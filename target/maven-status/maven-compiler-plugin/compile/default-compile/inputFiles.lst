@@ -1,13 +1,11 @@
 C:\Users\Dofault\Documents\dev\ModernSuperMarket\src\main\java\io\dofault\supermarket\commands\AddChestCommand.java
 C:\Users\Dofault\Documents\dev\ModernSuperMarket\src\main\java\io\dofault\supermarket\commands\AddItemChestCommand.java
-C:\Users\Dofault\Documents\dev\ModernSuperMarket\src\main\java\io\dofault\supermarket\commands\AddSellBlockCommand.java
 C:\Users\Dofault\Documents\dev\ModernSuperMarket\src\main\java\io\dofault\supermarket\commands\CommandManager.java
 C:\Users\Dofault\Documents\dev\ModernSuperMarket\src\main\java\io\dofault\supermarket\commands\DifferenceCommand.java
 C:\Users\Dofault\Documents\dev\ModernSuperMarket\src\main\java\io\dofault\supermarket\commands\EntryCommand.java
 C:\Users\Dofault\Documents\dev\ModernSuperMarket\src\main\java\io\dofault\supermarket\commands\ExitCommand.java
 C:\Users\Dofault\Documents\dev\ModernSuperMarket\src\main\java\io\dofault\supermarket\commands\PayCommand.java
 C:\Users\Dofault\Documents\dev\ModernSuperMarket\src\main\java\io\dofault\supermarket\commands\RemoveChestCommand.java
-C:\Users\Dofault\Documents\dev\ModernSuperMarket\src\main\java\io\dofault\supermarket\commands\RemoveSellBlockCommand.java
 C:\Users\Dofault\Documents\dev\ModernSuperMarket\src\main\java\io\dofault\supermarket\commands\SaveCommand.java
 C:\Users\Dofault\Documents\dev\ModernSuperMarket\src\main\java\io\dofault\supermarket\commands\SetPriceCommand.java
 C:\Users\Dofault\Documents\dev\ModernSuperMarket\src\main\java\io\dofault\supermarket\commands\SupermarketCommand.java

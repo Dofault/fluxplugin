@@ -3,6 +3,8 @@ package io.dofault.supermarket.commands;
 import io.dofault.supermarket.managers.ChestManager;
 import io.dofault.supermarket.managers.LangManager;
 
+import java.util.Map;
+
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -24,7 +26,7 @@ public class AddItemChestCommand implements SupermarketCommand {
 
     @Override
     public boolean execute(Player player, String[] args) {
-        if (args.length < 3) {
+        if (args.length != 3) {
             player.sendMessage(lang.get("shop-additemchest-usage"));
 
             return false;
@@ -46,7 +48,21 @@ public class AddItemChestCommand implements SupermarketCommand {
             return false;
         }
 
-        chestManager.addItemToChest(player, material, amount);
+        try {
+            boolean success = chestManager.addItemToChest(player.getLocation(), material, amount);
+
+            if (!success) {
+                throw new IllegalStateException(lang.get("shop-add-item-failed"));
+            }
+
+            player.sendMessage(lang.get("shop-add-item-chest", Map.of(
+                    "amount", String.valueOf(amount),
+                    "material", material.name())));
+        } catch (Exception e) {
+            player.sendMessage(e.getMessage());
+            e.printStackTrace();
+        }
+
         return true;
     }
 }

@@ -4,6 +4,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.Chest;
 import org.bukkit.block.Container;
 import org.bukkit.block.DoubleChest;
 import org.bukkit.entity.Player;
@@ -109,15 +111,12 @@ public class ChestManager {
 
     }
 
-    public void addChest(Player player) {
-        Location loc = player.getLocation().getBlock().getLocation(); // Position exacte du bloc
-        Block block = loc.getBlock();
-
-        if (!(block.getState() instanceof Container)) {
-            player.sendMessage(lang.get("shop-no-chest-here"));
-
-            return;
+    public boolean addChest(Block block) {
+        if (!(block.getState() instanceof Chest)) {
+            throw new IllegalArgumentException(lang.get("shop-no-chest-here"));
         }
+
+        Location loc = block.getLocation();
 
         if (chestConfig.contains("chests")) {
             for (String chestId : chestConfig.getConfigurationSection("chests").getKeys(false)) {
@@ -130,9 +129,7 @@ public class ChestManager {
                         && x == loc.getBlockX()
                         && y == loc.getBlockY()
                         && z == loc.getBlockZ()) {
-                    player.sendMessage(lang.get("shop-chest-already-registered"));
-
-                    return;
+                    throw new IllegalArgumentException(lang.get("shop-chest-already-registered"));
                 }
             }
         }
@@ -147,23 +144,17 @@ public class ChestManager {
         chestConfig.set("chests." + chestId + ".items", new ArrayList<String>());
 
         saveConfig();
-        player.sendMessage(lang.get("shop-chest-added", Map.of("id", chestId)));
-
+        return true;
     }
 
-    public void addItemToChest(Player player, Material material, int amount) {
-        Location loc = player.getLocation().getBlock().getLocation();
+    public boolean addItemToChest(Location loc, Material material, int amount) {
 
         if (!chestConfig.contains("chests")) {
-            player.sendMessage(lang.get("shop-no-chest"));
-
-            return;
+            throw new IllegalArgumentException(lang.get("shop-no-chest"));
         }
 
         if (!priceManager.hasPrice(material.name())) {
-            player.sendMessage(lang.get("shop-material-no-price"));
-
-            return;
+            throw new IllegalArgumentException(lang.get("shop-material-no-price"));
         }
 
         String targetChestId = null;
@@ -184,9 +175,33 @@ public class ChestManager {
         }
 
         if (targetChestId == null) {
-            player.sendMessage(lang.get("shop-not-registered-chest"));
+            throw new IllegalArgumentException(lang.get("shop-not-registered-chest"));
+        }
 
-            return;
+        // Vérification double coffre
+        Block block = loc.getBlock();
+        if (block.getState() instanceof Chest chest) {
+            Chest leftChest = null;
+            Chest rightChest = null;
+
+            // Vérifier les coffres voisins
+            for (BlockFace face : new BlockFace[] { BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST,
+                    BlockFace.WEST }) {
+                Block relative = block.getRelative(face);
+                if (relative.getState() instanceof Chest neighbor) {
+                    if (chest.getLocation().getX() < neighbor.getLocation().getX()) {
+                        rightChest = neighbor;
+                    } else if (chest.getLocation().getX() > neighbor.getLocation().getX()) {
+                        leftChest = neighbor;
+                    }
+                }
+            }
+
+            if (leftChest != null && rightChest == null) {
+                // Seul le coffre gauche est sélectionné, pas le droit
+                throw new IllegalArgumentException(
+                        "Vous devez vous placer sur le coffre de droite pour ajouter des items !");
+            }
         }
 
         List<String> items = chestConfig.getStringList("chests." + targetChestId + ".items");
@@ -195,10 +210,7 @@ public class ChestManager {
         saveConfig();
 
         reloadChests();
-
-        player.sendMessage(lang.get("shop-add-item-chest", Map.of(
-                "amount", String.valueOf(amount),
-                "material", material.name())));
+        return true;
     }
 
     // Retourne true si une location correspond à un coffre enregistré

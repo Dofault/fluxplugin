@@ -48,7 +48,7 @@ public class SetPriceCommand implements SupermarketCommand {
             return true;
         }
 
-        priceManager.setPrice(material.name(), price);
+        priceManager.setPrice(material, price);
         player.sendMessage(lang.get("shop-price-set", Map.of(
                 "material", material.name(),
                 "price", String.valueOf(price))));

@@ -5,8 +5,11 @@ import io.dofault.supermarket.managers.LangManager;
 import io.dofault.supermarket.managers.PlayerListManager;
 import io.dofault.supermarket.managers.SellManager;
 import io.dofault.supermarket.managers.ShopManager;
+import net.milkbowl.vault.economy.Economy;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -36,6 +39,7 @@ public class ShopRestrictionListener implements Listener {
     private ChestManager chestManager;
     private ShopManager shopManager;
     private LangManager lang;
+    private final Economy econ;
     private final SellManager sellManager;
     private final JavaPlugin plugin;
 
@@ -43,8 +47,9 @@ public class ShopRestrictionListener implements Listener {
     private final Material sellBlockMaterial;
 
     public ShopRestrictionListener(JavaPlugin plugin, LangManager lang, PlayerListManager playerListManager,
-            ChestManager chestManager, ShopManager shopManager, SellManager sellManager) {
+            ChestManager chestManager, ShopManager shopManager, SellManager sellManager, Economy econ) {
         this.plugin = plugin;
+        this.econ = econ;
         this.sellManager = sellManager;
         this.lang = lang;
         this.playerListManager = playerListManager;
@@ -67,6 +72,31 @@ public class ShopRestrictionListener implements Listener {
     }
 
     // ... le reste du listener
+    public void playShopEntrance(Player player) {
+        // Séquence harmonieuse : 3 notes
+        Sound[][] sequences = {
+                { Sound.BLOCK_NOTE_BLOCK_BELL, Sound.BLOCK_NOTE_BLOCK_CHIME },
+                { Sound.BLOCK_NOTE_BLOCK_XYLOPHONE }
+        };
+
+        float[] pitches = { 1.0f, 1.2f }; // pitch pour chaque "accord"
+
+        new BukkitRunnable() {
+            int index = 0;
+
+            @Override
+            public void run() {
+                if (index >= sequences.length) {
+                    cancel();
+                    return;
+                }
+                for (Sound sound : sequences[index]) {
+                    player.playSound(player.getLocation(), sound, 1.0f, pitches[index]);
+                }
+                index++;
+            }
+        }.runTaskTimer(plugin, 0L, 6L); // chaque accord tous les 6 ticks
+    }
 
     // Empêche toute interaction avec les blocs
     @EventHandler
@@ -129,6 +159,11 @@ public class ShopRestrictionListener implements Listener {
                         e.setCancelled(true);
                         return;
                     }
+                    if (e.getAction() == Action.LEFT_CLICK_BLOCK) {
+                        sellManager.lookPrices(player, block);
+                        e.setCancelled(true);
+                        return;
+                    }
                 }
 
                 // EXIT
@@ -138,19 +173,15 @@ public class ShopRestrictionListener implements Listener {
                     if (shopManager.isExit(blockBelow) && playerListManager.isInShop(player.getUniqueId())) {
                         if (shopManager.canPlayerExit(player)) {
                             Location entryLoc = shopManager.getEntryLocation(player);
-                            playerListManager.leaveShop(player);
+                            playerListManager.leaveShop(player, false);
                             player.teleport(entryLoc);
                             player.sendMessage(lang.get("shop-exit"));
 
-                            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1.0f, 0.9f); // sonore,
-                                                                                                             // cloche
-                                                                                                             // douce
+                            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1.0f, 0.9f);
                         } else {
                             player.sendMessage(lang.get("shop-must-pay")); // aigu
 
-                            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 2.0f, 0.5f); // plus aigu
-                                                                                                          // et plus
-                                                                                                          // fort
+                            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 2.0f, 0.5f);
 
                         }
                     }
@@ -196,11 +227,13 @@ public class ShopRestrictionListener implements Listener {
                             playerListManager.enterShop(player);
                             player.teleport(exitLoc);
 
-                            player.sendMessage(lang.get("shop-welcome-line1"));
-                            player.sendMessage(lang.get("shop-welcome-instruction"));
-                            player.sendMessage(lang.get("shop-welcome-leftclick"));
-                            player.sendMessage(lang.get("shop-welcome-rightclick"));
-
+                            List<String> messages = lang.getList("shop-welcome-messages");
+                            for (String msg : messages) {
+                                msg = msg.replace("%buy_block%", buyBlockMaterial.name())
+                                        .replace("%sell_block%", sellBlockMaterial.name());
+                                player.sendMessage(msg);
+                            }
+                            playShopEntrance(player);
                             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1.0f, 0.9f);
 
                             new BukkitRunnable() {
@@ -213,7 +246,7 @@ public class ShopRestrictionListener implements Listener {
                                     double balance = shopManager.getBalance(player);
                                     player.sendActionBar(
                                             lang.get("shop-cart-actionbar",
-                                                    Map.of("balance", String.valueOf(balance))));
+                                                    Map.of("balance", econ.format(balance))));
                                 }
                             }.runTaskTimer(plugin, 0L, 20L);
                         }

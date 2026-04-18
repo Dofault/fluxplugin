@@ -1,5 +1,6 @@
 io\dofault\supermarket\managers\PriceManager.class
 io\dofault\supermarket\managers\LangManager.class
+io\dofault\supermarket\managers\SellManager$2.class
 io\dofault\supermarket\managers\SellManager.class
 io\dofault\supermarket\commands\AddItemChestCommand.class
 io\dofault\supermarket\commands\RemoveChestCommand.class
@@ -7,17 +8,16 @@ io\dofault\supermarket\commands\SetPriceCommand.class
 io\dofault\supermarket\commands\AddChestCommand.class
 io\dofault\supermarket\commands\CommandManager.class
 io\dofault\supermarket\commands\SupermarketCommand.class
+io\dofault\supermarket\listener\ShopRestrictionListener$2.class
 io\dofault\supermarket\commands\PayCommand.class
 io\dofault\supermarket\commands\EntryCommand.class
 io\dofault\supermarket\main\Main.class
 io\dofault\supermarket\managers\PlayerListManager.class
-io\dofault\supermarket\commands\AddSellBlockCommand.class
 io\dofault\supermarket\commands\ExitCommand.class
 io\dofault\supermarket\model\BlockPos.class
 io\dofault\supermarket\commands\DifferenceCommand.class
 io\dofault\supermarket\managers\ChestManager.class
 io\dofault\supermarket\managers\ShopManager.class
-io\dofault\supermarket\commands\RemoveSellBlockCommand.class
 io\dofault\supermarket\listener\ShopRestrictionListener$1.class
 io\dofault\supermarket\managers\SellManager$1.class
 io\dofault\supermarket\listener\ShopRestrictionListener.class

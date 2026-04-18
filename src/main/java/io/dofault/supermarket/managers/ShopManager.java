@@ -158,7 +158,7 @@ public class ShopManager {
                     player.sendMessage(lang.get("shop-item-line", Map.of(
                             "item", itemName,
                             "delta", String.valueOf(delta),
-                            "price", String.valueOf(itemPrice))));
+                            "price", economy.format(itemPrice))));
                 }
 
                 // Log dans la console
@@ -167,7 +167,7 @@ public class ShopManager {
 
             }
 
-            player.sendMessage(lang.get("shop-total", Map.of("total", String.valueOf(totalPrice))));
+            player.sendMessage(lang.get("shop-total", Map.of("total", economy.format(totalPrice))));
 
         }
         player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1.0f, 0.9f);
@@ -208,13 +208,13 @@ public class ShopManager {
         if (totalCost > 0) {
             if (!economy.has(player, totalCost)) {
                 player.sendMessage(lang.get("shop-not-enough-money", Map.of(
-                        "balance", String.valueOf(economy.getBalance(player)))));
+                        "balance", economy.format(economy.getBalance(player)))));
                 player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 2.0f, 0.5f); // plus aigu et plus fort
 
                 return false;
             }
             economy.withdrawPlayer(player, totalCost);
-            player.sendMessage(lang.get("shop-paid-success", Map.of("total", String.valueOf(totalCost))));
+            player.sendMessage(lang.get("shop-paid-success", Map.of("total", economy.format(totalCost))));
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_CELEBRATE, 1f, 1f); // un peu plus fort et plus
                                                                                              // grave
 

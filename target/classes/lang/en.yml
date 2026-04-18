@@ -1,46 +1,70 @@
+###################################
+# EXIT / ERROR MESSAGES
+###################################
 shop-exit: "&aYou have exited the shop!"
-shop-must-pay: "&cYou must pay to be able to exit!"
+shop-must-pay: "&cYou must pay before exiting!"
 shop-cannot-open-outside: "&cYou cannot open this shop chest from outside!"
+shop-not-in-shop: "&cYou must be in the shop to do this!"
+shop-sell-unpaid-items: "&cYou cannot open the sell block while having unpaid items!"
+shop-no-sellblock: "&cNo sell block registered!"
+shop-sell-success: "&aYou sold your items for &6%amount%!"
+shop-add-item-failed: "&cFailed to add the item to the chest!"
+shop-doublechest-right-only: "&cYou must stand on the right chest to add items!"
 
-shop-welcome-line1: "&7&l----&r&7( &2WELCOME TO THE SHOP&7 )&7&l----"
-shop-welcome-instruction: "&7Use the &eTARGET &7block:"
-shop-welcome-leftclick: "&8- &a&lLeft Click &7→ view your &fbasket 🛒"
-shop-welcome-rightclick: "&8- &a&lRight Click &7→ pay for your &fitems 💰"
+###################################
+# WELCOME MESSAGES
+###################################
 
-shop-no-difference: "&aNo difference."
+# Available variables:
+# %buy_block%  → name of the block used to buy
+# %sell_block% → name of the block used to sell
+shop-welcome-messages:
+  - "&7&l----&r&7( &2Welcome to the shop&7 )&7&l----"
+  - "&7To buy, use the block &e%buy_block%&7:"
+  - "&8- &a&lLeft click &7→ view your &fbasket 🛒"
+  - "&8- &a&lRight click &7→ pay for your &fitems 💰"
+  - "&7To sell, use the block &e%sell_block%&7:"
+  - "&8- &a&lLeft click &7→ check prices &f📜"
+  - "&8- &a&lRight click &7→ sell your &fitems 💵"
 
+###################################
+# CART / PLAYER INVENTORY
+###################################
 shop-your-items: "&eYour items:"
-
-shop-item-line: "&d➤ &a%item% &e(+%delta%) &f→ &b%price% ₿"
-
-shop-total: "&6&l💰 Total: &b&l%total% ₿"
-
-shop-not-enough-money: "&cYou don't have enough money to pay for your inventory! &e(Your balance: 💰 %balance% ₿)"
-
-shop-paid-success: "&a✅ You have paid &6&l%total%&r&a ₿ for your items!"
-
+shop-item-line: "&d➤ &a%item% &e(+%delta%) &f→ &b%price%"
+shop-total: "&6&l💰 Total: &b&l%total%"
+shop-cart-actionbar: "&6Cart: &b%balance%"
+shop-not-enough-money: "&cYou don't have enough money to pay for your inventory! &e(Your balance: 💰 %balance%)"
+shop-paid-success: "&a✅ You paid &6&l%total%&r&a for your items!"
+shop-no-difference: "&aNo difference."
 shop-difference-log: "Difference for %player%: %item% -> %delta%"
 shop-item-price: "&aPrice of %item%: %price%"
-shop-no-price: "&cNo price set for %item%"
+shop-no-price: "&cNo price defined for %item%"
 
+###################################
+# CHESTS / SHOP BLOCKS
+###################################
 shop-no-chest: "&cNo chest registered!"
-shop-cart-actionbar: "&6Cart: &b%balance% ₿"
-
-
-shop-not-registered-chest: "&cYou are not on a registered chest!"
-
-shop-chest-unlinked: "&aChest link removed!"
-shop-no-chest-here: "&cThere is no chest at your location!"
+shop-no-bundle-entry: "&cYou are not allowed to enter with %item%!"
+shop-not-registered-chest: "&cYou are not standing on a registered chest!"
+shop-chest-unlinked: "&aChest unlinked!"
+shop-no-chest-here: "&cNo chest at your location!"
 shop-chest-already-registered: "&cThis chest is already registered!"
-shop-chest-added: "&aChest added! (ID: %id%)"
-shop-no-chest: "&cNo chest registered!"
-shop-material-no-price: "&cThis material has no price set!"
-shop-not-registered-chest: "&cYou are not on a registered chest!"
+shop-chest-added: "&aChest added!"
+shop-material-no-price: "&cThis material has no defined price!"
 shop-add-item-chest: "&aAdded %amount% %material% to the chest!"
+
+###################################
+# POSITION / SHOP SETUP
+###################################
 shop-entry-saved: "&aEntry position saved!"
-shop-exit-saved: "&aShop exit position saved!"
+shop-exit-saved: "&aExit position saved!"
 shop-saved: "&aShop saved!"
-shop-define-entry-exit-first: "&cYou must first define the entry and exit!"
+shop-define-entry-exit-first: "&cYou must define the entry and exit first!"
+
+###################################
+# COMMANDS
+###################################
 shop-setprice-usage: "&cUsage: /supermarket setprice <item> <price>"
 shop-invalid-item: "&cInvalid item!"
 shop-invalid-price: "&cInvalid price!"
@@ -50,49 +74,25 @@ shop-additemchest-usage: "&cUsage: /supermarket additemchest <item> <amount>"
 shop-invalid-number: "&cInvalid number!"
 shop-no-item-entry: "&cYou are not allowed to enter with a %item%!"
 
-
-# /help
+# General commands
 shop-commands-header: "&e» General Commands:"
-shop-command-entry-exit: "&b/supermarket &fentry|exit &7- &oSet the shop entry and exit points."
-shop-command-pay: "&b/supermarket &fpay &7- &oPay for your purchases."
-shop-command-save: "&b/supermarket &fsave &7- &oSave the shop's entry and exit points."
+shop-command-entry-exit: "&b/supermarket &fentry|exit &7- &oDefine the shop entry and exit."
+shop-command-pay: "&b/supermarket &fpay &7- &oPay for your items."
+shop-command-save: "&b/supermarket &fsave &7- &oSave the shop's entry and exit."
 shop-command-setprice: "&b/supermarket &fsetprice <item> <price> &7- &oSet the price of an item."
-shop-command-difference: "&b/supermarket &fdifference &7- &oShow the inventory difference."
-shop-command-addchest: "&b/supermarket &faddchest &7- &oAdd the chest under you to the shop."
-shop-command-removechest: "&b/supermarket &fremovechest &7- &oRemove the chest under you from the shop."
+shop-command-difference: "&b/supermarket &fdifference &7- &oShow inventory differences."
+shop-command-addchest: "&b/supermarket &faddchest &7- &oAdd a chest under your feet in the shop."
+shop-command-removechest: "&b/supermarket &fremovechest &7- &oRemove the chest under your feet from the shop."
 shop-command-additemchest: "&b/supermarket &fadditemchest <item> <amount> &7- &oAdd the item to the chest."
-shop-not-in-shop: "&cYou must be inside the shop to do that!"
-shop-sell-unpaid-items: "&cYou cannot open the sell block while you have items to pay for!"
-shop-no-sellblock: "&cNo sell block registered!"
-shop-sell-success: "&aYou sold your items for &6%amount% ₿!"
+shop-command-addsellblock: "&b/supermarket &faddsellblock &7- &oAdd the sell block under your feet in the shop."
+shop-command-removesellblock: "&b/supermarket &fremovesellblock &7- &oRemove the sell block under your feet from the shop."
 
-
-
-shop-sell-nothing: "&cYou have nothing to sell!"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+###################################
+# INVENTORY / PRICES
+###################################
+shop-prices-inventory-title: "§6Item Prices %page%/%totalPages%"
+shop-item-name: "§e%item%"
+shop-item-lore-buy-price: "§7Buy: §a%price%"
+shop-item-lore-sell-price: "§7Sell: §a%price%"
+shop-inventory-previous-page: "§aPrevious Page"
+shop-inventory-next-page: "§aNext Page"

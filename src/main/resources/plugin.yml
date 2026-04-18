@@ -1,9 +1,8 @@
-name: InfluenShop
+name: VaultSupermarket
 version: 1.0
 author: dofault
 main: io.dofault.supermarket.main.Main
-api-version: '1.21.4'
-
+api-version: "1.21.4"
 
 commands:
   supermarket:

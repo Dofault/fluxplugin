@@ -92,9 +92,9 @@ public class PlayerListManager {
         return true;
     }
 
-    public void leaveShop(Player player) {
+    public void leaveShop(Player player, boolean isRestore) {
         playersInShop.remove(player.getUniqueId());
-        loadInventory(player);
+        loadInventory(player, isRestore);
     }
 
     public boolean isInShop(UUID playerUUID) {
@@ -184,7 +184,7 @@ public class PlayerListManager {
         }
     }
 
-    private void loadInventory(Player player) {
+    private void loadInventory(Player player, boolean isRestore) {
         try {
             String sql = "SELECT inventory FROM shop_players WHERE uuid=?";
             PreparedStatement ps = connection.prepareStatement(sql);
@@ -198,7 +198,9 @@ public class PlayerListManager {
                     yaml.loadFromString(data);
                     List<ItemStack> items = (List<ItemStack>) yaml.getList("items");
 
-                    // player.getInventory().setContents(items.toArray(new ItemStack[0]));
+                    if (isRestore) {
+                        player.getInventory().setContents(items.toArray(new ItemStack[0]));
+                    }
 
                     plugin.getLogger().info("[DEBUG] Inventaire de " + player.getName() + " chargé.");
 

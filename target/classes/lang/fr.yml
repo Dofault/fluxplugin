@@ -1,53 +1,70 @@
+###################################
+# MESSAGES DE SORTIE / ERREURS
+###################################
 shop-exit: "&aVous êtes sorti du shop !"
 shop-must-pay: "&cVous devez payer pour pouvoir sortir !"
 shop-cannot-open-outside: "&cVous ne pouvez pas ouvrir ce coffre du shop depuis l'extérieur !"
+shop-not-in-shop: "&cVous devez être dans le shop pour faire cela !"
+shop-sell-unpaid-items: "&cVous ne pouvez pas ouvrir le bloc de vente tant que vous avez des articles impayés !"
+shop-no-sellblock: "&cAucun bloc de vente enregistré !"
+shop-sell-success: "&aVous avez vendu vos articles pour &6%amount% !"
+shop-add-item-failed: "&cImpossible d'ajouter l'objet dans le coffre !"
+shop-doublechest-right-only: "&cVous devez vous placer sur le coffre de droite pour ajouter des items !"
 
+###################################
+# MESSAGES D'ACCUEIL / WELCOME
+###################################
 
-shop-welcome-line1: "&7&l----&r&7( &2ʙɪᴇɴᴠᴇɴᴜᴇ ᴅᴀɴs ʟᴇ sʜᴏᴘ&7 )&7&l----"
-shop-welcome-instruction: "&7Utilise le bloc de &eCIBLE&7 :"
-shop-welcome-leftclick: "&8- &a&lClique gauche &7→ voir ton &fpanier 🛒"
-shop-welcome-rightclick: "&8- &a&lClique droit &7→ payer tes &farticles 💰"
+# Variables disponibles :
+# %buy_block%  → le nom du bloc utilisé pour acheter
+# %sell_block% → le nom du bloc utilisé pour vendre
+shop-welcome-messages:
+  - "&7&l----&r&7( &2ʙɪᴇɴᴠᴇɴᴜᴇ ᴅᴀɴs ʟᴇ sʜᴏᴘ&7 )&7&l----"
+  - "&7Pour acheter, utilise le bloc &e%buy_block%&7 :"
+  - "&8- &a&lClique gauche &7→ voir ton &fpanier 🛒"
+  - "&8- &a&lClique droit &7→ payer tes &farticles 💰"
+  - "&7Pour vendre, utilise le bloc &e%sell_block%&7 :"
+  - "&8- &a&lClique gauche &7→ consulter les prix &f📜"
+  - "&8- &a&lClique droit &7→ vendre tes &farticles 💵"
 
-
-shop-no-difference: "&aAucune différence."
-
+###################################
+# PANIER / INVENTAIRE DU JOUEUR
+###################################
 shop-your-items: "&eVos articles :"
-
-
-shop-item-line: "&d➤ &a%item% &e(+%delta%) &f→ &b%price% ₿"
-
-
-shop-total: "&6&l💰 Total : &b&l%total% ₿"
-shop-cart-actionbar: "&6Panier : &b%balance% ₿"
-
-shop-not-enough-money: "&cVous n'avez pas assez d'argent pour payer votre inventaire ! &e(Votre solde : 💰 %balance% ₿)"
-
-
-
-shop-paid-success: "&a✅ Vous avez payé &6&l%total%&r&a ₿ pour vos articles !"
-
+shop-item-line: "&d➤ &a%item% &e(+%delta%) &f→ &b%price%"
+shop-total: "&6&l💰 Total : &b&l%total%"
+shop-cart-actionbar: "&6Panier : &b%balance%"
+shop-not-enough-money: "&cVous n'avez pas assez d'argent pour payer votre inventaire ! &e(Votre solde : 💰 %balance%)"
+shop-paid-success: "&a✅ Vous avez payé &6&l%total%&r&a pour vos articles !"
+shop-no-difference: "&aAucune différence."
 shop-difference-log: "Différence pour %player%: %item% -> %delta%"
 shop-item-price: "&aPrix de %item% : %price%"
 shop-no-price: "&cAucun prix défini pour %item%"
 
+###################################
+# COFFRES / SHOP BLOCKS
+###################################
 shop-no-chest: "&cAucun coffre enregistré !"
 shop-no-bundle-entry: "&cVous n'avez pas le droit d'entrer avec %item% !"
-
-
 shop-not-registered-chest: "&cTu n'es pas sur un coffre enregistré !"
-
 shop-chest-unlinked: "&aLiaison du coffre supprimé !"
 shop-no-chest-here: "&cIl n'y a pas de coffre à ta position !"
 shop-chest-already-registered: "&cCe coffre est déjà enregistré !"
-shop-chest-added: "&aCoffre ajouté ! (ID: %id%)"
-shop-no-chest: "&cAucun coffre enregistré !"
+shop-chest-added: "&Coffre ajouté !"
 shop-material-no-price: "&cCe matériau n'a pas de prix défini !"
-shop-not-registered-chest: "&cTu n'es pas sur un coffre enregistré !"
 shop-add-item-chest: "&aAjouté %amount% %material% au coffre !"
+
+###################################
+# POSITION / SHOP SETUP
+###################################
 shop-entry-saved: "&aPosition d'entrée enregistrée !"
 shop-exit-saved: "&aPosition de sortie du shop enregistrée !"
 shop-saved: "&aShop sauvegardé !"
 shop-define-entry-exit-first: "&cVous devez d'abord définir l'entrée et la sortie !"
+
+###################################
+# COMMANDES
+###################################
 shop-setprice-usage: "&cUsage: /supermarket setprice <item> <prix>"
 shop-invalid-item: "&cItem invalide !"
 shop-invalid-price: "&cPrix invalide !"
@@ -57,19 +74,23 @@ shop-additemchest-usage: "&cUsage: /supermarket additemchest <item> <amount>"
 shop-invalid-number: "&cNombre invalide !"
 shop-no-item-entry: "&cVous n'avez pas le droit d'entrer avec un %item% !"
 
-
-shop-commands-header: "&e» Commandes Générales:"
+# Commandes générales
+shop-commands-header: "&e» Commandes Générales :"
 shop-command-entry-exit: "&b/supermarket &fentry|exit &7- &oDéfinir l'entrée et la sortie du magasin."
 shop-command-pay: "&b/supermarket &fpay &7- &oPayer ses achats."
 shop-command-save: "&b/supermarket &fsave &7- &oSauvegarder l'entrée et la sortie du shop."
 shop-command-setprice: "&b/supermarket &fsetprice <item> <prix> &7- &oDéfinir le prix d'un objet."
 shop-command-difference: "&b/supermarket &fdifference &7- &oAfficher la différence d'inventaire."
-shop-command-addchest: "&b/supermarket &faddchest &7- &oAjouter le coffre en dessous de vous dans le shop."
+shop-command-addchest: "&b/supermarket &faddchest &7- &oAjouter le coffre sous vos pieds dans le shop."
 shop-command-removechest: "&b/supermarket &fremovechest &7- &oRetirer le coffre en dessous de vous dans le shop."
-shop-command-additemchest: "&b/supermarket &fadditemchest <item> <amount> &7- &oAjouter l'objet dans le coffre."
+shop-command-additemchest: "&b/supermarket &fadditemchest <item> <amount> &7- &oAjouter un objet dans le coffre."
 
-shop-not-in-shop: "&cVous devez être dans le shop pour faire cela !"
-shop-sell-unpaid-items: "&cVous ne pouvez pas ouvrir le bloc de vente tant que vous avez des articles impayés !"
-shop-no-sellblock: "&cAucun bloc de vente enregistré !"
-shop-sell-success: "&aVous avez vendu vos articles pour &6%amount% ₿ !"
-shop-sell-nothing: "&cVous n'avez rien à vendre !"
+###################################
+# INVENTAIRE / PRIX
+###################################
+shop-prices-inventory-title: "§6Prix des items %page%/%totalPages%"
+shop-item-name: "§e%item%"
+shop-item-lore-buy-price: "§7Achat : §a%price%"
+shop-item-lore-sell-price: "§7Vente : §a%price%"
+shop-inventory-previous-page: "§aPage précédente"
+shop-inventory-next-page: "§aPage suivante"

@@ -1,7 +1,9 @@
 package io.dofault.supermarket.managers;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -11,21 +13,26 @@ import net.md_5.bungee.api.ChatColor;
 
 public class LangManager {
     private final JavaPlugin plugin;
+    private final String locale;
+    private final YamlConfiguration config;
     private final Map<String, String> messages = new HashMap<>();
 
     public LangManager(JavaPlugin plugin, String locale) {
         this.plugin = plugin;
-        loadLanguage(locale);
-    }
-
-    private void loadLanguage(String locale) {
+        this.locale = locale;
         File file = new File(plugin.getDataFolder(), "lang/" + locale + ".yml");
         if (!file.exists()) {
             plugin.saveResource("lang/" + locale + ".yml", false);
         }
-        YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
+        this.config = YamlConfiguration.loadConfiguration(file);
+        loadLanguage();
+    }
+
+    private void loadLanguage() {
         for (String key : config.getKeys(false)) {
-            messages.put(key, ChatColor.translateAlternateColorCodes('&', config.getString(key, key)));
+            if (config.isString(key)) {
+                messages.put(key, ChatColor.translateAlternateColorCodes('&', config.getString(key, key)));
+            }
         }
     }
 
@@ -41,5 +48,25 @@ public class LangManager {
 
     public String get(String key) {
         return get(key, null);
+    }
+
+    public List<String> getList(String key, Map<String, String> placeholders) {
+        List<String> result = new ArrayList<>();
+        if (!config.contains(key))
+            return result;
+
+        for (String line : config.getStringList(key)) {
+            if (placeholders != null) {
+                for (var entry : placeholders.entrySet()) {
+                    line = line.replace("%" + entry.getKey() + "%", entry.getValue());
+                }
+            }
+            result.add(ChatColor.translateAlternateColorCodes('&', line));
+        }
+        return result;
+    }
+
+    public List<String> getList(String key) {
+        return getList(key, null);
     }
 }

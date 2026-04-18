@@ -1,7 +1,10 @@
 language: fr
 buy_block: IRON_BLOCK
 sell_block: TARGET
-# Items interdits dans le shop (le joueur ne peut pas entrer avec ces items)
+sell-percentage: 0.8
+
+# WARNING
+# This plugin does'nt support bundle (because of glitch)
 banned-items:
   - BUNDLE
   - WHITE_BUNDLE

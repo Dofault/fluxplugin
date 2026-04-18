@@ -17,6 +17,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.EventHandler;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -48,18 +49,19 @@ public class Main extends JavaPlugin implements Listener {
             return;
         }
 
-        String langCode = getConfig().getString("language", "fr"); // récupère la langue du config
-        lang = new LangManager(this, langCode);
+        String langCode = getConfig().getString("language"); // récupère la langue du config
+        lang = new LangManager(this, "fr");
 
         playerList = new PlayerListManager(this, lang);
-        priceManager = new PriceManager(this, lang);
+        priceManager = new PriceManager(this, lang, econ);
         shopManager = new ShopManager(this, lang, econ, playerList, priceManager);
         chestManager = new ChestManager(this, lang, priceManager);
         sellManager = new SellManager(this, lang, shopManager, priceManager, playerList, econ);
 
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getPluginManager().registerEvents(
-                new ShopRestrictionListener(this, lang, playerList, chestManager, shopManager, sellManager), this);
+                new ShopRestrictionListener(this, lang, playerList, chestManager, shopManager, sellManager, econ),
+                this);
 
         // Initialisation du CommandManager
         commandManager = new CommandManager();
@@ -69,11 +71,9 @@ public class Main extends JavaPlugin implements Listener {
         commandManager.register(new SetPriceCommand(lang, priceManager));
         commandManager.register(new DifferenceCommand(lang, shopManager, playerList));
         commandManager.register(new PayCommand(lang, shopManager, playerList));
-        commandManager.register(new AddChestCommand(chestManager));
+        commandManager.register(new AddChestCommand(lang, chestManager));
         commandManager.register(new RemoveChestCommand(chestManager));
         commandManager.register(new AddItemChestCommand(lang, chestManager));
-        commandManager.register(new AddSellBlockCommand(sellManager));
-        commandManager.register(new RemoveSellBlockCommand(sellManager));
 
         getCommand("supermarket").setExecutor((sender, command, label, args) -> {
             if (!(sender instanceof Player player)) {
@@ -81,15 +81,16 @@ public class Main extends JavaPlugin implements Listener {
                 return true;
             }
             if (!commandManager.execute(player, args)) {
+
                 player.sendMessage(lang.get("shop-commands-header"));
-                player.sendMessage(lang.get("shop-command-entry-exit"));
-                player.sendMessage(lang.get("shop-command-pay"));
-                player.sendMessage(lang.get("shop-command-save"));
                 player.sendMessage(lang.get("shop-command-setprice"));
-                player.sendMessage(lang.get("shop-command-difference"));
+                player.sendMessage(lang.get("shop-command-additemchest"));
                 player.sendMessage(lang.get("shop-command-addchest"));
                 player.sendMessage(lang.get("shop-command-removechest"));
-                player.sendMessage(lang.get("shop-command-additemchest"));
+                player.sendMessage(lang.get("shop-command-entry-exit"));
+                player.sendMessage(lang.get("shop-command-save"));
+                player.sendMessage(lang.get("shop-command-difference"));
+                player.sendMessage(lang.get("shop-command-pay"));
 
             }
             return true;
@@ -137,7 +138,18 @@ public class Main extends JavaPlugin implements Listener {
         Player player = event.getPlayer();
         if (playerList.isInShop(player.getUniqueId())) {
             player.teleport(shopManager.getEntryLocation(player));
-            playerList.leaveShop(player);
+            playerList.leaveShop(player, true);
         }
     }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+        if (playerList.isInShop(player.getUniqueId())) {
+            // Téléporte éventuellement le joueur à l'entrée ou sauvegarde son état
+            player.teleport(shopManager.getEntryLocation(player));
+            playerList.leaveShop(player, true);
+        }
+    }
+
 }
