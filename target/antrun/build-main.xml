@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="maven-antrun-" default="main">
   <target name="main">
-    <copy file="C:\Users\Dofault\Documents\dev\ModernSuperMarket\target/VaultSuperMarket-1.0.jar" todir="C:\Users\Dofault\Documents\PAPERSERVER\plugins" />
+    <copy file="C:\Users\Dofault\Documents\dev\home\influencraft\plugins\ModernSuperMarketPlugin\target/VaultSuperMarket-1.0.jar" todir="C:\Users\Dofault\Documents\dev\home\influencraft\plugins\ModernSuperMarketPlugin/../../serveurs/03_semirp/plugins" />
   </target>
 </project>

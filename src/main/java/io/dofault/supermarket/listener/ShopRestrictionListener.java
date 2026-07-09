@@ -10,6 +10,7 @@ import net.milkbowl.vault.economy.Economy;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -172,9 +173,13 @@ public class ShopRestrictionListener implements Listener {
 
                     if (shopManager.isExit(blockBelow) && playerListManager.isInShop(player.getUniqueId())) {
                         if (shopManager.canPlayerExit(player)) {
-                            Location entryLoc = shopManager.getEntryLocation(player);
+                            UUID uuid = player.getUniqueId();
+                            Location destination = playerListManager.hasReturnLocation(uuid)
+                                    ? playerListManager.getReturnLocation(uuid)
+                                    : shopManager.getEntryLocation(player);
+                            playerListManager.clearReturnLocation(uuid);
                             playerListManager.leaveShop(player, false);
-                            player.teleport(entryLoc);
+                            player.teleport(destination);
                             player.sendMessage(lang.get("shop-exit"));
 
                             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1.0f, 0.9f);

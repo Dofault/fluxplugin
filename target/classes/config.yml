@@ -1,7 +1,13 @@
 language: fr
 buy_block: IRON_BLOCK
 sell_block: TARGET
-sell-percentage: 0.8
+
+# Cooldown (en secondes) de /supermarket tpshop pour un joueur sans la
+# permission supermarket.admin. Pour donner un cooldown différent par grade,
+# mets une meta LuckPerms "supermarket-tpshop-cooldown" sur le groupe
+# (ex: /lp group vip meta set supermarket-tpshop-cooldown 300) — elle prend
+# le dessus sur cette valeur par défaut.
+tpshop-cooldown-seconds: 1800
 
 # WARNING
 # This plugin does'nt support bundle (because of glitch)

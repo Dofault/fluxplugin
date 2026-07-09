@@ -4,10 +4,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.block.Chest;
 import org.bukkit.block.Container;
-import org.bukkit.block.DoubleChest;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -44,7 +42,18 @@ public class ChestManager {
         chestConfig = YamlConfiguration.loadConfiguration(chestFile);
 
         if (chestConfig.contains("chests")) {
-            chestCounter = chestConfig.getConfigurationSection("chests").getKeys(false).size();
+            // Le compteur doit être basé sur le plus grand numéro existant, pas sur le
+            // nombre d'entrées : après une suppression il peut y avoir des "trous"
+            // dans la numérotation (chest1, chest3, chest4...), et réutiliser un
+            // numéro libre écraserait un coffre existant.
+            for (String chestId : chestConfig.getConfigurationSection("chests").getKeys(false)) {
+                try {
+                    int id = Integer.parseInt(chestId.replace("chest", ""));
+                    chestCounter = Math.max(chestCounter, id);
+                } catch (NumberFormatException ignored) {
+                    // ignore les clés qui ne suivent pas le format "chestN"
+                }
+            }
         }
     }
 
@@ -88,23 +97,10 @@ public class ChestManager {
             return;
         }
 
-        // Supprime le coffre
+        // Supprime uniquement ce coffre. Les autres coffres gardent leur identifiant
+        // (pas de réindexation en cascade : chestCounter ne se base que sur le plus
+        // grand numéro existant, donc les "trous" laissés ici n'ont aucun impact).
         chestConfig.set("chests." + targetChestId, null);
-
-        // Réindexe tous les coffres
-        List<String> chestIds = new ArrayList<>(chestConfig.getConfigurationSection("chests").getKeys(false));
-        Collections.sort(chestIds, Comparator.comparingInt(id -> Integer.parseInt(id.replace("chest", ""))));
-
-        int counter = 1;
-        for (String id : chestIds) {
-            if (!id.equals("chest" + counter)) {
-                chestConfig.set("chests.chest" + counter,
-                        chestConfig.getConfigurationSection("chests." + id).getValues(true));
-                chestConfig.set("chests." + id, null);
-            }
-            counter++;
-        }
-        chestCounter = counter - 1;
 
         saveConfig();
         player.sendMessage(lang.get("shop-chest-unlinked"));
@@ -153,7 +149,7 @@ public class ChestManager {
             throw new IllegalArgumentException(lang.get("shop-no-chest"));
         }
 
-        if (!priceManager.hasPrice(material.name())) {
+        if (!priceManager.hasBuyPrice(material.name())) {
             throw new IllegalArgumentException(lang.get("shop-material-no-price"));
         }
 
@@ -178,32 +174,8 @@ public class ChestManager {
             throw new IllegalArgumentException(lang.get("shop-not-registered-chest"));
         }
 
-        // Vérification double coffre
-        Block block = loc.getBlock();
-        if (block.getState() instanceof Chest chest) {
-            Chest leftChest = null;
-            Chest rightChest = null;
-
-            // Vérifier les coffres voisins
-            for (BlockFace face : new BlockFace[] { BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST,
-                    BlockFace.WEST }) {
-                Block relative = block.getRelative(face);
-                if (relative.getState() instanceof Chest neighbor) {
-                    if (chest.getLocation().getX() < neighbor.getLocation().getX()) {
-                        rightChest = neighbor;
-                    } else if (chest.getLocation().getX() > neighbor.getLocation().getX()) {
-                        leftChest = neighbor;
-                    }
-                }
-            }
-
-            if (leftChest != null && rightChest == null) {
-                // Seul le coffre gauche est sélectionné, pas le droit
-                throw new IllegalArgumentException(
-                        "Vous devez vous placer sur le coffre de droite pour ajouter des items !");
-            }
-        }
-
+        // Chaque coffre est traité indépendamment, peu importe s'il est physiquement
+        // collé à un autre coffre : pas de détection/contrainte de double-coffre.
         List<String> items = chestConfig.getStringList("chests." + targetChestId + ".items");
         items.add(material.name() + ":" + amount);
         chestConfig.set("chests." + targetChestId + ".items", items);
@@ -248,7 +220,7 @@ public class ChestManager {
         int x = chestConfig.getInt("chests." + chestId + ".x");
         int y = chestConfig.getInt("chests." + chestId + ".y");
         int z = chestConfig.getInt("chests." + chestId + ".z");
-        return new Location(Bukkit.getWorld(worldName), x, y, z);
+        return new Location(worldName == null ? null : Bukkit.getWorld(worldName), x, y, z);
     }
 
     public void reloadChests() {
@@ -269,7 +241,7 @@ public class ChestManager {
         int y = chestConfig.getInt("chests." + chestId + ".y");
         int z = chestConfig.getInt("chests." + chestId + ".z");
 
-        if (Bukkit.getWorld(worldName) == null)
+        if (worldName == null || Bukkit.getWorld(worldName) == null)
             return;
 
         Location loc = new Location(Bukkit.getWorld(worldName), x, y, z);
@@ -278,13 +250,7 @@ public class ChestManager {
         if (!(block.getState() instanceof Container container))
             return;
 
-        Inventory inv;
-        if (container instanceof DoubleChest doubleChest) {
-            inv = doubleChest.getInventory();
-        } else {
-            inv = container.getInventory();
-        }
-
+        Inventory inv = container.getInventory();
         inv.clear();
 
         List<String> items = chestConfig.getStringList("chests." + chestId + ".items");

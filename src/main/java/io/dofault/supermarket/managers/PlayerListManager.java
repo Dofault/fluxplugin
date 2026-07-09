@@ -1,6 +1,7 @@
 
 package io.dofault.supermarket.managers;
 
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -17,6 +18,9 @@ public class PlayerListManager {
 
     private LangManager lang;
     private final Set<UUID> playersInShop = new HashSet<>();
+    private final Set<UUID> hasSold = new HashSet<>();
+    private final Set<UUID> hasBought = new HashSet<>();
+    private final Map<UUID, Location> returnLocations = new HashMap<>();
 
     public PlayerListManager(JavaPlugin plugin, LangManager lang) {
         this.plugin = plugin;
@@ -94,7 +98,45 @@ public class PlayerListManager {
 
     public void leaveShop(Player player, boolean isRestore) {
         playersInShop.remove(player.getUniqueId());
+        hasSold.remove(player.getUniqueId());
+        hasBought.remove(player.getUniqueId());
         loadInventory(player, isRestore);
+    }
+
+    /**
+     * Mémorise la position d'un joueur avant qu'il ne soit téléporté dans le
+     * shop par un admin, pour pouvoir l'y renvoyer à sa sortie.
+     */
+    public void setReturnLocation(Player player, Location location) {
+        returnLocations.put(player.getUniqueId(), location);
+    }
+
+    public boolean hasReturnLocation(UUID uuid) {
+        return returnLocations.containsKey(uuid);
+    }
+
+    public Location getReturnLocation(UUID uuid) {
+        return returnLocations.get(uuid);
+    }
+
+    public void clearReturnLocation(UUID uuid) {
+        returnLocations.remove(uuid);
+    }
+
+    public void markAsSold(UUID uuid) {
+        hasSold.add(uuid);
+    }
+
+    public boolean hasSold(UUID uuid) {
+        return hasSold.contains(uuid);
+    }
+
+    public void markAsBought(UUID uuid) {
+        hasBought.add(uuid);
+    }
+
+    public boolean hasBought(UUID uuid) {
+        return hasBought.contains(uuid);
     }
 
     public boolean isInShop(UUID playerUUID) {

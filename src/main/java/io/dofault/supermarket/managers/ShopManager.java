@@ -151,8 +151,8 @@ public class ShopManager {
                         : item.getType().name();
 
                 if (delta > 0) {
-                    double itemPrice = priceManager.hasPrice(item.getType().name())
-                            ? priceManager.getPrice(item.getType().name())
+                    double itemPrice = priceManager.hasBuyPrice(item.getType().name())
+                            ? priceManager.getBuyPrice(item.getType().name())
                             : 0.0;
                     totalPrice += itemPrice * delta;
                     player.sendMessage(lang.get("shop-item-line", Map.of(
@@ -182,7 +182,7 @@ public class ShopManager {
             int amount = entry.getValue();
             if (amount > 0) {
                 // Conversion en String via Material
-                double price = priceManager.getPrice(entry.getKey().getType().toString());
+                double price = priceManager.getBuyPrice(entry.getKey().getType().toString());
                 totalCost += price * amount;
             }
         }
@@ -200,7 +200,7 @@ public class ShopManager {
             int amount = entry.getValue();
             if (amount > 0) {
                 // Conversion en String via Material
-                double price = priceManager.getPrice(entry.getKey().getType().toString());
+                double price = priceManager.getBuyPrice(entry.getKey().getType().toString());
                 totalCost += price * amount;
             }
         }
@@ -215,10 +215,9 @@ public class ShopManager {
             }
             economy.withdrawPlayer(player, totalCost);
             player.sendMessage(lang.get("shop-paid-success", Map.of("total", economy.format(totalCost))));
-            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_CELEBRATE, 1f, 1f); // un peu plus fort et plus
-                                                                                             // grave
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_CELEBRATE, 1f, 1f);
 
-            // Sauvegarde l'inventaire actuel uniquement si le paiement a réussi
+            playerListManager.markAsBought(player.getUniqueId());
             playerListManager.saveInventory(player, false);
         }
 
@@ -232,7 +231,7 @@ public class ShopManager {
         for (Map.Entry<ItemStack, Integer> entry : diff.entrySet()) {
             int amount = entry.getValue();
             if (amount > 0) {
-                double price = priceManager.getPrice(entry.getKey().getType().toString());
+                double price = priceManager.getBuyPrice(entry.getKey().getType().toString());
                 total += price * amount;
             }
         }

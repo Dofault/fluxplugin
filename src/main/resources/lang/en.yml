@@ -9,7 +9,6 @@ shop-sell-unpaid-items: "&cYou cannot open the sell block while having unpaid it
 shop-no-sellblock: "&cNo sell block registered!"
 shop-sell-success: "&aYou sold your items for &6%amount%!"
 shop-add-item-failed: "&cFailed to add the item to the chest!"
-shop-doublechest-right-only: "&cYou must stand on the right chest to add items!"
 
 ###################################
 # WELCOME MESSAGES
@@ -38,7 +37,7 @@ shop-not-enough-money: "&cYou don't have enough money to pay for your inventory!
 shop-paid-success: "&a✅ You paid &6&l%total%&r&a for your items!"
 shop-no-difference: "&aNo difference."
 shop-difference-log: "Difference for %player%: %item% -> %delta%"
-shop-item-price: "&aPrice of %item%: %price%"
+shop-item-price: "&aPrice of %item%: buy %buy% / sell %sell%"
 shop-no-price: "&cNo price defined for %item%"
 
 ###################################
@@ -65,34 +64,51 @@ shop-define-entry-exit-first: "&cYou must define the entry and exit first!"
 ###################################
 # COMMANDS
 ###################################
-shop-setprice-usage: "&cUsage: /supermarket setprice <item> <price>"
+shop-setprice-usage: "&cUsage: /supermarket setprice <item> <buy> <sell>"
 shop-invalid-item: "&cInvalid item!"
 shop-invalid-price: "&cInvalid price!"
-shop-price-set: "&aPrice of %material% set to %price%"
+shop-price-set: "&aPrice of %material% set: buy %buy% / sell %sell%"
 shop-must-be-inside: "&cYou must be inside the shop!"
 shop-additemchest-usage: "&cUsage: /supermarket additemchest <item> <amount>"
 shop-invalid-number: "&cInvalid number!"
 shop-no-item-entry: "&cYou are not allowed to enter with a %item%!"
+shop-no-permission: "&cYou don't have permission to do that!"
+shop-tpshop-usage: "&cUsage: /supermarket tpshop [player] &7(no player = teleport yourself)"
+shop-player-not-found: "&cPlayer %player% not found or offline!"
+shop-tpshop-already-in-shop: "&c%player% is already in the shop!"
+shop-tpshop-failed: "&cCouldn't bring %player% into the shop (forbidden item in inventory?)!"
+shop-tpshop-success: "&aYou teleported %player% into the shop!"
+shop-tpshop-target-notice: "&aYou were teleported into the shop by %player%!"
+shop-tpshop-self-success: "&aYou were teleported into the shop!"
+shop-tpshop-cooldown: "&cYou must wait &e%time%&c before going back to the shop!"
+shop-checkprices-none: "&aNo invalid items in prices.yml."
+shop-checkprices-header: "&e%count% item(s) from prices.yml not found on this version:"
+shop-checkprices-line: "&7- &c%item%"
 
 # General commands
 shop-commands-header: "&e» General Commands:"
 shop-command-entry-exit: "&b/supermarket &fentry|exit &7- &oDefine the shop entry and exit."
 shop-command-pay: "&b/supermarket &fpay &7- &oPay for your items."
 shop-command-save: "&b/supermarket &fsave &7- &oSave the shop's entry and exit."
-shop-command-setprice: "&b/supermarket &fsetprice <item> <price> &7- &oSet the price of an item."
+shop-command-setprice: "&b/supermarket &fsetprice <item> <buy> <sell> &7- &oSet the price of an item."
 shop-command-difference: "&b/supermarket &fdifference &7- &oShow inventory differences."
 shop-command-addchest: "&b/supermarket &faddchest &7- &oAdd a chest under your feet in the shop."
 shop-command-removechest: "&b/supermarket &fremovechest &7- &oRemove the chest under your feet from the shop."
 shop-command-additemchest: "&b/supermarket &fadditemchest <item> <amount> &7- &oAdd the item to the chest."
 shop-command-addsellblock: "&b/supermarket &faddsellblock &7- &oAdd the sell block under your feet in the shop."
 shop-command-removesellblock: "&b/supermarket &fremovesellblock &7- &oRemove the sell block under your feet from the shop."
+shop-command-tpshop: "&b/supermarket &ftpshop [player] &7- &oTeleport into the shop, or another player (admin)."
+shop-command-checkprices: "&b/supermarket &fcheckprices &7- &oList prices.yml items invalid on this version (admin)."
 
 ###################################
 # INVENTORY / PRICES
 ###################################
-shop-prices-inventory-title: "§6Item Prices %page%/%totalPages%"
+shop-all-items-label: "All items"
+shop-all-items-button: "§eAll items"
+shop-category-item-name: "§e%category%"
+shop-category-item-lore: "§7%count% items"
+shop-prices-inventory-title: "§6%category% §7(%page%/%totalPages%)"
 shop-item-name: "§e%item%"
-shop-item-lore-buy-price: "§7Buy: §a%price%"
 shop-item-lore-sell-price: "§7Sell: §a%price%"
 shop-inventory-previous-page: "§aPrevious Page"
 shop-inventory-next-page: "§aNext Page"

@@ -21,4 +21,5 @@ io\dofault\supermarket\managers\ShopManager.class
 io\dofault\supermarket\listener\ShopRestrictionListener$1.class
 io\dofault\supermarket\managers\SellManager$1.class
 io\dofault\supermarket\listener\ShopRestrictionListener.class
+io\dofault\supermarket\placeholder\SupermarketPlaceholderExpansion.class
 io\dofault\supermarket\commands\SaveCommand.class

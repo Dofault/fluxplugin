@@ -8,6 +8,8 @@ import io.dofault.supermarket.managers.PlayerListManager;
 import io.dofault.supermarket.managers.PriceManager;
 import io.dofault.supermarket.managers.SellManager;
 import io.dofault.supermarket.managers.ShopManager;
+import io.dofault.supermarket.managers.TpShopCooldownManager;
+import io.dofault.supermarket.placeholder.SupermarketPlaceholderExpansion;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -36,6 +38,7 @@ public class Main extends JavaPlugin implements Listener {
     private Economy econ;
     private LangManager lang;
     private SellManager sellManager;
+    private TpShopCooldownManager tpShopCooldownManager;
 
     private CommandManager commandManager;
 
@@ -53,7 +56,8 @@ public class Main extends JavaPlugin implements Listener {
         lang = new LangManager(this, "fr");
 
         playerList = new PlayerListManager(this, lang);
-        priceManager = new PriceManager(this, lang, econ);
+        priceManager = new PriceManager(this, lang);
+        priceManager.logInvalidItems();
         shopManager = new ShopManager(this, lang, econ, playerList, priceManager);
         chestManager = new ChestManager(this, lang, priceManager);
         sellManager = new SellManager(this, lang, shopManager, priceManager, playerList, econ);
@@ -74,6 +78,10 @@ public class Main extends JavaPlugin implements Listener {
         commandManager.register(new AddChestCommand(lang, chestManager));
         commandManager.register(new RemoveChestCommand(chestManager));
         commandManager.register(new AddItemChestCommand(lang, chestManager));
+        tpShopCooldownManager = new TpShopCooldownManager(this);
+        commandManager.register(
+                new TpShopCommand(lang, shopManager, chestManager, playerList, tpShopCooldownManager));
+        commandManager.register(new CheckPricesCommand(lang, priceManager));
 
         getCommand("supermarket").setExecutor((sender, command, label, args) -> {
             if (!(sender instanceof Player player)) {
@@ -91,6 +99,8 @@ public class Main extends JavaPlugin implements Listener {
                 player.sendMessage(lang.get("shop-command-save"));
                 player.sendMessage(lang.get("shop-command-difference"));
                 player.sendMessage(lang.get("shop-command-pay"));
+                player.sendMessage(lang.get("shop-command-tpshop"));
+                player.sendMessage(lang.get("shop-command-checkprices"));
 
             }
             return true;
@@ -115,10 +125,22 @@ public class Main extends JavaPlugin implements Listener {
                             .filter(name -> name.startsWith(current))
                             .toList();
                 }
+                if (cmdName.equals("tpshop")) {
+                    String current = args[1].toLowerCase();
+                    return Bukkit.getOnlinePlayers().stream()
+                            .map(Player::getName)
+                            .filter(name -> name.toLowerCase().startsWith(current))
+                            .toList();
+                }
             }
 
             return Collections.emptyList();
         });
+
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            new SupermarketPlaceholderExpansion(playerList, tpShopCooldownManager).register();
+            getLogger().info("PlaceholderAPI expansion enregistrée.");
+        }
 
         getLogger().info("Supermarket plugin activé !");
     }
@@ -137,7 +159,7 @@ public class Main extends JavaPlugin implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         if (playerList.isInShop(player.getUniqueId())) {
-            player.teleport(shopManager.getEntryLocation(player));
+            player.teleport(resolveShopExitLocation(player));
             playerList.leaveShop(player, true);
         }
     }
@@ -147,9 +169,18 @@ public class Main extends JavaPlugin implements Listener {
         Player player = event.getPlayer();
         if (playerList.isInShop(player.getUniqueId())) {
             // Téléporte éventuellement le joueur à l'entrée ou sauvegarde son état
-            player.teleport(shopManager.getEntryLocation(player));
+            player.teleport(resolveShopExitLocation(player));
             playerList.leaveShop(player, true);
         }
+    }
+
+    private org.bukkit.Location resolveShopExitLocation(Player player) {
+        java.util.UUID uuid = player.getUniqueId();
+        org.bukkit.Location destination = playerList.hasReturnLocation(uuid)
+                ? playerList.getReturnLocation(uuid)
+                : shopManager.getEntryLocation(player);
+        playerList.clearReturnLocation(uuid);
+        return destination;
     }
 
 }

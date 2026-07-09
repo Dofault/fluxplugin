@@ -5,7 +5,6 @@ import io.dofault.supermarket.managers.PriceManager;
 
 import java.util.Map;
 
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
@@ -26,7 +25,7 @@ public class SetPriceCommand implements SupermarketCommand {
 
     @Override
     public boolean execute(Player player, String[] args) {
-        if (args.length != 3) {
+        if (args.length != 4) {
             player.sendMessage(lang.get("shop-setprice-usage"));
 
             return true;
@@ -39,19 +38,22 @@ public class SetPriceCommand implements SupermarketCommand {
             return true;
         }
 
-        double price;
+        double buy;
+        double sell;
         try {
-            price = Double.parseDouble(args[2]);
+            buy = Double.parseDouble(args[2]);
+            sell = Double.parseDouble(args[3]);
         } catch (NumberFormatException e) {
             player.sendMessage(lang.get("shop-invalid-price"));
 
             return true;
         }
 
-        priceManager.setPrice(material, price);
+        priceManager.setPrice(material, buy, sell);
         player.sendMessage(lang.get("shop-price-set", Map.of(
                 "material", material.name(),
-                "price", String.valueOf(price))));
+                "buy", String.valueOf(buy),
+                "sell", String.valueOf(sell))));
         return true;
     }
 }

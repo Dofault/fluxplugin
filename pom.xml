@@ -17,6 +17,14 @@
         <id>spigot-vault-api</id>
         <url>https://ci.ender.zone/plugin/repository/everything/</url>
     </repository>
+    <repository>
+        <id>placeholderapi</id>
+        <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
+    </repository>
+    <repository>
+        <id>luckperms</id>
+        <url>https://repo.lucko.me/</url>
+    </repository>
   </repositories>
 
   <dependencies>
@@ -41,7 +49,19 @@
         <artifactId>VaultAPI</artifactId>
         <version>1.7</version>
     </dependency>
-  
+    <dependency>
+        <groupId>me.clip</groupId>
+        <artifactId>placeholderapi</artifactId>
+        <version>2.11.6</version>
+        <scope>provided</scope>
+    </dependency>
+    <dependency>
+        <groupId>net.luckperms</groupId>
+        <artifactId>api</artifactId>
+        <version>5.4</version>
+        <scope>provided</scope>
+    </dependency>
+
   </dependencies>
 
 
@@ -76,7 +96,7 @@
                     <configuration>
                         <target>
                             <copy file="${project.build.directory}/${project.build.finalName}.jar"
-                                  todir="C:\Users\Dofault\Documents\PAPERSERVER\plugins" />
+                                  todir="${project.basedir}/../../serveurs/03_semirp/plugins" />
                         </target>
                     </configuration>
                 </execution>
