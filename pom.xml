@@ -35,12 +35,40 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Paper API (provided by the server at runtime) -->
+        <!-- Paper API (provided by the server at runtime).
+             Le serveur tourne réellement en 1.21.11 (cf. logs/latest.log "This server is
+             running Paper version 1.21.11-..."), pas 1.21.8 — aligné ici pour matcher le
+             paper-api-1.21.11-R0.1-SNAPSHOT.jar utilisé au runtime. -->
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
-            <version>1.21.8-R0.1-SNAPSHOT</version>
+            <version>1.21.11-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
+        </dependency>
+
+        <!-- Netty (bundlé par Paper au runtime, jamais chargé depuis Maven côté serveur) —
+             version exacte pinnée pour 1.21.11 (cf. META-INF/libraries.list du jar serveur).
+             Nécessaire pour io.netty.channel.ChannelDuplexHandler/ChannelHandlerContext utilisés
+             par EcoDisplayGuardListener. -->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport</artifactId>
+            <version>4.2.7.Final</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Jar serveur Paper mojang-mapped (versions/1.21.11/paper-1.21.11.jar) — nécessaire
+             pour compiler contre les classes NMS internes (net.minecraft.network.protocol.game.*,
+             org.bukkit.craftbukkit.inventory.CraftItemStack) utilisées par EcoDisplayGuardListener
+             pour s'accrocher à la pipeline netty juste à côté du handler "eco_packets" d'eco.
+             Paper 1.20.5+ étant nativement mojang-mapped au runtime, ce jar contient déjà les
+             noms de classes/méthodes lisibles — pas besoin de remapping séparé. -->
+        <dependency>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-server-mojangmapped</artifactId>
+            <version>1.21.11-local</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../../serveurs/03_semirp/versions/1.21.11/paper-1.21.11.jar</systemPath>
         </dependency>
 
         <!-- Bundled by Paper at runtime (server/libraries/com/google/code/gson) — used to

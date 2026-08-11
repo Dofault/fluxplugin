@@ -67,6 +67,10 @@ public final class InfluBridgePlugin extends JavaPlugin {
 
         Bukkit.getPluginManager().registerEvents(new AnvilRestrictionListener(), this);
 
+        // Guard packet AE/eco : no-op tant qu'eco n'a pas injecté "eco_packets" pour un joueur
+        // donné (cf. EcoDisplayGuardListener), donc sûr à enregistrer inconditionnellement.
+        Bukkit.getPluginManager().registerEvents(new EcoDisplayGuardListener(), this);
+
         if (getConfig().getBoolean("job-xp-bossbar.enabled", true)) {
             if (Bukkit.getPluginManager().isPluginEnabled("EcoJobs")) {
                 long hideAfterSeconds = getConfig().getLong("job-xp-bossbar.hide-after-seconds", 4);
