@@ -1,0 +1,54 @@
+# URL publique du site (mineweb), sans slash final.
+api-base-url: "https://dev.influencraft.fr"
+
+# Doit être identique à MC_SERVER_SECRET dans web/mineweb/.env
+api-secret: "CHANGE_ME"
+
+# Fréquence de vérification des commandes en attente (pending_commands)
+poll-interval-seconds: 30
+
+# Fréquence de rafraîchissement du cache de streak de vote (placeholders %influbridge_flame_*%)
+streak-cache-interval-seconds: 30
+
+# Commande exécutée (en tant que joueur) à l'ouverture de l'écran de succès vanilla (touche L)
+advancement-key-command: "menu"
+
+# ─── Vote Party ────────────────────────────────────────────────────────────
+# Système entièrement géré en jeu par InfluBridge (compte les votes réels
+# remontés par VotingPlugin) : aucun lien avec le site web. Le compteur est
+# exposé via %influbridge_voteparty_current% / %influbridge_voteparty_required%
+# (utilisé notamment par MythicHUD).
+voteparty:
+  # Nombre de votes réels (tous joueurs et tous vote-sites confondus) pour déclencher le Vote Party
+  votes-required: 30
+
+  # Commandes exécutées en console une fois le seuil atteint, une exécution par joueur en ligne.
+  # %player% = nom du joueur
+  reward-commands:
+    - "crates key give %player% tendance 1"
+
+  # Message broadcast à tout le serveur au déclenchement du Vote Party.
+  # %votes-required% = seuil configuré ci-dessus
+  broadcast-message: "&5&l✦ &dVote Party ! &7Le serveur vient d'atteindre &6%votes-required% votes&7, une Clé Tendance a été offerte à tous les joueurs en ligne !"
+
+  # Message privé envoyé à chaque joueur en ligne recevant la récompense (laisser vide "" pour désactiver)
+  reward-message: "&d✦ &7Tu as reçu une &6Clé Tendance&7 grâce au Vote Party !"
+
+# ─── Boss bar de progression d'XP de métier (EcoJobs) ──────────────────────
+# S'affiche à chaque gain d'XP de métier, même minime, et se masque après le
+# délai d'inactivité ci-dessous. Une seule boss bar par joueur (pas une par
+# métier) : si plusieurs métiers sont actifs, elle reflète toujours la
+# dernière action, jamais plusieurs bars empilées.
+job-xp-bossbar:
+  enabled: true
+
+  # Délai (en secondes) sans nouveau gain d'XP avant que la bar ne disparaisse
+  hide-after-seconds: 4
+
+  # Valeurs Adventure BossBar.Color : PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
+  color: "GREEN"
+
+  # Valeurs Adventure BossBar.Overlay : PROGRESS, NOTCHED_6, NOTCHED_10, NOTCHED_12, NOTCHED_20
+  # NOTCHED_20 = grille de 20 segments, équivalent à "SEGMENTED_20" côté AdvancedJobs
+  # (AdvancedJobs/config.yml §boss-bar) — repris pour matcher leur convention.
+  overlay: "NOTCHED_20"

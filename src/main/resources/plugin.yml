@@ -1,0 +1,13 @@
+name: InfluBridge
+version: '1.0.0'
+main: fr.influencraft.influbridge.InfluBridgePlugin
+api-version: '1.21'
+author: dofault
+description: "Pont entre le site web (mineweb) et le serveur SemiRP : livre les commandes en attente (achats boutique, récompenses de vote et top 3 mensuel), redirige la touche des succès vanilla vers /menu, et gère le Vote Party en jeu."
+
+softdepend: [ProtocolLib, PlaceholderAPI, VotingPlugin, EcoJobs]
+
+commands:
+  influvoteparty:
+    description: "Incrémente le compteur Vote Party. Déclenché en console par mineweb à chaque vote confirmé (tous sites confondus), indépendamment de VotingPlugin."
+    usage: "/<command> add"
