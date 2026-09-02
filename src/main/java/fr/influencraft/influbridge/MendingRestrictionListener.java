@@ -13,7 +13,6 @@ import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Neutralise l'enchantement vanilla Raccommodage (Mending) : le livre peut
@@ -47,14 +46,6 @@ import java.util.logging.Logger;
  */
 public final class MendingRestrictionListener implements Listener {
 
-    private final Logger logger;
-    private final boolean log;
-
-    public MendingRestrictionListener(Logger logger, boolean log) {
-        this.logger = logger;
-        this.log = log;
-    }
-
     /**
      * Enclume : livre + objet donne un objet avec Raccommodage. On retire juste
      * l'enchant du résultat, sans annuler l'opération : une réparation, une
@@ -67,7 +58,6 @@ public final class MendingRestrictionListener implements Listener {
         ItemStack result = event.getResult();
         if (retirerRaccommodage(result)) {
             event.setResult(result);
-            journaliser("enclume", result);
         }
     }
 
@@ -84,7 +74,6 @@ public final class MendingRestrictionListener implements Listener {
         boolean modifie = false;
         for (ItemStack item : loot) {
             if (retirerRaccommodage(item)) {
-                journaliser("loot", item);
                 modifie = true;
             }
         }
@@ -113,7 +102,6 @@ public final class MendingRestrictionListener implements Listener {
         ItemStack item = entite.getItemStack();
         if (retirerRaccommodage(item)) {
             entite.setItemStack(item);
-            journaliser("pêche", item);
         }
     }
 
@@ -137,11 +125,5 @@ public final class MendingRestrictionListener implements Listener {
         meta.removeEnchant(Enchantment.MENDING);
         item.setItemMeta(meta);
         return true;
-    }
-
-    private void journaliser(String contexte, ItemStack item) {
-        if (log) {
-            logger.info("Raccommodage retiré (" + contexte + ") : " + item.getType().name());
-        }
     }
 }
