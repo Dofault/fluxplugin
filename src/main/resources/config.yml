@@ -105,12 +105,18 @@ money-gain-actionbar:
   color: "&#B376E5"
 
 # ─── Neutralisation de l'enchantement Raccommodage (Mending) ────────────────
-# Pas de paramètre : le comportement est câblé en dur (règle de gameplay).
-# Le livre Raccommodage continue de circuler (loot, échanges, ventes) mais ne
-# peut plus jamais être associé à un objet : l'enchant est retiré du résultat
-# d'enclume, du loot généré (coffres trésor / structures / bastions / fouille
-# archéologique) et des prises de pêche. Les livres eux-mêmes ne sont jamais
-# modifiés — ils deviennent juste inutiles.
+# Le comportement est câblé en dur (règle de gameplay, aucun on/off) : le livre
+# Raccommodage continue de circuler (loot, échanges, ventes) mais ne peut plus
+# jamais être associé à un objet — l'enchant est retiré du résultat d'enclume,
+# du loot généré (coffres trésor / structures / bastions / fouille archéologique)
+# et des prises de pêche. Les livres eux-mêmes ne sont jamais modifiés, ils
+# deviennent juste inutiles.
 # Voies écartées avant celle-ci : blacklist AdvancedEnchantments (ne gère que
 # ses enchants custom) et datapack (AE intercepte l'enclume avant lui).
 # Détail : docs/technique/raccommodage.md
+raccommodage:
+  # true = écrit une ligne console à chaque retrait de Raccommodage, en précisant
+  #   le contexte (enclume / loot / pêche) et l'objet concerné. Utile pour auditer
+  #   après un déploiement ou débusquer un vecteur oublié.
+  # false = silencieux (défaut).
+  log: false

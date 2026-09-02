@@ -79,9 +79,13 @@ public final class InfluBridgePlugin extends JavaPlugin {
         // Neutralise l'enchantement vanilla Raccommodage (Mending) : retiré du résultat
         // d'enclume, du loot généré (coffres trésor / structures / bastions) et des prises
         // de pêche. Le livre continue de circuler, il devient juste inutile. Règle de
-        // gameplay, enregistré inconditionnellement et silencieux (cf. AnvilRestrictionListener).
-        // Voir MendingRestrictionListener pour les 2 voies écartées.
-        Bukkit.getPluginManager().registerEvents(new MendingRestrictionListener(), this);
+        // gameplay, enregistré inconditionnellement ; raccommodage.log (config.yml) active
+        // une trace console à chaque neutralisation. Voir MendingRestrictionListener pour
+        // les 2 voies écartées.
+        Bukkit.getPluginManager().registerEvents(
+                new MendingRestrictionListener(
+                        getLogger(), getConfig().getBoolean("raccommodage.log", false)),
+                this);
 
         // Guard packet AE/eco : no-op tant qu'eco n'a pas injecté "eco_packets" pour un joueur
         // donné (cf. EcoDisplayGuardListener), donc sûr à enregistrer inconditionnellement.
