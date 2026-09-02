@@ -1,13 +1,20 @@
 package fr.influencraft.influbridge;
 
+import com.willfp.eco.core.data.ProfileExtensions;
+import com.willfp.eco.core.data.keys.PersistentDataKey;
+import com.willfp.eco.core.data.keys.PersistentDataKeyType;
 import com.willfp.ecojobs.api.EcoJobsAPI;
 import com.willfp.ecojobs.api.event.PlayerJobExpGainEvent;
+import com.willfp.ecojobs.api.event.PlayerJobLevelUpEvent;
+import com.willfp.ecojobs.jobs.Job;
 import com.willfp.ecojobs.jobs.JobXPAccumulatorKt;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -16,6 +23,7 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,11 +49,47 @@ public final class JobXpBossBarListener implements Listener {
     private final Map<String, BossBar> activeBars = new ConcurrentHashMap<>();
     private final Map<String, BukkitTask> hideTasks = new ConcurrentHashMap<>();
 
+    // Préférence par joueur, activée par défaut — bascule via la commande "/jobxpbar toggle"
+    // (bouton "Notif. XP métier" de /reglages, DeluxeMenus).
+    private final PersistentDataKey<Boolean> enabledKey;
+
     public JobXpBossBarListener(Plugin plugin, long hideAfterSeconds, String colorName, String overlayName) {
         this.plugin = plugin;
         this.hideAfterTicks = hideAfterSeconds * 20L;
         this.color = parseColor(colorName);
         this.overlay = parseOverlay(overlayName);
+        this.enabledKey = new PersistentDataKey<>(
+                new NamespacedKey(plugin, "job_xp_bossbar_enabled"),
+                PersistentDataKeyType.BOOLEAN,
+                true);
+    }
+
+    public boolean isEnabled(OfflinePlayer player) {
+        return ProfileExtensions.getProfile(player).read(enabledKey);
+    }
+
+    public void setEnabled(Player player, boolean enabled) {
+        ProfileExtensions.getProfile((OfflinePlayer) player).write(enabledKey, enabled);
+        if (!enabled) {
+            hideAllBars(player);
+        }
+    }
+
+    private void hideAllBars(Player player) {
+        String prefix = player.getUniqueId() + ":";
+        Iterator<Map.Entry<String, BossBar>> it = activeBars.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, BossBar> entry = it.next();
+            if (!entry.getKey().startsWith(prefix)) {
+                continue;
+            }
+            player.hideBossBar(entry.getValue());
+            it.remove();
+            BukkitTask task = hideTasks.remove(entry.getKey());
+            if (task != null) {
+                task.cancel();
+            }
+        }
     }
 
     // Nettoie le nom du job de toute couleur avant de l'injecter dans le template MiniMessage :
@@ -65,6 +109,9 @@ public final class JobXpBossBarListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onJobXpGain(PlayerJobExpGainEvent event) {
         Player player = event.getPlayer();
+        if (!isEnabled(player)) {
+            return;
+        }
         String key = player.getUniqueId() + ":" + event.getJob().getId();
 
         // EcoJobsAPI.getJobProgress() lirait l'état AVANT ce gain : cet event est
@@ -136,6 +183,62 @@ public final class JobXpBossBarListener implements Listener {
             hideTasks.remove(key);
         }, hideAfterTicks);
         hideTasks.put(key, task);
+    }
+
+    // EcoJobsAPI.giveExactJobExperience() remet l'XP à 0 et fire cet event AVANT de reporter le
+    // reliquat (giveExactJobExperience(remainder), appelé juste après callEvent() dans la même
+    // pile d'appel synchrone) — lire l'état ici donnerait donc toujours "0/required", pas le
+    // vrai reliquat. On attend le tick suivant : la récursion (potentiellement plusieurs paliers
+    // d'affilée sur un très gros gain) est de toute façon terminée bien avant, dans le même tick
+    // serveur que l'event d'origine. Sans ce correctif, la bar affichée au moment du palier
+    // restait figée à 100% jusqu'au prochain gain naturel (parfois long à revenir sur un métier
+    // peu actif) au lieu de refléter tout de suite le vrai niveau/pourcentage.
+    @EventHandler
+    public void onJobLevelUp(PlayerJobLevelUpEvent event) {
+        Player player = event.getPlayer();
+        Job job = event.getJob();
+        String key = player.getUniqueId() + ":" + job.getId();
+        if (!activeBars.containsKey(key)) {
+            return;
+        }
+        Bukkit.getScheduler().runTask(plugin, () -> refreshAfterLevelUp(player, job, key));
+    }
+
+    private void refreshAfterLevelUp(Player player, Job job, String key) {
+        if (!player.isOnline()) {
+            return;
+        }
+        BossBar bar = activeBars.get(key);
+        if (bar == null) {
+            return;
+        }
+
+        int level = EcoJobsAPI.getJobLevel(player, job);
+        double currentXp = EcoJobsAPI.getJobXP(player, job);
+        double xpForNextLevel = job.getExpForLevel(level + 1);
+        float progress = xpForNextLevel > 0
+                ? (float) Math.max(0.0, Math.min(1.0, currentXp / xpForNextLevel))
+                : 1f;
+        String currentXpFormatted = String.valueOf(Math.round(currentXp));
+        String requiredXpFormatted = String.valueOf(Math.round(xpForNextLevel));
+        String plainJobName = COLOR_CODES.matcher(job.getName()).replaceAll("");
+
+        Component title;
+        try {
+            title = MiniMessage.miniMessage().deserialize(
+                    "<#4DA954>『<job> <#aafb93>Niv.<level></#aafb93>』  "
+                            + "<gray><white><current><gray>/<required> <gray>",
+                    Placeholder.unparsed("job", plainJobName),
+                    Placeholder.unparsed("level", String.valueOf(level)),
+                    Placeholder.unparsed("current", currentXpFormatted),
+                    Placeholder.unparsed("required", requiredXpFormatted));
+        } catch (Exception e) {
+            plugin.getLogger().warning("job-xp-bossbar: échec de rafraîchissement après palier — " + e.getMessage());
+            return;
+        }
+
+        bar.name(title);
+        bar.progress(progress);
     }
 
     private static BossBar.Color parseColor(String name) {

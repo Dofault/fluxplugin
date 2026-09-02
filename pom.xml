@@ -101,7 +101,7 @@
             <artifactId>votingplugin</artifactId>
             <version>7.0-local</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/VotingPlugin-7.0.jar</systemPath>
+            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/.archives/VotingPlugin-7.0.jar</systemPath>
         </dependency>
 
         <!-- EcoJobs (soft dependency, provided at runtime) — utilisé pour écouter
@@ -124,6 +124,43 @@
             <version>2026.31-local</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/eco-2026.31-modrinth.jar</systemPath>
+        </dependency>
+
+        <!-- Vault (soft dependency, provided at runtime) — utilisé pour net.milkbowl.vault.economy.Economy,
+             cf. LateVaultEconomyBinder (contourne un race condition de démarrage où eco/EcoJobs
+             enregistre son intégration économie AVANT que CMIEInjector n'ait fini de hooker
+             CMIEconomy dans Vault, cf. CLAUDE.md). Pas de repo Maven public, même technique
+             systemPath. -->
+        <dependency>
+            <groupId>com.github.MilkBowl</groupId>
+            <artifactId>VaultAPI</artifactId>
+            <version>2.19.1-local</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/VaultUnlocked-2.19.1.jar</systemPath>
+        </dependency>
+
+        <!-- AdvancedEnchantments (soft dependency, provided at runtime) — utilisé pour
+             détecter la présence de l'enchant "fonte" sur la pioche (AEAPI.hasCustomEnchant),
+             cf. FondeurFonteListener. Pas de repo Maven public, même technique systemPath. -->
+        <dependency>
+            <groupId>net.advancedplugins</groupId>
+            <artifactId>ae</artifactId>
+            <version>9.23.4-local</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/AdvancedEnchantments-9.23.4.jar</systemPath>
+        </dependency>
+
+        <!-- CMI (soft dependency, provided at runtime) — utilisé pour écouter
+             com.Zrips.CMI.events.CMIUserBalanceChangeEvent (action bar de gain d'argent
+             cumulatif, remplace l'ancien hook EssentialsX depuis la migration EssentialsX→CMI,
+             cf. MoneyGainActionBarListener et CLAUDE.md). Pas de repo Maven public, même
+             technique systemPath. -->
+        <dependency>
+            <groupId>com.Zrips</groupId>
+            <artifactId>cmi</artifactId>
+            <version>9.8.9.8-local</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/CMI-9.8.9.8.jar</systemPath>
         </dependency>
     </dependencies>
 

@@ -1,10 +1,15 @@
 package fr.influencraft.influbridge;
 
+import com.willfp.ecojobs.api.EcoJobsAPI;
+import com.willfp.ecojobs.jobs.Job;
+import com.willfp.ecojobs.jobs.Jobs;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
+
+import java.util.List;
 
 /**
  * Expose les placeholders PlaceholderAPI de InfluBridge (un seul identifiant
@@ -22,6 +27,26 @@ import org.bukkit.plugin.Plugin;
  *   armure, offhand et item sur le curseur. Existe car l'expansion PlaceholderAPI
  *   "Player" (%player_empty_slots%) est buggée sur cette version (voir CLAUDE.md,
  *   section Pièges techniques) : elle compte l'armure/offhand/slot "body".
+ * - %influbridge_job_active_<job>% : "true"/"false" — EcoJobsAPI.hasJobActive, le joueur a-t-il
+ *   réellement rejoint ce métier (join/leave natif EcoJobs, plus de notion de "taux plein"),
+ *   pour le menu DeluxeMenus /métiers (bouton rejoindre vs quitter via view_requirement, cf.
+ *   gui_menus/metiers/).
+ * - %influbridge_job_can_join_<job>% : "true"/"false" — EcoJobsAPI.canJoinJob (pas déjà actif
+ *   ET slot disponible selon la permission native ecojobs.limit.<n>, accordée par rang en
+ *   LuckPerms) — distingue "peut rejoindre" de "verrouillé, plus de slot" dans le menu.
+ * - %influbridge_job_join_price_<job>% / %influbridge_job_leave_price_<job>% : affichage du
+ *   prix réel configuré côté EcoJobs (job.getJoinPrice()/getLeavePrice().getDisplay(player)) —
+ *   jamais dupliqué ici, la formule (ex: rang_weight × 1000 pour quitter) vit uniquement dans
+ *   EcoJobs/jobs/<job>.yml.
+ * - %influbridge_job_rewards_<job>_<n>% : n-ième ligne (1 à 3) de rewards-description du
+ *   fichier EcoJobs/jobs/<job>.yml pour le niveau réel du joueur (JobRewardsFormatter, qui
+ *   reproduit Job.injectPlaceholdersInto — substitue %level% puis évalue les formules de
+ *   level-placeholders via NumberUtils.evaluateExpression, même moteur qu'EcoJobs) — texte déjà
+ *   rédigé à la main côté EcoJobs, jamais dupliqué ici, montants toujours à jour. Chaîne vide
+ *   si la ligne n'existe pas (jobs à une seule ligne de rewards-description, cas le plus courant).
+ * - %influbridge_job_xp_<job>_<n>% : n-ième ligne (1 à 4) du résumé xp-gain-methods du job
+ *   (JobXpFormatter — trigger + multiplier bruts, pas de formule à évaluer contrairement à
+ *   job_rewards), pour le bouton "XP" du menu détail /métiers.
  */
 public final class InfluBridgeExpansion extends PlaceholderExpansion {
 
@@ -29,7 +54,11 @@ public final class InfluBridgeExpansion extends PlaceholderExpansion {
     private final StreakCacheService streakCacheService;
     private final VotePartyService votePartyService;
 
-    public InfluBridgeExpansion(Plugin plugin, StreakCacheService streakCacheService, VotePartyService votePartyService) {
+    public InfluBridgeExpansion(
+            Plugin plugin,
+            StreakCacheService streakCacheService,
+            VotePartyService votePartyService
+    ) {
         this.plugin = plugin;
         this.streakCacheService = streakCacheService;
         this.votePartyService = votePartyService;
@@ -76,6 +105,67 @@ public final class InfluBridgeExpansion extends PlaceholderExpansion {
         if (params.equals("empty_slots")) {
             if (player == null) return "";
             return String.valueOf(countEmptyStorageSlots(player));
+        }
+
+        if (params.startsWith("job_active_")) {
+            if (player == null) return "false";
+            String jobId = params.substring("job_active_".length());
+            Job job = Jobs.getByID(jobId);
+            return String.valueOf(job != null && EcoJobsAPI.hasJobActive(player, job));
+        }
+
+        if (params.startsWith("job_can_join_")) {
+            if (player == null) return "false";
+            String jobId = params.substring("job_can_join_".length());
+            Job job = Jobs.getByID(jobId);
+            return String.valueOf(job != null && EcoJobsAPI.canJoinJob(player, job));
+        }
+
+        if (params.startsWith("job_join_price_")) {
+            if (player == null) return "";
+            String jobId = params.substring("job_join_price_".length());
+            Job job = Jobs.getByID(jobId);
+            return job == null ? "" : job.getJoinPrice().getDisplay(player);
+        }
+
+        if (params.startsWith("job_leave_price_")) {
+            if (player == null) return "";
+            String jobId = params.substring("job_leave_price_".length());
+            Job job = Jobs.getByID(jobId);
+            return job == null ? "" : job.getLeavePrice().getDisplay(player);
+        }
+
+        if (params.startsWith("job_rewards_")) {
+            if (player == null) return "";
+            String remainder = params.substring("job_rewards_".length());
+            int lastUnderscore = remainder.lastIndexOf('_');
+            if (lastUnderscore < 0) return "";
+            String jobId = remainder.substring(0, lastUnderscore);
+            int line;
+            try {
+                line = Integer.parseInt(remainder.substring(lastUnderscore + 1));
+            } catch (NumberFormatException e) {
+                return "";
+            }
+            List<String> descriptions = JobRewardsFormatter.format(player, jobId);
+            if (line < 1 || line > descriptions.size()) return "";
+            return descriptions.get(line - 1);
+        }
+
+        if (params.startsWith("job_xp_")) {
+            String remainder = params.substring("job_xp_".length());
+            int lastUnderscore = remainder.lastIndexOf('_');
+            if (lastUnderscore < 0) return "";
+            String jobId = remainder.substring(0, lastUnderscore);
+            int line;
+            try {
+                line = Integer.parseInt(remainder.substring(lastUnderscore + 1));
+            } catch (NumberFormatException e) {
+                return "";
+            }
+            List<String> lines = JobXpFormatter.format(jobId);
+            if (line < 1 || line > lines.size()) return "";
+            return lines.get(line - 1);
         }
 
         if (player == null || streakCacheService == null) return "";

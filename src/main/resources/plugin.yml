@@ -5,9 +5,21 @@ api-version: '1.21'
 author: dofault
 description: "Pont entre le site web (mineweb) et le serveur SemiRP : livre les commandes en attente (achats boutique, récompenses de vote et top 3 mensuel), redirige la touche des succès vanilla vers /menu, et gère le Vote Party en jeu."
 
-softdepend: [ProtocolLib, PlaceholderAPI, VotingPlugin, EcoJobs]
+softdepend: [ProtocolLib, PlaceholderAPI, VotingPlugin, EcoJobs, AdvancedEnchantments, CMI, Vault]
 
 commands:
   influvoteparty:
     description: "Incrémente le compteur Vote Party. Déclenché en console par mineweb à chaque vote confirmé (tous sites confondus), indépendamment de VotingPlugin."
     usage: "/<command> add"
+  metier:
+    description: "Backend du menu /métiers : rejoindre/quitter un métier (facture le vrai prix EcoJobs), voir sa progression ou le détail bloc par bloc."
+    usage: "/<command> [rejoindre <métier>|quitter <métier>|progression <métier>|blocs <métier> [page]]"
+  jobxpbar:
+    description: "Active/désactive la boss bar de progression d'XP de métier (bouton /reglages)."
+    usage: "/<command> <on|off|toggle>"
+  bitblocknotif:
+    description: "Active/désactive l'action bar de gain cumulatif de BitBlock (bouton /reglages)."
+    usage: "/<command> <on|off>"
+  votekeys:
+    description: "Réclame les clés de vote (Ordinaire/Phénomène) en attente, s'il reste un slot d'inventaire libre (bouton Vote de /menu, clic droit)."
+    usage: "/<command> claim"
