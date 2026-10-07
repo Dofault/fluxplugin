@@ -97,16 +97,14 @@ familiers:
   # Multiplicateur d'XP des familiers par permission : influpet.xpmultiplier.double / triple / quadruple /
   # 50percent, ou influpet.xpmultiplier.<pourcentage>. Ne s'applique pas aux cartes.
 
-# Modèle 3D du familier qui suit le joueur (BetterModel). Distances en blocs. arriere et cote ne donnent que la
-# direction du familier par rapport à la marche ; il reste toujours entre distance-min et distance-max.
+# Modèle 3D du familier qui suit le joueur (BetterModel). Distances en blocs. Entre distance-min et
+# distance-max il ne bouge pas et regarde le joueur ; il ne se déplace qu'en sortant de cette zone.
 familier-suivi:
-  cote: 1.0              # part « sur le côté » de sa position en marchant
-  arriere: 1.2           # part « en arrière » de sa position en marchant
   hauteur: 0.9           # hauteur au-dessus des pieds du joueur
-  distance-min: 1.0      # ne s'approche pas plus près
-  distance-max: 3.5      # revient s'il est plus loin
+  distance-min: 1.5      # trop près : il recule un peu
+  distance-max: 4.0      # trop loin : il revient vers le joueur
   teleport-distance: 16  # au-delà, réapparaît à côté du joueur
-  lissage: 0.18          # part du chemin parcourue par tick (plus haut = plus réactif)
-  vitesse-min: 0.45      # vitesse maximale par tick, au moins (sinon 1,3 x celle du joueur)
+  lissage: 0.18          # plus haut = il accélère plus vite vers sa place
+  vitesse-min: 0.45      # vitesse max par tick quand il rattrape (au moins ; sinon 1,3 x celle du joueur)
   flottement: 0.06       # amplitude du flottement
   hauteur-nom: 1.3       # hauteur du nom au-dessus du modèle

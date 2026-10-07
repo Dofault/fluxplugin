@@ -29,17 +29,17 @@ import java.util.UUID;
 
 /**
  * Modèle 3D (BetterModel) du familier actif, qui suit vraiment son maître (au lieu du point fixe collé à la
- * caméra d'EcoPets) :
- * - joueur à l'arrêt : le familier reste où il est, revient au-delà de distance-max, s'écarte s'il est collé,
- *   regarde le joueur, animation idle ;
- * - joueur en marche : il le suit sur le côté et en arrière selon la direction de MARCHE, toujours entre
- *   distance-min et distance-max, regarde où il va, animation walk ;
- * - au-delà de teleport-distance ou dans un autre monde : réapparaît à côté du joueur.
- * Familier « vol: true » : flotte à hauteur fixe au-dessus des pieds du joueur, avec un léger flottement ;
- * « vol: false » : posé sur le sol sous sa position.
+ * caméra d'EcoPets), comme quelqu'un qui l'accompagne :
+ * - tant que le maître est entre distance-min et distance-max (zone de confort), il ne bouge pas : il le suit
+ *   seulement du regard, même si le maître tourne autour de lui ;
+ * - il ne se déplace qu'en sortant de cette zone : trop loin, il revient jusqu'à être bien dans la zone ; trop
+ *   près, il recule un peu ; puis il s'arrête (animation walk en se déplaçant, idle sinon) ;
+ * - au-delà de teleport-distance ou dans un autre monde : réapparaît derrière le joueur.
+ * Familier « vol: true » : flotte au-dessus des pieds du joueur avec un léger flottement ; « vol: false » :
+ * posé sur le sol sous sa position.
  * Pas de modèle pour un familier caché (menu), un joueur mort, invisible ou spectateur. Nom au-dessus du modèle
  * (TextDisplay passager), traînée du familier (trail). Porte-armure marker : aucune hitbox, jamais sauvegardé.
- * Réglages de suivi : section familier-suivi de config.yml. Chargée seulement si BetterModel est actif.
+ * Réglages : section familier-suivi de config.yml. Chargée seulement si BetterModel est actif.
  */
 public final class PetDisplay {
 
@@ -52,9 +52,11 @@ public final class PetDisplay {
         TextDisplay label;
         double x, y, z;
         float yaw;
-        double dirX, dirZ;
         double lastPX, lastPZ;
         boolean walking;
+        /** en route vers sa distance but (sorti de la zone de confort) */
+        boolean moving;
+        double goal;
 
         Follower(Player owner, Pet pet, ArmorStand carrier, EntityTracker tracker, boolean hasWalk) {
             this.owner = owner;
@@ -70,7 +72,7 @@ public final class PetDisplay {
     private final Set<String> missing = new HashSet<>();
     private long tick;
 
-    private double side, back, height, minDistance, maxDistance, snapDistance, smoothing, minSpeed, bobAmplitude,
+    private double height, minDistance, maxDistance, snapDistance, smoothing, minSpeed, bobAmplitude,
             labelHeight;
 
     public PetDisplay() {
@@ -80,11 +82,9 @@ public final class PetDisplay {
 
     public void reload() {
         ConfigurationSection c = Pets.plugin().getConfig().getConfigurationSection("familier-suivi");
-        side = get(c, "cote", 1.0);
-        back = get(c, "arriere", 1.2);
         height = get(c, "hauteur", 0.9);
-        minDistance = get(c, "distance-min", 1.0);
-        maxDistance = get(c, "distance-max", 3.5);
+        minDistance = Math.max(0, get(c, "distance-min", 1.5));
+        maxDistance = Math.max(minDistance + 0.5, get(c, "distance-max", 4.0));
         snapDistance = get(c, "teleport-distance", 16);
         smoothing = get(c, "lissage", 0.18);
         minSpeed = get(c, "vitesse-min", 0.45);
@@ -140,13 +140,9 @@ public final class PetDisplay {
             return null;
         }
         Location p = owner.getLocation();
-        double fx = -Math.sin(Math.toRadians(p.getYaw()));
-        double fz = Math.cos(Math.toRadians(p.getYaw()));
-        double ox0 = -fx * back + fz * side;
-        double oz0 = -fz * back - fx * side;
-        double len = Math.max(1.0E-4, Math.hypot(ox0, oz0));
+        double yaw = Math.toRadians(p.getYaw());
         double radius = (minDistance + maxDistance) / 2;
-        Location start = p.clone().add(ox0 / len * radius, 0, oz0 / len * radius);
+        Location start = p.clone().add(Math.sin(yaw) * radius, 0, -Math.cos(yaw) * radius);
         start.setY(targetY(pet, p, start.getX(), start.getZ()));
         start.setYaw(p.getYaw());
         ArmorStand carrier = stand(start);
@@ -156,8 +152,6 @@ public final class PetDisplay {
         f.y = start.getY();
         f.z = start.getZ();
         f.yaw = start.getYaw();
-        f.dirX = fx;
-        f.dirZ = fz;
         f.lastPX = p.getX();
         f.lastPZ = p.getZ();
         followers.put(owner.getUniqueId(), f);
@@ -203,88 +197,71 @@ public final class PetDisplay {
     private void move(Follower f) {
         Location p = f.owner.getLocation();
         World world = p.getWorld();
-        // déplacement du joueur depuis le tick précédent : sa direction de marche, pas son regard
-        double pdx = p.getX() - f.lastPX;
-        double pdz = p.getZ() - f.lastPZ;
-        f.lastPX = p.getX();
-        f.lastPZ = p.getZ();
-        double pSpeed = Math.hypot(pdx, pdz);
-        boolean playerMoving = pSpeed > 0.03;
-        if (playerMoving) {
-            f.dirX += (pdx / pSpeed - f.dirX) * 0.3;
-            f.dirZ += (pdz / pSpeed - f.dirZ) * 0.3;
-            double n = Math.hypot(f.dirX, f.dirZ);
-            if (n > 1.0E-4) {
-                f.dirX /= n;
-                f.dirZ /= n;
-            }
-        }
-        double tx = f.x;
-        double tz = f.z;
         double dx = f.x - p.getX();
         double dz = f.z - p.getZ();
         double dist = Math.hypot(dx, dz);
         boolean snap = f.carrier.getWorld() != world || dist > snapDistance || Math.abs(f.y - p.getY()) > snapDistance;
-        if (playerMoving || snap) {
-            // en arrière et sur le côté par rapport à la direction de marche (arriere / cote ne donnent que
-            // la direction), à une distance gardée entre distance-min et distance-max : la distance actuelle,
-            // ramenée dans ces bornes (au démarrage ou après une téléportation : le milieu des bornes)
-            double ox0 = -f.dirX * back + f.dirZ * side;
-            double oz0 = -f.dirZ * back - f.dirX * side;
-            double len = Math.hypot(ox0, oz0);
-            if (len < 1.0E-4) {
-                ox0 = -f.dirX;
-                oz0 = -f.dirZ;
-                len = 1;
-            }
-            double radius = snap ? (minDistance + maxDistance) / 2 : Math.clamp(dist, minDistance, maxDistance);
-            tx = p.getX() + ox0 / len * radius;
-            tz = p.getZ() + oz0 / len * radius;
-        } else if (dist > maxDistance) {
-            // revient un peu en deçà de la borne, sans passer sous distance-min (bornes proches)
-            double ret = Math.max(minDistance, maxDistance - 1);
-            tx = p.getX() + dx / dist * ret;
-            tz = p.getZ() + dz / dist * ret;
-        } else if (dist < minDistance) {
-            double ux = dist > 1.0E-3 ? dx / dist : f.dirZ;
-            double uz = dist > 1.0E-3 ? dz / dist : -f.dirX;
-            double away = Math.min(maxDistance, minDistance + 0.3);
-            tx = p.getX() + ux * away;
-            tz = p.getZ() + uz * away;
-        }
-        double ty = targetY(f.pet, p, tx, tz);
-        // familier volant : ne pas viser l'intérieur d'un bloc plein, on monte d'un ou deux blocs au besoin
-        for (int i = 0; f.pet.flying() && i < 2 && world.getBlockAt((int) Math.floor(tx), (int) Math.floor(ty),
-                (int) Math.floor(tz)).getType().isOccluding(); i++) {
-            ty += 1;
-        }
         double ox = f.x;
         double oz = f.z;
         if (snap) {
-            f.x = tx;
-            f.y = ty;
-            f.z = tz;
+            // téléportation, autre monde, chute : il réapparaît derrière le joueur, au milieu de sa zone
+            double yaw = Math.toRadians(p.getYaw());
+            double r = (minDistance + maxDistance) / 2;
+            f.x = p.getX() + Math.sin(yaw) * r;
+            f.z = p.getZ() - Math.cos(yaw) * r;
+            f.y = targetY(f.pet, p, f.x, f.z);
+            f.moving = false;
         } else {
-            double sx = (tx - f.x) * smoothing;
-            double sz = (tz - f.z) * smoothing;
-            double step = Math.hypot(sx, sz);
-            double cap = Math.max(minSpeed, pSpeed * 1.3);
-            if (step > cap) {
-                sx *= cap / step;
-                sz *= cap / step;
+            // Zone de confort entre distance-min et distance-max : il ne bouge pas (il se contente de regarder
+            // son maître, même si celui-ci tourne autour de lui). Il ne se déplace que s'il en sort : trop loin,
+            // il revient jusqu'à être bien dans la zone ; trop près, il recule juste ce qu'il faut. Il s'arrête
+            // une fois ce but atteint (pas de va-et-vient au bord de la zone).
+            if (!f.moving && (dist > maxDistance || dist < minDistance)) {
+                f.moving = true;
+                double margin = Math.min(1.5, (maxDistance - minDistance) / 2);
+                f.goal = dist > maxDistance ? maxDistance - margin : minDistance + Math.min(0.5, margin);
             }
-            f.x += sx;
-            f.z += sz;
-            f.y += (ty - f.y) * (f.pet.flying() ? 0.15 : 0.4);
+            if (f.moving) {
+                double ux = dist > 1.0E-3 ? dx / dist : Math.sin(Math.toRadians(p.getYaw()));
+                double uz = dist > 1.0E-3 ? dz / dist : -Math.cos(Math.toRadians(p.getYaw()));
+                double remaining = dist - f.goal;
+                // plus il est loin du but, plus il va vite, sans dépasser la vitesse du joueur (x1,3)
+                double pdx = p.getX() - f.lastPX;
+                double pdz = p.getZ() - f.lastPZ;
+                double cap = Math.max(minSpeed, Math.hypot(pdx, pdz) * 1.3);
+                double step = Math.min(cap, Math.max(0.04, Math.abs(remaining) * smoothing));
+                if (Math.abs(remaining) <= step) {
+                    step = Math.abs(remaining);
+                    // but atteint : il s'arrête, sauf si le maître continue de s'éloigner de lui (il l'accompagne
+                    // alors en continu, au lieu d'avancer par à-coups)
+                    double away = -(pdx * ux + pdz * uz);
+                    f.moving = remaining > -1.0E-3 && away > 0.02;
+                }
+                f.x -= ux * step * Math.signum(remaining);
+                f.z -= uz * step * Math.signum(remaining);
+            }
+            // hauteur : suit le joueur en vol, ne réagit pas à un simple saut (écart de plus d'un bloc ou en
+            // déplacement seulement) ; au sol, le sol sous le familier
+            double ty = targetY(f.pet, p, f.x, f.z);
+            if (f.moving || !f.pet.flying() || Math.abs(ty - f.y) > 1.0) {
+                f.y += (ty - f.y) * (f.pet.flying() ? 0.15 : 0.4);
+            }
+            // familier volant : ne pas finir dans un bloc plein, on monte au besoin
+            for (int i = 0; f.pet.flying() && i < 2 && world.getBlockAt((int) Math.floor(f.x), (int) Math.floor(f.y),
+                    (int) Math.floor(f.z)).getType().isOccluding(); i++) {
+                f.y += 1;
+            }
         }
+        f.lastPX = p.getX();
+        f.lastPZ = p.getZ();
         double moved = Math.hypot(f.x - ox, f.z - oz);
-        boolean walking = !snap && moved > 0.03;
-        // regarde où il va en marchant, sinon son maître
+        boolean walking = !snap && moved > 0.02;
+        // regarde où il va en se déplaçant, sinon son maître
         float targetYaw = walking
                 ? (float) Math.toDegrees(Math.atan2(-(f.x - ox), f.z - oz))
                 : (float) Math.toDegrees(Math.atan2(-(p.getX() - f.x), p.getZ() - f.z));
         float delta = ((targetYaw - f.yaw) % 360 + 540) % 360 - 180;
-        f.yaw += snap ? delta : delta * 0.25f;
+        f.yaw += snap ? delta : delta * 0.2f;
         if (walking != f.walking && f.hasWalk) {
             if (walking) {
                 f.tracker.animate("walk");
