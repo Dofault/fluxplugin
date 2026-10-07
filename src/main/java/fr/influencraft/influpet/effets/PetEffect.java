@@ -12,7 +12,7 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Un effet de familier : section « effets.<key> » de familiers.yml (familier, min, max, réglages propres).
+ * Un effet de familier : section « effets.<key> » de effets.yml (familier, min, max, réglages propres).
  * Écouteur enregistré une seule fois ; sans section, familier null : l'effet ne s'applique à personne.
  */
 abstract class PetEffect implements Listener {

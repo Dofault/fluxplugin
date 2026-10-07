@@ -1,0 +1,49 @@
+# Cartes (une par familier en général, liée par « pet ») et XP donnée au familier par carte, selon sa rareté.
+# Modifié aussi par /influpet menu.
+
+card-xp:
+  simple: 150
+  unique: 220
+  elite: 320
+  ultimate: 450
+  legendary: 650
+  fabled: 1000
+cards:
+  flamby:
+    item: influcards:carte_test
+    name: Flamby
+    series: Flammes
+    rarity: simple
+    lore:
+    - '&#EADBC8Un petit esprit de flamme,'
+    - '&#EADBC8plus joueur que dangereux.'
+  braise:
+    item: influcards:carte_test
+    name: Braise
+    series: Flammes
+    rarity: unique
+    lore:
+    - '&#EADBC8Il ne s''éteint jamais vraiment.'
+  etincelle:
+    item: influcards:carte_test
+    name: Étincelle
+    series: Flammes
+    rarity: elite
+    lore:
+    - '&#EADBC8Rapide comme un éclair,'
+    - '&#EADBC8chaude comme une forge.'
+  brasier:
+    item: influcards:carte_test
+    name: Brasier
+    series: Flammes
+    rarity: ultimate
+    lore:
+    - '&#EADBC8Là où il passe,'
+    - '&#EADBC8l''herbe ne repousse pas.'
+  phenix:
+    item: influcards:carte_test
+    name: Phénix
+    series: Flammes
+    rarity: legendary
+    lore:
+    - '&#EADBC8Il renaît toujours de ses cendres.'

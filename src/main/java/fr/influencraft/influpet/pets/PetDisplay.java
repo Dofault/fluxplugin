@@ -32,8 +32,8 @@ import java.util.UUID;
  * caméra d'EcoPets) :
  * - joueur à l'arrêt : le familier reste où il est, revient au-delà de distance-max, s'écarte s'il est collé,
  *   regarde le joueur, animation idle ;
- * - joueur en marche : il le rejoint avec un peu de retard, sur le côté et en arrière selon la direction de
- *   MARCHE, regarde où il va, animation walk ;
+ * - joueur en marche : il le suit sur le côté et en arrière selon la direction de MARCHE, toujours entre
+ *   distance-min et distance-max, regarde où il va, animation walk ;
  * - au-delà de teleport-distance ou dans un autre monde : réapparaît à côté du joueur.
  * Familier « vol: true » : flotte à hauteur fixe au-dessus des pieds du joueur, avec un léger flottement ;
  * « vol: false » : posé sur le sol sous sa position.
@@ -142,7 +142,11 @@ public final class PetDisplay {
         Location p = owner.getLocation();
         double fx = -Math.sin(Math.toRadians(p.getYaw()));
         double fz = Math.cos(Math.toRadians(p.getYaw()));
-        Location start = p.clone().add(-fx * back + fz * side, 0, -fz * back - fx * side);
+        double ox0 = -fx * back + fz * side;
+        double oz0 = -fz * back - fx * side;
+        double len = Math.max(1.0E-4, Math.hypot(ox0, oz0));
+        double radius = (minDistance + maxDistance) / 2;
+        Location start = p.clone().add(ox0 / len * radius, 0, oz0 / len * radius);
         start.setY(targetY(pet, p, start.getX(), start.getZ()));
         start.setYaw(p.getYaw());
         ArmorStand carrier = stand(start);
@@ -222,17 +226,31 @@ public final class PetDisplay {
         double dist = Math.hypot(dx, dz);
         boolean snap = f.carrier.getWorld() != world || dist > snapDistance || Math.abs(f.y - p.getY()) > snapDistance;
         if (playerMoving || snap) {
-            // en arrière et sur le côté par rapport à la direction de marche
-            tx = p.getX() - f.dirX * back + f.dirZ * side;
-            tz = p.getZ() - f.dirZ * back - f.dirX * side;
+            // en arrière et sur le côté par rapport à la direction de marche (arriere / cote ne donnent que
+            // la direction), à une distance gardée entre distance-min et distance-max : la distance actuelle,
+            // ramenée dans ces bornes (au démarrage ou après une téléportation : le milieu des bornes)
+            double ox0 = -f.dirX * back + f.dirZ * side;
+            double oz0 = -f.dirZ * back - f.dirX * side;
+            double len = Math.hypot(ox0, oz0);
+            if (len < 1.0E-4) {
+                ox0 = -f.dirX;
+                oz0 = -f.dirZ;
+                len = 1;
+            }
+            double radius = snap ? (minDistance + maxDistance) / 2 : Math.clamp(dist, minDistance, maxDistance);
+            tx = p.getX() + ox0 / len * radius;
+            tz = p.getZ() + oz0 / len * radius;
         } else if (dist > maxDistance) {
-            tx = p.getX() + dx / dist * (maxDistance - 1);
-            tz = p.getZ() + dz / dist * (maxDistance - 1);
+            // revient un peu en deçà de la borne, sans passer sous distance-min (bornes proches)
+            double ret = Math.max(minDistance, maxDistance - 1);
+            tx = p.getX() + dx / dist * ret;
+            tz = p.getZ() + dz / dist * ret;
         } else if (dist < minDistance) {
             double ux = dist > 1.0E-3 ? dx / dist : f.dirZ;
             double uz = dist > 1.0E-3 ? dz / dist : -f.dirX;
-            tx = p.getX() + ux * (minDistance + 0.3);
-            tz = p.getZ() + uz * (minDistance + 0.3);
+            double away = Math.min(maxDistance, minDistance + 0.3);
+            tx = p.getX() + ux * away;
+            tz = p.getZ() + uz * away;
         }
         double ty = targetY(f.pet, p, tx, tz);
         // familier volant : ne pas viser l'intérieur d'un bloc plein, on monte d'un ou deux blocs au besoin

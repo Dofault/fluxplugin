@@ -46,11 +46,16 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
     private RevealManager reveals;
     private ChatPrompt prompts;
     private PetEffects petEffects;
+    private ConfigFiles configFiles;
+    private org.bukkit.configuration.file.YamlConfiguration config;
 
     @Override
     public void onEnable() {
         migrateDataFolder();
+        configFiles = new ConfigFiles(this);
+        configFiles.migrate();
         saveDefaultConfig();
+        reloadConfig();
         cardKey = new NamespacedKey(LEGACY_NAMESPACE, "card");
         boosterKey = new NamespacedKey(LEGACY_NAMESPACE, "booster");
         versionKey = new NamespacedKey(LEGACY_NAMESPACE, "version");
@@ -93,9 +98,6 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
             return false;
         }
         // effets de familiers impossibles en config libreforge (familiers.yml)
-        if (!new java.io.File(getDataFolder(), "familiers.yml").exists()) {
-            saveResource("familiers.yml", false);
-        }
         try {
             petEffects = new PetEffects(this);
         } catch (Throwable t) {
@@ -126,6 +128,39 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
         } catch (java.io.IOException e) {
             getLogger().warning("Reprise de plugins/InfluCard impossible : " + e);
         }
+    }
+
+    // configuration répartie en plusieurs fichiers (ConfigFiles), vue comme une seule par le reste du plugin
+
+    @Override
+    public org.bukkit.configuration.file.FileConfiguration getConfig() {
+        if (config == null) {
+            reloadConfig();
+        }
+        return config;
+    }
+
+    @Override
+    public void reloadConfig() {
+        if (configFiles == null) {
+            configFiles = new ConfigFiles(this);
+        }
+        config = configFiles.load();
+    }
+
+    @Override
+    public void saveConfig() {
+        if (configFiles != null && config != null) {
+            configFiles.save(config);
+        }
+    }
+
+    @Override
+    public void saveDefaultConfig() {
+        if (configFiles == null) {
+            configFiles = new ConfigFiles(this);
+        }
+        configFiles.saveDefaults();
     }
 
     @Override

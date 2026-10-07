@@ -1,0 +1,75 @@
+# Progression d'un familier niveau par niveau (clic sur le familier actif dans /familiers).
+# progression-slots.pattern : ordre des niveaux 1 à 9 puis a à z. %rewards% = effets du niveau.
+
+title: '&#FFD94D%pet%'
+rows: 6
+mask:
+  materials:
+  - black_stained_glass_pane
+  pattern:
+  - '111111111'
+  - '111111111'
+  - '111111111'
+  - '111111111'
+  - '111111111'
+  - '111111111'
+progression-slots:
+  pattern:
+  - 109ab0jkl
+  - 2080c0i0m
+  - 3070d0h0n
+  - 4560efg0o
+  - 00000000p
+  - 00000000q
+  level-as-amount: true
+  page-change-sound:
+    enabled: true
+    sound: ui_button_click
+    pitch: 1
+    volume: 1
+    category: UI
+  prev-page:
+    item: arrow name:"&#FFD94DPage précédente"
+    location:
+      row: 6
+      column: 4
+  next-page:
+    item: arrow name:"&#FFD94DPage suivante"
+    item-inactive: gray_dye name:"&7Page suivante"
+    location:
+      row: 6
+      column: 6
+  close:
+    enabled: true
+    item: barrier
+    name: '&#FF5C5CFermer'
+    location:
+      row: 6
+      column: 5
+  unlocked:
+    item: lime_stained_glass_pane
+    name: '%pet% &#FFD94DNiv. %level%'
+    lore:
+    - ''
+    - '&#FFD94DEffets :'
+    - '%rewards%'
+    - ''
+    - '&#2ECF7BDÉBLOQUÉ'
+  in-progress:
+    item: yellow_stained_glass_pane
+    name: '%pet% &#FFD94DNiv. %level%'
+    lore:
+    - ''
+    - '&#FFD94DEffets :'
+    - '%rewards%'
+    - ''
+    - '&#FFD94DProgression :'
+    - '&8» &#B376E5%percentage_progress% %'
+    - '&8» &#B376E5%current_xp%&8/&7%required_xp% &#B376E5XP'
+  locked:
+    item: red_stained_glass_pane
+    name: '%pet% &#FFD94DNiv. %level%'
+    lore:
+    - ''
+    - '&#FFD94DEffets :'
+    - '%rewards%'

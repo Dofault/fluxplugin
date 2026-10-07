@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Effets de familiers impossibles en config libreforge, codés ici. Réglages : plugins/InfluPet/familiers.yml
+ * Effets de familiers impossibles en config libreforge, codés ici. Réglages : plugins/InfluPet/effets.yml
  * (généré par scripts/influcard/appliquer_effets.py), relus par /influpet reload. Un effet absent du fichier
  * est désactivé. Chargé seulement si EcoPets est actif (niveau du familier actif lu via PetHook).
  */
@@ -56,9 +56,9 @@ public final class PetEffects {
         Bukkit.getPluginManager().registerEvents(effect, plugin);
     }
 
-    /** Relit familiers.yml (au démarrage et à chaque /influpet reload). */
+    /** Relit effets.yml (au démarrage et à chaque /influpet reload). */
     public void reload() {
-        File file = new File(plugin.getDataFolder(), "familiers.yml");
+        File file = new File(plugin.getDataFolder(), "effets.yml");
         YamlConfiguration cfg = YamlConfiguration.loadConfiguration(file);
         maxLevel = Math.max(1, cfg.getInt("niveau-max", 10));
         ConfigurationSection all = cfg.getConfigurationSection("effets");
@@ -71,7 +71,7 @@ public final class PetEffects {
             }
         }
         if (!file.exists()) {
-            plugin.getLogger().warning("familiers.yml absent : effets de familiers codés désactivés.");
+            plugin.getLogger().warning("effets.yml absent : effets de familiers codés désactivés.");
         } else {
             plugin.getLogger().info(active + " effets de familiers codés chargés.");
         }

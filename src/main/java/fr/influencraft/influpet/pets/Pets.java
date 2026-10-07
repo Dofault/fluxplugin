@@ -73,8 +73,7 @@ public final class Pets {
             return false;
         }
         libreforge = eco;
-        saveDefault("familiers-reglages.yml");
-        settings = new TransientConfig(new File(plugin.getDataFolder(), "familiers-reglages.yml"), ConfigType.YAML);
+        settings = readSettings();
         PetData.registerKeys(settings.getBool("stockage-local"));
         EcoPetsMigration.copyPetFiles(plugin);
         if (!providerRegistered) {
@@ -128,7 +127,7 @@ public final class Pets {
         if (plugin == null || libreforge == null) {
             return;
         }
-        settings = new TransientConfig(new File(plugin.getDataFolder(), "familiers-reglages.yml"), ConfigType.YAML);
+        settings = readSettings();
         PETS.clear();
         File folder = new File(plugin.getDataFolder(), "pets");
         File[] files = folder.listFiles((dir, name) -> name.endsWith(".yml") && !name.startsWith("_"));
@@ -186,11 +185,14 @@ public final class Pets {
         }
     }
 
-    private static void saveDefault(String name) {
-        File file = new File(plugin.getDataFolder(), name);
-        if (!file.exists()) {
-            plugin.saveResource(name, false);
-        }
+    /**
+     * Réglages des familiers : section familiers de la config d'InfluPet (config.yml, textes de lang/, menus de
+     * menus/), vue comme une config eco (mêmes chemins que l'ancien familiers-reglages.yml : gui, level-gui,
+     * messages, level-up, pet-entity...).
+     */
+    private static Config readSettings() {
+        var section = plugin.getConfig().getConfigurationSection("familiers");
+        return section == null ? new TransientConfig() : new TransientConfig(section);
     }
 
     /** Copie un fichier (utilisé par la reprise d'EcoPets). */
