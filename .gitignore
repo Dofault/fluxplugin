@@ -1,0 +1,11 @@
+# Compilation Maven
+target/
+
+# Jars des plugins dont InfluCard dépend (propriétaires ou payants, ex : ItemsAdder) : à copier à la main
+# depuis le serveur, cf. README
+libs/*.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/

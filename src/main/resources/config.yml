@@ -1,0 +1,231 @@
+# InfluCard : cartes à collectionner et boosters.
+#
+# Textes : codes & et &#RRGGBB. %img_<id>% affiche un glyphe ItemsAdder (cherché dans influtags,
+# influemoji puis influitems), toujours précédé de &r&f pour garder ses couleurs.
+# Textures des cartes et boosters : items ItemsAdder (namespace influcards).
+#
+# Palette propre aux cartes (volontairement hors charte serveur) :
+#   corail #FF7A59 (accent, actions), parchemin #EADBC8 (textes), crème #FFF4E0 (noms),
+#   ardoise #6B7A8F (secondaire), sarcelle #5FB3B3 (infos), brique #D9534F (erreurs).
+
+messages:
+  prefix: "&#FF7A59ᴄᴀʀᴛᴇꜱ &#6B7A8F▸ "
+  opened: "&#EADBC8Ouverture d'un %booster%&#EADBC8..."
+  finished: "&#EADBC8Booster terminé : &#FFF4E0%count% &#EADBC8cartes obtenues."
+  opened-all: "&#FFF4E0%boosters% &#EADBC8boosters ouverts : &#FFF4E0%count% &#EADBC8cartes obtenues."
+  skipped: "&#6B7A8FRévélation passée, cartes ajoutées à ton inventaire."
+  inventory-full: "&#D9534FInventaire plein : des cartes sont tombées à tes pieds."
+  inventory-needed: "&#D9534FPas assez de place : libère &#FFF4E0%slots% &#D9534Femplacement(s) pour ouvrir ce booster."
+  empty-booster: "&#D9534FCe booster ne contient aucune carte (configuration à vérifier)."
+  unknown-booster: "&#D9534FBooster inconnu : &#FFF4E0%id%"
+  unknown-card: "&#D9534FCarte inconnue : &#FFF4E0%id%"
+  player-not-found: "&#D9534FJoueur introuvable : &#FFF4E0%player%"
+  invalid-amount: "&#D9534FNombre invalide : &#FFF4E0%amount% &#6B7A8F(1 à 64)"
+  given: "&#FFF4E0%amount%x &r%item% &#EADBC8donné(s) à &#FFF4E0%player%&#EADBC8."
+  opened-for: "&#FFF4E0%amount% &#EADBC8booster(s) &r%booster% &#EADBC8ouvert(s) pour &#FFF4E0%player%&#EADBC8."
+  reloaded: "&#EADBC8Configuration rechargée : &#FFF4E0%cards% &#EADBC8cartes, &#FFF4E0%boosters% &#EADBC8boosters."
+  unknown-pet: "&#D9534FFamilier inconnu : &#FFF4E0%id%"
+  player-only: "&#D9534FCommande réservée aux joueurs."
+  already-exists: "&#D9534F« %id% » existe déjà."
+  created: "&#EADBC8« &#FFF4E0%id%&#EADBC8 » créé."
+  deleted: "&#EADBC8« &#FFF4E0%id%&#EADBC8 » supprimé."
+  prompt-hint: "&#6B7A8FÉcris ta réponse dans le tchat, ou « annuler »."
+  prompt-cancelled: "&#6B7A8FSaisie annulée."
+  prompt-timeout: "&#6B7A8FSaisie expirée."
+  pet-broadcast: "&#FFF4E0%player% &#EADBC8vient d'adopter &r%pet%&#EADBC8 !"
+  pet-unlocked: "&#5FB3B3Nouveau familier adopté : &r%pet%&#5FB3B3 !"
+  series-complete: "&#FFD94DSérie %series% complète ! &#EADBC8Tu reçois ses &#FFF4E0%count% &#EADBC8peluches."
+  card-used: "&#FFF4E0%amount% &#EADBC8carte(s) utilisée(s) : &#FFF4E0+%xp% XP &#EADBC8pour &r%pet%"
+  card-pet-locked: "&#D9534FTu n'as pas encore adopté &r%pet%&#D9534F : ouvre son booster pour le débloquer."
+  card-no-use: "&#6B7A8FCette carte ne nourrit aucun familier."
+  usage:
+    - "&#FF7A59/influcard menu &#6B7A8F- édition des boosters, cartes et familiers"
+    - "&#FF7A59/influcard give <joueur> booster <id> [nombre] &#6B7A8F- donne des boosters"
+    - "&#FF7A59/influcard give <joueur> carte <id> [nombre] &#6B7A8F- donne une carte précise"
+    - "&#FF7A59/influcard open <joueur> <booster> [nombre] &#6B7A8F- ouvre des boosters sans l'objet"
+    - "&#FF7A59/influcard list <cartes|familiers|boosters> &#6B7A8F- liste le contenu"
+    - "&#FF7A59/influcard info <carte|familier|booster> <id> &#6B7A8F- détail et chances de tirage"
+    - "&#FF7A59/influcard reload &#6B7A8F- recharge la configuration"
+
+# Révélation : une animation de totem par carte différente (de la moins rare à la plus rare),
+# puis la carte et le nombre d'exemplaires au milieu de l'écran une fois la carte envolée.
+# Un clic droit pendant la révélation la passe (cartes données d'un coup) et, avec un booster
+# en main, ouvre le suivant.
+reveal:
+  start-delay-ticks: 10
+  actionbar-delay-ticks: 2    # quasiment en même temps que le déclenchement du totem
+  delay-ticks: 39             # temps entre deux animations du totem (le verso s'ajoute avant)
+  actionbar: '%card%'
+  # Quantité au milieu de l'écran (sous-titre en gros), à partir de subtitle-min-count exemplaires
+  subtitle: '%rarity_color%&lx%count%'
+  subtitle-min-count: 1
+  fade-in: 2
+  stay: 22
+  fade-out: 6
+  # Verso commun des cartes affiché en grand (titre) pendant back-ticks avant chaque retournement,
+  # puis l'animation du totem passe par-dessus. 0 = désactivé.
+  # ouverture : image du booster affichée seule pendant booster-ticks, puis le verso de la première carte
+  booster-ticks: 20
+  back-ticks: 4
+  # le verso reste encore back-overlap-ticks par-dessus le début de l'animation du totem
+  back-overlap-ticks: 3
+  back-title: "&r&f%img_carte_verso_grand%"
+  # Booster ouvert pendant une révélation ou moins de spam-window-ticks après le précédent :
+  # pas d'animation du totem, cartes données d'un coup (un nouveau familier garde sa mise en scène).
+  spam-window-ticks: 20
+  actionbar-pet: "%card% &#5FB3B3Nouveau familier !"
+  actionbar-pet-duplicate: '%card% &#6B7A8FDéjà adopté &#EADBC8: sa carte et sa peluche'
+  actionbar-pet-duplicate-incomplete: '%card% &#6B7A8FDéjà adopté &#EADBC8: sa carte en plus'
+  sound-finish: "block.amethyst_block.resonate"
+
+# Familier tout juste adopté : la révélation marque une pause, titre + son, le modèle 3D apparaît
+# face au joueur (visible par lui seul) et joue son animation, spirale de particules à la couleur
+# de la rareté, annonce dans le tchat pour les raretés listées.
+pet-reveal:
+  duration-ticks: 160
+  # durée d'affichage du modèle 3D (visible par les joueurs à moins de 64 blocs), plus longue
+  # que la pause de la révélation
+  model-ticks: 240
+  title-ticks: 50   # le titre s'efface avant : on peut contempler le familier
+  # titre = nom du familier, sous-titre compact en petites capitales (seuls N et F en majuscules normales)
+  title: "%pet%"
+  subtitle: "&#FF7A59Nᴏᴜᴠᴇᴀᴜ Fᴀᴍɪʟɪᴇʀ"
+  sound: "ui.toast.challenge_complete"
+  animation: "happy"
+  distance: 2.5
+  broadcast-rarities:   # annonce à tout le serveur : mythique (ultimate), légendaire, fabuleux
+    - ultimate
+    - legendary
+    - fabled
+
+# Raretés, de la plus commune à la plus rare (ordre de révélation). Le tag contient déjà
+# le nom de la rareté : il est affiché seul devant le nom des cartes.
+rarities:
+  simple:
+    tag: "&r&f%img_simple%"
+    color: '#AAAAAA'
+  unique:
+    tag: "&r&f%img_unique%"
+    color: '#37C44A'
+  elite:
+    tag: "&r&f%img_elite%"
+    color: '#3283A8'
+  ultimate:
+    tag: "&r&f%img_ultimate%"
+    color: '#B376E5'
+  legendary:
+    tag: "&r&f%img_legendary%"
+    color: '#F0A800'
+  fabled:
+    tag: "&r&f%img_fabled%"
+    color: '#C8256A'
+
+# Format commun des cartes : %tag% (rareté), %name%, %number% (N° dans la collection, ordre de cette liste)
+card-format:
+  name: "%tag% &#FFF4E0%name%"
+  lore-header:
+    - "&#6B7A8FN°%number% &#6B7A8F• %series%"
+    - ""
+  lore-footer: []
+  # Ajouté aux cartes liées à un familier (champ pet) qui donnent de l'XP
+  lore-pet:
+    - ""
+    - "&#5FB3B3+%xp% XP &#EADBC8pour &r%pet%"
+    - "&r&7%img_right_click% &#FF7A59Nourrir &#6B7A8F(Maj : toute la pile)"
+
+# XP donnée au familier par carte utilisée, selon la rareté de la carte
+card-xp:
+  simple: 150
+  unique: 220
+  elite: 320
+  ultimate: 450
+  legendary: 650
+  fabled: 1000
+
+cards:
+  flamby:
+    item: influcards:carte_test
+    name: "Flamby"
+    series: "Flammes"
+    rarity: simple
+    lore:
+      - "&#EADBC8Un petit esprit de flamme,"
+      - "&#EADBC8plus joueur que dangereux."
+  braise:
+    item: influcards:carte_test
+    name: "Braise"
+    series: "Flammes"
+    rarity: unique
+    lore:
+      - "&#EADBC8Il ne s'éteint jamais vraiment."
+  etincelle:
+    item: influcards:carte_test
+    name: "Étincelle"
+    series: "Flammes"
+    rarity: elite
+    lore:
+      - "&#EADBC8Rapide comme un éclair,"
+      - "&#EADBC8chaude comme une forge."
+  brasier:
+    item: influcards:carte_test
+    name: "Brasier"
+    series: "Flammes"
+    rarity: ultimate
+    lore:
+      - "&#EADBC8Là où il passe,"
+      - "&#EADBC8l'herbe ne repousse pas."
+  phenix:
+    item: influcards:carte_test
+    name: "Phénix"
+    series: "Flammes"
+    rarity: legendary
+    lore:
+      - "&#EADBC8Il renaît toujours de ses cendres."
+
+# Familiers EcoPets obtenables dans les boosters (réglables dans /influcard menu > Familiers).
+# Un familier ne sort qu'une fois par booster. Peluches (pets.list.<id>.plush, influcards:peluche_<id>
+# par défaut) : l'adoption qui complète une série donne les peluches de toute la série, puis chaque
+# doublon d'une série complète donne sa peluche (série incomplète : rien). Déjà adopté : "reroll" (jamais tiré
+# pour ce joueur) ou "xp" (peut ressortir : peluche + duplicate-xp points d'XP, 0 = peluche seule).
+pets:
+  name-format: "%tag% &#5FB3B3%name%"
+  duplicate: xp
+  duplicate-xp: 0
+  list: {}
+
+boosters:
+  basique:
+    item: influcards:booster_basique
+    name: "&#FF7A59&lBooster Basique"
+    lore:
+      - "&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de la série"
+      - "&#FFF4E0Flammes&#EADBC8."
+      - ""
+      - "&r&7%img_right_click% &#FF7A59Ouvrir"
+    cards: 5
+    # Poids de tirage par rareté pour chaque carte, puis carte au hasard dans la rareté.
+    # Une rareté sans carte est ignorée (ici fabled).
+    rarity-weights:
+      simple: 50
+      unique: 25
+      elite: 13
+      ultimate: 7
+      legendary: 4
+      fabled: 1
+    # Récompenses possibles ("carte:<id>", "familier:<id>"). Vide = toutes les cartes et
+    # tous les familiers obtenables.
+    contents: []
+
+# Familiers BetterModel qui suivent le joueur (PetFollowers) au lieu d'être collés à sa caméra.
+# Distances en blocs, par rapport au joueur et à sa direction de marche.
+familier-suivi:
+  cote: 1.0              # écart sur le côté en marchant
+  arriere: 1.2           # retard derrière le joueur en marchant
+  hauteur: 0.9           # hauteur au-dessus des pieds du joueur
+  distance-min: 1.0      # à l'arrêt, s'écarte s'il est plus près
+  distance-max: 3.5      # à l'arrêt, revient s'il est plus loin
+  teleport-distance: 16  # au-delà, réapparaît à côté du joueur
+  lissage: 0.18          # part du chemin parcourue par tick (plus haut = plus réactif)
+  vitesse-min: 0.45      # vitesse maximale par tick, au moins (sinon 1,3 x celle du joueur)
+  flottement: 0.06       # amplitude du flottement
+  hauteur-nom: 1.3       # hauteur du nom au-dessus du modèle
