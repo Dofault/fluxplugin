@@ -18,7 +18,8 @@ import java.util.List;
 
 /**
  * Menu des familiers (/familiers), repris de PetsGUI d'EcoPets : familiers adoptés triés par niveau décroissant
- * dans la zone pet-area (pages), familier actif en haut (clic : sa progression), ranger, cacher / montrer,
+ * dans la zone pet-area (pages) : clic = l'activer (en plus des autres, selon le maximum du joueur) ou le
+ * ranger s'il est actif ; premier familier actif en haut (clic : sa progression), tout ranger, cacher / montrer,
  * fermer. Pas de bouton « retirer en œuf » : les familiers forment une collection.
  */
 public final class PetsMenu {
@@ -90,12 +91,20 @@ public final class PetsMenu {
                 if (pet == null) {
                     return;
                 }
-                if (!pet.equals(PetData.active(player))) {
-                    if (!pet.canActivate(player)) {
-                        PetMessages.send(player, "cannot-activate-pet", "%pet%", pet.name());
+                if (PetData.isActive(player, pet)) {
+                    // familier actif : le clic le range (plusieurs familiers actifs possibles)
+                    if (PetData.deactivate(player, pet)) {
+                        PetMessages.send(player, "deactivated-pet", "%pet%", pet.name());
+                    }
+                } else if (!pet.canActivate(player)) {
+                    PetMessages.send(player, "cannot-activate-pet", "%pet%", pet.name());
+                    return;
+                } else {
+                    PetData.Activation result = PetData.activate(player, pet);
+                    if (result == PetData.Activation.FULL) {
+                        PetCommands.tell(player, pet, result);
                         return;
                     }
-                    PetData.setActive(player, pet);
                 }
                 if (clickSound != null) {
                     clickSound.playTo(player);
@@ -128,8 +137,7 @@ public final class PetsMenu {
                 Slot.builder(PetItems.build(c.getString("gui.deactivate-pet.item"), c.getString("gui.deactivate-pet.name"), null))
                         .onLeftClick((event, slot, m) -> {
                             Player player = (Player) event.getWhoClicked();
-                            Pet pet = PetData.active(player);
-                            if (pet != null && PetData.setActive(player, null)) {
+                            for (Pet pet : PetData.deactivateAll(player)) {
                                 PetMessages.send(player, "deactivated-pet", "%pet%", pet.name());
                             }
                             m.refresh(player);

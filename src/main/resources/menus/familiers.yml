@@ -78,6 +78,7 @@ pet-icon:
   active-lore:
   - ''
   - '&#2ECF7BFamilier actif'
+  - '&r&7%img_left_click% &#FFD94DRanger'
   not-active-lore:
   - ''
   - '&r&7%img_left_click% &#FFD94DActiver'
@@ -113,7 +114,7 @@ close:
     column: 5
 deactivate-pet:
   item: player_head texture:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNTRiZDlhNDViOTY4MWNlYTViMjhjNzBmNzVhNjk1NmIxZjU5NGZlYzg0MGI5NjA3Nzk4ZmIxZTcwNzc2NDQzMCJ9fX0=
-  name: '&#FF5C5CRanger le familier'
+  name: '&#FF5C5CRanger tous les familiers'
   location:
     row: 6
     column: 2

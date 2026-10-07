@@ -42,16 +42,16 @@ public final class PetHook {
         return pet != null && PetData.has(player, pet);
     }
 
-    /** Id du familier actif du joueur, null sans familier. */
+    /** Id du premier familier actif du joueur, null sans familier. */
     public static String activeId(OfflinePlayer player) {
         Pet pet = available() ? PetData.active(player) : null;
         return pet == null ? null : pet.id();
     }
 
-    /** Niveau du familier id s'il est le familier actif du joueur, sinon 0. */
+    /** Niveau du familier id s'il est parmi les familiers actifs du joueur, sinon 0. */
     public static int activeLevel(OfflinePlayer player, String id) {
-        Pet pet = available() ? PetData.active(player) : null;
-        return pet == null || !pet.id().equals(id) ? 0 : PetData.level(player, pet);
+        Pet pet = available() ? Pets.get(id) : null;
+        return pet == null || !PetData.isActive(player, pet) ? 0 : PetData.level(player, pet);
     }
 
     /** Icône du familier (celle du menu des familiers), papier si indisponible. */

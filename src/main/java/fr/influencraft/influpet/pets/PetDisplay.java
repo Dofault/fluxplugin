@@ -20,7 +20,9 @@ import org.bukkit.util.Transformation;
 import org.joml.AxisAngle4f;
 import org.joml.Vector3f;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -34,7 +36,9 @@ import java.util.UUID;
  *   seulement du regard, même si le maître tourne autour de lui ;
  * - il ne se déplace qu'en sortant de cette zone : trop loin, il revient jusqu'à être bien dans la zone ; trop
  *   près, il recule un peu ; puis il s'arrête (animation walk en se déplaçant, idle sinon) ;
- * - au-delà de teleport-distance ou dans un autre monde : réapparaît derrière le joueur.
+ * - au-delà de teleport-distance ou dans un autre monde : réapparaît derrière le joueur ;
+ * - plusieurs familiers actifs : les suivants marchent en file derrière le premier, chacun suivant le précédent
+ *   avec la même logique entre ecart-file-min et ecart-file-max (sans les distances min / max du joueur).
  * Familier « vol: true » : flotte au-dessus des pieds du joueur avec un léger flottement ; « vol: false » :
  * posé sur le sol sous sa position.
  * Pas de modèle pour un familier caché (menu), un joueur mort, invisible ou spectateur. Nom au-dessus du modèle
@@ -67,13 +71,14 @@ public final class PetDisplay {
         }
     }
 
-    private final Map<UUID, Follower> followers = new HashMap<>();
+    /** Familiers affichés de chaque joueur, dans l'ordre de ses familiers actifs (le premier suit le joueur). */
+    private final Map<UUID, List<Follower>> followers = new HashMap<>();
     /** Modèles introuvables déjà signalés (un avertissement par modèle, pas un par tick). */
     private final Set<String> missing = new HashSet<>();
     private long tick;
 
     private double height, minDistance, maxDistance, snapDistance, smoothing, minSpeed, bobAmplitude,
-            labelHeight;
+            labelHeight, gapMin, gapMax;
 
     public PetDisplay() {
         reload();
@@ -90,6 +95,8 @@ public final class PetDisplay {
         minSpeed = get(c, "vitesse-min", 0.45);
         bobAmplitude = get(c, "flottement", 0.06);
         labelHeight = get(c, "hauteur-nom", 1.3);
+        gapMin = Math.max(0.3, get(c, "ecart-file-min", 1.2));
+        gapMax = Math.max(gapMin + 0.3, get(c, "ecart-file-max", 2.2));
         missing.clear();
         // familiers rechargés : nouveaux objets Pet, les modèles sont recréés au tick suivant
         shutdown();
@@ -99,38 +106,62 @@ public final class PetDisplay {
         return c == null ? def : c.getDouble(path, def);
     }
 
-    private Pet wanted(Player player) {
+    /** Familiers à afficher pour ce joueur (ses familiers actifs, dans l'ordre), aucun s'il est caché, mort... */
+    private List<Pet> wanted(Player player) {
         if (!Pets.enabled() || !Pets.settings().getBool("pet-entity.enabled") || player.isDead()
                 || player.isInvisible() || player.getGameMode() == GameMode.SPECTATOR || PetData.hidden(player)) {
-            return null;
+            return List.of();
         }
-        return PetData.active(player);
+        return PetData.actives(player);
     }
 
     private void tickAll() {
         tick++;
-        for (Iterator<Follower> it = followers.values().iterator(); it.hasNext(); ) {
-            Follower f = it.next();
-            if (!f.owner.isOnline() || !f.carrier.isValid() || !f.pet.equals(wanted(f.owner))) {
-                remove(f);
+        for (Iterator<Map.Entry<UUID, List<Follower>>> it = followers.entrySet().iterator(); it.hasNext(); ) {
+            List<Follower> list = it.next().getValue();
+            if (!list.isEmpty() && !list.get(0).owner.isOnline()) {
+                list.forEach(this::remove);
                 it.remove();
             }
         }
         for (Player player : Bukkit.getOnlinePlayers()) {
-            Follower f = followers.get(player.getUniqueId());
-            if (f == null) {
-                Pet pet = wanted(player);
-                if (pet != null) {
-                    f = spawn(player, pet);
+            List<Pet> pets = wanted(player);
+            List<Follower> list = followers.computeIfAbsent(player.getUniqueId(), k -> new ArrayList<>());
+            // modèles en trop (familier rangé, porteur disparu) retirés, les autres remis dans l'ordre des familiers
+            // actifs, les manquants ajoutés en bout de file
+            for (Iterator<Follower> it = list.iterator(); it.hasNext(); ) {
+                Follower f = it.next();
+                if (!f.carrier.isValid() || !pets.contains(f.pet)) {
+                    remove(f);
+                    it.remove();
                 }
             }
-            if (f != null) {
-                move(f);
+            list.sort(java.util.Comparator.comparingInt(f -> pets.indexOf(f.pet)));
+            for (Pet pet : pets) {
+                if (list.stream().noneMatch(f -> f.pet.equals(pet))) {
+                    Follower f = spawn(player, pet, list);
+                    if (f != null) {
+                        list.add(f);
+                    }
+                }
+            }
+            list.sort(java.util.Comparator.comparingInt(f -> pets.indexOf(f.pet)));
+            Location p = player.getLocation();
+            for (int i = 0; i < list.size(); i++) {
+                Follower f = list.get(i);
+                if (i == 0) {
+                    // le premier suit le joueur, dans la zone de confort distance-min / distance-max
+                    move(f, p.getX(), p.getZ(), minDistance, maxDistance, null);
+                } else {
+                    // les suivants marchent en file : chacun suit le précédent, entre ecart-file-min et -max
+                    Follower lead = list.get(i - 1);
+                    move(f, lead.x, lead.z, gapMin, gapMax, lead);
+                }
             }
         }
     }
 
-    private Follower spawn(Player owner, Pet pet) {
+    private Follower spawn(Player owner, Pet pet, List<Follower> before) {
         var renderer = BetterModel.modelOrNull(pet.model());
         if (renderer == null) {
             if (missing.add(pet.model())) {
@@ -141,8 +172,12 @@ public final class PetDisplay {
         }
         Location p = owner.getLocation();
         double yaw = Math.toRadians(p.getYaw());
-        double radius = (minDistance + maxDistance) / 2;
-        Location start = p.clone().add(Math.sin(yaw) * radius, 0, -Math.cos(yaw) * radius);
+        // derrière le joueur (premier) ou derrière le dernier de la file
+        Follower last = before.isEmpty() ? null : before.get(before.size() - 1);
+        double bx = last == null ? p.getX() : last.x;
+        double bz = last == null ? p.getZ() : last.z;
+        double radius = last == null ? (minDistance + maxDistance) / 2 : (gapMin + gapMax) / 2;
+        Location start = new Location(p.getWorld(), bx + Math.sin(yaw) * radius, p.getY(), bz - Math.cos(yaw) * radius);
         start.setY(targetY(pet, p, start.getX(), start.getZ()));
         start.setYaw(p.getYaw());
         ArmorStand carrier = stand(start);
@@ -152,9 +187,8 @@ public final class PetDisplay {
         f.y = start.getY();
         f.z = start.getZ();
         f.yaw = start.getYaw();
-        f.lastPX = p.getX();
-        f.lastPZ = p.getZ();
-        followers.put(owner.getUniqueId(), f);
+        f.lastPX = bx;
+        f.lastPZ = bz;
         updateLabel(f);
         return f;
     }
@@ -194,21 +228,26 @@ public final class PetDisplay {
         return player.getY();
     }
 
-    private void move(Follower f) {
+    /**
+     * Déplacement d'un familier par rapport à son meneur (lx, lz) : le joueur pour le premier, le familier
+     * précédent pour les suivants (lead), avec ses bornes minD / maxD. Regarde toujours le joueur à l'arrêt.
+     */
+    private void move(Follower f, double lx, double lz, double minDistance, double maxDistance, Follower lead) {
         Location p = f.owner.getLocation();
         World world = p.getWorld();
-        double dx = f.x - p.getX();
-        double dz = f.z - p.getZ();
+        double dx = f.x - lx;
+        double dz = f.z - lz;
         double dist = Math.hypot(dx, dz);
-        boolean snap = f.carrier.getWorld() != world || dist > snapDistance || Math.abs(f.y - p.getY()) > snapDistance;
+        boolean snap = f.carrier.getWorld() != world || Math.hypot(f.x - p.getX(), f.z - p.getZ()) > snapDistance
+                || Math.abs(f.y - p.getY()) > snapDistance || (lead != null && lead.carrier.getWorld() != world);
         double ox = f.x;
         double oz = f.z;
         if (snap) {
-            // téléportation, autre monde, chute : il réapparaît derrière le joueur, au milieu de sa zone
+            // téléportation, autre monde, chute : il réapparaît derrière son meneur, au milieu de sa zone
             double yaw = Math.toRadians(p.getYaw());
             double r = (minDistance + maxDistance) / 2;
-            f.x = p.getX() + Math.sin(yaw) * r;
-            f.z = p.getZ() - Math.cos(yaw) * r;
+            f.x = lx + Math.sin(yaw) * r;
+            f.z = lz - Math.cos(yaw) * r;
             f.y = targetY(f.pet, p, f.x, f.z);
             f.moving = false;
         } else {
@@ -226,8 +265,8 @@ public final class PetDisplay {
                 double uz = dist > 1.0E-3 ? dz / dist : -Math.cos(Math.toRadians(p.getYaw()));
                 double remaining = dist - f.goal;
                 // plus il est loin du but, plus il va vite, sans dépasser la vitesse du joueur (x1,3)
-                double pdx = p.getX() - f.lastPX;
-                double pdz = p.getZ() - f.lastPZ;
+                double pdx = lx - f.lastPX;
+                double pdz = lz - f.lastPZ;
                 double cap = Math.max(minSpeed, Math.hypot(pdx, pdz) * 1.3);
                 double step = Math.min(cap, Math.max(0.04, Math.abs(remaining) * smoothing));
                 if (Math.abs(remaining) <= step) {
@@ -252,8 +291,8 @@ public final class PetDisplay {
                 f.y += 1;
             }
         }
-        f.lastPX = p.getX();
-        f.lastPZ = p.getZ();
+        f.lastPX = lx;
+        f.lastPZ = lz;
         double moved = Math.hypot(f.x - ox, f.z - oz);
         boolean walking = !snap && moved > 0.02;
         // regarde où il va en se déplaçant, sinon son maître
@@ -329,7 +368,7 @@ public final class PetDisplay {
 
     /** Arrêt du plugin ou rechargement : retire tous les modèles. */
     public void shutdown() {
-        followers.values().forEach(this::remove);
+        followers.values().forEach(list -> list.forEach(this::remove));
         followers.clear();
     }
 }

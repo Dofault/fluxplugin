@@ -53,7 +53,7 @@ public final class PetItems {
         int level = PetData.level(player, pet);
         List<String> lore = new ArrayList<>(PetData.inject(c.getStrings(level >= pet.maxLevel()
                 ? "max-level-lore" : "lore"), player, pet, null));
-        lore.addAll(c.getStrings(pet.equals(PetData.active(player)) ? "active-lore" : "not-active-lore"));
+        lore.addAll(c.getStrings(PetData.isActive(player, pet) ? "active-lore" : "not-active-lore"));
         return named(pet.baseItem(), title(c.getString("name"), pet, level), lore);
     }
 

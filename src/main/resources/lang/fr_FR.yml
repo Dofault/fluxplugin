@@ -102,5 +102,6 @@ familiers:
     deactivated-pet: "&#B376E5Familier rangé : %pet%"
     no-pet-active: "&#FF5C5CTu n'as aucun familier actif."
     pet-auto-deactivated: "&#FF5C5CTon familier %pet%&#FF5C5C a été rangé : ses conditions ne sont plus remplies."
+    max-pets-reached: "&#FF5C5CTu as déjà %max% familier(s) actif(s) : range-en un d'abord (clic dessus)."
     cancelled-swap: "&#FF5C5CChangement de familier annulé."
     player-only: "&#FF5C5CCommande réservée aux joueurs."

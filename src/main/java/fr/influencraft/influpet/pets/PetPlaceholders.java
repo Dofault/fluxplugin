@@ -7,8 +7,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Placeholders %influpet_...%, mêmes noms que ceux d'EcoPets (%ecopets_...%) :
- * pet, pet_id, total_pets, active_pet_level, active_pet_level_numeral, active_pet_current_xp,
- * active_pet_required_xp, active_pet_percentage_progress, active_pet_description, et pour chaque familier
+ * pet, pet_id (premier familier actif), total_pets, active_pets (nombre), max_active_pets, active_pet_level,
+ * active_pet_level_numeral, active_pet_current_xp, active_pet_required_xp, active_pet_percentage_progress, active_pet_description, et pour chaque familier
  * <id> (niveau), <id>_level, <id>_current_xp, <id>_required_xp, <id>_percentage_progress, <id>_name,
  * <id>_can_activate. Chargée seulement si PlaceholderAPI est actif.
  */
@@ -47,6 +47,10 @@ final class PetPlaceholders extends PlaceholderExpansion {
                 return active == null ? "" : active.id();
             case "total_pets":
                 return String.valueOf(PetData.owned(player));
+            case "active_pets":
+                return String.valueOf(PetData.actives(player).size());
+            case "max_active_pets":
+                return player instanceof Player online ? String.valueOf(PetData.maxActive(online)) : "";
             case "active_pet_level":
                 return active == null ? "" : String.valueOf(PetData.level(player, active));
             case "active_pet_level_numeral":

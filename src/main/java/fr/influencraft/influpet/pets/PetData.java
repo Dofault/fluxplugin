@@ -23,13 +23,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Familiers d'un joueur : niveau et XP de chaque familier, familier actif, familier caché. Tout est lu et écrit
+ * Familiers d'un joueur : niveau et XP de chaque familier, familiers actifs (plusieurs selon la permission
+ * influpet.familiers.max.<n>), familiers cachés. Tout est lu et écrit
  * dans le profil eco du joueur (PersistentDataKey), exactement comme EcoPets (com.willfp.ecopets.pets.PetKt) :
  * niveau 0 = pas adopté. C'est une collection : un familier adopté ne se retire pas (pas d'œuf, pas d'échange).
  */
 public final class PetData {
 
     private static PersistentDataKey<String> activeKey;
+    private static PersistentDataKey<java.util.List<String>> activeListKey;
+    private static final Map<UUID, double[]> maxCache = new HashMap<>();
     private static PersistentDataKey<Boolean> hiddenKey;
     private static final Map<UUID, double[]> multiplierCache = new HashMap<>();
     private static final Pattern LEVEL_OFFSET = Pattern.compile("%level_(-?\\d+)(_numeral)?%");
@@ -39,6 +42,8 @@ public final class PetData {
 
     static void registerKeys(boolean local) {
         activeKey = new PersistentDataKey<>(Pets.key("active_pet"), PersistentDataKeyType.STRING, "", local);
+        activeListKey = new PersistentDataKey<>(Pets.key("active_pets"), PersistentDataKeyType.STRING_LIST,
+                java.util.List.of(), local);
         hiddenKey = new PersistentDataKey<>(Pets.key("hide_pet"), PersistentDataKeyType.BOOLEAN, false, local);
     }
 
@@ -171,19 +176,58 @@ public final class PetData {
 
     /** Retire le familier (administration) : niveau 0, XP 0, rangé s'il était actif. */
     public static void take(OfflinePlayer player, Pet pet) {
-        if (player instanceof Player online && pet.equals(active(online))) {
-            setActive(online, null);
+        if (player instanceof Player online && isActive(online, pet)) {
+            deactivate(online, pet);
         }
         setXp(player, pet, 0);
         setLevel(player, pet, 0);
     }
 
-    // ------------------------------------------------------------------ familier actif
+    // ------------------------------------------------------------------ familiers actifs
 
-    /** Familier actif (null sans familier, ou s'il n'est plus adopté / plus chargé). */
+    /** Résultat d'une activation. */
+    public enum Activation { OK, ALREADY, FULL, CANCELLED }
+
+    /**
+     * Familiers actifs, dans l'ordre d'activation (le premier suit le joueur, les suivants marchent derrière lui).
+     * Seuls les familiers adoptés et chargés comptent, au plus le maximum du joueur (s'il est connecté).
+     * Ancienne donnée à un seul familier (active_pet) reprise si la liste est vide.
+     */
+    public static List<Pet> actives(OfflinePlayer player) {
+        PlayerProfile profile = profile(player);
+        List<String> ids = profile.read(activeListKey);
+        if (ids == null || ids.isEmpty()) {
+            String single = profile.read(activeKey);
+            ids = single == null || single.isEmpty() ? List.of() : List.of(single);
+        }
+        int max = player instanceof Player online ? maxActive(online) : Integer.MAX_VALUE;
+        List<Pet> pets = new ArrayList<>();
+        for (String id : ids) {
+            Pet pet = Pets.get(id);
+            if (pet != null && !pets.contains(pet) && has(player, pet) && pets.size() < max) {
+                pets.add(pet);
+            }
+        }
+        return pets;
+    }
+
+    /** Premier familier actif (celui qui suit le joueur), null sans familier. */
     public static Pet active(OfflinePlayer player) {
-        Pet pet = Pets.get(profile(player).read(activeKey));
-        return pet != null && has(player, pet) ? pet : null;
+        List<Pet> pets = actives(player);
+        return pets.isEmpty() ? null : pets.get(0);
+    }
+
+    public static boolean isActive(OfflinePlayer player, Pet pet) {
+        return actives(player).contains(pet);
+    }
+
+    /** Holders libreforge de tous les familiers actifs : leurs effets s'appliquent ensemble. */
+    public static List<PetLevel> activeLevels(OfflinePlayer player) {
+        List<PetLevel> levels = new ArrayList<>();
+        for (Pet pet : actives(player)) {
+            levels.add(pet.level(level(player, pet)));
+        }
+        return levels;
     }
 
     public static PetLevel activeLevel(OfflinePlayer player) {
@@ -192,29 +236,104 @@ public final class PetData {
     }
 
     /**
-     * Active un familier (null = range le familier actif). Événements annulables comme EcoPets. Renvoie true si
-     * le changement a eu lieu.
+     * Nombre de familiers actifs autorisés : permission influpet.familiers.max.<n> (la plus haute), sinon
+     * familiers.actifs.defaut, jamais plus que familiers.actifs.maximum. Mis en cache 10 s.
      */
-    public static boolean setActive(Player player, Pet pet) {
-        Pet previous = active(player);
-        if (pet == null) {
-            if (previous != null) {
-                PetDeactivateEvent event = new PetDeactivateEvent(player, previous);
-                Bukkit.getPluginManager().callEvent(event);
-                if (event.isCancelled()) {
-                    return false;
+    public static int maxActive(Player player) {
+        long now = System.currentTimeMillis();
+        double[] cached = maxCache.get(player.getUniqueId());
+        if (cached != null && cached[1] > now) {
+            return (int) cached[0];
+        }
+        int cap = Math.max(1, Pets.settings().getInt("actifs.maximum"));
+        int value = Math.max(1, Pets.settings().getInt("actifs.defaut"));
+        for (PermissionAttachmentInfo info : player.getEffectivePermissions()) {
+            String perm = info.getPermission().toLowerCase(java.util.Locale.ROOT);
+            if (info.getValue() && perm.startsWith("influpet.familiers.max.")) {
+                try {
+                    value = Math.max(value, Integer.parseInt(perm.substring("influpet.familiers.max.".length())));
+                } catch (NumberFormatException ignored) {
+                    // permission mal écrite : ignorée
                 }
             }
-        } else {
-            PetActivateEvent event = new PetActivateEvent(player, pet, previous);
-            Bukkit.getPluginManager().callEvent(event);
-            if (event.isCancelled()) {
-                return false;
+        }
+        value = Math.min(value, cap);
+        maxCache.put(player.getUniqueId(), new double[]{value, now + 10_000});
+        return value;
+    }
+
+    /**
+     * Active un familier en plus des autres. Plus de place : avec une seule place, il remplace le familier actif
+     * (comportement d'EcoPets) ; sinon FULL (au joueur d'en ranger un). Événement annulable.
+     */
+    public static Activation activate(Player player, Pet pet) {
+        List<Pet> pets = new ArrayList<>(actives(player));
+        if (pets.contains(pet)) {
+            return Activation.ALREADY;
+        }
+        int max = maxActive(player);
+        Pet replaced = null;
+        if (pets.size() >= max) {
+            if (max > 1) {
+                return Activation.FULL;
+            }
+            replaced = pets.isEmpty() ? null : pets.get(0);
+        }
+        PetActivateEvent event = new PetActivateEvent(player, pet, replaced);
+        Bukkit.getPluginManager().callEvent(event);
+        if (event.isCancelled()) {
+            return Activation.CANCELLED;
+        }
+        if (replaced != null) {
+            pets.remove(replaced);
+        }
+        pets.add(pet);
+        write(player, pets);
+        return Activation.OK;
+    }
+
+    /** Range un familier actif (événement annulable). */
+    public static boolean deactivate(Player player, Pet pet) {
+        List<Pet> pets = new ArrayList<>(actives(player));
+        if (!pets.contains(pet)) {
+            return false;
+        }
+        PetDeactivateEvent event = new PetDeactivateEvent(player, pet);
+        Bukkit.getPluginManager().callEvent(event);
+        if (event.isCancelled()) {
+            return false;
+        }
+        pets.remove(pet);
+        write(player, pets);
+        return true;
+    }
+
+    /** Range tous les familiers actifs ; renvoie ceux qui ont été rangés. */
+    public static List<Pet> deactivateAll(Player player) {
+        List<Pet> done = new ArrayList<>();
+        for (Pet pet : actives(player)) {
+            if (deactivate(player, pet)) {
+                done.add(pet);
             }
         }
-        profile(player).write(activeKey, pet == null ? "" : pet.id());
+        return done;
+    }
+
+    /** Compatibilité : null = tout ranger, sinon activer (en remplaçant s'il n'y a qu'une place). */
+    public static boolean setActive(Player player, Pet pet) {
+        if (pet == null) {
+            return !deactivateAll(player).isEmpty() || actives(player).isEmpty();
+        }
+        Activation result = activate(player, pet);
+        return result == Activation.OK || result == Activation.ALREADY;
+    }
+
+    private static void write(Player player, List<Pet> pets) {
+        PlayerProfile profile = profile(player);
+        profile.write(activeListKey, pets.stream().map(Pet::id).toList());
+        // premier familier aussi dans l'ancienne clé (placeholders, retour en arrière)
+        profile.write(activeKey, pets.isEmpty() ? "" : pets.get(0).id());
         refresh(player);
-        return true;
     }
 
     public static boolean hidden(OfflinePlayer player) {
@@ -233,6 +352,7 @@ public final class PetData {
 
     static void forget(UUID uuid) {
         multiplierCache.remove(uuid);
+        maxCache.remove(uuid);
     }
 
     // ------------------------------------------------------------------ textes

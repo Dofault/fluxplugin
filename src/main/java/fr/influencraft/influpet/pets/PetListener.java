@@ -55,9 +55,10 @@ public final class PetListener implements Listener {
             return;
         }
         for (Player player : Bukkit.getOnlinePlayers()) {
-            Pet pet = PetData.active(player);
-            if (pet != null && !pet.canActivate(player) && PetData.setActive(player, null)) {
-                PetMessages.send(player, "pet-auto-deactivated", "%pet%", pet.name());
+            for (Pet pet : PetData.actives(player)) {
+                if (!pet.canActivate(player) && PetData.deactivate(player, pet)) {
+                    PetMessages.send(player, "pet-auto-deactivated", "%pet%", pet.name());
+                }
             }
         }
     }

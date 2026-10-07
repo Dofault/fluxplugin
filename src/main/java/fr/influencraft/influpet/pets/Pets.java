@@ -77,13 +77,17 @@ public final class Pets {
         PetData.registerKeys(settings.getBool("stockage-local"));
         EcoPetsMigration.copyPetFiles(plugin);
         if (!providerRegistered) {
-            // comme EcoPets : un seul holder, le familier actif du joueur à son niveau
+            // comme EcoPets, un holder par familier actif à son niveau (plusieurs familiers actifs : leurs effets
+            // s'appliquent ensemble)
             HolderProviderKt.registerHolderProvider(dispatcher -> {
                 if (!enabled || !(dispatcher.getDispatcher() instanceof Player player)) {
                     return Collections.emptyList();
                 }
-                PetLevel level = PetData.activeLevel(player);
-                return level == null ? Collections.emptyList() : List.<ProvidedHolder>of(new SimpleProvidedHolder(level));
+                List<ProvidedHolder> holders = new ArrayList<>();
+                for (PetLevel level : PetData.activeLevels(player)) {
+                    holders.add(new SimpleProvidedHolder(level));
+                }
+                return holders;
             });
             providerRegistered = true;
         }

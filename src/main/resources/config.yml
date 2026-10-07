@@ -82,6 +82,11 @@ familiers:
   # montures : rien n'est montable tant que c'est false, même un familier « montable: true »
   montures:
     actives: false
+  # familiers actifs en même temps (leurs effets s'additionnent) : defaut sans permission, sinon la plus haute
+  # permission influpet.familiers.max.<n>, jamais plus que maximum
+  actifs:
+    defaut: 1
+    maximum: 5
   pet-entity:
     enabled: true
     show-hologram: true
@@ -108,3 +113,6 @@ familier-suivi:
   vitesse-min: 0.45      # vitesse max par tick quand il rattrape (au moins ; sinon 1,3 x celle du joueur)
   flottement: 0.06       # amplitude du flottement
   hauteur-nom: 1.3       # hauteur du nom au-dessus du modèle
+  # plusieurs familiers actifs : file derrière le premier, chacun entre ces écarts du précédent
+  ecart-file-min: 1.2
+  ecart-file-max: 2.2
