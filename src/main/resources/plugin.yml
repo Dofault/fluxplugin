@@ -1,16 +1,17 @@
-name: InfluCard
+name: InfluPet
 version: '26.2'
-main: fr.influencraft.influcard.InfluCard
+main: fr.influencraft.influpet.InfluPet
 api-version: '1.21'
-description: Cartes à collectionner et boosters, révélation des cartes par animation de totem.
+description: Familiers, cartes à collectionner et boosters (ex-InfluCard).
 softdepend: [ItemsAdder, EcoPets, eco, BetterModel, packetevents]
 
 commands:
-  influcard:
-    description: Administration des cartes et boosters.
-    usage: /influcard <menu|give|open|list|info|reload>
-    permission: influcard.admin
+  influpet:
+    description: Administration des familiers, cartes et boosters.
+    usage: /influpet <menu|give|open|list|info|reload>
+    aliases: [influcard]
+    permission: influpet.admin
 
 permissions:
-  influcard.admin:
+  influpet.admin:
     default: op

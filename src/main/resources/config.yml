@@ -1,4 +1,4 @@
-# InfluCard : cartes à collectionner et boosters.
+# InfluPet (ex-InfluCard) : cartes à collectionner et boosters.
 #
 # Textes : codes & et &#RRGGBB. %img_<id>% affiche un glyphe ItemsAdder (cherché dans influtags,
 # influemoji puis influitems), toujours précédé de &r&f pour garder ses couleurs.
@@ -39,13 +39,13 @@ messages:
   card-pet-locked: "&#D9534FTu n'as pas encore adopté &r%pet%&#D9534F : ouvre son booster pour le débloquer."
   card-no-use: "&#6B7A8FCette carte ne nourrit aucun familier."
   usage:
-    - "&#FF7A59/influcard menu &#6B7A8F- édition des boosters, cartes et familiers"
-    - "&#FF7A59/influcard give <joueur> booster <id> [nombre] &#6B7A8F- donne des boosters"
-    - "&#FF7A59/influcard give <joueur> carte <id> [nombre] &#6B7A8F- donne une carte précise"
-    - "&#FF7A59/influcard open <joueur> <booster> [nombre] &#6B7A8F- ouvre des boosters sans l'objet"
-    - "&#FF7A59/influcard list <cartes|familiers|boosters> &#6B7A8F- liste le contenu"
-    - "&#FF7A59/influcard info <carte|familier|booster> <id> &#6B7A8F- détail et chances de tirage"
-    - "&#FF7A59/influcard reload &#6B7A8F- recharge la configuration"
+    - "&#FF7A59/influpet menu &#6B7A8F- édition des boosters, cartes et familiers"
+    - "&#FF7A59/influpet give <joueur> booster <id> [nombre] &#6B7A8F- donne des boosters"
+    - "&#FF7A59/influpet give <joueur> carte <id> [nombre] &#6B7A8F- donne une carte précise"
+    - "&#FF7A59/influpet open <joueur> <booster> [nombre] &#6B7A8F- ouvre des boosters sans l'objet"
+    - "&#FF7A59/influpet list <cartes|familiers|boosters> &#6B7A8F- liste le contenu"
+    - "&#FF7A59/influpet info <carte|familier|booster> <id> &#6B7A8F- détail et chances de tirage"
+    - "&#FF7A59/influpet reload &#6B7A8F- recharge la configuration"
 
 # Révélation : une animation de totem par carte différente (de la moins rare à la plus rare),
 # puis la carte et le nombre d'exemplaires au milieu de l'écran une fois la carte envolée.
@@ -182,7 +182,7 @@ cards:
     lore:
       - "&#EADBC8Il renaît toujours de ses cendres."
 
-# Familiers EcoPets obtenables dans les boosters (réglables dans /influcard menu > Familiers).
+# Familiers EcoPets obtenables dans les boosters (réglables dans /influpet menu > Familiers).
 # Un familier ne sort qu'une fois par booster. Peluches (pets.list.<id>.plush, influcards:peluche_<id>
 # par défaut) : l'adoption qui complète une série donne les peluches de toute la série, puis chaque
 # doublon d'une série complète donne sa peluche (série incomplète : rien). Déjà adopté : "reroll" (jamais tiré
