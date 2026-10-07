@@ -1,14 +1,16 @@
-package fr.influencraft.influpet;
+package fr.influencraft.influpet.pets;
 
+import com.willfp.eco.core.config.interfaces.Config;
+import fr.influencraft.influpet.Texts;
 import kr.toxicity.model.api.BetterModel;
 import kr.toxicity.model.api.bukkit.platform.BukkitAdapter;
 import kr.toxicity.model.api.tracker.EntityTracker;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
-import org.bukkit.Particle;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Player;
@@ -18,76 +20,66 @@ import org.bukkit.util.Transformation;
 import org.joml.AxisAngle4f;
 import org.joml.Vector3f;
 
-import java.io.File;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
- * Familiers BetterModel qui suivent vraiment leur maître, au lieu d'être accrochés à sa caméra.
- *
- * EcoPets téléporte à chaque tick l'entité du familier sur un point fixe calculé depuis le regard du joueur
- * (PetDisplay.tickPlayer, décompilé : hauteur des yeux, location-*-offset tournés avec le yaw) : tourner la
- * tête fait tourner le familier autour de soi. Aucune option ne change ça. On laisse donc à EcoPets une ANCRE
- * invisible sans modèle (ModelPet.spawn) qu'il déplace à sa guise, et le modèle est porté par un autre
- * porte-armure que l'on déplace nous-mêmes :
- * - joueur à l'arrêt : le familier reste où il est (tourner la tête ne le bouge plus), revient s'il est trop
- *   loin, s'écarte s'il est collé au joueur, regarde le joueur, animation idle ;
- * - joueur en marche : il le rejoint avec un peu de retard, sur le côté et en arrière selon la DIRECTION DE
- *   MARCHE (pas le regard), regarde où il va, animation walk ;
- * - trop loin (téléportation, chute) ou autre monde : réapparaît à côté du joueur.
- * Le nom (hologramme) et la traînée d'EcoPets seraient restés sur l'ancre : show-hologram est coupé côté
- * EcoPets et le nom est un TextDisplay passager du porteur ; la traînée des légendaires vient de familiers.yml.
- * L'ancre disparaît (familier rangé, joueur invisible ou mort, déconnexion) : le porteur aussi.
- * Porte-armures « marker » : aucune hitbox, ils n'interceptent ni clic ni coup.
+ * Modèle 3D (BetterModel) du familier actif, qui suit vraiment son maître (au lieu du point fixe collé à la
+ * caméra d'EcoPets) :
+ * - joueur à l'arrêt : le familier reste où il est, revient au-delà de distance-max, s'écarte s'il est collé,
+ *   regarde le joueur, animation idle ;
+ * - joueur en marche : il le rejoint avec un peu de retard, sur le côté et en arrière selon la direction de
+ *   MARCHE, regarde où il va, animation walk ;
+ * - au-delà de teleport-distance ou dans un autre monde : réapparaît à côté du joueur.
+ * Familier « vol: true » : flotte à hauteur fixe au-dessus des pieds du joueur, avec un léger flottement ;
+ * « vol: false » : posé sur le sol sous sa position.
+ * Pas de modèle pour un familier caché (menu), un joueur mort, invisible ou spectateur. Nom au-dessus du modèle
+ * (TextDisplay passager), traînée du familier (trail). Porte-armure marker : aucune hitbox, jamais sauvegardé.
+ * Réglages de suivi : section familier-suivi de config.yml. Chargée seulement si BetterModel est actif.
  */
-final class PetFollowers {
+public final class PetDisplay {
 
     private static final class Follower {
         final Player owner;
-        final String petId;
-        ArmorStand anchor;
+        final Pet pet;
         final ArmorStand carrier;
         final EntityTracker tracker;
+        final boolean hasWalk;
         TextDisplay label;
         double x, y, z;
         float yaw;
         double dirX, dirZ;
         double lastPX, lastPZ;
         boolean walking;
-        boolean hasWalk;
 
-        Follower(Player owner, String petId, ArmorStand anchor, ArmorStand carrier, EntityTracker tracker) {
+        Follower(Player owner, Pet pet, ArmorStand carrier, EntityTracker tracker, boolean hasWalk) {
             this.owner = owner;
-            this.petId = petId;
-            this.anchor = anchor;
+            this.pet = pet;
             this.carrier = carrier;
             this.tracker = tracker;
+            this.hasWalk = hasWalk;
         }
     }
 
-    private record Trail(Particle particle, int amount, int gap, double yOffset) {
-    }
-
-    private final InfluPet plugin;
     private final Map<UUID, Follower> followers = new HashMap<>();
-    private final Map<String, Trail> trails = new HashMap<>();
+    /** Modèles introuvables déjà signalés (un avertissement par modèle, pas un par tick). */
+    private final Set<String> missing = new HashSet<>();
     private long tick;
 
-    // réglages (section familier-suivi de config.yml, valeurs par défaut ci-dessous)
     private double side, back, height, minDistance, maxDistance, snapDistance, smoothing, minSpeed, bobAmplitude,
             labelHeight;
-    private String nameFormat = "%pet%&f (Niv. %level%)";
 
-    PetFollowers(InfluPet plugin) {
-        this.plugin = plugin;
+    public PetDisplay() {
         reload();
-        Bukkit.getScheduler().runTaskTimer(plugin, this::tickAll, 1L, 1L);
+        Bukkit.getScheduler().runTaskTimer(Pets.plugin(), this::tickAll, 1L, 1L);
     }
 
-    void reload() {
-        ConfigurationSection c = plugin.getConfig().getConfigurationSection("familier-suivi");
+    public void reload() {
+        ConfigurationSection c = Pets.plugin().getConfig().getConfigurationSection("familier-suivi");
         side = get(c, "cote", 1.0);
         back = get(c, "arriere", 1.2);
         height = get(c, "hauteur", 0.9);
@@ -98,56 +90,64 @@ final class PetFollowers {
         minSpeed = get(c, "vitesse-min", 0.45);
         bobAmplitude = get(c, "flottement", 0.06);
         labelHeight = get(c, "hauteur-nom", 1.3);
-        // nom au-dessus du familier : même format que l'hologramme d'EcoPets (pet-entity.name)
-        File eco = new File(plugin.getDataFolder().getParentFile(), "EcoPets/config.yml");
-        nameFormat = YamlConfiguration.loadConfiguration(eco).getString("pet-entity.name", nameFormat);
-        // traînées des légendaires (familiers.yml, généré par appliquer_effets.py)
-        trails.clear();
-        ConfigurationSection t = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "familiers.yml"))
-                .getConfigurationSection("trainees");
-        if (t != null) {
-            for (String id : t.getKeys(false)) {
-                try {
-                    trails.put(id, new Trail(Particle.valueOf(t.getString(id + ".particule", "flame").toUpperCase()),
-                            t.getInt(id + ".nombre", 2), Math.max(1, t.getInt(id + ".intervalle", 2)),
-                            t.getDouble(id + ".hauteur", 0)));
-                } catch (IllegalArgumentException e) {
-                    plugin.getLogger().warning("Traînée du familier " + id + " : particule inconnue.");
-                }
-            }
-        }
+        missing.clear();
+        // familiers rechargés : nouveaux objets Pet, les modèles sont recréés au tick suivant
+        shutdown();
     }
 
     private static double get(ConfigurationSection c, String path, double def) {
         return c == null ? def : c.getDouble(path, def);
     }
 
-    /** Ancre posée par EcoPets pour ce joueur : le modèle suit le joueur sur son propre porteur. */
-    void attach(Player owner, String petId, String model, ArmorStand anchor) {
-        Follower old = followers.get(owner.getUniqueId());
-        if (old != null && old.petId.equals(petId) && old.carrier.isValid()
-                && old.carrier.getWorld() == owner.getWorld()) {
-            // EcoPets a recréé son ancre (téléportation, rechargement) : on garde le même porteur
-            old.anchor = anchor;
-            return;
+    private Pet wanted(Player player) {
+        if (!Pets.enabled() || !Pets.settings().getBool("pet-entity.enabled") || player.isDead()
+                || player.isInvisible() || player.getGameMode() == GameMode.SPECTATOR || PetData.hidden(player)) {
+            return null;
         }
-        if (old != null) {
-            remove(old);
-            followers.remove(owner.getUniqueId());
+        return PetData.active(player);
+    }
+
+    private void tickAll() {
+        tick++;
+        for (Iterator<Follower> it = followers.values().iterator(); it.hasNext(); ) {
+            Follower f = it.next();
+            if (!f.owner.isOnline() || !f.carrier.isValid() || !f.pet.equals(wanted(f.owner))) {
+                remove(f);
+                it.remove();
+            }
         }
-        var renderer = BetterModel.modelOrNull(model);
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            Follower f = followers.get(player.getUniqueId());
+            if (f == null) {
+                Pet pet = wanted(player);
+                if (pet != null) {
+                    f = spawn(player, pet);
+                }
+            }
+            if (f != null) {
+                move(f);
+            }
+        }
+    }
+
+    private Follower spawn(Player owner, Pet pet) {
+        var renderer = BetterModel.modelOrNull(pet.model());
         if (renderer == null) {
-            plugin.getLogger().warning("Modèle BetterModel introuvable pour le familier " + petId + " : " + model);
-            return;
+            if (missing.add(pet.model())) {
+                Pets.plugin().getLogger().warning("Modèle BetterModel introuvable pour le familier " + pet.id()
+                        + " : " + pet.model());
+            }
+            return null;
         }
         Location p = owner.getLocation();
         double fx = -Math.sin(Math.toRadians(p.getYaw()));
         double fz = Math.cos(Math.toRadians(p.getYaw()));
-        Location start = p.clone().add(-fx * back + fz * side, height, -fz * back - fx * side);
+        Location start = p.clone().add(-fx * back + fz * side, 0, -fz * back - fx * side);
+        start.setY(targetY(pet, p, start.getX(), start.getZ()));
         start.setYaw(p.getYaw());
         ArmorStand carrier = stand(start);
         EntityTracker tracker = renderer.getOrCreate(BukkitAdapter.adapt(carrier));
-        Follower f = new Follower(owner, petId, anchor, carrier, tracker);
+        Follower f = new Follower(owner, pet, carrier, tracker, renderer.animation("walk").isPresent());
         f.x = start.getX();
         f.y = start.getY();
         f.z = start.getZ();
@@ -156,9 +156,9 @@ final class PetFollowers {
         f.dirZ = fz;
         f.lastPX = p.getX();
         f.lastPZ = p.getZ();
-        f.hasWalk = renderer.animation("walk").isPresent();
         followers.put(owner.getUniqueId(), f);
         updateLabel(f);
+        return f;
     }
 
     /** Porte-armure invisible, sans hitbox (marker), jamais sauvegardé. */
@@ -178,28 +178,22 @@ final class PetFollowers {
         });
     }
 
-    private TextDisplay label(ArmorStand carrier) {
-        TextDisplay label = carrier.getWorld().spawn(carrier.getLocation(), TextDisplay.class, d -> {
-            d.setPersistent(false);
-            d.setBillboard(Display.Billboard.CENTER);
-            d.setTransformation(new Transformation(new Vector3f(0, (float) labelHeight, 0), new AxisAngle4f(),
-                    new Vector3f(1, 1, 1), new AxisAngle4f()));
-        });
-        carrier.addPassenger(label);
-        return label;
-    }
-
-    private void tickAll() {
-        tick++;
-        for (Iterator<Follower> it = followers.values().iterator(); it.hasNext(); ) {
-            Follower f = it.next();
-            if (!f.owner.isOnline() || f.anchor == null || !f.anchor.isValid() || !f.carrier.isValid()) {
-                remove(f);
-                it.remove();
-                continue;
-            }
-            move(f);
+    /** Hauteur visée : au-dessus des pieds du joueur (vol), sinon le sol sous la position. */
+    private double targetY(Pet pet, Location player, double x, double z) {
+        if (pet.flying()) {
+            return player.getY() + height;
         }
+        World world = player.getWorld();
+        int bx = (int) Math.floor(x);
+        int bz = (int) Math.floor(z);
+        int top = (int) Math.floor(player.getY()) + 2;
+        for (int y = top; y >= top - 6; y--) {
+            Block block = world.getBlockAt(bx, y, bz);
+            if (!block.isPassable() && block.getRelative(0, 1, 0).isPassable()) {
+                return block.getBoundingBox().getMaxY();
+            }
+        }
+        return player.getY();
     }
 
     private void move(Follower f) {
@@ -223,11 +217,10 @@ final class PetFollowers {
         }
         double tx = f.x;
         double tz = f.z;
-        double ty = p.getY() + height;
         double dx = f.x - p.getX();
         double dz = f.z - p.getZ();
         double dist = Math.hypot(dx, dz);
-        boolean snap = f.carrier.getWorld() != world || dist > snapDistance || Math.abs(f.y - ty) > snapDistance;
+        boolean snap = f.carrier.getWorld() != world || dist > snapDistance || Math.abs(f.y - p.getY()) > snapDistance;
         if (playerMoving || snap) {
             // en arrière et sur le côté par rapport à la direction de marche
             tx = p.getX() - f.dirX * back + f.dirZ * side;
@@ -241,9 +234,10 @@ final class PetFollowers {
             tx = p.getX() + ux * (minDistance + 0.3);
             tz = p.getZ() + uz * (minDistance + 0.3);
         }
-        // ne pas viser l'intérieur d'un bloc plein : on monte d'un ou deux blocs au besoin
-        for (int i = 0; i < 2 && world.getBlockAt((int) Math.floor(tx), (int) Math.floor(ty), (int) Math.floor(tz))
-                .getType().isOccluding(); i++) {
+        double ty = targetY(f.pet, p, tx, tz);
+        // familier volant : ne pas viser l'intérieur d'un bloc plein, on monte d'un ou deux blocs au besoin
+        for (int i = 0; f.pet.flying() && i < 2 && world.getBlockAt((int) Math.floor(tx), (int) Math.floor(ty),
+                (int) Math.floor(tz)).getType().isOccluding(); i++) {
             ty += 1;
         }
         double ox = f.x;
@@ -263,7 +257,7 @@ final class PetFollowers {
             }
             f.x += sx;
             f.z += sz;
-            f.y += (ty - f.y) * 0.15;
+            f.y += (ty - f.y) * (f.pet.flying() ? 0.15 : 0.4);
         }
         double moved = Math.hypot(f.x - ox, f.z - oz);
         boolean walking = !snap && moved > 0.03;
@@ -281,7 +275,7 @@ final class PetFollowers {
             }
         }
         f.walking = walking;
-        double bob = Math.sin(tick * 0.1) * bobAmplitude;
+        double bob = f.pet.flying() ? Math.sin(tick * 0.1) * bobAmplitude : 0;
         Location to = new Location(world, f.x, f.y + bob, f.z, f.yaw, 0);
         if (f.carrier.getWorld() != world) {
             // un porteur avec passager ne change pas de monde : le nom est retiré puis recréé
@@ -297,22 +291,33 @@ final class PetFollowers {
         if (tick % 20 == 0) {
             updateLabel(f);
         }
-        Trail trail = trails.get(f.petId);
+        Pet.Trail trail = f.pet.trail();
         if (trail != null && tick % trail.gap() == 0) {
             world.spawnParticle(trail.particle(), f.x, f.y + trail.yOffset(), f.z, trail.amount(), 0.1, 0.1, 0.1, 0);
         }
     }
 
     private void updateLabel(Follower f) {
-        if (f.label == null || !f.label.isValid()) {
-            f.label = label(f.carrier);
+        Config s = Pets.settings();
+        if (!s.getBool("pet-entity.show-hologram")) {
+            if (f.label != null && f.label.isValid()) {
+                f.label.remove();
+            }
+            f.label = null;
+            return;
         }
-        var info = PetHook.pet(f.petId);
-        int level = PetHook.activeLevel(f.owner, f.petId);
-        String text = nameFormat.replace("%pet%", info == null ? f.petId : info.name())
-                .replace("%level%", String.valueOf(level))
-                .replace("%player%", f.owner.getName());
-        f.label.text(Texts.of(text));
+        if (f.label == null || !f.label.isValid()) {
+            f.label = f.carrier.getWorld().spawn(f.carrier.getLocation(), TextDisplay.class, d -> {
+                d.setPersistent(false);
+                d.setBillboard(Display.Billboard.CENTER);
+                d.setTransformation(new Transformation(new Vector3f(0, (float) labelHeight, 0), new AxisAngle4f(),
+                        new Vector3f(1, 1, 1), new AxisAngle4f()));
+            });
+            f.carrier.addPassenger(f.label);
+        }
+        f.label.text(Texts.of(s.getString("pet-entity.name").replace("%pet%", f.pet.name())
+                .replace("%level%", String.valueOf(PetData.level(f.owner, f.pet)))
+                .replace("%player%", f.owner.getName())));
     }
 
     private void remove(Follower f) {
@@ -327,26 +332,9 @@ final class PetFollowers {
         }
     }
 
-    /** Arrêt du plugin : retire tous les porteurs. */
-    void shutdown() {
+    /** Arrêt du plugin ou rechargement : retire tous les modèles. */
+    public void shutdown() {
         followers.values().forEach(this::remove);
         followers.clear();
-    }
-
-    /** Joueur propriétaire de l'ancre qu'EcoPets vient de créer : le plus proche avec ce familier actif. */
-    static Player ownerOf(Location anchor, String petId) {
-        Player best = null;
-        double bestDist = 6 * 6;
-        for (Player player : anchor.getWorld().getPlayers()) {
-            if (!petId.equalsIgnoreCase(PetHook.activeId(player))) {
-                continue;
-            }
-            double d = player.getLocation().distanceSquared(anchor);
-            if (d < bestDist) {
-                bestDist = d;
-                best = player;
-            }
-        }
-        return best;
     }
 }

@@ -77,7 +77,7 @@ public final class MainMenu extends Menu {
                 PetHook.available()
                         ? "&#EADBC8" + plugin.registry().pets().stream().filter(CardRegistry.PetEntry::enabled).count()
                         + " obtenables dans les boosters."
-                        : "&#D9534FEcoPets n'est pas chargé.",
+                        : "&#D9534FFamiliers inactifs (cf. logs).",
                 "", left("Gérer les familiers")), (p, c) -> new PetsMenu(plugin, 0).open(p));
         set(53, icon("influitems:accept", "&#FF7A59Recharger",
                 "&#EADBC8Relit config.yml (après une", "&#EADBC8modification à la main).", "", left("Recharger")),

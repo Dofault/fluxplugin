@@ -29,7 +29,7 @@ public final class PetsMenu extends Menu {
         var reg = plugin.registry();
         back(new MainMenu(plugin));
         if (!PetHook.available()) {
-            set(22, icon("barrier", "&#D9534FEcoPets n'est pas chargé",
+            set(22, icon("barrier", "&#D9534FFamiliers inactifs (cf. logs)",
                     "&#EADBC8Les familiers ne peuvent pas", "&#EADBC8sortir des boosters."));
             return;
         }

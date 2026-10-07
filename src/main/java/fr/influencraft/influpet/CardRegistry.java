@@ -32,12 +32,12 @@ public final class CardRegistry {
     public record Rarity(String id, int order, String tag) {
     }
 
-    /** pet : familier EcoPets nourri par cette carte (clic droit), ou null. */
+    /** pet : familier nourri par cette carte (clic droit), ou null. */
     public record Card(String id, int number, String itemId, String name, String series, Rarity rarity,
                        List<String> lore, String pet) {
     }
 
-    /** Familier EcoPets obtenable dans les boosters. */
+    /** Familier obtenable dans les boosters. */
     public record PetEntry(String id, Rarity rarity, boolean enabled) {
     }
 
@@ -401,7 +401,7 @@ public final class CardRegistry {
         return item;
     }
 
-    /** Nom affiché d'un familier EcoPets (son identifiant si EcoPets est absent). */
+    /** Nom affiché d'un familier (son identifiant si le système de familiers est inactif). */
     public String petName(String petId) {
         PetHook.PetInfo info = PetHook.pet(petId);
         return info == null ? petId : info.name();

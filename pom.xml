@@ -37,20 +37,28 @@
             <scope>system</scope>
             <systemPath>${project.basedir}/libs/ItemsAdder_4.0.18.jar</systemPath>
         </dependency>
-        <!-- Familiers débloqués par les boosters (optionnel à l'exécution). -->
-        <dependency>
-            <groupId>com.willfp</groupId>
-            <artifactId>ecopets</artifactId>
-            <version>2026.38</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/EcoPets-2026.38.jar</systemPath>
-        </dependency>
         <dependency>
             <groupId>com.willfp</groupId>
             <artifactId>eco</artifactId>
             <version>2026.38</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/libs/eco-2026.38-modrinth.jar</systemPath>
+        </dependency>
+        <!-- Effets des familiers (holders libreforge) : version embarquée par les plugins eco de la prod. -->
+        <dependency>
+            <groupId>com.willfp</groupId>
+            <artifactId>libreforge</artifactId>
+            <version>2026.38</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/libreforge-2026.38.jar</systemPath>
+        </dependency>
+        <!-- Placeholders %influpet_...% (optionnel à l'exécution). -->
+        <dependency>
+            <groupId>me.clip</groupId>
+            <artifactId>placeholderapi</artifactId>
+            <version>2.12.3</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/PlaceholderAPI-2.12.3.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>kr.toxicity.model</groupId>

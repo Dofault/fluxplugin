@@ -4,6 +4,8 @@ import fr.influencraft.influpet.CardRegistry.CardReward;
 import fr.influencraft.influpet.CardRegistry.PetReward;
 import fr.influencraft.influpet.CardRegistry.Reward;
 import fr.influencraft.influpet.effets.PetEffects;
+import fr.influencraft.influpet.pets.PetCommands;
+import fr.influencraft.influpet.pets.Pets;
 import fr.influencraft.influpet.gui.ChatPrompt;
 import fr.influencraft.influpet.gui.MainMenu;
 import fr.influencraft.influpet.gui.MenuListener;
@@ -24,7 +26,9 @@ import java.util.stream.Collectors;
 
 /**
  * Cartes à collectionner et boosters : un booster s'ouvre au clic droit, chaque récompense
- * (carte ou familier EcoPets) est révélée par une animation de totem. Édition en jeu : /influcard menu.
+ * (carte ou familier) est révélée par une animation de totem. Édition en jeu : /influpet menu. Les familiers
+ * (stockage, effets, menu /familiers, modèles qui suivent le joueur) sont gérés par le paquet pets, qui
+ * remplace EcoPets.
  */
 public final class InfluPet extends JavaPlugin implements TabCompleter {
 
@@ -50,6 +54,8 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
         cardKey = new NamespacedKey(LEGACY_NAMESPACE, "card");
         boosterKey = new NamespacedKey(LEGACY_NAMESPACE, "booster");
         versionKey = new NamespacedKey(LEGACY_NAMESPACE, "version");
+        // familiers avant les cartes : le registre des cartes liste les familiers chargés
+        boolean petsStarted = startPets();
         registry = new CardRegistry(this);
         registry.load();
         reveals = new RevealManager(this);
@@ -63,27 +69,39 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
         if (command != null) {
             command.setTabCompleter(this);
         }
-        if (getServer().getPluginManager().isPluginEnabled("EcoPets")
-                && getServer().getPluginManager().isPluginEnabled("BetterModel")) {
-            try {
-                BetterModelPets.register(this);
-            } catch (Throwable t) {
-                getLogger().warning("Familiers BetterModel indisponibles : " + t);
-            }
+        if (!petsStarted) {
+            // sur la prod, libreforge est chargé par les plugins eco eux-mêmes : il peut n'être actif qu'après
+            // InfluPet. Nouvel essai une fois le serveur démarré (tous les plugins activés).
+            getServer().getScheduler().runTask(this, () -> {
+                if (!Pets.enabled() && startPets()) {
+                    registry.load();
+                    refreshOnlineItems();
+                }
+            });
         }
-        // EcoPets se charge parfois après : on recharge une fois le serveur prêt pour lister les familiers
-        getServer().getScheduler().runTask(this, () -> registry.load());
+    }
+
+    /** Démarre les familiers et leurs effets codés. false si le système n'a pas pu démarrer (cf. logs). */
+    private boolean startPets() {
+        try {
+            if (!Pets.enable(this)) {
+                return false;
+            }
+        } catch (Throwable t) {
+            getLogger().severe("Système de familiers indisponible : " + t);
+            t.printStackTrace();
+            return false;
+        }
         // effets de familiers impossibles en config libreforge (familiers.yml)
-        if (getServer().getPluginManager().isPluginEnabled("EcoPets")) {
-            if (!new java.io.File(getDataFolder(), "familiers.yml").exists()) {
-                saveResource("familiers.yml", false);
-            }
-            try {
-                petEffects = new PetEffects(this);
-            } catch (Throwable t) {
-                getLogger().warning("Effets de familiers indisponibles : " + t);
-            }
+        if (!new java.io.File(getDataFolder(), "familiers.yml").exists()) {
+            saveResource("familiers.yml", false);
         }
+        try {
+            petEffects = new PetEffects(this);
+        } catch (Throwable t) {
+            getLogger().warning("Effets de familiers indisponibles : " + t);
+        }
+        return true;
     }
 
     /**
@@ -118,10 +136,7 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
         if (petEffects != null) {
             petEffects.shutdown();
         }
-        if (getServer().getPluginManager().isPluginEnabled("BetterModel")
-                && getServer().getPluginManager().isPluginEnabled("EcoPets")) {
-            BetterModelPets.shutdown();
-        }
+        Pets.disable();
     }
 
     public NamespacedKey cardKey() {
@@ -234,13 +249,10 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
             }
             case "reload" -> {
                 reloadConfig();
+                Pets.load();
                 registry.load();
                 if (petEffects != null) {
                     petEffects.reload();
-                }
-                if (getServer().getPluginManager().isPluginEnabled("BetterModel")
-                        && getServer().getPluginManager().isPluginEnabled("EcoPets")) {
-                    BetterModelPets.reload();
                 }
                 send(sender, "reloaded", "%cards%", String.valueOf(registry.cards().size()),
                         "%boosters%", String.valueOf(registry.boosters().size()));
@@ -249,6 +261,7 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
             case "open" -> open(sender, args);
             case "list" -> list(sender, args);
             case "info" -> info(sender, args);
+            case "familier", "pet" -> PetCommands.admin(sender, java.util.Arrays.copyOfRange(args, 1, args.length));
             default -> usage(sender);
         }
         return true;
@@ -437,8 +450,13 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
         List<String> petIds = registry.pets().stream().map(CardRegistry.PetEntry::id).toList();
         List<String> boosterIds = registry.boosters().stream().map(CardRegistry.Booster::id).toList();
         String sub = args[0].toLowerCase(Locale.ROOT);
+        if ((sub.equals("familier") || sub.equals("pet")) && args.length > 1) {
+            String lastArg = args[args.length - 1].toLowerCase(Locale.ROOT);
+            return PetCommands.adminTab(java.util.Arrays.copyOfRange(args, 1, args.length)).stream()
+                    .filter(o -> o.toLowerCase(Locale.ROOT).startsWith(lastArg)).toList();
+        }
         List<String> options = switch (args.length) {
-            case 1 -> List.of("menu", "give", "open", "list", "info", "reload");
+            case 1 -> List.of("menu", "give", "open", "list", "info", "familier", "reload");
             case 2 -> switch (sub) {
                 case "give", "open" -> players;
                 case "list", "info" -> List.of("cartes", "familiers", "boosters");

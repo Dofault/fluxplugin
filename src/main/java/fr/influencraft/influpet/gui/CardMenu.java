@@ -68,7 +68,7 @@ public final class CardMenu extends Menu {
                         + " XP &#EADBC8à ce familier (Maj : toute la pile).", "",
                 "&#6B7A8FL'XP par carte se règle par rareté", "&#6B7A8F(card-xp dans config.yml).", "",
                 left("Modifier")), (p, c) ->
-                ask(p, "&#EADBC8Identifiant EcoPets du familier &#6B7A8F(« aucun » pour délier) :",
+                ask(p, "&#EADBC8Identifiant du familier &#6B7A8F(« aucun » pour délier) :",
                         answer -> reg.setCard(id, "pet", answer.equalsIgnoreCase("aucun") ? "" : answer.trim().toLowerCase())));
 
         List<String> loreInfo = new ArrayList<>();
