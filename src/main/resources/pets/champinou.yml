@@ -1,0 +1,72 @@
+# Shroomy: one of the default InfluPet pets. Grows with its cards (right-click a card).
+# Model: BetterModel/models/familier_champinou.bbmodel, card and plush: ItemsAdder pack "influpet".
+
+name: '&#37C44AShroomy'
+description: '&#EADBC8Only grows with its cards'
+entity-texture: bettermodel:familier_champinou
+flying: false
+icon: itemsadder:influpet__carte_champinou
+trail:
+  enabled: false
+  particle: flame
+  gap: 2
+  amount: 1
+  y-offset: 0.0
+level-xp-requirements:
+- 52
+- 69
+- 88
+- 108
+- 129
+- 151
+- 173
+- 197
+- 219
+xp-gain-methods: []
+level-placeholders:
+- id: bonus
+  value: round((1 + (%level% - 1) * 9 / 9) * 100) / 100
+effects-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Mycelium'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to double'
+  - '  &#EADBC8harvested mushrooms'
+rewards-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Mycelium'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to double'
+  - '  &#EADBC8harvested mushrooms'
+level-up-messages:
+  1:
+  - '&#6B7A8F» &#FFF4E0Mycelium'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to double'
+  - '  &#EADBC8harvested mushrooms'
+level-up-effects: []
+effects:
+- effects:
+  - id: multiply_drops
+    args:
+      multiplier: 2
+  args:
+    chance: 1 + (%level% - 1) * 9 / 9
+  triggers:
+  - block_item_drop
+  filters:
+    blocks:
+    - brown_mushroom
+    - red_mushroom
+    - crimson_fungus
+    - warped_fungus
+    - brown_mushroom_block
+    - red_mushroom_block
+    player_placed: false
+conditions: []
+activate-conditions: []
+spawn-egg:
+  enabled: false
+  item: paper
+  name: '&#37C44AShroomy'
+  lore: []
+  craftable: false
+  recipe: []
+  withdrawable: false

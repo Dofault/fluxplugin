@@ -1,0 +1,52 @@
+# Kid Goat: one of the default InfluPet pets. Grows with its cards (right-click a card).
+# Model: BetterModel/models/familier_cabri.bbmodel, card and plush: ItemsAdder pack "influpet".
+
+name: '&#37C44AKid Goat'
+description: '&#EADBC8Only grows with its cards'
+entity-texture: bettermodel:familier_cabri
+flying: false
+icon: itemsadder:influpet__carte_cabri
+trail:
+  enabled: false
+  particle: flame
+  gap: 2
+  amount: 1
+  y-offset: 0.0
+level-xp-requirements:
+- 52
+- 69
+- 88
+- 108
+- 129
+- 151
+- 173
+- 197
+- 219
+xp-gain-methods: []
+level-placeholders:
+- id: bonus
+  value: round((0.2 + (%level% - 1) * 0.4 / 9) * 100) / 100
+effects-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Sure-footed&#EADBC8: steps up +&#FFF4E0%bonus%&#EADBC8 block'
+rewards-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Sure-footed&#EADBC8: steps up +&#FFF4E0%bonus%&#EADBC8 block'
+level-up-messages:
+  1:
+  - '&#6B7A8F» &#FFF4E0Sure-footed&#EADBC8: steps up +&#FFF4E0%bonus%&#EADBC8 block'
+level-up-effects: []
+effects:
+- id: increase_step_height
+  args:
+    height: 0.2 + (%level% - 1) * 0.4 / 9
+conditions: []
+activate-conditions: []
+spawn-egg:
+  enabled: false
+  item: paper
+  name: '&#37C44AKid Goat'
+  lore: []
+  craftable: false
+  recipe: []
+  withdrawable: false

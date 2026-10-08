@@ -58,7 +58,7 @@ public final class CardMenu extends Menu {
                         answer -> reg.setCard(id, "series", answer.equalsIgnoreCase(none) ? "" : answer)));
 
         set(23, icon("painting", t("texture.name"),
-                join(lines("texture.lore", "%value%", card.itemId(), "%example%", "influcards:carte_test"),
+                join(lines("texture.lore", "%value%", card.itemId(), "%example%", "influpet:carte_caillou"),
                         List.of(left(t("action.edit"))))), (p, c) ->
                 ask(p, t("texture.prompt"), answer -> reg.setCard(id, "item", answer.trim())));
 

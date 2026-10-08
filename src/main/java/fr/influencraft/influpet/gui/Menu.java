@@ -115,19 +115,19 @@ public abstract class Menu implements InventoryHolder {
     }
 
     protected void back(Menu target) {
-        set(rows * 9 - 9, icon("influitems:btn_back", t("back")), (p, c) -> target.open(p));
+        set(rows * 9 - 9, icon("arrow", t("back")), (p, c) -> target.open(p));
     }
 
     /** Boutons page précédente / suivante en bas du menu. */
     protected void pages(int page, int total, java.util.function.IntConsumer goTo) {
         int last = rows * 9 - 1;
         if (page > 0) {
-            set(last - 5, icon("influitems:btn_prev", t("previous-page"),
+            set(last - 5, icon("arrow", t("previous-page"),
                     t("page", "%page%", String.valueOf(page), "%pages%", String.valueOf(total))),
                     (p, c) -> goTo.accept(page - 1));
         }
         if (page < total - 1) {
-            set(last - 3, icon("influitems:btn_next", t("next-page"),
+            set(last - 3, icon("arrow", t("next-page"),
                     t("page", "%page%", String.valueOf(page + 2), "%pages%", String.valueOf(total))),
                     (p, c) -> goTo.accept(page + 1));
         }

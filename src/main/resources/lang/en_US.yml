@@ -91,7 +91,7 @@ card-format:
   lore-pet:
     - ""
     - "&#5FB3B3+%xp% XP &#EADBC8for &r%pet%"
-    - "&r&7%img_right_click% &#FF7A59Feed &#6B7A8F(Shift: whole stack)"
+    - "&#6B7A8F[Right-click] &#FF7A59Feed &#6B7A8F(Shift: whole stack)"
 
 pets:
   # pet name in the editor menus and announcements
@@ -144,13 +144,13 @@ pet-settings:
 
 # Editor menus (/influpet menu)
 editor:
-  back: "&r&7%img_left_click% &#FF7A59Back"
-  previous-page: "&r&7%img_left_click% &#FF7A59Previous page"
-  next-page: "&r&7%img_left_click% &#FF7A59Next page"
+  back: "&#6B7A8F[Left-click] &#FF7A59Back"
+  previous-page: "&#6B7A8F[Left-click] &#FF7A59Previous page"
+  next-page: "&#6B7A8F[Left-click] &#FF7A59Next page"
   page: "&#6B7A8FPage %page%/%pages%"
   click:
-    left: "&r&7%img_left_click% &#FF7A59%action%"
-    right: "&r&7%img_right_click% &#FF7A59%action%"
+    left: "&#6B7A8F[Left-click] &#FF7A59%action%"
+    right: "&#6B7A8F[Right-click] &#FF7A59%action%"
     shift: "&#6B7A8FShift + click &#FF7A59%action%"
   action:
     edit: "Edit"
@@ -169,7 +169,7 @@ editor:
   new-booster-lore:
     - "&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards."
     - ""
-    - "&r&7%img_right_click% &#FF7A59Open"
+    - "&#6B7A8F[Right-click] &#FF7A59Open"
   texture:
     name: "&#FF7A59Texture"
     lore:

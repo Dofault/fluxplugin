@@ -63,7 +63,7 @@ public final class PetsMenu extends Menu {
 
         boolean xp = reg.duplicateMode() == CardRegistry.DuplicatePetMode.XP;
         double amount = reg.duplicateXp();
-        set(49, icon(xp ? "experience_bottle" : "influitems:stairs", t("pets.duplicate.name"),
+        set(49, icon(xp ? "experience_bottle" : "repeater", t("pets.duplicate.name"),
                 join(lines(xp ? "pets.duplicate.lore-xp" : "pets.duplicate.lore-reroll",
                                 "%xp%", String.format(InfluPet.locale(), "%.0f", amount)),
                         xp ? List.of(left(t("pets.duplicate.switch")), right(t("pets.duplicate.more")),

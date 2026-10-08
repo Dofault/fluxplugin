@@ -77,7 +77,7 @@ public final class ConfigFiles {
     /** Écrit les fichiers par défaut manquants (installation neuve). */
     void saveDefaults() {
         List<String> names = new java.util.ArrayList<>(List.of("config.yml", "menus/pets.yml", "menus/progression.yml",
-                "content/cards.yml", "content/boosters.yml", "content/pets.yml", "effects.yml"));
+                "content/cards.yml", "content/boosters.yml", "content/pets.yml", "effects.yml", "chains.yml"));
         LANGUAGES.forEach(l -> names.add("lang/" + l + ".yml"));
         for (String name : names) {
             if (!file(name).exists()) {

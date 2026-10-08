@@ -48,7 +48,7 @@ public final class MainMenu extends Menu {
         }
         pages(page, pages, target -> new MainMenu(plugin, target).open(player));
 
-        set(4, icon("influitems:settings", t("main.info.name"), lines("main.info.lore")));
+        set(4, icon("comparator", t("main.info.name"), lines("main.info.lore")));
 
         set(45, icon("chest", t("main.new-booster.name"),
                 join(lines("main.new-booster.lore"), List.of(left(t("action.create"))))), (p, c) ->
@@ -61,7 +61,7 @@ public final class MainMenu extends Menu {
                     plugin.registry().createBooster(id);
                     plugin.send(p, "created", "%id%", id);
                 }));
-        set(47, icon("influcards:carte_test", t("main.cards.name"),
+        set(47, icon("paper", t("main.cards.name"),
                 join(lines("main.cards.lore", "%count%", String.valueOf(plugin.registry().cards().size())),
                         List.of(left(t("main.cards.action"))))),
                 (p, c) -> new CardsMenu(plugin, 0).open(p));
@@ -71,7 +71,7 @@ public final class MainMenu extends Menu {
                         .filter(CardRegistry.PetEntry::enabled).count()))
                         : lines("pets-unavailable"), List.of(left(t("main.pets.action"))))),
                 (p, c) -> new PetsMenu(plugin, 0).open(p));
-        set(53, icon("influitems:accept", t("main.reload.name"),
+        set(53, icon("clock", t("main.reload.name"),
                 join(lines("main.reload.lore"), List.of(left(t("main.reload.action"))))),
                 (p, c) -> {
                     plugin.reloadConfig();

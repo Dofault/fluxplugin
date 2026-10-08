@@ -91,7 +91,7 @@ card-format:
   lore-pet:
     - ""
     - "&#5FB3B3+%xp% XP &#EADBC8pour &r%pet%"
-    - "&r&7%img_right_click% &#FF7A59Nourrir &#6B7A8F(Maj : toute la pile)"
+    - "&#6B7A8F[Clic droit] &#FF7A59Nourrir &#6B7A8F(Maj : toute la pile)"
 
 # Familiers
 pets:
@@ -145,13 +145,13 @@ pet-settings:
 
 # Menus d'édition (/influpet menu)
 editor:
-  back: "&r&7%img_left_click% &#FF7A59Retour"
-  previous-page: "&r&7%img_left_click% &#FF7A59Page précédente"
-  next-page: "&r&7%img_left_click% &#FF7A59Page suivante"
+  back: "&#6B7A8F[Clic gauche] &#FF7A59Retour"
+  previous-page: "&#6B7A8F[Clic gauche] &#FF7A59Page précédente"
+  next-page: "&#6B7A8F[Clic gauche] &#FF7A59Page suivante"
   page: "&#6B7A8FPage %page%/%pages%"
   click:
-    left: "&r&7%img_left_click% &#FF7A59%action%"
-    right: "&r&7%img_right_click% &#FF7A59%action%"
+    left: "&#6B7A8F[Clic gauche] &#FF7A59%action%"
+    right: "&#6B7A8F[Clic droit] &#FF7A59%action%"
     shift: "&#6B7A8FMaj + clic &#FF7A59%action%"
   action:
     edit: "Modifier"
@@ -170,7 +170,7 @@ editor:
   new-booster-lore:
     - "&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes."
     - ""
-    - "&r&7%img_right_click% &#FF7A59Ouvrir"
+    - "&#6B7A8F[Clic droit] &#FF7A59Ouvrir"
   texture:
     name: "&#FF7A59Texture"
     lore:

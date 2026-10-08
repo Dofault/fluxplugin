@@ -68,7 +68,7 @@ public final class BoosterMenu extends Menu {
                 ask(p, t("booster.name.prompt"), answer -> reg.setBooster(id, "name", answer)));
 
         set(20, icon("painting", t("texture.name"),
-                join(lines("texture.lore", "%value%", b.itemId(), "%example%", "influcards:booster_basique"),
+                join(lines("texture.lore", "%value%", b.itemId(), "%example%", "influpet:booster_ordinaire"),
                         List.of(left(t("action.edit"))))), (p, c) ->
                 ask(p, t("texture.prompt"), answer -> reg.setBooster(id, "item", answer.trim())));
 
@@ -90,14 +90,14 @@ public final class BoosterMenu extends Menu {
                                 : lines("booster.contents.lore-chosen", "%count%", String.valueOf(count)),
                         List.of(left(t("booster.contents.action"))))), (p, c) -> new ContentMenu(plugin, id, 0).open(p));
 
-        set(25, icon("influitems:search", t("booster.chances.name"),
+        set(25, icon("spyglass", t("booster.chances.name"),
                 join(lines("booster.chances.lore"), List.of(left(t("booster.chances.action"))))), (p, c) -> {
             p.closeInventory();
             p.performCommand("influpet info booster " + id);
         });
 
         // Poids des raretés : ligne des cartes, ligne des familiers
-        set(27, icon("influcards:carte_test", t("booster.card-weights.name"), lines("booster.card-weights.lore")));
+        set(27, icon("paper", t("booster.card-weights.name"), lines("booster.card-weights.lore")));
         set(36, icon("bone", t("booster.pet-weights.name"), lines("booster.pet-weights.lore")));
         weightRow(player, b, false, RARITY_SLOTS);
         weightRow(player, b, true, PET_RARITY_SLOTS);

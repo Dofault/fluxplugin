@@ -1,0 +1,55 @@
+# Experience Orb: one of the default InfluPet pets. Grows with its cards (right-click a card).
+# Model: BetterModel/models/familier_orbe_xp.bbmodel, card and plush: ItemsAdder pack "influpet".
+
+name: '&#37C44AExperience Orb'
+description: '&#EADBC8Only grows with its cards'
+entity-texture: bettermodel:familier_orbe_xp
+flying: true
+icon: itemsadder:influpet__carte_orbe_xp
+trail:
+  enabled: false
+  particle: flame
+  gap: 2
+  amount: 1
+  y-offset: 0.0
+level-xp-requirements:
+- 52
+- 69
+- 88
+- 108
+- 129
+- 151
+- 173
+- 197
+- 219
+xp-gain-methods: []
+level-placeholders:
+- id: bonus
+  value: round((1 + (%level% - 1) * 9 / 9) * 100) / 100
+effects-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Memory'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance not to consume'
+  - '  &#EADBC8levels when enchanting'
+rewards-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Memory'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance not to consume'
+  - '  &#EADBC8levels when enchanting'
+level-up-messages:
+  1:
+  - '&#6B7A8F» &#FFF4E0Memory'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance not to consume'
+  - '  &#EADBC8levels when enchanting'
+level-up-effects: []
+effects: []
+conditions: []
+activate-conditions: []
+spawn-egg:
+  enabled: false
+  item: paper
+  name: '&#37C44AExperience Orb'
+  lore: []
+  craftable: false
+  recipe: []
+  withdrawable: false

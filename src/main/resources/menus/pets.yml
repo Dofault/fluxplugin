@@ -40,7 +40,7 @@ pet-slots:
   active:
     name: '%pet% &#FFD94DLvl. %level%'
     lore:
-    - '&r&7%img_right_click% &#FFD94DPut away'
+    - '&#6B7A8F[Right-click] &#FFD94DPut away'
     - ''
     - '%description%'
     - '&#6B7A8F(right-click one of its cards)'
@@ -52,9 +52,9 @@ pet-slots:
     - '&8» &#B376E5%percentage_progress% %'
     - '&8» &#B376E5%current_xp%&8/&7%required_xp% &#B376E5XP'
     - ''
-    - '&r&7%img_left_click% &#FFD94DView progress'
+    - '&#6B7A8F[Left-click] &#FFD94DView progress'
     max-level-lore:
-    - '&r&7%img_right_click% &#FFD94DPut away'
+    - '&#6B7A8F[Right-click] &#FFD94DPut away'
     - ''
     - '%description%'
     - '&#6B7A8F(right-click one of its cards)'
@@ -64,7 +64,7 @@ pet-slots:
     - ''
     - '&#2ECF7BMaximum level reached'
     - ''
-    - '&r&7%img_left_click% &#FFD94DView progress'
+    - '&#6B7A8F[Left-click] &#FFD94DView progress'
   # free slot (%slot%: slot number)
   empty:
     name: '&#FFD94DFree slot'
@@ -111,10 +111,10 @@ pet-icon:
   active-lore:
   - ''
   - '&#2ECF7BActive pet'
-  - '&r&7%img_left_click% &#FFD94DPut away'
+  - '&#6B7A8F[Left-click] &#FFD94DPut away'
   not-active-lore:
   - ''
-  - '&r&7%img_left_click% &#FFD94DActivate'
+  - '&#6B7A8F[Left-click] &#FFD94DActivate'
   click:
     enabled: true
     sound: ui_button_click
@@ -159,13 +159,13 @@ toggle:
     - ''
     - '&#B376E5They stay active, effects too.'
     - ''
-    - '&r&7%img_left_click% &#FFD94DHide'
+    - '&#6B7A8F[Left-click] &#FFD94DHide'
   show-pet:
     item: player_head texture:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNjNmNzliMjA3ZDYxZTEyMjUyM2I4M2Q2MTUwOGQ5OWNmYTA3OWQ0NWJmMjNkZjJhOWE1MTI3ZjkwNzFkNGIwMCJ9fX0=
     name: '&#FFD94DShow pets'
     lore:
     - ''
-    - '&r&7%img_left_click% &#FFD94DShow'
+    - '&#6B7A8F[Left-click] &#FFD94DShow'
   location:
     row: 6
     column: 8

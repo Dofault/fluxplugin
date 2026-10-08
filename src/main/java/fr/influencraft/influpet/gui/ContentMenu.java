@@ -69,7 +69,7 @@ public final class ContentMenu extends Menu {
         set(4, icon("chest", t("content.info.name", "%booster%", b.name()),
                 lines(b.contents().isEmpty() ? "content.info.lore-all" : "content.info.lore-chosen",
                         "%count%", String.valueOf(b.contents().size()))));
-        set(49, icon("influitems:chest_delete", t("content.reset.name"),
+        set(49, icon("lava_bucket", t("content.reset.name"),
                 join(lines("content.reset.lore"), List.of(left(t("content.reset.action"))))), (p, c) -> {
             reg.setBooster(id, "contents", List.of());
             refresh(p);

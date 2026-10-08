@@ -1,0 +1,90 @@
+# Butterfly: one of the default InfluPet pets. Grows with its cards (right-click a card).
+# Model: BetterModel/models/familier_papillon.bbmodel, card and plush: ItemsAdder pack "influpet".
+
+name: '&#3283A8Butterfly'
+description: '&#EADBC8Only grows with its cards'
+entity-texture: bettermodel:familier_papillon
+flying: true
+icon: itemsadder:influpet__carte_papillon
+trail:
+  enabled: false
+  particle: flame
+  gap: 2
+  amount: 1
+  y-offset: 0.0
+level-xp-requirements:
+- 32
+- 42
+- 53
+- 65
+- 78
+- 91
+- 105
+- 119
+- 135
+xp-gain-methods: []
+level-placeholders:
+- id: bonus
+  value: round((1 + (%level% - 1) * 9 / 9) * 100) / 100
+effects-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Bouquet'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to'
+  - '  &#EADBC8double picked flowers'
+rewards-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Bouquet'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to'
+  - '  &#EADBC8double picked flowers'
+level-up-messages:
+  1:
+  - '&#6B7A8F» &#FFF4E0Bouquet'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to'
+  - '  &#EADBC8double picked flowers'
+level-up-effects: []
+effects:
+- effects:
+  - id: multiply_drops
+    args:
+      multiplier: 2
+  args:
+    chance: 1 + (%level% - 1) * 9 / 9
+  triggers:
+  - block_item_drop
+  filters:
+    blocks:
+    - dandelion
+    - poppy
+    - blue_orchid
+    - allium
+    - azure_bluet
+    - red_tulip
+    - orange_tulip
+    - white_tulip
+    - pink_tulip
+    - oxeye_daisy
+    - cornflower
+    - lily_of_the_valley
+    - torchflower
+    - wither_rose
+    - sunflower
+    - lilac
+    - rose_bush
+    - peony
+    - pink_petals
+    - wildflowers
+    - cactus_flower
+    - open_eyeblossom
+    - closed_eyeblossom
+    - pitcher_plant
+    player_placed: false
+conditions: []
+activate-conditions: []
+spawn-egg:
+  enabled: false
+  item: paper
+  name: '&#3283A8Butterfly'
+  lore: []
+  craftable: false
+  recipe: []
+  withdrawable: false

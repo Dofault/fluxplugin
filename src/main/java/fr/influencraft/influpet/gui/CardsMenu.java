@@ -49,9 +49,9 @@ public final class CardsMenu extends Menu {
         }
         pages(page, pageCount(cards.size()), target -> new CardsMenu(plugin, target).open(player));
 
-        set(4, icon("influcards:carte_test", t("cards.info.name", "%count%", String.valueOf(cards.size())),
+        set(4, icon("paper", t("cards.info.name", "%count%", String.valueOf(cards.size())),
                 lines("cards.info.lore")));
-        set(49, icon("influitems:accept", t("cards.new.name"),
+        set(49, icon("writable_book", t("cards.new.name"),
                 join(lines("cards.new.lore"), List.of(left(t("action.create"))))), (p, c) ->
                 ask(p, t("cards.new.prompt"), answer -> {
                     String id = answer.toLowerCase().replaceAll("[^a-z0-9_]", "_");

@@ -76,6 +76,7 @@ public final class Pets {
         settings = readSettings();
         PetData.registerKeys(settings.getBool("local-storage"));
         EcoPetsMigration.copyPetFiles(plugin);
+        saveDefaultPets();
         fr.influencraft.influpet.ConfigFiles.migratePetFiles(new java.io.File(plugin.getDataFolder(), "pets"),
                 plugin.getLogger());
         if (!providerRegistered) {
@@ -134,6 +135,7 @@ public final class Pets {
             return;
         }
         settings = readSettings();
+        loadChains();
         PETS.clear();
         File folder = new File(plugin.getDataFolder(), "pets");
         File[] files = folder.listFiles((dir, name) -> name.endsWith(".yml") && !name.startsWith("_"));
@@ -156,6 +158,68 @@ public final class Pets {
         if (enabled) {
             HolderProviderKt.clearAllHolderCaches();
             Bukkit.getOnlinePlayers().forEach(Pets::refresh);
+        }
+    }
+
+    /**
+     * Installation neuve (ni pets/, ni plugins/EcoPets/pets à reprendre) : les familiers d'exemple du jar
+     * (pets/index.txt) sont écrits dans pets/.
+     */
+    private static void saveDefaultPets() {
+        File folder = new File(plugin.getDataFolder(), "pets");
+        if (folder.exists()) {
+            return;
+        }
+        try (var index = plugin.getResource("pets/index.txt")) {
+            if (index == null) {
+                return;
+            }
+            folder.mkdirs();
+            int count = 0;
+            for (String name : new String(index.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8).split("\\R")) {
+                name = name.trim();
+                if (name.isEmpty()) {
+                    continue;
+                }
+                try (var in = plugin.getResource("pets/" + name)) {
+                    if (in != null) {
+                        java.nio.file.Files.copy(in, new File(folder, name).toPath());
+                        count++;
+                    }
+                }
+            }
+            plugin.getLogger().info(count + " default pets written to pets/.");
+        } catch (java.io.IOException e) {
+            plugin.getLogger().warning("Could not write the default pets: " + e);
+        }
+    }
+
+    /**
+     * Chaînes libreforge propres aux familiers (chains.yml d'InfluPet, même format que celui de libreforge :
+     * chains: [{id, effects}]), enregistrées auprès de libreforge avant de compiler les familiers : un familier
+     * peut les lancer avec run_chain sans toucher à plugins/libreforge/chains.yml.
+     */
+    private static void loadChains() {
+        File file = new File(plugin.getDataFolder(), "chains.yml");
+        if (!file.exists()) {
+            return;
+        }
+        Config config = new TransientConfig(file, ConfigType.YAML);
+        int count = 0;
+        for (Config chain : config.getSubsections("chains")) {
+            String id = chain.getString("id");
+            if (id.isEmpty()) {
+                continue;
+            }
+            var compiled = com.willfp.libreforge.effects.Effects.INSTANCE.compileChain(chain.getSubsections("effects"),
+                    new com.willfp.libreforge.ViolationContext(libreforge, "InfluPet chain " + id));
+            if (compiled != null) {
+                com.willfp.libreforge.effects.Effects.INSTANCE.register(id, compiled);
+                count++;
+            }
+        }
+        if (count > 0) {
+            plugin.getLogger().info(count + " libreforge chains registered from chains.yml.");
         }
     }
 

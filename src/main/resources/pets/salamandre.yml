@@ -1,0 +1,75 @@
+# Blazing Salamander: one of the default InfluPet pets. Grows with its cards (right-click a card).
+# Model: BetterModel/models/familier_salamandre.bbmodel, card and plush: ItemsAdder pack "influpet".
+
+name: '&#37C44ABlazing Salamander'
+description: '&#EADBC8Only grows with its cards'
+entity-texture: bettermodel:familier_salamandre
+flying: false
+icon: itemsadder:influpet__carte_salamandre
+trail:
+  enabled: false
+  particle: flame
+  gap: 2
+  amount: 1
+  y-offset: 0.0
+level-xp-requirements:
+- 52
+- 69
+- 88
+- 108
+- 129
+- 151
+- 173
+- 197
+- 219
+xp-gain-methods: []
+level-placeholders:
+- id: bonus
+  value: round((1 + (%level% - 1) * 9 / 9) * 10) / 10
+effects-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Ember Skin'
+  - '  &#EADBC8Fire Resistance for &#FFF4E0%bonus%'
+  - '  &#FFF4E0s&#EADBC8 when touching lava'
+  - '  &#EADBC8Once per minute'
+rewards-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Ember Skin'
+  - '  &#EADBC8Fire Resistance for &#FFF4E0%bonus%'
+  - '  &#FFF4E0s&#EADBC8 when touching lava'
+  - '  &#EADBC8Once per minute'
+level-up-messages:
+  1:
+  - '&#6B7A8F» &#FFF4E0Ember Skin'
+  - '  &#EADBC8Fire Resistance for &#FFF4E0%bonus%'
+  - '  &#FFF4E0s&#EADBC8 when touching lava'
+  - '  &#EADBC8Once per minute'
+level-up-effects: []
+effects:
+- effects:
+  - id: potion_effect
+    args:
+      effect: fire_resistance
+      level: 1
+      duration: 20 + (%level% - 1) * 180 / 9
+      apply_to_player: true
+      particles: false
+  args:
+    cooldown: 60
+    send_cooldown_message: false
+  triggers:
+  - move
+  conditions:
+  - id: in_block
+    args:
+      block: lava
+conditions: []
+activate-conditions: []
+spawn-egg:
+  enabled: false
+  item: paper
+  name: '&#37C44ABlazing Salamander'
+  lore: []
+  craftable: false
+  recipe: []
+  withdrawable: false

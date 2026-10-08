@@ -43,26 +43,26 @@ pet-reveal:
     - legendary
     - fabled
 
-# Rarities, from the most common to the rarest (reveal order). The tag already contains the rarity name: it is
-# shown alone in front of card names.
+# Rarities, from the most common to the rarest (reveal order). The tag is shown in front of card names; it can be
+# an ItemsAdder glyph such as "&r&f%img_<id>%".
 rarities:
   simple:
-    tag: "&r&f%img_simple%"
+    tag: "&#AAAAAAꜱɪᴍᴘʟᴇ"
     color: '#AAAAAA'
   unique:
-    tag: "&r&f%img_unique%"
+    tag: "&#37C44Aᴜɴɪǫᴜᴇ"
     color: '#37C44A'
   elite:
-    tag: "&r&f%img_elite%"
+    tag: "&#3283A8ᴇʟɪᴛᴇ"
     color: '#3283A8'
   ultimate:
-    tag: "&r&f%img_ultimate%"
+    tag: "&#B376E5ᴜʟᴛɪᴍᴀᴛᴇ"
     color: '#B376E5'
   legendary:
-    tag: "&r&f%img_legendary%"
+    tag: "&#F0A800ʟᴇɢᴇɴᴅᴀʀʏ"
     color: '#F0A800'
   fabled:
-    tag: "&r&f%img_fabled%"
+    tag: "&#C8256Aꜰᴀʙʟᴇᴅ"
     color: '#C8256A'
 
 # Pet drawn from a booster while already adopted: reroll (never drawn) or xp (duplicate-xp given, plus

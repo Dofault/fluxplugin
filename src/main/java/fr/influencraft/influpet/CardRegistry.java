@@ -322,15 +322,20 @@ public final class CardRegistry {
     }
 
     /**
-     * Peluche du familier (meuble ItemsAdder) : pets.list.<id>.plush, influcards:peluche_<id> par
-     * défaut, vide = pas de peluche. Null si l'objet n'existe pas.
+     * Peluche du familier (meuble ItemsAdder) : pets.list.<id>.plush, sinon peluche_<id> du pack livré
+     * (influpet) ou de l'ancien (influcards) ; vide = pas de peluche. Null si l'objet n'existe pas.
      */
     public ItemStack plushItem(PetEntry pet) {
-        String id = plugin.getConfig().getString("pets.list." + pet.id() + ".plush", "influcards:peluche_" + pet.id());
-        if (id == null || id.isBlank() || !Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) {
+        String id = plugin.getConfig().getString("pets.list." + pet.id() + ".plush");
+        if ((id != null && id.isBlank()) || !Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) {
             return null;
         }
-        CustomStack stack = CustomStack.getInstance(id);
+        CustomStack stack = id != null ? CustomStack.getInstance(id) : null;
+        for (String ns : List.of("influpet", "influcards")) {
+            if (stack == null && id == null) {
+                stack = CustomStack.getInstance(ns + ":peluche_" + pet.id());
+            }
+        }
         return stack == null ? null : stack.getItemStack().clone();
     }
 
@@ -716,7 +721,7 @@ public final class CardRegistry {
     public void createBooster(String id) {
         String base = "boosters." + key(id);
         var cfg = plugin.getConfig();
-        cfg.set(base + ".item", "influcards:booster_basique");
+        cfg.set(base + ".item", "influpet:booster_ordinaire");
         cfg.set(base + ".name", "&#FF7A59&l" + id);
         cfg.set(base + ".lore", plugin.texts("editor.new-booster-lore"));
         cfg.set(base + ".cards", 5);
@@ -753,7 +758,7 @@ public final class CardRegistry {
     public void createCard(String id) {
         String base = "cards." + key(id);
         var cfg = plugin.getConfig();
-        cfg.set(base + ".item", "influcards:carte_test");
+        cfg.set(base + ".item", "paper");
         cfg.set(base + ".name", id);
         cfg.set(base + ".series", "");
         cfg.set(base + ".rarity", rarities.isEmpty() ? "simple" : rarities.keySet().iterator().next());
