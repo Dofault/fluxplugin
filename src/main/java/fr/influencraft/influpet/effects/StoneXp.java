@@ -1,4 +1,4 @@
-package fr.influencraft.influpet.effets;
+package fr.influencraft.influpet.effects;
 
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -15,14 +15,14 @@ import java.util.Set;
  * son propre BlockBreakEvent (mine_radius en keep_events), d'où un tirage par bloc du 3x3, ce que libreforge
  * (mine_block non relancé pour ces blocs) ne permet pas. Pierre posée par un joueur exclue.
  */
-final class XpPierre extends PetEffect {
+final class StoneXp extends PetEffect {
 
     private final PlacedBlocks placed;
     private final Set<Material> blocks = EnumSet.noneOf(Material.class);
     private int xp = 1;
 
-    XpPierre(PetEffects manager, PlacedBlocks placed) {
-        super(manager, "xp-pierre");
+    StoneXp(PetEffects manager, PlacedBlocks placed) {
+        super(manager, "stone-xp");
         this.placed = placed;
     }
 
@@ -31,7 +31,7 @@ final class XpPierre extends PetEffect {
         blocks.clear();
         xp = getInt("xp", 1);
         if (cfg != null) {
-            for (String id : cfg.getStringList("blocs")) {
+            for (String id : cfg.getStringList("blocks")) {
                 Material m = Material.matchMaterial(id.toUpperCase(Locale.ROOT));
                 if (m != null) {
                     blocks.add(m);

@@ -1,5 +1,0 @@
-# Familiers obtenables dans les boosters : rareté, obtenable ou non (enabled), peluche (plush), modèle.
-# La définition de chaque familier (niveaux, effets) est dans pets/<id>.yml. Modifié aussi par /influpet menu.
-
-pets:
-  list: {}

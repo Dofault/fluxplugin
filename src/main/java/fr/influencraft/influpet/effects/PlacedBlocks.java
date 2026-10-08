@@ -1,4 +1,4 @@
-package fr.influencraft.influpet.effets;
+package fr.influencraft.influpet.effects;
 
 import com.willfp.eco.util.BlockUtils;
 import fr.influencraft.influpet.PetHook;

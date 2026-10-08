@@ -14,7 +14,7 @@ public final class CardsMenu extends Menu {
     private final int page;
 
     public CardsMenu(InfluPet plugin, int page) {
-        super(plugin, 6, "&#FF7A59Cartes &#6B7A8F▸ &#EADBC8Collection");
+        super(plugin, 6, plugin.text("editor.cards.title"));
         this.page = page;
     }
 
@@ -34,9 +34,9 @@ public final class CardsMenu extends Menu {
                         meta.lore() == null ? List.of() : meta.lore());
                 lore.add(fr.influencraft.influpet.Texts.of(""));
                 lore.add(fr.influencraft.influpet.Texts.of("&#6B7A8F" + card.id()));
-                lore.add(fr.influencraft.influpet.Texts.of(left("Modifier")));
-                lore.add(fr.influencraft.influpet.Texts.of(right("Recevoir un exemplaire")));
-                lore.add(fr.influencraft.influpet.Texts.of(shift("Recevoir une pile (Maj + clic droit)")));
+                lore.add(fr.influencraft.influpet.Texts.of(left(t("action.edit"))));
+                lore.add(fr.influencraft.influpet.Texts.of(right(t("action.receive-one"))));
+                lore.add(fr.influencraft.influpet.Texts.of(shift(t("action.receive-stack"))));
                 meta.lore(lore);
             });
             set(CONTENT_SLOTS[i], item, (p, c) -> {
@@ -49,12 +49,11 @@ public final class CardsMenu extends Menu {
         }
         pages(page, pageCount(cards.size()), target -> new CardsMenu(plugin, target).open(player));
 
-        set(4, icon("influcards:carte_test", "&#FF7A59Cartes &#6B7A8F(" + cards.size() + ")",
-                "&#EADBC8Le numéro de collection suit", "&#EADBC8l'ordre de création."));
-        set(49, icon("influitems:accept", "&#FF7A59Nouvelle carte",
-                "&#EADBC8Crée une carte (texture de test,", "&#EADBC8rareté la plus commune).", "",
-                left("Créer")), (p, c) ->
-                ask(p, "&#EADBC8Identifiant de la nouvelle carte &#6B7A8F(lettres, chiffres, _) :", answer -> {
+        set(4, icon("influcards:carte_test", t("cards.info.name", "%count%", String.valueOf(cards.size())),
+                lines("cards.info.lore")));
+        set(49, icon("influitems:accept", t("cards.new.name"),
+                join(lines("cards.new.lore"), List.of(left(t("action.create"))))), (p, c) ->
+                ask(p, t("cards.new.prompt"), answer -> {
                     String id = answer.toLowerCase().replaceAll("[^a-z0-9_]", "_");
                     if (reg.card(id) != null) {
                         plugin.send(p, "already-exists", "%id%", id);

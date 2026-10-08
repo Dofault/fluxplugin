@@ -252,7 +252,9 @@ public final class RevealManager {
         }
         spot.setYaw(player.getLocation().getYaw() + 180);
         spot.setPitch(0);
-        String model = cfg.getString("pets.list." + reward.pet().id() + ".model", "familier_" + reward.pet().id());
+        var definition = fr.influencraft.influpet.pets.Pets.get(reward.pet().id());
+        String model = cfg.getString("pets.list." + reward.pet().id() + ".model",
+                definition != null ? definition.model() : reward.pet().id());
         if (plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")) {
             try {
                 Runnable close = BetterModelPets.showcase(player, model, spot,
@@ -265,7 +267,7 @@ public final class RevealManager {
                     }, duration));
                 }
             } catch (Throwable t) {
-                plugin.getLogger().warning("Apparition du familier impossible : " + t);
+                plugin.getLogger().warning("Could not spawn the pet model: " + t);
             }
         }
 
@@ -523,7 +525,7 @@ public final class RevealManager {
         return format.replace("%rarity_color%", "&" + (color.startsWith("#") ? color : "#" + color))
                 .replace("%card%", plugin.registry().displayName(entry.reward()))
                 .replace("%count%", String.valueOf(entry.count()))
-                .replace("%xp%", String.format(Locale.FRANCE, "%.0f", plugin.registry().duplicateXp()));
+                .replace("%xp%", String.format(InfluPet.locale(), "%.0f", plugin.registry().duplicateXp()));
     }
 
     private List<ItemStack> stacks(CardRegistry.Card card, int count) {

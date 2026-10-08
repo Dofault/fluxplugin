@@ -1,4 +1,4 @@
-package fr.influencraft.influpet.effets;
+package fr.influencraft.influpet.effects;
 
 import fr.influencraft.influpet.InfluPet;
 import fr.influencraft.influpet.PetHook;
@@ -29,23 +29,23 @@ public final class PetEffects {
         Bukkit.getPluginManager().registerEvents(placed, plugin);
         FurnaceOwners owners = new FurnaceOwners();
         Bukkit.getPluginManager().registerEvents(owners, plugin);
-        add(new XpPierre(this, placed));
-        add(new SansMiseAJour(this));
-        add(new ReplantCacao(this));
-        add(new PoudreOsInstant(this));
+        add(new StoneXp(this, placed));
+        add(new NoBlockUpdate(this));
+        add(new CocoaReplant(this));
+        add(new InstantBoneMeal(this));
         add(new Rage(this));
-        add(new BetonInstant(this));
-        add(new CuissonRapide(this, owners));
-        add(new LivraisonFour(this, owners));
-        add(new UsureSavante(this, placed));
-        add(new LapisEconome(this));
-        add(new NiveauxEconome(this));
-        add(new ResistanceAllies(this));
+        add(new InstantConcrete(this));
+        add(new FastSmelting(this, owners));
+        add(new FurnaceDelivery(this, owners));
+        add(new EnchantMastery(this, placed));
+        add(new LapisSaver(this));
+        add(new LevelSaver(this));
+        add(new AllyResistance(this));
         if (Bukkit.getPluginManager().isPluginEnabled("packetevents")) {
             try {
-                add(new NeigePoudreuse(this));
+                add(new PowderSnow(this));
             } catch (Throwable t) {
-                plugin.getLogger().warning("Familier neige poudreuse indisponible : " + t);
+                plugin.getLogger().warning("Powder snow pet effect unavailable: " + t);
             }
         }
         reload();
@@ -58,10 +58,10 @@ public final class PetEffects {
 
     /** Relit effets.yml (au démarrage et à chaque /influpet reload). */
     public void reload() {
-        File file = new File(plugin.getDataFolder(), "effets.yml");
+        File file = new File(plugin.getDataFolder(), "effects.yml");
         YamlConfiguration cfg = YamlConfiguration.loadConfiguration(file);
-        maxLevel = Math.max(1, cfg.getInt("niveau-max", 10));
-        ConfigurationSection all = cfg.getConfigurationSection("effets");
+        maxLevel = Math.max(1, cfg.getInt("max-level", 10));
+        ConfigurationSection all = cfg.getConfigurationSection("effects");
         int active = 0;
         for (PetEffect effect : effects) {
             ConfigurationSection section = all == null ? null : all.getConfigurationSection(effect.key());
@@ -71,9 +71,9 @@ public final class PetEffects {
             }
         }
         if (!file.exists()) {
-            plugin.getLogger().warning("effets.yml absent : effets de familiers codés désactivés.");
+            plugin.getLogger().warning("effects.yml missing: coded pet effects disabled.");
         } else {
-            plugin.getLogger().info(active + " effets de familiers codés chargés.");
+            plugin.getLogger().info(active + " coded pet effects loaded.");
         }
     }
 

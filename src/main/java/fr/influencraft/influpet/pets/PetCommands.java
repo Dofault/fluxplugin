@@ -15,9 +15,9 @@ import java.util.Locale;
 
 /**
  * Commandes des familiers (reprises d'EcoPets).
- * - /familiers (alias /pets, /pet) : menu ; « activer <familier> », « desactiver [familier] » (sans familier :
- *   tous).
- * - /influpet familier give|take|givexp|givecurrentxp|reset|setlevel|activate|deactivate <joueur> ... :
+ * - /pets (alias /pet, /familiers) : menu ; « activate <familier> », « deactivate [familier] » (sans familier :
+ *   tous ; « activer » / « desactiver » acceptés aussi).
+ * - /influpet pet give|take|givexp|givecurrentxp|reset|setlevel|activate|deactivate <joueur> ... :
  *   administration (console comprise). « reset » remet le familier au niveau 1 sans le retirer (le reset
  *   d'EcoPets le faisait passer au niveau 0, ce qui le retirait).
  */
@@ -38,7 +38,7 @@ public final class PetCommands implements TabExecutor {
             return true;
         }
         switch (args[0].toLowerCase(Locale.ROOT)) {
-            case "activer", "activate" -> {
+            case "activate", "activer" -> {
                 Pet pet = args.length > 1 ? Pets.get(args[1]) : null;
                 if (pet == null || !PetData.has(player, pet)) {
                     PetMessages.send(player, "invalid-pet");
@@ -48,7 +48,7 @@ public final class PetCommands implements TabExecutor {
                     tell(player, pet, PetData.activate(player, pet));
                 }
             }
-            case "desactiver", "deactivate", "ranger" -> {
+            case "deactivate", "desactiver", "ranger" -> {
                 // sans familier précisé : tous les familiers actifs
                 Pet pet = args.length > 1 ? Pets.get(args[1]) : null;
                 List<Pet> done = pet != null ? (PetData.deactivate(player, pet) ? List.of(pet) : List.of())
@@ -61,6 +61,14 @@ public final class PetCommands implements TabExecutor {
             default -> PetsMenu.open(player);
         }
         return true;
+    }
+
+    private static boolean isActivate(String arg) {
+        return arg.equalsIgnoreCase("activate") || arg.equalsIgnoreCase("activer");
+    }
+
+    private static boolean isDeactivate(String arg) {
+        return arg.equalsIgnoreCase("deactivate") || arg.equalsIgnoreCase("desactiver") || arg.equalsIgnoreCase("ranger");
     }
 
     /** Message d'une activation (commande, menu). */
@@ -79,37 +87,35 @@ public final class PetCommands implements TabExecutor {
                                       @NotNull String[] args) {
         List<String> options = new ArrayList<>();
         if (args.length == 1) {
-            options.addAll(List.of("activer", "desactiver"));
-        } else if (args.length == 2 && args[0].equalsIgnoreCase("activer") && sender instanceof Player player) {
+            options.addAll(List.of("activate", "deactivate"));
+        } else if (args.length == 2 && isActivate(args[0]) && sender instanceof Player player) {
             for (Pet pet : Pets.values()) {
                 if (PetData.has(player, pet) && !PetData.isActive(player, pet)) {
                     options.add(pet.id());
                 }
             }
-        } else if (args.length == 2 && args[0].equalsIgnoreCase("desactiver") && sender instanceof Player player) {
+        } else if (args.length == 2 && isDeactivate(args[0]) && sender instanceof Player player) {
             PetData.actives(player).forEach(p -> options.add(p.id()));
         }
         String last = args.length == 0 ? "" : args[args.length - 1].toLowerCase(Locale.ROOT);
         return options.stream().filter(o -> o.startsWith(last)).toList();
     }
 
-    // ------------------------------------------------------------------ administration (/influpet familier ...)
+    // ------------------------------------------------------------------ administration (/influpet pet ...)
 
-    private static void raw(CommandSender to, String text) {
-        to.sendMessage(Texts.of(text));
+    /** Message d'administration (messages.admin.<key>), sans préfixe. */
+    private static void admin(CommandSender to, String key, String... replacements) {
+        to.sendMessage(Texts.of(PetMessages.format("admin." + key, replacements)));
     }
 
-    private static final String USAGE = "&#FF7A59/influpet familier <give|take|givexp|givecurrentxp|reset|setlevel|"
-            + "activate|deactivate> <joueur> [familier] [valeur]";
-
-    /** args : sous-commande et ses arguments (sans « familier »). */
+    /** args : sous-commande et ses arguments (sans « pet »). */
     public static void admin(CommandSender sender, String[] args) {
         if (!Pets.enabled()) {
-            raw(sender, "&#D9534FSystème de familiers inactif (cf. logs du démarrage).");
+            admin(sender, "unavailable");
             return;
         }
         if (args.length < 2) {
-            raw(sender, USAGE);
+            admin(sender, "usage");
             return;
         }
         String sub = args[0].toLowerCase(Locale.ROOT);
@@ -118,7 +124,7 @@ public final class PetCommands implements TabExecutor {
             target = Bukkit.getOfflinePlayerIfCached(args[1]);
         }
         if (target == null) {
-            raw(sender, "&#D9534FJoueur inconnu : " + args[1]);
+            admin(sender, "unknown-player", "%player%", args[1]);
             return;
         }
         Player online = target.getPlayer();
@@ -128,24 +134,25 @@ public final class PetCommands implements TabExecutor {
                 // sans familier précisé : tous ses familiers actifs
                 Pet one = args.length > 2 ? Pets.get(args[2]) : null;
                 if (online == null) {
-                    raw(sender, "&#D9534F" + who + " n'est pas connecté.");
+                    admin(sender, "offline", "%player%", who);
                 } else if (one != null ? PetData.deactivate(online, one) : !PetData.deactivateAll(online).isEmpty()) {
-                    raw(sender, "&#EADBC8Familier(s) de " + who + " rangé(s).");
+                    admin(sender, "deactivated", "%player%", who);
                 } else {
-                    raw(sender, "&#D9534FRien à ranger.");
+                    admin(sender, "nothing-to-deactivate", "%player%", who);
                 }
                 return;
             }
             case "givecurrentxp" -> {
                 Pet active = online == null ? null : PetData.active(online);
                 Double amount = args.length > 2 ? parse(args[2]) : null;
-                if (active == null || amount == null) {
-                    raw(sender, "&#D9534F" + (active == null ? who + " n'a pas de familier actif (ou n'est pas connecté)."
-                            : "Montant invalide."));
-                    return;
+                if (active == null) {
+                    admin(sender, "no-active-pet", "%player%", who);
+                } else if (amount == null) {
+                    admin(sender, "invalid-number");
+                } else {
+                    PetData.giveXp(online, active, amount, false);
+                    admin(sender, "xp-given", "%xp%", Pet.nice(amount), "%pet%", active.name(), "%player%", who);
                 }
-                PetData.giveXp(online, active, amount, false);
-                raw(sender, "&#EADBC8" + Pet.nice(amount) + " XP donnée au familier actif de " + who + ".");
                 return;
             }
             default -> {
@@ -154,57 +161,68 @@ public final class PetCommands implements TabExecutor {
         }
         Pet pet = args.length > 2 ? Pets.get(args[2]) : null;
         if (pet == null) {
-            raw(sender, "&#D9534FFamilier inconnu." + (args.length > 2 ? " (" + args[2] + ")" : ""));
+            admin(sender, "unknown-pet", "%id%", args.length > 2 ? args[2] : "");
             return;
         }
-        String name = pet.name() + "&#EADBC8";
+        String name = pet.name();
         switch (sub) {
-            case "give" -> raw(sender, PetData.adopt(target, pet)
-                    ? "&#EADBC8" + who + " adopte " + name + "."
-                    : "&#D9534F" + who + " a déjà ce familier (ou adoption annulée).");
+            case "give" -> admin(sender, PetData.adopt(target, pet) ? "adopted" : "already-adopted",
+                    "%player%", who, "%pet%", name);
             case "take" -> {
                 PetData.take(target, pet);
-                raw(sender, "&#EADBC8" + name + " retiré à " + who + ".");
+                admin(sender, "taken", "%player%", who, "%pet%", name);
             }
             case "reset" -> {
                 if (!PetData.has(target, pet)) {
-                    raw(sender, "&#D9534F" + who + " n'a pas ce familier.");
+                    admin(sender, "not-owned", "%player%", who, "%pet%", name);
                     return;
                 }
                 PetData.setXp(target, pet, 0);
                 PetData.setLevel(target, pet, 1);
-                raw(sender, "&#EADBC8" + name + " de " + who + " remis au niveau 1.");
+                admin(sender, "level-set", "%player%", who, "%pet%", name, "%level%", "1");
             }
             case "setlevel" -> {
                 Double level = args.length > 3 ? parse(args[3]) : null;
-                if (level == null || level < 1 || !PetData.has(target, pet)) {
-                    raw(sender, "&#D9534F" + (PetData.has(target, pet) ? "Niveau invalide." : who + " n'a pas ce familier."));
-                    return;
+                if (!PetData.has(target, pet)) {
+                    admin(sender, "not-owned", "%player%", who, "%pet%", name);
+                } else if (level == null || level < 1) {
+                    admin(sender, "invalid-number");
+                } else {
+                    PetData.setXp(target, pet, 0);
+                    PetData.setLevel(target, pet, (int) Math.round(level));
+                    admin(sender, "level-set", "%player%", who, "%pet%", name,
+                            "%level%", String.valueOf(PetData.level(target, pet)));
                 }
-                PetData.setXp(target, pet, 0);
-                PetData.setLevel(target, pet, (int) Math.round(level));
-                raw(sender, "&#EADBC8" + name + " de " + who + " au niveau " + PetData.level(target, pet) + ".");
             }
             case "givexp" -> {
                 Double amount = args.length > 3 ? parse(args[3]) : null;
-                if (amount == null || online == null || !PetData.has(target, pet)) {
-                    raw(sender, "&#D9534F" + (amount == null ? "Montant invalide."
-                            : online == null ? who + " n'est pas connecté." : who + " n'a pas ce familier."));
-                    return;
+                if (amount == null) {
+                    admin(sender, "invalid-number");
+                } else if (online == null) {
+                    admin(sender, "offline", "%player%", who);
+                } else if (!PetData.has(target, pet)) {
+                    admin(sender, "not-owned", "%player%", who, "%pet%", name);
+                } else {
+                    PetData.giveXp(online, pet, amount, false);
+                    admin(sender, "xp-given", "%xp%", Pet.nice(amount), "%pet%", name, "%player%", who);
                 }
-                PetData.giveXp(online, pet, amount, false);
-                raw(sender, "&#EADBC8" + Pet.nice(amount) + " XP donnée à " + name + " de " + who + ".");
             }
             case "activate" -> {
-                if (online == null || !PetData.has(target, pet)) {
-                    raw(sender, "&#D9534F" + (online == null ? who + " n'est pas connecté." : who + " n'a pas ce familier."));
+                if (online == null) {
+                    admin(sender, "offline", "%player%", who);
+                } else if (!PetData.has(target, pet)) {
+                    admin(sender, "not-owned", "%player%", who, "%pet%", name);
                 } else {
                     PetData.Activation result = PetData.activate(online, pet);
-                    raw(sender, result == PetData.Activation.OK ? "&#EADBC8" + name + " activé pour " + who + "."
-                            : "&#D9534FActivation impossible : " + result + " (max " + PetData.maxActive(online) + ").");
+                    if (result == PetData.Activation.OK) {
+                        admin(sender, "activated", "%player%", who, "%pet%", name);
+                    } else {
+                        admin(sender, "activation-failed", "%player%", who, "%pet%", name,
+                                "%reason%", result.name(), "%max%", String.valueOf(PetData.maxActive(online)));
+                    }
                 }
             }
-            default -> raw(sender, USAGE);
+            default -> admin(sender, "usage");
         }
     }
 

@@ -21,7 +21,7 @@ public final class ContentMenu extends Menu {
     private final int page;
 
     public ContentMenu(InfluPet plugin, String id, int page) {
-        super(plugin, 6, "&#FF7A59Contenu &#6B7A8F▸ &#EADBC8" + id);
+        super(plugin, 6, plugin.text("editor.content.title", "%id%", id));
         this.id = id;
         this.page = page;
     }
@@ -52,18 +52,13 @@ public final class ContentMenu extends Menu {
             ItemStack item = reg.displayItem(player, r);
             List<String> lore = new ArrayList<>();
             if (r instanceof PetReward p) {
-                lore.add("&#5FB3B3Familier");
-                if (!p.pet().enabled()) {
-                    lore.add("&#D9534FDésactivé (menu Familiers) :");
-                    lore.add("&#D9534Fjamais tiré, même inclus.");
-                }
+                lore.addAll(lines(p.pet().enabled() ? "content.pet" : "content.pet-disabled"));
             } else {
-                lore.add("&#EADBC8Carte");
+                lore.addAll(lines("content.card"));
             }
-            lore.add(in ? "&#5FB3B3✔ Dans ce booster" : "&#6B7A8F✘ Hors de ce booster");
-            lore.add("&#EADBC8Chance par tirage : &#FFF4E0" + InfluPet.percent(reg.chance(b, r)));
-            lore.add("");
-            lore.add(left(in ? "Retirer" : "Ajouter"));
+            lore.addAll(lines(in ? "content.included" : "content.excluded", "%chance%",
+                    InfluPet.percent(reg.chance(b, r))));
+            lore.add(left(t(in ? "action.remove" : "action.add")));
             set(CONTENT_SLOTS[i], glow(decorate(item, reg.displayName(r), lore), in), (p, c) -> {
                 reg.toggleContent(reg.booster(id), r.key());
                 refresh(p);
@@ -71,16 +66,11 @@ public final class ContentMenu extends Menu {
         }
         pages(page, pageCount(all.size()), target -> new ContentMenu(plugin, id, target).open(player));
 
-        set(4, icon("chest", "&#FF7A59Contenu de " + b.name(),
-                b.contents().isEmpty()
-                        ? "&#EADBC8Mode : &#FFF4E0tout le contenu"
-                        : "&#EADBC8Mode : &#FFF4E0liste choisie (" + b.contents().size() + ")",
-                "",
-                "&#6B7A8FEn mode « tout », les nouvelles cartes",
-                "&#6B7A8Fet familiers obtenables y entrent seuls.",
-                "&#6B7A8FCliquer une récompense passe en liste choisie."));
-        set(49, icon("influitems:chest_delete", "&#FF7A59Tout inclure",
-                "&#EADBC8Revient au mode « tout le contenu ».", "", left("Réinitialiser")), (p, c) -> {
+        set(4, icon("chest", t("content.info.name", "%booster%", b.name()),
+                lines(b.contents().isEmpty() ? "content.info.lore-all" : "content.info.lore-chosen",
+                        "%count%", String.valueOf(b.contents().size()))));
+        set(49, icon("influitems:chest_delete", t("content.reset.name"),
+                join(lines("content.reset.lore"), List.of(left(t("content.reset.action"))))), (p, c) -> {
             reg.setBooster(id, "contents", List.of());
             refresh(p);
         });

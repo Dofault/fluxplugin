@@ -65,7 +65,7 @@ public final class CardRegistry {
 
     public record CardReward(Card card) implements Reward {
         public String key() {
-            return "carte:" + card.id();
+            return "card:" + card.id();
         }
 
         public Rarity rarity() {
@@ -87,7 +87,7 @@ public final class CardRegistry {
         }
 
         public String key() {
-            return "familier:" + pet.id();
+            return "pet:" + pet.id();
         }
 
         public Rarity rarity() {
@@ -145,7 +145,7 @@ public final class CardRegistry {
             for (String id : cs.getKeys(false)) {
                 Rarity rarity = rarities.get(key(cs.getString(id + ".rarity", "")));
                 if (rarity == null) {
-                    plugin.getLogger().warning("Carte " + id + " : rareté inconnue, carte ignorée.");
+                    plugin.getLogger().warning("Card " + id + ": unknown rarity, card skipped.");
                     continue;
                 }
                 String pet = cs.getString(id + ".pet", "");
@@ -160,7 +160,7 @@ public final class CardRegistry {
             for (String id : ps.getKeys(false)) {
                 Rarity rarity = rarities.get(key(ps.getString(id + ".rarity", "")));
                 if (rarity == null) {
-                    plugin.getLogger().warning("Familier " + id + " : rareté inconnue, ignoré.");
+                    plugin.getLogger().warning("Pet " + id + ": unknown rarity, skipped.");
                     continue;
                 }
                 pets.put(key(id), new PetEntry(key(id), rarity, ps.getBoolean(id + ".enabled", true)));
@@ -191,12 +191,12 @@ public final class CardRegistry {
                 boosters.put(key(id), new Booster(key(id), bs.getString(id + ".item", ""),
                         bs.getString(id + ".name", id), bs.getStringList(id + ".lore"),
                         Math.max(1, bs.getInt(id + ".cards", 5)), weights,
-                        bs.getStringList(id + ".contents").stream().map(CardRegistry::key).toList(),
+                        bs.getStringList(id + ".contents").stream().map(CardRegistry::contentKey).toList(),
                         petChance, petWeights));
             }
         }
-        plugin.getLogger().info(cards.size() + " cartes, " + pets.size() + " familiers, "
-                + boosters.size() + " boosters chargés.");
+        plugin.getLogger().info(cards.size() + " cards, " + pets.size() + " pets, "
+                + boosters.size() + " boosters loaded.");
         plugin.refreshOnlineItems();
     }
 
@@ -364,7 +364,7 @@ public final class CardRegistry {
     }
 
     /**
-     * Booster vu par un joueur : %adopte:<id>% dans la description devient ✔ (familier adopté) ou ✘.
+     * Booster vu par un joueur : %adopted:<id>% dans la description devient ✔ (familier adopté) ou ✘.
      * Sans joueur : « » ».
      */
     public ItemStack boosterItem(Booster booster, org.bukkit.OfflinePlayer viewer) {
@@ -387,7 +387,7 @@ public final class CardRegistry {
             if (card.pet() != null && cardXp(card.rarity()) > 0) {
                 for (String line : plugin.getConfig().getStringList("card-format.lore-pet")) {
                     lore.add(Texts.of(fillCard(line, card)
-                            .replace("%xp%", String.format(java.util.Locale.FRANCE, "%.0f", cardXp(card.rarity())))
+                            .replace("%xp%", String.format(InfluPet.locale(), "%.0f", cardXp(card.rarity())))
                             .replace("%pet%", petName(card.pet()))));
                 }
             }
@@ -407,7 +407,7 @@ public final class CardRegistry {
         return info == null ? petId : info.name();
     }
 
-    private static final java.util.regex.Pattern ADOPTED = java.util.regex.Pattern.compile("%adopte:([a-z0-9_]+)%");
+    private static final java.util.regex.Pattern ADOPTED = java.util.regex.Pattern.compile("%(?:adopted|adopte):([a-z0-9_]+)%");
 
     /** Familiers cités dans la description du booster ; « + » adopté, « - » non, vide sans joueur. */
     private String adoptionStatus(Booster booster, org.bukkit.OfflinePlayer viewer) {
@@ -523,16 +523,23 @@ public final class CardRegistry {
         return result;
     }
 
+    /** Entrée de contenu de booster, préfixes français d'avant 2026-10-08 (carte:, familier:) convertis. */
+    static String contentKey(String entry) {
+        String k = key(entry);
+        return k.startsWith("carte:") ? "card:" + k.substring(6)
+                : k.startsWith("familier:") ? "pet:" + k.substring(9) : k;
+    }
+
     public Reward reward(String key) {
-        String[] parts = key(key).split(":", 2);
+        String[] parts = contentKey(key).split(":", 2);
         if (parts.length != 2) {
             return null;
         }
-        if (parts[0].equals("carte")) {
+        if (parts[0].equals("card")) {
             Card c = cards.get(parts[1]);
             return c == null ? null : new CardReward(c);
         }
-        if (parts[0].equals("familier")) {
+        if (parts[0].equals("pet")) {
             PetEntry p = pets.get(parts[1]);
             return p == null || !p.enabled() || !PetHook.available() ? null : new PetReward(p);
         }
@@ -642,7 +649,7 @@ public final class CardRegistry {
         if (duplicateMode == DuplicatePetMode.REROLL && player != null) {
             for (PetEntry p : pets.values()) {
                 if (PetHook.has(player, p.id())) {
-                    excluded.add("familier:" + p.id());
+                    excluded.add("pet:" + p.id());
                 }
             }
         }
@@ -711,8 +718,7 @@ public final class CardRegistry {
         var cfg = plugin.getConfig();
         cfg.set(base + ".item", "influcards:booster_basique");
         cfg.set(base + ".name", "&#FF7A59&l" + id);
-        cfg.set(base + ".lore", List.of("&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes.", "",
-                "&r&7%img_right_click% &#FF7A59Ouvrir"));
+        cfg.set(base + ".lore", plugin.texts("editor.new-booster-lore"));
         cfg.set(base + ".cards", 5);
         for (Rarity r : rarities.values()) {
             cfg.set(base + ".rarity-weights." + r.id(), r.order() == 0 ? 1 : 0);
@@ -759,9 +765,9 @@ public final class CardRegistry {
         plugin.getConfig().set("cards." + key(id), null);
         // retire la carte des contenus explicites
         for (Booster b : boosters.values()) {
-            if (b.contents().contains("carte:" + key(id))) {
+            if (b.contents().contains("card:" + key(id))) {
                 List<String> list = new ArrayList<>(b.contents());
-                list.remove("carte:" + key(id));
+                list.remove("card:" + key(id));
                 plugin.getConfig().set("boosters." + b.id() + ".contents", list);
             }
         }

@@ -1,4 +1,4 @@
-package fr.influencraft.influpet.effets;
+package fr.influencraft.influpet.effects;
 
 import org.bukkit.GameMode;
 import org.bukkit.Material;
@@ -22,12 +22,12 @@ import org.bukkit.inventory.ItemStack;
  * plus : une pousse sans la place de pousser ne coûte que MAX_TRIES essais par clic. Une poudre d'os consommée,
  * comme en vanilla, même si l'arbre n'a pas eu la place.
  */
-final class PoudreOsInstant extends PetEffect {
+final class InstantBoneMeal extends PetEffect {
 
     private static final int MAX_TRIES = 16;
 
-    PoudreOsInstant(PetEffects manager) {
-        super(manager, "poudre-os-instant");
+    InstantBoneMeal(PetEffects manager) {
+        super(manager, "instant-bone-meal");
     }
 
     @EventHandler(priority = EventPriority.HIGH)

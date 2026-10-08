@@ -1,4 +1,4 @@
-package fr.influencraft.influpet.effets;
+package fr.influencraft.influpet.effects;
 
 import org.bukkit.Bukkit;
 import org.bukkit.block.Block;

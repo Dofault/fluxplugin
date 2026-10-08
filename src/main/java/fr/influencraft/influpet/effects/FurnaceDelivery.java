@@ -1,4 +1,4 @@
-package fr.influencraft.influpet.effets;
+package fr.influencraft.influpet.effects;
 
 import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
@@ -21,12 +21,12 @@ import java.util.Map;
  * du joueur a accepté (le reste reste dans le four), donc ni perte ni duplication. L'XP de cuisson reste
  * stockée dans le four, comme en vanilla : elle est donnée au prochain retrait de la case de résultat.
  */
-final class LivraisonFour extends PetEffect {
+final class FurnaceDelivery extends PetEffect {
 
     private final FurnaceOwners owners;
 
-    LivraisonFour(PetEffects manager, FurnaceOwners owners) {
-        super(manager, "livraison-four");
+    FurnaceDelivery(PetEffects manager, FurnaceOwners owners) {
+        super(manager, "furnace-delivery");
         this.owners = owners;
     }
 
@@ -37,7 +37,7 @@ final class LivraisonFour extends PetEffect {
         if (owner == null || owner.getWorld() != block.getWorld()) {
             return;
         }
-        double radius = getDouble("rayon", 16);
+        double radius = getDouble("radius", 16);
         if (owner.getLocation().distanceSquared(block.getLocation().add(0.5, 0.5, 0.5)) > radius * radius
                 || !roll(level(owner))) {
             return;

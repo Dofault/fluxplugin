@@ -115,20 +115,21 @@ public abstract class Menu implements InventoryHolder {
     }
 
     protected void back(Menu target) {
-        set(rows * 9 - 9, icon("influitems:btn_back", "&r&7%img_left_click% &#FF7A59Retour"),
-                (p, c) -> target.open(p));
+        set(rows * 9 - 9, icon("influitems:btn_back", t("back")), (p, c) -> target.open(p));
     }
 
     /** Boutons page précédente / suivante en bas du menu. */
     protected void pages(int page, int total, java.util.function.IntConsumer goTo) {
         int last = rows * 9 - 1;
         if (page > 0) {
-            set(last - 5, icon("influitems:btn_prev", "&r&7%img_left_click% &#FF7A59Page précédente",
-                    "&#6B7A8FPage " + page + "/" + total), (p, c) -> goTo.accept(page - 1));
+            set(last - 5, icon("influitems:btn_prev", t("previous-page"),
+                    t("page", "%page%", String.valueOf(page), "%pages%", String.valueOf(total))),
+                    (p, c) -> goTo.accept(page - 1));
         }
         if (page < total - 1) {
-            set(last - 3, icon("influitems:btn_next", "&r&7%img_left_click% &#FF7A59Page suivante",
-                    "&#6B7A8FPage " + (page + 2) + "/" + total), (p, c) -> goTo.accept(page + 1));
+            set(last - 3, icon("influitems:btn_next", t("next-page"),
+                    t("page", "%page%", String.valueOf(page + 2), "%pages%", String.valueOf(total))),
+                    (p, c) -> goTo.accept(page + 1));
         }
     }
 
@@ -136,17 +137,37 @@ public abstract class Menu implements InventoryHolder {
         return Math.max(1, (size + CONTENT_SLOTS.length - 1) / CONTENT_SLOTS.length);
     }
 
+    /** Texte du menu d'édition (lang : editor.<key>). */
+    protected String t(String key, String... replacements) {
+        return plugin.text("editor." + key, replacements);
+    }
+
+    /** Lignes du menu d'édition (lang : editor.<key>). */
+    protected List<String> lines(String key, String... replacements) {
+        return plugin.texts("editor." + key, replacements);
+    }
+
     /** Ligne d'aide d'action : clic gauche / droit, au format des menus du serveur. */
-    protected static String left(String action) {
-        return "&r&7%img_left_click% &#FF7A59" + action;
+    protected String left(String action) {
+        return t("click.left", "%action%", action);
     }
 
-    protected static String right(String action) {
-        return "&r&7%img_right_click% &#FF7A59" + action;
+    protected String right(String action) {
+        return t("click.right", "%action%", action);
     }
 
-    protected static String shift(String action) {
-        return "&#6B7A8FMaj + clic &#FF7A59" + action;
+    protected String shift(String action) {
+        return t("click.shift", "%action%", action);
+    }
+
+    /** Lignes concaténées (lore construit en plusieurs morceaux). */
+    @SafeVarargs
+    protected static List<String> join(List<String>... parts) {
+        List<String> all = new ArrayList<>();
+        for (List<String> part : parts) {
+            all.addAll(part);
+        }
+        return all;
     }
 
     /** Clic droit : un exemplaire ; Maj + clic droit : une pile de 64. */

@@ -1,4 +1,4 @@
-package fr.influencraft.influpet.effets;
+package fr.influencraft.influpet.effects;
 
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.NamespacedKey;
@@ -26,13 +26,13 @@ import java.util.concurrent.ThreadLocalRandom;
  * exclus) ou coup porté à une créature (pas les porte-armures). Compteur dans l'objet (PDC influcard:usure) :
  * il suit l'objet, ne compte qu'avec le familier actif et s'arrête quand plus rien ne peut monter.
  */
-final class UsureSavante extends PetEffect {
+final class EnchantMastery extends PetEffect {
 
     private final PlacedBlocks placed;
     private final NamespacedKey counterKey;
 
-    UsureSavante(PetEffects manager, PlacedBlocks placed) {
-        super(manager, "usure-savante");
+    EnchantMastery(PetEffects manager, PlacedBlocks placed) {
+        super(manager, "enchant-mastery");
         this.placed = placed;
         this.counterKey = new NamespacedKey(fr.influencraft.influpet.InfluPet.LEGACY_NAMESPACE, "usure");
     }

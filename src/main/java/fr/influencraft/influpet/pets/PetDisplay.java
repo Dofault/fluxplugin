@@ -44,7 +44,7 @@ import java.util.UUID;
  * posé sur le sol sous sa position.
  * Pas de modèle pour un familier caché (menu), un joueur mort, invisible ou spectateur. Nom au-dessus du modèle
  * (TextDisplay passager), traînée du familier (trail). Porte-armure marker : aucune hitbox, jamais sauvegardé.
- * Réglages : section familier-suivi de config.yml. Chargée seulement si BetterModel est actif.
+ * Réglages : section pet-follow de config.yml. Chargée seulement si BetterModel est actif.
  */
 public final class PetDisplay {
 
@@ -89,17 +89,17 @@ public final class PetDisplay {
     }
 
     public void reload() {
-        ConfigurationSection c = Pets.plugin().getConfig().getConfigurationSection("familier-suivi");
-        height = get(c, "hauteur", 0.9);
-        minDistance = Math.max(0, get(c, "distance-min", 1.5));
-        maxDistance = Math.max(minDistance + 0.5, get(c, "distance-max", 4.0));
+        ConfigurationSection c = Pets.plugin().getConfig().getConfigurationSection("pet-follow");
+        height = get(c, "height", 0.9);
+        minDistance = Math.max(0, get(c, "min-distance", 1.5));
+        maxDistance = Math.max(minDistance + 0.5, get(c, "max-distance", 4.0));
         snapDistance = get(c, "teleport-distance", 16);
-        smoothing = get(c, "lissage", 0.18);
-        minSpeed = get(c, "vitesse-min", 0.45);
-        bobAmplitude = get(c, "flottement", 0.06);
-        labelHeight = get(c, "hauteur-nom", 1.3);
-        gapMin = Math.max(0.3, get(c, "ecart-file-min", 1.2));
-        gapMax = Math.max(gapMin + 0.3, get(c, "ecart-file-max", 2.2));
+        smoothing = get(c, "smoothing", 0.18);
+        minSpeed = get(c, "min-speed", 0.45);
+        bobAmplitude = get(c, "bob-amplitude", 0.06);
+        labelHeight = get(c, "name-height", 1.3);
+        gapMin = Math.max(0.3, get(c, "queue-gap-min", 1.2));
+        gapMax = Math.max(gapMin + 0.3, get(c, "queue-gap-max", 2.2));
         missing.clear();
         // familiers rechargés : nouveaux objets Pet, les modèles sont recréés au tick suivant
         shutdown();
@@ -168,8 +168,8 @@ public final class PetDisplay {
         var renderer = BetterModel.modelOrNull(pet.model());
         if (renderer == null) {
             if (missing.add(pet.model())) {
-                Pets.plugin().getLogger().warning("Modèle BetterModel introuvable pour le familier " + pet.id()
-                        + " : " + pet.model());
+                Pets.plugin().getLogger().warning("BetterModel model not found for pet " + pet.id()
+                        + ": " + pet.model());
             }
             return null;
         }

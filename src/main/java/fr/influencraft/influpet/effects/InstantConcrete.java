@@ -1,4 +1,4 @@
-package fr.influencraft.influpet.effets;
+package fr.influencraft.influpet.effects;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -13,10 +13,10 @@ import org.bukkit.event.block.BlockPlaceEvent;
  * poudre posée en l'air n'est programmée que 2 ticks après la pose (FallingBlock), donc elle n'a pas encore pu
  * tomber ; si elle a disparu entre-temps, rien n'est créé (pas de duplication).
  */
-final class BetonInstant extends PetEffect {
+final class InstantConcrete extends PetEffect {
 
-    BetonInstant(PetEffects manager) {
-        super(manager, "beton-instant");
+    InstantConcrete(PetEffects manager) {
+        super(manager, "instant-concrete");
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

@@ -1,4 +1,4 @@
-package fr.influencraft.influpet.effets;
+package fr.influencraft.influpet.effects;
 
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -31,7 +31,7 @@ import java.util.Map;
  * Avec le familier actif, une cabosse au stade 0 (tout juste plantée) ne se casse pas : on récolte une rangée
  * sans détruire les cabosses replantées.
  */
-final class ReplantCacao extends PetEffect {
+final class CocoaReplant extends PetEffect {
 
     private static final class Pending {
         final Player player;
@@ -46,8 +46,8 @@ final class ReplantCacao extends PetEffect {
 
     private final Map<Block, Pending> pending = new HashMap<>();
 
-    ReplantCacao(PetEffects manager) {
-        super(manager, "replant-cacao");
+    CocoaReplant(PetEffects manager) {
+        super(manager, "cocoa-replant");
     }
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)

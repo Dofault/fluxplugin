@@ -1,4 +1,4 @@
-package fr.influencraft.influpet.effets;
+package fr.influencraft.influpet.effects;
 
 import fr.influencraft.influpet.Texts;
 import org.bukkit.Bukkit;
@@ -36,7 +36,7 @@ abstract class PetEffect implements Listener {
 
     void load(ConfigurationSection section) {
         cfg = section;
-        petId = section == null ? null : section.getString("familier");
+        petId = section == null ? null : section.getString("pet");
         min = section == null ? 0 : section.getDouble("min");
         max = section == null ? 0 : section.getDouble("max");
         cooldowns.clear();

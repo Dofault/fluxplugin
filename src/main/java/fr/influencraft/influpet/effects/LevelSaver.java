@@ -1,4 +1,4 @@
-package fr.influencraft.influpet.effets;
+package fr.influencraft.influpet.effects;
 
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -12,10 +12,10 @@ import org.bukkit.event.enchantment.EnchantItemEvent;
  * « bouton + 1 » niveaux juste après l'événement : on les rend le tick suivant. Rien en créatif, où la table
  * n'en retire pas (dont_consume_xp_chance de libreforge les rendait quand même : niveaux gratuits).
  */
-final class NiveauxEconome extends PetEffect {
+final class LevelSaver extends PetEffect {
 
-    NiveauxEconome(PetEffects manager) {
-        super(manager, "niveaux-econome");
+    LevelSaver(PetEffects manager) {
+        super(manager, "level-saver");
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

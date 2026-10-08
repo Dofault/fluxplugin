@@ -3,7 +3,7 @@ package fr.influencraft.influpet;
 import fr.influencraft.influpet.CardRegistry.CardReward;
 import fr.influencraft.influpet.CardRegistry.PetReward;
 import fr.influencraft.influpet.CardRegistry.Reward;
-import fr.influencraft.influpet.effets.PetEffects;
+import fr.influencraft.influpet.effects.PetEffects;
 import fr.influencraft.influpet.pets.PetCommands;
 import fr.influencraft.influpet.pets.Pets;
 import fr.influencraft.influpet.gui.ChatPrompt;
@@ -93,7 +93,7 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
                 return false;
             }
         } catch (Throwable t) {
-            getLogger().severe("Système de familiers indisponible : " + t);
+            getLogger().severe("Pet system unavailable: " + t);
             t.printStackTrace();
             return false;
         }
@@ -101,7 +101,7 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
         try {
             petEffects = new PetEffects(this);
         } catch (Throwable t) {
-            getLogger().warning("Effets de familiers indisponibles : " + t);
+            getLogger().warning("Coded pet effects unavailable: " + t);
         }
         return true;
     }
@@ -124,9 +124,9 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
                     java.nio.file.Files.copy(path, to.resolve(from.relativize(path).toString()));
                 }
             }
-            getLogger().info("Configuration reprise de plugins/InfluCard (ancien nom du plugin).");
+            getLogger().info("Configuration copied from plugins/InfluCard (former plugin name).");
         } catch (java.io.IOException e) {
-            getLogger().warning("Reprise de plugins/InfluCard impossible : " + e);
+            getLogger().warning("Could not copy plugins/InfluCard: " + e);
         }
     }
 
@@ -146,6 +146,7 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
             configFiles = new ConfigFiles(this);
         }
         config = configFiles.load();
+        locale = Locale.forLanguageTag(config.getString("language", "en_US").replace('_', '-'));
     }
 
     @Override
@@ -212,6 +213,25 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
         return prompts;
     }
 
+    /** Texte de la langue au chemin donné (le chemin lui-même s'il manque). */
+    public String text(String path, String... replacements) {
+        return replace(getConfig().getString(path, path), replacements);
+    }
+
+    /** Lignes de la langue au chemin donné (une ligne seule acceptée). */
+    public List<String> texts(String path, String... replacements) {
+        List<String> lines = getConfig().isList(path) ? getConfig().getStringList(path)
+                : List.of(getConfig().getString(path, path));
+        return lines.stream().map(l -> replace(l, replacements)).toList();
+    }
+
+    private static String replace(String text, String... replacements) {
+        for (int i = 0; i + 1 < replacements.length; i += 2) {
+            text = text.replace(replacements[i], replacements[i + 1]);
+        }
+        return text;
+    }
+
     public String format(String key, String... replacements) {
         String msg = getConfig().getString("messages." + key, key);
         for (int i = 0; i + 1 < replacements.length; i += 2) {
@@ -260,11 +280,12 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
     }
 
     private static boolean isCardType(String type) {
-        return type.equals("carte") || type.equals("cartes") || type.equals("card") || type.equals("cards");
+        // noms français acceptés (anciennes commandes)
+        return type.equals("card") || type.equals("cards") || type.equals("carte") || type.equals("cartes");
     }
 
     private static boolean isPetType(String type) {
-        return type.equals("familier") || type.equals("familiers") || type.equals("pet") || type.equals("pets");
+        return type.equals("pet") || type.equals("pets") || type.equals("familier") || type.equals("familiers");
     }
 
     @Override
@@ -301,7 +322,7 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
             case "open" -> open(sender, args);
             case "list" -> list(sender, args);
             case "info" -> info(sender, args);
-            case "familier", "pet" -> PetCommands.admin(sender, java.util.Arrays.copyOfRange(args, 1, args.length));
+            case "pet", "familier" -> PetCommands.admin(sender, java.util.Arrays.copyOfRange(args, 1, args.length));
             default -> usage(sender);
         }
         return true;
@@ -383,24 +404,24 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
     }
 
     private void list(CommandSender sender, String[] args) {
-        String type = args.length >= 2 ? args[1].toLowerCase(Locale.ROOT) : "cartes";
+        String type = args.length >= 2 ? args[1].toLowerCase(Locale.ROOT) : "cards";
         if (isCardType(type)) {
-            raw(sender, "&#FF7A59Cartes &#6B7A8F(" + registry.cards().size() + ")");
+            raw(sender, format("list.cards", "%count%", String.valueOf(registry.cards().size())));
             for (var card : registry.cards()) {
-                raw(sender, "&#6B7A8FN°" + String.format("%03d", card.number()) + " &r"
-                        + registry.displayName(card) + " &#6B7A8F(" + card.id() + ")");
+                raw(sender, format("list.card", "%number%", String.format("%03d", card.number()),
+                        "%name%", registry.displayName(card), "%id%", card.id()));
             }
         } else if (isPetType(type)) {
-            raw(sender, "&#FF7A59Familiers &#6B7A8F(" + registry.pets().size() + ")");
+            raw(sender, format("list.pets", "%count%", String.valueOf(registry.pets().size())));
             for (var pet : registry.pets()) {
-                raw(sender, "&r" + registry.displayName(pet) + " &#6B7A8F(" + pet.id() + ", "
-                        + (pet.enabled() ? "obtenable" : "désactivé") + ")");
+                raw(sender, format(pet.enabled() ? "list.pet-enabled" : "list.pet-disabled",
+                        "%name%", registry.displayName(pet), "%id%", pet.id()));
             }
         } else {
-            raw(sender, "&#FF7A59Boosters &#6B7A8F(" + registry.boosters().size() + ")");
+            raw(sender, format("list.boosters", "%count%", String.valueOf(registry.boosters().size())));
             for (var booster : registry.boosters()) {
-                raw(sender, "&r" + booster.name() + " &#6B7A8F(" + booster.id() + ", "
-                        + booster.cards() + " tirages)");
+                raw(sender, format("list.booster", "%name%", booster.name(), "%id%", booster.id(),
+                        "%draws%", String.valueOf(booster.cards())));
             }
         }
     }
@@ -419,8 +440,8 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
                 return;
             }
             reward = new CardReward(card);
-            raw(sender, registry.displayName(card) + " &#6B7A8F(" + card.id() + ", N°"
-                    + String.format("%03d", card.number()) + ", série " + card.series() + ")");
+            raw(sender, format("info.card", "%name%", registry.displayName(card), "%id%", card.id(),
+                    "%number%", String.format("%03d", card.number()), "%series%", card.series()));
         } else if (isPetType(type)) {
             var pet = registry.pet(args[2]);
             if (pet == null) {
@@ -428,13 +449,13 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
                 return;
             }
             reward = new PetReward(pet);
-            raw(sender, registry.displayName(pet) + " &#6B7A8F(" + pet.id() + ")");
+            raw(sender, format("info.pet", "%name%", registry.displayName(pet), "%id%", pet.id()));
         }
         if (reward != null) {
             for (var booster : registry.boosters()) {
                 double c = registry.chance(booster, reward);
                 if (c > 0) {
-                    raw(sender, "&#6B7A8F- &r" + booster.name() + " &#EADBC8: " + percent(c) + " par tirage");
+                    raw(sender, format("info.chance", "%booster%", booster.name(), "%chance%", percent(c)));
                 }
             }
             return;
@@ -444,8 +465,8 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
             send(sender, "unknown-booster", "%id%", args[2]);
             return;
         }
-        raw(sender, booster.name() + " &#6B7A8F(" + booster.id() + ", " + booster.cards()
-                + " tirages) - chance par tirage :");
+        raw(sender, format("info.booster", "%name%", booster.name(), "%id%", booster.id(),
+                "%draws%", String.valueOf(booster.cards())));
         var contents = registry.contents(booster);
         double petShare = registry.petChance(booster);
         for (boolean pets : new boolean[]{false, true}) {
@@ -453,7 +474,7 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
             if (share <= 0) {
                 continue;
             }
-            raw(sender, "&#FF7A59" + (pets ? "Familiers" : "Cartes") + " &#EADBC8" + percent(share) + " des tirages");
+            raw(sender, format(pets ? "info.pets-share" : "info.cards-share", "%chance%", percent(share)));
             for (var rarity : registry.rarities()) {
                 double rc = registry.rarityChance(booster, rarity, pets);
                 if (rc <= 0) {
@@ -478,8 +499,15 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
         };
     }
 
+    private static Locale locale = Locale.ENGLISH;
+
+    /** Locale des nombres affichés, d'après la langue choisie (language: fr_FR -> fr-FR). */
+    public static Locale locale() {
+        return locale;
+    }
+
     public static String percent(double chance) {
-        return String.format(Locale.FRANCE, "%.2f %%", chance * 100);
+        return String.format(locale, "%.2f %%", chance * 100);
     }
 
     @Override
@@ -493,20 +521,20 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
         List<String> petIds = registry.pets().stream().map(CardRegistry.PetEntry::id).toList();
         List<String> boosterIds = registry.boosters().stream().map(CardRegistry.Booster::id).toList();
         String sub = args[0].toLowerCase(Locale.ROOT);
-        if ((sub.equals("familier") || sub.equals("pet")) && args.length > 1) {
+        if ((sub.equals("pet") || sub.equals("familier")) && args.length > 1) {
             String lastArg = args[args.length - 1].toLowerCase(Locale.ROOT);
             return PetCommands.adminTab(java.util.Arrays.copyOfRange(args, 1, args.length)).stream()
                     .filter(o -> o.toLowerCase(Locale.ROOT).startsWith(lastArg)).toList();
         }
         List<String> options = switch (args.length) {
-            case 1 -> List.of("menu", "give", "open", "list", "info", "familier", "reload");
+            case 1 -> List.of("menu", "give", "open", "list", "info", "pet", "reload");
             case 2 -> switch (sub) {
                 case "give", "open" -> players;
-                case "list", "info" -> List.of("cartes", "familiers", "boosters");
+                case "list", "info" -> List.of("cards", "pets", "boosters");
                 default -> List.of();
             };
             case 3 -> switch (sub) {
-                case "give" -> List.of("booster", "carte");
+                case "give" -> List.of("booster", "card");
                 case "open" -> boosterIds;
                 case "info" -> {
                     String t = args[1].toLowerCase(Locale.ROOT);

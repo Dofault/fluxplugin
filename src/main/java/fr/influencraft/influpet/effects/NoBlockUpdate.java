@@ -1,4 +1,4 @@
-package fr.influencraft.influpet.effets;
+package fr.influencraft.influpet.effects;
 
 import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
@@ -35,7 +35,7 @@ import java.util.UUID;
  * pistons), dont l'autre moitié n'est retirée que par cette mise à jour : la laisser en place donnerait des
  * demi-blocs fantômes.
  */
-final class SansMiseAJour extends PetEffect {
+final class NoBlockUpdate extends PetEffect {
 
     private record Pos(UUID world, int x, int y, int z) {
         static Pos of(Block b) {
@@ -48,8 +48,8 @@ final class SansMiseAJour extends PetEffect {
     private final Map<UUID, long[]> rolls = new HashMap<>();
     private boolean clearScheduled;
 
-    SansMiseAJour(PetEffects manager) {
-        super(manager, "sans-mise-a-jour");
+    NoBlockUpdate(PetEffects manager) {
+        super(manager, "no-block-update");
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

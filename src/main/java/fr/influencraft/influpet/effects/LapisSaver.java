@@ -1,4 +1,4 @@
-package fr.influencraft.influpet.effets;
+package fr.influencraft.influpet.effects;
 
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -18,10 +18,10 @@ import org.bukkit.inventory.ItemStack;
  * Si la table a été fermée entre-temps (le lapis restant est revenu au joueur), le remboursement va dans
  * l'inventaire du joueur (au sol s'il est plein).
  */
-final class LapisEconome extends PetEffect {
+final class LapisSaver extends PetEffect {
 
-    LapisEconome(PetEffects manager) {
-        super(manager, "lapis-econome");
+    LapisSaver(PetEffects manager) {
+        super(manager, "lapis-saver");
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

@@ -58,11 +58,11 @@ final class EcoPetsMigration implements Listener {
                 Pets.copy(file, new File(target, file.getName()));
                 count++;
             } catch (IOException e) {
-                plugin.getLogger().warning("Copie de " + file.getName() + " impossible : " + e);
+                plugin.getLogger().warning("Could not copy " + file.getName() + ": " + e);
             }
         }
         target.mkdirs();
-        plugin.getLogger().info(count + " fichiers de familiers repris de plugins/EcoPets/pets.");
+        plugin.getLogger().info(count + " pet files imported from plugins/EcoPets/pets.");
     }
 
     static void registerPlayerDataMigration(InfluPet plugin) {
@@ -104,7 +104,7 @@ final class EcoPetsMigration implements Listener {
         }
         profile.write(migrated, true);
         if (pets > 0) {
-            plugin.getLogger().info("Familiers EcoPets repris pour " + player.getName() + " : " + pets + ".");
+            plugin.getLogger().info("EcoPets data imported for " + player.getName() + ": " + pets + ".");
         }
     }
 }

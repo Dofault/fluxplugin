@@ -1,0 +1,452 @@
+# InfluPet: texts shown to players (English). Selected with "language" in config.yml: lang/<language>.yml.
+# A key missing here falls back to the plugin's default (English) text.
+#
+# & and &#RRGGBB codes. %img_<id>% shows an ItemsAdder glyph (influtags, influemoji, influitems, influcards),
+# always preceded by &r&f to keep its colors.
+# Card palette: coral #FF7A59 (accent), parchment #EADBC8 (text), cream #FFF4E0 (names), slate #6B7A8F
+# (secondary), teal #5FB3B3 (info), brick #D9534F (errors).
+
+messages:
+  prefix: "&#FF7A59ᴄᴀʀᴅꜱ &#6B7A8F▸ "
+  opened: "&#EADBC8Opening a %booster%&#EADBC8..."
+  finished: "&#EADBC8Booster done: &#FFF4E0%count% &#EADBC8cards obtained."
+  opened-all: "&#FFF4E0%boosters% &#EADBC8boosters opened: &#FFF4E0%count% &#EADBC8cards obtained."
+  skipped: "&#6B7A8FReveal skipped, cards added to your inventory."
+  inventory-full: "&#D9534FInventory full: some cards dropped at your feet."
+  inventory-needed: "&#D9534FNot enough room: free &#FFF4E0%slots% &#D9534Fslot(s) to open this booster."
+  empty-booster: "&#D9534FThis booster contains no card (check the configuration)."
+  unknown-booster: "&#D9534FUnknown booster: &#FFF4E0%id%"
+  unknown-card: "&#D9534FUnknown card: &#FFF4E0%id%"
+  player-not-found: "&#D9534FPlayer not found: &#FFF4E0%player%"
+  invalid-amount: "&#D9534FInvalid number: &#FFF4E0%amount% &#6B7A8F(1 to 64)"
+  given: "&#FFF4E0%amount%x &r%item% &#EADBC8given to &#FFF4E0%player%&#EADBC8."
+  opened-for: "&#FFF4E0%amount% &#EADBC8booster(s) &r%booster% &#EADBC8opened for &#FFF4E0%player%&#EADBC8."
+  reloaded: "&#EADBC8Configuration reloaded: &#FFF4E0%cards% &#EADBC8cards, &#FFF4E0%boosters% &#EADBC8boosters."
+  unknown-pet: "&#D9534FUnknown pet: &#FFF4E0%id%"
+  player-only: "&#D9534FPlayers only."
+  no-permission: "&#FF5C5CYou do not have permission."
+  already-exists: "&#D9534F\"%id%\" already exists."
+  created: "&#EADBC8\"&#FFF4E0%id%&#EADBC8\" created."
+  deleted: "&#EADBC8\"&#FFF4E0%id%&#EADBC8\" deleted."
+  prompt-hint: "&#6B7A8FType your answer in chat, or \"cancel\"."
+  # word that cancels a chat prompt ("cancel" always works too)
+  prompt-cancel-word: "cancel"
+  prompt-cancelled: "&#6B7A8FInput cancelled."
+  prompt-timeout: "&#6B7A8FInput timed out."
+  pet-broadcast: "&#FFF4E0%player% &#EADBC8just adopted &r%pet%&#EADBC8!"
+  pet-unlocked: "&#5FB3B3New pet adopted: &r%pet%&#5FB3B3!"
+  series-complete: "&#FFD94D%series% series complete! &#EADBC8You receive its &#FFF4E0%count% &#EADBC8plushies."
+  card-used: "&#FFF4E0%amount% &#EADBC8card(s) used: &#FFF4E0+%xp% XP &#EADBC8for &r%pet%"
+  card-pet-locked: "&#D9534FYou have not adopted &r%pet%&#D9534F yet: open its booster to unlock it."
+  card-no-use: "&#6B7A8FThis card does not feed any pet."
+  usage:
+    - "&#FF7A59/influpet menu &#6B7A8F- edit boosters, cards and pets"
+    - "&#FF7A59/influpet give <player> booster <id> [amount] &#6B7A8F- give boosters"
+    - "&#FF7A59/influpet give <player> card <id> [amount] &#6B7A8F- give a specific card"
+    - "&#FF7A59/influpet open <player> <booster> [amount] &#6B7A8F- open boosters without the item"
+    - "&#FF7A59/influpet list <cards|pets|boosters> &#6B7A8F- list the content"
+    - "&#FF7A59/influpet info <card|pet|booster> <id> &#6B7A8F- details and draw chances"
+    - "&#FF7A59/influpet pet <give|take|givexp|reset|setlevel|...> <player> &#6B7A8F- a player's pets"
+    - "&#FF7A59/influpet reload &#6B7A8F- reload the configuration"
+  list:
+    cards: "&#FF7A59Cards &#6B7A8F(%count%)"
+    card: "&#6B7A8FN°%number% &r%name% &#6B7A8F(%id%)"
+    pets: "&#FF7A59Pets &#6B7A8F(%count%)"
+    pet-enabled: "&r%name% &#6B7A8F(%id%, obtainable)"
+    pet-disabled: "&r%name% &#6B7A8F(%id%, disabled)"
+    boosters: "&#FF7A59Boosters &#6B7A8F(%count%)"
+    booster: "&r%name% &#6B7A8F(%id%, %draws% draws)"
+  info:
+    card: "%name% &#6B7A8F(%id%, N°%number%, series %series%)"
+    pet: "%name% &#6B7A8F(%id%)"
+    chance: "&#6B7A8F- &r%booster% &#EADBC8: %chance% per draw"
+    booster: "%name% &#6B7A8F(%id%, %draws% draws) - chance per draw:"
+    pets-share: "&#FF7A59Pets &#EADBC8%chance% of draws"
+    cards-share: "&#FF7A59Cards &#EADBC8%chance% of draws"
+
+# Booster reveal
+reveal:
+  actionbar: '%card%'
+  # amount in the middle of the screen (big subtitle)
+  subtitle: '%rarity_color%&lx%count%'
+  # common card back, shown big before each card
+  back-title: "&r&f%img_carte_verso_grand%"
+  actionbar-pet: "%card% &#5FB3B3New pet!"
+  actionbar-pet-duplicate: '%card% &#6B7A8FAlready adopted &#EADBC8: its card and its plush'
+  actionbar-pet-duplicate-incomplete: '%card% &#6B7A8FAlready adopted &#EADBC8: its card instead'
+
+# Pet adoption: title = pet name, subtitle in small caps
+pet-reveal:
+  title: "%pet%"
+  subtitle: "&#FF7A59Nᴇᴡ Pᴇᴛ"
+
+# Cards: %tag% (rarity), %name%, %number% (collection N°), %series%
+card-format:
+  name: "%tag% &#FFF4E0%name%"
+  lore-header:
+    - "&#6B7A8FN°%number% &#6B7A8F• %series%"
+    - ""
+  lore-footer: []
+  # added to cards that feed a pet
+  lore-pet:
+    - ""
+    - "&#5FB3B3+%xp% XP &#EADBC8for &r%pet%"
+    - "&r&7%img_right_click% &#FF7A59Feed &#6B7A8F(Shift: whole stack)"
+
+pets:
+  # pet name in the editor menus and announcements
+  name-format: "%tag% &#5FB3B3%name%"
+
+pet-settings:
+  # name shown above the model following the player
+  pet-entity:
+    name: "%pet%&f (Lvl. %level%)"
+  level-up:
+    message:
+      message:
+        - ""
+        - " &#B376E5Your pet %pet%&#B376E5 reached &#FFD94Dlevel %level%&#B376E5!"
+        - ""
+        - " &#FFD94D&lEFFECTS:"
+        - " %level_up_messages%"
+        - ""
+  messages:
+    prefix: "&#FFD94D&lPets &8» &r"
+    invalid-pet: "&#FF5C5CUnknown or not adopted pet."
+    pet-already-active: "&#FF5C5CThis pet is already active."
+    cannot-activate-pet: "&#FF5C5CYou cannot activate %pet%&#FF5C5C here."
+    activated-pet: "&#B376E5Pet activated: %pet%"
+    deactivated-pet: "&#B376E5Pet put away: %pet%"
+    no-pet-active: "&#FF5C5CYou have no active pet."
+    pet-auto-deactivated: "&#FF5C5CYour pet %pet%&#FF5C5C was put away: its conditions are no longer met."
+    max-pets-reached: "&#FF5C5CYou already have %max% active pet(s): put one away first (click it)."
+    cancelled-swap: "&#FF5C5CPet change cancelled."
+    player-only: "&#FF5C5CPlayers only."
+    # /influpet pet ... (administration)
+    admin:
+      unavailable: "&#D9534FPet system unavailable (see startup logs)."
+      usage: "&#FF7A59/influpet pet <give|take|givexp|givecurrentxp|reset|setlevel|activate|deactivate> <player> [pet] [value]"
+      unknown-player: "&#D9534FUnknown player: %player%"
+      unknown-pet: "&#D9534FUnknown pet: %id%"
+      offline: "&#D9534F%player% is not online."
+      invalid-number: "&#D9534FInvalid number."
+      not-owned: "&#D9534F%player% does not have %pet%&#D9534F."
+      no-active-pet: "&#D9534F%player% has no active pet (or is not online)."
+      adopted: "&#EADBC8%player% adopts %pet%&#EADBC8."
+      already-adopted: "&#D9534F%player% already has %pet%&#D9534F (or the adoption was cancelled)."
+      taken: "&#EADBC8%pet%&#EADBC8 taken from %player%."
+      level-set: "&#EADBC8%pet%&#EADBC8 of %player% set to level %level%."
+      xp-given: "&#EADBC8%xp% XP given to %pet%&#EADBC8 of %player%."
+      activated: "&#EADBC8%pet%&#EADBC8 activated for %player%."
+      activation-failed: "&#D9534FCould not activate %pet%&#D9534F: %reason% (max %max%)."
+      deactivated: "&#EADBC8%player%'s pet(s) put away."
+      nothing-to-deactivate: "&#D9534F%player% has nothing to put away."
+
+# Editor menus (/influpet menu)
+editor:
+  back: "&r&7%img_left_click% &#FF7A59Back"
+  previous-page: "&r&7%img_left_click% &#FF7A59Previous page"
+  next-page: "&r&7%img_left_click% &#FF7A59Next page"
+  page: "&#6B7A8FPage %page%/%pages%"
+  click:
+    left: "&r&7%img_left_click% &#FF7A59%action%"
+    right: "&r&7%img_right_click% &#FF7A59%action%"
+    shift: "&#6B7A8FShift + click &#FF7A59%action%"
+  action:
+    edit: "Edit"
+    create: "Create"
+    add: "Add"
+    remove: "Remove"
+    delete: "Delete (Shift + right click)"
+    receive-one: "Receive one"
+    receive-stack: "Receive a stack (Shift + right click)"
+    next-rarity: "Next rarity"
+    previous-rarity: "Previous rarity"
+  pets-unavailable:
+    - "&#D9534FPets unavailable (see logs)."
+    - ""
+  # lore of a booster created from the menu
+  new-booster-lore:
+    - "&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards."
+    - ""
+    - "&r&7%img_right_click% &#FF7A59Open"
+  texture:
+    name: "&#FF7A59Texture"
+    lore:
+      - "&#6B7A8FCurrent: &#EADBC8%value%"
+      - ""
+      - "&#EADBC8ItemsAdder item id"
+      - "&#EADBC8(e.g. %example%)."
+      - ""
+    prompt: "&#EADBC8ItemsAdder item &#6B7A8F(namespace:id):"
+  description:
+    name: "&#FF7A59Description"
+    prompt: "&#EADBC8Description, lines separated by &#FFF4E0| &#EADBC8:"
+    current:
+      - "&#6B7A8FCurrent:"
+    empty:
+      - "&#6B7A8F(empty)"
+  main:
+    title: "&#FF7A59Cards &#6B7A8F▸ &#EADBC8Boosters"
+    booster:
+      lore:
+        - "&#6B7A8F%id% • %cards% draws"
+        - "&#6B7A8FContents: &#EADBC8%contents%"
+        - ""
+      contents-all: "all"
+      contents-count: "%count% rewards"
+    info:
+      name: "&#FF7A59Card editor"
+      lore:
+        - "&#EADBC8Set up boosters, cards"
+        - "&#EADBC8and obtainable pets."
+        - ""
+        - "&#6B7A8FEverything is saved in"
+        - "&#6B7A8Fplugins/InfluPet/content/."
+    new-booster:
+      name: "&#FF7A59New booster"
+      lore:
+        - "&#EADBC8Creates an empty booster."
+        - ""
+      prompt: "&#EADBC8New booster id &#6B7A8F(letters, digits, _):"
+    cards:
+      name: "&#FF7A59Cards"
+      lore:
+        - "&#EADBC8%count% cards."
+        - ""
+      action: "Manage cards"
+    pets:
+      name: "&#FF7A59Pets"
+      lore:
+        - "&#EADBC8%count% obtainable from boosters."
+        - ""
+      action: "Manage pets"
+    reload:
+      name: "&#FF7A59Reload"
+      lore:
+        - "&#EADBC8Reloads the configuration"
+        - "&#EADBC8(after a manual edit)."
+        - ""
+      action: "Reload"
+  booster:
+    title: "&#FF7A59Booster &#6B7A8F▸ &#EADBC8%id%"
+    preview:
+      receive: "Receive this booster"
+      test: "Test the opening"
+    name:
+      name: "&#FF7A59Name"
+      lore:
+        - "&#6B7A8FCurrent: &r%value%"
+        - ""
+        - "&#EADBC8Colors: & and hex codes."
+        - ""
+      prompt: "&#EADBC8New booster name:"
+    description-hint:
+      - "&#6B7A8FOne line per \"|\", %cards% = number of draws."
+    draws:
+      name: "&#FF7A59Draws per booster &#FFF4E0%count%"
+      lore:
+        - "&#EADBC8Number of rewards given"
+        - "&#EADBC8on each opening."
+        - ""
+    contents:
+      name: "&#FF7A59Contents"
+      lore-all:
+        - "&#EADBC8All (every card and"
+        - "&#EADBC8every obtainable pet)"
+        - ""
+      lore-chosen:
+        - "&#EADBC8%count% rewards"
+        - "&#EADBC8chosen by hand."
+        - ""
+      action: "Choose cards and pets"
+    chances:
+      name: "&#FF7A59Draw chances"
+      lore:
+        - "&#EADBC8Shows in chat the chance"
+        - "&#EADBC8of each card and pet."
+        - ""
+      action: "Show"
+    card-weights:
+      name: "&#FF7A59Cards: rarity weights"
+      lore:
+        - "&#EADBC8On each card draw, a rarity"
+        - "&#EADBC8is picked using these weights, then"
+        - "&#EADBC8a random card of that rarity."
+        - ""
+        - "&#6B7A8FA rarity without any card in the"
+        - "&#6B7A8Fcontents is never drawn."
+    pet-weights:
+      name: "&#FF7A59Pets: rarity weights"
+      lore:
+        - "&#EADBC8Same principle for"
+        - "&#EADBC8pet draws."
+        - ""
+        - "&#6B7A8FA pet drops at most once"
+        - "&#6B7A8Fper booster."
+    weight:
+      name: "%rarity% &#FFF4E0%weight%"
+      lore-cards:
+        - "&#EADBC8Chance of this rarity: &#FFF4E0%chance%"
+        - "&#EADBC8Cards of this rarity: &#FFF4E0%count%"
+        - ""
+      lore-pets:
+        - "&#EADBC8Chance of this rarity: &#FFF4E0%chance%"
+        - "&#EADBC8Pets of this rarity: &#FFF4E0%count%"
+        - ""
+    pet-chance:
+      name: "&#FF7A59Pet chance &#FFF4E0%chance%"
+      lore:
+        - "&#EADBC8Probability that a draw is"
+        - "&#EADBC8a pet rather than a card."
+        - "&#EADBC8Per booster: &#FFF4E0%chance% &#EADBC8to get at least one."
+        - ""
+      more: "+0.1 %"
+      less: "-0.1 %"
+      shift: "±1 %"
+    delete:
+      name: "&#D9534FDelete this booster"
+      lore:
+        - "&#EADBC8Boosters already given"
+        - "&#EADBC8will no longer open."
+        - ""
+  content:
+    title: "&#FF7A59Contents &#6B7A8F▸ &#EADBC8%id%"
+    card:
+      - "&#EADBC8Card"
+    pet:
+      - "&#5FB3B3Pet"
+    pet-disabled:
+      - "&#5FB3B3Pet"
+      - "&#D9534FDisabled (Pets menu):"
+      - "&#D9534Fnever drawn, even if included."
+    included:
+      - "&#5FB3B3✔ In this booster"
+      - "&#EADBC8Chance per draw: &#FFF4E0%chance%"
+      - ""
+    excluded:
+      - "&#6B7A8F✘ Not in this booster"
+      - "&#EADBC8Chance per draw: &#FFF4E0%chance%"
+      - ""
+    info:
+      name: "&#FF7A59Contents of %booster%"
+      lore-all:
+        - "&#EADBC8Mode: &#FFF4E0all contents"
+        - ""
+        - "&#6B7A8FIn \"all\" mode, new cards and"
+        - "&#6B7A8Fobtainable pets join on their own."
+        - "&#6B7A8FClicking a reward switches to a chosen list."
+      lore-chosen:
+        - "&#EADBC8Mode: &#FFF4E0chosen list (%count%)"
+        - ""
+        - "&#6B7A8FIn \"all\" mode, new cards and"
+        - "&#6B7A8Fobtainable pets join on their own."
+        - "&#6B7A8FClicking a reward switches to a chosen list."
+    reset:
+      name: "&#FF7A59Include everything"
+      lore:
+        - "&#EADBC8Back to \"all contents\" mode."
+        - ""
+      action: "Reset"
+  pets:
+    title: "&#FF7A59Cards &#6B7A8F▸ &#EADBC8Pets"
+    unavailable:
+      name: "&#D9534FPets unavailable (see logs)"
+      lore:
+        - "&#EADBC8Pets cannot drop"
+        - "&#EADBC8from boosters."
+    pet:
+      lore-enabled:
+        - "&#6B7A8F%id%"
+        - "&#EADBC8Rarity: &r%rarity%"
+        - "&#5FB3B3✔ Obtainable from boosters"
+        - ""
+      lore-disabled:
+        - "&#6B7A8F%id%"
+        - "&#EADBC8Rarity: &r%rarity%"
+        - "&#6B7A8F✘ Not obtainable"
+        - ""
+      enable: "Make obtainable"
+      disable: "Make not obtainable"
+      previous-rarity: "Previous rarity (Shift + right click)"
+    info:
+      name: "&#FF7A59Pets"
+      lore:
+        - "&#EADBC8An obtainable pet can drop"
+        - "&#EADBC8from boosters (depending on their contents):"
+        - "&#EADBC8it is adopted when revealed."
+        - ""
+        - "&#6B7A8FA pet drops at most once per booster."
+    duplicate:
+      name: "&#FF7A59Already adopted pet"
+      lore-xp:
+        - "&#EADBC8Mode: &#FFF4E0can drop again (its card)"
+        - "&#EADBC8Extra XP: &#FFF4E0%xp% XP"
+        - ""
+      lore-reroll:
+        - "&#EADBC8Mode: &#FFF4E0new draw"
+        - "&#EADBC8An adopted pet is never"
+        - "&#EADBC8drawn again for that player."
+        - ""
+      switch: "Change mode"
+      more: "+100 XP"
+      less: "-100 XP (Shift + right click)"
+  cards:
+    title: "&#FF7A59Cards &#6B7A8F▸ &#EADBC8Collection"
+    info:
+      name: "&#FF7A59Cards &#6B7A8F(%count%)"
+      lore:
+        - "&#EADBC8The collection number follows"
+        - "&#EADBC8the creation order."
+    new:
+      name: "&#FF7A59New card"
+      lore:
+        - "&#EADBC8Creates a card (test texture,"
+        - "&#EADBC8most common rarity)."
+        - ""
+      prompt: "&#EADBC8New card id &#6B7A8F(letters, digits, _):"
+  card:
+    title: "&#FF7A59Card &#6B7A8F▸ &#EADBC8%id%"
+    receive: "Receive this card"
+    # word that clears the series or the linked pet in the chat prompts
+    none: "none"
+    name:
+      name: "&#FF7A59Name"
+      lore:
+        - "&#6B7A8FCurrent: &#FFF4E0%value%"
+        - ""
+        - "&#EADBC8Without a color, the name takes"
+        - "&#EADBC8the card format color."
+        - ""
+      prompt: "&#EADBC8New card name:"
+    rarity:
+      name: "&#FF7A59Rarity &r%rarity%"
+    series:
+      name: "&#FF7A59Series"
+      lore:
+        - "&#6B7A8FCurrent: &#FFF4E0%value%"
+        - ""
+      empty: "(none)"
+      prompt: "&#EADBC8Card series &#6B7A8F(\"%none%\" to clear):"
+    pet:
+      name: "&#FF7A59Linked pet"
+      lore:
+        - "&#6B7A8FCurrent: &#FFF4E0%value%"
+        - ""
+        - "&#EADBC8Right-click with the card in hand:"
+        - "&#EADBC8gives &#FFF4E0%xp% XP &#EADBC8to this pet (Shift: whole stack)."
+        - ""
+        - "&#6B7A8FXP per card is set by rarity"
+        - "&#6B7A8F(card-xp in content/cards.yml)."
+        - ""
+      empty: "(none)"
+      prompt: "&#EADBC8Pet id &#6B7A8F(\"%none%\" to unlink):"
+    description-hint:
+      - "&#6B7A8FOne line per \"|\"."
+    delete:
+      name: "&#D9534FDelete this card"
+      lore:
+        - "&#EADBC8It is also removed from boosters."
+        - "&#EADBC8Cards already given stay in game"
+        - "&#EADBC8but are no longer recognized."
+        - ""

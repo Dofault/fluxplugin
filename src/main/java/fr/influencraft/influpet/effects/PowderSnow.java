@@ -1,4 +1,4 @@
-package fr.influencraft.influpet.effets;
+package fr.influencraft.influpet.effects;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
@@ -39,7 +39,7 @@ import java.util.UUID;
  *
  * Seule classe des effets qui référence packetevents : chargée seulement si packetevents est actif.
  */
-final class NeigePoudreuse extends PetEffect {
+final class PowderSnow extends PetEffect {
 
     private static final ResourceLocation REGISTRY = ResourceLocation.minecraft("entity_type");
     private static final String WALKABLE = "minecraft:powder_snow_walkable_mobs";
@@ -53,8 +53,8 @@ final class NeigePoudreuse extends PetEffect {
 
     private final Map<UUID, State> armed = new HashMap<>();
 
-    NeigePoudreuse(PetEffects manager) {
-        super(manager, "neige-poudreuse");
+    PowderSnow(PetEffects manager) {
+        super(manager, "powder-snow");
         Bukkit.getScheduler().runTaskTimer(manager.plugin(), this::update, 40L, PERIOD);
     }
 
@@ -84,9 +84,9 @@ final class NeigePoudreuse extends PetEffect {
                 }
             } else if (now >= state.activeUntil) {
                 send(player, false);
-                double recharge = getDouble("recharge", 30);
+                double recharge = getDouble("cooldown", 30);
                 startCooldown(player, recharge);
-                actionBar(player, "message-fin", "%secondes%", String.valueOf(Math.round(recharge)));
+                actionBar(player, "end-message", "%seconds%", String.valueOf(Math.round(recharge)));
             }
         }
     }
@@ -143,8 +143,8 @@ final class NeigePoudreuse extends PetEffect {
             map.put(REGISTRY, tags);
             PacketEvents.getAPI().getPlayerManager().sendPacket(player, new WrapperPlayServerTags(map));
         } catch (RuntimeException e) {
-            manager.plugin().getLogger().warning("Neige poudreuse : envoi des tags impossible à "
-                    + player.getName() + " : " + e);
+            manager.plugin().getLogger().warning("Powder snow: could not send tags to "
+                    + player.getName() + ": " + e);
         }
     }
 

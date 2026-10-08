@@ -20,7 +20,7 @@ public final class BoosterMenu extends Menu {
     private final String id;
 
     public BoosterMenu(InfluPet plugin, String id) {
-        super(plugin, 6, "&#FF7A59Booster &#6B7A8F▸ &#EADBC8" + id);
+        super(plugin, 6, plugin.text("editor.booster.title", "%id%", id));
         this.id = id;
     }
 
@@ -47,8 +47,8 @@ public final class BoosterMenu extends Menu {
         List<String> previewLore = new ArrayList<>(b.lore().stream()
                 .map(l -> l.replace("%cards%", String.valueOf(b.cards()))).toList());
         previewLore.add("");
-        previewLore.add(left("Recevoir ce booster"));
-        previewLore.add(right("Tester l'ouverture"));
+        previewLore.add(left(t("booster.preview.receive")));
+        previewLore.add(right(t("booster.preview.test")));
         set(4, decorate(preview, b.name(), previewLore), (p, c) -> {
             if (c.isRightClick()) {
                 p.closeInventory();
@@ -63,61 +63,51 @@ public final class BoosterMenu extends Menu {
             }
         });
 
-        set(19, icon("name_tag", "&#FF7A59Nom", "&#6B7A8FActuel : &r" + b.name(), "",
-                "&#EADBC8Couleurs : codes & et hexadécimaux.", "", left("Modifier")), (p, c) ->
-                ask(p, "&#EADBC8Nouveau nom du booster :", answer -> reg.setBooster(id, "name", answer)));
+        set(19, icon("name_tag", t("booster.name.name"),
+                join(lines("booster.name.lore", "%value%", b.name()), List.of(left(t("action.edit"))))), (p, c) ->
+                ask(p, t("booster.name.prompt"), answer -> reg.setBooster(id, "name", answer)));
 
-        set(20, icon("painting", "&#FF7A59Texture", "&#6B7A8FActuelle : &#EADBC8" + b.itemId(), "",
-                "&#EADBC8Identifiant d'un item ItemsAdder", "&#EADBC8(ex : influcards:booster_basique).",
-                "", left("Modifier")), (p, c) ->
-                ask(p, "&#EADBC8Item ItemsAdder du booster &#6B7A8F(namespace:id) :",
-                        answer -> reg.setBooster(id, "item", answer.trim())));
+        set(20, icon("painting", t("texture.name"),
+                join(lines("texture.lore", "%value%", b.itemId(), "%example%", "influcards:booster_basique"),
+                        List.of(left(t("action.edit"))))), (p, c) ->
+                ask(p, t("texture.prompt"), answer -> reg.setBooster(id, "item", answer.trim())));
 
-        set(21, icon("book", "&#FF7A59Description",
-                withHeader(b.lore(), "&#6B7A8FActuelle :", left("Modifier"),
-                        "&#6B7A8FUne ligne par « | », %cards% = nombre de tirages.")), (p, c) ->
-                ask(p, "&#EADBC8Description, lignes séparées par &#FFF4E0| &#EADBC8:",
-                        answer -> reg.setBooster(id, "lore", Arrays.stream(answer.split("\\|"))
-                                .map(String::trim).toList())));
+        set(21, icon("book", t("description.name"),
+                withHeader(b.lore(), lines("booster.description-hint"), left(t("action.edit")))), (p, c) ->
+                ask(p, t("description.prompt"), answer -> reg.setBooster(id, "lore", Arrays.stream(answer.split("\\|"))
+                        .map(String::trim).toList())));
 
-        set(23, icon("paper", "&#FF7A59Tirages par booster &#FFF4E0" + b.cards(),
-                "&#EADBC8Nombre de récompenses données", "&#EADBC8à chaque ouverture.", "",
-                left("+1"), right("-1"), shift("±10")), (p, c) -> {
+        set(23, icon("paper", t("booster.draws.name", "%count%", String.valueOf(b.cards())),
+                join(lines("booster.draws.lore"), List.of(left("+1"), right("-1"), shift("±10")))), (p, c) -> {
             int n = Math.max(1, Math.min(54, b.cards() + step(c)));
             reg.setBooster(id, "cards", n);
             refresh(p);
         });
 
         long count = reg.contents(b).size();
-        set(24, icon("chest", "&#FF7A59Contenu",
-                "&#EADBC8" + (b.contents().isEmpty() ? "Tout (toutes les cartes et" : count + " récompenses"),
-                b.contents().isEmpty() ? "&#EADBC8tous les familiers obtenables)" : "&#EADBC8choisies à la main.",
-                "", left("Choisir les cartes et familiers")), (p, c) -> new ContentMenu(plugin, id, 0).open(p));
+        set(24, icon("chest", t("booster.contents.name"),
+                join(b.contents().isEmpty() ? lines("booster.contents.lore-all")
+                                : lines("booster.contents.lore-chosen", "%count%", String.valueOf(count)),
+                        List.of(left(t("booster.contents.action"))))), (p, c) -> new ContentMenu(plugin, id, 0).open(p));
 
-        set(25, icon("influitems:search", "&#FF7A59Chances de tirage",
-                "&#EADBC8Affiche dans le tchat la chance", "&#EADBC8de chaque carte et familier.", "",
-                left("Afficher")), (p, c) -> {
+        set(25, icon("influitems:search", t("booster.chances.name"),
+                join(lines("booster.chances.lore"), List.of(left(t("booster.chances.action"))))), (p, c) -> {
             p.closeInventory();
             p.performCommand("influpet info booster " + id);
         });
 
         // Poids des raretés : ligne des cartes, ligne des familiers
-        set(27, icon("influcards:carte_test", "&#FF7A59Cartes : poids des raretés",
-                "&#EADBC8À chaque tirage de carte, une rareté", "&#EADBC8est choisie selon ces poids, puis",
-                "&#EADBC8une carte au hasard dans cette rareté.", "",
-                "&#6B7A8FUne rareté sans carte dans le", "&#6B7A8Fcontenu n'est jamais tirée."));
-        set(36, icon("bone", "&#FF7A59Familiers : poids des raretés",
-                "&#EADBC8Même principe pour les tirages", "&#EADBC8de familiers.", "",
-                "&#6B7A8FUn familier ne sort qu'une fois", "&#6B7A8Fpar booster."));
+        set(27, icon("influcards:carte_test", t("booster.card-weights.name"), lines("booster.card-weights.lore")));
+        set(36, icon("bone", t("booster.pet-weights.name"), lines("booster.pet-weights.lore")));
         weightRow(player, b, false, RARITY_SLOTS);
         weightRow(player, b, true, PET_RARITY_SLOTS);
 
         double pc = b.petChance() * 100;
-        set(22, icon("bone", "&#FF7A59Chance de familier &#FFF4E0" + String.format(java.util.Locale.FRANCE, "%.2f %%", pc),
-                "&#EADBC8Probabilité qu'un tirage soit", "&#EADBC8un familier plutôt qu'une carte.",
-                "&#EADBC8Par booster : &#FFF4E0" + InfluPet.percent(1 - Math.pow(1 - reg.petChance(b), b.cards()))
-                        + " &#EADBC8d'en avoir au moins un.", "",
-                left("+0,1 %"), right("-0,1 %"), shift("±1 %")), (p, c) -> {
+        set(22, icon("bone", t("booster.pet-chance.name", "%chance%", InfluPet.percent(b.petChance())),
+                join(lines("booster.pet-chance.lore", "%chance%",
+                                InfluPet.percent(1 - Math.pow(1 - reg.petChance(b), b.cards()))),
+                        List.of(left(t("booster.pet-chance.more")), right(t("booster.pet-chance.less")),
+                                shift(t("booster.pet-chance.shift"))))), (p, c) -> {
             double delta = switch (c) {
                 case LEFT -> 0.1;
                 case RIGHT -> -0.1;
@@ -131,9 +121,8 @@ public final class BoosterMenu extends Menu {
         });
 
         back(new MainMenu(plugin));
-        set(53, icon("barrier", "&#D9534FSupprimer ce booster",
-                "&#EADBC8Les boosters déjà distribués", "&#EADBC8ne s'ouvriront plus.", "",
-                shift("Supprimer (Maj + clic droit)")), (p, c) -> {
+        set(53, icon("barrier", t("booster.delete.name"),
+                join(lines("booster.delete.lore"), List.of(shift(t("action.delete"))))), (p, c) -> {
             if (c == ClickType.SHIFT_RIGHT) {
                 reg.deleteBooster(id);
                 plugin.send(p, "deleted", "%id%", id);
@@ -151,11 +140,12 @@ public final class BoosterMenu extends Menu {
             int weight = b.weights(pets).getOrDefault(r.id(), 0);
             long inContent = reg.contents(b).stream()
                     .filter(x -> (x instanceof CardRegistry.PetReward) == pets && x.rarity().equals(r)).count();
-            ItemStack item = icon(weight > 0 ? "lime_dye" : "gray_dye", r.tag() + " &#FFF4E0" + weight,
-                    "&#EADBC8Chance de cette rareté : &#FFF4E0" + InfluPet.percent(reg.rarityChance(b, r, pets)),
-                    "&#EADBC8" + (pets ? "Familiers" : "Cartes") + " de cette rareté : &#FFF4E0" + inContent,
-                    "",
-                    left("+1"), right("-1"), shift("±10"));
+            ItemStack item = icon(weight > 0 ? "lime_dye" : "gray_dye", t("booster.weight.name", "%rarity%", r.tag(),
+                            "%weight%", String.valueOf(weight)),
+                    join(lines(pets ? "booster.weight.lore-pets" : "booster.weight.lore-cards",
+                                    "%chance%", InfluPet.percent(reg.rarityChance(b, r, pets)),
+                                    "%count%", String.valueOf(inContent)),
+                            List.of(left("+1"), right("-1"), shift("±10"))));
             item.setAmount(Math.max(1, Math.min(64, weight)));
             set(slots[i + 1], item, (p, c) -> {
                 // première modification des poids familiers : on part des poids actuels
@@ -170,18 +160,18 @@ public final class BoosterMenu extends Menu {
         }
     }
 
-    private static List<String> withHeader(List<String> lines, String header, String action, String hint) {
-        List<String> lore = new ArrayList<>();
-        lore.add(header);
-        if (lines.isEmpty()) {
-            lore.add("&#6B7A8F(vide)");
-        } else {
-            lore.addAll(lines);
-        }
+    /** Valeur actuelle (lignes), puis l'aide, puis l'action (description d'un booster ou d'une carte). */
+    static List<String> withHeader(Menu menu, List<String> current, List<String> hint, String action) {
+        List<String> lore = new ArrayList<>(menu.lines("description.current"));
+        lore.addAll(current.isEmpty() ? menu.lines("description.empty") : current);
         lore.add("");
-        lore.add(hint);
+        lore.addAll(hint);
         lore.add("");
         lore.add(action);
         return lore;
+    }
+
+    private List<String> withHeader(List<String> current, List<String> hint, String action) {
+        return withHeader(this, current, hint, action);
     }
 }

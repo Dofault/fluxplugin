@@ -1,4 +1,4 @@
-package fr.influencraft.influpet.effets;
+package fr.influencraft.influpet.effects;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -10,12 +10,12 @@ import org.bukkit.event.inventory.FurnaceStartSmeltEvent;
  * le propriétaire (dernier joueur à y avoir cliqué) est connecté avec ce familier actif. Durée fixée au début
  * de chaque cuisson : retirer le familier en cours ne change que les cuissons suivantes.
  */
-final class CuissonRapide extends PetEffect {
+final class FastSmelting extends PetEffect {
 
     private final FurnaceOwners owners;
 
-    CuissonRapide(PetEffects manager, FurnaceOwners owners) {
-        super(manager, "cuisson-rapide");
+    FastSmelting(PetEffects manager, FurnaceOwners owners) {
+        super(manager, "fast-smelting");
         this.owners = owners;
     }
 

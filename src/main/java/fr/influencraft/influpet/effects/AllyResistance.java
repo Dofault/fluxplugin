@@ -1,4 +1,4 @@
-package fr.influencraft.influpet.effets;
+package fr.influencraft.influpet.effects;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -8,21 +8,21 @@ import org.bukkit.potion.PotionEffectType;
 /**
  * Écuyer : Résistance I (-20 % de dégâts, comme la potion) à tous les joueurs dans un rayon de value(niveau)
  * blocs (arrondi, comme la description). Le porteur n'en profite pas lui-même. Effet court renouvelé toutes les
- * « intervalle-ticks » : il disparaît peu après qu'on s'éloigne. addPotionEffect suit la règle vanilla : une
+ * « interval-ticks » : il disparaît peu après qu'on s'éloigne. addPotionEffect suit la règle vanilla : une
  * résistance plus forte ou plus longue déjà présente n'est pas écrasée, et deux Écuyers ne s'additionnent pas
  * (même niveau I). Les joueurs invisibles aux autres (vanish) et les spectateurs sont ignorés.
  */
-final class ResistanceAllies extends PetEffect {
+final class AllyResistance extends PetEffect {
 
     private int elapsed;
 
-    ResistanceAllies(PetEffects manager) {
-        super(manager, "resistance-allies");
+    AllyResistance(PetEffects manager) {
+        super(manager, "ally-resistance");
         Bukkit.getScheduler().runTaskTimer(manager.plugin(), this::tick, 60L, 20L);
     }
 
     private int interval() {
-        return Math.max(20, getInt("intervalle-ticks", 40));
+        return Math.max(20, getInt("interval-ticks", 40));
     }
 
     private void tick() {

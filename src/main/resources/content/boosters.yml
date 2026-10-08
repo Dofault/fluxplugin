@@ -1,0 +1,22 @@
+# Boosters: cards = draws, rarity-weights = rarity weights, contents = "card:<id>" / "pet:<id>" (empty = all
+# obtainable content), pet-chance = % chance that a draw is a pet. %adopted:<pet id>% in the lore shows ✔ or ✘
+# depending on whether the viewer adopted that pet. Also edited with /influpet menu.
+
+boosters:
+  basic:
+    item: influcards:booster_basique
+    name: '&#FF7A59&lBasic Booster'
+    lore:
+    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the'
+    - '&#FFF4E0Flames &#EADBC8series.'
+    - ''
+    - '&r&7%img_right_click% &#FF7A59Open'
+    cards: 5
+    rarity-weights:
+      simple: 50
+      unique: 25
+      elite: 13
+      ultimate: 7
+      legendary: 4
+      fabled: 1
+    contents: []

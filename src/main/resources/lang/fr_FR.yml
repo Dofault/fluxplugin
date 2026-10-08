@@ -1,5 +1,5 @@
-# InfluPet : textes affichés aux joueurs (français). Choisi par « langue » dans config.yml : lang/<langue>.yml.
-# Une clé absente ici reprend le texte par défaut du plugin.
+# InfluPet : textes affichés aux joueurs (français). Choisi par « language » dans config.yml : lang/<language>.yml.
+# Une clé absente ici reprend le texte par défaut du plugin (anglais).
 #
 # Codes & et &#RRGGBB. %img_<id>% affiche un glyphe ItemsAdder (influtags, influemoji, influitems, influcards),
 # toujours précédé de &r&f pour garder ses couleurs.
@@ -29,6 +29,8 @@ messages:
   created: "&#EADBC8« &#FFF4E0%id%&#EADBC8 » créé."
   deleted: "&#EADBC8« &#FFF4E0%id%&#EADBC8 » supprimé."
   prompt-hint: "&#6B7A8FÉcris ta réponse dans le tchat, ou « annuler »."
+  # mot qui annule une saisie dans le tchat (« cancel » marche toujours aussi)
+  prompt-cancel-word: "annuler"
   prompt-cancelled: "&#6B7A8FSaisie annulée."
   prompt-timeout: "&#6B7A8FSaisie expirée."
   pet-broadcast: "&#FFF4E0%player% &#EADBC8vient d'adopter &r%pet%&#EADBC8 !"
@@ -40,12 +42,27 @@ messages:
   usage:
     - "&#FF7A59/influpet menu &#6B7A8F- édition des boosters, cartes et familiers"
     - "&#FF7A59/influpet give <joueur> booster <id> [nombre] &#6B7A8F- donne des boosters"
-    - "&#FF7A59/influpet give <joueur> carte <id> [nombre] &#6B7A8F- donne une carte précise"
+    - "&#FF7A59/influpet give <joueur> card <id> [nombre] &#6B7A8F- donne une carte précise"
     - "&#FF7A59/influpet open <joueur> <booster> [nombre] &#6B7A8F- ouvre des boosters sans l'objet"
-    - "&#FF7A59/influpet list <cartes|familiers|boosters> &#6B7A8F- liste le contenu"
-    - "&#FF7A59/influpet info <carte|familier|booster> <id> &#6B7A8F- détail et chances de tirage"
-    - "&#FF7A59/influpet familier <give|take|givexp|reset|setlevel|...> <joueur> &#6B7A8F- familiers d'un joueur"
+    - "&#FF7A59/influpet list <cards|pets|boosters> &#6B7A8F- liste le contenu"
+    - "&#FF7A59/influpet info <card|pet|booster> <id> &#6B7A8F- détail et chances de tirage"
+    - "&#FF7A59/influpet pet <give|take|givexp|reset|setlevel|...> <joueur> &#6B7A8F- familiers d'un joueur"
     - "&#FF7A59/influpet reload &#6B7A8F- recharge la configuration"
+  list:
+    cards: "&#FF7A59Cartes &#6B7A8F(%count%)"
+    card: "&#6B7A8FN°%number% &r%name% &#6B7A8F(%id%)"
+    pets: "&#FF7A59Familiers &#6B7A8F(%count%)"
+    pet-enabled: "&r%name% &#6B7A8F(%id%, obtenable)"
+    pet-disabled: "&r%name% &#6B7A8F(%id%, désactivé)"
+    boosters: "&#FF7A59Boosters &#6B7A8F(%count%)"
+    booster: "&r%name% &#6B7A8F(%id%, %draws% tirages)"
+  info:
+    card: "%name% &#6B7A8F(%id%, N°%number%, série %series%)"
+    pet: "%name% &#6B7A8F(%id%)"
+    chance: "&#6B7A8F- &r%booster% &#EADBC8: %chance% par tirage"
+    booster: "%name% &#6B7A8F(%id%, %draws% tirages) - chance par tirage :"
+    pets-share: "&#FF7A59Familiers &#EADBC8%chance% des tirages"
+    cards-share: "&#FF7A59Cartes &#EADBC8%chance% des tirages"
 
 # Révélation d'un booster
 reveal:
@@ -81,7 +98,7 @@ pets:
   # nom d'un familier dans les menus d'édition et les annonces
   name-format: "%tag% &#5FB3B3%name%"
 
-familiers:
+pet-settings:
   # nom affiché au-dessus du modèle qui suit le joueur
   pet-entity:
     name: "%pet%&f (Niv. %level%)"
@@ -106,3 +123,331 @@ familiers:
     max-pets-reached: "&#FF5C5CTu as déjà %max% familier(s) actif(s) : range-en un d'abord (clic dessus)."
     cancelled-swap: "&#FF5C5CChangement de familier annulé."
     player-only: "&#FF5C5CCommande réservée aux joueurs."
+    # /influpet pet ... (administration)
+    admin:
+      unavailable: "&#D9534FSystème de familiers inactif (cf. logs du démarrage)."
+      usage: "&#FF7A59/influpet pet <give|take|givexp|givecurrentxp|reset|setlevel|activate|deactivate> <joueur> [familier] [valeur]"
+      unknown-player: "&#D9534FJoueur inconnu : %player%"
+      unknown-pet: "&#D9534FFamilier inconnu : %id%"
+      offline: "&#D9534F%player% n'est pas connecté."
+      invalid-number: "&#D9534FNombre invalide."
+      not-owned: "&#D9534F%player% n'a pas %pet%&#D9534F."
+      no-active-pet: "&#D9534F%player% n'a pas de familier actif (ou n'est pas connecté)."
+      adopted: "&#EADBC8%player% adopte %pet%&#EADBC8."
+      already-adopted: "&#D9534F%player% a déjà %pet%&#D9534F (ou adoption annulée)."
+      taken: "&#EADBC8%pet%&#EADBC8 retiré à %player%."
+      level-set: "&#EADBC8%pet%&#EADBC8 de %player% au niveau %level%."
+      xp-given: "&#EADBC8%xp% XP donnée à %pet%&#EADBC8 de %player%."
+      activated: "&#EADBC8%pet%&#EADBC8 activé pour %player%."
+      activation-failed: "&#D9534FActivation de %pet%&#D9534F impossible : %reason% (max %max%)."
+      deactivated: "&#EADBC8Familier(s) de %player% rangé(s)."
+      nothing-to-deactivate: "&#D9534F%player% n'a rien à ranger."
+
+# Menus d'édition (/influpet menu)
+editor:
+  back: "&r&7%img_left_click% &#FF7A59Retour"
+  previous-page: "&r&7%img_left_click% &#FF7A59Page précédente"
+  next-page: "&r&7%img_left_click% &#FF7A59Page suivante"
+  page: "&#6B7A8FPage %page%/%pages%"
+  click:
+    left: "&r&7%img_left_click% &#FF7A59%action%"
+    right: "&r&7%img_right_click% &#FF7A59%action%"
+    shift: "&#6B7A8FMaj + clic &#FF7A59%action%"
+  action:
+    edit: "Modifier"
+    create: "Créer"
+    add: "Ajouter"
+    remove: "Retirer"
+    delete: "Supprimer (Maj + clic droit)"
+    receive-one: "Recevoir un exemplaire"
+    receive-stack: "Recevoir une pile (Maj + clic droit)"
+    next-rarity: "Rareté suivante"
+    previous-rarity: "Rareté précédente"
+  pets-unavailable:
+    - "&#D9534FFamiliers inactifs (cf. logs)."
+    - ""
+  # description d'un booster créé depuis le menu
+  new-booster-lore:
+    - "&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes."
+    - ""
+    - "&r&7%img_right_click% &#FF7A59Ouvrir"
+  texture:
+    name: "&#FF7A59Texture"
+    lore:
+      - "&#6B7A8FActuelle : &#EADBC8%value%"
+      - ""
+      - "&#EADBC8Identifiant d'un item ItemsAdder"
+      - "&#EADBC8(ex : %example%)."
+      - ""
+    prompt: "&#EADBC8Item ItemsAdder &#6B7A8F(namespace:id) :"
+  description:
+    name: "&#FF7A59Description"
+    prompt: "&#EADBC8Description, lignes séparées par &#FFF4E0| &#EADBC8:"
+    current:
+      - "&#6B7A8FActuelle :"
+    empty:
+      - "&#6B7A8F(vide)"
+  main:
+    title: "&#FF7A59Cartes &#6B7A8F▸ &#EADBC8Boosters"
+    booster:
+      lore:
+        - "&#6B7A8F%id% • %cards% tirages"
+        - "&#6B7A8FContenu : &#EADBC8%contents%"
+        - ""
+      contents-all: "tout"
+      contents-count: "%count% récompenses"
+    info:
+      name: "&#FF7A59Édition des cartes"
+      lore:
+        - "&#EADBC8Paramètre les boosters, les cartes"
+        - "&#EADBC8et les familiers obtenables."
+        - ""
+        - "&#6B7A8FTout est enregistré dans"
+        - "&#6B7A8Fplugins/InfluPet/content/."
+    new-booster:
+      name: "&#FF7A59Nouveau booster"
+      lore:
+        - "&#EADBC8Crée un booster vide."
+        - ""
+      prompt: "&#EADBC8Identifiant du nouveau booster &#6B7A8F(lettres, chiffres, _) :"
+    cards:
+      name: "&#FF7A59Cartes"
+      lore:
+        - "&#EADBC8%count% cartes."
+        - ""
+      action: "Gérer les cartes"
+    pets:
+      name: "&#FF7A59Familiers"
+      lore:
+        - "&#EADBC8%count% obtenables dans les boosters."
+        - ""
+      action: "Gérer les familiers"
+    reload:
+      name: "&#FF7A59Recharger"
+      lore:
+        - "&#EADBC8Relit la configuration (après"
+        - "&#EADBC8une modification à la main)."
+        - ""
+      action: "Recharger"
+  booster:
+    title: "&#FF7A59Booster &#6B7A8F▸ &#EADBC8%id%"
+    preview:
+      receive: "Recevoir ce booster"
+      test: "Tester l'ouverture"
+    name:
+      name: "&#FF7A59Nom"
+      lore:
+        - "&#6B7A8FActuel : &r%value%"
+        - ""
+        - "&#EADBC8Couleurs : codes & et hexadécimaux."
+        - ""
+      prompt: "&#EADBC8Nouveau nom du booster :"
+    description-hint:
+      - "&#6B7A8FUne ligne par « | », %cards% = nombre de tirages."
+    draws:
+      name: "&#FF7A59Tirages par booster &#FFF4E0%count%"
+      lore:
+        - "&#EADBC8Nombre de récompenses données"
+        - "&#EADBC8à chaque ouverture."
+        - ""
+    contents:
+      name: "&#FF7A59Contenu"
+      lore-all:
+        - "&#EADBC8Tout (toutes les cartes et"
+        - "&#EADBC8tous les familiers obtenables)"
+        - ""
+      lore-chosen:
+        - "&#EADBC8%count% récompenses"
+        - "&#EADBC8choisies à la main."
+        - ""
+      action: "Choisir les cartes et familiers"
+    chances:
+      name: "&#FF7A59Chances de tirage"
+      lore:
+        - "&#EADBC8Affiche dans le tchat la chance"
+        - "&#EADBC8de chaque carte et familier."
+        - ""
+      action: "Afficher"
+    card-weights:
+      name: "&#FF7A59Cartes : poids des raretés"
+      lore:
+        - "&#EADBC8À chaque tirage de carte, une rareté"
+        - "&#EADBC8est choisie selon ces poids, puis"
+        - "&#EADBC8une carte au hasard dans cette rareté."
+        - ""
+        - "&#6B7A8FUne rareté sans carte dans le"
+        - "&#6B7A8Fcontenu n'est jamais tirée."
+    pet-weights:
+      name: "&#FF7A59Familiers : poids des raretés"
+      lore:
+        - "&#EADBC8Même principe pour les tirages"
+        - "&#EADBC8de familiers."
+        - ""
+        - "&#6B7A8FUn familier ne sort qu'une fois"
+        - "&#6B7A8Fpar booster."
+    weight:
+      name: "%rarity% &#FFF4E0%weight%"
+      lore-cards:
+        - "&#EADBC8Chance de cette rareté : &#FFF4E0%chance%"
+        - "&#EADBC8Cartes de cette rareté : &#FFF4E0%count%"
+        - ""
+      lore-pets:
+        - "&#EADBC8Chance de cette rareté : &#FFF4E0%chance%"
+        - "&#EADBC8Familiers de cette rareté : &#FFF4E0%count%"
+        - ""
+    pet-chance:
+      name: "&#FF7A59Chance de familier &#FFF4E0%chance%"
+      lore:
+        - "&#EADBC8Probabilité qu'un tirage soit"
+        - "&#EADBC8un familier plutôt qu'une carte."
+        - "&#EADBC8Par booster : &#FFF4E0%chance% &#EADBC8d'en avoir au moins un."
+        - ""
+      more: "+0,1 %"
+      less: "-0,1 %"
+      shift: "±1 %"
+    delete:
+      name: "&#D9534FSupprimer ce booster"
+      lore:
+        - "&#EADBC8Les boosters déjà distribués"
+        - "&#EADBC8ne s'ouvriront plus."
+        - ""
+  content:
+    title: "&#FF7A59Contenu &#6B7A8F▸ &#EADBC8%id%"
+    card:
+      - "&#EADBC8Carte"
+    pet:
+      - "&#5FB3B3Familier"
+    pet-disabled:
+      - "&#5FB3B3Familier"
+      - "&#D9534FDésactivé (menu Familiers) :"
+      - "&#D9534Fjamais tiré, même inclus."
+    included:
+      - "&#5FB3B3✔ Dans ce booster"
+      - "&#EADBC8Chance par tirage : &#FFF4E0%chance%"
+      - ""
+    excluded:
+      - "&#6B7A8F✘ Hors de ce booster"
+      - "&#EADBC8Chance par tirage : &#FFF4E0%chance%"
+      - ""
+    info:
+      name: "&#FF7A59Contenu de %booster%"
+      lore-all:
+        - "&#EADBC8Mode : &#FFF4E0tout le contenu"
+        - ""
+        - "&#6B7A8FEn mode « tout », les nouvelles cartes"
+        - "&#6B7A8Fet familiers obtenables y entrent seuls."
+        - "&#6B7A8FCliquer une récompense passe en liste choisie."
+      lore-chosen:
+        - "&#EADBC8Mode : &#FFF4E0liste choisie (%count%)"
+        - ""
+        - "&#6B7A8FEn mode « tout », les nouvelles cartes"
+        - "&#6B7A8Fet familiers obtenables y entrent seuls."
+        - "&#6B7A8FCliquer une récompense passe en liste choisie."
+    reset:
+      name: "&#FF7A59Tout inclure"
+      lore:
+        - "&#EADBC8Revient au mode « tout le contenu »."
+        - ""
+      action: "Réinitialiser"
+  pets:
+    title: "&#FF7A59Cartes &#6B7A8F▸ &#EADBC8Familiers"
+    unavailable:
+      name: "&#D9534FFamiliers inactifs (cf. logs)"
+      lore:
+        - "&#EADBC8Les familiers ne peuvent pas"
+        - "&#EADBC8sortir des boosters."
+    pet:
+      lore-enabled:
+        - "&#6B7A8F%id%"
+        - "&#EADBC8Rareté : &r%rarity%"
+        - "&#5FB3B3✔ Obtenable dans les boosters"
+        - ""
+      lore-disabled:
+        - "&#6B7A8F%id%"
+        - "&#EADBC8Rareté : &r%rarity%"
+        - "&#6B7A8F✘ Pas obtenable"
+        - ""
+      enable: "Rendre obtenable"
+      disable: "Rendre non obtenable"
+      previous-rarity: "Rareté précédente (Maj + clic droit)"
+    info:
+      name: "&#FF7A59Familiers"
+      lore:
+        - "&#EADBC8Un familier obtenable peut sortir"
+        - "&#EADBC8des boosters (selon leur contenu) :"
+        - "&#EADBC8il est adopté à sa révélation."
+        - ""
+        - "&#6B7A8FUn familier ne sort qu'une fois par booster."
+    duplicate:
+      name: "&#FF7A59Familier déjà adopté"
+      lore-xp:
+        - "&#EADBC8Mode : &#FFF4E0peut ressortir (sa carte)"
+        - "&#EADBC8XP en plus : &#FFF4E0%xp% XP"
+        - ""
+      lore-reroll:
+        - "&#EADBC8Mode : &#FFF4E0nouveau tirage"
+        - "&#EADBC8Un familier déjà adopté n'est"
+        - "&#EADBC8jamais tiré pour ce joueur."
+        - ""
+      switch: "Changer de mode"
+      more: "+100 XP"
+      less: "-100 XP (Maj + clic droit)"
+  cards:
+    title: "&#FF7A59Cartes &#6B7A8F▸ &#EADBC8Collection"
+    info:
+      name: "&#FF7A59Cartes &#6B7A8F(%count%)"
+      lore:
+        - "&#EADBC8Le numéro de collection suit"
+        - "&#EADBC8l'ordre de création."
+    new:
+      name: "&#FF7A59Nouvelle carte"
+      lore:
+        - "&#EADBC8Crée une carte (texture de test,"
+        - "&#EADBC8rareté la plus commune)."
+        - ""
+      prompt: "&#EADBC8Identifiant de la nouvelle carte &#6B7A8F(lettres, chiffres, _) :"
+  card:
+    title: "&#FF7A59Carte &#6B7A8F▸ &#EADBC8%id%"
+    receive: "Recevoir cette carte"
+    # mot qui vide la série ou délie le familier dans les saisies du tchat
+    none: "aucun"
+    name:
+      name: "&#FF7A59Nom"
+      lore:
+        - "&#6B7A8FActuel : &#FFF4E0%value%"
+        - ""
+        - "&#EADBC8Sans couleur : le nom prend"
+        - "&#EADBC8la couleur du format des cartes."
+        - ""
+      prompt: "&#EADBC8Nouveau nom de la carte :"
+    rarity:
+      name: "&#FF7A59Rareté &r%rarity%"
+    series:
+      name: "&#FF7A59Série"
+      lore:
+        - "&#6B7A8FActuelle : &#FFF4E0%value%"
+        - ""
+      empty: "(aucune)"
+      prompt: "&#EADBC8Série de la carte &#6B7A8F(« %none% » pour vider) :"
+    pet:
+      name: "&#FF7A59Familier lié"
+      lore:
+        - "&#6B7A8FActuel : &#FFF4E0%value%"
+        - ""
+        - "&#EADBC8Clic droit avec la carte en main :"
+        - "&#EADBC8donne &#FFF4E0%xp% XP &#EADBC8à ce familier (Maj : toute la pile)."
+        - ""
+        - "&#6B7A8FL'XP par carte se règle par rareté"
+        - "&#6B7A8F(card-xp dans content/cards.yml)."
+        - ""
+      empty: "(aucun)"
+      prompt: "&#EADBC8Identifiant du familier &#6B7A8F(« %none% » pour délier) :"
+    description-hint:
+      - "&#6B7A8FUne ligne par « | »."
+    delete:
+      name: "&#D9534FSupprimer cette carte"
+      lore:
+        - "&#EADBC8Elle est aussi retirée des boosters."
+        - "&#EADBC8Les cartes déjà distribuées restent"
+        - "&#EADBC8en jeu mais ne sont plus reconnues."
+        - ""

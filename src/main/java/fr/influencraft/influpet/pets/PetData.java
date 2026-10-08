@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 
 /**
  * Familiers d'un joueur : niveau et XP de chaque familier, familiers actifs (plusieurs selon la permission
- * influpet.familiers.max.<n>), familiers cachés. Tout est lu et écrit
+ * influpet.pets.max.<n>), familiers cachés. Tout est lu et écrit
  * dans le profil eco du joueur (PersistentDataKey), exactement comme EcoPets (com.willfp.ecopets.pets.PetKt) :
  * niveau 0 = pas adopté. C'est une collection : un familier adopté ne se retire pas (pas d'œuf, pas d'échange).
  */
@@ -236,8 +236,8 @@ public final class PetData {
     }
 
     /**
-     * Nombre de familiers actifs autorisés : permission influpet.familiers.max.<n> (la plus haute), sinon
-     * familiers.actifs.defaut, jamais plus que familiers.actifs.maximum. Mis en cache 10 s.
+     * Nombre de familiers actifs autorisés : permission influpet.pets.max.<n> (la plus haute), sinon
+     * pet-settings.active-pets.default, jamais plus que pet-settings.active-pets.maximum. Mis en cache 10 s.
      */
     public static int maxActive(Player player) {
         long now = System.currentTimeMillis();
@@ -245,13 +245,13 @@ public final class PetData {
         if (cached != null && cached[1] > now) {
             return (int) cached[0];
         }
-        int cap = Math.max(1, Pets.settings().getInt("actifs.maximum"));
-        int value = Math.max(1, Pets.settings().getInt("actifs.defaut"));
+        int cap = Math.max(1, Pets.settings().getInt("active-pets.maximum"));
+        int value = Math.max(1, Pets.settings().getInt("active-pets.default"));
         for (PermissionAttachmentInfo info : player.getEffectivePermissions()) {
             String perm = info.getPermission().toLowerCase(java.util.Locale.ROOT);
-            if (info.getValue() && perm.startsWith("influpet.familiers.max.")) {
+            if (info.getValue() && perm.startsWith("influpet.pets.max.")) {
                 try {
-                    value = Math.max(value, Integer.parseInt(perm.substring("influpet.familiers.max.".length())));
+                    value = Math.max(value, Integer.parseInt(perm.substring("influpet.pets.max.".length())));
                 } catch (NumberFormatException ignored) {
                     // permission mal écrite : ignorée
                 }

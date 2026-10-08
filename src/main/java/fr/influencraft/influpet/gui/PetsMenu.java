@@ -9,7 +9,6 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Familiers EcoPets : lesquels sortent des boosters, avec quelle rareté, et que faire d'un
@@ -20,7 +19,7 @@ public final class PetsMenu extends Menu {
     private final int page;
 
     public PetsMenu(InfluPet plugin, int page) {
-        super(plugin, 6, "&#FF7A59Cartes &#6B7A8F▸ &#EADBC8Familiers");
+        super(plugin, 6, plugin.text("editor.pets.title"));
         this.page = page;
     }
 
@@ -29,8 +28,7 @@ public final class PetsMenu extends Menu {
         var reg = plugin.registry();
         back(new MainMenu(plugin));
         if (!PetHook.available()) {
-            set(22, icon("barrier", "&#D9534FFamiliers inactifs (cf. logs)",
-                    "&#EADBC8Les familiers ne peuvent pas", "&#EADBC8sortir des boosters."));
+            set(22, icon("barrier", t("pets.unavailable.name"), lines("pets.unavailable.lore")));
             return;
         }
         List<PetHook.PetInfo> pets = new ArrayList<>(PetHook.pets());
@@ -44,14 +42,10 @@ public final class PetsMenu extends Menu {
             boolean enabled = entry != null && entry.enabled();
             CardRegistry.Rarity rarity = entry != null ? entry.rarity() : reg.rarities().getFirst();
             ItemStack item = PetHook.icon(player, info.id());
-            List<String> lore = new ArrayList<>();
-            lore.add("&#6B7A8F" + info.id());
-            lore.add("&#EADBC8Rareté : &r" + rarity.tag());
-            lore.add(enabled ? "&#5FB3B3✔ Obtenable dans les boosters" : "&#6B7A8F✘ Pas obtenable");
-            lore.add("");
-            lore.add(left(enabled ? "Rendre non obtenable" : "Rendre obtenable"));
-            lore.add(right("Rareté suivante"));
-            lore.add(shift("Rareté précédente (Maj + clic droit)"));
+            List<String> lore = join(lines(enabled ? "pets.pet.lore-enabled" : "pets.pet.lore-disabled",
+                    "%id%", info.id(), "%rarity%", rarity.tag()),
+                    List.of(left(t(enabled ? "pets.pet.disable" : "pets.pet.enable")),
+                            right(t("action.next-rarity")), shift(t("pets.pet.previous-rarity"))));
             set(CONTENT_SLOTS[i], glow(decorate(item, rarity.tag() + " &r" + info.name(), lore), enabled), (p, c) -> {
                 if (c == ClickType.LEFT || c == ClickType.SHIFT_LEFT) {
                     reg.setPet(info.id(), "enabled", !enabled);
@@ -65,24 +59,16 @@ public final class PetsMenu extends Menu {
         }
         pages(page, pageCount(pets.size()), target -> new PetsMenu(plugin, target).open(player));
 
-        set(4, icon("bone", "&#FF7A59Familiers",
-                "&#EADBC8Un familier obtenable peut sortir",
-                "&#EADBC8des boosters (selon leur contenu) :",
-                "&#EADBC8il est débloqué à sa révélation.",
-                "",
-                "&#6B7A8FUn familier ne sort qu'une fois par booster."));
+        set(4, icon("bone", t("pets.info.name"), lines("pets.info.lore")));
 
         boolean xp = reg.duplicateMode() == CardRegistry.DuplicatePetMode.XP;
         double amount = reg.duplicateXp();
-        set(49, icon(xp ? "experience_bottle" : "influitems:stairs", "&#FF7A59Familier déjà adopté",
-                xp ? "&#EADBC8Mode : &#FFF4E0peut ressortir (peluche)" : "&#EADBC8Mode : &#FFF4E0nouveau tirage",
-                xp ? "&#EADBC8XP en plus de la peluche : &#FFF4E0" + String.format(Locale.FRANCE, "%.0f", amount) + " XP"
-                        : "&#EADBC8Un familier déjà adopté n'est",
-                xp ? "" : "&#EADBC8jamais tiré pour ce joueur.",
-                "",
-                left("Changer de mode"),
-                xp ? right("+100 XP") : "",
-                xp ? shift("-100 XP (Maj + clic droit)") : ""), (p, c) -> {
+        set(49, icon(xp ? "experience_bottle" : "influitems:stairs", t("pets.duplicate.name"),
+                join(lines(xp ? "pets.duplicate.lore-xp" : "pets.duplicate.lore-reroll",
+                                "%xp%", String.format(InfluPet.locale(), "%.0f", amount)),
+                        xp ? List.of(left(t("pets.duplicate.switch")), right(t("pets.duplicate.more")),
+                                shift(t("pets.duplicate.less")))
+                                : List.of(left(t("pets.duplicate.switch"))))), (p, c) -> {
             if (c == ClickType.LEFT) {
                 reg.setDuplicate(xp ? CardRegistry.DuplicatePetMode.REROLL : CardRegistry.DuplicatePetMode.XP, amount);
             } else if (xp && c == ClickType.RIGHT) {

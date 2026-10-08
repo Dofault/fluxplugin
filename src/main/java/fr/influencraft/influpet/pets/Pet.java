@@ -96,23 +96,23 @@ public final class Pet {
         Integer max = config.getIntOrNull("max-level");
         this.maxLevel = max != null ? max : xpRequirements.size();
         if (xpFormula == null && xpRequirements.size() <= 1 && max == null) {
-            throw new IllegalArgumentException("Familier " + id + " : ni level-xp-requirements ni xp-formula");
+            throw new IllegalArgumentException("Pet " + id + ": neither level-xp-requirements nor xp-formula");
         }
-        this.flying = !config.has("vol") || config.getBool("vol");
-        this.mountable = config.has("montable") && config.getBool("montable");
+        this.flying = !config.has("flying") || config.getBool("flying");
+        this.mountable = config.has("mountable") && config.getBool("mountable");
         this.iconLookup = config.getString("icon");
 
         // %level% des effets : le niveau de CE familier chez le joueur évalué (comme EcoPets)
         config.injectPlaceholders(new PlayerStaticPlaceholder("level", p -> String.valueOf(PetData.level(p, this))));
         this.effects = Effects.INSTANCE.compile(config.getSubsections("effects"),
-                new ViolationContext(libreforge, "Familier " + id));
+                new ViolationContext(libreforge, "Pet " + id));
         this.conditions = Conditions.INSTANCE.compile(config.getSubsections("conditions"),
-                new ViolationContext(libreforge, "Familier " + id));
+                new ViolationContext(libreforge, "Pet " + id));
         this.activateConditions = Conditions.INSTANCE.compile(config.getSubsections("activate-conditions"),
-                new ViolationContext(libreforge, "Familier " + id + " activate-conditions"));
+                new ViolationContext(libreforge, "Pet " + id + " activate-conditions"));
         this.levelUpEffects = Effects.INSTANCE.compileChain(config.getSubsections("level-up-effects"),
                 NormalExecutorFactory.INSTANCE.create(),
-                new ViolationContext(libreforge, "Familier " + id + " level-up-effects"));
+                new ViolationContext(libreforge, "Pet " + id + " level-up-effects"));
     }
 
     private static Trail trail(Config c) {

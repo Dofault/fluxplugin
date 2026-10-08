@@ -219,7 +219,7 @@ public final class BoosterListener implements Listener {
         double xp = perCard * used;
         PetHook.giveXp(player, card.pet(), xp);
         player.sendActionBar(Texts.of(plugin.format("card-used", "%amount%", String.valueOf(used),
-                "%xp%", String.format(java.util.Locale.FRANCE, "%.0f", xp), "%pet%", petName)));
+                "%xp%", String.format(InfluPet.locale(), "%.0f", xp), "%pet%", petName)));
         player.playSound(player, "entity.player.levelup", 0.6f, 1.6f);
     }
 

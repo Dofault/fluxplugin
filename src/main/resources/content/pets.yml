@@ -1,0 +1,5 @@
+# Pets obtainable from boosters: rarity, obtainable or not (enabled), plush, model.
+# Each pet's definition (levels, effects) is in pets/<id>.yml. Also edited with /influpet menu.
+
+pets:
+  list: {}

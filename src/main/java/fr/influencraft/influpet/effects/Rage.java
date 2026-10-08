@@ -1,4 +1,4 @@
-package fr.influencraft.influpet.effets;
+package fr.influencraft.influpet.effects;
 
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;

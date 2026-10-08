@@ -62,20 +62,22 @@ public final class Pets {
             return true;
         }
         if (Bukkit.getPluginManager().isPluginEnabled("EcoPets")) {
-            plugin.getLogger().severe("EcoPets est encore actif : familiers d'InfluPet désactivés (retirer le jar "
-                    + "d'EcoPets, ses données sont reprises au démarrage).");
+            plugin.getLogger().severe("EcoPets is still enabled: InfluPet pets disabled (remove the EcoPets jar, "
+                    + "its data is imported on startup).");
             return false;
         }
         Plugin lf = Bukkit.getPluginManager().getPlugin("libreforge");
         if (!(lf instanceof EcoPlugin eco) || !lf.isEnabled()) {
-            plugin.getLogger().warning("libreforge pas encore actif (chargé par les plugins eco) : familiers démarrés "
-                    + "dès qu'il le sera.");
+            plugin.getLogger().warning("libreforge not enabled yet (loaded by eco plugins): pets will start "
+                    + "as soon as it is.");
             return false;
         }
         libreforge = eco;
         settings = readSettings();
-        PetData.registerKeys(settings.getBool("stockage-local"));
+        PetData.registerKeys(settings.getBool("local-storage"));
         EcoPetsMigration.copyPetFiles(plugin);
+        fr.influencraft.influpet.ConfigFiles.migratePetFiles(new java.io.File(plugin.getDataFolder(), "pets"),
+                plugin.getLogger());
         if (!providerRegistered) {
             // comme EcoPets, un holder par familier actif à son niveau (plusieurs familiers actifs : leurs effets
             // s'appliquent ensemble)
@@ -95,7 +97,7 @@ public final class Pets {
         load();
         EcoPetsMigration.registerPlayerDataMigration(plugin);
         Bukkit.getPluginManager().registerEvents(new PetListener(), plugin);
-        var command = plugin.getCommand("familiers");
+        var command = plugin.getCommand("pets");
         if (command != null) {
             PetCommands commands = new PetCommands();
             command.setExecutor(commands);
@@ -105,14 +107,14 @@ public final class Pets {
             try {
                 new PetPlaceholders().register();
             } catch (Throwable t) {
-                plugin.getLogger().warning("Placeholders des familiers indisponibles : " + t);
+                plugin.getLogger().warning("Pet placeholders unavailable: " + t);
             }
         }
         if (Bukkit.getPluginManager().isPluginEnabled("BetterModel")) {
             try {
                 display = new PetDisplay();
             } catch (Throwable t) {
-                plugin.getLogger().warning("Modèles des familiers indisponibles : " + t);
+                plugin.getLogger().warning("Pet models unavailable: " + t);
             }
         }
         return true;
@@ -142,11 +144,11 @@ public final class Pets {
                 try {
                     PETS.put(id, new Pet(id, new TransientConfig(file, ConfigType.YAML), libreforge));
                 } catch (RuntimeException e) {
-                    plugin.getLogger().warning("Familier " + id + " ignoré : " + e.getMessage());
+                    plugin.getLogger().warning("Pet " + id + " skipped: " + e.getMessage());
                 }
             }
         }
-        plugin.getLogger().info(PETS.size() + " familiers chargés.");
+        plugin.getLogger().info(PETS.size() + " pets loaded.");
         PetsMenu.update();
         if (display != null) {
             display.reload();
@@ -177,9 +179,9 @@ public final class Pets {
         return plugin;
     }
 
-    /** Montures autorisées sur le serveur (réglage montures.actives) : rien n'est montable tant que c'est faux. */
+    /** Montures autorisées sur le serveur (réglage pet-settings.mounts.enabled) : rien n'est montable tant que c'est faux. */
     public static boolean mountsEnabled() {
-        return settings != null && settings.getBool("montures.actives");
+        return settings != null && settings.getBool("mounts.enabled");
     }
 
     /** Effets du familier recalculés tout de suite pour ce joueur. */
@@ -195,7 +197,7 @@ public final class Pets {
      * messages, level-up, pet-entity...).
      */
     private static Config readSettings() {
-        var section = plugin.getConfig().getConfigurationSection("familiers");
+        var section = plugin.getConfig().getConfigurationSection("pet-settings");
         return section == null ? new TransientConfig() : new TransientConfig(section);
     }
 

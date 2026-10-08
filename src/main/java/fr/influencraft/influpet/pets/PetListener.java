@@ -51,7 +51,7 @@ public final class PetListener implements Listener {
     }
 
     private void checkConditions() {
-        if (!Pets.enabled() || !Pets.settings().getBool("desactiver-si-conditions-echouent")) {
+        if (!Pets.enabled() || !Pets.settings().getBool("deactivate-on-failed-conditions")) {
             return;
         }
         for (Player player : Bukkit.getOnlinePlayers()) {

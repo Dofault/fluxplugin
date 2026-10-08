@@ -54,7 +54,7 @@ public final class ChatPrompt implements Listener {
         p.timeout().cancel();
         String text = PlainTextComponentSerializer.plainText().serialize(event.message()).trim();
         plugin.getServer().getScheduler().runTask(plugin, () -> {
-            if (text.equalsIgnoreCase("annuler") || text.equalsIgnoreCase("cancel")) {
+            if (text.equalsIgnoreCase("cancel") || text.equalsIgnoreCase(plugin.format("prompt-cancel-word"))) {
                 plugin.send(event.getPlayer(), "prompt-cancelled");
                 p.onCancel().run();
             } else {

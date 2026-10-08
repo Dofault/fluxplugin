@@ -1,0 +1,49 @@
+# Cards (usually one per pet, linked with "pet") and XP given to the pet per card, by rarity.
+# Also edited with /influpet menu.
+
+card-xp:
+  simple: 150
+  unique: 220
+  elite: 320
+  ultimate: 450
+  legendary: 650
+  fabled: 1000
+cards:
+  flamby:
+    item: influcards:carte_test
+    name: Flamby
+    series: Flames
+    rarity: simple
+    lore:
+    - '&#EADBC8A small flame spirit,'
+    - '&#EADBC8more playful than dangerous.'
+  ember:
+    item: influcards:carte_test
+    name: Ember
+    series: Flames
+    rarity: unique
+    lore:
+    - '&#EADBC8It never really goes out.'
+  spark:
+    item: influcards:carte_test
+    name: Spark
+    series: Flames
+    rarity: elite
+    lore:
+    - '&#EADBC8Fast as lightning,'
+    - '&#EADBC8hot as a forge.'
+  blaze:
+    item: influcards:carte_test
+    name: Blaze
+    series: Flames
+    rarity: ultimate
+    lore:
+    - '&#EADBC8Where it passes,'
+    - '&#EADBC8grass never grows back.'
+  phoenix:
+    item: influcards:carte_test
+    name: Phoenix
+    series: Flames
+    rarity: legendary
+    lore:
+    - '&#EADBC8It always rises from its ashes.'
