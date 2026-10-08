@@ -1,10 +1,10 @@
 name: VaultSupermarket
-version: 1.0
+version: 26.2
 author: dofault
 main: io.dofault.supermarket.main.Main
 api-version: "1.21.4"
 
-softdepend: [PlaceholderAPI, LuckPerms]
+softdepend: [PlaceholderAPI, LuckPerms, CustomFishing, AdvancedEnchantments, eco, ProtocolLib]
 
 commands:
   supermarket:

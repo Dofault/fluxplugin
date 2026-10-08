@@ -1,6 +1,16 @@
 package io.dofault.supermarket.main;
 
+import io.dofault.supermarket.autosell.AutoSellFilter;
+import io.dofault.supermarket.autosell.AutoSellItemManager;
+import io.dofault.supermarket.autosell.AutoSellMenu;
+import io.dofault.supermarket.autosell.AutoSellExceptionManager;
 import io.dofault.supermarket.commands.*;
+import com.comphenix.protocol.ProtocolLibrary;
+import io.dofault.supermarket.listener.AutoSellPickupListener;
+import io.dofault.supermarket.listener.AutoSellEcoTelekinesisListener;
+import io.dofault.supermarket.listener.AutoSellTelepathyListener;
+import io.dofault.supermarket.listener.AutoSellToggleListener;
+import io.dofault.supermarket.listener.ShopItemUsePacketListener;
 import io.dofault.supermarket.listener.ShopRestrictionListener;
 import io.dofault.supermarket.managers.ChestManager;
 import io.dofault.supermarket.managers.LangManager;
@@ -39,6 +49,8 @@ public class Main extends JavaPlugin implements Listener {
     private LangManager lang;
     private SellManager sellManager;
     private TpShopCooldownManager tpShopCooldownManager;
+    private AutoSellItemManager autoSellItemManager;
+    private AutoSellFilter autoSellFilter;
 
     private CommandManager commandManager;
 
@@ -60,12 +72,38 @@ public class Main extends JavaPlugin implements Listener {
         priceManager.logInvalidItems();
         shopManager = new ShopManager(this, lang, econ, playerList, priceManager);
         chestManager = new ChestManager(this, lang, priceManager);
-        sellManager = new SellManager(this, lang, shopManager, priceManager, playerList, econ);
+        autoSellItemManager = new AutoSellItemManager(this, lang);
+        autoSellFilter = new AutoSellFilter(this);
+        AutoSellExceptionManager autoSellExceptions = new AutoSellExceptionManager(this, autoSellFilter);
+        autoSellFilter.setExceptionManager(autoSellExceptions);
+        AutoSellMenu autoSellMenu = new AutoSellMenu(this, lang, priceManager, playerList, autoSellItemManager,
+                autoSellExceptions, econ);
+        sellManager = new SellManager(this, lang, shopManager, priceManager, playerList, econ, autoSellItemManager);
 
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getPluginManager().registerEvents(
                 new ShopRestrictionListener(this, lang, playerList, chestManager, shopManager, sellManager, econ),
                 this);
+        getServer().getPluginManager().registerEvents(
+                new AutoSellToggleListener(autoSellItemManager, autoSellMenu), this);
+        getServer().getPluginManager().registerEvents(autoSellExceptions, this);
+        getServer().getPluginManager().registerEvents(autoSellMenu, this);
+        getServer().getPluginManager().registerEvents(
+                new AutoSellPickupListener(autoSellItemManager, autoSellFilter, priceManager, econ), this);
+        // Télépathie : un listener par plugin d'enchantement, chacun ne livre pas ses drops de la même façon.
+        if (Bukkit.getPluginManager().isPluginEnabled("AdvancedEnchantments")) {
+            getServer().getPluginManager().registerEvents(
+                    new AutoSellTelepathyListener(this, autoSellItemManager, autoSellFilter, priceManager, econ), this);
+        }
+        if (Bukkit.getPluginManager().isPluginEnabled("eco")) {
+            getServer().getPluginManager().registerEvents(
+                    new AutoSellEcoTelekinesisListener(autoSellItemManager, autoSellFilter, priceManager, econ), this);
+        }
+
+        if (Bukkit.getPluginManager().isPluginEnabled("ProtocolLib")) {
+            ProtocolLibrary.getProtocolManager()
+                    .addPacketListener(new ShopItemUsePacketListener(this, playerList, shopManager));
+        }
 
         // Initialisation du CommandManager
         commandManager = new CommandManager();
@@ -76,16 +114,27 @@ public class Main extends JavaPlugin implements Listener {
         commandManager.register(new DifferenceCommand(lang, shopManager, playerList));
         commandManager.register(new PayCommand(lang, shopManager, playerList));
         commandManager.register(new AddChestCommand(lang, chestManager));
-        commandManager.register(new RemoveChestCommand(chestManager));
+        commandManager.register(new RemoveChestCommand(lang, chestManager));
         commandManager.register(new AddItemChestCommand(lang, chestManager));
         tpShopCooldownManager = new TpShopCooldownManager(this);
         commandManager.register(
-                new TpShopCommand(lang, shopManager, chestManager, playerList, tpShopCooldownManager));
+                new TpShopCommand(this, lang, shopManager, chestManager, playerList, tpShopCooldownManager));
         commandManager.register(new CheckPricesCommand(lang, priceManager));
+        commandManager.register(new ReloadCommand(this, lang, priceManager, chestManager, autoSellFilter));
+        AutoSellCommand autoSellCommand = new AutoSellCommand(lang, autoSellItemManager);
+        commandManager.register(autoSellCommand);
 
         getCommand("supermarket").setExecutor((sender, command, label, args) -> {
             if (!(sender instanceof Player player)) {
-                sender.sendMessage("Uniquement pour les joueurs.");
+                // Seule exception au "joueurs uniquement" : la console peut donner l'objet de
+                // vente auto a un joueur precis ("/supermarket autosell <joueur>", meme chemin
+                // que giveOther) — utilise par un plugin de shop qui l'appelle apres avoir fait
+                // payer le joueur, sans que celui-ci ait besoin de la permission lui-meme.
+                if (args.length == 2 && args[0].equalsIgnoreCase("autosell")) {
+                    autoSellCommand.giveOther(sender, args[1]);
+                } else {
+                    sender.sendMessage("Uniquement pour les joueurs.");
+                }
                 return true;
             }
             if (!commandManager.execute(player, args)) {
@@ -101,6 +150,8 @@ public class Main extends JavaPlugin implements Listener {
                 player.sendMessage(lang.get("shop-command-pay"));
                 player.sendMessage(lang.get("shop-command-tpshop"));
                 player.sendMessage(lang.get("shop-command-checkprices"));
+                player.sendMessage(lang.get("shop-command-reload"));
+                player.sendMessage(lang.get("shop-command-autosell"));
 
             }
             return true;
@@ -125,7 +176,7 @@ public class Main extends JavaPlugin implements Listener {
                             .filter(name -> name.startsWith(current))
                             .toList();
                 }
-                if (cmdName.equals("tpshop")) {
+                if (cmdName.equals("tpshop") || cmdName.equals("autosell")) {
                     String current = args[1].toLowerCase();
                     return Bukkit.getOnlinePlayers().stream()
                             .map(Player::getName)
@@ -158,20 +209,62 @@ public class Main extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        if (playerList.isInShop(player.getUniqueId())) {
-            player.teleport(resolveShopExitLocation(player));
+        if (!playerList.isInShop(player.getUniqueId()))
+            return;
+
+        // Le joueur s'est déconnecté à l'intérieur du shop : on ne peut rien faire de
+        // fiable au moment du quit (un teleport() y est ignoré par le serveur), donc
+        // tout se joue ici. Le teleport est décalé d'un tick pour passer après les
+        // plugins qui repositionnent le joueur à la connexion (CMI spawn, etc.).
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            if (!player.isOnline() || !playerList.isInShop(player.getUniqueId()))
+                return;
+
+            org.bukkit.Location destination = null;
+            try {
+                destination = resolveShopExitLocation(player);
+            } catch (Exception ex) {
+                getLogger().warning("Position de sortie du shop introuvable pour " + player.getName()
+                        + ", il est sorti du shop sur place : " + ex.getMessage());
+            }
+
+            // L'inventaire est rendu en premier : c'est la partie qui efface les items
+            // non payés emportés dans le panier. Si le teleport échoue ensuite (position
+            // absente de la config, monde non chargé, annulation par un autre plugin),
+            // le joueur se retrouve au pire debout dans le magasin sans y être inscrit,
+            // ce qui ne donne accès à rien : les coffres du shop sont bloqués depuis
+            // l'extérieur.
             playerList.leaveShop(player, true);
-        }
+            if (destination != null && destination.getWorld() != null) {
+                player.teleport(destination);
+            }
+            player.sendMessage(lang.get("shop-exit"));
+        }, 5L);
     }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
+        // Le joueur reste volontairement marqué « dans le shop » (état persisté en base
+        // avec son inventaire d'origine) : c'est onPlayerJoin qui le sortira, le
+        // téléportera et lui rendra son inventaire à la reconnexion.
         Player player = event.getPlayer();
-        if (playerList.isInShop(player.getUniqueId())) {
-            // Téléporte éventuellement le joueur à l'entrée ou sauvegarde son état
-            player.teleport(resolveShopExitLocation(player));
-            playerList.leaveShop(player, true);
+        if (!playerList.isInShop(player.getUniqueId()))
+            return;
+
+        // En revanche, la grille de craft 2x2 et l'item tenu au curseur doivent être
+        // vidés ici : à la déconnexion, le serveur les jette au sol dans le magasin
+        // (Player.remove -> InventoryMenu.removed), et n'importe qui pouvait ensuite
+        // ramasser des items non payés. Désassemblage de PlayerList.remove (Paper 26.2)
+        // confirmé : closeContainer -> PlayerQuitEvent -> save -> removePlayerImmediately,
+        // donc ce nettoyage passe bien avant le drop. Aucune perte pour le joueur : sa
+        // reconnexion lui rend l'inventaire complet sauvegardé à l'entrée du magasin.
+        org.bukkit.inventory.InventoryView view = player.getOpenInventory();
+        org.bukkit.inventory.Inventory top = view.getTopInventory();
+        if (top.getType() == org.bukkit.event.inventory.InventoryType.CRAFTING
+                || top.getType() == org.bukkit.event.inventory.InventoryType.WORKBENCH) {
+            top.clear();
         }
+        player.setItemOnCursor(null);
     }
 
     private org.bukkit.Location resolveShopExitLocation(Player player) {

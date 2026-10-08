@@ -22,6 +22,11 @@ public class SaveCommand implements SupermarketCommand {
 
     @Override
     public boolean execute(Player player, String[] args) {
+        if (!player.hasPermission("supermarket.admin")) {
+            player.sendMessage(lang.get("shop-no-permission"));
+            return true;
+        }
+
         if (shopManager.saveShop()) {
             player.sendMessage(lang.get("shop-saved"));
 

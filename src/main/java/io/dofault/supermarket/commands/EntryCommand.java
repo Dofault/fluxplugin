@@ -25,6 +25,11 @@ public class EntryCommand implements SupermarketCommand {
 
     @Override
     public boolean execute(Player player, String[] args) {
+        if (!player.hasPermission("supermarket.admin")) {
+            player.sendMessage(lang.get("shop-no-permission"));
+            return true;
+        }
+
         chestManager.reloadChests();
         shopManager.setEntryPosSetting(player.getLocation());
         player.sendMessage(lang.get("shop-entry-saved"));

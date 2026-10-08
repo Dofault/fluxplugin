@@ -25,6 +25,11 @@ public class SetPriceCommand implements SupermarketCommand {
 
     @Override
     public boolean execute(Player player, String[] args) {
+        if (!player.hasPermission("supermarket.admin")) {
+            player.sendMessage(lang.get("shop-no-permission"));
+            return true;
+        }
+
         if (args.length != 4) {
             player.sendMessage(lang.get("shop-setprice-usage"));
 

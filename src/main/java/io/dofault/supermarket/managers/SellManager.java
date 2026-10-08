@@ -1,5 +1,7 @@
 package io.dofault.supermarket.managers;
 
+import io.dofault.supermarket.autosell.AutoSellItemManager;
+import io.dofault.supermarket.integration.CustomFishingHook;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -39,21 +41,33 @@ public class SellManager {
     private static final int PREV_PAGE_SLOT = 45;
     private static final int NEXT_PAGE_SLOT = 53;
 
+    // Les poissons vendables de CustomFishing n'ont pas de catégorie propre dans prices.yml
+    // (pas d'onglet dédié : ça dépasserait les 9 slots de CATEGORY_SLOTS ci-dessus) — ils sont
+    // simplement ajoutés à la catégorie "nourriture" existante. Ids synthétiques "fish:<index>"
+    // pointant dans la liste mise en cache par CustomFishingHook, pas des noms de Material.
+    private static final String FOOD_CATEGORY = "nourriture";
+    private static final String FISH_ID_PREFIX = "fish:";
+
     private final JavaPlugin plugin;
     private final LangManager langManager;
     private final PlayerListManager playerListManager;
     private final ShopManager shopManager;
     private final PriceManager priceManager;
+    private final AutoSellItemManager autoSellItemManager;
     private final Economy econ;
+    private final SellMenu sellMenu;
 
     public SellManager(JavaPlugin plugin, LangManager langManager,
-            ShopManager shopManager, PriceManager priceManager, PlayerListManager playerListManager, Economy econ) {
+            ShopManager shopManager, PriceManager priceManager, PlayerListManager playerListManager, Economy econ,
+            AutoSellItemManager autoSellItemManager) {
         this.plugin = plugin;
         this.priceManager = priceManager;
         this.econ = econ;
         this.langManager = langManager;
         this.playerListManager = playerListManager;
         this.shopManager = shopManager;
+        this.autoSellItemManager = autoSellItemManager;
+        this.sellMenu = new SellMenu(plugin, langManager, priceManager, playerListManager, autoSellItemManager, econ);
     }
 
     public void tryOpenSellBlock(Player player, Block targetBlock) {
@@ -68,60 +82,7 @@ public class SellManager {
             return;
         }
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f);
-
-        // Crée un inventaire temporaire pour vendre
-        Inventory sellInv = Bukkit.createInventory(null, InventoryType.CHEST, "§6Sell Items");
-        player.openInventory(sellInv);
-
-        Bukkit.getPluginManager().registerEvents(new Listener() {
-            @EventHandler
-            public void onClose(InventoryCloseEvent event) {
-                if (!event.getPlayer().equals(player))
-                    return;
-                if (!event.getInventory().equals(sellInv))
-                    return;
-
-                double total = 0.0;
-                List<ItemStack> toRestore = new ArrayList<>();
-
-                for (ItemStack item : sellInv.getContents()) {
-                    if (item == null || item.getType() == Material.AIR)
-                        continue;
-
-                    if (priceManager.isSellable(item.getType().name())) {
-                        total += priceManager.getSellPrice(item.getType().name()) * item.getAmount();
-                    } else {
-                        toRestore.add(item.clone());
-                    }
-                }
-
-                if (total > 0) {
-                    econ.depositPlayer(player, total);
-                    player.sendMessage(langManager.get(
-                            "shop-sell-success",
-                            Map.of("amount", econ.format(total))));
-                    player.playSound(player.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1f, 1f);
-
-                    playerListManager.markAsSold(player.getUniqueId());
-                    playerListManager.saveInventory(player, false);
-                }
-
-                sellInv.clear();
-
-                int restoredCount = 0;
-                for (ItemStack item : toRestore) {
-                    player.getInventory().addItem(item);
-                    restoredCount += item.getAmount();
-                }
-
-                if (restoredCount > 0) {
-                    player.sendMessage(langManager.get("shop-unsellable-restored",
-                            Map.of("amount", String.valueOf(restoredCount))));
-                }
-
-                HandlerList.unregisterAll(this);
-            }
-        }, plugin);
+        sellMenu.open(player);
     }
 
     public void lookPrices(Player player, Block block) {
@@ -139,25 +100,25 @@ public class SellManager {
     }
 
     private void openShopMenu(Player player) {
-        List<String> categories = priceManager.getCategories();
+        List<String> categories = new ArrayList<>(priceManager.getCategories());
 
         MenuState state = new MenuState();
-        List<String> items = resolveItems(state.category);
+        List<String> items = resolveItems(player, state.category);
         int totalPages = totalPages(items);
 
         Inventory inv = Bukkit.createInventory(null, 54, buildTitle(state.category, state.page, totalPages));
         fillBorder(inv);
-        fillCategoryButtons(inv, categories);
-        fillItemSlots(inv, items, state.page);
+        fillCategoryButtons(player, inv, categories);
+        fillItemSlots(player, inv, items, state.page);
         fillNavSlots(inv, state.page, totalPages);
 
         player.openInventory(inv);
 
         Runnable refresh = () -> {
-            List<String> currentItems = resolveItems(state.category);
+            List<String> currentItems = resolveItems(player, state.category);
             int pages = totalPages(currentItems);
             state.page = Math.max(1, Math.min(state.page, pages));
-            fillItemSlots(inv, currentItems, state.page);
+            fillItemSlots(player, inv, currentItems, state.page);
             fillNavSlots(inv, state.page, pages);
             player.getOpenInventory().setTitle(buildTitle(state.category, state.page, pages));
         };
@@ -214,12 +175,19 @@ public class SellManager {
         }, plugin);
     }
 
-    private List<String> resolveItems(String category) {
+    private List<String> resolveItems(Player player, String category) {
         List<String> ids = category == null
                 ? new ArrayList<>(priceManager.getItemIds())
                 : priceManager.getItemIdsByCategory(category);
         ids.removeIf(id -> Material.matchMaterial(id) == null || !priceManager.isSellable(id));
         ids.sort(String::compareTo);
+
+        if (FOOD_CATEGORY.equalsIgnoreCase(category) && CustomFishingHook.isEnabled()) {
+            List<ItemStack> fishSamples = CustomFishingHook.getSellableFishSamples(player);
+            for (int i = 0; i < fishSamples.size(); i++) {
+                ids.add(FISH_ID_PREFIX + i);
+            }
+        }
         return ids;
     }
 
@@ -260,7 +228,7 @@ public class SellManager {
         }
     }
 
-    private void fillCategoryButtons(Inventory inv, List<String> categories) {
+    private void fillCategoryButtons(Player player, Inventory inv, List<String> categories) {
         ItemStack allItems = new ItemStack(Material.NETHER_STAR);
         ItemMeta allMeta = allItems.getItemMeta();
         if (allMeta != null) {
@@ -277,34 +245,58 @@ public class SellManager {
                 meta.setDisplayName(langManager.get("shop-category-item-name",
                         Map.of("category", PriceManager.humanize(category))));
                 meta.setLore(List.of(langManager.get("shop-category-item-lore",
-                        Map.of("count", String.valueOf(resolveItems(category).size())))));
+                        Map.of("count", String.valueOf(resolveItems(player, category).size())))));
                 stack.setItemMeta(meta);
             }
             inv.setItem(CATEGORY_SLOTS[i], stack);
         }
     }
 
-    private void fillItemSlots(Inventory inv, List<String> items, int page) {
+    private void fillItemSlots(Player player, Inventory inv, List<String> items, int page) {
         for (int slot = ITEMS_START_SLOT; slot <= ITEMS_END_SLOT; slot++) {
             inv.setItem(slot, null);
         }
 
         int start = (page - 1) * ITEMS_PER_PAGE;
         int end = Math.min(start + ITEMS_PER_PAGE, items.size());
+        List<ItemStack> fishSamples = null;
 
         for (int i = start; i < end; i++) {
             String itemID = items.get(i);
-            Material mat = Material.matchMaterial(itemID);
-            if (mat == null)
-                continue;
+            ItemStack stack;
+            double price;
+            String displayName;
 
-            ItemStack stack = new ItemStack(mat);
+            if (itemID.startsWith(FISH_ID_PREFIX)) {
+                if (fishSamples == null) {
+                    fishSamples = CustomFishingHook.getSellableFishSamples(player);
+                }
+                int index = Integer.parseInt(itemID.substring(FISH_ID_PREFIX.length()));
+                if (index < 0 || index >= fishSamples.size())
+                    continue;
+                ItemStack sample = fishSamples.get(index);
+                stack = sample.clone();
+                stack.setAmount(1);
+                price = CustomFishingHook.getPrice(sample);
+                ItemMeta sampleMeta = sample.getItemMeta();
+                displayName = sampleMeta != null && sampleMeta.hasDisplayName()
+                        ? sampleMeta.getDisplayName()
+                        : PriceManager.humanize(sample.getType().name());
+            } else {
+                Material mat = Material.matchMaterial(itemID);
+                if (mat == null)
+                    continue;
+                stack = new ItemStack(mat);
+                price = priceManager.getSellPrice(itemID);
+                displayName = PriceManager.humanize(itemID);
+            }
+
             ItemMeta meta = stack.getItemMeta();
             if (meta != null) {
-                meta.setDisplayName(langManager.get("shop-item-name", Map.of("item", PriceManager.humanize(itemID))));
+                meta.setDisplayName(langManager.get("shop-item-name", Map.of("item", displayName)));
                 meta.setLore(List.of(
                         langManager.get("shop-item-lore-sell-price",
-                                Map.of("price", econ.format(priceManager.getSellPrice(itemID))))));
+                                Map.of("price", econ.format(price)))));
                 stack.setItemMeta(meta);
             }
             inv.setItem(ITEMS_START_SLOT + (i - start), stack);

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="maven-antrun-" default="main">
   <target name="main">
-    <copy file="C:\Users\Dofault\Documents\dev\home\influencraft\plugins\ModernSuperMarketPlugin\target/VaultSuperMarket-1.0.jar" todir="C:\Users\Dofault\Documents\dev\home\influencraft\plugins\ModernSuperMarketPlugin/../../serveurs/03_semirp/plugins" />
+    <copy file="/home/influencraft/plugins/ModernSuperMarketPlugin/target/VaultSuperMarket-26.2.jar" tofile="/home/influencraft/plugins/ModernSuperMarketPlugin/../../serveurs/03_semirp/plugins/VaultSuperMarket.jar" overwrite="true" />
+    <copy file="/home/influencraft/plugins/ModernSuperMarketPlugin/target/VaultSuperMarket-26.2.jar" tofile="/home/influencraft/plugins/ModernSuperMarketPlugin/../../serveurs/04_labs/plugins/VaultSuperMarket.jar" overwrite="true" />
   </target>
 </project>

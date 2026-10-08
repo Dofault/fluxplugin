@@ -26,6 +26,11 @@ public class AddItemChestCommand implements SupermarketCommand {
 
     @Override
     public boolean execute(Player player, String[] args) {
+        if (!player.hasPermission("supermarket.admin")) {
+            player.sendMessage(lang.get("shop-no-permission"));
+            return true;
+        }
+
         if (args.length != 3) {
             player.sendMessage(lang.get("shop-additemchest-usage"));
 
