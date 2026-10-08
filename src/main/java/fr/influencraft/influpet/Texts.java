@@ -21,7 +21,7 @@ public final class Texts {
             .hexColors()
             .build();
 
-    private static final Pattern GLYPH = Pattern.compile("%img_([a-z0-9_]+)%");
+    private static final Pattern GLYPH = Pattern.compile("%img_([a-z0-9_]+(?::[a-z0-9_]+)?)%");
     private static final List<String> GLYPH_NAMESPACES = List.of("influpet", "influtags", "influemoji", "influitems", "influcards");
     private static final Map<String, String> GLYPH_CACHE = new HashMap<>();
 
@@ -52,9 +52,10 @@ public final class Texts {
         if (!Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) {
             return "";
         }
-        for (String ns : GLYPH_NAMESPACES) {
+        // %img_<namespace>:<id>% : glyphe de n'importe quel pack ItemsAdder
+        for (String ns : id.contains(":") ? List.of("") : GLYPH_NAMESPACES) {
             try {
-                FontImageWrapper wrapper = new FontImageWrapper(ns + ":" + id);
+                FontImageWrapper wrapper = new FontImageWrapper(ns.isEmpty() ? id : ns + ":" + id);
                 if (wrapper.exists()) {
                     return wrapper.getString();
                 }

@@ -1,7 +1,7 @@
 # InfluPet: texts shown to players (English). Selected with "language" in config.yml: lang/<language>.yml.
 # A key missing here falls back to the plugin's default (English) text.
 #
-# & and &#RRGGBB codes. %img_<id>% shows an ItemsAdder glyph (influtags, influemoji, influitems, influcards),
+# & and &#RRGGBB codes. %img_<id>% shows a glyph of the InfluPet ItemsAdder pack, %img_<namespace>:<id>% one of any pack,
 # always preceded by &r&f to keep its colors.
 # Card palette: coral #FF7A59 (accent), parchment #EADBC8 (text), cream #FFF4E0 (names), slate #6B7A8F
 # (secondary), teal #5FB3B3 (info), brick #D9534F (errors).
