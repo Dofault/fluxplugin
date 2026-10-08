@@ -1,0 +1,573 @@
+# Cartes (une par familier, liée par « pet ») et XP donnée au familier par carte, selon sa rareté : avec
+# 1 XP par carte, les paliers de niveau (level-xp-requirements) se comptent en cartes. Modifié aussi par
+# /influpet menu.
+
+card-xp:
+  simple: 1
+  unique: 1
+  elite: 1
+  ultimate: 1
+  legendary: 1
+  fabled: 1
+cards:
+  pepite:
+    item: influpet:carte_pepite
+    name: '&#AAAAAAPépite'
+    series: Mineur
+    rarity: simple
+    pet: pepite
+    lore:
+    - '&#EADBC8Un éclat de minerai d''or'
+    - '&#EADBC8qui a décidé de marcher.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Mineur'
+  lanterne:
+    item: influpet:carte_lanterne
+    name: '&#37C44ALanterne'
+    series: Mineur
+    rarity: unique
+    pet: lanterne
+    lore:
+    - '&#EADBC8Elle éclaire les galeries'
+    - '&#EADBC8et ne s''éteint jamais.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Mineur'
+  wagonnet:
+    item: influpet:carte_wagonnet
+    name: '&#3283A8Wagonnet'
+    series: Mineur
+    rarity: elite
+    pet: wagonnet
+    lore:
+    - '&#EADBC8Il roule sur les rails'
+    - '&#EADBC8la benne pleine de trésors.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Mineur'
+  dragon_gemmes:
+    item: influpet:carte_dragon_gemmes
+    name: '&#B376E5Dragon de Gemmes'
+    series: Mineur
+    rarity: ultimate
+    pet: dragon_gemmes
+    lore:
+    - '&#EADBC8Ses écailles sont des diamants,'
+    - '&#EADBC8son trésor, toute la montagne.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Mineur'
+  caillou:
+    item: influpet:carte_caillou
+    name: '&#AAAAAACaillou'
+    series: Rochiste
+    rarity: simple
+    pet: caillou
+    lore:
+    - '&#EADBC8Il ne bouge pas beaucoup,'
+    - '&#EADBC8mais il connaît chaque pierre.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Rochiste'
+  mimique:
+    item: influpet:carte_mimique
+    name: '&#37C44AMimique'
+    series: Rochiste
+    rarity: unique
+    pet: mimique
+    lore:
+    - '&#EADBC8Un coffre au fond de la galerie ?'
+    - '&#EADBC8Méfie-toi, il a des dents.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Rochiste'
+  colosse:
+    item: influpet:carte_colosse
+    name: '&#3283A8Colosse de Basalte'
+    series: Rochiste
+    rarity: elite
+    pet: colosse
+    lore:
+    - '&#EADBC8Né d''une coulée de lave refroidie,'
+    - '&#EADBC8lent mais inébranlable.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Rochiste'
+  titan:
+    item: influpet:carte_titan
+    name: '&#B376E5Titan de Cristal'
+    series: Rochiste
+    rarity: ultimate
+    pet: titan
+    lore:
+    - '&#EADBC8Chaque cristal sur son dos'
+    - '&#EADBC8raconte un millénaire.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Rochiste'
+  fourmi:
+    item: influpet:carte_fourmi
+    name: '&#AAAAAAFourmi'
+    series: Déblayeur
+    rarity: simple
+    pet: fourmi
+    lore:
+    - '&#EADBC8Elle creuse des galeries'
+    - '&#EADBC8qui ne s''effondrent jamais.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Déblayeur'
+  cabri:
+    item: influpet:carte_cabri
+    name: '&#37C44ACabri'
+    series: Déblayeur
+    rarity: unique
+    pet: cabri
+    lore:
+    - '&#EADBC8Il saute de rocher en rocher'
+    - '&#EADBC8sans jamais trébucher.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Déblayeur'
+  lievre_neiges:
+    item: influpet:carte_lievre_neiges
+    name: '&#3283A8Lièvre des Neiges'
+    series: Déblayeur
+    rarity: elite
+    pet: lievre_neiges
+    lore:
+    - '&#EADBC8Il court sur la poudreuse'
+    - '&#EADBC8sans y laisser une empreinte.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Déblayeur'
+  ver_sables:
+    item: influpet:carte_ver_sables
+    name: '&#B376E5Ver des Sables'
+    series: Déblayeur
+    rarity: ultimate
+    pet: ver_sables
+    lore:
+    - '&#EADBC8Il nage sous les dunes'
+    - '&#EADBC8comme un poisson sous l''eau.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Déblayeur'
+  abeille:
+    item: influpet:carte_abeille
+    name: '&#AAAAAAAbeille'
+    series: Cultivateur
+    rarity: simple
+    pet: abeille
+    lore:
+    - '&#EADBC8Elle butine le potager,'
+    - '&#EADBC8et tout pousse sur son passage.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Cultivateur'
+  carottin:
+    item: influpet:carte_carottin
+    name: '&#37C44ACarottin'
+    series: Cultivateur
+    rarity: unique
+    pet: carottin
+    lore:
+    - '&#EADBC8Arraché du potager,'
+    - '&#EADBC8il y retourne chaque soir.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Cultivateur'
+  ouistiti:
+    item: influpet:carte_ouistiti
+    name: '&#3283A8Ouistiti'
+    series: Cultivateur
+    rarity: elite
+    pet: ouistiti
+    lore:
+    - '&#EADBC8Chaque cabosse qu''il chipe,'
+    - '&#EADBC8il la replante en cachette.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Cultivateur'
+  epouvantail:
+    item: influpet:carte_epouvantail
+    name: '&#B376E5Épouvantail'
+    series: Cultivateur
+    rarity: ultimate
+    pet: epouvantail
+    lore:
+    - '&#EADBC8Les corbeaux le fuient,'
+    - '&#EADBC8sauf un, son meilleur ami.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Cultivateur'
+  coquelicot:
+    item: influpet:carte_coquelicot
+    name: '&#AAAAAACoquelicot'
+    series: Herboriste
+    rarity: simple
+    pet: coquelicot
+    lore:
+    - '&#EADBC8La fleur la plus bavarde'
+    - '&#EADBC8de tout le pré.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Herboriste'
+  champinou:
+    item: influpet:carte_champinou
+    name: '&#37C44AChampinou'
+    series: Herboriste
+    rarity: unique
+    pet: champinou
+    lore:
+    - '&#EADBC8Il pousse là où personne'
+    - '&#EADBC8ne pense à regarder.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Herboriste'
+  papillon:
+    item: influpet:carte_papillon
+    name: '&#3283A8Papillon'
+    series: Herboriste
+    rarity: elite
+    pet: papillon
+    lore:
+    - '&#EADBC8Il ne se pose jamais'
+    - '&#EADBC8deux fois sur la même fleur.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Herboriste'
+  dryade:
+    item: influpet:carte_dryade
+    name: '&#B376E5Dryade'
+    series: Herboriste
+    rarity: ultimate
+    pet: dryade
+    lore:
+    - '&#EADBC8Esprit de la clairière,'
+    - '&#EADBC8les fleurs s''ouvrent à son passage.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Herboriste'
+  souche:
+    item: influpet:carte_souche
+    name: '&#AAAAAASouche'
+    series: Sylviculteur
+    rarity: simple
+    pet: souche
+    lore:
+    - '&#EADBC8Coupée il y a cent ans,'
+    - '&#EADBC8elle a gardé la hache en souvenir.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Sylviculteur'
+  castor:
+    item: influpet:carte_castor
+    name: '&#37C44ACastor'
+    series: Sylviculteur
+    rarity: unique
+    pet: castor
+    lore:
+    - '&#EADBC8Un arbre ? Trois coups de dents,'
+    - '&#EADBC8et c''est réglé.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Sylviculteur'
+  gland:
+    item: influpet:carte_gland
+    name: '&#3283A8Gland'
+    series: Sylviculteur
+    rarity: elite
+    pet: gland
+    lore:
+    - '&#EADBC8Un jour il sera chêne.'
+    - '&#EADBC8Pour l''instant, il roule.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Sylviculteur'
+  sylvain:
+    item: influpet:carte_sylvain
+    name: '&#B376E5Sylvain'
+    series: Sylviculteur
+    rarity: ultimate
+    pet: sylvain
+    lore:
+    - '&#EADBC8Gardien des vieilles forêts,'
+    - '&#EADBC8patient comme un chêne.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Sylviculteur'
+  flammeche:
+    item: influpet:carte_flammeche
+    name: '&#B376E5Flammèche'
+    series: Fondeur
+    rarity: ultimate
+    pet: flammeche
+    lore:
+    - '&#EADBC8Un petit esprit de flamme'
+    - '&#EADBC8qui ne quitte jamais le four.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Fondeur'
+  soufflet:
+    item: influpet:carte_soufflet
+    name: '&#AAAAAASoufflet'
+    series: Fondeur
+    rarity: simple
+    pet: soufflet
+    lore:
+    - '&#EADBC8Un souffle, et les braises'
+    - '&#EADBC8repartent de plus belle.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Fondeur'
+  salamandre:
+    item: influpet:carte_salamandre
+    name: '&#37C44ASalamandre Ardente'
+    series: Fondeur
+    rarity: unique
+    pet: salamandre
+    lore:
+    - '&#EADBC8Elle dort dans les braises'
+    - '&#EADBC8du haut-fourneau.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Fondeur'
+  fournaise:
+    item: influpet:carte_fournaise
+    name: '&#3283A8Fournaise'
+    series: Fondeur
+    rarity: elite
+    pet: fournaise
+    lore:
+    - '&#EADBC8Un four qui a pris vie,'
+    - '&#EADBC8et qui a toujours faim.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Fondeur'
+  lapin_lapis:
+    item: influpet:carte_lapin_lapis
+    name: '&#AAAAAALapis-Lapin'
+    series: Enchanteur
+    rarity: simple
+    pet: lapin_lapis
+    lore:
+    - '&#EADBC8Il a creusé si profond'
+    - '&#EADBC8qu''il en est ressorti tout bleu.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Enchanteur'
+  orbe_xp:
+    item: influpet:carte_orbe_xp
+    name: '&#37C44AOrbe d''Expérience'
+    series: Enchanteur
+    rarity: unique
+    pet: orbe_xp
+    lore:
+    - '&#EADBC8Il a la couleur de tes niveaux'
+    - '&#EADBC8et file toujours droit vers toi.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Enchanteur'
+  chouette_arcane:
+    item: influpet:carte_chouette_arcane
+    name: '&#3283A8Chouette Arcane'
+    series: Enchanteur
+    rarity: elite
+    pet: chouette_arcane
+    lore:
+    - '&#EADBC8Elle lit dans le noir'
+    - '&#EADBC8les grimoires interdits.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Enchanteur'
+  table_vivante:
+    item: influpet:carte_table_vivante
+    name: '&#B376E5Table Vivante'
+    series: Enchanteur
+    rarity: ultimate
+    pet: table_vivante
+    lore:
+    - '&#EADBC8La table d''enchantement'
+    - '&#EADBC8qui choisit elle-même ses sorts.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Enchanteur'
+  poissonnet:
+    item: influpet:carte_poissonnet
+    name: '&#AAAAAAPoissonnet'
+    series: Pêcheur
+    rarity: simple
+    pet: poissonnet
+    lore:
+    - '&#EADBC8Il sait où mordent'
+    - '&#EADBC8ses cousins.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Pêcheur'
+  crabichon:
+    item: influpet:carte_crabichon
+    name: '&#37C44ACrabichon'
+    series: Pêcheur
+    rarity: unique
+    pet: crabichon
+    lore:
+    - '&#EADBC8Il marche de travers'
+    - '&#EADBC8mais pêche tout droit.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Pêcheur'
+  dauphin:
+    item: influpet:carte_dauphin
+    name: '&#3283A8Dauphin'
+    series: Pêcheur
+    rarity: elite
+    pet: dauphin
+    lore:
+    - '&#EADBC8Il nage plus vite que son ombre'
+    - '&#EADBC8et t''emmène dans son sillage.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Pêcheur'
+  kraken:
+    item: influpet:carte_kraken
+    name: '&#B376E5Kraken'
+    series: Pêcheur
+    rarity: ultimate
+    pet: kraken
+    lore:
+    - '&#EADBC8Capitaine des abysses,'
+    - '&#EADBC8les poissons le suivent.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Pêcheur'
+  ecuyer:
+    item: influpet:carte_ecuyer
+    name: '&#AAAAAAÉcuyer'
+    series: Défenseur
+    rarity: simple
+    pet: ecuyer
+    lore:
+    - '&#EADBC8Petit, mais sa lance'
+    - '&#EADBC8tient les zombies à distance.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Défenseur'
+  pavois:
+    item: influpet:carte_pavois
+    name: '&#37C44APavois'
+    series: Défenseur
+    rarity: unique
+    pet: pavois
+    lore:
+    - '&#EADBC8Un grand bouclier vivant'
+    - '&#EADBC8qui se dresse devant ses amis.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Défenseur'
+  chien_garde:
+    item: influpet:carte_chien_garde
+    name: '&#3283A8Chien de Garde'
+    series: Défenseur
+    rarity: elite
+    pet: chien_garde
+    lore:
+    - '&#EADBC8Son armure brille,'
+    - '&#EADBC8son flair ne trompe jamais.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Défenseur'
+  chevalier_spectral:
+    item: influpet:carte_chevalier_spectral
+    name: '&#B376E5Chevalier Spectral'
+    series: Défenseur
+    rarity: ultimate
+    pet: chevalier_spectral
+    lore:
+    - '&#EADBC8Il a juré de protéger'
+    - '&#EADBC8même après sa mort.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Défenseur'
+  marteau_piqueur:
+    item: influpet:carte_marteau_piqueur
+    name: '&#AAAAAAMarteau-Piqueur'
+    series: Bâtisseur
+    rarity: simple
+    pet: marteau_piqueur
+    lore:
+    - '&#EADBC8Il fait trembler les routes'
+    - '&#EADBC8et déterre ce qu''elles cachaient.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Bâtisseur'
+  betonniere:
+    item: influpet:carte_betonniere
+    name: '&#37C44ABétonnière'
+    series: Bâtisseur
+    rarity: unique
+    pet: betonniere
+    lore:
+    - '&#EADBC8Elle tourne, tourne, tourne,'
+    - '&#EADBC8et le béton prend aussitôt.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Bâtisseur'
+  grue:
+    item: influpet:carte_grue
+    name: '&#3283A8Grue'
+    series: Bâtisseur
+    rarity: elite
+    pet: grue
+    lore:
+    - '&#EADBC8Elle soulève les blocs'
+    - '&#EADBC8les plus lourds du chantier.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Bâtisseur'
+  architecte:
+    item: influpet:carte_architecte
+    name: '&#B376E5Architecte'
+    series: Bâtisseur
+    rarity: ultimate
+    pet: architecte
+    lore:
+    - '&#EADBC8Il voit déjà la cathédrale'
+    - '&#EADBC8là où tu vois un terrain vague.'
+    - ''
+    - '&#5FB3B3Série &#FFF4E0Bâtisseur'
+  phenix:
+    item: influpet:carte_phenix
+    name: '&#F0A800Phénix'
+    series: Prestige
+    rarity: legendary
+    pet: phenix
+    lore:
+    - '&#EADBC8Il renaît toujours'
+    - '&#EADBC8de ses cendres.'
+    - ''
+    - '&#5FB3B3Familier de prestige'
+  astrolabe:
+    item: influpet:carte_astrolabe
+    name: '&#F0A800Astrolabe Céleste'
+    series: Prestige
+    rarity: legendary
+    pet: astrolabe
+    lore:
+    - '&#EADBC8Il fait tourner les planètes'
+    - '&#EADBC8pour ne jamais s''ennuyer.'
+    - ''
+    - '&#5FB3B3Familier de prestige'
+  kitsune:
+    item: influpet:carte_kitsune
+    name: '&#F0A800Kitsune des Neiges'
+    series: Prestige
+    rarity: legendary
+    pet: kitsune
+    lore:
+    - '&#EADBC8Une queue par siècle vécu.'
+    - '&#EADBC8Elle en a neuf.'
+    - ''
+    - '&#5FB3B3Familier de prestige'
+  licorne:
+    item: influpet:carte_licorne
+    name: '&#F0A800Licorne Astrale'
+    series: Prestige
+    rarity: legendary
+    pet: licorne
+    lore:
+    - '&#EADBC8Elle laisse des étoiles'
+    - '&#EADBC8là où elle passe.'
+    - ''
+    - '&#5FB3B3Familier de prestige'
+  nida:
+    item: influpet:carte_nida
+    name: '&#F0A800Nida'
+    series: Prestige
+    rarity: legendary
+    pet: nida
+    lore:
+    - '&#EADBC8Il a perdu son bras gauche'
+    - '&#EADBC8en retenant la porte du Néant.'
+    - ''
+    - '&#5FB3B3Familier de prestige'
+  leviathan:
+    item: influpet:carte_leviathan
+    name: '&#C8256ALéviathan'
+    series: Prestige
+    rarity: fabled
+    pet: leviathan
+    lore:
+    - '&#EADBC8Les marins ne prononcent'
+    - '&#EADBC8jamais son nom.'
+    - ''
+    - '&#5FB3B3Familier de prestige'
+  faucheur:
+    item: influpet:carte_faucheur
+    name: '&#C8256AFaucheur du Néant'
+    series: Prestige
+    rarity: fabled
+    pet: faucheur
+    lore:
+    - '&#EADBC8Il vient du vide'
+    - '&#EADBC8et y retourne toujours.'
+    - ''
+    - '&#5FB3B3Familier de prestige'

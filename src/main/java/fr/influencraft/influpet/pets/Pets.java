@@ -162,15 +162,20 @@ public final class Pets {
     }
 
     /**
-     * Installation neuve (ni pets/, ni plugins/EcoPets/pets à reprendre) : les familiers d'exemple du jar
-     * (pets/index.txt) sont écrits dans pets/.
+     * Installation neuve (ni pets/, ni plugins/EcoPets/pets à reprendre) : les familiers livrés dans le jar
+     * (pets/index.txt, version de la langue choisie dans i18n/<langue>/pets/ si elle existe) sont écrits dans pets/.
      */
     private static void saveDefaultPets() {
         File folder = new File(plugin.getDataFolder(), "pets");
         if (folder.exists()) {
             return;
         }
-        try (var index = plugin.getResource("pets/index.txt")) {
+        String language = plugin.getConfig().getString("language", "en_US");
+        String base = fr.influencraft.influpet.ConfigFiles.localized(language, "pets/");
+        if (plugin.getResource(base + "index.txt") == null) {
+            base = "pets/";
+        }
+        try (var index = plugin.getResource(base + "index.txt")) {
             if (index == null) {
                 return;
             }
@@ -181,7 +186,7 @@ public final class Pets {
                 if (name.isEmpty()) {
                     continue;
                 }
-                try (var in = plugin.getResource("pets/" + name)) {
+                try (var in = plugin.getResource(base + name)) {
                     if (in != null) {
                         java.nio.file.Files.copy(in, new File(folder, name).toPath());
                         count++;

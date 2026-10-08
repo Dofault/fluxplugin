@@ -1,0 +1,74 @@
+# &#37C44ACrabichon : un des familiers livrés avec InfluPet. Grandit avec ses cartes (clic droit sur une carte).
+# Modèle : BetterModel/models/familier_crabichon.bbmodel, carte et peluche : pack ItemsAdder "influpet".
+
+name: '&#37C44ACrabichon'
+description: '&#EADBC8Grandit uniquement avec ses cartes'
+entity-texture: bettermodel:familier_crabichon
+flying: false
+icon: itemsadder:influpet__carte_crabichon
+trail:
+  enabled: false
+  particle: flame
+  gap: 2
+  amount: 1
+  y-offset: 0.0
+level-xp-requirements:
+- 52
+- 69
+- 88
+- 108
+- 129
+- 151
+- 173
+- 197
+- 219
+xp-gain-methods: []
+level-placeholders:
+- id: bonus
+  value: round((0.2 + (%level% - 1) * 1.8 / 9) * 100) / 100
+effects-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Trésors des fonds'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance d''un'
+  - '  &#EADBC8trésor marin en pêchant'
+  - '  &#EADBC8avec une canne vanilla'
+rewards-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Trésors des fonds'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance d''un'
+  - '  &#EADBC8trésor marin en pêchant'
+  - '  &#EADBC8avec une canne vanilla'
+level-up-messages:
+  1:
+  - '&#6B7A8F» &#FFF4E0Trésors des fonds'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance d''un'
+  - '  &#EADBC8trésor marin en pêchant'
+  - '  &#EADBC8avec une canne vanilla'
+level-up-effects: []
+effects:
+- effects:
+  - id: drop_random_item
+    args:
+      items:
+      - nautilus_shell
+      - prismarine_shard
+      - prismarine_crystals
+    mutators:
+    - id: location_to_player
+  args:
+    chance: 0.2 + (%level% - 1) * 1.8 / 9
+  triggers:
+  - catch_fish
+  filters:
+    custom_fish_type:
+    - vanilla
+conditions: []
+activate-conditions: []
+spawn-egg:
+  enabled: false
+  item: paper
+  name: '&#37C44ACrabichon'
+  lore: []
+  craftable: false
+  recipe: []
+  withdrawable: false

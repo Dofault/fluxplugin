@@ -1,0 +1,108 @@
+# &#37C44AMimique : un des familiers livrés avec InfluPet. Grandit avec ses cartes (clic droit sur une carte).
+# Modèle : BetterModel/models/familier_mimique.bbmodel, carte et peluche : pack ItemsAdder "influpet".
+
+name: '&#37C44AMimique'
+description: '&#EADBC8Grandit uniquement avec ses cartes'
+entity-texture: bettermodel:familier_mimique
+flying: false
+icon: itemsadder:influpet__carte_mimique
+trail:
+  enabled: false
+  particle: flame
+  gap: 2
+  amount: 1
+  y-offset: 0.0
+level-xp-requirements:
+- 52
+- 69
+- 88
+- 108
+- 129
+- 151
+- 173
+- 197
+- 219
+xp-gain-methods: []
+level-placeholders:
+- id: bonus
+  value: round((0.001 + (%level% - 1) * 0.009 / 9) * 1000) / 1000
+effects-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Filon oublié'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance que la'
+  - '  &#EADBC8roche minée laisse place'
+  - '  &#EADBC8à un coffre d''aventure'
+rewards-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Filon oublié'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance que la'
+  - '  &#EADBC8roche minée laisse place'
+  - '  &#EADBC8à un coffre d''aventure'
+level-up-messages:
+  1:
+  - '&#6B7A8F» &#FFF4E0Filon oublié'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance que la'
+  - '  &#EADBC8roche minée laisse place'
+  - '  &#EADBC8à un coffre d''aventure'
+level-up-effects: []
+effects:
+- effects:
+  - id: run_chain
+    args:
+      chain: mimique_coffre
+      run-type: random
+      delay: 1
+  - id: play_sound
+    args:
+      sound: block_chest_open
+      pitch: 0.8
+      volume: 1.0
+      delay: 1
+  - id: send_message
+    args:
+      message: '&#B376E5Ta Mimique a déniché un &#FFD94Dcoffre d''aventure&#B376E5 !'
+      action_bar: true
+      delay: 1
+  args:
+    chance: 0.001 + (%level% - 1) * 0.009 / 9
+  triggers:
+  - mine_block
+  filters:
+    blocks:
+    - stone
+    - cobblestone
+    - deepslate
+    - cobbled_deepslate
+    - andesite
+    - diorite
+    - granite
+    - tuff
+    - calcite
+    - dripstone_block
+    - sandstone
+    - red_sandstone
+    - terracotta
+    - white_terracotta
+    - orange_terracotta
+    - yellow_terracotta
+    - red_terracotta
+    - brown_terracotta
+    - light_gray_terracotta
+    - cyan_terracotta
+    - light_blue_terracotta
+    - netherrack
+    - basalt
+    - smooth_basalt
+    - blackstone
+    - end_stone
+    player_placed: false
+conditions: []
+activate-conditions: []
+spawn-egg:
+  enabled: false
+  item: paper
+  name: '&#37C44AMimique'
+  lore: []
+  craftable: false
+  recipe: []
+  withdrawable: false

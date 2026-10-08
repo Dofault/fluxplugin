@@ -76,12 +76,15 @@ public final class ConfigFiles {
 
     /** Écrit les fichiers par défaut manquants (installation neuve). */
     void saveDefaults() {
+        String language = read(file("config.yml")).getString("language", DEFAULT_LANGUAGE);
         List<String> names = new java.util.ArrayList<>(List.of("config.yml", "menus/pets.yml", "menus/progression.yml",
                 "content/cards.yml", "content/boosters.yml", "content/pets.yml", "effects.yml", "chains.yml"));
         LANGUAGES.forEach(l -> names.add("lang/" + l + ".yml"));
         for (String name : names) {
             if (!file(name).exists()) {
-                try (InputStream in = resources.apply(name)) {
+                // contenu livré dans la langue choisie (i18n/<langue>/...), sinon la version anglaise
+                String source = exists(localized(language, name)) ? localized(language, name) : name;
+                try (InputStream in = resources.apply(source)) {
                     if (in != null) {
                         Files.createDirectories(file(name).toPath().getParent());
                         Files.copy(in, file(name).toPath());
@@ -91,13 +94,136 @@ public final class ConfigFiles {
                 }
             }
         }
+        if (!file(MARKER).exists()) {
+            writeMarker(language);
+        }
+    }
+
+    private boolean exists(String resource) {
+        try (InputStream in = resources.apply(resource)) {
+            return in != null;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    // ------------------------------------------------------------------ langue du contenu
+
+    /** Fichier où est notée la langue dans laquelle le contenu a été écrit (pour détecter un changement). */
+    static final String MARKER = ".content-language";
+    /** Fichiers traduits au changement de langue (en plus des familiers livrés, pets/<id>.yml). */
+    static final List<String> LOCALIZED = List.of("config.yml", "menus/pets.yml", "menus/progression.yml",
+            "content/cards.yml", "content/boosters.yml", "content/pets.yml", "effects.yml");
+
+    /** Ressource d'une langue : i18n/<langue>/<nom>, le nom seul pour l'anglais (contenu de base). */
+    public static String localized(String language, String name) {
+        return DEFAULT_LANGUAGE.equals(language) ? name : "i18n/" + language + "/" + name;
+    }
+
+    private void writeMarker(String language) {
+        try {
+            Files.createDirectories(folder.toPath());
+            Files.writeString(file(MARKER).toPath(), language, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            logger.warning("Could not write " + MARKER + ": " + e);
+        }
+    }
+
+    /**
+     * Langue changée dans config.yml depuis l'écriture du contenu : chaque texte encore identique à celui livré
+     * dans une autre langue (menus, cartes, boosters, familiers livrés, messages des effets, étiquettes de
+     * rareté) est remplacé par celui de la nouvelle langue ; ce que l'admin a modifié est gardé. Fichiers
+     * sauvegardés avant dans backups/<date>-<ancienne langue>/.
+     */
+    void applyLanguage(String language) {
+        String previous;
+        try {
+            previous = file(MARKER).exists() ? Files.readString(file(MARKER).toPath(), StandardCharsets.UTF_8).trim() : null;
+        } catch (IOException e) {
+            previous = null;
+        }
+        if (previous == null) {
+            writeMarker(language);
+            return;
+        }
+        if (previous.equals(language) || !LANGUAGES.contains(language)) {
+            return;
+        }
+        List<String> names = new java.util.ArrayList<>(LOCALIZED);
+        for (String pet : shippedPets()) {
+            names.add("pets/" + pet);
+        }
+        File backup = file("backups/" + java.time.LocalDateTime.now().format(
+                java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")) + "-" + previous);
+        int changed = 0;
+        for (String name : names) {
+            File f = file(name);
+            if (!f.exists()) {
+                continue;
+            }
+            YamlConfiguration current = read(f);
+            YamlConfiguration target = resource(localized(language, name));
+            if (target.getKeys(false).isEmpty()) {
+                continue;
+            }
+            List<YamlConfiguration> others = new java.util.ArrayList<>();
+            for (String other : LANGUAGES) {
+                if (!other.equals(language)) {
+                    others.add(resource(localized(other, name)));
+                }
+            }
+            boolean dirty = false;
+            for (String key : current.getKeys(true)) {
+                if (current.isConfigurationSection(key) || !target.contains(key) || target.isConfigurationSection(key)) {
+                    continue;
+                }
+                Object value = current.get(key);
+                for (YamlConfiguration other : others) {
+                    if (java.util.Objects.equals(value, other.get(key)) && !java.util.Objects.equals(value, target.get(key))) {
+                        current.set(key, target.get(key));
+                        dirty = true;
+                        break;
+                    }
+                }
+            }
+            if (dirty) {
+                try {
+                    File copy = new File(backup, name);
+                    Files.createDirectories(copy.toPath().getParent());
+                    Files.copy(f.toPath(), copy.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    Files.writeString(f.toPath(), current.saveToString(), StandardCharsets.UTF_8);
+                    changed++;
+                } catch (IOException e) {
+                    logger.warning("Could not translate " + name + ": " + e);
+                }
+            }
+        }
+        writeMarker(language);
+        logger.info("Content language " + previous + " -> " + language + ": " + changed + " files translated"
+                + (changed > 0 ? " (backup in " + folder.toPath().relativize(backup.toPath()) + ")." : "."));
+    }
+
+    /** Familiers livrés avec le plugin (pets/index.txt). */
+    private List<String> shippedPets() {
+        try (InputStream in = resources.apply("pets/index.txt")) {
+            if (in == null) {
+                return List.of();
+            }
+            return java.util.Arrays.stream(new String(in.readAllBytes(), StandardCharsets.UTF_8).split("\\R"))
+                    .map(String::trim).filter(n -> !n.isEmpty()).toList();
+        } catch (IOException e) {
+            return List.of();
+        }
     }
 
     // ------------------------------------------------------------------ lecture
 
     YamlConfiguration load() {
+        String language = read(file("config.yml")).getString("language", DEFAULT_LANGUAGE);
+        applyLanguage(language);
         YamlConfiguration merged = new YamlConfiguration();
         overlay(merged, "", resource("config.yml"));
+        overlay(merged, "", resource(localized(language, "config.yml")));
         YamlConfiguration config = read(file("config.yml"));
         overlay(merged, "", config);
         langFile = "lang/" + merged.getString("language", DEFAULT_LANGUAGE) + ".yml";
@@ -106,6 +232,7 @@ public final class ConfigFiles {
         overlay(merged, "", read(file(langFile)));
         for (Map.Entry<String, String> e : MENUS.entrySet()) {
             overlay(merged, e.getKey(), resource(e.getValue()));
+            overlay(merged, e.getKey(), resource(localized(language, e.getValue())));
             overlay(merged, e.getKey(), read(file(e.getValue())));
         }
         for (String name : new java.util.LinkedHashSet<>(CONTENT.values())) {
