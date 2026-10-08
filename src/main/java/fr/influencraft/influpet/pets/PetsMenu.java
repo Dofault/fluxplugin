@@ -18,9 +18,9 @@ import java.util.List;
 
 /**
  * Menu des familiers (/familiers), repris de PetsGUI d'EcoPets : familiers adoptés triés par niveau décroissant
- * dans la zone pet-area (pages) : clic = l'activer (en plus des autres, selon le maximum du joueur) ou le
- * ranger s'il est actif ; premier familier actif en haut (clic : sa progression), tout ranger, cacher / montrer,
- * fermer. Pas de bouton « retirer en œuf » : les familiers forment une collection.
+ * dans la zone pet-area (pages) : clic = l'activer (premier emplacement libre, selon le maximum du joueur) ou
+ * le ranger s'il est actif ; en haut, les emplacements des familiers actifs (pet-slots : occupé, libre ou
+ * verrouillé), tout ranger, cacher / montrer, fermer. Pas de bouton « retirer en œuf » : les familiers forment une collection.
  */
 public final class PetsMenu {
 
@@ -118,16 +118,35 @@ public final class PetsMenu {
         builder.addComponent(c.getInt("gui.next-page.location.row"), c.getInt("gui.next-page.location.column"),
                 pageChanger(PageChanger.Direction.FORWARDS, c.getString("gui.next-page.item"),
                         c.has("gui.next-page.item-inactive") ? c.getString("gui.next-page.item-inactive") : null, pageSound));
-        builder.setSlot(c.getInt("gui.pet-info.row"), c.getInt("gui.pet-info.column"), Slot.builder((player, m) -> {
-            Pet pet = PetData.active(player);
-            return pet == null ? PetItems.fromConfig(c.getSubsection("gui.pet-info.no-active")) : PetItems.info(player, pet);
-        }).onLeftClick((event, slot, m) -> {
-            Player player = (Player) event.getWhoClicked();
-            Pet pet = PetData.active(player);
-            if (pet != null) {
-                PetLevelMenu.open(player, pet);
-            }
-        }).build());
+        // emplacements des familiers actifs : occupé (clic gauche : progression, clic droit : ranger), libre, ou
+        // verrouillé au-delà du maximum du joueur
+        List<? extends Config> locations = c.getSubsections("gui.pet-slots.locations");
+        for (int i = 0; i < locations.size(); i++) {
+            int index = i;
+            builder.setSlot(locations.get(i).getInt("row"), locations.get(i).getInt("column"), Slot.builder((player, m) -> {
+                List<Pet> actives = PetData.actives(player);
+                if (index < actives.size()) {
+                    return PetItems.info(player, actives.get(index));
+                }
+                return PetItems.slot(player, index + 1, index >= PetData.maxActive(player));
+            }).onLeftClick((event, slot, m) -> {
+                Player player = (Player) event.getWhoClicked();
+                List<Pet> actives = PetData.actives(player);
+                if (index < actives.size()) {
+                    PetLevelMenu.open(player, actives.get(index));
+                }
+            }).onRightClick((event, slot, m) -> {
+                Player player = (Player) event.getWhoClicked();
+                List<Pet> actives = PetData.actives(player);
+                if (index < actives.size() && PetData.deactivate(player, actives.get(index))) {
+                    PetMessages.send(player, "deactivated-pet", "%pet%", actives.get(index).name());
+                    if (clickSound != null) {
+                        clickSound.playTo(player);
+                    }
+                    m.refresh(player);
+                }
+            }).build());
+        }
         if (c.getBool("gui.close.enabled")) {
             builder.setSlot(c.getInt("gui.close.location.row"), c.getInt("gui.close.location.column"),
                     Slot.builder(PetItems.build(c.getString("gui.close.item"), c.getString("gui.close.name"), null))

@@ -5,6 +5,7 @@ import fr.influencraft.influpet.Texts;
 import kr.toxicity.model.api.BetterModel;
 import kr.toxicity.model.api.bukkit.platform.BukkitAdapter;
 import kr.toxicity.model.api.tracker.EntityTracker;
+import kr.toxicity.model.api.tracker.TrackerUpdateAction;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -61,6 +62,8 @@ public final class PetDisplay {
         /** en route vers sa distance but (sorti de la zone de confort) */
         boolean moving;
         double goal;
+        /** dernière lumière appliquée au modèle (-1 : jamais) */
+        int blockLight = -1, skyLight = -1;
 
         Follower(Player owner, Pet pet, ArmorStand carrier, EntityTracker tracker, boolean hasWalk) {
             this.owner = owner;
@@ -325,9 +328,32 @@ public final class PetDisplay {
         if (tick % 20 == 0) {
             updateLabel(f);
         }
+        if (tick % 5 == 0) {
+            updateLight(f, world);
+        }
         Pet.Trail trail = f.pet.trail();
         if (trail != null && tick % trail.gap() == 0) {
             world.spawnParticle(trail.particle(), f.x, f.y + trail.yOffset(), f.z, trail.amount(), 0.1, 0.1, 0.1, 0);
+        }
+    }
+
+    /**
+     * Lumière du modèle : les item displays de BetterModel prennent celle du bloc de leur origine, nulle quand
+     * l'origine (les pieds) touche un bloc (dalle, terre labourée, tapis, bord d'un bloc plein), d'où un familier
+     * tout noir. On lui impose la vraie lumière de l'endroit, mesurée au milieu du familier et un bloc au-dessus
+     * (la plus forte des deux), envoyée seulement quand elle change.
+     */
+    private void updateLight(Follower f, World world) {
+        int bx = (int) Math.floor(f.x);
+        int bz = (int) Math.floor(f.z);
+        Block middle = world.getBlockAt(bx, (int) Math.floor(f.y + 0.4), bz);
+        Block above = middle.getRelative(0, 1, 0);
+        int block = Math.max(middle.getLightFromBlocks(), above.getLightFromBlocks());
+        int sky = Math.max(middle.getLightFromSky(), above.getLightFromSky());
+        if (block != f.blockLight || sky != f.skyLight) {
+            f.blockLight = block;
+            f.skyLight = sky;
+            f.tracker.update(TrackerUpdateAction.brightness(block, sky));
         }
     }
 

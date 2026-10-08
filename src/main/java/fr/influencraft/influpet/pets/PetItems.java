@@ -57,12 +57,32 @@ public final class PetItems {
         return named(pet.baseItem(), title(c.getString("name"), pet, level), lore);
     }
 
-    /** Icône du familier actif en haut du menu (gui.pet-info.active). */
+    /** Familier d'un emplacement occupé en haut du menu (gui.pet-slots.active). */
     public static ItemStack info(Player player, Pet pet) {
-        Config c = Pets.settings().getSubsection("gui.pet-info.active");
+        Config c = Pets.settings().getSubsection("gui.pet-slots.active");
         int level = PetData.level(player, pet);
         return named(pet.baseItem(), title(c.getString("name"), pet, level),
                 PetData.inject(c.getStrings(level >= pet.maxLevel() ? "max-level-lore" : "lore"), player, pet, null));
+    }
+
+    /** Emplacement libre (gui.pet-slots.empty) ou verrouillé (gui.pet-slots.locked) n°slot. */
+    public static ItemStack slot(Player player, int slot, boolean locked) {
+        Config c = Pets.settings().getSubsection(locked ? "gui.pet-slots.locked" : "gui.pet-slots.empty");
+        String grade = c.has("grades." + slot) ? c.getString("grades." + slot) : "";
+        List<String> lore = new ArrayList<>();
+        for (String line : c.has("lore") ? c.getStrings("lore") : List.<String>of()) {
+            if (!line.contains("%grade%") || !grade.isEmpty()) {
+                lore.add(papi(player, line.replace("%grade%", grade).replace("%slot%", String.valueOf(slot))));
+            }
+        }
+        String name = c.has("name") ? papi(player, c.getString("name").replace("%slot%", String.valueOf(slot))) : null;
+        return build(c.getString("item"), name, lore);
+    }
+
+    /** Placeholders PlaceholderAPI (si présent). */
+    private static String papi(Player player, String text) {
+        return text.indexOf('%') >= 0 && org.bukkit.Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")
+                ? me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, text) : text;
     }
 
     static String title(String format, Pet pet, int level) {

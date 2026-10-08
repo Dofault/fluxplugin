@@ -8,7 +8,7 @@ mask:
   materials:
   - black_stained_glass_pane
   pattern:
-  - '111101111'
+  - '110000011'
   - '111111111'
   - '100000001'
   - '100000001'
@@ -21,19 +21,28 @@ pet-area:
   bottom-right:
     row: 5
     column: 8
-pet-info:
-  row: 1
-  column: 5
-  no-active:
-    name: '&#FF5C5CAucun familier actif'
-    lore:
-    - ''
-    - '&#B376E5Choisis-en un ci-dessous !'
-    - ''
-    item: player_head texture:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmFkYzA0OGE3Y2U3OGY3ZGFkNzJhMDdkYTI3ZDg1YzA5MTY4ODFlNTUyMmVlZWQxZTNkYWYyMTdhMzhjMWEifX19
+# Emplacements des familiers actifs (rangée du haut), dans l'ordre de remplissage : un familier activé prend le
+# premier emplacement libre, le n°1 est celui qui suit le joueur (les autres marchent derrière lui). Le joueur a
+# autant d'emplacements que son maximum (permission influpet.familiers.max.<n>, cf. config.yml familiers.actifs),
+# les suivants s'affichent verrouillés.
+pet-slots:
+  locations:
+  - row: 1
+    column: 3
+  - row: 1
+    column: 4
+  - row: 1
+    column: 5
+  - row: 1
+    column: 6
+  - row: 1
+    column: 7
+  # emplacement occupé (clic gauche : progression, clic droit : ranger)
   active:
     name: '%pet% &#FFD94DNiv. %level%'
     lore:
+    - '&r&7%img_right_click% &#FFD94DRanger'
+    - ''
     - '%description%'
     - '&#6B7A8F(clic droit sur une de ses cartes)'
     - ''
@@ -46,6 +55,8 @@ pet-info:
     - ''
     - '&r&7%img_left_click% &#FFD94DVoir la progression'
     max-level-lore:
+    - '&r&7%img_right_click% &#FFD94DRanger'
+    - ''
     - '%description%'
     - '&#6B7A8F(clic droit sur une de ses cartes)'
     - ''
@@ -55,6 +66,29 @@ pet-info:
     - '&#2ECF7BNiveau maximum atteint'
     - ''
     - '&r&7%img_left_click% &#FFD94DVoir la progression'
+  # emplacement libre (%slot% : numéro de l'emplacement)
+  empty:
+    name: '&#FFD94DEmplacement libre'
+    lore:
+    - ''
+    - '&#B376E5Clique sur un familier'
+    - '&#B376E5ci-dessous pour l''activer.'
+    - ''
+    item: player_head texture:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmFkYzA0OGE3Y2U3OGY3ZGFkNzJhMDdkYTI3ZDg1YzA5MTY4ODFlNTUyMmVlZWQxZTNkYWYyMTdhMzhjMWEifX19
+  # emplacement au-delà du maximum du joueur. %slot% : numéro de l'emplacement ; %grade% : texte de « grades »
+  # pour cet emplacement (une ligne contenant %grade% est retirée tant qu'aucun grade n'y est indiqué).
+  # Placeholders PlaceholderAPI acceptés dans le nom et la description.
+  locked:
+    item: barrier
+    name: '&#FF5C5CEmplacement verrouillé'
+    lore:
+    - ''
+    - '&#B376E5Tu n''as pas encore accès'
+    - '&#B376E5à cet emplacement.'
+    - '&#B376E5Grade requis : %grade%'
+    - ''
+    # numéro d'emplacement : texte de %grade%, par exemple « 2: '&#FFD94DCitoyen' »
+    grades: {}
 pet-icon:
   name: '%pet% &#FFD94DNiv. %level%'
   lore:

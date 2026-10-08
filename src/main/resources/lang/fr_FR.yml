@@ -24,6 +24,7 @@ messages:
   reloaded: "&#EADBC8Configuration rechargée : &#FFF4E0%cards% &#EADBC8cartes, &#FFF4E0%boosters% &#EADBC8boosters."
   unknown-pet: "&#D9534FFamilier inconnu : &#FFF4E0%id%"
   player-only: "&#D9534FCommande réservée aux joueurs."
+  no-permission: "&#FF5C5CTu n'as pas la permission."
   already-exists: "&#D9534F« %id% » existe déjà."
   created: "&#EADBC8« &#FFF4E0%id%&#EADBC8 » créé."
   deleted: "&#EADBC8« &#FFF4E0%id%&#EADBC8 » supprimé."

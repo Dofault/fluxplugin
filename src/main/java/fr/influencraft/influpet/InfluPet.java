@@ -270,6 +270,11 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
+        // double sécurité : plugin.yml réserve déjà la commande à influpet.admin (op par défaut)
+        if (!sender.hasPermission("influpet.admin")) {
+            send(sender, "no-permission");
+            return true;
+        }
         if (args.length == 0) {
             usage(sender);
             return true;
@@ -480,6 +485,9 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
                                       @NotNull String alias, @NotNull String[] args) {
+        if (!sender.hasPermission("influpet.admin")) {
+            return List.of();
+        }
         List<String> players = Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
         List<String> cardIds = registry.cards().stream().map(CardRegistry.Card::id).toList();
         List<String> petIds = registry.pets().stream().map(CardRegistry.PetEntry::id).toList();
