@@ -15,7 +15,7 @@ the player's inventory and draw buttons over it. Developed for the Influencraft 
 | **FluxReferral** | Referral system with per-player server addresses | — |
 | **FluxRewards** | Daily login and playtime rewards | — |
 | **FluxSorter** | Sorting chests and sorting golem (Lands) | — |
-| **FluxTools** | Levelled crate tools with quests, plus optional utility modules (jobs menu and XP boss bar, money action bar, /repair, /bottlexp, Mending lock, anvil rules) | optional |
+| **FluxTools** | Levelled crate tools with quests, plus optional utility modules (jobs menu and XP boss bar, money action bar, /repair, /bottlexp, enchanted book splitter, Mending lock, anvil rules) | optional |
 | **FluxWebsite** | Bridge with the website: shop deliveries, vote rewards (/voteclaims), Vote Party, vote reminder and streak | — |
 
 ## Building
@@ -47,5 +47,5 @@ identifiers, so menus, ranks and items already handed out keep working.
 | FluxReferral | InfluParrainage |
 | FluxRewards | InfluRecompenses |
 | FluxSorter | SortingChest, InfluTri |
-| FluxTools | FluxItems (+ game modules of InfluBridge) |
+| FluxTools | FluxItems (+ game modules of InfluBridge, InfluEnchantSplitter) |
 | FluxWebsite | InfluBridge |

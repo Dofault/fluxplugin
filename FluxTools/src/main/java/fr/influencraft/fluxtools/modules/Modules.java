@@ -46,6 +46,12 @@ public final class Modules {
             plugin.getCommand("bottlexp").setTabCompleter(bottles);
             pm.registerEvents(bottles, plugin);
         }
+        if (on("enchant-splitter")) {
+            EnchantSplitter splitter = new EnchantSplitter(plugin);
+            command("enchantsplit", splitter);
+            plugin.getCommand("enchantsplit").setTabCompleter(splitter);
+            pm.registerEvents(splitter, plugin);
+        }
         if (on("advancement-redirect") && requires("advancement-redirect", "ProtocolLib")) {
             new AdvancementRedirectListener(plugin, section("advancement-redirect").getString("command", "menu")).register();
         }

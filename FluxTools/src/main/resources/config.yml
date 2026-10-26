@@ -87,3 +87,27 @@ modules:
   # démarré, sinon les give_money d'EcoJobs ne versent rien, en silence. Sans effet si eco a déjà son économie.
   vault-late-binding:
     enabled: true
+
+  # Séparation d'un livre enchanté en un livre par enchantement (ex-InfluEnchantSplitter) : /enchantsplit
+  # (alias /split, /separer) ou clic droit sur une table d'enchantement, livre en main. Chaque enchantement
+  # séparé consomme un livre vierge et experience-cost points d'XP (pas des niveaux, jamais en créatif ;
+  # 100 points ~ 6 niveaux depuis 0). Rien n'est prélevé si les livres, l'XP ou la place manquent.
+  # Permissions influenchantsplitter.command / .table / .reload (réservées aux VIP).
+  enchant-splitter:
+    enabled: true
+    experience-cost: 100
+    # false = commande uniquement
+    enchanting-table: true
+    # Messages MiniMessage ("" = pas envoyé). Variables : <cost> (points d'XP), <books> (livres vierges),
+    # <enchants> (enchantements du livre), <missing> (places manquantes).
+    messages:
+      no-permission: "<#FF5C5C>Séparer un livre enchanté est réservé aux VIP."
+      player-only: "<#FF5C5C>Seul un joueur peut utiliser cette commande."
+      not-enchanted-book: "<#FF5C5C>Tiens en main le livre enchanté à séparer."
+      not-enough-enchants: "<#FF5C5C>Ce livre n'a qu'un seul enchantement, il n'y a rien à séparer."
+      not-enough-books: "<#FF5C5C>Il te faut <books> livres vierges dans ton inventaire."
+      not-enough-xp: "<#FF5C5C>Il te faut <cost> points d'XP pour séparer ce livre."
+      not-enough-space: "<#FF5C5C>Il te manque <missing> places libres dans ton inventaire pour récupérer les livres séparés."
+      success: "<#2ECF7B>Livre séparé en <enchants> livres, pour <cost> points d'XP."
+      reloaded: "<#2BC4E8>Configuration rechargée."
+      reload-no-permission: "<#FF5C5C>Tu n'as pas la permission de recharger le plugin."

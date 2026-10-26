@@ -32,7 +32,21 @@ commands:
     description: "Ouvre le menu de réparation : dépose un objet, paie le prix fixe (modules.repair.cost), durabilité et coût d'enclume remis à neuf."
     usage: "/<command>"
     permission: influbridge.repair
+  enchantsplit:
+    description: "Sépare le livre enchanté tenu en main en un livre par enchantement (livres vierges + XP)."
+    usage: "/<command> [reload]"
+    aliases: [split, separer]
 permissions:
+  # Séparation de livres (module enchant-splitter, ex-InfluEnchantSplitter) : réservée aux VIP, accordée au groupe vip
+  influenchantsplitter.command:
+    description: "Séparer un livre enchanté avec /enchantsplit."
+    default: op
+  influenchantsplitter.table:
+    description: "Séparer un livre enchanté par clic droit sur une table d'enchantement."
+    default: op
+  influenchantsplitter.reload:
+    description: "/enchantsplit reload (relit config.yml)."
+    default: op
   influbridge.bottlexp:
     description: "Permet d'utiliser /bottlexp (remplir des fioles d'expérience). Utiliser une fiole ne demande aucune permission."
     default: op
