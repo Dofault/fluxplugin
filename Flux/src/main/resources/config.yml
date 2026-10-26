@@ -6,3 +6,30 @@ click-cooldown: 4
 
 # Préfixe des messages d'administration (/fluxmenu).
 prefix: "&#FFD94D&lFlux &8► "
+
+# ─── Suite Flux : réglages communs à tous les plugins de la suite ─────────────
+# Langue par défaut de tous les plugins de la suite (fichiers lang/<langue>.yml de chaque plugin).
+# Un plugin peut la remplacer par sa propre clé language.
+language: en_US
+
+# Monnaies. main = monnaie principale (prix par défaut des plugins). Format d'affichage de chaque monnaie :
+# %amount% = montant mis en forme (« 1 200 »). vault = toute économie Vault, playerpoints = PlayerPoints ;
+# d'autres plugins ajoutent les leurs (ex : chips, les jetons de FluxCasino).
+currencies:
+  main: vault
+  vault:
+    format: "%amount% $"
+  playerpoints:
+    format: "%amount% points"
+  chips:
+    format: "%amount% chips"
+
+# Couleurs des boîtes de dialogue (saisies, confirmations, copie, liens).
+dialogs:
+  title: "&#FFD94D"
+  text: "&#B376E5"
+  label: "&#B376E5"
+  option: "&f"
+  confirm: "&#2ECF7B"
+  cancel: "&#FF5C5C"
+  link: "&#2BC4E8&n"

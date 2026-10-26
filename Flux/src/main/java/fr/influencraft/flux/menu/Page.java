@@ -10,5 +10,5 @@ import java.util.List;
  *               rejoués à l'envers en revenant au menu
  */
 public record Page(String id, String title, List<String> frames, int frameInterval, List<MenuButton> buttons,
-                   List<PathSpec> paths) {
+                   List<PathSpec> paths, List<ListSpec> lists) {
 }

@@ -153,6 +153,8 @@ public final class MenuListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent e) {
         service.quit(e.getPlayer());
+        fr.influencraft.flux.api.list.Lists.forget(e.getPlayer());
+        fr.influencraft.flux.menu.ListRenderer.forget(e.getPlayer());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

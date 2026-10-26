@@ -79,12 +79,14 @@ public final class Actions {
             case "page" -> page(player, session, Text.placeholders(player, arg), false);
             case "page-toggle" -> page(player, session, Text.placeholders(player, arg), true);
             case "copy" -> {
-                String texte = Text.placeholders(player, arg);
-                Dialogs.copier(player, "&#FFD94DCopier", texte, "&fCopier dans le presse-papier");
+                String text = Text.placeholders(player, arg);
+                if (text.isBlank()) plugin.getLogger().warning("[copy] texte vide pour " + player.getName());
+                else fr.influencraft.flux.api.dialog.Dialogs.copy(player, fr.influencraft.flux.api.util.Format.word("copy-title"), text);
             }
             case "link" -> {
                 String url = Text.placeholders(player, arg).trim();
-                Dialogs.lien(player, "&#FFD94DLien", url, "&fOuvrir le lien");
+                if (url.isBlank()) plugin.getLogger().warning("[link] lien vide pour " + player.getName());
+                else fr.influencraft.flux.api.dialog.Dialogs.link(player, fr.influencraft.flux.api.util.Format.word("link-title"), url);
             }
             case "fluxjob" -> {
                 // [fluxjob] <métier> prev|next|reset : fenêtre de niveaux du menu Carrières.
@@ -113,6 +115,7 @@ public final class Actions {
                 if (session != null) plugin.menus().refresh(player, session);
             }
             case "collection" -> openCollectionGroup(player, Text.placeholders(player, arg).trim().toLowerCase(Locale.ROOT));
+            case "list" -> list(player, session, Text.placeholders(player, arg));
             case "refresh-buttons" -> {
                 // boutons seulement : le titre affiché (animation du Plinko...) n'est pas touché
                 if (session != null) plugin.menus().renderButtons(player, session);
@@ -130,6 +133,38 @@ public final class Actions {
                 external.run(player, session == null ? null : new FluxView(plugin, player, session), Text.placeholders(player, arg));
             }
         }
+    }
+
+    /**
+     * [list] <id> <next|prev|first|filter|sort|search|clear|reset ...>: navigation in a list of the open menu.
+     * "search" without text opens a search field, then the menu again.
+     */
+    private void list(Player player, MenuSession session, String arg) {
+        String[] parts = arg.trim().split("\\s+", 2);
+        if (parts.length < 2) {
+            plugin.getLogger().warning("[list] attend « <liste> <commande> », lu « " + arg + " »");
+            return;
+        }
+        String id = parts[0].toLowerCase(Locale.ROOT);
+        fr.influencraft.flux.menu.ListSpec spec = session == null ? null : session.menu().list(id);
+        int pageSize = spec == null ? 21 : spec.pageSize();
+        boolean askSearch = fr.influencraft.flux.api.list.Lists.act(player, id, parts[1], pageSize);
+        if (askSearch) {
+            Menu menu = session == null ? null : session.menu();
+            String current = fr.influencraft.flux.api.list.Lists.state(player, id).search();
+            fr.influencraft.flux.api.dialog.Dialogs.form(player, fr.influencraft.flux.api.util.Format.word("search-title"))
+                    .input("search", fr.influencraft.flux.api.util.Format.word("search-label"), current, 48)
+                    .onSubmit((p, answer) -> {
+                        fr.influencraft.flux.api.list.Lists.act(p, id, answer.text("search").isEmpty() ? "clear" : "search " + answer.text("search"), pageSize);
+                        if (menu != null) plugin.menus().open(p, menu);
+                    })
+                    .onCancel(p -> {
+                        if (menu != null) plugin.menus().open(p, menu);
+                    })
+                    .open();
+            return;
+        }
+        if (session != null) plugin.menus().refresh(player, session);
     }
 
     /** [page] <id|main> ; [page-toggle] <id> revient au menu si la page est déjà affichée. */

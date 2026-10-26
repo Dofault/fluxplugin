@@ -53,7 +53,9 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
 
         Text.init(getLogger());
         PathRenderer.init(getLogger());
-        Dialogs.init(getLogger());
+        fr.influencraft.flux.menu.ListRenderer.init(getLogger());
+        fr.influencraft.flux.api.command.Commands.init(this);
+        fr.influencraft.flux.api.economy.Economy.registerBuiltIns(this);
         items = new ItemFactory(this);
         actions = new Actions(this);
         menus = new MenuService(this, items);
@@ -66,6 +68,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         getServer().getPluginManager().registerEvents(this, this);
         if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) papiBridge = new PapiBridge(this);
         fr.influencraft.flux.api.FluxApi.bind(this);
+        fr.influencraft.flux.api.FluxApi.registerPlaceholders(this, "flux", this::ownPlaceholder);
         packetListener = PacketEvents.getAPI().getEventManager()
                 .registerListener(new InventoryHider(menus), PacketListenerPriority.HIGH);
         backgrounds = new ChestBackgrounds(menus, getLogger());
@@ -92,10 +95,59 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         if (registry != null) registry.unregisterCommands();
     }
 
+    private fr.influencraft.flux.api.text.Messages messages;
+
     private void readSettings() {
         reloadConfig();
         clickCooldown = Math.max(0, getConfig().getInt("click-cooldown", 4));
         prefix = getConfig().getString("prefix", "&#FFD94D&lFlux &8► ");
+        // suite-wide settings: language, currencies, dialogs
+        messages = fr.influencraft.flux.api.text.Messages.load(this, getConfig().getString("language", "en_US"));
+        java.util.Locale numbers = java.util.Locale.forLanguageTag(messages.language().replace('_', '-'));
+        fr.influencraft.flux.api.util.Format.configure(key -> {
+            String w = messages.raw("format." + key);
+            return w.isEmpty() ? key : w;
+        }, numbers);
+        fr.influencraft.flux.api.economy.Economy.configure(getConfig().getString("currencies.main", "vault"),
+                id -> getConfig().getString("currencies." + id + ".format", "%amount%"));
+        java.util.Map<String, String> dialog = new java.util.HashMap<>();
+        var colors = getConfig().getConfigurationSection("dialogs");
+        if (colors != null) for (String k : colors.getKeys(false)) dialog.put(k, colors.getString(k, ""));
+        for (String k : java.util.List.of("confirm-label", "cancel-label", "copy-label", "link-label")) {
+            String v = messages.raw("dialogs." + k);
+            if (!v.isEmpty()) dialog.put(k, v);
+        }
+        fr.influencraft.flux.api.dialog.Dialogs.configure(dialog);
+    }
+
+    /** Suite-wide language ({@code language} in Flux's config), default of every plugin of the suite. */
+    @Override
+    public String language() {
+        return messages == null ? "en_US" : messages.language();
+    }
+
+    /**
+     * {@code %flux_cmd_<plugin>_<id>%}: configured label of a command of the suite;
+     * {@code %flux_list_<id>_<field>%}: state of a list (see {@link fr.influencraft.flux.api.list.Lists}).
+     */
+    private String ownPlaceholder(Player player, String params) {
+        if (params.startsWith("cmd_")) {
+            String rest = params.substring(4);
+            int sep = rest.indexOf('_');
+            return sep < 0 ? null : fr.influencraft.flux.api.command.Commands.label(rest.substring(0, sep), rest.substring(sep + 1));
+        }
+        if (params.startsWith("list_") && player != null) {
+            String rest = params.substring(5);
+            for (String field : java.util.List.of("has_next", "has_prev", "pages", "page", "count", "filter", "sort", "search")) {
+                if (rest.endsWith("_" + field)) {
+                    String id = rest.substring(0, rest.length() - field.length() - 1);
+                    var session = menus.session(player.getUniqueId());
+                    var spec = session == null ? null : session.menu().list(id);
+                    return fr.influencraft.flux.api.list.Lists.placeholder(player, id, field, spec == null ? 21 : spec.pageSize());
+                }
+            }
+        }
+        return null;
     }
 
     public MenuService menus() {
@@ -146,6 +198,9 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     public void onPluginDisable(org.bukkit.event.server.PluginDisableEvent event) {
         if (event.getPlugin() == this) return;
         boolean hadMenus = fr.influencraft.flux.api.FluxApi.unregisterAll(event.getPlugin());
+        fr.influencraft.flux.api.list.Lists.unregisterAll(event.getPlugin());
+        fr.influencraft.flux.api.command.Commands.unregisterAll(event.getPlugin());
+        fr.influencraft.flux.api.economy.Economy.unregisterAll(event.getPlugin());
         placeholdersChanged();
         if (hadMenus) menuFoldersChanged();
     }

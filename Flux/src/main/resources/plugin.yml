@@ -5,7 +5,7 @@ api-version: "26.2"
 description: Couche d'interface de la suite Flux - menus (inventaire du joueur masquable) et API commune des plugins Flux.
 authors: [Influencraft]
 depend: [packetevents]
-softdepend: [ItemsAdder, PlaceholderAPI, DeluxeMenus, EcoBattlepass, EcoJobs]
+softdepend: [ItemsAdder, PlaceholderAPI, DeluxeMenus, EcoBattlepass, EcoJobs, Vault, PlayerPoints]
 
 commands:
   fluxmenu:

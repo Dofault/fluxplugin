@@ -139,6 +139,48 @@ public final class Text {
         }
         // Les placeholders peuvent renvoyer des codes « § » : on les ramène à « & ».
         out = out.replace('§', '&');
-        return LEGACY.deserialize(out).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
+        return colors(out).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
+    }
+
+    /** A MiniMessage tag: {@code <red>}, {@code <#FF0000>}, {@code </bold>}, {@code <gradient:...>}... */
+    private static final java.util.regex.Pattern MINI_TAG = java.util.regex.Pattern.compile("<[/!#]?[a-zA-Z0-9_#:.-]+(:[^>]*)?>");
+    private static final java.util.regex.Pattern LEGACY_HEX = java.util.regex.Pattern.compile("&#([A-Fa-f0-9]{6})");
+    private static final java.util.regex.Pattern LEGACY_CODE = java.util.regex.Pattern.compile("&([0-9a-fk-orA-FK-OR])");
+    private static final java.util.Map<Character, String> LEGACY_TAGS = java.util.Map.ofEntries(
+            java.util.Map.entry('0', "black"), java.util.Map.entry('1', "dark_blue"), java.util.Map.entry('2', "dark_green"),
+            java.util.Map.entry('3', "dark_aqua"), java.util.Map.entry('4', "dark_red"), java.util.Map.entry('5', "dark_purple"),
+            java.util.Map.entry('6', "gold"), java.util.Map.entry('7', "gray"), java.util.Map.entry('8', "dark_gray"),
+            java.util.Map.entry('9', "blue"), java.util.Map.entry('a', "green"), java.util.Map.entry('b', "aqua"),
+            java.util.Map.entry('c', "red"), java.util.Map.entry('d', "light_purple"), java.util.Map.entry('e', "yellow"),
+            java.util.Map.entry('f', "white"), java.util.Map.entry('k', "obfuscated"), java.util.Map.entry('l', "bold"),
+            java.util.Map.entry('m', "strikethrough"), java.util.Map.entry('n', "underlined"), java.util.Map.entry('o', "italic"),
+            java.util.Map.entry('r', "reset"));
+
+    /**
+     * Colours of a line: legacy codes ({@code &a}, {@code &#RRGGBB}) by default; when the line also holds
+     * MiniMessage tags, the legacy codes are turned into tags and the whole line is read as MiniMessage, so both
+     * syntaxes can be mixed. A line that fails to parse as MiniMessage is shown without its tags.
+     */
+    public static Component colors(String text) {
+        if (text.indexOf('<') < 0 || !MINI_TAG.matcher(text).find()) return LEGACY.deserialize(text);
+        String mini = LEGACY_HEX.matcher(text).replaceAll("<#$1>");
+        java.util.regex.Matcher m = LEGACY_CODE.matcher(mini);
+        StringBuilder sb = new StringBuilder();
+        while (m.find()) {
+            String tag = LEGACY_TAGS.get(Character.toLowerCase(m.group(1).charAt(0)));
+            m.appendReplacement(sb, tag == null ? "" : "<" + tag + ">");
+        }
+        m.appendTail(sb);
+        try {
+            return net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(sb.toString());
+        } catch (RuntimeException e) {
+            return Component.text(sb.toString().replaceAll("<[^>]*>", ""));
+        }
+    }
+
+    /** Placeholders and ItemsAdder glyphs only, no colour parsing (text sent to another plugin, commands). */
+    public static String glyphs(String text) {
+        if (!hasItemsAdder() || text.indexOf(':') < 0) return text;
+        return dev.lone.itemsadder.api.FontImages.FontImageWrapper.replaceFontImages(text);
     }
 }

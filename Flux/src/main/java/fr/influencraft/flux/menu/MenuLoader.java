@@ -67,7 +67,49 @@ public final class MenuLoader {
                 paths(yml.getConfigurationSection("paths"), where + " > paths", maxSlot, warn),
                 strings(yml, "title-loop.frames"),
                 Math.max(1, yml.getInt("title-loop.interval", 1)),
-                titleLayers(yml.getConfigurationSection("title-layers"), where + " > title-layers", warn));
+                titleLayers(yml.getConfigurationSection("title-layers"), where + " > title-layers", warn),
+                lists(yml.getConfigurationSection("lists"), where + " > lists", maxSlot, warn));
+    }
+
+    private static List<ListSpec> lists(ConfigurationSection section, String where, int maxSlot, Consumer<String> warn) {
+        if (section == null) return List.of();
+        List<ListSpec> out = new ArrayList<>();
+        for (String key : section.getKeys(false)) {
+            ConfigurationSection l = section.getConfigurationSection(key);
+            if (l == null) continue;
+            String at = where + "." + key;
+            List<Integer> slots = new ArrayList<>();
+            try {
+                for (String raw : strings(l, "slots")) addSlots(raw, slots);
+            } catch (IllegalArgumentException e) {
+                warn.accept(at + " : " + e.getMessage() + " (liste ignorée)");
+                continue;
+            }
+            slots.removeIf(s -> {
+                boolean bad = s < 0 || s >= maxSlot;
+                if (bad) warn.accept(at + " : case " + s + " hors du menu (ignorée)");
+                return bad;
+            });
+            ConfigurationSection item = l.getConfigurationSection("item");
+            if (slots.isEmpty() || item == null) {
+                warn.accept(at + " : slots et item obligatoires (liste ignorée)");
+                continue;
+            }
+            out.add(new ListSpec(key.toLowerCase(Locale.ROOT), slots.stream().mapToInt(Integer::intValue).toArray(),
+                    item, l.getConfigurationSection("empty"), at));
+        }
+        return List.copyOf(out);
+    }
+
+    /** A button built from a template section (lists): same rules as a menu button, warnings kept quiet. */
+    static MenuButton templateButton(String key, ConfigurationSection s, int maxSlot, int topSize, InventoryMode mode,
+                                     String at, Consumer<String> warn) {
+        try {
+            return button(key, s, maxSlot, topSize, mode, at, warn);
+        } catch (IllegalArgumentException e) {
+            warn.accept(at + " : " + e.getMessage());
+            return null;
+        }
     }
 
     private static List<TitleLayer> titleLayers(ConfigurationSection section, String where, Consumer<String> warn) {
@@ -101,7 +143,8 @@ public final class MenuLoader {
                     strings(p, "animation.frames"),
                     Math.max(1, p.getInt("animation.interval", 1)),
                     buttons(p.getConfigurationSection("items"), at + " > items", maxSlot, topSize, mode, warn),
-                    paths(p.getConfigurationSection("paths"), at + " > paths", maxSlot, warn)));
+                    paths(p.getConfigurationSection("paths"), at + " > paths", maxSlot, warn),
+                    lists(p.getConfigurationSection("lists"), at + " > lists", maxSlot, warn)));
         }
     }
 

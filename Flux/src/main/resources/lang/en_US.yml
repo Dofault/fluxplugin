@@ -1,0 +1,21 @@
+# Flux: words shared by every plugin of the suite (durations, yes/no, dialog buttons).
+format:
+  day: "d"
+  hour: "h"
+  minute: "min"
+  second: "s"
+  now: "now"
+  ago: "%duration% ago"
+  just-now: "just now"
+  yes: "yes"
+  no: "no"
+  date: "MM/dd HH:mm"
+  copy-title: "Copy"
+  link-title: "Link"
+  search-title: "Search"
+  search-label: "Text to search (empty: show everything)"
+dialogs:
+  confirm-label: "Confirm"
+  cancel-label: "Cancel"
+  copy-label: "Copy to clipboard"
+  link-label: "Open the link"

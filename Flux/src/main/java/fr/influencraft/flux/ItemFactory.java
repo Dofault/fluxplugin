@@ -48,7 +48,15 @@ public final class ItemFactory {
     private final Map<String, String> iaIds = new ConcurrentHashMap<>();
     private final Map<String, Boolean> warned = new ConcurrentHashMap<>();
 
+    private static ItemFactory instance;
+
+    /** The factory of the running Flux, for the public {@link fr.influencraft.flux.api.inventory.Items}. */
+    public static ItemFactory instance() {
+        return instance;
+    }
+
     public ItemFactory(Flux plugin) {
+        instance = this;
         // namespace of the former plugin name (FluxMenu), so stray buttons from older versions are still cleaned up
         BUTTON_KEY = new NamespacedKey("fluxmenu", "button");
         this.warn = plugin.getLogger()::warning;
@@ -63,8 +71,16 @@ public final class ItemFactory {
     public ItemStack build(MenuButton b, Player viewer, boolean muteTooltip) {
         // Le matériau peut contenir un placeholder (ex : ressource de la mission en cours).
         String material = b.material().indexOf('%') >= 0 ? Text.placeholders(viewer, b.material()) : b.material();
-        boolean fromSource = material.regionMatches(true, 0, "source:", 0, 7);
-        ItemStack item = fromSource ? fromSource(material, viewer) : base(material, viewer);
+        boolean fromEntry = material.startsWith(fr.influencraft.flux.menu.ListRenderer.ENTRY_MATERIAL);
+        boolean fromSource = fromEntry || material.regionMatches(true, 0, "source:", 0, 7);
+        ItemStack item;
+        if (fromEntry) {
+            // element of a list: its own item (copy)
+            ItemStack own = fr.influencraft.flux.menu.ListRenderer.entryItem(material.substring(fr.influencraft.flux.menu.ListRenderer.ENTRY_MATERIAL.length()));
+            item = own == null ? null : own.clone();
+        } else {
+            item = fromSource ? fromSource(material, viewer) : base(material, viewer);
+        }
         if (item == null || item.getType().isAir()) return null;
 
         // Objet d'une source sans « amount » : sa propre quantité est gardée.
@@ -161,7 +177,7 @@ public final class ItemFactory {
         }
     }
 
-    private ItemStack base(String raw, Player viewer) {
+    public ItemStack base(String raw, Player viewer) {
         String m = raw.trim();
         String lower = m.toLowerCase(Locale.ROOT);
         if (lower.equals("air")) return null;

@@ -31,10 +31,18 @@ public record Menu(
         List<PathSpec> paths,
         List<String> loopTitles,
         int loopInterval,
-        List<TitleLayer> titleLayers) {
+        List<TitleLayer> titleLayers,
+        List<ListSpec> lists) {
 
     public Page page(String id) {
         return id == null ? null : pages.get(id.toLowerCase(java.util.Locale.ROOT));
+    }
+
+    /** List of this id shown by the menu or one of its pages, or null. */
+    public ListSpec list(String listId) {
+        for (ListSpec l : lists) if (l.id().equals(listId)) return l;
+        for (Page p : pages.values()) for (ListSpec l : p.lists()) if (l.id().equals(listId)) return l;
+        return null;
     }
 
     /** Nombre de cases du coffre. */

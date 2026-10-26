@@ -44,6 +44,8 @@ public final class FluxApi {
         void menuFoldersChanged();
 
         void placeholdersChanged();
+
+        String language();
     }
 
     private record Owned<T>(Plugin owner, T value) {
@@ -56,6 +58,12 @@ public final class FluxApi {
     private static volatile Backend backend;
 
     private FluxApi() {
+    }
+
+    /** Suite-wide language ({@code language} in Flux's config, e.g. {@code fr_FR}), {@code en_US} without Flux. */
+    public static String language() {
+        Backend b = backend;
+        return b == null ? "en_US" : b.language();
     }
 
     /** Whether Flux is running (false when the plugin is missing or disabled). */

@@ -1,0 +1,21 @@
+# Flux : mots communs à tous les plugins de la suite (durées, oui/non, boutons des dialogues).
+format:
+  day: "j"
+  hour: "h"
+  minute: "min"
+  second: "s"
+  now: "maintenant"
+  ago: "il y a %duration%"
+  just-now: "à l'instant"
+  yes: "oui"
+  no: "non"
+  date: "dd/MM HH'h'mm"
+  copy-title: "Copier"
+  link-title: "Lien"
+  search-title: "Recherche"
+  search-label: "Texte à chercher (vide : tout afficher)"
+dialogs:
+  confirm-label: "Valider"
+  cancel-label: "Annuler"
+  copy-label: "Copier dans le presse-papier"
+  link-label: "Ouvrir le lien"

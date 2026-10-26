@@ -240,12 +240,15 @@ public final class MenuSession {
         int total = menu.totalSlots();
         MenuButton[] next = new MenuButton[total];
         // Boutons de la page d'abord : ils passent devant ceux du menu sur une même case.
+        // Order on a same slot: lists of the page, page buttons, lists of the menu, menu buttons.
         List<MenuButton> ordered = new ArrayList<>();
         if (page != null) {
+            ordered.addAll(fr.influencraft.flux.menu.ListRenderer.buttons(player, menu, page.lists()));
             List<MenuButton> pageButtons = new ArrayList<>(page.buttons());
             pageButtons.sort(Comparator.comparingInt(MenuButton::priority));
             ordered.addAll(pageButtons);
         }
+        ordered.addAll(fr.influencraft.flux.menu.ListRenderer.buttons(player, menu, menu.lists()));
         List<MenuButton> base = new ArrayList<>(menu.buttons());
         base.sort(Comparator.comparingInt(MenuButton::priority));
         ordered.addAll(base);
