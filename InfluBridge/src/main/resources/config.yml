@@ -1,0 +1,122 @@
+# URL publique du site (mineweb), sans slash final.
+api-base-url: "https://dev.influencraft.fr"
+
+# Doit être identique à MC_SERVER_SECRET dans web/mineweb/.env
+api-secret: "CHANGE_ME"
+
+# Fréquence de vérification des commandes en attente (pending_commands)
+poll-interval-seconds: 30
+
+# Fréquence de rafraîchissement du cache de streak de vote (placeholders %influbridge_flame_*%)
+streak-cache-interval-seconds: 30
+
+# Commande exécutée (en tant que joueur) à l'ouverture de l'écran de succès vanilla (touche L)
+advancement-key-command: "menu"
+
+# ─── Vote Party ────────────────────────────────────────────────────────────
+# Système entièrement géré en jeu par InfluBridge (compte les votes réels
+# remontés par VotingPlugin) : aucun lien avec le site web. Le compteur est
+# exposé via %influbridge_voteparty_current% / %influbridge_voteparty_required%
+# (utilisé notamment par MythicHUD).
+voteparty:
+  # Nombre de votes réels (tous joueurs et tous vote-sites confondus) pour déclencher le Vote Party
+  votes-required: 30
+
+  # Commandes exécutées en console une fois le seuil atteint, une exécution par joueur en ligne.
+  # %player% = nom du joueur
+  reward-commands:
+    - "crates key give %player% tendance 1"
+
+  # Message broadcast à tout le serveur au déclenchement du Vote Party.
+  # %votes-required% = seuil configuré ci-dessus
+  broadcast-message: "&5&l✦ &dVote Party ! &7Le serveur vient d'atteindre &6%votes-required% votes&7, une Clé Tendance a été offerte à tous les joueurs en ligne !"
+
+  # Message privé envoyé à chaque joueur en ligne recevant la récompense (laisser vide "" pour désactiver)
+  reward-message: "&d✦ &7Tu as reçu une &6Clé Tendance&7 grâce au Vote Party !"
+
+# ─── Boss bar de progression d'XP de métier (EcoJobs) ──────────────────────
+# S'affiche à chaque gain d'XP de métier, même minime, et se masque après le
+# délai d'inactivité ci-dessous. Une seule boss bar par joueur (pas une par
+# métier) : si plusieurs métiers sont actifs, elle reflète toujours la
+# dernière action, jamais plusieurs bars empilées.
+job-xp-bossbar:
+  enabled: true
+
+  # Délai (en secondes) sans nouveau gain d'XP avant que la bar ne disparaisse
+  hide-after-seconds: 4
+
+  # Valeurs Adventure BossBar.Color : PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
+  color: "GREEN"
+
+  # Valeurs Adventure BossBar.Overlay : PROGRESS, NOTCHED_6, NOTCHED_10, NOTCHED_12, NOTCHED_20
+  # NOTCHED_20 = grille de 20 segments, équivalent à "SEGMENTED_20" côté AdvancedJobs
+  # (AdvancedJobs/config.yml §boss-bar) — repris pour matcher leur convention.
+  overlay: "NOTCHED_20"
+
+# ─── XP Fondeur pour l'enchant AdvancedEnchantments "Fonte" ─────────────────
+# Le trigger natif "smelt" d'EcoJobs (jobs/fondeur.yml) ne se déclenche qu'au
+# four (FurnaceSmeltEvent). Un joueur équipé de l'enchant AE "fonte" (chance
+# de convertir directement le minerai miné en sa forme fondue, sans four) ne
+# recevait donc jamais d'XP fondeur pour ces minages. Ce module détecte la
+# présence de l'enchant sur la pioche et crédite fondeur au minage, pour les
+# minerais qui bénéficient réellement d'une fonte (fer/cuivre/or/débris
+# antiques — pas diamant/émeraude/redstone/etc., que "fonte" traite aussi
+# mais dont la forme minée est déjà la forme finale en vanilla).
+#
+# Détecte uniquement la PRÉSENCE de l'enchant sur l'outil, pas si "fonte" a
+# réellement procé sur ce coup précis (AE ne l'expose nulle part en dehors
+# de son moteur interne) — cohérent avec la philosophie déjà appliquée aux
+# autres enchants AE du serveur (valeurs fixes plutôt que loterie).
+fondeur-fonte-xp:
+  enabled: true
+
+  # XP fondeur donnée par minerai miné avec "fonte" équipé.
+  xp-per-ore: 0.2
+
+# ─── Action bar de gain d'argent cumulatif ──────────────────────────────────
+# Écoute com.Zrips.CMI.events.CMIUserBalanceChangeEvent (CMI, actionType ==
+# "Deposit"), fire par CMIEconomyAcount pour TOUT dépôt qui transite par le
+# backend économie CMIEconomy (confirmé par décompilation : la même méthode
+# est appelée aussi bien par l'API Vault générique — "give_money" d'EcoJobs,
+# Salaires, /money give, les récompenses ChatGames/UStats/ExcellentCrates/
+# Parrainage/CustomFishing/AxTrade — que par les commandes CMI elles-mêmes),
+# donc le montant affiché est le VRAI delta de solde encaissé (event.getTo()
+# - event.getFrom()), pas une valeur recalculée/devinée (contrairement à
+# l'ancien piège "give_money n'émet aucun event" — vrai pour libreforge/eco/
+# EcoJobs, faux une fois qu'on descend jusqu'au backend économie réel).
+# Depuis la migration EssentialsX→CMI (cf. CLAUDE.md), CMI n'expose plus de
+# cause distincte par commande (contrairement à l'ancien Cause.API/COMMAND_ECO/
+# COMMAND_PAY d'EssentialsX) : /pay et /money give déclenchent donc aussi
+# cette action bar, en plus de leur propre message CMI natif — accepté comme
+# léger doublon plutôt que fragile à distinguer sans hook plus profond.
+#
+# Cumulatif : tant que de nouveaux gains arrivent, ils s'additionnent au
+# compteur affiché et repoussent le délai d'expiration ci-dessous. Dès que ce
+# délai s'écoule sans nouveau gain, l'action bar est effacée et le compteur
+# retombe à 0 — un nouveau gain reparties alors de zéro.
+money-gain-actionbar:
+  enabled: true
+
+  # Délai (en secondes) sans nouveau gain avant que l'action bar ne s'efface et que le compteur ne se remette à 0.
+  hide-after-seconds: 1.5
+
+  # Couleur du montant affiché (legacy hex &#RRGGBB) — violet clair, convention charte graphique (CLAUDE.md §6.1/notifications).
+  # Un reset ("&r") est toujours inséré juste avant %img_bitblock% pour que l'icône ne soit pas teintée.
+  color: "&#B376E5"
+
+# ─── Neutralisation de l'enchantement Raccommodage (Mending) ────────────────
+# Le comportement est câblé en dur (règle de gameplay, aucun on/off) : le livre
+# Raccommodage continue de circuler (loot, échanges, ventes) mais ne peut plus
+# jamais être associé à un objet — l'enchant est retiré du résultat d'enclume,
+# du loot généré (coffres trésor / structures / bastions / fouille archéologique)
+# et des prises de pêche. Les livres eux-mêmes ne sont jamais modifiés, ils
+# deviennent juste inutiles.
+# Voies écartées avant celle-ci : blacklist AdvancedEnchantments (ne gère que
+# ses enchants custom) et datapack (AE intercepte l'enclume avant lui).
+# Détail : docs/technique/raccommodage.md
+raccommodage:
+  # true = écrit une ligne console à chaque retrait de Raccommodage, en précisant
+  #   le contexte (enclume / loot / pêche) et l'objet concerné. Utile pour auditer
+  #   après un déploiement ou débusquer un vecteur oublié.
+  # false = silencieux (défaut).
+  log: false

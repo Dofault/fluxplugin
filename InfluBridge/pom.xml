@@ -1,0 +1,216 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>fr.influencraft</groupId>
+    <artifactId>InfluBridge</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+
+    <name>InfluBridge</name>
+
+    <properties>
+        <java.version>21</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>papermc</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
+        <repository>
+            <id>placeholderapi</id>
+            <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <!-- PlaceholderAPI (soft dependency, installé sur le serveur : PlaceholderAPI-2.12.2.jar) -->
+        <dependency>
+            <groupId>me.clip</groupId>
+            <artifactId>placeholderapi</artifactId>
+            <version>2.11.6</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Paper API (provided by the server at runtime).
+             Le serveur tourne réellement en 1.21.11 (cf. logs/latest.log "This server is
+             running Paper version 1.21.11-..."), pas 1.21.8 — aligné ici pour matcher le
+             paper-api-1.21.11-R0.1-SNAPSHOT.jar utilisé au runtime. -->
+        <dependency>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <version>1.21.11-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Netty (bundlé par Paper au runtime, jamais chargé depuis Maven côté serveur) —
+             version exacte pinnée pour 1.21.11 (cf. META-INF/libraries.list du jar serveur).
+             Nécessaire pour io.netty.channel.ChannelDuplexHandler/ChannelHandlerContext utilisés
+             par EcoDisplayGuardListener. -->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport</artifactId>
+            <version>4.2.7.Final</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Jar serveur Paper mojang-mapped (versions/1.21.11/paper-1.21.11.jar) — nécessaire
+             pour compiler contre les classes NMS internes (net.minecraft.network.protocol.game.*,
+             org.bukkit.craftbukkit.inventory.CraftItemStack) utilisées par EcoDisplayGuardListener
+             pour s'accrocher à la pipeline netty juste à côté du handler "eco_packets" d'eco.
+             Paper 1.20.5+ étant nativement mojang-mapped au runtime, ce jar contient déjà les
+             noms de classes/méthodes lisibles — pas besoin de remapping séparé. -->
+        <dependency>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-server-mojangmapped</artifactId>
+            <version>1.21.11-local</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../../serveurs/03_semirp/versions/1.21.11/paper-1.21.11.jar</systemPath>
+        </dependency>
+
+        <!-- Bundled by Paper at runtime (server/libraries/com/google/code/gson) — used to
+             parse pending_commands responses from the mineweb API. -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.11.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- ProtocolLib (soft dependency, provided at runtime).
+             Compiled against the actual plugin jar installed on the SemiRP server (running a
+             5.5.0-SNAPSHOT build not published under a resolvable version on dmulloy2's repo)
+             — same systemPath technique already used by plugins/InfluOffrande/pom.xml for
+             ItemsAdder. -->
+        <dependency>
+            <groupId>com.comphenix.protocol</groupId>
+            <artifactId>ProtocolLib</artifactId>
+            <version>5.5.0-local</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/ProtocolLib.jar</systemPath>
+        </dependency>
+
+        <!-- VotingPlugin (soft dependency, provided at runtime) — utilisé pour écouter
+             PlayerPostVoteEvent (comptage du Vote Party). Même technique systemPath que
+             ProtocolLib ci-dessus : pas de repo Maven public pour ce jar. -->
+        <dependency>
+            <groupId>com.bencodez</groupId>
+            <artifactId>votingplugin</artifactId>
+            <version>7.0-local</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/.archives/VotingPlugin-7.0.jar</systemPath>
+        </dependency>
+
+        <!-- EcoJobs (soft dependency, provided at runtime) — utilisé pour écouter
+             PlayerJobExpGainEvent (boss bar de progression d'XP de métier). Même technique
+             systemPath que ProtocolLib/VotingPlugin ci-dessus : pas de repo Maven public. -->
+        <dependency>
+            <groupId>com.willfp</groupId>
+            <artifactId>ecojobs</artifactId>
+            <version>2026.31-local</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/EcoJobs-2026.31-spigot.jar</systemPath>
+        </dependency>
+
+        <!-- eco (framework partagé Auxilor, dépendance obligatoire d'EcoJobs) — nécessaire
+             en plus du jar EcoJobs ci-dessus car com.willfp.ecojobs.jobs.Job implémente
+             com.willfp.eco.core.registry.Registrable, défini dans ce jar. -->
+        <dependency>
+            <groupId>com.willfp</groupId>
+            <artifactId>eco</artifactId>
+            <version>2026.31-local</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/eco-2026.31-modrinth.jar</systemPath>
+        </dependency>
+
+        <!-- Vault (soft dependency, provided at runtime) — utilisé pour net.milkbowl.vault.economy.Economy,
+             cf. LateVaultEconomyBinder (contourne un race condition de démarrage où eco/EcoJobs
+             enregistre son intégration économie AVANT que CMIEInjector n'ait fini de hooker
+             CMIEconomy dans Vault, cf. CLAUDE.md). Pas de repo Maven public, même technique
+             systemPath. -->
+        <dependency>
+            <groupId>com.github.MilkBowl</groupId>
+            <artifactId>VaultAPI</artifactId>
+            <version>2.19.1-local</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/VaultUnlocked-2.19.1.jar</systemPath>
+        </dependency>
+
+        <!-- AdvancedEnchantments (soft dependency, provided at runtime) — utilisé pour
+             détecter la présence de l'enchant "fonte" sur la pioche (AEAPI.hasCustomEnchant),
+             cf. FondeurFonteListener. Pas de repo Maven public, même technique systemPath. -->
+        <dependency>
+            <groupId>net.advancedplugins</groupId>
+            <artifactId>ae</artifactId>
+            <version>9.23.4-local</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/AdvancedEnchantments-9.23.4.jar</systemPath>
+        </dependency>
+
+        <!-- CMI (soft dependency, provided at runtime) — utilisé pour écouter
+             com.Zrips.CMI.events.CMIUserBalanceChangeEvent (action bar de gain d'argent
+             cumulatif, remplace l'ancien hook EssentialsX depuis la migration EssentialsX→CMI,
+             cf. MoneyGainActionBarListener et CLAUDE.md). Pas de repo Maven public, même
+             technique systemPath. -->
+        <dependency>
+            <groupId>com.Zrips</groupId>
+            <artifactId>cmi</artifactId>
+            <version>9.8.9.8-local</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/CMI-9.8.9.8.jar</systemPath>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>fr.influencraft.influbridge.InfluBridgePlugin</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <!-- Copie automatique du jar vers le serveur SemiRP après chaque build.
+                 Ne redémarre pas le serveur — le plugin ne sera chargé qu'au prochain restart. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>deploy-to-semirp</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <copy file="${project.build.directory}/${project.artifactId}-${project.version}.jar"
+                                      tofile="${project.basedir}/../../serveurs/03_semirp/plugins/${project.artifactId}.jar"
+                                      overwrite="true"/>
+                                <echo message="InfluBridge.jar copié vers serveurs/03_semirp/plugins/"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
