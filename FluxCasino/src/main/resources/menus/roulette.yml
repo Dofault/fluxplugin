@@ -1,0 +1,202 @@
+# Roulette (2026-10-17) : la bille tourne sur la piste de la roue, tombe dans une case et s'y pose ([roulette], cf.
+# Roulette.java). Roue immobile (influcasino:roulette_roue), fond et sprites : influcasino (assets/casino/roulette/
+# gen_roulette_jeu.py), thème casino. Paris : rouge (impairs), noir (pairs), numéro précis (0 à 24).
+# Mise en jetons (FluxCasino) : prise au lancer, gain versé à l'arrivée de la bille.
+# Haut : retour (0), numéro tombé (7, à côté du lancer) et lancer (8), hors de la roue (son centre n'est jamais touché). Zone du joueur : barre de mise (66 à 68), paris (73, 74,
+# 76 à 78). Le bouton de numéro prend l'icône du numéro choisi (placeholder dans le matériau) ; un pari choisi brille.
+# [refresh-buttons] : le titre animé n'est pas touché.
+
+title: ":offset_-8::menu_roulette::offset_-151::roulette_roue:"
+rows: 6
+player-inventory: hidden
+vanilla-background: false
+
+items:
+
+  retour:
+    material: "itemsadder:influcasino:btn_retour"
+    name: "&#FFD94DRetour"
+    slots: [0]
+    lore:
+      - "&#FFD94D│ &#B376E5Revenir au casino."
+      - "&#FFD94D└ &r&7%img_left_click% &fCasino"
+    actions:
+      left: ["[menu] casino"]
+
+  lancer:
+    material: "itemsadder:influcasino:levier"
+    name: "&#FFD94DLancer la bille"
+    slots: [8]
+    lore:
+      - "&#FFD94D│ &#B376E5Jetons : &f%influcasino_jetons% &r&f%img_jeton%"
+      - "&#FFD94D│ &#B376E5Mise : &f%influcasino_mise% &r&f%img_jeton%"
+      - "&#FFD94D│ &#B376E5Pari : &f%fluxroulette_pari_nom% &#B376E5(x%fluxroulette_gain%)"
+      - "&#FFD94D│"
+      - "&#FFD94D│ &#B376E5Dernier tour : &f%fluxroulette_last%"
+      - "&#FFD94D│ &#B376E5Tours : &f%fluxroulette_count%"
+      - "&#FFD94D│ &#FF5C5C%fluxroulette_erreur%"
+      - "&#FFD94D└ &r&7%img_left_click% &fLancer"
+    actions:
+      left: ["[roulette] spin"]
+
+  # Numéro tombé au dernier tour : icône du numéro (couleur de sa case), point d'interrogation avant le premier tour
+  # et pendant que la bille tourne.
+  dernier:
+    material: "itemsadder:influcasino:pari_n%fluxroulette_dernier%"
+    priority: 1
+    view-requirements:
+      - "placeholder: %fluxroulette_dernier% != aucun"
+    name: "&#FFD94DNuméro tombé : &f%fluxroulette_dernier_nom%"
+    slots: [7]
+    lore:
+      - "&#FFD94D│ &#B376E5Dernier tour : &f%fluxroulette_last%"
+      - "&#FFD94D└ &#B376E5Tours : &f%fluxroulette_count%"
+
+  dernier_inconnu:
+    material: "itemsadder:influitems:unknown"
+    priority: 2
+    name: "&#FFD94DNuméro tombé"
+    slots: [7]
+    lore:
+      - "&#FFD94D└ &#B376E5Le numéro s'affiche ici quand la bille s'arrête."
+
+  # ── Paris ──────────────────────────────────────────────────────────────
+  rouge_choisi:
+    material: "itemsadder:influcasino:pari_rouge"
+    priority: 1
+    glow: true
+    view-requirements:
+      - "placeholder: %fluxroulette_pari% == rouge"
+    name: "&#FFD94DRouge &#2ECF7B(pari choisi)"
+    slots: [73]
+    lore:
+      - "&#FFD94D│ &#B376E5Les 12 cases rouges (numéros"
+      - "&#FFD94D│ &#B376E5impairs) : la mise est multipliée par 2."
+      - "&#FFD94D└ &#2ECF7BTon pari actuel."
+    actions:
+      left: ["[roulette] pari rouge"]
+
+  rouge:
+    material: "itemsadder:influcasino:pari_rouge"
+    priority: 2
+    name: "&#FFD94DRouge"
+    slots: [73]
+    lore:
+      - "&#FFD94D│ &#B376E5Les 12 cases rouges (numéros"
+      - "&#FFD94D│ &#B376E5impairs) : la mise est multipliée par 2."
+      - "&#FFD94D└ &r&7%img_left_click% &fParier sur le rouge"
+    actions:
+      left: ["[roulette] pari rouge", "[sound] minecraft:ui.button.click 0.5 1.2"]
+
+  noir_choisi:
+    material: "itemsadder:influcasino:pari_noir"
+    priority: 1
+    glow: true
+    view-requirements:
+      - "placeholder: %fluxroulette_pari% == noir"
+    name: "&#FFD94DNoir &#2ECF7B(pari choisi)"
+    slots: [74]
+    lore:
+      - "&#FFD94D│ &#B376E5Les 12 cases noires (numéros"
+      - "&#FFD94D│ &#B376E5pairs) : la mise est multipliée par 2."
+      - "&#FFD94D└ &#2ECF7BTon pari actuel."
+    actions:
+      left: ["[roulette] pari noir"]
+
+  noir:
+    material: "itemsadder:influcasino:pari_noir"
+    priority: 2
+    name: "&#FFD94DNoir"
+    slots: [74]
+    lore:
+      - "&#FFD94D│ &#B376E5Les 12 cases noires (numéros"
+      - "&#FFD94D│ &#B376E5pairs) : la mise est multipliée par 2."
+      - "&#FFD94D└ &r&7%img_left_click% &fParier sur le noir"
+    actions:
+      left: ["[roulette] pari noir", "[sound] minecraft:ui.button.click 0.5 1.2"]
+
+  numero_moins:
+    material: "itemsadder:influcasino:moins"
+    name: "&#FFD94DNuméro : &f%fluxroulette_numero%"
+    slots: [76]
+    lore:
+      - "&#FFD94D├ &r&7%img_left_click% &f-1"
+      - "&#FFD94D└ &r&7%img_right_click% &f-5"
+    actions:
+      left: ["[roulette] numero -1", "[sound] minecraft:ui.button.click 0.5 0.9"]
+      right: ["[roulette] numero -5", "[sound] minecraft:ui.button.click 0.5 0.9"]
+
+  numero_choisi:
+    material: "itemsadder:influcasino:pari_n%fluxroulette_numero%"
+    priority: 1
+    glow: true
+    view-requirements:
+      - "placeholder: %fluxroulette_pari% == numero"
+    name: "&#FFD94DNuméro : &f%fluxroulette_numero% &#2ECF7B(pari choisi)"
+    slots: [77]
+    lore:
+      - "&#FFD94D│ &#B376E5Une seule case sur 25 : la mise est"
+      - "&#FFD94D│ &#B376E5multipliée par 24. Règle le numéro"
+      - "&#FFD94D│ &#B376E5(0 à 24) avec les boutons - et +."
+      - "&#FFD94D└ &#2ECF7BTon pari actuel."
+    actions:
+      left: ["[roulette] pari numero"]
+
+  numero:
+    material: "itemsadder:influcasino:pari_n%fluxroulette_numero%"
+    priority: 2
+    name: "&#FFD94DNuméro : &f%fluxroulette_numero%"
+    slots: [77]
+    lore:
+      - "&#FFD94D│ &#B376E5Une seule case sur 25 : la mise est"
+      - "&#FFD94D│ &#B376E5multipliée par 24. Règle le numéro"
+      - "&#FFD94D│ &#B376E5(0 à 24) avec les boutons - et +."
+      - "&#FFD94D└ &r&7%img_left_click% &fParier sur ce numéro"
+    actions:
+      left: ["[roulette] pari numero", "[sound] minecraft:ui.button.click 0.5 1.2"]
+
+  numero_plus:
+    material: "itemsadder:influcasino:plus"
+    name: "&#FFD94DNuméro : &f%fluxroulette_numero%"
+    slots: [78]
+    lore:
+      - "&#FFD94D├ &r&7%img_left_click% &f+1"
+      - "&#FFD94D└ &r&7%img_right_click% &f+5"
+    actions:
+      left: ["[roulette] numero +1", "[sound] minecraft:ui.button.click 0.5 1.1"]
+      right: ["[roulette] numero +5", "[sound] minecraft:ui.button.click 0.5 1.1"]
+
+  # ── Barre de mise ──────────────────────────────────────────────────────
+  baisser:
+    material: "itemsadder:influcasino:moins"
+    name: "&#FFD94DMise : &f%influcasino_mise% &r&f%img_jeton%"
+    slots: [66]
+    lore:
+      - "&#FFD94D├ &r&7%img_left_click% &f-%influcasino_mise_pas%"
+      - "&#FFD94D└ &r&7%img_right_click% &f-%influcasino_mise_grand_pas%"
+    actions:
+      left: ["[player] jetons mise -%influcasino_mise_pas%", "[sound] minecraft:ui.button.click 0.5 0.9", "[refresh-buttons]"]
+      right: ["[player] jetons mise -%influcasino_mise_grand_pas%", "[sound] minecraft:ui.button.click 0.5 0.9", "[refresh-buttons]"]
+
+  mise:
+    material: "itemsadder:influcasino:jeton"
+    name: "&#FFD94DMise : &f%influcasino_mise% &r&f%img_jeton%"
+    slots: [67]
+    lore:
+      - "&#FFD94D│ &#B376E5De &f%influcasino_mise_min% &#B376E5à &f%influcasino_mise_max% &#B376E5jetons."
+      - "&#FFD94D├ &r&7%img_left_click% &fMise minimale"
+      - "&#FFD94D└ &r&7%img_right_click% &fMise maximale"
+    actions:
+      left: ["[player] jetons mise min", "[sound] minecraft:ui.button.click 0.5 1", "[refresh-buttons]"]
+      right: ["[player] jetons mise max", "[sound] minecraft:ui.button.click 0.5 1", "[refresh-buttons]"]
+
+  augmenter:
+    material: "itemsadder:influcasino:plus"
+    name: "&#FFD94DMise : &f%influcasino_mise% &r&f%img_jeton%"
+    slots: [68]
+    lore:
+      - "&#FFD94D├ &r&7%img_left_click% &f+%influcasino_mise_pas%"
+      - "&#FFD94D└ &r&7%img_right_click% &f+%influcasino_mise_grand_pas%"
+    actions:
+      left: ["[player] jetons mise +%influcasino_mise_pas%", "[sound] minecraft:ui.button.click 0.5 1.1", "[refresh-buttons]"]
+      right: ["[player] jetons mise +%influcasino_mise_grand_pas%", "[sound] minecraft:ui.button.click 0.5 1.1", "[refresh-buttons]"]

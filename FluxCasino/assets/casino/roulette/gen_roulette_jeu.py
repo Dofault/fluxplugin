@@ -175,7 +175,7 @@ jeton_couleur("noir").save(os.path.join(PACK, "textures", "item", "pari_noir.png
 
 # ------------------------------------------------------------------ config ItemsAdder
 L = ["info:", "  namespace: influcasino", "",
-     "# Généré par plugins/fluxplugin/Flux/assets/casino/roulette/gen_roulette_jeu.py, ne pas éditer à la main.",
+     "# Généré par plugins/fluxplugin/FluxCasino/assets/casino/roulette/gen_roulette_jeu.py, ne pas éditer à la main.",
      "# Roulette jouable : fond, bille et ombre de vitesse, jetons de pari.",
      "# Glyphes posés au pixel près dans le titre (y_position = 13 - haut).", "",
      "items:"]

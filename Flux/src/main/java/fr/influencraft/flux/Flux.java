@@ -24,7 +24,7 @@ import java.util.Locale;
  * du joueur peut être masqué (et remplacé par des boutons) sans jamais être modifié côté
  * serveur. Voir docs/technique/fluxmenu.md.
  */
-public final class Flux extends JavaPlugin {
+public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.FluxApi.Backend, org.bukkit.event.Listener {
 
     private ItemFactory items;
     private MenuRegistry registry;
@@ -36,9 +36,7 @@ public final class Flux extends JavaPlugin {
     private PassMissions passMissions;
     private JobInfo jobInfo;
     private CollectionInfo collectionInfo;
-    private Plinko plinko;
-    private Slots slots;
-    private Roulette roulette;
+    private PapiBridge papiBridge;
     private int clickCooldown;
     private String prefix;
 
@@ -65,6 +63,9 @@ public final class Flux extends JavaPlugin {
         getLogger().info(registry.all().size() + " menu(s) chargé(s)" + (warnings > 0 ? ", " + warnings + " avertissement(s)" : ""));
 
         getServer().getPluginManager().registerEvents(new MenuListener(this, menus), this);
+        getServer().getPluginManager().registerEvents(this, this);
+        if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) papiBridge = new PapiBridge(this);
+        fr.influencraft.flux.api.FluxApi.bind(this);
         packetListener = PacketEvents.getAPI().getEventManager()
                 .registerListener(new InventoryHider(menus), PacketListenerPriority.HIGH);
         backgrounds = new ChestBackgrounds(menus, getLogger());
@@ -75,9 +76,6 @@ public final class Flux extends JavaPlugin {
             passMissions = PassMissions.register(this);
             jobInfo = JobInfo.register(this);
             collectionInfo = CollectionInfo.register(this);
-            plinko = Plinko.register(this);
-            slots = Slots.register(this);
-            roulette = Roulette.register(this);
         });
     }
 
@@ -86,18 +84,8 @@ public final class Flux extends JavaPlugin {
         if (passMissions != null) passMissions.unregister();
         if (jobInfo != null) jobInfo.unregister();
         if (collectionInfo != null) collectionInfo.unregister();
-        if (plinko != null) {
-            plinko.shutdown();
-            if (plinko.isRegistered()) plinko.unregister();
-        }
-        if (slots != null) {
-            slots.shutdown();
-            if (slots.isRegistered()) slots.unregister();
-        }
-        if (roulette != null) {
-            roulette.shutdown();
-            if (roulette.isRegistered()) roulette.unregister();
-        }
+        fr.influencraft.flux.api.FluxApi.bind(null);
+        if (papiBridge != null) papiBridge.shutdown();
         if (menus != null) menus.closeAll();
         if (packetListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(packetListener);
         if (backgroundListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(backgroundListener);
@@ -118,16 +106,48 @@ public final class Flux extends JavaPlugin {
         return registry;
     }
 
-    public Plinko plinko() {
-        return plinko;
+    // ---------------------------------------------------------------- FluxApi backend
+
+    @Override
+    public boolean open(Player player, String menuId) {
+        Menu menu = registry.get(menuId);
+        if (menu == null) {
+            getLogger().warning("Menu inconnu « " + menuId + " » (FluxApi.open)");
+            return false;
+        }
+        return menus.open(player, menu);
     }
 
-    public Slots slots() {
-        return slots;
+    @Override
+    public fr.influencraft.flux.api.MenuView view(Player player) {
+        var session = menus.session(player.getUniqueId());
+        return session == null || !session.isOpen() ? null : new FluxView(this, player, session);
     }
 
-    public Roulette roulette() {
-        return roulette;
+    @Override
+    public boolean hasMenu(String menuId) {
+        return registry.get(menuId) != null;
+    }
+
+    @Override
+    public void menuFoldersChanged() {
+        int warnings = registry.load();
+        getLogger().info(registry.all().size() + " menu(s) chargé(s) après l'ajout d'un dossier de menus"
+                + (warnings > 0 ? ", " + warnings + " avertissement(s)" : ""));
+    }
+
+    @Override
+    public void placeholdersChanged() {
+        if (papiBridge != null) papiBridge.sync();
+    }
+
+    /** A plugin of the suite stops: its actions, placeholders, item sources and menus go with it. */
+    @org.bukkit.event.EventHandler
+    public void onPluginDisable(org.bukkit.event.server.PluginDisableEvent event) {
+        if (event.getPlugin() == this) return;
+        boolean hadMenus = fr.influencraft.flux.api.FluxApi.unregisterAll(event.getPlugin());
+        placeholdersChanged();
+        if (hadMenus) menuFoldersChanged();
     }
 
     public CollectionInfo collectionInfo() {

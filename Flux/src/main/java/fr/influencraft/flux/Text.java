@@ -85,13 +85,43 @@ public final class Text {
         return resolve(player, raw);
     }
 
+    private static final java.util.regex.Pattern OWN_PLACEHOLDER = java.util.regex.Pattern.compile("%([a-z0-9]+)_([^%\\s]+)%");
+
     private static String resolve(Player player, String raw) {
         String out = raw;
         if (player != null) out = out.replace("%player%", player.getName());
+        if (out.indexOf('%') >= 0) out = suitePlaceholders(player, out);
         if (hasPapi() && player != null && out.indexOf('%') >= 0) {
             out = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, out);
         }
         return out;
+    }
+
+    /**
+     * Placeholders of the plugins of the suite (FluxApi.registerPlaceholders), resolved without PlaceholderAPI.
+     * Unknown prefixes are left as they are, for PlaceholderAPI.
+     */
+    private static String suitePlaceholders(Player player, String text) {
+        java.util.regex.Matcher m = OWN_PLACEHOLDER.matcher(text);
+        StringBuilder out = null;
+        int last = 0;
+        while (m.find()) {
+            fr.influencraft.flux.api.PlaceholderProvider provider = fr.influencraft.flux.api.FluxApi.placeholders(m.group(1));
+            if (provider == null) continue;
+            String value;
+            try {
+                value = provider.request(player, m.group(2));
+            } catch (RuntimeException e) {
+                if (logger != null && warnedGlyphs.add(m.group())) logger.warning("Placeholder " + m.group() + " en erreur : " + e);
+                value = null;
+            }
+            if (value == null) continue;
+            if (out == null) out = new StringBuilder(text.length());
+            out.append(text, last, m.start()).append(value);
+            last = m.end();
+        }
+        if (out == null) return text;
+        return out.append(text, last, text.length()).toString();
     }
 
     /** Ligne affichée : placeholders, glyphes ItemsAdder puis couleurs, sans italique. */

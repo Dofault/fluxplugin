@@ -55,7 +55,7 @@ ic.save(os.path.join(PACK, "textures", "roulette", "icone.png"))
 open(os.path.join(PACK, "roulette.yml"), "w", encoding="utf-8").write(f"""info:
   namespace: influcasino
 
-# Généré par plugins/fluxplugin/Flux/assets/casino/roulette/gen_roulette.py, ne pas éditer à la main.
+# Généré par plugins/fluxplugin/FluxCasino/assets/casino/roulette/gen_roulette.py, ne pas éditer à la main.
 # roulette_roue : la roue (124 x 124, haut à y 18), affichée immobile.
 
 items:

@@ -26,7 +26,7 @@ final class Sources {
     }
 
     static void inscrire(FluxAuctionHouse plugin) {
-        FluxApi.registerItemSource("marche", (p, arg) -> objet(plugin, p, arg));
+        FluxApi.registerItemSource(plugin, "marche", (p, arg) -> objet(plugin, p, arg));
     }
 
     static void retirer() {

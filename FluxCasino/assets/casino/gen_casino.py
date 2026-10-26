@@ -100,7 +100,7 @@ icone_plinko().save(os.path.join(base, "textures", "item", "plinko.png"))
 open(os.path.join(base, "config.yml"), "w", encoding="utf-8").write("""info:
   namespace: influcasino
 
-# Généré par plugins/fluxplugin/Flux/assets/casino/gen_casino.py, ne pas éditer à la main.
+# Généré par plugins/fluxplugin/FluxCasino/assets/casino/gen_casino.py, ne pas éditer à la main.
 # Jeton de casino : objet (menus, 16 x 16) et glyphe %img_jeton% (texte, 9 x 9, réglé comme %img_bitblock%).
 
 items:

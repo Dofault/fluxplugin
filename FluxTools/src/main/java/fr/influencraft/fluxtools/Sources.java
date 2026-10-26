@@ -10,7 +10,7 @@ final class Sources {
     }
 
     static void inscrire(FluxTools plugin) {
-        FluxApi.registerItemSource("fluxitems", (p, arg) -> {
+        FluxApi.registerItemSource(plugin, "fluxitems", (p, arg) -> {
             ItemStack main = p.getInventory().getItemInMainHand();
             return plugin.outil(main) == null ? null : main.clone();
         });

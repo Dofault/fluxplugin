@@ -29,9 +29,7 @@ import java.util.Locale;
  *   [link] https://wiki.influencraft.fr  dialogue vanilla à un bouton : ouvre le lien
  *   [collection] geologie     ouvre une catégorie EcoCollections (aucune commande ne le permet)
  *   [fluxcoll] select pierre  collection affichée en bas du menu de catégorie ([fluxcoll] reset)
- *   [plinko]                  lâche une bille dans le menu Plinko (animation dans le titre)
- *   [slots]                   lance les rouleaux de la machine à sous (animation dans le titre)
- *   [roulette] spin           roulette : lance la bille ; pari rouge|noir|numero, numero +1|-1|N règlent le pari
+ *   [<type>] ...              action fournie par un autre plugin (FluxApi.registerAction), ex. [roulette] spin
  * </pre>
  * Les actions d'un clic sont jouées au tick suivant (ouvrir une fenêtre pendant un
  * InventoryClickEvent est déconseillé par Paper), dans l'ordre écrit.
@@ -114,9 +112,6 @@ public final class Actions {
                 else if (parts[0].equalsIgnoreCase("reset")) info.reset(player);
                 if (session != null) plugin.menus().refresh(player, session);
             }
-            case "plinko" -> plugin.plinko().launch(player, session);
-            case "slots" -> plugin.slots().spin(player, session);
-            case "roulette" -> plugin.roulette().act(player, session, Text.placeholders(player, arg));
             case "collection" -> openCollectionGroup(player, Text.placeholders(player, arg).trim().toLowerCase(Locale.ROOT));
             case "refresh-buttons" -> {
                 // boutons seulement : le titre affiché (animation du Plinko...) n'est pas touché
@@ -125,7 +120,15 @@ public final class Actions {
             case "refresh" -> {
                 if (session != null) plugin.menus().refresh(player, session);
             }
-            default -> plugin.getLogger().warning("Action inconnue « " + line + " »");
+            default -> {
+                // action of another plugin of the suite
+                fr.influencraft.flux.api.FluxAction external = fr.influencraft.flux.api.FluxApi.action(type);
+                if (external == null) {
+                    plugin.getLogger().warning("Action inconnue « " + line + " »");
+                    return;
+                }
+                external.run(player, session == null ? null : new FluxView(plugin, player, session), Text.placeholders(player, arg));
+            }
         }
     }
 

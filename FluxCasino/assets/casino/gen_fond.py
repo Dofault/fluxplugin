@@ -17,7 +17,8 @@ import tempfile
 from PIL import Image
 
 ICI = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(ICI, ".."))
+# fond_lib: shared background helpers of the suite, in Flux/assets
+sys.path.insert(0, os.path.join(ICI, "..", "..", "..", "Flux", "assets"))
 from fond_lib import objet, poser, tampon_case  # noqa: E402
 
 PACK = sys.argv[1]
@@ -48,7 +49,7 @@ im.save(os.path.join(PACK, "textures", "font", "menu_casino.png"))
 open(os.path.join(PACK, "fonds.yml"), "w", encoding="utf-8").write("""info:
   namespace: influcasino
 
-# Généré par plugins/fluxplugin/Flux/assets/casino/gen_fond.py, ne pas éditer à la main.
+# Généré par plugins/fluxplugin/FluxCasino/assets/casino/gen_fond.py, ne pas éditer à la main.
 font_images:
   # fond générique plein écran du casino (cadre de y 0 à 220), pour les prochains menus
   menu_casino_generique:

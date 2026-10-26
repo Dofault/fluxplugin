@@ -334,7 +334,7 @@ icone_levier().save(os.path.join(PACK, "textures", "item", "levier.png"))
 
 # ------------------------------------------------------------------ config ItemsAdder
 L = ["info:", "  namespace: influcasino", "",
-     "# Généré par plugins/fluxplugin/Flux/assets/slots/gen_slots.py, ne pas éditer à la main.",
+     "# Généré par plugins/fluxplugin/FluxCasino/assets/slots/gen_slots.py, ne pas éditer à la main.",
      "# Machine à sous : fond, rouleaux (fenêtre de 3 cases à une position de la bande, nette ou floue), cadres",
      "# de gain, ampoules, icônes. Glyphes posés au pixel près dans le titre (y_position = 13 - haut).", "",
      "items:",

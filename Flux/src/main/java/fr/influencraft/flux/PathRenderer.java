@@ -217,7 +217,7 @@ public final class PathRenderer {
      * Avance horizontale du titre (en px) : {@code :offset_N:} avance de N, une image
      * ItemsAdder de sa largeur + 1. Le texte libre n'est pas mesurable : signalé une fois.
      */
-    static int advance(String title) {
+    public static int advance(String title) {
         int total = 0;
         Matcher m = TOKEN.matcher(title);
         int last = 0;

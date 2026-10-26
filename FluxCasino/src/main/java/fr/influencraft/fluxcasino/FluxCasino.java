@@ -70,11 +70,17 @@ public final class FluxCasino extends JavaPlugin implements TabExecutor, Listene
             command.setTabCompleter(this);
         }
         getServer().getPluginManager().registerEvents(this, this);
-        if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) new Placeholders().register();
+        if (getServer().getPluginManager().isPluginEnabled("Flux")) {
+            // with Flux: placeholders resolved by Flux (and exposed to PlaceholderAPI by it), games and their menus
+            FluxHook.enable(this);
+        } else if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            new Placeholders().register();
+        }
     }
 
     @Override
     public void onDisable() {
+        if (getServer().getPluginManager().isPluginEnabled("Flux")) FluxHook.disable();
         if (store != null) store.close();
     }
 
@@ -328,6 +334,13 @@ public final class FluxCasino extends JavaPlugin implements TabExecutor, Listene
 
         @Override
         public String onRequest(OfflinePlayer player, @NotNull String params) {
+            return placeholder(player, params);
+        }
+    }
+
+    /** {@code %influcasino_<params>%}: chips, bet and exchange settings. */
+    String placeholder(OfflinePlayer player, String params) {
+        {
             switch (params) {
                 case "mise_min":
                     return format(betMin());

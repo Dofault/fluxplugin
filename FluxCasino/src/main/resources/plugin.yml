@@ -2,10 +2,10 @@ name: FluxCasino
 version: 0.1.0
 main: fr.influencraft.fluxcasino.FluxCasino
 api-version: "26.2"
-description: Jetons de casino d'Influencraft (solde, mise, échange contre des BitBlock) pour les jeux de Flux.
+description: Jetons de casino d'Influencraft (solde, mise, échange contre des BitBlock) et jeux du casino (Plinko, machine à sous, roulette) dans des menus Flux.
 authors: [Influencraft]
 depend: [Vault]
-softdepend: [PlaceholderAPI]
+softdepend: [Flux, PlaceholderAPI]
 
 commands:
   jetons:

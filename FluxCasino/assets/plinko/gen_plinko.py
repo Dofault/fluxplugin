@@ -117,7 +117,7 @@ for x in range(CASE_L):
 case.save(os.path.join(PACK, "textures", "plinko", "case.png"))
 
 L = ["info:", "  namespace: influcasino", "",
-     "# Généré par plugins/fluxplugin/Flux/assets/plinko/gen_plinko.py, ne pas éditer à la main.",
+     "# Généré par plugins/fluxplugin/FluxCasino/assets/plinko/gen_plinko.py, ne pas éditer à la main.",
      "# Plinko : fond du plateau et sprites posés au pixel près dans le titre (y_position = 13 - haut).", "",
      "font_images:",
      "  menu_plinko:", "    suggest_in_command: false", "    show_in_gui: false", "    path: font/menu_plinko.png",

@@ -2,10 +2,10 @@ name: Flux
 version: 0.1.0
 main: fr.influencraft.flux.Flux
 api-version: "26.2"
-description: Menus maison d'Influencraft (remplaçant de DeluxeMenus), inventaire du joueur masquable.
+description: Couche d'interface de la suite Flux - menus (inventaire du joueur masquable) et API commune des plugins Flux.
 authors: [Influencraft]
 depend: [packetevents]
-softdepend: [ItemsAdder, PlaceholderAPI, DeluxeMenus, EcoBattlepass, EcoJobs, FluxCasino]
+softdepend: [ItemsAdder, PlaceholderAPI, DeluxeMenus, EcoBattlepass, EcoJobs]
 
 commands:
   fluxmenu:

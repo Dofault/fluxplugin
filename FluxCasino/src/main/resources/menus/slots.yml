@@ -1,0 +1,72 @@
+# Machine à sous (2026-10-17) : trois rouleaux animés dans le titre de la fenêtre ([slots], cf. FluxCasino Slots.java).
+# Fond et rouleaux : influcasino (assets/slots/gen_slots.py), thème casino. Une ligne de gain : la case du milieu.
+# Mise en jetons (FluxCasino) : prise au lancer, gain versé à l'arrêt des rouleaux.
+# Rangée du haut commune aux jeux du casino : retour (0), barre de mise au centre (3, 4, 5), action du jeu au
+# dernier slot (8). [refresh-buttons] : le titre animé n'est pas touché.
+
+title: ":offset_-8::menu_slots:"
+rows: 6
+player-inventory: hidden
+vanilla-background: false
+
+items:
+
+  retour:
+    material: "itemsadder:influcasino:btn_retour"
+    name: "&#FFD94DRetour"
+    slots: [0]
+    lore:
+      - "&#FFD94D│ &#B376E5Revenir au casino."
+      - "&#FFD94D└ &r&7%img_left_click% &fCasino"
+    actions:
+      left: ["[menu] casino"]
+
+  lancer:
+    material: "itemsadder:influcasino:levier"
+    name: "&#FFD94DTirer le levier"
+    slots: [8]
+    lore:
+      - "&#FFD94D│ &#B376E5Jetons : &f%influcasino_jetons% &r&f%img_jeton%"
+      - "&#FFD94D│ &#B376E5Mise : &f%influcasino_mise% &r&f%img_jeton%"
+      - "&#FFD94D│"
+      - "&#FFD94D│ &#B376E5Dernier tour : &f%fluxslots_last%"
+      - "&#FFD94D│ &#B376E5Tours : &f%fluxslots_count%"
+      - "&#FFD94D│ &#FF5C5C%fluxslots_erreur%"
+      - "&#FFD94D└ &r&7%img_left_click% &fLancer les rouleaux"
+    actions:
+      left: ["[slots]"]
+
+  # ── Barre de mise ──────────────────────────────────────────────────────
+  baisser:
+    material: "itemsadder:influcasino:moins"
+    name: "&#FFD94DMise : &f%influcasino_mise% &r&f%img_jeton%"
+    slots: [3]
+    lore:
+      - "&#FFD94D├ &r&7%img_left_click% &f-%influcasino_mise_pas%"
+      - "&#FFD94D└ &r&7%img_right_click% &f-%influcasino_mise_grand_pas%"
+    actions:
+      left: ["[player] jetons mise -%influcasino_mise_pas%", "[sound] minecraft:ui.button.click 0.5 0.9", "[refresh-buttons]"]
+      right: ["[player] jetons mise -%influcasino_mise_grand_pas%", "[sound] minecraft:ui.button.click 0.5 0.9", "[refresh-buttons]"]
+
+  mise:
+    material: "itemsadder:influcasino:jeton"
+    name: "&#FFD94DMise : &f%influcasino_mise% &r&f%img_jeton%"
+    slots: [4]
+    lore:
+      - "&#FFD94D│ &#B376E5De &f%influcasino_mise_min% &#B376E5à &f%influcasino_mise_max% &#B376E5jetons."
+      - "&#FFD94D├ &r&7%img_left_click% &fMise minimale"
+      - "&#FFD94D└ &r&7%img_right_click% &fMise maximale"
+    actions:
+      left: ["[player] jetons mise min", "[sound] minecraft:ui.button.click 0.5 1", "[refresh-buttons]"]
+      right: ["[player] jetons mise max", "[sound] minecraft:ui.button.click 0.5 1", "[refresh-buttons]"]
+
+  augmenter:
+    material: "itemsadder:influcasino:plus"
+    name: "&#FFD94DMise : &f%influcasino_mise% &r&f%img_jeton%"
+    slots: [5]
+    lore:
+      - "&#FFD94D├ &r&7%img_left_click% &f+%influcasino_mise_pas%"
+      - "&#FFD94D└ &r&7%img_right_click% &f+%influcasino_mise_grand_pas%"
+    actions:
+      left: ["[player] jetons mise +%influcasino_mise_pas%", "[sound] minecraft:ui.button.click 0.5 1.1", "[refresh-buttons]"]
+      right: ["[player] jetons mise +%influcasino_mise_grand_pas%", "[sound] minecraft:ui.button.click 0.5 1.1", "[refresh-buttons]"]

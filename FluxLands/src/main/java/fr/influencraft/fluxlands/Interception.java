@@ -37,7 +37,9 @@ final class Interception implements Listener {
     }
 
     void recharger() {
-        actif = plugin.getConfig().getBoolean("menus-lands.remplacer", true);
+        // without Flux there is no menu to show instead: Lands keeps its own menus
+        actif = plugin.getConfig().getBoolean("menus-lands.remplacer", true)
+                && org.bukkit.Bukkit.getPluginManager().isPluginEnabled("Flux");
         Set<String> s = new HashSet<>();
         for (String a : plugin.getConfig().getStringList("menus-lands.alias")) s.add(a.toLowerCase(Locale.ROOT));
         if (s.isEmpty()) s.addAll(List.of("lands", "v", "ville", "villes"));

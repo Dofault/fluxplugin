@@ -41,7 +41,11 @@ public final class MenuRegistry {
         menus.clear();
         File dir = new File(plugin.getDataFolder(), "menus");
         int[] warnings = {0};
-        scan(dir, "", warnings);
+        scan(dir, "menus/", warnings);
+        // menus shipped by the other plugins of the suite (FluxApi.registerMenuFolder)
+        for (File folder : fr.influencraft.flux.api.FluxApi.menuFolders()) {
+            scan(folder, folder.getParentFile().getName() + "/" + folder.getName() + "/", warnings);
+        }
         registerCommands();
         return warnings[0];
     }
@@ -58,7 +62,7 @@ public final class MenuRegistry {
                 String name = f.getName().substring(0, f.getName().length() - 4).toLowerCase(Locale.ROOT);
                 // Identifiant = nom du fichier ; un doublon dans un sous-dossier est signalé.
                 if (menus.containsKey(name)) {
-                    plugin.getLogger().warning("menus/" + prefix + f.getName() + " : identifiant « " + name + " » déjà pris, fichier ignoré");
+                    plugin.getLogger().warning(prefix + f.getName() + " : identifiant « " + name + " » déjà pris, fichier ignoré");
                     warnings[0]++;
                     continue;
                 }
