@@ -5,12 +5,15 @@
 
     <groupId>fr.influencraft</groupId>
     <artifactId>InfluBridge</artifactId>
-    <version>1.0.0</version>
+    <version>26.2</version>
     <packaging>jar</packaging>
 
     <name>InfluBridge</name>
 
     <properties>
+        <!-- API Paper de compilation : 26.2 = version du serveur. Les jars compiles contre 26.2
+             restent compatibles 26.3 (mvn -P paper-26.3 pour le verifier) -->
+        <paper.api.version>26.2.build.124-stable</paper.api.version>
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
@@ -36,39 +39,25 @@
         </dependency>
 
         <!-- Paper API (provided by the server at runtime).
-             Le serveur tourne réellement en 1.21.11 (cf. logs/latest.log "This server is
-             running Paper version 1.21.11-..."), pas 1.21.8 — aligné ici pour matcher le
-             paper-api-1.21.11-R0.1-SNAPSHOT.jar utilisé au runtime. -->
+             Le serveur tourne en Paper 26.2 depuis la bêta 0.2 (cf. logs/latest.log "This server
+             is running Paper version 26.2-124-ver/... (Implementing API version
+             26.2.build.124-stable)") — version alignée sur cette build. -->
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
-            <version>1.21.11-R0.1-SNAPSHOT</version>
+            <version>${paper.api.version}</version>
             <scope>provided</scope>
         </dependency>
 
         <!-- Netty (bundlé par Paper au runtime, jamais chargé depuis Maven côté serveur) —
-             version exacte pinnée pour 1.21.11 (cf. META-INF/libraries.list du jar serveur).
+             version exacte pinnée pour Paper 26.2 (cf. META-INF/libraries.list du paper.jar serveur).
              Nécessaire pour io.netty.channel.ChannelDuplexHandler/ChannelHandlerContext utilisés
              par EcoDisplayGuardListener. -->
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport</artifactId>
-            <version>4.2.7.Final</version>
+            <version>4.2.15.Final</version>
             <scope>provided</scope>
-        </dependency>
-
-        <!-- Jar serveur Paper mojang-mapped (versions/1.21.11/paper-1.21.11.jar) — nécessaire
-             pour compiler contre les classes NMS internes (net.minecraft.network.protocol.game.*,
-             org.bukkit.craftbukkit.inventory.CraftItemStack) utilisées par EcoDisplayGuardListener
-             pour s'accrocher à la pipeline netty juste à côté du handler "eco_packets" d'eco.
-             Paper 1.20.5+ étant nativement mojang-mapped au runtime, ce jar contient déjà les
-             noms de classes/méthodes lisibles — pas besoin de remapping séparé. -->
-        <dependency>
-            <groupId>io.papermc.paper</groupId>
-            <artifactId>paper-server-mojangmapped</artifactId>
-            <version>1.21.11-local</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/../../serveurs/03_semirp/versions/1.21.11/paper-1.21.11.jar</systemPath>
         </dependency>
 
         <!-- Bundled by Paper at runtime (server/libraries/com/google/code/gson) — used to
@@ -76,7 +65,7 @@
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.11.0</version>
+            <version>2.14.0</version>
             <scope>provided</scope>
         </dependency>
 
@@ -93,26 +82,15 @@
             <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/ProtocolLib.jar</systemPath>
         </dependency>
 
-        <!-- VotingPlugin (soft dependency, provided at runtime) — utilisé pour écouter
-             PlayerPostVoteEvent (comptage du Vote Party). Même technique systemPath que
-             ProtocolLib ci-dessus : pas de repo Maven public pour ce jar. -->
-        <dependency>
-            <groupId>com.bencodez</groupId>
-            <artifactId>votingplugin</artifactId>
-            <version>7.0-local</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/.archives/VotingPlugin-7.0.jar</systemPath>
-        </dependency>
-
         <!-- EcoJobs (soft dependency, provided at runtime) — utilisé pour écouter
              PlayerJobExpGainEvent (boss bar de progression d'XP de métier). Même technique
-             systemPath que ProtocolLib/VotingPlugin ci-dessus : pas de repo Maven public. -->
+             systemPath que ProtocolLib ci-dessus : pas de repo Maven public. -->
         <dependency>
             <groupId>com.willfp</groupId>
             <artifactId>ecojobs</artifactId>
-            <version>2026.31-local</version>
+            <version>2026.38-local</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/EcoJobs-2026.31-spigot.jar</systemPath>
+            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/EcoJobs-2026.38-spigot.jar</systemPath>
         </dependency>
 
         <!-- eco (framework partagé Auxilor, dépendance obligatoire d'EcoJobs) — nécessaire
@@ -121,9 +99,9 @@
         <dependency>
             <groupId>com.willfp</groupId>
             <artifactId>eco</artifactId>
-            <version>2026.31-local</version>
+            <version>2026.38-local</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/eco-2026.31-modrinth.jar</systemPath>
+            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/eco-2026.41-modrinth.jar</systemPath>
         </dependency>
 
         <!-- Vault (soft dependency, provided at runtime) — utilisé pour net.milkbowl.vault.economy.Economy,
@@ -134,20 +112,22 @@
         <dependency>
             <groupId>com.github.MilkBowl</groupId>
             <artifactId>VaultAPI</artifactId>
-            <version>2.19.1-local</version>
+            <version>2.20.3-local</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/VaultUnlocked-2.19.1.jar</systemPath>
+            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/VaultUnlocked-2.20.3.jar</systemPath>
         </dependency>
 
-        <!-- AdvancedEnchantments (soft dependency, provided at runtime) — utilisé pour
-             détecter la présence de l'enchant "fonte" sur la pioche (AEAPI.hasCustomEnchant),
-             cf. FondeurFonteListener. Pas de repo Maven public, même technique systemPath. -->
+        <!-- CustomFishing (soft dependency, provided at runtime) — utilisé par RepairMenu
+             pour réparer les cannes du plugin : leur durabilité vit dans le NBT custom_data
+             (compound "CustomFishing", clés max_dur/cur_dur), hors de portée de Bukkit, et
+             seule l'API ItemManager la réécrit correctement. Pas de repo Maven public, même
+             technique systemPath que les autres. -->
         <dependency>
-            <groupId>net.advancedplugins</groupId>
-            <artifactId>ae</artifactId>
-            <version>9.23.4-local</version>
+            <groupId>net.momirealms</groupId>
+            <artifactId>customfishing</artifactId>
+            <version>2.3.27-local</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/AdvancedEnchantments-9.23.4.jar</systemPath>
+            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/CustomFishing-2.3.28.jar</systemPath>
         </dependency>
 
         <!-- CMI (soft dependency, provided at runtime) — utilisé pour écouter
@@ -158,11 +138,22 @@
         <dependency>
             <groupId>com.Zrips</groupId>
             <artifactId>cmi</artifactId>
-            <version>9.8.9.8-local</version>
+            <version>9.8.10.0-local</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/CMI-9.8.9.8.jar</systemPath>
+            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/CMI-9.8.11.0.jar</systemPath>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <!-- Compilation contre l'API Paper 26.3 (migration de decembre 2026) pour verifier que
+             le plugin reste compatible : mvn -P paper-26.3. Le jar de prod reste compile en 26.2. -->
+        <profile>
+            <id>paper-26.3</id>
+            <properties>
+                <paper.api.version>26.3.build.200-stable</paper.api.version>
+            </properties>
+        </profile>
+    </profiles>
 
     <build>
         <plugins>

@@ -18,12 +18,15 @@ import java.util.stream.Collectors;
  * Backend du menu DeluxeMenus /métiers (gui_menus/metiers/) — rejoindre()/quitter() sont les
  * seules actions qui mutent un état (appelées depuis les boutons "Rejoindre"/"Confirmer" des
  * menus détail/confirmation, `[player] metier rejoindre <job>` / `[player] metier quitter
- * <job>`), progression()/blocs() ne font qu'ouvrir un écran. Existent uniquement parce
- * qu'EcoJobs ne facture jamais depuis une commande (confirmé par décompilation :
- * EcoJobsAPI.joinJob/leaveJob ne font que muter l'état, Price.pay() n'est appelé que depuis
- * les GUI internes du plugin) — rejoindre()/quitter() reproduisent donc juste ce que fait le
- * clic natif, avec le vrai prix du job (job.getJoinPrice()/getLeavePrice(), configuré dans
- * EcoJobs/jobs/<job>.yml, jamais dupliqué ici).
+ * <job>`), progression()/blocs() ne font qu'ouvrir un écran.
+ * <p>
+ * Ne JAMAIS appeler Price.pay() ici : EcoJobsAPI.joinJob/leaveJob déclenchent
+ * PlayerJobJoinEvent/PlayerJobLeaveEvent, et le listener natif PriceHandler d'EcoJobs facture
+ * le prix du job (job.getJoinPrice()/getLeavePrice(), configuré dans EcoJobs/jobs/<job>.yml)
+ * puis annule l'événement si le joueur ne peut pas payer (confirmé par décompilation
+ * d'EcoJobs 2026.38). Un paiement ici en plus faisait payer deux fois, ou débitait sans
+ * retirer le métier. Cette classe se limite donc à un pré-contrôle (messages clairs) et
+ * vérifie que le changement a bien eu lieu avant de l'annoncer.
  */
 public final class JobChoiceCommand implements CommandExecutor, TabCompleter {
 
@@ -105,8 +108,12 @@ public final class JobChoiceCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        price.pay(player, 1.0);
+        // La facturation est faite par le listener natif d'EcoJobs (cf. javadoc de la classe)
         EcoJobsAPI.joinJob(player, job);
+        if (!EcoJobsAPI.hasJobActive(player, job)) {
+            send(player, "&cImpossible de rejoindre &7" + job.getName() + "&c, aucun BitBlock n'a été prélevé.");
+            return;
+        }
         send(player, "&fTu as rejoint &7" + job.getName() + "&f !");
     }
 
@@ -128,8 +135,12 @@ public final class JobChoiceCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        price.pay(player, 1.0);
+        // La facturation est faite par le listener natif d'EcoJobs (cf. javadoc de la classe)
         EcoJobsAPI.leaveJob(player, job);
+        if (EcoJobsAPI.hasJobActive(player, job)) {
+            send(player, "&cImpossible de quitter &7" + job.getName() + "&c, aucun BitBlock n'a été prélevé.");
+            return;
+        }
         send(player, "&7Tu as quitté &f" + job.getName() + "&7.");
     }
 

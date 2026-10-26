@@ -12,6 +12,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -22,19 +23,9 @@ import java.util.logging.Logger;
  * retiré du résultat d'enclume, du loot généré et des prises de pêche. Un livre
  * Raccommodage qui ne s'applique jamais devient de fait inutile.
  * <p>
- * Deux voies ont été essayées puis écartées avant celle-ci :
- * <ul>
- *   <li><b>Blacklist AdvancedEnchantments</b> : AE ne sait blacklister que ses
- *       propres enchants custom, jamais les enchants vanilla.</li>
- *   <li><b>Datapack</b> (vider {@code supported_items} de {@code minecraft:mending})
- *       : AE prend le contrôle de l'enclume à {@code EventPriority.HIGHEST}
- *       (AdvancedEnchantments/anvil.yml → {@code listener-priority: HIGHEST}) et
- *       calcule le résultat avant que le datapack n'influe dessus.</li>
- * </ul>
- * On s'exécute donc en Java, à {@code HIGHEST} : InfluBridge démarre après AE
- * (softdepend + ordre confirmé dans les logs), donc pour une même priorité notre
- * handler passe <i>après</i> celui d'AE et voit le résultat déjà calculé — même
- * mécanisme que {@link AnvilRestrictionListener}.
+ * Géré en Java, à {@code HIGHEST}, pour passer après les plugins qui recalculent
+ * le résultat d'enclume et voir le résultat final — même mécanisme que
+ * {@link AnvilRestrictionListener}.
  * <p>
  * <b>Règle transverse :</b> un <b>livre</b> n'est jamais modifié, où qu'il soit.
  * On agit uniquement quand Raccommodage est (ou serait) appliqué à un objet qui
@@ -94,10 +85,13 @@ public final class MendingRestrictionListener implements Listener {
                 modifie = true;
             }
         }
-        // getLoot() renvoie une copie de travail : les mutations d'ItemStack ne
-        // sont prises en compte qu'après setLoot().
+        // getLoot() renvoie la liste interne de l'event, PAS une copie : setLoot()
+        // fait this.loot.clear() puis this.loot.addAll(loot) — si "loot" est cette
+        // même référence, le clear() la vide aussi avant le addAll(), qui réinjecte
+        // alors une collection déjà vide. Résultat sans la copie défensive : tout
+        // le loot du conteneur disparaît dès qu'un seul objet portait Raccommodage.
         if (modifie) {
-            event.setLoot(loot);
+            event.setLoot(new ArrayList<>(loot));
         }
     }
 

@@ -17,6 +17,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -48,6 +49,11 @@ public final class JobXpBossBarListener implements Listener {
     // Clé = uuid joueur + ":" + id du métier (Job.getId()).
     private final Map<String, BossBar> activeBars = new ConcurrentHashMap<>();
     private final Map<String, BukkitTask> hideTasks = new ConcurrentHashMap<>();
+
+    // Dernier gain d'XP affiché pour cette bar : le rafraîchissement déclenché par un passage de
+    // niveau n'a pas accès à l'event de gain, mais doit continuer d'afficher le "(+x)" plutôt que
+    // de le faire disparaître au moment précis où le joueur a le plus envie de le voir.
+    private final Map<String, Double> lastGains = new ConcurrentHashMap<>();
 
     // Préférence par joueur, activée par défaut — bascule via la commande "/jobxpbar toggle"
     // (bouton "Notif. XP métier" de /reglages, DeluxeMenus).
@@ -85,6 +91,7 @@ public final class JobXpBossBarListener implements Listener {
             }
             player.hideBossBar(entry.getValue());
             it.remove();
+            lastGains.remove(entry.getKey());
             BukkitTask task = hideTasks.remove(entry.getKey());
             if (task != null) {
                 task.cancel();
@@ -106,7 +113,21 @@ public final class JobXpBossBarListener implements Listener {
     private static final DecimalFormat XP_FORMAT =
             new DecimalFormat("0.##", DecimalFormatSymbols.getInstance(Locale.US));
 
-    @EventHandler(ignoreCancelled = true)
+    // Gain lu juste avant les effets libreforge (familiers InfluPet : job_xp_multiplier), pour en
+    // déduire leur bonus. Événement synchrone et non réentrant : un seul gain en cours à la fois.
+    private PlayerJobExpGainEvent pendingEvent;
+    private double pendingAmount;
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void onJobXpGainBeforeEffects(PlayerJobExpGainEvent event) {
+        pendingEvent = event;
+        pendingAmount = event.getAmount();
+    }
+
+    // MONITOR : le gain affiché doit être le gain final. À la priorité par défaut, ce listener passait
+    // avant celui de l'effet job_xp_multiplier de libreforge (enregistré seulement une fois libreforge
+    // activé, après InfluBridge) : la barre montrait le gain sans le bonus des familiers (2026-10-09).
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onJobXpGain(PlayerJobExpGainEvent event) {
         Player player = event.getPlayer();
         if (!isEnabled(player)) {
@@ -128,36 +149,25 @@ public final class JobXpBossBarListener implements Listener {
         // globale). Seul le gain entre parenthèses reste exact à la décimale près.
         String currentXpFormatted = String.valueOf(Math.round(newXp));
         String requiredXpFormatted = String.valueOf(Math.round(xpForNextLevel));
-        String gainedFormatted = XP_FORMAT.format(event.getAmount());
         String plainJobName = COLOR_CODES.matcher(event.getJob().getName()).replaceAll("");
 
         // Booster d'XP éventuel (permission-boosters, potions de boost...), même mécanisme que
         // celui déjà appliqué en amont dans EcoJobsAPI.giveJobExperience. Affiché en pourcentage
         // (convention du serveur, cf. AdvancedJobs/config.yml "permission-boosters: percent: 25.0"),
         // pas en multiplicateur — et seulement s'il diffère de +0% (pas de bruit permanent sur la bar).
+        // Multiplicateur de permission, déjà inclus dans le montant de l'événement, multiplié par celui
+        // des effets libreforge (familiers) appliqués pendant l'événement.
         double multiplier = JobXPAccumulatorKt.getJobExperienceMultiplier(player);
+        if (pendingEvent == event && pendingAmount > 0) {
+            multiplier *= event.getAmount() / pendingAmount;
+        }
+        pendingEvent = null;
         double bonusPercent = (multiplier - 1.0) * 100.0;
-        boolean hasBonus = Math.abs(bonusPercent) > 0.1;
-        String bonusSegment = hasBonus ? " <#4DA954>(+<bonus>%)" : "";
+        lastGains.put(key, event.getAmount());
 
-        // Format MiniMessage fourni par l'utilisateur. Le nom du job est injecté via un
-        // placeholder "unparsed" (pas de concaténation directe dans le template) : sinon,
-        // n'importe quel caractère résiduel dans le nom du job pourrait casser le parsing
-        // MiniMessage (déjà arrivé une fois — ParsingException plantant l'event listener).
-        Component title;
-        try {
-            title = MiniMessage.miniMessage().deserialize(
-                    "<#4DA954>『<job> <#aafb93>Niv.<level></#aafb93>』  "
-                            + "<gray><white><current><gray>/<required> <gray>"
-                            + "<#4DA954>(<#aafb93>+<gained></#aafb93>)" + bonusSegment,
-                    Placeholder.unparsed("job", plainJobName),
-                    Placeholder.unparsed("level", String.valueOf(level)),
-                    Placeholder.unparsed("current", currentXpFormatted),
-                    Placeholder.unparsed("required", requiredXpFormatted),
-                    Placeholder.unparsed("gained", gainedFormatted),
-                    Placeholder.unparsed("bonus", XP_FORMAT.format(bonusPercent)));
-        } catch (Exception e) {
-            plugin.getLogger().warning("job-xp-bossbar: échec de rendu du titre — " + e.getMessage());
+        Component title = buildTitle(plainJobName, level, currentXpFormatted, requiredXpFormatted,
+                event.getAmount(), bonusPercent);
+        if (title == null) {
             return;
         }
 
@@ -180,6 +190,7 @@ public final class JobXpBossBarListener implements Listener {
         BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, () -> {
             player.hideBossBar(barToHide);
             activeBars.remove(key);
+            lastGains.remove(key);
             hideTasks.remove(key);
         }, hideAfterTicks);
         hideTasks.put(key, task);
@@ -223,22 +234,44 @@ public final class JobXpBossBarListener implements Listener {
         String requiredXpFormatted = String.valueOf(Math.round(xpForNextLevel));
         String plainJobName = COLOR_CODES.matcher(job.getName()).replaceAll("");
 
-        Component title;
-        try {
-            title = MiniMessage.miniMessage().deserialize(
-                    "<#4DA954>『<job> <#aafb93>Niv.<level></#aafb93>』  "
-                            + "<gray><white><current><gray>/<required> <gray>",
-                    Placeholder.unparsed("job", plainJobName),
-                    Placeholder.unparsed("level", String.valueOf(level)),
-                    Placeholder.unparsed("current", currentXpFormatted),
-                    Placeholder.unparsed("required", requiredXpFormatted));
-        } catch (Exception e) {
-            plugin.getLogger().warning("job-xp-bossbar: échec de rafraîchissement après palier — " + e.getMessage());
+        // Le gain qui a provoqué le palier n'est pas porté par PlayerJobLevelUpEvent : on réaffiche
+        // celui mémorisé au dernier PlayerJobExpGainEvent, sinon le "(+x)" disparaîtrait
+        // exactement au moment du palier. Le bonus est relu, il n'a pas pu changer entre-temps.
+        Double gained = lastGains.get(key);
+        double multiplier = JobXPAccumulatorKt.getJobExperienceMultiplier(player);
+        Component title = buildTitle(plainJobName, level, currentXpFormatted, requiredXpFormatted,
+                gained, (multiplier - 1.0) * 100.0);
+        if (title == null) {
             return;
         }
 
         bar.name(title);
         bar.progress(progress);
+    }
+
+    // Format MiniMessage fourni par l'utilisateur. Le nom du job est injecté via un placeholder
+    // "unparsed" (pas de concaténation directe dans le template) : sinon, n'importe quel caractère
+    // résiduel dans le nom du job pourrait casser le parsing MiniMessage (déjà arrivé une fois,
+    // ParsingException plantant l'event listener). Renvoie null si le rendu échoue (déjà loggé).
+    private Component buildTitle(String plainJobName, int level, String currentXpFormatted,
+                                 String requiredXpFormatted, Double gained, double bonusPercent) {
+        String gainSegment = gained != null ? "<#4DA954>(<#aafb93>+<gained></#aafb93>)" : "";
+        String bonusSegment = Math.abs(bonusPercent) > 0.1 ? " <#4DA954>(<#C8256A>+<bonus>%</#C8256A>)" : "";
+        try {
+            return MiniMessage.miniMessage().deserialize(
+                    "<#4DA954>『<job> <#aafb93>Niv.<level></#aafb93>』  "
+                            + "<gray><white><current><gray>/<required> <gray>"
+                            + gainSegment + bonusSegment,
+                    Placeholder.unparsed("job", plainJobName),
+                    Placeholder.unparsed("level", String.valueOf(level)),
+                    Placeholder.unparsed("current", currentXpFormatted),
+                    Placeholder.unparsed("required", requiredXpFormatted),
+                    Placeholder.unparsed("gained", gained != null ? XP_FORMAT.format(gained) : ""),
+                    Placeholder.unparsed("bonus", XP_FORMAT.format(bonusPercent)));
+        } catch (Exception e) {
+            plugin.getLogger().warning("job-xp-bossbar: échec de rendu du titre — " + e.getMessage());
+            return null;
+        }
     }
 
     private static BossBar.Color parseColor(String name) {

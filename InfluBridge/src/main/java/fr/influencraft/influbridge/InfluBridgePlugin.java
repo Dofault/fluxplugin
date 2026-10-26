@@ -5,6 +5,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class InfluBridgePlugin extends JavaPlugin {
 
+    // Services rechargeables à chaud par /influbridge reload.
+    private VoteReminderService voteReminderService;
+    private VotePartyService votePartyService;
+
     @Override
     public void onEnable() {
         saveDefaultConfig();
@@ -46,50 +50,124 @@ public final class InfluBridgePlugin extends JavaPlugin {
                             + "%influbridge_flame_*% (flamme de vote) sont désactivés.");
         }
 
-        // Clés de vote (Ordinaire/Phénomène) réclamées à la main via /votekeys claim
-        // (bouton Vote de /menu, clic droit) plutôt que livrées automatiquement — cf.
-        // pending_commands.requires_claim côté mineweb (poll.get.ts). Pas de cache
-        // d'affichage : le clic droit va toujours chercher la liste en temps réel.
-        if (!apiBaseUrl.isBlank() && !apiSecret.isBlank() && !apiSecret.equals("CHANGE_ME")) {
-            getCommand("votekeys").setExecutor(
-                    new VoteKeysClaimCommand(this, apiBaseUrl, apiSecret));
-        } else {
-            getLogger().warning(
-                    "api-base-url / api-secret non configurés — /votekeys (récupération des "
-                            + "clés de vote) est désactivé.");
-        }
-
         // Vote Party : la source réelle des votes est mineweb (commande console
         // "influvoteparty add" envoyée à chaque vote confirmé, cf. poll.get.ts).
         // Le compteur persiste dans voteparty.yml pour survivre à un redémarrage.
-        VotePartyService votePartyService = new VotePartyService(this);
-        if (Bukkit.getPluginManager().isPluginEnabled("VotingPlugin")) {
-            Bukkit.getPluginManager().registerEvents(votePartyService, this);
+        votePartyService = new VotePartyService(this, apiBaseUrl, apiSecret);
+
+        // Toutes les récompenses de vote (clés, flamme, top 3, objectif, tombola, Vote
+        // Party) se réclament à la main via /voteclaims (alias /votekeys ; bouton Vote
+        // de /menu, clic droit) plutôt que livrées automatiquement : cf.
+        // pending_commands.requires_claim côté mineweb. Pas de cache d'affichage :
+        // la liste est toujours lue en temps réel.
+        if (!apiBaseUrl.isBlank() && !apiSecret.isBlank() && !apiSecret.equals("CHANGE_ME")) {
+            getCommand("voteclaims").setExecutor(
+                    new VoteClaimsCommand(this, votePartyService, apiBaseUrl, apiSecret));
+
+            // Rappel de vote périodique : n'est envoyé qu'aux joueurs ayant au moins
+            // un site de vote disponible (les récompenses en attente ne déclenchent
+            // rien par elles-mêmes, cf. VoteReminderService). Le service est toujours
+            // construit, même interrupteur global à false : start() ne lance alors
+            // aucune tâche, mais /influbridge reload peut l'allumer sans redémarrage.
+            voteReminderService = new VoteReminderService(this, votePartyService, apiBaseUrl, apiSecret);
+            voteReminderService.start();
+
+            // Bouton "Notif. de vote" de /reglages (DeluxeMenus) : clic gauche
+                // "[player] votenotif on", clic droit "[player] votenotif off".
+            getCommand("votenotif").setExecutor((sender, command, label, args) -> {
+                if (!(sender instanceof org.bukkit.entity.Player player)) {
+                    sender.sendMessage("Cette commande est réservée aux joueurs.");
+                    return true;
+                }
+                if (args.length != 1
+                        || !(args[0].equalsIgnoreCase("on") || args[0].equalsIgnoreCase("off"))) {
+                    return false;
+                }
+                boolean newState = args[0].equalsIgnoreCase("on");
+                voteReminderService.setEnabled(player, newState);
+                String message = newState
+                        ? "&#FFD94D&lRéglages &8► &#B376E5Notif. de vote &#2ECF7Bactivées."
+                        : "&#FFD94D&lRéglages &8► &#B376E5Notif. de vote &#FF5C5Cdésactivées.";
+                player.sendMessage(com.willfp.eco.util.StringUtils.format(message, player));
+                return true;
+            });
+        } else {
+            getLogger().warning(
+                    "api-base-url / api-secret non configurés — /voteclaims (récupération des "
+                            + "récompenses de vote) est désactivé.");
         }
+
+        // Vote Party (service construit plus haut, avant /voteclaims et le rappel de vote).
         getCommand("influvoteparty").setExecutor((sender, command, label, args) -> {
+            if (!sender.hasPermission("influbridge.voteparty.admin")) {
+                sender.sendMessage(org.bukkit.ChatColor.RED + "Tu n'as pas la permission d'effectuer cette action.");
+                return true;
+            }
+
             if (args.length == 1 && args[0].equalsIgnoreCase("add")) {
                 votePartyService.addVote();
                 return true;
             }
+
+            if (args.length == 2 && (args[0].equalsIgnoreCase("add") || args[0].equalsIgnoreCase("remove"))) {
+                int amount;
+                try {
+                    amount = Integer.parseInt(args[1]);
+                } catch (NumberFormatException e) {
+                    sender.sendMessage(org.bukkit.ChatColor.RED + "Montant invalide : " + args[1]);
+                    return true;
+                }
+                if (amount <= 0) {
+                    sender.sendMessage(org.bukkit.ChatColor.RED + "Le montant doit être supérieur à 0.");
+                    return true;
+                }
+
+                if (args[0].equalsIgnoreCase("add")) {
+                    votePartyService.addVote(amount);
+                } else {
+                    votePartyService.removeVote(amount);
+                }
+                sender.sendMessage(org.bukkit.ChatColor.GREEN + "Compteur Vote Party : "
+                        + votePartyService.getCurrent() + "/" + votePartyService.getVotesRequired());
+                return true;
+            }
+
             return false;
         });
 
         Bukkit.getPluginManager().registerEvents(new AnvilRestrictionListener(), this);
 
+        // /repair : menu de réparation maison, en remplacement de l'alias CMI du même nom
+        // (désactivé dans CMI/Settings/Alias.yml pour que celui-ci gagne la commande).
+        // Prix unique lu à chaud dans repair.cost, durabilité + coût d'enclume remis à
+        // neuf. Voir RepairMenu.
+        if (getConfig().getBoolean("repair.enabled", true)) {
+            getCommand("repair").setExecutor(new RepairMenu(this));
+        }
+
+        // Fioles d'expérience : /bottlexp stocke l'XP par tranches de 1395 points (niveaux
+        // 0 → 30) dans des bouteilles vanilla marquées en PDC, rendues au clic droit sans
+        // lancer. Voir BottleXpService.
+        BottleXpService bottleXpService = new BottleXpService(this);
+        getCommand("bottlexp").setExecutor(bottleXpService);
+        getCommand("bottlexp").setTabCompleter(bottleXpService);
+        Bukkit.getPluginManager().registerEvents(bottleXpService, this);
+
         // Neutralise l'enchantement vanilla Raccommodage (Mending) : retiré du résultat
         // d'enclume, du loot généré (coffres trésor / structures / bastions) et des prises
         // de pêche. Le livre continue de circuler, il devient juste inutile. Règle de
-        // gameplay, enregistré inconditionnellement ; raccommodage.log (config.yml) active
-        // une trace console à chaque neutralisation. Voir MendingRestrictionListener pour
-        // les 2 voies écartées.
-        Bukkit.getPluginManager().registerEvents(
-                new MendingRestrictionListener(
-                        getLogger(), getConfig().getBoolean("raccommodage.log", false)),
-                this);
-
-        // Guard packet AE/eco : no-op tant qu'eco n'a pas injecté "eco_packets" pour un joueur
-        // donné (cf. EcoDisplayGuardListener), donc sûr à enregistrer inconditionnellement.
-        Bukkit.getPluginManager().registerEvents(new EcoDisplayGuardListener(), this);
+        // gameplay : raccommodage.enabled reste à true en production, l'interrupteur
+        // existe pour les tests sur Labs. raccommodage.log active une trace console à
+        // chaque neutralisation. Voir MendingRestrictionListener pour les 2 voies écartées.
+        if (getConfig().getBoolean("raccommodage.enabled", true)) {
+            Bukkit.getPluginManager().registerEvents(
+                    new MendingRestrictionListener(
+                            getLogger(), getConfig().getBoolean("raccommodage.log", false)),
+                    this);
+        } else {
+            getLogger().warning("raccommodage.enabled = false : l'enchantement Raccommodage"
+                    + " n'est plus neutralisé, il redevient applicable normalement.");
+        }
 
         if (getConfig().getBoolean("job-xp-bossbar.enabled", true)) {
             if (Bukkit.getPluginManager().isPluginEnabled("EcoJobs")) {
@@ -209,16 +287,79 @@ public final class InfluBridgePlugin extends JavaPlugin {
             }
         }, this);
 
-        if (getConfig().getBoolean("fondeur-fonte-xp.enabled", true)) {
-            if (Bukkit.getPluginManager().isPluginEnabled("EcoJobs")
-                    && Bukkit.getPluginManager().isPluginEnabled("AdvancedEnchantments")) {
-                double xpPerOre = getConfig().getDouble("fondeur-fonte-xp.xp-per-ore", 0.2);
-                Bukkit.getPluginManager().registerEvents(new FondeurFonteListener(xpPerOre), this);
-            } else {
-                getLogger().warning(
-                        "EcoJobs et/ou AdvancedEnchantments absent — l'XP fondeur pour l'enchant "
-                                + "\"fonte\" est désactivée.");
+        // /voteinfo : le bloc d'infos de vote à la demande, avec les vrais chiffres.
+        // C'est la cible de l'alias "vote" de commands.yml, qui pointait avant sur la
+        // fiche statique CMI (cmi ctext vote) — même gabarit, mais un seul texte à
+        // maintenir (vote-reminder.message) et des valeurs réelles.
+        getCommand("voteinfo").setExecutor((sender, command, label, args) -> {
+            if (!(sender instanceof org.bukkit.entity.Player player)) {
+                sender.sendMessage("Cette commande est réservée aux joueurs.");
+                return true;
             }
-        }
+            if (voteReminderService == null) {
+                player.sendMessage(com.willfp.eco.util.StringUtils.format(
+                        "&#FFD94D&lVote &8► &#B376E5Tu peux voter sur "
+                                + "&#2BC4E8&nhttps://influencraft.fr/vote", player));
+                return true;
+            }
+            voteReminderService.showTo(player);
+            return true;
+        });
+
+        // /influbridge reload : relit config.yml et réapplique ce qui peut l'être à
+        // chaud. Recharger les CLASSES d'un plugin Java n'est pas faisable proprement
+        // — la commande le dit donc explicitement plutôt que de laisser croire qu'un
+        // nouveau jar serait pris en compte.
+        getCommand("influbridge").setExecutor((sender, command, label, args) -> {
+            if (args.length != 1 || !args[0].equalsIgnoreCase("reload")) {
+                return false;
+            }
+            if (!sender.hasPermission("influbridge.admin")) {
+                sender.sendMessage(org.bukkit.ChatColor.RED
+                        + "Tu n'as pas la permission d'effectuer cette action.");
+                return true;
+            }
+
+            reloadConfig();
+            votePartyService.reloadConfig();
+
+            StringBuilder report = new StringBuilder();
+            report.append(org.bukkit.ChatColor.GREEN)
+                    .append("InfluBridge : config.yml rechargé.")
+                    .append('\n')
+                    .append(org.bukkit.ChatColor.GRAY)
+                    .append("  Vote Party : seuil ")
+                    .append(votePartyService.getVotesRequired())
+                    .append(" (compteur ")
+                    .append(votePartyService.getCurrent())
+                    .append(" inchangé)");
+
+            if (voteReminderService != null) {
+                voteReminderService.reload();
+                report.append('\n')
+                        .append(org.bukkit.ChatColor.GRAY)
+                        .append("  Rappel de vote : ")
+                        .append(voteReminderService.isGloballyEnabled()
+                                ? "actif, toutes les " + voteReminderService.getIntervalSeconds() + "s"
+                                : "désactivé");
+            }
+
+            if (getConfig().getBoolean("repair.enabled", true)) {
+                report.append('\n')
+                        .append(org.bukkit.ChatColor.GRAY)
+                        .append("  Réparation : ")
+                        .append(getConfig().getDouble("repair.cost", 500.0))
+                        .append(" BitBlock par objet");
+            }
+
+            report.append('\n')
+                    .append(org.bukkit.ChatColor.YELLOW)
+                    .append("  Demandent encore un redémarrage : intervalles de poll (site, streak), ")
+                    .append("boss bar XP métier, action bar BitBlock, raccommodage, ")
+                    .append("touche des succès — et tout nouveau jar du plugin.");
+
+            sender.sendMessage(report.toString());
+            return true;
+        });
     }
 }

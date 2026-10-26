@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Menu natif "eco" qui énumère automatiquement, à partir de EcoJobs/jobs/<job>.yml, ce qui
@@ -36,6 +37,9 @@ import java.util.Map;
  *   inverse un filtre" dans CLAUDE.md — cas batisseur ; soit un trigger qui ne porte pas sur des
  *   blocs, ex. catch_fish/kill/smelt/brew/enchant_item) — un slot par entrée xp-gain-methods,
  *   avec le montant d'argent retrouvé en croisant `effects[].triggers` sur le même déclencheur.
+ *   L'XP est lue dans `multiplier` ou, à défaut, dans `value` (clés alternatives de libreforge).
+ *   Une entrée peut porter une clé cosmétique `display-label` pour son titre, indispensable quand
+ *   plusieurs entrées partagent le même trigger (pêcheur : une entrée par rareté de poisson).
  */
 public final class JobBlockBreakdownMenu {
 
@@ -203,20 +207,53 @@ public final class JobBlockBreakdownMenu {
 
         for (Map<?, ?> method : config.getMapList("xp-gain-methods")) {
             Object triggerObj = method.get("trigger");
-            Object multiplierObj = method.get("multiplier");
-            if (triggerObj == null || multiplierObj == null) continue;
+            // `multiplier` (l'XP est la valeur du trigger multipliée) et `value` (l'XP est fixe,
+            // la valeur du trigger est ignorée) sont les deux clés alternatives de libreforge
+            // (com.willfp.libreforge.counters.Counters) — exclusives l'une de l'autre. Le pêcheur
+            // utilise `value` depuis le passage à une XP par palier de rareté (2026-09-15).
+            Object xpObj = method.get("multiplier") != null ? method.get("multiplier") : method.get("value");
+            if (triggerObj == null || xpObj == null) continue;
             String trigger = triggerObj.toString();
 
-            String moneyText = findMoneyForTrigger(moneyEffects, trigger, job, player);
+            String moneyText = findMoneyForTrigger(moneyEffects, trigger, method.get("filters"), job, player);
 
             Material icon = TRIGGER_ICONS.getOrDefault(trigger, Material.PAPER);
-            String title = TRIGGER_LABELS.getOrDefault(trigger, trigger);
-            entries.add(new DisplayEntry(icon, title, Double.parseDouble(multiplierObj.toString()), moneyText, null));
+            // `display-label` : clé purement cosmétique propre à ce menu, ignorée par libreforge
+            // (qui ne lit que trigger/conditions/filters/args/multiplier/value). Sert quand un
+            // métier a plusieurs entrées sur le MÊME trigger (pêcheur : une par rareté de
+            // poisson) et que le libellé générique du trigger les rendrait indistinguables.
+            Object labelObj = method.get("display-label");
+            String title = labelObj != null
+                    ? labelObj.toString()
+                    : TRIGGER_LABELS.getOrDefault(trigger, trigger);
+            entries.add(new DisplayEntry(icon, title, Double.parseDouble(xpObj.toString()), moneyText, null));
         }
         return entries;
     }
 
-    private static String findMoneyForTrigger(List<Map<?, ?>> moneyEffects, String trigger, Job job, Player player) {
+    // Un métier peut avoir PLUSIEURS effets give_money sur le même trigger, chacun filtré comme
+    // l'entrée xp-gain-methods correspondante (pêcheur : un prix par rareté de poisson depuis le
+    // 2026-09-15). Se contenter du premier effet portant le bon trigger afficherait alors le même
+    // prix sur toutes les lignes — d'où l'appariement par `filters` identiques en priorité.
+    private static String findMoneyForTrigger(List<Map<?, ?>> moneyEffects, String trigger,
+                                              Object methodFilters, Job job, Player player) {
+        if (methodFilters != null) {
+            for (Map<?, ?> effect : moneyEffects) {
+                if (!(effect.get("triggers") instanceof List<?> triggers) || !triggers.contains(trigger)) continue;
+                if (!Objects.equals(effect.get("filters"), methodFilters)) continue;
+                String text = formatMoney(effect, job, player);
+                if (text != null) return text;
+            }
+        }
+        // Repli 1 : un effet non filtré sur ce trigger vaut pour toutes les entrées (cas des
+        // métiers à un seul tarif, ex. defenseur/fondeur).
+        for (Map<?, ?> effect : moneyEffects) {
+            if (!(effect.get("triggers") instanceof List<?> triggers) || !triggers.contains(trigger)) continue;
+            if (effect.get("filters") != null) continue;
+            String text = formatMoney(effect, job, player);
+            if (text != null) return text;
+        }
+        // Repli 2 : comportement historique (premier effet du bon trigger, puis effet unique).
         for (Map<?, ?> effect : moneyEffects) {
             if (effect.get("triggers") instanceof List<?> triggers && triggers.contains(trigger)) {
                 String text = formatMoney(effect, job, player);
@@ -285,7 +322,7 @@ public final class JobBlockBreakdownMenu {
             if (meta != null) {
                 meta.setDisplayName(StringUtils.format("&#FFD94D" + entry.title(), player));
                 List<String> lore = new ArrayList<>();
-                lore.add(StringUtils.format("&7XP &8► &#2ECF7B" + entry.xp(), player));
+                lore.add(StringUtils.format("&7XP &8► &#2ECF7B" + formatXp(entry.xp()), player));
                 lore.add(StringUtils.format(
                         entry.moneyText() != null ? entry.moneyText() : "&7Argent &8► &8Aucun", player));
                 if (entry.extraLoreLine() != null) {
@@ -309,6 +346,15 @@ public final class JobBlockBreakdownMenu {
             }
             return icon;
         }).onLeftClick(onClick).build();
+    }
+
+    // Les multiplicateurs d'XP sont des doubles (0.5, 1.25...) mais la plupart des valeurs sont
+    // entières : afficher "10" plutôt que "10.0".
+    private static String formatXp(double xp) {
+        if (xp == Math.rint(xp) && !Double.isInfinite(xp)) {
+            return String.valueOf((long) xp);
+        }
+        return String.valueOf(xp);
     }
 
     private static String prettify(String id) {

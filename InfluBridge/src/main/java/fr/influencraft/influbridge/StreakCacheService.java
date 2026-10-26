@@ -33,6 +33,7 @@ public final class StreakCacheService {
     private final String apiBaseUrl;
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final Map<String, StreakData> cache = new ConcurrentHashMap<>();
+    private String lastError;
 
     public StreakCacheService(JavaPlugin plugin, String apiBaseUrl) {
         this.plugin = plugin;
@@ -46,6 +47,12 @@ public final class StreakCacheService {
     }
 
     public void refresh() {
+        // Un seul WARN par cycle (et seulement si l'erreur change), pour ne pas
+        // inonder les logs quand l'API du site est cassée : une ligne par joueur
+        // et par cycle avait produit des milliers de WARN le 2026-10-11.
+        String cycleError = null;
+        String cycleErrorDetail = null;
+        int failures = 0;
         for (Player player : Bukkit.getOnlinePlayers()) {
             String username = player.getName();
             try {
@@ -54,9 +61,19 @@ public final class StreakCacheService {
                     cache.put(username.toLowerCase(), data);
                 }
             } catch (Exception e) {
-                plugin.getLogger().warning(
-                        "Erreur pendant le rafraîchissement du streak de " + username + " : " + e.getMessage());
+                failures++;
+                if (cycleError == null) {
+                    cycleError = e.toString();
+                    cycleErrorDetail = username + " : " + cycleError;
+                }
             }
+        }
+        if (cycleError == null) {
+            lastError = null;
+        } else if (!cycleError.equals(lastError)) {
+            lastError = cycleError;
+            plugin.getLogger().warning("Erreur pendant le rafraîchissement du streak (" + failures
+                    + " joueur(s) touché(s), premier : " + cycleErrorDetail + ")");
         }
     }
 
@@ -68,8 +85,11 @@ public final class StreakCacheService {
                 .build();
 
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() == 404) {
+            return null; // joueur sans compte sur le site : normal
+        }
         if (response.statusCode() != 200) {
-            return null;
+            throw new IllegalStateException("HTTP " + response.statusCode() + " sur /api/vote/streak/" + username);
         }
 
         JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
@@ -77,7 +97,8 @@ public final class StreakCacheService {
                 json.get("current").getAsInt(),
                 json.get("best").getAsInt(),
                 json.get("tierName").getAsString(),
-                json.get("nextMilestone").getAsInt(),
+                // Optionnel : 0 = dernier palier atteint, -1 = champ absent de l'API.
+                json.has("nextMilestone") ? json.get("nextMilestone").getAsInt() : -1,
                 json.get("legendaryChancePercent").getAsDouble());
     }
 }

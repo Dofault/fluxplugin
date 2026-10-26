@@ -42,7 +42,11 @@ public final class AnvilRestrictionListener implements Listener {
         }
     }
 
-    private boolean isMarkedUnrepairable(ItemStack item) {
+    /**
+     * Exposé (statique) pour que {@link RepairMenu} refuse exactement les mêmes objets :
+     * `/repair` serait sinon une porte dérobée qui annule ce tag.
+     */
+    static boolean isMarkedUnrepairable(ItemStack item) {
         if (item == null) {
             return false;
         }

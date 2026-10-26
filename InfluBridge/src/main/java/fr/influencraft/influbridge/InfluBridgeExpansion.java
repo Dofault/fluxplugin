@@ -177,7 +177,7 @@ public final class InfluBridgeExpansion extends PlaceholderExpansion {
             case "flame_streak" -> String.valueOf(data.current());
             case "flame_best" -> String.valueOf(data.best());
             case "flame_tier" -> data.tierName();
-            case "flame_next_milestone" -> String.valueOf(data.nextMilestone());
+            case "flame_next_milestone" -> data.nextMilestone() > 0 ? String.valueOf(data.nextMilestone()) : "-";
             case "flame_legendary_chance" -> String.format("%.2f", data.legendaryChancePercent());
             default -> null;
         };
