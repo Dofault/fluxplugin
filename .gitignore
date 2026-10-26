@@ -1,0 +1,19 @@
+# Build outputs
+target/
+build/
+.gradle/
+out/
+*.class
+
+# Third-party jars used for compilation: never committed (several are paid plugins).
+# See LIBS.md for the list of jars each module expects in its libs/ folder.
+libs/*.jar
+**/libs/*.jar
+**/libs/paper-compile/
+
+# Local leftovers
+*.bak*
+.rollback*/
+.idea/
+.vscode/
+*.iml
