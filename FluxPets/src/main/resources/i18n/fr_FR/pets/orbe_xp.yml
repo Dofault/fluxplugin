@@ -1,0 +1,58 @@
+# &#37C44AOrbe d'Expérience : un des familiers livrés avec FluxPets. Grandit avec ses cartes (clic droit sur une carte).
+# Modèle : BetterModel/models/familier_orbe_xp.bbmodel, carte et peluche : pack ItemsAdder "influpet".
+
+name: '&#37C44AOrbe d''Expérience'
+description: '&#EADBC8Grandit uniquement avec ses cartes'
+entity-texture: bettermodel:familier_orbe_xp
+flying: true
+icon: itemsadder:influpet__carte_orbe_xp
+trail:
+  enabled: false
+  particle: flame
+  gap: 2
+  amount: 1
+  y-offset: 0.0
+level-xp-requirements:
+- 52
+- 69
+- 88
+- 108
+- 129
+- 151
+- 173
+- 197
+- 219
+xp-gain-methods: []
+level-placeholders:
+- id: bonus
+  value: round((1 + (%level% - 1) * 9 / 9) * 100) / 100
+effects-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Mémoire'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de ne'
+  - '  &#EADBC8pas consommer les'
+  - '  &#EADBC8niveaux en enchantant'
+rewards-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Mémoire'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de ne'
+  - '  &#EADBC8pas consommer les'
+  - '  &#EADBC8niveaux en enchantant'
+level-up-messages:
+  1:
+  - '&#6B7A8F» &#FFF4E0Mémoire'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de ne'
+  - '  &#EADBC8pas consommer les'
+  - '  &#EADBC8niveaux en enchantant'
+level-up-effects: []
+effects: []
+conditions: []
+activate-conditions: []
+spawn-egg:
+  enabled: false
+  item: paper
+  name: '&#37C44AOrbe d''Expérience'
+  lore: []
+  craftable: false
+  recipe: []
+  withdrawable: false

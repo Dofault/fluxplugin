@@ -1,0 +1,90 @@
+# Poppy: one of the default FluxPets pets. Grows with its cards (right-click a card).
+# Model: BetterModel/models/familier_coquelicot.bbmodel, card and plush: ItemsAdder pack "influpet".
+
+name: '&#AAAAAAPoppy'
+description: '&#EADBC8Only grows with its cards'
+entity-texture: bettermodel:familier_coquelicot
+flying: false
+icon: itemsadder:influpet__carte_coquelicot
+trail:
+  enabled: false
+  particle: flame
+  gap: 2
+  amount: 1
+  y-offset: 0.0
+level-xp-requirements:
+- 34
+- 45
+- 57
+- 70
+- 84
+- 99
+- 113
+- 129
+- 145
+xp-gain-methods: []
+level-placeholders:
+- id: bonus
+  value: round((10 + (%level% - 1) * 90 / 9) * 100) / 100
+effects-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Pollen'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance of an experience'
+  - '  &#EADBC8point per flower picked'
+rewards-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Pollen'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance of an experience'
+  - '  &#EADBC8point per flower picked'
+level-up-messages:
+  1:
+  - '&#6B7A8F» &#FFF4E0Pollen'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance of an experience'
+  - '  &#EADBC8point per flower picked'
+level-up-effects: []
+effects:
+- effects:
+  - id: give_xp
+    args:
+      amount: 1
+  args:
+    chance: 10 + (%level% - 1) * 90 / 9
+  triggers:
+  - mine_block
+  filters:
+    blocks:
+    - dandelion
+    - poppy
+    - blue_orchid
+    - allium
+    - azure_bluet
+    - red_tulip
+    - orange_tulip
+    - white_tulip
+    - pink_tulip
+    - oxeye_daisy
+    - cornflower
+    - lily_of_the_valley
+    - torchflower
+    - wither_rose
+    - sunflower
+    - lilac
+    - rose_bush
+    - peony
+    - pink_petals
+    - wildflowers
+    - cactus_flower
+    - open_eyeblossom
+    - closed_eyeblossom
+    - pitcher_plant
+    player_placed: false
+conditions: []
+activate-conditions: []
+spawn-egg:
+  enabled: false
+  item: paper
+  name: '&#AAAAAAPoppy'
+  lore: []
+  craftable: false
+  recipe: []
+  withdrawable: false

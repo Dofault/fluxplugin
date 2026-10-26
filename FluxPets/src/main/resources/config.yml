@@ -1,0 +1,136 @@
+# FluxPets: pets, collectible cards and boosters. Settings only:
+#   lang/<language>.yml    every text shown to players
+#   menus/                 pet menus (/pets and level progression)
+#   content/               cards, boosters and obtainable pets (also edited with /influpet menu)
+#   pets/<id>.yml          each pet's definition (levels, libreforge effects, model)
+#   effects.yml            pet effects coded in the plugin
+# Reloaded with /influpet reload.
+
+# Text file: lang/<language>.yml (en_US and fr_FR are included)
+language: en_US
+
+# Reveal: one totem animation per distinct card (from the most common to the rarest). Right-clicking during
+# the reveal skips it (cards given at once) and, with a booster in hand, opens the next one.
+reveal:
+  start-delay-ticks: 10
+  actionbar-delay-ticks: 2    # almost at the same time as the totem animation
+  delay-ticks: 39             # time between two totem animations (the card back is added before)
+  subtitle-min-count: 1       # amount shown from this number of copies
+  fade-in: 2
+  stay: 22
+  fade-out: 6
+  # opening: booster image alone for booster-ticks, then the back of the first card
+  booster-ticks: 20
+  # card back shown back-ticks before each flip (0 = disabled), then back-overlap-ticks more over the start
+  # of the totem animation
+  back-ticks: 4
+  back-overlap-ticks: 3
+  # booster opened during a reveal or less than spam-window-ticks after the previous one: no animation
+  spam-window-ticks: 20
+  sound-finish: "block.amethyst_block.resonate"
+
+# Newly adopted pet: pause, title + sound, 3D model facing the player, particle spiral in the rarity color,
+# chat announcement for the listed rarities.
+pet-reveal:
+  duration-ticks: 160
+  model-ticks: 240    # how long the model stays (visible within 64 blocks), longer than the pause
+  title-ticks: 50
+  sound: "ui.toast.challenge_complete"
+  animation: "happy"
+  distance: 2.5
+  broadcast-rarities:   # announced to the whole server
+    - ultimate
+    - legendary
+    - fabled
+
+# Rarities, from the most common to the rarest (reveal order). The tag is shown in front of card names; it can be
+# an ItemsAdder glyph such as "&r&f%img_<id>%".
+rarities:
+  simple:
+    tag: "&#AAAAAAꜱɪᴍᴘʟᴇ"
+    color: '#AAAAAA'
+  unique:
+    tag: "&#37C44Aᴜɴɪǫᴜᴇ"
+    color: '#37C44A'
+  elite:
+    tag: "&#3283A8ᴇʟɪᴛᴇ"
+    color: '#3283A8'
+  ultimate:
+    tag: "&#B376E5ᴜʟᴛɪᴍᴀᴛᴇ"
+    color: '#B376E5'
+  legendary:
+    tag: "&#F0A800ʟᴇɢᴇɴᴅᴀʀʏ"
+    color: '#F0A800'
+  fabled:
+    tag: "&#C8256Aꜰᴀʙʟᴇᴅ"
+    color: '#C8256A'
+
+# Pet drawn from a booster while already adopted: reroll (never drawn) or xp (duplicate-xp given, plus
+# duplicate-card cards of that pet).
+pets:
+  duplicate: xp
+  duplicate-xp: 0
+  duplicate-card: 1
+
+# Pet system
+pet-settings:
+  # /pets without arguments: console command that opens the pets menu (%player% = player name). The plugin
+  # ships no player menu: build it with a menu plugin from the %influpet_view_...%, %influpet_slot_...% and
+  # %influpet_selected_...% placeholders, its buttons calling /pets toggle|filter|page|select|view|visibility.
+  menu-command: ""
+  # pets per page of %influpet_view_<n>% (the menu's grid)
+  view-page-size: 21
+  # save locally even if eco uses a database (no sync between servers); only change with the server stopped
+  local-storage: false
+  # put away an active pet whose activate-conditions are no longer met
+  deactivate-on-failed-conditions: true
+  # mounts: nothing can be ridden while false, even a "mountable: true" pet
+  mounts:
+    enabled: false
+  # pets active at the same time (their effects add up): default without permission, otherwise the highest
+  # influpet.pets.max.<n> permission, never more than maximum
+  active-pets:
+    default: 1
+    maximum: 5
+  pet-entity:
+    enabled: true
+    show-hologram: true
+  level-up:
+    message:
+      enabled: true
+    sound:
+      enabled: true
+      sound: entity_player_levelup
+      pitch: 1.3
+      volume: 0.8
+      category: PLAYER
+  # Pet XP multiplier by permission: influpet.xpmultiplier.double / triple / quadruple / 50percent, or
+  # influpet.xpmultiplier.<percentage>. Does not apply to cards.
+
+# 3D model of the pet following the player (BetterModel). Distances in blocks. Between min-distance and
+# max-distance it stays still and looks at the player; it only moves when leaving that zone.
+pet-follow:
+  height: 0.9            # height above the player's feet (flying pets)
+  min-distance: 1.5      # too close: it steps back a little
+  max-distance: 4.0      # too far: it comes back to the player
+  teleport-distance: 16  # beyond that, it reappears next to the player
+  smoothing: 0.18        # higher = it speeds up faster towards its spot
+  min-speed: 0.45        # max speed per tick when catching up (at least; otherwise 1.3 x the player's)
+  bob-amplitude: 0.06    # flying pets' floating amplitude
+  name-height: 1.3       # name height above the model
+  # several active pets: they walk in a queue behind the first one, each between these gaps from the previous one
+  queue-gap-min: 1.2
+  queue-gap-max: 2.2
+
+# One-time career catch-up (EcoJobs). Career boosters are given by EcoJobs itself on each level-up
+# (level-up-effects: run_command "influpet give %player% booster <booster> 1"); EcoJobs never replays a level
+# already reached, so on their first join after this is enabled, players get once the boosters of the levels
+# they already passed: (level - 1) x boosters-per-level per job. What does not fit stays pending (never
+# dropped): reminder every reminder-seconds, /catchup (alias /rattrapage) gives what fits.
+career-catch-up:
+  enabled: false
+  boosters-per-level: 1
+  # rappel de /boosters tant que des boosters attendent (0 : seulement à la connexion)
+  reminder-seconds: 240
+  # EcoJobs job id: booster id
+  jobs: {}

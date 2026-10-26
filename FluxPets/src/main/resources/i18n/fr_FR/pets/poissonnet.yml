@@ -1,0 +1,67 @@
+# &#AAAAAAPoissonnet : un des familiers livrés avec FluxPets. Grandit avec ses cartes (clic droit sur une carte).
+# Modèle : BetterModel/models/familier_poissonnet.bbmodel, carte et peluche : pack ItemsAdder "influpet".
+
+name: '&#AAAAAAPoissonnet'
+description: '&#EADBC8Grandit uniquement avec ses cartes'
+entity-texture: bettermodel:familier_poissonnet
+icon: itemsadder:influpet__carte_poissonnet
+flying: true
+trail:
+  enabled: false
+  particle: flame
+  gap: 2
+  amount: 1
+  y-offset: 0.0
+level-xp-requirements:
+- 34
+- 45
+- 57
+- 70
+- 84
+- 99
+- 113
+- 129
+- 145
+xp-gain-methods: []
+level-placeholders:
+- id: bonus
+  value: round((1 + (%level% - 1) * 9 / 9) * 100) / 100
+effects-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Belle prise'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de pêcher'
+  - '  &#EADBC8un poisson en plus'
+rewards-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Belle prise'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de pêcher'
+  - '  &#EADBC8un poisson en plus'
+level-up-messages:
+  1:
+  - '&#6B7A8F» &#FFF4E0Belle prise'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de pêcher'
+  - '  &#EADBC8un poisson en plus'
+level-up-effects: []
+effects:
+- effects:
+  - id: drop_random_item
+    args:
+      items:
+      - cod
+      - salmon
+    mutators:
+    - id: location_to_player
+  args:
+    chance: 1 + (%level% - 1) * 9 / 9
+  triggers:
+  - catch_fish
+conditions: []
+activate-conditions: []
+spawn-egg:
+  enabled: false
+  item: paper
+  name: '&#AAAAAAPoissonnet'
+  lore: []
+  craftable: false
+  recipe: []
+  withdrawable: false

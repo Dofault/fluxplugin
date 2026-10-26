@@ -1,0 +1,8 @@
+# Flux : réglages généraux. Les menus vivent dans menus/*.yml (un fichier = un menu,
+# son identifiant est le nom du fichier sans .yml, sous-dossiers acceptés).
+
+# Délai minimal entre deux clics pris en compte, en ticks (anti double clic / spam).
+click-cooldown: 4
+
+# Préfixe des messages d'administration (/fluxmenu).
+prefix: "&#FFD94D&lFlux &8► "

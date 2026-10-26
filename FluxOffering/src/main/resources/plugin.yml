@@ -1,0 +1,24 @@
+name: FluxOffering
+version: 26.2
+main: fr.influencraft.fluxoffering.FluxOfferingPlugin
+api-version: "26.2"
+authors: [Dofault, Entr0pik]
+description: "Generic per-player item collections (\"offrandes\"), tracked and saved, exposed via PlaceholderAPI. No rankup/reward logic - that's wired up externally with the placeholders."
+
+softdepend: [PlaceholderAPI, ItemsAdder, Vault]
+
+commands:
+  offrande:
+    description: "Ouvre la liste des offrandes, ou une offrande precise."
+    usage: "/offrande [collection]"
+  influoffrande:
+    description: "Commandes d'administration d'FluxOffering : create, remove, rename, permission, reset, set, check, reload."
+    usage: "/influoffrande <create|remove|rename|permission|reset|set|check|reload> ..."
+
+permissions:
+  offrandes.use:
+    description: "Permet d'utiliser /offrande (voir la liste et deposer des items)"
+    default: true
+  offrandes.admin:
+    description: "Permet les sous-commandes admin (reset/set/check/reload) et l'editeur de collection en jeu, en plus de contourner toute permission de collection"
+    default: op

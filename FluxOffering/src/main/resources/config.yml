@@ -1,0 +1,96 @@
+# FluxOffering — configuration generale.
+# Les collections (quels items, quelles quantites, quelle permission) vivent dans
+# collections.yml, pas ici : ce fichier est volontairement epargne par l'editeur en jeu
+# (clic sur le bouton d'edition dans /offrande <collection>) pour ne jamais perdre
+# ces commentaires.
+#
+# Textes joueur (messages de tchat, noms/lore des items de menu) : voir messages.yml.
+
+settings:
+  # Un item renomme (enclume) est-il accepte en depot ?
+  accept-renamed-items: false
+  # Un outil/armure use (durabilite entamee) est-il accepte en depot ?
+  # false = seuls les objets a pleine durabilite comptent.
+  accept-damaged-tools: false
+  # A quelle frequence (en minutes) le plugin sauvegarde en tache de fond les joueurs
+  # en ligne dont la progression a change. Independant de la sauvegarde immediate a
+  # chaque depot et a l'arret du serveur (celles-ci ont toujours lieu).
+  autosave-interval-minutes: 5
+
+storage:
+  # Seul 'yaml' est implemente : un fichier par joueur sous plugins/FluxOffering/data/.
+  # Un fichier pese quelques centaines d'octets et n'est ecrit qu'au depot/edition admin
+  # (jamais en boucle), donc largement suffisant meme avec un millier de joueurs.
+  type: yaml
+
+gui:
+  # Taille de l'inventaire (multiple de 9, entre 9 et 54).
+  size: 54
+  # Emplacements ou sont affiches les items demandes par une collection (3 lignes de 7).
+  # Quand l'offrande demande de l'argent (money > 0 dans collections.yml), la 1ere case
+  # de cette liste (slot 10) est reservee a l'argent, uniquement sur la 1ere page : les
+  # items commencent alors a la case suivante sur cette page-la, et occupent les 21
+  # cases en entier sur les pages suivantes. En mode edition, cette 1ere case (page 1
+  # uniquement) est toujours reservee a l'argent (meme a 0), pour porter le bouton
+  # "modifier l'argent demande".
+  item-slots: [10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34]
+  nav-previous-slot: 45
+  nav-next-slot: 53
+  filter-slot: 49
+  editor-toggle-slot: 0
+  # Bouton "Tout deposer" : depose d'un coup tout ce qui peut l'etre, sur tous les items
+  # de la collection (masque en mode edition et une fois la collection completee).
+  deposit-all-slot: 40
+
+  # Sons (cle vanilla, avec ou sans le prefixe "minecraft:").
+  open-sound: "minecraft:item.book.page_turn"
+  deposit-sound: "minecraft:entity.experience_orb.pickup"
+  error-sound: "minecraft:entity.villager.no"
+  # Joue en plus du son de depot, uniquement au moment ou l'offrande passe a 100%.
+  collection-complete-sound: "minecraft:entity.player.levelup"
+  # Joue quand le joueur demande le lien wiki d'un objet qu'il n'a pas (cf. section wiki).
+  wiki-sound: "minecraft:item.book.page_turn"
+
+  # Materiaux des boutons de controle : un id ItemsAdder ("namespace:id") ou un materiau
+  # vanilla. Retombe automatiquement sur une fleche/un materiau vanilla si ItemsAdder
+  # n'est pas installe ou que l'id n'existe pas.
+  materials:
+    nav-prev: "influitems:btn_prev"
+    nav-next: "influitems:btn_next"
+    filter: "influitems:filter"
+    editor-open: "ANVIL"
+    editor-close: "BARRIER"
+    deposit-all: "CHEST"
+    # Icone de la case argent (slot 10). Id ItemsAdder "namespace:id" (l'item
+    # influitems:bitblock existe deja, meme texture que le glyphe %img_bitblock%) ou
+    # materiau vanilla si ItemsAdder n'est pas installe.
+    money: "influitems:bitblock"
+    # Bouton retour vers /menu, affiche a la place de la fleche "page precedente"
+    # quand on est sur la 1ere page (slot nav-previous-slot).
+    back: "influitems:btn_back"
+
+  # {displayname} est remplace par le champ "displayname" de la collection (collections.yml).
+  collection-title-format: "{displayname}"
+  editor-title-format: "&#FF5C5C[Editeur] &#FFD94D{displayname}"
+
+# Lien wiki propose au joueur qui n'a aucun exemplaire d'un objet demande : dans ce cas
+# aucun depot n'est possible, la case affiche donc "Voir le wiki de l'objet" et le clic
+# gauche envoie le lien dans le tchat (gabarit encadre : messages.yml -> gui.wiki-link).
+wiki:
+  enabled: true
+  # {title} = titre de la page wiki, derive automatiquement de l'id vanilla de l'objet
+  # (ROTTEN_FLESH -> "Rotten Flesh", enchant:bane_of_arthropods -> "Bane of Arthropods").
+  # fr.minecraft.wiki garde des redirections depuis les titres anglais vers ses articles
+  # francais ("Stone" -> "Roche", "Rotten Flesh" -> "Chair putrefiee"), donc rien a
+  # maintenir ici quand un objet est ajoute a une offrande : ca marche tout seul.
+  url-format: "https://fr.minecraft.wiki/w/{title}"
+  # Les seuls objets dont le titre de page ne se deduit pas de leur id. Verifies le
+  # 2026-09-20 sur fr.minecraft.wiki (les 153 autres objets des offrandes se resolvent
+  # sans exception). Une cle absente d'ici et sans page (item ItemsAdder, poisson
+  # CustomFishing) n'affiche simplement pas le bouton.
+  titles:
+    AMETHYST_BLOCK: "Block of Amethyst"
+    BEEF: "Raw Beef"
+    PORKCHOP: "Raw Porkchop"
+    SLIME_BALL: "Slimeball"
+    DRAGON_BREATH: "Dragon's Breath"

@@ -1,0 +1,84 @@
+# Nugget: one of the default FluxPets pets. Grows with its cards (right-click a card).
+# Model: BetterModel/models/familier_pepite.bbmodel, card and plush: ItemsAdder pack "influpet".
+
+name: '&#AAAAAANugget'
+description: '&#EADBC8Only grows with its cards'
+entity-texture: bettermodel:familier_pepite
+flying: false
+icon: itemsadder:influpet__carte_pepite
+trail:
+  enabled: false
+  particle: flame
+  gap: 2
+  amount: 1
+  y-offset: 0.0
+level-xp-requirements:
+- 34
+- 45
+- 57
+- 70
+- 84
+- 99
+- 113
+- 129
+- 145
+xp-gain-methods: []
+level-placeholders:
+- id: bonus
+  value: round((10 + (%level% - 1) * 90 / 9) * 100) / 100
+effects-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Nuggets'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance of an extra nugget'
+  - '  &#EADBC8when mining iron or gold'
+rewards-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Nuggets'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance of an extra nugget'
+  - '  &#EADBC8when mining iron or gold'
+level-up-messages:
+  1:
+  - '&#6B7A8F» &#FFF4E0Nuggets'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance of an extra nugget'
+  - '  &#EADBC8when mining iron or gold'
+level-up-effects: []
+effects:
+- effects:
+  - id: drop_item
+    args:
+      item: iron_nugget
+      add_to_drops: true
+  args:
+    chance: 10 + (%level% - 1) * 90 / 9
+  triggers:
+  - block_item_drop
+  filters:
+    blocks:
+    - iron_ore
+    - deepslate_iron_ore
+    player_placed: false
+- effects:
+  - id: drop_item
+    args:
+      item: gold_nugget
+      add_to_drops: true
+  args:
+    chance: 10 + (%level% - 1) * 90 / 9
+  triggers:
+  - block_item_drop
+  filters:
+    blocks:
+    - gold_ore
+    - deepslate_gold_ore
+    - nether_gold_ore
+    player_placed: false
+conditions: []
+activate-conditions: []
+spawn-egg:
+  enabled: false
+  item: paper
+  name: '&#AAAAAANugget'
+  lore: []
+  craftable: false
+  recipe: []
+  withdrawable: false

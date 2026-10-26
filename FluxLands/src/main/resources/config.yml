@@ -1,0 +1,107 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# FluxLands : extension de Lands qui relie les villes, les warps
+# (InfluPW), les échoppes (InfluEchoppe) et les parcelles à louer (Agence). Les menus sont des menus Flux
+# (menus/ville*.yml, warps.yml, echoppes.yml, agence.yml) qui lisent les placeholders
+# %influlands_...% et appellent /influlands pour naviguer.
+# Doc : docs/technique/influlands.md
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Droit de place : part de chaque transaction d'échoppe (vente ou rachat)
+# reversée à la banque de la ville où se trouve l'échoppe.
+droit-de-place:
+  # Interrupteur général (false = aucune retenue, les menus affichent 0 %).
+  actif: true
+  # Taux d'une ville qui n'a jamais réglé le sien, en pourcentage.
+  taux-defaut: 5.0
+  # Bornes du taux réglable par le maire depuis le menu Commerce.
+  taux-min: 0.0
+  taux-max: 15.0
+  # Pas des boutons + / - du menu Commerce (clic gauche), en points de %.
+  pas: 0.5
+  # Pas des boutons avec maj + clic.
+  pas-rapide: 2.5
+  # Types de villes Lands qui perçoivent le droit : LAND (ville de joueurs),
+  # ADMIN (ville d'administration, ex : Utopia), CAMP. Les échoppes situées
+  # hors de ces villes ne paient rien.
+  types-de-ville: [LAND]
+  # Les échoppes illimitées (admin) ne paient jamais.
+  ignorer-echoppes-illimitees: true
+  # Qui paie : toujours le propriétaire de l'échoppe (il commerce dans la
+  # ville). Sur une vente il reverse une part de sa recette ; sur un rachat la
+  # part s'ajoute à ce qu'il paie, et la transaction est refusée s'il ne peut
+  # pas couvrir les deux.
+  # Le propriétaire de la ville (maire) est-il exempté dans sa propre ville ?
+  exempter-maire: false
+  # Résumé envoyé au propriétaire d'échoppe et au maire, en secondes
+  # (regroupe les retenues pour ne pas inonder le tchat). 0 = un message par
+  # transaction.
+  resume-secondes: 60
+
+# Ménage des échoppes : qui, dans une ville, peut casser l'échoppe d'un autre
+# joueur (échoppes abandonnées). Le contenu du coffre tombe au sol, les deux
+# joueurs sont prévenus et la console garde une trace.
+echoppes:
+  # maire : le maire seulement.
+  # droit-de-casser : le maire, plus quiconque a le droit Casser de Lands à
+  #   l'endroit de l'échoppe (mêmes règles que pour un coffre ordinaire).
+  # non : seul le propriétaire (et le staff) peut casser son échoppe.
+  # Sur une parcelle louée ou vendue au propriétaire de l'échoppe, le maire
+  # n'a pas de passe-droit tant que le contrat court.
+  menage: droit-de-casser
+
+# Warps (InfluPW) épinglés par le maire sur la fiche de sa ville.
+vitrine:
+  max-adresses: 3
+
+# Index des échoppes et warps (ville de chacun), recalculé en tâche de
+# fond toutes les N secondes. Une échoppe créée apparaît au plus tard après ce
+# délai.
+index-secondes: 30
+
+# Taille des pages des listes (grille 7 x 3 des menus).
+taille-page: 21
+
+# Sauvegarde du registre (taux, vitrines, recettes), en minutes.
+sauvegarde-minutes: 5
+
+# Nombre de jours de recettes gardés pour le graphique du menu Commerce.
+jours-historique: 14
+
+# Menus Flux ouverts par le plugin (id = nom du fichier dans menus/).
+menus:
+  ville: ville
+  accueil: ville_accueil
+  fiche: ville_fiche
+  annuaire: villes
+  warps: warps
+  echoppes: echoppes
+  habitants: ville_habitants
+  commerce: ville_commerce
+  banque: ville_banque
+  reglages: ville_reglages
+  parcelles: ville_parcelles
+  parcelle: ville_parcelle
+  annonce: ville_annonce
+  roles: ville_roles
+  droits: ville_droits
+  parametres: ville_parametres
+  agence: agence
+  territoires: territoires
+  pays: pays
+  pays_accueil: pays_accueil
+  pays_fiche: pays_fiche
+  pays_annuaire: pays_annuaire
+  pays_villes: pays_villes
+
+# Remplacement des menus natifs de Lands par ceux d'FluxLands : /lands, /v,
+# /ville (et leur sous-commande menu) ouvrent Ma ville, bank la Banque,
+# rental list l'Agence, area les Parcelles. Les autres sous-commandes de Lands
+# ne changent pas. Le bouton « Menu complet » des Réglages ouvre toujours le
+# menu natif.
+menus-lands:
+  remplacer: true
+  # Commandes considérées comme Lands (alias de config.yml de Lands > alias).
+  alias: [lands, v, ville, villes]
+  # Commandes considérées comme les pays de Lands (/nations et ses alias) :
+  # seules ou avec menu, elles ouvrent Mon pays.
+  alias-pays: [nations, n]

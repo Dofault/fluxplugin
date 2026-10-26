@@ -1,0 +1,61 @@
+# &#3283A8Fournaise : un des familiers livrés avec FluxPets. Grandit avec ses cartes (clic droit sur une carte).
+# Modèle : BetterModel/models/familier_fournaise.bbmodel, carte et peluche : pack ItemsAdder "influpet".
+
+name: '&#3283A8Fournaise'
+description: '&#EADBC8Grandit uniquement avec ses cartes'
+entity-texture: bettermodel:familier_fournaise
+flying: false
+icon: itemsadder:influpet__carte_fournaise
+trail:
+  enabled: false
+  particle: flame
+  gap: 2
+  amount: 1
+  y-offset: 0.0
+level-xp-requirements:
+- 32
+- 42
+- 53
+- 65
+- 78
+- 91
+- 105
+- 119
+- 135
+xp-gain-methods: []
+level-placeholders:
+- id: bonus
+  value: round((10 + (%level% - 1) * 90 / 9) * 100) / 100
+effects-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Livraison'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance qu''un objet'
+  - '  &#EADBC8cuit arrive directement'
+  - '  &#EADBC8dans ton inventaire'
+  - '  &#EADBC8Fours que tu remplis, à 16 blocs au plus'
+rewards-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Livraison'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance qu''un objet'
+  - '  &#EADBC8cuit arrive directement'
+  - '  &#EADBC8dans ton inventaire'
+  - '  &#EADBC8Fours que tu remplis, à 16 blocs au plus'
+level-up-messages:
+  1:
+  - '&#6B7A8F» &#FFF4E0Livraison'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance qu''un objet'
+  - '  &#EADBC8cuit arrive directement'
+  - '  &#EADBC8dans ton inventaire'
+  - '  &#EADBC8Fours que tu remplis, à 16 blocs au plus'
+level-up-effects: []
+effects: []
+conditions: []
+activate-conditions: []
+spawn-egg:
+  enabled: false
+  item: paper
+  name: '&#3283A8Fournaise'
+  lore: []
+  craftable: false
+  recipe: []
+  withdrawable: false

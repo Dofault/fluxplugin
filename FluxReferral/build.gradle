@@ -1,0 +1,52 @@
+plugins {
+    id 'java'
+    // Shadow (GradleUp, ASM récent : lit les classes Java 25)
+    id 'com.gradleup.shadow' version '9.3.0'
+}
+
+group = 'fr.influencraft'
+version = '26.2'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.papermc.io/repository/maven-public/' }
+    maven { url 'https://repo.extendedclip.com/content/repositories/placeholderapi/' }
+}
+
+dependencies {
+    // Paper API de compilation : 26.2 = version du serveur, les jars restent compatibles 26.3
+    // (gradle build -PpaperApi=26.3.build.200-stable pour le vérifier)
+    compileOnly "io.papermc.paper:paper-api:${findProperty('paperApi') ?: '26.2.build.124-stable'}"
+    compileOnly 'me.clip:placeholderapi:2.11.6'
+
+    // HikariCP shadé dans le jar — aucune dépendance côté serveur
+    implementation 'com.zaxxer:HikariCP:5.1.0'
+    // Pilote MySQL requis au runtime
+    implementation 'com.mysql:mysql-connector-j:8.4.0'
+    // Pilote SQLite — fallback local si MySQL/MariaDB est injoignable (ex : environnement de test sans base)
+    implementation 'org.xerial:sqlite-jdbc:3.46.1.3'
+}
+
+processResources {
+    filteringCharset = 'UTF-8'
+}
+
+shadowJar {
+    archiveClassifier.set('')
+    relocate 'com.zaxxer.hikari', 'fr.influencraft.fluxreferral.libs.hikari'
+    relocate 'com.mysql', 'fr.influencraft.fluxreferral.libs.mysql'
+    relocate 'org.sqlite', 'fr.influencraft.fluxreferral.libs.sqlite'
+    minimize {
+        // Conserver les classes des pilotes MySQL et SQLite (chargées par réflexion par HikariCP)
+        exclude(dependency('com.mysql:mysql-connector-j'))
+        exclude(dependency('org.xerial:sqlite-jdbc'))
+    }
+}
+
+build.dependsOn shadowJar

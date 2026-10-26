@@ -1,0 +1,66 @@
+# Carroty: one of the default FluxPets pets. Grows with its cards (right-click a card).
+# Model: BetterModel/models/familier_carottin.bbmodel, card and plush: ItemsAdder pack "influpet".
+
+name: '&#37C44ACarroty'
+description: '&#EADBC8Only grows with its cards'
+entity-texture: bettermodel:familier_carottin
+flying: false
+icon: itemsadder:influpet__carte_carottin
+trail:
+  enabled: false
+  particle: flame
+  gap: 2
+  amount: 1
+  y-offset: 0.0
+level-xp-requirements:
+- 52
+- 69
+- 88
+- 108
+- 129
+- 151
+- 173
+- 197
+- 219
+xp-gain-methods: []
+level-placeholders:
+- id: bonus
+  value: round((0.25 + (%level% - 1) * 0.75 / 9) * 100) / 100
+effects-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Hoe Reach&#EADBC8: +&#FFF4E0%bonus%&#EADBC8 block'
+  - '  &#EADBC8Hoe in hand'
+rewards-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Hoe Reach&#EADBC8: +&#FFF4E0%bonus%&#EADBC8 block'
+  - '  &#EADBC8Hoe in hand'
+level-up-messages:
+  1:
+  - '&#6B7A8F» &#FFF4E0Hoe Reach&#EADBC8: +&#FFF4E0%bonus%&#EADBC8 block'
+  - '  &#EADBC8Hoe in hand'
+level-up-effects: []
+effects:
+- id: block_reach
+  args:
+    reach: 0.25 + (%level% - 1) * 0.75 / 9
+  conditions:
+  - id: in_mainhand
+    args:
+      items:
+      - wooden_hoe
+      - stone_hoe
+      - copper_hoe
+      - iron_hoe
+      - golden_hoe
+      - diamond_hoe
+      - netherite_hoe
+conditions: []
+activate-conditions: []
+spawn-egg:
+  enabled: false
+  item: paper
+  name: '&#37C44ACarroty'
+  lore: []
+  craftable: false
+  recipe: []
+  withdrawable: false

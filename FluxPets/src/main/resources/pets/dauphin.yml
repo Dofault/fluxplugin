@@ -1,0 +1,71 @@
+# Dolphin: one of the default FluxPets pets. Grows with its cards (right-click a card).
+# Model: BetterModel/models/familier_dauphin.bbmodel, card and plush: ItemsAdder pack "influpet".
+
+name: '&#3283A8Dolphin'
+description: '&#EADBC8Only grows with its cards'
+entity-texture: bettermodel:familier_dauphin
+flying: true
+icon: itemsadder:influpet__carte_dauphin
+trail:
+  enabled: false
+  particle: flame
+  gap: 2
+  amount: 1
+  y-offset: 0.0
+level-xp-requirements:
+- 32
+- 42
+- 53
+- 65
+- 78
+- 91
+- 105
+- 119
+- 135
+xp-gain-methods: []
+level-placeholders:
+- id: bonus
+  value: round((0.5 + (%level% - 1) * 4.5 / 9) * 10) / 10
+effects-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Dolphin Swim'
+  - '  &#EADBC8Dolphin''s Grace for &#FFF4E0%bonus%'
+  - '  &#FFF4E0s&#EADBC8 when you start swimming'
+  - '  &#EADBC8Once every 30 s'
+rewards-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Dolphin Swim'
+  - '  &#EADBC8Dolphin''s Grace for &#FFF4E0%bonus%'
+  - '  &#FFF4E0s&#EADBC8 when you start swimming'
+  - '  &#EADBC8Once every 30 s'
+level-up-messages:
+  1:
+  - '&#6B7A8F» &#FFF4E0Dolphin Swim'
+  - '  &#EADBC8Dolphin''s Grace for &#FFF4E0%bonus%'
+  - '  &#FFF4E0s&#EADBC8 when you start swimming'
+  - '  &#EADBC8Once every 30 s'
+level-up-effects: []
+effects:
+- effects:
+  - id: potion_effect
+    args:
+      effect: dolphins_grace
+      level: 1
+      duration: 10 + (%level% - 1) * 90 / 9
+      apply_to_player: true
+      particles: false
+  args:
+    cooldown: 30
+    send_cooldown_message: false
+  triggers:
+  - start_swimming
+conditions: []
+activate-conditions: []
+spawn-egg:
+  enabled: false
+  item: paper
+  name: '&#3283A8Dolphin'
+  lore: []
+  craftable: false
+  recipe: []
+  withdrawable: false

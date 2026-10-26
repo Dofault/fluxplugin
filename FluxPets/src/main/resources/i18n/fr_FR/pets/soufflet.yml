@@ -1,0 +1,55 @@
+# &#AAAAAASoufflet : un des familiers livrés avec FluxPets. Grandit avec ses cartes (clic droit sur une carte).
+# Modèle : BetterModel/models/familier_soufflet.bbmodel, carte et peluche : pack ItemsAdder "influpet".
+
+name: '&#AAAAAASoufflet'
+description: '&#EADBC8Grandit uniquement avec ses cartes'
+entity-texture: bettermodel:familier_soufflet
+flying: false
+icon: itemsadder:influpet__carte_soufflet
+trail:
+  enabled: false
+  particle: flame
+  gap: 2
+  amount: 1
+  y-offset: 0.0
+level-xp-requirements:
+- 34
+- 45
+- 57
+- 70
+- 84
+- 99
+- 113
+- 129
+- 145
+xp-gain-methods: []
+level-placeholders:
+- id: bonus
+  value: round((10 + (%level% - 1) * 90 / 9) * 100) / 100
+effects-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Feu vif'
+  - '  &#EADBC8Cuisson +&#FFF4E0%bonus%%&#EADBC8 plus rapide'
+  - '  &#EADBC8dans les fours que tu remplis'
+rewards-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Feu vif'
+  - '  &#EADBC8Cuisson +&#FFF4E0%bonus%%&#EADBC8 plus rapide'
+  - '  &#EADBC8dans les fours que tu remplis'
+level-up-messages:
+  1:
+  - '&#6B7A8F» &#FFF4E0Feu vif'
+  - '  &#EADBC8Cuisson +&#FFF4E0%bonus%%&#EADBC8 plus rapide'
+  - '  &#EADBC8dans les fours que tu remplis'
+level-up-effects: []
+effects: []
+conditions: []
+activate-conditions: []
+spawn-egg:
+  enabled: false
+  item: paper
+  name: '&#AAAAAASoufflet'
+  lore: []
+  craftable: false
+  recipe: []
+  withdrawable: false

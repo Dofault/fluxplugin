@@ -1,0 +1,58 @@
+# Acorn: one of the default FluxPets pets. Grows with its cards (right-click a card).
+# Model: BetterModel/models/familier_gland.bbmodel, card and plush: ItemsAdder pack "influpet".
+
+name: '&#3283A8Acorn'
+description: '&#EADBC8Only grows with its cards'
+entity-texture: bettermodel:familier_gland
+flying: false
+icon: itemsadder:influpet__carte_gland
+trail:
+  enabled: false
+  particle: flame
+  gap: 2
+  amount: 1
+  y-offset: 0.0
+level-xp-requirements:
+- 32
+- 42
+- 53
+- 65
+- 78
+- 91
+- 105
+- 119
+- 135
+xp-gain-methods: []
+level-placeholders:
+- id: bonus
+  value: round((10 + (%level% - 1) * 90 / 9) * 100) / 100
+effects-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Sudden Growth'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a'
+  - '  &#EADBC8sapling becomes a tree'
+  - '  &#EADBC8with a single bone meal'
+rewards-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Sudden Growth'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a'
+  - '  &#EADBC8sapling becomes a tree'
+  - '  &#EADBC8with a single bone meal'
+level-up-messages:
+  1:
+  - '&#6B7A8F» &#FFF4E0Sudden Growth'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a'
+  - '  &#EADBC8sapling becomes a tree'
+  - '  &#EADBC8with a single bone meal'
+level-up-effects: []
+effects: []
+conditions: []
+activate-conditions: []
+spawn-egg:
+  enabled: false
+  item: paper
+  name: '&#3283A8Acorn'
+  lore: []
+  craftable: false
+  recipe: []
+  withdrawable: false

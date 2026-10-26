@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Aggregator of the Flux suite. Each module keeps its own standalone pom; building from here
+  resolves the dependencies between Flux modules (e.g. FluxAuctionHouse needs Flux and FluxLands)
+  without copying their jars around. FluxReferral builds with Gradle (see its folder).
+
+  mvn -o package          all modules, jars in <module>/target/
+  mvn -o package -pl Flux,FluxTools -am
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>fr.influencraft</groupId>
+    <artifactId>flux-suite</artifactId>
+    <version>1</version>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>Flux</module>
+        <module>FluxTools</module>
+        <module>FluxCasino</module>
+        <module>FluxLands</module>
+        <module>FluxAuctionHouse</module>
+        <module>FluxOffering</module>
+        <module>FluxPets</module>
+        <module>FluxRewards</module>
+        <module>FluxSorter</module>
+    </modules>
+</project>

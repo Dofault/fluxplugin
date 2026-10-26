@@ -1,0 +1,37 @@
+# ==================================================
+# INFLUMARCHE : marché unifié (Labs)
+# Hôtel des ventes (AuctionHouse) + échoppes des villes (InfluEchoppe)
+# Doc : docs/technique/influmarche.md
+# ==================================================
+
+# Durée de vie du catalogue (secondes) : les offres de l'hôtel des ventes et des
+# échoppes sont relues au plus à cet intervalle (et après chaque vente).
+catalogue-secondes: 2
+
+# Prix moyen (/ah average, menus) : période prise en compte, en jours.
+# Moyenne pondérée par la quantité, ventes de l'hôtel des ventes ET des échoppes.
+prix-moyen:
+  jours: 30
+
+# Fréquence de détection des enchères terminées (secondes), pour les écrire une
+# seule fois dans l'historique.
+encheres-scan-secondes: 30
+
+# Commandes reprises par FluxAuctionHouse. Sans argument : menu du marché.
+# history / average / search / sell sans prix / view : FluxAuctionHouse.
+# Le reste (sell <prix>, bid <prix>, admin...) passe à AuctionHouse.
+interception:
+  actif: true
+  # Commande d'AuctionHouse (messages.yml -> commands.ah).
+  ah: [ah, auctionhouse:ah]
+  # Alias joueurs : réécrits en /ah quand FluxAuctionHouse ne les traite pas.
+  alias: [hdv, marche, influmarche:hdv, influmarche:marche]
+
+# Identifiants des menus Flux (plugins/Flux/menus/marche*.yml).
+menus:
+  marche: marche
+  offre: marche_offre
+  vendre: marche_vendre
+  ventes: marche_ventes
+  encheres: marche_encheres
+  historique: marche_historique

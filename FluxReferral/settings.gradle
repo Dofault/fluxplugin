@@ -1,0 +1,7 @@
+plugins {
+    // Permet à Gradle de télécharger automatiquement un JDK 21 si aucun n'est installé localement
+    // (nécessaire ici : la machine n'a qu'un JRE 21 sans javac, plus un JDK 25)
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}
+
+rootProject.name = 'FluxReferral'

@@ -1,0 +1,20 @@
+name: FluxTools
+version: '0.1.0'
+main: fr.influencraft.fluxtools.FluxTools
+api-version: '1.21'
+description: Outils de progression des caisses de vote (contrats, pass de l'outil, niveaux).
+authors: [Influencraft]
+depend: [Vault]
+# EcoEnchants avant nous : ses enchantements (Filon, Tranchée...) doivent être inscrits quand on lit les outils.
+softdepend: [EcoEnchants, eco, Flux, PlaceholderAPI]
+commands:
+  outil:
+    description: Ouvre l'interface de l'outil tenu en main.
+    usage: /outil
+  fluxitems:
+    description: Administration des outils FluxTools.
+    usage: /fluxitems <give|reload|info|debloquer|avancer|etape>
+permissions:
+  fluxitems.admin:
+    description: /fluxitems
+    default: op

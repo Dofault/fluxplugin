@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>fr.influencraft</groupId>
+    <artifactId>FluxPets</artifactId>
+    <version>26.2</version>
+    <packaging>jar</packaging>
+
+    <properties>
+        <!-- API Paper de compilation : 26.2 = version du serveur. Les jars compiles contre 26.2
+             restent compatibles 26.3 (mvn -P paper-26.3 pour le verifier) -->
+        <paper.api.version>26.2.build.124-stable</paper.api.version>
+        <java.version>25</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>papermc</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <version>${paper.api.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Jar ItemsAdder du serveur (fourni à l'exécution), copié dans libs/. -->
+        <dependency>
+            <groupId>dev.lone</groupId>
+            <artifactId>itemsadder</artifactId>
+            <version>4.0.18</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/ItemsAdder_4.0.18.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>com.willfp</groupId>
+            <artifactId>eco</artifactId>
+            <version>2026.38</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/eco-2026.38-modrinth.jar</systemPath>
+        </dependency>
+        <!-- Effets des familiers (holders libreforge) : version embarquée par les plugins eco de la prod. -->
+        <dependency>
+            <groupId>com.willfp</groupId>
+            <artifactId>libreforge</artifactId>
+            <version>2026.38</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/libreforge-2026.38.jar</systemPath>
+        </dependency>
+        <!-- Placeholders %influpet_...% (optionnel à l'exécution). -->
+        <!-- EcoJobs (softdepend) : niveaux de carrière lus par le rattrapage des boosters (CareerCatchUp). -->
+        <dependency>
+            <groupId>com.willfp</groupId>
+            <artifactId>EcoJobs</artifactId>
+            <version>2026.38</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/EcoJobs-2026.38-spigot.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>me.clip</groupId>
+            <artifactId>placeholderapi</artifactId>
+            <version>2.12.3</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/PlaceholderAPI-2.12.3.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>kr.toxicity.model</groupId>
+            <artifactId>bettermodel</artifactId>
+            <version>3.5.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/bettermodel-3.5.0-paper.jar</systemPath>
+        </dependency>
+        <!-- VaultSupermarket (softdepend) : bonus de prix de vente de la Licorne Astrale (SupermarketAPI). -->
+        <dependency>
+            <groupId>io.dofault</groupId>
+            <artifactId>VaultSuperMarket</artifactId>
+            <version>26.2</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/VaultSuperMarket-26.2.jar</systemPath>
+        </dependency>
+        <!-- Tags envoyés à un seul joueur (familier Bonhomme de Neige), optionnel à l'exécution. -->
+        <dependency>
+            <groupId>com.github.retrooper</groupId>
+            <artifactId>packetevents-spigot</artifactId>
+            <version>2.13.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/packetevents-spigot-2.13.0.jar</systemPath>
+        </dependency>
+    </dependencies>
+
+    <profiles>
+        <!-- Compilation contre l'API Paper 26.3 (migration de decembre 2026) pour verifier que
+             le plugin reste compatible : mvn -P paper-26.3. Le jar de prod reste compile en 26.2. -->
+        <profile>
+            <id>paper-26.3</id>
+            <properties>
+                <paper.api.version>26.3.build.200-stable</paper.api.version>
+            </properties>
+        </profile>
+    </profiles>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <release>${java.version}</release>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

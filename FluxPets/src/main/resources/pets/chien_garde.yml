@@ -1,0 +1,58 @@
+# Guard Dog: one of the default FluxPets pets. Grows with its cards (right-click a card).
+# Model: BetterModel/models/familier_chien_garde.bbmodel, card and plush: ItemsAdder pack "influpet".
+
+name: '&#3283A8Guard Dog'
+description: '&#EADBC8Only grows with its cards'
+entity-texture: bettermodel:familier_chien_garde
+flying: false
+icon: itemsadder:influpet__carte_chien_garde
+trail:
+  enabled: false
+  particle: flame
+  gap: 2
+  amount: 1
+  y-offset: 0.0
+level-xp-requirements:
+- 32
+- 42
+- 53
+- 65
+- 78
+- 91
+- 105
+- 119
+- 135
+xp-gain-methods: []
+level-placeholders:
+- id: bonus
+  value: round((10 + (%level% - 1) * 90 / 9) * 100) / 100
+effects-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Rage'
+  - '  &#EADBC8The lower your health, the'
+  - '  &#EADBC8harder you hit: up to +&#FFF4E0%bonus%%&#EADBC8'
+  - '  &#EADBC8damage at 1 health point'
+rewards-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Rage'
+  - '  &#EADBC8The lower your health, the'
+  - '  &#EADBC8harder you hit: up to +&#FFF4E0%bonus%%&#EADBC8'
+  - '  &#EADBC8damage at 1 health point'
+level-up-messages:
+  1:
+  - '&#6B7A8F» &#FFF4E0Rage'
+  - '  &#EADBC8The lower your health, the'
+  - '  &#EADBC8harder you hit: up to +&#FFF4E0%bonus%%&#EADBC8'
+  - '  &#EADBC8damage at 1 health point'
+level-up-effects: []
+effects: []
+conditions: []
+activate-conditions: []
+spawn-egg:
+  enabled: false
+  item: paper
+  name: '&#3283A8Guard Dog'
+  lore: []
+  craftable: false
+  recipe: []
+  withdrawable: false
