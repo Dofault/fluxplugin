@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="shopPlugin:jar">
+    <output-path>$USER_HOME$/Documents/serveur/plugins</output-path>
+    <root id="archive" name="shopPlugin.jar">
+      <element id="module-output" name="shopPlugin" />
+    </root>
+  </artifact>
+</component>

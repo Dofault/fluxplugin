@@ -1,0 +1,165 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.influencraft.vaultsupermarket</groupId>
+  <artifactId>VaultSuperMarket</artifactId>
+  <packaging>jar</packaging>
+  <version>26.2</version>
+  <name>VaultSuperMarket</name>
+  <url>http://maven.apache.org</url>
+
+    <repositories>
+    <repository>
+      <id>papermc</id>
+      <url>https://repo.papermc.io/repository/maven-public/</url>
+    </repository>
+        <repository>
+        <id>spigot-vault-api</id>
+        <url>https://ci.ender.zone/plugin/repository/everything/</url>
+    </repository>
+    <repository>
+        <id>placeholderapi</id>
+        <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
+    </repository>
+    <repository>
+        <id>luckperms</id>
+        <url>https://repo.lucko.me/</url>
+    </repository>
+  </repositories>
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+
+
+
+        <!-- Aligné sur la version réelle du serveur SemiRP (1.21.11) — migration 26.2. -->
+        <dependency>
+        <groupId>io.papermc.paper</groupId>
+        <artifactId>paper-api</artifactId>
+        <version>1.21.11-R0.1-SNAPSHOT</version>
+        <scope>provided</scope>
+        </dependency>
+
+    <dependency>
+        <groupId>net.milkbowl.vault</groupId>
+        <artifactId>VaultAPI</artifactId>
+        <version>1.7</version>
+    </dependency>
+    <dependency>
+        <groupId>me.clip</groupId>
+        <artifactId>placeholderapi</artifactId>
+        <version>2.11.6</version>
+        <scope>provided</scope>
+    </dependency>
+    <dependency>
+        <groupId>net.luckperms</groupId>
+        <artifactId>api</artifactId>
+        <version>5.4</version>
+        <scope>provided</scope>
+    </dependency>
+
+    <!-- CustomFishing API (soft dependency, provided at runtime).
+         Compiled against the actual plugin jar installed on the SemiRP server (no public
+         Maven repo for MomiRealms plugins) — same technique already used by
+         plugins/InfluOffrande/pom.xml and plugins/mana-sync/pom.xml for ItemsAdder. -->
+    <dependency>
+        <groupId>net.momirealms</groupId>
+        <artifactId>customfishing</artifactId>
+        <version>2.3.27</version>
+        <scope>system</scope>
+        <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/CustomFishing-2.3.27.jar</systemPath>
+    </dependency>
+
+    <!-- AdvancedEnchantments API (soft dependency, provided at runtime), même technique que
+         CustomFishing ci-dessus : nécessaire pour reconnaître un livre d'enchantement custom
+         (AEAPI.isCustomEnchantBook) et bloquer son application en drag-and-drop dans le shop. -->
+    <dependency>
+        <groupId>net.advancedplugins</groupId>
+        <artifactId>ae</artifactId>
+        <version>9.24.13</version>
+        <scope>system</scope>
+        <systemPath>${project.basedir}/../../serveurs/04_labs/plugins/AdvancedEnchantments-9.24.13.jar</systemPath>
+    </dependency>
+
+    <!-- eco API (soft dependency, provided at runtime), même technique systemPath : nécessaire
+         pour DropQueuePushEvent, par lequel passent les drops de la Télépathie d'EcoEnchants
+         (cf. AutoSellEcoTelekinesisListener). -->
+    <dependency>
+        <groupId>com.willfp</groupId>
+        <artifactId>eco</artifactId>
+        <version>2026.38</version>
+        <scope>system</scope>
+        <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/eco-2026.38-modrinth.jar</systemPath>
+    </dependency>
+
+    <!-- ProtocolLib (soft dependency, provided at runtime), même technique systemPath que
+         ci-dessus, déjà utilisée pour ProtocolLib par plugins/InfluBridge/pom.xml. Nécessaire
+         pour bloquer le paquet USE_ITEM du clic droit dans le vide : AdvancedEnchantments
+         ignore volontairement l'annulation Bukkit pour Action.RIGHT_CLICK_AIR (confirmé par
+         décompilation de InteractEvent.class), donc seule une interception au niveau paquet,
+         avant que Bukkit ne génère le PlayerInteractEvent, bloque ce cas de façon fiable. -->
+    <dependency>
+        <groupId>com.comphenix.protocol</groupId>
+        <artifactId>ProtocolLib</artifactId>
+        <version>5.5.0-local</version>
+        <scope>system</scope>
+        <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/ProtocolLib.jar</systemPath>
+    </dependency>
+
+  </dependencies>
+
+
+  <properties>
+      <maven.compiler.source>21</maven.compiler.source>
+      <maven.compiler.target>21</maven.compiler.target>
+  </properties>
+
+<build>
+
+<!--
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>plugin.yml</include>
+                </includes>
+            </resource>
+        </resources>-->
+        
+    <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>3.1.0</version>
+            <executions>
+                <execution>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>run</goal>
+                    </goals>
+                    <configuration>
+                        <target>
+                            <!-- Nom de fichier fixe (sans le numéro de version) pour éviter qu'un
+                                 ancien jar versionné (ex : VaultSuperMarket-1.0.jar) reste chargé
+                                 en doublon à côté du nouveau à chaque bump de version. -->
+                            <copy file="${project.build.directory}/${project.build.finalName}.jar"
+                                  tofile="${project.basedir}/../../serveurs/03_semirp/plugins/${project.artifactId}.jar"
+                                  overwrite="true" />
+                            <!-- Serveur de test Labs : permet d'essayer une version du plugin
+                                 sans toucher au SemiRP tant qu'elle n'est pas validée. -->
+                            <copy file="${project.build.directory}/${project.build.finalName}.jar"
+                                  tofile="${project.basedir}/../../serveurs/04_labs/plugins/${project.artifactId}.jar"
+                                  overwrite="true" />
+                        </target>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
+</project>

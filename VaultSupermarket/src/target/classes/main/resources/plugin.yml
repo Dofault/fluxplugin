@@ -1,0 +1,12 @@
+name: CubelinesShop
+version: 1.0
+author: dofault
+main: Main
+depend: [Vault]
+softdepend: [Vault]
+
+
+commands:
+  supermarket:
+    description: Commande principale du plugin Supermarket
+    usage: /supermarket <entry|exit|save|setprice>

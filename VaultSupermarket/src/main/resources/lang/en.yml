@@ -1,0 +1,142 @@
+###################################
+# EXIT / ERROR MESSAGES
+###################################
+shop-exit: "&aYou have exited the shop!"
+shop-must-pay: "&cYou must pay before exiting!"
+shop-cannot-open-outside: "&cYou cannot open this shop chest from outside!"
+shop-command-blocked: "&cYou can only use /supermarket commands in the shop!"
+shop-craft-blocked: "&cYou cannot craft inside the shop!"
+shop-not-in-shop: "&cYou must be in the shop to do this!"
+shop-sell-unpaid-items: "&cYou cannot open the sell block while having unpaid items!"
+shop-no-sellblock: "&cNo sell block registered!"
+shop-sell-success: "&aYou sold your items for &6%amount%!"
+shop-add-item-failed: "&cFailed to add the item to the chest!"
+
+###################################
+# WELCOME MESSAGES
+###################################
+
+# Available variables:
+# %buy_block%  → name of the block used to buy
+# %sell_block% → name of the block used to sell
+shop-welcome-messages:
+  - "&7&l----&r&7( &2Welcome to the shop&7 )&7&l----"
+  - "&7To buy, use the block &e%buy_block%&7:"
+  - "&8- &a&lLeft click &7→ view your &fbasket 🛒"
+  - "&8- &a&lRight click &7→ pay for your &fitems 💰"
+  - "&7To sell, use the block &e%sell_block%&7:"
+  - "&8- &a&lLeft click &7→ check prices &f📜"
+  - "&8- &a&lRight click &7→ sell your &fitems 💵"
+
+###################################
+# CART / PLAYER INVENTORY
+###################################
+shop-your-items: "&eYour items:"
+shop-item-line: "&d➤ &a%item% &e(+%delta%) &f→ &b%price%"
+shop-total: "&6&l💰 Total: &b&l%total%"
+shop-cart-actionbar: "&6Cart: &b%balance%"
+shop-not-enough-money: "&cYou don't have enough money to pay for your inventory! &e(Your balance: 💰 %balance%)"
+shop-paid-success: "&a✅ You paid &6&l%total%&r&a for your items!"
+shop-no-difference: "&aNo difference."
+shop-difference-log: "Difference for %player%: %item% -> %delta%"
+shop-item-price: "&aPrice of %item%: buy %buy% / sell %sell%"
+shop-no-price: "&cNo price defined for %item%"
+
+###################################
+# CHESTS / SHOP BLOCKS
+###################################
+shop-no-chest: "&cNo chest registered!"
+shop-no-bundle-entry: "&cYou are not allowed to enter with %item%!"
+shop-not-registered-chest: "&cYou are not standing on a registered chest!"
+shop-chest-unlinked: "&aChest unlinked!"
+shop-no-chest-here: "&cNo chest at your location!"
+shop-chest-already-registered: "&cThis chest is already registered!"
+shop-chest-added: "&aChest added!"
+shop-material-no-price: "&cThis material has no defined price!"
+shop-add-item-chest: "&aAdded %amount% %material% to the chest!"
+
+###################################
+# POSITION / SHOP SETUP
+###################################
+shop-entry-saved: "&aEntry position saved!"
+shop-exit-saved: "&aExit position saved!"
+shop-saved: "&aShop saved!"
+shop-define-entry-exit-first: "&cYou must define the entry and exit first!"
+
+###################################
+# COMMANDS
+###################################
+shop-setprice-usage: "&cUsage: /supermarket setprice <item> <buy> <sell>"
+shop-invalid-item: "&cInvalid item!"
+shop-invalid-price: "&cInvalid price!"
+shop-price-set: "&aPrice of %material% set: buy %buy% / sell %sell%"
+shop-must-be-inside: "&cYou must be inside the shop!"
+shop-additemchest-usage: "&cUsage: /supermarket additemchest <item> <amount>"
+shop-invalid-number: "&cInvalid number!"
+shop-no-item-entry: "&cYou are not allowed to enter with a %item%!"
+shop-no-permission: "&cYou don't have permission to do that!"
+shop-tpshop-usage: "&cUsage: /supermarket tpshop [player] &7(no player = teleport yourself)"
+shop-player-not-found: "&cPlayer %player% not found or offline!"
+shop-tpshop-already-in-shop: "&c%player% is already in the shop!"
+shop-tpshop-failed: "&cCouldn't bring %player% into the shop (forbidden item in inventory?)!"
+shop-tpshop-success: "&aYou teleported %player% into the shop!"
+shop-tpshop-target-notice: "&aYou were teleported into the shop by %player%!"
+shop-tpshop-self-success: "&aYou were teleported into the shop!"
+shop-tpshop-cooldown: "&cYou must wait &e%time%&c before going back to the shop!"
+shop-tpshop-warmup-start: "&eTeleporting to the shop in &6%time%&es &7- don't move!"
+shop-tpshop-warmup-actionbar: "&6Teleporting in &e%time%s&6..."
+shop-tpshop-warmup-cancelled: "&cTeleport cancelled: you moved!"
+shop-tpshop-already-teleporting: "&cA teleport is already in progress!"
+shop-checkprices-none: "&aNo invalid items in prices.yml."
+shop-checkprices-header: "&e%count% item(s) from prices.yml not found on this version:"
+shop-checkprices-line: "&7- &c%item%"
+
+# General commands
+shop-commands-header: "&e» General Commands:"
+shop-command-entry-exit: "&b/supermarket &fentry|exit &7- &oDefine the shop entry and exit."
+shop-command-pay: "&b/supermarket &fpay &7- &oPay for your items."
+shop-command-save: "&b/supermarket &fsave &7- &oSave the shop's entry and exit."
+shop-command-setprice: "&b/supermarket &fsetprice <item> <buy> <sell> &7- &oSet the price of an item."
+shop-command-difference: "&b/supermarket &fdifference &7- &oShow inventory differences."
+shop-command-addchest: "&b/supermarket &faddchest &7- &oAdd a chest under your feet in the shop."
+shop-command-removechest: "&b/supermarket &fremovechest &7- &oRemove the chest under your feet from the shop."
+shop-command-additemchest: "&b/supermarket &fadditemchest <item> <amount> &7- &oAdd the item to the chest."
+shop-command-addsellblock: "&b/supermarket &faddsellblock &7- &oAdd the sell block under your feet in the shop."
+shop-command-removesellblock: "&b/supermarket &fremovesellblock &7- &oRemove the sell block under your feet from the shop."
+shop-command-tpshop: "&b/supermarket &ftpshop [player] &7- &oTeleport into the shop, or another player (admin)."
+shop-command-checkprices: "&b/supermarket &fcheckprices &7- &oList prices.yml items invalid on this version (admin)."
+
+###################################
+# INVENTORY / PRICES
+###################################
+shop-all-items-label: "All items"
+shop-all-items-button: "§eAll items"
+shop-category-item-name: "§e%category%"
+shop-category-item-lore: "§7%count% items"
+shop-prices-inventory-title: "§6%category% §7(%page%/%totalPages%)"
+shop-item-name: "§e%item%"
+shop-item-lore-sell-price: "§7Sell: §a%price%"
+shop-inventory-previous-page: "§aPrevious Page"
+shop-inventory-next-page: "§aNext Page"
+
+# --- Manual sell menu (double confirmation) ---
+shop-sell-inventory-title: "&#FFD94DSell your items"
+shop-sell-confirm-name: "&r&7&#FFD94D Sell"
+shop-sell-confirm-lore:
+  - ""
+  - "&#B376E5Total: &f%price%"
+  - "&#B376E5Sellable items: &f%sellable%"
+  - "&#B376E5Unsellable items: &f%unsellable%"
+  - ""
+  - "&#B376E5Close the menu to get everything back."
+  - ""
+shop-sell-confirm-armed-name: "&r&7&#FFD94D Confirm the sale"
+shop-sell-confirm-armed-lore:
+  - ""
+  - "&#FF5C5CClick a second time to sell."
+  - ""
+  - "&#B376E5Total: &f%price%"
+  - "&#B376E5Sellable items: &f%sellable%"
+  - ""
+shop-sell-nothing-to-sell: "&#FF5C5CNone of your items can be sold here!"
+shop-sell-cancelled: "&#B376E5Sale cancelled, your items have been returned."
