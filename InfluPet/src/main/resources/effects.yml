@@ -1,0 +1,79 @@
+# Pet effects coded in the plugin (not possible with libreforge config). Each effect is tied to a pet
+# (pet: <id>); an effect missing from this file is disabled. Reloaded with /influpet reload.
+# min = value at level 1, max = value at max-level, linear in between.
+
+max-level: 10
+effects:
+  # chance (%) to get xp vanilla experience per mined block of the list (blocks placed by players excluded)
+  stone-xp:
+    pet: caillou
+    min: 1
+    max: 10
+    xp: 1
+    blocks:
+    - stone
+  # chance (%) that a broken block does not update its neighbours (sand and gravel stay, water does not flow)
+  no-block-update:
+    pet: fourmi
+    min: 10
+    max: 100
+  # walk on powder snow without sinking for value seconds, then cooldown seconds of rest
+  powder-snow:
+    pet: lievre_neiges
+    min: 0.5
+    max: 5
+    cooldown: 30
+    end-message: '&#B376E5Your Snow Hare is resting &#FFD94D%seconds% s'
+  # chance (%) to replant a harvested ripe cocoa pod (uses a cocoa bean); age-0 pods are not broken
+  cocoa-replant:
+    pet: ouistiti
+    min: 10
+    max: 100
+  # chance (%) that one bone meal grows a sapling into a tree at once
+  instant-bone-meal:
+    pet: gland
+    min: 10
+    max: 100
+  # Resistance I for nearby players, value = radius in blocks
+  ally-resistance:
+    pet: pavois
+    min: 4
+    max: 12
+    interval-ticks: 40
+  # damage bonus (%) at 1 health point, none at full health, linear in between
+  rage:
+    pet: chien_garde
+    min: 10
+    max: 100
+  # chance (%) that placed concrete powder turns into concrete instantly
+  instant-concrete:
+    pet: betonniere
+    min: 10
+    max: 100
+  # smelting speed bonus (%) in the furnaces you used last
+  fast-smelting:
+    pet: soufflet
+    min: 10
+    max: 100
+  # chance (%) that a smelted item goes straight to your inventory (within radius blocks of the furnace)
+  furnace-delivery:
+    pet: fournaise
+    min: 10
+    max: 100
+    radius: 16
+  # chance (%) that enchanting does not consume lapis lazuli
+  lapis-saver:
+    pet: lapin_lapis
+    min: 10
+    max: 100
+  # chance (%) that enchanting does not consume levels
+  level-saver:
+    pet: orbe_xp
+    min: 1
+    max: 10
+  # uses (mined blocks, hits) for +1 level on a vanilla enchantment of the held item
+  enchant-mastery:
+    pet: chouette_arcane
+    min: 1500
+    max: 500
+    message: '&#B376E5Your Arcane Owl improves &#FFD94D%enchant%'

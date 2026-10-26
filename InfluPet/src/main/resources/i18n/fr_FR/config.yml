@@ -1,0 +1,15 @@
+# Valeurs françaises de config.yml (étiquettes de rareté), appliquées au changement de langue.
+
+rarities:
+  simple:
+    tag: '&#AAAAAAꜱɪᴍᴘʟᴇ'
+  unique:
+    tag: '&#37C44Aᴜɴɪǫᴜᴇ'
+  elite:
+    tag: '&#3283A8ᴇʟɪᴛᴇ'
+  ultimate:
+    tag: '&#B376E5ᴜʟᴛɪᴍᴇ'
+  legendary:
+    tag: '&#F0A800ʟᴇɢᴇɴᴅᴀɪʀᴇ'
+  fabled:
+    tag: '&#C8256Aꜰᴀʙᴜʟᴇᴜx'

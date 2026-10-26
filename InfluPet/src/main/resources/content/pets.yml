@@ -1,0 +1,158 @@
+# Pets obtainable from boosters: rarity, enabled (obtainable or not), optional plush and model.
+# Each pet's definition (levels, effects) is in pets/<id>.yml. Also edited with /influpet menu.
+
+pets:
+  list:
+    pepite:
+      rarity: simple
+      enabled: true
+    lanterne:
+      rarity: unique
+      enabled: true
+    wagonnet:
+      rarity: elite
+      enabled: true
+    dragon_gemmes:
+      rarity: ultimate
+      enabled: true
+    caillou:
+      rarity: simple
+      enabled: true
+    mimique:
+      rarity: unique
+      enabled: true
+    colosse:
+      rarity: elite
+      enabled: true
+    titan:
+      rarity: ultimate
+      enabled: true
+    fourmi:
+      rarity: simple
+      enabled: true
+    cabri:
+      rarity: unique
+      enabled: true
+    lievre_neiges:
+      rarity: elite
+      enabled: true
+    ver_sables:
+      rarity: ultimate
+      enabled: true
+    abeille:
+      rarity: simple
+      enabled: true
+    carottin:
+      rarity: unique
+      enabled: true
+    ouistiti:
+      rarity: elite
+      enabled: true
+    epouvantail:
+      rarity: ultimate
+      enabled: true
+    coquelicot:
+      rarity: simple
+      enabled: true
+    champinou:
+      rarity: unique
+      enabled: true
+    papillon:
+      rarity: elite
+      enabled: true
+    dryade:
+      rarity: ultimate
+      enabled: true
+    souche:
+      rarity: simple
+      enabled: true
+    castor:
+      rarity: unique
+      enabled: true
+    gland:
+      rarity: elite
+      enabled: true
+    sylvain:
+      rarity: ultimate
+      enabled: true
+    flammeche:
+      rarity: ultimate
+      enabled: true
+    soufflet:
+      rarity: simple
+      enabled: true
+    salamandre:
+      rarity: unique
+      enabled: true
+    fournaise:
+      rarity: elite
+      enabled: true
+    lapin_lapis:
+      rarity: simple
+      enabled: true
+    orbe_xp:
+      rarity: unique
+      enabled: true
+    chouette_arcane:
+      rarity: elite
+      enabled: true
+    table_vivante:
+      rarity: ultimate
+      enabled: true
+    poissonnet:
+      rarity: simple
+      enabled: true
+    crabichon:
+      rarity: unique
+      enabled: true
+    dauphin:
+      rarity: elite
+      enabled: true
+    kraken:
+      rarity: ultimate
+      enabled: true
+    ecuyer:
+      rarity: simple
+      enabled: true
+    pavois:
+      rarity: unique
+      enabled: true
+    chien_garde:
+      rarity: elite
+      enabled: true
+    chevalier_spectral:
+      rarity: ultimate
+      enabled: true
+    marteau_piqueur:
+      rarity: simple
+      enabled: true
+    betonniere:
+      rarity: unique
+      enabled: true
+    grue:
+      rarity: elite
+      enabled: true
+    architecte:
+      rarity: ultimate
+      enabled: true
+    phenix:
+      rarity: legendary
+      enabled: true
+    astrolabe:
+      rarity: legendary
+      enabled: true
+    kitsune:
+      rarity: legendary
+      enabled: true
+    licorne:
+      rarity: legendary
+      enabled: true
+    nida:
+      rarity: legendary
+      enabled: true
+    leviathan:
+      rarity: fabled
+      enabled: true
+    faucheur:
+      rarity: fabled
+      enabled: true

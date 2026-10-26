@@ -1,0 +1,27 @@
+name: InfluPet
+version: '1.0.0'
+main: fr.influencraft.influpet.InfluPet
+api-version: '1.21'
+description: Pets, collectible cards and boosters.
+# eco: player pet storage. libreforge (loaded by eco plugins): pet effects and job XP multiplier.
+depend: [eco]
+softdepend: [libreforge, EcoJobs, EcoEnchants, EcoItems, ItemsAdder, BetterModel, packetevents, PlaceholderAPI]
+
+commands:
+  influpet:
+    description: Pets, cards and boosters administration.
+    usage: /influpet <menu|give|open|list|info|pet|reload>
+    permission: influpet.admin
+  pets:
+    description: Pets menu.
+    usage: /pets [activate <pet>|deactivate [pet]]
+    aliases: [pet, familiers, familier]
+    permission: influpet.command.pets
+
+permissions:
+  influpet.admin:
+    description: /influpet (give, open, list, info, pet, reload, editor menu).
+    default: op
+  influpet.command.pets:
+    description: /pets (own pets only).
+    default: true

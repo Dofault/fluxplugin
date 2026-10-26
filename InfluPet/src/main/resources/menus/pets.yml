@@ -1,0 +1,171 @@
+# /pets menu: rows and columns start at 1. Items use the eco syntax ("arrow name:\"...\"",
+# "player_head texture:...", "itemsadder:..."). Lore placeholders: %pet%, %level%, %description%, %effects%,
+# %percentage_progress%, %current_xp%, %required_xp%.
+
+title: '&#FFD94DPets'
+rows: 6
+mask:
+  materials:
+  - black_stained_glass_pane
+  pattern:
+  - '110000011'
+  - '111111111'
+  - '100000001'
+  - '100000001'
+  - '100000001'
+  - '101000111'
+pet-area:
+  top-left:
+    row: 3
+    column: 2
+  bottom-right:
+    row: 5
+    column: 8
+# Active pet slots (top row), in filling order: an activated pet takes the first free slot, slot 1 is the one
+# following the player (the others walk behind it). The player has as many slots as their maximum (permission
+# influpet.pets.max.<n>, see config.yml pet-settings.active-pets), the next ones are shown locked.
+pet-slots:
+  locations:
+  - row: 1
+    column: 3
+  - row: 1
+    column: 4
+  - row: 1
+    column: 5
+  - row: 1
+    column: 6
+  - row: 1
+    column: 7
+  # occupied slot (left click: progress, right click: put away)
+  active:
+    name: '%pet% &#FFD94DLvl. %level%'
+    lore:
+    - '&#6B7A8F[Right-click] &#FFD94DPut away'
+    - ''
+    - '%description%'
+    - '&#6B7A8F(right-click one of its cards)'
+    - ''
+    - '&#FFD94DEffects:'
+    - '%effects%'
+    - ''
+    - '&#FFD94DProgress:'
+    - '&8» &#B376E5%percentage_progress% %'
+    - '&8» &#B376E5%current_xp%&8/&7%required_xp% &#B376E5XP'
+    - ''
+    - '&#6B7A8F[Left-click] &#FFD94DView progress'
+    max-level-lore:
+    - '&#6B7A8F[Right-click] &#FFD94DPut away'
+    - ''
+    - '%description%'
+    - '&#6B7A8F(right-click one of its cards)'
+    - ''
+    - '&#FFD94DEffects:'
+    - '%effects%'
+    - ''
+    - '&#2ECF7BMaximum level reached'
+    - ''
+    - '&#6B7A8F[Left-click] &#FFD94DView progress'
+  # free slot (%slot%: slot number)
+  empty:
+    name: '&#FFD94DFree slot'
+    lore:
+    - ''
+    - '&#B376E5Click a pet below'
+    - '&#B376E5to activate it.'
+    - ''
+    item: player_head texture:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmFkYzA0OGE3Y2U3OGY3ZGFkNzJhMDdkYTI3ZDg1YzA5MTY4ODFlNTUyMmVlZWQxZTNkYWYyMTdhMzhjMWEifX19
+  # slot beyond the player's maximum. %slot%: slot number; %grade%: text of "grades" for that slot (a line
+  # containing %grade% is removed while no grade is set for it). PlaceholderAPI placeholders are supported in
+  # the name and lore.
+  locked:
+    item: barrier
+    name: '&#FF5C5CLocked slot'
+    lore:
+    - ''
+    - '&#B376E5You do not have access'
+    - '&#B376E5to this slot yet.'
+    - '&#B376E5Required rank: %grade%'
+    - ''
+    # slot number: text of %grade%, for example "2: '&#FFD94DVIP'"
+    grades: {}
+pet-icon:
+  name: '%pet% &#FFD94DLvl. %level%'
+  lore:
+  - '%description%'
+  - '&#6B7A8F(right-click one of its cards)'
+  - ''
+  - '&#FFD94DEffects:'
+  - '%effects%'
+  - ''
+  - '&#FFD94DProgress:'
+  - '&8» &#B376E5%percentage_progress% %'
+  - '&8» &#B376E5%current_xp%&8/&7%required_xp% &#B376E5XP'
+  max-level-lore:
+  - '%description%'
+  - '&#6B7A8F(right-click one of its cards)'
+  - ''
+  - '&#FFD94DEffects:'
+  - '%effects%'
+  - ''
+  - '&#2ECF7BMaximum level reached'
+  active-lore:
+  - ''
+  - '&#2ECF7BActive pet'
+  - '&#6B7A8F[Left-click] &#FFD94DPut away'
+  not-active-lore:
+  - ''
+  - '&#6B7A8F[Left-click] &#FFD94DActivate'
+  click:
+    enabled: true
+    sound: ui_button_click
+    pitch: 1
+    volume: 1
+    category: UI
+page-change-sound:
+  enabled: true
+  sound: ui_button_click
+  pitch: 1
+  volume: 1
+  category: UI
+prev-page:
+  item: arrow name:"&#FFD94DPrevious page"
+  location:
+    row: 6
+    column: 4
+next-page:
+  item: arrow name:"&#FFD94DNext page"
+  item-inactive: gray_dye name:"&7Next page"
+  location:
+    row: 6
+    column: 6
+close:
+  enabled: true
+  item: barrier
+  name: '&#FF5C5CClose'
+  location:
+    row: 6
+    column: 5
+deactivate-pet:
+  item: player_head texture:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNTRiZDlhNDViOTY4MWNlYTViMjhjNzBmNzVhNjk1NmIxZjU5NGZlYzg0MGI5NjA3Nzk4ZmIxZTcwNzc2NDQzMCJ9fX0=
+  name: '&#FF5C5CPut away all pets'
+  location:
+    row: 6
+    column: 2
+toggle:
+  hide-pet:
+    item: player_head texture:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOTI1YjhlZWQ1YzU2NWJkNDQwZWM0N2M3OWMyMGQ1Y2YzNzAxNjJiMWQ5YjVkZDMxMDBlZDYyODNmZTAxZDZlIn19fQ==
+    name: '&#FFD94DHide pets'
+    lore:
+    - ''
+    - '&#B376E5They stay active, effects too.'
+    - ''
+    - '&#6B7A8F[Left-click] &#FFD94DHide'
+  show-pet:
+    item: player_head texture:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNjNmNzliMjA3ZDYxZTEyMjUyM2I4M2Q2MTUwOGQ5OWNmYTA3OWQ0NWJmMjNkZjJhOWE1MTI3ZjkwNzFkNGIwMCJ9fX0=
+    name: '&#FFD94DShow pets'
+    lore:
+    - ''
+    - '&#6B7A8F[Left-click] &#FFD94DShow'
+  location:
+    row: 6
+    column: 8

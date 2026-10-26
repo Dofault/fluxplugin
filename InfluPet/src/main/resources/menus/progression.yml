@@ -1,0 +1,75 @@
+# Level-by-level progression of a pet (click an active pet in /pets).
+# progression-slots.pattern: order of levels 1 to 9 then a to z. %rewards% = effects of the level.
+
+title: '&#FFD94D%pet%'
+rows: 6
+mask:
+  materials:
+  - black_stained_glass_pane
+  pattern:
+  - '111111111'
+  - '111111111'
+  - '111111111'
+  - '111111111'
+  - '111111111'
+  - '111111111'
+progression-slots:
+  pattern:
+  - 109ab0jkl
+  - 2080c0i0m
+  - 3070d0h0n
+  - 4560efg0o
+  - 00000000p
+  - 00000000q
+  level-as-amount: true
+  page-change-sound:
+    enabled: true
+    sound: ui_button_click
+    pitch: 1
+    volume: 1
+    category: UI
+  prev-page:
+    item: arrow name:"&#FFD94DPrevious page"
+    location:
+      row: 6
+      column: 4
+  next-page:
+    item: arrow name:"&#FFD94DNext page"
+    item-inactive: gray_dye name:"&7Next page"
+    location:
+      row: 6
+      column: 6
+  close:
+    enabled: true
+    item: barrier
+    name: '&#FF5C5CClose'
+    location:
+      row: 6
+      column: 5
+  unlocked:
+    item: lime_stained_glass_pane
+    name: '%pet% &#FFD94DLvl. %level%'
+    lore:
+    - ''
+    - '&#FFD94DEffects:'
+    - '%rewards%'
+    - ''
+    - '&#2ECF7BUNLOCKED'
+  in-progress:
+    item: yellow_stained_glass_pane
+    name: '%pet% &#FFD94DLvl. %level%'
+    lore:
+    - ''
+    - '&#FFD94DEffects:'
+    - '%rewards%'
+    - ''
+    - '&#FFD94DProgress:'
+    - '&8» &#B376E5%percentage_progress% %'
+    - '&8» &#B376E5%current_xp%&8/&7%required_xp% &#B376E5XP'
+  locked:
+    item: red_stained_glass_pane
+    name: '%pet% &#FFD94DLvl. %level%'
+    lore:
+    - ''
+    - '&#FFD94DEffects:'
+    - '%rewards%'

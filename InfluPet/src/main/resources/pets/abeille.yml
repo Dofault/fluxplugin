@@ -1,0 +1,143 @@
+# Bee: one of the default InfluPet pets. Grows with its cards (right-click a card).
+# Model: BetterModel/models/familier_abeille.bbmodel, card and plush: ItemsAdder pack "influpet".
+
+name: '&#AAAAAABee'
+description: '&#EADBC8Only grows with its cards'
+entity-texture: bettermodel:familier_abeille
+flying: true
+icon: itemsadder:influpet__carte_abeille
+trail:
+  enabled: false
+  particle: flame
+  gap: 2
+  amount: 1
+  y-offset: 0.0
+level-xp-requirements:
+- 34
+- 45
+- 57
+- 70
+- 84
+- 99
+- 113
+- 129
+- 145
+xp-gain-methods: []
+level-placeholders:
+- id: bonus
+  value: round((10 + (%level% - 1) * 90 / 9) * 100) / 100
+effects-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Express Growth'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a planted'
+  - '  &#EADBC8seed starts half-grown'
+rewards-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Express Growth'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a planted'
+  - '  &#EADBC8seed starts half-grown'
+level-up-messages:
+  1:
+  - '&#6B7A8F» &#FFF4E0Express Growth'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a planted'
+  - '  &#EADBC8seed starts half-grown'
+level-up-effects: []
+effects:
+- effects:
+  - id: age_crop
+    args:
+      age: 4
+  args:
+    chance: 10 + (%level% - 1) * 90 / 9
+  triggers:
+  - place_block
+  filters:
+    blocks:
+    - wheat
+- effects:
+  - id: age_crop
+    args:
+      age: 4
+  args:
+    chance: 10 + (%level% - 1) * 90 / 9
+  triggers:
+  - place_block
+  filters:
+    blocks:
+    - carrots
+- effects:
+  - id: age_crop
+    args:
+      age: 4
+  args:
+    chance: 10 + (%level% - 1) * 90 / 9
+  triggers:
+  - place_block
+  filters:
+    blocks:
+    - potatoes
+- effects:
+  - id: age_crop
+    args:
+      age: 4
+  args:
+    chance: 10 + (%level% - 1) * 90 / 9
+  triggers:
+  - place_block
+  filters:
+    blocks:
+    - melon_stem
+- effects:
+  - id: age_crop
+    args:
+      age: 4
+  args:
+    chance: 10 + (%level% - 1) * 90 / 9
+  triggers:
+  - place_block
+  filters:
+    blocks:
+    - pumpkin_stem
+- effects:
+  - id: age_crop
+    args:
+      age: 2
+  args:
+    chance: 10 + (%level% - 1) * 90 / 9
+  triggers:
+  - place_block
+  filters:
+    blocks:
+    - beetroots
+- effects:
+  - id: age_crop
+    args:
+      age: 2
+  args:
+    chance: 10 + (%level% - 1) * 90 / 9
+  triggers:
+  - place_block
+  filters:
+    blocks:
+    - nether_wart
+- effects:
+  - id: age_crop
+    args:
+      age: 2
+  args:
+    chance: 10 + (%level% - 1) * 90 / 9
+  triggers:
+  - place_block
+  filters:
+    blocks:
+    - pitcher_crop
+conditions: []
+activate-conditions: []
+spawn-egg:
+  enabled: false
+  item: paper
+  name: '&#AAAAAABee'
+  lore: []
+  craftable: false
+  recipe: []
+  withdrawable: false

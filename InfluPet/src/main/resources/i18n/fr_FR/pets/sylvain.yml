@@ -1,0 +1,54 @@
+# &#B376E5Sylvain : un des familiers livrés avec InfluPet. Grandit avec ses cartes (clic droit sur une carte).
+# Modèle : BetterModel/models/familier_sylvain.bbmodel, carte et peluche : pack ItemsAdder "influpet".
+
+name: '&#B376E5Sylvain'
+description: '&#EADBC8Grandit uniquement avec ses cartes'
+entity-texture: bettermodel:familier_sylvain
+flying: false
+icon: itemsadder:influpet__carte_sylvain
+trail:
+  enabled: false
+  particle: flame
+  gap: 2
+  amount: 1
+  y-offset: 0.0
+level-xp-requirements:
+- 19
+- 25
+- 31
+- 38
+- 46
+- 54
+- 62
+- 70
+- 79
+xp-gain-methods: []
+level-placeholders:
+- id: bonus
+  value: round((3 + (%level% - 1) * 27 / 9) * 100) / 100
+effects-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0XP Bûcheron&#EADBC8 : +&#FFF4E0%bonus%%&#EADBC8'
+rewards-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0XP Bûcheron&#EADBC8 : +&#FFF4E0%bonus%%&#EADBC8'
+level-up-messages:
+  1:
+  - '&#6B7A8F» &#FFF4E0XP Bûcheron&#EADBC8 : +&#FFF4E0%bonus%%&#EADBC8'
+level-up-effects: []
+effects:
+- id: job_xp_multiplier
+  args:
+    multiplier: 1 + (3 + (%level% - 1) * 27 / 9) / 100
+    jobs:
+    - lumberjack
+conditions: []
+activate-conditions: []
+spawn-egg:
+  enabled: false
+  item: paper
+  name: '&#B376E5Sylvain'
+  lore: []
+  craftable: false
+  recipe: []
+  withdrawable: false

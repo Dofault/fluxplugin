@@ -1,0 +1,1021 @@
+# Boosters: one per job series (the only way to adopt its pets), a Prestige booster, and 4 tiers that can
+# give any pet (at most one pet per opening). cards = draws, rarity-weights / pet-rarity-weights = rarity
+# weights, contents = "card:<id>" / "pet:<id>" (empty = all obtainable content), pet-chance = % chance
+# that a draw is a pet, duplicate-plush: false = a duplicate never gives its plush from this booster.
+# %adopted:<pet id>% in the lore shows ✔ or ✘ depending on whether the viewer adopted that pet.
+# Also edited with /influpet menu.
+
+boosters:
+  metier_mineur:
+    item: influpet:booster_metier_mineur
+    name: '&#4FD6E8&lMiner Booster'
+    lore:
+    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the &#4FD6E8Miner&#EADBC8 series.'
+    - ''
+    - '&#EADBC8Pets to adopt:'
+    - '%adopted:pepite% &#AAAAAANugget'
+    - '%adopted:lanterne% &#37C44ALantern'
+    - '%adopted:wagonnet% &#3283A8Minecart'
+    - '%adopted:dragon_gemmes% &#B376E5Gem Dragon'
+    - ''
+    - '&#6B7A8F[Right-click] &#FF7A59Open'
+    - '&#6B7A8FShift + right-click: open the whole stack'
+    cards: 8
+    rarity-weights:
+      simple: 2500
+      unique: 3818
+      elite: 2318
+      ultimate: 1364
+      legendary: 45
+      fabled: 5
+    contents:
+    - pet:pepite
+    - pet:lanterne
+    - pet:wagonnet
+    - pet:dragon_gemmes
+    - card:pepite
+    - card:lanterne
+    - card:wagonnet
+    - card:dragon_gemmes
+    pet-chance: 3.2931
+    pet-rarity-weights:
+      simple: 200000
+      unique: 20000
+      elite: 10000
+      ultimate: 5000
+      legendary: 0
+      fabled: 0
+  metier_rochiste:
+    item: influpet:booster_metier_rochiste
+    name: '&#A8AEB8&lQuarrier Booster'
+    lore:
+    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the &#A8AEB8Quarrier&#EADBC8 series.'
+    - ''
+    - '&#EADBC8Pets to adopt:'
+    - '%adopted:caillou% &#AAAAAAPebble'
+    - '%adopted:mimique% &#37C44AMimic'
+    - '%adopted:colosse% &#3283A8Basalt Colossus'
+    - '%adopted:titan% &#B376E5Crystal Titan'
+    - ''
+    - '&#6B7A8F[Right-click] &#FF7A59Open'
+    - '&#6B7A8FShift + right-click: open the whole stack'
+    cards: 8
+    rarity-weights:
+      simple: 2500
+      unique: 3818
+      elite: 2318
+      ultimate: 1364
+      legendary: 45
+      fabled: 5
+    contents:
+    - pet:caillou
+    - pet:mimique
+    - pet:colosse
+    - pet:titan
+    - card:caillou
+    - card:mimique
+    - card:colosse
+    - card:titan
+    pet-chance: 3.2931
+    pet-rarity-weights:
+      simple: 200000
+      unique: 20000
+      elite: 10000
+      ultimate: 5000
+      legendary: 0
+      fabled: 0
+  metier_deblayeur:
+    item: influpet:booster_metier_deblayeur
+    name: '&#D9C27A&lDigger Booster'
+    lore:
+    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the &#D9C27ADigger&#EADBC8 series.'
+    - ''
+    - '&#EADBC8Pets to adopt:'
+    - '%adopted:fourmi% &#AAAAAAAnt'
+    - '%adopted:cabri% &#37C44AKid Goat'
+    - '%adopted:lievre_neiges% &#3283A8Snow Hare'
+    - '%adopted:ver_sables% &#B376E5Sandworm'
+    - ''
+    - '&#6B7A8F[Right-click] &#FF7A59Open'
+    - '&#6B7A8FShift + right-click: open the whole stack'
+    cards: 8
+    rarity-weights:
+      simple: 2500
+      unique: 3818
+      elite: 2318
+      ultimate: 1364
+      legendary: 45
+      fabled: 5
+    contents:
+    - pet:fourmi
+    - pet:cabri
+    - pet:lievre_neiges
+    - pet:ver_sables
+    - card:fourmi
+    - card:cabri
+    - card:lievre_neiges
+    - card:ver_sables
+    pet-chance: 3.2931
+    pet-rarity-weights:
+      simple: 200000
+      unique: 20000
+      elite: 10000
+      ultimate: 5000
+      legendary: 0
+      fabled: 0
+  metier_cultivateur:
+    item: influpet:booster_metier_cultivateur
+    name: '&#E8C547&lFarmer Booster'
+    lore:
+    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the &#E8C547Farmer&#EADBC8 series.'
+    - ''
+    - '&#EADBC8Pets to adopt:'
+    - '%adopted:abeille% &#AAAAAABee'
+    - '%adopted:carottin% &#37C44ACarroty'
+    - '%adopted:ouistiti% &#3283A8Marmoset'
+    - '%adopted:epouvantail% &#B376E5Scarecrow'
+    - ''
+    - '&#6B7A8F[Right-click] &#FF7A59Open'
+    - '&#6B7A8FShift + right-click: open the whole stack'
+    cards: 8
+    rarity-weights:
+      simple: 2500
+      unique: 3818
+      elite: 2318
+      ultimate: 1364
+      legendary: 45
+      fabled: 5
+    contents:
+    - pet:abeille
+    - pet:carottin
+    - pet:ouistiti
+    - pet:epouvantail
+    - card:abeille
+    - card:carottin
+    - card:ouistiti
+    - card:epouvantail
+    pet-chance: 3.2931
+    pet-rarity-weights:
+      simple: 200000
+      unique: 20000
+      elite: 10000
+      ultimate: 5000
+      legendary: 0
+      fabled: 0
+  metier_herboriste:
+    item: influpet:booster_metier_herboriste
+    name: '&#6CD46C&lHerbalist Booster'
+    lore:
+    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the &#6CD46CHerbalist&#EADBC8 series.'
+    - ''
+    - '&#EADBC8Pets to adopt:'
+    - '%adopted:coquelicot% &#AAAAAAPoppy'
+    - '%adopted:champinou% &#37C44AShroomy'
+    - '%adopted:papillon% &#3283A8Butterfly'
+    - '%adopted:dryade% &#B376E5Dryad'
+    - ''
+    - '&#6B7A8F[Right-click] &#FF7A59Open'
+    - '&#6B7A8FShift + right-click: open the whole stack'
+    cards: 8
+    rarity-weights:
+      simple: 2500
+      unique: 3818
+      elite: 2318
+      ultimate: 1364
+      legendary: 45
+      fabled: 5
+    contents:
+    - pet:coquelicot
+    - pet:champinou
+    - pet:papillon
+    - pet:dryade
+    - card:coquelicot
+    - card:champinou
+    - card:papillon
+    - card:dryade
+    pet-chance: 3.2931
+    pet-rarity-weights:
+      simple: 200000
+      unique: 20000
+      elite: 10000
+      ultimate: 5000
+      legendary: 0
+      fabled: 0
+  metier_sylviculteur:
+    item: influpet:booster_metier_sylviculteur
+    name: '&#B07A45&lForester Booster'
+    lore:
+    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the &#B07A45Forester&#EADBC8 series.'
+    - ''
+    - '&#EADBC8Pets to adopt:'
+    - '%adopted:souche% &#AAAAAAStump'
+    - '%adopted:castor% &#37C44ABeaver'
+    - '%adopted:gland% &#3283A8Acorn'
+    - '%adopted:sylvain% &#B376E5Sylvan'
+    - ''
+    - '&#6B7A8F[Right-click] &#FF7A59Open'
+    - '&#6B7A8FShift + right-click: open the whole stack'
+    cards: 8
+    rarity-weights:
+      simple: 2500
+      unique: 3818
+      elite: 2318
+      ultimate: 1364
+      legendary: 45
+      fabled: 5
+    contents:
+    - pet:souche
+    - pet:castor
+    - pet:gland
+    - pet:sylvain
+    - card:souche
+    - card:castor
+    - card:gland
+    - card:sylvain
+    pet-chance: 3.2931
+    pet-rarity-weights:
+      simple: 200000
+      unique: 20000
+      elite: 10000
+      ultimate: 5000
+      legendary: 0
+      fabled: 0
+  metier_fondeur:
+    item: influpet:booster_metier_fondeur
+    name: '&#FF8A3D&lSmelter Booster'
+    lore:
+    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the &#FF8A3DSmelter&#EADBC8 series.'
+    - ''
+    - '&#EADBC8Pets to adopt:'
+    - '%adopted:soufflet% &#AAAAAABellows'
+    - '%adopted:salamandre% &#37C44ABlazing Salamander'
+    - '%adopted:fournaise% &#3283A8Furnace'
+    - '%adopted:flammeche% &#B376E5Flicker'
+    - ''
+    - '&#6B7A8F[Right-click] &#FF7A59Open'
+    - '&#6B7A8FShift + right-click: open the whole stack'
+    cards: 8
+    rarity-weights:
+      simple: 2500
+      unique: 3818
+      elite: 2318
+      ultimate: 1364
+      legendary: 45
+      fabled: 5
+    contents:
+    - pet:flammeche
+    - pet:soufflet
+    - pet:salamandre
+    - pet:fournaise
+    - card:flammeche
+    - card:soufflet
+    - card:salamandre
+    - card:fournaise
+    pet-chance: 3.2931
+    pet-rarity-weights:
+      simple: 200000
+      unique: 20000
+      elite: 10000
+      ultimate: 5000
+      legendary: 0
+      fabled: 0
+  metier_enchanteur:
+    item: influpet:booster_metier_enchanteur
+    name: '&#8C7BFF&lEnchanter Booster'
+    lore:
+    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the &#8C7BFFEnchanter&#EADBC8 series.'
+    - ''
+    - '&#EADBC8Pets to adopt:'
+    - '%adopted:lapin_lapis% &#AAAAAALapis Bunny'
+    - '%adopted:orbe_xp% &#37C44AExperience Orb'
+    - '%adopted:chouette_arcane% &#3283A8Arcane Owl'
+    - '%adopted:table_vivante% &#B376E5Living Table'
+    - ''
+    - '&#6B7A8F[Right-click] &#FF7A59Open'
+    - '&#6B7A8FShift + right-click: open the whole stack'
+    cards: 8
+    rarity-weights:
+      simple: 2500
+      unique: 3818
+      elite: 2318
+      ultimate: 1364
+      legendary: 45
+      fabled: 5
+    contents:
+    - pet:lapin_lapis
+    - pet:orbe_xp
+    - pet:chouette_arcane
+    - pet:table_vivante
+    - card:lapin_lapis
+    - card:orbe_xp
+    - card:chouette_arcane
+    - card:table_vivante
+    pet-chance: 3.2931
+    pet-rarity-weights:
+      simple: 200000
+      unique: 20000
+      elite: 10000
+      ultimate: 5000
+      legendary: 0
+      fabled: 0
+  metier_pecheur:
+    item: influpet:booster_metier_pecheur
+    name: '&#4FA8FF&lFisher Booster'
+    lore:
+    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the &#4FA8FFFisher&#EADBC8 series.'
+    - ''
+    - '&#EADBC8Pets to adopt:'
+    - '%adopted:poissonnet% &#AAAAAAFishlet'
+    - '%adopted:crabichon% &#37C44ACrabby'
+    - '%adopted:dauphin% &#3283A8Dolphin'
+    - '%adopted:kraken% &#B376E5Kraken'
+    - ''
+    - '&#6B7A8F[Right-click] &#FF7A59Open'
+    - '&#6B7A8FShift + right-click: open the whole stack'
+    cards: 8
+    rarity-weights:
+      simple: 2500
+      unique: 3818
+      elite: 2318
+      ultimate: 1364
+      legendary: 45
+      fabled: 5
+    contents:
+    - pet:poissonnet
+    - pet:crabichon
+    - pet:dauphin
+    - pet:kraken
+    - card:poissonnet
+    - card:crabichon
+    - card:dauphin
+    - card:kraken
+    pet-chance: 3.2931
+    pet-rarity-weights:
+      simple: 200000
+      unique: 20000
+      elite: 10000
+      ultimate: 5000
+      legendary: 0
+      fabled: 0
+  metier_defenseur:
+    item: influpet:booster_metier_defenseur
+    name: '&#E04848&lDefender Booster'
+    lore:
+    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the &#E04848Defender&#EADBC8 series.'
+    - ''
+    - '&#EADBC8Pets to adopt:'
+    - '%adopted:ecuyer% &#AAAAAASquire'
+    - '%adopted:pavois% &#37C44ABulwark'
+    - '%adopted:chien_garde% &#3283A8Guard Dog'
+    - '%adopted:chevalier_spectral% &#B376E5Spectral Knight'
+    - ''
+    - '&#6B7A8F[Right-click] &#FF7A59Open'
+    - '&#6B7A8FShift + right-click: open the whole stack'
+    cards: 8
+    rarity-weights:
+      simple: 2500
+      unique: 3818
+      elite: 2318
+      ultimate: 1364
+      legendary: 45
+      fabled: 5
+    contents:
+    - pet:ecuyer
+    - pet:pavois
+    - pet:chien_garde
+    - pet:chevalier_spectral
+    - card:ecuyer
+    - card:pavois
+    - card:chien_garde
+    - card:chevalier_spectral
+    pet-chance: 3.2931
+    pet-rarity-weights:
+      simple: 200000
+      unique: 20000
+      elite: 10000
+      ultimate: 5000
+      legendary: 0
+      fabled: 0
+  metier_batisseur:
+    item: influpet:booster_metier_batisseur
+    name: '&#F2A33A&lBuilder Booster'
+    lore:
+    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the &#F2A33ABuilder&#EADBC8 series.'
+    - ''
+    - '&#EADBC8Pets to adopt:'
+    - '%adopted:marteau_piqueur% &#AAAAAAJackhammer'
+    - '%adopted:betonniere% &#37C44ACement Mixer'
+    - '%adopted:grue% &#3283A8Crane'
+    - '%adopted:architecte% &#B376E5Architect'
+    - ''
+    - '&#6B7A8F[Right-click] &#FF7A59Open'
+    - '&#6B7A8FShift + right-click: open the whole stack'
+    cards: 8
+    rarity-weights:
+      simple: 2500
+      unique: 3818
+      elite: 2318
+      ultimate: 1364
+      legendary: 45
+      fabled: 5
+    contents:
+    - pet:marteau_piqueur
+    - pet:betonniere
+    - pet:grue
+    - pet:architecte
+    - card:marteau_piqueur
+    - card:betonniere
+    - card:grue
+    - card:architecte
+    pet-chance: 3.2931
+    pet-rarity-weights:
+      simple: 200000
+      unique: 20000
+      elite: 10000
+      ultimate: 5000
+      legendary: 0
+      fabled: 0
+  prestige:
+    item: influpet:booster_prestige
+    name: '&#F0A800&lPrestige Booster'
+    lore:
+    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the &#F0A800Prestige&#EADBC8 series.'
+    - ''
+    - '&#EADBC8Pets to adopt:'
+    - '%adopted:phenix% &#F0A800Phoenix'
+    - '%adopted:astrolabe% &#F0A800Celestial Astrolabe'
+    - '%adopted:kitsune% &#F0A800Snow Kitsune'
+    - '%adopted:licorne% &#F0A800Astral Unicorn'
+    - '%adopted:nida% &#F0A800Nida'
+    - '%adopted:leviathan% &#C8256ALeviathan'
+    - '%adopted:faucheur% &#C8256AVoid Reaper'
+    - ''
+    - '&#6B7A8F[Right-click] &#FF7A59Open'
+    - '&#6B7A8FShift + right-click: open the whole stack'
+    cards: 5
+    rarity-weights:
+      simple: 400
+      unique: 280
+      elite: 170
+      ultimate: 100
+      legendary: 45
+      fabled: 15
+    contents:
+    - pet:phenix
+    - pet:astrolabe
+    - pet:kitsune
+    - pet:licorne
+    - pet:nida
+    - pet:leviathan
+    - pet:faucheur
+    - card:phenix
+    - card:astrolabe
+    - card:kitsune
+    - card:licorne
+    - card:nida
+    - card:leviathan
+    - card:faucheur
+    pet-chance: 0.2917
+    pet-rarity-weights:
+      simple: 0
+      unique: 0
+      elite: 0
+      ultimate: 0
+      legendary: 12500
+      fabled: 2000
+  ordinaire:
+    item: influpet:booster_ordinaire
+    name: '&f&lOrdinary Booster'
+    lore:
+    - '&#EADBC8Tier: &#FFF4E0★&#6B7A8F☆☆☆'
+    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from'
+    - '&#EADBC8every series.'
+    - ''
+    - '&#EADBC8Pets to adopt:'
+    - '&#6B7A8F» &#FFF4E0Every pet'
+    - ''
+    - '&#6B7A8F[Right-click] &#FF7A59Open'
+    - '&#6B7A8FShift + right-click: open the whole stack'
+    cards: 8
+    rarity-weights:
+      simple: 400
+      unique: 280
+      elite: 170
+      ultimate: 100
+      legendary: 45
+      fabled: 5
+    contents:
+    - pet:pepite
+    - pet:lanterne
+    - pet:wagonnet
+    - pet:dragon_gemmes
+    - pet:caillou
+    - pet:mimique
+    - pet:colosse
+    - pet:titan
+    - pet:fourmi
+    - pet:cabri
+    - pet:lievre_neiges
+    - pet:ver_sables
+    - pet:abeille
+    - pet:carottin
+    - pet:ouistiti
+    - pet:epouvantail
+    - pet:coquelicot
+    - pet:champinou
+    - pet:papillon
+    - pet:dryade
+    - pet:souche
+    - pet:castor
+    - pet:gland
+    - pet:sylvain
+    - pet:flammeche
+    - pet:soufflet
+    - pet:salamandre
+    - pet:fournaise
+    - pet:lapin_lapis
+    - pet:orbe_xp
+    - pet:chouette_arcane
+    - pet:table_vivante
+    - pet:poissonnet
+    - pet:crabichon
+    - pet:dauphin
+    - pet:kraken
+    - pet:ecuyer
+    - pet:pavois
+    - pet:chien_garde
+    - pet:chevalier_spectral
+    - pet:marteau_piqueur
+    - pet:betonniere
+    - pet:grue
+    - pet:architecte
+    - pet:phenix
+    - pet:astrolabe
+    - pet:kitsune
+    - pet:licorne
+    - pet:nida
+    - pet:leviathan
+    - pet:faucheur
+    - card:pepite
+    - card:lanterne
+    - card:wagonnet
+    - card:dragon_gemmes
+    - card:caillou
+    - card:mimique
+    - card:colosse
+    - card:titan
+    - card:fourmi
+    - card:cabri
+    - card:lievre_neiges
+    - card:ver_sables
+    - card:abeille
+    - card:carottin
+    - card:ouistiti
+    - card:epouvantail
+    - card:coquelicot
+    - card:champinou
+    - card:papillon
+    - card:dryade
+    - card:souche
+    - card:castor
+    - card:gland
+    - card:sylvain
+    - card:flammeche
+    - card:soufflet
+    - card:salamandre
+    - card:fournaise
+    - card:lapin_lapis
+    - card:orbe_xp
+    - card:chouette_arcane
+    - card:table_vivante
+    - card:poissonnet
+    - card:crabichon
+    - card:dauphin
+    - card:kraken
+    - card:ecuyer
+    - card:pavois
+    - card:chien_garde
+    - card:chevalier_spectral
+    - card:marteau_piqueur
+    - card:betonniere
+    - card:grue
+    - card:architecte
+    - card:phenix
+    - card:astrolabe
+    - card:kitsune
+    - card:licorne
+    - card:nida
+    - card:leviathan
+    - card:faucheur
+    pet-chance: 0.1612
+    pets-prefer-new: true
+    duplicate-plush: false
+    pet-rarity-weights:
+      simple: 3336
+      unique: 3336
+      elite: 3336
+      ultimate: 1668
+      legendary: 830
+      fabled: 330
+  tendance:
+    item: influpet:booster_tendance
+    name: '&#55FF55&lTrending Booster'
+    lore:
+    - '&#EADBC8Tier: &#FFF4E0★★&#6B7A8F☆☆'
+    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from'
+    - '&#EADBC8every series.'
+    - ''
+    - '&#EADBC8Pets to adopt:'
+    - '&#6B7A8F» &#FFF4E0Every pet'
+    - ''
+    - '&#6B7A8F[Right-click] &#FF7A59Open'
+    - '&#6B7A8FShift + right-click: open the whole stack'
+    cards: 12
+    rarity-weights:
+      simple: 300
+      unique: 290
+      elite: 200
+      ultimate: 130
+      legendary: 65
+      fabled: 15
+    contents:
+    - pet:pepite
+    - pet:lanterne
+    - pet:wagonnet
+    - pet:dragon_gemmes
+    - pet:caillou
+    - pet:mimique
+    - pet:colosse
+    - pet:titan
+    - pet:fourmi
+    - pet:cabri
+    - pet:lievre_neiges
+    - pet:ver_sables
+    - pet:abeille
+    - pet:carottin
+    - pet:ouistiti
+    - pet:epouvantail
+    - pet:coquelicot
+    - pet:champinou
+    - pet:papillon
+    - pet:dryade
+    - pet:souche
+    - pet:castor
+    - pet:gland
+    - pet:sylvain
+    - pet:flammeche
+    - pet:soufflet
+    - pet:salamandre
+    - pet:fournaise
+    - pet:lapin_lapis
+    - pet:orbe_xp
+    - pet:chouette_arcane
+    - pet:table_vivante
+    - pet:poissonnet
+    - pet:crabichon
+    - pet:dauphin
+    - pet:kraken
+    - pet:ecuyer
+    - pet:pavois
+    - pet:chien_garde
+    - pet:chevalier_spectral
+    - pet:marteau_piqueur
+    - pet:betonniere
+    - pet:grue
+    - pet:architecte
+    - pet:phenix
+    - pet:astrolabe
+    - pet:kitsune
+    - pet:licorne
+    - pet:nida
+    - pet:leviathan
+    - pet:faucheur
+    - card:pepite
+    - card:lanterne
+    - card:wagonnet
+    - card:dragon_gemmes
+    - card:caillou
+    - card:mimique
+    - card:colosse
+    - card:titan
+    - card:fourmi
+    - card:cabri
+    - card:lievre_neiges
+    - card:ver_sables
+    - card:abeille
+    - card:carottin
+    - card:ouistiti
+    - card:epouvantail
+    - card:coquelicot
+    - card:champinou
+    - card:papillon
+    - card:dryade
+    - card:souche
+    - card:castor
+    - card:gland
+    - card:sylvain
+    - card:flammeche
+    - card:soufflet
+    - card:salamandre
+    - card:fournaise
+    - card:lapin_lapis
+    - card:orbe_xp
+    - card:chouette_arcane
+    - card:table_vivante
+    - card:poissonnet
+    - card:crabichon
+    - card:dauphin
+    - card:kraken
+    - card:ecuyer
+    - card:pavois
+    - card:chien_garde
+    - card:chevalier_spectral
+    - card:marteau_piqueur
+    - card:betonniere
+    - card:grue
+    - card:architecte
+    - card:phenix
+    - card:astrolabe
+    - card:kitsune
+    - card:licorne
+    - card:nida
+    - card:leviathan
+    - card:faucheur
+    pet-chance: 0.1292
+    pets-prefer-new: true
+    duplicate-plush: false
+    pet-rarity-weights:
+      simple: 3996
+      unique: 3996
+      elite: 3996
+      ultimate: 2004
+      legendary: 1000
+      fabled: 400
+  virale:
+    item: influpet:booster_virale
+    name: '&#5A85EA&lViral Booster'
+    lore:
+    - '&#EADBC8Tier: &#FFF4E0★★★&#6B7A8F☆'
+    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from'
+    - '&#EADBC8every series.'
+    - ''
+    - '&#EADBC8Pets to adopt:'
+    - '&#6B7A8F» &#FFF4E0Every pet'
+    - ''
+    - '&#6B7A8F[Right-click] &#FF7A59Open'
+    - '&#6B7A8FShift + right-click: open the whole stack'
+    cards: 16
+    rarity-weights:
+      simple: 180
+      unique: 260
+      elite: 250
+      ultimate: 180
+      legendary: 100
+      fabled: 30
+    contents:
+    - pet:pepite
+    - pet:lanterne
+    - pet:wagonnet
+    - pet:dragon_gemmes
+    - pet:caillou
+    - pet:mimique
+    - pet:colosse
+    - pet:titan
+    - pet:fourmi
+    - pet:cabri
+    - pet:lievre_neiges
+    - pet:ver_sables
+    - pet:abeille
+    - pet:carottin
+    - pet:ouistiti
+    - pet:epouvantail
+    - pet:coquelicot
+    - pet:champinou
+    - pet:papillon
+    - pet:dryade
+    - pet:souche
+    - pet:castor
+    - pet:gland
+    - pet:sylvain
+    - pet:flammeche
+    - pet:soufflet
+    - pet:salamandre
+    - pet:fournaise
+    - pet:lapin_lapis
+    - pet:orbe_xp
+    - pet:chouette_arcane
+    - pet:table_vivante
+    - pet:poissonnet
+    - pet:crabichon
+    - pet:dauphin
+    - pet:kraken
+    - pet:ecuyer
+    - pet:pavois
+    - pet:chien_garde
+    - pet:chevalier_spectral
+    - pet:marteau_piqueur
+    - pet:betonniere
+    - pet:grue
+    - pet:architecte
+    - pet:phenix
+    - pet:astrolabe
+    - pet:kitsune
+    - pet:licorne
+    - pet:nida
+    - pet:leviathan
+    - pet:faucheur
+    - card:pepite
+    - card:lanterne
+    - card:wagonnet
+    - card:dragon_gemmes
+    - card:caillou
+    - card:mimique
+    - card:colosse
+    - card:titan
+    - card:fourmi
+    - card:cabri
+    - card:lievre_neiges
+    - card:ver_sables
+    - card:abeille
+    - card:carottin
+    - card:ouistiti
+    - card:epouvantail
+    - card:coquelicot
+    - card:champinou
+    - card:papillon
+    - card:dryade
+    - card:souche
+    - card:castor
+    - card:gland
+    - card:sylvain
+    - card:flammeche
+    - card:soufflet
+    - card:salamandre
+    - card:fournaise
+    - card:lapin_lapis
+    - card:orbe_xp
+    - card:chouette_arcane
+    - card:table_vivante
+    - card:poissonnet
+    - card:crabichon
+    - card:dauphin
+    - card:kraken
+    - card:ecuyer
+    - card:pavois
+    - card:chien_garde
+    - card:chevalier_spectral
+    - card:marteau_piqueur
+    - card:betonniere
+    - card:grue
+    - card:architecte
+    - card:phenix
+    - card:astrolabe
+    - card:kitsune
+    - card:licorne
+    - card:nida
+    - card:leviathan
+    - card:faucheur
+    pet-chance: 0.6563
+    pets-prefer-new: true
+    duplicate-plush: false
+    pet-rarity-weights:
+      simple: 48888
+      unique: 19560
+      elite: 13032
+      ultimate: 6516
+      legendary: 10000
+      fabled: 2000
+  phenomene:
+    item: influpet:booster_phenomene
+    name: '&#F0A800&lPhenomenal Booster'
+    lore:
+    - '&#EADBC8Tier: &#FFF4E0★★★★&#6B7A8F'
+    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from'
+    - '&#EADBC8every series.'
+    - ''
+    - '&#EADBC8Pets to adopt:'
+    - '&#6B7A8F» &#FFF4E0Every pet'
+    - ''
+    - '&#6B7A8F[Right-click] &#FF7A59Open'
+    - '&#6B7A8FShift + right-click: open the whole stack'
+    cards: 20
+    rarity-weights:
+      simple: 100
+      unique: 200
+      elite: 250
+      ultimate: 230
+      legendary: 160
+      fabled: 60
+    contents:
+    - pet:pepite
+    - pet:lanterne
+    - pet:wagonnet
+    - pet:dragon_gemmes
+    - pet:caillou
+    - pet:mimique
+    - pet:colosse
+    - pet:titan
+    - pet:fourmi
+    - pet:cabri
+    - pet:lievre_neiges
+    - pet:ver_sables
+    - pet:abeille
+    - pet:carottin
+    - pet:ouistiti
+    - pet:epouvantail
+    - pet:coquelicot
+    - pet:champinou
+    - pet:papillon
+    - pet:dryade
+    - pet:souche
+    - pet:castor
+    - pet:gland
+    - pet:sylvain
+    - pet:flammeche
+    - pet:soufflet
+    - pet:salamandre
+    - pet:fournaise
+    - pet:lapin_lapis
+    - pet:orbe_xp
+    - pet:chouette_arcane
+    - pet:table_vivante
+    - pet:poissonnet
+    - pet:crabichon
+    - pet:dauphin
+    - pet:kraken
+    - pet:ecuyer
+    - pet:pavois
+    - pet:chien_garde
+    - pet:chevalier_spectral
+    - pet:marteau_piqueur
+    - pet:betonniere
+    - pet:grue
+    - pet:architecte
+    - pet:phenix
+    - pet:astrolabe
+    - pet:kitsune
+    - pet:licorne
+    - pet:nida
+    - pet:leviathan
+    - pet:faucheur
+    - card:pepite
+    - card:lanterne
+    - card:wagonnet
+    - card:dragon_gemmes
+    - card:caillou
+    - card:mimique
+    - card:colosse
+    - card:titan
+    - card:fourmi
+    - card:cabri
+    - card:lievre_neiges
+    - card:ver_sables
+    - card:abeille
+    - card:carottin
+    - card:ouistiti
+    - card:epouvantail
+    - card:coquelicot
+    - card:champinou
+    - card:papillon
+    - card:dryade
+    - card:souche
+    - card:castor
+    - card:gland
+    - card:sylvain
+    - card:flammeche
+    - card:soufflet
+    - card:salamandre
+    - card:fournaise
+    - card:lapin_lapis
+    - card:orbe_xp
+    - card:chouette_arcane
+    - card:table_vivante
+    - card:poissonnet
+    - card:crabichon
+    - card:dauphin
+    - card:kraken
+    - card:ecuyer
+    - card:pavois
+    - card:chien_garde
+    - card:chevalier_spectral
+    - card:marteau_piqueur
+    - card:betonniere
+    - card:grue
+    - card:architecte
+    - card:phenix
+    - card:astrolabe
+    - card:kitsune
+    - card:licorne
+    - card:nida
+    - card:leviathan
+    - card:faucheur
+    pet-chance: 3.4064
+    pets-prefer-new: true
+    duplicate-plush: false
+    pet-rarity-weights:
+      simple: 244440
+      unique: 97776
+      elite: 65184
+      ultimate: 32592
+      legendary: 50000
+      fabled: 10000

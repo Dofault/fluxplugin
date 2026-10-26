@@ -1,0 +1,58 @@
+# &#3283A8Gland : un des familiers livrés avec InfluPet. Grandit avec ses cartes (clic droit sur une carte).
+# Modèle : BetterModel/models/familier_gland.bbmodel, carte et peluche : pack ItemsAdder "influpet".
+
+name: '&#3283A8Gland'
+description: '&#EADBC8Grandit uniquement avec ses cartes'
+entity-texture: bettermodel:familier_gland
+flying: false
+icon: itemsadder:influpet__carte_gland
+trail:
+  enabled: false
+  particle: flame
+  gap: 2
+  amount: 1
+  y-offset: 0.0
+level-xp-requirements:
+- 32
+- 42
+- 53
+- 65
+- 78
+- 91
+- 105
+- 119
+- 135
+xp-gain-methods: []
+level-placeholders:
+- id: bonus
+  value: round((10 + (%level% - 1) * 90 / 9) * 100) / 100
+effects-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Croissance éclair'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance qu''une pousse'
+  - '  &#EADBC8devienne un arbre d''un seul'
+  - '  &#EADBC8coup de poudre d''os'
+rewards-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Croissance éclair'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance qu''une pousse'
+  - '  &#EADBC8devienne un arbre d''un seul'
+  - '  &#EADBC8coup de poudre d''os'
+level-up-messages:
+  1:
+  - '&#6B7A8F» &#FFF4E0Croissance éclair'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance qu''une pousse'
+  - '  &#EADBC8devienne un arbre d''un seul'
+  - '  &#EADBC8coup de poudre d''os'
+level-up-effects: []
+effects: []
+conditions: []
+activate-conditions: []
+spawn-egg:
+  enabled: false
+  item: paper
+  name: '&#3283A8Gland'
+  lore: []
+  craftable: false
+  recipe: []
+  withdrawable: false

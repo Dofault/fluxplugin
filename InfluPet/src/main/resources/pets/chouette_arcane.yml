@@ -1,0 +1,64 @@
+# Arcane Owl: one of the default InfluPet pets. Grows with its cards (right-click a card).
+# Model: BetterModel/models/familier_chouette_arcane.bbmodel, card and plush: ItemsAdder pack "influpet".
+
+name: '&#3283A8Arcane Owl'
+description: '&#EADBC8Only grows with its cards'
+entity-texture: bettermodel:familier_chouette_arcane
+flying: true
+icon: itemsadder:influpet__carte_chouette_arcane
+trail:
+  enabled: false
+  particle: flame
+  gap: 2
+  amount: 1
+  y-offset: 0.0
+level-xp-requirements:
+- 32
+- 42
+- 53
+- 65
+- 78
+- 91
+- 105
+- 119
+- 135
+xp-gain-methods: []
+level-placeholders:
+- id: bonus
+  value: round((1500 + (%level% - 1) * -1000 / 9) * 1) / 1
+effects-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Wise Wear'
+  - '  &#EADBC8An item gains a vanilla'
+  - '  &#EADBC8enchantment level every &#FFF4E0%bonus%&#EADBC8'
+  - '  &#EADBC8blocks mined or hits dealt'
+  - '  &#EADBC8Vanilla Minecraft enchantments,'
+  - '  &#EADBC8never above their maximum'
+rewards-description:
+  1:
+  - '&#6B7A8F» &#FFF4E0Wise Wear'
+  - '  &#EADBC8An item gains a vanilla'
+  - '  &#EADBC8enchantment level every &#FFF4E0%bonus%&#EADBC8'
+  - '  &#EADBC8blocks mined or hits dealt'
+  - '  &#EADBC8Vanilla Minecraft enchantments,'
+  - '  &#EADBC8never above their maximum'
+level-up-messages:
+  1:
+  - '&#6B7A8F» &#FFF4E0Wise Wear'
+  - '  &#EADBC8An item gains a vanilla'
+  - '  &#EADBC8enchantment level every &#FFF4E0%bonus%&#EADBC8'
+  - '  &#EADBC8blocks mined or hits dealt'
+  - '  &#EADBC8Vanilla Minecraft enchantments,'
+  - '  &#EADBC8never above their maximum'
+level-up-effects: []
+effects: []
+conditions: []
+activate-conditions: []
+spawn-egg:
+  enabled: false
+  item: paper
+  name: '&#3283A8Arcane Owl'
+  lore: []
+  craftable: false
+  recipe: []
+  withdrawable: false
