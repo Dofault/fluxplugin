@@ -17,3 +17,7 @@ libs/*.jar
 .idea/
 .vscode/
 *.iml
+
+# Python caches
+__pycache__/
+*.pyc

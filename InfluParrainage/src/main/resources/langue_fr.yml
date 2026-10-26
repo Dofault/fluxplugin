@@ -1,0 +1,114 @@
+# ===================================================
+# InfluParrainage, InfluenCraft
+# Fichier de langue : Français
+# Auteur : Entr0pik
+# ===================================================
+# Toutes les valeurs supportent le format MiniMessage.
+# Placeholders globaux disponibles : {prefixe}
+# {code} et {adresse} sont rendus cliquables (copie dans le presse-papier).
+# Une clé absente de ce fichier reprend le texte par défaut du plugin.
+
+messages:
+
+  # --- Adresse personnelle (/parrainage adresse, bouton du menu) ---
+  adresse-affichage: "{prefixe} <color:#B376E5>Ton adresse perso : <color:#2BC4E8><u>{adresse}</u></color><newline><color:#B376E5>Donne-la à tes amis : ils l'ajoutent dans <white>Multijoueur</white>, <white>Ajouter un serveur</white>.<newline><color:#B376E5>Après <white>{temps}</white> de jeu, vous recevez tous les deux une récompense.<newline><dark_gray>Clique sur l'adresse pour la copier. Code de secours : {code}"
+  adresse-survol-copier: "<gray>Clique pour copier ton adresse"
+  chargement: "{prefixe} <gray>Chargement de tes données, réessaie dans un instant."
+
+  # --- Arrivée par adresse et validation automatique ---
+  arrivee-filleul: "{prefixe} <color:#B376E5>Bienvenue ! Tu as rejoint le serveur grâce à <color:#FFD94D>{parrain}</color>. Joue <white>{temps}</white> pour valider ton parrainage : vous aurez tous les deux une récompense à récupérer."
+  arrivee-notif-parrain: "{prefixe} <color:#FFD94D>{joueur}</color> <color:#B376E5>vient d'arriver avec ton adresse ! Son parrainage sera validé après <white>{temps}</white> de jeu."
+  validation-filleul: "{prefixe} <color:#2ECF7B>Parrainage validé ! Merci d'avoir rejoint le serveur avec <color:#FFD94D>{parrain}</color>, ta récompense d'accueil t'attend : <white>/parrainage recuperer</white>."
+  validation-refus-meme-ip: "{prefixe} <color:#FF5C5C>Ton parrainage par <white>{parrain}</white> n'a pas pu être validé : vous jouez depuis la même connexion. Contacte le staff si vous vivez sous le même toit."
+  validation-refus-meme-ip-parrain: "{prefixe} <color:#FF5C5C>Le parrainage de <white>{joueur}</white> n'a pas pu être validé : vous jouez depuis la même connexion."
+
+  # --- Commande /parrainage code ---
+  code-affichage: "{prefixe} <gray>Ton code de parrainage : <color:#FFD94D><bold>{code}</bold></color>"
+  code-genere: "{prefixe} <color:#2ECF7B>Ton code a été généré : <color:#FFD94D><bold>{code}</bold></color>"
+
+  # --- Commande /parrainage utiliser <code> ---
+  utilisation-succes: "{prefixe} <color:#2ECF7B>Tu as utilisé le code de <color:#FFD94D>{parrain}</color>. Bienvenue sur InfluenCraft ! Ta récompense d'accueil t'attend : <white>/parrainage recuperer</white>."
+  utilisation-notif-parrain: "{prefixe} <color:#FFD94D>{joueur}</color> <color:#B376E5>est maintenant ton filleul ! Tu en as <white>{compteur}</white>, récupère ta récompense : <white>/parrainage recuperer</white>."
+  utilisation-deja-parraine: "{prefixe} <color:#FF5C5C>Tu as déjà été parrainé."
+  utilisation-en-attente: "{prefixe} <color:#B376E5>Tu as rejoint le serveur grâce à <color:#FFD94D>{parrain}</color> : ton parrainage sera validé tout seul après le temps de jeu requis."
+  utilisation-propre-code: "{prefixe} <color:#FF5C5C>Tu ne peux pas utiliser ton propre code de parrainage."
+  utilisation-code-invalide: "{prefixe} <color:#FF5C5C>Ce code de parrainage est invalide ou inexistant."
+  utilisation-circulaire: "{prefixe} <color:#FF5C5C>Tu ne peux pas utiliser le code de ton propre filleul."
+  utilisation-meme-ip: "{prefixe} <color:#FF5C5C>Impossible : tu joues depuis la même connexion que ce parrain."
+  utilisation-temps-jeu-insuffisant: "{prefixe} <color:#FF5C5C>Tu dois avoir joué au moins <yellow>{temps}</yellow> avant de pouvoir utiliser un code."
+
+  # --- Commande /parrainage recuperer ---
+  recuperation-rien: "{prefixe} <gray>Rien à récupérer pour l'instant."
+  recuperation-en-cours: "{prefixe} <gray>Récupération déjà en cours, réessaie dans un instant."
+  recuperation-succes: "{prefixe} <color:#2ECF7B><white>{compteur}</white> récompense(s) récupérée(s) !"
+  recuperation-partielle: "{prefixe} <color:#2ECF7B><white>{compteur}</white> récompense(s) récupérée(s)."
+  recuperation-inventaire-plein: "{prefixe} <color:#FF5C5C>Ton inventaire est plein : fais de la place puis retape <white>/parrainage recuperer</white> pour le reste."
+
+  # --- Commande /parrainage top ---
+  classement-entete: "<strikethrough><gray>                                                    </gray></strikethrough><newline><color:#FFD94D>✦ Classement des parrains</color><newline><strikethrough><gray>                                                    </gray></strikethrough>"
+  classement-ligne: "<gray><bold>#{rang}</bold> <white>{joueur}</white> <dark_gray>-</dark_gray> <yellow>{compteur} filleul(s)</yellow>"
+  classement-vide: "{prefixe} <gray>Aucun parrainage enregistré pour l'instant."
+
+  # --- Commande /parrainage info [joueur] ---
+  info-entete: "{prefixe} <color:#FFD94D>Informations de parrainage</color>"
+  info-parrain: "<gray>Parrain : <white>{parrain}</white>"
+  info-parrain-aucun: "<gray>Parrain : <white>Aucun</white>"
+  info-nb-filleuls: "<gray>Filleuls : <yellow>{compteur}</yellow>"
+  info-code: "<gray>Code : <color:#FFD94D>{code}</color>"
+  info-prochain-palier: "<gray>Prochain palier : <color:#2BC4E8>{palier} filleul(s)</color>"
+  info-palier-max: "<gray>Prochain palier : <color:#2ECF7B>Palier maximum atteint !</color>"
+  info-joueur-introuvable: "{prefixe} <color:#FF5C5C>Joueur introuvable."
+
+  # --- Paliers ---
+  palier-atteint-joueur: "{prefixe} <color:#FFD94D>Palier atteint ! Tu as parrainé <yellow>{compteur}</yellow> joueur(s). Récompense disponible : <white>/parrainage recuperer</white>."
+  palier-atteint-annonce: "{prefixe} <white>{joueur}</white> <gray>vient d'atteindre le palier de <yellow>{compteur}</yellow> filleul(s) !</gray>"
+
+  # --- Commandes d'administration ---
+  admin-reinitialisation-succes: "{prefixe} <color:#2ECF7B>Données de parrainage de <white>{joueur}</white> réinitialisées avec succès."
+  admin-rechargement-succes: "{prefixe} <color:#2ECF7B>Configuration et messages rechargés."
+  admin-definir-parrain-succes: "{prefixe} <color:#2ECF7B>Parrain de <white>{joueur}</white> défini sur <color:#FFD94D>{parrain}</color>."
+  admin-supprimer-parrain-succes: "{prefixe} <color:#2ECF7B>Lien de parrainage de <white>{joueur}</white> supprimé."
+  admin-forcer-palier-succes: "{prefixe} <color:#2ECF7B>Palier <yellow>{palier}</yellow> déclenché pour <white>{joueur}</white>."
+  admin-forcerpalier-recompense-donnee: "{prefixe} <color:#2ECF7B>Palier <yellow>{compteur}</yellow> forcé par un admin : récompense donnée immédiatement, hors file d'attente."
+  admin-simuler-succes: "{prefixe} <color:#2ECF7B><white>{joueur}</white> a été inscrit sur l'adresse de <color:#FFD94D>{parrain}</color> (invitation en attente)."
+  admin-simuler-echec: "{prefixe} <color:#FF5C5C>Aucune invitation créée pour <white>{joueur}</white> avec <white>{adresse}</white> (adresse inconnue, déjà filleul ou déjà en attente, propre adresse)."
+  admin-valider-succes: "{prefixe} <color:#2ECF7B>Parrainage de <white>{joueur}</white> par <color:#FFD94D>{parrain}</color> validé."
+  admin-valider-echec: "{prefixe} <color:#FF5C5C>Validation impossible pour <white>{joueur}</white> : {raison}."
+
+  # --- Messages génériques ---
+  permission-refusee: "{prefixe} <color:#FF5C5C>Tu n'as pas la permission d'effectuer cette action."
+  joueur-seulement: "{prefixe} <color:#FF5C5C>Cette commande ne peut être exécutée que par un joueur."
+  usage-invalide: "{prefixe} <color:#FF5C5C>Usage : <white>{usage}</white>"
+  erreur-bdd: "{prefixe} <color:#FF5C5C>Erreur de base de données. Contacte un administrateur."
+  joueur-non-connecte: "{prefixe} <color:#FF5C5C>Ce joueur n'est pas connecté."
+
+  # --- Code cliquable ---
+  code-survol-copier: "<gray>Clique pour copier ton code"
+
+  # --- Aide joueur (/parrainage aide) ---
+  aide-entete: "{prefixe} <color:#FFD94D><bold>Commandes du parrainage</bold></color>"
+  aide-ligne: "<gray> <color:#FFD94D>›</color> <white>{commande}</white> <dark_gray>:</dark_gray> <gray>{description}</gray>"
+  aide-pied: "<dark_gray>Utilise <white>/parrainage admin aide</white> pour les commandes admin."
+  aide-desc-adresse: "Afficher ton adresse perso à donner à tes amis"
+  aide-desc-code: "Afficher ton code de parrainage"
+  aide-desc-utiliser: "Utiliser un code de parrainage"
+  aide-desc-info-soi: "Voir tes informations de parrainage"
+  aide-desc-info-autres: "Voir les infos d'un autre joueur"
+  aide-desc-top: "Afficher le classement des parrains"
+  aide-desc-recuperer: "Récupérer tes récompenses en attente"
+
+  # --- Messages admin supplémentaires ---
+  admin-joueur-pas-parraine: "{prefixe} <color:#FF5C5C>Ce joueur n'a pas de parrain enregistré."
+  admin-reinitialisation-avertissement: "{prefixe} <yellow>⚠ Toutes les données ont été effacées (filleuls, paliers, code). Pour supprimer un seul lien, utilise <white>/parrainage admin supprimerparrain \\<filleul></white>."
+
+  # --- Aide admin (/parrainage admin aide) ---
+  aide-admin-entete: "{prefixe} <color:#FF5C5C><bold>Commandes admin du parrainage</bold></color>"
+  aide-admin-ligne: "<gray> <color:#FF5C5C>›</color> <white>{commande}</white> <dark_gray>:</dark_gray> <gray>{description}</gray>"
+  aide-admin-desc-recharger: "Recharger la configuration"
+  aide-admin-desc-reinitialiser: "Réinitialiser les données d'un joueur"
+  aide-admin-desc-definirparrain: "Définir manuellement un parrain"
+  aide-admin-desc-supprimerparrain: "Supprimer un lien de parrainage"
+  aide-admin-desc-forcerpalier: "Déclencher un palier manuellement"
+  aide-admin-desc-info: "Infos de débogage d'un joueur"
+  aide-admin-desc-simuler: "Simuler une arrivée par adresse (test sans DNS)"
+  aide-admin-desc-valider: "Valider un parrainage en attente sans attendre"

@@ -54,10 +54,10 @@ public final class PetHook {
         return pet == null || !PetData.isActive(player, pet) ? 0 : PetData.level(player, pet);
     }
 
-    /** Icône du familier (celle du menu des familiers), papier si indisponible. */
+    /** Icône du familier (son objet « icon », à son nom), papier si indisponible. */
     public static ItemStack icon(Player player, String id) {
         Pet pet = available() ? Pets.get(id) : null;
-        return pet == null ? new ItemStack(Material.PAPER) : PetItems.icon(player, pet);
+        return pet == null ? new ItemStack(Material.PAPER) : PetItems.named(pet.baseItem(), pet.name(), null);
     }
 
     /** Adopte le familier (événement d'adoption, niveau 1). */

@@ -1,0 +1,22 @@
+name: InfluCasino
+version: 0.1.0
+main: fr.influencraft.casino.InfluCasino
+api-version: "26.2"
+description: Jetons de casino d'Influencraft (solde, mise, échange contre des BitBlock) pour les jeux de FluxMenu.
+authors: [Influencraft]
+depend: [Vault]
+softdepend: [PlaceholderAPI]
+
+commands:
+  jetons:
+    description: Jetons de casino (solde, mise, échange).
+    usage: /jetons [mise|acheter|vendre|admin]
+    aliases: [jeton]
+
+permissions:
+  influcasino.use:
+    description: /jetons (solde, mise, échange).
+    default: true
+  influcasino.admin:
+    description: /jetons admin (give, take, set, historique).
+    default: op

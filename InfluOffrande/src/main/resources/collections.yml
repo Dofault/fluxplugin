@@ -1,0 +1,50 @@
+# collections.yml — collection definitions for InfluOffrande.
+#
+# This file is rewritten in full whenever an admin uses the in-game editor (click the
+# edit button in /offrande <collection>), so don't rely on comments here surviving an
+# in-game edit — hand edits are always picked up fine on the next /influoffrande reload.
+#
+# collections:
+#   <id>:                     # used in /offrande <id>, and in %offrandes_<id>_*% placeholders
+#     displayname: "..."      # supports &legacy, &#RRGGBB / #RRGGBB hex, MiniMessage <tags>, %papi_placeholders%
+#     permission: "..."       # LuckPerms/Bukkit permission required to access it; blank = open to
+#                              # anyone with offrandes.use. Ops and offrandes.admin always bypass this.
+#     items:
+#       <item key>: <amount>  # a plain Bukkit material (DIAMOND) or an ItemsAdder namespaced id
+#                              # ("namespace:id", quoted because of the colon). Amount can be far
+#                              # above 64 — the GUI displays a single glowing icon in that case, with
+#                              # the real number shown on hover.
+#     names:                  # optional: pretty per-item display name override (else auto-generated
+#       <item key>: "..."     # from the material/ItemsAdder name)
+#
+# Avoid dots (".") in collection ids and ItemsAdder namespaced ids: this file is parsed
+# through Bukkit's ConfigurationSection, which treats "." as a path separator.
+#
+# This is the exact two-collection example from the InfluOffrande spec, ready to use.
+# See docs/offrande.md for the real per-rank "Offrande <Rang>" content this plugin is meant
+# to eventually host (this default file intentionally does not try to guess/pre-fill that).
+
+collections:
+  collection1:
+    displayname: "&6Offrande du Mineur"
+    permission: ""
+    items:
+      DIAMOND: 64
+      IRON_INGOT: 128
+      OAK_LOG: 256
+    names:
+      DIAMOND: "Diamant"
+      IRON_INGOT: "Lingot de fer"
+      OAK_LOG: "Buche de chene"
+
+  collection2:
+    displayname: "&5Offrande du Nether"
+    # Exemple : reserve aux joueurs ayant cette permission (a accorder par grade via LuckPerms,
+    # ex: /lp group repute permission set offrandes.collection.collection2 true).
+    permission: "offrandes.collection.collection2"
+    items:
+      NETHERITE_INGOT: 4
+      BLAZE_ROD: 32
+    names:
+      NETHERITE_INGOT: "Lingot de netherite"
+      BLAZE_ROD: "Baton de blaze"

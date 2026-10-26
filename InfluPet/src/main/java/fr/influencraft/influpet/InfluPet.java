@@ -42,6 +42,7 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
     private NamespacedKey boosterKey;
     private NamespacedKey versionKey;
     private ItemUpdater updater;
+    private fr.influencraft.influpet.careers.CareerCatchUp boosterStash;
     private CardRegistry registry;
     private RevealManager reveals;
     private ChatPrompt prompts;
@@ -59,6 +60,7 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
         cardKey = new NamespacedKey(LEGACY_NAMESPACE, "card");
         boosterKey = new NamespacedKey(LEGACY_NAMESPACE, "booster");
         versionKey = new NamespacedKey(LEGACY_NAMESPACE, "version");
+        Pets.registerPlaceholders(this);
         // familiers avant les cartes : le registre des cartes liste les familiers chargés
         boolean petsStarted = startPets();
         registry = new CardRegistry(this);
@@ -74,6 +76,8 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
         if (command != null) {
             command.setTabCompleter(this);
         }
+        // boosters en attente (/boosters) et rattrapage unique des boosters de carrière, cf. CareerCatchUp
+        boosterStash = fr.influencraft.influpet.careers.CareerCatchUp.enable(this);
         if (!petsStarted) {
             // sur la prod, libreforge est chargé par les plugins eco eux-mêmes : il peut n'être actif qu'après
             // InfluPet. Nouvel essai une fois le serveur démarré (tous les plugins activés).
@@ -175,6 +179,11 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
         Pets.disable();
     }
 
+    /** Multiplicateur d'argent du familier actif du joueur (effet codé money-bonus), 1 sans bonus. */
+    public double moneyMultiplier(Player player) {
+        return petEffects == null ? 1 : petEffects.moneyMultiplier(player);
+    }
+
     public NamespacedKey cardKey() {
         return cardKey;
     }
@@ -199,6 +208,11 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
         if (updater != null && player.isOnline()) {
             updater.refresh(player);
         }
+    }
+
+    /** Boosters en attente de /boosters. */
+    public fr.influencraft.influpet.careers.CareerCatchUp boosterStash() {
+        return boosterStash;
     }
 
     public CardRegistry registry() {
@@ -319,6 +333,7 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
                         "%boosters%", String.valueOf(registry.boosters().size()));
             }
             case "give" -> give(sender, args);
+            case "stash" -> stash(sender, args);
             case "open" -> open(sender, args);
             case "list" -> list(sender, args);
             case "info" -> info(sender, args);
@@ -347,8 +362,11 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
                 send(sender, "unknown-booster", "%id%", args[3]);
                 return;
             }
-            item = registry.boosterItem(booster);
-            name = booster.name();
+            // surplus en attente de /boosters plutôt qu'au sol
+            boosterStash.giveOrStash(target, booster, n);
+            send(sender, "given", "%amount%", String.valueOf(n), "%item%", booster.name(), "%player%",
+                    target.getName());
+            return;
         } else if (isCardType(type)) {
             var card = registry.card(args[3]);
             if (card == null) {
@@ -369,6 +387,29 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
             RevealManager.giveOrDrop(target, stack);
         }
         send(sender, "given", "%amount%", String.valueOf(n), "%item%", name, "%player%", target.getName());
+    }
+
+    /** Met des boosters en attente de /boosters, sans rien donner (boosters de passage de niveau EcoJobs). */
+    private void stash(CommandSender sender, String[] args) {
+        if (args.length < 3) {
+            usage(sender);
+            return;
+        }
+        Player target = target(sender, args[1]);
+        int n = amount(sender, args, 3);
+        if (target == null || n < 0) {
+            return;
+        }
+        var booster = registry.booster(args[2]);
+        if (booster == null) {
+            send(sender, "unknown-booster", "%id%", args[2]);
+            return;
+        }
+        boosterStash.stash(target, booster.id(), n);
+        if (sender instanceof Player) {
+            send(sender, "stashed", "%amount%", String.valueOf(n), "%item%", booster.name(), "%player%",
+                    target.getName());
+        }
     }
 
     private void open(CommandSender sender, String[] args) {
@@ -527,15 +568,15 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
                     .filter(o -> o.toLowerCase(Locale.ROOT).startsWith(lastArg)).toList();
         }
         List<String> options = switch (args.length) {
-            case 1 -> List.of("menu", "give", "open", "list", "info", "pet", "reload");
+            case 1 -> List.of("menu", "give", "stash", "open", "list", "info", "pet", "reload");
             case 2 -> switch (sub) {
-                case "give", "open" -> players;
+                case "give", "stash", "open" -> players;
                 case "list", "info" -> List.of("cards", "pets", "boosters");
                 default -> List.of();
             };
             case 3 -> switch (sub) {
                 case "give" -> List.of("booster", "card");
-                case "open" -> boosterIds;
+                case "open", "stash" -> boosterIds;
                 case "info" -> {
                     String t = args[1].toLowerCase(Locale.ROOT);
                     yield isCardType(t) ? cardIds : isPetType(t) ? petIds : boosterIds;
@@ -544,7 +585,7 @@ public final class InfluPet extends JavaPlugin implements TabCompleter {
             };
             case 4 -> sub.equals("give")
                     ? (isCardType(args[2].toLowerCase(Locale.ROOT)) ? cardIds : boosterIds)
-                    : (sub.equals("open") ? List.of("1", "5", "10") : List.of());
+                    : (sub.equals("open") || sub.equals("stash") ? List.of("1", "5", "10") : List.of());
             case 5 -> sub.equals("give") ? List.of("1", "16", "64") : List.of();
             default -> List.of();
         };

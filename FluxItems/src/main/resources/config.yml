@@ -1,0 +1,32 @@
+# FluxItems : réglages généraux. Les outils sont dans outils/<id>.yml (générés par
+# plugins/FluxItems/assets/gen_outils.py, ne pas les modifier à la main).
+
+# Mondes où les outils ne progressent pas (comme les métiers, désactivés dans Utopia).
+mondes-exclus: [utopia]
+
+# Renouvellement des quêtes journalières (pass Virale / Phénomène).
+fuseau: Europe/Paris
+heure-renouvellement: 6
+
+# Menu FluxMenu ouvert par accroupi + clic droit ou /outil.
+menu: outil
+
+# Annonce à tout le serveur quand un outil atteint son niveau maximum.
+annonce-maitrise: true
+
+# Palette FluxItems (« rubis ») : rubis #FF4D6D (préfixe, titres), rose pâle #FFD6DE (texte),
+# grenat #A33A50 (filets), menthe #7BE0A1 (réussi), gris rosé #A89BA0 (pas atteint), blanc (valeurs). Le gain de BitBlock garde la convention commune (docs/notifications/bitblock.md).
+messages:
+  prefixe: "&#FF4D6D◆ "
+  pas-d-outil: "&#FFD6DETiens un &foutil de caisse &#FFD6DEen main."
+  jalon: "&#FFD6DEPalier du contrat : &f%quantite%&#FFD6DE/&f%total%&#FFD6DE."
+  etape: "&#FFD6DEQuête réussie : &f%quete%&#FFD6DE."
+  niveau: "&#FFD6DETon outil passe au &#FF4D6Dniveau %niveau%&#FFD6DE."
+  deblocage: "&#FFD6DENouvel enchantement : "
+  bonus-xp: "&#FFD6DEBonus de quête : &f+%xp% XP &#FFD6DEd'outil."
+  prochaine: "&#FFD6DEProchaine quête dans &f%duree%&#FFD6DE."
+  maitrise: "&#FF4D6DOutil maîtrisé &#FFD6DE: niveau maximum atteint."
+  annonce: "&#FF4D6D◆ &f%joueur% &#FFD6DEa maîtrisé sa %outil%&#FFD6DE !"
+  brise: "&#FFD6DEContrat rempli, ton outil s'est brisé."
+  gain: "&r&f\uE023 &#B376E5Tu as gagné &f%montant% &#B376E5Bitblock &#2ECF7B▲ &7[ᴏᴜᴛɪʟ]"
+  verrou: "&#FFD6DELes enchantements de cet outil évoluent avec lui : &fimpossible de les modifier&#FFD6DE."

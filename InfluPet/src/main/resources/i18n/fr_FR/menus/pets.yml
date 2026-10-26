@@ -134,6 +134,30 @@ close:
   location:
     row: 6
     column: 5
+  # Command run by the player instead of just closing (e.g. "menu" for a back button). Empty = close.
+  command: ''
+# Filter button (optional: remove the section to hide it). Left click: next filter, right click: previous one.
+# Filters are the card series of the pets the player owns. Series listed in by-rarity are filtered by rarity
+# instead (one filter per rarity, named by rarity-names, default: the rarity tag). %filters% = one line per filter
+# (selected / unselected formats: %filter%, %owned% and %total% = pets owned / existing in that filter).
+filter:
+  item: hopper
+  name: '&#6B7A8F[Clic gauche] &#FFD94DFiltrer par série'
+  lore:
+  - '&#6B7A8F[Clic droit] &#FFD94DFiltre précédent'
+  - ''
+  - '%filters%'
+  all: Tous les familiers
+  selected: '&#FFD94D» %filter% &7(%owned%/%total%)'
+  unselected: '&8» &#B376E5%filter% &7(%owned%/%total%)'
+  by-rarity:
+  - Prestige
+  rarity-names:
+    legendary: Légendaire
+    fabled: Fabuleux
+  location:
+    row: 6
+    column: 7
 deactivate-pet:
   item: player_head texture:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNTRiZDlhNDViOTY4MWNlYTViMjhjNzBmNzVhNjk1NmIxZjU5NGZlYzg0MGI5NjA3Nzk4ZmIxZTcwNzc2NDQzMCJ9fX0=
   name: '&#FF5C5CRanger tous les familiers'

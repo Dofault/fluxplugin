@@ -74,6 +74,12 @@ pets:
 
 # Pet system
 pet-settings:
+  # /pets without arguments: console command that opens the pets menu (%player% = player name). The plugin
+  # ships no player menu: build it with a menu plugin from the %influpet_view_...%, %influpet_slot_...% and
+  # %influpet_selected_...% placeholders, its buttons calling /pets toggle|filter|page|select|view|visibility.
+  menu-command: ""
+  # pets per page of %influpet_view_<n>% (the menu's grid)
+  view-page-size: 21
   # save locally even if eco uses a database (no sync between servers); only change with the server stopped
   local-storage: false
   # put away an active pet whose activate-conditions are no longer met
@@ -115,3 +121,16 @@ pet-follow:
   # several active pets: they walk in a queue behind the first one, each between these gaps from the previous one
   queue-gap-min: 1.2
   queue-gap-max: 2.2
+
+# One-time career catch-up (EcoJobs). Career boosters are given by EcoJobs itself on each level-up
+# (level-up-effects: run_command "influpet give %player% booster <booster> 1"); EcoJobs never replays a level
+# already reached, so on their first join after this is enabled, players get once the boosters of the levels
+# they already passed: (level - 1) x boosters-per-level per job. What does not fit stays pending (never
+# dropped): reminder every reminder-seconds, /catchup (alias /rattrapage) gives what fits.
+career-catch-up:
+  enabled: false
+  boosters-per-level: 1
+  # rappel de /boosters tant que des boosters attendent (0 : seulement à la connexion)
+  reminder-seconds: 240
+  # EcoJobs job id: booster id
+  jobs: {}

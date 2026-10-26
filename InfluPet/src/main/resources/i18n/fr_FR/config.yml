@@ -13,3 +13,16 @@ rarities:
     tag: '&#F0A800ʟᴇɢᴇɴᴅᴀɪʀᴇ'
   fabled:
     tag: '&#C8256Aꜰᴀʙᴜʟᴇᴜx'
+
+# One-time career catch-up (EcoJobs). Career boosters are given by EcoJobs itself on each level-up
+# (level-up-effects: run_command "influpet give %player% booster <booster> 1"); EcoJobs never replays a level
+# already reached, so on their first join after this is enabled, players get once the boosters of the levels
+# they already passed: (level - 1) x boosters-per-level per job. What does not fit stays pending (never
+# dropped): reminder every reminder-seconds, /catchup (alias /rattrapage) gives what fits.
+career-catch-up:
+  enabled: false
+  boosters-per-level: 1
+  # rappel de /boosters tant que des boosters attendent (0 : seulement à la connexion)
+  reminder-seconds: 240
+  # EcoJobs job id: booster id
+  jobs: {}

@@ -198,6 +198,11 @@ public final class CardRegistry {
         plugin.getLogger().info(cards.size() + " cards, " + pets.size() + " pets, "
                 + boosters.size() + " boosters loaded.");
         plugin.refreshOnlineItems();
+        try {
+            EcoItemLookup.register(plugin, this);
+        } catch (Throwable t) {
+            plugin.getLogger().warning("Boosters not exposed to eco item lookup: " + t);
+        }
     }
 
     // ---------------------------------------------------------------- accès

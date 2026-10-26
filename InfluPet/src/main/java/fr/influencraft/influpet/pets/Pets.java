@@ -104,13 +104,6 @@ public final class Pets {
             command.setExecutor(commands);
             command.setTabCompleter(commands);
         }
-        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            try {
-                new PetPlaceholders().register();
-            } catch (Throwable t) {
-                plugin.getLogger().warning("Pet placeholders unavailable: " + t);
-            }
-        }
         if (Bukkit.getPluginManager().isPluginEnabled("BetterModel")) {
             try {
                 display = new PetDisplay();
@@ -151,7 +144,7 @@ public final class Pets {
             }
         }
         plugin.getLogger().info(PETS.size() + " pets loaded.");
-        PetsMenu.update();
+        PetView.clearCache();
         if (display != null) {
             display.reload();
         }
@@ -242,6 +235,21 @@ public final class Pets {
 
     public static Config settings() {
         return settings;
+    }
+
+    /**
+     * Placeholders %influpet_...%, enregistrés dès le démarrage du plugin (les familiers peuvent ne démarrer
+     * qu'au premier tick).
+     */
+    public static void registerPlaceholders(InfluPet influPet) {
+        if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            return;
+        }
+        try {
+            new PetPlaceholders(influPet).register();
+        } catch (Throwable t) {
+            influPet.getLogger().warning("Pet placeholders unavailable: " + t);
+        }
     }
 
     public static InfluPet plugin() {

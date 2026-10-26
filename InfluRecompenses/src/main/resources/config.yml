@@ -1,0 +1,268 @@
+# ===================================================
+# InfluRecompenses, Influencraft
+# Récompenses de connexion quotidienne et de temps de jeu.
+# Récupération dans le menu (page Récompenses de /menu2), ou /recompenses jour, /recompenses temps.
+# Couleurs : &x et &#RRGGBB. Placeholders PlaceholderAPI acceptés dans les descriptions et messages.
+# ⚠️ Montants proposés pour la bêta sur Labs, à équilibrer avant la prod.
+# ===================================================
+
+# Le jour change à minuit dans ce fuseau.
+fuseau-horaire: "Europe/Paris"
+
+connexion:
+  # Nombre de jours d'un cycle : après le dernier, on repart au jour 1.
+  cycle: 28
+  # false : chaque jour de connexion fait avancer d'un jour, même après une absence.
+  # true  : un jour sans connexion ramène au jour 1 (série stricte).
+  serie-stricte: false
+  # Un jour non récupéré le jour même est manqué. Jours absents de la liste = sans récompense.
+  jours:
+    1:
+      description:
+        - "&f%img_bitblock% 50"
+      commandes:
+        - "money give {joueur} 50"
+    2:
+      description:
+        - "&f%img_bitblock% 60"
+      commandes:
+        - "money give {joueur} 60"
+    3:
+      description:
+        - "&f%img_bitblock% 70"
+      commandes:
+        - "money give {joueur} 70"
+    4:
+      description:
+        - "&f%img_bitblock% 80"
+      commandes:
+        - "money give {joueur} 80"
+    5:
+      description:
+        - "&f%img_bitblock% 90"
+      commandes:
+        - "money give {joueur} 90"
+    6:
+      description:
+        - "&f%img_bitblock% 100"
+      commandes:
+        - "money give {joueur} 100"
+    7:
+      nom: "Jour 7"
+      description:
+        - "&fClé Ordinaire"
+        - "&f%img_bitblock% 250"
+      commandes:
+        - "ecocrates give {joueur} key ordinaire physical 1"
+        - "money give {joueur} 250"
+    8:
+      description:
+        - "&f%img_bitblock% 120"
+      commandes:
+        - "money give {joueur} 120"
+    9:
+      description:
+        - "&f%img_bitblock% 130"
+      commandes:
+        - "money give {joueur} 130"
+    10:
+      description:
+        - "&f%img_bitblock% 140"
+      commandes:
+        - "money give {joueur} 140"
+    11:
+      description:
+        - "&f%img_bitblock% 150"
+      commandes:
+        - "money give {joueur} 150"
+    12:
+      description:
+        - "&f%img_bitblock% 160"
+      commandes:
+        - "money give {joueur} 160"
+    13:
+      description:
+        - "&f%img_bitblock% 170"
+      commandes:
+        - "money give {joueur} 170"
+    14:
+      nom: "Jour 14"
+      description:
+        - "&#55FF55Clé Tendance"
+        - "&f%img_bitblock% 500"
+      commandes:
+        - "ecocrates give {joueur} key tendance physical 1"
+        - "money give {joueur} 500"
+    15:
+      description:
+        - "&f%img_bitblock% 190"
+      commandes:
+        - "money give {joueur} 190"
+    16:
+      description:
+        - "&f%img_bitblock% 200"
+      commandes:
+        - "money give {joueur} 200"
+    17:
+      description:
+        - "&f%img_bitblock% 210"
+      commandes:
+        - "money give {joueur} 210"
+    18:
+      description:
+        - "&f%img_bitblock% 220"
+      commandes:
+        - "money give {joueur} 220"
+    19:
+      description:
+        - "&f%img_bitblock% 230"
+      commandes:
+        - "money give {joueur} 230"
+    20:
+      description:
+        - "&f%img_bitblock% 240"
+      commandes:
+        - "money give {joueur} 240"
+    21:
+      nom: "Jour 21"
+      description:
+        - "&#5a85eaClé Virale"
+        - "&f%img_bitblock% 750"
+      commandes:
+        - "ecocrates give {joueur} key virale physical 1"
+        - "money give {joueur} 750"
+    22:
+      description:
+        - "&f%img_bitblock% 260"
+      commandes:
+        - "money give {joueur} 260"
+    23:
+      description:
+        - "&f%img_bitblock% 270"
+      commandes:
+        - "money give {joueur} 270"
+    24:
+      description:
+        - "&f%img_bitblock% 280"
+      commandes:
+        - "money give {joueur} 280"
+    25:
+      description:
+        - "&f%img_bitblock% 290"
+      commandes:
+        - "money give {joueur} 290"
+    26:
+      description:
+        - "&f%img_bitblock% 300"
+      commandes:
+        - "money give {joueur} 300"
+    27:
+      description:
+        - "&f%img_bitblock% 310"
+      commandes:
+        - "money give {joueur} 310"
+    28:
+      nom: "Jour 28"
+      description:
+        - "&#f0a800Clé Phénomène"
+        - "&f%img_bitblock% 1000"
+      commandes:
+        - "ecocrates give {joueur} key phenomene physical 1"
+        - "money give {joueur} 1000"
+
+temps-de-jeu:
+  # Clé = temps de jeu total requis sur ce serveur (« 30m », « 1h », « 2h30 »). Une fois chacun.
+  paliers:
+    1h:
+      description:
+        - "&f%img_bitblock% 200"
+      commandes:
+        - "money give {joueur} 200"
+    3h:
+      description:
+        - "&f%img_bitblock% 400"
+      commandes:
+        - "money give {joueur} 400"
+    5h:
+      description:
+        - "&fClé Ordinaire"
+        - "&f%img_bitblock% 600"
+      commandes:
+        - "money give {joueur} 600"
+        - "ecocrates give {joueur} key ordinaire physical 1"
+    10h:
+      description:
+        - "&f%img_bitblock% 1 000"
+      commandes:
+        - "money give {joueur} 1000"
+    20h:
+      description:
+        - "&#55FF55Clé Tendance"
+        - "&f%img_bitblock% 1 500"
+      commandes:
+        - "money give {joueur} 1500"
+        - "ecocrates give {joueur} key tendance physical 1"
+    35h:
+      description:
+        - "&f%img_bitblock% 2 000"
+      commandes:
+        - "money give {joueur} 2000"
+    50h:
+      description:
+        - "&#55FF55Clé Tendance"
+        - "&f%img_bitblock% 3 000"
+      commandes:
+        - "money give {joueur} 3000"
+        - "ecocrates give {joueur} key tendance physical 1"
+    75h:
+      description:
+        - "&f%img_bitblock% 4 000"
+      commandes:
+        - "money give {joueur} 4000"
+    100h:
+      description:
+        - "&#5a85eaClé Virale"
+        - "&f%img_bitblock% 5 000"
+      commandes:
+        - "money give {joueur} 5000"
+        - "ecocrates give {joueur} key virale physical 1"
+    150h:
+      description:
+        - "&f%img_bitblock% 6 500"
+      commandes:
+        - "money give {joueur} 6500"
+    200h:
+      description:
+        - "&#5a85eaClé Virale"
+        - "&f%img_bitblock% 8 000"
+      commandes:
+        - "money give {joueur} 8000"
+        - "ecocrates give {joueur} key virale physical 1"
+    300h:
+      description:
+        - "&f%img_bitblock% 10 000"
+      commandes:
+        - "money give {joueur} 10000"
+    500h:
+      description:
+        - "&#f0a800Clé Phénomène"
+        - "&f%img_bitblock% 15 000"
+      commandes:
+        - "money give {joueur} 15000"
+        - "ecocrates give {joueur} key phenomene physical 1"
+    750h:
+      description:
+        - "&#f0a800Clé Phénomène"
+        - "&f%img_bitblock% 20 000"
+      commandes:
+        - "money give {joueur} 20000"
+        - "ecocrates give {joueur} key phenomene physical 1"
+
+messages:
+  prefixe: "&#B376E5ʀéᴄᴏᴍᴘᴇɴꜱᴇꜱ &8▸"
+  rappel: "{prefixe} &#B376E5Tu as &f{nombre} &#B376E5récompense(s) à récupérer dans &f/menu2&#B376E5, onglet Récompenses."
+  nouveau-jour: "{prefixe} &#B376E5Nouveau jour : ta récompense de connexion t'attend dans &f/menu2&#B376E5."
+  jour-recupere: "{prefixe} &#2ECF7BRécompense du &f{nom} &#2ECF7Brécupérée !"
+  temps-recupere: "{prefixe} &#2ECF7BRécompense &f{nom} &#2ECF7Brécupérée !"
+  rien-a-recuperer: "{prefixe} &#FF5C5CRien à récupérer pour l'instant."
+  aide: "{prefixe} &#B376E5Tes récompenses se récupèrent dans &f/menu2&#B376E5, onglet Récompenses."

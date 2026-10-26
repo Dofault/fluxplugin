@@ -1,0 +1,40 @@
+# InfluCasino : jetons de casino. Les jeux (FluxMenu : Plinko...) prennent la mise du joueur en jetons et
+# versent le gain en jetons ; les jetons s'achètent et se revendent contre des BitBlock (Vault).
+
+# Mise des jeux, en jetons. Gardée par joueur ; « step » = pas du clic gauche, « big-step » = clic droit.
+# Mise minimale de 10 et pas de 10 : avec des multiplicateurs à une décimale (x1.1, x0.4...), le gain tombe
+# toujours juste (pas d'arrondi au détriment du joueur).
+bet:
+  min: 10
+  max: 1000
+  default: 10
+  step: 10
+  big-step: 100
+
+# Échange jetons <-> BitBlock.
+exchange:
+  enabled: true
+  # achat de jetons contre des BitBlock : fermé, les jetons se gagnent ailleurs et ne font que se revendre
+  buy-enabled: false
+  # BitBlock payés pour 1 jeton à l'achat
+  buy-price: 10
+  # BitBlock rendus pour 1 jeton à la revente (égal au prix d'achat = échange sans frais)
+  sell-price: 10
+  # jetons au plus par achat ou revente
+  max-per-operation: 100000
+
+messages:
+  balance: "&7%img_jeton% &#B376E5Tu as &f%amount% &#B376E5jetons. Mise : &f%bet%"
+  bought-money: "&7%img_bitblock% &#B376E5Tu as perdu &f%price% &#B376E5Bitblock &#FF5C5C▼ &7[ᴄᴀꜱɪɴᴏ]"
+  bought-chips: "&7%img_jeton% &#B376E5Tu as reçu &f%amount% &#B376E5jetons &#2ECF7B▲ &7[ᴄᴀꜱɪɴᴏ]"
+  sold-chips: "&7%img_jeton% &#B376E5Tu as donné &f%amount% &#B376E5jetons &#FF5C5C▼ &7[ᴄᴀꜱɪɴᴏ]"
+  sold-money: "&7%img_bitblock% &#B376E5Tu as gagné &f%price% &#B376E5Bitblock &#2ECF7B▲ &7[ᴄᴀꜱɪɴᴏ]"
+  not-enough-money: "&#FF5C5CPas assez de Bitblock : il en faut &f%price%&#FF5C5C."
+  not-enough-chips: "&#FF5C5CPas assez de jetons : tu en as &f%amount%&#FF5C5C."
+  exchange-disabled: "&#FF5C5CL'échange de jetons est fermé pour le moment."
+  buy-disabled: "&#FF5C5CLes jetons ne s'achètent pas : ils se gagnent et se revendent."
+  invalid-amount: "&#FF5C5CNombre invalide."
+  usage: "&#B376E5/jetons &7[mise <+N|-N|N|min|max>] [acheter <N>] [vendre <N|tout>]"
+  admin-done: "&#B376E5%player% : &f%amount% &#B376E5jetons."
+  admin-usage: "&#B376E5/jetons admin <give|take|set|historique> <joueur> [nombre]"
+  player-not-found: "&#FF5C5CJoueur introuvable : &f%player%"

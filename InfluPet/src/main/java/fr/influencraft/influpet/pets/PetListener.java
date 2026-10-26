@@ -66,5 +66,6 @@ public final class PetListener implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         PetData.forget(event.getPlayer().getUniqueId());
+        PetView.forget(event.getPlayer().getUniqueId());
     }
 }

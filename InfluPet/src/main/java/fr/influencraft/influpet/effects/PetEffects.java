@@ -21,6 +21,7 @@ public final class PetEffects {
     private final InfluPet plugin;
     private final List<PetEffect> effects = new ArrayList<>();
     private final PlacedBlocks placed;
+    private final MoneyBonus moneyBonus;
     private int maxLevel = 10;
 
     public PetEffects(InfluPet plugin) {
@@ -41,6 +42,9 @@ public final class PetEffects {
         add(new LapisSaver(this));
         add(new LevelSaver(this));
         add(new AllyResistance(this));
+        moneyBonus = new MoneyBonus(this);
+        add(moneyBonus);
+        add(new StructureCompass(this));
         if (Bukkit.getPluginManager().isPluginEnabled("packetevents")) {
             try {
                 add(new PowderSnow(this));
@@ -80,6 +84,11 @@ public final class PetEffects {
     /** Arrêt du plugin : remet ce qui n'existe que côté client (lumières, neige poudreuse). */
     public void shutdown() {
         effects.forEach(PetEffect::shutdown);
+    }
+
+    /** Multiplicateur d'argent du familier actif du joueur (effet money-bonus), 1 sans bonus. */
+    public double moneyMultiplier(Player player) {
+        return moneyBonus.multiplier(player);
     }
 
     InfluPet plugin() {

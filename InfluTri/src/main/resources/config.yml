@@ -1,0 +1,51 @@
+# Sorting Chest: automatic sorting chest.
+#
+# The sorting chest is a waxed oxidized copper chest marked by the plugin.
+# When a player closes it, its content is sent stack by stack to the copper
+# chests (any oxidation stage, waxed or not) that already hold the same kind
+# of item, closest first. Range is limited to the Lands area of the sorting
+# chest: its sub-area if it is in one, otherwise the land (outside sub-areas).
+
+# Sorting chest levels. The level is stored in the item and in the placed block
+# (kept when placed and broken) and is never shown to players.
+# A setting missing from a level uses the value of level 1. To add a level,
+# copy block "1" under a new number, then /sortingchest give <player> <amount> <level>.
+#   radius: maximum distance (in blocks) between the sorting chest and a target chest.
+#   interval-ticks: delay between two stacks sent (20 = 1 second).
+levels:
+  1:
+    radius: 50
+    interval-ticks: 40
+
+# Flight time of a stack (in ticks): minimum, maximum, and ticks added per block of distance.
+flight:
+  ticks-min: 10
+  ticks-max: 40
+  ticks-per-block: 0.6
+
+# Decorative copper golem that comes out of the sorting chest and throws each stack (visual only).
+golem:
+  enabled: true
+
+# Particles that tell a sorting chest apart from a normal copper chest.
+particles:
+  enabled: true
+  interval-ticks: 10
+  player-distance: 24
+
+# "Sorting chest" item (MiniMessage). <radius> = radius of the item's level.
+item:
+  name: "<!italic><#FFD94D>Sorting chest"
+  lore:
+    - "<!italic><#B376E5>Close it and its content is sent"
+    - "<!italic><#B376E5>to the copper chests of the area"
+    - "<!italic><#B376E5>that already hold the same item."
+    - ""
+    - "<!italic><#B376E5>Range: its sub-area, or the land"
+    - "<!italic><#B376E5>outside sub-areas, within <#FFD94D><radius></#FFD94D> blocks."
+
+messages:
+  outside-land: "<#FF5C5C>This sorting chest only works inside a land."
+  give-ok: "<#2ECF7B>Gave <amount> sorting chest(s) to <player>."
+  player-not-found: "<#FF5C5C>Player not found."
+  reload-ok: "<#2ECF7B>Sorting Chest configuration reloaded."

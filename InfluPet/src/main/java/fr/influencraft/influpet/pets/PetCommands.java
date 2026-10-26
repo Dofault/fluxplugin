@@ -15,8 +15,12 @@ import java.util.Locale;
 
 /**
  * Commandes des familiers (reprises d'EcoPets).
- * - /pets (alias /pet, /familiers) : menu ; « activate <familier> », « deactivate [familier] » (sans familier :
+ * - /pets (alias /pet, /familiers) : lance pet-settings.menu-command (InfluPet ne fournit aucun menu de
+ *   joueur : chez nous, le menu FluxMenu) ; « activate <familier> », « deactivate [familier] » (sans familier :
  *   tous ; « activer » / « desactiver » acceptés aussi).
+ * - Sous-commandes utilisées par les boutons du menu (PetView) : « toggle <familier> » (l'activer, ou le ranger
+ *   s'il est actif), « filter next|previous », « page next|previous », « select <familier> » (familier consulté,
+ *   %influpet_selected_...%), « view reset » (page 1, sans filtre), « visibility » (cacher / montrer).
  * - /influpet pet give|take|givexp|givecurrentxp|reset|setlevel|activate|deactivate <joueur> ... :
  *   administration (console comprise). « reset » remet le familier au niveau 1 sans le retirer (le reset
  *   d'EcoPets le faisait passer au niveau 0, ce qui le retirait).
@@ -34,7 +38,7 @@ public final class PetCommands implements TabExecutor {
             return true;
         }
         if (args.length == 0) {
-            PetsMenu.open(player);
+            openMenu(player);
             return true;
         }
         switch (args[0].toLowerCase(Locale.ROOT)) {
@@ -58,9 +62,49 @@ public final class PetCommands implements TabExecutor {
                 }
                 done.forEach(p -> PetMessages.send(player, "deactivated-pet", "%pet%", p.name()));
             }
-            default -> PetsMenu.open(player);
+            case "toggle" -> {
+                Pet pet = args.length > 1 ? Pets.get(args[1]) : null;
+                if (pet == null || !PetData.has(player, pet)) {
+                    return true;
+                }
+                if (PetData.isActive(player, pet)) {
+                    if (PetData.deactivate(player, pet)) {
+                        PetMessages.send(player, "deactivated-pet", "%pet%", pet.name());
+                    }
+                } else if (!pet.canActivate(player)) {
+                    PetMessages.send(player, "cannot-activate-pet", "%pet%", pet.name());
+                } else {
+                    PetData.Activation result = PetData.activate(player, pet);
+                    if (result != PetData.Activation.OK) {
+                        tell(player, pet, result);
+                    }
+                }
+                PetView.invalidate(player);
+            }
+            case "filter" -> PetView.stepFilter(player, args.length > 1 && args[1].toLowerCase(Locale.ROOT).startsWith("prev") ? -1 : 1);
+            case "page" -> PetView.stepPage(player, args.length > 1 && args[1].toLowerCase(Locale.ROOT).startsWith("prev") ? -1 : 1);
+            case "select" -> {
+                Pet pet = args.length > 1 ? Pets.get(args[1]) : null;
+                if (pet != null && PetData.has(player, pet)) {
+                    PetView.select(player, pet);
+                }
+            }
+            case "view" -> PetView.reset(player);
+            case "visibility" -> PetData.setHidden(player, !PetData.hidden(player));
+            default -> openMenu(player);
         }
         return true;
+    }
+
+    /** /pets sans argument : commande console pet-settings.menu-command (%player% = nom du joueur), sinon rien. */
+    private static void openMenu(Player player) {
+        String command = Pets.settings().getString("menu-command");
+        if (command == null || command.isBlank()) {
+            PetMessages.send(player, "no-menu");
+            return;
+        }
+        String line = command.startsWith("/") ? command.substring(1) : command;
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), line.replace("%player%", player.getName()));
     }
 
     private static boolean isActivate(String arg) {
