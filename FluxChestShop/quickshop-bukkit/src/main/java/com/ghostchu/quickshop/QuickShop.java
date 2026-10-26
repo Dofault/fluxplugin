@@ -1,0 +1,1532 @@
+package com.ghostchu.quickshop;
+
+import cc.carm.lib.easysql.EasySQL;
+import cc.carm.lib.easysql.api.SQLManager;
+import cc.carm.lib.easysql.hikari.HikariConfig;
+import cc.carm.lib.easysql.hikari.HikariDataSource;
+import cc.carm.lib.easysql.manager.SQLManagerImpl;
+import com.ghostchu.quickshop.api.GameVersion;
+import com.ghostchu.quickshop.api.QuickShopAPI;
+import com.ghostchu.quickshop.api.QuickShopProvider;
+import com.ghostchu.quickshop.api.RankLimiter;
+import com.ghostchu.quickshop.api.command.CommandManager;
+import com.ghostchu.quickshop.api.database.DatabaseHelper;
+import com.ghostchu.quickshop.api.economy.EconomyManager;
+import com.ghostchu.quickshop.api.event.QSConfigurationReloadEvent;
+import com.ghostchu.quickshop.api.hook.Hook;
+import com.ghostchu.quickshop.api.inventory.InventoryWrapperManager;
+import com.ghostchu.quickshop.api.inventory.InventoryWrapperRegistry;
+import com.ghostchu.quickshop.api.inventory.SkullProvider;
+import com.ghostchu.quickshop.api.localization.text.TextManager;
+import com.ghostchu.quickshop.api.registry.BuiltInRegistry;
+import com.ghostchu.quickshop.api.registry.RegistryManager;
+import com.ghostchu.quickshop.api.registry.builtin.itemexpression.ItemExpressionRegistry;
+import com.ghostchu.quickshop.api.shop.ItemMatcher;
+import com.ghostchu.quickshop.api.shop.PlayerFinder;
+import com.ghostchu.quickshop.api.shop.Shop;
+import com.ghostchu.quickshop.api.shop.ShopControlPanelManager;
+import com.ghostchu.quickshop.api.shop.ShopItemBlackList;
+import com.ghostchu.quickshop.api.shop.ShopManager;
+import com.ghostchu.quickshop.api.shop.display.DisplayManager;
+import com.ghostchu.quickshop.api.shop.display.DisplayType;
+import com.ghostchu.quickshop.api.shop.tag.TagManager;
+import com.ghostchu.quickshop.command.QuickShopCommand;
+import com.ghostchu.quickshop.command.SimpleCommandManager;
+import com.ghostchu.quickshop.common.util.CommonUtil;
+import com.ghostchu.quickshop.common.util.JsonUtil;
+import com.ghostchu.quickshop.common.util.QuickExecutor;
+import com.ghostchu.quickshop.config.GuiConfig;
+import com.ghostchu.quickshop.config.MainConfig;
+import com.ghostchu.quickshop.database.DatabaseIOUtil;
+import com.ghostchu.quickshop.database.HikariUtil;
+import com.ghostchu.quickshop.database.SimpleDatabaseHelperV2;
+import com.ghostchu.quickshop.economy.EconomyLoader;
+import com.ghostchu.quickshop.economy.QSEconomyManager;
+import com.ghostchu.quickshop.hook.FWorldEditHook;
+import com.ghostchu.quickshop.hook.WorldEditHook;
+import com.ghostchu.quickshop.listener.BlockListener;
+import com.ghostchu.quickshop.listener.BungeeListener;
+import com.ghostchu.quickshop.listener.ChatListener;
+import com.ghostchu.quickshop.listener.ChunkListener;
+import com.ghostchu.quickshop.listener.CustomInventoryListener;
+import com.ghostchu.quickshop.listener.DisplayProtectionListener;
+import com.ghostchu.quickshop.listener.InternalListener;
+import com.ghostchu.quickshop.listener.LockListener;
+import com.ghostchu.quickshop.listener.PlayerListener;
+import com.ghostchu.quickshop.listener.PlayerLockClickListener;
+import com.ghostchu.quickshop.listener.ShopProtectionListener;
+import com.ghostchu.quickshop.listener.WorldListener;
+import com.ghostchu.quickshop.localization.text.SimpleTextManager;
+import com.ghostchu.quickshop.menu.ShopBrowseMenu;
+import com.ghostchu.quickshop.menu.ShopHistoryMenu;
+import com.ghostchu.quickshop.menu.ShopKeeperMenu;
+import com.ghostchu.quickshop.menu.ShopStaffMenu;
+import com.ghostchu.quickshop.menu.ShopTradeMenu;
+import com.ghostchu.quickshop.metric.MetricListener;
+import com.ghostchu.quickshop.papi.QuickShopPAPI;
+import com.ghostchu.quickshop.permission.PermissionManager;
+import com.ghostchu.quickshop.platform.Platform;
+import com.ghostchu.quickshop.registry.SimpleRegistryManager;
+import com.ghostchu.quickshop.registry.builtin.itemexpression.SimpleItemExpressionRegistry;
+import com.ghostchu.quickshop.registry.builtin.itemexpression.handlers.SimpleEnchantmentExpressionHandler;
+import com.ghostchu.quickshop.registry.builtin.itemexpression.handlers.SimpleItemReferenceExpressionHandler;
+import com.ghostchu.quickshop.registry.builtin.itemexpression.handlers.SimpleMaterialExpressionHandler;
+import com.ghostchu.quickshop.registry.builtin.itemexpression.handlers.SimpleWildcardExpressionHandler;
+import com.ghostchu.quickshop.shop.ShopLoader;
+import com.ghostchu.quickshop.shop.ShopPurger;
+import com.ghostchu.quickshop.shop.SimpleShopItemBlackList;
+import com.ghostchu.quickshop.shop.SimpleShopManager;
+import com.ghostchu.quickshop.shop.SimpleShopPermissionManager;
+import com.ghostchu.quickshop.shop.controlpanel.SimpleShopControlPanel;
+import com.ghostchu.quickshop.shop.controlpanel.SimpleShopControlPanelManager;
+import com.ghostchu.quickshop.shop.display.AbstractDisplayItem;
+import com.ghostchu.quickshop.shop.display.display.DisplayEntityItemManager;
+import com.ghostchu.quickshop.shop.display.virtual.VirtualDisplayItemManager;
+import com.ghostchu.quickshop.shop.interaction.QuickShopInteractionManager;
+import com.ghostchu.quickshop.shop.inventory.BukkitInventoryWrapperManager;
+import com.ghostchu.quickshop.shop.sign.SignHooker;
+import com.ghostchu.quickshop.shop.tag.QuickShopTagManager;
+import com.ghostchu.quickshop.util.FastPlayerFinder;
+import com.ghostchu.quickshop.util.ItemMarker;
+import com.ghostchu.quickshop.util.MsgUtil;
+import com.ghostchu.quickshop.util.PermissionChecker;
+import com.ghostchu.quickshop.util.ShopUtil;
+import com.ghostchu.quickshop.util.Util;
+import com.ghostchu.quickshop.util.envcheck.CheckResult;
+import com.ghostchu.quickshop.util.envcheck.EnvCheckEntry;
+import com.ghostchu.quickshop.util.envcheck.EnvironmentChecker;
+import com.ghostchu.quickshop.util.envcheck.ResultContainer;
+import com.ghostchu.quickshop.util.envcheck.ResultReport;
+import com.ghostchu.quickshop.util.holder.QuickShopPreviewGUIHolder;
+import com.ghostchu.quickshop.util.logger.Log;
+import com.ghostchu.quickshop.util.matcher.item.BukkitItemMatcherImpl;
+import com.ghostchu.quickshop.util.matcher.item.ModernCustomMatcher;
+import com.ghostchu.quickshop.util.matcher.item.QuickShopItemMatcherImpl;
+import com.ghostchu.quickshop.util.metric.MetricManager;
+import com.ghostchu.quickshop.util.paste.PasteManager;
+import com.ghostchu.quickshop.util.performance.PerfMonitor;
+import com.ghostchu.quickshop.util.privacy.PrivacyController;
+import com.ghostchu.quickshop.util.reporter.error.RollbarErrorReporter;
+import com.ghostchu.quickshop.util.skin.PaperSkullProvider;
+import com.ghostchu.quickshop.util.updater.UpdateManager;
+import com.ghostchu.quickshop.watcher.CalendarWatcher;
+import com.ghostchu.quickshop.watcher.DisplayAutoDespawnWatcher;
+import com.ghostchu.quickshop.watcher.LogWatcher;
+import com.ghostchu.quickshop.watcher.OngoingFeeWatcher;
+import com.ghostchu.quickshop.watcher.ShopDataSaveWatcher;
+import com.ghostchu.quickshop.watcher.SignUpdateWatcher;
+import com.ghostchu.quickshop.watcher.UpdateWatcher;
+import com.ghostchu.simplereloadlib.ReloadManager;
+import com.ghostchu.simplereloadlib.ReloadResult;
+import com.ghostchu.simplereloadlib.Reloadable;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.tcoded.folialib.FoliaLib;
+import com.vdurmont.semver4j.Semver;
+import dev.dejvokep.boostedyaml.YamlDocument;
+import dev.dejvokep.boostedyaml.block.implementation.Section;
+import io.papermc.lib.PaperLib;
+import lombok.Getter;
+import lombok.Setter;
+import net.tnemc.item.AbstractItemStack;
+import net.tnemc.item.bukkit.BukkitItemStack;
+import net.tnemc.item.bukkit.platform.BukkitHelper;
+import net.tnemc.item.paper.PaperItemStack;
+import net.tnemc.item.platform.registry.BaseHelper;
+import net.tnemc.menu.bukkit.BukkitMenuHandler;
+import net.tnemc.menu.bukkit.BukkitPlayer;
+import net.tnemc.menu.bukkit.listener.BukkitChatListener;
+import net.tnemc.menu.bukkit.listener.BukkitInventoryClickListener;
+import net.tnemc.menu.bukkit.listener.BukkitInventoryCloseListener;
+import net.tnemc.menu.core.MenuHandler;
+import net.tnemc.menu.core.compatibility.MenuPlayer;
+import net.tnemc.menu.core.manager.MenuManager;
+import net.tnemc.menu.folia.FoliaMenuHandler;
+import net.tnemc.menu.folia.FoliaPlayer;
+import net.tnemc.menu.folia.listener.FoliaChatListener;
+import net.tnemc.menu.folia.listener.FoliaInventoryClickListener;
+import net.tnemc.menu.folia.listener.FoliaInventoryCloseListener;
+import net.tnemc.menu.paper.PaperMenuHandler;
+import net.tnemc.menu.paper.PaperPlayer;
+import net.tnemc.menu.paper.listener.PaperChatListener;
+import net.tnemc.menu.paper.listener.PaperInventoryClickListener;
+import net.tnemc.menu.paper.listener.PaperInventoryCloseListener;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.command.Command;
+import org.bukkit.command.PluginCommand;
+import org.bukkit.entity.Player;
+import org.bukkit.event.HandlerList;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.ServicePriority;
+import org.h2.Driver;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+
+import java.awt.print.Paper;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.Set;
+import java.util.StringJoiner;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
+
+public class QuickShop implements QuickShopAPI, Reloadable {
+
+
+  private final Map<String, Hook> hooks = new HashMap<>();
+
+  public static final Queue<UUID> inShop = new ConcurrentLinkedQueue<>();
+
+  public static final Cache<UUID, ShopUtil.PendingTransferTask> taskCache = CacheBuilder
+          .newBuilder()
+          .expireAfterWrite(60, TimeUnit.SECONDS)
+          .build();
+
+  /**
+   * If running environment test
+   */
+  @Getter
+  private static final boolean TESTING = false;
+  /**
+   * The active instance of QuickShop You shouldn't use this if you really need it.
+   */
+  @ApiStatus.Internal
+  private static QuickShop instance;
+  private MainConfig config;
+  /**
+   * The manager to check permissions.
+   */
+  private static PermissionManager permissionManager;
+  @Getter
+  private final ReloadManager reloadManager = new ReloadManager();
+  private final InventoryWrapperRegistry inventoryWrapperRegistry = new InventoryWrapperRegistry();
+  @Getter
+  private final InventoryWrapperManager inventoryWrapperManager = new BukkitInventoryWrapperManager();
+  @Getter
+  private final ShopControlPanelManager shopControlPanelManager = new SimpleShopControlPanelManager(this);
+  private final Map<String, String> addonRegisteredMapping = new HashMap<>();
+  @Getter
+  private final QuickShopBukkit javaPlugin;
+  private final Logger logger;
+  private final Platform platform;
+  @Getter
+  private final EconomyLoader economyLoader = new EconomyLoader(this);
+  private final EconomyManager economyManager = new QSEconomyManager();
+  private final QuickShopTagManager tagManager;
+  private UpdateManager updateManager;
+  @Getter
+  private final PasteManager pasteManager = new PasteManager();
+  protected MenuHandler menuHandler;
+  protected BaseHelper helperMethods;
+  private QuickShopInteractionManager interactionManager;
+  @Getter
+  private GuiConfig guiConfig;
+  private FoliaLib folia;
+  /* Public QuickShop API End */
+  private GameVersion gameVersion;
+  private boolean isFallbackVersion = false;
+  private volatile SimpleDatabaseHelperV2 databaseHelper;
+  private SimpleCommandManager commandManager;
+  private ItemMatcher itemMatcher;
+  private SkullProvider skullProvider;
+  private SimpleShopManager shopManager;
+  private SimpleTextManager textManager;
+  @Getter
+  private SimpleShopPermissionManager shopPermissionManager;
+  private boolean priceChangeRequiresFee = false;
+  @Getter
+  private DatabaseDriverType databaseDriverType = null;
+  /**
+   * The BootError, if it not NULL, plugin will stop loading and show setted errors when use /qs
+   */
+  @Nullable
+  @Getter
+  @Setter
+  private BootError bootError;
+  /**
+   * Default database prefix, can overwrite by config
+   */
+  @Getter
+  private String dbPrefix = "";
+  /**
+   * Whether we should use display items or not
+   */
+  private boolean display = true;
+  private boolean invalidProvider = false;
+  @Getter
+  private int displayItemCheckTicks;
+  @Nullable
+  @Getter
+  private LogWatcher logWatcher;
+
+  private boolean onFolia = false;
+
+  /**
+   * The plugin PlaceHolderAPI(null if not present)
+   */
+  @Getter
+  private Plugin placeHolderAPI;
+  /**
+   * A util to call to check some actions permission
+   */
+  @Getter
+  private PermissionChecker permissionChecker;
+  /**
+   * The error reporter to help devs report errors to Sentry.io
+   */
+  @Getter
+  @Nullable
+  private RollbarErrorReporter sentryErrorReporter;
+  /**
+   * The server UniqueID, use to the ErrorReporter
+   */
+  @Getter
+  private UUID serverUniqueID;
+  private boolean setupDBonEnableding = false;
+  /**
+   * Rewrited shoploader, more faster.
+   */
+  @Getter
+  private ShopLoader shopLoader;
+  @Getter
+  private DisplayAutoDespawnWatcher displayAutoDespawnWatcher;
+  @Getter
+  private OngoingFeeWatcher ongoingFeeWatcher;
+  @Getter
+  private SignUpdateWatcher signUpdateWatcher;
+  @Getter
+  private boolean allowStack;
+  @Getter
+  private EnvironmentChecker environmentChecker;
+  @Getter
+  @Nullable
+  private UpdateWatcher updateWatcher;
+  @Getter
+  private BuildInfo buildInfo;
+  @Getter
+  @Nullable
+  private String currency = null;
+  @Getter
+  private CalendarWatcher calendarWatcher;
+  @Getter
+  private ShopPurger shopPurger;
+  private int loggingLocation = 0;
+  @Getter
+  private volatile SQLManager sqlManager;
+  @Getter
+  @Nullable
+  private QuickShopPAPI quickShopPAPI;
+  @Getter
+  private ItemMarker itemMarker;
+  private Map<String, String> translationMapping;
+  @Getter
+  private PlayerFinder playerFinder;
+  @Getter
+  private ShopItemBlackList shopItemBlackList;
+  @Getter
+  private ShopDataSaveWatcher shopSaveWatcher;
+  @Getter
+  private SignHooker signHooker;
+  @Getter
+  private BungeeListener bungeeListener;
+  private RankLimiter rankLimiter;
+  @Nullable
+  private DisplayManager<?> displayManager = null;
+  @Getter
+  private PrivacyController privacyController;
+  @Getter
+  private MetricManager metricManager;
+  @Getter
+  private RegistryManager registry;
+
+  private LockListener shopLockListener;
+  private DisplayProtectionListener displayProtectionListener;
+
+  public QuickShop(final QuickShopBukkit javaPlugin, final Logger logger, final Platform platform) {
+
+    this.javaPlugin = javaPlugin;
+    this.logger = logger;
+    this.platform = platform;
+    this.helperMethods = new BukkitHelper();
+    this.tagManager = new QuickShopTagManager(this);
+  }
+
+  /**
+   * Get the QuickShop instance You should use QuickShopAPI if possible, we don't promise the
+   * internal access will be stable
+   *
+   * @return QuickShop instance
+   */
+  @NotNull
+  public static QuickShop getInstance() {
+
+    return instance;
+  }
+
+  @Override
+  public Map<String, Hook> hooks() {
+
+    return hooks;
+  }
+
+  /**
+   * Get the permissionManager as static
+   *
+   * @return the permission Manager.
+   */
+  @NotNull
+  public static PermissionManager getPermissionManager() {
+
+    return permissionManager;
+  }
+
+  public static FoliaLib folia() {
+
+    return instance.folia;
+  }
+
+  public static MenuHandler menu() {
+
+    return instance.menuHandler;
+  }
+
+  /**
+   * Early than onEnable, make sure instance was loaded in first time.
+   */
+  public final void onLoad() {
+
+    instance = this;
+
+    registerService();
+    // Reset the BootError status to normal.
+    this.bootError = null;
+    Util.setPlugin(this);
+    logger.info("Reading the configuration...");
+    initConfiguration();
+    logger.info("QuickShop {} - Early boot step - Booting up", javaPlugin.getFork());
+    getReloadManager().register(this);
+    //BEWARE THESE ONLY RUN ONCE
+    this.buildInfo = new BuildInfo(javaPlugin.getResource("BUILDINFO"));
+    logger.info("Self testing...");
+    if(!runtimeCheck(EnvCheckEntry.Stage.ON_LOAD)) {
+      return;
+    }
+    logger.info("Setting up privacy controller...");
+    this.privacyController = new PrivacyController(this);
+    logger.info("Setting up QuickShop registry....");
+    this.registry = new SimpleRegistryManager();
+    this.registry.registerRegistry(BuiltInRegistry.ITEM_EXPRESSION.getName(), new SimpleItemExpressionRegistry(this));
+    logger.info("Setting up metrics manager...");
+    this.metricManager = new MetricManager();
+    this.metricManager.initPlatforms();
+    logger.info("Loading player name and unique id mapping...");
+    this.playerFinder = new FastPlayerFinder(this);
+    loadTextManager();
+    logger.info("Register InventoryWrapper...");
+    this.inventoryWrapperRegistry.register(javaPlugin, this.inventoryWrapperManager);
+    logger.info("QuickShop " + javaPlugin.getFork() + " - Early boot step - Complete");
+  }
+
+  private void registerService() {
+
+    logger.info("Registering Bukkit Service: {}", QuickShopProvider.class.getName());
+    Bukkit.getServicesManager().register(QuickShopProvider.class, new QuickShopProvider() {
+      @Override
+      public @NotNull QuickShopAPI getApiInstance() {
+
+        return instance;
+      }
+
+      @Override
+      public @NotNull Plugin getInstance() {
+
+        return javaPlugin;
+      }
+    }, javaPlugin, ServicePriority.High);
+  }
+
+  private boolean runtimeCheck(@NotNull final EnvCheckEntry.Stage stage) {
+
+    environmentChecker = new EnvironmentChecker(this);
+    final ResultReport resultReport = environmentChecker.run(stage);
+    final StringJoiner joiner = new StringJoiner("\n", "", "");
+    if(resultReport.getFinalResult().ordinal() > CheckResult.WARNING.ordinal()) {
+      for(final Entry<EnvCheckEntry, ResultContainer> result : resultReport.getResults().entrySet()) {
+        if(result.getValue().getResult().ordinal() > CheckResult.WARNING.ordinal()) {
+          joiner.add(String.format("- [%s/%s] %s", result.getValue().getResult().getDisplay(), result.getKey().name(), result.getValue().getResultMessage()));
+        }
+      }
+    }
+    // Check If we need kill the server or disable plugin
+
+    switch(resultReport.getFinalResult()) {
+      case DISABLE_PLUGIN -> {
+        Bukkit.getPluginManager().disablePlugin(javaPlugin);
+        return false;
+      }
+      case STOP_WORKING -> {
+        setupBootError(new BootError(logger, joiner.toString()), true);
+        final PluginCommand command = javaPlugin.getCommand("echoppe");
+        if(command != null) {
+          Util.mainThreadRun(()->command.setTabCompleter(javaPlugin)); //Disable tab completer
+        }
+      }
+      default -> {
+      }
+    }
+    return true;
+  }
+
+  private void initConfiguration() {
+    /* Process the config */
+    //noinspection ResultOfMethodCallIgnored
+    javaPlugin.getDataFolder().mkdirs();
+
+    this.config = new MainConfig(this);
+    if(!this.config.load()) {
+      logger.error("Failed to load config.yml, The binary file of QuickShop may be corrupted. Please re-download from our website.");
+    }
+
+    javaPlugin.reloadConfig();
+
+    /* It will generate a new UUID above updateConfig */
+    this.serverUniqueID = UUID.fromString(Objects.requireNonNull(getConfig().getString("server-uuid", String.valueOf(UUID.randomUUID()))));
+    updateConfig();
+  }
+
+  private void loadTextManager() {
+
+    logger.info("Loading translations (This may take a while)...");
+    try {
+      this.textManager = new SimpleTextManager(this);
+    } catch(final NoSuchMethodError | NoClassDefFoundError e) {
+      logger.error("Failed to initialize text manager, the QuickShop doesn't compatible with your Server version. Did you up-to-date?", e);
+      Bukkit.getPluginManager().disablePlugin(javaPlugin);
+      throw new IllegalStateException("Cannot initialize text manager");
+    }
+    textManager.load();
+  }
+
+  /**
+   * Mark plugins stop working
+   *
+   * @param bootError           reason
+   * @param unregisterListeners should we disable all listeners?
+   */
+  public void setupBootError(final BootError bootError, final boolean unregisterListeners) {
+
+    this.bootError = bootError;
+    if(unregisterListeners) {
+      HandlerList.unregisterAll(javaPlugin);
+    }
+    folia.getScheduler().cancelAllTasks();
+  }
+
+  /**
+   * Reloads QuickShops config
+   */
+  public void reloadConfigSubModule() {
+    // Load quick variables
+    this.display = this.getConfig().getBoolean("shop.display-items");
+    final int type = getConfig().getInt("shop.display-type");
+    if(type != 2 && type != 3 && type != 900) {
+
+      this.invalidProvider = true;
+    }
+
+    this.priceChangeRequiresFee = this.getConfig().getBoolean("shop.price-change-requires-fee");
+    this.displayItemCheckTicks = this.getConfig().getInt("shop.display-items-check-ticks");
+    this.allowStack = this.getConfig().getBoolean("shop.allow-stacks");
+    this.currency = this.getConfig().getString("currency");
+    this.loggingLocation = this.getConfig().getInt("logging.location");
+    this.translationMapping = new HashMap<>();
+    getConfig().getStringList("custom-translation-key").forEach(str->{
+      final String[] split = str.split("=", 0);
+      this.translationMapping.put(split[0], split[1]);
+    });
+    this.translationMapping.putAll(this.addonRegisteredMapping);
+    if(this.platform != null) {
+      this.platform.updateTranslationMappingSection(this.translationMapping);
+    }
+
+    if(CommonUtil.isEmptyString(this.currency)) {
+      this.currency = null;
+    }
+    if(this.getConfig().getBoolean("logging.enable")) {
+      logWatcher = new LogWatcher(this, new File(javaPlugin.getDataFolder(), "qs.log"));
+    } else {
+      logWatcher = null;
+    }
+    // Schedule this event can be run in next tick.
+    //Util.mainThreadRun(() -> new QSConfigurationReloadEvent(javaPlugin).callEvent());
+  }
+
+  public MainConfig mainConfig() {
+    return this.config;
+  }
+
+  @NotNull
+  public YamlDocument getConfig() {
+
+    return this.config.getYaml();
+  }
+
+  private void updateConfig() {
+
+  }
+
+  @NotNull
+  public Logger logger() {
+
+    return logger;
+  }
+
+  @Override
+  public CommandManager getCommandManager() {
+
+    return this.commandManager;
+  }
+
+  @Override
+  public DatabaseHelper getDatabaseHelper() {
+
+    return this.databaseHelper;
+  }
+
+  @Override
+  public GameVersion getGameVersion() {
+
+    if(gameVersion == null) {
+
+      //NMS version is irrelevant anymore
+      gameVersion = GameVersion.get(platform.getMinecraftVersion(), (fallback)->this.isFallbackVersion = fallback);
+    }
+    return this.gameVersion;
+  }
+
+  @Override
+  public @NotNull InventoryWrapperRegistry getInventoryWrapperRegistry() {
+
+    return inventoryWrapperRegistry;
+  }
+
+  /**
+   * Retrieves the instance of the {@code SkullProvider}, which is responsible for providing
+   * methods to asynchronously generate player skulls or skull profiles.
+   *
+   * The {@code SkullProvider} interface offers functionality to retrieve player skulls (as
+   * {@code ItemStack} objects) or skull profile information (via {@code SkullProfile}), using
+   * identifiers such as UUID or player name.
+   *
+   * @return The {@code SkullProvider} instance for accessing skull-related utilities.
+   *
+   * @since 6.3.0.0
+   */
+  @Override
+  public SkullProvider getSkullProvider() {
+
+    return skullProvider;
+  }
+
+  @Override
+  public ItemMatcher getItemMatcher() {
+
+    return this.itemMatcher;
+  }
+
+  /**
+   * Retrieves the EconomyManager instance that manages all economies associated with their unique
+   * identifiers.
+   *
+   * @return The EconomyManager instance.
+   */
+  @Override
+  public EconomyManager getEconomyManager() {
+
+    return economyManager;
+  }
+
+  /**
+   * Retrieves the TagManager associated with the QuickShop system. The TagManager is responsible
+   * for handling operations related to managing tags, which may include inventory item metadata and
+   * custom item tags used by the system.
+   *
+   * @return The TagManager instance that provides functionality for tag-related operations within
+   * the QuickShop system.
+   */
+  @Override
+  public TagManager tagManager() {
+    return tagManager;
+  }
+
+  public UpdateManager updateManager() {
+    return this.updateManager;
+  }
+
+  /**
+   * Retrieves the InteractionManager associated with this QuickShopProvider.
+   *
+   * @return The InteractionManager that manages InteractionBehaviors and InteractionTypes.
+   */
+  @Override
+  public QuickShopInteractionManager getInteractionManager() {
+
+    return interactionManager;
+  }
+
+  @Override
+  public ShopManager getShopManager() {
+
+    return this.shopManager;
+  }
+
+  /**
+   * Retrieves the instance of the DisplayManager responsible for managing display functionalities.
+   *
+   * @return The DisplayManager instance, which handles operations related to displays for various
+   * types of entities.
+   */
+  @Override
+  @Nullable
+  public DisplayManager<?> getDisplayManager() {
+
+    return displayManager;
+  }
+
+  @Override
+  public TextManager getTextManager() {
+
+    return this.textManager;
+  }
+
+  @Override
+  public boolean isDisplayEnabled() {
+
+    return this.display;
+  }
+
+  public boolean isValidDisplayProvider() {
+
+    return !invalidProvider;
+  }
+
+  @Override
+  public RankLimiter getRankLimiter() {
+
+    return rankLimiter;
+  }
+
+  @Override
+  public boolean isPriceChangeRequiresFee() {
+
+    return this.priceChangeRequiresFee;
+  }
+
+  @Override
+  public void logEvent(@NotNull final Object eventObject) {
+
+    if(this.getLogWatcher() == null) {
+      return;
+    }
+    if(loggingLocation == 0) {
+      this.getLogWatcher().log(JsonUtil.getGson().toJson(eventObject));
+    } else {
+      getDatabaseHelper().insertHistoryRecord(eventObject)
+              .thenAccept(result->{
+              })
+              .exceptionally(throwable->{
+                Log.debug("Failed to log event: " + throwable.getMessage());
+                return null;
+              });
+    }
+
+  }
+
+  @Override
+  public void registerLocalizedTranslationKeyMapping(@NotNull final String translationKey, @NotNull final String key) {
+
+    addonRegisteredMapping.put(translationKey, key);
+    translationMapping.putAll(addonRegisteredMapping);
+    if(this.platform != null) {
+      this.platform.updateTranslationMappingSection(translationMapping);
+    }
+  }
+
+  @Override
+  public Semver getSemVersion() {
+
+    return javaPlugin.getSemVersion();
+  }
+
+  /**
+   * Get the permissionManager as static
+   *
+   * @return the permission Manager.
+   */
+  @NotNull
+  public PermissionManager perm() {
+
+    return permissionManager;
+  }
+
+  public final void onEnable() {
+
+    logger.info("QuickShop " + javaPlugin.getFork());
+
+    this.folia = new FoliaLib(javaPlugin);
+
+    if(this.folia.isFolia()) {
+
+      this.onFolia = true;
+      Bukkit.getPluginManager().registerEvents(new FoliaChatListener(javaPlugin), javaPlugin);
+      Bukkit.getPluginManager().registerEvents(new FoliaInventoryClickListener(javaPlugin), javaPlugin);
+      Bukkit.getPluginManager().registerEvents(new FoliaInventoryCloseListener(javaPlugin), javaPlugin);
+      this.menuHandler = new FoliaMenuHandler(javaPlugin, false);
+    } else if(this.folia.isPaper()) {
+
+      Bukkit.getPluginManager().registerEvents(new PaperChatListener(javaPlugin), javaPlugin);
+      Bukkit.getPluginManager().registerEvents(new PaperInventoryClickListener(javaPlugin), javaPlugin);
+      Bukkit.getPluginManager().registerEvents(new PaperInventoryCloseListener(javaPlugin), javaPlugin);
+      this.menuHandler = new PaperMenuHandler(javaPlugin, false);
+    } else {
+
+      Bukkit.getPluginManager().registerEvents(new BukkitChatListener(javaPlugin), javaPlugin);
+      Bukkit.getPluginManager().registerEvents(new BukkitInventoryClickListener(javaPlugin), javaPlugin);
+      Bukkit.getPluginManager().registerEvents(new BukkitInventoryCloseListener(javaPlugin), javaPlugin);
+      this.menuHandler = new BukkitMenuHandler(javaPlugin, false);
+    }
+
+    this.skullProvider = new PaperSkullProvider();
+
+    // Initialize GuiConfig before menus that depend on it
+    this.guiConfig = new GuiConfig(this);
+
+    MenuManager.instance().addMenu(new ShopHistoryMenu());
+    MenuManager.instance().addMenu(new ShopKeeperMenu());
+    MenuManager.instance().addMenu(new ShopBrowseMenu());
+    MenuManager.instance().addMenu(new ShopTradeMenu());
+    MenuManager.instance().addMenu(new ShopStaffMenu());
+
+    registerService();
+    /* Check the running envs is support or not. */
+    logger.info("Starting plugin self-test, please wait...");
+    try(final PerfMonitor ignored = new PerfMonitor("Self Test")) {
+      runtimeCheck(EnvCheckEntry.Stage.ON_ENABLE);
+    }
+    logger.info("Reading the configuration...");
+    initConfiguration();
+    logger.info("Contributors: {}", CommonUtil.list2String(javaPlugin.getDescription().getAuthors()));
+    logger.info("Original author: Netherfoam, Timtower, KaiNoMood, sandtechnology");
+    logger.info("FluxChestShop: Influencraft fork of QuickShop-Hikari {} (GPLv3, QuickShop-Community).", javaPlugin.getDescription().getVersion());
+    logger.info("Let's start loading the plugin");
+    loadErrorReporter();
+    loadItemMatcher();
+    this.itemMarker = new ItemMarker(this);
+    loadRegistry();
+    this.shopItemBlackList = new SimpleShopItemBlackList(this);
+    Util.initialize();
+    
+    getGameVersion();
+    if (this.isFallbackVersion) {
+
+      logger.warn("=================================================================");
+      logger.warn("=========================   ATTENTION   =========================");
+      logger.warn("=================================================================");
+      logger.warn("The current Minecraft version is not listed as officially");
+      logger.warn("supported by this version of QuickShop-Hikari.");
+      logger.warn("");
+      logger.warn("Display logic is falling back to the last known working");
+      logger.warn("implementation for compatibility.");
+      logger.warn("");
+      logger.warn("Displays, item rendering, holograms, or other visual");
+      logger.warn("features may not function correctly on this server version.");
+      logger.warn("");
+      logger.warn("If you experience issues, please update QuickShop-Hikari");
+      logger.warn("when a version supporting your Minecraft release becomes");
+      logger.warn("available.");
+      logger.warn("");
+      logger.warn("Need help or want to report compatibility issues?");
+      logger.warn("Join our Discord: https://discord.gg/Bu3dVtmsD3");
+      logger.warn("=================================================================");
+    }
+    try {
+      loadVirtualDisplayItem();
+    } catch(final Exception e) {
+      logger.warn("Failed to process virtual display item system", e);
+    }
+    loadSignHooker();
+    //Load the database
+    try(final PerfMonitor ignored = new PerfMonitor("Initialize database")) {
+      initDatabase();
+    }
+    Util.asyncThreadRun(()->{
+      logger.info("Start to caching usernames (async)...");
+      ((FastPlayerFinder)getPlayerFinder()).bakeCaches();
+    });
+    /* Initalize the tools */
+    // Create the shop manager.
+    permissionManager = new PermissionManager(this);
+    shopPermissionManager = new SimpleShopPermissionManager(this);
+    // This should be inited before shop manager
+    this.registerDisplayAutoDespawn();
+    logger.info("Registering commands...");
+    this.permissionChecker = new PermissionChecker(this);
+    loadCommandHandler();
+//        this.invWrapperUpdateManager = new InventoryWrapperUpdateManager(this);
+//        this.invWrapperUpdateManager.register();
+
+    this.shopManager = new SimpleShopManager(this);
+    // Limit
+    //this.registerLimitRanks();
+    this.rankLimiter = new SimpleRankLimiter(this);
+    // Limit end
+    if(getConfig().getInt("shop.finding.distance") > 100 && getConfig().getBoolean("shop.finding.exclude-out-of-stock")) {
+      logger.error("Shop find distance is too high with chunk loading feature turned on! It may cause lag! Pick a number below 100!");
+    }
+    signUpdateWatcher = new SignUpdateWatcher();
+    //shopContainerWatcher = new ShopContainerWatcher();
+    shopSaveWatcher = new ShopDataSaveWatcher(this);
+    shopSaveWatcher.start(0, 20L * 60L * 5L);
+    /* Load all shops. */
+    shopLoader = new ShopLoader(this);
+    shopLoader.loadShops();
+    QuickExecutor.getCommonExecutor().submit(this::bakeShopsOwnerCache);
+
+    logger.info("Loading shop tags...");
+    this.tagManager.loadAllFromDB();
+
+    logger.info("Registering listeners...");
+    this.interactionManager = new QuickShopInteractionManager(this);
+    // Register events
+    // Listeners (These don't)
+    registerListeners();
+    this.shopControlPanelManager.initialize();
+    this.shopControlPanelManager.register(new SimpleShopControlPanel());
+    this.registerDisplayItem();
+    this.registerShopLock();
+    logger.info("Cleaning MsgUtils...");
+    MsgUtil.clean();
+    this.registerUpdater();
+    /* Delay the Economy system load, give a chance to let economy system register. */
+    /* And we have a listener to listen the ServiceRegisterEvent :) */
+    Log.debug("Scheduled economy system loading.");
+    folia.getScheduler().runLater(economyLoader::load, 1);
+    registerTasks();
+    Log.debug("DisplayItem selected: " + AbstractDisplayItem.getNowUsing().name());
+    registerCommunicationChannels();
+    new QSConfigurationReloadEvent(javaPlugin).callEvent();
+    load3rdParty();
+    try(final PerfMonitor ignored = new PerfMonitor("Self Test")) {
+      runtimeCheck(EnvCheckEntry.Stage.AFTER_ON_ENABLE);
+    }
+
+    //initialize our hooks and things
+    logger.info("Initializing built-in hooks...");
+    addHook(new WorldEditHook());
+    addHook(new FWorldEditHook());
+
+    loadHooks();
+  }
+
+  private void loadRegistry() {
+
+    logger.info("Setting up ItemExpressionRegistry...");
+    final ItemExpressionRegistry itemExpressionRegistry = (ItemExpressionRegistry)this.registry.getRegistry(BuiltInRegistry.ITEM_EXPRESSION);
+    itemExpressionRegistry.registerHandlerSafely(new SimpleMaterialExpressionHandler(this));
+    itemExpressionRegistry.registerHandlerSafely(new SimpleEnchantmentExpressionHandler(this));
+    itemExpressionRegistry.registerHandlerSafely(new SimpleItemReferenceExpressionHandler(this));
+    itemExpressionRegistry.registerHandlerSafely(new SimpleWildcardExpressionHandler(this));
+  }
+
+  private void loadErrorReporter() {
+
+    try {
+      if(!getConfig().getBoolean("auto-report-errors")) {
+        Log.debug("Error Reporter has been disabled by the configuration.");
+      } else {
+        sentryErrorReporter = new RollbarErrorReporter(this);
+        Log.debug("Error Reporter has been initialized.");
+      }
+    } catch(final Exception th) {
+      logger.warn("Cannot load the Rollbar Error Reporter: {}", th.getMessage());
+      logger.warn("Because the error reporter doesn't work, report this error to the developer. Thank you!");
+    }
+  }
+
+  private void loadItemMatcher() {
+
+    final ItemMatcher defItemMatcher = switch(getConfig().getInt("matcher.work-type")) {
+      case 0 -> new QuickShopItemMatcherImpl(this);
+      case 3 -> new ModernCustomMatcher(this);
+      case 1 -> new BukkitItemMatcherImpl(this);
+      default ->
+              throw new IllegalStateException("Unexpected value: " + getConfig().getInt("matcher.work-type"));
+    };
+    this.itemMatcher = ServiceInjector.getInjectedService(ItemMatcher.class, defItemMatcher);
+  }
+
+  private void loadVirtualDisplayItem() {
+
+    if(!invalidProvider && this.display) {
+      //VirtualItem support
+      if(AbstractDisplayItem.getNowUsing() == DisplayType.VIRTUALITEM) {
+        logger.info("Using Virtual Displays. Attempting to initialize packet factory...");
+        try {
+
+          this.displayManager = new VirtualDisplayItemManager(this);
+        } catch(final Exception e) {
+
+          //disable displays since we don't have packet support
+          this.display = false;
+          getConfig().set("shop.display-items", false);
+          javaPlugin.saveConfig();
+
+          logger.warn("Failed to initialize Virtual Display packet factory. Please validate that you have an up-to-date ProtocolLib or PacketEvents installation.", e);
+          throw e;
+        }
+      }
+
+      if(AbstractDisplayItem.getNowUsing() == DisplayType.DISPLAY_ENTITY) {
+
+        this.displayManager = new DisplayEntityItemManager();
+      }
+    }
+  }
+
+  private void loadSignHooker() {
+    if(getConfig().getBoolean("shop.per-player-shop-sign")) {
+
+      signHooker = new SignHooker(this);
+      signHooker.register();
+      logger.info("Successfully registered per-player shop sign!");
+    } else {
+
+      signHooker = null;
+    }
+  }
+
+  private void initDatabase() {
+
+    setupDBonEnableding = true;
+    if(!setupDatabase()) {
+      logger.error("Failed to setup database, please check the logs for more information!");
+      Bukkit.getPluginManager().disablePlugin(javaPlugin);
+      throw new IllegalStateException("Failed to setup database");
+    }
+    setupDBonEnableding = false;
+  }
+
+  private void registerDisplayAutoDespawn() {
+
+    if(this.display && getConfig().getBoolean("shop.display-auto-despawn")) {
+
+      final int checkTime = getConfig().getInt("shop.display-check-time");
+      if(this.displayAutoDespawnWatcher != null && this.displayAutoDespawnWatcher.getTaskPeriod() == checkTime) {
+        // Don't restart the task if the check time hasn't changed.
+        return;
+      }
+
+      if(this.displayAutoDespawnWatcher == null) {
+        this.displayAutoDespawnWatcher = new DisplayAutoDespawnWatcher(this);
+      }
+
+      this.displayAutoDespawnWatcher.start(20, checkTime);
+      logger.warn("Unrecommended use of display-auto-despawn. This feature may have a heavy impact on the server's performance!");
+    } else {
+      if(this.displayAutoDespawnWatcher != null) {
+        this.displayAutoDespawnWatcher.unregister();
+        this.displayAutoDespawnWatcher = null;
+      }
+    }
+  }
+
+  private void loadCommandHandler() {
+    /* PreInit for BootError feature */
+    this.registerQuickShopCommands();
+
+  }
+
+  private void bakeShopsOwnerCache() {
+
+    if(config.getYaml().getBoolean("database.bake-uuids", false)) {
+      logger.info("Baking shops owner and moderators caches (This may take a while if you upgrade from old versions)...");
+      final Set<UUID> waitingForBake = new HashSet<>();
+      this.shopManager.getAllShops().forEach(shop->{
+        final UUID uuid = shop.getOwner().getUniqueIdIfRealPlayer().orElse(null);
+        if(uuid != null && !this.playerFinder.isCached(uuid)) {
+          waitingForBake.add(uuid);
+        }
+        shop.getPermissionAudiences().keySet().forEach(audience->{
+          if(!this.playerFinder.isCached(audience)) {
+            waitingForBake.add(audience);
+          }
+        });
+      });
+      for(final UUID uuid : waitingForBake) {
+        QuickExecutor.getSecondaryProfileIoExecutor().submit(()->{
+          final String name = playerFinder.uuid2Name(uuid);
+          if(name != null) {
+            playerFinder.cache(uuid, name);
+          }
+        });
+      }
+      if(!waitingForBake.isEmpty()) {
+        javaPlugin.logger().info("Performing {} players username caching.", waitingForBake.size());
+      }
+    }
+  }
+
+  private void registerListeners() {
+
+    new BlockListener(this).register();
+    new PlayerListener(this).register();
+    new WorldListener(this).register();
+    // Listeners - We decide which one to use at runtime
+    new ChatListener(this).register();
+    new ChunkListener(this).register();
+    new CustomInventoryListener(this).register();
+    new ShopProtectionListener(this).register();
+    new PlayerLockClickListener(this).register();
+    new MetricListener(this).register();
+    new InternalListener(this).register();
+    if(Util.checkIfBungee()) {
+      this.bungeeListener = new BungeeListener(this);
+      this.bungeeListener.register();
+    }
+  }
+
+  private void registerDisplayItem() {
+
+    if(this.display && AbstractDisplayItem.getNowUsing() != DisplayType.VIRTUALITEM
+       && AbstractDisplayItem.getNowUsing() != DisplayType.DISPLAY_ENTITY) {
+      if(getDisplayItemCheckTicks() > 0) {
+        if(getConfig().getInt("shop.display-items-check-ticks") < 3000) {
+          logger.error("Shop.display-items-check-ticks is too low! It may cause HUGE lag! Pick a number > 3000");
+        }
+        logger.info("Registering DisplayCheck task....");
+        folia.getScheduler().runTimerAsync(()->{
+          for(final Shop<?, ?> shop : getShopManager().getLoadedShops()) {
+            //Shop may be deleted or unloaded when iterating
+            if(!shop.isLoaded()) {
+              continue;
+            }
+            folia.getScheduler().runAtLocationLater((Location)shop.bukkitLocation(), shop::checkDisplay, 1L);
+          }
+        }, 1L, getDisplayItemCheckTicks());
+      } else if(getDisplayItemCheckTicks() == 0) {
+
+        logger.info("shop.display-items-check-ticks was set to 0. Display Check has been disabled");
+      } else {
+        logger.error("shop.display-items-check-ticks has been set to an invalid value. Please use a value above 3000.");
+      }
+      if(this.displayProtectionListener == null) {
+        this.displayProtectionListener = new DisplayProtectionListener(this);
+        this.displayProtectionListener.register();
+      }
+    } else {
+      if(this.displayProtectionListener != null) {
+        this.displayProtectionListener.unregister();
+        this.displayProtectionListener = null;
+      }
+    }
+  }
+
+  private void registerShopLock() {
+
+    final boolean useShopLock = getConfig().getBoolean("shop.lock");
+    if(useShopLock) {
+
+      if(this.shopLockListener == null) {
+        this.shopLockListener = new LockListener(this);
+        this.shopLockListener.register();
+      }
+    } else if(this.shopLockListener != null) {
+      this.shopLockListener.unregister();
+      this.shopLockListener = null;
+    }
+  }
+
+  private void registerUpdater() {
+
+    final boolean updaterEnabled = this.getConfig().getBoolean("updater", true);
+    if(updaterEnabled && this.updateManager == null) {
+      this.updateManager = new UpdateManager(this);
+      updateWatcher = new UpdateWatcher();
+      updateWatcher.init();
+    } else {
+      if (this.updateManager != null) {
+        this.updateManager.unregister();
+        this.updateManager = null;
+      }
+
+      if(updateWatcher != null) {
+        updateWatcher.uninit();
+        updateWatcher = null;
+      }
+    }
+  }
+
+  private void registerTasks() {
+
+    calendarWatcher = new CalendarWatcher(this);
+    signUpdateWatcher.start(1, 10);
+    if(logWatcher != null) {
+      logWatcher.start(10, 10);
+      logger.info("Log actions is enabled. Actions will be logged in the qs.log file!");
+    }
+    this.registerOngoingFee();
+    calendarWatcher = new CalendarWatcher(this);
+    calendarWatcher.start();
+    this.shopPurger = new ShopPurger(this);
+    if(getConfig().getBoolean("purge.at-server-startup")) {
+      shopPurger.purge();
+    }
+  }
+
+  private void registerCommunicationChannels() {
+
+    Bukkit.getMessenger().registerOutgoingPluginChannel(javaPlugin, "BungeeCord");
+  }
+
+  /**
+   * Load 3rdParty plugin support module.
+   */
+  private void load3rdParty() {
+
+    final boolean usePAPI = getConfig().getBoolean("plugin.PlaceHolderAPI.enable");
+    if(usePAPI) {
+      this.placeHolderAPI = Bukkit.getPluginManager().getPlugin("PlaceholderAPI");
+      if(this.placeHolderAPI != null && placeHolderAPI.isEnabled()) {
+        this.quickShopPAPI = new QuickShopPAPI(this);
+        this.quickShopPAPI.register();
+        logger.info("Successfully loaded PlaceHolderAPI support!");
+      }
+    }
+  }
+
+  /**
+   * Setup the database
+   *
+   * @return The setup result
+   */
+  public boolean setupDatabase() {
+
+    logger.info("Setting up database...");
+    final HikariConfig config = HikariUtil.createHikariConfig();
+    try {
+      final Section dbCfg = getConfig().getSection("database");
+      if(Objects.requireNonNull(dbCfg).getBoolean("mysql")) {
+        databaseDriverType = DatabaseDriverType.MYSQL;
+        // MySQL database - Required database be created first.
+        dbPrefix = dbCfg.getString("prefix");
+        if(dbPrefix == null || "none".equals(dbPrefix)) {
+          dbPrefix = "";
+        }
+        final String user = dbCfg.getString("user");
+        final String pass = dbCfg.getString("password");
+        final String host = dbCfg.getString("host");
+        final String port = dbCfg.getString("port");
+        final String database = dbCfg.getString("database");
+        final boolean useSSL = dbCfg.getBoolean("usessl");
+        config.setJdbcUrl("jdbc:mysql://" + host + ":" + port + "/" + database + "?useSSL=" + useSSL);
+        config.setUsername(user);
+        config.setPassword(pass);
+        this.sqlManager = new SQLManagerImpl(new HikariDataSource(config), "QuickShop-Hikari-SQLManager");
+      } else {
+        // H2 database - Doing this handles file creation
+        databaseDriverType = DatabaseDriverType.H2;
+        Log.debug("Registering JDBC H2 driver...");
+        Driver.load();
+        logger.info("Create database backup...");
+        final String driverClassName = Driver.class.getName();
+        Log.debug("Setting up H2 driver class name to: " + driverClassName);
+        config.setDriverClassName(driverClassName);
+        config.setJdbcUrl("jdbc:h2:" + new File(javaPlugin.getDataFolder(), "shops").getCanonicalFile().getAbsolutePath() + ";MODE=MYSQL");
+        this.sqlManager = new SQLManagerImpl(new HikariDataSource(config), "QuickShop-Hikari-SQLManager");
+        this.sqlManager.executeSQL("SET MODE=MYSQL"); // Switch to MySQL mode
+      }
+      //this.sqlManager.setDebugMode(Util.isDevMode());
+      this.sqlManager.setExecutorPool(QuickExecutor.getHikaricpExecutor());
+      // Make the database up to date
+      this.databaseHelper = new SimpleDatabaseHelperV2(this, this.sqlManager, this.getDbPrefix());
+      final DatabaseIOUtil ioUtil = new DatabaseIOUtil(databaseHelper);
+      ioUtil.performBackup("startup");
+      return true;
+    } catch(final Exception e) {
+      logger.error("Error when connecting to the database", e);
+      if(setupDBonEnableding) {
+        bootError = BuiltInSolution.databaseError();
+      }
+      return false;
+    }
+  }
+
+  public void registerQuickShopCommands() {
+
+    commandManager = new SimpleCommandManager(this);
+    final List<String> customCommands = getConfig().getStringList("custom-commands");
+    // FluxChestShop : /echoppe remplace /quickshop et /qs (alias additionnels : custom-commands de config.yml).
+    final Command quickShopCommand = new QuickShopCommand("echoppe", commandManager, new ArrayList<>(new HashSet<>(customCommands)));
+    try {
+      platform.registerCommand("fluxchestshop", quickShopCommand);
+    } catch(final Exception e) {
+      logger.warn("Failed to register command aliases", e);
+    }
+    Log.debug("QuickShop command registered with those aliases: " + CommonUtil.list2String(quickShopCommand.getAliases()));
+  }
+
+  private void registerOngoingFee() {
+
+    if(getConfig().getBoolean("shop.ongoing-fee.enable")) {
+      ongoingFeeWatcher = new OngoingFeeWatcher(this);
+      ongoingFeeWatcher.start(1, getConfig().getInt("shop.ongoing-fee.ticks"));
+      logger.info("Ongoing fee feature is enabled.");
+    } else {
+      if(ongoingFeeWatcher != null) {
+        ongoingFeeWatcher.stop();
+        ongoingFeeWatcher = null;
+      }
+    }
+  }
+
+  public final void onDisable() {
+
+    logger.info("QuickShop is finishing remaining work, this may need a while...");
+    if(calendarWatcher != null) {
+      calendarWatcher.stop();
+    }
+    if(sentryErrorReporter != null) {
+      logger.info("Shutting down error reporter...");
+      sentryErrorReporter.unregister();
+    }
+    if(this.quickShopPAPI != null) {
+      logger.info("Unregistering PlaceHolderAPI hooks...");
+      if(this.quickShopPAPI.unregister()) {
+        logger.info("Successfully unregistered PlaceholderAPI hook!");
+      } else {
+        logger.info("Unregistering not successful. Was it already unloaded?");
+      }
+    }
+    if(shopManager != null) {
+      logger.info("Unloading all loaded shops...");
+      shopManager.getLoadedShops().forEach(shop->shopManager.unloadShop(shop));
+    }
+    if(this.bungeeListener != null) {
+      logger.info("Disabling the BungeeChat messenger listener.");
+      Bukkit.getOnlinePlayers().forEach(player->this.bungeeListener.notifyForCancel(player));
+      this.bungeeListener.unregister();
+    }
+    if(shopSaveWatcher != null) {
+      logger.info("Stopping shop auto save...");
+      shopSaveWatcher.stop();
+    }
+    if(shopManager != null) {
+      logger.info("Saving all in-memory changed shops...");
+      final List<@NotNull CompletableFuture> futures = shopManager.getAllShops().stream().filter(Shop::isDirty).map(Shop::update).toList();
+
+      logger.info("Shops needed saved: " + futures.size());
+      final CompletableFuture<?>[] completableFutures = futures.toArray(new CompletableFuture<?>[0]);
+
+      try {
+
+        CompletableFuture.allOf(completableFutures)
+                .orTimeout(15, TimeUnit.SECONDS)
+                .join();
+
+      } catch(final CompletionException ex) {
+
+        logger.info("Timed out, running saving synchronously to determine shop with issue.", ex);
+        for(final Shop shop : shopManager.getAllShops()) {
+
+          if(shop.isDirty()) {
+            try {
+
+              shop.updateSync();
+            } catch(final RuntimeException re) {
+
+              logger.warn("Issue occurred while saving a shop. This may cause data loss. Please check the logs for more information. ID: " + shop.getShopId() + " Location: " + shop.bukkitLocation(), re);
+            }
+          }
+        }
+      }
+    }
+    /* Remove all display items, and any dupes we can find */
+    if(shopManager != null) {
+      logger.info("Cleaning up shop manager...");
+      shopManager.clear();
+    }
+
+    try {
+      for (final Player player : javaPlugin.getServer().getOnlinePlayers()) {
+        if (player.getOpenInventory().getTopInventory().getHolder(false) instanceof QuickShopPreviewGUIHolder) {
+          player.closeInventory();
+        }
+      }
+    } catch(final Exception e) {
+      javaPlugin.getSLF4JLogger().warn("An exception occurred while attempting to close open preview inventories for players", e);
+    }
+
+    if(AbstractDisplayItem.getNowUsing() == DisplayType.VIRTUALITEM && displayManager != null) {
+      logger.info("Cleaning up display manager...");
+      displayManager.unload();
+    }
+    if(logWatcher != null) {
+      logger.info("Stopping log watcher...");
+      logWatcher.close();
+    }
+    logger.info("Shutting down scheduled timers...");
+    folia.getScheduler().cancelAllTasks();
+    /* Unload UpdateWatcher */
+    if(this.updateWatcher != null) {
+      logger.info("Shutting down update watcher...");
+      this.updateWatcher.uninit();
+    }
+    logger.info("Shutting down 3rd-party integrations...");
+    unload3rdParty();
+    if(this.getSqlManager() != null) {
+      logger.info("Shutting down database connections...");
+      EasySQL.shutdownManager(this.getSqlManager());
+    }
+  }
+
+  private void unload3rdParty() {
+
+    if(this.placeHolderAPI != null && placeHolderAPI.isEnabled() && this.quickShopPAPI != null) {
+
+      this.quickShopPAPI.unregister();
+      logger.info("Unload PlaceHolderAPI module successfully!");
+    }
+    if(this.signHooker != null) {
+
+      this.signHooker.unregister();
+      logger.info("Unload SignHooker module successfully!");
+    }
+
+    if(this.displayManager != null) {
+
+      this.displayManager.unload();
+    }
+  }
+
+  public Platform platform() {
+    return platform;
+  }
+
+  public boolean onFolia() {
+
+    return onFolia;
+  }
+
+  @NotNull
+  public File getDataFolder() {
+
+    return javaPlugin.getDataFolder();
+  }
+
+  @Override
+  public ReloadResult reloadModule() throws Exception {
+
+    registerDisplayAutoDespawn();
+    //registerOngoingFee();
+    registerUpdater();
+    registerShopLock();
+    registerDisplayItem();
+    return Reloadable.super.reloadModule();
+  }
+
+  public AbstractItemStack<?> stack() {
+
+    if(PaperLib.isPaper()) {
+      return new PaperItemStack();
+    }
+    return new BukkitItemStack();
+  }
+
+  public AbstractItemStack<ItemStack> stack(final ItemStack itemStack) {
+
+    if(PaperLib.isPaper()) {
+      return new PaperItemStack().of(itemStack);
+    }
+    return new BukkitItemStack().of(itemStack);
+  }
+
+  public @NotNull TextManager text() {
+
+    return this.textManager;
+  }
+
+  public ShopControlPanelManager controlPanelManager() {
+
+    return shopControlPanelManager;
+  }
+
+  public MenuPlayer createMenuPlayer(final OfflinePlayer player) {
+
+    if(this.folia.isFolia()) {
+      return new FoliaPlayer(player, this.javaPlugin);
+    } else if(this.folia.isPaper()) {
+      return new PaperPlayer(player, this.javaPlugin);
+    } else {
+      return new BukkitPlayer(player, this.javaPlugin);
+    }
+  }
+
+  /**
+   * Return the QuickShop fork name.
+   *
+   * @return The fork name.
+   */
+  @NotNull
+  public String getFork() {
+
+    return javaPlugin.getFork();
+  }
+
+  /**
+   * Return the QuickShop fork name.
+   *
+   * @return The fork name.
+   */
+  @NotNull
+  public String getVersion() {
+
+    return javaPlugin.getVersion();
+  }
+
+  public String getMainCommand() {
+
+    final List<String> customCommands = getConfig().getStringList("custom-commands");
+    return customCommands.isEmpty()? "echoppe" : customCommands.getFirst();
+  }
+
+  public String getCommandPrefix(final String commandLabel) {
+
+    final Section section = getConfig().getSection("custom-subcommands");
+
+    if(section == null) return commandLabel;
+    final String prefix = section.getString(commandLabel);
+
+    if(prefix == null || prefix.isEmpty()) return commandLabel;
+    return prefix;
+  }
+
+  public enum DatabaseDriverType {
+    MYSQL,
+    H2
+  }
+}

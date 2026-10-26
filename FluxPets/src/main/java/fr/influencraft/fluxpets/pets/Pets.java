@@ -27,7 +27,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Système de familiers d'FluxPets, qui remplace EcoPets (même architecture : définitions dans pets/*.yml,
+ * Système de familiers de FluxPets, qui remplace EcoPets (même architecture : définitions dans pets/*.yml,
  * données des joueurs dans eco, effets fournis à libreforge par un holder du familier actif).
  *
  * Ne démarre pas si EcoPets est encore actif (les effets compteraient deux fois) ou si libreforge est absent.
@@ -55,7 +55,7 @@ public final class Pets {
         return enabled;
     }
 
-    /** Démarrage (onEnable d'FluxPets, une fois). Renvoie false si le système n'a pas pu démarrer. */
+    /** Démarrage (onEnable de FluxPets, une fois). Renvoie false si le système n'a pas pu démarrer. */
     public static boolean enable(FluxPets influPet) {
         plugin = influPet;
         if (enabled) {
@@ -193,7 +193,7 @@ public final class Pets {
     }
 
     /**
-     * Chaînes libreforge propres aux familiers (chains.yml d'FluxPets, même format que celui de libreforge :
+     * Chaînes libreforge propres aux familiers (chains.yml de FluxPets, même format que celui de libreforge :
      * chains: [{id, effects}]), enregistrées auprès de libreforge avant de compiler les familiers : un familier
      * peut les lancer avec run_chain sans toucher à plugins/libreforge/chains.yml.
      */
@@ -269,7 +269,7 @@ public final class Pets {
     }
 
     /**
-     * Réglages des familiers : section familiers de la config d'FluxPets (config.yml, textes de lang/, menus de
+     * Réglages des familiers : section familiers de la config de FluxPets (config.yml, textes de lang/, menus de
      * menus/), vue comme une config eco (mêmes chemins que l'ancien familiers-reglages.yml : gui, level-gui,
      * messages, level-up, pet-entity...).
      */

@@ -20,9 +20,9 @@ import java.util.Map;
 
 /**
  * FluxLands : extension de Lands qui unifie les villes, les adresses (InfluPW) et les
- * échoppes (InfluEchoppe). Fournit les placeholders {@code %influlands_...%} et la commande
+ * échoppes (FluxChestShop). Fournit les placeholders {@code %influlands_...%} et la commande
  * {@code /influlands} lus et appelés par les menus Flux (menus/ville*.yml,
- * adresses.yml, echoppes.yml). InfluPW et InfluEchoppe sont facultatifs : sans eux, les
+ * adresses.yml, echoppes.yml). InfluPW et FluxChestShop sont facultatifs : sans eux, les
  * listes correspondantes sont simplement vides.
  */
 public final class FluxLands extends JavaPlugin implements Listener {
@@ -60,7 +60,7 @@ public final class FluxLands extends JavaPlugin implements Listener {
         pays = new Pays(this);
         interception = new Interception(this);
 
-        if (Bukkit.getPluginManager().isPluginEnabled("InfluEchoppe")) {
+        if (Bukkit.getPluginManager().isPluginEnabled("FluxChestShop")) {
             RegisteredServiceProvider<Economy> rsp = Bukkit.getServicesManager().getRegistration(Economy.class);
             if (rsp == null) {
                 getLogger().warning("Aucune économie Vault : droit de place désactivé, échoppes listées quand même.");
@@ -68,9 +68,9 @@ public final class FluxLands extends JavaPlugin implements Listener {
             quickShop = new ModuleQuickShop(this, rsp != null ? rsp.getProvider() : null);
             quickShop.chargerStocks();
             if (rsp != null) Bukkit.getPluginManager().registerEvents(quickShop, this);
-            getLogger().info("InfluEchoppe trouvé : échoppes et droit de place actifs.");
+            getLogger().info("FluxChestShop trouvé : échoppes et droit de place actifs.");
         } else {
-            getLogger().info("InfluEchoppe absent : pas d'échoppes ni de droit de place.");
+            getLogger().info("FluxChestShop absent : pas d'échoppes ni de droit de place.");
         }
         if (Bukkit.getPluginManager().isPluginEnabled("InfluPW")) {
             playerWarps = new ModulePlayerWarps(this);

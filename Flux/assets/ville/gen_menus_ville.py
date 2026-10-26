@@ -469,7 +469,7 @@ warps += barre_liste("itemsadder:influville:warp", "Warps",
 menu("warps", "menu_warps", warps, commandes=["warps"],
      ouverture=[iv("vue warps"), "[refresh]"], doc="Warps (InfluPW) avec leur ville (/warps).")
 
-# Échoppes (InfluEchoppe)
+# Échoppes (FluxChestShop)
 echoppes = [retour_liste()]
 for n, slot in enumerate(GRILLE, start=1):
     echoppes.append(bouton("echoppe_%d" % n, slot, l(n, "icone"), l(n, "objet"),
@@ -489,7 +489,7 @@ echoppes += barre_liste("itemsadder:influville:echoppe", "Échoppes",
                                lore(["Pose un coffre, puis frappe-le", "avec l'objet à vendre et", "indique le prix dans le tchat.", "",
                                      "Droit de place ici : &f%influlands_taux_ici% %"])))
 menu("echoppes", "menu_echoppes", echoppes, commandes=["echoppes"],
-     ouverture=[iv("vue echoppes"), "[refresh]"], doc="Échoppes (InfluEchoppe) avec leur ville et le droit de place (/echoppes).")
+     ouverture=[iv("vue echoppes"), "[refresh]"], doc="Échoppes (FluxChestShop) avec leur ville et le droit de place (/echoppes).")
 
 # Habitants
 habitants = [retour_liste()]

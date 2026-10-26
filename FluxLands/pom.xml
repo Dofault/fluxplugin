@@ -40,8 +40,8 @@
             <scope>system</scope>
             <systemPath>${project.basedir}/libs/Lands-8.9.5.jar</systemPath>
         </dependency>
-        <!-- InfluPW (fork de PlayerWarps 5.1.1) et InfluEchoppe (fork de QuickShop-Hikari 6.3.0.1) :
-             jars construits depuis plugins/InfluPW et plugins/InfluEchoppe, API Java inchangée. -->
+        <!-- InfluPW (fork de PlayerWarps 5.1.1) et FluxChestShop (fork de QuickShop-Hikari 6.3.0.1) :
+             jars construits depuis plugins/InfluPW et plugins/FluxChestShop, API Java inchangée. -->
         <dependency>
             <groupId>fr.influencraft</groupId>
             <artifactId>influpw</artifactId>
@@ -54,7 +54,7 @@
             <artifactId>influechoppe</artifactId>
             <version>6.3.0.1</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/libs/InfluEchoppe.jar</systemPath>
+            <systemPath>${project.basedir}/libs/FluxChestShop.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>net.milkbowl</groupId>

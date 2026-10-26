@@ -15,12 +15,12 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Remplace les menus natifs de Lands par ceux d'FluxLands : {@code /lands}, {@code /v},
+ * Remplace les menus natifs de Lands par ceux de FluxLands : {@code /lands}, {@code /v},
  * {@code /ville}... sans argument (ou {@code menu}) ouvrent Ma ville, {@code bank} la Banque,
  * {@code rental list} et {@code menu rentals} l'Agence, {@code area} et
  * {@code menu land areas} les Parcelles ; {@code /nations} et {@code /n} (ou {@code menu}) ouvrent
  * Mon pays. Toutes les autres sous-commandes passent telles
- * quelles. Le bouton « Menu complet » d'FluxLands ({@code /influlands natif}) laisse passer
+ * quelles. Le bouton « Menu complet » de FluxLands ({@code /influlands natif}) laisse passer
  * une seule commande pour atteindre les menus natifs non refaits.
  */
 final class Interception implements Listener {

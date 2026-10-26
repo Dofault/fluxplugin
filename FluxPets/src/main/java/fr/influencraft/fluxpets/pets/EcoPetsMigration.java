@@ -22,7 +22,7 @@ import java.util.Map;
  * - fichiers : au premier démarrage, plugins/EcoPets/pets/*.yml est copié dans plugins/FluxPets/pets/ (même
  *   format), l'ancien dossier est laissé tel quel ;
  * - joueurs : à la connexion, une seule fois par joueur (clé influpet:migration_ecopets), les clés eco d'EcoPets
- *   (ecopets:<familier>_level, _xp, active_pet, hide_pet) sont recopiées dans celles d'FluxPets. Rien n'est
+ *   (ecopets:<familier>_level, _xp, active_pet, hide_pet) sont recopiées dans celles de FluxPets. Rien n'est
  *   écrasé : un familier déjà présent côté FluxPets garde ses valeurs. Les clés EcoPets restent dans la base.
  */
 final class EcoPetsMigration implements Listener {

@@ -29,7 +29,7 @@ final class Registre {
         long transactions;
         /** jour (aaaa-mm-jj) -> montant perçu ce jour-là. */
         final TreeMap<String, Double> jours = new TreeMap<>();
-        /** identifiant d'échoppe InfluEchoppe -> montant total reversé par elle. */
+        /** identifiant d'échoppe FluxChestShop -> montant total reversé par elle. */
         final Map<Long, Double> parEchoppe = new HashMap<>();
 
         double jour(LocalDate d) {

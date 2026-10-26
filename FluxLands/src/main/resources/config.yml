@@ -1,6 +1,6 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # FluxLands : extension de Lands qui relie les villes, les warps
-# (InfluPW), les échoppes (InfluEchoppe) et les parcelles à louer (Agence). Les menus sont des menus Flux
+# (InfluPW), les échoppes (FluxChestShop) et les parcelles à louer (Agence). Les menus sont des menus Flux
 # (menus/ville*.yml, warps.yml, echoppes.yml, agence.yml) qui lisent les placeholders
 # %influlands_...% et appellent /influlands pour naviguer.
 # Doc : docs/technique/influlands.md
@@ -93,7 +93,7 @@ menus:
   pays_annuaire: pays_annuaire
   pays_villes: pays_villes
 
-# Remplacement des menus natifs de Lands par ceux d'FluxLands : /lands, /v,
+# Remplacement des menus natifs de Lands par ceux de FluxLands : /lands, /v,
 # /ville (et leur sous-commande menu) ouvrent Ma ville, bank la Banque,
 # rental list l'Agence, area les Parcelles. Les autres sous-commandes de Lands
 # ne changent pas. Le bouton « Menu complet » des Réglages ouvre toujours le

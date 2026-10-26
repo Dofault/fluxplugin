@@ -7,6 +7,7 @@ the player's inventory and draw buttons over it. Developed for the Influencraft 
 |---|---|---|
 | **Flux** | Core: menu engine, public API (`fr.influencraft.flux.api`) | — |
 | **FluxAuctionHouse** | Auction house front-end (on top of AuctionHouse) unified with chest shops, sales history, average price | optional |
+| **FluxChestShop** | Player chest shops: fork of QuickShop-Hikari 6.3.0.1, **GPLv3** (see its `LICENSE` and `FORK.md`) | — |
 | **FluxCasino** | Casino tokens (balance, bets, exchange) | — |
 | **FluxLands** | Towns and nations on top of Lands: bank, plots, roles, shops, warps | optional |
 | **FluxOffering** | Item offerings to rank up | — |
@@ -25,6 +26,7 @@ Third-party server jars are not committed (several are paid plugins): drop them 
 ```
 mvn package                 # every Maven module, jars in <module>/target/
 cd FluxReferral && ./gradlew build   # FluxReferral uses Gradle (run Gradle itself on JDK 21)
+cd FluxChestShop && ./gradlew :quickshop-bukkit:shadowJar --no-configuration-cache   # GPLv3 fork, Gradle
 ```
 
 ## Renamed plugins
@@ -37,6 +39,7 @@ identifiers, so menus, ranks and items already handed out keep working.
 |---|---|
 | Flux | FluxMenu |
 | FluxAuctionHouse | InfluMarche |
+| FluxChestShop | InfluEchoppe, QuickShop-Hikari (data identity kept as `QuickShop-Hikari`) |
 | FluxCasino | InfluCasino |
 | FluxLands | InfluLands |
 | FluxOffering | InfluOffrande |

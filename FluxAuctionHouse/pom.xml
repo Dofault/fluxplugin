@@ -54,7 +54,7 @@
             <artifactId>influechoppe</artifactId>
             <version>6.3.0.1</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/libs/InfluEchoppe.jar</systemPath>
+            <systemPath>${project.basedir}/libs/FluxChestShop.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>net.milkbowl</groupId>

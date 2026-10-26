@@ -313,7 +313,7 @@ public final class Slots extends PlaceholderExpansion {
         return m == Math.floor(m) ? String.valueOf((long) m) : String.valueOf(m);
     }
 
-    /** Détail du tour pour le journal d'FluxCasino : symboles de la ligne et multiplicateur. */
+    /** Détail du tour pour le journal de FluxCasino : symboles de la ligne et multiplicateur. */
     private static String detail(Outcome o) {
         return SYMBOLS[o.stops()[0]] + "-" + SYMBOLS[o.stops()[1]] + "-" + SYMBOLS[o.stops()[2]] + " x" + format(o.mult());
     }

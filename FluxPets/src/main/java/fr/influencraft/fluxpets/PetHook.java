@@ -12,7 +12,7 @@ import org.bukkit.inventory.ItemStack;
 import java.util.List;
 
 /**
- * Façade des familiers pour les cartes, boosters et effets (système de familiers d'FluxPets, paquet pets, qui
+ * Façade des familiers pour les cartes, boosters et effets (système de familiers de FluxPets, paquet pets, qui
  * remplace EcoPets). Système inactif (libreforge absent, EcoPets encore là) : tout renvoie « aucun familier » et
  * le plugin tourne avec les cartes seules.
  */

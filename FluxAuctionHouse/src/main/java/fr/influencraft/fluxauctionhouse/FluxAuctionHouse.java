@@ -11,7 +11,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 /**
  * FluxAuctionHouse : marché unifié d'Influencraft. Interface (menus Flux) de l'hôtel des ventes
- * AuctionHouse, réunie avec les échoppes des villes (InfluEchoppe, FluxLands) dans un seul
+ * AuctionHouse, réunie avec les échoppes des villes (FluxChestShop, FluxLands) dans un seul
  * catalogue avec une seule recherche ; historique des ventes et prix moyen
  * ({@code /ah history}, {@code /ah average}). Voir docs/technique/influmarche.md.
  */
@@ -55,12 +55,12 @@ public final class FluxAuctionHouse extends JavaPlugin implements Listener {
         commande = new Commande(this);
         interception = new Interception(this);
 
-        if (Bukkit.getPluginManager().isPluginEnabled("InfluEchoppe")) {
+        if (Bukkit.getPluginManager().isPluginEnabled("FluxChestShop")) {
             echoppes = new Echoppes(this);
             Bukkit.getPluginManager().registerEvents(echoppes, this);
-            getLogger().info("InfluEchoppe trouvé : les échoppes entrent dans le marché.");
+            getLogger().info("FluxChestShop trouvé : les échoppes entrent dans le marché.");
         } else {
-            getLogger().info("InfluEchoppe absent : marché limité à l'hôtel des ventes.");
+            getLogger().info("FluxChestShop absent : marché limité à l'hôtel des ventes.");
         }
         Bukkit.getPluginManager().registerEvents(this, this);
         Bukkit.getPluginManager().registerEvents(interception, this);

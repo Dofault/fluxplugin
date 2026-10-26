@@ -487,7 +487,7 @@ final class Commande implements TabExecutor {
         else allerA(p, a.nom());
     }
 
-    /** Localise une échoppe par son identifiant InfluEchoppe (API, menu Marché d'FluxAuctionHouse). */
+    /** Localise une échoppe par son identifiant FluxChestShop (API, menu Marché de FluxAuctionHouse). */
     boolean localiserEchoppe(Player p, long shopId) {
         for (Fiches.Echoppe s : plugin.echoppes()) {
             if (s.id() == shopId) {
@@ -498,7 +498,7 @@ final class Commande implements TabExecutor {
         return false;
     }
 
-    /** Ouvre la fiche publique de la ville d'identifiant donné (API, menu Marché d'FluxAuctionHouse). */
+    /** Ouvre la fiche publique de la ville d'identifiant donné (API, menu Marché de FluxAuctionHouse). */
     void ficheVille(Player p, String villeId) {
         ficheDe(p, plugin.vues().etat(p), villeId);
     }
@@ -886,7 +886,7 @@ final class Commande implements TabExecutor {
         }
     }
 
-    /** Menu natif de Lands, sans l'interception d'FluxLands (fonctions non refaites). */
+    /** Menu natif de Lands, sans l'interception de FluxLands (fonctions non refaites). */
     private void natif(Player p, String commande, String args) {
         Land ma = plugin.villes().maVille(p);
         if (ma != null) editer(p, ma);

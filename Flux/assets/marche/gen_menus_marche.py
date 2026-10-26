@@ -107,7 +107,7 @@ def retour_marche():
 
 
 def entrees(grille, prefixe="liste"):
-    """Une entrée de liste par case : objet réel, description d'FluxAuctionHouse ; variante brillante prioritaire."""
+    """Une entrée de liste par case : objet réel, description de FluxAuctionHouse ; variante brillante prioritaire."""
     items = []
     for n, slot in enumerate(grille, start=1):
         base = "%s_%d" % (prefixe, n)
@@ -224,7 +224,7 @@ marche += [
 ]
 marche += entrees(GRILLE_MARCHE)
 menu("marche", "menu_marche", marche, ouverture=[im("vue MARCHE"), "[refresh]"],
-     doc="Marché : hôtel des ventes (AuctionHouse) et échoppes (InfluEchoppe) réunis (/hdv, /marche, /ah).")
+     doc="Marché : hôtel des ventes (AuctionHouse) et échoppes (FluxChestShop) réunis (/hdv, /marche, /ah).")
 
 # ── Offre de l'hôtel des ventes ────────────────────────────────────────────
 VENTE_ACHAT = [oui("offre_existe"), non("offre_enchere"), non("offre_mienne"), oui("offre_en_cours")]

@@ -9,7 +9,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.UUID;
 
 /**
- * Instantanés des échoppes et adresses, indépendants des classes d'InfluEchoppe et de
+ * Instantanés des échoppes et adresses, indépendants des classes de FluxChestShop et de
  * InfluPW : les placeholders et menus les lisent sans dépendre de la présence de
  * ces plugins.
  */
@@ -18,7 +18,7 @@ final class Fiches {
     private Fiches() {
     }
 
-    /** Échoppe InfluEchoppe vue au dernier passage de l'index. */
+    /** Échoppe FluxChestShop vue au dernier passage de l'index. */
     record Echoppe(long id, Location lieu, UUID proprio, String proprioNom, String icone, String objet,
                    int quantite, double prix, boolean rachat, int stock, String villeId, String villeNom) {
 

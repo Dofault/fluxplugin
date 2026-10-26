@@ -28,7 +28,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Lien avec InfluEchoppe (chargé seulement s'il est présent) :
+ * Lien avec FluxChestShop (chargé seulement s'il est présent) :
  * <ul>
  *   <li>index des échoppes et de la ville où se trouve chacune ;</li>
  *   <li>droit de place : à chaque transaction réussie d'une échoppe située dans une ville,
@@ -44,7 +44,7 @@ final class ModuleQuickShop implements Listener {
     private volatile List<Fiches.Echoppe> index = List.of();
     /**
      * Dernier stock connu de chaque échoppe (place libre pour un rachat), relevé quand sa zone est
-     * chargée : InfluEchoppe ne lit pas un coffre déchargé. Sert à cacher les échoppes vides ou les
+     * chargée : FluxChestShop ne lit pas un coffre déchargé. Sert à cacher les échoppes vides ou les
      * rachats pleins des listes publiques (fiches, marché) même loin de tout joueur. Gardé dans
      * stocks.yml d'un démarrage à l'autre.
      */
@@ -86,7 +86,7 @@ final class ModuleQuickShop implements Listener {
     void sauvegarderStocks() {
         if (!stocksModifies) return;
         org.bukkit.configuration.file.YamlConfiguration y = new org.bukkit.configuration.file.YamlConfiguration();
-        y.options().setHeader(List.of("Dernier stock connu de chaque échoppe InfluEchoppe (identifiant: stock), géré par FluxLands.",
+        y.options().setHeader(List.of("Dernier stock connu de chaque échoppe FluxChestShop (identifiant: stock), géré par FluxLands.",
                 "Une échoppe à 0 (rachat : place libre à 0) est cachée des listes publiques. Ne pas modifier à la main."));
         for (Map.Entry<Long, Integer> e : stocks.entrySet()) y.set(String.valueOf(e.getKey()), e.getValue());
         try {
@@ -103,7 +103,7 @@ final class ModuleQuickShop implements Listener {
         if (avant == null || avant != stock) stocksModifies = true;
     }
 
-    /** Recalcule l'index (fil principal : API InfluEchoppe et Lands). */
+    /** Recalcule l'index (fil principal : API FluxChestShop et Lands). */
     void indexer() {
         List<Fiches.Echoppe> l = new ArrayList<>();
         java.util.Set<Long> vues = new java.util.HashSet<>();
@@ -165,7 +165,7 @@ final class ModuleQuickShop implements Listener {
     // ── Ménage par la ville ─────────────────────────────────────────────────
 
     /**
-     * InfluEchoppe ne laisse casser une échoppe qu'à son propriétaire : on accorde aussi le droit
+     * FluxChestShop ne laisse casser une échoppe qu'à son propriétaire : on accorde aussi le droit
      * « delete » à la ville (cf. {@link #peutNettoyer}). Couvre la casse du coffre et /echoppe remove.
      */
     @EventHandler(priority = EventPriority.HIGH)

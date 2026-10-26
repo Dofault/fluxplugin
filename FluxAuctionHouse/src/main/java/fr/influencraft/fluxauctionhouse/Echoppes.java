@@ -16,11 +16,11 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Lien avec InfluEchoppe (chargé seulement s'il est présent) : les échoppes et rachats des
+ * Lien avec FluxChestShop (chargé seulement s'il est présent) : les échoppes et rachats des
  * villes entrent dans le catalogue du marché, et chaque transaction réussie est écrite dans
  * l'historique (prix moyen commun à l'hôtel des ventes et aux échoppes).
  *
- * <p>La ville et le droit de place viennent d'FluxLands ({@link Ville}) quand il est là.</p>
+ * <p>La ville et le droit de place viennent de FluxLands ({@link Ville}) quand il est là.</p>
  */
 final class Echoppes implements Listener {
 
@@ -74,7 +74,7 @@ final class Echoppes implements Listener {
     /**
      * Transaction réussie d'une échoppe : enregistrée dans l'historique. Le nombre d'objets est
      * déduit du montant hors taxe et du prix unitaire de l'échoppe (indépendant de la manière dont
-     * InfluEchoppe compte les lots).
+     * FluxChestShop compte les lots).
      */
     @EventHandler(priority = EventPriority.MONITOR)
     public void transaction(ShopSuccessPurchaseEvent e) {

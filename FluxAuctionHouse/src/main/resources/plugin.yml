@@ -2,10 +2,10 @@ name: FluxAuctionHouse
 version: '0.1.0'
 main: fr.influencraft.fluxauctionhouse.FluxAuctionHouse
 api-version: '1.21'
-description: Marché unifié (hôtel des ventes AuctionHouse + échoppes InfluEchoppe), historique et prix moyen.
+description: Marché unifié (hôtel des ventes AuctionHouse + échoppes FluxChestShop), historique et prix moyen.
 authors: [Influencraft]
 depend: [Vault, AuctionHouse]
-softdepend: [Flux, PlaceholderAPI, InfluEchoppe, FluxLands, ItemsAdder]
+softdepend: [Flux, PlaceholderAPI, FluxChestShop, FluxLands, ItemsAdder]
 # Pilote SQLite de l'historique (téléchargé par Paper au premier démarrage, déjà en cache sur Labs).
 libraries:
   - org.xerial:sqlite-jdbc:3.49.1.0

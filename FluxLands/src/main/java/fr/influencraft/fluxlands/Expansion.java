@@ -30,7 +30,7 @@ import java.util.Map;
  *   jour_&lt;k&gt;_montant|nom|barre   recettes des 7 derniers jours de ma ville (k=1 : il y a 6 jours)
  *   adresseville_&lt;nom&gt;     ville d'une adresse (pour les menus d'InfluPW eux-mêmes)
  *   taux_ici                droit de place là où se tient le joueur
- *   modules_echoppes|adresses  oui/non selon la présence d'InfluEchoppe / InfluPW
+ *   modules_echoppes|adresses  oui/non selon la présence de FluxChestShop / InfluPW
  * </pre>
  */
 final class Expansion extends PlaceholderExpansion {

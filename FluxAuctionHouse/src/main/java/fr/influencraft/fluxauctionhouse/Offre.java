@@ -7,10 +7,10 @@ import java.util.UUID;
 
 /**
  * Une offre du marché, quelle que soit sa source : vente directe ou enchère de l'hôtel des ventes
- * (AuctionHouse), échoppe d'une ville ou rachat d'une échoppe (InfluEchoppe). Instantané pris au
+ * (AuctionHouse), échoppe d'une ville ou rachat d'une échoppe (FluxChestShop). Instantané pris au
  * dernier passage du catalogue.
  *
- * @param id        identifiant de note AuctionHouse, ou « e » + identifiant InfluEchoppe
+ * @param id        identifiant de note AuctionHouse, ou « e » + identifiant FluxChestShop
  * @param prix      prix de toute l'offre (enchère : offre actuelle ou mise de départ)
  * @param quantite  objets proposés (échoppe : objets par transaction)
  * @param finDans   secondes restantes (hôtel des ventes), -1 sinon
