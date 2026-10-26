@@ -1,0 +1,30 @@
+# shop.yml — catalogue de la boutique Influence (InfluShop).
+#
+# Ce fichier est reecrit en entier par l'editeur en jeu (bouton enclume, slot 0,
+# reserve a la permission influshop.admin) : evite de compter sur ces commentaires
+# apres une modif en jeu. Une modif a la main est reprise au demarrage / a
+# "/influshop reload".
+#
+# Vide par defaut : chaque entree s'ajoute en jeu en deposant l'objet reel dans la
+# boutique en mode edition (son nom/lore/materiau/model-data sont captures tels
+# quels a cet instant precis — ca marche avec n'importe quel item, y compris
+# ItemsAdder, aucun hook specifique necessaire), puis en renseignant dans la
+# fenetre qui s'ouvre la commande a executer a l'achat (sans le "/", %player% est
+# remplace par le nom du joueur) et le prix en Influence.
+#
+# Schema d'une entree (pour une modif a la main) :
+#   <id>:
+#     command: "crates key give %player% ordinaire 1"
+#     run-as: CONSOLE            # ou PLAYER si la commande doit etre executee par
+#                                 # le joueur lui-meme (verifie sa propre permission,
+#                                 # ex: une commande qui refuse la console) — seule
+#                                 # l'edition manuelle peut mettre PLAYER, la fenetre
+#                                 # en jeu met toujours CONSOLE par defaut.
+#     price: 150
+#     display:
+#       material: TRIPWIRE_HOOK
+#       model-data: 0             # omis/0 = pas de custom-model-data
+#       name: "<white><b>Cle Ordinaire</b>"   # MiniMessage
+#       lore: ["<gray>Ouvre la Caisse Ordinaire."]
+
+entries: {}

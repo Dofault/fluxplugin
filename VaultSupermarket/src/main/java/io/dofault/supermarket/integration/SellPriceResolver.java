@@ -1,6 +1,8 @@
 package io.dofault.supermarket.integration;
 
+import io.dofault.supermarket.api.SupermarketAPI;
 import io.dofault.supermarket.managers.PriceManager;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 /**
@@ -32,5 +34,30 @@ public final class SellPriceResolver {
             return priceManager.getSellPrice(materialId) * item.getAmount();
         }
         return 0.0;
+    }
+
+    /**
+     * Same as {@link #resolveTotalPrice(PriceManager, ItemStack)} with the seller's bonuses
+     * ({@link SupermarketAPI} sell-price modifiers) applied, rounded to the cent. This is the
+     * amount actually paid: every sale goes through here.
+     *
+     * A material that the shop also sells never resells above its buy price, whatever the
+     * bonuses: no buy-then-sell loop.
+     */
+    public static double resolveTotalPrice(PriceManager priceManager, Player player, ItemStack item) {
+        double base = resolveTotalPrice(priceManager, item);
+        if (base <= 0) {
+            return base;
+        }
+        double multiplier = SupermarketAPI.sellMultiplier(player, item);
+        if (multiplier == 1.0) {
+            return base;
+        }
+        double total = base * multiplier;
+        String materialId = item.getType().name();
+        if (CustomFishingHook.getPrice(item) <= 0 && priceManager.isBuyable(materialId)) {
+            total = Math.min(total, Math.max(base, priceManager.getBuyPrice(materialId) * item.getAmount()));
+        }
+        return PriceManager.roundMoney(total);
     }
 }

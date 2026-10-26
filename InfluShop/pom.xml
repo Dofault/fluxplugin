@@ -1,0 +1,143 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>fr.influencraft</groupId>
+    <artifactId>InfluShop</artifactId>
+    <version>26.2</version>
+    <packaging>jar</packaging>
+
+    <name>InfluShop</name>
+
+    <properties>
+        <!-- API Paper de compilation : 26.2 = version du serveur. Les jars compiles contre 26.2
+             restent compatibles 26.3 (mvn -P paper-26.3 pour le verifier) -->
+        <paper.api.version>26.2.build.124-stable</paper.api.version>
+        <java.version>21</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>papermc</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
+        <repository>
+            <id>placeholderapi</id>
+            <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <!-- Paper API (provided by the server at runtime). Pinned to the actual SemiRP server
+             version (1.21.11, not just any 1.21.x) because the in-game item-add editor uses
+             the Dialog API (io.papermc.paper.dialog), only confirmed present from 1.21.6+. -->
+        <dependency>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <version>${paper.api.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- PlaceholderAPI (soft dependency, provided at runtime) — used to expand the
+             %img_influence%/%img_left_click%/%img_right_click% glyphs in item names/lore. -->
+        <dependency>
+            <groupId>me.clip</groupId>
+            <artifactId>placeholderapi</artifactId>
+            <version>2.11.6</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Bundled by Paper at runtime; declared explicitly for the chat-based price prompt
+             (same technique as InfluOffrande's EditorChatListener). -->
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-text-serializer-plain</artifactId>
+            <version>4.24.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- PlayerPoints — the Influence currency backend. No public Maven repo for this exact
+             build, compiled against the actual jar installed on the SemiRP server (same
+             systemPath technique as ItemsAdder in InfluOffrande/mana-sync's pom.xml). -->
+        <dependency>
+            <groupId>org.black_ixx</groupId>
+            <artifactId>playerpoints</artifactId>
+            <version>3.3.5</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/PlayerPoints-3.3.5.jar</systemPath>
+        </dependency>
+
+        <!-- ItemsAdder API (soft dependency, provided at runtime) — resolves the "influitems:"
+             control-button materials (nav arrows, sort, balance, back) in config.yml. Same
+             systemPath technique already used by InfluOffrande/mana-sync's pom.xml. -->
+        <dependency>
+            <groupId>dev.lone</groupId>
+            <artifactId>ItemsAdder</artifactId>
+            <version>4.0.18</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/ItemsAdder_4.0.18.jar</systemPath>
+        </dependency>
+    </dependencies>
+
+    <profiles>
+        <!-- Compilation contre l'API Paper 26.3 (migration de decembre 2026) pour verifier que
+             le plugin reste compatible : mvn -P paper-26.3. Le jar de prod reste compile en 26.2. -->
+        <profile>
+            <id>paper-26.3</id>
+            <properties>
+                <paper.api.version>26.3.build.200-stable</paper.api.version>
+            </properties>
+        </profile>
+    </profiles>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>fr.influencraft.influshop.InfluShopPlugin</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <!-- Copie automatique du jar vers le serveur SemiRP après chaque build -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>deploy-to-semirp</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <copy file="${project.build.directory}/${project.artifactId}-${project.version}.jar"
+                                      tofile="${project.basedir}/../../serveurs/03_semirp/plugins/${project.artifactId}.jar"
+                                      overwrite="true"/>
+                                <echo message="InfluShop.jar copie vers serveurs/03_semirp/plugins/"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -41,7 +41,7 @@
         <dependency>
         <groupId>io.papermc.paper</groupId>
         <artifactId>paper-api</artifactId>
-        <version>1.21.11-R0.1-SNAPSHOT</version>
+        <version>${paper.api.version}</version>
         <scope>provided</scope>
         </dependency>
 
@@ -72,18 +72,7 @@
         <artifactId>customfishing</artifactId>
         <version>2.3.27</version>
         <scope>system</scope>
-        <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/CustomFishing-2.3.27.jar</systemPath>
-    </dependency>
-
-    <!-- AdvancedEnchantments API (soft dependency, provided at runtime), même technique que
-         CustomFishing ci-dessus : nécessaire pour reconnaître un livre d'enchantement custom
-         (AEAPI.isCustomEnchantBook) et bloquer son application en drag-and-drop dans le shop. -->
-    <dependency>
-        <groupId>net.advancedplugins</groupId>
-        <artifactId>ae</artifactId>
-        <version>9.24.13</version>
-        <scope>system</scope>
-        <systemPath>${project.basedir}/../../serveurs/04_labs/plugins/AdvancedEnchantments-9.24.13.jar</systemPath>
+        <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/CustomFishing-2.3.28.jar</systemPath>
     </dependency>
 
     <!-- eco API (soft dependency, provided at runtime), même technique systemPath : nécessaire
@@ -94,30 +83,41 @@
         <artifactId>eco</artifactId>
         <version>2026.38</version>
         <scope>system</scope>
-        <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/eco-2026.38-modrinth.jar</systemPath>
+        <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/eco-2026.41-modrinth.jar</systemPath>
     </dependency>
 
-    <!-- ProtocolLib (soft dependency, provided at runtime), même technique systemPath que
-         ci-dessus, déjà utilisée pour ProtocolLib par plugins/InfluBridge/pom.xml. Nécessaire
-         pour bloquer le paquet USE_ITEM du clic droit dans le vide : AdvancedEnchantments
-         ignore volontairement l'annulation Bukkit pour Action.RIGHT_CLICK_AIR (confirmé par
-         décompilation de InteractEvent.class), donc seule une interception au niveau paquet,
-         avant que Bukkit ne génère le PlayerInteractEvent, bloque ce cas de façon fiable. -->
+    <!-- ItemsAdder API (soft dependency, provided at runtime), même technique systemPath :
+         nécessaire pour reconnaître un bloc ItemsAdder posé comme bloc magasin
+         (CustomBlock.byAlreadyPlaced, cf. ItemsAdderHook). -->
     <dependency>
-        <groupId>com.comphenix.protocol</groupId>
-        <artifactId>ProtocolLib</artifactId>
-        <version>5.5.0-local</version>
+        <groupId>dev.lone</groupId>
+        <artifactId>ItemsAdder</artifactId>
+        <version>4.0.18</version>
         <scope>system</scope>
-        <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/ProtocolLib.jar</systemPath>
+        <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/ItemsAdder_4.0.18.jar</systemPath>
     </dependency>
 
   </dependencies>
 
 
   <properties>
+        <!-- API Paper de compilation : 26.2 = version du serveur. Les jars compiles contre 26.2
+             restent compatibles 26.3 (mvn -P paper-26.3 pour le verifier) -->
+        <paper.api.version>26.2.build.124-stable</paper.api.version>
       <maven.compiler.source>21</maven.compiler.source>
       <maven.compiler.target>21</maven.compiler.target>
   </properties>
+
+    <profiles>
+        <!-- Compilation contre l'API Paper 26.3 (migration de decembre 2026) pour verifier que
+             le plugin reste compatible : mvn -P paper-26.3. Le jar de prod reste compile en 26.2. -->
+        <profile>
+            <id>paper-26.3</id>
+            <properties>
+                <paper.api.version>26.3.build.200-stable</paper.api.version>
+            </properties>
+        </profile>
+    </profiles>
 
 <build>
 
@@ -145,15 +145,14 @@
                     <configuration>
                         <target>
                             <!-- Nom de fichier fixe (sans le numéro de version) pour éviter qu'un
-                                 ancien jar versionné (ex : VaultSuperMarket-1.0.jar) reste chargé
-                                 en doublon à côté du nouveau à chaque bump de version. -->
-                            <copy file="${project.build.directory}/${project.build.finalName}.jar"
-                                  tofile="${project.basedir}/../../serveurs/03_semirp/plugins/${project.artifactId}.jar"
-                                  overwrite="true" />
-                            <!-- Serveur de test Labs : permet d'essayer une version du plugin
-                                 sans toucher au SemiRP tant qu'elle n'est pas validée. -->
+                                 ancien jar versionné reste chargé en doublon à côté du nouveau.
+                                 Copie sur les serveurs de test uniquement (Labs, Semi-Lab) : la
+                                 prod SemiRP se met à jour à la main, après validation. -->
                             <copy file="${project.build.directory}/${project.build.finalName}.jar"
                                   tofile="${project.basedir}/../../serveurs/04_labs/plugins/${project.artifactId}.jar"
+                                  overwrite="true" />
+                            <copy file="${project.build.directory}/${project.build.finalName}.jar"
+                                  tofile="${project.basedir}/../../serveurs/05_semilab/plugins/${project.artifactId}.jar"
                                   overwrite="true" />
                         </target>
                     </configuration>

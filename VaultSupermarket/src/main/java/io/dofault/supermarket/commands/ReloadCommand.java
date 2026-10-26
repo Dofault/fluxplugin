@@ -1,9 +1,9 @@
 package io.dofault.supermarket.commands;
 
 import io.dofault.supermarket.autosell.AutoSellFilter;
-import io.dofault.supermarket.managers.ChestManager;
 import io.dofault.supermarket.managers.LangManager;
 import io.dofault.supermarket.managers.PriceManager;
+import io.dofault.supermarket.shop.ShopRegistry;
 
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -12,25 +12,22 @@ import java.util.Map;
 
 /**
  * Recharge à chaud prices.yml (le principal cas d'usage : changer un prix sans redémarrer le
- * serveur), config.yml, lang/fr.yml et chest.yml — sans recompiler/redéployer le plugin. Les
- * champs mis en cache une seule fois à l'activation (ex. buy_block/sell_block matérialisés dans
- * ShopRestrictionListener) ne sont PAS repris par ce reload, un redémarrage reste nécessaire
- * pour ceux-là.
+ * serveur), config.yml, lang/fr.yml et shops.yml, sans recompiler/redéployer le plugin.
  */
 public class ReloadCommand implements SupermarketCommand {
 
     private final JavaPlugin plugin;
     private final LangManager lang;
     private final PriceManager priceManager;
-    private final ChestManager chestManager;
+    private final ShopRegistry shopRegistry;
     private final AutoSellFilter autoSellFilter;
 
-    public ReloadCommand(JavaPlugin plugin, LangManager lang, PriceManager priceManager, ChestManager chestManager,
+    public ReloadCommand(JavaPlugin plugin, LangManager lang, PriceManager priceManager, ShopRegistry shopRegistry,
             AutoSellFilter autoSellFilter) {
         this.plugin = plugin;
         this.lang = lang;
         this.priceManager = priceManager;
-        this.chestManager = chestManager;
+        this.shopRegistry = shopRegistry;
         this.autoSellFilter = autoSellFilter;
     }
 
@@ -50,7 +47,7 @@ public class ReloadCommand implements SupermarketCommand {
         priceManager.reload();
         priceManager.logInvalidItems();
         lang.reload();
-        chestManager.reloadChests();
+        shopRegistry.reload();
         autoSellFilter.reload();
 
         int invalid = priceManager.getInvalidItemIds().size();

@@ -1,0 +1,59 @@
+# InfluShop — configuration generale (mise en page du menu, sons, materiaux des
+# boutons de controle). Le catalogue lui-meme (quels items, quel prix) vit dans
+# shop.yml, pas ici : ce fichier est epargne par l'editeur en jeu pour ne jamais
+# perdre ces commentaires.
+#
+# Textes joueur (messages de tchat, gabarits nom/lore) : voir messages.yml.
+
+settings:
+  # Duree (en secondes) pendant laquelle un admin peut taper un prix dans le
+  # tchat avant que l'invite s'annule automatiquement.
+  price-prompt-timeout-seconds: 30
+
+gui:
+  # Taille de l'inventaire (multiple de 9, entre 9 et 54).
+  size: 54
+  # Emplacements ou sont affiches les items du catalogue (3 lignes de 7),
+  # meme grille que /offrande.
+  item-slots: [10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34]
+  nav-previous-slot: 45
+  nav-next-slot: 53
+  # Bouton de tri (cycle Par plugin -> Prix croissant -> Prix decroissant -> Par plugin).
+  sort-slot: 49
+  # Bouton enclume : bascule le mode edition (reserve a la permission influshop.admin).
+  editor-toggle-slot: 0
+  # Case en lecture seule affichant le solde Influence du joueur (remplace le
+  # bouton "Tout deposer" d'InfluOffrande dans ce plugin-ci).
+  balance-slot: 40
+
+  # Sons (cle vanilla, avec ou sans le prefixe "minecraft:").
+  open-sound: "minecraft:item.book.page_turn"
+  purchase-sound: "minecraft:entity.experience_orb.pickup"
+  error-sound: "minecraft:entity.villager.no"
+
+  # Materiaux des boutons de controle : un id ItemsAdder ("namespace:id") ou un
+  # materiau vanilla. Retombe automatiquement sur un materiau vanilla si
+  # ItemsAdder n'est pas installe ou que l'id n'existe pas.
+  materials:
+    nav-prev: "influitems:btn_prev"
+    nav-next: "influitems:btn_next"
+    sort: "influitems:filter"
+    editor-open: "ANVIL"
+    editor-close: "BARRIER"
+    balance: "influitems:influence"
+    back: "influitems:btn_back"
+
+  shop-title-format: "&#FFD94D%img_influence% Boutique Influence"
+  editor-title-format: "&#FF5C5C[Editeur] &#FFD94D%img_influence% Boutique Influence"
+
+# Petit inventaire de confirmation ouvert entre le clic sur un item du catalogue et l'achat
+# reel (rien n'est debite/donne avant que le joueur clique sur "Confirmer" dedans).
+confirm:
+  size: 27
+  item-slot: 13
+  confirm-slot: 11
+  cancel-slot: 15
+  title-format: "&#FFD94D%img_influence% Confirmer l'achat"
+  materials:
+    confirm: "influitems:accept"
+    cancel: "BARRIER"

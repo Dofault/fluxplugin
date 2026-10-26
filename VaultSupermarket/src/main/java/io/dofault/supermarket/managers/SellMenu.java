@@ -2,6 +2,7 @@ package io.dofault.supermarket.managers;
 
 import io.dofault.supermarket.autosell.AutoSellItemManager;
 import io.dofault.supermarket.integration.SellPriceResolver;
+import io.dofault.supermarket.shop.ShopActivity;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -46,16 +47,16 @@ public class SellMenu {
     private final JavaPlugin plugin;
     private final LangManager lang;
     private final PriceManager priceManager;
-    private final PlayerListManager playerListManager;
+    private final ShopActivity activity;
     private final AutoSellItemManager autoSellItemManager;
     private final Economy econ;
 
     public SellMenu(JavaPlugin plugin, LangManager lang, PriceManager priceManager,
-            PlayerListManager playerListManager, AutoSellItemManager autoSellItemManager, Economy econ) {
+            ShopActivity activity, AutoSellItemManager autoSellItemManager, Economy econ) {
         this.plugin = plugin;
         this.lang = lang;
         this.priceManager = priceManager;
-        this.playerListManager = playerListManager;
+        this.activity = activity;
         this.autoSellItemManager = autoSellItemManager;
         this.econ = econ;
     }
@@ -72,7 +73,7 @@ public class SellMenu {
     private record Quote(double total, int sellableCount, int unsellableCount) {
     }
 
-    private Quote quote(Inventory inv) {
+    private Quote quote(Player player, Inventory inv) {
         double total = 0.0;
         int sellable = 0;
         int unsellable = 0;
@@ -84,7 +85,7 @@ public class SellMenu {
             // L'objet de vente auto n'est jamais vendable, même s'il a un prix de matériau.
             double price = autoSellItemManager.isAutoSellItem(item)
                     ? 0.0
-                    : SellPriceResolver.resolveTotalPrice(priceManager, item);
+                    : SellPriceResolver.resolveTotalPrice(priceManager, player, item);
             if (price > 0) {
                 total += price;
                 sellable += item.getAmount();
@@ -187,12 +188,12 @@ public class SellMenu {
         private void renderBottomRow() {
             ItemStack filler = filler();
             for (int slot = SELLABLE_END_SLOT + 1; slot < SIZE; slot++) {
-                inv.setItem(slot, slot == confirmSlot ? confirmButton(quote(inv), armed) : filler);
+                inv.setItem(slot, slot == confirmSlot ? confirmButton(quote(player, inv), armed) : filler);
             }
         }
 
         private void refreshButton() {
-            inv.setItem(confirmSlot, confirmButton(quote(inv), armed));
+            inv.setItem(confirmSlot, confirmButton(quote(player, inv), armed));
         }
 
         private void disarm() {
@@ -247,7 +248,7 @@ public class SellMenu {
         }
 
         private void handleConfirm() {
-            Quote quote = quote(inv);
+            Quote quote = quote(player, inv);
 
             if (quote.total() <= 0) {
                 player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
@@ -286,7 +287,7 @@ public class SellMenu {
                     continue;
                 }
                 boolean sellable = !autoSellItemManager.isAutoSellItem(item)
-                        && SellPriceResolver.resolveTotalPrice(priceManager, item) > 0;
+                        && SellPriceResolver.resolveTotalPrice(priceManager, player, item) > 0;
                 if (!sellable) {
                     toRestore.add(item.clone());
                 }
@@ -297,8 +298,7 @@ public class SellMenu {
             player.sendMessage(lang.get("shop-sell-success", Map.of("amount", econ.format(quote.total()))));
             player.playSound(player.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1f, 1f);
 
-            playerListManager.markAsSold(player.getUniqueId());
-            playerListManager.saveInventory(player, false);
+            activity.markSold(player.getUniqueId());
 
             int restored = giveBack(toRestore);
             if (restored > 0) {

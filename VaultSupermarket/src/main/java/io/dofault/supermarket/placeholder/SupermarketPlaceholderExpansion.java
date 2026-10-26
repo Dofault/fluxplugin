@@ -1,6 +1,6 @@
 package io.dofault.supermarket.placeholder;
 
-import io.dofault.supermarket.managers.PlayerListManager;
+import io.dofault.supermarket.shop.ShopActivity;
 import io.dofault.supermarket.managers.TpShopCooldownManager;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;
@@ -9,12 +9,12 @@ import org.jetbrains.annotations.Nullable;
 
 public class SupermarketPlaceholderExpansion extends PlaceholderExpansion {
 
-    private final PlayerListManager playerListManager;
+    private final ShopActivity activity;
     private final TpShopCooldownManager tpShopCooldownManager;
 
-    public SupermarketPlaceholderExpansion(PlayerListManager playerListManager,
+    public SupermarketPlaceholderExpansion(ShopActivity activity,
             TpShopCooldownManager tpShopCooldownManager) {
-        this.playerListManager = playerListManager;
+        this.activity = activity;
         this.tpShopCooldownManager = tpShopCooldownManager;
     }
 
@@ -42,10 +42,10 @@ public class SupermarketPlaceholderExpansion extends PlaceholderExpansion {
     public @Nullable String onRequest(OfflinePlayer player, @NotNull String params) {
         if (player == null) return null;
         if (params.equals("player_sell")) {
-            return String.valueOf(playerListManager.hasSold(player.getUniqueId()));
+            return String.valueOf(activity.hasSold(player.getUniqueId()));
         }
         if (params.equals("player_buy")) {
-            return String.valueOf(playerListManager.hasBought(player.getUniqueId()));
+            return String.valueOf(activity.hasBought(player.getUniqueId()));
         }
         if (params.equals("tpshop_cooldown")) {
             return String.valueOf(tpShopCooldownManager.getRemainingSeconds(player.getUniqueId()));

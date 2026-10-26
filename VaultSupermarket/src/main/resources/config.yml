@@ -1,40 +1,68 @@
-language: fr
-buy_block: IRON_BLOCK
-sell_block: TARGET
+# ---------------------------------------------------------------------------
+# Coffres magasins (clic droit = menu d'achat/vente) et blocs de vente
+# ---------------------------------------------------------------------------
+# Un coffre magasin est assigné par sa position avec /supermarket addchest (en
+# regardant le bloc). Ses objets se gèrent dans son éditeur (admin accroupi +
+# clic droit) : n'importe quel objet, booster InfluPet ou item custom compris.
+# Seuls les types listés ici peuvent devenir un coffre magasin :
+#   - matériau vanilla : CHEST, BARREL...
+#   - bloc ItemsAdder  : itemsadder:<namespace>:<id> (les meubles ItemsAdder,
+#     qui sont des entités, ne sont pas pris en charge)
+# Le bloc n'est jamais ouvert : son contenu réel n'a aucune importance. Les
+# objets vendus sont stockés dans shops.yml (6 au maximum, une rangée chacun).
+# Les blocs de vente (/supermarket addsellblock) peuvent être de n'importe
+# quel type : clic droit = menu de dépôt, clic gauche = consultation des prix.
+shop:
+  block-types:
+    - CHEST
 
-# Cooldown (en secondes) de /supermarket tpshop pour un joueur sans la
-# permission supermarket.admin. Pour donner un cooldown différent par grade,
-# mets une meta LuckPerms "supermarket-tpshop-cooldown" sur le groupe
-# (ex: /lp group vip meta set supermarket-tpshop-cooldown 300) — elle prend
-# le dessus sur cette valeur par défaut.
+# Menu d'un coffre magasin (achat seul) : l'objet puis ses boutons x1, x2, x10,
+# x64, centrés. La taille de la pile du bouton affiche la quantité. Double
+# confirmation : le 1er clic arme le bouton (buy-button-armed), le 2e achète.
+# Juste après un achat, le même bouton achète sans confirmation pendant
+# quick-buy-seconds (relancé à chaque achat) : achat en masse en cliquant vite.
+# Les colonnes 0, 1, 7 et 8 de chaque rangée sont remplies par filler.
+# custom-model-data > 0 : icône ItemsAdder posée sur le matériau (pas de hook
+# ItemsAdder, cf. ItemsAdder/storage/items_ids_cache.yml).
+shop-menu:
+  # Délai avant qu'un bouton armé ne redevienne normal tout seul.
+  confirm-timeout-seconds: 5
+  quick-buy-seconds: 1
+  filler:
+    material: GRAY_STAINED_GLASS_PANE
+    custom-model-data: 0
+  buy-button:
+    material: LIME_STAINED_GLASS_PANE
+    custom-model-data: 0
+  buy-button-armed:
+    material: ORANGE_STAINED_GLASS_PANE
+    custom-model-data: 0
+  # Éditeur : influitems:add (10021), influitems:settings (10040),
+  # influitems:chest_delete (10024).
+  editor-add:
+    material: PAPER
+    custom-model-data: 10021
+  editor-price:
+    material: PAPER
+    custom-model-data: 10040
+  editor-remove:
+    material: PAPER
+    custom-model-data: 10024
+
+# ---------------------------------------------------------------------------
+# /supermarket tpshop (bouton du menu /marche)
+# ---------------------------------------------------------------------------
+# Point d'arrivée posé en jeu par /supermarket settpshop (section tpshop).
+#
+# Cooldown (en secondes) pour un joueur sans la permission supermarket.admin.
+# Pour donner un cooldown différent par grade, mets une meta LuckPerms
+# "supermarket-tpshop-cooldown" sur le groupe (ex: /lp group vip meta set
+# supermarket-tpshop-cooldown 300) : elle prend le dessus sur cette valeur.
 tpshop-cooldown-seconds: 1800
 
-# Warmup (en secondes) avant la téléportation de /supermarket tpshop pour un
-# joueur sans la permission supermarket.admin. Le joueur ne doit pas bouger
-# pendant ce délai, sinon la téléportation est annulée. Les admins n'ont
-# aucun warmup (téléportation instantanée). Mettre à 0 pour désactiver.
+# Délai (en secondes) pendant lequel le joueur ne doit pas bouger avant d'être
+# téléporté. Les admins n'en ont aucun. 0 pour désactiver.
 tpshop-warmup-seconds: 3
-
-# WARNING
-# This plugin does'nt support bundle (because of glitch)
-banned-items:
-  - BUNDLE
-  - WHITE_BUNDLE
-  - ORANGE_BUNDLE
-  - MAGENTA_BUNDLE
-  - LIGHT_BLUE_BUNDLE
-  - YELLOW_BUNDLE
-  - LIME_BUNDLE
-  - PINK_BUNDLE
-  - GRAY_BUNDLE
-  - LIGHT_GRAY_BUNDLE
-  - CYAN_BUNDLE
-  - PURPLE_BUNDLE
-  - BLUE_BUNDLE
-  - BROWN_BUNDLE
-  - GREEN_BUNDLE
-  - RED_BUNDLE
-  - BLACK_BUNDLE
 
 # ---------------------------------------------------------------------------
 # Menu de vente manuelle (clic droit sur le bloc de vente)
@@ -50,6 +78,10 @@ sell-menu:
 
   # Délai avant qu'un bouton armé ne redevienne inactif tout seul.
   confirm-timeout-seconds: 5
+  quick-buy-seconds: 1
+  filler:
+    material: GRAY_STAINED_GLASS_PANE
+    custom-model-data: 0
 
   # Les icônes ItemsAdder sont rendues via le custom_model_data posé sur un
   # matériau vanilla (le plugin n'a pas de hook ItemsAdder) :
@@ -69,9 +101,9 @@ sell-menu:
 # Vente automatique (objet "Vente Automatique")
 # ---------------------------------------------------------------------------
 # Ce qui ne doit JAMAIS partir en vente auto. But : la vente auto vend des
-# ressources farmées, jamais de l'équipement ni un objet rare — un joueur qui
+# ressources farmées, jamais de l'équipement ni un objet rare : un joueur qui
 # reçoit le stuff d'un ami ne doit pas le voir disparaître parce qu'il avait
-# oublié son objet activé. Ces items restent vendables manuellement au magasin.
+# oublié son objet activé. Ces items restent vendables manuellement au bloc de vente.
 autosell:
   exclusions:
     # Exceptions PAR DÉFAUT : chaque joueur peut les modifier dans le menu de
@@ -135,22 +167,6 @@ autosell:
       - SNIFFER_EGG
       - SADDLE
       - NAME_TAG
-
-# Commandes utilisables par un joueur qui se trouve dans le magasin. Toute autre
-# commande est bloquée (le magasin est un espace fermé : pas de /home, /tpa,
-# /back...). Le préfixe de plugin ("cmi:msg") est ignoré, donc inutile de le
-# lister. Liste vide -> seul /supermarket passe.
-allowed-commands:
-  - supermarket
-  # Exceptions : messages privés, pour ne pas laisser un joueur muet pendant ses
-  # courses. Les alias sont à lister un par un (ce sont des commandes distinctes
-  # côté serveur).
-  - msg
-  - tell
-  - w
-  - whisper
-  - r
-  - reply
 
 # ---------------------------------------------------------------------------
 # Menu de la vente automatique (clic droit avec l'objet)

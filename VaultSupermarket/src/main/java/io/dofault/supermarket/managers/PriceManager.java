@@ -4,7 +4,6 @@ import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -12,7 +11,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.TreeSet;
 
 public class PriceManager {
@@ -22,11 +20,9 @@ public class PriceManager {
     private final JavaPlugin plugin;
     private final File priceFile;
     private FileConfiguration priceConfig;
-    private final LangManager lang;
 
-    public PriceManager(JavaPlugin plugin, LangManager lang) {
+    public PriceManager(JavaPlugin plugin) {
         this.plugin = plugin;
-        this.lang = lang;
         this.priceFile = new File(plugin.getDataFolder(), "prices.yml");
 
         if (!priceFile.exists()) {
@@ -84,6 +80,22 @@ public class PriceManager {
      */
     public boolean isSellable(String itemID) {
         return getSellPrice(itemID) > 0;
+    }
+
+    /** Même règle côté achat : un prix d'achat absent ou à 0 signifie "pas en vente". */
+    public boolean isBuyable(String itemID) {
+        return getBuyPrice(itemID) > 0;
+    }
+
+    /**
+     * Arrondit un montant au centime le plus proche, avec un plancher à 0,01 pour tout montant
+     * positif : une transaction ne doit jamais tomber à 0 parce que le prix unitaire est minuscule.
+     */
+    public static double roundMoney(double amount) {
+        if (amount <= 0) {
+            return 0.0;
+        }
+        return Math.max(0.01, Math.round(amount * 100.0) / 100.0);
     }
 
     public String getCategory(String itemID) {
@@ -159,16 +171,5 @@ public class PriceManager {
             formatted.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1).toLowerCase());
         }
         return formatted.toString();
-    }
-
-    public void sendPriceToPlayer(Player player, String itemID) {
-        if (hasPrice(itemID)) {
-            player.sendMessage(lang.get("shop-item-price", Map.of(
-                    "item", itemID,
-                    "buy", String.valueOf(getBuyPrice(itemID)),
-                    "sell", String.valueOf(getSellPrice(itemID)))));
-        } else {
-            player.sendMessage(lang.get("shop-no-price", Map.of("item", itemID)));
-        }
     }
 }

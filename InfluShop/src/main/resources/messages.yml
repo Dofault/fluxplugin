@@ -1,0 +1,97 @@
+# messages.yml — tous les textes joueur d'InfluShop. Rechargeable a chaud via
+# "/influshop reload" (sans avoir a redemarrer le serveur).
+
+gui:
+  # {price} = prix formate (espace tous les 3 chiffres), {name} = nom reel de
+  # l'item (celui fourni par CustomFishing/AdvancedEnchantments/le "display"
+  # d'une entree COMMAND) — colle avant {name}, PAS de placeholder {name} a
+  # utiliser directement, le nom reel garde ses propres codes couleur.
+  # Crochets a la couleur Influence (#E060A0). &r&f juste avant le glyphe
+  # %img_influence% (glyphe deja colorise, cf. CLAUDE.md) pour ne jamais lui
+  # laisser une teinte heritee de la couleur precedente.
+  price-prefix: "&#E060A0[&r&f%img_influence%&r &f{price} &#E060A0Influence&#E060A0]&r "
+
+  buy-hint:
+    - ""
+    - "&r&7%img_left_click% &#FFD94D Acheter"
+  buy-hint-insufficient:
+    - ""
+    - "&r&#FF5C5C Solde Influence insuffisant"
+  editor-hint:
+    - ""
+    - "&r&7%img_left_click% &#FFD94D Modifier le prix"
+    - "&r&7%img_right_click% &#FFD94D Retirer du shop"
+
+  nav-prev-name: "&r&7%img_left_click% &#FFD94DPage precedente"
+  nav-prev-lore: []
+  nav-next-name: "&r&7%img_left_click% &#FFD94DPage suivante"
+  nav-next-lore: []
+  back-name: "&r&7%img_left_click% &#FFD94DRetour"
+  back-lore:
+    - "&#B376E5Retour au menu principal."
+
+  # Selecteur de tri a 3 etats (meme convention que le selecteur d'affichage
+  # d'InfluOffrande) : un clic fait defiler Tout -> Prix croissant -> Prix
+  # decroissant -> Tout. La liste complete est toujours affichee dans le lore,
+  # l'etat courant en surbrillance — jamais de notion de "plugin" cote joueur,
+  # qui ne sait pas ce qu'est un plugin.
+  sort-all-name: "&r&7%img_left_click% &#FFD94DTri : Tout"
+  sort-all-lore:
+    - "&#FFD94D➤ Tout"
+    - "&8➤ &#B376E5Prix croissant"
+    - "&8➤ &#B376E5Prix decroissant"
+    - ""
+    - "&#B376E5Clique pour changer le tri."
+  sort-price-asc-name: "&r&7%img_left_click% &#FFD94DTri : Prix croissant"
+  sort-price-asc-lore:
+    - "&8➤ &#B376E5Tout"
+    - "&#FFD94D➤ Prix croissant"
+    - "&8➤ &#B376E5Prix decroissant"
+    - ""
+    - "&#B376E5Clique pour changer le tri."
+  sort-price-desc-name: "&r&7%img_left_click% &#FFD94DTri : Prix decroissant"
+  sort-price-desc-lore:
+    - "&8➤ &#B376E5Tout"
+    - "&8➤ &#B376E5Prix croissant"
+    - "&#FFD94D➤ Prix decroissant"
+    - ""
+    - "&#B376E5Clique pour changer le tri."
+
+  editor-enter-name: "&r&7%img_left_click% &#FFD94DModifier la boutique"
+  editor-enter-lore:
+    - "&#B376E5Reserve aux administrateurs."
+  editor-exit-name: "&r&7%img_left_click% &#FFD94DQuitter l'edition"
+  editor-exit-lore:
+    - "&#B376E5Retour a la boutique."
+
+  balance-name: "&#E060A0Ton solde"
+  balance-lore:
+    - ""
+    - "&r&f%img_influence%&r &f{balance} &#E060A0Influence"
+
+  confirm-button-name: "&r&7%img_left_click% &#2ECF7BConfirmer l'achat"
+  confirm-button-lore: []
+  cancel-button-name: "&r&7%img_left_click% &#FF5C5CAnnuler"
+  cancel-button-lore: []
+
+editor:
+  prompt-price: "&#FFD94D➜ Tape le prix en Influence pour &f{name}&#FFD94D dans le tchat (ou 'annuler')."
+  invalid-number: "&#FF5C5C➜ Nombre invalide, reessaie (ou tape 'annuler')."
+  cancelled: "&#FF5C5C➜ Modification annulee."
+  price-set: "&#2ECF7B➜ Prix de &f{name}&#2ECF7B fixe a &f{price} &#2ECF7BInfluence."
+  item-added: "&#2ECF7B➜ &f{name}&#2ECF7B ajoute a la boutique pour &f{price} &#2ECF7BInfluence."
+  item-removed: "&#FF5C5C➜ &f{name}&#FF5C5C retire de la boutique."
+  invalid-command: "&#FF5C5C➜ Commande vide, l'item n'a pas ete ajoute."
+
+shop:
+  # Convention docs/notifications/influence.md (variation de solde Influence) : couleur
+  # #E060A0 pour le verbe et "Influence", fleche #2ECF7B▲ gain / #FF5C5C▼ perte, source
+  # entre crochets gris (&7) a la fin. Un achat = perte generique, source [ᴀᴄʜᴀᴛ].
+  # &r&f juste avant le glyphe (deja colorise) comme partout ailleurs dans ce plugin —
+  # la doc utilise &7 nu devant :influence:, mais c'est une contrainte propre au fichier
+  # de PlayerPoints (pas de hook PAPI dans ce fichier-la), qui ne s'applique pas ici.
+  purchase-success: "&r&f%img_influence%&r &#E060A0Tu as perdu &f{price} &#E060A0Influence &#FF5C5C▼&7 [ᴀᴄʜᴀᴛ]"
+  purchase-insufficient-funds: "&#FF5C5C➜ Il te manque de l'Influence pour acheter &f{name}&#FF5C5C (&f{price} &#FF5C5Crequis)."
+  purchase-inventory-full: "&#FF5C5C➜ Ton inventaire est plein, libere au moins un emplacement pour acheter &f{name}&#FF5C5C."
+  purchase-cancelled: "&#FF5C5C➜ Achat annule."
+  reload-success: "&#2ECF7B➜ InfluShop recharge (config, messages, catalogue)."

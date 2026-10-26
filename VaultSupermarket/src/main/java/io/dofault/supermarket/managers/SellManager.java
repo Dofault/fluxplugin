@@ -2,10 +2,10 @@ package io.dofault.supermarket.managers;
 
 import io.dofault.supermarket.autosell.AutoSellItemManager;
 import io.dofault.supermarket.integration.CustomFishingHook;
+import io.dofault.supermarket.shop.ShopActivity;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
@@ -13,7 +13,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -50,46 +49,27 @@ public class SellManager {
 
     private final JavaPlugin plugin;
     private final LangManager langManager;
-    private final PlayerListManager playerListManager;
-    private final ShopManager shopManager;
     private final PriceManager priceManager;
-    private final AutoSellItemManager autoSellItemManager;
     private final Economy econ;
     private final SellMenu sellMenu;
 
-    public SellManager(JavaPlugin plugin, LangManager langManager,
-            ShopManager shopManager, PriceManager priceManager, PlayerListManager playerListManager, Economy econ,
-            AutoSellItemManager autoSellItemManager) {
+    public SellManager(JavaPlugin plugin, LangManager langManager, PriceManager priceManager, ShopActivity activity,
+            Economy econ, AutoSellItemManager autoSellItemManager) {
         this.plugin = plugin;
         this.priceManager = priceManager;
         this.econ = econ;
         this.langManager = langManager;
-        this.playerListManager = playerListManager;
-        this.shopManager = shopManager;
-        this.autoSellItemManager = autoSellItemManager;
-        this.sellMenu = new SellMenu(plugin, langManager, priceManager, playerListManager, autoSellItemManager, econ);
+        this.sellMenu = new SellMenu(plugin, langManager, priceManager, activity, autoSellItemManager, econ);
     }
 
-    public void tryOpenSellBlock(Player player, Block targetBlock) {
-        if (!playerListManager.isInShop(player.getUniqueId())) {
-            player.sendMessage(langManager.get("shop-not-in-shop"));
-            return;
-        }
-
-        if (!shopManager.canPlayerExit(player)) {
-            player.sendMessage(langManager.get("shop-sell-unpaid-items"));
-            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 2.0f, 0.5f);
-            return;
-        }
+    /** Clic droit sur le bloc de vente : menu de dépôt, utilisable partout. */
+    public void openSellMenu(Player player) {
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f);
         sellMenu.open(player);
     }
 
-    public void lookPrices(Player player, Block block) {
-        if (!playerListManager.isInShop(player.getUniqueId())) {
-            player.sendMessage(langManager.get("shop-not-in-shop"));
-            return;
-        }
+    /** Clic gauche sur le bloc de vente : consultation des prix de vente. */
+    public void openPriceList(Player player) {
         player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1.0f, 1.0f);
         openShopMenu(player);
     }

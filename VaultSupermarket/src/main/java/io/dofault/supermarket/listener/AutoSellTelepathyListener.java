@@ -128,7 +128,7 @@ public class AutoSellTelepathyListener implements Listener {
 
             ItemStack deltaStack = afterStack.clone();
             deltaStack.setAmount(delta);
-            double price = SellPriceResolver.resolveTotalPrice(priceManager, deltaStack);
+            double price = SellPriceResolver.resolveTotalPrice(priceManager, player, deltaStack);
             if (price <= 0) {
                 continue; // pas de prix connu : on laisse le joueur garder ce qu'il a reçu
             }

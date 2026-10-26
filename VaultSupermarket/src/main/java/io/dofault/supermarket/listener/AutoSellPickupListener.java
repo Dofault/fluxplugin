@@ -66,7 +66,7 @@ public class AutoSellPickupListener implements Listener {
             return; // équipement / objet rare : ramassage normal, il se vendra manuellement
         }
 
-        double price = SellPriceResolver.resolveTotalPrice(priceManager, picked);
+        double price = SellPriceResolver.resolveTotalPrice(priceManager, player, picked);
         if (price <= 0) {
             return; // pas de prix connu : ramassage normal, comme si l'objet n'existait pas
         }

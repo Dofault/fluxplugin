@@ -1,0 +1,24 @@
+name: InfluShop
+version: 26.2
+main: fr.influencraft.influshop.InfluShopPlugin
+api-version: '26.2'
+author: dofault
+description: "Boutique payable en Influence (PlayerPoints), pas en BitBlock/Vault. Chaque item est ajoute en jeu en deposant l'objet reel (nom/lore/modele captures tels quels, marche avec n'importe quel plugin dont ItemsAdder) et en indiquant la commande a executer a l'achat, editable entierement en jeu."
+
+softdepend: [PlaceholderAPI, PlayerPoints, ItemsAdder]
+
+commands:
+  shop:
+    description: "Ouvre la boutique Influence."
+    usage: "/shop"
+  influshop:
+    description: "Commandes d'administration d'InfluShop : reload."
+    usage: "/influshop <reload>"
+
+permissions:
+  influshop.use:
+    description: "Permet d'utiliser /shop"
+    default: true
+  influshop.admin:
+    description: "Permet l'editeur en jeu (bouton enclume) et /influshop reload"
+    default: op

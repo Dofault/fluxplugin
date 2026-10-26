@@ -70,7 +70,7 @@ public class AutoSellEcoTelekinesisListener implements Listener {
                 kept.add(item); // objet de vente auto / équipement / objet rare : le joueur le garde
                 continue;
             }
-            double price = SellPriceResolver.resolveTotalPrice(priceManager, item);
+            double price = SellPriceResolver.resolveTotalPrice(priceManager, player, item);
             if (price <= 0) {
                 kept.add(item); // pas de prix connu : livré normalement
                 continue;

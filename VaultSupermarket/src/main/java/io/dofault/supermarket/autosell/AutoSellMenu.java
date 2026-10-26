@@ -2,7 +2,6 @@ package io.dofault.supermarket.autosell;
 
 import io.dofault.supermarket.integration.CustomFishingHook;
 import io.dofault.supermarket.managers.LangManager;
-import io.dofault.supermarket.managers.PlayerListManager;
 import io.dofault.supermarket.managers.PriceManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
@@ -73,19 +72,17 @@ public class AutoSellMenu implements Listener {
     private final JavaPlugin plugin;
     private final LangManager lang;
     private final PriceManager priceManager;
-    private final PlayerListManager playerListManager;
     private final AutoSellItemManager itemManager;
     private final AutoSellExceptionManager exceptions;
     private final Economy econ;
     private final Map<UUID, Long> lastToggleAt = new HashMap<>();
 
     public AutoSellMenu(JavaPlugin plugin, LangManager lang, PriceManager priceManager,
-            PlayerListManager playerListManager, AutoSellItemManager itemManager,
+            AutoSellItemManager itemManager,
             AutoSellExceptionManager exceptions, Economy econ) {
         this.plugin = plugin;
         this.lang = lang;
         this.priceManager = priceManager;
-        this.playerListManager = playerListManager;
         this.itemManager = itemManager;
         this.exceptions = exceptions;
         this.econ = econ;
@@ -97,10 +94,6 @@ public class AutoSellMenu implements Listener {
     // ------------------------------------------------------------------
 
     public void open(Player player) {
-        if (playerListManager.isInShop(player.getUniqueId())) {
-            player.sendMessage(lang.get("shop-autosell-toggle-in-shop"));
-            return;
-        }
         Session session = new Session(player);
         session.inventory = Bukkit.createInventory(session, SIZE, session.title());
         session.render();
@@ -117,11 +110,6 @@ public class AutoSellMenu implements Listener {
      * @return {@code true} si l'objet a été basculé
      */
     public boolean toggle(Player player) {
-        if (playerListManager.isInShop(player.getUniqueId())) {
-            player.sendMessage(lang.get("shop-autosell-toggle-in-shop"));
-            return false;
-        }
-
         UUID uuid = player.getUniqueId();
         long now = System.currentTimeMillis();
         Long last = lastToggleAt.get(uuid);

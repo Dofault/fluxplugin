@@ -1,13 +1,12 @@
 package io.dofault.supermarket.commands;
 
-import io.dofault.supermarket.managers.ChestManager;
 import io.dofault.supermarket.managers.LangManager;
-import io.dofault.supermarket.managers.PlayerListManager;
-import io.dofault.supermarket.managers.ShopManager;
 import io.dofault.supermarket.managers.TpShopCooldownManager;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -17,26 +16,24 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * {@code /supermarket tpshop [joueur]} : simple téléportation vers le point du magasin
+ * ({@code tpshop.location}, posé par {@code /supermarket settpshop}). Utilisée par le menu
+ * {@code /marche}. Les joueurs ont un délai d'attente immobile et un cooldown ; les admins non.
+ */
 public class TpShopCommand implements SupermarketCommand {
+
+    private static final String LOCATION_PATH = "tpshop.location";
 
     private final JavaPlugin plugin;
     private final LangManager lang;
-    private final ShopManager shopManager;
-    private final ChestManager chestManager;
-    private final PlayerListManager playerListManager;
     private final TpShopCooldownManager cooldownManager;
-    private final long warmupSeconds;
     private final Set<UUID> pendingTeleports = new HashSet<>();
 
-    public TpShopCommand(JavaPlugin plugin, LangManager lang, ShopManager shopManager, ChestManager chestManager,
-            PlayerListManager playerListManager, TpShopCooldownManager cooldownManager) {
+    public TpShopCommand(JavaPlugin plugin, LangManager lang, TpShopCooldownManager cooldownManager) {
         this.plugin = plugin;
         this.lang = lang;
-        this.shopManager = shopManager;
-        this.chestManager = chestManager;
-        this.playerListManager = playerListManager;
         this.cooldownManager = cooldownManager;
-        this.warmupSeconds = plugin.getConfig().getLong("tpshop-warmup-seconds", 3);
     }
 
     @Override
@@ -46,62 +43,75 @@ public class TpShopCommand implements SupermarketCommand {
 
     @Override
     public boolean execute(Player player, String[] args) {
-        // /supermarket tpshop -> le joueur se téléporte lui-même dans le shop.
         if (args.length == 1) {
             selfTeleport(player);
-            return true;
-        }
-
-        // /supermarket tpshop <joueur> -> un admin téléporte un autre joueur.
-        if (args.length == 2) {
+        } else if (args.length == 2) {
             adminTeleportOther(player, args[1]);
-            return true;
+        } else {
+            player.sendMessage(lang.get("shop-tpshop-usage"));
         }
-
-        player.sendMessage(lang.get("shop-tpshop-usage"));
         return true;
+    }
+
+    /** Enregistre la position actuelle du joueur comme point d'arrivée de /tpshop. */
+    public void setLocation(Location location) {
+        plugin.getConfig().set(LOCATION_PATH + ".world", location.getWorld().getName());
+        plugin.getConfig().set(LOCATION_PATH + ".x", location.getX());
+        plugin.getConfig().set(LOCATION_PATH + ".y", location.getY());
+        plugin.getConfig().set(LOCATION_PATH + ".z", location.getZ());
+        plugin.getConfig().set(LOCATION_PATH + ".yaw", (double) location.getYaw());
+        plugin.getConfig().set(LOCATION_PATH + ".pitch", (double) location.getPitch());
+        plugin.saveConfig();
+    }
+
+    /** @return le point d'arrivée, ou {@code null} s'il n'est pas défini ou que son monde n'est pas chargé. */
+    private Location destination() {
+        ConfigurationSection section = plugin.getConfig().getConfigurationSection(LOCATION_PATH);
+        if (section == null) {
+            return null;
+        }
+        World world = Bukkit.getWorld(section.getString("world", ""));
+        if (world == null) {
+            return null;
+        }
+        return new Location(world, section.getDouble("x"), section.getDouble("y"), section.getDouble("z"),
+                (float) section.getDouble("yaw"), (float) section.getDouble("pitch"));
     }
 
     private void selfTeleport(Player player) {
         boolean isAdmin = player.hasPermission("supermarket.admin");
-
         if (!isAdmin && !player.hasPermission("supermarket.tpshop")) {
             player.sendMessage(lang.get("shop-no-permission"));
             return;
         }
-
-        if (playerListManager.isInShop(player.getUniqueId())) {
-            player.sendMessage(lang.get("shop-tpshop-already-in-shop", Map.of("player", player.getName())));
+        if (destination() == null) {
+            player.sendMessage(lang.get("shop-tpshop-not-set"));
             return;
         }
-
         if (!isAdmin && cooldownManager.isOnCooldown(player)) {
             player.sendMessage(lang.get("shop-tpshop-cooldown", Map.of(
                     "time", TpShopCooldownManager.formatDuration(cooldownManager.getRemainingSeconds(player)))));
             return;
         }
-
         if (!isAdmin && pendingTeleports.contains(player.getUniqueId())) {
             player.sendMessage(lang.get("shop-tpshop-already-teleporting"));
             return;
         }
 
-        // Les admins se téléportent instantanément, sans warmup.
+        long warmupSeconds = plugin.getConfig().getLong("tpshop-warmup-seconds", 3);
         if (isAdmin || warmupSeconds <= 0) {
-            performSelfTeleport(player, isAdmin);
+            teleport(player, isAdmin);
             return;
         }
-
-        startWarmup(player);
+        startWarmup(player, warmupSeconds);
     }
 
-    private void startWarmup(Player player) {
+    private void startWarmup(Player player, long warmupSeconds) {
         UUID uuid = player.getUniqueId();
         pendingTeleports.add(uuid);
-        Location startLocation = player.getLocation();
+        Location start = player.getLocation();
 
-        player.sendMessage(lang.get("shop-tpshop-warmup-start",
-                Map.of("time", String.valueOf(warmupSeconds))));
+        player.sendMessage(lang.get("shop-tpshop-warmup-start", Map.of("time", String.valueOf(warmupSeconds))));
 
         new BukkitRunnable() {
             long remaining = warmupSeconds;
@@ -113,23 +123,19 @@ public class TpShopCommand implements SupermarketCommand {
                     cancel();
                     return;
                 }
-
-                if (hasMoved(player, startLocation)) {
+                if (hasMoved(player, start)) {
                     pendingTeleports.remove(uuid);
                     player.sendMessage(lang.get("shop-tpshop-warmup-cancelled"));
                     cancel();
                     return;
                 }
-
                 if (remaining <= 0) {
                     pendingTeleports.remove(uuid);
                     cancel();
-                    performSelfTeleport(player, false);
+                    teleport(player, false);
                     return;
                 }
-
-                player.sendActionBar(lang.get("shop-tpshop-warmup-actionbar",
-                        Map.of("time", String.valueOf(remaining))));
+                player.sendActionBar(lang.get("shop-tpshop-warmup-actionbar", Map.of("time", String.valueOf(remaining))));
                 remaining--;
             }
         }.runTaskTimer(plugin, 0L, 20L);
@@ -137,30 +143,28 @@ public class TpShopCommand implements SupermarketCommand {
 
     private boolean hasMoved(Player player, Location start) {
         Location current = player.getLocation();
-        if (current.getWorld() == null || start.getWorld() == null
-                || !current.getWorld().equals(start.getWorld())) {
+        if (current.getWorld() == null || !current.getWorld().equals(start.getWorld())) {
             return true;
         }
         return current.distanceSquared(start) > 0.09; // ~0.3 bloc de tolérance
     }
 
-    private void performSelfTeleport(Player player, boolean isAdmin) {
-        playerListManager.setReturnLocation(player, player.getLocation());
-
-        if (!playerListManager.enterShop(player)) {
-            playerListManager.clearReturnLocation(player.getUniqueId());
-            player.sendMessage(lang.get("shop-tpshop-failed", Map.of("player", player.getName())));
+    private void teleport(Player player, boolean isAdmin) {
+        Location destination = destination();
+        if (destination == null) {
+            player.sendMessage(lang.get("shop-tpshop-not-set"));
             return;
         }
-
-        chestManager.reloadChests();
-        player.teleport(shopManager.getExitLocation(player));
-
-        if (!isAdmin) {
-            cooldownManager.markUsed(player);
-        }
-
-        player.sendMessage(lang.get("shop-tpshop-self-success"));
+        player.teleportAsync(destination).thenAccept(success -> {
+            if (!success) {
+                player.sendMessage(lang.get("shop-tpshop-failed"));
+                return;
+            }
+            if (!isAdmin) {
+                cooldownManager.markUsed(player);
+            }
+            player.sendMessage(lang.get("shop-tpshop-self-success"));
+        });
     }
 
     private void adminTeleportOther(Player player, String targetName) {
@@ -168,30 +172,23 @@ public class TpShopCommand implements SupermarketCommand {
             player.sendMessage(lang.get("shop-no-permission"));
             return;
         }
-
         Player target = Bukkit.getPlayerExact(targetName);
         if (target == null) {
             player.sendMessage(lang.get("shop-player-not-found", Map.of("player", targetName)));
             return;
         }
-
-        if (playerListManager.isInShop(target.getUniqueId())) {
-            player.sendMessage(lang.get("shop-tpshop-already-in-shop", Map.of("player", target.getName())));
+        Location destination = destination();
+        if (destination == null) {
+            player.sendMessage(lang.get("shop-tpshop-not-set"));
             return;
         }
-
-        playerListManager.setReturnLocation(target, target.getLocation());
-
-        if (!playerListManager.enterShop(target)) {
-            playerListManager.clearReturnLocation(target.getUniqueId());
-            player.sendMessage(lang.get("shop-tpshop-failed", Map.of("player", target.getName())));
-            return;
-        }
-
-        chestManager.reloadChests();
-        target.teleport(shopManager.getExitLocation(target));
-
-        player.sendMessage(lang.get("shop-tpshop-success", Map.of("player", target.getName())));
-        target.sendMessage(lang.get("shop-tpshop-target-notice", Map.of("player", player.getName())));
+        target.teleportAsync(destination).thenAccept(success -> {
+            if (!success) {
+                player.sendMessage(lang.get("shop-tpshop-failed"));
+                return;
+            }
+            player.sendMessage(lang.get("shop-tpshop-success", Map.of("player", target.getName())));
+            target.sendMessage(lang.get("shop-tpshop-target-notice", Map.of("player", player.getName())));
+        });
     }
 }

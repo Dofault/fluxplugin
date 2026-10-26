@@ -1,129 +1,167 @@
 ###################################
-# MESSAGES DE SORTIE / ERREURS
+# MENU D'UN COFFRE MAGASIN
 ###################################
-shop-exit: "&aVous êtes sorti du shop !"
-shop-must-pay: "&cVous devez payer pour pouvoir sortir !"
-shop-cannot-open-outside: "&cVous ne pouvez pas ouvrir ce coffre du shop depuis l'extérieur !"
-shop-command-blocked: "&cVous ne pouvez utiliser que les commandes /supermarket dans le shop !"
-shop-craft-blocked: "§x§B§3§7§6§E§5ᴍᴀɢᴀꜱɪɴ &8▸ §x§F§F§5§C§5§CTu ne peux pas crafter dans le magasin !"
-shop-not-in-shop: "&cVous devez être dans le shop pour faire cela !"
-shop-sell-unpaid-items: "&cVous ne pouvez pas ouvrir le bloc de vente tant que vous avez des articles impayés !"
-shop-no-sellblock: "&cAucun bloc de vente enregistré !"
-shop-sell-success: "&aVous avez vendu vos articles pour &6%amount% !"
-shop-add-item-failed: "&cImpossible d'ajouter l'objet dans le coffre !"
+# Une rangée par objet : l'objet puis ses boutons d'achat. La vente passe par le bloc de vente.
+shop-menu-title: "&#FFD94DMagasin"
+shop-menu-empty: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FF5C5CCe coffre n'a rien à proposer pour le moment."
+# %price% déjà formaté, suivi de l'icône BitBlock (caractère brut, pas de hook PAPI).
+shop-menu-price: "&f%price% &r&f"
+shop-menu-unavailable: "&#FF5C5CNon disponible"
+shop-menu-item-lore:
+  - ""
+  - "&#B376E5Achat : %buy% &7x1"
+  - ""
+  - "&#B376E5Tu en as : &f%owned%"
+  - ""
+shop-menu-buy-name: "&r&7&#FFD94D Acheter x%amount%"
+shop-menu-buy-lore:
+  - ""
+  - "&#B376E5Prix : %price%"
+  - ""
+shop-menu-buy-armed-name: "&r&7&#FFD94D Confirmer l'achat x%amount%"
+shop-menu-buy-armed-lore:
+  - ""
+  - "&#FF5C5CClique une seconde fois pour acheter."
+  - ""
+  - "&#B376E5Prix : %price%"
+  - ""
+
+# %item% = nom de l'objet, traduit dans la langue du joueur.
+shop-buy-success: "&7:bitblock: &#B376E5Acheté &fx%amount% %item%&#B376E5 pour &f%price% &#FF5C5C▼&7 [ᴍᴀɢᴀꜱɪɴ]"
+shop-buy-unavailable: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FF5C5CCet objet n'est plus en vente."
+shop-buy-no-space: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FF5C5CPas assez de place dans ton inventaire pour &f%amount%&#FF5C5C objet(s) (place pour &f%space%&#FF5C5C)."
+shop-buy-not-enough-money: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FF5C5CIl te faut &f%price% &r&f&#FF5C5C, tu n'as que &f%balance% &r&f&#FF5C5C."
+shop-transaction-failed: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FF5C5CLa transaction a échoué, rien n'a été débité."
+
+shop-block-protected: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FF5C5CCe bloc appartient au magasin, il ne peut pas être cassé."
+shop-block-protected-admin: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FF5C5CBloc assigné : &f/supermarket removechest&#FF5C5C ou &fremovesellblock&#FF5C5C d'abord."
 
 ###################################
-# MESSAGES D'ACCUEIL / WELCOME
+# BLOC DE VENTE (menu de dépôt)
 ###################################
-
-# Variables disponibles :
-# %buy_block%  → le nom du bloc utilisé pour acheter
-# %sell_block% → le nom du bloc utilisé pour vendre
-shop-welcome-messages:
-  - "&7&l----&r&7( &2ʙɪᴇɴᴠᴇɴᴜᴇ ᴅᴀɴs ʟᴇ sʜᴏᴘ&7 )&7&l----"
-  - "&7Pour acheter, utilise le bloc &e%buy_block%&7 :"
-  - "&8- &a&lClique gauche &7→ voir ton &fpanier 🛒"
-  - "&8- &a&lClique droit &7→ payer tes &farticles 💰"
-  - "&7Pour vendre, utilise le bloc &e%sell_block%&7 :"
-  - "&8- &a&lClique gauche &7→ consulter les prix &f📜"
-  - "&8- &a&lClique droit &7→ vendre tes &farticles 💵"
+shop-sell-success: "&7:bitblock: &#B376E5Tu as reçu &f%amount% &#B376E5Bitblock &#2ECF7B▲&7 [ᴍᴀɢᴀꜱɪɴ]"
 
 ###################################
-# PANIER / INVENTAIRE DU JOUEUR
+# ÉDITEUR D'UN COFFRE MAGASIN (admin accroupi + clic droit)
 ###################################
-shop-your-items: "&eVos articles :"
-shop-item-line: "&d➤ &a%item% &e(+%delta%) &f→ &b%price%"
-shop-total: "&6&l💰 Total : &b&l%total%"
-shop-cart-actionbar: "&6Panier : &b%balance%"
-shop-not-enough-money: "&cVous n'avez pas assez d'argent pour payer votre inventaire ! &e(Votre solde : 💰 %balance%)"
-shop-paid-success: "&a✅ Vous avez payé &6&l%total%&r&a pour vos articles !"
-shop-no-difference: "&aAucune différence."
-shop-difference-log: "Différence pour %player%: %item% -> %delta%"
-shop-item-price: "&aPrix de %item% : achat %buy% / vente %sell%"
-shop-no-price: "&cAucun prix défini pour %item%"
+shop-editor-title: "&#FFD94DÉdition du magasin"
+shop-editor-add-name: "&#FFD94DAjouter un objet"
+shop-editor-add-lore:
+  - ""
+  - "&#B376E5Clique un objet de ton inventaire :"
+  - "&#B376E5une copie exacte est ajoutée."
+  - "&#B376E5Il ne quitte pas ton inventaire."
+  - ""
+shop-editor-item-lore-default:
+  - ""
+  - "&#B376E5Prix : %price% &7(prices.yml)"
+  - ""
+shop-editor-item-lore-custom:
+  - ""
+  - "&#B376E5Prix : %price% &7(propre au coffre)"
+  - ""
+shop-editor-price-name: "&r&7&#FFD94D Changer le prix"
+shop-editor-price-lore:
+  - ""
+  - "&#B376E5Le prix se tape dans le tchat."
+  - ""
+shop-editor-remove-name: "&r&7&#FFD94D Retirer"
+shop-editor-remove-lore:
+  - ""
+shop-editor-remove-armed-name: "&r&7&#FFD94D Confirmer le retrait"
+shop-editor-remove-armed-lore:
+  - ""
+  - "&#FF5C5CClique une seconde fois pour retirer."
+  - ""
+shop-editor-added-default: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &f%item%&#2ECF7B ajouté, au prix de prices.yml."
+shop-editor-removed: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &f%item%&#2ECF7B retiré du coffre."
+shop-editor-already: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FF5C5CCet objet est déjà dans ce coffre."
+shop-editor-full: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FF5C5CUn coffre magasin propose au plus &f%max%&#FF5C5C objets."
+shop-editor-price-prompt: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FFD94DTape dans le tchat le prix d'achat de &f%item%&#FFD94D, ou &fannuler&#FFD94D."
+shop-editor-price-prompt-default: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FFD94DTape dans le tchat le prix d'achat de &f%item%&#FFD94D, &fdéfaut&#FFD94D pour celui de prices.yml, ou &fannuler&#FFD94D."
+shop-editor-price-invalid: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FF5C5CPrix invalide, tape un nombre positif (ex : 12.5) ou &fannuler&#FF5C5C."
+shop-editor-price-no-default: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FF5C5CCet objet n'a pas de prix dans prices.yml, tape un nombre ou &fannuler&#FF5C5C."
+shop-editor-price-cancelled: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#B376E5Saisie annulée."
+shop-editor-price-set: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &f%item%&#2ECF7B : prix d'achat %price%&#2ECF7B."
 
 ###################################
-# COFFRES / SHOP BLOCKS
+# ASSIGNATION DES BLOCS
 ###################################
-shop-no-chest: "&cAucun coffre enregistré !"
-shop-no-bundle-entry: "&cVous n'avez pas le droit d'entrer avec %item% !"
-shop-not-registered-chest: "&cTu n'es pas sur un coffre enregistré !"
-shop-chest-unlinked: "&aLiaison du coffre supprimé !"
-shop-no-chest-here: "&cIl n'y a pas de coffre à ta position !"
-shop-chest-already-registered: "&cCe coffre est déjà enregistré !"
-shop-chest-added: "&Coffre ajouté !"
-shop-material-no-price: "&cCe matériau n'a pas de prix défini !"
-shop-add-item-chest: "&aAjouté %amount% %material% au coffre !"
+shop-admin-no-target: "&#FF5C5CRegarde le bloc visé (6 blocs maximum)."
+shop-admin-already-assigned: "&#FF5C5CCe bloc est déjà un coffre magasin ou un bloc de vente."
+shop-admin-block-not-allowed: "&#FF5C5CCe bloc ne peut pas devenir un coffre magasin. Types autorisés (config.yml, shop.block-types) : &f%types%"
+shop-admin-chest-added: "&#2ECF7BCoffre magasin assigné. Accroupi + clic droit dessus pour y ajouter des objets."
+shop-admin-chest-removed: "&#2ECF7BCoffre magasin désassigné."
+shop-admin-not-a-chest: "&#FF5C5CCe bloc n'est pas un coffre magasin."
+shop-admin-sellblock-added: "&#2ECF7BBloc de vente assigné."
+shop-admin-sellblock-removed: "&#2ECF7BBloc de vente désassigné."
+shop-admin-not-a-sellblock: "&#FF5C5CCe bloc n'est pas un bloc de vente."
 
 ###################################
-# POSITION / SHOP SETUP
+# PRIX
 ###################################
-shop-entry-saved: "&aPosition d'entrée enregistrée !"
-shop-exit-saved: "&aPosition de sortie du shop enregistrée !"
-shop-saved: "&aShop sauvegardé !"
-shop-define-entry-exit-first: "&cVous devez d'abord définir l'entrée et la sortie !"
+shop-setprice-usage: "&#FF5C5CUsage : /supermarket setprice <item> <achat> <vente>"
+shop-invalid-item: "&#FF5C5CItem invalide !"
+shop-invalid-price: "&#FF5C5CPrix invalide !"
+shop-price-set: "&#2ECF7BPrix de %material% défini : achat %buy% / vente %sell%"
+shop-checkprices-none: "&#2ECF7BAucun item invalide dans prices.yml."
+shop-checkprices-header: "&#FFD94D%count% item(s) de prices.yml introuvable(s) sur cette version :"
+shop-checkprices-line: "&7- &#FF5C5C%item%"
+shop-reload-success: "&#2ECF7BRechargé : &f%items% &#2ECF7Bitem(s) dans prices.yml &7(&#FF5C5C%invalid%&7 invalide(s))"
+shop-no-permission: "&#FF5C5CTu n'as pas la permission de faire ça !"
+shop-player-not-found: "&#FF5C5CJoueur %player% introuvable ou hors-ligne !"
 
 ###################################
-# COMMANDES
+# TÉLÉPORTATION AU MAGASIN (/supermarket tpshop)
 ###################################
-shop-setprice-usage: "&cUsage: /supermarket setprice <item> <achat> <vente>"
-shop-invalid-item: "&cItem invalide !"
-shop-invalid-price: "&cPrix invalide !"
-shop-price-set: "&aPrix de %material% défini : achat %buy% / vente %sell%"
-shop-must-be-inside: "&cVous devez être dans le shop !"
-shop-additemchest-usage: "&cUsage: /supermarket additemchest <item> <amount>"
-shop-invalid-number: "&cNombre invalide !"
-shop-no-item-entry: "&cVous n'avez pas le droit d'entrer avec un %item% !"
-shop-no-permission: "&cVous n'avez pas la permission de faire ça !"
-shop-tpshop-usage: "&cUsage: /supermarket tpshop [joueur] &7(sans joueur = se téléporter soi-même)"
-shop-player-not-found: "&cJoueur %player% introuvable ou hors-ligne !"
-shop-tpshop-already-in-shop: "&c%player% est déjà dans le shop !"
-shop-tpshop-failed: "&cImpossible de faire entrer %player% dans le shop (objet interdit dans son inventaire ?) !"
-shop-tpshop-success: "&aVous avez téléporté %player% dans le shop !"
-shop-tpshop-target-notice: "&aTu as été téléporté dans le shop par %player% !"
-shop-tpshop-self-success: "&aTu as été téléporté dans le shop !"
-shop-tpshop-cooldown: "&cTu dois encore attendre &e%time%&c avant de pouvoir retourner dans le shop !"
-shop-tpshop-warmup-start: "&eTéléportation dans le shop dans &6%time%&es &7- ne bouge pas !"
-shop-tpshop-warmup-actionbar: "&6Téléportation dans &e%time%s&6..."
-shop-tpshop-warmup-cancelled: "&cTéléportation annulée : tu as bougé !"
-shop-tpshop-already-teleporting: "&cUne téléportation est déjà en cours !"
-shop-checkprices-none: "&aAucun item invalide dans prices.yml."
-shop-checkprices-header: "&e%count% item(s) de prices.yml introuvable(s) sur cette version :"
-shop-checkprices-line: "&7- &c%item%"
+shop-tpshop-usage: "&#FF5C5CUsage : /supermarket tpshop [joueur] &7(sans joueur = se téléporter soi-même)"
+shop-tpshop-not-set: "&#FF5C5CLe point d'arrivée du magasin n'est pas défini."
+shop-tpshop-location-set: "&#2ECF7BPoint d'arrivée de /supermarket tpshop enregistré à ta position."
+shop-tpshop-failed: "&#FF5C5CLa téléportation au magasin a échoué."
+shop-tpshop-success: "&#2ECF7BTu as téléporté %player% au magasin !"
+shop-tpshop-target-notice: "&#2ECF7BTu as été téléporté au magasin par %player% !"
+shop-tpshop-self-success: "&#2ECF7BTe voilà au magasin !"
+shop-tpshop-cooldown: "&#FF5C5CTu dois encore attendre &#FFD94D%time%&#FF5C5C avant de retourner au magasin !"
+shop-tpshop-warmup-start: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &7Téléportation au magasin dans &#FFD94D%time%s&7, ne bouge pas !"
+shop-tpshop-warmup-actionbar: "&#FFD94DTéléportation dans &f%time%s"
+shop-tpshop-warmup-cancelled: "&#FF5C5CTéléportation annulée, tu as bougé !"
+shop-tpshop-already-teleporting: "&#FF5C5CTu es déjà en train de te téléporter au magasin !"
 
-# Commandes générales
-shop-commands-header: "&e» Commandes Générales :"
-shop-command-entry-exit: "&b/supermarket &fentry|exit &7- &oDéfinir l'entrée et la sortie du magasin."
-shop-command-pay: "&b/supermarket &fpay &7- &oPayer ses achats."
-shop-command-save: "&b/supermarket &fsave &7- &oSauvegarder l'entrée et la sortie du shop."
-shop-command-setprice: "&b/supermarket &fsetprice <item> <achat> <vente> &7- &oDéfinir le prix d'un objet."
-shop-command-difference: "&b/supermarket &fdifference &7- &oAfficher la différence d'inventaire."
-shop-command-addchest: "&b/supermarket &faddchest &7- &oAjouter le coffre sous vos pieds dans le shop."
-shop-command-removechest: "&b/supermarket &fremovechest &7- &oRetirer le coffre en dessous de vous dans le shop."
-shop-command-additemchest: "&b/supermarket &fadditemchest <item> <amount> &7- &oAjouter un objet dans le coffre."
-shop-command-tpshop: "&b/supermarket &ftpshop [joueur] &7- &oSe téléporter dans le shop, ou un autre joueur (admin)."
-shop-command-checkprices: "&b/supermarket &fcheckprices &7- &oLister les items de prices.yml invalides sur cette version (admin)."
-shop-command-reload: "&b/supermarket &freload &7- &oRecharger prices.yml, config.yml, lang et chest.yml sans redémarrer (admin)."
-shop-reload-success: "&aRechargé : &e%items% &aitem(s) dans prices.yml&7 (&c%invalid%&7 invalide(s))&a."
+###################################
+# AIDE
+###################################
+shop-commands-header: |-
+  §7§m                                                    §f
+  &#FFD94D✦ Aide : commandes du Supermarket
+  §7§m                                                    §f
+shop-command-chest: "   &#F0A800/supermarket addchest|removechest &8- &7Assigner / désassigner le coffre magasin regardé."
+shop-command-editor: "   &#F0A800Accroupi + clic droit &8- &7Sur un coffre magasin : éditeur (ajouter, retirer, changer un prix)."
+shop-command-sellblock: "   &#F0A800/supermarket addsellblock|removesellblock &8- &7Assigner / désassigner le bloc de vente regardé."
+shop-command-setprice: "   &#F0A800/supermarket setprice <item> <achat> <vente> &8- &7Définir le prix d'un item."
+shop-command-checkprices: "   &#F0A800/supermarket checkprices &8- &7Lister les items de prices.yml invalides sur cette version."
+shop-command-tpshop: "   &#F0A800/supermarket tpshop [joueur] &8- &7Se téléporter au magasin, ou un autre joueur (admin)."
+shop-command-settpshop: "   &#F0A800/supermarket settpshop &8- &7Poser le point d'arrivée de tpshop à ta position."
+shop-command-autosell: "   &#F0A800/supermarket autosell [joueur] &8- &7Recevoir l'item de vente automatique, ou en donner un (admin)."
+shop-command-reload: "   &#F0A800/supermarket reload &8- &7Recharger prices.yml, config.yml, la langue et shops.yml."
 
 ###################################
 # INVENTAIRE / PRIX
 ###################################
-shop-all-items-label: "Tous les articles"
-shop-all-items-button: "§eTous les articles"
-shop-category-item-name: "§e%category%"
-shop-category-item-lore: "§7%count% articles"
-shop-prices-inventory-title: "§6%category% §7(%page%/%totalPages%)"
-shop-item-name: "§e%item%"
-shop-item-lore-sell-price: "§7Vente : §a%price%"
-shop-inventory-previous-page: "§aPage précédente"
-shop-inventory-next-page: "§aPage suivante"
+shop-all-items-label: "Tous les items"
+shop-all-items-button: "§x§F§F§D§9§4§DTous les items"
+shop-category-item-name: "§x§F§F§D§9§4§D%category%"
+shop-category-item-lore: "&7%count% items"
+shop-prices-inventory-title: "§x§F§F§D§9§4§D%category% &7(%page%/%totalPages%)"
+shop-item-name: "§x§F§F§D§9§4§D%item%"
+shop-item-lore-sell-price: "&7Vente : §x§2§E§C§F§7§B%price%"
+shop-inventory-previous-page: "§x§2§E§C§F§7§BPage précédente"
+shop-inventory-next-page: "§x§2§E§C§F§7§BPage suivante"
 
 ###################################
-# VENTE AUTOMATIQUE (objet colorant)
+# VENTE AUTOMATIQUE (item colorant)
 ###################################
-autosell-item-name-off: "&c&lVente Automatique Désactivée"
-autosell-item-name-on: "&a&lVente Automatique Activée"
+autosell-item-name-off: "§x§F§F§5§C§5§C&lVente Automatique Désactivée"
+autosell-item-name-on: "§x§2§E§C§F§7§B&lVente Automatique Activée"
 autosell-item-lore-off:
   - "&#B376E5Vend automatiquement ce que"
   - "&#B376E5tu ramasses."
@@ -141,16 +179,13 @@ autosell-item-lore-on:
   - "&r&7&#FFD94D Gérer les exceptions"
   - "&#B376E5Accroupi + &r&7&#FFD94D Activer / Désactiver"
 
-shop-autosell-given: "&aTu as reçu ton objet de vente automatique !"
-shop-autosell-inventory-full: "&cTon inventaire est plein, impossible de te donner l'objet !"
-shop-autosell-given-to: "&aTu as donné l'objet de vente automatique à %player% !"
-shop-autosell-target-inventory-full: "&cL'inventaire de %player% est plein, impossible de lui donner l'objet !"
-shop-autosell-toggled-on: "&a&l✔ &aVente automatique activée !"
-shop-autosell-toggled-off: "&c&l✘ &cVente automatique désactivée !"
-shop-autosell-toggle-cooldown: "&cAttends un peu avant de rebasculer ton objet !"
-shop-autosell-toggle-in-shop: "&cTu ne peux pas activer/désactiver la vente automatique dans le shop !"
-shop-autosell-item-sold: "&7[Vente auto] &d➤ &a%item% &e(x%amount%) &f→ &b%price%"
-shop-command-autosell: "&b/supermarket &fautosell [joueur] &7- &oRecevoir l'objet de vente automatique, ou en donner un à un autre joueur (admin)."
+shop-autosell-given: "§x§B§3§7§6§E§5ᴍᴀɢᴀꜱɪɴ &8▸ §x§2§E§C§F§7§BTu as reçu ton item de vente automatique !"
+shop-autosell-inventory-full: "§x§F§F§5§C§5§CTon inventaire est plein, impossible de te donner l'item !"
+shop-autosell-given-to: "§x§2§E§C§F§7§BTu as donné l'item de vente automatique à %player% !"
+shop-autosell-target-inventory-full: "§x§F§F§5§C§5§CL'inventaire de %player% est plein, impossible de lui donner l'item !"
+shop-autosell-toggled-on: "§x§2§E§C§F§7§B✔ Vente automatique activée !"
+shop-autosell-toggled-off: "§x§F§F§5§C§5§C✘ Vente automatique désactivée !"
+shop-autosell-toggle-cooldown: "§x§F§F§5§C§5§CAttends un peu avant de rebasculer ton item !"
 
 # --- Menu de vente manuelle (double confirmation) ---
 shop-sell-inventory-title: "&#FFD94DVendre tes items"
@@ -171,8 +206,9 @@ shop-sell-confirm-armed-lore:
   - "&#B376E5Total : &f%price% &r&f"
   - "&#B376E5Items vendables : &f%sellable%"
   - ""
-shop-sell-nothing-to-sell: "&#FF5C5CAucun de tes items n'est vendable ici !"
-shop-sell-cancelled: "&#B376E5Vente annulée, tes items t'ont été rendus."
+shop-sell-nothing-to-sell: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FF5C5CAucun de tes items n'est vendable ici !"
+shop-sell-cancelled: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#B376E5Vente annulée, tes items t'ont été rendus."
+shop-unsellable-restored: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#B376E5%amount% item(s) non vendable(s) t'ont été rendus."
 
 # --- Menu de la vente automatique (clic droit avec l'objet) ---
 autosell-menu-title: "&#FFD94DVente Automatique &7(%page%/%totalPages%)"
@@ -203,7 +239,7 @@ autosell-menu-info-lore:
   - "&#B376E5Les objets enchantés ou personnalisés"
   - "&#B376E5ne partent jamais, quels que soient"
   - "&#B376E5tes réglages. Tout reste vendable"
-  - "&#B376E5à la main au magasin."
+  - "&#B376E5à la main au bloc de vente."
   - ""
 autosell-menu-entry-lore:
   - ""

@@ -1,33 +1,26 @@
-# Supermarket Plugin for Minecraft 1.21.4 papermc
+# VaultSupermarket (Paper 26.2)
 
-A supermarket plugin for Minecraft: the player enters the shop, takes items, and must pay for them before leaving. Full management of inventories, item prices, and payments via Vault.
+Plugin maison d'Influencraft : coffres magasins à menu d'achat/vente, blocs de vente, catalogue de prix (`prices.yml`) et objet « Vente Automatique ». Économie via Vault.
 
----
+Documentation complète : [`docs/technique/supermarket.md`](../../docs/technique/supermarket.md).
 
-## Requirements
+## Commandes (`/supermarket`)
 
-- Java 17
-- Apache Maven 3.9.11
-- Minecraft server compatible with Paper MC version 1.21.4
-- Vault for economy management
+| Commande | Rôle |
+| -------- | ---- |
+| `addchest` / `removechest` | Assigne / désassigne le coffre magasin regardé |
+| (accroupi + clic droit) | Éditeur du coffre magasin : ajouter un objet de son inventaire, changer un prix, retirer |
+| `addsellblock` / `removesellblock` | Assigne / désassigne le bloc de vente regardé |
+| `setprice <item> <achat> <vente>` | Prix d'un objet dans `prices.yml` |
+| `checkprices` | Objets de `prices.yml` inconnus sur cette version |
+| `tpshop [joueur]` / `settpshop` | Téléportation au magasin / pose du point d'arrivée |
+| `autosell [joueur]` | Donne l'objet de vente automatique |
+| `reload` | Recharge config, langue, prix et magasins |
 
----
-
-| Command                        | Description                                      |
-| ------------------------------ | ------------------------------------------------ |
-| entry                          | Sets the shop entry location                     |
-| exit                           | Sets the shop exit location                      |
-| save                           | Saves the shop (entry and exit required)        |
-| setprice <item> <price>        | Sets the price of an item                        |
-| difference                     | Shows the difference with the saved inventory   |
-| pay                            | Pays the player for the items taken             |
-| addchest                       | Adds a chest to the shop                         |
-| removechest                    | Removes the last added chest                     |
-| additemchest <item> <amount>   | Adds an item to the last added chest            |
+## Build
 
 ```bash
-git clone <repo-url>
-cd <project-name>
-mvn dependency:resolve
-mvn clean compile
-mvn clean install
+mvn -o package -DskipTests
+```
+
+Le jar est copié automatiquement sur Labs et Semi-Lab, jamais sur la prod. Sur la machine du serveur, compiler dans un cgroup plafonné en mémoire (voir la doc).
