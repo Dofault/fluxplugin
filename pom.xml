@@ -27,5 +27,6 @@
         <module>FluxPets</module>
         <module>FluxRewards</module>
         <module>FluxSorter</module>
+        <module>FluxWebsite</module>
     </modules>
 </project>

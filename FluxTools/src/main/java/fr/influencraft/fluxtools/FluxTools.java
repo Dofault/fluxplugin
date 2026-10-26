@@ -1,5 +1,6 @@
 package fr.influencraft.fluxtools;
 
+import fr.influencraft.fluxtools.modules.Modules;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -39,11 +40,12 @@ public final class FluxTools extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        // utility modules (ex-InfluBridge) do not need the crate tools, start them first
+        new Modules(this).enable();
         Etat.init(this);
         RegisteredServiceProvider<Economy> rsp = Bukkit.getServicesManager().getRegistration(Economy.class);
         if (rsp == null) {
-            getLogger().severe("Aucune économie Vault : FluxTools désactivé.");
-            Bukkit.getPluginManager().disablePlugin(this);
+            getLogger().severe("No Vault economy: crate tools disabled, the other modules keep running.");
             return;
         }
         eco = rsp.getProvider();

@@ -1,0 +1,92 @@
+# URL publique du site (mineweb), sans slash final.
+api-base-url: "https://dev.influencraft.fr"
+
+# Doit être identique à MC_SERVER_SECRET dans web/mineweb/.env
+api-secret: "CHANGE_ME"
+
+# Fréquence de vérification des commandes en attente (pending_commands)
+poll-interval-seconds: 30
+
+# Fréquence de rafraîchissement du cache de streak de vote (placeholders %influbridge_flame_*%)
+streak-cache-interval-seconds: 30
+
+# ─── Vote Party ────────────────────────────────────────────────────────────
+# Système entièrement géré en jeu par InfluBridge (compte les votes
+# confirmés remontés par mineweb via /influvoteparty add). Le compteur est
+# exposé via %influbridge_voteparty_current% / %influbridge_voteparty_required%
+# (utilisé notamment par MythicHUD).
+voteparty:
+  # Nombre de votes réels (tous joueurs et tous vote-sites confondus) pour déclencher le Vote Party
+  votes-required: 30
+
+  # Récompense de chaque joueur en ligne, à réclamer par /voteclaims (le site la met en
+  # attente). Utilisée seulement si le panel admin du site (Votes > Vote Party) est vide.
+  # %player% = nom du joueur
+  reward-commands:
+    - "ecocrates give %player% key tendance physical 1"
+
+  # Message broadcast à tout le serveur au déclenchement du Vote Party.
+  # %votes-required% = seuil configuré ci-dessus
+  broadcast-message: "&5&l✦ &dVote Party ! &7Le serveur vient d'atteindre &6%votes-required% votes&7, une Clé Tendance est offerte à tous les joueurs en ligne ! Récupère-la avec &f/voteclaims&7."
+
+  # Message privé envoyé à chaque joueur en ligne une fois sa récompense mise en attente (laisser vide "" pour désactiver)
+  reward-message: "&d✦ &7Ta &6Clé Tendance&7 du Vote Party t'attend : tape &f/voteclaims&7 pour la récupérer."
+
+  # Message privé quand le site est injoignable au déclenchement : la récompense est
+  # gardée en local (voteparty.yml, par UUID) et rendue par /voteclaims avec les autres.
+  reward-stored-message: "&d✦ &7Ta &6Clé Tendance&7 du Vote Party t'attend : tape &f/voteclaims&7 pour la récupérer."
+
+  # Titre + sous-titre affichés au centre de l'écran de chaque joueur en ligne
+  # (laisser vide "" pour désactiver).
+  title: "&#FFD94D&lVote Party atteint !"
+  subtitle: "&#B376E5Une Clé Tendance offerte à tous"
+
+  # Son joué à chaque joueur en ligne (clé de son vanilla, "" pour aucun son).
+  sound: "entity.player.levelup"
+
+# ─── Rappel de vote ────────────────────────────────────────────────────────
+# Rappel périodique envoyé en tchat aux joueurs en ligne, sur le même gabarit
+# que la fiche /vote, qu'il sert aussi (commande voteinfo, alias /vote).
+# Déclenchement : UNIQUEMENT si le joueur a au moins un site de vote
+# disponible (cooldown écoulé côté mineweb). Les récompenses en attente ne
+# déclenchent jamais le rappel à elles seules, elles sont seulement affichées.
+vote-reminder:
+  enabled: true
+
+  # Intervalle entre deux rappels, en secondes (plancher : 60)
+  interval-seconds: 300
+
+  # Délai avant le TOUT PREMIER rappel après un démarrage, en secondes.
+  # Sert à décaler le rappel des autres messages périodiques du serveur :
+  # ChatGames tourne toutes les 10 min (ChatGames/config.yml → time_minutes),
+  # donc un rappel toutes les 5 min non décalé tomberait pile sur un jeu une
+  # fois sur deux. Avec 150 (2 min 30, soit la moitié de l'intervalle), les
+  # deux ne coïncident jamais. Si tu changes interval-seconds, remets ce délai
+  # à la moitié de la nouvelle valeur.
+  initial-delay-seconds: 150
+
+  # Bloc envoyé au joueur. Placeholders :
+  #   %available% = sites de vote disponibles maintenant pour ce joueur
+  #   %total%     = nombre total de sites de vote
+  #   %pending%   = récompenses de vote en attente de réclamation (/voteclaims)
+  #   %tickets%   = tickets de tombola pas encore misés (à miser sur le site)
+  #   %prochain_lot% = temps avant le prochain tirage de la tombola (ligne sautée sans lot ouvert)
+  # Une ligne contenant %pending% (ou %tickets%) est automatiquement sautée
+  # quand le joueur n'a rien en attente (ou aucun ticket).
+  # Les raccourcis écrits [/commande] sont rendus cliquables.
+  message:
+    - "&#8A8A8A&m                        &r&#8A8A8A ɪɴꜰᴏꜱ &m                        &r"
+    - ""
+    - " &8『&r 🗳 &#B376E5&lᴠᴏᴛᴇ&r &8』"
+    - ""
+    - "   &#DADADAVote chaque jour pour gagner des récompenses."
+    - "  &8• &7Sɪᴛᴇꜱ ᴅɪꜱᴘᴏɴɪʙʟᴇꜱ : &f%available%&7/&f%total%"
+    - "  &8• &7Cléꜱ ᴇɴ ᴀᴛᴛᴇɴᴛᴇ : &f%pending% [/voteclaims]"
+    - "  &8• &7Tɪᴄᴋᴇᴛꜱ ᴅᴇ ᴛᴏᴍʙᴏʟᴀ : &f%tickets%"
+    - "  &8• &7Pʀᴏᴄʜᴀɪɴ ʟᴏᴛ : &fdans %prochain_lot%"
+    - "  &8• &7Lɪᴇɴ : &#2BC4E8&nhttps://influencraft.fr/vote"
+    - ""
+    - "&#8A8A8A&m                                                        &r"
+
+# La boss bar d'XP de métier, l'action bar de gain, Raccommodage, /repair, /bottlexp et la touche des
+# succès sont passés dans les modules de FluxTools (section modules de son config.yml).

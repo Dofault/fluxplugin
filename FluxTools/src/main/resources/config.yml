@@ -30,3 +30,60 @@ messages:
   brise: "&#FFD6DEContrat rempli, ton outil s'est brisé."
   gain: "&r&f\uE023 &#B376E5Tu as gagné &f%montant% &#B376E5Bitblock &#2ECF7B▲ &7[ᴏᴜᴛɪʟ]"
   verrou: "&#FFD6DELes enchantements de cet outil évoluent avec lui : &fimpossible de les modifier&#FFD6DE."
+
+# ─── Modules utilitaires (repris d'InfluBridge le 2026-10-26) ──────────────────
+# Chacun s'active ou se coupe avec enabled. Un module dont le plugin requis est absent
+# (EcoJobs, CMI, ProtocolLib...) se coupe tout seul avec un avertissement en console.
+modules:
+  # /metier (menu des métiers), redirection du menu natif EcoJobs, placeholders %fluxtools_job_*%. EcoJobs requis.
+  jobs:
+    enabled: true
+
+  # Boss bar à chaque gain d'XP de métier, masquée après hide-after-seconds sans gain. EcoJobs requis.
+  # Une seule barre par joueur, qui suit toujours la dernière action. /jobxpbar on|off (bouton /reglages).
+  job-xp-bossbar:
+    enabled: true
+    hide-after-seconds: 4
+    # PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
+    color: "GREEN"
+    # PROGRESS, NOTCHED_6, NOTCHED_10, NOTCHED_12, NOTCHED_20
+    overlay: "NOTCHED_20"
+
+  # Action bar cumulative des gains d'argent (tout dépôt CMIEconomy, montant réel encaissé), effacée
+  # après hide-after-seconds sans nouveau gain. CMI requis. /bitblocknotif on|off (bouton /reglages).
+  money-gain-actionbar:
+    enabled: true
+    hide-after-seconds: 1.5
+    # Couleur du montant ; un reset est toujours inséré avant %img_bitblock%.
+    color: "&#B376E5"
+
+  # Neutralise Raccommodage (Mending) : retiré du résultat d'enclume, du loot généré et des prises de pêche.
+  # Les livres circulent toujours, ils deviennent inutiles. Détail : docs/technique/raccommodage.md.
+  # log: une ligne console à chaque retrait.
+  mending:
+    enabled: true
+    log: false
+
+  # Refus à l'enclume des objets portant le tag de lore « Irréparable » (outils de caisse Ordinaire/Tendance).
+  anvil-restrictions:
+    enabled: true
+
+  # /repair : menu de réparation à prix unique (cost, en BitBlock), durabilité et coût d'enclume remis à neuf.
+  # Permission influbridge.repair (groupe eminent, rang 5). Objets « Irréparable » refusés.
+  repair:
+    enabled: true
+    cost: 500
+
+  # /bottlexp : stocke l'XP dans des fioles de 1395 points (niveaux 0 à 30), rendues au clic droit.
+  bottlexp:
+    enabled: true
+
+  # Touche des succès vanilla (L) : exécute cette commande à la place (en tant que joueur). ProtocolLib requis.
+  advancement-redirect:
+    enabled: true
+    command: "menu"
+
+  # Correctif de démarrage eco + CMIEInjector : réinscrit l'économie Vault auprès d'eco une fois le serveur
+  # démarré, sinon les give_money d'EcoJobs ne versent rien, en silence. Sans effet si eco a déjà son économie.
+  vault-late-binding:
+    enabled: true

@@ -2,11 +2,11 @@ name: FluxTools
 version: '0.1.0'
 main: fr.influencraft.fluxtools.FluxTools
 api-version: '1.21'
-description: Outils de progression des caisses de vote (contrats, pass de l'outil, niveaux).
+description: Outils de progression des caisses de vote (contrats, pass de l'outil, niveaux) et modules utilitaires (métiers, réparation, fioles d'XP, notifications).
 authors: [Influencraft]
 depend: [Vault]
 # EcoEnchants avant nous : ses enchantements (Filon, Tranchée...) doivent être inscrits quand on lit les outils.
-softdepend: [EcoEnchants, eco, Flux, PlaceholderAPI]
+softdepend: [EcoEnchants, eco, EcoJobs, CMI, ProtocolLib, CustomFishing, Flux, PlaceholderAPI]
 commands:
   outil:
     description: Ouvre l'interface de l'outil tenu en main.
@@ -14,7 +14,34 @@ commands:
   fluxitems:
     description: Administration des outils FluxTools.
     usage: /fluxitems <give|reload|info|debloquer|avancer|etape>
+  # Modules utilitaires (ex-InfluBridge), noms de commandes et permissions gardés.
+  metier:
+    description: "Backend du menu /métiers : rejoindre/quitter un métier (facture le vrai prix EcoJobs), voir sa progression ou le détail bloc par bloc."
+    usage: "/<command> [rejoindre <métier>|quitter <métier>|progression <métier>|blocs <métier> [page]]"
+  jobxpbar:
+    description: "Active/désactive la boss bar de progression d'XP de métier (bouton /reglages)."
+    usage: "/<command> <on|off|toggle>"
+  bitblocknotif:
+    description: "Active/désactive l'action bar de gain cumulatif de BitBlock (bouton /reglages)."
+    usage: "/<command> <on|off>"
+  bottlexp:
+    description: "Stocke l'XP du joueur dans des fioles d'expérience de 1395 points chacune (niveaux 0 à 30), rendues au clic droit."
+    usage: "/<command> [give <joueur> <xp> [quantité]]"
+    permission: influbridge.bottlexp
+  repair:
+    description: "Ouvre le menu de réparation : dépose un objet, paie le prix fixe (modules.repair.cost), durabilité et coût d'enclume remis à neuf."
+    usage: "/<command>"
+    permission: influbridge.repair
 permissions:
+  influbridge.bottlexp:
+    description: "Permet d'utiliser /bottlexp (remplir des fioles d'expérience). Utiliser une fiole ne demande aucune permission."
+    default: op
+  influbridge.bottlexp.admin:
+    description: "Permet /bottlexp give <joueur> <xp> [quantité] : donne des fioles d'un montant d'XP libre."
+    default: op
+  influbridge.repair:
+    description: "Permet d'ouvrir le menu de réparation /repair. Accordé au groupe eminent (rang 5)."
+    default: op
   fluxitems.admin:
     description: /fluxitems
     default: op

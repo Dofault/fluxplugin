@@ -14,7 +14,8 @@ the player's inventory and draw buttons over it. Developed for the Influencraft 
 | **FluxReferral** | Referral system with per-player server addresses | — |
 | **FluxRewards** | Daily login and playtime rewards | — |
 | **FluxSorter** | Sorting chests and sorting golem (Lands) | — |
-| **FluxTools** | Levelled tools with quests, crate tools | optional |
+| **FluxTools** | Levelled crate tools with quests, plus optional utility modules (jobs menu and XP boss bar, money action bar, /repair, /bottlexp, Mending lock, anvil rules) | optional |
+| **FluxWebsite** | Bridge with the website: shop deliveries, vote rewards (/voteclaims), Vote Party, vote reminder and streak | — |
 
 ## Building
 
@@ -29,7 +30,7 @@ cd FluxReferral && ./gradlew build   # FluxReferral uses Gradle (run Gradle itse
 ## Renamed plugins
 
 Every plugin copies the data folder of its former name on first start (the old folder is left
-untouched). Commands, permissions, placeholders and item data (PDC namespaces) keep their former
+untouched). Commands, permissions, placeholders (except the InfluBridge game placeholders, now `%fluxtools_compass_north%`, `%fluxtools_empty_slots%`, `%fluxtools_job_*%`) and item data (PDC namespaces) keep their former
 identifiers, so menus, ranks and items already handed out keep working.
 
 | New name | Former name(s) |
@@ -43,4 +44,5 @@ identifiers, so menus, ranks and items already handed out keep working.
 | FluxReferral | InfluParrainage |
 | FluxRewards | InfluRecompenses |
 | FluxSorter | SortingChest, InfluTri |
-| FluxTools | FluxItems |
+| FluxTools | FluxItems (+ game modules of InfluBridge) |
+| FluxWebsite | InfluBridge |

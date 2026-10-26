@@ -102,7 +102,7 @@ def bouton_metier(jid, nom, objet, desc, slot, choisi=False):
     cle = f"{jid}_choisi" if choisi else jid
     its = [
         item(f"{cle}_actif", objet, nom, slot, niveau(jid) + desc + [VERT + "Métier actif."], action, clics,
-             priorite=1, glow=True, quantite=qte, conditions=[f"placeholder: %influbridge_job_active_{jid}% == true"]),
+             priorite=1, glow=True, quantite=qte, conditions=[f"placeholder: %fluxtools_job_active_{jid}% == true"]),
         item(f"{cle}_inactif", objet, nom, slot, niveau(jid) + desc + [ROUGE + "Métier inactif."], action, clics,
              priorite=2, glow=choisi, quantite=qte),
     ]
@@ -183,16 +183,16 @@ def adhesion(jid, nom):
     return [
         # Double clic : le 1er clic affiche le message de confirmation (option « confirm » de Flux).
         item("adhesion_quitter", "itemsadder:influitems:deny", "Quitter le métier", ADHESION,
-             ["Ta progression est gardée.", f"Coût : &f%influbridge_job_leave_price_{jid}%"],
+             ["Ta progression est gardée.", f"Coût : &f%fluxtools_job_leave_price_{jid}%"],
              [CLIC_G + "Double clic pour quitter"],
              {"left": [f"[player] metier quitter {jid}", "[refresh]"]},
-             priorite=1, conditions=[f"placeholder: %influbridge_job_active_{jid}% == true"]).replace(
+             priorite=1, conditions=[f"placeholder: %fluxtools_job_active_{jid}% == true"]).replace(
             "        priority: 1", '        priority: 1\n        confirm: "&#f0716fClique encore pour quitter le métier."', 1),
         item("adhesion_rejoindre", "itemsadder:influitems:accept", "Rejoindre ce métier", ADHESION,
-             ["Commence à gagner des BitBlock", "avec ce métier.", f"Coût : &f%influbridge_job_join_price_{jid}%"],
+             ["Commence à gagner des BitBlock", "avec ce métier.", f"Coût : &f%fluxtools_job_join_price_{jid}%"],
              [CLIC_G + "Rejoindre"],
              {"left": [f"[player] metier rejoindre {jid}", "[sound] minecraft:entity.player.levelup 1 1.4", "[refresh]"]},
-             priorite=2, conditions=[f"placeholder: %influbridge_job_can_join_{jid}% == true"]),
+             priorite=2, conditions=[f"placeholder: %fluxtools_job_can_join_{jid}% == true"]),
         item("adhesion_complet", "itemsadder:influitems:lock", "Plus de place", ADHESION,
              ["Tu exerces déjà le maximum", "de métiers pour ton rang :", "&f%ecojobs_in_jobs%&7/&f%ecojobs_limit%",
               ROUGE + "Monte en rang pour en exercer plus."], priorite=3),
