@@ -72,7 +72,7 @@
         <artifactId>customfishing</artifactId>
         <version>2.3.27</version>
         <scope>system</scope>
-        <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/CustomFishing-2.3.28.jar</systemPath>
+        <systemPath>${project.basedir}/libs/CustomFishing-2.3.28.jar</systemPath>
     </dependency>
 
     <!-- eco API (soft dependency, provided at runtime), même technique systemPath : nécessaire
@@ -83,7 +83,7 @@
         <artifactId>eco</artifactId>
         <version>2026.38</version>
         <scope>system</scope>
-        <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/eco-2026.41-modrinth.jar</systemPath>
+        <systemPath>${project.basedir}/libs/eco-2026.41-modrinth.jar</systemPath>
     </dependency>
 
     <!-- ItemsAdder API (soft dependency, provided at runtime), même technique systemPath :
@@ -94,7 +94,7 @@
         <artifactId>ItemsAdder</artifactId>
         <version>4.0.18</version>
         <scope>system</scope>
-        <systemPath>${project.basedir}/../../serveurs/03_semirp/plugins/ItemsAdder_4.0.18.jar</systemPath>
+        <systemPath>${project.basedir}/libs/ItemsAdder_4.0.18.jar</systemPath>
     </dependency>
 
   </dependencies>
@@ -149,10 +149,10 @@
                                  Copie sur les serveurs de test uniquement (Labs, Semi-Lab) : la
                                  prod SemiRP se met à jour à la main, après validation. -->
                             <copy file="${project.build.directory}/${project.build.finalName}.jar"
-                                  tofile="${project.basedir}/../../serveurs/04_labs/plugins/${project.artifactId}.jar"
+                                  tofile="${project.basedir}/../../../serveurs/04_labs/plugins/${project.artifactId}.jar"
                                   overwrite="true" />
                             <copy file="${project.build.directory}/${project.build.finalName}.jar"
-                                  tofile="${project.basedir}/../../serveurs/05_semilab/plugins/${project.artifactId}.jar"
+                                  tofile="${project.basedir}/../../../serveurs/05_semilab/plugins/${project.artifactId}.jar"
                                   overwrite="true" />
                         </target>
                     </configuration>

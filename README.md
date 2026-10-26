@@ -18,6 +18,8 @@ the player's inventory and draw buttons over it. Developed for the Influencraft 
 | **FluxTools** | Levelled crate tools with quests, plus optional utility modules (jobs menu and XP boss bar, money action bar, /repair, /bottlexp, enchanted book splitter, Mending lock, anvil rules) | optional |
 | **FluxWebsite** | Bridge with the website: shop deliveries, vote rewards (/voteclaims), Vote Party, vote reminder and streak | — |
 
+`InfluShop` (Influence currency shop) and `VaultSupermarket` (server shop blocks) are imported as they are and will be merged into **FluxShop**.
+
 ## Building
 
 Third-party server jars are not committed (several are paid plugins): drop them into each module's

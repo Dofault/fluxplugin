@@ -28,5 +28,8 @@
         <module>FluxRewards</module>
         <module>FluxSorter</module>
         <module>FluxWebsite</module>
+        <!-- to be merged into FluxShop -->
+        <module>InfluShop</module>
+        <module>VaultSupermarket</module>
     </modules>
 </project>
