@@ -1,0 +1,3 @@
+files:
+  - source: /quickshop-bukkit/src/main/resources/lang/*.yml
+    translation: /crowdin/lang/%locale%/%original_file_name%

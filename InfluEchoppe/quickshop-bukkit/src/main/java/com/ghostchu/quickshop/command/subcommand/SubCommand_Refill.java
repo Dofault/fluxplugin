@@ -1,0 +1,57 @@
+package com.ghostchu.quickshop.command.subcommand;
+
+import com.ghostchu.quickshop.QuickShop;
+import com.ghostchu.quickshop.api.command.CommandHandler;
+import com.ghostchu.quickshop.api.command.CommandParser;
+import com.ghostchu.quickshop.api.shop.Shop;
+import com.ghostchu.quickshop.common.util.CommonUtil;
+import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.List;
+
+public class SubCommand_Refill implements CommandHandler<Player> {
+
+  private final QuickShop plugin;
+
+  public SubCommand_Refill(final QuickShop plugin) {
+
+    this.plugin = plugin;
+  }
+
+  @Override
+  public void onCommand(@NotNull final Player sender, @NotNull final String commandLabel, @NotNull final CommandParser parser) {
+
+    if(parser.getArgs().isEmpty()) {
+      plugin.text().of(sender, "command.no-amount-given").send();
+      return;
+    }
+    final int add;
+    final Shop shop = getLookingShop(sender);
+    if(shop == null) {
+      plugin.text().of(sender, "not-looking-at-shop").send();
+      return;
+    }
+    if(CommonUtil.isInteger(parser.getArgs().getFirst())) {
+      add = Integer.parseInt(parser.getArgs().getFirst());
+    } else {
+      if(parser.getArgs().getFirst().equals(plugin.getConfig().getString("shop.word-for-trade-all-items"))) {
+        add = shop.getRemainingSpace();
+      } else {
+        plugin.text().of(sender, "not-a-number", parser.getArgs().getFirst()).send();
+        return;
+      }
+    }
+    shop.add(shop.getItem(), add);
+    plugin.text().of(sender, "refill-success").send();
+  }
+
+  @NotNull
+  @Override
+  public List<String> onTabComplete(@NotNull final Player sender, @NotNull final String commandLabel, @NotNull final CommandParser parser) {
+
+    return parser.getArgs().size() == 1? Collections.singletonList(plugin.text().of(sender, "tabcomplete.amount").plain()) : Collections.emptyList();
+  }
+
+}
