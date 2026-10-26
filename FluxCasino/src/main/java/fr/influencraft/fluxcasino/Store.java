@@ -14,16 +14,15 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Soldes et mises en base SQLite (plugins/FluxCasino/casino.db, pilote fourni par Paper), écrits tout de
- * suite à chaque mouvement (un jeton vaut de l'argent : pas de sauvegarde différée). Chaque mouvement de
- * solde est aussi inscrit au journal (ledger : joueur, variation, solde après, motif, date), pour pouvoir
- * retracer un litige ou un abus. Soldes et mises gardés en cache (lus par les placeholders à chaque rendu).
- * Tout se passe sur le fil principal.
+ * Balances and bets in SQLite (plugins/FluxCasino/casino.db, driver provided by Paper), written right away on every
+ * movement (a chip is worth money: no delayed save). Every balance movement is also written to the ledger (player,
+ * change, balance after, reason, date) to trace a dispute or an abuse. Balances and bets are cached (read by the
+ * placeholders on every render). Main thread only.
  */
 final class Store {
 
     private final Connection db;
-    private final Map<UUID, long[]> cache = new ConcurrentHashMap<>(); // {jetons, mise}
+    private final Map<UUID, long[]> cache = new ConcurrentHashMap<>(); // {chips, bet}
     private final long defaultBet;
 
     Store(File folder, long defaultBet) throws SQLException {
@@ -44,7 +43,7 @@ final class Store {
         try {
             db.close();
         } catch (SQLException ignored) {
-            // arrêt du serveur
+            // server stopping
         }
     }
 
@@ -56,7 +55,7 @@ final class Store {
                     return rs.next() ? new long[]{rs.getLong(1), rs.getLong(2)} : new long[]{0, defaultBet};
                 }
             } catch (SQLException e) {
-                throw new IllegalStateException("lecture du solde de " + u, e);
+                throw new IllegalStateException("reading the balance of " + u, e);
             }
         });
     }
@@ -74,8 +73,8 @@ final class Store {
     }
 
     /**
-     * Ajoute delta (négatif = retrait) au solde, journal compris, dans une transaction. Refusé (false) si le
-     * solde deviendrait négatif. Le cache n'est mis à jour qu'une fois l'écriture validée.
+     * Adds delta (negative = withdrawal) to the balance, ledger included, in one transaction. Refused (false) when the
+     * balance would go negative. The cache is only updated once the write is committed.
      */
     boolean add(UUID uuid, String name, long delta, String reason) {
         long[] r = row(uuid);
@@ -100,14 +99,14 @@ final class Store {
             try {
                 db.rollback();
             } catch (SQLException ignored) {
-                // la connexion est déjà en défaut
+                // the connection already failed
             }
-            throw new IllegalStateException("écriture du solde de " + uuid, e);
+            throw new IllegalStateException("writing the balance of " + uuid, e);
         } finally {
             try {
                 db.setAutoCommit(true);
             } catch (SQLException ignored) {
-                // idem
+                // same
             }
         }
     }
@@ -118,7 +117,7 @@ final class Store {
             write(uuid, name, r[0], bet);
             r[1] = bet;
         } catch (SQLException e) {
-            throw new IllegalStateException("écriture de la mise de " + uuid, e);
+            throw new IllegalStateException("writing the bet of " + uuid, e);
         }
     }
 
@@ -135,7 +134,7 @@ final class Store {
         }
     }
 
-    /** Derniers mouvements d'un joueur (le plus récent d'abord) : « variation solde motif date ». */
+    /** Last movements of a player (most recent first): {change, balance, reason, date}. */
     List<String[]> history(UUID uuid, int limit) {
         List<String[]> out = new ArrayList<>();
         try (PreparedStatement ps = db.prepareStatement(

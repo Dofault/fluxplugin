@@ -3,33 +3,13 @@ version: 26.2
 main: fr.influencraft.fluxwebsite.FluxWebsite
 api-version: '26.2'
 author: dofault
-description: "Pont entre le site web (mineweb) et le serveur : livre les commandes en attente (achats boutique), les récompenses de vote (/voteclaims), le Vote Party, le rappel de vote et la flamme de vote. Ex-InfluBridge."
-
-softdepend: [PlaceholderAPI, eco]
-
-commands:
-  influbridge:
-    description: "Relit config.yml et réapplique à chaud ce qui peut l'être (rappel de vote, Vote Party)."
-    usage: "/<command> reload"
-    permission: influbridge.admin
-  influvoteparty:
-    description: "Incrémente le compteur Vote Party. Déclenché en console par mineweb à chaque vote confirmé (tous sites confondus). Réservé OP en jeu (add/remove <montant> pour corriger le compteur à la main)."
-    usage: "/<command> <add [montant]|remove <montant>>"
-  voteinfo:
-    description: "Affiche le bloc d'infos de vote (sites disponibles, récompenses en attente). Cible de l'alias /vote."
-    usage: "/<command>"
-  votenotif:
-    description: "Active/désactive le rappel de vote périodique en tchat (bouton /reglages)."
-    usage: "/<command> <on|off>"
-  voteclaims:
-    description: "Réclame toutes les récompenses de vote en attente (clés, flamme, top 3, objectif du mois, tombola, Vote Party), dans la limite des cases libres de l'inventaire (bouton Vote de /menu, clic droit)."
-    usage: "/<command>"
-    aliases: [votekeys]
+description: "Bridge between the website and the server: shop deliveries, vote rewards to claim, Vote Party, vote reminder and vote streak. Formerly InfluBridge."
+depend: [Flux]
 
 permissions:
   influbridge.admin:
-    description: "Permet /influbridge reload (rechargement de config.yml)"
+    description: "Reload the config (/website reload)."
     default: op
   influbridge.voteparty.admin:
-    description: "Permet de corriger le compteur Vote Party à la main (/influvoteparty add|remove <montant>)"
+    description: "Change the Vote Party counter by hand (/voteparty add|remove <amount>)."
     default: op

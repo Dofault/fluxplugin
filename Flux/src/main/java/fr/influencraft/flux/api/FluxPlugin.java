@@ -25,8 +25,8 @@ import java.util.jar.JarFile;
  *   <li>{@code config.yml} written from the jar when missing;</li>
  *   <li>texts in {@code lang/<language>.yml} ({@link #messages()}), in the plugin's {@code language} or else the
  *   suite's one;</li>
- *   <li>menus shipped in the jar under {@code menus/}: copied to {@code plugins/<Plugin>/menus/} when missing and
- *   loaded by Flux;</li>
+ *   <li>menus shipped in the jar under {@code menus/} (a translation under {@code i18n/<language>/menus/} is used
+ *   instead when present): copied to {@code plugins/<Plugin>/menus/} when missing and loaded by Flux;</li>
  *   <li>shortcuts to declare commands, placeholders, actions and lists, all dropped when the plugin stops.</li>
  * </ul>
  * Subclasses implement {@link #enable()} (and optionally {@link #disable()}, {@link #reload()}).
@@ -126,8 +126,18 @@ public abstract class FluxPlugin extends JavaPlugin {
             getLogger().warning("Could not list the menus of the jar: " + e.getMessage());
         }
         if (shipped.isEmpty()) return;
+        String translated = "i18n/" + language() + "/";
         for (String name : shipped) {
-            if (!new File(getDataFolder(), name).exists()) saveResource(name, false);
+            File target = new File(getDataFolder(), name);
+            if (target.exists()) continue;
+            // a translated menu (i18n/<language>/menus/x.yml) is written instead of the English one
+            String source = getResource(translated + name) != null ? translated + name : name;
+            try (java.io.InputStream in = getResource(source)) {
+                target.getParentFile().mkdirs();
+                java.nio.file.Files.copy(in, target.toPath());
+            } catch (IOException | NullPointerException e) {
+                getLogger().warning("Could not write " + name + ": " + e.getMessage());
+            }
         }
         FluxApi.registerMenuFolder(this, new File(getDataFolder(), "menus"));
     }

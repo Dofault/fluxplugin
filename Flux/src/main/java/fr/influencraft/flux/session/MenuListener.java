@@ -155,6 +155,7 @@ public final class MenuListener implements Listener {
         service.quit(e.getPlayer());
         fr.influencraft.flux.api.list.Lists.forget(e.getPlayer());
         fr.influencraft.flux.menu.ListRenderer.forget(e.getPlayer());
+        fr.influencraft.flux.api.util.PlayerSettings.forget(e.getPlayer().getUniqueId());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

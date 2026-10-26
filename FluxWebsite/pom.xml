@@ -11,7 +11,7 @@
     <properties>
         <!-- Paper API 26.2 = server version; jars built against it stay compatible with 26.3 (check: mvn -P paper-26.3) -->
         <paper.api.version>26.2.build.124-stable</paper.api.version>
-        <java.version>21</java.version>
+        <java.version>25</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -33,12 +33,6 @@
             <version>${paper.api.version}</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>me.clip</groupId>
-            <artifactId>placeholderapi</artifactId>
-            <version>2.11.6</version>
-            <scope>provided</scope>
-        </dependency>
         <!-- Bundled by Paper at runtime: parses the website API responses -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
@@ -46,13 +40,11 @@
             <version>2.14.0</version>
             <scope>provided</scope>
         </dependency>
-        <!-- eco (Auxilor): text formatting and per-player data keys. Jar copied into libs/ (see LIBS.md). -->
         <dependency>
-            <groupId>com.willfp</groupId>
-            <artifactId>eco</artifactId>
-            <version>2026.41</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/eco-2026.41-modrinth.jar</systemPath>
+            <groupId>fr.influencraft</groupId>
+            <artifactId>Flux</artifactId>
+            <version>0.1.0</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 

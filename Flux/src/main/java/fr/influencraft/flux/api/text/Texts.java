@@ -82,6 +82,33 @@ public final class Texts {
         player.sendActionBar(parse(raw, player));
     }
 
+    private static final java.util.regex.Pattern COMMAND_SHORTCUT = java.util.regex.Pattern.compile("\\[/[^\\]]+\\]");
+    // stops on the last useful character: final punctuation belongs to the sentence, not to the URL
+    private static final java.util.regex.Pattern URL = java.util.regex.Pattern.compile("https?://[^\\s]*[^\\s.,;:!?)\\]]");
+
+    /**
+     * Makes {@code [/command]} shortcuts run their command on click and plain URLs open on click, keeping the
+     * text style (Minecraft makes nothing clickable by itself).
+     */
+    public static Component clickable(Component line) {
+        Component out = line.replaceText(net.kyori.adventure.text.TextReplacementConfig.builder().match(COMMAND_SHORTCUT)
+                .replacement((match, builder) -> {
+                    String command = match.group().substring(1, match.group().length() - 1);
+                    return builder.clickEvent(net.kyori.adventure.text.event.ClickEvent.runCommand(command))
+                            .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(
+                                    Component.text(command, net.kyori.adventure.text.format.NamedTextColor.GRAY)));
+                }).build());
+        return out.replaceText(net.kyori.adventure.text.TextReplacementConfig.builder().match(URL)
+                .replacement((match, builder) -> builder.clickEvent(net.kyori.adventure.text.event.ClickEvent.openUrl(match.group()))
+                        .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(
+                                Component.text(match.group(), net.kyori.adventure.text.format.NamedTextColor.GRAY)))).build());
+    }
+
+    /** {@link #parse} then {@link #clickable}. */
+    public static Component parseClickable(String raw, OfflinePlayer player) {
+        return clickable(parse(raw, player));
+    }
+
     /** Replaces {@code key, value} pairs in a raw text ({@code "%amount%", "10"}). */
     public static String replace(String raw, String... pairs) {
         if (raw == null) return "";

@@ -1,0 +1,50 @@
+# FluxRewards: pending rewards of every source. Opened by /rewards menu.
+title: "&8Rewards"
+rows: 6
+player-inventory: hidden
+vanilla-background: true
+update-interval: 40
+
+lists:
+  rewards:
+    slots: 10-16,19-25,28-34
+    item:
+      material: entry
+      name: "%entry_label%"
+      lore:
+        - "&7%entry_source%"
+        - "&7Slots: &f%entry_slots%"
+      actions:
+        left: ["[player] %flux_cmd_fluxrewards_rewards% claim"]
+    empty:
+      material: BARRIER
+      name: "&7Nothing waiting for you"
+
+items:
+  claim:
+    slot: 49
+    material: CHEST
+    name: "&#2ECF7BClaim everything"
+    lore: ["&7%fluxrewards_pending% reward(s) waiting"]
+    actions:
+      left: ["[player] %flux_cmd_fluxrewards_rewards% claim"]
+  previous:
+    slot: 45
+    material: ARROW
+    name: "&fPrevious page"
+    view-requirements: ["placeholder: %flux_list_rewards_has_prev% == true"]
+    actions:
+      left: ["[list] rewards prev"]
+  next:
+    slot: 53
+    material: ARROW
+    name: "&fNext page (%flux_list_rewards_page%/%flux_list_rewards_pages%)"
+    view-requirements: ["placeholder: %flux_list_rewards_has_next% == true"]
+    actions:
+      left: ["[list] rewards next"]
+  close:
+    slot: 50
+    material: BARRIER
+    name: "&cClose"
+    actions:
+      left: ["[close]"]

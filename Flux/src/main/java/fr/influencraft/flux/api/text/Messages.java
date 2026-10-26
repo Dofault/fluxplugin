@@ -24,6 +24,7 @@ import java.util.List;
  *   <li>A {@code prefix} key, when present, is put before every {@link #send} message; a message starting with
  *   {@code !} is sent without it. An empty message is not sent.</li>
  *   <li>Variables are {@code key, value} pairs: {@code send(player, "bought", "%amount%", "10")}.</li>
+ *   <li>In chat messages, {@code [/command]} shortcuts and URLs are clickable.</li>
  * </ul>
  * The language comes from the plugin's {@code language} config key, else from Flux's (suite-wide default).
  */
@@ -112,7 +113,7 @@ public final class Messages {
         for (String line : rawList(key, vars)) {
             if (line.isEmpty()) continue;
             String text = line.startsWith("!") ? line.substring(1) : prefix + line;
-            to.sendMessage(Texts.parse(text, context));
+            to.sendMessage(Texts.parseClickable(text, context));
         }
     }
 

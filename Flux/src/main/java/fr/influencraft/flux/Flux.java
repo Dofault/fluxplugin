@@ -55,6 +55,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         PathRenderer.init(getLogger());
         fr.influencraft.flux.menu.ListRenderer.init(getLogger());
         fr.influencraft.flux.api.command.Commands.init(this);
+        fr.influencraft.flux.api.util.PlayerSettings.open(this);
         fr.influencraft.flux.api.economy.Economy.registerBuiltIns(this);
         items = new ItemFactory(this);
         actions = new Actions(this);
@@ -88,6 +89,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         if (jobInfo != null) jobInfo.unregister();
         if (collectionInfo != null) collectionInfo.unregister();
         fr.influencraft.flux.api.FluxApi.bind(null);
+        fr.influencraft.flux.api.util.PlayerSettings.close();
         if (papiBridge != null) papiBridge.shutdown();
         if (menus != null) menus.closeAll();
         if (packetListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(packetListener);
@@ -201,6 +203,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         fr.influencraft.flux.api.list.Lists.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.command.Commands.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.economy.Economy.unregisterAll(event.getPlugin());
+        fr.influencraft.flux.api.reward.Rewards.unregisterAll(event.getPlugin());
         placeholdersChanged();
         if (hadMenus) menuFoldersChanged();
     }

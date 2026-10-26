@@ -1,13 +1,13 @@
-# URL publique du site (mineweb), sans slash final.
-api-base-url: "https://dev.influencraft.fr"
+# Public URL of the website, without a trailing slash.
+api-base-url: ""
 
-# Doit être identique à MC_SERVER_SECRET dans web/mineweb/.env
+# Must match MC_SERVER_SECRET on the website side.
 api-secret: "CHANGE_ME"
 
-# Fréquence de vérification des commandes en attente (pending_commands)
+# How often pending commands (shop purchases) are polled, in seconds.
 poll-interval-seconds: 30
 
-# Fréquence de rafraîchissement du cache de streak de vote (placeholders %influbridge_flame_*%)
+# How often the vote streak of online players is refreshed (%influbridge_flame_*%), in seconds.
 streak-cache-interval-seconds: 30
 
 # ─── Vote Party ────────────────────────────────────────────────────────────
@@ -88,5 +88,6 @@ vote-reminder:
     - ""
     - "&#8A8A8A&m                                                        &r"
 
-# La boss bar d'XP de métier, l'action bar de gain, Raccommodage, /repair, /bottlexp et la touche des
-# succès sont passés dans les modules de FluxTools (section modules de son config.yml).
+# Icon of the vote rewards in the menu of pending rewards (FluxRewards).
+vote-rewards:
+  icon: "TRIPWIRE_HOOK"
