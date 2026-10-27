@@ -43,9 +43,9 @@ public final class Text {
         return papi;
     }
 
+    /** A custom item plugin provides glyphs (Flux providers.items). */
     static boolean hasItemsAdder() {
-        if (itemsAdder == null) itemsAdder = Bukkit.getPluginManager().isPluginEnabled("ItemsAdder");
-        return itemsAdder;
+        return fr.influencraft.flux.api.items.CustomItems.available();
     }
 
     /** Placeholders seuls (texte brut, sans couleurs) : commandes, conditions. */
@@ -128,7 +128,7 @@ public final class Text {
     public static Component line(Player player, String raw) {
         String out = placeholders(player, raw);
         if (hasItemsAdder() && out.indexOf(':') >= 0) {
-            out = dev.lone.itemsadder.api.FontImages.FontImageWrapper.replaceFontImages(out);
+            out = fr.influencraft.flux.api.items.CustomItems.glyphs(out);
             java.util.regex.Matcher m = LEFTOVER_GLYPH.matcher(out);
             while (m.find()) {
                 if (logger != null && warnedGlyphs.add(m.group())) {
@@ -295,9 +295,9 @@ public final class Text {
         return color + formats;
     }
 
-    /** Placeholders and ItemsAdder glyphs only, no colour parsing (text sent to another plugin, commands). */
+    /** Placeholders and custom glyphs only, no colour parsing (text sent to another plugin, commands). */
     public static String glyphs(String text) {
         if (!hasItemsAdder() || text.indexOf(':') < 0) return text;
-        return dev.lone.itemsadder.api.FontImages.FontImageWrapper.replaceFontImages(text);
+        return fr.influencraft.flux.api.items.CustomItems.glyphs(text);
     }
 }

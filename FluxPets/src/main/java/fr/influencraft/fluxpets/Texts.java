@@ -1,6 +1,5 @@
 package fr.influencraft.fluxpets;
 
-import dev.lone.itemsadder.api.FontImages.FontImageWrapper;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
@@ -42,18 +41,14 @@ public final class Texts {
     }
 
     private static String lookupGlyph(String id) {
-        if (!Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) {
+        if (!fr.influencraft.flux.api.items.CustomItems.available()) {
             return "";
         }
-        // %img_<namespace>:<id>% : glyphe de n'importe quel pack ItemsAdder
+        // %img_<namespace>:<id>%: glyph of any pack (Flux custom items service)
         for (String ns : id.contains(":") ? List.of("") : GLYPH_NAMESPACES) {
-            try {
-                FontImageWrapper wrapper = new FontImageWrapper(ns.isEmpty() ? id : ns + ":" + id);
-                if (wrapper.exists()) {
-                    return wrapper.getString();
-                }
-            } catch (RuntimeException ignored) {
-                // glyphe absent de ce namespace
+            String full = ns.isEmpty() ? id : ns + ":" + id;
+            if (fr.influencraft.flux.api.items.CustomItems.glyphExists(full)) {
+                return fr.influencraft.flux.api.items.CustomItems.glyphs(":" + full + ":");
             }
         }
         return "";

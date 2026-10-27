@@ -244,26 +244,12 @@ public final class PathRenderer {
         return text.replaceAll("%[^%\\s]+%", "").isBlank();
     }
 
-    @SuppressWarnings("unchecked")
     private static int width(String name) {
         return WIDTHS.computeIfAbsent(name, n -> {
-            if (!Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) return 0;
-            String full = n;
-            if (!n.contains(":")) {
-                for (Object o : (Iterable<Object>) dev.lone.itemsadder.api.FontImages.FontImageWrapper.getNamespacedIdsInRegistry()) {
-                    String id = String.valueOf(o);
-                    if (id.endsWith(":" + n)) {
-                        full = id;
-                        break;
-                    }
-                }
-            }
-            dev.lone.itemsadder.api.FontImages.FontImageWrapper w = new dev.lone.itemsadder.api.FontImages.FontImageWrapper(full);
-            if (!w.exists()) {
-                warnOnce("width" + n, "glyphe :" + n + ": inconnu d'ItemsAdder, largeur 0 retenue pour placer les chemins");
-                return 0;
-            }
-            return w.getWidth();
+            if (!fr.influencraft.flux.api.items.CustomItems.available()) return 0;
+            int w = fr.influencraft.flux.api.items.CustomItems.glyphWidth(n);
+            if (w <= 0) warnOnce("width" + n, "glyph :" + n + ": unknown, width 0 used to place the paths");
+            return w;
         });
     }
 

@@ -45,7 +45,6 @@ public final class ItemFactory {
     public static NamespacedKey BUTTON_KEY;
 
     private final Consumer<String> warn;
-    private final Map<String, String> iaIds = new ConcurrentHashMap<>();
     private final Map<String, Boolean> warned = new ConcurrentHashMap<>();
 
     private static ItemFactory instance;
@@ -63,7 +62,6 @@ public final class ItemFactory {
     }
 
     public void clearCache() {
-        iaIds.clear();
         warned.clear();
     }
 
@@ -229,20 +227,17 @@ public final class ItemFactory {
     }
 
     private ItemStack itemsAdder(String id, String raw) {
-        if (!Text.hasItemsAdder()) {
-            warnOnce(raw, "ItemsAdder absent, « " + raw + " » remplacé par une barrière");
+        if (!fr.influencraft.flux.api.items.CustomItems.available()) {
+            warnOnce(raw, "no custom item plugin, \u00ab " + raw + " \u00bb replaced by a barrier");
             return new ItemStack(Material.BARRIER);
         }
-        String namespaced = iaIds.computeIfAbsent(id, ItemFactory::resolveIaId);
-        dev.lone.itemsadder.api.CustomStack stack = namespaced.isEmpty() ? null
-                : dev.lone.itemsadder.api.CustomStack.getInstance(namespaced);
+        ItemStack stack = fr.influencraft.flux.api.items.CustomItems.item(id);
         if (stack == null) {
-            // ItemsAdder peut ne pas avoir fini de charger : on ne garde pas l'échec en cache.
-            iaIds.remove(id);
-            warnOnce(raw, "objet ItemsAdder introuvable « " + raw + " », remplacé par une barrière");
+            // the custom items may still be loading: the failure is not cached
+            warnOnce(raw, "custom item not found \u00ab " + raw + " \u00bb, replaced by a barrier");
             return new ItemStack(Material.BARRIER);
         }
-        return stack.getItemStack().clone();
+        return stack;
     }
 
     /** Tête HeadDatabase par réflexion (pas de dépendance de compilation) ; tête simple sinon. */
@@ -260,22 +255,6 @@ public final class ItemFactory {
             warnOnce(raw, "HeadDatabase absent, « " + raw + " » remplacé par une tête simple");
         }
         return new ItemStack(Material.PLAYER_HEAD);
-    }
-
-    /** « ns:id » tel quel, sinon on cherche l'unique « *:id » du registre ItemsAdder. */
-    @SuppressWarnings("unchecked")
-    private static String resolveIaId(String id) {
-        if (id.contains(":")) return id;
-        String suffix = ":" + id;
-        String found = "";
-        for (Object o : (Iterable<Object>) dev.lone.itemsadder.api.CustomStack.getNamespacedIdsInRegistry()) {
-            String full = String.valueOf(o);
-            if (full.endsWith(suffix)) {
-                if (!found.isEmpty()) return found; // homonymes : premier trouvé, préciser le namespace
-                found = full;
-            }
-        }
-        return found;
     }
 
     private static int amount(String raw, Player viewer) {

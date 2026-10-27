@@ -1,5 +1,6 @@
 package fr.influencraft.fluxauctionhouse;
 
+import fr.influencraft.flux.api.items.CustomItems;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import net.kyori.adventure.text.Component;
@@ -88,11 +89,9 @@ final class Objets {
 
     /** Identifiant ItemsAdder (« ns:id ») ou null. */
     static String itemsAdder(ItemStack item) {
-        if (item == null || !Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) return null;
         try {
-            dev.lone.itemsadder.api.CustomStack cs = dev.lone.itemsadder.api.CustomStack.byItemStack(item);
-            return cs == null ? null : cs.getNamespacedID();
-        } catch (Throwable t) {
+            return CustomItems.id(item); // custom items of the server (Flux providers.items)
+        } catch (RuntimeException | LinkageError t) {
             return null;
         }
     }

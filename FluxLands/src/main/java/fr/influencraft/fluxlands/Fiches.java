@@ -41,13 +41,10 @@ final class Fiches {
     /** Matériau Flux d'un objet : {@code itemsadder:ns:id} pour un objet ItemsAdder, sinon vanilla. */
     static String materiau(ItemStack item) {
         if (item == null || item.getType().isAir()) return "minecraft:chest";
-        if (Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) {
-            try {
-                dev.lone.itemsadder.api.CustomStack cs = dev.lone.itemsadder.api.CustomStack.byItemStack(item);
-                if (cs != null) return "itemsadder:" + cs.getNamespacedID();
-            } catch (Throwable ignored) {
-                // API ItemsAdder pas encore prête : objet vanilla de repli
-            }
+        {
+            // custom item of the server (Flux providers.items), written in the Flux material syntax
+            String custom = fr.influencraft.flux.api.items.CustomItems.id(item);
+            if (custom != null) return "itemsadder:" + custom;
         }
         return item.getType().getKey().toString();
     }

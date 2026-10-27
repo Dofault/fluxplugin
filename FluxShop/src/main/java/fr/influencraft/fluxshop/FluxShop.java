@@ -20,7 +20,6 @@ import fr.influencraft.fluxshop.managers.SellManager;
 import fr.influencraft.fluxshop.managers.TpShopCooldownManager;
 import fr.influencraft.fluxshop.managers.SellMenu;
 import fr.influencraft.fluxshop.placeholder.ShopPlaceholders;
-import fr.influencraft.fluxshop.integration.ItemsAdderLoadListener;
 import fr.influencraft.fluxshop.shop.ShopActivity;
 import fr.influencraft.fluxshop.shop.ShopBlockRestorer;
 import fr.influencraft.fluxshop.shop.ShopEditor;
@@ -114,9 +113,8 @@ public class FluxShop extends JavaPlugin {
         // for custom blocks
         ShopBlockRestorer restorer = new ShopBlockRestorer(this, shopRegistry);
         pm.registerEvents(restorer, this);
-        if (pm.isPluginEnabled("ItemsAdder")) {
-            pm.registerEvents(new ItemsAdderLoadListener(restorer::restoreAll), this);
-        }
+        // custom blocks can only be placed once the custom items are loaded (Flux providers.items)
+        fr.influencraft.flux.api.items.CustomItems.onLoaded(this, restorer::restoreAll);
         Bukkit.getScheduler().runTask(this, restorer::restoreAll);
         pm.registerEvents(new AutoSellToggleListener(autoSellItemManager, autoSellMenu), this);
         pm.registerEvents(autoSellExceptions, this);

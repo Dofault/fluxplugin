@@ -79,11 +79,10 @@ public final class ChestBackgrounds implements PacketListener {
     private String prefix(int rows) {
         String cached = prefixes.get(rows - 1);
         if (cached != null) return cached;
-        if (!Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) return null;
+        if (!fr.influencraft.flux.api.items.CustomItems.available()) return null;
         String resolved;
         try {
-            resolved = dev.lone.itemsadder.api.FontImages.FontImageWrapper
-                    .replaceFontImages(String.format(SHORTCODE, rows));
+            resolved = fr.influencraft.flux.api.items.CustomItems.glyphs(String.format(SHORTCODE, rows));
         } catch (RuntimeException e) {
             return null; // ItemsAdder en cours de chargement : on réessaiera à la prochaine fenêtre
         }

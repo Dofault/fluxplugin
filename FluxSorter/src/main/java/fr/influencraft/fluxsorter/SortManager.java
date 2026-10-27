@@ -263,26 +263,9 @@ public final class SortManager {
         return stack.getType().getKey().toString();
     }
 
+    /** Custom item id (Flux providers.items), so two custom items of the same material are told apart. */
     private String itemsAdderId(ItemStack stack) {
-        if (!iaResolved) {
-            iaResolved = true;
-            if (Hooks.isEnabled("ItemsAdder")) {
-                try {
-                    Class<?> cls = Class.forName("dev.lone.itemsadder.api.CustomStack");
-                    iaByItemStack = cls.getMethod("byItemStack", ItemStack.class);
-                    iaGetId = cls.getMethod("getNamespacedID");
-                } catch (ReflectiveOperationException e) {
-                    plugin.getLogger().warning("ItemsAdder API not found, comparing by material only.");
-                }
-            }
-        }
-        if (iaByItemStack == null) return null;
-        try {
-            Object custom = iaByItemStack.invoke(null, stack);
-            return custom == null ? null : (String) iaGetId.invoke(custom);
-        } catch (ReflectiveOperationException e) {
-            return null;
-        }
+        return fr.influencraft.flux.api.items.CustomItems.id(stack);
     }
 
     // ---------------------------------------------------------------- visuel

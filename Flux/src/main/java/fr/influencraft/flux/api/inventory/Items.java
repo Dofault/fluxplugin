@@ -57,17 +57,14 @@ public final class Items {
         return item;
     }
 
-    /** Namespaced ItemsAdder id of an item ({@code namespace:id}), or null when it is not an ItemsAdder item. */
+    /** Namespaced custom item id ({@code namespace:id}), or null for a vanilla item. See {@link fr.influencraft.flux.api.items.CustomItems}. */
     public static String itemsAdderId(ItemStack item) {
-        if (item == null || !org.bukkit.Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) return null;
-        dev.lone.itemsadder.api.CustomStack stack = dev.lone.itemsadder.api.CustomStack.byItemStack(item);
-        return stack == null ? null : stack.getNamespacedID();
+        return fr.influencraft.flux.api.items.CustomItems.id(item);
     }
 
-    /** Whether an ItemsAdder item with this namespaced id exists (false without ItemsAdder). */
+    /** Whether a custom item with this id exists. See {@link fr.influencraft.flux.api.items.CustomItems}. */
     public static boolean itemsAdderExists(String namespacedId) {
-        return org.bukkit.Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")
-                && dev.lone.itemsadder.api.CustomStack.isInRegistry(namespacedId);
+        return fr.influencraft.flux.api.items.CustomItems.exists(namespacedId);
     }
 
     /** Same kind of item (ItemsAdder id when both have one, otherwise material and item data). */

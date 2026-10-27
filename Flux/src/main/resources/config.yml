@@ -83,3 +83,13 @@ sounds:
   toggle-on: "minecraft:block.amethyst_block.chime 1 1.4"
   toggle-off: "minecraft:block.amethyst_block.hit 1 0.8"
   remove: "minecraft:entity.item.break 0.6 1"
+
+# Third-party plugins behind the services of the suite. The plugins of the suite only talk to Flux: changing one of
+# these plugins means one adapter in Flux, nothing else. auto: the known plugin that is installed; none: off.
+providers:
+  # custom items, blocks and font glyphs (itemsadder)
+  items: auto
+  # careers: levels, XP, XP gains and level-ups (ecojobs)
+  jobs: auto
+  # balance changes of the main currency, for the "money gained" notifications (cmi)
+  money-events: auto

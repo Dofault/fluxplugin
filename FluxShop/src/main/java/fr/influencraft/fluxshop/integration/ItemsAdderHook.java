@@ -1,17 +1,12 @@
 package fr.influencraft.fluxshop.integration;
 
-import dev.lone.itemsadder.api.CustomBlock;
-import dev.lone.itemsadder.api.ItemsAdder;
-import org.bukkit.Bukkit;
+import fr.influencraft.flux.api.items.CustomItems;
 import org.bukkit.block.Block;
 
 /**
- * Lecture de l'identifiant ItemsAdder d'un bloc posé, pour qu'un bloc custom puisse servir de
- * magasin ({@code itemsadder:<namespace>:<id>} dans {@code shop.block-types}). ItemsAdder n'est
- * qu'une dépendance douce : sans lui, aucun bloc n'est reconnu comme bloc ItemsAdder.
- * <p>
- * Seuls les vrais blocs ItemsAdder sont couverts. Les meubles (furniture) sont des entités, pas
- * des blocs : ils ne peuvent pas servir de magasin.
+ * Custom blocks used as shop blocks ({@code itemsadder:<namespace>:<id>} in {@code shop.block-types}), through the
+ * custom items service of Flux (ItemsAdder today, providers.items). Only real custom blocks are covered: furniture
+ * are entities, they cannot be shops.
  */
 public final class ItemsAdderHook {
 
@@ -19,42 +14,28 @@ public final class ItemsAdderHook {
     }
 
     public static boolean isEnabled() {
-        return Bukkit.getPluginManager().isPluginEnabled("ItemsAdder");
+        return CustomItems.available();
     }
 
-    /** @return {@code namespace:id} du bloc ItemsAdder posé ici, ou {@code null}. */
+    /** @return {@code namespace:id} of the custom block placed there, or {@code null}. */
     public static String blockId(Block block) {
-        if (!isEnabled()) {
-            return null;
-        }
         try {
-            CustomBlock custom = CustomBlock.byAlreadyPlaced(block);
-            return custom == null ? null : custom.getNamespacedID();
-        } catch (Throwable ignored) {
+            return CustomItems.blockId(block);
+        } catch (RuntimeException | LinkageError e) {
             return null;
         }
     }
 
-    /** ItemsAdder charge ses blocs après le démarrage : rien ne peut être posé avant. */
+    /** Custom blocks are loaded after start-up: nothing can be placed before. */
     public static boolean areItemsLoaded() {
-        if (!isEnabled()) {
-            return false;
-        }
-        try {
-            return ItemsAdder.areItemsLoaded();
-        } catch (Throwable ignored) {
-            return false;
-        }
+        return CustomItems.available() && CustomItems.loaded();
     }
 
-    /** @return {@code true} si le bloc ItemsAdder {@code namespace:id} a été posé. */
+    /** @return {@code true} when the custom block {@code namespace:id} was placed. */
     public static boolean place(String namespacedId, Block block) {
-        if (!isEnabled()) {
-            return false;
-        }
         try {
-            return CustomBlock.place(namespacedId, block.getLocation()) != null;
-        } catch (Throwable ignored) {
+            return CustomItems.placeBlock(namespacedId, block.getLocation());
+        } catch (RuntimeException | LinkageError e) {
             return false;
         }
     }

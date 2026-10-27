@@ -1,6 +1,5 @@
 package fr.influencraft.fluxpets;
 
-import dev.lone.itemsadder.api.CustomStack;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -316,11 +315,10 @@ public final class CardRegistry {
 
     /** Texture ItemsAdder (namespace:id), papier nu si l'item n'existe pas. */
     public ItemStack base(String itemsAdderId, Material fallback) {
-        if (itemsAdderId != null && !itemsAdderId.isBlank()
-                && Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) {
-            CustomStack stack = CustomStack.getInstance(itemsAdderId);
+        if (itemsAdderId != null && !itemsAdderId.isBlank()) {
+            ItemStack stack = fr.influencraft.flux.api.items.CustomItems.item(itemsAdderId);
             if (stack != null) {
-                return stack.getItemStack().clone();
+                return stack;
             }
         }
         return new ItemStack(fallback);
@@ -332,16 +330,16 @@ public final class CardRegistry {
      */
     public ItemStack plushItem(PetEntry pet) {
         String id = plugin.getConfig().getString("pets.list." + pet.id() + ".plush");
-        if ((id != null && id.isBlank()) || !Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) {
+        if ((id != null && id.isBlank()) || !fr.influencraft.flux.api.items.CustomItems.available()) {
             return null;
         }
-        CustomStack stack = id != null ? CustomStack.getInstance(id) : null;
+        ItemStack stack = id != null ? fr.influencraft.flux.api.items.CustomItems.item(id) : null;
         for (String ns : List.of("influpet", "influcards")) {
             if (stack == null && id == null) {
-                stack = CustomStack.getInstance(ns + ":peluche_" + pet.id());
+                stack = fr.influencraft.flux.api.items.CustomItems.item(ns + ":peluche_" + pet.id());
             }
         }
-        return stack == null ? null : stack.getItemStack().clone();
+        return stack;
     }
 
     /** XP donnée au familier par une carte de cette rareté. */
