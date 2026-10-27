@@ -304,7 +304,8 @@ public final class MenuLoader {
                 s.getString("item-model", null),
                 flags,
                 s.getBoolean("hide-tooltip", false),
-                s.getString("confirm", null),
+                // blank: no confirmation (a list template can turn it off for some elements)
+                s.getString("confirm", "").isBlank() ? null : s.getString("confirm"),
                 requirements(s, "view-requirements", at, warn),
                 requirements(s, "click-requirements", at, warn),
                 strings(s, "deny-actions"),

@@ -55,7 +55,7 @@ public final class Modules {
             JobChoiceCommand jobs = new JobChoiceCommand(plugin);
             command("job", null, jobs, jobs, "metier");
             // data of the Careers menu (%fluxjob_*%, [fluxjob])
-            JobMenuInfo.register(plugin);
+            JobMenu.register(plugin, section("jobs"));
             // the job plugin's own job list opens ours instead
             fr.influencraft.flux.api.jobs.Jobs.get().replaceNativeMenus(plugin, p -> org.bukkit.Bukkit.dispatchCommand(p, "metiers"));
         }
@@ -75,7 +75,7 @@ public final class Modules {
         if (on("pass-menu")) PassMissions.register(plugin);
         if (on("collections-menu")) CollectionInfo.register(plugin);
         fr.influencraft.flux.api.FluxApi.registerPlaceholders(plugin, "fluxtools",
-                new ToolsExpansion(fr.influencraft.flux.api.jobs.Jobs.available())::request);
+                new ToolsExpansion()::request);
     }
 
     /** A job plugin is served by Flux (providers.jobs); otherwise the module turns itself off. */

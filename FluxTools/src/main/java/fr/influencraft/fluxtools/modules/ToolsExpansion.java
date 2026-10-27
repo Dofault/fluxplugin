@@ -10,16 +10,9 @@ import org.bukkit.inventory.ItemStack;
  *   <li>{@code compass_north}: frame (1-32) of the HUD compass pointing north, from the player's yaw</li>
  *   <li>{@code empty_slots}: empty slots among the 36 storage slots (hotbar + main inventory). PlaceholderAPI's
  *   own {@code %player_empty_slots%} also counts armour, off-hand and the body slot.</li>
- *   <li>{@code job_*}: EcoJobs data for the jobs menu, see {@link JobPlaceholders} (EcoJobs only)</li>
  * </ul>
  */
 final class ToolsExpansion {
-
-    private final boolean jobs;
-
-    ToolsExpansion(boolean jobs) {
-        this.jobs = jobs;
-    }
 
     /** Provider registered with Flux as {@code fluxtools} (resolved without PlaceholderAPI, exposed to it). */
     String request(Player player, String params) {
@@ -28,9 +21,6 @@ final class ToolsExpansion {
         }
         if (params.equals("empty_slots")) {
             return player == null ? "" : String.valueOf(emptyStorageSlots(player));
-        }
-        if (jobs && params.startsWith("job_")) {
-            return JobPlaceholders.request(player, params);
         }
         return null;
     }
