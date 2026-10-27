@@ -1,0 +1,29 @@
+# FluxTools : réparation (/repair). Dépose l'objet dans la case de gauche, le bouton d'à côté le répare.
+title: "&8Réparation"
+rows: 3
+player-inventory: interactive
+vanilla-background: true
+input-slots: 12
+input-change-actions: ["[repair] changed"]
+
+lists:
+  repair_button:
+    slots: 14
+    item:
+      material: entry
+      actions:
+        left: ["[repair] fix"]
+
+items:
+  info:
+    slot: 4
+    material: ANVIL
+    name: "&#FFD94DRéparation"
+    lore:
+      - "&#B376E5Dépose une arme, un outil, une armure ou une canne dans la case de gauche. Remet aussi le coût d'enclume à zéro (fini le « Trop cher ! »)."
+  back:
+    slot: 22
+    material: itemsadder:influitems:btn_back
+    name: "&r&7%img_left_click%&#FFD94D Retour"
+    actions:
+      left: ["[close]", "[player] menu", "[sound] @page"]

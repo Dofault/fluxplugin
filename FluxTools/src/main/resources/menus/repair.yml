@@ -1,0 +1,29 @@
+# FluxTools: repair menu (/repair). Put the item in the deposit slot, the button next to it repairs it.
+title: "&8Repair"
+rows: 3
+player-inventory: interactive
+vanilla-background: true
+input-slots: 12
+input-change-actions: ["[repair] changed"]
+
+lists:
+  repair_button:
+    slots: 14
+    item:
+      material: entry
+      actions:
+        left: ["[repair] fix"]
+
+items:
+  info:
+    slot: 4
+    material: ANVIL
+    name: "&#FFD94DRepair"
+    lore:
+      - "&#B376E5Put a weapon, a tool, an armour piece or a rod in the slot on the left. Also resets the anvil cost."
+  back:
+    slot: 22
+    material: ARROW
+    name: "&r&7%img_left_click%&#FFD94D Back"
+    actions:
+      left: ["[close]", "[player] menu"]
