@@ -89,14 +89,18 @@ public class ServiceDecouverte {
     }
 
     private Dialogs.Form formulaire(Player p, String erreur) {
+        // question, then the sources as clickable choices, then the field and "by a player" under it
         Dialogs.Form form = Dialogs.form(p, texte("decouverte-titre", Map.of()))
                 .body(texte("decouverte-question", Map.of()));
+        java.util.List<String> choix = new java.util.ArrayList<>();
+        for (Map.Entry<String, String> source : config.getSourcesQuestionnaire().entrySet()) {
+            choix.add(source.getKey());
+            choix.add(source.getValue());
+        }
+        form.choiceLine(choix.toArray(new String[0]));
         if (erreur != null) form.body(erreur);
         form.input("pseudo", texte("decouverte-champ", Map.of()), "", 16);
-        for (Map.Entry<String, String> source : config.getSourcesQuestionnaire().entrySet()) {
-            form.action(source.getKey(), source.getValue());
-        }
-        return form.action(SOURCE_JOUEUR, texte("decouverte-bouton-joueur", Map.of())).columns(2);
+        return form.action(SOURCE_JOUEUR, texte("decouverte-bouton-joueur", Map.of())).columns(1);
     }
 
     private void ouvrir(Player p, Instant premiereConnexion, String erreur) {

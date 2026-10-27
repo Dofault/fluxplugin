@@ -137,7 +137,8 @@ public final class Dialogs {
     public static final class Form {
         private final Player player;
         private final String title;
-        private final List<String> body = new ArrayList<>();
+        /** Lines of text ({@code String}) and lines of clickable choices ({@code String[][]}), in order. */
+        private final List<Object> body = new ArrayList<>();
         private final List<DialogInput> inputs = new ArrayList<>();
         private final List<String> textIds = new ArrayList<>();
         private final List<String> toggleIds = new ArrayList<>();
@@ -159,6 +160,19 @@ public final class Dialogs {
 
         public Form body(String line) {
             body.add(line);
+            return this;
+        }
+
+        /**
+         * A line of clickable choices inside the text, where it is written (above the fields), e.g. answers that need no
+         * field. A click closes the window and submits with {@link Answer#button()} = the choice id (fields left empty).
+         *
+         * @param idsAndLabels id, label, id, label...
+         */
+        public Form choiceLine(String... idsAndLabels) {
+            List<String[]> line = new ArrayList<>();
+            for (int i = 0; i + 1 < idsAndLabels.length; i += 2) line.add(new String[]{idsAndLabels[i], idsAndLabels[i + 1]});
+            body.add(line.toArray(new String[0][]));
             return this;
         }
 
@@ -267,8 +281,27 @@ public final class Dialogs {
                     DialogAction.customClick((view, audience) -> sync(() -> {
                         if (player.isOnline()) onCancel.accept(player);
                     }), once));
-            List<DialogBody> lines = body.stream()
-                    .map(l -> (DialogBody) DialogBody.plainMessage(Texts.parse(style("text") + l, player))).toList();
+            List<DialogBody> lines = new ArrayList<>();
+            for (Object entry : body) {
+                if (entry instanceof String l) {
+                    lines.add(DialogBody.plainMessage(Texts.parse(style("text") + l, player)));
+                    continue;
+                }
+                net.kyori.adventure.text.TextComponent.Builder line = net.kyori.adventure.text.Component.text();
+                boolean first = true;
+                for (String[] choice : (String[][]) entry) {
+                    if (!first) line.append(net.kyori.adventure.text.Component.text("     "));
+                    first = false;
+                    String id = choice[0];
+                    line.append(Texts.parse(style("option") + "&l[ " + choice[1] + " ]", player)
+                            .clickEvent(ClickEvent.callback(audience -> sync(() -> {
+                                if (!player.isOnline()) return;
+                                player.closeDialog();
+                                onSubmit.accept(player, new Answer(Map.of(), Map.of(), id));
+                            }), once)));
+                }
+                lines.add(DialogBody.plainMessage(line.build(), 250));
+            }
             DialogBase base = DialogBase.create(Texts.parse(style("title") + title, player), null, closable, false,
                     DialogBase.DialogAfterAction.CLOSE, lines, List.copyOf(inputs));
             if (actions.isEmpty()) {
