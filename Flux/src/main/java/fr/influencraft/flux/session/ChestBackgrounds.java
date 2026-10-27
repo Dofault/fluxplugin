@@ -57,6 +57,8 @@ public final class ChestBackgrounds implements PacketListener {
 
         User user = event.getUser();
         UUID id = user == null ? null : user.getUUID();
+        // Bedrock clients have no resource pack: no background image in their titles
+        if (id != null && fr.influencraft.flux.api.client.Clients.bedrock(id)) return;
         if (id != null) {
             MenuSession session = service.session(id);
             // Notre menu (inscrit avant l'ouverture) : transparent sauf vanilla-background: true.

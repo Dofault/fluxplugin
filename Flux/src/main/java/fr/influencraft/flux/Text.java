@@ -128,7 +128,7 @@ public final class Text {
     public static Component line(Player player, String raw) {
         String out = placeholders(player, raw);
         if (hasItemsAdder() && out.indexOf(':') >= 0) {
-            out = fr.influencraft.flux.api.items.CustomItems.glyphs(out);
+            out = fr.influencraft.flux.api.items.CustomItems.glyphs(out, player);
             java.util.regex.Matcher m = LEFTOVER_GLYPH.matcher(out);
             while (m.find()) {
                 if (logger != null && warnedGlyphs.add(m.group())) {

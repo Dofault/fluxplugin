@@ -48,6 +48,16 @@ public final class Providers {
         } else {
             fr.influencraft.flux.api.shops.ChestShops.use(null);
         }
+        // Java or Bedrock client (Geyser + Floodgate), with the Bedrock equivalents of custom items and glyphs
+        fr.influencraft.flux.api.client.Clients.Provider clients = null;
+        if (!choice(config, "clients").equals("none") && enabled("floodgate")) {
+            try {
+                clients = new fr.influencraft.flux.adapters.floodgate.FloodgateClients();
+            } catch (ReflectiveOperationException | RuntimeException e) {
+                flux.getLogger().warning("Floodgate found but not readable: " + e);
+            }
+        }
+        fr.influencraft.flux.api.client.Clients.use(clients, flux.getConfig().getConfigurationSection("bedrock"));
         // packets to one client (Flux depends on packetevents)
         fr.influencraft.flux.api.client.ClientTags.use(enabled("packetevents") ? new fr.influencraft.flux.adapters.packetevents.PacketEventsTags() : null);
         String money = choice(config, "money-events");
@@ -73,7 +83,8 @@ public final class Providers {
         flux.getLogger().info("Providers: money events = " + (money.equals("none") || !enabled("CMI") ? "none" : "CMI") + ", items = " + CustomItems.providerName() + ", jobs = " + fr.influencraft.flux.api.jobs.Jobs.providerName()
                 + ", fishing = " + fr.influencraft.flux.api.fishing.Fishing.providerName()
                 + ", claims = " + fr.influencraft.flux.api.claims.Claims.providerName()
-                + ", chest shops = " + fr.influencraft.flux.api.shops.ChestShops.providerName());
+                + ", chest shops = " + fr.influencraft.flux.api.shops.ChestShops.providerName()
+                + ", clients = " + fr.influencraft.flux.api.client.Clients.providerName());
     }
 
     static String choice(ConfigurationSection config, String key) {

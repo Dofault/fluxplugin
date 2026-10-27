@@ -88,7 +88,8 @@ public final class MenuSession {
     }
 
     public boolean hidesInventory() {
-        return menu.inventoryMode() == InventoryMode.HIDDEN;
+        // Bedrock clients (Geyser) do not take the rewritten inventory packets: their inventory stays visible
+        return menu.inventoryMode() == InventoryMode.HIDDEN && !fr.influencraft.flux.api.client.Clients.bedrock(playerId);
     }
 
     public boolean isOpen() {

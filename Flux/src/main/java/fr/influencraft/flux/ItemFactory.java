@@ -193,7 +193,7 @@ public final class ItemFactory {
 
         if (lower.startsWith("itemsadder:") || lower.startsWith("itemsadder-") || lower.startsWith("ia:")) {
             String id = m.substring(lower.startsWith("ia:") ? 3 : 11);
-            return itemsAdder(id, raw);
+            return itemsAdder(id, raw, viewer);
         }
         if (lower.startsWith("hdb:") || lower.startsWith("hdb-")) {
             return headDatabase(m.substring(4).trim(), raw);
@@ -226,12 +226,12 @@ public final class ItemFactory {
         return new ItemStack(material);
     }
 
-    private ItemStack itemsAdder(String id, String raw) {
+    private ItemStack itemsAdder(String id, String raw, Player viewer) {
         if (!fr.influencraft.flux.api.items.CustomItems.available()) {
             warnOnce(raw, "no custom item plugin, \u00ab " + raw + " \u00bb replaced by a barrier");
             return new ItemStack(Material.BARRIER);
         }
-        ItemStack stack = fr.influencraft.flux.api.items.CustomItems.item(id);
+        ItemStack stack = fr.influencraft.flux.api.items.CustomItems.item(id, viewer);
         if (stack == null) {
             // the custom items may still be loading: the failure is not cached
             warnOnce(raw, "custom item not found \u00ab " + raw + " \u00bb, replaced by a barrier");

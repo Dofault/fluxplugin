@@ -97,6 +97,8 @@ providers:
   claims: auto
   # chest shops of the players (quickshop: FluxChestShop or QuickShop-Hikari)
   chest-shops: auto
+  # Java or Bedrock client of each player (floodgate), see the bedrock section
+  clients: auto
   # balance changes of the main currency, for the "money gained" notifications (cmi)
   money-events: auto
 
@@ -106,3 +108,16 @@ providers:
 #     common: {sample: common_cod, label: "Common fish", color: "&7"}
 fishing:
   tiers: {}
+
+# Bedrock players (Geyser + Floodgate) get no resource pack: custom items and glyphs are replaced for them. Flux applies
+# it in every menu and text of the suite; the inventory of a "hidden" menu stays visible on Bedrock.
+bedrock:
+  # text written instead of a glyph (:id: or %img_id%), by glyph id; the others become default-glyph
+  glyphs:
+    left_click: "[L]"
+    right_click: "[R]"
+  default-glyph: ""
+  # vanilla item shown instead of a custom item, by id (namespace:id or id); the others become default-item
+  items:
+    # namespace:id: MATERIAL
+  default-item: PAPER

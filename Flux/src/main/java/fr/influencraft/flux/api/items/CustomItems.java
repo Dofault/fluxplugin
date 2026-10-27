@@ -138,6 +138,28 @@ public final class CustomItems {
         return null;
     }
 
+    /** Glyphs for this viewer: the Bedrock equivalents ({@code bedrock.glyphs}) when he plays on Bedrock. */
+    public static String glyphs(String text, org.bukkit.entity.Player viewer) {
+        if (viewer != null && fr.influencraft.flux.api.client.Clients.bedrock(viewer)) {
+            return fr.influencraft.flux.api.client.Clients.bedrockGlyphs(text);
+        }
+        return glyphs(text);
+    }
+
+    /** A custom item for this viewer: its vanilla equivalent ({@code bedrock.items}) when he plays on Bedrock. */
+    public static ItemStack item(String id, org.bukkit.entity.Player viewer) {
+        ItemStack custom = item(id);
+        if (custom == null || viewer == null || !fr.influencraft.flux.api.client.Clients.bedrock(viewer)) return custom;
+        ItemStack vanilla = new ItemStack(fr.influencraft.flux.api.client.Clients.bedrockItem(id));
+        org.bukkit.inventory.meta.ItemMeta from = custom.getItemMeta(), to = vanilla.getItemMeta();
+        if (from != null && to != null) {
+            if (from.displayName() != null) to.displayName(from.displayName());
+            if (from.lore() != null) to.lore(from.lore());
+            vanilla.setItemMeta(to);
+        }
+        return vanilla;
+    }
+
     public static String glyphs(String text) {
         if (text == null || text.indexOf(':') < 0) return text;
         try {
