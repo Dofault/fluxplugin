@@ -28,7 +28,6 @@ import java.util.Locale;
  *   [copy] %parrainage_adresse%      dialogue vanilla à un bouton : copie dans le presse-papier
  *   [link] https://wiki.influencraft.fr  dialogue vanilla à un bouton : ouvre le lien
  *   [collection] geologie     ouvre une catégorie EcoCollections (aucune commande ne le permet)
- *   [fluxcoll] select pierre  collection affichée en bas du menu de catégorie ([fluxcoll] reset)
  *   [<type>] ...              action fournie par un autre plugin (FluxApi.registerAction), ex. [roulette] spin
  * </pre>
  * Les actions d'un clic sont jouées au tick suivant (ouvrir une fenêtre pendant un
@@ -97,16 +96,6 @@ public final class Actions {
                 }
                 plugin.menus().swapPage(player, session, target);
             }
-            case "fluxcoll" -> {
-                // [fluxcoll] select <id> | reset : collection affichée en bas du menu d'une catégorie.
-                String[] parts = Text.placeholders(player, arg).trim().split("\\s+");
-                CollectionInfo info = plugin.collectionInfo();
-                if (info == null || parts.length == 0) return;
-                if (parts[0].equalsIgnoreCase("select") && parts.length == 2) info.select(player, parts[1]);
-                else if (parts[0].equalsIgnoreCase("reset")) info.reset(player);
-                if (session != null) plugin.menus().refresh(player, session);
-            }
-            case "collection" -> openCollectionGroup(player, Text.placeholders(player, arg).trim().toLowerCase(Locale.ROOT));
             case "list" -> list(player, session, Text.placeholders(player, arg));
             case "refresh-buttons" -> {
                 // boutons seulement : le titre affiché (animation du Plinko...) n'est pas touché
@@ -190,30 +179,6 @@ public final class Actions {
      * Ouvre le menu d'une catégorie EcoCollections ({@code GroupGUI.open}), par réflexion :
      * {@code /collections} n'ouvre que la liste générale, sans argument de catégorie.
      */
-    private void openCollectionGroup(Player player, String id) {
-        org.bukkit.plugin.Plugin eco = Bukkit.getPluginManager().getPlugin("EcoCollections");
-        if (eco == null || !eco.isEnabled()) {
-            plugin.getLogger().warning("[collection] EcoCollections absent, « " + id + " » non ouvert");
-            return;
-        }
-        try {
-            ClassLoader loader = eco.getClass().getClassLoader();
-            Class<?> groupsClass = Class.forName("com.exanthiax.ecocollections.groups.CollectionGroups", true, loader);
-            Object groups = groupsClass.getField("INSTANCE").get(null);
-            Object group = groupsClass.getMethod("getByID", String.class).invoke(groups, id);
-            if (group == null) {
-                plugin.getLogger().warning("[collection] catégorie inconnue « " + id + " »");
-                return;
-            }
-            Class<?> guiClass = Class.forName("com.exanthiax.ecocollections.gui.GroupGUI", true, loader);
-            Class<?> groupClass = Class.forName("com.exanthiax.ecocollections.groups.CollectionGroup", true, loader);
-            Object gui = guiClass.getField("INSTANCE").get(null);
-            guiClass.getMethod("open", Player.class, groupClass, boolean.class, int.class).invoke(gui, player, group, false, 1);
-        } catch (ReflectiveOperationException e) {
-            plugin.getLogger().warning("[collection] ouverture de « " + id + " » impossible : " + e);
-        }
-    }
-
     private void deluxeMenu(Player player, String id) {
         if (!Bukkit.getPluginManager().isPluginEnabled("DeluxeMenus")) {
             plugin.getLogger().warning("[deluxemenu] DeluxeMenus absent, « " + id + " » non ouvert");

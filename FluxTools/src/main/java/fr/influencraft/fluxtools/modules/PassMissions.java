@@ -1,6 +1,5 @@
-package fr.influencraft.flux;
+package fr.influencraft.fluxtools.modules;
 
-import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -39,7 +38,7 @@ import java.util.regex.Pattern;
  * Accès par réflexion à l'API d'EcoBattlepass (aucune dépendance de compilation) ; la
  * description d'une mission est calculée une fois par tick et par joueur.
  */
-public final class PassMissions extends PlaceholderExpansion {
+public final class PassMissions {
 
     private static final Pattern QUEST = Pattern.compile("^(.+)_(\\d+)_(name|done|icon|line_(\\d+))$");
     private static final Pattern CATEGORY = Pattern.compile("^(.+)_(count|active)$");
@@ -91,13 +90,14 @@ public final class PassMissions extends PlaceholderExpansion {
         cfgHas = config.getMethod("has", String.class);
     }
 
-    /** Inscrit l'extension si EcoBattlepass et PlaceholderAPI sont là ; null sinon. */
-    static PassMissions register(Plugin plugin) {
+    /** Registers the placeholders when EcoBattlepass is there; null otherwise. */
+    public static PassMissions register(Plugin plugin) {
         Plugin eco = Bukkit.getPluginManager().getPlugin("EcoBattlepass");
-        if (eco == null || !eco.isEnabled() || !Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) return null;
+        if (eco == null || !eco.isEnabled()) return null;
         try {
             PassMissions expansion = new PassMissions(plugin, eco);
-            expansion.register();
+            // %fluxpass_*%: resolved by Flux in menus, exposed to PlaceholderAPI by Flux
+            fr.influencraft.flux.api.FluxApi.registerPlaceholders(plugin, "fluxpass", expansion::onPlaceholderRequest);
             return expansion;
         } catch (ReflectiveOperationException | RuntimeException e) {
             plugin.getLogger().warning("Placeholders des missions du pass indisponibles (API EcoBattlepass changée ?) : " + e);
@@ -105,27 +105,10 @@ public final class PassMissions extends PlaceholderExpansion {
         }
     }
 
-    @Override
-    public String getIdentifier() {
-        return "fluxpass";
-    }
 
-    @Override
-    public String getAuthor() {
-        return "Influencraft";
-    }
 
-    @Override
-    public String getVersion() {
-        return plugin.getPluginMeta().getVersion();
-    }
 
-    @Override
-    public boolean persist() {
-        return true;
-    }
 
-    @Override
     public String onPlaceholderRequest(Player player, String params) {
         try {
             Matcher tp = TIER_PAGE.matcher(params);
@@ -196,8 +179,8 @@ public final class PassMissions extends PlaceholderExpansion {
     /** Page du chemin qui contient le palier du joueur (palier 0 = page 1), bornée à la dernière. */
     private static String tierPage(Player player, String pass, int perPage) {
         if (player == null || perPage <= 0) return "1";
-        int tier = number(me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, "%ecobattlepass_tier_" + pass + "%"));
-        int max = number(me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, "%ecobattlepass_" + pass + "_max_tiers%"));
+        int tier = number(fr.influencraft.flux.api.text.Texts.placeholders("%ecobattlepass_tier_" + pass + "%", player));
+        int max = number(fr.influencraft.flux.api.text.Texts.placeholders("%ecobattlepass_" + pass + "_max_tiers%", player));
         int page = Math.max(1, (Math.max(tier, 1) + perPage - 1) / perPage);
         if (max > 0) page = Math.min(page, (max + perPage - 1) / perPage);
         return String.valueOf(page);

@@ -71,6 +71,9 @@ public final class Modules {
         if (on("money-gain-actionbar")) {
             enableMoneyGainActionBar();
         }
+        // data of the pass and collections menus (EcoBattlepass, EcoCollections: only used here)
+        if (on("pass-menu")) PassMissions.register(plugin);
+        if (on("collections-menu")) CollectionInfo.register(plugin);
         fr.influencraft.flux.api.FluxApi.registerPlaceholders(plugin, "fluxtools",
                 new ToolsExpansion(fr.influencraft.flux.api.jobs.Jobs.available())::request);
     }

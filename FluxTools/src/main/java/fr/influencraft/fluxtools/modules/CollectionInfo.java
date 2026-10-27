@@ -1,6 +1,5 @@
-package fr.influencraft.flux;
+package fr.influencraft.fluxtools.modules;
 
-import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -32,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Accès par réflexion à l'API d'EcoCollections (aucune dépendance de compilation) : les
  * collections ajoutées ou retirées sont prises en compte sans rien changer ici.
  */
-public final class CollectionInfo extends PlaceholderExpansion {
+public final class CollectionInfo {
 
     private final Plugin plugin;
     private final Object collections;
@@ -52,13 +51,24 @@ public final class CollectionInfo extends PlaceholderExpansion {
         isComplete = api.getMethod("isCollectionComplete", OfflinePlayer.class, collection);
     }
 
-    /** Inscrit l'extension si EcoCollections et PlaceholderAPI sont là ; null sinon. */
-    static CollectionInfo register(Plugin plugin) {
+    /** Registers the placeholders when EcoCollections is there; null otherwise. */
+    public static CollectionInfo register(Plugin plugin) {
         Plugin eco = Bukkit.getPluginManager().getPlugin("EcoCollections");
-        if (eco == null || !eco.isEnabled() || !Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) return null;
+        if (eco == null || !eco.isEnabled()) return null;
         try {
             CollectionInfo expansion = new CollectionInfo(plugin, eco);
-            expansion.register();
+            // [fluxcoll] select <id> | reset: collection shown at the bottom of a category menu
+            fr.influencraft.flux.api.FluxApi.registerAction(plugin, "fluxcoll", (player, view, argument) -> {
+                String[] parts = argument.trim().split("\\s+");
+                if (parts[0].equalsIgnoreCase("select") && parts.length == 2) expansion.select(player, parts[1]);
+                else if (parts[0].equalsIgnoreCase("reset")) expansion.reset(player);
+                if (view != null) view.refresh();
+            });
+            // [collection] <category>: opens an EcoCollections category directly (/collections takes no category)
+            fr.influencraft.flux.api.FluxApi.registerAction(plugin, "collection", (player, view, argument) ->
+                    openGroup(plugin, eco, player, argument.trim().toLowerCase(java.util.Locale.ROOT)));
+            // %fluxcoll_*%: resolved by Flux in menus, exposed to PlaceholderAPI by Flux
+            fr.influencraft.flux.api.FluxApi.registerPlaceholders(plugin, "fluxcoll", expansion::onPlaceholderRequest);
             return expansion;
         } catch (ReflectiveOperationException | RuntimeException e) {
             plugin.getLogger().warning("Placeholders des collections indisponibles (API EcoCollections changée ?) : " + e);
@@ -66,25 +76,9 @@ public final class CollectionInfo extends PlaceholderExpansion {
         }
     }
 
-    @Override
-    public String getIdentifier() {
-        return "fluxcoll";
-    }
 
-    @Override
-    public String getAuthor() {
-        return "Influencraft";
-    }
 
-    @Override
-    public String getVersion() {
-        return plugin.getPluginMeta().getVersion();
-    }
 
-    @Override
-    public boolean persist() {
-        return true;
-    }
 
     /** [fluxcoll] select <id> : retient la collection affichée en bas du menu de catégorie. */
     public void select(Player player, String id) {
@@ -96,7 +90,6 @@ public final class CollectionInfo extends PlaceholderExpansion {
         selected.remove(player.getUniqueId());
     }
 
-    @Override
     public String onPlaceholderRequest(Player player, String params) {
         String p = params.toLowerCase(Locale.ROOT);
         if (p.equals("selected") || p.startsWith("selected_")) {
@@ -105,7 +98,7 @@ public final class CollectionInfo extends PlaceholderExpansion {
             if (id == null) return "0";
             String field = p.substring("selected_".length());
             String target = field.equals("tier") ? "%ecocollections_" + id + "%" : "%ecocollections_" + id + "_" + field + "%";
-            return me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, target);
+            return fr.influencraft.flux.api.text.Texts.placeholders(target, player);
         }
         String field = p.contains("_") ? p.substring(p.lastIndexOf('_') + 1) : p;
         if (!field.equals("completed") && !field.equals("total") && !field.equals("percent")) return null;
@@ -126,6 +119,25 @@ public final class CollectionInfo extends PlaceholderExpansion {
             };
         } catch (ReflectiveOperationException | RuntimeException e) {
             return "0";
+        }
+    }
+
+    private static void openGroup(Plugin plugin, Plugin eco, Player player, String id) {
+        try {
+            ClassLoader loader = eco.getClass().getClassLoader();
+            Class<?> groupsClass = Class.forName("com.exanthiax.ecocollections.groups.CollectionGroups", true, loader);
+            Object groups = groupsClass.getField("INSTANCE").get(null);
+            Object group = groupsClass.getMethod("getByID", String.class).invoke(groups, id);
+            if (group == null) {
+                plugin.getLogger().warning("[collection] unknown category \u00ab " + id + " \u00bb");
+                return;
+            }
+            Class<?> guiClass = Class.forName("com.exanthiax.ecocollections.gui.GroupGUI", true, loader);
+            Class<?> groupClass = Class.forName("com.exanthiax.ecocollections.groups.CollectionGroup", true, loader);
+            Object gui = guiClass.getField("INSTANCE").get(null);
+            guiClass.getMethod("open", Player.class, groupClass, boolean.class, int.class).invoke(gui, player, group, false, 1);
+        } catch (ReflectiveOperationException e) {
+            plugin.getLogger().warning("[collection] could not open \u00ab " + id + " \u00bb: " + e);
         }
     }
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Génère les menus Flux des catégories de collections (un menu par catégorie EcoCollections).
 
-    python3 gen_collections.py <plugins/EcoCollections> <plugins/Flux/menus>
+    python3 gen_collections.py <plugins/EcoCollections> <plugins/FluxTools/menus>
 
 Écrit menus/collection_<catégorie>.yml, ouvert par le menu Collection ([menu] collection_<id>).
 À relancer (puis /fluxmenu reload) quand on ajoute, retire ou déplace une collection.
@@ -90,7 +90,7 @@ for gid, g in sorted(groupes.items()):
         continue
     nom_groupe = g["name"].split("Voir ", 1)[-1] if "Voir " in g["name"] else g["name"]
     pages = [liste[i:i + PAR_PAGE] for i in range(0, len(liste), PAR_PAGE)]
-    L = [f"# Généré par plugins/fluxplugin/Flux/assets/gen_collections.py : ne pas modifier à la main.",
+    L = [f"# Généré par plugins/fluxplugin/FluxTools/assets/gen_collections.py : ne pas modifier à la main.",
          f"# Catégorie « {nom_groupe} » du menu Collection : {len(liste)} collection(s), {len(pages)} page(s).",
          "",
          'title: ":offset_-8::menu_collection_categorie:"',

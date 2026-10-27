@@ -33,8 +33,6 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     private PacketListenerCommon packetListener;
     private PacketListenerCommon backgroundListener;
     private ChestBackgrounds backgrounds;
-    private PassMissions passMissions;
-    private CollectionInfo collectionInfo;
     private PapiBridge papiBridge;
     private int clickCooldown;
     private String prefix;
@@ -81,15 +79,11 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
                 .registerListener(backgrounds, PacketListenerPriority.HIGH);
         // Après le chargement de tous les plugins : EcoBattlepass peut s'activer après nous.
         getServer().getScheduler().runTask(this, () -> {
-            passMissions = PassMissions.register(this);
-            collectionInfo = CollectionInfo.register(this);
         });
     }
 
     @Override
     public void onDisable() {
-        if (passMissions != null) passMissions.unregister();
-        if (collectionInfo != null) collectionInfo.unregister();
         fr.influencraft.flux.api.FluxApi.bind(null);
         if (rewards != null) rewards.stop();
         fr.influencraft.flux.api.util.PlayerSettings.close();
@@ -234,9 +228,6 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         if (hadMenus) menuFoldersChanged();
     }
 
-    public CollectionInfo collectionInfo() {
-        return collectionInfo;
-    }
 
 
     public Actions actions() {
