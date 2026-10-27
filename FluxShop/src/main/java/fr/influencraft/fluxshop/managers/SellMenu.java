@@ -159,7 +159,7 @@ public class SellMenu {
         if (view == null) return;
         Quote quote = quote(player, view.inputs().values());
         if (quote.total() <= 0) {
-            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+            fr.influencraft.flux.api.util.Sounds.cue(player, "error");
             player.sendMessage(lang.get("shop-sell-nothing-to-sell"));
             disarm(state);
             refresh(player, view);
@@ -169,7 +169,7 @@ public class SellMenu {
             disarm(state);
             state.armed = true;
             // XP sound: the click counts, nothing is sold yet, the next click is final
-            player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
+            fr.influencraft.flux.api.util.Sounds.cue(player, "success");
             long timeout = Math.max(1, plugin.getConfig().getInt("sell-menu.confirm-timeout-seconds", 5)) * 20L;
             state.disarmTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 state.disarmTask = null;
@@ -200,7 +200,7 @@ public class SellMenu {
         total = PriceManager.roundMoney(total);
         if (total > 0 && money.give(player, total)) {
             player.sendMessage(lang.get("shop-sell-success", Map.of("amount", fr.influencraft.flux.api.util.Format.decimal(total))));
-            player.playSound(player.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1f, 1f);
+            fr.influencraft.flux.api.util.Sounds.cue(player, "complete");
             activity.markSold(player.getUniqueId());
             plugin.getLogger().info("[Sell] " + player.getName() + " sold " + (taken.size() - giveBack.size()) + " stack(s) for " + total);
         } else {

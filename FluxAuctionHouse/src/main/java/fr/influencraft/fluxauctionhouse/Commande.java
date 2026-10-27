@@ -267,7 +267,7 @@ final class Commande implements CommandExecutor, TabCompleter {
         }
         confirmations.put(p.getUniqueId(), new Object[]{action, now + 3000});
         p.sendActionBar(Fmt.ligne(p, OR + message));
-        p.playSound(p, Sound.BLOCK_NOTE_BLOCK_HAT, 0.6f, 1.6f);
+        fr.influencraft.flux.api.util.Sounds.cue(p, "click");
         return false;
     }
 

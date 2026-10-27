@@ -28,7 +28,6 @@ public final class ConfigManager {
     private final File collectionsFile;
 
     private Settings settings;
-    private GuiSettings guiSettings;
     private WikiLinks wikiLinks;
     private final Map<String, CollectionDefinition> collections = new LinkedHashMap<>();
 
@@ -41,7 +40,6 @@ public final class ConfigManager {
         plugin.saveDefaultConfig();
         plugin.reloadConfig();
         loadSettings();
-        loadGuiSettings();
         loadWikiLinks();
         loadCollections();
     }
@@ -71,34 +69,6 @@ public final class ConfigManager {
                 cfg.getBoolean("wiki.enabled", true),
                 cfg.getString("wiki.url-format", "https://fr.minecraft.wiki/w/{title}"),
                 titles);
-    }
-
-    private void loadGuiSettings() {
-        var cfg = plugin.getConfig();
-        guiSettings = new GuiSettings(
-                cfg.getInt("gui.size", 54),
-                cfg.getIntegerList("gui.item-slots"),
-                cfg.getInt("gui.nav-previous-slot", 45),
-                cfg.getInt("gui.nav-next-slot", 53),
-                cfg.getInt("gui.filter-slot", 49),
-                cfg.getInt("gui.editor-toggle-slot", 0),
-                cfg.getInt("gui.deposit-all-slot", 40),
-                cfg.getString("gui.open-sound", "minecraft:item.book.page_turn"),
-                cfg.getString("gui.deposit-sound", "minecraft:entity.experience_orb.pickup"),
-                cfg.getString("gui.error-sound", "minecraft:entity.villager.no"),
-                cfg.getString("gui.collection-complete-sound", "minecraft:entity.player.levelup"),
-                cfg.getString("gui.wiki-sound", "minecraft:item.book.page_turn"),
-                cfg.getString("gui.collection-title-format", "{displayname}"),
-                cfg.getString("gui.editor-title-format", "&#FF5C5C[Editeur] &#FFD94D{displayname}"),
-                cfg.getString("gui.materials.nav-prev", "influitems:btn_prev"),
-                cfg.getString("gui.materials.nav-next", "influitems:btn_next"),
-                cfg.getString("gui.materials.filter", "influitems:filter"),
-                cfg.getString("gui.materials.editor-open", "ANVIL"),
-                cfg.getString("gui.materials.editor-close", "BARRIER"),
-                cfg.getString("gui.materials.deposit-all", "CHEST"),
-                cfg.getString("gui.materials.money", "influitems:bitblock"),
-                cfg.getString("gui.materials.back", "influitems:btn_back")
-        );
     }
 
     private void loadCollections() {
@@ -203,10 +173,6 @@ public final class ConfigManager {
 
     public Settings settings() {
         return settings;
-    }
-
-    public GuiSettings gui() {
-        return guiSettings;
     }
 
     public WikiLinks wikiLinks() {

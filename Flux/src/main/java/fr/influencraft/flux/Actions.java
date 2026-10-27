@@ -19,7 +19,7 @@ import java.util.Locale;
  *   [menu] profil             ouvre un menu Flux
  *   [deluxemenu] profil       ouvre un menu DeluxeMenus (transition)
  *   [openguimenu] profil      menu Flux s'il existe, sinon DeluxeMenus
- *   [sound] minecraft:ui.button.click 1 1
+ *   [sound] minecraft:ui.button.click 1 1   (or a named cue of the suite: [sound] @success)
  *   [refresh]                 recalcule le menu ouvert
  *   [refresh-buttons]         recalcule seulement les boutons (garde le titre affiché : animations)
  *   [page] parametres         anime puis affiche une page du menu ([page] main pour revenir)
@@ -227,21 +227,11 @@ public final class Actions {
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "dm open " + id.trim() + " " + player.getName());
     }
 
+    /** {@code [sound] <key> [volume] [pitch]} or a named cue of the suite: {@code [sound] @success}. */
     private static void sound(Player player, String arg) {
-        String[] parts = arg.split("\\s+");
-        if (parts.length == 0 || parts[0].isEmpty()) return;
-        float volume = parts.length > 1 ? parseFloat(parts[1], 1f) : 1f;
-        float pitch = parts.length > 2 ? parseFloat(parts[2], 1f) : 1f;
-        player.playSound(player.getLocation(), parts[0].toLowerCase(Locale.ROOT), volume, pitch);
+        fr.influencraft.flux.api.util.Sounds.play(player, arg);
     }
 
-    private static float parseFloat(String s, float def) {
-        try {
-            return Float.parseFloat(s);
-        } catch (NumberFormatException e) {
-            return def;
-        }
-    }
 
     private static String stripSlash(String cmd) {
         return cmd.startsWith("/") ? cmd.substring(1) : cmd;

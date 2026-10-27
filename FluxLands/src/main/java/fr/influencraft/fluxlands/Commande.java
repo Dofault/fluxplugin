@@ -729,11 +729,11 @@ final class Commande implements TabExecutor {
             Land ma = plugin.villes().maVille(p);
             if (ma == null) continue;
             if (cible != null && !cible.isEmpty()) {
-                p.playSound(p.getLocation(), "minecraft:entity.experience_orb.pickup", 0.7f, 1.2f);
+                fr.influencraft.flux.api.util.Sounds.cue(p, "success");
                 nommerParcelle(p, ma, cible);
                 continue;
             }
-            p.playSound(p.getLocation(), "minecraft:entity.experience_orb.pickup", 0.7f, 1.2f);
+            fr.influencraft.flux.api.util.Sounds.cue(p, "success");
             p.sendMessage(Fmt.ligne(p, "&#2ECF7BSélection prête (" + plugin.gestion().selection(p) + "). &#B376E5Fenêtre fermée par erreur ? ")
                     .append(Fmt.ligne(p, "&#FFD94D&n[Nommer la parcelle]")
                             .clickEvent(net.kyori.adventure.text.event.ClickEvent.runCommand("/influlands parcelle nouvelle"))));

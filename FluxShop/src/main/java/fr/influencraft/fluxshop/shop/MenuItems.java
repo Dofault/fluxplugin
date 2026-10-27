@@ -69,9 +69,6 @@ public final class MenuItems {
         return stack;
     }
 
-    public ItemStack filler() {
-        return decorate(icon("filler", Material.GRAY_STAINED_GLASS_PANE, 0, 1), " ", List.of());
-    }
 
     /** Montant formaté suivi de l'icône BitBlock. */
     public String price(double amount) {

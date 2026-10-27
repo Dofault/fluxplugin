@@ -150,7 +150,7 @@ public final class BoosterListener implements Listener {
                 - plugin.reveals().freeSlots(player, slot, boosters);
         if (missing > 0) {
             plugin.send(player, "inventory-needed", "%slots%", String.valueOf(missing));
-            player.playSound(player, "entity.villager.no", 0.6f, 1f);
+            fr.influencraft.flux.api.util.Sounds.cue(player, "error");
             return false;
         }
         return true;

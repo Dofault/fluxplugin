@@ -116,7 +116,7 @@ public class ShopEditor {
         State previous = states.put(player.getUniqueId(), new State(shop));
         if (previous != null && previous.disarmTask != null) previous.disarmTask.cancel();
         invalidate(player);
-        if (FluxApi.open(player, MENU)) player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 0.6f, 0.9f);
+        if (FluxApi.open(player, MENU)) fr.influencraft.flux.api.util.Sounds.cue(player, "open");
     }
 
     public void forget(UUID uuid) {
@@ -166,7 +166,7 @@ public class ShopEditor {
         ShopEntry entry = state.shop.getItems().remove(row);
         registry.save();
         MenuItems.send(player, lang.get("shop-editor-removed"), entry.getItem());
-        player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 0.6f, 1.0f);
+        fr.influencraft.flux.api.util.Sounds.cue(player, "remove");
         refresh(player, view);
     }
 
@@ -190,7 +190,7 @@ public class ShopEditor {
             entries.add(entry);
             registry.save();
             MenuItems.send(player, lang.get("shop-editor-added-default"), entry.getItem());
-            player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.6f, 1.2f);
+            fr.influencraft.flux.api.util.Sounds.cue(player, "success");
             refresh(player, view);
             return;
         }
@@ -216,7 +216,7 @@ public class ShopEditor {
             state.armedRow = -1;
             refresh(player, FluxApi.view(player));
         }, timeout);
-        player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.6f, 0.7f);
+        fr.influencraft.flux.api.util.Sounds.cue(player, "confirm");
         refresh(player, view);
     }
 
@@ -275,12 +275,12 @@ public class ShopEditor {
         }
         registry.save();
         MenuItems.send(player, lang.get("shop-editor-price-set", Map.of("price", menuItems.price(entry.unitPrice(priceManager)))), entry.getItem());
-        player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.6f, 1.2f);
+        fr.influencraft.flux.api.util.Sounds.cue(player, "success");
         open(player, shop);
     }
 
     private void fail(Player player, String message) {
         player.sendMessage(message);
-        player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+        fr.influencraft.flux.api.util.Sounds.cue(player, "error");
     }
 }

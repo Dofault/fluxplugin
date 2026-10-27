@@ -21,16 +21,13 @@ shop:
 # confirmation : le 1er clic arme le bouton (buy-button-armed), le 2e achète.
 # Juste après un achat, le même bouton achète sans confirmation pendant
 # quick-buy-seconds (relancé à chaque achat) : achat en masse en cliquant vite.
-# Les colonnes 0, 1, 7 et 8 de chaque rangée sont remplies par filler.
+# Disposition, vitres et titres : menus Flux plugins/FluxShop/menus/ (shop, shop_sell...).
 # custom-model-data > 0 : icône ItemsAdder posée sur le matériau (pas de hook
 # ItemsAdder, cf. ItemsAdder/storage/items_ids_cache.yml).
 shop-menu:
   # Délai avant qu'un bouton armé ne redevienne normal tout seul.
   confirm-timeout-seconds: 5
   quick-buy-seconds: 1
-  filler:
-    material: GRAY_STAINED_GLASS_PANE
-    custom-model-data: 0
   buy-button:
     material: LIME_STAINED_GLASS_PANE
     custom-model-data: 0
@@ -67,21 +64,14 @@ tpshop-warmup-seconds: 3
 # ---------------------------------------------------------------------------
 # Menu de vente manuelle (clic droit sur le bloc de vente)
 # ---------------------------------------------------------------------------
-# Le joueur dépose ses items dans les slots 0-44 ; la dernière rangée (45-53)
-# est une zone morte remplie de vitres, avec le bouton de confirmation au
-# milieu. Rien n'est vendu tant qu'il n'a pas cliqué DEUX fois dessus : le
+# Le joueur dépose ses items dans la zone de dépôt du menu Flux shop_sell
+# (disposition dans plugins/FluxShop/menus/shop_sell.yml). Rien n'est vendu tant qu'il n'a pas cliqué DEUX fois dessus : le
 # 1er clic arme la vente (son d'XP), le 2e vend et ferme le menu. Fermer le
 # menu autrement rend tout le contenu au joueur.
 sell-menu:
-  # Slot du bouton de confirmation (doit être entre 45 et 53).
-  confirm-slot: 49
 
   # Délai avant qu'un bouton armé ne redevienne inactif tout seul.
   confirm-timeout-seconds: 5
-  quick-buy-seconds: 1
-  filler:
-    material: GRAY_STAINED_GLASS_PANE
-    custom-model-data: 0
 
   # Les icônes ItemsAdder sont rendues via le custom_model_data posé sur un
   # matériau vanilla (le plugin n'a pas de hook ItemsAdder) :
@@ -93,9 +83,6 @@ sell-menu:
   confirm-button-armed:
     material: PAPER
     custom-model-data: 10032
-  filler:
-    material: GRAY_STAINED_GLASS_PANE
-    custom-model-data: 0
 
 # ---------------------------------------------------------------------------
 # Vente automatique (objet "Vente Automatique")
@@ -176,8 +163,6 @@ autosell:
 # ces valeurs sont aussi les valeurs par défaut du plugin.
 autosell-menu:
   icons:
-    previous: { material: PAPER, custom-model-data: 10012 }        # influitems:btn_prev
-    next: { material: PAPER, custom-model-data: 10011 }            # influitems:btn_next
     category: { material: PAPER, custom-model-data: 10017 }        # influitems:filter
     view: { material: PAPER, custom-model-data: 10019 }            # influitems:search
     bulk: { material: PAPER, custom-model-data: 10021 }            # influitems:add

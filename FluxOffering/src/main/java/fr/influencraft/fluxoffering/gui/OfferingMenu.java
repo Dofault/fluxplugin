@@ -10,7 +10,6 @@ import fr.influencraft.flux.api.list.ListQuery;
 import fr.influencraft.flux.api.list.Lists;
 import fr.influencraft.flux.api.util.Format;
 import fr.influencraft.fluxoffering.config.ConfigManager;
-import fr.influencraft.fluxoffering.config.GuiSettings;
 import fr.influencraft.fluxoffering.config.MessagesManager;
 import fr.influencraft.fluxoffering.data.DataManager;
 import fr.influencraft.fluxoffering.integration.ItemsAdderHook;
@@ -23,7 +22,6 @@ import fr.influencraft.fluxoffering.service.MoneyDepositResult;
 import fr.influencraft.fluxoffering.text.TextUtil;
 import fr.influencraft.fluxoffering.util.AmountFormatter;
 import fr.influencraft.fluxoffering.util.ProgressCalculator;
-import fr.influencraft.fluxoffering.util.SoundUtil;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
@@ -99,7 +97,7 @@ public final class OfferingMenu implements ListProvider, FluxAction {
         // another collection: back to page 1; the filter is kept while the player stays online
         if (changed) Lists.act(player, LIST, "first", 21);
         Lists.invalidate(player, LIST);
-        if (FluxApi.open(player, MENU)) SoundUtil.play(player, configManager.gui().openSound());
+        if (FluxApi.open(player, MENU)) fr.influencraft.flux.api.util.Sounds.cue(player, "page");
     }
 
     // ---------------------------------------------------------------- list "offering"
@@ -186,7 +184,10 @@ public final class OfferingMenu implements ListProvider, FluxAction {
 
     private ItemStack moneyStack() {
         try {
-            return ItemKey.parse(configManager.gui().moneyItem()).toDisplayStack(1);
+            // the icon of the currency, configured once in Flux (currencies.<id>.icon)
+            var money = fr.influencraft.flux.api.economy.Economy.main();
+            ItemStack icon = money == null ? null : fr.influencraft.flux.api.inventory.Items.of(fr.influencraft.flux.api.economy.Economy.icon(money.id()));
+            return icon != null ? icon : new ItemStack(org.bukkit.Material.GOLD_INGOT);
         } catch (IllegalArgumentException ex) {
             return new ItemStack(Material.SUNFLOWER);
         }
@@ -316,17 +317,16 @@ public final class OfferingMenu implements ListProvider, FluxAction {
         ph.put("name_upper", name.startsWith("<lang:") ? name : name.toUpperCase(Locale.FRENCH));
         ph.put("url", url);
         messages.sendList(player, "gui.wiki-link", ph, player);
-        SoundUtil.play(player, configManager.gui().wikiSound());
+        fr.influencraft.flux.api.util.Sounds.cue(player, "page");
         return true;
     }
 
     private void deposit(Player player, CollectionDefinition collection, ItemKey key, int max) {
         DepositResult result = depositService.deposit(player, collection, key, max);
         if (result == null) return;
-        GuiSettings gui = configManager.gui();
         String name = collection.displayNameFor(key);
         if (result.isNoop()) {
-            SoundUtil.play(player, gui.errorSound());
+            fr.influencraft.flux.api.util.Sounds.cue(player, "error");
             if (result.newTotal() >= result.required()) {
                 messages.send(player, "gui.deposit-item-already-complete", Map.of("name", name), player);
             } else {
@@ -334,7 +334,7 @@ public final class OfferingMenu implements ListProvider, FluxAction {
             }
             return;
         }
-        SoundUtil.play(player, gui.depositSound());
+        fr.influencraft.flux.api.util.Sounds.cue(player, "success");
         Map<String, String> ph = Map.of("amount", String.valueOf(result.deposited()), "name", name,
                 "deposited", String.valueOf(result.newTotal()), "required", String.valueOf(result.required()),
                 "percent", String.valueOf(ProgressCalculator.percent(dataManager.get(player), collection)));
@@ -354,20 +354,19 @@ public final class OfferingMenu implements ListProvider, FluxAction {
                 justCompleted |= result.collectionJustCompleted();
             }
         }
-        GuiSettings gui = configManager.gui();
         if (units == 0) {
-            SoundUtil.play(player, gui.errorSound());
+            fr.influencraft.flux.api.util.Sounds.cue(player, "error");
             messages.send(player, "gui.deposit-all-nothing", player);
             return;
         }
-        SoundUtil.play(player, gui.depositSound());
+        fr.influencraft.flux.api.util.Sounds.cue(player, "success");
         messages.send(player, "gui.deposit-all-success", Map.of("amount", String.valueOf(units), "types", String.valueOf(types),
                 "percent", String.valueOf(ProgressCalculator.percent(dataManager.get(player), collection))), player);
         if (justCompleted) completed(player, collection);
     }
 
     private void completed(Player player, CollectionDefinition collection) {
-        SoundUtil.play(player, configManager.gui().collectionCompleteSound());
+        fr.influencraft.flux.api.util.Sounds.cue(player, "complete");
         messages.send(player, "gui.collection-completed", Map.of("collection", collection.displayName()), player);
     }
 
@@ -375,7 +374,7 @@ public final class OfferingMenu implements ListProvider, FluxAction {
     private void askMoneyDeposit(Player player, CollectionDefinition collection) {
         long current = dataManager.get(player).getMoneyDeposited(collection.id());
         if (current >= collection.money()) {
-            SoundUtil.play(player, configManager.gui().errorSound());
+            fr.influencraft.flux.api.util.Sounds.cue(player, "error");
             messages.send(player, "gui.money-already-complete", player);
             return;
         }
@@ -400,14 +399,13 @@ public final class OfferingMenu implements ListProvider, FluxAction {
     }
 
     private void reportMoney(Player player, CollectionDefinition collection, MoneyDepositResult result) {
-        GuiSettings gui = configManager.gui();
         if (result == null || result.isNoop()) {
-            SoundUtil.play(player, gui.errorSound());
+            fr.influencraft.flux.api.util.Sounds.cue(player, "error");
             messages.send(player, result != null && result.newTotal() >= result.required()
                     ? "gui.money-already-complete" : "gui.money-deposit-missing", player);
             return;
         }
-        SoundUtil.play(player, gui.depositSound());
+        fr.influencraft.flux.api.util.Sounds.cue(player, "success");
         messages.send(player, "gui.money-deposit-success", Map.of("amount", AmountFormatter.grouped(result.deposited()),
                 "deposited", AmountFormatter.grouped(result.newTotal()), "required", AmountFormatter.grouped(result.required()),
                 "percent", String.valueOf(ProgressCalculator.percent(dataManager.get(player), collection))), player);

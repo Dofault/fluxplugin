@@ -309,7 +309,7 @@ public final class RepairMenu implements CommandExecutor {
                 default -> "&#FF5C5CIl te faut &f" + NumberUtils.format(cost)
                         + " &r%img_bitblock%&#FF5C5C pour réparer cet objet.";
             }, player));
-            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            fr.influencraft.flux.api.util.Sounds.cue(player, "error");
             return;
         }
 
@@ -317,7 +317,7 @@ public final class RepairMenu implements CommandExecutor {
         if (economy == null || !economy.withdrawPlayer(player, cost).transactionSuccess()) {
             player.sendMessage(StringUtils.format(
                     "&#FF5C5CLe paiement a échoué, ton objet n'a pas été touché.", player));
-            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            fr.influencraft.flux.api.util.Sounds.cue(player, "error");
             return;
         }
 

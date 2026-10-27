@@ -98,7 +98,7 @@ public class AutoSellMenu implements ListProvider {
     public void open(Player player) {
         Lists.reset(player, LIST);
         invalidate(player);
-        if (FluxApi.open(player, MENU)) player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1.0f, 1.0f);
+        if (FluxApi.open(player, MENU)) fr.influencraft.flux.api.util.Sounds.cue(player, "page");
     }
 
     public void forget(UUID uuid) {
@@ -130,8 +130,7 @@ public class AutoSellMenu implements ListProvider {
 
         boolean nowActive = itemManager.isActive(toggled);
         player.sendMessage(lang.get(nowActive ? "shop-autosell-toggled-on" : "shop-autosell-toggled-off"));
-        player.playSound(player.getLocation(), nowActive ? Sound.BLOCK_AMETHYST_BLOCK_CHIME : Sound.BLOCK_AMETHYST_BLOCK_HIT,
-                1.0f, nowActive ? 1.4f : 0.8f);
+        fr.influencraft.flux.api.util.Sounds.cue(player, nowActive ? "toggle-on" : "toggle-off");
         return true;
     }
 
@@ -333,16 +332,15 @@ public class AutoSellMenu implements ListProvider {
                 boolean nowException = !exceptions.getExceptions(uuid).contains(argument);
                 exceptions.setExceptions(uuid, List.of(argument), nowException);
                 itemManager.refreshLore(player);
-                player.playSound(player.getLocation(), nowException ? Sound.BLOCK_AMETHYST_BLOCK_HIT : Sound.BLOCK_AMETHYST_BLOCK_CHIME,
-                        1.0f, nowException ? 0.8f : 1.4f);
+                fr.influencraft.flux.api.util.Sounds.cue(player, nowException ? "toggle-off" : "toggle-on");
             }
             case "category" -> {
                 Lists.act(player, LIST, right ? "filter-prev" : "filter", PAGE_SIZE);
-                player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1.0f, 1.0f);
+                fr.influencraft.flux.api.util.Sounds.cue(player, "page");
             }
             case "view" -> {
                 Lists.act(player, LIST, right ? "sort-prev" : "sort", PAGE_SIZE);
-                player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1.0f, 1.0f);
+                fr.influencraft.flux.api.util.Sounds.cue(player, "page");
             }
             case "bulk" -> {
                 List<String> shown = Lists.entries(player, LIST).stream().map(ListEntry::id).toList();
@@ -350,7 +348,7 @@ public class AutoSellMenu implements ListProvider {
                 // left click: everything shown becomes an exception; right click: everything shown is sold again
                 exceptions.setExceptions(uuid, shown, !right);
                 itemManager.refreshLore(player);
-                player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.2f);
+                fr.influencraft.flux.api.util.Sounds.cue(player, "success");
             }
             case "toggle" -> {
                 if (!toggle(player)) return;
@@ -360,11 +358,11 @@ public class AutoSellMenu implements ListProvider {
                     resetArmedAt.remove(uuid);
                     exceptions.resetToDefault(uuid);
                     itemManager.refreshLore(player);
-                    player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
+                    fr.influencraft.flux.api.util.Sounds.cue(player, "success");
                     player.sendMessage(lang.get("autosell-menu-reset-done"));
                 } else {
                     resetArmedAt.put(uuid, System.currentTimeMillis());
-                    player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 1.0f);
+                    fr.influencraft.flux.api.util.Sounds.cue(player, "confirm");
                 }
             }
             default -> {

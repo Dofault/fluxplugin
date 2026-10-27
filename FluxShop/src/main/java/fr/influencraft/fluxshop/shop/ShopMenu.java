@@ -111,13 +111,13 @@ public class ShopMenu {
         }
         if (items.isEmpty()) {
             player.sendMessage(lang.get("shop-menu-empty"));
-            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+            fr.influencraft.flux.api.util.Sounds.cue(player, "error");
             return;
         }
         State previous = states.put(player.getUniqueId(), new State(shop, items));
         if (previous != null && previous.disarmTask != null) previous.disarmTask.cancel();
         invalidate(player);
-        if (FluxApi.open(player, MENU)) player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 0.6f, 1.2f);
+        if (FluxApi.open(player, MENU)) fr.influencraft.flux.api.util.Sounds.cue(player, "open");
     }
 
     public void forget(UUID uuid) {
@@ -178,7 +178,7 @@ public class ShopMenu {
             refresh(player, FluxApi.view(player));
         }, timeout);
         // XP sound: the click counts, nothing is bought yet
-        player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.6f, 0.7f);
+        fr.influencraft.flux.api.util.Sounds.cue(player, "confirm");
         refresh(player, view);
     }
 
@@ -235,12 +235,12 @@ public class ShopMenu {
         plugin.getLogger().info("[Shop] " + player.getName() + " bought " + quantity + " " + MenuItems.describe(entry)
                 + " for " + total + " (" + shop.getId() + ")");
         MenuItems.send(player, lang.get("shop-buy-success", Map.of("amount", String.valueOf(quantity), "price", fr.influencraft.flux.api.util.Format.decimal(total))), model);
-        player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.8f, 1.2f);
+        fr.influencraft.flux.api.util.Sounds.cue(player, "success");
         return true;
     }
 
     private void fail(Player player, String message) {
         player.sendMessage(message);
-        player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+        fr.influencraft.flux.api.util.Sounds.cue(player, "error");
     }
 }

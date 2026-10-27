@@ -175,7 +175,7 @@ public abstract class Menu implements InventoryHolder {
         ItemStack copy = item.clone();
         copy.setAmount(click == ClickType.SHIFT_RIGHT ? Math.min(64, copy.getMaxStackSize()) : 1);
         fr.influencraft.fluxpets.RevealManager.giveOrDrop(player, copy);
-        player.playSound(player, "entity.item.pickup", 0.6f, 1.2f);
+        fr.influencraft.flux.api.util.Sounds.cue(player, "click");
     }
 
     /** Demande une saisie dans le tchat puis rouvre ce menu. */

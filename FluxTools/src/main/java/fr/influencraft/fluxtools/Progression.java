@@ -168,7 +168,7 @@ final class Progression implements Listener {
         }
         p.showTitle(Title.title(Fmt.texte(Fmt.TITRE + "◆ Niveau " + apres),
                 debloque == null ? Component.empty() : debloque.color(TextColor.color(0xFFD6DE))));
-        p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.1f);
+        fr.influencraft.flux.api.util.Sounds.cue(p, "complete");
         if (apres >= o.niveauMax()) {
             plugin.message(p, "maitrise");
             if (plugin.getConfig().getBoolean("annonce-maitrise", true)) {
@@ -186,7 +186,7 @@ final class Progression implements Listener {
             Outil.Jalon j = etape.jalons().get(e.jalons++);
             payer(p, e, j.recompense());
             plugin.message(p, "jalon", "%quantite%", Fmt.nombre(j.quantite()), "%total%", Fmt.nombre(q.quantite()));
-            p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.8f, 1.2f);
+            fr.influencraft.flux.api.util.Sounds.cue(p, "success");
         }
         if (e.avance < q.quantite()) {
             Rendu.maj(item, o, e, enchants);
@@ -208,7 +208,7 @@ final class Progression implements Listener {
             plugin.message(p, "bonus-xp", "%xp%", Fmt.nombre(etape.xp()));
             gagner(p, o, e, etape.xp());
         }
-        p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.7f, 1.2f);
+        fr.influencraft.flux.api.util.Sounds.cue(p, "reward");
         Rendu.maj(item, o, e, true);
 
         if (!fini) {
@@ -234,7 +234,7 @@ final class Progression implements Listener {
             p.getWorld().spawnParticle(Particle.ITEM, p.getEyeLocation().add(p.getLocation().getDirection().multiply(0.6)),
                     20, 0.2, 0.2, 0.2, 0.05, main.clone());
             p.getInventory().setItemInMainHand(null);
-            p.playSound(p.getLocation(), Sound.ENTITY_ITEM_BREAK, 1f, 1f);
+            fr.influencraft.flux.api.util.Sounds.cue(p, "remove");
             plugin.message(p, "brise");
         });
     }

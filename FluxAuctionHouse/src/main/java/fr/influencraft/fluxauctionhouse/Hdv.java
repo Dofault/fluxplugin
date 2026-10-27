@@ -183,7 +183,7 @@ final class Hdv {
         String nom = Objets.nom(item);
         String vendeur = nomJoueur(note.getPlayerUUID(), note.getPlayerName());
         Fmt.envoyer(p, Fmt.bitblock("Tu as acheté &fx" + quantite + " " + nom + " " + Fmt.VIOLET + "pour", prix, false, " à &f" + vendeur));
-        p.playSound(p, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.7f, 1.2f);
+        fr.influencraft.flux.api.util.Sounds.cue(p, "success");
         plugin.historique().enregistrer(new Historique.Vente(System.currentTimeMillis(), "vente", noteId, note.getPlayerUUID(), vendeur,
                 p.getUniqueId(), p.getName(), Objets.cle(item), nom, quantite, prix, prix - net(prix), bytes(item), null));
 
@@ -229,7 +229,7 @@ final class Hdv {
         eco.withdrawPlayer(p, hausse);
         String nom = Objets.nom(note.getItem());
         Fmt.envoyer(p, Fmt.bitblock("Tu as engagé", hausse, false, " sur &f" + nom + " &7(ton offre : " + Fmt.argent(montant) + ")"));
-        p.playSound(p, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.7f, 1.2f);
+        fr.influencraft.flux.api.util.Sounds.cue(p, "success");
         Set<UUID> autres = note.getBidders();
         autres.remove(p.getUniqueId());
         for (UUID id : autres) {
@@ -254,7 +254,7 @@ final class Hdv {
         p.getInventory().addItem(note.getItem());
         ItemNoteStorage.deleteCancelNote(note);
         Fmt.envoyer(p, Fmt.VIOLET + "Offre retirée : &f" + Objets.nom(note.getItem()) + Fmt.VIOLET + " est revenu dans ton inventaire. " + Fmt.SOURCE);
-        p.playSound(p, Sound.BLOCK_WOOD_BREAK, 0.7f, 1f);
+        fr.influencraft.flux.api.util.Sounds.cue(p, "remove");
         return true;
     }
 
@@ -272,7 +272,7 @@ final class Hdv {
             if (!CollectSoldItemGUI.collect(p, note.getNoteID(), quantite, prix)) return refus(p, "Rien à récupérer ici.");
             Fmt.envoyer(p, Fmt.bitblock("Tu as vendu &fx" + quantite + " " + nom + " " + Fmt.VIOLET + "pour", net(prix), true,
                     " à &f" + acheteur + " &7(taxe " + Fmt.taux(taxe() * 100) + " %)"));
-            p.playSound(p, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.7f, 1.2f);
+            fr.influencraft.flux.api.util.Sounds.cue(p, "success");
             return true;
         }
         if (e != Etat.EXPIREE && e != Etat.RETIREE_ADMIN) return refus(p, "Cette offre est toujours en vente.");
@@ -296,7 +296,7 @@ final class Hdv {
         } else {
             Fmt.envoyer(p, Fmt.VIOLET + "Offre expirée : &f" + nom + Fmt.VIOLET + " est revenu dans ton inventaire. " + Fmt.SOURCE);
         }
-        p.playSound(p, Sound.ENTITY_ITEM_PICKUP, 0.7f, 1f);
+        fr.influencraft.flux.api.util.Sounds.cue(p, "success");
         return true;
     }
 
@@ -322,7 +322,7 @@ final class Hdv {
             eco.depositPlayer(p, rendu);
             Fmt.envoyer(p, Fmt.bitblock("Tu as récupéré", rendu, true, " de ton offre sur &f" + nom));
         }
-        p.playSound(p, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.7f, 1.2f);
+        fr.influencraft.flux.api.util.Sounds.cue(p, "success");
         return true;
     }
 
@@ -374,7 +374,7 @@ final class Hdv {
         Fmt.envoyer(p, Fmt.VIOLET + (enchere ? "Enchère ouverte" : "Mise en vente") + " : &fx" + quantite + " " + Objets.nom(vendu) + Fmt.VIOLET
                 + (enchere ? " à partir de &f" : " pour &f") + Fmt.argent(prix) + " " + Fmt.BB + Fmt.VIOLET + ". En ligne dans "
                 + SettingManager.auctionSetupTime + " s, pendant " + Fmt.duree(duree(p, enchere)) + ". " + Fmt.SOURCE);
-        p.playSound(p, Sound.BLOCK_NOTE_BLOCK_PLING, 0.7f, 1.4f);
+        fr.influencraft.flux.api.util.Sounds.cue(p, "success");
         return true;
     }
 
@@ -417,7 +417,7 @@ final class Hdv {
 
     private static boolean refus(Player p, String texte) {
         Fmt.erreur(p, texte);
-        p.playSound(p, Sound.ENTITY_VILLAGER_NO, 0.6f, 1f);
+        fr.influencraft.flux.api.util.Sounds.cue(p, "error");
         return false;
     }
 }

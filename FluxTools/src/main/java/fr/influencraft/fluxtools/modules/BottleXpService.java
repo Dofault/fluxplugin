@@ -232,7 +232,7 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
         player.getInventory().setItem(hand, inHand.getAmount() > 0 ? inHand : null);
 
         player.giveExp(storedXp, false);
-        player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.6f, 1.2f);
+        fr.influencraft.flux.api.util.Sounds.cue(player, "complete");
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)

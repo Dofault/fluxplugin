@@ -17,12 +17,16 @@ language: en_US
 # d'autres plugins ajoutent les leurs (ex : chips, les jetons de FluxCasino).
 currencies:
   main: vault
+  # format: how an amount is written; icon: item shown for it in menus (Flux material syntax)
   vault:
     format: "%amount% $"
+    icon: GOLD_INGOT
   playerpoints:
     format: "%amount% points"
+    icon: EMERALD
   chips:
     format: "%amount% chips"
+    icon: GOLD_NUGGET
 
 # Couleurs des boîtes de dialogue (saisies, confirmations, copie, liens).
 dialogs:
@@ -63,3 +67,19 @@ database:
   pool-size: 6
   # prefix added to every table name (useful when the database is shared with other applications)
   table-prefix: ""
+
+# Interface sounds of the whole suite ("<sound> [volume] [pitch]", "none" = silent). Plugins and menus play them by
+# name (Sounds.cue in code, "@error" in a config or a [sound] action).
+sounds:
+  open: "minecraft:block.chest.open 0.6 1.2"
+  close: "minecraft:block.chest.close 0.6 1.2"
+  page: "minecraft:item.book.page_turn"
+  click: "minecraft:ui.button.click 0.6 1"
+  confirm: "minecraft:entity.experience_orb.pickup 0.6 0.7"
+  success: "minecraft:entity.experience_orb.pickup 0.8 1.2"
+  error: "minecraft:entity.villager.no"
+  complete: "minecraft:entity.player.levelup"
+  reward: "minecraft:ui.toast.challenge_complete 0.8 1"
+  toggle-on: "minecraft:block.amethyst_block.chime 1 1.4"
+  toggle-off: "minecraft:block.amethyst_block.hit 1 0.8"
+  remove: "minecraft:entity.item.break 0.6 1"

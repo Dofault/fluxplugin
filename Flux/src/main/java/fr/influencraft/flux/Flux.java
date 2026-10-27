@@ -126,6 +126,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         clickCooldown = Math.max(0, getConfig().getInt("click-cooldown", 4));
         prefix = getConfig().getString("prefix", "&#FFD94D&lFlux &8► ");
         Text.configureLore(getConfig().getInt("lore.max-line-length", 40), getConfig().getBoolean("lore.repeat-prefix", true));
+        fr.influencraft.flux.api.util.Sounds.configure(getConfig().getConfigurationSection("sounds"));
         // suite-wide settings: language, currencies, dialogs
         messages = fr.influencraft.flux.api.text.Messages.load(this, getConfig().getString("language", "en_US"));
         java.util.Locale numbers = java.util.Locale.forLanguageTag(messages.language().replace('_', '-'));
@@ -135,6 +136,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         }, numbers);
         fr.influencraft.flux.api.economy.Economy.configure(getConfig().getString("currencies.main", "vault"),
                 id -> getConfig().getString("currencies." + id + ".format", "%amount%"));
+        fr.influencraft.flux.api.economy.Economy.configureIcons(id -> getConfig().getString("currencies." + id + ".icon", "GOLD_NUGGET"));
         java.util.Map<String, String> dialog = new java.util.HashMap<>();
         var colors = getConfig().getConfigurationSection("dialogs");
         if (colors != null) for (String k : colors.getKeys(false)) dialog.put(k, colors.getString(k, ""));

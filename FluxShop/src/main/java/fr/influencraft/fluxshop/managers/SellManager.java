@@ -57,13 +57,13 @@ public class SellManager implements ListProvider {
 
     /** Right click on the sell block: deposit menu. */
     public void openSellMenu(Player player) {
-        player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f);
+        fr.influencraft.flux.api.util.Sounds.cue(player, "open");
         sellMenu.open(player);
     }
 
     /** Left click on the sell block: sell prices. */
     public void openPriceList(Player player) {
-        player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1.0f, 1.0f);
+        fr.influencraft.flux.api.util.Sounds.cue(player, "page");
         Lists.reset(player, PRICES_LIST);
         FluxApi.open(player, PRICES_MENU);
     }

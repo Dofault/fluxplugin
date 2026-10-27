@@ -29,6 +29,7 @@ public final class Economy {
     private static final Map<String, Owned> CURRENCIES = new ConcurrentHashMap<>();
     private static volatile String main = "vault";
     private static volatile Function<String, String> formats = id -> "%amount%";
+    private static volatile Function<String, String> icons = id -> "GOLD_NUGGET";
 
     private Economy() {
     }
@@ -37,6 +38,16 @@ public final class Economy {
     public static void configure(String mainCurrency, Function<String, String> formatOfCurrency) {
         main = mainCurrency.toLowerCase(Locale.ROOT);
         formats = formatOfCurrency;
+    }
+
+    /** Called by Flux from its config ({@code currencies.<id>.icon}). */
+    public static void configureIcons(Function<String, String> iconOfCurrency) {
+        icons = iconOfCurrency;
+    }
+
+    /** Menu icon of a currency ({@code currencies.<id>.icon}, Flux material syntax), the same in every plugin. */
+    public static String icon(String currencyId) {
+        return icons.apply(currencyId.toLowerCase(Locale.ROOT));
     }
 
     public static void register(Plugin owner, Currency currency) {

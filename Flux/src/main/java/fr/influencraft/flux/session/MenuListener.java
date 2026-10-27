@@ -138,7 +138,7 @@ public final class MenuListener implements Listener {
         // Bouton à confirmer : le 1er clic prévient (barre d'action + son), le 2e agit.
         if (button.confirm() != null && !s.confirmClick(button)) {
             player.sendActionBar(fr.influencraft.flux.Text.line(player, button.confirm()));
-            player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_HAT, 1f, 0.8f);
+            fr.influencraft.flux.api.util.Sounds.cue(player, "click");
             return;
         }
 
