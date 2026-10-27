@@ -23,6 +23,7 @@ rewards:
   help: "&#B376E5Récupère tes récompenses avec &f[/%flux_cmd_flux_rewards%]&#B376E5."
   reminder: "&#B376E5Tu as &f%count% &#B376E5récompense(s) en attente : &f[/%flux_cmd_flux_rewards%]"
   given: "&#B376E5Nouvelle récompense en attente : &f%label%&#B376E5, &f[/%flux_cmd_flux_rewards%]"
+  given-many: "&f%count% &#B376E5nouvelles récompenses en attente : &f[/%flux_cmd_flux_rewards%]"
   claimed: "&#2ECF7B%count% récompense(s) récupérée(s) !"
   remaining: "&#B376E5Il en reste &f%count%&#B376E5 : libère de la place dans ton inventaire puis refais &f[/%flux_cmd_flux_rewards%]&#B376E5."
   nothing: "&#FF5C5CRien à récupérer pour le moment."

@@ -89,7 +89,7 @@ sounds:
   remove: "minecraft:entity.item.break 0.6 1"
   toggle-on: "minecraft:block.amethyst_block.chime 1 1.4"
   toggle-off: "minecraft:block.amethyst_block.hit 1 0.8"
-  # alerte staff
+  # quelque chose demande l'attention : récompense en attente, alerte staff (3 s minimum entre deux)
   alert: "minecraft:block.note_block.pling 0.7 1.6"
   # (open, close et reward n'existent plus : open joue page, reward joue complete, close est muet)
 

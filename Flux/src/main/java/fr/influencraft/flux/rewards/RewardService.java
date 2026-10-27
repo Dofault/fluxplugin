@@ -13,6 +13,7 @@ import fr.influencraft.flux.api.reward.Rewards;
 import fr.influencraft.flux.api.reward.StoredReward;
 import fr.influencraft.flux.api.text.Messages;
 import fr.influencraft.flux.api.util.Players;
+import fr.influencraft.flux.api.util.Sounds;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
@@ -28,8 +29,10 @@ import java.io.File;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -47,6 +50,8 @@ public final class RewardService implements Rewards.Backend, Listener {
     private final JavaPlugin flux;
     private final Supplier<Messages> messages;
     private final RewardStore store;
+    /** Rewards given in the last second, per player: one message and one sound for a burst (catch-up, crate). */
+    private final Map<UUID, List<String>> burst = new HashMap<>();
 
     private RewardService(JavaPlugin flux, Supplier<Messages> messages, RewardStore store) {
         this.flux = flux;
@@ -88,11 +93,25 @@ public final class RewardService implements Rewards.Backend, Listener {
             Player online = player.getPlayer();
             if (online == null) return;
             changed(online);
-            if (flux.getConfig().getBoolean("rewards.notify-on-give", true)) {
-                messages.get().send(online, "rewards.given", "%label%", reward.label());
-            }
+            if (flux.getConfig().getBoolean("rewards.notify-on-give", true)) notifyLater(online, reward.label());
         });
         return true;
+    }
+
+    private void notifyLater(Player player, String label) {
+        List<String> labels = burst.get(player.getUniqueId());
+        if (labels != null) {
+            labels.add(label);
+            return;
+        }
+        burst.put(player.getUniqueId(), new ArrayList<>(List.of(label)));
+        Bukkit.getScheduler().runTaskLater(flux, () -> {
+            List<String> all = burst.remove(player.getUniqueId());
+            if (all == null || !player.isOnline()) return;
+            if (all.size() == 1) messages.get().send(player, "rewards.given", "%label%", all.get(0));
+            else messages.get().send(player, "rewards.given-many", "%count%", String.valueOf(all.size()));
+            Sounds.cue(player, "alert");
+        }, 20L);
     }
 
     @Override
@@ -250,7 +269,9 @@ public final class RewardService implements Rewards.Backend, Listener {
     private void remind(Player player) {
         if (!player.isOnline()) return;
         int count = store.pending(player.getUniqueId()).size();
-        if (count > 0) messages.get().send(player, "rewards.reminder", "%count%", String.valueOf(count));
+        if (count == 0) return;
+        messages.get().send(player, "rewards.reminder", "%count%", String.valueOf(count));
+        Sounds.cue(player, "alert");
     }
 
     // ------------------------------------------------------------------ /rewards

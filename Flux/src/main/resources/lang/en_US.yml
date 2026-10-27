@@ -23,6 +23,7 @@ rewards:
   help: "&#B376E5Claim your rewards with &f[/%flux_cmd_flux_rewards%]&#B376E5."
   reminder: "&#B376E5You have &f%count% &#B376E5reward(s) waiting: &f[/%flux_cmd_flux_rewards%]"
   given: "&#B376E5New reward waiting for you: &f%label%&#B376E5, &f[/%flux_cmd_flux_rewards%]"
+  given-many: "&f%count% &#B376E5new rewards waiting: &f[/%flux_cmd_flux_rewards%]"
   claimed: "&#2ECF7B%count% reward(s) claimed!"
   remaining: "&#B376E5%count% reward(s) left: make room in your inventory and type &f[/%flux_cmd_flux_rewards%] &#B376E5again."
   nothing: "&#FF5C5CNothing to claim for now."

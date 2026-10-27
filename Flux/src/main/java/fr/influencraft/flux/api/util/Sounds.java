@@ -15,7 +15,8 @@ import java.util.Locale;
  * <p>Cues, one per meaning: {@code page} (a menu opens or turns a page), {@code click} (a button),
  * {@code confirm} (first click of a double confirmation, nothing done yet), {@code success} (an action worked:
  * bought, sold, deposited), {@code complete} (something earned: a level, a finished offering, a claimed reward),
- * {@code error}, {@code remove}, {@code toggle-on}, {@code toggle-off}, {@code alert} (staff alert). Former cues
+ * {@code error}, {@code remove}, {@code toggle-on}, {@code toggle-off}, {@code alert} (something needs the player's attention: a reward
+ * waiting, a staff alert; at most once every 3 seconds per player, a burst of alerts rings once). Former cues
  * still answer: {@code open} plays {@code page}, {@code reward} plays {@code complete}, {@code close} is silent.</p>
  */
 public final class Sounds {
@@ -35,6 +36,10 @@ public final class Sounds {
     /** Cues merged into another one (menus and configs written before keep working). */
     private static final java.util.Map<String, String> MERGED = java.util.Map.of("open", "page", "reward", "complete", "close", "");
 
+    /** Minimum time between two plays of a cue for one player, in ms. */
+    private static final java.util.Map<String, Long> COOLDOWNS = java.util.Map.of("alert", 3000L);
+    private static final java.util.Map<String, Long> LAST_PLAYED = new java.util.concurrent.ConcurrentHashMap<>();
+
     private Sounds() {
     }
 
@@ -49,6 +54,14 @@ public final class Sounds {
         String key = name.toLowerCase(Locale.ROOT);
         key = MERGED.getOrDefault(key, key);
         String spec = CUES.get(key);
+        Long cooldown = COOLDOWNS.get(key);
+        if (spec != null && cooldown != null && player != null) {
+            long now = System.currentTimeMillis();
+            String id = player.getUniqueId() + ":" + key;
+            Long last = LAST_PLAYED.get(id);
+            if (last != null && now - last < cooldown) return;
+            LAST_PLAYED.put(id, now);
+        }
         if (spec != null) play(player, spec);
     }
 
