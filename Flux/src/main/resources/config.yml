@@ -123,23 +123,13 @@ bedrock:
     # namespace:id: MATERIAL
   default-item: PAPER
 
-# Messages to Discord through webhooks (Discord: channel settings > Integrations > Webhooks > copy the URL).
-# Plugins use the name, never the URL. Empty: nothing is sent.
-discord:
-  # name shown on the messages ("": the webhook's own name)
-  username: ""
-  webhooks:
-    staff: ""
 
 # Alerts for the staff (players with flux.staff.alerts), e.g. how a new player found the server.
 staff:
   format: "&#FF5C5Cꜱᴛᴀꜰꜰ &8▸ &#FFD94D{title} &8» &#B376E5{message}"
   # sound cue (see sounds) or "<sound> [volume] [pitch]", "" = silent
   sound: alert
-  # webhook of discord.webhooks that receives the alerts ("" = Discord off)
-  discord: staff
-  # per topic: chat (online staff) and discord (webhook name, "" = not on Discord)
+  # per topic: false turns its chat alert off
   topics:
     referral-origin:
       chat: true
-      discord: staff

@@ -148,3 +148,4 @@ messages:
   alerte-staff-titre: "Origine d'un joueur"
   alerte-staff: "<white>{joueur}</white> a découvert le serveur par <white>{origine}</white>"
   alerte-staff-autre: "<white>{joueur}</white> a découvert le serveur autrement : <white>« {texte} »</white>"
+  origine-usage: "{prefixe} <color:#B376E5>Utilisation : <white>/origine <joueur>"

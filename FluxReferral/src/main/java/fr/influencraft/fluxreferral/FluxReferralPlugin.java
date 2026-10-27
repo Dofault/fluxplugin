@@ -31,6 +31,9 @@ import java.util.logging.Level;
  */
 public class FluxReferralPlugin extends JavaPlugin {
 
+    /** {@code /origine <player>}: given to the whole staff (moderators included). */
+    public static final String PERMISSION_ORIGINE = "parrainage.staff.origine";
+
     private GestionnaireConfig gestionnaireConfig;
     private GestionnaireLangue gestionnaireLangue;
     private fr.influencraft.fluxreferral.service.ServiceDecouverte serviceDecouverte;
@@ -103,6 +106,18 @@ public class FluxReferralPlugin extends JavaPlugin {
 
         fr.influencraft.flux.api.command.Commands.create(this, "referral").aliases("parrainage", "parr")
             .description("Referral system.").bukkit(cmdParrainage, cmdParrainage).register();
+        // /origine <player>: where a player comes from, for the whole staff (moderators included)
+        fr.influencraft.flux.api.command.Commands.create(this, "origin").aliases("origine", "provenance")
+            .description("Where a player comes from (staff).").permission(PERMISSION_ORIGINE)
+            .executor((sender, label, args) -> {
+                if (!sender.hasPermission(PERMISSION_ORIGINE)) sender.sendMessage(gestionnaireLangue.getMessage("permission-refusee"));
+                else if (args.length < 1) sender.sendMessage(gestionnaireLangue.getMessage("origine-usage"));
+                else serviceDecouverte.consulter(sender, args[0]);
+                return true;
+            })
+            .completer((sender, args) -> args.length == 1 && sender.hasPermission(PERMISSION_ORIGINE)
+                ? fr.influencraft.flux.api.util.Players.complete(args[0]) : java.util.List.of())
+            .register();
         // referral rewards are handed to Flux's reward manager on join and before every claim
         fr.influencraft.flux.api.reward.Rewards.collector(this, p -> serviceRecuperation.transferer(p, null));
 

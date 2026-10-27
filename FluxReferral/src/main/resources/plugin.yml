@@ -81,6 +81,11 @@ permissions:
     description: Valider tout de suite le parrainage en attente d'un joueur
     default: op
 
+  # --- Staff ---
+  parrainage.staff.origine:
+    description: "/origine <joueur> : voir d'où vient un joueur (à donner à tout le staff, modos compris)"
+    default: op
+
   # --- Permission globale admin ---
   parrainage.admin.decouverte:
     description: "Voir comment un joueur a découvert le serveur"

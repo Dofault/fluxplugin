@@ -54,7 +54,7 @@ public class ServiceDecouverte {
         depot.ecouter(this::annoncer);
     }
 
-    /** A new discovery is recorded: the staff learns where the player comes from (Flux staff alerts, chat and Discord). */
+    /** A new discovery is recorded: the staff learns where the player comes from (Flux staff alerts, chat of the online staff). */
     private void annoncer(UUID joueur, String source, UUID parrain, String detail) {
         if (!config.isAlerteStaff()) return;
         try {
@@ -69,8 +69,7 @@ public class ServiceDecouverte {
                         .map(JoueurParrainage::pseudo).orElse(parrain.toString());
                 message = texte("alerte-staff", Map.of("joueur", nom, "origine", libelle(source, parrainNom)));
             }
-            fr.influencraft.flux.api.staff.Staff.alert("referral-origin", texte("alerte-staff-titre", Map.of()), message,
-                    0xB376E5, java.util.List.of());
+            fr.influencraft.flux.api.staff.Staff.alert("referral-origin", texte("alerte-staff-titre", Map.of()), message);
         } catch (SQLException e) {
             plugin.getLogger().log(Level.WARNING, "Staff alert of a discovery", e);
         }

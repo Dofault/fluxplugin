@@ -48,8 +48,7 @@ adresse:
 # /parrainage decouverte <joueur> et /parrainage decouvertes (admin) pour consulter.
 decouverte:
   questionnaire: true
-  # Prévient le staff de l'origine de chaque joueur (alertes staff de Flux : tchat du staff connecté et salon
-  # Discord du webhook "staff", section staff de plugins/Flux/config.yml)
+  # Prévient le staff connecté de l'origine de chaque joueur (alertes staff de Flux, permission flux.staff.alerts)
   alerte-staff: true
   # Délai avant l'ouverture de la fenêtre après la connexion (secondes)
   delai-secondes: 5
