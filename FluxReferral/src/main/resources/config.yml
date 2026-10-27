@@ -5,20 +5,10 @@
 # ===================================================
 
 base-de-donnees:
-  # Mode de connexion :
-  # - auto  : tente MySQL/MariaDB au démarrage, bascule automatiquement sur le fichier SQLite local
-  #           (voir fichier-local) si la connexion échoue (utile en environnement de test sans base)
-  # - mysql : force MySQL/MariaDB, désactive le plugin si la connexion échoue
-  # - local : force le fichier SQLite local, ignore hote/port/nom/utilisateur/mot-de-passe
-  mode: auto
-  hote: localhost
-  port: 3306
-  nom: influencraft
-  utilisateur: root
-  mot-de-passe: motdepasse
-  taille-pool: 10
+  # La base elle-même (SQLite ou MySQL/MariaDB, hôte, identifiants) se règle une seule fois pour toute la suite,
+  # section database de plugins/Flux/config.yml. Ici : seulement le préfixe des tables du parrainage.
   prefixe-tables: "parr_"
-  # Nom du fichier SQLite (mode "local", ou fallback en mode "auto"), stocké dans le dossier de données du plugin
+  # Ancien fichier SQLite local, recopié une fois dans la base de Flux au démarrage
   fichier-local: "parrainage.db"
 
 # Code de langue : correspond au fichier langue_{code}.yml

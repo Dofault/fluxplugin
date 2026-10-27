@@ -42,7 +42,7 @@ public final class FluxAuctionHouse extends JavaPlugin implements Listener {
         }
         eco = rsp.getProvider();
         try {
-            historique = new Historique(getDataFolder(), getLogger());
+            historique = new Historique(this, getDataFolder(), getLogger());
         } catch (java.sql.SQLException e) {
             getLogger().severe("Historique (SQLite) indisponible : " + e + ". FluxAuctionHouse désactivé.");
             Bukkit.getPluginManager().disablePlugin(this);

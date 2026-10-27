@@ -1,10 +1,10 @@
 package fr.influencraft.fluxauctionhouse;
 
+import fr.influencraft.flux.api.data.Database;
 import org.bukkit.inventory.ItemStack;
 
 import java.io.File;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /**
- * Historique des ventes du marché (base SQLite {@code plugins/FluxAuctionHouse/historique.db}) : ventes
+ * Historique des ventes du marché (tables {@code market_sales} and {@code market_seen_auctions} of the suite's database, Flux {@link Database}) : ventes
  * directes et enchères de l'hôtel des ventes, transactions des échoppes. Sert à {@code /ah history}
  * et au prix moyen ({@code /ah average}, menus).
  *
@@ -53,42 +53,38 @@ final class Historique {
     }
 
     private final Logger log;
-    private final Connection db;
+    /** One writer at a time, like before the shared database. */
+    private final Object db = new Object();
+    private final String ventes = Database.table("market_sales");
+    private final String vues = Database.table("market_seen_auctions");
     private final ExecutorService ecriture = Executors.newSingleThreadExecutor(r -> new Thread(r, "FluxAuctionHouse-historique"));
-    private final Map<String, Object[]> cache = new ConcurrentHashMap<>(); // clé -> {expiration, valeur}
+    private final Map<String, Object[]> cache = new ConcurrentHashMap<>(); // key -> {expiry, value}
 
-    Historique(File dossier, Logger log) throws SQLException {
+    Historique(org.bukkit.plugin.Plugin plugin, File dossier, Logger log) throws SQLException {
         this.log = log;
-        dossier.mkdirs();
-        try {
-            Class.forName("org.sqlite.JDBC"); // pilote chargé par plugin.yml (libraries)
-        } catch (ClassNotFoundException e) {
-            throw new SQLException("pilote SQLite absent", e);
+        Database.Dialect d = Database.dialect();
+        try (Connection c = Database.connection(); Statement s = c.createStatement()) {
+            s.execute("CREATE TABLE IF NOT EXISTS " + ventes + " ("
+                    + " id " + d.autoId() + ","
+                    + " date BIGINT NOT NULL, source " + d.key(32) + " NOT NULL, ref TEXT,"
+                    + " vendeur " + d.key(36) + ", vendeur_nom TEXT, acheteur " + d.key(36) + ", acheteur_nom TEXT,"
+                    + " cle " + d.key(191) + " NOT NULL, nom TEXT, quantite INTEGER NOT NULL,"
+                    + " total DOUBLE NOT NULL, taxe DOUBLE NOT NULL, objet " + (d == Database.Dialect.SQLITE ? "BLOB" : "MEDIUMBLOB") + ", ville TEXT)");
+            Database.index(c, "market_sales_key", ventes, "cle, date", false);
+            Database.index(c, "market_sales_seller", ventes, "vendeur, date", false);
+            Database.index(c, "market_sales_buyer", ventes, "acheteur, date", false);
+            // auctions already recorded (found by scanning, once each)
+            s.execute("CREATE TABLE IF NOT EXISTS " + vues + " (note " + d.key(191) + " PRIMARY KEY)");
         }
-        db = DriverManager.getConnection("jdbc:sqlite:" + new File(dossier, "historique.db").getAbsolutePath());
-        try (Statement s = db.createStatement()) {
-            s.execute("PRAGMA journal_mode=WAL");
-            s.execute("""
-                    CREATE TABLE IF NOT EXISTS ventes (
-                      id INTEGER PRIMARY KEY AUTOINCREMENT,
-                      date INTEGER NOT NULL, source TEXT NOT NULL, ref TEXT,
-                      vendeur TEXT, vendeur_nom TEXT, acheteur TEXT, acheteur_nom TEXT,
-                      cle TEXT NOT NULL, nom TEXT, quantite INTEGER NOT NULL,
-                      total REAL NOT NULL, taxe REAL NOT NULL, objet BLOB, ville TEXT)""");
-            s.execute("CREATE INDEX IF NOT EXISTS ventes_cle ON ventes(cle, date)");
-            s.execute("CREATE INDEX IF NOT EXISTS ventes_vendeur ON ventes(vendeur, date)");
-            s.execute("CREATE INDEX IF NOT EXISTS ventes_acheteur ON ventes(acheteur, date)");
-            // Enchères terminées déjà enregistrées (détectées par balayage, une seule fois chacune).
-            s.execute("CREATE TABLE IF NOT EXISTS encheres_vues (note TEXT PRIMARY KEY)");
-        }
+        // the file of the former versions (historique.db), moved once
+        Database.importSqlite(plugin, new File(dossier, "historique.db"), "ventes", ventes, "encheres_vues", vues);
     }
 
     void fermer() {
         ecriture.shutdown();
         try {
             ecriture.awaitTermination(5, TimeUnit.SECONDS);
-            db.close();
-        } catch (InterruptedException | SQLException e) {
+        } catch (InterruptedException e) {
             log.warning("Fermeture de l'historique : " + e);
         }
     }
@@ -99,7 +95,7 @@ final class Historique {
         cache.clear();
         ecriture.execute(() -> {
             synchronized (db) {
-                try (PreparedStatement ps = db.prepareStatement("INSERT INTO ventes (date, source, ref, vendeur, vendeur_nom, acheteur, "
+                try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement("INSERT INTO " + ventes + " (date, source, ref, vendeur, vendeur_nom, acheteur, "
                         + "acheteur_nom, cle, nom, quantite, total, taxe, objet, ville) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)")) {
                     ps.setLong(1, v.date());
                     ps.setString(2, v.source());
@@ -127,7 +123,7 @@ final class Historique {
     /** Marque une enchère terminée comme enregistrée ; faux si elle l'était déjà (fil principal). */
     boolean premiereFois(String note) {
         synchronized (db) {
-            try (PreparedStatement ps = db.prepareStatement("INSERT OR IGNORE INTO encheres_vues (note) VALUES (?)")) {
+            try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement(Database.dialect().insertIgnore() + " " + vues + " (note) VALUES (?)")) {
                 ps.setString(1, note);
                 return ps.executeUpdate() > 0;
             } catch (SQLException e) {
@@ -159,7 +155,7 @@ final class Historique {
             };
             List<Vente> l = new ArrayList<>();
             synchronized (db) {
-                try (PreparedStatement ps = db.prepareStatement("SELECT * FROM ventes WHERE " + where + " ORDER BY date DESC LIMIT ?")) {
+                try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement("SELECT * FROM " + ventes + " WHERE " + where + " ORDER BY date DESC LIMIT ?")) {
                     int i = 1;
                     ps.setString(i++, joueur.toString());
                     if (filtre == 0) ps.setString(i++, joueur.toString());
@@ -184,11 +180,12 @@ final class Historique {
     private Moyenne calculerMoyenne(String cle, int jours) {
         long depuis = System.currentTimeMillis() - jours * 86_400_000L;
         synchronized (db) {
-            try (PreparedStatement ps = db.prepareStatement("""
+            try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement("""
                     SELECT COUNT(*), SUM(quantite), SUM(total), MIN(total * 1.0 / quantite), MAX(total * 1.0 / quantite),
                       SUM(CASE WHEN source IN ('vente','enchere') THEN total END), SUM(CASE WHEN source IN ('vente','enchere') THEN quantite END),
                       SUM(CASE WHEN source IN ('echoppe','rachat') THEN total END), SUM(CASE WHEN source IN ('echoppe','rachat') THEN quantite END)
-                    FROM ventes WHERE cle = ? AND date >= ? AND quantite > 0""")) {
+                    FROM """ + ventes + """
+                     WHERE cle = ? AND date >= ? AND quantite > 0""")) {
                 ps.setString(1, cle);
                 ps.setLong(2, depuis);
                 try (ResultSet rs = ps.executeQuery()) {

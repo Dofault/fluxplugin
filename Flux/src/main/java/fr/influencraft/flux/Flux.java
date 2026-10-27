@@ -56,6 +56,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         PathRenderer.init(getLogger());
         fr.influencraft.flux.menu.ListRenderer.init(getLogger());
         fr.influencraft.flux.api.command.Commands.init(this);
+        fr.influencraft.flux.api.data.Database.start(this, getConfig().getConfigurationSection("database"));
         fr.influencraft.flux.api.util.PlayerSettings.open(this);
         fr.influencraft.flux.api.economy.Economy.registerBuiltIns(this);
         items = new ItemFactory(this);
@@ -94,6 +95,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         fr.influencraft.flux.api.FluxApi.bind(null);
         if (rewards != null) rewards.stop();
         fr.influencraft.flux.api.util.PlayerSettings.close();
+        fr.influencraft.flux.api.data.Database.stop();
         if (papiBridge != null) papiBridge.shutdown();
         if (menus != null) menus.closeAll();
         if (packetListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(packetListener);

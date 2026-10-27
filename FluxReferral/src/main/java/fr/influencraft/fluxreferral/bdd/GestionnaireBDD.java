@@ -1,7 +1,6 @@
 package fr.influencraft.fluxreferral.bdd;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
+import fr.influencraft.flux.api.data.Database;
 import fr.influencraft.fluxreferral.FluxReferralPlugin;
 import fr.influencraft.fluxreferral.configuration.GestionnaireConfig;
 
@@ -13,9 +12,9 @@ import java.sql.Statement;
 import java.util.logging.Level;
 
 /**
- * Gestionnaire du pool de connexions HikariCP et de l'initialisation du schéma SQL.
- * Supporte deux dialectes : MySQL/MariaDB (production) et SQLite (fallback local,
- * utile en environnement de test sans base MariaDB provisionnée, ex : 04_labs).
+ * Tables of the referral system in the suite's database (Flux {@link Database}: SQLite file or MySQL/MariaDB,
+ * configured once in {@code plugins/Flux/config.yml}). Creates the schema in the dialect of that database and moves
+ * the former local file ({@code base-de-donnees.fichier-local}) into it once.
  *
  * @author Entr0pik
  */
@@ -25,7 +24,6 @@ public class GestionnaireBDD {
 
     private final FluxReferralPlugin plugin;
     private final GestionnaireConfig config;
-    private HikariDataSource source;
     private Dialecte dialecte;
 
     public GestionnaireBDD(FluxReferralPlugin plugin, GestionnaireConfig config) {
@@ -34,81 +32,14 @@ public class GestionnaireBDD {
     }
 
     public void initialiser() throws SQLException {
-        String mode = config.getModeBDD();
-
-        if ("local".equalsIgnoreCase(mode)) {
-            demarrerSqlite();
-        } else if ("mysql".equalsIgnoreCase(mode)) {
-            demarrerMysql();
-        } else {
-            // Mode "auto" (par défaut) : MySQL/MariaDB en priorité, fallback SQLite si injoignable
-            try {
-                demarrerMysql();
-            } catch (SQLException e) {
-                plugin.getLogger().log(Level.WARNING,
-                    "Connexion MySQL/MariaDB impossible (" + e.getMessage()
-                    + ") — bascule sur le fallback SQLite local.");
-                demarrerSqlite();
-            }
-        }
-
+        if (!Database.available()) throw new SQLException("database of Flux unavailable");
+        dialecte = Database.dialect() == Database.Dialect.MYSQL ? Dialecte.MYSQL : Dialecte.SQLITE;
         creerSchema();
-    }
-
-    private void demarrerMysql() throws SQLException {
-        HikariConfig hikariConfig = new HikariConfig();
-        hikariConfig.setJdbcUrl(
-            "jdbc:mysql://" + config.getHoteBDD() + ":" + config.getPortBDD()
-            + "/" + config.getNomBDD()
-            + "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8"
-        );
-        hikariConfig.setUsername(config.getUtilisateurBDD());
-        hikariConfig.setPassword(config.getMotDePasseBDD());
-        hikariConfig.setMaximumPoolSize(config.getTaillePool());
-        hikariConfig.setMinimumIdle(2);
-        // Court : en mode "auto", on ne doit pas rester bloqué longtemps avant de basculer sur SQLite
-        hikariConfig.setConnectionTimeout(5_000);
-        hikariConfig.setIdleTimeout(600_000);
-        hikariConfig.setMaxLifetime(1_800_000);
-        hikariConfig.setPoolName("FluxReferral-Pool-MySQL");
-        hikariConfig.addDataSourceProperty("cachePrepStmts", "true");
-        hikariConfig.addDataSourceProperty("prepStmtCacheSize", "250");
-        hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
-        hikariConfig.addDataSourceProperty("useServerPrepStmts", "true");
-        // Validation de la connexion différée à nous (voir plus bas) plutôt qu'à l'initialisation du pool,
-        // pour pouvoir intercepter l'échec proprement et basculer sur SQLite en mode "auto"
-        hikariConfig.setInitializationFailTimeout(-1);
-
-        HikariDataSource candidate = new HikariDataSource(hikariConfig);
-        try (Connection test = candidate.getConnection()) {
-            // Connexion validée
-        } catch (SQLException e) {
-            candidate.close();
-            throw e;
-        }
-
-        this.source = candidate;
-        this.dialecte = Dialecte.MYSQL;
-        plugin.getLogger().info("Connexion au pool de base de données MySQL/MariaDB établie.");
-    }
-
-    private void demarrerSqlite() {
-        if (!plugin.getDataFolder().exists()) {
-            plugin.getDataFolder().mkdirs();
-        }
-        File fichier = new File(plugin.getDataFolder(), config.getFichierLocalBDD());
-
-        HikariConfig hikariConfig = new HikariConfig();
-        hikariConfig.setJdbcUrl("jdbc:sqlite:" + fichier.getAbsolutePath());
-        // SQLite ne supporte qu'un seul writer à la fois : une seule connexion dans le pool
-        hikariConfig.setMaximumPoolSize(1);
-        hikariConfig.setPoolName("FluxReferral-Pool-SQLite");
-        // Nécessaire à chaque connexion : SQLite n'active pas les clés étrangères par défaut
-        hikariConfig.setConnectionInitSql("PRAGMA foreign_keys = ON");
-
-        this.source = new HikariDataSource(hikariConfig);
-        this.dialecte = Dialecte.SQLITE;
-        plugin.getLogger().info("Connexion au fallback SQLite local établie (" + fichier.getAbsolutePath() + ").");
+        String p = config.getPrefixeTables();
+        // parents first (foreign keys)
+        Database.importSqlite(plugin, new File(plugin.getDataFolder(), config.getFichierLocalBDD()),
+                p + "joueurs", p + "joueurs", p + "evenements", p + "evenements",
+                p + "paliers", p + "paliers", p + "invitations", p + "invitations");
     }
 
     private void creerSchema() throws SQLException {
@@ -283,13 +214,10 @@ public class GestionnaireBDD {
     }
 
     public Connection obtenirConnexion() throws SQLException {
-        return source.getConnection();
+        return Database.connection();
     }
 
     public void fermer() {
-        if (source != null && !source.isClosed()) {
-            source.close();
-            plugin.getLogger().info("Pool de connexions fermé proprement.");
-        }
+        // the pool belongs to Flux
     }
 }

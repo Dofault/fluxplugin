@@ -1,11 +1,11 @@
 package fr.influencraft.flux.rewards;
 
+import fr.influencraft.flux.api.data.Database;
 import fr.influencraft.flux.api.reward.Reward;
 import fr.influencraft.flux.api.reward.StoredReward;
 
 import java.io.File;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -17,42 +17,39 @@ import java.util.UUID;
 import java.util.logging.Logger;
 
 /**
- * Rewards of every player in SQLite ({@code plugins/Flux/rewards.db}). A claimed reward is kept with its claim date
- * (history, and the key stays taken so the same reward is never given twice). Synchronized: any thread.
+ * Rewards of every player, table {@code flux_rewards} of the suite's database ({@link Database}). A claimed reward is
+ * kept with its claim date (history, and its key stays taken so the same reward is never given twice). Any thread.
  */
 final class RewardStore {
 
     private static final String SEPARATOR = "\n";
 
-    private final Connection db;
+    private final String table = Database.table("flux_rewards");
     private final Logger log;
 
     RewardStore(File folder, Logger log) throws SQLException {
         this.log = log;
-        folder.mkdirs();
-        db = DriverManager.getConnection("jdbc:sqlite:" + new File(folder, "rewards.db").getAbsolutePath());
-        try (Statement st = db.createStatement()) {
-            st.execute("PRAGMA journal_mode=WAL");
-            st.execute("CREATE TABLE IF NOT EXISTS rewards (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL,"
-                    + " source TEXT NOT NULL, reward_key TEXT, label TEXT NOT NULL, icon TEXT NOT NULL, amount INTEGER NOT NULL,"
-                    + " slots INTEGER NOT NULL, commands TEXT NOT NULL, created INTEGER NOT NULL, claimed INTEGER)");
-            st.execute("CREATE INDEX IF NOT EXISTS rewards_pending ON rewards (uuid, claimed, id)");
-            st.execute("CREATE UNIQUE INDEX IF NOT EXISTS rewards_key ON rewards (uuid, reward_key) WHERE reward_key IS NOT NULL");
+        Database.Dialect d = Database.dialect();
+        try (Connection c = Database.connection(); Statement st = c.createStatement()) {
+            st.execute("CREATE TABLE IF NOT EXISTS " + table + " (id " + d.autoId() + ", uuid " + d.key(36) + " NOT NULL,"
+                    + " source " + d.key(64) + " NOT NULL, reward_key " + d.key(191) + ", label TEXT NOT NULL, icon TEXT NOT NULL,"
+                    + " amount INTEGER NOT NULL, slots INTEGER NOT NULL, commands TEXT NOT NULL, created BIGINT NOT NULL, claimed BIGINT)");
+            Database.index(c, "flux_rewards_pending", table, "uuid, claimed, id", false);
+            // NULL keys never collide: only keyed rewards are unique
+            Database.index(c, "flux_rewards_key", table, "uuid, reward_key", true);
         }
+        // former file of the first version
+        Database.importSqlite(org.bukkit.Bukkit.getPluginManager().getPlugin("Flux"), new File(folder, "rewards.db"), "rewards", table);
     }
 
-    synchronized void close() {
-        try {
-            db.close();
-        } catch (SQLException ignored) {
-            // server stopping
-        }
+    void close() {
+        // the pool belongs to Database
     }
 
     /** False when the key is already taken or the database refused it. */
-    synchronized boolean add(UUID uuid, Reward r) {
-        try (PreparedStatement ps = db.prepareStatement("INSERT OR IGNORE INTO rewards (uuid, source, reward_key, label, icon,"
-                + " amount, slots, commands, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+    boolean add(UUID uuid, Reward r) {
+        try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement(Database.dialect().insertIgnore() + " " + table
+                + " (uuid, source, reward_key, label, icon, amount, slots, commands, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
             ps.setString(1, uuid.toString());
             ps.setString(2, r.source());
             ps.setString(3, r.key());
@@ -69,8 +66,8 @@ final class RewardStore {
         }
     }
 
-    synchronized boolean has(UUID uuid, String key) {
-        try (PreparedStatement ps = db.prepareStatement("SELECT 1 FROM rewards WHERE uuid = ? AND reward_key = ?")) {
+    boolean has(UUID uuid, String key) {
+        try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement("SELECT 1 FROM " + table + " WHERE uuid = ? AND reward_key = ?")) {
             ps.setString(1, uuid.toString());
             ps.setString(2, key);
             try (ResultSet rs = ps.executeQuery()) {
@@ -82,10 +79,10 @@ final class RewardStore {
         }
     }
 
-    synchronized List<StoredReward> pending(UUID uuid) {
+    List<StoredReward> pending(UUID uuid) {
         List<StoredReward> out = new ArrayList<>();
-        try (PreparedStatement ps = db.prepareStatement("SELECT id, created, source, reward_key, label, icon, amount, slots,"
-                + " commands FROM rewards WHERE uuid = ? AND claimed IS NULL ORDER BY id")) {
+        try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement("SELECT id, created, source, reward_key, label, icon, amount, slots,"
+                + " commands FROM " + table + " WHERE uuid = ? AND claimed IS NULL ORDER BY id")) {
             ps.setString(1, uuid.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -102,8 +99,8 @@ final class RewardStore {
     }
 
     /** Marks a reward as claimed; true only for the call that actually claimed it. */
-    synchronized boolean markClaimed(long id) {
-        try (PreparedStatement ps = db.prepareStatement("UPDATE rewards SET claimed = ? WHERE id = ? AND claimed IS NULL")) {
+    boolean markClaimed(long id) {
+        try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement("UPDATE " + table + " SET claimed = ? WHERE id = ? AND claimed IS NULL")) {
             ps.setLong(1, System.currentTimeMillis());
             ps.setLong(2, id);
             return ps.executeUpdate() == 1;

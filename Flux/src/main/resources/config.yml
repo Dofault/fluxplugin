@@ -49,3 +49,17 @@ rewards:
   notify-on-give: true
   # reminder of the waiting rewards, every N seconds (0: only when joining)
   reminder-interval-seconds: 0
+
+# The one database of the suite: every plugin of the suite keeps its tables here.
+database:
+  # sqlite: file plugins/Flux/<file> (nothing to install). mysql: MySQL or MariaDB server below.
+  type: sqlite
+  file: flux.db
+  host: localhost
+  port: 3306
+  name: influencraft
+  user: root
+  password: ""
+  pool-size: 6
+  # prefix added to every table name (useful when the database is shared with other applications)
+  table-prefix: ""

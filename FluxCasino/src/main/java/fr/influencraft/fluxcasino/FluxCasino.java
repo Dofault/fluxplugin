@@ -43,7 +43,7 @@ public final class FluxCasino extends FluxPlugin implements Listener {
     @Override
     protected void enable() {
         try {
-            store = new Store(getDataFolder(), getConfig().getLong("bet.default", 10));
+            store = new Store(this, getDataFolder(), getConfig().getLong("bet.default", 10));
         } catch (Exception e) {
             getLogger().severe("Chip database unavailable, plugin disabled: " + e);
             getServer().getPluginManager().disablePlugin(this);

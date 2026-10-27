@@ -1,8 +1,8 @@
 package fr.influencraft.fluxcasino;
 
+import fr.influencraft.flux.api.data.Database;
 import java.io.File;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -14,42 +14,40 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Balances and bets in SQLite (plugins/FluxCasino/casino.db, driver provided by Paper), written right away on every
- * movement (a chip is worth money: no delayed save). Every balance movement is also written to the ledger (player,
- * change, balance after, reason, date) to trace a dispute or an abuse. Balances and bets are cached (read by the
- * placeholders on every render). Main thread only.
+ * Balances and bets in the suite's database (tables {@code casino_balances}, {@code casino_ledger}, see Flux
+ * {@link Database}), written right away on every movement (a chip is worth money: no delayed save). Every balance
+ * movement is also written to the ledger (player, change, balance after, reason, date) to trace a dispute or an abuse.
+ * Balances and bets are cached (read by the placeholders on every render). Main thread only.
  */
 final class Store {
 
-    private final Connection db;
+    private final String balances = Database.table("casino_balances");
+    private final String ledger = Database.table("casino_ledger");
     private final Map<UUID, long[]> cache = new ConcurrentHashMap<>(); // {chips, bet}
     private final long defaultBet;
 
-    Store(File folder, long defaultBet) throws SQLException {
+    Store(org.bukkit.plugin.Plugin plugin, File folder, long defaultBet) throws SQLException {
         this.defaultBet = defaultBet;
-        folder.mkdirs();
-        db = DriverManager.getConnection("jdbc:sqlite:" + new File(folder, "casino.db").getAbsolutePath());
-        try (Statement st = db.createStatement()) {
-            st.execute("PRAGMA journal_mode=WAL");
-            st.execute("CREATE TABLE IF NOT EXISTS balances (uuid TEXT PRIMARY KEY, name TEXT, chips INTEGER NOT NULL DEFAULT 0,"
-                    + " bet INTEGER NOT NULL, updated INTEGER NOT NULL)");
-            st.execute("CREATE TABLE IF NOT EXISTS ledger (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL,"
-                    + " delta INTEGER NOT NULL, balance INTEGER NOT NULL, reason TEXT NOT NULL, at INTEGER NOT NULL)");
-            st.execute("CREATE INDEX IF NOT EXISTS ledger_uuid ON ledger (uuid, id)");
+        Database.Dialect d = Database.dialect();
+        try (Connection c = Database.connection(); Statement st = c.createStatement()) {
+            st.execute("CREATE TABLE IF NOT EXISTS " + balances + " (uuid " + d.key(36) + " PRIMARY KEY, name TEXT,"
+                    + " chips BIGINT NOT NULL DEFAULT 0, bet BIGINT NOT NULL, updated BIGINT NOT NULL)");
+            st.execute("CREATE TABLE IF NOT EXISTS " + ledger + " (id " + d.autoId() + ", uuid " + d.key(36) + " NOT NULL,"
+                    + " delta BIGINT NOT NULL, balance BIGINT NOT NULL, reason TEXT NOT NULL, at BIGINT NOT NULL)");
+            Database.index(c, "casino_ledger_uuid", ledger, "uuid, id", false);
         }
+        // the file of the former versions (casino.db), moved once
+        Database.importSqlite(plugin, new File(folder, "casino.db"), "balances", balances, "ledger", ledger);
     }
 
     void close() {
-        try {
-            db.close();
-        } catch (SQLException ignored) {
-            // server stopping
-        }
+        // the pool belongs to Flux
     }
 
     private long[] row(UUID uuid) {
         return cache.computeIfAbsent(uuid, u -> {
-            try (PreparedStatement ps = db.prepareStatement("SELECT chips, bet FROM balances WHERE uuid = ?")) {
+            try (Connection c = Database.connection();
+                 PreparedStatement ps = c.prepareStatement("SELECT chips, bet FROM " + balances + " WHERE uuid = ?")) {
                 ps.setString(1, u.toString());
                 try (ResultSet rs = ps.executeQuery()) {
                     return rs.next() ? new long[]{rs.getLong(1), rs.getLong(2)} : new long[]{0, defaultBet};
@@ -80,51 +78,46 @@ final class Store {
         long[] r = row(uuid);
         long after = r[0] + delta;
         if (after < 0) return false;
-        try {
-            db.setAutoCommit(false);
-            write(uuid, name, after, r[1]);
-            try (PreparedStatement ps = db.prepareStatement(
-                    "INSERT INTO ledger (uuid, delta, balance, reason, at) VALUES (?, ?, ?, ?, ?)")) {
-                ps.setString(1, uuid.toString());
-                ps.setLong(2, delta);
-                ps.setLong(3, after);
-                ps.setString(4, reason);
-                ps.setLong(5, System.currentTimeMillis());
-                ps.executeUpdate();
+        try (Connection c = Database.connection()) {
+            c.setAutoCommit(false);
+            try {
+                write(c, uuid, name, after, r[1]);
+                try (PreparedStatement ps = c.prepareStatement(
+                        "INSERT INTO " + ledger + " (uuid, delta, balance, reason, at) VALUES (?, ?, ?, ?, ?)")) {
+                    ps.setString(1, uuid.toString());
+                    ps.setLong(2, delta);
+                    ps.setLong(3, after);
+                    ps.setString(4, reason);
+                    ps.setLong(5, System.currentTimeMillis());
+                    ps.executeUpdate();
+                }
+                c.commit();
+            } catch (SQLException e) {
+                c.rollback();
+                throw e;
+            } finally {
+                c.setAutoCommit(true);
             }
-            db.commit();
             r[0] = after;
             return true;
         } catch (SQLException e) {
-            try {
-                db.rollback();
-            } catch (SQLException ignored) {
-                // the connection already failed
-            }
             throw new IllegalStateException("writing the balance of " + uuid, e);
-        } finally {
-            try {
-                db.setAutoCommit(true);
-            } catch (SQLException ignored) {
-                // same
-            }
         }
     }
 
     void setBet(UUID uuid, String name, long bet) {
         long[] r = row(uuid);
-        try {
-            write(uuid, name, r[0], bet);
+        try (Connection c = Database.connection()) {
+            write(c, uuid, name, r[0], bet);
             r[1] = bet;
         } catch (SQLException e) {
             throw new IllegalStateException("writing the bet of " + uuid, e);
         }
     }
 
-    private void write(UUID uuid, String name, long chips, long bet) throws SQLException {
-        try (PreparedStatement ps = db.prepareStatement("INSERT INTO balances (uuid, name, chips, bet, updated) VALUES (?, ?, ?, ?, ?)"
-                + " ON CONFLICT(uuid) DO UPDATE SET name = excluded.name, chips = excluded.chips, bet = excluded.bet,"
-                + " updated = excluded.updated")) {
+    private void write(Connection c, UUID uuid, String name, long chips, long bet) throws SQLException {
+        try (PreparedStatement ps = c.prepareStatement(Database.dialect().upsert(balances, List.of("uuid", "name", "chips", "bet", "updated"),
+                List.of("uuid"), List.of("name", "chips", "bet", "updated")))) {
             ps.setString(1, uuid.toString());
             ps.setString(2, name);
             ps.setLong(3, chips);
@@ -137,8 +130,8 @@ final class Store {
     /** Last movements of a player (most recent first): {change, balance, reason, date}. */
     List<String[]> history(UUID uuid, int limit) {
         List<String[]> out = new ArrayList<>();
-        try (PreparedStatement ps = db.prepareStatement(
-                "SELECT delta, balance, reason, at FROM ledger WHERE uuid = ? ORDER BY id DESC LIMIT ?")) {
+        try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement(
+                "SELECT delta, balance, reason, at FROM " + ledger + " WHERE uuid = ? ORDER BY id DESC LIMIT ?")) {
             ps.setString(1, uuid.toString());
             ps.setInt(2, limit);
             try (ResultSet rs = ps.executeQuery()) {
@@ -148,7 +141,7 @@ final class Store {
                 }
             }
         } catch (SQLException e) {
-            throw new IllegalStateException("lecture du journal de " + uuid, e);
+            throw new IllegalStateException("reading the ledger of " + uuid, e);
         }
         return out;
     }
