@@ -67,7 +67,7 @@ final class PetPlaceholders {
             case "active_pet_level":
                 return active == null ? "" : String.valueOf(PetData.level(player, active));
             case "active_pet_level_numeral":
-                return active == null ? "" : com.willfp.eco.util.NumberUtils.toNumeral(PetData.level(player, active));
+                return active == null ? "" : fr.influencraft.flux.api.util.Format.roman(PetData.level(player, active));
             case "active_pet_current_xp":
                 return active == null ? "" : Pet.nice(PetData.xp(player, active));
             case "active_pet_required_xp":

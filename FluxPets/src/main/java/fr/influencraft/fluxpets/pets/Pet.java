@@ -279,10 +279,10 @@ public final class Pet {
         while (m.find()) {
             int value = level + Integer.parseInt(m.group(1));
             m.appendReplacement(sb, Matcher.quoteReplacement(m.group(2) != null
-                    ? NumberUtils.toNumeral(value) : String.valueOf(value)));
+                    ? fr.influencraft.flux.api.util.Format.roman(value) : String.valueOf(value)));
         }
         m.appendTail(sb);
-        return sb.toString().replace("%level_numeral%", NumberUtils.toNumeral(level))
+        return sb.toString().replace("%level_numeral%", fr.influencraft.flux.api.util.Format.roman(level))
                 .replace("%level%", String.valueOf(level));
     }
 

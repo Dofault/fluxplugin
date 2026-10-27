@@ -1,7 +1,6 @@
 package fr.influencraft.fluxpets.pets;
 
 import com.willfp.eco.core.config.interfaces.Config;
-import com.willfp.eco.core.sound.PlayableSound;
 import com.willfp.libreforge.DispatcherKt;
 import com.willfp.libreforge.effects.Chain;
 import com.willfp.libreforge.effects.executors.impl.NormalExecutorFactory;
@@ -38,10 +37,7 @@ public final class PetListener implements Listener {
                     null, 0.0, 0.0), TriggerBlank.INSTANCE, NormalExecutorFactory.INSTANCE.create());
         }
         Config settings = Pets.settings();
-        var sound = PlayableSound.create(settings.getSubsection("level-up.sound"));
-        if (sound != null) {
-            sound.playTo(player);
-        }
+        fr.influencraft.flux.api.util.Sounds.play(player, settings.getStringOrNull("level-up.sound"));
         if (settings.getBool("level-up.message.enabled")) {
             for (String line : PetData.inject(settings.getStrings("level-up.message.message"), player, pet,
                     event.getLevel())) {

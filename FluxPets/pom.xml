@@ -40,24 +40,24 @@
         <dependency>
             <groupId>com.willfp</groupId>
             <artifactId>eco</artifactId>
-            <version>2026.38</version>
+            <version>2026.41</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/libs/eco-2026.38-modrinth.jar</systemPath>
+            <systemPath>${project.basedir}/../Flux/libs/eco-2026.41-modrinth.jar</systemPath>
         </dependency>
-        <!-- Effets des familiers (holders libreforge) : version embarquée par les plugins eco de la prod. -->
+        <!-- Effets des familiers (holders libreforge) : jar libreforge-standalone du serveur. eco : le jar de Flux (un seul exemplaire dans le dépôt). -->
         <dependency>
             <groupId>com.willfp</groupId>
             <artifactId>libreforge</artifactId>
-            <version>2026.38</version>
+            <version>2026.39</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/libs/libreforge-2026.38.jar</systemPath>
+            <systemPath>${project.basedir}/libs/libreforge-standalone-2026.39.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>kr.toxicity.model</groupId>
             <artifactId>bettermodel</artifactId>
-            <version>3.5.0</version>
+            <version>3.5.1</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/libs/bettermodel-3.5.0-paper.jar</systemPath>
+            <systemPath>${project.basedir}/libs/bettermodel-3.5.1-paper.jar</systemPath>
         </dependency>
         <!-- FluxShop (softdepend): sell price bonus of the Astral Unicorn (SupermarketAPI), reactor module -->
         <dependency>

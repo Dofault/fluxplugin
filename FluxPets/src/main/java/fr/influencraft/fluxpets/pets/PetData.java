@@ -3,7 +3,6 @@ package fr.influencraft.fluxpets.pets;
 import com.willfp.eco.core.data.PlayerProfile;
 import com.willfp.eco.core.data.keys.PersistentDataKey;
 import com.willfp.eco.core.data.keys.PersistentDataKeyType;
-import com.willfp.eco.util.NumberUtils;
 import fr.influencraft.fluxpets.pets.event.PetActivateEvent;
 import fr.influencraft.fluxpets.pets.event.PetAdoptEvent;
 import fr.influencraft.fluxpets.pets.event.PetDeactivateEvent;
@@ -378,10 +377,10 @@ public final class PetData {
             while (m.find()) {
                 int value = level + Integer.parseInt(m.group(1));
                 m.appendReplacement(sb, Matcher.quoteReplacement(m.group(2) != null
-                        ? NumberUtils.toNumeral(value) : String.valueOf(value)));
+                        ? fr.influencraft.flux.api.util.Format.roman(value) : String.valueOf(value)));
             }
             m.appendTail(sb);
-            line = sb.toString().replace("%level_numeral%", NumberUtils.toNumeral(level))
+            line = sb.toString().replace("%level_numeral%", fr.influencraft.flux.api.util.Format.roman(level))
                     .replace("%level%", String.valueOf(level));
             int indent = line.length() - line.replace(" ", "").length();
             List<String> block = line.contains("%effects%") ? pet.effectsDescription(level)

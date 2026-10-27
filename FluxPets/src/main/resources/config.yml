@@ -98,12 +98,8 @@ pet-settings:
   level-up:
     message:
       enabled: true
-    sound:
-      enabled: true
-      sound: entity_player_levelup
-      pitch: 1.3
-      volume: 0.8
-      category: PLAYER
+    # "<sound> [volume] [pitch]" or a Flux cue ("@complete"), "none" = silent
+    sound: "minecraft:entity.player.levelup 1 1.3"
   # Pet XP multiplier by permission: influpet.xpmultiplier.double / triple / quadruple / 50percent, or
   # influpet.xpmultiplier.<percentage>. Does not apply to cards.
 

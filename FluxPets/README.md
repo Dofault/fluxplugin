@@ -9,9 +9,8 @@ Documentation complète : `docs/technique/influpet.md` du dépôt serveur.
 
 - JDK 25 (l'API Paper 26.2 est en classes Java 25), Maven.
 - Copier dans `libs/` les jars utilisés à la compilation (non versionnés) : `ItemsAdder_4.0.18.jar`,
-  `eco-2026.38-modrinth.jar`, `libreforge-2026.38.jar` (le `libreforge-2026.38-shadow.jar` embarqué dans les
-  plugins eco), `PlaceholderAPI-2.12.3.jar`, `bettermodel-3.5.0-paper.jar`, `packetevents-spigot-2.13.0.jar`
-  (versions exactes : `pom.xml`). EcoPets n'est plus nécessaire : les familiers sont gérés par le plugin.
+  `libreforge-standalone-2026.39.jar` (celui du serveur), `PlaceholderAPI-2.12.3.jar`, `bettermodel-3.5.1-paper.jar`, `packetevents-spigot-2.13.0.jar`
+  (versions exactes : `pom.xml`). eco n'est pas copié ici : le module compile avec le jar eco de `Flux/libs/`. EcoPets n'est plus nécessaire : les familiers sont gérés par le plugin.
 - `mvn package` : jar dans `target/FluxPets.jar`. Sur la machine du serveur, toujours dans un cgroup à mémoire
   plafonnée (une compilation nue peut faire tuer le serveur par le noyau).
 
