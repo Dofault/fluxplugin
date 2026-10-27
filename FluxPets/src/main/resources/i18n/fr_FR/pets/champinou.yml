@@ -29,13 +29,11 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Mycélium'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de doubler'
-  - '  &#EADBC8les champignons récoltés'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de doubler &#EADBC8les champignons récoltés'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Mycélium'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de doubler'
-  - '  &#EADBC8les champignons récoltés'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de doubler &#EADBC8les champignons récoltés'
 level-up-messages:
   1:
   - '&#6B7A8F» &#FFF4E0Mycélium'

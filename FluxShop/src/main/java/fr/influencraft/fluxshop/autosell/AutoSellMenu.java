@@ -263,7 +263,7 @@ public class AutoSellMenu implements ListProvider {
                 meta.displayName(Component.translatable(stack.getType().getItemTranslationKey())
                         .color(GOLD).decoration(TextDecoration.ITALIC, false));
             }
-            meta.setLore(lore);
+            meta.setLore(fr.influencraft.flux.api.text.Texts.wrapLines(lore));
             meta.setEnchantmentGlintOverride(exception);
             stack.setItemMeta(meta);
         }

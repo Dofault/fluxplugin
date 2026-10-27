@@ -35,7 +35,7 @@ public final class PetItems {
             if (lore != null) {
                 List<Component> lines = new ArrayList<>();
                 lore.forEach(l -> lines.add(Texts.of(l)));
-                meta.lore(lines);
+                meta.lore(fr.influencraft.flux.api.text.Texts.wrapLore(lines));
             }
         });
         return item;

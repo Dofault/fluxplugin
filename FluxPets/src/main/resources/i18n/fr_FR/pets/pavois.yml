@@ -29,16 +29,12 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Rempart'
-  - '  &#EADBC8Résistance I (-20 % de'
-  - '  &#EADBC8dégâts) aux joueurs à'
-  - '  &#EADBC8&#FFF4E0%bonus%&#EADBC8 blocs autour de toi'
+  - '  &#EADBC8Résistance I (-20 % de dégâts) aux joueurs à &#EADBC8&#FFF4E0%bonus%&#EADBC8 blocs autour de toi'
   - '  &#EADBC8Pas pour toi-même'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Rempart'
-  - '  &#EADBC8Résistance I (-20 % de'
-  - '  &#EADBC8dégâts) aux joueurs à'
-  - '  &#EADBC8&#FFF4E0%bonus%&#EADBC8 blocs autour de toi'
+  - '  &#EADBC8Résistance I (-20 % de dégâts) aux joueurs à &#EADBC8&#FFF4E0%bonus%&#EADBC8 blocs autour de toi'
   - '  &#EADBC8Pas pour toi-même'
 level-up-messages:
   1:

@@ -29,17 +29,13 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Cocoa Grower'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to replant'
-  - '  &#EADBC8the harvested cocoa pod'
-  - '  &#EADBC8Freshly planted pods'
-  - '  &#EADBC8do not break'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to replant &#EADBC8the harvested cocoa pod'
+  - '  &#EADBC8Freshly planted pods do not break'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Cocoa Grower'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to replant'
-  - '  &#EADBC8the harvested cocoa pod'
-  - '  &#EADBC8Freshly planted pods'
-  - '  &#EADBC8do not break'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to replant &#EADBC8the harvested cocoa pod'
+  - '  &#EADBC8Freshly planted pods do not break'
 level-up-messages:
   1:
   - '&#6B7A8F» &#FFF4E0Cocoa Grower'

@@ -167,7 +167,7 @@ public final class OfferingMenu implements ListProvider, FluxAction {
             // nothing to deposit (the player has none): the wiki page tells where to get it
             lore.addAll(messages.rawList("gui.item-lore-wiki-hint", ph));
         }
-        meta.lore(TextUtil.parseItemTextList(lore, viewer));
+        meta.lore(fr.influencraft.flux.api.text.Texts.wrapLore(TextUtil.parseItemTextList(lore, viewer)));
         stack.setItemMeta(meta);
         return stack;
     }
@@ -179,7 +179,7 @@ public final class OfferingMenu implements ListProvider, FluxAction {
         Map<String, String> ph = Map.of("name", collection.displayNameFor(key),
                 "amount_formatted", AmountFormatter.format(messages, key, required), "amount_literal", String.valueOf(required));
         meta.displayName(TextUtil.parseItemText(messages.raw("gui.item-name-editor", ph), viewer));
-        meta.lore(TextUtil.parseItemTextList(messages.rawList("gui.item-lore-editor", ph), viewer));
+        meta.lore(fr.influencraft.flux.api.text.Texts.wrapLore(TextUtil.parseItemTextList(messages.rawList("gui.item-lore-editor", ph), viewer)));
         stack.setItemMeta(meta);
         return stack;
     }
@@ -205,7 +205,7 @@ public final class OfferingMenu implements ListProvider, FluxAction {
         meta.displayName(TextUtil.parseItemText(messages.raw(complete ? "gui.money-name-complete" : "gui.money-name", ph), viewer));
         List<String> lore = new ArrayList<>(messages.rawList("gui.money-lore", ph));
         if (complete) lore.addAll(messages.rawList("gui.item-lore-complete-suffix", ph));
-        meta.lore(TextUtil.parseItemTextList(lore, viewer));
+        meta.lore(fr.influencraft.flux.api.text.Texts.wrapLore(TextUtil.parseItemTextList(lore, viewer)));
         stack.setItemMeta(meta);
         return stack;
     }
@@ -217,7 +217,7 @@ public final class OfferingMenu implements ListProvider, FluxAction {
         Map<String, String> ph = Map.of("amount", AmountFormatter.grouped(collection.money()));
         meta.displayName(TextUtil.parseItemText(messages.raw(collection.hasMoneyRequirement() ? "gui.money-name-editor"
                 : "gui.money-name-editor-empty", ph), viewer));
-        meta.lore(TextUtil.parseItemTextList(messages.rawList("gui.money-lore-editor", ph), viewer));
+        meta.lore(fr.influencraft.flux.api.text.Texts.wrapLore(TextUtil.parseItemTextList(messages.rawList("gui.money-lore-editor", ph), viewer)));
         stack.setItemMeta(meta);
         return stack;
     }

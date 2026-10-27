@@ -29,15 +29,11 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Sudden Growth'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a'
-  - '  &#EADBC8sapling becomes a tree'
-  - '  &#EADBC8with a single bone meal'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a &#EADBC8sapling becomes a tree &#EADBC8with a single bone meal'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Sudden Growth'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a'
-  - '  &#EADBC8sapling becomes a tree'
-  - '  &#EADBC8with a single bone meal'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a &#EADBC8sapling becomes a tree &#EADBC8with a single bone meal'
 level-up-messages:
   1:
   - '&#6B7A8F» &#FFF4E0Sudden Growth'

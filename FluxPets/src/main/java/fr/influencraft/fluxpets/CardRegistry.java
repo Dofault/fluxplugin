@@ -404,7 +404,7 @@ public final class CardRegistry {
             for (String line : plugin.getConfig().getStringList("card-format.lore-footer")) {
                 lore.add(Texts.of(fillCard(line, card)));
             }
-            meta.lore(lore);
+            meta.lore(fr.influencraft.flux.api.text.Texts.wrapLore(lore));
             meta.getPersistentDataContainer().set(plugin.cardKey(), PersistentDataType.STRING, card.id());
             meta.getPersistentDataContainer().set(plugin.versionKey(), PersistentDataType.INTEGER, version(card));
         });
@@ -443,7 +443,7 @@ public final class CardRegistry {
         ItemStack item = base(booster.itemId(), Material.PAPER);
         item.editMeta(meta -> {
             meta.displayName(Texts.of(booster.name()));
-            meta.lore(booster.lore().stream()
+            meta.lore(fr.influencraft.flux.api.text.Texts.wrapLore(booster.lore().stream()
                     .map(l -> {
                         var m = ADOPTED.matcher(l.replace("%cards%", String.valueOf(booster.cards())));
                         StringBuilder out = new StringBuilder();
@@ -455,7 +455,7 @@ public final class CardRegistry {
                         m.appendTail(out);
                         return Texts.of(out.toString());
                     })
-                    .toList());
+                    .toList()));
             meta.getPersistentDataContainer().set(plugin.boosterKey(), PersistentDataType.STRING, booster.id());
             meta.getPersistentDataContainer().set(plugin.versionKey(), PersistentDataType.INTEGER, version(booster, status));
         });

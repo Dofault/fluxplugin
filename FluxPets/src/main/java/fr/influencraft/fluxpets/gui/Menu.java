@@ -103,7 +103,7 @@ public abstract class Menu implements InventoryHolder {
             for (String l : lore) {
                 lines.add(Texts.of(l));
             }
-            meta.lore(lines);
+            meta.lore(fr.influencraft.flux.api.text.Texts.wrapLore(lines));
             meta.addItemFlags(ItemFlag.values());
         });
         return item;

@@ -29,13 +29,11 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Nuggets'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance of an extra nugget'
-  - '  &#EADBC8when mining iron or gold'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance of an extra nugget &#EADBC8when mining iron or gold'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Nuggets'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance of an extra nugget'
-  - '  &#EADBC8when mining iron or gold'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance of an extra nugget &#EADBC8when mining iron or gold'
 level-up-messages:
   1:
   - '&#6B7A8F» &#FFF4E0Nuggets'

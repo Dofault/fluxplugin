@@ -63,7 +63,7 @@ public final class MenuItems {
         ItemMeta meta = stack.getItemMeta();
         if (meta != null) {
             meta.setDisplayName(name);
-            meta.setLore(lore);
+            meta.setLore(fr.influencraft.flux.api.text.Texts.wrapLines(lore));
             stack.setItemMeta(meta);
         }
         return stack;
@@ -89,7 +89,7 @@ public final class MenuItems {
         if (meta != null) {
             List<String> lore = meta.hasLore() && meta.getLore() != null ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
             lore.addAll(extra);
-            meta.setLore(lore);
+            meta.setLore(fr.influencraft.flux.api.text.Texts.wrapLines(lore));
             stack.setItemMeta(meta);
         }
         return stack;

@@ -29,13 +29,11 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Feu vif'
-  - '  &#EADBC8Cuisson +&#FFF4E0%bonus%%&#EADBC8 plus rapide'
-  - '  &#EADBC8dans les fours que tu remplis'
+  - '  &#EADBC8Cuisson +&#FFF4E0%bonus%%&#EADBC8 plus rapide dans les fours que tu remplis'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Feu vif'
-  - '  &#EADBC8Cuisson +&#FFF4E0%bonus%%&#EADBC8 plus rapide'
-  - '  &#EADBC8dans les fours que tu remplis'
+  - '  &#EADBC8Cuisson +&#FFF4E0%bonus%%&#EADBC8 plus rapide dans les fours que tu remplis'
 level-up-messages:
   1:
   - '&#6B7A8F» &#FFF4E0Feu vif'

@@ -17,7 +17,7 @@ import static fr.influencraft.fluxtools.Fmt.*;
  *   a (oui/non), page (outil_pass_&lt;page niveaux&gt;_&lt;semaine&gt;, outil_&lt;nœuds&gt; ou outil_aucun), semaine, nom, palier, famille, mode (pass/contrat)
  *   niveau (0 à niveau_max, XP d'outil), niveau_max, maitrise (oui/non, niveau max atteint)
  *   xp, xp_requis, xp_barre (vers le niveau d'outil suivant)
- *   quete_l&lt;k&gt;, noeud_&lt;n&gt;_quete_l&lt;k&gt; (texte coupé à {@link Fmt#LARGEUR} caractères, ligne de menu préfixée)
+ *   quete_l&lt;k&gt;, noeud_&lt;n&gt;_quete_l&lt;k&gt; (text split to the suite's lore width, menu line prefixed)
  *   niveau_&lt;n&gt;_etat (fait/verrou), _xp (XP cumulée requise), _l&lt;k&gt; (k-ième enchantement débloqué à ce niveau, ligne de menu)
  *   etape (réussies), etapes, etat (en_cours/attente/termine), attente (durée)
  *   quete, avance, quantite, pourcent, barre, icone, recompense
@@ -59,7 +59,7 @@ final class Expansion {
         if (ql.matches()) {
             // Texte de quête coupé en lignes de menu (une ligne vide est masquée par Flux).
             String texte = onRequest(joueur, ql.group(1));
-            List<String> lignes = texte == null ? List.of() : couper(texte, LARGEUR);
+            List<String> lignes = texte == null ? List.of() : couper(texte);
             int k = Integer.parseInt(ql.group(2));
             return k <= lignes.size() ? "&#A33A50│ &#FFD6DE" + lignes.get(k - 1) : "";
         }

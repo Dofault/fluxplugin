@@ -29,15 +29,11 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Rage'
-  - '  &#EADBC8The lower your health, the'
-  - '  &#EADBC8harder you hit: up to +&#FFF4E0%bonus%%&#EADBC8'
-  - '  &#EADBC8damage at 1 health point'
+  - '  &#EADBC8The lower your health, the harder you hit: up to +&#FFF4E0%bonus%%&#EADBC8 damage at 1 health point'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Rage'
-  - '  &#EADBC8The lower your health, the'
-  - '  &#EADBC8harder you hit: up to +&#FFF4E0%bonus%%&#EADBC8'
-  - '  &#EADBC8damage at 1 health point'
+  - '  &#EADBC8The lower your health, the harder you hit: up to +&#FFF4E0%bonus%%&#EADBC8 damage at 1 health point'
 level-up-messages:
   1:
   - '&#6B7A8F» &#FFF4E0Rage'

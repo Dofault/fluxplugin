@@ -78,7 +78,7 @@ public class AutoSellItemManager {
         ItemMeta meta = stack.getItemMeta();
         meta.setMaxStackSize(1);
         meta.setDisplayName(lang.get(active ? "autosell-item-name-on" : "autosell-item-name-off"));
-        meta.setLore(lang.getList(active ? "autosell-item-lore-on" : "autosell-item-lore-off", placeholders));
+        meta.setLore(fr.influencraft.flux.api.text.Texts.wrapLines(lang.getList(active ? "autosell-item-lore-on" : "autosell-item-lore-off", placeholders)));
         meta.getPersistentDataContainer().set(markerKey, PersistentDataType.BYTE, (byte) 1);
         meta.getPersistentDataContainer().set(activeKey, PersistentDataType.BYTE, (byte) (active ? 1 : 0));
         stack.setItemMeta(meta);

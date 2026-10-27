@@ -43,8 +43,7 @@ items:
     material: "itemsadder:influitems:filter"
     name: "&r&7%img_left_click% &#FFD94DAffichage : %flux_list_offering_filter%"
     lore:
-      - "&#B376E5Tout, Déposés (offrande remplie),"
-      - "&#B376E5Non déposés (ce qu'il reste à faire)."
+      - "&#B376E5Tout, Déposés (offrande remplie), Non déposés (ce qu'il reste à faire)."
       - ""
       - "&#B376E5Clique pour changer l'affichage."
     view-requirements: ["placeholder: %offrandes_editing% == false"]
@@ -55,9 +54,7 @@ items:
     material: CHEST
     name: "&r&7%img_left_click% &#FFD94DTout déposer"
     lore:
-      - "&#B376E5Dépose d'un coup tout ce que"
-      - "&#B376E5tu peux, sur tous les items"
-      - "&#B376E5de cette offrande."
+      - "&#B376E5Dépose d'un coup tout ce que tu peux, sur tous les items de cette offrande."
       - ""
       - "&#B376E5Progression : &f%offrandes_current_percent% %"
     view-requirements:

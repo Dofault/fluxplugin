@@ -29,18 +29,12 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0No Cave-in'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to dig'
-  - '  &#EADBC8without waking the blocks'
-  - '  &#EADBC8around: sand does not'
-  - '  &#EADBC8fall, water does not flow'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to dig &#EADBC8without waking the blocks &#EADBC8around: sand does not &#EADBC8fall, water does not flow'
   - '  &#EADBC8Area mining included'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0No Cave-in'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to dig'
-  - '  &#EADBC8without waking the blocks'
-  - '  &#EADBC8around: sand does not'
-  - '  &#EADBC8fall, water does not flow'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to dig &#EADBC8without waking the blocks &#EADBC8around: sand does not &#EADBC8fall, water does not flow'
   - '  &#EADBC8Area mining included'
 level-up-messages:
   1:

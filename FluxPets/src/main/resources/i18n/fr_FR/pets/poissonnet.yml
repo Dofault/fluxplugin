@@ -29,13 +29,11 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Belle prise'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de pêcher'
-  - '  &#EADBC8un poisson en plus'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de pêcher &#EADBC8un poisson en plus'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Belle prise'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de pêcher'
-  - '  &#EADBC8un poisson en plus'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de pêcher &#EADBC8un poisson en plus'
 level-up-messages:
   1:
   - '&#6B7A8F» &#FFF4E0Belle prise'

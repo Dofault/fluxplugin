@@ -35,7 +35,7 @@ public final class CardMenu extends Menu {
                     meta.lore() == null ? List.of() : meta.lore());
             lore.add(fr.influencraft.fluxpets.Texts.of(""));
             lore.add(fr.influencraft.fluxpets.Texts.of(left(t("card.receive"))));
-            meta.lore(lore);
+            meta.lore(fr.influencraft.flux.api.text.Texts.wrapLore(lore));
         });
         set(4, preview, (p, c) -> RevealManager.giveOrDrop(p, reg.cardItem(card)));
 

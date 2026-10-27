@@ -256,7 +256,7 @@ final class Vues {
         m.put("monde", a.lieu() != null && a.lieu().getWorld() != null ? a.lieu().getWorld().getName() : "");
         // Le maire peut épingler un warp de sa ville sur la fiche de la ville.
         m.put("epinglable", Fmt.oui(ma != null && Villes.estMaire(ma, p.getUniqueId()) && Villes.id(ma).equals(a.villeId())));
-        List<String> desc = Fmt.couper(a.description(), 28);
+        List<String> desc = Fmt.couper(a.description());
         for (int i = 0; i < 3; i++) m.put("desc_" + (i + 1), i < desc.size() ? desc.get(i) : "");
         return m;
     }
@@ -485,7 +485,7 @@ final class Vues {
         m.put("etat", actif ? "&#2ECF7B✔ Autorisé" : "&#FF5C5C✖ Interdit");
         List<String> desc = new ArrayList<>();
         try {
-            for (Object o : f.getDescription()) desc.addAll(Fmt.couper(Gestion.nu(String.valueOf(o)), 30));
+            for (Object o : f.getDescription()) desc.addAll(Fmt.couper(Gestion.nu(String.valueOf(o))));
         } catch (RuntimeException ignored) {
         }
         for (int i = 0; i < 4; i++) m.put("desc_" + (i + 1), i < desc.size() ? desc.get(i) : "");

@@ -29,14 +29,12 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Shards'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance of an experience'
-  - '  &#EADBC8point per stone block mined'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance of an experience &#EADBC8point per stone block mined'
   - '  &#EADBC8Area mining included'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Shards'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance of an experience'
-  - '  &#EADBC8point per stone block mined'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance of an experience &#EADBC8point per stone block mined'
   - '  &#EADBC8Area mining included'
 level-up-messages:
   1:

@@ -29,19 +29,13 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Wise Wear'
-  - '  &#EADBC8An item gains a vanilla'
-  - '  &#EADBC8enchantment level every &#FFF4E0%bonus%&#EADBC8'
-  - '  &#EADBC8blocks mined or hits dealt'
-  - '  &#EADBC8Vanilla Minecraft enchantments,'
-  - '  &#EADBC8never above their maximum'
+  - '  &#EADBC8An item gains a vanilla enchantment level every &#FFF4E0%bonus%&#EADBC8 blocks mined or hits dealt'
+  - '  &#EADBC8Vanilla Minecraft enchantments, never above their maximum'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Wise Wear'
-  - '  &#EADBC8An item gains a vanilla'
-  - '  &#EADBC8enchantment level every &#FFF4E0%bonus%&#EADBC8'
-  - '  &#EADBC8blocks mined or hits dealt'
-  - '  &#EADBC8Vanilla Minecraft enchantments,'
-  - '  &#EADBC8never above their maximum'
+  - '  &#EADBC8An item gains a vanilla enchantment level every &#FFF4E0%bonus%&#EADBC8 blocks mined or hits dealt'
+  - '  &#EADBC8Vanilla Minecraft enchantments, never above their maximum'
 level-up-messages:
   1:
   - '&#6B7A8F» &#FFF4E0Wise Wear'

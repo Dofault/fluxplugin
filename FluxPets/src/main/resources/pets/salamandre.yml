@@ -29,14 +29,12 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Ember Skin'
-  - '  &#EADBC8Fire Resistance for &#FFF4E0%bonus%'
-  - '  &#FFF4E0s&#EADBC8 when touching lava'
+  - '  &#EADBC8Fire Resistance for &#FFF4E0%bonus% &#FFF4E0s&#EADBC8 when touching lava'
   - '  &#EADBC8Once per minute'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Ember Skin'
-  - '  &#EADBC8Fire Resistance for &#FFF4E0%bonus%'
-  - '  &#FFF4E0s&#EADBC8 when touching lava'
+  - '  &#EADBC8Fire Resistance for &#FFF4E0%bonus% &#FFF4E0s&#EADBC8 when touching lava'
   - '  &#EADBC8Once per minute'
 level-up-messages:
   1:

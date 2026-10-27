@@ -76,6 +76,39 @@ public final class Texts {
         return item;
     }
 
+    /**
+     * Same for legacy lore strings ({@code setLore}): every line longer than the suite's width is split, colours kept.
+     * Accepts {@code &} and {@code §} codes; the result uses the same character as the input line.
+     */
+    public static List<String> wrapLines(List<String> lore) {
+        if (lore == null) return null;
+        List<String> out = new ArrayList<>(lore.size());
+        for (String line : lore) {
+            if (line == null) {
+                out.add(null);
+                continue;
+            }
+            boolean section = line.indexOf('§') >= 0;
+            for (String piece : Text.wrap(section ? line.replace('§', '&') : line)) out.add(section ? toSection(piece) : piece);
+        }
+        return out;
+    }
+
+    private static final java.util.regex.Pattern SHORT_HEX = java.util.regex.Pattern.compile("&#([0-9a-fA-F]{6})");
+
+    /** Back to § codes, hex colours in Bukkit's expanded form ({@code §x§R§R§G§G§B§B}). */
+    private static String toSection(String line) {
+        java.util.regex.Matcher m = SHORT_HEX.matcher(line);
+        StringBuilder sb = new StringBuilder();
+        while (m.find()) {
+            StringBuilder hex = new StringBuilder("&x");
+            for (char c : m.group(1).toCharArray()) hex.append('&').append(c);
+            m.appendReplacement(sb, hex.toString());
+        }
+        m.appendTail(sb);
+        return sb.toString().replace('&', '§');
+    }
+
     /** Same for lore lines already built as components. */
     public static List<Component> wrapLore(List<Component> lore) {
         return Text.wrapLore(lore);

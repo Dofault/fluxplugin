@@ -62,13 +62,9 @@ final class Fmt {
         return total <= 0 ? 100 : (int) Math.min(100, Math.floor(avance * 100.0 / total));
     }
 
-    /** Largeur maximale (caractères visibles) d'une ligne de description ou de menu. */
-    static final int LARGEUR = 30;
-
-    /** Coupe un texte coloré en lignes d'au plus {@code largeur} caractères visibles, couleur reportée. */
-    static java.util.List<String> couper(String texte, int largeur) {
-        // the suite's lore wrapping (colours carried over to the next line)
-        return new java.util.ArrayList<>(fr.influencraft.flux.api.text.Texts.wrap(texte, largeur));
+    /** Splits a coloured text to the suite's lore width (Flux {@code lore.max-line-length}), colours carried over. */
+    static java.util.List<String> couper(String texte) {
+        return new java.util.ArrayList<>(fr.influencraft.flux.api.text.Texts.wrap(texte));
     }
 
     /** Barre de 20 traits : partie faite en vert, reste en gris. */

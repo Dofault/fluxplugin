@@ -29,15 +29,11 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Trésors des fonds'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance d''un'
-  - '  &#EADBC8trésor marin en pêchant'
-  - '  &#EADBC8avec une canne vanilla'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance d''un &#EADBC8trésor marin en pêchant &#EADBC8avec une canne vanilla'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Trésors des fonds'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance d''un'
-  - '  &#EADBC8trésor marin en pêchant'
-  - '  &#EADBC8avec une canne vanilla'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance d''un &#EADBC8trésor marin en pêchant &#EADBC8avec une canne vanilla'
 level-up-messages:
   1:
   - '&#6B7A8F» &#FFF4E0Trésors des fonds'

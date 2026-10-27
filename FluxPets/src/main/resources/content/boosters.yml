@@ -488,8 +488,7 @@ boosters:
     name: '&f&lOrdinary Booster'
     lore:
     - '&#EADBC8Tier: &#FFF4E0★&#6B7A8F☆☆☆'
-    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from'
-    - '&#EADBC8every series.'
+    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from every series.'
     - ''
     - '&#EADBC8Pets to adopt:'
     - '&#6B7A8F» &#FFF4E0Every pet'
@@ -622,8 +621,7 @@ boosters:
     name: '&#55FF55&lTrending Booster'
     lore:
     - '&#EADBC8Tier: &#FFF4E0★★&#6B7A8F☆☆'
-    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from'
-    - '&#EADBC8every series.'
+    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from every series.'
     - ''
     - '&#EADBC8Pets to adopt:'
     - '&#6B7A8F» &#FFF4E0Every pet'
@@ -756,8 +754,7 @@ boosters:
     name: '&#5A85EA&lViral Booster'
     lore:
     - '&#EADBC8Tier: &#FFF4E0★★★&#6B7A8F☆'
-    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from'
-    - '&#EADBC8every series.'
+    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from every series.'
     - ''
     - '&#EADBC8Pets to adopt:'
     - '&#6B7A8F» &#FFF4E0Every pet'
@@ -890,8 +887,7 @@ boosters:
     name: '&#F0A800&lPhenomenal Booster'
     lore:
     - '&#EADBC8Tier: &#FFF4E0★★★★&#6B7A8F'
-    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from'
-    - '&#EADBC8every series.'
+    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from every series.'
     - ''
     - '&#EADBC8Pets to adopt:'
     - '&#6B7A8F» &#FFF4E0Every pet'

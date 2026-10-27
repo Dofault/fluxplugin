@@ -89,11 +89,6 @@ final class Fmt {
                 + (gain ? VERT + "▲" : ROUGE + "▼") + "&7" + suite + " " + SOURCE;
     }
 
-    /** Coupe une phrase en lignes d'au plus {@code max} caractères. */
-    static List<String> couper(String texte, int max) {
-        return fr.influencraft.flux.api.util.Format.wrap(texte, max);
-    }
-
     /** Lore au style de /menu2 : description (│), puis actions (├ ... └). */
     static List<String> lore(List<String> desc, List<String> actions) {
         List<String> l = new ArrayList<>();

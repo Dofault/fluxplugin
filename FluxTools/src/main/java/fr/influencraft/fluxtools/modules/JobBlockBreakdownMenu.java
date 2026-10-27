@@ -308,7 +308,7 @@ public final class JobBlockBreakdownMenu {
                     lore.add("");
                     lore.add(StringUtils.format("&7Page &f" + page + "&7/&f" + totalPages, player));
                 }
-                meta.setLore(lore);
+                meta.setLore(fr.influencraft.flux.api.text.Texts.wrapLines(lore));
                 icon.setItemMeta(meta);
             }
             return icon;
@@ -329,7 +329,7 @@ public final class JobBlockBreakdownMenu {
                     lore.add("");
                     lore.add(StringUtils.format(entry.extraLoreLine(), player));
                 }
-                meta.setLore(lore);
+                meta.setLore(fr.influencraft.flux.api.text.Texts.wrapLines(lore));
                 icon.setItemMeta(meta);
             }
             return icon;

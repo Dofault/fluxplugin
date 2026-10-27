@@ -50,7 +50,7 @@ public final class SorterItem {
         for (String line : plugin.conf().getStringList("item.lore")) {
             lore.add(FluxSorter.mm(line, Placeholder.unparsed("radius", rayon), Placeholder.unparsed("rayon", rayon)));
         }
-        meta.lore(lore);
+        meta.lore(fr.influencraft.flux.api.text.Texts.wrapLore(lore));
         meta.setEnchantmentGlintOverride(true);
         meta.getPersistentDataContainer().set(key, PersistentDataType.BYTE, (byte) 1);
         meta.getPersistentDataContainer().set(levelKey, PersistentDataType.INTEGER, level);

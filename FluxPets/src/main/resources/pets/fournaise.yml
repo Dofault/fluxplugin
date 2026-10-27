@@ -29,14 +29,12 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Delivery'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a smelted item'
-  - '  &#EADBC8goes straight to your inventory'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a smelted item &#EADBC8goes straight to your inventory'
   - '  &#EADBC8Furnaces you fill, within 16 blocks'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Delivery'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a smelted item'
-  - '  &#EADBC8goes straight to your inventory'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a smelted item &#EADBC8goes straight to your inventory'
   - '  &#EADBC8Furnaces you fill, within 16 blocks'
 level-up-messages:
   1:

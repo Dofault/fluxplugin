@@ -29,15 +29,11 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Rage'
-  - '  &#EADBC8Plus ta vie est basse, plus tu'
-  - '  &#EADBC8frappes fort : jusqu''à +&#FFF4E0%bonus%%&#EADBC8'
-  - '  &#EADBC8de dégâts à 1 point de vie'
+  - '  &#EADBC8Plus ta vie est basse, plus tu frappes fort : jusqu''à +&#FFF4E0%bonus%%&#EADBC8 de dégâts à 1 point de vie'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Rage'
-  - '  &#EADBC8Plus ta vie est basse, plus tu'
-  - '  &#EADBC8frappes fort : jusqu''à +&#FFF4E0%bonus%%&#EADBC8'
-  - '  &#EADBC8de dégâts à 1 point de vie'
+  - '  &#EADBC8Plus ta vie est basse, plus tu frappes fort : jusqu''à +&#FFF4E0%bonus%%&#EADBC8 de dégâts à 1 point de vie'
 level-up-messages:
   1:
   - '&#6B7A8F» &#FFF4E0Rage'

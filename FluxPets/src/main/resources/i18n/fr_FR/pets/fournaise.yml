@@ -29,16 +29,12 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Livraison'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance qu''un objet'
-  - '  &#EADBC8cuit arrive directement'
-  - '  &#EADBC8dans ton inventaire'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance qu''un objet &#EADBC8cuit arrive directement &#EADBC8dans ton inventaire'
   - '  &#EADBC8Fours que tu remplis, à 16 blocs au plus'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Livraison'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance qu''un objet'
-  - '  &#EADBC8cuit arrive directement'
-  - '  &#EADBC8dans ton inventaire'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance qu''un objet &#EADBC8cuit arrive directement &#EADBC8dans ton inventaire'
   - '  &#EADBC8Fours que tu remplis, à 16 blocs au plus'
 level-up-messages:
   1:

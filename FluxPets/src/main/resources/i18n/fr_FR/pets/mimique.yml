@@ -29,15 +29,11 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Filon oublié'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance que la'
-  - '  &#EADBC8roche minée laisse place'
-  - '  &#EADBC8à un coffre d''aventure'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance que la &#EADBC8roche minée laisse place &#EADBC8à un coffre d''aventure'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Filon oublié'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance que la'
-  - '  &#EADBC8roche minée laisse place'
-  - '  &#EADBC8à un coffre d''aventure'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance que la &#EADBC8roche minée laisse place &#EADBC8à un coffre d''aventure'
 level-up-messages:
   1:
   - '&#6B7A8F» &#FFF4E0Filon oublié'

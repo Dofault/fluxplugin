@@ -29,15 +29,11 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Mémoire'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de ne'
-  - '  &#EADBC8pas consommer les'
-  - '  &#EADBC8niveaux en enchantant'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de ne &#EADBC8pas consommer les &#EADBC8niveaux en enchantant'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Mémoire'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de ne'
-  - '  &#EADBC8pas consommer les'
-  - '  &#EADBC8niveaux en enchantant'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de ne &#EADBC8pas consommer les &#EADBC8niveaux en enchantant'
 level-up-messages:
   1:
   - '&#6B7A8F» &#FFF4E0Mémoire'

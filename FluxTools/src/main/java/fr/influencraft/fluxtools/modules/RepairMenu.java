@@ -378,7 +378,7 @@ public final class RepairMenu implements CommandExecutor {
             for (String line : lore) {
                 formatted.add(StringUtils.format(line, player));
             }
-            meta.setLore(formatted);
+            meta.setLore(fr.influencraft.flux.api.text.Texts.wrapLines(formatted));
             icon.setItemMeta(meta);
         }
         return icon;

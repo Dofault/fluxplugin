@@ -17,8 +17,7 @@ cards:
     rarity: simple
     pet: pepite
     lore:
-    - '&#EADBC8Un éclat de minerai d''or'
-    - '&#EADBC8qui a décidé de marcher.'
+    - '&#EADBC8Un éclat de minerai d''or qui a décidé de marcher.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Mineur'
   lanterne:
@@ -28,8 +27,7 @@ cards:
     rarity: unique
     pet: lanterne
     lore:
-    - '&#EADBC8Elle éclaire les galeries'
-    - '&#EADBC8et ne s''éteint jamais.'
+    - '&#EADBC8Elle éclaire les galeries et ne s''éteint jamais.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Mineur'
   wagonnet:
@@ -39,8 +37,7 @@ cards:
     rarity: elite
     pet: wagonnet
     lore:
-    - '&#EADBC8Il roule sur les rails'
-    - '&#EADBC8la benne pleine de trésors.'
+    - '&#EADBC8Il roule sur les rails la benne pleine de trésors.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Mineur'
   dragon_gemmes:
@@ -50,8 +47,7 @@ cards:
     rarity: ultimate
     pet: dragon_gemmes
     lore:
-    - '&#EADBC8Ses écailles sont des diamants,'
-    - '&#EADBC8son trésor, toute la montagne.'
+    - '&#EADBC8Ses écailles sont des diamants, son trésor, toute la montagne.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Mineur'
   caillou:
@@ -61,8 +57,7 @@ cards:
     rarity: simple
     pet: caillou
     lore:
-    - '&#EADBC8Il ne bouge pas beaucoup,'
-    - '&#EADBC8mais il connaît chaque pierre.'
+    - '&#EADBC8Il ne bouge pas beaucoup, mais il connaît chaque pierre.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Rochiste'
   mimique:
@@ -83,8 +78,7 @@ cards:
     rarity: elite
     pet: colosse
     lore:
-    - '&#EADBC8Né d''une coulée de lave refroidie,'
-    - '&#EADBC8lent mais inébranlable.'
+    - '&#EADBC8Né d''une coulée de lave refroidie, lent mais inébranlable.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Rochiste'
   titan:
@@ -94,8 +88,7 @@ cards:
     rarity: ultimate
     pet: titan
     lore:
-    - '&#EADBC8Chaque cristal sur son dos'
-    - '&#EADBC8raconte un millénaire.'
+    - '&#EADBC8Chaque cristal sur son dos raconte un millénaire.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Rochiste'
   fourmi:
@@ -105,8 +98,7 @@ cards:
     rarity: simple
     pet: fourmi
     lore:
-    - '&#EADBC8Elle creuse des galeries'
-    - '&#EADBC8qui ne s''effondrent jamais.'
+    - '&#EADBC8Elle creuse des galeries qui ne s''effondrent jamais.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Déblayeur'
   cabri:
@@ -116,8 +108,7 @@ cards:
     rarity: unique
     pet: cabri
     lore:
-    - '&#EADBC8Il saute de rocher en rocher'
-    - '&#EADBC8sans jamais trébucher.'
+    - '&#EADBC8Il saute de rocher en rocher sans jamais trébucher.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Déblayeur'
   lievre_neiges:
@@ -127,8 +118,7 @@ cards:
     rarity: elite
     pet: lievre_neiges
     lore:
-    - '&#EADBC8Il court sur la poudreuse'
-    - '&#EADBC8sans y laisser une empreinte.'
+    - '&#EADBC8Il court sur la poudreuse sans y laisser une empreinte.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Déblayeur'
   ver_sables:
@@ -138,8 +128,7 @@ cards:
     rarity: ultimate
     pet: ver_sables
     lore:
-    - '&#EADBC8Il nage sous les dunes'
-    - '&#EADBC8comme un poisson sous l''eau.'
+    - '&#EADBC8Il nage sous les dunes comme un poisson sous l''eau.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Déblayeur'
   abeille:
@@ -149,8 +138,7 @@ cards:
     rarity: simple
     pet: abeille
     lore:
-    - '&#EADBC8Elle butine le potager,'
-    - '&#EADBC8et tout pousse sur son passage.'
+    - '&#EADBC8Elle butine le potager, et tout pousse sur son passage.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Cultivateur'
   carottin:
@@ -160,8 +148,7 @@ cards:
     rarity: unique
     pet: carottin
     lore:
-    - '&#EADBC8Arraché du potager,'
-    - '&#EADBC8il y retourne chaque soir.'
+    - '&#EADBC8Arraché du potager, il y retourne chaque soir.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Cultivateur'
   ouistiti:
@@ -171,8 +158,7 @@ cards:
     rarity: elite
     pet: ouistiti
     lore:
-    - '&#EADBC8Chaque cabosse qu''il chipe,'
-    - '&#EADBC8il la replante en cachette.'
+    - '&#EADBC8Chaque cabosse qu''il chipe, il la replante en cachette.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Cultivateur'
   epouvantail:
@@ -182,8 +168,7 @@ cards:
     rarity: ultimate
     pet: epouvantail
     lore:
-    - '&#EADBC8Les corbeaux le fuient,'
-    - '&#EADBC8sauf un, son meilleur ami.'
+    - '&#EADBC8Les corbeaux le fuient, sauf un, son meilleur ami.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Cultivateur'
   coquelicot:
@@ -193,8 +178,7 @@ cards:
     rarity: simple
     pet: coquelicot
     lore:
-    - '&#EADBC8La fleur la plus bavarde'
-    - '&#EADBC8de tout le pré.'
+    - '&#EADBC8La fleur la plus bavarde de tout le pré.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Herboriste'
   champinou:
@@ -204,8 +188,7 @@ cards:
     rarity: unique
     pet: champinou
     lore:
-    - '&#EADBC8Il pousse là où personne'
-    - '&#EADBC8ne pense à regarder.'
+    - '&#EADBC8Il pousse là où personne ne pense à regarder.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Herboriste'
   papillon:
@@ -215,8 +198,7 @@ cards:
     rarity: elite
     pet: papillon
     lore:
-    - '&#EADBC8Il ne se pose jamais'
-    - '&#EADBC8deux fois sur la même fleur.'
+    - '&#EADBC8Il ne se pose jamais deux fois sur la même fleur.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Herboriste'
   dryade:
@@ -226,8 +208,7 @@ cards:
     rarity: ultimate
     pet: dryade
     lore:
-    - '&#EADBC8Esprit de la clairière,'
-    - '&#EADBC8les fleurs s''ouvrent à son passage.'
+    - '&#EADBC8Esprit de la clairière, les fleurs s''ouvrent à son passage.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Herboriste'
   souche:
@@ -237,8 +218,7 @@ cards:
     rarity: simple
     pet: souche
     lore:
-    - '&#EADBC8Coupée il y a cent ans,'
-    - '&#EADBC8elle a gardé la hache en souvenir.'
+    - '&#EADBC8Coupée il y a cent ans, elle a gardé la hache en souvenir.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Sylviculteur'
   castor:
@@ -248,8 +228,7 @@ cards:
     rarity: unique
     pet: castor
     lore:
-    - '&#EADBC8Un arbre ? Trois coups de dents,'
-    - '&#EADBC8et c''est réglé.'
+    - '&#EADBC8Un arbre ? Trois coups de dents, et c''est réglé.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Sylviculteur'
   gland:
@@ -270,8 +249,7 @@ cards:
     rarity: ultimate
     pet: sylvain
     lore:
-    - '&#EADBC8Gardien des vieilles forêts,'
-    - '&#EADBC8patient comme un chêne.'
+    - '&#EADBC8Gardien des vieilles forêts, patient comme un chêne.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Sylviculteur'
   flammeche:
@@ -281,8 +259,7 @@ cards:
     rarity: ultimate
     pet: flammeche
     lore:
-    - '&#EADBC8Un petit esprit de flamme'
-    - '&#EADBC8qui ne quitte jamais le four.'
+    - '&#EADBC8Un petit esprit de flamme qui ne quitte jamais le four.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Fondeur'
   soufflet:
@@ -292,8 +269,7 @@ cards:
     rarity: simple
     pet: soufflet
     lore:
-    - '&#EADBC8Un souffle, et les braises'
-    - '&#EADBC8repartent de plus belle.'
+    - '&#EADBC8Un souffle, et les braises repartent de plus belle.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Fondeur'
   salamandre:
@@ -303,8 +279,7 @@ cards:
     rarity: unique
     pet: salamandre
     lore:
-    - '&#EADBC8Elle dort dans les braises'
-    - '&#EADBC8du haut-fourneau.'
+    - '&#EADBC8Elle dort dans les braises du haut-fourneau.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Fondeur'
   fournaise:
@@ -314,8 +289,7 @@ cards:
     rarity: elite
     pet: fournaise
     lore:
-    - '&#EADBC8Un four qui a pris vie,'
-    - '&#EADBC8et qui a toujours faim.'
+    - '&#EADBC8Un four qui a pris vie, et qui a toujours faim.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Fondeur'
   lapin_lapis:
@@ -325,8 +299,7 @@ cards:
     rarity: simple
     pet: lapin_lapis
     lore:
-    - '&#EADBC8Il a creusé si profond'
-    - '&#EADBC8qu''il en est ressorti tout bleu.'
+    - '&#EADBC8Il a creusé si profond qu''il en est ressorti tout bleu.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Enchanteur'
   orbe_xp:
@@ -336,8 +309,7 @@ cards:
     rarity: unique
     pet: orbe_xp
     lore:
-    - '&#EADBC8Il a la couleur de tes niveaux'
-    - '&#EADBC8et file toujours droit vers toi.'
+    - '&#EADBC8Il a la couleur de tes niveaux et file toujours droit vers toi.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Enchanteur'
   chouette_arcane:
@@ -347,8 +319,7 @@ cards:
     rarity: elite
     pet: chouette_arcane
     lore:
-    - '&#EADBC8Elle lit dans le noir'
-    - '&#EADBC8les grimoires interdits.'
+    - '&#EADBC8Elle lit dans le noir les grimoires interdits.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Enchanteur'
   table_vivante:
@@ -358,8 +329,7 @@ cards:
     rarity: ultimate
     pet: table_vivante
     lore:
-    - '&#EADBC8La table d''enchantement'
-    - '&#EADBC8qui choisit elle-même ses sorts.'
+    - '&#EADBC8La table d''enchantement qui choisit elle-même ses sorts.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Enchanteur'
   poissonnet:
@@ -369,8 +339,7 @@ cards:
     rarity: simple
     pet: poissonnet
     lore:
-    - '&#EADBC8Il sait où mordent'
-    - '&#EADBC8ses cousins.'
+    - '&#EADBC8Il sait où mordent ses cousins.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Pêcheur'
   crabichon:
@@ -380,8 +349,7 @@ cards:
     rarity: unique
     pet: crabichon
     lore:
-    - '&#EADBC8Il marche de travers'
-    - '&#EADBC8mais pêche tout droit.'
+    - '&#EADBC8Il marche de travers mais pêche tout droit.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Pêcheur'
   dauphin:
@@ -391,8 +359,7 @@ cards:
     rarity: elite
     pet: dauphin
     lore:
-    - '&#EADBC8Il nage plus vite que son ombre'
-    - '&#EADBC8et t''emmène dans son sillage.'
+    - '&#EADBC8Il nage plus vite que son ombre et t''emmène dans son sillage.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Pêcheur'
   kraken:
@@ -402,8 +369,7 @@ cards:
     rarity: ultimate
     pet: kraken
     lore:
-    - '&#EADBC8Capitaine des abysses,'
-    - '&#EADBC8les poissons le suivent.'
+    - '&#EADBC8Capitaine des abysses, les poissons le suivent.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Pêcheur'
   ecuyer:
@@ -413,8 +379,7 @@ cards:
     rarity: simple
     pet: ecuyer
     lore:
-    - '&#EADBC8Petit, mais sa lance'
-    - '&#EADBC8tient les zombies à distance.'
+    - '&#EADBC8Petit, mais sa lance tient les zombies à distance.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Défenseur'
   pavois:
@@ -424,8 +389,7 @@ cards:
     rarity: unique
     pet: pavois
     lore:
-    - '&#EADBC8Un grand bouclier vivant'
-    - '&#EADBC8qui se dresse devant ses amis.'
+    - '&#EADBC8Un grand bouclier vivant qui se dresse devant ses amis.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Défenseur'
   chien_garde:
@@ -435,8 +399,7 @@ cards:
     rarity: elite
     pet: chien_garde
     lore:
-    - '&#EADBC8Son armure brille,'
-    - '&#EADBC8son flair ne trompe jamais.'
+    - '&#EADBC8Son armure brille, son flair ne trompe jamais.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Défenseur'
   chevalier_spectral:
@@ -446,8 +409,7 @@ cards:
     rarity: ultimate
     pet: chevalier_spectral
     lore:
-    - '&#EADBC8Il a juré de protéger'
-    - '&#EADBC8même après sa mort.'
+    - '&#EADBC8Il a juré de protéger même après sa mort.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Défenseur'
   marteau_piqueur:
@@ -457,8 +419,7 @@ cards:
     rarity: simple
     pet: marteau_piqueur
     lore:
-    - '&#EADBC8Il fait trembler les routes'
-    - '&#EADBC8et déterre ce qu''elles cachaient.'
+    - '&#EADBC8Il fait trembler les routes et déterre ce qu''elles cachaient.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Bâtisseur'
   betonniere:
@@ -468,8 +429,7 @@ cards:
     rarity: unique
     pet: betonniere
     lore:
-    - '&#EADBC8Elle tourne, tourne, tourne,'
-    - '&#EADBC8et le béton prend aussitôt.'
+    - '&#EADBC8Elle tourne, tourne, tourne, et le béton prend aussitôt.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Bâtisseur'
   grue:
@@ -479,8 +439,7 @@ cards:
     rarity: elite
     pet: grue
     lore:
-    - '&#EADBC8Elle soulève les blocs'
-    - '&#EADBC8les plus lourds du chantier.'
+    - '&#EADBC8Elle soulève les blocs les plus lourds du chantier.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Bâtisseur'
   architecte:
@@ -490,8 +449,7 @@ cards:
     rarity: ultimate
     pet: architecte
     lore:
-    - '&#EADBC8Il voit déjà la cathédrale'
-    - '&#EADBC8là où tu vois un terrain vague.'
+    - '&#EADBC8Il voit déjà la cathédrale là où tu vois un terrain vague.'
     - ''
     - '&#5FB3B3Série &#FFF4E0Bâtisseur'
   phenix:
@@ -501,8 +459,7 @@ cards:
     rarity: legendary
     pet: phenix
     lore:
-    - '&#EADBC8Il renaît toujours'
-    - '&#EADBC8de ses cendres.'
+    - '&#EADBC8Il renaît toujours de ses cendres.'
     - ''
     - '&#5FB3B3Familier de prestige'
   astrolabe:
@@ -512,8 +469,7 @@ cards:
     rarity: legendary
     pet: astrolabe
     lore:
-    - '&#EADBC8Il fait tourner les planètes'
-    - '&#EADBC8pour ne jamais s''ennuyer.'
+    - '&#EADBC8Il fait tourner les planètes pour ne jamais s''ennuyer.'
     - ''
     - '&#5FB3B3Familier de prestige'
   kitsune:
@@ -534,8 +490,7 @@ cards:
     rarity: legendary
     pet: licorne
     lore:
-    - '&#EADBC8Elle laisse des étoiles'
-    - '&#EADBC8là où elle passe.'
+    - '&#EADBC8Elle laisse des étoiles là où elle passe.'
     - ''
     - '&#5FB3B3Familier de prestige'
   nida:
@@ -545,8 +500,7 @@ cards:
     rarity: legendary
     pet: nida
     lore:
-    - '&#EADBC8Il a perdu son bras gauche'
-    - '&#EADBC8en retenant la porte du Néant.'
+    - '&#EADBC8Il a perdu son bras gauche en retenant la porte du Néant.'
     - ''
     - '&#5FB3B3Familier de prestige'
   leviathan:
@@ -556,8 +510,7 @@ cards:
     rarity: fabled
     pet: leviathan
     lore:
-    - '&#EADBC8Les marins ne prononcent'
-    - '&#EADBC8jamais son nom.'
+    - '&#EADBC8Les marins ne prononcent jamais son nom.'
     - ''
     - '&#5FB3B3Familier de prestige'
   faucheur:
@@ -567,7 +520,6 @@ cards:
     rarity: fabled
     pet: faucheur
     lore:
-    - '&#EADBC8Il vient du vide'
-    - '&#EADBC8et y retourne toujours.'
+    - '&#EADBC8Il vient du vide et y retourne toujours.'
     - ''
     - '&#5FB3B3Familier de prestige'

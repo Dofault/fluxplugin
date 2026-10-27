@@ -488,8 +488,7 @@ boosters:
     name: '&f&lBooster Ordinaire'
     lore:
     - '&#EADBC8Palier : &#FFF4E0★&#6B7A8F☆☆☆'
-    - '&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de toutes'
-    - '&#EADBC8les séries.'
+    - '&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de toutes les séries.'
     - ''
     - '&#EADBC8Familiers à adopter :'
     - '&#6B7A8F» &#FFF4E0Tous les familiers'
@@ -622,8 +621,7 @@ boosters:
     name: '&#55FF55&lBooster Tendance'
     lore:
     - '&#EADBC8Palier : &#FFF4E0★★&#6B7A8F☆☆'
-    - '&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de toutes'
-    - '&#EADBC8les séries.'
+    - '&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de toutes les séries.'
     - ''
     - '&#EADBC8Familiers à adopter :'
     - '&#6B7A8F» &#FFF4E0Tous les familiers'
@@ -756,8 +754,7 @@ boosters:
     name: '&#5A85EA&lBooster Viral'
     lore:
     - '&#EADBC8Palier : &#FFF4E0★★★&#6B7A8F☆'
-    - '&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de toutes'
-    - '&#EADBC8les séries.'
+    - '&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de toutes les séries.'
     - ''
     - '&#EADBC8Familiers à adopter :'
     - '&#6B7A8F» &#FFF4E0Tous les familiers'
@@ -890,8 +887,7 @@ boosters:
     name: '&#F0A800&lBooster Phénomène'
     lore:
     - '&#EADBC8Palier : &#FFF4E0★★★★&#6B7A8F'
-    - '&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de toutes'
-    - '&#EADBC8les séries.'
+    - '&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de toutes les séries.'
     - ''
     - '&#EADBC8Familiers à adopter :'
     - '&#6B7A8F» &#FFF4E0Tous les familiers'

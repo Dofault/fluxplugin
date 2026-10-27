@@ -29,13 +29,11 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Archaeologist'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to find a'
-  - '  &#EADBC8rare item while digging'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to find a &#EADBC8rare item while digging'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Archaeologist'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to find a'
-  - '  &#EADBC8rare item while digging'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to find a &#EADBC8rare item while digging'
 level-up-messages:
   1:
   - '&#6B7A8F» &#FFF4E0Archaeologist'

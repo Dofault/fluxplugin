@@ -37,7 +37,7 @@ public final class CardsMenu extends Menu {
                 lore.add(fr.influencraft.fluxpets.Texts.of(left(t("action.edit"))));
                 lore.add(fr.influencraft.fluxpets.Texts.of(right(t("action.receive-one"))));
                 lore.add(fr.influencraft.fluxpets.Texts.of(shift(t("action.receive-stack"))));
-                meta.lore(lore);
+                meta.lore(fr.influencraft.flux.api.text.Texts.wrapLore(lore));
             });
             set(CONTENT_SLOTS[i], item, (p, c) -> {
                 if (c.isRightClick()) {

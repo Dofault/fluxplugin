@@ -29,13 +29,11 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Deep Treasures'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance of a sea treasure'
-  - '  &#EADBC8when fishing with a vanilla rod'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance of a sea treasure &#EADBC8when fishing with a vanilla rod'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Deep Treasures'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance of a sea treasure'
-  - '  &#EADBC8when fishing with a vanilla rod'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance of a sea treasure &#EADBC8when fishing with a vanilla rod'
 level-up-messages:
   1:
   - '&#6B7A8F» &#FFF4E0Deep Treasures'

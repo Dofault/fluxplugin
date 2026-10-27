@@ -29,13 +29,11 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Bouquet'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to'
-  - '  &#EADBC8double picked flowers'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to &#EADBC8double picked flowers'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Bouquet'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to'
-  - '  &#EADBC8double picked flowers'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to &#EADBC8double picked flowers'
 level-up-messages:
   1:
   - '&#6B7A8F» &#FFF4E0Bouquet'

@@ -29,15 +29,11 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Pousse express'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance qu''une'
-  - '  &#EADBC8graine plantée pousse'
-  - '  &#EADBC8directement à mi-croissance'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance qu''une &#EADBC8graine plantée pousse &#EADBC8directement à mi-croissance'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Pousse express'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance qu''une'
-  - '  &#EADBC8graine plantée pousse'
-  - '  &#EADBC8directement à mi-croissance'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance qu''une &#EADBC8graine plantée pousse &#EADBC8directement à mi-croissance'
 level-up-messages:
   1:
   - '&#6B7A8F» &#FFF4E0Pousse express'

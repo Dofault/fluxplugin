@@ -29,16 +29,12 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Éclats'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance d''un'
-  - '  &#EADBC8point d''expérience par'
-  - '  &#EADBC8bloc de pierre miné'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance d''un &#EADBC8point d''expérience par &#EADBC8bloc de pierre miné'
   - '  &#EADBC8Minage de zone compris'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Éclats'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance d''un'
-  - '  &#EADBC8point d''expérience par'
-  - '  &#EADBC8bloc de pierre miné'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance d''un &#EADBC8point d''expérience par &#EADBC8bloc de pierre miné'
   - '  &#EADBC8Minage de zone compris'
 level-up-messages:
   1:

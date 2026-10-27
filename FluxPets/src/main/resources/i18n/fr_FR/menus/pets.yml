@@ -63,8 +63,7 @@ pet-slots:
     name: '&#FFD94DEmplacement libre'
     lore:
     - ''
-    - '&#B376E5Clique sur un familier'
-    - '&#B376E5ci-dessous pour l''activer.'
+    - '&#B376E5Clique sur un familier ci-dessous pour l''activer.'
     - ''
     item: player_head texture:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmFkYzA0OGE3Y2U3OGY3ZGFkNzJhMDdkYTI3ZDg1YzA5MTY4ODFlNTUyMmVlZWQxZTNkYWYyMTdhMzhjMWEifX19
   locked:
@@ -72,8 +71,7 @@ pet-slots:
     name: '&#FF5C5CEmplacement verrouillé'
     lore:
     - ''
-    - '&#B376E5Tu n''as pas encore accès'
-    - '&#B376E5à cet emplacement.'
+    - '&#B376E5Tu n''as pas encore accès à cet emplacement.'
     - '&#B376E5Grade requis : %grade%'
     - ''
     grades: {}

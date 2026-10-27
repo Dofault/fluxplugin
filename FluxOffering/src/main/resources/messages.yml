@@ -169,8 +169,7 @@ gui:
     - "&#FFD94D➤ Deposes"
     - "&8➤ &#B376E5Non deposes"
     - ""
-    - "&#B376E5N'affiche que ce que tu as"
-    - "&#B376E5deja depose en entier."
+    - "&#B376E5N'affiche que ce que tu as deja depose en entier."
     - ""
     - "&#B376E5Clique pour changer l'affichage."
   filter-not-deposited-name: "&r&7%img_left_click% &#FFD94DAffichage : Non deposes"
@@ -179,8 +178,7 @@ gui:
     - "&8➤ &#B376E5Deposes"
     - "&#FFD94D➤ Non deposes"
     - ""
-    - "&#B376E5N'affiche que ce qu'il"
-    - "&#B376E5te reste a deposer."
+    - "&#B376E5N'affiche que ce qu'il te reste a deposer."
     - ""
     - "&#B376E5Clique pour changer l'affichage."
 
@@ -193,9 +191,7 @@ gui:
 
   deposit-all-name: "&r&7%img_left_click% &#FFD94DTout deposer"
   deposit-all-lore:
-    - "&#B376E5Depose d'un coup tout ce que"
-    - "&#B376E5tu peux, sur tous les items"
-    - "&#B376E5de cette offrande."
+    - "&#B376E5Depose d'un coup tout ce que tu peux, sur tous les items de cette offrande."
   # {amount} {types} {percent}
   deposit-all-success: "&8[&r#2ECF7BOffrande&8] &#2ECF7B✔ &7{amount} items deposes sur &f{types} &7type(s) — offrande a &f{percent}%"
   deposit-all-nothing: "&8[&r#2ECF7BOffrande&8] &7Tu n'as rien a deposer dans cette offrande pour le moment."
@@ -243,8 +239,7 @@ gui:
     - "&#B376E5Niveaux deposes : &f{deposited}&7/&f{required} &8(&f{percent}%&8)"
     - ""
     - "&#B376E5Depose des livres enchantes"
-    - "&f{name}&#B376E5, chaque livre ajoute"
-    - "&#B376E5son niveau au compteur."
+    - "&f{name}&#B376E5, chaque livre ajoute &#B376E5son niveau au compteur."
   enchant-lore-hint:
     - ""
     - "&r&7%img_left_click% &#FFD94DDeposer tous tes livres"

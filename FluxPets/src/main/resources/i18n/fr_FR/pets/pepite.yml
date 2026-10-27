@@ -29,13 +29,11 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Pépites'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance d''une pépite en'
-  - '  &#EADBC8plus en minant du fer ou de l''or'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance d''une pépite en &#EADBC8plus en minant du fer ou de l''or'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Pépites'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance d''une pépite en'
-  - '  &#EADBC8plus en minant du fer ou de l''or'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance d''une pépite en &#EADBC8plus en minant du fer ou de l''or'
 level-up-messages:
   1:
   - '&#6B7A8F» &#FFF4E0Pépites'

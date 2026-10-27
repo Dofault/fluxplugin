@@ -209,11 +209,9 @@ editor:
     info:
       name: "&#FF7A59Édition des cartes"
       lore:
-        - "&#EADBC8Paramètre les boosters, les cartes"
-        - "&#EADBC8et les familiers obtenables."
+        - "&#EADBC8Paramètre les boosters, les cartes et les familiers obtenables."
         - ""
-        - "&#6B7A8FTout est enregistré dans"
-        - "&#6B7A8Fplugins/FluxPets/content/."
+        - "&#6B7A8FTout est enregistré dans plugins/FluxPets/content/."
     new-booster:
       name: "&#FF7A59Nouveau booster"
       lore:
@@ -235,8 +233,7 @@ editor:
     reload:
       name: "&#FF7A59Recharger"
       lore:
-        - "&#EADBC8Relit la configuration (après"
-        - "&#EADBC8une modification à la main)."
+        - "&#EADBC8Relit la configuration (après une modification à la main)."
         - ""
       action: "Recharger"
   booster:
@@ -257,44 +254,35 @@ editor:
     draws:
       name: "&#FF7A59Tirages par booster &#FFF4E0%count%"
       lore:
-        - "&#EADBC8Nombre de récompenses données"
-        - "&#EADBC8à chaque ouverture."
+        - "&#EADBC8Nombre de récompenses données à chaque ouverture."
         - ""
     contents:
       name: "&#FF7A59Contenu"
       lore-all:
-        - "&#EADBC8Tout (toutes les cartes et"
-        - "&#EADBC8tous les familiers obtenables)"
+        - "&#EADBC8Tout (toutes les cartes et tous les familiers obtenables)"
         - ""
       lore-chosen:
-        - "&#EADBC8%count% récompenses"
-        - "&#EADBC8choisies à la main."
+        - "&#EADBC8%count% récompenses choisies à la main."
         - ""
       action: "Choisir les cartes et familiers"
     chances:
       name: "&#FF7A59Chances de tirage"
       lore:
-        - "&#EADBC8Affiche dans le tchat la chance"
-        - "&#EADBC8de chaque carte et familier."
+        - "&#EADBC8Affiche dans le tchat la chance de chaque carte et familier."
         - ""
       action: "Afficher"
     card-weights:
       name: "&#FF7A59Cartes : poids des raretés"
       lore:
-        - "&#EADBC8À chaque tirage de carte, une rareté"
-        - "&#EADBC8est choisie selon ces poids, puis"
-        - "&#EADBC8une carte au hasard dans cette rareté."
+        - "&#EADBC8À chaque tirage de carte, une rareté est choisie selon ces poids, puis une carte au hasard dans cette rareté."
         - ""
-        - "&#6B7A8FUne rareté sans carte dans le"
-        - "&#6B7A8Fcontenu n'est jamais tirée."
+        - "&#6B7A8FUne rareté sans carte dans le contenu n'est jamais tirée."
     pet-weights:
       name: "&#FF7A59Familiers : poids des raretés"
       lore:
-        - "&#EADBC8Même principe pour les tirages"
-        - "&#EADBC8de familiers."
+        - "&#EADBC8Même principe pour les tirages de familiers."
         - ""
-        - "&#6B7A8FUn familier ne sort qu'une fois"
-        - "&#6B7A8Fpar booster."
+        - "&#6B7A8FUn familier ne sort qu'une fois par booster."
     weight:
       name: "%rarity% &#FFF4E0%weight%"
       lore-cards:
@@ -308,8 +296,7 @@ editor:
     pet-chance:
       name: "&#FF7A59Chance de familier &#FFF4E0%chance%"
       lore:
-        - "&#EADBC8Probabilité qu'un tirage soit"
-        - "&#EADBC8un familier plutôt qu'une carte."
+        - "&#EADBC8Probabilité qu'un tirage soit un familier plutôt qu'une carte."
         - "&#EADBC8Par booster : &#FFF4E0%chance% &#EADBC8d'en avoir au moins un."
         - ""
       more: "+0,1 %"
@@ -318,8 +305,7 @@ editor:
     delete:
       name: "&#D9534FSupprimer ce booster"
       lore:
-        - "&#EADBC8Les boosters déjà distribués"
-        - "&#EADBC8ne s'ouvriront plus."
+        - "&#EADBC8Les boosters déjà distribués ne s'ouvriront plus."
         - ""
   content:
     title: "&#FF7A59Contenu &#6B7A8F▸ &#EADBC8%id%"
@@ -344,14 +330,12 @@ editor:
       lore-all:
         - "&#EADBC8Mode : &#FFF4E0tout le contenu"
         - ""
-        - "&#6B7A8FEn mode « tout », les nouvelles cartes"
-        - "&#6B7A8Fet familiers obtenables y entrent seuls."
+        - "&#6B7A8FEn mode « tout », les nouvelles cartes et familiers obtenables y entrent seuls."
         - "&#6B7A8FCliquer une récompense passe en liste choisie."
       lore-chosen:
         - "&#EADBC8Mode : &#FFF4E0liste choisie (%count%)"
         - ""
-        - "&#6B7A8FEn mode « tout », les nouvelles cartes"
-        - "&#6B7A8Fet familiers obtenables y entrent seuls."
+        - "&#6B7A8FEn mode « tout », les nouvelles cartes et familiers obtenables y entrent seuls."
         - "&#6B7A8FCliquer une récompense passe en liste choisie."
     reset:
       name: "&#FF7A59Tout inclure"
@@ -364,8 +348,7 @@ editor:
     unavailable:
       name: "&#D9534FFamiliers inactifs (cf. logs)"
       lore:
-        - "&#EADBC8Les familiers ne peuvent pas"
-        - "&#EADBC8sortir des boosters."
+        - "&#EADBC8Les familiers ne peuvent pas sortir des boosters."
     pet:
       lore-enabled:
         - "&#6B7A8F%id%"
@@ -383,8 +366,7 @@ editor:
     info:
       name: "&#FF7A59Familiers"
       lore:
-        - "&#EADBC8Un familier obtenable peut sortir"
-        - "&#EADBC8des boosters (selon leur contenu) :"
+        - "&#EADBC8Un familier obtenable peut sortir des boosters (selon leur contenu) :"
         - "&#EADBC8il est adopté à sa révélation."
         - ""
         - "&#6B7A8FUn familier ne sort qu'une fois par booster."
@@ -396,8 +378,7 @@ editor:
         - ""
       lore-reroll:
         - "&#EADBC8Mode : &#FFF4E0nouveau tirage"
-        - "&#EADBC8Un familier déjà adopté n'est"
-        - "&#EADBC8jamais tiré pour ce joueur."
+        - "&#EADBC8Un familier déjà adopté n'est jamais tiré pour ce joueur."
         - ""
       switch: "Changer de mode"
       more: "+100 XP"
@@ -407,13 +388,11 @@ editor:
     info:
       name: "&#FF7A59Cartes &#6B7A8F(%count%)"
       lore:
-        - "&#EADBC8Le numéro de collection suit"
-        - "&#EADBC8l'ordre de création."
+        - "&#EADBC8Le numéro de collection suit l'ordre de création."
     new:
       name: "&#FF7A59Nouvelle carte"
       lore:
-        - "&#EADBC8Crée une carte (texture de test,"
-        - "&#EADBC8rareté la plus commune)."
+        - "&#EADBC8Crée une carte (texture de test, rareté la plus commune)."
         - ""
       prompt: "&#EADBC8Identifiant de la nouvelle carte &#6B7A8F(lettres, chiffres, _) :"
   card:
@@ -426,8 +405,7 @@ editor:
       lore:
         - "&#6B7A8FActuel : &#FFF4E0%value%"
         - ""
-        - "&#EADBC8Sans couleur : le nom prend"
-        - "&#EADBC8la couleur du format des cartes."
+        - "&#EADBC8Sans couleur : le nom prend la couleur du format des cartes."
         - ""
       prompt: "&#EADBC8Nouveau nom de la carte :"
     rarity:
@@ -458,6 +436,5 @@ editor:
       name: "&#D9534FSupprimer cette carte"
       lore:
         - "&#EADBC8Elle est aussi retirée des boosters."
-        - "&#EADBC8Les cartes déjà distribuées restent"
-        - "&#EADBC8en jeu mais ne sont plus reconnues."
+        - "&#EADBC8Les cartes déjà distribuées restent en jeu mais ne sont plus reconnues."
         - ""

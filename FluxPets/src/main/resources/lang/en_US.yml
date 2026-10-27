@@ -208,11 +208,9 @@ editor:
     info:
       name: "&#FF7A59Card editor"
       lore:
-        - "&#EADBC8Set up boosters, cards"
-        - "&#EADBC8and obtainable pets."
+        - "&#EADBC8Set up boosters, cards and obtainable pets."
         - ""
-        - "&#6B7A8FEverything is saved in"
-        - "&#6B7A8Fplugins/FluxPets/content/."
+        - "&#6B7A8FEverything is saved in plugins/FluxPets/content/."
     new-booster:
       name: "&#FF7A59New booster"
       lore:
@@ -256,44 +254,35 @@ editor:
     draws:
       name: "&#FF7A59Draws per booster &#FFF4E0%count%"
       lore:
-        - "&#EADBC8Number of rewards given"
-        - "&#EADBC8on each opening."
+        - "&#EADBC8Number of rewards given on each opening."
         - ""
     contents:
       name: "&#FF7A59Contents"
       lore-all:
-        - "&#EADBC8All (every card and"
-        - "&#EADBC8every obtainable pet)"
+        - "&#EADBC8All (every card and every obtainable pet)"
         - ""
       lore-chosen:
-        - "&#EADBC8%count% rewards"
-        - "&#EADBC8chosen by hand."
+        - "&#EADBC8%count% rewards chosen by hand."
         - ""
       action: "Choose cards and pets"
     chances:
       name: "&#FF7A59Draw chances"
       lore:
-        - "&#EADBC8Shows in chat the chance"
-        - "&#EADBC8of each card and pet."
+        - "&#EADBC8Shows in chat the chance of each card and pet."
         - ""
       action: "Show"
     card-weights:
       name: "&#FF7A59Cards: rarity weights"
       lore:
-        - "&#EADBC8On each card draw, a rarity"
-        - "&#EADBC8is picked using these weights, then"
-        - "&#EADBC8a random card of that rarity."
+        - "&#EADBC8On each card draw, a rarity is picked using these weights, then a random card of that rarity."
         - ""
-        - "&#6B7A8FA rarity without any card in the"
-        - "&#6B7A8Fcontents is never drawn."
+        - "&#6B7A8FA rarity without any card in the contents is never drawn."
     pet-weights:
       name: "&#FF7A59Pets: rarity weights"
       lore:
-        - "&#EADBC8Same principle for"
-        - "&#EADBC8pet draws."
+        - "&#EADBC8Same principle for pet draws."
         - ""
-        - "&#6B7A8FA pet drops at most once"
-        - "&#6B7A8Fper booster."
+        - "&#6B7A8FA pet drops at most once per booster."
     weight:
       name: "%rarity% &#FFF4E0%weight%"
       lore-cards:
@@ -307,8 +296,7 @@ editor:
     pet-chance:
       name: "&#FF7A59Pet chance &#FFF4E0%chance%"
       lore:
-        - "&#EADBC8Probability that a draw is"
-        - "&#EADBC8a pet rather than a card."
+        - "&#EADBC8Probability that a draw is a pet rather than a card."
         - "&#EADBC8Per booster: &#FFF4E0%chance% &#EADBC8to get at least one."
         - ""
       more: "+0.1 %"
@@ -317,8 +305,7 @@ editor:
     delete:
       name: "&#D9534FDelete this booster"
       lore:
-        - "&#EADBC8Boosters already given"
-        - "&#EADBC8will no longer open."
+        - "&#EADBC8Boosters already given will no longer open."
         - ""
   content:
     title: "&#FF7A59Contents &#6B7A8F▸ &#EADBC8%id%"
@@ -343,14 +330,12 @@ editor:
       lore-all:
         - "&#EADBC8Mode: &#FFF4E0all contents"
         - ""
-        - "&#6B7A8FIn \"all\" mode, new cards and"
-        - "&#6B7A8Fobtainable pets join on their own."
+        - "&#6B7A8FIn \"all\" mode, new cards and obtainable pets join on their own."
         - "&#6B7A8FClicking a reward switches to a chosen list."
       lore-chosen:
         - "&#EADBC8Mode: &#FFF4E0chosen list (%count%)"
         - ""
-        - "&#6B7A8FIn \"all\" mode, new cards and"
-        - "&#6B7A8Fobtainable pets join on their own."
+        - "&#6B7A8FIn \"all\" mode, new cards and obtainable pets join on their own."
         - "&#6B7A8FClicking a reward switches to a chosen list."
     reset:
       name: "&#FF7A59Include everything"
@@ -363,8 +348,7 @@ editor:
     unavailable:
       name: "&#D9534FPets unavailable (see logs)"
       lore:
-        - "&#EADBC8Pets cannot drop"
-        - "&#EADBC8from boosters."
+        - "&#EADBC8Pets cannot drop from boosters."
     pet:
       lore-enabled:
         - "&#6B7A8F%id%"
@@ -382,8 +366,7 @@ editor:
     info:
       name: "&#FF7A59Pets"
       lore:
-        - "&#EADBC8An obtainable pet can drop"
-        - "&#EADBC8from boosters (depending on their contents):"
+        - "&#EADBC8An obtainable pet can drop from boosters (depending on their contents):"
         - "&#EADBC8it is adopted when revealed."
         - ""
         - "&#6B7A8FA pet drops at most once per booster."
@@ -395,8 +378,7 @@ editor:
         - ""
       lore-reroll:
         - "&#EADBC8Mode: &#FFF4E0new draw"
-        - "&#EADBC8An adopted pet is never"
-        - "&#EADBC8drawn again for that player."
+        - "&#EADBC8An adopted pet is never drawn again for that player."
         - ""
       switch: "Change mode"
       more: "+100 XP"
@@ -406,13 +388,11 @@ editor:
     info:
       name: "&#FF7A59Cards &#6B7A8F(%count%)"
       lore:
-        - "&#EADBC8The collection number follows"
-        - "&#EADBC8the creation order."
+        - "&#EADBC8The collection number follows the creation order."
     new:
       name: "&#FF7A59New card"
       lore:
-        - "&#EADBC8Creates a card (test texture,"
-        - "&#EADBC8most common rarity)."
+        - "&#EADBC8Creates a card (test texture, most common rarity)."
         - ""
       prompt: "&#EADBC8New card id &#6B7A8F(letters, digits, _):"
   card:
@@ -425,8 +405,7 @@ editor:
       lore:
         - "&#6B7A8FCurrent: &#FFF4E0%value%"
         - ""
-        - "&#EADBC8Without a color, the name takes"
-        - "&#EADBC8the card format color."
+        - "&#EADBC8Without a color, the name takes the card format color."
         - ""
       prompt: "&#EADBC8New card name:"
     rarity:
@@ -457,6 +436,5 @@ editor:
       name: "&#D9534FDelete this card"
       lore:
         - "&#EADBC8It is also removed from boosters."
-        - "&#EADBC8Cards already given stay in game"
-        - "&#EADBC8but are no longer recognized."
+        - "&#EADBC8Cards already given stay in game but are no longer recognized."
         - ""

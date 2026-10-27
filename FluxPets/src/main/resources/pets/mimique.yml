@@ -29,13 +29,11 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Forgotten Vein'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that mined rock'
-  - '  &#EADBC8leaves an adventure chest behind'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that mined rock &#EADBC8leaves an adventure chest behind'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Forgotten Vein'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that mined rock'
-  - '  &#EADBC8leaves an adventure chest behind'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that mined rock &#EADBC8leaves an adventure chest behind'
 level-up-messages:
   1:
   - '&#6B7A8F» &#FFF4E0Forgotten Vein'

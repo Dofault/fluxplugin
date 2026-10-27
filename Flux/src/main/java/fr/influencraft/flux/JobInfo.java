@@ -218,7 +218,6 @@ public final class JobInfo extends PlaceholderExpansion {
     }
 
     private static final String BARRE = "&#FFD94D│ ";
-    private static final int LARGEUR = 30;
     private final Map<String, YamlConfiguration> configs = new ConcurrentHashMap<>();
 
     private YamlConfiguration config(String jobId) {
@@ -262,10 +261,10 @@ public final class JobInfo extends PlaceholderExpansion {
         return out;
     }
 
-    /** Coupe une phrase colorée en lignes d'au plus LARGEUR caractères visibles, couleur reportée. */
+    /** Splits a coloured sentence to the suite's lore width, bar prefix repeated on every line. */
     private static List<String> wrap(String phrase) {
         // the suite's lore wrapping, bar prefix repeated on every line
-        return Text.wrap(BARRE + phrase, LARGEUR + 2);
+        return Text.wrap(BARRE + phrase);
     }
 
     private int level(Player player, String jobId) {

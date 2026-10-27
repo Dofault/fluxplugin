@@ -29,14 +29,12 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Dolphin Swim'
-  - '  &#EADBC8Dolphin''s Grace for &#FFF4E0%bonus%'
-  - '  &#FFF4E0s&#EADBC8 when you start swimming'
+  - '  &#EADBC8Dolphin''s Grace for &#FFF4E0%bonus% &#FFF4E0s&#EADBC8 when you start swimming'
   - '  &#EADBC8Once every 30 s'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Dolphin Swim'
-  - '  &#EADBC8Dolphin''s Grace for &#FFF4E0%bonus%'
-  - '  &#FFF4E0s&#EADBC8 when you start swimming'
+  - '  &#EADBC8Dolphin''s Grace for &#FFF4E0%bonus% &#FFF4E0s&#EADBC8 when you start swimming'
   - '  &#EADBC8Once every 30 s'
 level-up-messages:
   1:

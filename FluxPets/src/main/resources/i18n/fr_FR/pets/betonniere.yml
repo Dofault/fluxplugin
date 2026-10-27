@@ -29,13 +29,11 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Prise rapide'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance que la poudre de'
-  - '  &#EADBC8béton posée durcisse aussitôt'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance que la poudre de &#EADBC8béton posée durcisse aussitôt'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Prise rapide'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance que la poudre de'
-  - '  &#EADBC8béton posée durcisse aussitôt'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance que la poudre de &#EADBC8béton posée durcisse aussitôt'
 level-up-messages:
   1:
   - '&#6B7A8F» &#FFF4E0Prise rapide'

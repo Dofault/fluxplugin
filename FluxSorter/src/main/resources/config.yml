@@ -37,12 +37,9 @@ particles:
 item:
   name: "<!italic><#FFD94D>Sorting chest"
   lore:
-    - "<!italic><#B376E5>Close it and its content is sent"
-    - "<!italic><#B376E5>to the copper chests of the area"
-    - "<!italic><#B376E5>that already hold the same item."
+    - "<!italic><#B376E5>Close it and its content is sent to the copper chests of the area that already hold the same item."
     - ""
-    - "<!italic><#B376E5>Range: its sub-area, or the land"
-    - "<!italic><#B376E5>outside sub-areas, within <#FFD94D><radius></#FFD94D> blocks."
+    - "<!italic><#B376E5>Range: its sub-area, or the land outside sub-areas, within <#FFD94D><radius></#FFD94D> blocks."
 
 messages:
   outside-land: "<#FF5C5C>This sorting chest only works inside a land."

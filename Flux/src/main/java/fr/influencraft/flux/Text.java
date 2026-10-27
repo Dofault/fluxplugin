@@ -228,8 +228,13 @@ public final class Text {
         return wrap(line, loreWidth);
     }
 
+    /** {@code &x&R&R&G&G&B&B} (Bukkit's expanded hex form) written as {@code &#RRGGBB}. */
+    private static final java.util.regex.Pattern EXPANDED_HEX = java.util.regex.Pattern.compile(
+            "&[xX]&([0-9a-fA-F])&([0-9a-fA-F])&([0-9a-fA-F])&([0-9a-fA-F])&([0-9a-fA-F])&([0-9a-fA-F])");
+
     public static java.util.List<String> wrap(String line, int width) {
         if (line == null) return java.util.List.of("");
+        if (line.indexOf('x') >= 0 || line.indexOf('X') >= 0) line = EXPANDED_HEX.matcher(line).replaceAll("&#$1$2$3$4$5$6");
         if (width <= 0 || visibleLength(line) <= width || (line.indexOf('<') >= 0 && MINI_TAG.matcher(line).find())) {
             return java.util.List.of(line);
         }

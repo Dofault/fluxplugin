@@ -29,15 +29,13 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Rampart'
-  - '  &#EADBC8Resistance I (-20 %'
-  - '  &#EADBC8damage) for players within'
+  - '  &#EADBC8Resistance I (-20 % damage) for players within'
   - '  &#EADBC8&#FFF4E0%bonus%&#EADBC8 blocks around you'
   - '  &#EADBC8Not for yourself'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Rampart'
-  - '  &#EADBC8Resistance I (-20 %'
-  - '  &#EADBC8damage) for players within'
+  - '  &#EADBC8Resistance I (-20 % damage) for players within'
   - '  &#EADBC8&#FFF4E0%bonus%&#EADBC8 blocks around you'
   - '  &#EADBC8Not for yourself'
 level-up-messages:

@@ -109,7 +109,7 @@ final class Rendu {
         } else if (e.enAttente()) {
             lore.add(objet(TEXTE + "Prochaine quête le &f" + new SimpleDateFormat("dd/MM 'à' H'h'", Locale.FRANCE).format(new Date(e.dispo))));
         } else if (q != null) {
-            for (String l : couper(TEXTE + q.libelle(), LARGEUR)) lore.add(objet(l));
+            for (String l : couper(TEXTE + q.libelle())) lore.add(objet(l));
             lore.add(objet(barre(e.avance, q.quantite()) + " &f" + nombre(e.avance) + "&7/&f" + nombre(q.quantite())));
         }
 
@@ -118,7 +118,7 @@ final class Rendu {
         lore.add(objet("&8" + (arme ? "Monstres vaincus : " + nombre(e.tues) : "Blocs : " + nombre(e.blocs))
                 + " &8· Quêtes : " + e.quetes));
         lore.add(raccourci());
-        meta.lore(lore);
+        meta.lore(fr.influencraft.flux.api.text.Texts.wrapLore(lore));
     }
 
     /** « Efficacité III/VII » : niveau de l'enchantement débloqué / maximum, rien d'autre. */

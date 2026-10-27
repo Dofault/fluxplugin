@@ -261,10 +261,10 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
         ItemMeta meta = item.getItemMeta();
         meta.displayName(text(player, "&#FFD94DFiole d'expérience"));
         // Points et non niveaux : "30 niveaux" n'est exact qu'en partant de zéro.
-        meta.lore(List.of(
+        meta.lore(fr.influencraft.flux.api.text.Texts.wrapLore(List.of(
                 text(player, "&#B376E5Contient &f" + xp + " &#B376E5xp"),
                 Component.empty(),
-                text(player, "&r&7%img_right_click%&#FFD94D Absorber l'expérience")));
+                text(player, "&r&7%img_right_click%&#FFD94D Absorber l'expérience"))));
         meta.setEnchantmentGlintOverride(true);
         meta.getPersistentDataContainer().set(bottledXpKey, PersistentDataType.INTEGER, xp);
         item.setItemMeta(meta);

@@ -29,13 +29,11 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Debarker'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a cut'
-  - '  &#EADBC8log drops already stripped'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a cut &#EADBC8log drops already stripped'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Debarker'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a cut'
-  - '  &#EADBC8log drops already stripped'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a cut &#EADBC8log drops already stripped'
 level-up-messages:
   1:
   - '&#6B7A8F» &#FFF4E0Debarker'

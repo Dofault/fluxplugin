@@ -48,9 +48,9 @@ final class Fmt {
         envoyer(p, "&#FF5C5C" + texte);
     }
 
-    /** Coupe une phrase en lignes d'au plus {@code max} caractères (lores). */
-    static java.util.List<String> couper(String texte, int max) {
+    /** Splits a sentence to the suite's lore width (lores). */
+    static java.util.List<String> couper(String texte) {
         if (texte == null || texte.isBlank()) return new java.util.ArrayList<>();
-        return new java.util.ArrayList<>(fr.influencraft.flux.api.text.Texts.wrap(texte.trim(), max));
+        return new java.util.ArrayList<>(fr.influencraft.flux.api.text.Texts.wrap(texte.trim()));
     }
 }

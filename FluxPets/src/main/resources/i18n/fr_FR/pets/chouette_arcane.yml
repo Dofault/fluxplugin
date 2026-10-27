@@ -29,19 +29,13 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Usure savante'
-  - '  &#EADBC8Un objet gagne un niveau'
-  - '  &#EADBC8d''enchantement vanilla tous les'
-  - '  &#EADBC8&#FFF4E0%bonus%&#EADBC8 blocs minés ou coups portés'
-  - '  &#EADBC8Enchantements de Minecraft de base,'
-  - '  &#EADBC8sans dépasser leur niveau maximum'
+  - '  &#EADBC8Un objet gagne un niveau d''enchantement vanilla tous les &#EADBC8&#FFF4E0%bonus%&#EADBC8 blocs minés ou coups portés'
+  - '  &#EADBC8Enchantements de Minecraft de base, sans dépasser leur niveau maximum'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Usure savante'
-  - '  &#EADBC8Un objet gagne un niveau'
-  - '  &#EADBC8d''enchantement vanilla tous les'
-  - '  &#EADBC8&#FFF4E0%bonus%&#EADBC8 blocs minés ou coups portés'
-  - '  &#EADBC8Enchantements de Minecraft de base,'
-  - '  &#EADBC8sans dépasser leur niveau maximum'
+  - '  &#EADBC8Un objet gagne un niveau d''enchantement vanilla tous les &#EADBC8&#FFF4E0%bonus%&#EADBC8 blocs minés ou coups portés'
+  - '  &#EADBC8Enchantements de Minecraft de base, sans dépasser leur niveau maximum'
 level-up-messages:
   1:
   - '&#6B7A8F» &#FFF4E0Usure savante'

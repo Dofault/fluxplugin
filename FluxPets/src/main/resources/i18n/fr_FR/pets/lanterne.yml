@@ -29,16 +29,12 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Prospection'
-  - '  &#EADBC8Maj + clic droit, pioche en'
-  - '  &#EADBC8main : les minerais à 8 blocs'
-  - '  &#EADBC8brillent pendant &#FFF4E0%bonus% s&#EADBC8'
+  - '  &#EADBC8Maj + clic droit, pioche en main : les minerais à 8 blocs brillent pendant &#FFF4E0%bonus% s&#EADBC8'
   - '  &#EADBC8Une fois par minute'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Prospection'
-  - '  &#EADBC8Maj + clic droit, pioche en'
-  - '  &#EADBC8main : les minerais à 8 blocs'
-  - '  &#EADBC8brillent pendant &#FFF4E0%bonus% s&#EADBC8'
+  - '  &#EADBC8Maj + clic droit, pioche en main : les minerais à 8 blocs brillent pendant &#FFF4E0%bonus% s&#EADBC8'
   - '  &#EADBC8Une fois par minute'
 level-up-messages:
   1:

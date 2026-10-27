@@ -29,13 +29,11 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Express Growth'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a planted'
-  - '  &#EADBC8seed starts half-grown'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a planted &#EADBC8seed starts half-grown'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Express Growth'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a planted'
-  - '  &#EADBC8seed starts half-grown'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a planted &#EADBC8seed starts half-grown'
 level-up-messages:
   1:
   - '&#6B7A8F» &#FFF4E0Express Growth'

@@ -29,15 +29,11 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Croissance éclair'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance qu''une pousse'
-  - '  &#EADBC8devienne un arbre d''un seul'
-  - '  &#EADBC8coup de poudre d''os'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance qu''une pousse &#EADBC8devienne un arbre d''un seul &#EADBC8coup de poudre d''os'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Croissance éclair'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance qu''une pousse'
-  - '  &#EADBC8devienne un arbre d''un seul'
-  - '  &#EADBC8coup de poudre d''os'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance qu''une pousse &#EADBC8devienne un arbre d''un seul &#EADBC8coup de poudre d''os'
 level-up-messages:
   1:
   - '&#6B7A8F» &#FFF4E0Croissance éclair'

@@ -29,16 +29,12 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Prospecting'
-  - '  &#EADBC8Shift + right-click with'
-  - '  &#EADBC8a pickaxe: ores within 8'
-  - '  &#EADBC8blocks glow for &#FFF4E0%bonus% s&#EADBC8'
+  - '  &#EADBC8Shift + right-click with a pickaxe: ores within 8 blocks glow for &#FFF4E0%bonus% s&#EADBC8'
   - '  &#EADBC8Once per minute'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Prospecting'
-  - '  &#EADBC8Shift + right-click with'
-  - '  &#EADBC8a pickaxe: ores within 8'
-  - '  &#EADBC8blocks glow for &#FFF4E0%bonus% s&#EADBC8'
+  - '  &#EADBC8Shift + right-click with a pickaxe: ores within 8 blocks glow for &#FFF4E0%bonus% s&#EADBC8'
   - '  &#EADBC8Once per minute'
 level-up-messages:
   1:

@@ -29,17 +29,13 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Cacaoyer'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de replanter'
-  - '  &#EADBC8la cabosse de cacao récoltée'
-  - '  &#EADBC8Les cabosses tout juste plantées'
-  - '  &#EADBC8ne se cassent pas'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de replanter &#EADBC8la cabosse de cacao récoltée'
+  - '  &#EADBC8Les cabosses tout juste plantées ne se cassent pas'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Cacaoyer'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de replanter'
-  - '  &#EADBC8la cabosse de cacao récoltée'
-  - '  &#EADBC8Les cabosses tout juste plantées'
-  - '  &#EADBC8ne se cassent pas'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de replanter &#EADBC8la cabosse de cacao récoltée'
+  - '  &#EADBC8Les cabosses tout juste plantées ne se cassent pas'
 level-up-messages:
   1:
   - '&#6B7A8F» &#FFF4E0Cacaoyer'

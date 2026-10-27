@@ -29,18 +29,12 @@ level-placeholders:
 effects-description:
   1:
   - '&#6B7A8F» &#FFF4E0Sans éboulement'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de creuser'
-  - '  &#EADBC8sans réveiller les blocs'
-  - '  &#EADBC8autour : le sable ne tombe'
-  - '  &#EADBC8pas, l''eau ne coule pas'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de creuser &#EADBC8sans réveiller les blocs &#EADBC8autour : le sable ne tombe &#EADBC8pas, l''eau ne coule pas'
   - '  &#EADBC8Minage de zone compris'
 rewards-description:
   1:
   - '&#6B7A8F» &#FFF4E0Sans éboulement'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de creuser'
-  - '  &#EADBC8sans réveiller les blocs'
-  - '  &#EADBC8autour : le sable ne tombe'
-  - '  &#EADBC8pas, l''eau ne coule pas'
+  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de creuser &#EADBC8sans réveiller les blocs &#EADBC8autour : le sable ne tombe &#EADBC8pas, l''eau ne coule pas'
   - '  &#EADBC8Minage de zone compris'
 level-up-messages:
   1:
