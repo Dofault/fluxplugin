@@ -73,10 +73,7 @@ public class ServiceDecouverte {
      */
     public void montrer(Player cible, boolean apercu) {
         if (apercu) {
-            Dialogs.Form form = formulaire(cible, null);
-            form.onSubmit((player, answer) -> player.sendMessage(fr.influencraft.flux.api.text.Texts.parse(
-                    texte("decouverte-apercu", Map.of("source", answer.button(), "joueur", answer.text("pseudo"))))))
-                .open();
+            apercu(cible);
             return;
         }
         async(() -> {
@@ -88,25 +85,60 @@ public class ServiceDecouverte {
         });
     }
 
-    private Dialogs.Form formulaire(Player p, String erreur) {
-        // question, then the sources as clickable choices, then the field and "by a player" under it
-        Dialogs.Form form = Dialogs.form(p, texte("decouverte-titre", Map.of()))
-                .body(texte("decouverte-question", Map.of()));
-        java.util.List<String> choix = new java.util.ArrayList<>();
+    /** Preview: both steps, answers shown in the chat, nothing recorded. */
+    private void apercu(Player p) {
+        question(p).onSubmit((player, answer) -> {
+            if (!SOURCE_JOUEUR.equals(answer.button())) {
+                player.sendMessage(fr.influencraft.flux.api.text.Texts.parse(texte("decouverte-apercu", Map.of("source", answer.button(), "joueur", ""))));
+                return;
+            }
+            pseudo(player, null).onSubmit((pl, a) -> {
+                if ("retour".equals(a.button())) apercu(pl);
+                else pl.sendMessage(fr.influencraft.flux.api.text.Texts.parse(texte("decouverte-apercu",
+                        Map.of("source", SOURCE_JOUEUR, "joueur", a.text("pseudo")))));
+            }).open();
+        }).open();
+    }
+
+    /** Step 1: welcome and question, one real button per source plus "By a player" (no window title: too high). */
+    private Dialogs.Form question(Player p) {
+        Dialogs.Form form = Dialogs.form(p, "")
+                .spacer(3)
+                .body(texte("decouverte-titre", Map.of()))
+                .spacer(1)
+                .body(texte("decouverte-question", Map.of()))
+                .spacer(1);
         for (Map.Entry<String, String> source : config.getSourcesQuestionnaire().entrySet()) {
-            choix.add(source.getKey());
-            choix.add(source.getValue());
+            form.action(source.getKey(), source.getValue());
         }
-        form.choiceLine(choix.toArray(new String[0]));
-        if (erreur != null) form.body(erreur);
-        form.input("pseudo", texte("decouverte-champ", Map.of()), "", 16);
         return form.action(SOURCE_JOUEUR, texte("decouverte-bouton-joueur", Map.of())).columns(1);
     }
 
+    /** Step 2 ("By a player"): the name of the player who invited him. */
+    private Dialogs.Form pseudo(Player p, String erreur) {
+        Dialogs.Form form = Dialogs.form(p, "")
+                .spacer(3)
+                .body(texte("decouverte-champ", Map.of()))
+                .spacer(1);
+        if (erreur != null) form.body(erreur).spacer(1);
+        return form.input("pseudo", texte("decouverte-champ-libelle", Map.of()), "", 16)
+                .action("valider", texte("decouverte-bouton-valider", Map.of()))
+                .action("retour", texte("decouverte-bouton-retour", Map.of()))
+                .columns(2);
+    }
+
     private void ouvrir(Player p, Instant premiereConnexion, String erreur) {
-        formulaire(p, erreur)
-                .onSubmit((player, answer) -> repondre(player, premiereConnexion, answer.button(), answer.text("pseudo")))
-                .open();
+        question(p).onSubmit((player, answer) -> {
+            if (SOURCE_JOUEUR.equals(answer.button())) ouvrirPseudo(player, premiereConnexion, null);
+            else repondre(player, premiereConnexion, answer.button(), "");
+        }).open();
+    }
+
+    private void ouvrirPseudo(Player p, Instant premiereConnexion, String erreur) {
+        pseudo(p, erreur).onSubmit((player, answer) -> {
+            if ("retour".equals(answer.button())) ouvrir(player, premiereConnexion, null);
+            else repondre(player, premiereConnexion, SOURCE_JOUEUR, answer.text("pseudo"));
+        }).open();
     }
 
     private void repondre(Player p, Instant premiereConnexion, String source, String saisie) {
@@ -120,7 +152,7 @@ public class ServiceDecouverte {
             return;
         }
         if (saisie.isBlank()) {
-            ouvrir(p, premiereConnexion, texte("decouverte-erreur-vide", Map.of()));
+            ouvrirPseudo(p, premiereConnexion, texte("decouverte-erreur-vide", Map.of()));
             return;
         }
         async(() -> {
@@ -145,7 +177,7 @@ public class ServiceDecouverte {
     private void rouvrir(UUID uuid, Instant premiereConnexion, String erreur) {
         Bukkit.getScheduler().runTask(plugin, () -> {
             Player p = Bukkit.getPlayer(uuid);
-            if (p != null && p.isOnline()) ouvrir(p, premiereConnexion, erreur);
+            if (p != null && p.isOnline()) ouvrirPseudo(p, premiereConnexion, erreur);
         });
     }
 

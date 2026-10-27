@@ -163,6 +163,12 @@ public final class Dialogs {
             return this;
         }
 
+        /** Empty lines, to bring the text down towards the middle of the screen. */
+        public Form spacer(int lines) {
+            for (int i = 0; i < lines; i++) body.add(" ");
+            return this;
+        }
+
         /**
          * A line of clickable choices inside the text, where it is written (above the fields), e.g. answers that need no
          * field. A click closes the window and submits with {@link Answer#button()} = the choice id (fields left empty).
