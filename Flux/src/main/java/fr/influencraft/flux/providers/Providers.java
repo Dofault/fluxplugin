@@ -34,7 +34,24 @@ public final class Providers {
         } else {
             fr.influencraft.flux.api.jobs.Jobs.use(null);
         }
-        flux.getLogger().info("Providers: items = " + CustomItems.providerName() + ", jobs = " + fr.influencraft.flux.api.jobs.Jobs.providerName());
+        String fishing = choice(config, "fishing");
+        fr.influencraft.flux.api.fishing.Fishing.use((fishing.equals("auto") || fishing.equals("customfishing")) && enabled("CustomFishing")
+                ? new fr.influencraft.flux.adapters.customfishing.CustomFishingFishing() : null, flux.getConfig().getConfigurationSection("fishing.tiers"));
+        String money = choice(config, "money-events");
+        if ((money.equals("auto") || money.equals("cmi")) && enabled("CMI")) {
+            Bukkit.getPluginManager().registerEvents(new fr.influencraft.flux.adapters.cmi.CmiMoneyEvents(), flux);
+        }
+        if (enabled("eco") && !choice(config, "eco-vault-bridge").equals("false")) {
+            // eco plugins hook Vault once at their start, before CMI joins Vault: bound again once the server is up
+            Bukkit.getPluginManager().registerEvents(new org.bukkit.event.Listener() {
+                @org.bukkit.event.EventHandler
+                public void onServerLoad(org.bukkit.event.server.ServerLoadEvent event) {
+                    fr.influencraft.flux.adapters.eco.EcoVaultBridge.bindIfNeeded();
+                }
+            }, flux);
+        }
+        flux.getLogger().info("Providers: money events = " + (money.equals("none") || !enabled("CMI") ? "none" : "CMI") + ", items = " + CustomItems.providerName() + ", jobs = " + fr.influencraft.flux.api.jobs.Jobs.providerName()
+                + ", fishing = " + fr.influencraft.flux.api.fishing.Fishing.providerName());
     }
 
     static String choice(ConfigurationSection config, String key) {

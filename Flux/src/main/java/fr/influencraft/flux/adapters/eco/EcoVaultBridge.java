@@ -1,4 +1,4 @@
-package fr.influencraft.fluxtools.modules;
+package fr.influencraft.flux.adapters.eco;
 
 import com.willfp.eco.core.integrations.economy.EconomyIntegration;
 import com.willfp.eco.core.integrations.economy.EconomyManager;
@@ -35,12 +35,12 @@ import java.math.BigDecimal;
  * {@code EconomyManager.REGISTRY}, celui-ci ne sert jamais), mais corrige
  * le cas où il a raté sa fenêtre.</p>
  */
-final class LateVaultEconomyBinder {
+public final class EcoVaultBridge {
 
-    private LateVaultEconomyBinder() {
+    private EcoVaultBridge() {
     }
 
-    static void bindIfNeeded() {
+    public static void bindIfNeeded() {
         if (EconomyManager.hasRegistrations()) {
             return;
         }

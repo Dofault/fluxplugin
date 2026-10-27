@@ -7,7 +7,6 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -69,17 +68,8 @@ public final class Modules {
                     "&#FFD94D&lRéglages &8► &#B376E5Notif. XP métier &#2ECF7Bactivée.",
                     "&#FFD94D&lRéglages &8► &#B376E5Notif. XP métier &#FF5C5Cdésactivée.");
         }
-        if (on("money-gain-actionbar") && requires("money-gain-actionbar", "CMI")) {
+        if (on("money-gain-actionbar")) {
             enableMoneyGainActionBar();
-        }
-        if (on("vault-late-binding") && requires("vault-late-binding", "eco")) {
-            // ServerLoadEvent fires after every plugin's onEnable, so after CMIEInjector hooked Vault
-            pm.registerEvents(new Listener() {
-                @EventHandler
-                public void onServerLoad(ServerLoadEvent event) {
-                    LateVaultEconomyBinder.bindIfNeeded();
-                }
-            }, plugin);
         }
         fr.influencraft.flux.api.FluxApi.registerPlaceholders(plugin, "fluxtools",
                 new ToolsExpansion(fr.influencraft.flux.api.jobs.Jobs.available())::request);

@@ -91,5 +91,14 @@ providers:
   items: auto
   # careers: levels, XP, XP gains and level-ups (ecojobs)
   jobs: auto
+  # custom fishing: fish prices, rarity tiers, rod durability (customfishing)
+  fishing: auto
   # balance changes of the main currency, for the "money gained" notifications (cmi)
   money-events: auto
+
+# Rarity tiers of the custom fish (a fish belongs to a tier when its id starts with "<tier>_"): sample shown in the
+# shop price lists, label and colour. Example:
+#   tiers:
+#     common: {sample: common_cod, label: "Common fish", color: "&7"}
+fishing:
+  tiers: {}

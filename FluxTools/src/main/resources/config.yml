@@ -69,10 +69,6 @@ modules:
     enabled: true
     command: "menu"
 
-  # Start-up fix for eco + CMIEInjector: registers the Vault economy with eco once the server started, otherwise
-  # EcoJobs give_money silently pays nothing. No effect when eco already has its economy.
-  vault-late-binding:
-    enabled: true
 
   # Splits an enchanted book into one book per enchantment: /enchantsplit (aliases /split, /separer) or a right click
   # on an enchanting table, book in hand. Each enchantment costs a blank book and experience-cost XP points (not

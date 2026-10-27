@@ -1,6 +1,6 @@
 package fr.influencraft.fluxtools.modules;
 
-import com.Zrips.CMI.events.CMIUserBalanceChangeEvent;
+import fr.influencraft.flux.api.economy.BalanceChangeEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
@@ -79,16 +79,17 @@ public final class MoneyGainActionBarListener implements Listener {
     }
 
     @EventHandler
-    public void onBalanceUpdate(CMIUserBalanceChangeEvent event) {
-        if (!"Deposit".equals(event.getActionType())) {
+    public void onBalanceUpdate(BalanceChangeEvent event) {
+        // money gained in the main currency, whatever plugin gave it (Flux money events)
+        if (!event.deposit() || !event.currency().equals("vault")) {
             return;
         }
-        BigDecimal delta = BigDecimal.valueOf(event.getTo()).subtract(BigDecimal.valueOf(event.getFrom()));
+        BigDecimal delta = BigDecimal.valueOf(event.to()).subtract(BigDecimal.valueOf(event.from()));
         if (delta.signum() <= 0) {
             return;
         }
 
-        UUID uuid = event.getUser().getUuid();
+        UUID uuid = event.player();
         Bukkit.getScheduler().runTask(plugin, () -> {
             Player player = Bukkit.getPlayer(uuid);
             if (player == null || !isEnabled(player)) {
