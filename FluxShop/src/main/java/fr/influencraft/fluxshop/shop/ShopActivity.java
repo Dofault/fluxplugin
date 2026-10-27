@@ -10,7 +10,7 @@ import java.util.UUID;
 
 /**
  * Qui a acheté / vendu au magasin depuis sa connexion, pour les placeholders
- * {@code %vaultsupermarket_player_buy%} et {@code %vaultsupermarket_player_sell%} (lus par les
+ * {@code %fluxshop_player_buy%} et {@code %fluxshop_player_sell%} (lus par les
  * quêtes Typewriter). Mémoire seulement : remis à zéro à la déconnexion.
  */
 public class ShopActivity implements Listener {

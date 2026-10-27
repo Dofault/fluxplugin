@@ -203,6 +203,27 @@ public final class Text {
      * spaces. Every wrapped line starts again with the colours active at the cut, after the line's decoration prefix
      * ({@code &#FFD94D│ }) when there is one. Lines with MiniMessage tags are left as they are.
      */
+    /**
+     * Wraps lore that is already built (items made by code, e.g. list entries): every line longer than the configured
+     * width is split like {@link #wrap(String)}, keeping its colours; shorter lines are kept untouched.
+     */
+    public static java.util.List<Component> wrapLore(java.util.List<Component> lore) {
+        if (lore == null || lore.isEmpty() || loreWidth <= 0) return lore;
+        java.util.List<Component> out = null;
+        for (int i = 0; i < lore.size(); i++) {
+            Component line = lore.get(i);
+            String legacy = LEGACY.serialize(line);
+            java.util.List<String> pieces = visibleLength(legacy) > loreWidth ? wrap(legacy) : java.util.List.of();
+            if (pieces.size() <= 1) {
+                if (out != null) out.add(line);
+                continue;
+            }
+            if (out == null) out = new java.util.ArrayList<>(lore.subList(0, i));
+            for (String piece : pieces) out.add(colors(piece).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
+        }
+        return out == null ? lore : out;
+    }
+
     public static java.util.List<String> wrap(String line) {
         return wrap(line, loreWidth);
     }

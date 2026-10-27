@@ -97,6 +97,12 @@ public final class ItemFactory {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
 
+        // items built by code (list entries) get the same line width as the menu files
+        if (fromEntry && meta.lore() != null) {
+            List<Component> own = meta.lore();
+            List<Component> wrapped = Text.wrapLore(own);
+            if (wrapped != own) meta.lore(wrapped);
+        }
         if (b.name() != null) meta.displayName(name(viewer, b.name()));
         if (!b.lore().isEmpty()) {
             List<Component> lore = new ArrayList<>(b.lore().size());

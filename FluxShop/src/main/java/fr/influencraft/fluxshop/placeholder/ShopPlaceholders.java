@@ -8,7 +8,7 @@ import fr.influencraft.fluxshop.shop.ShopEditor;
 import org.bukkit.entity.Player;
 
 /**
- * {@code %fluxshop_<params>%} (also answered as the former {@code %vaultsupermarket_<params>%}):
+ * {@code %fluxshop_<params>%}:
  * <ul>
  * <li>{@code player_sell}, {@code player_buy}: the player sold / bought something recently (quests);</li>
  * <li>{@code tpshop_cooldown}, {@code tpshop_cooldown_formatted}, {@code tpshop_available};</li>

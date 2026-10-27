@@ -59,6 +59,28 @@ public final class Texts {
         return out;
     }
 
+    /**
+     * Wraps the lore of an item built by code (setLore / lore(...) with long lines) to the suite's width. Flux already
+     * does it for list entries ({@code material: entry}); call it for items given or shown outside Flux menus.
+     */
+    public static org.bukkit.inventory.ItemStack wrapLore(org.bukkit.inventory.ItemStack item) {
+        if (item == null) return null;
+        org.bukkit.inventory.meta.ItemMeta meta = item.getItemMeta();
+        if (meta == null || meta.lore() == null) return item;
+        List<Component> lore = meta.lore();
+        List<Component> wrapped = Text.wrapLore(lore);
+        if (wrapped != lore) {
+            meta.lore(wrapped);
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
+    /** Same for lore lines already built as components. */
+    public static List<Component> wrapLore(List<Component> lore) {
+        return Text.wrapLore(lore);
+    }
+
     /** One lore line split to the suite's width (see {@link #lore}); placeholders must already be resolved. */
     public static List<String> wrap(String line) {
         return Text.wrap(line);

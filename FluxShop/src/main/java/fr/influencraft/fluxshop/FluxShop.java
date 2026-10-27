@@ -167,10 +167,9 @@ public class FluxShop extends JavaPlugin {
                 .usage("/supermarket <chest|setprice|checkprices|tpshop|settpshop|autosell|reload>")
                 .bukkit(executor, new SupermarketTabCompleter(commandManager)).register();
 
-        // %fluxshop_*% (and the former %vaultsupermarket_*%): resolved by Flux in menus, exposed to PlaceholderAPI
+        // %fluxshop_*%: resolved by Flux in menus, exposed to PlaceholderAPI by Flux
         ShopPlaceholders placeholders = new ShopPlaceholders(lang, activity, tpShopCooldownManager, shopEditor);
         FluxApi.registerPlaceholders(this, "fluxshop", placeholders);
-        FluxApi.registerPlaceholders(this, "vaultsupermarket", placeholders);
 
         getLogger().info(shopRegistry.getChestCount() + " coffre(s) magasin et " + shopRegistry.getSellBlockCount()
                 + " bloc(s) de vente chargés.");
