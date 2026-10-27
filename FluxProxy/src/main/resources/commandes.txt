@@ -1,0 +1,9 @@
+# Commandes du proxy (Velocity et ses plugins) proposées quand un joueur tape « / ».
+# Toutes les autres commandes du proxy sont masquées (velocity, cb, slp, planproxy, staffsuiteproxy...),
+# elles restent utilisables par qui en a la permission. Les commandes des serveurs ne sont pas touchées
+# (Flux les filtre de son côté, cf. plugins/Flux/commands.yml).
+# Une ligne par commande : « commande » ou « commande permission » (proposée seulement à qui a cette permission).
+# Relu à chaque changement de serveur du joueur, pas besoin de redémarrer le proxy.
+lobby
+semirp
+events
