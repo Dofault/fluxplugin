@@ -26,3 +26,9 @@ permissions:
   flux.staff.alerts:
     description: Receives the staff alerts of the suite in the chat (e.g. how a new player found the server).
     default: op
+  flux.commands.all:
+    description: Sees every command in the "/" suggestions (command-suggestions of the config).
+    default: op
+  flux.commands.staff:
+    description: Sees the staff list of the "/" suggestions.
+    default: op

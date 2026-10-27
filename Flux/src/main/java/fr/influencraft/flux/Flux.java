@@ -35,6 +35,8 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     private ChestBackgrounds backgrounds;
     private PapiBridge papiBridge;
     private int clickCooldown;
+    private String openSound = "@page";
+    private final CommandSuggestions suggestions = new CommandSuggestions();
     private String prefix;
 
     @Override
@@ -69,6 +71,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
 
         getServer().getPluginManager().registerEvents(new MenuListener(this, menus), this);
         getServer().getPluginManager().registerEvents(this, this);
+        getServer().getPluginManager().registerEvents(suggestions, this);
         if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) papiBridge = new PapiBridge(this);
         fr.influencraft.flux.api.FluxApi.bind(this);
         fr.influencraft.flux.api.FluxApi.registerPlaceholders(this, "flux", this::ownPlaceholder);
@@ -116,10 +119,12 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     private void readSettings() {
         reloadConfig();
         clickCooldown = Math.max(0, getConfig().getInt("click-cooldown", 4));
+        openSound = getConfig().getString("menu-open-sound", "@page");
         prefix = getConfig().getString("prefix", "&#FFD94D&lFlux &8► ");
         Text.configureLore(getConfig().getInt("lore.max-line-length", 40), getConfig().getBoolean("lore.repeat-prefix", true));
         fr.influencraft.flux.api.util.Sounds.configure(getConfig().getConfigurationSection("sounds"));
         fr.influencraft.flux.api.staff.Staff.configure(getConfig().getConfigurationSection("staff"));
+        suggestions.configure(getConfig().getConfigurationSection("command-suggestions"));
         // suite-wide settings: language, currencies, dialogs
         messages = fr.influencraft.flux.api.text.Messages.load(this, getConfig().getString("language", "en_US"));
         java.util.Locale numbers = java.util.Locale.forLanguageTag(messages.language().replace('_', '-'));
@@ -233,6 +238,11 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
 
     public Actions actions() {
         return actions;
+    }
+
+    /** Sound of a menu opening when its open-actions play none ("@cue" or "<sound> [volume] [pitch]", "none"). */
+    public String openSound() {
+        return openSound;
     }
 
     public int clickCooldown() {

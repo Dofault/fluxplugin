@@ -4,6 +4,10 @@
 # Délai minimal entre deux clics pris en compte, en ticks (anti double clic / spam).
 click-cooldown: 4
 
+# Sound of a menu opening when its open-actions play none ("@<cue>" of sounds, or "<sound> [volume] [pitch]",
+# "none" = silent).
+menu-open-sound: "@page"
+
 # Préfixe des messages d'administration (/fluxmenu).
 prefix: "&#FFD94D&lFlux &8► "
 
@@ -133,3 +137,15 @@ staff:
   topics:
     referral-origin:
       chat: true
+
+# Commands suggested when a player types "/": every command is hidden but those listed below, whatever plugin they
+# come from. The server still drops what the player has no permission for, so a list says what is worth showing.
+# Only suggestions change: a hidden command can still be run. Bypass permission: every command is shown.
+command-suggestions:
+  enabled: false
+  bypass-permission: flux.commands.all
+  lists:
+    players:
+      permission: ""
+      commands:
+        spawn: "Back to spawn"

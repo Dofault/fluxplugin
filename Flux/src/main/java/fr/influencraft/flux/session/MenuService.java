@@ -91,6 +91,10 @@ public final class MenuService {
             }, 1L, menu.loopInterval()));
         }
         plugin.actions().run(player, session, menu.openActions());
+        // menus that play no sound when opening get the default one (menu-open-sound)
+        if (menu.openActions().stream().noneMatch(a -> a.trim().startsWith("[sound]"))) {
+            fr.influencraft.flux.api.util.Sounds.play(player, plugin.openSound());
+        }
         return true;
     }
 
