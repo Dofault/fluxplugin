@@ -138,14 +138,12 @@ staff:
     referral-origin:
       chat: true
 
-# Commands suggested when a player types "/": every command is hidden but those listed below, whatever plugin they
-# come from. The server still drops what the player has no permission for, so a list says what is worth showing.
-# Only suggestions change: a hidden command can still be run. Bypass permission: every command is shown.
+# Commands suggested when a player types "/": every command is hidden but the suggested ones of commands.yml (suite
+# commands, menu commands and the "others" section), whatever plugin they come from. The server still drops what the
+# player has no permission for. Only suggestions change: a hidden command can still be run. /help lists them.
 command-suggestions:
   enabled: false
+  # sees every command
   bypass-permission: flux.commands.all
-  lists:
-    players:
-      permission: ""
-      commands:
-        spawn: "Back to spawn"
+  # also propose the aliases (false: one label per command)
+  show-aliases: false

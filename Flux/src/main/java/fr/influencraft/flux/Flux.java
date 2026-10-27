@@ -36,7 +36,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     private PapiBridge papiBridge;
     private int clickCooldown;
     private String openSound = "@page";
-    private final CommandSuggestions suggestions = new CommandSuggestions();
+    private final CommandManager commandManager = new CommandManager();
     private String prefix;
 
     @Override
@@ -71,7 +71,9 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
 
         getServer().getPluginManager().registerEvents(new MenuListener(this, menus), this);
         getServer().getPluginManager().registerEvents(this, this);
-        getServer().getPluginManager().registerEvents(suggestions, this);
+        getServer().getPluginManager().registerEvents(commandManager, this);
+        fr.influencraft.flux.api.command.Commands.create(this, "help").aliases("commandes")
+                .description("Liste des commandes").executor(commandManager::help).register();
         if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) papiBridge = new PapiBridge(this);
         fr.influencraft.flux.api.FluxApi.bind(this);
         fr.influencraft.flux.api.FluxApi.registerPlaceholders(this, "flux", this::ownPlaceholder);
@@ -124,7 +126,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         Text.configureLore(getConfig().getInt("lore.max-line-length", 40), getConfig().getBoolean("lore.repeat-prefix", true));
         fr.influencraft.flux.api.util.Sounds.configure(getConfig().getConfigurationSection("sounds"));
         fr.influencraft.flux.api.staff.Staff.configure(getConfig().getConfigurationSection("staff"));
-        suggestions.configure(getConfig().getConfigurationSection("command-suggestions"));
+        commandManager.configure(getConfig().getConfigurationSection("command-suggestions"));
         // suite-wide settings: language, currencies, dialogs
         messages = fr.influencraft.flux.api.text.Messages.load(this, getConfig().getString("language", "en_US"));
         java.util.Locale numbers = java.util.Locale.forLanguageTag(messages.language().replace('_', '-'));

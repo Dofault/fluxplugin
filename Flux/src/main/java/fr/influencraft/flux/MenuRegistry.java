@@ -87,6 +87,10 @@ public final class MenuRegistry {
         Map<String, String> wanted = new LinkedHashMap<>();
         java.util.Set<String> overriding = new java.util.HashSet<>();
         for (Menu menu : menus.values()) {
+            // the first label of a menu is its command in commands.yml (description, suggestion); the others are aliases
+            if (!menu.commands().isEmpty() && !menu.commands().get(0).isBlank()) {
+                fr.influencraft.flux.api.command.Commands.menuCommand(menu.commands().get(0).trim());
+            }
             for (String label : menu.commands()) {
                 String l = label.trim().toLowerCase(Locale.ROOT);
                 if (!l.isEmpty() && wanted.putIfAbsent(l, menu.id()) == null && menu.overrideCommands()) overriding.add(l);

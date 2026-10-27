@@ -18,16 +18,23 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Commands of the suite, renamable by the server owner. A plugin declares its commands here (not in plugin.yml),
- * under an English default name; Flux writes each one into {@code plugins/Flux/commands.yml} where it can be
- * renamed, given aliases or switched off:
+ * Commands of the server, in one file: {@code plugins/Flux/commands.yml}. A plugin of the suite declares its
+ * commands here (not in plugin.yml), under an English default name; Flux writes each one into the file where it can
+ * be renamed, given aliases, described, hidden from the "/" suggestions or switched off:
  *
  * <pre>
  *   fluxrewards:
  *     rewards:            # identifier, never changes
  *       name: recompenses # label typed by players
  *       aliases: [rewards, rw]
+ *       description: "Récompenses à récupérer"   # suggestions and /aide
+ *       suggest: true     # proposed when typing "/" (permissions still apply)
  *       enabled: true
+ *   menus:                # commands opening a menu (first label of each menu), written by Flux
+ *     metiers: {description: "Tes métiers", suggest: true}
+ *   others:               # commands of other plugins (CMI, Lands...) proposed when typing "/"
+ *     spawn: "Retourner au spawn"
+ *     vanish: {description: "Devenir invisible", permission: flux.commands.staff}
  * </pre>
  * Messages mention a command with {@code %flux_cmd_<plugin>_<id>%} (the configured label) so they stay right.
  *
@@ -53,8 +60,15 @@ public final class Commands {
         List<String> complete(CommandSender sender, String[] args);
     }
 
-    private record Registered(Plugin owner, String id, SuiteCommand command) {
+    private record Registered(Plugin owner, String id, SuiteCommand command, String description, boolean suggest) {
     }
+
+    /** A command proposed when typing "/": its label, description, other labels, and the permission to see it. */
+    public record Shown(String label, String description, List<String> aliases, String permission) {
+    }
+
+    /** Sections of commands.yml that are not plugins. */
+    private static final java.util.Set<String> SECTIONS = java.util.Set.of("menus", "others");
 
     private static final Map<String, Registered> COMMANDS = new ConcurrentHashMap<>();
     private static File file;
@@ -70,10 +84,65 @@ public final class Commands {
         flux = fluxPlugin;
         file = new File(fluxPlugin.getDataFolder(), "commands.yml");
         config = YamlConfiguration.loadConfiguration(file);
-        config.options().setHeader(List.of(
-                "Commands of the Flux suite. Each plugin adds its own here on first start.",
-                "name: label typed by players, aliases: other labels, enabled: false removes the command.",
-                "Messages show the configured label with %flux_cmd_<plugin>_<id>%. Changes apply after a restart."));
+        // the server owner's own header (comments at the top) is kept
+        if (config.options().getHeader().isEmpty()) config.options().setHeader(List.of(
+                "Commands of the server. Each plugin of the suite adds its own here on first start.",
+                "name: label typed by players, aliases: other labels, enabled: false removes the command,",
+                "description: shown by /aide, suggest: false hides it from the \"/\" suggestions (permissions still apply).",
+                "menus: commands opening a menu (written by Flux). others: commands of other plugins to propose.",
+                "Messages show the configured label with %flux_cmd_<plugin>_<id>%. Names apply after a restart,",
+                "descriptions and suggestions after /fluxmenu reload."));
+    }
+
+    /** Re-reads the file (descriptions, suggestions, others) without registering again. */
+    public static synchronized void reload() {
+        if (file != null) config = YamlConfiguration.loadConfiguration(file);
+    }
+
+    /** Commands proposed when typing "/": suite commands, menu commands and the listed commands of other plugins. */
+    public static synchronized List<Shown> shown() {
+        List<Shown> out = new ArrayList<>();
+        for (Registered r : COMMANDS.values()) {
+            String path = r.owner().getName().toLowerCase(Locale.ROOT) + "." + r.id();
+            if (!config.getBoolean(path + ".suggest", r.suggest())) continue;
+            out.add(new Shown(r.command().getName(), config.getString(path + ".description", r.description()),
+                    r.command().getAliases(), r.command().getPermission()));
+        }
+        for (String section : SECTIONS) {
+            ConfigurationSection s = config.getConfigurationSection(section);
+            if (s == null) continue;
+            for (String label : s.getKeys(false)) {
+                String description;
+                String permission = null;
+                if (s.isConfigurationSection(label)) {
+                    ConfigurationSection e = s.getConfigurationSection(label);
+                    if (!e.getBoolean("suggest", true)) continue;
+                    description = e.getString("description", "");
+                    permission = e.getString("permission", null);
+                } else {
+                    description = s.getString(label, "");
+                }
+                out.add(new Shown(label.toLowerCase(Locale.ROOT), description, List.of(), permission));
+            }
+        }
+        return out;
+    }
+
+    /** A menu opened by a command: written to the {@code menus} section on first start (suggested, no description). */
+    public static synchronized void menuCommand(String label) {
+        String path = "menus." + label.toLowerCase(Locale.ROOT);
+        if (config.isSet(path)) return;
+        config.set(path + ".description", "");
+        config.set(path + ".suggest", true);
+        save();
+    }
+
+    private static void save() {
+        try {
+            config.save(file);
+        } catch (IOException e) {
+            if (flux != null) flux.getLogger().warning("Could not save commands.yml: " + e.getMessage());
+        }
     }
 
     public static Builder create(Plugin owner, String id) {
@@ -117,20 +186,28 @@ public final class Commands {
         });
     }
 
-    private static synchronized ConfigurationSection entry(Plugin owner, String id, List<String> defaultAliases) {
+    private static synchronized ConfigurationSection entry(Plugin owner, String id, List<String> defaultAliases,
+                                                          String description, boolean suggest) {
         String path = owner.getName().toLowerCase(Locale.ROOT) + "." + id;
         ConfigurationSection section = config.getConfigurationSection(path);
+        boolean changed = false;
         if (section == null) {
             section = config.createSection(path);
             section.set("name", id);
             section.set("aliases", defaultAliases);
             section.set("enabled", true);
-            try {
-                config.save(file);
-            } catch (IOException e) {
-                if (flux != null) flux.getLogger().warning("Could not save commands.yml: " + e.getMessage());
-            }
+            changed = true;
         }
+        // keys added later to the file: written once with the plugin's defaults
+        if (!section.isSet("description")) {
+            section.set("description", description);
+            changed = true;
+        }
+        if (!section.isSet("suggest")) {
+            section.set("suggest", suggest);
+            changed = true;
+        }
+        if (changed) save();
         return section;
     }
 
@@ -144,6 +221,7 @@ public final class Commands {
         private List<String> aliases = List.of();
         private Executor executor = (s, l, a) -> true;
         private Completer completer = null;
+        private boolean suggest = true;
 
         private Builder(Plugin owner, String id) {
             this.owner = owner;
@@ -170,6 +248,12 @@ public final class Commands {
         /** Default aliases, written to commands.yml on first start. */
         public Builder aliases(String... labels) {
             this.aliases = List.of(labels);
+            return this;
+        }
+
+        /** False: not proposed when typing "/" by default (admin or technical commands); commands.yml decides. */
+        public Builder suggest(boolean shown) {
+            this.suggest = shown;
             return this;
         }
 
@@ -202,7 +286,7 @@ public final class Commands {
         /** Registers the command under its configured label. Returns false when switched off in commands.yml. */
         public boolean register() {
             if (flux == null) throw new IllegalStateException("Flux is not enabled");
-            ConfigurationSection entry = entry(owner, id, aliases);
+            ConfigurationSection entry = entry(owner, id, aliases, description, suggest);
             if (!entry.getBoolean("enabled", true)) return false;
             String name = entry.getString("name", id).trim().toLowerCase(Locale.ROOT);
             List<String> labels = new ArrayList<>();
@@ -211,7 +295,7 @@ public final class Commands {
                 if (!l.isEmpty() && !l.equals(name)) labels.add(l);
             }
             SuiteCommand command = new SuiteCommand(name, description, usage, labels, permission, executor, completer);
-            Registered previous = COMMANDS.put(key(owner.getName(), id), new Registered(owner, id, command));
+            Registered previous = COMMANDS.put(key(owner.getName(), id), new Registered(owner, id, command, description, suggest));
             CommandMap map = Bukkit.getCommandMap();
             if (previous != null) unregister(map, previous.command());
             map.register(owner.getName().toLowerCase(Locale.ROOT), command);
