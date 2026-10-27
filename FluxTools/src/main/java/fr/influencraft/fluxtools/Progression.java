@@ -163,7 +163,7 @@ final class Progression implements Listener {
             Enchantment ench = Outil.enchantement(id);
             if (v == o.valeur(id, avant) || ench == null) continue;
             Component nom = Component.text().append(ench.description()).append(Component.text(" " + Fmt.romain(v))).build();
-            p.sendMessage(Fmt.texte(plugin.texte("prefixe") + plugin.texte("deblocage")).append(nom.color(NamedTextColor.WHITE)));
+            p.sendMessage(Fmt.texte(plugin.texte("prefix") + plugin.texte("deblocage")).append(nom.color(NamedTextColor.WHITE)));
             if (debloque == null) debloque = nom;
         }
         p.showTitle(Title.title(Fmt.texte(Fmt.TITRE + "◆ Niveau " + apres),

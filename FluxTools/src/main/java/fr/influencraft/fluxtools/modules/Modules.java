@@ -2,7 +2,6 @@ package fr.influencraft.fluxtools.modules;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -38,18 +37,16 @@ public final class Modules {
                     plugin);
         }
         if (on("repair")) {
-            command("repair", new RepairMenu(plugin));
+            command("repair", "influbridge.repair", new RepairMenu(plugin), null);
         }
         if (on("bottlexp")) {
             BottleXpService bottles = new BottleXpService(plugin);
-            command("bottlexp", bottles);
-            plugin.getCommand("bottlexp").setTabCompleter(bottles);
+            command("bottlexp", "influbridge.bottlexp", bottles, bottles);
             pm.registerEvents(bottles, plugin);
         }
         if (on("enchant-splitter")) {
             EnchantSplitter splitter = new EnchantSplitter(plugin);
-            command("enchantsplit", splitter);
-            plugin.getCommand("enchantsplit").setTabCompleter(splitter);
+            command("enchantsplit", null, splitter, splitter, "split", "separer");
             pm.registerEvents(splitter, plugin);
         }
         if (on("advancement-redirect") && requires("advancement-redirect", "ProtocolLib")) {
@@ -57,8 +54,7 @@ public final class Modules {
         }
         if (on("jobs") && requires("jobs", "EcoJobs")) {
             JobChoiceCommand jobs = new JobChoiceCommand();
-            command("metier", jobs);
-            plugin.getCommand("metier").setTabCompleter(jobs);
+            command("job", null, jobs, jobs, "metier");
             pm.registerEvents(new NativeJobsMenuRedirectListener(plugin), plugin);
         }
         if (on("job-xp-bossbar") && requires("job-xp-bossbar", "EcoJobs")) {
@@ -66,7 +62,7 @@ public final class Modules {
             JobXpBossBarListener bar = new JobXpBossBarListener(plugin, c.getLong("hide-after-seconds", 4),
                     c.getString("color", "GREEN"), c.getString("overlay", "NOTCHED_20"));
             pm.registerEvents(bar, plugin);
-            toggleCommand("jobxpbar", true, bar::isEnabled, bar::setEnabled,
+            toggleCommand("jobxpbar", new String[0], true, bar::isEnabled, bar::setEnabled,
                     "&#FFD94D&lRéglages &8► &#B376E5Notif. XP métier &#2ECF7Bactivée.",
                     "&#FFD94D&lRéglages &8► &#B376E5Notif. XP métier &#FF5C5Cdésactivée.");
         }
@@ -82,9 +78,8 @@ public final class Modules {
                 }
             }, plugin);
         }
-        if (pm.isPluginEnabled("PlaceholderAPI")) {
-            new ToolsExpansion(plugin, pm.isPluginEnabled("EcoJobs")).register();
-        }
+        fr.influencraft.flux.api.FluxApi.registerPlaceholders(plugin, "fluxtools",
+                new ToolsExpansion(pm.isPluginEnabled("EcoJobs"))::request);
     }
 
     private void enableMoneyGainActionBar() {
@@ -104,7 +99,7 @@ public final class Modules {
         MoneyGainActionBarListener bar = new MoneyGainActionBarListener(plugin, c.getDouble("hide-after-seconds", 1.5),
                 c.getString("color", "&#B376E5"), durabilityGuard, durabilityThreshold);
         pm.registerEvents(bar, plugin);
-        toggleCommand("bitblocknotif", false, null, bar::setEnabled,
+        toggleCommand("moneynotif", new String[]{"bitblocknotif"}, false, null, bar::setEnabled,
                 "&#FFD94D&lRéglages &8► &#B376E5Notif. gain %img_bitblock% &#2ECF7Bactivées.",
                 "&#FFD94D&lRéglages &8► &#B376E5Notif. gain %img_bitblock% &#FF5C5Cdésactivées.");
     }
@@ -113,9 +108,9 @@ public final class Modules {
      * Player toggle used by the settings menu buttons: "on" / "off", plus "toggle" (or no argument) when
      * {@code allowToggle} is set.
      */
-    private void toggleCommand(String name, boolean allowToggle, java.util.function.Predicate<Player> current,
+    private void toggleCommand(String name, String[] aliases, boolean allowToggle, java.util.function.Predicate<Player> current,
                                BiConsumer<Player, Boolean> set, String onMessage, String offMessage) {
-        command(name, (sender, command, label, args) -> {
+        command(name, null, (sender, command, label, args) -> {
             if (!(sender instanceof Player player)) {
                 sender.sendMessage("Cette commande est réservée aux joueurs.");
                 return true;
@@ -131,9 +126,9 @@ public final class Modules {
                 return false;
             }
             set.accept(player, state);
-            player.sendMessage(com.willfp.eco.util.StringUtils.format(state ? onMessage : offMessage, player));
+            player.sendMessage(fr.influencraft.flux.api.text.Texts.parse(state ? onMessage : offMessage, player));
             return true;
-        });
+        }, null, aliases);
     }
 
     private boolean on(String id) {
@@ -151,8 +146,18 @@ public final class Modules {
         return false;
     }
 
-    private void command(String name, CommandExecutor executor) {
-        PluginCommand command = plugin.getCommand(name);
-        if (command != null) command.setExecutor(executor);
+    /** Registers a module command through Flux (renamable in plugins/Flux/commands.yml). */
+    private void command(String id, String permission, CommandExecutor executor, org.bukkit.command.TabCompleter completer,
+                         String... aliases) {
+        org.bukkit.command.Command self = new org.bukkit.command.Command(id) {
+            @Override
+            public boolean execute(org.bukkit.command.CommandSender sender, String label, String[] args) {
+                return true;
+            }
+        };
+        fr.influencraft.flux.api.command.Commands.create(plugin, id).aliases(aliases).permission(permission)
+                .executor((sender, label, args) -> executor.onCommand(sender, self, label, args))
+                .completer(completer == null ? null : (sender, args) -> completer.onTabComplete(sender, self, id, args))
+                .register();
     }
 }

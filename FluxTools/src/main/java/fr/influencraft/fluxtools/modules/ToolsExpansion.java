@@ -1,10 +1,8 @@
 package fr.influencraft.fluxtools.modules;
 
-import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.Plugin;
 
 /**
  * Placeholders {@code %fluxtools_...%} of the utility modules (formerly {@code %influbridge_...%}):
@@ -15,38 +13,16 @@ import org.bukkit.plugin.Plugin;
  *   <li>{@code job_*}: EcoJobs data for the jobs menu, see {@link JobPlaceholders} (EcoJobs only)</li>
  * </ul>
  */
-final class ToolsExpansion extends PlaceholderExpansion {
+final class ToolsExpansion {
 
-    private final Plugin plugin;
     private final boolean jobs;
 
-    ToolsExpansion(Plugin plugin, boolean jobs) {
-        this.plugin = plugin;
+    ToolsExpansion(boolean jobs) {
         this.jobs = jobs;
     }
 
-    @Override
-    public String getIdentifier() {
-        return "fluxtools";
-    }
-
-    @Override
-    public String getAuthor() {
-        return "Influencraft";
-    }
-
-    @Override
-    public String getVersion() {
-        return plugin.getPluginMeta().getVersion();
-    }
-
-    @Override
-    public boolean persist() {
-        return true;
-    }
-
-    @Override
-    public String onPlaceholderRequest(Player player, String params) {
+    /** Provider registered with Flux as {@code fluxtools} (resolved without PlaceholderAPI, exposed to it). */
+    String request(Player player, String params) {
         if (params.equals("compass_north")) {
             return player == null ? "" : String.valueOf(compassFrame(player.getLocation().getYaw()));
         }

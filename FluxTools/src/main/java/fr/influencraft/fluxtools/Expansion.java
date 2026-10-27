@@ -1,6 +1,5 @@
 package fr.influencraft.fluxtools;
 
-import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -26,7 +25,7 @@ import static fr.influencraft.fluxtools.Fmt.*;
  *   noeud_&lt;n&gt;_etat (fait/en_cours/attente/verrou), _titre, _quete, _recompense, _gain (bonus d'XP), _ligne_gain
  * </pre>
  */
-final class Expansion extends PlaceholderExpansion {
+final class Expansion {
 
     private static final Pattern QUETE_LIGNE = Pattern.compile("(quete|noeud_\\d+_quete)_l(\\d+)");
     private static final Pattern NIVEAU = Pattern.compile("niveau_(\\d+)_(.+)");
@@ -38,28 +37,12 @@ final class Expansion extends PlaceholderExpansion {
         this.plugin = plugin;
     }
 
-    @Override
-    public String getIdentifier() {
-        return "fluxitems";
+    /** {@code %fluxitems_<param>%}, registered with Flux (resolved without PlaceholderAPI, exposed to it). */
+    String request(Player player, String param) {
+        return onRequest(player, param);
     }
 
-    @Override
-    public String getAuthor() {
-        return "Influencraft";
-    }
-
-    @Override
-    public String getVersion() {
-        return plugin.getPluginMeta().getVersion();
-    }
-
-    @Override
-    public boolean persist() {
-        return true;
-    }
-
-    @Override
-    public String onRequest(OfflinePlayer joueur, String param) {
+    String onRequest(OfflinePlayer joueur, String param) {
         if (!(joueur instanceof Player p)) return "";
         ItemStack item = p.getInventory().getItemInMainHand();
         Outil o = plugin.outil(item);

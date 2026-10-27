@@ -1,8 +1,5 @@
 package fr.influencraft.fluxtools.modules;
 
-import com.willfp.eco.core.data.ProfileExtensions;
-import com.willfp.eco.core.data.keys.PersistentDataKey;
-import com.willfp.eco.core.data.keys.PersistentDataKeyType;
 import com.willfp.ecojobs.api.EcoJobsAPI;
 import com.willfp.ecojobs.api.event.PlayerJobExpGainEvent;
 import com.willfp.ecojobs.api.event.PlayerJobLevelUpEvent;
@@ -41,6 +38,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class JobXpBossBarListener implements Listener {
 
+    /** Per-player toggle (settings menu), on by default. */
+    static final String SETTING = "fluxtools:job-xp-bar";
+
     private final Plugin plugin;
     private final long hideAfterTicks;
     private final BossBar.Color color;
@@ -55,28 +55,19 @@ public final class JobXpBossBarListener implements Listener {
     // de le faire disparaître au moment précis où le joueur a le plus envie de le voir.
     private final Map<String, Double> lastGains = new ConcurrentHashMap<>();
 
-    // Préférence par joueur, activée par défaut — bascule via la commande "/jobxpbar toggle"
-    // (bouton "Notif. XP métier" de /reglages, DeluxeMenus).
-    private final PersistentDataKey<Boolean> enabledKey;
-
     public JobXpBossBarListener(Plugin plugin, long hideAfterSeconds, String colorName, String overlayName) {
         this.plugin = plugin;
         this.hideAfterTicks = hideAfterSeconds * 20L;
         this.color = parseColor(colorName);
         this.overlay = parseOverlay(overlayName);
-        this.enabledKey = new PersistentDataKey<>(
-                // namespace of the former plugin (InfluBridge): data already written stays readable
-                new NamespacedKey("influbridge", "job_xp_bossbar_enabled"),
-                PersistentDataKeyType.BOOLEAN,
-                true);
     }
 
     public boolean isEnabled(OfflinePlayer player) {
-        return ProfileExtensions.getProfile(player).read(enabledKey);
+        return fr.influencraft.flux.api.util.PlayerSettings.flag(player, SETTING, true);
     }
 
     public void setEnabled(Player player, boolean enabled) {
-        ProfileExtensions.getProfile((OfflinePlayer) player).write(enabledKey, enabled);
+        fr.influencraft.flux.api.util.PlayerSettings.set(player, SETTING, enabled);
         if (!enabled) {
             hideAllBars(player);
         }

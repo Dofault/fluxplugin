@@ -7,7 +7,6 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.RegisteredServiceProvider;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.util.Collections;
@@ -22,7 +21,7 @@ import java.util.Set;
  * pass de 7 jours), ses statistiques et ses enchantements, fixés par son niveau. Interface : menus
  * Flux, alimentés par nos placeholders et la source d'objet {@code fluxitems}.
  */
-public final class FluxTools extends JavaPlugin {
+public final class FluxTools extends fr.influencraft.flux.api.FluxPlugin {
 
     private Map<String, Outil> outils = Map.of();
     private Set<String> materiaux = Set.of();
@@ -33,13 +32,12 @@ public final class FluxTools extends JavaPlugin {
     private final Parures parures = new Parures(this);
 
     @Override
-    public void onLoad() {
-        LegacyDataFolder.migrate(this, "FluxItems");
+    protected java.util.List<String> formerNames() {
+        return java.util.List.of("FluxItems");
     }
 
     @Override
-    public void onEnable() {
-        saveDefaultConfig();
+    protected void enable() {
         // utility modules (ex-InfluBridge) do not need the crate tools, start them first
         new Modules(this).enable();
         Etat.init(this);
@@ -59,18 +57,29 @@ public final class FluxTools extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(apparences, this);
         Bukkit.getPluginManager().registerEvents(parures, this);
         Commande cmd = new Commande(this);
-        getCommand("fluxitems").setExecutor(cmd);
-        getCommand("fluxitems").setTabCompleter(cmd);
-        getCommand("outil").setExecutor(cmd);
+        command("tool")
+                .description("Opens the menu of the tool in hand.")
+                .aliases("outil")
+                .executor((sender, label, args) -> {
+                    if (sender instanceof Player p) ouvrir(p);
+                    return true;
+                })
+                .register();
+        command("tools")
+                .description("Admin of the crate tools.")
+                .aliases("fluxitems")
+                .permission("fluxitems.admin")
+                .executor(cmd::run)
+                .completer(cmd::complete)
+                .register();
 
-        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) new Expansion(this).register();
-        if (Bukkit.getPluginManager().isPluginEnabled("Flux")) Sources.inscrire(this);
+        placeholders("fluxitems", new Expansion(this)::request);
+        Sources.inscrire(this);
     }
 
     @Override
-    public void onDisable() {
+    protected void disable() {
         parures.arreter();
-        if (Bukkit.getPluginManager().isPluginEnabled("Flux")) Sources.retirer();
     }
 
     void charger() {
@@ -149,22 +158,21 @@ public final class FluxTools extends JavaPlugin {
         return apparences;
     }
 
+    /** Raw text of the language file. */
     String texte(String cle) {
-        return getConfig().getString("messages." + cle, cle);
+        return messages().raw(cle);
     }
 
     void message(Player p, String cle, String... remplacements) {
-        String t = texte(cle);
-        for (int i = 0; i + 1 < remplacements.length; i += 2) t = t.replace(remplacements[i], remplacements[i + 1]);
-        p.sendMessage(Fmt.texte(texte("prefixe") + t));
+        messages().send(p, cle, remplacements);
     }
 
-    /** Ouvre le menu Flux de l'outil tenu en main. */
+    /** Opens the Flux menu of the tool in hand. */
     void ouvrir(Player p) {
         if (outil(p.getInventory().getItemInMainHand()) == null) {
             message(p, "pas-d-outil");
             return;
         }
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "fluxmenu open " + getConfig().getString("menu", "outil") + " " + p.getName());
+        fr.influencraft.flux.api.FluxApi.open(p, getConfig().getString("menu", "outil"));
     }
 }

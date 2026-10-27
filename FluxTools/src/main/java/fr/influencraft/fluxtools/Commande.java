@@ -38,9 +38,19 @@ final class Commande implements TabExecutor, TabCompleter {
         this.plugin = plugin;
     }
 
+    /** Executor of {@code /tools} (Flux command). */
+    boolean run(CommandSender s, String label, String[] a) {
+        return onCommand(s, null, label, a);
+    }
+
+    /** Completer of {@code /tools}. */
+    List<String> complete(CommandSender s, String[] a) {
+        return onTabComplete(s, null, "tools", a);
+    }
+
     @Override
     public boolean onCommand(CommandSender s, Command c, String label, String[] a) {
-        if (c.getName().equals("outil")) {
+        if (c != null && c.getName().equals("outil")) {
             if (s instanceof Player p) plugin.ouvrir(p);
             return true;
         }

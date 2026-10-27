@@ -1,10 +1,6 @@
 package fr.influencraft.fluxtools.modules;
 
 import com.Zrips.CMI.events.CMIUserBalanceChangeEvent;
-import com.willfp.eco.core.data.ProfileExtensions;
-import com.willfp.eco.core.data.keys.PersistentDataKey;
-import com.willfp.eco.core.data.keys.PersistentDataKeyType;
-import com.willfp.eco.util.StringUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
@@ -50,6 +46,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class MoneyGainActionBarListener implements Listener {
 
+    /** Per-player toggle (settings menu), on by default. */
+    static final String SETTING = "fluxtools:money-notif";
+
     private static final DecimalFormat AMOUNT_FORMAT =
             new DecimalFormat("0.00", DecimalFormatSymbols.getInstance(Locale.FRANCE));
 
@@ -62,10 +61,6 @@ public final class MoneyGainActionBarListener implements Listener {
     private final Map<UUID, BigDecimal> totals = new ConcurrentHashMap<>();
     private final Map<UUID, BukkitTask> hideTasks = new ConcurrentHashMap<>();
 
-    // Préférence par joueur, activée par défaut — bascule via la commande "/bitblocknotif on|off"
-    // (bouton "Notif. gain BitBlock" de /reglages, DeluxeMenus).
-    private final PersistentDataKey<Boolean> enabledKey;
-
     public MoneyGainActionBarListener(Plugin plugin, double hideAfterSeconds, String color,
                                        boolean durabilityGuardEnabled, int durabilityThreshold) {
         this.plugin = plugin;
@@ -73,19 +68,14 @@ public final class MoneyGainActionBarListener implements Listener {
         this.color = color;
         this.durabilityGuardEnabled = durabilityGuardEnabled;
         this.durabilityThreshold = durabilityThreshold;
-        this.enabledKey = new PersistentDataKey<>(
-                // namespace of the former plugin (InfluBridge): data already written stays readable
-                new NamespacedKey("influbridge", "money_gain_actionbar_enabled"),
-                PersistentDataKeyType.BOOLEAN,
-                true);
     }
 
     public boolean isEnabled(OfflinePlayer player) {
-        return ProfileExtensions.getProfile(player).read(enabledKey);
+        return fr.influencraft.flux.api.util.PlayerSettings.flag(player, SETTING, true);
     }
 
     public void setEnabled(Player player, boolean enabled) {
-        ProfileExtensions.getProfile((OfflinePlayer) player).write(enabledKey, enabled);
+        fr.influencraft.flux.api.util.PlayerSettings.set(player, SETTING, enabled);
     }
 
     @EventHandler
@@ -113,10 +103,10 @@ public final class MoneyGainActionBarListener implements Listener {
         BigDecimal total = totals.merge(uuid, delta, BigDecimal::add);
 
         if (!(durabilityGuardEnabled && isHeldItemDurabilityLow(player))) {
-            String raw = color + "+" + AMOUNT_FORMAT.format(total) + "&r %img_bitblock%";
-            String formatted = StringUtils.format(raw, player);
-            Component component = LegacyComponentSerializer.legacySection().deserialize(formatted);
-            player.sendActionBar(component);
+            // amount in the main currency format of the suite (Flux config: currencies.<id>.format)
+            fr.influencraft.flux.api.economy.Currency money = fr.influencraft.flux.api.economy.Economy.main();
+            String amount = money == null ? AMOUNT_FORMAT.format(total) : money.format(total.doubleValue());
+            player.sendActionBar(fr.influencraft.flux.api.text.Texts.parse(color + "+" + amount, player));
         }
 
         BukkitTask previousTask = hideTasks.remove(uuid);

@@ -16,31 +16,18 @@ annonce-maitrise: true
 
 # Palette FluxTools (« rubis ») : rubis #FF4D6D (préfixe, titres), rose pâle #FFD6DE (texte),
 # grenat #A33A50 (filets), menthe #7BE0A1 (réussi), gris rosé #A89BA0 (pas atteint), blanc (valeurs). Le gain de BitBlock garde la convention commune (docs/notifications/bitblock.md).
-messages:
-  prefixe: "&#FF4D6D◆ "
-  pas-d-outil: "&#FFD6DETiens un &foutil de caisse &#FFD6DEen main."
-  jalon: "&#FFD6DEPalier du contrat : &f%quantite%&#FFD6DE/&f%total%&#FFD6DE."
-  etape: "&#FFD6DEQuête réussie : &f%quete%&#FFD6DE."
-  niveau: "&#FFD6DETon outil passe au &#FF4D6Dniveau %niveau%&#FFD6DE."
-  deblocage: "&#FFD6DENouvel enchantement : "
-  bonus-xp: "&#FFD6DEBonus de quête : &f+%xp% XP &#FFD6DEd'outil."
-  prochaine: "&#FFD6DEProchaine quête dans &f%duree%&#FFD6DE."
-  maitrise: "&#FF4D6DOutil maîtrisé &#FFD6DE: niveau maximum atteint."
-  annonce: "&#FF4D6D◆ &f%joueur% &#FFD6DEa maîtrisé sa %outil%&#FFD6DE !"
-  brise: "&#FFD6DEContrat rempli, ton outil s'est brisé."
-  gain: "&r&f\uE023 &#B376E5Tu as gagné &f%montant% &#B376E5Bitblock &#2ECF7B▲ &7[ᴏᴜᴛɪʟ]"
-  verrou: "&#FFD6DELes enchantements de cet outil évoluent avec lui : &fimpossible de les modifier&#FFD6DE."
+# Texts: lang/<language>.yml (language of the suite unless a language key is set here).
 
-# ─── Modules utilitaires (repris d'InfluBridge le 2026-10-26) ──────────────────
-# Chacun s'active ou se coupe avec enabled. Un module dont le plugin requis est absent
-# (EcoJobs, CMI, ProtocolLib...) se coupe tout seul avec un avertissement en console.
+# ─── Utility modules (taken over from InfluBridge) ─────────────────────────────
+# Each one is switched with enabled. A module whose required plugin is missing (EcoJobs, CMI, ProtocolLib...)
+# turns itself off with a console warning.
 modules:
-  # /metier (menu des métiers), redirection du menu natif EcoJobs, placeholders %fluxtools_job_*%. EcoJobs requis.
+  # Jobs menu commands (/job, alias /metier), redirect of the native EcoJobs menu, %fluxtools_job_*%. Needs EcoJobs.
   jobs:
     enabled: true
 
-  # Boss bar à chaque gain d'XP de métier, masquée après hide-after-seconds sans gain. EcoJobs requis.
-  # Une seule barre par joueur, qui suit toujours la dernière action. /jobxpbar on|off (bouton /reglages).
+  # Boss bar on every job XP gain, hidden after hide-after-seconds without gain. Needs EcoJobs.
+  # One bar per player, following the last action. Players toggle it with /jobxpbar on|off.
   job-xp-bossbar:
     enabled: true
     hide-after-seconds: 4
@@ -49,65 +36,63 @@ modules:
     # PROGRESS, NOTCHED_6, NOTCHED_10, NOTCHED_12, NOTCHED_20
     overlay: "NOTCHED_20"
 
-  # Action bar cumulative des gains d'argent (tout dépôt CMIEconomy, montant réel encaissé), effacée
-  # après hide-after-seconds sans nouveau gain. CMI requis. /bitblocknotif on|off (bouton /reglages).
+  # Cumulative action bar of money gains (every CMI economy deposit, real amount received), cleared after
+  # hide-after-seconds without gain. Needs CMI. Players toggle it with /moneynotif on|off.
   money-gain-actionbar:
     enabled: true
     hide-after-seconds: 1.5
-    # Couleur du montant ; un reset est toujours inséré avant %img_bitblock%.
+    # colour of the amount (shown in the main currency format of Flux)
     color: "&#B376E5"
 
-  # Neutralise Raccommodage (Mending) : retiré du résultat d'enclume, du loot généré et des prises de pêche.
-  # Les livres circulent toujours, ils deviennent inutiles. Détail : docs/technique/raccommodage.md.
-  # log: une ligne console à chaque retrait.
+  # Locks Mending: removed from anvil results, generated loot and fishing. Books still circulate, they just
+  # become useless. log: one console line per removal.
   mending:
     enabled: true
     log: false
 
-  # Refus à l'enclume des objets portant le tag de lore « Irréparable » (outils de caisse Ordinaire/Tendance).
+  # Refuses at the anvil the items whose lore has the "Irréparable" tag (crate tools).
   anvil-restrictions:
     enabled: true
 
-  # /repair : menu de réparation à prix unique (cost, en BitBlock), durabilité et coût d'enclume remis à neuf.
-  # Permission influbridge.repair (groupe eminent, rang 5). Objets « Irréparable » refusés.
+  # /repair: repair menu at a single price (cost, in the main currency), durability and anvil cost reset.
+  # Permission influbridge.repair. Items tagged "Irréparable" are refused.
   repair:
     enabled: true
     cost: 500
 
-  # /bottlexp : stocke l'XP dans des fioles de 1395 points (niveaux 0 à 30), rendues au clic droit.
+  # /bottlexp: stores XP in bottles of 1395 points (levels 0 to 30), given back on right click.
   bottlexp:
     enabled: true
 
-  # Touche des succès vanilla (L) : exécute cette commande à la place (en tant que joueur). ProtocolLib requis.
+  # Vanilla advancements key (L): runs this command instead (as the player). Needs ProtocolLib.
   advancement-redirect:
     enabled: true
     command: "menu"
 
-  # Correctif de démarrage eco + CMIEInjector : réinscrit l'économie Vault auprès d'eco une fois le serveur
-  # démarré, sinon les give_money d'EcoJobs ne versent rien, en silence. Sans effet si eco a déjà son économie.
+  # Start-up fix for eco + CMIEInjector: registers the Vault economy with eco once the server started, otherwise
+  # EcoJobs give_money silently pays nothing. No effect when eco already has its economy.
   vault-late-binding:
     enabled: true
 
-  # Séparation d'un livre enchanté en un livre par enchantement (ex-InfluEnchantSplitter) : /enchantsplit
-  # (alias /split, /separer) ou clic droit sur une table d'enchantement, livre en main. Chaque enchantement
-  # séparé consomme un livre vierge et experience-cost points d'XP (pas des niveaux, jamais en créatif ;
-  # 100 points ~ 6 niveaux depuis 0). Rien n'est prélevé si les livres, l'XP ou la place manquent.
-  # Permissions influenchantsplitter.command / .table / .reload (réservées aux VIP).
+  # Splits an enchanted book into one book per enchantment: /enchantsplit (aliases /split, /separer) or a right click
+  # on an enchanting table, book in hand. Each enchantment costs a blank book and experience-cost XP points (not
+  # levels, never in creative; 100 points ~ 6 levels from 0). Nothing is taken when books, XP or room are missing.
+  # Permissions influenchantsplitter.command / .table / .reload.
   enchant-splitter:
     enabled: true
     experience-cost: 100
-    # false = commande uniquement
+    # false = command only
     enchanting-table: true
-    # Messages MiniMessage ("" = pas envoyé). Variables : <cost> (points d'XP), <books> (livres vierges),
-    # <enchants> (enchantements du livre), <missing> (places manquantes).
+    # MiniMessage texts ("" = not sent). Variables: <cost> (XP points), <books> (blank books), <enchants> (enchantments
+    # of the book), <missing> (missing slots).
     messages:
-      no-permission: "<#FF5C5C>Séparer un livre enchanté est réservé aux VIP."
-      player-only: "<#FF5C5C>Seul un joueur peut utiliser cette commande."
-      not-enchanted-book: "<#FF5C5C>Tiens en main le livre enchanté à séparer."
-      not-enough-enchants: "<#FF5C5C>Ce livre n'a qu'un seul enchantement, il n'y a rien à séparer."
-      not-enough-books: "<#FF5C5C>Il te faut <books> livres vierges dans ton inventaire."
-      not-enough-xp: "<#FF5C5C>Il te faut <cost> points d'XP pour séparer ce livre."
-      not-enough-space: "<#FF5C5C>Il te manque <missing> places libres dans ton inventaire pour récupérer les livres séparés."
-      success: "<#2ECF7B>Livre séparé en <enchants> livres, pour <cost> points d'XP."
-      reloaded: "<#2BC4E8>Configuration rechargée."
-      reload-no-permission: "<#FF5C5C>Tu n'as pas la permission de recharger le plugin."
+      no-permission: "<#FF5C5C>Splitting enchanted books is reserved to VIP players."
+      player-only: "<#FF5C5C>Only a player can use this command."
+      not-enchanted-book: "<#FF5C5C>Hold the enchanted book to split."
+      not-enough-enchants: "<#FF5C5C>This book has a single enchantment, there is nothing to split."
+      not-enough-books: "<#FF5C5C>You need <books> blank books in your inventory."
+      not-enough-xp: "<#FF5C5C>You need <cost> XP points to split this book."
+      not-enough-space: "<#FF5C5C>You are missing <missing> free slots to get the split books."
+      success: "<#2ECF7B>Book split into <enchants> books, for <cost> XP points."
+      reloaded: "<#2BC4E8>Configuration reloaded."
+      reload-no-permission: "<#FF5C5C>You are not allowed to reload the plugin."
