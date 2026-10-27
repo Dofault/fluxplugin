@@ -145,3 +145,6 @@ messages:
   decouverte-autre: "<color:#FFD94D><bold>Comment nous as-tu trouvés ?</bold></color>"
   decouverte-autre-libelle: "Ta réponse"
   decouverte-erreur-autre: "<color:#FF5C5C>Écris comment tu as trouvé le serveur."
+  alerte-staff-titre: "Origine d'un joueur"
+  alerte-staff: "<white>{joueur}</white> a découvert le serveur par <white>{origine}</white>"
+  alerte-staff-autre: "<white>{joueur}</white> a découvert le serveur autrement : <white>« {texte} »</white>"

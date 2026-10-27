@@ -14,7 +14,7 @@ import java.util.Locale;
  *
  * <p>Cues: {@code open}, {@code close}, {@code page}, {@code click}, {@code confirm} (first click of a double
  * confirmation), {@code success}, {@code error}, {@code complete}, {@code reward}, {@code toggle-on},
- * {@code toggle-off}, {@code remove}.</p>
+ * {@code toggle-off}, {@code remove}, {@code alert} (staff alert).</p>
  */
 public final class Sounds {
 
@@ -30,7 +30,8 @@ public final class Sounds {
             java.util.Map.entry("reward", "minecraft:ui.toast.challenge_complete 0.8 1"),
             java.util.Map.entry("toggle-on", "minecraft:block.amethyst_block.chime 1 1.4"),
             java.util.Map.entry("toggle-off", "minecraft:block.amethyst_block.hit 1 0.8"),
-            java.util.Map.entry("remove", "minecraft:entity.item.break 0.6 1")));
+            java.util.Map.entry("remove", "minecraft:entity.item.break 0.6 1"),
+            java.util.Map.entry("alert", "minecraft:block.note_block.pling 0.7 1.6")));
 
     private Sounds() {
     }

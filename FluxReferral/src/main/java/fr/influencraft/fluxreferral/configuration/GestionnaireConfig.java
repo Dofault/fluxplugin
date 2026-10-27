@@ -73,6 +73,7 @@ public class GestionnaireConfig {
 
     // --- Questionnaire: how the player discovered the server ---
     public boolean isQuestionnaireActif()     { return config.getBoolean("decouverte.questionnaire", true); }
+    public boolean isAlerteStaff()            { return config.getBoolean("decouverte.alerte-staff", true); }
     public long    getDelaiQuestionnaireTicks() { return Math.max(20L, config.getLong("decouverte.delai-secondes", 5L) * 20L); }
     /** Answers of the questionnaire other than "a player": id -> label, in order. */
     public java.util.Map<String, String> getSourcesQuestionnaire() {

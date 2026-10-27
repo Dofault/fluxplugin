@@ -51,6 +51,29 @@ public class ServiceDecouverte {
         this.parrainage = parrainage;
         this.config = config;
         this.langue = langue;
+        depot.ecouter(this::annoncer);
+    }
+
+    /** A new discovery is recorded: the staff learns where the player comes from (Flux staff alerts, chat and Discord). */
+    private void annoncer(UUID joueur, String source, UUID parrain, String detail) {
+        if (!config.isAlerteStaff()) return;
+        try {
+            String nom = depotJoueur.trouverParUUID(joueur).map(JoueurParrainage::pseudo)
+                    .orElseGet(() -> fr.influencraft.flux.api.util.Players.name(Bukkit.getOfflinePlayer(joueur), joueur.toString()));
+            String message;
+            if (SOURCE_AUTRE.equals(source)) {
+                message = texte("alerte-staff-autre", Map.of("joueur", nom,
+                        "texte", net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().escapeTags(detail == null ? "" : detail)));
+            } else {
+                String parrainNom = parrain == null ? "" : depotJoueur.trouverParUUID(parrain)
+                        .map(JoueurParrainage::pseudo).orElse(parrain.toString());
+                message = texte("alerte-staff", Map.of("joueur", nom, "origine", libelle(source, parrainNom)));
+            }
+            fr.influencraft.flux.api.staff.Staff.alert("referral-origin", texte("alerte-staff-titre", Map.of()), message,
+                    0xB376E5, java.util.List.of());
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.WARNING, "Staff alert of a discovery", e);
+        }
     }
 
     /**

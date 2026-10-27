@@ -23,12 +23,22 @@ public class DepotDecouverte {
     public record Decouverte(String source, UUID parrain, String detail, Timestamp date) {
     }
 
+    /** Told of each new discovery, on the thread that recorded it. */
+    public interface Ecouteur {
+        void nouvelle(UUID joueur, String source, UUID parrain, String detail);
+    }
+
     private final GestionnaireBDD gestionnaireBDD;
     private final String table;
+    private volatile Ecouteur ecouteur;
 
     public DepotDecouverte(FluxReferralPlugin plugin, GestionnaireBDD gestionnaireBDD) {
         this.gestionnaireBDD = gestionnaireBDD;
         this.table = plugin.getGestionnaireConfig().getPrefixeTables() + "decouvertes";
+    }
+
+    public void ecouter(Ecouteur ecouteur) {
+        this.ecouteur = ecouteur;
     }
 
     /** @return true when recorded (false: the player already had one) */
@@ -39,8 +49,11 @@ public class DepotDecouverte {
             stmt.setString(2, source);
             stmt.setString(3, parrain == null ? null : parrain.toString());
             stmt.setString(4, detail == null ? null : detail.length() > 64 ? detail.substring(0, 64) : detail);
-            return stmt.executeUpdate() > 0;
+            if (stmt.executeUpdate() == 0) return false;
         }
+        Ecouteur e = ecouteur;
+        if (e != null) e.nouvelle(joueur, source, parrain, detail);
+        return true;
     }
 
     public Optional<Decouverte> trouver(UUID joueur) throws SQLException {

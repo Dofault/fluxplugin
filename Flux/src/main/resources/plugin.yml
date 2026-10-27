@@ -23,3 +23,6 @@ permissions:
   flux.rewards.give:
     description: /rewards give and /rewards list (hand a reward to a player, see what waits for him).
     default: op
+  flux.staff.alerts:
+    description: Receives the staff alerts of the suite in the chat (e.g. how a new player found the server).
+    default: op
