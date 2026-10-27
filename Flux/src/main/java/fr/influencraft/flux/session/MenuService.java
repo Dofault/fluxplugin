@@ -205,16 +205,19 @@ public final class MenuService {
         view.setTitle(SECTION.serialize(Text.line(player, raw)));
     }
 
-    private final java.util.Set<String> slowWarned = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    private final java.util.Map<String, Long> slowWarned = new java.util.concurrent.ConcurrentHashMap<>();
 
     /** Signale une fois par page un affichage de plus de 20 ms (diagnostic de performance). */
     private void measure(MenuSession session, long start, String what) {
         long ms = (System.nanoTime() - start) / 1_000_000;
         if (ms < 20) return;
         String page = session.menu().id() + (session.page() != null ? "/" + session.page().id() : "");
-        if (slowWarned.add(page + what)) {
-            plugin.getLogger().warning("Affichage lent de " + page + " (" + what + ") : " + ms + " ms");
-        }
+        // at most once every 30 s per page and operation, with where the time went
+        long now = System.currentTimeMillis();
+        Long last = slowWarned.get(page + what);
+        if (last != null && now - last < 30_000) return;
+        slowWarned.put(page + what, now);
+        plugin.getLogger().warning("Affichage lent de " + page + " (" + what + ") : " + ms + " ms [" + RenderTimings.summary() + "]");
     }
 
     /** Recalcule un menu ouvert (placeholders, conditions d'affichage). */

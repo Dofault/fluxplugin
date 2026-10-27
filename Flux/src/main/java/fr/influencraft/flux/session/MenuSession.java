@@ -327,7 +327,9 @@ public final class MenuSession {
     private ItemStack item(MenuButton b, Player player, Map<MenuButton, ItemStack> built) {
         if (b == null) return null;
         if (built.containsKey(b)) return built.get(b);
+        long t = System.nanoTime();
         ItemStack item = items.build(b, player, muteTooltips);
+        RenderTimings.add(RenderTimings.ITEMS, t);
         built.put(b, item);
         return item;
     }

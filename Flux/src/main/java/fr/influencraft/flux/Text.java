@@ -60,6 +60,7 @@ public final class Text {
 
     public static void beginMemo(Player player) {
         if (memoDepth++ == 0) {
+            fr.influencraft.flux.session.RenderTimings.reset();
             memo = new java.util.HashMap<>();
             memoPlayer = player;
         }
@@ -90,9 +91,15 @@ public final class Text {
     private static String resolve(Player player, String raw) {
         String out = raw;
         if (player != null) out = out.replace("%player%", player.getName());
-        if (out.indexOf('%') >= 0) out = suitePlaceholders(player, out);
+        if (out.indexOf('%') >= 0) {
+            long t = System.nanoTime();
+            out = suitePlaceholders(player, out);
+            fr.influencraft.flux.session.RenderTimings.add(fr.influencraft.flux.session.RenderTimings.SUITE, t);
+        }
         if (hasPapi() && player != null && out.indexOf('%') >= 0) {
+            long t = System.nanoTime();
             out = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, out);
+            fr.influencraft.flux.session.RenderTimings.add(fr.influencraft.flux.session.RenderTimings.PAPI, t);
         }
         return out;
     }
@@ -128,7 +135,9 @@ public final class Text {
     public static Component line(Player player, String raw) {
         String out = placeholders(player, raw);
         if (hasItemsAdder() && out.indexOf(':') >= 0) {
+            long t = System.nanoTime();
             out = fr.influencraft.flux.api.items.CustomItems.glyphs(out, player);
+            fr.influencraft.flux.session.RenderTimings.add(fr.influencraft.flux.session.RenderTimings.GLYPHS, t);
             java.util.regex.Matcher m = LEFTOVER_GLYPH.matcher(out);
             while (m.find()) {
                 if (logger != null && warnedGlyphs.add(m.group())) {
@@ -139,7 +148,10 @@ public final class Text {
         }
         // Les placeholders peuvent renvoyer des codes « § » : on les ramène à « & ».
         out = out.replace('§', '&');
-        return colors(out).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
+        long t = System.nanoTime();
+        Component line = colors(out).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
+        fr.influencraft.flux.session.RenderTimings.add(fr.influencraft.flux.session.RenderTimings.COLORS, t);
+        return line;
     }
 
     /** A MiniMessage tag: {@code <red>}, {@code <#FF0000>}, {@code </bold>}, {@code <gradient:...>}... */
