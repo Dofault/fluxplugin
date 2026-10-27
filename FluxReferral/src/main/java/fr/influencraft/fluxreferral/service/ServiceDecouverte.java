@@ -116,20 +116,12 @@ public class ServiceDecouverte {
             if (SOURCE_AUTRE.equals(answer.button())) {
                 autre(player, null).onSubmit((pl, a) -> {
                     if ("retour".equals(a.button())) apercu(pl);
-                    else pl.sendMessage(fr.influencraft.flux.api.text.Texts.parse(texte("decouverte-apercu",
-                            Map.of("source", SOURCE_AUTRE, "joueur", a.text("texte")))));
                 }).open();
-                return;
+            } else if (SOURCE_JOUEUR.equals(answer.button())) {
+                pseudo(player, null).onSubmit((pl, a) -> {
+                    if ("retour".equals(a.button())) apercu(pl);
+                }).open();
             }
-            if (!SOURCE_JOUEUR.equals(answer.button())) {
-                player.sendMessage(fr.influencraft.flux.api.text.Texts.parse(texte("decouverte-apercu", Map.of("source", answer.button(), "joueur", ""))));
-                return;
-            }
-            pseudo(player, null).onSubmit((pl, a) -> {
-                if ("retour".equals(a.button())) apercu(pl);
-                else pl.sendMessage(fr.influencraft.flux.api.text.Texts.parse(texte("decouverte-apercu",
-                        Map.of("source", SOURCE_JOUEUR, "joueur", a.text("pseudo")))));
-            }).open();
         }).open();
     }
 
