@@ -80,6 +80,20 @@
             <scope>system</scope>
             <systemPath>${project.basedir}/libs/CustomFishing-2.3.28.jar</systemPath>
         </dependency>
+        <dependency>
+            <groupId>me.angeschossen</groupId>
+            <artifactId>lands</artifactId>
+            <version>8.9.5</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/Lands-8.9.5.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>fr.influencraft</groupId>
+            <artifactId>FluxChestShop</artifactId>
+            <version>local</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/FluxChestShop.jar</systemPath>
+        </dependency>
         <!-- shared database pool, downloaded by Paper at runtime (plugin.yml libraries) -->
         <dependency>
             <groupId>com.zaxxer</groupId>

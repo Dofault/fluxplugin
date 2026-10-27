@@ -93,6 +93,10 @@ providers:
   jobs: auto
   # custom fishing: fish prices, rarity tiers, rod durability (customfishing)
   fishing: auto
+  # protected areas, for plugins that only need to know where a claim is (lands)
+  claims: auto
+  # chest shops of the players (quickshop: FluxChestShop or QuickShop-Hikari)
+  chest-shops: auto
   # balance changes of the main currency, for the "money gained" notifications (cmi)
   money-events: auto
 

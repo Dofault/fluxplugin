@@ -1,6 +1,5 @@
 package fr.influencraft.fluxsorter;
 
-import me.angeschossen.lands.api.LandsIntegration;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
@@ -28,7 +27,6 @@ public final class FluxSorter extends JavaPlugin {
 
     private static final MiniMessage MM = MiniMessage.miniMessage();
 
-    private LandsIntegration lands;
     private SorterItem sorterItem;
     private SorterRegistry registry;
     private SortManager sortManager;
@@ -67,7 +65,9 @@ public final class FluxSorter extends JavaPlugin {
                 .description("Sorting chest administration.").permission("sortingchest.admin").bukkit(this, this).register();
         saveDefaultConfig();
         conf = Settings.of(getConfig());
-        lands = LandsIntegration.of(this);
+        if (!fr.influencraft.flux.api.claims.Claims.available()) {
+            getLogger().warning("No claim plugin in Flux (providers.claims): sorting chests cannot work.");
+        }
         levels = new Levels(this);
         sorterItem = new SorterItem(this);
         registry = new SorterRegistry(this);
@@ -86,7 +86,6 @@ public final class FluxSorter extends JavaPlugin {
         if (registry != null) registry.stop();
     }
 
-    public LandsIntegration lands() { return lands; }
     public SorterItem sorterItem() { return sorterItem; }
     public SorterRegistry registry() { return registry; }
     public SortManager sortManager() { return sortManager; }

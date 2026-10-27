@@ -54,12 +54,12 @@ public final class FluxAuctionHouse extends JavaPlugin implements Listener {
         commande = new Commande(this);
         interception = new Interception(this);
 
-        if (Bukkit.getPluginManager().isPluginEnabled("FluxChestShop")) {
+        if (fr.influencraft.flux.api.shops.ChestShops.available()) {
             echoppes = new Echoppes(this);
             Bukkit.getPluginManager().registerEvents(echoppes, this);
-            getLogger().info("FluxChestShop trouvé : les échoppes entrent dans le marché.");
+            getLogger().info("Chest shops (" + fr.influencraft.flux.api.shops.ChestShops.providerName() + ") join the market.");
         } else {
-            getLogger().info("FluxChestShop absent : marché limité à l'hôtel des ventes.");
+            getLogger().info("No chest shop plugin in Flux: market limited to the auction house.");
         }
         Bukkit.getPluginManager().registerEvents(this, this);
         Bukkit.getPluginManager().registerEvents(interception, this);

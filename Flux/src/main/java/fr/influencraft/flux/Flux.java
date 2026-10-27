@@ -229,6 +229,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         fr.influencraft.flux.api.economy.Economy.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.reward.Rewards.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.items.CustomItems.unregisterAll(event.getPlugin());
+        fr.influencraft.flux.api.shops.ChestShops.unregisterAll(event.getPlugin());
         placeholdersChanged();
         if (hadMenus) menuFoldersChanged();
     }

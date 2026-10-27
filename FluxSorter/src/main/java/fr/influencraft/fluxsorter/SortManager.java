@@ -1,6 +1,6 @@
 package fr.influencraft.fluxsorter;
 
-import me.angeschossen.lands.api.land.Area;
+import fr.influencraft.flux.api.claims.Claims;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
@@ -34,7 +34,7 @@ import java.util.Set;
 /**
  * Tri pile par pile.
  *
- * Sécurité : la portée est la zone Lands (Area) où se trouve le coffre de tri,
+ * Sécurité : la portée est la zone protégée (service Claims de Flux, Lands aujourd'hui) où se trouve le coffre de tri,
  * c'est-à-dire sa parcelle, ou la zone principale de la ville hors parcelles.
  * Pouvoir ouvrir le coffre de tri demande l'accès conteneur de cette zone, qui est
  * le même droit que pour ouvrir n'importe quel coffre de la zone : le tri ne donne
@@ -68,7 +68,7 @@ public final class SortManager {
         if (!plugin.sorterItem().isSorterBlock(sorter)) return;
         Inventory inv = sorterInventory(sorter);
         if (inv == null || inv.isEmpty()) return;
-        if (plugin.lands().getArea(sorter.getLocation()) == null) {
+        if (Claims.areaId(sorter.getLocation()) == null) {
             player.sendMessage(plugin.message("outside-land"));
             return;
         }
@@ -117,7 +117,7 @@ public final class SortManager {
             stop(sorter);
             return;
         }
-        Area zone = plugin.lands().getArea(sorter.getLocation());
+        String zone = Claims.areaId(sorter.getLocation());
         Inventory source = sorterInventory(sorter);
         if (zone == null || source == null) {
             stop(sorter);
@@ -170,7 +170,7 @@ public final class SortManager {
 
     // ---------------------------------------------------------------- cibles
 
-    private List<Target> findTargets(Block sorter, Area zone) {
+    private List<Target> findTargets(Block sorter, String zone) {
         World world = sorter.getWorld();
         int radius = plugin.levels().radius(plugin.sorterItem().levelOf(sorter));
         double radiusSq = (double) radius * radius;
@@ -201,7 +201,7 @@ public final class SortManager {
                     // Toutes les moitiés du coffre doivent être dans la même zone que le coffre de tri.
                     boolean ok = true;
                     for (Block half : halves) {
-                        if (!sameZone(zone, plugin.lands().getArea(half.getLocation()))) { ok = false; break; }
+                        if (!zone.equals(Claims.areaId(half.getLocation()))) { ok = false; break; }
                         if (plugin.sorterItem().hasMark(half.getState(false))) { ok = false; break; }
                         if (Hooks.isLocked(half)) { ok = false; break; }
                     }
@@ -237,9 +237,6 @@ public final class SortManager {
         return List.of(chest.getBlock());
     }
 
-    private static boolean sameZone(Area zone, Area other) {
-        return other != null && zone.getULID().equals(other.getULID());
-    }
 
     private static boolean hasRoom(Inventory inventory, ItemStack stack) {
         for (ItemStack content : inventory.getStorageContents()) {

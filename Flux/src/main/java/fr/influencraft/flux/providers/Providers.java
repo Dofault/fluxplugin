@@ -37,6 +37,17 @@ public final class Providers {
         String fishing = choice(config, "fishing");
         fr.influencraft.flux.api.fishing.Fishing.use((fishing.equals("auto") || fishing.equals("customfishing")) && enabled("CustomFishing")
                 ? new fr.influencraft.flux.adapters.customfishing.CustomFishingFishing() : null, flux.getConfig().getConfigurationSection("fishing.tiers"));
+        String claims = choice(config, "claims");
+        fr.influencraft.flux.api.claims.Claims.use((claims.equals("auto") || claims.equals("lands")) && enabled("Lands")
+                ? new fr.influencraft.flux.adapters.lands.LandsClaims(flux) : null);
+        String shops = choice(config, "chest-shops");
+        if ((shops.equals("auto") || shops.equals("quickshop")) && (enabled("FluxChestShop") || enabled("QuickShop-Hikari"))) {
+            var adapter = new fr.influencraft.flux.adapters.quickshop.QuickShopShops();
+            fr.influencraft.flux.api.shops.ChestShops.use(adapter);
+            Bukkit.getPluginManager().registerEvents(adapter, flux);
+        } else {
+            fr.influencraft.flux.api.shops.ChestShops.use(null);
+        }
         String money = choice(config, "money-events");
         if ((money.equals("auto") || money.equals("cmi")) && enabled("CMI")) {
             Bukkit.getPluginManager().registerEvents(new fr.influencraft.flux.adapters.cmi.CmiMoneyEvents(), flux);
@@ -51,7 +62,9 @@ public final class Providers {
             }, flux);
         }
         flux.getLogger().info("Providers: money events = " + (money.equals("none") || !enabled("CMI") ? "none" : "CMI") + ", items = " + CustomItems.providerName() + ", jobs = " + fr.influencraft.flux.api.jobs.Jobs.providerName()
-                + ", fishing = " + fr.influencraft.flux.api.fishing.Fishing.providerName());
+                + ", fishing = " + fr.influencraft.flux.api.fishing.Fishing.providerName()
+                + ", claims = " + fr.influencraft.flux.api.claims.Claims.providerName()
+                + ", chest shops = " + fr.influencraft.flux.api.shops.ChestShops.providerName());
     }
 
     static String choice(ConfigurationSection config, String key) {

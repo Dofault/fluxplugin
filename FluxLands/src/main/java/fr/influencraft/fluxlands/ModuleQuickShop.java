@@ -1,11 +1,9 @@
 package fr.influencraft.fluxlands;
 
-import com.ghostchu.quickshop.api.QuickShopAPI;
-import com.ghostchu.quickshop.api.event.economy.ShopPurchaseEvent;
-import com.ghostchu.quickshop.api.event.economy.ShopSuccessPurchaseEvent;
-import com.ghostchu.quickshop.api.event.management.ShopPermissionCheckEvent;
-import com.ghostchu.quickshop.api.shop.Shop;
-import com.ghostchu.quickshop.api.shop.permission.BuiltInShopPermission;
+import fr.influencraft.flux.api.shops.ChestShop;
+import fr.influencraft.flux.api.shops.ChestShopPurchaseEvent;
+import fr.influencraft.flux.api.shops.ChestShopTradeEvent;
+import fr.influencraft.flux.api.shops.ChestShops;
 import me.angeschossen.lands.api.flags.type.Flags;
 import me.angeschossen.lands.api.land.Area;
 import me.angeschossen.lands.api.land.Land;
@@ -107,22 +105,21 @@ final class ModuleQuickShop implements Listener {
     void indexer() {
         List<Fiches.Echoppe> l = new ArrayList<>();
         java.util.Set<Long> vues = new java.util.HashSet<>();
-        for (Shop shop : QuickShopAPI.getInstance().getShopManager().getAllShops()) {
+        for (ChestShop shop : ChestShops.all()) {
             try {
-                Location loc = shop.bukkitLocation();
+                Location loc = shop.location();
                 if (loc == null || loc.getWorld() == null) continue;
                 Land land = plugin.villes().a(loc);
-                Optional<UUID> owner = shop.getOwner().getUniqueIdIfRealPlayer();
-                UUID proprio = owner.orElse(null);
-                String proprioNom = proprio != null ? Villes.nomJoueur(proprio) : shop.getOwner().getDisplay();
-                // Stock lu si la zone est chargée (et mémorisé), sinon le dernier connu.
-                int stock = stock(shop, loc);
-                vues.add(shop.getShopId());
-                if (stock >= 0) noterStock(shop.getShopId(), stock);
-                else stock = stockConnu(shop.getShopId());
-                l.add(new Fiches.Echoppe(shop.getShopId(), loc.clone(), proprio, proprioNom,
-                        Fiches.materiau(shop.getItem()), Fiches.nomObjet(shop.getItem()), shop.getItem().getAmount(),
-                        shop.getPrice(), shop.isBuying(), stock,
+                UUID proprio = shop.owner();
+                String proprioNom = proprio != null ? Villes.nomJoueur(proprio) : shop.ownerName();
+                // stock read when the area is loaded (and remembered), else the last known one
+                int stock = shop.stock();
+                vues.add(shop.id());
+                if (stock >= 0) noterStock(shop.id(), stock);
+                else stock = stockConnu(shop.id());
+                l.add(new Fiches.Echoppe(shop.id(), loc.clone(), proprio, proprioNom,
+                        Fiches.materiau(shop.item()), Fiches.nomObjet(shop.item()), shop.item().getAmount(),
+                        shop.price(), shop.buying(), stock,
                         land != null ? Villes.id(land) : "", land != null ? land.getName() : ""));
             } catch (RuntimeException e) {
                 // échoppe corrompue ou monde absent : ignorée jusqu'au prochain passage
@@ -138,10 +135,8 @@ final class ModuleQuickShop implements Listener {
      * recalculé une seconde plus tard, pour qu'une échoppe vidée disparaisse aussitôt des listes.
      */
     @EventHandler(priority = EventPriority.MONITOR)
-    public void stockApresTransaction(ShopSuccessPurchaseEvent e) {
-        Shop shop = e.getShop();
-        Location loc = shop.bukkitLocation();
-        if (loc != null) noterStock(shop.getShopId(), stock(shop, loc));
+    public void stockApresTransaction(ChestShopTradeEvent e) {
+        noterStock(e.shop().id(), e.shop().stock());
         if (reindexPrevu) return;
         reindexPrevu = true;
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
@@ -150,30 +145,11 @@ final class ModuleQuickShop implements Listener {
         }, 20L);
     }
 
-    /** Stock (vente) ou place libre (rachat), seulement si le chunk est chargé : -1 sinon. */
-    private static int stock(Shop shop, Location loc) {
-        World w = loc.getWorld();
-        if (shop.isUnlimited()) return Integer.MAX_VALUE;
-        if (w == null || !w.isChunkLoaded(loc.getBlockX() >> 4, loc.getBlockZ() >> 4)) return -1;
-        try {
-            return shop.isBuying() ? shop.getRemainingSpace() : shop.getRemainingStock();
-        } catch (RuntimeException e) {
-            return -1;
-        }
-    }
-
     // ── Ménage par la ville ─────────────────────────────────────────────────
 
-    /**
-     * FluxChestShop ne laisse casser une échoppe qu'à son propriétaire : on accorde aussi le droit
-     * « delete » à la ville (cf. {@link #peutNettoyer}). Couvre la casse du coffre et /echoppe remove.
-     */
-    @EventHandler(priority = EventPriority.HIGH)
-    public void droitDeMenage(ShopPermissionCheckEvent e) {
-        if (e.hasPermission() || !BuiltInShopPermission.DELETE.getRawNode().equals(e.permissionNode())) return;
-        if (!QuickShopAPI.getPluginInstance().getName().equals(e.pluginNamespace())) return;
-        Shop shop = e.shop().orElse(null);
-        if (shop != null && peutNettoyer(shop, e.playerUUID())) e.hasPermission(true);
+    /** The shop plugin only lets the owner remove a shop: the town may too (see {@link #peutNettoyer}). */
+    void enregistrerMenage() {
+        ChestShops.allowRemoval(plugin, this::peutNettoyer);
     }
 
     /**
@@ -182,14 +158,14 @@ final class ModuleQuickShop implements Listener {
      * pas outre un contrat : sur une parcelle louée ou vendue au propriétaire de l'échoppe, seul le
      * drapeau Casser compte (le maire retrouve la main une fois le contrat terminé).
      */
-    private boolean peutNettoyer(Shop shop, UUID joueur) {
+    private boolean peutNettoyer(ChestShop shop, UUID joueur) {
         String mode = plugin.getConfig().getString("echoppes.menage", "droit-de-casser");
         if (joueur == null || "non".equalsIgnoreCase(mode)) return false;
-        Location loc = shop.bukkitLocation();
+        Location loc = shop.location();
         Land land = plugin.villes().a(loc);
         if (land == null) return false;
         Area zone = land.getArea(loc);
-        UUID proprio = shop.getOwner().getUniqueIdIfRealPlayer().orElse(null);
+        UUID proprio = shop.owner();
         boolean contrat = zone != null && proprio != null && proprio.equals(zone.getTenant());
         if (Villes.estMaire(land, joueur) && !contrat) return true;
         return "droit-de-casser".equalsIgnoreCase(mode) && zone != null && zone.hasRoleFlag(joueur, Flags.BLOCK_BREAK);
@@ -198,15 +174,15 @@ final class ModuleQuickShop implements Listener {
     /** Après la casse d'une échoppe par la ville : prévient les deux joueurs et garde une trace. */
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void apresMenage(BlockBreakEvent e) {
-        Shop shop = QuickShopAPI.getInstance().getShopManager().getShop(e.getBlock().getLocation(), true);
+        ChestShop shop = ChestShops.at(e.getBlock().getLocation());
         if (shop == null) return;
         Player p = e.getPlayer();
-        UUID proprio = shop.getOwner().getUniqueIdIfRealPlayer().orElse(null);
+        UUID proprio = shop.owner();
         if (proprio == null || proprio.equals(p.getUniqueId()) || !peutNettoyer(shop, p.getUniqueId())) return;
-        Land land = plugin.villes().a(shop.bukkitLocation());
-        String objet = Fiches.nomObjet(shop.getItem());
+        Land land = plugin.villes().a(shop.location());
+        String objet = Fiches.nomObjet(shop.item());
         String ville = land != null ? land.getName() : "?";
-        plugin.getLogger().info(p.getName() + " a retiré l'échoppe " + shop.getShopId() + " (" + objet + ") de "
+        plugin.getLogger().info(p.getName() + " a retiré l'échoppe " + shop.id() + " (" + objet + ") de "
                 + Villes.nomJoueur(proprio) + " à " + ville);
         Fmt.envoyer(p, "&#B376E5Tu as retiré l'échoppe de &f" + Villes.nomJoueur(proprio) + " &#B376E5(&f" + objet
                 + "&#B376E5). Son contenu est tombé au sol.");
@@ -217,10 +193,11 @@ final class ModuleQuickShop implements Listener {
     // ── Droit de place ──────────────────────────────────────────────────────
 
     /** Ville qui perçoit le droit pour cette échoppe, ou null (hors ville, illimitée, désactivé...). */
-    private Land villeTaxatrice(Shop shop, UUID proprio) {
+    private Land villeTaxatrice(ChestShop shop) {
+        UUID proprio = shop.owner();
         if (!plugin.getConfig().getBoolean("droit-de-place.actif", true) || proprio == null) return null;
-        if (shop.isUnlimited() && plugin.getConfig().getBoolean("droit-de-place.ignorer-echoppes-illimitees", true)) return null;
-        Land land = plugin.villes().a(shop.bukkitLocation());
+        if (shop.unlimited() && plugin.getConfig().getBoolean("droit-de-place.ignorer-echoppes-illimitees", true)) return null;
+        Land land = plugin.villes().a(shop.location());
         if (!plugin.villes().percoit(land)) return null;
         if (plugin.getConfig().getBoolean("droit-de-place.exempter-maire", false) && Villes.estMaire(land, proprio)) return null;
         return land;
@@ -233,33 +210,32 @@ final class ModuleQuickShop implements Listener {
 
     /** Rachat : refuse d'avance si le propriétaire ne peut pas payer le joueur ET le droit de place. */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void avantTransaction(ShopPurchaseEvent e) {
-        Shop shop = e.getShop();
-        if (!shop.isBuying()) return;
-        UUID proprio = shop.getOwner().getUniqueIdIfRealPlayer().orElse(null);
-        Land land = villeTaxatrice(shop, proprio);
+    public void avantTransaction(ChestShopPurchaseEvent e) {
+        ChestShop shop = e.shop();
+        if (!shop.buying()) return;
+        Land land = villeTaxatrice(shop);
         if (land == null) return;
-        double droit = part(land, e.getTotal());
+        double droit = part(land, e.total());
         if (droit <= 0) return;
-        OfflinePlayer owner = Bukkit.getOfflinePlayer(proprio);
-        if (eco.balance(owner) < e.getTotal() + droit) {
-            e.setCancelled(true, Fmt.ligne(null, "&#FF5C5CLe propriétaire de cette échoppe ne peut pas payer ce rachat et le droit de place de "
+        OfflinePlayer owner = Bukkit.getOfflinePlayer(shop.owner());
+        if (eco.balance(owner) < e.total() + droit) {
+            e.refuse(Fmt.ligne(null, "&#FF5C5CLe propriétaire de cette échoppe ne peut pas payer ce rachat et le droit de place de "
                     + land.getName() + "."));
         }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    public void apresTransaction(ShopSuccessPurchaseEvent e) {
-        Shop shop = e.getShop();
-        UUID proprio = shop.getOwner().getUniqueIdIfRealPlayer().orElse(null);
-        Land land = villeTaxatrice(shop, proprio);
+    public void apresTransaction(ChestShopTradeEvent e) {
+        ChestShop shop = e.shop();
+        Land land = villeTaxatrice(shop);
         if (land == null) return;
-        double droit = part(land, e.getBalanceWithoutTax());
+        double droit = part(land, e.total());
         if (droit <= 0) return;
+        UUID proprio = shop.owner();
         OfflinePlayer owner = Bukkit.getOfflinePlayer(proprio);
         if (!eco.take(owner, droit)) {
             plugin.getLogger().warning("Droit de place non prélevé : " + Villes.nomJoueur(proprio) + " n'a pas " + droit
-                    + " (échoppe " + shop.getShopId() + ", ville " + land.getName() + ")");
+                    + " (échoppe " + shop.id() + ", ville " + land.getName() + ")");
             return;
         }
         if (!land.modifyBalance(droit)) {
@@ -268,7 +244,7 @@ final class ModuleQuickShop implements Listener {
             return;
         }
         String id = Villes.id(land);
-        plugin.registre().encaisser(id, shop.getShopId(), droit);
+        plugin.registre().encaisser(id, shop.id(), droit);
         noter(proprio, id, droit);
         if (plugin.getConfig().getInt("droit-de-place.resume-secondes", 60) <= 0) envoyerResumes();
     }

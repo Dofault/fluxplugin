@@ -58,7 +58,7 @@ public final class FluxLands extends JavaPlugin implements Listener {
         pays = new Pays(this);
         interception = new Interception(this);
 
-        if (Bukkit.getPluginManager().isPluginEnabled("FluxChestShop")) {
+        if (fr.influencraft.flux.api.shops.ChestShops.available()) {
             // the main currency of the suite (Flux, currencies.main)
             var money = fr.influencraft.flux.api.economy.Economy.main();
             if (money == null) {
@@ -67,6 +67,7 @@ public final class FluxLands extends JavaPlugin implements Listener {
             quickShop = new ModuleQuickShop(this, money);
             quickShop.chargerStocks();
             if (money != null) Bukkit.getPluginManager().registerEvents(quickShop, this);
+            quickShop.enregistrerMenage();
             getLogger().info("FluxChestShop trouvé : échoppes et droit de place actifs.");
         } else {
             getLogger().info("FluxChestShop absent : pas d'échoppes ni de droit de place.");

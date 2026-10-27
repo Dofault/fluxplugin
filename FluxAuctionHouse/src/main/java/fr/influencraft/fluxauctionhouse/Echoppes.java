@@ -1,10 +1,9 @@
 package fr.influencraft.fluxauctionhouse;
 
-import com.ghostchu.quickshop.api.QuickShopAPI;
-import com.ghostchu.quickshop.api.event.economy.ShopSuccessPurchaseEvent;
-import com.ghostchu.quickshop.api.shop.Shop;
+import fr.influencraft.flux.api.shops.ChestShop;
+import fr.influencraft.flux.api.shops.ChestShopTradeEvent;
+import fr.influencraft.flux.api.shops.ChestShops;
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -13,10 +12,9 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
- * Lien avec FluxChestShop (chargé seulement s'il est présent) : les échoppes et rachats des
+ * Chest shops of the players (Flux chest shops service, FluxChestShop today) : les échoppes et rachats des
  * villes entrent dans le catalogue du marché, et chaque transaction réussie est écrite dans
  * l'historique (prix moyen commun à l'hôtel des ventes et aux échoppes).
  *
@@ -36,70 +34,51 @@ final class Echoppes implements Listener {
      */
     List<Offre> offres() {
         List<Offre> l = new ArrayList<>();
-        for (Shop shop : QuickShopAPI.getInstance().getShopManager().getAllShops()) {
+        for (ChestShop shop : ChestShops.all()) {
             try {
-                Location loc = shop.bukkitLocation();
+                Location loc = shop.location();
                 if (loc == null || loc.getWorld() == null) continue;
-                ItemStack item = shop.getItem().clone();
-                int stock = stock(shop, loc);
-                if (stock < 0) stock = Ville.stockConnu(shop.getShopId());
+                ItemStack item = shop.item().clone();
+                int stock = shop.stock();
+                if (stock < 0) stock = Ville.stockConnu(shop.id());
                 if (stock == 0) continue;
-                boolean rachat = shop.isBuying();
-                UUID proprio = shop.getOwner().getUniqueIdIfRealPlayer().orElse(null);
-                String proprioNom = shop.getOwner().getUsernameOptional().orElse(shop.getOwner().getDisplay());
+                boolean rachat = shop.buying();
                 String ville = Ville.nomA(loc);
-                l.add(new Offre(rachat ? Offre.Type.RACHAT : Offre.Type.ECHOPPE, "e" + shop.getShopId(), item, Objets.cle(item),
-                        Objets.nom(item), Objets.index(item) + " " + Objets.normaliser(proprioNom + " " + (ville == null ? "" : ville)),
-                        Objets.categorie(item), shop.getPrice(), Math.max(1, item.getAmount()), proprio, proprioNom, -1, stock,
+                l.add(new Offre(rachat ? Offre.Type.RACHAT : Offre.Type.ECHOPPE, "e" + shop.id(), item, Objets.cle(item),
+                        Objets.nom(item), Objets.index(item) + " " + Objets.normaliser(shop.ownerName() + " " + (ville == null ? "" : ville)),
+                        Objets.categorie(item), shop.price(), Math.max(1, item.getAmount()), shop.owner(), shop.ownerName(), -1, stock,
                         ville, Ville.idA(loc), Ville.droitA(loc), loc.clone(), 0, 0, 0));
             } catch (RuntimeException e) {
-                // échoppe corrompue ou monde absent : ignorée jusqu'au passage suivant
+                // broken shop or missing world: skipped until the next pass
             }
         }
         return l;
     }
 
-    /** Stock (vente) ou place libre (rachat), seulement si le chunk est chargé : -1 sinon. */
-    private static int stock(Shop shop, Location loc) {
-        if (shop.isUnlimited()) return Integer.MAX_VALUE;
-        World w = loc.getWorld();
-        if (w == null || !w.isChunkLoaded(loc.getBlockX() >> 4, loc.getBlockZ() >> 4)) return -1;
-        try {
-            return shop.isBuying() ? shop.getRemainingSpace() : shop.getRemainingStock();
-        } catch (RuntimeException e) {
-            return -1;
-        }
-    }
-
     /**
-     * Transaction réussie d'une échoppe : enregistrée dans l'historique. Le nombre d'objets est
-     * déduit du montant hors taxe et du prix unitaire de l'échoppe (indépendant de la manière dont
-     * FluxChestShop compte les lots).
+     * A successful chest shop trade goes to the history. The item count comes from the money (tax excluded) and the
+     * unit price, whatever way the shop plugin counts bundles.
      */
     @EventHandler(priority = EventPriority.MONITOR)
-    public void transaction(ShopSuccessPurchaseEvent e) {
+    public void transaction(ChestShopTradeEvent e) {
         try {
-            Shop shop = e.getShop();
-            ItemStack item = shop.getItem().clone();
-            double unite = shop.getPrice() / Math.max(1, item.getAmount());
-            double total = e.getBalanceWithoutTax();
-            int quantite = unite > 0 ? (int) Math.round(total / unite) : e.getAmount();
+            ChestShop shop = e.shop();
+            ItemStack item = shop.item().clone();
+            double unite = shop.price() / Math.max(1, item.getAmount());
+            double total = e.total();
+            int quantite = unite > 0 ? (int) Math.round(total / unite) : e.amount();
             if (quantite <= 0) return;
-            boolean rachat = shop.isBuying();
-            UUID proprio = shop.getOwner().getUniqueIdIfRealPlayer().orElse(null);
-            String proprioNom = shop.getOwner().getUsernameOptional().orElse(shop.getOwner().getDisplay());
-            UUID client = e.getPurchaser().getUniqueIdIfRealPlayer().orElse(null);
-            String clientNom = e.getPurchaser().getUsernameOptional().orElse(e.getPurchaser().getDisplay());
+            boolean rachat = shop.buying();
             item.setAmount(Math.min(quantite, item.getMaxStackSize()));
-            Location loc = shop.bukkitLocation();
+            Location loc = shop.location();
             plugin.historique().enregistrer(new Historique.Vente(System.currentTimeMillis(), rachat ? "rachat" : "echoppe",
-                    String.valueOf(shop.getShopId()),
-                    rachat ? client : proprio, rachat ? clientNom : proprioNom,
-                    rachat ? proprio : client, rachat ? proprioNom : clientNom,
-                    Objets.cle(item), Objets.nom(item), quantite, total, e.getTax(), Hdv.bytes(item), Ville.nomA(loc)));
+                    String.valueOf(shop.id()),
+                    rachat ? e.customer() : shop.owner(), rachat ? e.customerName() : shop.ownerName(),
+                    rachat ? shop.owner() : e.customer(), rachat ? shop.ownerName() : e.customerName(),
+                    Objets.cle(item), Objets.nom(item), quantite, total, e.tax(), Hdv.bytes(item), Ville.nomA(loc)));
             plugin.catalogue().invalider();
         } catch (RuntimeException ex) {
-            plugin.getLogger().warning("Transaction d'échoppe non enregistrée : " + ex);
+            plugin.getLogger().warning("Chest shop trade not recorded: " + ex);
         }
     }
 

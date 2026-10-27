@@ -3,8 +3,8 @@ version: '1.0.0'
 main: fr.influencraft.fluxsorter.FluxSorter
 api-version: '1.21'
 description: A sorting chest that sends its content to the copper chests of the same Lands area that already hold the same items.
-depend: [Lands, Flux]
-softdepend: [BlockLocker, CoreProtect, ItemsAdder]
+depend: [Flux]
+softdepend: [BlockLocker, CoreProtect]
 
 permissions:
   sortingchest.admin:
