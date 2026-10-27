@@ -82,6 +82,13 @@ permissions:
     default: op
 
   # --- Permission globale admin ---
+  parrainage.admin.decouverte:
+    description: "Voir comment un joueur a découvert le serveur"
+    default: op
+  parrainage.admin.decouvertes:
+    description: "Statistiques de découverte du serveur"
+    default: op
+
   parrainage.admin.*:
     description: Accès complet à toutes les commandes admin du parrainage
     default: op

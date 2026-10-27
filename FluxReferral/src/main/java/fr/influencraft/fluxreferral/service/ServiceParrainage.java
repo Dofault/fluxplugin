@@ -56,6 +56,7 @@ public class ServiceParrainage {
     private final ServiceClassement serviceClassement;
     private final ServiceAdresse serviceAdresse;
     private final ServiceProfil serviceProfil;
+    private final fr.influencraft.fluxreferral.bdd.DepotDecouverte depotDecouverte;
     private final SecureRandom random;
 
     /** Joueurs connectés ayant une invitation en attente (parcourus par la tâche de vérification). */
@@ -65,7 +66,8 @@ public class ServiceParrainage {
                              DepotEvenement depotEvenement, DepotInvitation depotInvitation,
                              GestionnaireConfig config, GestionnaireLangue langue,
                              ServicePalier servicePalier, ServiceClassement serviceClassement,
-                             ServiceAdresse serviceAdresse, ServiceProfil serviceProfil) {
+                             ServiceAdresse serviceAdresse, ServiceProfil serviceProfil,
+                             fr.influencraft.fluxreferral.bdd.DepotDecouverte depotDecouverte) {
         this.plugin = plugin;
         this.depotJoueur = depotJoueur;
         this.depotEvenement = depotEvenement;
@@ -76,6 +78,7 @@ public class ServiceParrainage {
         this.serviceClassement = serviceClassement;
         this.serviceAdresse = serviceAdresse;
         this.serviceProfil = serviceProfil;
+        this.depotDecouverte = depotDecouverte;
         this.random = new SecureRandom();
     }
 
@@ -117,28 +120,40 @@ public class ServiceParrainage {
                                            Instant premiereConnexion, boolean forcer) throws SQLException {
         Optional<String> libelle = serviceAdresse.extraireLibelle(hote);
         if (libelle.isEmpty()) return Optional.empty();
-
-        if (depotEvenement.estDejaFilleul(filleulUuid) || depotInvitation.trouver(filleulUuid).isPresent()) {
-            return Optional.empty();
-        }
-        // Seuls les nouveaux joueurs comptent : un ancien joueur qui passe par l'adresse d'un ami
-        // ne lui rapporte rien
-        Duration anciennete = Duration.between(premiereConnexion, Instant.now());
-        if (!forcer && anciennete.toHours() >= config.getDelaiArriveeHeures()) {
-            return Optional.empty();
-        }
-
         Optional<JoueurParrainage> optParrain = serviceAdresse.resoudre(libelle.get());
         if (optParrain.isEmpty()) return Optional.empty();
-        JoueurParrainage parrain = optParrain.get();
+        if (inviter(filleulUuid, pseudoFilleul, optParrain.get(), hote, premiereConnexion, forcer) != Arrivee.CREEE) {
+            return Optional.empty();
+        }
+        // arrived by a personal address: that is how he discovered the server, no questionnaire
+        depotDecouverte.enregistrer(filleulUuid, "adresse", optParrain.get().uuid(), hote);
+        return Optional.of(optParrain.get().pseudo());
+    }
 
-        if (parrain.uuid().equals(filleulUuid)) return Optional.empty();
-        if (config.isBloquerCirculaire() && filleulUuid.equals(parrain.parrainUuid())) return Optional.empty();
+    /** Outcome of {@link #inviter}. */
+    public enum Arrivee { CREEE, DEJA_PARRAINE, TROP_ANCIEN, SOI_MEME, CIRCULAIRE }
 
-        if (!depotInvitation.inserer(filleulUuid, parrain.uuid(), hote)) return Optional.empty();
+    /**
+     * Makes the player a pending referee of {@code parrain} (validated after the minimum play time), whatever the way
+     * he named him: personal address or questionnaire. Same rules for both. Asynchronous thread.
+     *
+     * @param origine address typed, or "questionnaire"
+     */
+    public Arrivee inviter(UUID filleulUuid, String pseudoFilleul, JoueurParrainage parrain, String origine,
+                              Instant premiereConnexion, boolean forcer) throws SQLException {
+        if (depotEvenement.estDejaFilleul(filleulUuid) || depotInvitation.trouver(filleulUuid).isPresent()) {
+            return Arrivee.DEJA_PARRAINE;
+        }
+        // only new players count: an old player naming a friend brings him nothing
+        Duration anciennete = Duration.between(premiereConnexion, Instant.now());
+        if (!forcer && anciennete.toHours() >= config.getDelaiArriveeHeures()) return Arrivee.TROP_ANCIEN;
+        if (parrain.uuid().equals(filleulUuid)) return Arrivee.SOI_MEME;
+        if (config.isBloquerCirculaire() && filleulUuid.equals(parrain.parrainUuid())) return Arrivee.CIRCULAIRE;
+
+        if (!depotInvitation.inserer(filleulUuid, parrain.uuid(), origine)) return Arrivee.DEJA_PARRAINE;
         filleulsEnAttente.add(filleulUuid);
-        plugin.getLogger().info(pseudoFilleul + " est arrivé par l'adresse de " + parrain.pseudo()
-            + " (" + hote + "), parrainage en attente du temps de jeu minimum.");
+        plugin.getLogger().info(pseudoFilleul + " est arrivé par " + parrain.pseudo()
+            + " (" + origine + "), parrainage en attente du temps de jeu minimum.");
 
         serviceProfil.recharger(filleulUuid);
         serviceProfil.recharger(parrain.uuid());
@@ -156,9 +171,7 @@ public class ServiceParrainage {
                     Map.of("joueur", pseudoFilleul, "temps", temps)));
             }
         }, 60L);
-
-        // Temps de jeu déjà atteint (ou contrôle désactivé) : validation au prochain passage
-        return Optional.of(parrain.pseudo());
+        return Arrivee.CREEE;
     }
 
     /** Charge l'état « en attente » d'un joueur qui se connecte. Thread asynchrone. */
@@ -298,7 +311,11 @@ public class ServiceParrainage {
                 return ResultatUtilisation.echec(ResultatUtilisation.Type.MEME_IP);
             }
 
-            return enregistrer(parrain, filleulUuid, pseudoFilleul);
+            ResultatUtilisation resultat = enregistrer(parrain, filleulUuid, pseudoFilleul);
+            if (resultat.type() == ResultatUtilisation.Type.SUCCES) {
+                depotDecouverte.enregistrer(filleulUuid, "joueur", parrain.uuid(), "code");
+            }
+            return resultat;
 
         } catch (SQLException e) {
             plugin.getLogger().log(Level.SEVERE,

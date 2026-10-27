@@ -10,7 +10,9 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 /**
- * Adresse personnelle de parrainage : {@code <pseudo>.<domaine>} (ex : dofault.play.influencraft.fr).
+ * Adresse personnelle de parrainage : {@code <pseudo>.<domaine>} (ex : dofault.influencraft.fr). Les sous-domaines
+ * réservés (play, www, map...) ne sont jamais des adresses perso ; les anciens domaines ({@code autres-domaines})
+ * restent lus.
  *
  * <p>Le client Minecraft envoie l'adresse tapée dans le paquet de handshake ; Velocity (forwarding
  * moderne) la transmet telle quelle au serveur, qui la lit via {@code Player#getVirtualHost()}.
@@ -34,7 +36,8 @@ public class ServiceAdresse {
     /** Adresse à donner aux amis, construite depuis le pseudo (ou le code en secours). */
     public String adressePour(String pseudo, String code) {
         String libelle = pseudo.toLowerCase(Locale.ROOT).replace('_', '-');
-        if (!LIBELLE.matcher(libelle).matches()) {
+        // a pseudo that is also a sub-domain of the site (play, www...) uses the code instead
+        if (!LIBELLE.matcher(libelle).matches() || config.getLibellesReserves().contains(libelle)) {
             libelle = code.toLowerCase(Locale.ROOT);
         }
         return libelle + "." + config.getDomaine();
@@ -53,12 +56,18 @@ public class ServiceAdresse {
         if (zero >= 0) h = h.substring(0, zero);
         while (h.endsWith(".")) h = h.substring(0, h.length() - 1);
 
-        String suffixe = "." + config.getDomaine();
-        if (!h.endsWith(suffixe)) return Optional.empty();
-        String libelle = h.substring(0, h.length() - suffixe.length());
-        // Un seul niveau : « www.dofault.play... » n'est pas une adresse de parrainage
-        if (!LIBELLE.matcher(libelle).matches()) return Optional.empty();
-        return Optional.of(libelle);
+        java.util.List<String> domaines = new java.util.ArrayList<>();
+        domaines.add(config.getDomaine());
+        domaines.addAll(config.getAutresDomaines());
+        for (String domaine : domaines) {
+            String suffixe = "." + domaine;
+            if (!h.endsWith(suffixe)) continue;
+            String libelle = h.substring(0, h.length() - suffixe.length());
+            // one level only ("www.dofault..." is not an address), never a reserved sub-domain (play.influencraft.fr)
+            if (!LIBELLE.matcher(libelle).matches() || config.getLibellesReserves().contains(libelle)) continue;
+            return Optional.of(libelle);
+        }
+        return Optional.empty();
     }
 
     /** Retrouve le parrain désigné par un libellé : pseudo d'abord, puis code de parrainage. */

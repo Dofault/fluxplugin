@@ -59,7 +59,9 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
         new EntreeAide("/parrainage admin forcerpalier \\<joueur> \\<n>",          "parrainage.admin.forcerpalier",   "aide-admin-desc-forcerpalier"),
         new EntreeAide("/parrainage admin info \\<joueur>",                        "parrainage.admin.info",           "aide-admin-desc-info"),
         new EntreeAide("/parrainage admin simuler \\<joueur> \\<adresse>",         "parrainage.admin.simuler",        "aide-admin-desc-simuler"),
-        new EntreeAide("/parrainage admin valider \\<joueur>",                     "parrainage.admin.valider",        "aide-admin-desc-valider")
+        new EntreeAide("/parrainage admin valider \\<joueur>",                     "parrainage.admin.valider",        "aide-admin-desc-valider"),
+        new EntreeAide("/parrainage admin decouverte \\<joueur>",                  "parrainage.admin.decouverte",     "aide-admin-desc-decouverte"),
+        new EntreeAide("/parrainage admin decouvertes",                            "parrainage.admin.decouvertes",    "aide-admin-desc-decouvertes")
     );
 
     private final FluxReferralPlugin plugin;
@@ -442,6 +444,11 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
                 if (args.length < 4) { usageAdmin(sender, "simuler \\<joueur> \\<adresse>"); return; }
                 traiterAdminSimuler(sender, args[2], args[3]);
             }
+            case "decouverte"       -> {
+                if (args.length < 3) sender.sendMessage(langue.getMessage("admin-usage-decouverte"));
+                else plugin.getServiceDecouverte().consulter(sender, args[2]);
+            }
+            case "decouvertes"      -> plugin.getServiceDecouverte().statistiques(sender);
             case "valider"          -> {
                 if (args.length < 3) { usageAdmin(sender, "valider \\<joueur>"); return; }
                 traiterAdminValider(sender, args[2]);
@@ -696,7 +703,7 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("admin")) {
             List<String> sousCommandes = List.of("aide", "recharger", "reinitialiser",
-                "definirparrain", "supprimerparrain", "forcerpalier", "info", "simuler", "valider");
+                "definirparrain", "supprimerparrain", "forcerpalier", "info", "simuler", "valider", "decouverte", "decouvertes");
             return sousCommandes.stream()
                 .filter(s -> s.startsWith(args[1].toLowerCase()))
                 .filter(s -> aPermissionAdmin(sender, s))

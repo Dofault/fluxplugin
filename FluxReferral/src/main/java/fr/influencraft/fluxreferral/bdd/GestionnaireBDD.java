@@ -39,7 +39,7 @@ public class GestionnaireBDD {
         // parents first (foreign keys)
         Database.importSqlite(plugin, new File(plugin.getDataFolder(), config.getFichierLocalBDD()),
                 p + "joueurs", p + "joueurs", p + "evenements", p + "evenements",
-                p + "paliers", p + "paliers", p + "invitations", p + "invitations");
+                p + "paliers", p + "paliers", p + "invitations", p + "invitations", p + "decouvertes", p + "decouvertes");
     }
 
     private void creerSchema() throws SQLException {
@@ -115,6 +115,18 @@ public class GestionnaireBDD {
                 "    FOREIGN KEY (`filleul_uuid`) REFERENCES `" + p + "joueurs`(`uuid`) ON DELETE CASCADE" +
                 ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
             );
+
+            stmt.executeUpdate(
+                "CREATE TABLE IF NOT EXISTS `" + p + "decouvertes` (" +
+                "  `uuid`            VARCHAR(36)  NOT NULL," +
+                "  `source`          VARCHAR(32)  NOT NULL," +
+                "  `parrain_uuid`    VARCHAR(36)  DEFAULT NULL," +
+                "  `detail`          VARCHAR(64)  DEFAULT NULL," +
+                "  `date_decouverte` TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP," +
+                "  PRIMARY KEY (`uuid`)," +
+                "  KEY `idx_" + nomBase + "_decouverte_source` (`source`)" +
+                ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+            );
         }
         ajouterColonneSiAbsente("joueurs", "ip_hash", "VARCHAR(64) DEFAULT NULL");
         ajouterColonneSiAbsente("joueurs", "filleuls_recompenses_donnees", "INT NOT NULL DEFAULT 0");
@@ -175,6 +187,16 @@ public class GestionnaireBDD {
                 "  `date_arrivee`  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP," +
                 "  FOREIGN KEY (`parrain_uuid`) REFERENCES `" + p + "joueurs`(`uuid`) ON DELETE CASCADE," +
                 "  FOREIGN KEY (`filleul_uuid`) REFERENCES `" + p + "joueurs`(`uuid`) ON DELETE CASCADE" +
+                ")"
+            );
+
+            stmt.executeUpdate(
+                "CREATE TABLE IF NOT EXISTS `" + p + "decouvertes` (" +
+                "  `uuid`            VARCHAR(36)  NOT NULL PRIMARY KEY," +
+                "  `source`          VARCHAR(32)  NOT NULL," +
+                "  `parrain_uuid`    VARCHAR(36)  DEFAULT NULL," +
+                "  `detail`          VARCHAR(64)  DEFAULT NULL," +
+                "  `date_decouverte` TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP" +
                 ")"
             );
         }

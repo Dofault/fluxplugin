@@ -33,6 +33,7 @@ public class FluxReferralPlugin extends JavaPlugin {
 
     private GestionnaireConfig gestionnaireConfig;
     private GestionnaireLangue gestionnaireLangue;
+    private fr.influencraft.fluxreferral.service.ServiceDecouverte serviceDecouverte;
     private GestionnaireBDD gestionnaireBDD;
     private DepotJoueur depotJoueur;
 
@@ -68,6 +69,7 @@ public class FluxReferralPlugin extends JavaPlugin {
         var depotEvenement = new DepotEvenement(this, gestionnaireBDD);
         var depotPalier    = new DepotPalier(this, gestionnaireBDD);
         var depotInvitation = new DepotInvitation(this, gestionnaireBDD);
+        var depotDecouverte = new fr.influencraft.fluxreferral.bdd.DepotDecouverte(this, gestionnaireBDD);
 
         // --- Services ---
         serviceClassement = new ServiceClassement(this, depotJoueur);
@@ -75,7 +77,9 @@ public class FluxReferralPlugin extends JavaPlugin {
         serviceProfil        = new ServiceProfil(this, depotJoueur, depotPalier, depotInvitation, serviceAdresse);
         var servicePalier    = new ServicePalier(this, depotPalier, gestionnaireConfig, gestionnaireLangue);
         var serviceParrainage = new ServiceParrainage(this, depotJoueur, depotEvenement, depotInvitation,
-            gestionnaireConfig, gestionnaireLangue, servicePalier, serviceClassement, serviceAdresse, serviceProfil);
+            gestionnaireConfig, gestionnaireLangue, servicePalier, serviceClassement, serviceAdresse, serviceProfil, depotDecouverte);
+        serviceDecouverte = new fr.influencraft.fluxreferral.service.ServiceDecouverte(this, depotDecouverte, depotJoueur,
+            serviceParrainage, gestionnaireConfig, gestionnaireLangue);
         var serviceRecuperation = new ServiceRecuperation(this, depotJoueur, depotPalier, gestionnaireConfig, serviceProfil);
         var empreinteIp      = new EmpreinteIp(this);
 
@@ -158,6 +162,7 @@ public class FluxReferralPlugin extends JavaPlugin {
     // --- Accesseurs ---
     public GestionnaireConfig  getGestionnaireConfig()  { return gestionnaireConfig; }
     public GestionnaireLangue  getGestionnaireLangue()  { return gestionnaireLangue; }
+    public fr.influencraft.fluxreferral.service.ServiceDecouverte getServiceDecouverte() { return serviceDecouverte; }
     public GestionnaireBDD     getGestionnaireBDD()     { return gestionnaireBDD; }
     public DepotJoueur         getDepotJoueur()         { return depotJoueur; }
     public ServiceClassement   getServiceClassement()   { return serviceClassement; }

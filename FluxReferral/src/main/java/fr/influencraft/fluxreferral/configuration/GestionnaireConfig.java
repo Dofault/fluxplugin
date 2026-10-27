@@ -62,8 +62,34 @@ public class GestionnaireConfig {
     // --- Adresse personnelle (<pseudo>.<domaine>) ---
     public boolean isAdresseActive()          { return config.getBoolean("adresse.active", true); }
     public String  getDomaine() {
-        String d = config.getString("adresse.domaine", "play.influencraft.fr").trim().toLowerCase(Locale.ROOT);
+        String d = config.getString("adresse.domaine", "influencraft.fr").trim().toLowerCase(Locale.ROOT);
         return d.startsWith(".") ? d.substring(1) : d;
+    }
+    /** Former domains still read (an address given before a change keeps working). */
+    public java.util.List<String> getAutresDomaines() {
+        return config.getStringList("adresse.autres-domaines").stream()
+            .map(d -> d.trim().toLowerCase(Locale.ROOT)).map(d -> d.startsWith(".") ? d.substring(1) : d).toList();
+    }
+    /** Sub-domains of the site and the server, never a personal address (play, www, map...). */
+    public java.util.Set<String> getLibellesReserves() {
+        return config.getStringList("adresse.reserves").stream().map(d -> d.trim().toLowerCase(Locale.ROOT))
+            .collect(java.util.stream.Collectors.toSet());
+    }
+
+    // --- Questionnaire: how the player discovered the server ---
+    public boolean isQuestionnaireActif()     { return config.getBoolean("decouverte.questionnaire", true); }
+    public long    getDelaiQuestionnaireTicks() { return Math.max(20L, config.getLong("decouverte.delai-secondes", 5L) * 20L); }
+    /** Answers of the questionnaire other than "a player": id -> label, in order. */
+    public java.util.Map<String, String> getSourcesQuestionnaire() {
+        java.util.Map<String, String> out = new java.util.LinkedHashMap<>();
+        var section = config.getConfigurationSection("decouverte.sources");
+        if (section == null) {
+            out.put("tiktok", "TikTok");
+            out.put("vote", "Site de vote");
+            return out;
+        }
+        for (String id : section.getKeys(false)) out.put(id.toLowerCase(Locale.ROOT), section.getString(id, id));
+        return out;
     }
     /** Délai après la première connexion pendant lequel une arrivée par adresse est encore prise en compte. */
     public long    getDelaiArriveeHeures()    { return config.getLong("adresse.delai-arrivee-heures", 48L); }

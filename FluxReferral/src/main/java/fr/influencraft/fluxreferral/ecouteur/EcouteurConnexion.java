@@ -85,6 +85,8 @@ public class EcouteurConnexion implements Listener {
 
                 if (ip != null) depotJoueur.mettreAJourIp(uuid, empreinteIp.calculer(ip));
                 serviceParrainage.traiterArrivee(uuid, pseudo, hote, premiereConnexion, false);
+                // no personal address: ask how he discovered the server (new players, until answered)
+                plugin.getServiceDecouverte().proposer(uuid, premiereConnexion);
                 serviceParrainage.chargerAttente(uuid);
                 serviceProfil.recharger(uuid);
             } catch (SQLException e) {

@@ -20,7 +20,7 @@ prefixe: "<color:#B376E5>ᴘᴀʀʀᴀɪɴᴀɢᴇ</color> <dark_gray>▸</dark_
 # ===================================================
 # Adresse personnelle : <pseudo>.<domaine>
 # ===================================================
-# Chaque joueur a sa propre adresse de serveur (ex : dofault.play.influencraft.fr).
+# Chaque joueur a sa propre adresse de serveur (ex : dofault.influencraft.fr).
 # Un nouveau joueur qui se connecte avec devient son filleul (validé après temps-jeu-minimum).
 # Le serveur lit l'adresse tapée par le joueur, transmise par Velocity (forwarding "modern").
 # Prérequis réseau :
@@ -29,10 +29,33 @@ prefixe: "<color:#B376E5>ᴘᴀʀʀᴀɪɴᴀɢᴇ</color> <dark_gray>▸</dark_
 #     client envoie la cible du SRV et non l'adresse tapée, l'adresse perso serait perdue.
 adresse:
   active: true
-  domaine: "play.influencraft.fr"
+  domaine: "influencraft.fr"
+  # Anciens domaines encore lus (une adresse donnée avant un changement marche toujours)
+  autres-domaines:
+    - "play.influencraft.fr"
+  # Sous-domaines du site et du serveur : jamais une adresse perso (un joueur nommé ainsi donne son code)
+  reserves: [play, www, map, carte, wiki, api, mail, vote, boutique, shop, store, discord, dev, admin, panel,
+    lobby, labs, semilab, events, mc, minecraft, static, cdn, stats, status, ns1, ns2, smtp, imap, webmail]
   # Une arrivée par adresse n'est prise en compte que si le joueur s'est connecté pour la première
   # fois il y a moins de X heures (un ancien joueur ne rapporte rien à celui dont il prend l'adresse)
   delai-arrivee-heures: 48
+
+# ===================================================
+# Comment le joueur a découvert le serveur
+# ===================================================
+# À sa première connexion (et aux suivantes tant qu'il n'a pas répondu, pendant delai-arrivee-heures),
+# un joueur arrivé sans l'adresse perso d'un autre joueur reçoit une fenêtre : un bouton par source
+# ci-dessous, plus « Par un joueur » avec un champ pour son pseudo (ou son code). Répondre « par un
+# joueur » vaut une arrivée par son adresse : parrainage en attente du temps de jeu minimum.
+# Une arrivée par adresse perso est enregistrée toute seule, sans questionnaire.
+# /parrainage decouverte <joueur> et /parrainage decouvertes (admin) pour consulter.
+decouverte:
+  questionnaire: true
+  # Délai avant l'ouverture de la fenêtre après la connexion (secondes)
+  delai-secondes: 5
+  sources:
+    tiktok: "TikTok"
+    vote: "Site de vote"
 
 parrainage:
   # Temps de jeu minimum avant qu'un code puisse être utilisé, et avant qu'une arrivée par

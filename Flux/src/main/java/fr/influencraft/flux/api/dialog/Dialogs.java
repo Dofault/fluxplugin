@@ -95,10 +95,21 @@ public final class Dialogs {
     public static final class Answer {
         private final Map<String, String> texts;
         private final Map<String, Boolean> toggles;
+        private final String button;
 
         Answer(Map<String, String> texts, Map<String, Boolean> toggles) {
+            this(texts, toggles, "confirm");
+        }
+
+        Answer(Map<String, String> texts, Map<String, Boolean> toggles, String button) {
             this.texts = texts;
             this.toggles = toggles;
+            this.button = button;
+        }
+
+        /** Id of the button clicked ({@code "confirm"} in a confirm/cancel form, else an id of {@link Form#action}). */
+        public String button() {
+            return button;
         }
 
         /** Trimmed text of a field or the chosen option of a list ({@code ""} when empty). */
@@ -133,6 +144,9 @@ public final class Dialogs {
         private final Map<String, List<String>> choices = new HashMap<>();
         private final List<String> required = new ArrayList<>();
         private String confirm = style("confirm-label"), cancel = style("cancel-label");
+        private final List<String[]> actions = new ArrayList<>();
+        private int columns = 2;
+        private boolean closable = true;
         private BiConsumer<Player, Answer> onSubmit = (p, a) -> {
         };
         private Consumer<Player> onCancel = p -> {
@@ -194,6 +208,26 @@ public final class Dialogs {
             return this;
         }
 
+        /**
+         * Adds an action button instead of the confirm/cancel pair: each button submits the form, {@link Answer#button()}
+         * tells which one. Buttons are laid out on {@link #columns} columns, below the fields.
+         */
+        public Form action(String id, String label) {
+            actions.add(new String[]{id, label});
+            return this;
+        }
+
+        public Form columns(int count) {
+            this.columns = Math.max(1, count);
+            return this;
+        }
+
+        /** False: Escape does not close the window, the player has to click a button. */
+        public Form closable(boolean canClose) {
+            this.closable = canClose;
+            return this;
+        }
+
         public Form onSubmit(BiConsumer<Player, Answer> action) {
             this.onSubmit = action;
             return this;
@@ -235,9 +269,28 @@ public final class Dialogs {
                     }), once));
             List<DialogBody> lines = body.stream()
                     .map(l -> (DialogBody) DialogBody.plainMessage(Texts.parse(style("text") + l, player))).toList();
-            DialogBase base = DialogBase.create(Texts.parse(style("title") + title, player), null, true, false,
+            DialogBase base = DialogBase.create(Texts.parse(style("title") + title, player), null, closable, false,
                     DialogBase.DialogAfterAction.CLOSE, lines, List.copyOf(inputs));
-            player.showDialog(Dialog.create(f -> f.empty().base(base).type(DialogType.confirmation(ok, no))));
+            if (actions.isEmpty()) {
+                player.showDialog(Dialog.create(f -> f.empty().base(base).type(DialogType.confirmation(ok, no))));
+                return;
+            }
+            List<ActionButton> buttons = new ArrayList<>();
+            for (String[] a : actions) {
+                String id = a[0];
+                buttons.add(ActionButton.create(Texts.parse(style("option") + a[1], player), null, 150,
+                        DialogAction.customClick((view, audience) -> {
+                            Map<String, String> texts = new HashMap<>();
+                            Map<String, Boolean> toggles = new HashMap<>();
+                            for (String t : textIds) texts.put(t, view.getText(t));
+                            for (String t : toggleIds) toggles.put(t, view.getBoolean(t));
+                            Answer answer = new Answer(texts, toggles, id);
+                            sync(() -> {
+                                if (player.isOnline()) onSubmit.accept(player, answer);
+                            });
+                        }, once)));
+            }
+            player.showDialog(Dialog.create(f -> f.empty().base(base).type(DialogType.multiAction(buttons, null, columns))));
         }
     }
 }
