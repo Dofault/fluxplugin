@@ -25,8 +25,9 @@ final class Fmt {
         return fr.influencraft.flux.api.util.Format.percent(pourcentage);
     }
 
+    /** Value compared by the menu conditions ("== oui"): fixed, never translated. */
     static String oui(boolean b) {
-        return fr.influencraft.flux.api.util.Format.yesNo(b);
+        return b ? "oui" : "non";
     }
 
     /** Message de tchat : placeholders (glyphes %img_...%) puis couleurs, sans italique. */

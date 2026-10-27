@@ -47,8 +47,9 @@ final class Fmt {
         return fr.influencraft.flux.api.util.Format.percent(pourcentage);
     }
 
+    /** Value compared by the menu conditions ("== oui"): fixed, never translated. */
     static String oui(boolean b) {
-        return fr.influencraft.flux.api.util.Format.yesNo(b);
+        return b ? "oui" : "non";
     }
 
     /** Durée courte : « 2 j 5 h », « 3 h 12 min », « 45 s ». */
