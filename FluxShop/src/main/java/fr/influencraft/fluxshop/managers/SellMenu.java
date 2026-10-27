@@ -169,7 +169,7 @@ public class SellMenu {
             disarm(state);
             state.armed = true;
             // XP sound: the click counts, nothing is sold yet, the next click is final
-            fr.influencraft.flux.api.util.Sounds.cue(player, "success");
+            fr.influencraft.flux.api.util.Sounds.cue(player, "confirm");
             long timeout = Math.max(1, plugin.getConfig().getInt("sell-menu.confirm-timeout-seconds", 5)) * 20L;
             state.disarmTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 state.disarmTask = null;

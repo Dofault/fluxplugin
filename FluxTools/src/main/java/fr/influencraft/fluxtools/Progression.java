@@ -199,7 +199,7 @@ final class Progression implements Listener {
             plugin.message(p, "bonus-xp", "%xp%", Fmt.nombre(etape.xp()));
             gagner(p, o, e, etape.xp());
         }
-        fr.influencraft.flux.api.util.Sounds.cue(p, "reward");
+        fr.influencraft.flux.api.util.Sounds.cue(p, "complete");
         Rendu.maj(item, o, e, true);
 
         if (!fini) {

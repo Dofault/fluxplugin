@@ -57,7 +57,7 @@ public class SellManager implements ListProvider {
 
     /** Right click on the sell block: deposit menu. */
     public void openSellMenu(Player player) {
-        fr.influencraft.flux.api.util.Sounds.cue(player, "open");
+        fr.influencraft.flux.api.util.Sounds.cue(player, "page");
         sellMenu.open(player);
     }
 

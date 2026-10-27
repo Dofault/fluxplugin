@@ -75,19 +75,23 @@ database:
 # Interface sounds of the whole suite ("<sound> [volume] [pitch]", "none" = silent). Plugins and menus play them by
 # name (Sounds.cue in code, "@error" in a config or a [sound] action).
 sounds:
-  alert: "minecraft:block.note_block.pling 0.7 1.6"
-  open: "minecraft:block.chest.open 0.6 1.2"
-  close: "minecraft:block.chest.close 0.6 1.2"
+  # un menu s'ouvre ou change de page
   page: "minecraft:item.book.page_turn"
+  # un bouton
   click: "minecraft:ui.button.click 0.6 1.4"
+  # premier clic d'une double confirmation (rien n'est encore fait)
   confirm: "minecraft:entity.experience_orb.pickup 0.6 0.7"
+  # une action a marché : achat, vente, dépôt
   success: "minecraft:entity.experience_orb.pickup 0.8 1.2"
-  error: "minecraft:entity.villager.no"
+  # quelque chose de gagné : niveau, offrande terminée, récompense récupérée
   complete: "minecraft:entity.player.levelup 1 1.4"
-  reward: "minecraft:ui.toast.challenge_complete 0.8 1"
+  error: "minecraft:entity.villager.no"
+  remove: "minecraft:entity.item.break 0.6 1"
   toggle-on: "minecraft:block.amethyst_block.chime 1 1.4"
   toggle-off: "minecraft:block.amethyst_block.hit 1 0.8"
-  remove: "minecraft:entity.item.break 0.6 1"
+  # alerte staff
+  alert: "minecraft:block.note_block.pling 0.7 1.6"
+  # (open, close et reward n'existent plus : open joue page, reward joue complete, close est muet)
 
 # Third-party plugins behind the services of the suite. The plugins of the suite only talk to Flux: changing one of
 # these plugins means one adapter in Flux, nothing else. auto: the known plugin that is installed; none: off.

@@ -117,7 +117,7 @@ public class ShopMenu {
         State previous = states.put(player.getUniqueId(), new State(shop, items));
         if (previous != null && previous.disarmTask != null) previous.disarmTask.cancel();
         invalidate(player);
-        if (FluxApi.open(player, MENU)) fr.influencraft.flux.api.util.Sounds.cue(player, "open");
+        if (FluxApi.open(player, MENU)) fr.influencraft.flux.api.util.Sounds.cue(player, "page");
     }
 
     public void forget(UUID uuid) {

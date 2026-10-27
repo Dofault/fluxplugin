@@ -12,26 +12,28 @@ import java.util.Locale;
  * Other sounds are written {@code "<key> [volume] [pitch]"}, e.g. {@code "minecraft:ui.button.click 1 1.2"}
  * (any resource pack sound key). Empty or {@code "none"}: no sound.
  *
- * <p>Cues: {@code open}, {@code close}, {@code page}, {@code click}, {@code confirm} (first click of a double
- * confirmation), {@code success}, {@code error}, {@code complete}, {@code reward}, {@code toggle-on},
- * {@code toggle-off}, {@code remove}, {@code alert} (staff alert).</p>
+ * <p>Cues, one per meaning: {@code page} (a menu opens or turns a page), {@code click} (a button),
+ * {@code confirm} (first click of a double confirmation, nothing done yet), {@code success} (an action worked:
+ * bought, sold, deposited), {@code complete} (something earned: a level, a finished offering, a claimed reward),
+ * {@code error}, {@code remove}, {@code toggle-on}, {@code toggle-off}, {@code alert} (staff alert). Former cues
+ * still answer: {@code open} plays {@code page}, {@code reward} plays {@code complete}, {@code close} is silent.</p>
  */
 public final class Sounds {
 
     private static final java.util.Map<String, String> CUES = new java.util.concurrent.ConcurrentHashMap<>(java.util.Map.ofEntries(
-            java.util.Map.entry("open", "minecraft:block.chest.open 0.6 1.2"),
-            java.util.Map.entry("close", "minecraft:block.chest.close 0.6 1.2"),
             java.util.Map.entry("page", "minecraft:item.book.page_turn"),
             java.util.Map.entry("click", "minecraft:ui.button.click 0.6 1.4"),
             java.util.Map.entry("confirm", "minecraft:entity.experience_orb.pickup 0.6 0.7"),
             java.util.Map.entry("success", "minecraft:entity.experience_orb.pickup 0.8 1.2"),
             java.util.Map.entry("error", "minecraft:entity.villager.no"),
             java.util.Map.entry("complete", "minecraft:entity.player.levelup 1 1.4"),
-            java.util.Map.entry("reward", "minecraft:ui.toast.challenge_complete 0.8 1"),
             java.util.Map.entry("toggle-on", "minecraft:block.amethyst_block.chime 1 1.4"),
             java.util.Map.entry("toggle-off", "minecraft:block.amethyst_block.hit 1 0.8"),
             java.util.Map.entry("remove", "minecraft:entity.item.break 0.6 1"),
             java.util.Map.entry("alert", "minecraft:block.note_block.pling 0.7 1.6")));
+
+    /** Cues merged into another one (menus and configs written before keep working). */
+    private static final java.util.Map<String, String> MERGED = java.util.Map.of("open", "page", "reward", "complete", "close", "");
 
     private Sounds() {
     }
@@ -39,12 +41,14 @@ public final class Sounds {
     /** Called by Flux from its config (section {@code sounds}). */
     public static void configure(org.bukkit.configuration.ConfigurationSection section) {
         if (section == null) return;
-        for (String key : section.getKeys(false)) CUES.put(key.toLowerCase(Locale.ROOT), section.getString(key, "none"));
+        for (String key : section.getKeys(false)) if (!MERGED.containsKey(key.toLowerCase(Locale.ROOT))) CUES.put(key.toLowerCase(Locale.ROOT), section.getString(key, "none"));
     }
 
     /** Plays a named cue of the suite. */
     public static void cue(Player player, String name) {
-        String spec = CUES.get(name.toLowerCase(Locale.ROOT));
+        String key = name.toLowerCase(Locale.ROOT);
+        key = MERGED.getOrDefault(key, key);
+        String spec = CUES.get(key);
         if (spec != null) play(player, spec);
     }
 
