@@ -1,5 +1,7 @@
 package fr.influencraft.fluxreferral.placeholder;
 
+import fr.influencraft.fluxreferral.service.ServiceRecuperation;
+
 import fr.influencraft.fluxreferral.FluxReferralPlugin;
 import fr.influencraft.fluxreferral.configuration.GestionnaireConfig;
 import fr.influencraft.fluxreferral.modele.Palier;
@@ -79,7 +81,7 @@ public class ExpansionParrainage {
         }
 
         if (params.startsWith("palier_")) return traiterPalier(player, p, params);
-        if (params.startsWith("filleul_")) return traiterFilleul(p, params);
+        if (params.startsWith("filleul_")) return traiterFilleul(player.getUniqueId(), p, params);
         if (params.startsWith("attente_") && !params.equals("attente_progression")) return traiterAttente(p, params);
         if (params.startsWith("recent_")) {
             int n = entier(params.substring("recent_".length()));
@@ -101,7 +103,7 @@ public class ExpansionParrainage {
             case "restant"         -> prochain != null ? String.valueOf(prochain.filleuls() - p.nbFilleuls()) : "0";
             case "pourcentage"     -> String.valueOf(pourcentage(p, prochain));
             case "progression"     -> barre(p, prochain);
-            case "a_recuperer"     -> String.valueOf(aRecuperer(p));
+            case "a_recuperer"     -> String.valueOf(aRecuperer(player.getUniqueId(), p));
             case "filleul_recompense_attente" -> p.filleulRecompenseEnAttente() ? "oui" : "non";
             default                -> null;
         };
@@ -148,27 +150,34 @@ public class ExpansionParrainage {
             case "seuil"   -> String.valueOf(palier.filleuls());
             case "nom"     -> palier.nom();
             case "restant" -> String.valueOf(Math.max(0, palier.filleuls() - p.nbFilleuls()));
+            // "obtenu" once claimed from Flux; waiting in Flux (or not handed yet) = "disponible"
             case "etat"    -> !p.paliersObtenus().contains(palier.filleuls()) ? "verrouille"
-                                : p.paliersRecuperes().contains(palier.filleuls()) ? "obtenu" : "disponible";
+                                : p.paliersRecuperes().contains(palier.filleuls())
+                                    && !fr.influencraft.flux.api.reward.Rewards.waiting(player.getUniqueId(), ServiceRecuperation.clePalier(palier.filleuls()))
+                                    ? "obtenu" : "disponible";
             default        -> "";
         };
     }
 
     /** filleul_<f>_etat : verrouille / disponible (atteint, récompense pas récupérée) / obtenu. */
-    private String traiterFilleul(Profil p, String params) {
+    private String traiterFilleul(java.util.UUID uuid, Profil p, String params) {
         String reste = params.substring("filleul_".length());
         int sep = reste.indexOf('_');
         if (sep < 0 || !reste.endsWith("_etat")) return "";
         int f = entier(reste.substring(0, sep));
         if (f < 1) return "";
         if (f > p.nbFilleuls()) return "verrouille";
-        return f <= p.filleulsRecompensesDonnees() ? "obtenu" : "disponible";
+        boolean enAttente = fr.influencraft.flux.api.reward.Rewards.waiting(uuid, ServiceRecuperation.cleFilleul(f));
+        return f <= p.filleulsRecompensesDonnees() && !enAttente ? "obtenu" : "disponible";
     }
 
-    private int aRecuperer(Profil p) {
+    private int aRecuperer(java.util.UUID uuid, Profil p) {
+        // not handed to Flux yet + waiting in Flux
         int filleuls = Math.max(0, p.nbFilleuls() - p.filleulsRecompensesDonnees());
         int paliers = p.paliersObtenus().size() - p.paliersRecuperes().size();
-        return filleuls + paliers + (p.filleulRecompenseEnAttente() ? 1 : 0);
+        long flux = fr.influencraft.flux.api.reward.Rewards.pending(uuid).stream()
+                .filter(r -> ServiceRecuperation.SOURCE.equals(r.reward().source())).count();
+        return filleuls + paliers + (p.filleulRecompenseEnAttente() ? 1 : 0) + (int) flux;
     }
 
     private String traiterAttente(Profil p, String params) {

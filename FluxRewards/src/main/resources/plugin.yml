@@ -2,13 +2,13 @@ name: FluxRewards
 version: 26.2
 main: fr.influencraft.fluxrewards.FluxRewards
 api-version: "26.2"
-description: Every pending reward of the Flux suite behind one command, plus daily login and playtime rewards.
+description: Daily login and playtime rewards, delivered through the reward manager of Flux.
 authors: [Influencraft]
 depend: [Flux]
 
 permissions:
   influrecompenses.admin:
-    description: Rewards admin (day, reset, reload, queue).
+    description: Login and playtime rewards admin (day, reset, reload).
     default: op
   fluxrewards.queue:
     description: Queue a reward for a player (/rewards queue), e.g. from another plugin's config.

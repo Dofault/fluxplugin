@@ -1,0 +1,49 @@
+# Flux : toutes les récompenses en attente du joueur, quel que soit le plugin qui les a données (/recompenses).
+# Un clic sur une récompense la récupère ; le bouton du bas récupère tout ce qui rentre dans l'inventaire.
+title: "&8Récompenses"
+rows: 6
+player-inventory: hidden
+vanilla-background: true
+update-interval: 40
+
+lists:
+  rewards:
+    slots: 10-16,19-25,28-34
+    item:
+      material: entry
+      name: "%entry_label%"
+      lore:
+        - "&#B376E5%entry_source%, %entry_date%"
+        - "&#B376E5Cases nécessaires : &f%entry_slots%"
+        - ""
+        - "&r&7%img_left_click%&#FFD94D Récupérer"
+      actions:
+        left: ["[rewards] claim %entry_id%"]
+    empty:
+      material: itemsadder:influitems:checkmark
+      name: "&#FFD94DRien en attente"
+      lore: ["&#B376E5Tes prochaines récompenses (votes, parrainage, connexion, boosters...) arriveront ici."]
+
+items:
+  claim:
+    slot: 49
+    material: itemsadder:influitems:reward
+    name: "&r&7%img_left_click%&#FFD94D Tout récupérer"
+    lore:
+      - "&#B376E5%flux_rewards_count% récompense(s) en attente, %flux_rewards_slots% case(s) nécessaire(s). Ce qui ne rentre pas reste ici."
+    actions:
+      left: ["[rewards] claim"]
+  previous:
+    slot: 45
+    material: itemsadder:influitems:btn_prev
+    name: "&#FFD94DPage précédente"
+    view-requirements: ["placeholder: %flux_list_rewards_has_prev% == true"]
+    actions:
+      left: ["[list] rewards prev"]
+  next:
+    slot: 53
+    material: itemsadder:influitems:btn_next
+    name: "&#FFD94DPage suivante &7(%flux_list_rewards_page%/%flux_list_rewards_pages%)"
+    view-requirements: ["placeholder: %flux_list_rewards_has_next% == true"]
+    actions:
+      left: ["[list] rewards next"]

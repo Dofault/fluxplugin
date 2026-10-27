@@ -8,6 +8,8 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
+import fr.influencraft.flux.api.reward.Reward;
+import fr.influencraft.flux.api.reward.Rewards;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -23,9 +25,10 @@ import java.util.logging.Level;
 /**
  * Daily login and playtime rewards.
  *
- * <p><b>Login</b>: each login day moves one day forward in a cycle; the reward of the day is claimed the same day,
- * otherwise it is missed. With {@code strict-streak}, a day without login brings the player back to day 1.</p>
- * <p><b>Playtime</b>: tiers of total playtime on the server (vanilla statistic), each claimed once, any time.</p>
+ * <p><b>Login</b>: each login day moves one day forward in a cycle; the reward of the day is handed to Flux as soon
+ * as the day counts (claimed later with /rewards, like every reward of the suite). With {@code strict-streak}, a day without login brings the player back to day 1.</p>
+ * <p><b>Playtime</b>: tiers of total playtime on the server (vanilla statistic), each handed to Flux once, when
+ * reached.</p>
  *
  * <p>Main thread only; files are written asynchronously ({@code players/<uuid>.yml}, keys unchanged since
  * InfluRecompenses). The config also accepts the former French keys (connexion.jours, temps-de-jeu.paliers...).</p>
@@ -222,23 +225,24 @@ public final class DailyRewards {
         return t != null ? t : new RewardTier(day, plugin.messages().raw("day-name", "%day%", String.valueOf(day)), List.of(), List.of(), 0);
     }
 
-    /** Claims today's reward when it fits in {@code freeSlots}. True when claimed. */
-    public boolean claimDay(Player player, int freeSlots, boolean verbose) {
+    /** Key of today's login reward in Flux. */
+    public String dayKey(PlayerData d) {
+        return "daily:" + d.lastDay;
+    }
+
+    /**
+     * Hands today's reward to Flux (it waits there until claimed with /rewards) and marks the day as received.
+     * True when given now.
+     */
+    public boolean grantDay(Player player) {
         PlayerData d = players.get(player.getUniqueId());
         RewardTier tier = availableDay(player);
-        if (d == null || tier == null) {
-            if (verbose) plugin.messages().send(player, "nothing-to-claim");
-            return false;
-        }
-        if (tier.slots() > freeSlots) {
-            if (verbose) plugin.messages().send(player, "no-room", "%slots%", String.valueOf(tier.slots()));
-            return false;
-        }
+        if (d == null || tier == null) return false;
         d.claimedDays.add((int) tier.threshold());
         save(player.getUniqueId(), d, false);
-        plugin.run(player, tier.commands());
-        if (verbose) plugin.messages().send(player, "day-claimed", "%name%", tier.name(), "%day%", String.valueOf(tier.threshold()));
-        return true;
+        if (tier.commands().isEmpty()) return false;
+        return Rewards.give(player, Reward.of("daily", tier.name()).key(dayKey(d))
+                .icon(plugin.getConfig().getString("icons.daily", "CLOCK")).slots(tier.slots()).commands(tier.commands()));
     }
 
     // ================================================================ playtime
@@ -276,38 +280,24 @@ public final class DailyRewards {
         return out;
     }
 
-    /**
-     * Claims available playtime tiers that fit, {@code index} 1 = shortest tier, 0 = all of them.
-     * Returns {claimed, left because of room}.
-     */
-    public int[] claimPlaytime(Player player, int index, int freeSlots, boolean verbose) {
-        PlayerData d = players.get(player.getUniqueId());
-        if (d == null) return new int[]{0, 0};
-        int claimed = 0, left = 0, room = freeSlots;
-        for (int i = 0; i < playtimeTiers.size(); i++) {
-            if (index != 0 && index != i + 1) continue;
-            RewardTier t = playtimeTiers.get(i);
-            if (playtimeState(player.getUniqueId(), d, t) != State.AVAILABLE) continue;
-            if (t.slots() > room) {
-                left++;
-                continue;
-            }
-            room -= t.slots();
-            d.claimedPlaytime.add(t.threshold());
-            plugin.run(player, t.commands());
-            if (verbose) plugin.messages().send(player, "playtime-claimed", "%name%", t.name());
-            claimed++;
-        }
-        if (claimed > 0) save(player.getUniqueId(), d, false);
-        else if (verbose) plugin.messages().send(player, left > 0 ? "no-room" : "nothing-to-claim", "%slots%", "1");
-        return new int[]{claimed, left};
+    /** Key of a playtime tier in Flux. */
+    public static String playtimeKey(RewardTier tier) {
+        return "playtime:" + tier.threshold();
     }
 
-    /** Rewards available right now (day + playtime). */
-    public int available(UUID uuid) {
-        Player p = Bukkit.getPlayer(uuid);
-        if (p == null) return 0;
-        return (availableDay(p) != null ? 1 : 0) + availablePlaytime(p).size();
+    /** Hands every playtime tier just reached to Flux and marks them as received. Returns how many. */
+    public int grantPlaytime(Player player) {
+        PlayerData d = players.get(player.getUniqueId());
+        if (d == null) return 0;
+        int given = 0;
+        String icon = plugin.getConfig().getString("icons.playtime", "EXPERIENCE_BOTTLE");
+        for (RewardTier t : availablePlaytime(player)) {
+            d.claimedPlaytime.add(t.threshold());
+            if (!t.commands().isEmpty() && Rewards.give(player, Reward.of("playtime", t.name()).key(playtimeKey(t))
+                    .icon(icon).slots(t.slots()).commands(t.commands()))) given++;
+        }
+        if (given > 0) save(player.getUniqueId(), d, false);
+        return given;
     }
 
     // ================================================================ admin (tests)

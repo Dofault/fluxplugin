@@ -111,7 +111,9 @@ final class VoteReminder {
     }
 
     private void send(Player player, Status status) {
-        int pending = status.pendingRewards() + party.pendingCount(player.getUniqueId());
+        // still on the website + already moved into Flux
+        int pending = status.pendingRewards() + (int) fr.influencraft.flux.api.reward.Rewards.pending(player.getUniqueId()).stream()
+                .filter(r -> r.reward().source().equals("votes")).count();
         for (String raw : plugin.getConfig().getStringList("vote-reminder.message")) {
             if (pending <= 0 && raw.contains("%pending%")) continue;
             if (status.raffleTickets() <= 0 && raw.contains("%tickets%")) continue;

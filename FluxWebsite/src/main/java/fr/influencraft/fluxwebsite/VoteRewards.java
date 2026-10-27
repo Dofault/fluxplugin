@@ -2,41 +2,36 @@ package fr.influencraft.fluxwebsite;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import fr.influencraft.flux.api.inventory.Inventories;
-import fr.influencraft.flux.api.reward.ClaimResult;
-import fr.influencraft.flux.api.reward.PendingReward;
-import fr.influencraft.flux.api.reward.RewardSource;
+import fr.influencraft.flux.api.reward.Reward;
+import fr.influencraft.flux.api.reward.Rewards;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Every reward of the vote system, kept on the website until the player claims it ({@code pending_commands} with
- * {@code requires_claim}: key of each vote, streak bonus, monthly top 3 and goal, raffle prizes, Vote Party), plus
- * the Vote Party rewards kept locally ({@link VoteParty}). Source {@code votes} of the suite's rewards, also claimed
- * alone with {@code /voteclaims}.
+ * Vote rewards kept on the website ({@code pending_commands} with {@code requires_claim}: key of each vote, streak
+ * bonus, monthly top 3 and goal, raffle prizes, Vote Party) are moved into Flux, which keeps them with every other
+ * reward of the suite until the player claims them ({@code /rewards}, or {@code /voteclaims} for the votes only).
  *
- * <p>Each reward needs one slot: never more rewards than free slots, the others stay pending on the website
- * (nothing acknowledged). A command is acknowledged before it runs, so a double claim never delivers it twice.</p>
+ * <p>Collected when the player joins and before every claim (Flux {@link Rewards#collector}). Each reward is given
+ * to Flux with the key {@code vote:<website id>} <b>before</b> being acknowledged on the website: after a crash
+ * between the two, the next collection finds it again and Flux ignores the duplicate key.</p>
  */
-final class VoteRewards implements RewardSource {
+final class VoteRewards {
 
     private final FluxWebsite plugin;
     private final WebApi api;
-    private final VoteParty party;
+    /** Players being collected (the website is read asynchronously). */
+    private final Set<UUID> collecting = ConcurrentHashMap.newKeySet();
 
-    VoteRewards(FluxWebsite plugin, WebApi api, VoteParty party) {
+    VoteRewards(FluxWebsite plugin, WebApi api) {
         this.plugin = plugin;
         this.api = api;
-        this.party = party;
-    }
-
-    @Override
-    public String id() {
-        return "votes";
     }
 
     private List<JsonObject> fetch(String name) throws Exception {
@@ -48,87 +43,44 @@ final class VoteRewards implements RewardSource {
         return out;
     }
 
-    @Override
-    public CompletableFuture<List<PendingReward>> pending(Player player) {
-        String icon = plugin.getConfig().getString("vote-rewards.icon", "TRIPWIRE_HOOK");
-        String label = plugin.messages().raw("vote-reward");
-        int local = party.pendingCount(player.getUniqueId());
-        String name = player.getName();
-        return CompletableFuture.supplyAsync(() -> {
-            List<PendingReward> out = new ArrayList<>();
-            for (int i = 0; i < local; i++) out.add(new PendingReward(id(), plugin.messages().raw("vote-party-reward"), icon, 1, 1));
-            if (!api.ready()) return out;
-            try {
-                for (JsonObject entry : fetch(name)) {
-                    String own = entry.has("label") && !entry.get("label").isJsonNull() ? entry.get("label").getAsString() : label;
-                    out.add(new PendingReward(id(), own, icon, 1, 1));
-                }
-            } catch (Exception e) {
-                plugin.getLogger().fine("Vote rewards of " + name + " unavailable: " + e.getMessage());
-            }
-            return out;
-        });
-    }
-
-    @Override
-    public CompletableFuture<ClaimResult> claim(Player player, int freeSlots) {
-        return claim(player, freeSlots, null);
-    }
-
-    /** {@code onError} (main thread) is told when the website could not be read; the local rewards are given anyway. */
-    CompletableFuture<ClaimResult> claim(Player player, int freeSlots, Runnable onError) {
-        int local = party.claim(player, freeSlots);
-        int localLeft = party.pendingCount(player.getUniqueId());
-        int room = freeSlots - local;
-        CompletableFuture<ClaimResult> result = new CompletableFuture<>();
-        if (!api.ready()) {
-            result.complete(new ClaimResult(local, localLeft));
-            return result;
-        }
-        String name = player.getName();
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            try {
-                List<JsonObject> waiting = fetch(name);
-                List<JsonObject> deliver = room > 0 ? waiting.subList(0, Math.min(room, waiting.size())) : List.of();
-                List<Long> ids = new ArrayList<>();
-                List<String> commands = new ArrayList<>();
-                for (JsonObject entry : deliver) {
-                    ids.add(entry.get("id").getAsLong());
-                    commands.add(entry.get("command").getAsString());
-                }
-                if (!ids.isEmpty()) api.ack(ids); // before running them: never delivered twice
-                int left = waiting.size() - deliver.size() + localLeft;
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    for (String c : commands) Bukkit.dispatchCommand(Bukkit.getConsoleSender(), c);
-                    result.complete(new ClaimResult(local + commands.size(), left));
-                });
-            } catch (Exception e) {
-                plugin.getLogger().warning("Vote rewards of " + name + " could not be claimed: " + e.getMessage());
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    if (onError != null) onError.run();
-                    result.complete(new ClaimResult(local, localLeft));
-                });
-            }
-        });
-        return result;
-    }
-
-    /** {@code /voteclaims}: vote rewards only, with its own messages. */
-    void command(Player player) {
-        int free = Inventories.freeSlots(player);
-        if (free == 0) {
-            plugin.messages().send(player, "votes-no-room");
+    /** Moves the player's website rewards into Flux (asynchronous); {@code then} runs on the main thread afterwards. */
+    void collect(Player player, Runnable then) {
+        if (!api.ready() || !collecting.add(player.getUniqueId())) {
+            if (then != null) then.run();
             return;
         }
-        boolean[] failed = {false};
-        claim(player, free, () -> {
-            failed[0] = true;
-            plugin.messages().send(player, "votes-error");
-        }).thenAccept(r -> {
-            if (r.delivered() == 0 && !failed[0]) plugin.messages().send(player, "votes-none");
-            if (r.delivered() > 0) plugin.messages().send(player, "votes-claimed", "%count%", String.valueOf(r.delivered()));
-            if (r.remaining() > 0) plugin.messages().send(player, "votes-remaining", "%count%", String.valueOf(r.remaining()));
-            fr.influencraft.flux.api.reward.Rewards.changed(player);
+        String name = player.getName();
+        String icon = plugin.getConfig().getString("vote-rewards.icon", "TRIPWIRE_HOOK");
+        String defaultLabel = plugin.messages().raw("vote-reward");
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            List<Long> moved = new ArrayList<>();
+            try {
+                for (JsonObject entry : fetch(name)) {
+                    long id = entry.get("id").getAsLong();
+                    String label = entry.has("label") && !entry.get("label").isJsonNull() ? entry.get("label").getAsString() : defaultLabel;
+                    Reward reward = Reward.of("votes", label).key("vote:" + id).icon(icon).slots(1)
+                            .commands(entry.get("command").getAsString());
+                    // kept by Flux (or already there): only then acknowledged on the website
+                    if (Rewards.give(player, reward) || Rewards.given(player.getUniqueId(), "vote:" + id)) moved.add(id);
+                }
+                if (!moved.isEmpty()) api.ack(moved);
+            } catch (Exception e) {
+                plugin.getLogger().warning("Vote rewards of " + name + " not collected: " + e.getMessage());
+            } finally {
+                collecting.remove(player.getUniqueId());
+                if (then != null) Bukkit.getScheduler().runTask(plugin, then);
+            }
+        });
+    }
+
+    /** {@code /voteclaims}: collects, then claims the vote rewards only. */
+    void command(Player player) {
+        collect(player, () -> {
+            if (!player.isOnline()) return;
+            var result = Rewards.claim(player, "votes", false);
+            if (result.delivered() == 0 && result.remaining() == 0) plugin.messages().send(player, "votes-none");
+            if (result.delivered() > 0) plugin.messages().send(player, "votes-claimed", "%count%", String.valueOf(result.delivered()));
+            if (result.remaining() > 0) plugin.messages().send(player, "votes-remaining", "%count%", String.valueOf(result.remaining()));
         });
     }
 }

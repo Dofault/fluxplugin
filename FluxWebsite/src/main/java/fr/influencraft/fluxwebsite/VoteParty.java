@@ -29,9 +29,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * <p>Like every vote reward, the Vote Party reward is claimed by the player: the list of online players is sent to
  * the website ({@code POST /api/mc/vote-party/reward}), which keeps each reward pending (commands from its admin
- * panel, or {@code voteparty.reward-commands}). When the website cannot be reached, the commands are kept here per
- * UUID ({@code pending} in voteparty.yml, {@code %player%} resolved only on delivery) and claimed with the other
- * vote rewards.</p>
+ * panel, or {@code voteparty.reward-commands}) until it is moved into Flux's rewards. When the website cannot be
+ * reached, the rewards are handed to Flux directly.</p>
  */
 final class VoteParty {
 
@@ -39,8 +38,6 @@ final class VoteParty {
     private final WebApi api;
     private final File file;
     private final AtomicInteger current = new AtomicInteger();
-    /** Reward commands kept locally per player. Main thread only. */
-    private final Map<UUID, List<String>> pending = new HashMap<>();
 
     private int votesRequired;
     private List<String> rewardCommands;
@@ -125,7 +122,7 @@ final class VoteParty {
                 for (Player p : players) {
                     if (!p.isOnline()) continue;
                     if (!message.isBlank()) p.sendMessage(Texts.parseClickable(message, p));
-                    Rewards.changed(p);
+                    Rewards.collect(p); // straight into Flux's rewards
                 }
             });
         });
@@ -142,16 +139,19 @@ final class VoteParty {
         return false;
     }
 
-    /** Fallback: rewards kept in voteparty.yml, claimed with the other vote rewards. Main thread. */
+    /** Fallback when the website cannot keep them: the rewards go straight to Flux's reward manager. Main thread. */
     private void storeLocally(List<Player> players) {
         if (rewardCommands.isEmpty()) return;
         String message = setting("reward-stored-message");
         for (Player p : players) {
-            pending.computeIfAbsent(p.getUniqueId(), u -> new ArrayList<>()).addAll(rewardCommands);
+            give(p, rewardCommands);
             if (p.isOnline() && !message.isBlank()) p.sendMessage(Texts.parseClickable(message, p));
-            Rewards.changed(p);
         }
-        save();
+    }
+
+    private void give(org.bukkit.OfflinePlayer player, List<String> commands) {
+        Rewards.give(player, fr.influencraft.flux.api.reward.Reward.of("votes", plugin.messages().raw("vote-party-reward"))
+                .icon(plugin.getConfig().getString("vote-rewards.icon", "TRIPWIRE_HOOK")).slots(1).commands(commands));
     }
 
     private void showTitle(Player player) {
@@ -162,44 +162,32 @@ final class VoteParty {
                 Title.Times.times(Duration.ofMillis(500), Duration.ofSeconds(3), Duration.ofSeconds(1))));
     }
 
-    /** Vote Party rewards kept locally for this player. Main thread. */
-    int pendingCount(UUID uuid) {
-        List<String> commands = pending.get(uuid);
-        return commands == null ? 0 : commands.size();
-    }
-
-    /** Delivers at most {@code max} locally kept rewards (one slot each) and returns how many. Main thread. */
-    int claim(Player player, int max) {
-        List<String> commands = pending.get(player.getUniqueId());
-        if (commands == null || commands.isEmpty() || max <= 0) return 0;
-        List<String> delivered = new ArrayList<>(commands.subList(0, Math.min(max, commands.size())));
-        commands.subList(0, delivered.size()).clear();
-        if (commands.isEmpty()) pending.remove(player.getUniqueId());
-        save();
-        for (String c : delivered) Bukkit.dispatchCommand(Bukkit.getConsoleSender(), c.replace("%player%", player.getName()));
-        return delivered.size();
-    }
-
     private void load() {
         if (!file.exists()) return;
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
         current.set(yaml.getInt("current", 0));
         ConfigurationSection section = yaml.getConfigurationSection("pending");
         if (section == null) return;
+        Map<UUID, List<String>> moved = new HashMap<>();
         for (String key : section.getKeys(false)) {
             try {
                 List<String> commands = section.getStringList(key);
-                if (!commands.isEmpty()) pending.put(UUID.fromString(key), new ArrayList<>(commands));
+                // rewards kept here by a former version: handed to Flux once
+                if (!commands.isEmpty()) moved.put(UUID.fromString(key), new ArrayList<>(commands));
             } catch (IllegalArgumentException e) {
                 plugin.getLogger().warning("voteparty.yml: invalid UUID ignored: " + key);
             }
+        }
+        moved.forEach((uuid, commands) -> give(Bukkit.getOfflinePlayer(uuid), commands));
+        if (!moved.isEmpty()) {
+            plugin.getLogger().info(moved.size() + " player(s) had Vote Party rewards kept locally: moved into Flux.");
+            save();
         }
     }
 
     private void save() {
         YamlConfiguration yaml = new YamlConfiguration();
         yaml.set("current", current.get());
-        pending.forEach((uuid, commands) -> yaml.set("pending." + uuid, commands));
         try {
             yaml.save(file);
         } catch (IOException e) {

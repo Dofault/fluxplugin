@@ -1,23 +1,11 @@
-# FluxRewards: every pending reward in one place (/rewards), daily login rewards and playtime rewards.
+# FluxRewards: daily login rewards and playtime rewards. Once earned, a reward is handed to Flux and waits there
+# with every other reward of the suite until the player claims it (/rewards, settings in plugins/Flux/config.yml).
 # Colours: & codes, &#RRGGBB and MiniMessage tags. Commands run from the console, %player% = player name.
-# "slots" = inventory slots the commands need: a reward is only given when it fits (0 for money only).
+# "slots" = inventory slots the commands need: a reward is only delivered when it fits (0 for money only).
 
 timezone: "Europe/Paris"
 
-# Order in which /rewards claims the sources (others after, alphabetically). Sources of other plugins:
-# votes (FluxWebsite), boosters (FluxPets), referral (FluxReferral).
-claim-order: [mailbox, daily, playtime, votes, boosters, referral]
-# Sources never claimed by /rewards (they keep their own command).
-disabled-sources: []
-
-# true: /rewards opens the menu of pending rewards instead of claiming everything right away.
-command-opens-menu: false
-
-# Reminder of pending rewards: on join, and every interval-seconds (0 = on join only).
-reminder:
-  interval-seconds: 0
-
-# Icons of the login and playtime rewards in the menu of pending rewards.
+# Icons of the login and playtime rewards in the rewards menu of Flux.
 icons:
   daily: "CLOCK"
   playtime: "EXPERIENCE_BOTTLE"
@@ -27,7 +15,7 @@ daily:
   cycle: 7
   # false: each login day moves one day forward, even after an absence. true: a day without login resets to day 1.
   strict-streak: false
-  # A day not claimed on the same day is missed. Days missing from the list give nothing.
+  # Days missing from the list give nothing. A day without login is missed.
   days:
     1:
       lore: ["&f8 bread"]

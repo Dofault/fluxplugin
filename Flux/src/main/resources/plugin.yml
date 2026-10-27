@@ -17,3 +17,6 @@ permissions:
   fluxmenu.admin:
     description: /fluxmenu (open, reload, list).
     default: op
+  flux.rewards.give:
+    description: /rewards give and /rewards list (hand a reward to a player, see what waits for him).
+    default: op

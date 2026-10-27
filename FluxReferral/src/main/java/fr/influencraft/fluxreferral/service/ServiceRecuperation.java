@@ -1,5 +1,8 @@
 package fr.influencraft.fluxreferral.service;
 
+import fr.influencraft.flux.api.reward.ClaimResult;
+import fr.influencraft.flux.api.reward.Reward;
+import fr.influencraft.flux.api.reward.Rewards;
 import fr.influencraft.fluxreferral.FluxReferralPlugin;
 import fr.influencraft.fluxreferral.bdd.DepotJoueur;
 import fr.influencraft.fluxreferral.bdd.DepotPalier;
@@ -20,21 +23,21 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 
 /**
- * Récupération manuelle des récompenses de parrainage : rien n'est jamais distribué tout seul.
- * Trois sources de récompenses en attente pour un joueur :
- * <ul>
- *   <li>en tant que <b>parrain</b>, une récompense par filleul (répétée, jamais limitée) ;</li>
- *   <li>en tant que <b>parrain</b>, un bonus par palier franchi (rare) ;</li>
- *   <li>en tant que <b>filleul</b>, une récompense d'accueil (une seule fois).</li>
- * </ul>
- * Chaque case du chemin du menu récupère sa propre récompense ({@link #recupererUnFilleul},
- * {@link #recupererPalier}) ; {@link #recuperer} (commande nue, sans argument) donne tout
- * d'un coup. Dans tous les cas, une unité n'est donnée que s'il reste au moins une case libre
- * dans l'inventaire, et acquittée en base (asynchrone) juste après l'exécution de ses
- * commandes — jamais avant, jamais en lot à la fin : un pépin en cours de route ne fait perdre
- * que ce qui restait, jamais redonner ce qui a déjà été accordé.
+ * Referral rewards go through Flux's reward manager: every reward earned (welcome reward of a referred player, tier
+ * bonus, one reward per validated referred player) is handed to Flux with its own key, then acknowledged here, and
+ * claimed with every other reward ({@code /rewards}) or from the referral path of the menu
+ * ({@code /parrainage recuperer [filleul|palier <n>]}).
+ * <p>
+ * Keys: {@code referral:welcome}, {@code referral:tier:<referred players>}, {@code referral:referee:<n>} (n-th
+ * referred player). Given to Flux <b>before</b> being acknowledged: after a crash in between, the next transfer gives
+ * the same keys again and Flux ignores them.
+ * <p>
+ * Transfer: when the player joins and before every claim (Flux {@link Rewards#collector}), and on
+ * {@code /parrainage recuperer}.
  */
 public class ServiceRecuperation {
+
+    public static final String SOURCE = "referral";
 
     private final FluxReferralPlugin plugin;
     private final DepotJoueur depotJoueur;
@@ -42,7 +45,7 @@ public class ServiceRecuperation {
     private final GestionnaireConfig config;
     private final ServiceProfil serviceProfil;
 
-    /** Anti double-appel : une seule récupération en vol par joueur, quelle que soit sa forme. */
+    /** One transfer at a time per player. */
     private final Set<UUID> enCours = ConcurrentHashMap.newKeySet();
 
     public ServiceRecuperation(FluxReferralPlugin plugin, DepotJoueur depotJoueur, DepotPalier depotPalier,
@@ -54,215 +57,121 @@ public class ServiceRecuperation {
         this.serviceProfil = serviceProfil;
     }
 
-    /** Résumé d'une récupération, pour le message au joueur. */
-    public record Resultat(int filleulsRecompenses, boolean filleulRecompenseRecue,
-                           List<Integer> paliersRecompenses, boolean inventairePlein, boolean dejaEnCours) {
-        public int total() {
-            return filleulsRecompenses + (filleulRecompenseRecue ? 1 : 0) + paliersRecompenses.size();
-        }
-
-        static Resultat vide(boolean plein) {
-            return new Resultat(0, false, List.of(), plein, false);
-        }
-
-        static Resultat enCoursDeja() {
-            return new Resultat(0, false, List.of(), false, true);
+    /** Summary of a claim, for the message to the player. */
+    public record Resultat(int total, boolean inventairePlein, boolean dejaEnCours) {
+        static Resultat of(ClaimResult r) {
+            return new Resultat(r.delivered(), r.remaining() > 0, false);
         }
     }
 
-    // ====================================================================
-    // Récupération unité par unité (une case du chemin du menu)
-    // ====================================================================
-
-    /** Donne la prochaine récompense de filleul en attente (une seule, la suivante dans l'ordre). */
-    public void recupererUnFilleul(Player joueur, Consumer<Resultat> callback) {
-        UUID uuid = joueur.getUniqueId();
-        if (!demarrer(uuid, callback)) return;
-
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            try {
-                var opt = depotJoueur.trouverParUUID(uuid);
-                boolean enAttente = opt.isPresent()
-                    && depotJoueur.obtenirFilleulsRecompensesDonnees(uuid) < opt.get().nbFilleuls();
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    Resultat resultat;
-                    if (!enAttente) {
-                        resultat = Resultat.vide(false);
-                    } else if (!aUneCaseLibre(joueur)) {
-                        resultat = Resultat.vide(true);
-                    } else {
-                        executer(config.getCommandesParrain(), joueur.getName());
-                        acquitterAsync(uuid, () -> depotJoueur.incrementerFilleulsRecompensesDonnees(uuid, 1), "récompense filleul");
-                        resultat = new Resultat(1, false, List.of(), false, false);
-                    }
-                    terminer(uuid, resultat, callback);
-                });
-            } catch (SQLException e) {
-                erreurLecture(uuid, joueur, e, callback);
-            }
-        });
+    public static String cleFilleul(int n) {
+        return SOURCE + ":referee:" + n;
     }
 
-    /** Donne le bonus d'un palier précis, s'il est atteint et pas déjà récupéré. */
-    public void recupererPalier(Player joueur, int seuil, Consumer<Resultat> callback) {
-        UUID uuid = joueur.getUniqueId();
-        if (!demarrer(uuid, callback)) return;
-
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            try {
-                boolean enAttente = depotPalier.paliersEnAttente(uuid).contains(seuil);
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    Resultat resultat;
-                    Palier palier = config.getPaliers().stream().filter(p -> p.filleuls() == seuil).findFirst().orElse(null);
-                    if (!enAttente || palier == null) {
-                        resultat = Resultat.vide(false);
-                    } else if (!aUneCaseLibre(joueur)) {
-                        resultat = Resultat.vide(true);
-                    } else {
-                        executer(palier.commandes(), joueur.getName());
-                        acquitterAsync(uuid, () -> depotPalier.marquerRecupere(uuid, seuil), "palier " + seuil);
-                        resultat = new Resultat(0, false, List.of(seuil), false, false);
-                    }
-                    terminer(uuid, resultat, callback);
-                });
-            } catch (SQLException e) {
-                erreurLecture(uuid, joueur, e, callback);
-            }
-        });
+    public static String clePalier(int seuil) {
+        return SOURCE + ":tier:" + seuil;
     }
 
+    public static final String CLE_ACCUEIL = SOURCE + ":welcome";
+
     // ====================================================================
-    // Récupération groupée (commande nue /parrainage recuperer)
+    // Claims (command and menu path)
     // ====================================================================
 
-    /**
-     * Récupère tout ce qui est en attente pour {@code joueur} (parrain et filleul confondus).
-     * Peut être appelée depuis le thread principal ; le résultat revient sur le thread principal.
-     */
+    /** Everything that fits, referral rewards only. */
     public void recuperer(Player joueur, Consumer<Resultat> callback) {
-        UUID uuid = joueur.getUniqueId();
-        if (!demarrer(uuid, callback)) return;
+        transferer(joueur, () -> callback.accept(Resultat.of(Rewards.claim(joueur, SOURCE, false))));
+    }
 
+    /** The next referred-player reward waiting (oldest first). */
+    public void recupererUnFilleul(Player joueur, Consumer<Resultat> callback) {
+        transferer(joueur, () -> {
+            String cle = Rewards.pending(joueur.getUniqueId()).stream()
+                    .map(r -> r.reward().key())
+                    .filter(k -> k != null && k.startsWith(SOURCE + ":referee:"))
+                    .findFirst().orElse(null);
+            callback.accept(cle == null ? new Resultat(0, false, false) : Resultat.of(Rewards.claimKey(joueur, cle, false)));
+        });
+    }
+
+    /** The bonus of one tier. */
+    public void recupererPalier(Player joueur, int seuil, Consumer<Resultat> callback) {
+        transferer(joueur, () -> callback.accept(Resultat.of(Rewards.claimKey(joueur, clePalier(seuil), false))));
+    }
+
+    // ====================================================================
+    // Transfer into Flux
+    // ====================================================================
+
+    /** Hands every earned referral reward to Flux; {@code then} runs on the main thread afterwards. */
+    public void transferer(Player joueur, Runnable then) {
+        UUID uuid = joueur.getUniqueId();
+        if (!enCours.add(uuid)) {
+            if (then != null) then.run();
+            return;
+        }
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
                 var opt = depotJoueur.trouverParUUID(uuid);
                 if (opt.isEmpty()) {
-                    Bukkit.getScheduler().runTask(plugin, () -> terminer(uuid, Resultat.vide(false), callback));
+                    finir(uuid, false, then);
                     return;
                 }
                 JoueurParrainage j = opt.get();
-                int filleulsEnAttente = Math.max(0, j.nbFilleuls() - depotJoueur.obtenirFilleulsRecompensesDonnees(uuid));
-                boolean filleulRecompenseEnAttente = j.parrainUuid() != null && !depotJoueur.obtenirFilleulRecompenseRecuperee(uuid);
-                List<Integer> paliersEnAttente = new ArrayList<>(depotPalier.paliersEnAttente(uuid));
-                paliersEnAttente.sort(Comparator.naturalOrder());
+                int dejaDonnes = depotJoueur.obtenirFilleulsRecompensesDonnees(uuid);
+                int filleulsEnAttente = Math.max(0, j.nbFilleuls() - dejaDonnes);
+                boolean accueil = j.parrainUuid() != null && !depotJoueur.obtenirFilleulRecompenseRecuperee(uuid);
+                List<Integer> paliers = new ArrayList<>(depotPalier.paliersEnAttente(uuid));
+                paliers.sort(Comparator.naturalOrder());
+                boolean change = false;
 
-                Bukkit.getScheduler().runTask(plugin, () ->
-                    donnerSurThreadPrincipal(joueur, filleulsEnAttente, filleulRecompenseEnAttente, paliersEnAttente, callback));
+                if (accueil && donner(joueur, CLE_ACCUEIL, libelle("accueil", 0), config.getCommandesFilleul())) {
+                    depotJoueur.marquerFilleulRecompenseRecuperee(uuid);
+                    change = true;
+                }
+                List<Palier> definis = config.getPaliers();
+                for (int seuil : paliers) {
+                    Palier palier = definis.stream().filter(p -> p.filleuls() == seuil).findFirst().orElse(null);
+                    if (palier == null) continue; // tier removed from the config meanwhile
+                    if (donner(joueur, clePalier(seuil), libelle("palier", seuil), palier.commandes())) {
+                        depotPalier.marquerRecupere(uuid, seuil);
+                        change = true;
+                    }
+                }
+                for (int i = 1; i <= filleulsEnAttente; i++) {
+                    if (!donner(joueur, cleFilleul(dejaDonnes + i), libelle("filleul", 0), config.getCommandesParrain())) break;
+                    depotJoueur.incrementerFilleulsRecompensesDonnees(uuid, 1);
+                    change = true;
+                }
+                finir(uuid, change, then);
             } catch (SQLException e) {
-                erreurLecture(uuid, joueur, e, callback);
+                plugin.getLogger().log(Level.SEVERE, "Erreur BDD pendant le transfert des récompenses de " + joueur.getName(), e);
+                finir(uuid, false, then);
             }
         });
     }
 
-    /** Thread principal : vérifie l'inventaire et distribue, une unité à la fois. */
-    private void donnerSurThreadPrincipal(Player joueur, int filleulsEnAttente, boolean filleulRecompenseEnAttente,
-                                          List<Integer> paliersEnAttente, Consumer<Resultat> callback) {
-        UUID uuid = joueur.getUniqueId();
-        int filleulsRecompenses = 0;
-        boolean filleulRecompenseRecue = false;
-        List<Integer> paliersRecompenses = new ArrayList<>();
-        boolean plein = false;
-
-        // Ordre : accueil du filleul d'abord (unique), puis les paliers (bonus, plus rares),
-        // puis les récompenses par filleul (répétitives) — pour que les cases libres servent
-        // en priorité aux récompenses les plus significatives.
-        if (filleulRecompenseEnAttente) {
-            if (aUneCaseLibre(joueur)) {
-                executer(config.getCommandesFilleul(), joueur.getName());
-                filleulRecompenseRecue = true;
-                acquitterAsync(uuid, () -> depotJoueur.marquerFilleulRecompenseRecuperee(uuid), "accueil filleul");
-            } else {
-                plein = true;
-            }
-        }
-
-        if (!plein) {
-            List<Palier> paliers = config.getPaliers();
-            for (int seuil : paliersEnAttente) {
-                if (!aUneCaseLibre(joueur)) {
-                    plein = true;
-                    break;
-                }
-                Palier palier = paliers.stream().filter(p -> p.filleuls() == seuil).findFirst().orElse(null);
-                if (palier == null) continue; // palier retiré de la config entre-temps
-                executer(palier.commandes(), joueur.getName());
-                paliersRecompenses.add(seuil);
-                final int seuilFinal = seuil;
-                acquitterAsync(uuid, () -> depotPalier.marquerRecupere(uuid, seuilFinal), "palier " + seuil);
-            }
-        }
-
-        if (!plein) {
-            List<String> commandesParrain = config.getCommandesParrain();
-            while (filleulsRecompenses < filleulsEnAttente) {
-                if (!aUneCaseLibre(joueur)) {
-                    plein = true;
-                    break;
-                }
-                executer(commandesParrain, joueur.getName());
-                filleulsRecompenses++;
-                acquitterAsync(uuid, () -> depotJoueur.incrementerFilleulsRecompensesDonnees(uuid, 1), "récompense filleul");
-            }
-        }
-
-        terminer(uuid, new Resultat(filleulsRecompenses, filleulRecompenseRecue, paliersRecompenses, plein, false), callback);
+    /** Kept by Flux now, or already there (transfer replayed after a crash). */
+    private boolean donner(Player joueur, String cle, String libelle, List<String> commandes) {
+        List<String> converties = commandes.stream().map(c -> c.replace("{joueur}", "%player%")).toList();
+        Reward reward = Reward.of(SOURCE, libelle).key(cle).slots(1).commands(converties)
+                .icon(plugin.getConfig().getString("recompenses.icone", "PLAYER_HEAD"));
+        return Rewards.give(joueur, reward) || Rewards.given(joueur.getUniqueId(), cle);
     }
 
-    // ====================================================================
-
-    /** @return false si une récupération est déjà en vol (callback déjà appelé dans ce cas) */
-    private boolean demarrer(UUID uuid, Consumer<Resultat> callback) {
-        if (!enCours.add(uuid)) {
-            callback.accept(Resultat.enCoursDeja());
-            return false;
-        }
-        return true;
+    private String libelle(String type, int seuil) {
+        String own = plugin.getGestionnaireLangue().getMessageBrut("recompense-libelle-" + type, java.util.Map.of());
+        String label = own != null && !own.isBlank() && !own.contains("recompense-libelle-") ? own : switch (type) {
+            case "accueil" -> "&fRécompense d'accueil (parrainage)";
+            case "palier" -> "&fBonus de parrainage : {seuil} filleuls";
+            default -> "&fRécompense de filleul";
+        };
+        return label.replace("{seuil}", String.valueOf(seuil));
     }
 
-    private void terminer(UUID uuid, Resultat resultat, Consumer<Resultat> callback) {
-        if (resultat.total() > 0) serviceProfil.recharger(uuid);
+    private void finir(UUID uuid, boolean change, Runnable then) {
+        if (change) serviceProfil.recharger(uuid);
         enCours.remove(uuid);
-        callback.accept(resultat);
-    }
-
-    private void erreurLecture(UUID uuid, Player joueur, SQLException e, Consumer<Resultat> callback) {
-        plugin.getLogger().log(Level.SEVERE, "Erreur BDD lors de la lecture des récompenses en attente de " + joueur.getName(), e);
-        Bukkit.getScheduler().runTask(plugin, () -> terminer(uuid, Resultat.vide(false), callback));
-    }
-
-    private static boolean aUneCaseLibre(Player joueur) {
-        return joueur.getInventory().firstEmpty() != -1;
-    }
-
-    private static void executer(List<String> commandes, String pseudo) {
-        for (String commande : commandes) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), commande.replace("{joueur}", pseudo));
-        }
-    }
-
-    /** Écrit l'acquittement en base de façon asynchrone, sans bloquer la distribution en cours. */
-    private interface EcritureBDD {
-        void ecrire() throws SQLException;
-    }
-
-    private void acquitterAsync(UUID uuid, EcritureBDD ecriture, String libelle) {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            try {
-                ecriture.ecrire();
-            } catch (SQLException e) {
-                plugin.getLogger().log(Level.SEVERE,
-                    "Erreur BDD lors de l'acquittement (" + libelle + ") pour " + uuid, e);
-            }
-        });
+        if (then != null) Bukkit.getScheduler().runTask(plugin, then);
     }
 }

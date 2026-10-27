@@ -40,3 +40,12 @@ dialogs:
 lore:
   max-line-length: 40
   repeat-prefix: true
+
+# Reward manager: every plugin of the suite hands its rewards to Flux, players claim them all with /rewards.
+rewards:
+  # /rewards opens the menu "rewards" (menus/rewards.yml); false: claims everything straight away
+  command-opens-menu: true
+  # chat message when a reward is given to an online player
+  notify-on-give: true
+  # reminder of the waiting rewards, every N seconds (0: only when joining)
+  reminder-interval-seconds: 0

@@ -1,88 +1,134 @@
 package fr.influencraft.flux.api.reward;
 
 import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 /**
- * Pending rewards of the suite. Plugins register their {@link RewardSource}; the rewards plugin (FluxRewards)
- * claims them all at once and also provides a generic {@link Mailbox} so that any plugin, or any config through a
- * console command, can hand a reward (commands + slots it needs) to a player without dropping it.
+ * The reward manager of the suite. Every plugin hands its rewards to Flux ({@link #give}): Flux keeps them
+ * ({@code plugins/Flux/rewards.db}) and delivers them all through one command ({@code /rewards}, renamable) and one
+ * menu, within the room left in the inventory. Nothing is ever dropped, and a reward is marked as claimed before its
+ * commands run, so it can never be delivered twice.
+ *
+ * <p>Rewards living elsewhere (the website's votes...) are moved into Flux by a {@link #collector}, called when the
+ * player joins and before every claim.</p>
  *
  * <pre>
- *   Rewards.register(this, new BoosterSource());
- *   Rewards.queue(player, "jobs", "&fBooster Mineur", "itemsadder:influpet:booster_mineur", 1,
- *           List.of("fluxpets give %player% booster_mineur 1"));
+ *   Rewards.give(player, Reward.fromConfig(section, "referral", "&amp;fReferral bonus").key("referral:tier:5"));
+ *   Rewards.collector(this, player -> moveWebsiteVotesIntoFlux(player));
  * </pre>
  */
 public final class Rewards {
 
-    /** Storage of rewards queued by commands, provided by the rewards plugin. */
-    public interface Mailbox {
-        /** Keeps a reward for the player ({@code %player%} in commands = his name at claim time). */
-        void queue(OfflinePlayer player, String source, String label, String icon, int slots, List<String> commands);
+    /** Implemented by Flux. */
+    public interface Backend {
+        boolean give(OfflinePlayer player, Reward reward);
+
+        boolean given(UUID player, String key);
+
+        List<StoredReward> pending(UUID player);
+
+        ClaimResult claim(Player player, String source, long id, boolean verbose);
+
+        void open(Player player);
     }
 
-    private record Owned(Plugin owner, RewardSource source) {
-    }
-
-    private static final Map<String, Owned> SOURCES = new ConcurrentHashMap<>();
-    private static volatile Mailbox mailbox;
-    private static volatile Plugin mailboxOwner;
-    /** Called when a source's pending rewards change, to refresh menus and reminders. */
-    private static volatile java.util.function.Consumer<OfflinePlayer> changed = p -> {
-    };
+    private static volatile Backend backend;
+    private static final Map<Plugin, Consumer<Player>> COLLECTORS = new ConcurrentHashMap<>();
 
     private Rewards() {
     }
 
-    public static void register(Plugin owner, RewardSource source) {
-        SOURCES.put(source.id().toLowerCase(Locale.ROOT), new Owned(owner, source));
+    public static void bind(Backend flux) {
+        backend = flux;
     }
 
-    public static void unregisterAll(Plugin owner) {
-        SOURCES.values().removeIf(o -> o.owner() == owner);
-        if (mailboxOwner == owner) {
-            mailbox = null;
-            mailboxOwner = null;
+    /** True when Flux runs its reward manager. */
+    public static boolean available() {
+        return backend != null;
+    }
+
+    /**
+     * Keeps a reward for the player until he claims it. Any thread. False when Flux is missing, when the database
+     * refused it (logged) or when a reward with the same key was already given to him.
+     */
+    public static boolean give(OfflinePlayer player, Reward reward) {
+        Backend b = backend;
+        return b != null && player != null && reward != null && b.give(player, reward);
+    }
+
+    /** Whether a reward with this key was already given to the player (claimed or not). */
+    public static boolean given(UUID player, String key) {
+        Backend b = backend;
+        return b != null && key != null && b.given(player, key);
+    }
+
+    /** Rewards waiting for the player, oldest first. */
+    public static List<StoredReward> pending(UUID player) {
+        Backend b = backend;
+        return b == null ? List.of() : b.pending(player);
+    }
+
+    public static int count(UUID player) {
+        return pending(player).size();
+    }
+
+    /** Claims everything that fits (main thread), with the usual messages. */
+    public static ClaimResult claim(Player player) {
+        return claim(player, null, true);
+    }
+
+    /** Claims what fits among the rewards of one source (null = all). */
+    public static ClaimResult claim(Player player, String source, boolean verbose) {
+        Backend b = backend;
+        return b == null ? ClaimResult.NONE : b.claim(player, source == null ? null : source.toLowerCase(Locale.ROOT), -1, verbose);
+    }
+
+    /** Claims the waiting reward of this key when it fits (one case of a path in a menu). */
+    public static ClaimResult claimKey(Player player, String key, boolean verbose) {
+        Backend b = backend;
+        if (b == null || key == null) return ClaimResult.NONE;
+        for (StoredReward r : b.pending(player.getUniqueId())) {
+            if (key.equals(r.reward().key())) return b.claim(player, null, r.id(), verbose);
+        }
+        return ClaimResult.NONE;
+    }
+
+    /** Whether a reward of this key waits for the player (given, not claimed yet). */
+    public static boolean waiting(UUID player, String key) {
+        return key != null && pending(player).stream().anyMatch(r -> key.equals(r.reward().key()));
+    }
+
+    /** Opens the rewards menu (claims everything when no menu is installed). */
+    public static void open(Player player) {
+        Backend b = backend;
+        if (b != null) b.open(player);
+    }
+
+    /** Moves rewards kept elsewhere into Flux for this player; called on join and before every claim, main thread. */
+    public static void collector(Plugin owner, Consumer<Player> collector) {
+        COLLECTORS.put(owner, collector);
+    }
+
+    /** Called by Flux. */
+    public static void collect(Player player) {
+        for (Map.Entry<Plugin, Consumer<Player>> e : COLLECTORS.entrySet()) {
+            try {
+                e.getValue().accept(player);
+            } catch (RuntimeException ex) {
+                e.getKey().getLogger().warning("Reward collector failed for " + player.getName() + ": " + ex);
+            }
         }
     }
 
-    public static List<RewardSource> sources() {
-        return SOURCES.values().stream().map(Owned::source).toList();
-    }
-
-    public static RewardSource source(String id) {
-        Owned o = SOURCES.get(id.toLowerCase(Locale.ROOT));
-        return o == null ? null : o.source();
-    }
-
-    /** Called by the rewards plugin. */
-    public static void provideMailbox(Plugin owner, Mailbox box, java.util.function.Consumer<OfflinePlayer> onChange) {
-        mailbox = box;
-        mailboxOwner = owner;
-        changed = onChange;
-    }
-
-    /** Whether a mailbox is available (the rewards plugin is installed). */
-    public static boolean hasMailbox() {
-        return mailbox != null;
-    }
-
-    /** Queues a reward in the mailbox. False when there is no mailbox: the caller must deliver it another way. */
-    public static boolean queue(OfflinePlayer player, String source, String label, String icon, int slots, List<String> commands) {
-        Mailbox box = mailbox;
-        if (box == null) return false;
-        box.queue(player, source, label, icon, Math.max(0, slots), List.copyOf(commands));
-        return true;
-    }
-
-    /** A source tells that the pending rewards of a player changed (new reward, claimed elsewhere). */
-    public static void changed(OfflinePlayer player) {
-        changed.accept(player);
+    public static void unregisterAll(Plugin owner) {
+        COLLECTORS.remove(owner);
     }
 }

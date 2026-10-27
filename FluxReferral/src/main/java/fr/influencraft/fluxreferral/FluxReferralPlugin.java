@@ -99,9 +99,8 @@ public class FluxReferralPlugin extends JavaPlugin {
 
         fr.influencraft.flux.api.command.Commands.create(this, "referral").aliases("parrainage", "parr")
             .description("Referral system.").bukkit(cmdParrainage, cmdParrainage).register();
-        // referral rewards are also claimed with every other reward of the suite (FluxRewards)
-        fr.influencraft.flux.api.reward.Rewards.register(this,
-            new fr.influencraft.fluxreferral.service.ReferralRewards(this, serviceProfil, serviceRecuperation));
+        // referral rewards are handed to Flux's reward manager on join and before every claim
+        fr.influencraft.flux.api.reward.Rewards.collector(this, p -> serviceRecuperation.transferer(p, null));
 
         // --- Écouteurs ---
         Bukkit.getPluginManager().registerEvents(

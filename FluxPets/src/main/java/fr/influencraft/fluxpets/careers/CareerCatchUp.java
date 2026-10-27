@@ -24,32 +24,27 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Boosters en attente, récupérés avec {@code /boosters} (alias {@code /rattrapage}, {@code /catchup}),
- * et rattrapage unique des boosters de carrière (section {@code career-catch-up} de config.yml).
+ * Waiting boosters and the one-time career catch-up ({@code career-catch-up} section of config.yml).
  * <p>
- * Tout booster qui ne va pas directement dans l'inventaire passe par ce stock
- * ({@code influpet:career_catchup_pending}, nom gardé pour les données déjà écrites) : boosters de
- * passage de niveau EcoJobs ({@code level-up-effects} → {@code run_command influpet stash ...}), surplus
- * de {@code influpet give} quand l'inventaire est plein, rattrapage. Rien ne tombe au sol, rien n'est donné
- * sans que le joueur le demande : {@code /boosters} donne ce qui rentre, le reste attend.
+ * Every booster that does not go straight into the inventory is handed to Flux's reward manager (source
+ * {@code boosters}, one reward per stack of 64), claimed with every other reward ({@code /rewards}) or alone with
+ * {@code /boosters}: EcoJobs level-up boosters ({@code level-up-effects} → {@code influpet stash ...}), what
+ * {@code influpet give} could not fit, the catch-up. Nothing is dropped.
  * <p>
- * Rattrapage : EcoJobs ne rejoue jamais un niveau
- * déjà atteint : à sa première connexion après l'activation, un joueur reçoit donc une fois pour toutes les
- * boosters de ses niveaux déjà passés, soit {@code (niveau - 1) x boosters-per-level} par métier (le
- * niveau 1 est donné d'office par EcoJobs, sans passage de niveau). Un marqueur dans ses données eco
- * ({@code influpet:career_catchup_done}) empêche tout second rattrapage.
- * <p>
- * Rappel à la connexion, puis toutes les {@code reminder-seconds} secondes (0 : jamais) tant qu'il reste
- * des boosters en attente.
+ * Catch-up: EcoJobs never replays a level already reached, so on his first login after activation a player gets
+ * once the boosters of his levels already passed, {@code (level - 1) x boosters-per-level} per job (level 1 is given
+ * by EcoJobs without level-up). A marker in his eco data ({@code influpet:career_catchup_done}) prevents a second
+ * catch-up. Boosters kept by a former version in his eco data ({@code influpet:career_catchup_pending}) are moved to
+ * Flux on his next login.
  */
-public final class CareerCatchUp implements Listener, CommandExecutor, fr.influencraft.flux.api.reward.RewardSource {
+public final class CareerCatchUp implements Listener, CommandExecutor {
 
     private static final String SECTION = "career-catch-up";
 
     private final FluxPets plugin;
     private final PersistentDataKey<Boolean> doneKey = new PersistentDataKey<>(key("career_catchup_done"),
             PersistentDataKeyType.BOOLEAN, false);
-    /** Boosters en attente, au format {@code <booster>:<nombre>}. */
+    /** Boosters kept by former versions, {@code <booster>:<amount>}: moved to Flux on login. */
     private final PersistentDataKey<List<String>> pendingKey = new PersistentDataKey<>(
             key("career_catchup_pending"), PersistentDataKeyType.STRING_LIST, List.of());
 
@@ -61,14 +56,12 @@ public final class CareerCatchUp implements Listener, CommandExecutor, fr.influe
         return new NamespacedKey("influpet", value);
     }
 
-    /** Démarre /boosters et le rappel ; le rattrapage de carrière ne joue que si EcoJobs est là. */
+    /** Starts /boosters; the career catch-up only runs with EcoJobs. */
     public static CareerCatchUp enable(FluxPets plugin) {
         CareerCatchUp catchUp = new CareerCatchUp(plugin);
         fr.influencraft.flux.api.command.Commands.create(plugin, "boosters").aliases("rattrapage", "catchup")
                 .description("Collect your waiting boosters.").permission("influpet.command.boosters")
                 .bukkit(catchUp, null).register();
-        // also claimed with every other reward of the suite (FluxRewards)
-        fr.influencraft.flux.api.reward.Rewards.register(plugin, catchUp);
         // the booster items, for the icons of the pending rewards: source:fluxpets:booster:<id>
         fr.influencraft.flux.api.FluxApi.registerItemSource(plugin, "fluxpets", (viewer, arg) -> {
             if (!arg.startsWith("booster:")) return null;
@@ -76,11 +69,6 @@ public final class CareerCatchUp implements Listener, CommandExecutor, fr.influe
             return b == null ? null : plugin.registry().boosterItem(b, viewer);
         });
         Bukkit.getPluginManager().registerEvents(catchUp, plugin);
-        long seconds = plugin.getConfig().getLong(SECTION + ".reminder-seconds", 0);
-        if (seconds > 0) {
-            long period = Math.max(10, seconds) * 20L;
-            Bukkit.getScheduler().runTaskTimer(plugin, catchUp::remindAll, period, period);
-        }
         // joueurs déjà connectés (reload du plugin)
         Bukkit.getOnlinePlayers().forEach(player -> catchUp.later(player, 20L));
         return catchUp;
@@ -91,15 +79,27 @@ public final class CareerCatchUp implements Listener, CommandExecutor, fr.influe
                 && Bukkit.getPluginManager().isPluginEnabled("EcoJobs");
     }
 
-    /** Met des boosters en attente de /boosters. */
-    public void stash(Player player, String boosterId, int amount) {
+    /** Hands boosters to Flux's rewards (one reward per stack of 64), claimed with /rewards or /boosters. */
+    public void stash(org.bukkit.OfflinePlayer player, String boosterId, int amount) {
+        stash(player, boosterId, amount, null);
+    }
+
+    /** Same, {@code key} (or null) keeps a catch-up from being given twice. */
+    private void stash(org.bukkit.OfflinePlayer player, String boosterId, int amount, String key) {
         if (amount <= 0) {
             return;
         }
-        PlayerProfile profile = PlayerProfile.load(player);
-        Map<String, Integer> pending = readPending(profile);
-        pending.merge(boosterId, amount, Integer::sum);
-        profile.write(pendingKey, writePending(pending));
+        CardRegistry.Booster booster = plugin.registry().booster(boosterId);
+        String label = booster == null ? boosterId : booster.name();
+        String command = fr.influencraft.flux.api.command.Commands.label("FluxPets", "fluxpets");
+        int chunk = 0;
+        for (int left = amount; left > 0; left -= 64, chunk++) {
+            int n = Math.min(64, left);
+            fr.influencraft.flux.api.reward.Reward reward = fr.influencraft.flux.api.reward.Reward.of("boosters", label)
+                    .icon("source:fluxpets:booster:" + boosterId).amount(n).slots(1)
+                    .commands(command + " give %player% booster " + boosterId + " " + n);
+            fr.influencraft.flux.api.reward.Rewards.give(player, key == null ? reward : reward.key(key + ":" + chunk));
+        }
     }
 
     /**
@@ -143,8 +143,8 @@ public final class CareerCatchUp implements Listener, CommandExecutor, fr.influe
     private void later(Player player, long delay) {
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (player.isOnline()) {
+                moveFormerPending(player);
                 catchUp(player);
-                remind(player);
             }
         }, delay);
     }
@@ -163,7 +163,7 @@ public final class CareerCatchUp implements Listener, CommandExecutor, fr.influe
         if (jobs == null || perLevel == 0) {
             return;
         }
-        Map<String, Integer> pending = readPending(profile);
+        Map<String, Integer> pending = new LinkedHashMap<>();
         List<String> summary = new ArrayList<>();
         int total = 0;
         for (String jobId : jobs.getKeys(false)) {
@@ -185,8 +185,8 @@ public final class CareerCatchUp implements Listener, CommandExecutor, fr.influe
                     "%level%", String.valueOf(level)));
             total += amount;
         }
-        // marqueur et attente écrits avant toute remise : un arrêt brutal ne peut ni rejouer ni perdre
-        profile.write(pendingKey, writePending(pending));
+        // keyed rewards first, then the marker: a crash in between replays the catch-up, Flux ignores the keys
+        pending.forEach((id, amount) -> stash(player, id, amount, "boosters:catchup:" + id));
         profile.write(doneKey, true);
         if (total > 0) {
             plugin.getLogger().info("Career catch-up for " + player.getName() + ": " + total + " boosters "
@@ -196,84 +196,16 @@ public final class CareerCatchUp implements Listener, CommandExecutor, fr.influe
         }
     }
 
-    /**
-     * Donne ce qui rentre dans l'inventaire, garde le reste en attente.
-     *
-     * Appelé par /boosters.
-     */
-    private void deliver(Player player) {
-        deliver(player, true);
-    }
-
-    /** Gives what fits, keeps the rest; {given, still waiting}. Messages only when {@code verbose}. */
-    private int[] deliver(Player player, boolean verbose) {
+    /** Boosters kept in the eco data by a former version: handed to Flux once. */
+    private void moveFormerPending(Player player) {
         PlayerProfile profile = PlayerProfile.load(player);
-        Map<String, Integer> pending = readPending(profile);
-        if (pending.isEmpty()) {
-            if (verbose) plugin.send(player, "boosters-nothing");
-            return new int[]{0, 0};
+        Map<String, Integer> former = readPending(profile);
+        if (former.isEmpty()) {
+            return;
         }
-        int given = 0;
-        Map<String, Integer> left = new LinkedHashMap<>();
-        for (Map.Entry<String, Integer> entry : pending.entrySet()) {
-            CardRegistry.Booster booster = plugin.registry().booster(entry.getKey());
-            if (booster == null) {
-                left.put(entry.getKey(), entry.getValue()); // booster retiré de la config : gardé
-                continue;
-            }
-            int added = add(player, booster, entry.getValue());
-            given += added;
-            int remaining = entry.getValue() - added;
-            if (remaining > 0) {
-                left.put(entry.getKey(), remaining);
-            }
-        }
-        profile.write(pendingKey, writePending(left));
-        int count = left.values().stream().mapToInt(Integer::intValue).sum();
-        if (verbose && given > 0) {
-            plugin.send(player, "boosters-given", "%count%", String.valueOf(given));
-        }
-        if (verbose && !left.isEmpty()) {
-            plugin.send(player, "boosters-inventory-full", "%count%", String.valueOf(count));
-        }
-        if (given > 0) fr.influencraft.flux.api.reward.Rewards.changed(player);
-        return new int[]{given, count};
-    }
-
-    // ------------------------------------------------------------------ reward source "boosters"
-
-    @Override
-    public String id() {
-        return "boosters";
-    }
-
-    @Override
-    public java.util.concurrent.CompletableFuture<List<fr.influencraft.flux.api.reward.PendingReward>> pending(Player player) {
-        List<fr.influencraft.flux.api.reward.PendingReward> out = new ArrayList<>();
-        readPending(PlayerProfile.load(player)).forEach((id, amount) -> {
-            CardRegistry.Booster booster = plugin.registry().booster(id);
-            String label = booster == null ? id : booster.name();
-            out.add(new fr.influencraft.flux.api.reward.PendingReward(id(), label, "source:fluxpets:booster:" + id, amount,
-                    (amount + 63) / 64));
-        });
-        return java.util.concurrent.CompletableFuture.completedFuture(out);
-    }
-
-    @Override
-    public java.util.concurrent.CompletableFuture<fr.influencraft.flux.api.reward.ClaimResult> claim(Player player, int freeSlots) {
-        int[] r = deliver(player, false);
-        return java.util.concurrent.CompletableFuture.completedFuture(new fr.influencraft.flux.api.reward.ClaimResult(r[0], r[1]));
-    }
-
-    private void remindAll() {
-        Bukkit.getOnlinePlayers().forEach(this::remind);
-    }
-
-    private void remind(Player player) {
-        int count = readPending(PlayerProfile.load(player)).values().stream().mapToInt(Integer::intValue).sum();
-        if (count > 0) {
-            plugin.send(player, "boosters-pending", "%count%", String.valueOf(count));
-        }
+        profile.write(pendingKey, List.of());
+        former.forEach((id, amount) -> stash(player, id, amount));
+        plugin.getLogger().info("Waiting boosters of " + player.getName() + " moved into Flux: " + former);
     }
 
     @Override
@@ -283,7 +215,12 @@ public final class CareerCatchUp implements Listener, CommandExecutor, fr.influe
             sender.sendMessage("Players only.");
             return true;
         }
-        deliver(player);
+        // collects first (other plugins may hand boosters on the way), then claims the boosters only
+        fr.influencraft.flux.api.reward.Rewards.collect(player);
+        var result = fr.influencraft.flux.api.reward.Rewards.claim(player, "boosters", false);
+        if (result.delivered() == 0 && result.remaining() == 0) plugin.send(player, "boosters-nothing");
+        if (result.delivered() > 0) plugin.send(player, "boosters-given", "%count%", String.valueOf(result.delivered()));
+        if (result.remaining() > 0) plugin.send(player, "boosters-inventory-full", "%count%", String.valueOf(result.remaining()));
         return true;
     }
 
@@ -307,13 +244,4 @@ public final class CareerCatchUp implements Listener, CommandExecutor, fr.influe
         return pending;
     }
 
-    private static List<String> writePending(Map<String, Integer> pending) {
-        List<String> lines = new ArrayList<>();
-        pending.forEach((id, amount) -> {
-            if (amount > 0) {
-                lines.add(id + ":" + amount);
-            }
-        });
-        return lines;
-    }
 }

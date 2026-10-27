@@ -1,4 +1,5 @@
-# FluxRewards: pending rewards of every source. Opened by /rewards menu.
+# Flux: every reward waiting for the player, whatever plugin gave it (/rewards). Click one to claim it, or claim
+# everything that fits in your inventory.
 title: "&8Rewards"
 rows: 6
 player-inventory: hidden
@@ -12,10 +13,12 @@ lists:
       material: entry
       name: "%entry_label%"
       lore:
-        - "&7%entry_source%"
-        - "&7Slots: &f%entry_slots%"
+        - "&7%entry_source%, %entry_date%"
+        - "&7Slots needed: &f%entry_slots%"
+        - ""
+        - "&r&7%img_left_click%&#FFD94D Claim"
       actions:
-        left: ["[player] %flux_cmd_fluxrewards_rewards% claim"]
+        left: ["[rewards] claim %entry_id%"]
     empty:
       material: BARRIER
       name: "&7Nothing waiting for you"
@@ -24,10 +27,11 @@ items:
   claim:
     slot: 49
     material: CHEST
-    name: "&#2ECF7BClaim everything"
-    lore: ["&7%fluxrewards_pending% reward(s) waiting"]
+    name: "&r&7%img_left_click%&#FFD94D Claim everything"
+    lore:
+      - "&#B376E5%flux_rewards_count% reward(s) waiting, %flux_rewards_slots% slot(s) needed. What does not fit stays here."
     actions:
-      left: ["[player] %flux_cmd_fluxrewards_rewards% claim"]
+      left: ["[rewards] claim"]
   previous:
     slot: 45
     material: ARROW
@@ -42,9 +46,3 @@ items:
     view-requirements: ["placeholder: %flux_list_rewards_has_next% == true"]
     actions:
       left: ["[list] rewards next"]
-  close:
-    slot: 50
-    material: BARRIER
-    name: "&cClose"
-    actions:
-      left: ["[close]"]

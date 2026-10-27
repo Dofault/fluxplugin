@@ -518,7 +518,7 @@ def recompenses(cycle, nb_temps):
                             priorite=1, conditions=[f"placeholder: {e} == recupere"], quantite=d))
             its.append(item(f"jour{d}_dispo", "itemsadder:influitems:chest_item", nom, slot, desc,
                             [CLIC_G_OK + "Récupérer"],
-                            {"left": ["[player] recompenses jour", "[sound] minecraft:entity.player.levelup 1 1.4", "[refresh]"]},
+                            {"left": ["[rewards] claim source:daily", "[sound] minecraft:entity.player.levelup 1 1.4", "[refresh]"]},
                             priorite=2, conditions=[f"placeholder: {e} == disponible"], quantite=d))
             its.append(item(f"jour{d}_manque", "itemsadder:influitems:deny", nom, slot, desc + ["&#FF5C5CManqué ce jour-là."],
                             priorite=3, conditions=[f"placeholder: {e} == manque"], quantite=d))
@@ -544,7 +544,7 @@ def recompenses(cycle, nb_temps):
                             priorite=1, conditions=[f"placeholder: {e} == recupere"], quantite=i))
             its.append(item(f"temps{i}_dispo", "itemsadder:influitems:chest_item", nom, slot, desc,
                             [CLIC_G_OK + "Récupérer"],
-                            {"left": [f"[player] recompenses temps {i}", "[sound] minecraft:entity.player.levelup 1 1.4", "[refresh]"]},
+                            {"left": [f"[rewards] claim key:%recompenses_temps_{i}_cle%", "[sound] minecraft:entity.player.levelup 1 1.4", "[refresh]"]},
                             priorite=2, conditions=[f"placeholder: {e} == disponible"], quantite=i))
             its.append(item(f"temps{i}", "itemsadder:influitems:lock", nom, slot,
                             desc + [f"Encore &f%recompenses_temps_{i}_restant%" + VIOLET + " de jeu."], priorite=3, quantite=i))

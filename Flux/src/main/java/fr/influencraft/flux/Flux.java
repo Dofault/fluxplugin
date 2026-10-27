@@ -50,6 +50,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         saveDefaultConfig();
         File menusDir = new File(getDataFolder(), "menus");
         if (!menusDir.isDirectory()) saveResource("menus/main.yml", false);
+        shipOwnMenu("rewards");
 
         Text.init(getLogger());
         PathRenderer.init(getLogger());
@@ -62,6 +63,8 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         menus = new MenuService(this, items);
         registry = new MenuRegistry(this);
         readSettings();
+        rewards = fr.influencraft.flux.rewards.RewardService.start(this, () -> messages);
+        if (rewards != null) rewards.importFormerMailbox(getDataFolder().getParentFile());
         int warnings = registry.load();
         getLogger().info(registry.all().size() + " menu(s) chargé(s)" + (warnings > 0 ? ", " + warnings + " avertissement(s)" : ""));
 
@@ -89,6 +92,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         if (jobInfo != null) jobInfo.unregister();
         if (collectionInfo != null) collectionInfo.unregister();
         fr.influencraft.flux.api.FluxApi.bind(null);
+        if (rewards != null) rewards.stop();
         fr.influencraft.flux.api.util.PlayerSettings.close();
         if (papiBridge != null) papiBridge.shutdown();
         if (menus != null) menus.closeAll();
@@ -98,6 +102,22 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     }
 
     private fr.influencraft.flux.api.text.Messages messages;
+    private fr.influencraft.flux.rewards.RewardService rewards;
+
+    /** Copies one of Flux's own menus when missing (translation under i18n/<language>/ when there is one). */
+    private void shipOwnMenu(String id) {
+        File target = new File(getDataFolder(), "menus/" + id + ".yml");
+        if (target.exists()) return;
+        String language = getConfig().getString("language", "en_US");
+        String source = getResource("i18n/" + language + "/menus/" + id + ".yml") != null ? "i18n/" + language + "/menus/" + id + ".yml" : "menus/" + id + ".yml";
+        try (java.io.InputStream in = getResource(source)) {
+            if (in == null) return;
+            target.getParentFile().mkdirs();
+            java.nio.file.Files.copy(in, target.toPath());
+        } catch (java.io.IOException e) {
+            getLogger().warning("Could not write menus/" + id + ".yml: " + e.getMessage());
+        }
+    }
 
     private void readSettings() {
         reloadConfig();
@@ -134,6 +154,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
      * {@code %flux_list_<id>_<field>%}: state of a list (see {@link fr.influencraft.flux.api.list.Lists}).
      */
     private String ownPlaceholder(Player player, String params) {
+        if (params.startsWith("rewards_") && rewards != null) return rewards.placeholder(player, params.substring(8));
         if (params.startsWith("cmd_")) {
             String rest = params.substring(4);
             int sep = rest.indexOf('_');

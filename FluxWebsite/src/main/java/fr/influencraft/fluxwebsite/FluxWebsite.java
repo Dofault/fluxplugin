@@ -13,7 +13,8 @@ import java.util.List;
  * Bridge between the website (mineweb) and the game server:
  * <ul>
  *   <li>shop purchases and other commands to run right away ({@link ShopDelivery});</li>
- *   <li>vote rewards to claim ({@link VoteRewards}, source {@code votes} of the suite's rewards, {@code /voteclaims});</li>
+ *   <li>vote rewards of the website moved into Flux's rewards ({@link VoteRewards}, source {@code votes},
+ *   {@code /voteclaims} for the votes only);</li>
  *   <li>Vote Party counter and rewards ({@link VoteParty}), vote reminder and {@code /voteinfo} ({@link VoteReminder});</li>
  *   <li>placeholders {@code %influbridge_voteparty_current|required%} and {@code %influbridge_flame_*%}.</li>
  * </ul>
@@ -50,8 +51,9 @@ public final class FluxWebsite extends FluxPlugin {
         party = new VoteParty(this, api);
         reminder = new VoteReminder(this, api, party);
         reminder.start();
-        votes = new VoteRewards(this, api, party);
-        Rewards.register(this, votes);
+        votes = new VoteRewards(this, api);
+        // website rewards are moved into Flux's reward manager on join and before every claim
+        Rewards.collector(this, p -> votes.collect(p, null));
         placeholders("influbridge", this::placeholder);
         registerCommands();
     }
