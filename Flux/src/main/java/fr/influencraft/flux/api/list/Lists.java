@@ -69,6 +69,17 @@ public final class Lists {
         PROVIDERS.put(id.toLowerCase(Locale.ROOT), new Owned(owner, provider));
     }
 
+    /**
+     * A one-item "list": a button whose whole item (name, lore, state) is built by code for each player, shown by a
+     * list with {@code material: entry} on one slot. Nothing is shown when the function returns null.
+     */
+    public static void registerItem(Plugin owner, String id, java.util.function.Function<Player, org.bukkit.inventory.ItemStack> item) {
+        register(owner, id, query -> {
+            org.bukkit.inventory.ItemStack stack = item.apply(query.viewer());
+            return stack == null ? List.of() : List.of(ListEntry.of(id).item(stack));
+        });
+    }
+
     public static void unregisterAll(Plugin owner) {
         PROVIDERS.values().removeIf(o -> o.owner() == owner);
     }

@@ -1,310 +1,271 @@
 package fr.influencraft.fluxshop.shop;
 
+import fr.influencraft.flux.api.FluxApi;
+import fr.influencraft.flux.api.MenuView;
+import fr.influencraft.flux.api.dialog.Dialogs;
+import fr.influencraft.flux.api.list.ListEntry;
+import fr.influencraft.flux.api.list.ListProvider;
+import fr.influencraft.flux.api.list.Lists;
 import fr.influencraft.fluxshop.managers.LangManager;
 import fr.influencraft.fluxshop.managers.PriceManager;
-import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.ClickType;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Éditeur d'un coffre magasin, ouvert par un admin accroupi + clic droit sur le coffre.
+ * Editor of a shop chest (admin sneaking + right click), a Flux menu ({@code menus/shop_editor.yml}, admin inventory
+ * visible). One row per item: the item, "change the price", "remove"; lists {@code editor_item},
+ * {@code editor_price}, {@code editor_remove}, sharing the same order ({@code editor_price} ends with the "add" hint).
  * <ul>
- * <li>clic sur un objet de son propre inventaire : copie exacte ajoutée au coffre (booster InfluPet,
- * objet ItemsAdder...). Un objet vanilla qui a un prix d'achat dans {@code prices.yml} le suit en
- * direct ; sinon le prix est demandé dans le tchat ;</li>
- * <li>« Changer le prix » : prix propre au coffre, saisi dans le tchat ({@code défaut} revient à
- * {@code prices.yml} pour un objet vanilla) ;</li>
- * <li>« Retirer » : double clic de confirmation, comme l'achat.</li>
+ * <li>clicking an item of one's own inventory ({@code [shop] editor-add <slot>}) adds an exact copy (FluxPets booster,
+ * ItemsAdder item...). A plain vanilla item priced in {@code prices.yml} follows that price; otherwise the price is
+ * asked in a dialog window;</li>
+ * <li>"change the price": price of this chest only, or back to {@code prices.yml} for a plain vanilla item;</li>
+ * <li>"remove": double click confirmation, like buying.</li>
  * </ul>
  */
-public class ShopEditor implements Listener {
+public class ShopEditor {
 
-    private static final int ITEM_COLUMN = 2;
-    private static final int PRICE_COLUMN = 4;
-    private static final int REMOVE_COLUMN = 6;
-    private static final int[] FILLER_COLUMNS = { 0, 1, 7, 8 };
-    private static final long PROMPT_TIMEOUT_MILLIS = 60_000L;
+    public static final String MENU = "shop_editor";
+    private static final List<String> LISTS = List.of("editor_item", "editor_price", "editor_remove");
 
     private final JavaPlugin plugin;
     private final LangManager lang;
     private final PriceManager priceManager;
     private final ShopRegistry registry;
     private final MenuItems menuItems;
+    private final Map<UUID, State> states = new ConcurrentHashMap<>();
 
-    /** Saisie de prix en attente dans le tchat, par joueur (le tchat est asynchrone). */
-    private final Map<UUID, PricePrompt> prompts = new ConcurrentHashMap<>();
+    private static final class State {
+        final Shop shop;
+        int armedRow = -1;
+        BukkitTask disarmTask;
 
-    private record PricePrompt(Shop shop, ShopEntry entry, boolean isNew, long expiresAt) {
+        State(Shop shop) {
+            this.shop = shop;
+        }
     }
 
-    public ShopEditor(JavaPlugin plugin, LangManager lang, PriceManager priceManager, ShopRegistry registry,
-            Economy econ) {
+    public ShopEditor(JavaPlugin plugin, LangManager lang, PriceManager priceManager, ShopRegistry registry) {
         this.plugin = plugin;
         this.lang = lang;
         this.priceManager = priceManager;
         this.registry = registry;
-        this.menuItems = new MenuItems(plugin, lang, econ);
+        this.menuItems = new MenuItems(plugin, lang);
+    }
+
+    public void register() {
+        Lists.register(plugin, "editor_item", rows((s, i, e) -> MenuItems.withExtraLore(e, priceLore(e))));
+        ListProvider prices = rows((s, i, e) -> MenuItems.decorate(
+                menuItems.icon("editor-price", Material.PAPER, 10040, 1),
+                lang.get("shop-editor-price-name"), lang.getList("shop-editor-price-lore")));
+        // the "price" column ends with the "add an item" hint, on the first free row
+        Lists.register(plugin, "editor_price", query -> {
+            List<ListEntry> out = new ArrayList<>(prices.entries(query));
+            State state = states.get(query.viewer().getUniqueId());
+            if (state != null && state.shop.getItems().size() < Shop.MAX_ITEMS) {
+                out.add(ListEntry.of("add").item(MenuItems.decorate(menuItems.icon("editor-add", Material.PAPER, 10021, 1),
+                        lang.get("shop-editor-add-name"), lang.getList("shop-editor-add-lore"))));
+            }
+            return out;
+        });
+        Lists.register(plugin, "editor_remove", rows((s, i, e) -> {
+            boolean armed = i == s.armedRow;
+            ItemStack remove = MenuItems.decorate(menuItems.icon("editor-remove", Material.PAPER, 10024, 1),
+                    lang.get(armed ? "shop-editor-remove-armed-name" : "shop-editor-remove-name"),
+                    lang.getList(armed ? "shop-editor-remove-armed-lore" : "shop-editor-remove-lore"));
+            if (armed) {
+                ItemMeta meta = remove.getItemMeta();
+                if (meta != null) {
+                    meta.setEnchantmentGlintOverride(true);
+                    remove.setItemMeta(meta);
+                }
+            }
+            return remove;
+        }));
+    }
+
+    @FunctionalInterface
+    private interface Icon {
+        ItemStack build(State state, int row, ShopEntry entry);
+    }
+
+    private ListProvider rows(Icon icon) {
+        return query -> {
+            State state = states.get(query.viewer().getUniqueId());
+            List<ListEntry> out = new ArrayList<>();
+            if (state == null) return out;
+            List<ShopEntry> items = state.shop.getItems();
+            for (int row = 0; row < items.size(); row++) out.add(ListEntry.of(String.valueOf(row)).item(icon.build(state, row, items.get(row))));
+            return out;
+        };
     }
 
     public void open(Player player, Shop shop) {
-        Session session = new Session(player, shop);
-        int rows = Math.min(Shop.MAX_ITEMS, shop.getItems().size() + 1);
-        session.inventory = Bukkit.createInventory(session, rows * 9, lang.get("shop-editor-title"));
-        session.render();
-        player.openInventory(session.inventory);
-        player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 0.6f, 0.9f);
+        State previous = states.put(player.getUniqueId(), new State(shop));
+        if (previous != null && previous.disarmTask != null) previous.disarmTask.cancel();
+        invalidate(player);
+        if (FluxApi.open(player, MENU)) player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 0.6f, 0.9f);
     }
 
-    // ------------------------------------------------------------------
-    // Session (un éditeur ouvert)
-    // ------------------------------------------------------------------
+    public void forget(UUID uuid) {
+        State s = states.remove(uuid);
+        if (s != null && s.disarmTask != null) s.disarmTask.cancel();
+    }
 
-    private final class Session implements InventoryHolder {
+    /** Number of items of the chest being edited, for the menu ({@code %fluxshop_editor_count%}). */
+    public int count(Player player) {
+        State s = states.get(player.getUniqueId());
+        return s == null ? 0 : s.shop.getItems().size();
+    }
 
-        private final Player player;
-        private final Shop shop;
-        private Inventory inventory;
-        private int armedRow = -1;
-        private BukkitTask disarmTask;
+    private void invalidate(Player player) {
+        for (String list : LISTS) Lists.invalidate(player, list);
+    }
 
-        private Session(Player player, Shop shop) {
-            this.player = player;
-            this.shop = shop;
+    private void refresh(Player player, MenuView view) {
+        invalidate(player);
+        if (view != null && MENU.equals(view.menuId())) view.refreshButtons();
+    }
+
+    private List<String> priceLore(ShopEntry entry) {
+        double unit = entry.unitPrice(priceManager);
+        String price = unit > 0 ? menuItems.price(unit) : lang.get("shop-menu-unavailable");
+        return lang.getList(entry.getPrice() != null ? "shop-editor-item-lore-custom" : "shop-editor-item-lore-default",
+                Map.of("price", price));
+    }
+
+    // ------------------------------------------------------------------ [shop] editor-*
+
+    public void price(Player player, MenuView view, int row) {
+        State state = editing(player);
+        if (state == null || row < 0 || row >= state.shop.getItems().size()) return;
+        disarm(state);
+        ask(player, state.shop, state.shop.getItems().get(row), false);
+    }
+
+    public void remove(Player player, MenuView view, int row) {
+        State state = editing(player);
+        if (state == null || row < 0 || row >= state.shop.getItems().size()) return;
+        if (state.armedRow != row) {
+            arm(player, view, state, row);
+            return;
         }
+        disarm(state);
+        ShopEntry entry = state.shop.getItems().remove(row);
+        registry.save();
+        MenuItems.send(player, lang.get("shop-editor-removed"), entry.getItem());
+        player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 0.6f, 1.0f);
+        refresh(player, view);
+    }
 
-        @Override
-        public Inventory getInventory() {
-            return inventory;
+    /** Click on an item of the admin's own inventory: a copy is offered by the chest (the item stays). */
+    public void add(Player player, MenuView view, int inventorySlot) {
+        State state = editing(player);
+        if (state == null || inventorySlot < 0 || inventorySlot >= player.getInventory().getSize()) return;
+        ItemStack clicked = player.getInventory().getItem(inventorySlot);
+        if (clicked == null || clicked.getType().isAir()) return;
+        List<ShopEntry> entries = state.shop.getItems();
+        if (entries.stream().anyMatch(entry -> entry.matches(clicked))) {
+            fail(player, lang.get("shop-editor-already"));
+            return;
         }
-
-        private void render() {
-            inventory.clear();
-            ItemStack filler = menuItems.filler();
-            List<ShopEntry> entries = shop.getItems();
-            int rows = inventory.getSize() / 9;
-            for (int row = 0; row < rows; row++) {
-                int base = row * 9;
-                for (int column : FILLER_COLUMNS) {
-                    inventory.setItem(base + column, filler);
-                }
-                if (row >= entries.size()) {
-                    inventory.setItem(base + PRICE_COLUMN, MenuItems.decorate(
-                            menuItems.icon("editor-add", Material.PAPER, 10021, 1),
-                            lang.get("shop-editor-add-name"), lang.getList("shop-editor-add-lore")));
-                    continue;
-                }
-                ShopEntry entry = entries.get(row);
-                inventory.setItem(base + ITEM_COLUMN, MenuItems.withExtraLore(entry, priceLore(entry)));
-                inventory.setItem(base + PRICE_COLUMN, MenuItems.decorate(
-                        menuItems.icon("editor-price", Material.PAPER, 10040, 1),
-                        lang.get("shop-editor-price-name"), lang.getList("shop-editor-price-lore")));
-                boolean armed = row == armedRow;
-                ItemStack remove = MenuItems.decorate(menuItems.icon("editor-remove", Material.PAPER, 10024, 1),
-                        lang.get(armed ? "shop-editor-remove-armed-name" : "shop-editor-remove-name"),
-                        lang.getList(armed ? "shop-editor-remove-armed-lore" : "shop-editor-remove-lore"));
-                if (armed) {
-                    ItemMeta meta = remove.getItemMeta();
-                    if (meta != null) {
-                        meta.setEnchantmentGlintOverride(true);
-                        remove.setItemMeta(meta);
-                    }
-                }
-                inventory.setItem(base + REMOVE_COLUMN, remove);
-            }
+        if (entries.size() >= Shop.MAX_ITEMS) {
+            fail(player, lang.get("shop-editor-full", Map.of("max", String.valueOf(Shop.MAX_ITEMS))));
+            return;
         }
-
-        private List<String> priceLore(ShopEntry entry) {
-            double unit = entry.unitPrice(priceManager);
-            String price = unit > 0 ? menuItems.price(unit) : lang.get("shop-menu-unavailable");
-            return lang.getList(entry.getPrice() != null ? "shop-editor-item-lore-custom" : "shop-editor-item-lore-default",
-                    Map.of("price", price));
+        ShopEntry entry = new ShopEntry(clicked.clone(), null);
+        if (entry.isPlain() && priceManager.isBuyable(clicked.getType().name())) {
+            entries.add(entry);
+            registry.save();
+            MenuItems.send(player, lang.get("shop-editor-added-default"), entry.getItem());
+            player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.6f, 1.2f);
+            refresh(player, view);
+            return;
         }
+        ask(player, state.shop, entry, true);
+    }
 
-        private void onTopClick(int slot) {
-            int row = slot / 9;
-            int column = slot % 9;
-            List<ShopEntry> entries = shop.getItems();
-            if (row >= entries.size()) {
-                return;
-            }
-            ShopEntry entry = entries.get(row);
-            if (column == PRICE_COLUMN) {
-                disarm();
-                prompt(player, shop, entry, false);
-            } else if (column == REMOVE_COLUMN) {
-                if (armedRow != row) {
-                    arm(row);
+    private State editing(Player player) {
+        State state = states.get(player.getUniqueId());
+        if (state == null || !player.hasPermission("supermarket.admin")) return null;
+        if (!registry.isRegistered(state.shop)) {
+            player.sendMessage(lang.get("shop-admin-not-a-chest"));
+            return null;
+        }
+        return state;
+    }
+
+    private void arm(Player player, MenuView view, State state, int row) {
+        disarm(state);
+        state.armedRow = row;
+        long timeout = Math.max(1, plugin.getConfig().getLong("shop-menu.confirm-timeout-seconds", 5)) * 20L;
+        state.disarmTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            state.disarmTask = null;
+            state.armedRow = -1;
+            refresh(player, FluxApi.view(player));
+        }, timeout);
+        player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.6f, 0.7f);
+        refresh(player, view);
+    }
+
+    private void disarm(State state) {
+        if (state.disarmTask != null) state.disarmTask.cancel();
+        state.disarmTask = null;
+        state.armedRow = -1;
+    }
+
+    // ------------------------------------------------------------------ price dialog
+
+    private void ask(Player player, Shop shop, ShopEntry entry, boolean isNew) {
+        boolean canDefault = entry.isPlain() && priceManager.isBuyable(entry.getItem().getType().name());
+        Dialogs.Form form = Dialogs.form(player, lang.get("shop-editor-title"))
+                .body(lang.get(canDefault && !isNew ? "shop-editor-price-dialog-default" : "shop-editor-price-dialog"))
+                .input("price", lang.get("shop-editor-price-dialog-label"), entry.getPrice() == null ? "" : String.valueOf(entry.getPrice()), 16);
+        if (canDefault) form.toggle("default", lang.get("shop-editor-price-dialog-use-default"), entry.getPrice() == null && !isNew);
+        form.onSubmit((p, answer) -> {
+            Double price;
+            if (canDefault && answer.toggle("default")) {
+                price = null;
+            } else {
+                try {
+                    double value = Double.parseDouble(answer.text("price").replace(',', '.').replace(" ", ""));
+                    if (!(value > 0) || Double.isInfinite(value)) throw new NumberFormatException();
+                    price = PriceManager.roundMoney(value);
+                } catch (NumberFormatException e) {
+                    p.sendMessage(lang.get(canDefault ? "shop-editor-price-no-default" : "shop-editor-price-invalid"));
+                    open(p, shop);
                     return;
                 }
-                disarm();
-                entries.remove(entry);
-                registry.save();
-                MenuItems.send(player, lang.get("shop-editor-removed"), entry.getItem());
-                player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 0.6f, 1.0f);
-                reopen();
             }
-        }
-
-        private void onOwnItemClick(ItemStack clicked) {
-            if (clicked == null || clicked.getType().isAir()) {
-                return;
-            }
-            List<ShopEntry> entries = shop.getItems();
-            if (entries.stream().anyMatch(entry -> entry.matches(clicked))) {
-                fail(player, "shop-editor-already");
-                return;
-            }
-            if (entries.size() >= Shop.MAX_ITEMS) {
-                player.sendMessage(lang.get("shop-editor-full", Map.of("max", String.valueOf(Shop.MAX_ITEMS))));
-                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
-                return;
-            }
-            ShopEntry entry = new ShopEntry(clicked, null);
-            if (entry.isPlain() && priceManager.isBuyable(clicked.getType().name())) {
-                entries.add(entry);
-                registry.save();
-                MenuItems.send(player, lang.get("shop-editor-added-default"), entry.getItem());
-                player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.6f, 1.2f);
-                reopen();
-                return;
-            }
-            prompt(player, shop, entry, true);
-        }
-
-        /**
-         * Rouvre l'éditeur (le nombre de rangées suit le nombre d'objets), un tick plus tard :
-         * Bukkit déconseille d'ouvrir un inventaire pendant un événement de clic.
-         */
-        private void reopen() {
-            disarm();
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                if (player.isOnline() && registry.isRegistered(shop)) {
-                    open(player, shop);
-                }
-            });
-        }
-
-        private void arm(int row) {
-            disarm();
-            armedRow = row;
-            long timeout = Math.max(1, plugin.getConfig().getLong("shop-menu.confirm-timeout-seconds", 5)) * 20L;
-            disarmTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                disarmTask = null;
-                armedRow = -1;
-                if (player.getOpenInventory().getTopInventory().getHolder() == this) {
-                    render();
-                }
-            }, timeout);
-            player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.6f, 0.7f);
-            render();
-        }
-
-        private void disarm() {
-            if (disarmTask != null) {
-                disarmTask.cancel();
-                disarmTask = null;
-            }
-            armedRow = -1;
-        }
+            save(p, shop, entry, isNew, price);
+        }).onCancel(p -> {
+            p.sendMessage(lang.get("shop-editor-price-cancelled"));
+            open(p, shop);
+        }).open();
     }
 
-    // ------------------------------------------------------------------
-    // Saisie du prix dans le tchat
-    // ------------------------------------------------------------------
-
-    private void prompt(Player player, Shop shop, ShopEntry entry, boolean isNew) {
-        prompts.put(player.getUniqueId(),
-                new PricePrompt(shop, entry, isNew, System.currentTimeMillis() + PROMPT_TIMEOUT_MILLIS));
-        // Fermeture décalée d'un tick : appelée depuis un événement de clic.
-        Bukkit.getScheduler().runTask(plugin, () -> player.closeInventory());
-        MenuItems.send(player, lang.get(entry.isPlain() && !isNew
-                ? "shop-editor-price-prompt-default"
-                : "shop-editor-price-prompt"), entry.getItem());
-        player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.8f, 1.2f);
-    }
-
-    // LOWEST : la saisie doit être interceptée avant que les plugins de tchat ne la diffusent.
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void onChat(AsyncPlayerChatEvent event) {
-        Player player = event.getPlayer();
-        PricePrompt prompt = prompts.remove(player.getUniqueId());
-        if (prompt == null) {
-            return;
-        }
-        if (System.currentTimeMillis() > prompt.expiresAt()) {
-            return; // saisie abandonnée : le message part normalement dans le tchat
-        }
-        event.setCancelled(true);
-        String input = event.getMessage().trim();
-        Bukkit.getScheduler().runTask(plugin, () -> handleInput(player, prompt, input));
-    }
-
-    private void handleInput(Player player, PricePrompt prompt, String input) {
-        if (!player.isOnline()) {
-            return;
-        }
-        Shop shop = prompt.shop();
-        ShopEntry entry = prompt.entry();
-        String normalized = input.toLowerCase(Locale.ROOT);
-
-        if (normalized.equals("annuler")) {
-            player.sendMessage(lang.get("shop-editor-price-cancelled"));
-            reopenIfRegistered(player, shop);
-            return;
-        }
+    private void save(Player player, Shop shop, ShopEntry entry, boolean isNew, Double price) {
         if (!registry.isRegistered(shop)) {
             player.sendMessage(lang.get("shop-admin-not-a-chest"));
             return;
         }
-
-        Double price;
-        if (normalized.equals("défaut") || normalized.equals("defaut")) {
-            if (!entry.isPlain() || !priceManager.isBuyable(entry.getItem().getType().name())) {
-                retry(player, prompt, "shop-editor-price-no-default");
-                return;
-            }
-            price = null;
-        } else {
-            try {
-                double value = Double.parseDouble(normalized.replace(',', '.'));
-                if (!(value > 0) || Double.isInfinite(value)) {
-                    throw new NumberFormatException();
-                }
-                price = PriceManager.roundMoney(value);
-            } catch (NumberFormatException e) {
-                retry(player, prompt, "shop-editor-price-invalid");
-                return;
-            }
-        }
-
-        if (prompt.isNew()) {
+        if (isNew) {
             List<ShopEntry> entries = shop.getItems();
             if (entries.size() >= Shop.MAX_ITEMS || entries.stream().anyMatch(other -> other.matches(entry.getItem()))) {
                 player.sendMessage(lang.get("shop-editor-full", Map.of("max", String.valueOf(Shop.MAX_ITEMS))));
-                reopenIfRegistered(player, shop);
+                open(player, shop);
                 return;
             }
             entry.setPrice(price);
@@ -313,67 +274,13 @@ public class ShopEditor implements Listener {
             entry.setPrice(price);
         }
         registry.save();
-        MenuItems.send(player, lang.get("shop-editor-price-set", Map.of(
-                "price", menuItems.price(entry.unitPrice(priceManager)))), entry.getItem());
+        MenuItems.send(player, lang.get("shop-editor-price-set", Map.of("price", menuItems.price(entry.unitPrice(priceManager)))), entry.getItem());
         player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.6f, 1.2f);
-        reopenIfRegistered(player, shop);
+        open(player, shop);
     }
 
-    private void retry(Player player, PricePrompt prompt, String messageKey) {
-        player.sendMessage(lang.get(messageKey));
-        prompts.put(player.getUniqueId(), new PricePrompt(prompt.shop(), prompt.entry(), prompt.isNew(),
-                System.currentTimeMillis() + PROMPT_TIMEOUT_MILLIS));
-    }
-
-    private void reopenIfRegistered(Player player, Shop shop) {
-        if (registry.isRegistered(shop)) {
-            open(player, shop);
-        }
-    }
-
-    private void fail(Player player, String key) {
-        player.sendMessage(lang.get(key));
+    private void fail(Player player, String message) {
+        player.sendMessage(message);
         player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
-    }
-
-    // ------------------------------------------------------------------
-    // Événements
-    // ------------------------------------------------------------------
-
-    @EventHandler
-    public void onClick(InventoryClickEvent event) {
-        if (!(event.getView().getTopInventory().getHolder() instanceof Session session)) {
-            return;
-        }
-        // Rien ne bouge, ni dans l'éditeur ni dans l'inventaire de l'admin : un clic sur un de ses
-        // objets en ajoute seulement une copie au coffre.
-        event.setCancelled(true);
-        if (event.getClick() != ClickType.LEFT || event.getClickedInventory() == null) {
-            return;
-        }
-        if (event.getClickedInventory() == event.getView().getTopInventory()) {
-            session.onTopClick(event.getSlot());
-        } else {
-            session.onOwnItemClick(event.getCurrentItem());
-        }
-    }
-
-    @EventHandler
-    public void onDrag(InventoryDragEvent event) {
-        if (event.getView().getTopInventory().getHolder() instanceof Session) {
-            event.setCancelled(true);
-        }
-    }
-
-    @EventHandler
-    public void onClose(InventoryCloseEvent event) {
-        if (event.getInventory().getHolder() instanceof Session session) {
-            session.disarm();
-        }
-    }
-
-    @EventHandler
-    public void onQuit(PlayerQuitEvent event) {
-        prompts.remove(event.getPlayer().getUniqueId());
     }
 }

@@ -1,0 +1,22 @@
+# FluxShop: selling menu of a sell block (right click). Put what you want to sell in the 5 first rows, then click the
+# confirm button twice. Closing the menu gives everything back.
+title: "%fluxshop_lang_shop-sell-inventory-title%"
+rows: 6
+player-inventory: interactive
+vanilla-background: true
+input-slots: 0-44
+input-change-actions: ["[shop] sell-changed"]
+
+lists:
+  sell_confirm:
+    slots: 49
+    item:
+      material: entry
+      actions:
+        left: ["[shop] sell-confirm"]
+
+items:
+  filler:
+    slots: 45-48,50-53
+    material: GRAY_STAINED_GLASS_PANE
+    hide-tooltip: true

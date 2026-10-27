@@ -4,7 +4,7 @@ import fr.influencraft.fluxshop.autosell.AutoSellFilter;
 import fr.influencraft.fluxshop.autosell.AutoSellItemManager;
 import fr.influencraft.fluxshop.integration.SellPriceResolver;
 import fr.influencraft.fluxshop.managers.PriceManager;
-import net.milkbowl.vault.economy.Economy;
+import fr.influencraft.fluxshop.managers.Money;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -57,7 +57,6 @@ public class AutoSellTelepathyListener implements Listener {
     private final AutoSellItemManager autoSellItemManager;
     private final AutoSellFilter autoSellFilter;
     private final PriceManager priceManager;
-    private final Economy econ;
 
     // Un seul diff programmé par joueur et par tick, même si plusieurs blocs sont cassés
     // d'un coup (mine-aire + télépathie par ex.) : le premier bloc du tick pose l'instantané
@@ -65,12 +64,11 @@ public class AutoSellTelepathyListener implements Listener {
     private final Map<UUID, ItemStack[]> pendingBeforeSnapshot = new ConcurrentHashMap<>();
 
     public AutoSellTelepathyListener(JavaPlugin plugin, AutoSellItemManager autoSellItemManager,
-            AutoSellFilter autoSellFilter, PriceManager priceManager, Economy econ) {
+            AutoSellFilter autoSellFilter, PriceManager priceManager) {
         this.plugin = plugin;
         this.autoSellItemManager = autoSellItemManager;
         this.autoSellFilter = autoSellFilter;
         this.priceManager = priceManager;
-        this.econ = econ;
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
@@ -139,7 +137,7 @@ public class AutoSellTelepathyListener implements Listener {
         }
 
         if (total > 0) {
-            econ.depositPlayer(player, total);
+            Money.give(player, total);
         }
     }
 

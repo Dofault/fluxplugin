@@ -1,24 +1,21 @@
 package fr.influencraft.fluxshop.autosell;
 
+import fr.influencraft.flux.api.FluxApi;
+import fr.influencraft.flux.api.MenuView;
+import fr.influencraft.flux.api.list.ListEntry;
+import fr.influencraft.flux.api.list.ListProvider;
+import fr.influencraft.flux.api.list.ListQuery;
+import fr.influencraft.flux.api.list.Lists;
 import fr.influencraft.fluxshop.integration.CustomFishingHook;
 import fr.influencraft.fluxshop.managers.LangManager;
 import fr.influencraft.fluxshop.managers.PriceManager;
+import fr.influencraft.fluxshop.shop.MenuItems;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
-import net.milkbowl.vault.economy.Economy;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.ClickType;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -31,41 +28,36 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Menu de la vente automatique, ouvert par un clic droit avec l'objet en main : la liste de
- * tout ce que la vente auto peut vendre (prices.yml + paliers de poissons CustomFishing), avec
- * le prix de vente, filtrable par catégorie et par état. Un clic sur un objet l'ajoute aux
- * exceptions du joueur ou l'en retire. La barre du bas porte aussi l'activation de l'objet et
- * la remise aux exceptions par défaut.
- * <p>
- * Les icônes sont des {@code custom_model_data} ItemsAdder posés sur du PAPER (le plugin n'a
- * pas de hook ItemsAdder, cf. {@code SellMenu}), surchargeables dans {@code autosell-menu.icons}.
+ * Auto-sell menu, opened by a right click with the auto-sell item in hand: a Flux menu ({@code menus/shop_autosell.yml})
+ * listing everything auto-sell can sell ({@code prices.yml} + CustomFishing fish tiers) with its sell price. Clicking
+ * an entry adds it to the player's exceptions or removes it.
+ * <ul>
+ * <li>list {@code autosell}: filters = "all" then each category, sort orders = state (all, exceptions, sold);</li>
+ * <li>toolbar buttons are one-item lists built here: {@code autosell_category}, {@code autosell_view},
+ * {@code autosell_bulk}, {@code autosell_toggle}, {@code autosell_reset}, {@code autosell_info};</li>
+ * <li>clicks: {@code [shop] autosell <entry|category|view|bulk|toggle|reset> [id] [left|right]}.</li>
+ * </ul>
+ * Icons are ItemsAdder custom_model_data on PAPER, overridable in {@code autosell-menu.icons}.
  */
-public class AutoSellMenu implements Listener {
+public class AutoSellMenu implements ListProvider {
+
+    public static final String MENU = "shop_autosell";
+    public static final String LIST = "autosell";
+    private static final List<String> BUTTONS = List.of("autosell_category", "autosell_view", "autosell_bulk",
+            "autosell_toggle", "autosell_reset", "autosell_info");
+    private static final int PAGE_SIZE = 45;
 
     private static final long TOGGLE_COOLDOWN_MILLIS = 3000L;
     private static final long RESET_CONFIRM_MILLIS = 5000L;
 
-    // 6 rangées : 5 rangées d'objets, barre d'outils en bas
-    private static final int SIZE = 54;
-    private static final int ITEMS_PER_PAGE = 45;
-    private static final int PREV_SLOT = 45;
-    private static final int CATEGORY_SLOT = 46;
-    private static final int VIEW_SLOT = 47;
-    private static final int BULK_SLOT = 48;
-    private static final int TOGGLE_SLOT = 49;
-    private static final int RESET_SLOT = 50;
-    private static final int NEXT_SLOT = 52;
-    private static final int INFO_SLOT = 53;
-
-    /** Pseudo-catégorie des paliers de poissons CustomFishing (absente de prices.yml). */
+    /** Pseudo-category of the CustomFishing fish tiers (not in prices.yml). */
     private static final String FISH_CATEGORY = "peche";
-
     private static final TextColor GOLD = TextColor.color(0xFFD94D);
 
-    /** Filtre d'état. */
+    /** State filter, the "sort" of the list. */
     private enum View { ALL, EXCEPTIONS, SOLD }
 
-    /** Une ligne de la liste : un matériau de prices.yml ou un palier de poissons. */
+    /** One line: a material of prices.yml or a fish tier. */
     private record Entry(String key, String category, ItemStack sample, double unitPrice, boolean fish) {
     }
 
@@ -74,40 +66,51 @@ public class AutoSellMenu implements Listener {
     private final PriceManager priceManager;
     private final AutoSellItemManager itemManager;
     private final AutoSellExceptionManager exceptions;
-    private final Economy econ;
+    private final MenuItems menuItems;
     private final Map<UUID, Long> lastToggleAt = new HashMap<>();
+    private final Map<UUID, Long> resetArmedAt = new HashMap<>();
 
     public AutoSellMenu(JavaPlugin plugin, LangManager lang, PriceManager priceManager,
-            AutoSellItemManager itemManager,
-            AutoSellExceptionManager exceptions, Economy econ) {
+            AutoSellItemManager itemManager, AutoSellExceptionManager exceptions) {
         this.plugin = plugin;
         this.lang = lang;
         this.priceManager = priceManager;
         this.itemManager = itemManager;
         this.exceptions = exceptions;
-        this.econ = econ;
+        this.menuItems = new MenuItems(plugin, lang);
         itemManager.setLoreInfo(this::itemLorePlaceholders);
     }
 
-    // ------------------------------------------------------------------
-    // Points d'entrée
-    // ------------------------------------------------------------------
+    public void register() {
+        Lists.register(plugin, LIST, this);
+        Lists.registerItem(plugin, "autosell_category", this::categoryButton);
+        Lists.registerItem(plugin, "autosell_view", this::viewButton);
+        Lists.registerItem(plugin, "autosell_bulk", p -> MenuItems.decorate(icon("bulk", 10021), lang.get("autosell-menu-bulk-name"),
+                lang.getList("autosell-menu-bulk-lore", Map.of("count", String.valueOf(Lists.entries(p, LIST).size())))));
+        Lists.registerItem(plugin, "autosell_toggle", this::toggleButton);
+        Lists.registerItem(plugin, "autosell_reset", this::resetButton);
+        Lists.registerItem(plugin, "autosell_info", p -> MenuItems.decorate(icon("info", 10181),
+                lang.get("autosell-menu-info-name"), lang.getList("autosell-menu-info-lore")));
+    }
+
+    // ------------------------------------------------------------------ entry points
 
     public void open(Player player) {
-        Session session = new Session(player);
-        session.inventory = Bukkit.createInventory(session, SIZE, session.title());
-        session.render();
-        player.openInventory(session.inventory);
-        player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1.0f, 1.0f);
+        Lists.reset(player, LIST);
+        invalidate(player);
+        if (FluxApi.open(player, MENU)) player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1.0f, 1.0f);
+    }
+
+    public void forget(UUID uuid) {
+        lastToggleAt.remove(uuid);
+        resetArmedAt.remove(uuid);
     }
 
     /**
-     * Bascule l'objet de vente auto du joueur (celui en main, sinon le premier trouvé).
-     * Limité à un changement toutes les {@link #TOGGLE_COOLDOWN_MILLIS} ms, pour qu'on ne puisse
-     * pas l'allumer pile au moment où un drop de valeur tombe puis l'éteindre aussitôt, en
-     * triant ses ventes une par une au lieu de s'en servir comme d'un « mode farm ».
+     * Toggles the player's auto-sell item (the one in hand, else the first found). Limited to one change every
+     * {@link #TOGGLE_COOLDOWN_MILLIS} ms, so it cannot be switched on right when a valuable drop falls then off again.
      *
-     * @return {@code true} si l'objet a été basculé
+     * @return true when the item was toggled
      */
     public boolean toggle(Player player) {
         UUID uuid = player.getUniqueId();
@@ -117,24 +120,17 @@ public class AutoSellMenu implements Listener {
             player.sendMessage(lang.get("shop-autosell-toggle-cooldown"));
             return false;
         }
-
         int slot = findItemSlot(player);
-        if (slot == NO_SLOT) {
-            return false;
-        }
+        if (slot == NO_SLOT) return false;
         lastToggleAt.put(uuid, now);
 
         ItemStack toggled = itemManager.toggled(player, itemAt(player, slot));
-        if (slot == OFF_HAND_SLOT) {
-            player.getInventory().setItemInOffHand(toggled);
-        } else {
-            player.getInventory().setItem(slot, toggled);
-        }
+        if (slot == OFF_HAND_SLOT) player.getInventory().setItemInOffHand(toggled);
+        else player.getInventory().setItem(slot, toggled);
 
         boolean nowActive = itemManager.isActive(toggled);
         player.sendMessage(lang.get(nowActive ? "shop-autosell-toggled-on" : "shop-autosell-toggled-off"));
-        player.playSound(player.getLocation(),
-                nowActive ? Sound.BLOCK_AMETHYST_BLOCK_CHIME : Sound.BLOCK_AMETHYST_BLOCK_HIT,
+        player.playSound(player.getLocation(), nowActive ? Sound.BLOCK_AMETHYST_BLOCK_CHIME : Sound.BLOCK_AMETHYST_BLOCK_HIT,
                 1.0f, nowActive ? 1.4f : 0.8f);
         return true;
     }
@@ -144,14 +140,10 @@ public class AutoSellMenu implements Listener {
 
     private int findItemSlot(Player player) {
         int held = player.getInventory().getHeldItemSlot();
-        if (itemManager.isAutoSellItem(player.getInventory().getItem(held))) {
-            return held;
-        }
+        if (itemManager.isAutoSellItem(player.getInventory().getItem(held))) return held;
         ItemStack[] contents = player.getInventory().getStorageContents();
         for (int i = 0; i < contents.length; i++) {
-            if (itemManager.isAutoSellItem(contents[i])) {
-                return i;
-            }
+            if (itemManager.isAutoSellItem(contents[i])) return i;
         }
         return itemManager.isAutoSellItem(player.getInventory().getItemInOffHand()) ? OFF_HAND_SLOT : NO_SLOT;
     }
@@ -165,12 +157,10 @@ public class AutoSellMenu implements Listener {
         return slot != NO_SLOT && itemManager.isActive(itemAt(player, slot));
     }
 
-    // ------------------------------------------------------------------
-    // Données
-    // ------------------------------------------------------------------
+    // ------------------------------------------------------------------ data
 
-    /** Tout ce que la vente auto peut vendre : paliers de poissons d'abord, puis prices.yml. */
-    private List<Entry> entries(Player player) {
+    /** Everything auto-sell can sell: fish tiers first, then prices.yml. */
+    private List<Entry> all(Player player) {
         List<Entry> entries = new ArrayList<>();
         if (CustomFishingHook.isEnabled()) {
             for (Map.Entry<String, ItemStack> fish : CustomFishingHook.getSellableFishSamplesByTier(player).entrySet()) {
@@ -179,7 +169,6 @@ public class AutoSellMenu implements Listener {
                         CustomFishingHook.getPrice(sample) / Math.max(1, sample.getAmount()), true));
             }
         }
-
         List<Entry> materials = new ArrayList<>();
         for (String id : priceManager.getItemIds()) {
             Material material = Material.matchMaterial(id);
@@ -193,10 +182,17 @@ public class AutoSellMenu implements Listener {
         return entries;
     }
 
-    /** Nombre d'exceptions qui concernent réellement un objet vendable (le reste est sans effet). */
+    private List<String> categories() {
+        List<String> categories = new ArrayList<>();
+        if (CustomFishingHook.isEnabled()) categories.add(FISH_CATEGORY);
+        categories.addAll(priceManager.getCategories());
+        return categories;
+    }
+
+    /** Exceptions that really concern a sellable item (the others have no effect). */
     private int exceptionCount(Player player) {
         Set<String> playerExceptions = exceptions.getExceptions(player.getUniqueId());
-        return (int) entries(player).stream().filter(entry -> playerExceptions.contains(entry.key())).count();
+        return (int) all(player).stream().filter(entry -> playerExceptions.contains(entry.key())).count();
     }
 
     private Map<String, String> itemLorePlaceholders(Player player) {
@@ -207,320 +203,180 @@ public class AutoSellMenu implements Listener {
         return FISH_CATEGORY.equals(category) ? lang.get("autosell-menu-category-fish") : PriceManager.humanize(category);
     }
 
-    // ------------------------------------------------------------------
-    // Menu
-    // ------------------------------------------------------------------
+    // ------------------------------------------------------------------ list autosell
 
-    private final class Session implements InventoryHolder {
-        private final Player player;
-        private final List<Entry> all;
-        private final List<String> categories = new ArrayList<>();
-        private Inventory inventory;
-
-        private int categoryIndex = -1; // -1 = toutes les catégories
-        private View view = View.ALL;
-        private int page = 1;
-        private long resetArmedAt = 0L;
-        private List<Entry> shown = List.of();
-
-        private Session(Player player) {
-            this.player = player;
-            this.all = entries(player);
-            if (all.stream().anyMatch(Entry::fish)) {
-                categories.add(FISH_CATEGORY);
-            }
-            categories.addAll(priceManager.getCategories());
-        }
-
-        @Override
-        public Inventory getInventory() {
-            return inventory;
-        }
-
-        private List<Entry> filtered() {
-            Set<String> playerExceptions = exceptions.getExceptions(player.getUniqueId());
-            String category = categoryIndex < 0 ? null : categories.get(categoryIndex);
-            List<Entry> result = new ArrayList<>();
-            for (Entry entry : all) {
-                if (category != null && !category.equalsIgnoreCase(entry.category())) {
-                    continue;
-                }
-                boolean exception = playerExceptions.contains(entry.key());
-                if (view == View.ALL || (view == View.EXCEPTIONS) == exception) {
-                    result.add(entry);
-                }
-            }
-            return result;
-        }
-
-        private int totalPages() {
-            return Math.max(1, (int) Math.ceil((double) shown.size() / ITEMS_PER_PAGE));
-        }
-
-        private String title() {
-            return lang.get("autosell-menu-title", Map.of(
-                    "page", String.valueOf(page),
-                    "totalPages", String.valueOf(totalPages())));
-        }
-
-        private void render() {
-            shown = filtered();
-            page = Math.max(1, Math.min(page, totalPages()));
-            inventory.clear();
-
-            Set<String> playerExceptions = exceptions.getExceptions(player.getUniqueId());
-            int start = (page - 1) * ITEMS_PER_PAGE;
-            int end = Math.min(start + ITEMS_PER_PAGE, shown.size());
-            for (int i = start; i < end; i++) {
-                Entry entry = shown.get(i);
-                inventory.setItem(i - start, entryItem(entry, playerExceptions.contains(entry.key())));
-            }
-
-            if (page > 1) {
-                ItemStack prev = icon("previous", Material.PAPER, 10012);
-                decorate(prev, lang.get("shop-inventory-previous-page"), List.of(), false);
-                inventory.setItem(PREV_SLOT, prev);
-            }
-            if (page < totalPages()) {
-                ItemStack next = icon("next", Material.PAPER, 10011);
-                decorate(next, lang.get("shop-inventory-next-page"), List.of(), false);
-                inventory.setItem(NEXT_SLOT, next);
-            }
-
-            inventory.setItem(CATEGORY_SLOT, categoryButton());
-            inventory.setItem(VIEW_SLOT, viewButton());
-
-            ItemStack bulk = icon("bulk", Material.PAPER, 10021);
-            decorate(bulk, lang.get("autosell-menu-bulk-name"),
-                    lang.getList("autosell-menu-bulk-lore", Map.of("count", String.valueOf(shown.size()))), false);
-            inventory.setItem(BULK_SLOT, bulk);
-
-            boolean active = isActive(player);
-            ItemStack toggle = new ItemStack(active ? Material.CYAN_DYE : Material.LIGHT_BLUE_DYE);
-            decorate(toggle, lang.get(active ? "autosell-menu-toggle-off-name" : "autosell-menu-toggle-on-name"),
-                    lang.getList("autosell-menu-toggle-lore", Map.of(
-                            "state", lang.get(active ? "autosell-menu-state-on" : "autosell-menu-state-off"),
-                            "exceptions", String.valueOf(exceptionCount(player)))),
-                    false);
-            inventory.setItem(TOGGLE_SLOT, toggle);
-
-            boolean armed = System.currentTimeMillis() - resetArmedAt < RESET_CONFIRM_MILLIS;
-            ItemStack reset = icon("reset", Material.PAPER, 10024);
-            List<String> resetLore = new ArrayList<>(lang.getList(
-                    armed ? "autosell-menu-reset-armed-lore" : "autosell-menu-reset-lore"));
-            if (exceptions.isDefault(player.getUniqueId())) {
-                resetLore.addAll(lang.getList("autosell-menu-reset-already-default"));
-            }
-            decorate(reset, lang.get(armed ? "autosell-menu-reset-armed-name" : "autosell-menu-reset-name"),
-                    resetLore, false);
-            inventory.setItem(RESET_SLOT, reset);
-
-            ItemStack info = icon("info", Material.PAPER, 10181);
-            decorate(info, lang.get("autosell-menu-info-name"), lang.getList("autosell-menu-info-lore"), false);
-            inventory.setItem(INFO_SLOT, info);
-
-            // Le titre porte la page : on ne le change qu'une fois le menu ouvert (au premier
-            // rendu, il est posé par createInventory).
-            if (player.getOpenInventory().getTopInventory().getHolder() == this) {
-                player.getOpenInventory().setTitle(title());
-            }
-        }
-
-        private ItemStack entryItem(Entry entry, boolean exception) {
-            ItemStack stack = entry.sample().clone();
-            stack.setAmount(1);
-
-            List<String> lore = new ArrayList<>();
-            if (entry.fish()) {
-                lore.addAll(lang.getList("autosell-menu-entry-fish-lore", Map.of(
-                        "price", econ.format(entry.unitPrice()))));
-            } else {
-                int stackSize = stack.getMaxStackSize();
-                lore.addAll(lang.getList(stackSize > 1 ? "autosell-menu-entry-lore" : "autosell-menu-entry-lore-unstackable",
-                        Map.of("price", econ.format(entry.unitPrice()),
-                                "stack_price", econ.format(entry.unitPrice() * stackSize),
-                                "stack", String.valueOf(stackSize),
-                                "category", categoryLabel(entry.category()))));
-            }
-            lore.add(lang.get(exception ? "autosell-menu-entry-exception" : "autosell-menu-entry-sold"));
-            lore.add("");
-            lore.add(lang.get(exception ? "autosell-menu-entry-action-remove" : "autosell-menu-entry-action-add"));
-
-            ItemMeta meta = stack.getItemMeta();
-            if (meta != null) {
-                if (!entry.fish()) {
-                    // Nom traduit par le client (français pour un joueur en français) plutôt
-                    // que le nom du matériau en anglais. Les poissons gardent leur nom de
-                    // palier coloré, posé par CustomFishingHook.
-                    meta.displayName(Component.translatable(stack.getType().getItemTranslationKey())
-                            .color(GOLD).decoration(TextDecoration.ITALIC, false));
-                }
-                meta.setLore(lore);
-                meta.setEnchantmentGlintOverride(exception);
-                stack.setItemMeta(meta);
-            }
-            return stack;
-        }
-
-        private ItemStack categoryButton() {
-            List<String> lore = new ArrayList<>();
-            lore.add(lang.get("autosell-menu-category-previous"));
-            lore.add("");
-            lore.add(lang.get(categoryIndex < 0 ? "autosell-menu-option-selected" : "autosell-menu-option",
-                    Map.of("option", lang.get("autosell-menu-category-all"))));
-            for (int i = 0; i < categories.size(); i++) {
-                lore.add(lang.get(i == categoryIndex ? "autosell-menu-option-selected" : "autosell-menu-option",
-                        Map.of("option", categoryLabel(categories.get(i)))));
-            }
-            lore.add("");
-            ItemStack stack = icon("category", Material.PAPER, 10017);
-            decorate(stack, lang.get("autosell-menu-category-name"), lore, false);
-            return stack;
-        }
-
-        private ItemStack viewButton() {
-            List<String> lore = new ArrayList<>();
-            lore.add("");
-            for (View option : View.values()) {
-                lore.add(lang.get(option == view ? "autosell-menu-option-selected" : "autosell-menu-option",
-                        Map.of("option", lang.get("autosell-menu-view-" + option.name().toLowerCase()))));
-            }
-            lore.add("");
-            ItemStack stack = icon("view", Material.PAPER, 10019);
-            decorate(stack, lang.get("autosell-menu-view-name"), lore, false);
-            return stack;
-        }
-
-        private void onClick(int slot, ClickType click) {
-            if (slot < ITEMS_PER_PAGE) {
-                int index = (page - 1) * ITEMS_PER_PAGE + slot;
-                if (index < shown.size()) {
-                    toggleException(shown.get(index));
-                }
-                return;
-            }
-
-            UUID uuid = player.getUniqueId();
-            switch (slot) {
-                case PREV_SLOT -> page--;
-                case NEXT_SLOT -> page++;
-                case CATEGORY_SLOT -> {
-                    int options = categories.size() + 1; // + "toutes"
-                    int step = click.isRightClick() ? -1 : 1;
-                    categoryIndex = Math.floorMod(categoryIndex + 1 + step, options) - 1;
-                    page = 1;
-                }
-                case VIEW_SLOT -> {
-                    view = View.values()[(view.ordinal() + 1) % View.values().length];
-                    page = 1;
-                }
-                case BULK_SLOT -> {
-                    if (shown.isEmpty()) {
-                        return;
-                    }
-                    // Clic gauche : tout ce qui est affiché devient exception ; clic droit :
-                    // tout ce qui est affiché repart en vente auto.
-                    exceptions.setExceptions(uuid, shown.stream().map(Entry::key).toList(), !click.isRightClick());
-                    itemManager.refreshLore(player);
-                    player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.2f);
-                }
-                case TOGGLE_SLOT -> {
-                    if (!toggle(player)) {
-                        return;
-                    }
-                }
-                case RESET_SLOT -> {
-                    long now = System.currentTimeMillis();
-                    if (now - resetArmedAt < RESET_CONFIRM_MILLIS) {
-                        resetArmedAt = 0L;
-                        exceptions.resetToDefault(uuid);
-                        itemManager.refreshLore(player);
-                        player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
-                        player.sendMessage(lang.get("autosell-menu-reset-done"));
-                    } else {
-                        resetArmedAt = now;
-                        player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 1.0f);
-                    }
-                }
-                default -> {
-                    return;
-                }
-            }
-            if (slot == PREV_SLOT || slot == NEXT_SLOT || slot == CATEGORY_SLOT || slot == VIEW_SLOT) {
-                player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1.0f, 1.0f);
-            }
-            render();
-        }
-
-        private void toggleException(Entry entry) {
-            UUID uuid = player.getUniqueId();
-            boolean nowException = !exceptions.getExceptions(uuid).contains(entry.key());
-            exceptions.setExceptions(uuid, List.of(entry.key()), nowException);
-            itemManager.refreshLore(player);
-            player.playSound(player.getLocation(),
-                    nowException ? Sound.BLOCK_AMETHYST_BLOCK_HIT : Sound.BLOCK_AMETHYST_BLOCK_CHIME,
-                    1.0f, nowException ? 0.8f : 1.4f);
-            render();
-        }
+    @Override
+    public List<String> filters() {
+        List<String> labels = new ArrayList<>();
+        labels.add(lang.get("autosell-menu-category-all"));
+        for (String category : categories()) labels.add(categoryLabel(category));
+        return labels;
     }
 
-    // ------------------------------------------------------------------
-    // Événements
-    // ------------------------------------------------------------------
-
-    @EventHandler
-    public void onClick(InventoryClickEvent event) {
-        if (!(event.getView().getTopInventory().getHolder() instanceof Session session)) {
-            return;
-        }
-        event.setCancelled(true);
-        if (event.getClickedInventory() == null || event.getClickedInventory() != event.getView().getTopInventory()) {
-            return;
-        }
-        session.onClick(event.getSlot(), event.getClick());
+    @Override
+    public List<String> sorts() {
+        List<String> labels = new ArrayList<>();
+        for (View view : View.values()) labels.add(lang.get("autosell-menu-view-" + view.name().toLowerCase()));
+        return labels;
     }
 
-    @EventHandler
-    public void onDrag(InventoryDragEvent event) {
-        if (event.getView().getTopInventory().getHolder() instanceof Session) {
-            event.setCancelled(true);
+    @Override
+    public List<ListEntry> entries(ListQuery query) {
+        Player player = query.viewer();
+        List<String> categories = categories();
+        String category = query.filter() <= 0 || query.filter() > categories.size() ? null : categories.get(query.filter() - 1);
+        View view = View.values()[Math.floorMod(query.sort(), View.values().length)];
+        Set<String> playerExceptions = exceptions.getExceptions(player.getUniqueId());
+        List<ListEntry> out = new ArrayList<>();
+        for (Entry entry : all(player)) {
+            if (category != null && !category.equalsIgnoreCase(entry.category())) continue;
+            boolean exception = playerExceptions.contains(entry.key());
+            if (view != View.ALL && (view == View.EXCEPTIONS) != exception) continue;
+            out.add(ListEntry.of(entry.key()).set("category", categoryLabel(entry.category()))
+                    .set("name", PriceManager.humanize(entry.key())).item(entryItem(entry, exception)));
         }
+        return out;
     }
 
-    // ------------------------------------------------------------------
-    // Icônes
-    // ------------------------------------------------------------------
-
-    private ItemStack icon(String key, Material fallbackMaterial, int fallbackModelData) {
-        ConfigurationSection section = plugin.getConfig().getConfigurationSection("autosell-menu.icons." + key);
-        Material material = fallbackMaterial;
-        int modelData = fallbackModelData;
-        if (section != null) {
-            Material configured = Material.matchMaterial(section.getString("material", fallbackMaterial.name()));
-            material = configured == null ? fallbackMaterial : configured;
-            modelData = section.getInt("custom-model-data", fallbackModelData);
+    private ItemStack entryItem(Entry entry, boolean exception) {
+        ItemStack stack = entry.sample().clone();
+        stack.setAmount(1);
+        List<String> lore = new ArrayList<>();
+        if (entry.fish()) {
+            lore.addAll(lang.getList("autosell-menu-entry-fish-lore", Map.of("price", menuItems.price(entry.unitPrice()))));
+        } else {
+            int stackSize = stack.getMaxStackSize();
+            lore.addAll(lang.getList(stackSize > 1 ? "autosell-menu-entry-lore" : "autosell-menu-entry-lore-unstackable",
+                    Map.of("price", menuItems.price(entry.unitPrice()),
+                            "stack_price", menuItems.price(entry.unitPrice() * stackSize),
+                            "stack", String.valueOf(stackSize),
+                            "category", categoryLabel(entry.category()))));
         }
-        ItemStack stack = new ItemStack(material);
-        if (modelData > 0) {
-            ItemMeta meta = stack.getItemMeta();
-            if (meta != null) {
-                meta.setCustomModelData(modelData);
-                stack.setItemMeta(meta);
+        lore.add(lang.get(exception ? "autosell-menu-entry-exception" : "autosell-menu-entry-sold"));
+        lore.add("");
+        lore.add(lang.get(exception ? "autosell-menu-entry-action-remove" : "autosell-menu-entry-action-add"));
+
+        ItemMeta meta = stack.getItemMeta();
+        if (meta != null) {
+            if (!entry.fish()) {
+                // name translated by the client rather than the English material name; fish keep their tier name
+                meta.displayName(Component.translatable(stack.getType().getItemTranslationKey())
+                        .color(GOLD).decoration(TextDecoration.ITALIC, false));
             }
+            meta.setLore(lore);
+            meta.setEnchantmentGlintOverride(exception);
+            stack.setItemMeta(meta);
         }
         return stack;
     }
 
-    private void decorate(ItemStack stack, String name, List<String> lore, boolean glint) {
-        ItemMeta meta = stack.getItemMeta();
-        if (meta == null) {
-            return;
+    // ------------------------------------------------------------------ toolbar
+
+    private ItemStack categoryButton(Player player) {
+        int selected = Lists.state(player, LIST).filter();
+        List<String> labels = filters();
+        List<String> lore = new ArrayList<>();
+        lore.add(lang.get("autosell-menu-category-previous"));
+        lore.add("");
+        for (int i = 0; i < labels.size(); i++) {
+            lore.add(lang.get(i == Math.floorMod(selected, labels.size()) ? "autosell-menu-option-selected" : "autosell-menu-option",
+                    Map.of("option", labels.get(i))));
         }
-        meta.setDisplayName(name);
-        meta.setLore(lore);
-        if (glint) {
-            meta.setEnchantmentGlintOverride(true);
+        lore.add("");
+        return MenuItems.decorate(icon("category", 10017), lang.get("autosell-menu-category-name"), lore);
+    }
+
+    private ItemStack viewButton(Player player) {
+        int selected = Math.floorMod(Lists.state(player, LIST).sort(), View.values().length);
+        List<String> labels = sorts();
+        List<String> lore = new ArrayList<>();
+        lore.add("");
+        for (int i = 0; i < labels.size(); i++) {
+            lore.add(lang.get(i == selected ? "autosell-menu-option-selected" : "autosell-menu-option", Map.of("option", labels.get(i))));
         }
-        stack.setItemMeta(meta);
+        lore.add("");
+        return MenuItems.decorate(icon("view", 10019), lang.get("autosell-menu-view-name"), lore);
+    }
+
+    private ItemStack toggleButton(Player player) {
+        boolean active = isActive(player);
+        return MenuItems.decorate(new ItemStack(active ? Material.CYAN_DYE : Material.LIGHT_BLUE_DYE),
+                lang.get(active ? "autosell-menu-toggle-off-name" : "autosell-menu-toggle-on-name"),
+                lang.getList("autosell-menu-toggle-lore", Map.of(
+                        "state", lang.get(active ? "autosell-menu-state-on" : "autosell-menu-state-off"),
+                        "exceptions", String.valueOf(exceptionCount(player)))));
+    }
+
+    private ItemStack resetButton(Player player) {
+        boolean armed = resetArmed(player.getUniqueId());
+        List<String> lore = new ArrayList<>(lang.getList(armed ? "autosell-menu-reset-armed-lore" : "autosell-menu-reset-lore"));
+        if (exceptions.isDefault(player.getUniqueId())) lore.addAll(lang.getList("autosell-menu-reset-already-default"));
+        return MenuItems.decorate(icon("reset", 10024), lang.get(armed ? "autosell-menu-reset-armed-name" : "autosell-menu-reset-name"), lore);
+    }
+
+    private boolean resetArmed(UUID uuid) {
+        Long at = resetArmedAt.get(uuid);
+        return at != null && System.currentTimeMillis() - at < RESET_CONFIRM_MILLIS;
+    }
+
+    private ItemStack icon(String key, int fallbackModelData) {
+        return menuItems.iconAt("autosell-menu.icons." + key, Material.PAPER, fallbackModelData, 1);
+    }
+
+    // ------------------------------------------------------------------ [shop] autosell ...
+
+    public void click(Player player, MenuView view, String button, String argument, boolean right) {
+        UUID uuid = player.getUniqueId();
+        switch (button) {
+            case "entry" -> {
+                if (argument.isEmpty()) return;
+                boolean nowException = !exceptions.getExceptions(uuid).contains(argument);
+                exceptions.setExceptions(uuid, List.of(argument), nowException);
+                itemManager.refreshLore(player);
+                player.playSound(player.getLocation(), nowException ? Sound.BLOCK_AMETHYST_BLOCK_HIT : Sound.BLOCK_AMETHYST_BLOCK_CHIME,
+                        1.0f, nowException ? 0.8f : 1.4f);
+            }
+            case "category" -> {
+                Lists.act(player, LIST, right ? "filter-prev" : "filter", PAGE_SIZE);
+                player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1.0f, 1.0f);
+            }
+            case "view" -> {
+                Lists.act(player, LIST, right ? "sort-prev" : "sort", PAGE_SIZE);
+                player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1.0f, 1.0f);
+            }
+            case "bulk" -> {
+                List<String> shown = Lists.entries(player, LIST).stream().map(ListEntry::id).toList();
+                if (shown.isEmpty()) return;
+                // left click: everything shown becomes an exception; right click: everything shown is sold again
+                exceptions.setExceptions(uuid, shown, !right);
+                itemManager.refreshLore(player);
+                player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.2f);
+            }
+            case "toggle" -> {
+                if (!toggle(player)) return;
+            }
+            case "reset" -> {
+                if (resetArmed(uuid)) {
+                    resetArmedAt.remove(uuid);
+                    exceptions.resetToDefault(uuid);
+                    itemManager.refreshLore(player);
+                    player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
+                    player.sendMessage(lang.get("autosell-menu-reset-done"));
+                } else {
+                    resetArmedAt.put(uuid, System.currentTimeMillis());
+                    player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 1.0f);
+                }
+            }
+            default -> {
+                return;
+            }
+        }
+        invalidate(player);
+        if (view != null && MENU.equals(view.menuId())) view.refresh();
+    }
+
+    private void invalidate(Player player) {
+        Lists.invalidate(player, LIST);
+        for (String button : BUTTONS) Lists.invalidate(player, button);
     }
 }

@@ -5,7 +5,7 @@ import fr.influencraft.fluxshop.autosell.AutoSellFilter;
 import fr.influencraft.fluxshop.autosell.AutoSellItemManager;
 import fr.influencraft.fluxshop.integration.SellPriceResolver;
 import fr.influencraft.fluxshop.managers.PriceManager;
-import net.milkbowl.vault.economy.Economy;
+import fr.influencraft.fluxshop.managers.Money;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -39,14 +39,12 @@ public class AutoSellEcoTelekinesisListener implements Listener {
     private final AutoSellItemManager autoSellItemManager;
     private final AutoSellFilter autoSellFilter;
     private final PriceManager priceManager;
-    private final Economy econ;
 
     public AutoSellEcoTelekinesisListener(AutoSellItemManager autoSellItemManager, AutoSellFilter autoSellFilter,
-            PriceManager priceManager, Economy econ) {
+            PriceManager priceManager) {
         this.autoSellItemManager = autoSellItemManager;
         this.autoSellFilter = autoSellFilter;
         this.priceManager = priceManager;
-        this.econ = econ;
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -80,7 +78,7 @@ public class AutoSellEcoTelekinesisListener implements Listener {
 
         if (total > 0) {
             event.setItems(kept);
-            econ.depositPlayer(player, total);
+            Money.give(player, total);
         }
     }
 }

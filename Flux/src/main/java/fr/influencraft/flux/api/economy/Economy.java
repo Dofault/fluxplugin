@@ -65,7 +65,9 @@ public final class Economy {
 
     /** Applies {@code currencies.<id>.format} to an amount. For implementations of {@link Currency#format}. */
     public static String format(String currencyId, double amount) {
-        return formats.apply(currencyId.toLowerCase(Locale.ROOT)).replace("%amount%", Format.number(amount));
+        // whole amounts without decimals, cents kept when there are some
+        String shown = Math.abs(amount - Math.rint(amount)) < 0.005 ? Format.number(Math.rint(amount)) : Format.decimal(amount);
+        return formats.apply(currencyId.toLowerCase(Locale.ROOT)).replace("%amount%", shown);
     }
 
     /** Rounds to the cent, never below 0.01 for a positive amount (money rule of the suite). */

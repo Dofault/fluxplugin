@@ -4,7 +4,7 @@ import fr.influencraft.fluxshop.autosell.AutoSellFilter;
 import fr.influencraft.fluxshop.autosell.AutoSellItemManager;
 import fr.influencraft.fluxshop.integration.SellPriceResolver;
 import fr.influencraft.fluxshop.managers.PriceManager;
-import net.milkbowl.vault.economy.Economy;
+import fr.influencraft.fluxshop.managers.Money;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -24,8 +24,8 @@ import org.bukkit.inventory.ItemStack;
  * storage is never mistaken for "farming" and never triggers a sale.
  * <p>
  * Deliberately sends no chat message per sale (farming fast would spam the chat into
- * uselessness) — {@code econ.depositPlayer(...)} goes through Vault → CMI like every other
- * deposit, so InfluBridge's {@code MoneyGainActionBarListener} already picks it up and merges
+ * uselessness) — {@code Money.give(...)} goes through Vault → CMI like every other
+ * deposit, so FluxTools' {@code MoneyGainActionBarListener} already picks it up and merges
  * it into the same cumulative "+X BitBlock" action bar it shows for EcoJobs earnings, with no
  * changes needed on either side.
  * <p>
@@ -39,14 +39,12 @@ public class AutoSellPickupListener implements Listener {
     private final AutoSellItemManager autoSellItemManager;
     private final AutoSellFilter autoSellFilter;
     private final PriceManager priceManager;
-    private final Economy econ;
 
     public AutoSellPickupListener(AutoSellItemManager autoSellItemManager, AutoSellFilter autoSellFilter,
-            PriceManager priceManager, Economy econ) {
+            PriceManager priceManager) {
         this.autoSellItemManager = autoSellItemManager;
         this.autoSellFilter = autoSellFilter;
         this.priceManager = priceManager;
-        this.econ = econ;
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -73,7 +71,7 @@ public class AutoSellPickupListener implements Listener {
 
         event.setCancelled(true);
         event.getItem().remove();
-        econ.depositPlayer(player, price);
+        Money.give(player, price);
         player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.2f, 1.5f);
     }
 }

@@ -1,0 +1,43 @@
+# FluxShop: buying menu of a shop chest (right click). One row per item: the item, then x1, x2, x10, x64.
+# Rows are lists drawn by FluxShop (same order in every list); clicks go through [shop] buy <row> <quantity>.
+# Texts of the items come from plugins/FluxShop/lang/fr.yml, icons from config.yml (shop-menu).
+title: "%fluxshop_lang_shop-menu-title%"
+rows: 6
+player-inventory: visible
+vanilla-background: true
+
+lists:
+  shop_item:
+    slots: 2,11,20,29,38,47
+    item:
+      material: entry
+  shop_buy_1:
+    slots: 3,12,21,30,39,48
+    item:
+      material: entry
+      actions:
+        left: ["[shop] buy %entry_id% 1"]
+  shop_buy_2:
+    slots: 4,13,22,31,40,49
+    item:
+      material: entry
+      actions:
+        left: ["[shop] buy %entry_id% 2"]
+  shop_buy_10:
+    slots: 5,14,23,32,41,50
+    item:
+      material: entry
+      actions:
+        left: ["[shop] buy %entry_id% 10"]
+  shop_buy_64:
+    slots: 6,15,24,33,42,51
+    item:
+      material: entry
+      actions:
+        left: ["[shop] buy %entry_id% 64"]
+
+items:
+  filler:
+    slots: 0,1,7,8,9,10,16,17,18,19,25,26,27,28,34,35,36,37,43,44,45,46,52,53
+    material: GRAY_STAINED_GLASS_PANE
+    hide-tooltip: true

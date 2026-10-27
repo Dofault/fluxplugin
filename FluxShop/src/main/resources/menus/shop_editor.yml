@@ -1,0 +1,31 @@
+# FluxShop: editor of a shop chest (administrator sneaking + right click). One row per item: the item, its price,
+# remove (double click). Clicking an item of your own inventory adds a copy of it to the chest.
+title: "%fluxshop_lang_shop-editor-title%"
+rows: 6
+player-inventory: visible
+vanilla-background: true
+inventory-click-actions: ["[shop] editor-add %clicked_slot%"]
+
+lists:
+  editor_item:
+    slots: 2,11,20,29,38,47
+    item:
+      material: entry
+  editor_price:
+    slots: 4,13,22,31,40,49
+    item:
+      material: entry
+      actions:
+        left: ["[shop] editor-price %entry_id%"]
+  editor_remove:
+    slots: 6,15,24,33,42,51
+    item:
+      material: entry
+      actions:
+        left: ["[shop] editor-remove %entry_id%"]
+
+items:
+  filler:
+    slots: 0,1,7,8,9,10,16,17,18,19,25,26,27,28,34,35,36,37,43,44,45,46,52,53
+    material: GRAY_STAINED_GLASS_PANE
+    hide-tooltip: true

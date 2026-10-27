@@ -7,12 +7,7 @@ main: fr.influencraft.fluxshop.FluxShop
 api-version: '26.2'
 
 depend: [Flux]
-softdepend: [Vault, LuckPerms, CustomFishing, AdvancedEnchantments, eco, ItemsAdder]
-
-commands:
-  supermarket:
-    description: Commande principale du plugin Supermarket
-    usage: /supermarket <shop|setprice|checkprices|tpshop|settpshop|autosell|reload>
+softdepend: [Vault, PlaceholderAPI, LuckPerms, CustomFishing, AdvancedEnchantments, eco, ItemsAdder]
 
 permissions:
   supermarket.admin:

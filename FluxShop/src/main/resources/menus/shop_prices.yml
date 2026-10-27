@@ -1,0 +1,42 @@
+# FluxShop: sell prices (left click on a sell block). The filter button walks through the categories of prices.yml.
+title: "&#FFD94D%flux_list_shop_prices_filter% &7(%flux_list_shop_prices_page%/%flux_list_shop_prices_pages%)"
+rows: 6
+player-inventory: hidden
+vanilla-background: true
+
+lists:
+  shop_prices:
+    slots: 0-44
+    item:
+      material: entry
+
+items:
+  filter:
+    slot: 49
+    material: PAPER
+    custom-model-data: 10017
+    name: "&r&7%img_left_click%&#FFD94D Next category"
+    lore:
+      - "&r&7%img_right_click%&#FFD94D Previous category"
+      - ""
+      - "&#B376E5Shown: &f%flux_list_shop_prices_filter%"
+      - "&#B376E5%flux_list_shop_prices_count% items"
+    actions:
+      left: ["[list] shop_prices filter"]
+      right: ["[list] shop_prices filter-prev"]
+  previous:
+    slot: 45
+    material: PAPER
+    custom-model-data: 10012
+    name: "%fluxshop_lang_shop-inventory-previous-page%"
+    view-requirements: ["placeholder: %flux_list_shop_prices_has_prev% == true"]
+    actions:
+      left: ["[list] shop_prices prev"]
+  next:
+    slot: 53
+    material: PAPER
+    custom-model-data: 10011
+    name: "%fluxshop_lang_shop-inventory-next-page%"
+    view-requirements: ["placeholder: %flux_list_shop_prices_has_next% == true"]
+    actions:
+      left: ["[list] shop_prices next"]

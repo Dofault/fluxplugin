@@ -1,0 +1,69 @@
+# FluxShop: auto-sell menu (right click with the auto-sell item). Click an item to add it to your exceptions (never
+# auto-sold) or to remove it. Every button is built by FluxShop (texts in lang/fr.yml, icons in config.yml).
+title: "&#FFD94DAuto-sell &7(%flux_list_autosell_page%/%flux_list_autosell_pages%)"
+rows: 6
+player-inventory: hidden
+vanilla-background: true
+
+lists:
+  autosell:
+    slots: 0-44
+    item:
+      material: entry
+      actions:
+        left: ["[shop] autosell entry %entry_id%"]
+  autosell_category:
+    slots: 46
+    item:
+      material: entry
+      actions:
+        left: ["[shop] autosell category left"]
+        right: ["[shop] autosell category right"]
+  autosell_view:
+    slots: 47
+    item:
+      material: entry
+      actions:
+        left: ["[shop] autosell view left"]
+        right: ["[shop] autosell view right"]
+  autosell_bulk:
+    slots: 48
+    item:
+      material: entry
+      actions:
+        left: ["[shop] autosell bulk left"]
+        right: ["[shop] autosell bulk right"]
+  autosell_toggle:
+    slots: 49
+    item:
+      material: entry
+      actions:
+        left: ["[shop] autosell toggle"]
+  autosell_reset:
+    slots: 50
+    item:
+      material: entry
+      actions:
+        left: ["[shop] autosell reset"]
+  autosell_info:
+    slots: 53
+    item:
+      material: entry
+
+items:
+  previous:
+    slot: 45
+    material: PAPER
+    custom-model-data: 10012
+    name: "%fluxshop_lang_shop-inventory-previous-page%"
+    view-requirements: ["placeholder: %flux_list_autosell_has_prev% == true"]
+    actions:
+      left: ["[list] autosell prev"]
+  next:
+    slot: 52
+    material: PAPER
+    custom-model-data: 10011
+    name: "%fluxshop_lang_shop-inventory-next-page%"
+    view-requirements: ["placeholder: %flux_list_autosell_has_next% == true"]
+    actions:
+      left: ["[list] autosell next"]
