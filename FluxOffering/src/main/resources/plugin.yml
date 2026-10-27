@@ -6,7 +6,6 @@ authors: [Dofault, Entr0pik]
 description: "Generic per-player item collections (\"offrandes\"), tracked and saved, exposed via PlaceholderAPI. No rankup/reward logic - that's wired up externally with the placeholders."
 
 depend: [Flux]
-softdepend: [ItemsAdder, Vault]
 
 permissions:
   offrandes.use:

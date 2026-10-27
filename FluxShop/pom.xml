@@ -50,57 +50,11 @@
         <version>${paper.api.version}</version>
         <scope>provided</scope>
         </dependency>
-
-    <dependency>
-        <groupId>net.milkbowl.vault</groupId>
-        <artifactId>VaultAPI</artifactId>
-        <version>1.7</version>
-    </dependency>
-    <dependency>
-        <groupId>me.clip</groupId>
-        <artifactId>placeholderapi</artifactId>
-        <version>2.11.6</version>
-        <scope>provided</scope>
-    </dependency>
     <dependency>
         <groupId>net.luckperms</groupId>
         <artifactId>api</artifactId>
         <version>5.4</version>
         <scope>provided</scope>
-    </dependency>
-
-    <!-- CustomFishing API (soft dependency, provided at runtime).
-         Compiled against the actual plugin jar installed on the SemiRP server (no public
-         Maven repo for MomiRealms plugins) — same technique already used by
-         plugins/InfluOffrande/pom.xml and plugins/mana-sync/pom.xml for ItemsAdder. -->
-    <dependency>
-        <groupId>net.momirealms</groupId>
-        <artifactId>customfishing</artifactId>
-        <version>2.3.27</version>
-        <scope>system</scope>
-        <systemPath>${project.basedir}/libs/CustomFishing-2.3.28.jar</systemPath>
-    </dependency>
-
-    <!-- eco API (soft dependency, provided at runtime), même technique systemPath : nécessaire
-         pour DropQueuePushEvent, par lequel passent les drops de la Télépathie d'EcoEnchants
-         (cf. AutoSellEcoTelekinesisListener). -->
-    <dependency>
-        <groupId>com.willfp</groupId>
-        <artifactId>eco</artifactId>
-        <version>2026.38</version>
-        <scope>system</scope>
-        <systemPath>${project.basedir}/libs/eco-2026.41-modrinth.jar</systemPath>
-    </dependency>
-
-    <!-- ItemsAdder API (soft dependency, provided at runtime), même technique systemPath :
-         nécessaire pour reconnaître un bloc ItemsAdder posé comme bloc magasin
-         (CustomBlock.byAlreadyPlaced, cf. ItemsAdderHook). -->
-    <dependency>
-        <groupId>dev.lone</groupId>
-        <artifactId>ItemsAdder</artifactId>
-        <version>4.0.18</version>
-        <scope>system</scope>
-        <systemPath>${project.basedir}/libs/ItemsAdder_4.0.18.jar</systemPath>
     </dependency>
 
   </dependencies>

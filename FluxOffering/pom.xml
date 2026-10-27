@@ -48,23 +48,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Vault (soft dependency, provided at runtime) — used to deposit BitBlock
-             (server economy, backed by EssentialsXEco) into an offrande's money requirement. -->
-        <dependency>
-            <groupId>net.milkbowl.vault</groupId>
-            <artifactId>VaultAPI</artifactId>
-            <version>1.7</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <!-- PlaceholderAPI (soft dependency, provided at runtime) -->
-        <dependency>
-            <groupId>me.clip</groupId>
-            <artifactId>placeholderapi</artifactId>
-            <version>2.11.6</version>
-            <scope>provided</scope>
-        </dependency>
-
         <!-- Bundled by Paper at runtime; declared explicitly because it isn't always pulled
              in transitively from paper-api for compilation (used to strip chat input down
              to plain text in the editor's chat-based quantity prompt). -->
@@ -73,18 +56,6 @@
             <artifactId>adventure-text-serializer-plain</artifactId>
             <version>4.24.0</version>
             <scope>provided</scope>
-        </dependency>
-
-        <!-- ItemsAdder API (soft dependency, provided at runtime).
-             Compiled against the actual plugin jar installed on the SemiRP server (no working
-             jitpack build exists for the 4.0.x line at the time of writing) — same technique
-             already used by plugins/mana-sync/pom.xml. -->
-        <dependency>
-            <groupId>dev.lone</groupId>
-            <artifactId>ItemsAdder</artifactId>
-            <version>4.0.18</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/ItemsAdder_4.0.18.jar</systemPath>
         </dependency>
     </dependencies>
 

@@ -37,54 +37,11 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>net.milkbowl</groupId>
-            <artifactId>vaultunlocked</artifactId>
-            <version>2.20.3</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/VaultUnlocked-2.20.3.jar</systemPath>
-        </dependency>
-        <dependency>
-            <groupId>me.clip</groupId>
-            <artifactId>placeholderapi</artifactId>
-            <version>2.12.3</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/PlaceholderAPI-2.12.3.jar</systemPath>
-        </dependency>
-        <!-- Optional plugins used by the utility modules (ex-InfluBridge) -->
-        <dependency>
-            <groupId>com.willfp</groupId>
-            <artifactId>eco</artifactId>
-            <version>2026.41</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/eco-2026.41-modrinth.jar</systemPath>
-        </dependency>
-        <dependency>
-            <groupId>com.willfp</groupId>
-            <artifactId>ecojobs</artifactId>
-            <version>2026.38</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/EcoJobs-2026.38-spigot.jar</systemPath>
-        </dependency>
-        <dependency>
             <groupId>com.comphenix.protocol</groupId>
             <artifactId>ProtocolLib</artifactId>
             <version>5.5.0</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/libs/ProtocolLib.jar</systemPath>
-        </dependency>
-        <dependency>
-            <groupId>com.zrips</groupId>
-            <artifactId>cmi</artifactId>
-            <version>9.8.11.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/CMI-9.8.11.0.jar</systemPath>
-        </dependency>
-        <dependency>
-            <groupId>net.momirealms</groupId>
-            <artifactId>customfishing</artifactId>
-            <version>2.3.28</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/CustomFishing-2.3.28.jar</systemPath>
         </dependency>
     </dependencies>
 

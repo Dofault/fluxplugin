@@ -34,15 +34,6 @@
             <version>26.2.build.124-stable</version>
             <scope>provided</scope>
         </dependency>
-
-        <!-- Jars des plugins serveur (fournis à l'exécution), copiés dans libs/. -->
-        <dependency>
-            <groupId>me.angeschossen</groupId>
-            <artifactId>lands</artifactId>
-            <version>8.6.2</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/Lands-8.6.2.jar</systemPath>
-        </dependency>
         <dependency>
             <groupId>nl.rutgerkok</groupId>
             <artifactId>blocklocker</artifactId>

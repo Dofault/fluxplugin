@@ -6,7 +6,7 @@ description: Levelled crate tools with quests, and utility modules (jobs, repair
 authors: [Influencraft]
 depend: [Flux]
 # EcoEnchants avant nous : ses enchantements (Filon, Tranchée...) doivent être inscrits quand on lit les outils.
-softdepend: [Vault, EcoEnchants, eco, EcoJobs, CMI, ProtocolLib, CustomFishing]
+softdepend: [ProtocolLib, EcoEnchants, EcoBattlepass, EcoCollections]
 permissions:
   # Séparation de livres (module enchant-splitter, ex-InfluEnchantSplitter) : réservée aux VIP, accordée au groupe vip
   influenchantsplitter.command:

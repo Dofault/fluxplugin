@@ -6,7 +6,7 @@ description: Pets, collectible cards and boosters.
 # FluxShop: sell-price bonus pet effect (money-bonus).
 # eco: player pet storage. libreforge (loaded by eco plugins): pet effects and job XP multiplier.
 depend: [eco, Flux]
-softdepend: [libreforge, EcoJobs, FluxShop, EcoEnchants, EcoItems, ItemsAdder, BetterModel, packetevents, PlaceholderAPI]
+softdepend: [libreforge, FluxShop, EcoEnchants, EcoItems, BetterModel]
 
 permissions:
   influpet.admin:

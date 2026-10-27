@@ -46,42 +46,13 @@
             <scope>system</scope>
             <systemPath>${project.basedir}/libs/Lands-8.9.5.jar</systemPath>
         </dependency>
-        <!-- InfluPW (fork de PlayerWarps 5.1.1) et FluxChestShop (fork de QuickShop-Hikari 6.3.0.1) :
-             jars construits depuis plugins/InfluPW et plugins/FluxChestShop, API Java inchangée. -->
+        <!-- InfluPW (fork of PlayerWarps 5.1.1), jar built from plugins/InfluPW. Chest shops go through Flux. -->
         <dependency>
             <groupId>fr.influencraft</groupId>
             <artifactId>influpw</artifactId>
             <version>5.1.1</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/libs/InfluPW.jar</systemPath>
-        </dependency>
-        <dependency>
-            <groupId>fr.influencraft</groupId>
-            <artifactId>influechoppe</artifactId>
-            <version>6.3.0.1</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/FluxChestShop.jar</systemPath>
-        </dependency>
-        <dependency>
-            <groupId>net.milkbowl</groupId>
-            <artifactId>vaultunlocked</artifactId>
-            <version>2.20.3</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/VaultUnlocked-2.20.3.jar</systemPath>
-        </dependency>
-        <dependency>
-            <groupId>me.clip</groupId>
-            <artifactId>placeholderapi</artifactId>
-            <version>2.12.3</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/PlaceholderAPI-2.12.3.jar</systemPath>
-        </dependency>
-        <dependency>
-            <groupId>dev.lone</groupId>
-            <artifactId>itemsadder</artifactId>
-            <version>4.0.18</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/ItemsAdder_4.0.18.jar</systemPath>
         </dependency>
     </dependencies>
 

@@ -4,9 +4,9 @@ main: fr.influencraft.fluxlands.FluxLands
 # 26.2 = version minimale, le plugin se charge aussi en 26.3 (compilation vérifiée par le profil Maven paper-26.3).
 api-version: '26.2'
 authors: [Dofault, Entr0pik]
-description: Extension de Lands (ex-InfluVille) - villes, pays, warps (InfluPW), échoppes (FluxChestShop) unifiés.
-depend: [Lands, Vault, Flux]
-softdepend: [InfluPW, FluxChestShop, ItemsAdder]
+description: Extension de Lands (ex-InfluVille) - villes, pays, warps (InfluPW), échoppes unifiés.
+depend: [Lands, Flux]
+softdepend: [InfluPW]
 
 permissions:
   influlands.use:

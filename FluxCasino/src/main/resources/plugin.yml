@@ -5,7 +5,6 @@ api-version: "26.2"
 description: Casino chips (balance, bet, exchange against the main currency) and casino games (Plinko, slot machine, roulette) in Flux menus.
 authors: [Influencraft]
 depend: [Flux]
-softdepend: [Vault]
 
 permissions:
   influcasino.use:
