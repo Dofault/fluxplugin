@@ -53,10 +53,12 @@ public class ServiceDecouverte {
         this.langue = langue;
     }
 
-    /** After the join is processed (asynchronous thread): asks the question when the player still has to answer. */
+    /**
+     * After the join is processed (asynchronous thread): asks the question at every join until the player answers,
+     * whatever his seniority. A former player naming a sponsor is recorded for the statistics only (too old to be sponsored).
+     */
     public void proposer(UUID uuid, Instant premiereConnexion) throws SQLException {
         if (!config.isQuestionnaireActif()) return;
-        if (Duration.between(premiereConnexion, Instant.now()).toHours() >= config.getDelaiArriveeHeures()) return;
         if (depot.trouver(uuid).isPresent()) return;
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             Player p = Bukkit.getPlayer(uuid);
