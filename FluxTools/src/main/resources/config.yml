@@ -41,6 +41,17 @@ modules:
       defenseur: {icon: IRON_SWORD, description: ["Élimine les créatures", "hostiles."]}
       batisseur: {icon: BRICKS, description: ["Pose des blocs", "de construction."]}
 
+  # Pass menu (/menu2 > Pass): mission categories of EcoBattlepass shown in the menu, in order (icon, name,
+  # amount on the icon). Needs EcoBattlepass.
+  pass-menu:
+    enabled: true
+    categories:
+      quotidiennes: {icon: CLOCK, name: "Missions quotidiennes", amount: 1}
+      semaine_1: {icon: WRITABLE_BOOK, name: "Semaine 1", amount: 1}
+      semaine_2: {icon: WRITABLE_BOOK, name: "Semaine 2", amount: 2}
+      semaine_3: {icon: WRITABLE_BOOK, name: "Semaine 3", amount: 3}
+      semaine_4: {icon: WRITABLE_BOOK, name: "Semaine 4", amount: 4}
+
   # Boss bar on every job XP gain, hidden after hide-after-seconds without gain. Needs EcoJobs.
   # One bar per player, following the last action. Players toggle it with /jobxpbar on|off.
   job-xp-bossbar:

@@ -301,13 +301,10 @@ P_RETOUR, P_ICONE, P_PREV, P_NEXT, P_CATS = 0, 8, 18, 26, 56
 P_PALIERS = [19, 29, 21, 31, 23, 33, 25]
 P_PASSAGES = [20, 30, 22, 32, 24, 34]
 P_MISSIONS = list(range(63, 72))
+P_CATEGORIES = list(range(P_CATS, P_CATS + 5))
 
-# Les 5 catégories de missions du pass (EcoBattlepass/categories/pass/).
-# Nombre de missions par catégorie (EcoBattlepass/categories/pass/*.yml), pour la disposition.
-NB_MISSIONS = {"quotidiennes": 9, "semaine_1": 8, "semaine_2": 8, "semaine_3": 8, "semaine_4": 8}
-MISSIONS = [("quotidiennes", "CLOCK", "Missions quotidiennes", 1),
-            ("semaine_1", "WRITABLE_BOOK", "Semaine 1", 1), ("semaine_2", "WRITABLE_BOOK", "Semaine 2", 2),
-            ("semaine_3", "WRITABLE_BOOK", "Semaine 3", 3), ("semaine_4", "WRITABLE_BOOK", "Semaine 4", 4)]
+# Catégories (56-60) et missions (63-71, centrées) : listes Flux construites par FluxTools (PassMenu), catégories
+# dans modules.pass-menu de plugins/FluxTools/config.yml.
 
 
 def pass_entete(pid_pass, infos):
@@ -324,7 +321,7 @@ def pass_infos(pid_pass):
                               f"Fin de saison : &f%ecobattlepass_time_to_season_end_{pid_pass}%"]
 
 
-def pass_chemin(pid_pass, n, total, paliers_max, cid):
+def pass_chemin(pid_pass, n, total, paliers_max):
     """Chemin de la page n (paliers libres + piste Prestige) et ses boutons précédent / suivant."""
     T = f"%ecobattlepass_tier_{pid_pass}%"
     debut = (n - 1) * PAR_PAGE
@@ -333,11 +330,11 @@ def pass_chemin(pid_pass, n, total, paliers_max, cid):
     its = []
     if n > 1:
         its.append(item("precedent", "itemsadder:influitems:btn_prev", "Page précédente", P_PREV, [],
-                        clics={"left": [f"[page-swap] {pid_pass}_{n - 1}_{cid}", "[sound] @page"]},
+                        clics={"left": [f"[page-swap] {pid_pass}_{n - 1}", "[sound] @page"]},
                         cacher=True))
     if n < total:
         its.append(item("suivant", "itemsadder:influitems:btn_next", "Page suivante", P_NEXT, [],
-                        clics={"left": [f"[page-swap] {pid_pass}_{n + 1}_{cid}", "[sound] @page"]},
+                        clics={"left": [f"[page-swap] {pid_pass}_{n + 1}", "[sound] @page"]},
                         cacher=True))
     branches = []
     for k, slot in enumerate(slots):
@@ -379,67 +376,14 @@ def pass_chemin(pid_pass, n, total, paliers_max, cid):
     return its, chemins
 
 
-def missions_pass(pid_pass, n, affichee):
-    """Les 5 catégories (56-60) : la catégorie affichée brille, les autres la remplacent (même page du chemin)."""
-    its = []
-    for k, (cid, mat, nom, qte) in enumerate(MISSIONS):
-        slot = P_CATS + k
-        fait = f"&f%ecobattlepass_category_completed_quests_{cid}%&7/&f%ecobattlepass_category_quest_amount_{cid}%"
-        debut = f"%ecobattlepass_category_{cid}_start_timer%"
-        temps = (["Renouvellement dans", f"&f%ecobattlepass_category_{cid}_reset_timer%"] if cid == "quotidiennes"
-                 else [])
-        if cid == affichee:
-            its.append(item(f"cat_{cid}", mat, nom, slot, [f"Missions terminées : {fait}"] + temps, glow=True))
-            continue
-        # Semaine pas encore commencée : cadenas, début dans... (le minuteur vaut « Disponible » une fois ouverte).
-        its.append(item(f"cat_{cid}_bientot", "itemsadder:influitems:lock", nom, slot,
-                        ["Débute dans", f"&f{debut}"], priorite=1,
-                        conditions=[f"placeholder: {debut} !contains Disponible"]))
-        its.append(item(f"cat_{cid}", mat, nom, slot, [f"Missions terminées : {fait}"] + temps,
-                        [CLIC_G + "Voir les missions"],
-                        {"left": [f"[page-swap] {pid_pass}_{n}_{cid}", "[sound] @page"]},
-                        priorite=2))
-    return its
-
-
-def disposition_missions(c):
-    """Cases de c missions sur la rangée P_MISSIONS, centrées : impair = collées, pair =
-    symétriques autour de la case du milieu laissée vide (même règle partout dans le menu)."""
-    if c % 2:
-        cols = list(range(4 - c // 2, 4 - c // 2 + c))
-    else:
-        cols = [x for x in range(4 - c // 2, 4 + c // 2 + 1) if x != 4]
-    return [P_MISSIONS[0] + x for x in cols]
-
-
-def missions_liste(cid):
-    """Missions de la catégorie (63-71), chacune à sa place (disposition centrée fixe) :
-    terminée = coche verte, catégorie pas encore ouverte = cadenas, sinon la ressource de la tâche."""
-    nb = NB_MISSIONS.get(cid, 9)
-    its = []
-    for n, slot in enumerate(disposition_missions(nb), 1):
-        base = f"%fluxpass_{cid}_{n}"
-        details = [brut(f"{base}_line_{k}%") for k in range(1, 7)]
-        its.append(item(f"m{n}_faite", "itemsadder:influitems:accept", f"{base}_name%", slot,
-                        details + ["&#2ECF7BTerminée."], priorite=1,
-                        conditions=[f"placeholder: {base}_done% == oui"]))
-        its.append(item(f"m{n}_bientot", "itemsadder:influitems:lock", f"{base}_name%", slot,
-                        details + ["Pas encore disponible."], priorite=2,
-                        conditions=[f"placeholder: %fluxpass_{cid}_active% != oui"]))
-        # En cours : la ressource de la tâche (bloc, objet, œuf...), pour repérer d'un coup d'œil quoi faire.
-        its.append(item(f"m{n}", f"{base}_icon%", f"{base}_name%", slot, details + ["En cours."], priorite=3))
-    return its
-
 def pass_pages(paliers_max, pid_pass="pass"):
     total = -(-paliers_max // PAR_PAGE)
     T = f"%ecobattlepass_tier_{pid_pass}%"
     infos = pass_infos(pid_pass)
     pages = []
     for n in range(1, total + 1):
-        for cid, _, _, _ in MISSIONS:
-            chemin, chemins = pass_chemin(pid_pass, n, total, paliers_max, cid)
-            its = pass_entete(pid_pass, infos) + chemin + missions_pass(pid_pass, n, cid) + missions_liste(cid)
-            pages.append(page(f"{pid_pass}_{n}_{cid}", its, chemins, TITRE_PASS, animation=False))
+        chemin, chemins = pass_chemin(pid_pass, n, total, paliers_max)
+        pages.append(page(f"{pid_pass}_{n}", chemin, chemins, TITRE_PASS, animation=False))
     principal = [item("pass", "itemsadder:influitems:pass", "Pass", 52,
                       [f"Palier &f{T}" + VIOLET + ", récompenses", "Standard et Prestige."], [CLIC_G + "Ouvrir"],
                       {"left": [f"[menu] {pid_pass}"]})]
@@ -447,11 +391,13 @@ def pass_pages(paliers_max, pid_pass="pass"):
 
 
 def menu_pass(pid_pass="pass"):
-    """menus/pass.yml : le menu lui-même (ses pages sont dans _pages/pass.yml). Il s'ouvre sur la
-    page du palier du joueur (%fluxpass_tierpage_...% fourni par Flux), missions quotidiennes."""
+    """menus/pass.yml : en-tête, catégories et missions (listes de FluxTools) ; le chemin des paliers est dans
+    les pages _pages/pass.yml (une par tranche de 7 paliers). Ouverture sur la page du palier du joueur
+    (%fluxpass_tierpage_...%), missions quotidiennes."""
     entete = "\n".join("\n".join(l[4:] for l in b.split("\n")) for b in pass_entete(pid_pass, pass_infos(pid_pass)))
     return f"""# Généré par plugins/fluxplugin/Flux/assets/gen_pages.py : ne pas modifier à la main.
 # Menu du pass (EcoBattlepass « {pid_pass} »), à part du menu principal, ouvert par son bouton Pass.
+# Catégories et missions : listes construites par FluxTools (PassMenu).
 
 title: {TITRE_PASS}
 rows: 6
@@ -460,12 +406,24 @@ vanilla-background: false
 update-interval: 20
 
 open-actions:
-  - "[page-swap] {pid_pass}_%fluxpass_tierpage_{pid_pass}_{PAR_PAGE}%_quotidiennes"
+  - "[fluxpass] category quotidiennes"
+  - "[page-swap] {pid_pass}_%fluxpass_tierpage_{pid_pass}_{PAR_PAGE}%"
 
 page-files:
   - _pages/{pid_pass}.yml
 
-# Le temps d'ouvrir la bonne page (un tick) : en-tête seul.
+lists:
+  pass_categories:
+    slots: {", ".join(map(str, P_CATEGORIES))}
+    item:
+      material: entry
+      actions:
+        left: ["[fluxpass] category %entry_id%", "[sound] @page"]
+  pass_missions:
+    slots: {", ".join(map(str, P_MISSIONS))}
+    item:
+      material: entry
+
 items:
 {entete}
 """

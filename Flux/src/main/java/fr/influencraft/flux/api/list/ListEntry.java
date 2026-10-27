@@ -28,6 +28,11 @@ public final class ListEntry {
         return new ListEntry(id);
     }
 
+    /** An empty slot in the list (e.g. to centre an even number of elements around an empty middle). */
+    public static ListEntry gap() {
+        return new ListEntry("").item(new ItemStack(org.bukkit.Material.AIR));
+    }
+
     public ListEntry set(String key, Object value) {
         values.put(key, value == null ? "" : String.valueOf(value));
         return this;
