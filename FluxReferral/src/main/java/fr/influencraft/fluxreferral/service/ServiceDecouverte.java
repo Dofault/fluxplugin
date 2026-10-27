@@ -260,7 +260,7 @@ public class ServiceDecouverte {
                 String parrainNom = dec.parrain() == null ? "" : depotJoueur.trouverParUUID(dec.parrain())
                         .map(JoueurParrainage::pseudo).orElse(dec.parrain().toString());
                 message = texte("decouverte-info", Map.of("joueur", nom, "source", libelle(dec.source(), parrainNom),
-                        "detail", dec.detail() == null ? "" : dec.detail(),
+                        "detail", dec.detail() == null ? "" : net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().escapeTags(dec.detail()),
                         "date", dec.date() == null ? "?" : fr.influencraft.flux.api.util.Format.date(dec.date().getTime())));
             }
             String m = message;
