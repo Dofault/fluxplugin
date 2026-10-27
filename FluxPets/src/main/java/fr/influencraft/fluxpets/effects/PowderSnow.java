@@ -1,10 +1,5 @@
 package fr.influencraft.fluxpets.effects;
 
-import com.github.retrooper.packetevents.PacketEvents;
-import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
-import com.github.retrooper.packetevents.protocol.player.ClientVersion;
-import com.github.retrooper.packetevents.resources.ResourceLocation;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerTags;
 import io.papermc.paper.event.server.ServerResourcesReloadedEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -41,7 +36,6 @@ import java.util.UUID;
  */
 final class PowderSnow extends PetEffect {
 
-    private static final ResourceLocation REGISTRY = ResourceLocation.minecraft("entity_type");
     private static final String WALKABLE = "minecraft:powder_snow_walkable_mobs";
     private static final int PERIOD = 2;
     private static final int NEAR = 2;
@@ -123,37 +117,13 @@ final class PowderSnow extends PetEffect {
             armed.remove(player.getUniqueId());
         }
         try {
-            ClientVersion version = PacketEvents.getAPI().getPlayerManager().getClientVersion(player);
-            List<WrapperPlayServerTags.Tag> tags = new ArrayList<>();
-            for (Tag<EntityType> tag : Bukkit.getTags(Tag.REGISTRY_ENTITY_TYPES, EntityType.class)) {
-                List<Integer> ids = new ArrayList<>();
-                for (EntityType type : tag.getValues()) {
-                    int id = id(type, version);
-                    if (id >= 0) {
-                        ids.add(id);
-                    }
-                }
-                String key = tag.getKey().toString();
-                if (walk && key.equals(WALKABLE)) {
-                    ids.add(id(EntityType.PLAYER, version));
-                }
-                tags.add(new WrapperPlayServerTags.Tag(key, ids));
-            }
-            Map<ResourceLocation, List<WrapperPlayServerTags.Tag>> map = new HashMap<>();
-            map.put(REGISTRY, tags);
-            PacketEvents.getAPI().getPlayerManager().sendPacket(player, new WrapperPlayServerTags(map));
+            // the walkable tag only differs for this client (Flux ClientTags)
+            fr.influencraft.flux.api.client.ClientTags.sendEntityTypeTags(player,
+                    walk ? Map.of(WALKABLE, java.util.Set.of(EntityType.PLAYER)) : Map.of());
         } catch (RuntimeException e) {
             manager.plugin().getLogger().warning("Powder snow: could not send tags to "
                     + player.getName() + ": " + e);
         }
-    }
-
-    private static int id(EntityType type, ClientVersion version) {
-        if (type.getKey() == null) {
-            return -1;
-        }
-        var mapped = EntityTypes.getByName(type.getKey().toString());
-        return mapped == null ? -1 : mapped.getId(version);
     }
 
     @EventHandler

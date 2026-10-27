@@ -1,6 +1,5 @@
 package fr.influencraft.fluxtools.modules;
 
-import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
@@ -275,9 +274,7 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
     }
 
     private Component text(Player player, String legacy) {
-        String resolved = Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")
-                ? PlaceholderAPI.setPlaceholders(player, legacy)
-                : legacy;
+        String resolved = fr.influencraft.flux.api.text.Texts.placeholders(legacy, player);
         return fr.influencraft.flux.api.text.Texts.colors(resolved).decoration(TextDecoration.ITALIC, false);
     }
 

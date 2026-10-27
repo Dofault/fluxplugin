@@ -11,7 +11,6 @@ import fr.influencraft.fluxshop.autosell.AutoSellMenu;
 import fr.influencraft.fluxshop.commands.*;
 import fr.influencraft.fluxshop.listener.AutoSellEcoTelekinesisListener;
 import fr.influencraft.fluxshop.listener.AutoSellPickupListener;
-import fr.influencraft.fluxshop.listener.AutoSellTelepathyListener;
 import fr.influencraft.fluxshop.listener.AutoSellToggleListener;
 import fr.influencraft.fluxshop.listener.ShopBlockListener;
 import fr.influencraft.fluxshop.managers.LangManager;
@@ -119,13 +118,8 @@ public class FluxShop extends JavaPlugin {
         pm.registerEvents(new AutoSellToggleListener(autoSellItemManager, autoSellMenu), this);
         pm.registerEvents(autoSellExceptions, this);
         pm.registerEvents(new AutoSellPickupListener(autoSellItemManager, autoSellFilter, priceManager), this);
-        // telepathy: one listener per enchantment plugin, each delivers its drops its own way
-        if (pm.isPluginEnabled("AdvancedEnchantments")) {
-            pm.registerEvents(new AutoSellTelepathyListener(this, autoSellItemManager, autoSellFilter, priceManager), this);
-        }
-        if (pm.isPluginEnabled("eco")) {
-            pm.registerEvents(new AutoSellEcoTelekinesisListener(autoSellItemManager, autoSellFilter, priceManager), this);
-        }
+        // telekinesis of enchantments: drops delivered straight to the inventory (Flux DirectDropsEvent)
+        pm.registerEvents(new AutoSellEcoTelekinesisListener(autoSellItemManager, autoSellFilter, priceManager), this);
 
         TpShopCooldownManager tpShopCooldownManager = new TpShopCooldownManager(this);
         TpShopCommand tpShopCommand = new TpShopCommand(this, lang, tpShopCooldownManager);

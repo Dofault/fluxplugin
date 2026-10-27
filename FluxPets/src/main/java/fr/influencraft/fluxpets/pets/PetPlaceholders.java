@@ -159,8 +159,7 @@ final class PetPlaceholders {
         if (champ.equals("grade")) {
             String path = "gui.pet-slots.locked.grades." + n;
             String grade = Pets.settings().has(path) ? Pets.settings().getString(path) : "";
-            return org.bukkit.Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")
-                    ? me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, grade) : grade;
+            return fr.influencraft.flux.api.text.Texts.placeholders(grade, player);
         }
         return field(player, pet, champ);
     }

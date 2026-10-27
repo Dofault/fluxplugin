@@ -24,7 +24,6 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 
-import java.lang.reflect.Method;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
@@ -43,14 +42,11 @@ final class Progression implements Listener {
     private final FluxTools plugin;
     private final Map<UUID, Integer> profondeur = new HashMap<>();
     private final Map<UUID, Integer> dernierTick = new HashMap<>();
-    private Method estPose;
 
     Progression(FluxTools plugin) {
         this.plugin = plugin;
-        try {
-            estPose = Class.forName("com.willfp.eco.util.BlockUtils").getMethod("isPlayerPlaced", Block.class);
-        } catch (ReflectiveOperationException | LinkageError ex) {
-            plugin.getLogger().warning("eco absent : les blocs posés par les joueurs compteront pour les quêtes.");
+        if (!fr.influencraft.flux.api.world.PlacedBlocks.available()) {
+            plugin.getLogger().warning("No placed blocks tracker in Flux: blocks placed by players count for the quests.");
         }
     }
 
@@ -93,12 +89,7 @@ final class Progression implements Listener {
     }
 
     private boolean pose(Block b) {
-        if (estPose == null) return false;
-        try {
-            return (boolean) estPose.invoke(null, b);
-        } catch (ReflectiveOperationException ex) {
-            return false;
-        }
+        return fr.influencraft.flux.api.world.PlacedBlocks.playerPlaced(b);
     }
 
     /** Culture mûre (âge maximal) ; un bloc sans âge (melon, citrouille) compte toujours. */

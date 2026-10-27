@@ -48,9 +48,18 @@ public final class Providers {
         } else {
             fr.influencraft.flux.api.shops.ChestShops.use(null);
         }
+        // packets to one client (Flux depends on packetevents)
+        fr.influencraft.flux.api.client.ClientTags.use(enabled("packetevents") ? new fr.influencraft.flux.adapters.packetevents.PacketEventsTags() : null);
         String money = choice(config, "money-events");
         if ((money.equals("auto") || money.equals("cmi")) && enabled("CMI")) {
             Bukkit.getPluginManager().registerEvents(new fr.influencraft.flux.adapters.cmi.CmiMoneyEvents(), flux);
+        }
+        if (enabled("eco")) {
+            var world = new fr.influencraft.flux.adapters.eco.EcoWorld();
+            fr.influencraft.flux.api.world.PlacedBlocks.use(world);
+            Bukkit.getPluginManager().registerEvents(world, flux);
+        } else {
+            fr.influencraft.flux.api.world.PlacedBlocks.use(null);
         }
         if (enabled("eco") && !choice(config, "eco-vault-bridge").equals("false")) {
             // eco plugins hook Vault once at their start, before CMI joins Vault: bound again once the server is up

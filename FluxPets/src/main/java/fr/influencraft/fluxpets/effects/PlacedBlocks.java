@@ -1,6 +1,5 @@
 package fr.influencraft.fluxpets.effects;
 
-import com.willfp.eco.util.BlockUtils;
 import fr.influencraft.fluxpets.PetHook;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
@@ -32,7 +31,7 @@ final class PlacedBlocks implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void mark(BlockBreakEvent event) {
         // seuls les joueurs avec un familier actif peuvent en avoir besoin
-        if (PetHook.activeId(event.getPlayer()) == null || !BlockUtils.isPlayerPlaced(event.getBlock())) {
+        if (PetHook.activeId(event.getPlayer()) == null || !fr.influencraft.flux.api.world.PlacedBlocks.playerPlaced(event.getBlock())) {
             return;
         }
         placed.add(event);
