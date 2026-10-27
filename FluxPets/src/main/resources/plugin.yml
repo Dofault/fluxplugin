@@ -12,9 +12,6 @@ permissions:
   influpet.admin:
     description: /influpet (give, open, list, info, pet, reload, editor menu).
     default: op
-  influpet.command.boosters:
-    description: /boosters (waiting boosters).
-    default: true
   influpet.command.pets:
     description: /pets (own pets only).
     default: true

@@ -7,16 +7,12 @@ import fr.influencraft.fluxpets.CardRegistry;
 import fr.influencraft.fluxpets.FluxPets;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -27,8 +23,8 @@ import java.util.Map;
  * Waiting boosters and the one-time career catch-up ({@code career-catch-up} section of config.yml).
  * <p>
  * Every booster that does not go straight into the inventory is handed to Flux's reward manager (source
- * {@code boosters}, one reward per stack of 64), claimed with every other reward ({@code /rewards}) or alone with
- * {@code /boosters}: EcoJobs level-up boosters ({@code level-up-effects} → {@code influpet stash ...}), what
+ * {@code boosters}, one reward per stack of 64), claimed with every other reward ({@code /rewards}, Flux reminds the
+ * player of them): EcoJobs level-up boosters ({@code level-up-effects} → {@code influpet stash ...}), what
  * {@code influpet give} could not fit, the catch-up. Nothing is dropped.
  * <p>
  * Catch-up: EcoJobs never replays a level already reached, so on his first login after activation a player gets
@@ -37,7 +33,7 @@ import java.util.Map;
  * catch-up. Boosters kept by a former version in his eco data ({@code influpet:career_catchup_pending}) are moved to
  * Flux on his next login.
  */
-public final class CareerCatchUp implements Listener, CommandExecutor {
+public final class CareerCatchUp implements Listener {
 
     private static final String SECTION = "career-catch-up";
 
@@ -56,12 +52,9 @@ public final class CareerCatchUp implements Listener, CommandExecutor {
         return new NamespacedKey("influpet", value);
     }
 
-    /** Starts /boosters; the career catch-up only runs with EcoJobs. */
+    /** Starts the waiting boosters; the career catch-up only runs with EcoJobs. */
     public static CareerCatchUp enable(FluxPets plugin) {
         CareerCatchUp catchUp = new CareerCatchUp(plugin);
-        fr.influencraft.flux.api.command.Commands.create(plugin, "boosters").aliases("rattrapage", "catchup")
-                .description("Collect your waiting boosters.").suggest(false).permission("influpet.command.boosters")
-                .bukkit(catchUp, null).register();
         // the booster items, for the icons of the pending rewards: source:fluxpets:booster:<id>
         fr.influencraft.flux.api.FluxApi.registerItemSource(plugin, "fluxpets", (viewer, arg) -> {
             if (!arg.startsWith("booster:")) return null;
@@ -79,7 +72,7 @@ public final class CareerCatchUp implements Listener, CommandExecutor {
                 && fr.influencraft.flux.api.jobs.Jobs.available(); // job plugin served by Flux (providers.jobs)
     }
 
-    /** Hands boosters to Flux's rewards (one reward per stack of 64), claimed with /rewards or /boosters. */
+    /** Hands boosters to Flux's rewards (one reward per stack of 64), claimed with /rewards. */
     public void stash(org.bukkit.OfflinePlayer player, String boosterId, int amount) {
         stash(player, boosterId, amount, null);
     }
@@ -103,14 +96,14 @@ public final class CareerCatchUp implements Listener, CommandExecutor {
     }
 
     /**
-     * Donne des boosters dans l'inventaire, ce qui ne rentre pas part en attente de /boosters.
+     * Donne des boosters dans l'inventaire, ce qui ne rentre pas part dans les récompenses de Flux (qui prévient
+     * le joueur).
      * Renvoie le nombre mis en attente.
      */
     public int giveOrStash(Player player, CardRegistry.Booster booster, int amount) {
         int left = amount - add(player, booster, amount);
         if (left > 0) {
             stash(player, booster.id(), left);
-            plugin.send(player, "boosters-stashed", "%count%", String.valueOf(left));
         }
         return left;
     }
@@ -206,22 +199,6 @@ public final class CareerCatchUp implements Listener, CommandExecutor {
         profile.write(pendingKey, List.of());
         former.forEach((id, amount) -> stash(player, id, amount));
         plugin.getLogger().info("Waiting boosters of " + player.getName() + " moved into Flux: " + former);
-    }
-
-    @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
-            String @NotNull [] args) {
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage("Players only.");
-            return true;
-        }
-        // collects first (other plugins may hand boosters on the way), then claims the boosters only
-        fr.influencraft.flux.api.reward.Rewards.collect(player);
-        var result = fr.influencraft.flux.api.reward.Rewards.claim(player, "boosters", false);
-        if (result.delivered() == 0 && result.remaining() == 0) plugin.send(player, "boosters-nothing");
-        if (result.delivered() > 0) plugin.send(player, "boosters-given", "%count%", String.valueOf(result.delivered()));
-        if (result.remaining() > 0) plugin.send(player, "boosters-inventory-full", "%count%", String.valueOf(result.remaining()));
-        return true;
     }
 
     private Map<String, Integer> readPending(PlayerProfile profile) {
