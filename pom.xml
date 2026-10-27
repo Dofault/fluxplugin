@@ -31,6 +31,5 @@
         <module>InfluShop</module>
         <module>FluxShop</module>
         <module>FluxPets</module>
-        <module>FluxProxy</module>
     </modules>
 </project>
