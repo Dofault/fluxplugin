@@ -141,3 +141,7 @@ messages:
   decouverte-source-joueurs: "un joueur"
   aide-admin-desc-questionnaire: "Aperçu du questionnaire de découverte, ou le reposer à un joueur"
   decouverte-apercu: "{prefixe} <color:#B376E5>Aperçu, rien n'est enregistré : bouton <white>{source}</white>, champ « <white>{joueur}</white> »."
+  decouverte-bouton-autre: "Autre"
+  decouverte-autre: "<color:#FFD94D><bold>Comment nous as-tu trouvés ?</bold></color>"
+  decouverte-autre-libelle: "Ta réponse"
+  decouverte-erreur-autre: "<color:#FF5C5C>Écris comment tu as trouvé le serveur."

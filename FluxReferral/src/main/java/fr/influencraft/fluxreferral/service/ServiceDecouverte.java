@@ -34,6 +34,7 @@ import java.util.logging.Level;
 public class ServiceDecouverte {
 
     public static final String SOURCE_JOUEUR = "joueur";
+    public static final String SOURCE_AUTRE = "autre";
 
     private final FluxReferralPlugin plugin;
     private final DepotDecouverte depot;
@@ -88,6 +89,14 @@ public class ServiceDecouverte {
     /** Preview: both steps, answers shown in the chat, nothing recorded. */
     private void apercu(Player p) {
         question(p).onSubmit((player, answer) -> {
+            if (SOURCE_AUTRE.equals(answer.button())) {
+                autre(player, null).onSubmit((pl, a) -> {
+                    if ("retour".equals(a.button())) apercu(pl);
+                    else pl.sendMessage(fr.influencraft.flux.api.text.Texts.parse(texte("decouverte-apercu",
+                            Map.of("source", SOURCE_AUTRE, "joueur", a.text("texte")))));
+                }).open();
+                return;
+            }
             if (!SOURCE_JOUEUR.equals(answer.button())) {
                 player.sendMessage(fr.influencraft.flux.api.text.Texts.parse(texte("decouverte-apercu", Map.of("source", answer.button(), "joueur", ""))));
                 return;
@@ -103,7 +112,7 @@ public class ServiceDecouverte {
     /** Step 1: welcome and question, one real button per source plus "By a player" (no window title: too high). */
     private Dialogs.Form question(Player p) {
         Dialogs.Form form = Dialogs.form(p, "")
-                .spacer(3)
+                .spacer(1)
                 .body(texte("decouverte-titre", Map.of()))
                 .spacer(1)
                 .body(texte("decouverte-question", Map.of()))
@@ -111,13 +120,46 @@ public class ServiceDecouverte {
         for (Map.Entry<String, String> source : config.getSourcesQuestionnaire().entrySet()) {
             form.action(source.getKey(), source.getValue());
         }
-        return form.action(SOURCE_JOUEUR, texte("decouverte-bouton-joueur", Map.of())).columns(1);
+        return form.action(SOURCE_JOUEUR, texte("decouverte-bouton-joueur", Map.of()))
+                .action(SOURCE_AUTRE, texte("decouverte-bouton-autre", Map.of())).columns(1);
+    }
+
+    /** Step 2 ("Other"): the player writes how he found the server. */
+    private Dialogs.Form autre(Player p, String erreur) {
+        Dialogs.Form form = Dialogs.form(p, "")
+                .spacer(1)
+                .body(texte("decouverte-autre", Map.of()))
+                .spacer(1);
+        if (erreur != null) form.body(erreur).spacer(1);
+        return form.input("texte", texte("decouverte-autre-libelle", Map.of()), "", 64)
+                .action("valider", texte("decouverte-bouton-valider", Map.of()))
+                .action("retour", texte("decouverte-bouton-retour", Map.of()))
+                .columns(2);
+    }
+
+    private void ouvrirAutre(Player p, Instant premiereConnexion, String erreur) {
+        autre(p, erreur).onSubmit((player, answer) -> {
+            if ("retour".equals(answer.button())) {
+                ouvrir(player, premiereConnexion, null);
+                return;
+            }
+            String texte = answer.text("texte");
+            if (texte.isBlank()) {
+                ouvrirAutre(player, premiereConnexion, texte("decouverte-erreur-autre", Map.of()));
+                return;
+            }
+            UUID uuid = player.getUniqueId();
+            async(() -> {
+                depot.enregistrer(uuid, SOURCE_AUTRE, null, texte);
+                envoyer(uuid, "decouverte-merci", Map.of());
+            });
+        }).open();
     }
 
     /** Step 2 ("By a player"): the name of the player who invited him. */
     private Dialogs.Form pseudo(Player p, String erreur) {
         Dialogs.Form form = Dialogs.form(p, "")
-                .spacer(3)
+                .spacer(1)
                 .body(texte("decouverte-champ", Map.of()))
                 .spacer(1);
         if (erreur != null) form.body(erreur).spacer(1);
@@ -130,6 +172,7 @@ public class ServiceDecouverte {
     private void ouvrir(Player p, Instant premiereConnexion, String erreur) {
         question(p).onSubmit((player, answer) -> {
             if (SOURCE_JOUEUR.equals(answer.button())) ouvrirPseudo(player, premiereConnexion, null);
+            else if (SOURCE_AUTRE.equals(answer.button())) ouvrirAutre(player, premiereConnexion, null);
             else repondre(player, premiereConnexion, answer.button(), "");
         }).open();
     }
@@ -245,6 +288,7 @@ public class ServiceDecouverte {
         if ("adresse".equals(source)) return texte("decouverte-source-adresse", Map.of("joueur", parrain));
         if (SOURCE_JOUEUR.equals(source)) return parrain.isEmpty() ? texte("decouverte-source-joueurs", Map.of())
                 : texte("decouverte-source-joueur", Map.of("joueur", parrain));
+        if (SOURCE_AUTRE.equals(source)) return texte("decouverte-bouton-autre", Map.of());
         return config.getSourcesQuestionnaire().getOrDefault(source, source);
     }
 }
