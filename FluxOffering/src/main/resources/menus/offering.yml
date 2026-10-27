@@ -1,0 +1,86 @@
+# FluxOffering: the offering a player opened (/offering [collection]). Its money and items are the list "offering"
+# (each entry shows its own item, name and progress); clicks go through the [offering] action.
+title: "&8%offrandes_current_name%"
+rows: 6
+player-inventory: hidden
+vanilla-background: true
+
+lists:
+  offering:
+    slots: 10-16,19-25,28-34
+    item:
+      material: entry
+      actions:
+        left: ["[offering] click %entry_id% left"]
+        right: ["[offering] click %entry_id% right"]
+
+items:
+  back:
+    slot: 45
+    material: ARROW
+    name: "&fBack"
+    view-requirements: ["placeholder: %flux_list_offering_has_prev% == false"]
+    actions:
+      left: ["[close]"]
+  previous:
+    slot: 45
+    material: ARROW
+    name: "&fPrevious page"
+    priority: -1
+    view-requirements: ["placeholder: %flux_list_offering_has_prev% == true"]
+    actions:
+      left: ["[list] offering prev"]
+  next:
+    slot: 53
+    material: ARROW
+    name: "&fNext page"
+    view-requirements: ["placeholder: %flux_list_offering_has_next% == true"]
+    actions:
+      left: ["[list] offering next"]
+  filter:
+    slot: 49
+    material: HOPPER
+    name: "&fShow: &e%flux_list_offering_filter%"
+    lore: ["&7Click to change."]
+    view-requirements: ["placeholder: %offrandes_editing% == false"]
+    actions:
+      left: ["[list] offering filter"]
+  deposit_all:
+    slot: 40
+    material: CHEST
+    name: "&aDeposit everything"
+    lore: ["&7Deposits everything you can,", "&7on every item of this offering.", "", "&7Progress: &f%offrandes_current_percent%%"]
+    view-requirements:
+      - "placeholder: %offrandes_editing% == false"
+      - "placeholder: %offrandes_current_complete% == false"
+    actions:
+      left: ["[offering] depositall"]
+  editor:
+    slot: 0
+    material: ANVIL
+    name: "&eEdit this offering"
+    lore: ["&7Administrators only."]
+    view-requirements:
+      - "permission: offrandes.admin"
+      - "placeholder: %offrandes_editing% == false"
+    actions:
+      left: ["[offering] editor"]
+  editor_exit:
+    slot: 0
+    material: BARRIER
+    name: "&eLeave the editor"
+    view-requirements:
+      - "permission: offrandes.admin"
+      - "placeholder: %offrandes_editing% == true"
+    actions:
+      left: ["[offering] editor"]
+  add_item:
+    slot: 8
+    material: LIME_DYE
+    name: "&aRequest the item in your hand"
+    lore: ["&7Hold the item (or an enchanted book)", "&7then click to set its quantity."]
+    view-requirements:
+      - "permission: offrandes.admin"
+      - "placeholder: %offrandes_editing% == true"
+    actions:
+      left: ["[offering] additem"]

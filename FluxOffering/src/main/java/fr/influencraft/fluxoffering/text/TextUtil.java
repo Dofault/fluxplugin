@@ -1,6 +1,5 @@
 package fr.influencraft.fluxoffering.text;
 
-import fr.influencraft.fluxoffering.integration.PlaceholderHook;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -77,19 +76,8 @@ public final class TextUtil {
      *               console/global text.
      */
     public static Component parse(String raw, OfflinePlayer player) {
-        if (raw == null) {
-            return Component.empty();
-        }
-        String expanded = PlaceholderHook.apply(raw, player);
-        String miniSource = translateToMiniMessage(expanded);
-        try {
-            return MiniMessage.miniMessage().deserialize(miniSource);
-        } catch (Exception ex) {
-            // Never show tag/color-code soup to a player: strip anything that looks like a
-            // leftover MiniMessage tag (e.g. an unescaped '<'/'>' coming from external text
-            // such as an ItemsAdder item's own configured name) and show the rest as plain text.
-            return Component.text(miniSource.replaceAll("<[^>]*>", ""));
-        }
+        // the Flux pipeline: suite placeholders, PlaceholderAPI, glyphs, legacy codes and MiniMessage mixed
+        return raw == null ? Component.empty() : fr.influencraft.flux.api.text.Texts.parse(raw, player);
     }
 
     /**

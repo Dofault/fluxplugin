@@ -9,13 +9,7 @@ import fr.influencraft.flux.api.text.Messages;
 import fr.influencraft.flux.api.util.DataFolders;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
 /**
  * Base class of every plugin of the Flux suite ({@code depend: [Flux]} in its plugin.yml). It takes care of what
@@ -113,32 +107,7 @@ public abstract class FluxPlugin extends JavaPlugin {
         Economy.register(this, currency);
     }
 
-    /** Copies the jar's {@code menus/} files that are missing on disk, then hands the folder to Flux. */
     private void shipMenus() {
-        List<String> shipped = new ArrayList<>();
-        try (JarFile jar = new JarFile(getFile())) {
-            Enumeration<JarEntry> entries = jar.entries();
-            while (entries.hasMoreElements()) {
-                String name = entries.nextElement().getName();
-                if (name.startsWith("menus/") && name.endsWith(".yml")) shipped.add(name);
-            }
-        } catch (IOException e) {
-            getLogger().warning("Could not list the menus of the jar: " + e.getMessage());
-        }
-        if (shipped.isEmpty()) return;
-        String translated = "i18n/" + language() + "/";
-        for (String name : shipped) {
-            File target = new File(getDataFolder(), name);
-            if (target.exists()) continue;
-            // a translated menu (i18n/<language>/menus/x.yml) is written instead of the English one
-            String source = getResource(translated + name) != null ? translated + name : name;
-            try (java.io.InputStream in = getResource(source)) {
-                target.getParentFile().mkdirs();
-                java.nio.file.Files.copy(in, target.toPath());
-            } catch (IOException | NullPointerException e) {
-                getLogger().warning("Could not write " + name + ": " + e.getMessage());
-            }
-        }
-        FluxApi.registerMenuFolder(this, new File(getDataFolder(), "menus"));
+        fr.influencraft.flux.api.util.Resources.shipMenus(this, language());
     }
 }

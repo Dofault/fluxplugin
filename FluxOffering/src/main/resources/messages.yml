@@ -67,6 +67,11 @@ admin:
 
 # Prompts admin de l'editeur (chat).
 editor:
+  # Fenêtres de saisie de l'éditeur. {name}
+  dialog-quantity: "Quantité demandée de {name} :"
+  dialog-quantity-label: "Quantité"
+  dialog-money: "Montant demandé par cette offrande :"
+  hold-item: "&8[&r#2ECF7BOffrande&8] &#FF5C5C✖ &7Tiens en main l'objet à demander."
   # {name}
   prompt-quantity: "&8[&r#2ECF7BOffrande&8] &7Ecris la quantite voulue pour &f{name} &7dans le tchat (ou &fannuler&7) :"
   cancelled: "&8[&r#2ECF7BOffrande&8] &7Modification annulee."
@@ -85,6 +90,13 @@ editor:
   money-removed: "&8[&r#2ECF7BOffrande&8] &#FF5C5C✖ &7Argent demande retire de cette offrande."
 
 gui:
+  # Libellés du filtre de la liste (bouton Affichage)
+  filter-label-all: "Tout"
+  filter-label-deposited: "Déposés"
+  filter-label-not-deposited: "Non déposés"
+  # Fenêtre de saisie du montant d'argent à déposer. {remaining}
+  money-dialog-body: "Il te reste {remaining} %img_bitblock% à déposer. Combien veux-tu déposer ?"
+  money-dialog-label: "Montant (10000, 10k, 2,5k...)"
   # {name}
   deposit-item-already-complete: "&8[&r#2ECF7BOffrande&8] &7&f{name} &7est deja complet."
   # {name}

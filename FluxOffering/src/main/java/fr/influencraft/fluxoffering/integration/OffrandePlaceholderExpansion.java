@@ -5,7 +5,6 @@ import fr.influencraft.fluxoffering.data.DataManager;
 import fr.influencraft.fluxoffering.model.CollectionDefinition;
 import fr.influencraft.fluxoffering.model.PlayerData;
 import fr.influencraft.fluxoffering.util.ProgressCalculator;
-import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -18,11 +17,16 @@ import org.jetbrains.annotations.NotNull;
  * %offrandes_&lt;collection&gt;_progress% -&gt; "2/3" (item types completed / total types)
  * %offrandes_&lt;collection&gt;_percent%  -&gt; "73" (overall quantity completion, 0-100)
  */
-public final class OffrandePlaceholderExpansion extends PlaceholderExpansion {
+public final class OffrandePlaceholderExpansion {
 
     private final JavaPlugin plugin;
     private final ConfigManager configManager;
     private final DataManager dataManager;
+    private fr.influencraft.fluxoffering.gui.OfferingMenu menu;
+
+    public void menu(fr.influencraft.fluxoffering.gui.OfferingMenu offeringMenu) {
+        this.menu = offeringMenu;
+    }
 
     public OffrandePlaceholderExpansion(JavaPlugin plugin, ConfigManager configManager, DataManager dataManager) {
         this.plugin = plugin;
@@ -30,28 +34,27 @@ public final class OffrandePlaceholderExpansion extends PlaceholderExpansion {
         this.dataManager = dataManager;
     }
 
-    @Override
-    public @NotNull String getIdentifier() {
-        return "offrandes";
-    }
-
-    @Override
-    public @NotNull String getAuthor() {
-        return "Influencraft";
-    }
-
-    @Override
-    public @NotNull String getVersion() {
-        return plugin.getDescription().getVersion();
-    }
-
-    @Override
-    public boolean persist() {
-        return true;
-    }
-
-    @Override
-    public String onRequest(OfflinePlayer player, @NotNull String params) {
+    /**
+     * {@code %offrandes_<collection>[_percent|_progress]%}, and for the menu {@code %offrandes_current_name%},
+     * {@code %offrandes_current_percent%}, {@code %offrandes_current_progress%}, {@code %offrandes_current_complete%},
+     * {@code %offrandes_editing%} (collection the player looks at). Registered with Flux.
+     */
+    public String onRequest(OfflinePlayer player, String params) {
+        if (params.startsWith("current_") || params.equals("editing")) {
+            if (!(player instanceof org.bukkit.entity.Player online) || menu == null) return "";
+            if (params.equals("editing")) return String.valueOf(menu.editing(online));
+            CollectionDefinition current = menu.selected(online);
+            if (current == null) return "";
+            PlayerData d = dataManager.get(online);
+            return switch (params) {
+                case "current_name" -> current.displayName();
+                case "current_id" -> current.id();
+                case "current_percent" -> String.valueOf(ProgressCalculator.percent(d, current));
+                case "current_progress" -> ProgressCalculator.completedTypeCount(d, current) + "/" + ProgressCalculator.totalTypesWithMoney(current);
+                case "current_complete" -> String.valueOf(ProgressCalculator.isComplete(d, current));
+                default -> null;
+            };
+        }
         String collectionId;
         String mode;
         if (params.endsWith("_percent")) {

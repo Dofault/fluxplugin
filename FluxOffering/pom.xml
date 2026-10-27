@@ -34,6 +34,12 @@
     </repositories>
 
     <dependencies>
+        <dependency>
+            <groupId>fr.influencraft</groupId>
+            <artifactId>Flux</artifactId>
+            <version>0.1.0</version>
+            <scope>provided</scope>
+        </dependency>
         <!-- Paper API (provided by the server at runtime), version pilotee par paper.api.version. -->
         <dependency>
             <groupId>io.papermc.paper</groupId>

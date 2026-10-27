@@ -8,11 +8,10 @@ import fr.influencraft.fluxoffering.config.ConfigManager;
 import fr.influencraft.fluxoffering.config.MessagesManager;
 import fr.influencraft.fluxoffering.data.DataManager;
 import fr.influencraft.fluxoffering.data.PlayerDataListener;
-import fr.influencraft.fluxoffering.gui.CollectionMenu;
-import fr.influencraft.fluxoffering.gui.EditorChatListener;
-import fr.influencraft.fluxoffering.gui.GuiListener;
+import fr.influencraft.fluxoffering.gui.OfferingMenu;
+import fr.influencraft.flux.api.FluxApi;
+import fr.influencraft.flux.api.command.Commands;
 import fr.influencraft.fluxoffering.integration.OffrandePlaceholderExpansion;
-import fr.influencraft.fluxoffering.integration.VaultEconomyHook;
 import fr.influencraft.fluxoffering.service.DepositService;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -24,7 +23,7 @@ public final class FluxOfferingPlugin extends JavaPlugin {
 
     @Override
     public void onLoad() {
-        LegacyDataFolder.migrate(this, "InfluOffrande");
+        fr.influencraft.flux.api.util.DataFolders.migrate(this, "InfluOffrande");
     }
 
     @Override
@@ -38,37 +37,30 @@ public final class FluxOfferingPlugin extends JavaPlugin {
         dataManager = new DataManager(this);
         dataManager.init();
 
-        if (VaultEconomyHook.setup(this)) {
-            getLogger().info("Vault detected, BitBlock deposits (offrande money) are enabled.");
-        } else {
-            getLogger().warning("Vault (or an economy plugin behind it) not found — offrande money deposits will fail until it's installed.");
-        }
-
         DepositService depositService = new DepositService(configManager, dataManager);
-        EditorChatListener editorChatListener = new EditorChatListener(this, configManager, messagesManager);
-        CollectionMenu collectionMenu = new CollectionMenu(configManager, messagesManager, dataManager, depositService, editorChatListener);
-        GuiListener guiListener = new GuiListener(configManager, collectionMenu);
+        OfferingMenu offeringMenu = new OfferingMenu(this, configManager, messagesManager, dataManager, depositService);
         PlayerDataListener playerDataListener = new PlayerDataListener(this, dataManager);
-
-        getServer().getPluginManager().registerEvents(guiListener, this);
-        getServer().getPluginManager().registerEvents(editorChatListener, this);
         getServer().getPluginManager().registerEvents(playerDataListener, this);
+        getServer().getPluginManager().registerEvents(new org.bukkit.event.Listener() {
+            @org.bukkit.event.EventHandler
+            public void onQuit(org.bukkit.event.player.PlayerQuitEvent event) {
+                offeringMenu.forget(event.getPlayer().getUniqueId());
+            }
+        }, this);
 
-        OffrandeCommand executor = new OffrandeCommand(configManager, messagesManager, dataManager, collectionMenu);
+        // the offering menu is a Flux menu shipped in the jar (menus/offering.yml, French in i18n/fr_FR)
+        fr.influencraft.flux.api.util.Resources.shipMenus(this, FluxApi.language());
+        FluxApi.registerAction(this, "offering", offeringMenu);
+        fr.influencraft.flux.api.list.Lists.register(this, OfferingMenu.LIST, offeringMenu);
+
+        OffrandeCommand executor = new OffrandeCommand(configManager, messagesManager, dataManager, offeringMenu);
         OffrandeTabCompleter tabCompleter = new OffrandeTabCompleter(configManager, dataManager);
-        var command = getCommand("offrande");
-        if (command != null) {
-            command.setExecutor(executor);
-            command.setTabCompleter(tabCompleter);
-        }
-
+        Commands.create(this, "offering").aliases("offrande").description("Opens an offering.")
+                .bukkit(executor, tabCompleter).register();
         FluxOfferingAdminCommand adminExecutor = new FluxOfferingAdminCommand(configManager, messagesManager, dataManager);
         FluxOfferingAdminTabCompleter adminTabCompleter = new FluxOfferingAdminTabCompleter(configManager);
-        var adminCommand = getCommand("influoffrande");
-        if (adminCommand != null) {
-            adminCommand.setExecutor(adminExecutor);
-            adminCommand.setTabCompleter(adminTabCompleter);
-        }
+        Commands.create(this, "offerings").aliases("influoffrande").description("Offerings administration.")
+                .permission("offrandes.admin").bukkit(adminExecutor, adminTabCompleter).register();
 
         // Players already online when the plugin (re)loads (e.g. /reload) still need their data cached.
         for (var player : getServer().getOnlinePlayers()) {
@@ -76,12 +68,9 @@ public final class FluxOfferingPlugin extends JavaPlugin {
                     () -> dataManager.loadIntoCache(player.getUniqueId(), player.getName()));
         }
 
-        if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            new OffrandePlaceholderExpansion(this, configManager, dataManager).register();
-            getLogger().info("PlaceholderAPI detected, %offrandes_*% placeholders registered.");
-        } else {
-            getLogger().info("PlaceholderAPI not found, placeholders are disabled (the plugin still works fine otherwise).");
-        }
+        OffrandePlaceholderExpansion placeholders = new OffrandePlaceholderExpansion(this, configManager, dataManager);
+        placeholders.menu(offeringMenu);
+        FluxApi.registerPlaceholders(this, "offrandes", placeholders::onRequest);
 
         if (getServer().getPluginManager().isPluginEnabled("ItemsAdder")) {
             getLogger().info("ItemsAdder detected, custom items can be used in collections.yml.");

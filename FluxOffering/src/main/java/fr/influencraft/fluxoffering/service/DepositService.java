@@ -4,7 +4,6 @@ import fr.influencraft.fluxoffering.config.ConfigManager;
 import fr.influencraft.fluxoffering.config.Settings;
 import fr.influencraft.fluxoffering.data.DataManager;
 import fr.influencraft.fluxoffering.integration.ItemsAdderHook;
-import fr.influencraft.fluxoffering.integration.VaultEconomyHook;
 import fr.influencraft.fluxoffering.model.CollectionDefinition;
 import fr.influencraft.fluxoffering.model.ItemKey;
 import fr.influencraft.fluxoffering.model.PlayerData;
@@ -204,18 +203,19 @@ public final class DepositService {
         if (remaining <= 0) {
             return new MoneyDepositResult(0, current, required, false, false);
         }
-        if (!VaultEconomyHook.isAvailable()) {
+        fr.influencraft.flux.api.economy.Currency money = fr.influencraft.flux.api.economy.Economy.main();
+        if (money == null || !money.available()) {
             return new MoneyDepositResult(0, current, required, false, false);
         }
 
-        long balance = (long) Math.floor(VaultEconomyHook.getBalance(player));
+        long balance = (long) Math.floor(money.balance(player));
         long toConsume = Math.min(Math.min(remaining, Math.max(0, maxToConsume)), balance);
         if (toConsume <= 0) {
             return new MoneyDepositResult(0, current, required, false, false);
         }
 
         boolean wasCollectionComplete = ProgressCalculator.isComplete(data, collection);
-        if (!VaultEconomyHook.withdraw(player, toConsume)) {
+        if (!money.take(player, toConsume)) {
             return new MoneyDepositResult(0, current, required, false, false);
         }
 

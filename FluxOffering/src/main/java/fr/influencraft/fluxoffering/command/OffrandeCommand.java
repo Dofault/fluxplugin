@@ -3,8 +3,7 @@ package fr.influencraft.fluxoffering.command;
 import fr.influencraft.fluxoffering.config.ConfigManager;
 import fr.influencraft.fluxoffering.config.MessagesManager;
 import fr.influencraft.fluxoffering.data.DataManager;
-import fr.influencraft.fluxoffering.gui.CollectionMenu;
-import fr.influencraft.fluxoffering.integration.PlaceholderHook;
+import fr.influencraft.fluxoffering.gui.OfferingMenu;
 import fr.influencraft.fluxoffering.model.CollectionDefinition;
 import fr.influencraft.fluxoffering.util.AccessUtil;
 import org.bukkit.command.Command;
@@ -38,10 +37,10 @@ public final class OffrandeCommand implements CommandExecutor {
     private final ConfigManager configManager;
     private final MessagesManager messages;
     private final DataManager dataManager;
-    private final CollectionMenu collectionMenu;
+    private final OfferingMenu collectionMenu;
 
     public OffrandeCommand(ConfigManager configManager, MessagesManager messages, DataManager dataManager,
-                            CollectionMenu collectionMenu) {
+                            OfferingMenu collectionMenu) {
         this.configManager = configManager;
         this.messages = messages;
         this.dataManager = dataManager;
@@ -70,7 +69,7 @@ public final class OffrandeCommand implements CommandExecutor {
         }
         // Track "standard" rather than the primary group: a staff group (helper, moderateur...)
         // outweighs the rank, so the primary group would resolve to the staff group instead.
-        String group = PlaceholderHook.apply("%luckperms_current_group_on_track_standard%", player);
+        String group = fr.influencraft.flux.api.text.Texts.placeholders("%luckperms_current_group_on_track_standard%", player);
         if (group == null || group.isBlank() || group.contains("%")) {
             messages.send(player, "general.rank-unresolved", player);
             return;
@@ -122,7 +121,7 @@ public final class OffrandeCommand implements CommandExecutor {
             messages.send(player, "gui.money-invalid", player);
             return;
         }
-        collectionMenu.handleMoneyCommandDeposit(player, collection, amount);
+        collectionMenu.depositMoneyCommand(player, collection, amount);
     }
 
     private void openCollection(CommandSender sender, String collectionId) {
