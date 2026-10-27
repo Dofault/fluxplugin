@@ -10,14 +10,8 @@ api-version: '26.2'
 description: Système de parrainage pour le serveur InfluenCraft
 authors: [Entr0pik]
 website: https://influencraft.fr
-softdepend:
-  - PlaceholderAPI
+depend: [Flux]
 
-commands:
-  parrainage:
-    description: Commandes du système de parrainage
-    aliases: [referral, parr]
-    usage: /parrainage <adresse|code|utiliser|info|top|aide|admin>
 
 permissions:
 

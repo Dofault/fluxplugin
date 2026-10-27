@@ -1,6 +1,5 @@
 package fr.influencraft.fluxpets.pets;
 
-import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +27,7 @@ import java.util.List;
  * actuel), level_<L> (état du niveau L : unlocked, current, locked), rewards_<L>_<k> (k-ième ligne des effets
  * du niveau L). Vide sans familier ou au-delà des lignes.
  */
-final class PetPlaceholders extends PlaceholderExpansion {
+final class PetPlaceholders {
 
     private final fr.influencraft.fluxpets.FluxPets plugin;
 
@@ -36,28 +35,8 @@ final class PetPlaceholders extends PlaceholderExpansion {
         this.plugin = plugin;
     }
 
-    @Override
-    public @NotNull String getIdentifier() {
-        return "influpet";
-    }
-
-    @Override
-    public @NotNull String getAuthor() {
-        return "Influencraft";
-    }
-
-    @Override
-    public @NotNull String getVersion() {
-        return plugin.getPluginMeta().getVersion();
-    }
-
-    @Override
-    public boolean persist() {
-        return true;
-    }
-
-    @Override
-    public String onRequest(OfflinePlayer player, @NotNull String params) {
+    /** {@code %influpet_<params>%}, registered with Flux (resolved without PlaceholderAPI, exposed to it). */
+    String onRequest(OfflinePlayer player, String params) {
         if (params.equals("money_multiplier")) {
             double multiplier = player instanceof Player online ? plugin.moneyMultiplier(online) : 1;
             return String.format(java.util.Locale.ROOT, "%.4f", multiplier);

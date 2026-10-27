@@ -149,15 +149,7 @@ public final class Modules {
     /** Registers a module command through Flux (renamable in plugins/Flux/commands.yml). */
     private void command(String id, String permission, CommandExecutor executor, org.bukkit.command.TabCompleter completer,
                          String... aliases) {
-        org.bukkit.command.Command self = new org.bukkit.command.Command(id) {
-            @Override
-            public boolean execute(org.bukkit.command.CommandSender sender, String label, String[] args) {
-                return true;
-            }
-        };
         fr.influencraft.flux.api.command.Commands.create(plugin, id).aliases(aliases).permission(permission)
-                .executor((sender, label, args) -> executor.onCommand(sender, self, label, args))
-                .completer(completer == null ? null : (sender, args) -> completer.onTabComplete(sender, self, id, args))
-                .register();
+                .bukkit(executor, completer).register();
     }
 }

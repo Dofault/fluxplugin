@@ -42,7 +42,7 @@ import java.util.Map;
  * Rappel à la connexion, puis toutes les {@code reminder-seconds} secondes (0 : jamais) tant qu'il reste
  * des boosters en attente.
  */
-public final class CareerCatchUp implements Listener, CommandExecutor {
+public final class CareerCatchUp implements Listener, CommandExecutor, fr.influencraft.flux.api.reward.RewardSource {
 
     private static final String SECTION = "career-catch-up";
 
@@ -64,10 +64,17 @@ public final class CareerCatchUp implements Listener, CommandExecutor {
     /** Démarre /boosters et le rappel ; le rattrapage de carrière ne joue que si EcoJobs est là. */
     public static CareerCatchUp enable(FluxPets plugin) {
         CareerCatchUp catchUp = new CareerCatchUp(plugin);
-        var command = plugin.getCommand("boosters");
-        if (command != null) {
-            command.setExecutor(catchUp);
-        }
+        fr.influencraft.flux.api.command.Commands.create(plugin, "boosters").aliases("rattrapage", "catchup")
+                .description("Collect your waiting boosters.").permission("influpet.command.boosters")
+                .bukkit(catchUp, null).register();
+        // also claimed with every other reward of the suite (FluxRewards)
+        fr.influencraft.flux.api.reward.Rewards.register(plugin, catchUp);
+        // the booster items, for the icons of the pending rewards: source:fluxpets:booster:<id>
+        fr.influencraft.flux.api.FluxApi.registerItemSource(plugin, "fluxpets", (viewer, arg) -> {
+            if (!arg.startsWith("booster:")) return null;
+            CardRegistry.Booster b = plugin.registry().booster(arg.substring(8));
+            return b == null ? null : plugin.registry().boosterItem(b, viewer);
+        });
         Bukkit.getPluginManager().registerEvents(catchUp, plugin);
         long seconds = plugin.getConfig().getLong(SECTION + ".reminder-seconds", 0);
         if (seconds > 0) {
@@ -195,11 +202,16 @@ public final class CareerCatchUp implements Listener, CommandExecutor {
      * Appelé par /boosters.
      */
     private void deliver(Player player) {
+        deliver(player, true);
+    }
+
+    /** Gives what fits, keeps the rest; {given, still waiting}. Messages only when {@code verbose}. */
+    private int[] deliver(Player player, boolean verbose) {
         PlayerProfile profile = PlayerProfile.load(player);
         Map<String, Integer> pending = readPending(profile);
         if (pending.isEmpty()) {
-            plugin.send(player, "boosters-nothing");
-            return;
+            if (verbose) plugin.send(player, "boosters-nothing");
+            return new int[]{0, 0};
         }
         int given = 0;
         Map<String, Integer> left = new LinkedHashMap<>();
@@ -217,13 +229,40 @@ public final class CareerCatchUp implements Listener, CommandExecutor {
             }
         }
         profile.write(pendingKey, writePending(left));
-        if (given > 0) {
+        int count = left.values().stream().mapToInt(Integer::intValue).sum();
+        if (verbose && given > 0) {
             plugin.send(player, "boosters-given", "%count%", String.valueOf(given));
         }
-        if (!left.isEmpty()) {
-            int count = left.values().stream().mapToInt(Integer::intValue).sum();
+        if (verbose && !left.isEmpty()) {
             plugin.send(player, "boosters-inventory-full", "%count%", String.valueOf(count));
         }
+        if (given > 0) fr.influencraft.flux.api.reward.Rewards.changed(player);
+        return new int[]{given, count};
+    }
+
+    // ------------------------------------------------------------------ reward source "boosters"
+
+    @Override
+    public String id() {
+        return "boosters";
+    }
+
+    @Override
+    public java.util.concurrent.CompletableFuture<List<fr.influencraft.flux.api.reward.PendingReward>> pending(Player player) {
+        List<fr.influencraft.flux.api.reward.PendingReward> out = new ArrayList<>();
+        readPending(PlayerProfile.load(player)).forEach((id, amount) -> {
+            CardRegistry.Booster booster = plugin.registry().booster(id);
+            String label = booster == null ? id : booster.name();
+            out.add(new fr.influencraft.flux.api.reward.PendingReward(id(), label, "source:fluxpets:booster:" + id, amount,
+                    (amount + 63) / 64));
+        });
+        return java.util.concurrent.CompletableFuture.completedFuture(out);
+    }
+
+    @Override
+    public java.util.concurrent.CompletableFuture<fr.influencraft.flux.api.reward.ClaimResult> claim(Player player, int freeSlots) {
+        int[] r = deliver(player, false);
+        return java.util.concurrent.CompletableFuture.completedFuture(new fr.influencraft.flux.api.reward.ClaimResult(r[0], r[1]));
     }
 
     private void remindAll() {

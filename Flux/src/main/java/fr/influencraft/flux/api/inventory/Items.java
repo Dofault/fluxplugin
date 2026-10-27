@@ -14,7 +14,8 @@ import java.util.List;
  * <ul>
  *   <li>{@code itemsadder:<namespace>:<id>} or {@code itemsadder:<id>} (any ItemsAdder item);</li>
  *   <li>a vanilla material: {@code DIAMOND}, {@code minecraft:diamond};</li>
- *   <li>{@code head:<base64 texture>}, {@code player-head} (the viewer's head), {@code hdb:<id>} (HeadDatabase).</li>
+ *   <li>{@code head:<base64 texture>}, {@code player-head} (the viewer's head), {@code hdb:<id>} (HeadDatabase);</li>
+ *   <li>{@code source:<id>:<argument>}: an item provided by a plugin ({@link fr.influencraft.flux.api.FluxApi#registerItemSource}).</li>
  * </ul>
  * An unknown material gives a barrier (with one console warning), never null, except {@code air}.
  */
@@ -25,6 +26,13 @@ public final class Items {
 
     /** The item of a material spec, or null for {@code air}. {@code viewer} is used by {@code player-head}. */
     public static ItemStack of(String material, Player viewer) {
+        if (material != null && material.regionMatches(true, 0, "source:", 0, 7)) {
+            String rest = material.substring(7);
+            int sep = rest.indexOf(':');
+            var source = fr.influencraft.flux.api.FluxApi.itemSource(sep < 0 ? rest : rest.substring(0, sep));
+            ItemStack item = source == null ? null : source.item(viewer, sep < 0 ? "" : rest.substring(sep + 1));
+            return item == null ? new ItemStack(Material.BARRIER) : item.clone();
+        }
         ItemFactory factory = ItemFactory.instance();
         if (factory == null) {
             Material m = Material.matchMaterial(material);

@@ -98,12 +98,9 @@ public final class Pets {
         load();
         EcoPetsMigration.registerPlayerDataMigration(plugin);
         Bukkit.getPluginManager().registerEvents(new PetListener(), plugin);
-        var command = plugin.getCommand("pets");
-        if (command != null) {
-            PetCommands commands = new PetCommands();
-            command.setExecutor(commands);
-            command.setTabCompleter(commands);
-        }
+        PetCommands commands = new PetCommands();
+        fr.influencraft.flux.api.command.Commands.create(plugin, "pets").aliases("pet", "familiers", "familier")
+                .description("Pets menu.").permission("influpet.command.pets").bukkit(commands, commands).register();
         if (Bukkit.getPluginManager().isPluginEnabled("BetterModel")) {
             try {
                 display = new PetDisplay();
@@ -242,14 +239,8 @@ public final class Pets {
      * qu'au premier tick).
      */
     public static void registerPlaceholders(FluxPets influPet) {
-        if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            return;
-        }
-        try {
-            new PetPlaceholders(influPet).register();
-        } catch (Throwable t) {
-            influPet.getLogger().warning("Pet placeholders unavailable: " + t);
-        }
+        PetPlaceholders placeholders = new PetPlaceholders(influPet);
+        fr.influencraft.flux.api.FluxApi.registerPlaceholders(influPet, "influpet", placeholders::onRequest);
     }
 
     public static FluxPets plugin() {

@@ -23,7 +23,8 @@ dependencies {
     // Paper API de compilation : 26.2 = version du serveur, les jars restent compatibles 26.3
     // (gradle build -PpaperApi=26.3.build.200-stable pour le vérifier)
     compileOnly "io.papermc.paper:paper-api:${findProperty('paperApi') ?: '26.2.build.124-stable'}"
-    compileOnly 'me.clip:placeholderapi:2.11.6'
+    // Flux (suite core), built by the Maven reactor first: mvn -pl Flux package
+    compileOnly files('../Flux/target/Flux.jar')
 
     // HikariCP shadé dans le jar — aucune dépendance côté serveur
     implementation 'com.zaxxer:HikariCP:5.1.0'

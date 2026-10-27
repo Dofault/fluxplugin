@@ -183,6 +183,22 @@ public final class Commands {
             return this;
         }
 
+        /**
+         * Runs an existing Bukkit {@link org.bukkit.command.CommandExecutor} (and tab completer, may be null): it
+         * receives a command named after the id, whatever label the server owner configured.
+         */
+        public Builder bukkit(org.bukkit.command.CommandExecutor bukkitExecutor, org.bukkit.command.TabCompleter bukkitCompleter) {
+            Command self = new Command(id) {
+                @Override
+                public boolean execute(CommandSender sender, String label, String[] args) {
+                    return true;
+                }
+            };
+            this.executor = (sender, label, args) -> bukkitExecutor.onCommand(sender, self, label, args);
+            this.completer = bukkitCompleter == null ? null : (sender, args) -> bukkitCompleter.onTabComplete(sender, self, id, args);
+            return this;
+        }
+
         /** Registers the command under its configured label. Returns false when switched off in commands.yml. */
         public boolean register() {
             if (flux == null) throw new IllegalStateException("Flux is not enabled");

@@ -5,24 +5,8 @@ api-version: '26.2'
 description: Pets, collectible cards and boosters.
 # VaultSupermarket: sell-price bonus pet effect (money-bonus).
 # eco: player pet storage. libreforge (loaded by eco plugins): pet effects and job XP multiplier.
-depend: [eco]
+depend: [eco, Flux]
 softdepend: [libreforge, EcoJobs, VaultSupermarket, EcoEnchants, EcoItems, ItemsAdder, BetterModel, packetevents, PlaceholderAPI]
-
-commands:
-  influpet:
-    description: Pets, cards and boosters administration.
-    usage: /influpet <menu|give|stash|open|list|info|pet|reload>
-    permission: influpet.admin
-  pets:
-    description: Pets menu.
-    usage: /pets [activate <pet>|deactivate [pet]]
-    aliases: [pet, familiers, familier]
-    permission: influpet.command.pets
-  boosters:
-    description: Collect your waiting boosters (career level-ups, catch-up, full inventory).
-    usage: /boosters
-    aliases: [rattrapage, catchup]
-    permission: influpet.command.boosters
 
 permissions:
   influpet.admin:

@@ -9,6 +9,10 @@
 # Une clé absente de ce fichier reprend le texte par défaut du plugin.
 
 messages:
+  # Libellés des récompenses en attente dans le menu de FluxRewards (/rewards)
+  recompense-libelle-accueil: "&fRécompense d'accueil (parrainage)"
+  recompense-libelle-palier: "&fBonus de parrainage : {seuil} filleuls"
+  recompense-libelle-filleul: "&fRécompense de filleul"
 
   # --- Adresse personnelle (/parrainage adresse, bouton du menu) ---
   adresse-affichage: "{prefixe} <color:#B376E5>Ton adresse perso : <color:#2BC4E8><u>{adresse}</u></color><newline><color:#B376E5>Donne-la à tes amis : ils l'ajoutent dans <white>Multijoueur</white>, <white>Ajouter un serveur</white>.<newline><color:#B376E5>Après <white>{temps}</white> de jeu, vous recevez tous les deux une récompense.<newline><dark_gray>Clique sur l'adresse pour la copier. Code de secours : {code}"

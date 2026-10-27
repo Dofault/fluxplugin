@@ -52,7 +52,7 @@ public final class FluxPets extends JavaPlugin implements TabCompleter {
 
     @Override
     public void onLoad() {
-        LegacyDataFolder.migrate(this, "InfluPet", "InfluCard");
+        fr.influencraft.flux.api.util.DataFolders.migrate(this, "InfluPet", "InfluCard");
     }
 
     @Override
@@ -76,10 +76,9 @@ public final class FluxPets extends JavaPlugin implements TabCompleter {
         updater = new ItemUpdater(this);
         getServer().getPluginManager().registerEvents(updater, this);
         getServer().getPluginManager().registerEvents(prompts, this);
-        var command = getCommand("influpet");
-        if (command != null) {
-            command.setTabCompleter(this);
-        }
+        fr.influencraft.flux.api.command.Commands.create(this, "fluxpets").aliases("influpet")
+                .description("Pets, cards and boosters administration.").permission("influpet.admin")
+                .bukkit(this, this).register();
         // boosters en attente (/boosters) et rattrapage unique des boosters de carrière, cf. CareerCatchUp
         boosterStash = fr.influencraft.fluxpets.careers.CareerCatchUp.enable(this);
         if (!petsStarted) {

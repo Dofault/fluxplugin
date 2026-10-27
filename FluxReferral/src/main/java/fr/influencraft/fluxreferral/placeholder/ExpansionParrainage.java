@@ -7,8 +7,6 @@ import fr.influencraft.fluxreferral.modele.Profil;
 import fr.influencraft.fluxreferral.service.ServiceClassement;
 import fr.influencraft.fluxreferral.service.ServiceParrainage;
 import fr.influencraft.fluxreferral.service.ServiceProfil;
-import me.clip.placeholderapi.PlaceholderAPI;
-import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +36,7 @@ import java.util.List;
  *
  * @author Entr0pik
  */
-public class ExpansionParrainage extends PlaceholderExpansion {
+public class ExpansionParrainage {
 
     private static final int LONGUEUR_BARRE = 10;
 
@@ -57,21 +55,8 @@ public class ExpansionParrainage extends PlaceholderExpansion {
         this.config = plugin.getGestionnaireConfig();
     }
 
-    @Override
-    public @NotNull String getIdentifier() { return "parrainage"; }
-
-    @Override
-    public @NotNull String getAuthor() { return "Entr0pik"; }
-
-    @Override
-    public @NotNull String getVersion() { return plugin.getDescription().getVersion(); }
-
-    /** Persiste l'enregistrement entre les rechargements de PlaceholderAPI. */
-    @Override
-    public boolean persist() { return true; }
-
-    @Override
-    public String onRequest(OfflinePlayer player, @NotNull String params) {
+    /** {@code %parrainage_<params>%}, registered with Flux (resolved without PlaceholderAPI, exposed to it). */
+    public String onRequest(OfflinePlayer player, String params) {
         // Données indépendantes du joueur
         if (params.startsWith("top_")) return traiterTop(params);
         if (params.startsWith("recompense_parrain_")) return ligne(player, config.getDescriptionParrain(), params, "recompense_parrain_");
@@ -215,7 +200,7 @@ public class ExpansionParrainage extends PlaceholderExpansion {
         int j = entier(params.substring(prefixe.length()));
         if (j < 1 || j > lignes.size()) return "";
         String texte = lignes.get(j - 1);
-        return texte.indexOf('%') >= 0 ? PlaceholderAPI.setPlaceholders(player, texte) : texte;
+        return texte.indexOf('%') >= 0 ? fr.influencraft.flux.api.text.Texts.placeholders(texte, player) : texte;
     }
 
     private String traiterTop(String params) {

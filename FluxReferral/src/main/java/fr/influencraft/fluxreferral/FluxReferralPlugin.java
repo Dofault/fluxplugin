@@ -44,7 +44,7 @@ public class FluxReferralPlugin extends JavaPlugin {
 
     @Override
     public void onLoad() {
-        LegacyDataFolder.migrate(this, "InfluParrainage");
+        fr.influencraft.flux.api.util.DataFolders.migrate(this, "InfluParrainage");
     }
 
     @Override
@@ -97,11 +97,11 @@ public class FluxReferralPlugin extends JavaPlugin {
         var cmdParrainage = new CommandeParrainage(this, depotJoueur, serviceParrainage,
             servicePalier, serviceClassement, serviceProfil, serviceRecuperation, gestionnaireConfig, gestionnaireLangue);
 
-        var bcParrainage = getCommand("parrainage");
-        if (bcParrainage != null) {
-            bcParrainage.setExecutor(cmdParrainage);
-            bcParrainage.setTabCompleter(cmdParrainage);
-        }
+        fr.influencraft.flux.api.command.Commands.create(this, "referral").aliases("parrainage", "parr")
+            .description("Referral system.").bukkit(cmdParrainage, cmdParrainage).register();
+        // referral rewards are also claimed with every other reward of the suite (FluxRewards)
+        fr.influencraft.flux.api.reward.Rewards.register(this,
+            new fr.influencraft.fluxreferral.service.ReferralRewards(this, serviceProfil, serviceRecuperation));
 
         // --- Écouteurs ---
         Bukkit.getPluginManager().registerEvents(
@@ -121,12 +121,9 @@ public class FluxReferralPlugin extends JavaPlugin {
         });
 
         // --- PlaceholderAPI (soft-depend) ---
-        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
-            new ExpansionParrainage(this, serviceProfil, serviceClassement, serviceParrainage).register();
-            getLogger().info("Extension PlaceholderAPI enregistrée avec succès.");
-        } else {
-            getLogger().info("PlaceholderAPI absent — l'extension de placeholders ne sera pas enregistrée.");
-        }
+        // %parrainage_*%: resolved by Flux in menus, exposed to PlaceholderAPI by Flux
+        var expansion = new ExpansionParrainage(this, serviceProfil, serviceClassement, serviceParrainage);
+        fr.influencraft.flux.api.FluxApi.registerPlaceholders(this, "parrainage", expansion::onRequest);
 
         getLogger().info("Plugin FluxReferral activé avec succès (v" + getDescription().getVersion() + ").");
     }
