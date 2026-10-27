@@ -111,7 +111,7 @@ public class ServiceDecouverte {
 
     /** Step 1: welcome and question, one real button per source plus "By a player" (no window title: too high). */
     private Dialogs.Form question(Player p) {
-        Dialogs.Form form = Dialogs.form(p, "")
+        Dialogs.Form form = Dialogs.form(p, "").width(320)
                 .body(texte("decouverte-titre", Map.of()))
                 .body(texte("decouverte-question", Map.of()));
         for (Map.Entry<String, String> source : config.getSourcesQuestionnaire().entrySet()) {
@@ -123,7 +123,7 @@ public class ServiceDecouverte {
 
     /** Step 2 ("Other"): the player writes how he found the server. */
     private Dialogs.Form autre(Player p, String erreur) {
-        Dialogs.Form form = Dialogs.form(p, "")
+        Dialogs.Form form = Dialogs.form(p, "").width(320)
                 .body(texte("decouverte-autre", Map.of()));
         if (erreur != null) form.body(erreur);
         return form.input("texte", texte("decouverte-autre-libelle", Map.of()), "", 64)
@@ -153,7 +153,7 @@ public class ServiceDecouverte {
 
     /** Step 2 ("By a player"): the name of the player who invited him. */
     private Dialogs.Form pseudo(Player p, String erreur) {
-        Dialogs.Form form = Dialogs.form(p, "")
+        Dialogs.Form form = Dialogs.form(p, "").width(320)
                 .body(texte("decouverte-champ", Map.of()));
         if (erreur != null) form.body(erreur);
         return form.input("pseudo", texte("decouverte-champ-libelle", Map.of()), "", 16)

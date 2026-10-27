@@ -148,6 +148,7 @@ public final class Dialogs {
         private final List<String[]> actions = new ArrayList<>();
         private int columns = 2;
         private boolean closable = true;
+        private int width = 200;
         private BiConsumer<Player, Answer> onSubmit = (p, a) -> {
         };
         private Consumer<Player> onCancel = p -> {
@@ -242,6 +243,12 @@ public final class Dialogs {
             return this;
         }
 
+        /** Width of the text lines in pixels (1 to 1024, Minecraft default 200): wider keeps a sentence on one line. */
+        public Form width(int pixels) {
+            this.width = Math.max(1, Math.min(1024, pixels));
+            return this;
+        }
+
         /** False: Escape does not close the window, the player has to click a button. */
         public Form closable(boolean canClose) {
             this.closable = canClose;
@@ -290,7 +297,7 @@ public final class Dialogs {
             List<DialogBody> lines = new ArrayList<>();
             for (Object entry : body) {
                 if (entry instanceof String l) {
-                    lines.add(DialogBody.plainMessage(Texts.parse(style("text") + l, player)));
+                    lines.add(DialogBody.plainMessage(Texts.parse(style("text") + l, player), width));
                     continue;
                 }
                 net.kyori.adventure.text.TextComponent.Builder line = net.kyori.adventure.text.Component.text();
