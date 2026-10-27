@@ -4,19 +4,11 @@ main: fr.influencraft.fluxauctionhouse.FluxAuctionHouse
 api-version: '1.21'
 description: Marché unifié (hôtel des ventes AuctionHouse + échoppes FluxChestShop), historique et prix moyen.
 authors: [Influencraft]
-depend: [Vault, AuctionHouse]
-softdepend: [Flux, PlaceholderAPI, FluxChestShop, FluxLands, ItemsAdder]
+depend: [Vault, AuctionHouse, Flux]
+softdepend: [FluxChestShop, FluxLands, ItemsAdder]
 # Pilote SQLite de l'historique (téléchargé par Paper au premier démarrage, déjà en cache sur Labs).
 libraries:
   - org.xerial:sqlite-jdbc:3.49.1.0
-commands:
-  influmarche:
-    description: Navigation des menus du marché (boutons Flux).
-    usage: /influmarche
-  hdv:
-    description: Marché et hôtel des ventes.
-    aliases: [marche]
-    usage: /hdv [search <objet>|sell|history|average|help]
 permissions:
   influmarche.admin:
     description: /influmarche reload

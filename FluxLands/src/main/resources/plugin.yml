@@ -5,15 +5,8 @@ main: fr.influencraft.fluxlands.FluxLands
 api-version: '26.2'
 authors: [Dofault, Entr0pik]
 description: Extension de Lands (ex-InfluVille) - villes, pays, warps (InfluPW), échoppes (FluxChestShop) unifiés.
-depend: [Lands, Vault]
-softdepend: [PlaceholderAPI, InfluPW, FluxChestShop, ItemsAdder, Flux]
-
-commands:
-  influlands:
-    description: Navigation des menus Ville (appelée par Flux) et administration.
-    # influville / iv : anciens noms (InfluVille), gardés pour ne casser aucun bouton ou raccourci existant.
-    aliases: [il, influville, iv]
-    usage: /<command> aide
+depend: [Lands, Vault, Flux]
+softdepend: [InfluPW, FluxChestShop, ItemsAdder]
 
 permissions:
   influlands.use:

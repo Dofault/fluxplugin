@@ -1,7 +1,6 @@
 package fr.influencraft.fluxlands;
 
 import me.angeschossen.lands.api.land.Land;
-import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +32,7 @@ import java.util.Map;
  *   modules_echoppes|adresses  oui/non selon la présence de FluxChestShop / InfluPW
  * </pre>
  */
-final class Expansion extends PlaceholderExpansion {
+final class Expansion {
 
     private final FluxLands plugin;
 
@@ -41,28 +40,12 @@ final class Expansion extends PlaceholderExpansion {
         this.plugin = plugin;
     }
 
-    @Override
-    public @NotNull String getIdentifier() {
-        return "influlands";
-    }
 
-    @Override
-    public @NotNull String getAuthor() {
-        return "Influencraft";
-    }
 
-    @Override
-    public @NotNull String getVersion() {
-        return plugin.getPluginMeta().getVersion();
-    }
 
-    @Override
-    public boolean persist() {
-        return true;
-    }
 
-    @Override
-    public String onRequest(OfflinePlayer off, @NotNull String params) {
+    /** Placeholders of the plugin, registered with Flux (resolved without PlaceholderAPI, exposed to it). */
+    String onRequest(OfflinePlayer off, String params) {
         Player p = off != null ? off.getPlayer() : null;
         if (p == null) return "";
         String s = params.toLowerCase(Locale.ROOT);

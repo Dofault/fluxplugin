@@ -28,7 +28,7 @@ public final class FluxAuctionHouse extends JavaPlugin implements Listener {
 
     @Override
     public void onLoad() {
-        LegacyDataFolder.migrate(this, "InfluMarche");
+        fr.influencraft.flux.api.util.DataFolders.migrate(this, "InfluMarche");
     }
 
     @Override
@@ -64,17 +64,13 @@ public final class FluxAuctionHouse extends JavaPlugin implements Listener {
         }
         Bukkit.getPluginManager().registerEvents(this, this);
         Bukkit.getPluginManager().registerEvents(interception, this);
-        for (String c : new String[]{"influmarche", "hdv"}) {
-            var pc = getCommand(c);
-            if (pc != null) {
-                pc.setExecutor(commande);
-                pc.setTabCompleter(commande);
-            }
-        }
-        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) new Expansion(this).register();
-        else getLogger().warning("PlaceholderAPI absent : les menus ne pourront rien afficher.");
-        if (Bukkit.getPluginManager().isPluginEnabled("Flux")) Sources.inscrire(this);
-        else getLogger().warning("Flux absent : pas de menus du marché.");
+        fr.influencraft.flux.api.command.Commands.create(this, "fluxauctionhouse").aliases("influmarche")
+                .description("Market menus (buttons).").bukkit(commande, commande).register();
+        fr.influencraft.flux.api.command.Commands.create(this, "market").aliases("hdv", "marche")
+                .description("Market and auction house.").bukkit(commande, commande).register();
+        // %influmarche_*%: resolved by Flux in menus, exposed to PlaceholderAPI by Flux
+        fr.influencraft.flux.api.FluxApi.registerPlaceholders(this, "influmarche", new Expansion(this)::onRequest);
+        Sources.inscrire(this);
         planifier();
     }
 
@@ -107,11 +103,7 @@ public final class FluxAuctionHouse extends JavaPlugin implements Listener {
     void ouvrirMenu(Player p, String cleOuId) {
         if (cleOuId == null || cleOuId.isEmpty() || !p.isOnline()) return;
         String id = getConfig().getString("menus." + cleOuId, cleOuId);
-        if (Bukkit.getPluginManager().isPluginEnabled("Flux")) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "fluxmenu open " + id + " " + p.getName());
-        } else {
-            getLogger().warning("Flux absent : menu « " + id + " » non ouvert");
-        }
+        if (!fr.influencraft.flux.api.FluxApi.open(p, id)) getLogger().warning("Menu « " + id + " » not opened (Flux missing or unknown menu)");
     }
 
     @EventHandler

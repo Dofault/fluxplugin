@@ -1,6 +1,5 @@
 package fr.influencraft.fluxauctionhouse;
 
-import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import me.elaineqheart.auctionHouse.data.persistentStorage.local.SettingManager;
 import me.elaineqheart.auctionHouse.data.ram.ItemNote;
 import org.bukkit.OfflinePlayer;
@@ -28,7 +27,7 @@ import static fr.influencraft.fluxauctionhouse.Fmt.*;
  *   main_l&lt;k&gt;                         prix moyen de l'objet en main
  * </pre>
  */
-final class Expansion extends PlaceholderExpansion {
+final class Expansion {
 
     private static final Pattern LISTE = Pattern.compile("liste_(\\d+)_(.+)");
     private static final Pattern AUTRE = Pattern.compile("autre_(\\d+)_(.+)");
@@ -41,28 +40,12 @@ final class Expansion extends PlaceholderExpansion {
         this.plugin = plugin;
     }
 
-    @Override
-    public String getIdentifier() {
-        return "influmarche";
-    }
 
-    @Override
-    public String getAuthor() {
-        return "Influencraft";
-    }
 
-    @Override
-    public String getVersion() {
-        return plugin.getPluginMeta().getVersion();
-    }
 
-    @Override
-    public boolean persist() {
-        return true;
-    }
 
-    @Override
-    public String onRequest(OfflinePlayer op, String s) {
+    /** Placeholders of the plugin, registered with Flux (resolved without PlaceholderAPI, exposed to it). */
+    String onRequest(OfflinePlayer op, String s) {
         if (!(op instanceof Player p) || !p.isOnline()) return "";
         try {
             return valeur(p, s);

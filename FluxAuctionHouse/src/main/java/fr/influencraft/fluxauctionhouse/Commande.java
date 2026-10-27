@@ -51,7 +51,7 @@ final class Commande implements CommandExecutor, TabCompleter {
             return true;
         }
         if (!(sender instanceof Player p)) return true;
-        if (command.getName().equalsIgnoreCase("hdv")) {
+        if (command.getName().equalsIgnoreCase("market")) {
             if (!entree(p, a)) p.performCommand("ah " + String.join(" ", a));
             return true;
         }
@@ -465,7 +465,7 @@ final class Commande implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] a) {
         List<String> out = new ArrayList<>();
-        if (command.getName().equalsIgnoreCase("hdv") && a.length == 1) {
+        if (command.getName().equalsIgnoreCase("market") && a.length == 1) {
             for (String s : List.of("search", "sell", "bid", "history", "average", "ventes", "encheres", "help")) {
                 if (s.startsWith(a[0].toLowerCase(Locale.ROOT))) out.add(s);
             }

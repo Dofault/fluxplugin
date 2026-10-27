@@ -21,28 +21,22 @@ final class Fmt {
 
     /** Montant entier groupé par milliers à la française : « 12 345 ». */
     static String argent(double montant) {
-        DecimalFormatSymbols s = new DecimalFormatSymbols(Locale.FRANCE);
-        s.setGroupingSeparator(' ');
-        return new DecimalFormat("#,##0", s).format(Math.floor(montant + 1e-9));
+        return fr.influencraft.flux.api.util.Format.number(montant);
     }
 
     /** Taux en pourcentage sans décimale inutile : « 5 », « 2,5 ». */
     static String taux(double pourcentage) {
-        DecimalFormatSymbols s = new DecimalFormatSymbols(Locale.FRANCE);
-        return new DecimalFormat("0.#", s).format(pourcentage);
+        return fr.influencraft.flux.api.util.Format.percent(pourcentage);
     }
 
     static String oui(boolean b) {
-        return b ? "oui" : "non";
+        return fr.influencraft.flux.api.util.Format.yesNo(b);
     }
 
     /** Message de tchat : placeholders (glyphes %img_...%) puis couleurs, sans italique. */
     static Component ligne(Player p, String brut) {
-        String txt = brut;
-        if (p != null && Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            txt = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(p, txt);
-        }
-        return LEGACY.deserialize(txt).decoration(TextDecoration.ITALIC, false);
+        // the Flux text pipeline (suite placeholders, PlaceholderAPI, glyphs, colours)
+        return fr.influencraft.flux.api.text.Texts.parse(brut, p);
     }
 
     static void envoyer(Player p, String brut) {

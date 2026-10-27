@@ -38,55 +38,41 @@ final class Fmt {
 
     /** Montant entier groupé par milliers à la française : « 12 345 ». */
     static String argent(double montant) {
-        DecimalFormatSymbols s = new DecimalFormatSymbols(Locale.FRANCE);
-        s.setGroupingSeparator(' ');
-        return new DecimalFormat("#,##0", s).format(Math.floor(montant + 1e-9));
+        return fr.influencraft.flux.api.util.Format.number(montant);
     }
 
     /** Prix unitaire : deux décimales sous 100, entier au-delà (« 12,50 », « 1 250 »). */
     static String unite(double prix) {
         if (prix >= 100) return argent(Math.round(prix));
-        DecimalFormatSymbols s = new DecimalFormatSymbols(Locale.FRANCE);
-        s.setGroupingSeparator(' ');
-        return new DecimalFormat("#,##0.##", s).format(prix);
+        return fr.influencraft.flux.api.util.Format.decimal(prix);
     }
 
     static String taux(double pourcentage) {
-        return new DecimalFormat("0.#", new DecimalFormatSymbols(Locale.FRANCE)).format(pourcentage);
+        return fr.influencraft.flux.api.util.Format.percent(pourcentage);
     }
 
     static String oui(boolean b) {
-        return b ? "oui" : "non";
+        return fr.influencraft.flux.api.util.Format.yesNo(b);
     }
 
     /** Durée courte : « 2 j 5 h », « 3 h 12 min », « 45 s ». */
     static String duree(long secondes) {
-        if (secondes <= 0) return "terminé";
-        long j = secondes / 86400, h = secondes % 86400 / 3600, m = secondes % 3600 / 60;
-        if (j > 0) return j + " j " + h + " h";
-        if (h > 0) return h + " h " + m + " min";
-        if (m > 0) return m + " min";
-        return secondes + " s";
+        return fr.influencraft.flux.api.util.Format.duration(secondes);
     }
 
     static String date(long ms) {
-        return new SimpleDateFormat("dd/MM HH'h'mm", Locale.FRANCE).format(new Date(ms));
+        return fr.influencraft.flux.api.util.Format.date(ms);
     }
 
     /** Ancienneté : « il y a 3 h », « il y a 2 j ». */
     static String ilYa(long ms) {
-        long s = Math.max(0, (System.currentTimeMillis() - ms) / 1000);
-        if (s < 60) return "à l'instant";
-        return "il y a " + duree(s);
+        return fr.influencraft.flux.api.util.Format.ago(ms);
     }
 
     /** Message de tchat : placeholders (glyphes %img_...%) puis couleurs, sans italique. */
     static Component ligne(Player p, String brut) {
-        String txt = brut;
-        if (p != null && Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            txt = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(p, txt);
-        }
-        return LEGACY.deserialize(txt).decoration(TextDecoration.ITALIC, false);
+        // the Flux text pipeline (suite placeholders, PlaceholderAPI, glyphs, colours)
+        return fr.influencraft.flux.api.text.Texts.parse(brut, p);
     }
 
     static void envoyer(Player p, String brut) {
@@ -105,19 +91,7 @@ final class Fmt {
 
     /** Coupe une phrase en lignes d'au plus {@code max} caractères. */
     static List<String> couper(String texte, int max) {
-        List<String> lignes = new ArrayList<>();
-        if (texte == null || texte.isBlank()) return lignes;
-        StringBuilder cur = new StringBuilder();
-        for (String mot : texte.trim().split("\\s+")) {
-            if (!cur.isEmpty() && cur.length() + 1 + mot.length() > max) {
-                lignes.add(cur.toString());
-                cur.setLength(0);
-            }
-            if (!cur.isEmpty()) cur.append(' ');
-            cur.append(mot);
-        }
-        if (!cur.isEmpty()) lignes.add(cur.toString());
-        return lignes;
+        return fr.influencraft.flux.api.util.Format.wrap(texte, max);
     }
 
     /** Lore au style de /menu2 : description (│), puis actions (├ ... └). */

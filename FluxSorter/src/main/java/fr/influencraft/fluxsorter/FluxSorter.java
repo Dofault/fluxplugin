@@ -47,7 +47,7 @@ public final class FluxSorter extends JavaPlugin {
     /** Reprend une seule fois le dossier plugins/FluxSorter (nom d'avant Sorting Chest), sans le supprimer. */
     @Override
     public void onLoad() {
-        LegacyDataFolder.migrate(this, "SortingChest", "InfluTri");
+        fr.influencraft.flux.api.util.DataFolders.migrate(this, "SortingChest", "InfluTri");
         Path old = getDataFolder().toPath().resolveSibling("FluxSorter");
         Path target = getDataFolder().toPath();
         if (!Files.isDirectory(old) || Files.exists(target)) return;
@@ -63,6 +63,8 @@ public final class FluxSorter extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        fr.influencraft.flux.api.command.Commands.create(this, "sorter").aliases("sortingchest", "schest", "tri")
+                .description("Sorting chest administration.").permission("sortingchest.admin").bukkit(this, this).register();
         saveDefaultConfig();
         conf = Settings.of(getConfig());
         lands = LandsIntegration.of(this);

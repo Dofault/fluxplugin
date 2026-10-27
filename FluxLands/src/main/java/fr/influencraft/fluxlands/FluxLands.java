@@ -42,7 +42,7 @@ public final class FluxLands extends JavaPlugin implements Listener {
 
     @Override
     public void onLoad() {
-        LegacyDataFolder.migrate(this, "InfluLands");
+        fr.influencraft.flux.api.util.DataFolders.migrate(this, "InfluLands");
     }
 
     @Override
@@ -83,16 +83,10 @@ public final class FluxLands extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(interception, this);
         Commande cmd = new Commande(this);
         commande = cmd;
-        var pc = getCommand("influlands");
-        if (pc != null) {
-            pc.setExecutor(cmd);
-            pc.setTabCompleter(cmd);
-        }
-        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            new Expansion(this).register();
-        } else {
-            getLogger().warning("PlaceholderAPI absent : les menus ne pourront rien afficher.");
-        }
+        fr.influencraft.flux.api.command.Commands.create(this, "towns").aliases("influlands", "il", "influville", "iv")
+                .description("Towns menus (buttons).").bukkit(cmd, cmd).register();
+        // %influlands_*%: resolved by Flux in menus, exposed to PlaceholderAPI by Flux
+        fr.influencraft.flux.api.FluxApi.registerPlaceholders(this, "influlands", new Expansion(this)::onRequest);
         planifier();
     }
 
@@ -280,11 +274,7 @@ public final class FluxLands extends JavaPlugin implements Listener {
     void ouvrirMenu(Player p, String cleOuId) {
         if (cleOuId == null || cleOuId.isEmpty() || !p.isOnline()) return;
         String id = getConfig().getString("menus." + cleOuId, cleOuId);
-        if (Bukkit.getPluginManager().isPluginEnabled("Flux")) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "fluxmenu open " + id + " " + p.getName());
-        } else {
-            getLogger().warning("Flux absent : menu « " + id + " » non ouvert");
-        }
+        if (!fr.influencraft.flux.api.FluxApi.open(p, id)) getLogger().warning("Menu « " + id + " » not opened (Flux missing or unknown menu)");
     }
 
     // ── Événements ──────────────────────────────────────────────────────────
