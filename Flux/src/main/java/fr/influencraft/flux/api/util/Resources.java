@@ -21,8 +21,9 @@ public final class Resources {
 
     /**
      * Copies the jar's {@code menus/} files that are missing on disk (the translation under
-     * {@code i18n/<language>/menus/} when present) and hands {@code plugins/<Plugin>/menus/} to Flux.
-     * Does nothing when the jar ships no menu.
+     * {@code i18n/<language>/menus/} when present) and hands {@code plugins/<Plugin>/menus/} to Flux: the menus of a
+     * plugin live in its own folder, never in Flux's. The folder is handed even when the jar ships no menu (menus
+     * written for the server).
      */
     public static void shipMenus(JavaPlugin plugin, String language) {
         List<String> shipped = new ArrayList<>();
@@ -35,7 +36,11 @@ public final class Resources {
         } catch (Exception e) {
             plugin.getLogger().warning("Could not list the menus of the jar: " + e.getMessage());
         }
-        if (shipped.isEmpty()) return;
+        File folder = new File(plugin.getDataFolder(), "menus");
+        if (shipped.isEmpty()) {
+            if (folder.isDirectory()) FluxApi.registerMenuFolder(plugin, folder);
+            return;
+        }
         String translated = "i18n/" + language + "/";
         for (String name : shipped) {
             File target = new File(plugin.getDataFolder(), name);
@@ -49,6 +54,6 @@ public final class Resources {
                 plugin.getLogger().warning("Could not write " + name + ": " + e.getMessage());
             }
         }
-        FluxApi.registerMenuFolder(plugin, new File(plugin.getDataFolder(), "menus"));
+        FluxApi.registerMenuFolder(plugin, folder);
     }
 }

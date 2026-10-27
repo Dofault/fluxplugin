@@ -26,7 +26,7 @@ import sys
 from PIL import Image
 
 ICI = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(ICI, ".."))
+sys.path.insert(0, os.path.join(ICI, "..", "..", "..", "Flux", "assets"))  # shared fond_lib of the suite
 from fond_lib import generique_raccourci, objet, poser, tampon_case  # noqa: E402
 
 GENERIQUE, SORTIE = sys.argv[1], sys.argv[2]
@@ -726,7 +726,7 @@ def main():
         im.save(os.path.join(gui, nom + ".png"))
 
     lignes = [
-        "# Généré par plugins/fluxplugin/Flux/assets/ville/gen_ville.py : ne pas modifier à la main.",
+        "# Généré par plugins/fluxplugin/FluxLands/assets/ville/gen_ville.py : ne pas modifier à la main.",
         "# Menus Ville (FluxLands + Flux, Labs) : icônes de boutons, niveaux de ville, jauges, fonds.",
         "info:",
         "  namespace: influville",

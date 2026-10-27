@@ -65,6 +65,8 @@ public final class FluxPets extends JavaPlugin implements TabCompleter {
         boosterKey = new NamespacedKey(LEGACY_NAMESPACE, "booster");
         versionKey = new NamespacedKey(LEGACY_NAMESPACE, "version");
         Pets.registerPlaceholders(this);
+        // the Flux menus of the pets (familiers, familier) live in plugins/FluxPets/menus/
+        fr.influencraft.flux.api.util.Resources.shipMenus(this, fr.influencraft.flux.api.FluxApi.language());
         // familiers avant les cartes : le registre des cartes liste les familiers chargés
         boolean petsStarted = startPets();
         registry = new CardRegistry(this);

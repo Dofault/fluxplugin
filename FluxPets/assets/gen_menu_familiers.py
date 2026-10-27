@@ -62,7 +62,7 @@ def fiche(p):
 
 
 def entete(titre, commentaire):
-    return [f"# Généré par plugins/fluxplugin/Flux/assets/gen_menu_familiers.py : ne pas modifier à la main.",
+    return [f"# Généré par plugins/fluxplugin/FluxPets/assets/gen_menu_familiers.py : ne pas modifier à la main.",
             f"# {commentaire}", "",
             f'title: ":offset_-8::{titre}:"', "rows: 6", "player-inventory: hidden", "vanilla-background: false",
             "update-interval: 20", ""]

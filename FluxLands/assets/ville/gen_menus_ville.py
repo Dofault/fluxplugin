@@ -19,7 +19,7 @@ MAJ_GAUCHE = "&r&7Maj + %img_left_click% &f"
 MAJ_DROIT = "&r&7Maj + %img_right_click% &f"
 BB = "&f%img_bitblock%"
 GRILLE = [r * 9 + c for r in range(2, 5) for c in range(1, 8)]
-ENTETE = "# Généré par plugins/fluxplugin/Flux/assets/ville/gen_menus_ville.py : ne pas modifier à la main.\n"
+ENTETE = "# Généré par plugins/fluxplugin/FluxLands/assets/ville/gen_menus_ville.py : ne pas modifier à la main.\n"
 ANCIENS = ["adresses.yml"]  # menus renommés, supprimés à la génération
 
 

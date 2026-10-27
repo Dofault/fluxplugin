@@ -87,6 +87,8 @@ public final class FluxLands extends JavaPlugin implements Listener {
                 .description("Towns menus (buttons).").bukkit(cmd, cmd).register();
         // %influlands_*%: resolved by Flux in menus, exposed to PlaceholderAPI by Flux
         fr.influencraft.flux.api.FluxApi.registerPlaceholders(this, "influlands", new Expansion(this)::onRequest);
+        // the town, country and warp menus live in plugins/FluxLands/menus/
+        fr.influencraft.flux.api.util.Resources.shipMenus(this, fr.influencraft.flux.api.FluxApi.language());
         planifier();
     }
 

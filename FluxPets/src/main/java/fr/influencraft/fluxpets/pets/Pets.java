@@ -261,7 +261,7 @@ public final class Pets {
 
     /**
      * Réglages des familiers : section familiers de la config de FluxPets (config.yml, textes de lang/, menus de
-     * menus/), vue comme une config eco (mêmes chemins que l'ancien familiers-reglages.yml : gui, level-gui,
+     * gui/), vue comme une config eco (mêmes chemins que l'ancien familiers-reglages.yml : gui, level-gui,
      * messages, level-up, pet-entity...).
      */
     private static Config readSettings() {

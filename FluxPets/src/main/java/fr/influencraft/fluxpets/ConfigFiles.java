@@ -20,7 +20,8 @@ import java.util.Map;
  * (FluxPets#getConfig) :
  * - config.yml : réglages ;
  * - lang/<language>.yml : textes affichés aux joueurs (chemins de LANG) ;
- * - menus/pets.yml, menus/progression.yml : menus des familiers (sous pet-settings.gui / pet-settings.level-gui) ;
+ * - gui/pets.yml, gui/progression.yml : eco menus of the pets (pet-settings.gui / pet-settings.level-gui; menus/ is
+ *   the folder of the Flux menus of the plugin) ;
  * - content/cards.yml, content/boosters.yml, content/pets.yml : cartes, boosters, familiers obtenables ;
  * - effects.yml : effets de familiers codés dans le plugin (lu par PetEffects).
  * Au chargement, chaque fichier est lu par-dessus sa version par défaut du jar (une clé ajoutée par une mise à
@@ -50,8 +51,8 @@ public final class ConfigFiles {
         CONTENT.put("cards", "content/cards.yml");
         CONTENT.put("boosters", "content/boosters.yml");
         CONTENT.put("pets.list", "content/pets.yml");
-        MENUS.put("pet-settings.gui", "menus/pets.yml");
-        MENUS.put("pet-settings.level-gui", "menus/progression.yml");
+        MENUS.put("pet-settings.gui", "gui/pets.yml");
+        MENUS.put("pet-settings.level-gui", "gui/progression.yml");
     }
 
     private final File folder;
@@ -77,7 +78,7 @@ public final class ConfigFiles {
     /** Écrit les fichiers par défaut manquants (installation neuve). */
     void saveDefaults() {
         String language = read(file("config.yml")).getString("language", DEFAULT_LANGUAGE);
-        List<String> names = new java.util.ArrayList<>(List.of("config.yml", "menus/pets.yml", "menus/progression.yml",
+        List<String> names = new java.util.ArrayList<>(List.of("config.yml", "gui/pets.yml", "gui/progression.yml",
                 "content/cards.yml", "content/boosters.yml", "content/pets.yml", "effects.yml", "chains.yml"));
         LANGUAGES.forEach(l -> names.add("lang/" + l + ".yml"));
         for (String name : names) {
@@ -112,7 +113,7 @@ public final class ConfigFiles {
     /** Fichier où est notée la langue dans laquelle le contenu a été écrit (pour détecter un changement). */
     static final String MARKER = ".content-language";
     /** Fichiers traduits au changement de langue (en plus des familiers livrés, pets/<id>.yml). */
-    static final List<String> LOCALIZED = List.of("config.yml", "menus/pets.yml", "menus/progression.yml",
+    static final List<String> LOCALIZED = List.of("config.yml", "gui/pets.yml", "gui/progression.yml",
             "content/cards.yml", "content/boosters.yml", "content/pets.yml", "effects.yml");
 
     /** Ressource d'une langue : i18n/<langue>/<nom>, le nom seul pour l'anglais (contenu de base). */
@@ -459,6 +460,34 @@ public final class ConfigFiles {
      * Les anciens fichiers sont gardés avec le suffixe .legacy.
      */
     void migrate() {
+        migrateLegacy();
+        moveEcoMenus();
+    }
+
+    /** A menu in the eco format (mask/pattern), not a Flux menu. */
+    private boolean isEcoMenu(File f) {
+        return f.isFile() && read(f).contains("mask");
+    }
+
+    /**
+     * The eco menus moved from menus/ to gui/ on 2026-10-27: menus/ holds the Flux menus of the plugin (familiers,
+     * familier). Moved once, only when they are eco menus.
+     */
+    private void moveEcoMenus() {
+        for (String name : List.of("pets.yml", "progression.yml")) {
+            File old = file("menus/" + name), now = file("gui/" + name);
+            if (!isEcoMenu(old) || now.exists()) continue;
+            try {
+                Files.createDirectories(now.toPath().getParent());
+                Files.move(old.toPath(), now.toPath());
+                logger.info("menus/" + name + " moved to gui/" + name + " (menus/ is for the Flux menus).");
+            } catch (IOException e) {
+                logger.warning("Could not move menus/" + name + " to gui/: " + e);
+            }
+        }
+    }
+
+    private void migrateLegacy() {
         migrateEffects();
         migratePetFiles(file("pets"), logger);
         File config = file("config.yml");
@@ -467,7 +496,7 @@ public final class ConfigFiles {
                 && !file("content/boosters.yml").exists()
                 && (current.contains("cards") || current.contains("boosters") || current.contains("messages"));
         boolean french = current.contains("langue") || current.contains("familiers") || current.contains("familier-suivi")
-                || file("contenu").isDirectory() || file("menus/familiers.yml").exists();
+                || file("contenu").isDirectory() || isEcoMenu(file("menus/familiers.yml"));
         File reglages = file("familiers-reglages.yml");
         if (!monolithic && !french && !reglages.exists()) {
             return;

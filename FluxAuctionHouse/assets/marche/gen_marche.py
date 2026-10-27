@@ -268,7 +268,7 @@ def main():
         im.save(os.path.join(gui, nom + ".png"))
 
     lignes = [
-        "# Généré par plugins/fluxplugin/Flux/assets/marche/gen_marche.py : ne pas modifier à la main.",
+        "# Généré par plugins/fluxplugin/FluxAuctionHouse/assets/marche/gen_marche.py : ne pas modifier à la main.",
         "# Marché (FluxAuctionHouse + Flux, Labs) : icônes de boutons et fonds de menus.",
         "info:",
         "  namespace: influmarche",

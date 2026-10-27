@@ -70,6 +70,8 @@ public final class FluxAuctionHouse extends JavaPlugin implements Listener {
                 .description("Market and auction house.").bukkit(commande, commande).register();
         // %influmarche_*%: resolved by Flux in menus, exposed to PlaceholderAPI by Flux
         fr.influencraft.flux.api.FluxApi.registerPlaceholders(this, "influmarche", new Expansion(this)::onRequest);
+        // the market menus live in plugins/FluxAuctionHouse/menus/
+        fr.influencraft.flux.api.util.Resources.shipMenus(this, fr.influencraft.flux.api.FluxApi.language());
         Sources.inscrire(this);
         planifier();
     }
