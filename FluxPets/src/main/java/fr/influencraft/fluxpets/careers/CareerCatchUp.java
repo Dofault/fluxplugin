@@ -60,7 +60,7 @@ public final class CareerCatchUp implements Listener, CommandExecutor {
     public static CareerCatchUp enable(FluxPets plugin) {
         CareerCatchUp catchUp = new CareerCatchUp(plugin);
         fr.influencraft.flux.api.command.Commands.create(plugin, "boosters").aliases("rattrapage", "catchup")
-                .description("Collect your waiting boosters.").permission("influpet.command.boosters")
+                .description("Collect your waiting boosters.").suggest(false).permission("influpet.command.boosters")
                 .bukkit(catchUp, null).register();
         // the booster items, for the icons of the pending rewards: source:fluxpets:booster:<id>
         fr.influencraft.flux.api.FluxApi.registerItemSource(plugin, "fluxpets", (viewer, arg) -> {
