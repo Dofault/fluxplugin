@@ -136,3 +136,5 @@ messages:
   decouverte-source-adresse: "l'adresse perso de {joueur}"
   decouverte-source-joueur: "le joueur {joueur}"
   decouverte-source-joueurs: "un joueur"
+  aide-admin-desc-questionnaire: "Aperçu du questionnaire de découverte, ou le reposer à un joueur"
+  decouverte-apercu: "{prefixe} <color:#B376E5>Aperçu, rien n'est enregistré : bouton <white>{source}</white>, champ « <white>{joueur}</white> »."

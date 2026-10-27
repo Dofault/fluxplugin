@@ -30,9 +30,6 @@ prefixe: "<color:#B376E5>ᴘᴀʀʀᴀɪɴᴀɢᴇ</color> <dark_gray>▸</dark_
 adresse:
   active: true
   domaine: "influencraft.fr"
-  # Anciens domaines encore lus (une adresse donnée avant un changement marche toujours)
-  autres-domaines:
-    - "play.influencraft.fr"
   # Sous-domaines du site et du serveur : jamais une adresse perso (un joueur nommé ainsi donne son code)
   reserves: [play, www, map, carte, wiki, api, mail, vote, boutique, shop, store, discord, dev, admin, panel,
     lobby, labs, semilab, events, mc, minecraft, static, cdn, stats, status, ns1, ns2, smtp, imap, webmail]

@@ -67,7 +67,28 @@ public class ServiceDecouverte {
         return langue.getMessageBrut(cle, vars);
     }
 
-    private void ouvrir(Player p, Instant premiereConnexion, String erreur) {
+    /**
+     * {@code /parrainage admin questionnaire [joueur]}: without a player, a preview for the sender (answers shown,
+     * nothing recorded); with a player, asks him again for real (his former answer stays if he had one).
+     */
+    public void montrer(Player cible, boolean apercu) {
+        if (apercu) {
+            Dialogs.Form form = formulaire(cible, null);
+            form.onSubmit((player, answer) -> player.sendMessage(fr.influencraft.flux.api.text.Texts.parse(
+                    texte("decouverte-apercu", Map.of("source", answer.button(), "joueur", answer.text("pseudo"))))))
+                .open();
+            return;
+        }
+        async(() -> {
+            var j = depotJoueur.trouverParUUID(cible.getUniqueId());
+            Instant premiere = j.map(x -> java.sql.Timestamp.valueOf(x.premiereConnexion()).toInstant()).orElse(Instant.now());
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (cible.isOnline()) ouvrir(cible, premiere, null);
+            });
+        });
+    }
+
+    private Dialogs.Form formulaire(Player p, String erreur) {
         Dialogs.Form form = Dialogs.form(p, texte("decouverte-titre", Map.of()))
                 .body(texte("decouverte-question", Map.of()));
         if (erreur != null) form.body(erreur);
@@ -75,8 +96,11 @@ public class ServiceDecouverte {
         for (Map.Entry<String, String> source : config.getSourcesQuestionnaire().entrySet()) {
             form.action(source.getKey(), source.getValue());
         }
-        form.action(SOURCE_JOUEUR, texte("decouverte-bouton-joueur", Map.of()))
-                .columns(2)
+        return form.action(SOURCE_JOUEUR, texte("decouverte-bouton-joueur", Map.of())).columns(2);
+    }
+
+    private void ouvrir(Player p, Instant premiereConnexion, String erreur) {
+        formulaire(p, erreur)
                 .onSubmit((player, answer) -> repondre(player, premiereConnexion, answer.button(), answer.text("pseudo")))
                 .open();
     }

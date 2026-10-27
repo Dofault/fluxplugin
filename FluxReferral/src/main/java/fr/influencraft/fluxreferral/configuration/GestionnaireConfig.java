@@ -65,11 +65,6 @@ public class GestionnaireConfig {
         String d = config.getString("adresse.domaine", "influencraft.fr").trim().toLowerCase(Locale.ROOT);
         return d.startsWith(".") ? d.substring(1) : d;
     }
-    /** Former domains still read (an address given before a change keeps working). */
-    public java.util.List<String> getAutresDomaines() {
-        return config.getStringList("adresse.autres-domaines").stream()
-            .map(d -> d.trim().toLowerCase(Locale.ROOT)).map(d -> d.startsWith(".") ? d.substring(1) : d).toList();
-    }
     /** Sub-domains of the site and the server, never a personal address (play, www, map...). */
     public java.util.Set<String> getLibellesReserves() {
         return config.getStringList("adresse.reserves").stream().map(d -> d.trim().toLowerCase(Locale.ROOT))

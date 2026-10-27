@@ -88,6 +88,9 @@ permissions:
   parrainage.admin.decouvertes:
     description: "Statistiques de découverte du serveur"
     default: op
+  parrainage.admin.questionnaire:
+    description: "Voir le questionnaire de découverte (aperçu) ou le reposer à un joueur"
+    default: op
 
   parrainage.admin.*:
     description: Accès complet à toutes les commandes admin du parrainage
