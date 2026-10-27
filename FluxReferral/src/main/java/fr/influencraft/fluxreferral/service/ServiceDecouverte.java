@@ -112,9 +112,7 @@ public class ServiceDecouverte {
     /** Step 1: welcome and question, one real button per source plus "By a player" (no window title: too high). */
     private Dialogs.Form question(Player p) {
         Dialogs.Form form = Dialogs.form(p, "")
-                .spacer(1)
                 .body(texte("decouverte-titre", Map.of()))
-                .spacer(1)
                 .body(texte("decouverte-question", Map.of()))
                 .spacer(1);
         for (Map.Entry<String, String> source : config.getSourcesQuestionnaire().entrySet()) {
@@ -127,10 +125,9 @@ public class ServiceDecouverte {
     /** Step 2 ("Other"): the player writes how he found the server. */
     private Dialogs.Form autre(Player p, String erreur) {
         Dialogs.Form form = Dialogs.form(p, "")
-                .spacer(1)
                 .body(texte("decouverte-autre", Map.of()))
                 .spacer(1);
-        if (erreur != null) form.body(erreur).spacer(1);
+        if (erreur != null) form.body(erreur);
         return form.input("texte", texte("decouverte-autre-libelle", Map.of()), "", 64)
                 .action("valider", texte("decouverte-bouton-valider", Map.of()))
                 .action("retour", texte("decouverte-bouton-retour", Map.of()))
@@ -159,10 +156,9 @@ public class ServiceDecouverte {
     /** Step 2 ("By a player"): the name of the player who invited him. */
     private Dialogs.Form pseudo(Player p, String erreur) {
         Dialogs.Form form = Dialogs.form(p, "")
-                .spacer(1)
                 .body(texte("decouverte-champ", Map.of()))
                 .spacer(1);
-        if (erreur != null) form.body(erreur).spacer(1);
+        if (erreur != null) form.body(erreur);
         return form.input("pseudo", texte("decouverte-champ-libelle", Map.of()), "", 16)
                 .action("valider", texte("decouverte-bouton-valider", Map.of()))
                 .action("retour", texte("decouverte-bouton-retour", Map.of()))
