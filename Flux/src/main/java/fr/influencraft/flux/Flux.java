@@ -34,7 +34,6 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     private PacketListenerCommon backgroundListener;
     private ChestBackgrounds backgrounds;
     private PassMissions passMissions;
-    private JobInfo jobInfo;
     private CollectionInfo collectionInfo;
     private PapiBridge papiBridge;
     private int clickCooldown;
@@ -83,7 +82,6 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         // Après le chargement de tous les plugins : EcoBattlepass peut s'activer après nous.
         getServer().getScheduler().runTask(this, () -> {
             passMissions = PassMissions.register(this);
-            jobInfo = JobInfo.register(this);
             collectionInfo = CollectionInfo.register(this);
         });
     }
@@ -91,7 +89,6 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     @Override
     public void onDisable() {
         if (passMissions != null) passMissions.unregister();
-        if (jobInfo != null) jobInfo.unregister();
         if (collectionInfo != null) collectionInfo.unregister();
         fr.influencraft.flux.api.FluxApi.bind(null);
         if (rewards != null) rewards.stop();
@@ -240,9 +237,6 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         return collectionInfo;
     }
 
-    public JobInfo jobInfo() {
-        return jobInfo;
-    }
 
     public Actions actions() {
         return actions;
@@ -300,7 +294,6 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
                 Text.resetHooks();
                 backgrounds.reset();
                 PathRenderer.reset();
-                if (jobInfo != null) jobInfo.clear();
                 int warnings = registry.load();
                 msg(sender, "&#2ECF7B" + registry.all().size() + " menu(s) rechargé(s)"
                         + (warnings > 0 ? " &#FF5C5C(" + warnings + " avertissement(s), voir la console)" : "") + ".");

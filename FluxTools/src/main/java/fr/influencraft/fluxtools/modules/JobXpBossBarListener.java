@@ -1,10 +1,8 @@
 package fr.influencraft.fluxtools.modules;
 
-import com.willfp.ecojobs.api.EcoJobsAPI;
-import com.willfp.ecojobs.api.event.PlayerJobExpGainEvent;
-import com.willfp.ecojobs.api.event.PlayerJobLevelUpEvent;
-import com.willfp.ecojobs.jobs.Job;
-import com.willfp.ecojobs.jobs.JobXPAccumulatorKt;
+import fr.influencraft.flux.api.jobs.JobLevelUpEvent;
+import fr.influencraft.flux.api.jobs.JobXpGainEvent;
+import fr.influencraft.flux.api.jobs.Jobs;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -24,7 +22,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Affiche une boss bar de progression d'XP de métier (EcoJobs) à chaque gain,
+ * Affiche une boss bar de progression d'XP de métier (service métiers de Flux) à chaque gain,
  * même minime, puis la masque après un délai d'inactivité. Une bar par (joueur,
  * métier) : si une seule action fait progresser plusieurs métiers à la fois
  * (ex. un effet qui casse plusieurs blocs d'un coup, mélangeant minerai et
@@ -98,64 +96,40 @@ public final class JobXpBossBarListener implements Listener {
 
     // exact XP, not rounded (Flux Format.decimal: 2 decimals at most, trailing zeros removed)
 
-    // Gain lu juste avant les effets libreforge (familiers InfluPet : job_xp_multiplier), pour en
-    // déduire leur bonus. Événement synchrone et non réentrant : un seul gain en cours à la fois.
-    private PlayerJobExpGainEvent pendingEvent;
-    private double pendingAmount;
-
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-    public void onJobXpGainBeforeEffects(PlayerJobExpGainEvent event) {
-        pendingEvent = event;
-        pendingAmount = event.getAmount();
-    }
-
-    // MONITOR : le gain affiché doit être le gain final. À la priorité par défaut, ce listener passait
-    // avant celui de l'effet job_xp_multiplier de libreforge (enregistré seulement une fois libreforge
-    // activé, après InfluBridge) : la barre montrait le gain sans le bonus des familiers (2026-10-09).
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onJobXpGain(PlayerJobExpGainEvent event) {
-        Player player = event.getPlayer();
+    /** Final gain, every bonus included, and the state after it (Flux jobs service). */
+    @EventHandler
+    public void onJobXpGain(JobXpGainEvent event) {
+        Player player = event.player();
         if (!isEnabled(player)) {
             return;
         }
-        String key = player.getUniqueId() + ":" + event.getJob().getId();
+        String key = player.getUniqueId() + ":" + event.job();
+        lastGains.put(key, event.gained());
+        show(player, key, event.job(), event.level(), event.xp(), event.required(), event.gained(), event.bonusPercent(), true);
+    }
 
-        // EcoJobsAPI.getJobProgress() lirait l'état AVANT ce gain : cet event est
-        // déclenché par EcoJobsAPI.giveJobExperience() avant l'écriture réelle de l'XP
-        // (callEvent -> check isCancelled -> giveExactJobExperience), donc on doit
-        // reconstituer la progression post-gain à la main plutôt que lire l'API.
-        int level = EcoJobsAPI.getJobLevel(player, event.getJob());
-        double xpForNextLevel = event.getJob().getExpForLevel(level + 1);
-        double newXp = EcoJobsAPI.getJobXP(player, event.getJob()) + event.getAmount();
-        float progress = xpForNextLevel > 0
-                ? (float) Math.max(0.0, Math.min(1.0, newXp / xpForNextLevel))
-                : 1f;
-        // current/required : arrondis à l'entier (pas besoin de précision sur la progression
-        // globale). Seul le gain entre parenthèses reste exact à la décimale près.
-        String currentXpFormatted = String.valueOf(Math.round(newXp));
-        String requiredXpFormatted = String.valueOf(Math.round(xpForNextLevel));
-        String plainJobName = COLOR_CODES.matcher(event.getJob().getName()).replaceAll("");
-
-        // Booster d'XP éventuel (permission-boosters, potions de boost...), même mécanisme que
-        // celui déjà appliqué en amont dans EcoJobsAPI.giveJobExperience. Affiché en pourcentage
-        // (convention du serveur, cf. AdvancedJobs/config.yml "permission-boosters: percent: 25.0"),
-        // pas en multiplicateur — et seulement s'il diffère de +0% (pas de bruit permanent sur la bar).
-        // Multiplicateur de permission, déjà inclus dans le montant de l'événement, multiplié par celui
-        // des effets libreforge (familiers) appliqués pendant l'événement.
-        double multiplier = JobXPAccumulatorKt.getJobExperienceMultiplier(player);
-        if (pendingEvent == event && pendingAmount > 0) {
-            multiplier *= event.getAmount() / pendingAmount;
+    /** A level was just passed: the bar shows the new level right away, with the gain that caused it. */
+    @EventHandler
+    public void onJobLevelUp(JobLevelUpEvent event) {
+        Player player = event.player();
+        String key = player.getUniqueId() + ":" + event.job();
+        if (!activeBars.containsKey(key)) {
+            return;
         }
-        pendingEvent = null;
-        double bonusPercent = (multiplier - 1.0) * 100.0;
-        lastGains.put(key, event.getAmount());
+        double bonus = (Jobs.get().xpMultiplier(player) - 1.0) * 100.0;
+        show(player, key, event.job(), event.level(), event.xp(), event.required(), lastGains.get(key), bonus, false);
+    }
 
-        Component title = buildTitle(plainJobName, level, currentXpFormatted, requiredXpFormatted,
-                event.getAmount(), bonusPercent);
+    private void show(Player player, String key, String job, int level, double xp, double required, Double gained,
+                      double bonusPercent, boolean restartTimer) {
+        float progress = required > 0 ? (float) Math.max(0.0, Math.min(1.0, xp / required)) : 1f;
+        // current/required rounded (no need for precision on the overall progress), the gain stays exact
+        String plainJobName = COLOR_CODES.matcher(Jobs.get().displayName(job)).replaceAll("");
+        Component title = buildTitle(plainJobName, level, String.valueOf(Math.round(xp)), String.valueOf(Math.round(required)),
+                gained, bonusPercent);
         if (title == null) {
             return;
         }
-
         BossBar bar = activeBars.get(key);
         if (bar == null) {
             bar = BossBar.bossBar(title, progress, color, overlay);
@@ -165,73 +139,20 @@ public final class JobXpBossBarListener implements Listener {
             bar.name(title);
             bar.progress(progress);
         }
-
+        if (!restartTimer) {
+            return;
+        }
         BukkitTask previousTask = hideTasks.remove(key);
         if (previousTask != null) {
             previousTask.cancel();
         }
-
         BossBar barToHide = bar;
-        BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+        hideTasks.put(key, Bukkit.getScheduler().runTaskLater(plugin, () -> {
             player.hideBossBar(barToHide);
             activeBars.remove(key);
             lastGains.remove(key);
             hideTasks.remove(key);
-        }, hideAfterTicks);
-        hideTasks.put(key, task);
-    }
-
-    // EcoJobsAPI.giveExactJobExperience() remet l'XP à 0 et fire cet event AVANT de reporter le
-    // reliquat (giveExactJobExperience(remainder), appelé juste après callEvent() dans la même
-    // pile d'appel synchrone) — lire l'état ici donnerait donc toujours "0/required", pas le
-    // vrai reliquat. On attend le tick suivant : la récursion (potentiellement plusieurs paliers
-    // d'affilée sur un très gros gain) est de toute façon terminée bien avant, dans le même tick
-    // serveur que l'event d'origine. Sans ce correctif, la bar affichée au moment du palier
-    // restait figée à 100% jusqu'au prochain gain naturel (parfois long à revenir sur un métier
-    // peu actif) au lieu de refléter tout de suite le vrai niveau/pourcentage.
-    @EventHandler
-    public void onJobLevelUp(PlayerJobLevelUpEvent event) {
-        Player player = event.getPlayer();
-        Job job = event.getJob();
-        String key = player.getUniqueId() + ":" + job.getId();
-        if (!activeBars.containsKey(key)) {
-            return;
-        }
-        Bukkit.getScheduler().runTask(plugin, () -> refreshAfterLevelUp(player, job, key));
-    }
-
-    private void refreshAfterLevelUp(Player player, Job job, String key) {
-        if (!player.isOnline()) {
-            return;
-        }
-        BossBar bar = activeBars.get(key);
-        if (bar == null) {
-            return;
-        }
-
-        int level = EcoJobsAPI.getJobLevel(player, job);
-        double currentXp = EcoJobsAPI.getJobXP(player, job);
-        double xpForNextLevel = job.getExpForLevel(level + 1);
-        float progress = xpForNextLevel > 0
-                ? (float) Math.max(0.0, Math.min(1.0, currentXp / xpForNextLevel))
-                : 1f;
-        String currentXpFormatted = String.valueOf(Math.round(currentXp));
-        String requiredXpFormatted = String.valueOf(Math.round(xpForNextLevel));
-        String plainJobName = COLOR_CODES.matcher(job.getName()).replaceAll("");
-
-        // Le gain qui a provoqué le palier n'est pas porté par PlayerJobLevelUpEvent : on réaffiche
-        // celui mémorisé au dernier PlayerJobExpGainEvent, sinon le "(+x)" disparaîtrait
-        // exactement au moment du palier. Le bonus est relu, il n'a pas pu changer entre-temps.
-        Double gained = lastGains.get(key);
-        double multiplier = JobXPAccumulatorKt.getJobExperienceMultiplier(player);
-        Component title = buildTitle(plainJobName, level, currentXpFormatted, requiredXpFormatted,
-                gained, (multiplier - 1.0) * 100.0);
-        if (title == null) {
-            return;
-        }
-
-        bar.name(title);
-        bar.progress(progress);
+        }, hideAfterTicks));
     }
 
     // Format MiniMessage fourni par l'utilisateur. Le nom du job est injecté via un placeholder

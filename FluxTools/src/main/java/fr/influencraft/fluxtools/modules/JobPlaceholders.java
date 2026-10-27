@@ -1,22 +1,18 @@
 package fr.influencraft.fluxtools.modules;
 
-import com.willfp.ecojobs.api.EcoJobsAPI;
-import com.willfp.ecojobs.jobs.Job;
-import com.willfp.ecojobs.jobs.Jobs;
+import fr.influencraft.flux.api.jobs.Jobs;
 import org.bukkit.entity.Player;
 
 import java.util.List;
 
 /**
- * {@code %fluxtools_job_*%} placeholders, kept apart from {@link ToolsExpansion} so that EcoJobs classes are only
- * loaded when EcoJobs is installed.
+ * {@code %fluxtools_job_*%} placeholders, read through the jobs service of Flux (EcoJobs today).
  * <ul>
  *   <li>{@code job_active_<job>}: "true"/"false", the player has joined this job</li>
- *   <li>{@code job_can_join_<job>}: "true"/"false", not active yet and a job slot is free
- *   ({@code ecojobs.limit.<n>} permission)</li>
- *   <li>{@code job_join_price_<job>} / {@code job_leave_price_<job>}: price as configured in EcoJobs</li>
- *   <li>{@code job_rewards_<job>_<n>}: n-th line of the job's rewards-description at the player's level</li>
- *   <li>{@code job_xp_<job>_<n>}: n-th line of the job's xp-gain-methods summary</li>
+ *   <li>{@code job_can_join_<job>}: "true"/"false", not active yet and a job slot is free</li>
+ *   <li>{@code job_join_price_<job>} / {@code job_leave_price_<job>}: price as configured in the job plugin</li>
+ *   <li>{@code job_rewards_<job>_<n>}: n-th line of the job's rewards at the player's level</li>
+ *   <li>{@code job_xp_<job>_<n>}: n-th line of the job's XP actions summary</li>
  * </ul>
  */
 final class JobPlaceholders {
@@ -25,28 +21,26 @@ final class JobPlaceholders {
     }
 
     static String request(Player player, String params) {
+        if (!Jobs.available()) return null;
+        Jobs.Provider jobs = Jobs.get();
         if (params.startsWith("job_active_")) {
-            Job job = Jobs.getByID(params.substring("job_active_".length()));
-            return String.valueOf(player != null && job != null && EcoJobsAPI.hasJobActive(player, job));
+            return String.valueOf(player != null && jobs.active(player, params.substring("job_active_".length())));
         }
         if (params.startsWith("job_can_join_")) {
-            Job job = Jobs.getByID(params.substring("job_can_join_".length()));
-            return String.valueOf(player != null && job != null && EcoJobsAPI.canJoinJob(player, job));
+            return String.valueOf(player != null && jobs.canJoin(player, params.substring("job_can_join_".length())));
         }
         if (params.startsWith("job_join_price_")) {
-            Job job = Jobs.getByID(params.substring("job_join_price_".length()));
-            return player == null || job == null ? "" : job.getJoinPrice().getDisplay(player);
+            return player == null ? "" : jobs.joinPrice(player, params.substring("job_join_price_".length()));
         }
         if (params.startsWith("job_leave_price_")) {
-            Job job = Jobs.getByID(params.substring("job_leave_price_".length()));
-            return player == null || job == null ? "" : job.getLeavePrice().getDisplay(player);
+            return player == null ? "" : jobs.leavePrice(player, params.substring("job_leave_price_".length()));
         }
         if (params.startsWith("job_rewards_")) {
             if (player == null) return "";
-            return line(params.substring("job_rewards_".length()), jobId -> JobRewardsFormatter.format(player, jobId));
+            return line(params.substring("job_rewards_".length()), job -> jobs.rewards(player, job));
         }
         if (params.startsWith("job_xp_")) {
-            return line(params.substring("job_xp_".length()), JobXpFormatter::format);
+            return player == null ? "" : line(params.substring("job_xp_".length()), job -> JobXpFormatter.format(player, job));
         }
         return null;
     }

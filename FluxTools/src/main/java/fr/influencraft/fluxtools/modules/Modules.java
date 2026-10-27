@@ -52,12 +52,15 @@ public final class Modules {
         if (on("advancement-redirect") && requires("advancement-redirect", "ProtocolLib")) {
             new AdvancementRedirectListener(plugin, section("advancement-redirect").getString("command", "menu")).register();
         }
-        if (on("jobs") && requires("jobs", "EcoJobs")) {
-            JobChoiceCommand jobs = new JobChoiceCommand();
+        if (on("jobs") && jobsAvailable("jobs")) {
+            JobChoiceCommand jobs = new JobChoiceCommand(plugin);
             command("job", null, jobs, jobs, "metier");
-            pm.registerEvents(new NativeJobsMenuRedirectListener(plugin), plugin);
+            // data of the Careers menu (%fluxjob_*%, [fluxjob])
+            JobMenuInfo.register(plugin);
+            // the job plugin's own job list opens ours instead
+            fr.influencraft.flux.api.jobs.Jobs.get().replaceNativeMenus(plugin, p -> org.bukkit.Bukkit.dispatchCommand(p, "metiers"));
         }
-        if (on("job-xp-bossbar") && requires("job-xp-bossbar", "EcoJobs")) {
+        if (on("job-xp-bossbar") && jobsAvailable("job-xp-bossbar")) {
             ConfigurationSection c = section("job-xp-bossbar");
             JobXpBossBarListener bar = new JobXpBossBarListener(plugin, c.getLong("hide-after-seconds", 4),
                     c.getString("color", "GREEN"), c.getString("overlay", "NOTCHED_20"));
@@ -79,7 +82,14 @@ public final class Modules {
             }, plugin);
         }
         fr.influencraft.flux.api.FluxApi.registerPlaceholders(plugin, "fluxtools",
-                new ToolsExpansion(pm.isPluginEnabled("EcoJobs"))::request);
+                new ToolsExpansion(fr.influencraft.flux.api.jobs.Jobs.available())::request);
+    }
+
+    /** A job plugin is served by Flux (providers.jobs); otherwise the module turns itself off. */
+    private boolean jobsAvailable(String module) {
+        if (fr.influencraft.flux.api.jobs.Jobs.available()) return true;
+        plugin.getLogger().info("Module " + module + " off: no job plugin in Flux (providers.jobs).");
+        return false;
     }
 
     private void enableMoneyGainActionBar() {

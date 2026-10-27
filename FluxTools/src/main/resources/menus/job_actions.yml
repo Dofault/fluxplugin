@@ -1,0 +1,37 @@
+# FluxTools: what pays XP and money in a job (/job blocs <job>), read from the job plugin on every opening.
+title: "&8%jobactions_name%"
+rows: 6
+player-inventory: hidden
+vanilla-background: true
+
+lists:
+  job_actions_header:
+    slots: 4
+    item:
+      material: entry
+  job_actions:
+    slots: 10-16,19-25,28-34,37-43
+    item:
+      material: entry
+
+items:
+  previous:
+    slot: 46
+    material: ARROW
+    name: "&fPrevious page"
+    view-requirements: ["placeholder: %flux_list_job_actions_has_prev% == true"]
+    actions:
+      left: ["[list] job_actions prev"]
+  back:
+    slot: 49
+    material: ARROW
+    name: "&fBack"
+    actions:
+      left: ["[player] metiers"]
+  next:
+    slot: 52
+    material: ARROW
+    name: "&fNext page (%flux_list_job_actions_page%/%flux_list_job_actions_pages%)"
+    view-requirements: ["placeholder: %flux_list_job_actions_has_next% == true"]
+    actions:
+      left: ["[list] job_actions next"]

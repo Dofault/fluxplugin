@@ -76,7 +76,7 @@ public final class CareerCatchUp implements Listener, CommandExecutor {
 
     private boolean enabled() {
         return plugin.getConfig().getBoolean(SECTION + ".enabled", false)
-                && Bukkit.getPluginManager().isPluginEnabled("EcoJobs");
+                && fr.influencraft.flux.api.jobs.Jobs.available(); // job plugin served by Flux (providers.jobs)
     }
 
     /** Hands boosters to Flux's rewards (one reward per stack of 64), claimed with /rewards or /boosters. */
@@ -169,7 +169,7 @@ public final class CareerCatchUp implements Listener, CommandExecutor {
         for (String jobId : jobs.getKeys(false)) {
             String boosterId = jobs.getString(jobId);
             CardRegistry.Booster booster = boosterId == null ? null : plugin.registry().booster(boosterId);
-            int level = EcoJobsLevels.level(player, jobId);
+            int level = (fr.influencraft.flux.api.jobs.Jobs.get().exists(jobId) ? fr.influencraft.flux.api.jobs.Jobs.get().level(player, jobId) : -1);
             if (booster == null || level < 0) {
                 plugin.getLogger().warning("career-catch-up: job '" + jobId + "' or booster '" + boosterId
                         + "' not found, skipped.");
@@ -181,7 +181,7 @@ public final class CareerCatchUp implements Listener, CommandExecutor {
             }
             pending.merge(booster.id(), amount, Integer::sum);
             summary.add(plugin.format("career-catch-up-line", "%booster%", booster.name(),
-                    "%amount%", String.valueOf(amount), "%job%", EcoJobsLevels.name(jobId),
+                    "%amount%", String.valueOf(amount), "%job%", fr.influencraft.flux.api.jobs.Jobs.get().displayName(jobId),
                     "%level%", String.valueOf(level)));
             total += amount;
         }

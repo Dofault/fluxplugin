@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Génère le menu Carrières de Flux (Labs) : menus/metiers.yml et menus/_pages/metiers.yml.
 
-    python3 gen_metiers.py <dossier menus/ de Flux> <dossier EcoJobs/jobs> <FluxPets/content/cards.yml>
+    python3 gen_metiers.py <plugins/FluxTools/menus> <dossier EcoJobs/jobs> <FluxPets/content/cards.yml>
 
 Fond influmenu:menu_metier (176 x 221), tout dans un seul menu, sans l'en-tête du menu principal :
   rangée 0-8                 : retour (0), rejoindre / quitter (7, quitter = double clic), nom du métier
@@ -27,7 +27,8 @@ import sys
 
 import yaml
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# gen_pages (page helpers of the main menu) stays with Flux
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "Flux", "assets"))
 from gen_pages import item, page, q, brut, CLIC_G, OR, VIOLET, ROUGE  # noqa: E402
 
 FOND = ":offset_-8::menu_metier:"
@@ -235,7 +236,7 @@ def main():
     ] + grille
     corps = "\n\n".join("\n".join(l[4:] for l in b.split("\n")) for b in base)
     with open(os.path.join(menus, "metiers.yml"), "w", encoding="utf-8") as f:
-        f.write(f"""# Généré par plugins/fluxplugin/Flux/assets/gen_metiers.py : ne pas modifier à la main.
+        f.write(f"""# Généré par plugins/fluxplugin/FluxTools/assets/gen_metiers.py : ne pas modifier à la main.
 # Menu Carrières (EcoJobs), remplace /metiers, /carrieres (DeluxeMenus) et /job, /jobs (EcoJobs) sur Labs.
 
 title: "{FOND}"
@@ -280,7 +281,7 @@ items:
         print(f"{jid} : {count} actions, {total} page(s)")
     os.makedirs(os.path.join(menus, "_pages"), exist_ok=True)
     with open(os.path.join(menus, "_pages", "metiers.yml"), "w", encoding="utf-8") as f:
-        f.write("# Généré par plugins/fluxplugin/Flux/assets/gen_metiers.py : ne pas modifier à la main.\n"
+        f.write("# Généré par plugins/fluxplugin/FluxTools/assets/gen_metiers.py : ne pas modifier à la main.\n"
                 "# Pages du menu Carrières : une par métier et par page d'actions rémunérées.\n\npages:\n\n"
                 + "\n".join(pages) + "\n")
     print(len(pages), "pages")

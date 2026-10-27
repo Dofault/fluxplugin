@@ -88,14 +88,6 @@ public final class Actions {
                 if (url.isBlank()) plugin.getLogger().warning("[link] lien vide pour " + player.getName());
                 else fr.influencraft.flux.api.dialog.Dialogs.link(player, fr.influencraft.flux.api.util.Format.word("link-title"), url);
             }
-            case "fluxjob" -> {
-                // [fluxjob] <métier> prev|next|reset : fenêtre de niveaux du menu Carrières.
-                String[] parts = Text.placeholders(player, arg).trim().split("\\s+");
-                if (parts.length == 2 && plugin.jobInfo() != null) {
-                    plugin.jobInfo().shift(player, parts[0], parts[1]);
-                    if (session != null) plugin.menus().refresh(player, session);
-                }
-            }
             case "page-swap" -> {
                 if (session == null) return;
                 Page target = session.menu().page(Text.placeholders(player, arg).trim().toLowerCase(Locale.ROOT));

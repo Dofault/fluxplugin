@@ -1,9 +1,6 @@
 package fr.influencraft.fluxtools.modules;
 
-import com.willfp.eco.core.price.ConfiguredPrice;
-import com.willfp.ecojobs.api.EcoJobsAPI;
-import com.willfp.ecojobs.jobs.Job;
-import com.willfp.ecojobs.jobs.Jobs;
+import fr.influencraft.flux.api.jobs.Jobs;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -15,22 +12,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Backend du menu DeluxeMenus /métiers (gui_menus/metiers/) — rejoindre()/quitter() sont les
- * seules actions qui mutent un état (appelées depuis les boutons "Rejoindre"/"Confirmer" des
- * menus détail/confirmation, `[player] metier rejoindre <job>` / `[player] metier quitter
- * <job>`), progression()/blocs() ne font qu'ouvrir un écran.
- * <p>
- * Ne JAMAIS appeler Price.pay() ici : EcoJobsAPI.joinJob/leaveJob déclenchent
- * PlayerJobJoinEvent/PlayerJobLeaveEvent, et le listener natif PriceHandler d'EcoJobs facture
- * le prix du job (job.getJoinPrice()/getLeavePrice(), configuré dans EcoJobs/jobs/<job>.yml)
- * puis annule l'événement si le joueur ne peut pas payer (confirmé par décompilation
- * d'EcoJobs 2026.38). Un paiement ici en plus faisait payer deux fois, ou débitait sans
- * retirer le métier. Cette classe se limite donc à un pré-contrôle (messages clairs) et
- * vérifie que le changement a bien eu lieu avant de l'annoncer.
+ * Backend of the jobs menu: join/leave ({@code /metier rejoindre|quitter <job>}) through the jobs service of Flux,
+ * which lets the job plugin charge its own price (never charge it here too); progression and blocks only open a
+ * screen.
  */
 public final class JobChoiceCommand implements CommandExecutor, TabCompleter {
 
-    private final JobBlockBreakdownMenu blockBreakdownMenu = new JobBlockBreakdownMenu();
+    private final JobBlockBreakdownMenu blockBreakdownMenu;
+
+    public JobChoiceCommand(org.bukkit.plugin.Plugin plugin) {
+        this.blockBreakdownMenu = new JobBlockBreakdownMenu(plugin);
+    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -87,70 +79,32 @@ public final class JobChoiceCommand implements CommandExecutor, TabCompleter {
     }
 
     private void rejoindre(Player player, String jobId) {
-        Job job = Jobs.getByID(jobId);
-        if (job == null) {
-            send(player, "&cMétier inconnu : &7" + jobId);
-            return;
+        Jobs.Provider jobs = Jobs.get();
+        String name = jobs.displayName(jobId);
+        switch (jobs.join(player, jobId)) {
+            case DONE -> send(player, "&fTu as rejoint &7" + name + "&f !");
+            case ALREADY -> send(player, "&7Tu exerces déjà &f" + name + "&7.");
+            case NOT_ALLOWED -> send(player, "&cTu as atteint ta limite de métiers actifs pour ton rang.");
+            case NO_MONEY -> send(player, "&cTu n'as pas assez de BitBlock pour rejoindre &7" + name + "&c.");
+            case UNKNOWN_JOB -> send(player, "&cMétier inconnu : &7" + jobId);
+            case FAILED -> send(player, "&cImpossible de rejoindre &7" + name + "&c, aucun BitBlock n'a été prélevé.");
         }
-
-        if (!EcoJobsAPI.canJoinJob(player, job)) {
-            if (EcoJobsAPI.hasJobActive(player, job)) {
-                send(player, "&7Tu exerces déjà &f" + job.getName() + "&7.");
-            } else {
-                send(player, "&cTu as atteint ta limite de métiers actifs pour ton rang.");
-            }
-            return;
-        }
-
-        ConfiguredPrice price = job.getJoinPrice();
-        if (!price.canAfford(player, 1.0)) {
-            send(player, "&cTu n'as pas assez de BitBlock pour rejoindre &7" + job.getName() + "&c.");
-            return;
-        }
-
-        // La facturation est faite par le listener natif d'EcoJobs (cf. javadoc de la classe)
-        EcoJobsAPI.joinJob(player, job);
-        if (!EcoJobsAPI.hasJobActive(player, job)) {
-            send(player, "&cImpossible de rejoindre &7" + job.getName() + "&c, aucun BitBlock n'a été prélevé.");
-            return;
-        }
-        send(player, "&fTu as rejoint &7" + job.getName() + "&f !");
     }
 
     private void quitter(Player player, String jobId) {
-        Job job = Jobs.getByID(jobId);
-        if (job == null) {
-            send(player, "&cMétier inconnu : &7" + jobId);
-            return;
+        Jobs.Provider jobs = Jobs.get();
+        String name = jobs.displayName(jobId);
+        switch (jobs.leave(player, jobId)) {
+            case DONE -> send(player, "&7Tu as quitté &f" + name + "&7.");
+            case ALREADY -> send(player, "&7Tu n'exerces pas &f" + name + "&7.");
+            case NO_MONEY -> send(player, "&cTu n'as pas assez de BitBlock pour quitter &7" + name + "&c.");
+            case UNKNOWN_JOB -> send(player, "&cMétier inconnu : &7" + jobId);
+            default -> send(player, "&cImpossible de quitter &7" + name + "&c, aucun BitBlock n'a été prélevé.");
         }
-
-        if (!EcoJobsAPI.hasJobActive(player, job)) {
-            send(player, "&7Tu n'exerces pas &f" + job.getName() + "&7.");
-            return;
-        }
-
-        ConfiguredPrice price = job.getLeavePrice();
-        if (!price.canAfford(player, 1.0)) {
-            send(player, "&cTu n'as pas assez de BitBlock pour quitter &7" + job.getName() + "&c.");
-            return;
-        }
-
-        // La facturation est faite par le listener natif d'EcoJobs (cf. javadoc de la classe)
-        EcoJobsAPI.leaveJob(player, job);
-        if (EcoJobsAPI.hasJobActive(player, job)) {
-            send(player, "&cImpossible de quitter &7" + job.getName() + "&c, aucun BitBlock n'a été prélevé.");
-            return;
-        }
-        send(player, "&7Tu as quitté &f" + job.getName() + "&7.");
     }
 
     private void progression(Player player, String jobId) {
-        Job job = Jobs.getByID(jobId);
-        if (job == null) {
-            send(player, "&cMétier inconnu : &7" + jobId);
-            return;
-        }
-        job.getLevelGUI().open(player);
+        if (!Jobs.get().openLevels(player, jobId)) send(player, "&cMétier inconnu : &7" + jobId);
     }
 
     private void send(Player player, String message) {
@@ -165,8 +119,7 @@ public final class JobChoiceCommand implements CommandExecutor, TabCompleter {
                     .collect(Collectors.toList());
         }
         if (args.length == 2) {
-            return Jobs.values().stream()
-                    .map(Job::getId)
+            return Jobs.get().ids().stream()
                     .filter(id -> id.startsWith(args[1].toLowerCase()))
                     .collect(Collectors.toList());
         }

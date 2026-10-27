@@ -51,6 +51,21 @@
             <scope>system</scope>
             <systemPath>${project.basedir}/libs/VaultUnlocked-2.20.3.jar</systemPath>
         </dependency>
+        <!-- adapters (adapters/<plugin>): the only code of the suite compiled against these plugins -->
+        <dependency>
+            <groupId>com.willfp</groupId>
+            <artifactId>eco</artifactId>
+            <version>2026.41</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/eco-2026.41-modrinth.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>com.willfp</groupId>
+            <artifactId>EcoJobs</artifactId>
+            <version>2026.38</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/EcoJobs-2026.38-spigot.jar</systemPath>
+        </dependency>
         <!-- shared database pool, downloaded by Paper at runtime (plugin.yml libraries) -->
         <dependency>
             <groupId>com.zaxxer</groupId>

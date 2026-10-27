@@ -20,13 +20,21 @@ public final class Providers {
     public static void start(JavaPlugin flux, ConfigurationSection config) {
         String items = choice(config, "items");
         if ((items.equals("auto") || items.equals("itemsadder")) && enabled("ItemsAdder")) {
-            ItemsAdderItems adapter = new ItemsAdderItems();
+            var adapter = new fr.influencraft.flux.adapters.itemsadder.ItemsAdderItems();
             CustomItems.use(adapter);
             Bukkit.getPluginManager().registerEvents(adapter, flux);
         } else {
             CustomItems.use(null);
         }
-        flux.getLogger().info("Providers: items = " + CustomItems.providerName());
+        String jobs = choice(config, "jobs");
+        if ((jobs.equals("auto") || jobs.equals("ecojobs")) && enabled("EcoJobs")) {
+            fr.influencraft.flux.adapters.ecojobs.EcoJobsJobs adapter = new fr.influencraft.flux.adapters.ecojobs.EcoJobsJobs(flux);
+            fr.influencraft.flux.api.jobs.Jobs.use(adapter);
+            Bukkit.getPluginManager().registerEvents(adapter, flux);
+        } else {
+            fr.influencraft.flux.api.jobs.Jobs.use(null);
+        }
+        flux.getLogger().info("Providers: items = " + CustomItems.providerName() + ", jobs = " + fr.influencraft.flux.api.jobs.Jobs.providerName());
     }
 
     static String choice(ConfigurationSection config, String key) {

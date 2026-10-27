@@ -1,17 +1,13 @@
 package fr.influencraft.fluxtools.modules;
 
-import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Résume xp-gain-methods (EcoJobs/jobs/<job>.yml) en texte lisible pour le bouton "XP" du menu
- * détail /métiers — contrairement à rewards-description (JobRewardsFormatter), ces montants sont
- * des valeurs brutes déjà lisibles en config (pas de formule %level% à évaluer), donc lecture
- * directe sans dépendance à NumberUtils. Plafonné à 3 entrées + une ligne de récapitulatif si un
- * job en définit plus (ex: rochiste en a 8, un par palier de rareté de bloc).
+ * Summary of a job's XP actions (Flux jobs service) for the "XP" button of the jobs menu: one line per kind of
+ * action, at most 3 plus a count of the others.
  */
 final class JobXpFormatter {
 
@@ -42,23 +38,20 @@ final class JobXpFormatter {
             Map.entry("catch_entity", "Capturer une entité")
     );
 
-    static List<String> format(String jobId) {
-        YamlConfiguration config = EcoJobsConfig.readJob(jobId);
-        List<Map<?, ?>> methods = config.getMapList("xp-gain-methods");
-
+    static List<String> format(org.bukkit.entity.Player player, String jobId) {
+        List<fr.influencraft.flux.api.jobs.JobAction> actions = fr.influencraft.flux.api.jobs.Jobs.get().actions(player, jobId);
+        // one line per kind of action (the block grid lists one action per block)
+        Map<String, Double> byTrigger = new java.util.LinkedHashMap<>();
+        for (var action : actions) byTrigger.putIfAbsent(action.label() != null ? action.label() : action.trigger(), action.xp());
         List<String> lines = new ArrayList<>();
-        int cap = 3;
-        for (int i = 0; i < methods.size() && i < cap; i++) {
-            Map<?, ?> method = methods.get(i);
-            Object trigger = method.get("trigger");
-            Object multiplier = method.get("multiplier");
-            if (trigger == null || multiplier == null) continue;
-
-            String label = TRIGGER_LABELS.getOrDefault(trigger.toString(), trigger.toString());
-            lines.add("&8» &7" + label + " &8► &#2ECF7B" + multiplier + " &7XP");
+        int cap = 3, i = 0;
+        for (Map.Entry<String, Double> e : byTrigger.entrySet()) {
+            if (i++ >= cap) break;
+            String label = TRIGGER_LABELS.getOrDefault(e.getKey(), e.getKey());
+            lines.add("&8» &7" + label + " &8► &#2ECF7B" + fr.influencraft.flux.api.util.Format.decimal(e.getValue()) + " &7XP");
         }
-        if (methods.size() > cap) {
-            lines.add("&8» &7... et &f" + (methods.size() - cap) + " &7autre(s) action(s)");
+        if (byTrigger.size() > cap) {
+            lines.add("&8» &7... et &f" + (byTrigger.size() - cap) + " &7autre(s) action(s)");
         }
         return lines;
     }

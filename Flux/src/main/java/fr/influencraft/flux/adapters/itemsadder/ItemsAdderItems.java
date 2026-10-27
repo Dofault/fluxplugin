@@ -1,4 +1,4 @@
-package fr.influencraft.flux.providers;
+package fr.influencraft.flux.adapters.itemsadder;
 
 import dev.lone.itemsadder.api.CustomBlock;
 import dev.lone.itemsadder.api.CustomStack;
