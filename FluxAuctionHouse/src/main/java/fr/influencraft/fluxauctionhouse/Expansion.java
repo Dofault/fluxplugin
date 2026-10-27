@@ -102,7 +102,7 @@ final class Expansion {
         if (s.startsWith("tri_")) return choix(Catalogue.TRIS, Integer.parseInt(s.substring(4)), e.tri);
         if (s.startsWith("filtre_")) return choix(new String[]{"Tout", "Mes ventes", "Mes achats"}, Integer.parseInt(s.substring(7)), e.filtreHisto);
         return switch (s) {
-            case "solde" -> argent(plugin.economie().getBalance(p));
+            case "solde" -> argent(plugin.economie().balance(p));
             case "taxe" -> taux(Hdv.taxe() * 100);
             case "emplacements" -> plugin.hdv().ventesEnCours(p) + "/" + plugin.hdv().emplacements(p);
             case "a_recuperer" -> String.valueOf(plugin.hdv().aRecuperer(p));
@@ -159,7 +159,7 @@ final class Expansion {
             case "hausse": return argent(v.enchereOffre(p, n) - n.getBid(p));
             case "peut": {
                 double besoin = n.isBIDAuction() ? v.enchereOffre(p, n) - n.getBid(p) : Hdv.prixAchat(n, v.quantiteOffre(p, n));
-                return oui(plugin.economie().getBalance(p) >= besoin);
+                return oui(plugin.economie().balance(p) >= besoin);
             }
             case "autres_total": return String.valueOf(v.autres(p).size());
             default: break;

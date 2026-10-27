@@ -220,7 +220,7 @@ final class Progression implements Listener {
 
     private void payer(Player p, Etat e, double montant) {
         if (montant <= 0) return;
-        plugin.economie().depositPlayer(p, montant);
+        plugin.economie().give(p, montant);
         e.gagne += montant;
         p.sendMessage(Fmt.texte(plugin.texte("gain").replace("%montant%", Fmt.nombre(montant))));
     }

@@ -4,7 +4,6 @@ import fr.influencraft.fluxshop.managers.LangManager;
 import fr.influencraft.fluxshop.managers.PriceManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -22,9 +21,6 @@ import java.util.Map;
  * ({@code shop-menu.*}, matériau + {@code custom_model_data}), prix formatés, nom d'objet.
  */
 public final class MenuItems {
-
-    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.builder()
-            .character('§').hexColors().useUnusualXRepeatedCharacterHexFormat().build();
 
     private final JavaPlugin plugin;
     private final LangManager lang;
@@ -120,8 +116,8 @@ public final class MenuItems {
             player.sendMessage(message);
             return;
         }
-        player.sendMessage(LEGACY.deserialize(message.substring(0, index))
+        player.sendMessage(fr.influencraft.flux.api.text.Texts.colors(message.substring(0, index))
                 .append(name(item))
-                .append(LEGACY.deserialize(message.substring(index + "%item%".length()))));
+                .append(fr.influencraft.flux.api.text.Texts.colors(message.substring(index + "%item%".length()))));
     }
 }

@@ -2,7 +2,6 @@ package fr.influencraft.fluxauctionhouse;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -29,9 +28,6 @@ final class Fmt {
     static final String MAJ_GAUCHE = "&r&7Maj +  &f";
     /** Source des messages de l'hôtel des ventes (petites capitales, convention notifications). */
     static final String SOURCE = "&7[ʜᴅᴠ]";
-
-    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.builder()
-            .character('&').hexCharacter('#').hexColors().build();
 
     private Fmt() {
     }

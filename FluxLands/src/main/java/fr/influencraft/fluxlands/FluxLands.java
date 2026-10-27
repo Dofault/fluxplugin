@@ -2,14 +2,12 @@ package fr.influencraft.fluxlands;
 
 import me.angeschossen.lands.api.events.LandDeleteEvent;
 import me.angeschossen.lands.api.land.Land;
-import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.text.SimpleDateFormat;
@@ -61,13 +59,14 @@ public final class FluxLands extends JavaPlugin implements Listener {
         interception = new Interception(this);
 
         if (Bukkit.getPluginManager().isPluginEnabled("FluxChestShop")) {
-            RegisteredServiceProvider<Economy> rsp = Bukkit.getServicesManager().getRegistration(Economy.class);
-            if (rsp == null) {
-                getLogger().warning("Aucune économie Vault : droit de place désactivé, échoppes listées quand même.");
+            // the main currency of the suite (Flux, currencies.main)
+            var money = fr.influencraft.flux.api.economy.Economy.main();
+            if (money == null) {
+                getLogger().warning("No currency in Flux: market fee disabled, chest shops still listed.");
             }
-            quickShop = new ModuleQuickShop(this, rsp != null ? rsp.getProvider() : null);
+            quickShop = new ModuleQuickShop(this, money);
             quickShop.chargerStocks();
-            if (rsp != null) Bukkit.getPluginManager().registerEvents(quickShop, this);
+            if (money != null) Bukkit.getPluginManager().registerEvents(quickShop, this);
             getLogger().info("FluxChestShop trouvé : échoppes et droit de place actifs.");
         } else {
             getLogger().info("FluxChestShop absent : pas d'échoppes ni de droit de place.");

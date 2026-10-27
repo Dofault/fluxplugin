@@ -412,7 +412,7 @@ def titre(fond):
 
 def fleche(nom, case, materiau, libelle, cible):
     return {nom: {"material": "itemsadder:influitems:" + materiau, "slots": [case], "name": TITRE + libelle,
-                  "actions": {"left": ["[page-swap] " + cible, "[sound] minecraft:item.book.page_turn 1 1"]}}}
+                  "actions": {"left": ["[page-swap] " + cible, "[sound] @page"]}}}
 
 
 def page_outil(n):

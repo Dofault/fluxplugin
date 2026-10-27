@@ -65,7 +65,7 @@ def menu(nom, fond, items, commandes=None, ouverture=(), doc=""):
     if commandes:
         out.append("commands: [%s]\n" % ", ".join(commandes))
     out += ["player-inventory: hidden\n", "vanilla-background: false\n", "update-interval: 20\n\n", "open-actions:\n"]
-    for a in list(ouverture) + ["[sound] minecraft:item.book.page_turn 1 1"]:
+    for a in list(ouverture) + ["[sound] @page"]:
         out.append("  - %s\n" % q(a))
     out.append("\nitems:\n\n")
     out += [i + "\n" for i in items]
@@ -77,8 +77,9 @@ def iv(cmd):
     return "[player] influlands " + cmd
 
 
-SON = "[sound] minecraft:ui.button.click 0.6 1.4"
-SON_OK = "[sound] minecraft:entity.experience_orb.pickup 0.6 1.2"
+SON = "[sound] @click"
+SON_PAGE = "[sound] @page"
+SON_OK = "[sound] @success"
 
 
 def retour(slot, cible, libelle, droit=None):
@@ -402,12 +403,12 @@ def barre_liste(info_icone, info_nom, info_desc, action=None, gauche=None, filtr
                             {"left": [iv("filtre +"), SON, "[refresh]"], "right": [iv("filtre -"), SON, "[refresh]"]}))
     items += [
         bouton("precedent", 48, "itemsadder:influitems:btn_prev", OR + "Page précédente", lore([], [(GAUCHE, "Précédente")]),
-               {"left": [iv("page -"), SON, "[refresh]"]}, conditions=["placeholder: %influlands_liste_precedent% == oui"]),
+               {"left": [iv("page -"), SON_PAGE, "[refresh]"]}, conditions=["placeholder: %influlands_liste_precedent% == oui"]),
         bouton("recherche", 49, "itemsadder:influitems:search", OR + "Rechercher",
                lore(["Recherche : &f%influlands_liste_recherche%"], [(GAUCHE, "Rechercher"), (DROIT, "Effacer")]),
                {"left": [iv("recherche")], "right": [iv("effacer"), SON, "[refresh]"]}),
         bouton("suivant", 50, "itemsadder:influitems:btn_next", OR + "Page suivante", lore([], [(GAUCHE, "Suivante")]),
-               {"left": [iv("page +"), SON, "[refresh]"]}, conditions=["placeholder: %influlands_liste_suivant% == oui"]),
+               {"left": [iv("page +"), SON_PAGE, "[refresh]"]}, conditions=["placeholder: %influlands_liste_suivant% == oui"]),
     ]
     if tri:
         items.append(bouton("tri", 51, "itemsadder:influitems:stairs", OR + "Trier par",

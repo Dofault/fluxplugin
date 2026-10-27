@@ -9,7 +9,7 @@ import com.ghostchu.quickshop.api.shop.permission.BuiltInShopPermission;
 import me.angeschossen.lands.api.flags.type.Flags;
 import me.angeschossen.lands.api.land.Area;
 import me.angeschossen.lands.api.land.Land;
-import net.milkbowl.vault.economy.Economy;
+import fr.influencraft.flux.api.economy.Currency;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
@@ -40,7 +40,7 @@ import java.util.UUID;
 final class ModuleQuickShop implements Listener {
 
     private final FluxLands plugin;
-    private final Economy eco;
+    private final Currency eco;
     private volatile List<Fiches.Echoppe> index = List.of();
     /**
      * Dernier stock connu de chaque échoppe (place libre pour un rachat), relevé quand sa zone est
@@ -56,7 +56,7 @@ final class ModuleQuickShop implements Listener {
     private final Map<UUID, Map<String, double[]>> resumesProprio = new HashMap<>();
     private final Map<String, double[]> resumesVille = new HashMap<>();
 
-    ModuleQuickShop(FluxLands plugin, Economy eco) {
+    ModuleQuickShop(FluxLands plugin, Currency eco) {
         this.plugin = plugin;
         this.eco = eco;
     }
@@ -242,7 +242,7 @@ final class ModuleQuickShop implements Listener {
         double droit = part(land, e.getTotal());
         if (droit <= 0) return;
         OfflinePlayer owner = Bukkit.getOfflinePlayer(proprio);
-        if (eco.getBalance(owner) < e.getTotal() + droit) {
+        if (eco.balance(owner) < e.getTotal() + droit) {
             e.setCancelled(true, Fmt.ligne(null, "&#FF5C5CLe propriétaire de cette échoppe ne peut pas payer ce rachat et le droit de place de "
                     + land.getName() + "."));
         }
@@ -257,13 +257,13 @@ final class ModuleQuickShop implements Listener {
         double droit = part(land, e.getBalanceWithoutTax());
         if (droit <= 0) return;
         OfflinePlayer owner = Bukkit.getOfflinePlayer(proprio);
-        if (!eco.withdrawPlayer(owner, droit).transactionSuccess()) {
+        if (!eco.take(owner, droit)) {
             plugin.getLogger().warning("Droit de place non prélevé : " + Villes.nomJoueur(proprio) + " n'a pas " + droit
                     + " (échoppe " + shop.getShopId() + ", ville " + land.getName() + ")");
             return;
         }
         if (!land.modifyBalance(droit)) {
-            eco.depositPlayer(owner, droit); // banque refusée : on rend l'argent
+            eco.give(owner, droit); // banque refusée : on rend l'argent
             plugin.getLogger().warning("Banque de " + land.getName() + " refusée, droit de place rendu à " + Villes.nomJoueur(proprio));
             return;
         }

@@ -164,6 +164,9 @@ public final class Actions {
                     .open();
             return;
         }
+        // the same feedback in every list of the suite: page sound for pages, click for filters and sorts
+        String verb = parts[1].trim().split("\\s+")[0].toLowerCase(Locale.ROOT);
+        fr.influencraft.flux.api.util.Sounds.cue(player, verb.equals("next") || verb.equals("prev") || verb.equals("first") ? "page" : "click");
         if (session != null) plugin.menus().refresh(player, session);
     }
 

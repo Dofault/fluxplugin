@@ -2,11 +2,7 @@ package fr.influencraft.fluxtools;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.util.Locale;
 
 /** Mise en forme des nombres, durées et textes (couleurs {@code &} et {@code &#RRGGBB}). */
 final class Fmt {
@@ -16,9 +12,6 @@ final class Fmt {
      * menu : rubis (titres), rose pâle (texte), grenat (filets, secondaire), menthe (réussi), gris rosé (pas atteint).
      */
     static final String TITRE = "&#FF4D6D", TEXTE = "&#FFD6DE", FILET = "&#A33A50", OK = "&#7BE0A1", KO = "&#A89BA0";
-
-    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.builder()
-            .character('&').hexCharacter('#').hexColors().build();
     private static final String[] ROMAIN = {"0", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"};
 
     private static final java.util.Map<String, String> VANILLA = java.util.Map.of(
@@ -30,18 +23,16 @@ final class Fmt {
 
     /** Texte d'objet (nom, description) : sans l'italique que Minecraft ajoute par défaut. */
     static Component objet(String s) {
-        return LEGACY.deserialize(s).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
+        return fr.influencraft.flux.api.text.Texts.colors(s).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
     }
 
     static Component texte(String s) {
-        return LEGACY.deserialize(s);
+        return fr.influencraft.flux.api.text.Texts.colors(s);
     }
 
-    /** Entier groupé par milliers à la française : « 12 345 ». */
+    /** Whole number grouped by thousands in the suite's language (Flux Format). */
     static String nombre(double n) {
-        DecimalFormatSymbols s = new DecimalFormatSymbols(Locale.FRANCE);
-        s.setGroupingSeparator(' ');
-        return new DecimalFormat("#,##0", s).format(Math.floor(n + 1e-9));
+        return fr.influencraft.flux.api.util.Format.number(n);
     }
 
     /** Nom français d'un enchantement pour un texte de menu (vanilla : table, EcoEnchants : son nom affiché). */

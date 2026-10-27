@@ -2,7 +2,6 @@ package fr.influencraft.fluxlands;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -25,8 +24,6 @@ import java.util.regex.Pattern;
 final class Couleurs {
 
     private static final Pattern JETON = Pattern.compile("<t:([a-zA-Z0-9_\\-]+)>");
-    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.builder()
-            .character('&').hexCharacter('#').hexColors().build();
 
     private static Map<String, String> jetons = Map.of();
 
@@ -49,7 +46,7 @@ final class Couleurs {
     private static Component composant(String brut) {
         if (brut == null || brut.isEmpty()) return Component.empty();
         String s = brut;
-        if (s.indexOf('<') < 0) return LEGACY.deserialize(s); // déjà en & (ou texte nu)
+        if (s.indexOf('<') < 0) return fr.influencraft.flux.api.text.Texts.colors(s); // déjà en & (ou texte nu)
         Matcher mt = JETON.matcher(s);
         StringBuilder sb = new StringBuilder();
         while (mt.find()) mt.appendReplacement(sb, Matcher.quoteReplacement(jetons.getOrDefault(mt.group(1), "")));
@@ -64,7 +61,7 @@ final class Couleurs {
 
     /** Texte coloré au format & / &#RRGGBB. */
     static String legacy(String brut) {
-        return LEGACY.serialize(composant(brut));
+        return fr.influencraft.flux.api.text.Texts.ampersand(composant(brut));
     }
 
     /** Texte sans aucune couleur. */

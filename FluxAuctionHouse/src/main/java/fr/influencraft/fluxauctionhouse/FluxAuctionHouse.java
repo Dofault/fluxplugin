@@ -1,12 +1,11 @@
 package fr.influencraft.fluxauctionhouse;
 
-import net.milkbowl.vault.economy.Economy;
+import fr.influencraft.flux.api.economy.Currency;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
@@ -17,7 +16,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  */
 public final class FluxAuctionHouse extends JavaPlugin implements Listener {
 
-    private Economy eco;
+    private Currency eco;
     private Hdv hdv;
     private Echoppes echoppes;
     private Catalogue catalogue;
@@ -34,13 +33,13 @@ public final class FluxAuctionHouse extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        RegisteredServiceProvider<Economy> rsp = Bukkit.getServicesManager().getRegistration(Economy.class);
-        if (rsp == null) {
-            getLogger().severe("Aucune économie Vault : FluxAuctionHouse désactivé.");
+        // the main currency of the suite (Flux, currencies.main)
+        eco = fr.influencraft.flux.api.economy.Economy.main();
+        if (eco == null) {
+            getLogger().severe("No currency available in Flux (Vault missing?): FluxAuctionHouse disabled.");
             Bukkit.getPluginManager().disablePlugin(this);
             return;
         }
-        eco = rsp.getProvider();
         try {
             historique = new Historique(this, getDataFolder(), getLogger());
         } catch (java.sql.SQLException e) {
@@ -113,7 +112,7 @@ public final class FluxAuctionHouse extends JavaPlugin implements Listener {
         vues.oublier(e.getPlayer().getUniqueId());
     }
 
-    Economy economie() {
+    Currency economie() {
         return eco;
     }
 

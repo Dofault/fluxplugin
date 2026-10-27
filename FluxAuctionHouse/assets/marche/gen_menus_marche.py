@@ -17,7 +17,8 @@ OR, VIOLET = "&#FFD94D", "&#B376E5"
 GAUCHE, DROIT = "&r&7%img_left_click% &f", "&r&7%img_right_click% &f"
 BB = "&f%img_bitblock%"
 ENTETE = "# Généré par plugins/fluxplugin/FluxAuctionHouse/assets/marche/gen_menus_marche.py : ne pas modifier à la main.\n"
-SON = "[sound] minecraft:ui.button.click 0.6 1.4"
+SON = "[sound] @click"
+SON_PAGE = "[sound] @page"
 LIGNES = 12  # lignes de description préparées par FluxAuctionHouse (%influmarche_..._l1% à _l12%)
 GRILLE_MARCHE = [r * 9 + c for r in range(2, 6) for c in range(1, 8)]
 GRILLE_LISTE = [r * 9 + c for r in range(2, 5) for c in range(1, 8)]
@@ -84,7 +85,7 @@ def menu(nom, fond, items, ouverture=(), doc=""):
     out = [ENTETE, "# " + doc + "\n\n" if doc else "\n",
            "title: %s\n" % q(":offset_-8::%s:" % fond), "rows: 6\n",
            "player-inventory: hidden\n", "vanilla-background: false\n", "update-interval: 20\n\n", "open-actions:\n"]
-    for a in list(ouverture) + ["[sound] minecraft:item.book.page_turn 1 1"]:
+    for a in list(ouverture) + ["[sound] @page"]:
         out.append("  - %s\n" % q(a))
     out.append("\nitems:\n\n")
     out += [i + "\n" for i in items]
@@ -97,7 +98,8 @@ def im(cmd):
 
 
 def act(*cmds, refresh=True):
-    l = [im(c) for c in cmds] + [SON]
+    # page buttons sound like every page of the suite
+    l = [im(c) for c in cmds] + [SON_PAGE if any(c.startswith("page ") for c in cmds) else SON]
     return l + (["[refresh]"] if refresh else [])
 
 

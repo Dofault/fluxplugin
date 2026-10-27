@@ -95,8 +95,8 @@ def nb_actions(jobs_dir, jid):
 
 def bouton_metier(jid, nom, objet, desc, slot, choisi=False):
     """Bouton d'un métier : actif (brille) ou inactif ; le métier affiché brille aussi."""
-    clics = {"left": ["[sound] minecraft:item.book.page_turn 1 1"] if choisi else
-             [f"[fluxjob] {jid} reset", f"[page-swap] metiers_{jid}_1", "[sound] minecraft:item.book.page_turn 1 1"]}
+    clics = {"left": ["[sound] @page"] if choisi else
+             [f"[fluxjob] {jid} reset", f"[page-swap] metiers_{jid}_1", "[sound] @page"]}
     action = [] if choisi else [CLIC_G + "Voir le métier"]
     qte = f"%fluxjob_{jid}_levelmod%"
     cle = f"{jid}_choisi" if choisi else jid
@@ -155,10 +155,10 @@ def barre_niveaux(jid):
                         lignes + [ROUGE + "Pas encore atteint."], priorite=3, quantite=qte))
     # Flèches : affichées seulement s'il y a des niveaux avant / après la fenêtre.
     its.append(item("niveaux_prev", "itemsadder:influitems:btn_prev", "Niveaux précédents", FLECHE_PREV, [],
-                    clics={"left": [f"[fluxjob] {jid} prev", "[sound] minecraft:item.book.page_turn 1 1"]}, cacher=True,
+                    clics={"left": [f"[fluxjob] {jid} prev", "[sound] @page"]}, cacher=True,
                     conditions=[f"placeholder: %fluxjob_{jid}_lvl_1% > 1"]))
     its.append(item("niveaux_next", "itemsadder:influitems:btn_next", "Niveaux suivants", FLECHE_NEXT, [],
-                    clics={"left": [f"[fluxjob] {jid} next", "[sound] minecraft:item.book.page_turn 1 1"]}, cacher=True,
+                    clics={"left": [f"[fluxjob] {jid} next", "[sound] @page"]}, cacher=True,
                     conditions=[f"placeholder: %fluxjob_{jid}_lvl_7% < %fluxjob_{jid}_max%"]))
     chemin = {"slots": "[" + ", ".join(map(str, NIVEAUX)) + "]", "progress": q(f"%fluxjob_{jid}_window%"),
               "color": "vert", "start": "false", "end": "false"}
@@ -191,7 +191,7 @@ def adhesion(jid, nom):
         item("adhesion_rejoindre", "itemsadder:influitems:accept", "Rejoindre ce métier", ADHESION,
              ["Commence à gagner des BitBlock", "avec ce métier.", f"Coût : &f%fluxtools_job_join_price_{jid}%"],
              [CLIC_G + "Rejoindre"],
-             {"left": [f"[player] metier rejoindre {jid}", "[sound] minecraft:entity.player.levelup 1 1.4", "[refresh]"]},
+             {"left": [f"[player] metier rejoindre {jid}", "[sound] @complete", "[refresh]"]},
              priorite=2, conditions=[f"placeholder: %fluxtools_job_can_join_{jid}% == true"]),
         item("adhesion_complet", "itemsadder:influitems:lock", "Plus de place", ADHESION,
              ["Tu exerces déjà le maximum", "de métiers pour ton rang :", "&f%ecojobs_in_jobs%&7/&f%ecojobs_limit%",
@@ -211,11 +211,11 @@ def actions_page(jid, n, total, count):
                         [f"XP : {VERT}{b}_xp%", f"{b}_money%"]))
     if n > 1:
         its.append(item("precedent", "itemsadder:influitems:btn_prev", "Page précédente", PREV, [],
-                        clics={"left": [f"[page-swap] metiers_{jid}_{n - 1}", "[sound] minecraft:item.book.page_turn 1 1"]},
+                        clics={"left": [f"[page-swap] metiers_{jid}_{n - 1}", "[sound] @page"]},
                         cacher=True))
     if n < total:
         its.append(item("suivant", "itemsadder:influitems:btn_next", "Page suivante", NEXT, [],
-                        clics={"left": [f"[page-swap] metiers_{jid}_{n + 1}", "[sound] minecraft:item.book.page_turn 1 1"]},
+                        clics={"left": [f"[page-swap] metiers_{jid}_{n + 1}", "[sound] @page"]},
                         cacher=True))
     return its
 
@@ -250,7 +250,7 @@ update-interval: 20
 open-actions:
   - "[fluxjob] mineur reset"
   - "[page-swap] metiers_mineur_1"
-  - "[sound] minecraft:item.book.page_turn 1 1"
+  - "[sound] @page"
 
 page-files:
   - _pages/metiers.yml

@@ -28,7 +28,7 @@ vanilla-background: false
 update-interval: 20
 
 open-actions:
-  - "[sound] minecraft:item.book.page_turn 1 1"
+  - "[sound] @page"
 
 items:
 

@@ -1,12 +1,11 @@
 package fr.influencraft.fluxtools;
 
 import fr.influencraft.fluxtools.modules.Modules;
-import net.milkbowl.vault.economy.Economy;
+import fr.influencraft.flux.api.economy.Currency;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.RegisteredServiceProvider;
 
 import java.io.File;
 import java.util.Collections;
@@ -26,7 +25,7 @@ public final class FluxTools extends fr.influencraft.flux.api.FluxPlugin {
     private Map<String, Outil> outils = Map.of();
     private Set<String> materiaux = Set.of();
     private final Set<String> mondesExclus = new HashSet<>();
-    private Economy eco;
+    private Currency eco;
     private Progression progression;
     private final Apparences apparences = new Apparences(this);
     private final Parures parures = new Parures(this);
@@ -41,12 +40,12 @@ public final class FluxTools extends fr.influencraft.flux.api.FluxPlugin {
         // utility modules (ex-InfluBridge) do not need the crate tools, start them first
         new Modules(this).enable();
         Etat.init(this);
-        RegisteredServiceProvider<Economy> rsp = Bukkit.getServicesManager().getRegistration(Economy.class);
-        if (rsp == null) {
-            getLogger().severe("No Vault economy: crate tools disabled, the other modules keep running.");
+        // main currency of the suite, resolved by Flux on every call (CMI hooks into Vault late)
+        eco = fr.influencraft.flux.api.economy.Economy.main();
+        if (eco == null) {
+            getLogger().severe("No currency in Flux: crate tools disabled, the other modules keep running.");
             return;
         }
-        eco = rsp.getProvider();
         charger();
 
         progression = new Progression(this);
@@ -146,7 +145,7 @@ public final class FluxTools extends fr.influencraft.flux.api.FluxPlugin {
         return mondesExclus.contains(w.getName().toLowerCase(Locale.ROOT));
     }
 
-    Economy economie() {
+    Currency economie() {
         return eco;
     }
 

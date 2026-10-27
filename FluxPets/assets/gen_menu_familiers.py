@@ -25,7 +25,8 @@ PORTRAIT = "itemsadder:influportraits:portrait_"
 GRILLE = [r * 9 + c for r in range(2, 5) for c in range(1, 8)]
 EMPLACEMENTS = list(range(2, 7))
 NIVEAUX = [r * 9 + c for r in (2, 3) for c in range(2, 7)]
-SON = "[sound] minecraft:ui.button.click 0.6 1.4"
+SON = "[sound] @click"
+SON_PAGE = "[sound] @page"
 
 
 def q(texte):
@@ -70,7 +71,7 @@ def entete(titre, commentaire):
 
 # ------------------------------------------------------------------ familiers.yml
 L = entete("menu_familiers", "Menu des familiers (FluxPets), ouvert par /pets.")
-L += ["open-actions:", '  - "[player] pets view reset"', '  - "[sound] minecraft:item.book.page_turn 1 1"', "",
+L += ["open-actions:", '  - "[player] pets view reset"', '  - "[sound] @page"', "",
       "items:", ""]
 # Carte d'un familier (Phénix) : rappel que les familiers montent de niveau avec leurs cartes.
 bouton(L, "infos", "itemsadder:influcards:carte_phenix", OR + "Familiers", [8],
@@ -122,12 +123,12 @@ bouton(L, "filtre", "itemsadder:influitems:filter", OR + "Filtrer", [46],
        + [f"{OR}│", f"{OR}├ {GAUCHE} &fFiltre suivant", f"{OR}└ {DROIT} &fFiltre précédent"],
        gauche=["[player] pets filter next", SON, "[refresh]"], droit=["[player] pets filter previous", SON, "[refresh]"])
 bouton(L, "precedent", "itemsadder:influitems:btn_prev", OR + "Page précédente", [48],
-       [f"{OR}└ {GAUCHE} &fPage précédente"], gauche=["[player] pets page previous", SON, "[refresh]"],
+       [f"{OR}└ {GAUCHE} &fPage précédente"], gauche=["[player] pets page previous", SON_PAGE, "[refresh]"],
        conditions=["%influpet_view_page% >= 2"])
 bouton(L, "retour", "itemsadder:influitems:btn_back", OR + "Retour", [0],
        [f"{OR}│ {VIOLET}Revenir au menu.", f"{OR}└ {GAUCHE} &fMenu principal"], gauche=["[menu] main"])
 bouton(L, "suivant", "itemsadder:influitems:btn_next", OR + "Page suivante", [50],
-       [f"{OR}└ {GAUCHE} &fPage suivante"], gauche=["[player] pets page next", SON, "[refresh]"],
+       [f"{OR}└ {GAUCHE} &fPage suivante"], gauche=["[player] pets page next", SON_PAGE, "[refresh]"],
        conditions=["%influpet_view_pages% > %influpet_view_page%"])
 bouton(L, "montrer", "ENDER_EYE", OR + "Montrer mes familiers", [52],
        [f"{OR}│ {VIOLET}Tes familiers sont cachés :", f"{OR}│ {VIOLET}ils ne te suivent plus.",

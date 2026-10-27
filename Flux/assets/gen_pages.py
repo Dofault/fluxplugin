@@ -118,11 +118,11 @@ def navigation(prefixe, n, total, onglet_slot, onglet_mat, onglet_nom, apropos):
                 glow=True, cacher=True)]
     if n > 1:
         its.append(item("precedent", "itemsadder:influitems:btn_prev", "Page précédente", PREV, [],
-                        clics={"left": [f"[page-swap] {prefixe}_{n - 1}", "[sound] minecraft:item.book.page_turn 1 1"]},
+                        clics={"left": [f"[page-swap] {prefixe}_{n - 1}", "[sound] @page"]},
                         cacher=True))
     if n < total:
         its.append(item("suivant", "itemsadder:influitems:btn_next", "Page suivante", NEXT, [],
-                        clics={"left": [f"[page-swap] {prefixe}_{n + 1}", "[sound] minecraft:item.book.page_turn 1 1"]},
+                        clics={"left": [f"[page-swap] {prefixe}_{n + 1}", "[sound] @page"]},
                         cacher=True))
     its.append(icone_page(onglet_mat, onglet_nom, apropos))
     return its
@@ -216,7 +216,7 @@ def parrainage(seuils):
                             conditions=[f"placeholder: {etat} == obtenu"], quantite=f))
             its.append(item(f"filleul{f}_dispo", "itemsadder:influitems:chest_item", f"{f} filleul{pluriel}", slot,
                             recompense, [CLIC_G_OK + "Récupérer"],
-                            {"left": ["[player] parrainage recuperer filleul", "[sound] minecraft:entity.player.levelup 1 1.4", "[refresh]"]},
+                            {"left": ["[player] parrainage recuperer filleul", "[sound] @complete", "[refresh]"]},
                             priorite=2, conditions=[f"placeholder: {etat} == disponible"], quantite=f))
             its.append(item(f"filleul{f}", "itemsadder:influitems:lock",
                             f"%parrainage_filleuls%/{f} filleul{pluriel}", slot,
@@ -232,7 +232,7 @@ def parrainage(seuils):
                                 conditions=[f"placeholder: {etat_p} == obtenu"]))
                 its.append(item(f"palier{f}_dispo", "itemsadder:influitems:chest_item", f"Palier {f} filleuls", bas,
                                 desc, [CLIC_G_OK + "Récupérer"],
-                                {"left": [f"[player] parrainage recuperer palier {f}", "[sound] minecraft:entity.player.levelup 1 1.4", "[refresh]"]},
+                                {"left": [f"[player] parrainage recuperer palier {f}", "[sound] @complete", "[refresh]"]},
                                 priorite=2, conditions=[f"placeholder: {etat_p} == disponible"]))
                 its.append(item(f"palier{f}", "itemsadder:influitems:lock", f"Palier {f} filleuls", bas,
                                 desc + [ROUGE + "Pas encore atteint."], priorite=3))
@@ -333,11 +333,11 @@ def pass_chemin(pid_pass, n, total, paliers_max, cid):
     its = []
     if n > 1:
         its.append(item("precedent", "itemsadder:influitems:btn_prev", "Page précédente", P_PREV, [],
-                        clics={"left": [f"[page-swap] {pid_pass}_{n - 1}_{cid}", "[sound] minecraft:item.book.page_turn 1 1"]},
+                        clics={"left": [f"[page-swap] {pid_pass}_{n - 1}_{cid}", "[sound] @page"]},
                         cacher=True))
     if n < total:
         its.append(item("suivant", "itemsadder:influitems:btn_next", "Page suivante", P_NEXT, [],
-                        clics={"left": [f"[page-swap] {pid_pass}_{n + 1}_{cid}", "[sound] minecraft:item.book.page_turn 1 1"]},
+                        clics={"left": [f"[page-swap] {pid_pass}_{n + 1}_{cid}", "[sound] @page"]},
                         cacher=True))
     branches = []
     for k, slot in enumerate(slots):
@@ -352,7 +352,7 @@ def pass_chemin(pid_pass, n, total, paliers_max, cid):
                         priorite=1, conditions=[f"placeholder: {etat} != NOT_RECEIVED", f"placeholder: {etat} != RECEIVED_PREMIUM"], quantite=t))
         its.append(item(f"libre{t}_dispo", "itemsadder:influitems:chest_unlock", nom, slot, libre,
                         [CLIC_G_OK + "Récupérer"],
-                        {"left": [f"[player] {pid_pass} claim {t} free", "[sound] minecraft:entity.player.levelup 1 1.4", "[refresh]"]},
+                        {"left": [f"[player] {pid_pass} claim {t} free", "[sound] @complete", "[refresh]"]},
                         priorite=2, conditions=[f"placeholder: {T} >= {t}"], quantite=t))
         its.append(item(f"libre{t}", "itemsadder:influitems:lock", nom, slot, libre + [ROUGE + "Pas encore atteint."], priorite=3, quantite=t))
         bas = slot - 9 if slot < 27 else slot + 9   # Prestige vers l'extérieur du créneau
@@ -364,7 +364,7 @@ def pass_chemin(pid_pass, n, total, paliers_max, cid):
                         priorite=2, conditions=["!permission: battlepass.premium"]))
         its.append(item(f"prestige{t}_dispo", "itemsadder:influitems:chest_unlock", nomp, bas, prest,
                         [CLIC_G_OK + "Récupérer"],
-                        {"left": [f"[player] {pid_pass} claim {t} premium", "[sound] minecraft:entity.player.levelup 1 1.4", "[refresh]"]},
+                        {"left": [f"[player] {pid_pass} claim {t} premium", "[sound] @complete", "[refresh]"]},
                         priorite=3, conditions=[f"placeholder: {T} >= {t}"]))
         its.append(item(f"prestige{t}", "itemsadder:influitems:lock", nomp, bas, prest + [ROUGE + "Pas encore atteint."], priorite=4))
     trace = []
@@ -397,7 +397,7 @@ def missions_pass(pid_pass, n, affichee):
                         conditions=[f"placeholder: {debut} !contains Disponible"]))
         its.append(item(f"cat_{cid}", mat, nom, slot, [f"Missions terminées : {fait}"] + temps,
                         [CLIC_G + "Voir les missions"],
-                        {"left": [f"[page-swap] {pid_pass}_{n}_{cid}", "[sound] minecraft:item.book.page_turn 1 1"]},
+                        {"left": [f"[page-swap] {pid_pass}_{n}_{cid}", "[sound] @page"]},
                         priorite=2))
     return its
 
@@ -496,11 +496,11 @@ def recompenses(cycle, nb_temps):
                          ["Tu as joué &f%recompenses_temps_joue%" + VIOLET + ".",
                           "Paliers atteints : &f%recompenses_temps_atteints%&7/&f%recompenses_temps_total%"],
                          [CLIC_G + "Voir les paliers"],
-                         {"left": ["[page-swap] recompenses_temps_1", "[sound] minecraft:item.book.page_turn 1 1"]})]
+                         {"left": ["[page-swap] recompenses_temps_1", "[sound] @page"]})]
         return [item("bascule", "SUNFLOWER", "Connexion quotidienne", A2,
                      ["Jour &f%recompenses_jour%&7/&f%recompenses_cycle%" + VIOLET + " de connexion."],
                      [CLIC_G + "Voir les jours"],
-                     {"left": ["[page-swap] recompenses_jour_1", "[sound] minecraft:item.book.page_turn 1 1"]})]
+                     {"left": ["[page-swap] recompenses_jour_1", "[sound] @page"]})]
 
     # Connexion
     for n in range(1, pj + 1):
@@ -518,7 +518,7 @@ def recompenses(cycle, nb_temps):
                             priorite=1, conditions=[f"placeholder: {e} == recupere"], quantite=d))
             its.append(item(f"jour{d}_dispo", "itemsadder:influitems:chest_item", nom, slot, desc,
                             [CLIC_G_OK + "Récupérer"],
-                            {"left": ["[rewards] claim source:daily", "[sound] minecraft:entity.player.levelup 1 1.4", "[refresh]"]},
+                            {"left": ["[rewards] claim source:daily", "[sound] @complete", "[refresh]"]},
                             priorite=2, conditions=[f"placeholder: {e} == disponible"], quantite=d))
             its.append(item(f"jour{d}_manque", "itemsadder:influitems:deny", nom, slot, desc + ["&#FF5C5CManqué ce jour-là."],
                             priorite=3, conditions=[f"placeholder: {e} == manque"], quantite=d))
@@ -544,7 +544,7 @@ def recompenses(cycle, nb_temps):
                             priorite=1, conditions=[f"placeholder: {e} == recupere"], quantite=i))
             its.append(item(f"temps{i}_dispo", "itemsadder:influitems:chest_item", nom, slot, desc,
                             [CLIC_G_OK + "Récupérer"],
-                            {"left": [f"[rewards] claim key:%recompenses_temps_{i}_cle%", "[sound] minecraft:entity.player.levelup 1 1.4", "[refresh]"]},
+                            {"left": [f"[rewards] claim key:%recompenses_temps_{i}_cle%", "[sound] @complete", "[refresh]"]},
                             priorite=2, conditions=[f"placeholder: {e} == disponible"], quantite=i))
             its.append(item(f"temps{i}", "itemsadder:influitems:lock", nom, slot,
                             desc + [f"Encore &f%recompenses_temps_{i}_restant%" + VIOLET + " de jeu."], priorite=3, quantite=i))

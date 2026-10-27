@@ -154,7 +154,7 @@ public final class JobChoiceCommand implements CommandExecutor, TabCompleter {
     }
 
     private void send(Player player, String message) {
-        player.sendMessage(ChatColor.translateAlternateColorCodes('&', message));
+        fr.influencraft.flux.api.text.Texts.send(player, message);
     }
 
     @Override

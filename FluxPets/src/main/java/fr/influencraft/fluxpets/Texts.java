@@ -3,7 +3,6 @@ package fr.influencraft.fluxpets;
 import dev.lone.itemsadder.api.FontImages.FontImageWrapper;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 
 import java.util.HashMap;
@@ -14,12 +13,6 @@ import java.util.regex.Pattern;
 
 /** Mise en forme : codes & / &#RRGGBB et glyphes ItemsAdder %img_<id>%. */
 public final class Texts {
-
-    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.builder()
-            .character('&')
-            .hexCharacter('#')
-            .hexColors()
-            .build();
 
     private static final Pattern GLYPH = Pattern.compile("%img_([a-z0-9_]+(?::[a-z0-9_]+)?)%");
     private static final List<String> GLYPH_NAMESPACES = List.of("influpet", "influtags", "influemoji", "influitems", "influcards");
@@ -68,6 +61,6 @@ public final class Texts {
 
     /** Texte -> composant, sans italique (noms et lores d'items, titres). */
     public static Component of(String legacy) {
-        return LEGACY.deserialize(glyphs(legacy)).decoration(TextDecoration.ITALIC, false);
+        return fr.influencraft.flux.api.text.Texts.colors(glyphs(legacy)).decoration(TextDecoration.ITALIC, false);
     }
 }

@@ -236,8 +236,8 @@ final class Expansion {
             case "jours" -> ma.getUpkeepCosts() > 0 ? String.valueOf((long) Math.floor(ma.getBalance() / ma.getUpkeepCosts())) : "illimité";
             case "assez" -> Fmt.oui(ma.getBalance() >= e.montant);
             case "perso" -> {
-                var rsp = org.bukkit.Bukkit.getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
-                yield rsp != null ? Fmt.argent(rsp.getProvider().getBalance(p)) : "?";
+                var money = fr.influencraft.flux.api.economy.Economy.main();
+                yield money != null ? Fmt.argent(money.balance(p)) : "?";
             }
             default -> "";
         };

@@ -9,7 +9,7 @@ import me.elaineqheart.auctionHouse.data.ram.AuctionHouseStorage;
 import me.elaineqheart.auctionHouse.data.ram.Bid;
 import me.elaineqheart.auctionHouse.data.ram.ItemNote;
 import net.kyori.adventure.text.event.ClickEvent;
-import net.milkbowl.vault.economy.Economy;
+import fr.influencraft.flux.api.economy.Currency;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -35,9 +35,9 @@ import java.util.UUID;
 final class Hdv {
 
     private final FluxAuctionHouse plugin;
-    private final Economy eco;
+    private final Currency eco;
 
-    Hdv(FluxAuctionHouse plugin, Economy eco) {
+    Hdv(FluxAuctionHouse plugin, Currency eco) {
         this.plugin = plugin;
         this.eco = eco;
     }
@@ -175,10 +175,10 @@ final class Hdv {
         if (note.isExpired()) return refus(p, "Cette offre a expiré.");
         if (note.isOnWaitingList()) return refus(p, "Cette offre n'est pas encore en vente.");
         double prix = prixAchat(note, quantite);
-        if (eco.getBalance(p) < prix) return refus(p, "Il te manque " + Fmt.argent(prix - eco.getBalance(p)) + " BitBlocks.");
+        if (eco.balance(p) < prix) return refus(p, "Il te manque " + Fmt.argent(prix - eco.balance(p)) + " BitBlocks.");
         if (!ItemNoteStorage.setSoldIfOnAuction(note, p, quantite, prix)) return refus(p, "Cet objet vient d'être vendu.");
 
-        eco.withdrawPlayer(p, prix);
+        if (!eco.take(p, prix)) plugin.getLogger().severe("[HDV] Payment of " + prix + " by " + p.getName() + " refused after the sale was recorded");
         p.getInventory().addItem(item.clone());
         String nom = Objets.nom(item);
         String vendeur = nomJoueur(note.getPlayerUUID(), note.getPlayerName());
@@ -223,10 +223,10 @@ final class Hdv {
         if (note.isExpired()) return refus(p, "Cette enchère est terminée.");
         if (offreMin(note) > montant) return refus(p, "Quelqu'un a enchéri avant toi : l'offre minimale est maintenant " + Fmt.argent(offreMin(note)) + ".");
         double hausse = montant - note.getBid(p);
-        if (eco.getBalance(p) < hausse) return refus(p, "Il te manque " + Fmt.argent(hausse - eco.getBalance(p)) + " BitBlocks.");
+        if (eco.balance(p) < hausse) return refus(p, "Il te manque " + Fmt.argent(hausse - eco.balance(p)) + " BitBlocks.");
         if (!ItemNoteStorage.addBidIfOnAuction(note, p, montant)) return refus(p, "Cette enchère n'existe plus.");
 
-        eco.withdrawPlayer(p, hausse);
+        if (!eco.take(p, hausse)) plugin.getLogger().severe("[HDV] Bid payment of " + hausse + " by " + p.getName() + " refused after the bid was recorded");
         String nom = Objets.nom(note.getItem());
         Fmt.envoyer(p, Fmt.bitblock("Tu as engagé", hausse, false, " sur &f" + nom + " &7(ton offre : " + Fmt.argent(montant) + ")"));
         fr.influencraft.flux.api.util.Sounds.cue(p, "success");
@@ -319,7 +319,7 @@ final class Hdv {
         } else {
             double rendu = note.getBid(p);
             if (!ItemNoteStorage.claimEndedAuctionItem(p, note)) return refus(p, "Rien à récupérer ici.");
-            eco.depositPlayer(p, rendu);
+            eco.give(p, rendu);
             Fmt.envoyer(p, Fmt.bitblock("Tu as récupéré", rendu, true, " de ton offre sur &f" + nom));
         }
         fr.influencraft.flux.api.util.Sounds.cue(p, "success");

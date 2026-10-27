@@ -2,7 +2,6 @@ package fr.influencraft.fluxlands;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -12,9 +11,6 @@ import java.util.Locale;
 
 /** Mise en forme des nombres et des messages (couleurs {@code &} et {@code &#RRGGBB}, PlaceholderAPI). */
 final class Fmt {
-
-    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.builder()
-            .character('&').hexCharacter('#').hexColors().build();
 
     private Fmt() {
     }

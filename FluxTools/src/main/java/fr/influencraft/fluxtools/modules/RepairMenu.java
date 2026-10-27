@@ -7,7 +7,6 @@ import com.willfp.eco.core.gui.menu.events.CaptiveItemChangeEvent;
 import com.willfp.eco.core.gui.slot.Slot;
 import com.willfp.eco.util.NumberUtils;
 import com.willfp.eco.util.StringUtils;
-import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -20,7 +19,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.Repairable;
-import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
@@ -313,8 +311,7 @@ public final class RepairMenu implements CommandExecutor {
             return;
         }
 
-        Economy economy = getEconomy();
-        if (economy == null || !economy.withdrawPlayer(player, cost).transactionSuccess()) {
+        if (!fr.influencraft.flux.api.economy.Economy.main().take(player, cost)) {
             player.sendMessage(StringUtils.format(
                     "&#FF5C5CLe paiement a échoué, ton objet n'a pas été touché.", player));
             fr.influencraft.flux.api.util.Sounds.cue(player, "error");
@@ -347,19 +344,8 @@ public final class RepairMenu implements CommandExecutor {
     }
 
     private double getBalance(Player player) {
-        Economy economy = getEconomy();
-        return economy == null ? 0 : economy.getBalance(player);
-    }
-
-    /**
-     * Résolu à chaque appel plutôt que mis en cache au démarrage : CMIEInjector hooke
-     * CMIEconomy dans Vault plusieurs secondes après le onEnable des plugins (cf.
-     * {@link LateVaultEconomyBinder}), un cache pris trop tôt resterait null à vie.
-     */
-    private static Economy getEconomy() {
-        RegisteredServiceProvider<Economy> registration =
-                Bukkit.getServicesManager().getRegistration(Economy.class);
-        return registration == null ? null : registration.getProvider();
+        // main currency of the suite, resolved by Flux on every call (CMI hooks into Vault late)
+        return fr.influencraft.flux.api.economy.Economy.main().balance(player);
     }
 
     // ── Rendu ───────────────────────────────────────────────────────────────

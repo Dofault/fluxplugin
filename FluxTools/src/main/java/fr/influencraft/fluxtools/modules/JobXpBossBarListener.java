@@ -19,10 +19,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.util.Iterator;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -99,11 +96,7 @@ public final class JobXpBossBarListener implements Listener {
     private static final java.util.regex.Pattern COLOR_CODES = java.util.regex.Pattern.compile(
             "(?i)[&§]x(?:[&§].){6}|&#[0-9a-f]{6}|[&§][0-9a-fk-or]");
 
-    // XP exacte, pas arrondie à l'entier : "10" reste "10", "10.4" reste "10.4" (2 décimales
-    // max, zéros inutiles retirés). Locale forcée en US pour un séparateur "." constant, quelle
-    // que soit la locale du serveur.
-    private static final DecimalFormat XP_FORMAT =
-            new DecimalFormat("0.##", DecimalFormatSymbols.getInstance(Locale.US));
+    // exact XP, not rounded (Flux Format.decimal: 2 decimals at most, trailing zeros removed)
 
     // Gain lu juste avant les effets libreforge (familiers InfluPet : job_xp_multiplier), pour en
     // déduire leur bonus. Événement synchrone et non réentrant : un seul gain en cours à la fois.
@@ -258,8 +251,8 @@ public final class JobXpBossBarListener implements Listener {
                     Placeholder.unparsed("level", String.valueOf(level)),
                     Placeholder.unparsed("current", currentXpFormatted),
                     Placeholder.unparsed("required", requiredXpFormatted),
-                    Placeholder.unparsed("gained", gained != null ? XP_FORMAT.format(gained) : ""),
-                    Placeholder.unparsed("bonus", XP_FORMAT.format(bonusPercent)));
+                    Placeholder.unparsed("gained", gained != null ? fr.influencraft.flux.api.util.Format.decimal(gained) : ""),
+                    Placeholder.unparsed("bonus", fr.influencraft.flux.api.util.Format.decimal(bonusPercent)));
         } catch (Exception e) {
             plugin.getLogger().warning("job-xp-bossbar: échec de rendu du titre — " + e.getMessage());
             return null;

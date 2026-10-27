@@ -3,7 +3,6 @@ package fr.influencraft.fluxtools.modules;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -59,11 +58,6 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
     static final String ADMIN_PERMISSION = "influbridge.bottlexp.admin";
 
     private static final String PREFIX = "&#FFD94D&lFiole d'XP &8► ";
-    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.builder()
-            .character('&')
-            .hexCharacter('#')
-            .hexColors()
-            .build();
 
     private final NamespacedKey bottledXpKey;
     /** Tick du dernier clic consommé par joueur : un clic peut déclencher main + offhand. */
@@ -284,7 +278,7 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
         String resolved = Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")
                 ? PlaceholderAPI.setPlaceholders(player, legacy)
                 : legacy;
-        return LEGACY.deserialize(resolved).decoration(TextDecoration.ITALIC, false);
+        return fr.influencraft.flux.api.text.Texts.colors(resolved).decoration(TextDecoration.ITALIC, false);
     }
 
     private void send(Player player, String message) {
@@ -295,7 +289,7 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
         if (sender instanceof Player player) {
             send(player, message);
         } else {
-            sender.sendMessage(LEGACY.deserialize(message));
+            sender.sendMessage(fr.influencraft.flux.api.text.Texts.colors(message));
         }
     }
 

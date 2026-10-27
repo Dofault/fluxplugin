@@ -149,6 +149,14 @@ public final class Texts {
         return SECTION.serialize(component);
     }
 
+    private static final net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer AMPERSAND =
+            net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.builder().character('&').hexCharacter('#').hexColors().build();
+
+    /** Text written back with {@code &} codes and {@code &#RRGGBB} colours (to store it in a config or a database). */
+    public static String ampersand(Component component) {
+        return AMPERSAND.serialize(component);
+    }
+
     public static void send(CommandSender to, String raw) {
         if (raw == null || raw.isEmpty()) return;
         to.sendMessage(parse(raw, to instanceof Player p ? p : null));

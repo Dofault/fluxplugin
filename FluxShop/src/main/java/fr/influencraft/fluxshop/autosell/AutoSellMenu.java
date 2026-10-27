@@ -336,11 +336,11 @@ public class AutoSellMenu implements ListProvider {
             }
             case "category" -> {
                 Lists.act(player, LIST, right ? "filter-prev" : "filter", PAGE_SIZE);
-                fr.influencraft.flux.api.util.Sounds.cue(player, "page");
+                fr.influencraft.flux.api.util.Sounds.cue(player, "click");
             }
             case "view" -> {
                 Lists.act(player, LIST, right ? "sort-prev" : "sort", PAGE_SIZE);
-                fr.influencraft.flux.api.util.Sounds.cue(player, "page");
+                fr.influencraft.flux.api.util.Sounds.cue(player, "click");
             }
             case "bulk" -> {
                 List<String> shown = Lists.entries(player, LIST).stream().map(ListEntry::id).toList();

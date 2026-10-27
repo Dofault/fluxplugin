@@ -103,7 +103,7 @@ for gid, g in sorted(groupes.items()):
          "open-actions:",
          f"  - {q('[fluxcoll] select ' + liste[0][0])}",
          f"  - {q('[page-swap] ' + gid + '_1')}",
-         '  - "[sound] minecraft:item.book.page_turn 1 1"',
+         '  - "[sound] @page"',
          "",
          "# Paliers de la collection sélectionnée (2e rangée de l'inventaire).",
          "paths:",
@@ -159,7 +159,7 @@ for gid, g in sorted(groupes.items()):
                          f"      - {q('placeholder: %fluxcoll_selected% == ' + cid)}"])
             objet(P, "c_" + cid, mat, cmd, d.get("name", cid), [slot],
                   lore + [f"{OR}└ {CLIC} &fVoir la progression"],
-                  [f"[fluxcoll] select {cid}", "[sound] minecraft:ui.button.click 0.6 1.4"])
+                  [f"[fluxcoll] select {cid}", "[sound] @click"])
         L += [f"  {gid}_{n}:", "    items:", ""] + indenter(P, 4)
 
     chemin = os.path.join(OUT, f"collection_{gid}.yml")
