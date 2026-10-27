@@ -52,7 +52,7 @@ public final class Items {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
         if (name != null) meta.displayName(Texts.parse(name, viewer));
-        if (lore != null && !lore.isEmpty()) meta.lore(Texts.lines(lore, viewer));
+        if (lore != null && !lore.isEmpty()) meta.lore(Texts.lore(lore, viewer));
         item.setItemMeta(meta);
         return item;
     }

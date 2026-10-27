@@ -33,3 +33,10 @@ dialogs:
   confirm: "&#2ECF7B"
   cancel: "&#FF5C5C"
   link: "&#2BC4E8&n"
+
+# Lores of every menu and item of the suite: a line longer than max-line-length visible characters (colour codes not
+# counted) is cut on spaces into several lines that keep the colours. repeat-prefix: a decoration at the start of the
+# line ("&#FFD94D│ ") is repeated on the cut lines. 0 = never cut.
+lore:
+  max-line-length: 40
+  repeat-prefix: true

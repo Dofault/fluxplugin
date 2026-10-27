@@ -264,28 +264,8 @@ public final class JobInfo extends PlaceholderExpansion {
 
     /** Coupe une phrase colorée en lignes d'au plus LARGEUR caractères visibles, couleur reportée. */
     private static List<String> wrap(String phrase) {
-        List<String> lines = new ArrayList<>();
-        StringBuilder line = new StringBuilder();
-        int visible = 0;
-        String color = "";
-        for (String word : phrase.split(" ")) {
-            int len = word.replaceAll("&#[0-9A-Fa-f]{6}|&[0-9a-fk-or]", "").length();
-            if (visible > 0 && visible + 1 + len > LARGEUR) {
-                lines.add(BARRE + line);
-                line = new StringBuilder(color);
-                visible = 0;
-            }
-            if (visible > 0) {
-                line.append(' ');
-                visible++;
-            }
-            line.append(word);
-            visible += len;
-            Matcher c = Pattern.compile("&#[0-9A-Fa-f]{6}|&[0-9a-f]").matcher(word);
-            while (c.find()) color = c.group();
-        }
-        if (line.length() > 0) lines.add(BARRE + line);
-        return lines;
+        // the suite's lore wrapping, bar prefix repeated on every line
+        return Text.wrap(BARRE + phrase, LARGEUR + 2);
     }
 
     private int level(Player player, String jobId) {

@@ -1,6 +1,6 @@
 package fr.influencraft.fluxpets.effects;
 
-import io.dofault.supermarket.api.SupermarketAPI;
+import fr.influencraft.fluxshop.api.SupermarketAPI;
 import org.bukkit.plugin.Plugin;
 
 /** Seule classe qui référence VaultSupermarket : chargée seulement s'il est actif. */

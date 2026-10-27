@@ -1,0 +1,23 @@
+name: FluxShop
+# former name, for plugins that still look it up
+provides: [VaultSupermarket]
+version: 26.2
+author: dofault
+main: fr.influencraft.fluxshop.FluxShop
+api-version: '26.2'
+
+depend: [Flux]
+softdepend: [Vault, LuckPerms, CustomFishing, AdvancedEnchantments, eco, ItemsAdder]
+
+commands:
+  supermarket:
+    description: Commande principale du plugin Supermarket
+    usage: /supermarket <shop|setprice|checkprices|tpshop|settpshop|autosell|reload>
+
+permissions:
+  supermarket.admin:
+    description: "Commandes d'administration du Supermarket (blocs magasins, prix, tpshop d'un autre joueur...)"
+    default: op
+  supermarket.tpshop:
+    description: "Permet de se téléporter soi-même au magasin via /supermarket tpshop (à attribuer par grade via LuckPerms)"
+    default: false

@@ -84,13 +84,12 @@
             <scope>system</scope>
             <systemPath>${project.basedir}/libs/bettermodel-3.5.0-paper.jar</systemPath>
         </dependency>
-        <!-- VaultSupermarket (softdepend) : bonus de prix de vente de la Licorne Astrale (SupermarketAPI). -->
+        <!-- FluxShop (softdepend): sell price bonus of the Astral Unicorn (SupermarketAPI), reactor module -->
         <dependency>
-            <groupId>io.dofault</groupId>
-            <artifactId>VaultSuperMarket</artifactId>
+            <groupId>fr.influencraft</groupId>
+            <artifactId>FluxShop</artifactId>
             <version>26.2</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/VaultSuperMarket-26.2.jar</systemPath>
+            <scope>provided</scope>
         </dependency>
         <!-- Tags envoyés à un seul joueur (familier Bonhomme de Neige), optionnel à l'exécution. -->
         <dependency>

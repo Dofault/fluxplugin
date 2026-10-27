@@ -32,4 +32,13 @@ public interface MenuView {
     void refresh();
 
     void close();
+
+    /** Items the player put in the deposit zone ({@code input-slots}), by slot (live items: do not keep them). */
+    java.util.Map<Integer, org.bukkit.inventory.ItemStack> inputs();
+
+    /**
+     * Removes and returns the items of the deposit zone: the caller now owns them (e.g. sold). Whatever is not taken
+     * goes back to the player when the menu closes.
+     */
+    java.util.List<org.bukkit.inventory.ItemStack> takeInputs();
 }

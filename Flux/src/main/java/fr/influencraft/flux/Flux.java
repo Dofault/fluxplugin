@@ -103,6 +103,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         reloadConfig();
         clickCooldown = Math.max(0, getConfig().getInt("click-cooldown", 4));
         prefix = getConfig().getString("prefix", "&#FFD94D&lFlux &8► ");
+        Text.configureLore(getConfig().getInt("lore.max-line-length", 40), getConfig().getBoolean("lore.repeat-prefix", true));
         // suite-wide settings: language, currencies, dialogs
         messages = fr.influencraft.flux.api.text.Messages.load(this, getConfig().getString("language", "en_US"));
         java.util.Locale numbers = java.util.Locale.forLanguageTag(messages.language().replace('_', '-'));

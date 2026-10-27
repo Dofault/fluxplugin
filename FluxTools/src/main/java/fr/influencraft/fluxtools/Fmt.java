@@ -67,29 +67,8 @@ final class Fmt {
 
     /** Coupe un texte coloré en lignes d'au plus {@code largeur} caractères visibles, couleur reportée. */
     static java.util.List<String> couper(String texte, int largeur) {
-        java.util.List<String> lignes = new java.util.ArrayList<>();
-        StringBuilder ligne = new StringBuilder();
-        int visible = 0;
-        String couleur = "";
-        java.util.regex.Pattern code = java.util.regex.Pattern.compile("&#[0-9A-Fa-f]{6}|&[0-9a-fk-or]");
-        for (String mot : texte.split(" ")) {
-            int n = code.matcher(mot).replaceAll("").length();
-            if (visible > 0 && visible + 1 + n > largeur) {
-                lignes.add(ligne.toString());
-                ligne = new StringBuilder(couleur);
-                visible = 0;
-            }
-            if (visible > 0) {
-                ligne.append(' ');
-                visible++;
-            }
-            ligne.append(mot);
-            visible += n;
-            java.util.regex.Matcher c = code.matcher(mot);
-            while (c.find()) couleur = c.group();
-        }
-        if (visible > 0) lignes.add(ligne.toString());
-        return lignes;
+        // the suite's lore wrapping (colours carried over to the next line)
+        return new java.util.ArrayList<>(fr.influencraft.flux.api.text.Texts.wrap(texte, largeur));
     }
 
     /** Barre de 20 traits : partie faite en vert, reste en gris. */

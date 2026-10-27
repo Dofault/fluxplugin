@@ -251,6 +251,7 @@ public final class MenuService {
     public void closed(Player player, MenuSession session) {
         session.markClosed();
         sessions.remove(player.getUniqueId(), session);
+        giveBackInputs(player, session);
         if (session.hidesInventory() && plugin.isEnabled()) {
             creativeGuard.put(player.getUniqueId(), Bukkit.getCurrentTick() + CREATIVE_GUARD_TICKS);
             // Le serveur bascule sur la fenêtre d'inventaire après l'événement : on renvoie le
@@ -267,7 +268,10 @@ public final class MenuService {
 
     public void quit(Player player) {
         MenuSession s = sessions.remove(player.getUniqueId());
-        if (s != null) s.markClosed();
+        if (s != null) {
+            s.markClosed();
+            giveBackInputs(player, s);
+        }
         creativeGuard.remove(player.getUniqueId());
     }
 
@@ -290,12 +294,25 @@ public final class MenuService {
             }
             sessions.remove(s.playerId(), s);
             s.markClosed();
+            if (p != null) giveBackInputs(p, s);
             if (p != null && p.isOnline()) {
                 p.updateInventory();
                 purgeButtons(p);
             }
         }
         creativeGuard.clear();
+    }
+
+    /**
+     * Whatever is still in the deposit zone goes back to its owner (closing, leaving, reload): never lost. What does
+     * not fit drops at his feet, the last resort.
+     */
+    private void giveBackInputs(Player player, MenuSession session) {
+        if (session.menu().inputSlots().length == 0) return;
+        java.util.List<ItemStack> items = session.takeInputs();
+        if (items.isEmpty()) return;
+        items.removeIf(ItemFactory::isButton);
+        fr.influencraft.flux.api.inventory.Inventories.giveOrDrop(player, items);
     }
 
     /**

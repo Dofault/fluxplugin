@@ -31,6 +31,18 @@ public final class MenuLoader {
         }
         InventoryMode mode = InventoryMode.parse(yml.getString("player-inventory", "hidden"));
         int topSize = rows * 9;
+        // deposit zone: slots of the chest where the player puts real items (needs his inventory)
+        List<Integer> inputs = new ArrayList<>();
+        try {
+            for (String raw : strings(yml, "input-slots")) addSlots(raw, inputs);
+        } catch (IllegalArgumentException e) {
+            warn.accept(where + " : input-slots : " + e.getMessage());
+        }
+        inputs.removeIf(s -> s < 0 || s >= topSize);
+        if (!inputs.isEmpty() && mode != InventoryMode.INTERACTIVE) {
+            if (mode == InventoryMode.HIDDEN) warn.accept(where + " : input-slots needs the player's inventory, player-inventory: interactive used");
+            mode = InventoryMode.INTERACTIVE;
+        }
         int maxSlot = mode == InventoryMode.HIDDEN ? topSize + 36 : topSize;
 
         List<MenuButton> buttons = buttons(yml.getConfigurationSection("items"), where + " > items",
@@ -68,7 +80,10 @@ public final class MenuLoader {
                 strings(yml, "title-loop.frames"),
                 Math.max(1, yml.getInt("title-loop.interval", 1)),
                 titleLayers(yml.getConfigurationSection("title-layers"), where + " > title-layers", warn),
-                lists(yml.getConfigurationSection("lists"), where + " > lists", maxSlot, warn));
+                lists(yml.getConfigurationSection("lists"), where + " > lists", maxSlot, warn),
+                inputs.stream().mapToInt(Integer::intValue).toArray(),
+                strings(yml, "input-change-actions"),
+                strings(yml, "inventory-click-actions"));
     }
 
     private static List<ListSpec> lists(ConfigurationSection section, String where, int maxSlot, Consumer<String> warn) {
@@ -95,7 +110,7 @@ public final class MenuLoader {
                 warn.accept(at + " : slots et item obligatoires (liste ignorée)");
                 continue;
             }
-            out.add(new ListSpec(key.toLowerCase(Locale.ROOT), slots.stream().mapToInt(Integer::intValue).toArray(),
+            out.add(new ListSpec(l.getString("source", key).toLowerCase(Locale.ROOT), slots.stream().mapToInt(Integer::intValue).toArray(),
                     item, l.getConfigurationSection("empty"), at));
         }
         return List.copyOf(out);

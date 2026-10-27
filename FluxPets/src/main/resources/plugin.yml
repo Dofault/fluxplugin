@@ -3,10 +3,10 @@ version: '1.0.0'
 main: fr.influencraft.fluxpets.FluxPets
 api-version: '26.2'
 description: Pets, collectible cards and boosters.
-# VaultSupermarket: sell-price bonus pet effect (money-bonus).
+# FluxShop: sell-price bonus pet effect (money-bonus).
 # eco: player pet storage. libreforge (loaded by eco plugins): pet effects and job XP multiplier.
 depend: [eco, Flux]
-softdepend: [libreforge, EcoJobs, VaultSupermarket, EcoEnchants, EcoItems, ItemsAdder, BetterModel, packetevents, PlaceholderAPI]
+softdepend: [libreforge, EcoJobs, FluxShop, EcoEnchants, EcoItems, ItemsAdder, BetterModel, packetevents, PlaceholderAPI]
 
 permissions:
   influpet.admin:

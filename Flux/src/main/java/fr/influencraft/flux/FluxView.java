@@ -73,6 +73,16 @@ final class FluxView implements MenuView {
     }
 
     @Override
+    public java.util.Map<Integer, org.bukkit.inventory.ItemStack> inputs() {
+        return session.inputs();
+    }
+
+    @Override
+    public java.util.List<org.bukkit.inventory.ItemStack> takeInputs() {
+        return session.takeInputs();
+    }
+
+    @Override
     public boolean equals(Object o) {
         return o instanceof FluxView v && v.session == session;
     }

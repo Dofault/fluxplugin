@@ -13,14 +13,14 @@ final class MoneyBonus extends PetEffect {
 
     MoneyBonus(PetEffects manager) {
         super(manager, "money-bonus");
-        if (Bukkit.getPluginManager().isPluginEnabled("VaultSupermarket")) {
+        if (Bukkit.getPluginManager().isPluginEnabled("FluxShop")) {
             try {
                 SupermarketSellBonus.register(manager.plugin(), this);
             } catch (Throwable t) {
                 manager.plugin().getLogger().warning("Sell price pet effect unavailable (VaultSupermarket API): " + t);
             }
         } else {
-            manager.plugin().getLogger().info("VaultSupermarket not found: money-bonus pet effect has no effect.");
+            manager.plugin().getLogger().info("FluxShop not found: money-bonus pet effect has no effect.");
         }
     }
 

@@ -50,18 +50,7 @@ final class Fmt {
 
     /** Coupe une phrase en lignes d'au plus {@code max} caractères (lores). */
     static java.util.List<String> couper(String texte, int max) {
-        java.util.List<String> lignes = new java.util.ArrayList<>();
-        if (texte == null || texte.isBlank()) return lignes;
-        StringBuilder cur = new StringBuilder();
-        for (String mot : texte.trim().split("\\s+")) {
-            if (cur.length() > 0 && cur.length() + 1 + mot.length() > max) {
-                lignes.add(cur.toString());
-                cur.setLength(0);
-            }
-            if (cur.length() > 0) cur.append(' ');
-            cur.append(mot);
-        }
-        if (cur.length() > 0) lignes.add(cur.toString());
-        return lignes;
+        if (texte == null || texte.isBlank()) return new java.util.ArrayList<>();
+        return new java.util.ArrayList<>(fr.influencraft.flux.api.text.Texts.wrap(texte.trim(), max));
     }
 }

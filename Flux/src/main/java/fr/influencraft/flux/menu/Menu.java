@@ -32,7 +32,16 @@ public record Menu(
         List<String> loopTitles,
         int loopInterval,
         List<TitleLayer> titleLayers,
-        List<ListSpec> lists) {
+        List<ListSpec> lists,
+        int[] inputSlots,
+        List<String> inputChangeActions,
+        List<String> inventoryClickActions) {
+
+    /** Whether the player may put items in this top slot (deposit zone, {@code input-slots}). */
+    public boolean isInput(int rawSlot) {
+        for (int s : inputSlots) if (s == rawSlot) return true;
+        return false;
+    }
 
     public Page page(String id) {
         return id == null ? null : pages.get(id.toLowerCase(java.util.Locale.ROOT));

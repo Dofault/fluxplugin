@@ -195,6 +195,27 @@ public final class MenuSession {
         return menu.topSize();
     }
 
+    /** Items in the deposit zone ({@code input-slots}), by slot; empty slots left out. */
+    public java.util.Map<Integer, ItemStack> inputs() {
+        java.util.Map<Integer, ItemStack> out = new java.util.LinkedHashMap<>();
+        for (int slot : menu.inputSlots()) {
+            ItemStack item = inventory.getItem(slot);
+            if (item != null && !item.getType().isAir()) out.put(slot, item);
+        }
+        return out;
+    }
+
+    /** Removes the items of the deposit zone and returns them (the caller now owns them). */
+    public java.util.List<ItemStack> takeInputs() {
+        java.util.List<ItemStack> out = new java.util.ArrayList<>();
+        for (int slot : menu.inputSlots()) {
+            ItemStack item = inventory.getItem(slot);
+            if (item != null && !item.getType().isAir()) out.add(item);
+            inventory.setItem(slot, null);
+        }
+        return out;
+    }
+
     /** Bouton affiché sur une case brute de la fenêtre, null si aucun. */
     public MenuButton buttonAt(int rawSlot) {
         return rawSlot >= 0 && rawSlot < shown.length ? shown[rawSlot] : null;
@@ -270,6 +291,11 @@ public final class MenuSession {
         Map<MenuButton, ItemStack> built = new IdentityHashMap<>();
         int top = menu.topSize();
         for (int slot = 0; slot < top; slot++) {
+            // deposit zone: real items of the player, never overwritten
+            if (menu.isInput(slot)) {
+                next[slot] = null;
+                continue;
+            }
             ItemStack item = item(next[slot], player, built);
             ItemStack current = inventory.getItem(slot);
             if (current != null && current.getType().isAir()) current = null;

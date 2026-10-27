@@ -102,7 +102,11 @@ public final class ItemFactory {
             List<Component> lore = new ArrayList<>(b.lore().size());
             // Objet d'une source : le lore du bouton vient sous la description de l'objet.
             if (fromSource && meta.lore() != null) lore.addAll(meta.lore());
-            for (String line : b.lore()) {
+            for (String rawLine : b.lore()) {
+              // long lines are wrapped to the configured width (lore.max-line-length), after placeholders
+              String resolvedLine = rawLine.indexOf('%') >= 0 ? Text.placeholders(viewer, rawLine) : rawLine;
+              List<String> pieces = Text.wrap(resolvedLine);
+              for (String line : pieces.size() == 1 ? List.of(rawLine) : pieces) {
                 Component rendered = Text.line(viewer, line);
                 // Une ligne qui contient un placeholder et qui ne reste, une fois résolue et les
                 // couleurs retirées, que du vide (rien à afficher) est sautée : utile pour les
@@ -118,6 +122,7 @@ public final class ItemFactory {
                     continue;
                 }
                 lore.add(rendered);
+              }
             }
             meta.lore(lore);
         }

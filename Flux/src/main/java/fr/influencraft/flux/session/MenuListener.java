@@ -45,28 +45,88 @@ public final class MenuListener implements Listener {
         return view.getTopInventory().getHolder(false) instanceof MenuHolder h ? h.session() : null;
     }
 
-    /** Ce clic doit-il être annulé (true pour tout ce qui n'est pas « ranger son inventaire »). */
+    /**
+     * Ce clic doit-il être annulé (true pour tout ce qui n'est pas « ranger son inventaire » ou poser / reprendre un
+     * objet dans la zone de dépôt). Un maj+clic depuis l'inventaire vers le menu est annulé ici puis rejoué à la main
+     * vers la zone de dépôt seulement ({@link #shiftIntoInputs}).
+     */
     private static boolean mustCancel(MenuSession s, InventoryClickEvent e) {
         if (s.menu().inventoryMode() != InventoryMode.INTERACTIVE) return true;
         int raw = e.getRawSlot();
-        if (raw >= 0 && raw < s.topSize()) return true;
         InventoryAction action = e.getAction();
-        return action == InventoryAction.MOVE_TO_OTHER_INVENTORY
-                || action == InventoryAction.COLLECT_TO_CURSOR
-                || action == InventoryAction.UNKNOWN;
+        if (action == InventoryAction.COLLECT_TO_CURSOR || action == InventoryAction.UNKNOWN) return true;
+        if (raw >= 0 && raw < s.topSize()) {
+            // deposit zone: everything but a double click (which would collect buttons too)
+            return !s.menu().isInput(raw);
+        }
+        return action == InventoryAction.MOVE_TO_OTHER_INVENTORY;
+    }
+
+    /** Shift-click from the player's inventory: moves the stack into the deposit zone only. */
+    private void shiftIntoInputs(Player player, MenuSession s, InventoryClickEvent e) {
+        org.bukkit.inventory.ItemStack moving = e.getCurrentItem();
+        if (moving == null || moving.getType().isAir() || s.menu().inputSlots().length == 0) return;
+        org.bukkit.inventory.Inventory top = s.inventory();
+        int left = moving.getAmount();
+        for (int pass = 0; pass < 2 && left > 0; pass++) {
+            for (int slot : s.menu().inputSlots()) {
+                if (left <= 0) break;
+                org.bukkit.inventory.ItemStack there = top.getItem(slot);
+                if (pass == 0 && there != null && there.isSimilar(moving) && there.getAmount() < there.getMaxStackSize()) {
+                    int add = Math.min(left, there.getMaxStackSize() - there.getAmount());
+                    there.setAmount(there.getAmount() + add);
+                    left -= add;
+                } else if (pass == 1 && (there == null || there.getType().isAir())) {
+                    org.bukkit.inventory.ItemStack put = moving.clone();
+                    put.setAmount(Math.min(left, moving.getMaxStackSize()));
+                    top.setItem(slot, put);
+                    left -= put.getAmount();
+                }
+            }
+        }
+        if (left == moving.getAmount()) return;
+        if (left <= 0) e.setCurrentItem(null);
+        else moving.setAmount(left);
+        inputsChanged(player, s);
+    }
+
+    /** Runs the menu's input-change-actions on the next tick (contents of the deposit zone changed). */
+    private void inputsChanged(Player player, MenuSession s) {
+        if (s.menu().inputChangeActions().isEmpty()) return;
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (player.isOnline() && s.isOpen()) plugin.actions().run(player, s, s.menu().inputChangeActions());
+        });
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onClick(InventoryClickEvent e) {
         MenuSession s = sessionOf(e);
         if (s == null) return;
-        if (!mustCancel(s, e)) return;
+        if (!mustCancel(s, e)) {
+            int raw = e.getRawSlot();
+            if (raw >= 0 && raw < s.topSize() && e.getWhoClicked() instanceof Player player) inputsChanged(player, s);
+            return;
+        }
         e.setCancelled(true);
         if (!(e.getWhoClicked() instanceof Player player)) return;
+        if (e.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY && e.getRawSlot() >= s.topSize()
+                && s.menu().inventoryMode() == InventoryMode.INTERACTIVE) {
+            shiftIntoInputs(player, s, e);
+            return;
+        }
 
         int raw = e.getRawSlot();
+        // click in the player's own (visible) inventory: inventory-click-actions, %clicked_slot% = slot of his inventory
+        if (raw >= s.topSize() && !s.hidesInventory()) {
+            if (!s.menu().inventoryClickActions().isEmpty() && e.getSlot() >= 0 && !s.onCooldown(plugin.clickCooldown())) {
+                String slot = String.valueOf(e.getSlot());
+                plugin.actions().run(player, s, s.menu().inventoryClickActions().stream()
+                        .map(a -> a.replace("%clicked_slot%", slot)).toList());
+            }
+            return;
+        }
         // Hors coffre, les boutons n'existent qu'en mode hidden (zone du joueur réécrite).
-        if (raw < 0 || (raw >= s.topSize() && !s.hidesInventory())) return;
+        if (raw < 0) return;
         // Zone du bas, ou double clic n'importe où (le client regroupe à la souris les objets
         // semblables de toute la fenêtre, zone du bas comprise) : fenêtre renvoyée.
         if (raw >= s.topSize() || e.getClick() == org.bukkit.event.inventory.ClickType.DOUBLE_CLICK) resyncBottom(player, s);
@@ -124,9 +184,21 @@ public final class MenuListener implements Listener {
         if (s == null) return false;
         if (s.menu().inventoryMode() != InventoryMode.INTERACTIVE) return true;
         for (int raw : e.getRawSlots()) {
-            if (raw < s.topSize()) return true;
+            if (raw < s.topSize() && !s.menu().isInput(raw)) return true;
         }
         return false;
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onDragDone(InventoryDragEvent e) {
+        MenuSession s = sessionOf(e);
+        if (s == null || !(e.getWhoClicked() instanceof Player player)) return;
+        for (int raw : e.getRawSlots()) {
+            if (raw < s.topSize()) {
+                inputsChanged(player, s);
+                return;
+            }
+        }
     }
 
     /**

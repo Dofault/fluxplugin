@@ -47,6 +47,28 @@ public final class Texts {
         return out;
     }
 
+    /**
+     * Lore lines: placeholders resolved, long lines wrapped to the suite's width ({@code lore.max-line-length} in
+     * Flux's config) keeping their colours and decoration prefix, then parsed. Write one long sentence, Flux cuts it.
+     */
+    public static List<Component> lore(List<String> raw, OfflinePlayer player) {
+        List<Component> out = new ArrayList<>();
+        for (String line : raw) {
+            for (String piece : wrap(placeholders(line, player))) out.add(parse(piece, player));
+        }
+        return out;
+    }
+
+    /** One lore line split to the suite's width (see {@link #lore}); placeholders must already be resolved. */
+    public static List<String> wrap(String line) {
+        return Text.wrap(line);
+    }
+
+    /** Same with an explicit width (visible characters, colour codes not counted). */
+    public static List<String> wrap(String line, int width) {
+        return Text.wrap(line, width);
+    }
+
     /** Colours only: no placeholder, no glyph (text already resolved, or coming from players). */
     public static Component colors(String raw) {
         if (raw == null || raw.isEmpty()) return Component.empty();
