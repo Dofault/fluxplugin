@@ -71,7 +71,9 @@ public final class DailyRewards {
         plugin.getLogger().info(days.size() + " login day(s) (cycle of " + cycle + "), " + playtimeTiers.size() + " playtime tier(s).");
     }
 
+    /** The section under its key, or under its former name; the jar's defaults never hide a former name. */
     private static ConfigurationSection section(ConfigurationSection parent, String key, String formerKey) {
+        if (!parent.contains(key, true) && parent.contains(formerKey, true)) return parent.getConfigurationSection(formerKey);
         ConfigurationSection s = parent.getConfigurationSection(key);
         return s != null ? s : parent.getConfigurationSection(formerKey);
     }
