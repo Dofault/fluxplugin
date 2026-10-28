@@ -134,6 +134,7 @@ public final class Text {
     /** Ligne affichée : placeholders, glyphes ItemsAdder puis couleurs, sans italique. */
     public static Component line(Player player, String raw) {
         String out = placeholders(player, raw);
+        out = fr.influencraft.flux.api.text.Style.applyTags(out);
         if (hasItemsAdder() && out.indexOf(':') >= 0) {
             long t = System.nanoTime();
             out = fr.influencraft.flux.api.items.CustomItems.glyphs(out, player);

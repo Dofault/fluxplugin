@@ -18,16 +18,17 @@ frame:
   branch: "&#FFD94D├ "
   corner: "&#FFD94D└ "
 
-# button name colour (a name that starts with its own colour keeps it)
-name: "&#FFD94D"
-description: "&f"
-text: "&#B376E5"
+# Formats: %text% is the text (a colour in the text itself wins). Any format or text may use
+# <smallcaps>...</smallcaps>, e.g. description: "<smallcaps>&f%text%</smallcaps>".
+name: "&#FFD94D%text%"
+description: "&f%text%"
+text: "&#B376E5%text%"
 key-value: "&#B376E5%key% : &f%value%"
 item: "&8➤ &7%item%"
 states:
-  ok: "&#2ECF7B"
-  ko: "&#FF5C5C"
-  info: "&#FFD94D"
+  ok: "&#2ECF7B%text%"
+  ko: "&#FF5C5C%text%"
+  info: "&#FFD94D%text%"
 
 actions:
   left: "&r&7%img_left_click% &f%label%"
@@ -44,9 +45,6 @@ sections:
   # framed blank line between two sections and before the actions
   gap: true
 
-small-caps:
-  names: false
-  description: false
 
 # Variants of a plugin: only the keys it changes, e.g.
 # variants:

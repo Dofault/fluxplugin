@@ -114,7 +114,7 @@ public final class ItemFactory {
             if (fromSource && meta.lore() != null) lore.addAll(meta.lore());
             for (String rawLine : source) {
               // long lines are wrapped to the configured width (lore.max-line-length), after placeholders
-              String resolvedLine = rawLine.indexOf('%') >= 0 ? Text.placeholders(viewer, rawLine) : rawLine;
+              String resolvedLine = fr.influencraft.flux.api.text.Style.applyTags(rawLine.indexOf('%') >= 0 ? Text.placeholders(viewer, rawLine) : rawLine);
               List<String> pieces = Text.wrap(resolvedLine);
               for (String line : pieces.size() == 1 ? List.of(rawLine) : pieces) {
                 Component rendered = Text.line(viewer, line);

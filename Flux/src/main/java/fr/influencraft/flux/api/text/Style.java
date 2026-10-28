@@ -10,8 +10,8 @@ import java.util.Map;
 /**
  * The look of every button of the suite, set once in {@code plugins/Flux/style.yml} (look only, never words: those
  * live in the language files): lore frame, colours of the name,
- * the description, the plain text, key/value lines, list items and states, the click actions, the filters, small
- * caps. A plugin may use a variant ({@code variants.<name>} of the file, only the keys it changes) to keep its own
+ * the description, the plain text, key/value lines, list items and states, the click actions, the filters. Any
+ * text may use {@code <smallcaps>...</smallcaps>} ({@link #applyTags}). A plugin may use a variant ({@code variants.<name>} of the file, only the keys it changes) to keep its own
  * colours. Read by {@link fr.influencraft.flux.api.inventory.Lore} (code) and by the {@code @tags} of menu files.
  */
 public final class Style {
@@ -22,16 +22,15 @@ public final class Style {
     private static final Map<String, String> DEFAULTS = Map.ofEntries(
             Map.entry("frame.enabled", "true"), Map.entry("frame.line", "&#FFD94D│ "),
             Map.entry("frame.branch", "&#FFD94D├ "), Map.entry("frame.corner", "&#FFD94D└ "),
-            Map.entry("name", "&#FFD94D"), Map.entry("text", "&#B376E5"), Map.entry("description", "&f"),
+            Map.entry("name", "&#FFD94D%text%"), Map.entry("text", "&#B376E5%text%"), Map.entry("description", "&f%text%"),
             Map.entry("key-value", "&#B376E5%key% : &f%value%"), Map.entry("item", "&8➤ &7%item%"),
-            Map.entry("states.ok", "&#2ECF7B"), Map.entry("states.ko", "&#FF5C5C"), Map.entry("states.info", "&#FFD94D"),
+            Map.entry("states.ok", "&#2ECF7B%text%"), Map.entry("states.ko", "&#FF5C5C%text%"), Map.entry("states.info", "&#FFD94D%text%"),
             Map.entry("actions.left", "&r&7%img_left_click% &f%label%"),
             Map.entry("actions.right", "&r&7%img_right_click% &f%label%"),
             Map.entry("actions.shift-left", "&r&7⇧%img_left_click% &f%label%"),
             Map.entry("actions.shift-right", "&r&7⇧%img_right_click% &f%label%"),
             Map.entry("filter.selected", "&f» %label%"), Map.entry("filter.unselected", "&#B376E5%label%"),
-            Map.entry("sections.gap", "true"), Map.entry("small-caps.names", "false"),
-            Map.entry("small-caps.description", "false"));
+            Map.entry("sections.gap", "true"));
 
     private static Map<String, String> base = new HashMap<>(DEFAULTS);
     private static final Map<String, Map<String, String>> VARIANTS = new HashMap<>();
@@ -110,18 +109,23 @@ public final class Style {
         return flag("sections.gap");
     }
 
-    /** Button name: the name colour unless the text sets its own, small caps when enabled. */
+    /** A format of the file applied to a text: {@code %text%} replaced, or the text appended (colour-only format). */
+    private String fill(String key, String text) {
+        String format = value(key);
+        return format.contains("%text%") ? format.replace("%text%", text) : format + text;
+    }
+
+    /** Button name (a colour in the name itself wins over the format's). */
     public String name(String text) {
-        String t = flag("small-caps.names") ? smallCaps(text) : text;
-        return startsWithColour(t) ? t : value("name") + t;
+        return fill("name", text);
     }
 
     public String description(String text) {
-        return value("description") + (flag("small-caps.description") ? smallCaps(text) : text);
+        return fill("description", text);
     }
 
     public String text(String text) {
-        return value("text") + text;
+        return fill("text", text);
     }
 
     public String keyValue(String key, String val) {
@@ -129,11 +133,11 @@ public final class Style {
     }
 
     public String item(String text) {
-        return value("item").replace("%item%", text);
+        return value("item").replace("%item%", text).replace("%text%", text);
     }
 
     public String state(String state, String text) {
-        return value("states." + state) + text;
+        return fill("states." + state, text);
     }
 
     public String action(Click click, String label) {
@@ -155,6 +159,21 @@ public final class Style {
 
     // ---------------------------------------------------------------- small caps
 
+    private static final java.util.regex.Pattern SMALL_CAPS = java.util.regex.Pattern.compile("<smallcaps>(.*?)</smallcaps>");
+
+    /**
+     * {@code <smallcaps>...</smallcaps>} anywhere (style formats, names, menu texts, messages): the inside in small
+     * caps. Applied by Flux on every displayed line, after the placeholders.
+     */
+    public static String applyTags(String text) {
+        if (text == null || text.indexOf("<smallcaps>") < 0) return text;
+        java.util.regex.Matcher m = SMALL_CAPS.matcher(text);
+        StringBuilder out = new StringBuilder();
+        while (m.find()) m.appendReplacement(out, java.util.regex.Matcher.quoteReplacement(smallCaps(m.group(1))));
+        m.appendTail(out);
+        return out.toString();
+    }
+
     private static final String SMALL = "ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘǫʀꜱᴛᴜᴠᴡxʏᴢ";
 
     /** Lower-case letters to small caps, colour codes, %placeholders% and :glyphs: untouched. */
@@ -175,10 +194,6 @@ public final class Style {
             else out.append(ch);
         }
         return out.toString();
-    }
-
-    private static boolean startsWithColour(String text) {
-        return text.startsWith("&") || text.startsWith("§") || text.startsWith("<");
     }
 
     /** Lines of a list of keys, for tooling. */

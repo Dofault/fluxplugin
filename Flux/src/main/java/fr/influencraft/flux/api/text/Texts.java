@@ -54,7 +54,7 @@ public final class Texts {
     public static List<Component> lore(List<String> raw, OfflinePlayer player) {
         List<Component> out = new ArrayList<>();
         for (String line : raw) {
-            for (String piece : wrap(placeholders(line, player))) out.add(parse(piece, player));
+            for (String piece : wrap(Style.applyTags(placeholders(line, player)))) out.add(parse(piece, player));
         }
         return out;
     }

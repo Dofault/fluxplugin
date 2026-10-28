@@ -87,7 +87,7 @@ The plugins are written **as English plugins, then adapted to French** for our s
 ## Button style (lore, names, actions): always through Flux
 
 The look of every button lives in `plugins/Flux/style.yml` (`api.text.Style`): frame (`│ ├ └`), colours of the name,
-description, plain text, key/value, list items and states, the 4 click actions, the filter format, small caps.
+description, plain text, key/value, list items and states, the 4 click actions, the filter format. Formats use `%text%`; any text may use `<smallcaps>...</smallcaps>`.
 Look only, never words (labels go to the lang files). Never hand-write `&#FFD94D│ ...` lines again:
 
 - **Code**: `Lore.create()` (or `Lore.create("<variant>")` for a plugin colour) with `.description()` (paragraphs,
