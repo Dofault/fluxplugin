@@ -98,7 +98,7 @@ public final class ItemFactory {
         // items built by code (list entries) get the same line width as the menu files
         if (fromEntry && meta.lore() != null) {
             List<Component> own = meta.lore();
-            List<Component> wrapped = Text.box(Text.wrapLore(own));
+            List<Component> wrapped = Text.wrapLore(own);
             if (wrapped != own) meta.lore(wrapped);
         }
         if (b.name() != null) meta.displayName(name(viewer, fr.influencraft.flux.api.text.Style.get().name(b.name())));
@@ -134,7 +134,7 @@ public final class ItemFactory {
                 lore.add(rendered);
               }
             }
-            meta.lore(Text.box(lore));
+            meta.lore(lore);
         }
         if (b.glow()) meta.setEnchantmentGlintOverride(true);
         if (b.customModelData() != null) setCustomModelData(meta, b.customModelData());

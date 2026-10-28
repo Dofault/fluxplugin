@@ -57,24 +57,9 @@ public final class Style {
     private record Block(String kind, String prefix, String selected, String unselected, String suffix) {
     }
 
-    /**
-     * Border of the lore. {@code left*} start the lines (actions, last line when there is no bottom); {@code right}
-     * ends them, aligned at the widest line (a real box); {@code top}, {@code bottom} and {@code separator} (in place
-     * of blank lines) are full lines where {@code {fill}} repeats {@code fill} across the box width.
-     */
-    public record Border(String left, String leftAction, String leftLast, String right, String top, String bottom,
-                         String separator, String fill) {
-        static final Border NONE = new Border("", "", "", "", "", "", "", "─");
-
-        /** The box is finished after all lines are known (placeholders, wrapping): right side or full lines. */
-        public boolean box() {
-            return !right.isEmpty() || !top.isEmpty() || !bottom.isEmpty() || !separator.isEmpty();
-        }
-    }
-
-    private record Look(String lore, List<Block> blocks, Border border, String name, Map<String, String> icons) {
-        Look(String lore, Border border, String name, Map<String, String> icons) {
-            this(lore, parse(lore), border, name, icons);
+    private record Look(String lore, List<Block> blocks, List<String> frame, String name, Map<String, String> icons, boolean framed) {
+        Look(String lore, List<String> frame, String name, Map<String, String> icons, boolean framed) {
+            this(lore, parse(lore), frame, name, icons, framed);
         }
     }
 
@@ -123,49 +108,26 @@ public final class Style {
     }
 
     private static Look defaults() {
-        return new Look(DEFAULT_LORE, new Border("&#FFD94D│ ", "&#FFD94D├ ", "&#FFD94D└ ", "", "", "", "", "─"), "&#FFD94D{text}",
+        return new Look(DEFAULT_LORE, List.of("&#FFD94D│ ", "&#FFD94D├ ", "&#FFD94D└ "), "&#FFD94D{text}",
                 Map.of("left", "&r&7%img_left_click%", "right", "&r&7%img_right_click%",
-                        "shift-left", "&r&7⇧%img_left_click%", "shift-right", "&r&7⇧%img_right_click%"));
+                        "shift-left", "&r&7⇧%img_left_click%", "shift-right", "&r&7⇧%img_right_click%"), true);
     }
 
     private static Look read(ConfigurationSection s, Look fallback) {
         if (s == null) return fallback;
+        List<String> frame = s.isList("frame") ? s.getStringList("frame") : fallback.frame();
+        if (frame.size() < 3) frame = fallback.frame();
         Map<String, String> icons = new HashMap<>(fallback.icons());
         ConfigurationSection ic = s.getConfigurationSection("icons");
         if (ic != null) for (String k : ic.getKeys(false)) icons.put(k.toLowerCase(Locale.ROOT), ic.getString(k, ""));
-        return new Look(s.getString("lore", fallback.lore()), readBorder(s, fallback.border()),
-                s.getString("name", fallback.name()), icons);
-    }
-
-    private static Border readBorder(ConfigurationSection s, Border fallback) {
-        if (s.isBoolean("border") && !s.getBoolean("border")) return Border.NONE;
-        ConfigurationSection b = s.getConfigurationSection("border");
-        if (b == null) return fallback;
-        return new Border(b.getString("left", fallback.left()), b.getString("left-action", fallback.leftAction()),
-                b.getString("left-last", fallback.leftLast()), b.getString("right", fallback.right()),
-                b.getString("top", fallback.top()), b.getString("bottom", fallback.bottom()),
-                b.getString("separator", fallback.separator()), b.getString("fill", fallback.fill()));
-    }
-
-    private static final Map<Integer, Integer> WIDTHS = new HashMap<>();
-
-    /** The suite's border (the box is finished by Flux on the shown lore, variants keep their own left side only). */
-    public static Border border() {
-        return base.border();
-    }
-
-    /** Width overrides in pixels ({@code font-widths}) for characters the built-in table gets wrong. */
-    public static Integer fontWidth(int codePoint) {
-        return WIDTHS.get(codePoint);
+        return new Look(s.getString("lore", fallback.lore()), frame, s.getString("name", fallback.name()), icons,
+                s.getBoolean("framed", fallback.framed()));
     }
 
     /** Called by Flux with style.yml. */
     public static void configure(ConfigurationSection file) {
         base = read(file, defaults());
         VARIANTS.clear();
-        WIDTHS.clear();
-        ConfigurationSection w = file == null ? null : file.getConfigurationSection("font-widths");
-        if (w != null) for (String k : w.getKeys(false)) if (!k.isEmpty()) WIDTHS.put(k.codePointAt(0), w.getInt(k));
         ConfigurationSection v = file == null ? null : file.getConfigurationSection("variants");
         if (v != null) for (String name : v.getKeys(false)) VARIANTS.put(name.toLowerCase(Locale.ROOT), read(v.getConfigurationSection(name), base));
     }
@@ -209,7 +171,7 @@ public final class Style {
      * (the last action, or the last line, gets the corner).
      */
     public List<String> lore(List<Entry> entries) {
-        return render(entries, true);
+        return render(entries, look().framed());
     }
 
     private List<String> render(List<Entry> entries, boolean frame) {
@@ -226,10 +188,7 @@ public final class Style {
             run = 0;
             List<Entry> own = byKind.get(b.kind());
             if (own == null) continue;
-            if (!lines.isEmpty() && gap > 0) {
-                if (frame && !look().border().separator().isEmpty()) lines.add(new String[]{"separator", ""});
-                else for (int i = 0; i < gap; i++) lines.add(new String[]{"", ""});
-            }
+            if (!lines.isEmpty()) for (int i = 0; i < gap; i++) lines.add(new String[]{"", ""});
             gap = 0;
             for (Entry e : own) lines.add(new String[]{e.kind(), b.prefix() + fill(e.selected() ? b.selected() : b.unselected(), e) + b.suffix()});
         }
@@ -238,20 +197,15 @@ public final class Style {
             for (String[] l : lines) out.add(l[1]);
             return out;
         }
-        Border border = look().border();
-        List<String> out = new ArrayList<>(lines.size() + 2);
-        if (!lines.isEmpty() && !border.top().isEmpty()) out.add(border.top());
+        List<String> f = look().frame();
+        List<String> out = new ArrayList<>(lines.size());
         for (int i = 0; i < lines.size(); i++) {
-            String kind = lines.get(i)[0], text = lines.get(i)[1];
-            if (kind.equals("separator")) {
-                out.add(border.separator());
-                continue;
-            }
-            boolean last = i == lines.size() - 1 && border.bottom().isEmpty();
-            String prefix = last ? border.leftLast() : kind.equals("actions") ? border.leftAction() : border.left();
+            boolean last = i == lines.size() - 1;
+            boolean action = lines.get(i)[0].equals("actions");
+            String prefix = last ? f.get(2) : action ? f.get(1) : f.get(0);
+            String text = lines.get(i)[1];
             out.add(text.isEmpty() ? stripEnd(prefix) : prefix + text);
         }
-        if (!lines.isEmpty() && !border.bottom().isEmpty()) out.add(border.bottom());
         return out;
     }
 

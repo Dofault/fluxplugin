@@ -90,8 +90,7 @@ The look of every button lives in `plugins/Flux/style.yml` (`api.text.Style`): o
 bottom like an HTML page (`<description>...</description>`, `<values>` with `{key}`/`{value}`, `<list>`, `<filter>`
 with `<selected>`/`<unselected>`, `<text>`, `<ok>`, `<ko>`, `<info>`, `<actions>` with `{icon}`/`{label}`). A block
 repeats per line of its kind and vanishes when empty; template order is the lore order; a blank template line shows
-only between content (runs around a vanished block merge). Plus `border` (left side; optional real box: `right` aligned in pixels, `top`/`bottom`/`separator` full lines with
-`{fill}`, finished by `Text.box` on the shown lore), `font-widths`, `name`, `icons`. Any text may use
+only between content (runs around a vanished block merge). Plus `frame`, `name`, `icons`. Any text may use
 `<smallcaps>...</smallcaps>`. Look only, never words (labels go to the lang files). Never hand-write `&#FFD94D│ ...`
 lines again:
 
@@ -105,8 +104,8 @@ lines again:
 - **Navigation arrows** (previous / next page): no name, `hide-tooltip: true`.
 - **Filters**: one format (the pets one): options listed with the current one marked, left click = next filter,
   right click = previous (`[list] <id> filter` / `filter-prev`, or `@filter <list>` for a Flux list).
-- A plugin keeps its own colour with a variant (`variants.<name>` in style.yml: its own `lore`, `name`, `border` left
-  side or `icons`), never with hard-coded colours.
+- A plugin keeps its own colour with a variant (`variants.<name>` in style.yml: its own `lore`, `name`, `frame` or
+  `icons`), never with hard-coded colours.
 
 ## Building (shared machine: production runs on it)
 

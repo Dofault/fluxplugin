@@ -36,7 +36,6 @@ public final class Text {
         warnedGlyphs.clear();
         papi = null;
         itemsAdder = null;
-        glyphWidths = null;
     }
 
     private static boolean hasPapi() {
@@ -227,8 +226,7 @@ public final class Text {
         for (int i = 0; i < lore.size(); i++) {
             Component line = lore.get(i);
             String legacy = LEGACY.serialize(line);
-            boolean finished = boxed(PLAIN.serialize(line), PLAIN.serialize(colors(fr.influencraft.flux.api.text.Style.border().right())));
-            java.util.List<String> pieces = !finished && visibleLength(legacy) > loreWidth ? wrap(legacy) : java.util.List.of();
+            java.util.List<String> pieces = visibleLength(legacy) > loreWidth ? wrap(legacy) : java.util.List.of();
             if (pieces.size() <= 1) {
                 if (out != null) out.add(line);
                 continue;
@@ -314,154 +312,5 @@ public final class Text {
     public static String glyphs(String text) {
         if (!hasItemsAdder() || text.indexOf(':') < 0) return text;
         return fr.influencraft.flux.api.items.CustomItems.glyphs(text);
-    }
-
-    // ------------------------------------------------------------------ lore box (style.yml border)
-
-    private static final net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer PLAIN =
-            net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText();
-    /** Width in px (advance, spacing included) of the default font, the characters that are not 6 px. */
-    private static final java.util.Map<Integer, Integer> FONT = new java.util.HashMap<>();
-    private static volatile java.util.Map<Integer, Integer> glyphWidths;
-
-    static {
-        for (char c : "!',.:;i|".toCharArray()) FONT.put((int) c, 2);
-        for (char c : "`l".toCharArray()) FONT.put((int) c, 3);
-        for (char c : " It[]\"()*{}".toCharArray()) FONT.put((int) c, 4);
-        for (char c : "<>fk".toCharArray()) FONT.put((int) c, 5);
-        for (char c : "@~".toCharArray()) FONT.put((int) c, 7);
-    }
-
-    /** Width of custom glyphs (ItemsAdder), by character, built once per hook reset. */
-    private static java.util.Map<Integer, Integer> glyphWidths() {
-        java.util.Map<Integer, Integer> map = glyphWidths;
-        if (map != null) return map;
-        map = new java.util.HashMap<>();
-        if (hasItemsAdder()) {
-            try {
-                for (String id : fr.influencraft.flux.api.items.CustomItems.glyphIds()) {
-                    String glyph = fr.influencraft.flux.api.items.CustomItems.glyphs(":" + id + ":");
-                    if (glyph != null && glyph.codePointCount(0, glyph.length()) == 1) {
-                        map.put(glyph.codePointAt(0), fr.influencraft.flux.api.items.CustomItems.glyphWidth(id) + 1);
-                    }
-                }
-            } catch (RuntimeException e) {
-                return map; // provider still loading: try again next time
-            }
-        }
-        glyphWidths = map;
-        return map;
-    }
-
-    /** Shown width in px of a legacy line ({@code &} codes, glyph characters already in place). */
-    public static int pixelWidth(String legacy) {
-        java.util.Map<Integer, Integer> glyphs = glyphWidths();
-        boolean bold = false;
-        int width = 0;
-        for (int i = 0; i < legacy.length(); ) {
-            int cp = legacy.codePointAt(i);
-            if ((cp == '&' || cp == '§') && i + 1 < legacy.length()) {
-                char c = Character.toLowerCase(legacy.charAt(i + 1));
-                if (c == '#' && i + 8 <= legacy.length()) {
-                    bold = false;
-                    i += 8;
-                    continue;
-                }
-                if ("0123456789abcdefrx".indexOf(c) >= 0) bold = false;
-                if (c == 'l') bold = true;
-                if ("0123456789abcdefklmnorx".indexOf(c) >= 0) {
-                    i += 2;
-                    continue;
-                }
-            }
-            Integer own = fr.influencraft.flux.api.text.Style.fontWidth(cp);
-            Integer glyph = own == null ? glyphs.get(cp) : null;
-            width += own != null ? own : glyph != null ? glyph : FONT.getOrDefault(cp, 6) + (bold ? 1 : 0);
-            i += Character.charCount(cp);
-        }
-        return width;
-    }
-
-    /** A line that already has the box's right side (wrapping or boxing it again would break the box). */
-    private static boolean boxed(String plain, String right) {
-        String r = right.strip();
-        return !r.isEmpty() && plain.strip().length() > r.length() + 1 && plain.strip().endsWith(r);
-    }
-
-    /** Exactly {@code px} pixels of empty space: an ItemsAdder offset, else normal (4) and bold (5) spaces. */
-    private static Component space(int px) {
-        if (px <= 0) return Component.empty();
-        if (hasItemsAdder()) {
-            String offset = fr.influencraft.flux.api.items.CustomItems.glyphs(":offset_" + px + ":");
-            if (offset != null && !offset.startsWith(":")) return Component.text(offset);
-        }
-        int bold = 0;
-        while (px % 4 != 0 && px >= 5) {
-            px -= 5;
-            bold++;
-        }
-        return Component.text(" ".repeat(px / 4))
-                .append(Component.text(" ".repeat(bold)).decoration(TextDecoration.BOLD, true));
-    }
-
-    /**
-     * Finishes the box of a shown lore (style.yml {@code border}): right side aligned at the widest framed line,
-     * {@code {fill}} of the full lines repeated across that width. Lines that do not start with the border (the
-     * item's own description, unframed lines) are left as they are; an already finished lore is not touched.
-     */
-    public static java.util.List<Component> box(java.util.List<Component> lore) {
-        var border = fr.influencraft.flux.api.text.Style.border();
-        if (lore == null || lore.isEmpty() || !border.box()) return lore;
-        java.util.List<String> starts = new java.util.ArrayList<>();
-        for (String l : new String[]{border.left(), border.leftAction(), border.leftLast()}) {
-            String plain = PLAIN.serialize(colors(l)).strip();
-            if (!plain.isEmpty()) starts.add(plain);
-        }
-        String right = PLAIN.serialize(colors(border.right()));
-        int[] kind = new int[lore.size()]; // 0 untouched, 1 framed line, 2 full line
-        int widest = 0;
-        boolean any = false;
-        for (int i = 0; i < lore.size(); i++) {
-            String plain = PLAIN.serialize(lore.get(i));
-            if (plain.contains("{fill}")) {
-                kind[i] = 2;
-                any = true;
-                continue;
-            }
-            boolean framed = false;
-            for (String st : starts) if (plain.startsWith(st)) framed = true;
-            if (!framed) continue;
-            if (boxed(plain, right)) return lore; // already finished
-            widest = Math.max(widest, pixelWidth(LEGACY.serialize(lore.get(i))));
-            if (right.isEmpty()) continue;
-            kind[i] = 1;
-            any = true;
-        }
-        if (!any) return lore;
-        int rightWidth = pixelWidth(border.right());
-        Component rightPart = colors(glyphs(border.right())).decoration(TextDecoration.ITALIC, false);
-        int fillWidth = Math.max(1, pixelWidth(border.fill()));
-        java.util.List<Component> out = new java.util.ArrayList<>(lore.size());
-        for (int i = 0; i < lore.size(); i++) {
-            Component line = lore.get(i);
-            if (kind[i] == 1) {
-                int w = pixelWidth(LEGACY.serialize(line));
-                out.add(line.append(space(widest - w).color(null)).append(rightPart));
-            } else if (kind[i] == 2) {
-                String legacy = LEGACY.serialize(line);
-                int at = legacy.indexOf("{fill}");
-                String before = legacy.substring(0, at), after = legacy.substring(at + 6);
-                int room = widest + rightWidth - pixelWidth(before) - pixelWidth(after);
-                int count = Math.max(0, room / fillWidth);
-                String colorAtFill = activeCodes(before);
-                Component full = colors(before + border.fill().repeat(count))
-                        .append(space(room - count * fillWidth))
-                        .append(colors(colorAtFill + after));
-                out.add(full.decoration(TextDecoration.ITALIC, false));
-            } else {
-                out.add(line);
-            }
-        }
-        return out;
     }
 }

@@ -56,7 +56,7 @@ public final class Texts {
         for (String line : raw) {
             for (String piece : wrap(Style.applyTags(placeholders(line, player)))) out.add(parse(piece, player));
         }
-        return fr.influencraft.flux.Text.box(out);
+        return out;
     }
 
     /**
