@@ -1,9 +1,10 @@
 # Flux : menu Récompenses (/recompenses, bouton Récompenses de /menu2). Fond menu_recompenses (ItemsAdder
 # influmenu, généré par plugins/fluxplugin/Flux/assets/recompenses/gen_fond.py).
+# Retour en 0, explication du menu et récompense du jour en 8.
 # Haut : toutes les récompenses en attente, quel que soit le plugin qui les a données, une case par récompense
 # (21 par page), page précédente / suivante à gauche et à droite de la boîte, Tout récupérer dessous.
-# Bas : récompense du jour, puis la frise du cycle de connexion (ou des paliers de temps de jeu), 7 par page.
-# Les éléments du bas sont construits par FluxRewards (listes recompenses_frise et recompenses_jour).
+# Bas : deux frises de 7, le cycle de connexion (55-61) et les paliers de temps de jeu (64-70), flèches de chaque
+# côté. Explication et frises construites par FluxRewards (listes recompenses_info, _connexion, _temps).
 title: ":offset_-8::menu_recompenses:"
 rows: 6
 player-inventory: hidden
@@ -28,14 +29,21 @@ lists:
       actions:
         left: ["[rewards] claim %entry_id%", "[sound] @complete"]
 
-  recompenses_jour:
-    slots: 58
+  recompenses_info:
+    slots: 8
     item:
       material: entry
       actions:
         left: ["%entry_clic%", "[refresh]"]
 
-  recompenses_frise:
+  recompenses_connexion:
+    slots: 55-61
+    item:
+      material: entry
+      actions:
+        left: ["%entry_clic%", "[refresh]"]
+
+  recompenses_temps:
     slots: 64-70
     item:
       material: entry
@@ -47,7 +55,7 @@ items:
   retour:
     material: "itemsadder:influitems:btn_back"
     name: "&#FFD94DRetour"
-    slots: [54]
+    slots: [0]
     lore:
       - "&#FFD94D│ &#B376E5Revenir au menu."
       - "&#FFD94D└ &r&7%img_left_click% &fMenu principal"
@@ -58,7 +66,6 @@ items:
     material: "itemsadder:influitems:checkmark"
     name: "&#FFD94DRien en attente"
     slots: [22]
-    priority: 1
     view-requirements: ["placeholder: %flux_rewards_count% == 0"]
     lore:
       - "&#FFD94D│ &#B376E5Tes prochaines récompenses"
@@ -96,45 +103,38 @@ items:
     actions:
       left: ["[list] rewards next", "[sound] @page"]
 
-  vue_temps:
-    material: "itemsadder:influitems:stairs"
-    priority: 1
-    view-requirements: ["placeholder: %flux_list_recompenses_frise_filter% == Connexion"]
-    name: "&#FFD94DConnexion"
-    slots: [62]
-    lore:
-      - "&#FFD94D│ &#B376E5La frise montre tes jours"
-      - "&#FFD94D│ &#B376E5de connexion."
-      - "&#FFD94D└ &r&7%img_left_click% &fVoir le temps de jeu"
-    actions:
-      left: ["[list] recompenses_frise filter 1", "[sound] @click"]
-
-  vue_connexion:
-    material: "itemsadder:influitems:tracking"
-    priority: 2
-    name: "&#FFD94DTemps de jeu"
-    slots: [62]
-    lore:
-      - "&#FFD94D│ &#B376E5La frise montre les paliers"
-      - "&#FFD94D│ &#B376E5de temps de jeu."
-      - "&#FFD94D└ &r&7%img_left_click% &fVoir la connexion"
-    actions:
-      left: ["[fluxrewards] semaine", "[sound] @click"]
-
-  semaine_prec:
+  connexion_prec:
     material: "itemsadder:influitems:btn_prev"
     hide-tooltip: true
-    name: "&#FFD94DPrécédent"
-    slots: [63]
-    view-requirements: ["placeholder: %flux_list_recompenses_frise_has_prev% == true"]
+    name: "&#FFD94DSemaine précédente"
+    slots: [54]
+    view-requirements: ["placeholder: %flux_list_recompenses_connexion_has_prev% == true"]
     actions:
-      left: ["[list] recompenses_frise prev", "[sound] @page"]
+      left: ["[list] recompenses_connexion prev", "[sound] @page"]
 
-  semaine_suiv:
+  connexion_suiv:
     material: "itemsadder:influitems:btn_next"
     hide-tooltip: true
-    name: "&#FFD94DSuivant"
-    slots: [71]
-    view-requirements: ["placeholder: %flux_list_recompenses_frise_has_next% == true"]
+    name: "&#FFD94DSemaine suivante"
+    slots: [62]
+    view-requirements: ["placeholder: %flux_list_recompenses_connexion_has_next% == true"]
     actions:
-      left: ["[list] recompenses_frise next", "[sound] @page"]
+      left: ["[list] recompenses_connexion next", "[sound] @page"]
+
+  temps_prec:
+    material: "itemsadder:influitems:btn_prev"
+    hide-tooltip: true
+    name: "&#FFD94DPaliers précédents"
+    slots: [63]
+    view-requirements: ["placeholder: %flux_list_recompenses_temps_has_prev% == true"]
+    actions:
+      left: ["[list] recompenses_temps prev", "[sound] @page"]
+
+  temps_suiv:
+    material: "itemsadder:influitems:btn_next"
+    hide-tooltip: true
+    name: "&#FFD94DPaliers suivants"
+    slots: [71]
+    view-requirements: ["placeholder: %flux_list_recompenses_temps_has_next% == true"]
+    actions:
+      left: ["[list] recompenses_temps next", "[sound] @page"]

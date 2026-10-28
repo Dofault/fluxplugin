@@ -4,8 +4,6 @@ import fr.influencraft.flux.api.FluxApi;
 import fr.influencraft.flux.api.inventory.Items;
 import fr.influencraft.flux.api.inventory.Lore;
 import fr.influencraft.flux.api.list.ListEntry;
-import fr.influencraft.flux.api.list.ListProvider;
-import fr.influencraft.flux.api.list.ListQuery;
 import fr.influencraft.flux.api.list.Lists;
 import fr.influencraft.flux.api.reward.Rewards;
 import fr.influencraft.flux.api.text.Texts;
@@ -20,15 +18,16 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Lower part of Flux's rewards menu ({@code menus/rewards.yml}): the frieze of the login cycle or of the playtime
- * tiers ({@code recompenses_frise}, 7 per page, filter 0 = login, 1 = playtime) and today's reward
- * ({@code recompenses_jour}). Each element is built here, the menu file only places it; a click on a waiting
- * reward claims it ({@code %entry_clic%}). {@code [fluxrewards] semaine} opens the frieze on the current week.
+ * Parts of Flux's rewards menu ({@code menus/rewards.yml}) built here, the menu file only places them: the frieze
+ * of the login cycle ({@code recompenses_connexion}) and of the playtime tiers ({@code recompenses_temps}), 7 per
+ * page, and the explanation of the menu with today's reward ({@code recompenses_info}). A click on a waiting
+ * reward claims it ({@code %entry_clic%}). {@code [fluxrewards] semaine} opens the login frieze on the current week.
  */
 final class RewardsMenu {
 
-    static final String FRISE = "recompenses_frise";
-    static final String JOUR = "recompenses_jour";
+    static final String CONNEXION = "recompenses_connexion";
+    static final String TEMPS = "recompenses_temps";
+    static final String INFO = "recompenses_info";
     private static final int PAR_SEMAINE = 7;
 
     private final FluxRewards plugin;
@@ -41,29 +40,21 @@ final class RewardsMenu {
 
     static void enable(FluxRewards plugin, DailyRewards daily) {
         RewardsMenu menu = new RewardsMenu(plugin, daily);
-        Lists.register(plugin, FRISE, new ListProvider() {
-            @Override
-            public List<ListEntry> entries(ListQuery query) {
-                return query.filter() == 1 ? menu.playtime(query.viewer()) : menu.days(query.viewer());
-            }
-
-            @Override
-            public List<String> filters() {
-                return List.of("Connexion", "Temps de jeu");
-            }
-        });
-        Lists.register(plugin, JOUR, query -> List.of(menu.today(query.viewer())));
+        Lists.register(plugin, CONNEXION, query -> menu.days(query.viewer()));
+        Lists.register(plugin, TEMPS, query -> menu.playtime(query.viewer()));
+        Lists.register(plugin, INFO, query -> List.of(menu.info(query.viewer())));
         FluxApi.registerAction(plugin, "fluxrewards", (player, view, argument) -> {
             if (argument.trim().equalsIgnoreCase("semaine")) menu.currentWeek(player);
         });
     }
 
-    /** Opens the frieze on the login view, at the week of today. */
+    /** Opens the login frieze at the week of today, the playtime frieze on its first page. */
     private void currentWeek(Player player) {
-        Lists.reset(player, FRISE);
+        Lists.reset(player, TEMPS);
+        Lists.reset(player, CONNEXION);
         PlayerData d = daily.data(player.getUniqueId());
         int day = d == null ? 1 : Math.max(1, d.dayOfCycle(daily.cycle()));
-        Lists.act(player, FRISE, "page " + ((day - 1) / PAR_SEMAINE + 1), PAR_SEMAINE);
+        Lists.act(player, CONNEXION, "page " + ((day - 1) / PAR_SEMAINE + 1), PAR_SEMAINE);
     }
 
     // ------------------------------------------------------------------ login days
@@ -138,29 +129,34 @@ final class RewardsMenu {
         return out;
     }
 
-    // ------------------------------------------------------------------ today
+    // ------------------------------------------------------------------ explanation and today
 
-    private ListEntry today(Player player) {
+    private ListEntry info(Player player) {
         UUID uuid = player.getUniqueId();
         PlayerData d = daily.data(uuid);
         int day = d == null ? 0 : d.dayOfCycle(daily.cycle());
-        Lore lore = Lore.create().line("Une récompense t'attend à chaque")
-                .line("jour de connexion, et d'autres")
-                .line("en jouant (temps de jeu).")
+        Lore lore = Lore.create().line("Tout ce que tu gagnes arrive ici :")
+                .line("connexion, temps de jeu, votes,")
+                .line("parrainage, boosters...")
+                .line("")
+                .line("En bas, une récompense par jour")
+                .line("de connexion (1re ligne) et par")
+                .line("palier de temps de jeu (2e ligne).")
                 .line("")
                 .line("Jour " + Lore.GOLD + day + "&7/" + Lore.GOLD + daily.cycle() + Lore.PURPLE + " de connexion.")
                 .line("Temps de jeu : " + Lore.GOLD + Format.duration(daily.playtime(uuid)) + Lore.PURPLE + ".");
         String clic = "[sound] @error";
         String icon;
-        if (d != null && Rewards.waiting(uuid, daily.dayKey(d))) {
-            icon = "itemsadder:influitems:chest_item";
+        boolean waiting = d != null && Rewards.waiting(uuid, daily.dayKey(d));
+        if (waiting) {
+            icon = "itemsadder:influitems:reward";
             lore.line(Lore.GREEN + "Celle d'aujourd'hui t'attend !").left("Récupérer");
             clic = "[rewards] claim key:" + daily.dayKey(d);
         } else {
-            icon = "itemsadder:influitems:chest_checkmark";
-            lore.line(Lore.GREEN + "Déjà récupérée, reviens demain.");
+            icon = "itemsadder:influitems:reward";
+            lore.line(Lore.GREEN + "Celle d'aujourd'hui est prise, reviens demain.");
         }
-        return entry(player, "aujourdhui", icon, "Récompense du jour", lore, Math.max(1, day), true).set("clic", clic);
+        return entry(player, "info", icon, "Récompenses", lore, 1, waiting).set("clic", clic);
     }
 
     // ------------------------------------------------------------------ helpers
