@@ -1,9 +1,12 @@
-# FluxOffering : l'offrande ouverte par le joueur (/offrande [collection]). L'argent et les objets demandés sont la
-# liste « offering » (chaque élément porte son objet, son nom et sa progression) ; les clics passent par [offering].
-title: "&8%offrandes_current_name%"
+# FluxOffering : l'offrande ouverte par le joueur (/offrande [collection], ou un clic sur un rang de /grade).
+# Fond menu_offrande_<rang> (Flux/assets/offrande/gen_fonds.py) : la couleur et les étoiles de palier du rang ; ton
+# inventaire reste visible pour voir ce que tu peux déposer. Ligne 0 : retour (0) et icône de l'offrande (8). Objets
+# demandés : liste « offering » (10-16, 19-25, 28-34), pages en 18 et 26, Tout déposer en 40, filtre en 49,
+# boutons d'administration en 45 et 53. Les clics passent par [offering].
+title: ":offset_-8::menu_offrande_%offrandes_current_id%:"
 rows: 6
-player-inventory: hidden
-vanilla-background: true
+player-inventory: visible
+vanilla-background: false
 
 lists:
   offering:
@@ -15,24 +18,32 @@ lists:
         right: ["[offering] click %entry_id% right"]
 
 items:
+  icone:
+    slot: 8
+    material: "itemsadder:influitems:stairs"
+    name: "&#FFD94D%offrandes_current_name%"
+    lore:
+      - "&#FFD94D│ &#B376E5Dépose les objets demandés"
+      - "&#FFD94D│ &#B376E5depuis ton inventaire (clic sur"
+      - "&#FFD94D│ &#B376E5un objet, ou Tout déposer)."
+      - "&#FFD94D│ &#B376E5"
+      - "&#FFD94D└ &#B376E5Progression : &f%offrandes_current_percent% %"
   retour:
-    slot: 45
+    slot: 0
     material: "itemsadder:influitems:btn_back"
     name: "&r&7%img_left_click% &#FFD94DRetour"
-    lore: ["&#B376E5Retour au menu principal."]
-    view-requirements: ["placeholder: %flux_list_offering_has_prev% == false"]
+    lore: ["&#B376E5Retour aux rangs."]
     actions:
-      left: ["[close]", "[player] menu"]
+      left: ["[menu] grades"]
   precedente:
-    slot: 45
+    slot: 18
     material: "itemsadder:influitems:btn_prev"
     name: "&r&7%img_left_click% &#FFD94DPage précédente"
-    priority: -1
     view-requirements: ["placeholder: %flux_list_offering_has_prev% == true"]
     actions:
       left: ["[list] offering prev"]
   suivante:
-    slot: 53
+    slot: 26
     material: "itemsadder:influitems:btn_next"
     name: "&r&7%img_left_click% &#FFD94DPage suivante"
     view-requirements: ["placeholder: %flux_list_offering_has_next% == true"]
@@ -43,7 +54,8 @@ items:
     material: "itemsadder:influitems:filter"
     name: "&r&7%img_left_click% &#FFD94DAffichage : %flux_list_offering_filter%"
     lore:
-      - "&#B376E5Tout, Déposés (offrande remplie), Non déposés (ce qu'il reste à faire)."
+      - "&#B376E5Tout, Déposés (offrande remplie),"
+      - "&#B376E5Non déposés (ce qu'il reste à faire)."
       - ""
       - "&#B376E5Clique pour changer l'affichage."
     view-requirements: ["placeholder: %offrandes_editing% == false"]
@@ -54,7 +66,9 @@ items:
     material: CHEST
     name: "&r&7%img_left_click% &#FFD94DTout déposer"
     lore:
-      - "&#B376E5Dépose d'un coup tout ce que tu peux, sur tous les items de cette offrande."
+      - "&#B376E5Dépose d'un coup tout ce que"
+      - "&#B376E5tu peux, sur tous les items"
+      - "&#B376E5de cette offrande."
       - ""
       - "&#B376E5Progression : &f%offrandes_current_percent% %"
     view-requirements:
@@ -63,7 +77,7 @@ items:
     actions:
       left: ["[offering] depositall"]
   edition:
-    slot: 0
+    slot: 45
     material: ANVIL
     name: "&r&7%img_left_click% &#FFD94DModifier cette offrande"
     lore: ["&#B376E5Réservé aux administrateurs."]
@@ -73,7 +87,7 @@ items:
     actions:
       left: ["[offering] editor"]
   quitter_edition:
-    slot: 0
+    slot: 45
     material: BARRIER
     name: "&r&7%img_left_click% &#FFD94DQuitter l'édition"
     lore: ["&#B376E5Retour à la vue normale."]
@@ -83,7 +97,7 @@ items:
     actions:
       left: ["[offering] editor"]
   ajouter:
-    slot: 8
+    slot: 53
     material: "itemsadder:influitems:add"
     name: "&r&7%img_left_click% &#FFD94DDemander l'objet en main"
     lore:

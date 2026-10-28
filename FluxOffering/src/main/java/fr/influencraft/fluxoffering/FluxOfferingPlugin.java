@@ -69,7 +69,7 @@ public final class FluxOfferingPlugin extends JavaPlugin {
         }
 
         // rank menu (/grade): ranks.yml, Flux menu grades
-        new fr.influencraft.fluxoffering.ranks.RankMenu(this).enable();
+        new fr.influencraft.fluxoffering.ranks.RankMenu(this, id -> configManager.getCollection(id) != null).enable();
 
         OffrandePlaceholderExpansion placeholders = new OffrandePlaceholderExpansion(this, configManager, dataManager);
         placeholders.menu(offeringMenu);

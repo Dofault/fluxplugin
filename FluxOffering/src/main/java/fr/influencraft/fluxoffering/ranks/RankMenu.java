@@ -64,12 +64,15 @@ public final class RankMenu implements org.bukkit.event.Listener {
     }
 
     private final JavaPlugin plugin;
+    /** Whether an offering (collection) exists for this id. */
+    private final java.util.function.Predicate<String> offeringExists;
     private final List<Tier> tiers = new ArrayList<>();
     private final List<Rank> ranks = new ArrayList<>();
     private String placeholder;
 
-    public RankMenu(JavaPlugin plugin) {
+    public RankMenu(JavaPlugin plugin, java.util.function.Predicate<String> offeringExists) {
         this.plugin = plugin;
+        this.offeringExists = offeringExists;
     }
 
     public void enable() {
@@ -162,11 +165,20 @@ public final class RankMenu implements org.bukkit.event.Listener {
         return out;
     }
 
+    /**
+     * A rank: name and number, description, perks (server lore frame, grey arrows). A click opens the rank's offering
+     * (the one that gives it) for every rank up to the next one, already done ones included; further ranks stay
+     * closed (the offering command checks the access again).
+     */
     private ListEntry rankEntry(Player player, Rank r, int index, int current) {
-        Lore lore = Lore.create().line("Grade &f" + (index + 1) + "&7/&f" + ranks.size()).lines(r.description());
-        for (String perk : r.perks()) lore.raw(perk);
+        Lore lore = Lore.create();
+        for (String line : r.description()) lore.line("&f" + line);
+        if (!r.perks().isEmpty()) lore.line("");
+        for (String perk : r.perks()) lore.line(perk);
+        lore.line("");
         String icon, click = "[sound] @error";
         boolean glow = false;
+        boolean offering = index <= current + 1 && offeringExists.test(r.id());
         if (index == current) {
             icon = "player-head";
             glow = true;
@@ -176,13 +188,17 @@ public final class RankMenu implements org.bukkit.event.Listener {
             lore.line(Lore.GREEN + "Validé.");
         } else if (index == current + 1) {
             icon = "itemsadder:influitems:tracking";
-            lore.line("Prochain grade : fais son offrande.").left("Faire l'offrande");
-            click = "[player] offrande";
+            lore.line("Prochain rang : fais son offrande.");
         } else {
             icon = "itemsadder:influitems:lock";
-            lore.line(Lore.RED + "Pas encore atteint.");
+            lore.line(Lore.RED + "Pas encore accessible.");
         }
-        return entry(player, "rank:" + r.id(), icon, "&" + r.colour() + "&l" + r.name(), lore, index + 1, glow).set("clic", click);
+        if (offering) {
+            lore.left(index == current + 1 ? "Faire l'offrande" : "Voir l'offrande");
+            click = "[player] offrande " + r.id();
+        }
+        String name = "&" + r.colour() + "&l" + r.name() + " &7" + (index + 1) + "/" + ranks.size();
+        return entry(player, "rank:" + r.id(), icon, name, lore, index + 1, glow).set("clic", click);
     }
 
     private ListEntry chestEntry(Player player, Tier t, int current) {
