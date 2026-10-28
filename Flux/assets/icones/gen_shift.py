@@ -2,7 +2,8 @@
 """Shift key glyph (influemoji:shift), same 16x16 pixel art and palette as left_click / right_click.
 
     <venv with Pillow>/python3 gen_shift.py <contents/influemoji/textures/font/emoji>
-Shown before the click icon of the shift actions: %img_shift% + %img_left_click% (Flux style.yml, icons).
+Shown before the click icon of the shift actions: %img_shift%+%img_left_click% (the + is a character, Flux style.yml).
+The arrow is 2 / 4 / 6 / 8 px wide (even) so it sits exactly in the middle of the 14 px key.
 """
 import os
 import sys
@@ -15,15 +16,15 @@ ART = [
     "................",
     "..OOOOOOOOOOOO..",
     ".OEEEEEEEEEEEEO.",
-    ".OTTTTTTSTTTTTO.",
-    ".OTTTTTSSSTTTTO.",
-    ".OTTTTSSSSSTTTO.",
-    ".OTTTSSSSSSSTTO.",
-    ".OTTTddSSSddTTO.",
-    ".OTTTTTSSSTTTTO.",
-    ".OTTTTTSSSTTTTO.",
-    ".OTTTTTSSSTTTTO.",
-    ".OTTTTTdddTTTTO.",
+    ".OTTTTTSSTTTTTO.",
+    ".OTTTTSSSSTTTTO.",
+    ".OTTTSSSSSSTTTO.",
+    ".OTTSSSSSSSSTTO.",
+    ".OTTddSSSSddTTO.",
+    ".OTTTTSSSSTTTTO.",
+    ".OTTTTSSSSTTTTO.",
+    ".OTTTTSSSSTTTTO.",
+    ".OTTTTddddTTTTO.",
     ".OKKKKKKKKKKKKO.",
     ".OKKKKKKKKKKKKO.",
     "..OOOOOOOOOOOO..",

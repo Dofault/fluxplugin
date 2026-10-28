@@ -47,8 +47,8 @@ name: "&#FFD94D{text}"
 icons:
   left: "&r&7%img_left_click%"
   right: "&r&7%img_right_click%"
-  shift-left: "&r&7%img_shift%&8+&7%img_left_click%"
-  shift-right: "&r&7%img_shift%&8+&7%img_right_click%"
+  shift-left: "&r&7%img_shift%&7+%img_left_click%"
+  shift-right: "&r&7%img_shift%&7+%img_right_click%"
 
 # Variants of a plugin: any of the keys above (lore, frame, separator, name, icons), the rest comes from here.
 # A menu button picks one with a lore line « @style <variant> ».

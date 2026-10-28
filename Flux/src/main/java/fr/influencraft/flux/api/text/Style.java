@@ -121,7 +121,7 @@ public final class Style {
     private static Look defaults() {
         return new Look(DEFAULT_LORE, new Frame(true, "", "&#FFD94D│ ", "&#FFD94D├ ", "&#FFD94D└ "), null, "&#FFD94D{text}",
                 Map.of("left", "&r&7%img_left_click%", "right", "&r&7%img_right_click%",
-                        "shift-left", "&r&7%img_shift%&8+&7%img_left_click%", "shift-right", "&r&7%img_shift%&8+&7%img_right_click%"));
+                        "shift-left", "&r&7%img_shift%&7+%img_left_click%", "shift-right", "&r&7%img_shift%&7+%img_right_click%"));
     }
 
     private static Look read(ConfigurationSection s, Look fallback) {

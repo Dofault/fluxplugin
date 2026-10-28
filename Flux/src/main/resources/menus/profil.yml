@@ -1,0 +1,226 @@
+# Profile menu (/profil): the player's card. Background influmenu:menu_profil (plugins/fluxplugin/Flux/assets/profil/gen_fond.py).
+# Row 0: back (0), menu icon (8). Row 1: BitBlock (11), head (13), Influence (15). Row 3: leaderboards of Flux (28 to 34,
+# %flux_top_<board>_...%, config « leaderboards » of Flux). Row 5: activity (46, 48, 50, 52). Inventory row: shortcuts.
+# Replaces the DeluxeMenus menus profil.yml and stats/stats_main.yml (2026-10-28).
+title: ":offset_-8::menu_profil:"
+rows: 6
+commands: [profil, profile]
+player-inventory: hidden
+vanilla-background: false
+update-interval: 40
+
+open-actions:
+  - "[sound] @page"
+
+items:
+
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
+    slots: [0]
+    lore:
+      - "@left Menu principal"
+    actions:
+      left: ["[menu] main"]
+
+  icone:
+    material: "itemsadder:influitems:leaderboard"
+    name: "Profil"
+    slots: [8]
+    lore:
+      - "@desc Ta fiche : tes monnaies, ta place dans les classements du serveur et ton activité."
+      - "@info Classements mis à jour toutes les 10 minutes."
+
+  bitblock:
+    material: "itemsadder:influitems:bitblock"
+    name: "BitBlock"
+    slots: [11]
+    lore:
+      - "@kv Solde | %vault_eco_balance_formatted% %img_bitblock%"
+      - "@kv Classement | %flux_top_fortune_rank%"
+
+  joueur:
+    material: player-head
+    name: "%player_name%"
+    slots: [13]
+    lore:
+      - "@kv Rang | %luckperms_prefix%"
+      - "@kv Arrivé le | %player_first_join_date%"
+      - "@kv Temps de jeu | %flux_top_temps_de_jeu_value%"
+      - "@kv Familiers | %influpet_total_pets%&#B376E5/&f%influpet_pets_count%"
+
+  influence:
+    material: "itemsadder:influitems:influence"
+    name: "Influence"
+    slots: [15]
+    lore:
+      - "@kv Solde | %playerpoints_points% %img_influence%"
+      - "@kv Classement | %flux_top_influence_rank%"
+
+  top_temps_de_jeu:
+    material: "CLOCK"
+    name: "Temps de jeu"
+    slots: [28]
+    lore:
+      - "@kv Toi | %flux_top_temps_de_jeu_value%"
+      - "@kv Ta place | %flux_top_temps_de_jeu_rank%"
+      - "@item &f1. %flux_top_temps_de_jeu_1_name% &8· &7%flux_top_temps_de_jeu_1_value%"
+      - "@item &f2. %flux_top_temps_de_jeu_2_name% &8· &7%flux_top_temps_de_jeu_2_value%"
+      - "@item &f3. %flux_top_temps_de_jeu_3_name% &8· &7%flux_top_temps_de_jeu_3_value%"
+      - "@item &f4. %flux_top_temps_de_jeu_4_name% &8· &7%flux_top_temps_de_jeu_4_value%"
+      - "@item &f5. %flux_top_temps_de_jeu_5_name% &8· &7%flux_top_temps_de_jeu_5_value%"
+
+  top_fortune:
+    material: "GOLD_BLOCK"
+    name: "Fortune"
+    slots: [29]
+    lore:
+      - "@kv Toi | %flux_top_fortune_value%"
+      - "@kv Ta place | %flux_top_fortune_rank%"
+      - "@item &f1. %flux_top_fortune_1_name% &8· &7%flux_top_fortune_1_value%"
+      - "@item &f2. %flux_top_fortune_2_name% &8· &7%flux_top_fortune_2_value%"
+      - "@item &f3. %flux_top_fortune_3_name% &8· &7%flux_top_fortune_3_value%"
+      - "@item &f4. %flux_top_fortune_4_name% &8· &7%flux_top_fortune_4_value%"
+      - "@item &f5. %flux_top_fortune_5_name% &8· &7%flux_top_fortune_5_value%"
+
+  top_influence:
+    material: "AMETHYST_SHARD"
+    name: "Influence"
+    slots: [30]
+    lore:
+      - "@kv Toi | %flux_top_influence_value%"
+      - "@kv Ta place | %flux_top_influence_rank%"
+      - "@item &f1. %flux_top_influence_1_name% &8· &7%flux_top_influence_1_value%"
+      - "@item &f2. %flux_top_influence_2_name% &8· &7%flux_top_influence_2_value%"
+      - "@item &f3. %flux_top_influence_3_name% &8· &7%flux_top_influence_3_value%"
+      - "@item &f4. %flux_top_influence_4_name% &8· &7%flux_top_influence_4_value%"
+      - "@item &f5. %flux_top_influence_5_name% &8· &7%flux_top_influence_5_value%"
+
+  top_parrainage:
+    material: "itemsadder:influitems:referral"
+    name: "Parrainage"
+    slots: [31]
+    lore:
+      - "@kv Toi | %flux_top_parrainage_value%"
+      - "@kv Ta place | %flux_top_parrainage_rank%"
+      - "@item &f1. %flux_top_parrainage_1_name% &8· &7%flux_top_parrainage_1_value%"
+      - "@item &f2. %flux_top_parrainage_2_name% &8· &7%flux_top_parrainage_2_value%"
+      - "@item &f3. %flux_top_parrainage_3_name% &8· &7%flux_top_parrainage_3_value%"
+      - "@item &f4. %flux_top_parrainage_4_name% &8· &7%flux_top_parrainage_4_value%"
+      - "@item &f5. %flux_top_parrainage_5_name% &8· &7%flux_top_parrainage_5_value%"
+
+  top_peche:
+    material: "FISHING_ROD"
+    name: "Pêche"
+    slots: [32]
+    lore:
+      - "@kv Toi | %flux_top_peche_value%"
+      - "@kv Ta place | %flux_top_peche_rank%"
+      - "@item &f1. %flux_top_peche_1_name% &8· &7%flux_top_peche_1_value%"
+      - "@item &f2. %flux_top_peche_2_name% &8· &7%flux_top_peche_2_value%"
+      - "@item &f3. %flux_top_peche_3_name% &8· &7%flux_top_peche_3_value%"
+      - "@item &f4. %flux_top_peche_4_name% &8· &7%flux_top_peche_4_value%"
+      - "@item &f5. %flux_top_peche_5_name% &8· &7%flux_top_peche_5_value%"
+
+  top_sans_mourir:
+    material: "TOTEM_OF_UNDYING"
+    name: "Sans mourir"
+    slots: [33]
+    lore:
+      - "@kv Toi | %flux_top_sans_mourir_value%"
+      - "@kv Ta place | %flux_top_sans_mourir_rank%"
+      - "@item &f1. %flux_top_sans_mourir_1_name% &8· &7%flux_top_sans_mourir_1_value%"
+      - "@item &f2. %flux_top_sans_mourir_2_name% &8· &7%flux_top_sans_mourir_2_value%"
+      - "@item &f3. %flux_top_sans_mourir_3_name% &8· &7%flux_top_sans_mourir_3_value%"
+      - "@item &f4. %flux_top_sans_mourir_4_name% &8· &7%flux_top_sans_mourir_4_value%"
+      - "@item &f5. %flux_top_sans_mourir_5_name% &8· &7%flux_top_sans_mourir_5_value%"
+
+  top_jeux_du_chat:
+    material: "WRITABLE_BOOK"
+    name: "Jeux du tchat"
+    slots: [34]
+    lore:
+      - "@kv Toi | %flux_top_jeux_du_chat_value%"
+      - "@kv Ta place | %flux_top_jeux_du_chat_rank%"
+      - "@item &f1. %flux_top_jeux_du_chat_1_name% &8· &7%flux_top_jeux_du_chat_1_value%"
+      - "@item &f2. %flux_top_jeux_du_chat_2_name% &8· &7%flux_top_jeux_du_chat_2_value%"
+      - "@item &f3. %flux_top_jeux_du_chat_3_name% &8· &7%flux_top_jeux_du_chat_3_value%"
+      - "@item &f4. %flux_top_jeux_du_chat_4_name% &8· &7%flux_top_jeux_du_chat_4_value%"
+      - "@item &f5. %flux_top_jeux_du_chat_5_name% &8· &7%flux_top_jeux_du_chat_5_value%"
+
+  carrieres:
+    material: IRON_PICKAXE
+    name: "Carrières"
+    slots: [46]
+    flags: [HIDE_ATTRIBUTES]
+    lore:
+      - "@kv Actives | %ecojobs_in_jobs%&#B376E5/&f%ecojobs_limit%"
+      - "@kv Niveau total | %ecojobs_total_job_level%"
+      - "@left Mes carrières"
+    actions:
+      left: ["[menu] metiers"]
+
+  pass:
+    material: NETHER_STAR
+    name: "Pass"
+    slots: [48]
+    lore:
+      - "@kv Palier | %ecobattlepass_tier_pass%"
+      - "@left Ouvrir le pass"
+    actions:
+      left: ["[menu] pass"]
+
+  combat:
+    material: IRON_SWORD
+    name: "Combats"
+    slots: [50]
+    flags: [HIDE_ATTRIBUTES]
+    lore:
+      - "@kv Monstres vaincus | %statistic_mob_kills%"
+      - "@kv Joueurs vaincus | %statistic_player_kills%"
+      - "@kv Morts | %statistic_deaths%"
+
+  votes:
+    material: "itemsadder:influitems:vote"
+    name: "Votes"
+    slots: [52]
+    lore:
+      - "@kv Série | %influbridge_flame_streak% j"
+      - "@kv Palier | %influbridge_flame_tier%"
+
+  rangs:
+    material: "itemsadder:influitems:stairs"
+    name: "Rangs"
+    slots: [55]
+    lore:
+      - "@left Ma progression de rang"
+    actions:
+      left: ["[menu] grades"]
+
+  metiers:
+    material: IRON_PICKAXE
+    name: "Carrières"
+    slots: [57]
+    flags: [HIDE_ATTRIBUTES]
+    lore:
+      - "@left Mes carrières"
+    actions:
+      left: ["[menu] metiers"]
+
+  succes:
+    material: "itemsadder:influitems:reward"
+    name: "Succès"
+    slots: [59]
+    lore:
+      - "@left Mes succès"
+    actions:
+      left: ["[menu] collection"]
+
+  familiers:
+    material: "itemsadder:influitems:tracking"
+    name: "Familiers"
+    slots: [61]
+    lore:
+      - "@left Mes familiers"
+    actions:
+      left: ["[menu] familiers"]

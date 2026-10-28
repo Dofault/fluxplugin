@@ -78,10 +78,10 @@ items:
     slots: [31]
     lore:
       - "@kv Rang | %luckperms_primary_group_name%"
-      - "@desc Tes statistiques et ta famille."
+      - "@desc Tes monnaies, tes classements et ton activité."
       - "@left Voir mon profil"
     actions:
-      left: ["[openguimenu] profil"]
+      left: ["[menu] profil"]
 
   mondes:
     material: COMPASS
