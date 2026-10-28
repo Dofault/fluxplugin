@@ -51,6 +51,8 @@ public final class LeaderboardService implements Leaderboards.Service, Listener 
     private int size = 10;
     private final Map<String, List<Entry>> tops = new ConcurrentHashMap<>();
     private final Map<String, Object[]> ranks = new ConcurrentHashMap<>(); // board:uuid -> {rank, millis}
+    /** Last known value of each player per board ("board:uuid"), NaN = none: placeholders never query per render. */
+    private final Map<String, Double> values = new ConcurrentHashMap<>();
     private BukkitTask timer, backfill;
 
     public LeaderboardService(Plugin flux) {
@@ -154,6 +156,9 @@ public final class LeaderboardService implements Leaderboards.Service, Listener 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent e) {
         record(e.getPlayer());
+        String suffix = ":" + e.getPlayer().getUniqueId();
+        values.keySet().removeIf(k -> k.endsWith(suffix));
+        ranks.keySet().removeIf(k -> k.endsWith(suffix));
     }
 
     private void record(OfflinePlayer p) {
@@ -166,6 +171,7 @@ public final class LeaderboardService implements Leaderboards.Service, Listener 
                 // a source failing for one player (offline data unreadable) skips him
             }
         }
+        if (p.isOnline()) for (Map.Entry<String, Double> e : values.entrySet()) this.values.put(e.getKey() + ":" + p.getUniqueId(), e.getValue());
         if (values.isEmpty()) return;
         String sql = Database.dialect().upsert(table, List.of("board", "uuid", "name", "value"), List.of("board", "uuid"), List.of("name", "value"));
         try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement(sql)) {
@@ -242,6 +248,15 @@ public final class LeaderboardService implements Leaderboards.Service, Listener 
 
     @Override
     public Double value(String board, UUID player) {
+        String key = board.toLowerCase(Locale.ROOT) + ":" + player;
+        Double cached = values.get(key);
+        if (cached != null) return cached.isNaN() ? null : cached;
+        Double stored = stored(board, player);
+        values.put(key, stored == null ? Double.NaN : stored);
+        return stored;
+    }
+
+    private Double stored(String board, UUID player) {
         try (Connection c = Database.connection();
              PreparedStatement ps = c.prepareStatement("SELECT value FROM " + table + " WHERE board = ? AND uuid = ?")) {
             ps.setString(1, board.toLowerCase(Locale.ROOT));

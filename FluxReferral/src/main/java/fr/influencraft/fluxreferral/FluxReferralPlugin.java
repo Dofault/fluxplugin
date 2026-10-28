@@ -142,6 +142,14 @@ public class FluxReferralPlugin extends JavaPlugin {
         // %parrainage_*%: resolved by Flux in menus, exposed to PlaceholderAPI by Flux
         var expansion = new ExpansionParrainage(this, serviceProfil, serviceClassement, serviceParrainage);
         fr.influencraft.flux.api.FluxApi.registerPlaceholders(this, "parrainage", expansion::onRequest);
+        // leaderboard of Flux (%flux_top_parrainage_...%), read from our table: works for offline players too
+        fr.influencraft.flux.api.leaderboard.Leaderboards.register(this, "parrainage", player -> {
+            try {
+                return (double) depotJoueur.obtenirNbFilleuls(player.getUniqueId());
+            } catch (SQLException e) {
+                return null;
+            }
+        }, fr.influencraft.flux.api.util.Format::number);
 
         getLogger().info("Plugin FluxReferral activé avec succès (v" + getDescription().getVersion() + ").");
     }
@@ -153,6 +161,7 @@ public class FluxReferralPlugin extends JavaPlugin {
             Bukkit.getScheduler().cancelTask(idTacheRafraichissement);
         }
         Bukkit.getScheduler().cancelTasks(this);
+        fr.influencraft.flux.api.leaderboard.Leaderboards.unregisterAll(this);
 
         if (gestionnaireBDD != null) {
             gestionnaireBDD.fermer();
