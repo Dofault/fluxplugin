@@ -4,7 +4,7 @@ Copy each jar from the server's `plugins/` folder (same version, or update the p
 
 | Module | Jars |
 |---|---|
-| Flux | `packetevents-spigot-2.13.0.jar`, `ItemsAdder_4.0.18.jar`, `PlaceholderAPI-2.12.3.jar`, `VaultUnlocked-2.20.3.jar`, `HikariCP-7.0.2.jar` (from the server's `libraries/com/zaxxer/HikariCP/`) |
+| Flux | `packetevents-spigot-2.13.0.jar`, `DiscordSRV-Build-1.30.5.jar` (optional at runtime), `ItemsAdder_4.0.18.jar`, `PlaceholderAPI-2.12.3.jar`, `VaultUnlocked-2.20.3.jar`, `HikariCP-7.0.2.jar` (from the server's `libraries/com/zaxxer/HikariCP/`) |
 | FluxAuctionHouse | `AuctionHouse-1.5.4.jar`, `FluxChestShop.jar`, `VaultUnlocked-2.20.3.jar`, `PlaceholderAPI-2.12.3.jar`, `ItemsAdder_4.0.18.jar` |
 | FluxCasino | `PlaceholderAPI-2.12.3.jar`, `VaultAPI-1.7.jar` |
 | FluxLands | `Lands-8.9.5.jar`, `InfluPW.jar`, `FluxChestShop.jar`, `VaultUnlocked-2.20.3.jar`, `PlaceholderAPI-2.12.3.jar`, `ItemsAdder_4.0.18.jar` |

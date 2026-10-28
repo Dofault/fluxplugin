@@ -38,6 +38,13 @@
             <systemPath>${project.basedir}/libs/packetevents-spigot-2.13.0.jar</systemPath>
         </dependency>
         <dependency>
+            <groupId>com.discordsrv</groupId>
+            <artifactId>discordsrv</artifactId>
+            <version>1.30.5</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/DiscordSRV-Build-1.30.5.jar</systemPath>
+        </dependency>
+        <dependency>
             <groupId>dev.lone</groupId>
             <artifactId>itemsadder</artifactId>
             <version>4.0.18</version>

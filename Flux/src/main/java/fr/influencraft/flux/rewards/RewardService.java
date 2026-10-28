@@ -52,13 +52,13 @@ public final class RewardService implements Rewards.Backend, Listener {
     private final RewardStore store;
     /** Rewards given in the last second, per player: one message and one sound for a burst (catch-up, crate). */
     private final Map<UUID, List<String>> burst = new HashMap<>();
-    private final DiscordDm discord;
+    private final DiscordNotifier discord;
 
     private RewardService(JavaPlugin flux, Supplier<Messages> messages, RewardStore store) {
         this.flux = flux;
         this.messages = messages;
         this.store = store;
-        this.discord = new DiscordDm(flux.getLogger());
+        this.discord = DiscordNotifier.create(flux, store, () -> plain(messages.get().raw("rewards.discord-optout-done")));
     }
 
     public static RewardService start(JavaPlugin flux, Supplier<Messages> messages) {
@@ -262,15 +262,18 @@ public final class RewardService implements Rewards.Backend, Listener {
         sync(() -> {
             Player p = Bukkit.getPlayer(uuid);
             if (p != null) {
-                m.send(p, "rewards.expiring", "%count%", String.valueOf(count), "%time%", when);
+                m.send(p, "rewards.expiring");
                 fr.influencraft.flux.api.util.Sounds.cue(p, "alert");
             }
         });
-        if (flux.getConfig().getBoolean("rewards.discord-reminders", true)) {
-            String text = fr.influencraft.flux.api.text.Texts.plain(fr.influencraft.flux.api.text.Texts.colors(
-                    m.raw("rewards.discord-expiring", "%count%", String.valueOf(count), "%time%", when)));
-            discord.send(uuid, text);
+        if (discord != null && flux.getConfig().getBoolean("rewards.discord-reminders", true)) {
+            discord.send(uuid, plain(m.raw("rewards.discord-expiring")), plain(m.raw("rewards.discord-optout-button")));
         }
+    }
+
+    /** Discord text: no Minecraft colour codes. */
+    private static String plain(String raw) {
+        return fr.influencraft.flux.api.text.Texts.plain(fr.influencraft.flux.api.text.Texts.colors(raw));
     }
 
     private void sync(Runnable task) {
@@ -396,6 +399,15 @@ public final class RewardService implements Rewards.Backend, Listener {
                 claim(p, args.length > 1 ? args[1] : null, -1, true);
             }
             case "menu" -> open(p);
+            case "discord" -> {
+                // switches the Discord reminders of the rewards about to expire
+                java.util.UUID id = p.getUniqueId();
+                Bukkit.getScheduler().runTaskAsynchronously(flux, () -> {
+                    boolean off = !store.discordOptOut(id);
+                    store.setDiscordOptOut(id, off);
+                    sync(() -> m.send(p, off ? "rewards.discord-off" : "rewards.discord-on"));
+                });
+            }
             default -> m.send(p, "rewards.help");
         }
         return true;
@@ -452,7 +464,7 @@ public final class RewardService implements Rewards.Backend, Listener {
         String last = args.length == 0 ? "" : args[args.length - 1].toLowerCase(Locale.ROOT);
         List<String> out = new ArrayList<>();
         if (args.length == 1) {
-            out.addAll(List.of("claim", "menu"));
+            out.addAll(List.of("claim", "menu", "discord"));
             if (sender.hasPermission("flux.rewards.give")) out.addAll(List.of("give", "list"));
         } else if (args.length == 2 && (args[0].equalsIgnoreCase("give") || args[0].equalsIgnoreCase("list"))) {
             return Players.complete(last);

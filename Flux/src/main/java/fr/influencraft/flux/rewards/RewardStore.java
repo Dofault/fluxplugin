@@ -27,6 +27,8 @@ final class RewardStore {
     private static final String SEPARATOR = "\n";
 
     private final String table = Database.table("flux_rewards");
+    /** Players who asked for no Discord reminder. */
+    private final String optOut = Database.table("flux_rewards_discord_optout");
     private final Logger log;
 
     RewardStore(File folder, Logger log) throws SQLException {
@@ -41,6 +43,7 @@ final class RewardStore {
             Database.index(c, "flux_rewards_key", table, "uuid, reward_key", true);
             addColumn(st, "expired BIGINT");
             addColumn(st, "warned INTEGER NOT NULL DEFAULT 0");
+            st.execute("CREATE TABLE IF NOT EXISTS " + optOut + " (uuid " + d.key(36) + " NOT NULL PRIMARY KEY, since BIGINT NOT NULL)");
         }
         // former file of the first version
         Database.importSqlite(org.bukkit.Bukkit.getPluginManager().getPlugin("Flux"), new File(folder, "rewards.db"), "rewards", table);
@@ -166,5 +169,29 @@ final class RewardStore {
             return java.util.Map.of();
         }
         return lost;
+    }
+
+    boolean discordOptOut(UUID uuid) {
+        try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement("SELECT 1 FROM " + optOut + " WHERE uuid = ?")) {
+            ps.setString(1, uuid.toString());
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            log.warning("Could not read the Discord reminder choice of " + uuid + ": " + e);
+            return true; // unknown: do not disturb
+        }
+    }
+
+    void setDiscordOptOut(UUID uuid, boolean off) {
+        String sql = off ? Database.dialect().insertIgnore() + " " + optOut + " (uuid, since) VALUES (?, ?)"
+                : "DELETE FROM " + optOut + " WHERE uuid = ?";
+        try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, uuid.toString());
+            if (off) ps.setLong(2, System.currentTimeMillis());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            log.warning("Could not save the Discord reminder choice of " + uuid + ": " + e);
+        }
     }
 }
