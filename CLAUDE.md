@@ -69,6 +69,14 @@ The plugins are written **as English plugins, then adapted to French** for our s
   `gen_outils.py`, `gen_metiers.py`...). Change the script and regenerate, never hand-edit generated YAML.
   Exception: `Flux/assets/menu_recompenses.png` is hand-retouched by the owner, do not regenerate it.
 
+## Menu layout rules
+
+- **First row of every menu: back button in its first slot, the icon of the current menu (what this page is, with its
+  explanation in the tooltip) in its last slot**, like the pass. "First row" means the first row of the drawn menu,
+  wherever it sits: a menu drawn in the hidden inventory area starts there, not at slot 0 of the chest.
+- Backgrounds are free drawings (any height, any position); keep a reminder of the generic background
+  (`Flux/assets/menu_generique.png`) and the violet theme, plus a colour accent of the menu's own.
+
 ## Building (shared machine: production runs on it)
 
 Never run a bare Maven/Gradle build: the OOM killer would kill the production server. Always cap memory:
