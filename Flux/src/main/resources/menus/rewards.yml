@@ -1,6 +1,6 @@
 # Flux : menu Récompenses (/recompenses, bouton Récompenses de /menu2). Fond menu_recompenses (ItemsAdder
 # influmenu, généré par plugins/fluxplugin/Flux/assets/recompenses/gen_fond.py).
-# Retour en 0, explication du menu et récompense du jour en 8.
+# Retour en 9, explication du menu et récompense du jour en 17.
 # Haut : toutes les récompenses en attente, quel que soit le plugin qui les a données, une case par récompense
 # (21 par page), page précédente / suivante à gauche et à droite de la boîte, Tout récupérer dessous.
 # Bas : deux frises de 7, le cycle de connexion (55-61) et les paliers de temps de jeu (64-70), flèches de chaque
@@ -17,7 +17,7 @@ open-actions:
 
 lists:
   rewards:
-    slots: 10-16,19-25,28-34
+    slots: 19-25,28-34,37-43
     item:
       material: entry
       name: "&#FFD94D%entry_label%"
@@ -30,7 +30,7 @@ lists:
         left: ["[rewards] claim %entry_id%", "[sound] @complete"]
 
   recompenses_info:
-    slots: 8
+    slots: 17
     item:
       material: entry
       actions:
@@ -55,7 +55,7 @@ items:
   retour:
     material: "itemsadder:influitems:btn_back"
     name: "&#FFD94DRetour"
-    slots: [0]
+    slots: [9]
     lore:
       - "&#FFD94D│ &#B376E5Revenir au menu."
       - "&#FFD94D└ &r&7%img_left_click% &fMenu principal"
@@ -65,7 +65,7 @@ items:
   vide:
     material: "itemsadder:influitems:checkmark"
     name: "&#FFD94DRien en attente"
-    slots: [22]
+    slots: [31]
     view-requirements: ["placeholder: %flux_rewards_count% == 0"]
     lore:
       - "&#FFD94D│ &#B376E5Tes prochaines récompenses"
@@ -75,7 +75,7 @@ items:
   tout:
     material: "itemsadder:influitems:reward"
     name: "&#FFD94DTout récupérer"
-    slots: [40]
+    slots: [49]
     lore:
       - "&#FFD94D│ &#B376E5En attente : &f%flux_rewards_count%"
       - "&#FFD94D│ &#B376E5Cases nécessaires : &f%flux_rewards_slots%"
@@ -89,7 +89,7 @@ items:
     material: "itemsadder:influitems:btn_prev"
     hide-tooltip: true
     name: "&#FFD94DPage précédente"
-    slots: [18]
+    slots: [27]
     view-requirements: ["placeholder: %flux_list_rewards_has_prev% == true"]
     actions:
       left: ["[list] rewards prev", "[sound] @page"]
@@ -98,7 +98,7 @@ items:
     material: "itemsadder:influitems:btn_next"
     hide-tooltip: true
     name: "&#FFD94DPage suivante"
-    slots: [26]
+    slots: [35]
     view-requirements: ["placeholder: %flux_list_rewards_has_next% == true"]
     actions:
       left: ["[list] rewards next", "[sound] @page"]
