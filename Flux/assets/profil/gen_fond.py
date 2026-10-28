@@ -1,81 +1,76 @@
-"""Background of the profile menu (/profil, 2026-10-28): the player's card.
+"""Backgrounds of the profile menus (2026-10-28, layout modelled on the owner's reference screenshot, server theme).
 
-Layout (6-row chest, hidden inventory):
+menu_profil (/profil), 6-row chest, rows 0 to 4 used:
   row 0          back (0) and menu icon (8), the title « PROFIL » between them
-  row 1          BitBlock (11), the player's head (13), Influence (15)
-  row 2          label « CLASSEMENTS »
-  row 3          7 leaderboards (28 to 34): the player's value and rank in each
-  row 4          label « ACTIVITÉ »
-  row 5          4 activity tiles (46, 48, 50, 52)
-  gap            label « RACCOURCIS » in the chest / inventory gap
-  inventory row  4 shortcuts (55, 57, 59, 61)
+  left panel     columns 0 to 3, rows 1 to 4: the player's 3D bust, drawn by Flux in the title
+                 (%flux_avatar_43_107%: bottom centre of this panel)
+  right panel    columns 5 to 8, rows 1 to 4: 8 buttons on rows 2 and 3 (slots 23 to 26, 32 to 35)
+menu_classements (/profil -> Classements): title « CLASSEMENTS », 7 boards on row 2 (slots 19 to 25) in one panel.
 
-Usage: python gen_fond.py <png> [preview x3]  (Pillow)
+Typography always white. Usage: python gen_fond.py <dir for the pngs> [preview dir]  (Pillow)
 """
 import os
 import sys
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))
-from fond_lib import generique_raccourci, poser, tampon_case, text, title  # noqa: E402
+from fond_lib import generique_raccourci, poser, tampon_case, title  # noqa: E402
 
 W, H = 176, 221
-TOP, BOTTOM = 0, 178
+TOP, BOTTOM = 0, 120
 CONTOUR = (21, 17, 27, 255)
-GOLD, PURPLE, BLUE, GREY = "FFD94D", "B376E5", "2BC4E8", "A89BA0"
-LABEL = (179, 118, 229, 255)
-
-TILES = {11: GOLD, 13: GOLD, 15: PURPLE}
-TILES.update({s: GOLD for s in range(28, 35)})
-TILES.update({s: BLUE for s in (46, 48, 50, 52)})
-TILES.update({s: PURPLE for s in (55, 57, 59, 61)})
-
-
-def c(h):
-    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4)) + (255,)
-
-
-def mix(a, b, t):
-    return tuple(round(a[i] + (b[i] - a[i]) * t) for i in range(3)) + (255,)
+PANEL = (27, 21, 39, 255)
+PANEL_EDGE = (13, 10, 18, 255)
+PANEL_LIGHT = (72, 57, 96, 255)
+AVATAR_BOTTOM = (43, 107)
 
 
 def objet(case):
-    """Top-left of a slot's item; hidden-inventory rows start at y 139 in game."""
-    if case < 54:
-        return 8 + 18 * (case % 9), 18 + 18 * (case // 9)
-    i = case - 54
-    return 8 + 18 * (i % 9), 139 + 18 * (i // 9)
+    return 8 + 18 * (case % 9), 18 + 18 * (case // 9)
 
 
-def tint(tampon, colour):
-    """The rounded case in a colour: its fill (the most used, lightest shade) dark, its rims in the colour."""
-    col = c(colour)
-    shades = sorted({v for v in tampon.values()}, key=lambda v: sum(v[:3]))
-    fill = max(shades, key=lambda v: list(tampon.values()).count(v))
-    rims = [v for v in shades if v != fill]
-    table = {fill: mix(CONTOUR, col, .22)}
-    for i, v in enumerate(rims):
-        table[v] = mix(CONTOUR, col, i / max(1, len(rims) - 1))
-    return {k: table[v] for k, v in tampon.items()}
+def panel(im, cols, rows, pad=2):
+    """Rounded dark panel around a block of slots (columns and rows inclusive), sunken: dark edge, light inner rim."""
+    x0, y0 = objet(rows[0] * 9 + cols[0])
+    x1, y1 = objet(rows[1] * 9 + cols[1])
+    box = (x0 - 1 - pad, y0 - 1 - pad, x1 + 16 + pad, y1 + 16 + pad)
+    d = ImageDraw.Draw(im)
+    d.rounded_rectangle(box, radius=4, fill=PANEL, outline=PANEL_EDGE)
+    d.rounded_rectangle((box[0] + 1, box[1] + 1, box[2] - 1, box[3] - 1), radius=3, outline=PANEL_LIGHT)
+    d.rounded_rectangle((box[0] + 2, box[1] + 2, box[2] - 2, box[3] - 2), radius=2, outline=PANEL)
 
 
-def background():
+def base(name):
     im = generique_raccourci(os.path.join(os.path.dirname(HERE), "menu_generique.png"), TOP, BOTTOM)
+    title(im, name, objet(0)[1])
+    return im
+
+
+def profil():
+    im = base("Profil")
+    panel(im, (0, 3), (1, 4))
+    panel(im, (5, 8), (1, 4))
     case = tampon_case()
-    for slot, colour in TILES.items():
-        x, y = objet(slot)
-        poser(im, tint(case, colour), x, y)
-    title(im, "Profil", objet(0)[1])
-    text(im, "Classements", 88, objet(19)[1] + 6, colour=LABEL)
-    text(im, "Activité", 88, objet(37)[1] + 6, colour=LABEL)
-    text(im, "Raccourcis", 88, 128, colour=LABEL)
+    for slot in (23, 24, 25, 26, 32, 33, 34, 35):
+        poser(im, case, *objet(slot))
+    return im
+
+
+def classements():
+    im = base("Classements")
+    panel(im, (1, 7), (1, 3))
+    case = tampon_case()
+    for slot in range(19, 26):
+        poser(im, case, *objet(slot))
     return im
 
 
 if __name__ == "__main__":
-    im = background()
-    im.save(sys.argv[1])
-    if len(sys.argv) > 2:
-        im.resize((W * 3, H * 3), Image.NEAREST).save(sys.argv[2])
+    out = sys.argv[1]
+    for name, im in (("menu_profil", profil()), ("menu_classements", classements())):
+        im.save(os.path.join(out, name + ".png"))
+        if len(sys.argv) > 2:
+            im.resize((W * 3, H * 3), Image.NEAREST).save(os.path.join(sys.argv[2], name + "_x3.png"))
+    print("menu_profil.png, menu_classements.png ->", out)

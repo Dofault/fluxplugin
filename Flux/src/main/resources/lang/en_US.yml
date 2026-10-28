@@ -15,6 +15,8 @@ format:
   search-title: "Search"
   search-label: "Text to search (empty: show everything)"
   filter-next: "Next filter"
+  first-place: "1st"
+  nth-place: "th"
   filter-previous: "Previous filter"
 dialogs:
   confirm-label: "Confirm"

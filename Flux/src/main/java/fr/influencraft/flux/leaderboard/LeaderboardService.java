@@ -54,6 +54,8 @@ public final class LeaderboardService implements Leaderboards.Service, Listener 
     /** Last known value of each player per board ("board:uuid"), NaN = none: placeholders never query per render. */
     private final Map<String, Double> values = new ConcurrentHashMap<>();
     private BukkitTask timer, backfill;
+    /** Boards already checked for a first fill since the start. */
+    private final java.util.Set<String> filled = ConcurrentHashMap.newKeySet();
 
     public LeaderboardService(Plugin flux) {
         this.flux = flux;
@@ -162,8 +164,12 @@ public final class LeaderboardService implements Leaderboards.Service, Listener 
     }
 
     private void record(OfflinePlayer p) {
+        record(p, Leaderboards.boards().values());
+    }
+
+    private void record(OfflinePlayer p, java.util.Collection<Board> boards) {
         Map<String, Double> values = new HashMap<>();
-        for (Board b : Leaderboards.boards().values()) {
+        for (Board b : boards) {
             try {
                 Double v = b.source().value(p);
                 if (v != null && !v.isNaN()) values.put(b.id(), v);
@@ -188,20 +194,23 @@ public final class LeaderboardService implements Leaderboards.Service, Listener 
         }
     }
 
-    /** Boards without any value yet: every player the server knows, 20 per second. */
+    /**
+     * Boards without any value yet, each once per start (a board that stays empty, e.g. its plugin is missing, is not
+     * filled again on every reload): only those boards, for every player the server knows, 20 per second.
+     */
     private void startBackfill() {
-        boolean empty = false;
-        for (String board : Leaderboards.boards().keySet()) {
-            if (count(board) == 0) empty = true;
+        List<Board> empty = new ArrayList<>();
+        for (Board b : Leaderboards.boards().values()) {
+            if (filled.add(b.id()) && count(b.id()) == 0) empty.add(b);
         }
-        if (!empty || backfill != null) {
+        if (empty.isEmpty() || backfill != null) {
             reloadTops();
             return;
         }
         Deque<OfflinePlayer> queue = new ArrayDeque<>(List.of(Bukkit.getOfflinePlayers()));
-        flux.getLogger().info("Leaderboards: first fill, " + queue.size() + " players");
+        flux.getLogger().info("Leaderboards: first fill of " + empty.stream().map(Board::id).toList() + ", " + queue.size() + " players");
         backfill = Bukkit.getScheduler().runTaskTimer(flux, () -> {
-            for (int i = 0; i < 20 && !queue.isEmpty(); i++) record(queue.poll());
+            for (int i = 0; i < 20 && !queue.isEmpty(); i++) record(queue.poll(), empty);
             if (queue.isEmpty()) {
                 backfill.cancel();
                 backfill = null;
@@ -293,18 +302,21 @@ public final class LeaderboardService implements Leaderboards.Service, Listener 
     }
 
     /**
-     * {@code top_<board>_<n>_name}, {@code top_<board>_<n>_value}, {@code top_<board>_rank}, {@code top_<board>_value}
+     * {@code top_<board>_<n>_name}, {@code top_<board>_<n>_value}, {@code top_<board>_rank} (number),
+     * {@code top_<board>_place} (« 1er », « 2e »), {@code top_<board>_value}
      * (params after « top_ »); the board id may hold underscores.
      */
     public String placeholder(Player viewer, String params) {
         int last = params.lastIndexOf('_');
         if (last < 0) return null;
         String field = params.substring(last + 1), rest = params.substring(0, last);
-        if (field.equals("rank") || (field.equals("value") && Leaderboards.board(rest) != null)) {
+        if (field.equals("rank") || field.equals("place") || (field.equals("value") && Leaderboards.board(rest) != null)) {
             if (viewer == null) return "";
-            if (field.equals("rank")) {
+            if (!field.equals("value")) {
                 int r = rank(rest, viewer.getUniqueId());
-                return r == 0 ? "-" : String.valueOf(r);
+                if (r == 0) return "-";
+                // place: « 1er », « 2e »... (word format.first-place / format.nth-place of Flux's language file)
+                return field.equals("rank") ? String.valueOf(r) : r == 1 ? Format.word("first-place") : r + Format.word("nth-place");
             }
             Double v = value(rest, viewer.getUniqueId());
             return v == null ? "-" : Leaderboards.board(rest).format().apply(v);

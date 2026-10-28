@@ -15,6 +15,8 @@ format:
   search-title: "Recherche"
   search-label: "Texte à chercher (vide : tout afficher)"
   filter-next: "Filtre suivant"
+  first-place: "1er"
+  nth-place: "e"
   filter-previous: "Filtre précédent"
 dialogs:
   confirm-label: "Valider"
