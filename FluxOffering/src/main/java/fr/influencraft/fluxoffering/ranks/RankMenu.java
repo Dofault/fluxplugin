@@ -182,13 +182,13 @@ public final class RankMenu implements org.bukkit.event.Listener {
         if (index == current) {
             icon = "player-head";
             glow = true;
-            lore.line(Lore.GREEN + "Ton rang actuel.").line("Valide-le avec l'offrande du rang suivant.");
+            lore.line(Lore.GREEN + "Validé, c'est ton rang actuel.");
         } else if (index < current) {
             icon = "itemsadder:influitems:unlock";
             lore.line(Lore.GREEN + "Validé.");
         } else if (index == current + 1) {
             icon = "itemsadder:influitems:tracking";
-            lore.line("Prochain rang : fais son offrande.");
+            lore.line(Lore.GOLD + "Prochain rang.");
         } else {
             icon = "itemsadder:influitems:lock";
             lore.line(Lore.RED + "Pas encore accessible.");
@@ -202,7 +202,6 @@ public final class RankMenu implements org.bukkit.event.Listener {
     }
 
     private ListEntry chestEntry(Player player, Tier t, int current) {
-        Rank last = t.ranks().get(t.ranks().size() - 1);
         Lore lore = Lore.create().line("Récompense du palier &f" + t.name()).lines(t.rewardLines());
         String icon, click = "[sound] @error";
         switch (chest(player, t, current)) {
@@ -222,8 +221,9 @@ public final class RankMenu implements org.bukkit.event.Listener {
             }
             default -> {
                 icon = "itemsadder:influitems:chest";
-                lore.line("Valide le rang &" + last.colour() + last.name() + Lore.PURPLE + " (son offrande,")
-                    .line("qui fait passer au rang suivant) pour l'ouvrir.");
+                // opens with the next tier's first rank (or the last rank of the ladder, held)
+                Rank opener = ranks.get(Math.min(ranks.size() - 1, lastIndex(t) + 1));
+                lore.line("S'ouvre quand tu deviens &" + opener.colour() + opener.name() + Lore.PURPLE + ".");
             }
         }
         return entry(player, "tier:" + t.id(), icon, t.rewardLabel(), lore, 1, false).set("clic", click);
