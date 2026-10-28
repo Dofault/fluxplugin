@@ -33,7 +33,26 @@ import java.util.UUID;
  *   <li>action {@code [grades] claim <tier>}: hands the tier's reward through Flux rewards (once, keyed)</li>
  * </ul>
  */
-public final class RankMenu {
+public final class RankMenu implements org.bukkit.event.Listener {
+
+    /** Fired by {@code /influoffrande reload}: ranks.yml is read again. */
+    public static final class Reload extends org.bukkit.event.Event {
+        private static final org.bukkit.event.HandlerList HANDLERS = new org.bukkit.event.HandlerList();
+
+        @Override
+        public org.bukkit.event.HandlerList getHandlers() {
+            return HANDLERS;
+        }
+
+        public static org.bukkit.event.HandlerList getHandlerList() {
+            return HANDLERS;
+        }
+    }
+
+    @org.bukkit.event.EventHandler
+    public void onReload(Reload event) {
+        load();
+    }
 
     public static final String LIST = "grades", INFO = "grades_info";
 
@@ -55,6 +74,7 @@ public final class RankMenu {
 
     public void enable() {
         load();
+        plugin.getServer().getPluginManager().registerEvents(this, plugin);
         Lists.register(plugin, LIST, query -> entries(query.viewer()));
         Lists.register(plugin, INFO, query -> List.of(info(query.viewer())));
         FluxApi.registerAction(plugin, "grades", (player, view, argument) -> {

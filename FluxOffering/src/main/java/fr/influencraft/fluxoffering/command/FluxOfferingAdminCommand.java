@@ -155,6 +155,8 @@ public final class FluxOfferingAdminCommand implements CommandExecutor {
 
     private void handleReload(CommandSender sender) {
         configManager.reload();
+        // ranks.yml (rank menu) is read again with the rest
+        org.bukkit.Bukkit.getPluginManager().callEvent(new fr.influencraft.fluxoffering.ranks.RankMenu.Reload());
         messages.load();
         messages.send(sender, "admin.reload-success", sender instanceof Player p ? p : null);
     }
