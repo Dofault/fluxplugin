@@ -49,31 +49,79 @@ public final class Sounds {
         for (String key : section.getKeys(false)) if (!MERGED.containsKey(key.toLowerCase(Locale.ROOT))) CUES.put(key.toLowerCase(Locale.ROOT), section.getString(key, "none"));
     }
 
+    /**
+     * Sounds of one click: the action lines of a click run as a batch ({@link #begin}/{@link #end}) and only one sound
+     * plays, so a [list] page sound, a menu opening sound and a [sound] line never stack. A sound written in the
+     * menu ({@link #explicit}) wins over the ones played by code, else the first one played is kept.
+     */
+    private static final class Batch {
+        String raw;
+        boolean explicit;
+    }
+
+    private static final java.util.Map<java.util.UUID, Batch> BATCHES = new java.util.HashMap<>();
+
+    /** Starts the sound batch of a click (main thread). */
+    public static void begin(Player player) {
+        if (player != null) BATCHES.put(player.getUniqueId(), new Batch());
+    }
+
+    /** Ends the batch of a click and plays its sound. */
+    public static void end(Player player) {
+        Batch b = player == null ? null : BATCHES.remove(player.getUniqueId());
+        if (b != null && b.raw != null) emit(player, b.raw);
+    }
+
     /** Plays a named cue of the suite. */
     public static void cue(Player player, String name) {
-        String key = name.toLowerCase(Locale.ROOT);
+        play(player, "@" + name);
+    }
+
+    /** Plays a sound ({@code "<key> [volume] [pitch]"}, or {@code "@cue"}). */
+    public static void play(Player player, String spec) {
+        record(player, resolve(player, spec), false);
+    }
+
+    /** Sound written by a menu author ({@code [sound]} action): during a click, it replaces the automatic ones. */
+    public static void explicit(Player player, String spec) {
+        record(player, resolve(player, spec), true);
+    }
+
+    private static void record(Player player, String raw, boolean explicit) {
+        if (player == null || raw == null) return;
+        Batch b = org.bukkit.Bukkit.isPrimaryThread() ? BATCHES.get(player.getUniqueId()) : null;
+        if (b == null) {
+            emit(player, raw);
+        } else if (explicit ? !b.explicit : b.raw == null) {
+            b.raw = raw;
+            b.explicit = explicit;
+        }
+    }
+
+    /** The sound to play ({@code key [volume] [pitch]}), null for none or a cue on cooldown. */
+    private static String resolve(Player player, String spec) {
+        if (spec == null) return null;
+        String trimmed = spec.trim();
+        if (!trimmed.startsWith("@")) {
+            String key = trimmed.split("\\s+")[0];
+            return key.isEmpty() || key.equalsIgnoreCase("none") ? null : trimmed;
+        }
+        String key = trimmed.substring(1).toLowerCase(Locale.ROOT);
         key = MERGED.getOrDefault(key, key);
-        String spec = CUES.get(key);
+        String cue = CUES.get(key);
         Long cooldown = COOLDOWNS.get(key);
-        if (spec != null && cooldown != null && player != null) {
+        if (cue != null && cooldown != null && player != null) {
             long now = System.currentTimeMillis();
             String id = player.getUniqueId() + ":" + key;
             Long last = LAST_PLAYED.get(id);
-            if (last != null && now - last < cooldown) return;
+            if (last != null && now - last < cooldown) return null;
             LAST_PLAYED.put(id, now);
         }
-        if (spec != null) play(player, spec);
+        return cue == null || cue.trim().startsWith("@") ? null : resolve(player, cue);
     }
 
-    public static void play(Player player, String spec) {
-        if (player == null || spec == null) return;
-        String trimmed = spec.trim();
-        if (trimmed.startsWith("@")) {
-            cue(player, trimmed.substring(1));
-            return;
-        }
-        String[] parts = trimmed.split("\\s+");
-        if (parts[0].isEmpty() || parts[0].equalsIgnoreCase("none")) return;
+    private static void emit(Player player, String raw) {
+        String[] parts = raw.trim().split("\\s+");
         float volume = parts.length > 1 ? parse(parts[1], 1f) : 1f;
         float pitch = parts.length > 2 ? parse(parts[2], 1f) : 1f;
         player.playSound(player.getLocation(), parts[0].toLowerCase(Locale.ROOT), SoundCategory.MASTER, volume, pitch);

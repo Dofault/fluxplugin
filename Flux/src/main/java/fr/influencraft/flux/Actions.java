@@ -44,13 +44,19 @@ public final class Actions {
     public void run(Player player, MenuSession session, List<String> actions) {
         if (actions.isEmpty() || !plugin.isEnabled()) return;
         Bukkit.getScheduler().runTask(plugin, () -> {
-            for (String line : actions) {
-                if (!player.isOnline()) return;
-                try {
-                    runOne(player, session, line);
-                } catch (RuntimeException e) {
-                    plugin.getLogger().warning("Action « " + line + " » en échec pour " + player.getName() + " : " + e);
+            // one sound per click, whatever the lines play (see Sounds#begin)
+            fr.influencraft.flux.api.util.Sounds.begin(player);
+            try {
+                for (String line : actions) {
+                    if (!player.isOnline()) return;
+                    try {
+                        runOne(player, session, line);
+                    } catch (RuntimeException e) {
+                        plugin.getLogger().warning("Action \"" + line + "\" failed for " + player.getName() + ": " + e);
+                    }
                 }
+            } finally {
+                fr.influencraft.flux.api.util.Sounds.end(player);
             }
         });
     }
@@ -189,7 +195,7 @@ public final class Actions {
 
     /** {@code [sound] <key> [volume] [pitch]} or a named cue of the suite: {@code [sound] @success}. */
     private static void sound(Player player, String arg) {
-        fr.influencraft.flux.api.util.Sounds.play(player, arg);
+        fr.influencraft.flux.api.util.Sounds.explicit(player, arg);
     }
 
 

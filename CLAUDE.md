@@ -39,7 +39,7 @@ The plugins are written **as English plugins, then adapted to French** for our s
 | `inventory.Lore`, `inventory.Items` | Lore builder in the server style (`│`/`└` frame, click lines); item from a spec (`itemsadder:ns:id`, `source:<plugin>:<arg>`). |
 | `items.CustomItems` | Shared recognition of custom items. Each suite plugin declares its own items with `CustomItems.register(plugin, namespace, Source)` (`fluxtools:<tool>`, `fluxpets:booster_<id>`). A source answers only for its own items. |
 | `reward.Rewards` | Give a reward (`Reward.of(source, label).icon(...).commands(...)`); claimed in the `rewards` menu. Expiry, reminders (in game and Discord through DiscordSRV), grouped notifications are handled by Flux. |
-| `util.Sounds` | Named cues only: `page`, `click`, `confirm` (first click of a double confirmation), `success`, `complete` (something earned), `error`, `remove`, `toggle-on/off`, `alert` (needs attention, 3 s cooldown). |
+| `util.Sounds` | Named cues only: `page`, `click`, `confirm` (first click of a double confirmation), `success`, `complete` (something earned), `error`, `remove`, `toggle-on/off`, `alert` (needs attention, 3 s cooldown). **One sound per click**: the action lines of a click run as a batch, a `[sound]` line wins over sounds played by code (`[list]` page sound, menu opening), else the first one plays. Do not add a `[sound]` that only repeats the automatic one. |
 | `staff.Staff` | `Staff.alert(topic, title, message)` to online staff. |
 | `dialog.Dialogs` | Paper dialogs (forms, copy buttons). |
 | Menu `paths` | Progress paths drawn in the title (pack `influroad`). `states` placeholder gives one colour per step: `vert` claimed, `orange` waiting, `rouge` missed, `eteint` locked. |
