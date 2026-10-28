@@ -43,11 +43,11 @@ def mix(a, b, t):
 
 
 def objet(case):
-    """Top-left of a slot's item; hidden-inventory rows sit 2 px higher in game."""
+    """Top-left of a slot's item; hidden-inventory rows start at y 139 in game (as PathRenderer), checked on 2026-10-28."""
     if case < 54:
         return 8 + 18 * (case % 9), 18 + 18 * (case // 9)
     i = case - 54
-    return 8 + 18 * (i % 9), 138 + 18 * (i // 9)
+    return 8 + 18 * (i % 9), 139 + 18 * (i // 9)
 
 
 def slot(row, col):

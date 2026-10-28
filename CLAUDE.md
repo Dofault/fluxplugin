@@ -108,7 +108,7 @@ systemd-run --user --scope -q -p MemoryMax=2.5G nice -n 10 mvn -q -o -pl <Module
   even when the server file still uses the former name. Check `contains(key, true)` first.
 - Do not compare against `Format.yesNo()` in menus (localised), use fixed values.
 - A menu needs `[refresh]` after a list page change to redraw its title (paths).
-- Inventory rows of a hidden-inventory menu sit 2 px higher in game than `fond_lib.objet` computes.
+- Inventory rows of a hidden-inventory menu: the item of the first row sits at y 139 in game (as `PathRenderer`), not 140 as `fond_lib.objet` computes. Check the first background of a new menu in game.
 
 ## Production go-live notes
 
