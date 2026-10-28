@@ -34,5 +34,6 @@
         <module>FluxEnchant</module>
         <module>FluxFly</module>
         <module>FluxMigration</module>
+        <module>FluxTags</module>
     </modules>
 </project>

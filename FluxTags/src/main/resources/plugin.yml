@@ -1,0 +1,21 @@
+name: FluxTags
+version: 26.2
+main: fr.influencraft.fluxtags.FluxTags
+api-version: "26.2"
+description: Collectible player tags (rank, evolving job tags, special tags); one shown in the chat and the tab list.
+authors: [Influencraft]
+depend: [Flux]
+
+permissions:
+  fluxtags.use:
+    description: Open /tags and pick a tag.
+    default: true
+  fluxtags.admin:
+    description: Reload, set or clear the tag of a player.
+    default: op
+  fluxtags.tag.beta:
+    description: Unlocks the « Bêta » tag.
+    default: false
+  fluxtags.tag.createur:
+    description: Unlocks the « Créateur » tag.
+    default: false

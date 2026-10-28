@@ -1,0 +1,51 @@
+# Tags menu (/tags): one tag per row (rows 1 to 5), its button in column 1 and its image drawn next to it in the title
+# (%fluxtags_rows%, FluxTags). Background fluxtags:menu_tags (FluxTags/assets/gen_tags.py).
+title: ":offset_-8::menu_tags::offset_-177:%fluxtags_rows%"
+rows: 6
+player-inventory: hidden
+vanilla-background: false
+
+open-actions:
+  - "[sound] @page"
+
+lists:
+  tags:
+    slots: 10,19,28,37,46
+    item:
+      material: entry
+      actions:
+        left: ["%entry_clic%", "[refresh]"]
+
+items:
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
+    slots: [0]
+    lore:
+      - "@left Mon profil"
+    actions:
+      left: ["[menu] profil"]
+
+  icone:
+    material: NAME_TAG
+    name: "Tags"
+    slots: [8]
+    lore:
+      - "@desc Choisis le tag affiché à côté de ton pseudo. Les tags de métier changent de forme tous les 50 niveaux."
+      - "@kv Débloqués | %fluxtags_unlocked%&#B376E5/&f%fluxtags_total%"
+
+  precedent:
+    material: "itemsadder:influitems:btn_prev"
+    hide-tooltip: true
+    slots: [17]
+    view-requirements: ["placeholder: %flux_list_tags_has_prev% == true"]
+    actions:
+      left: ["[list] tags prev", "[refresh]"]
+
+  suivant:
+    material: "itemsadder:influitems:btn_next"
+    hide-tooltip: true
+    slots: [53]
+    view-requirements: ["placeholder: %flux_list_tags_has_next% == true"]
+    actions:
+      left: ["[list] tags next", "[refresh]"]

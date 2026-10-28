@@ -18,6 +18,7 @@ the player's inventory and draw buttons over it. Developed for the Influencraft 
 | **FluxReferral** | Referral system with per-player server addresses | — |
 | **FluxRewards** | Daily login and playtime rewards | — |
 | **FluxSorter** | Sorting chests and sorting golem (Lands) | — |
+| **FluxTags** | Collectible player tags (rank, evolving job tags, specials), one shown in the chat and tab list | — |
 | **FluxTools** | Levelled crate tools with quests, plus optional utility modules (jobs menu and XP boss bar, money action bar, /repair, /bottlexp, enchanted book splitter, Mending lock, anvil rules) | optional |
 | **FluxWebsite** | Bridge with the website: shop deliveries, vote rewards (/voteclaims), Vote Party, vote reminder and streak | — |
 | **FluxProxy** | Velocity plugin: hides the proxy's commands from the "/" suggestions | no (proxy) |

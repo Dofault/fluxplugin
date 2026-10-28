@@ -85,6 +85,12 @@ public final class ItemsAdderItems implements CustomItems.Provider, Listener {
     }
 
     @Override
+    public String glyphChar(String id) {
+        if (!glyphExists(id)) return null;
+        return new FontImageWrapper(id).internalGetUnicode();
+    }
+
+    @Override
     public int glyphWidth(String id) {
         if (!glyphExists(id)) return 0;
         return new FontImageWrapper(id).getWidth();

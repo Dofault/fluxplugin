@@ -48,6 +48,11 @@ public final class CustomItems {
         /** Width of a glyph in pixels (0 when unknown). */
         int glyphWidth(String id);
 
+        /** The bare character(s) of a glyph ({@code namespace:id}), coloured by the text colour; null when unknown. */
+        default String glyphChar(String id) {
+            return null;
+        }
+
         /** Id of the custom block placed there, or null. */
         String blockId(Block block);
 
@@ -221,6 +226,15 @@ public final class CustomItems {
 
     public static Collection<String> glyphIds() {
         return provider.glyphIds();
+    }
+
+    /** The bare character(s) of a glyph ({@code namespace:id}), to colour it; null when unknown or still loading. */
+    public static String glyph(String id) {
+        try {
+            return provider.glyphChar(id);
+        } catch (RuntimeException e) {
+            return null;
+        }
     }
 
     public static int glyphWidth(String id) {
