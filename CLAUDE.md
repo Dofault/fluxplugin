@@ -87,8 +87,8 @@ The plugins are written **as English plugins, then adapted to French** for our s
 ## Button style (lore, names, actions): always through Flux
 
 The look of every button lives in `plugins/Flux/style.yml` (`api.text.Style`): one `lore` template written top to
-bottom like an HTML page (`{description}...{/description}`, `{values}` with `{key}`/`{value}`, `{list}`, `{filter}`
-with `{selected}`/`{unselected}`, `{text}`, `{ok}`, `{ko}`, `{info}`, `{actions}` with `{icon}`/`{label}`). A block
+bottom like an HTML page (`<description>...</description>`, `<values>` with `{key}`/`{value}`, `<list>`, `<filter>`
+with `<selected>`/`<unselected>`, `<text>`, `<ok>`, `<ko>`, `<info>`, `<actions>` with `{icon}`/`{label}`). A block
 repeats per line of its kind and vanishes when empty; template order is the lore order; a blank template line shows
 only between content (runs around a vanished block merge). Plus `frame`, `name`, `icons`. Any text may use
 `<smallcaps>...</smallcaps>`. Look only, never words (labels go to the lang files). Never hand-write `&#FFD94D│ ...`

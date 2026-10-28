@@ -14,11 +14,11 @@ import java.util.regex.Pattern;
  * The look of every button of the suite, set in {@code plugins/Flux/style.yml} (look only, never words: those live in
  * the language files). The lore is one template, read top to bottom like an HTML page the data is poured into:
  * <pre>
- *   {description}&amp;f{text}{/description}
+ *   &lt;description&gt;&amp;f{text}&lt;/description&gt;
  *
- *   {values}&amp;#B376E5{key} : &amp;f{value}{/values}
+ *   &lt;values&gt;&amp;#B376E5{key} : &amp;f{value}&lt;/values&gt;
  * </pre>
- * Each block is repeated for every element of its kind and vanishes when there is none; a blank line of the template
+ * Tags are the structure, braces the data. Each block is repeated for every element of its kind and vanishes when there is none; a blank line of the template
  * only shows between two lines of content (consecutive blank runs merge into the longest one). The frame
  * ({@code │ ├ └}) is added to every produced line, the button name has its own template, the click icons a map.
  * A plugin may use a variant ({@code variants.<name>}: any of these keys). Any text may use
@@ -34,19 +34,19 @@ public final class Style {
     }
 
     private static final String DEFAULT_LORE = """
-            {description}&f{text}{/description}
+            <description>&f{text}</description>
 
-            {values}&#B376E5{key} : &f{value}{/values}
+            <values>&#B376E5{key} : &f{value}</values>
 
-            {list}&8➤ &7{text}{/list}
-            {filter}{selected}&f» {text}{/selected}{unselected}&#B376E5{text}{/unselected}{/filter}
+            <list>&8➤ &7{text}</list>
+            <filter><selected>&f» {text}</selected><unselected>&#B376E5{text}</unselected></filter>
 
-            {text}&#B376E5{text}{/text}
-            {ok}&#2ECF7B{text}{/ok}
-            {ko}&#FF5C5C{text}{/ko}
-            {info}&#FFD94D{text}{/info}
+            <text>&#B376E5{text}</text>
+            <ok>&#2ECF7B{text}</ok>
+            <ko>&#FF5C5C{text}</ko>
+            <info>&#FFD94D{text}</info>
 
-            {actions}{icon} &f{label}{/actions}
+            <actions>{icon} &f{label}</actions>
             """;
 
     private record Look(String lore, List<String> frame, String name, Map<String, String> icons, boolean framed) {
@@ -129,7 +129,8 @@ public final class Style {
 
     // ---------------------------------------------------------------- template
 
-    private static final Pattern BLOCK = Pattern.compile("\\{(\\w+)}(.*)\\{/\\1}");
+    /** A block: {@code <kind>...</kind>}, only the kinds below (other tags such as {@code <smallcaps>} stay text). */
+    private static final Pattern BLOCK = Pattern.compile("<(description|values|list|filter|text|ok|ko|info|actions)>(.*)</\\1>");
 
     /**
      * The lore of these entries: the template filled top to bottom, blank lines only between content, then the frame
@@ -183,7 +184,7 @@ public final class Style {
         return out;
     }
 
-    private static final Pattern CONDITION = Pattern.compile("\\{(selected|unselected)}(.*?)\\{/\\1}");
+    private static final Pattern CONDITION = Pattern.compile("<(selected|unselected)>(.*?)</\\1>");
 
     private static String fill(String template, Entry e) {
         if (e.fields().containsKey("raw")) return e.fields().get("raw");

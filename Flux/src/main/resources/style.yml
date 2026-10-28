@@ -2,30 +2,31 @@
 # after /fluxmenu reload. Look only, never words (labels live in the lang files). Colours: &x, &#RRGGBB.
 #
 # lore: the template of every lore, read top to bottom like an HTML page the data is poured into.
-#   {block}...{/block}  repeated once per line of that kind, gone when there is none:
-#     {description} {text}          description paragraphs (@desc)
-#     {values} {key} {value}        key : value (@kv Key | Value)
-#     {list} {text}                 list items (@item)
-#     {filter} {text}               filter options; {selected}...{/selected} / {unselected}...{/unselected} inside
-#     {text} {text}                 plain lines (@text, or a line without tag)
-#     {ok} {ko} {info} {text}       states
-#     {actions} {icon} {label}      click actions (@left @right @shift-left @shift-right), icons below
+# Tags are the structure, {braces} the data.
+#   <block>...</block>  repeated once per line of that kind, gone when there is none:
+#     <description> {text}          description paragraphs (@desc)
+#     <values> {key} {value}        key : value (@kv Key | Value)
+#     <list> {text}                 list items (@item)
+#     <filter> {text}               filter options; <selected>...</selected> / <unselected>...</unselected> inside
+#     <text> {text}                 plain lines (@text, or a line without tag)
+#     <ok> <ko> <info> {text}       states
+#     <actions> {icon} {label}      click actions (@left @right @shift-left @shift-right), icons below
 #   The order of the lines is the order of the lore. A blank line only shows between two lines of content
 #   (two blank lines = a bigger gap). Any text may use <smallcaps>...</smallcaps>.
 lore: |
-  {description}&f{text}{/description}
+  <description>&f{text}</description>
 
-  {values}&#B376E5{key} : &f{value}{/values}
+  <values>&#B376E5{key} : &f{value}</values>
 
-  {list}&8➤ &7{text}{/list}
-  {filter}{selected}&f» {text}{/selected}{unselected}&#B376E5{text}{/unselected}{/filter}
+  <list>&8➤ &7{text}</list>
+  <filter><selected>&f» {text}</selected><unselected>&#B376E5{text}</unselected></filter>
 
-  {text}&#B376E5{text}{/text}
-  {ok}&#2ECF7B{text}{/ok}
-  {ko}&#FF5C5C{text}{/ko}
-  {info}&#FFD94D{text}{/info}
+  <text>&#B376E5{text}</text>
+  <ok>&#2ECF7B{text}</ok>
+  <ko>&#FF5C5C{text}</ko>
+  <info>&#FFD94D{text}</info>
 
-  {actions}{icon} &f{label}{/actions}
+  <actions>{icon} &f{label}</actions>
 
 # frame added in front of every line: [line, branch (actions), corner (last line)]; framed: false removes it
 frame: ["&#FFD94D│ ", "&#FFD94D├ ", "&#FFD94D└ "]

@@ -49,7 +49,7 @@ public final class Lore {
 
     // ---------------------------------------------------------------- content
 
-    /** Description paragraph(s) ({@code {description}} block). */
+    /** Description paragraph(s) ({@code <description>} block). */
     public Lore description(String... paragraphs) {
         for (String p : paragraphs) add("description", p);
         return this;
@@ -59,12 +59,12 @@ public final class Lore {
         return description(paragraphs.toArray(new String[0]));
     }
 
-    /** Key/value information ({@code {values}} block, {@code {key}} and {@code {value}}). */
+    /** Key/value information ({@code <values>} block, {@code {key}} and {@code {value}}). */
     public Lore kv(String key, Object value) {
         return add("values", Map.of("key", key, "value", String.valueOf(value)), false);
     }
 
-    /** Item of a list (perks, rewards...): {@code {list}} block; a colour code in the text keeps its own colour. */
+    /** Item of a list (perks, rewards...): {@code <list>} block; a colour code in the text keeps its own colour. */
     public Lore item(String text) {
         return add("list", text);
     }
@@ -74,7 +74,7 @@ public final class Lore {
         return this;
     }
 
-    /** Plain text line ({@code {text}} block). */
+    /** Plain text line ({@code <text>} block). */
     public Lore line(String text) {
         return add("text", text);
     }
@@ -102,7 +102,7 @@ public final class Lore {
         return this;
     }
 
-    /** Filter options ({@code {filter}} block, the selected one through {@code {selected}}), then next / previous. */
+    /** Filter options ({@code <filter>} block, the selected one through {@code <selected>}), then next / previous. */
     public Lore filter(List<String> options, int selected) {
         for (int i = 0; i < options.size(); i++) add("filter", Map.of("text", options.get(i)), i == selected);
         return left(style.filterNext()).right(style.filterPrevious());
