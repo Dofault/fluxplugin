@@ -4,9 +4,9 @@ Layout (6-row chest, hidden inventory):
   row 0          back (0) and menu icon (8), the ceiling lamps between them
   rows 2 to 4    4 tier banners on a gold rod, 3 rank slots each, weakest on top: columns 1, 3, 5, 7
                  (slots 19/28/37, 21/30/39, 23/32/41, 25/34/43)
-  row 5          the path runs through the banner tips (waypoints 46, 48, 50, 52)
-  inventory row  reward slot of each tier (64, 66, 68, 70)
-The path itself (rank to rank to reward) is drawn by Flux in game (menu paths, coloured per step).
+  row 5          reward slot of each tier, at the tip of its banner (46, 48, 50, 52)
+Raised by one row on 2026-10-28 (rewards were in the inventory area). The path itself (rank to rank to reward) is
+drawn by Flux in game (menu paths, coloured per step).
 
 Usage: python gen_fond.py <png> [preview x3]  (Pillow)
 """
@@ -19,11 +19,11 @@ sys.path.insert(0, os.path.dirname(HERE))
 from fond_lib import generique_raccourci, poser, tampon_case  # noqa: E402
 
 W, H = 176, 221
-BOTTOM = 178
+BOTTOM = 148
 FRAME = 10
 COLS = (1, 3, 5, 7)
 RANK_ROWS = (2, 3, 4)
-REWARD_ROW = 6
+REWARD_ROW = 5
 ROD_Y = 38
 TIER_COLOURS = ["9AD29A", "4E72E6", "E65C9F", "E65C5C"]  # middle rank of each tier
 RANK_COLOURS = ["C0C0C0", "9AD29A", "6AC7C7", "5CA8E6", "4E72E6", "8A5CE6", "D15CE6", "E65C9F", "FFD94D",
