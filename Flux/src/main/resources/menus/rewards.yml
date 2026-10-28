@@ -40,12 +40,12 @@ lists:
     slots: 19-25,28-34,37-43
     item:
       material: entry
-      name: "&#FFD94D%entry_label%"
+      name: "%entry_label%"
       lore:
-        - "&#FFD94D│ &#B376E5Source : &f%entry_source%"
-        - "&#FFD94D│ &#B376E5Reçue le &f%entry_date%"
-        - "&#FFD94D│ &#B376E5Expire dans &f%entry_expire%"
-        - "&#FFD94D└ &r&7%img_left_click% &fRécupérer"
+        - "@kv Source | %entry_source%"
+        - "@kv Reçue le | %entry_date%"
+        - "@kv Expire dans | %entry_expire%"
+        - "@left Récupérer"
       actions:
         left: ["[rewards] claim %entry_id%", "[sound] @complete"]
 
@@ -74,42 +74,36 @@ items:
 
   retour:
     material: "itemsadder:influitems:btn_back"
-    name: "&#FFD94DRetour"
+    name: "Retour"
     slots: [9]
     lore:
-      - "&#FFD94D│ &#B376E5Revenir au menu."
-      - "&#FFD94D└ &r&7%img_left_click% &fMenu principal"
+      - "@desc Revenir au menu."
+      - "@left Menu principal"
     actions:
       left: ["[menu] main"]
 
   vide:
     material: "itemsadder:influitems:checkmark"
-    name: "&#FFD94DRien en attente"
+    name: "Rien en attente"
     slots: [31]
     view-requirements: ["placeholder: %flux_rewards_count% == 0"]
     lore:
-      - "&#FFD94D│ &#B376E5Tes prochaines récompenses"
-      - "&#FFD94D│ &#B376E5(connexion, temps de jeu, votes,"
-      - "&#FFD94D└ &#B376E5parrainage, boosters...) arrivent ici."
+      - "@desc Tes prochaines récompenses (connexion, temps de jeu, votes, parrainage, boosters...) arrivent ici."
 
   tout:
     material: "itemsadder:influitems:reward"
-    name: "&#FFD94DTout récupérer"
+    name: "Tout récupérer"
     slots: [49]
     lore:
-      - "&#FFD94D│ &#B376E5En attente : &f%flux_rewards_count%"
-      - "&#FFD94D│ &#B376E5Non récupérées en 3 semaines,"
-      - "&#FFD94D│ &#B376E5elles sont perdues."
-      - "&#FFD94D│ &#B376E5Ce qui ne rentre pas dans ton"
-      - "&#FFD94D│ &#B376E5inventaire reste ici."
-      - "&#FFD94D└ &r&7%img_left_click% &fTout récupérer"
+      - "@desc Ce qui ne rentre pas dans ton inventaire reste ici. Non récupérées en 3 semaines, elles sont perdues."
+      - "@kv En attente | %flux_rewards_count%"
+      - "@left Tout récupérer"
     actions:
       left: ["[rewards] claim", "[sound] @complete"]
 
   precedente:
     material: "itemsadder:influitems:btn_prev"
     hide-tooltip: true
-    name: "&#FFD94DPage précédente"
     slots: [27]
     view-requirements: ["placeholder: %flux_list_rewards_has_prev% == true"]
     actions:
@@ -118,7 +112,6 @@ items:
   suivante:
     material: "itemsadder:influitems:btn_next"
     hide-tooltip: true
-    name: "&#FFD94DPage suivante"
     slots: [35]
     view-requirements: ["placeholder: %flux_list_rewards_has_next% == true"]
     actions:
@@ -127,7 +120,6 @@ items:
   connexion_prec:
     material: "itemsadder:influitems:btn_prev"
     hide-tooltip: true
-    name: "&#FFD94DSemaine précédente"
     slots: [54]
     view-requirements: ["placeholder: %flux_list_recompenses_connexion_has_prev% == true"]
     actions:
@@ -136,7 +128,6 @@ items:
   connexion_suiv:
     material: "itemsadder:influitems:btn_next"
     hide-tooltip: true
-    name: "&#FFD94DSemaine suivante"
     slots: [62]
     view-requirements: ["placeholder: %flux_list_recompenses_connexion_has_next% == true"]
     actions:
@@ -145,7 +136,6 @@ items:
   temps_prec:
     material: "itemsadder:influitems:btn_prev"
     hide-tooltip: true
-    name: "&#FFD94DPaliers précédents"
     slots: [72]
     view-requirements: ["placeholder: %flux_list_recompenses_temps_has_prev% == true"]
     actions:
@@ -154,7 +144,6 @@ items:
   temps_suiv:
     material: "itemsadder:influitems:btn_next"
     hide-tooltip: true
-    name: "&#FFD94DPaliers suivants"
     slots: [80]
     view-requirements: ["placeholder: %flux_list_recompenses_temps_has_next% == true"]
     actions:

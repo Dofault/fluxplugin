@@ -125,6 +125,10 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         prefix = getConfig().getString("prefix", "&#FFD94D&lFlux &8► ");
         Text.configureLore(getConfig().getInt("lore.max-line-length", 40), getConfig().getBoolean("lore.repeat-prefix", true));
         fr.influencraft.flux.api.util.Sounds.configure(getConfig().getConfigurationSection("sounds"));
+        // look of every button (lore frame, colours, actions, filters): plugins/Flux/style.yml
+        java.io.File styleFile = new java.io.File(getDataFolder(), "style.yml");
+        if (!styleFile.exists()) saveResource("style.yml", false);
+        fr.influencraft.flux.api.text.Style.configure(org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(styleFile));
         fr.influencraft.flux.api.staff.Staff.configure(getConfig().getConfigurationSection("staff"));
         commandManager.configure(getConfig().getConfigurationSection("command-suggestions"));
         // suite-wide settings: language, currencies, dialogs

@@ -101,12 +101,18 @@ public final class ItemFactory {
             List<Component> wrapped = Text.wrapLore(own);
             if (wrapped != own) meta.lore(wrapped);
         }
-        if (b.name() != null) meta.displayName(name(viewer, b.name()));
-        if (!b.lore().isEmpty()) {
-            List<Component> lore = new ArrayList<>(b.lore().size());
+        if (b.name() != null) meta.displayName(name(viewer, fr.influencraft.flux.api.text.Style.get().name(b.name())));
+        // lore written with @tags (style.yml), @filter <list> expanded for this viewer
+        List<String> source = b.lore();
+        if (!source.isEmpty()) {
+            List<String> tagged = fr.influencraft.flux.api.inventory.Lore.fromTags(expandFilters(source, viewer), null);
+            if (tagged != null) source = tagged;
+        }
+        if (!source.isEmpty()) {
+            List<Component> lore = new ArrayList<>(source.size());
             // Objet d'une source : le lore du bouton vient sous la description de l'objet.
             if (fromSource && meta.lore() != null) lore.addAll(meta.lore());
-            for (String rawLine : b.lore()) {
+            for (String rawLine : source) {
               // long lines are wrapped to the configured width (lore.max-line-length), after placeholders
               String resolvedLine = rawLine.indexOf('%') >= 0 ? Text.placeholders(viewer, rawLine) : rawLine;
               List<String> pieces = Text.wrap(resolvedLine);
@@ -141,6 +147,28 @@ public final class ItemFactory {
         meta.getPersistentDataContainer().set(BUTTON_KEY, PersistentDataType.BYTE, (byte) 1);
         item.setItemMeta(meta);
         return item;
+    }
+
+    /** {@code @filter <list>}: one line per filter of the list (the viewer's one marked), then next / previous. */
+    private static List<String> expandFilters(List<String> lines, Player viewer) {
+        List<String> out = null;
+        for (int i = 0; i < lines.size(); i++) {
+            String l = lines.get(i);
+            if (!l.startsWith("@filter")) {
+                if (out != null) out.add(l);
+                continue;
+            }
+            if (out == null) out = new ArrayList<>(lines.subList(0, i));
+            String id = l.substring(7).trim().toLowerCase(Locale.ROOT);
+            var provider = fr.influencraft.flux.api.list.Lists.provider(id);
+            List<String> labels = provider == null ? List.of() : provider.filters();
+            int selected = viewer == null ? 0 : fr.influencraft.flux.api.list.Lists.state(viewer, id).filter();
+            var style = fr.influencraft.flux.api.text.Style.get();
+            for (int k = 0; k < labels.size(); k++) out.add("@option " + style.filterOption(labels.get(k), k == selected));
+            out.add("@left " + style.filterNext());
+            out.add("@right " + style.filterPrevious());
+        }
+        return out == null ? lines : out;
     }
 
     /**

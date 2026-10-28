@@ -51,7 +51,7 @@ public final class Items {
         if (item == null) return null;
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
-        if (name != null) meta.displayName(Texts.parse(name, viewer));
+        if (name != null) meta.displayName(Texts.parse(fr.influencraft.flux.api.text.Style.get().name(name), viewer));
         if (lore != null && !lore.isEmpty()) meta.lore(Texts.lore(lore, viewer));
         item.setItemMeta(meta);
         return item;

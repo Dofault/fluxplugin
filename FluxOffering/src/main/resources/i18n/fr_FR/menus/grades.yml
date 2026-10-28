@@ -63,7 +63,7 @@ items:
     name: "&#FFD94DRetour"
     slots: [9]
     lore:
-      - "&#FFD94D│ &#B376E5Revenir au menu."
-      - "&#FFD94D└ &r&7%img_left_click% &fMenu principal"
+      - "@desc Revenir au menu."
+      - "@left Menu principal"
     actions:
       left: ["[menu] main"]

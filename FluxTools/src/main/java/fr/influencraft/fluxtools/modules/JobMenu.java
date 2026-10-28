@@ -158,8 +158,9 @@ final class JobMenu implements Listener {
             if (!jobs.exists(s.id())) continue;
             boolean active = jobs.active(player, s.id());
             boolean chosen = s.id().equals(shown);
-            Lore lore = levelLore(player, s.id()).lines(s.description())
-                    .line(active ? Lore.GREEN + "Métier actif." : Lore.RED + "Métier inactif.");
+            Lore lore = levelLore(player, s.id()).description(s.description());
+            if (active) lore.ok("Métier actif.");
+            else lore.ko("Métier inactif.");
             if (!chosen) lore.left("Voir le métier");
             ItemStack item = item(s.icon(), plainName(s.id()), lore.build(), player);
             decorate(item, jobs.level(player, s.id()), active || chosen);
@@ -170,8 +171,8 @@ final class JobMenu implements Listener {
 
     private Lore levelLore(Player player, String job) {
         return Lore.create()
-                .line("Niveau : &f" + Jobs.get().level(player, job))
-                .line("Progression : &f" + Format.decimal(Jobs.progress(player, job) * 100) + "%");
+                .kv("Niveau", Jobs.get().level(player, job))
+                .kv("Progression", Format.decimal(Jobs.progress(player, job) * 100) + "%");
     }
 
     private List<ListEntry> levels(Player player) {
@@ -183,19 +184,19 @@ final class JobMenu implements Listener {
         int start = windowStart(player, job);
         for (int level = start; level < start + WINDOW; level++) {
             Lore lore = Lore.create();
-            for (String line : levelLines(player, job, level)) lore.line(line);
+            lore.items(levelLines(player, job, level));
             String icon;
             if (level < current) {
                 icon = "itemsadder:influitems:chest_checkmark";
-                lore.line(Lore.GREEN + "Atteint.");
+                lore.ok("Atteint.");
             } else if (level == current) {
                 icon = "itemsadder:influitems:stairs";
-                lore.line("XP : &f" + Format.decimal(jobs.xp(player, job)) + "&7/&f" + Format.decimal(jobs.xpForLevel(job, level + 1)));
-                lore.line("Progression : &f" + Format.decimal(Jobs.progress(player, job) * 100) + "%");
-                lore.line(Lore.GREEN + "Ton niveau actuel.");
+                lore.kv("XP", Format.decimal(jobs.xp(player, job)) + "&7/&f" + Format.decimal(jobs.xpForLevel(job, level + 1)));
+                lore.kv("Progression", Format.decimal(Jobs.progress(player, job) * 100) + "%");
+                lore.ok("Ton niveau actuel.");
             } else {
                 icon = "itemsadder:influitems:lock";
-                lore.line(Lore.RED + "Pas encore atteint.");
+                lore.ko("Pas encore atteint.");
             }
             ItemStack item = item(icon, "Niveau " + level, lore.build(), player);
             decorate(item, level, level == current);
@@ -222,7 +223,7 @@ final class JobMenu implements Listener {
         if (job == null || !Jobs.available()) return out;
         int i = 0;
         for (JobAction a : Jobs.get().actions(player, job)) {
-            Lore lore = Lore.create().line("XP : " + Lore.GREEN + Format.decimal(a.xp())).raw(Lore.GOLD + "└ " + money(player, a));
+            Lore lore = Lore.create().kv("XP", Format.decimal(a.xp())).kv("Gain", money(player, a));
             out.add(ListEntry.of(String.valueOf(i++)).item(item(icon(a).name(), actionName(a), lore.build(), player)));
         }
         return out;
@@ -235,15 +236,15 @@ final class JobMenu implements Listener {
         ItemStack item;
         String confirm = "";
         if (jobs.active(player, job)) {
-            item = item("itemsadder:influitems:deny", "Quitter le métier", Lore.create().line("Ta progression est gardée.")
-                    .line("Coût : &f" + jobs.leavePrice(player, job)).left("Double clic pour quitter").build(), player);
+            item = item("itemsadder:influitems:deny", "Quitter le métier", Lore.create().description("Ta progression est gardée.")
+                    .kv("Coût", jobs.leavePrice(player, job)).left("Double clic pour quitter").build(), player);
             confirm = "&#f0716fClique encore pour quitter le métier.";
         } else if (jobs.canJoin(player, job)) {
-            item = item("itemsadder:influitems:accept", "Rejoindre ce métier", Lore.create().line("Commence à gagner des BitBlock")
-                    .line("avec ce métier.").line("Coût : &f" + jobs.joinPrice(player, job)).left("Rejoindre").build(), player);
+            item = item("itemsadder:influitems:accept", "Rejoindre ce métier", Lore.create().description("Commence à gagner des BitBlock avec ce métier.")
+                    .kv("Coût", jobs.joinPrice(player, job)).left("Rejoindre").build(), player);
         } else {
-            item = item("itemsadder:influitems:lock", "Plus de place", Lore.create().line("Tu exerces déjà le maximum")
-                    .line("de métiers pour ton rang.").line(Lore.RED + "Monte en rang pour en exercer plus.").build(), player);
+            item = item("itemsadder:influitems:lock", "Plus de place", Lore.create().description("Tu exerces déjà le maximum de métiers pour ton rang.")
+                    .ko("Monte en rang pour en exercer plus.").build(), player);
         }
         return List.of(ListEntry.of(job).item(item).set("confirm", confirm));
     }
@@ -296,7 +297,7 @@ final class JobMenu implements Listener {
     }
 
     private static ItemStack item(String material, String name, List<String> lore, Player player) {
-        ItemStack item = Items.of(material, Lore.GOLD + name, lore, player);
+        ItemStack item = Items.of(material, name, lore, player);
         return item == null ? new ItemStack(Material.PAPER) : item;
     }
 

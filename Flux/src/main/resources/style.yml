@@ -1,0 +1,55 @@
+# Look of every button of the suite (menu files and buttons built by code). Change it here, it changes everywhere
+# after /fluxmenu reload. Colours: &x, &#RRGGBB.
+#
+# In menu files, write the lore with tags and Flux applies this style (frame, colours, order of the sections):
+#   lore:
+#     - "@desc A description paragraph."      (description colour; several @desc lines = several paragraphs)
+#     - "@kv Level | %some_level%"            (key : value)
+#     - "@item 3 homes"                       (list item)
+#     - "@text Plain line" or a line without tag
+#     - "@ok Done." / "@ko Locked." / "@info Next one."   (states)
+#     - "@filter <list id>"                   (the list's filters, the viewer's one marked, then next / previous)
+#     - "@left Open" / "@right ..." / "@shift-left ..." / "@shift-right ..."   (4 actions at most)
+# Sections are always shown in this order: description, key/values, list, text and states, actions.
+
+frame:
+  enabled: true
+  line: "&#FFD94D│ "
+  branch: "&#FFD94D├ "
+  corner: "&#FFD94D└ "
+
+# button name colour (a name that starts with its own colour keeps it)
+name: "&#FFD94D"
+description: "&f"
+text: "&#B376E5"
+key-value: "&#B376E5%key% : &f%value%"
+item: "&8➤ &7%item%"
+states:
+  ok: "&#2ECF7B"
+  ko: "&#FF5C5C"
+  info: "&#FFD94D"
+
+actions:
+  left: "&r&7%img_left_click% &f%label%"
+  right: "&r&7%img_right_click% &f%label%"
+  shift-left: "&r&7⇧%img_left_click% &f%label%"
+  shift-right: "&r&7⇧%img_right_click% &f%label%"
+
+# filter options (the labels « next / previous filter » are words: lang files of Flux, filter-next / filter-previous)
+filter:
+  selected: "&f» %label%"
+  unselected: "&#B376E5%label%"
+
+sections:
+  # framed blank line between two sections and before the actions
+  gap: true
+
+small-caps:
+  names: false
+  description: false
+
+# Variants of a plugin: only the keys it changes, e.g.
+# variants:
+#   pets:
+#     name: "&#FF7A59"
+variants: {}

@@ -21,56 +21,51 @@ items:
   icone:
     slot: 8
     material: "itemsadder:influitems:stairs"
-    name: "&#FFD94D%offrandes_current_name%"
+    name: "%offrandes_current_name%"
     lore:
-      - "&#FFD94D│ &#B376E5Dépose les objets demandés"
-      - "&#FFD94D│ &#B376E5depuis ton inventaire (clic sur"
-      - "&#FFD94D│ &#B376E5un objet, ou Tout déposer)."
-      - "&#FFD94D│ &#B376E5"
-      - "&#FFD94D└ &#B376E5Progression : &f%offrandes_current_percent% %"
+      - "@desc Dépose les objets demandés depuis ton inventaire (clic sur un objet, ou Tout déposer)."
+      - "@kv Progression | %offrandes_current_percent% %"
   retour:
     slot: 0
     material: "itemsadder:influitems:btn_back"
-    name: "&r&7%img_left_click% &#FFD94DRetour"
-    lore: ["&#B376E5Retour aux rangs."]
+    name: "Retour"
+    lore:
+      - "@desc Retour aux rangs."
+      - "@left Rangs"
     actions:
       left: ["[menu] grades"]
   precedente:
     slot: 18
     material: "itemsadder:influitems:btn_prev"
-    name: "&r&7%img_left_click% &#FFD94DPage précédente"
+    hide-tooltip: true
     view-requirements: ["placeholder: %flux_list_offering_has_prev% == true"]
     actions:
       left: ["[list] offering prev"]
   suivante:
     slot: 26
     material: "itemsadder:influitems:btn_next"
-    name: "&r&7%img_left_click% &#FFD94DPage suivante"
+    hide-tooltip: true
     view-requirements: ["placeholder: %flux_list_offering_has_next% == true"]
     actions:
       left: ["[list] offering next"]
   filtre:
     slot: 49
     material: "itemsadder:influitems:filter"
-    name: "&r&7%img_left_click% &#FFD94DAffichage : %flux_list_offering_filter%"
+    name: "Filtrer"
     lore:
-      - "&#B376E5Tout, Déposés (offrande remplie),"
-      - "&#B376E5Non déposés (ce qu'il reste à faire)."
-      - ""
-      - "&#B376E5Clique pour changer l'affichage."
+      - "@filter offering"
     view-requirements: ["placeholder: %offrandes_editing% == false"]
     actions:
       left: ["[list] offering filter"]
+      right: ["[list] offering filter-prev"]
   tout_deposer:
     slot: 40
     material: CHEST
-    name: "&r&7%img_left_click% &#FFD94DTout déposer"
+    name: "Tout déposer"
     lore:
-      - "&#B376E5Dépose d'un coup tout ce que"
-      - "&#B376E5tu peux, sur tous les items"
-      - "&#B376E5de cette offrande."
-      - ""
-      - "&#B376E5Progression : &f%offrandes_current_percent% %"
+      - "@desc Dépose d'un coup tout ce que tu peux, sur tous les objets de cette offrande."
+      - "@kv Progression | %offrandes_current_percent% %"
+      - "@left Tout déposer"
     view-requirements:
       - "placeholder: %offrandes_editing% == false"
       - "placeholder: %offrandes_current_complete% == false"
@@ -79,8 +74,8 @@ items:
   edition:
     slot: 45
     material: ANVIL
-    name: "&r&7%img_left_click% &#FFD94DModifier cette offrande"
-    lore: ["&#B376E5Réservé aux administrateurs."]
+    name: "Modifier cette offrande"
+    lore: ["@desc Réservé aux administrateurs.", "@left Modifier"]
     view-requirements:
       - "permission: offrandes.admin"
       - "placeholder: %offrandes_editing% == false"
@@ -89,8 +84,8 @@ items:
   quitter_edition:
     slot: 45
     material: BARRIER
-    name: "&r&7%img_left_click% &#FFD94DQuitter l'édition"
-    lore: ["&#B376E5Retour à la vue normale."]
+    name: "Quitter l'édition"
+    lore: ["@desc Retour à la vue normale.", "@left Quitter"]
     view-requirements:
       - "permission: offrandes.admin"
       - "placeholder: %offrandes_editing% == true"
@@ -99,10 +94,10 @@ items:
   ajouter:
     slot: 53
     material: "itemsadder:influitems:add"
-    name: "&r&7%img_left_click% &#FFD94DDemander l'objet en main"
+    name: "Demander l'objet en main"
     lore:
-      - "&#B376E5Tiens l'objet (ou un livre enchanté)"
-      - "&#B376E5puis clique pour fixer sa quantité."
+      - "@desc Tiens l'objet (ou un livre enchanté) puis clique pour fixer sa quantité."
+      - "@left Ajouter"
     view-requirements:
       - "permission: offrandes.admin"
       - "placeholder: %offrandes_editing% == true"

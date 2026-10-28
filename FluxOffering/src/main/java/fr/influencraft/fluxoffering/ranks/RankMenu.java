@@ -171,27 +171,24 @@ public final class RankMenu implements org.bukkit.event.Listener {
      * closed (the offering command checks the access again).
      */
     private ListEntry rankEntry(Player player, Rank r, int index, int current) {
-        Lore lore = Lore.create();
-        for (String line : r.description()) lore.line("&f" + line);
-        if (!r.perks().isEmpty()) lore.line("");
-        for (String perk : r.perks()) lore.line(perk);
-        lore.line("");
+        Lore lore = Lore.create().description(r.description());
+        for (String perk : r.perks()) lore.item(perk.replaceFirst("^&8(&m)?➤ ", ""));
         String icon, click = "[sound] @error";
         boolean glow = false;
         boolean offering = index <= current + 1 && offeringExists.test(r.id());
         if (index == current) {
             icon = "player-head";
             glow = true;
-            lore.line(Lore.GREEN + "Validé, c'est ton rang actuel.");
+            lore.ok("Validé, c'est ton rang actuel.");
         } else if (index < current) {
             icon = "itemsadder:influitems:unlock";
-            lore.line(Lore.GREEN + "Validé.");
+            lore.ok("Validé.");
         } else if (index == current + 1) {
             icon = "itemsadder:influitems:tracking";
-            lore.line(Lore.GOLD + "Prochain rang.");
+            lore.info("Prochain rang.");
         } else {
             icon = "itemsadder:influitems:lock";
-            lore.line(Lore.RED + "Pas encore accessible.");
+            lore.ko("Pas encore accessible.");
         }
         if (offering) {
             lore.left(index == current + 1 ? "Faire l'offrande" : "Voir l'offrande");
@@ -202,21 +199,21 @@ public final class RankMenu implements org.bukkit.event.Listener {
     }
 
     private ListEntry chestEntry(Player player, Tier t, int current) {
-        Lore lore = Lore.create().line("Récompense du palier &f" + t.name()).lines(t.rewardLines());
+        Lore lore = Lore.create().description("Récompense du palier &f" + t.name()).items(t.rewardLines());
         String icon, click = "[sound] @error";
         switch (chest(player, t, current)) {
             case CLAIMED -> {
                 icon = "itemsadder:influitems:chest_checkmark";
-                lore.line(Lore.GREEN + "Récupérée.");
+                lore.ok("Récupérée.");
             }
             case WAITING -> {
                 icon = "itemsadder:influitems:chest_item";
-                lore.line("Elle t'attend dans tes récompenses.").left("Ouvrir les récompenses");
+                lore.info("Elle t'attend dans tes récompenses.").left("Ouvrir les récompenses");
                 click = "[menu] rewards";
             }
             case READY -> {
                 icon = "itemsadder:influitems:chest_unlock";
-                lore.line(Lore.GREEN + "Palier terminé !").left("Récupérer");
+                lore.ok("Palier terminé !").left("Récupérer");
                 click = "[grades] claim " + t.id();
             }
             default -> {
@@ -232,24 +229,20 @@ public final class RankMenu implements org.bukkit.event.Listener {
     private ListEntry info(Player player) {
         int current = current(player);
         Rank now = ranks.isEmpty() ? null : ranks.get(current);
-        Lore lore = Lore.create().line("Monte en grade en faisant")
-                .line("les offrandes : chaque grade")
-                .line("débloque de nouveaux avantages.")
-                .line("")
-                .line("Chaque palier de 3 grades se")
-                .line("termine par un coffre de récompense.");
-        if (now != null) lore.line("").line("Ton grade : &" + now.colour() + now.name());
+        Lore lore = Lore.create().description("Monte en rang en faisant les offrandes : chaque rang débloque de nouveaux avantages.",
+                "Chaque palier de 3 rangs se termine par un coffre de récompense.");
+        if (now != null) lore.kv("Ton rang", "&" + now.colour() + now.name());
         String click = "[sound] @error";
         if (current + 1 < ranks.size()) {
             Rank next = ranks.get(current + 1);
-            lore.line("Prochain : &" + next.colour() + next.name()).left("Faire l'offrande");
+            lore.kv("Prochain", "&" + next.colour() + next.name()).left("Faire l'offrande");
             click = "[player] offrande";
         }
-        return entry(player, "info", "itemsadder:influitems:stairs", "Grades", lore, 1, false).set("clic", click);
+        return entry(player, "info", "itemsadder:influitems:stairs", "Rangs", lore, 1, false).set("clic", click);
     }
 
     private static ListEntry entry(Player player, String id, String icon, String name, Lore lore, int amount, boolean glow) {
-        ItemStack item = Items.of(icon, Lore.GOLD + name, lore.build(), player);
+        ItemStack item = Items.of(icon, name, lore.build(), player);
         if (item == null) item = new ItemStack(Material.PAPER);
         item.setAmount(Math.max(1, Math.min(99, amount)));
         if (glow) {

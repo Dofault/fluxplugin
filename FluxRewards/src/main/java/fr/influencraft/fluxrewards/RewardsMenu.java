@@ -125,19 +125,19 @@ final class RewardsMenu {
             DailyRewards.State state = daily.dayState(d, n);
             boolean waiting = n == today && Rewards.waiting(uuid, daily.dayKey(d));
             Lore lore = Lore.create();
-            if (tier != null) lore.lines(placeholders(player, tier.lore()));
+            if (tier != null) lore.items(placeholders(player, tier.lore()));
             String clic = "[sound] @error";
             String icon;
             if (waiting) {
                 icon = "itemsadder:influitems:chest_item";
-                lore.line(Lore.GREEN + "Aujourd'hui, en attente.").left("Récupérer");
+                lore.ok("Aujourd'hui, en attente.").left("Récupérer");
                 clic = "[rewards] claim key:" + daily.dayKey(d);
             } else if (state == DailyRewards.State.CLAIMED) {
                 icon = "itemsadder:influitems:chest_checkmark";
-                lore.line(Lore.GREEN + "Récupéré.");
+                lore.ok("Récupéré.");
             } else if (state == DailyRewards.State.MISSED) {
                 icon = "itemsadder:influitems:deny";
-                lore.line(Lore.RED + "Manqué ce jour-là.");
+                lore.ko("Manqué ce jour-là.");
             } else {
                 icon = "itemsadder:influitems:lock";
                 lore.line(n == today + 1 ? "Reviens demain." : "Dans " + (n - today) + " jours de connexion.");
@@ -159,20 +159,20 @@ final class RewardsMenu {
             i++;
             String key = DailyRewards.playtimeKey(tier);
             DailyRewards.State state = daily.playtimeState(uuid, d, tier);
-            Lore lore = Lore.create().lines(placeholders(player, tier.lore()))
-                    .line("Palier : " + Lore.GOLD + Format.duration(tier.threshold()) + Lore.PURPLE + " de jeu.");
+            Lore lore = Lore.create().kv("Palier", Format.duration(tier.threshold()) + " de jeu")
+                    .items(placeholders(player, tier.lore()));
             String clic = "[sound] @error";
             String icon;
             if (Rewards.waiting(uuid, key)) {
                 icon = "itemsadder:influitems:chest_item";
-                lore.line(Lore.GREEN + "Atteint, en attente.").left("Récupérer");
+                lore.ok("Atteint, en attente.").left("Récupérer");
                 clic = "[rewards] claim key:" + key;
             } else if (state == DailyRewards.State.CLAIMED) {
                 icon = "itemsadder:influitems:chest_checkmark";
-                lore.line(Lore.GREEN + "Récupéré.");
+                lore.ok("Récupéré.");
             } else if (state == DailyRewards.State.AVAILABLE) {
                 icon = "itemsadder:influitems:chest_item";
-                lore.line(Lore.GREEN + "Atteint, il arrive dans tes récompenses.");
+                lore.ok("Atteint, il arrive dans tes récompenses.");
             } else {
                 icon = "itemsadder:influitems:lock";
                 lore.line("Encore " + Lore.GOLD + Format.duration(Math.max(0, tier.threshold() - daily.playtime(uuid)))
@@ -189,26 +189,21 @@ final class RewardsMenu {
         UUID uuid = player.getUniqueId();
         PlayerData d = daily.data(uuid);
         int day = d == null ? 0 : d.dayOfCycle(daily.cycle());
-        Lore lore = Lore.create().line("Tout ce que tu gagnes arrive ici :")
-                .line("connexion, temps de jeu, votes,")
-                .line("parrainage, boosters...")
-                .line("")
-                .line("En bas, une récompense par jour")
-                .line("de connexion (1re ligne) et par")
-                .line("palier de temps de jeu (2e ligne).")
-                .line("")
-                .line("Jour " + Lore.GOLD + day + "&7/" + Lore.GOLD + daily.cycle() + Lore.PURPLE + " de connexion.")
-                .line("Temps de jeu : " + Lore.GOLD + Format.duration(daily.playtime(uuid)) + Lore.PURPLE + ".");
+        Lore lore = Lore.create()
+                .description("Tout ce que tu gagnes arrive ici : connexion, temps de jeu, votes, parrainage, boosters...",
+                        "En bas, une récompense par jour de connexion (1re ligne) et par palier de temps de jeu (2e ligne).")
+                .kv("Jour de connexion", day + "/" + daily.cycle())
+                .kv("Temps de jeu", Format.duration(daily.playtime(uuid)));
         String clic = "[sound] @error";
         String icon;
         boolean waiting = d != null && Rewards.waiting(uuid, daily.dayKey(d));
         if (waiting) {
             icon = "itemsadder:influitems:reward";
-            lore.line(Lore.GREEN + "Celle d'aujourd'hui t'attend !").left("Récupérer");
+            lore.ok("Celle d'aujourd'hui t'attend !").left("Récupérer");
             clic = "[rewards] claim key:" + daily.dayKey(d);
         } else {
             icon = "itemsadder:influitems:reward";
-            lore.line(Lore.GREEN + "Celle d'aujourd'hui est prise, reviens demain.");
+            lore.ok("Celle d'aujourd'hui est prise, reviens demain.");
         }
         return entry(player, "info", icon, "Récompenses", lore, 1, waiting).set("clic", clic);
     }
@@ -216,7 +211,7 @@ final class RewardsMenu {
     // ------------------------------------------------------------------ helpers
 
     private static ListEntry entry(Player player, String id, String icon, String name, Lore lore, int amount, boolean glow) {
-        ItemStack item = Items.of(icon, Lore.GOLD + name, lore.build(), player);
+        ItemStack item = Items.of(icon, name, lore.build(), player);
         if (item == null) item = new ItemStack(Material.PAPER);
         item.setAmount(Math.max(1, Math.min(99, amount)));
         if (glow) {

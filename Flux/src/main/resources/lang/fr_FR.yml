@@ -14,6 +14,8 @@ format:
   link-title: "Lien"
   search-title: "Recherche"
   search-label: "Texte à chercher (vide : tout afficher)"
+  filter-next: "Filtre suivant"
+  filter-previous: "Filtre précédent"
 dialogs:
   confirm-label: "Valider"
   cancel-label: "Annuler"

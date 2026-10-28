@@ -274,7 +274,7 @@ final class PassMenu implements Listener {
     }
 
     private static ItemStack item(String material, String name, List<String> lore, Player player) {
-        ItemStack item = Items.of(material, Lore.GOLD + name, lore, player);
+        ItemStack item = Items.of(material, name, lore, player);
         return item == null ? new ItemStack(Material.PAPER) : item;
     }
 

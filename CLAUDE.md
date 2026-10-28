@@ -84,6 +84,25 @@ The plugins are written **as English plugins, then adapted to French** for our s
 - Backgrounds are free drawings (any height, any position); keep a reminder of the generic background
   (`Flux/assets/menu_generique.png`) and the violet theme, plus a colour accent of the menu's own.
 
+## Button style (lore, names, actions): always through Flux
+
+The look of every button lives in `plugins/Flux/style.yml` (`api.text.Style`): frame (`│ ├ └`), colours of the name,
+description, plain text, key/value, list items and states, the 4 click actions, the filter format, small caps.
+Look only, never words (labels go to the lang files). Never hand-write `&#FFD94D│ ...` lines again:
+
+- **Code**: `Lore.create()` (or `Lore.create("<variant>")` for a plugin colour) with `.description()` (paragraphs,
+  white), `.kv(key, value)`, `.item()` / `.items()` (lists), `.line()` (plain text), `.ok()` / `.ko()` / `.info()`,
+  `.filter(options, selected)`, `.left()` / `.right()` / `.shiftLeft()` / `.shiftRight()`. Sections always come out
+  in the same order: description, key/values, list, text and states, actions. Names go through `Items.of`, which
+  applies the name style.
+- **Menu files**: lore lines with tags `@desc`, `@kv Key | Value`, `@item`, `@text`, `@ok`, `@ko`, `@info`,
+  `@filter <list>`, `@option`, `@left`, `@right`, `@shift-left`, `@shift-right`, `@raw`. Names without a colour get
+  the name colour. Generators (`assets/*.py`) must write these tags.
+- **Navigation arrows** (previous / next page): no name, `hide-tooltip: true`.
+- **Filters**: one format (the pets one): options listed with the current one marked, left click = next filter,
+  right click = previous (`[list] <id> filter` / `filter-prev`, or `@filter <list>` for a Flux list).
+- A plugin keeps its own colour with a variant (`variants.<name>` in style.yml), never with hard-coded colours.
+
 ## Building (shared machine: production runs on it)
 
 Never run a bare Maven/Gradle build: the OOM killer would kill the production server. Always cap memory:
