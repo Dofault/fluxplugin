@@ -134,10 +134,20 @@ public final class RankMenu implements org.bukkit.event.Listener {
 
     private enum Chest { LOCKED, READY, WAITING, CLAIMED }
 
+    /**
+     * A tier is done once its last rank is validated: holding a rank is not validating it, the player validates it
+     * with the offering that takes him to the next rank. So the chest opens when he reached the next tier's first
+     * rank; the very last rank of the ladder, with nothing after it, counts as validated once held.
+     */
+    private boolean done(Tier t, int current) {
+        int last = lastIndex(t);
+        return current > last || (last == ranks.size() - 1 && current == last);
+    }
+
     private Chest chest(Player player, Tier t, int current) {
         UUID uuid = player.getUniqueId();
         if (Rewards.given(uuid, key(t))) return Rewards.waiting(uuid, key(t)) ? Chest.WAITING : Chest.CLAIMED;
-        return current >= lastIndex(t) ? Chest.READY : Chest.LOCKED;
+        return done(t, current) ? Chest.READY : Chest.LOCKED;
     }
 
     // ------------------------------------------------------------------ list entries
@@ -160,10 +170,10 @@ public final class RankMenu implements org.bukkit.event.Listener {
         if (index == current) {
             icon = "player-head";
             glow = true;
-            lore.line(Lore.GREEN + "Ton grade actuel.");
+            lore.line(Lore.GREEN + "Ton rang actuel.").line("Valide-le avec l'offrande du rang suivant.");
         } else if (index < current) {
             icon = "itemsadder:influitems:unlock";
-            lore.line(Lore.GREEN + "Atteint.");
+            lore.line(Lore.GREEN + "Validé.");
         } else if (index == current + 1) {
             icon = "itemsadder:influitems:tracking";
             lore.line("Prochain grade : fais son offrande.").left("Faire l'offrande");
@@ -196,7 +206,8 @@ public final class RankMenu implements org.bukkit.event.Listener {
             }
             default -> {
                 icon = "itemsadder:influitems:chest";
-                lore.line("Atteins le grade &" + last.colour() + last.name() + Lore.PURPLE + " pour l'ouvrir.");
+                lore.line("Valide le rang &" + last.colour() + last.name() + Lore.PURPLE + " (son offrande,")
+                    .line("qui fait passer au rang suivant) pour l'ouvrir.");
             }
         }
         return entry(player, "tier:" + t.id(), icon, t.rewardLabel(), lore, 1, false).set("clic", click);
