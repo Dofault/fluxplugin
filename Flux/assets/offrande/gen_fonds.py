@@ -66,12 +66,20 @@ def background(rank, colour, tier, chest, generic, case):
     im.paste(generic.crop((4, 16, 172, CHEST_BOTTOM + 1)), (4, 16))
     d = ImageDraw.Draw(im)
     col = c(colour)
-    # ribbon of the rank's colour behind the title row, with the tier's stars
-    for x in range(4, 172):
-        t = abs(x - 88) / 84
-        d.line([(x, 4), (x, 13)], mix(mix(CONTOUR, col, .55), mix(CONTOUR, col, .25), t))
-    d.line([(4, 4), (171, 4)], mix(col, (255, 255, 255, 255), .25))
-    d.line([(4, 14), (171, 14)], CONTOUR)
+    # ribbon of the rank's colour over the whole top of the panel, frame included (only the dark outer outline and the
+    # transparent corners are kept), with the tier's stars
+    px = im.load()
+    for y in range(0, 15):
+        for x in range(im.width):
+            p = px[x, y]
+            if p[3] == 0 or p[:3] == CONTOUR[:3]:
+                continue
+            t = abs(x - 88) / 88
+            shade = mix(mix(CONTOUR, col, .55), mix(CONTOUR, col, .25), t)
+            if y <= 2:
+                shade = mix(shade, mix(col, (255, 255, 255, 255), .3), .6)
+            px[x, y] = shade
+    d.line([(1, 14), (174, 14)], CONTOUR)
     for k in range(tier + 1):
         star(im, 88 - 3 * tier + 6 * k, 9, OR_CLAIR)
     for n in LIST:
