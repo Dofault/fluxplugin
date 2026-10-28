@@ -1,0 +1,25 @@
+name: FluxFly
+version: 26.2
+main: fr.influencraft.fluxfly.FluxFly
+api-version: "26.2"
+description: Fly time bank (/fly) in the allowed worlds, earned through rewards, with unlimited flight by permission.
+authors: [Influencraft]
+depend: [Flux]
+loadbefore: [CMI]
+
+permissions:
+  fluxfly.use:
+    description: Use /fly with the fly time of the player.
+    default: true
+  fluxfly.unlimited:
+    description: Fly without spending fly time (still only in the allowed worlds), e.g. VIP.
+    default: false
+  fluxfly.bypass:
+    description: Fly in every world without spending fly time (staff).
+    default: op
+  fluxfly.others:
+    description: /fly <player> on another player.
+    default: op
+  fluxfly.admin:
+    description: Give, take, set and check fly time, reload.
+    default: op

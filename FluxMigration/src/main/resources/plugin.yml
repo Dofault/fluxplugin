@@ -1,0 +1,13 @@
+name: FluxMigration
+version: 26.2
+main: fr.influencraft.fluxmigration.FluxMigration
+api-version: "26.2"
+description: One-time data migrations of the Flux suite (former plugins to Flux). Remove once every migration is done.
+authors: [Influencraft]
+depend: [Flux]
+softdepend: [FluxFly]
+
+permissions:
+  fluxmigration.admin:
+    description: See and run the migrations.
+    default: op

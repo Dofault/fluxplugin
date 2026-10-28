@@ -1,0 +1,23 @@
+# FluxFly: every player has a fly time bank (seconds). /fly turns flight on in the allowed worlds and spends that time
+# while the player is actually flying. Fly time is earned through rewards (commands: fluxfly add <player> <duration>).
+# Durations: "90s", "10m", "1h30", "2h"; a bare number is minutes.
+
+# Worlds where /fly works (flight is turned off on leaving them).
+worlds: [Valdor]
+
+# Fly time of a player seen for the first time, in seconds.
+starting-time: 10
+
+# Flight is turned off for this many seconds after taking damage from a player (0 = never).
+combat-seconds: 10
+
+# After flight stops (time out, combat, world change, /fly off), the next fall does not hurt.
+fall-protection: true
+
+# Mining fatigue while flying (0 = none), so flight is for moving around, not for mining walls.
+mining-fatigue: 1
+
+# Bar at the top of the screen while flying.
+bossbar:
+  enabled: true
+  color: WHITE

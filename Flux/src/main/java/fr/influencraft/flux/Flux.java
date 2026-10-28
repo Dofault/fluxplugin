@@ -66,6 +66,8 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         readSettings();
         rewards = fr.influencraft.flux.rewards.RewardService.start(this, () -> messages);
         if (rewards != null) rewards.importFormerMailbox(getDataFolder().getParentFile());
+        leaderboards = new fr.influencraft.flux.leaderboard.LeaderboardService(this);
+        leaderboards.start(getConfig().getConfigurationSection("leaderboards"));
         int warnings = registry.load();
         getLogger().info(registry.all().size() + " menu(s) chargé(s)" + (warnings > 0 ? ", " + warnings + " avertissement(s)" : ""));
 
@@ -91,6 +93,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     public void onDisable() {
         fr.influencraft.flux.api.FluxApi.bind(null);
         if (rewards != null) rewards.stop();
+        if (leaderboards != null) leaderboards.stop();
         fr.influencraft.flux.api.util.PlayerSettings.close();
         fr.influencraft.flux.api.data.Database.stop();
         if (papiBridge != null) papiBridge.shutdown();
@@ -102,6 +105,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
 
     private fr.influencraft.flux.api.text.Messages messages;
     private fr.influencraft.flux.rewards.RewardService rewards;
+    private fr.influencraft.flux.leaderboard.LeaderboardService leaderboards;
 
     /** Copies one of Flux's own menus when missing (translation under i18n/<language>/ when there is one). */
     private void shipOwnMenu(String id) {
@@ -130,6 +134,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         if (!styleFile.exists()) saveResource("style.yml", false);
         fr.influencraft.flux.api.text.Style.configure(org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(styleFile));
         fr.influencraft.flux.api.staff.Staff.configure(getConfig().getConfigurationSection("staff"));
+        if (leaderboards != null) leaderboards.configure(getConfig().getConfigurationSection("leaderboards"));
         commandManager.configure(getConfig().getConfigurationSection("command-suggestions"));
         // suite-wide settings: language, currencies, dialogs
         messages = fr.influencraft.flux.api.text.Messages.load(this, getConfig().getString("language", "en_US"));
@@ -159,10 +164,12 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
 
     /**
      * {@code %flux_cmd_<plugin>_<id>%}: configured label of a command of the suite;
-     * {@code %flux_list_<id>_<field>%}: state of a list (see {@link fr.influencraft.flux.api.list.Lists}).
+     * {@code %flux_list_<id>_<field>%}: state of a list (see {@link fr.influencraft.flux.api.list.Lists});
+     * {@code %flux_top_<board>_...%}: leaderboards (see {@link fr.influencraft.flux.api.leaderboard.Leaderboards}).
      */
     private String ownPlaceholder(Player player, String params) {
         if (params.startsWith("rewards_") && rewards != null) return rewards.placeholder(player, params.substring(8));
+        if (params.startsWith("top_") && leaderboards != null) return leaderboards.placeholder(player, params.substring(4));
         if (params.startsWith("cmd_")) {
             String rest = params.substring(4);
             int sep = rest.indexOf('_');

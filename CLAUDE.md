@@ -61,6 +61,7 @@ The plugins are written **as English plugins, then adapted to French** for our s
 | `util.Sounds` | Named cues only: `page`, `click`, `confirm` (first click of a double confirmation), `success`, `complete` (something earned), `error`, `remove`, `toggle-on/off`, `alert` (needs attention, 3 s cooldown). **One sound per click**: the action lines of a click run as a batch, a `[sound]` line wins over sounds played by code (`[list]` page sound, menu opening), else the first one plays. Do not add a `[sound]` that only repeats the automatic one. |
 | `staff.Staff` | `Staff.alert(topic, title, message)` to online staff. |
 | `dialog.Dialogs` | Paper dialogs (forms, copy buttons). |
+| `leaderboard.Leaderboards` | Leaderboards kept by Flux (`leaderboards` in Flux's config: statistic, money or placeholder; or `Leaderboards.register` from code). Placeholders `%flux_top_<board>_<n>_name/value%`, `%flux_top_<board>_rank/value%`. Replaces ajLeaderboards. |
 | Menu `paths` | Progress paths drawn in the title (pack `influroad`). `states` placeholder gives one colour per step: `vert` claimed, `orange` waiting, `rouge` missed, `eteint` locked. |
 
 - FluxTools exposes `fr.influencraft.fluxtools.api` (`Tools.info/refresh`, `EnchantMastery` service) used by
@@ -139,6 +140,24 @@ systemd-run --user --scope -q -p MemoryMax=2.5G nice -n 10 mvn -q -o -pl <Module
 - Do not compare against `Format.yesNo()` in menus (localised), use fixed values.
 - A menu needs `[refresh]` after a list page change to redraw its title (paths).
 - Inventory rows of a hidden-inventory menu: the item of the first row sits at y 139 in game (as `PathRenderer`), not 140 as `fond_lib.objet` computes. Check the first background of a new menu in game.
+
+## Migrations and patches (data of former plugins, items already handed out)
+
+Never let old data or old items limit a new feature: write a migration instead, and keep it where it can be deleted.
+
+- **One-time data migrations** (a former plugin's data copied into a Flux plugin) live **only** in the `FluxMigration`
+  module (`fluxmigration/migrations/`), one class per migration, registered in `Migrations.all()`. Id
+  `yyyy-MM-dd_short_name`, never changed once deployed; idempotent (skip what the target already has); never deletes
+  the source (archiving the former plugin is a manual go-live step); talks to the target only through its public
+  API (`<plugin>.api`, e.g. `fluxfly.api.FlyTime`). It runs once when the server starts, before players can join, and
+  is recorded in Flux's table `fluxmigration_done` (`/fluxmigration status`).
+- **Compatibility code that must stay running for a while** (old item ids, former placeholders, former command
+  names) goes in a `compat` package of the owning plugin, every class starting with a comment
+  `// COMPAT <date>: <what> - remove when <condition>`. Never scatter it in the main code.
+- When a migration has run on production and `/fluxmigration status` shows it done: delete its class and its line in
+  `Migrations.all()`. When `Migrations.all()` is empty, the FluxMigration jar is removed from the servers. Search
+  `COMPAT` from time to time and remove what is past its condition.
+- Every migration and compat item gets a line in `docs/technique/flux-mise-en-prod.md`.
 
 ## Production go-live notes
 

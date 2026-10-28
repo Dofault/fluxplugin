@@ -5,12 +5,14 @@ the player's inventory and draw buttons over it. Developed for the Influencraft 
 
 | Plugin | Role | Needs Flux |
 |---|---|---|
-| **Flux** | Core: menu engine, public API (`fr.influencraft.flux.api`) | — |
+| **Flux** | Core: menu engine, public API (`fr.influencraft.flux.api`), rewards, leaderboards | — |
 | **FluxAuctionHouse** | Auction house front-end (on top of AuctionHouse) unified with chest shops, sales history, average price | optional |
 | **FluxChestShop** | Player chest shops: fork of QuickShop-Hikari 6.3.0.1, **GPLv3** (see its `LICENSE` and `FORK.md`) | — |
 | **FluxEnchant** | Enchantment weight per item and mastery enchantments on the crate tools (EcoEnchants) | optional |
 | **FluxCasino** | Casino tokens (balance, bets, exchange) | — |
+| **FluxFly** | Fly time bank (/fly) in the allowed worlds, unlimited flight by permission (replaces PowerFly) | — |
 | **FluxLands** | Towns and nations on top of Lands: bank, plots, roles, shops, warps | optional |
+| **FluxMigration** | One-time data migrations from former plugins (deploy for a migration, remove afterwards) | — |
 | **FluxOffering** | Item offerings to rank up | — |
 | **FluxPets** | Collectible cards, boosters and pets | — |
 | **FluxReferral** | Referral system with per-player server addresses | — |

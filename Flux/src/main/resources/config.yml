@@ -49,6 +49,19 @@ lore:
   max-line-length: 40
   repeat-prefix: true
 
+# Leaderboards (placeholders %flux_top_<board>_<n>_name%, %flux_top_<board>_<n>_value%, %flux_top_<board>_rank% and
+# %flux_top_<board>_value% for the viewer). Values of online players are recorded every refresh-minutes and on quit;
+# a new board is first filled with every player the server knows (a few per second). A board's source: a vanilla
+# statistic (statistic: PLAY_ONE_MINUTE...), the main money (money: true) or a placeholder giving a number
+# (placeholder: "%..."). format: number (default), ticks or seconds (shown as a duration), money.
+leaderboards:
+  refresh-minutes: 10
+  size: 10
+  boards:
+    playtime: {statistic: PLAY_ONE_MINUTE, format: ticks}
+    fish: {statistic: FISH_CAUGHT}
+    money: {money: true, format: money}
+
 # Reward manager: every plugin of the suite hands its rewards to Flux, players claim them all with /rewards.
 rewards:
   # /rewards opens the menu "rewards" (menus/rewards.yml); false: claims everything straight away
