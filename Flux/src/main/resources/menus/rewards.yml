@@ -1,48 +1,140 @@
-# Flux: every reward waiting for the player, whatever plugin gave it (/rewards). Click one to claim it, or claim
-# everything that fits in your inventory.
-title: "&8Rewards"
+# Flux : menu Récompenses (/recompenses, bouton Récompenses de /menu2). Fond menu_recompenses (ItemsAdder
+# influmenu, généré par plugins/fluxplugin/Flux/assets/recompenses/gen_fond.py).
+# Haut : toutes les récompenses en attente, quel que soit le plugin qui les a données, une case par récompense
+# (21 par page), page précédente / suivante à gauche et à droite de la boîte, Tout récupérer dessous.
+# Bas : récompense du jour, puis la frise du cycle de connexion (ou des paliers de temps de jeu), 7 par page.
+# Les éléments du bas sont construits par FluxRewards (listes recompenses_frise et recompenses_jour).
+title: ":offset_-8::menu_recompenses:"
 rows: 6
 player-inventory: hidden
-vanilla-background: true
+vanilla-background: false
 update-interval: 40
+
+open-actions:
+  - "[fluxrewards] semaine"
+  - "[sound] @page"
 
 lists:
   rewards:
     slots: 10-16,19-25,28-34
     item:
       material: entry
-      name: "%entry_label%"
+      name: "&#FFD94D%entry_label%"
       lore:
-        - "&7%entry_source%, %entry_date%"
-        - "&7Slots needed: &f%entry_slots%"
-        - ""
-        - "&r&7%img_left_click%&#FFD94D Claim"
+        - "&#FFD94D│ &#B376E5Source : &f%entry_source%"
+        - "&#FFD94D│ &#B376E5Reçue le &f%entry_date%"
+        - "&#FFD94D│ &#B376E5Cases nécessaires : &f%entry_slots%"
+        - "&#FFD94D└ &r&7%img_left_click% &fRécupérer"
       actions:
-        left: ["[rewards] claim %entry_id%"]
-    empty:
-      material: BARRIER
-      name: "&7Nothing waiting for you"
+        left: ["[rewards] claim %entry_id%", "[sound] @complete"]
+
+  recompenses_jour:
+    slots: 58
+    item:
+      material: entry
+      actions:
+        left: ["%entry_clic%", "[refresh]"]
+
+  recompenses_frise:
+    slots: 64-70
+    item:
+      material: entry
+      actions:
+        left: ["%entry_clic%", "[refresh]"]
 
 items:
-  claim:
-    slot: 49
-    material: CHEST
-    name: "&r&7%img_left_click%&#FFD94D Claim everything"
+
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "&#FFD94DRetour"
+    slots: [54]
     lore:
-      - "&#B376E5%flux_rewards_count% reward(s) waiting, %flux_rewards_slots% slot(s) needed. What does not fit stays here."
+      - "&#FFD94D│ &#B376E5Revenir au menu."
+      - "&#FFD94D└ &r&7%img_left_click% &fMenu principal"
     actions:
-      left: ["[rewards] claim"]
-  previous:
-    slot: 45
-    material: ARROW
-    name: "&fPrevious page"
+      left: ["[menu] main"]
+
+  vide:
+    material: "itemsadder:influitems:checkmark"
+    name: "&#FFD94DRien en attente"
+    slots: [22]
+    priority: 1
+    view-requirements: ["placeholder: %flux_rewards_count% == 0"]
+    lore:
+      - "&#FFD94D│ &#B376E5Tes prochaines récompenses"
+      - "&#FFD94D│ &#B376E5(connexion, temps de jeu, votes,"
+      - "&#FFD94D└ &#B376E5parrainage, boosters...) arrivent ici."
+
+  tout:
+    material: "itemsadder:influitems:reward"
+    name: "&#FFD94DTout récupérer"
+    slots: [40]
+    lore:
+      - "&#FFD94D│ &#B376E5En attente : &f%flux_rewards_count%"
+      - "&#FFD94D│ &#B376E5Cases nécessaires : &f%flux_rewards_slots%"
+      - "&#FFD94D│ &#B376E5Ce qui ne rentre pas dans ton"
+      - "&#FFD94D│ &#B376E5inventaire reste ici."
+      - "&#FFD94D└ &r&7%img_left_click% &fTout récupérer"
+    actions:
+      left: ["[rewards] claim", "[sound] @complete"]
+
+  precedente:
+    material: "itemsadder:influitems:btn_prev"
+    hide-tooltip: true
+    name: "&#FFD94DPage précédente"
+    slots: [18]
     view-requirements: ["placeholder: %flux_list_rewards_has_prev% == true"]
     actions:
-      left: ["[list] rewards prev"]
-  next:
-    slot: 53
-    material: ARROW
-    name: "&fNext page (%flux_list_rewards_page%/%flux_list_rewards_pages%)"
+      left: ["[list] rewards prev", "[sound] @page"]
+
+  suivante:
+    material: "itemsadder:influitems:btn_next"
+    hide-tooltip: true
+    name: "&#FFD94DPage suivante"
+    slots: [26]
     view-requirements: ["placeholder: %flux_list_rewards_has_next% == true"]
     actions:
-      left: ["[list] rewards next"]
+      left: ["[list] rewards next", "[sound] @page"]
+
+  vue_temps:
+    material: "itemsadder:influitems:stairs"
+    priority: 1
+    view-requirements: ["placeholder: %flux_list_recompenses_frise_filter% == Connexion"]
+    name: "&#FFD94DConnexion"
+    slots: [62]
+    lore:
+      - "&#FFD94D│ &#B376E5La frise montre tes jours"
+      - "&#FFD94D│ &#B376E5de connexion."
+      - "&#FFD94D└ &r&7%img_left_click% &fVoir le temps de jeu"
+    actions:
+      left: ["[list] recompenses_frise filter 1", "[sound] @click"]
+
+  vue_connexion:
+    material: "itemsadder:influitems:tracking"
+    priority: 2
+    name: "&#FFD94DTemps de jeu"
+    slots: [62]
+    lore:
+      - "&#FFD94D│ &#B376E5La frise montre les paliers"
+      - "&#FFD94D│ &#B376E5de temps de jeu."
+      - "&#FFD94D└ &r&7%img_left_click% &fVoir la connexion"
+    actions:
+      left: ["[fluxrewards] semaine", "[sound] @click"]
+
+  semaine_prec:
+    material: "itemsadder:influitems:btn_prev"
+    hide-tooltip: true
+    name: "&#FFD94DPrécédent"
+    slots: [63]
+    view-requirements: ["placeholder: %flux_list_recompenses_frise_has_prev% == true"]
+    actions:
+      left: ["[list] recompenses_frise prev", "[sound] @page"]
+
+  semaine_suiv:
+    material: "itemsadder:influitems:btn_next"
+    hide-tooltip: true
+    name: "&#FFD94DSuivant"
+    slots: [71]
+    view-requirements: ["placeholder: %flux_list_recompenses_frise_has_next% == true"]
+    actions:
+      left: ["[list] recompenses_frise next", "[sound] @page"]

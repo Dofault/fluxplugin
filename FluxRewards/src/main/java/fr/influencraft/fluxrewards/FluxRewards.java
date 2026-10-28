@@ -53,6 +53,7 @@ public final class FluxRewards extends FluxPlugin implements Listener {
                 .register();
         // earned rewards are moved into Flux on join and before every claim
         Rewards.collector(this, this::grant);
+        RewardsMenu.enable(this, daily);
 
         Bukkit.getPluginManager().registerEvents(this, this);
         for (Player p : Bukkit.getOnlinePlayers()) arrive(p);

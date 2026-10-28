@@ -3,7 +3,7 @@
 
     python3 gen_pages.py <dossier menus/ de Flux> <config FluxReferral> <config FluxRewards>
 
-Écrit menus/_pages/{parrainage,pass,recompenses,vote}.yml et remplace, dans menus/main.yml, le bloc
+Écrit menus/_pages/{parrainage,pass,vote}.yml (récompenses : menu dédié rewards.yml depuis le 2026-10-28) et remplace, dans menus/main.yml, le bloc
 entre « # >>> gen_pages » et « # <<< gen_pages » (boutons du bas qui ouvrent ces pages).
 À relancer après un changement de paliers (parrainage), de jours / paliers de temps (récompenses)
 ou du nombre de paliers du pass. Puis /fluxmenu reload.
@@ -442,84 +442,13 @@ def lire_recompenses(chemin):
 
 
 def recompenses(cycle, nb_temps):
-    pages = []
-    pj = -(-cycle // PAR_PAGE)
-    pt = -(-nb_temps // PAR_PAGE)
-
-    def bas_communs(mode):
-        """Centre de la barre : bascule entre les jours de connexion et le temps de jeu
-        (chaque récompense se récupère une par une sur le chemin, pas de « tout récupérer »)."""
-        if mode == "jour":
-            return [item("bascule", "CLOCK", "Temps de jeu", A2,
-                         ["Tu as joué &f%recompenses_temps_joue%" + VIOLET + ".",
-                          "Paliers atteints : &f%recompenses_temps_atteints%&7/&f%recompenses_temps_total%"],
-                         [CLIC_G + "Voir les paliers"],
-                         {"left": ["[page-swap] recompenses_temps_1", "[sound] @page"]})]
-        return [item("bascule", "SUNFLOWER", "Connexion quotidienne", A2,
-                     ["Jour &f%recompenses_jour%&7/&f%recompenses_cycle%" + VIOLET + " de connexion."],
-                     [CLIC_G + "Voir les jours"],
-                     {"left": ["[page-swap] recompenses_jour_1", "[sound] @page"]})]
-
-    # Connexion
-    for n in range(1, pj + 1):
-        debut = (n - 1) * PAR_PAGE
-        nb = min(PAR_PAGE, cycle - debut)
-        slots = CHEMIN[:nb]
-        its = navigation("recompenses_jour", n, pj, 51, "itemsadder:influitems:reward", "Récompenses", APROPOS["recompenses"])
-        # Les pages de temps de jeu ont leur propre bouton d'onglet : même case, même action de fermeture
-        for k, slot in enumerate(slots):
-            d = debut + k + 1
-            nom = f"%recompenses_jour_{d}_nom%"
-            desc = [f"%recompenses_jour_{d}_ligne_1%", f"%recompenses_jour_{d}_ligne_2%"]
-            e = f"%recompenses_jour_{d}_etat%"
-            its.append(item(f"jour{d}_ok", "itemsadder:influitems:chest_checkmark", nom, slot, desc + ["&#2ECF7BRécupéré."],
-                            priorite=1, conditions=[f"placeholder: {e} == recupere"], quantite=d))
-            its.append(item(f"jour{d}_dispo", "itemsadder:influitems:chest_item", nom, slot, desc,
-                            [CLIC_G_OK + "Récupérer"],
-                            {"left": ["[rewards] claim source:daily", "[sound] @complete", "[refresh]"]},
-                            priorite=2, conditions=[f"placeholder: {e} == disponible"], quantite=d))
-            its.append(item(f"jour{d}_manque", "itemsadder:influitems:deny", nom, slot, desc + ["&#FF5C5CManqué ce jour-là."],
-                            priorite=3, conditions=[f"placeholder: {e} == manque"], quantite=d))
-            its.append(item(f"jour{d}", "itemsadder:influitems:lock", nom, slot, desc + ["Connecte-toi un autre jour."], priorite=4, quantite=d))
-        its += bas_communs("jour")
-        chemin = {"slots": "[" + ", ".join(map(str, slots)) + "]", "progress": '"%recompenses_jour%"', "offset": debut,
-                  "color": "vert", "start": "false", "end": "false"}
-        chemins = {"jours": chemin, **connecteurs(n, pj, slots, "vert", '"%recompenses_jour%"', debut, nb)}
-        pages.append(page(f"recompenses_jour_{n}", its, chemins))
-
-    # Temps de jeu
-    for n in range(1, pt + 1):
-        debut = (n - 1) * PAR_PAGE
-        nb = min(PAR_PAGE, nb_temps - debut)
-        slots = CHEMIN[:nb]
-        its = navigation("recompenses_temps", n, pt, 51, "itemsadder:influitems:reward", "Récompenses", APROPOS["recompenses"])
-        for k, slot in enumerate(slots):
-            i = debut + k + 1
-            nom = f"%recompenses_temps_{i}_nom%"
-            desc = [f"%recompenses_temps_{i}_ligne_1%", f"%recompenses_temps_{i}_ligne_2%"]
-            e = f"%recompenses_temps_{i}_etat%"
-            its.append(item(f"temps{i}_ok", "itemsadder:influitems:chest_checkmark", nom, slot, desc + ["&#2ECF7BRécupéré."],
-                            priorite=1, conditions=[f"placeholder: {e} == recupere"], quantite=i))
-            its.append(item(f"temps{i}_dispo", "itemsadder:influitems:chest_item", nom, slot, desc,
-                            [CLIC_G_OK + "Récupérer"],
-                            {"left": [f"[rewards] claim key:%recompenses_temps_{i}_cle%", "[sound] @complete", "[refresh]"]},
-                            priorite=2, conditions=[f"placeholder: {e} == disponible"], quantite=i))
-            its.append(item(f"temps{i}", "itemsadder:influitems:lock", nom, slot,
-                            desc + [f"Encore &f%recompenses_temps_{i}_restant%" + VIOLET + " de jeu."], priorite=3, quantite=i))
-        its += bas_communs("temps")
-        chemin = {"slots": "[" + ", ".join(map(str, slots)) + "]", "progress": '"%recompenses_temps_atteints%"',
-                  "offset": debut, "color": "bleu", "start": "false",
-                  "end": "false"}
-        chemins = {"temps": chemin, **connecteurs(n, pt, slots, "bleu", '"%recompenses_temps_atteints%"', debut, nb)}
-        pages.append(page(f"recompenses_temps_{n}", its, chemins))
-
-    ouverture = [(f"recompenses_jour_{n}", f"placeholder: %recompenses_jour% <= {n * PAR_PAGE}") for n in range(1, pj)]
-    ouverture.append((f"recompenses_jour_{pj}", None))
-    principal = bouton_principal("recompense", "itemsadder:influitems:reward", "Récompenses", 51,
-                                 ["Jour de connexion : &f%recompenses_jour%&7/&f%recompenses_cycle%",
-                                  "À récupérer : &f%recompenses_a_recuperer%"],
-                                 "Ouvrir", ouverture)
-    return "\n".join(pages), principal
+    """Plus de tiroir depuis le 2026-10-28 : le bouton ouvre le menu dédié (menus/rewards.yml, /recompenses), qui
+    montre les récompenses en attente, la récompense du jour et la frise des jours / paliers de temps de jeu."""
+    principal = [item("recompense", "itemsadder:influitems:reward", "Récompenses", 51,
+                      ["En attente : &f%flux_rewards_count%",
+                       "Jour de connexion : &f%recompenses_jour%&7/&f%recompenses_cycle%"],
+                      [CLIC_G + "Ouvrir"], {"left": ["[menu] rewards"]})]
+    return "", principal
 
 
 # ════════════════════════════════════════════════════════════════════════
@@ -566,7 +495,11 @@ def main():
         "recompenses": recompenses(cycle, nb_temps),
         "vote": vote(),
     }.items():
-        fichier(os.path.join(menus, "_pages", nom + ".yml"), contenu, f"Pages « {nom} » du menu main.")
+        chemin = os.path.join(menus, "_pages", nom + ".yml")
+        if contenu:
+            fichier(chemin, contenu, f"Pages « {nom} » du menu main.")
+        elif os.path.exists(chemin):
+            os.remove(chemin)
         principaux += principal
 
     with open(os.path.join(menus, "pass.yml"), "w", encoding="utf-8") as f:

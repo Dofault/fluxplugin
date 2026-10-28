@@ -162,6 +162,14 @@ public final class Lists {
             case "next" -> s.page = Math.min(s.page + 1, pages(player, id, pageSize) - 1);
             case "prev" -> s.page = Math.max(0, s.page - 1);
             case "first" -> s.page = 0;
+            case "page" -> {
+                // page number from 1 (open a list on a given page, e.g. the current week)
+                try {
+                    s.page = Math.max(0, Math.min(Integer.parseInt(arg) - 1, pages(player, id, pageSize) - 1));
+                } catch (NumberFormatException e) {
+                    return false;
+                }
+            }
             case "filter" -> s.filter = cycle(s.filter, filters, arg, 1);
             case "filter-prev" -> s.filter = cycle(s.filter, filters, "", -1);
             case "sort" -> s.sort = cycle(s.sort, sorts, arg, 1);
@@ -179,7 +187,7 @@ public final class Lists {
                 return false;
             }
         }
-        if (!verb.equals("next") && !verb.equals("prev") && !verb.equals("first")) s.page = 0;
+        if (!verb.equals("next") && !verb.equals("prev") && !verb.equals("first") && !verb.equals("page")) s.page = 0;
         s.cached = null;
         return false;
     }

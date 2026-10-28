@@ -117,7 +117,7 @@ public final class Actions {
     }
 
     /**
-     * [list] <id> <next|prev|first|filter|sort|search|clear|reset ...>: navigation in a list of the open menu.
+     * [list] <id> <next|prev|first|page <n>|filter|sort|search|clear|reset ...>: navigation in a list of the open menu.
      * "search" without text opens a search field, then the menu again.
      */
     private void list(Player player, MenuSession session, String arg) {
