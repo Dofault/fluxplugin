@@ -52,11 +52,13 @@ public final class RewardService implements Rewards.Backend, Listener {
     private final RewardStore store;
     /** Rewards given in the last second, per player: one message and one sound for a burst (catch-up, crate). */
     private final Map<UUID, List<String>> burst = new HashMap<>();
+    private final DiscordDm discord;
 
     private RewardService(JavaPlugin flux, Supplier<Messages> messages, RewardStore store) {
         this.flux = flux;
         this.messages = messages;
         this.store = store;
+        this.discord = new DiscordDm(flux.getLogger());
     }
 
     public static RewardService start(JavaPlugin flux, Supplier<Messages> messages) {
@@ -76,6 +78,8 @@ public final class RewardService implements Rewards.Backend, Listener {
         Bukkit.getPluginManager().registerEvents(service, flux);
         long every = flux.getConfig().getLong("rewards.reminder-interval-seconds", 0) * 20L;
         if (every > 0) Bukkit.getScheduler().runTaskTimer(flux, () -> Bukkit.getOnlinePlayers().forEach(service::remind), every, every);
+        // expiry and its reminders, every 30 minutes (first pass 2 minutes after the start)
+        Bukkit.getScheduler().runTaskTimerAsynchronously(flux, service::expiry, 2400L, 36000L);
         return service;
     }
 
@@ -184,6 +188,91 @@ public final class RewardService implements Rewards.Backend, Listener {
         if (view != null) view.refreshButtons();
     }
 
+    // ------------------------------------------------------------------ expiry
+
+    /** Time a reward waits before it is lost (rewards.expire-days, 0 = never), in ms. */
+    private long expiryMs() {
+        return Math.max(0, flux.getConfig().getLong("rewards.expire-days", 21)) * 86_400_000L;
+    }
+
+    /**
+     * Async: warns the players whose rewards expire soon (rewards.expire-reminders, e.g. 7d and 24h: in game when
+     * online, Discord private message through DiscordSRV when the account is linked), then expires the old ones.
+     * The latest reminder is handled first: after a long stop, a player only gets the closest one.
+     */
+    private void expiry() {
+        long delay = expiryMs();
+        if (delay <= 0) return;
+        long now = System.currentTimeMillis();
+        long from = expiryStart();
+        List<Long> before = new ArrayList<>();
+        for (String raw : flux.getConfig().getStringList("rewards.expire-reminders")) {
+            long seconds = fr.influencraft.flux.api.util.Format.parseDuration(raw);
+            if (seconds > 0 && seconds * 1000L < delay) before.add(seconds * 1000L);
+        }
+        before.sort(java.util.Comparator.reverseOrder()); // 7d, 24h
+        for (int i = before.size() - 1; i >= 0; i--) {
+            long left = before.get(i);
+            long createdBefore = now - (delay - left);
+            if (createdBefore <= from) continue; // rewards older than the expiry count from its start
+            Map<UUID, Integer> due = store.due(createdBefore, i + 1);
+            if (due.isEmpty()) continue;
+            store.markWarned(createdBefore, i + 1);
+            String when = fr.influencraft.flux.api.util.Format.duration(left / 1000L);
+            for (Map.Entry<UUID, Integer> e : due.entrySet()) warn(e.getKey(), e.getValue(), when);
+        }
+        Map<UUID, Integer> lost = now - delay <= from ? Map.of() : store.expire(now - delay);
+        if (!lost.isEmpty()) {
+            flux.getLogger().info("Rewards expired: " + lost);
+            sync(() -> lost.forEach((uuid, count) -> {
+                Player p = Bukkit.getPlayer(uuid);
+                if (p != null) {
+                    changed(p);
+                    messages.get().send(p, "rewards.expired", "%count%", String.valueOf(count));
+                }
+            }));
+        }
+    }
+
+    private volatile long expiryStart = -1;
+
+    /**
+     * Day the expiry started (file rewards-expiry-start.txt, written on the first run): rewards waiting from before
+     * count their delay from it, so turning the expiry on never takes old rewards at once.
+     */
+    private long expiryStart() {
+        if (expiryStart >= 0) return expiryStart;
+        java.io.File file = new java.io.File(flux.getDataFolder(), "rewards-expiry-start.txt");
+        try {
+            if (file.isFile()) {
+                expiryStart = Long.parseLong(java.nio.file.Files.readString(file.toPath()).trim());
+            } else {
+                expiryStart = System.currentTimeMillis();
+                java.nio.file.Files.writeString(file.toPath(), String.valueOf(expiryStart));
+            }
+        } catch (java.io.IOException | NumberFormatException e) {
+            flux.getLogger().warning("rewards-expiry-start.txt unreadable, expiry counted from now: " + e);
+            expiryStart = System.currentTimeMillis();
+        }
+        return expiryStart;
+    }
+
+    private void warn(UUID uuid, int count, String when) {
+        Messages m = messages.get();
+        sync(() -> {
+            Player p = Bukkit.getPlayer(uuid);
+            if (p != null) {
+                m.send(p, "rewards.expiring", "%count%", String.valueOf(count), "%time%", when);
+                fr.influencraft.flux.api.util.Sounds.cue(p, "alert");
+            }
+        });
+        if (flux.getConfig().getBoolean("rewards.discord-reminders", true)) {
+            String text = fr.influencraft.flux.api.text.Texts.plain(fr.influencraft.flux.api.text.Texts.colors(
+                    m.raw("rewards.discord-expiring", "%count%", String.valueOf(count), "%time%", when)));
+            discord.send(uuid, text);
+        }
+    }
+
     private void sync(Runnable task) {
         if (!flux.isEnabled()) return;
         if (Bukkit.isPrimaryThread()) task.run();
@@ -205,7 +294,9 @@ public final class RewardService implements Rewards.Backend, Listener {
                     .set("amount", r.amount())
                     .set("slots", r.slots())
                     .set("source", source.isEmpty() ? r.source() : source)
-                    .set("date", fr.influencraft.flux.api.util.Format.date(stored.created())));
+                    .set("date", fr.influencraft.flux.api.util.Format.date(stored.created()))
+                    .set("expire", expiryMs() <= 0 ? "" : fr.influencraft.flux.api.util.Format.duration(
+                            Math.max(0, Math.max(stored.created(), expiryStart()) + expiryMs() - System.currentTimeMillis()) / 1000L)));
         }
         return out;
     }

@@ -44,7 +44,7 @@ lists:
       lore:
         - "&#FFD94D│ &#B376E5Source : &f%entry_source%"
         - "&#FFD94D│ &#B376E5Reçue le &f%entry_date%"
-        - "&#FFD94D│ &#B376E5Cases nécessaires : &f%entry_slots%"
+        - "&#FFD94D│ &#B376E5Expire dans &f%entry_expire%"
         - "&#FFD94D└ &r&7%img_left_click% &fRécupérer"
       actions:
         left: ["[rewards] claim %entry_id%", "[sound] @complete"]
@@ -98,7 +98,8 @@ items:
     slots: [49]
     lore:
       - "&#FFD94D│ &#B376E5En attente : &f%flux_rewards_count%"
-      - "&#FFD94D│ &#B376E5Cases nécessaires : &f%flux_rewards_slots%"
+      - "&#FFD94D│ &#B376E5Non récupérées en 3 semaines,"
+      - "&#FFD94D│ &#B376E5elles sont perdues."
       - "&#FFD94D│ &#B376E5Ce qui ne rentre pas dans ton"
       - "&#FFD94D│ &#B376E5inventaire reste ici."
       - "&#FFD94D└ &r&7%img_left_click% &fTout récupérer"

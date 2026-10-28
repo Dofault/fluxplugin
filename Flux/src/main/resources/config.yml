@@ -57,6 +57,11 @@ rewards:
   notify-on-give: true
   # reminder of the waiting rewards, every N seconds (0: only when joining)
   reminder-interval-seconds: 0
+  # a reward not claimed after this many days is lost (0 = never)
+  expire-days: 21
+  # reminders before it is lost: in game, and Discord private message (DiscordSRV, linked accounts)
+  expire-reminders: ["7d", "24h"]
+  discord-reminders: true
 
 # The one database of the suite: every plugin of the suite keeps its tables here.
 database:
