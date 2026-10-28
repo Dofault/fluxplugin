@@ -62,6 +62,8 @@ rewards:
   # reminders before it is lost: in game, and Discord private message (DiscordSRV, linked accounts)
   expire-reminders: ["7d", "24h"]
   discord-reminders: true
+  # address shown in the Discord reminders (%ip%)
+  server-address: "play.influencraft.fr"
 
 # The one database of the suite: every plugin of the suite keeps its tables here.
 database:

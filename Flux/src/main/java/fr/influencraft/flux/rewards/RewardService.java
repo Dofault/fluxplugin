@@ -218,8 +218,9 @@ public final class RewardService implements Rewards.Backend, Listener {
             Map<UUID, Integer> due = store.due(createdBefore, i + 1);
             if (due.isEmpty()) continue;
             store.markWarned(createdBefore, i + 1);
-            String when = fr.influencraft.flux.api.util.Format.duration(left / 1000L);
-            for (Map.Entry<UUID, Integer> e : due.entrySet()) warn(e.getKey(), e.getValue(), when);
+            String when = delay(left / 1000L);
+            boolean last = i == before.size() - 1;
+            for (UUID player : due.keySet()) warn(player, when, last);
         }
         Map<UUID, Integer> lost = now - delay <= from ? Map.of() : store.expire(now - delay);
         if (!lost.isEmpty()) {
@@ -257,7 +258,19 @@ public final class RewardService implements Rewards.Backend, Listener {
         return expiryStart;
     }
 
-    private void warn(UUID uuid, int count, String when) {
+    /** « 7 jours », « 24h » : days from two days on, hours below (the « 24h » of the last reminder). */
+    private static String delay(long seconds) {
+        long days = seconds / 86400;
+        return days >= 2 ? days + " jours" : Math.max(1, seconds / 3600) + "h";
+    }
+
+    /**
+     * Expiry reminder, deliberately vague (no count). The Discord text has its own message per reminder
+     * ({@code discord-expiring}, {@code discord-expiring-last} for the closest one) with {@code %time%},
+     * {@code %ip%} (rewards.server-address) and {@code %version%} (the server's Minecraft version, never written
+     * by hand so it never gets old).
+     */
+    private void warn(UUID uuid, String when, boolean last) {
         Messages m = messages.get();
         sync(() -> {
             Player p = Bukkit.getPlayer(uuid);
@@ -267,7 +280,10 @@ public final class RewardService implements Rewards.Backend, Listener {
             }
         });
         if (discord != null && flux.getConfig().getBoolean("rewards.discord-reminders", true)) {
-            discord.send(uuid, plain(m.raw("rewards.discord-expiring")), plain(m.raw("rewards.discord-optout-button")));
+            String text = m.raw(last ? "rewards.discord-expiring-last" : "rewards.discord-expiring", "%time%", when,
+                    "%ip%", flux.getConfig().getString("rewards.server-address", "play.influencraft.fr"),
+                    "%version%", Bukkit.getMinecraftVersion());
+            discord.send(uuid, plain(text), plain(m.raw("rewards.discord-optout-button")));
         }
     }
 
