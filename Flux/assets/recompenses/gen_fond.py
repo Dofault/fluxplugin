@@ -2,22 +2,21 @@
 
 Haut : image retouchée par l'utilisateur le 2026-10-28 (fond_haut_utilisateur.png : grande étoile gravée en
 filigrane, boîte des 21 récompenses avec page précédente et suivante sur des cases noircies, Tout récupérer et son
-halo), descendue d'une rangée (seuls ses pixels qui diffèrent du fond générique sont reportés, le dégradé reste
-celui du générique) : récompenses 19-25 / 28-34 / 37-43, flèches 27 et 35, Tout récupérer 49. Rangée 1 : cases
+halo), descendue d'une rangée avec le bord du haut (cadre du générique raccourci d'autant, l'étoile reste
+coupée par le bord) : récompenses 19-25 / 28-34 / 37-43, flèches 27 et 35, Tout récupérer 49. Rangée 1 : cases
 du retour (9) et de l'explication (17). Bas : deux frises dans une même boîte, connexion (55-61, flèches 54 / 62)
 et temps de jeu (64-70, flèches 63 / 71).
 Les cases de l'inventaire masqué sont 2 px plus haut que dans fond_lib.objet (relevé en jeu par l'utilisateur).
 
 Usage : python gen_fond.py <fichier png> [aperçu agrandi]  (Pillow requis)
 """
-import math
 import os
 import sys
 from PIL import Image, ImageDraw
 
 ICI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(ICI))
-from fond_lib import poser, tampon_case  # noqa: E402
+from fond_lib import generique_raccourci, poser, tampon_case  # noqa: E402
 
 W, H = 176, 221
 COUPE = 128
@@ -47,25 +46,12 @@ def case_noire(d, n):
 
 
 def fond():
-    im = Image.open(os.path.join(os.path.dirname(ICI), "menu_generique.png")).convert("RGBA")
-    generique = im.copy().load()
-    haut = Image.open(os.path.join(ICI, "fond_haut_utilisateur.png")).convert("RGBA").load()
-    px = im.load()
-    for y in range(3, COUPE):
-        if y + DECALAGE >= LIMITE:
-            break
-        for x in range(4, W - 4):
-            if haut[x, y] != generique[x, y]:
-                px[x, y + DECALAGE] = haut[x, y]
+    # cadre du générique raccourci : le bord du haut descend d'une rangée avec la partie coffre
+    im = generique_raccourci(os.path.join(os.path.dirname(ICI), "menu_generique.png"), DECALAGE, H - 1)
+    haut = Image.open(os.path.join(ICI, "fond_haut_utilisateur.png")).convert("RGBA")
+    # partie coffre de l'utilisateur, bord du haut compris (l'étoile reste coupée par le bord)
+    im.paste(haut.crop((0, 0, W, LIMITE - DECALAGE)), (0, DECALAGE))
     d = ImageDraw.Draw(im)
-    # pointe haute de l'étoile, cachée par le bord dans l'image d'origine et visible une fois descendue
-    centre, apex = (88, 80), (88, 6)
-    for k in (-54, -126):
-        a = math.radians(k)
-        bout = (centre[0] + 31.08 * math.cos(a), centre[1] + 31.08 * math.sin(a))
-        fin = (apex[0] + (bout[0] - apex[0]) * .3, apex[1] + (bout[1] - apex[1]) * .3)
-        d.line([(apex[0], apex[1] + 1), (fin[0], fin[1] + 1)], CADRE)
-        d.line([apex, fin], CONTOUR)
     case = tampon_case()
     for n in EN_TETE:
         poser(im, case, *objet(n))
@@ -74,7 +60,6 @@ def fond():
     for n in FLECHES:
         case_noire(d, n)
     return im
-
 
 if __name__ == "__main__":
     im = fond()
