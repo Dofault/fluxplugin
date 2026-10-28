@@ -1,0 +1,19 @@
+# Rank menu (/grade): ranks grouped in tiers, weakest first. Each tier ends with a reward chest, handed once through
+# the rewards of Flux. The player's rank is read with this placeholder (LuckPerms track by default).
+current-rank-placeholder: "%luckperms_current_group_on_track_standard%"
+
+ranks:
+  newcomer: {name: "Newcomer", colour: "#C0C0C0", description: ["Starting rank."], perks: []}
+  citizen: {name: "Citizen", colour: "#9AD29A", description: ["First social rank."], perks: []}
+  known: {name: "Known", colour: "#6AC7C7", description: ["People know your name."], perks: []}
+
+tiers:
+  foundation:
+    name: "Foundation"
+    ranks: [newcomer, citizen, known]
+    reward:
+      label: "Foundation chest"
+      icon: "CHEST"
+      slots: 1
+      lines: []
+      commands: []

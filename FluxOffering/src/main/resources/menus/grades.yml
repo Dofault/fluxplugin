@@ -1,0 +1,69 @@
+# Rank menu (/grade): ranks grouped in tiers, each tier ending with a reward chest.
+# Background influmenu:menu_rangs (plugins/fluxplugin/Flux/assets/rangs/gen_fond.py), the whole menu one row down.
+# Row 1: back (9) and menu icon (17). Tier banners in columns 1, 3, 5, 7: 3 ranks (rows 3 to 5, weakest on top), then
+# the tier's reward chest on the first inventory row. Entries built by FluxOffering (RankMenu): list grades, column
+# by column; paths coloured per step (%grades_states_<tier>%).
+title: ":offset_-8::menu_rangs:"
+rows: 6
+commands: [grade, grades, rang, rangs]
+player-inventory: hidden
+vanilla-background: false
+update-interval: 40
+
+open-actions:
+  - "[sound] @page"
+
+paths:
+  tier_1:
+    slots: [28, 37, 46, 55]
+    progress: "4"
+    states: "%grades_states_1%"
+    color: vert
+    start: false
+    end: false
+  tier_2:
+    slots: [30, 39, 48, 57]
+    progress: "4"
+    states: "%grades_states_2%"
+    color: vert
+    start: false
+    end: false
+  tier_3:
+    slots: [32, 41, 50, 59]
+    progress: "4"
+    states: "%grades_states_3%"
+    color: vert
+    start: false
+    end: false
+  tier_4:
+    slots: [34, 43, 52, 61]
+    progress: "4"
+    states: "%grades_states_4%"
+    color: vert
+    start: false
+    end: false
+
+lists:
+  grades:
+    slots: 28,37,46,55,30,39,48,57,32,41,50,59,34,43,52,61
+    item:
+      material: entry
+      actions:
+        left: ["%entry_clic%", "[refresh]"]
+  grades_info:
+    slots: 17
+    item:
+      material: entry
+      actions:
+        left: ["%entry_clic%"]
+
+items:
+  back:
+    material: "itemsadder:influitems:btn_back"
+    name: "&#FFD94DBack"
+    slots: [9]
+    lore:
+      - "&#FFD94D│ &#B376E5Back to the menu."
+      - "&#FFD94D└ &r&7%img_left_click% &fMain menu"
+    actions:
+      left: ["[menu] main"]
