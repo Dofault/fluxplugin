@@ -162,7 +162,7 @@ final class Commande implements TabExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender s, Command c, String label, String[] a) {
         List<String> r = new ArrayList<>();
-        if (!c.getName().equals("fluxitems")) return r;
+        // only /tools (ex /fluxitems) is completed here, c is null when Flux calls it
         if (a.length == 1) {
             for (String x : SOUS) if (x.startsWith(a[0].toLowerCase(Locale.ROOT))) r.add(x);
         } else if (a.length == 2 && a[0].equalsIgnoreCase("give")) {
