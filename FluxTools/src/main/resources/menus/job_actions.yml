@@ -1,4 +1,4 @@
-# FluxTools: what pays XP and money in a job (/job blocs <job>), read from the job plugin on every opening.
+# FluxTools : ce qui rapporte de l'XP et de l'argent dans un métier (/metier blocs <métier>), relu à chaque ouverture.
 title: "&8%jobactions_name%"
 rows: 6
 player-inventory: hidden
@@ -17,21 +17,23 @@ lists:
 items:
   previous:
     slot: 46
-    material: ARROW
-    name: "&fPrevious page"
+    material: itemsadder:influitems:btn_prev
+    hide-tooltip: true
     view-requirements: ["placeholder: %flux_list_job_actions_has_prev% == true"]
     actions:
       left: ["[list] job_actions prev"]
   back:
     slot: 49
-    material: ARROW
-    name: "&fBack"
+    material: itemsadder:influitems:btn_back
+    name: "Retour"
+    lore:
+      - "@left Carrières"
     actions:
-      left: ["[player] metiers"]
+      left: ["[player] metiers", "[sound] @page"]
   next:
     slot: 52
-    material: ARROW
-    name: "&fNext page (%flux_list_job_actions_page%/%flux_list_job_actions_pages%)"
+    material: itemsadder:influitems:btn_next
+    hide-tooltip: true
     view-requirements: ["placeholder: %flux_list_job_actions_has_next% == true"]
     actions:
       left: ["[list] job_actions next"]

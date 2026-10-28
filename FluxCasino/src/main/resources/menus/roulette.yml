@@ -1,7 +1,7 @@
 # Roulette (2026-10-17) : la bille tourne sur la piste de la roue, tombe dans une case et s'y pose ([roulette], cf.
 # Roulette.java). Roue immobile (influcasino:roulette_roue), fond et sprites : influcasino (assets/casino/roulette/
 # gen_roulette_jeu.py), thème casino. Paris : rouge (impairs), noir (pairs), numéro précis (0 à 24).
-# Mise en jetons (FluxCasino) : prise au lancer, gain versé à l'arrivée de la bille.
+# Mise en jetons (InfluCasino) : prise au lancer, gain versé à l'arrivée de la bille.
 # Haut : retour (0), numéro tombé (7, à côté du lancer) et lancer (8), hors de la roue (son centre n'est jamais touché). Zone du joueur : barre de mise (66 à 68), paris (73, 74,
 # 76 à 78). Le bouton de numéro prend l'icône du numéro choisi (placeholder dans le matériau) ; un pari choisi brille.
 # [refresh-buttons] : le titre animé n'est pas touché.
@@ -18,8 +18,8 @@ items:
     name: "&#FFD94DRetour"
     slots: [0]
     lore:
-      - "&#FFD94D│ &#B376E5Revenir au casino."
-      - "&#FFD94D└ &r&7%img_left_click% &fCasino"
+      - "@desc Revenir au casino."
+      - "@left Casino"
     actions:
       left: ["[menu] casino"]
 
@@ -28,14 +28,13 @@ items:
     name: "&#FFD94DLancer la bille"
     slots: [8]
     lore:
-      - "&#FFD94D│ &#B376E5Jetons : &f%influcasino_jetons% &r&f%img_jeton%"
-      - "&#FFD94D│ &#B376E5Mise : &f%influcasino_mise% &r&f%img_jeton%"
-      - "&#FFD94D│ &#B376E5Pari : &f%fluxroulette_pari_nom% &#B376E5(x%fluxroulette_gain%)"
-      - "&#FFD94D│"
-      - "&#FFD94D│ &#B376E5Dernier tour : &f%fluxroulette_last%"
-      - "&#FFD94D│ &#B376E5Tours : &f%fluxroulette_count%"
-      - "&#FFD94D│ &#FF5C5C%fluxroulette_erreur%"
-      - "&#FFD94D└ &r&7%img_left_click% &fLancer"
+      - "@kv Jetons | %influcasino_jetons% &r&f%img_jeton%"
+      - "@kv Mise | %influcasino_mise% &r&f%img_jeton%"
+      - "@kv Pari | %fluxroulette_pari_nom% &#B376E5(x%fluxroulette_gain%)"
+      - "@kv Dernier tour | %fluxroulette_last%"
+      - "@kv Tours | %fluxroulette_count%"
+      - "@ko %fluxroulette_erreur%"
+      - "@left Lancer"
     actions:
       left: ["[roulette] spin"]
 
@@ -49,8 +48,8 @@ items:
     name: "&#FFD94DNuméro tombé : &f%fluxroulette_dernier_nom%"
     slots: [7]
     lore:
-      - "&#FFD94D│ &#B376E5Dernier tour : &f%fluxroulette_last%"
-      - "&#FFD94D└ &#B376E5Tours : &f%fluxroulette_count%"
+      - "@kv Dernier tour | %fluxroulette_last%"
+      - "@kv Tours | %fluxroulette_count%"
 
   dernier_inconnu:
     material: "itemsadder:influitems:unknown"
@@ -58,7 +57,7 @@ items:
     name: "&#FFD94DNuméro tombé"
     slots: [7]
     lore:
-      - "&#FFD94D└ &#B376E5Le numéro s'affiche ici quand la bille s'arrête."
+      - "@desc Le numéro s'affiche ici quand la bille s'arrête."
 
   # ── Paris ──────────────────────────────────────────────────────────────
   rouge_choisi:
@@ -70,9 +69,8 @@ items:
     name: "&#FFD94DRouge &#2ECF7B(pari choisi)"
     slots: [73]
     lore:
-      - "&#FFD94D│ &#B376E5Les 12 cases rouges (numéros"
-      - "&#FFD94D│ &#B376E5impairs) : la mise est multipliée par 2."
-      - "&#FFD94D└ &#2ECF7BTon pari actuel."
+      - "@desc Les 12 cases rouges (numéros impairs) : la mise est multipliée par 2."
+      - "@ok Ton pari actuel."
     actions:
       left: ["[roulette] pari rouge"]
 
@@ -82,9 +80,8 @@ items:
     name: "&#FFD94DRouge"
     slots: [73]
     lore:
-      - "&#FFD94D│ &#B376E5Les 12 cases rouges (numéros"
-      - "&#FFD94D│ &#B376E5impairs) : la mise est multipliée par 2."
-      - "&#FFD94D└ &r&7%img_left_click% &fParier sur le rouge"
+      - "@desc Les 12 cases rouges (numéros impairs) : la mise est multipliée par 2."
+      - "@left Parier sur le rouge"
     actions:
       left: ["[roulette] pari rouge", "[sound] @click"]
 
@@ -97,9 +94,8 @@ items:
     name: "&#FFD94DNoir &#2ECF7B(pari choisi)"
     slots: [74]
     lore:
-      - "&#FFD94D│ &#B376E5Les 12 cases noires (numéros"
-      - "&#FFD94D│ &#B376E5pairs) : la mise est multipliée par 2."
-      - "&#FFD94D└ &#2ECF7BTon pari actuel."
+      - "@desc Les 12 cases noires (numéros pairs) : la mise est multipliée par 2."
+      - "@ok Ton pari actuel."
     actions:
       left: ["[roulette] pari noir"]
 
@@ -109,9 +105,8 @@ items:
     name: "&#FFD94DNoir"
     slots: [74]
     lore:
-      - "&#FFD94D│ &#B376E5Les 12 cases noires (numéros"
-      - "&#FFD94D│ &#B376E5pairs) : la mise est multipliée par 2."
-      - "&#FFD94D└ &r&7%img_left_click% &fParier sur le noir"
+      - "@desc Les 12 cases noires (numéros pairs) : la mise est multipliée par 2."
+      - "@left Parier sur le noir"
     actions:
       left: ["[roulette] pari noir", "[sound] @click"]
 
@@ -120,8 +115,8 @@ items:
     name: "&#FFD94DNuméro : &f%fluxroulette_numero%"
     slots: [76]
     lore:
-      - "&#FFD94D├ &r&7%img_left_click% &f-1"
-      - "&#FFD94D└ &r&7%img_right_click% &f-5"
+      - "@left -1"
+      - "@right -5"
     actions:
       left: ["[roulette] numero -1", "[sound] @click"]
       right: ["[roulette] numero -5", "[sound] @click"]
@@ -135,10 +130,9 @@ items:
     name: "&#FFD94DNuméro : &f%fluxroulette_numero% &#2ECF7B(pari choisi)"
     slots: [77]
     lore:
-      - "&#FFD94D│ &#B376E5Une seule case sur 25 : la mise est"
-      - "&#FFD94D│ &#B376E5multipliée par 24. Règle le numéro"
-      - "&#FFD94D│ &#B376E5(0 à 24) avec les boutons - et +."
-      - "&#FFD94D└ &#2ECF7BTon pari actuel."
+      - "@kv Une seule case sur 25 | la mise est multipliée par 24. Règle le numéro"
+      - "@desc (0 à 24) avec les boutons - et +."
+      - "@ok Ton pari actuel."
     actions:
       left: ["[roulette] pari numero"]
 
@@ -148,10 +142,9 @@ items:
     name: "&#FFD94DNuméro : &f%fluxroulette_numero%"
     slots: [77]
     lore:
-      - "&#FFD94D│ &#B376E5Une seule case sur 25 : la mise est"
-      - "&#FFD94D│ &#B376E5multipliée par 24. Règle le numéro"
-      - "&#FFD94D│ &#B376E5(0 à 24) avec les boutons - et +."
-      - "&#FFD94D└ &r&7%img_left_click% &fParier sur ce numéro"
+      - "@kv Une seule case sur 25 | la mise est multipliée par 24. Règle le numéro"
+      - "@desc (0 à 24) avec les boutons - et +."
+      - "@left Parier sur ce numéro"
     actions:
       left: ["[roulette] pari numero", "[sound] @click"]
 
@@ -160,8 +153,8 @@ items:
     name: "&#FFD94DNuméro : &f%fluxroulette_numero%"
     slots: [78]
     lore:
-      - "&#FFD94D├ &r&7%img_left_click% &f+1"
-      - "&#FFD94D└ &r&7%img_right_click% &f+5"
+      - "@left +1"
+      - "@right +5"
     actions:
       left: ["[roulette] numero +1", "[sound] @click"]
       right: ["[roulette] numero +5", "[sound] @click"]
@@ -172,8 +165,8 @@ items:
     name: "&#FFD94DMise : &f%influcasino_mise% &r&f%img_jeton%"
     slots: [66]
     lore:
-      - "&#FFD94D├ &r&7%img_left_click% &f-%influcasino_mise_pas%"
-      - "&#FFD94D└ &r&7%img_right_click% &f-%influcasino_mise_grand_pas%"
+      - "@left -%influcasino_mise_pas%"
+      - "@right -%influcasino_mise_grand_pas%"
     actions:
       left: ["[player] jetons mise -%influcasino_mise_pas%", "[sound] @click", "[refresh-buttons]"]
       right: ["[player] jetons mise -%influcasino_mise_grand_pas%", "[sound] @click", "[refresh-buttons]"]
@@ -183,9 +176,9 @@ items:
     name: "&#FFD94DMise : &f%influcasino_mise% &r&f%img_jeton%"
     slots: [67]
     lore:
-      - "&#FFD94D│ &#B376E5De &f%influcasino_mise_min% &#B376E5à &f%influcasino_mise_max% &#B376E5jetons."
-      - "&#FFD94D├ &r&7%img_left_click% &fMise minimale"
-      - "&#FFD94D└ &r&7%img_right_click% &fMise maximale"
+      - "@desc De &f%influcasino_mise_min% <base>à &f%influcasino_mise_max% <base>jetons."
+      - "@left Mise minimale"
+      - "@right Mise maximale"
     actions:
       left: ["[player] jetons mise min", "[sound] @click", "[refresh-buttons]"]
       right: ["[player] jetons mise max", "[sound] @click", "[refresh-buttons]"]
@@ -195,8 +188,8 @@ items:
     name: "&#FFD94DMise : &f%influcasino_mise% &r&f%img_jeton%"
     slots: [68]
     lore:
-      - "&#FFD94D├ &r&7%img_left_click% &f+%influcasino_mise_pas%"
-      - "&#FFD94D└ &r&7%img_right_click% &f+%influcasino_mise_grand_pas%"
+      - "@left +%influcasino_mise_pas%"
+      - "@right +%influcasino_mise_grand_pas%"
     actions:
       left: ["[player] jetons mise +%influcasino_mise_pas%", "[sound] @click", "[refresh-buttons]"]
       right: ["[player] jetons mise +%influcasino_mise_grand_pas%", "[sound] @click", "[refresh-buttons]"]

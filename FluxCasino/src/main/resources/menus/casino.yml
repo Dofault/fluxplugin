@@ -1,4 +1,4 @@
-# Casino (2026-10-17) : jetons (FluxCasino), jeux et revente des jetons contre des Bitblock (pas d'achat).
+# Casino (2026-10-17) : jetons (InfluCasino), jeux et revente des jetons contre des Bitblock (pas d'achat).
 # Ouvert par /casino et le bouton Casino du menu principal. Fond : influcasino:menu_casino
 # (assets/casino/gen_fond.py), thème casino.
 
@@ -15,8 +15,8 @@ items:
     name: "&#FFD94DRetour"
     slots: [0]
     lore:
-      - "&#FFD94D│ &#B376E5Revenir au menu."
-      - "&#FFD94D└ &r&7%img_left_click% &fMenu principal"
+      - "@desc Revenir au menu."
+      - "@left Menu principal"
     actions:
       left: ["[menu] main"]
 
@@ -25,9 +25,9 @@ items:
     name: "&#FFD94DMes jetons"
     slots: [4]
     lore:
-      - "&#FFD94D│ &#B376E5Solde : &f%influcasino_jetons% &r&f%img_jeton%"
-      - "&#FFD94D│ &#B376E5Mise des jeux : &f%influcasino_mise%"
-      - "&#FFD94D└ &#B376E5Revends-les contre des Bitblock en bas."
+      - "@kv Solde | %influcasino_jetons% &r&f%img_jeton%"
+      - "@kv Mise des jeux | %influcasino_mise%"
+      - "@desc Revends-les contre des Bitblock en bas."
 
   # ── Jeux ───────────────────────────────────────────────────────────────
   plinko:
@@ -35,10 +35,8 @@ items:
     name: "&#FFD94DPlinko"
     slots: [20]
     lore:
-      - "&#FFD94D│ &#B376E5Lâche des billes sur une pyramide"
-      - "&#FFD94D│ &#B376E5de clous : la case d'arrivée"
-      - "&#FFD94D│ &#B376E5multiplie ta mise, de x0.4 à x10."
-      - "&#FFD94D└ &r&7%img_left_click% &fJouer"
+      - "@desc Lâche des billes sur une pyramide de clous : la case d'arrivée multiplie ta mise, de x0.4 à x10."
+      - "@left Jouer"
     actions:
       left: ["[menu] plinko"]
 
@@ -47,10 +45,8 @@ items:
     name: "&#FFD94DRoulette"
     slots: [22]
     lore:
-      - "&#FFD94D│ &#B376E5Parie sur le rouge, le noir ou un"
-      - "&#FFD94D│ &#B376E5numéro et regarde la bille tomber :"
-      - "&#FFD94D│ &#B376E5jusqu'à x24 sur un numéro précis."
-      - "&#FFD94D└ &r&7%img_left_click% &fJouer"
+      - "@desc Parie sur le rouge, le noir ou un numéro et regarde la bille tomber : jusqu'à x24 sur un numéro précis."
+      - "@left Jouer"
     actions:
       left: ["[menu] roulette"]
 
@@ -59,10 +55,8 @@ items:
     name: "&#FFD94DMachine à sous"
     slots: [24]
     lore:
-      - "&#FFD94D│ &#B376E5Trois rouleaux, une ligne de gain :"
-      - "&#FFD94D│ &#B376E5aligne les symboles pour multiplier"
-      - "&#FFD94D│ &#B376E5ta mise."
-      - "&#FFD94D└ &r&7%img_left_click% &fJouer"
+      - "@desc Trois rouleaux, une ligne de gain : aligne les symboles pour multiplier ta mise."
+      - "@left Jouer"
     actions:
       left: ["[menu] slots"]
 
@@ -72,18 +66,17 @@ items:
     name: "&#FFD94DMes Bitblock"
     slots: [39]
     lore:
-      - "&#FFD94D└ &#B376E5Solde : &f%vault_eco_balance_formatted% &r&f%img_bitblock%"
+      - "@kv Solde | %vault_eco_balance_formatted% &r&f%img_bitblock%"
 
   revendre:
     material: "itemsadder:influcasino:moins"
     name: "&#FFD94DRevendre des jetons"
     slots: [41]
     lore:
-      - "&#FFD94D│ &#B376E51 jeton = &f%influcasino_prix_vente% &r&f%img_bitblock%"
-      - "&#FFD94D│"
-      - "&#FFD94D├ &r&7%img_left_click% &f10 jetons"
-      - "&#FFD94D├ &r&7%img_right_click% &f100 jetons"
-      - "&#FFD94D└ &#B376E5MAJ + &r&7%img_left_click% &fTout revendre"
+      - "@desc 1 jeton = &f%influcasino_prix_vente% &r&f%img_bitblock%"
+      - "@left 10 jetons"
+      - "@right 100 jetons"
+      - "@shift-left Tout revendre"
     actions:
       left: ["[player] jetons vendre 10", "[refresh]"]
       right: ["[player] jetons vendre 100", "[refresh]"]

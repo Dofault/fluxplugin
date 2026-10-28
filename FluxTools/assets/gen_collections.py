@@ -17,8 +17,6 @@ Disposition (fond influmenu:menu_collection_categorie) :
 import glob
 import os
 import sys
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../Flux/assets"))
-from lore_tags import convert_yaml  # noqa: E402  (lore lines in the tags of Flux's style.yml)
 
 import yaml
 
@@ -120,19 +118,19 @@ for gid, g in sorted(groupes.items()):
          ""]
     gmat, gcmd = icone(g.get("gui", {}).get("icon", "book"))
     objet(L, "categorie", gmat, gcmd, OR + nom_groupe, [4],
-          [f"{OR}│ {VIOLET}Collection : &f%fluxcoll_{gid}_completed%{VIOLET}/&f%fluxcoll_{gid}_total%",
-           f"{OR}└ {VIOLET}Progression : &f%fluxcoll_{gid}_percent% %"])
+          [f"@kv Collection | %fluxcoll_{gid}_completed%{VIOLET}/&f%fluxcoll_{gid}_total%",
+           f"@kv Progression | %fluxcoll_{gid}_percent% %"])
     objet(L, "retour", "itemsadder:influitems:btn_back", None, OR + "Retour", [49],
-          [f"{OR}│ {VIOLET}Revenir aux catégories.", f"{OR}└ {CLIC} &fCollection"], ["[menu] collection"])
+          [f"@desc Revenir aux catégories.", f"@left Collection"], ["[menu] collection"])
     objet(L, "barre", "itemsadder:influitems:invisible", None, OR + "Paliers", BARRE,
-          [f"{OR}│ {VIOLET}Palier : &f%fluxcoll_selected_tier%{VIOLET}/&f%fluxcoll_selected_max_tier%",
-           f"{OR}└ {VIOLET}Progression : &f%fluxcoll_selected_count%{VIOLET}/&f%fluxcoll_selected_required%"])
+          [f"@kv Palier | %fluxcoll_selected_tier%{VIOLET}/&f%fluxcoll_selected_max_tier%",
+           f"@kv Progression | %fluxcoll_selected_count%{VIOLET}/&f%fluxcoll_selected_required%"])
     L.append("  # Collection sélectionnée (case 58) : une variante par collection.")
     for cid, d in liste:
         mat, cmd = icone(d.get("gui", {}).get("icon", "paper"))
         objet(L, "selection_" + cid, mat, cmd, d.get("name", cid), [58],
-              [f"{OR}│ {VIOLET}Palier : &f%ecocollections_{cid}%{VIOLET}/&f%ecocollections_{cid}_max_tier%",
-               f"{OR}└ {VIOLET}Progression : &f%ecocollections_{cid}_count%{VIOLET}/&f%ecocollections_{cid}_required%"],
+              [f"@kv Palier | %ecocollections_{cid}%{VIOLET}/&f%ecocollections_{cid}_max_tier%",
+               f"@kv Progression | %ecocollections_{cid}_count%{VIOLET}/&f%ecocollections_{cid}_required%"],
               extra=["    view-requirements:", f"      - {q('placeholder: %fluxcoll_selected% == ' + cid)}"])
 
     L += ["pages:", ""]
@@ -140,30 +138,30 @@ for gid, g in sorted(groupes.items()):
         P = []
         if n > 1:
             objet(P, "precedent", "itemsadder:influitems:btn_prev", None, OR + "Page précédente", [48],
-                  [f"{OR}└ {CLIC} &fPage {n - 1}"], [f"[page-swap] {gid}_{n - 1}"])
+                  [f"@left Page {n - 1}"], [f"[page-swap] {gid}_{n - 1}"])
         else:
             objet(P, "precedent", "itemsadder:influitems:btn_prev", None, OR + "Page précédente", [48],
-                  [f"{OR}└ {VIOLET}Tu es sur la première page."])
+                  [f"@desc Tu es sur la première page."])
         if n < len(pages):
             objet(P, "suivant", "itemsadder:influitems:btn_next", None, OR + "Page suivante", [50],
-                  [f"{OR}└ {CLIC} &fPage {n + 1}"], [f"[page-swap] {gid}_{n + 1}"])
+                  [f"@left Page {n + 1}"], [f"[page-swap] {gid}_{n + 1}"])
         else:
             objet(P, "suivant", "itemsadder:influitems:btn_next", None, OR + "Page suivante", [50],
-                  [f"{OR}└ {VIOLET}Tu es sur la dernière page."])
+                  [f"@desc Tu es sur la dernière page."])
         for (cid, d), slot in zip(page, GRILLE):
             mat, cmd = icone(d.get("gui", {}).get("icon", "paper"))
-            lore = [f"{OR}│ {VIOLET}Palier : &f%ecocollections_{cid}%{VIOLET}/&f%ecocollections_{cid}_max_tier%",
-                    f"{OR}│ {VIOLET}Progression : &f%ecocollections_{cid}_count%{VIOLET}/&f%ecocollections_{cid}_required%"]
+            lore = [f"@kv Palier | %ecocollections_{cid}%{VIOLET}/&f%ecocollections_{cid}_max_tier%",
+                    f"@kv Progression | %ecocollections_{cid}_count%{VIOLET}/&f%ecocollections_{cid}_required%"]
             # Variante brillante quand elle est sélectionnée (priorité -1 : passe devant).
             objet(P, "choisie_" + cid, mat, cmd, d.get("name", cid), [slot],
-                  lore + [f"{OR}└ {VIOLET}Affichée en bas du menu."],
+                  lore + [f"@desc Affichée en bas du menu."],
                   extra=["    priority: -1", "    glow: true", "    view-requirements:",
                          f"      - {q('placeholder: %fluxcoll_selected% == ' + cid)}"])
             objet(P, "c_" + cid, mat, cmd, d.get("name", cid), [slot],
-                  lore + [f"{OR}└ {CLIC} &fVoir la progression"],
+                  lore + [f"@left Voir la progression"],
                   [f"[fluxcoll] select {cid}", "[sound] @click"])
         L += [f"  {gid}_{n}:", "    items:", ""] + indenter(P, 4)
 
     chemin = os.path.join(OUT, f"collection_{gid}.yml")
-    open(chemin, "w", encoding="utf-8").write(convert_yaml("\n".join(L).rstrip() + "\n"))
+    open(chemin, "w", encoding="utf-8").write("\n".join(L).rstrip() + "\n")
     print(f"{gid}: {len(liste)} collections, {len(pages)} page(s) -> {chemin}")

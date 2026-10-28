@@ -1,4 +1,4 @@
-# FluxShop: sell prices (left click on a sell block). The filter button walks through the categories of prices.yml.
+# FluxShop : prix de vente (clic gauche sur un bloc de vente). Le bouton filtre parcourt les catégories de prices.yml.
 title: "&#FFD94D%flux_list_shop_prices_filter% &7(%flux_list_shop_prices_page%/%flux_list_shop_prices_pages%)"
 rows: 6
 player-inventory: hidden
@@ -15,12 +15,10 @@ items:
     slot: 49
     material: PAPER
     custom-model-data: 10017
-    name: "&r&7%img_left_click%&#FFD94D Next category"
+    name: "Filtrer"
     lore:
-      - "&r&7%img_right_click%&#FFD94D Previous category"
-      - ""
-      - "&#B376E5Shown: &f%flux_list_shop_prices_filter%"
-      - "&#B376E5%flux_list_shop_prices_count% items"
+      - "@filter shop_prices"
+      - "@kv Objets | %flux_list_shop_prices_count%"
     actions:
       left: ["[list] shop_prices filter"]
       right: ["[list] shop_prices filter-prev"]

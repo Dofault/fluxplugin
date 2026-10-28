@@ -12,7 +12,7 @@ Fonds et icônes : pack ItemsAdder « influmarche » (gen_marche.py). Style des 
 import os
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../Flux/assets"))
-from lore_tags import convert_yaml  # noqa: E402  (lore lines in the tags of Flux's style.yml)
+from menu_lore import lore  # noqa: E402  (button lore in the tags of Flux's style.yml)
 
 SORTIE = sys.argv[1]
 OR, VIOLET = "&#FFD94D", "&#B376E5"
@@ -28,15 +28,6 @@ GRILLE_LISTE = [r * 9 + c for r in range(2, 5) for c in range(1, 8)]
 
 def q(s):
     return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
-
-
-def lore(desc, actions=()):
-    lignes = [OR + "│ " + VIOLET + d if d else OR + "│" for d in desc]
-    for i, (icone, lib) in enumerate(actions):
-        lignes.append(OR + ("└ " if i == len(actions) - 1 else "├ ") + icone + lib)
-    if not actions and lignes:
-        lignes[-1] = lignes[-1].replace("│", "└", 1)
-    return lignes
 
 
 def pm(c):
@@ -92,7 +83,7 @@ def menu(nom, fond, items, ouverture=(), doc=""):
     out.append("\nitems:\n\n")
     out += [i + "\n" for i in items]
     with open(os.path.join(SORTIE, nom + ".yml"), "w") as f:
-        f.write(convert_yaml("".join(out)))
+        f.write("".join(out))
 
 
 def im(cmd):
@@ -195,7 +186,7 @@ marche = [
                  "Aussi un vendeur ou une ville."], [(GAUCHE, "Rechercher"), (DROIT, "Effacer")]),
            {"left": [im("recherche")], "right": act("effacer")}),
     bouton("tri", 35, "itemsadder:influitems:stairs", OR + "Trier par",
-           ["@option " + pm("tri_%d" % k) for k in range(5)] + [OR + "├ " + GAUCHE + "Suivant", OR + "└ " + DROIT + "Précédent"],
+           ["@option " + pm("tri_%d" % k) for k in range(5)] + ["@left Suivant", "@right Précédent"],
            {"left": act("tri +"), "right": act("tri -")}),
     bouton("vide", 31, "itemsadder:influitems:unknown", OR + "Aucune offre",
            lore(["Rien ne correspond à cette", "recherche ici. Essaie une", "autre catégorie ou la", "source « Tout »."]),
@@ -222,7 +213,7 @@ marche += [
            {"left": [im("moyenne")], "right": [im("moyenne chercher")]}),
     bouton("echoppe", 70, "itemsadder:influitems:add", OR + "Ouvrir une échoppe",
            lore(["Pose un coffre dans ta ville,", "frappe-le avec l'objet et", "indique le prix dans le tchat.",
-                 "Pas de taxe du serveur : la", "ville prend son droit de place", "(ici : &f%influlands_taux_ici% %" + VIOLET + ")."],
+                 "Pas de taxe du serveur : la ville prend son droit de place (ici : &f%influlands_taux_ici% %" + VIOLET + ")."],
                 [(GAUCHE, "Mes échoppes")]),
            {"left": ["[player] influlands ouvrir echoppes miennes"]}),
 ]
@@ -344,9 +335,9 @@ for slot, arg, lib, mat in selecteur(range(37, 44), "prix", (100, 1000, 10000), 
 for slot in range(54, 90):
     case = slot - 45 if slot < 81 else slot - 81
     base = "inv_%d" % case
-    vendre.append(bouton(base + "_choisi", slot, "source:marche:inv:%d" % case, None, [OR + "└ " + VIOLET + "Objet choisi"],
+    vendre.append(bouton(base + "_choisi", slot, "source:marche:inv:%d" % case, None, ["@desc Objet choisi"],
                          conditions=[oui(base + "_choisi")], priorite=1, extra={"glow": "true"}))
-    vendre.append(bouton(base, slot, "source:marche:inv:%d" % case, None, [OR + "└ " + GAUCHE + "Choisir"],
+    vendre.append(bouton(base, slot, "source:marche:inv:%d" % case, None, ["@left Choisir"],
                          {"left": act("vente choisir %d" % case)}, conditions=[oui(base + "_existe")]))
 menu("marche_vendre", "menu_marche_vendre", vendre, ouverture=["[refresh]"],
      doc="Mise en vente à l'hôtel des ventes : objet choisi dans l'inventaire (zone du bas), quantité, prix, type.")
@@ -400,7 +391,7 @@ liste("marche_historique", "menu_marche_historique", "HISTORIQUE",
           bouton("moyenne", 45, "itemsadder:influmarche:moyenne", OR + "Prix moyen de l'objet en main", lignes("main"),
                  {"left": [im("moyenne")], "right": [im("moyenne chercher")]}),
           bouton("filtre", 47, "itemsadder:influitems:filter", OR + "Afficher",
-                 ["@option " + pm("filtre_%d" % k) for k in range(3)] + [OR + "├ " + GAUCHE + "Suivant", OR + "└ " + DROIT + "Précédent"],
+                 ["@option " + pm("filtre_%d" % k) for k in range(3)] + ["@left Suivant", "@right Précédent"],
                  {"left": act("filtre +"), "right": act("filtre -")}),
           bouton("ventes", 51, "itemsadder:influmarche:mes_ventes", OR + "Mes ventes", lore([], [(GAUCHE, "Ouvrir")]),
                  {"left": [im("ouvrir ventes")]}),

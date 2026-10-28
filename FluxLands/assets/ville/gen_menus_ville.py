@@ -7,12 +7,12 @@ echoppes.yml, agence.yml, pays*.yml.
 Ne pas modifier les menus générés à la main : changer ce script puis le relancer et /fluxmenu reload.
 Données : placeholders %influlands_...% et commande /influlands du plugin FluxLands
 (docs/technique/influlands.md). Fonds et icônes : pack ItemsAdder « influville » (gen_ville.py).
-Style des boutons : celui de /menu2 (titre or, barre │ devant chaque ligne, actions précédées de l'icône de clic).
+Lore des boutons : balises du style de Flux (menu_lore.lore, Flux/assets).
 """
 import os
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../Flux/assets"))
-from lore_tags import convert_yaml  # noqa: E402  (lore lines in the tags of Flux's style.yml)
+from menu_lore import lore  # noqa: E402  (button lore in the tags of Flux's style.yml)
 
 SORTIE = sys.argv[1]
 OR, VIOLET = "&#FFD94D", "&#B376E5"
@@ -28,16 +28,6 @@ ANCIENS = ["adresses.yml"]  # menus renommés, supprimés à la génération
 def q(s):
     """Chaîne YAML entre guillemets doubles."""
     return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
-
-
-def lore(desc, actions=()):
-    """desc : lignes de description (│) ; actions : (icône, libellé). La dernière ligne finit par └."""
-    lignes = [OR + "│ " + VIOLET + d if d else OR + "│" for d in desc]
-    for i, (icone, lib) in enumerate(actions):
-        lignes.append(OR + ("└ " if i == len(actions) - 1 else "├ ") + icone + lib)
-    if not actions and lignes:
-        lignes[-1] = lignes[-1].replace("│", "└", 1)
-    return lignes
 
 
 def bouton(cle, slot, materiau, nom, lignes, actions=None, conditions=None, priorite=None, extra=None):
@@ -72,7 +62,7 @@ def menu(nom, fond, items, commandes=None, ouverture=(), doc=""):
     out.append("\nitems:\n\n")
     out += [i + "\n" for i in items]
     with open(os.path.join(SORTIE, nom + ".yml"), "w") as f:
-        f.write(convert_yaml("".join(out)))
+        f.write("".join(out))
 
 
 def iv(cmd):
@@ -391,7 +381,7 @@ def l(n, c):
 
 
 def choix_lignes(prefixe, nb):
-    return [OR + "│ " + "%%influlands_liste_%s_%d%%" % (prefixe, k) for k in range(1, nb + 1)]
+    return ["@option %%influlands_liste_%s_%d%%" % (prefixe, k) for k in range(1, nb + 1)]
 
 
 def barre_liste(info_icone, info_nom, info_desc, action=None, gauche=None, filtre=True, tri=True, extra=()):
@@ -401,7 +391,7 @@ def barre_liste(info_icone, info_nom, info_desc, action=None, gauche=None, filtr
                                   {"left": [iv("ouvrir ville")]}))
     if filtre:
         items.append(bouton("filtre", 47, "itemsadder:influitems:filter", OR + "Filtre",
-                            choix_lignes("filtre", 6) + [OR + "├ " + GAUCHE + "Suivant", OR + "└ " + DROIT + "Précédent"],
+                            choix_lignes("filtre", 6) + ["@left Suivant", "@right Précédent"],
                             {"left": [iv("filtre +"), SON, "[refresh]"], "right": [iv("filtre -"), SON, "[refresh]"]}))
     items += [
         bouton("precedent", 48, "itemsadder:influitems:btn_prev", OR + "Page précédente", lore([], [(GAUCHE, "Précédente")]),
@@ -414,7 +404,7 @@ def barre_liste(info_icone, info_nom, info_desc, action=None, gauche=None, filtr
     ]
     if tri:
         items.append(bouton("tri", 51, "itemsadder:influitems:stairs", OR + "Trier par",
-                            choix_lignes("tri", 4) + [OR + "├ " + GAUCHE + "Suivant", OR + "└ " + DROIT + "Précédent"],
+                            choix_lignes("tri", 4) + ["@left Suivant", "@right Précédent"],
                             {"left": [iv("tri +"), SON, "[refresh]"], "right": [iv("tri -"), SON, "[refresh]"]}))
     if action:
         items.append(action)
@@ -528,10 +518,10 @@ agence += barre_liste(
            {"left": [iv("ouvrir parcelles")]}, conditions=[MAIRE]),
     extra=[
         bouton("budget", 46, "itemsadder:influville:budget", OR + "Budget",
-               choix_lignes("budget", 5) + [OR + "├ " + GAUCHE + "Suivant", OR + "└ " + DROIT + "Précédent"],
+               choix_lignes("budget", 5) + ["@left Suivant", "@right Précédent"],
                {"left": [iv("budget +"), SON, "[refresh]"], "right": [iv("budget -"), SON, "[refresh]"]}),
         bouton("taille", 52, "itemsadder:influville:taille", OR + "Taille",
-               choix_lignes("taille", 4) + [OR + "├ " + GAUCHE + "Suivant", OR + "└ " + DROIT + "Précédent"],
+               choix_lignes("taille", 4) + ["@left Suivant", "@right Précédent"],
                {"left": [iv("taille +"), SON, "[refresh]"], "right": [iv("taille -"), SON, "[refresh]"]}),
     ])
 menu("agence", "menu_agence", agence, commandes=["agence"], ouverture=[iv("vue agence"), "[refresh]"],

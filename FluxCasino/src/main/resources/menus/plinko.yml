@@ -1,6 +1,6 @@
-# Plinko (2026-10-17) : le bouton lâche une bille, animée dans le titre de la fenêtre ([plinko], cf. FluxCasino Plinko.java).
+# Plinko (2026-10-17) : le bouton lâche une bille, animée dans le titre de la fenêtre ([plinko], cf. Plinko.java).
 # Plateau et sprites : influcasino (assets/plinko/gen_plinko.py), thème casino.
-# Mise en jetons (FluxCasino) : prise au lancer, gain versé à l'arrivée.
+# Mise en jetons (InfluCasino) : prise au lancer, gain versé à l'arrivée.
 # Rangée du haut, réutilisable dans les autres jeux : retour au casino (0), barre de mise au centre : baisser (3),
 # mise (4), augmenter (5) ; action du jeu au dernier slot (8). [refresh-buttons] : le titre animé n'est pas touché.
 
@@ -16,8 +16,8 @@ items:
     name: "&#FFD94DRetour"
     slots: [0]
     lore:
-      - "&#FFD94D│ &#B376E5Revenir au casino."
-      - "&#FFD94D└ &r&7%img_left_click% &fCasino"
+      - "@desc Revenir au casino."
+      - "@left Casino"
     actions:
       left: ["[menu] casino"]
 
@@ -26,13 +26,12 @@ items:
     name: "&#FFD94DLancer la bille"
     slots: [8]
     lore:
-      - "&#FFD94D│ &#B376E5Jetons : &f%influcasino_jetons% &r&f%img_jeton%"
-      - "&#FFD94D│ &#B376E5Mise : &f%influcasino_mise% &r&f%img_jeton%"
-      - "&#FFD94D│"
-      - "&#FFD94D│ &#B376E5Dernier lancer : &f%fluxplinko_last%"
-      - "&#FFD94D│ &#B376E5Lancers : &f%fluxplinko_count%"
-      - "&#FFD94D│ &#FF5C5C%fluxplinko_erreur%"
-      - "&#FFD94D└ &r&7%img_left_click% &fLancer"
+      - "@kv Jetons | %influcasino_jetons% &r&f%img_jeton%"
+      - "@kv Mise | %influcasino_mise% &r&f%img_jeton%"
+      - "@kv Dernier lancer | %fluxplinko_last%"
+      - "@kv Lancers | %fluxplinko_count%"
+      - "@ko %fluxplinko_erreur%"
+      - "@left Lancer"
     actions:
       left: ["[plinko]"]
 
@@ -42,8 +41,8 @@ items:
     name: "&#FFD94DMise : &f%influcasino_mise% &r&f%img_jeton%"
     slots: [3]
     lore:
-      - "&#FFD94D├ &r&7%img_left_click% &f-%influcasino_mise_pas%"
-      - "&#FFD94D└ &r&7%img_right_click% &f-%influcasino_mise_grand_pas%"
+      - "@left -%influcasino_mise_pas%"
+      - "@right -%influcasino_mise_grand_pas%"
     actions:
       left: ["[player] jetons mise -%influcasino_mise_pas%", "[sound] @click", "[refresh-buttons]"]
       right: ["[player] jetons mise -%influcasino_mise_grand_pas%", "[sound] @click", "[refresh-buttons]"]
@@ -53,9 +52,9 @@ items:
     name: "&#FFD94DMise : &f%influcasino_mise% &r&f%img_jeton%"
     slots: [4]
     lore:
-      - "&#FFD94D│ &#B376E5De &f%influcasino_mise_min% &#B376E5à &f%influcasino_mise_max% &#B376E5jetons."
-      - "&#FFD94D├ &r&7%img_left_click% &fMise minimale"
-      - "&#FFD94D└ &r&7%img_right_click% &fMise maximale"
+      - "@desc De &f%influcasino_mise_min% <base>à &f%influcasino_mise_max% <base>jetons."
+      - "@left Mise minimale"
+      - "@right Mise maximale"
     actions:
       left: ["[player] jetons mise min", "[sound] @click", "[refresh-buttons]"]
       right: ["[player] jetons mise max", "[sound] @click", "[refresh-buttons]"]
@@ -65,8 +64,8 @@ items:
     name: "&#FFD94DMise : &f%influcasino_mise% &r&f%img_jeton%"
     slots: [5]
     lore:
-      - "&#FFD94D├ &r&7%img_left_click% &f+%influcasino_mise_pas%"
-      - "&#FFD94D└ &r&7%img_right_click% &f+%influcasino_mise_grand_pas%"
+      - "@left +%influcasino_mise_pas%"
+      - "@right +%influcasino_mise_grand_pas%"
     actions:
       left: ["[player] jetons mise +%influcasino_mise_pas%", "[sound] @click", "[refresh-buttons]"]
       right: ["[player] jetons mise +%influcasino_mise_grand_pas%", "[sound] @click", "[refresh-buttons]"]

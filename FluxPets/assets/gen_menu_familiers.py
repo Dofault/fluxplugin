@@ -16,8 +16,6 @@ itemsadder:influportraits:portrait_<id> (scripts/influcard/portraits.py).
 """
 import os
 import sys
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../Flux/assets"))
-from lore_tags import convert_yaml  # noqa: E402  (lore lines in the tags of Flux's style.yml)
 
 OUT = sys.argv[1]
 OR, VIOLET, VERT, ROUGE = "&#FFD94D", "&#B376E5", "&#2ECF7B", "&#FF5C5C"
@@ -60,9 +58,9 @@ def bouton(L, cle, materiau, nom, slots, lore=(), gauche=(), droit=(), condition
 
 def fiche(p):
     """Description, effets et progression d'un familier (préfixe de placeholder p, ex. influpet_view_3)."""
-    return ([f"{OR}│ %{p}_description%", f"{OR}│"]
-            + [f"{OR}│ %{p}_effects_{k}%" for k in range(1, EFFETS + 1)]
-            + [f"{OR}│", f"{OR}│ {VIOLET}Progression : &f%{p}_progress% %"])
+    return ([f"@desc %{p}_description%"]
+            + [f"@text %{p}_effects_{k}%" for k in range(1, EFFETS + 1)]
+            + [f"@kv Progression | %{p}_progress% %"])
 
 
 def entete(titre, commentaire):
@@ -78,44 +76,38 @@ L += ["open-actions:", '  - "[player] pets view reset"', '  - "[sound] @page"', 
       "items:", ""]
 # Carte d'un familier (Phénix) : rappel que les familiers montent de niveau avec leurs cartes.
 bouton(L, "infos", "itemsadder:influcards:carte_phenix", OR + "Familiers", [8],
-       [f"{OR}│ {VIOLET}Tes familiers montent de niveau",
-        f"{OR}│ {VIOLET}grâce à leurs cartes : fais un",
-        f"{OR}│ {VIOLET}clic droit sur une carte pour",
-        f"{OR}│ {VIOLET}la donner à son familier.",
-        f"{OR}│",
-        f"{OR}│ {VIOLET}Débloqué : &f%influpet_total_pets%{VIOLET}/&f%influpet_pets_count%",
-        f"{OR}└ {VIOLET}Actifs : &f%influpet_active_pets%{VIOLET}/&f%influpet_max_active_pets%"])
+       ["@desc Tes familiers montent de niveau grâce à leurs cartes : fais un clic droit sur une carte pour la donner à son familier.",
+        f"@kv Débloqué | %influpet_total_pets%{VIOLET}/&f%influpet_pets_count%",
+        f"@kv Actifs | %influpet_active_pets%{VIOLET}/&f%influpet_max_active_pets%"])
 bouton(L, "tout_ranger", "itemsadder:influitems:deny", OR + "Tout ranger", [49],
-       [f"{OR}│ {VIOLET}Range tous tes familiers actifs.", f"{OR}└ {GAUCHE} &fTout ranger"],
+       ["@desc Range tous tes familiers actifs.", "@left Tout ranger"],
        gauche=["[player] pets deactivate", SON, "[refresh]"], conditions=["%influpet_active_pets% >= 1"])
 
 L.append("  # Emplacements des familiers actifs : occupé, libre ou verrouillé.")
 for n, case in enumerate(EMPLACEMENTS, 1):
     p = f"influpet_slot_{n}"
     bouton(L, f"emplacement_{n}", PORTRAIT + f"%{p}%", f"%{p}_name% {OR}Niv. %{p}_level%", [case],
-           fiche(p) + [f"{OR}│", f"{OR}├ {GAUCHE} &fVoir la progression", f"{OR}└ {DROIT} &fRanger"],
+           fiche(p) + ["@left Voir la progression", "@right Ranger"],
            gauche=[f"[player] pets select %{p}%", "[menu] familier"],
            droit=[f"[player] pets toggle %{p}%", SON, "[refresh]"],
            conditions=[f"%{p}_state% == active"], extra=["    priority: -2"])
     bouton(L, f"verrouille_{n}", "itemsadder:influitems:lock", ROUGE + "Emplacement verrouillé", [case],
-           [f"{OR}│ {VIOLET}Tu n'as pas encore accès", f"{OR}│ {VIOLET}à cet emplacement.",
-            f"{OR}└ {VIOLET}Grade requis : &f%{p}_grade%"],
+           ["@desc Tu n'as pas encore accès à cet emplacement.", f"@kv Grade requis | %{p}_grade%"],
            conditions=[f"%{p}_state% == locked"], extra=["    priority: -1"])
     bouton(L, f"libre_{n}", "itemsadder:influitems:add", OR + "Emplacement libre", [case],
-           [f"{OR}│ {VIOLET}Clique sur un familier", f"{OR}└ {VIOLET}ci-dessous pour l'activer."])
+           ["@desc Clique sur un familier ci-dessous pour l'activer."])
 
 L.append("  # Familiers adoptés de la page (actif : il brille).")
 for k, case in enumerate(GRILLE, 1):
     p = f"influpet_view_{k}"
     nom = f"%{p}_name% {OR}Niv. %{p}_level%"
     bouton(L, f"actif_{k}", PORTRAIT + f"%{p}%", nom, [case],
-           fiche(p) + [f"{OR}│", f"{OR}│ {VERT}Familier actif",
-                       f"{OR}├ {GAUCHE} &fRanger", f"{OR}└ {DROIT} &fVoir la progression"],
+           fiche(p) + ["@ok Familier actif", "@left Ranger", "@right Voir la progression"],
            gauche=[f"[player] pets toggle %{p}%", SON, "[refresh]"],
            droit=[f"[player] pets select %{p}%", "[menu] familier"],
            conditions=[f"%{p}_active% == true"], extra=["    priority: -1", "    glow: true"])
     bouton(L, f"familier_{k}", PORTRAIT + f"%{p}%", nom, [case],
-           fiche(p) + [f"{OR}│", f"{OR}├ {GAUCHE} &fActiver", f"{OR}└ {DROIT} &fVoir la progression"],
+           fiche(p) + ["@left Activer", "@right Voir la progression"],
            gauche=[f"[player] pets toggle %{p}%", SON, "[refresh]"],
            droit=[f"[player] pets select %{p}%", "[menu] familier"],
            conditions=[f"%{p}_level% >= 1"])
@@ -127,23 +119,21 @@ bouton(L, "filtre", "itemsadder:influitems:filter", "Filtrer", [46],
        gauche=["[player] pets filter next", SON, "[refresh]"], droit=["[player] pets filter previous", SON, "[refresh]"])
 # navigation arrows: no name, no tooltip
 bouton(L, "precedent", "itemsadder:influitems:btn_prev", None, [48],
-       [f"{OR}└ {GAUCHE} &fPage précédente"], gauche=["[player] pets page previous", SON_PAGE, "[refresh]"],
+       ["@left Page précédente"], gauche=["[player] pets page previous", SON_PAGE, "[refresh]"],
        conditions=["%influpet_view_page% >= 2"], extra=["    hide-tooltip: true"])
 bouton(L, "retour", "itemsadder:influitems:btn_back", OR + "Retour", [0],
-       [f"{OR}│ {VIOLET}Revenir au menu.", f"{OR}└ {GAUCHE} &fMenu principal"], gauche=["[menu] main"])
+       ["@desc Revenir au menu.", "@left Menu principal"], gauche=["[menu] main"])
 bouton(L, "suivant", "itemsadder:influitems:btn_next", None, [50],
-       [f"{OR}└ {GAUCHE} &fPage suivante"], gauche=["[player] pets page next", SON_PAGE, "[refresh]"],
+       ["@left Page suivante"], gauche=["[player] pets page next", SON_PAGE, "[refresh]"],
        conditions=["%influpet_view_pages% > %influpet_view_page%"], extra=["    hide-tooltip: true"])
 bouton(L, "montrer", "ENDER_EYE", OR + "Montrer mes familiers", [52],
-       [f"{OR}│ {VIOLET}Tes familiers sont cachés :", f"{OR}│ {VIOLET}ils ne te suivent plus.",
-        f"{OR}└ {GAUCHE} &fLes montrer"],
+       ["@desc Tes familiers sont cachés : ils ne te suivent plus.", "@left Les montrer"],
        gauche=["[player] pets visibility", SON, "[refresh]"], conditions=["%influpet_hidden% == true"],
        extra=["    priority: -1"])
 bouton(L, "cacher", "ENDER_PEARL", OR + "Cacher mes familiers", [52],
-       [f"{OR}│ {VIOLET}Leurs effets restent actifs,", f"{OR}│ {VIOLET}ils ne te suivent plus.",
-        f"{OR}└ {GAUCHE} &fLes cacher"],
+       ["@desc Leurs effets restent actifs, ils ne te suivent plus.", "@left Les cacher"],
        gauche=["[player] pets visibility", SON, "[refresh]"])
-open(os.path.join(OUT, "familiers.yml"), "w", encoding="utf-8").write(convert_yaml("\n".join(L).rstrip() + "\n"))
+open(os.path.join(OUT, "familiers.yml"), "w", encoding="utf-8").write("\n".join(L).rstrip() + "\n")
 
 # ------------------------------------------------------------------ familier.yml
 p = "influpet_selected"
@@ -151,24 +141,24 @@ L = entete("menu_familier", "Progression d'un familier (choisi par /pets select)
 L += ["items:", ""]
 # Exception : ici, la carte du familier plutôt que son portrait (demande du 2026-10-15).
 bouton(L, "portrait", f"itemsadder:influcards:carte_%{p}%", f"%{p}_name% {OR}Niv. %{p}_level%", [4],
-       [f"{OR}│ %{p}_description%", f"{OR}│",
-        f"{OR}│ {VIOLET}Niveau : &f%{p}_level%{VIOLET}/&f%{p}_max_level%",
-        f"{OR}└ {VIOLET}Progression : &f%{p}_progress% %"])
+       [f"@desc %{p}_description%",
+        f"@kv Niveau | %{p}_level%{VIOLET}/&f%{p}_max_level%",
+        f"@kv Progression | %{p}_progress% %"])
 for niveau, case in enumerate(NIVEAUX, 1):
-    effets = [f"{OR}│ %{p}_rewards_{niveau}_{k}%" for k in range(1, EFFETS + 1)]
+    effets = [f"@text %{p}_rewards_{niveau}_{k}%" for k in range(1, EFFETS + 1)]
     nom = OR + f"Niveau {niveau}"
     garde = f"%{p}_max_level% >= {niveau}"
     bouton(L, f"niveau_{niveau}_debloque", "itemsadder:influitems:checkmark", nom, [case],
-           effets + [f"{OR}│", f"{OR}└ {VERT}Débloqué"],
+           effets + ["@ok Débloqué"],
            conditions=[garde, f"%{p}_level_{niveau}% == unlocked"], extra=[f"    amount: {niveau}", "    priority: -2"])
     bouton(L, f"niveau_{niveau}_en_cours", "itemsadder:influitems:tracking", nom, [case],
-           effets + [f"{OR}│", f"{OR}│ {VIOLET}Progression : &f%{p}_progress% %",
-                     f"{OR}└ {VIOLET}Cartes : &f%{p}_current_xp%{VIOLET}/&f%{p}_required_xp%"],
+           effets + [f"@kv Progression | %{p}_progress% %",
+                     f"@kv Cartes | %{p}_current_xp%{VIOLET}/&f%{p}_required_xp%"],
            conditions=[garde, f"%{p}_level_{niveau}% == current"], extra=[f"    amount: {niveau}", "    priority: -1"])
     bouton(L, f"niveau_{niveau}_verrouille", "itemsadder:influitems:lock", nom, [case],
-           effets + [f"{OR}│", f"{OR}└ {ROUGE}Verrouillé"],
+           effets + ["@ko Verrouillé"],
            conditions=[garde], extra=[f"    amount: {niveau}"])
 bouton(L, "retour", "itemsadder:influitems:btn_back", OR + "Retour", [49],
-       [f"{OR}│ {VIOLET}Revenir aux familiers.", f"{OR}└ {GAUCHE} &fFamiliers"], gauche=["[menu] familiers"])
-open(os.path.join(OUT, "familier.yml"), "w", encoding="utf-8").write(convert_yaml("\n".join(L).rstrip() + "\n"))
+       ["@desc Revenir aux familiers.", "@left Familiers"], gauche=["[menu] familiers"])
+open(os.path.join(OUT, "familier.yml"), "w", encoding="utf-8").write("\n".join(L).rstrip() + "\n")
 print("familiers.yml, familier.yml écrits dans", OUT)

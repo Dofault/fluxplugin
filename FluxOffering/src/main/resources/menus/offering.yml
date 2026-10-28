@@ -1,9 +1,12 @@
-# FluxOffering: the offering a player opened (/offering [collection]). Its money and items are the list "offering"
-# (each entry shows its own item, name and progress); clicks go through the [offering] action.
-title: "&8%offrandes_current_name%"
+# FluxOffering : l'offrande ouverte par le joueur (/offrande [collection], ou un clic sur un rang de /grade).
+# Fond menu_offrande_<rang> (Flux/assets/offrande/gen_fonds.py) : la couleur et les étoiles de palier du rang ; ton
+# inventaire reste visible pour voir ce que tu peux déposer. Ligne 0 : retour (0) et icône de l'offrande (8). Objets
+# demandés : liste « offering » (10-16, 19-25, 28-34), pages en 18 et 26, Tout déposer en 40, filtre en 49,
+# boutons d'administration en 45 et 53. Les clics passent par [offering].
+title: ":offset_-8::menu_offrande_%offrandes_current_id%:"
 rows: 6
-player-inventory: hidden
-vanilla-background: true
+player-inventory: visible
+vanilla-background: false
 
 lists:
   offering:
@@ -15,70 +18,86 @@ lists:
         right: ["[offering] click %entry_id% right"]
 
 items:
-  back:
-    slot: 45
-    material: ARROW
-    name: "&fBack"
-    view-requirements: ["placeholder: %flux_list_offering_has_prev% == false"]
+  icone:
+    slot: 8
+    material: "itemsadder:influitems:stairs"
+    name: "%offrandes_current_name%"
+    lore:
+      - "@desc Dépose les objets demandés depuis ton inventaire (clic sur un objet, ou Tout déposer)."
+      - "@kv Progression | %offrandes_current_percent% %"
+  retour:
+    slot: 0
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
+    lore:
+      - "@desc Retour aux rangs."
+      - "@left Rangs"
     actions:
-      left: ["[close]"]
-  previous:
-    slot: 45
-    material: ARROW
-    name: "&fPrevious page"
-    priority: -1
+      left: ["[menu] grades"]
+  precedente:
+    slot: 18
+    material: "itemsadder:influitems:btn_prev"
+    hide-tooltip: true
     view-requirements: ["placeholder: %flux_list_offering_has_prev% == true"]
     actions:
       left: ["[list] offering prev"]
-  next:
-    slot: 53
-    material: ARROW
-    name: "&fNext page"
+  suivante:
+    slot: 26
+    material: "itemsadder:influitems:btn_next"
+    hide-tooltip: true
     view-requirements: ["placeholder: %flux_list_offering_has_next% == true"]
     actions:
       left: ["[list] offering next"]
-  filter:
+  filtre:
     slot: 49
-    material: HOPPER
-    name: "&fShow: &e%flux_list_offering_filter%"
-    lore: ["&7Click to change."]
+    material: "itemsadder:influitems:filter"
+    name: "Filtrer"
+    lore:
+      - "@filter offering"
     view-requirements: ["placeholder: %offrandes_editing% == false"]
     actions:
       left: ["[list] offering filter"]
-  deposit_all:
+      right: ["[list] offering filter-prev"]
+  tout_deposer:
     slot: 40
     material: CHEST
-    name: "&aDeposit everything"
-    lore: ["&7Deposits everything you can,", "&7on every item of this offering.", "", "&7Progress: &f%offrandes_current_percent%%"]
+    name: "Tout déposer"
+    lore:
+      - "@desc Dépose d'un coup tout ce que tu peux, sur tous les objets de cette offrande."
+      - "@kv Progression | %offrandes_current_percent% %"
+      - "@left Tout déposer"
     view-requirements:
       - "placeholder: %offrandes_editing% == false"
       - "placeholder: %offrandes_current_complete% == false"
     actions:
       left: ["[offering] depositall"]
-  editor:
-    slot: 0
+  edition:
+    slot: 45
     material: ANVIL
-    name: "&eEdit this offering"
-    lore: ["&7Administrators only."]
+    name: "Modifier cette offrande"
+    lore: ["@desc Réservé aux administrateurs.", "@left Modifier"]
     view-requirements:
       - "permission: offrandes.admin"
       - "placeholder: %offrandes_editing% == false"
     actions:
       left: ["[offering] editor"]
-  editor_exit:
-    slot: 0
+  quitter_edition:
+    slot: 45
     material: BARRIER
-    name: "&eLeave the editor"
+    name: "Quitter l'édition"
+    lore: ["@desc Retour à la vue normale.", "@left Quitter"]
     view-requirements:
       - "permission: offrandes.admin"
       - "placeholder: %offrandes_editing% == true"
     actions:
       left: ["[offering] editor"]
-  add_item:
-    slot: 8
-    material: LIME_DYE
-    name: "&aRequest the item in your hand"
-    lore: ["&7Hold the item (or an enchanted book)", "&7then click to set its quantity."]
+  ajouter:
+    slot: 53
+    material: "itemsadder:influitems:add"
+    name: "Demander l'objet en main"
+    lore:
+      - "@desc Tiens l'objet (ou un livre enchanté) puis clique pour fixer sa quantité."
+      - "@left Ajouter"
     view-requirements:
       - "permission: offrandes.admin"
       - "placeholder: %offrandes_editing% == true"

@@ -1,4 +1,4 @@
-# Rank menu (/grade): ranks grouped in tiers, each tier ending with a reward chest.
+# Rank menu (/grade): grades groupés par palier, chaque palier se termine par un coffre de récompense.
 # Background influmenu:menu_rangs (plugins/fluxplugin/Flux/assets/rangs/gen_fond.py), the whole menu one row down.
 # Row 1: back (9) and menu icon (17). Tier banners in columns 1, 3, 5, 7: 3 ranks (rows 3 to 5, weakest on top), then
 # the tier's reward chest on the first inventory row. Entries built by FluxOffering (RankMenu): list grades, column
@@ -60,10 +60,10 @@ lists:
 items:
   back:
     material: "itemsadder:influitems:btn_back"
-    name: "&#FFD94DBack"
+    name: "&#FFD94DRetour"
     slots: [9]
     lore:
-      - "&#FFD94D│ &#B376E5Back to the menu."
-      - "&#FFD94D└ &r&7%img_left_click% &fMain menu"
+      - "@desc Revenir au menu."
+      - "@left Menu principal"
     actions:
       left: ["[menu] main"]

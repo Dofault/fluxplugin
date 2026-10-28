@@ -20,7 +20,7 @@ import os
 import re
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "."))
-from lore_tags import convert_yaml  # noqa: E402  (lore lines in the tags of Flux's style.yml)
+from menu_lore import lore  # noqa: E402  (button lore in the tags of Flux's style.yml)
 
 PAR_PAGE = 7
 CHEMIN = [64 + k for k in range(PAR_PAGE)]
@@ -42,34 +42,8 @@ CLIC_G, CLIC_D = "&r&7%img_left_click% &f", "&r&7%img_right_click% &f"
 CLIC_G_OK = "&r&7%img_left_click% &#2ECF7B"
 ROUGE = "&#f0716f"   # couleur d'erreur : « Pas encore atteint. »
 
-# Marqueur de ligne « brute » : passée telle quelle à Flux, sans le préfixe │. Sert aux
-# listes de longueur variable fournies par un plugin tiers (ex : reward-lore d'EcoBattlepass,
-# déjà préfixées de leur propre puce ➤) — une ligne marquée qui contient un placeholder et
-# résout vide est automatiquement sautée par Flux (ItemFactory), pas celles qu'on écrit ici.
-_RAW = "\x00"
-
-
-def brut(s):
-    return _RAW + s
-
-
 def q(s):
     return '"' + s.replace('"', "'") + '"'
-
-
-def lore(lignes, actions=()):
-    """Style /menu2 : │ devant la description (sauf lignes brut()), ├ / └ devant les actions."""
-    out = [l[len(_RAW):] if l.startswith(_RAW) else f"{OR}│ {VIOLET}{l}" for l in lignes]
-    for i, a in enumerate(actions):
-        out.append(f"{OR}{'└' if i == len(actions) - 1 else '├'} {a}")
-    if not actions and out:
-        # Dernière ligne à porter un │ (une ligne brut() en queue, ex : reward-lore dont le
-        # dernier index est vide à l'exécution, ne doit jamais rester comme terminaison).
-        for i in range(len(out) - 1, -1, -1):
-            if "│" in out[i]:
-                out[i] = out[i].replace("│", "└", 1)
-                break
-    return out
 
 
 def item(cle, material, nom, slot, lignes, actions=(), clics=None, priorite=None, conditions=(),
@@ -173,7 +147,7 @@ def connecteurs(n, total, slots, color, progress, debut, nb, prev=None, nxt=None
 def fichier(chemin, contenu, entete):
     os.makedirs(os.path.dirname(chemin), exist_ok=True)
     with open(chemin, "w", encoding="utf-8") as f:
-        f.write(convert_yaml(f"# Généré par plugins/fluxplugin/Flux/assets/gen_pages.py : ne pas modifier à la main.\n# {entete}\n\npages:\n\n{contenu}\n"))
+        f.write(f"# Généré par plugins/fluxplugin/Flux/assets/gen_pages.py : ne pas modifier à la main.\n# {entete}\n\npages:\n\n{contenu}\n")
 
 
 def bouton_principal(cle, material, nom, slot, lignes, action_label, pages):
@@ -345,8 +319,8 @@ def pass_chemin(pid_pass, n, total, paliers_max):
         # Index 0 de tier_..._reward = nom combiné (trop large), jamais affiché ; les suivants sont
         # les lignes de reward-lore (EcoBattlepass/rewards/*.yml), sautées si vides.
         # reward-lore lines of EcoBattlepass (its *-rewards-format must be "%reward%": the frame comes from Flux)
-        libre = [brut(f"@item %ecobattlepass_tier_free_reward_{pid_pass}_{t}_{i}%") for i in range(1, 6)]
-        prest = [brut(f"@item %ecobattlepass_tier_premium_reward_{pid_pass}_{t}_{i}%") for i in range(1, 6)]
+        libre = [f"@item %ecobattlepass_tier_free_reward_{pid_pass}_{t}_{i}%" for i in range(1, 6)]
+        prest = [f"@item %ecobattlepass_tier_premium_reward_{pid_pass}_{t}_{i}%" for i in range(1, 6)]
         nom = f"Palier {t}"
         its.append(item(f"libre{t}_ok", "itemsadder:influitems:chest_checkmark", nom, slot, libre + ["&#2ECF7BRécupéré."],
                         priorite=1, conditions=[f"placeholder: {etat} != NOT_RECEIVED", f"placeholder: {etat} != RECEIVED_PREMIUM"], quantite=t))
@@ -508,7 +482,7 @@ def main():
         principaux += principal
 
     with open(os.path.join(menus, "pass.yml"), "w", encoding="utf-8") as f:
-        f.write(convert_yaml(menu_pass()))
+        f.write(menu_pass())
 
     main_yml = os.path.join(menus, "main.yml")
     texte = open(main_yml, encoding="utf-8").read()
@@ -516,7 +490,7 @@ def main():
     principaux = ["\n".join(l[4:] for l in b.split("\n")) for b in principaux]
     bloc = "  # >>> gen_pages (boutons générés par assets/gen_pages.py)\n\n" + "\n\n".join(principaux) + "\n\n  # <<< gen_pages\n"
     texte = re.sub(r"  # >>> gen_pages.*?  # <<< gen_pages\n", lambda m: bloc, texte, flags=re.S)
-    open(main_yml, "w", encoding="utf-8").write(convert_yaml(texte))
+    open(main_yml, "w", encoding="utf-8").write(texte)
     print(f"parrainage : paliers {seuils} ; pass : {pass_max} paliers ; récompenses : cycle {cycle}, {nb_temps} paliers de temps")
 
 
