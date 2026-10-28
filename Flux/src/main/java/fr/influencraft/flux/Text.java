@@ -36,6 +36,7 @@ public final class Text {
         warnedGlyphs.clear();
         papi = null;
         itemsAdder = null;
+        glyphWidths = null;
     }
 
     private static boolean hasPapi() {
@@ -321,6 +322,7 @@ public final class Text {
             net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText();
     /** Width in px (advance, spacing included) of the default font, the characters that are not 6 px. */
     private static final java.util.Map<Integer, Integer> FONT = new java.util.HashMap<>();
+    private static volatile java.util.Map<Integer, Integer> glyphWidths;
 
     static {
         for (char c : "!',.:;i|".toCharArray()) FONT.put((int) c, 2);
@@ -328,13 +330,27 @@ public final class Text {
         for (char c : " It[]\"()*{}".toCharArray()) FONT.put((int) c, 4);
         for (char c : "<>fk".toCharArray()) FONT.put((int) c, 5);
         for (char c : "@~".toCharArray()) FONT.put((int) c, 7);
-        FONT.put(0x27A4, 8); // ➤ (measured in game)
-        FONT.put(0x2500, 9); // ─ (measured in game)
     }
 
-    /** Advances of custom font characters (ItemsAdder pack), cached by the provider. */
+    /** Width of custom glyphs (ItemsAdder), by character, built once per hook reset. */
     private static java.util.Map<Integer, Integer> glyphWidths() {
-        return hasItemsAdder() ? fr.influencraft.flux.api.items.CustomItems.charWidths() : java.util.Map.of();
+        java.util.Map<Integer, Integer> map = glyphWidths;
+        if (map != null) return map;
+        map = new java.util.HashMap<>();
+        if (hasItemsAdder()) {
+            try {
+                for (String id : fr.influencraft.flux.api.items.CustomItems.glyphIds()) {
+                    String glyph = fr.influencraft.flux.api.items.CustomItems.glyphs(":" + id + ":");
+                    if (glyph != null && glyph.codePointCount(0, glyph.length()) == 1) {
+                        map.put(glyph.codePointAt(0), fr.influencraft.flux.api.items.CustomItems.glyphWidth(id) + 1);
+                    }
+                }
+            } catch (RuntimeException e) {
+                return map; // provider still loading: try again next time
+            }
+        }
+        glyphWidths = map;
+        return map;
     }
 
     /** Shown width in px of a legacy line ({@code &} codes, glyph characters already in place). */
