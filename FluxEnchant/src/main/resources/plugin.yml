@@ -1,0 +1,13 @@
+name: FluxEnchant
+version: 26.2
+main: fr.influencraft.fluxenchant.FluxEnchant
+api-version: "26.2"
+description: Enchantment weight per item and mastery enchantments on the crate tools (EcoEnchants enchantments).
+authors: [Influencraft]
+depend: [Flux]
+softdepend: [FluxTools, EcoEnchants]
+
+permissions:
+  fluxenchant.admin:
+    description: /fluxenchant reload and info.
+    default: op

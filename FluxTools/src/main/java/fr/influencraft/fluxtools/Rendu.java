@@ -78,6 +78,9 @@ final class Rendu {
             int v = o.valeur(id, niveau);
             if (ench != null && v > 0) meta.addEnchant(ench, v, true);
         }
+        // enchantements de maîtrise (FluxEnchant), par-dessus
+        var maitrise = fr.influencraft.fluxtools.api.Tools.mastery();
+        if (maitrise != null) maitrise.apply(meta);
     }
 
     private static void decorer(ItemMeta meta, Outil o, Etat e) {
@@ -132,6 +135,8 @@ final class Rendu {
         for (Enchantment ench : meta.getEnchants().keySet()) {
             if (LIVRES.contains(ench.getKey().getKey())) l.add(ligne(ench, ""));
         }
+        var maitrise = fr.influencraft.fluxtools.api.Tools.mastery();
+        if (maitrise != null) for (String ligne : maitrise.lines(meta)) l.add(objet(ligne));
         return l;
     }
 

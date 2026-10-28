@@ -74,7 +74,13 @@ final class Verrous implements Listener {
             return;
         }
         if (droite.getType() == Material.ENCHANTED_BOOK) {
-            ev.setResult(livre(o, gauche, droite));
+            ItemStack r = livre(o, gauche, droite);
+            // other books: mastery enchantments of another plugin (FluxEnchant), when one is registered
+            var maitrise = fr.influencraft.fluxtools.api.Tools.mastery();
+            if (r == null && maitrise != null && !livreOutil(droite) && ev.getView().getPlayer() instanceof Player p) {
+                r = maitrise.anvil(p, gauche, droite, FluxTools.info(o, Etat.lire(gauche)));
+            }
+            ev.setResult(r);
             if (ev.getResult() != null) ev.getView().setRepairCost(10);
             return;
         }
@@ -99,6 +105,13 @@ final class Verrous implements Listener {
         for (Enchantment e : m.getStoredEnchants().keySet()) {
             if (!VANILLA.contains(e) && !Rendu.LIVRES.contains(e.getKey().getKey())) return true;
         }
+        return false;
+    }
+
+    /** Livre Incassable ou Lié à l'âme (géré ici, jamais par la maîtrise). */
+    private static boolean livreOutil(ItemStack livre) {
+        if (!(livre.getItemMeta() instanceof EnchantmentStorageMeta m)) return false;
+        for (Enchantment e : m.getStoredEnchants().keySet()) if (Rendu.LIVRES.contains(e.getKey().getKey())) return true;
         return false;
     }
 

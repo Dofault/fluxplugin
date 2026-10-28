@@ -31,5 +31,6 @@
         <module>InfluShop</module>
         <module>FluxShop</module>
         <module>FluxPets</module>
+        <module>FluxEnchant</module>
     </modules>
 </project>

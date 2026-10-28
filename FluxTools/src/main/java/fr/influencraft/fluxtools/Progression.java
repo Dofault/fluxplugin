@@ -79,7 +79,9 @@ final class Progression implements Listener {
         if (!pose) e.blocs++;
 
         boolean utile = "houe".equals(o.famille) ? mur(b) && !(pose && !(b.getBlockData() instanceof Ageable)) : !pose;
-        boolean monte = utile && gagner(p, o, e, o.points.getOrDefault(cible, 0.0));
+        double points = o.points.getOrDefault(cible, 0.0);
+        boolean monte = utile && gagner(p, o, e, points);
+        if (utile) monte |= maitrise(p, item, o, e, points);
 
         Outil.Quete q = e.queteActive(o);
         boolean compte = utile && q != null && q.vise(cible)
@@ -121,7 +123,9 @@ final class Progression implements Listener {
         e.tues++;
         String cible = mort.getType().getKey().getKey();
         boolean utile = "arc".equals(o.famille) ? tir : melee;
-        boolean monte = utile && gagner(p, o, e, o.points.getOrDefault(cible, 0.0));
+        double points = o.points.getOrDefault(cible, 0.0);
+        boolean monte = utile && gagner(p, o, e, points);
+        if (utile) monte |= maitrise(p, item, o, e, points);
         Outil.Quete q = e.queteActive(o);
         boolean compte = q != null && q.vise(cible)
                 && (q.type() == Outil.Type.TUER && melee || q.type() == Outil.Type.TIRER && tir);
@@ -136,6 +140,13 @@ final class Progression implements Listener {
     }
 
     // ─── Avancement, récompenses ────────────────────────────────────────────
+
+    /** Outil au niveau maximum : l'XP gagnée fait aussi monter ses enchantements de maîtrise (FluxEnchant). */
+    private boolean maitrise(Player p, ItemStack item, Outil o, Etat e, double xp) {
+        var hook = fr.influencraft.fluxtools.api.Tools.mastery();
+        if (hook == null || xp <= 0 || !o.aNiveaux() || o.niveau(e.xp) < o.niveauMax()) return false;
+        return hook.gain(p, item, FluxTools.info(o, e), xp);
+    }
 
     /**
      * Ajoute de l'XP d'outil ; au passage d'un niveau, prévient le joueur.

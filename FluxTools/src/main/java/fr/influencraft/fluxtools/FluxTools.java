@@ -47,6 +47,7 @@ public final class FluxTools extends fr.influencraft.flux.api.FluxPlugin {
             return;
         }
         charger();
+        fr.influencraft.fluxtools.api.Tools.bind(this::info, this::rafraichir);
 
         progression = new Progression(this);
         Bukkit.getPluginManager().registerEvents(progression, this);
@@ -136,6 +137,26 @@ public final class FluxTools extends fr.influencraft.flux.api.FluxPlugin {
     }
 
     /** Définition de l'outil FluxTools porté par l'objet, ou null. */
+    /** The tool for other plugins ({@link fr.influencraft.fluxtools.api.Tools#info}). */
+    fr.influencraft.fluxtools.api.ToolInfo info(ItemStack item) {
+        Outil o = outil(item);
+        if (o == null) return null;
+        Etat e = Etat.lire(item);
+        return info(o, e);
+    }
+
+    void rafraichir(ItemStack item) {
+        Outil o = outil(item);
+        Etat e = o == null ? null : Etat.lire(item);
+        if (e != null) Rendu.maj(item, o, e, true);
+    }
+
+    static fr.influencraft.fluxtools.api.ToolInfo info(Outil o, Etat e) {
+        int max = o.aNiveaux() ? o.niveauMax() : 0;
+        return new fr.influencraft.fluxtools.api.ToolInfo(o.id, o.palier, o.famille, e == null ? 0 : o.niveau(e.xp), max,
+                max > 0 ? o.seuil(max) : 0);
+    }
+
     Outil outil(ItemStack item) {
         String id = Etat.outil(item);
         return id == null ? null : outils.get(id);

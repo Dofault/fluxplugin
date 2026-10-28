@@ -1,0 +1,20 @@
+prefix: "&#B376E5ᴇɴᴄʜᴀɴᴛ &8▸ "
+reloaded: "&#2ECF7BFluxEnchant rechargé : %count% enchantements lus."
+admin-usage: "!&#FF5C5C/%flux_cmd_fluxenchant_fluxenchant% <reload|info>"
+info: "&#B376E5Poids de l'objet en main : &f%weight%&7/&f%capacity%"
+# Enclume (barre d'action, au plus une fois toutes les 2 s)
+refused-tier: "&#FF5C5CSeuls les outils Virale et Phénomène reçoivent des enchantements de maîtrise."
+refused-level: "&#FF5C5CTon outil doit être au niveau &f%level%&#FF5C5C pour recevoir un enchantement de maîtrise."
+refused-mastering: "&#FF5C5CMaîtrise d'abord &f%enchant%&#FF5C5C avant d'en ajouter un autre."
+refused-weight: "&#FF5C5CTrop lourd : &f%weight%&7/&f%capacity%&#FF5C5C de poids avec ce livre."
+refused-present: "&#FF5C5CTon outil a déjà cet enchantement."
+refused-book: "&#FF5C5CUn seul enchantement par livre, et pas un enchantement vanilla."
+refused-target: "&#FF5C5CCet enchantement ne va pas sur cet outil."
+table-trimmed: "&#FF5C5CTrop lourd pour cet objet : un enchantement n'a pas été posé (&f%weight%&7/&f%capacity%&#FF5C5C)."
+# Maîtrise
+level-up: "&#B376E5Maîtrise : &f%enchant% %level%&#B376E5 !"
+mastered: "&#2ECF7B%enchant% est maîtrisé ! Tu peux ajouter un autre enchantement à l'enclume."
+# Lignes de l'outil
+line: "&#B376E5✦ &f%enchant% %level%&7/&f%max% &8(maîtrise %percent% %)"
+line-mastered: "&#B376E5✦ &f%enchant% %level%"
+line-weight: "&8Poids &7%weight%&8/&7%capacity%"

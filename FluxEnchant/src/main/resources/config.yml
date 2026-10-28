@@ -1,0 +1,29 @@
+# FluxEnchant: weight of the enchantments and mastery enchantments of the crate tools.
+
+# Weight of a custom enchantment (EcoEnchants), by rarity (rarity: of its file in plugins/EcoEnchants/enchants).
+# Vanilla enchantments weigh nothing.
+weights:
+  simple: 1
+  unique: 2
+  elite: 3
+  ultimate: 4
+  legendary: 5
+  fabled: 7
+  fabled_exclusif: 8
+
+# Total weight an item can carry (tools, weapons, armour), and per kind when needed (tools, armor).
+capacity:
+  default: 15
+
+# Mastery: books added at the anvil to a crate tool of these tiers, once the tool is at its last level.
+# A book starts at level 0 (inactive) and climbs with the tool's XP up to the book's level; the next book can only
+# be added once the previous one is mastered.
+mastery:
+  tiers: [virale, phenomene]
+  # XP to master a book = XP of the tool's last level x factor (the 20 tool levels = 1)
+  xp-factor: 1.5
+  # spread over the book's levels: level k at (k / max) ^ curve of that XP
+  curve: 1.6
+
+# Folder of the EcoEnchants enchantment files (rarity, display name), relative to plugins/
+ecoenchants-folder: EcoEnchants/enchants
