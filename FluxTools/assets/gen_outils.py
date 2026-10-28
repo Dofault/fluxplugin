@@ -306,15 +306,14 @@ def seuils(palier):
 
 
 def points(famille):
-    """XP d'outil par unité = secondes de farm (60 / rythme). Tous les blocs des métiers de la famille,
-    puis les rythmes forcés des groupes."""
+    """XP d'outil par unité = secondes de farm (60 / rythme), seulement pour les groupes à rythme forcé
+    (rareté des minerais, monstres des armes...). Les autres blocs sont calculés par FluxTools au chargement
+    depuis les métiers EcoJobs du serveur (xp-metiers de sa config, depuis le 2026-10-28) : ils suivent EcoJobs
+    sans relancer ce script."""
     pts = {}
-    for job in METIERS_FAMILLE.get(famille, []):
-        base, par_min = METIERS[job]
-        xp_min = par_min * XP[job][base]
-        for b, xp in XP[job].items():
-            pts[b] = round(60 * xp / xp_min, 2)
     for g in GROUPES[famille].values():
+        if not g[5]:
+            continue
         for c in g[3]:
             pts[c] = round(60 / rythme(g), 2)
     return dict(sorted(pts.items()))

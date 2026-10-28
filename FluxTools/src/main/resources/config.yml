@@ -118,3 +118,22 @@ modules:
       success: "<#2ECF7B>Book split into <enchants> books, for <cost> XP points."
       reloaded: "<#2BC4E8>Configuration reloaded."
       reload-no-permission: "<#FF5C5C>You are not allowed to reload the plugin."
+
+# XP d'outil par bloc (outils à niveaux Virale et Phénomène), calculée au chargement depuis les métiers EcoJobs
+# du serveur : 1 point = 1 seconde de farm. Chaque métier a sa propre échelle : son bloc de référence se mine à
+# par-minute unités par minute. Les points écrits dans un fichier d'outil (rythmes forcés) passent devant.
+# Après un changement d'XP dans EcoJobs : /fluxitems reload.
+xp-metiers:
+  dossier-ecojobs: EcoJobs/jobs
+  metiers:
+    rochiste: {bloc: stone, par-minute: 40}
+    mineur: {bloc: coal_ore, par-minute: 6}
+    deblayeur: {bloc: dirt, par-minute: 40}
+    sylviculteur: {bloc: oak_log, par-minute: 12}
+    cultivateur: {bloc: wheat, par-minute: 40}
+  # métiers de chaque famille d'outil, le dernier prioritaire quand un bloc est dans deux métiers
+  familles:
+    pioche: [rochiste, mineur]
+    pelle: [deblayeur]
+    hache: [sylviculteur]
+    houe: [cultivateur]

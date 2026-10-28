@@ -116,6 +116,13 @@ public final class FluxTools extends fr.influencraft.flux.api.FluxPlugin {
                 if (o != null) lus.put(o.id, o);
             }
         }
+        // XP par bloc des outils à niveaux : métiers EcoJobs du serveur, les points du fichier de l'outil devant
+        Map<String, Map<String, Double>> parFamille = PointsMetiers.calculer(getConfig().getConfigurationSection("xp-metiers"),
+                getDataFolder().getParentFile(), getLogger());
+        for (Outil o : lus.values()) {
+            if (!o.aNiveaux()) continue;
+            parFamille.getOrDefault(o.famille, Map.of()).forEach(o.points::putIfAbsent);
+        }
         Set<String> mats = new HashSet<>();
         for (Outil o : lus.values()) mats.add(o.materiau.getKey().getKey());
         outils = lus;
