@@ -74,6 +74,9 @@ The plugins are written **as English plugins, then adapted to French** for our s
 - **First row of every menu: back button in its first slot, the icon of the current menu (what this page is, with its
   explanation in the tooltip) in its last slot**, like the pass. "First row" means the first row of the drawn menu,
   wherever it sits: a menu drawn in the hidden inventory area starts there, not at slot 0 of the chest.
+- **Every menu has a title on its first row**, centred between the back button and the menu icon: QuinqueFive
+  capitals (5 px), white with a one-pixel shadow, as in the pass (`fond_lib.title()` in `Flux/assets`). Keep that
+  strip readable: light decor (a light beam, the generic background) is fine behind it, a detailed drawing is not.
 - **Use the window's own spacing instead of empty rows.** The hidden inventory starts 14 px lower than a regular row
   would: rather than wasting an empty slot row to separate two groups, shift the whole drawing (background
   included) so the separation falls on the chest/inventory gap. A menu does not have to start at row 0. Paths cross

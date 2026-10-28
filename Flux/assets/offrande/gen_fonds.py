@@ -2,7 +2,7 @@
 
 The suite's chest (chest_6.png: generic violet panel, chest and inventory) with the player's inventory part untouched
 (the offering menu shows it, so the player sees what he can deposit). In the chest part only the used cells stay:
-  slot 0 back, slot 8 offering icon (first row rule), 10-16 / 19-25 / 28-34 requested items (tinted with the rank's
+  slot 0 back, slot 8 offering icon (first row rule) with the title « OFFRANDE » between them, 10-16 / 19-25 / 28-34 requested items (tinted with the rank's
   colour), 18 / 26 previous / next page (dark cells), 40 deposit all (gold), 49 filter.
 A ribbon of the rank's colour runs behind the title row, with the stars of its tier.
 
@@ -15,7 +15,7 @@ from PIL import Image, ImageDraw
 HERE = os.path.dirname(os.path.abspath(__file__))
 ASSETS = os.path.dirname(HERE)
 sys.path.insert(0, ASSETS)
-from fond_lib import poser, tampon_case  # noqa: E402
+from fond_lib import poser, tampon_case, title  # noqa: E402
 
 RANKS = [("citoyen", "9AD29A", 0), ("repute", "6AC7C7", 0), ("populaire", "5CA8E6", 1), ("eminent", "4E72E6", 1),
          ("figure", "8A5CE6", 1), ("influenceur", "D15CE6", 2), ("icone", "E65C9F", 2), ("legende", "FFD94D", 2),
@@ -86,6 +86,7 @@ def background(rank, colour, tier, chest, generic, case):
         poser(im, tint(case, colour, .75), *objet(n))
     for n in (0, 8, 49):
         poser(im, case, *objet(n))
+    title(im, "Offrande", objet(0)[1])
     for n in (18, 26):
         dark(d, n)
     gold = tint(case, "F0A800")

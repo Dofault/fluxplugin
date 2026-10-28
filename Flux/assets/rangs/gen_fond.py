@@ -1,7 +1,7 @@
 """Background of the rank menu (museum, chosen on 2026-10-28), from the round-4 proposals (gen_v4.py, variant 1).
 
 Layout (6-row chest, hidden inventory), the whole drawing one row down (row 0 empty):
-  row 1          back (9) and menu icon (17), the ceiling lamps between them
+  row 1          back (9) and menu icon (17), the title « RANGS » and the ceiling lamps between them
   rows 3 to 5    4 tier banners on a gold rod, 3 rank slots each, weakest on top: columns 1, 3, 5, 7
                  (slots 28/37/46, 30/39/48, 32/41/50, 34/43/52)
   inventory row  reward slot of each tier (55, 57, 59, 61): the gap between the chest and the inventory separates
@@ -16,7 +16,7 @@ from PIL import Image, ImageDraw
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))
-from fond_lib import generique_raccourci, poser, tampon_case  # noqa: E402
+from fond_lib import generique_raccourci, poser, tampon_case, title  # noqa: E402
 
 W, H = 176, 221
 TOP = 18  # the whole menu starts one row down: row 0 stays empty
@@ -122,6 +122,7 @@ def background():
         poser(im, tint(case, "F0A800"), *objet(slot(REWARD_ROW, col)))
     for n in (9, 17):  # back and menu icon, first row of the menu (row 1)
         poser(im, case, *objet(n))
+    title(im, "Rangs", objet(9)[1])
     return im
 
 

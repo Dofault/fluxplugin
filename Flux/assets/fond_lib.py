@@ -72,3 +72,61 @@ def tampon_case(png=None):
     png = png or os.path.join(os.path.dirname(os.path.abspath(__file__)), "case_arrondie.png")
     im = Image.open(png).convert("RGBA")
     return {(x - 1, y - 1): im.getpixel((x, y)) for y in range(im.height) for x in range(im.width) if im.getpixel((x, y))[3]}
+
+
+# ---------------------------------------------------------------- menu titles (QuinqueFive, 5 px high)
+
+_FONT = None
+# accented capitals: base letter + extra pixels (relative to the letter's top left)
+_ACCENTS = {"É": ("E", [(3, -2), (2, -1)]), "È": ("E", [(1, -2), (2, -1)]), "Ê": ("E", [(1, -1), (2, -2), (3, -1)]),
+            "Ô": ("O", [(1, -1), (2, -2), (3, -1)]), "À": ("A", [(1, -2), (2, -1)])}
+WHITE, SHADOW = (255, 255, 255, 255), (0, 0, 0, 255)
+
+
+def _font():
+    global _FONT
+    if _FONT is None:
+        import json
+        import os
+        _FONT = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "metiers", "quinquefive.json")))
+    return _FONT
+
+
+def _glyph(c):
+    base, extra = _ACCENTS.get(c, (c, []))
+    return _font().get(base), extra
+
+
+def text_width(txt):
+    w = 0
+    for c in txt.upper():
+        g, _ = _glyph(c)
+        w += (len(g[0]) if g else 3) + 1
+    return w - 1
+
+
+def text(im, txt, cx, y, colour=WHITE, shadow=SHADOW):
+    """QuinqueFive capitals centred on cx, top at y, with a one-pixel shadow below (as the pass title)."""
+    x = cx - text_width(txt) // 2
+    px = im.load()
+    for c in txt.upper():
+        g, extra = _glyph(c)
+        if not g:
+            x += 4
+            continue
+        for dy, row in enumerate(g):
+            for dx, ch in enumerate(row):
+                if ch == "#":
+                    px[x + dx, y + dy + 1] = shadow
+        for dy, row in enumerate(g):
+            for dx, ch in enumerate(row):
+                if ch == "#":
+                    px[x + dx, y + dy] = colour
+        for dx, dy in extra:
+            px[x + dx, y + dy] = colour
+        x += len(g[0]) + 1
+
+
+def title(im, txt, row_top, cx=88):
+    """Menu title on the menu's first row (between the back button and the menu icon), as in the pass."""
+    text(im, txt, cx, row_top + 6)
