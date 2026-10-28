@@ -152,9 +152,9 @@ final class PassMenu implements Listener {
             List<?> quests = (List<?>) getQuests.invoke(category);
             int done = 0;
             for (Object q : quests) if ((boolean) hasCompleted.invoke(null, player, q)) done++;
-            Lore lore = Lore.create().line("Missions terminées : &f" + done + "&7/&f" + quests.size());
+            Lore lore = Lore.create().kv("Missions terminées", done + "&7/&f" + quests.size());
             if (s.id().equals("quotidiennes")) {
-                lore.line("Renouvellement dans").line("&f" + external(player, "%ecobattlepass_category_" + s.id() + "_reset_timer%"));
+                lore.kv("Renouvellement dans", external(player, "%ecobattlepass_category_" + s.id() + "_reset_timer%"));
             }
             ItemStack item;
             String start = external(player, "%ecobattlepass_category_" + s.id() + "_start_timer%");
@@ -162,7 +162,7 @@ final class PassMenu implements Listener {
                 item = item(s.icon(), s.name(), lore.build(), player);
                 glow(item);
             } else if (!start.contains("Disponible")) {
-                item = item("itemsadder:influitems:lock", s.name(), Lore.create().line("Débute dans").line("&f" + start).build(), player);
+                item = item("itemsadder:influitems:lock", s.name(), Lore.create().kv("Débute dans", start).build(), player);
             } else {
                 item = item(s.icon(), s.name(), lore.left("Voir les missions").build(), player);
             }
@@ -182,18 +182,18 @@ final class PassMenu implements Listener {
             Object quest = quests.get(i);
             String name = (String) formattedName.invoke(quest, player);
             Lore lore = Lore.create();
-            for (String line : lore(quest, player)) lore.raw(line);
+            styled(lore, lore(quest, player));
             String icon;
             if ((boolean) hasCompleted.invoke(null, player, quest)) {
                 icon = "itemsadder:influitems:accept";
                 lore.line(Lore.GREEN + "Terminée.");
             } else if (!open) {
                 icon = "itemsadder:influitems:lock";
-                lore.line("Pas encore disponible.");
+                lore.ko("Pas encore disponible.");
             } else {
                 // the resource of its task (block, item, egg...), to see at a glance what to do
                 icon = icon(quest);
-                lore.line("En cours.");
+                lore.info("En cours.");
             }
             missions.add(ListEntry.of(String.valueOf(i)).item(item(icon, name, lore.build(), player)));
         }
@@ -336,6 +336,31 @@ final class PassMenu implements Listener {
 
     /** Lines of the mission (tasks and progress, EcoBattlepass quests-icon format), blank lines dropped. */
     @SuppressWarnings("unchecked")
+    private static final java.util.regex.Pattern EXPANDED_HEX = java.util.regex.Pattern.compile(
+            "&x&(\\p{XDigit})&(\\p{XDigit})&(\\p{XDigit})&(\\p{XDigit})&(\\p{XDigit})&(\\p{XDigit})");
+    private static final java.util.regex.Pattern KEY_VALUE = java.util.regex.Pattern.compile("^(.+?)\\s*(?:&[0-9a-fA-F])?\\s*[►▸]\\s*(.*)$");
+    private static final java.util.regex.Pattern LEADING_CODES = java.util.regex.Pattern.compile("^(?:&#\\p{XDigit}{6}|&[0-9a-fk-orA-FK-OR])+");
+    private static final java.util.regex.Pattern TEXT_COLOUR = java.util.regex.Pattern.compile("(?i)&#B376E5");
+
+    /**
+     * EcoBattlepass quest lines in the suite's style: « Key ► value » as key/values, other lines as description (its
+     * own text colour in the middle of a line becomes « back to the description colour »).
+     */
+    private static void styled(Lore lore, List<String> lines) {
+        for (String raw : lines) {
+            String line = EXPANDED_HEX.matcher(raw.replace('§', '&')).replaceAll("&#$1$2$3$4$5$6").strip();
+            java.util.regex.Matcher kv = KEY_VALUE.matcher(line);
+            if (kv.matches()) {
+                String key = LEADING_CODES.matcher(kv.group(1)).replaceFirst("").strip();
+                String value = kv.group(2).startsWith("&f") ? kv.group(2).substring(2) : kv.group(2);
+                lore.kv(TEXT_COLOUR.matcher(key).replaceAll(""), value);
+            } else {
+                String text = TEXT_COLOUR.matcher(line).lookingAt() ? line.substring(8) : line;
+                lore.description(TEXT_COLOUR.matcher(text).replaceAll("<base>"));
+            }
+        }
+    }
+
     private List<String> lore(Object quest, Player player) throws ReflectiveOperationException {
         List<String> lines = new ArrayList<>((List<String>) formattedLore.invoke(quest, player));
         lines.removeIf(l -> l == null || l.replaceAll("§.", "").isBlank());

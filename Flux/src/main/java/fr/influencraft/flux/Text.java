@@ -247,6 +247,8 @@ public final class Text {
 
     public static java.util.List<String> wrap(String line, int width) {
         if (line == null) return java.util.List.of("");
+        // text from other plugins comes with § codes (and §x§R§R§G§G§B§B hex): measured and carried as & codes
+        if (line.indexOf('§') >= 0) line = line.replace('§', '&');
         if (line.indexOf('x') >= 0 || line.indexOf('X') >= 0) line = EXPANDED_HEX.matcher(line).replaceAll("&#$1$2$3$4$5$6");
         if (width <= 0 || visibleLength(line) <= width || (line.indexOf('<') >= 0 && MINI_TAG.matcher(line).find())) {
             return java.util.List.of(line);
@@ -267,7 +269,7 @@ public final class Text {
         int currentWidth = 0;
         String active = activeCodes(prefix);
         String lineStart = ""; // the first line keeps its own codes
-        for (String word : body.split(" ", -1)) {
+        for (String word : glueIcons(body.split(" ", -1))) {
             int w = visibleLength(word);
             if (currentWidth > 0 && currentWidth + 1 + w > room) {
                 out.add(prefix + lineStart + current);
@@ -284,7 +286,58 @@ public final class Text {
             active = activeCodes(active + word);
         }
         out.add(prefix + lineStart + current);
+        return framePieces(out, prefix);
+    }
+
+    /** A word that is only an icon (custom glyph) stays with the next word: « [crown] Couronnes » is never cut. */
+    private static java.util.List<String> glueIcons(String[] words) {
+        java.util.List<String> out = new java.util.ArrayList<>(words.length);
+        String pending = null;
+        for (String w : words) {
+            String word = pending == null ? w : pending + " " + w;
+            pending = null;
+            if (isIcon(word)) pending = word;
+            else out.add(word);
+        }
+        if (pending != null) out.add(pending);
         return out;
+    }
+
+    private static final java.util.regex.Pattern ICON_CODE = java.util.regex.Pattern.compile(":[a-z0-9_-]+:|%img_[a-z0-9_]+%");
+
+    private static boolean isIcon(String word) {
+        String visible = CODE.matcher(word).replaceAll("");
+        if (ICON_CODE.matcher(visible).matches()) return true;
+        if (visible.isEmpty()) return false;
+        for (int i = 0; i < visible.length(); i++) {
+            char c = visible.charAt(i);
+            if (c < '\uE000' || c > '\uF8FF') return false;
+        }
+        return true;
+    }
+
+    /**
+     * Pieces of a framed line: the frame's corner (└) only on the last piece and the branch (├) only on the first,
+     * the others get the frame's line (│), so a cut line never shows two corners.
+     */
+    private static java.util.List<String> framePieces(java.util.List<String> pieces, String prefix) {
+        if (pieces.size() < 2 || prefix.isEmpty()) return pieces;
+        var frame = fr.influencraft.flux.api.text.Style.frame();
+        String corner = plainChar(frame.corner()), branch = plainChar(frame.branch()), line = plainChar(frame.line());
+        String own = plainChar(prefix);
+        if (own.isEmpty() || line.isEmpty() || (!own.equals(corner) && !own.equals(branch))) return pieces;
+        java.util.List<String> out = new java.util.ArrayList<>(pieces.size());
+        for (int i = 0; i < pieces.size(); i++) {
+            boolean keep = own.equals(corner) ? i == pieces.size() - 1 : i == 0;
+            String piece = pieces.get(i);
+            out.add(keep ? piece : piece.replaceFirst(java.util.regex.Pattern.quote(own), line));
+        }
+        return out;
+    }
+
+    /** The visible symbol of a frame piece (« &#FFD94D└ » -> « └ »). */
+    private static String plainChar(String piece) {
+        return CODE.matcher(piece == null ? "" : piece).replaceAll("").strip();
     }
 
     /** Colour and formats in force at the end of a text, as codes to put back at the start of the next line. */

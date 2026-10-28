@@ -90,7 +90,9 @@ The look of every button lives in `plugins/Flux/style.yml` (`api.text.Style`): o
 bottom like an HTML page (`<description>...</description>`, `<values>` with `{key}`/`{value}`, `<list>`, `<filter>`
 with `<selected>`/`<unselected>`, `<text>`, `<ok>`, `<ko>`, `<info>`, `<actions>` with `{icon}`/`{label}`). A block
 repeats per line of its kind and vanishes when empty; template order is the lore order; a blank template line shows
-only between content (runs around a vanished block merge). Plus `frame`, `name`, `icons`. Any text may use
+only between content (runs around a vanished block merge). Plus `frame` (optional: `enabled`, `name` prefix of
+button names, `line`, `branch`, `corner`), `separator` (what template blank lines become), `name`, `icons`.
+`<base>` inside a text = back to the block's colour. Any text may use
 `<smallcaps>...</smallcaps>`. Look only, never words (labels go to the lang files). Never hand-write `&#FFD94D│ ...`
 lines again:
 

@@ -28,9 +28,18 @@ lore: |
 
   <actions>{icon} &f{label}</actions>
 
-# frame added in front of every line: [line, branch (actions), corner (last line)]; framed: false removes it
-frame: ["&#FFD94D│ ", "&#FFD94D├ ", "&#FFD94D└ "]
-framed: true
+# frame of the buttons (optional, enabled: false removes it): before the button name, before every line, before
+# the actions, before the last line
+frame:
+  enabled: true
+  name: ""
+  line: "&#FFD94D│ "
+  branch: "&#FFD94D├ "
+  corner: "&#FFD94D└ "
+
+# what each blank line of the template becomes (still only between two lines of content); empty = a blank line
+# (the frame's line alone when framed), e.g. "&#FFD94D├──────"
+separator: ""
 
 # button name ({text}: the name, a colour in the name itself wins)
 name: "&#FFD94D{text}"
@@ -41,7 +50,7 @@ icons:
   shift-left: "&r&7⇧%img_left_click%"
   shift-right: "&r&7⇧%img_right_click%"
 
-# Variants of a plugin: any of the keys above (lore, frame, framed, name, icons), the rest comes from here.
+# Variants of a plugin: any of the keys above (lore, frame, separator, name, icons), the rest comes from here.
 # A menu button picks one with a lore line « @style <variant> ».
 # variants:
 #   pets:
@@ -49,7 +58,10 @@ icons:
 variants:
   # FluxTools (« rubis » palette): garnet frame, pale pink text, mint / greyish pink states
   outils:
-    frame: ["&#A33A50│ ", "&#A33A50├ ", "&#A33A50└ "]
+    frame:
+      line: "&#A33A50│ "
+      branch: "&#A33A50├ "
+      corner: "&#A33A50└ "
     name: "&#FF4D6D{text}"
     lore: |
       <description>&#FFD6DE{text}</description>

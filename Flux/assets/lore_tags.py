@@ -14,15 +14,17 @@ import sys
 
 # palettes: colour of plain text, of states; a palette other than the default adds "@style <variant>"
 PALETTES = {
-    None: {"text": {"#b376e5", "&f", ""}, "ok": {"#2ecf7b"}, "ko": {"#f0716f", "#ff5c5c"}, "info": {"#ffd94d"}},
-    "outils": {"text": {"#ffd6de", "&f", ""}, "ok": {"#7be0a1"}, "ko": {"#a89ba0"}, "info": {"#ff4d6d"}},
+    None: {"text": {"#b376e5", "&f", ""}, "ok": {"#2ecf7b"}, "ko": {"#f0716f", "#ff5c5c"}, "info": {"#ffd94d"},
+           "base": "&#B376E5"},
+    "outils": {"text": {"#ffd6de", "&f", ""}, "ok": {"#7be0a1"}, "ko": {"#a89ba0"}, "info": {"#ff4d6d"},
+               "base": "&#FFD6DE"},
 }
 FRAME_COLOURS = {"#a33a50": "outils"}
 
 FRAME = re.compile(r"^((?:&#[0-9A-Fa-f]{6}|&[0-9a-fk-orA-FK-OR])*)([│├└])(?: |$)(.*)$", re.S)
 CODES = re.compile(r"^((?:&r|&#[0-9A-Fa-f]{6}|&[0-9a-fk-orA-FK-OR]|\s)*)")
 ACTION = re.compile(r"^(?:&r|&#[0-9A-Fa-f]{6}|&[0-9a-fk-orA-FK-OR]|\s)*(Maj \+ |⇧\s*)?%img_(left|right)_click%\s*(.*)$", re.S)
-KV = re.compile(r"^([^&%:|]{1,40}?) : (.+)$", re.S)
+KV = re.compile(r"^\s*([A-ZÀ-Ý0-9][^&%:|]{0,39}?) : (.+)$", re.S)
 COLOUR = re.compile(r"&#[0-9A-Fa-f]{6}|&[0-9a-fA-F]")
 
 
@@ -36,6 +38,13 @@ def _last_colour(codes):
 
 def _strip_codes(text):
     return CODES.sub("", text, count=1)
+
+
+def _based(body, palette):
+    """The old text colour written in the middle of a line (« back to the text after a value ») becomes <base>: back
+    to the colour of the block, whatever the style makes it."""
+    base = PALETTES[palette]["base"]
+    return re.sub(re.escape(base), "<base>", body, flags=re.I)
 
 
 def _line(rest, palette):
@@ -73,7 +82,7 @@ def _line(rest, palette):
             if value.startswith("&f"):
                 value = value[2:]
             return "@kv %s | %s" % (kv.group(1).strip(), value)
-        return "@desc " + body
+        return "@desc " + _based(body, palette)
     return "@text " + rest
 
 
@@ -81,7 +90,7 @@ def convert_lines(lines):
     """A lore (list of strings) in tags; returned as is when it has no framed line."""
     framed = [FRAME.match(l) for l in lines]
     if not any(framed):
-        return lines
+        return _tidy(lines)
     palette = None
     for m in framed:
         if m and _last_colour(m.group(1)) in FRAME_COLOURS:
@@ -90,8 +99,16 @@ def convert_lines(lines):
     for line, m in zip(lines, framed):
         if m:
             tag = _line(m.group(3), palette)
-            if tag is not None:
-                out.append(tag)
+            if tag is None:
+                continue
+            # a sentence left open on the previous description line goes on with this one
+            rest = m.group(3)
+            body = rest[len(CODES.match(rest).group(1)):]
+            if out and out[-1].startswith("@desc ") and _continues(out[-1], body, tag.startswith("@kv ")) \
+                    and (tag.startswith("@desc ") or tag.startswith("@kv ")):
+                out[-1] += " " + _based(body, palette)
+                continue
+            out.append(tag)
         elif line.startswith("@"):
             out.append(line)  # already a tag (written by the generator)
         elif line.strip():
@@ -99,16 +116,41 @@ def convert_lines(lines):
     return _join_sentences(out)
 
 
+def _tidy(lines):
+    """A lore already in tags: old text colour inside descriptions as <base>, open sentences joined (idempotent)."""
+    if not any(l.startswith("@desc ") for l in lines):
+        return lines
+    palette = next((l[7:].strip() for l in lines if l.startswith("@style ")), None)
+    palette = palette if palette in PALETTES else None
+    out = []
+    for l in lines:
+        if l.startswith("@desc "):
+            body = _based(l[6:], palette)
+            if out and out[-1].startswith("@desc ") and _continues(out[-1], body, False):
+                out[-1] += " " + body
+                continue
+            l = "@desc " + body
+        out.append(l)
+    return out
+
+
+def _continues(previous, body, key_value):
+    """Does this line go on with the sentence of the previous description line? Yes when it starts with a lower-case
+    letter, or when the previous one stops on a lower-case letter or a comma and this one is not a « Key : value »."""
+    first = re.sub(r"^(?:<base>|&#[0-9A-Fa-f]{6}|&[0-9a-fk-or]|\s)+", "", body)[:1]
+    if first.islower():
+        return True
+    last = re.sub(r"(?:<base>|&#[0-9A-Fa-f]{6}|&[0-9a-fk-or]|\s)+$", "", previous)[-1:]
+    return not key_value and (last.islower() or last == ",")
+
+
 def _join_sentences(tags):
-    """A sentence cut by hand over several lines is put back in one line (Flux wraps it to the width): a @desc
-    line starting with a lower-case letter continues the previous @desc or @kv line."""
+    """A @desc line starting with a lower-case letter right after a @kv line ends that value's sentence."""
     out = []
     for t in tags:
-        if t.startswith("@desc ") and out and (out[-1].startswith("@desc ") or out[-1].startswith("@kv ")):
-            text = _strip_codes(t[6:])
-            if text[:1].islower():
-                out[-1] = out[-1] + " " + t[6:]
-                continue
+        if t.startswith("@desc ") and out and out[-1].startswith("@kv ") and _strip_codes(t[6:])[:1].islower():
+            out[-1] = out[-1] + " " + t[6:]
+            continue
         out.append(t)
     return out
 

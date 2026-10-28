@@ -57,9 +57,20 @@ public final class Style {
     private record Block(String kind, String prefix, String selected, String unselected, String suffix) {
     }
 
-    private record Look(String lore, List<Block> blocks, List<String> frame, String name, Map<String, String> icons, boolean framed) {
-        Look(String lore, List<String> frame, String name, Map<String, String> icons, boolean framed) {
-            this(lore, parse(lore), frame, name, icons, framed);
+    /**
+     * Frame of a button (optional): {@code name} goes before the button name, {@code line} before the lines,
+     * {@code branch} before the actions, {@code corner} before the last line.
+     */
+    public record Frame(boolean enabled, String name, String line, String branch, String corner) {
+    }
+
+    /**
+     * {@code separator}: what each blank line of the template becomes (only between content); null = a blank line
+     * (the frame's line alone when framed).
+     */
+    private record Look(String lore, List<Block> blocks, Frame frame, String separator, String name, Map<String, String> icons) {
+        Look(String lore, Frame frame, String separator, String name, Map<String, String> icons) {
+            this(lore, parse(lore), frame, separator, name, icons);
         }
     }
 
@@ -108,20 +119,33 @@ public final class Style {
     }
 
     private static Look defaults() {
-        return new Look(DEFAULT_LORE, List.of("&#FFD94D│ ", "&#FFD94D├ ", "&#FFD94D└ "), "&#FFD94D{text}",
+        return new Look(DEFAULT_LORE, new Frame(true, "", "&#FFD94D│ ", "&#FFD94D├ ", "&#FFD94D└ "), null, "&#FFD94D{text}",
                 Map.of("left", "&r&7%img_left_click%", "right", "&r&7%img_right_click%",
-                        "shift-left", "&r&7⇧%img_left_click%", "shift-right", "&r&7⇧%img_right_click%"), true);
+                        "shift-left", "&r&7⇧%img_left_click%", "shift-right", "&r&7⇧%img_right_click%"));
     }
 
     private static Look read(ConfigurationSection s, Look fallback) {
         if (s == null) return fallback;
-        List<String> frame = s.isList("frame") ? s.getStringList("frame") : fallback.frame();
-        if (frame.size() < 3) frame = fallback.frame();
+        Frame frame = readFrame(s, fallback.frame());
+        String separator = s.contains("separator") ? s.getString("separator", "") : fallback.separator();
+        if (separator != null && separator.isEmpty()) separator = null;
         Map<String, String> icons = new HashMap<>(fallback.icons());
         ConfigurationSection ic = s.getConfigurationSection("icons");
         if (ic != null) for (String k : ic.getKeys(false)) icons.put(k.toLowerCase(Locale.ROOT), ic.getString(k, ""));
-        return new Look(s.getString("lore", fallback.lore()), frame, s.getString("name", fallback.name()), icons,
-                s.getBoolean("framed", fallback.framed()));
+        return new Look(s.getString("lore", fallback.lore()), frame, separator, s.getString("name", fallback.name()), icons);
+    }
+
+    private static Frame readFrame(ConfigurationSection s, Frame f) {
+        if (s.isBoolean("frame")) return new Frame(s.getBoolean("frame"), f.name(), f.line(), f.branch(), f.corner());
+        ConfigurationSection c = s.getConfigurationSection("frame");
+        if (c == null) return f;
+        return new Frame(c.getBoolean("enabled", f.enabled()), c.getString("name", f.name()), c.getString("line", f.line()),
+                c.getString("branch", f.branch()), c.getString("corner", f.corner()));
+    }
+
+    /** The suite's frame (Flux keeps it on wrapped lines). */
+    public static Frame frame() {
+        return base.frame();
     }
 
     /** Called by Flux with style.yml. */
@@ -141,7 +165,8 @@ public final class Style {
 
     /** Button name through the name template (a colour in the name itself wins). */
     public String name(String text) {
-        return look().name().replace("{text}", text);
+        Frame f = look().frame();
+        return (f.enabled() ? f.name() : "") + look().name().replace("{text}", text);
     }
 
     public String icon(Click click) {
@@ -171,7 +196,7 @@ public final class Style {
      * (the last action, or the last line, gets the corner).
      */
     public List<String> lore(List<Entry> entries) {
-        return render(entries, look().framed());
+        return render(entries, look().frame().enabled());
     }
 
     private List<String> render(List<Entry> entries, boolean frame) {
@@ -188,32 +213,65 @@ public final class Style {
             run = 0;
             List<Entry> own = byKind.get(b.kind());
             if (own == null) continue;
-            if (!lines.isEmpty()) for (int i = 0; i < gap; i++) lines.add(new String[]{"", ""});
+            if (!lines.isEmpty()) for (int i = 0; i < gap; i++) lines.add(new String[]{"gap", ""});
             gap = 0;
             for (Entry e : own) lines.add(new String[]{e.kind(), b.prefix() + fill(e.selected() ? b.selected() : b.unselected(), e) + b.suffix()});
         }
-        if (!frame) {
-            List<String> out = new ArrayList<>();
-            for (String[] l : lines) out.add(l[1]);
-            return out;
-        }
-        List<String> f = look().frame();
+        String separator = look().separator();
+        Frame f = look().frame();
         List<String> out = new ArrayList<>(lines.size());
         for (int i = 0; i < lines.size(); i++) {
+            String kind = lines.get(i)[0], text = lines.get(i)[1];
+            if (kind.equals("gap") && separator != null) {
+                out.add(separator);
+                continue;
+            }
+            if (!frame) {
+                out.add(text);
+                continue;
+            }
             boolean last = i == lines.size() - 1;
-            boolean action = lines.get(i)[0].equals("actions");
-            String prefix = last ? f.get(2) : action ? f.get(1) : f.get(0);
-            String text = lines.get(i)[1];
+            String prefix = last ? f.corner() : kind.equals("actions") ? f.branch() : f.line();
             out.add(text.isEmpty() ? stripEnd(prefix) : prefix + text);
         }
         return out;
     }
 
+    /**
+     * The body with the entry's fields; {@code <base>} inside a field means « back to the colour this field starts
+     * with in the template » (e.g. after a value written in another colour in the middle of a description).
+     */
     private static String fill(String body, Entry e) {
         String raw = e.fields().get("raw");
         if (raw != null) return raw;
-        for (Map.Entry<String, String> field : e.fields().entrySet()) body = body.replace("{" + field.getKey() + "}", field.getValue());
-        return body;
+        String out = body;
+        for (Map.Entry<String, String> field : e.fields().entrySet()) {
+            String key = "{" + field.getKey() + "}", value = field.getValue();
+            int at = body.indexOf(key);
+            if (value.contains("<base>")) value = value.replace("<base>", at < 0 ? "" : colourAt(body.substring(0, at)));
+            out = out.replace(key, value);
+        }
+        return out;
+    }
+
+    private static final Pattern CODE = Pattern.compile("&#[0-9a-fA-F]{6}|&[0-9a-fk-orA-FK-OR]");
+
+    /** Colour and formats in force at the end of a template piece. */
+    private static String colourAt(String text) {
+        String colour = "";
+        StringBuilder formats = new StringBuilder();
+        Matcher m = CODE.matcher(text);
+        while (m.find()) {
+            String code = m.group();
+            char c = Character.toLowerCase(code.charAt(1));
+            if (code.startsWith("&#") || Character.isDigit(c) || (c >= 'a' && c <= 'f') || c == 'r') {
+                colour = c == 'r' ? "&r" : code;
+                formats.setLength(0);
+            } else {
+                formats.append(code);
+            }
+        }
+        return colour + formats;
     }
 
     private static String stripEnd(String s) {

@@ -250,7 +250,7 @@ def parrainage(seuils):
     ouverture = [(f"parrainage_{n}", f"placeholder: %parrainage_filleuls% < {n * PAR_PAGE}") for n in range(1, total)]
     ouverture.append((f"parrainage_{total}", None))
     principal = bouton_principal("parrainage", "itemsadder:influitems:referral", "Parrainage", 46,
-                                 ["Invite tes amis avec ton", "adresse perso : &f%parrainage_filleuls% " + VIOLET + "filleul(s).",
+                                 ["Invite tes amis avec ton adresse perso.", "Filleuls : &f%parrainage_filleuls%",
                                   "À récupérer : &f%parrainage_a_recuperer%"],
                                  "Ouvrir", ouverture)
     return "\n".join(pages), principal
