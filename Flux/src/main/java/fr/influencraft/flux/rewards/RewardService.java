@@ -326,7 +326,7 @@ public final class RewardService implements Rewards.Backend, Listener {
     /** {@code %flux_rewards_<field>%}: {@code count}, {@code slots} (slots needed by everything waiting). */
     public String placeholder(Player player, String field) {
         if (player == null) return "";
-        List<StoredReward> list = store.pending(player.getUniqueId());
+        List<StoredReward> list = store.pendingCached(player.getUniqueId());
         return switch (field) {
             case "count" -> String.valueOf(list.size());
             case "slots" -> String.valueOf(list.stream().mapToInt(s -> s.reward().slots()).sum());

@@ -64,6 +64,7 @@ final class RewardStore {
 
     /** False when the key is already taken or the database refused it. */
     boolean add(UUID uuid, Reward r) {
+        recent.remove(uuid);
         try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement(Database.dialect().insertIgnore() + " " + table
                 + " (uuid, source, reward_key, label, icon, amount, slots, commands, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
             ps.setString(1, uuid.toString());
@@ -95,6 +96,20 @@ final class RewardStore {
         }
     }
 
+    /** Pending rewards as read at most a few seconds ago (placeholders, read on every render), never for a claim. */
+    private final java.util.Map<UUID, Object[]> recent = new java.util.concurrent.ConcurrentHashMap<>(); // {expiry, list}
+
+    @SuppressWarnings("unchecked")
+    List<StoredReward> pendingCached(UUID uuid) {
+        long now = System.currentTimeMillis();
+        Object[] hit = recent.get(uuid);
+        if (hit != null && (long) hit[0] > now) return (List<StoredReward>) hit[1];
+        if (recent.size() > 500) recent.clear();
+        List<StoredReward> list = pending(uuid);
+        recent.put(uuid, new Object[]{now + 5000, list});
+        return list;
+    }
+
     List<StoredReward> pending(UUID uuid) {
         List<StoredReward> out = new ArrayList<>();
         try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement("SELECT id, created, source, reward_key, label, icon, amount, slots,"
@@ -116,6 +131,7 @@ final class RewardStore {
 
     /** Marks a reward as claimed; true only for the call that actually claimed it. */
     boolean markClaimed(long id) {
+        recent.clear();
         try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement("UPDATE " + table + " SET claimed = ? WHERE id = ? AND claimed IS NULL AND expired IS NULL")) {
             ps.setLong(1, System.currentTimeMillis());
             ps.setLong(2, id);
@@ -159,6 +175,7 @@ final class RewardStore {
     java.util.Map<UUID, Integer> expire(long createdBefore) {
         java.util.Map<UUID, Integer> lost = due(createdBefore, Integer.MAX_VALUE);
         if (lost.isEmpty()) return lost;
+        recent.clear();
         try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement("UPDATE " + table
                 + " SET expired = ? WHERE claimed IS NULL AND expired IS NULL AND created < ?")) {
             ps.setLong(1, System.currentTimeMillis());
