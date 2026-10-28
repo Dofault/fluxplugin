@@ -1,13 +1,14 @@
 # Flux
 
 A suite of Paper plugins (Minecraft 26.2) built around **Flux**, a packet-based menu engine that can hide
-the player's inventory and draw buttons over it. Developed for the Influencraft server.
+the player's inventory and draw buttons over it. Developed for the Influencraft server. Working in this repository with an AI assistant: read [CLAUDE.md](CLAUDE.md).
 
 | Plugin | Role | Needs Flux |
 |---|---|---|
 | **Flux** | Core: menu engine, public API (`fr.influencraft.flux.api`) | — |
 | **FluxAuctionHouse** | Auction house front-end (on top of AuctionHouse) unified with chest shops, sales history, average price | optional |
 | **FluxChestShop** | Player chest shops: fork of QuickShop-Hikari 6.3.0.1, **GPLv3** (see its `LICENSE` and `FORK.md`) | — |
+| **FluxEnchant** | Enchantment weight per item and mastery enchantments on the crate tools (EcoEnchants) | optional |
 | **FluxCasino** | Casino tokens (balance, bets, exchange) | — |
 | **FluxLands** | Towns and nations on top of Lands: bank, plots, roles, shops, warps | optional |
 | **FluxOffering** | Item offerings to rank up | — |
@@ -17,6 +18,7 @@ the player's inventory and draw buttons over it. Developed for the Influencraft 
 | **FluxSorter** | Sorting chests and sorting golem (Lands) | — |
 | **FluxTools** | Levelled crate tools with quests, plus optional utility modules (jobs menu and XP boss bar, money action bar, /repair, /bottlexp, enchanted book splitter, Mending lock, anvil rules) | optional |
 | **FluxWebsite** | Bridge with the website: shop deliveries, vote rewards (/voteclaims), Vote Party, vote reminder and streak | — |
+| **FluxProxy** | Velocity plugin: hides the proxy's commands from the "/" suggestions | no (proxy) |
 
 `InfluShop` (Influence currency shop) and `VaultSupermarket` (server shop blocks) are imported as they are and will be merged into **FluxShop**.
 
