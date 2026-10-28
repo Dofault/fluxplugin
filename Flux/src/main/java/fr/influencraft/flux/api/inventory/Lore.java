@@ -3,15 +3,13 @@ package fr.influencraft.flux.api.inventory;
 import fr.influencraft.flux.api.text.Style;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Lore of a button in the suite's style ({@code plugins/Flux/style.yml}, see {@link Style}). Sections always come in
- * the same order, whatever order the calls were made in: description, key/values, list, text and states, actions,
- * a framed blank line between two sections. The frame ({@code │}, {@code ├}, {@code └}), colours and click icons come
- * from the style, so changing the file changes every menu of the suite.
+ * Lore of a button in the suite's style ({@code plugins/Flux/style.yml}, see {@link Style}). The lines are handed to
+ * the style's lore template, which decides their order, colours and spacing (blank lines only between content), then
+ * the frame ({@code │}, {@code ├}, {@code └}) is added: changing the file changes every menu of the suite.
  *
  * <pre>
  *   Lore.create().description("Rang de départ.").kv("Salaire", "100").item("1 home").ok("Validé").left("Voir").build()
@@ -23,16 +21,12 @@ public final class Lore {
     /** Colours of the suite's convention, for text built by hand inside a line. */
     public static final String GOLD = "&#FFD94D", PURPLE = "&#B376E5", GREEN = "&#2ECF7B", RED = "&#f0716f";
 
-    private enum Section { DESCRIPTION, VALUES, LIST, TEXT }
-
     private final Style style;
-    private final Map<Section, List<String>> sections = new EnumMap<>(Section.class);
-    private final List<String> actions = new ArrayList<>();
+    private final List<Style.Entry> entries = new ArrayList<>();
     private final List<String> unframed = new ArrayList<>();
 
     private Lore(Style style) {
         this.style = style;
-        for (Section s : Section.values()) sections.put(s, new ArrayList<>());
     }
 
     public static Lore create() {
@@ -44,11 +38,20 @@ public final class Lore {
         return new Lore(Style.of(variant));
     }
 
+    private Lore add(String kind, Map<String, String> fields, boolean selected) {
+        entries.add(new Style.Entry(kind, fields, selected));
+        return this;
+    }
+
+    private Lore add(String kind, String text) {
+        return add(kind, Map.of("text", text), false);
+    }
+
     // ---------------------------------------------------------------- content
 
-    /** Description paragraph(s), description colour (white by default). */
+    /** Description paragraph(s) ({@code {description}} block). */
     public Lore description(String... paragraphs) {
-        for (String p : paragraphs) sections.get(Section.DESCRIPTION).add(style.description(p));
+        for (String p : paragraphs) add("description", p);
         return this;
     }
 
@@ -56,16 +59,14 @@ public final class Lore {
         return description(paragraphs.toArray(new String[0]));
     }
 
-    /** Key/value information ({@code Niveau : 12}), value always in the value colour. */
+    /** Key/value information ({@code {values}} block, {@code {key}} and {@code {value}}). */
     public Lore kv(String key, Object value) {
-        sections.get(Section.VALUES).add(style.keyValue(key, String.valueOf(value)));
-        return this;
+        return add("values", Map.of("key", key, "value", String.valueOf(value)), false);
     }
 
-    /** Item of a list (perks, rewards...): the list format; a colour code in the text keeps its own colour. */
+    /** Item of a list (perks, rewards...): {@code {list}} block; a colour code in the text keeps its own colour. */
     public Lore item(String text) {
-        sections.get(Section.LIST).add(style.item(text));
-        return this;
+        return add("list", text);
     }
 
     public Lore items(List<String> texts) {
@@ -73,10 +74,9 @@ public final class Lore {
         return this;
     }
 
-    /** Plain text line (text colour, a colour code in the text takes over). */
+    /** Plain text line ({@code {text}} block). */
     public Lore line(String text) {
-        sections.get(Section.TEXT).add(text.isEmpty() ? "" : style.text(text));
-        return this;
+        return add("text", text);
     }
 
     public Lore lines(List<String> texts) {
@@ -85,18 +85,15 @@ public final class Lore {
     }
 
     public Lore ok(String text) {
-        sections.get(Section.TEXT).add(style.state("ok", text));
-        return this;
+        return add("ok", text);
     }
 
     public Lore ko(String text) {
-        sections.get(Section.TEXT).add(style.state("ko", text));
-        return this;
+        return add("ko", text);
     }
 
     public Lore info(String text) {
-        sections.get(Section.TEXT).add(style.state("info", text));
-        return this;
+        return add("info", text);
     }
 
     /** Line written as is, outside the frame, after everything else. */
@@ -105,10 +102,15 @@ public final class Lore {
         return this;
     }
 
-    /** Filter options: the selected one marked, then the next / previous actions (left / right click). */
+    /** Filter options ({@code {filter}} block, the selected one through {@code {selected}}), then next / previous. */
     public Lore filter(List<String> options, int selected) {
-        for (int i = 0; i < options.size(); i++) sections.get(Section.LIST).add(style.filterOption(options.get(i), i == selected));
+        for (int i = 0; i < options.size(); i++) add("filter", Map.of("text", options.get(i)), i == selected);
         return left(style.filterNext()).right(style.filterPrevious());
+    }
+
+    /** Filter option already formatted (by {@link Style#filterOption}): placed in the filter block as is. */
+    public Lore option(String formatted) {
+        return formatted == null || formatted.isBlank() ? this : add("filter", Map.of("raw", formatted), false);
     }
 
     // ---------------------------------------------------------------- actions (4 at most)
@@ -130,41 +132,20 @@ public final class Lore {
     }
 
     public Lore action(Style.Click click, String label) {
-        actions.add(style.action(click, label));
-        return this;
+        return add("actions", Map.of("icon", style.icon(click), "label", label), false);
     }
 
     /** Action line with its own icon and colours. */
     public Lore action(String text) {
-        actions.add(text);
-        return this;
+        return add("actions", Map.of("raw", text), false);
     }
 
     // ---------------------------------------------------------------- build
 
     public List<String> build() {
-        List<String> body = new ArrayList<>();
-        for (Section s : Section.values()) {
-            List<String> lines = sections.get(s);
-            if (lines.isEmpty()) continue;
-            if (!body.isEmpty() && style.sectionGap()) body.add("");
-            body.addAll(lines);
-        }
-        List<String> out = new ArrayList<>(body.size() + actions.size() + unframed.size());
-        for (int i = 0; i < body.size(); i++) {
-            boolean last = i == body.size() - 1 && actions.isEmpty();
-            out.add((last ? style.frameCorner() : style.frameLine()) + body.get(i));
-        }
-        if (!body.isEmpty() && !actions.isEmpty() && style.sectionGap()) out.add(stripTrailingSpace(style.frameLine()));
-        for (int i = 0; i < actions.size(); i++) {
-            out.add((i == actions.size() - 1 ? style.frameCorner() : style.frameBranch()) + actions.get(i));
-        }
+        List<String> out = new ArrayList<>(style.lore(entries));
         out.addAll(unframed);
         return out;
-    }
-
-    private static String stripTrailingSpace(String s) {
-        return s.endsWith(" ") ? s.substring(0, s.length() - 1) : s;
     }
 
     // ---------------------------------------------------------------- menu files
@@ -203,7 +184,7 @@ public final class Lore {
                 case "right" -> lore.right(arg);
                 case "shift-left" -> lore.shiftLeft(arg);
                 case "shift-right" -> lore.shiftRight(arg);
-                case "option" -> lore.sections.get(Section.LIST).add(arg); // pre-formatted filter option
+                case "option" -> lore.option(arg); // pre-formatted filter option
                 case "raw" -> lore.raw(arg);
                 default -> lore.line(arg);
             }

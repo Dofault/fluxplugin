@@ -1,53 +1,47 @@
 # Look of every button of the suite (menu files and buttons built by code). Change it here, it changes everywhere
-# after /fluxmenu reload. Colours: &x, &#RRGGBB.
+# after /fluxmenu reload. Look only, never words (labels live in the lang files). Colours: &x, &#RRGGBB.
 #
-# In menu files, write the lore with tags and Flux applies this style (frame, colours, order of the sections):
-#   lore:
-#     - "@desc A description paragraph."      (description colour; several @desc lines = several paragraphs)
-#     - "@kv Level | %some_level%"            (key : value)
-#     - "@item 3 homes"                       (list item)
-#     - "@text Plain line" or a line without tag
-#     - "@ok Done." / "@ko Locked." / "@info Next one."   (states)
-#     - "@filter <list id>"                   (the list's filters, the viewer's one marked, then next / previous)
-#     - "@left Open" / "@right ..." / "@shift-left ..." / "@shift-right ..."   (4 actions at most)
-# Sections are always shown in this order: description, key/values, list, text and states, actions.
+# lore: the template of every lore, read top to bottom like an HTML page the data is poured into.
+#   {block}...{/block}  repeated once per line of that kind, gone when there is none:
+#     {description} {text}          description paragraphs (@desc)
+#     {values} {key} {value}        key : value (@kv Key | Value)
+#     {list} {text}                 list items (@item)
+#     {filter} {text}               filter options; {selected}...{/selected} / {unselected}...{/unselected} inside
+#     {text} {text}                 plain lines (@text, or a line without tag)
+#     {ok} {ko} {info} {text}       states
+#     {actions} {icon} {label}      click actions (@left @right @shift-left @shift-right), icons below
+#   The order of the lines is the order of the lore. A blank line only shows between two lines of content
+#   (two blank lines = a bigger gap). Any text may use <smallcaps>...</smallcaps>.
+lore: |
+  {description}&f{text}{/description}
 
-frame:
-  enabled: true
-  line: "&#FFD94D│ "
-  branch: "&#FFD94D├ "
-  corner: "&#FFD94D└ "
+  {values}&#B376E5{key} : &f{value}{/values}
 
-# Formats: %text% is the text (a colour in the text itself wins). Any format or text may use
-# <smallcaps>...</smallcaps>, e.g. description: "<smallcaps>&f%text%</smallcaps>".
-name: "&#FFD94D%text%"
-description: "&f%text%"
-text: "&#B376E5%text%"
-key-value: "&#B376E5%key% : &f%value%"
-item: "&8➤ &7%item%"
-states:
-  ok: "&#2ECF7B%text%"
-  ko: "&#FF5C5C%text%"
-  info: "&#FFD94D%text%"
+  {list}&8➤ &7{text}{/list}
+  {filter}{selected}&f» {text}{/selected}{unselected}&#B376E5{text}{/unselected}{/filter}
 
-actions:
-  left: "&r&7%img_left_click% &f%label%"
-  right: "&r&7%img_right_click% &f%label%"
-  shift-left: "&r&7⇧%img_left_click% &f%label%"
-  shift-right: "&r&7⇧%img_right_click% &f%label%"
+  {text}&#B376E5{text}{/text}
+  {ok}&#2ECF7B{text}{/ok}
+  {ko}&#FF5C5C{text}{/ko}
+  {info}&#FFD94D{text}{/info}
 
-# filter options (the labels « next / previous filter » are words: lang files of Flux, filter-next / filter-previous)
-filter:
-  selected: "&f» %label%"
-  unselected: "&#B376E5%label%"
+  {actions}{icon} &f{label}{/actions}
 
-sections:
-  # framed blank line between two sections and before the actions
-  gap: true
+# frame added in front of every line: [line, branch (actions), corner (last line)]; framed: false removes it
+frame: ["&#FFD94D│ ", "&#FFD94D├ ", "&#FFD94D└ "]
+framed: true
 
+# button name ({text}: the name, a colour in the name itself wins)
+name: "&#FFD94D{text}"
 
-# Variants of a plugin: only the keys it changes, e.g.
+icons:
+  left: "&r&7%img_left_click%"
+  right: "&r&7%img_right_click%"
+  shift-left: "&r&7⇧%img_left_click%"
+  shift-right: "&r&7⇧%img_right_click%"
+
+# Variants of a plugin: any of the keys above (lore, frame, framed, name, icons), the rest comes from here, e.g.
 # variants:
 #   pets:
-#     name: "&#FF7A59"
+#     name: "&#FF7A59{text}"
 variants: {}

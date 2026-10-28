@@ -86,22 +86,26 @@ The plugins are written **as English plugins, then adapted to French** for our s
 
 ## Button style (lore, names, actions): always through Flux
 
-The look of every button lives in `plugins/Flux/style.yml` (`api.text.Style`): frame (`│ ├ └`), colours of the name,
-description, plain text, key/value, list items and states, the 4 click actions, the filter format. Formats use `%text%`; any text may use `<smallcaps>...</smallcaps>`.
-Look only, never words (labels go to the lang files). Never hand-write `&#FFD94D│ ...` lines again:
+The look of every button lives in `plugins/Flux/style.yml` (`api.text.Style`): one `lore` template written top to
+bottom like an HTML page (`{description}...{/description}`, `{values}` with `{key}`/`{value}`, `{list}`, `{filter}`
+with `{selected}`/`{unselected}`, `{text}`, `{ok}`, `{ko}`, `{info}`, `{actions}` with `{icon}`/`{label}`). A block
+repeats per line of its kind and vanishes when empty; template order is the lore order; a blank template line shows
+only between content (runs around a vanished block merge). Plus `frame`, `name`, `icons`. Any text may use
+`<smallcaps>...</smallcaps>`. Look only, never words (labels go to the lang files). Never hand-write `&#FFD94D│ ...`
+lines again:
 
 - **Code**: `Lore.create()` (or `Lore.create("<variant>")` for a plugin colour) with `.description()` (paragraphs,
   white), `.kv(key, value)`, `.item()` / `.items()` (lists), `.line()` (plain text), `.ok()` / `.ko()` / `.info()`,
-  `.filter(options, selected)`, `.left()` / `.right()` / `.shiftLeft()` / `.shiftRight()`. Sections always come out
-  in the same order: description, key/values, list, text and states, actions. Names go through `Items.of`, which
-  applies the name style.
+  `.filter(options, selected)`, `.left()` / `.right()` / `.shiftLeft()` / `.shiftRight()`. The template decides the
+  order, whatever order the calls were made in. Names go through `Items.of`, which applies the name style.
 - **Menu files**: lore lines with tags `@desc`, `@kv Key | Value`, `@item`, `@text`, `@ok`, `@ko`, `@info`,
   `@filter <list>`, `@option`, `@left`, `@right`, `@shift-left`, `@shift-right`, `@raw`. Names without a colour get
   the name colour. Generators (`assets/*.py`) must write these tags.
 - **Navigation arrows** (previous / next page): no name, `hide-tooltip: true`.
 - **Filters**: one format (the pets one): options listed with the current one marked, left click = next filter,
   right click = previous (`[list] <id> filter` / `filter-prev`, or `@filter <list>` for a Flux list).
-- A plugin keeps its own colour with a variant (`variants.<name>` in style.yml), never with hard-coded colours.
+- A plugin keeps its own colour with a variant (`variants.<name>` in style.yml: its own `lore`, `name`, `frame` or
+  `icons`), never with hard-coded colours.
 
 ## Building (shared machine: production runs on it)
 
