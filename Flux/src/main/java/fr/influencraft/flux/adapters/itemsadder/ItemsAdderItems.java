@@ -69,7 +69,11 @@ public final class ItemsAdderItems implements CustomItems.Provider, Listener {
 
     @Override
     public boolean glyphExists(String id) {
-        return new FontImageWrapper(id).exists();
+        try {
+            return new FontImageWrapper(id).exists();
+        } catch (IllegalArgumentException e) {
+            return false; // ItemsAdder throws for an unknown id instead of answering false
+        }
     }
 
     @Override
@@ -82,8 +86,8 @@ public final class ItemsAdderItems implements CustomItems.Provider, Listener {
 
     @Override
     public int glyphWidth(String id) {
-        FontImageWrapper w = new FontImageWrapper(id);
-        return w.exists() ? w.getWidth() : 0;
+        if (!glyphExists(id)) return 0;
+        return new FontImageWrapper(id).getWidth();
     }
 
     @Override
