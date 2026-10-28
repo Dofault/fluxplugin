@@ -279,7 +279,10 @@ public final class RewardService implements Rewards.Backend, Listener {
                 fr.influencraft.flux.api.util.Sounds.cue(p, "alert");
             }
         });
-        if (discord != null && flux.getConfig().getBoolean("rewards.discord-reminders", true)) {
+        // a banned player (server ban list, where StaffSuite writes its bans; a temporary ban only while it lasts)
+        // gets no Discord reminder
+        if (discord != null && flux.getConfig().getBoolean("rewards.discord-reminders", true)
+                && !Bukkit.getOfflinePlayer(uuid).isBanned()) {
             String text = m.raw(last ? "rewards.discord-expiring-last" : "rewards.discord-expiring", "%time%", when,
                     "%ip%", flux.getConfig().getString("rewards.server-address", "play.influencraft.fr"),
                     "%version%", Bukkit.getMinecraftVersion());
