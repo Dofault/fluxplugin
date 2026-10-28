@@ -96,6 +96,25 @@ public final class FluxTags extends FluxPlugin implements Listener {
                         : args.length == 3 ? List.copyOf(catalogue.keySet()) : List.of())
                 .register();
         Bukkit.getPluginManager().registerEvents(this, this);
+        fr.influencraft.flux.api.profile.Profiles.register(this, "tags", 60, new fr.influencraft.flux.api.profile.Profiles.Section() {
+            public org.bukkit.inventory.ItemStack item(Player viewer, OfflinePlayer subject, int page) {
+                Tag t = catalogue.get(selection(subject.getUniqueId()));
+                Player online = subject.getPlayer();
+                Lore lore = Lore.create();
+                String image = t == null || online == null ? null : image(online, t);
+                lore.kv(messages().raw("current"), t == null || t.id().equals(NONE) ? "-"
+                        : (image != null ? glyph(image) + " " : "") + name(viewer, t));
+                if (online != null) lore.kv("Débloqués", catalogue.values().stream()
+                        .filter(x -> !x.id().equals(NONE) && image(online, x) != null).count() + "&7/&f" + (catalogue.size() - 1));
+                if (fr.influencraft.flux.api.profile.Profiles.own(viewer)) lore.left("Mes tags");
+                return Items.of("NAME_TAG", "Tags", lore.build(), viewer);
+            }
+
+            public boolean click(Player viewer, OfflinePlayer subject, boolean right) {
+                if (fr.influencraft.flux.api.profile.Profiles.own(viewer) && !right) FluxApi.open(viewer, "tags");
+                return false;
+            }
+        });
     }
 
     @Override

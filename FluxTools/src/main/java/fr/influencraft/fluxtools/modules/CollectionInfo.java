@@ -69,6 +69,7 @@ public final class CollectionInfo {
                     openGroup(plugin, eco, player, argument.trim().toLowerCase(java.util.Locale.ROOT)));
             // %fluxcoll_*%: resolved by Flux in menus, exposed to PlaceholderAPI by Flux
             fr.influencraft.flux.api.FluxApi.registerPlaceholders(plugin, "fluxcoll", expansion::onPlaceholderRequest);
+            fr.influencraft.flux.api.profile.Profiles.register(plugin, "collection", 40, expansion.profileSection());
             return expansion;
         } catch (ReflectiveOperationException | RuntimeException e) {
             plugin.getLogger().warning("Placeholders des collections indisponibles (API EcoCollections changée ?) : " + e);
@@ -79,6 +80,47 @@ public final class CollectionInfo {
 
 
 
+
+    private static final Map<String, String> GROUP_NAMES = Map.ofEntries(Map.entry("botanique", "Botanique"),
+            Map.entry("geologie", "Géologie"), Map.entry("traque", "Traque"), Map.entry("peche", "Pêche"),
+            Map.entry("terre", "Terre"), Map.entry("navigation", "Navigation"), Map.entry("boiserie", "Boiserie"),
+            Map.entry("metallurgie", "Métallurgie"), Map.entry("gastronomie", "Gastronomie"), Map.entry("social", "Social"),
+            Map.entry("enchantement", "Enchantement"));
+
+    /** Section « Collection » of the profile: completed collections, in total and per category (offline too). */
+    private fr.influencraft.flux.api.profile.Profiles.Section profileSection() {
+        return new fr.influencraft.flux.api.profile.Profiles.Section() {
+            public org.bukkit.inventory.ItemStack item(Player viewer, OfflinePlayer subject, int page) {
+                Map<String, int[]> groups = new java.util.TreeMap<>();
+                int done = 0, total = 0;
+                try {
+                    for (Object c : (Collection<?>) values.invoke(collections)) {
+                        int[] g = groups.computeIfAbsent((String) groupId.invoke(c), k -> new int[2]);
+                        g[1]++;
+                        total++;
+                        if ((boolean) isComplete.invoke(null, subject, c)) {
+                            g[0]++;
+                            done++;
+                        }
+                    }
+                } catch (ReflectiveOperationException | RuntimeException e) {
+                    return null;
+                }
+                var lore = fr.influencraft.flux.api.inventory.Lore.create();
+                lore.kv("Terminées", done + "&7/&f" + total + " &8(&7" + (total == 0 ? 0 : done * 100 / total) + " %&8)");
+                for (Map.Entry<String, int[]> g : groups.entrySet()) {
+                    lore.item(GROUP_NAMES.getOrDefault(g.getKey(), g.getKey()) + " &8· &f" + g.getValue()[0] + "&7/&f" + g.getValue()[1]);
+                }
+                if (fr.influencraft.flux.api.profile.Profiles.own(viewer)) lore.left("Mes collections");
+                return fr.influencraft.flux.api.inventory.Items.of("itemsadder:influitems:reward", "Collection", lore.build(), viewer);
+            }
+
+            public boolean click(Player viewer, OfflinePlayer subject, boolean right) {
+                if (fr.influencraft.flux.api.profile.Profiles.own(viewer) && !right) fr.influencraft.flux.api.FluxApi.open(viewer, "collection");
+                return false;
+            }
+        };
+    }
 
     /** [fluxcoll] select <id> : retient la collection affichée en bas du menu de catégorie. */
     public void select(Player player, String id) {

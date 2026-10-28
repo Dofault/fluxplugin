@@ -24,7 +24,7 @@ items:
     lore:
       - "@left Mon profil"
     actions:
-      left: ["[menu] profil"]
+      left: ["[player] profil"]
 
   icone:
     material: NAME_TAG

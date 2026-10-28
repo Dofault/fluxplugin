@@ -47,7 +47,11 @@ public final class Items {
 
     /** Item with a name and lore through {@link Texts} (placeholders of {@code viewer}, colours, no italics). */
     public static ItemStack of(String material, String name, List<String> lore, Player viewer) {
-        ItemStack item = of(material, viewer);
+        return dress(of(material, viewer), name, lore, viewer);
+    }
+
+    /** An item already built (a player head with its profile...) given a name and a lore in the suite's style. */
+    public static ItemStack dress(ItemStack item, String name, List<String> lore, Player viewer) {
         if (item == null) return null;
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;

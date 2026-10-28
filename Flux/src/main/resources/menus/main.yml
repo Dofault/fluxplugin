@@ -81,7 +81,7 @@ items:
       - "@desc Tes monnaies, tes classements et ton activité."
       - "@left Voir mon profil"
     actions:
-      left: ["[menu] profil"]
+      left: ["[player] profil"]
 
   mondes:
     material: COMPASS

@@ -1,13 +1,11 @@
-"""Backgrounds of the profile menus (2026-10-28, layout modelled on the owner's reference screenshot, server theme).
+"""Background of the profile menu (/profil [player], 2026-10-28): a passport, server theme (violet, gold trims).
 
-menu_profil (/profil), 6-row chest, rows 0 to 4 used:
+6-row chest, rows 0 to 4 used:
   row 0          back (0) and menu icon (8), the title « PROFIL » between them
-  left panel     columns 0 to 3, rows 1 to 4: the player's 3D bust, drawn by Flux in the title
-                 (%flux_avatar_43_107%: bottom centre of this panel)
-  right panel    columns 5 to 8, rows 1 to 4: 8 buttons on rows 2 and 3 (slots 23 to 26, 32 to 35)
-menu_classements (/profil -> Classements): title « CLASSEMENTS », 7 boards on row 2 (slots 19 to 25) in one panel.
-
-Typography always white. Usage: python gen_fond.py <dir for the pngs> [preview dir]  (Pillow)
+  photo          columns 0 to 2, rows 1 to 3: the player's head, an item model 3 slots high centred on slot 19
+  sections       columns 4 to 7, rows 2 and 3 (slots 22 to 25, 31 to 34): the 8 sections of the profile
+  row 4          the passport's machine-readable zone (decoration)
+Typography always white. Usage: python gen_fond.py <dir for menu_profil.png> [preview dir]  (Pillow)
 """
 import os
 import sys
@@ -16,61 +14,53 @@ from PIL import Image, ImageDraw
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))
-from fond_lib import generique_raccourci, poser, tampon_case, title  # noqa: E402
+from fond_lib import generique_raccourci, poser, tampon_case, text, title  # noqa: E402
 
 W, H = 176, 221
 TOP, BOTTOM = 0, 120
-CONTOUR = (21, 17, 27, 255)
-PANEL = (27, 21, 39, 255)
-PANEL_EDGE = (13, 10, 18, 255)
-PANEL_LIGHT = (72, 57, 96, 255)
-AVATAR_BOTTOM = (43, 107)
+WHITE = (255, 255, 255, 255)
+CARD = (46, 34, 66, 255)
+CARD_DARK = (32, 24, 46, 255)
+GOLD, GOLD_DARK, GOLD_LIGHT = (240, 168, 0, 255), (138, 90, 20, 255), (255, 217, 77, 255)
+PHOTO = (21, 16, 30, 255)
+SECTIONS = (22, 23, 24, 25, 31, 32, 33, 34)
 
 
 def objet(case):
     return 8 + 18 * (case % 9), 18 + 18 * (case // 9)
 
 
-def panel(im, cols, rows, pad=2):
-    """Rounded dark panel around a block of slots (columns and rows inclusive), sunken: dark edge, light inner rim."""
-    x0, y0 = objet(rows[0] * 9 + cols[0])
-    x1, y1 = objet(rows[1] * 9 + cols[1])
-    box = (x0 - 1 - pad, y0 - 1 - pad, x1 + 16 + pad, y1 + 16 + pad)
+def card(im):
+    """The passport page: violet card with a gold double trim, a darker band at the bottom for the MRZ."""
     d = ImageDraw.Draw(im)
-    d.rounded_rectangle(box, radius=4, fill=PANEL, outline=PANEL_EDGE)
-    d.rounded_rectangle((box[0] + 1, box[1] + 1, box[2] - 1, box[3] - 1), radius=3, outline=PANEL_LIGHT)
-    d.rounded_rectangle((box[0] + 2, box[1] + 2, box[2] - 2, box[3] - 2), radius=2, outline=PANEL)
+    box = (3, 33, 172, 111)
+    d.rounded_rectangle(box, radius=5, fill=CARD, outline=GOLD_DARK)
+    d.rounded_rectangle((box[0] + 1, box[1] + 1, box[2] - 1, box[3] - 1), radius=4, outline=GOLD)
+    d.rounded_rectangle((box[0] + 3, box[1] + 3, box[2] - 3, box[3] - 3), radius=3, outline=GOLD_DARK)
+    d.rectangle((box[0] + 4, 93, box[2] - 4, box[3] - 4), fill=CARD_DARK)
+    # photo: dark frame with a light rim, slots of columns 0 to 2, rows 1 to 3
+    x0, y0 = objet(9)
+    x1, y1 = objet(29)
+    d.rectangle((x0, y0 - 1, x1 + 16, y1 + 16), fill=PHOTO, outline=GOLD_DARK)
+    d.rectangle((x0 + 1, y0, x1 + 15, y1 + 15), outline=(72, 57, 96, 255))
 
 
-def base(name):
+def background():
     im = generique_raccourci(os.path.join(os.path.dirname(HERE), "menu_generique.png"), TOP, BOTTOM)
-    title(im, name, objet(0)[1])
-    return im
-
-
-def profil():
-    im = base("Profil")
-    panel(im, (0, 3), (1, 4))
-    panel(im, (5, 8), (1, 4))
+    title(im, "Profil", objet(0)[1])
+    card(im)
     case = tampon_case()
-    for slot in (23, 24, 25, 26, 32, 33, 34, 35):
+    for slot in SECTIONS:
         poser(im, case, *objet(slot))
-    return im
-
-
-def classements():
-    im = base("Classements")
-    panel(im, (1, 7), (1, 3))
-    case = tampon_case()
-    for slot in range(19, 26):
-        poser(im, case, *objet(slot))
+    text(im, "Influencraft", 124, 38, colour=WHITE)
+    text(im, "P<INFLUENCRAFT<<<<<<<<<<<<", 88, 96, colour=WHITE, shadow=(0, 0, 0, 0))
+    text(im, "<<<<SEMI<RP<<<<<<<<<<<<<<", 88, 103, colour=WHITE, shadow=(0, 0, 0, 0))
     return im
 
 
 if __name__ == "__main__":
-    out = sys.argv[1]
-    for name, im in (("menu_profil", profil()), ("menu_classements", classements())):
-        im.save(os.path.join(out, name + ".png"))
-        if len(sys.argv) > 2:
-            im.resize((W * 3, H * 3), Image.NEAREST).save(os.path.join(sys.argv[2], name + "_x3.png"))
-    print("menu_profil.png, menu_classements.png ->", out)
+    im = background()
+    im.save(os.path.join(sys.argv[1], "menu_profil.png"))
+    if len(sys.argv) > 2:
+        im.crop((0, 0, W, 124)).resize((W * 3, 124 * 3), Image.NEAREST).save(os.path.join(sys.argv[2], "menu_profil_x3.png"))
+    print("menu_profil.png ->", sys.argv[1])

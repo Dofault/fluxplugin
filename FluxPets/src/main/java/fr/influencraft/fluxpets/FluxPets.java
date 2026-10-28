@@ -110,6 +110,27 @@ public final class FluxPets extends JavaPlugin implements TabCompleter {
         updater = new ItemUpdater(this);
         getServer().getPluginManager().registerEvents(updater, this);
         getServer().getPluginManager().registerEvents(prompts, this);
+        // section « Familiers » of the profile (/profil): works for an offline player too
+        fr.influencraft.flux.api.profile.Profiles.register(this, "pets", 50, new fr.influencraft.flux.api.profile.Profiles.Section() {
+            public org.bukkit.inventory.ItemStack item(org.bukkit.entity.Player viewer, org.bukkit.OfflinePlayer subject, int page) {
+                var lore = fr.influencraft.flux.api.inventory.Lore.create();
+                lore.kv("Familiers", fr.influencraft.fluxpets.pets.PetData.owned(subject) + "&7/&f" + fr.influencraft.fluxpets.pets.Pets.values().size());
+                java.util.List<fr.influencraft.fluxpets.pets.Pet> active = fr.influencraft.fluxpets.pets.PetData.actives(subject);
+                if (!active.isEmpty()) lore.kv("Actifs", active.stream().map(fr.influencraft.fluxpets.pets.Pet::name).collect(java.util.stream.Collectors.joining("&7, ")));
+                fr.influencraft.fluxpets.pets.Pets.values().stream()
+                        .filter(pet -> fr.influencraft.fluxpets.pets.PetData.level(subject, pet) > 0)
+                        .sorted(java.util.Comparator.comparingInt((fr.influencraft.fluxpets.pets.Pet pet) -> -fr.influencraft.fluxpets.pets.PetData.level(subject, pet)))
+                        .limit(5)
+                        .forEach(pet -> lore.item(pet.name() + " &8· &fniv. " + fr.influencraft.fluxpets.pets.PetData.level(subject, pet)));
+                if (fr.influencraft.flux.api.profile.Profiles.own(viewer)) lore.left("Mes familiers");
+                return fr.influencraft.flux.api.inventory.Items.of("BONE", "Familiers", lore.build(), viewer);
+            }
+
+            public boolean click(org.bukkit.entity.Player viewer, org.bukkit.OfflinePlayer subject, boolean right) {
+                if (fr.influencraft.flux.api.profile.Profiles.own(viewer) && !right) fr.influencraft.flux.api.FluxApi.open(viewer, "familiers");
+                return false;
+            }
+        });
         fr.influencraft.flux.api.command.Commands.create(this, "fluxpets").aliases("influpet")
                 .description("Pets, cards and boosters administration.").permission("influpet.admin")
                 .bukkit(this, this).register();

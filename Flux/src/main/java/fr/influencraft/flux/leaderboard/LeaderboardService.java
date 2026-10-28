@@ -92,6 +92,7 @@ public final class LeaderboardService implements Leaderboards.Service, Listener 
                     continue;
                 }
                 Leaderboards.register(flux, id, source, format(b.getString("format", "number")));
+                Leaderboards.name(id, b.getString("name"));
             }
         }
         long period = Math.max(1, config.getInt("refresh-minutes", 10)) * 1200L;

@@ -87,6 +87,32 @@ public final class FluxLands extends JavaPlugin implements Listener {
                 .description("Towns menus (buttons).").bukkit(cmd, cmd).register();
         // %influlands_*%: resolved by Flux in menus, exposed to PlaceholderAPI by Flux
         fr.influencraft.flux.api.FluxApi.registerPlaceholders(this, "influlands", new Expansion(this)::onRequest);
+        // section « Ville » of the profile (/profil)
+        fr.influencraft.flux.api.profile.Profiles.register(this, "town", 20, new fr.influencraft.flux.api.profile.Profiles.Section() {
+            public org.bukkit.inventory.ItemStack item(org.bukkit.entity.Player viewer, org.bukkit.OfflinePlayer subject, int page) {
+                me.angeschossen.lands.api.land.Land land = villes.villeDe(subject);
+                var lore = fr.influencraft.flux.api.inventory.Lore.create();
+                if (land == null) {
+                    lore.description("N'habite dans aucune ville.");
+                    return fr.influencraft.flux.api.inventory.Items.of("itemsadder:influville:ville", "Ville", lore.build(), viewer);
+                }
+                Map<String, String> f = champsVille(land, viewer);
+                lore.kv("Ville", f.get("nom_couleur"));
+                lore.kv("Rôle", Villes.role(land, subject.getUniqueId()));
+                lore.kv("Niveau", f.get("niveau"));
+                lore.kv("Habitants", f.get("habitants"));
+                lore.kv("Chunks", f.get("chunks") + "&7/&f" + f.get("chunks_max"));
+                if (!f.getOrDefault("solde", "").isEmpty()) lore.kv("Banque", f.get("solde"));
+                lore.kv("Pays", f.get("nation"));
+                if (fr.influencraft.flux.api.profile.Profiles.own(viewer)) lore.left("Ma ville");
+                return fr.influencraft.flux.api.inventory.Items.of(f.getOrDefault("icone", "itemsadder:influville:ville"), "Ville", lore.build(), viewer);
+            }
+
+            public boolean click(org.bukkit.entity.Player viewer, org.bukkit.OfflinePlayer subject, boolean right) {
+                if (fr.influencraft.flux.api.profile.Profiles.own(viewer) && !right) fr.influencraft.flux.api.FluxApi.open(viewer, "ville");
+                return false;
+            }
+        });
         // the town, country and warp menus live in plugins/FluxLands/menus/
         fr.influencraft.flux.api.util.Resources.shipMenus(this, fr.influencraft.flux.api.FluxApi.language());
         planifier();

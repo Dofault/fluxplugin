@@ -45,6 +45,7 @@ public final class Leaderboards {
     }
 
     private static final Map<String, Board> BOARDS = new ConcurrentHashMap<>();
+    private static final Map<String, String> NAMES = new ConcurrentHashMap<>();
     private static volatile Service service;
 
     private Leaderboards() {
@@ -62,6 +63,19 @@ public final class Leaderboards {
         return BOARDS;
     }
 
+    /** Display name of a board ({@code name} in Flux's config), else its id written as words. */
+    public static String name(String id) {
+        String own = NAMES.get(id.toLowerCase(java.util.Locale.ROOT));
+        if (own != null) return own;
+        String words = id.replace('_', ' ');
+        return words.isEmpty() ? id : Character.toUpperCase(words.charAt(0)) + words.substring(1);
+    }
+
+    public static void name(String id, String name) {
+        if (name == null || name.isBlank()) NAMES.remove(id.toLowerCase(java.util.Locale.ROOT));
+        else NAMES.put(id.toLowerCase(java.util.Locale.ROOT), name);
+    }
+
     public static Board board(String id) {
         return BOARDS.get(id.toLowerCase(java.util.Locale.ROOT));
     }
@@ -73,6 +87,11 @@ public final class Leaderboards {
     /** Best players of a board (as many as Flux keeps, {@code leaderboards.size}). */
     public static List<Entry> top(String board) {
         return service == null ? List.of() : service.top(board);
+    }
+
+    /** Recorded value of a player, null when none. */
+    public static Double value(String board, UUID player) {
+        return service == null ? null : service.value(board, player);
     }
 
     /** Position of a player (1 = best), 0 when he has no value. */

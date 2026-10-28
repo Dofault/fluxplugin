@@ -94,6 +94,18 @@ final class Villes {
         return l;
     }
 
+    /** Town of a player, online or not: « ma ville » when online, else the one he leads, else the first he lives in. */
+    Land villeDe(OfflinePlayer joueur) {
+        if (joueur.getPlayer() != null) return maVille(joueur.getPlayer());
+        Land premiere = null;
+        for (Object o : api.getLands()) {
+            if (!(o instanceof Land land) || land.getLandType() != LandType.LAND || !land.isTrusted(joueur.getUniqueId())) continue;
+            if (joueur.getUniqueId().equals(land.getOwnerUID())) return land;
+            if (premiere == null) premiere = land;
+        }
+        return premiere;
+    }
+
     /** « Ma ville » : celle choisie parmi les siennes, sinon celle dont il est maire, sinon la première. */
     Land maVille(Player p) {
         List<Land> siennes = duJoueur(p);

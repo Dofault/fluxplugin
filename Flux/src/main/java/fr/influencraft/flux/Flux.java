@@ -68,6 +68,8 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         if (rewards != null) rewards.importFormerMailbox(getDataFolder().getParentFile());
         leaderboards = new fr.influencraft.flux.leaderboard.LeaderboardService(this);
         leaderboards.start(getConfig().getConfigurationSection("leaderboards"));
+        profile = new fr.influencraft.flux.profile.ProfileService(this);
+        profile.start(getConfig().getString("profile.head-model", "influmenu:tete_profil_b"));
         int warnings = registry.load();
         getLogger().info(registry.all().size() + " menu(s) chargé(s)" + (warnings > 0 ? ", " + warnings + " avertissement(s)" : ""));
 
@@ -106,6 +108,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     private fr.influencraft.flux.api.text.Messages messages;
     private fr.influencraft.flux.rewards.RewardService rewards;
     private fr.influencraft.flux.leaderboard.LeaderboardService leaderboards;
+    private fr.influencraft.flux.profile.ProfileService profile;
 
     /** Copies one of Flux's own menus when missing (translation under i18n/<language>/ when there is one). */
     private void shipOwnMenu(String id) {
@@ -170,6 +173,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     private String ownPlaceholder(Player player, String params) {
         if (params.startsWith("rewards_") && rewards != null) return rewards.placeholder(player, params.substring(8));
         if (params.startsWith("top_") && leaderboards != null) return leaderboards.placeholder(player, params.substring(4));
+        if (params.startsWith("profile_") && profile != null) return profile.placeholder(player, params.substring(8));
         if (params.startsWith("cmd_")) {
             String rest = params.substring(4);
             int sep = rest.indexOf('_');

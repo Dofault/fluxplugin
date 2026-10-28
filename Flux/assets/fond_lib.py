@@ -93,7 +93,14 @@ def _font():
     return _FONT
 
 
+# characters missing from QuinqueFive, drawn in its 5 px grid
+_EXTRA = {"<": ["..#", ".#.", "#..", ".#.", "..#"], ">": ["#..", ".#.", "..#", ".#.", "#.."], "'": ["#", "#", ".", ".", "."],
+          "-": ["...", "...", "###", "...", "..."]}
+
+
 def _glyph(c):
+    if c in _EXTRA:
+        return _EXTRA[c], []
     base, extra = _ACCENTS.get(c, (c, []))
     return _font().get(base), extra
 
