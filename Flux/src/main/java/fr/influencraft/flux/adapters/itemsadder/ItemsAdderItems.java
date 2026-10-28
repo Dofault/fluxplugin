@@ -20,6 +20,9 @@ public final class ItemsAdderItems implements CustomItems.Provider, Listener {
 
     @EventHandler
     public void onLoad(dev.lone.itemsadder.api.Events.ItemsAdderLoadDataEvent event) {
+        synchronized (this) {
+            widths = null; // glyphs may have changed
+        }
         CustomItems.fireLoaded();
     }
 
@@ -95,5 +98,74 @@ public final class ItemsAdderItems implements CustomItems.Provider, Listener {
     @Override
     public boolean placeBlock(String id, Location location) {
         return CustomBlock.place(id, location) != null;
+    }
+
+    private java.util.Map<Integer, Integer> widths;
+
+    /**
+     * Advances of the glyphs (font images), computed like the client does for a bitmap glyph: rightmost visible
+     * column of the image, scaled to the glyph height ({@code scale_ratio}), rounded, plus 1. Read from the ItemsAdder
+     * sources ({@code contents/<pack>/configs}, textures), the generated pack being protected; recomputed when
+     * ItemsAdder reloads its data.
+     */
+    @Override
+    public synchronized java.util.Map<Integer, Integer> charWidths() {
+        if (widths != null) return widths;
+        org.bukkit.plugin.Plugin ia = org.bukkit.Bukkit.getPluginManager().getPlugin("ItemsAdder");
+        if (ia == null || !loaded()) return java.util.Map.of();
+        java.util.Map<Integer, Integer> out = new java.util.HashMap<>();
+        java.io.File[] packs = new java.io.File(ia.getDataFolder(), "contents").listFiles(java.io.File::isDirectory);
+        if (packs != null) for (java.io.File pack : packs) readPack(pack, out);
+        widths = out;
+        return widths;
+    }
+
+    private static void readPack(java.io.File pack, java.util.Map<Integer, Integer> out) {
+        java.util.List<java.io.File> files = new java.util.ArrayList<>();
+        try (var walk = java.nio.file.Files.walk(pack.toPath())) {
+            walk.filter(p -> p.toString().endsWith(".yml")).forEach(p -> files.add(p.toFile()));
+        } catch (java.io.IOException e) {
+            return;
+        }
+        for (java.io.File file : files) {
+            var yml = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(file);
+            var images = yml.getConfigurationSection("font_images");
+            String ns = yml.getString("info.namespace");
+            if (images == null || ns == null) continue;
+            for (String id : images.getKeys(false)) {
+                String path = images.getString(id + ".path");
+                if (path == null) continue;
+                FontImageWrapper glyph = new FontImageWrapper(ns + ":" + id);
+                if (!glyph.exists()) continue;
+                String unicode = glyph.internalGetUnicode();
+                if (unicode == null || unicode.isEmpty()) continue;
+                java.awt.image.BufferedImage image = texture(pack, ns, path.endsWith(".png") ? path : path + ".png");
+                if (image == null) continue;
+                int height = images.getInt(id + ".scale_ratio", glyph.getHeight());
+                out.put(unicode.codePointAt(0), (int) (0.5f + visibleWidth(image) * (float) height / image.getHeight()) + 1);
+            }
+        }
+    }
+
+    private static java.awt.image.BufferedImage texture(java.io.File pack, String ns, String path) {
+        for (java.io.File f : new java.io.File[]{new java.io.File(pack, "textures/" + path),
+                new java.io.File(pack, "resourcepack/assets/" + ns + "/textures/" + path),
+                new java.io.File(pack, "resourcepack/" + ns + "/textures/" + path)}) {
+            if (!f.isFile()) continue;
+            try {
+                return javax.imageio.ImageIO.read(f);
+            } catch (java.io.IOException e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    /** Rightmost column with a visible pixel, plus 1 (0 for an empty image). */
+    private static int visibleWidth(java.awt.image.BufferedImage image) {
+        for (int x = image.getWidth() - 1; x >= 0; x--) {
+            for (int y = 0; y < image.getHeight(); y++) if ((image.getRGB(x, y) >>> 24) != 0) return x + 1;
+        }
+        return 0;
     }
 }

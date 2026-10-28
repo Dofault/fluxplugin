@@ -48,6 +48,11 @@ public final class CustomItems {
         /** Width of a glyph in pixels (0 when unknown). */
         int glyphWidth(String id);
 
+        /** Advance in pixels (spacing included) of every custom font character, as the client computes it. */
+        default java.util.Map<Integer, Integer> charWidths() {
+            return java.util.Map.of();
+        }
+
         /** Id of the custom block placed there, or null. */
         String blockId(Block block);
 
@@ -221,6 +226,15 @@ public final class CustomItems {
 
     public static Collection<String> glyphIds() {
         return provider.glyphIds();
+    }
+
+    /** Advance in pixels of the custom font characters (empty when unknown or still loading). */
+    public static java.util.Map<Integer, Integer> charWidths() {
+        try {
+            return provider.charWidths();
+        } catch (RuntimeException e) {
+            return java.util.Map.of();
+        }
     }
 
     public static int glyphWidth(String id) {
