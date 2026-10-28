@@ -17,6 +17,8 @@ Disposition (fond influmenu:menu_collection_categorie) :
 import glob
 import os
 import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../Flux/assets"))
+from lore_tags import convert_yaml  # noqa: E402  (lore lines in the tags of Flux's style.yml)
 
 import yaml
 
@@ -163,5 +165,5 @@ for gid, g in sorted(groupes.items()):
         L += [f"  {gid}_{n}:", "    items:", ""] + indenter(P, 4)
 
     chemin = os.path.join(OUT, f"collection_{gid}.yml")
-    open(chemin, "w", encoding="utf-8").write("\n".join(L).rstrip() + "\n")
+    open(chemin, "w", encoding="utf-8").write(convert_yaml("\n".join(L).rstrip() + "\n"))
     print(f"{gid}: {len(liste)} collections, {len(pages)} page(s) -> {chemin}")

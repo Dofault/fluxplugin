@@ -17,7 +17,12 @@ Contrats (Ordinaire, Tendance, irréparables) : la quantité est aussi plafonné
 import argparse
 import math
 import os
+import sys
+
 import yaml
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../Flux/assets"))
+from lore_tags import convert_yaml  # noqa: E402  (lore lines in the tags of Flux's style.yml)
 
 RACINE = "/home/influencraft"
 JOBS = RACINE + "/serveurs/03_semirp/plugins/EcoJobs/jobs"
@@ -359,6 +364,8 @@ ENTETE = ("# Généré par plugins/fluxplugin/FluxTools/assets/gen_outils.py : n
 def ecrire(chemin, donnees, entete=ENTETE):
     os.makedirs(os.path.dirname(chemin), exist_ok=True)
     texte = entete + yaml.safe_dump(donnees, allow_unicode=True, sort_keys=False, width=200)
+    if os.sep + "menus" + os.sep in chemin:
+        texte = convert_yaml(texte)
     if os.path.exists(chemin) and open(chemin).read() == texte:
         return False
     open(chemin, "w").write(texte)
@@ -378,21 +385,21 @@ def noeud_quete(i, case):
     pre = "%%fluxitems_noeud_%d_" % i
     base = {"amount": str(i), "slots": [case], "name": TITRE + pre + "titre%"}
     recompense = L + "Récompense : &f%img_bitblock% " + pre + "recompense%"
-    gain = "%%fluxitems_noeud_%d_ligne_gain%%" % i   # bonus d'XP, ligne masquée pour un contrat
+    gain = L + "Bonus : &f%%fluxitems_noeud_%d_ligne_gain%%" % i   # bonus d'XP, ligne masquée pour un contrat
     return {
         "q%d_fait" % i: dict(base, material="itemsadder:influitems:accept", priority=1,
                              **{"view-requirements": ["placeholder: " + pre + "etat% == fait"],
-                                "lore": [pre + "quete_l1%", pre + "quete_l2%", pre + "quete_l3%", FILET + "└ " + OK + "Réussie."]}),
+                                "lore": [L + pre + "quete_l1%", L + pre + "quete_l2%", L + pre + "quete_l3%", FILET + "└ " + OK + "Réussie."]}),
         "q%d_cours" % i: dict(base, material="%fluxitems_icone%", priority=2, glow=True,
                               **{"view-requirements": ["placeholder: " + pre + "etat% == en_cours"],
-                                 "lore": [pre + "quete_l1%", pre + "quete_l2%", pre + "quete_l3%",
+                                 "lore": [L + pre + "quete_l1%", L + pre + "quete_l2%", L + pre + "quete_l3%",
                                           L + "%fluxitems_barre% &f%fluxitems_avance%&7/&f%fluxitems_quantite%",
                                           recompense, gain, FIN + "En cours."]}),
         "q%d_attente" % i: dict(base, material="clock", priority=3,
                                 **{"view-requirements": ["placeholder: " + pre + "etat% == attente"],
-                                   "lore": [pre + "quete_l1%", pre + "quete_l2%", pre + "quete_l3%", recompense, gain, FIN + "Une quête par jour."]}),
+                                   "lore": [L + pre + "quete_l1%", L + pre + "quete_l2%", L + pre + "quete_l3%", recompense, gain, FIN + "Une quête par jour."]}),
         "q%d" % i: dict(base, material="itemsadder:influitems:lock", priority=4,
-                        lore=[pre + "quete_l1%", pre + "quete_l2%", pre + "quete_l3%", recompense, gain, FILET + "└ " + KO + "Pas encore atteinte."]),
+                        lore=[L + pre + "quete_l1%", L + pre + "quete_l2%", L + pre + "quete_l3%", recompense, gain, FILET + "└ " + KO + "Pas encore atteinte."]),
     }
 
 
@@ -434,7 +441,7 @@ def page_pass(l, q, nl, nq):
     items = {}
     for n, case in zip(niveaux, NIVEAUX_CASES):
         pre = "%%fluxitems_niveau_%d_" % n
-        lignes = [pre + "l%d%%" % k for k in (1, 2, 3)]
+        lignes = [L + pre + "l%d%%" % k for k in (1, 2, 3)]
         base = {"amount": str(n), "slots": [case], "name": TITRE + "Niveau %d" % n}
         items["niv%d_fait" % n] = dict(base, material="itemsadder:influitems:accept", priority=1,
                                        **{"view-requirements": ["placeholder: " + pre + "etat% == fait"],
@@ -480,7 +487,7 @@ def menu(tailles):
                            FIN + "Gagné : &f%img_bitblock% %fluxitems_gagne%"]},
         "quete": {"material": "writable_book", "slots": [QUETE_DU_JOUR], "name": TITRE + "Quête du jour", "glow": True,
                   "view-requirements": ["placeholder: %fluxitems_etat% == en_cours"],
-                  "lore": ["%fluxitems_quete_l1%", "%fluxitems_quete_l2%", "%fluxitems_quete_l3%",
+                  "lore": [L + "%fluxitems_quete_l1%", L + "%fluxitems_quete_l2%", L + "%fluxitems_quete_l3%",
                            L + "%fluxitems_barre% &f%fluxitems_avance%&7/&f%fluxitems_quantite%",
                            FIN + "Récompense : &f%img_bitblock% %fluxitems_recompense%"]},
         "quete_attente": {"material": "clock", "slots": [QUETE_DU_JOUR], "name": TITRE + "Prochaine quête",
@@ -518,7 +525,7 @@ def main():
             ecrits += ecrire(os.path.join(a.labs, "FluxTools/outils", id_ + ".yml"), o)
             resume = " | ".join("%s" % ", ".join("%s %d" % (q["id"], q["quantite"]) for q in e["quetes"][:4]) for e in o["etapes"])
             print("%-18s %s" % (id_, resume[:200]))
-    ecrits += ecrire(os.path.join(a.labs, "Flux/menus/outil.yml"), menu(tailles),
+    ecrits += ecrire(os.path.join(a.labs, "FluxTools/menus/outil.yml"), menu(tailles),
                      "# Généré par plugins/fluxplugin/FluxTools/assets/gen_outils.py : ne pas modifier à la main.\n"
                      "# Menu de l'outil en main (accroupi + clic droit, /outil).\n")
     print("%d fichier(s) écrit(s)." % ecrits)

@@ -130,10 +130,10 @@ final class Expansion {
         };
     }
 
-    /** Ligne d'un sélecteur : choix courant en blanc avec une flèche, les autres en gris. */
+    /** One option of a selector, in the suite's filter format (Flux style.yml). */
     private static String choix(String[] noms, int k, int courant) {
         if (k < 0 || k >= noms.length) return "";
-        return k == courant ? OR + "│ &f▸ " + noms[k] : OR + "│ &7" + noms[k];
+        return fr.influencraft.flux.api.text.Style.get().filterOption(noms[k], k == courant);
     }
 
     private String offre(Player p, Etat e, String c) {

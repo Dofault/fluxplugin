@@ -29,6 +29,7 @@ import yaml
 # gen_pages (page helpers of the main menu) stays with Flux
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "Flux", "assets"))
 from gen_pages import item, page, q, brut, CLIC_G, OR, VIOLET, ROUGE  # noqa: E402
+from lore_tags import convert_yaml  # noqa: E402  (lore lines in the tags of Flux's style.yml)
 
 FOND = ":offset_-8::menu_metier:"
 # Après le fond (avance 177 - 8 = 169 depuis le début du titre), l'illustration va en x = 38 :
@@ -140,7 +141,7 @@ def main():
     ]
     corps = "\n\n".join("\n".join(l[4:] for l in b.split("\n")) for b in base)
     with open(os.path.join(menus, "metiers.yml"), "w", encoding="utf-8") as f:
-        f.write(f"""# Généré par plugins/fluxplugin/FluxTools/assets/gen_metiers.py : ne pas modifier à la main.
+        f.write(convert_yaml(f"""# Généré par plugins/fluxplugin/FluxTools/assets/gen_metiers.py : ne pas modifier à la main.
 # Menu Carrières (EcoJobs), remplace /metiers, /carrieres (DeluxeMenus) et /job, /jobs (EcoJobs) sur Labs.
 # Les métiers, niveaux, actions et le bouton rejoindre / quitter sont construits par FluxTools (JobMenu, listes
 # metiers_*) ; ordre, icônes et descriptions des métiers : modules.jobs.menu de plugins/FluxTools/config.yml.
@@ -169,7 +170,7 @@ lists:
 items:
 
 {corps}
-""")
+"""))
     largeurs = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "Flux", "assets", "metiers", "noms.json")))
     pages = []
     for jid, nom, objet, serie, desc in METIERS:
@@ -181,9 +182,9 @@ items:
         pages.append(page(f"metiers_{jid}", cartes(serie, toutes), chemins(jid), titre, animation=False))
     os.makedirs(os.path.join(menus, "_pages"), exist_ok=True)
     with open(os.path.join(menus, "_pages", "metiers.yml"), "w", encoding="utf-8") as f:
-        f.write("# Généré par plugins/fluxplugin/FluxTools/assets/gen_metiers.py : ne pas modifier à la main.\n"
-                "# Pages du menu Carrières, une par métier : titre, familiers du métier, barres de niveaux et d'XP.\n\npages:\n\n"
-                + "\n".join(pages) + "\n")
+        f.write(convert_yaml("# Généré par plugins/fluxplugin/FluxTools/assets/gen_metiers.py : ne pas modifier à la main.\n"
+                             "# Pages du menu Carrières, une par métier : titre, familiers du métier, barres de niveaux et d'XP.\n\npages:\n\n"
+                             + "\n".join(pages) + "\n"))
     print(len(pages), "pages")
 
 

@@ -86,13 +86,27 @@ final class Fmt {
                 + (gain ? VERT + "▲" : ROUGE + "▼") + "&7" + suite + " " + SOURCE;
     }
 
-    /** Lore au style de /menu2 : description (│), puis actions (├ ... └). */
+    private static final java.util.regex.Pattern KEY_VALUE = java.util.regex.Pattern.compile("^([^&%:|]{1,40}?) : (?:&f)?(.+)$");
+
+    /**
+     * Lore in the suite's style (Flux style.yml): "Key : value" lines as key/values, other lines as description,
+     * actions written with GAUCHE / DROIT / MAJ_GAUCHE as the matching clicks.
+     */
     static List<String> lore(List<String> desc, List<String> actions) {
-        List<String> l = new ArrayList<>();
-        for (String d : desc) l.add(d.isEmpty() ? OR + "│" : OR + "│ " + VIOLET + d);
-        for (int i = 0; i < actions.size(); i++) l.add(OR + (i == actions.size() - 1 ? "└ " : "├ ") + actions.get(i));
-        if (actions.isEmpty() && !l.isEmpty()) l.set(l.size() - 1, l.getLast().replaceFirst("│", "└"));
-        return l;
+        fr.influencraft.flux.api.inventory.Lore l = fr.influencraft.flux.api.inventory.Lore.create();
+        for (String d : desc) {
+            if (d.isEmpty()) continue;
+            java.util.regex.Matcher kv = KEY_VALUE.matcher(d);
+            if (kv.matches() && !kv.group(1).trim().endsWith(".")) l.kv(kv.group(1).trim(), kv.group(2));
+            else l.description(d);
+        }
+        for (String a : actions) {
+            if (a.startsWith(MAJ_GAUCHE)) l.shiftLeft(a.substring(MAJ_GAUCHE.length()));
+            else if (a.startsWith(GAUCHE)) l.left(a.substring(GAUCHE.length()));
+            else if (a.startsWith(DROIT)) l.right(a.substring(DROIT.length()));
+            else l.action(a);
+        }
+        return l.build();
     }
 
     /** Montant entier positif saisi, ou -1 (accepte « 10 000 », « 10k », « 2,5k », « 1m »). */

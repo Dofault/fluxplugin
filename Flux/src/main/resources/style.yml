@@ -41,8 +41,27 @@ icons:
   shift-left: "&r&7⇧%img_left_click%"
   shift-right: "&r&7⇧%img_right_click%"
 
-# Variants of a plugin: any of the keys above (lore, frame, framed, name, icons), the rest comes from here, e.g.
+# Variants of a plugin: any of the keys above (lore, frame, framed, name, icons), the rest comes from here.
+# A menu button picks one with a lore line « @style <variant> ».
 # variants:
 #   pets:
 #     name: "&#FF7A59{text}"
-variants: {}
+variants:
+  # FluxTools (« rubis » palette): garnet frame, pale pink text, mint / greyish pink states
+  outils:
+    frame: ["&#A33A50│ ", "&#A33A50├ ", "&#A33A50└ "]
+    name: "&#FF4D6D{text}"
+    lore: |
+      <description>&#FFD6DE{text}</description>
+
+      <values>&#FFD6DE{key} : &f{value}</values>
+
+      <list>&#A33A50➤ &#FFD6DE{text}</list>
+      <filter><selected>&f» {text}</selected><unselected>&#FFD6DE{text}</unselected></filter>
+
+      <text>&#FFD6DE{text}</text>
+      <ok>&#7BE0A1{text}</ok>
+      <ko>&#A89BA0{text}</ko>
+      <info>&#FF4D6D{text}</info>
+
+      <actions>{icon} &f{label}</actions>

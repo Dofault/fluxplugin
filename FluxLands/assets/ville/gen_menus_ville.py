@@ -11,6 +11,8 @@ Style des boutons : celui de /menu2 (titre or, barre │ devant chaque ligne, ac
 """
 import os
 import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../Flux/assets"))
+from lore_tags import convert_yaml  # noqa: E402  (lore lines in the tags of Flux's style.yml)
 
 SORTIE = sys.argv[1]
 OR, VIOLET = "&#FFD94D", "&#B376E5"
@@ -70,7 +72,7 @@ def menu(nom, fond, items, commandes=None, ouverture=(), doc=""):
     out.append("\nitems:\n\n")
     out += [i + "\n" for i in items]
     with open(os.path.join(SORTIE, nom + ".yml"), "w") as f:
-        f.write("".join(out))
+        f.write(convert_yaml("".join(out)))
 
 
 def iv(cmd):

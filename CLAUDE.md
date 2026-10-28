@@ -100,7 +100,9 @@ lines again:
   order, whatever order the calls were made in. Names go through `Items.of`, which applies the name style.
 - **Menu files**: lore lines with tags `@desc`, `@kv Key | Value`, `@item`, `@text`, `@ok`, `@ko`, `@info`,
   `@filter <list>`, `@option`, `@left`, `@right`, `@shift-left`, `@shift-right`, `@raw`. Names without a colour get
-  the name colour. Generators (`assets/*.py`) must write these tags.
+  the name colour. `@style <variant>` picks a plugin variant for that button. Generators (`assets/*.py`) write
+  these tags and pass their output through `Flux/assets/lore_tags.py` (`convert_yaml`), which turns any leftover
+  hand-framed line into tags. Placeholders return unframed text, the menu places them with a tag.
 - **Navigation arrows** (previous / next page): no name, `hide-tooltip: true`.
 - **Filters**: one format (the pets one): options listed with the current one marked, left click = next filter,
   right click = previous (`[list] <id> filter` / `filter-prev`, or `@filter <list>` for a Flux list).

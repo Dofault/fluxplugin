@@ -153,7 +153,7 @@ public final class Lore {
     /**
      * Lore of a menu file written with tags: {@code @desc}, {@code @kv Key | Value}, {@code @item}, {@code @text},
      * {@code @ok}, {@code @ko}, {@code @info}, {@code @left}, {@code @right}, {@code @shift-left}, {@code @shift-right},
-     * {@code @raw}; a line without a tag is plain text. Returns null when no line has a tag (lore kept as written).
+     * {@code @raw}, {@code @style <variant>}; a line without a tag is plain text. Returns null when no line has a tag (lore kept as written).
      * {@code @filter} lines are expanded by Flux before (they need the viewer).
      */
     public static List<String> fromTags(List<String> lines, String variant) {
@@ -165,8 +165,12 @@ public final class Lore {
             }
         }
         if (!tagged) return null;
+        for (String l : lines) {
+            if (l.startsWith("@style ")) variant = l.substring(7).trim(); // a menu button may pick a plugin variant
+        }
         Lore lore = create(variant);
         for (String l : lines) {
+            if (l.startsWith("@style ")) continue;
             String tag = l.startsWith("@") ? l.substring(1).split(" ", 2)[0].toLowerCase(java.util.Locale.ROOT) : "text";
             String arg = l.startsWith("@") ? (l.contains(" ") ? l.substring(l.indexOf(' ') + 1) : "") : l;
             switch (tag) {

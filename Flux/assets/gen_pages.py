@@ -19,6 +19,8 @@ Une page = 7 étapes ; précédent / suivant passent d'une page à l'autre sans 
 import os
 import re
 import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "."))
+from lore_tags import convert_yaml  # noqa: E402  (lore lines in the tags of Flux's style.yml)
 
 PAR_PAGE = 7
 CHEMIN = [64 + k for k in range(PAR_PAGE)]
@@ -171,7 +173,7 @@ def connecteurs(n, total, slots, color, progress, debut, nb, prev=None, nxt=None
 def fichier(chemin, contenu, entete):
     os.makedirs(os.path.dirname(chemin), exist_ok=True)
     with open(chemin, "w", encoding="utf-8") as f:
-        f.write(f"# Généré par plugins/fluxplugin/Flux/assets/gen_pages.py : ne pas modifier à la main.\n# {entete}\n\npages:\n\n{contenu}\n")
+        f.write(convert_yaml(f"# Généré par plugins/fluxplugin/Flux/assets/gen_pages.py : ne pas modifier à la main.\n# {entete}\n\npages:\n\n{contenu}\n"))
 
 
 def bouton_principal(cle, material, nom, slot, lignes, action_label, pages):
@@ -341,9 +343,10 @@ def pass_chemin(pid_pass, n, total, paliers_max):
         t = debut + k + 1
         etat = f"%ecobattlepass_tier_state_{pid_pass}_{t}%"
         # Index 0 de tier_..._reward = nom combiné (trop large), jamais affiché ; les suivants sont
-        # les lignes de reward-lore (EcoBattlepass/rewards/*.yml, préfixées ➤), sautées si vides.
-        libre = [brut(f"%ecobattlepass_tier_free_reward_{pid_pass}_{t}_{i}%") for i in range(1, 6)]
-        prest = [brut(f"%ecobattlepass_tier_premium_reward_{pid_pass}_{t}_{i}%") for i in range(1, 6)]
+        # les lignes de reward-lore (EcoBattlepass/rewards/*.yml), sautées si vides.
+        # reward-lore lines of EcoBattlepass (its *-rewards-format must be "%reward%": the frame comes from Flux)
+        libre = [brut(f"@item %ecobattlepass_tier_free_reward_{pid_pass}_{t}_{i}%") for i in range(1, 6)]
+        prest = [brut(f"@item %ecobattlepass_tier_premium_reward_{pid_pass}_{t}_{i}%") for i in range(1, 6)]
         nom = f"Palier {t}"
         its.append(item(f"libre{t}_ok", "itemsadder:influitems:chest_checkmark", nom, slot, libre + ["&#2ECF7BRécupéré."],
                         priorite=1, conditions=[f"placeholder: {etat} != NOT_RECEIVED", f"placeholder: {etat} != RECEIVED_PREMIUM"], quantite=t))
@@ -505,7 +508,7 @@ def main():
         principaux += principal
 
     with open(os.path.join(menus, "pass.yml"), "w", encoding="utf-8") as f:
-        f.write(menu_pass())
+        f.write(convert_yaml(menu_pass()))
 
     main_yml = os.path.join(menus, "main.yml")
     texte = open(main_yml, encoding="utf-8").read()
@@ -513,7 +516,7 @@ def main():
     principaux = ["\n".join(l[4:] for l in b.split("\n")) for b in principaux]
     bloc = "  # >>> gen_pages (boutons générés par assets/gen_pages.py)\n\n" + "\n\n".join(principaux) + "\n\n  # <<< gen_pages\n"
     texte = re.sub(r"  # >>> gen_pages.*?  # <<< gen_pages\n", lambda m: bloc, texte, flags=re.S)
-    open(main_yml, "w", encoding="utf-8").write(texte)
+    open(main_yml, "w", encoding="utf-8").write(convert_yaml(texte))
     print(f"parrainage : paliers {seuils} ; pass : {pass_max} paliers ; récompenses : cycle {cycle}, {nb_temps} paliers de temps")
 
 

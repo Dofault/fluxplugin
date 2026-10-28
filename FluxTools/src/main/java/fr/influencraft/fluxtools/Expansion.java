@@ -57,11 +57,11 @@ final class Expansion {
         Outil.Quete q = e.termine(o) ? null : o.etapes.get(e.etape).quete(e.quete);
         Matcher ql = QUETE_LIGNE.matcher(param);
         if (ql.matches()) {
-            // Texte de quête coupé en lignes de menu (une ligne vide est masquée par Flux).
+            // Quest text cut into menu lines (an empty line is hidden by Flux); the menu frames it (style.yml).
             String texte = onRequest(joueur, ql.group(1));
             List<String> lignes = texte == null ? List.of() : couper(texte);
             int k = Integer.parseInt(ql.group(2));
-            return k <= lignes.size() ? "&#A33A50│ &#FFD6DE" + lignes.get(k - 1) : "";
+            return k <= lignes.size() ? lignes.get(k - 1) : "";
         }
         Matcher nv = NIVEAU.matcher(param);
         if (nv.matches()) return niveau(o, e, Integer.parseInt(nv.group(1)), nv.group(2));
@@ -132,7 +132,7 @@ final class Expansion {
         for (var en : o.progressifs.entrySet()) {
             Integer v = en.getValue().get(n);
             if (v == null || ++i != k) continue;
-            return "&#A33A50│ &#FFD6DE" + Fmt.nomEnchantement(en.getKey()) + " " + romain(v);
+            return Fmt.nomEnchantement(en.getKey()) + " " + romain(v);
         }
         return "";
     }
@@ -166,7 +166,7 @@ final class Expansion {
                     : etape.recompense());
             case "gain" -> o.aNiveaux() && etape.xp() > 0 ? "+" + nombre(etape.xp()) + " XP d'outil" : "";
             case "ligne_gain" -> o.aNiveaux() && etape.xp() > 0 && !jalons
-                    ? "&#A33A50│ &#FFD6DEBonus : &f+" + nombre(etape.xp()) + " XP d'outil" : "";
+                    ? "+" + nombre(etape.xp()) + " XP d'outil" : "";
             default -> null;
         };
     }

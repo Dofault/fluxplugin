@@ -151,7 +151,7 @@ final class Expansion {
             nom = "À " + f.getName();
         }
         if (nom.equals("Ma nation") && plugin.villes().maVille(p) == null) return "";
-        return i == actif ? "&#FFD94D▸ &f" + nom : "&#B376E5  " + nom;
+        return fr.influencraft.flux.api.text.Style.get().filterOption(nom, i == actif);
     }
 
     private String vitrine(Player p, String s) {

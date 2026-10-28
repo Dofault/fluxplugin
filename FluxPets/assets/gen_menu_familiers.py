@@ -16,6 +16,8 @@ itemsadder:influportraits:portrait_<id> (scripts/influcard/portraits.py).
 """
 import os
 import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../Flux/assets"))
+from lore_tags import convert_yaml  # noqa: E402  (lore lines in the tags of Flux's style.yml)
 
 OUT = sys.argv[1]
 OR, VIOLET, VERT, ROUGE = "&#FFD94D", "&#B376E5", "&#2ECF7B", "&#FF5C5C"
@@ -36,7 +38,8 @@ def q(texte):
 def bouton(L, cle, materiau, nom, slots, lore=(), gauche=(), droit=(), conditions=(), extra=()):
     L.append(f"  {cle}:")
     L.append(f"    material: {q(materiau)}")
-    L.append(f"    name: {q(nom)}")
+    if nom:
+        L.append(f"    name: {q(nom)}")
     L.append(f"    slots: [{', '.join(map(str, slots))}]")
     L.append("    flags: [HIDE_ATTRIBUTES]")
     L.extend(extra)
@@ -118,18 +121,19 @@ for k, case in enumerate(GRILLE, 1):
            conditions=[f"%{p}_level% >= 1"])
 
 L.append("  # Rangée du bas.")
-bouton(L, "filtre", "itemsadder:influitems:filter", OR + "Filtrer", [46],
-       [f"%influpet_view_filter_line_{k}%" for k in range(1, 16)]
-       + [f"{OR}│", f"{OR}├ {GAUCHE} &fFiltre suivant", f"{OR}└ {DROIT} &fFiltre précédent"],
+# filter in the suite's format (options from FluxPets through Style.filterOption)
+bouton(L, "filtre", "itemsadder:influitems:filter", "Filtrer", [46],
+       [f"@option %influpet_view_filter_line_{k}%" for k in range(1, 16)] + ["@left Filtre suivant", "@right Filtre précédent"],
        gauche=["[player] pets filter next", SON, "[refresh]"], droit=["[player] pets filter previous", SON, "[refresh]"])
-bouton(L, "precedent", "itemsadder:influitems:btn_prev", OR + "Page précédente", [48],
+# navigation arrows: no name, no tooltip
+bouton(L, "precedent", "itemsadder:influitems:btn_prev", None, [48],
        [f"{OR}└ {GAUCHE} &fPage précédente"], gauche=["[player] pets page previous", SON_PAGE, "[refresh]"],
-       conditions=["%influpet_view_page% >= 2"])
+       conditions=["%influpet_view_page% >= 2"], extra=["    hide-tooltip: true"])
 bouton(L, "retour", "itemsadder:influitems:btn_back", OR + "Retour", [0],
        [f"{OR}│ {VIOLET}Revenir au menu.", f"{OR}└ {GAUCHE} &fMenu principal"], gauche=["[menu] main"])
-bouton(L, "suivant", "itemsadder:influitems:btn_next", OR + "Page suivante", [50],
+bouton(L, "suivant", "itemsadder:influitems:btn_next", None, [50],
        [f"{OR}└ {GAUCHE} &fPage suivante"], gauche=["[player] pets page next", SON_PAGE, "[refresh]"],
-       conditions=["%influpet_view_pages% > %influpet_view_page%"])
+       conditions=["%influpet_view_pages% > %influpet_view_page%"], extra=["    hide-tooltip: true"])
 bouton(L, "montrer", "ENDER_EYE", OR + "Montrer mes familiers", [52],
        [f"{OR}│ {VIOLET}Tes familiers sont cachés :", f"{OR}│ {VIOLET}ils ne te suivent plus.",
         f"{OR}└ {GAUCHE} &fLes montrer"],
@@ -139,7 +143,7 @@ bouton(L, "cacher", "ENDER_PEARL", OR + "Cacher mes familiers", [52],
        [f"{OR}│ {VIOLET}Leurs effets restent actifs,", f"{OR}│ {VIOLET}ils ne te suivent plus.",
         f"{OR}└ {GAUCHE} &fLes cacher"],
        gauche=["[player] pets visibility", SON, "[refresh]"])
-open(os.path.join(OUT, "familiers.yml"), "w", encoding="utf-8").write("\n".join(L).rstrip() + "\n")
+open(os.path.join(OUT, "familiers.yml"), "w", encoding="utf-8").write(convert_yaml("\n".join(L).rstrip() + "\n"))
 
 # ------------------------------------------------------------------ familier.yml
 p = "influpet_selected"
@@ -166,5 +170,5 @@ for niveau, case in enumerate(NIVEAUX, 1):
            conditions=[garde], extra=[f"    amount: {niveau}"])
 bouton(L, "retour", "itemsadder:influitems:btn_back", OR + "Retour", [49],
        [f"{OR}│ {VIOLET}Revenir aux familiers.", f"{OR}└ {GAUCHE} &fFamiliers"], gauche=["[menu] familiers"])
-open(os.path.join(OUT, "familier.yml"), "w", encoding="utf-8").write("\n".join(L).rstrip() + "\n")
+open(os.path.join(OUT, "familier.yml"), "w", encoding="utf-8").write(convert_yaml("\n".join(L).rstrip() + "\n"))
 print("familiers.yml, familier.yml écrits dans", OUT)
