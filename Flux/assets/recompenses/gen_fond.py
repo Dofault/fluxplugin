@@ -23,6 +23,8 @@ COUPE = 128
 DECALAGE = 18
 LIMITE = 136  # rien du haut sous cette ligne (la boîte des frises commence juste après)
 EN_TETE = [9, 17]
+# bas du cadre : même marge sous la frise du temps de jeu qu'au-dessus du retour (environ une demi-rangée)
+BAS = 190
 CONNEXION = list(range(55, 62))
 TEMPS = list(range(64, 71))
 FLECHES = [54, 62, 63, 71]
@@ -46,8 +48,8 @@ def case_noire(d, n):
 
 
 def fond():
-    # cadre du générique raccourci : le bord du haut descend d'une rangée avec la partie coffre
-    im = generique_raccourci(os.path.join(os.path.dirname(ICI), "menu_generique.png"), DECALAGE, H - 1)
+    # cadre du générique raccourci : le bord du haut descend d'une rangée avec la partie coffre, le bas remonte
+    im = generique_raccourci(os.path.join(os.path.dirname(ICI), "menu_generique.png"), DECALAGE, BAS)
     haut = Image.open(os.path.join(ICI, "fond_haut_utilisateur.png")).convert("RGBA")
     # partie coffre de l'utilisateur, bord du haut compris (l'étoile reste coupée par le bord)
     im.paste(haut.crop((0, 0, W, LIMITE - DECALAGE)), (0, DECALAGE))
