@@ -26,6 +26,10 @@ import java.util.regex.Pattern;
  */
 public final class Style {
 
+    /** A block: {@code <kind>...</kind>}, only the kinds below (other tags such as {@code <smallcaps>} stay text). */
+    private static final Pattern BLOCK = Pattern.compile("<(description|values|list|filter|text|ok|ko|info|actions)>(.*)</\\1>");
+    private static final Pattern CONDITION = Pattern.compile("<(selected|unselected)>(.*?)</\\1>");
+
     /** The 4 click actions a button can show. */
     public enum Click { LEFT, RIGHT, SHIFT_LEFT, SHIFT_RIGHT }
 
@@ -49,7 +53,39 @@ public final class Style {
             <actions>{icon} &f{label}</actions>
             """;
 
-    private record Look(String lore, List<String> frame, String name, Map<String, String> icons, boolean framed) {
+    /** A line of the template, parsed once: a blank line (kind null) or a block, its body for selected / other entries. */
+    private record Block(String kind, String prefix, String selected, String unselected, String suffix) {
+    }
+
+    private record Look(String lore, List<Block> blocks, List<String> frame, String name, Map<String, String> icons, boolean framed) {
+        Look(String lore, List<String> frame, String name, Map<String, String> icons, boolean framed) {
+            this(lore, parse(lore), frame, name, icons, framed);
+        }
+    }
+
+    /** Template to blocks, done when style.yml is read; lines that are neither blank nor a block are ignored. */
+    private static List<Block> parse(String lore) {
+        List<Block> out = new ArrayList<>();
+        for (String line : lore.split("\n", -1)) {
+            if (line.isBlank()) {
+                out.add(new Block(null, "", "", "", ""));
+                continue;
+            }
+            Matcher m = BLOCK.matcher(line);
+            if (!m.find()) continue;
+            out.add(new Block(m.group(1), line.substring(0, m.start()), condition(m.group(2), true),
+                    condition(m.group(2), false), line.substring(m.end())));
+        }
+        return List.copyOf(out);
+    }
+
+    /** Keeps the inside of {@code <selected>} or {@code <unselected>}, drops the other. */
+    private static String condition(String body, boolean selected) {
+        Matcher c = CONDITION.matcher(body);
+        StringBuilder sb = new StringBuilder();
+        while (c.find()) c.appendReplacement(sb, Matcher.quoteReplacement(c.group(1).equals("selected") == selected ? c.group(2) : ""));
+        c.appendTail(sb);
+        return sb.toString();
     }
 
     private static Look base = defaults();
@@ -129,8 +165,6 @@ public final class Style {
 
     // ---------------------------------------------------------------- template
 
-    /** A block: {@code <kind>...</kind>}, only the kinds below (other tags such as {@code <smallcaps>} stay text). */
-    private static final Pattern BLOCK = Pattern.compile("<(description|values|list|filter|text|ok|ko|info|actions)>(.*)</\\1>");
 
     /**
      * The lore of these entries: the template filled top to bottom, blank lines only between content, then the frame
@@ -143,29 +177,20 @@ public final class Style {
     private List<String> render(List<Entry> entries, boolean frame) {
         Map<String, List<Entry>> byKind = new HashMap<>();
         for (Entry e : entries) byKind.computeIfAbsent(e.kind(), k -> new ArrayList<>()).add(e);
-        // produced lines (kind, text), blank runs as ("", count)
-        List<String[]> rows = new ArrayList<>();
-        // blank lines between two blocks with content: runs separated only by vanished blocks merge (longest wins)
+        // lines as (kind, text); blank lines only between content, runs separated by vanished blocks merge (longest wins)
+        List<String[]> lines = new ArrayList<>();
         int run = 0, gap = 0;
-        for (String line : look().lore().split("\n", -1)) {
-            if (line.isBlank()) {
+        for (Block b : look().blocks()) {
+            if (b.kind() == null) {
                 gap = Math.max(gap, ++run);
                 continue;
             }
             run = 0;
-            Matcher m = BLOCK.matcher(line);
-            if (!m.find()) continue;
-            List<Entry> own = byKind.getOrDefault(m.group(1), List.of());
-            if (own.isEmpty()) continue;
-            if (gap > 0 && !rows.isEmpty()) rows.add(new String[]{"", String.valueOf(gap)});
+            List<Entry> own = byKind.get(b.kind());
+            if (own == null) continue;
+            if (!lines.isEmpty()) for (int i = 0; i < gap; i++) lines.add(new String[]{"", ""});
             gap = 0;
-            String prefix = line.substring(0, m.start()), suffix = line.substring(m.end());
-            for (Entry e : own) rows.add(new String[]{e.kind(), prefix + fill(m.group(2), e) + suffix});
-        }
-        List<String[]> lines = new ArrayList<>();
-        for (String[] r : rows) {
-            if (r[0].isEmpty()) for (int i = 0; i < Integer.parseInt(r[1]); i++) lines.add(new String[]{"", ""});
-            else lines.add(r);
+            for (Entry e : own) lines.add(new String[]{e.kind(), b.prefix() + fill(e.selected() ? b.selected() : b.unselected(), e) + b.suffix()});
         }
         if (!frame) {
             List<String> out = new ArrayList<>();
@@ -184,20 +209,11 @@ public final class Style {
         return out;
     }
 
-    private static final Pattern CONDITION = Pattern.compile("<(selected|unselected)>(.*?)</\\1>");
-
-    private static String fill(String template, Entry e) {
-        if (e.fields().containsKey("raw")) return e.fields().get("raw");
-        Matcher c = CONDITION.matcher(template);
-        StringBuilder sb = new StringBuilder();
-        while (c.find()) {
-            boolean show = c.group(1).equals("selected") == e.selected();
-            c.appendReplacement(sb, Matcher.quoteReplacement(show ? c.group(2) : ""));
-        }
-        c.appendTail(sb);
-        String out = sb.toString();
-        for (Map.Entry<String, String> field : e.fields().entrySet()) out = out.replace("{" + field.getKey() + "}", field.getValue());
-        return out;
+    private static String fill(String body, Entry e) {
+        String raw = e.fields().get("raw");
+        if (raw != null) return raw;
+        for (Map.Entry<String, String> field : e.fields().entrySet()) body = body.replace("{" + field.getKey() + "}", field.getValue());
+        return body;
     }
 
     private static String stripEnd(String s) {
