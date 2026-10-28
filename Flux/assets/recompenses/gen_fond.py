@@ -1,4 +1,5 @@
-"""Fond du menu Récompenses (/recompenses).
+"""Fond du menu Récompenses (/recompenses). Depuis le 2026-10-28, le fond en service est celui retouché à la main par
+l'utilisateur (Flux/assets/menu_recompenses.png) : ne pas relancer ce script par-dessus sans son accord.
 
 Haut : image retouchée par l'utilisateur le 2026-10-28 (fond_haut_utilisateur.png : grande étoile gravée en
 filigrane, boîte des 21 récompenses avec page précédente et suivante sur des cases noircies, Tout récupérer et son
