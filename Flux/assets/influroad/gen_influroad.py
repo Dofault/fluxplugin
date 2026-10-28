@@ -19,6 +19,9 @@ HEIGHT = {"chemin_h": 3, "chemin_v": 19, "chemin_h_demi": 3, "chemin_v_demi": 10
 ROWS = [18 + 18 * r for r in range(6)] + [139, 157, 175] + [197]
 # Inventaire d'un coffre de 2 rangées (menu de l'outil, FluxTools) : 103 + (2 - 4) x 18, puis barre d'action.
 ROWS += [67, 85, 103, 125]
+# Vertical pieces that cross the gap between the last chest row and the first inventory row (6-row menu): the piece
+# ends on the inventory slot, its top at 139 - 18 + 8 (PathRenderer.link).
+CROSSING_V = [129]
 # Décalage vertical de chaque pièce par rapport au haut de la case (cf. LISEZMOI.md).
 DY = {"chemin_h": [7], "chemin_h_demi": [7], "chemin_v": [8], "chemin_v_demi": [-1, 8], "chemin_noeud": [6]}
 
@@ -34,7 +37,7 @@ lines = ["info:", "  namespace: influroad", "",
          "font_images:"]
 count = 0
 for p in PIECES:
-    ys = sorted({row + dy for row in ROWS for dy in DY[p]})
+    ys = sorted({row + dy for row in ROWS for dy in DY[p]} | (set(CROSSING_V) if p == "chemin_v" else set()))
     for s in STATES:
         for y in ys:
             lines += [f"  {p}_{s}_y{y}:", "    suggest_in_command: false", "    show_in_gui: false",

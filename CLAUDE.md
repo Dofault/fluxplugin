@@ -74,6 +74,10 @@ The plugins are written **as English plugins, then adapted to French** for our s
 - **First row of every menu: back button in its first slot, the icon of the current menu (what this page is, with its
   explanation in the tooltip) in its last slot**, like the pass. "First row" means the first row of the drawn menu,
   wherever it sits: a menu drawn in the hidden inventory area starts there, not at slot 0 of the chest.
+- **Use the window's own spacing instead of empty rows.** The hidden inventory starts 14 px lower than a regular row
+  would: rather than wasting an empty slot row to separate two groups, shift the whole drawing (background
+  included) so the separation falls on the chest/inventory gap. A menu does not have to start at row 0. Paths cross
+  that gap (`PathRenderer`, `influroad` crossing pieces).
 - Backgrounds are free drawings (any height, any position); keep a reminder of the generic background
   (`Flux/assets/menu_generique.png`) and the violet theme, plus a colour accent of the menu's own.
 

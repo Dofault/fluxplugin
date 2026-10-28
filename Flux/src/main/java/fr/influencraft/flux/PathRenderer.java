@@ -208,12 +208,11 @@ public final class PathRenderer {
             for (int x = x1; x < x2; x += 18) horizontal.add(new Piece(glyph("chemin_h", state, a[1] + 7), x + 8, H_W));
         } else if (a[0] == b[0]) {
             int y1 = Math.min(a[1], b[1]), y2 = Math.max(a[1], b[1]);
-            if ((y2 - y1) % 18 != 0) {
-                warnOnce(path.id() + from + "-" + to, "chemin " + path.id() + " : cases " + from + " et " + to
-                        + " non reliables (écart vertical de " + (y2 - y1) + " px, pas un multiple de 18)");
-                return;
-            }
-            for (int y = y1; y < y2; y += 18) vertical.add(new Piece(glyph("chemin_v", state, y + 8), a[0] + 7, V_W));
+            // whole rows: one piece per row; across the gap between the chest and the inventory (not a multiple of
+            // 18), the last piece is pulled up so it ends on the lower slot (influroad has those heights)
+            int y = y1;
+            for (; y + 18 <= y2; y += 18) vertical.add(new Piece(glyph("chemin_v", state, y + 8), a[0] + 7, V_W));
+            if (y < y2) vertical.add(new Piece(glyph("chemin_v", state, y2 - 18 + 8), a[0] + 7, V_W));
         } else {
             warnOnce(path.id() + from + "-" + to, "chemin " + path.id() + " : cases " + from + " et " + to
                     + " ni sur la même ligne ni sur la même colonne (liaison ignorée)");

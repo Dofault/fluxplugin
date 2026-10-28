@@ -1,12 +1,12 @@
 """Background of the rank menu (museum, chosen on 2026-10-28), from the round-4 proposals (gen_v4.py, variant 1).
 
-Layout (6-row chest, hidden inventory):
-  row 0          back (0) and menu icon (8), the ceiling lamps between them
-  rows 2 to 4    4 tier banners on a gold rod, 3 rank slots each, weakest on top: columns 1, 3, 5, 7
-                 (slots 19/28/37, 21/30/39, 23/32/41, 25/34/43)
-  row 5          reward slot of each tier, at the tip of its banner (46, 48, 50, 52)
-Raised by one row on 2026-10-28 (rewards were in the inventory area). The path itself (rank to rank to reward) is
-drawn by Flux in game (menu paths, coloured per step).
+Layout (6-row chest, hidden inventory), the whole drawing one row down (row 0 empty):
+  row 1          back (9) and menu icon (17), the ceiling lamps between them
+  rows 3 to 5    4 tier banners on a gold rod, 3 rank slots each, weakest on top: columns 1, 3, 5, 7
+                 (slots 28/37/46, 30/39/48, 32/41/50, 34/43/52)
+  inventory row  reward slot of each tier (55, 57, 59, 61): the gap between the chest and the inventory separates
+                 it from the last rank without an empty row
+The path itself (rank to rank to reward) is drawn by Flux in game (menu paths, coloured per step).
 
 Usage: python gen_fond.py <png> [preview x3]  (Pillow)
 """
@@ -19,12 +19,13 @@ sys.path.insert(0, os.path.dirname(HERE))
 from fond_lib import generique_raccourci, poser, tampon_case  # noqa: E402
 
 W, H = 176, 221
-BOTTOM = 148
+TOP = 18  # the whole menu starts one row down: row 0 stays empty
+BOTTOM = 178
 FRAME = 10
 COLS = (1, 3, 5, 7)
-RANK_ROWS = (2, 3, 4)
-REWARD_ROW = 5
-ROD_Y = 38
+RANK_ROWS = (3, 4, 5)
+REWARD_ROW = 6
+ROD_Y = 56
 TIER_COLOURS = ["9AD29A", "4E72E6", "E65C9F", "E65C5C"]  # middle rank of each tier
 RANK_COLOURS = ["C0C0C0", "9AD29A", "6AC7C7", "5CA8E6", "4E72E6", "8A5CE6", "D15CE6", "E65C9F", "FFD94D",
                 "E6A85C", "E65C5C", "FF0033"]
@@ -84,17 +85,17 @@ def spotlight(im, cx, top, bottom, spread, colour=(255, 232, 170), strength=34):
     alpha = im.split()[3].load()
     for y in range(im.height):
         for x in range(im.width):
-            if px[x, y][3] and (alpha[x, y] == 0 or x < 4 or x > im.width - 5 or y < 3 or y > bottom + 2):
+            if px[x, y][3] and (alpha[x, y] == 0 or x < 4 or x > im.width - 5 or y < TOP + 3 or y > bottom + 2):
                 px[x, y] = (0, 0, 0, 0)
     im.alpha_composite(layer)
 
 
 def background():
-    im = generique_raccourci(os.path.join(os.path.dirname(HERE), "menu_generique.png"), 0, BOTTOM)
+    im = generique_raccourci(os.path.join(os.path.dirname(HERE), "menu_generique.png"), TOP, BOTTOM)
     case = tampon_case()
     for col in COLS:
         x, _ = objet(col)
-        spotlight(im, x + 8, 6, BOTTOM - FRAME, 20)
+        spotlight(im, x + 8, TOP + 6, BOTTOM - FRAME, 20)
     d = ImageDraw.Draw(im)
     for t, col in enumerate(COLS):
         x, _ = objet(col)
@@ -111,15 +112,15 @@ def background():
     for t, col in enumerate(COLS):
         x, _ = objet(col)
         cx = x + 8
-        d.rectangle([cx - 3, 3, cx + 3, 6], c("2A1250"))
-        d.line([(cx - 3, 6), (cx + 3, 6)], OR)
-        d.line([(cx - 2, 7), (cx + 2, 7)], OR_CLAIR)
+        d.rectangle([cx - 3, TOP + 3, cx + 3, TOP + 6], c("2A1250"))
+        d.line([(cx - 3, TOP + 6), (cx + 3, TOP + 6)], OR)
+        d.line([(cx - 2, TOP + 7), (cx + 2, TOP + 7)], OR_CLAIR)
         for k in range(t + 1):
             star(im, cx - 3 * t + 6 * k, ROD_Y + 7, OR_CLAIR)
         for r, row in enumerate(RANK_ROWS):
             poser(im, tint(case, RANK_COLOURS[t * 3 + r]), *objet(slot(row, col)))
         poser(im, tint(case, "F0A800"), *objet(slot(REWARD_ROW, col)))
-    for n in (0, 8):  # back and menu icon, first row of the menu
+    for n in (9, 17):  # back and menu icon, first row of the menu (row 1)
         poser(im, case, *objet(n))
     return im
 
