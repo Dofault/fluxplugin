@@ -135,6 +135,10 @@ systemd-run --user --scope -q -p MemoryMax=2.5G nice -n 10 mvn -q -o -pl <Module
 
 ## Known pitfalls
 
+- Never put `loadbefore` on a plugin of the suite towards a third-party plugin: Flux itself loads after a chain of
+  them (CustomFishing, EcoJobs, libreforge, CMI...), so it closes a loop and Paper refuses to start the server
+  (FluxFly with `loadbefore: [CMI]`, 2026-10-28). A command taken from another plugin is freed in that plugin's config.
+
 - Bukkit config defaults shadow former key names: `getConfigurationSection("new")` returns the jar's default section
   even when the server file still uses the former name. Check `contains(key, true)` first.
 - Do not compare against `Format.yesNo()` in menus (localised), use fixed values.
