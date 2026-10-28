@@ -25,5 +25,14 @@ mastery:
   # spread over the book's levels: level k at (k / max) ^ curve of that XP
   curve: 1.6
 
+# Mystery books: right click on one of these custom items (id as Flux recognises it) gives a random enchanted book
+# of the rarity, with a firework of the rarity's colour (read in EcoEnchants' rarity.yml) bursting on the player.
+mystery-books:
+  enabled: true
+  items: {}
+  command: "ecoenchants giverandombook %player% %rarity%"
+  sound: "minecraft:entity.player.levelup 1 1"
+  firework: true
+
 # Folder of the EcoEnchants enchantment files (rarity, display name), relative to plugins/
 ecoenchants-folder: EcoEnchants/enchants

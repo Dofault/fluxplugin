@@ -16,11 +16,13 @@ import java.util.Locale;
 
 /**
  * Enchantments of the suite: weight of the custom (EcoEnchants) enchantments per item, and mastery enchantments on
- * the crate tools of FluxTools ({@link Mastery}). Later: the suite's own enchantments.
+ * the crate tools of FluxTools ({@link Mastery}), mystery books ({@link MysteryBooks}). Later: the suite's own
+ * enchantments.
  */
 public final class FluxEnchant extends FluxPlugin {
 
     private final Rarities rarities = new Rarities();
+    private final MysteryBooks books = new MysteryBooks(this);
     private Mastery mastery;
 
     @Override
@@ -29,6 +31,7 @@ public final class FluxEnchant extends FluxPlugin {
         int count = loadRarities();
         getLogger().info(count + " enchantment(s) read in EcoEnchants.");
         Bukkit.getPluginManager().registerEvents(new Weight(this), this);
+        Bukkit.getPluginManager().registerEvents(books, this);
         if (Bukkit.getPluginManager().getPlugin("FluxTools") != null) {
             mastery = new Mastery(this);
             Bukkit.getServicesManager().register(EnchantMastery.class, mastery, this, ServicePriority.Normal);
@@ -45,8 +48,11 @@ public final class FluxEnchant extends FluxPlugin {
         Bukkit.getServicesManager().unregisterAll(this);
     }
 
+    /** Enchantments and rarity colours from EcoEnchants, mystery books from the config. */
     private int loadRarities() {
         File folder = new File(getDataFolder().getParentFile(), getConfig().getString("ecoenchants-folder", "EcoEnchants/enchants"));
+        rarities.loadColors(new File(folder.getParentFile(), "rarity.yml"));
+        books.load(getConfig().getConfigurationSection("mystery-books"));
         return rarities.load(folder, getConfig().getConfigurationSection("weights"));
     }
 

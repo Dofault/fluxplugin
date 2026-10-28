@@ -98,6 +98,12 @@ systemd-run --user --scope -q -p MemoryMax=2.5G nice -n 10 mvn -q -o -pl <Module
 - A menu needs `[refresh]` after a list page change to redraw its title (paths).
 - Inventory rows of a hidden-inventory menu sit 2 px higher in game than `fond_lib.objet` computes.
 
+## Production go-live notes
+
+Whenever a change will need an action on the day Flux goes to production (file not to copy, config to change, test to
+run, old plugin to remove, DeluxeMenus menu to replace...), add it to `/home/influencraft/docs/technique/flux-mise-en-prod.md`
+(French). Nobody should have to guess on that day.
+
 ## More documentation
 
 On the server machine, `/home/influencraft/docs/technique/` has one page per plugin (`flux-suite.md` is the overview,
