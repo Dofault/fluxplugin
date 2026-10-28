@@ -16,6 +16,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * changing it means writing one adapter in Flux ({@link Provider}).
  *
  * <p>Ids are namespaced ({@code influitems:btn_next}); {@link #resolve} also accepts a bare id when it is unique.</p>
+ *
+ * <p>The plugins of the suite declare their own items here ({@link #register}, e.g. {@code fluxtools:pioche_virale},
+ * {@code fluxpets:booster_mineur}), so every plugin recognises them the same way. A source only answers for its own
+ * items (marked by its plugin): any other item keeps its usual behaviour.</p>
  */
 public final class CustomItems {
 
@@ -65,6 +69,22 @@ public final class CustomItems {
         public boolean placeBlock(String id, Location location) { return false; }
     };
 
+    /** Items of a plugin of the suite, under its own namespace. */
+    public interface Source {
+        /** Id (without namespace) of this plugin's item, or null when the item is not one of its own. */
+        String id(ItemStack item);
+
+        /** A new stack of the item, or null when unknown. */
+        ItemStack item(String id);
+
+        /** Ids (without namespace). */
+        Collection<String> ids();
+    }
+
+    private record Owned(Plugin owner, Source source) {
+    }
+
+    private static final Map<String, Owned> SOURCES = new ConcurrentHashMap<>();
     private static volatile Provider provider = NONE;
     private static final Map<Plugin, Runnable> ON_LOAD = new ConcurrentHashMap<>();
 
@@ -94,6 +114,12 @@ public final class CustomItems {
 
     public static void unregisterAll(Plugin owner) {
         ON_LOAD.remove(owner);
+        SOURCES.values().removeIf(o -> o.owner() == owner);
+    }
+
+    /** Declares the items of a plugin of the suite under {@code namespace}. */
+    public static void register(Plugin owner, String namespace, Source source) {
+        SOURCES.put(namespace.toLowerCase(java.util.Locale.ROOT), new Owned(owner, source));
     }
 
     /** True when a custom item plugin is in use. */
@@ -109,24 +135,44 @@ public final class CustomItems {
         return provider.loaded();
     }
 
-    /** Namespaced id of a custom item, or null for a vanilla item. */
+    /** Namespaced id of a custom item (suite or custom item plugin), or null for a vanilla item. */
     public static String id(ItemStack item) {
-        return item == null ? null : provider.id(item);
+        if (item == null || item.isEmpty()) return null;
+        if (item.hasItemMeta()) {
+            for (Map.Entry<String, Owned> e : SOURCES.entrySet()) {
+                String own;
+                try {
+                    own = e.getValue().source().id(item);
+                } catch (RuntimeException ex) {
+                    own = null;
+                }
+                if (own != null) return e.getKey() + ":" + own;
+            }
+        }
+        return provider.id(item);
     }
 
     /** A new stack of this custom item, or null when unknown. */
     public static ItemStack item(String id) {
         String full = resolve(id);
-        return full == null ? null : provider.item(full);
+        if (full == null) return null;
+        Owned own = SOURCES.get(full.substring(0, full.indexOf(':')));
+        return own != null ? own.source().item(full.substring(full.indexOf(':') + 1)) : provider.item(full);
     }
 
     public static boolean exists(String id) {
         String full = resolve(id);
-        return full != null && provider.exists(full);
+        if (full == null) return false;
+        Owned own = SOURCES.get(full.substring(0, full.indexOf(':')));
+        return own != null ? own.source().ids().contains(full.substring(full.indexOf(':') + 1)) : provider.exists(full);
     }
 
+    /** Every id: the suite's items, then the custom item plugin's. */
     public static Collection<String> ids() {
-        return provider.ids();
+        List<String> out = new java.util.ArrayList<>();
+        SOURCES.forEach((ns, own) -> own.source().ids().forEach(id -> out.add(ns + ":" + id)));
+        out.addAll(provider.ids());
+        return out;
     }
 
     /** {@code ns:id} as it is, else the only {@code *:id} of the registry (the first one when several). */
@@ -134,7 +180,7 @@ public final class CustomItems {
         if (id == null || id.isEmpty()) return null;
         if (id.contains(":")) return id;
         String suffix = ":" + id;
-        for (String full : provider.ids()) if (full.endsWith(suffix)) return full;
+        for (String full : ids()) if (full.endsWith(suffix)) return full;
         return null;
     }
 

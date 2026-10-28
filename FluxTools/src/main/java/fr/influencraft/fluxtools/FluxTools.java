@@ -48,6 +48,25 @@ public final class FluxTools extends fr.influencraft.flux.api.FluxPlugin {
         }
         charger();
         fr.influencraft.fluxtools.api.Tools.bind(this::info, this::rafraichir);
+        // outils reconnus par toute la suite : fluxtools:<id> (pioche_virale...)
+        fr.influencraft.flux.api.items.CustomItems.register(this, "fluxtools", new fr.influencraft.flux.api.items.CustomItems.Source() {
+            @Override
+            public String id(ItemStack item) {
+                String id = Etat.outil(item);
+                return id != null && outils.containsKey(id) ? id : null;
+            }
+
+            @Override
+            public ItemStack item(String id) {
+                Outil o = outils.get(id);
+                return o == null ? null : Rendu.creer(o);
+            }
+
+            @Override
+            public java.util.Collection<String> ids() {
+                return outils.keySet();
+            }
+        });
 
         progression = new Progression(this);
         Bukkit.getPluginManager().registerEvents(progression, this);

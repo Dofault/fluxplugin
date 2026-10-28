@@ -71,6 +71,38 @@ public final class FluxPets extends JavaPlugin implements TabCompleter {
         boolean petsStarted = startPets();
         registry = new CardRegistry(this);
         registry.load();
+        // boosters and cards known to every plugin of the suite: fluxpets:booster_<id>, fluxpets:card_<id>
+        fr.influencraft.flux.api.items.CustomItems.register(this, "fluxpets", new fr.influencraft.flux.api.items.CustomItems.Source() {
+            @Override
+            public String id(org.bukkit.inventory.ItemStack item) {
+                var pdc = item.getItemMeta().getPersistentDataContainer();
+                String booster = pdc.get(boosterKey, org.bukkit.persistence.PersistentDataType.STRING);
+                if (booster != null) return "booster_" + booster;
+                String card = pdc.get(cardKey, org.bukkit.persistence.PersistentDataType.STRING);
+                return card == null ? null : "card_" + card;
+            }
+
+            @Override
+            public org.bukkit.inventory.ItemStack item(String id) {
+                if (id.startsWith("booster_")) {
+                    CardRegistry.Booster b = registry.booster(id.substring(8));
+                    return b == null ? null : registry.boosterItem(b);
+                }
+                if (id.startsWith("card_")) {
+                    CardRegistry.Card c = registry.card(id.substring(5));
+                    return c == null ? null : registry.cardItem(c);
+                }
+                return null;
+            }
+
+            @Override
+            public java.util.Collection<String> ids() {
+                java.util.List<String> out = new java.util.ArrayList<>();
+                registry.boosters().forEach(b -> out.add("booster_" + b.id()));
+                registry.cards().forEach(c -> out.add("card_" + c.id()));
+                return out;
+            }
+        });
         reveals = new RevealManager(this);
         prompts = new ChatPrompt(this);
         getServer().getPluginManager().registerEvents(new BoosterListener(this), this);
