@@ -217,7 +217,6 @@ public final class ProfileService {
             lore.kv("Temps de jeu", Format.duration(s.getStatistic(Statistic.PLAY_ONE_MINUTE) / 20L));
             lore.kv("Blocs cassés", s.isOnline() ? Format.number(mined(s)) : "-");
             lore.kv("Monstres vaincus", Format.number(s.getStatistic(Statistic.MOB_KILLS)));
-            lore.kv("Joueurs vaincus", Format.number(s.getStatistic(Statistic.PLAYER_KILLS)));
             lore.kv("Morts", Format.number(s.getStatistic(Statistic.DEATHS)));
             lore.kv("Distance à pied", Format.number(s.getStatistic(Statistic.WALK_ONE_CM) / 100000.0) + " km");
             return button(viewer, "CLOCK", "Statistiques", lore);
