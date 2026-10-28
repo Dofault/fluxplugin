@@ -369,10 +369,12 @@ def pass_chemin(pid_pass, n, total, paliers_max):
         trace.append(str(slot))
         if k < len(slots) - 1:
             trace.append(q(f"~{P_PASSAGES[k]}"))
-    chemin = {"slots": "[" + ", ".join(trace) + "]", "progress": q(T), "offset": debut, "color": "or",
+    # couleur par palier (2026-10-28) : vert récupéré, orange atteint à récupérer, éteint pas atteint
+    chemin = {"slots": "[" + ", ".join(trace) + "]", "progress": q(T), "offset": debut, "color": "vert",
+              "states": q(f"%fluxpass_tierstates_{pid_pass}_{debut + 1}_{nb}%"),
               "start": "false", "end": "false",
               "branches": "[" + ", ".join(branches) + "]"}
-    chemins = {"paliers": chemin, **connecteurs(n, total, slots, "or", q(T), debut, nb, P_PREV, P_NEXT)}
+    chemins = {"paliers": chemin, **connecteurs(n, total, slots, "vert", q(T), debut, nb, P_PREV, P_NEXT)}
     return its, chemins
 
 

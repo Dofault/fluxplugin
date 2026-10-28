@@ -36,7 +36,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *   empty): done, not available yet, or in progress with the item of its task</li>
  * </ul>
  * Action {@code [fluxpass] category <id>} shows a category. Placeholder {@code %fluxpass_tierpage_<pass>_<n>%}: page
- * (n tiers per page) holding the player's tier, to open the path at the right place.
+ * (n tiers per page) holding the player's tier, to open the path at the right place; {@code %fluxpass_tierstates_<pass>_<first>_<count>%}:
+ * colours of the path steps.
  */
 final class PassMenu implements Listener {
 
@@ -214,7 +215,31 @@ final class PassMenu implements Listener {
 
     // ---------------------------------------------------------------- placeholder
 
+    /**
+     * {@code tierstates_<pass>_<first>_<count>}: colour of tiers first to first + count - 1 for the path of the pass
+     * (vert free reward claimed, orange reached and waiting, eteint not reached).
+     */
+    private String tierStates(Player player, String rest) {
+        String[] p = rest.split("_");
+        if (player == null || p.length < 3) return "";
+        int first = number(p[p.length - 2]), count = number(p[p.length - 1]);
+        String pass = String.join("_", java.util.Arrays.copyOf(p, p.length - 2));
+        int tier = number(external(player, "%ecobattlepass_tier_" + pass + "%"));
+        List<String> out = new ArrayList<>();
+        for (int t = first; t < first + count; t++) {
+            if (t > tier) {
+                out.add("eteint");
+                continue;
+            }
+            String state = external(player, "%ecobattlepass_tier_state_" + pass + "_" + t + "%").trim();
+            boolean claimed = !state.isEmpty() && !state.equals("NOT_RECEIVED") && !state.equals("RECEIVED_PREMIUM");
+            out.add(claimed ? "vert" : "orange");
+        }
+        return String.join(",", out);
+    }
+
     private String placeholder(Player player, String params) {
+        if (params.startsWith("tierstates_")) return tierStates(player, params.substring("tierstates_".length()));
         if (!params.startsWith("tierpage_")) return null;
         String rest = params.substring("tierpage_".length());
         int sep = rest.lastIndexOf('_');

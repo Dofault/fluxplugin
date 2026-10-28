@@ -97,21 +97,29 @@ public final class PathRenderer {
             step[i] = next;
         }
 
-        // Liaisons du chemin : allumées si les deux cases sont atteintes.
+        // Couleur de chaque étape (states), sinon progression + couleur unique.
+        String[] colors = states(player, path);
+        java.util.function.IntFunction<String> color = k -> colors == null
+                ? (progress >= k ? on : "eteint")
+                : (k >= 1 && k <= colors.length ? colors[k - 1] : "eteint");
+
+        // Liaisons du chemin : allumées si les deux cases sont atteintes (couleur de l'étape d'arrivée).
         for (int i = 0; i + 1 < slots.size(); i++) {
-            String state = progress >= step[i] && progress >= step[i + 1] ? on : "eteint";
+            String state = colors != null
+                    ? (color.apply(step[i]).equals("eteint") ? "eteint" : color.apply(step[i + 1]))
+                    : progress >= step[i] && progress >= step[i + 1] ? on : "eteint";
             link(path, slots.get(i), slots.get(i + 1), state, rows, vertical, horizontal);
         }
         // Départ et fin (demi-pièces), dans le prolongement du chemin.
         if (path.start()) {
             int first = slots.get(0);
             int dir = slots.size() > 1 ? direction(slots.get(1), first, rows) : LEFT;
-            demi(path, first, dir, progress >= 1 ? on : "eteint", rows, vertical, horizontal);
+            demi(path, first, dir, color.apply(1), rows, vertical, horizontal);
         }
         if (path.end()) {
             int last = slots.get(slots.size() - 1);
             int dir = slots.size() > 1 ? direction(slots.get(slots.size() - 2), last, rows) : RIGHT;
-            demi(path, last, dir, progress >= steps ? on : "eteint", rows, vertical, horizontal);
+            demi(path, last, dir, color.apply(steps), rows, vertical, horizontal);
         }
         // Branches vers les paliers : allumées quand la case de départ est atteinte.
         for (int[] b : path.branches()) {
@@ -120,25 +128,37 @@ public final class PathRenderer {
                 warnOnce(path.id() + b[0], "chemin " + path.id() + " : la branche part de la case " + b[0]
                         + " qui n'est pas sur le chemin (éteinte)");
             }
-            String state = index >= 0 && progress >= step[index] ? on : "eteint";
+            String state = index >= 0 ? color.apply(step[index]) : "eteint";
             link(path, b[0], b[1], state, rows, vertical, horizontal);
         }
-        // Losanges : allumés si la case est atteinte (chemin) ou si sa branche l'est.
+        // Losanges : couleur de la case (chemin) ou de l'étape d'où part leur branche.
         for (int slot : path.nodes()) {
-            boolean lit;
+            String state = "eteint";
             int index = slots.indexOf(slot);
             if (index >= 0) {
-                lit = progress >= step[index];
+                state = color.apply(step[index]);
             } else {
-                lit = false;
                 for (int[] b : path.branches()) {
                     int from = slots.indexOf(b[0]);
-                    if (b[1] == slot && from >= 0 && progress >= step[from]) lit = true;
+                    if (b[1] == slot && from >= 0 && !color.apply(step[from]).equals("eteint")) state = color.apply(step[from]);
                 }
             }
             int[] pos = position(slot, rows);
-            nodes.add(new Piece(glyph("chemin_noeud", lit ? on : "eteint", pos[1] + 6), pos[0] + 6, NODE_W));
+            nodes.add(new Piece(glyph("chemin_noeud", state, pos[1] + 6), pos[0] + 6, NODE_W));
         }
+    }
+
+    private static final java.util.Set<String> STATES = java.util.Set.of("eteint", "vert", "orange", "rouge", "or", "bleu", "rose");
+
+    /** Couleurs des étapes affichées (option states), null quand le chemin n'en a pas. */
+    private static String[] states(Player player, PathSpec path) {
+        if (path.states() == null || path.states().isBlank()) return null;
+        String[] parts = Text.placeholders(player, path.states()).split(",");
+        for (int i = 0; i < parts.length; i++) {
+            String p = parts[i].trim().toLowerCase(java.util.Locale.ROOT);
+            parts[i] = STATES.contains(p) ? p : "eteint";
+        }
+        return parts;
     }
 
     private static int progress(Player player, PathSpec path) {

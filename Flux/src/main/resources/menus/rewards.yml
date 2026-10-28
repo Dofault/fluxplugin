@@ -3,7 +3,7 @@
 # Retour en 9, explication du menu et récompense du jour en 17.
 # Haut : toutes les récompenses en attente, quel que soit le plugin qui les a données, une case par récompense
 # (21 par page), page précédente / suivante à gauche et à droite de la boîte, Tout récupérer dessous.
-# Bas : deux frises de 7, le cycle de connexion (55-61) et les paliers de temps de jeu (64-70), flèches de chaque
+# Bas : deux frises de 7, le cycle de connexion (55-61) et les paliers de temps de jeu (73-79), flèches de chaque
 # côté. Explication et frises construites par FluxRewards (listes recompenses_info, _connexion, _temps).
 title: ":offset_-8::menu_recompenses:"
 rows: 6
@@ -12,18 +12,21 @@ vanilla-background: false
 update-interval: 40
 
 # Liaisons entre les étapes des frises (pièces influroad dans le titre, comme le pass), allumées jusqu'à
-# aujourd'hui / jusqu'au dernier palier atteint, sur la page affichée.
+# vert récupéré, orange en attente, rouge manqué, éteint pas encore (une liaison prend la couleur de l'étape
+# où elle arrive).
 paths:
   connexion:
     slots: [55, 56, 57, 58, 59, 60, 61]
     progress: "%fluxrewards_frise_connexion%"
+    states: "%fluxrewards_frise_connexion_etats%"
     color: vert
     start: false
     end: false
   temps:
-    slots: [64, 65, 66, 67, 68, 69, 70]
+    slots: [73, 74, 75, 76, 77, 78, 79]
     progress: "%fluxrewards_frise_temps%"
-    color: bleu
+    states: "%fluxrewards_frise_temps_etats%"
+    color: vert
     start: false
     end: false
 
@@ -61,7 +64,7 @@ lists:
         left: ["%entry_clic%", "[refresh]"]
 
   recompenses_temps:
-    slots: 64-70
+    slots: 73-79
     item:
       material: entry
       actions:
@@ -142,7 +145,7 @@ items:
     material: "itemsadder:influitems:btn_prev"
     hide-tooltip: true
     name: "&#FFD94DPaliers précédents"
-    slots: [63]
+    slots: [72]
     view-requirements: ["placeholder: %flux_list_recompenses_temps_has_prev% == true"]
     actions:
       left: ["[list] recompenses_temps prev", "[sound] @page", "[refresh]"]
@@ -151,7 +154,7 @@ items:
     material: "itemsadder:influitems:btn_next"
     hide-tooltip: true
     name: "&#FFD94DPaliers suivants"
-    slots: [71]
+    slots: [80]
     view-requirements: ["placeholder: %flux_list_recompenses_temps_has_next% == true"]
     actions:
       left: ["[list] recompenses_temps next", "[sound] @page", "[refresh]"]

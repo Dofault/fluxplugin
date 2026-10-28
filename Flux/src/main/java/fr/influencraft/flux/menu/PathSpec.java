@@ -20,8 +20,11 @@ import java.util.List;
  *                 tourner, sans en faire une étape ; elles sont atteintes avec l'étape suivante
  * @param offset   étapes retirées de la progression avant l'affichage : page 2 d'un long
  *                 chemin de 7 cases = {@code offset: 7} (étapes 8 à 14)
+ * @param states   couleur de chaque étape affichée, séparées par des virgules (placeholder accepté, vide =
+ *                 progression + color) : vert récupéré, orange en attente, rouge manqué, eteint pas encore.
+ *                 Une liaison prend la couleur de l'étape où elle arrive, une branche celle de son départ.
  */
 public record PathSpec(String id, List<Integer> slots, List<int[]> branches, String progress, int cycle,
                        String color, boolean start, boolean end, List<Integer> nodes, int offset,
-                       java.util.Set<Integer> waypoints) {
+                       java.util.Set<Integer> waypoints, String states) {
 }

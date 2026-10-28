@@ -1,6 +1,6 @@
 """Génère le pack ItemsAdder « influroad » (chemins de progression Flux).
 
-Chaque pièce du kit (25 PNG : 5 pièces x 5 états) devient une font_image par hauteur
+Chaque pièce du kit (35 PNG : 5 pièces x 7 états) devient une font_image par hauteur
 de pose : une font_image a une hauteur fixe (y_position), donc une entrée par pièce et
 par position verticale, toutes pointant vers le même PNG. Nom : <pièce>_<état>_y<Y>
 où Y est le haut de la pièce en coordonnées de la fenêtre (0 = haut de la fenêtre).
@@ -12,7 +12,7 @@ import os, shutil, sys
 
 KIT, OUT = sys.argv[1], sys.argv[2]
 PIECES = ["chemin_h", "chemin_v", "chemin_h_demi", "chemin_v_demi", "chemin_noeud"]
-STATES = ["eteint", "vert", "or", "bleu", "rose"]
+STATES = ["eteint", "vert", "or", "bleu", "rose", "rouge", "orange"]
 HEIGHT = {"chemin_h": 3, "chemin_v": 19, "chemin_h_demi": 3, "chemin_v_demi": 10, "chemin_noeud": 5}
 
 # Haut des cases d'un menu de 6 rangées : coffre, 3 rangées d'inventaire, barre d'action.

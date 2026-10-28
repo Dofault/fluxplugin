@@ -1,7 +1,7 @@
 # Kit chemin de progression (générique)
 
 Pièces de chemin à poser entre les slots de n'importe quel menu (grille Minecraft de 18 px).
-Chaque pièce existe en 5 états : `eteint`, `vert`, `or`, `bleu`, `rose`.
+Chaque pièce existe en 7 états : `eteint`, `vert`, `or`, `bleu`, `rose`, `rouge`, `orange`. Convention des chemins à états (2026-10-28) : `vert` récupéré / atteint, `orange` en attente, `rouge` manqué, `eteint` pas encore.
 
 | Fichier | Taille | Rôle |
 | --- | --- | --- |

@@ -163,7 +163,7 @@ public final class MenuLoader {
         }
     }
 
-    private static final java.util.Set<String> COLORS = java.util.Set.of("vert", "or", "bleu", "rose");
+    private static final java.util.Set<String> COLORS = java.util.Set.of("vert", "orange", "rouge", "or", "bleu", "rose");
 
     private static List<PathSpec> paths(ConfigurationSection section, String where, int maxSlot, Consumer<String> warn) {
         if (section == null) return List.of();
@@ -218,12 +218,13 @@ public final class MenuLoader {
             for (String raw : strings(p, "nodes")) addSlots(raw, nodes);
             String color = p.getString("color", "vert").toLowerCase(Locale.ROOT);
             if (!COLORS.contains(color)) {
-                warn.accept(at + " : couleur « " + color + " » inconnue (vert, or, bleu, rose), vert retenu");
+                warn.accept(at + " : couleur « " + color + " » inconnue (vert, orange, rouge, or, bleu, rose), vert retenu");
                 color = "vert";
             }
             out.add(new PathSpec(key, List.copyOf(slots), List.copyOf(branches), p.getString("progress", "0"),
                     Math.max(0, p.getInt("cycle", 0)), color, p.getBoolean("start", true), p.getBoolean("end", false),
-                    List.copyOf(nodes), Math.max(0, p.getInt("offset", 0)), java.util.Set.copyOf(waypoints)));
+                    List.copyOf(nodes), Math.max(0, p.getInt("offset", 0)), java.util.Set.copyOf(waypoints),
+                    p.getString("states", "")));
         }
         return List.copyOf(out);
     }

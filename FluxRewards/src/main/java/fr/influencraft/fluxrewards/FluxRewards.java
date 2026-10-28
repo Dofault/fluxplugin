@@ -167,7 +167,8 @@ public final class FluxRewards extends FluxPlugin implements Listener {
      *   <li>{@code temps_joue}, {@code temps_atteints} (path progress), {@code temps_total}</li>
      *   <li>{@code temps_<i>_etat|nom|seuil|restant|ligne_<j>}</li>
      *   <li>{@code a_recuperer}: login and playtime rewards waiting in Flux</li>
-     *   <li>{@code frise_connexion}, {@code frise_temps}: progress of the paths of the rewards menu, on the page shown</li>
+     *   <li>{@code frise_connexion}, {@code frise_temps}: progress of the paths of the rewards menu, on the page shown;
+     *   {@code frise_connexion_etats}, {@code frise_temps_etats}: colour of each step (vert, orange, rouge, eteint)</li>
      * </ul>
      */
     private String placeholder(Player player, String params) {
@@ -197,6 +198,12 @@ public final class FluxRewards extends FluxPlugin implements Listener {
             case "frise_connexion" -> {
                 // path of the menu's login frieze: steps reached on the page shown (today included)
                 return String.valueOf(RewardsMenu.pathProgress(player, RewardsMenu.CONNEXION, d.dayOfCycle(daily.cycle())));
+            }
+            case "frise_connexion_etats" -> {
+                return RewardsMenu.dayColors(player, daily);
+            }
+            case "frise_temps_etats" -> {
+                return RewardsMenu.playtimeColors(player, daily);
             }
             case "frise_temps" -> {
                 return String.valueOf(RewardsMenu.pathProgress(player, RewardsMenu.TEMPS, daily.playtimeReached(uuid)));

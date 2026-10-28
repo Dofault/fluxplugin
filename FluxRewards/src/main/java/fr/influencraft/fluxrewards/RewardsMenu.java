@@ -63,6 +63,54 @@ final class RewardsMenu {
         return Math.max(0, Math.min(PAR_SEMAINE, reached - start));
     }
 
+    /** Colours of the 7 steps of the login frieze page shown (path states): vert, orange, rouge, eteint. */
+    static String dayColors(Player player, DailyRewards daily) {
+        UUID uuid = player.getUniqueId();
+        PlayerData d = daily.data(uuid);
+        int start = Lists.state(player, CONNEXION).page() * PAR_SEMAINE;
+        List<String> out = new ArrayList<>();
+        int today = d == null ? 0 : d.dayOfCycle(daily.cycle());
+        for (int n = start + 1; n <= Math.min(daily.cycle(), start + PAR_SEMAINE); n++) {
+            if (d == null) {
+                out.add("eteint");
+                continue;
+            }
+            boolean waiting = n == today && Rewards.waiting(uuid, daily.dayKey(d));
+            out.add(waiting ? "orange" : switch (daily.dayState(d, n)) {
+                case CLAIMED -> "vert";
+                case MISSED -> "rouge";
+                case AVAILABLE -> "orange";
+                case LOCKED -> "eteint";
+            });
+        }
+        return String.join(",", out);
+    }
+
+    /** Colours of the 7 steps of the playtime frieze page shown. */
+    static String playtimeColors(Player player, DailyRewards daily) {
+        UUID uuid = player.getUniqueId();
+        PlayerData d = daily.data(uuid);
+        List<RewardTier> tiers = daily.playtimeTiers();
+        int start = Lists.state(player, TEMPS).page() * PAR_SEMAINE;
+        List<String> out = new ArrayList<>();
+        for (int i = start; i < Math.min(tiers.size(), start + PAR_SEMAINE); i++) {
+            RewardTier tier = tiers.get(i);
+            if (d == null) {
+                out.add("eteint");
+            } else if (Rewards.waiting(uuid, DailyRewards.playtimeKey(tier))) {
+                out.add("orange");
+            } else {
+                out.add(switch (daily.playtimeState(uuid, d, tier)) {
+                    case CLAIMED -> "vert";
+                    case AVAILABLE -> "orange";
+                    case MISSED -> "rouge";
+                    case LOCKED -> "eteint";
+                });
+            }
+        }
+        return String.join(",", out);
+    }
+
     // ------------------------------------------------------------------ login days
 
     private List<ListEntry> days(Player player) {
