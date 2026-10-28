@@ -57,6 +57,12 @@ final class RewardsMenu {
         Lists.act(player, CONNEXION, "page " + ((day - 1) / PAR_SEMAINE + 1), PAR_SEMAINE);
     }
 
+    /** Steps reached among the 7 of the page of a frieze the player looks at (0 to 7). */
+    static int pathProgress(Player player, String list, int reached) {
+        int start = Lists.state(player, list).page() * PAR_SEMAINE;
+        return Math.max(0, Math.min(PAR_SEMAINE, reached - start));
+    }
+
     // ------------------------------------------------------------------ login days
 
     private List<ListEntry> days(Player player) {

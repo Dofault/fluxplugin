@@ -11,9 +11,26 @@ player-inventory: hidden
 vanilla-background: false
 update-interval: 40
 
+# Liaisons entre les étapes des frises (pièces influroad dans le titre, comme le pass), allumées jusqu'à
+# aujourd'hui / jusqu'au dernier palier atteint, sur la page affichée.
+paths:
+  connexion:
+    slots: [55, 56, 57, 58, 59, 60, 61]
+    progress: "%fluxrewards_frise_connexion%"
+    color: vert
+    start: false
+    end: false
+  temps:
+    slots: [64, 65, 66, 67, 68, 69, 70]
+    progress: "%fluxrewards_frise_temps%"
+    color: bleu
+    start: false
+    end: false
+
 open-actions:
   - "[fluxrewards] semaine"
   - "[sound] @page"
+  - "[refresh]"
 
 lists:
   rewards:
@@ -110,7 +127,7 @@ items:
     slots: [54]
     view-requirements: ["placeholder: %flux_list_recompenses_connexion_has_prev% == true"]
     actions:
-      left: ["[list] recompenses_connexion prev", "[sound] @page"]
+      left: ["[list] recompenses_connexion prev", "[sound] @page", "[refresh]"]
 
   connexion_suiv:
     material: "itemsadder:influitems:btn_next"
@@ -119,7 +136,7 @@ items:
     slots: [62]
     view-requirements: ["placeholder: %flux_list_recompenses_connexion_has_next% == true"]
     actions:
-      left: ["[list] recompenses_connexion next", "[sound] @page"]
+      left: ["[list] recompenses_connexion next", "[sound] @page", "[refresh]"]
 
   temps_prec:
     material: "itemsadder:influitems:btn_prev"
@@ -128,7 +145,7 @@ items:
     slots: [63]
     view-requirements: ["placeholder: %flux_list_recompenses_temps_has_prev% == true"]
     actions:
-      left: ["[list] recompenses_temps prev", "[sound] @page"]
+      left: ["[list] recompenses_temps prev", "[sound] @page", "[refresh]"]
 
   temps_suiv:
     material: "itemsadder:influitems:btn_next"
@@ -137,4 +154,4 @@ items:
     slots: [71]
     view-requirements: ["placeholder: %flux_list_recompenses_temps_has_next% == true"]
     actions:
-      left: ["[list] recompenses_temps next", "[sound] @page"]
+      left: ["[list] recompenses_temps next", "[sound] @page", "[refresh]"]
