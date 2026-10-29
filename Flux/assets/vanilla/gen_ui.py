@@ -135,52 +135,39 @@ def sprite_lit():
 
 # ---------------------------------------------------------------------------------------------------- buttons
 
-def _px(d, pts, cx, cy):
-    for x, y in pts:
-        d.point((cx + x + 1, cy + y + 1), fill=(0, 0, 0, 140))
-    for x, y in pts:
-        d.point((cx + x, cy + y), fill=WHITE)
-
-
-def _minus(d, cx, cy):
-    _px(d, [(i, j) for i in range(-3, 4) for j in (0, 1)], cx, cy)
-
-
-def _lock(d, cx, cy):
-    _px(d, [(x, y) for x in range(-3, 4) for y in range(0, 4)] + [(-2, -1), (-2, -2), (-1, -3), (0, -3), (1, -3),
-                                                                   (2, -2), (2, -1)], cx, cy)
-
-
-def _gear(d, cx, cy):
-    ring = [(x, y) for x in range(-3, 4) for y in range(-3, 4) if 4 <= x * x + y * y <= 10]
-    teeth = [(0, -4), (0, 4), (-4, 0), (4, 0), (-3, -3), (3, 3), (-3, 3), (3, -3)]
-    _px(d, ring + teeth, cx, cy)
-
-
-def _search(d, cx, cy):
-    ring = [(x, y) for x in range(-3, 2) for y in range(-3, 2) if 3 <= (x + 1) ** 2 + (y + 1) ** 2 <= 5]
-    _px(d, ring + [(1, 1), (2, 2), (3, 3)], cx, cy)
-
-
-def _filter(d, cx, cy):
-    _px(d, [(x, -3) for x in range(-3, 4)] + [(x, -1) for x in range(-2, 3)] + [(x, 1) for x in range(-1, 2)]
-        + [(0, 2), (0, 3)], cx, cy)
-
-
-def _up(d, cx, cy):
-    _px(d, [(0, y) for y in range(-3, 4)] + [(-1, -2), (1, -2), (-2, -1), (2, -1), (-3, 0), (3, 0)], cx, cy)
-
-
-def _down(d, cx, cy):
-    _px(d, [(0, y) for y in range(-3, 4)] + [(-1, 2), (1, 2), (-2, 1), (2, 1), (-3, 0), (3, 0)], cx, cy)
-
-
-ICONS = dict(ui.ICONS)
-ICONS.update({"remove": _minus, "lock": _lock, "settings": _gear, "search": _search, "filter": _filter,
-              "up": _up, "down": _down})
-ICONS["add"] = ICONS.pop("plus")
+# Icons of the buttons: 8 x 8, symmetric where the shape allows, drawn at (4, 3) so they sit in the middle of the
+# button face (x 2-13, y 2-11); white with a 1 px shadow under each column, as the menu font.
+ICONS = {
+    "close": ["##....##", "###..###", ".######.", "..####..", "..####..", ".######.", "###..###", "##....##"],
+    "add": ["...##...", "...##...", "...##...", "########", "########", "...##...", "...##...", "...##..."],
+    "remove": ["........", "........", "........", "########", "########", "........", "........", "........"],
+    "info": ["...##...", "...##...", "........", "..###...", "...##...", "...##...", "...##...", "..####.."],
+    "left": ["...##...", "..##....", ".##.....", "########", "########", ".##.....", "..##....", "...##..."],
+    "right": ["...##...", "....##..", ".....##.", "########", "########", ".....##.", "....##..", "...##..."],
+    "up": ["...##...", "..####..", ".######.", "##.##.##", "...##...", "...##...", "...##...", "...##..."],
+    "down": ["...##...", "...##...", "...##...", "...##...", "##.##.##", ".######.", "..####..", "...##..."],
+    "check": ["........", "......##", ".....##.", "##..##..", ".####...", "..##....", "........", "........"],
+    "back": ["......##", "......##", "..#...##", ".##...##", "########", "########", ".##.....", "..#....."],
+    "lock": ["..####..", ".##..##.", ".#....#.", "########", "###..###", "###..###", "########", "########"],
+    "settings": ["...##...", ".######.", ".##..##.", "###..###", "###..###", ".##..##.", ".######.", "...##..."],
+    "search": [".####...", "##..##..", "#....#..", "#....#..", "##..##..", ".#####..", ".....##.", "......##"],
+    "filter": ["########", ".######.", "..####..", "...##...", "...##...", "...##...", "...##...", "...##..."],
+}
+ICON_X, ICON_Y = 4, 3
 BUTTONS = ["back", "close", "info", "add", "remove", "left", "right", "check", "lock", "settings", "search",
            "filter", "up", "down"]
+
+
+def draw_icon(d, icon, colour, shadow):
+    rows = ICONS[icon]
+    for y, row in enumerate(rows):
+        for x, c in enumerate(row):
+            if c == "#" and (y + 1 >= len(rows) or rows[y + 1][x] != "#"):
+                d.point((ICON_X + x, ICON_Y + y + 1), fill=shadow)
+    for y, row in enumerate(rows):
+        for x, c in enumerate(row):
+            if c == "#":
+                d.point((ICON_X + x, ICON_Y + y), fill=colour)
 
 
 def button_png(icon, colour, disabled=False):
@@ -191,13 +178,7 @@ def button_png(icon, colour, disabled=False):
     ui.button(d, (0, 0, 15, 14), base, None)
     d.point((0, 15), fill=(0, 0, 0, 0))
     d.point((15, 15), fill=(0, 0, 0, 0))
-    ICONS[icon](d, 7, 6)
-    if disabled:   # icon greyed
-        px = im.load()
-        for y in range(16):
-            for x in range(16):
-                if px[x, y] == WHITE and 1 < x < 14 and 1 < y < 13:
-                    px[x, y] = rgb("#C6C6C6")
+    draw_icon(d, icon, rgb("#C6C6C6") if disabled else WHITE, tone(base, -0.55))
     return im
 
 
