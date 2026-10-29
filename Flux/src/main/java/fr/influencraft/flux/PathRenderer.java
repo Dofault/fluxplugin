@@ -219,6 +219,11 @@ public final class PathRenderer {
         }
     }
 
+    /** Top left of the item of a raw slot in the window {x, y} (inventory rows as drawn in game). */
+    public static int[] slotPosition(int slot, int rows) {
+        return position(slot, rows);
+    }
+
     /** Coin haut gauche de la case brute {@code slot} dans la fenêtre {x, y}. */
     static int[] position(int slot, int rows) {
         int top = rows * 9;

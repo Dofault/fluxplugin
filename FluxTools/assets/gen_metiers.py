@@ -3,24 +3,19 @@
 
     python3 gen_metiers.py <plugins/FluxTools/menus> <FluxPets/content/cards.yml>
 
-Fond influmenu:menu_metier (176 x 221), tout dans un seul menu, sans l'en-tête du menu principal :
-  rangée 0-8                 : retour (0), rejoindre / quitter (7, quitter = double clic), nom du métier
-                               écrit au centre (influmetier:nom_<id>, dans le titre), icône Carrières (8)
-  cases 9 / 18 / 27 / 36     : les 4 familiers FluxPets du métier (simple, unique, élite, ultime), en portrait
-  cadre (colonnes 2 à 6)     : illustration du métier choisi (influmetier:metier_<id>, dans le titre)
-  cases 15-17 ... 42-44      : les 12 métiers, une rangée par famille
-  inventaire 55-61 / 64-70 / 73-79 : actions rémunérées (21 par page), flèches 63 et 71
-  rangée 45-53               : barre des 7 niveaux autour du niveau du joueur (46-52, chemin vert),
-                               flèches 45 / 53 pour décaler la fenêtre ([fluxjob] <id> prev|next)
-  barre d'action 81-89       : barre d'XP vers le niveau suivant (chemin vert sur les 9 cases vides,
-                               9 segments), sans objet ; niveau écrit juste au-dessus
-                               (chiffres influmetier:chiffre_<n>, %fluxjob_<id>_levelglyphs_169%)
-Une page par métier (metiers_<id>), sans animation : titre, familiers (%influpet_<familier>_level%) et barres.
-Grille des métiers, niveaux, actions rémunérées (paginées par Flux) et rejoindre / quitter sont des listes de
-Flux construites par FluxTools (JobMenu) : rien à régénérer quand les actions ou les niveaux changent.
-À relancer après un changement de cartes ou de métiers (liste METIERS), puis /fluxmenu reload.
+Thème vanilla (2026-10-29) : fond fluxui:bg_metiers (Flux/assets/vanilla/gen_ui.py), le reste en widgets de Flux.
+  rangée 0                   : retour (0), nom du métier dans le champ sombre (widget text), rejoindre /
+                               quitter (7, quitter = double clic), info (8)
+  cases 9 / 18 / 27 / 36     : les 4 familiers FluxPets du métier, en portrait
+  cadre                      : illustration du métier choisi (influmetier:metier_<id>, widget image)
+  cases 15-17 ... 42-44      : les 12 métiers (case du métier affiché éclairée, widget lit)
+  rangée 5                   : barre d'XP vers le niveau suivant, « Niv. N » dessus, XP au survol (widget bar)
+  inventaire 54-80           : actions rémunérées (27 par page)
+  barre d'action 81 / 89     : pagination des actions (widget pager : rien quand tout tient sur une page)
+Une page par métier (metiers_<id>) : familiers et widgets du métier. Grille, actions et rejoindre / quitter sont
+des listes de Flux construites par FluxTools (JobMenu). À relancer après un changement de cartes ou de métiers
+(liste METIERS), puis /fluxmenu reload.
 """
-import json
 import os
 import sys
 
@@ -30,21 +25,16 @@ import yaml
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "Flux", "assets"))
 from gen_pages import item, page, q, CLIC_G, OR, VIOLET, ROUGE  # noqa: E402
 
-FOND = ":offset_-8::menu_metier:"
-# Après le fond (avance 177 - 8 = 169 depuis le début du titre), l'illustration va en x = 38 :
-# 38 - 8 = 30 depuis le début du titre, d'où un décalage de 30 - 169.
-DECALAGE_PHOTO = 30 - 169
+FOND = ":offset_-8::bg_metiers:"
 VERT = "&#2ECF7B"
 CARTES = [9, 18, 27, 36]
 METIER_CASES = [15, 16, 17, 24, 25, 26, 33, 34, 35, 42, 43, 44]
-NIVEAUX = list(range(46, 53))
-BARRE_XP = list(range(81, 90))
 RETOUR, ADHESION, INFO = 0, 7, 8
-FLECHE_PREV, FLECHE_NEXT = 45, 53
-# Curseur du titre après le fond (169) puis l'illustration (offset -139, glyphe 64 + 1) : 95.
-CURSEUR_APRES_PHOTO = 169 + DECALAGE_PHOTO + 65
-ACTIONS = list(range(55, 62)) + list(range(64, 71)) + list(range(73, 80))   # 7 colonnes x 3 rangées
-PREV, NEXT = 63, 71
+ACTIONS = list(range(54, 81))       # les 3 rangées de l'inventaire
+PREV, NEXT = 81, 89                 # pagination, sur la barre d'action
+BARRE = {"x": 6, "y": 109, "width": 164, "survol": "45-53"}     # cadre dessiné dans le fond
+NOM = {"x": 77, "y": 23}            # centre du champ sombre de la rangée 0
+PHOTO_X = 34
 RARETES = [("simple", "Commune"), ("unique", "Rare"), ("elite", "Élite"), ("ultimate", "Ultime")]
 
 # (id EcoJobs, nom, objet, série FluxPets, description courte) ; une rangée par famille.
@@ -92,14 +82,29 @@ def cartes(serie, toutes):
     return its
 
 
-def chemins(jid):
-    """Barre des 7 niveaux (46-52) et barre d'XP (81-89) : chemins verts allumés par Flux."""
-    return {
-        "niveaux": {"slots": "[" + ", ".join(map(str, NIVEAUX)) + "]", "progress": q(f"%fluxjob_{jid}_window%"),
-                    "color": "vert", "start": "false", "end": "false"},
-        "xp": {"slots": "[" + ", ".join(map(str, BARRE_XP)) + "]", "progress": q(f"%fluxjob_{jid}_xpsteps%"),
-               "color": "vert", "start": "true", "end": "true"},
-    }
+def widgets(jid, nom, case):
+    """Widgets de la page d'un métier : nom, illustration, case éclairée, barre d'XP (8 espaces : dans une page)."""
+    b = BARRE
+    return "\n".join([
+        "    widgets:",
+        "      nom:",
+        f"        type: text", f"        x: {NOM['x']}", f"        y: {NOM['y']}", "        align: center",
+        f"        text: {q(nom)}",
+        "      illustration:",
+        "        type: image", f"        glyph: {q('metier_' + jid)}", f"        x: {PHOTO_X}", "        width: 64",
+        "      selection:",
+        "        type: lit", f"        slot: {case}",
+        "      niveau:",
+        "        type: bar", f"        x: {b['x']}", f"        y: {b['y']}", f"        width: {b['width']}",
+        f"        progress: {q(f'%ecojobs_{jid}_percentage_progress%')}", "        max: 100", "        colour: green",
+        f"        text: {q(f'Niv. %ecojobs_{jid}_level%')}",
+        "        tooltip:",
+        f"          slots: {q(b['survol'])}",
+        f"          name: {q(f'{OR}Niveau %ecojobs_{jid}_level%')}",
+        "          lore:",
+        f"            - {q(f'@kv Expérience | %ecojobs_{jid}_current_xp%&7/&f%ecojobs_{jid}_required_xp%')}",
+        f"            - {q(f'@kv Progression | %ecojobs_{jid}_percentage_progress% %')}",
+    ])
 
 
 def liste(lid, slots, actions=None, extra=()):
@@ -116,25 +121,15 @@ def main():
     menus, cards_yml = sys.argv[1:3]
     toutes = yaml.safe_load(open(cards_yml, encoding="utf-8"))["cards"]
     base = [
-        item("retour", "itemsadder:influitems:btn_back", "Retour", RETOUR, ["Revenir au menu."],
+        item("retour", "itemsadder:fluxui:btn_back_red", "Retour", RETOUR, ["Revenir au menu."],
              [CLIC_G + "Menu principal"], {"left": ["[menu] main"]}),
-        item("info", "IRON_PICKAXE", "Carrières", INFO,
-             ["Choisis un métier à droite :", "ses cartes, ses niveaux et ses", "actions rémunérées s'affichent.",
-              "", "Métiers actifs : &f%ecojobs_in_jobs%&7/&f%ecojobs_limit%"]).replace(
-            "        name:", "        flags: [HIDE_ATTRIBUTES]\n        name:", 1),
-        item("actions_prec", "itemsadder:influitems:btn_prev", "Page précédente", PREV, [],
-             clics={"left": ["[list] metiers_actions prev", "[sound] @page"]}, cacher=True,
-             conditions=["placeholder: %flux_list_metiers_actions_has_prev% == true"]),
-        item("actions_suiv", "itemsadder:influitems:btn_next", "Page suivante", NEXT, [],
-             clics={"left": ["[list] metiers_actions next", "[sound] @page"]}, cacher=True,
-             conditions=["placeholder: %flux_list_metiers_actions_has_next% == true"]),
+        item("info", "itemsadder:fluxui:btn_info_blue", "Carrières", INFO,
+             ["Choisis un métier à droite. Ses familiers, son niveau et ses actions rémunérées s'affichent.",
+              "", "Métiers actifs : &f%ecojobs_in_jobs%&7/&f%ecojobs_limit%"]),
     ]
     listes = [
         liste("metiers_grille", METIER_CASES,
               ["[fluxjob] %entry_id% reset", "[page-swap] metiers_%entry_id%", "[sound] @page"]),
-        liste("metiers_niveaux", NIVEAUX),
-        liste("metiers_niveaux_prec", [FLECHE_PREV], ["[fluxjob] %entry_id% prev", "[sound] @page"], ["hide-tooltip: true"]),
-        liste("metiers_niveaux_suiv", [FLECHE_NEXT], ["[fluxjob] %entry_id% next", "[sound] @page"], ["hide-tooltip: true"]),
         liste("metiers_actions", ACTIONS),
         liste("metiers_adhesion", [ADHESION], ["[fluxjob] %entry_id% adhesion"], ['confirm: "%entry_confirm%"']),
     ]
@@ -166,23 +161,26 @@ lists:
 
 {chr(10).join(listes)}
 
+# Pagination des actions : boutons et compteur seulement quand elles ne tiennent pas sur une page.
+widgets:
+  pages:
+    type: pager
+    list: metiers_actions
+    prev: {PREV}
+    next: {NEXT}
+
 items:
 
 {corps}
 """)
-    largeurs = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "Flux", "assets", "metiers", "noms.json")))
     pages = []
-    for jid, nom, objet, serie, desc in METIERS:
-        # Nom du métier centré sur la rangée du bas : x = 88 - largeur / 2 dans la fenêtre.
-        decalage_nom = (88 - largeurs[jid] // 2 - 8) - CURSEUR_APRES_PHOTO
-        # Niveau écrit au-dessus de la barre d'XP (avance nette nulle : n'influe pas sur la suite).
-        niveau_ecrit = f"%fluxjob_{jid}_levelglyphs_169%"
-        titre = q(f"{FOND}{niveau_ecrit}:offset_{DECALAGE_PHOTO}::metier_{jid}::offset_{decalage_nom}::nom_{jid}:")
-        pages.append(page(f"metiers_{jid}", cartes(serie, toutes), chemins(jid), titre, animation=False))
+    for k, (jid, nom, objet, serie, desc) in enumerate(METIERS):
+        bloc = page(f"metiers_{jid}", cartes(serie, toutes), {}, q(FOND), animation=False)
+        pages.append(bloc.rstrip("\n") + "\n" + widgets(jid, nom, METIER_CASES[k]) + "\n")
     os.makedirs(os.path.join(menus, "_pages"), exist_ok=True)
     with open(os.path.join(menus, "_pages", "metiers.yml"), "w", encoding="utf-8") as f:
         f.write("# Généré par plugins/fluxplugin/FluxTools/assets/gen_metiers.py : ne pas modifier à la main.\n"
-                "# Pages du menu Carrières, une par métier : titre, familiers du métier, barres de niveaux et d'XP.\n\npages:\n\n"
+                "# Pages du menu Carrières, une par métier : familiers, nom, illustration, case éclairée, barre d'XP.\n\npages:\n\n"
                 + "\n".join(pages) + "\n")
     print(len(pages), "pages")
 

@@ -45,8 +45,10 @@ public final class MenuLoader {
         }
         int maxSlot = mode == InventoryMode.HIDDEN ? topSize + 36 : topSize;
 
-        List<MenuButton> buttons = buttons(yml.getConfigurationSection("items"), where + " > items",
-                maxSlot, topSize, mode, warn);
+        List<MenuButton> buttons = new ArrayList<>(buttons(yml.getConfigurationSection("items"), where + " > items",
+                maxSlot, topSize, mode, warn));
+        List<Widget> widgets = widgets(yml.getConfigurationSection("widgets"), where + " > widgets", warn);
+        buttons.addAll(widgetButtons(widgets, maxSlot, topSize, mode, yml.getConfigurationSection("widgets"), where, warn));
 
         java.util.Map<String, Page> pages = new java.util.LinkedHashMap<>();
         String defaultTitle = yml.getString("title", "");
@@ -83,7 +85,8 @@ public final class MenuLoader {
                 lists(yml.getConfigurationSection("lists"), where + " > lists", maxSlot, warn),
                 inputs.stream().mapToInt(Integer::intValue).toArray(),
                 strings(yml, "input-change-actions"),
-                strings(yml, "inventory-click-actions"));
+                strings(yml, "inventory-click-actions"),
+                widgets);
     }
 
     private static List<ListSpec> lists(ConfigurationSection section, String where, int maxSlot, Consumer<String> warn) {
@@ -127,6 +130,88 @@ public final class MenuLoader {
         }
     }
 
+    // ---------------------------------------------------------------- widgets (vanilla theme, Widget / UiTitle)
+
+    private static List<Widget> widgets(ConfigurationSection section, String where, Consumer<String> warn) {
+        if (section == null) return List.of();
+        List<Widget> out = new ArrayList<>();
+        for (String key : section.getKeys(false)) {
+            ConfigurationSection w = section.getConfigurationSection(key);
+            if (w == null) continue;
+            String at = where + "." + key;
+            List<Requirement> req = requirements(w, "view-requirements", at, warn);
+            String type = w.getString("type", "").toLowerCase(Locale.ROOT);
+            try {
+                out.add(switch (type) {
+                    case "text" -> new Widget.Text(key, w.getInt("x"), w.getInt("y"), align(w.getString("align", "left")),
+                            w.getString("text", ""), w.getString("colour", w.getString("color", null)), req);
+                    case "image" -> new Widget.Image(key, w.getString("glyph", ""), w.getInt("x"), w.getInt("width"), req);
+                    case "bar" -> new Widget.Bar(key, w.getInt("x"), w.getInt("y"), w.getInt("width"),
+                            w.getString("progress", "0"), w.getDouble("max", 1), w.getString("colour", "green"),
+                            w.getString("text", null), req);
+                    case "pager" -> new Widget.Pager(key, w.getString("list", ""), w.getInt("prev"), w.getInt("next"), req);
+                    case "lit" -> new Widget.Lit(key, w.getInt("slot"), req);
+                    default -> throw new IllegalArgumentException("type « " + type + " » inconnu (text, image, bar, pager, lit)");
+                });
+            } catch (IllegalArgumentException e) {
+                warn.accept(at + " : " + e.getMessage() + " (widget ignoré)");
+            }
+        }
+        return List.copyOf(out);
+    }
+
+    private static Widget.Align align(String raw) {
+        return switch (raw.toLowerCase(Locale.ROOT)) {
+            case "center", "centre" -> Widget.Align.CENTER;
+            case "right" -> Widget.Align.RIGHT;
+            default -> Widget.Align.LEFT;
+        };
+    }
+
+    /**
+     * Buttons a widget brings with it, built as if written in the file: the pager's two buttons (active, or greyed
+     * when there is no page that way, nothing at all when the list fits on one page) and the tooltip of a bar
+     * (invisible items over {@code tooltip.slots}).
+     */
+    private static List<MenuButton> widgetButtons(List<Widget> widgets, int maxSlot, int topSize, InventoryMode mode,
+                                                  ConfigurationSection section, String where, Consumer<String> warn) {
+        if (widgets.isEmpty()) return List.of();
+        YamlConfiguration gen = new YamlConfiguration();
+        for (Widget w : widgets) {
+            if (w instanceof Widget.Pager p) {
+                String pre = "%flux_list_" + p.list() + "_";
+                pagerButton(gen, p.id() + "_prev", p.prev(), "left", pre + "has_prev%", pre + "pages%", "[list] " + p.list() + " prev");
+                pagerButton(gen, p.id() + "_next", p.next(), "right", pre + "has_next%", pre + "pages%", "[list] " + p.list() + " next");
+            } else if (w instanceof Widget.Bar b && section != null) {
+                ConfigurationSection tip = section.getConfigurationSection(b.id() + ".tooltip");
+                if (tip == null) continue;
+                String k = "__" + b.id() + "_tooltip.";
+                gen.set(k + "material", "itemsadder:influitems:invisible");
+                gen.set(k + "slots", tip.get("slots"));
+                gen.set(k + "name", tip.getString("name", " "));
+                gen.set(k + "lore", tip.getStringList("lore"));
+                gen.set(k + "priority", 10);
+            }
+        }
+        return buttons(gen, where + " > widgets", maxSlot, topSize, mode, warn);
+    }
+
+    private static void pagerButton(YamlConfiguration gen, String id, int slot, String icon, String can, String pages,
+                                    String action) {
+        String on = "__" + id + ".", off = "__" + id + "_off.";
+        gen.set(on + "material", "itemsadder:fluxui:btn_" + icon + "_green");
+        gen.set(on + "slots", List.of(String.valueOf(slot)));
+        gen.set(on + "hide-tooltip", true);
+        gen.set(on + "priority", 1);
+        gen.set(on + "view-requirements", List.of("placeholder: " + can + " == true"));
+        gen.set(on + "actions.left", List.of(action));
+        gen.set(off + "material", "itemsadder:fluxui:btn_" + icon + "_off");
+        gen.set(off + "slots", List.of(String.valueOf(slot)));
+        gen.set(off + "hide-tooltip", true);
+        gen.set(off + "priority", 2);
+        gen.set(off + "view-requirements", List.of("placeholder: " + pages + " > 1"));
+    }
+
     private static List<TitleLayer> titleLayers(ConfigurationSection section, String where, Consumer<String> warn) {
         if (section == null) return List.of();
         List<TitleLayer> out = new ArrayList<>();
@@ -153,13 +238,18 @@ public final class MenuLoader {
             String at = where + " > pages." + key;
             String id = key.toLowerCase(Locale.ROOT);
             if (pages.containsKey(id)) warn.accept(at + " : page déjà définie, remplacée");
+            List<Widget> widgets = widgets(p.getConfigurationSection("widgets"), at + " > widgets", warn);
+            List<MenuButton> pageButtons = new ArrayList<>(
+                    buttons(p.getConfigurationSection("items"), at + " > items", maxSlot, topSize, mode, warn));
+            pageButtons.addAll(widgetButtons(widgets, maxSlot, topSize, mode, p.getConfigurationSection("widgets"), at, warn));
             pages.put(id, new Page(id,
                     p.getString("title", defaultTitle),
                     strings(p, "animation.frames"),
                     Math.max(1, p.getInt("animation.interval", 1)),
-                    buttons(p.getConfigurationSection("items"), at + " > items", maxSlot, topSize, mode, warn),
+                    List.copyOf(pageButtons),
                     paths(p.getConfigurationSection("paths"), at + " > paths", maxSlot, warn),
-                    lists(p.getConfigurationSection("lists"), at + " > lists", maxSlot, warn)));
+                    lists(p.getConfigurationSection("lists"), at + " > lists", maxSlot, warn),
+                    widgets));
         }
     }
 

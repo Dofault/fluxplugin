@@ -13,6 +13,8 @@ import java.util.List;
  * {@code interval} ticks (animation continue : roue qui tourne...), sans bloquer les clics.
  *
  * <p>title-layers (facultatif) : calques ajoutés au titre selon des conditions, cf. {@link TitleLayer}.
+ *
+ * <p>widgets (optional): text, bars, pagers... of the vanilla theme drawn in the title, cf. {@link Widget}.
  */
 public record Menu(
         String id,
@@ -35,7 +37,8 @@ public record Menu(
         List<ListSpec> lists,
         int[] inputSlots,
         List<String> inputChangeActions,
-        List<String> inventoryClickActions) {
+        List<String> inventoryClickActions,
+        List<Widget> widgets) {
 
     /** Whether the player may put items in this top slot (deposit zone, {@code input-slots}). */
     public boolean isInput(int rawSlot) {

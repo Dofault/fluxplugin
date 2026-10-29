@@ -236,14 +236,14 @@ final class JobMenu implements Listener {
         ItemStack item;
         String confirm = "";
         if (jobs.active(player, job)) {
-            item = item("itemsadder:influitems:deny", "Quitter le métier", Lore.create().description("Ta progression est gardée.")
+            item = item("itemsadder:fluxui:btn_close_red", "Quitter le métier", Lore.create().description("Ta progression est gardée.")
                     .kv("Coût", jobs.leavePrice(player, job)).left("Double clic pour quitter").build(), player);
             confirm = "&#f0716fClique encore pour quitter le métier.";
         } else if (jobs.canJoin(player, job)) {
-            item = item("itemsadder:influitems:accept", "Rejoindre ce métier", Lore.create().description("Commence à gagner des BitBlock avec ce métier.")
+            item = item("itemsadder:fluxui:btn_add_green", "Rejoindre ce métier", Lore.create().description("Commence à gagner des BitBlock avec ce métier.")
                     .kv("Coût", jobs.joinPrice(player, job)).left("Rejoindre").build(), player);
         } else {
-            item = item("itemsadder:influitems:lock", "Plus de place", Lore.create().description("Tu exerces déjà le maximum de métiers pour ton rang.")
+            item = item("itemsadder:fluxui:btn_lock_grey", "Plus de place", Lore.create().description("Tu exerces déjà le maximum de métiers pour ton rang.")
                     .ko("Monte en rang pour en exercer plus.").build(), player);
         }
         return List.of(ListEntry.of(job).item(item).set("confirm", confirm));

@@ -130,6 +130,13 @@ public final class MenuSession {
         if (page != null) paths.addAll(page.paths());
         StringBuilder full = new StringBuilder(base)
                 .append(fr.influencraft.flux.PathRenderer.render(player, base, menu.rows(), paths));
+        List<fr.influencraft.flux.menu.Widget> widgets = new ArrayList<>(menu.widgets());
+        if (page != null) widgets.addAll(page.widgets());
+        if (!widgets.isEmpty()) {
+            // window x of the title cursor: the title starts at x 8
+            int cursor = 8 + fr.influencraft.flux.PathRenderer.advance(full.toString());
+            full.append(fr.influencraft.flux.menu.UiTitle.render(player, widgets, cursor, menu.rows()));
+        }
         for (fr.influencraft.flux.menu.TitleLayer layer : menu.titleLayers()) {
             if (fr.influencraft.flux.menu.Requirement.all(layer.requirements(), player)) full.append(layer.text());
         }
