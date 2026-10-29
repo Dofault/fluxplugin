@@ -31,7 +31,9 @@ import java.util.Map;
  *   <li>{@code /aide} (command {@code help}): a dialog built on the fly ({@link Dialogs#links});</li>
  *   <li>the pause menu (Escape): a button opening the same window. The client only shows dialogs of the server's
  *   registry there (tag {@code minecraft:pause_screen_additions}), so Flux writes them as a data pack
- *   ({@code <main world>/datapacks/flux}); a change of {@code help.yml} reaches the pause menu after a restart.</li>
+ *   ({@code <main world>/datapacks/flux}); a change of {@code help.yml} reaches the pause menu after a restart.
+ *   Its command buttons run {@code /fluxaide <command>}: the client would go back to the pause menu (a command
+ *   answering in the chat stayed hidden), Flux closes the screen first.</li>
  * </ul>
  */
 public final class HelpService {
@@ -54,6 +56,20 @@ public final class HelpService {
                 .executor((sender, label, args) -> {
                     Player p = Players.of(sender);
                     if (p != null) open(p);
+                    return true;
+                })
+                .register();
+        // command buttons of the pause menu window: the client goes back to the pause menu after a button, so the
+        // screen is closed first (a container close packet closes any screen), then the command runs as the player
+        Commands.create(flux, "fluxaide")
+                .description("Bouton de la fenêtre d'aide : ferme l'écran puis lance la commande")
+                .suggest(false)
+                .executor((sender, label, args) -> {
+                    Player p = Players.of(sender);
+                    if (p == null || args.length == 0) return true;
+                    p.closeInventory();
+                    String command = String.join(" ", args);
+                    Bukkit.getScheduler().runTask(flux, () -> p.performCommand(command));
                     return true;
                 })
                 .register();
@@ -155,7 +171,7 @@ public final class HelpService {
                 action.addProperty("url", l.url());
             } else {
                 action.addProperty("type", "minecraft:run_command");
-                action.addProperty("command", l.command().startsWith("/") ? l.command() : "/" + l.command());
+                action.addProperty("command", "/fluxaide " + (l.command().startsWith("/") ? l.command().substring(1) : l.command()));
             }
             a.add("action", action);
             actions.add(a);
