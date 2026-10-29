@@ -36,6 +36,7 @@ import java.util.logging.Level;
  */
 public final class LoginCalendar {
 
+    /** BEFORE_ARRIVAL: before the player's first day on the server or in the calendar (never shown as missed). */
     public enum State { CLAIMED, TODAY, MISSED, BEFORE_ARRIVAL, TO_COME }
 
     private final FluxCalendar plugin;
@@ -105,6 +106,7 @@ public final class LoginCalendar {
             YamlConfiguration y = YamlConfiguration.loadConfiguration(f);
             d.days = y.getInt("jours", 0);
             d.lastDay = date(y.getString("dernier-jour"));
+            d.since = date(y.getString("debut"));
             String month = y.getString("mois");
             if (month != null) {
                 try {
@@ -116,6 +118,7 @@ public final class LoginCalendar {
             }
             // files of the former 28-day cycle have no month: their claimed days are not dates, dropped
         }
+        if (d.since == null) d.since = today();
         d.roll(today());
         players.put(uuid, d);
         return d;
@@ -135,6 +138,7 @@ public final class LoginCalendar {
         y.set("jours", d.days);
         y.set("dernier-jour", d.lastDay != null ? d.lastDay.toString() : null);
         y.set("mois", d.month != null ? d.month.toString() : null);
+        y.set("debut", d.since != null ? d.since.toString() : null);
         y.set("jours-recuperes", new ArrayList<>(d.claimed));
         String content = y.saveToString();
         Runnable write = () -> {
@@ -178,7 +182,8 @@ public final class LoginCalendar {
         if (d.claimed.contains(day)) return State.CLAIMED;
         if (day == today.getDayOfMonth()) return State.TODAY;
         if (day > today.getDayOfMonth()) return State.TO_COME;
-        return today.withDayOfMonth(day).isBefore(arrival(player)) ? State.BEFORE_ARRIVAL : State.MISSED;
+        LocalDate date = today.withDayOfMonth(day);
+        return date.isBefore(arrival(player)) || (d.since != null && date.isBefore(d.since)) ? State.BEFORE_ARRIVAL : State.MISSED;
     }
 
     /** First day the player came on the server. */

@@ -16,6 +16,8 @@ public final class PlayerData {
     LocalDate lastDay;
     /** Login days counted since the first one. */
     int days;
+    /** First day the calendar knew the player: earlier dates are never « missed » (the calendar did not exist yet). */
+    LocalDate since;
 
     /** Starts the month of {@code today} when the stored one is older. */
     void roll(LocalDate today) {

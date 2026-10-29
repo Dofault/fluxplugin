@@ -292,8 +292,11 @@ def pack(plugins):
     words = [("mois_%d" % (i + 1), m) for i, m in enumerate(MONTHS)] + [("chiffre_%d" % n, str(n)) for n in range(10)]
     for gid, word in words:
         im = label(word)
-        im.save(os.path.join(dest, "textures/titre", gid + ".png"))
-        lines += glyph(gid, "titre/%s.png" % gid, im.height, 13 - TITLE_Y)
+        # ItemsAdder wants y_position <= image height: transparent margin under the word, which stays on top
+        padded = Image.new("RGBA", (im.width, max(im.height, 13 - TITLE_Y)), (0, 0, 0, 0))
+        padded.alpha_composite(im)
+        padded.save(os.path.join(dest, "textures/titre", gid + ".png"))
+        lines += glyph(gid, "titre/%s.png" % gid, padded.height, 13 - TITLE_Y)
         widths[gid] = im.width
     lines += ["", "items:"]
     marks = [("jour_recupere", mark("tick"), "Jour récupéré"), ("jour_manque", mark("cross"), "Jour manqué"),

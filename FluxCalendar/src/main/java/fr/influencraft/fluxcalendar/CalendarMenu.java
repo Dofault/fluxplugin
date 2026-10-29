@@ -138,7 +138,7 @@ final class CalendarMenu {
                 icon = MARK + "jour_manque";
                 lore.ko("Manquée : pas récupérée ce jour-là.");
             }
-            case BEFORE_ARRIVAL -> lore.info("Tu n'étais pas encore arrivé sur le serveur.");
+            case BEFORE_ARRIVAL -> lore.info("Le calendrier ne te suivait pas encore ce jour-là.");
             case TO_COME -> {
                 if (reward != null && reward.big()) icon = MARK + "jour_bonus";
                 int in = day - calendar.today().getDayOfMonth();
