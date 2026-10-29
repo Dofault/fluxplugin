@@ -34,12 +34,16 @@ currencies:
 
 # Couleurs des boîtes de dialogue (saisies, confirmations, copie, liens).
 dialogs:
+  # Neutral windows (2026-10-29): yellow title, everything else white; links stay blue and underlined.
   title: "&#FFD94D"
-  text: "&#B376E5"
-  label: "&#B376E5"
+  text: "&f"
+  label: "&f"
   option: "&f"
-  confirm: "&#2ECF7B"
-  cancel: "&#FF5C5C"
+  confirm: "&f"
+  cancel: "&f"
+  # descriptions shown on hover (check boxes, buttons), cut into lines of line-length characters
+  hover: "&f"
+  line-length: 40
   link: "&#2BC4E8&n"
 
 # Lores of every menu and item of the suite: a line longer than max-line-length visible characters (colour codes not

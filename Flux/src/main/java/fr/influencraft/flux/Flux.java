@@ -145,11 +145,6 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         fr.influencraft.flux.api.text.Style.configure(org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(styleFile));
         fr.influencraft.flux.api.staff.Staff.configure(getConfig().getConfigurationSection("staff"));
         if (leaderboards != null) leaderboards.configure(getConfig().getConfigurationSection("leaderboards"));
-        if (help != null) {
-            help.load();
-            help.writeDataPack();
-        }
-        if (settings != null) settings.load();
         commandManager.configure(getConfig().getConfigurationSection("command-suggestions"));
         // suite-wide settings: language, currencies, dialogs
         messages = fr.influencraft.flux.api.text.Messages.load(this, getConfig().getString("language", "en_US"));
@@ -169,6 +164,12 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
             if (!v.isEmpty()) dialog.put(k, v);
         }
         fr.influencraft.flux.api.dialog.Dialogs.configure(dialog);
+        // after the dialog colours: the pause menu window is written with them
+        if (help != null) {
+            help.load();
+            help.writeDataPack();
+        }
+        if (settings != null) settings.load();
     }
 
     /** Suite-wide language ({@code language} in Flux's config), default of every plugin of the suite. */

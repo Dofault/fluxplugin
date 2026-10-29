@@ -129,13 +129,13 @@ public final class HelpService {
         String title = config.getString("title", "Help");
         JsonObject d = new JsonObject();
         d.addProperty("type", "minecraft:multi_action");
-        d.add("title", text("&#FFD94D" + title));
-        d.add("external_title", text("&#FFD94D" + config.getString("pause-button", title)));
+        d.add("title", text(Dialogs.color("title") + title));
+        d.add("external_title", text(Dialogs.color("title") + config.getString("pause-button", title)));
         JsonArray body = new JsonArray();
         for (String line : config.getStringList("text")) {
             JsonObject b = new JsonObject();
             b.addProperty("type", "minecraft:plain_message");
-            b.add("contents", text("&#B376E5" + line));
+            b.add("contents", text(Dialogs.color("text") + line));
             b.addProperty("width", 300);
             body.add(b);
         }
@@ -146,8 +146,8 @@ public final class HelpService {
         JsonArray actions = new JsonArray();
         for (Dialogs.Link l : links()) {
             JsonObject a = new JsonObject();
-            a.add("label", text("&f" + l.label()));
-            if (l.description() != null && !l.description().isBlank()) a.add("tooltip", text("&#B376E5" + l.description()));
+            a.add("label", text(Dialogs.color("option") + l.label()));
+            if (l.description() != null && !l.description().isBlank()) a.add("tooltip", text(Dialogs.hover(l.description())));
             a.addProperty("width", 150);
             JsonObject action = new JsonObject();
             if (l.url() != null && !l.url().isBlank()) {

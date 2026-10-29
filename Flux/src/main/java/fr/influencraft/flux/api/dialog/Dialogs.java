@@ -41,8 +41,9 @@ import java.util.function.Consumer;
 public final class Dialogs {
 
     private static volatile Map<String, String> style = Map.ofEntries(
-            Map.entry("title", "&#FFD94D"), Map.entry("text", "&#B376E5"), Map.entry("label", "&#B376E5"),
-            Map.entry("option", "&f"), Map.entry("confirm", "&#2ECF7B"), Map.entry("cancel", "&#FF5C5C"),
+            Map.entry("title", "&#FFD94D"), Map.entry("text", "&f"), Map.entry("label", "&f"),
+            Map.entry("option", "&f"), Map.entry("confirm", "&f"), Map.entry("cancel", "&f"), Map.entry("hover", "&f"),
+            Map.entry("line-length", "40"),
             Map.entry("link", "&#2BC4E8&n"), Map.entry("confirm-label", "Confirm"), Map.entry("cancel-label", "Cancel"),
             Map.entry("copy-label", "Copy"), Map.entry("link-label", "Open the link"));
 
@@ -58,6 +59,30 @@ public final class Dialogs {
 
     static String style(String key) {
         return style.getOrDefault(key, "");
+    }
+
+    /** A colour or label of the dialogs ({@code dialogs.*} of Flux's config), e.g. for a dialog written as a data pack. */
+    public static String color(String key) {
+        return style(key);
+    }
+
+    /**
+     * A description shown on hover (check box, button), cut into lines of {@code dialogs.line-length} characters
+     * ({@link fr.influencraft.flux.api.util.Format#wrap}), in the hover colour.
+     */
+    public static String hover(String description) {
+        int max;
+        try {
+            max = Integer.parseInt(style("line-length"));
+        } catch (NumberFormatException e) {
+            max = 40;
+        }
+        StringBuilder out = new StringBuilder();
+        for (String line : fr.influencraft.flux.api.util.Format.wrap(description, max)) {
+            if (!out.isEmpty()) out.append('\n');
+            out.append(style("hover")).append(line);
+        }
+        return out.toString();
     }
 
     public static Form form(Player player, String title) {
@@ -101,8 +126,8 @@ public final class Dialogs {
                     : ClickEvent.callback(audience -> sync(() -> {
                         if (player.isOnline()) player.performCommand(l.command().startsWith("/") ? l.command().substring(1) : l.command());
                     }), ClickCallback.Options.builder().uses(1).lifetime(Duration.ofMinutes(5)).build());
-            buttons.add(ActionButton.create(Texts.parse("&f" + l.label(), player),
-                    l.description() == null || l.description().isBlank() ? null : Texts.parse(style("text") + l.description(), player),
+            buttons.add(ActionButton.create(Texts.parse(style("option") + l.label(), player),
+                    l.description() == null || l.description().isBlank() ? null : Texts.parse(hover(l.description()), player),
                     150, DialogAction.staticAction(click)));
         }
         List<DialogBody> body = new ArrayList<>();
@@ -239,7 +264,7 @@ public final class Dialogs {
         public Form toggle(String id, String label, boolean initial, String description) {
             net.kyori.adventure.text.Component text = Texts.parse(style("option") + label, player);
             if (description != null && !description.isBlank()) {
-                text = text.hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(Texts.parse(style("text") + description, player)));
+                text = text.hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(Texts.parse(hover(description), player)));
             }
             inputs.add(DialogInput.bool(id, text, initial, "true", "false"));
             toggleIds.add(id);
