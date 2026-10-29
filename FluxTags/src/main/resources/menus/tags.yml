@@ -1,6 +1,6 @@
-# Tags menu (/tags): one tag per row (rows 1 to 5), its button in column 2 and its image (chat size) drawn next to it
+# Tags menu (/tags): one tag per row (rows 1 to 5), its button in column 1 and its image (chat size) drawn next to it
 # in the title (%fluxtags_rows%, FluxTags). Page arrows on the first row of the hidden inventory (57, 59).
-# Background fluxtags:menu_tags (FluxTags/assets/gen_tags.py, variants in gen_fonds.py).
+# Background fluxtags:menu_tags (FluxTags/assets/gen_tags.py and gen_fonds.py).
 title: ":offset_-8::menu_tags::offset_-177:%fluxtags_rows%"
 rows: 6
 player-inventory: hidden
@@ -11,7 +11,7 @@ open-actions:
 
 lists:
   tags:
-    slots: 11,20,29,38,47
+    slots: 10,19,28,37,46
     item:
       material: entry
       actions:

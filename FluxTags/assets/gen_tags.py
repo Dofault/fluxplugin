@@ -9,10 +9,9 @@ Each tag image exists several times in the pack, always 9 px high (halved in the
   <id>                 for %fluxtags_tag% in the chat and TAB
   <id>_r<1..5>         placed on row 1..5 of the /tags menu (drawn in the title next to its button, gen_fonds.TAG_X)
   rang_<rank>_p        the rank line of the profile menu (Flux, menus/profil.yml), at PROFILE_Y
-Background of /tags: one of the variants of gen_fonds.py.
+Background of /tags: gen_fonds.background (« rubans »).
 
     <venv with Pillow>/python3 gen_tags.py <plugins dir of the server> [job style: gemme (chosen 2026-10-28) | plein | bordure]
-        [background variant of gen_fonds.py, 1 to 5]
 Writes plugins/ItemsAdder/contents/fluxtags (textures, config.yml) and plugins/FluxTags/glyphs.yml (image widths),
 then run /iazip.
 """
@@ -24,13 +23,12 @@ from PIL import Image, ImageDraw
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from tag_styles import RARITIES, STYLES  # noqa: E402
-from gen_fonds import ROWS, TAG_H, VARIANTS, tag_top  # noqa: E402
+from gen_fonds import ROWS, TAG_H, background, tag_top  # noqa: E402
 
 RANK_COLOURS = ["c0c0c0", "9ad29a", "6ac7c7", "5ca8e6", "4e72e6", "8a5ce6", "d15ce6", "e65c9f", "ffd94d",
                 "e6a85c", "e65c5c", "ff0033"]
 SPECIALS = [("beta", "Bêta", "b376e5"), ("createur", "Créateur", "2bc4e8")]
-PROFILE_Y = 40     # window y of the rank tag of the profile (row 1, above the sections)
-BACKGROUND = 1     # variant of gen_fonds.py (1 vitrine, provisional until the owner picks one)
+PROFILE_Y = 39     # window y of the rank tag of the profile (row 1, above the sections, as gen_fonds.tag_top)
 
 
 def jobs(plugins):
@@ -54,7 +52,7 @@ def strip(text):
     return re.sub(r"&#[0-9A-Fa-f]{6}|&[0-9a-fk-or]", "", text)
 
 
-def main(plugins, style, variant):
+def main(plugins, style):
     dest = os.path.join(plugins, "ItemsAdder", "contents", "fluxtags")
     tex = os.path.join(dest, "textures", "tags")
     os.makedirs(tex, exist_ok=True)
@@ -85,7 +83,7 @@ def main(plugins, style, variant):
                       '    path: "tags/%s.png"' % gid, "    scale_ratio: %d" % TAG_H, "    y_position: %d" % (13 - PROFILE_Y)]
     os.makedirs(os.path.join(dest, "textures", "gui"), exist_ok=True)
     widest = max(round(im.width * TAG_H / im.height) for _, im in tags)
-    VARIANTS[variant - 1][1](widest).save(os.path.join(dest, "textures", "gui", "menu_tags.png"))
+    background(widest).save(os.path.join(dest, "textures", "gui", "menu_tags.png"))
     lines += ["  menu_tags:", "    show_in_gui: false", "    suggest_in_command: false",
               '    path: "gui/menu_tags.png"', "    scale_ratio: 221", "    y_position: 13"]
     open(os.path.join(dest, "config.yml"), "w").write("\n".join(lines) + "\n")
@@ -99,4 +97,4 @@ def main(plugins, style, variant):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2] if len(sys.argv) > 2 else "gemme", int(sys.argv[3]) if len(sys.argv) > 3 else BACKGROUND)
+    main(sys.argv[1], sys.argv[2] if len(sys.argv) > 2 else "gemme")
