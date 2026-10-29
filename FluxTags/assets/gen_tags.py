@@ -73,9 +73,8 @@ def main(plugins, style):
     for gid, im in tags:
         im.save(os.path.join(tex, gid + ".png"))
         lines += ["  %s:" % gid, "    show_in_gui: false", "    suggest_in_command: false",
-                  '    path: "tags/%s.png"' % gid, "    scale_ratio: 9",
-                  # rank tags 1 px higher, as the influtags grade glyphs they replace in the chat
-                  "    y_position: %d" % (8 if gid.startswith("rang_") else 7)]
+                  # same height as the influtags grade glyphs they replace in the chat (7 is 1 px too low)
+                  '    path: "tags/%s.png"' % gid, "    scale_ratio: 9", "    y_position: 8"]
         for row in range(ROWS):
             top = tag_top(row)
             lines += ["  %s_r%d:" % (gid, row + 1), "    show_in_gui: false", "    suggest_in_command: false",
