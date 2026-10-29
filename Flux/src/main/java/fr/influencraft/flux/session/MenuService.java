@@ -206,7 +206,10 @@ public final class MenuService {
     private void setTitle(Player player, MenuSession session, String raw) {
         InventoryView view = player.getOpenInventory();
         if (view.getTopInventory() != session.inventory()) return;
-        view.setTitle(SECTION.serialize(Text.line(player, raw)));
+        net.kyori.adventure.text.Component title = Text.line(player, raw);
+        // ChestBackgrounds puts this component back in the packet: the legacy string below loses fonts
+        session.setWireTitle(title);
+        view.setTitle(SECTION.serialize(title));
     }
 
     private final java.util.Map<String, Long> slowWarned = new java.util.concurrent.ConcurrentHashMap<>();

@@ -54,6 +54,9 @@ public final class MenuSession {
     private BukkitTask animation;
     /** Dernier titre envoyé (fond + chemins), pour ne le renvoyer que s'il change. */
     private String lastTitle;
+    /** Title component of the last setTitle: put back in the open-window packet (Bukkit only sends legacy text,
+     * which loses fonts: widgets of the vanilla theme). Read on the network thread. */
+    private volatile net.kyori.adventure.text.Component wireTitle;
     private long lastClickTick = Long.MIN_VALUE / 2;
     /** Bouton « confirm » cliqué une première fois, et quand (double clic de confirmation). */
     private MenuButton armed;
@@ -189,6 +192,14 @@ public final class MenuSession {
     }
 
     /** Fil réseau : cette fenêtre est-elle la nôtre ? (-1 = identifiant inconnu, toute fenêtre non nulle). */
+    public net.kyori.adventure.text.Component wireTitle() {
+        return wireTitle;
+    }
+
+    void setWireTitle(net.kyori.adventure.text.Component title) {
+        this.wireTitle = title;
+    }
+
     public boolean matchesWindow(int id) {
         int mine = windowId;
         return mine == -1 ? id > 0 : id == mine;

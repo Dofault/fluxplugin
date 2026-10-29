@@ -169,8 +169,8 @@ public final class MenuLoader {
     }
 
     /**
-     * Buttons a widget brings with it, built as if written in the file: the pager's two buttons (active, or greyed
-     * when there is no page that way, nothing at all when the list fits on one page) and the tooltip of a bar
+     * Buttons a widget brings with it, built as if written in the file: the click areas of the pager (invisible,
+     * 2 slots each, only when there is a page that way; the buttons are drawn by UiTitle) and the tooltip of a bar
      * (invisible items over {@code tooltip.slots}).
      */
     private static List<MenuButton> widgetButtons(List<Widget> widgets, int maxSlot, int topSize, InventoryMode mode,
@@ -180,8 +180,10 @@ public final class MenuLoader {
         for (Widget w : widgets) {
             if (w instanceof Widget.Pager p) {
                 String pre = "%flux_list_" + p.list() + "_";
-                pagerButton(gen, p.id() + "_prev", p.prev(), "left", pre + "has_prev%", pre + "pages%", "[list] " + p.list() + " prev");
-                pagerButton(gen, p.id() + "_next", p.next(), "right", pre + "has_next%", pre + "pages%", "[list] " + p.list() + " next");
+                pagerButton(gen, p.id() + "_prev", List.of(String.valueOf(p.prev()), String.valueOf(p.prev() + 1)),
+                        pre + "has_prev%", "[list] " + p.list() + " prev");
+                pagerButton(gen, p.id() + "_next", List.of(String.valueOf(p.next() - 1), String.valueOf(p.next())),
+                        pre + "has_next%", "[list] " + p.list() + " next");
             } else if (w instanceof Widget.Bar b && section != null) {
                 ConfigurationSection tip = section.getConfigurationSection(b.id() + ".tooltip");
                 if (tip == null) continue;
@@ -196,20 +198,14 @@ public final class MenuLoader {
         return buttons(gen, where + " > widgets", maxSlot, topSize, mode, warn);
     }
 
-    private static void pagerButton(YamlConfiguration gen, String id, int slot, String icon, String can, String pages,
-                                    String action) {
-        String on = "__" + id + ".", off = "__" + id + "_off.";
-        gen.set(on + "material", "itemsadder:fluxui:btn_" + icon + "_green");
-        gen.set(on + "slots", List.of(String.valueOf(slot)));
-        gen.set(on + "hide-tooltip", true);
-        gen.set(on + "priority", 1);
-        gen.set(on + "view-requirements", List.of("placeholder: " + can + " == true"));
-        gen.set(on + "actions.left", List.of(action));
-        gen.set(off + "material", "itemsadder:fluxui:btn_" + icon + "_off");
-        gen.set(off + "slots", List.of(String.valueOf(slot)));
-        gen.set(off + "hide-tooltip", true);
-        gen.set(off + "priority", 2);
-        gen.set(off + "view-requirements", List.of("placeholder: " + pages + " > 1"));
+    /** Invisible click area of a pager button (the button itself is drawn in the title): 2 slots. */
+    private static void pagerButton(YamlConfiguration gen, String id, List<String> slots, String can, String action) {
+        String k = "__" + id + ".";
+        gen.set(k + "material", "itemsadder:influitems:invisible");
+        gen.set(k + "slots", slots);
+        gen.set(k + "hide-tooltip", true);
+        gen.set(k + "view-requirements", List.of("placeholder: " + can + " == true"));
+        gen.set(k + "actions.left", List.of(action));
     }
 
     private static List<TitleLayer> titleLayers(ConfigurationSection section, String where, Consumer<String> warn) {

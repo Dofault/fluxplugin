@@ -61,10 +61,15 @@ public final class ChestBackgrounds implements PacketListener {
         if (id != null && fr.influencraft.flux.api.client.Clients.bedrock(id)) return;
         if (id != null) {
             MenuSession session = service.session(id);
-            // Notre menu (inscrit avant l'ouverture) : transparent sauf vanilla-background: true.
-            if (session != null && session.matchesWindow(packet.getContainerId())
-                    && !session.menu().vanillaBackground()) {
-                return;
+            if (session != null && session.matchesWindow(packet.getContainerId())) {
+                // title changed by Flux (page, animation): the full component, fonts included
+                Component wanted = session.wireTitle();
+                if (wanted != null) {
+                    packet.setTitle(wanted);
+                    event.markForReEncode(true);
+                }
+                // Notre menu (inscrit avant l'ouverture) : transparent sauf vanilla-background: true.
+                if (!session.menu().vanillaBackground()) return;
             }
         }
 

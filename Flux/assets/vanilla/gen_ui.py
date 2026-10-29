@@ -23,6 +23,21 @@ from PIL import Image, ImageDraw
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import ui  # noqa: E402
+
+
+def game_objet(case, rows=6):
+    """Item position of a raw slot as drawn in game (inventory 1 px higher than fond_lib.objet computes)."""
+    top = rows * 9
+    if case < top:
+        return 8 + 18 * (case % 9), 18 + 18 * (case // 9)
+    i = case - top
+    if i < 27:
+        return 8 + 18 * (i % 9), 103 + (rows - 4) * 18 + 18 * (i // 9)
+    return 8 + 18 * (i - 27), 161 + (rows - 4) * 18
+
+
+ui.objet = game_objet
+ui.fond_lib.objet = game_objet
 from ui import BLACK, WHITE, rgb, tone  # noqa: E402
 
 NS = "fluxui"
@@ -38,7 +53,8 @@ BAR_COLOURS = {"green": rgb("#3E8E2E"), "gold": rgb("#D9A21B"), "blue": rgb("#3D
 CHUNK_BASE = 0xE000            # + 16 * colour index + chunk index
 SPRITE_BASE = 0xE100
 PAGER_W, PAGER_H = 70, 16      # pager field: 15 high + the white line under it
-SPRITES = ["pager", "lit"]     #  pager field,  selected slot (20 x 20 around a slot)
+# font sprites: U+E100 pager field, U+E101 selected slot (20 x 20), U+E102-E105 pager buttons (left on/off, right on/off)
+PAGER_BTN_W = 36               # pager button: 2 slots wide
 BUTTON_COLOURS = {"red": rgb("#C0392B"), "green": rgb("#3E8E2E"), "blue": rgb("#3D7FB8"), "grey": rgb("#6E6E6E"),
                   "gold": rgb("#D9A21B")}
 
@@ -86,6 +102,21 @@ def sprite_pager():
     im = Image.new("RGBA", (PAGER_W, PAGER_H), (0, 0, 0, 0))
     ui.field(im, ImageDraw.Draw(im), (0, 0, PAGER_W - 1, PAGER_H - 2))
     ImageDraw.Draw(im).line((1, PAGER_H - 1, PAGER_W - 2, PAGER_H - 1), fill=WHITE)
+    return im
+
+
+def sprite_pager_button(direction, on):
+    """Light pager button of the shop reference, 2 slots wide; greyed arrow when there is no page that way."""
+    im = Image.new("RGBA", (PAGER_BTN_W, PAGER_H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    ui.flat_button(d, (0, 0, PAGER_BTN_W - 1, PAGER_H - 2), direction)
+    d.line((1, PAGER_H - 1, PAGER_BTN_W - 2, PAGER_H - 1), fill=WHITE)
+    if not on:
+        px = im.load()
+        for y in range(PAGER_H):
+            for x in range(PAGER_BTN_W):
+                if px[x, y] == rgb("#6B6B6B"):
+                    px[x, y] = rgb("#B4B4B4")
     return im
 
 
@@ -172,9 +203,14 @@ def button_png(icon, colour, disabled=False):
 
 # ---------------------------------------------------------------------------------------------------- backgrounds
 
-def label(im, txt, x, y, centre=False):
-    """Static menu text: the menu font (white, 1 px shadow under each column)."""
-    ui.write(im, txt, x if centre else 0, y, WHITE, TEXT_SHADOW, left=None if centre else x)
+INK = rgb("#404040")
+
+
+def label(im, txt, x, y, centre=False, dark_ground=False):
+    """Static menu text in the menu font: engraved dark grey without shadow on the light window (as vanilla
+    titles), white with its 1 px shadow on dark grounds (fields, bars)."""
+    colour, shadow = (WHITE, TEXT_SHADOW) if dark_ground else (INK, None)
+    ui.write(im, txt, x if centre else 0, y, colour, shadow, left=None if centre else x)
 
 
 def bar_frame(d, x0, y0, x1):
@@ -196,9 +232,9 @@ def bg_metiers(generic):
     ui.container(im, d, span(pets), "ardoise")
     for c in pets:
         ui.slot(d, c, "dark")
-    d.rectangle((32, 37, 99, 104), fill=rgb("#373737"))
-    d.line((33, 105, 100, 105), fill=WHITE)
-    d.line((100, 38, 100, 105), fill=WHITE)
+    d.rectangle((33, 38, 98, 103), fill=rgb("#373737"))     # 1 px around the 64 x 64 illustration at (34, 39)
+    d.line((34, 104, 99, 104), fill=WHITE)
+    d.line((99, 39, 99, 104), fill=WHITE)
     ui.container(im, d, span(grid), "ardoise")
     for c in grid:
         ui.slot(d, c, "dark")
@@ -240,6 +276,9 @@ def main(plugins, resources=None):
             chunk(colour, w).save(os.path.join(tex, f"bar_{cname}_{w}.png"))
     sprite_pager().save(os.path.join(tex, "pager.png"))
     sprite_lit().save(os.path.join(tex, "lit.png"))
+    pager_buttons = [("left", True), ("left", False), ("right", True), ("right", False)]
+    for direction, on in pager_buttons:
+        sprite_pager_button(direction, on).save(os.path.join(tex, f"pager_{direction}_{'on' if on else 'off'}.png"))
 
     for y in range(0, 221):
         providers = [{"type": "space", "advances": {" ": 4}}]
@@ -254,6 +293,10 @@ def main(plugins, resources=None):
         if 13 - y <= PAGER_H:
             providers.append({"type": "bitmap", "file": f"{NS}:font/pager.png", "ascent": 13 - y, "height": PAGER_H,
                               "chars": [chr(SPRITE_BASE)]})
+        if 13 - y <= PAGER_H:
+            for k, (direction, on) in enumerate(pager_buttons):
+                providers.append({"type": "bitmap", "file": f"{NS}:font/pager_{direction}_{'on' if on else 'off'}.png",
+                                  "ascent": 13 - y, "height": PAGER_H, "chars": [chr(SPRITE_BASE + 2 + k)]})
         if 13 - y <= 20:
             providers.append({"type": "bitmap", "file": f"{NS}:font/lit.png", "ascent": 13 - y, "height": 20,
                               "chars": [chr(SPRITE_BASE + 1)]})
@@ -284,7 +327,7 @@ def main(plugins, resources=None):
         out += [f"  {json.dumps(c, ensure_ascii=False)}: {w}" for c, w in widths.items()]
         out += ["chunks: [" + ", ".join(map(str, CHUNKS)) + "]",
                 "bar-colours: [" + ", ".join(BAR_COLOURS) + "]",
-                f"bar-height: {BAR_H}", f"pager-width: {PAGER_W}"]
+                f"bar-height: {BAR_H}", f"pager-width: {PAGER_W}", f"pager-button-width: {PAGER_BTN_W}"]
         open(os.path.join(resources, "ui", "glyphs.yml"), "w", encoding="utf-8").write("\n".join(out) + "\n")
     print(f"{NS}: {len(BUTTONS) * (len(BUTTON_COLOURS) + 1)} buttons, 221 fonts, {len(BACKGROUNDS)} backgrounds -> {dest}")
 

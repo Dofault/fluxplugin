@@ -26,7 +26,7 @@ public final class UiTitle {
             java.util.regex.Pattern.compile("(?i)[&§]#[0-9a-f]{6}|[&§][0-9a-fk-or]|<[^>]*>");
     private static int[] chunks = {1, 2, 4, 8, 16, 32, 64, 128};
     private static List<String> barColours = List.of("green", "gold", "blue", "red", "purple");
-    private static int barHeight = 10, pagerWidth = 70;
+    private static int barHeight = 10, pagerWidth = 70, pagerButtonWidth = 36;
 
     static {
         try (InputStream in = UiTitle.class.getResourceAsStream("/ui/glyphs.yml")) {
@@ -39,6 +39,7 @@ public final class UiTitle {
                 if (!yml.getStringList("bar-colours").isEmpty()) barColours = yml.getStringList("bar-colours");
                 barHeight = yml.getInt("bar-height", barHeight);
                 pagerWidth = yml.getInt("pager-width", pagerWidth);
+                pagerButtonWidth = yml.getInt("pager-button-width", pagerButtonWidth);
             }
         } catch (Exception ignored) {
             // no glyph table: text widgets draw nothing
@@ -122,16 +123,24 @@ public final class UiTitle {
         }
     }
 
+    /**
+     * Pager of the shop reference on one row: light button 2 slots wide on {@code prev} and the slot after it, field
+     * "page/pages" in the middle, button on the slot before {@code next} and {@code next}. Buttons greyed when there is
+     * no page that way; nothing at all when the list fits on one page. The clicks are invisible items (MenuLoader).
+     */
     private static void pager(StringBuilder out, Player player, Widget.Pager p, int cursor, int rows) {
         int pages = number(Text.placeholders(player, "%flux_list_" + p.list() + "_pages%"));
         if (pages <= 1) return;
         int page = number(Text.placeholders(player, "%flux_list_" + p.list() + "_page%"));
         int[] a = fr.influencraft.flux.PathRenderer.slotPosition(p.prev(), rows);
         int[] b = fr.influencraft.flux.PathRenderer.slotPosition(p.next(), rows);
-        int centre = (a[0] + b[0] + 16) / 2;
-        int left = centre - pagerWidth / 2;
-        sprite(out, cursor, left, a[1] - 1, SPRITE_BASE, pagerWidth);
-        text(out, cursor, centre + 1, a[1] + 4, Widget.Align.CENTER, page + "/" + pages, null);
+        int top = a[1] - 1;
+        int leftEdge = a[0] - 1, rightEdge = b[0] + 16;
+        sprite(out, cursor, leftEdge, top, SPRITE_BASE + (page > 1 ? 2 : 3), pagerButtonWidth);
+        sprite(out, cursor, rightEdge - pagerButtonWidth + 1, top, SPRITE_BASE + (page < pages ? 4 : 5), pagerButtonWidth);
+        int centre = (leftEdge + rightEdge + 1) / 2;
+        sprite(out, cursor, centre - pagerWidth / 2, top, SPRITE_BASE, pagerWidth);
+        text(out, cursor, centre + 1, top + 5, Widget.Align.CENTER, page + "/" + pages, null);
     }
 
     private static void sprite(StringBuilder out, int cursor, int x, int y, int ch, int width) {
