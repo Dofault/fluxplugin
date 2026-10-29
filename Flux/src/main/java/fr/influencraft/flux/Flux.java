@@ -69,7 +69,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         leaderboards = new fr.influencraft.flux.leaderboard.LeaderboardService(this);
         leaderboards.start(getConfig().getConfigurationSection("leaderboards"));
         profile = new fr.influencraft.flux.profile.ProfileService(this);
-        profile.start(getConfig().getString("profile.head-model", "influmenu:tete_profil_b"));
+        profile.start(getConfig().getString("profile.bust-model", "influmenu:buste_"));
         int warnings = registry.load();
         getLogger().info(registry.all().size() + " menu(s) chargé(s)" + (warnings > 0 ? ", " + warnings + " avertissement(s)" : ""));
 

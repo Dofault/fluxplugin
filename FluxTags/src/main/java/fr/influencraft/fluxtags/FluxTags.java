@@ -2,6 +2,7 @@ package fr.influencraft.fluxtags;
 
 import fr.influencraft.flux.api.FluxApi;
 import fr.influencraft.flux.api.FluxPlugin;
+import fr.influencraft.flux.api.TitleOverlay;
 import fr.influencraft.flux.api.data.Database;
 import fr.influencraft.flux.api.inventory.Items;
 import fr.influencraft.flux.api.inventory.Lore;
@@ -44,14 +45,19 @@ import java.util.concurrent.ConcurrentHashMap;
  *   <li>specials ({@code specials} of the config): unlocked by {@code fluxtags.tag.<id>}.</li>
  * </ul>
  * Images: pack {@code fluxtags} of ItemsAdder ({@code assets/gen_tags.py}), glyph {@code <image>} for the chat and
- * {@code <image>_r<row>} for row 1 to 5 of the menu. Placeholders: {@code %fluxtags_tag%}, {@code %fluxtags_tag_spaced%},
- * {@code %fluxtags_name%}, {@code %fluxtags_unlocked%}, {@code %fluxtags_total%}, {@code %fluxtags_rows%} (menu title).
+ * {@code <image>_r<row>} for row 1 to 5 of the menu, {@code rang_<rank>_p} for the profile. Placeholders:
+ * {@code %fluxtags_tag%}, {@code %fluxtags_tag_spaced%}, {@code %fluxtags_name%}, {@code %fluxtags_unlocked%},
+ * {@code %fluxtags_total%}, {@code %fluxtags_rows%} (title of /tags), {@code %fluxtags_profile%} (title of the profile:
+ * the rank tag of the shown player).
  */
 public final class FluxTags extends FluxPlugin implements Listener {
 
     private static final String NONE = "aucun";
     private static final int ROWS = 5;
-    private static final int TAG_X = 43;
+    /** Window x of the tags in /tags and of the rank tag in the profile (assets/gen_fonds.py). */
+    private static final int TAG_X = 64;
+    private static final int PROFILE_X = 80;
+    private static final int TAG_HEIGHT = 9;
 
     /** A tag of the catalogue; {@code job} or {@code special} set for those kinds. */
     private record Tag(String id, String job, String special) {
@@ -63,6 +69,7 @@ public final class FluxTags extends FluxPlugin implements Listener {
     private String table;
     private List<Integer> tiers = List.of(50, 100, 150, 200, 250, 300);
     private String rankPlaceholder;
+    private boolean jobsLoaded;
 
     @Override
     protected void enable() {
@@ -96,6 +103,10 @@ public final class FluxTags extends FluxPlugin implements Listener {
                         : args.length == 3 ? List.copyOf(catalogue.keySet()) : List.of())
                 .register();
         Bukkit.getPluginManager().registerEvents(this, this);
+        // the jobs provider of Flux may be ready only once every plugin is enabled: job tags added then
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            if (!jobsLoaded) settings();
+        }, 40L);
         fr.influencraft.flux.api.profile.Profiles.register(this, "tags", 60, new fr.influencraft.flux.api.profile.Profiles.Section() {
             public org.bukkit.inventory.ItemStack item(Player viewer, OfflinePlayer subject, int page) {
                 Tag t = catalogue.get(selection(subject.getUniqueId()));
@@ -130,7 +141,8 @@ public final class FluxTags extends FluxPlugin implements Listener {
         catalogue.clear();
         catalogue.put(NONE, new Tag(NONE, null, null));
         catalogue.put("rang", new Tag("rang", null, null));
-        if (Jobs.available()) {
+        jobsLoaded = Jobs.available() && !Jobs.get().ids().isEmpty();
+        if (jobsLoaded) {
             for (String job : Jobs.get().ids()) catalogue.put("metier_" + job, new Tag("metier_" + job, job, null));
         }
         ConfigurationSection specials = getConfig().getConfigurationSection("specials");
@@ -280,28 +292,29 @@ public final class FluxTags extends FluxPlugin implements Listener {
     private String rows(Player p) {
         List<ListEntry> all = Lists.entries(p, "tags");
         int page = Lists.state(p, "tags").page();
-        StringBuilder out = new StringBuilder();
-        int cursor = 0;
-        for (int r = 0; r < ROWS; r++) {
-            int index = page * ROWS + r;
-            if (index >= all.size()) break;
-            ListEntry e = all.get(index);
+        TitleOverlay out = new TitleOverlay("", 0);
+        for (int r = 0; r < ROWS && page * ROWS + r < all.size(); r++) {
+            ListEntry e = all.get(page * ROWS + r);
             String image = e.values().get("image");
-            if (image == null) continue;
-            String glyph = CustomItems.glyph("fluxtags:" + image + "_r" + (r + 1));
-            int[] size = sizes.get(image);
-            if (glyph == null || size == null) continue;
-            out.append(space(TAG_X - cursor)).append("true".equals(e.values().get("locked")) ? "&8" : "&f").append(glyph);
-            cursor = TAG_X + (int) (0.5 + size[0] * 18.0 / size[1]) + 1;
+            if (image != null) place(out, image + "_r" + (r + 1), image, TAG_X, "true".equals(e.values().get("locked")) ? "&8" : "&f");
         }
-        out.append(space(-cursor));
-        return out.toString();
+        return out.moveTo(0).resolved();
     }
 
-    private static String space(int n) {
-        if (n == 0) return "";
-        String g = CustomItems.glyphs(":offset_" + n + ":");
-        return g == null || g.startsWith(":") ? "" : g;
+    /** The rank tag of the player whose profile the viewer looks at, on the profile's line above the sections. */
+    private String profile(Player viewer) {
+        OfflinePlayer subject = fr.influencraft.flux.api.profile.Profiles.subject(viewer);
+        String rank = Texts.placeholders(rankPlaceholder, subject).trim().toLowerCase(Locale.ROOT);
+        if (rank.isEmpty() || rank.indexOf('%') >= 0) return "";
+        TitleOverlay out = new TitleOverlay("", 0);
+        place(out, "rang_" + rank + "_p", "rang_" + rank, PROFILE_X, "&f");
+        return out.moveTo(0).resolved();
+    }
+
+    private void place(TitleOverlay out, String glyph, String image, int x, String colour) {
+        int[] size = sizes.get(image);
+        if (size != null && CustomItems.glyph("fluxtags:" + glyph) != null)
+            out.add("fluxtags:" + glyph, x, (int) Math.round(size[0] * (double) TAG_HEIGHT / size[1]), colour);
     }
 
     // ---------------------------------------------------------------- placeholders and admin
@@ -313,6 +326,9 @@ public final class FluxTags extends FluxPlugin implements Listener {
             }
             case "rows" -> {
                 return p == null ? "" : rows(p);
+            }
+            case "profile" -> {
+                return p == null ? "" : profile(p);
             }
             default -> {
             }

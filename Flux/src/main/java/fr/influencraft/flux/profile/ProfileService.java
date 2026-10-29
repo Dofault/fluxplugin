@@ -29,8 +29,9 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * The profile menu ({@code /profil [player]}, menu {@code profil}): the subject's head (list {@code profile_head}, a
- * big item model) and the sections of {@link Profiles} (list {@code profile}). Flux gives four sections itself:
+ * The profile menu ({@code /profil [player]}, menu {@code profil}): the subject's bust (list {@code profile_bust}: four
+ * player heads shaped by item models {@code <bust-model>head|torso|right_arm|left_arm}, re-skinned by the entity shader
+ * of the resource pack, see {@code Flux/assets/buste/gen_buste.py}) and the sections of {@link Profiles} (list {@code profile}). Flux gives four sections itself:
  * economy, leaderboards (pages), jobs and statistics.
  */
 public final class ProfileService {
@@ -39,16 +40,18 @@ public final class ProfileService {
     private final Plugin flux;
     private final Map<String, Integer> pages = new ConcurrentHashMap<>(); // viewer:section -> page
     private final Map<UUID, Object[]> mined = new ConcurrentHashMap<>();  // subject -> {millis, blocks}
-    private String headModel = "influmenu:tete_profil_b";
+    /** Parts of the bust in the order of the list's slots, drawn in that order (the head last, over the torso). */
+    private static final List<String> BUST = List.of("left_arm", "torso", "right_arm", "head");
+    private String bustModel = "influmenu:buste_";
 
     public ProfileService(Plugin flux) {
         this.flux = flux;
     }
 
-    public void start(String headModel) {
-        if (headModel != null && !headModel.isBlank()) this.headModel = headModel;
+    public void start(String bustModel) {
+        if (bustModel != null && !bustModel.isBlank()) this.bustModel = bustModel;
         Lists.register(flux, "profile", q -> entries(q.viewer()));
-        Lists.registerItem(flux, "profile_head", this::head);
+        Lists.register(flux, "profile_bust", q -> bust(q.viewer()));
         FluxApi.registerAction(flux, "profile", (player, view, argument) -> click(player, argument.trim()));
         fr.influencraft.flux.api.command.Commands.create(flux, "profile").aliases("profil")
                 .description("Show a player's profile.")
@@ -124,22 +127,29 @@ public final class ProfileService {
         Lists.invalidate(viewer, "profile");
     }
 
-    private ItemStack head(Player viewer) {
+    private List<ListEntry> bust(Player viewer) {
         OfflinePlayer subject = Profiles.subject(viewer);
-        ItemStack item = new ItemStack(Material.PLAYER_HEAD);
-        if (item.getItemMeta() instanceof SkullMeta skull) {
-            skull.setPlayerProfile(subject instanceof Player online ? online.getPlayerProfile() : Bukkit.createProfile(subject.getUniqueId(), subject.getName()));
-            NamespacedKey model = NamespacedKey.fromString(headModel);
-            if (model != null) skull.setItemModel(model);
-            skull.setHideTooltip(false);
-            item.setItemMeta(skull);
-        }
+        com.destroystokyo.paper.profile.PlayerProfile profile = subject instanceof Player online ? online.getPlayerProfile()
+                : Bukkit.createProfile(subject.getUniqueId(), subject.getName());
+        boolean slim = profile.getTextures().getSkinModel() == org.bukkit.profile.PlayerTextures.SkinModel.SLIM;
         String rank = fr.influencraft.flux.api.text.Texts.placeholders("%luckperms_prefix%", subject);
         Lore lore = Lore.create();
         if (rank != null && !rank.contains("%")) lore.kv("Rang", rank);
         lore.kv("Arrivé le", subject.getFirstPlayed() > 0 ? Format.date(subject.getFirstPlayed()) : "-");
         lore.kv("En ligne", subject.isOnline() ? "oui" : "non");
-        return Items.dress(item, Players.name(subject, "?"), lore.build(), viewer);
+        List<String> lines = lore.build();
+        List<ListEntry> out = new ArrayList<>();
+        for (String part : BUST) {
+            ItemStack item = new ItemStack(Material.PLAYER_HEAD);
+            if (item.getItemMeta() instanceof SkullMeta skull) {
+                skull.setPlayerProfile(profile);
+                NamespacedKey model = NamespacedKey.fromString(bustModel + part + (slim && part.endsWith("arm") ? "_slim" : ""));
+                if (model != null) skull.setItemModel(model);
+                item.setItemMeta(skull);
+            }
+            out.add(ListEntry.of(part).item(Items.dress(item, Players.name(subject, "?"), lines, viewer)));
+        }
+        return out;
     }
 
     // ---------------------------------------------------------------- sections of Flux

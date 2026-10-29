@@ -10,6 +10,9 @@ package fr.influencraft.flux.api;
  *   frame.add("plinko_ball_y40", 86, 5);
  *   view.showTitle(frame.toString());
  * </pre>
+ * Also the output of a title placeholder (FluxTags rows, the profile's rank line): start at cursor 0 right after the
+ * background (whose advance brings the cursor back to the window's left edge), {@link #moveTo} 0 at the end, then
+ * {@link #resolved()}.
  */
 public final class TitleOverlay {
 
@@ -22,13 +25,38 @@ public final class TitleOverlay {
         this.cursor = cursor;
     }
 
-    /** Places a glyph {@code width} px wide with its left edge at {@code x}. */
+    /**
+     * Places a glyph {@code width} px wide (its advance minus 1) with its left edge at {@code x}. {@code glyph}: a
+     * shortcode id ({@code plinko_ball_y40}) or a namespaced id ({@code fluxtags:beta_r1}, written as its character).
+     */
     public TitleOverlay add(String glyph, int x, int width) {
         int offset = x - cursor;
         if (offset != 0) sb.append(":offset_").append(offset).append(':');
-        sb.append(':').append(glyph).append(':');
+        String own = glyph.indexOf(':') > 0 ? fr.influencraft.flux.api.items.CustomItems.glyph(glyph) : null;
+        sb.append(own != null ? own : ":" + glyph + ":");
         cursor = x + width + 1;
         return this;
+    }
+
+    /** Same with a colour code before the glyph ({@code &f} keeps its own colours, {@code &8} darkens it). */
+    public TitleOverlay add(String glyph, int x, int width, String colour) {
+        int offset = x - cursor;
+        if (offset != 0) sb.append(":offset_").append(offset).append(':');
+        sb.append(colour);
+        cursor = x;
+        return add(glyph, x, width);
+    }
+
+    /** Moves the cursor to x without drawing (0: back to where a placeholder started). */
+    public TitleOverlay moveTo(int x) {
+        if (x != cursor) sb.append(":offset_").append(x - cursor).append(':');
+        cursor = x;
+        return this;
+    }
+
+    /** The text with every glyph replaced by its character, for a placeholder's output. */
+    public String resolved() {
+        return fr.influencraft.flux.api.items.CustomItems.glyphs(sb.toString());
     }
 
     @Override

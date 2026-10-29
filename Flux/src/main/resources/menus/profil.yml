@@ -1,8 +1,9 @@
-# Profile menu (/profil [player]): a passport. Background influmenu:menu_profil (Flux/assets/profil/gen_fond.py).
-# Row 0: back (0), menu icon (8). Photo: the shown player's head, a big item model (list profile_head, slot 19, model
-# profile.head-model of Flux's config). Sections (list profile, slots 22-25 and 31-34): given by the plugins of the
+# Profile menu (/profil [player]): a player card. Background influmenu:menu_profil (Flux/assets/profil/gen_fond.py).
+# Row 0: back (0), menu icon (8). Photo: the shown player's bust (list profile_bust: left arm, torso, right arm, head
+# in slots 18, 19, 20, 28; models profile.bust-model of Flux's config + part, Flux/assets/buste/gen_buste.py).
+# Above the sections, the shown player's rank tag drawn in the title (%fluxtags_profile%, FluxTags). Sections (list profile, slots 22-25 and 31-34): given by the plugins of the
 # suite (economy, leaderboards, jobs, statistics in Flux; town, collection, pets, tags in their plugins).
-title: ":offset_-8::menu_profil:"
+title: ":offset_-8::menu_profil::offset_-177:%fluxtags_profile%"
 rows: 6
 player-inventory: hidden
 vanilla-background: false
@@ -12,8 +13,8 @@ open-actions:
   - "[sound] @page"
 
 lists:
-  profile_head:
-    slots: 19
+  profile_bust:
+    slots: 18,19,20,28
     item:
       material: entry
   profile:

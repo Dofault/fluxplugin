@@ -1,5 +1,6 @@
-# Tags menu (/tags): one tag per row (rows 1 to 5), its button in column 1 and its image drawn next to it in the title
-# (%fluxtags_rows%, FluxTags). Background fluxtags:menu_tags (FluxTags/assets/gen_tags.py).
+# Tags menu (/tags): one tag per row (rows 1 to 5), its button in column 2 and its image (chat size) drawn next to it
+# in the title (%fluxtags_rows%, FluxTags). Page arrows on the first row of the hidden inventory (57, 59).
+# Background fluxtags:menu_tags (FluxTags/assets/gen_tags.py, variants in gen_fonds.py).
 title: ":offset_-8::menu_tags::offset_-177:%fluxtags_rows%"
 rows: 6
 player-inventory: hidden
@@ -10,7 +11,7 @@ open-actions:
 
 lists:
   tags:
-    slots: 10,19,28,37,46
+    slots: 11,20,29,38,47
     item:
       material: entry
       actions:
@@ -33,11 +34,12 @@ items:
     lore:
       - "@desc Choisis le tag affiché à côté de ton pseudo. Les tags de métier changent de forme tous les 50 niveaux."
       - "@kv Débloqués | %fluxtags_unlocked%&#B376E5/&f%fluxtags_total%"
+      - "@kv Page | %flux_list_tags_page%&#B376E5/&f%flux_list_tags_pages%"
 
   precedent:
     material: "itemsadder:influitems:btn_prev"
     hide-tooltip: true
-    slots: [17]
+    slots: [57]
     view-requirements: ["placeholder: %flux_list_tags_has_prev% == true"]
     actions:
       left: ["[list] tags prev", "[refresh]"]
@@ -45,7 +47,7 @@ items:
   suivant:
     material: "itemsadder:influitems:btn_next"
     hide-tooltip: true
-    slots: [53]
+    slots: [59]
     view-requirements: ["placeholder: %flux_list_tags_has_next% == true"]
     actions:
       left: ["[list] tags next", "[refresh]"]
