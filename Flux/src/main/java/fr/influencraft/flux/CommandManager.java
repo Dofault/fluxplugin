@@ -30,7 +30,7 @@ import java.util.Set;
  * Commands seen by players ({@code command-suggestions} of Flux's config, lists in {@code commands.yml}): when a
  * player types "/", every command is hidden but the suggested ones (suite commands, menu commands, {@code others}),
  * whatever plugin they come from. The server still drops what the player has no permission for: an unranked player
- * never sees {@code /fly}. Only suggestions change, a hidden command can still be run. {@code /aide} lists the same
+ * never sees {@code /fly}. Only suggestions change, a hidden command can still be run. {@code /commandes} lists the same
  * commands with their description.
  * <p>An alias has no permission of its own ({@code /meule} = {@code cmi grindstone} in the server's commands.yml,
  * {@code /don} in CMI's CustomAlias.yml): it is shown only if the player may run the command it points to, so a
@@ -150,7 +150,7 @@ final class CommandManager implements Listener {
         return out;
     }
 
-    /** {@code /aide [page]}: the commands the player can use, a click writes one in the chat bar. */
+    /** {@code /commandes [page]}: the commands the player can use, a click writes one in the chat bar. */
     boolean help(org.bukkit.command.CommandSender sender, String label, String[] args) {
         if (!(sender instanceof Player player)) return true;
         List<Commands.Shown> all = visible(player);

@@ -1,0 +1,19 @@
+# Help window: /aide (command "help") and a button of the pause menu (Escape), from this one file.
+# The pause menu reads a data pack Flux writes in the main world (datapacks/flux): a change shows there after a restart.
+# Buttons in order on "columns" columns: "url" opens a link (the client asks for confirmation), "command" runs a
+# command as the player. "description" shows when the mouse is over the button.
+title: "Help"
+pause-button: "Help"
+text:
+  - "Every link of the server in one place."
+columns: 2
+buttons:
+  - label: "In-game menu"
+    description: "Opens the main menu."
+    command: "menu2"
+  - label: "Commands"
+    description: "Every command you can use."
+    command: "commandes"
+  - label: "Website"
+    description: "The server's website."
+    url: "https://example.org"

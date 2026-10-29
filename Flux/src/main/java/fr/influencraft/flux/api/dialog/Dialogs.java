@@ -86,6 +86,32 @@ public final class Dialogs {
         player.showDialog(Dialog.create(f -> f.empty().base(base).type(DialogType.notice(ok))));
     }
 
+    /** A button of {@link #links}: opens a URL or runs a command as the player; its description shows on hover. */
+    public record Link(String label, String description, String url, String command) {
+    }
+
+    /**
+     * A window of buttons (help, links of the server): each one opens its URL (the client asks for confirmation) or
+     * runs its command as the player, then the window closes. Buttons on {@code columns} columns, in order.
+     */
+    public static void links(Player player, String title, List<String> lines, List<Link> links, int columns) {
+        List<ActionButton> buttons = new ArrayList<>();
+        for (Link l : links) {
+            ClickEvent click = l.url() != null && !l.url().isBlank() ? ClickEvent.openUrl(l.url())
+                    : ClickEvent.callback(audience -> sync(() -> {
+                        if (player.isOnline()) player.performCommand(l.command().startsWith("/") ? l.command().substring(1) : l.command());
+                    }), ClickCallback.Options.builder().uses(1).lifetime(Duration.ofMinutes(5)).build());
+            buttons.add(ActionButton.create(Texts.parse("&f" + l.label(), player),
+                    l.description() == null || l.description().isBlank() ? null : Texts.parse(style("text") + l.description(), player),
+                    150, DialogAction.staticAction(click)));
+        }
+        List<DialogBody> body = new ArrayList<>();
+        for (String line : lines) body.add(DialogBody.plainMessage(Texts.parse(style("text") + line, player), 300));
+        DialogBase base = DialogBase.create(Texts.parse(style("title") + title, player), null, true, false,
+                DialogBase.DialogAfterAction.CLOSE, body, List.of());
+        player.showDialog(Dialog.create(f -> f.empty().base(base).type(DialogType.multiAction(buttons, null, Math.max(1, columns)))));
+    }
+
     static void sync(Runnable task) {
         Plugin flux = Bukkit.getPluginManager().getPlugin("Flux");
         if (flux != null && flux.isEnabled()) Bukkit.getScheduler().runTask(flux, task);
@@ -206,7 +232,16 @@ public final class Dialogs {
         }
 
         public Form toggle(String id, String label, boolean initial) {
-            inputs.add(DialogInput.bool(id, Texts.parse(style("option") + label, player), initial, "true", "false"));
+            return toggle(id, label, initial, null);
+        }
+
+        /** Check box whose label shows {@code description} when the mouse is over it. */
+        public Form toggle(String id, String label, boolean initial, String description) {
+            net.kyori.adventure.text.Component text = Texts.parse(style("option") + label, player);
+            if (description != null && !description.isBlank()) {
+                text = text.hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(Texts.parse(style("text") + description, player)));
+            }
+            inputs.add(DialogInput.bool(id, text, initial, "true", "false"));
             toggleIds.add(id);
             return this;
         }

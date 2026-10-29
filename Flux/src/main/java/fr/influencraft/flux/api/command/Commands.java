@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *     rewards:            # identifier, never changes
  *       name: recompenses # label typed by players
  *       aliases: [rewards, rw]
- *       description: "Récompenses à récupérer"   # suggestions and /aide
+ *       description: "Récompenses à récupérer"   # suggestions and /commandes
  *       suggest: true     # proposed when typing "/" (permissions still apply)
  *       enabled: true
  *   menus:                # commands opening a menu (first label of each menu), written by Flux
@@ -88,7 +88,7 @@ public final class Commands {
         if (config.options().getHeader().isEmpty()) config.options().setHeader(List.of(
                 "Commands of the server. Each plugin of the suite adds its own here on first start.",
                 "name: label typed by players, aliases: other labels, enabled: false removes the command,",
-                "description: shown by /aide, suggest: false hides it from the \"/\" suggestions (permissions still apply).",
+                "description: shown by /commandes, suggest: false hides it from the \"/\" suggestions (permissions still apply).",
                 "menus: commands opening a menu (written by Flux). others: commands of other plugins to propose.",
                 "Messages show the configured label with %flux_cmd_<plugin>_<id>%. Names apply after a restart,",
                 "descriptions and suggestions after /fluxmenu reload."));

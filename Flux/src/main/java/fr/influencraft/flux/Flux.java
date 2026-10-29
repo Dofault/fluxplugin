@@ -76,8 +76,13 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         getServer().getPluginManager().registerEvents(new MenuListener(this, menus), this);
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getPluginManager().registerEvents(commandManager, this);
-        fr.influencraft.flux.api.command.Commands.create(this, "help").aliases("commandes")
+        fr.influencraft.flux.api.command.Commands.create(this, "commands").aliases("commandes")
                 .description("Liste des commandes").executor(commandManager::help).register();
+        // help window (/aide and the pause menu) and settings window (/parametres): plugins/Flux/help.yml, settings.yml
+        help = new fr.influencraft.flux.help.HelpService(this);
+        help.start();
+        settings = new fr.influencraft.flux.settings.SettingsService(this);
+        settings.start();
         if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) papiBridge = new PapiBridge(this);
         fr.influencraft.flux.api.FluxApi.bind(this);
         fr.influencraft.flux.api.FluxApi.registerPlaceholders(this, "flux", this::ownPlaceholder);
@@ -109,6 +114,8 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     private fr.influencraft.flux.rewards.RewardService rewards;
     private fr.influencraft.flux.leaderboard.LeaderboardService leaderboards;
     private fr.influencraft.flux.profile.ProfileService profile;
+    private fr.influencraft.flux.help.HelpService help;
+    private fr.influencraft.flux.settings.SettingsService settings;
 
     /** Copies one of Flux's own menus when missing (translation under i18n/<language>/ when there is one). */
     private void shipOwnMenu(String id) {
@@ -138,6 +145,11 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         fr.influencraft.flux.api.text.Style.configure(org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(styleFile));
         fr.influencraft.flux.api.staff.Staff.configure(getConfig().getConfigurationSection("staff"));
         if (leaderboards != null) leaderboards.configure(getConfig().getConfigurationSection("leaderboards"));
+        if (help != null) {
+            help.load();
+            help.writeDataPack();
+        }
+        if (settings != null) settings.load();
         commandManager.configure(getConfig().getConfigurationSection("command-suggestions"));
         // suite-wide settings: language, currencies, dialogs
         messages = fr.influencraft.flux.api.text.Messages.load(this, getConfig().getString("language", "en_US"));
