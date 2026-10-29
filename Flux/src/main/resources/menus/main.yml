@@ -63,13 +63,13 @@ items:
         - "[console] tw quest untrack %player_name%"
         - "[close]"
 
-  succes:
+  collections:
     material: NETHER_STAR
-    name: "&#FFD94DSuccès"
+    name: "&#FFD94DCollections"
     slots: [30]
     lore:
-      - "@desc Débloque des succès et gagne des &f%img_impact% <base>Couronnes."
-      - "@left Voir mes succès"
+      - "@desc Complète des collections et gagne des &f%img_impact% <base>Couronnes."
+      - "@left Voir mes collections"
     actions:
       left: ["[menu] collection"]
 
@@ -609,9 +609,9 @@ pages:
         actions:
           left: ["[message] &#FFD94D&lMenu &8► &#B376E5Bientôt disponible (aperçu FluxMenu)."]
 
-      top_succes:
+      top_collections:
         material: NETHER_STAR
-        name: "&#FFD94DSuccès"
+        name: "&#FFD94DCollections"
         slots: [66]
         lore:
           - "@text &#F0A800① &fDofault &8· &#B376E5186 points"
