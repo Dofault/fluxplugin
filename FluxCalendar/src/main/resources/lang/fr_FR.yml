@@ -4,3 +4,4 @@ admin-usage: "!&#FF5C5C/%flux_cmd_fluxcalendar_fluxcalendar% <reset <joueur> [al
 admin-reset: "&#2ECF7BCalendrier de %player% remis à zéro (aujourd'hui, ou tout le mois avec all)."
 day-name: "Jour %day%"
 new-day: "&#B376E5Nouveau jour : ta récompense t'attend dans le &f/calendrier&#B376E5, à récupérer avant minuit."
+month-complete: "&#2ECF7BMois complet ! &#B376E5Tu as récupéré tous les jours du mois, voici ton bonus."

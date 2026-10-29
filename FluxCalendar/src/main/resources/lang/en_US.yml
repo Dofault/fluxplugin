@@ -4,3 +4,4 @@ admin-usage: "!&#FF5C5C/%flux_cmd_fluxcalendar_fluxcalendar% <reset <player> [al
 admin-reset: "&#2ECF7B%player%'s calendar reset (today, or the whole month with all)."
 day-name: "Day %day%"
 new-day: "&#B376E5New day: your reward waits in the &f/calendar&#B376E5, claim it before midnight."
+month-complete: "&#2ECF7BMonth complete! &#B376E5You claimed every day of the month, here is your bonus."

@@ -184,6 +184,11 @@ final class CalendarMenu {
         Lore month = Lore.create()
                 .kv("Jours récupérés", calendar.claimedCount(player) + "&7/&f" + today.lengthOfMonth())
                 .kv("Jours de connexion", d == null ? 0 : d.days);
+        DayReward complete = calendar.complete();
+        if (complete != null) {
+            month.line("Récupère tous les jours du mois pour gagner :").items(placeholders(player, complete.lore()));
+            if (calendar.claimedCount(player) == today.lengthOfMonth()) month.ok("Mois complet !");
+        }
         List<ListEntry> out = new ArrayList<>();
         out.add(entry(player, "mois", MARK + "jour_recupere", "Ce mois-ci", month, 1, false));
         Lore next = Lore.create();

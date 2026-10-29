@@ -1,0 +1,13 @@
+name: FluxCrate
+version: 26.2
+main: fr.influencraft.fluxcrate.FluxCrate
+api-version: "26.2"
+description: Crates and keys of the server (replaces EcoCrates), opened and previewed in Flux menus.
+authors: [Influencraft]
+depend: [Flux]
+softdepend: [ItemsAdder, eco]
+
+permissions:
+  fluxcrate.admin:
+    description: Give keys, place and remove crates, reload.
+    default: op

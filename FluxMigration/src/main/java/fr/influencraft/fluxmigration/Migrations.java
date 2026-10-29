@@ -1,5 +1,6 @@
 package fr.influencraft.fluxmigration;
 
+import fr.influencraft.fluxmigration.migrations.EcoCratesToFluxCrate;
 import fr.influencraft.fluxmigration.migrations.PowerFlyToFluxFly;
 
 import java.util.List;
@@ -12,7 +13,8 @@ final class Migrations {
 
     static List<Migration> all(FluxMigration plugin) {
         return List.of(
-                new PowerFlyToFluxFly(plugin)
+                new PowerFlyToFluxFly(plugin),
+                new EcoCratesToFluxCrate(plugin)
         );
     }
 }

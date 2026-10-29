@@ -24,15 +24,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 /**
- * The login calendar: one reward per date of the month ({@code days.<1..31>} of the config), claimed by the player
- * on that date only, by clicking today's case of the calendar ({@code /calendrier}). A date not claimed is missed;
- * everything starts again on the 1st of the next month.
+ * The login calendar: one reward per date of the month, claimed by the player on that date only, by clicking
+ * today's case of the calendar ({@code /calendrier}). A date not claimed is missed; everything starts again on the
+ * 1st of the next month. The reward of a date is, from the most precise: {@code days.<date>}, then
+ * {@code weekdays.<monday..sunday>}, then {@code daily}. Claiming every date of a month gives {@code complete} too.
  *
  * <p>A claim runs at once: the reward goes through Flux ({@link Rewards}) and is claimed in the same click, so it
  * only stays in {@code /rewards} when it does not fit in the inventory.</p>
  *
  * <p>Main thread only; files are written asynchronously ({@code joueurs/<uuid>.yml}). The config also accepts the
- * former French keys ({@code jours}, {@code nom}, {@code description}, {@code commandes}, {@code grosse}).</p>
+ * former French keys ({@code quotidien}, {@code jours-semaine} with lundi..dimanche, {@code jours},
+ * {@code mois-complet}, {@code nom}, {@code description}, {@code commandes}, {@code grosse}).</p>
  */
 public final class LoginCalendar {
 
@@ -42,7 +44,11 @@ public final class LoginCalendar {
     private final FluxCalendar plugin;
     private final Map<UUID, PlayerData> players = new ConcurrentHashMap<>();
     private ZoneId zone = ZoneId.of("Europe/Paris");
-    private Map<Integer, DayReward> days = Map.of();
+    private static final List<String> FRENCH_DAYS = List.of("lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche");
+    private DayReward daily;
+    private Map<java.time.DayOfWeek, DayReward> weekdays = Map.of();
+    private Map<Integer, DayReward> dates = Map.of();
+    private DayReward complete;
 
     public LoginCalendar(FluxCalendar plugin) {
         this.plugin = plugin;
@@ -58,34 +64,73 @@ public final class LoginCalendar {
             plugin.getLogger().warning("Invalid timezone, Europe/Paris used");
             zone = ZoneId.of("Europe/Paris");
         }
-        ConfigurationSection section = c.contains("days", true) ? c.getConfigurationSection("days")
-                : c.getConfigurationSection("jours");
+        daily = reward(section(c, "daily", "quotidien"), "daily");
+        complete = reward(section(c, "complete", "mois-complet"), "complete");
+        Map<java.time.DayOfWeek, DayReward> week = new HashMap<>();
+        ConfigurationSection w = section(c, "weekdays", "jours-semaine");
+        if (w != null) {
+            for (String key : w.getKeys(false)) {
+                java.time.DayOfWeek dow = weekday(key);
+                if (dow == null) plugin.getLogger().warning("Unknown weekday « " + key + " » in the config, ignored");
+                else week.put(dow, reward(w.getConfigurationSection(key), key));
+            }
+        }
+        weekdays = Map.copyOf(week);
         Map<Integer, DayReward> read = new HashMap<>();
+        ConfigurationSection section = section(c, "days", "jours");
         if (section != null) {
             for (String key : section.getKeys(false)) {
-                ConfigurationSection s = section.getConfigurationSection(key);
                 int day = parse(key);
-                if (s == null || day < 1 || day > 31) {
+                if (day < 1 || day > 31 || section.getConfigurationSection(key) == null) {
                     plugin.getLogger().warning("Unreadable day « " + key + " » in the config, ignored");
                     continue;
                 }
-                List<String> commands = new ArrayList<>();
-                for (String cmd : s.isList("commands") ? s.getStringList("commands") : s.getStringList("commandes")) {
-                    commands.add(cmd.replace("{joueur}", "%player%"));
-                }
-                String defaultName = plugin.messages().raw("day-name", "%day%", String.valueOf(day));
-                read.put(day, new DayReward(day, s.getString("name", s.getString("nom", defaultName)),
-                        s.isList("lore") ? s.getStringList("lore") : s.getStringList("description"), commands,
-                        Math.max(0, s.getInt("slots", 1)), s.getBoolean("big", s.getBoolean("grosse", false))));
+                read.put(day, reward(section.getConfigurationSection(key), key));
             }
         }
-        days = Map.copyOf(read);
-        plugin.getLogger().info(days.size() + " calendar day(s) with a reward.");
+        dates = Map.copyOf(read);
+        plugin.getLogger().info("Calendar: " + (daily != null ? "daily reward, " : "") + weekdays.size() + " weekday(s), "
+                + dates.size() + " date(s)" + (complete != null ? ", month bonus." : "."));
     }
 
-    /** Reward of a date of the month, null when that date gives nothing. */
+    /** The section under its key, or under its former French name. */
+    private static ConfigurationSection section(ConfigurationSection parent, String key, String french) {
+        return parent.contains(key, true) ? parent.getConfigurationSection(key) : parent.getConfigurationSection(french);
+    }
+
+    private DayReward reward(ConfigurationSection s, String key) {
+        if (s == null) return null;
+        List<String> commands = new ArrayList<>();
+        for (String cmd : s.isList("commands") ? s.getStringList("commands") : s.getStringList("commandes")) {
+            commands.add(cmd.replace("{joueur}", "%player%"));
+        }
+        return new DayReward(s.getString("name", s.getString("nom", plugin.messages().raw("day-name", "%day%", key))),
+                s.isList("lore") ? s.getStringList("lore") : s.getStringList("description"), commands,
+                Math.max(0, s.getInt("slots", 1)), s.getBoolean("big", s.getBoolean("grosse", false)));
+    }
+
+    private static java.time.DayOfWeek weekday(String key) {
+        String k = key.toLowerCase(java.util.Locale.ROOT);
+        int french = FRENCH_DAYS.indexOf(k);
+        if (french >= 0) return java.time.DayOfWeek.of(french + 1);
+        try {
+            return java.time.DayOfWeek.valueOf(k.toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    /** Reward of a date of the current month, null when that date gives nothing. */
     public DayReward reward(int day) {
-        return days.get(day);
+        LocalDate date = today().withDayOfMonth(day);
+        DayReward r = dates.get(day);
+        if (r == null) r = weekdays.get(date.getDayOfWeek());
+        return r != null ? r : daily;
+    }
+
+    /** Reward of a month whose every date was claimed, null when none. */
+    public DayReward complete() {
+        return complete;
     }
 
     public LocalDate today() {
@@ -194,8 +239,9 @@ public final class LoginCalendar {
 
     /** Whether today's reward waits to be claimed. */
     public boolean claimable(Player player) {
-        DayReward r = days.get(today().getDayOfMonth());
-        return r != null && !r.commands().isEmpty() && state(player, r.day()) == State.TODAY;
+        int day = today().getDayOfMonth();
+        DayReward r = reward(day);
+        return r != null && !r.commands().isEmpty() && state(player, day) == State.TODAY;
     }
 
     /** Claims today's reward (main thread); NONE when there is nothing to claim today. */
@@ -203,13 +249,23 @@ public final class LoginCalendar {
         PlayerData d = players.get(player.getUniqueId());
         if (d == null || !claimable(player)) return ClaimResult.NONE;
         LocalDate today = today();
-        DayReward r = days.get(today.getDayOfMonth());
-        d.claimed.add(r.day());
+        DayReward r = reward(today.getDayOfMonth());
+        d.claimed.add(today.getDayOfMonth());
         save(player.getUniqueId(), d, false);
-        Reward reward = Reward.of("daily", r.name()).key("daily:" + today)
+        ClaimResult result = give(player, r, "daily:" + today);
+        if (complete != null && d.claimed.size() == today.lengthOfMonth()) {
+            plugin.messages().send(player, "month-complete");
+            result = result.plus(give(player, complete, "calendar-complete:" + YearMonth.from(today)));
+        }
+        return result;
+    }
+
+    /** Through Flux, claimed at once: what does not fit stays in /rewards. */
+    private ClaimResult give(Player player, DayReward r, String key) {
+        Reward reward = Reward.of("daily", r.name()).key(key)
                 .icon(plugin.getConfig().getString("icons.daily", "CLOCK")).slots(r.slots()).commands(r.commands());
         Rewards.give(player, reward);
-        return Rewards.claimKey(player, reward.key(), true);
+        return Rewards.claimKey(player, key, true);
     }
 
     /** Dates of the current month claimed by the player. */

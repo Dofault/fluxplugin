@@ -17,6 +17,7 @@ the player's inventory and draw buttons over it. Developed for the Influencraft 
 | **FluxPets** | Collectible cards, boosters and pets | — |
 | **FluxReferral** | Referral system with per-player server addresses | — |
 | **FluxCalendar** | Login calendar: one reward per day of the month (`/calendrier`) | — |
+| **FluxCrate** | Crates and keys, opened and previewed in Flux menus (replaces EcoCrates) | EcoCrates |
 | **FluxSorter** | Sorting chests and sorting golem (Lands) | — |
 | **FluxTags** | Collectible player tags (rank, evolving job tags, specials), one shown in the chat and tab list | — |
 | **FluxTools** | Levelled crate tools with quests, plus optional utility modules (jobs menu and XP boss bar, money action bar, /repair, /bottlexp, enchanted book splitter, Mending lock, anvil rules) | optional |

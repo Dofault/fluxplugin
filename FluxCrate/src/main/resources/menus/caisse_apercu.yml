@@ -1,0 +1,56 @@
+# Crate preview (FluxCrate): left click on a placed crate, /fluxcrate preview <crate>. Every reward with its chance
+# (fluxcrate_apercu, 21 per page), the crate's button (fluxcrate_caisse, 49: keys carried, left click opens).
+# Background fluxcrate:menu_caisse_apercu (FluxCrate/assets/gen_fonds.py).
+title: ":offset_-8::menu_caisse_apercu:"
+rows: 6
+player-inventory: hidden
+vanilla-background: false
+
+open-actions:
+  - "[sound] @page"
+
+lists:
+  fluxcrate_apercu:
+    slots: 19-25,28-34,37-43
+    item:
+      material: entry
+  fluxcrate_caisse:
+    slots: 49
+    item:
+      material: entry
+      actions:
+        left: ["[fluxcrate] open"]
+
+items:
+  fermer:
+    material: "itemsadder:influitems:close"
+    name: "Fermer"
+    slots: [0]
+    lore:
+      - "@left Fermer"
+    actions:
+      left: ["[close]"]
+
+  icone:
+    material: "itemsadder:influitems:chest"
+    name: "Caisse"
+    slots: [8]
+    lore:
+      - "@desc Les récompenses possibles et leur chance. Ouvre la caisse avec une clé : clic droit sur la caisse, ou le bouton du bas."
+      - "@info Accroupi + clic droit : ouvre toutes tes clés d'un coup."
+
+  precedente:
+    material: "itemsadder:influitems:btn_prev"
+    hide-tooltip: true
+    slots: [27]
+    view-requirements: ["placeholder: %flux_list_fluxcrate_apercu_has_prev% == true"]
+    actions:
+      left: ["[list] fluxcrate_apercu prev"]
+
+  suivante:
+    material: "itemsadder:influitems:btn_next"
+    hide-tooltip: true
+    slots: [35]
+    view-requirements: ["placeholder: %flux_list_fluxcrate_apercu_has_next% == true"]
+    actions:
+      left: ["[list] fluxcrate_apercu next"]

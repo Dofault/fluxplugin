@@ -1,0 +1,26 @@
+# A crate (files starting with « _ » are ignored). Id = file name.
+name: "&f&lExample crate"
+# The key: an item (any Flux item spec) given by /fluxcrate give <player> <crate> [amount].
+key:
+  item: "TRIPWIRE_HOOK"
+  name: "&f&lExample key"
+  lore: ["&7Opens the example crate."]
+# Text above the placed crate, and the colour of its ring of particles.
+hologram: ["&f&lExample crate", "&7Left click: rewards  Right click: open"]
+particle: "#FFFFFF"
+# Rewards, drawn by weight (chance = weight / sum of weights). « display » is shown in the menus; « items » are
+# given (« <spec> [amount] »), « commands » run from the console (%player% = player name).
+rewards:
+  diamonds:
+    name: "&b3 diamonds"
+    weight: 10
+    display:
+      item: "DIAMOND"
+      lore: ["&7Three shiny diamonds."]
+    items: ["DIAMOND 3"]
+  money:
+    name: "&f100 coins"
+    weight: 40
+    display:
+      item: "GOLD_NUGGET"
+    commands: ["money give %player% 100"]

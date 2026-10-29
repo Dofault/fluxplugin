@@ -11,14 +11,24 @@ timezone: "Europe/Paris"
 icons:
   daily: "CLOCK"
 
-# Dates missing from the list give nothing (29 to 31 exist only in long months).
-days:
-  1:
-    lore: ["&f8 bread"]
-    commands: ["give %player% minecraft:bread 8"]
-    slots: 1
-  7:
+# The reward of a date, from the most precise: "days.<date>", then "weekdays.<monday..sunday>", then "daily".
+daily:
+  lore: ["&f8 bread"]
+  commands: ["give %player% minecraft:bread 8"]
+  slots: 1
+
+weekdays:
+  sunday:
     lore: ["&b2 diamonds"]
     commands: ["give %player% minecraft:diamond 2"]
     slots: 1
     big: true
+
+# Specific dates of the month (29 to 31 exist only in long months).
+days: {}
+
+# Given with the last claim when every date of the month was claimed.
+complete:
+  lore: ["&61 nether star"]
+  commands: ["give %player% minecraft:nether_star 1"]
+  slots: 1

@@ -1,0 +1,23 @@
+# Crate opening (FluxCrate): the strip of rewards slides and slows down (fluxcrate_roll, 19-25), the reward under the
+# gold frame (22) is won. Closing the menu during the roll gives the reward at once.
+# Background fluxcrate:menu_caisse_ouverture (FluxCrate/assets/gen_fonds.py).
+title: ":offset_-8::menu_caisse_ouverture:"
+rows: 6
+player-inventory: hidden
+vanilla-background: false
+
+lists:
+  fluxcrate_roll:
+    slots: 19-25
+    item:
+      material: entry
+
+items:
+  fermer:
+    material: "itemsadder:influitems:close"
+    name: "Fermer"
+    slots: [0]
+    lore:
+      - "@left Fermer"
+    actions:
+      left: ["[close]"]

@@ -1,0 +1,2 @@
+# FluxCrate: the crates of the server. One file per crate in crates/<id>.yml (see crates/_example.yml);
+# crates placed in the worlds are in placed.yml (/fluxcrate place <crate> while looking at a block).
