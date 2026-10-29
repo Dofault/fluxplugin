@@ -115,18 +115,19 @@ final class CrateMenus {
         int keys = Keys.count(player, crate.id());
         Lore lore = Lore.create().description("Une récompense tirée au hasard parmi celles du dessus, contre une clé.")
                 .kv("Clés", keys);
-        if (keys > 0) lore.left("Ouvrir");
+        if (keys > 0 || FluxCrate.free(player)) lore.left("Ouvrir");
         else lore.ko("Il te faut une " + crate.keyName() + "&r.");
         return ListEntry.of(crate.id()).item(Items.of(crate.keyItem(), crate.name(), lore.build(), player));
     }
 
     // ------------------------------------------------------------------ roll
 
-    /** Takes a key and starts the roll; false when the player has no key. */
+    /** Takes a key (none for {@code fluxcrate.free}) and starts the roll; false when the player has no key. */
     boolean open(Player player, Crate crate) {
         if (rolls.containsKey(player.getUniqueId())) return true;
         Crate.Reward won = crate.draw();
-        if (won == null || !Keys.take(player, crate.id(), 1)) {
+        boolean paid = won != null && (Keys.take(player, crate.id(), 1) || FluxCrate.free(player));
+        if (!paid) {
             plugin.messages().send(player, "no-key", "%key%", crate.keyName());
             Sounds.cue(player, "error");
             return false;

@@ -74,6 +74,15 @@ def tampon_case(png=None):
     return {(x - 1, y - 1): im.getpixel((x, y)) for y in range(im.height) for x in range(im.width) if im.getpixel((x, y))[3]}
 
 
+def case_sombre(im, x, y):
+    """Case of the page arrows (previous / next): a dark square with a lighter joint, as behind the arrows of the
+    job menu (menu_metier.png) and the rewards menu. (x, y) = position of the item."""
+    from PIL import ImageDraw
+    d = ImageDraw.Draw(im)
+    d.rectangle([x - 1, y - 1, x + 16, y + 16], (37, 29, 48, 255))
+    d.rectangle([x, y, x + 15, y + 15], (29, 23, 38, 255))
+
+
 # ---------------------------------------------------------------- menu titles (QuinqueFive, 5 px high)
 
 _FONT = None

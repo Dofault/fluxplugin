@@ -128,6 +128,11 @@ public final class FluxCrate extends FluxPlugin implements Listener {
         getLogger().info(crates.size() + " crate(s): " + String.join(", ", crates.keySet()));
     }
 
+    /** Opens crates without a key (staff tests): permission {@code fluxcrate.free}, operators by default. */
+    static boolean free(Player p) {
+        return p.hasPermission("fluxcrate.free");
+    }
+
     Crate crate(String id) {
         return id == null ? null : crates.get(id.toLowerCase(Locale.ROOT));
     }
@@ -177,7 +182,7 @@ public final class FluxCrate extends FluxPlugin implements Listener {
         }
         if (e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         int keys = Keys.count(p, crate.id());
-        if (keys == 0) {
+        if (keys == 0 && !free(p)) {
             messages().send(p, "no-key", "%key%", crate.keyName());
             Sounds.cue(p, "error");
             Vector away = p.getLocation().toVector().subtract(b.getLocation().add(0.5, 0, 0.5).toVector());

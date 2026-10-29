@@ -8,6 +8,9 @@ depend: [Flux]
 softdepend: [ItemsAdder, eco]
 
 permissions:
+  fluxcrate.free:
+    description: Open crates without a key (tests).
+    default: op
   fluxcrate.admin:
     description: Give keys, place and remove crates, reload.
     default: op

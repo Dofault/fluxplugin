@@ -2,7 +2,9 @@
 """FluxCrate: backgrounds of the crate menus (2026-10-29), pack « fluxcrate » of ItemsAdder.
 
   menu_caisse_apercu     close (0), title « CAISSE », icon (8); the rewards in 3 rows of 7 (19-25, 28-34, 37-43)
-                         with the page arrows on each side (27, 35); the crate's button on a gold case (49)
+                         with the page arrows on each side (27, 35, dark cases of the arrows); the crate's button
+                         on a gold case (49)
+The frame starts half a slot below the window's top.
   menu_caisse_ouverture  close (0), title « OUVERTURE »; the strip (19-25), the middle case (22) in a gold frame
                          with an arrow above and below
 
@@ -17,15 +19,18 @@ from PIL import Image, ImageDraw
 HERE = os.path.dirname(os.path.abspath(__file__))
 FLUX = os.path.join(HERE, "..", "..", "Flux", "assets")
 sys.path.insert(0, FLUX)
-from fond_lib import generique_raccourci, objet, poser, tampon_case, title  # noqa: E402
+from fond_lib import case_sombre, generique_raccourci, objet, poser, tampon_case, title  # noqa: E402
 
 W, H = 176, 221
 GOLD, GOLD_DARK, GOLD_LIGHT = (240, 168, 0, 255), (138, 90, 20, 255), (255, 217, 77, 255)
 DARK = (29, 23, 38, 255)
 
 
+TOP = 9  # the frame starts half a slot down (2026-10-29)
+
+
 def base(name, bottom):
-    im = generique_raccourci(os.path.join(FLUX, "menu_generique.png"), 0, bottom)
+    im = generique_raccourci(os.path.join(FLUX, "menu_generique.png"), TOP, bottom)
     title(im, name, objet(0)[1])
     case = tampon_case()
     for s in (0, 8):
@@ -51,7 +56,7 @@ def apercu():
         for s in range(row, row + 7):
             poser(im, case, *objet(s))
     for s in (27, 35):
-        poser(im, case, *objet(s))
+        case_sombre(im, *objet(s))
     gold(d, 49)
     return im
 
