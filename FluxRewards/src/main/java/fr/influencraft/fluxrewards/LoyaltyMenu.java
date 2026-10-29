@@ -5,6 +5,7 @@ import fr.influencraft.flux.api.inventory.Items;
 import fr.influencraft.flux.api.inventory.Lore;
 import fr.influencraft.flux.api.list.ListEntry;
 import fr.influencraft.flux.api.list.Lists;
+import fr.influencraft.flux.api.reward.ClaimResult;
 import fr.influencraft.flux.api.reward.Rewards;
 import fr.influencraft.flux.api.text.Texts;
 import fr.influencraft.flux.api.util.Format;
@@ -18,34 +19,63 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Parts of Flux's rewards menu ({@code menus/rewards.yml}) built here, the menu file only places them: the frieze
- * of the login cycle ({@code recompenses_connexion}) and of the playtime tiers ({@code recompenses_temps}), 7 per
- * page, and the explanation of the menu with today's reward ({@code recompenses_info}). A click on a waiting
- * reward claims it ({@code %entry_clic%}). {@code [fluxrewards] semaine} opens the login frieze on the current week.
+ * The loyalty menu ({@code menus/fidelite.yml}, {@code /fidelite}): its parts are built here, the menu file only
+ * places them. In the chest, the week of the login cycle ({@code fidelite_jours}, 7 per page); in the hidden
+ * inventory, the playtime tiers ({@code fidelite_temps}, 7 per page); the menu icon with today's state
+ * ({@code fidelite_info}). A click claims at once ({@code %entry_clic%}): {@code [fluxrewards] jour},
+ * {@code [fluxrewards] temps <n>}; {@code [fluxrewards] semaine} shows the current week. A reward handed to Flux
+ * before 2026-10-29 still waits in /rewards: its case claims it there ({@code [rewards] claim key:}).
  */
-final class RewardsMenu {
+final class LoyaltyMenu {
 
-    static final String CONNEXION = "recompenses_connexion";
-    static final String TEMPS = "recompenses_temps";
-    static final String INFO = "recompenses_info";
+    static final String CONNEXION = "fidelite_jours";
+    static final String TEMPS = "fidelite_temps";
+    static final String INFO = "fidelite_info";
     private static final int PAR_SEMAINE = 7;
 
     private final FluxRewards plugin;
     private final DailyRewards daily;
 
-    private RewardsMenu(FluxRewards plugin, DailyRewards daily) {
+    private LoyaltyMenu(FluxRewards plugin, DailyRewards daily) {
         this.plugin = plugin;
         this.daily = daily;
     }
 
     static void enable(FluxRewards plugin, DailyRewards daily) {
-        RewardsMenu menu = new RewardsMenu(plugin, daily);
+        LoyaltyMenu menu = new LoyaltyMenu(plugin, daily);
         Lists.register(plugin, CONNEXION, query -> menu.days(query.viewer()));
         Lists.register(plugin, TEMPS, query -> menu.playtime(query.viewer()));
         Lists.register(plugin, INFO, query -> List.of(menu.info(query.viewer())));
         FluxApi.registerAction(plugin, "fluxrewards", (player, view, argument) -> {
-            if (argument.trim().equalsIgnoreCase("semaine")) menu.currentWeek(player);
+            String[] a = argument.trim().toLowerCase(java.util.Locale.ROOT).split(" ");
+            switch (a[0]) {
+                case "semaine" -> menu.currentWeek(player);
+                case "jour" -> menu.claimed(player, daily.claimDay(player));
+                case "temps" -> {
+                    int i = a.length > 1 ? parse(a[1]) : -1;
+                    List<RewardTier> tiers = daily.playtimeTiers();
+                    if (i >= 1 && i <= tiers.size()) menu.claimed(player, daily.claimPlaytime(player, tiers.get(i - 1)));
+                }
+                default -> {
+                }
+            }
         });
+    }
+
+    /** After a claim: the success cue, or the error cue when nothing was given (it then waits in /rewards). */
+    private void claimed(Player player, ClaimResult result) {
+        fr.influencraft.flux.api.util.Sounds.cue(player, result.delivered() > 0 ? "complete" : "error");
+        Lists.invalidate(player, CONNEXION);
+        Lists.invalidate(player, TEMPS);
+        Lists.invalidate(player, INFO);
+    }
+
+    private static int parse(String s) {
+        try {
+            return Integer.parseInt(s);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
     /** Opens the login frieze at the week of today, the playtime frieze on its first page. */
@@ -132,6 +162,10 @@ final class RewardsMenu {
                 icon = "itemsadder:influitems:chest_item";
                 lore.ok("Aujourd'hui, en attente.").left("Récupérer");
                 clic = "[rewards] claim key:" + daily.dayKey(d);
+            } else if (state == DailyRewards.State.AVAILABLE) {
+                icon = "itemsadder:influitems:chest_item";
+                lore.ok("Aujourd'hui ! À récupérer avant minuit.").left("Récupérer");
+                clic = "[fluxrewards] jour";
             } else if (state == DailyRewards.State.CLAIMED) {
                 icon = "itemsadder:influitems:chest_checkmark";
                 lore.ok("Récupéré.");
@@ -172,7 +206,8 @@ final class RewardsMenu {
                 lore.ok("Récupéré.");
             } else if (state == DailyRewards.State.AVAILABLE) {
                 icon = "itemsadder:influitems:chest_item";
-                lore.ok("Atteint, il arrive dans tes récompenses.");
+                lore.ok("Atteint !").left("Récupérer");
+                clic = "[fluxrewards] temps " + i;
             } else {
                 icon = "itemsadder:influitems:lock";
                 lore.line("Encore " + Lore.GOLD + Format.duration(Math.max(0, tier.threshold() - daily.playtime(uuid)))
@@ -190,22 +225,14 @@ final class RewardsMenu {
         PlayerData d = daily.data(uuid);
         int day = d == null ? 0 : d.dayOfCycle(daily.cycle());
         Lore lore = Lore.create()
-                .description("Tout ce que tu gagnes arrive ici : connexion, temps de jeu, votes, parrainage, boosters...",
-                        "En bas, une récompense par jour de connexion (1re ligne) et par palier de temps de jeu (2e ligne).")
+                .description("Une récompense par jour de connexion, à récupérer le jour même : la 7e de chaque semaine est la plus grosse.",
+                        "En bas, une récompense par palier de temps de jeu.")
                 .kv("Jour de connexion", day + "/" + daily.cycle())
                 .kv("Temps de jeu", Format.duration(daily.playtime(uuid)));
-        String clic = "[sound] @error";
-        String icon;
-        boolean waiting = d != null && Rewards.waiting(uuid, daily.dayKey(d));
-        if (waiting) {
-            icon = "itemsadder:influitems:reward";
-            lore.ok("Celle d'aujourd'hui t'attend !").left("Récupérer");
-            clic = "[rewards] claim key:" + daily.dayKey(d);
-        } else {
-            icon = "itemsadder:influitems:reward";
-            lore.ok("Celle d'aujourd'hui est prise, reviens demain.");
-        }
-        return entry(player, "info", icon, "Récompenses", lore, 1, waiting).set("clic", clic);
+        boolean today = d != null && (Rewards.waiting(uuid, daily.dayKey(d)) || daily.availableDay(player) != null);
+        if (today) lore.ok("Celle d'aujourd'hui t'attend !");
+        else lore.info("Celle d'aujourd'hui est prise, reviens demain.");
+        return entry(player, "info", "itemsadder:influitems:reward", "Fidélité", lore, 1, today).set("clic", "");
     }
 
     // ------------------------------------------------------------------ helpers

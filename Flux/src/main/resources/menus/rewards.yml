@@ -1,39 +1,17 @@
-# Flux : menu Récompenses (/recompenses, bouton Récompenses de /menu2). Fond menu_recompenses (ItemsAdder
-# influmenu, généré par plugins/fluxplugin/Flux/assets/recompenses/gen_fond.py).
-# Retour en 9, explication du menu et récompense du jour en 17.
-# Haut : toutes les récompenses en attente, quel que soit le plugin qui les a données, une case par récompense
+# Flux : menu Récompenses (/recompenses, bouton Récompenses de /menu2) : la boîte aux lettres, toutes les récompenses
+# en attente quel que soit le plugin qui les a données (votes, parrainage, boosters...), une case par récompense
 # (21 par page), page précédente / suivante à gauche et à droite de la boîte, Tout récupérer dessous.
-# Bas : deux frises de 7, le cycle de connexion (55-61) et les paliers de temps de jeu (73-79), flèches de chaque
-# côté. Explication et frises construites par FluxRewards (listes recompenses_info, _connexion, _temps).
+# Retour en 9, explication en 17. La connexion et le temps de jeu ont leur menu depuis le 2026-10-29 (Fidélité,
+# FluxRewards, /fidelite). Fond menu_recompenses (ItemsAdder influmenu) : le fond retouché à la main par
+# l'utilisateur (Flux/assets/menu_recompenses.png) coupé sous l'étoile par Flux/assets/recompenses/sans_frises.py.
 title: ":offset_-8::menu_recompenses:"
 rows: 6
 player-inventory: hidden
 vanilla-background: false
 update-interval: 40
 
-# Liaisons entre les étapes des frises (pièces influroad dans le titre, comme le pass), allumées jusqu'à
-# vert récupéré, orange en attente, rouge manqué, éteint pas encore (une liaison prend la couleur de l'étape
-# où elle arrive).
-paths:
-  connexion:
-    slots: [55, 56, 57, 58, 59, 60, 61]
-    progress: "%fluxrewards_frise_connexion%"
-    states: "%fluxrewards_frise_connexion_etats%"
-    color: vert
-    start: false
-    end: false
-  temps:
-    slots: [73, 74, 75, 76, 77, 78, 79]
-    progress: "%fluxrewards_frise_temps%"
-    states: "%fluxrewards_frise_temps_etats%"
-    color: vert
-    start: false
-    end: false
-
 open-actions:
-  - "[fluxrewards] semaine"
   - "[sound] @page"
-  - "[refresh]"
 
 lists:
   rewards:
@@ -49,27 +27,6 @@ lists:
       actions:
         left: ["[rewards] claim %entry_id%", "[sound] @complete"]
 
-  recompenses_info:
-    slots: 17
-    item:
-      material: entry
-      actions:
-        left: ["%entry_clic%", "[refresh]"]
-
-  recompenses_connexion:
-    slots: 55-61
-    item:
-      material: entry
-      actions:
-        left: ["%entry_clic%", "[refresh]"]
-
-  recompenses_temps:
-    slots: 73-79
-    item:
-      material: entry
-      actions:
-        left: ["%entry_clic%", "[refresh]"]
-
 items:
 
   retour:
@@ -81,6 +38,15 @@ items:
       - "@left Menu principal"
     actions:
       left: ["[menu] main"]
+
+  icone:
+    material: "itemsadder:influitems:reward"
+    name: "Récompenses"
+    slots: [17]
+    lore:
+      - "@desc Tout ce que tu gagnes et qui ne rentre pas dans ton inventaire arrive ici : votes, parrainage, boosters..."
+      - "@kv En attente | %flux_rewards_count%"
+      - "@info Connexion et temps de jeu : /fidelite"
 
   vide:
     material: "itemsadder:influitems:checkmark"
@@ -116,35 +82,3 @@ items:
     view-requirements: ["placeholder: %flux_list_rewards_has_next% == true"]
     actions:
       left: ["[list] rewards next", "[sound] @page"]
-
-  connexion_prec:
-    material: "itemsadder:influitems:btn_prev"
-    hide-tooltip: true
-    slots: [54]
-    view-requirements: ["placeholder: %flux_list_recompenses_connexion_has_prev% == true"]
-    actions:
-      left: ["[list] recompenses_connexion prev", "[sound] @page", "[refresh]"]
-
-  connexion_suiv:
-    material: "itemsadder:influitems:btn_next"
-    hide-tooltip: true
-    slots: [62]
-    view-requirements: ["placeholder: %flux_list_recompenses_connexion_has_next% == true"]
-    actions:
-      left: ["[list] recompenses_connexion next", "[sound] @page", "[refresh]"]
-
-  temps_prec:
-    material: "itemsadder:influitems:btn_prev"
-    hide-tooltip: true
-    slots: [72]
-    view-requirements: ["placeholder: %flux_list_recompenses_temps_has_prev% == true"]
-    actions:
-      left: ["[list] recompenses_temps prev", "[sound] @page", "[refresh]"]
-
-  temps_suiv:
-    material: "itemsadder:influitems:btn_next"
-    hide-tooltip: true
-    slots: [80]
-    view-requirements: ["placeholder: %flux_list_recompenses_temps_has_next% == true"]
-    actions:
-      left: ["[list] recompenses_temps next", "[sound] @page", "[refresh]"]

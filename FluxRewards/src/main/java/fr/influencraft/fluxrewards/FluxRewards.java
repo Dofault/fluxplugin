@@ -1,5 +1,6 @@
 package fr.influencraft.fluxrewards;
 
+import fr.influencraft.flux.api.FluxApi;
 import fr.influencraft.flux.api.FluxPlugin;
 import fr.influencraft.flux.api.reward.Rewards;
 import fr.influencraft.flux.api.text.Texts;
@@ -20,17 +21,25 @@ import java.util.Locale;
 import java.util.UUID;
 
 /**
- * FluxRewards: the daily login and playtime rewards. Like every reward of the suite, they are handed to Flux
- * ({@link Rewards}), which keeps them and delivers them with {@code /rewards}; this plugin only decides when they are
- * earned (login day counted, playtime tier reached) and shows the paths of the main menu (placeholders).
+ * FluxRewards: the daily login and playtime rewards, claimed in the loyalty menu ({@code /fidelite}, {@link
+ * LoyaltyMenu}). The first login of a day opens that menu by itself when something can be claimed (once the
+ * resource pack is loaded); a claim is delivered at once, {@code /rewards} only keeps what does not fit.
  *
  * <pre>
+ *   /fidelite                                                          (players)
  *   /fluxrewards day &lt;player&gt; &lt;n&gt; | reset &lt;player&gt; | reload    (admin)
  * </pre>
  */
 public final class FluxRewards extends FluxPlugin implements Listener {
 
+    /** Seconds to wait for the resource pack before opening the loyalty menu anyway. */
+    private static final long PACK_TIMEOUT = 30;
+
     private DailyRewards daily;
+    /** Players who just started a new login day, waiting for their resource pack before the menu opens. */
+    private final java.util.Set<UUID> toOpen = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    /** Playtime tiers reached, per online player: a new one is announced. */
+    private final java.util.Map<UUID, Integer> reached = new java.util.concurrent.ConcurrentHashMap<>();
 
     @Override
     protected List<String> formerNames() {
@@ -51,17 +60,26 @@ public final class FluxRewards extends FluxPlugin implements Listener {
                 .executor(this::onCommand)
                 .completer(this::complete)
                 .register();
-        // earned rewards are moved into Flux on join and before every claim
-        Rewards.collector(this, this::grant);
-        RewardsMenu.enable(this, daily);
+        command("loyalty")
+                .aliases("fidelite")
+                .description("Daily login and playtime rewards.")
+                .executor((sender, label, args) -> {
+                    Player p = Players.of(sender);
+                    if (p != null) FluxApi.open(p, "fidelite");
+                    return true;
+                })
+                .register();
+        LoyaltyMenu.enable(this, daily);
 
         Bukkit.getPluginManager().registerEvents(this, this);
         for (Player p : Bukkit.getOnlinePlayers()) arrive(p);
         // midnight and playtime tiers for players staying online
         Bukkit.getScheduler().runTaskTimer(this, () -> {
             for (Player p : Bukkit.getOnlinePlayers()) {
-                daily.countDay(p);
-                grant(p);
+                if (daily.countDay(p) && daily.availableDay(p) != null) messages().send(p, "new-day");
+                int now = daily.playtimeReached(p.getUniqueId());
+                Integer before = reached.put(p.getUniqueId(), now);
+                if (before != null && now > before) messages().send(p, "tier-reached");
             }
         }, 1200L, 1200L);
     }
@@ -81,27 +99,42 @@ public final class FluxRewards extends FluxPlugin implements Listener {
         return daily;
     }
 
-    /** Hands today's reward and the playtime tiers reached to Flux. */
-    private void grant(Player p) {
-        if (daily.data(p.getUniqueId()) == null) return;
-        daily.grantDay(p);
-        daily.grantPlaytime(p);
-    }
-
-    private void arrive(Player p) {
+    /** Loads the player; true when this login starts a new day. */
+    private boolean arrive(Player p) {
         daily.load(p.getUniqueId());
-        daily.countDay(p);
+        boolean newDay = daily.countDay(p);
         daily.playtime(p.getUniqueId());
+        reached.put(p.getUniqueId(), daily.playtimeReached(p.getUniqueId()));
+        return newDay;
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onJoin(PlayerJoinEvent e) {
-        // before Flux collects the rewards of the player
-        arrive(e.getPlayer());
+        Player p = e.getPlayer();
+        if (!arrive(p) || !daily.claimable(p)) return;
+        // first login of the day: the loyalty menu opens once the resource pack is there (its images), or anyway later
+        toOpen.add(p.getUniqueId());
+        Bukkit.getScheduler().runTaskLater(this, () -> openLoyalty(p), PACK_TIMEOUT * 20L);
+    }
+
+    @EventHandler
+    public void onPack(org.bukkit.event.player.PlayerResourcePackStatusEvent e) {
+        var status = e.getStatus();
+        if (status == org.bukkit.event.player.PlayerResourcePackStatusEvent.Status.ACCEPTED
+                || status == org.bukkit.event.player.PlayerResourcePackStatusEvent.Status.DOWNLOADED) return;
+        Player p = e.getPlayer();
+        Bukkit.getScheduler().runTaskLater(this, () -> openLoyalty(p), 20L);
+    }
+
+    private void openLoyalty(Player p) {
+        if (!p.isOnline() || !toOpen.remove(p.getUniqueId()) || !daily.claimable(p)) return;
+        FluxApi.open(p, "fidelite");
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent e) {
+        toOpen.remove(e.getPlayer().getUniqueId());
+        reached.remove(e.getPlayer().getUniqueId());
         daily.playtime(e.getPlayer().getUniqueId());
         daily.unload(e.getPlayer().getUniqueId());
     }
@@ -130,7 +163,6 @@ public final class FluxRewards extends FluxPlugin implements Listener {
                     return true;
                 }
                 daily.setDay(target, n);
-                grant(target);
                 messages().send(sender, "admin-day", "%player%", target.getName(), "%day%", String.valueOf(n));
             }
             case "reset" -> {
@@ -197,16 +229,16 @@ public final class FluxRewards extends FluxPlugin implements Listener {
             }
             case "frise_connexion" -> {
                 // path of the menu's login frieze: steps reached on the page shown (today included)
-                return String.valueOf(RewardsMenu.pathProgress(player, RewardsMenu.CONNEXION, d.dayOfCycle(daily.cycle())));
+                return String.valueOf(LoyaltyMenu.pathProgress(player, LoyaltyMenu.CONNEXION, d.dayOfCycle(daily.cycle())));
             }
             case "frise_connexion_etats" -> {
-                return RewardsMenu.dayColors(player, daily);
+                return LoyaltyMenu.dayColors(player, daily);
             }
             case "frise_temps_etats" -> {
-                return RewardsMenu.playtimeColors(player, daily);
+                return LoyaltyMenu.playtimeColors(player, daily);
             }
             case "frise_temps" -> {
-                return String.valueOf(RewardsMenu.pathProgress(player, RewardsMenu.TEMPS, daily.playtimeReached(uuid)));
+                return String.valueOf(LoyaltyMenu.pathProgress(player, LoyaltyMenu.TEMPS, daily.playtimeReached(uuid)));
             }
             case "a_recuperer" -> {
                 return String.valueOf(Rewards.pending(uuid).stream()

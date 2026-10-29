@@ -1,0 +1,92 @@
+# Loyalty menu (/fidelite, FluxRewards): opens by itself at the first login of a day when something can be claimed.
+# Chest: the week of the login cycle (fidelite_jours, 19-25, the 7th day of a week is the big one), previous / next
+# week in 18 / 26. Hidden inventory: the playtime tiers (fidelite_temps, 55-61), pages in 54 / 62. A click claims at
+# once (only what does not fit goes to /recompenses). Background influmenu:menu_fidelite (FluxRewards/assets/gen_fond.py,
+# provisional).
+title: ":offset_-8::menu_fidelite:"
+rows: 6
+player-inventory: hidden
+vanilla-background: false
+update-interval: 40
+
+# Links between the steps (influroad pieces in the title): green claimed, orange waiting, red missed, off locked.
+paths:
+  connexion:
+    slots: [19, 20, 21, 22, 23, 24, 25]
+    progress: "%fluxrewards_frise_connexion%"
+    states: "%fluxrewards_frise_connexion_etats%"
+    color: vert
+    start: false
+    end: false
+  temps:
+    slots: [55, 56, 57, 58, 59, 60, 61]
+    progress: "%fluxrewards_frise_temps%"
+    states: "%fluxrewards_frise_temps_etats%"
+    color: vert
+    start: false
+    end: false
+
+open-actions:
+  - "[fluxrewards] semaine"
+  - "[sound] @page"
+  - "[refresh]"
+
+lists:
+  fidelite_info:
+    slots: 8
+    item:
+      material: entry
+  fidelite_jours:
+    slots: 19-25
+    item:
+      material: entry
+      actions:
+        left: ["%entry_clic%", "[refresh]"]
+  fidelite_temps:
+    slots: 55-61
+    item:
+      material: entry
+      actions:
+        left: ["%entry_clic%", "[refresh]"]
+
+items:
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
+    slots: [0]
+    lore:
+      - "@left Menu principal"
+    actions:
+      left: ["[menu] main"]
+
+  semaine_prec:
+    material: "itemsadder:influitems:btn_prev"
+    hide-tooltip: true
+    slots: [18]
+    view-requirements: ["placeholder: %flux_list_fidelite_jours_has_prev% == true"]
+    actions:
+      left: ["[list] fidelite_jours prev", "[refresh]"]
+
+  semaine_suiv:
+    material: "itemsadder:influitems:btn_next"
+    hide-tooltip: true
+    slots: [26]
+    view-requirements: ["placeholder: %flux_list_fidelite_jours_has_next% == true"]
+    actions:
+      left: ["[list] fidelite_jours next", "[refresh]"]
+
+  temps_prec:
+    material: "itemsadder:influitems:btn_prev"
+    hide-tooltip: true
+    slots: [54]
+    view-requirements: ["placeholder: %flux_list_fidelite_temps_has_prev% == true"]
+    actions:
+      left: ["[list] fidelite_temps prev", "[refresh]"]
+
+  temps_suiv:
+    material: "itemsadder:influitems:btn_next"
+    hide-tooltip: true
+    slots: [62]
+    view-requirements: ["placeholder: %flux_list_fidelite_temps_has_next% == true"]
+    actions:
+      left: ["[list] fidelite_temps next", "[refresh]"]

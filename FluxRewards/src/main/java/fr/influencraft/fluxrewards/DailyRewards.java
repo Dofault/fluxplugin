@@ -8,6 +8,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
+import fr.influencraft.flux.api.reward.ClaimResult;
 import fr.influencraft.flux.api.reward.Reward;
 import fr.influencraft.flux.api.reward.Rewards;
 import java.io.File;
@@ -25,10 +26,14 @@ import java.util.logging.Level;
 /**
  * Daily login and playtime rewards.
  *
- * <p><b>Login</b>: each login day moves one day forward in a cycle; the reward of the day is handed to Flux as soon
- * as the day counts (claimed later with /rewards, like every reward of the suite). With {@code strict-streak}, a day without login brings the player back to day 1.</p>
- * <p><b>Playtime</b>: tiers of total playtime on the server (vanilla statistic), each handed to Flux once, when
- * reached.</p>
+ * <p><b>Login</b>: each login day moves one day forward in a cycle; the reward of the day is claimed in the loyalty
+ * menu ({@code /fidelite}) that same day, else it is missed. With {@code strict-streak}, a day without login brings
+ * the player back to day 1.</p>
+ * <p><b>Playtime</b>: tiers of total playtime on the server (vanilla statistic), claimed in the loyalty menu once
+ * reached (never missed).</p>
+ * <p>A claim runs at once: the reward goes through Flux ({@link Rewards}) and is claimed in the same click, so it
+ * only stays in {@code /rewards} when it does not fit in the inventory. Rewards handed to Flux before 2026-10-29
+ * (given as soon as earned) stay claimable there.</p>
  *
  * <p>Main thread only; files are written asynchronously ({@code players/<uuid>.yml}, keys unchanged since
  * InfluRecompenses). The config also accepts the former French keys (connexion.jours, temps-de-jeu.paliers...).</p>
@@ -232,19 +237,22 @@ public final class DailyRewards {
         return "daily:" + d.lastDay;
     }
 
-    /**
-     * Hands today's reward to Flux (it waits there until claimed with /rewards) and marks the day as received.
-     * True when given now.
-     */
-    public boolean grantDay(Player player) {
+    /** Claims today's reward (main thread). NONE when nothing is available. */
+    public ClaimResult claimDay(Player player) {
         PlayerData d = players.get(player.getUniqueId());
         RewardTier tier = availableDay(player);
-        if (d == null || tier == null) return false;
+        if (d == null || tier == null) return ClaimResult.NONE;
         d.claimedDays.add((int) tier.threshold());
         save(player.getUniqueId(), d, false);
-        if (tier.commands().isEmpty()) return false;
-        return Rewards.give(player, Reward.of("daily", tier.name()).key(dayKey(d))
-                .icon(plugin.getConfig().getString("icons.daily", "CLOCK")).slots(tier.slots()).commands(tier.commands()));
+        return claim(player, Reward.of("daily", tier.name()).key(dayKey(d))
+                .icon(plugin.getConfig().getString("icons.daily", "CLOCK")).slots(tier.slots()).commands(tier.commands()), tier);
+    }
+
+    /** Through Flux, claimed at once: what does not fit stays in /rewards. */
+    private ClaimResult claim(Player player, Reward reward, RewardTier tier) {
+        if (tier.commands().isEmpty()) return ClaimResult.NONE;
+        Rewards.give(player, reward);
+        return Rewards.claimKey(player, reward.key(), true);
     }
 
     // ================================================================ playtime
@@ -287,19 +295,19 @@ public final class DailyRewards {
         return "playtime:" + tier.threshold();
     }
 
-    /** Hands every playtime tier just reached to Flux and marks them as received. Returns how many. */
-    public int grantPlaytime(Player player) {
+    /** Claims a playtime tier reached (main thread). NONE when not available. */
+    public ClaimResult claimPlaytime(Player player, RewardTier tier) {
         PlayerData d = players.get(player.getUniqueId());
-        if (d == null) return 0;
-        int given = 0;
-        String icon = plugin.getConfig().getString("icons.playtime", "EXPERIENCE_BOTTLE");
-        for (RewardTier t : availablePlaytime(player)) {
-            d.claimedPlaytime.add(t.threshold());
-            if (!t.commands().isEmpty() && Rewards.give(player, Reward.of("playtime", t.name()).key(playtimeKey(t))
-                    .icon(icon).slots(t.slots()).commands(t.commands()))) given++;
-        }
-        if (given > 0) save(player.getUniqueId(), d, false);
-        return given;
+        if (d == null || playtimeState(player.getUniqueId(), d, tier) != State.AVAILABLE) return ClaimResult.NONE;
+        d.claimedPlaytime.add(tier.threshold());
+        save(player.getUniqueId(), d, false);
+        return claim(player, Reward.of("playtime", tier.name()).key(playtimeKey(tier))
+                .icon(plugin.getConfig().getString("icons.playtime", "EXPERIENCE_BOTTLE")).slots(tier.slots()).commands(tier.commands()), tier);
+    }
+
+    /** Whether something can be claimed in the loyalty menu: today's reward or a playtime tier. */
+    public boolean claimable(Player player) {
+        return availableDay(player) != null || !availablePlaytime(player).isEmpty();
     }
 
     // ================================================================ admin (tests)

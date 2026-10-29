@@ -7,7 +7,8 @@
 #
 # Disposition (centrée) :
 #   coffre rangée 4 : 28 à 34, 7 fonctionnalités, Profil au centre
-#   coffre rangée 6 : Vote 45, Parrainage 46, Classement 47, Récompenses 51, Pass 52, Autre 53
+#   coffre rangée 6 : Vote 45, Parrainage 46, Classement 47, Rangs 48, Casino 49, Fidélité 50, Récompenses 51,
+#   Pass 52, Autre 53
 #   (Autre = Paramètres au clic gauche, Aide au clic droit)
 #   inventaire du joueur : masqué, aucun bouton
 # ─────────────────────────────────────────────────────────────────────────────
@@ -238,10 +239,20 @@ items:
     slots: [51]
     lore:
       - "@kv En attente | %flux_rewards_count%"
-      - "@kv Jour de connexion | %recompenses_jour%&7/&f%recompenses_cycle%"
       - "@left Ouvrir"
     actions:
       left: ["[menu] rewards"]
+
+  fidelite:
+    material: "itemsadder:influitems:chest"
+    name: "&#FFD94DFidélité"
+    slots: [50]
+    lore:
+      - "@desc Une récompense par jour de connexion et par palier de temps de jeu."
+      - "@kv Jour de connexion | %fluxrewards_jour%&7/&f%fluxrewards_cycle%"
+      - "@left Ouvrir"
+    actions:
+      left: ["[menu] fidelite"]
 
   vote:
     material: "itemsadder:influitems:vote"
