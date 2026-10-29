@@ -39,6 +39,8 @@ dialogs:
   text: "&f"
   label: "&f"
   option: "&f"
+  # label of the check boxes (settings window)
+  toggle: "&f"
   confirm: "&f"
   cancel: "&f"
   # descriptions shown on hover (check boxes, buttons), cut into lines of line-length characters

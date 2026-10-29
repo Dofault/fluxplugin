@@ -7,7 +7,7 @@
 #
 # Disposition (centrée) :
 #   coffre rangée 4 : 28 à 34, 7 fonctionnalités, Profil au centre
-#   coffre rangée 6 : Vote 45, Parrainage 46, Classement 47, Rangs 48, Casino 49, Calendrier 50, Récompenses 51,
+#   coffre rangée 6 : Vote 45, Parrainage 46, Classement 47, Rangs 48, Casino 49, Récompenses 51 (calendrier au clic droit),
 #   Pass 52, Autre 53
 #   (Autre = fenêtre des paramètres au clic gauche, fenêtre d'aide au clic droit : Flux, settings.yml et help.yml)
 #   inventaire du joueur : masqué, aucun bouton
@@ -240,19 +240,10 @@ items:
     lore:
       - "@kv En attente | %flux_rewards_count%"
       - "@left Ouvrir"
+      - "@right Calendrier"
     actions:
       left: ["[menu] rewards"]
-
-  calendrier:
-    material: "itemsadder:fluxcalendar:jour_cadeau"
-    name: "&#FFD94DCalendrier"
-    slots: [50]
-    lore:
-      - "@desc Une récompense par jour du mois : clique sur la date du jour pour la récupérer."
-      - "@kv Ce mois-ci | %fluxcalendar_recuperes%&7/&f%fluxcalendar_jours_mois%"
-      - "@left Ouvrir"
-    actions:
-      left: ["[menu] calendrier"]
+      right: ["[menu] calendrier"]
 
   vote:
     material: "itemsadder:influitems:vote"

@@ -1,10 +1,16 @@
 package fr.influencraft.flux;
 
 import fr.influencraft.flux.api.command.Commands;
+import fr.influencraft.flux.api.dialog.Dialogs;
 import fr.influencraft.flux.api.text.Texts;
-import net.kyori.adventure.text.Component;
+import io.papermc.paper.dialog.Dialog;
+import io.papermc.paper.registry.data.dialog.ActionButton;
+import io.papermc.paper.registry.data.dialog.DialogBase;
+import io.papermc.paper.registry.data.dialog.action.DialogAction;
+import io.papermc.paper.registry.data.dialog.body.DialogBody;
+import io.papermc.paper.registry.data.dialog.type.DialogType;
+import net.kyori.adventure.text.event.ClickCallback;
 import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.FormattedCommandAlias;
@@ -15,9 +21,12 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandSendEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.plugin.Plugin;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,6 +34,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Commands seen by players ({@code command-suggestions} of Flux's config, lists in {@code commands.yml}): when a
@@ -38,7 +49,11 @@ import java.util.Set;
  */
 final class CommandManager implements Listener {
 
-    private static final int PER_PAGE = 10;
+    private static final int PER_PAGE = 16;
+    private static final long PAGE_COOLDOWN_MS = 500;
+
+    /** Last page change of {@code /commandes} per player (anti-spam). */
+    private final Map<UUID, Long> lastPageChange = new ConcurrentHashMap<>();
 
     private volatile boolean enabled;
     private volatile boolean showAliases;
@@ -150,33 +165,63 @@ final class CommandManager implements Listener {
         return out;
     }
 
-    /** {@code /commandes [page]}: the commands the player can use, a click writes one in the chat bar. */
+    /**
+     * {@code /commandes [page]}: the commands the player can use, in a dialog window. A command button closes the
+     * window and writes the command in the chat bar; the page buttons show the other page in the same window (nothing
+     * piles up in the chat), at most one page change every {@link #PAGE_COOLDOWN_MS} ms.
+     */
     boolean help(org.bukkit.command.CommandSender sender, String label, String[] args) {
         if (!(sender instanceof Player player)) return true;
-        List<Commands.Shown> all = visible(player);
-        int pages = Math.max(1, (all.size() + PER_PAGE - 1) / PER_PAGE);
         int page = 1;
         if (args.length > 0) {
             try {
-                page = Math.max(1, Math.min(pages, Integer.parseInt(args[0])));
+                page = Integer.parseInt(args[0]);
             } catch (NumberFormatException ignored) {
                 // not a number: first page
             }
         }
-        player.sendMessage(Texts.parse("&#FFD94D&lCommandes &8(" + page + "/" + pages + ") &7Clique pour l'écrire."));
-        for (Commands.Shown s : all.subList((page - 1) * PER_PAGE, Math.min(all.size(), page * PER_PAGE))) {
-            Component line = Texts.parse("&#FFD94D/" + s.label() + (s.description().isEmpty() ? "" : " &8» &#B376E5" + s.description()))
-                    .clickEvent(ClickEvent.suggestCommand("/" + s.label() + " "))
-                    .hoverEvent(HoverEvent.showText(Texts.parse("&7Clique pour écrire &f/" + s.label())));
-            player.sendMessage(line);
-        }
-        if (pages > 1) {
-            Component nav = Component.empty();
-            if (page > 1) nav = nav.append(Texts.parse("&#FFD94D« Page précédente").clickEvent(ClickEvent.runCommand("/" + label + " " + (page - 1))));
-            if (page > 1 && page < pages) nav = nav.append(Texts.parse("&8   |   "));
-            if (page < pages) nav = nav.append(Texts.parse("&#FFD94DPage suivante »").clickEvent(ClickEvent.runCommand("/" + label + " " + (page + 1))));
-            player.sendMessage(nav);
-        }
+        showPage(player, page);
         return true;
+    }
+
+    private void showPage(Player player, int requested) {
+        List<Commands.Shown> all = visible(player);
+        int pages = Math.max(1, (all.size() + PER_PAGE - 1) / PER_PAGE);
+        int page = Math.max(1, Math.min(pages, requested));
+        List<ActionButton> buttons = new ArrayList<>();
+        for (Commands.Shown s : all.subList((page - 1) * PER_PAGE, Math.min(all.size(), page * PER_PAGE))) {
+            buttons.add(ActionButton.create(Texts.parse("&#FFD94D/" + s.label(), player),
+                    s.description().isEmpty() ? null : Texts.parse(Dialogs.hover(s.description()), player), 150,
+                    DialogAction.staticAction(ClickEvent.suggestCommand("/" + s.label() + " "))));
+        }
+        if (page > 1) buttons.add(pageButton(player, "« Page précédente", page - 1));
+        if (page < pages) buttons.add(pageButton(player, "Page suivante »", page + 1));
+        DialogBase base = DialogBase.create(Texts.parse(Dialogs.color("title") + "Commandes &8(" + page + "/" + pages + ")", player),
+                null, true, false, DialogBase.DialogAfterAction.CLOSE,
+                List.of(DialogBody.plainMessage(Texts.parse(Dialogs.color("text") + "Clique sur une commande pour l'écrire dans le tchat.", player), 300)),
+                List.of());
+        player.showDialog(Dialog.create(f -> f.empty().base(base).type(DialogType.multiAction(buttons, null, 2))));
+    }
+
+    /** Shows {@code page} in place of the current one; a click too soon after the last page change is ignored. */
+    private ActionButton pageButton(Player player, String text, int page) {
+        return ActionButton.create(Texts.parse(Dialogs.color("option") + text, player), null, 150,
+                DialogAction.customClick((view, audience) -> {
+                    Plugin flux = Bukkit.getPluginManager().getPlugin("Flux");
+                    if (flux == null || !flux.isEnabled()) return;
+                    Bukkit.getScheduler().runTask(flux, () -> {
+                        if (!player.isOnline()) return;
+                        long now = System.currentTimeMillis();
+                        Long last = lastPageChange.get(player.getUniqueId());
+                        if (last != null && now - last < PAGE_COOLDOWN_MS) return;
+                        lastPageChange.put(player.getUniqueId(), now);
+                        showPage(player, page);
+                    });
+                }, ClickCallback.Options.builder().uses(1).lifetime(Duration.ofMinutes(5)).build()));
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        lastPageChange.remove(event.getPlayer().getUniqueId());
     }
 }

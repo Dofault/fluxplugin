@@ -423,10 +423,11 @@ def lire_recompenses(chemin):
 def recompenses(cycle, nb_temps):
     """Plus de tiroir depuis le 2026-10-28 : le bouton ouvre le menu dédié (menus/rewards.yml, /recompenses), qui
     montre les récompenses en attente, la récompense du jour et la frise des jours / paliers de temps de jeu."""
+    # calendar on the right click since 2026-10-29 (its own button in slot 50 removed)
     principal = [item("recompense", "itemsadder:influitems:reward", "Récompenses", 51,
-                      ["En attente : &f%flux_rewards_count%",
-                       "Jour de connexion : &f%recompenses_jour%&7/&f%recompenses_cycle%"],
-                      [CLIC_G + "Ouvrir"], {"left": ["[menu] rewards"]})]
+                      ["En attente : &f%flux_rewards_count%"],
+                      [CLIC_G + "Ouvrir", CLIC_D + "Calendrier"],
+                      {"left": ["[menu] rewards"], "right": ["[menu] calendrier"]})]
     return "", principal
 
 

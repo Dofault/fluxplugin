@@ -28,7 +28,7 @@ from gen_fonds import LIFT, ROWS, TAG_H, background, tag_top  # noqa: E402
 RANK_COLOURS = ["c0c0c0", "9ad29a", "6ac7c7", "5ca8e6", "4e72e6", "8a5ce6", "d15ce6", "e65c9f", "ffd94d",
                 "e6a85c", "e65c5c", "ff0033"]
 SPECIALS = [("beta", "Bêta", "b376e5"), ("createur", "Créateur", "2bc4e8")]
-PROFILE_Y = 39     # window y of the rank tag of the profile (row 1, above the sections, as gen_fonds.tag_top)
+PROFILE_Y = 75     # window y of the rank tag of the profile (row 3: row 1 of the card lowered by 2, above the sections)
 
 
 def jobs(plugins):

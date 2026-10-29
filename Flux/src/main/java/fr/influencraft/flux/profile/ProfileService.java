@@ -25,6 +25,7 @@ import org.bukkit.plugin.Plugin;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -43,6 +44,10 @@ public final class ProfileService {
     /** Parts of the bust in the order of the list's slots, drawn in that order (the head last, over the torso). */
     private static final List<String> BUST = List.of("left_arm", "torso", "right_arm", "head");
     private String bustModel = "influmenu:buste_";
+    private static final long SKIN_TTL_MS = 3_600_000;
+    /** Skins of players seen in a profile (subject -> profile with textures): an offline subject has none on the server. */
+    private final Map<UUID, Skin> skins = new ConcurrentHashMap<>();
+    private final Set<UUID> fetching = ConcurrentHashMap.newKeySet();
 
     public ProfileService(Plugin flux) {
         this.flux = flux;
@@ -127,10 +132,44 @@ public final class ProfileService {
         Lists.invalidate(viewer, "profile");
     }
 
+    /**
+     * The subject's profile with its skin. Online: the profile the proxy forwarded. Offline: the server has no skin,
+     * so the profile is completed from Mojang off the main thread, cached {@link #SKIN_TTL_MS}, and the bust is redrawn
+     * when it arrives (default skin until then).
+     */
+    private com.destroystokyo.paper.profile.PlayerProfile skin(Player viewer, OfflinePlayer subject) {
+        UUID id = subject.getUniqueId();
+        if (subject instanceof Player online) {
+            com.destroystokyo.paper.profile.PlayerProfile profile = online.getPlayerProfile();
+            if (profile.hasTextures()) skins.put(id, new Skin(profile, System.currentTimeMillis()));
+            return profile;
+        }
+        Skin cached = skins.get(id);
+        if (cached != null && System.currentTimeMillis() - cached.at() < SKIN_TTL_MS) return cached.profile();
+        com.destroystokyo.paper.profile.PlayerProfile profile = Bukkit.createProfile(id, subject.getName());
+        if (fetching.add(id)) {
+            Bukkit.getScheduler().runTaskAsynchronously(flux, () -> {
+                try {
+                    if (profile.complete(true) && profile.hasTextures()) skins.put(id, new Skin(profile, System.currentTimeMillis()));
+                } catch (RuntimeException e) {
+                    flux.getLogger().fine("No skin for " + id + ": " + e);
+                } finally {
+                    fetching.remove(id);
+                    Bukkit.getScheduler().runTask(flux, () -> {
+                        if (viewer.isOnline()) Lists.invalidate(viewer, "profile_bust");
+                    });
+                }
+            });
+        }
+        return cached != null ? cached.profile() : profile;
+    }
+
+    private record Skin(com.destroystokyo.paper.profile.PlayerProfile profile, long at) {
+    }
+
     private List<ListEntry> bust(Player viewer) {
         OfflinePlayer subject = Profiles.subject(viewer);
-        com.destroystokyo.paper.profile.PlayerProfile profile = subject instanceof Player online ? online.getPlayerProfile()
-                : Bukkit.createProfile(subject.getUniqueId(), subject.getName());
+        com.destroystokyo.paper.profile.PlayerProfile profile = skin(viewer, subject);
         boolean slim = profile.getTextures().getSkinModel() == org.bukkit.profile.PlayerTextures.SkinModel.SLIM;
         String rank = fr.influencraft.flux.api.text.Texts.placeholders("%luckperms_prefix%", subject);
         Lore lore = Lore.create();

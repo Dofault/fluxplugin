@@ -1,13 +1,13 @@
 """Background of the profile menu (/profil [player]), chosen 2026-10-29 (variant 1 of the second round): the whole menu
 IS a player card. Theme colours of the generic background, light paper body with guilloche, gold chip, signature.
 
-6-row chest, rows 0 to 4 used:
+6-row chest, the card lowered by SHIFT rows (2026-10-29: 2 rows), drawn below as if it started on row 0:
   row 0          back (0), title « CARTE JOUEUR », menu icon (8), in the dark header band
-  photo          columns 0 to 2, rows 1 to 3: the player's bust (list profile_bust, slots 18, 19, 20, 28,
-                 Flux/assets/buste/gen_buste.py)
+  photo          columns 0 to 2, rows 1 to 3: the player's bust (list profile_bust, Flux/assets/buste/gen_buste.py)
   rank line      row 1, columns 4 to 8: the player's rank tag (%fluxtags_profile%, FluxTags gen_tags.PROFILE_Y)
-  sections       columns 4 to 7, rows 2 and 3 (slots 22 to 25, 31 to 34): the 8 sections of the profile
+  sections       columns 4 to 7, rows 2 and 3: the 8 sections of the profile
   row 4          signature under the photo, chip
+Slots in menus/profil.yml are these + 9 * SHIFT.
 Typography always white. Usage: <venv with Pillow>/python3 gen_fond.py <dir for menu_profil.png> [preview dir]
 """
 import math
@@ -31,6 +31,7 @@ GOLD, GOLD_DARK, GOLD_LIGHT, PINK = (240, 168, 0, 255), (138, 90, 20, 255), (255
 SECTIONS = (22, 23, 24, 25, 31, 32, 33, 34)
 PHOTO = (6, 34, 62, 90)
 CARD = (0, 0, 175, 113)
+SHIFT = 2   # rows the whole card is lowered by in the window
 
 
 def objet(case):
@@ -123,11 +124,13 @@ def background():
     signature(d, 10, 99, DARK[0])
     chip(d, 154, 94)
     cases(im)
-    return im
+    lowered = new()
+    lowered.paste(im.crop((0, 0, W, H - 18 * SHIFT)), (0, 18 * SHIFT))
+    return lowered
 
 
 if __name__ == "__main__":
     im = background()
     im.save(os.path.join(sys.argv[1], "menu_profil.png"))
     if len(sys.argv) > 2:
-        im.crop((0, 0, W, 116)).resize((W * 3, 116 * 3), Image.NEAREST).save(os.path.join(sys.argv[2], "menu_profil_x3.png"))
+        im.crop((0, 0, W, 116 + 18 * SHIFT)).resize((W * 3, (116 + 18 * SHIFT) * 3), Image.NEAREST).save(os.path.join(sys.argv[2], "menu_profil_x3.png"))

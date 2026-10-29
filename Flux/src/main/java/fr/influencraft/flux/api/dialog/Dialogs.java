@@ -43,7 +43,7 @@ public final class Dialogs {
 
     private static volatile Map<String, String> style = Map.ofEntries(
             Map.entry("title", "&#FFD94D"), Map.entry("text", "&f"), Map.entry("label", "&f"),
-            Map.entry("option", "&f"), Map.entry("confirm", "&f"), Map.entry("cancel", "&f"), Map.entry("hover", "&f"),
+            Map.entry("option", "&f"), Map.entry("toggle", "&f"), Map.entry("confirm", "&f"), Map.entry("cancel", "&f"), Map.entry("hover", "&f"),
             Map.entry("line-length", "40"),
             Map.entry("link", "&#2BC4E8&n"), Map.entry("confirm-label", "Confirm"), Map.entry("cancel-label", "Cancel"),
             Map.entry("copy-label", "Copy"), Map.entry("link-label", "Open the link"));
@@ -263,7 +263,7 @@ public final class Dialogs {
 
         /** Check box whose label shows {@code description} when the mouse is over it. */
         public Form toggle(String id, String label, boolean initial, String description) {
-            net.kyori.adventure.text.Component text = Texts.parse(style("option") + label, player);
+            net.kyori.adventure.text.Component text = Texts.parse(style("toggle") + label, player);
             if (description != null && !description.isBlank()) {
                 text = text.hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(Texts.parse(hover(description), player)));
             }
