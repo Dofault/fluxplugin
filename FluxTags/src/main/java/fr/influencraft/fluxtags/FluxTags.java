@@ -40,7 +40,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * FluxTags: collectible tags. A player shows one tag at most, picked in {@code /tags}:
  * <ul>
- *   <li>{@code rang}: follows his current rank (an older rank's tag cannot be kept);</li>
+ *   <li>{@code rang} (shown until the player picks another tag or none): follows his current rank (an older rank's
+ *   tag cannot be kept);</li>
  *   <li>{@code metier_<job>}: unlocked at the first job tier (level 50), then a new look at every tier up to 300;</li>
  *   <li>specials ({@code specials} of the config): unlocked by {@code fluxtags.tag.<id>}.</li>
  * </ul>
@@ -53,6 +54,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class FluxTags extends FluxPlugin implements Listener {
 
     private static final String NONE = "aucun";
+    /** The rank tag: shown until the player picks another one (or none). */
+    private static final String RANK = "rang";
     private static final int ROWS = 6;
     /** Window x of the tags in /tags and of the rank tag in the profile (assets/gen_fonds.py). */
     private static final int TAG_X = 46;
@@ -136,7 +139,7 @@ public final class FluxTags extends FluxPlugin implements Listener {
         if (tiers.isEmpty()) tiers = List.of(50, 100, 150, 200, 250, 300);
         catalogue.clear();
         catalogue.put(NONE, new Tag(NONE, null, null));
-        catalogue.put("rang", new Tag("rang", null, null));
+        catalogue.put(RANK, new Tag(RANK, null, null));
         jobsLoaded = Jobs.available() && !Jobs.get().ids().isEmpty();
         if (jobsLoaded) {
             for (String job : Jobs.get().ids()) catalogue.put("metier_" + job, new Tag("metier_" + job, job, null));
@@ -184,10 +187,10 @@ public final class FluxTags extends FluxPlugin implements Listener {
         try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement("SELECT tag FROM " + table + " WHERE uuid = ?")) {
             ps.setString(1, id.toString());
             try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? rs.getString(1) : NONE;
+                return rs.next() ? rs.getString(1) : RANK;
             }
         } catch (SQLException e) {
-            return NONE;
+            return RANK;
         }
     }
 
