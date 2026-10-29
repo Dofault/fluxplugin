@@ -82,10 +82,13 @@ public class ServiceDecouverte {
     public void proposer(UUID uuid, Instant premiereConnexion) throws SQLException {
         if (!config.isQuestionnaireActif()) return;
         if (depot.trouver(uuid).isPresent()) return;
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+        // through the join screens of Flux: before the calendar, once the resource pack is loaded
+        Bukkit.getScheduler().runTask(plugin, () -> {
             Player p = Bukkit.getPlayer(uuid);
-            if (p != null && p.isOnline()) ouvrir(p, premiereConnexion, null);
-        }, config.getDelaiQuestionnaireTicks());
+            if (p != null && p.isOnline()) {
+                fr.influencraft.flux.api.welcome.JoinScreens.request(p, 10, (player, fini) -> ouvrir(player, premiereConnexion, null, fini));
+            }
+        });
     }
 
     private String texte(String cle, Map<String, String> vars) {
@@ -105,7 +108,8 @@ public class ServiceDecouverte {
             var j = depotJoueur.trouverParUUID(cible.getUniqueId());
             Instant premiere = j.map(x -> java.sql.Timestamp.valueOf(x.premiereConnexion()).toInstant()).orElse(Instant.now());
             Bukkit.getScheduler().runTask(plugin, () -> {
-                if (cible.isOnline()) ouvrir(cible, premiere, null);
+                if (cible.isOnline()) ouvrir(cible, premiere, null, () -> {
+                });
             });
         });
     }
@@ -148,23 +152,24 @@ public class ServiceDecouverte {
                 .columns(2);
     }
 
-    private void ouvrirAutre(Player p, Instant premiereConnexion, String erreur) {
+    private void ouvrirAutre(Player p, Instant premiereConnexion, String erreur, Runnable fini) {
         autre(p, erreur).onSubmit((player, answer) -> {
             if ("retour".equals(answer.button())) {
-                ouvrir(player, premiereConnexion, null);
+                ouvrir(player, premiereConnexion, null, fini);
                 return;
             }
             String texte = answer.text("texte");
             if (texte.isBlank()) {
-                ouvrirAutre(player, premiereConnexion, texte("decouverte-erreur-autre", Map.of()));
+                ouvrirAutre(player, premiereConnexion, texte("decouverte-erreur-autre", Map.of()), fini);
                 return;
             }
             UUID uuid = player.getUniqueId();
+            fini.run();
             async(() -> {
                 depot.enregistrer(uuid, SOURCE_AUTRE, null, texte);
                 envoyer(uuid, "decouverte-merci", Map.of());
             });
-        }).open();
+        }).onCancel(player -> fini.run()).open();
     }
 
     /** Step 2 ("By a player"): the name of the player who invited him. */
@@ -178,25 +183,27 @@ public class ServiceDecouverte {
                 .columns(2);
     }
 
-    private void ouvrir(Player p, Instant premiereConnexion, String erreur) {
+    /** {@code fini}: runs once the questionnaire is over (answered or closed), for the next join screen. */
+    private void ouvrir(Player p, Instant premiereConnexion, String erreur, Runnable fini) {
         question(p).onSubmit((player, answer) -> {
-            if (SOURCE_JOUEUR.equals(answer.button())) ouvrirPseudo(player, premiereConnexion, null);
-            else if (SOURCE_AUTRE.equals(answer.button())) ouvrirAutre(player, premiereConnexion, null);
-            else repondre(player, premiereConnexion, answer.button(), "");
-        }).open();
+            if (SOURCE_JOUEUR.equals(answer.button())) ouvrirPseudo(player, premiereConnexion, null, fini);
+            else if (SOURCE_AUTRE.equals(answer.button())) ouvrirAutre(player, premiereConnexion, null, fini);
+            else repondre(player, premiereConnexion, answer.button(), "", fini);
+        }).onCancel(player -> fini.run()).open();
     }
 
-    private void ouvrirPseudo(Player p, Instant premiereConnexion, String erreur) {
+    private void ouvrirPseudo(Player p, Instant premiereConnexion, String erreur, Runnable fini) {
         pseudo(p, erreur).onSubmit((player, answer) -> {
-            if ("retour".equals(answer.button())) ouvrir(player, premiereConnexion, null);
-            else repondre(player, premiereConnexion, SOURCE_JOUEUR, answer.text("pseudo"));
-        }).open();
+            if ("retour".equals(answer.button())) ouvrir(player, premiereConnexion, null, fini);
+            else repondre(player, premiereConnexion, SOURCE_JOUEUR, answer.text("pseudo"), fini);
+        }).onCancel(player -> fini.run()).open();
     }
 
-    private void repondre(Player p, Instant premiereConnexion, String source, String saisie) {
+    private void repondre(Player p, Instant premiereConnexion, String source, String saisie, Runnable fini) {
         UUID uuid = p.getUniqueId();
         String pseudoFilleul = p.getName();
         if (!SOURCE_JOUEUR.equals(source)) {
+            fini.run();
             async(() -> {
                 depot.enregistrer(uuid, source, null, "questionnaire");
                 envoyer(uuid, "decouverte-merci", Map.of());
@@ -204,32 +211,34 @@ public class ServiceDecouverte {
             return;
         }
         if (saisie.isBlank()) {
-            ouvrirPseudo(p, premiereConnexion, texte("decouverte-erreur-vide", Map.of()));
+            ouvrirPseudo(p, premiereConnexion, texte("decouverte-erreur-vide", Map.of()), fini);
             return;
         }
         async(() -> {
             Optional<JoueurParrainage> parrain = depotJoueur.trouverParPseudo(saisie);
             if (parrain.isEmpty()) parrain = depotJoueur.trouverParCode(saisie.toUpperCase(Locale.ROOT));
             if (parrain.isEmpty()) {
-                rouvrir(uuid, premiereConnexion, texte("decouverte-erreur-inconnu", Map.of("joueur", saisie)));
+                rouvrir(uuid, premiereConnexion, texte("decouverte-erreur-inconnu", Map.of("joueur", saisie)), fini);
                 return;
             }
             JoueurParrainage j = parrain.get();
             ServiceParrainage.Arrivee arrivee = parrainage.inviter(uuid, pseudoFilleul, j, "questionnaire", premiereConnexion, false);
             if (arrivee == ServiceParrainage.Arrivee.SOI_MEME) {
-                rouvrir(uuid, premiereConnexion, texte("decouverte-erreur-soi", Map.of()));
+                rouvrir(uuid, premiereConnexion, texte("decouverte-erreur-soi", Map.of()), fini);
                 return;
             }
             depot.enregistrer(uuid, SOURCE_JOUEUR, j.uuid(), "questionnaire");
+            fini.run();
             // a pending referral sends its own welcome message; otherwise just thanks
             if (arrivee != ServiceParrainage.Arrivee.CREEE) envoyer(uuid, "decouverte-merci-joueur", Map.of("joueur", j.pseudo()));
         });
     }
 
-    private void rouvrir(UUID uuid, Instant premiereConnexion, String erreur) {
+    private void rouvrir(UUID uuid, Instant premiereConnexion, String erreur, Runnable fini) {
         Bukkit.getScheduler().runTask(plugin, () -> {
             Player p = Bukkit.getPlayer(uuid);
-            if (p != null && p.isOnline()) ouvrirPseudo(p, premiereConnexion, erreur);
+            if (p != null && p.isOnline()) ouvrirPseudo(p, premiereConnexion, erreur, fini);
+            else fini.run();
         });
     }
 

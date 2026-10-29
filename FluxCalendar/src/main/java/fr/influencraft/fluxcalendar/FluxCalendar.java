@@ -2,6 +2,7 @@ package fr.influencraft.fluxcalendar;
 
 import fr.influencraft.flux.api.FluxApi;
 import fr.influencraft.flux.api.FluxPlugin;
+import fr.influencraft.flux.api.welcome.JoinScreens;
 import fr.influencraft.flux.api.util.Format;
 import fr.influencraft.flux.api.util.Players;
 import org.bukkit.Bukkit;
@@ -12,18 +13,15 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * FluxCalendar: the login calendar ({@code /calendrier}, {@link LoginCalendar}, {@link CalendarMenu}). The first
- * login of a day opens the calendar by itself when today's reward waits (once the resource pack is loaded, for the
- * menu's images); the player claims it by clicking today's date.
+ * login of a day opens the calendar by itself when today's reward waits, through the join screens of Flux (after
+ * the resource pack and the screens before it, such as the questionnaire of a new player); the player claims it by
+ * clicking today's date.
  *
  * <pre>
  *   /calendrier                                              (players)
@@ -32,14 +30,10 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class FluxCalendar extends FluxPlugin implements Listener {
 
-    /** Seconds to wait for the resource pack before opening the calendar anyway. */
-    private static final long PACK_TIMEOUT = 30;
     private static final String MENU = "calendrier";
 
     private LoginCalendar calendar;
     private CalendarMenu menu;
-    /** Players who just started a new login day, waiting for their resource pack before the calendar opens. */
-    private final Set<UUID> toOpen = ConcurrentHashMap.newKeySet();
 
     @Override
     protected List<String> formerNames() {
@@ -102,26 +96,15 @@ public final class FluxCalendar extends FluxPlugin implements Listener {
     public void onJoin(PlayerJoinEvent e) {
         Player p = e.getPlayer();
         if (!arrive(p) || !calendar.claimable(p)) return;
-        toOpen.add(p.getUniqueId());
-        Bukkit.getScheduler().runTaskLater(this, () -> open(p), PACK_TIMEOUT * 20L);
-    }
-
-    @EventHandler
-    public void onPack(PlayerResourcePackStatusEvent e) {
-        PlayerResourcePackStatusEvent.Status status = e.getStatus();
-        if (status == PlayerResourcePackStatusEvent.Status.ACCEPTED || status == PlayerResourcePackStatusEvent.Status.DOWNLOADED) return;
-        Player p = e.getPlayer();
-        Bukkit.getScheduler().runTaskLater(this, () -> open(p), 20L);
-    }
-
-    private void open(Player p) {
-        if (!p.isOnline() || !toOpen.remove(p.getUniqueId()) || !calendar.claimable(p)) return;
-        FluxApi.open(p, MENU);
+        // after the screens shown before it (the questionnaire of a new player), once the resource pack is there
+        JoinScreens.request(p, 100, (player, done) -> {
+            if (calendar.claimable(player)) FluxApi.open(player, MENU);
+            done.run();
+        });
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent e) {
-        toOpen.remove(e.getPlayer().getUniqueId());
         calendar.unload(e.getPlayer().getUniqueId());
     }
 

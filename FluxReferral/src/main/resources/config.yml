@@ -50,8 +50,7 @@ decouverte:
   questionnaire: true
   # Prévient le staff connecté de l'origine de chaque joueur (alertes staff de Flux, permission flux.staff.alerts)
   alerte-staff: true
-  # Délai avant l'ouverture de la fenêtre après la connexion (secondes)
-  delai-secondes: 5
+  # La fenêtre s'ouvre une fois le pack de ressources chargé, avant le calendrier (écrans d'arrivée de Flux).
   sources:
     tiktok: "TikTok"
     vote: "Site de vote"

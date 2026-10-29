@@ -83,6 +83,10 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         help.start();
         settings = new fr.influencraft.flux.settings.SettingsService(this);
         settings.start();
+        // screens shown when a player joins (questionnaire, calendar...), one after another once the pack is loaded
+        fr.influencraft.flux.welcome.JoinScreenService joinScreens = new fr.influencraft.flux.welcome.JoinScreenService(this);
+        getServer().getPluginManager().registerEvents(joinScreens, this);
+        fr.influencraft.flux.api.welcome.JoinScreens.bind(joinScreens);
         if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) papiBridge = new PapiBridge(this);
         fr.influencraft.flux.api.FluxApi.bind(this);
         fr.influencraft.flux.api.FluxApi.registerPlaceholders(this, "flux", this::ownPlaceholder);

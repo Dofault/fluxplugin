@@ -35,7 +35,8 @@ import java.util.function.Consumer;
  *       .onCancel(p -> FluxApi.open(p, "bank"))
  *       .open();
  * </pre>
- * Callbacks run on the main thread, at most once, within 5 minutes; Escape just closes the window. Colours of titles,
+ * Callbacks run on the main thread, at most once, within 5 minutes; Escape counts as the cancel button
+ * ({@link Form#onCancel}). Colours of titles,
  * texts and buttons come from Flux's config ({@code dialogs.*}).
  */
 public final class Dialogs {
@@ -396,7 +397,12 @@ public final class Dialogs {
                             });
                         }, once)));
             }
-            player.showDialog(Dialog.create(f -> f.empty().base(base).type(DialogType.multiAction(buttons, null, columns))));
+            // Escape (or closing) runs onCancel, like the cancel button of a confirm/cancel form
+            ActionButton exit = ActionButton.create(Texts.parse(style("cancel") + cancel, player), null, 100,
+                    DialogAction.customClick((view, audience) -> sync(() -> {
+                        if (player.isOnline()) onCancel.accept(player);
+                    }), once));
+            player.showDialog(Dialog.create(f -> f.empty().base(base).type(DialogType.multiAction(buttons, exit, columns))));
         }
     }
 }
