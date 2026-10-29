@@ -17,12 +17,13 @@ public record Crate(String id, String name, String keyItem, String keyName, List
      * A reward of a crate.
      *
      * @param weight   chance = weight / sum of the crate's weights
-     * @param display  item shown in the menus ({@code Items.of} spec), {@code lore} under its name
+     * @param display  item shown in the menus ({@code Items.of} spec), {@code lore} under its name, {@code modelData}
+     *                 its custom model data (0 = none), {@code glow} the enchantment shine
      * @param commands console commands run when won ({@code %player%} = player name)
      * @param items    items given when won ({@code <spec>} or {@code <spec> <amount>})
      */
-    public record Reward(String id, String name, double weight, String display, List<String> lore,
-                         List<String> commands, List<String> items) {
+    public record Reward(String id, String name, double weight, String display, List<String> lore, int modelData,
+                         boolean glow, List<String> commands, List<String> items) {
     }
 
     static Crate read(String id, ConfigurationSection c) {
@@ -34,6 +35,7 @@ public record Crate(String id, String name, String keyItem, String keyName, List
                 if (r == null) continue;
                 rewards.add(new Reward(rid, r.getString("name", rid), Math.max(0, r.getDouble("weight", 1)),
                         r.getString("display.item", "PAPER"), r.getStringList("display.lore"),
+                        r.getInt("display.model-data", 0), r.getBoolean("display.glow", false),
                         r.getStringList("commands"), r.getStringList("items")));
             }
         }

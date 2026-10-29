@@ -109,7 +109,14 @@ public final class EcoCratesToFluxCrate implements Migration {
         String base = "rewards." + rid + ".";
         out.set(base + "name", r.getString("name", rid));
         out.set(base + "weight", r.getDouble("weight.value", r.getDouble("weight", 1)));
-        out.set(base + "display.item", spec(r.getString("display.item", "PAPER")));
+        String display = r.getString("display.item", "PAPER");
+        out.set(base + "display.item", spec(display));
+        Matcher model = Pattern.compile("custom_model_data:(\\d+)").matcher(display);
+        if (model.find()) out.set(base + "display.model-data", Integer.parseInt(model.group(1)));
+        if (!display.toLowerCase(Locale.ROOT).startsWith("eco") && display.matches(".*\\s[a-z_]+:\\d+.*")
+                && !display.contains("custom_model_data")) {
+            out.set(base + "display.glow", true); // an enchantment argument (« enchanted_book incassable:1 »)
+        }
         List<String> lore = new ArrayList<>();
         for (String line : r.getStringList("display.lore")) if (!line.contains("%chance%")) lore.add(line);
         while (!lore.isEmpty() && lore.get(0).isBlank()) lore.remove(0);
@@ -139,21 +146,19 @@ public final class EcoCratesToFluxCrate implements Migration {
     }
 
     /**
-     * An eco item string as a Flux item spec: ItemsAdder items and plain materials as Flux writes them (the name
-     * argument dropped: FluxCrate names the item, the amount kept apart); anything with other eco arguments (model
-     * data, enchantments) handed to eco as is ({@code eco:...}), so the item looks the same.
+     * An item string of EcoCrates as a Flux item spec: ItemsAdder items and materials as Flux writes them (arguments
+     * dropped: name given by FluxCrate, model data and shine read apart, the amount kept apart); EcoItems and
+     * EcoArmor items kept with their arguments.
      */
     static String spec(String eco) {
         String s = NAME_ARG.matcher(eco).replaceAll("").trim();
         String lower = s.toLowerCase(Locale.ROOT);
-        if (lower.startsWith("ecoarmor:") || lower.startsWith("ecoitems:")) return s; // eco lookup reads its arguments
-        String[] words = s.split(" ");
-        String first = words[0];
+        if (lower.startsWith("ecoarmor:") || lower.startsWith("ecoitems:")) return s;
+        String first = s.split(" ")[0];
         if (first.toLowerCase(Locale.ROOT).startsWith("itemsadder:")) {
             return "itemsadder:" + first.substring(11).replace("__", ":");
         }
-        boolean arguments = words.length > 2 || (words.length == 2 && !words[1].matches("\\d+"));
-        return arguments ? "eco:" + s : first.toUpperCase(Locale.ROOT);
+        return first.toUpperCase(Locale.ROOT);
     }
 
     private static String itemWithAmount(String eco) {

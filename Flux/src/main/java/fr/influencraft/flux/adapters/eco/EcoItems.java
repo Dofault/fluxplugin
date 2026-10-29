@@ -7,8 +7,8 @@ import org.bukkit.inventory.ItemStack;
 
 /**
  * Items of the eco plugins (EcoItems, EcoArmor...) for {@code ItemFactory}: specs {@code ecoitems:<id>},
- * {@code ecoarmor:<id>} and their eco arguments ({@code ecoarmor:set_virale_helmet item_model:...}), and
- * {@code eco:<any eco item string>}, looked up through eco. Only called when eco is enabled.
+ * {@code ecoarmor:<id>} and their arguments ({@code ecoarmor:set_virale_helmet item_model:...}), looked up through
+ * eco. Only called when eco is enabled.
  */
 public final class EcoItems {
 

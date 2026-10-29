@@ -8,7 +8,8 @@ key:
 # Text above the placed crate, and the colour of its ring of particles.
 hologram: ["&f&lExample crate", "&7Left click: rewards  Right click: open"]
 particle: "#FFFFFF"
-# Rewards, drawn by weight (chance = weight / sum of weights). « display » is shown in the menus; « items » are
+# Rewards, drawn by weight (chance = weight / sum of weights). « display » is shown in the menus (item, lore,
+# optional « model-data » for a texture of the resource pack and « glow » for the enchantment shine); « items » are
 # given (« <spec> [amount] »), « commands » run from the console (%player% = player name).
 rewards:
   diamonds:

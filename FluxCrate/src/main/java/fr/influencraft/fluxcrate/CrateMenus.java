@@ -104,7 +104,7 @@ final class CrateMenus {
         if (crate == null) return out;
         for (Crate.Reward r : crate.rewards()) {
             Lore lore = Lore.create().items(r.lore()).kv("Chance", Format.decimal(crate.chance(r)) + "%");
-            out.add(ListEntry.of(r.id()).item(Items.of(r.display(), r.name(), lore.build(), player)));
+            out.add(ListEntry.of(r.id()).item(display(r, lore, player, false)));
         }
         return out;
     }
@@ -177,6 +177,20 @@ final class CrateMenus {
         if (v == null || !v.isOpen() || !ROLL_MENU.equals(v.menuId())) rolls.remove(id);
     }
 
+    /** The item shown for a reward: its display item, name, lore, model data and shine. */
+    @SuppressWarnings("deprecation") // custom model data: the number the resource pack of the server uses
+    private static ItemStack display(Crate.Reward r, Lore lore, Player player, boolean shine) {
+        ItemStack item = Items.of(r.display(), r.name(), lore.build(), player);
+        if (item == null) item = new ItemStack(Material.PAPER);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            if (r.modelData() != 0) meta.setCustomModelData(r.modelData());
+            if (r.glow() || shine) meta.setEnchantmentGlintOverride(true);
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
     /** The 7 cases of the strip; the middle one is the reward under the gold frame. */
     private List<ListEntry> strip(Player player) {
         Roll roll = rolls.get(player.getUniqueId());
@@ -189,16 +203,7 @@ final class CrateMenus {
             boolean centre = i == VISIBLE / 2;
             Lore lore = Lore.create().items(r.lore());
             if (centre && roll.given) lore.ok("Gagné !");
-            ItemStack item = Items.of(r.display(), r.name(), lore.build(), player);
-            if (item == null) item = new ItemStack(Material.PAPER);
-            if (centre && roll.given) {
-                ItemMeta meta = item.getItemMeta();
-                if (meta != null) {
-                    meta.setEnchantmentGlintOverride(true);
-                    item.setItemMeta(meta);
-                }
-            }
-            out.add(ListEntry.of("roll:" + i).item(item));
+            out.add(ListEntry.of("roll:" + i).item(display(r, lore, player, centre && roll.given)));
         }
         return out;
     }
