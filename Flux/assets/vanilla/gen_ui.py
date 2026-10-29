@@ -7,7 +7,7 @@ Writes:
   ItemsAdder/contents/fluxui/config.yml          buttons (items fluxui:btn_<icon>_<colour>, _off = disabled) and
                                                  the backgrounds (font images fluxui:bg_<menu>)
   ItemsAdder/contents/fluxui/textures/...        their pictures, and those of the fonts (textures/font)
-  ItemsAdder/contents/fluxui/resourcepack/...    fonts fluxui:y<Y> (Y = window y of the top, 0 to 220): the menu
+  ItemsAdder/contents/fluxui_fonts/resourcepack/  fonts fluxui:y<Y> (Y = window y of the top, 0 to 220): the menu
                                                  font (QuinqueFive capitals, white, 1 px shadow under each column),
                                                  progress bar chunks, sprites (pager field, selected slot)
   <Flux resources>/ui/glyphs.yml                 width of every character, read by Flux to place text (UiTitle)
@@ -258,14 +258,17 @@ BACKGROUNDS = {"metiers": bg_metiers}
 
 def main(plugins, resources=None):
     dest = os.path.join(plugins, "ItemsAdder", "contents", NS)
-    rp = os.path.join(dest, "resourcepack", "assets", NS)
-    # pictures in the pack's textures/ (ItemsAdder copies it to assets/fluxui/textures/), font files in
-    # resourcepack/assets/fluxui/font/ (copied as they are)
-    for sub in ("textures/btn", "textures/bg", "textures/font", os.path.join("resourcepack", "assets", NS, "font")):
+    # Pictures in the pack's textures/ (ItemsAdder copies it to assets/fluxui/textures/). Font files in a raw pack
+    # of their own, contents/fluxui_fonts/resourcepack/assets/fluxui/font/: ItemsAdder copies a resourcepack/ folder
+    # as it is only in a contents folder without config.yml (in contents/fluxui it would land under
+    # assets/fluxui/resourcepack/, where the client never looks).
+    import shutil
+    rp = os.path.join(plugins, "ItemsAdder", "contents", NS + "_fonts", "resourcepack", "assets", NS)
+    os.makedirs(os.path.join(rp, "font"), exist_ok=True)
+    for sub in ("textures/btn", "textures/bg", "textures/font"):
         os.makedirs(os.path.join(dest, sub), exist_ok=True)
-    stale = os.path.join(rp, "textures")
+    stale = os.path.join(dest, "resourcepack")
     if os.path.isdir(stale):
-        import shutil
         shutil.rmtree(stale)
     tex = os.path.join(dest, "textures", "font")
 
