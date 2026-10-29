@@ -53,7 +53,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class FluxTags extends FluxPlugin implements Listener {
 
     private static final String NONE = "aucun";
-    private static final int ROWS = 5;
+    private static final int ROWS = 6;
     /** Window x of the tags in /tags and of the rank tag in the profile (assets/gen_fonds.py). */
     private static final int TAG_X = 46;
     private static final int PROFILE_X = 80;
@@ -103,10 +103,6 @@ public final class FluxTags extends FluxPlugin implements Listener {
                         : args.length == 3 ? List.copyOf(catalogue.keySet()) : List.of())
                 .register();
         Bukkit.getPluginManager().registerEvents(this, this);
-        // the jobs provider of Flux may be ready only once every plugin is enabled: job tags added then
-        Bukkit.getScheduler().runTaskLater(this, () -> {
-            if (!jobsLoaded) settings();
-        }, 40L);
         fr.influencraft.flux.api.profile.Profiles.register(this, "tags", 60, new fr.influencraft.flux.api.profile.Profiles.Section() {
             public org.bukkit.inventory.ItemStack item(Player viewer, OfflinePlayer subject, int page) {
                 Tag t = catalogue.get(selection(subject.getUniqueId()));
@@ -231,7 +227,13 @@ public final class FluxTags extends FluxPlugin implements Listener {
 
     // ---------------------------------------------------------------- menu
 
+    /** EcoJobs loads its jobs after the server has started (after this plugin): the catalogue is rebuilt at first use. */
+    private void jobsReady() {
+        if (!jobsLoaded && Jobs.available() && !Jobs.get().ids().isEmpty()) settings();
+    }
+
     private List<ListEntry> entries(Player p) {
+        jobsReady();
         List<ListEntry> out = new ArrayList<>();
         String current = selection(p.getUniqueId());
         for (Tag t : catalogue.values()) {
@@ -320,6 +322,7 @@ public final class FluxTags extends FluxPlugin implements Listener {
     // ---------------------------------------------------------------- placeholders and admin
 
     private String placeholder(Player p, String key) {
+        jobsReady();
         switch (key) {
             case "total" -> {
                 return String.valueOf(catalogue.size() - 1);

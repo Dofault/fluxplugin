@@ -7,7 +7,7 @@ Tags (glyph ids, used by FluxTags), styles decided 2026-10-28:
   beta, createur       special tags (permission), style « plein »
 Each tag image exists several times in the pack, always 9 px high (halved in the menu on 2026-10-29):
   <id>                 for %fluxtags_tag% in the chat and TAB
-  <id>_r<1..5>         placed on row 1..5 of the /tags menu (drawn in the title next to its button, gen_fonds.TAG_X)
+  <id>_r<1..6>         placed on line 1..6 of the /tags menu (chest rows 0 to 5) (drawn in the title next to its button, gen_fonds.TAG_X)
   rang_<rank>_p        the rank line of the profile menu (Flux, menus/profil.yml), at PROFILE_Y
 Background of /tags: gen_fonds.background (« rubans »).
 
@@ -23,7 +23,7 @@ from PIL import Image, ImageDraw
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from tag_styles import RARITIES, STYLES  # noqa: E402
-from gen_fonds import ROWS, TAG_H, background, tag_top  # noqa: E402
+from gen_fonds import LIFT, ROWS, TAG_H, background, tag_top  # noqa: E402
 
 RANK_COLOURS = ["c0c0c0", "9ad29a", "6ac7c7", "5ca8e6", "4e72e6", "8a5ce6", "d15ce6", "e65c9f", "ffd94d",
                 "e6a85c", "e65c5c", "ff0033"]
@@ -74,9 +74,9 @@ def main(plugins, style):
         im.save(os.path.join(tex, gid + ".png"))
         lines += ["  %s:" % gid, "    show_in_gui: false", "    suggest_in_command: false",
                   '    path: "tags/%s.png"' % gid, "    scale_ratio: 9", "    y_position: 7"]
-        for row in range(1, ROWS + 1):
+        for row in range(ROWS):
             top = tag_top(row)
-            lines += ["  %s_r%d:" % (gid, row), "    show_in_gui: false", "    suggest_in_command: false",
+            lines += ["  %s_r%d:" % (gid, row + 1), "    show_in_gui: false", "    suggest_in_command: false",
                       '    path: "tags/%s.png"' % gid, "    scale_ratio: %d" % TAG_H, "    y_position: %d" % (13 - top)]
         if gid.startswith("rang_"):
             lines += ["  %s_p:" % gid, "    show_in_gui: false", "    suggest_in_command: false",
@@ -85,7 +85,7 @@ def main(plugins, style):
     widest = max(round(im.width * TAG_H / im.height) for _, im in tags)
     background(widest).save(os.path.join(dest, "textures", "gui", "menu_tags.png"))
     lines += ["  menu_tags:", "    show_in_gui: false", "    suggest_in_command: false",
-              '    path: "gui/menu_tags.png"', "    scale_ratio: 221", "    y_position: 13"]
+              '    path: "gui/menu_tags.png"', "    scale_ratio: 221", "    y_position: %d" % (13 + LIFT)]
     open(os.path.join(dest, "config.yml"), "w").write("\n".join(lines) + "\n")
     # size of every tag image file: FluxTags places the menu images with it
     data = os.path.join(plugins, "FluxTags")
