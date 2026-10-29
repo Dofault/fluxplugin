@@ -1,8 +1,8 @@
 # Flux : menu Récompenses (/recompenses, bouton Récompenses de /menu2) : la boîte aux lettres, toutes les récompenses
 # en attente quel que soit le plugin qui les a données (votes, parrainage, boosters...), une case par récompense
 # (21 par page), page précédente / suivante à gauche et à droite de la boîte, Tout récupérer dessous.
-# Retour en 9, explication en 17. La connexion et le temps de jeu ont leur menu depuis le 2026-10-29 (Fidélité,
-# FluxRewards, /fidelite). Fond menu_recompenses (ItemsAdder influmenu) : le fond retouché à la main par
+# Retour en 9, explication en 17. Les récompenses de connexion ont leur menu depuis le 2026-10-29 (calendrier,
+# FluxCalendar, /calendrier). Fond menu_recompenses (ItemsAdder influmenu) : le fond retouché à la main par
 # l'utilisateur (Flux/assets/menu_recompenses.png) coupé sous l'étoile par Flux/assets/recompenses/sans_frises.py.
 title: ":offset_-8::menu_recompenses:"
 rows: 6
@@ -46,7 +46,7 @@ items:
     lore:
       - "@desc Tout ce que tu gagnes et qui ne rentre pas dans ton inventaire arrive ici : votes, parrainage, boosters..."
       - "@kv En attente | %flux_rewards_count%"
-      - "@info Connexion et temps de jeu : /fidelite"
+      - "@info Récompense du jour : /calendrier"
 
   vide:
     material: "itemsadder:influitems:checkmark"

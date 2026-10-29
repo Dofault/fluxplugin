@@ -1,0 +1,24 @@
+# FluxCalendar: the login calendar (/calendrier). One reward per date of the month, claimed by clicking today's date
+# in the calendar, on that day only (a date not claimed is missed); everything starts again on the 1st.
+# A claim is delivered at once through Flux; what does not fit in the inventory waits in /rewards.
+# Colours: & codes, &#RRGGBB and MiniMessage tags. Commands run from the console, %player% = player name.
+# "slots" = inventory slots the commands need (0 for money only). "big: true" = a big reward, marked in advance.
+
+# The day changes at midnight in this timezone.
+timezone: "Europe/Paris"
+
+# Icon of a calendar reward when it waits in /rewards (inventory full).
+icons:
+  daily: "CLOCK"
+
+# Dates missing from the list give nothing (29 to 31 exist only in long months).
+days:
+  1:
+    lore: ["&f8 bread"]
+    commands: ["give %player% minecraft:bread 8"]
+    slots: 1
+  7:
+    lore: ["&b2 diamonds"]
+    commands: ["give %player% minecraft:diamond 2"]
+    slots: 1
+    big: true

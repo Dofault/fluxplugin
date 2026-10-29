@@ -7,7 +7,7 @@
 #
 # Disposition (centrée) :
 #   coffre rangée 4 : 28 à 34, 7 fonctionnalités, Profil au centre
-#   coffre rangée 6 : Vote 45, Parrainage 46, Classement 47, Rangs 48, Casino 49, Fidélité 50, Récompenses 51,
+#   coffre rangée 6 : Vote 45, Parrainage 46, Classement 47, Rangs 48, Casino 49, Calendrier 50, Récompenses 51,
 #   Pass 52, Autre 53
 #   (Autre = Paramètres au clic gauche, Aide au clic droit)
 #   inventaire du joueur : masqué, aucun bouton
@@ -243,16 +243,16 @@ items:
     actions:
       left: ["[menu] rewards"]
 
-  fidelite:
-    material: "itemsadder:influitems:chest"
-    name: "&#FFD94DFidélité"
+  calendrier:
+    material: "itemsadder:fluxcalendar:jour_cadeau"
+    name: "&#FFD94DCalendrier"
     slots: [50]
     lore:
-      - "@desc Une récompense par jour de connexion et par palier de temps de jeu."
-      - "@kv Jour de connexion | %fluxrewards_jour%&7/&f%fluxrewards_cycle%"
+      - "@desc Une récompense par jour du mois : clique sur la date du jour pour la récupérer."
+      - "@kv Ce mois-ci | %fluxcalendar_recuperes%&7/&f%fluxcalendar_jours_mois%"
       - "@left Ouvrir"
     actions:
-      left: ["[menu] fidelite"]
+      left: ["[menu] calendrier"]
 
   vote:
     material: "itemsadder:influitems:vote"

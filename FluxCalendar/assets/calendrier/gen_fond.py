@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
-"""Loyalty menu (/fidelite) as a real monthly calendar: 5 proposals (2026-10-29).
+"""Calendar menu (/calendrier, FluxCalendar): a real monthly calendar, « mural » chosen 2026-10-29 among 5 proposals.
 
-Layout shared by every variant:
-  above the window   the month's name (drawn in the title by FluxRewards: one glyph per month), the weekday letters
+Layout:
+  above the window   the month's name (drawn in the title by FluxCalendar: one glyph per month), the weekday letters
                      L M M J V S D just above the first week (the frame starts LIFT px above the window)
   chest rows 0 to 5  the weeks, Monday to Sunday in columns 1 to 7: one case per day of the month, its number shown
                      by the item's count; back (0) and menu icon (8) on row 0, columns 0 and 8 are margins
   hidden inventory   a welcome banner in the chest/inventory gap, today's reward on a gold case (58), the month's
                      stats on each side (56, 60)
 
-    <venv with Pillow>/python3 gen_variantes.py <out dir>
-Writes fond_<n>.png and variantes_calendrier.png (each one with October 2026 filled in: days claimed, missed, today).
+    <venv with Pillow>/python3 gen_fond.py <plugins dir of the server> [preview dir]
+Writes the ItemsAdder pack « fluxcalendar » (background menu_calendrier, title words mois_<1..12> and chiffre_<0..9>,
+day marks jour_recupere / jour_manque / jour_cadeau / jour_bonus, each also with a drawn « 1 » for the 1st of the
+month: the game shows no count of 1, jour_un for an empty 1st) and plugins/FluxCalendar/glyphs.yml, then /iazip.
+The preview shows October 2026 filled in.
 """
 import calendar
 import math
@@ -36,6 +39,11 @@ VIOLET, VIOLET_LIGHT = (91, 45, 158, 255), (179, 118, 229, 255)
 GOLD, GOLD_DARK, GOLD_LIGHT = (240, 168, 0, 255), (138, 90, 20, 255), (255, 217, 77, 255)
 PINK, PINK_DARK = (224, 96, 160, 255), (200, 37, 106, 255)
 PAPER, PAPER_LINE, PAPER_SHADE = (246, 242, 250, 255), (226, 219, 234, 255), (205, 195, 220, 255)
+HEADER_TOP = -14              # window y of the calendar's pink header
+HEADER_SHADOW = (120, 20, 70, 255)
+TITLE_Y = HEADER_TOP + 7      # window y of the month and year (glyphs placed by FluxCalendar)
+MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre",
+          "Novembre", "Décembre"]
 
 
 def item(slot):
@@ -143,65 +151,12 @@ def inventory_cases(c):
     gold_case(c, TODAY_SLOT)
 
 
-# ---------------------------------------------------------------- variants
-
-def v1():
-    """Éphéméride: a paper desk calendar. Violet cover band with gold spiral rings, cream page printed with a thin
-    grid, weekend columns tinted pink, the page curling at the bottom right."""
-    c = frame()
-    x0, x1 = item(1)[0] - 3, item(7)[0] + 18
-    top, bottom = -16, item(45)[1] + 19
-    c.rrect((x0 - 1, top - 1, x1 + 1, bottom + 1), 4, fill=OUTLINE)
-    c.rrect((x0, top, x1, bottom), 3, fill=PAPER)
-    c.rrect((x0, top, x1, 2), 3, fill=VIOLET)
-    c.rect((x0, -1, x1, 2), fill=VIOLET)
-    c.line([(x0, 3), (x1, 3)], fill=(60, 28, 110, 255))
-    for i in range(9):  # spiral rings
-        rx = x0 + 7 + i * (x1 - x0 - 14) // 8
-        c.rrect((rx - 1, top - 6, rx + 1, top + 3), 1, fill=GOLD_LIGHT, outline=GOLD_DARK)
-    c.text("Octobre", 88, top + 7, colour=WHITE, shadow=(60, 28, 110, 255))
-    for col in (6, 7):
-        cx = item(col)[0]
-        c.rect((cx - 1, 4, cx + 16, bottom - 1), fill=(250, 230, 240, 255))
-    weekday_letters(c, 7, colour=VIOLET, weekend=PINK_DARK, shadow=PAPER_LINE)
-    for r in range(6):
-        for col in range(1, 8):
-            x, y = item(r * 9 + col)
-            c.rect((x - 1, y - 1, x + 16, y + 16), outline=PAPER_SHADE)
-    c.polygon([(x1 - 9, bottom), (x1, bottom - 9), (x1, bottom)], fill=PAPER_SHADE)
-    c.line([(x1 - 9, bottom), (x1, bottom - 9)], fill=MID)
-    c.case(0)
-    c.case(8)
-    welcome(c, VIOLET, OUTLINE)
-    inventory_cases(c)
-    return c.im
-
-
-def v2():
-    """Agenda: the dark theme of the other menus, gold month, the weeks on the theme's cases with weekends on pink
-    cases, a light violet line under each week."""
-    c = frame()
-    c.text("Octobre", 88, -13, colour=GOLD_LIGHT, shadow=GOLD_DARK)
-    for dx in (-30, 30):
-        star(c, 88 + dx, -11, 3, GOLD)
-    weekday_letters(c, 7, colour=VIOLET_LIGHT)
-    pink = {k: (min(255, v[0] + 50), v[1], min(255, v[2] + 10), v[3]) for k, v in tampon_case().items()}
-    for r in range(6):
-        for col in range(1, 8):
-            c.case(r * 9 + col, pink if col >= 6 else None)
-    c.case(0)
-    c.case(8)
-    welcome(c, DARK[3], GOLD, colour=GOLD_LIGHT)
-    inventory_cases(c)
-    return c.im
-
-
-def v3():
-    """Calendrier mural: hung on a nail by a string, a pink header with the month, perforations of the torn pages
-    above it, pages piled under the last week."""
+def background():
+    """Calendrier mural (chosen 2026-10-29 among 5 proposals): hung on a nail by a string, a pink header (the month
+    and year are drawn over it by FluxCalendar), perforations of the torn pages, pages piled under the last week."""
     c = frame()
     x0, x1 = item(1)[0] - 4, item(7)[0] + 19
-    top, bottom = -14, item(45)[1] + 19
+    top, bottom = HEADER_TOP, item(45)[1] + 19
     c.line([(88, -21), (x0 + 12, top)], fill=GOLD_DARK)
     c.line([(88, -21), (x1 - 12, top)], fill=GOLD_DARK)
     c.ellipse((86, -23, 90, -19), fill=MID, outline=OUTLINE)
@@ -211,11 +166,10 @@ def v3():
     c.rrect((x0, top, x1, bottom), 2, fill=PAPER)
     c.rect((x0, top, x1, 15), fill=PINK_DARK)
     c.rect((x0, top, x1, top + 1), fill=PINK)
-    c.line([(x0, 16), (x1, 16)], fill=(120, 20, 70, 255))
+    c.line([(x0, 16), (x1, 16)], fill=HEADER_SHADOW)
     for x in range(x0 + 3, x1 - 1, 4):  # perforations
-        c.point(x, top + 3, (120, 20, 70, 255))
-    c.text("Octobre", 88, top + 7, colour=WHITE, shadow=(120, 20, 70, 255))
-    weekday_letters(c, 7, colour=WHITE, weekend=GOLD_LIGHT, shadow=(120, 20, 70, 255))
+        c.point(x, top + 3, HEADER_SHADOW)
+    weekday_letters(c, 7, colour=WHITE, weekend=GOLD_LIGHT, shadow=HEADER_SHADOW)
     for r in range(6):
         for col in range(1, 8):
             x, y = item(r * 9 + col)
@@ -226,77 +180,6 @@ def v3():
     welcome(c, PINK_DARK, OUTLINE)
     inventory_cases(c)
     return c.im
-
-
-def v4():
-    """Nuit étoilée: a night sky behind the month, each day a round seat with a faint halo, gold crescent moon and
-    stars in the margins (the charter's stars)."""
-    c = frame()
-    x0, x1 = item(1)[0] - 4, item(7)[0] + 19
-    top, bottom = -18, item(45)[1] + 19
-    c.rrect((x0 - 1, top - 1, x1 + 1, bottom + 1), 5, fill=OUTLINE)
-    for y in range(top, bottom + 1):
-        t = (y - top) / (bottom - top)
-        col = (int(18 + 30 * t), int(14 + 10 * t), int(46 + 30 * t), 255)
-        c.line([(x0, y), (x1, y)], fill=col)
-    seed = 11
-    for _ in range(70):
-        seed = (seed * 1103515245 + 12345) % (1 << 31)
-        sx = x0 + 2 + seed % (x1 - x0 - 4)
-        seed = (seed * 1103515245 + 12345) % (1 << 31)
-        sy = top + 2 + seed % (bottom - top - 4)
-        c.point(sx, sy, (210, 190, 240, 255) if seed % 4 else GOLD_LIGHT)
-    c.text("Octobre", 88, top + 5, colour=GOLD_LIGHT, shadow=(10, 6, 24, 255))
-    c.ellipse((x0 + 8, top + 2, x0 + 18, top + 12), fill=GOLD_LIGHT)
-    c.ellipse((x0 + 11, top + 1, x0 + 21, top + 11), fill=(18, 14, 46, 255))
-    star(c, x1 - 12, top + 7, 4, GOLD_LIGHT)
-    weekday_letters(c, 7, colour=VIOLET_LIGHT, weekend=PINK, shadow=(10, 6, 24, 255))
-    for r in range(6):
-        for col in range(1, 8):
-            x, y = item(r * 9 + col)
-            c.ellipse((x - 2, y - 2, x + 17, y + 17), fill=(60, 40, 100, 120))
-            c.ellipse((x, y, x + 15, y + 15), fill=(14, 10, 34, 255), outline=(150, 110, 210, 255))
-    c.case(0)
-    c.case(8)
-    welcome(c, (18, 14, 46, 255), VIOLET_LIGHT, colour=GOLD_LIGHT)
-    inventory_cases(c)
-    return c.im
-
-
-def v5():
-    """Calendrier de l'Avent: every day is a little door of a colour of the charter (violet, pink, gold, blue,
-    green) with a ribbon, a bow on the header, confetti in the margins."""
-    c = frame()
-    x0, x1 = item(1)[0] - 4, item(7)[0] + 19
-    top, bottom = -18, item(45)[1] + 19
-    c.rrect((x0 - 1, top - 1, x1 + 1, bottom + 1), 4, fill=OUTLINE)
-    c.rrect((x0, top, x1, bottom), 3, fill=(58, 30, 98, 255))
-    c.rrect((x0 + 2, top + 2, x1 - 2, 3), 2, fill=PINK_DARK)
-    c.text("Octobre", 88, top + 6, colour=WHITE, shadow=(110, 15, 60, 255))
-    c.polygon([(88, top + 1), (80, top - 4), (80, top + 5)], fill=GOLD)  # bow
-    c.polygon([(88, top + 1), (96, top - 4), (96, top + 5)], fill=GOLD)
-    c.rect((86, top - 1, 90, top + 3), fill=GOLD_LIGHT)
-    weekday_letters(c, 7, colour=WHITE, weekend=GOLD_LIGHT, shadow=(30, 12, 60, 255))
-    doors = [VIOLET, PINK_DARK, GOLD_DARK, (43, 140, 190, 255), (46, 160, 100, 255)]
-    for r in range(6):
-        for col in range(1, 8):
-            x, y = item(r * 9 + col)
-            base = doors[(r * 3 + col) % len(doors)]
-            light = tuple(min(255, v + 40) for v in base[:3]) + (255,)
-            c.rrect((x - 1, y - 1, x + 16, y + 16), 2, fill=OUTLINE)
-            c.rrect((x, y, x + 15, y + 15), 2, fill=base)
-            c.line([(x + 1, y + 1), (x + 14, y + 1)], fill=light)
-            c.line([(x + 7, y), (x + 7, y + 15)], fill=GOLD_LIGHT)
-    for x, y in ((14, 30), (160, 44), (13, 74), (161, 96), (15, 112), (158, 120)):
-        c.rect((x, y, x + 1, y + 1), fill=[PINK, GOLD_LIGHT, VIOLET_LIGHT][x % 3])
-    c.case(0)
-    c.case(8)
-    welcome(c, PINK_DARK, OUTLINE)
-    inventory_cases(c)
-    return c.im
-
-
-VARIANTS = [("1 ephemeride", v1), ("2 agenda", v2), ("3 mural", v3), ("4 nuit etoilee", v4), ("5 avent", v5)]
 
 
 # ---------------------------------------------------------------- preview
@@ -329,6 +212,23 @@ def mark(kind):
     return im
 
 
+ONE = [".#.", "##.", ".#.", ".#.", ".#.", ".#.", "###"]  # the « 1 » of Minecraft's font
+
+
+def with_one(im):
+    """The item count is not shown for 1: the 1st of the month gets its « 1 » drawn where the game draws counts."""
+    out = im.copy()
+    for dy, row in enumerate(ONE):
+        for dx, ch in enumerate(row):
+            if ch == "#":
+                out.putpixel((13 + dx, 9 + dy), (62, 62, 62, 255))  # shadow
+    for dy, row in enumerate(ONE):
+        for dx, ch in enumerate(row):
+            if ch == "#":
+                out.putpixel((12 + dx, 8 + dy), WHITE)
+    return out
+
+
 def count(im, n, x, y, k):
     """Item count as in game: white digits bottom right of the case, dark shadow."""
     s = str(n)
@@ -338,11 +238,20 @@ def count(im, n, x, y, k):
     im.alpha_composite(lbl, ((x + 17) * k - lbl.width, (y + 16) * k - lbl.height + k))
 
 
+def label(words):
+    """A word of the title as an image: QuinqueFive capitals, white, header-coloured shadow (7 px high)."""
+    im = Image.new("RGBA", (text_width(words) + 1, 7), (0, 0, 0, 0))
+    text(im, words, (text_width(words) + 1) // 2, 0, colour=WHITE, shadow=HEADER_SHADOW)
+    return im
+
+
 def preview(bg, k=3):
     """October 2026 filled in: claimed days (tick), a few missed (cross), today (29, gift), the big days to come
     (small gift), the others empty: only their number."""
     view = Image.new("RGBA", (W, INV_Y + 30 + LIFT), (58, 58, 58, 255))
     view.alpha_composite(bg.crop((0, 0, W, view.height)))
+    title = label("Octobre 2026")
+    view.alpha_composite(title, (88 - title.width // 2, TITLE_Y + LIFT))
     view = view.resize((W * k, view.height * k), Image.NEAREST)
     today, missed = 29, {6, 13, 14, 22}
     icons = {"ok": mark("tick"), "ko": mark("cross"), "today": mark("gift"), "big": mark("small_gift")}
@@ -365,20 +274,49 @@ def preview(bg, k=3):
     return view
 
 
+def pack(plugins):
+    """Writes the ItemsAdder pack « fluxcalendar » (background, title words, day marks) and FluxCalendar/glyphs.yml."""
+    dest = os.path.join(plugins, "ItemsAdder", "contents", "fluxcalendar")
+    for sub in ("textures/gui", "textures/titre", "textures/item"):
+        os.makedirs(os.path.join(dest, sub), exist_ok=True)
+    background().save(os.path.join(dest, "textures/gui/menu_calendrier.png"))
+
+    def glyph(gid, path, h, y):
+        return ["  %s:" % gid, "    show_in_gui: false", "    suggest_in_command: false", '    path: "%s"' % path,
+                "    scale_ratio: %d" % h, "    y_position: %d" % y]
+
+    lines = ["# Generated by plugins/fluxplugin/FluxCalendar/assets/calendrier/gen_fond.py: do not edit by hand.",
+             "info:", "  namespace: fluxcalendar", "", "font_images:"]
+    lines += glyph("menu_calendrier", "gui/menu_calendrier.png", H, 13 + LIFT)
+    widths = {}
+    words = [("mois_%d" % (i + 1), m) for i, m in enumerate(MONTHS)] + [("chiffre_%d" % n, str(n)) for n in range(10)]
+    for gid, word in words:
+        im = label(word)
+        im.save(os.path.join(dest, "textures/titre", gid + ".png"))
+        lines += glyph(gid, "titre/%s.png" % gid, im.height, 13 - TITLE_Y)
+        widths[gid] = im.width
+    lines += ["", "items:"]
+    marks = [("jour_recupere", mark("tick"), "Jour récupéré"), ("jour_manque", mark("cross"), "Jour manqué"),
+             ("jour_cadeau", mark("gift"), "Récompense du jour"), ("jour_bonus", mark("small_gift"), "Grosse récompense"),
+             ("jour", Image.new("RGBA", (16, 16), (0, 0, 0, 0)), "Jour")]
+    for gid, im, name in marks:
+        for suffix, picture in (("", im), ("_un", with_one(im))):
+            if gid == "jour" and not suffix:
+                continue  # an empty day is influitems:invisible, its count shows the number
+            picture.save(os.path.join(dest, "textures/item", gid + suffix + ".png"))
+            lines += ["  %s:" % (gid + suffix), "    display_name: '%s'" % name, "    resource:", "      material: PAPER",
+                      "      generate: true", "      textures:", "      - item/%s.png" % (gid + suffix)]
+    open(os.path.join(dest, "config.yml"), "w").write("\n".join(lines) + "\n")
+    data = os.path.join(plugins, "FluxCalendar")
+    os.makedirs(data, exist_ok=True)
+    open(os.path.join(data, "glyphs.yml"), "w").write(
+        "# Generated by FluxCalendar/assets/calendrier/gen_fond.py: width in px of the title words (month, digits),\n"
+        "# window x where the title is centred and space in px between the month and the year.\n"
+        "centre: 88\nspace: 4\n" + "".join("%s: %d\n" % kv for kv in widths.items()))
+    print("pack fluxcalendar ->", dest)
+
+
 if __name__ == "__main__":
-    out = sys.argv[1]
-    tiles = []
-    for name, fn in VARIANTS:
-        im = fn()
-        im.save(os.path.join(out, "fond_%s.png" % name.split()[0]))
-        tiles.append((name, preview(im)))
-    tw, th = tiles[0][1].size
-    sheet = Image.new("RGBA", (tw * 3 + 60, (th + 40) * 2), (20, 16, 28, 255))
-    for i, (name, t) in enumerate(tiles):
-        x, y = (i % 3) * (tw + 30), (i // 3) * (th + 40)
-        sheet.alpha_composite(t, (x, y + 30))
-        lbl = Image.new("RGBA", (text_width(name) + 2, 7), (0, 0, 0, 0))
-        text(lbl, name, lbl.width // 2, 0, colour=WHITE)
-        sheet.alpha_composite(lbl.resize((lbl.width * 3, lbl.height * 3), Image.NEAREST), (x + 6, y + 4))
-    sheet.save(os.path.join(out, "variantes_calendrier.png"))
-    print("->", out)
+    pack(sys.argv[1])
+    if len(sys.argv) > 2:
+        preview(background()).save(os.path.join(sys.argv[2], "calendrier_apercu.png"))

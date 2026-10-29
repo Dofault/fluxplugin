@@ -24,7 +24,7 @@
         <module>FluxLands</module>
         <module>FluxAuctionHouse</module>
         <module>FluxOffering</module>
-        <module>FluxRewards</module>
+        <module>FluxCalendar</module>
         <module>FluxSorter</module>
         <module>FluxWebsite</module>
         <!-- to be merged into FluxShop -->

@@ -1,0 +1,6 @@
+prefix: "&#B376E5ᴄᴀʟᴇɴᴅᴀʀ &8▸ "
+reloaded: "&#2ECF7BFluxCalendar reloaded."
+admin-usage: "!&#FF5C5C/%flux_cmd_fluxcalendar_fluxcalendar% <reset <player> [all]|reload> (online player)"
+admin-reset: "&#2ECF7B%player%'s calendar reset (today, or the whole month with all)."
+day-name: "Day %day%"
+new-day: "&#B376E5New day: your reward waits in the &f/calendar&#B376E5, claim it before midnight."

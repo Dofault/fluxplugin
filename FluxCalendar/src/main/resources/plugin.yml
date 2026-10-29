@@ -1,0 +1,12 @@
+name: FluxCalendar
+version: 26.2
+main: fr.influencraft.fluxcalendar.FluxCalendar
+api-version: "26.2"
+description: Login calendar, one reward per day of the month, delivered through the reward manager of Flux.
+authors: [Influencraft]
+depend: [Flux]
+
+permissions:
+  influrecompenses.admin:
+    description: Login calendar admin (reset, reload).
+    default: op
