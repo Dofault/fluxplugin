@@ -271,13 +271,15 @@ def parrainage_actions():
 #   inventaire 2e rangée : les missions de la catégorie affichée (9, ou 8 avec un trou au centre)
 # Chemin et catégorie sont indépendants : une page par couple (page du chemin, catégorie),
 # pass_<n>_<catégorie>. Le menu s'ouvre sur la page du palier du joueur, missions quotidiennes.
-TITRE_PASS = '":offset_-8::menu_pass:"'
-P_RETOUR, P_ICONE, P_PREV, P_NEXT, P_CATS = 0, 8, 18, 26, 56
-# Paliers de la page, dans l'ordre (créneaux : haut, bas, haut...), et la case de passage qui suit
-# chaque palier sauf le dernier (virage dans une case vide).
-P_PALIERS = [19, 29, 21, 31, 23, 33, 25]
-P_PASSAGES = [20, 30, 22, 32, 24, 34]
-P_MISSIONS = list(range(63, 72))
+# Thème vanilla (maquette validée le 2026-10-30, fond fluxui:bg_pass de Flux/assets/vanilla/gen_ui.py) :
+#   rangée 0 : retour (0), info (8) ; rangées 1-2 : carte de saison (icône, nom, fin dans..., barre : widgets) ;
+#   rangée 4 : récompenses gratuites des 7 paliers de la page (37-43), numéro et cadenas au-dessus (widgets),
+#   flèches 36 / 44 ; rangée 5 : récompenses premium juste dessous (46-52), bloc vert ;
+#   inventaire : bloc Missions (même largeur que le premium) : 5 catégories (56-60), 7 missions (64-70).
+TITRE_PASS = '":offset_-8::bg_pass:"'
+P_RETOUR, P_ICONE, P_PREV, P_NEXT, P_CATS = 0, 8, 36, 44, 56
+P_PALIERS = list(range(37, 44))
+P_MISSIONS = list(range(64, 71))
 P_CATEGORIES = list(range(P_CATS, P_CATS + 5))
 
 # Catégories (56-60) et missions (63-71, centrées) : listes Flux construites par FluxTools (PassMenu), catégories
@@ -287,7 +289,7 @@ P_CATEGORIES = list(range(P_CATS, P_CATS + 5))
 def pass_entete(pid_pass, infos):
     return [item("retour", "itemsadder:influitems:btn_back", "Retour", P_RETOUR, ["Revenir au menu."],
                  [CLIC_G + "Menu principal"], {"left": ["[menu] main"]}),
-            item("icone", "itemsadder:influitems:pass", "Pass", P_ICONE, infos, glow=True)]
+            item("icone", "itemsadder:fluxui:btn_info_blue", "Pass", P_ICONE, infos)]
 
 
 def pass_infos(pid_pass):
@@ -299,61 +301,54 @@ def pass_infos(pid_pass):
 
 
 def pass_chemin(pid_pass, n, total, paliers_max):
-    """Chemin de la page n (paliers libres + piste Prestige) et ses boutons précédent / suivant."""
+    """Page n : les 7 paliers (gratuit rangée 4, premium juste dessous), flèches, numéros et cadenas (widgets)."""
     T = f"%ecobattlepass_tier_{pid_pass}%"
     debut = (n - 1) * PAR_PAGE
     nb = min(PAR_PAGE, paliers_max - debut)
     slots = P_PALIERS[:nb]
     its = []
     if n > 1:
-        its.append(item("precedent", "itemsadder:influitems:btn_prev", "Page précédente", P_PREV, [],
-                        clics={"left": [f"[page-swap] {pid_pass}_{n - 1}", "[sound] @page"]},
-                        cacher=True))
+        its.append(item("precedent", "itemsadder:fluxui:btn_left_orange", "Page précédente", P_PREV, [],
+                        clics={"left": [f"[page-swap] {pid_pass}_{n - 1}", "[sound] @page"]}, cacher=True))
     if n < total:
-        its.append(item("suivant", "itemsadder:influitems:btn_next", "Page suivante", P_NEXT, [],
-                        clics={"left": [f"[page-swap] {pid_pass}_{n + 1}", "[sound] @page"]},
-                        cacher=True))
-    branches = []
+        its.append(item("suivant", "itemsadder:fluxui:btn_right_orange", "Page suivante", P_NEXT, [],
+                        clics={"left": [f"[page-swap] {pid_pass}_{n + 1}", "[sound] @page"]}, cacher=True))
+    widgets = []
     for k, slot in enumerate(slots):
         t = debut + k + 1
         etat = f"%ecobattlepass_tier_state_{pid_pass}_{t}%"
-        # Index 0 de tier_..._reward = nom combiné (trop large), jamais affiché ; les suivants sont
-        # les lignes de reward-lore (EcoBattlepass/rewards/*.yml), sautées si vides.
         # reward-lore lines of EcoBattlepass (its *-rewards-format must be "%reward%": the frame comes from Flux)
         libre = [f"@item %ecobattlepass_tier_free_reward_{pid_pass}_{t}_{i}%" for i in range(1, 6)]
         prest = [f"@item %ecobattlepass_tier_premium_reward_{pid_pass}_{t}_{i}%" for i in range(1, 6)]
         nom = f"Palier {t}"
         its.append(item(f"libre{t}_ok", "itemsadder:influitems:chest_checkmark", nom, slot, libre + ["&#2ECF7BRécupéré."],
-                        priorite=1, conditions=[f"placeholder: {etat} != NOT_RECEIVED", f"placeholder: {etat} != RECEIVED_PREMIUM"], quantite=t))
+                        priorite=1, conditions=[f"placeholder: {etat} != NOT_RECEIVED", f"placeholder: {etat} != RECEIVED_PREMIUM"]))
         its.append(item(f"libre{t}_dispo", "itemsadder:influitems:chest_unlock", nom, slot, libre,
                         [CLIC_G_OK + "Récupérer"],
                         {"left": [f"[player] {pid_pass} claim {t} free", "[sound] @complete", "[refresh]"]},
-                        priorite=2, conditions=[f"placeholder: {T} >= {t}"], quantite=t))
-        its.append(item(f"libre{t}", "itemsadder:influitems:lock", nom, slot, libre + [ROUGE + "Pas encore atteint."], priorite=3, quantite=t))
-        bas = slot - 9 if slot < 27 else slot + 9   # Prestige vers l'extérieur du créneau
-        branches.append(f'"{slot} > {bas}"')
-        nomp = f"★ Palier {t} Prestige"
+                        priorite=2, conditions=[f"placeholder: {T} >= {t}"]))
+        its.append(item(f"libre{t}", "itemsadder:influitems:chest", nom, slot, libre + [ROUGE + "Pas encore atteint."], priorite=3))
+        bas = slot + 9
+        nomp = f"★ Palier {t} Premium"
         its.append(item(f"prestige{t}_ok", "itemsadder:influitems:chest_checkmark", nomp, bas, prest + ["&#2ECF7BRécupéré."],
                         priorite=1, conditions=[f"placeholder: {etat} != NOT_RECEIVED", f"placeholder: {etat} != RECEIVED_FREE"]))
-        its.append(item(f"prestige{t}_requis", "itemsadder:influitems:lock", nomp, bas, prest + ["&#FF5C5CPass Prestige requis."],
+        its.append(item(f"prestige{t}_requis", "itemsadder:influitems:lock", nomp, bas, prest + ["&#FF5C5CPass premium requis."],
                         priorite=2, conditions=["!permission: battlepass.premium"]))
         its.append(item(f"prestige{t}_dispo", "itemsadder:influitems:chest_unlock", nomp, bas, prest,
                         [CLIC_G_OK + "Récupérer"],
                         {"left": [f"[player] {pid_pass} claim {t} premium", "[sound] @complete", "[refresh]"]},
                         priorite=3, conditions=[f"placeholder: {T} >= {t}"]))
-        its.append(item(f"prestige{t}", "itemsadder:influitems:lock", nomp, bas, prest + [ROUGE + "Pas encore atteint."], priorite=4))
-    trace = []
-    for k, slot in enumerate(slots):
-        trace.append(str(slot))
-        if k < len(slots) - 1:
-            trace.append(q(f"~{P_PASSAGES[k]}"))
-    # couleur par palier (2026-10-28) : vert récupéré, orange atteint à récupérer, éteint pas atteint
-    chemin = {"slots": "[" + ", ".join(trace) + "]", "progress": q(T), "offset": debut, "color": "vert",
-              "states": q(f"%fluxpass_tierstates_{pid_pass}_{debut + 1}_{nb}%"),
-              "start": "false", "end": "false",
-              "branches": "[" + ", ".join(branches) + "]"}
-    chemins = {"paliers": chemin, **connecteurs(n, total, slots, "vert", q(T), debut, nb, P_PREV, P_NEXT)}
-    return its, chemins
+        its.append(item(f"prestige{t}", "itemsadder:influitems:chest", nomp, bas, prest + [ROUGE + "Pas encore atteint."], priorite=4))
+        cx = 8 + 18 * (slot % 9) + 8
+        widgets += [f"      numero{t}:", "        type: text", "        ink: true", f"        x: {cx}", "        y: 83",
+                    "        align: center", f'        text: "{t}"',
+                    f"      ouvert{t}:", "        type: text", "        ink: true", f"        x: {cx}", "        y: 76",
+                    "        align: center", '        text: "\\uE121"',
+                    f'        view-requirements: ["placeholder: {T} >= {t}"]',
+                    f"      ferme{t}:", "        type: text", "        ink: true", f"        x: {cx}", "        y: 76",
+                    "        align: center", '        text: "\\uE120"',
+                    f'        view-requirements: ["placeholder: {T} < {t}"]']
+    return its, widgets
 
 
 def pass_pages(paliers_max, pid_pass="pass"):
@@ -362,8 +357,9 @@ def pass_pages(paliers_max, pid_pass="pass"):
     infos = pass_infos(pid_pass)
     pages = []
     for n in range(1, total + 1):
-        chemin, chemins = pass_chemin(pid_pass, n, total, paliers_max)
-        pages.append(page(f"{pid_pass}_{n}", chemin, chemins, TITRE_PASS, animation=False))
+        its, widgets = pass_chemin(pid_pass, n, total, paliers_max)
+        bloc = page(f"{pid_pass}_{n}", its, {}, TITRE_PASS, animation=False)
+        pages.append(bloc.rstrip("\n") + "\n    widgets:\n" + "\n".join(widgets) + "\n")
     principal = [item("pass", "itemsadder:influitems:pass", "Pass", 52,
                       [f"Palier &f{T}" + VIOLET + ", récompenses", "Standard et Prestige."], [CLIC_G + "Ouvrir"],
                       {"left": [f"[menu] {pid_pass}"]})]
@@ -391,6 +387,35 @@ open-actions:
 
 page-files:
   - _pages/{pid_pass}.yml
+
+# Carte de saison (fond fluxui:bg_pass) : grande icône, nom, fin de saison, barre des paliers.
+widgets:
+  icone_saison:
+    type: image
+    glyph: "pass_carte"
+    x: 10
+    width: 32
+  saison:
+    type: text
+    x: 48
+    y: 40
+    text: "Pass de saison"
+  fin:
+    type: text
+    x: 48
+    y: 49
+    colour: "#B4B4B4"
+    text: "Fin dans %ecobattlepass_time_to_season_end_{pid_pass}%"
+  paliers:
+    type: bar
+    frame: true
+    x: 48
+    y: 57
+    width: 116
+    colour: gold
+    progress: "%ecobattlepass_tier_{pid_pass}%"
+    max: "%ecobattlepass_{pid_pass}_max_tiers%"
+    text: "%ecobattlepass_tier_{pid_pass}%/%ecobattlepass_{pid_pass}_max_tiers%"
 
 lists:
   pass_categories:

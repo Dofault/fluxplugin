@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <ul>
  *   <li>{@code pass_categories}: the mission categories ({@code modules.pass-menu.categories}: icon, name,
  *   amount); the one shown glows, a week not started yet shows when it starts</li>
- *   <li>{@code pass_missions}: missions of the category shown, centred on 9 slots (an even count leaves the middle
+ *   <li>{@code pass_missions}: missions of the category shown, centred on the row ({@code mission-slots}, an even count leaves the middle
  *   empty): done, not available yet, or in progress with the item of its task</li>
  * </ul>
  * Action {@code [fluxpass] category <id>} shows a category. Placeholder {@code %fluxpass_tierpage_<pass>_<n>%}: page
@@ -42,7 +42,8 @@ import java.util.concurrent.ConcurrentHashMap;
 final class PassMenu implements Listener {
 
     static final String CATEGORIES = "pass_categories", MISSIONS = "pass_missions";
-    private static final int SLOTS = 9;
+    /** Slots of the missions row ({@code modules.pass-menu.mission-slots}, odd: the middle one is empty for an even count). */
+    private int slots = 9;
 
     /** A category of the menu (config). */
     private record Shown(String id, String icon, String name, int amount) {
@@ -94,6 +95,7 @@ final class PassMenu implements Listener {
             plugin.getLogger().warning("Pass menu missions unavailable (EcoBattlepass API changed?): " + e);
             return;
         }
+        if (config != null) menu.slots = Math.max(1, config.getInt("mission-slots", 9));
         ConfigurationSection cats = config == null ? null : config.getConfigurationSection("categories");
         if (cats != null) {
             for (String id : cats.getKeys(false)) {
@@ -178,7 +180,7 @@ final class PassMenu implements Listener {
         boolean open = (boolean) isActive.invoke(category);
         List<?> quests = (List<?>) getQuests.invoke(category);
         List<ListEntry> missions = new ArrayList<>();
-        for (int i = 0; i < quests.size() && i < SLOTS; i++) {
+        for (int i = 0; i < quests.size() && i < slots; i++) {
             Object quest = quests.get(i);
             String name = (String) formattedName.invoke(quest, player);
             Lore lore = Lore.create();
@@ -200,14 +202,14 @@ final class PassMenu implements Listener {
         return centred(missions);
     }
 
-    /** Centred on 9 slots: an odd count side by side, an even count around the empty middle slot. */
-    private static List<ListEntry> centred(List<ListEntry> entries) {
-        int c = entries.size();
+    /** Centred on the row: an odd count side by side, an even count around the empty middle slot. */
+    private List<ListEntry> centred(List<ListEntry> entries) {
+        int c = entries.size(), middle = slots / 2;
         List<ListEntry> out = new ArrayList<>();
-        int first = 4 - c / 2;
+        int first = middle - c / 2;
         for (int i = 0; i < first; i++) out.add(ListEntry.gap());
         for (int i = 0; i < c; i++) {
-            if (c % 2 == 0 && out.size() == 4) out.add(ListEntry.gap());
+            if (c % 2 == 0 && out.size() == middle) out.add(ListEntry.gap());
             out.add(entries.get(i));
         }
         return out;

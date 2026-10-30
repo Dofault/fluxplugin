@@ -43,7 +43,8 @@ from ui import BLACK, WHITE, rgb, tone  # noqa: E402
 NS = "fluxui"
 TEXT_SHADOW = (40, 40, 40, 255)
 # characters of the menu font (lower case is drawn upper case by Flux)
-CHARS = (list("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") + list("ÉÈÊÀÂÎÔ") + list("/%.:+-!'·?,()"))
+# \uE120 / \uE121: closed / open lock (pass milestones), written in a text like any letter
+CHARS = (list("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") + list("ÉÈÊÀÂÎÔ") + list("/%.:+-!'·?,()") + ["\uE120", "\uE121"])
 CELL_W, CELL_H = 8, 16         # accent rows 0-1, letter rows 2-6, shadow row 7, empty below: a glyph may stand
                                # up to 16 px above the baseline (ascent <= height), so text fits any row, plate too
 COLS = 16
@@ -65,7 +66,9 @@ BUTTON_COLOURS = {"red": rgb("#C0392B"), "green": rgb("#3E8E2E"), "blue": rgb("#
 # ---------------------------------------------------------------------------------------------------- font
 
 fond = ui.fond_lib
-fond._EXTRA.update({"?": ["###", "..#", ".##", "...", ".#."], ",": [".", ".", ".", "#", "#"],
+fond._EXTRA.update({"\uE120": ["..#..", ".#.#.", "#####", "##.##", "#####"],
+                    "\uE121": ["..#..", ".#.#.", ".#...", "#####", "#####"],
+                    "?": ["###", "..#", ".##", "...", ".#."], ",": [".", ".", ".", "#", "#"],
                     "(": [".#", "#.", "#.", "#.", ".#"], ")": ["#.", ".#", ".#", ".#", "#."]})
 
 
@@ -359,6 +362,33 @@ def span(cases, pad=1):
 ROW_TOPS = [18 + 18 * r for r in range(6)] + [139, 157, 175, 197]   # item y of chest rows 0-5, inventory, hotbar
 
 
+PASS_GREEN, PASS_GREEN_DARK = rgb("#3E8E2E"), rgb("#2A6420")
+PASS_FREE = list(range(37, 44))          # free rewards of the 7 tiers of a page
+PASS_PREMIUM = list(range(46, 53))       # premium rewards, right under them
+PASS_TABS, PASS_MISSIONS = list(range(56, 61)), list(range(64, 71))
+
+
+def bg_pass(generic):
+    """Pass menu (Flux pass.yml, validated mockup of 2026-10-30): season card (rows 1-2: big icon fluxui:pass_carte,
+    name, time left and bar drawn by Flux), free rewards (row 4, frames by the theme, numbers and locks by Flux
+    above them), premium rewards in a green box (row 5), then the missions in a dark box as wide as the premium one
+    and sharing its edge: header, 5 categories, 7 missions (inventory rows 0-1)."""
+    im = bg_window(generic, 0, 7)
+    d = ImageDraw.Draw(im, "RGBA")
+    ui.container(im, d, (6, 35, 169, 70), "ardoise")
+    px0, py0, px1, py1 = span(PASS_PREMIUM)
+    d.rectangle((px0, py0, px1, py1), fill=BLACK)
+    d.rectangle((px0 + 1, py0 + 1, px1 - 1, py1 - 1), fill=PASS_GREEN_DARK)
+    d.line((px0 + 1, py0 + 1, px1 - 1, py0 + 1), fill=tone(PASS_GREEN_DARK, -0.3))
+    for c in PASS_PREMIUM:
+        ui.slot(d, c, "colour", PASS_GREEN)
+    _, _, _, my1 = span(PASS_MISSIONS, 3)
+    ui.container(im, d, (px0, py1, px1, my1), "ardoise", head="Missions", head_kind="strip", head_h=11)
+    for c in PASS_TABS + PASS_MISSIONS:
+        ui.slot(d, c, "dark")
+    return im
+
+
 def bg_window(generic, first=0, last=9):
     """The bare window of the theme, fitted to the rows a menu uses (theme of Flux): it starts ``first`` rows lower
     than a full window (the plate moves with it) and ends 6 px under row ``last`` (0-5 chest, 6-8 inventory,
@@ -375,7 +405,7 @@ def bg_window(generic, first=0, last=9):
     return im
 
 
-BACKGROUNDS = {"metiers": bg_metiers, "window": bg_window}
+BACKGROUNDS = {"metiers": bg_metiers, "window": bg_window, "pass": bg_pass}
 for _first in range(0, 6):
     for _last in range(_first, 10):
         if (_first, _last) != (0, 9):
@@ -515,6 +545,12 @@ def main(plugins, resources=None):
         fn(generic).save(os.path.join(dest, "textures", "bg", name + ".png"))
         lines += [f"  bg_{name}:", "    show_in_gui: false", "    suggest_in_command: false",
                   f"    path: bg/{name}.png", "    scale_ratio: 221", "    y_position: 13"]
+    # big icon of the pass season card (32 x 32 at window (10, 37))
+    pass_png = os.path.join(contents, "influitems", "textures", "pass.png")
+    if os.path.isfile(pass_png):
+        Image.open(pass_png).convert("RGBA").resize((32, 32), Image.NEAREST).save(os.path.join(dest, "textures", "bg", "pass_carte.png"))
+        lines += ["  pass_carte:", "    show_in_gui: false", "    suggest_in_command: false",
+                  "    path: bg/pass_carte.png", "    scale_ratio: 32", "    y_position: %d" % (13 - 37)]
     open(os.path.join(dest, "config.yml"), "w", encoding="utf-8").write("\n".join(lines) + "\n")
 
     if resources:

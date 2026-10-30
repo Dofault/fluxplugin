@@ -56,6 +56,8 @@ chars:
   ",": 1
   "(": 2
   ")": 2
+  "": 5
+  "": 5
 chunks: [1, 2, 4, 8, 16, 32, 64, 128]
 bar-colours: [green, gold, blue, red, purple]
 bar-height: 10
