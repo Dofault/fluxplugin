@@ -20,8 +20,151 @@ public final class MenuLoader {
     private MenuLoader() {
     }
 
+    // ---------------------------------------------------------------- vanilla theme (section theme:)
+
+    /** Buttons of the former theme and their vanilla-theme replacement ({@code theme.buttons} of Flux's config). */
+    private static volatile java.util.Map<String, String> themeButtons = java.util.Map.of();
+    /** Rows added to every chest slot of the menu being loaded ({@code theme.shift}). */
+    private static final ThreadLocal<int[]> SHIFT = new ThreadLocal<>();
+
+    /** Menus converted from Flux's config ({@code theme.menus.<id>}), same keys as a {@code theme:} section. */
+    private static volatile java.util.Map<String, ConfigurationSection> themeMenus = java.util.Map.of();
+
+    public static void configureTheme(java.util.Map<String, String> buttons, ConfigurationSection menus) {
+        themeButtons = java.util.Map.copyOf(buttons);
+        java.util.Map<String, ConfigurationSection> m = new java.util.HashMap<>();
+        if (menus != null) for (String k : menus.getKeys(false)) {
+            ConfigurationSection c = menus.getConfigurationSection(k);
+            if (c != null) m.put(k.toLowerCase(Locale.ROOT), c);
+        }
+        themeMenus = java.util.Map.copyOf(m);
+    }
+
     public static Menu load(String id, File file, Consumer<String> warn) {
         YamlConfiguration yml = YamlConfiguration.loadConfiguration(file);
+        ConfigurationSection theme = yml.getConfigurationSection("theme");
+        if (theme == null) theme = themeMenus.get(id.toLowerCase(Locale.ROOT));
+        if (theme == null) return loadNow(id, file, yml, null, warn);
+        // theme.shift: the whole content moves down, slots of the file stay as written. "auto" (default): a menu
+        // that uses only the chest and stops before its last row moves down to end on it (centred on the screen)
+        int rows = yml.getInt("rows", 6);
+        int shift;
+        if (theme.isInt("shift")) {
+            shift = theme.getInt("shift");
+        } else {
+            Menu plain = loadNow(id, file, yml, null, msg -> { });
+            int[] span = rowSpan(plain);
+            shift = span[1] < rows - 1 ? rows - 1 - span[1] : 0;
+        }
+        SHIFT.set(new int[]{shift * 9, rows * 9});
+        try {
+            return loadNow(id, file, yml, theme, warn);
+        } finally {
+            SHIFT.remove();
+        }
+    }
+
+    /**
+     * Menu with the vanilla theme: bare window as default title, the menu name on the plate (engraved text), a slot
+     * frame under every slot it uses (buttons of the theme and invisible items excepted), former buttons replaced.
+     */
+    private static Menu themed(Menu m, ConfigurationSection theme) {
+        List<MenuButton> buttons = m.buttons().stream().map(MenuLoader::rebutton).toList();
+        List<Widget> widgets = new ArrayList<>();
+        String name = theme.getString("title", "");
+        // the window fits the rows used (menu and pages): it starts on the first one, ends under the last one
+        int[] span = rowSpan(m);
+        String title = theme.isSet("background") ? m.title()
+                : span[0] == 0 && span[1] == 9 ? ":offset_-8::bg_window:"
+                : ":offset_-8::bg_window_" + span[0] + "_" + span[1] + ":";
+        int plateY = 5 + 18 * span[0];
+        if (!name.isBlank()) widgets.add(new Widget.Text("__title", 88, plateY, Widget.Align.CENTER, name, null, true, List.of()));
+        boolean frames = !theme.getString("frames", "vanilla").equalsIgnoreCase("none");
+        boolean dark = theme.getString("frames", "vanilla").equalsIgnoreCase("dark");
+        Set<Integer> skip = new java.util.HashSet<>();
+        for (String raw : strings(theme, "no-frame")) addSlots(raw, skip);
+        if (frames && m.inventoryMode() != InventoryMode.HIDDEN) {
+            // the player's own inventory shows under the menu: its 36 slots need their frames too
+            int[] inv = new int[36];
+            for (int i = 0; i < 36; i++) inv[i] = m.topSize() + i;
+            widgets.add(new Widget.Slots("__inventory", inv, false, List.of()));
+        }
+        if (frames) {
+            int[] used = framed(buttons, m.lists(), skip);
+            if (used.length > 0) widgets.add(new Widget.Slots("__frames", used, dark, List.of()));
+        }
+        widgets.addAll(m.widgets());
+        java.util.Map<String, Page> pages = new java.util.LinkedHashMap<>();
+        for (var e : m.pages().entrySet()) {
+            Page p = e.getValue();
+            List<MenuButton> pb = p.buttons().stream().map(MenuLoader::rebutton).toList();
+            List<Widget> pw = new ArrayList<>();
+            if (frames) {
+                int[] used = framed(pb, p.lists(), skip);
+                if (used.length > 0) pw.add(new Widget.Slots("__frames", used, dark, List.of()));
+            }
+            pw.addAll(p.widgets());
+            // pages drew their own former backgrounds and animations: replaced by the menu's, unless kept
+            boolean keep = theme.getBoolean("keep-page-titles", false);
+            String pageTitle = keep && p.title() != null && !p.title().isBlank() ? p.title() : title;
+            pages.put(e.getKey(), new Page(p.id(), pageTitle, keep ? p.frames() : List.of(), p.frameInterval(), pb, p.paths(),
+                    p.lists(), List.copyOf(pw)));
+        }
+        boolean layers = theme.getBoolean("keep-title-layers", false);
+        return new Menu(m.id(), title, m.rows(), m.commands(), m.overrideCommands(), m.permission(), m.inventoryMode(),
+                m.vanillaBackground(), m.updateInterval(), m.openActions(), m.closeActions(), buttons,
+                java.util.Map.copyOf(pages), m.paths(), theme.getBoolean("keep-title-loop", false) ? m.loopTitles() : List.of(),
+                m.loopInterval(), layers ? m.titleLayers() : List.of(), m.lists(),
+                m.inputSlots(), m.inputChangeActions(), m.inventoryClickActions(), List.copyOf(widgets));
+    }
+
+    /**
+     * First chest row and last row used by a menu and its pages: 0-5 chest, 6-8 inventory, 9 hotbar. A menu showing the
+     * player's inventory always goes down to the hotbar.
+     */
+    private static int[] rowSpan(Menu m) {
+        int top = m.topSize();
+        int first = 5, last = 0;
+        java.util.List<int[]> all = new ArrayList<>();
+        for (MenuButton b : m.buttons()) all.add(b.slots());
+        for (ListSpec l : m.lists()) all.add(l.slots());
+        for (Page p : m.pages().values()) {
+            for (MenuButton b : p.buttons()) all.add(b.slots());
+            for (ListSpec l : p.lists()) all.add(l.slots());
+        }
+        for (int[] slots : all) for (int s : slots) {
+            int row = s < top ? s / 9 : 6 + Math.min(3, (s - top) / 9);
+            if (s < top) first = Math.min(first, row);
+            last = Math.max(last, row);
+        }
+        if (m.inventoryMode() != InventoryMode.HIDDEN) last = 9;
+        if (last < first) last = first;
+        return new int[]{first, last};
+    }
+
+    private static MenuButton rebutton(MenuButton b) {
+        String to = b.material() == null ? null : themeButtons.get(b.material().toLowerCase(Locale.ROOT));
+        if (to == null) return b;
+        return new MenuButton(b.id(), to, b.name(), b.lore(), b.amount(), b.slots(), b.priority(), b.glow(),
+                b.customModelData(), b.itemModel(), b.flags(), b.hideTooltip(), b.confirm(), b.viewRequirements(),
+                b.clickRequirements(), b.denyActions(), b.actions());
+    }
+
+    /** Slots to frame: every list slot, every button slot but theme buttons and invisible items. */
+    private static int[] framed(List<MenuButton> buttons, List<ListSpec> lists, Set<Integer> skip) {
+        java.util.TreeSet<Integer> out = new java.util.TreeSet<>();
+        for (ListSpec l : lists) for (int s : l.slots()) out.add(s);
+        for (MenuButton b : buttons) {
+            String mat = b.material() == null ? "" : b.material().toLowerCase(Locale.ROOT);
+            if (mat.contains("fluxui:btn_") || mat.contains("invisible") || b.id().startsWith("__")) continue;
+            for (int s : b.slots()) out.add(s);
+        }
+        out.removeAll(skip);
+        return out.stream().mapToInt(Integer::intValue).toArray();
+    }
+
+    private static Menu loadNow(String id, File file, YamlConfiguration yml, ConfigurationSection theme,
+                                Consumer<String> warn) {
         String where = "menus/" + id + ".yml";
 
         int rows = yml.getInt("rows", 6);
@@ -51,7 +194,9 @@ public final class MenuLoader {
         buttons.addAll(widgetButtons(widgets, maxSlot, topSize, mode, yml.getConfigurationSection("widgets"), where, warn));
 
         java.util.Map<String, Page> pages = new java.util.LinkedHashMap<>();
-        String defaultTitle = yml.getString("title", "");
+        // themed menu: its background replaces the former title (theme.background, the bare window by default)
+        String defaultTitle = theme != null ? ":offset_-8::" + theme.getString("background", "bg_window") + ":"
+                : yml.getString("title", "");
         pages(yml.getConfigurationSection("pages"), where, defaultTitle, maxSlot, topSize, mode, pages, warn);
         // Pages rangées dans d'autres fichiers (chemin relatif au dossier du menu, préfixe _ pour
         // que Flux ne les charge pas comme des menus) : même format, section pages: à la racine.
@@ -65,8 +210,8 @@ public final class MenuLoader {
             pages(other.getConfigurationSection("pages"), "menus/" + rel, defaultTitle, maxSlot, topSize, mode, pages, warn);
         }
 
-        return new Menu(id,
-                yml.getString("title", ""),
+        Menu built = new Menu(id,
+                defaultTitle,
                 rows,
                 strings(yml, "commands"),
                 yml.getBoolean("override-commands", false),
@@ -87,6 +232,7 @@ public final class MenuLoader {
                 strings(yml, "input-change-actions"),
                 strings(yml, "inventory-click-actions"),
                 widgets);
+        return theme == null ? built : themed(built, theme);
     }
 
     private static List<ListSpec> lists(ConfigurationSection section, String where, int maxSlot, Consumer<String> warn) {
@@ -144,14 +290,22 @@ public final class MenuLoader {
             try {
                 out.add(switch (type) {
                     case "text" -> new Widget.Text(key, w.getInt("x"), w.getInt("y"), align(w.getString("align", "left")),
-                            w.getString("text", ""), w.getString("colour", w.getString("color", null)), req);
+                            w.getString("text", ""), w.getString("colour", w.getString("color", null)),
+                            w.getBoolean("ink", false), req);
+                    case "slots" -> {
+                        List<Integer> sl = new ArrayList<>();
+                        for (String raw : strings(w, "slots")) addSlots(raw, sl);
+                        yield new Widget.Slots(key, sl.stream().mapToInt(Integer::intValue).toArray(),
+                                w.getBoolean("dark", false), req);
+                    }
                     case "image" -> new Widget.Image(key, w.getString("glyph", ""), w.getInt("x"), w.getInt("width"), req);
                     case "bar" -> new Widget.Bar(key, w.getInt("x"), w.getInt("y"), w.getInt("width"),
                             w.getString("progress", "0"), w.getDouble("max", 1), w.getString("colour", "green"),
                             w.getString("text", null), req);
-                    case "pager" -> new Widget.Pager(key, w.getString("list", ""), w.getInt("prev"), w.getInt("next"), req);
-                    case "lit" -> new Widget.Lit(key, w.getInt("slot"), req);
-                    default -> throw new IllegalArgumentException("type « " + type + " » inconnu (text, image, bar, pager, lit)");
+                    case "pager" -> new Widget.Pager(key, w.getString("list", ""), shifted(w.getInt("prev")),
+                            shifted(w.getInt("next")), req);
+                    case "lit" -> new Widget.Lit(key, shifted(w.getInt("slot")), req);
+                    default -> throw new IllegalArgumentException("type « " + type + " » inconnu (text, image, bar, pager, lit, slots)");
                 });
             } catch (IllegalArgumentException e) {
                 warn.accept(at + " : " + e.getMessage() + " (widget ignoré)");
@@ -411,6 +565,13 @@ public final class MenuLoader {
         return List.copyOf(list);
     }
 
+    /** A chest slot moved down by {@code theme.shift} rows (slots of the player's inventory never move). */
+    private static int shifted(int slot) {
+        int[] shift = SHIFT.get();
+        if (shift == null || slot >= shift[1]) return slot;
+        return Math.min(shift[1] - 1, slot + shift[0]);
+    }
+
     /** "12", "0-8" ou une liste mêlant les deux. */
     private static void addSlots(String raw, java.util.Collection<Integer> out) {
         if (raw == null) return;
@@ -422,9 +583,9 @@ public final class MenuLoader {
                 if (dash > 0) {
                     int from = Integer.parseInt(p.substring(0, dash).trim());
                     int to = Integer.parseInt(p.substring(dash + 1).trim());
-                    for (int i = Math.min(from, to); i <= Math.max(from, to); i++) out.add(i);
+                    for (int i = Math.min(from, to); i <= Math.max(from, to); i++) out.add(shifted(i));
                 } else {
-                    out.add(Integer.parseInt(p));
+                    out.add(shifted(Integer.parseInt(p)));
                 }
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("case illisible « " + p + " »");

@@ -177,3 +177,80 @@ command-suggestions:
   bypass-permission: flux.commands.all
   # also propose the aliases (false: one label per command)
   show-aliases: false
+
+# Vanilla theme (docs/technique/flux-ui.md)
+theme:
+  buttons:
+    "itemsadder:influitems:btn_back": "itemsadder:fluxui:btn_back_orange"
+    "itemsadder:influitems:home": "itemsadder:fluxui:btn_back_orange"
+    "itemsadder:influitems:btn_prev": "itemsadder:fluxui:btn_left_orange"
+    "itemsadder:influitems:btn_next": "itemsadder:fluxui:btn_right_orange"
+    "itemsadder:influitems:close": "itemsadder:fluxui:btn_close_red"
+    "itemsadder:influitems:deny": "itemsadder:fluxui:btn_close_red"
+    "itemsadder:influitems:accept": "itemsadder:fluxui:btn_check_green"
+    "itemsadder:influitems:add": "itemsadder:fluxui:btn_add_green"
+    "itemsadder:influitems:remove": "itemsadder:fluxui:btn_remove_red"
+    "itemsadder:influitems:settings": "itemsadder:fluxui:btn_settings_grey"
+    "itemsadder:influitems:search": "itemsadder:fluxui:btn_search_blue"
+    "itemsadder:influitems:filter": "itemsadder:fluxui:btn_filter_blue"
+  # Menus converted to the theme (instead of a theme: section in their file, so generators keep working):
+  # title (on the plate), shift (rows the content moves down, default auto: ends on the last chest row when it
+  # uses only the chest), background (default: bare window fitted to the rows used), frames
+  # (vanilla, dark, none), no-frame (slots), keep-page-titles / keep-title-layers / keep-title-loop.
+  menus:
+    main: {title: "Menu", background: bg_main, no-frame: "0"}
+    mondes: {title: "Mondes"}
+    pass: {title: "Pass"}
+    rewards: {title: "Récompenses"}
+    marche: {title: "Marché"}
+    marche_encheres: {title: "Enchères"}
+    marche_historique: {title: "Historique"}
+    marche_offre: {title: "Offre"}
+    marche_vendre: {title: "Vendre"}
+    marche_ventes: {title: "Mes ventes"}
+    casino: {title: "Casino"}
+    caisse_apercu: {title: "Caisse"}
+    agence: {title: "Agence"}
+    echoppes: {title: "Échoppes"}
+    pays: {title: "Pays"}
+    pays_accueil: {title: "Pays"}
+    pays_annuaire: {title: "Annuaire"}
+    pays_fiche: {title: "Pays"}
+    pays_villes: {title: "Villes du pays"}
+    territoires: {title: "Territoires"}
+    ville: {title: "Ville"}
+    ville_accueil: {title: "Ville"}
+    ville_annonce: {title: "Annonce"}
+    ville_banque: {title: "Banque"}
+    ville_commerce: {title: "Commerce"}
+    ville_droits: {title: "Droits"}
+    ville_fiche: {title: "Ville"}
+    ville_habitants: {title: "Habitants"}
+    ville_parametres: {title: "Paramètres"}
+    ville_parcelle: {title: "Parcelle"}
+    ville_parcelles: {title: "Parcelles"}
+    ville_reglages: {title: "Réglages"}
+    ville_roles: {title: "Rôles"}
+    villes: {title: "Annuaire"}
+    warps: {title: "Warps"}
+    familier: {title: "Familier"}
+    familiers: {title: "Familiers"}
+    grades: {title: "Rangs"}
+    shop: {title: "Boutique"}
+    shop_autosell: {title: "Vente auto"}
+    shop_editor: {title: "Éditeur"}
+    shop_prices: {title: "Prix"}
+    shop_sell: {title: "Vente"}
+    collection: {title: "Collections"}
+    job_actions: {title: "Actions"}
+    collection_boiserie: {title: "Boiserie"}
+    collection_botanique: {title: "Botanique"}
+    collection_enchantement: {title: "Enchantement"}
+    collection_gastronomie: {title: "Gastronomie"}
+    collection_geologie: {title: "Géologie"}
+    collection_metallurgie: {title: "Métallurgie"}
+    collection_navigation: {title: "Navigation"}
+    collection_peche: {title: "Pêche"}
+    collection_social: {title: "Social"}
+    collection_terre: {title: "Terre"}
+    collection_traque: {title: "Traque"}

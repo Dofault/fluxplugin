@@ -53,7 +53,8 @@ BAR_COLOURS = {"green": rgb("#3E8E2E"), "gold": rgb("#D9A21B"), "blue": rgb("#3D
 CHUNK_BASE = 0xE000            # + 16 * colour index + chunk index
 SPRITE_BASE = 0xE100
 PAGER_W, PAGER_H = 70, 16      # pager field: 15 high + the white line under it
-# font sprites: U+E100 pager field, U+E101 selected slot (20 x 20), U+E102-E105 pager buttons (left on/off, right on/off)
+# font sprites: U+E100 pager field, U+E101 selected slot (20 x 20), U+E102-E105 pager buttons (left on/off, right
+# on/off), U+E106 vanilla slot, U+E107 dark slot (18 x 18)
 PAGER_BTN_W = 36               # pager button: 2 slots wide
 # button faces of the vanilla theme: bright colours on the grey window (not the Influencraft violet palette)
 BUTTON_COLOURS = {"red": rgb("#C0392B"), "green": rgb("#3E8E2E"), "blue": rgb("#3D7FB8"), "orange": rgb("#E07B24"),
@@ -67,7 +68,7 @@ fond._EXTRA.update({"?": ["###", "..#", ".##", "...", ".#."], ",": [".", ".", ".
                     "(": [".#", "#.", "#.", "#.", ".#"], ")": ["#.", ".#", ".#", ".#", "#."]})
 
 
-def glyph_sheet():
+def glyph_sheet(shadow=True):
     rows = (len(CHARS) + COLS - 1) // COLS
     sheet = Image.new("RGBA", (COLS * CELL_W, rows * CELL_H), (0, 0, 0, 0))
     px = sheet.load()
@@ -78,7 +79,7 @@ def glyph_sheet():
         w = len(g[0])
         for dy, row in enumerate(g):            # shadow first, one pixel under each column
             for dx, ch in enumerate(row):
-                if ch == "#":
+                if ch == "#" and shadow:
                     px[ox + dx, oy + 2 + dy + 1] = TEXT_SHADOW
         for dy, row in enumerate(g):
             for dx, ch in enumerate(row):
@@ -118,6 +119,17 @@ def sprite_pager_button(direction, on):
             for x in range(PAGER_BTN_W):
                 if px[x, y] == rgb("#6B6B6B"):
                     px[x, y] = rgb("#B4B4B4")
+    return im
+
+
+def sprite_slot(kind):
+    """A slot of the theme, 18 x 18 from (slot x - 1, slot y - 1): vanilla (light window) or dark (containers)."""
+    im = Image.new("RGBA", (18, 18), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    saved = ui.objet
+    ui.objet = lambda case, rows=6: (1, 1)
+    ui.slot(d, 0, kind)
+    ui.objet = saved
     return im
 
 
@@ -190,6 +202,35 @@ def button_png(icon, face, disabled=False):
     return im
 
 
+# World icons of the worlds menu (provisional, 2026-10-30): a small planet per world, greyed with a lock when the
+# player has no access (fluxui:monde_<id>, fluxui:monde_<id>_lock).
+WORLDS = {"utopia": ("#5DADE2", "#F4F1E8"), "valdor": ("#58B347", "#2E7D32"), "atlas": ("#8D6E4A", "#6B8E3A"),
+          "nether": ("#B83A2E", "#F0A04B"), "end": ("#E8E3A6", "#7A48C0"), "stratum": ("#D9A21B", "#5B3C11")}
+
+
+def world_png(base, accent, locked=False):
+    im = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    b, a = rgb(base), rgb(accent)
+    if locked:
+        grey = lambda c: (sum(c[:3]) // 3,) * 3 + (255,)
+        b, a = grey(b), grey(a)
+    d.ellipse((1, 1, 14, 14), fill=OUTLINE)
+    d.ellipse((2, 2, 13, 13), fill=b)
+    d.ellipse((3, 8, 9, 12), fill=a)                 # a continent / feature
+    d.ellipse((8, 4, 12, 7), fill=a)
+    d.point((5, 4), fill=tone(b, 0.6))               # light
+    d.point((4, 5), fill=tone(b, 0.6))
+    d.arc((2, 2, 13, 13), 20, 160, fill=tone(b, -0.35))
+    if locked:
+        for x, y in ((9, 10), (10, 10), (11, 10), (12, 10), (9, 11), (12, 11), (9, 12), (10, 12), (11, 12), (12, 12),
+                     (9, 13), (10, 13), (11, 13), (12, 13), (10, 8), (11, 8), (9, 9), (12, 9)):
+            d.point((x, y), fill=OUTLINE)
+        for x, y in ((10, 11), (11, 11)):
+            d.point((x, y), fill=rgb("#D9A21B"))
+    return im
+
+
 # ---------------------------------------------------------------------------------------------------- backgrounds
 
 INK = rgb("#404040")
@@ -240,7 +281,40 @@ def span(cases, pad=1):
     return min(xs) - 1 - pad, min(ys) - 1 - pad, max(xs) + 16 + pad, max(ys) + 16 + pad
 
 
-BACKGROUNDS = {"metiers": bg_metiers}
+def bg_main(generic):
+    """Main menu (/menu2): dashboard band on row 0 (head of the player in slot 0, name, rank, balance drawn by Flux),
+    the rest is drawn by the theme (frames of the features and of the bottom buttons)."""
+    im = ui.window(generic)
+    d = ImageDraw.Draw(im, "RGBA")
+    ui.container(im, d, span(list(range(9))), "ardoise")
+    ui.slot(d, 0, "dark")
+    return im
+
+
+ROW_TOPS = [18 + 18 * r for r in range(6)] + [139, 157, 175, 197]   # item y of chest rows 0-5, inventory, hotbar
+
+
+def bg_window(generic, first=0, last=9):
+    """The bare window of the theme, fitted to the rows a menu uses (theme of Flux): it starts ``first`` rows lower
+    than a full window (the plate moves with it) and ends 6 px under row ``last`` (0-5 chest, 6-8 inventory,
+    9 hotbar), so a menu of few rows is no taller than it needs and stays centred on the screen."""
+    full = ui.window(generic)
+    if first == 0 and last == 9:
+        return full
+    dy = 18 * first
+    bottom = ROW_TOPS[last] + 16 + 6          # last row of pixels of the window
+    im = Image.new("RGBA", full.size, (0, 0, 0, 0))
+    body = bottom + 1 - dy - 3                # rows of the full window kept above its 3 bottom rows
+    im.paste(full.crop((0, 0, full.width, body)), (0, dy))
+    im.paste(full.crop((0, full.height - 3, full.width, full.height)), (0, bottom - 2))
+    return im
+
+
+BACKGROUNDS = {"metiers": bg_metiers, "window": bg_window, "main": bg_main}
+for _first in range(0, 6):
+    for _last in range(_first, 10):
+        if (_first, _last) != (0, 9):
+            BACKGROUNDS[f"window_{_first}_{_last}"] = (lambda f, l: lambda generic: bg_window(generic, f, l))(_first, _last)
 
 
 # ---------------------------------------------------------------------------------------------------- main
@@ -268,12 +342,16 @@ def main(plugins, resources=None):
             chunk(colour, w).save(os.path.join(tex, f"bar_{cname}_{w}.png"))
     sprite_pager().save(os.path.join(tex, "pager.png"))
     sprite_lit().save(os.path.join(tex, "lit.png"))
+    sprite_slot("vanilla").save(os.path.join(tex, "slot.png"))
+    sprite_slot("dark").save(os.path.join(tex, "slot_dark.png"))
+    glyph_sheet(shadow=False)[0].save(os.path.join(tex, "text_ink.png"))
     pager_buttons = [("left", True), ("left", False), ("right", True), ("right", False)]
     for direction, on in pager_buttons:
         sprite_pager_button(direction, on).save(os.path.join(tex, f"pager_{direction}_{'on' if on else 'off'}.png"))
 
     for y in range(0, 221):
-        providers = [{"type": "space", "advances": {" ": 4}}]
+        # \uE1F0: 1 px back (slots side by side: a sprite advances by its width + 1)
+        providers = [{"type": "space", "advances": {" ": 4, "\uE1F0": -1}}]
         if y >= 7:   # text: cell top = letter top - 2, ascent <= height
             providers.append({"type": "bitmap", "file": f"{NS}:font/text.png", "ascent": 13 - (y - 2),
                               "height": CELL_H, "chars": grid})
@@ -292,8 +370,19 @@ def main(plugins, resources=None):
         if 13 - y <= 20:
             providers.append({"type": "bitmap", "file": f"{NS}:font/lit.png", "ascent": 13 - y, "height": 20,
                               "chars": [chr(SPRITE_BASE + 1)]})
+        if 13 - y <= 18:
+            for k, name in enumerate(("slot", "slot_dark")):
+                providers.append({"type": "bitmap", "file": f"{NS}:font/{name}.png", "ascent": 13 - y, "height": 18,
+                                  "chars": [chr(SPRITE_BASE + 6 + k)]})
         with open(os.path.join(rp, "font", f"y{y}.json"), "w", encoding="utf-8") as f:
             json.dump({"providers": providers}, f, ensure_ascii=False, separators=(",", ":"))
+        # n<Y>: the menu font without shadow, engraved dark grey on the light window (Flux tints it)
+        ink = [{"type": "space", "advances": {" ": 4}}]
+        if y >= 7:
+            ink.append({"type": "bitmap", "file": f"{NS}:font/text_ink.png", "ascent": 13 - (y - 2), "height": CELL_H,
+                        "chars": grid})
+        with open(os.path.join(rp, "font", f"n{y}.json"), "w", encoding="utf-8") as f:
+            json.dump({"providers": ink}, f, ensure_ascii=False, separators=(",", ":"))
 
     lines = ["# Generated by plugins/fluxplugin/Flux/assets/vanilla/gen_ui.py: do not edit by hand.",
              "info:", f"  namespace: {NS}", "", "items:"]
@@ -304,6 +393,13 @@ def main(plugins, resources=None):
             button_png(icon, colour, off).save(os.path.join(dest, "textures", "btn", iid + ".png"))
             lines += [f"  {iid}:", "    display_name: ' '", "    resource:", "      material: PAPER",
                       "      generate: true", "      textures:", f"      - btn/{iid}.png"]
+    os.makedirs(os.path.join(dest, "textures", "monde"), exist_ok=True)
+    for wid, (base, accent) in WORLDS.items():
+        for locked in (False, True):
+            iid = f"monde_{wid}" + ("_lock" if locked else "")
+            world_png(base, accent, locked).save(os.path.join(dest, "textures", "monde", iid + ".png"))
+            lines += [f"  {iid}:", "    display_name: ' '", "    resource:", "      material: PAPER",
+                      "      generate: true", "      textures:", f"      - monde/{iid}.png"]
     lines += ["", "font_images:"]
     generic = os.path.join(HERE, "menu_vanilla.png")
     for name, fn in BACKGROUNDS.items():

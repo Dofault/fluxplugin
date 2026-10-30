@@ -12,6 +12,7 @@ import java.util.List;
  *   <li>{@link Bar}: fill of a progress bar whose empty frame is in the background, optional text and tooltip</li>
  *   <li>{@link Pager}: page buttons and "page/pages" field of a list, shown only when the list has several pages</li>
  *   <li>{@link Lit}: selected-slot highlight under a slot, when its conditions hold</li>
+ *   <li>{@link Slots}: slot frames (added by the {@code theme:} section for every slot the menu uses)</li>
  * </ul>
  */
 public sealed interface Widget {
@@ -22,8 +23,13 @@ public sealed interface Widget {
 
     enum Align { LEFT, CENTER, RIGHT }
 
-    record Text(String id, int x, int y, Align align, String text, String colour, List<Requirement> requirements)
-            implements Widget {
+    /** {@code ink}: the font without shadow, engraved dark grey on the light window (titles, labels). */
+    record Text(String id, int x, int y, Align align, String text, String colour, boolean ink,
+                List<Requirement> requirements) implements Widget {
+    }
+
+    /** Slot frames drawn under these slots: vanilla (light window) or dark (containers). */
+    record Slots(String id, int[] slots, boolean dark, List<Requirement> requirements) implements Widget {
     }
 
     record Image(String id, String glyph, int x, int width, List<Requirement> requirements) implements Widget {

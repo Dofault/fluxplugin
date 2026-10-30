@@ -168,6 +168,10 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
             if (!v.isEmpty()) dialog.put(k, v);
         }
         fr.influencraft.flux.api.dialog.Dialogs.configure(dialog);
+        java.util.Map<String, String> themeButtons = new java.util.HashMap<>();
+        var tb = getConfig().getConfigurationSection("theme.buttons");
+        if (tb != null) for (String k : tb.getKeys(false)) themeButtons.put(k.toLowerCase(java.util.Locale.ROOT), tb.getString(k));
+        fr.influencraft.flux.menu.MenuLoader.configureTheme(themeButtons, getConfig().getConfigurationSection("theme.menus"));
         // after the dialog colours: the pause menu window is written with them
         if (help != null) {
             help.load();

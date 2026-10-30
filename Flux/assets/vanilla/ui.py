@@ -160,7 +160,7 @@ def container(im, d, box, style="ardoise", head=None, head_kind="strip", head_h=
         d.rectangle((x0 + 1, y0 + 1, x1 - 1, y1 - 1), fill=fill)
         d.line((x0 + 1, y0 + 1, x1 - 1, y0 + 1), fill=shadow)
         d.line((x0 + 1, y0 + 1, x0 + 1, y1 - 1), fill=shadow)
-        d.line((x0 + 1, y1 + 1, x1 - 1, y1 + 1), fill=WHITE)   # the white line of the reference, under the box
+        d.line((x0, y1 + 1, x1, y1 + 1), fill=WHITE)   # white line under the box, from edge to edge
     if head and head_kind == "strip":
         top = y0 + 1
         d.rectangle((x0 + 1, top, x1 - 1, top + head_h - 1), fill=accent or band)

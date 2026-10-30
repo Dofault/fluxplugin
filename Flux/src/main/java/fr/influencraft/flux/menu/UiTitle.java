@@ -55,7 +55,9 @@ public final class UiTitle {
         for (Widget w : widgets) {
             if (!Requirement.all(w.requirements(), player)) continue;
             switch (w) {
-                case Widget.Text t -> text(out, cursor, t.x(), t.y(), t.align(), Text.placeholders(player, t.text()), t.colour());
+                case Widget.Text t -> text(out, cursor, t.x(), t.y(), t.align(), Text.placeholders(player, t.text()),
+                        t.colour(), t.ink());
+                case Widget.Slots s -> slots(out, cursor, s, rows);
                 case Widget.Image i -> {
                     move(out, i.x() - cursor);
                     out.append(':').append(Text.placeholders(player, i.glyph())).append(':');
@@ -76,6 +78,10 @@ public final class UiTitle {
 
     /** Text of the menu font; unknown characters are dropped. */
     static void text(StringBuilder out, int cursor, int x, int y, Widget.Align align, String raw, String colour) {
+        text(out, cursor, x, y, align, raw, colour, false);
+    }
+
+    static void text(StringBuilder out, int cursor, int x, int y, Widget.Align align, String raw, String colour, boolean ink) {
         String s = clean(raw);
         if (s.isEmpty()) return;
         int width = width(s);
@@ -86,8 +92,9 @@ public final class UiTitle {
         };
         move(out, left - cursor);
         // container titles are tinted dark grey by default: colour always set (white unless given)
-        out.append("<font:fluxui:y").append(y).append("><")
-                .append(colour == null || colour.isBlank() ? "white" : colour).append('>').append(s).append("</font>");
+        String tint = colour != null && !colour.isBlank() ? colour : ink ? "#404040" : "white";
+        out.append("<font:fluxui:").append(ink ? 'n' : 'y').append(y).append("><").append(tint).append('>')
+                .append(s).append("</font>");
         move(out, cursor - left - advance(s));
     }
 
@@ -141,6 +148,30 @@ public final class UiTitle {
         int centre = (leftEdge + rightEdge + 1) / 2;
         sprite(out, cursor, centre - pagerWidth / 2, top, SPRITE_BASE, pagerWidth);
         text(out, cursor, centre + 1, top + 5, Widget.Align.CENTER, page + "/" + pages, null);
+    }
+
+    /** Slot frames, one run per row of consecutive slots (a frame advances 19, pulled back 1: 18 = the slot pitch). */
+    private static void slots(StringBuilder out, int cursor, Widget.Slots w, int rows) {
+        int[] sorted = w.slots().clone();
+        java.util.Arrays.sort(sorted);
+        char frame = (char) (SPRITE_BASE + (w.dark() ? 7 : 6));
+        int i = 0;
+        while (i < sorted.length) {
+            int[] first = fr.influencraft.flux.PathRenderer.slotPosition(sorted[i], rows);
+            int n = 1;
+            while (i + n < sorted.length) {
+                int[] next = fr.influencraft.flux.PathRenderer.slotPosition(sorted[i + n], rows);
+                if (next[1] != first[1] || next[0] != first[0] + 18 * n) break;
+                n++;
+            }
+            int x = first[0] - 1;
+            move(out, x - cursor);
+            out.append("<font:fluxui:y").append(first[1] - 1).append("><white>");
+            for (int k = 0; k < n; k++) out.append(frame).append('\uE1F0');
+            out.append("</font>");
+            move(out, cursor - x - 18 * n);
+            i += n;
+        }
     }
 
     private static void sprite(StringBuilder out, int cursor, int x, int y, int ch, int width) {
