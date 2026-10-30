@@ -121,7 +121,7 @@ def main():
     menus, cards_yml = sys.argv[1:3]
     toutes = yaml.safe_load(open(cards_yml, encoding="utf-8"))["cards"]
     base = [
-        item("retour", "itemsadder:fluxui:btn_back_red", "Retour", RETOUR, ["Revenir au menu."],
+        item("retour", "itemsadder:fluxui:btn_back_purple", "Retour", RETOUR, ["Revenir au menu."],
              [CLIC_G + "Menu principal"], {"left": ["[menu] main"]}),
         item("info", "itemsadder:fluxui:btn_info_blue", "Carrières", INFO,
              ["Choisis un métier à droite. Ses familiers, son niveau et ses actions rémunérées s'affichent.",

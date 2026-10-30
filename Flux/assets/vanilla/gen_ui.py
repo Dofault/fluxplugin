@@ -55,8 +55,9 @@ SPRITE_BASE = 0xE100
 PAGER_W, PAGER_H = 70, 16      # pager field: 15 high + the white line under it
 # font sprites: U+E100 pager field, U+E101 selected slot (20 x 20), U+E102-E105 pager buttons (left on/off, right on/off)
 PAGER_BTN_W = 36               # pager button: 2 slots wide
-BUTTON_COLOURS = {"red": rgb("#C0392B"), "green": rgb("#3E8E2E"), "blue": rgb("#3D7FB8"), "grey": rgb("#6E6E6E"),
-                  "gold": rgb("#D9A21B")}
+# faces of the buttons of the former theme (influitems: deny, add, back, settings, reward), blue added for info
+BUTTON_COLOURS = {"red": (207, 80, 88, 255), "green": (79, 164, 92, 255), "blue": (86, 140, 200, 255),
+                  "purple": (155, 134, 198, 255), "grey": (154, 150, 166, 255), "gold": (209, 154, 46, 255)}
 
 
 # ---------------------------------------------------------------------------------------------------- font
@@ -135,50 +136,57 @@ def sprite_lit():
 
 # ---------------------------------------------------------------------------------------------------- buttons
 
-# Icons of the buttons: 8 x 8, symmetric where the shape allows, drawn at (4, 3) so they sit in the middle of the
-# button face (x 2-13, y 2-11); white with a 1 px shadow under each column, as the menu font.
+# Buttons in the style of the former theme (influitems back, add, deny...): 14 x 14 with rounded corners in the
+# 16 x 16 picture, outline, light top line and sides, darker band at the bottom, icon engraved in a dark tone of the
+# face with a light pixel under it. Roles: a outline, b top light, c face, d side light, e dark.
+TEMPLATE = ["................", "..aaaaaaaaaaaa..", ".aabbbbbbbbbbaa.", ".abccccccccccba."] + \
+           [".adccccccccccda."] * 7 + \
+           [".adeeeeeeeeeeda.", ".adddddddddddda.", ".aaeeeeeeeeeeaa.", "..aaaaaaaaaaaa..", "................"]
+OUTLINE = (21, 17, 27, 255)
+# Icons: 8 x 6, symmetric where the shape allows, at (4, 4): the middle of the face (x 3-12, y 3-10).
 ICONS = {
-    "close": ["##....##", "###..###", ".######.", "..####..", "..####..", ".######.", "###..###", "##....##"],
-    "add": ["...##...", "...##...", "...##...", "########", "########", "...##...", "...##...", "...##..."],
-    "remove": ["........", "........", "........", "########", "########", "........", "........", "........"],
-    "info": ["...##...", "...##...", "........", "..###...", "...##...", "...##...", "...##...", "..####.."],
-    "left": ["...##...", "..##....", ".##.....", "########", "########", ".##.....", "..##....", "...##..."],
-    "right": ["...##...", "....##..", ".....##.", "########", "########", ".....##.", "....##..", "...##..."],
-    "up": ["...##...", "..####..", ".######.", "##.##.##", "...##...", "...##...", "...##...", "...##..."],
-    "down": ["...##...", "...##...", "...##...", "...##...", "##.##.##", ".######.", "..####..", "...##..."],
-    "check": ["........", "......##", ".....##.", "##..##..", ".####...", "..##....", "........", "........"],
-    "back": ["......##", "......##", "..#...##", ".##...##", "########", "########", ".##.....", "..#....."],
-    "lock": ["..####..", ".##..##.", ".#....#.", "########", "###..###", "###..###", "########", "########"],
-    "settings": ["...##...", ".######.", ".##..##.", "###..###", "###..###", ".##..##.", ".######.", "...##..."],
-    "search": [".####...", "##..##..", "#....#..", "#....#..", "##..##..", ".#####..", ".....##.", "......##"],
-    "filter": ["########", ".######.", "..####..", "...##...", "...##...", "...##...", "...##...", "...##..."],
+    "close": [".#....#.", "..#..#..", "...##...", "...##...", "..#..#..", ".#....#."],
+    "add": ["...##...", "...##...", ".######.", ".######.", "...##...", "...##..."],
+    "remove": ["........", "........", ".######.", ".######.", "........", "........"],
+    "info": ["...##...", "........", "...##...", "...##...", "...##...", "..####.."],
+    "left": ["...#....", "..##....", ".######.", ".######.", "..##....", "...#...."],
+    "right": ["....#...", "....##..", ".######.", ".######.", "....##..", "....#..."],
+    "up": ["...##...", "..####..", ".######.", "...##...", "...##...", "...##..."],
+    "down": ["...##...", "...##...", "...##...", ".######.", "..####..", "...##..."],
+    "check": ["......#.", ".....##.", ".#..##..", ".####...", "..##....", "........"],
+    "back": ["......#.", "......#.", "..#...#.", ".######.", "..#.....", "........"],
+    "lock": ["..####..", ".#....#.", ".######.", ".##..##.", ".##..##.", ".######."],
+    "settings": ["...##...", ".######.", ".##..##.", ".##..##.", ".######.", "...##..."],
+    "search": [".###....", "#...#...", "#...#...", ".####...", "....##..", ".....##."],
+    "filter": [".######.", "..####..", "...##...", "...##...", "...##...", "...##..."],
 }
-ICON_X, ICON_Y = 4, 3
+ICON_X, ICON_Y = 4, 4
 BUTTONS = ["back", "close", "info", "add", "remove", "left", "right", "check", "lock", "settings", "search",
            "filter", "up", "down"]
 
 
-def draw_icon(d, icon, colour, shadow):
+def button_png(icon, face, disabled=False):
+    """A button of the former theme, recoloured: ``face`` is its main colour; disabled = grey, faint icon."""
+    if disabled:
+        face = (154, 150, 166, 255)
+    roles = {"a": OUTLINE, "b": tone(face, 0.8), "c": face, "d": tone(face, 0.38), "e": tone(face, -0.4)}
+    im = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    px = im.load()
+    for y, row in enumerate(TEMPLATE):
+        for x, r in enumerate(row):
+            if r in roles:
+                px[x, y] = roles[r]
+    dark = tone(face, -0.15) if disabled else tone(face, -0.4)
+    light = face if disabled else tone(face, 0.22)
     rows = ICONS[icon]
     for y, row in enumerate(rows):
         for x, c in enumerate(row):
             if c == "#" and (y + 1 >= len(rows) or rows[y + 1][x] != "#"):
-                d.point((ICON_X + x, ICON_Y + y + 1), fill=shadow)
+                px[ICON_X + x, ICON_Y + y + 1] = light
     for y, row in enumerate(rows):
         for x, c in enumerate(row):
             if c == "#":
-                d.point((ICON_X + x, ICON_Y + y), fill=colour)
-
-
-def button_png(icon, colour, disabled=False):
-    """Button A in a 16 x 16 item picture: 15 high + the white line under it."""
-    im = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
-    d = ImageDraw.Draw(im)
-    base = rgb("#8B8B8B") if disabled else colour
-    # the whole 16 x 16: the white line under a button is drawn by the background, only where no black edge
-    # follows (button_line), so a button standing on a container shares its edge
-    ui.button(d, (0, 0, 15, 15), base, None)
-    draw_icon(d, icon, rgb("#C6C6C6") if disabled else WHITE, tone(base, -0.55))
+                px[ICON_X + x, ICON_Y + y] = dark
     return im
 
 
@@ -207,18 +215,16 @@ def bg_metiers(generic):
     im = ui.window(generic)
     d = ImageDraw.Draw(im, "RGBA")
     label(im, "Métier", 88, 5, centre=True)
-    ui.field(im, d, (26, 18, 128, 33))
+    ui.field(im, d, (26, 19, 128, 32))     # as high as the buttons beside it (14 px)
     pets = [9, 18, 27, 36]
     grid = [15, 16, 17, 24, 25, 26, 33, 34, 35, 42, 43, 44]
-    # containers start 1 px higher than their slots need: their top edge is the bottom edge of the buttons and of
-    # the name field above (one 1 px line, not two)
-    ui.container(im, d, on_row0(span(pets)), "ardoise")
+    ui.container(im, d, span(pets), "ardoise")
     for c in pets:
         ui.slot(d, c, "dark")
     d.rectangle((33, 38, 98, 103), fill=rgb("#373737"))     # 1 px around the 64 x 64 illustration at (34, 39)
     d.line((34, 104, 99, 104), fill=WHITE)
     d.line((99, 39, 99, 104), fill=WHITE)
-    ui.container(im, d, on_row0(span(grid)), "ardoise")
+    ui.container(im, d, span(grid), "ardoise")
     for c in grid:
         ui.slot(d, c, "dark")
     bar_frame(d, 6, 109, 169)
@@ -226,17 +232,6 @@ def bg_metiers(generic):
     for i in range(27):
         ui.slot(d, 54 + i)
     return im
-
-
-def on_row0(box):
-    """A box right under row 0: its top edge on the bottom edge of the row 0 buttons (y 33)."""
-    return box[0], 33, box[2], box[3]
-
-
-def button_line(d, case):
-    """White line under a button of row/slot ``case``, for a button that does not stand on a black edge."""
-    x, y = ui.objet(case)
-    d.line((x + 1, y + 16, x + 14, y + 16), fill=WHITE)
 
 
 def span(cases, pad=1):
