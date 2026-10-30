@@ -141,7 +141,22 @@ public class FluxReferralPlugin extends JavaPlugin {
         // --- PlaceholderAPI (soft-depend) ---
         // %parrainage_*%: resolved by Flux in menus, exposed to PlaceholderAPI by Flux
         var expansion = new ExpansionParrainage(this, serviceProfil, serviceClassement, serviceParrainage);
-        fr.influencraft.flux.api.FluxApi.registerPlaceholders(this, "parrainage", expansion::onRequest);
+        // referral tree (menu parrainage): %parrainage_arbre_gen_<n>%, %parrainage_arbre_total%
+        var tree = new fr.influencraft.fluxreferral.service.ReferralTree(this, gestionnaireBDD,
+                gestionnaireConfig.getPrefixeTables());
+        tree.start();
+        fr.influencraft.flux.api.FluxApi.registerPlaceholders(this, "parrainage", (player, params) -> {
+            if (player != null && params.equals("arbre_total")) return String.valueOf(tree.total(player.getUniqueId()));
+            if (player != null && params.startsWith("arbre_gen_")) {
+                try {
+                    return String.valueOf(tree.generation(player.getUniqueId(),
+                            Integer.parseInt(params.substring("arbre_gen_".length()))).size());
+                } catch (NumberFormatException e) {
+                    return "0";
+                }
+            }
+            return expansion.onRequest(player, params);
+        });
         // leaderboard of Flux (%flux_top_parrainage_...%), read from our table: works for offline players too
         fr.influencraft.flux.api.leaderboard.Leaderboards.register(this, "parrainage", player -> {
             try {

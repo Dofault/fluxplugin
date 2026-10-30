@@ -1,0 +1,85 @@
+# Menu Vote (2026-10-30) : l'ancien tiroir du menu principal en menu à part, même contenu.
+# Thème vanilla (theme.menus.vote de la config de Flux). Généré à l'origine par Flux/assets/gen_pages.py (vote).
+rows: 6
+player-inventory: hidden
+vanilla-background: false
+update-interval: 20
+commands: [votemenu]
+
+open-actions:
+  - "[sound] @page"
+
+items:
+
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "&#FFD94DRetour"
+    slots: [0]
+    lore:
+      - "@desc Revenir au menu."
+      - "@left Menu principal"
+    actions:
+      left: ["[menu] main"]
+
+  icone:
+    material: "itemsadder:influitems:vote"
+    name: "&#FFD94DVote"
+    slots: [8]
+    lore:
+      - "@desc Vote pour le serveur chaque jour : chaque vote donne des tickets à miser sur les lots de la tombola, sur le site."
+
+
+  tickets:
+    material: "PAPER"
+    name: "&#FFD94DTes tickets"
+    slots: [13]
+    lore:
+      - "@desc Chaque vote te donne des tickets pour la tombola."
+      - "@kv Tickets à miser | 12 &8(exemple)"
+
+  lot1:
+    material: "itemsadder:influitems:chest"
+    name: "&#FFD94DLot 1"
+    slots: [20]
+    lore:
+      - "@text &#B376E5&#f0a800Livre Légendaire aléatoire"
+      - "@desc Tirage dans &f2j 4h"
+      - "@kv Tickets misés | 148 &8(exemple)"
+      - "@left Miser sur le site"
+    actions:
+      left: ["[player] vote", "[close]"]
+
+  lot2:
+    material: "itemsadder:influitems:chest"
+    name: "&#FFD94DLot 2"
+    slots: [22]
+    lore:
+      - "@text &#B376E5&#5a85ea3 clés Virale"
+      - "@desc Tirage dans &f18h"
+      - "@kv Tickets misés | 148 &8(exemple)"
+      - "@left Miser sur le site"
+    actions:
+      left: ["[player] vote", "[close]"]
+
+  lot3:
+    material: "itemsadder:influitems:chest"
+    name: "&#FFD94DLot 3"
+    slots: [24]
+    lore:
+      - "@desc %img_bitblock% 25 000"
+      - "@desc Tirage dans &f3j 1h"
+      - "@kv Tickets misés | 148 &8(exemple)"
+      - "@left Miser sur le site"
+    actions:
+      left: ["[player] vote", "[close]"]
+
+  recuperer:
+    material: "itemsadder:influitems:reward"
+    name: "&#FFD94DMes lots"
+    slots: [31]
+    lore:
+      - "@desc Les lots gagnés t'attendent ici, avec tes clés de vote."
+      - "@left Récupérer"
+    actions:
+      left: ["[player] voteclaims"]
+

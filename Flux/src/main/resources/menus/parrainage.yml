@@ -1,0 +1,190 @@
+# Menu Parrainage (2026-10-30) : l'arbre de parrainage. Une rangée par génération : tes filleuls (1), leurs
+# filleuls (2), et ainsi de suite jusqu'à 4. Listes parrainage_gen<n> et placeholders %parrainage_arbre_*% de
+# FluxReferral (ReferralTree). Thème vanilla (theme.menus.parrainage de la config de Flux).
+rows: 6
+player-inventory: hidden
+vanilla-background: false
+update-interval: 40
+commands: [parrainagemenu]
+
+open-actions:
+  - "[sound] @page"
+
+lists:
+  parrainage_gen1:
+    slots: 10-16
+    item:
+      material: entry
+  parrainage_gen2:
+    slots: 19-25
+    item:
+      material: entry
+  parrainage_gen3:
+    slots: 28-34
+    item:
+      material: entry
+  parrainage_gen4:
+    slots: 37-43
+    item:
+      material: entry
+
+items:
+
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "&#FFD94DRetour"
+    slots: [0]
+    lore:
+      - "@desc Revenir au menu."
+      - "@left Menu principal"
+    actions:
+      left: ["[menu] main"]
+
+  moi:
+    material: player-head
+    name: "&#FFD94D%player_name%"
+    slots: [4]
+    lore:
+      - "@desc Ton arbre de parrainage : les joueurs que tu as amenés, puis ceux qu'ils ont amenés à leur tour."
+      - "@kv Ton code | %parrainage_code%"
+      - "@kv Filleuls | %parrainage_filleuls%"
+      - "@kv Dans ton arbre | %parrainage_arbre_total%"
+      - "@kv Parrain | %parrainage_parrain%"
+
+  recompenses:
+    material: "itemsadder:influitems:reward"
+    name: "&#FFD94DRécompenses"
+    slots: [7]
+    lore:
+      - "@desc Les récompenses de tes filleuls et des paliers atteints."
+      - "@kv À récupérer | %parrainage_a_recuperer%"
+      - "@left Récupérer"
+    actions:
+      left: ["[player] parrainage recuperer", "[refresh]"]
+
+  adresse:
+    material: "itemsadder:influitems:copy"
+    name: "&#FFD94DTon adresse"
+    slots: [8]
+    lore:
+      - "@desc Donne cette adresse à tes amis : en se connectant avec, ils deviennent tes filleuls."
+      - "@kv Adresse | %parrainage_adresse%"
+      - "@left Copier"
+    actions:
+      left: ["[player] parrainage adresse"]
+
+  generation_1:
+    material: PAPER
+    amount: "1"
+    name: "&#FFD94DGénération 1"
+    slots: [9]
+    lore:
+      - "@desc Les joueurs que tu as parrainés."
+      - "@kv Joueurs | %parrainage_arbre_gen_1%"
+
+  suivant_1:
+    material: "itemsadder:influitems:btn_next"
+    hide-tooltip: true
+    priority: 1
+    slots: [17]
+    view-requirements:
+      - "placeholder: %flux_list_parrainage_gen1_has_next% == true"
+    actions:
+      left: ["[list] parrainage_gen1 next"]
+
+  precedent_1:
+    material: "itemsadder:influitems:btn_prev"
+    hide-tooltip: true
+    priority: 2
+    slots: [17]
+    view-requirements:
+      - "placeholder: %flux_list_parrainage_gen1_has_prev% == true"
+    actions:
+      left: ["[list] parrainage_gen1 prev"]
+
+  generation_2:
+    material: PAPER
+    amount: "2"
+    name: "&#FFD94DGénération 2"
+    slots: [18]
+    lore:
+      - "@desc Les filleuls de la génération 1."
+      - "@kv Joueurs | %parrainage_arbre_gen_2%"
+
+  suivant_2:
+    material: "itemsadder:influitems:btn_next"
+    hide-tooltip: true
+    priority: 1
+    slots: [26]
+    view-requirements:
+      - "placeholder: %flux_list_parrainage_gen2_has_next% == true"
+    actions:
+      left: ["[list] parrainage_gen2 next"]
+
+  precedent_2:
+    material: "itemsadder:influitems:btn_prev"
+    hide-tooltip: true
+    priority: 2
+    slots: [26]
+    view-requirements:
+      - "placeholder: %flux_list_parrainage_gen2_has_prev% == true"
+    actions:
+      left: ["[list] parrainage_gen2 prev"]
+
+  generation_3:
+    material: PAPER
+    amount: "3"
+    name: "&#FFD94DGénération 3"
+    slots: [27]
+    lore:
+      - "@desc Les filleuls de la génération 2."
+      - "@kv Joueurs | %parrainage_arbre_gen_3%"
+
+  suivant_3:
+    material: "itemsadder:influitems:btn_next"
+    hide-tooltip: true
+    priority: 1
+    slots: [35]
+    view-requirements:
+      - "placeholder: %flux_list_parrainage_gen3_has_next% == true"
+    actions:
+      left: ["[list] parrainage_gen3 next"]
+
+  precedent_3:
+    material: "itemsadder:influitems:btn_prev"
+    hide-tooltip: true
+    priority: 2
+    slots: [35]
+    view-requirements:
+      - "placeholder: %flux_list_parrainage_gen3_has_prev% == true"
+    actions:
+      left: ["[list] parrainage_gen3 prev"]
+
+  generation_4:
+    material: PAPER
+    amount: "4"
+    name: "&#FFD94DGénération 4"
+    slots: [36]
+    lore:
+      - "@desc Les filleuls de la génération 3."
+      - "@kv Joueurs | %parrainage_arbre_gen_4%"
+
+  suivant_4:
+    material: "itemsadder:influitems:btn_next"
+    hide-tooltip: true
+    priority: 1
+    slots: [44]
+    view-requirements:
+      - "placeholder: %flux_list_parrainage_gen4_has_next% == true"
+    actions:
+      left: ["[list] parrainage_gen4 next"]
+
+  precedent_4:
+    material: "itemsadder:influitems:btn_prev"
+    hide-tooltip: true
+    priority: 2
+    slots: [44]
+    view-requirements:
+      - "placeholder: %flux_list_parrainage_gen4_has_prev% == true"
+    actions:
+      left: ["[list] parrainage_gen4 prev"]

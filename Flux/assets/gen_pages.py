@@ -223,11 +223,12 @@ def parrainage(seuils):
         pages.append(page(f"parrainage_{n}", its, chemins))
     ouverture = [(f"parrainage_{n}", f"placeholder: %parrainage_filleuls% < {n * PAR_PAGE}") for n in range(1, total)]
     ouverture.append((f"parrainage_{total}", None))
-    principal = bouton_principal("parrainage", "itemsadder:influitems:referral", "Parrainage", 46,
-                                 ["Invite tes amis avec ton adresse perso.", "Filleuls : &f%parrainage_filleuls%",
-                                  "À récupérer : &f%parrainage_a_recuperer%"],
-                                 "Ouvrir", ouverture)
-    return "\n".join(pages), principal
+    # 2026-10-30: no more drawer, the button opens the menu parrainage (referral tree, Flux/menus/parrainage.yml)
+    principal = [item("parrainage", "itemsadder:influitems:referral", "Parrainage", 46,
+                      ["Invite tes amis avec ton adresse perso.", "Filleuls : &f%parrainage_filleuls%",
+                       "À récupérer : &f%parrainage_a_recuperer%"],
+                      [CLIC_G + "Ouvrir"], {"left": ["[menu] parrainage"]})]
+    return "", principal
 
 
 def parrainage_actions():
@@ -457,7 +458,9 @@ def vote():
     principal = [item("vote", "itemsadder:influitems:vote", "Vote", 45,
                       ["Vote et gagne des tickets", "pour la tombola."], [CLIC_G + "Tombola", CLIC_D + "Mes lots"],
                       {"left": ["[page-toggle] vote"], "right": ["[player] voteclaims"]})]
-    return page("vote", its, {}), principal
+    # 2026-10-30: no more drawer, the button opens the menu vote (Flux/menus/vote.yml, same content)
+    principal[0] = principal[0].replace('"[page-toggle] vote"', '"[menu] vote"')
+    return "", principal
 
 
 # ════════════════════════════════════════════════════════════════════════

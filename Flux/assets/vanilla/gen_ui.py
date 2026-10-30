@@ -281,18 +281,6 @@ def span(cases, pad=1):
     return min(xs) - 1 - pad, min(ys) - 1 - pad, max(xs) + 16 + pad, max(ys) + 16 + pad
 
 
-def bg_main(generic, last=5):
-    """Main menu (/menu2): dashboard band on row 1 (head of the player in slot 9, name, rank, balance drawn by Flux),
-    the rest is drawn by the theme (frames of the features and of the bottom buttons)."""
-    # fitted as a themed window, from the dashboard (row 1) to the last row used: one picture per height, the window
-    # grows when a drawer (vote, leaderboard, referral) opens in the inventory area (theme background bg_main_*)
-    im = bg_window(generic, 1, last)
-    d = ImageDraw.Draw(im, "RGBA")
-    ui.container(im, d, span(list(range(9, 18))), "ardoise")
-    ui.slot(d, 9, "dark")
-    return im
-
-
 ROW_TOPS = [18 + 18 * r for r in range(6)] + [139, 157, 175, 197]   # item y of chest rows 0-5, inventory, hotbar
 
 
@@ -313,8 +301,6 @@ def bg_window(generic, first=0, last=9):
 
 
 BACKGROUNDS = {"metiers": bg_metiers, "window": bg_window}
-for _last in range(5, 10):
-    BACKGROUNDS[f"main_1_{_last}"] = (lambda l: lambda generic: bg_main(generic, l))(_last)
 for _first in range(0, 6):
     for _last in range(_first, 10):
         if (_first, _last) != (0, 9):

@@ -198,7 +198,10 @@ theme:
   # uses only the chest), background (default bg_window_*: bare window fitted to the rows used, * = first_last row), frames
   # (vanilla, dark, none), no-frame / frame (slots without / with a frame whatever stands on them), keep-page-titles / keep-title-layers / keep-title-loop.
   menus:
-    main: {title: "Menu", background: "bg_main_*", no-frame: "9", frame: "21-23, 30-32, 39-41"}
+    main: {title: "Menu", frame: "21-23, 30-32, 39-41"}
+    vote: {title: "Vote"}
+    classement: {title: "Classement"}
+    parrainage: {title: "Parrainage"}
     mondes: {title: "Mondes"}
     pass: {title: "Pass"}
     rewards: {title: "Récompenses"}

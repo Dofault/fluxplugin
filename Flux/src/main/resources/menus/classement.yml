@@ -1,0 +1,121 @@
+# Menu Classement (2026-10-30) : l'ancien tiroir du menu principal en menu à part, même contenu.
+# Thème vanilla (theme.menus.classement de la config de Flux).
+rows: 6
+player-inventory: hidden
+vanilla-background: false
+update-interval: 20
+
+open-actions:
+  - "[sound] @page"
+
+items:
+
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "&#FFD94DRetour"
+    slots: [0]
+    lore:
+      - "@desc Revenir au menu."
+      - "@left Menu principal"
+    actions:
+      left: ["[menu] main"]
+
+  icone:
+    material: itemsadder:influitems:leaderboard
+    name: "&#FFD94DClassement"
+    slots: [8]
+    lore:
+      - "@desc Compare-toi aux meilleurs joueurs du serveur, dans chaque domaine."
+
+  top_carrieres:
+    material: DIAMOND_PICKAXE
+    flags: [HIDE_ATTRIBUTES]
+    name: "&#FFD94DCarrières"
+    slots: [10]
+    lore:
+      - "@text &#F0A800① &fDofault &8· &#B376E5412 niv."
+      - "@text &#D9D9D9② &fAurora &8· &#B376E5388 niv."
+      - "@text &#C97B3A③ &fKaelis &8· &#B376E5361 niv."
+      - "@text &8(exemple)"
+      - "@left Voir tout"
+    actions:
+      left: ["[menu] metiers"]
+
+  top_richesse:
+    material: GOLD_INGOT
+    name: "&#FFD94DRichesse"
+    slots: [11]
+    lore:
+      - "@text &#F0A800① &fDofault &8· &#B376E51,2 M BitBlock"
+      - "@text &#D9D9D9② &fAurora &8· &#B376E5980 k BitBlock"
+      - "@text &#C97B3A③ &fKaelis &8· &#B376E5845 k BitBlock"
+      - "@text &8(exemple)"
+      - "@left Voir tout"
+    actions:
+      left: ["[message] &#FFD94D&lMenu &8► &#B376E5Bientôt disponible (aperçu FluxMenu)."]
+
+  top_collections:
+    material: NETHER_STAR
+    name: "&#FFD94DCollections"
+    slots: [12]
+    lore:
+      - "@text &#F0A800① &fDofault &8· &#B376E5186 points"
+      - "@text &#D9D9D9② &fAurora &8· &#B376E5171 points"
+      - "@text &#C97B3A③ &fKaelis &8· &#B376E5160 points"
+      - "@text &8(exemple)"
+      - "@left Voir tout"
+    actions:
+      left: ["[message] &#FFD94D&lMenu &8► &#B376E5Bientôt disponible (aperçu FluxMenu)."]
+
+  top_temps:
+    material: CLOCK
+    name: "&#FFD94DTemps de jeu"
+    slots: [13]
+    lore:
+      - "@text &#F0A800① &fDofault &8· &#B376E5312 h"
+      - "@text &#D9D9D9② &fAurora &8· &#B376E5287 h"
+      - "@text &#C97B3A③ &fKaelis &8· &#B376E5251 h"
+      - "@text &8(exemple)"
+      - "@left Voir tout"
+    actions:
+      left: ["[message] &#FFD94D&lMenu &8► &#B376E5Bientôt disponible (aperçu FluxMenu)."]
+
+  top_votes:
+    material: EMERALD
+    name: "&#FFD94DVotes"
+    slots: [14]
+    lore:
+      - "@text &#F0A800① &fDofault &8· &#B376E598 votes"
+      - "@text &#D9D9D9② &fAurora &8· &#B376E591 votes"
+      - "@text &#C97B3A③ &fKaelis &8· &#B376E587 votes"
+      - "@text &8(exemple)"
+      - "@left Voir tout"
+    actions:
+      left: ["[message] &#FFD94D&lMenu &8► &#B376E5Bientôt disponible (aperçu FluxMenu)."]
+
+  top_villes:
+    material: BRICKS
+    name: "&#FFD94DVilles"
+    slots: [15]
+    lore:
+      - "@text &#F0A800① &fDofault &8· &#B376E5240 chunks"
+      - "@text &#D9D9D9② &fAurora &8· &#B376E5198 chunks"
+      - "@text &#C97B3A③ &fKaelis &8· &#B376E5176 chunks"
+      - "@text &8(exemple)"
+      - "@left Voir tout"
+    actions:
+      left: ["[message] &#FFD94D&lMenu &8► &#B376E5Bientôt disponible (aperçu FluxMenu)."]
+
+  top_parrains_cl:
+    material: PLAYER_HEAD
+    name: "&#FFD94DParrainage"
+    slots: [16]
+    lore:
+      - "@text &#F0A800① &fDofault &8· &#B376E514 filleuls"
+      - "@text &#D9D9D9② &fAurora &8· &#B376E59 filleuls"
+      - "@text &#C97B3A③ &fKaelis &8· &#B376E57 filleuls"
+      - "@text &8(exemple)"
+      - "@left Voir tout"
+    actions:
+      left: ["[player] parrainage top", "[close]"]
+

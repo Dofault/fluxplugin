@@ -166,11 +166,8 @@ items:
 
   # >>> gen_pages (boutons générés par assets/gen_pages.py)
 
-  parrainage_1:
+  parrainage:
     material: "itemsadder:influitems:referral"
-    priority: 1
-    view-requirements:
-      - "placeholder: %parrainage_filleuls% < 7"
     name: "&#FFD94DParrainage"
     slots: [46]
     lore:
@@ -179,50 +176,7 @@ items:
       - "@kv À récupérer | %parrainage_a_recuperer%"
       - "@left Ouvrir"
     actions:
-      left: ["[page-toggle] parrainage_1"]
-
-  parrainage_2:
-    material: "itemsadder:influitems:referral"
-    priority: 2
-    view-requirements:
-      - "placeholder: %parrainage_filleuls% < 14"
-    name: "&#FFD94DParrainage"
-    slots: [46]
-    lore:
-      - "@desc Invite tes amis avec ton adresse perso."
-      - "@kv Filleuls | %parrainage_filleuls%"
-      - "@kv À récupérer | %parrainage_a_recuperer%"
-      - "@left Ouvrir"
-    actions:
-      left: ["[page-toggle] parrainage_2"]
-
-  parrainage_3:
-    material: "itemsadder:influitems:referral"
-    priority: 3
-    view-requirements:
-      - "placeholder: %parrainage_filleuls% < 21"
-    name: "&#FFD94DParrainage"
-    slots: [46]
-    lore:
-      - "@desc Invite tes amis avec ton adresse perso."
-      - "@kv Filleuls | %parrainage_filleuls%"
-      - "@kv À récupérer | %parrainage_a_recuperer%"
-      - "@left Ouvrir"
-    actions:
-      left: ["[page-toggle] parrainage_3"]
-
-  parrainage_4:
-    material: "itemsadder:influitems:referral"
-    priority: 4
-    name: "&#FFD94DParrainage"
-    slots: [46]
-    lore:
-      - "@desc Invite tes amis avec ton adresse perso."
-      - "@kv Filleuls | %parrainage_filleuls%"
-      - "@kv À récupérer | %parrainage_a_recuperer%"
-      - "@left Ouvrir"
-    actions:
-      left: ["[page-toggle] parrainage_4"]
+      left: ["[menu] parrainage"]
 
   pass:
     material: "itemsadder:influitems:pass"
@@ -255,7 +209,7 @@ items:
       - "@left Tombola"
       - "@right Mes lots"
     actions:
-      left: ["[page-toggle] vote"]
+      left: ["[menu] vote"]
       right: ["[player] voteclaims"]
 
   # <<< gen_pages
@@ -268,7 +222,7 @@ items:
       - "@desc Les meilleurs joueurs de chaque carrière."
       - "@left Voir le podium"
     actions:
-      left: ["[page-toggle] classement"]
+      left: ["[menu] classement"]
 
   autre:
     material: itemsadder:influitems:unknown
@@ -282,161 +236,33 @@ items:
       left: ["[player] parametres"]
       right: ["[player] aide"]
 
-# ── Pages : même fenêtre, nouveau fond + boutons en plus ───────────────────
-# Chaque bouton du bas ouvre sa page ([page-toggle] <id>) : animation du panneau
-# qui s'agrandit, puis boutons de la page dans la zone de l'inventaire (masqué).
-# Re-cliquer referme (animation à l'envers) ; d'une page à l'autre, le panneau se
-# replie puis se redéploie.
-# Zone des pages : 54-62, 63-71, 72-80 (inventaire), 81-89 (barre d'action).
-# Pages générées (parrainage, pass, récompenses, vote) : plugins/FluxMenu/assets/gen_pages.py
-page-files:
-  - _pages/parrainage.yml
-  - _pages/vote.yml
+# Plus de tiroirs depuis le 2026-10-30 : vote, classement et parrainage ont chacun leur menu (vote.yml,
+# classement.yml, parrainage.yml).
 
-pages:
-
-  classement:
-    title: &extension_title ":offset_-8::menu2_anim_5:"
-    animation: &extension
-      frames:
-        - ":offset_-8::menu2_anim_2:"
-        - ":offset_-8::menu2_anim_3:"
-        - ":offset_-8::menu2_anim_4:"
-      interval: 2   # ticks entre deux images
-    items:
-
-      classement:
-        material: itemsadder:influitems:leaderboard
-        glow: true
-        hide-tooltip: true
-        name: "&#FFD94DClassement"
-        slots: [47]
-        lore:
-          - "@desc Ouvert."
-          - "@left Refermer"
-        actions:
-          left: ["[page-toggle] classement"]
-
-      top_carrieres:
-        material: DIAMOND_PICKAXE
-        flags: [HIDE_ATTRIBUTES]
-        name: "&#FFD94DCarrières"
-        slots: [64]
-        lore:
-          - "@text &#F0A800① &fDofault &8· &#B376E5412 niv."
-          - "@text &#D9D9D9② &fAurora &8· &#B376E5388 niv."
-          - "@text &#C97B3A③ &fKaelis &8· &#B376E5361 niv."
-          - "@text &8(exemple)"
-          - "@left Voir tout"
-        actions:
-          left: ["[menu] metiers"]
-
-      top_richesse:
-        material: GOLD_INGOT
-        name: "&#FFD94DRichesse"
-        slots: [65]
-        lore:
-          - "@text &#F0A800① &fDofault &8· &#B376E51,2 M BitBlock"
-          - "@text &#D9D9D9② &fAurora &8· &#B376E5980 k BitBlock"
-          - "@text &#C97B3A③ &fKaelis &8· &#B376E5845 k BitBlock"
-          - "@text &8(exemple)"
-          - "@left Voir tout"
-        actions:
-          left: ["[message] &#FFD94D&lMenu &8► &#B376E5Bientôt disponible (aperçu FluxMenu)."]
-
-      top_collections:
-        material: NETHER_STAR
-        name: "&#FFD94DCollections"
-        slots: [66]
-        lore:
-          - "@text &#F0A800① &fDofault &8· &#B376E5186 points"
-          - "@text &#D9D9D9② &fAurora &8· &#B376E5171 points"
-          - "@text &#C97B3A③ &fKaelis &8· &#B376E5160 points"
-          - "@text &8(exemple)"
-          - "@left Voir tout"
-        actions:
-          left: ["[message] &#FFD94D&lMenu &8► &#B376E5Bientôt disponible (aperçu FluxMenu)."]
-
-      top_temps:
-        material: CLOCK
-        name: "&#FFD94DTemps de jeu"
-        slots: [67]
-        lore:
-          - "@text &#F0A800① &fDofault &8· &#B376E5312 h"
-          - "@text &#D9D9D9② &fAurora &8· &#B376E5287 h"
-          - "@text &#C97B3A③ &fKaelis &8· &#B376E5251 h"
-          - "@text &8(exemple)"
-          - "@left Voir tout"
-        actions:
-          left: ["[message] &#FFD94D&lMenu &8► &#B376E5Bientôt disponible (aperçu FluxMenu)."]
-
-      top_votes:
-        material: EMERALD
-        name: "&#FFD94DVotes"
-        slots: [68]
-        lore:
-          - "@text &#F0A800① &fDofault &8· &#B376E598 votes"
-          - "@text &#D9D9D9② &fAurora &8· &#B376E591 votes"
-          - "@text &#C97B3A③ &fKaelis &8· &#B376E587 votes"
-          - "@text &8(exemple)"
-          - "@left Voir tout"
-        actions:
-          left: ["[message] &#FFD94D&lMenu &8► &#B376E5Bientôt disponible (aperçu FluxMenu)."]
-
-      top_villes:
-        material: BRICKS
-        name: "&#FFD94DVilles"
-        slots: [69]
-        lore:
-          - "@text &#F0A800① &fDofault &8· &#B376E5240 chunks"
-          - "@text &#D9D9D9② &fAurora &8· &#B376E5198 chunks"
-          - "@text &#C97B3A③ &fKaelis &8· &#B376E5176 chunks"
-          - "@text &8(exemple)"
-          - "@left Voir tout"
-        actions:
-          left: ["[message] &#FFD94D&lMenu &8► &#B376E5Bientôt disponible (aperçu FluxMenu)."]
-
-      top_parrains_cl:
-        material: PLAYER_HEAD
-        name: "&#FFD94DParrainage"
-        slots: [70]
-        lore:
-          - "@text &#F0A800① &fDofault &8· &#B376E514 filleuls"
-          - "@text &#D9D9D9② &fAurora &8· &#B376E59 filleuls"
-          - "@text &#C97B3A③ &fKaelis &8· &#B376E57 filleuls"
-          - "@text &8(exemple)"
-          - "@left Voir tout"
-        actions:
-          left: ["[player] parrainage top", "[close]"]
-
-      retour:
-        material: itemsadder:influitems:leaderboard
-        glow: true
-        name: "&#FFD94DClassement"
-        slots: [58]
-        lore:
-          - "@desc Compare-toi aux meilleurs joueurs du serveur, dans chaque domaine."
-
-# Tableau de bord de la rangée 1 (fond fluxui:bg_main_*) : pseudo, rang et solde écrits par Flux.
+# Tableau de bord de la rangée 1 : tête (profil) en 9, pseudo, rang et solde gravés sur la fenêtre par Flux.
 widgets:
   pseudo:
     type: text
+    ink: true
     x: 28
     y: 38
     text: "%player_name%"
   rang:
     type: text
+    ink: true
     x: 28
     y: 45
     text: "%luckperms_primary_group_name%"
   solde:
     type: text
+    ink: true
     x: 166
     y: 38
     align: right
     text: "%vault_eco_balance_formatted%"
   solde_libelle:
     type: text
+    ink: true
     x: 166
     y: 45
     align: right
