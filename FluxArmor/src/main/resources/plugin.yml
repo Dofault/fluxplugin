@@ -1,0 +1,12 @@
+name: FluxArmor
+version: 26.2
+main: fr.influencraft.fluxarmor.FluxArmor
+api-version: "26.2"
+description: Armour in real 3D drawn by the resource pack's entity shader, built from Blockbench models, worn by items recognised by Flux.
+authors: [Influencraft]
+depend: [Flux]
+
+permissions:
+  fluxarmor.admin:
+    description: Build the 3D armour pack, reload.
+    default: op

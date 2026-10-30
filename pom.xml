@@ -36,5 +36,6 @@
         <module>FluxFly</module>
         <module>FluxMigration</module>
         <module>FluxTags</module>
+        <module>FluxArmor</module>
     </modules>
 </project>

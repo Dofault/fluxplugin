@@ -8,7 +8,7 @@ import org.bukkit.inventory.ItemStack;
 /**
  * Items of the eco plugins (EcoItems, EcoArmor...) for {@code ItemFactory}: specs {@code ecoitems:<id>},
  * {@code ecoarmor:<id>} and their arguments ({@code ecoarmor:set_virale_helmet item_model:...}), looked up through
- * eco. Only called when eco is enabled.
+ * eco, and the id of such an item ({@code CustomItems.id}). Only called when eco is enabled.
  */
 public final class EcoItems {
 
@@ -17,6 +17,12 @@ public final class EcoItems {
 
     public static boolean available() {
         return Bukkit.getPluginManager().isPluginEnabled("eco");
+    }
+
+    /** Key of the eco custom item ({@code ecoarmor:virale_chestplate}), null for any other item. */
+    public static String id(ItemStack item) {
+        com.willfp.eco.core.items.CustomItem custom = Items.getCustomItem(item);
+        return custom == null ? null : custom.getKey().toString();
     }
 
     /** The item of an eco lookup string, null when eco does not know it. */

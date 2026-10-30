@@ -67,10 +67,8 @@ final class Commande implements TabExecutor, TabCompleter {
             case "livre" -> livre(s, a);
             case "reload" -> {
                 plugin.charger();
-                for (Player p : Bukkit.getOnlinePlayers()) {
-                    Rafraichissement.inventaire(plugin, p.getInventory());
-                    plugin.apparences().inventaire(p.getInventory());
-                }
+                for (Player p : Bukkit.getOnlinePlayers()) Rafraichissement.inventaire(plugin, p.getInventory());
+                fr.influencraft.flux.api.items.ItemLooks.refreshOnline();
                 s.sendMessage(Fmt.texte(Fmt.OK + plugin.outils().size() + " outils rechargés."));
             }
             case "info", "debloquer", "avancer", "etape", "xp" -> main(s, a);

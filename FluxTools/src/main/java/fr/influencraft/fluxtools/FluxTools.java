@@ -73,7 +73,7 @@ public final class FluxTools extends fr.influencraft.flux.api.FluxPlugin {
         Bukkit.getPluginManager().registerEvents(new Verrous(this), this);
         Bukkit.getPluginManager().registerEvents(new Ouverture(this), this);
         Bukkit.getPluginManager().registerEvents(new Rafraichissement(this), this);
-        Bukkit.getPluginManager().registerEvents(apparences, this);
+        fr.influencraft.flux.api.items.ItemLooks.register(this, apparences::apply);
         Bukkit.getPluginManager().registerEvents(parures, this);
         Commande cmd = new Commande(this);
         command("tool")

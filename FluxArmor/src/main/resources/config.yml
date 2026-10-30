@@ -1,0 +1,22 @@
+# FluxArmor: armour in real 3D, drawn by the entity shader of the resource pack (see docs/technique/fluxarmor.md).
+#
+# /fluxarmor build: reads the Blockbench model of each armour, writes the pack into the ItemsAdder content folder
+# below (then run /iazip). /fluxarmor reload: re-reads this file.
+
+# ItemsAdder content folder where the pack is written, relative to the plugins/ folder.
+itemsadder-content: ItemsAdder/contents/fluxarmor
+
+# Armours. FluxArmor owns no item: each armour lists the Flux ids of the items wearing it (exact id, or prefix ending
+# with *), whatever plugin made them. The piece (chestplate, leggings, boots) follows the item's equipment slot.
+#
+#   <id>:
+#     model: models/<id>.bbmodel          # Blockbench model, relative to this plugin's folder. Frame: one skin pixel per
+#                                         # unit, feet at y = 0, +x towards the player's left, +z forwards. Groups:
+#                                         # plastron_torse, plastron_bras_droit, plastron_bras_gauche, jambieres_torse,
+#                                         # jambieres_jambe_droite, jambieres_jambe_gauche, bottes_jambe_droite,
+#                                         # bottes_jambe_gauche (a missing left limb mirrors the right one).
+#     fallback-humanoid: models/<id>_humanoid.png    # optional flat textures (64 x 32 template), shown with
+#     fallback-leggings: models/<id>_leggings.png    # Iris / OptiFine shaders, on macOS and Vulkan
+#     items:
+#       - ecoarmor:<set>_*
+armors: {}

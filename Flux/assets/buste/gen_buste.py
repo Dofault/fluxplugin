@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """The player's bust of the profile menu (2026-10-29): 4 player heads (head, torso, right arm, left arm) shaped and
-placed by item models, re-skinned by the entity shader (InfluArmor's, file buste.fsh.glsl).
+placed by item models, re-skinned by the entity shader (FluxArmor's, file buste.fsh.glsl).
 
 How it works:
 - every part is a vanilla player head (special model minecraft:player_head: the real skin of the player);
@@ -11,7 +11,7 @@ How it works:
   (torso, arms, jacket, sleeves) instead of the head's;
 - in menus the normals come with y flipped (checked in game on 2026-10-29), hence F.
 This script writes the item models (pack influmenu: items/buste_*.json, models/item/buste_*.json), the shader
-constants (InfluArmor/assets/shaders/buste_constantes.glsl) and, with --preview <skin.png> <out.png>, a picture of
+constants (FluxArmor/assets/shaders/buste_constantes.glsl) and, with --preview <skin.png> <out.png>, a picture of
 the bust computed with the same maths as the game.
 
     <venv with numpy, Pillow>/python3 gen_buste.py <plugins dir of the server> [--preview skin.png out.png]
@@ -24,7 +24,7 @@ import sys
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SHADER_OUT = os.path.join(HERE, "..", "..", "..", "..", "InfluArmor", "assets", "shaders", "buste_constantes.glsl")
+SHADER_OUT = os.path.join(HERE, "..", "..", "..", "..", "FluxArmor", "assets", "shaders", "buste_constantes.glsl")
 
 VIEW = (12.0, 22.0)   # pitch, yaw (degrees) of the whole bust; unusual on purpose: no other head uses it
 K = 3.0               # skin pixel -> GUI pixel (bust 16 px wide and high -> 48 GUI px, about 3 slots)

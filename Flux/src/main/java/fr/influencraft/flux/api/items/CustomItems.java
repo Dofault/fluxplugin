@@ -120,6 +120,7 @@ public final class CustomItems {
     public static void unregisterAll(Plugin owner) {
         ON_LOAD.remove(owner);
         SOURCES.values().removeIf(o -> o.owner() == owner);
+        ItemLooks.unregisterAll(owner);
     }
 
     /** Declares the items of a plugin of the suite under {@code namespace}. */
@@ -153,8 +154,36 @@ public final class CustomItems {
                 }
                 if (own != null) return e.getKey() + ":" + own;
             }
+            String eco = ecoId(item);
+            if (eco != null) return eco;
         }
         return provider.id(item);
+    }
+
+    /**
+     * Id of an item of the eco plugins ({@code ecoarmor:virale_chestplate}, {@code ecoitems:<id>}), asked to eco only
+     * when the item carries one of their keys.
+     */
+    private static String ecoId(ItemStack item) {
+        boolean eco = false;
+        for (org.bukkit.NamespacedKey k : item.getPersistentDataContainer().getKeys()) {
+            if (k.getNamespace().equals("ecoarmor") || k.getNamespace().equals("ecoitems")) {
+                eco = true;
+                break;
+            }
+        }
+        if (!eco || !fr.influencraft.flux.adapters.eco.EcoItems.available()) return null;
+        try {
+            return fr.influencraft.flux.adapters.eco.EcoItems.id(item);
+        } catch (RuntimeException | LinkageError e) {
+            return null;
+        }
+    }
+
+    /** True when {@code id} matches {@code pattern}: an exact id, or a prefix ending with {@code *}. */
+    public static boolean matches(String pattern, String id) {
+        if (id == null || pattern == null) return false;
+        return pattern.endsWith("*") ? id.startsWith(pattern.substring(0, pattern.length() - 1)) : pattern.equals(id);
     }
 
     /** A new stack of this custom item, or null when unknown. */

@@ -1,0 +1,6 @@
+prefix: "&#B376E5ᴀʀᴍᴜʀᴇ &8▸ "
+usage: "!&#FF5C5C/%flux_cmd_fluxarmor_fluxarmor% <build|reload>"
+reloaded: "&#2ECF7BFluxArmor rechargé."
+built: "&7%summary%"
+written: "&#2ECF7BPack écrit dans &f%folder%&#2ECF7B : lancer /iazip."
+failed: "&#FF5C5CConstruction impossible : &f%error%"

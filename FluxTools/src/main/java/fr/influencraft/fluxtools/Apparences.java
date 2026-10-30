@@ -1,172 +1,110 @@
 package fr.influencraft.fluxtools;
 
-import com.destroystokyo.paper.event.player.PlayerArmorChangeEvent;
+import fr.influencraft.flux.api.items.CustomItems;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.Equippable;
 import net.kyori.adventure.key.Key;
-import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityPickupItemEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryOpenEvent;
-import org.bukkit.event.player.PlayerItemHeldEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.persistence.PersistentDataType;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 /**
- * Apparences 3D posées sur des objets d'autres plugins (pièces EcoArmor...), reconnus par leur matériau et
- * une valeur de leur PersistentDataContainer ({@code apparences.yml}) : composant item_model (icône, modèle
- * porté sur la tête) et apparence portée (composant equippable). Mêmes moments que {@link Rafraichissement},
- * plus l'équipement d'une armure, le ramassage et la fermeture d'un inventaire (gain de caisse).
+ * 3D looks given to items of other plugins (EcoArmor pieces...), from {@code apparences.yml}: icon (item_model
+ * component, also the model worn on the head) and worn appearance (equippable component). An item is recognised by its
+ * Flux id ({@link CustomItems#id}, e.g. {@code ecoarmor:phenomene_chestplate}); Flux applies the look at the right
+ * moments ({@code ItemLooks}).
  */
-final class Apparences implements Listener {
+final class Apparences {
 
     /**
-     * {@code equipement} : absent = apparence portée d'origine, null = aucune (modèle de l'objet sur la tête).
-     * {@code parure} : modèle 3D porté sur le torse par {@link Parures}, ou null.
+     * {@code item}: id or prefix ending with {@code *}. {@code equip}: false = worn appearance left as it is;
+     * {@code equipment} null with {@code equip} = none (the item's model is worn on the head).
+     * {@code parure}: 3D model worn on the torso by {@link Parures}, or null.
      */
-    private record Regle(NamespacedKey marqueur, String valeur, NamespacedKey modele, boolean equipe, NamespacedKey equipement,
-                         NamespacedKey parure) {
+    private record Rule(String item, NamespacedKey model, boolean equip, NamespacedKey equipment, NamespacedKey parure) {
     }
 
     private final FluxTools plugin;
-    private final Map<Material, List<Regle>> regles = new EnumMap<>(Material.class);
-    private ConfigurationSection reglagesParures;
+    private final List<Rule> rules = new ArrayList<>();
+    private ConfigurationSection parureSettings;
 
     Apparences(FluxTools plugin) {
         this.plugin = plugin;
     }
 
     void charger() {
-        regles.clear();
-        reglagesParures = null;
+        rules.clear();
+        parureSettings = null;
         File f = new File(plugin.getDataFolder(), "apparences.yml");
         if (!f.isFile()) return;
         YamlConfiguration yml = YamlConfiguration.loadConfiguration(f);
-        reglagesParures = yml.getConfigurationSection("parures");
-        ConfigurationSection racine = yml.getConfigurationSection("apparences");
-        if (racine == null) return;
-        for (String id : racine.getKeys(false)) {
-            ConfigurationSection c = racine.getConfigurationSection(id);
-            Material mat = c == null ? null : Material.matchMaterial(c.getString("materiau", ""));
-            NamespacedKey marqueur = c == null ? null : NamespacedKey.fromString(c.getString("marqueur", ""));
-            if (mat == null || marqueur == null) {
-                plugin.getLogger().warning("Apparence " + id + " : matériau ou marqueur invalide, ignorée.");
+        parureSettings = yml.getConfigurationSection("parures");
+        ConfigurationSection root = yml.getConfigurationSection("apparences");
+        if (root == null) return;
+        for (String id : root.getKeys(false)) {
+            ConfigurationSection c = root.getConfigurationSection(id);
+            String item = c == null ? "" : c.getString("objet", "");
+            if (item.isBlank() || !item.contains(":")) {
+                plugin.getLogger().warning("Appearance " + id + ": missing or invalid item id (objet), skipped.");
                 continue;
             }
             String eq = c.getString("equipement");
-            regles.computeIfAbsent(mat, k -> new ArrayList<>()).add(new Regle(marqueur, c.getString("valeur", ""),
-                    cle(c.getString("modele")), eq != null, eq == null || eq.equalsIgnoreCase("aucun") ? null : cle(eq),
-                    cle(c.getString("parure"))));
+            rules.add(new Rule(item, key(c.getString("modele")), eq != null,
+                    eq == null || eq.equalsIgnoreCase("aucun") ? null : key(eq), key(c.getString("parure"))));
         }
-        int n = regles.values().stream().mapToInt(List::size).sum();
-        if (n > 0) plugin.getLogger().info(n + " apparences chargées.");
+        if (!rules.isEmpty()) plugin.getLogger().info(rules.size() + " appearances loaded.");
+        fr.influencraft.flux.api.items.ItemLooks.refreshOnline();
     }
 
-    /** Section {@code parures} d'apparences.yml (placement des modèles du torse), ou null. */
+    /** Section {@code parures} of apparences.yml (placement of the torso models), or null. */
     ConfigurationSection reglagesParures() {
-        return reglagesParures;
+        return parureSettings;
     }
 
-    /** Modèle de parure de la règle qui reconnaît l'objet, ou null. */
+    /** Parure model of the rule recognising the item, or null. */
     NamespacedKey parure(ItemStack item) {
-        Regle r = regle(item);
+        Rule r = item == null || item.isEmpty() ? null : rule(CustomItems.id(item));
         return r == null ? null : r.parure();
     }
 
-    private Regle regle(ItemStack item) {
-        if (item == null || item.isEmpty()) return null;
-        List<Regle> liste = regles.get(item.getType());
-        if (liste == null) return null;
-        for (Regle r : liste)
-            if (r.valeur().equals(item.getPersistentDataContainer().get(r.marqueur(), PersistentDataType.STRING))) return r;
+    private Rule rule(String id) {
+        if (id == null) return null;
+        for (Rule r : rules) if (CustomItems.matches(r.item(), id)) return r;
         return null;
     }
 
-    private static NamespacedKey cle(String s) {
+    private static NamespacedKey key(String s) {
         return s == null || s.isBlank() ? null : NamespacedKey.fromString(s);
     }
 
     /**
-     * Pose l'apparence de la règle qui reconnaît l'objet ; vrai si l'objet a changé. Composants lus par l'API de
-     * Paper, qui renvoie la valeur réelle (celle du matériau si l'objet n'en écrit pas) : ItemMeta#getEquippable
-     * renvoie au contraire un composant vide (tête, sans apparence) quand l'objet n'en écrit pas.
+     * Look of the rule recognising the item (ItemLooks); true when the item changed. Components read through Paper's
+     * API, which returns the real value (the material's one when the item writes none): ItemMeta#getEquippable returns
+     * an empty component (head, no appearance) instead.
      */
-    boolean appliquer(ItemStack item) {
-        Regle r = regle(item);
+    boolean apply(String id, ItemStack item) {
+        Rule r = rule(id);
         if (r == null) return false;
-        boolean change = false;
-        if (r.modele() != null && !meme(item.getData(DataComponentTypes.ITEM_MODEL), r.modele())) {
-            item.setData(DataComponentTypes.ITEM_MODEL, r.modele());
-            change = true;
+        boolean changed = false;
+        if (r.model() != null && !same(item.getData(DataComponentTypes.ITEM_MODEL), r.model())) {
+            item.setData(DataComponentTypes.ITEM_MODEL, r.model());
+            changed = true;
         }
         Equippable eq = item.getData(DataComponentTypes.EQUIPPABLE);
-        if (r.equipe() && eq != null && !meme(eq.assetId(), r.equipement())) {
-            item.setData(DataComponentTypes.EQUIPPABLE, eq.toBuilder().assetId(r.equipement()));
-            change = true;
+        if (r.equip() && eq != null && !same(eq.assetId(), r.equipment())) {
+            item.setData(DataComponentTypes.EQUIPPABLE, eq.toBuilder().assetId(r.equipment()));
+            changed = true;
         }
-        return change;
+        return changed;
     }
 
-    private static boolean meme(Key a, Key b) {
+    private static boolean same(Key a, Key b) {
         return Objects.equals(a == null ? null : a.asString(), b == null ? null : b.asString());
-    }
-
-    void inventaire(Inventory inv) {
-        if (regles.isEmpty()) return;
-        for (int i = 0; i < inv.getSize(); i++) {
-            ItemStack item = inv.getItem(i);
-            if (appliquer(item)) inv.setItem(i, item);
-        }
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void connexion(PlayerJoinEvent ev) {
-        inventaire(ev.getPlayer().getInventory());
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void ouverture(InventoryOpenEvent ev) {
-        inventaire(ev.getInventory());
-        inventaire(ev.getPlayer().getInventory());
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void fermeture(InventoryCloseEvent ev) {
-        inventaire(ev.getPlayer().getInventory());
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void enMain(PlayerItemHeldEvent ev) {
-        Player p = ev.getPlayer();
-        ItemStack item = p.getInventory().getItem(ev.getNewSlot());
-        if (appliquer(item)) p.getInventory().setItem(ev.getNewSlot(), item);
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void equipement(PlayerArmorChangeEvent ev) {
-        ItemStack item = ev.getPlayer().getInventory().getItem(ev.getSlot());
-        if (appliquer(item)) ev.getPlayer().getInventory().setItem(ev.getSlot(), item);
-    }
-
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void ramassage(EntityPickupItemEvent ev) {
-        ItemStack item = ev.getItem().getItemStack();
-        if (appliquer(item)) ev.getItem().setItemStack(item);
     }
 }
