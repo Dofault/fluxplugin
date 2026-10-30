@@ -373,7 +373,7 @@ def bg_pass(generic):
     name, time left and bar drawn by Flux), free rewards (row 4, frames by the theme, numbers and locks by Flux
     above them), premium rewards in a green box (row 5), then the missions in a dark box as wide as the premium one
     one row lower with grey space above: header, 5 categories, 7 missions (inventory rows 1-2)."""
-    im = bg_window(generic, 0, 8)
+    im = bg_window(generic, 0, 8, extra=5)   # grey margin under the missions box
     d = ImageDraw.Draw(im, "RGBA")
     ui.container(im, d, (6, 35, 169, 70), "ardoise")
     px0, py0, px1, py1 = span(PASS_PREMIUM)
@@ -391,15 +391,16 @@ def bg_pass(generic):
     return im
 
 
-def bg_window(generic, first=0, last=9):
+def bg_window(generic, first=0, last=9, extra=0):
     """The bare window of the theme, fitted to the rows a menu uses (theme of Flux): it starts ``first`` rows lower
     than a full window (the plate moves with it) and ends 6 px under row ``last`` (0-5 chest, 6-8 inventory,
     9 hotbar), so a menu of few rows is no taller than it needs and stays centred on the screen."""
     full = ui.window(generic)
-    if first == 0 and last == 9:
+    if first == 0 and last == 9 and not extra:
         return full
     dy = 18 * first
-    bottom = ROW_TOPS[last] + 16 + 6          # last row of pixels of the window
+    # last row of pixels of the window; extra: more grey under the last row (a box drawn down there keeps a margin)
+    bottom = min(full.height - 1, ROW_TOPS[last] + 16 + 6 + extra)
     im = Image.new("RGBA", full.size, (0, 0, 0, 0))
     body = bottom + 1 - dy - 3                # rows of the full window kept above its 3 bottom rows
     im.paste(full.crop((0, 0, full.width, body)), (0, dy))
