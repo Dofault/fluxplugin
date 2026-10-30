@@ -21,16 +21,60 @@ language: en_US
 # d'autres plugins ajoutent les leurs (ex : chips, les jetons de FluxCasino).
 currencies:
   main: vault
-  # format: how an amount is written; icon: item shown for it in menus (Flux material syntax)
+  # type: vault = the Vault economy (kept by CMI or another plugin), flux = kept by Flux in its database.
+  # format: how an amount is written; icon: item shown for it in menus (Flux material syntax).
+  # flux currencies: decimals (0 = whole units), command: true = /<id> (balance; give|take|set|look for
+  # flux.currency.<id>.admin). Names: money.names.<id> in the lang file; message look: money in style.yml.
   vault:
+    type: vault
     format: "%amount% $"
     icon: GOLD_INGOT
-  playerpoints:
-    format: "%amount% points"
+  influence:
+    type: flux
+    decimals: 0
+    command: true
+    format: "%amount% influence"
     icon: EMERALD
   chips:
+    type: flux
+    decimals: 0
+    command: false   # FluxCasino's /chips
     format: "%amount% chips"
     icon: GOLD_NUGGET
+
+# Account history (/account, menu "compte"): every balance change of every currency, with its origin.
+ledger:
+  enabled: true
+  # movements of the same currency, origin and direction within this window share one line (jobs paying every block)
+  merge-seconds: 300
+  keep-days: 90
+  # lines kept in memory per online player, shown by the menu
+  menu-lines: 300
+  # currencies of the menu filter and of the main-menu button, in order
+  currencies: [vault, influence, chips]
+  # plugins that only carry money for others: the origin is the outermost other plugin of the call stack
+  plumbing: [Flux, Vault, VaultUnlocked, CMI, CMILib, CMIEInjector, eco]
+  # class name prefix -> origin ("Plugin:key"), for what the plugin name alone cannot tell
+  classes:
+    "com.Zrips.CMI.Modules.PlayTimeRewards": "CMI:salary"
+    "com.Zrips.CMI.commands.list.pay": "CMI:transfer"
+    "com.Zrips.CMI.commands.list.money": "CMI:command"
+  # label of an origin: "Plugin:key", or "Plugin" for every key of a plugin; suite plugins name their own keys in
+  # their lang file (origins.<key>), these entries win. unknown: origin not found.
+  origins:
+    unknown: "Other"
+    EcoJobs: "Jobs"
+    libreforge: "Jobs"
+    Lands: "Towns"
+    AuctionHouse: "Auction house"
+    EcoBattlepass: "Pass"
+    "CMI:salary": "Salary"
+    "CMI:transfer": "Transfer"
+    "CMI:command": "Command"
+  # origins never recorded ("Plugin:key" or "Plugin")
+  ignored: []
+  # menu icon of a line by origin (Flux material syntax), else the currency icon
+  icons: {}
 
 # Couleurs des boîtes de dialogue (saisies, confirmations, copie, liens).
 dialogs:
@@ -134,7 +178,7 @@ providers:
   chest-shops: auto
   # Java or Bedrock client of each player (floodgate), see the bedrock section
   clients: auto
-  # balance changes of the main currency, for the "money gained" notifications (cmi)
+  # every Vault balance change, whatever plugin made it: account history, "money gained" notifications (cmi)
   money-events: auto
 
 # Rarity tiers of the custom fish (a fish belongs to a tier when its id starts with "<tier>_"): sample shown in the
@@ -249,11 +293,19 @@ theme:
     shop_editor: {title: "Éditeur"}
     shop_prices: {title: "Prix"}
     shop_sell: {title: "Vente"}
-    collection: {title: "Collections"}
+    collection:
+      title: "Collections"
+      keep-paths: false
+      frame: "28-34, 37-43, 46-52"   # 21 slots: room for future categories
+      widgets:
+        progression: {type: bar, frame: true, x: 25, y: 141, width: 126, colour: green,
+                      progress: "%fluxcoll_completed%", max: "%fluxcoll_total%",
+                      text: "Collections %fluxcoll_completed%/%fluxcoll_total%"}
     job_actions: {title: "Actions"}
     collection_boiserie:
       title: "Boiserie"
       keep-paths: false     # the tiers path of the former theme: a bar instead
+      frame: "10-16, 19-25, 28-34, 37-43"   # the 28 slots of the grid, even empty
       widgets:
         paliers: {type: bar, frame: true, x: 25, y: 159, width: 126, colour: green,
                   progress: "%fluxcoll_selected_tier%", max: "%fluxcoll_selected_max_tier%",
@@ -261,6 +313,7 @@ theme:
     collection_botanique:
       title: "Botanique"
       keep-paths: false     # the tiers path of the former theme: a bar instead
+      frame: "10-16, 19-25, 28-34, 37-43"   # the 28 slots of the grid, even empty
       widgets:
         paliers: {type: bar, frame: true, x: 25, y: 159, width: 126, colour: green,
                   progress: "%fluxcoll_selected_tier%", max: "%fluxcoll_selected_max_tier%",
@@ -268,6 +321,7 @@ theme:
     collection_enchantement:
       title: "Enchantement"
       keep-paths: false     # the tiers path of the former theme: a bar instead
+      frame: "10-16, 19-25, 28-34, 37-43"   # the 28 slots of the grid, even empty
       widgets:
         paliers: {type: bar, frame: true, x: 25, y: 159, width: 126, colour: green,
                   progress: "%fluxcoll_selected_tier%", max: "%fluxcoll_selected_max_tier%",
@@ -275,6 +329,7 @@ theme:
     collection_gastronomie:
       title: "Gastronomie"
       keep-paths: false     # the tiers path of the former theme: a bar instead
+      frame: "10-16, 19-25, 28-34, 37-43"   # the 28 slots of the grid, even empty
       widgets:
         paliers: {type: bar, frame: true, x: 25, y: 159, width: 126, colour: green,
                   progress: "%fluxcoll_selected_tier%", max: "%fluxcoll_selected_max_tier%",
@@ -282,6 +337,7 @@ theme:
     collection_geologie:
       title: "Géologie"
       keep-paths: false     # the tiers path of the former theme: a bar instead
+      frame: "10-16, 19-25, 28-34, 37-43"   # the 28 slots of the grid, even empty
       widgets:
         paliers: {type: bar, frame: true, x: 25, y: 159, width: 126, colour: green,
                   progress: "%fluxcoll_selected_tier%", max: "%fluxcoll_selected_max_tier%",
@@ -289,6 +345,7 @@ theme:
     collection_metallurgie:
       title: "Métallurgie"
       keep-paths: false     # the tiers path of the former theme: a bar instead
+      frame: "10-16, 19-25, 28-34, 37-43"   # the 28 slots of the grid, even empty
       widgets:
         paliers: {type: bar, frame: true, x: 25, y: 159, width: 126, colour: green,
                   progress: "%fluxcoll_selected_tier%", max: "%fluxcoll_selected_max_tier%",
@@ -296,6 +353,7 @@ theme:
     collection_navigation:
       title: "Navigation"
       keep-paths: false     # the tiers path of the former theme: a bar instead
+      frame: "10-16, 19-25, 28-34, 37-43"   # the 28 slots of the grid, even empty
       widgets:
         paliers: {type: bar, frame: true, x: 25, y: 159, width: 126, colour: green,
                   progress: "%fluxcoll_selected_tier%", max: "%fluxcoll_selected_max_tier%",
@@ -303,6 +361,7 @@ theme:
     collection_peche:
       title: "Pêche"
       keep-paths: false     # the tiers path of the former theme: a bar instead
+      frame: "10-16, 19-25, 28-34, 37-43"   # the 28 slots of the grid, even empty
       widgets:
         paliers: {type: bar, frame: true, x: 25, y: 159, width: 126, colour: green,
                   progress: "%fluxcoll_selected_tier%", max: "%fluxcoll_selected_max_tier%",
@@ -310,6 +369,7 @@ theme:
     collection_social:
       title: "Social"
       keep-paths: false     # the tiers path of the former theme: a bar instead
+      frame: "10-16, 19-25, 28-34, 37-43"   # the 28 slots of the grid, even empty
       widgets:
         paliers: {type: bar, frame: true, x: 25, y: 159, width: 126, colour: green,
                   progress: "%fluxcoll_selected_tier%", max: "%fluxcoll_selected_max_tier%",
@@ -317,6 +377,7 @@ theme:
     collection_terre:
       title: "Terre"
       keep-paths: false     # the tiers path of the former theme: a bar instead
+      frame: "10-16, 19-25, 28-34, 37-43"   # the 28 slots of the grid, even empty
       widgets:
         paliers: {type: bar, frame: true, x: 25, y: 159, width: 126, colour: green,
                   progress: "%fluxcoll_selected_tier%", max: "%fluxcoll_selected_max_tier%",
@@ -324,6 +385,7 @@ theme:
     collection_traque:
       title: "Traque"
       keep-paths: false     # the tiers path of the former theme: a bar instead
+      frame: "10-16, 19-25, 28-34, 37-43"   # the 28 slots of the grid, even empty
       widgets:
         paliers: {type: bar, frame: true, x: 25, y: 159, width: 126, colour: green,
                   progress: "%fluxcoll_selected_tier%", max: "%fluxcoll_selected_max_tier%",
