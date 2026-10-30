@@ -18,6 +18,8 @@ Une page = 7 étapes ; précédent / suivant passent d'une page à l'autre sans 
 """
 import os
 import re
+
+import yaml
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "."))
 from menu_lore import lore  # noqa: E402  (button lore in the tags of Flux's style.yml)
@@ -301,6 +303,45 @@ def pass_infos(pid_pass):
                               f"Fin de saison : &f%ecobattlepass_time_to_season_end_{pid_pass}%"]
 
 
+# Objet affiché pour une récompense du pass (2026-10-30) : le lot lui-même plutôt qu'un coffre, lu dans les
+# effets de la récompense EcoBattlepass (premier objet donné), avec sa quantité.
+CLES = {"ordinaire": "itemsadder:influkey:common_key", "tendance": "itemsadder:influkey:epic_key",
+        "virale": "itemsadder:influkey:rare_key", "phenomene": "itemsadder:influkey:legendary_key"}
+ECOBP = os.environ.get("ECOBATTLEPASS", "/home/influencraft/serveurs/04_labs/plugins/EcoBattlepass")
+
+
+def lot(reward_id):
+    """(matériau, quantité) du premier objet donné par la récompense, ou un coffre si rien n'est reconnu."""
+    for piste in ("standard", "prestige"):
+        f = os.path.join(ECOBP, "rewards", piste, reward_id + ".yml")
+        if not os.path.isfile(f):
+            continue
+        for eff in yaml.safe_load(open(f, encoding="utf-8")).get("effects") or []:
+            cmd = str(((eff or {}).get("args") or {}).get("command", "")).split()
+            if len(cmd) >= 4 and cmd[0] == "iagive":
+                return "itemsadder:" + cmd[2], int(cmd[3])
+            if len(cmd) >= 6 and cmd[0] == "ecocrates" and cmd[3] == "key" and cmd[4] in CLES:
+                return CLES[cmd[4]], int(cmd[6]) if len(cmd) > 6 else 1
+            if len(cmd) >= 4 and cmd[0] == "cmi" and cmd[1] == "give":
+                return cmd[3].upper(), int(cmd[4]) if len(cmd) > 4 else 1
+            if len(cmd) >= 5 and cmd[0] == "customfishing" and cmd[1] == "items":
+                return "STRING", int(cmd[5]) if len(cmd) > 5 else 1
+            if len(cmd) >= 4 and cmd[0] == "points" and cmd[1] == "give":
+                return "itemsadder:influitems:influence", int(cmd[3])
+    return "itemsadder:influitems:chest", 1
+
+
+def lots_palier(t):
+    """(lot gratuit, lot premium) du palier t, d'après battlepasses/pass.yml."""
+    f = os.path.join(ECOBP, "battlepasses", "pass.yml")
+    if os.path.isfile(f):
+        for tier in yaml.safe_load(open(f, encoding="utf-8")).get("tiers") or []:
+            if tier.get("tier") == t:
+                ids = {r.get("tier"): r.get("id") for r in tier.get("rewards") or []}
+                return lot(ids.get("free", "")), lot(ids.get("premium", ""))
+    return ("itemsadder:influitems:chest", 1), ("itemsadder:influitems:chest", 1)
+
+
 def pass_chemin(pid_pass, n, total, paliers_max):
     """Page n : les 7 paliers (gratuit rangée 4, premium juste dessous), flèches, numéros et cadenas (widgets)."""
     T = f"%ecobattlepass_tier_{pid_pass}%"
@@ -322,24 +363,27 @@ def pass_chemin(pid_pass, n, total, paliers_max):
         libre = [f"@item %ecobattlepass_tier_free_reward_{pid_pass}_{t}_{i}%" for i in range(1, 6)]
         prest = [f"@item %ecobattlepass_tier_premium_reward_{pid_pass}_{t}_{i}%" for i in range(1, 6)]
         nom = f"Palier {t}"
-        its.append(item(f"libre{t}_ok", "itemsadder:influitems:chest_checkmark", nom, slot, libre + ["&#2ECF7BRécupéré."],
-                        priorite=1, conditions=[f"placeholder: {etat} != NOT_RECEIVED", f"placeholder: {etat} != RECEIVED_PREMIUM"]))
-        its.append(item(f"libre{t}_dispo", "itemsadder:influitems:chest_unlock", nom, slot, libre,
+        (mat_l, qte_l), (mat_p, qte_p) = lots_palier(t)
+        ql, qp = min(64, max(1, qte_l)), min(64, max(1, qte_p))
+        # le lot lui-même dans chaque état : brillant quand il attend d'être récupéré
+        its.append(item(f"libre{t}_ok", mat_l, nom, slot, libre + ["&#2ECF7BRécupéré."],
+                        priorite=1, conditions=[f"placeholder: {etat} != NOT_RECEIVED", f"placeholder: {etat} != RECEIVED_PREMIUM"], quantite=ql))
+        its.append(item(f"libre{t}_dispo", mat_l, nom, slot, libre,
                         [CLIC_G_OK + "Récupérer"],
                         {"left": [f"[player] {pid_pass} claim {t} free", "[sound] @complete", "[refresh]"]},
-                        priorite=2, conditions=[f"placeholder: {T} >= {t}"]))
-        its.append(item(f"libre{t}", "itemsadder:influitems:chest", nom, slot, libre + [ROUGE + "Pas encore atteint."], priorite=3))
+                        priorite=2, conditions=[f"placeholder: {T} >= {t}"], glow=True, quantite=ql))
+        its.append(item(f"libre{t}", mat_l, nom, slot, libre + [ROUGE + "Pas encore atteint."], priorite=3, quantite=ql))
         bas = slot + 9
         nomp = f"★ Palier {t} Premium"
-        its.append(item(f"prestige{t}_ok", "itemsadder:influitems:chest_checkmark", nomp, bas, prest + ["&#2ECF7BRécupéré."],
-                        priorite=1, conditions=[f"placeholder: {etat} != NOT_RECEIVED", f"placeholder: {etat} != RECEIVED_FREE"]))
-        its.append(item(f"prestige{t}_requis", "itemsadder:influitems:lock", nomp, bas, prest + ["&#FF5C5CPass premium requis."],
-                        priorite=2, conditions=["!permission: battlepass.premium"]))
-        its.append(item(f"prestige{t}_dispo", "itemsadder:influitems:chest_unlock", nomp, bas, prest,
+        its.append(item(f"prestige{t}_ok", mat_p, nomp, bas, prest + ["&#2ECF7BRécupéré."],
+                        priorite=1, conditions=[f"placeholder: {etat} != NOT_RECEIVED", f"placeholder: {etat} != RECEIVED_FREE"], quantite=qp))
+        its.append(item(f"prestige{t}_requis", mat_p, nomp, bas, prest + ["&#FF5C5CPass premium requis."],
+                        priorite=2, conditions=["!permission: battlepass.premium"], quantite=qp))
+        its.append(item(f"prestige{t}_dispo", mat_p, nomp, bas, prest,
                         [CLIC_G_OK + "Récupérer"],
                         {"left": [f"[player] {pid_pass} claim {t} premium", "[sound] @complete", "[refresh]"]},
-                        priorite=3, conditions=[f"placeholder: {T} >= {t}"]))
-        its.append(item(f"prestige{t}", "itemsadder:influitems:chest", nomp, bas, prest + [ROUGE + "Pas encore atteint."], priorite=4))
+                        priorite=3, conditions=[f"placeholder: {T} >= {t}"], glow=True, quantite=qp))
+        its.append(item(f"prestige{t}", mat_p, nomp, bas, prest + [ROUGE + "Pas encore atteint."], priorite=4, quantite=qp))
         cx = 8 + 18 * (slot % 9) + 8
         widgets += [f"      numero{t}:", "        type: text", "        ink: true", f"        x: {cx}", "        y: 83",
                     "        align: center", f'        text: "{t}"',
