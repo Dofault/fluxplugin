@@ -82,8 +82,12 @@ public final class MenuLoader {
         String background = theme.getString("background", "bg_window_*");
         String title = window(background, span);
         int plateY = 5 + 18 * span[0];
-        if (!name.isBlank()) widgets.add(new Widget.Text("__title", 88, plateY, Widget.Align.CENTER, name, null, true, List.of()));
-        boolean frames = !theme.getString("frames", "vanilla").equalsIgnoreCase("none");
+        // picture made for this menu by gen_ui.py (auto_bg.py): window, slot frames and name already in it
+        String auto = "bg_auto_" + m.id().toLowerCase(Locale.ROOT);
+        boolean pictured = !theme.isSet("background") && glyph(auto);
+        if (pictured) title = ":offset_-8::" + auto + ":";
+        if (!name.isBlank() && !pictured) widgets.add(new Widget.Text("__title", 88, plateY, Widget.Align.CENTER, name, null, true, List.of()));
+        boolean frames = !pictured && !theme.getString("frames", "vanilla").equalsIgnoreCase("none");
         boolean dark = theme.getString("frames", "vanilla").equalsIgnoreCase("dark");
         Set<Integer> skip = new java.util.HashSet<>();
         for (String raw : strings(theme, "no-frame")) addSlots(raw, skip);
@@ -116,7 +120,9 @@ public final class MenuLoader {
             pw.addAll(p.widgets());
             // pages drew their own former backgrounds and animations: replaced by the menu's, unless kept
             boolean keep = theme.getBoolean("keep-page-titles", false);
+            String pageAuto = auto + "__" + p.id().toLowerCase(Locale.ROOT);
             String pageTitle = keep && p.title() != null && !p.title().isBlank() ? p.title()
+                    : pictured ? ":offset_-8::" + (glyph(pageAuto) ? pageAuto : auto) + ":"
                     : window(background, rowSpan(m.buttons(), m.lists(), p.buttons(), p.lists(), m));
             pages.put(e.getKey(), new Page(p.id(), pageTitle, keep ? p.frames() : List.of(), p.frameInterval(), pb,
                     theme.getBoolean("keep-paths", true) ? p.paths() : List.of(),
@@ -173,6 +179,14 @@ public final class MenuLoader {
             pl.addAll(p.lists());
         }
         return rowSpan(m.buttons(), m.lists(), pb, pl, m);
+    }
+
+    private static boolean glyph(String id) {
+        try {
+            return fr.influencraft.flux.api.items.CustomItems.available() && fr.influencraft.flux.api.items.CustomItems.glyphExists(id);
+        } catch (RuntimeException e) {
+            return false;
+        }
     }
 
     private static MenuButton rebutton(MenuButton b) {

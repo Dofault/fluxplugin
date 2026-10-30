@@ -410,6 +410,8 @@ def bg_pass(generic):
     d.line((px0, py0 + 1, px1, py0 + 1), fill=tone(PASS_GREEN_DARK, -0.3))
     for c in PASS_PREMIUM:
         ui.slot(d, c, "colour", PASS_GREEN)
+    for c in PASS_FREE:
+        ui.slot(d, c, "vanilla")
     # missions one row lower than the tracks, grey space between: header strip right above the categories
     _, ty0, _, _ = span(PASS_TABS, 1)
     _, _, _, my1 = span(PASS_MISSIONS, 3)
@@ -576,11 +578,35 @@ def main(plugins, resources=None):
         fn(generic).save(os.path.join(dest, "textures", "bg", name + ".png"))
         lines += [f"  bg_{name}:", "    show_in_gui: false", "    suggest_in_command: false",
                   f"    path: bg/{name}.png", "    scale_ratio: 221", "    y_position: 13"]
-    # pass page arrows over both tracks (rows 4-5, item y 90): 2 slots high, placed by image widgets
+    # every themed menu without a background of its own: window, slot frames and name in one picture (auto_bg.py)
+    import auto_bg
+    auto_dir = os.path.join(dest, "textures", "bg", "auto")
+    os.makedirs(auto_dir, exist_ok=True)
+    for f in os.listdir(auto_dir):
+        if f.endswith(".png"):
+            os.remove(os.path.join(auto_dir, f))
+    autos = auto_bg.build(plugins, bg_window, generic)
+    for name, im in autos.items():
+        im.save(os.path.join(auto_dir, name + ".png"))
+        lines += [f"  bg_{name}:", "    show_in_gui: false", "    suggest_in_command: false",
+                  f"    path: bg/auto/{name}.png", "    scale_ratio: 221", "    y_position: 13"]
+    print(len(autos), "themed menu backgrounds")
+    # pass page arrows over both tracks: real items whose model overflows their slot (item in the lower slot,
+    # picture 2 slots high, oversized_in_gui as the profile bust), item model fluxui:<name> in the raw pack
+    raw = os.path.dirname(rp)
+    for sub in ("items", os.path.join("models", "item"), os.path.join("textures", "item")):
+        os.makedirs(os.path.join(rp, sub), exist_ok=True)
     for name, icon in (("pass_prev", "left"), ("pass_next", "right")):
-        tall_button_png(icon, BUTTON_COLOURS["orange"]).save(os.path.join(dest, "textures", "bg", name + ".png"))
-        lines += [f"  {name}:", "    show_in_gui: false", "    suggest_in_command: false",
-                  f"    path: bg/{name}.png", "    scale_ratio: 34", "    y_position: %d" % (13 - 90)]
+        tall_button_png(icon, BUTTON_COLOURS["orange"]).save(os.path.join(rp, "textures", "item", name + ".png"))
+        with open(os.path.join(rp, "items", name + ".json"), "w", encoding="utf-8") as f:
+            json.dump({"model": {"type": "minecraft:model", "model": f"{NS}:item/{name}"}, "oversized_in_gui": True}, f)
+        face = {"uv": [0, 0, 16, 16], "texture": "#t"}
+        with open(os.path.join(rp, "models", "item", name + ".json"), "w", encoding="utf-8") as f:
+            json.dump({"textures": {"t": f"{NS}:item/{name}", "particle": f"{NS}:item/{name}"},
+                       "gui_light": "front",
+                       "elements": [{"from": [0, 0, 8], "to": [16, 16, 8], "faces": {"south": face, "north": face}}],
+                       # 16 x 34 picture: stretched to 34 px high, its bottom on the slot's bottom (centre 8 -> up 9)
+                       "display": {"gui": {"rotation": [0, 0, 0], "translation": [0, 9, 0], "scale": [1, 2.125, 1]}}}, f)
     # big icon of the pass season card (32 x 32 at window (10, 37))
     pass_png = os.path.join(contents, "influitems", "textures", "pass.png")
     if os.path.isfile(pass_png):
