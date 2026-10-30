@@ -316,6 +316,29 @@ def missions_row(im, d, first_inv_row, tabs=True):
         slot(d, base + 1 + k); put(im, base + 1 + k, REW[(k + 3) % 7])
 
 
+LOCK = ["..#..", ".#.#.", "#####", "##.##", "#####"]
+LOCK_OPEN = ["..#..", ".#.#.", ".#...", "#####", "#####"]
+
+
+def glyph(d, pattern, cx, y, colour):
+    w = len(pattern[0])
+    for dy, row in enumerate(pattern):
+        for dx, ch in enumerate(row):
+            if ch == "#":
+                d.point((cx - w // 2 + dx, y + dy), fill=colour)
+
+
+def q1b(im, d):
+    """q1 with a lock above each milestone number (open when reached), Missions centred in the gap."""
+    title(im, "Pass", 0); put(im, 0, "back"); put(im, 8, "info")
+    season(im, d); milestones(im, d, 4, 5)
+    for k in range(7):
+        x, y = gen_ui.game_objet(37 + k)
+        glyph(d, LOCK_OPEN if k < 2 else LOCK, x + 8, y - 14, INK)
+    write(im, "Missions", 88, 130, INK, None)
+    missions_row(im, d, 0)
+
+
 def q1(im, d):
     """Season card, milestones, premium, then missions (tabs + list) in the inventory area."""
     title(im, "Pass", 0); put(im, 0, "back"); put(im, 8, "info")
@@ -481,4 +504,5 @@ if __name__ == "__main__":
           [(0, 7), (0, 5), (0, 6), (0, 8), (0, 7)])
     sheet([("w1", w1), ("w2", w2), ("w3", w3), ("w4", w4), ("w5", w5)], os.path.join(out, "villes2.png"),
           [(0, 5)] * 5)
+    sheet([("q1b", q1b)], os.path.join(out, "pass3.png"), [(0, 7)])
     print("ok")
