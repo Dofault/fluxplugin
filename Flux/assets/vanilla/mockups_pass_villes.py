@@ -366,6 +366,19 @@ def dark_missions(im, d, style, head, lit_colour=None):
         write(im, "Missions", (x0 + x1) // 2 + 1, top + 4, WHITE, SH)
 
 
+def q1e(im, d):
+    """A, aligned on the premium track: same width, its top edge is the premium box's bottom edge (one line)."""
+    q1_top(im, d)
+    px0, _, px1, py1 = box_of([46, 52])
+    tabs, lst = [56, 57, 58, 59, 60], list(range(64, 71))
+    _, _, _, y1 = box_of(lst, 3)
+    ui.container(im, d, (px0, py1, px1, y1), "ardoise", head="Missions", head_kind="strip", head_h=11)
+    for k, c in enumerate(tabs):
+        ui.slot(d, c, "lit" if k == 0 else "dark"); put(im, c, ["clock", "book", "book", "book", "book"][k])
+    for k, c in enumerate(lst):
+        ui.slot(d, c, "dark"); put(im, c, REW[(k + 3) % 7])
+
+
 def q1d_a(im, d):
     q1_top(im, d); dark_missions(im, d, "ardoise", True)
 
@@ -545,4 +558,5 @@ if __name__ == "__main__":
           [(0, 5)] * 5)
     sheet([("q1b", q1b)], os.path.join(out, "pass3.png"), [(0, 7)])
     sheet([("a", q1d_a), ("b", q1d_b), ("c", q1d_c)], os.path.join(out, "pass4.png"), [(0, 7)] * 3)
+    sheet([("e", q1e)], os.path.join(out, "pass5.png"), [(0, 7)])
     print("ok")
