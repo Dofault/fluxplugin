@@ -175,9 +175,9 @@ def button_png(icon, colour, disabled=False):
     im = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
     base = rgb("#8B8B8B") if disabled else colour
-    ui.button(d, (0, 0, 15, 14), base, None)
-    d.point((0, 15), fill=(0, 0, 0, 0))
-    d.point((15, 15), fill=(0, 0, 0, 0))
+    # the whole 16 x 16: the white line under a button is drawn by the background, only where no black edge
+    # follows (button_line), so a button standing on a container shares its edge
+    ui.button(d, (0, 0, 15, 15), base, None)
     draw_icon(d, icon, rgb("#C6C6C6") if disabled else WHITE, tone(base, -0.55))
     return im
 
@@ -206,17 +206,19 @@ def bg_metiers(generic):
     level bar (row 5), paid actions in the inventory, pager on the hotbar (drawn by Flux only when needed)."""
     im = ui.window(generic)
     d = ImageDraw.Draw(im, "RGBA")
-    label(im, "Métier", 88, 4, centre=True)
+    label(im, "Métier", 88, 5, centre=True)
     ui.field(im, d, (26, 18, 128, 33))
     pets = [9, 18, 27, 36]
     grid = [15, 16, 17, 24, 25, 26, 33, 34, 35, 42, 43, 44]
-    ui.container(im, d, span(pets), "ardoise")
+    # containers start 1 px higher than their slots need: their top edge is the bottom edge of the buttons and of
+    # the name field above (one 1 px line, not two)
+    ui.container(im, d, on_row0(span(pets)), "ardoise")
     for c in pets:
         ui.slot(d, c, "dark")
     d.rectangle((33, 38, 98, 103), fill=rgb("#373737"))     # 1 px around the 64 x 64 illustration at (34, 39)
     d.line((34, 104, 99, 104), fill=WHITE)
     d.line((99, 39, 99, 104), fill=WHITE)
-    ui.container(im, d, span(grid), "ardoise")
+    ui.container(im, d, on_row0(span(grid)), "ardoise")
     for c in grid:
         ui.slot(d, c, "dark")
     bar_frame(d, 6, 109, 169)
@@ -224,6 +226,17 @@ def bg_metiers(generic):
     for i in range(27):
         ui.slot(d, 54 + i)
     return im
+
+
+def on_row0(box):
+    """A box right under row 0: its top edge on the bottom edge of the row 0 buttons (y 33)."""
+    return box[0], 33, box[2], box[3]
+
+
+def button_line(d, case):
+    """White line under a button of row/slot ``case``, for a button that does not stand on a black edge."""
+    x, y = ui.objet(case)
+    d.line((x + 1, y + 16, x + 14, y + 16), fill=WHITE)
 
 
 def span(cases, pad=1):

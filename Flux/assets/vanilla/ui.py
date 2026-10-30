@@ -46,7 +46,23 @@ def tone(c, f):
 
 
 def window(generic):
-    return Image.open(generic).convert("RGBA").copy()
+    """The generic window with a clean outline: 1 px black all around (the source misses the bottom edge and the top
+    of the right edge), 2 px dark grey shade inside the right and bottom edges, as the rest of the frame."""
+    im = Image.open(generic).convert("RGBA").copy()
+    px = im.load()
+    w, h = im.size
+    for y in range(7, h):
+        px[w - 1, y] = BLACK
+        px[0, y] = BLACK if y >= 8 else px[0, y]
+    for x in range(0, w):
+        px[x, h - 1] = BLACK
+    for x in range(3, w - 1):
+        px[x, h - 3] = SHADE
+        px[x, h - 2] = SHADE
+    for y in range(h - 3, h - 1):    # bottom left: the white light of the left edge stops at the shade
+        px[1, y] = SHADE
+        px[2, y] = SHADE
+    return im
 
 
 def write(im, txt, cx, y, colour, shadow=None, left=None):
