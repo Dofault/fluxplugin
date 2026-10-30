@@ -335,6 +335,41 @@ def restyled_png(face_name, glyph):
     return im
 
 
+# Rank badges of the rank route (FluxOffering RankMenu, 2026-10-30): a shield in the rank's colour (ranks.yml) with its
+# number engraved, gold stars on top for the prestige cycle; "off" greyed for the steps not reached.
+# Items fluxui:rang_<n>_<cycle>_<on|off> (n from 1, cycle 0-2).
+def rank_badge(colour, n, cycle, on):
+    im = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    c = colour if on else (150, 150, 150, 255)
+    if not on:
+        g = sum(colour[:3]) // 3
+        c = (g, g, g, 255)
+    shield = [(2, 3), (13, 3), (13, 9), (8, 14), (7, 14), (2, 9)]
+    d.polygon([(1, 2), (14, 2), (14, 9), (8, 15), (7, 15), (1, 9)], fill=OUTLINE)
+    d.polygon(shield, fill=c)
+    d.line((3, 4, 12, 4), fill=tone(c, 0.5))
+    d.line((3, 4, 3, 8), fill=tone(c, 0.35))
+    digits = str(n)
+    w = sum(len(fond._glyph(ch)[0][0]) + 1 for ch in digits) - 1
+    x = 8 - w // 2
+    for ch in digits:
+        g, _ = fond._glyph(ch)
+        for dy, row in enumerate(g):
+            for dx, v in enumerate(row):
+                if v == "#":
+                    if 6 + dy + 1 <= 13:
+                        im.putpixel((x + dx, 6 + dy + 1), tone(c, -0.6))
+                    im.putpixel((x + dx, 6 + dy), WHITE if on else (225, 225, 225, 255))
+        x += len(g[0]) + 1
+    star = rgb("#FFD94D") if on else (200, 200, 200, 255)
+    for k in range(cycle):
+        sx = 8 - 2 * cycle + 4 * k + 1
+        for px_, py_ in ((sx, 0), (sx - 1, 1), (sx, 1), (sx + 1, 1), (sx, 2)):
+            im.putpixel((px_, py_), star)
+    return im
+
+
 # ---------------------------------------------------------------------------------------------------- backgrounds
 
 INK = rgb("#404040")
@@ -572,6 +607,20 @@ def main(plugins, resources=None):
         for k, v in sorted(mapping.items()):
             f.write(f'"{k}": "{v}"\n')
     print(len(mapping), "former icons restyled")
+    ranks_yml = os.path.join(plugins, "FluxOffering", "ranks.yml")
+    if os.path.isfile(ranks_yml):
+        import yaml
+        rc = yaml.safe_load(open(ranks_yml, encoding="utf-8")) or {}
+        order = [r for t in (rc.get("tiers") or {}).values() for r in (t.get("ranks") or [])]
+        os.makedirs(os.path.join(dest, "textures", "rang"), exist_ok=True)
+        for n, rid in enumerate(order, 1):
+            colour = rgb(str(((rc.get("ranks") or {}).get(rid) or {}).get("colour", "#FFFFFF")))
+            for cycle in range(3):
+                for on in (True, False):
+                    iid = f"rang_{n}_{cycle}_{'on' if on else 'off'}"
+                    rank_badge(colour, n, cycle, on).save(os.path.join(dest, "textures", "rang", iid + ".png"))
+                    lines += [f"  {iid}:", "    display_name: ' '", "    resource:", "      material: PAPER",
+                              "      generate: true", "      textures:", f"      - rang/{iid}.png"]
     lines += ["", "font_images:"]
     generic = os.path.join(HERE, "menu_vanilla.png")
     for name, fn in BACKGROUNDS.items():

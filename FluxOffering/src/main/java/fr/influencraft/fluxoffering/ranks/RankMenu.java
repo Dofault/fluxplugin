@@ -184,8 +184,8 @@ public final class RankMenu implements org.bukkit.event.Listener {
     }
 
     /**
-     * A step of the route: green pane passed, the player's head on his step, yellow pane for the next one, grey pane
-     * further; the last rank of each cycle is a nether star. A click opens the rank's offering up to the next step
+     * A step of the route: the rank's badge, coloured once passed, greyed further (the next one glows), the player's
+     * head on his step. A click opens the rank's offering up to the next step
      * (the offering command checks the access again).
      */
     private ListEntry stepEntry(Player player, int i, int position) {
@@ -193,7 +193,9 @@ public final class RankMenu implements org.bukkit.event.Listener {
         int cycle = i / ranks.size();
         Lore lore = Lore.create().description(r.description());
         for (String perk : r.perks()) lore.item(perk.replaceFirst("^&8(&m)?➤ ", ""));
-        boolean last = i % ranks.size() == ranks.size() - 1;
+        // badge of the rank (fluxui:rang_<n>_<cycle>_<on|off>, Flux/assets/vanilla/gen_ui.py): coloured once passed,
+        // greyed further; the player's own step shows his head
+        String badge = "itemsadder:fluxui:rang_" + (i % ranks.size() + 1) + "_" + cycle + "_";
         String icon, click = "[sound] @error";
         boolean glow = false;
         if (i == position) {
@@ -201,13 +203,14 @@ public final class RankMenu implements org.bukkit.event.Listener {
             glow = true;
             lore.ok("C'est ton rang actuel.");
         } else if (i < position) {
-            icon = last ? "NETHER_STAR" : "LIME_STAINED_GLASS_PANE";
+            icon = badge + "on";
             lore.ok("Validé.");
         } else if (i == position + 1) {
-            icon = last ? "NETHER_STAR" : "YELLOW_STAINED_GLASS_PANE";
+            icon = badge + "off";
+            glow = true;
             lore.info("Prochaine étape.");
         } else {
-            icon = last ? "NETHER_STAR" : "GRAY_STAINED_GLASS_PANE";
+            icon = badge + "off";
             lore.ko("Pas encore accessible.");
         }
         if (cycle == 0 && i <= position + 1 && offeringExists.test(r.id())) {
