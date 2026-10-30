@@ -106,6 +106,7 @@ def render(plugins, menu_file, page_id=None):
         sections.append(yml["pages"][page_id])
     framed, drawn = set(), []
     skip = set(slots_of(theme.get("no-frame"), shift, top))
+    framed |= set(slots_of(theme.get("frame"), shift, top))
     for sec in sections:
         for lid, l in (sec.get("lists") or {}).items():
             for s in slots_of(l.get("slots"), shift, top):
@@ -113,7 +114,7 @@ def render(plugins, menu_file, page_id=None):
         for key, it in (sec.get("items") or {}).items():
             mat = mapping.get(str(it.get("material", "")).lower(), it.get("material", ""))
             ss = slots_of(it.get("slots", it.get("slot")), shift, top)
-            if "fluxui:btn_" not in mat and "invisible" not in mat:
+            if not str(mat).lower().startswith("itemsadder:") and "invisible" not in str(mat):
                 framed.update(ss)
             for s in ss:
                 drawn.append((s, mat))

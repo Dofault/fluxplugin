@@ -83,6 +83,9 @@ public final class MenuLoader {
         boolean dark = theme.getString("frames", "vanilla").equalsIgnoreCase("dark");
         Set<Integer> skip = new java.util.HashSet<>();
         for (String raw : strings(theme, "no-frame")) addSlots(raw, skip);
+        // frame: slots framed whatever stands on them (a grid mixing pictures and vanilla items)
+        Set<Integer> force = new java.util.TreeSet<>();
+        for (String raw : strings(theme, "frame")) addSlots(raw, force);
         if (frames && m.inventoryMode() != InventoryMode.HIDDEN) {
             // the player's own inventory shows under the menu: its 36 slots need their frames too
             int[] inv = new int[36];
@@ -90,8 +93,11 @@ public final class MenuLoader {
             widgets.add(new Widget.Slots("__inventory", inv, false, List.of()));
         }
         if (frames) {
-            int[] used = framed(buttons, m.lists(), skip);
-            if (used.length > 0) widgets.add(new Widget.Slots("__frames", used, dark, List.of()));
+            java.util.TreeSet<Integer> used = new java.util.TreeSet<>();
+            for (int s : framed(buttons, m.lists(), skip)) used.add(s);
+            used.addAll(force);
+            if (!used.isEmpty()) widgets.add(new Widget.Slots("__frames", used.stream().mapToInt(Integer::intValue).toArray(),
+                    dark, List.of()));
         }
         widgets.addAll(m.widgets());
         java.util.Map<String, Page> pages = new java.util.LinkedHashMap<>();
@@ -150,13 +156,17 @@ public final class MenuLoader {
                 b.clickRequirements(), b.denyActions(), b.actions());
     }
 
-    /** Slots to frame: every list slot, every button slot but theme buttons and invisible items. */
+    /**
+     * Slots to frame: the content, never the buttons. Every list slot (elements, and the "?" of an empty list), every
+     * item that is not a picture: vanilla items, heads. Pictures of ItemsAdder (back, arrows, icons) are buttons and
+     * stand on the window without a frame, as invisible items.
+     */
     private static int[] framed(List<MenuButton> buttons, List<ListSpec> lists, Set<Integer> skip) {
         java.util.TreeSet<Integer> out = new java.util.TreeSet<>();
         for (ListSpec l : lists) for (int s : l.slots()) out.add(s);
         for (MenuButton b : buttons) {
             String mat = b.material() == null ? "" : b.material().toLowerCase(Locale.ROOT);
-            if (mat.contains("fluxui:btn_") || mat.contains("invisible") || b.id().startsWith("__")) continue;
+            if (mat.startsWith("itemsadder:") || mat.contains("invisible") || b.id().startsWith("__")) continue;
             for (int s : b.slots()) out.add(s);
         }
         out.removeAll(skip);

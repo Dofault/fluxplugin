@@ -196,9 +196,9 @@ theme:
   # Menus converted to the theme (instead of a theme: section in their file, so generators keep working):
   # title (on the plate), shift (rows the content moves down, default auto: ends on the last chest row when it
   # uses only the chest), background (default: bare window fitted to the rows used), frames
-  # (vanilla, dark, none), no-frame (slots), keep-page-titles / keep-title-layers / keep-title-loop.
+  # (vanilla, dark, none), no-frame / frame (slots without / with a frame whatever stands on them), keep-page-titles / keep-title-layers / keep-title-loop.
   menus:
-    main: {title: "Menu", background: bg_main, no-frame: "0"}
+    main: {title: "Menu", background: bg_main, no-frame: "0", frame: "21-23, 30-32, 39-41"}
     mondes: {title: "Mondes"}
     pass: {title: "Pass"}
     rewards: {title: "Récompenses"}
