@@ -61,7 +61,7 @@ public final class UiTitle {
                 case Widget.Image i -> {
                     move(out, i.x() - cursor);
                     out.append(':').append(Text.placeholders(player, i.glyph())).append(':');
-                    move(out, cursor - i.x() - i.width() - 1);
+                    move(out, cursor - i.x() - i.width());   // an ItemsAdder picture advances by its width
                 }
                 case Widget.Bar b -> bar(out, player, b, cursor);
                 case Widget.Pager p -> pager(out, player, p, cursor, rows);

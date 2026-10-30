@@ -238,6 +238,17 @@ public final class PathRenderer {
     }
 
     /**
+     * ItemsAdder pictures of a title (every {@code :name:} that is not an offset). Measured in game (2026-10-30): a
+     * picture advances by its width, not width + 1 as {@link #advance} counts, so the widgets subtract this count.
+     */
+    public static int glyphCount(String title) {
+        int n = 0;
+        Matcher m = TOKEN.matcher(title);
+        while (m.find()) if (!OFFSET.matcher(m.group(1)).matches()) n++;
+        return n;
+    }
+
+    /**
      * Avance horizontale du titre (en px) : {@code :offset_N:} avance de N, une image
      * ItemsAdder de sa largeur + 1. Le texte libre n'est pas mesurable : signalé une fois.
      */

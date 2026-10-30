@@ -136,8 +136,10 @@ public final class MenuSession {
         List<fr.influencraft.flux.menu.Widget> widgets = new ArrayList<>(menu.widgets());
         if (page != null) widgets.addAll(page.widgets());
         if (!widgets.isEmpty()) {
-            // window x of the title cursor: the title starts at x 8
-            int cursor = 8 + fr.influencraft.flux.PathRenderer.advance(full.toString());
+            // window x of the title cursor: the title starts at x 8; an ItemsAdder picture advances by its width only
+            // (advance counts width + 1: one pixel too many per picture, the widgets were drawn 1 px to the left)
+            String so_far = full.toString();
+            int cursor = 8 + fr.influencraft.flux.PathRenderer.advance(so_far) - fr.influencraft.flux.PathRenderer.glyphCount(so_far);
             full.append(fr.influencraft.flux.menu.UiTitle.render(player, widgets, cursor, menu.rows()));
         }
         for (fr.influencraft.flux.menu.TitleLayer layer : menu.titleLayers()) {
