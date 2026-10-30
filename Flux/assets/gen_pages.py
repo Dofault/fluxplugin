@@ -311,7 +311,9 @@ ECOBP = os.environ.get("ECOBATTLEPASS", "/home/influencraft/serveurs/04_labs/plu
 
 
 def lot(reward_id):
-    """(matériau, quantité) du premier objet donné par la récompense, ou un coffre si rien n'est reconnu."""
+    """(matériau, quantité) du lot le plus parlant de la récompense : un objet (livre, élytres, œuf...) avant un
+    objet de pêche, une clé de caisse puis l'Influence ; un coffre si rien n'est reconnu."""
+    trouves = []
     for piste in ("standard", "prestige"):
         f = os.path.join(ECOBP, "rewards", piste, reward_id + ".yml")
         if not os.path.isfile(f):
@@ -319,16 +321,19 @@ def lot(reward_id):
         for eff in yaml.safe_load(open(f, encoding="utf-8")).get("effects") or []:
             cmd = str(((eff or {}).get("args") or {}).get("command", "")).split()
             if len(cmd) >= 4 and cmd[0] == "iagive":
-                return "itemsadder:" + cmd[2], int(cmd[3])
-            if len(cmd) >= 6 and cmd[0] == "ecocrates" and cmd[3] == "key" and cmd[4] in CLES:
-                return CLES[cmd[4]], int(cmd[6]) if len(cmd) > 6 else 1
-            if len(cmd) >= 4 and cmd[0] == "cmi" and cmd[1] == "give":
-                return cmd[3].upper(), int(cmd[4]) if len(cmd) > 4 else 1
-            if len(cmd) >= 5 and cmd[0] == "customfishing" and cmd[1] == "items":
-                return "STRING", int(cmd[5]) if len(cmd) > 5 else 1
-            if len(cmd) >= 4 and cmd[0] == "points" and cmd[1] == "give":
-                return "itemsadder:influitems:influence", int(cmd[3])
-    return "itemsadder:influitems:chest", 1
+                trouves.append((0, "itemsadder:" + cmd[2], int(cmd[3])))
+            elif len(cmd) >= 4 and cmd[0] == "cmi" and cmd[1] == "give":
+                trouves.append((0, cmd[3].upper(), int(cmd[4]) if len(cmd) > 4 else 1))
+            elif len(cmd) >= 5 and cmd[0] == "customfishing" and cmd[1] == "items":
+                trouves.append((1, "STRING", int(cmd[5]) if len(cmd) > 5 else 1))
+            elif len(cmd) >= 6 and cmd[0] == "ecocrates" and cmd[3] == "key" and cmd[4] in CLES:
+                trouves.append((2, CLES[cmd[4]], int(cmd[6]) if len(cmd) > 6 else 1))
+            elif len(cmd) >= 4 and cmd[0] == "points" and cmd[1] == "give":
+                trouves.append((3, "itemsadder:influitems:influence", int(cmd[3])))
+    if not trouves:
+        return "itemsadder:influitems:chest", 1
+    _, mat, qte = min(trouves, key=lambda x: x[0])
+    return mat, qte
 
 
 def lots_palier(t):
