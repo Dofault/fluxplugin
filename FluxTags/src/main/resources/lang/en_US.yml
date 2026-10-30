@@ -22,3 +22,4 @@ current: "Shown"
 pick: "Show"
 remove: "Stop showing"
 rarities: ["Common", "Unique", "Epic", "Mythic", "Legendary", "Fabled"]
+locked-tag: "Not unlocked yet."

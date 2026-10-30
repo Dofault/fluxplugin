@@ -7,7 +7,7 @@
 #
 # Disposition (centrée) :
 #   Thème vanilla (2026-10-30, theme.menus.main de la config de Flux) : rangée 1 = tableau de bord (tête = profil
-#   en 9, pseudo, rang, solde : widgets), fonctionnalités en carré 3 x 3 centré (21-23, 30-32, 39-41)
+#   en 9, pseudo : widget, bouton Compte en 17 : soldes et historique), fonctionnalités en carré 3 x 3 centré (21-23, 30-32, 39-41)
 #   coffre rangée 6 : Vote 45, Parrainage 46, Classement 47, Rangs 48, Casino 49, Récompenses 51 (calendrier au clic droit),
 #   Pass 52, Autre 53
 #   (Autre = fenêtre des paramètres au clic gauche, fenêtre d'aide au clic droit : Flux, settings.yml et help.yml)
@@ -32,6 +32,16 @@ update-interval: 20
 
 open-actions:
   - "[sound] @page"
+
+# Bouton Compte (2026-10-30), dernière case de la rangée du profil : soldes de chaque monnaie, construit par Flux
+# (liste account_button), ouvre l'historique des gains et dépenses (/compte).
+lists:
+  account_button:
+    slots: 17
+    item:
+      material: entry
+      actions:
+        left: ["[player] compte"]
 
 items:
 
@@ -164,6 +174,16 @@ items:
     actions:
       left: ["[menu] grades"]
 
+
+  tags:
+    material: NAME_TAG
+    name: "&#FFD94DTags"
+    slots: [49]
+    lore:
+      - "@desc Choisis le tag affiché à côté de ton pseudo."
+      - "@left Ouvrir"
+    actions:
+      left: ["[menu] tags"]
   # >>> gen_pages (boutons générés par assets/gen_pages.py)
 
   parrainage:
@@ -239,7 +259,7 @@ items:
 # Plus de tiroirs depuis le 2026-10-30 : vote, classement et parrainage ont chacun leur menu (vote.yml,
 # classement.yml, parrainage.yml).
 
-# Tableau de bord de la rangée 1 : tête (profil) en 9, pseudo et solde gravés sur la fenêtre par Flux.
+# Tableau de bord de la rangée 1 : tête (profil) en 9, pseudo gravé sur la fenêtre par Flux, bouton Compte en 17.
 widgets:
   pseudo:
     type: text
@@ -247,10 +267,3 @@ widgets:
     x: 28
     y: 41
     text: "%player_name%"
-  solde:
-    type: text
-    ink: true
-    x: 166
-    y: 41
-    align: right
-    text: "%vault_eco_balance_formatted% BitBlock"

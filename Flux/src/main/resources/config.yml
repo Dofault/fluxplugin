@@ -247,8 +247,9 @@ theme:
   # uses only the chest), background (default bg_window_*: bare window fitted to the rows used, * = first_last row), frames
   # (vanilla, dark, none), no-frame / frame (slots without / with a frame whatever stands on them), keep-page-titles / keep-title-layers / keep-title-loop.
   menus:
-    main: {title: "Menu", frame: "21-23, 30-32, 39-41"}
+    main: {title: "Menu", frame: "21-23, 30-32, 39-41", no-frame: "49"}
     pass: {title: "Pass", background: bg_pass, keep-paths: false, frames: none}   # frames in its picture
+    tags: {title: "Tags", frame: "10-16, 19-25, 28-34, 37-43"}
     vote: {title: "Vote"}
     classement: {title: "Classement"}
     parrainage: {title: "Parrainage"}

@@ -258,14 +258,23 @@ public final class FluxTags extends FluxPlugin implements Listener {
                 if (!unlocked) lore.ko(messages().raw("unlock-special"));
             } else {
                 lore.description(messages().raw("rank-description"));
+                if (!unlocked) lore.ko(messages().raw("locked-tag"));
             }
             if (shown) lore.ok(messages().raw("current"));
             if (unlocked) {
                 if (shown && !t.id().equals(NONE)) lore.left(messages().raw("remove"));
                 else if (!shown) lore.left(messages().raw("pick"));
             }
-            String icon = !unlocked ? "itemsadder:influitems:lock" : shown ? "itemsadder:influitems:accept" : "itemsadder:influitems:unlock";
-            out.add(ListEntry.of(t.id()).item(Items.of(icon, name(p, t), lore.build(), p))
+            // vanilla theme (2026-10-30): every tag is a name tag, the worn one glows; its name is the tag image itself
+            String shownImage = image == null ? (t.job() != null ? "metier_" + t.job() + "_1" : t.special()) : image;
+            String title = t.id().equals(NONE) || shownImage == null ? name(p, t) : "&f:" + shownImage + ":";
+            org.bukkit.inventory.ItemStack tag = Items.of("NAME_TAG", title, lore.build(), p);
+            if (shown && tag != null) {
+                org.bukkit.inventory.meta.ItemMeta meta = tag.getItemMeta();
+                meta.setEnchantmentGlintOverride(true);
+                tag.setItemMeta(meta);
+            }
+            out.add(ListEntry.of(t.id()).item(tag)
                     .set("clic", unlocked ? "[tags] " + t.id() : "[sound] @error")
                     .set("image", image == null ? (t.job() != null ? "metier_" + t.job() + "_1" : t.special()) : image)
                     .set("locked", String.valueOf(!unlocked)));

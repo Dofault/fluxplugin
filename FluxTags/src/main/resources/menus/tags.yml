@@ -1,8 +1,6 @@
-# Tags menu (/tags): one tag per row (rows 0 to 5, the first between the back button and the menu icon, the title
-# above the chest), its button in column 1 and its image (chat size) drawn next to it in the title (%fluxtags_rows%,
-# FluxTags). Page arrows on the first row of the hidden inventory (57, 59).
-# Background fluxtags:menu_tags (FluxTags/assets/gen_tags.py and gen_fonds.py).
-title: ":offset_-8::menu_tags::offset_-177:%fluxtags_rows%"
+# Tags menu (/tags), vanilla theme (2026-10-30): the tags as name tags, 28 per page (rows 1 to 4), the worn one glows;
+# hovering one shows the tag image as its name and whether it is unlocked. Pager on row 5. Opened from the main menu.
+# Entries built by FluxTags (list tags). Theme: theme.menus.tags of Flux's config.
 rows: 6
 player-inventory: hidden
 vanilla-background: false
@@ -12,11 +10,18 @@ open-actions:
 
 lists:
   tags:
-    slots: 1,10,19,28,37,46
+    slots: 10-16, 19-25, 28-34, 37-43
     item:
       material: entry
       actions:
         left: ["%entry_clic%", "[refresh]"]
+
+widgets:
+  pages:
+    type: pager
+    list: tags
+    prev: 45
+    next: 53
 
 items:
   retour:
@@ -24,31 +29,14 @@ items:
     name: "Retour"
     slots: [0]
     lore:
-      - "@left Mon profil"
+      - "@desc Revenir au menu."
+      - "@left Menu principal"
     actions:
-      left: ["[player] profil"]
+      left: ["[menu] main"]
 
   icone:
     material: NAME_TAG
     name: "Tags"
     slots: [8]
     lore:
-      - "@desc Choisis le tag affiché à côté de ton pseudo. Les tags de métier changent de forme tous les 50 niveaux."
-      - "@kv Débloqués | %fluxtags_unlocked%&#B376E5/&f%fluxtags_total%"
-      - "@kv Page | %flux_list_tags_page%&#B376E5/&f%flux_list_tags_pages%"
-
-  precedent:
-    material: "itemsadder:influitems:btn_prev"
-    hide-tooltip: true
-    slots: [57]
-    view-requirements: ["placeholder: %flux_list_tags_has_prev% == true"]
-    actions:
-      left: ["[list] tags prev", "[refresh]"]
-
-  suivant:
-    material: "itemsadder:influitems:btn_next"
-    hide-tooltip: true
-    slots: [59]
-    view-requirements: ["placeholder: %flux_list_tags_has_next% == true"]
-    actions:
-      left: ["[list] tags next", "[refresh]"]
+      - "@desc Un tag s'affiche à côté de ton pseudo dans le tchat. Clique sur un tag débloqué pour le porter."

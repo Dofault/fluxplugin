@@ -22,3 +22,4 @@ current: "Affiché"
 pick: "Afficher"
 remove: "Ne plus afficher"
 rarities: ["Commun", "Unique", "Épique", "Mythique", "Légendaire", "Fabuleux"]
+locked-tag: "Pas encore débloqué."
