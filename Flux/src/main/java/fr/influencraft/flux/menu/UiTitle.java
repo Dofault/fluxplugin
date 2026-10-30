@@ -20,7 +20,7 @@ import java.util.Map;
  */
 public final class UiTitle {
 
-    private static final int CHUNK_BASE = 0xE000, SPRITE_BASE = 0xE100;
+    private static final int CHUNK_BASE = 0xE000, SPRITE_BASE = 0xE100, FRAME_BASE = 0xE110;
     private static final Map<Character, Integer> WIDTHS = new HashMap<>();
     private static final java.util.regex.Pattern COLOURS =
             java.util.regex.Pattern.compile("(?i)[&§]#[0-9a-f]{6}|[&§][0-9a-fk-or]|<[^>]*>");
@@ -99,13 +99,10 @@ public final class UiTitle {
     }
 
     private static void bar(StringBuilder out, Player player, Widget.Bar b, int cursor) {
-        double value;
-        try {
-            value = Double.parseDouble(Text.placeholders(player, b.progress()).trim().replace(',', '.').replace("%", ""));
-        } catch (NumberFormatException e) {
-            value = 0;
-        }
-        double ratio = Math.max(0, Math.min(1, value / (b.max() <= 0 ? 1 : b.max())));
+        double value = decimal(Text.placeholders(player, b.progress()));
+        double max = decimal(Text.placeholders(player, b.max()));
+        double ratio = Math.max(0, Math.min(1, value / (max <= 0 ? 1 : max)));
+        if (b.frame()) barFrame(out, b, cursor);
         int inner = b.width() - 2;
         int fill = (int) Math.round(inner * ratio);
         int colour = Math.max(0, barColours.indexOf(b.colour()));
@@ -135,6 +132,22 @@ public final class UiTitle {
      * "page/pages" in the middle, button on the slot before {@code next} and {@code next}. Buttons greyed when there is
      * no page that way; nothing at all when the list fits on one page. The clicks are invisible items (MenuLoader).
      */
+    /** Empty frame of a bar: black edge, body chunks (as the fill), black edge; each glyph pulled back 1 px. */
+    private static void barFrame(StringBuilder out, Widget.Bar b, int cursor) {
+        move(out, b.x() - cursor);
+        StringBuilder chars = new StringBuilder().append((char) (FRAME_BASE + 8)).append('\uE1F0');
+        int body = b.width() - 2, drawn = 0;
+        for (int k = chunks.length - 1; k >= 0; k--) {
+            while (body - drawn >= chunks[k]) {
+                chars.append((char) (FRAME_BASE + k)).append('\uE1F0');
+                drawn += chunks[k];
+            }
+        }
+        chars.append((char) (FRAME_BASE + 8)).append('\uE1F0');
+        out.append("<font:fluxui:y").append(b.y()).append("><white>").append(chars).append("</font>");
+        move(out, cursor - b.x() - b.width());
+    }
+
     private static void pager(StringBuilder out, Player player, Widget.Pager p, int cursor, int rows) {
         int pages = number(Text.placeholders(player, "%flux_list_" + p.list() + "_pages%"));
         if (pages <= 1) return;
@@ -203,6 +216,14 @@ public final class UiTitle {
 
     private static void move(StringBuilder out, int px) {
         if (px != 0) out.append(":offset_").append(px).append(':');
+    }
+
+    private static double decimal(String s) {
+        try {
+            return Double.parseDouble(s.trim().replace(',', '.').replace("%", ""));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     private static int number(String s) {

@@ -169,9 +169,16 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         }
         fr.influencraft.flux.api.dialog.Dialogs.configure(dialog);
         java.util.Map<String, String> themeButtons = new java.util.HashMap<>();
+        // former-theme pictures restyled by gen_ui.py, then theme.buttons of the config (wins)
+        java.io.File restyled = new java.io.File(getDataFolder(), "theme-buttons.yml");
+        if (restyled.isFile()) {
+            var r = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(restyled);
+            for (String k : r.getKeys(false)) themeButtons.put(k.toLowerCase(java.util.Locale.ROOT), r.getString(k));
+        }
         var tb = getConfig().getConfigurationSection("theme.buttons");
         if (tb != null) for (String k : tb.getKeys(false)) themeButtons.put(k.toLowerCase(java.util.Locale.ROOT), tb.getString(k));
-        fr.influencraft.flux.menu.MenuLoader.configureTheme(themeButtons, getConfig().getConfigurationSection("theme.menus"));
+        fr.influencraft.flux.menu.MenuLoader.configureTheme(themeButtons, getConfig().getConfigurationSection("theme.menus"),
+                getConfig().getStringList("theme.content-namespaces"));
         // after the dialog colours: the pause menu window is written with them
         if (help != null) {
             help.load();

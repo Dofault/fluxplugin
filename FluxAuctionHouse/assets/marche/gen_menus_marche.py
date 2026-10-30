@@ -193,25 +193,27 @@ marche = [
            conditions=["placeholder: %s == 0" % pm("total")], priorite=-1),
 ]
 marche += pages(44, 53)
-for k, (slot, mat, nom, desc) in enumerate(SOURCES):
-    choisi = oui("source_%d" % k)
-    marche.append(bouton("source_%d_choisie" % k, slot, mat, OR + nom, lore(desc + ["", "&fAffiché : " + pm("total") + " offres"]),
-                         conditions=[choisi], priorite=1, extra={"glow": "true"}))
-    marche.append(bouton("source_%d" % k, slot, mat, OR + nom, lore(desc, [(GAUCHE, "Afficher")]), {"left": act("source %d" % k)}))
-for k, (mat, nom) in enumerate(CATEGORIES):
-    marche.append(bouton("categorie_%d_choisie" % k, 54 + k, mat, OR + nom, lore(["Catégorie affichée."]),
-                         conditions=[oui("categorie_%d" % k)], priorite=1, extra={"glow": "true"}))
-    marche.append(bouton("categorie_%d" % k, 54 + k, mat, OR + nom, lore([], [(GAUCHE, "Afficher")]), {"left": act("categorie %d" % k)}))
+# two filter buttons (2026-10-30) instead of the 4 sources and 9 categories: left = next, right = previous
 marche += [
-    bouton("encheres", 64, "itemsadder:influmarche:enchere", OR + "Mes enchères",
+    bouton("filtre_source", 18, "itemsadder:fluxui:btn_filter_blue", OR + "Source",
+           ["@desc D'où viennent les offres affichées."] + ["@option " + pm("choixsource_%d" % k) for k in range(len(SOURCES))]
+           + ["@left Suivante", "@right Précédente"],
+           {"left": act("source +"), "right": act("source -")}),
+    bouton("filtre_categorie", 27, "itemsadder:fluxui:btn_filter_blue", OR + "Catégorie",
+           ["@desc Le genre d'objets affichés."] + ["@option " + pm("choixcategorie_%d" % k) for k in range(len(CATEGORIES))]
+           + ["@left Suivante", "@right Précédente"],
+           {"left": act("categorie +"), "right": act("categorie -")}),
+]
+marche += [
+    bouton("encheres", 55, "itemsadder:influmarche:enchere", OR + "Mes enchères",
            lore(["Enchères où tu as fait une", "offre : suivi, objets gagnés,", "BitBlocks à récupérer."], [(GAUCHE, "Ouvrir")]),
            {"left": [im("ouvrir encheres")]}),
-    bouton("historique", 66, "itemsadder:influmarche:historique", OR + "Historique",
+    bouton("historique", 57, "itemsadder:influmarche:historique", OR + "Historique",
            lore(["Tes ventes et achats, à", "l'hôtel des ventes et dans", "les échoppes (/ah history)."], [(GAUCHE, "Ouvrir")]),
            {"left": [im("ouvrir historique")]}),
-    bouton("moyenne", 68, "itemsadder:influmarche:moyenne", OR + "Prix moyen de l'objet en main", lignes("main"),
+    bouton("moyenne", 59, "itemsadder:influmarche:moyenne", OR + "Prix moyen de l'objet en main", lignes("main"),
            {"left": [im("moyenne")], "right": [im("moyenne chercher")]}),
-    bouton("echoppe", 70, "itemsadder:influitems:add", OR + "Ouvrir une échoppe",
+    bouton("echoppe", 61, "itemsadder:influitems:add", OR + "Ouvrir une échoppe",
            lore(["Pose un coffre dans ta ville,", "frappe-le avec l'objet et", "indique le prix dans le tchat.",
                  "Pas de taxe du serveur : la ville prend son droit de place (ici : &f%influlands_taux_ici% %" + VIOLET + ")."],
                 [(GAUCHE, "Mes échoppes")]),

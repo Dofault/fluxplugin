@@ -184,12 +184,12 @@ final class Commande implements CommandExecutor, TabCompleter {
                 e.vue = Etat.Vue.valueOf(a[1].toUpperCase(Locale.ROOT));
                 e.changer();
             }
-            case "source" -> {
-                e.source = Math.floorMod(Integer.parseInt(a[1]), Catalogue.SOURCES.length);
+            case "source" -> {   // a number, or + / - (filter button: next / previous)
+                e.source = Math.floorMod(pas(a[1], e.source), Catalogue.SOURCES.length);
                 e.page(0);
             }
             case "categorie" -> {
-                e.categorie = Math.floorMod(Integer.parseInt(a[1]), Objets.Categorie.values().length);
+                e.categorie = Math.floorMod(pas(a[1], e.categorie), Objets.Categorie.values().length);
                 e.page(0);
             }
             case "tri" -> {
@@ -471,5 +471,14 @@ final class Commande implements CommandExecutor, TabCompleter {
             }
         }
         return out;
+    }
+
+    /** "+" / "-": the value after / before {@code current}, else the number given. */
+    private static int pas(String arg, int current) {
+        return switch (arg) {
+            case "+" -> current + 1;
+            case "-" -> current - 1;
+            default -> Integer.parseInt(arg);
+        };
     }
 }

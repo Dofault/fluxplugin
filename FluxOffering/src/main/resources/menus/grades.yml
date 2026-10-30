@@ -1,9 +1,7 @@
-# Rank menu (/grade): grades groupés par palier, chaque palier se termine par un coffre de récompense.
-# Background influmenu:menu_rangs (plugins/fluxplugin/Flux/assets/rangs/gen_fond.py), the whole menu one row down.
-# Row 1: back (9) and menu icon (17). Tier banners in columns 1, 3, 5, 7: 3 ranks (rows 3 to 5, weakest on top), then
-# the tier's reward chest on the first inventory row. Entries built by FluxOffering (RankMenu): list grades, column
-# by column; paths coloured per step (%grades_states_<tier>%).
-title: ":offset_-8::menu_rangs:"
+# Rank menu (/grade), 2026-10-30: a route of 36 steps (the 12 ranks, then Prestige I, then Prestige II) drawn as a
+# snake over rows 1 to 4 (left to right, then right to left...), linked by a path coloured per step
+# (%grades_route%), progress bar on row 5. Steps built by FluxOffering (RankMenu, list grades). Vanilla theme
+# (theme.menus.grades of Flux's config).
 rows: 6
 commands: [grade, grades, rang, rangs]
 player-inventory: hidden
@@ -14,54 +12,53 @@ open-actions:
   - "[sound] @page"
 
 paths:
-  tier_1:
-    slots: [28, 37, 46, 55]
-    progress: "4"
-    states: "%grades_states_1%"
-    color: vert
-    start: false
-    end: false
-  tier_2:
-    slots: [30, 39, 48, 57]
-    progress: "4"
-    states: "%grades_states_2%"
-    color: vert
-    start: false
-    end: false
-  tier_3:
-    slots: [32, 41, 50, 59]
-    progress: "4"
-    states: "%grades_states_3%"
-    color: vert
-    start: false
-    end: false
-  tier_4:
-    slots: [34, 43, 52, 61]
-    progress: "4"
-    states: "%grades_states_4%"
+  route:
+    slots: [9, 10, 11, 12, 13, 14, 15, 16, 17, 26, 25, 24, 23, 22, 21, 20, 19, 18, 27, 28, 29, 30, 31, 32, 33, 34, 35, 44, 43, 42, 41, 40, 39, 38, 37, 36]
+    progress: "36"
+    states: "%grades_route%"
     color: vert
     start: false
     end: false
 
 lists:
   grades:
-    slots: 28,37,46,55,30,39,48,57,32,41,50,59,34,43,52,61
+    slots: 9, 10, 11, 12, 13, 14, 15, 16, 17, 26, 25, 24, 23, 22, 21, 20, 19, 18, 27, 28, 29, 30, 31, 32, 33, 34, 35, 44, 43, 42, 41, 40, 39, 38, 37, 36
     item:
       material: entry
       actions:
         left: ["%entry_clic%", "[refresh]"]
   grades_info:
-    slots: 17
+    slots: 8
     item:
       material: entry
       actions:
         left: ["%entry_clic%"]
 
+widgets:
+  progression:
+    type: bar
+    frame: true
+    x: 25
+    y: 110
+    width: 126
+    colour: green
+    progress: "%grades_step%"
+    max: "%grades_steps%"
+    text: "Étape %grades_step%/%grades_steps%"
+    tooltip:
+      slots: "46-52"
+      name: "&#FFD94DTa progression"
+      lore:
+        - "@desc 12 rangs, puis la même route en Prestige I et en Prestige II."
+        - "@kv Rang | %grades_rank%"
+        - "@kv Étape | %grades_step%/%grades_steps%"
+
 items:
-  back:
+
+  retour:
     material: "itemsadder:influitems:btn_back"
     name: "&#FFD94DRetour"
-    slots: [9]
+    slots: [0]
     lore:
       - "@desc Revenir au menu."
       - "@left Menu principal"

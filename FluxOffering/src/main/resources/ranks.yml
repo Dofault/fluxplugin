@@ -1,6 +1,10 @@
 # Rank menu (/grade): ranks grouped in tiers, weakest first. Each tier ends with a reward chest, handed once through
 # the rewards of Flux. The player's rank is read with this placeholder (LuckPerms track by default).
 current-rank-placeholder: "%luckperms_current_group_on_track_standard%"
+# Route of the menu (2026-10-30): the ranks again on each cycle, named after the rank. Prestige of the player read
+# here (0 = first cycle) until a prestige system exists.
+prestige-placeholder: "0"
+cycles: ["", "Prestige I", "Prestige II"]
 
 ranks:
   newcomer: {name: "Newcomer", colour: "#C0C0C0", description: ["Starting rank."], perks: []}

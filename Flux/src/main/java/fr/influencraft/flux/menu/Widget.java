@@ -36,8 +36,9 @@ public sealed interface Widget {
     }
 
     /** {@code x, y}: top left of the bar frame; the fill starts 1 px inside. {@code progress / max} in 0..1. */
-    record Bar(String id, int x, int y, int width, String progress, double max, String colour, String text,
-               List<Requirement> requirements) implements Widget {
+    /** {@code max}: number or placeholder. {@code frame}: Flux draws the empty frame too (else it is in the background). */
+    record Bar(String id, int x, int y, int width, String progress, String max, String colour, String text,
+               boolean frame, List<Requirement> requirements) implements Widget {
     }
 
     /** Buttons on {@code prev} / {@code next}, field centred between them on their row. */

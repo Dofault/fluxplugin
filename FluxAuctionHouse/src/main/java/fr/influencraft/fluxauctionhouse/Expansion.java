@@ -19,7 +19,7 @@ import static fr.influencraft.fluxauctionhouse.Fmt.*;
  * <pre>
  *   solde, taxe, emplacements, a_recuperer, a_recuperer_oui, nb_offres
  *   total, page, pages, precedent, suivant, recherche, recherche_oui
- *   source, source_&lt;k&gt; (0-3), categorie, categorie_&lt;k&gt; (0-8), tri, tri_&lt;k&gt; (0-4), filtre_&lt;k&gt; (historique, 0-2)
+ *   source, source_&lt;k&gt; (0-3), choixsource_&lt;k&gt;, categorie, categorie_&lt;k&gt; (0-8), choixcategorie_&lt;k&gt;, tri, tri_&lt;k&gt; (0-4), filtre_&lt;k&gt; (historique, 0-2)
  *   liste_&lt;n&gt;_existe|brille|l&lt;k&gt;       n-ième entrée de la page (lignes de description déjà mises en forme)
  *   offre_existe|enchere|mienne|en_cours|partiel|retirable|premier|peut|quantite|quantite_max|total|unite
  *   offre_montant|min|hausse|l&lt;k&gt;|moy_l&lt;k&gt;, autre_&lt;n&gt;_existe|l&lt;k&gt;, autres_total
@@ -96,6 +96,13 @@ final class Expansion {
         if (s.startsWith("main_")) {
             String l = ligne(v.moyenneMain(p), s.substring(5));
             return l == null ? "" : l;
+        }
+        // options of the two filter buttons of the market (current one marked)
+        if (s.startsWith("choixsource_")) return choix(Catalogue.SOURCES, Integer.parseInt(s.substring(12)), e.source);
+        if (s.startsWith("choixcategorie_")) {
+            Objets.Categorie[] c = Objets.Categorie.values();
+            int k = Integer.parseInt(s.substring(15));
+            return k < 0 || k >= c.length ? "" : choix(java.util.Arrays.stream(c).map(x -> x.nom).toArray(String[]::new), k, e.categorie);
         }
         if (s.startsWith("source_")) return oui(e.source == Integer.parseInt(s.substring(7)));
         if (s.startsWith("categorie_")) return oui(e.categorie == Integer.parseInt(s.substring(10)));

@@ -44,7 +44,8 @@ NS = "fluxui"
 TEXT_SHADOW = (40, 40, 40, 255)
 # characters of the menu font (lower case is drawn upper case by Flux)
 CHARS = (list("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") + list("ÉÈÊÀÂÎÔ") + list("/%.:+-!'·?,()"))
-CELL_W, CELL_H = 8, 8          # accent rows 0-1, letter rows 2-6, shadow row 7
+CELL_W, CELL_H = 8, 16         # accent rows 0-1, letter rows 2-6, shadow row 7, empty below: a glyph may stand
+                               # up to 16 px above the baseline (ascent <= height), so text fits any row, plate too
 COLS = 16
 BAR_H = 10                     # inner height of a progress bar (its outline is in the background)
 CHUNKS = [1, 2, 4, 8, 16, 32, 64, 128]
@@ -97,6 +98,25 @@ def chunk(colour, w):
     d = ImageDraw.Draw(im)
     d.line((0, 0, w - 1, 0), fill=tone(colour, 0.4))
     d.line((0, BAR_H - 1, w - 1, BAR_H - 1), fill=tone(colour, -0.3))
+    return im
+
+
+FRAME_BASE = 0xE110            # bar frames: + k for the body chunks of CHUNKS widths, + 8 the 1 px edge
+
+
+def bar_frame_chunk(w, edge=False):
+    """Piece of an empty bar frame drawn by Flux (widget bar with frame): black outline, dark inside, white line
+    under it; the edge is the black column at both ends."""
+    h = BAR_H + 3
+    im = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    if edge:
+        d.line((0, 0, 0, BAR_H + 1), fill=BLACK)
+        return im
+    d.line((0, 0, w - 1, 0), fill=BLACK)
+    d.rectangle((0, 1, w - 1, BAR_H), fill=rgb("#2B2B30"))
+    d.line((0, BAR_H + 1, w - 1, BAR_H + 1), fill=BLACK)
+    d.line((0, BAR_H + 2, w - 1, BAR_H + 2), fill=WHITE)
     return im
 
 
@@ -231,6 +251,61 @@ def world_png(base, accent, locked=False):
     return im
 
 
+# Former-theme icons restyled (2026-10-30): every picture of influitems / influville / influmarche drawn on the
+# former button template (rounded 14 x 14, engraved pictogram) becomes a button of the theme: same pictogram,
+# square corners, the nearest bright colour (the former violet goes blue). Items fluxui:re_<ns>_<id>, and
+# plugins/Flux/theme-buttons.yml (former material -> new one), applied by Flux to themed menus.
+RESTYLE = ("influitems", "influville", "influmarche")
+FORMER_OUTLINE = (21, 17, 27)
+
+
+def former_button(im):
+    """Face colour and pictogram pixels of a picture on the former button template, or None."""
+    px = im.load()
+    corners = [px[2, 1], px[13, 1], px[1, 2], px[14, 2], px[1, 13], px[2, 14], px[13, 14]]
+    if any(c[3] < 255 or c[:3] != FORMER_OUTLINE for c in corners) or px[1, 1][3] != 0:
+        return None
+    face = px[3, 3]
+    lum = lambda c: 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2]
+    glyph = [(x, y) for y in range(3, 11) for x in range(3, 13)
+             if px[x, y][3] == 255 and lum(px[x, y]) < lum(face) * 0.82]
+    return face, glyph
+
+
+def nearest_colour(face):
+    import colorsys
+    r, g, b = (c / 255 for c in face[:3])
+    h, l, sat = colorsys.rgb_to_hls(r, g, b)
+    if sat < 0.18:
+        return "grey"
+    hue = h * 360
+    if hue >= 250 and hue < 300:      # the former violet
+        return "blue"
+    for name, lo, hi in (("red", 0, 18), ("orange", 18, 38), ("gold", 38, 70), ("green", 70, 170),
+                         ("blue", 170, 250), ("red", 300, 361)):
+        if lo <= hue < hi:
+            return name
+    return "grey"
+
+
+def restyled_png(face_name, glyph):
+    face = BUTTON_COLOURS[face_name]
+    roles = {"a": OUTLINE, "b": tone(face, 0.8), "c": face, "d": tone(face, 0.38), "e": tone(face, -0.4)}
+    im = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    px = im.load()
+    for y, row in enumerate(TEMPLATE):
+        for x, r in enumerate(row):
+            if r in roles:
+                px[x, y] = roles[r]
+    cells = set(glyph)
+    for x, y in glyph:
+        if (x, y + 1) not in cells and y + 1 <= 10:
+            px[x, y + 1] = tone(face, 0.22)
+    for x, y in glyph:
+        px[x, y] = tone(face, -0.6)
+    return im
+
+
 # ---------------------------------------------------------------------------------------------------- backgrounds
 
 INK = rgb("#404040")
@@ -332,6 +407,9 @@ def main(plugins, resources=None):
             chunk(colour, w).save(os.path.join(tex, f"bar_{cname}_{w}.png"))
     sprite_pager().save(os.path.join(tex, "pager.png"))
     sprite_lit().save(os.path.join(tex, "lit.png"))
+    for w in CHUNKS:
+        bar_frame_chunk(w).save(os.path.join(tex, f"barframe_{w}.png"))
+    bar_frame_chunk(1, edge=True).save(os.path.join(tex, "barframe_edge.png"))
     sprite_slot("vanilla").save(os.path.join(tex, "slot.png"))
     sprite_slot("dark").save(os.path.join(tex, "slot_dark.png"))
     glyph_sheet(shadow=False)[0].save(os.path.join(tex, "text_ink.png"))
@@ -342,7 +420,7 @@ def main(plugins, resources=None):
     for y in range(0, 221):
         # \uE1F0: 1 px back (slots side by side: a sprite advances by its width + 1)
         providers = [{"type": "space", "advances": {" ": 4, "\uE1F0": -1}}]
-        if y >= 7:   # text: cell top = letter top - 2, ascent <= height
+        if True:     # text: cell top = letter top - 2 (ascent 15 - y <= 16)
             providers.append({"type": "bitmap", "file": f"{NS}:font/text.png", "ascent": 13 - (y - 2),
                               "height": CELL_H, "chars": grid})
         if 13 - y <= BAR_H:
@@ -360,6 +438,12 @@ def main(plugins, resources=None):
         if 13 - y <= 20:
             providers.append({"type": "bitmap", "file": f"{NS}:font/lit.png", "ascent": 13 - y, "height": 20,
                               "chars": [chr(SPRITE_BASE + 1)]})
+        if 13 - y <= BAR_H + 3:
+            for k, w in enumerate(CHUNKS):
+                providers.append({"type": "bitmap", "file": f"{NS}:font/barframe_{w}.png", "ascent": 13 - y,
+                                  "height": BAR_H + 3, "chars": [chr(FRAME_BASE + k)]})
+            providers.append({"type": "bitmap", "file": f"{NS}:font/barframe_edge.png", "ascent": 13 - y,
+                              "height": BAR_H + 3, "chars": [chr(FRAME_BASE + 8)]})
         if 13 - y <= 18:
             for k, name in enumerate(("slot", "slot_dark")):
                 providers.append({"type": "bitmap", "file": f"{NS}:font/{name}.png", "ascent": 13 - y, "height": 18,
@@ -368,7 +452,7 @@ def main(plugins, resources=None):
             json.dump({"providers": providers}, f, ensure_ascii=False, separators=(",", ":"))
         # n<Y>: the menu font without shadow, engraved dark grey on the light window (Flux tints it)
         ink = [{"type": "space", "advances": {" ": 4}}]
-        if y >= 7:
+        if True:
             ink.append({"type": "bitmap", "file": f"{NS}:font/text_ink.png", "ascent": 13 - (y - 2), "height": CELL_H,
                         "chars": grid})
         with open(os.path.join(rp, "font", f"n{y}.json"), "w", encoding="utf-8") as f:
@@ -390,6 +474,41 @@ def main(plugins, resources=None):
             world_png(base, accent, locked).save(os.path.join(dest, "textures", "monde", iid + ".png"))
             lines += [f"  {iid}:", "    display_name: ' '", "    resource:", "      material: PAPER",
                       "      generate: true", "      textures:", f"      - monde/{iid}.png"]
+    contents = os.path.join(plugins, "ItemsAdder", "contents")
+    os.makedirs(os.path.join(dest, "textures", "re"), exist_ok=True)
+    mapping = {}
+    for ns in RESTYLE:
+        tdir = os.path.join(contents, ns, "textures")
+        cfg = os.path.join(contents, ns, "config.yml")
+        if not os.path.isdir(tdir) or not os.path.isfile(cfg):
+            continue
+        import yaml
+        items = (yaml.safe_load(open(cfg, encoding="utf-8")) or {}).get("items") or {}
+        for iid, spec in items.items():
+            tex = ((spec or {}).get("resource") or {}).get("textures") or []
+            if not tex:
+                continue
+            path = os.path.join(tdir, tex[0] if tex[0].endswith(".png") else tex[0] + ".png")
+            if not os.path.isfile(path):
+                continue
+            pic = Image.open(path).convert("RGBA")
+            if pic.size != (16, 16):
+                continue
+            found = former_button(pic)
+            if not found:
+                continue
+            face, glyph = found
+            new_id = f"re_{ns}_{iid}"
+            restyled_png(nearest_colour(face), glyph).save(os.path.join(dest, "textures", "re", new_id + ".png"))
+            lines += [f"  {new_id}:", "    display_name: ' '", "    resource:", "      material: PAPER",
+                      "      generate: true", "      textures:", f"      - re/{new_id}.png"]
+            mapping[f"itemsadder:{ns}:{iid}"] = f"itemsadder:{NS}:{new_id}"
+    with open(os.path.join(plugins, "Flux", "theme-buttons.yml"), "w", encoding="utf-8") as f:
+        f.write("# Generated by Flux/assets/vanilla/gen_ui.py: former-theme pictures and their restyled button\n"
+                "# (applied to themed menus; theme.buttons of config.yml wins over this file).\n")
+        for k, v in sorted(mapping.items()):
+            f.write(f'"{k}": "{v}"\n')
+    print(len(mapping), "former icons restyled")
     lines += ["", "font_images:"]
     generic = os.path.join(HERE, "menu_vanilla.png")
     for name, fn in BACKGROUNDS.items():

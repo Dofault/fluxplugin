@@ -239,31 +239,18 @@ items:
 # Plus de tiroirs depuis le 2026-10-30 : vote, classement et parrainage ont chacun leur menu (vote.yml,
 # classement.yml, parrainage.yml).
 
-# Tableau de bord de la rangée 1 : tête (profil) en 9, pseudo, rang et solde gravés sur la fenêtre par Flux.
+# Tableau de bord de la rangée 1 : tête (profil) en 9, pseudo et solde gravés sur la fenêtre par Flux.
 widgets:
   pseudo:
     type: text
     ink: true
     x: 28
-    y: 38
+    y: 41
     text: "%player_name%"
-  rang:
-    type: text
-    ink: true
-    x: 28
-    y: 45
-    text: "%luckperms_primary_group_name%"
   solde:
     type: text
     ink: true
     x: 166
-    y: 38
+    y: 41
     align: right
-    text: "%vault_eco_balance_formatted%"
-  solde_libelle:
-    type: text
-    ink: true
-    x: 166
-    y: 45
-    align: right
-    text: "BitBlock"
+    text: "%vault_eco_balance_formatted% BitBlock"

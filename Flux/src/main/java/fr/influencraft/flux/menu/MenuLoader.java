@@ -24,14 +24,18 @@ public final class MenuLoader {
 
     /** Buttons of the former theme and their vanilla-theme replacement ({@code theme.buttons} of Flux's config). */
     private static volatile java.util.Map<String, String> themeButtons = java.util.Map.of();
+    /** ItemsAdder namespaces whose pictures are content, framed like vanilla items (pet portraits, cards...). */
+    private static volatile java.util.Set<String> contentNamespaces = java.util.Set.of();
     /** Rows added to every chest slot of the menu being loaded ({@code theme.shift}). */
     private static final ThreadLocal<int[]> SHIFT = new ThreadLocal<>();
 
     /** Menus converted from Flux's config ({@code theme.menus.<id>}), same keys as a {@code theme:} section. */
     private static volatile java.util.Map<String, ConfigurationSection> themeMenus = java.util.Map.of();
 
-    public static void configureTheme(java.util.Map<String, String> buttons, ConfigurationSection menus) {
+    public static void configureTheme(java.util.Map<String, String> buttons, ConfigurationSection menus,
+                                      List<String> content) {
         themeButtons = java.util.Map.copyOf(buttons);
+        contentNamespaces = content.stream().map(n -> n.toLowerCase(Locale.ROOT)).collect(java.util.stream.Collectors.toUnmodifiableSet());
         java.util.Map<String, ConfigurationSection> m = new java.util.HashMap<>();
         if (menus != null) for (String k : menus.getKeys(false)) {
             ConfigurationSection c = menus.getConfigurationSection(k);
@@ -114,13 +118,15 @@ public final class MenuLoader {
             boolean keep = theme.getBoolean("keep-page-titles", false);
             String pageTitle = keep && p.title() != null && !p.title().isBlank() ? p.title()
                     : window(background, rowSpan(m.buttons(), m.lists(), p.buttons(), p.lists(), m));
-            pages.put(e.getKey(), new Page(p.id(), pageTitle, keep ? p.frames() : List.of(), p.frameInterval(), pb, p.paths(),
+            pages.put(e.getKey(), new Page(p.id(), pageTitle, keep ? p.frames() : List.of(), p.frameInterval(), pb,
+                    theme.getBoolean("keep-paths", true) ? p.paths() : List.of(),
                     p.lists(), List.copyOf(pw)));
         }
         boolean layers = theme.getBoolean("keep-title-layers", false);
         return new Menu(m.id(), title, m.rows(), m.commands(), m.overrideCommands(), m.permission(), m.inventoryMode(),
                 m.vanillaBackground(), m.updateInterval(), m.openActions(), m.closeActions(), buttons,
-                java.util.Map.copyOf(pages), m.paths(), theme.getBoolean("keep-title-loop", false) ? m.loopTitles() : List.of(),
+                java.util.Map.copyOf(pages), theme.getBoolean("keep-paths", true) ? m.paths() : List.of(),
+                theme.getBoolean("keep-title-loop", false) ? m.loopTitles() : List.of(),
                 m.loopInterval(), layers ? m.titleLayers() : List.of(), m.lists(),
                 m.inputSlots(), m.inputChangeActions(), m.inventoryClickActions(), List.copyOf(widgets));
     }
@@ -187,7 +193,9 @@ public final class MenuLoader {
         for (ListSpec l : lists) for (int s : l.slots()) out.add(s);
         for (MenuButton b : buttons) {
             String mat = b.material() == null ? "" : b.material().toLowerCase(Locale.ROOT);
-            if (mat.startsWith("itemsadder:") || mat.contains("invisible") || b.id().startsWith("__")) continue;
+            boolean picture = mat.startsWith("itemsadder:")
+                    && !contentNamespaces.contains(mat.substring("itemsadder:".length()).split(":", 2)[0]);
+            if (picture || mat.contains("invisible") || b.id().startsWith("__")) continue;
             for (int s : b.slots()) out.add(s);
         }
         out.removeAll(skip);
@@ -221,8 +229,12 @@ public final class MenuLoader {
 
         List<MenuButton> buttons = new ArrayList<>(buttons(yml.getConfigurationSection("items"), where + " > items",
                 maxSlot, topSize, mode, warn));
-        List<Widget> widgets = widgets(yml.getConfigurationSection("widgets"), where + " > widgets", warn);
+        List<Widget> widgets = new ArrayList<>(widgets(yml.getConfigurationSection("widgets"), where + " > widgets", warn));
+        // widgets declared with the theme (theme.menus.<id>.widgets of Flux's config): generated menus stay untouched
+        if (theme != null) widgets.addAll(widgets(theme.getConfigurationSection("widgets"), where + " > theme.widgets", warn));
         buttons.addAll(widgetButtons(widgets, maxSlot, topSize, mode, yml.getConfigurationSection("widgets"), where, warn));
+        if (theme != null) buttons.addAll(widgetButtons(widgets, maxSlot, topSize, mode,
+                theme.getConfigurationSection("widgets"), where, warn).stream().filter(b -> b.id().contains("_tooltip")).toList());
 
         java.util.Map<String, Page> pages = new java.util.LinkedHashMap<>();
         // themed menu: its background replaces the former title (theme.background, the bare window by default)
@@ -331,8 +343,8 @@ public final class MenuLoader {
                     }
                     case "image" -> new Widget.Image(key, w.getString("glyph", ""), w.getInt("x"), w.getInt("width"), req);
                     case "bar" -> new Widget.Bar(key, w.getInt("x"), w.getInt("y"), w.getInt("width"),
-                            w.getString("progress", "0"), w.getDouble("max", 1), w.getString("colour", "green"),
-                            w.getString("text", null), req);
+                            w.getString("progress", "0"), w.getString("max", "1"), w.getString("colour", "green"),
+                            w.getString("text", null), w.getBoolean("frame", false), req);
                     case "pager" -> new Widget.Pager(key, w.getString("list", ""), shifted(w.getInt("prev")),
                             shifted(w.getInt("next")), req);
                     case "lit" -> new Widget.Lit(key, shifted(w.getInt("slot")), req);

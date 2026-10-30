@@ -23,14 +23,15 @@ import java.util.Locale;
 import java.util.UUID;
 
 /**
- * Rank menu ({@code /grade}, Flux menu {@code grades}): the ranks grouped in tiers (one banner each, weakest rank on
- * top), each tier ending in a reward chest. Ranks and tiers come from {@code ranks.yml}; the player's rank is read on
- * the permission plugin through a placeholder (LuckPerms track). Built here, placed by the menu file:
+ * Rank menu ({@code /grade}, Flux menu {@code grades}), 2026-10-30: a route of {@code cycles x ranks} steps (3 x 12 =
+ * 36): the 12 ranks, then again with "Prestige I", then "Prestige II", drawn as a snake over the chest. Ranks come
+ * from {@code ranks.yml}; the player's rank is read on the permission plugin (LuckPerms track), his prestige through
+ * {@code prestige-placeholder} (0 while there is no prestige). No reward between tiers for now.
  * <ul>
- *   <li>list {@code grades}: per tier its ranks then its chest (4 tiers x 4 = 16 entries, column by column)</li>
+ *   <li>list {@code grades}: the steps of the route in order</li>
  *   <li>list {@code grades_info}: the menu icon (current rank, next step)</li>
- *   <li>placeholders {@code %grades_states_<tier>%} (path colour of each step), {@code %grades_rank%}</li>
- *   <li>action {@code [grades] claim <tier>}: hands the tier's reward through Flux rewards (once, keyed)</li>
+ *   <li>placeholders {@code %grades_rank%}, {@code %grades_step%} (1-based position on the route),
+ *   {@code %grades_steps%} (route length), {@code %grades_route%} (path colour of every step)</li>
  * </ul>
  */
 public final class RankMenu implements org.bukkit.event.Listener {
@@ -69,6 +70,9 @@ public final class RankMenu implements org.bukkit.event.Listener {
     private final List<Tier> tiers = new ArrayList<>();
     private final List<Rank> ranks = new ArrayList<>();
     private String placeholder;
+    private String prestigePlaceholder = "0";
+    /** Name added to a rank on each cycle of the route: none, Prestige I, Prestige II. */
+    private List<String> cycles = List.of("", "Prestige I", "Prestige II");
 
     public RankMenu(JavaPlugin plugin, java.util.function.Predicate<String> offeringExists) {
         this.plugin = plugin;
@@ -93,6 +97,8 @@ public final class RankMenu implements org.bukkit.event.Listener {
         if (!file.exists()) plugin.saveResource("ranks.yml", false);
         YamlConfiguration c = YamlConfiguration.loadConfiguration(file);
         placeholder = c.getString("current-rank-placeholder", "%luckperms_current_group_on_track_standard%");
+        prestigePlaceholder = c.getString("prestige-placeholder", "0");
+        if (!c.getStringList("cycles").isEmpty()) cycles = List.copyOf(c.getStringList("cycles"));
         tiers.clear();
         ranks.clear();
         ConfigurationSection rs = c.getConfigurationSection("ranks");
@@ -127,6 +133,21 @@ public final class RankMenu implements org.bukkit.event.Listener {
         return 0;
     }
 
+    /** Prestige of the player: 0 for the first cycle. */
+    private int prestige(Player player) {
+        try {
+            int p = Integer.parseInt(Texts.placeholders(prestigePlaceholder, player).trim());
+            return Math.max(0, Math.min(cycles.size() - 1, p));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    /** Index of the player on the route (0-based): prestige x ranks + rank. */
+    private int step(Player player) {
+        return prestige(player) * ranks.size() + current(player);
+    }
+
     private int lastIndex(Tier t) {
         return ranks.indexOf(t.ranks().get(t.ranks().size() - 1));
     }
@@ -157,80 +178,53 @@ public final class RankMenu implements org.bukkit.event.Listener {
 
     private List<ListEntry> entries(Player player) {
         List<ListEntry> out = new ArrayList<>();
-        int current = current(player);
-        for (Tier t : tiers) {
-            for (Rank r : t.ranks()) out.add(rankEntry(player, r, ranks.indexOf(r), current));
-            out.add(chestEntry(player, t, current));
-        }
+        int position = step(player);
+        for (int i = 0; i < ranks.size() * cycles.size(); i++) out.add(stepEntry(player, i, position));
         return out;
     }
 
     /**
-     * A rank: name and number, description, perks (server lore frame, grey arrows). A click opens the rank's offering
-     * (the one that gives it) for every rank up to the next one, already done ones included; further ranks stay
-     * closed (the offering command checks the access again).
+     * A step of the route: green pane passed, the player's head on his step, yellow pane for the next one, grey pane
+     * further; the last rank of each cycle is a nether star. A click opens the rank's offering up to the next step
+     * (the offering command checks the access again).
      */
-    private ListEntry rankEntry(Player player, Rank r, int index, int current) {
+    private ListEntry stepEntry(Player player, int i, int position) {
+        Rank r = ranks.get(i % ranks.size());
+        int cycle = i / ranks.size();
         Lore lore = Lore.create().description(r.description());
         for (String perk : r.perks()) lore.item(perk.replaceFirst("^&8(&m)?➤ ", ""));
+        boolean last = i % ranks.size() == ranks.size() - 1;
         String icon, click = "[sound] @error";
         boolean glow = false;
-        boolean offering = index <= current + 1 && offeringExists.test(r.id());
-        if (index == current) {
+        if (i == position) {
             icon = "player-head";
             glow = true;
-            lore.ok("Validé, c'est ton rang actuel.");
-        } else if (index < current) {
-            icon = "itemsadder:influitems:unlock";
+            lore.ok("C'est ton rang actuel.");
+        } else if (i < position) {
+            icon = last ? "NETHER_STAR" : "LIME_STAINED_GLASS_PANE";
             lore.ok("Validé.");
-        } else if (index == current + 1) {
-            icon = "itemsadder:influitems:tracking";
-            lore.info("Prochain rang.");
+        } else if (i == position + 1) {
+            icon = last ? "NETHER_STAR" : "YELLOW_STAINED_GLASS_PANE";
+            lore.info("Prochaine étape.");
         } else {
-            icon = "itemsadder:influitems:lock";
+            icon = last ? "NETHER_STAR" : "GRAY_STAINED_GLASS_PANE";
             lore.ko("Pas encore accessible.");
         }
-        if (offering) {
-            lore.left(index == current + 1 ? "Faire l'offrande" : "Voir l'offrande");
+        if (cycle == 0 && i <= position + 1 && offeringExists.test(r.id())) {
+            lore.left(i == position + 1 ? "Faire l'offrande" : "Voir l'offrande");
             click = "[player] offrande " + r.id();
         }
-        String name = "&" + r.colour() + "&l" + r.name() + " &7" + (index + 1) + "/" + ranks.size();
-        return entry(player, "rank:" + r.id(), icon, name, lore, index + 1, glow).set("clic", click);
-    }
-
-    private ListEntry chestEntry(Player player, Tier t, int current) {
-        Lore lore = Lore.create().description("Récompense du palier &f" + t.name()).items(t.rewardLines());
-        String icon, click = "[sound] @error";
-        switch (chest(player, t, current)) {
-            case CLAIMED -> {
-                icon = "itemsadder:influitems:chest_checkmark";
-                lore.ok("Récupérée.");
-            }
-            case WAITING -> {
-                icon = "itemsadder:influitems:chest_item";
-                lore.info("Elle t'attend dans tes récompenses.").left("Ouvrir les récompenses");
-                click = "[menu] rewards";
-            }
-            case READY -> {
-                icon = "itemsadder:influitems:chest_unlock";
-                lore.ok("Palier terminé !").left("Récupérer");
-                click = "[grades] claim " + t.id();
-            }
-            default -> {
-                icon = "itemsadder:influitems:chest";
-                // opens with the next tier's first rank (or the last rank of the ladder, held)
-                Rank opener = ranks.get(Math.min(ranks.size() - 1, lastIndex(t) + 1));
-                lore.line("S'ouvre quand tu deviens &" + opener.colour() + opener.name() + Lore.PURPLE + ".");
-            }
-        }
-        return entry(player, "tier:" + t.id(), icon, t.rewardLabel(), lore, 1, false).set("clic", click);
+        String prefix = cycles.get(cycle).isBlank() ? "" : " &7" + cycles.get(cycle);
+        String name = "&" + r.colour() + "&l" + r.name() + prefix + " &8" + (i + 1) + "/" + ranks.size() * cycles.size();
+        return entry(player, "step:" + i, icon, name, lore, i % ranks.size() + 1, glow).set("clic", click);
     }
 
     private ListEntry info(Player player) {
         int current = current(player);
         Rank now = ranks.isEmpty() ? null : ranks.get(current);
         Lore lore = Lore.create().description("Monte en rang en faisant les offrandes : chaque rang débloque de nouveaux avantages.",
-                "Chaque palier de 3 rangs se termine par un coffre de récompense.");
+                "Après le 12e rang, la route repart du premier en Prestige.");
+        lore.kv("Étape", (step(player) + 1) + "/" + ranks.size() * cycles.size());
         if (now != null) lore.kv("Ton rang", "&" + now.colour() + now.name());
         String click = "[sound] @error";
         if (current + 1 < ranks.size()) {
@@ -257,28 +251,20 @@ public final class RankMenu implements org.bukkit.event.Listener {
 
     // ------------------------------------------------------------------ placeholders, action
 
-    /** {@code states_<tier number from 1>}: colour of each step of the tier's path; {@code rank}: current rank name. */
+    /** {@code rank}: current rank name; {@code step}, {@code steps}, {@code route}: position and colours of the route. */
     private String placeholder(Player player, String params) {
         if (player == null) return "";
         int current = current(player);
         if (params.equals("rank")) return ranks.isEmpty() ? "" : ranks.get(current).name();
-        if (!params.startsWith("states_")) return null;
-        int n;
-        try {
-            n = Integer.parseInt(params.substring(7)) - 1;
-        } catch (NumberFormatException e) {
-            return "";
+        if (params.equals("step")) return String.valueOf(step(player) + 1);
+        if (params.equals("steps")) return String.valueOf(ranks.size() * cycles.size());
+        if (params.equals("route")) {
+            int position = step(player);
+            List<String> out = new ArrayList<>();
+            for (int i = 0; i < ranks.size() * cycles.size(); i++) out.add(i <= position ? "vert" : i == position + 1 ? "orange" : "eteint");
+            return String.join(",", out);
         }
-        if (n < 0 || n >= tiers.size()) return "";
-        Tier t = tiers.get(n);
-        List<String> out = new ArrayList<>();
-        for (Rank r : t.ranks()) out.add(ranks.indexOf(r) <= current ? "vert" : "eteint");
-        out.add(switch (chest(player, t, current)) {
-            case CLAIMED -> "vert";
-            case READY, WAITING -> "orange";
-            case LOCKED -> "eteint";
-        });
-        return String.join(",", out);
+        return null;
     }
 
     private void claim(Player player, String tierId) {
