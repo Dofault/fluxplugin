@@ -72,6 +72,14 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         profile.start(getConfig().getString("profile.bust-model", "influmenu:buste_"));
         int warnings = registry.load();
         getLogger().info(registry.all().size() + " menu(s) chargé(s)" + (warnings > 0 ? ", " + warnings + " avertissement(s)" : ""));
+        // menus read again once the custom items are loaded: themed menus pick their generated picture
+        // (bg_auto_<menu>) only when ItemsAdder knows it, which is after Flux starts
+        fr.influencraft.flux.api.items.CustomItems.onLoaded(this, () -> {
+            PathRenderer.reset();
+            int w = registry.load();
+            getLogger().info(registry.all().size() + " menu(s) rechargé(s) après le chargement des objets personnalisés"
+                    + (w > 0 ? ", " + w + " avertissement(s)" : ""));
+        });
 
         getServer().getPluginManager().registerEvents(new MenuListener(this, menus), this);
         getServer().getPluginManager().registerEvents(this, this);
