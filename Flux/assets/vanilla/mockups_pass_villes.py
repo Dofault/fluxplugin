@@ -339,6 +339,45 @@ def q1b(im, d):
     missions_row(im, d, 0)
 
 
+def q1_top(im, d):
+    title(im, "Pass", 0); put(im, 0, "back"); put(im, 8, "info")
+    season(im, d); milestones(im, d, 4, 5)
+    for k in range(7):
+        x, y = gen_ui.game_objet(37 + k)
+        glyph(d, LOCK_OPEN if k < 2 else LOCK, x + 8, y - 14, INK)
+
+
+def dark_missions(im, d, style, head, lit_colour=None):
+    """Missions in a dark sub-container over the inventory area: header, tabs, list."""
+    tabs, lst = [56, 57, 58, 59, 60], list(range(64, 71))
+    top = 126
+    x0, _, x1, y1 = box_of(tabs + lst, 3)
+    ui.container(im, d, (x0, top, x1, y1), style, head="Missions" if head else None, head_kind="strip", head_h=11)
+    kind = "ink" if style == "encre" else "dark"
+    for k, c in enumerate(tabs):
+        if k == 0 and lit_colour:
+            ui.slot(d, c, "colour", lit_colour)
+        else:
+            ui.slot(d, c, "lit" if k == 0 else kind)
+        put(im, c, ["clock", "book", "book", "book", "book"][k])
+    for k, c in enumerate(lst):
+        ui.slot(d, c, kind); put(im, c, REW[(k + 3) % 7])
+    if not head:
+        write(im, "Missions", (x0 + x1) // 2 + 1, top + 4, WHITE, SH)
+
+
+def q1d_a(im, d):
+    q1_top(im, d); dark_missions(im, d, "ardoise", True)
+
+
+def q1d_b(im, d):
+    q1_top(im, d); dark_missions(im, d, "encre", False)
+
+
+def q1d_c(im, d):
+    q1_top(im, d); dark_missions(im, d, "ardoise", True, GREEN)
+
+
 def q1(im, d):
     """Season card, milestones, premium, then missions (tabs + list) in the inventory area."""
     title(im, "Pass", 0); put(im, 0, "back"); put(im, 8, "info")
@@ -505,4 +544,5 @@ if __name__ == "__main__":
     sheet([("w1", w1), ("w2", w2), ("w3", w3), ("w4", w4), ("w5", w5)], os.path.join(out, "villes2.png"),
           [(0, 5)] * 5)
     sheet([("q1b", q1b)], os.path.join(out, "pass3.png"), [(0, 7)])
+    sheet([("a", q1d_a), ("b", q1d_b), ("c", q1d_c)], os.path.join(out, "pass4.png"), [(0, 7)] * 3)
     print("ok")
