@@ -160,46 +160,48 @@ CATEGORIES = [("CHEST", "Tout"), ("BRICKS", "Construction"), ("IRON_INGOT", "Res
               ("DIAMOND_SWORD", "Combat et armures"), ("BREAD", "Nourriture et cultures"), ("ENCHANTED_BOOK", "Alchimie et magie"),
               ("NETHER_STAR", "Objets uniques"), ("BUNDLE", "Divers")]
 
+# 2026-10-30: no top row any more, both side columns one row lower (back, sell, filters, previous | market,
+# my sales, search, sort, next): the window starts on row 1
 marche = [
-    bouton("retour", 0, "itemsadder:influitems:btn_back", OR + "Retour", lore([], [(GAUCHE, "Menu principal")]), {"left": ["[menu] main"]}),
-    bouton("info", 8, "itemsadder:influmarche:marche", OR + "Marché",
+    bouton("retour", 9, "itemsadder:influitems:btn_back", OR + "Retour", lore([], [(GAUCHE, "Menu principal")]), {"left": ["[menu] main"]}),
+    bouton("info", 17, "itemsadder:influmarche:marche", OR + "Marché",
            lore(["L'hôtel des ventes et les", "échoppes des villes réunis :", "cherche un objet, tu vois",
                  "toutes ses offres.", "",
                  "Hôtel des ventes : taxe de &f" + pm("taxe") + " %", VIOLET + "prélevée au vendeur.",
                  "Échoppes : droit de place", "de la ville, sans taxe.", "",
                  "Offres : &f" + pm("nb_offres"), "Ton solde : &f" + pm("solde") + " " + BB,
                  "", "&7Serveur en bêta : retours", "&7bienvenus sur Discord."])),
-    bouton("vendre", 9, "itemsadder:influitems:add", OR + "Vendre",
+    bouton("vendre", 18, "itemsadder:influitems:add", OR + "Vendre",
            lore(["Mets un objet de ton", "inventaire en vente directe", "ou aux enchères.",
                  "Offres en cours : &f" + pm("emplacements")], [(GAUCHE, "Choisir un objet")]),
            {"left": [im("ouvrir vendre")]}),
-    bouton("mes_ventes_recup", 17, "itemsadder:influitems:chest_item", OR + "Mes ventes",
+    bouton("mes_ventes_recup", 26, "itemsadder:influitems:chest_item", OR + "Mes ventes",
            lore(["&f" + pm("a_recuperer") + VIOLET + " à récupérer (BitBlocks", "ou objets).", "Offres en cours : &f" + pm("emplacements")],
                 [(GAUCHE, "Ouvrir"), (DROIT, "Tout récupérer")]),
            {"left": [im("ouvrir ventes")], "right": act("recuperer")}, conditions=[oui("a_recuperer_oui")], priorite=1,
            extra={"glow": "true"}),
-    bouton("mes_ventes", 17, "itemsadder:influmarche:mes_ventes", OR + "Mes ventes",
+    bouton("mes_ventes", 26, "itemsadder:influmarche:mes_ventes", OR + "Mes ventes",
            lore(["Tes offres à l'hôtel des", "ventes et leur état.", "Offres en cours : &f" + pm("emplacements")], [(GAUCHE, "Ouvrir")]),
            {"left": [im("ouvrir ventes")]}),
-    bouton("recherche", 26, "itemsadder:influitems:search", OR + "Rechercher",
+    bouton("recherche", 35, "itemsadder:influitems:search", OR + "Rechercher",
            lore(["Recherche : &f" + pm("recherche"), "", "Français ou anglais : diamant,", "DIAMOND, épée, tranchant...",
                  "Aussi un vendeur ou une ville."], [(GAUCHE, "Rechercher"), (DROIT, "Effacer")]),
            {"left": [im("recherche")], "right": act("effacer")}),
-    bouton("tri", 35, "itemsadder:influitems:stairs", OR + "Trier par",
+    bouton("tri", 44, "itemsadder:influitems:stairs", OR + "Trier par",
            ["@option " + pm("tri_%d" % k) for k in range(5)] + ["@left Suivant", "@right Précédent"],
            {"left": act("tri +"), "right": act("tri -")}),
     bouton("vide", 31, "itemsadder:influitems:unknown", OR + "Aucune offre",
            lore(["Rien ne correspond à cette", "recherche ici. Essaie une", "autre catégorie ou la", "source « Tout »."]),
            conditions=["placeholder: %s == 0" % pm("total")], priorite=-1),
 ]
-marche += pages(44, 53)
+marche += pages(45, 53)
 # two filter buttons (2026-10-30) instead of the 4 sources and 9 categories: left = next, right = previous
 marche += [
-    bouton("filtre_source", 18, "itemsadder:fluxui:btn_filter_blue", OR + "Source",
+    bouton("filtre_source", 27, "itemsadder:fluxui:btn_filter_blue", OR + "Source",
            ["@desc D'où viennent les offres affichées."] + ["@option " + pm("choixsource_%d" % k) for k in range(len(SOURCES))]
            + ["@left Suivante", "@right Précédente"],
            {"left": act("source +"), "right": act("source -")}),
-    bouton("filtre_categorie", 27, "itemsadder:fluxui:btn_filter_blue", OR + "Catégorie",
+    bouton("filtre_categorie", 36, "itemsadder:fluxui:btn_filter_blue", OR + "Catégorie",
            ["@desc Le genre d'objets affichés."] + ["@option " + pm("choixcategorie_%d" % k) for k in range(len(CATEGORIES))]
            + ["@left Suivante", "@right Précédente"],
            {"left": act("categorie +"), "right": act("categorie -")}),
