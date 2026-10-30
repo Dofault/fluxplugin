@@ -6,8 +6,8 @@
 # la zone de l'inventaire du joueur : 54-80 = ses 3 rangées, 81-89 = barre d'action.
 #
 # Disposition (centrée) :
-#   Thème vanilla (2026-10-30, theme.menus.main de la config de Flux) : rangée 0 = tableau de bord (tête = profil
-#   en 0, pseudo, rang, solde : widgets), fonctionnalités en carré 3 x 3 centré (21-23, 30-32, 39-41)
+#   Thème vanilla (2026-10-30, theme.menus.main de la config de Flux) : rangée 1 = tableau de bord (tête = profil
+#   en 9, pseudo, rang, solde : widgets), fonctionnalités en carré 3 x 3 centré (21-23, 30-32, 39-41)
 #   coffre rangée 6 : Vote 45, Parrainage 46, Classement 47, Rangs 48, Casino 49, Récompenses 51 (calendrier au clic droit),
 #   Pass 52, Autre 53
 #   (Autre = fenêtre des paramètres au clic gauche, fenêtre d'aide au clic droit : Flux, settings.yml et help.yml)
@@ -77,7 +77,7 @@ items:
   profil:
     material: player-head
     name: "&#FFD94DProfil"
-    slots: [0]
+    slots: [9]
     lore:
       - "@kv Rang | %luckperms_primary_group_name%"
       - "@desc Tes monnaies, tes classements et ton activité."
@@ -417,27 +417,27 @@ pages:
         lore:
           - "@desc Compare-toi aux meilleurs joueurs du serveur, dans chaque domaine."
 
-# Tableau de bord de la rangée 0 (fond fluxui:bg_main) : pseudo, rang et solde écrits par Flux.
+# Tableau de bord de la rangée 1 (fond fluxui:bg_main_*) : pseudo, rang et solde écrits par Flux.
 widgets:
   pseudo:
     type: text
     x: 28
-    y: 20
+    y: 38
     text: "%player_name%"
   rang:
     type: text
     x: 28
-    y: 27
+    y: 45
     text: "%luckperms_primary_group_name%"
   solde:
     type: text
     x: 166
-    y: 20
+    y: 38
     align: right
     text: "%vault_eco_balance_formatted%"
   solde_libelle:
     type: text
     x: 166
-    y: 27
+    y: 45
     align: right
     text: "BitBlock"

@@ -66,9 +66,12 @@ def render(plugins, menu_file, page_id=None):
     rows = yml.get("rows", 6)
     top = rows * 9
 
-    def used(sh):
+    def used(sh, all_pages=False):
         out = set()
-        for sec in [yml] + list((yml.get("pages") or {}).values()):
+        pages = list((yml.get("pages") or {}).values()) if all_pages else []
+        if page_id and page_id in (yml.get("pages") or {}):
+            pages = [yml["pages"][page_id]]
+        for sec in [yml] + pages:
             for l in (sec.get("lists") or {}).values():
                 out |= set(slots_of(l.get("slots"), sh, top))
             for it in (sec.get("items") or {}).values():
@@ -90,12 +93,12 @@ def render(plugins, menu_file, page_id=None):
     if isinstance(theme.get("shift"), int):
         shift = theme["shift"]
     else:
-        f0, l0 = span(used(0))
+        f0, l0 = span(used(0, True))
         shift = rows - 1 - l0 if l0 < rows - 1 else 0
     first, last = span(used(shift))
     generic = os.path.join(HERE, "menu_vanilla.png")
     if theme.get("background"):
-        im = gen_ui.BACKGROUNDS[theme["background"][3:]](generic)
+        im = gen_ui.BACKGROUNDS[theme["background"][3:].replace("*", "%d_%d" % (first, last))](generic)
     else:
         im = gen_ui.bg_window(generic, first, last)
     d = ImageDraw.Draw(im, "RGBA")

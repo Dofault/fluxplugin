@@ -72,11 +72,11 @@ public final class MenuLoader {
         List<MenuButton> buttons = m.buttons().stream().map(MenuLoader::rebutton).toList();
         List<Widget> widgets = new ArrayList<>();
         String name = theme.getString("title", "");
-        // the window fits the rows used (menu and pages): it starts on the first one, ends under the last one
-        int[] span = rowSpan(m);
-        String title = theme.isSet("background") ? m.title()
-                : span[0] == 0 && span[1] == 9 ? ":offset_-8::bg_window:"
-                : ":offset_-8::bg_window_" + span[0] + "_" + span[1] + ":";
+        // the window fits the rows used: the menu's own content, and each page (drawer) its content added, so the
+        // window grows when a drawer opens
+        int[] span = rowSpan(m.buttons(), m.lists(), List.of(), List.of(), m);
+        String background = theme.getString("background", "bg_window_*");
+        String title = window(background, span);
         int plateY = 5 + 18 * span[0];
         if (!name.isBlank()) widgets.add(new Widget.Text("__title", 88, plateY, Widget.Align.CENTER, name, null, true, List.of()));
         boolean frames = !theme.getString("frames", "vanilla").equalsIgnoreCase("none");
@@ -112,7 +112,8 @@ public final class MenuLoader {
             pw.addAll(p.widgets());
             // pages drew their own former backgrounds and animations: replaced by the menu's, unless kept
             boolean keep = theme.getBoolean("keep-page-titles", false);
-            String pageTitle = keep && p.title() != null && !p.title().isBlank() ? p.title() : title;
+            String pageTitle = keep && p.title() != null && !p.title().isBlank() ? p.title()
+                    : window(background, rowSpan(m.buttons(), m.lists(), p.buttons(), p.lists(), m));
             pages.put(e.getKey(), new Page(p.id(), pageTitle, keep ? p.frames() : List.of(), p.frameInterval(), pb, p.paths(),
                     p.lists(), List.copyOf(pw)));
         }
@@ -125,19 +126,28 @@ public final class MenuLoader {
     }
 
     /**
-     * First chest row and last row used by a menu and its pages: 0-5 chest, 6-8 inventory, 9 hotbar. A menu showing the
-     * player's inventory always goes down to the hotbar.
+     * Title of a fitted window: {@code background} with its {@code *} replaced by "first_last" (the bare window of a
+     * full menu is bg_window).
      */
-    private static int[] rowSpan(Menu m) {
+    private static String window(String background, int[] span) {
+        String id = !background.contains("*") ? background
+                : background.equals("bg_window_*") && span[0] == 0 && span[1] == 9 ? "bg_window"
+                : background.replace("*", span[0] + "_" + span[1]);
+        return ":offset_-8::" + id + ":";
+    }
+
+    /**
+     * First chest row and last row used by these buttons and lists: 0-5 chest, 6-8 inventory, 9 hotbar. A menu showing
+     * the player's inventory always goes down to the hotbar.
+     */
+    private static int[] rowSpan(List<MenuButton> b1, List<ListSpec> l1, List<MenuButton> b2, List<ListSpec> l2, Menu m) {
         int top = m.topSize();
         int first = 5, last = 0;
         java.util.List<int[]> all = new ArrayList<>();
-        for (MenuButton b : m.buttons()) all.add(b.slots());
-        for (ListSpec l : m.lists()) all.add(l.slots());
-        for (Page p : m.pages().values()) {
-            for (MenuButton b : p.buttons()) all.add(b.slots());
-            for (ListSpec l : p.lists()) all.add(l.slots());
-        }
+        for (MenuButton b : b1) all.add(b.slots());
+        for (MenuButton b : b2) all.add(b.slots());
+        for (ListSpec l : l1) all.add(l.slots());
+        for (ListSpec l : l2) all.add(l.slots());
         for (int[] slots : all) for (int s : slots) {
             int row = s < top ? s / 9 : 6 + Math.min(3, (s - top) / 9);
             if (s < top) first = Math.min(first, row);
@@ -146,6 +156,17 @@ public final class MenuLoader {
         if (m.inventoryMode() != InventoryMode.HIDDEN) last = 9;
         if (last < first) last = first;
         return new int[]{first, last};
+    }
+
+    /** Rows used by a menu and all its pages (auto shift). */
+    private static int[] rowSpan(Menu m) {
+        List<MenuButton> pb = new ArrayList<>();
+        List<ListSpec> pl = new ArrayList<>();
+        for (Page p : m.pages().values()) {
+            pb.addAll(p.buttons());
+            pl.addAll(p.lists());
+        }
+        return rowSpan(m.buttons(), m.lists(), pb, pl, m);
     }
 
     private static MenuButton rebutton(MenuButton b) {
