@@ -87,7 +87,8 @@ public final class MenuLoader {
         boolean pictured = !theme.isSet("background") && glyph(auto);
         if (pictured) title = ":offset_-8::" + auto + ":";
         if (!name.isBlank() && !pictured) widgets.add(new Widget.Text("__title", 88, plateY, Widget.Align.CENTER, name, null, true, List.of()));
-        boolean frames = !pictured && !theme.getString("frames", "vanilla").equalsIgnoreCase("none");
+        // slot frames are never drawn in the title any more (2026-10-30): they are in the menu's picture (auto_bg.py)
+        boolean frames = false;
         boolean dark = theme.getString("frames", "vanilla").equalsIgnoreCase("dark");
         Set<Integer> skip = new java.util.HashSet<>();
         for (String raw : strings(theme, "no-frame")) addSlots(raw, skip);
