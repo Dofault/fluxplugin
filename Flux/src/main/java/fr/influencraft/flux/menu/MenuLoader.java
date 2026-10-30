@@ -363,6 +363,7 @@ public final class MenuLoader {
                     case "pager" -> new Widget.Pager(key, w.getString("list", ""), shifted(w.getInt("prev")),
                             shifted(w.getInt("next")), req);
                     case "lit" -> new Widget.Lit(key, shifted(w.getInt("slot")), req);
+                    case "raw" -> new Widget.Raw(key, w.getInt("x", 0), w.getString("text", ""), req);
                     default -> throw new IllegalArgumentException("type « " + type + " » inconnu (text, image, bar, pager, lit, slots)");
                 });
             } catch (IllegalArgumentException e) {

@@ -59,7 +59,7 @@ public final class FluxTags extends FluxPlugin implements Listener {
     private static final int ROWS = 6;
     /** Window x of the tags in /tags and of the rank tag in the profile (assets/gen_fonds.py). */
     private static final int TAG_X = 46;
-    private static final int PROFILE_X = 80;
+    private static final int PROFILE_X = 110;   // right part of the identity card header (vanilla theme)
     private static final int TAG_HEIGHT = 9;
 
     /** A tag of the catalogue; {@code job} or {@code special} set for those kinds. */

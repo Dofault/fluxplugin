@@ -15,6 +15,7 @@ then /iazip. Flux draws text, bars and pagers in the menu titles from these font
 docs/technique/flux-ui.md); everything static (window, sub-containers, slots, frames, labels) is in the backgrounds.
 """
 import json
+import math
 import os
 import sys
 
@@ -456,6 +457,32 @@ def bg_pass(generic):
     return im
 
 
+def bg_profil(generic):
+    """Player card of /profil (2026-10-30): back (18) and menu icon (26) above a light identity card: dark header band
+    with « Carte d'identité » on the left and the rank tag on the right (FluxTags, window x 110, y 74), dark photo
+    frame behind the bust (36-38, 46), the 8 sections in slots (40-43, 49-52), a signature under the photo and a
+    gold chip."""
+    im = bg_window(generic, 2, 5, extra=22)
+    d = ImageDraw.Draw(im, "RGBA")
+    ui.container(im, d, (5, 71, 170, 141), "carte")
+    d.rectangle((6, 72, 169, 85), fill=rgb("#35363A"))
+    d.line((6, 86, 169, 86), fill=BLACK)
+    ui.write(im, "Carte d'identité", 0, 76, WHITE, TEXT_SHADOW, left=10)
+    d.rectangle((6, 87, 60, 126), fill=BLACK)                     # photo, behind the bust
+    d.rectangle((7, 88, 59, 125), fill=rgb("#4A4B50"))
+    for c in (40, 41, 42, 43, 49, 50, 51, 52):
+        ui.slot(d, c, "vanilla")
+    sig = [(10 + i, 133 + 2 * math.sin(i / 2.2) * (1 - i / 50) + (1 if 18 < i < 26 else 0)) for i in range(0, 44)]
+    d.line(sig, fill=rgb("#3D3D6B"), width=1)
+    d.line((8, 137, 58, 137), fill=rgb("#9A9A9A"))
+    x, y = 150, 127                                               # gold chip
+    d.rounded_rectangle((x, y, x + 13, y + 10), radius=2, fill=rgb("#F0A800"), outline=rgb("#8A5A14"))
+    for yy in (y + 3, y + 7):
+        d.line((x + 1, yy, x + 12, yy), fill=rgb("#C88C14"))
+    d.line((x + 6, y + 1, x + 6, y + 9), fill=rgb("#C88C14"))
+    return im
+
+
 def bg_window(generic, first=0, last=9, extra=0):
     """The bare window of the theme, fitted to the rows a menu uses (theme of Flux): it starts ``first`` rows lower
     than a full window (the plate moves with it) and ends 6 px under row ``last`` (0-5 chest, 6-8 inventory,
@@ -473,7 +500,7 @@ def bg_window(generic, first=0, last=9, extra=0):
     return im
 
 
-BACKGROUNDS = {"metiers": bg_metiers, "window": bg_window, "pass": bg_pass}
+BACKGROUNDS = {"metiers": bg_metiers, "window": bg_window, "pass": bg_pass, "profil": bg_profil}
 for _first in range(0, 6):
     for _last in range(_first, 10):
         if (_first, _last) != (0, 9):

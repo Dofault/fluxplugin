@@ -65,6 +65,11 @@ public final class UiTitle {
                 }
                 case Widget.Bar b -> bar(out, player, b, cursor);
                 case Widget.Pager p -> pager(out, player, p, cursor, rows);
+                case Widget.Raw r -> {
+                    move(out, r.x() - cursor);
+                    out.append(Text.placeholders(player, r.text()));
+                    move(out, cursor - r.x());
+                }
                 case Widget.Lit l -> {
                     int[] at = fr.influencraft.flux.PathRenderer.slotPosition(l.slot(), rows);
                     sprite(out, cursor, at[0] - 2, at[1] - 2, SPRITE_BASE + 1, 20);

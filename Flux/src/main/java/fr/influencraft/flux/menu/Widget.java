@@ -47,4 +47,8 @@ public sealed interface Widget {
 
     record Lit(String id, int slot, List<Requirement> requirements) implements Widget {
     }
+
+    /** Title text of another plugin inserted as it is, from window x {@code x} (it must bring the cursor back). */
+    record Raw(String id, int x, String text, List<Requirement> requirements) implements Widget {
+    }
 }
