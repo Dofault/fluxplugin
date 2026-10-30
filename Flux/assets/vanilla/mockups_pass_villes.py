@@ -274,6 +274,189 @@ def v4(im, d):
     shortcuts(im, d, 5)
 
 
+# ---------------------------------------------------------------------------------------------------- round 2
+
+def season(im, d, y0=35, h=35, icon=True, ring=False):
+    """Season card of p3: icon, name, time left, golden bar."""
+    ui.container(im, d, (6, y0, 169, y0 + h), "ardoise")
+    if ring:
+        cx, cy = 26, y0 + h // 2
+        d.ellipse((cx - 15, cy - 15, cx + 15, cy + 15), fill=BLACK)
+        d.pieslice((cx - 14, cy - 14, cx + 14, cy + 14), -90, -90 + int(360 * 0.42), fill=GOLD)
+        d.ellipse((cx - 9, cy - 9, cx + 9, cy + 9), fill=rgb("#585B5F"))
+        write(im, "13", cx + 1, cy - 2, WHITE, SH)
+    elif icon:
+        big(im, "pass", 10, y0 + 2, 32)
+    write(im, "Saison 3", 0, y0 + 5, WHITE, SH, left=48)
+    write(im, "Fin dans 12 j", 0, y0 + 14, rgb("#B4B4B4"), SH, left=48)
+    if not ring:
+        fill_bar(d, im, 48, y0 + 22, 116, 0.42, GOLD, "13/50")
+
+
+def milestones(im, d, row, premium_row, numbers=True):
+    for k in range(7):
+        c = row * 9 + 1 + k
+        slot(d, c); put(im, c, REW[k])
+        if numbers:
+            x, y = gen_ui.game_objet(c)
+            write(im, str(5 * (k + 1)), x + 8, y - 7, INK, None)
+    green_box(im, d, box_of([premium_row * 9 + 1, premium_row * 9 + 7]))
+    for k in range(7):
+        gslot(d, premium_row * 9 + 1 + k); put(im, premium_row * 9 + 1 + k, "chest_done" if k < 2 else "chest")
+    put(im, row * 9, "prev"); put(im, row * 9 + 8, "next")
+
+
+def missions_row(im, d, first_inv_row, tabs=True):
+    base = 54 + 9 * first_inv_row
+    if tabs:
+        for k in range(5):
+            slot(d, base + 2 + k, "lit" if k == 0 else "vanilla"); put(im, base + 2 + k, ["clock", "book", "book", "book", "book"][k])
+        base += 9
+    for k in range(7):
+        slot(d, base + 1 + k); put(im, base + 1 + k, REW[(k + 3) % 7])
+
+
+def q1(im, d):
+    """Season card, milestones, premium, then missions (tabs + list) in the inventory area."""
+    title(im, "Pass", 0); put(im, 0, "back"); put(im, 8, "info")
+    season(im, d); milestones(im, d, 4, 5)
+    write(im, "Missions", 0, 132, INK, None, left=8)
+    missions_row(im, d, 0)
+
+
+def q2(im, d):
+    """Missions on the side: the season card then a column of 4 missions right of the tracks."""
+    title(im, "Pass", 0); put(im, 0, "back"); put(im, 8, "info")
+    season(im, d)
+    for k in range(5):
+        c = 37 + k
+        slot(d, c); put(im, c, REW[k])
+    green_box(im, d, box_of([46, 50]))
+    for k in range(5):
+        gslot(d, 46 + k); put(im, 46 + k, "chest")
+    put(im, 36, "prev"); put(im, 45, "next")
+    ui.container(im, d, box_of([43, 53]), "ardoise")
+    for c in (43, 44, 52, 53):
+        slot(d, c, "dark"); put(im, c, "book")
+    write(im, "Missions", 148, 27 + 18 * 1, INK, None) if False else None
+
+
+def q3(im, d):
+    """Ring: the season progress as a golden ring on the card, the tracks, missions as a daily row with a timer."""
+    title(im, "Pass", 0); put(im, 0, "back"); put(im, 8, "info")
+    season(im, d, ring=True)
+    fill_bar(d, im, 48, 57, 116, 0.6, GREEN, "Pts 620/1000")
+    milestones(im, d, 4, 5)
+    ui.container(im, d, box_of([55, 61]), "ardoise")
+    for k in range(7):
+        slot(d, 55 + k, "dark"); put(im, 55 + k, ["clock", "book", "book", "book", "book", "book", "book"][k])
+    write(im, "Du jour · 6 h", 88, 132, INK, None)
+
+
+def q4(im, d):
+    """Week tabs: the 5 mission categories as tabs right under the card, missions, then the tracks at the bottom."""
+    title(im, "Pass", 0); put(im, 0, "back"); put(im, 8, "info")
+    season(im, d)
+    for k in range(5):
+        c = 38 + k
+        slot(d, c, "lit" if k == 0 else "vanilla"); put(im, c, ["clock", "book", "book", "book", "book"][k])
+    for k in range(7):
+        slot(d, 46 + k); put(im, 46 + k, REW[(k + 3) % 7])
+    write(im, "Paliers", 0, 132, INK, None, left=8)
+    for k in range(7):
+        slot(d, 55 + k); put(im, 55 + k, REW[k])
+    green_box(im, d, box_of([64, 70]))
+    for k in range(7):
+        gslot(d, 64 + k); put(im, 64 + k, "chest")
+    put(im, 54, "prev"); put(im, 62, "next")
+
+
+def q5(im, d):
+    """Free and premium side by side as two lanes going down, the season card on top, missions at the bottom."""
+    title(im, "Pass", 0); put(im, 0, "back"); put(im, 8, "info")
+    season(im, d)
+    for r, row in enumerate((3, 4, 5)):
+        bx, by = 72, 18 + 18 * row + 2
+        d.rectangle((bx - 1, by - 1, bx + 32, by + 12), fill=BLACK)
+        d.rectangle((bx, by, bx + 31, by + 11), fill=GOLD if r < 1 else rgb("#5A5A5A"))
+        write(im, "Pal. %d" % (13 + r), bx + 16, by + 3, WHITE, SH)
+        slot(d, row * 9 + 2); put(im, row * 9 + 2, REW[r])
+    green_box(im, d, box_of([33, 51]))
+    for row in (3, 4, 5):
+        gslot(d, row * 9 + 6); put(im, row * 9 + 6, "chest")
+    write(im, "Gratuit", 0, 61, INK, None, left=24) if False else None
+    put(im, 27, "prev"); put(im, 35, "next")
+    missions_row(im, d, 0, tabs=False)
+
+
+def shield(d, cx, cy, w, colour, kind="shield"):
+    if kind == "shield":
+        pts = [(cx - w, cy - w), (cx + w, cy - w), (cx + w, cy + w // 2), (cx, cy + w + w // 2), (cx - w, cy + w // 2)]
+    elif kind == "banner":
+        pts = [(cx - w, cy - w), (cx + w, cy - w), (cx + w, cy + w + 6), (cx, cy + w - 2), (cx - w, cy + w + 6)]
+    else:   # pennant
+        pts = [(cx - w, cy - w), (cx + w + 10, cy), (cx - w, cy + w)]
+    d.polygon([(x + (1 if x > cx else -1 if x < cx else 0), y + (1 if y > cy else -1)) for x, y in pts], fill=BLACK)
+    d.polygon(pts, fill=colour)
+    return pts
+
+
+TOWN, LAND = rgb("#3D7FB8"), rgb("#C0392B")
+
+
+def w1(im, d):
+    """The shields alone, side by side."""
+    title(im, "Territoires", 0); put(im, 0, "back")
+    for cx, col, icon in ((46, TOWN, "ville"), (130, LAND, "pays")):
+        shield(d, cx, 58, 26, col); d.line((cx - 25, 33, cx + 25, 33), fill=tone(col, 0.4))
+        big(im, icon, cx - 16, 44, 32)
+    shortcuts(im, d, 5)
+
+
+def w2(im, d):
+    """Gilded: gold border, the country crowned."""
+    title(im, "Territoires", 0); put(im, 0, "back")
+    for cx, col, icon, crown in ((46, TOWN, "ville", False), (130, LAND, "pays", True)):
+        shield(d, cx, 60, 28, GOLD); shield(d, cx, 60, 24, col)
+        big(im, icon, cx - 16, 46, 32)
+        if crown:
+            d.polygon([(cx - 10, 34), (cx - 10, 26), (cx - 5, 30), (cx, 23), (cx + 5, 30), (cx + 10, 26), (cx + 10, 34)], fill=GOLD)
+    shortcuts(im, d, 5)
+
+
+def w3(im, d):
+    """Hanging banners: a pole across the window, both banners hang from it."""
+    title(im, "Territoires", 0); put(im, 0, "back")
+    d.rectangle((14, 36, 162, 39), fill=rgb("#6B4A2B")); d.line((14, 36, 162, 36), fill=rgb("#8D6E4A"))
+    for cx, col, icon in ((54, TOWN, "ville"), (122, LAND, "pays")):
+        d.line((cx - 20, 40, cx - 20, 43), fill=BLACK); d.line((cx + 20, 40, cx + 20, 43), fill=BLACK)
+        shield(d, cx, 66, 22, col, "banner")
+        d.line((cx - 21, 45, cx + 21, 45), fill=tone(col, 0.4))
+        big(im, icon, cx - 16, 52, 32)
+    shortcuts(im, d, 5)
+
+
+def w4(im, d):
+    """Town inside country: the country's big shield holds the town's small one, linked."""
+    title(im, "Territoires", 0); put(im, 0, "back")
+    shield(d, 112, 54, 28, LAND)
+    big(im, "pays", 96, 36, 32)
+    shield(d, 54, 64, 22, TOWN)
+    big(im, "ville", 38, 52, 32)
+    d.line((76, 66, 88, 66), fill=GOLD); d.line((76, 67, 88, 67), fill=GOLD)
+    shortcuts(im, d, 5)
+
+
+def w5(im, d):
+    """Pennants on poles: one flag per territory, slanted, like a camp."""
+    title(im, "Territoires", 0); put(im, 0, "back")
+    for x, col, icon in ((40, TOWN, "ville"), (108, LAND, "pays")):
+        d.rectangle((x - 1, 32, x + 1, 104), fill=rgb("#6B4A2B"))
+        shield(d, x + 22, 52, 20, col, "pennant")
+        big(im, icon, x + 6, 44, 16)
+    shortcuts(im, d, 5)
+
+
 def sheet(variants, path, first_last):
     tiles = []
     for (name, fn), (f, l) in zip(variants, first_last):
@@ -294,4 +477,8 @@ if __name__ == "__main__":
           [(0, 5), (0, 5), (0, 5), (0, 5), (0, 6)])
     sheet([("v1", v1), ("v2", v2), ("v3", v3), ("v4", v4)], os.path.join(out, "villes.png"),
           [(0, 5), (0, 5), (0, 5), (0, 5)])
+    sheet([("q1", q1), ("q2", q2), ("q3", q3), ("q4", q4), ("q5", q5)], os.path.join(out, "pass2.png"),
+          [(0, 7), (0, 5), (0, 6), (0, 8), (0, 7)])
+    sheet([("w1", w1), ("w2", w2), ("w3", w3), ("w4", w4), ("w5", w5)], os.path.join(out, "villes2.png"),
+          [(0, 5)] * 5)
     print("ok")
