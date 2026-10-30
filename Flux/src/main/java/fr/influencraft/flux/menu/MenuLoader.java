@@ -182,12 +182,29 @@ public final class MenuLoader {
         return rowSpan(m.buttons(), m.lists(), pb, pl, m);
     }
 
+    /**
+     * Whether gen_ui.py made this picture: read from plugins/Flux/theme-pictures.yml (written with the pictures), not
+     * asked to ItemsAdder, which may not have loaded them yet when the menus are read at startup.
+     */
     private static boolean glyph(String id) {
-        try {
-            return fr.influencraft.flux.api.items.CustomItems.available() && fr.influencraft.flux.api.items.CustomItems.glyphExists(id);
-        } catch (RuntimeException e) {
-            return false;
+        return pictures().contains(id.toLowerCase(Locale.ROOT));
+    }
+
+    private static volatile java.util.Set<String> pictures = java.util.Set.of();
+    private static volatile long picturesRead = -1;
+
+    private static java.util.Set<String> pictures() {
+        org.bukkit.plugin.Plugin flux = org.bukkit.Bukkit.getPluginManager().getPlugin("Flux");
+        if (flux == null) return pictures;
+        File f = new File(flux.getDataFolder(), "theme-pictures.yml");
+        long stamp = f.isFile() ? f.lastModified() : 0;
+        if (stamp != picturesRead) {
+            java.util.Set<String> out = new java.util.HashSet<>();
+            if (stamp > 0) for (String s : YamlConfiguration.loadConfiguration(f).getStringList("pictures")) out.add(s.toLowerCase(Locale.ROOT));
+            pictures = java.util.Set.copyOf(out);
+            picturesRead = stamp;
         }
+        return pictures;
     }
 
     private static MenuButton rebutton(MenuButton b) {
