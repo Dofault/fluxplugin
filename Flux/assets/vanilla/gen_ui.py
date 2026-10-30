@@ -365,15 +365,15 @@ ROW_TOPS = [18 + 18 * r for r in range(6)] + [139, 157, 175, 197]   # item y of 
 PASS_GREEN, PASS_GREEN_DARK = rgb("#3E8E2E"), rgb("#2A6420")
 PASS_FREE = list(range(37, 44))          # free rewards of the 7 tiers of a page
 PASS_PREMIUM = list(range(46, 53))       # premium rewards, right under them
-PASS_TABS, PASS_MISSIONS = list(range(56, 61)), list(range(64, 71))
+PASS_TABS, PASS_MISSIONS = list(range(65, 70)), list(range(73, 80))   # inventory rows 1-2: grey space above
 
 
 def bg_pass(generic):
     """Pass menu (Flux pass.yml, validated mockup of 2026-10-30): season card (rows 1-2: big icon fluxui:pass_carte,
     name, time left and bar drawn by Flux), free rewards (row 4, frames by the theme, numbers and locks by Flux
     above them), premium rewards in a green box (row 5), then the missions in a dark box as wide as the premium one
-    and sharing its edge: header, 5 categories, 7 missions (inventory rows 0-1)."""
-    im = bg_window(generic, 0, 7)
+    one row lower with grey space above: header, 5 categories, 7 missions (inventory rows 1-2)."""
+    im = bg_window(generic, 0, 8)
     d = ImageDraw.Draw(im, "RGBA")
     ui.container(im, d, (6, 35, 169, 70), "ardoise")
     px0, py0, px1, py1 = span(PASS_PREMIUM)
@@ -382,8 +382,10 @@ def bg_pass(generic):
     d.line((px0 + 1, py0 + 1, px1 - 1, py0 + 1), fill=tone(PASS_GREEN_DARK, -0.3))
     for c in PASS_PREMIUM:
         ui.slot(d, c, "colour", PASS_GREEN)
+    # missions one row lower than the tracks, grey space between: header strip right above the categories
+    _, ty0, _, _ = span(PASS_TABS, 1)
     _, _, _, my1 = span(PASS_MISSIONS, 3)
-    ui.container(im, d, (px0, py1, px1, my1), "ardoise", head="Missions", head_kind="strip", head_h=11)
+    ui.container(im, d, (px0, ty0 - 13, px1, my1), "ardoise", head="Missions", head_kind="strip", head_h=11)
     for c in PASS_TABS + PASS_MISSIONS:
         ui.slot(d, c, "dark")
     return im

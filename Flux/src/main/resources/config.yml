@@ -204,7 +204,7 @@ theme:
   # (vanilla, dark, none), no-frame / frame (slots without / with a frame whatever stands on them), keep-page-titles / keep-title-layers / keep-title-loop.
   menus:
     main: {title: "Menu", frame: "21-23, 30-32, 39-41"}
-    pass: {title: "Pass", background: bg_pass, keep-paths: false, frame: "37-43", no-frame: "46-52, 56-60, 64-70"}
+    pass: {title: "Pass", background: bg_pass, keep-paths: false, frame: "37-43", no-frame: "46-52, 65-69, 73-79"}
     vote: {title: "Vote"}
     classement: {title: "Classement"}
     parrainage: {title: "Parrainage"}

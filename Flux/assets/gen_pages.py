@@ -275,11 +275,12 @@ def parrainage_actions():
 #   rangée 0 : retour (0), info (8) ; rangées 1-2 : carte de saison (icône, nom, fin dans..., barre : widgets) ;
 #   rangée 4 : récompenses gratuites des 7 paliers de la page (37-43), numéro et cadenas au-dessus (widgets),
 #   flèches 36 / 44 ; rangée 5 : récompenses premium juste dessous (46-52), bloc vert ;
-#   inventaire : bloc Missions (même largeur que le premium) : 5 catégories (56-60), 7 missions (64-70).
+#   inventaire : bloc Missions (même largeur que le premium), une rangée plus bas avec du gris au-dessus :
+#   5 catégories (65-69), 7 missions (73-79). Menu statique (update-interval 0) : redessiné aux clics et pages.
 TITRE_PASS = '":offset_-8::bg_pass:"'
-P_RETOUR, P_ICONE, P_PREV, P_NEXT, P_CATS = 0, 8, 36, 44, 56
+P_RETOUR, P_ICONE, P_PREV, P_NEXT, P_CATS = 0, 8, 36, 44, 65
 P_PALIERS = list(range(37, 44))
-P_MISSIONS = list(range(64, 71))
+P_MISSIONS = list(range(73, 80))
 P_CATEGORIES = list(range(P_CATS, P_CATS + 5))
 
 # Catégories (56-60) et missions (63-71, centrées) : listes Flux construites par FluxTools (PassMenu), catégories
@@ -379,7 +380,7 @@ title: {TITRE_PASS}
 rows: 6
 player-inventory: hidden
 vanilla-background: false
-update-interval: 20
+update-interval: 0
 
 open-actions:
   - "[fluxpass] category quotidiennes"
@@ -405,7 +406,7 @@ widgets:
     x: 48
     y: 49
     colour: "#B4B4B4"
-    text: "Fin dans %ecobattlepass_time_to_season_end_{pid_pass}%"
+    text: "Fin dans %fluxpass_seasonend_{pid_pass}%"
   paliers:
     type: bar
     frame: true

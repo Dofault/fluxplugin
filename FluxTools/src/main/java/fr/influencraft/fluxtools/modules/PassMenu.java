@@ -35,7 +35,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *   <li>{@code pass_missions}: missions of the category shown, centred on the row ({@code mission-slots}, an even count leaves the middle
  *   empty): done, not available yet, or in progress with the item of its task</li>
  * </ul>
- * Action {@code [fluxpass] category <id>} shows a category. Placeholder {@code %fluxpass_tierpage_<pass>_<n>%}: page
+ * Action {@code [fluxpass] category <id>} shows a category. {@code %fluxpass_seasonend_<pass>%}: time left of the season
+ * in its largest unit. Placeholder {@code %fluxpass_tierpage_<pass>_<n>%}: page
  * (n tiers per page) holding the player's tier, to open the path at the right place; {@code %fluxpass_tierstates_<pass>_<first>_<count>%}:
  * colours of the path steps.
  */
@@ -242,6 +243,12 @@ final class PassMenu implements Listener {
 
     private String placeholder(Player player, String params) {
         if (params.startsWith("tierstates_")) return tierStates(player, params.substring("tierstates_".length()));
+        // seasonend_<pass>: time left in its largest unit only ("62j", "3h", "5min"), for the season card
+        if (params.startsWith("seasonend_")) {
+            String full = fr.influencraft.flux.api.text.Texts.placeholders(
+                    "%ecobattlepass_time_to_season_end_" + params.substring("seasonend_".length()) + "%", player).trim();
+            return full.isEmpty() || full.startsWith("%") ? "" : full.split("\\s+")[0];
+        }
         if (!params.startsWith("tierpage_")) return null;
         String rest = params.substring("tierpage_".length());
         int sep = rest.lastIndexOf('_');
