@@ -55,9 +55,9 @@ SPRITE_BASE = 0xE100
 PAGER_W, PAGER_H = 70, 16      # pager field: 15 high + the white line under it
 # font sprites: U+E100 pager field, U+E101 selected slot (20 x 20), U+E102-E105 pager buttons (left on/off, right on/off)
 PAGER_BTN_W = 36               # pager button: 2 slots wide
-# faces of the buttons of the former theme (influitems: deny, add, back, settings, reward), blue added for info
-BUTTON_COLOURS = {"red": (207, 80, 88, 255), "green": (79, 164, 92, 255), "blue": (86, 140, 200, 255),
-                  "purple": (155, 134, 198, 255), "grey": (154, 150, 166, 255), "gold": (209, 154, 46, 255)}
+# button faces of the vanilla theme: bright colours on the grey window (not the Influencraft violet palette)
+BUTTON_COLOURS = {"red": rgb("#C0392B"), "green": rgb("#3E8E2E"), "blue": rgb("#3D7FB8"), "orange": rgb("#E07B24"),
+                  "purple": rgb("#7A48C0"), "grey": rgb("#8B8B8B"), "gold": rgb("#D9A21B")}
 
 
 # ---------------------------------------------------------------------------------------------------- font
@@ -136,12 +136,12 @@ def sprite_lit():
 
 # ---------------------------------------------------------------------------------------------------- buttons
 
-# Buttons in the style of the former theme (influitems back, add, deny...): 14 x 14 with rounded corners in the
-# 16 x 16 picture, outline, light top line and sides, darker band at the bottom, icon engraved in a dark tone of the
-# face with a light pixel under it. Roles: a outline, b top light, c face, d side light, e dark.
-TEMPLATE = ["................", "..aaaaaaaaaaaa..", ".aabbbbbbbbbbaa.", ".abccccccccccba."] + \
+# Buttons in the style of the former theme (influitems back, add, deny...) with square corners (2026-10-30):
+# 14 x 14 in the 16 x 16 picture, outline, light top line and sides, darker band at the bottom, icon engraved in a
+# dark tone of the face with a light pixel under it. Roles: a outline, b top light, c face, d side light, e dark.
+TEMPLATE = ["................", ".aaaaaaaaaaaaaa.", ".abbbbbbbbbbbba.", ".abccccccccccba."] + \
            [".adccccccccccda."] * 7 + \
-           [".adeeeeeeeeeeda.", ".adddddddddddda.", ".aaeeeeeeeeeeaa.", "..aaaaaaaaaaaa..", "................"]
+           [".adeeeeeeeeeeda.", ".adddddddddddda.", ".aeeeeeeeeeeeea.", ".aaaaaaaaaaaaaa.", "................"]
 OUTLINE = (21, 17, 27, 255)
 # Icons: 8 x 6, symmetric where the shape allows, at (4, 4): the middle of the face (x 3-12, y 3-10).
 ICONS = {
@@ -168,7 +168,7 @@ BUTTONS = ["back", "close", "info", "add", "remove", "left", "right", "check", "
 def button_png(icon, face, disabled=False):
     """A button of the former theme, recoloured: ``face`` is its main colour; disabled = grey, faint icon."""
     if disabled:
-        face = (154, 150, 166, 255)
+        face = rgb("#8B8B8B")
     roles = {"a": OUTLINE, "b": tone(face, 0.8), "c": face, "d": tone(face, 0.38), "e": tone(face, -0.4)}
     im = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
     px = im.load()
@@ -176,7 +176,7 @@ def button_png(icon, face, disabled=False):
         for x, r in enumerate(row):
             if r in roles:
                 px[x, y] = roles[r]
-    dark = tone(face, -0.15) if disabled else tone(face, -0.4)
+    dark = tone(face, -0.15) if disabled else tone(face, -0.6)
     light = face if disabled else tone(face, 0.22)
     rows = ICONS[icon]
     for y, row in enumerate(rows):
