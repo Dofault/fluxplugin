@@ -200,6 +200,32 @@ BUTTONS = ["back", "close", "info", "add", "remove", "left", "right", "check", "
            "filter", "up", "down"]
 
 
+def tall_button_png(icon, face, rows=2):
+    """A button of the theme ``rows`` slots high (pass page arrows over both tracks): same edges and engraving,
+    the pictogram in the middle."""
+    h = 18 * rows - 2
+    im = Image.new("RGBA", (16, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    d.rectangle((1, 1, 14, h - 2), fill=OUTLINE)
+    d.rectangle((2, 2, 13, h - 3), fill=face)
+    d.line((2, 2, 13, 2), fill=tone(face, 0.8))
+    d.line((2, 3, 2, h - 6), fill=tone(face, 0.38)); d.line((13, 3, 13, h - 6), fill=tone(face, 0.38))
+    d.line((2, h - 5, 13, h - 5), fill=tone(face, -0.4))
+    d.line((2, h - 4, 13, h - 4), fill=tone(face, 0.38))
+    d.line((2, h - 3, 13, h - 3), fill=tone(face, -0.4))
+    rows_px = ICONS[icon]
+    top = (h - 6) // 2 - 3
+    for y, row in enumerate(rows_px):
+        for x, c in enumerate(row):
+            if c == "#" and (y + 1 >= len(rows_px) or rows_px[y + 1][x] != "#"):
+                im.putpixel((ICON_X + x, top + y + 1), tone(face, 0.22))
+    for y, row in enumerate(rows_px):
+        for x, c in enumerate(row):
+            if c == "#":
+                im.putpixel((ICON_X + x, top + y), tone(face, -0.6))
+    return im
+
+
 def button_png(icon, face, disabled=False):
     """A button of the former theme, recoloured: ``face`` is its main colour; disabled = grey, faint icon."""
     if disabled:
@@ -377,9 +403,11 @@ def bg_pass(generic):
     d = ImageDraw.Draw(im, "RGBA")
     ui.container(im, d, (6, 35, 169, 70), "ardoise")
     px0, py0, px1, py1 = span(PASS_PREMIUM)
-    d.rectangle((px0, py0, px1, py1), fill=BLACK)
-    d.rectangle((px0 + 1, py0 + 1, px1 - 1, py1 - 1), fill=PASS_GREEN_DARK)
-    d.line((px0 + 1, py0 + 1, px1 - 1, py0 + 1), fill=tone(PASS_GREEN_DARK, -0.3))
+    # premium track: black edge on top and bottom only (no left / right edge)
+    d.rectangle((px0, py0, px1, py1), fill=PASS_GREEN_DARK)
+    d.line((px0, py0, px1, py0), fill=BLACK)
+    d.line((px0, py1, px1, py1), fill=BLACK)
+    d.line((px0, py0 + 1, px1, py0 + 1), fill=tone(PASS_GREEN_DARK, -0.3))
     for c in PASS_PREMIUM:
         ui.slot(d, c, "colour", PASS_GREEN)
     # missions one row lower than the tracks, grey space between: header strip right above the categories
@@ -548,6 +576,11 @@ def main(plugins, resources=None):
         fn(generic).save(os.path.join(dest, "textures", "bg", name + ".png"))
         lines += [f"  bg_{name}:", "    show_in_gui: false", "    suggest_in_command: false",
                   f"    path: bg/{name}.png", "    scale_ratio: 221", "    y_position: 13"]
+    # pass page arrows over both tracks (rows 4-5, item y 90): 2 slots high, placed by image widgets
+    for name, icon in (("pass_prev", "left"), ("pass_next", "right")):
+        tall_button_png(icon, BUTTON_COLOURS["orange"]).save(os.path.join(dest, "textures", "bg", name + ".png"))
+        lines += [f"  {name}:", "    show_in_gui: false", "    suggest_in_command: false",
+                  f"    path: bg/{name}.png", "    scale_ratio: 34", "    y_position: %d" % (13 - 90)]
     # big icon of the pass season card (32 x 32 at window (10, 37))
     pass_png = os.path.join(contents, "influitems", "textures", "pass.png")
     if os.path.isfile(pass_png):

@@ -354,13 +354,19 @@ def pass_chemin(pid_pass, n, total, paliers_max):
     nb = min(PAR_PAGE, paliers_max - debut)
     slots = P_PALIERS[:nb]
     its = []
-    if n > 1:
-        its.append(item("precedent", "itemsadder:fluxui:btn_left_orange", "Page précédente", P_PREV, [],
-                        clics={"left": [f"[page-swap] {pid_pass}_{n - 1}", "[sound] @page"]}, cacher=True))
-    if n < total:
-        its.append(item("suivant", "itemsadder:fluxui:btn_right_orange", "Page suivante", P_NEXT, [],
-                        clics={"left": [f"[page-swap] {pid_pass}_{n + 1}", "[sound] @page"]}, cacher=True))
     widgets = []
+    # page arrows 2 slots high over both tracks: the picture (fluxui:pass_prev / pass_next) by an image widget,
+    # the click on invisible items in both slots
+    if n > 1:
+        its.append(item("precedent", "itemsadder:influitems:invisible", "Page précédente", f"{P_PREV}, {P_PREV + 9}", [],
+                        clics={"left": [f"[page-swap] {pid_pass}_{n - 1}", "[sound] @page"]}, cacher=True))
+        widgets += ["      fleche_prec:", "        type: image", '        glyph: "pass_prev"', f"        x: {8 + 18 * (P_PREV % 9)}",
+                    "        width: 16"]
+    if n < total:
+        its.append(item("suivant", "itemsadder:influitems:invisible", "Page suivante", f"{P_NEXT}, {P_NEXT + 9}", [],
+                        clics={"left": [f"[page-swap] {pid_pass}_{n + 1}", "[sound] @page"]}, cacher=True))
+        widgets += ["      fleche_suiv:", "        type: image", '        glyph: "pass_next"', f"        x: {8 + 18 * (P_NEXT % 9)}",
+                    "        width: 16"]
     for k, slot in enumerate(slots):
         t = debut + k + 1
         etat = f"%ecobattlepass_tier_state_{pid_pass}_{t}%"
