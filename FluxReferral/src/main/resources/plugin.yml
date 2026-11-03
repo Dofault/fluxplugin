@@ -11,6 +11,7 @@ description: Système de parrainage pour le serveur InfluenCraft
 authors: [Entr0pik]
 website: https://influencraft.fr
 depend: [Flux]
+softdepend: [FluxFamily]
 
 
 permissions:

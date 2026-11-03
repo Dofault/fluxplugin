@@ -17,7 +17,7 @@ import java.util.UUID;
 import java.util.logging.Logger;
 
 /**
- * Rewards of every player, table {@code flux_rewards} of the suite's database ({@link Database}). A claimed reward is
+ * Rewards of every player, table {@code flux_core_rewards} of the suite's database ({@link Database}). A claimed reward is
  * kept with its claim date (history, and its key stays taken so the same reward is never given twice). A reward not
  * claimed in time is kept with its expiry date ({@code expired}); {@code warned} counts the expiry reminders sent.
  * Any thread.
@@ -26,21 +26,24 @@ final class RewardStore {
 
     private static final String SEPARATOR = "\n";
 
-    private final String table = Database.table("flux_rewards");
+    private final String table = Database.table("flux_core_rewards");
     /** Players who asked for no Discord reminder. */
-    private final String optOut = Database.table("flux_rewards_discord_optout");
+    private final String optOut = Database.table("flux_core_rewards_discord_optout");
     private final Logger log;
 
     RewardStore(File folder, Logger log) throws SQLException {
         this.log = log;
         Database.Dialect d = Database.dialect();
         try (Connection c = Database.connection(); Statement st = c.createStatement()) {
+            // names before 2026-10-31
+            Database.renameTable(c, Database.table("flux_rewards"), table, "flux_rewards_pending", "flux_rewards_key");
+            Database.renameTable(c, Database.table("flux_rewards_discord_optout"), optOut);
             st.execute("CREATE TABLE IF NOT EXISTS " + table + " (id " + d.autoId() + ", uuid " + d.key(36) + " NOT NULL,"
                     + " source " + d.key(64) + " NOT NULL, reward_key " + d.key(191) + ", label TEXT NOT NULL, icon TEXT NOT NULL,"
                     + " amount INTEGER NOT NULL, slots INTEGER NOT NULL, commands TEXT NOT NULL, created BIGINT NOT NULL, claimed BIGINT)");
-            Database.index(c, "flux_rewards_pending", table, "uuid, claimed, id", false);
+            Database.index(c, "flux_core_rewards_pending", table, "uuid, claimed, id", false);
             // NULL keys never collide: only keyed rewards are unique
-            Database.index(c, "flux_rewards_key", table, "uuid, reward_key", true);
+            Database.index(c, "flux_core_rewards_key", table, "uuid, reward_key", true);
             addColumn(st, "expired BIGINT");
             addColumn(st, "warned INTEGER NOT NULL DEFAULT 0");
             st.execute("CREATE TABLE IF NOT EXISTS " + optOut + " (uuid " + d.key(36) + " NOT NULL PRIMARY KEY, since BIGINT NOT NULL)");

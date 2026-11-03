@@ -126,7 +126,7 @@ public final class RepairMenu implements CommandExecutor {
             Sounds.cue(player, "error");
             return;
         }
-        if (!Economy.main().take(player, cost)) {
+        if (!Economy.main().take(player, cost, fr.influencraft.flux.api.economy.Origin.of("FluxTools", "repair").detail(item.getType().name().toLowerCase(java.util.Locale.ROOT)))) {
             Texts.send(player, "&#FF5C5CLe paiement a échoué, ton objet n'a pas été touché.");
             Sounds.cue(player, "error");
             return;

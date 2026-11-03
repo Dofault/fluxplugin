@@ -6,7 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
- * Accès public pour les autres plugins maison (FluxAuctionHouse : marché unifié HDV + échoppes).
+ * Accès public pour les autres plugins maison (FluxCommerce : marché unifié HDV + échoppes).
  * Toutes les méthodes s'appellent sur le fil principal, FluxLands activé.
  */
 public final class FluxLandsApi {
@@ -38,19 +38,17 @@ public final class FluxLandsApi {
         return iv.registre().taux(Villes.id(land));
     }
 
-    /**
-     * Dernier stock connu d'une échoppe (rachat : place libre), relevé par FluxLands quand sa zone
-     * était chargée. -1 si jamais relevé, Integer.MAX_VALUE si illimitée.
-     */
-    public static int stockConnu(long shopId) {
-        FluxLands iv = plugin();
-        return iv.quickShop() == null ? -1 : iv.quickShop().stockConnu(shopId);
-    }
-
     /** Téléporte vers une échoppe (warp le plus proche, sinon spawn de la ville). False si elle est inconnue de l'index. */
     public static boolean localiserEchoppe(Player p, long shopId) {
         Commande c = plugin().commande();
         return c != null && c.localiserEchoppe(p, shopId);
+    }
+
+    /** Names of the towns a player lives in (market: quick search of their shops). */
+    public static java.util.List<String> villesDe(Player p) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (me.angeschossen.lands.api.land.Land l : plugin().villes().duJoueur(p)) out.add(l.getName());
+        return out;
     }
 
     /** Ouvre la fiche publique d'une ville par son identifiant. */

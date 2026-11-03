@@ -1,25 +1,26 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # FluxLands : extension de Lands qui relie les villes, les warps
-# (InfluPW), les échoppes (FluxChestShop) et les parcelles à louer (Agence). Les menus sont des menus Flux
+# (FluxPW), les échoppes (FluxCommerce) et les parcelles à louer (Agence). Les menus sont des menus Flux
 # (menus/ville*.yml, warps.yml, echoppes.yml, agence.yml) qui lisent les placeholders
-# %influlands_...% et appellent /influlands pour naviguer.
-# Doc : docs/technique/influlands.md
+# %fluxlands_...% et appellent /fluxlands pour naviguer.
+# Doc : docs/technique/fluxlands.md
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Droit de place : part de chaque transaction d'échoppe (vente ou rachat)
+# Droit de place : part de chaque transaction d'échoppe (vente ou achat)
 # reversée à la banque de la ville où se trouve l'échoppe.
 droit-de-place:
   # Interrupteur général (false = aucune retenue, les menus affichent 0 %).
   actif: true
+  # Option « Échoppe de la ville » d'une échoppe de vente (case à la création, ligne du panneau
+  # de l'échoppe) : 100 % des ventes vont à la banque de la ville, comme un droit de place à 100 %.
+  echoppe-de-ville: true
   # Taux d'une ville qui n'a jamais réglé le sien, en pourcentage.
   taux-defaut: 5.0
   # Bornes du taux réglable par le maire depuis le menu Commerce.
   taux-min: 0.0
   taux-max: 15.0
-  # Pas des boutons + / - du menu Commerce (clic gauche), en points de %.
+  # Pas du curseur de la fenêtre du taux (menu Commerce), en points de %.
   pas: 0.5
-  # Pas des boutons avec maj + clic.
-  pas-rapide: 2.5
   # Types de villes Lands qui perçoivent le droit : LAND (ville de joueurs),
   # ADMIN (ville d'administration, ex : Utopia), CAMP. Les échoppes situées
   # hors de ces villes ne paient rien.
@@ -27,7 +28,7 @@ droit-de-place:
   # Les échoppes illimitées (admin) ne paient jamais.
   ignorer-echoppes-illimitees: true
   # Qui paie : toujours le propriétaire de l'échoppe (il commerce dans la
-  # ville). Sur une vente il reverse une part de sa recette ; sur un rachat la
+  # ville). Sur une vente il reverse une part de sa recette ; sur un achat la
   # part s'ajoute à ce qu'il paie, et la transaction est refusée s'il ne peut
   # pas couvrir les deux.
   # Le propriétaire de la ville (maire) est-il exempté dans sa propre ville ?
@@ -41,15 +42,20 @@ droit-de-place:
 # joueur (échoppes abandonnées). Le contenu du coffre tombe au sol, les deux
 # joueurs sont prévenus et la console garde une trace.
 echoppes:
+  # Qui peut casser l'échoppe d'un autre joueur dans sa ville :
+  # adjoints : le maire et ses adjoints (droits Casser et Modifier la ville dans la
+  #   zone publique de la ville, que n'ont ni les résidents ni les locataires).
   # maire : le maire seulement.
   # droit-de-casser : le maire, plus quiconque a le droit Casser de Lands à
   #   l'endroit de l'échoppe (mêmes règles que pour un coffre ordinaire).
   # non : seul le propriétaire (et le staff) peut casser son échoppe.
-  # Sur une parcelle louée ou vendue au propriétaire de l'échoppe, le maire
+  # Sur une parcelle louée ou vendue au propriétaire de l'échoppe, la ville
   # n'a pas de passe-droit tant que le contrat court.
-  menage: droit-de-casser
+  # « adjoints » depuis le 2026-10-31 (avant : « maire » ; avec droit-de-casser, tout
+  # habitant pouvait supprimer les échoppes des autres).
+  menage: adjoints
 
-# Warps (InfluPW) épinglés par le maire sur la fiche de sa ville.
+# Warps (FluxPW) épinglés par le maire sur la fiche de sa ville.
 vitrine:
   max-adresses: 3
 
@@ -74,14 +80,13 @@ menus:
   fiche: ville_fiche
   annuaire: villes
   warps: warps
-  echoppes: echoppes
   habitants: ville_habitants
   commerce: ville_commerce
-  banque: ville_banque
-  reglages: ville_reglages
+  niveau: ville_niveau
+  pays_taxes: pays_taxes
+  pays_effets: pays_effets
   parcelles: ville_parcelles
   parcelle: ville_parcelle
-  annonce: ville_annonce
   roles: ville_roles
   droits: ville_droits
   parametres: ville_parametres
@@ -102,6 +107,17 @@ menus-lands:
   remplacer: true
   # Commandes considérées comme Lands (alias de config.yml de Lands > alias).
   alias: [lands, v, ville, villes]
-  # Commandes considérées comme les pays de Lands (/nations et ses alias) :
+  # Commandes des pays de Lands (/pays, /p, alias de /nations dans la config de Lands ; /nations et /nation
+  # restent déclarées par Lands mais ne sont plus montrées aux joueurs) :
   # seules ou avec menu, elles ouvrent Mon pays.
-  alias-pays: [nations, n]
+  alias-pays: [pays, p, nations, nation]
+
+# Country effects, kept and applied by FluxLands (Lands' own effects are not used: no API). Each country level unlocks
+# effects (added to those of the levels below) and sets how many may be active at once. Minecraft effect keys.
+# Members of the country standing in one of its towns get the active ones, refreshed every every-seconds.
+country-effects:
+  every-seconds: 3
+  levels:
+    '2': {effects: [speed, jump_boost, dolphins_grace], active: 1}
+    '3': {effects: [haste, night_vision, luck], active: 1}
+    '4': {effects: [strength, absorption, health_boost, resistance], active: 1}

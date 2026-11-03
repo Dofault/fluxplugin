@@ -116,12 +116,15 @@ public final class MenuListener implements Listener {
         }
 
         int raw = e.getRawSlot();
-        // click in the player's own (visible) inventory: inventory-click-actions, %clicked_slot% = slot of his inventory
+        // click in the player's own (visible) inventory: inventory-click-actions, %clicked_slot% = slot of his inventory,
+        // %clicked_kind% = left, right, shift-left, shift-right, middle, drop (clicks without a kind are ignored)
         if (raw >= s.topSize() && !s.hidesInventory()) {
-            if (!s.menu().inventoryClickActions().isEmpty() && e.getSlot() >= 0 && !s.onCooldown(plugin.clickCooldown())) {
+            ClickKind clicked = ClickKind.of(e.getClick());
+            if (!s.menu().inventoryClickActions().isEmpty() && e.getSlot() >= 0 && clicked != null
+                    && !s.onCooldown(plugin.clickCooldown())) {
                 String slot = String.valueOf(e.getSlot());
                 plugin.actions().run(player, s, s.menu().inventoryClickActions().stream()
-                        .map(a -> a.replace("%clicked_slot%", slot)).toList());
+                        .map(a -> a.replace("%clicked_slot%", slot).replace("%clicked_kind%", clicked.key)).toList());
             }
             return;
         }

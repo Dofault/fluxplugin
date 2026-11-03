@@ -1,0 +1,56 @@
+# Listing an item: the player's inventory drawn in the inventory area (copies, his real inventory changes only when
+# the item is listed). A click on an item opens a window: amount, total price, auction or not, then it is listed.
+# Row 1: back, menu icon (tax, durations, slots). Row 2: my listings, item in hand, history. Lists built by
+# FluxCommerce.
+rows: 2
+player-inventory: hidden
+vanilla-background: false
+
+open-actions:
+  - "[sound] @page"
+
+lists:
+  hdv_sell_info:
+    slots: [8]
+    item:
+      material: entry
+  hdv_sell_hand:
+    slots: [13]
+    item:
+      material: entry
+      actions:
+        left: ["[hdv] sell-hand"]
+  hdv_inventory:
+    slots: "18-53"
+    item:
+      material: entry
+      actions:
+        left: ["%entry_left%"]
+
+items:
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
+    slots: [0]
+    lore:
+      - "@left Revenir au marché"
+    actions:
+      left: ["[hdv] open market"]
+  mes_ventes:
+    material: "itemsadder:influmarche:mes_ventes"
+    name: "Mes ventes"
+    slots: [11]
+    lore:
+      - "@desc Tes offres à l'HDV et ce qu'il y a à récupérer."
+      - "@left Ouvrir"
+    actions:
+      left: ["[hdv] open listings"]
+  historique:
+    material: "itemsadder:influmarche:historique"
+    name: "Historique"
+    slots: [15]
+    lore:
+      - "@desc Tes ventes et tes achats, avec les prix payés."
+      - "@left Ouvrir"
+    actions:
+      left: ["[hdv] open history"]

@@ -1,0 +1,77 @@
+# History (/hdv history): sales and purchases of the player, auction house and chest shops (left: every offer of the
+# item). Row 1: back, menu icon. Rows 1-4: sales. Row 5: pages. Inventory row: show (everything, sales, purchases),
+# market, my listings, my bids. Lists built by FluxCommerce.
+rows: 6
+player-inventory: hidden
+vanilla-background: false
+
+open-actions:
+  - "[sound] @page"
+
+lists:
+  hdv_history_info:
+    slots: [8]
+    item:
+      material: entry
+  hdv_history:
+    slots: "10-16, 19-25, 28-34, 37-43"
+    item:
+      material: entry
+      actions:
+        left: ["%entry_left%"]
+    empty:
+      material: "itemsadder:influitems:unknown"
+      name: "Aucune offre"
+      lore:
+        - "@desc Aucune vente ni aucun achat pour le moment."
+  hdv_history_filter:
+    slots: [55]
+    item:
+      material: entry
+      actions:
+        left: ["[list] hdv_history filter"]
+        right: ["[list] hdv_history filter-prev"]
+
+widgets:
+  pages:
+    type: pager
+    list: hdv_history
+    prev: 45
+    next: 53
+
+items:
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
+    slots: [0]
+    lore:
+      - "@left Revenir au marché"
+    actions:
+      left: ["[hdv] open market"]
+  marche:
+    material: "itemsadder:influmarche:marche"
+    name: "Marché"
+    slots: [57]
+    lore:
+      - "@desc L'HDV et les échoppes des villes."
+      - "@left Ouvrir"
+    actions:
+      left: ["[hdv] open market"]
+  ventes:
+    material: "itemsadder:influmarche:mes_ventes"
+    name: "Mes ventes"
+    slots: [59]
+    lore:
+      - "@desc Tes offres à l'HDV et ce qu'il y a à récupérer."
+      - "@left Ouvrir"
+    actions:
+      left: ["[hdv] open listings"]
+  encheres:
+    material: "itemsadder:influmarche:enchere"
+    name: "Mes enchères"
+    slots: [61]
+    lore:
+      - "@desc Les enchères où tu as fait une offre."
+      - "@left Ouvrir"
+    actions:
+      left: ["[hdv] open bids"]

@@ -24,10 +24,11 @@ import sys
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SHADER_OUT = os.path.join(HERE, "..", "..", "..", "..", "FluxArmor", "assets", "shaders", "buste_constantes.glsl")
+SHADER_OUT = os.path.join(HERE, "..", "..", "..", "FluxArmor", "assets", "shaders", "buste_constantes.glsl")
 
 VIEW = (12.0, 22.0)   # pitch, yaw (degrees) of the whole bust; unusual on purpose: no other head uses it
-K = 3.0               # skin pixel -> GUI pixel (bust 16 px wide and high -> 48 GUI px, about 3 slots)
+K = 2.1               # skin pixel -> GUI pixel (2026-11-01: was 3.0, the head went over the « Carte d'identité » band)
+OFFSET = (-1.0, -8.0)  # GUI px (right, up) of the whole bust: fits it in the photo frame (window y 88 to 125, gen_ui.bg_profil)
 Z = 60.0              # towards the camera: in front of the menu background drawn by the title
 F = np.diag([1.0, -1.0, 1.0])
 ROTATIONS = {  # part -> quarter-turn marker (columns: where local x, y, z go)
@@ -94,7 +95,7 @@ def display(part, slim):
         j = int(np.argmax(np.abs(rp[:, i])))
         s[i] = K * dims[j] / 8.0
     c_loc = np.array([0.0, -4.0, 0.0])  # head cube centre relative to the item's pivot (block centre), px
-    t = view() @ (K * np.array(centre, dtype=float)) - rd @ (s * c_loc) + np.array([0.0, 0.0, Z])
+    t = view() @ (K * np.array(centre, dtype=float)) - rd @ (s * c_loc) + np.array([OFFSET[0], OFFSET[1], Z])
     shown = t + np.array([-18.0 * SLOTS[part][0], 18.0 * SLOTS[part][1], 0.0])  # from its own slot's centre
     return euler_xyz(rd), [round(v, 4) for v in shown], [round(v, 4) for v in s], rd, s, t
 

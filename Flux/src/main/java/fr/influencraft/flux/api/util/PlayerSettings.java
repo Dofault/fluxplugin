@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Small per-player preferences of the suite (notification toggles of the settings menu...), kept by Flux in the
- * table {@code flux_settings} of the suite's database. Keys are namespaced by plugin: {@code "fluxtools:job-xp-bar"}.
+ * table {@code flux_core_settings} of the suite's database. Keys are namespaced by plugin: {@code "fluxtools:job-xp-bar"}.
  * Cached; main thread only.
  *
  * <pre>
@@ -37,9 +37,10 @@ public final class PlayerSettings {
     /** Called by Flux at start-up, once the database is started. */
     public static void open(Plugin flux) {
         logger = flux.getLogger();
-        table = Database.table("flux_settings");
+        table = Database.table("flux_core_settings");
         Database.Dialect d = Database.dialect();
         try (Connection c = Database.connection(); Statement st = c.createStatement()) {
+            Database.renameTable(c, Database.table("flux_settings"), table); // name before 2026-10-31
             st.execute("CREATE TABLE IF NOT EXISTS " + table + " (uuid " + d.key(36) + " NOT NULL, setting_key " + d.key(128)
                     + " NOT NULL, value TEXT NOT NULL, PRIMARY KEY (uuid, setting_key))");
             ready = true;

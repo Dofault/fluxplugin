@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Menus Flux des villes et pays (FluxLands) : écrit menus/territoires.yml, ville*.yml, villes.yml, warps.yml,
-echoppes.yml, agence.yml, pays*.yml.
+agence.yml, pays*.yml (les échoppes sont au marché de FluxAuctionHouse).
 
     python3 gen_menus_ville.py <plugins/Flux/menus>
 
 Ne pas modifier les menus générés à la main : changer ce script puis le relancer et /fluxmenu reload.
-Données : placeholders %influlands_...% et commande /influlands du plugin FluxLands
-(docs/technique/influlands.md). Fonds et icônes : pack ItemsAdder « influville » (gen_ville.py).
+Données : placeholders %fluxlands_...% et commande /fluxlands du plugin FluxLands
+(docs/technique/fluxlands.md). Fonds et icônes : pack ItemsAdder « influville » (gen_ville.py).
 Lore des boutons : balises du style de Flux (menu_lore.lore, Flux/assets).
 """
 import os
@@ -22,7 +22,7 @@ MAJ_DROIT = "&r&7Maj + %img_right_click% &f"
 BB = "&f%img_bitblock%"
 GRILLE = [r * 9 + c for r in range(2, 5) for c in range(1, 8)]
 ENTETE = "# Généré par plugins/fluxplugin/FluxLands/assets/ville/gen_menus_ville.py : ne pas modifier à la main.\n"
-ANCIENS = ["adresses.yml"]  # menus renommés, supprimés à la génération
+ANCIENS = ["adresses.yml", "ville_annonce.yml", "ville_banque.yml", "ville_reglages.yml", "echoppes.yml"]  # menus renommés ou retirés, supprimés à la génération
 
 
 def q(s):
@@ -51,7 +51,7 @@ def bouton(cle, slot, materiau, nom, lignes, actions=None, conditions=None, prio
     return "\n".join(out) + "\n"
 
 
-def menu(nom, fond, items, commandes=None, ouverture=(), doc=""):
+def menu(nom, fond, items, commandes=None, ouverture=(), doc="", widgets="", listes=""):
     out = [ENTETE, "# " + doc + "\n\n" if doc else "\n",
            "title: %s\n" % q(":offset_-8::%s:" % fond), "rows: 6\n"]
     if commandes:
@@ -59,6 +59,10 @@ def menu(nom, fond, items, commandes=None, ouverture=(), doc=""):
     out += ["player-inventory: hidden\n", "vanilla-background: false\n", "update-interval: 20\n\n", "open-actions:\n"]
     for a in list(ouverture) + ["[sound] @page"]:
         out.append("  - %s\n" % q(a))
+    if widgets:
+        out.append("\n" + widgets)
+    if listes:
+        out.append("\n" + listes)
     out.append("\nitems:\n\n")
     out += [i + "\n" for i in items]
     with open(os.path.join(SORTIE, nom + ".yml"), "w") as f:
@@ -66,7 +70,7 @@ def menu(nom, fond, items, commandes=None, ouverture=(), doc=""):
 
 
 def iv(cmd):
-    return "[player] influlands " + cmd
+    return "[player] fluxlands " + cmd
 
 
 SON = "[sound] @click"
@@ -93,131 +97,141 @@ RETOUR_HUB = ("Menu principal", ["[menu] main"])
 
 
 def m(c):
-    return "%influlands_ma_" + c + "%"
+    return "%fluxlands_ma_" + c + "%"
 
 
 def mp(c):
-    return "%influlands_monpays_" + c + "%"
+    return "%fluxlands_monpays_" + c + "%"
 
 
 def fp(c):
-    return "%influlands_paysfiche_" + c + "%"
+    return "%fluxlands_paysfiche_" + c + "%"
 
 
 def f(c):
-    return "%influlands_fiche_" + c + "%"
+    return "%fluxlands_fiche_" + c + "%"
 
 
 def pc(c):
-    return "%influlands_parcelle_" + c + "%"
-
-
-def an(c):
-    return "%influlands_annonce_" + c + "%"
+    return "%fluxlands_parcelle_" + c + "%"
 
 
 def bq(c):
-    return "%influlands_banque_" + c + "%"
+    return "%fluxlands_banque_" + c + "%"
 
 
 MAIRE = "placeholder: " + m("est_maire") + " == oui"
 
 
-def selecteur(prefixe, unite, affichage, cles=(10000, 1000, 100), extra_aff=None):
-    """Rangée 4 (37 à 43) : trois boutons -, l'affichage au centre, trois boutons +."""
-    items = []
-    for i, v in enumerate(cles):
-        lib = "{:,}".format(v).replace(",", " ")
-        items.append(bouton("moins_%d" % v, 37 + i, "itemsadder:influitems:remove", OR + "-" + lib + unite,
-                            lore([], [(GAUCHE, "Retirer " + lib)]), {"left": [iv(prefixe + " -" + str(v)), SON, "[refresh]"]}))
-        items.append(bouton("plus_%d" % v, 43 - i, "itemsadder:influitems:add", OR + "+" + lib + unite,
-                            lore([], [(GAUCHE, "Ajouter " + lib)]), {"left": [iv(prefixe + " +" + str(v)), SON, "[refresh]"]}))
-    items.append(affichage)
-    return items
+def banque_bouton(depuis):
+    """Banque : clic gauche déposer, clic droit retirer, chacun par une fenêtre de montant (pas de menu tampon)."""
+    return bouton("banque", 37, "itemsadder:influville:banque", OR + "Banque",
+                  lore(["Paie les frais d'entretien et les agrandissements de la ville.", "",
+                        "Banque : &f" + m("solde") + " " + BB, "Ton solde : &f" + bq("perso") + " " + BB,
+                        "Frais d'entretien : &f" + m("entretien") + " " + BB + " &7/ jour",
+                        "Couverts pendant : &f" + bq("jours") + " jours"],
+                       [(GAUCHE, "Déposer"), (DROIT, "Retirer")]),
+                  {"left": [iv("banque deposer " + depuis)], "right": [iv("banque retirer " + depuis)]})
 
 
 # ── Ma ville ───────────────────────────────────────────────────────────────
+# Refait le 2026-11-01 : plus de menu Réglages, tout est ici. Case 8 = information sans action. Rangée 2 : niveau, fiche
+# publique, pays. Rangée 4 : la vie de la ville. Rangée 5 : l'administration (le maire modifie, tout le monde consulte).
+# L'annuaire des villes et l'Agence sont dans Villes et Pays (/menu2), pas ici.
+INFO_VILLE = ["Niveau : &f" + m("niveau"), "Maire : &f" + m("maire"), "Ton rôle : &f" + m("role"),
+              "Fondation : &f" + m("creation"), "Habitants : &f" + m("habitants") + " &7(" + m("en_ligne") + " en ligne)",
+              "Chunks : &f" + m("chunks") + "/" + m("chunks_max"), "Banque : &f" + m("solde") + " " + BB,
+              "Frais d'entretien : &f" + m("entretien") + " " + BB + " &7/ jour", "Droit de place : &f" + m("taux") + " %"]
+DESC_VILLE = "Le tableau de bord de ta ville. Tout le monde consulte, seul le maire modifie."
+FICHE_DESC = ["Ta ville telle que les autres joueurs la voient : ses chiffres et sa vitrine de warps."]
 ma_ville = [
     retour(0, ["[menu] territoires"], "Villes et Pays", droit=RETOUR_HUB),
-    bouton("fiche_multi", 8, m("icone"), m("nom_couleur"),
-           lore(["Niveau : &f" + m("niveau"), "Maire : &f" + m("maire"), "Ton rôle : &f" + m("role"),
-                 "Fondée le &f" + m("creation"), "", "Tu habites &f%influlands_nb_villes%" + VIOLET + " villes."],
-                [(GAUCHE, "Voir la fiche publique"), (DROIT, "Afficher ma ville suivante")]),
+    bouton("info_multi", 8, "itemsadder:influville:ville", m("nom_couleur"),
+           lore([DESC_VILLE, "Tu habites &f%fluxlands_nb_villes%" + VIOLET + " villes : change de ville avec la fiche publique.", ""] + INFO_VILLE),
+           priorite=-1, conditions=["placeholder: %fluxlands_nb_villes% >= 2"]),
+    bouton("info", 8, "itemsadder:influville:ville", m("nom_couleur"), lore([DESC_VILLE, ""] + INFO_VILLE)),
+    # Rangée 2
+    bouton("niveau", 20, m("icone"), OR + "Niveau &f" + m("niveau_num") + OR + "/7",
+           lore([m("niveau"), "Le niveau de la ville augmente ses limites (chunks, habitants)."], [(GAUCHE, "Objectifs du niveau suivant")]),
+           {"left": [iv("niveau ville")]}),
+    bouton("fiche_multi", 22, "itemsadder:influville:epingle", OR + "Fiche publique",
+           lore(FICHE_DESC, [(GAUCHE, "Voir la fiche publique"), (DROIT, "Afficher ma ville suivante")]),
            {"left": [iv("ouvrir fiche ma")], "right": [iv("choisir"), SON, "[refresh]"]},
-           priorite=-1, conditions=["placeholder: %influlands_nb_villes% >= 2"]),
-    bouton("fiche", 8, m("icone"), m("nom_couleur"),
-           lore(["Niveau : &f" + m("niveau"), "Maire : &f" + m("maire"), "Ton rôle : &f" + m("role"),
-                 "Fondée le &f" + m("creation")],
-                [(GAUCHE, "Voir la fiche publique")]),
+           priorite=-1, conditions=["placeholder: %fluxlands_nb_villes% >= 2"]),
+    bouton("fiche", 22, "itemsadder:influville:epingle", OR + "Fiche publique", lore(FICHE_DESC, [(GAUCHE, "Voir la fiche publique")]),
            {"left": [iv("ouvrir fiche ma")]}),
-    # Statistiques (rangée 2)
-    bouton("stat_niveau", 19, m("icone"), OR + "Niveau &f" + m("niveau_num") + OR + "/7",
-           lore([m("niveau"), "Le niveau de la ville augmente", "ses limites (chunks, habitants)."], [(GAUCHE, "Objectifs du niveau suivant")]),
-           {"left": [iv("natif menu land level")]}),
-    bouton("stat_habitants", 20, "itemsadder:influville:habitants", OR + "Habitants &f" + m("habitants"),
-           lore(["En ligne : &f" + m("en_ligne")])),
-    bouton("stat_chunks", 21, "itemsadder:influville:chunks", OR + "Chunks &f" + m("chunks") + OR + "/&f" + m("chunks_max"),
-           lore(["Chunks revendiqués par la ville,", "sur le maximum de son niveau."])),
-    bouton("stat_banque", 22, "itemsadder:influitems:bitblock", OR + "Banque",
-           lore(["Solde : &f" + m("solde") + " " + BB, "Paie les frais d'entretien", "et les agrandissements."])),
-    bouton("stat_entretien", 23, "itemsadder:influville:entretien", OR + "Frais d'entretien",
-           lore(["&f" + m("entretien") + " " + BB + VIOLET + " par jour,", "prélevés sur la banque."])),
-    bouton("stat_droit", 24, "itemsadder:influville:commerce", OR + "Droit de place &f" + m("taux") + " %",
-           lore(["Part des ventes des échoppes", "de la ville versée à sa banque.", "",
-                 "Aujourd'hui : &f" + m("recette_jour") + " " + BB, "7 jours : &f" + m("recette_7j") + " " + BB])),
-    bouton("mon_pays", 25, mp("icone"), OR + "Mon pays : " + mp("nom_couleur"),
-           lore(["Capitale : &f" + mp("capitale"), "Villes : &f" + mp("villes") + VIOLET + "  Niveau : &f" + mp("niveau")], [(GAUCHE, "Ouvrir Mon pays")]),
+    bouton("mon_pays", 24, mp("icone"), OR + "Mon pays : " + mp("nom_couleur"),
+           lore(["Capitale : &f" + mp("capitale"), "Villes : &f" + mp("villes"), "Niveau : &f" + mp("niveau")], [(GAUCHE, "Ouvrir Mon pays")]),
            {"left": [iv("ouvrir pays")]}, priorite=-1, conditions=["placeholder: " + mp("existe") + " == oui"]),
-    bouton("sans_pays", 25, "itemsadder:influville:pays", OR + "Pays",
-           lore(["Ta ville n'appartient à", "aucun pays."], [(GAUCHE, "Fonder ou rejoindre un pays")]),
+    bouton("sans_pays", 24, "itemsadder:influville:pays", OR + "Pays",
+           lore(["Ta ville n'appartient à aucun pays."], [(GAUCHE, "Fonder ou rejoindre un pays")]),
            {"left": [iv("ouvrir pays")]}),
-    # Gestion (rangée 4)
-    bouton("banque", 37, "itemsadder:influville:banque", OR + "Banque",
-           lore(["Solde : &f" + m("solde") + " " + BB, "Dépose ou retire avec", "les boutons + et -."], [(GAUCHE, "Ouvrir la banque")]),
-           {"left": [iv("ouvrir banque")]}),
+    # Rangée 4 : la vie de la ville
+    banque_bouton("ville"),
     bouton("habitants", 38, "itemsadder:influville:habitants", OR + "Habitants",
            lore([m("habitants") + " habitants, " + m("en_ligne") + " en ligne."], [(GAUCHE, "Voir les habitants"), (DROIT, "Inviter un joueur")]),
            {"left": [iv("ouvrir habitants ma")], "right": [iv("saisie inviter")]}),
-    bouton("echoppes", 39, "itemsadder:influville:echoppe", OR + "Échoppes",
-           lore([m("echoppes") + " échoppes dans la ville."], [(GAUCHE, "Échoppes de la ville"), (DROIT, "Mes échoppes")]),
-           {"left": [iv("ouvrir echoppes ma")], "right": [iv("ouvrir echoppes miennes")]},
-           conditions=["placeholder: %influlands_modules_echoppes% == oui"]),
-    bouton("spawn", 40, "itemsadder:influville:spawn", OR + "Spawn de la ville",
-           lore(["Retourne au point d'apparition", "de ta ville."], [(GAUCHE, "Se téléporter")]),
-           {"left": [iv("spawn ma")]}),
+    bouton("commerce", 39, "itemsadder:influville:commerce", OR + "Commerce",
+           lore(["Part des ventes des échoppes de la ville versée à sa banque.", "",
+                 "Droit de place : &f" + m("taux") + " %", "Aujourd'hui : &f" + m("recette_jour") + " " + BB,
+                 "7 jours : &f" + m("recette_7j") + " " + BB], [(GAUCHE, "Ouvrir")]),
+           {"left": [iv("ouvrir commerce")]}),
+    bouton("echoppes", 40, "itemsadder:influville:echoppe", OR + "Échoppes",
+           lore([m("echoppes") + " échoppes dans la ville, au marché."], [(GAUCHE, "Échoppes de la ville"), (DROIT, "Mes échoppes")]),
+           {"left": [iv("ouvrir echoppes ma depuis:ville")], "right": [iv("ouvrir echoppes miennes depuis:ville")]},
+           conditions=["placeholder: %fluxlands_modules_echoppes% == oui"]),
     bouton("warps", 41, "itemsadder:influville:warp", OR + "Warps",
            lore([m("adresses") + " warps dans la ville."], [(GAUCHE, "Warps de la ville"), (DROIT, "Créer un warp ici")]),
            {"left": [iv("ouvrir warps ma")], "right": [iv("saisie creer_warp")]},
-           conditions=["placeholder: %influlands_modules_warps% == oui"]),
-    bouton("commerce", 42, "itemsadder:influville:commerce", OR + "Commerce",
-           lore(["Droit de place, recettes", "et meilleures échoppes."], [(GAUCHE, "Ouvrir")]),
-           {"left": [iv("ouvrir commerce")]}),
-    bouton("annuaire", 43, "itemsadder:influville:annuaire", OR + "Annuaire des villes",
-           lore(["Toutes les villes du serveur."], [(GAUCHE, "Ouvrir")]),
-           {"left": [iv("ouvrir annuaire")]}),
-    bouton("reglages", 45, "itemsadder:influitems:settings", OR + "Réglages",
-           lore(["Parcelles, rôles et permissions,", "paramètres, nom, spawn."], [(GAUCHE, "Ouvrir")]),
-           {"left": [iv("ouvrir reglages")]}),
-    bouton("agence", 49, "itemsadder:influville:agence", OR + "Agence",
-           lore(["Parcelles à louer ou à vendre", "dans toutes les villes."], [(GAUCHE, "Toutes les annonces"), (DROIT, "Annonces de ma ville")]),
-           {"left": [iv("ouvrir agence")], "right": [iv("ouvrir agence ma")]}),
-    bouton("revendiquer", 53, "itemsadder:influville:chunks", OR + "Revendiquer ce chunk",
-           lore(["Ajoute le chunk où tu te tiens", "à ta ville (coût prélevé", "sur la banque)."], [(GAUCHE, "Revendiquer")]),
-           {"left": ["[close]", "[player] lands claim"]}),
+           conditions=["placeholder: %fluxlands_modules_warps% == oui"]),
+    bouton("spawn_maire", 42, "itemsadder:influville:spawn", OR + "Spawn de la ville",
+           lore(["Point d'arrivée de la ville. Le déplacer pose le spawn là où tu te tiens.", "",
+                 "Prix pour le poser : &f" + m("spawn_prix")], [(GAUCHE, "Se téléporter"), (DROIT, "Définir le spawn ici")]),
+           {"left": [iv("spawn ma")], "right": [iv("spawn definir"), "[refresh]"]}, priorite=-1, conditions=[MAIRE]),
+    bouton("spawn", 42, "itemsadder:influville:spawn", OR + "Spawn de la ville",
+           lore(["Point d'arrivée de la ville. Seul le maire peut le déplacer."], [(GAUCHE, "Se téléporter")]),
+           {"left": [iv("spawn ma")]}),
+    bouton("chunk", 43, "itemsadder:influville:chunks", OR + "Chunk où tu te tiens",
+           lore(["Revendiquer ajoute ce chunk à ta ville (coût prélevé sur la banque), l'abandonner le rend à la nature.",
+                 "Commandes : &f[/v claim]" + VIOLET + " et &f[/v unclaim]" + VIOLET + "."],
+                [(GAUCHE, "Revendiquer ce chunk"), (DROIT, "Abandonner ce chunk")]),
+           {"left": [iv("chunk revendiquer")], "right": [iv("chunk abandonner")]}),
+    # Rangée 5 : administration
+    bouton("parcelles", 47, "itemsadder:influville:parcelle", OR + "Parcelles",
+           lore(["Découpe ta ville en parcelles, loue-les ou vends-les."], [(GAUCHE, "Ouvrir")]), {"left": [iv("ouvrir parcelles depuis:ville")]}),
+    bouton("roles", 48, "itemsadder:influville:roles", OR + "Rôles et permissions",
+           lore(["Ce que chaque rôle a le droit de faire dans la ville."], [(GAUCHE, "Ouvrir")]), {"left": [iv("ouvrir roles depuis:ville")]}),
+    bouton("parametres", 49, "itemsadder:influitems:settings", OR + "Paramètres",
+           lore(["Explosions, feu, apparition des monstres, PvP..."], [(GAUCHE, "Ouvrir")]), {"left": [iv("ouvrir parametres depuis:ville")]}),
+    bouton("renommer", 50, "itemsadder:influville:renommer", OR + "Renommer la ville",
+           lore(["Nom actuel : &f" + m("nom")], [(GAUCHE, "Choisir un nom")]), {"left": [iv("reglages renommer")]}),
+    bouton("accueil", 51, "itemsadder:influville:message", OR + "Message d'accueil",
+           lore(["Titre affiché aux joueurs qui entrent dans la ville."], [(GAUCHE, "Écrire le message")]), {"left": [iv("reglages accueil")]}),
 ]
-menu("ville", "menu_ville", ma_ville, doc="Ma ville : tableau de bord de la ville du joueur (/menu2 > Ville, /lands, /v, /ville).")
+# Nom de la ville écrit par Flux au milieu de la rangée du haut (entre Retour et l'information), gravé comme les
+# titres : on voit d'un coup d'œil quelle ville on gère ; « ville suivante » le met à jour ([refresh]).
+NOM_EN_TETE = """widgets:
+  nom:
+    type: text
+    x: 88
+    y: 23
+    align: center
+    ink: true
+    text: "%s"
+"""
+menu("ville", "menu_ville", ma_ville, widgets=NOM_EN_TETE % m("nom"), doc="Ma ville : tableau de bord et gestion de la ville du joueur (/menu2 > Ville, /lands, /v, /ville).")
 
 # ── Accueil (joueur sans ville) ────────────────────────────────────────────
 accueil = [
     retour(0, ["[menu] territoires"], "Villes et Pays", droit=RETOUR_HUB),
-    bouton("annuaire", 29, "itemsadder:influville:annuaire", OR + "Annuaire des villes",
+    bouton("annuaire", 20, "itemsadder:influville:annuaire", OR + "Annuaire des villes",
            lore(["Trouve une ville qui te plaît", "et demande une invitation", "à son maire."], [(GAUCHE, "Ouvrir")]),
            {"left": [iv("ouvrir annuaire depuis:accueil")]}),
-    bouton("fonder", 31, "itemsadder:influitems:add", OR + "Fonder une ville",
+    bouton("fonder", 22, "itemsadder:influitems:add", OR + "Fonder une ville",
            lore(["Crée ta ville à l'endroit", "où tu te tiens.", "", "Serveur en bêta : les règles", "des villes peuvent évoluer."],
                 [(GAUCHE, "Choisir un nom")]),
            {"left": [iv("saisie creer_ville")]}),
-    bouton("agence", 33, "itemsadder:influville:agence", OR + "Agence",
+    bouton("agence", 24, "itemsadder:influville:agence", OR + "Agence",
            lore(["Loue ou achète une parcelle", "dans une ville existante."], [(GAUCHE, "Voir les annonces")]),
            {"left": [iv("ouvrir agence depuis:accueil")]}),
 ]
@@ -226,7 +240,7 @@ menu("ville_accueil", "menu_ville_accueil", accueil, doc="Accueil des villes, po
 
 # ── Fiche publique d'une ville ─────────────────────────────────────────────
 def v(n, c):
-    return "%%influlands_vitrine_%d_%s%%" % (n, c)
+    return "%%fluxlands_vitrine_%d_%s%%" % (n, c)
 
 
 fiche = [
@@ -245,7 +259,7 @@ fiche = [
            lore(["Warps publics de la ville."])),
     bouton("stat_droit", 24, "itemsadder:influville:commerce", OR + "Droit de place &f" + f("taux") + " %",
            lore(["Part de chaque vente d'échoppe", "versée à la banque de la ville."])),
-    bouton("stat_nation", 25, "itemsadder:influville:nation", OR + "Nation", lore(["&f" + f("nation")])),
+    bouton("stat_nation", 25, "itemsadder:influville:nation", OR + "Pays", lore(["&f" + f("nation")])),
 ]
 for n, slot in enumerate((38, 40, 42), start=1):
     fiche.append(bouton("vitrine_%d" % n, slot, v(n, "icone"), OR + v(n, "titre"),
@@ -268,10 +282,10 @@ fiche += [
            lore([f("habitants") + " habitants."], [(GAUCHE, "Voir")]), {"left": [iv("ouvrir habitants fiche")]}),
     bouton("warps", 49, "itemsadder:influville:warp", OR + "Warps de " + f("nom"),
            lore([f("adresses") + " warps."], [(GAUCHE, "Voir")]), {"left": [iv("ouvrir warps fiche")]},
-           conditions=["placeholder: %influlands_modules_warps% == oui"]),
+           conditions=["placeholder: %fluxlands_modules_warps% == oui"]),
     bouton("echoppes", 51, "itemsadder:influville:echoppe", OR + "Échoppes de " + f("nom"),
            lore([f("echoppes") + " échoppes."], [(GAUCHE, "Voir")]), {"left": [iv("ouvrir echoppes fiche")]},
-           conditions=["placeholder: %influlands_modules_echoppes% == oui"]),
+           conditions=["placeholder: %fluxlands_modules_echoppes% == oui"]),
 ]
 menu("ville_fiche", "menu_ville_fiche", fiche, doc="Fiche publique d'une ville (annuaire, warps, échoppes).")
 
@@ -279,30 +293,25 @@ menu("ville_fiche", "menu_ville_fiche", fiche, doc="Fiche publique d'une ville (
 commerce = [
     retour(0, [iv("ouvrir ville")], "Ma ville"),
     bouton("info", 8, "itemsadder:influville:commerce", OR + "Droit de place",
-           lore(["Chaque vente ou rachat d'une", "échoppe située dans ta ville", "verse une part du montant à", "la banque de la ville. Le maire",
+           lore(["Chaque vente ou achat d'une", "échoppe située dans ta ville", "verse une part du montant à", "la banque de la ville. Le maire",
                  "en fixe le taux."])),
     bouton("aujourdhui", 19, "itemsadder:influitems:bitblock", OR + "Aujourd'hui",
            lore(["&f" + m("recette_jour") + " " + BB + VIOLET + " perçus."])),
-    bouton("moins", 21, "itemsadder:influitems:remove", OR + "Baisser le taux",
-           lore([], [(GAUCHE, "-0,5 point"), (MAJ_GAUCHE, "-2,5 points")]),
-           {"left": [iv("droit -"), SON, "[refresh]"], "shift-left": [iv("droit --"), SON, "[refresh]"]},
-           conditions=[MAIRE]),
+    bouton("taux_maire", 22, "itemsadder:influville:commerce", OR + "Droit de place &f" + m("taux") + " %",
+           lore(["Taux appliqué aux échoppes de " + m("nom") + "."], [(GAUCHE, "Changer le taux")]),
+           {"left": [iv("droit")]}, priorite=-1, conditions=[MAIRE], extra={"glow": "true"}),
     bouton("taux", 22, "itemsadder:influville:commerce", OR + "Droit de place &f" + m("taux") + " %",
-           lore(["Taux appliqué aux échoppes", "de " + m("nom") + ".", "", "Seul le maire peut le changer."]),
+           lore(["Taux appliqué aux échoppes de " + m("nom") + ".", "", "Seul le maire peut le changer."]),
            extra={"glow": "true"}),
-    bouton("plus", 23, "itemsadder:influitems:add", OR + "Monter le taux",
-           lore([], [(GAUCHE, "+0,5 point"), (MAJ_GAUCHE, "+2,5 points")]),
-           {"left": [iv("droit +"), SON, "[refresh]"], "shift-left": [iv("droit ++"), SON, "[refresh]"]},
-           conditions=[MAIRE]),
     bouton("total", 25, "itemsadder:influitems:bitblock", OR + "Depuis toujours",
            lore(["&f" + m("recette_total") + " " + BB + VIOLET + " perçus", "en &f" + m("transactions") + VIOLET + " transactions."])),
 ]
 for k, slot in enumerate(range(37, 44), start=1):
-    j = "%%influlands_jour_%d_" % k
+    j = "%%fluxlands_jour_%d_" % k
     commerce.append(bouton("jour_%d" % k, slot, "itemsadder:influville:barre_" + j + "barre%", OR + j + "nom%",
                            lore(["&f" + j + "montant% " + BB + VIOLET + " perçus."])))
 for n, slot in enumerate(range(47, 52), start=1):
-    t = "%%influlands_top_%d_" % n
+    t = "%%fluxlands_top_%d_" % n
     commerce.append(bouton("top_%d" % n, slot, t + "icone%", t + "objet%",
                            lore(["N°%d du commerce de la ville" % n, "Par &f" + t + "proprio%", "Reversé : &f" + t + "reverse% " + BB,
                                  "Prix : &f" + t + "prix% " + BB + " &7(x" + t + "quantite%)"],
@@ -310,83 +319,21 @@ for n, slot in enumerate(range(47, 52), start=1):
                            {"left": [iv("top %d" % n)]}, conditions=["placeholder: %sexiste%% == oui" % t]))
 commerce.append(bouton("echoppes", 53, "itemsadder:influville:echoppe", OR + "Échoppes de la ville",
                        lore([m("echoppes") + " échoppes."], [(GAUCHE, "Voir")]), {"left": [iv("ouvrir echoppes ma depuis:commerce")]},
-                       conditions=["placeholder: %influlands_modules_echoppes% == oui"]))
+                       conditions=["placeholder: %fluxlands_modules_echoppes% == oui"]))
 menu("ville_commerce", "menu_ville_commerce", commerce, doc="Commerce de ma ville : droit de place, recettes des 7 derniers jours, meilleures échoppes.")
-
-# ── Banque de ma ville ─────────────────────────────────────────────────────
-banque = [
-    retour(0, [iv("ouvrir ville")], "Ma ville"),
-    bouton("info", 8, "itemsadder:influville:banque", OR + "Banque de " + m("nom"),
-           lore(["Règle le montant avec les", "boutons + et -, puis dépose", "ou retire. Retirer demande le", "droit de banque de ton rôle."])),
-    bouton("perso", 20, "itemsadder:influitems:bitblock", OR + "Ton solde", lore(["&f" + bq("perso") + " " + BB])),
-    bouton("ville", 22, "itemsadder:influville:banque", OR + "Banque de la ville", lore(["&f" + bq("solde") + " " + BB]),
-           extra={"glow": "true"}),
-    bouton("entretien", 24, "itemsadder:influville:entretien", OR + "Frais d'entretien",
-           lore(["&f" + m("entretien") + " " + BB + VIOLET + " par jour.", "Couverts pour &f" + bq("jours") + VIOLET + " jours."])),
-]
-banque += selecteur("banque montant", "", bouton("montant", 40, "itemsadder:influville:budget", OR + "Montant : &f" + bq("montant") + " " + BB,
-                                                   lore([], [(GAUCHE, "Saisir un montant"), (DROIT, "Remettre à 1 000")]),
-                                                   {"left": [iv("banque saisir")], "right": [iv("banque montant =1000"), SON, "[refresh]"]},
-                                                   extra={"glow": "true"}))
-banque += [
-    bouton("deposer", 47, "itemsadder:influville:deposer", OR + "Déposer &f" + bq("montant") + " " + BB,
-           lore(["De ton solde vers la banque."], [(GAUCHE, "Déposer")]), {"left": [iv("banque deposer"), SON_OK, "[refresh]"]}),
-    bouton("saisir", 49, "itemsadder:influville:renommer", OR + "Saisir un montant",
-           lore(["Tape directement le montant", "(5000, 10k, 2,5k...)."], [(GAUCHE, "Saisir")]), {"left": [iv("banque saisir")]}),
-    bouton("retirer", 51, "itemsadder:influville:retirer", OR + "Retirer &f" + bq("montant") + " " + BB,
-           lore(["De la banque vers ton solde."], [(GAUCHE, "Retirer")]), {"left": [iv("banque retirer"), SON_OK, "[refresh]"]}),
-]
-menu("ville_banque", "menu_ville_banque", banque, doc="Banque de ma ville : montant réglé par boutons + et -, dépôt et retrait (/v bank).")
-
-# ── Réglages de ma ville ───────────────────────────────────────────────────
-reglages = [
-    retour(0, [iv("ouvrir ville")], "Ma ville"),
-    bouton("info", 8, "itemsadder:influitems:settings", OR + "Réglages de " + m("nom"),
-           lore(["Tout le monde peut consulter,", "seul le maire modifie.", "", "Ton rôle : &f" + m("role")])),
-    bouton("parcelles", 20, "itemsadder:influville:parcelle", OR + "Parcelles",
-           lore(["Découpe ta ville en parcelles,", "loue-les ou vends-les."], [(GAUCHE, "Ouvrir")]), {"left": [iv("ouvrir parcelles")]}),
-    bouton("roles", 22, "itemsadder:influville:roles", OR + "Rôles et permissions",
-           lore(["Ce que chaque rôle a le droit", "de faire dans la ville."], [(GAUCHE, "Ouvrir")]), {"left": [iv("ouvrir roles")]}),
-    bouton("parametres", 24, "itemsadder:influville:parametres", OR + "Paramètres",
-           lore(["Explosions, feu, apparition", "des monstres, PvP..."], [(GAUCHE, "Ouvrir")]), {"left": [iv("ouvrir parametres")]}),
-    bouton("banque", 37, "itemsadder:influville:banque", OR + "Banque", lore(["Solde : &f" + m("solde") + " " + BB], [(GAUCHE, "Ouvrir")]),
-           {"left": [iv("ouvrir banque")]}),
-    bouton("habitants", 38, "itemsadder:influville:habitants", OR + "Habitants",
-           lore([m("habitants") + " habitants."], [(GAUCHE, "Voir"), (DROIT, "Inviter un joueur")]),
-           {"left": [iv("ouvrir habitants ma depuis:reglages")], "right": [iv("saisie inviter")]}),
-    bouton("spawn", 39, "itemsadder:influville:spawn", OR + "Spawn ici",
-           lore(["Place le spawn de la ville", "là où tu te tiens."], [(GAUCHE, "Définir ici")]),
-           {"left": [iv("reglages spawn"), SON, "[refresh]"]}),
-    bouton("renommer", 40, "itemsadder:influville:renommer", OR + "Renommer la ville",
-           lore(["Nom actuel : &f" + m("nom")], [(GAUCHE, "Choisir un nom")]), {"left": [iv("reglages renommer")]}),
-    bouton("accueil", 41, "itemsadder:influville:message", OR + "Message d'accueil",
-           lore(["Titre affiché aux joueurs", "qui entrent dans la ville."], [(GAUCHE, "Écrire le message")]),
-           {"left": [iv("reglages accueil")]}),
-    bouton("agence", 42, "itemsadder:influville:agence", OR + "Annonces de la ville",
-           lore(["Parcelles de " + m("nom"), "à louer ou à vendre."], [(GAUCHE, "Ouvrir l'Agence")]), {"left": [iv("ouvrir agence ma depuis:reglages")]}),
-    bouton("niveau", 43, "itemsadder:influville:niveau", OR + "Niveau de la ville",
-           lore(["Objectifs pour passer", "au niveau suivant."], [(GAUCHE, "Voir les objectifs")]),
-           {"left": [iv("natif menu land level")]}),
-    bouton("relations", 45, "itemsadder:influville:lier", OR + "Relations",
-           lore(["Alliés et ennemis de la ville."], [(GAUCHE, "Ouvrir")]), {"left": [iv("natif menu land relations")]}),
-    bouton("complet", 53, "itemsadder:influitems:unknown", OR + "Menu complet",
-           lore(["Toutes les options de Lands,", "dans leur menu d'origine."], [(GAUCHE, "Ouvrir")]), {"left": [iv("natif menu")]}),
-]
-menu("ville_reglages", "menu_ville_reglages", reglages, doc="Réglages de ma ville (remplace le menu natif de Lands).")
-
 
 # ── Listes (annuaire, warps, échoppes, habitants, agence, parcelles, rôles, permissions, paramètres) ──
 def l(n, c):
-    return "%%influlands_liste_%d_%s%%" % (n, c)
+    return "%%fluxlands_liste_%d_%s%%" % (n, c)
 
 
 def choix_lignes(prefixe, nb):
-    return ["@option %%influlands_liste_%s_%d%%" % (prefixe, k) for k in range(1, nb + 1)]
+    return ["@option %%fluxlands_liste_%s_%d%%" % (prefixe, k) for k in range(1, nb + 1)]
 
 
 def barre_liste(info_icone, info_nom, info_desc, action=None, gauche=None, filtre=True, tri=True, extra=()):
     """Barre du bas : raccourci (45), filtre (47), pages (48, 50), recherche (49), tri (51), action (53)."""
-    items = [bouton("info", 8, info_icone, OR + info_nom, lore(info_desc + ["", "Résultats : &f%influlands_liste_total%"]))]
+    items = [bouton("info", 8, info_icone, OR + info_nom, lore(info_desc + ["", "Résultats : &f%fluxlands_liste_total%"]))]
     items.append(gauche or bouton("ma_ville", 45, "itemsadder:influville:ville", OR + "Ma ville", lore([], [(GAUCHE, "Ouvrir")]),
                                   {"left": [iv("ouvrir ville")]}))
     if filtre:
@@ -395,12 +342,12 @@ def barre_liste(info_icone, info_nom, info_desc, action=None, gauche=None, filtr
                             {"left": [iv("filtre +"), SON, "[refresh]"], "right": [iv("filtre -"), SON, "[refresh]"]}))
     items += [
         bouton("precedent", 48, "itemsadder:influitems:btn_prev", OR + "Page précédente", lore([], [(GAUCHE, "Précédente")]),
-               {"left": [iv("page -"), SON_PAGE, "[refresh]"]}, conditions=["placeholder: %influlands_liste_precedent% == oui"]),
+               {"left": [iv("page -"), SON_PAGE, "[refresh]"]}, conditions=["placeholder: %fluxlands_liste_precedent% == oui"]),
         bouton("recherche", 49, "itemsadder:influitems:search", OR + "Rechercher",
-               lore(["Recherche : &f%influlands_liste_recherche%"], [(GAUCHE, "Rechercher"), (DROIT, "Effacer")]),
+               lore(["Recherche : &f%fluxlands_liste_recherche%"], [(GAUCHE, "Rechercher"), (DROIT, "Effacer")]),
                {"left": [iv("recherche")], "right": [iv("effacer"), SON, "[refresh]"]}),
         bouton("suivant", 50, "itemsadder:influitems:btn_next", OR + "Page suivante", lore([], [(GAUCHE, "Suivante")]),
-               {"left": [iv("page +"), SON_PAGE, "[refresh]"]}, conditions=["placeholder: %influlands_liste_suivant% == oui"]),
+               {"left": [iv("page +"), SON_PAGE, "[refresh]"]}, conditions=["placeholder: %fluxlands_liste_suivant% == oui"]),
     ]
     if tri:
         items.append(bouton("tri", 51, "itemsadder:influitems:stairs", OR + "Trier par",
@@ -414,7 +361,7 @@ def barre_liste(info_icone, info_nom, info_desc, action=None, gauche=None, filtr
 
 def vide(icone, nom, desc):
     """Case centrale affichée quand la liste est vide."""
-    return bouton("vide", 31, icone, OR + nom, lore(desc), conditions=["placeholder: %influlands_liste_total% == 0"])
+    return bouton("vide", 31, icone, OR + nom, lore(desc), conditions=["placeholder: %fluxlands_liste_total% == 0"])
 
 
 # Annuaire des villes
@@ -425,7 +372,7 @@ for n, slot in enumerate(GRILLE, start=1):
                                  "Habitants : &f" + l(n, "habitants") + " &7(" + l(n, "en_ligne") + " en ligne)",
                                  "Chunks : &f" + l(n, "chunks"),
                                  "Échoppes : &f" + l(n, "echoppes") + VIOLET + "  Warps : &f" + l(n, "adresses"),
-                                 "Droit de place : &f" + l(n, "taux") + " %", "Nation : &f" + l(n, "nation")],
+                                 "Droit de place : &f" + l(n, "taux") + " %", "Pays : &f" + l(n, "nation")],
                                 [(GAUCHE, "Voir la fiche"), (DROIT, "Se téléporter au spawn")]),
                            {"left": [iv("clic %d gauche" % n)], "right": [iv("clic %d droit" % n)]},
                            conditions=["placeholder: %s == oui" % l(n, "existe")]))
@@ -434,11 +381,11 @@ annuaire += barre_liste("itemsadder:influville:annuaire", "Annuaire des villes",
                         ["Toutes les villes du serveur,", "de la plus grande à la plus", "petite."],
                         bouton("fonder", 53, "itemsadder:influitems:add", OR + "Fonder une ville",
                                lore(["Crée ta ville à l'endroit", "où tu te tiens."], [(GAUCHE, "Choisir un nom")]),
-                               {"left": [iv("saisie creer_ville")]}, conditions=["placeholder: %influlands_ma_existe% == non"]))
+                               {"left": [iv("saisie creer_ville")]}, conditions=["placeholder: %fluxlands_ma_existe% == non"]))
 menu("villes", "menu_villes", annuaire, commandes=["annuaire"],
      ouverture=[iv("vue villes"), "[refresh]"], doc="Annuaire des villes (/annuaire).")
 
-# Warps (InfluPW)
+# Warps (FluxPW)
 warps = [retour_liste()]
 for n, slot in enumerate(GRILLE, start=1):
     desc = ["Ville : &f" + l(n, "ville"), "Par &f" + l(n, "proprio"),
@@ -455,38 +402,20 @@ for n, slot in enumerate(GRILLE, start=1):
                         conditions=["placeholder: %s == oui" % l(n, "existe")]))
 warps.append(vide("itemsadder:influitems:unknown", "Aucun warp", ["Aucun warp ne correspond", "à ce filtre."]))
 warps += barre_liste("itemsadder:influville:warp", "Warps",
-                     ["Les warps des joueurs (/pw),", "rattachés à la ville où", "ils se trouvent."],
+                     ["Les warps des joueurs [/pw],", "rattachés à la ville où", "ils se trouvent."],
                      bouton("creer", 53, "itemsadder:influitems:add", OR + "Créer un warp",
                             lore(["Crée un warp là où tu te", "tiens. Dans une ville, il", "apparaît sur sa fiche."], [(GAUCHE, "Choisir un nom")]),
                             {"left": [iv("saisie creer_warp")]}))
 menu("warps", "menu_warps", warps, commandes=["warps"],
-     ouverture=[iv("vue warps"), "[refresh]"], doc="Warps (InfluPW) avec leur ville (/warps).")
-
-# Échoppes (FluxChestShop)
-echoppes = [retour_liste()]
-for n, slot in enumerate(GRILLE, start=1):
-    echoppes.append(bouton("echoppe_%d" % n, slot, l(n, "icone"), l(n, "objet"),
-                           lore(["&f" + l(n, "type") + VIOLET + " par &f" + l(n, "proprio"),
-                                 "Prix : &f" + l(n, "prix") + " " + BB + " &7(x" + l(n, "quantite") + ")",
-                                 "Stock : &f" + l(n, "stock"),
-                                 "Ville : &f" + l(n, "ville") + " &7(droit " + l(n, "taux") + " %)",
-                                 "Reversé à la ville : &f" + l(n, "reverse") + " " + BB, l(n, "statut")],
-                                [(GAUCHE, "Localiser"), (DROIT, "Fiche de la ville")]),
-                           {"left": [iv("clic %d gauche" % n)], "right": [iv("clic %d droit" % n)]},
-                           conditions=["placeholder: %s == oui" % l(n, "existe")],
-                           extra={"amount": q(l(n, "quantite"))}))
-echoppes.append(vide("itemsadder:influitems:unknown", "Aucune échoppe", ["Aucune échoppe ne correspond", "à ce filtre."]))
-echoppes += barre_liste("itemsadder:influville:echoppe", "Échoppes",
-                        ["Coffres de vente et de rachat", "des joueurs. Dans une ville,", "une part de chaque vente va", "à sa banque (droit de place)."],
-                        bouton("ouvrir_echoppe", 53, "itemsadder:influitems:add", OR + "Ouvrir une échoppe",
-                               lore(["Pose un coffre, puis frappe-le", "avec l'objet à vendre et", "indique le prix dans le tchat.", "",
-                                     "Droit de place ici : &f%influlands_taux_ici% %"])))
-menu("echoppes", "menu_echoppes", echoppes, commandes=["echoppes"],
-     ouverture=[iv("vue echoppes"), "[refresh]"], doc="Échoppes (FluxChestShop) avec leur ville et le droit de place (/echoppes).")
+     ouverture=[iv("vue warps"), "[refresh]"], doc="Warps (FluxPW) avec leur ville (/warps).")
 
 # Habitants
 habitants = [retour_liste()]
 for n, slot in enumerate(GRILLE, start=1):
+    habitants.append(bouton("habitant_%d_maire" % n, slot, l(n, "tete"), "&f" + l(n, "nom"),
+                            lore(["Rôle : " + l(n, "role"), l(n, "statut")], [(GAUCHE, "Changer son rôle")]),
+                            {"left": [iv("clic %d gauche" % n)]}, priorite=-1,
+                            conditions=["placeholder: %s == oui" % l(n, "existe"), "placeholder: %s == oui" % l(n, "role_modifiable")]))
     habitants.append(bouton("habitant_%d" % n, slot, l(n, "tete"), "&f" + l(n, "nom"),
                             lore(["Rôle : " + l(n, "role"), l(n, "statut")]),
                             conditions=["placeholder: %s == oui" % l(n, "existe")]))
@@ -512,7 +441,7 @@ for n, slot in enumerate(GRILLE, start=1):
 agence.append(vide("itemsadder:influitems:unknown", "Aucune annonce", ["Aucune parcelle à louer ou", "à vendre pour ces filtres."]))
 agence += barre_liste(
     "itemsadder:influville:agence", "Agence",
-    ["Parcelles à louer ou à vendre", "dans toutes les villes", "(/v rental list)."],
+    ["Parcelles à louer ou à vendre", "dans toutes les villes", "[/agence]."],
     bouton("publier", 53, "itemsadder:influitems:add", OR + "Publier une annonce",
            lore(["Mets en location ou en vente", "une parcelle de ta ville."], [(GAUCHE, "Mes parcelles")]),
            {"left": [iv("ouvrir parcelles")]}, conditions=[MAIRE]),
@@ -541,8 +470,7 @@ parcelles += barre_liste(
     "itemsadder:influville:parcelle", "Parcelles de " + m("nom"),
     ["Sous-zones de la ville, à", "louer ou à vendre."],
     bouton("nouvelle", 53, "itemsadder:influitems:add", OR + "Nouvelle parcelle",
-           lore(["1. Sélectionne les deux coins", "   de la parcelle.", "2. La fenêtre du nom s'ouvre", "   toute seule.", "",
-                 "Sélection : &f%influlands_selection%"], [(GAUCHE, "Commencer")]),
+           lore(["Délimite-la par deux coins,", "par le chunk où tu te tiens ou", "par ta sélection, nomme-la, et", "mets-la à l'Agence dans la foulée", "si tu veux."], [(GAUCHE, "Commencer")]),
            {"left": [iv("parcelle nouvelle")]}, conditions=[MAIRE]),
     gauche=bouton("ici", 45, "itemsadder:influville:spawn", OR + "Parcelle où je suis",
                   lore(["Ouvre la parcelle dans", "laquelle tu te tiens."], [(GAUCHE, "Ouvrir")]), {"left": [iv("parcelle ici")]}))
@@ -574,12 +502,21 @@ parcelle = [
            lore(["La parcelle existe mais n'a", "pas encore de zone. Sélectionne", "ses deux coins : elle sera", "délimitée aussitôt."], [(GAUCHE, "Délimiter")]),
            {"left": [iv("parcelle delimiter")]}, priorite=-3,
            conditions=[MAIRE, "placeholder: " + pc("delimitee") + " == non"], extra={"glow": "true"}),
-    bouton("publier", 40, "itemsadder:influitems:add", OR + "Mettre en annonce",
-           lore(["Location ou vente, prix et", "durée réglés par boutons.", "L'annonce s'affiche en", "hologramme dans la parcelle."], [(GAUCHE, "Préparer l'annonce")]),
-           {"left": [iv("parcelle annonce")]}, conditions=[MAIRE, "placeholder: " + pc("annonce") + " == non",
-                                                            "placeholder: " + pc("occupee") + " == non"], extra={"glow": "true"}),
-    bouton("retirer", 40, "itemsadder:influitems:deny", OR + "Retirer l'annonce",
-           lore([pc("annonce_ligne")], [(GAUCHE, "Retirer")]), {"left": [iv("parcelle retirer"), SON, "[refresh]"]},
+    bouton("poser", 40, "itemsadder:influitems:accept", OR + "Poser l'annonce ici",
+           lore(["Ton annonce est prête. Place-toi", "dans ta ville, juste à côté de", "la parcelle (dans la rue devant),", "là où l'hologramme doit apparaître."],
+                [(GAUCHE, "Poser l'annonce ici"), (DROIT, "Abandonner l'annonce")]),
+           {"left": [iv("annonce publier")], "right": [iv("annonce abandonner"), SON, "[refresh]"]}, priorite=-4,
+           conditions=[MAIRE, "placeholder: " + pc("brouillon") + " == oui"], extra={"glow": "true"}),
+    bouton("publier", 40, "itemsadder:influitems:add", OR + "Mettre à l'Agence",
+           lore(["Loue ou vends la parcelle. Une", "fenêtre demande le prix et les", "durées, puis l'hologramme se pose", "là où tu te tiens, à côté de la", "parcelle (pas dedans)."],
+                [(GAUCHE, "Mettre en location"), (DROIT, "Mettre en vente")]),
+           {"left": [iv("parcelle location")], "right": [iv("parcelle vente")]},
+           conditions=[MAIRE, "placeholder: " + pc("annonce") + " == non", "placeholder: " + pc("occupee") + " == non"],
+           extra={"glow": "true"}),
+    bouton("annonce_cours", 40, pc("icone"), OR + pc("etat"),
+           lore([pc("annonce_ligne"), "Modifier rouvre la fenêtre, puis", "replace l'hologramme là où tu", "te tiens."],
+                [(GAUCHE, "Modifier l'annonce"), (DROIT, "Retirer l'annonce")]),
+           {"left": [iv("parcelle modifier")], "right": [iv("parcelle retirer"), SON, "[refresh]"]},
            priorite=-1, conditions=[MAIRE, "placeholder: " + pc("annonce") + " == oui"]),
     bouton("terminer", 40, "itemsadder:influitems:lock", OR + "Mettre fin à l'occupation",
            lore([pc("locataire_ligne"), "Lands verse la compensation", "prévue à l'occupant."], [(GAUCHE, "Double clic pour confirmer")]),
@@ -594,8 +531,8 @@ parcelle = [
            {"left": ["[close]", "[player] lands view here"]}),
     bouton("liste", 43, "itemsadder:influville:annuaire", OR + "Toutes les parcelles", lore([], [(GAUCHE, "Ouvrir")]),
            {"left": [iv("ouvrir parcelles")]}),
-    bouton("reglages", 49, "itemsadder:influitems:settings", OR + "Réglages de la ville", lore([], [(GAUCHE, "Ouvrir")]),
-           {"left": [iv("ouvrir reglages")]}),
+    bouton("ma_ville", 49, "itemsadder:influville:ville", OR + "Ma ville", lore([], [(GAUCHE, "Ouvrir")]),
+           {"left": [iv("ouvrir ville")]}),
     bouton("supprimer", 53, "itemsadder:influitems:deny", OR + "Supprimer la parcelle",
            lore(["Ouvre la liste des parcelles", "de Lands : survole " + pc("nom") + " et", "appuie sur ta touche Jeter (Q).",
                  "Impossible tant qu'une annonce", "ou un occupant s'y trouve."], [(GAUCHE, "Double clic pour continuer")]),
@@ -604,69 +541,41 @@ parcelle = [
 ]
 menu("ville_parcelle", "menu_ville_parcelle", parcelle, doc="Une parcelle de ma ville : état, annonce, occupant, gestion.")
 
-# Préparer une annonce
-LOC = "placeholder: " + an("location") + " == oui"
-annonce = [
-    retour(0, ["[menu] ville_parcelle"], "Parcelle"),
-    bouton("info", 8, "itemsadder:influville:agence", OR + "Publier une annonce",
-           lore(["1. Choisis vente ou location.", "2. Règle le prix (et les durées).", "3. Place-toi dans la parcelle,",
-                 "   à l'endroit de l'hologramme.", "4. Publie."])),
-    bouton("vente_on", 20, "itemsadder:influville:vente", OR + "Vente", lore(["Le joueur devient propriétaire", "de la parcelle."]),
-           priorite=-1, conditions=["placeholder: " + an("location") + " == non"], extra={"glow": "true"}),
-    bouton("vente", 20, "itemsadder:influville:vente", OR + "Vente", lore(["Le joueur devient propriétaire", "de la parcelle."], [(GAUCHE, "Choisir")]),
-           {"left": [iv("annonce type"), SON, "[refresh]"]}),
-    bouton("parcelle", 22, "itemsadder:influville:parcelle", OR + an("parcelle"),
-           lore(["Type : &f" + an("type"), "Prix : &f" + an("prix") + " " + BB])),
-    bouton("location_on", 24, "itemsadder:influville:location", OR + "Location", lore(["Le joueur loue la parcelle par", "période, jusqu'à une durée max."]),
-           priorite=-1, conditions=[LOC], extra={"glow": "true"}),
-    bouton("location", 24, "itemsadder:influville:location", OR + "Location",
-           lore(["Le joueur loue la parcelle par", "période, jusqu'à une durée max."], [(GAUCHE, "Choisir")]),
-           {"left": [iv("annonce type"), SON, "[refresh]"]}),
-]
-annonce += selecteur("annonce prix", "", bouton("prix", 40, "itemsadder:influville:budget", OR + "Prix : &f" + an("prix") + " " + BB,
-                                                  lore(["Par période pour une location."], [(GAUCHE, "Saisir un prix")]),
-                                                  {"left": [iv("annonce saisir")]}, extra={"glow": "true"}))
-annonce += [
-    bouton("periode_moins", 45, "itemsadder:influitems:remove", OR + "-1 jour", lore([], [(GAUCHE, "Raccourcir la période")]),
-           {"left": [iv("annonce periode -1"), SON, "[refresh]"]}, conditions=[LOC]),
-    bouton("periode", 46, "itemsadder:influville:periode", OR + "Période : &f" + an("periode"),
-           lore(["Durée payée à chaque", "renouvellement."]), conditions=[LOC]),
-    bouton("periode_plus", 47, "itemsadder:influitems:add", OR + "+1 jour", lore([], [(GAUCHE, "Allonger la période")]),
-           {"left": [iv("annonce periode +1"), SON, "[refresh]"]}, conditions=[LOC]),
-    bouton("publier", 49, "itemsadder:influitems:accept", OR + "Publier ici",
-           lore(["Pose l'annonce là où tu te", "tiens (dans la parcelle,", "pieds sur un sol plein)."], [(GAUCHE, "Publier")]),
-           {"left": [iv("annonce publier")]}, extra={"glow": "true"}),
-    bouton("duree_moins", 51, "itemsadder:influitems:remove", OR + "-7 jours", lore([], [(GAUCHE, "Réduire la durée maximale")]),
-           {"left": [iv("annonce duree -7"), SON, "[refresh]"]}, conditions=[LOC]),
-    bouton("duree", 52, "itemsadder:influville:periode", OR + "Durée max : &f" + an("duree"),
-           lore(["Durée totale qu'un locataire", "peut atteindre en renouvelant."]), conditions=[LOC]),
-    bouton("duree_plus", 53, "itemsadder:influitems:add", OR + "+7 jours", lore([], [(GAUCHE, "Augmenter la durée maximale")]),
-           {"left": [iv("annonce duree +7"), SON, "[refresh]"]}, conditions=[LOC]),
-]
-menu("ville_annonce", "menu_ville_annonce", annonce, doc="Préparer et publier l'annonce (vente ou location, hologramme) d'une parcelle.")
-
 # Rôles de ma ville
+# Le maire gère les rôles d'habitants (2026-11-01) : clic gauche permissions, clic droit renommer ou supprimer,
+# maj + clic monter ou descendre dans l'ordre de priorité, « + » pour en créer un. Les rôles de Lands (maire,
+# passants, nouveaux arrivants, locataires, compatriotes) n'ont que leurs permissions.
 roles = [retour_liste()]
 for n, slot in enumerate(GRILLE, start=1):
+    base = ["Type : &f" + l(n, "type"), "&f" + l(n, "droits") + VIOLET + " permissions accordées"]
+    existe = "placeholder: %s == oui" % l(n, "existe")
+    roles.append(bouton("role_%d_gestion" % n, slot, l(n, "icone"), l(n, "nom"),
+                        lore(base, [(GAUCHE, "Modifier les permissions"), (DROIT, "Renommer ou supprimer"),
+                                    (MAJ_GAUCHE, "Monter dans l'ordre"), (MAJ_DROIT, "Descendre dans l'ordre")]),
+                        {"left": [iv("clic %d gauche" % n)], "right": [iv("clic %d droit" % n)],
+                         "shift-left": [iv("clic %d monter" % n), SON, "[refresh]"], "shift-right": [iv("clic %d descendre" % n), SON, "[refresh]"]},
+                        conditions=[existe, "placeholder: %s == oui" % l(n, "habitant"), MAIRE], priorite=-2))
     roles.append(bouton("role_%d" % n, slot, l(n, "icone"), l(n, "nom"),
-                        lore(["Type : &f" + l(n, "type"), "Priorité : &f" + l(n, "priorite"), "&f" + l(n, "droits") + VIOLET + " permissions accordées"],
-                             [(GAUCHE, "Modifier les permissions")]),
+                        lore(base, [(GAUCHE, "Modifier les permissions")]),
                         {"left": [iv("clic %d gauche" % n)]},
-                        conditions=["placeholder: %s == oui" % l(n, "existe"), "placeholder: %s == oui" % l(n, "modifiable")], priorite=-1))
+                        conditions=[existe, "placeholder: %s == oui" % l(n, "modifiable")], priorite=-1))
     roles.append(bouton("role_%d_maire" % n, slot, l(n, "icone"), l(n, "nom"),
                         lore(["Type : &f" + l(n, "type"), "Le maire a toujours", "toutes les permissions."]),
-                        conditions=["placeholder: %s == oui" % l(n, "existe")]))
+                        conditions=[existe]))
 roles += barre_liste("itemsadder:influville:roles", "Rôles de " + m("nom"),
-                     ["Du plus important au moins", "important. Chaque rôle a ses", "propres permissions."], filtre=False, tri=False,
+                     ["Du plus important au moins important. Chaque rôle a ses propres permissions."], filtre=False, tri=False,
+                     action=bouton("creer", 53, "itemsadder:influitems:add", OR + "Créer un rôle",
+                                   lore(["Un nouveau rôle d'habitant, en bas de la liste."], [(GAUCHE, "Choisir un nom")]),
+                                   {"left": [iv("role creer")]}, conditions=[MAIRE]),
                      gauche=bouton("habitants", 45, "itemsadder:influville:habitants", OR + "Habitants",
-                                   lore(["Change le rôle d'un habitant", "depuis le menu complet."], [(GAUCHE, "Ouvrir")]),
-                                   {"left": [iv("natif member menu")]}))
+                                   lore(["Le maire change le rôle d'un habitant d'un clic sur sa tête."], [(GAUCHE, "Ouvrir")]),
+                                   {"left": [iv("ouvrir habitants ma depuis:roles")]}))
 menu("ville_roles", "menu_roles", roles, ouverture=[iv("vue roles"), "[refresh]"], doc="Rôles de ma ville.")
 
 # Permissions d'un rôle
 droits = [retour_liste()]
 for n, slot in enumerate(GRILLE, start=1):
-    d = ["&7" + l(n, "desc_%d" % k) for k in range(1, 5)] + ["", l(n, "etat")]
+    d = [l(n, "desc"), "", l(n, "etat")]
     droits.append(bouton("droit_%d_on" % n, slot, l(n, "icone"), "&f" + l(n, "nom"), lore(d, [(GAUCHE, "Interdire")]),
                          {"left": [iv("clic %d gauche" % n), SON, "[refresh]"]}, priorite=-1,
                          conditions=["placeholder: %s == oui" % l(n, "existe"), "placeholder: %s == oui" % l(n, "actif")],
@@ -674,16 +583,15 @@ for n, slot in enumerate(GRILLE, start=1):
     droits.append(bouton("droit_%d" % n, slot, l(n, "icone"), "&7" + l(n, "nom"), lore(d, [(GAUCHE, "Autoriser")]),
                          {"left": [iv("clic %d gauche" % n), SON, "[refresh]"]},
                          conditions=["placeholder: %s == oui" % l(n, "existe")]))
-droits += barre_liste("%influlands_role_icone%", "Permissions : %influlands_role_nom%",
+droits += barre_liste("%fluxlands_role_icone%", "Permissions : %fluxlands_role_nom%",
                       ["Ce que ce rôle peut faire.", "Brillant = autorisé.", "Filtre : actions dans la ville", "ou gestion de la ville."],
-                      tri=False, gauche=bouton("reglages", 45, "itemsadder:influitems:settings", OR + "Réglages", lore([], [(GAUCHE, "Ouvrir")]),
-                                               {"left": [iv("ouvrir reglages")]}))
+                      tri=False)
 menu("ville_droits", "menu_droits", droits, ouverture=[iv("vue droits"), "[refresh]"], doc="Permissions d'un rôle de ma ville.")
 
 # Paramètres de ma ville
 parametres = [retour_liste()]
 for n, slot in enumerate(GRILLE, start=1):
-    d = ["&7" + l(n, "desc_%d" % k) for k in range(1, 5)] + ["", l(n, "etat")]
+    d = [l(n, "desc"), "", l(n, "etat")]
     parametres.append(bouton("param_%d_on" % n, slot, l(n, "icone"), "&f" + l(n, "nom"), lore(d, [(GAUCHE, "Désactiver")]),
                              {"left": [iv("clic %d gauche" % n), SON, "[refresh]"]}, priorite=-1,
                              conditions=["placeholder: %s == oui" % l(n, "existe"), "placeholder: %s == oui" % l(n, "actif")],
@@ -691,106 +599,140 @@ for n, slot in enumerate(GRILLE, start=1):
     parametres.append(bouton("param_%d" % n, slot, l(n, "icone"), "&7" + l(n, "nom"), lore(d, [(GAUCHE, "Activer")]),
                              {"left": [iv("clic %d gauche" % n), SON, "[refresh]"]},
                              conditions=["placeholder: %s == oui" % l(n, "existe")]))
-parametres += barre_liste("itemsadder:influville:parametres", "Paramètres de " + m("nom"),
-                          ["Règles naturelles de la ville", "(explosions, feu, monstres...).", "Brillant = activé."], tri=False,
-                          gauche=bouton("reglages", 45, "itemsadder:influitems:settings", OR + "Réglages", lore([], [(GAUCHE, "Ouvrir")]),
-                                        {"left": [iv("ouvrir reglages")]}))
+parametres += barre_liste("itemsadder:influitems:settings", "Paramètres de " + m("nom"),
+                          ["Règles naturelles de la ville", "(explosions, feu, monstres...).", "Brillant = activé."], tri=False)
 menu("ville_parametres", "menu_parametres", parametres, ouverture=[iv("vue parametres"), "[refresh]"], doc="Paramètres naturels de ma ville.")
 
 # ── Accueil partagé « Villes et Pays » ─────────────────────────────────────
+# Maquette 4 du 2026-10-31 : Retour (9) et information sans action (17) sur la rangée 1, deux cartes sombres l'une
+# sous l'autre (Ma ville rangées 2-3, Mon pays rangées 4-5 : objets invisibles pour le clic et l'infobulle), grande
+# icône dans le fond (fluxui:bg_territoires, Flux/assets/vanilla/gen_ui.py), trois lignes écrites par Flux à côté
+# (widgets ci-dessous, positions liées aux cartes du fond), puis Explorer sur la première rangée de l'inventaire.
 INVISIBLE = "itemsadder:influitems:invisible"
+CARTE_VILLE = list(range(18, 36))
+CARTE_PAYS = list(range(36, 54))
+VISIBLE = {"hide-tooltip": "false"}
+
+
+def lignes_carte(cle, y0, lignes, condition):
+    """Trois lignes d'une carte : la première en blanc (nom), les autres en gris clair."""
+    out = []
+    for k, texte in enumerate(lignes):
+        out += ["  %s_%d:" % (cle, k), "    type: text", "    x: 45", "    y: %d" % (y0 + 9 * k), "    text: %s" % q(texte)]
+        if k:
+            out.append('    colour: "#BDBDBD"')
+        out += ["    view-requirements:", "      - %s" % q(condition)]
+    return out
+
+
+AVEC_VILLE, SANS_VILLE = "placeholder: " + m("existe") + " == oui", "placeholder: " + m("existe") + " != oui"
+AVEC_PAYS, SANS_PAYS = "placeholder: " + mp("existe") + " == oui", "placeholder: " + mp("existe") + " != oui"
+WIDGETS_TERRITOIRES = "\n".join(
+    ["widgets:"]
+    + lignes_carte("ville", 59, [m("nom"), "Niveau " + m("niveau_num") + " · " + m("niveau"), m("habitants") + " habitants"], AVEC_VILLE)
+    + lignes_carte("sans_ville", 59, ["Aucune ville", "Fonde la tienne ou", "rejoins une ville"], SANS_VILLE)
+    + lignes_carte("pays", 95, [mp("nom"), mp("niveau") + " · " + mp("villes") + " villes", "Capitale " + mp("capitale")], AVEC_PAYS)
+    + lignes_carte("sans_pays", 95, ["Aucun pays", "Réunis plusieurs villes", "autour d'une capitale"], SANS_PAYS)) + "\n"
+
 territoires = [
-    bouton("panneau_ville_membre", [0, 1, 2, 3, 9, 10, 11, 12, 18, 19, 20, 21], INVISIBLE, m("nom_couleur"),
-           lore(["Niveau : &f" + m("niveau"), "Habitants : &f" + m("habitants") + VIOLET + "  Chunks : &f" + m("chunks"),
-                 "Banque : &f" + m("solde") + " " + BB], [(GAUCHE, "Ouvrir Ma ville")]),
-           {"left": [iv("ouvrir ville")]}, priorite=-1, conditions=["placeholder: " + m("existe") + " == oui"], extra={"hide-tooltip": "false"}),
-    bouton("panneau_ville", [0, 1, 2, 3, 9, 10, 11, 12, 18, 19, 20, 21], INVISIBLE, OR + "Villes",
-           lore(["Tu n'habites aucune ville.", "Fonde la tienne ou rejoins", "une ville existante."], [(GAUCHE, "Commencer")]),
-           {"left": [iv("ouvrir ville")]}),
-    bouton("panneau_pays_membre", [5, 6, 7, 8, 14, 15, 16, 17, 23, 24, 25, 26], INVISIBLE, mp("nom_couleur"),
-           lore(["Niveau : &f" + mp("niveau"), "Capitale : &f" + mp("capitale"), "Villes : &f" + mp("villes") + VIOLET + "  Habitants : &f" + mp("habitants")],
-                [(GAUCHE, "Ouvrir Mon pays")]),
-           {"left": [iv("ouvrir pays")]}, priorite=-1, conditions=["placeholder: " + mp("existe") + " == oui"]),
-    bouton("panneau_pays", [5, 6, 7, 8, 14, 15, 16, 17, 23, 24, 25, 26], INVISIBLE, OR + "Pays",
-           lore(["Ta ville n'appartient à aucun", "pays. Un pays réunit plusieurs", "villes autour d'une capitale."], [(GAUCHE, "Découvrir")]),
-           {"left": [iv("ouvrir pays")]}),
-    # Explorer : seulement ce qui n'est ni dans Ma ville ni dans Mon pays (allégé le 2026-10-19).
-    bouton("annuaire", 38, "itemsadder:influville:annuaire", OR + "Annuaire des villes", lore(["Toutes les villes du serveur."], [(GAUCHE, "Ouvrir")]),
+    retour(9, ["[menu] main"], "Menu principal"),
+    bouton("info", 17, "itemsadder:influville:ville", OR + "Villes et Pays",
+           lore(["Gère ta ville et ton pays, et explore ceux des autres joueurs.", "",
+                 "Villes : &f%fluxlands_nb_villes_serveur%", "Pays : &f%fluxlands_nb_pays%",
+                 "Annonces à l'Agence : &f%fluxlands_annonces%"])),
+    bouton("ma_ville", CARTE_VILLE, INVISIBLE, OR + "Ma ville : " + m("nom_couleur"),
+           lore(["Niveau : &f" + m("niveau"), "Ton rôle : &f" + m("role"),
+                 "Habitants : &f" + m("habitants") + " &7(" + m("en_ligne") + " en ligne)", "Banque : &f" + m("solde") + " " + BB],
+                [(GAUCHE, "Ouvrir Ma ville"), (DROIT, "Fiche publique")]),
+           {"left": [iv("ouvrir ville")], "right": [iv("ouvrir fiche ma")]},
+           priorite=-1, conditions=[AVEC_VILLE], extra=VISIBLE),
+    bouton("sans_ville", CARTE_VILLE, INVISIBLE, OR + "Ville",
+           lore(["Tu n'habites aucune ville. Fonde la tienne ou rejoins une ville existante."], [(GAUCHE, "Commencer")]),
+           {"left": [iv("ouvrir ville")]}, extra=VISIBLE),
+    bouton("mon_pays", CARTE_PAYS, INVISIBLE, OR + "Mon pays : " + mp("nom_couleur"),
+           lore(["Niveau : &f" + mp("niveau"), "Capitale : &f" + mp("capitale"), "Villes : &f" + mp("villes"),
+                 "Habitants : &f" + mp("habitants")], [(GAUCHE, "Ouvrir Mon pays")]),
+           {"left": [iv("ouvrir pays")]}, priorite=-1, conditions=[AVEC_PAYS], extra=VISIBLE),
+    bouton("sans_pays", CARTE_PAYS, INVISIBLE, OR + "Pays",
+           lore(["Ta ville n'appartient à aucun pays. Un pays réunit plusieurs villes autour d'une capitale."],
+                [(GAUCHE, "Découvrir")]),
+           {"left": [iv("ouvrir pays")]}, extra=VISIBLE),
+    # Explorer (première rangée de l'inventaire) : seulement ce qui n'est ni dans Ma ville ni dans Mon pays.
+    bouton("annuaire", 56, "itemsadder:influville:annuaire", OR + "Annuaire des villes", lore(["Toutes les villes du serveur."], [(GAUCHE, "Ouvrir")]),
            {"left": [iv("ouvrir annuaire depuis:territoires")]}),
-    bouton("warps", 39, "itemsadder:influville:warp", OR + "Warps", lore(["Les warps des joueurs,", "classés par ville."], [(GAUCHE, "Ouvrir")]),
-           {"left": [iv("ouvrir warps toutes depuis:territoires")]}, conditions=["placeholder: %influlands_modules_warps% == oui"]),
-    bouton("agence", 40, "itemsadder:influville:agence", OR + "Agence", lore(["Parcelles à louer ou à vendre", "dans toutes les villes."], [(GAUCHE, "Ouvrir")]),
+    bouton("warps", 57, "itemsadder:influville:warp", OR + "Warps", lore(["Les warps des joueurs, classés par ville."], [(GAUCHE, "Ouvrir")]),
+           {"left": [iv("ouvrir warps toutes depuis:territoires")]}, conditions=["placeholder: %fluxlands_modules_warps% == oui"]),
+    bouton("agence", 58, "itemsadder:influville:agence", OR + "Agence", lore(["Parcelles à louer ou à vendre dans toutes les villes."], [(GAUCHE, "Ouvrir")]),
            {"left": [iv("ouvrir agence depuis:territoires")]}),
-    bouton("echoppes", 41, "itemsadder:influville:echoppe", OR + "Échoppes", lore(["Où acheter et vendre", "dans les villes."], [(GAUCHE, "Ouvrir")]),
-           {"left": [iv("ouvrir echoppes toutes depuis:territoires")]}, conditions=["placeholder: %influlands_modules_echoppes% == oui"]),
-    bouton("annuaire_pays", 42, "itemsadder:influville:pays", OR + "Annuaire des pays", lore(["Tous les pays du serveur."], [(GAUCHE, "Ouvrir")]),
+    bouton("echoppes", 59, "itemsadder:influville:echoppe", OR + "Échoppes", lore(["Où acheter et vendre dans les villes."], [(GAUCHE, "Ouvrir")]),
+           {"left": [iv("ouvrir echoppes toutes depuis:territoires")]}, conditions=["placeholder: %fluxlands_modules_echoppes% == oui"]),
+    bouton("annuaire_pays", 60, "itemsadder:influville:nation", OR + "Annuaire des pays", lore(["Tous les pays du serveur."], [(GAUCHE, "Ouvrir")]),
            {"left": [iv("ouvrir pays_annuaire depuis:territoires")]}),
-    retour(49, ["[menu] main"], "Menu principal"),
 ]
-menu("territoires", "menu_territoires", territoires, doc="Villes et Pays : accueil partagé ouvert par le bouton Ville et Pays de /menu2.")
+menu("territoires", "menu_territoires", territoires, widgets=WIDGETS_TERRITOIRES,
+     doc="Villes et Pays : accueil partagé ouvert par le bouton Ville et Pays de /menu2.")
 
 # ── Mon pays ───────────────────────────────────────────────────────────────
+# Refait le 2026-11-01 comme Ma ville : case 8 = information sans action ; rangée 2 : niveau, fiche publique, capitale ;
+# rangée 4 : la vie du pays ; rangée 5 : ce que fait le chef (ou le maire d'une ville membre : quitter). Plus d'alliances
+# ni de guerre (coupées dans Lands), plus de menu complet de Lands. Taxes et effets : nos menus (2026-11-01).
 CHEF = "placeholder: " + mp("est_chef") + " == oui"
+INFO_PAYS = ["Niveau : &f" + mp("niveau"), "Chef : &f" + mp("chef"), "Capitale : &f" + mp("capitale"),
+             "Fondation : &f" + mp("creation"), "Villes : &f" + mp("villes"),
+             "Habitants : &f" + mp("habitants") + " &7(" + mp("en_ligne") + " en ligne)", "Chunks : &f" + mp("chunks"),
+             "Trésor : &f" + mp("tresor") + " " + BB]
 mon_pays = [
     retour(0, ["[menu] territoires"], "Villes et Pays", droit=RETOUR_HUB),
-    bouton("fiche", 8, mp("icone"), mp("nom_couleur"),
-           lore(["Niveau : &f" + mp("niveau"), "Chef : &f" + mp("chef"), "Fondé le &f" + mp("creation")], [(GAUCHE, "Voir la fiche publique")]),
+    bouton("info", 8, "itemsadder:influville:pays", mp("nom_couleur"),
+           lore(["Le tableau de bord de ton pays. Le trésor est la banque de la capitale, qui paie les frais d'entretien du pays.", ""]
+                + INFO_PAYS)),
+    bouton("niveau", 20, mp("icone"), OR + "Niveau &f" + mp("niveau_num") + OR + "/4",
+           lore([mp("niveau"), "Le niveau du pays débloque des chunks et des effets pour toutes ses villes."],
+                [(GAUCHE, "Objectifs du niveau suivant")]),
+           {"left": [iv("niveau pays")]}),
+    bouton("fiche", 22, "itemsadder:influville:epingle", OR + "Fiche publique",
+           lore(["Ton pays tel que les autres joueurs le voient."], [(GAUCHE, "Voir la fiche publique")]),
            {"left": [iv("ouvrir pays_fiche mon")]}),
-    bouton("stat_niveau", 19, mp("icone"), OR + "Niveau &f" + mp("niveau_num") + OR + "/4",
-           lore([mp("niveau"), "Le niveau du pays augmente", "avec ses villes membres."], [(GAUCHE, "Objectifs du niveau suivant")]),
-           {"left": [iv("natifpays menu nation level")]}),
-    bouton("stat_villes", 20, "itemsadder:influville:ville", OR + "Villes &f" + mp("villes"), lore(["Villes membres du pays."], [(GAUCHE, "Voir")]),
+    bouton("capitale_fiche", 24, "itemsadder:influville:capitale", OR + "Capitale : " + mp("capitale_couleur"),
+           lore(["La capitale paie les frais d'entretien du pays."], [(GAUCHE, "Fiche de la capitale")]),
+           {"left": [iv("ouvrir fiche " + mp("capitale"))]}),
+    # Rangée 4
+    bouton("villes", 38, "itemsadder:influville:ville", OR + "Villes du pays", lore([mp("villes") + " villes membres."], [(GAUCHE, "Voir")]),
            {"left": [iv("ouvrir pays_villes mon")]}),
-    bouton("stat_habitants", 21, "itemsadder:influville:habitants", OR + "Habitants &f" + mp("habitants"), lore(["En ligne : &f" + mp("en_ligne")])),
-    bouton("stat_chunks", 22, "itemsadder:influville:chunks", OR + "Chunks &f" + mp("chunks"), lore(["Territoire de toutes", "les villes du pays."])),
-    bouton("stat_tresor", 23, "itemsadder:influitems:bitblock", OR + "Trésor",
-           lore(["&f" + mp("tresor") + " " + BB, "Banque de la capitale, qui", "paie les frais d'entretien", "du pays."])),
-    bouton("stat_capitale", 24, "itemsadder:influville:capitale", OR + "Capitale : " + mp("capitale_couleur"),
-           lore([], [(GAUCHE, "Fiche de la capitale")]), {"left": [iv("ouvrir fiche " + mp("capitale"))]}),
-    bouton("stat_chef", 25, "itemsadder:influville:roles", OR + "Chef : &f" + mp("chef"), lore(["Maire de la capitale."])),
-    bouton("villes", 37, "itemsadder:influville:ville", OR + "Villes du pays", lore([mp("villes") + " villes membres."], [(GAUCHE, "Voir")]),
-           {"left": [iv("ouvrir pays_villes mon")]}),
-    bouton("inviter", 38, "itemsadder:influitems:add", OR + "Inviter une ville",
-           lore(["Choisis une ville sans pays", "dans la liste."], [(GAUCHE, "Choisir")]), {"left": [iv("pays inviter")]}, conditions=[CHEF]),
     bouton("spawn", 39, "itemsadder:influville:spawn", OR + "Spawn du pays", lore(["Spawn de la capitale."], [(GAUCHE, "Se téléporter")]),
            {"left": [iv("pays spawn mon")]}),
-    bouton("relations", 40, "itemsadder:influville:lier", OR + "Relations", lore(["Alliés et ennemis du pays."], [(GAUCHE, "Ouvrir")]),
-           {"left": [iv("natifpays menu nation relations")]}),
-    bouton("taxes", 41, "itemsadder:influville:taxes", OR + "Taxes", lore(["Taxes versées par les villes", "au pays."], [(GAUCHE, "Ouvrir")]),
-           {"left": [iv("natifpays menu nation taxes")]}),
-    bouton("effets", 42, "itemsadder:influville:effets", OR + "Effets", lore(["Bonus accordés aux habitants", "du pays."], [(GAUCHE, "Ouvrir")]),
-           {"left": [iv("natifpays menu nation effects")]}),
-    bouton("annuaire", 43, "itemsadder:influville:annuaire", OR + "Annuaire des pays", lore(["Tous les pays du serveur."], [(GAUCHE, "Ouvrir")]),
-           {"left": [iv("ouvrir pays_annuaire")]}),
-    bouton("guerre", 45, "itemsadder:influville:guerre", OR + "Guerre", lore(["Déclarations et guerres", "en cours."], [(GAUCHE, "Ouvrir")]),
-           {"left": [iv("natifpays war menu")]}),
-    bouton("capitale", 46, "itemsadder:influville:capitale", OR + "Changer de capitale", lore(["Choisis la nouvelle capitale", "parmi les villes du pays."], [(GAUCHE, "Choisir")]),
+    bouton("chat", 40, "itemsadder:influville:message", OR + "Tchat du pays",
+           lore(["Parle seulement aux habitants du pays (bascule)."], [(GAUCHE, "Activer / désactiver")]), {"left": [iv("pays chat")]}),
+    bouton("taxes", 41, "itemsadder:influville:taxes", OR + "Taxes", lore(["Taxes versées par les villes au pays."], [(GAUCHE, "Ouvrir")]),
+           {"left": [iv("pays taxes")]}),
+    bouton("effets", 42, "itemsadder:influville:effets", OR + "Effets", lore(["Bonus accordés aux habitants du pays."], [(GAUCHE, "Ouvrir")]),
+           {"left": [iv("pays effets")]}),
+    # Rangée 5
+    bouton("inviter", 47, "itemsadder:influitems:add", OR + "Inviter une ville",
+           lore(["Choisis une ville sans pays dans la liste."], [(GAUCHE, "Choisir")]), {"left": [iv("pays inviter")]}, conditions=[CHEF]),
+    bouton("capitale", 49, "itemsadder:influville:capitale", OR + "Changer de capitale",
+           lore(["Choisis la nouvelle capitale parmi les villes du pays."], [(GAUCHE, "Choisir")]),
            {"left": [iv("pays capitale")]}, conditions=[CHEF]),
-    bouton("renommer", 47, "itemsadder:influville:renommer", OR + "Renommer le pays", lore(["Nom actuel : &f" + mp("nom")], [(GAUCHE, "Choisir un nom")]),
-           {"left": [iv("pays renommer")]}, conditions=[CHEF]),
-    bouton("chat", 49, "itemsadder:influville:message", OR + "Tchat du pays", lore(["Parle seulement aux habitants", "du pays (bascule)."], [(GAUCHE, "Activer / désactiver")]),
-           {"left": [iv("pays chat")]}),
-    bouton("quitter", 51, "itemsadder:influville:quitter", OR + "Quitter le pays",
+    bouton("quitter", 49, "itemsadder:influville:quitter", OR + "Quitter le pays",
            lore(["Ta ville quitte " + mp("nom") + "."], [(GAUCHE, "Double clic pour confirmer")]), {"left": [iv("pays quitter")]},
            conditions=["placeholder: " + mp("maire_ici") + " == oui", "placeholder: " + mp("capitale_moi") + " == non"],
            extra={"confirm": q("&#FF5C5CClique encore pour faire quitter " + mp("nom") + " à ta ville")}),
-    bouton("niveau", 52, "itemsadder:influville:niveau", OR + "Niveau du pays", lore(["Objectifs pour passer", "au niveau suivant."], [(GAUCHE, "Voir")]),
-           {"left": [iv("natifpays menu nation level")]}),
-    bouton("complet", 53, "itemsadder:influitems:unknown", OR + "Menu complet", lore(["Toutes les options des pays,", "dans leur menu d'origine."], [(GAUCHE, "Ouvrir")]),
-           {"left": [iv("natifpays menu")]}),
+    bouton("renommer", 51, "itemsadder:influville:renommer", OR + "Renommer le pays", lore(["Nom actuel : &f" + mp("nom")], [(GAUCHE, "Choisir un nom")]),
+           {"left": [iv("pays renommer")]}, conditions=[CHEF]),
 ]
-menu("pays", "menu_pays", mon_pays, doc="Mon pays : tableau de bord du pays de ma ville (/nations, /n).")
+menu("pays", "menu_pays", mon_pays, widgets=NOM_EN_TETE % mp("nom"), doc="Mon pays : tableau de bord du pays de ma ville (/pays, /p).")
 
 # ── Accueil des pays (ville sans pays) ─────────────────────────────────────
 pays_accueil = [
     retour(0, ["[menu] territoires"], "Villes et Pays", droit=RETOUR_HUB),
-    bouton("annuaire", 29, "itemsadder:influville:annuaire", OR + "Annuaire des pays",
+    bouton("annuaire", 20, "itemsadder:influville:annuaire", OR + "Annuaire des pays",
            lore(["Découvre les pays existants", "et leurs villes."], [(GAUCHE, "Ouvrir")]), {"left": [iv("ouvrir pays_annuaire depuis:pays_accueil")]}),
-    bouton("fonder", 31, "itemsadder:influitems:add", OR + "Fonder un pays",
+    bouton("fonder", 22, "itemsadder:influitems:add", OR + "Fonder un pays",
            lore(["Ta ville en devient la capitale.", "Réservé au maire.", "", "Serveur en bêta : les règles", "des pays peuvent évoluer."], [(GAUCHE, "Choisir un nom")]),
            {"left": [iv("pays creer")]}),
-    bouton("rejoindre", 33, "itemsadder:influville:inviter_ville", OR + "Rejoindre un pays",
-           lore(["Accepte l'invitation qu'un", "pays a envoyée à ta ville."], [(GAUCHE, "Choisir le pays")]), {"left": [iv("pays accepter")]}),
+    bouton("rejoindre", 24, "itemsadder:influville:inviter_ville", OR + "Rejoindre un pays",
+           lore(["Accepte l'invitation qu'un pays a envoyée à ta ville. Le chef d'un pays invite les villes depuis son menu."],
+                [(GAUCHE, "Voir les invitations")]), {"left": [iv("pays accepter")]}),
 ]
 menu("pays_accueil", "menu_pays_accueil", pays_accueil, doc="Accueil des pays, pour une ville qui n'appartient à aucun pays.")
 
@@ -861,3 +803,72 @@ for ancien in ANCIENS:
     if os.path.exists(p):
         os.remove(p)
 print("menus écrits dans", SORTIE)
+
+
+# ── Objectifs du niveau suivant (ville ou pays) ────────────────────────────
+# Remplace le menu des niveaux de Lands (2026-11-01). Contenu écrit en Java (Levels.java) : listes Flux
+# fluxlands_level_info (case 8), fluxlands_level_goals (un bouton par objectif) et fluxlands_level_up (passage).
+LISTES_NIVEAU = """lists:
+  fluxlands_level_info:
+    slots: 8
+    item:
+      material: entry
+  fluxlands_level_goals:
+    slots: 20,22,24
+    item:
+      material: entry
+  fluxlands_level_up:
+    slots: 49
+    item:
+      material: entry
+      actions:
+        left: ["[player] fluxlands niveau monter"]
+"""
+niveau = [
+    bouton("retour", 0, "itemsadder:influitems:btn_back", OR + "Retour", lore([], [(GAUCHE, "Revenir")]),
+           {"left": [iv("niveau retour")]}),
+]
+menu("ville_niveau", "menu_ville", niveau, listes=LISTES_NIVEAU,
+     doc="Objectifs du niveau suivant de ma ville ou de mon pays, et passage au niveau suivant (remplace le menu de Lands).")
+
+
+# ── Taxes du pays ──────────────────────────────────────────────────────────
+# Notre menu (2026-11-01, CountryMenus.java) : le chef fixe la taxe par chunk (curseur), la liste montre ce que chaque
+# ville membre verse.
+LISTES_TAXES = """lists:
+  fluxlands_country_tax_info:
+    slots: 22
+    item:
+      material: entry
+      actions:
+        left: ["[player] fluxlands pays taxe"]
+  fluxlands_country_tax_towns:
+    slots: 37-43,46-52
+    item:
+      material: entry
+"""
+taxes = [
+    retour(0, [iv("ouvrir pays")], "Mon pays"),
+    bouton("info", 8, "itemsadder:influville:taxes", OR + "Taxes du pays",
+           lore(["Chaque ville membre verse au pays une taxe par chunk revendiqué, prélevée avec les frais d'entretien. "
+                 "Le chef fixe le montant entre les bornes du serveur.", "", "En dessous : ce que verse chaque ville."])),
+]
+menu("pays_taxes", "menu_pays", taxes, listes=LISTES_TAXES, doc="Taxes de mon pays (remplace le menu de Lands).")
+
+# ── Effets du pays ─────────────────────────────────────────────────────────
+# Notre menu (2026-11-01) : effets débloqués par niveau (CountryEffects.java, config country-effects), le chef
+# active ceux qu'il veut dans la limite du niveau. Appliqués aux habitants du pays présents dans ses villes.
+LISTES_EFFETS = """lists:
+  fluxlands_country_effects_info:
+    slots: 8
+    item:
+      material: entry
+  fluxlands_country_effects:
+    slots: 20-24,29-33
+    item:
+      material: entry
+      actions:
+        left: ["[player] fluxlands pays effet %entry_effect%", "[sound] @click", "[refresh]"]
+"""
+effets = [retour(0, [iv("ouvrir pays")], "Mon pays")]
+menu("pays_effets", "menu_pays", effets, listes=LISTES_EFFETS, doc="Effets de mon pays (remplace le menu de Lands).")

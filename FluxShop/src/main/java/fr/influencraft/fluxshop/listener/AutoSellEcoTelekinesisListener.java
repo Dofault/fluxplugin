@@ -62,7 +62,7 @@ public class AutoSellEcoTelekinesisListener implements Listener {
         if (total > 0) {
             event.items().clear();
             event.items().addAll(kept);
-            Money.give(player, total);
+            Money.give(player, total, "autosell");
         }
     }
 }

@@ -1,40 +1,40 @@
 # FluxShop: buying menu of a shop chest (right click). One row per item: the item, then x1, x2, x10, x64.
-# Rows are lists drawn by FluxShop (same order in every list); clicks go through [shop] buy <row> <quantity>.
-# Texts of the items come from plugins/FluxShop/lang/fr.yml, icons from config.yml (shop-menu).
-title: "%fluxshop_lang_shop-menu-title%"
+# Rows are the lists of Flux's trade window (row N of every list = item N), clicks [trade] buy <row> <quantity>.
+# Button texts: trade.* of Flux's lang files, icons: trade section of Flux's config; title: shop-menu-title of FluxShop.
+title: "%flux_trade_title%"
 rows: 6
 player-inventory: visible
 vanilla-background: true
 
 lists:
-  shop_item:
+  trade_item:
     slots: 2,11,20,29,38,47
     item:
       material: entry
-  shop_buy_1:
+  trade_buy_1:
     slots: 3,12,21,30,39,48
     item:
       material: entry
       actions:
-        left: ["[shop] buy %entry_id% 1"]
-  shop_buy_2:
+        left: ["[trade] buy %entry_id% 1"]
+  trade_buy_2:
     slots: 4,13,22,31,40,49
     item:
       material: entry
       actions:
-        left: ["[shop] buy %entry_id% 2"]
-  shop_buy_10:
+        left: ["[trade] buy %entry_id% 2"]
+  trade_buy_10:
     slots: 5,14,23,32,41,50
     item:
       material: entry
       actions:
-        left: ["[shop] buy %entry_id% 10"]
-  shop_buy_64:
+        left: ["[trade] buy %entry_id% 10"]
+  trade_buy_64:
     slots: 6,15,24,33,42,51
     item:
       material: entry
       actions:
-        left: ["[shop] buy %entry_id% 64"]
+        left: ["[trade] buy %entry_id% 64"]
 
 items:
   filler:

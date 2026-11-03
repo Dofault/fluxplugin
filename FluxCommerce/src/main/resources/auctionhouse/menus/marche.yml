@@ -1,0 +1,115 @@
+# Market (/hdv, /marche): the auction house and the chest shops together, vanilla theme (theme.menus.marche of Flux's
+# config). Row 1: back, the offers, menu icon. Left column: sell, source, sort; right column: my listings, search.
+# Rows 1-4: 28 offers (left: buy / bid / go there, right: every offer of the item or town page). Row 5: pages.
+# Inventory row: my bids, history, price of the item in hand, open a shop. Lists built by FluxCommerce.
+rows: 6
+player-inventory: hidden
+vanilla-background: false
+
+open-actions:
+  - "[sound] @page"
+
+lists:
+  hdv_market:
+    slots: "10-16, 19-25, 28-34, 37-43"
+    item:
+      material: entry
+      actions:
+        left: ["%entry_left%"]
+        right: ["%entry_right%"]
+        shift-left: ["%entry_shift_left%"]
+    empty:
+      material: "itemsadder:influitems:unknown"
+      name: "Aucune offre"
+      lore:
+        - "@desc Rien ne correspond. Essaie une autre recherche ou l'affichage « Tout »."
+  hdv_market_info:
+    slots: [17]
+    item:
+      material: entry
+  hdv_sell:
+    slots: [18]
+    item:
+      material: entry
+      actions:
+        left: ["[hdv] open sell"]
+  hdv_mine:
+    slots: [26]
+    item:
+      material: entry
+      actions:
+        left: ["[hdv] open listings"]
+        right: ["[hdv] collect"]
+  hdv_source:
+    slots: [27]
+    item:
+      material: entry
+      actions:
+        left: ["[list] hdv_market filter"]
+        right: ["[list] hdv_market filter-prev"]
+  hdv_search:
+    slots: [35]
+    item:
+      material: entry
+      actions:
+        left: ["[hdv] search"]
+        right: ["[list] hdv_market clear"]
+  hdv_sort:
+    slots: [36]
+    item:
+      material: entry
+      actions:
+        left: ["[list] hdv_market sort"]
+        right: ["[list] hdv_market sort-prev"]
+  hdv_average:
+    slots: [59]
+    item:
+      material: entry
+      actions:
+        left: ["[hdv] average"]
+        right: ["[hdv] average search"]
+
+widgets:
+  pages:
+    type: pager
+    list: hdv_market
+    prev: 45
+    next: 53
+
+items:
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
+    slots: [9]
+    lore:
+      - "@left Revenir"
+    actions:
+      left: ["[hdv] back"]
+  encheres:
+    material: "itemsadder:influmarche:enchere"
+    name: "Mes enchères"
+    slots: [55]
+    lore:
+      - "@desc Les enchères où tu as fait une offre : suivi et objets remportés."
+      - "@left Ouvrir"
+    actions:
+      left: ["[hdv] open bids"]
+  historique:
+    material: "itemsadder:influmarche:historique"
+    name: "Historique"
+    slots: [57]
+    lore:
+      - "@desc Tes ventes et tes achats, à l'HDV et dans les échoppes (/hdv history)."
+      - "@left Ouvrir"
+    actions:
+      left: ["[hdv] open history"]
+  echoppe:
+    material: "itemsadder:influitems:add"
+    name: "Ouvrir une échoppe"
+    slots: [61]
+    lore:
+      - "@desc Accroupi + clic droit sur un coffre de ta ville, l'objet en main, puis choisis le prix."
+      - "@kv Pas de taxe du serveur | la ville prend son droit de place."
+      - "@left Mes échoppes"
+    actions:
+      left: ["[hdv] myshops"]

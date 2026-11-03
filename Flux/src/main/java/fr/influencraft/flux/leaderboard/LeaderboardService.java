@@ -38,7 +38,7 @@ import java.util.regex.Pattern;
 
 /**
  * Engine of {@link Leaderboards}: boards of Flux's config ({@code leaderboards}), values recorded in the table
- * {@code flux_leaderboard} (online players every {@code refresh-minutes} and on quit; every known player once, a few
+ * {@code flux_core_leaderboard} (online players every {@code refresh-minutes} and on quit; every known player once, a few
  * per second, when a board has no value yet), top kept in memory, placeholders {@code %flux_top_...%}.
  */
 public final class LeaderboardService implements Leaderboards.Service, Listener {
@@ -62,11 +62,12 @@ public final class LeaderboardService implements Leaderboards.Service, Listener 
     }
 
     public void start(ConfigurationSection config) {
-        table = Database.table("flux_leaderboard");
+        table = Database.table("flux_core_leaderboard");
         try (Connection c = Database.connection(); Statement st = c.createStatement()) {
+            Database.renameTable(c, Database.table("flux_leaderboard"), table, "flux_leaderboard_value"); // name before 2026-10-31
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + table + " (board " + Database.dialect().key(64) + " NOT NULL, uuid "
                     + Database.dialect().key(36) + " NOT NULL, name VARCHAR(32), value DOUBLE NOT NULL, PRIMARY KEY (board, uuid))");
-            Database.index(c, "flux_leaderboard_value", table, "board, value", false);
+            Database.index(c, "flux_core_leaderboard_value", table, "board, value", false);
         } catch (SQLException e) {
             flux.getLogger().severe("Could not create " + table + ": " + e.getMessage());
             return;
@@ -121,6 +122,10 @@ public final class LeaderboardService implements Leaderboards.Service, Listener 
         if (b.getBoolean("money", false)) {
             return p -> Economy.main() == null ? null : Economy.main().balance(p);
         }
+        if (b.isSet("currency")) {
+            String id = b.getString("currency", "");
+            return p -> Economy.get(id) == null ? null : Economy.get(id).balance(p);
+        }
         String placeholder = b.getString("placeholder");
         if (placeholder == null) return null;
         return p -> number(placeholder(p, placeholder));
@@ -145,7 +150,8 @@ public final class LeaderboardService implements Leaderboards.Service, Listener 
             case "ticks" -> v -> Format.duration((long) v / 20);
             case "seconds" -> v -> Format.duration((long) v);
             case "money" -> v -> Economy.main() == null ? Format.number(v) : Economy.main().format(v);
-            default -> v -> Format.number(v);
+            // a currency id: its own format (Flux's config currencies.<id>.format)
+            default -> v -> Economy.get(kind) == null ? Format.number(v) : Economy.get(kind).format(v);
         };
     }
 

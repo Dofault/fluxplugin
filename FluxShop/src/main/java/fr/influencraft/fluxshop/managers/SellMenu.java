@@ -198,7 +198,7 @@ public class SellMenu {
             else giveBack.add(item);
         }
         total = PriceManager.roundMoney(total);
-        if (total > 0 && money.give(player, total)) {
+        if (total > 0 && money.give(player, total, Money.origin("sell"))) {
             player.sendMessage(lang.get("shop-sell-success", Map.of("amount", fr.influencraft.flux.api.util.Format.decimal(total))));
             fr.influencraft.flux.api.util.Sounds.cue(player, "complete");
             activity.markSold(player.getUniqueId());

@@ -1,14 +1,13 @@
 package fr.influencraft.fluxlands;
 
 import fr.influencraft.flux.api.dialog.Dialogs;
-import fr.influencraft.flux.api.util.Format;
 import org.bukkit.entity.Player;
 
 import java.util.List;
 import java.util.function.BiConsumer;
 
 /**
- * Typed inputs of the town menus (amounts, names, search, invitations), as Flux dialog windows instead of Lands'
+ * Typed inputs of the town menus (names, search, invitations; amounts use {@code Dialogs.Form#amount}), as Flux dialog windows instead of Lands'
  * and PlayerWarps' "type your answer in the chat". Cancel, Escape or an empty answer reopen {@code menuRetour}.
  */
 final class Saisie {
@@ -26,11 +25,6 @@ final class Saisie {
                 .onSubmit((pl, a) -> apres.accept(pl, a.text("valeur")))
                 .onCancel(pl -> plugin.ouvrirMenu(pl, menuRetour))
                 .open();
-    }
-
-    /** Positive whole amount, or -1 ("10 000", "10k", "2,5k" accepted). */
-    static long montant(String s) {
-        return Format.parseAmount(s);
     }
 
     /**
@@ -67,12 +61,28 @@ final class Saisie {
                 .open();
     }
 
-    /** Answer of the plot window: Y min / Y max are null when left empty. */
-    interface ReponseParcelle {
-        void accepter(Player p, String nom, boolean solAuCiel, Integer yMin, Integer yMax);
+    /** What follows the creation of a plot: nothing (its menu opens), or the Agency window to rent or sell it. */
+    enum Ensuite {
+        RIEN("Ouvrir la parcelle"), LOCATION("La mettre en location"), VENTE("La mettre en vente");
+
+        final String libelle;
+
+        Ensuite(String libelle) {
+            this.libelle = libelle;
+        }
+
+        static Ensuite de(String libelle) {
+            for (Ensuite e : values()) if (e.libelle.equals(libelle)) return e;
+            return RIEN;
+        }
     }
 
-    /** Plot name, "from ground to sky" box and two optional Y min / Y max fields. */
+    /** Answer of the plot window: Y min / Y max are null when left empty. */
+    interface ReponseParcelle {
+        void accepter(Player p, String nom, boolean solAuCiel, Integer yMin, Integer yMax, Ensuite ensuite);
+    }
+
+    /** Plot name, "from ground to sky" box, two optional Y min / Y max fields and what to do once created. */
     void ouvrirParcelle(Player p, String titre, String explication, String nomInitial, boolean solAuCiel,
                         String yMinInitial, String yMaxInitial, String menuRetour, ReponseParcelle apres) {
         Dialogs.form(p, titre).body(explication)
@@ -80,8 +90,10 @@ final class Saisie {
                 .toggle("case", "Du sol au ciel (toute la hauteur)", solAuCiel)
                 .smallInput("ymin", "Y min (vide = sélection)", yMinInitial, 5)
                 .smallInput("ymax", "Y max (vide = sélection)", yMaxInitial, 5)
+                .choice("ensuite", "Ensuite", java.util.Arrays.stream(Ensuite.values()).map(e -> e.libelle).toList())
+                .buttons(nomInitial.isEmpty() ? "Créer la parcelle" : "Délimiter", "Annuler")
                 .onSubmit((pl, a) -> apres.accepter(pl, a.text("valeur").replace(' ', '_'), a.toggle("case"),
-                        a.integer("ymin"), a.integer("ymax")))
+                        a.integer("ymin"), a.integer("ymax"), Ensuite.de(a.text("ensuite"))))
                 .onCancel(pl -> plugin.ouvrirMenu(pl, menuRetour))
                 .open();
     }

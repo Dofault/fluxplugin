@@ -142,7 +142,9 @@ public final class RewardService implements Rewards.Backend, Listener {
             }
             if (!store.markClaimed(stored.id())) continue; // claimed meanwhile
             room -= r.slots();
-            run(player, r.commands());
+            // money given by the commands is recorded under the reward (Flux:reward_<source>, its label as detail)
+            fr.influencraft.flux.api.economy.Ledger.run(fr.influencraft.flux.api.economy.Origin.of(flux, "reward_" + r.source())
+                    .detail(fr.influencraft.flux.api.text.Texts.plain(r.label(), null)), () -> run(player, r.commands()));
             delivered++;
             // the commands may have filled more (or fewer) slots than announced
             room = Math.min(room, Inventories.freeSlots(player));

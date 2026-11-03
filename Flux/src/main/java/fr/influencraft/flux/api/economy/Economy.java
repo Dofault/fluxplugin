@@ -12,13 +12,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 /**
- * Currencies of the suite. {@code vault} and {@code playerpoints} are provided by Flux; a plugin adds its own with
- * {@link #register}. The display format of each currency is set in Flux's config ({@code currencies.<id>.format},
- * {@code %amount%} = formatted number), with {@link #main()} = the {@code currencies.main} one.
+ * Currencies of the suite. Declared in Flux's config ({@code currencies.<id>}): {@code type: vault} is the Vault
+ * economy (BitBlock, kept by CMI), {@code type: flux} a currency Flux keeps in its own database (Influence, casino
+ * chips). Adding a currency is a config entry; a plugin may still add one in code with {@link #register}. The
+ * display format of each currency is {@code currencies.<id>.format} ({@code %amount%} = formatted number), its name
+ * {@code money.names.<id>} in Flux's lang, the look of its gain / loss messages {@code money} in style.yml.
+ * {@link #main()} = the {@code currencies.main} one.
  *
  * <pre>
  *   Currency money = Economy.main();
- *   if (!money.take(player, price)) { messages.send(player, "not-enough-money", "%price%", money.format(price)); return; }
+ *   if (!money.take(player, price, Origin.of(this, "repair"))) { messages.send(player, "not-enough-money", "%price%", money.format(price)); return; }
+ *   player.sendMessage(money.format(money.balance(player)));   // every balance shown through format(): one look everywhere
  * </pre>
  */
 public final class Economy {
@@ -26,10 +30,22 @@ public final class Economy {
     private record Owned(Plugin owner, Currency currency) {
     }
 
+    /** Sends the standard gain / loss message (set by Flux). */
+    public interface Notifier {
+        void notify(OfflinePlayer player, Currency currency, double signedAmount, Origin origin);
+    }
+
     private static final Map<String, Owned> CURRENCIES = new ConcurrentHashMap<>();
+    /** Former identifiers still accepted in configs ({@code playerpoints} = {@code influence}). */
+    private static final Map<String, String> ALIASES = new ConcurrentHashMap<>();
     private static volatile String main = "vault";
     private static volatile Function<String, String> formats = id -> "%amount%";
     private static volatile Function<String, String> icons = id -> "GOLD_NUGGET";
+    private static volatile Function<String, String> names = id -> id;
+    private static volatile Notifier notifier = (p, c, a, o) -> {
+    };
+    /** True when an adapter reports every Vault balance change (CMI): the Vault currency then fires no event itself. */
+    private static volatile boolean vaultObserved;
 
     private Economy() {
     }
@@ -45,9 +61,30 @@ public final class Economy {
         icons = iconOfCurrency;
     }
 
+    /** Called by Flux: names from its lang, the message sender. */
+    public static void configureDisplay(Function<String, String> nameOfCurrency, Notifier sender) {
+        names = nameOfCurrency;
+        notifier = sender;
+    }
+
+    /** Called by Flux's providers: an adapter fires a {@link BalanceChangeEvent} for every Vault change. */
+    public static void vaultObserved(boolean observed) {
+        vaultObserved = observed;
+    }
+
+    /** A former identifier of a currency, still accepted by {@link #get}. */
+    public static void alias(String former, String id) {
+        ALIASES.put(former.toLowerCase(Locale.ROOT), id.toLowerCase(Locale.ROOT));
+    }
+
     /** Menu icon of a currency ({@code currencies.<id>.icon}, Flux material syntax), the same in every plugin. */
     public static String icon(String currencyId) {
-        return icons.apply(currencyId.toLowerCase(Locale.ROOT));
+        return icons.apply(resolve(currencyId));
+    }
+
+    /** Name of a currency as players read it ({@code money.names.<id>}), e.g. "BitBlock". */
+    public static String name(String currencyId) {
+        return names.apply(resolve(currencyId));
     }
 
     public static void register(Plugin owner, Currency currency) {
@@ -58,9 +95,14 @@ public final class Economy {
         CURRENCIES.values().removeIf(o -> o.owner() == owner);
     }
 
-    /** Currency by identifier, or null when unknown. */
+    private static String resolve(String id) {
+        String low = id.toLowerCase(Locale.ROOT);
+        return CURRENCIES.containsKey(low) ? low : ALIASES.getOrDefault(low, low);
+    }
+
+    /** Currency by identifier (or former identifier), or null when unknown. */
     public static Currency get(String id) {
-        Owned o = id == null ? null : CURRENCIES.get(id.toLowerCase(Locale.ROOT));
+        Owned o = id == null ? null : CURRENCIES.get(resolve(id));
         return o == null ? null : o.currency();
     }
 
@@ -78,7 +120,26 @@ public final class Economy {
     public static String format(String currencyId, double amount) {
         // whole amounts without decimals, cents kept when there are some
         String shown = Math.abs(amount - Math.rint(amount)) < 0.005 ? Format.number(Math.rint(amount)) : Format.decimal(amount);
-        return formats.apply(currencyId.toLowerCase(Locale.ROOT)).replace("%amount%", shown);
+        return formats.apply(resolve(currencyId)).replace("%amount%", shown);
+    }
+
+    /**
+     * Short form of an amount for tight spots (main-menu dashboard, below the name): 950, 12K, 1,2M, 80M, 3,4Md.
+     * Rounded down, so a balance never looks bigger than it is; one decimal under 10 of a unit.
+     */
+    public static String compact(double amount) {
+        double a = Math.abs(amount);
+        String sign = amount < 0 ? "-" : "";
+        String[] units = {"Md", "M", "K"};
+        double[] sizes = {1e9, 1e6, 1e3};
+        for (int i = 0; i < units.length; i++) {
+            if (a < sizes[i]) continue;
+            double v = a / sizes[i];
+            String shown = v < 10 ? Format.decimal(Math.floor(v * 10) / 10) : Format.number(Math.floor(v));
+            if (shown.endsWith(",0") || shown.endsWith(".0")) shown = shown.substring(0, shown.length() - 2);
+            return sign + shown + units[i];
+        }
+        return sign + Format.number(Math.floor(a));
     }
 
     /** Rounds to the cent, never below 0.01 for a positive amount (money rule of the suite). */
@@ -87,9 +148,22 @@ public final class Economy {
         return Math.max(0.01, Math.round(amount * 100) / 100.0);
     }
 
+    /**
+     * Sends the standard gain (amount &gt; 0) or loss message of the suite to the player, when online: the look of
+     * style.yml {@code money}, the words of Flux's lang {@code money}, the origin's label. Used by
+     * {@link Origin#notifyPlayer()}; call it directly for a movement made outside {@link Currency}.
+     */
+    public static void notify(OfflinePlayer player, Currency currency, double signedAmount, Origin origin) {
+        if (player != null && currency != null && Math.abs(signedAmount) >= 0.005) notifier.notify(player, currency, signedAmount, origin);
+    }
+
     // ---------------------------------------------------------------- built-in currencies
 
-    /** Any Vault economy, looked up on every call (the provider can register late, e.g. CMI). */
+    /**
+     * Any Vault economy, looked up on every call (the provider can register late, e.g. CMI). When no adapter reports
+     * Vault's balance changes ({@link #vaultObserved}), it fires the {@link BalanceChangeEvent} itself, so the
+     * movements made through the suite are still recorded.
+     */
     static final class VaultCurrency implements Currency {
         private static net.milkbowl.vault.economy.Economy provider() {
             var rsp = org.bukkit.Bukkit.getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
@@ -117,82 +191,25 @@ public final class Economy {
             var e = provider();
             if (e == null) return false;
             if (amount <= 0) return true;
-            return e.has(player, amount) && e.withdrawPlayer(player, amount).transactionSuccess();
+            double before = vaultObserved ? 0 : e.getBalance(player);
+            boolean done = e.has(player, amount) && e.withdrawPlayer(player, amount).transactionSuccess();
+            if (done && !vaultObserved) fire(player, before, e.getBalance(player), false);
+            return done;
         }
 
         @Override
         public boolean give(OfflinePlayer player, double amount) {
             var e = provider();
             if (e == null) return false;
-            return amount <= 0 || e.depositPlayer(player, amount).transactionSuccess();
+            if (amount <= 0) return true;
+            double before = vaultObserved ? 0 : e.getBalance(player);
+            boolean done = e.depositPlayer(player, amount).transactionSuccess();
+            if (done && !vaultObserved) fire(player, before, e.getBalance(player), true);
+            return done;
         }
 
-        @Override
-        public String format(double amount) {
-            return Economy.format(id(), amount);
-        }
-    }
-
-    /** PlayerPoints (whole points), through its public API by reflection: no compile dependency. */
-    static final class PlayerPointsCurrency implements Currency {
-        private Object api;
-        private java.lang.reflect.Method look, take, give;
-
-        private boolean resolve() {
-            Plugin p = org.bukkit.Bukkit.getPluginManager().getPlugin("PlayerPoints");
-            if (p == null || !p.isEnabled()) return false;
-            if (api != null) return true;
-            try {
-                Object instance = p.getClass().getMethod("getAPI").invoke(p);
-                look = instance.getClass().getMethod("look", java.util.UUID.class);
-                take = instance.getClass().getMethod("take", java.util.UUID.class, int.class);
-                give = instance.getClass().getMethod("give", java.util.UUID.class, int.class);
-                api = instance;
-                return true;
-            } catch (ReflectiveOperationException e) {
-                return false;
-            }
-        }
-
-        @Override
-        public String id() {
-            return "playerpoints";
-        }
-
-        @Override
-        public boolean available() {
-            return resolve();
-        }
-
-        @Override
-        public double balance(OfflinePlayer player) {
-            try {
-                return resolve() ? ((Number) look.invoke(api, player.getUniqueId())).doubleValue() : 0;
-            } catch (ReflectiveOperationException e) {
-                return 0;
-            }
-        }
-
-        @Override
-        public boolean take(OfflinePlayer player, double amount) {
-            int points = (int) Math.ceil(amount - 1e-9);
-            if (points <= 0) return resolve();
-            try {
-                return resolve() && balance(player) >= points && (boolean) take.invoke(api, player.getUniqueId(), points);
-            } catch (ReflectiveOperationException e) {
-                return false;
-            }
-        }
-
-        @Override
-        public boolean give(OfflinePlayer player, double amount) {
-            int points = (int) Math.floor(amount + 1e-9);
-            if (points <= 0) return resolve();
-            try {
-                return resolve() && (boolean) give.invoke(api, player.getUniqueId(), points);
-            } catch (ReflectiveOperationException e) {
-                return false;
-            }
+        private void fire(OfflinePlayer player, double from, double to, boolean deposit) {
+            org.bukkit.Bukkit.getPluginManager().callEvent(new BalanceChangeEvent(player.getUniqueId(), id(), from, to, deposit));
         }
 
         @Override
@@ -204,6 +221,5 @@ public final class Economy {
     /** Called by Flux at start-up. The Vault one is only created when Vault is installed. */
     public static void registerBuiltIns(Plugin flux) {
         if (org.bukkit.Bukkit.getPluginManager().getPlugin("Vault") != null) register(flux, new VaultCurrency());
-        register(flux, new PlayerPointsCurrency());
     }
 }

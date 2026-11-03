@@ -1,0 +1,76 @@
+# My bids: auctions the player bid on (highest bid or beaten, bids given back at once) and auctions won, to collect.
+# Row 1: back, menu icon. Rows 1-4: auctions. Row 5: pages. Inventory row: collect everything, market, history,
+# my listings. Lists built by FluxCommerce.
+rows: 6
+player-inventory: hidden
+vanilla-background: false
+
+open-actions:
+  - "[sound] @page"
+
+lists:
+  hdv_bids_info:
+    slots: [8]
+    item:
+      material: entry
+  hdv_bids:
+    slots: "10-16, 19-25, 28-34, 37-43"
+    item:
+      material: entry
+      actions:
+        left: ["%entry_left%"]
+    empty:
+      material: "itemsadder:influitems:unknown"
+      name: "Aucune offre"
+      lore:
+        - "@desc Tu n'as fait aucune offre en cours. Les enchères se trouvent au marché (affichage HDV)."
+  hdv_collect:
+    slots: [55]
+    item:
+      material: entry
+      actions:
+        left: ["[hdv] collect"]
+
+widgets:
+  pages:
+    type: pager
+    list: hdv_bids
+    prev: 45
+    next: 53
+
+items:
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
+    slots: [0]
+    lore:
+      - "@left Revenir au marché"
+    actions:
+      left: ["[hdv] open market"]
+  marche:
+    material: "itemsadder:influmarche:marche"
+    name: "Marché"
+    slots: [57]
+    lore:
+      - "@desc L'HDV et les échoppes des villes."
+      - "@left Ouvrir"
+    actions:
+      left: ["[hdv] open market"]
+  historique:
+    material: "itemsadder:influmarche:historique"
+    name: "Historique"
+    slots: [59]
+    lore:
+      - "@desc Tes ventes et tes achats, à l'HDV et dans les échoppes."
+      - "@left Ouvrir"
+    actions:
+      left: ["[hdv] open history"]
+  ventes:
+    material: "itemsadder:influmarche:mes_ventes"
+    name: "Mes ventes"
+    slots: [61]
+    lore:
+      - "@desc Tes offres à l'HDV et ce qu'il y a à récupérer."
+      - "@left Ouvrir"
+    actions:
+      left: ["[hdv] open listings"]

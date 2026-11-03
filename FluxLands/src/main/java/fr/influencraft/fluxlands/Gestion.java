@@ -18,7 +18,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.Rotatable;
 import org.bukkit.block.sign.Side;
@@ -237,13 +236,19 @@ final class Gestion {
         return null;
     }
 
+    /** A role given to residents (normal ones, role of new residents): the mayor renames and orders them. */
+    static boolean roleHabitant(Role r) {
+        return r.getType() == me.angeschossen.lands.api.role.enums.RoleType.NORMAL
+                || r.getType() == me.angeschossen.lands.api.role.enums.RoleType.ENTRY;
+    }
+
     static String typeRole(Role r) {
         return switch (r.getType()) {
             case OWNER -> "Maire";
             case VISITOR -> "Passants";
             case ENTRY -> "Nouveaux habitants";
             case TENANT -> "Locataires";
-            case NATION -> "Nation";
+            case NATION -> "Compatriote";
             case ALLY -> "Alliés";
             default -> "Rôle d'habitant";
         };
@@ -309,22 +314,21 @@ final class Gestion {
     // ── Publication et retrait d'une annonce ────────────────────────────────
 
     /**
-     * Pose l'annonce de la parcelle à l'endroit où se tient le joueur (qui doit être dedans).
-     * Renvoie un message d'erreur, ou null si la pancarte a été acceptée par Lands.
+     * Places the plot's listing where the player stands (spot checked before by {@link Listings#spotProblem}).
+     * A listing nobody took yet is replaced: Lands removes the former sign or hologram itself. Returns an error
+     * message, or null when Lands accepted the sign.
      */
-    String publier(Player p, Land land, Area zone, Vues.Etat e) {
-        Area ici = land.getArea(p.getLocation());
-        if (ici == null || ici.isDefault() || !ici.getName().equalsIgnoreCase(zone.getName())) {
-            return "Place-toi dans la parcelle " + zone.getName() + ", là où l'annonce doit apparaître.";
+    String publier(Player p, Area zone, Listings.Draft d) {
+        RentalBase offre = zone.getRentalOffer();
+        if (offre != null && offre.getType() != RentalType.RENT && offre.getType() != RentalType.SELL) {
+            return "<t:erreur>La parcelle</t> " + Fmt.v(zone.getName()) + " <t:erreur>est occupée.</t> Mets d'abord fin à l'occupation.";
         }
-        if (zone.getRentalOffer() != null) return "Cette parcelle a déjà une annonce : retire-la d'abord.";
         Block b = p.getLocation().getBlock();
-        if (!b.getType().isAir() || !b.getRelative(BlockFace.DOWN).getType().isSolid()) {
-            return "Place-toi sur un sol plein, sans bloc à tes pieds : l'annonce s'y affichera.";
-        }
-        List<String> lignes = e.location
-                ? List.of("Lands", "rent " + zone.getName(), e.periode + "d " + e.duree + "d", String.valueOf(e.prix))
-                : List.of("Lands", "sell " + zone.getName(), String.valueOf(e.prix), "");
+        // Lands' sign format: "<period> [max]" in days, max left out = no limit (its upper bound)
+        List<String> lignes = d.rent()
+                ? List.of("Lands", "rent " + zone.getName(), d.periodDays() + "d" + (d.maxDays() > 0 ? " " + d.maxDays() + "d" : ""),
+                String.valueOf(d.price()))
+                : List.of("Lands", "sell " + zone.getName(), String.valueOf(d.price()), "");
         b.setType(Material.OAK_SIGN, false);
         if (b.getBlockData() instanceof Rotatable rot) {
             rot.setRotation(p.getFacing().getOppositeFace());
@@ -336,7 +340,7 @@ final class Gestion {
         Bukkit.getPluginManager().callEvent(ev);
         if (ev.isCancelled()) {
             if (b.getType() == Material.OAK_SIGN) b.setType(Material.AIR, false);
-            return "Lands a refusé l'annonce (voir le message au-dessus).";
+            return "<t:erreur>Lands a refusé l'annonce ici.</t> Essaie un autre endroit de ta ville, hors de toute parcelle louée ou vendue (voir le message de Lands au-dessus s'il y en a un).";
         }
         if (b.getState() instanceof Sign sign) {
             List<Component> finales = ev.lines();

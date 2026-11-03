@@ -32,7 +32,7 @@ public final class ChestShopTradeEvent extends Event {
 
     public String customerName() { return customerName; }
 
-    /** Amount traded as counted by the shop plugin (bundles or items). */
+    /** Items traded (bundles times the items of a bundle). */
     public int amount() { return amount; }
 
     /** Money of the trade, tax excluded. */

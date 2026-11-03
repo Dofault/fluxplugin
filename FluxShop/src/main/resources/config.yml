@@ -17,23 +17,14 @@ shop:
     - CHEST
 
 # Menu d'un coffre magasin (achat seul) : l'objet puis ses boutons x1, x2, x10,
-# x64, centrés. La taille de la pile du bouton affiche la quantité. Double
-# confirmation : le 1er clic arme le bouton (buy-button-armed), le 2e achète.
-# Juste après un achat, le même bouton achète sans confirmation pendant
-# quick-buy-seconds (relancé à chaque achat) : achat en masse en cliquant vite.
+# x64 : fenêtre d'échange de Flux (icônes, double clic et achat en rafale dans la
+# section trade de plugins/Flux/config.yml, textes trade.* de la langue de Flux).
 # Disposition, vitres et titres : menus Flux plugins/FluxShop/menus/ (shop, shop_sell...).
 # custom-model-data > 0 : icône ItemsAdder posée sur le matériau (pas de hook
 # ItemsAdder, cf. ItemsAdder/storage/items_ids_cache.yml).
 shop-menu:
   # Délai avant qu'un bouton armé ne redevienne normal tout seul.
   confirm-timeout-seconds: 5
-  quick-buy-seconds: 1
-  buy-button:
-    material: LIME_STAINED_GLASS_PANE
-    custom-model-data: 0
-  buy-button-armed:
-    material: ORANGE_STAINED_GLASS_PANE
-    custom-model-data: 0
   # Éditeur : influitems:add (10021), influitems:settings (10040),
   # influitems:chest_delete (10024).
   editor-add:

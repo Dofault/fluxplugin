@@ -41,8 +41,13 @@ public sealed interface Widget {
                boolean frame, List<Requirement> requirements) implements Widget {
     }
 
-    /** Buttons on {@code prev} / {@code next}, field centred between them on their row. */
-    record Pager(String id, String list, int prev, int next, List<Requirement> requirements) implements Widget {
+    /**
+     * Buttons on {@code prev} / {@code next}, field centred between them on their row. {@code page} / {@code pages}:
+     * placeholders of the current page (1-based) and page count; {@code prevActions} / {@code nextActions}: what the
+     * buttons run. All default to the Flux list {@code list}; set them to page another plugin's list (marché).
+     */
+    record Pager(String id, String list, int prev, int next, String page, String pages, List<String> prevActions,
+                 List<String> nextActions, List<Requirement> requirements) implements Widget {
     }
 
     record Lit(String id, int slot, List<Requirement> requirements) implements Widget {

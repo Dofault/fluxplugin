@@ -43,6 +43,7 @@ public class GestionnaireConfig {
     public String getUtilisateurBDD()   { return config.getString("base-de-donnees.utilisateur", "root"); }
     public String getMotDePasseBDD()    { return config.getString("base-de-donnees.mot-de-passe", "motdepasse"); }
     public int    getTaillePool()       { return config.getInt("base-de-donnees.taille-pool", 10); }
+    /** Prefix of the tables before 2026-10-31 (now flux_referral_*), only read to rename them once. */
     public String getPrefixeTables()    { return config.getString("base-de-donnees.prefixe-tables", "parr_"); }
     public String getFichierLocalBDD()  { return config.getString("base-de-donnees.fichier-local", "parrainage.db"); }
 

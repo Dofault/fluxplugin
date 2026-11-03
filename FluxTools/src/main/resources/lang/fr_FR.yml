@@ -12,3 +12,8 @@ annonce: "&#FF4D6D◆ &f%joueur% &#FFD6DEa maîtrisé sa %outil%&#FFD6DE !"
 brise: "&#FFD6DEContrat rempli, ton outil s'est brisé."
 gain: "&r&f\uE023 &#B376E5Tu as gagné &f%montant% &#B376E5Bitblock &#2ECF7B▲ &7[ᴏᴜᴛɪʟ]"
 verrou: "&#FFD6DELes enchantements de cet outil évoluent avec lui : &fimpossible de les modifier&#FFD6DE."
+# Noms des origines dans l'historique /compte et les messages de gain / perte de Flux.
+origins:
+  default: "Outil"
+  quest: "Outil"
+  repair: "Réparation"

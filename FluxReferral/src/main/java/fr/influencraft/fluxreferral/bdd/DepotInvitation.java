@@ -17,17 +17,15 @@ import java.util.UUID;
 public class DepotInvitation {
 
     private final GestionnaireBDD gestionnaireBDD;
-    private final String prefixe;
 
     public DepotInvitation(FluxReferralPlugin plugin, GestionnaireBDD gestionnaireBDD) {
         this.gestionnaireBDD = gestionnaireBDD;
-        this.prefixe = plugin.getGestionnaireConfig().getPrefixeTables();
     }
 
     /** @return true si l'invitation a été créée (false si le filleul en avait déjà une) */
     public boolean inserer(UUID filleulUuid, UUID parrainUuid, String hote) throws SQLException {
-        String sql = gestionnaireBDD.insertIgnore() + " INTO `" + prefixe
-            + "invitations` (filleul_uuid, parrain_uuid, hote) VALUES (?, ?, ?)";
+        String sql = gestionnaireBDD.insertIgnore() + " INTO `" + Tables.INVITATIONS
+            + "` (filleul_uuid, parrain_uuid, hote) VALUES (?, ?, ?)";
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, filleulUuid.toString());
@@ -38,7 +36,7 @@ public class DepotInvitation {
     }
 
     public Optional<Invitation> trouver(UUID filleulUuid) throws SQLException {
-        String sql = "SELECT * FROM `" + prefixe + "invitations` WHERE filleul_uuid = ?";
+        String sql = "SELECT * FROM `" + Tables.INVITATIONS + "` WHERE filleul_uuid = ?";
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, filleulUuid.toString());
@@ -54,7 +52,7 @@ public class DepotInvitation {
     }
 
     public void supprimer(UUID filleulUuid) throws SQLException {
-        String sql = "DELETE FROM `" + prefixe + "invitations` WHERE filleul_uuid = ?";
+        String sql = "DELETE FROM `" + Tables.INVITATIONS + "` WHERE filleul_uuid = ?";
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, filleulUuid.toString());
@@ -63,7 +61,7 @@ public class DepotInvitation {
     }
 
     public void mettreAJourTempsJoue(UUID filleulUuid, long secondes) throws SQLException {
-        String sql = "UPDATE `" + prefixe + "invitations` SET temps_joue = ? WHERE filleul_uuid = ?";
+        String sql = "UPDATE `" + Tables.INVITATIONS + "` SET temps_joue = ? WHERE filleul_uuid = ?";
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, secondes);
@@ -74,8 +72,8 @@ public class DepotInvitation {
 
     /** Filleuls en attente d'un parrain, du plus ancien au plus récent. */
     public List<Profil.Filleul> listerParParrain(UUID parrainUuid) throws SQLException {
-        String sql = "SELECT j.pseudo, i.temps_joue FROM `" + prefixe + "invitations` i"
-            + " JOIN `" + prefixe + "joueurs` j ON j.uuid = i.filleul_uuid"
+        String sql = "SELECT j.pseudo, i.temps_joue FROM `" + Tables.INVITATIONS + "` i"
+            + " JOIN `" + Tables.PLAYERS + "` j ON j.uuid = i.filleul_uuid"
             + " WHERE i.parrain_uuid = ? ORDER BY i.date_arrivee ASC";
         List<Profil.Filleul> liste = new ArrayList<>();
         try (Connection conn = gestionnaireBDD.obtenirConnexion();

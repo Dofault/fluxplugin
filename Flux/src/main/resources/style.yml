@@ -77,3 +77,23 @@ variants:
       <info>&#FF4D6D{text}</info>
 
       <actions>{icon} &f{label}</actions>
+
+# Gain / loss messages of every currency (the words live in the lang file: money.message, money.verbs, money.names).
+#   {icon} {color}: of the currency (currencies.<id>), {amount}: the amount template below, {arrow}: arrow-gain or
+#   arrow-loss, {origin}: the origin template below (empty when the origin is unknown).
+money:
+  color: "&#B376E5"
+  amount: "&f{amount}"
+  arrow-gain: "&#2ECF7B▲"
+  arrow-loss: "&#FF5C5C▼"
+  origin: "&7 [<smallcaps>{origin}</smallcaps>]"
+  currencies:
+    vault:
+      color: "&#B376E5"
+      icon: "&r&f$"
+    influence:
+      color: "&#E060A0"
+      icon: "&r&f✦"
+    chips:
+      color: "&#FFD94D"
+      icon: "&r&f●"

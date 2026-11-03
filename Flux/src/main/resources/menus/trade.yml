@@ -1,0 +1,43 @@
+# Flux: buying window of one item (TradeWindow.buy), e.g. a player's chest shop. The item, then x1, x2, x10, x64
+# bundles: a first click arms the button, a second one buys. Items drawn by Flux (trade service), texts trade.* of
+# Flux's lang files, button icons in the trade section of Flux's config. The title is given by the plugin.
+title: "%flux_trade_title%"
+rows: 3
+player-inventory: visible
+vanilla-background: true
+
+lists:
+  trade_item:
+    slots: 10
+    item:
+      material: entry
+  trade_buy_1:
+    slots: 12
+    item:
+      material: entry
+      actions:
+        left: ["[trade] buy %entry_id% 1"]
+  trade_buy_2:
+    slots: 13
+    item:
+      material: entry
+      actions:
+        left: ["[trade] buy %entry_id% 2"]
+  trade_buy_10:
+    slots: 14
+    item:
+      material: entry
+      actions:
+        left: ["[trade] buy %entry_id% 10"]
+  trade_buy_64:
+    slots: 15
+    item:
+      material: entry
+      actions:
+        left: ["[trade] buy %entry_id% 64"]
+
+items:
+  filler:
+    slots: 0,1,2,3,4,5,6,7,8,9,11,16,17,18,19,20,21,22,23,24,25,26
+    material: GRAY_STAINED_GLASS_PANE
+    hide-tooltip: true

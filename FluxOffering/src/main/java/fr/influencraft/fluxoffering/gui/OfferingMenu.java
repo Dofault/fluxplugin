@@ -381,11 +381,9 @@ public final class OfferingMenu implements ListProvider, FluxAction {
         String remaining = AmountFormatter.grouped(collection.money() - current);
         Dialogs.form(player, collection.displayName())
                 .body(messages.raw("gui.money-dialog-body", Map.of("remaining", remaining)))
-                .requiredInput("amount", messages.raw("gui.money-dialog-label"), "", 16)
+                .amount("amount", messages.raw("gui.money-dialog-label"), 0, 1, collection.money() - current)
                 .onSubmit((p, answer) -> {
-                    long amount = Format.parseAmount(answer.text("amount"));
-                    if (amount <= 0) messages.send(p, "gui.money-invalid", p);
-                    else reportMoney(p, collection, depositService.depositMoney(p, collection, amount));
+                    reportMoney(p, collection, depositService.depositMoney(p, collection, answer.amount("amount")));
                     open(p, collection, false);
                 })
                 .onCancel(p -> open(p, collection, false))
@@ -418,17 +416,13 @@ public final class OfferingMenu implements ListProvider, FluxAction {
         Integer current = collection.items().get(key);
         Dialogs.form(admin, collection.displayName())
                 .body(messages.raw("editor.dialog-quantity", Map.of("name", name)))
-                .requiredInput("amount", messages.raw("editor.dialog-quantity-label"), current == null ? "" : String.valueOf(current), 10)
+                .amount("amount", messages.raw("editor.dialog-quantity-label"), current == null ? 0 : current, 1, Integer.MAX_VALUE)
                 .onSubmit((p, answer) -> {
-                    long amount = Format.parseAmount(answer.text("amount"));
-                    if (amount <= 0 || amount > Integer.MAX_VALUE) {
-                        messages.send(p, "editor.invalid-number", p);
-                    } else {
-                        collection.items().put(key, (int) amount);
-                        configManager.saveCollections();
-                        messages.send(p, isNew ? "editor.item-added" : "editor.item-quantity-set",
-                                Map.of("name", collection.displayNameFor(key), "amount", String.valueOf(amount)), p);
-                    }
+                    long amount = answer.amount("amount");
+                    collection.items().put(key, (int) amount);
+                    configManager.saveCollections();
+                    messages.send(p, isNew ? "editor.item-added" : "editor.item-quantity-set",
+                            Map.of("name", collection.displayNameFor(key), "amount", String.valueOf(amount)), p);
                     open(p, collection, true);
                 })
                 .onCancel(p -> open(p, collection, true))
@@ -438,17 +432,13 @@ public final class OfferingMenu implements ListProvider, FluxAction {
     private void askMoneyRequirement(Player admin, CollectionDefinition collection) {
         Dialogs.form(admin, collection.displayName())
                 .body(messages.raw("editor.dialog-money"))
-                .requiredInput("amount", messages.raw("editor.dialog-quantity-label"),
-                        collection.hasMoneyRequirement() ? String.valueOf(collection.money()) : "", 16)
+                .amount("amount", messages.raw("editor.dialog-quantity-label"),
+                        collection.hasMoneyRequirement() ? collection.money() : 0, 1, Long.MAX_VALUE)
                 .onSubmit((p, answer) -> {
-                    long amount = Format.parseAmount(answer.text("amount"));
-                    if (amount <= 0) {
-                        messages.send(p, "editor.invalid-number", p);
-                    } else {
-                        collection.money(amount);
-                        configManager.saveCollections();
-                        messages.send(p, "editor.money-set", Map.of("amount", AmountFormatter.grouped(amount)), p);
-                    }
+                    long amount = answer.amount("amount");
+                    collection.money(amount);
+                    configManager.saveCollections();
+                    messages.send(p, "editor.money-set", Map.of("amount", AmountFormatter.grouped(amount)), p);
                     open(p, collection, true);
                 })
                 .onCancel(p -> open(p, collection, true))

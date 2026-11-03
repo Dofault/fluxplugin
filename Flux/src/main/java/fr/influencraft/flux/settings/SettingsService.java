@@ -1,9 +1,9 @@
 package fr.influencraft.flux.settings;
 
 import fr.influencraft.flux.api.command.Commands;
-import fr.influencraft.flux.api.data.Database;
 import fr.influencraft.flux.api.dialog.Dialogs;
 import fr.influencraft.flux.api.text.Texts;
+import fr.influencraft.flux.api.util.PlayerSettings;
 import fr.influencraft.flux.api.util.Players;
 import fr.influencraft.flux.api.util.Sounds;
 import org.bukkit.Bukkit;
@@ -13,16 +13,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * The settings window ({@code /parametres}, command {@code settings}): one check box per option of
@@ -31,8 +25,8 @@ import java.util.UUID;
  * player, {@code %player%} = name).
  *
  * <p>The state of an option comes from its {@code state} placeholder when the plugin behind it gives one
- * ({@code true}/{@code yes}/{@code oui}/{@code 1} = on), else from the last choice saved by Flux (table
- * {@code flux_settings}), else from its {@code default}.</p>
+ * ({@code true}/{@code yes}/{@code oui}/{@code 1} = on), else from the last choice saved by Flux
+ * ({@link PlayerSettings}, key {@code flux:<option>}), else from its {@code default}.</p>
  */
 public final class SettingsService {
 
@@ -43,20 +37,12 @@ public final class SettingsService {
     private final JavaPlugin flux;
     private final List<Option> options = new ArrayList<>();
     private YamlConfiguration config = new YamlConfiguration();
-    private String table;
 
     public SettingsService(JavaPlugin flux) {
         this.flux = flux;
     }
 
     public void start() {
-        table = Database.table("flux_settings");
-        try (Connection c = Database.connection(); Statement st = c.createStatement()) {
-            st.executeUpdate("CREATE TABLE IF NOT EXISTS " + table + " (uuid " + Database.dialect().key(36)
-                    + " NOT NULL, setting VARCHAR(64) NOT NULL, enabled INT NOT NULL, PRIMARY KEY (uuid, setting))");
-        } catch (SQLException e) {
-            flux.getLogger().severe("Could not create " + table + ": " + e.getMessage());
-        }
         load();
         Commands.create(flux, "settings").aliases("parametres", "reglages")
                 .description("Tes réglages : affichage et options de jeu")
@@ -84,7 +70,7 @@ public final class SettingsService {
     }
 
     public void open(Player player) {
-        Map<String, Boolean> saved = saved(player.getUniqueId());
+        Map<String, Boolean> saved = saved(player);
         Map<String, Boolean> before = new HashMap<>();
         Dialogs.Form form = Dialogs.form(player, config.getString("title", "Settings"))
                 .buttons(config.getString("save", "Save"), config.getString("close", "Close"));
@@ -100,7 +86,7 @@ public final class SettingsService {
                 boolean on = answer.toggle(o.id());
                 if (on == before.get(o.id())) continue;
                 run(p, on ? o.on() : o.off());
-                save(p.getUniqueId(), o.id(), on);
+                PlayerSettings.set(p, key(o.id()), on);
                 changed++;
             }
             Sounds.cue(p, changed > 0 ? "success" : "click");
@@ -130,29 +116,17 @@ public final class SettingsService {
 
     // ------------------------------------------------------------------ storage
 
-    private Map<String, Boolean> saved(UUID player) {
-        Map<String, Boolean> out = new HashMap<>();
-        try (Connection c = Database.connection();
-             PreparedStatement ps = c.prepareStatement("SELECT setting, enabled FROM " + table + " WHERE uuid = ?")) {
-            ps.setString(1, player.toString());
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) out.put(rs.getString(1), rs.getInt(2) != 0);
-            }
-        } catch (SQLException e) {
-            flux.getLogger().warning("Could not read the settings of " + player + ": " + e.getMessage());
-        }
-        return out;
+    // Saved in PlayerSettings (one settings table for the suite). Before 2026-10-31 this class wrote its own columns in
+    // the same table, which PlayerSettings had already created with others: nothing was ever saved, nothing to move.
+    private static String key(String option) {
+        return "flux:" + option;
     }
 
-    private void save(UUID player, String setting, boolean enabled) {
-        String sql = Database.dialect().upsert(table, List.of("uuid", "setting", "enabled"), List.of("uuid", "setting"), List.of("enabled"));
-        try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, player.toString());
-            ps.setString(2, setting);
-            ps.setInt(3, enabled ? 1 : 0);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            flux.getLogger().warning("Could not save the setting " + setting + " of " + player + ": " + e.getMessage());
+    private Map<String, Boolean> saved(Player player) {
+        Map<String, Boolean> out = new HashMap<>();
+        for (Option o : options) {
+            if (PlayerSettings.has(player, key(o.id()))) out.put(o.id(), PlayerSettings.flag(player, key(o.id()), o.byDefault()));
         }
+        return out;
     }
 }

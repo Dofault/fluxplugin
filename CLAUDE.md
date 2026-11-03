@@ -59,14 +59,41 @@ The plugins are written **as English plugins, then adapted to French** for our s
 | `items.CustomItems` | Shared recognition of custom items. Each suite plugin declares its own items with `CustomItems.register(plugin, namespace, Source)` (`fluxtools:<tool>`, `fluxpets:booster_<id>`). A source answers only for its own items. `id(item)` also knows eco items (`ecoarmor:virale_chestplate`); `matches(pattern, id)` for `ns:prefix*` patterns. |
 | `items.ItemLooks` | Looks given to items whoever made them (3D icon, worn appearance): `ItemLooks.register(plugin, (id, item) -> changed)`, keyed on the Flux id, applied by Flux at join, inventory open/close, item held, armour change, pickup. Never add your own listeners for that (FluxTools `apparences.yml`, FluxArmor). |
 | `reward.Rewards` | Give a reward (`Reward.of(source, label).icon(...).commands(...)`); claimed in the `rewards` menu. Expiry, reminders (in game and Discord through DiscordSRV), grouped notifications are handled by Flux. |
+| `util.Experience` | A player's experience in points (vanilla formulas; `getTotalExperience()` is wrong after enchanting): `total`, `set`, `take`, `give`, `pointsOfLevels`, `levelOf`. Used by the trades of FluxCommerce and `/bottlexp`. |
 | `util.Sounds` | Named cues only: `page`, `click`, `confirm` (first click of a double confirmation), `success`, `complete` (something earned), `error`, `remove`, `toggle-on/off`, `alert` (needs attention, 3 s cooldown). **One sound per click**: the action lines of a click run as a batch, a `[sound]` line wins over sounds played by code (`[list]` page sound, menu opening), else the first one plays. Do not add a `[sound]` that only repeats the automatic one. |
 | `staff.Staff` | `Staff.alert(topic, title, message)` to online staff. |
-| `dialog.Dialogs` | Paper dialogs (forms, copy buttons, links). Escape counts as the cancel button (`onCancel`). |
+| `dialog.Dialogs` | Paper dialogs (forms, copy buttons, links). Escape counts as the cancel button (`onCancel`). **Every amount, price or quantity a player types goes through `Form.amount(id, label, initial, min, max)`** (`Answer.amount`): the form refuses a wrong value itself and reopens with the error and what was typed; cross-field rules with `Form.check`, a short scale (rate) with `Form.slider`. Never parse a typed amount by hand or ask it in the chat. |
+| `trade.TradeWindow` | The window a player buys or sells a given item in (rows of x1/x2/x10/x64 bundles with double click and quick buy; deposit zone with a two-click confirm). The plugin gives the offer (item, bundle, price, stock) and does the trade; Flux draws it (menus `trade`, `trade_sell`, or the lists `trade_*` placed in the plugin's own menu). Used by FluxShop shop chests and FluxCommerce (chest shops, auction house). Never draw a buy/sell window again. |
+| `text.ChatHelp` | Paged chat help of a command (`/<cmd> help [page]`), the look of Lands' help; texts `help.*` of the plugin's lang file. Used by FluxPW and FluxCommerce: never write another help. |
+| `text.Translations` | Minecraft names (items, blocks, enchantments) in the server's language, for a text written once for everybody (a sign, a search index): `server(key)`, `itemName(item)`. Anywhere else send the name to be translated by each client (`<lang:key>`). |
 | `welcome.JoinScreens` | Screens shown when a player joins (questionnaire, calendar...): `JoinScreens.request(player, order, (p, done) -> ...)`. Flux waits for the resource pack, shows them one at a time by order (questionnaire 10, calendar 100), the next once `done` ran. Never open a menu or dialog on join by yourself. |
 | `leaderboard.Leaderboards` | Leaderboards kept by Flux (`leaderboards` in Flux's config: statistic, money or placeholder; or `Leaderboards.register` from code). Placeholders `%flux_top_<board>_<n>_name/value%`, `%flux_top_<board>_rank/value%`. Replaces ajLeaderboards. |
+| `data.Database` | The one database of the suite (SQLite `flux.db` by default, MySQL/MariaDB, set in `plugins/Flux/storage.yml`): `Database.connection()`, `table(name)`, `dialect()`. Name tables `flux_<module>_<category>`, key rows by player UUID (names are columns, never keys). Renaming a table: `Database.renameTable(c, old, new)` before `CREATE TABLE`. Tables named by hand: `Database.declare(...)`. Engine change: `/fluxmenu database migrate <sqlite\|mysql>` + restart, copied at start-up (`DatabaseMigration`). Never open your own connection or file. See `docs/technique/flux-base.md`. |
+| `economy.Economy` + `Origin` | Every money movement: `Economy.main()` / `Economy.get("influence")`, then `give/take(player, amount, Origin.of(this, "key"))` (account history `/compte`, `.notifyPlayer()` = Flux sends the standard gain / loss message from style.yml `money`). Never call Vault or another economy plugin directly; show any balance with `Currency.format`. Name your origin keys in your lang file (`origins.<key>`). Third-party moves are recorded too (origin found from the call stack). See `docs/technique/flux-economie.md`. |
+| `tab.TabList` | The tab list (header, names, nametags, order, line below the name) is drawn by Flux from `plugins/Flux/tab.yml`. A plugin shows its data there with a piece: `TabList.piece(this, "id", player -> text)` (`{id}` in tab.yml), `TabList.refresh(player)` when it changed. `TabList.collision(player, false)`: nobody pushes him (pushing is computed by each client from the teams Flux sends: never create a scoreboard team for it). See `docs/technique/flux-tab.md`. |
 | `profile.Profiles` | Sections of the profile menu (`/profil [player]`): each plugin registers the section of the data it owns (`Profiles.register(plugin, id, order, section)`), built for the shown player (`subject`, possibly offline). A profile is a summary: clicks only turn a section's pages or open the viewer's own menu. Flux gives economy, leaderboards, jobs, statistics; FluxLands town, FluxTools collection, FluxPets pets, FluxTags tags. |
 | Menu `paths` | Progress paths drawn in the title (pack `influroad`). `states` placeholder gives one colour per step: `vert` claimed, `orange` waiting, `rouge` missed, `eteint` locked. |
 
+- FluxFamily owns couples and family trees (`fluxfamily.api.Family`: status, partner, `lineage(...)` for parent links
+  kept by another plugin, as FluxReferral's sponsors). FluxTags takes tags from other plugins (`fluxtags.api.Tags`).
+- FluxAFK owns the AFK state (`fluxafk.api.Afk`: `afk(player)`, `progress(player)`; tab piece `{away}`); CMI's AFK module is
+  off, never read `%cmi_user_afk%` again.
+- FluxPW owns player warps (`fluxpw.api.PlayerWarps`: list, visit and create with every check of `/pw`, imports);
+  FluxLands shows them with their town. Its permissions are the former `playerwarps.*` nodes renamed `fluxpw.*` (same suffixes); rank groups are moved
+  with `FluxPW/assets/lp_playerwarps_to_fluxpw.py` (Labs done, production at go-live).
+- FluxCommerce owns commerce between players (merged from FluxTrade, FluxAuctionHouse and FluxChestShop on 2026-11-01):
+  one plugin made of **parts** (`trade`, `auctionhouse`, `chestshop`), each a `fluxcommerce.Module` with its own package,
+  folder (`<part>/config.yml`, `<part>/lang/`, `<part>/menus/`, through `Messages.load(plugin, language, folder)` and
+  `Resources.shipMenus(plugin, language, folder)`), permissions `fluxcommerce.<trade|ah|chestshop>.*` and money origins
+  `<trade|ah|chestshop>_<key>`. Bukkit things (tasks, listeners, lists, commands) go through `module.host()`. Shared:
+  forbidden items (`ItemRules`, `blacklist` of the main config) and bans (`Bans`, `/commerce`, `fluxcommerce.staff`),
+  checked by every part. Chest shops register as the provider of Flux's `shops.ChestShops` (FluxLands: town, market
+  fee, town shops; the auction house: market). Imports through `fluxcommerce.api.Shops` and `.Listings`. Trades hold
+  offered items until the end, experience always moves in points. FluxCommerce loads after FluxLands (the market reads
+  towns); FluxLands links the chest shops on the first tick. A new part is a new `Module`, not a new plugin.
+- FluxLands owns every town and country screen: never send a player to one of Lands' own menus (levels, members,
+  relations...), build ours on Lands' API (`Levels`, roles through `Area#setRole`). Shops of towns are listed by the
+  market of FluxCommerce (`/influmarche depuis <back command> <source> [search]`), not by FluxLands.
 - FluxCrate owns crates and keys (`fluxcrate.api.Crates`, used by the migration of EcoCrates); give keys with
   `fluxcrate give <player> <crate> <n>`, never with a third-party crates plugin.
 - FluxTools exposes `fr.influencraft.fluxtools.api` (`Tools.info/refresh`, `EnchantMastery` service) used by
@@ -127,7 +154,7 @@ systemd-run --user --scope -q -p MemoryMax=2.5G nice -n 10 mvn -q -o -pl <Module
 
 - Offline (`-o`), `-am` so Flux is built with the module. Third-party jars go in `<module>/libs/` (see `LIBS.md`),
   **never commit them** (`.gitignore`).
-- FluxReferral uses Gradle (JDK 21), FluxChestShop is a Gradle fork, FluxProxy (Velocity) is compiled with `javac`
+- FluxReferral uses Gradle (JDK 21), FluxProxy (Velocity) is compiled with `javac`
   on JDK 25 (see its README).
 
 ## Deploying to Labs
@@ -145,7 +172,17 @@ systemd-run --user --scope -q -p MemoryMax=2.5G nice -n 10 mvn -q -o -pl <Module
   (FluxFly with `loadbefore: [CMI]`, 2026-10-28). A command taken from another plugin is freed in that plugin's config.
 
 - Bukkit config defaults shadow former key names: `getConfigurationSection("new")` returns the jar's default section
-  even when the server file still uses the former name. Check `contains(key, true)` first.
+  even when the server file still uses the former name. Check `contains(key, true)` first. The other way round, a
+  section missing from the server file reads as an **empty** section, without any error: log a warning when a list
+  the plugin needs (rewards...) comes out empty (FluxAFK filled bars but gave nothing during its first tests, 2026-10-31).
+- Editing a deployed config with a script: never a DOTALL regex up to an unbounded `.*` (it ate every section down to
+  the end of the FluxAFK file, 2026-10-31). Reparse the whole file afterwards and check every top-level key is there.
+- Player activity (AFK, idle): read the keys (`PlayerInputEvent`, `Player#getCurrentInput()`) and head rotation, never
+  the position: water, vehicles and other players move a player who does nothing.
+- Never teleport inside `PlayerMoveEvent` or `PlayerInputEvent`: schedule it on the next tick. `PlayerMoveEvent#setTo`
+  fires a `PlayerTeleportEvent` (cause `PLUGIN`): a listener reacting to teleports must ignore that one.
+- A jar replaced while the server runs: even `/<plugin> reload` can fail with `ClassNotFoundException` (a class never
+  loaded before, read from the new jar). Only a restart is a valid test.
 - Do not compare against `Format.yesNo()` in menus (localised), use fixed values.
 - A menu needs `[refresh]` after a list page change to redraw its title (paths).
 - Inventory rows of a hidden-inventory menu: the item of the first row sits at y 139 in game (as `PathRenderer`), not 140 as `fond_lib.objet` computes. Check the first background of a new menu in game.
@@ -159,7 +196,7 @@ Never let old data or old items limit a new feature: write a migration instead, 
   `yyyy-MM-dd_short_name`, never changed once deployed; idempotent (skip what the target already has); never deletes
   the source (archiving the former plugin is a manual go-live step); talks to the target only through its public
   API (`<plugin>.api`, e.g. `fluxfly.api.FlyTime`). It runs once when the server starts, before players can join, and
-  is recorded in Flux's table `fluxmigration_done` (`/fluxmigration status`).
+  is recorded in Flux's table `flux_migration_done` (`/fluxmigration status`).
 - **Compatibility code that must stay running for a while** (old item ids, former placeholders, former command
   names) goes in a `compat` package of the owning plugin, every class starting with a comment
   `// COMPAT <date>: <what> - remove when <condition>`. Never scatter it in the main code.
@@ -177,5 +214,5 @@ run, old plugin to remove, DeluxeMenus menu to replace...), add it to `/home/inf
 ## More documentation
 
 On the server machine, `/home/influencraft/docs/technique/` has one page per plugin (`flux-suite.md` is the overview,
-`fluxenchant.md`, `fluxitems.md`, `fluxmenu.md`, `parrainage.md`...), in French. Keep them updated when behaviour
+`fluxenchant.md`, `fluxtools.md`, `flux.md`, `parrainage.md`...), in French. Keep them updated when behaviour
 changes; this file stays the short, English entry point.

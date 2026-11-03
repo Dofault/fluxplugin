@@ -1,0 +1,47 @@
+# Players blocked from one warp, vanilla theme (theme.menus.pw_blocked of Flux's config). Row 1: back, block a
+# player, menu icon. Rows 2-5: their heads (click: unblock). Row 6: pages. Lists built by FluxPW.
+rows: 6
+player-inventory: hidden
+vanilla-background: false
+
+open-actions:
+  - "[sound] @page"
+
+lists:
+  pw_blocked_info:
+    slots: [8]
+    item:
+      material: entry
+  pw_blocked:
+    slots: 9-44
+    item:
+      material: entry
+      actions:
+        left: ["%entry_clic%"]
+
+widgets:
+  pages:
+    type: pager
+    list: pw_blocked
+    prev: 45
+    next: 53
+
+items:
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
+    slots: [0]
+    lore:
+      - "@desc Revenir aux réglages du warp."
+      - "@left Retour"
+    actions:
+      left: ["[pw] manage-back"]
+  bloquer:
+    material: "itemsadder:influitems:add"
+    name: "Bloquer un joueur"
+    slots: [4]
+    lore:
+      - "@desc Ce joueur ne pourra plus visiter ton warp."
+      - "@left Bloquer"
+    actions:
+      left: ["[pw] block"]

@@ -22,7 +22,7 @@ import java.util.Locale;
 /**
  * Flux : menus maison d'Influencraft. Point clé par rapport à DeluxeMenus : l'inventaire
  * du joueur peut être masqué (et remplacé par des boutons) sans jamais être modifié côté
- * serveur. Voir docs/technique/fluxmenu.md.
+ * serveur. Voir docs/technique/flux.md.
  */
 public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.FluxApi.Backend, org.bukkit.event.Listener {
 
@@ -50,21 +50,31 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         File menusDir = new File(getDataFolder(), "menus");
         if (!menusDir.isDirectory()) saveResource("menus/main.yml", false);
         shipOwnMenu("rewards");
+        shipOwnMenu("compte");
+        shipOwnMenu("trade");
+        shipOwnMenu("trade_sell");
 
         Text.init(getLogger());
         PathRenderer.init(getLogger());
         fr.influencraft.flux.menu.ListRenderer.init(getLogger());
         fr.influencraft.flux.api.command.Commands.init(this);
-        fr.influencraft.flux.api.data.Database.start(this, getConfig().getConfigurationSection("database"));
+        // database of the suite: plugins/Flux/storage.yml (the database section of config.yml before 2026-10-31)
+        fr.influencraft.flux.compat.StorageConfigCompat.move(this);
+        fr.influencraft.flux.api.data.Database.start(this, fr.influencraft.flux.api.data.Database.loadSettings(this));
         fr.influencraft.flux.providers.Providers.start(this, getConfig().getConfigurationSection("providers"));
         fr.influencraft.flux.api.util.PlayerSettings.open(this);
         fr.influencraft.flux.api.economy.Economy.registerBuiltIns(this);
+        // money of the suite: Flux's own currencies, account history, gain / loss messages (configured by readSettings)
+        currencies = new fr.influencraft.flux.economy.CurrencyService(this, () -> messages);
         items = new ItemFactory(this);
         actions = new Actions(this);
         menus = new MenuService(this, items);
         registry = new MenuRegistry(this);
         readSettings();
+        currencies.start();
         rewards = fr.influencraft.flux.rewards.RewardService.start(this, () -> messages);
+        // buying / selling window of one item (shop chests, chest shops): api.trade.TradeWindow
+        trades = fr.influencraft.flux.trade.TradeService.start(this, () -> messages);
         if (rewards != null) rewards.importFormerMailbox(getDataFolder().getParentFile());
         leaderboards = new fr.influencraft.flux.leaderboard.LeaderboardService(this);
         leaderboards.start(getConfig().getConfigurationSection("leaderboards"));
@@ -103,16 +113,24 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         backgrounds = new ChestBackgrounds(menus, getLogger());
         backgroundListener = PacketEvents.getAPI().getEventManager()
                 .registerListener(backgrounds, PacketListenerPriority.HIGH);
-        // Après le chargement de tous les plugins : EcoBattlepass peut s'activer après nous.
-        getServer().getScheduler().runTask(this, () -> {
-        });
+        // tab list (plugins/Flux/tab.yml), in place of the TAB plugin; nametags and the line below the name as packets
+        tab = new fr.influencraft.flux.tab.TabService(this, getServer().getPluginManager().isPluginEnabled("packetevents")
+                ? new fr.influencraft.flux.adapters.packetevents.PacketEventsNametags() : null);
+        tab.start();
+        // once every plugin is enabled: PlayerPoints may load after us
+        getServer().getScheduler().runTask(this, () -> fr.influencraft.flux.compat.PlayerPointsCompat.start(this, currencies));
+        // every plugin has opened its tables: record them (what /fluxmenu database migrate moves)
+        getServer().getScheduler().runTaskAsynchronously(this, fr.influencraft.flux.api.data.Database::rememberTables);
     }
 
     @Override
     public void onDisable() {
         fr.influencraft.flux.api.FluxApi.bind(null);
         if (rewards != null) rewards.stop();
+        if (trades != null) trades.stop();
         if (leaderboards != null) leaderboards.stop();
+        if (currencies != null) currencies.stop();
+        if (tab != null) tab.stop();
         fr.influencraft.flux.api.util.PlayerSettings.close();
         fr.influencraft.flux.api.data.Database.stop();
         if (papiBridge != null) papiBridge.shutdown();
@@ -124,6 +142,9 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
 
     private fr.influencraft.flux.api.text.Messages messages;
     private fr.influencraft.flux.rewards.RewardService rewards;
+    private fr.influencraft.flux.trade.TradeService trades;
+    private fr.influencraft.flux.economy.CurrencyService currencies;
+    private fr.influencraft.flux.tab.TabService tab;
     private fr.influencraft.flux.leaderboard.LeaderboardService leaderboards;
     private fr.influencraft.flux.profile.ProfileService profile;
     private fr.influencraft.flux.help.HelpService help;
@@ -154,12 +175,14 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         // look of every button (lore frame, colours, actions, filters): plugins/Flux/style.yml
         java.io.File styleFile = new java.io.File(getDataFolder(), "style.yml");
         if (!styleFile.exists()) saveResource("style.yml", false);
-        fr.influencraft.flux.api.text.Style.configure(org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(styleFile));
+        org.bukkit.configuration.file.YamlConfiguration style = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(styleFile);
+        fr.influencraft.flux.api.text.Style.configure(style);
         fr.influencraft.flux.api.staff.Staff.configure(getConfig().getConfigurationSection("staff"));
         if (leaderboards != null) leaderboards.configure(getConfig().getConfigurationSection("leaderboards"));
         commandManager.configure(getConfig().getConfigurationSection("command-suggestions"));
         // suite-wide settings: language, currencies, dialogs
         messages = fr.influencraft.flux.api.text.Messages.load(this, getConfig().getString("language", "en_US"));
+        fr.influencraft.flux.api.text.Translations.load(this, messages.language());
         java.util.Locale numbers = java.util.Locale.forLanguageTag(messages.language().replace('_', '-'));
         fr.influencraft.flux.api.util.Format.configure(key -> {
             String w = messages.raw("format." + key);
@@ -168,10 +191,11 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         fr.influencraft.flux.api.economy.Economy.configure(getConfig().getString("currencies.main", "vault"),
                 id -> getConfig().getString("currencies." + id + ".format", "%amount%"));
         fr.influencraft.flux.api.economy.Economy.configureIcons(id -> getConfig().getString("currencies." + id + ".icon", "GOLD_NUGGET"));
+        if (currencies != null) currencies.configure(getConfig(), style.getConfigurationSection("money"));
         java.util.Map<String, String> dialog = new java.util.HashMap<>();
         var colors = getConfig().getConfigurationSection("dialogs");
         if (colors != null) for (String k : colors.getKeys(false)) dialog.put(k, colors.getString(k, ""));
-        for (String k : java.util.List.of("confirm-label", "cancel-label", "copy-label", "link-label")) {
+        for (String k : java.util.List.of("confirm-label", "cancel-label", "copy-label", "link-label", "amount-invalid", "amount-min", "amount-max")) {
             String v = messages.raw("dialogs." + k);
             if (!v.isEmpty()) dialog.put(k, v);
         }
@@ -207,7 +231,9 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
      * {@code %flux_top_<board>_...%}: leaderboards (see {@link fr.influencraft.flux.api.leaderboard.Leaderboards}).
      */
     private String ownPlaceholder(Player player, String params) {
+        if (params.startsWith("balance_") && currencies != null) return currencies.placeholder(player, params.substring(8));
         if (params.startsWith("rewards_") && rewards != null) return rewards.placeholder(player, params.substring(8));
+        if (params.equals("trade_title") && trades != null) return trades.title(player);
         if (params.startsWith("top_") && leaderboards != null) return leaderboards.placeholder(player, params.substring(4));
         if (params.startsWith("profile_") && profile != null) return profile.placeholder(player, params.substring(8));
         if (params.startsWith("cmd_")) {
@@ -280,6 +306,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         fr.influencraft.flux.api.list.Lists.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.command.Commands.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.economy.Economy.unregisterAll(event.getPlugin());
+        fr.influencraft.flux.api.tab.TabList.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.reward.Rewards.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.items.CustomItems.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.shops.ChestShops.unregisterAll(event.getPlugin());
@@ -350,6 +377,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
                 Text.resetHooks();
                 backgrounds.reset();
                 PathRenderer.reset();
+                if (tab != null) tab.load();
                 int warnings = registry.load();
                 msg(sender, "&#2ECF7B" + registry.all().size() + " menu(s) rechargé(s)"
                         + (warnings > 0 ? " &#FF5C5C(" + warnings + " avertissement(s), voir la console)" : "") + ".");
@@ -361,9 +389,49 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
                             + (m.commands().isEmpty() ? "" : ", /" + String.join(" /", m.commands())));
                 }
             }
-            default -> msg(sender, "&#B376E5/" + label + " open <menu> [joueur] &8| &#B376E5reload &8| &#B376E5list");
+            case "database" -> database(sender, label, args);
+            default -> msg(sender, "&#B376E5/" + label + " open <menu> [joueur] &8| &#B376E5reload &8| &#B376E5list &8| &#B376E5database");
         }
         return true;
+    }
+
+    /** {@code /fluxmenu database [status | migrate <sqlite|mysql> [replace] | cancel]}: where the suite keeps its data. */
+    private void database(CommandSender sender, String label, String[] args) {
+        String action = args.length < 2 ? "status" : args[1].toLowerCase(Locale.ROOT);
+        switch (action) {
+            case "migrate" -> {
+                if (args.length < 3 || !List.of("sqlite", "mysql", "mariadb").contains(args[2].toLowerCase(Locale.ROOT))) {
+                    messages.send(sender, "database.usage", "%label%", label);
+                    return;
+                }
+                boolean replace = args.length >= 4 && args[3].equalsIgnoreCase("replace");
+                String target = args[2].toLowerCase(Locale.ROOT);
+                messages.send(sender, "database.checking", "%target%", target);
+                // the target is reached over the network: never on the main thread
+                getServer().getScheduler().runTaskAsynchronously(this, () -> {
+                    String error = fr.influencraft.flux.api.data.Database.planMigration(this, target, replace, sender.getName());
+                    if (error == null) messages.send(sender, "database.planned", "%target%", target);
+                    else messages.send(sender, "database.refused", "%reason%", error);
+                });
+            }
+            case "cancel" -> {
+                String error = fr.influencraft.flux.api.data.Database.cancelMigration(this);
+                if (error == null) messages.send(sender, "database.cancelled");
+                else messages.send(sender, "database.refused", "%reason%", error);
+            }
+            default -> getServer().getScheduler().runTaskAsynchronously(this, () -> {
+                messages.send(sender, "database.status-title");
+                for (String line : fr.influencraft.flux.api.data.Database.status(this)) messages.send(sender, "database.status-line", "%line%", line);
+            });
+        }
+    }
+
+    /** The database is closed (server unreachable, failed migration): players wait outside instead of losing progress. */
+    @org.bukkit.event.EventHandler(priority = org.bukkit.event.EventPriority.HIGHEST)
+    public void blockJoinWithoutDatabase(org.bukkit.event.player.AsyncPlayerPreLoginEvent event) {
+        if (fr.influencraft.flux.api.data.Database.available() || !fr.influencraft.flux.api.data.Database.blockJoinsOnError()) return;
+        if (getServer().getOfflinePlayer(event.getUniqueId()).isOp()) return;
+        event.disallow(org.bukkit.event.player.AsyncPlayerPreLoginEvent.Result.KICK_OTHER, messages.get("database.join-blocked", null));
     }
 
     @Override
@@ -371,7 +439,13 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         List<String> out = new ArrayList<>();
         if (!sender.hasPermission("fluxmenu.admin")) return out;
         if (args.length == 1) {
-            for (String s : List.of("open", "reload", "list")) if (s.startsWith(args[0].toLowerCase(Locale.ROOT))) out.add(s);
+            for (String s : List.of("open", "reload", "list", "database")) if (s.startsWith(args[0].toLowerCase(Locale.ROOT))) out.add(s);
+        } else if (args.length == 2 && args[0].equalsIgnoreCase("database")) {
+            for (String s : List.of("status", "migrate", "cancel")) if (s.startsWith(args[1].toLowerCase(Locale.ROOT))) out.add(s);
+        } else if (args.length == 3 && args[0].equalsIgnoreCase("database") && args[1].equalsIgnoreCase("migrate")) {
+            for (String s : List.of("sqlite", "mysql")) if (s.startsWith(args[2].toLowerCase(Locale.ROOT))) out.add(s);
+        } else if (args.length == 4 && args[0].equalsIgnoreCase("database") && args[1].equalsIgnoreCase("migrate")) {
+            if ("replace".startsWith(args[3].toLowerCase(Locale.ROOT))) out.add("replace");
         } else if (args.length == 2 && args[0].equalsIgnoreCase("open")) {
             for (Menu m : registry.all()) if (m.id().startsWith(args[1].toLowerCase(Locale.ROOT))) out.add(m.id());
         } else if (args.length == 3 && args[0].equalsIgnoreCase("open")) {

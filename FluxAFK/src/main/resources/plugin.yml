@@ -1,0 +1,21 @@
+name: FluxAFK
+version: 1.0.0
+main: fr.influencraft.fluxafk.FluxAFK
+api-version: "26.2"
+description: Idle players are taken to an AFK zone where a timer fills up and drops rewards into /rewards.
+authors: [Influencraft]
+depend: [Flux]
+
+permissions:
+  fluxafk.use:
+    description: Go AFK on purpose with /afk.
+    default: true
+  fluxafk.auto:
+    description: Taken to the AFK zone after idling for idle-time.
+    default: true
+  fluxafk.exempt:
+    description: Never taken to the AFK zone automatically (staff).
+    default: false
+  fluxafk.admin:
+    description: Set the zone, check, send or bring back a player, reload.
+    default: op

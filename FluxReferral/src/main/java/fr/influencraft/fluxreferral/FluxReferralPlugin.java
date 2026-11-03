@@ -142,9 +142,10 @@ public class FluxReferralPlugin extends JavaPlugin {
         // %parrainage_*%: resolved by Flux in menus, exposed to PlaceholderAPI by Flux
         var expansion = new ExpansionParrainage(this, serviceProfil, serviceClassement, serviceParrainage);
         // referral tree (menu parrainage): %parrainage_arbre_gen_<n>%, %parrainage_arbre_total%
-        var tree = new fr.influencraft.fluxreferral.service.ReferralTree(this, gestionnaireBDD,
-                gestionnaireConfig.getPrefixeTables());
+        var tree = new fr.influencraft.fluxreferral.service.ReferralTree(this, gestionnaireBDD);
         tree.start();
+        if (Bukkit.getPluginManager().isPluginEnabled("FluxFamily"))
+            fr.influencraft.fluxreferral.service.FamilyLink.register(this, tree);
         fr.influencraft.flux.api.FluxApi.registerPlaceholders(this, "parrainage", (player, params) -> {
             if (player != null && params.equals("arbre_total")) return String.valueOf(tree.total(player.getUniqueId()));
             if (player != null && params.startsWith("arbre_gen_")) {

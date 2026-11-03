@@ -377,8 +377,15 @@ public final class MenuLoader {
                     case "bar" -> new Widget.Bar(key, w.getInt("x"), w.getInt("y"), w.getInt("width"),
                             w.getString("progress", "0"), w.getString("max", "1"), w.getString("colour", "green"),
                             w.getString("text", null), w.getBoolean("frame", false), req);
-                    case "pager" -> new Widget.Pager(key, w.getString("list", ""), shifted(w.getInt("prev")),
-                            shifted(w.getInt("next")), req);
+                    case "pager" -> {
+                        String list = w.getString("list", "");
+                        String pre = "%flux_list_" + list + "_";
+                        yield new Widget.Pager(key, list, shifted(w.getInt("prev")), shifted(w.getInt("next")),
+                                w.getString("page", pre + "page%"), w.getString("pages", pre + "pages%"),
+                                w.isList("prev-actions") ? w.getStringList("prev-actions") : List.of("[list] " + list + " prev"),
+                                w.isList("next-actions") ? w.getStringList("next-actions") : List.of("[list] " + list + " next"),
+                                req);
+                    }
                     case "lit" -> new Widget.Lit(key, shifted(w.getInt("slot")), req);
                     case "raw" -> new Widget.Raw(key, w.getInt("x", 0), w.getString("text", ""), req);
                     default -> throw new IllegalArgumentException("type « " + type + " » inconnu (text, image, bar, pager, lit, slots)");
@@ -409,11 +416,10 @@ public final class MenuLoader {
         YamlConfiguration gen = new YamlConfiguration();
         for (Widget w : widgets) {
             if (w instanceof Widget.Pager p) {
-                String pre = "%flux_list_" + p.list() + "_";
                 pagerButton(gen, p.id() + "_prev", List.of(String.valueOf(p.prev()), String.valueOf(p.prev() + 1)),
-                        pre + "has_prev%", "[list] " + p.list() + " prev");
+                        "placeholder: " + p.page() + " > 1", p.prevActions());
                 pagerButton(gen, p.id() + "_next", List.of(String.valueOf(p.next() - 1), String.valueOf(p.next())),
-                        pre + "has_next%", "[list] " + p.list() + " next");
+                        "placeholder: " + p.page() + " < " + p.pages(), p.nextActions());
             } else if (w instanceof Widget.Bar b && section != null) {
                 ConfigurationSection tip = section.getConfigurationSection(b.id() + ".tooltip");
                 if (tip == null) continue;
@@ -429,13 +435,13 @@ public final class MenuLoader {
     }
 
     /** Invisible click area of a pager button (the button itself is drawn in the title): 2 slots. */
-    private static void pagerButton(YamlConfiguration gen, String id, List<String> slots, String can, String action) {
+    private static void pagerButton(YamlConfiguration gen, String id, List<String> slots, String can, List<String> actions) {
         String k = "__" + id + ".";
         gen.set(k + "material", "itemsadder:influitems:invisible");
         gen.set(k + "slots", slots);
         gen.set(k + "hide-tooltip", true);
-        gen.set(k + "view-requirements", List.of("placeholder: " + can + " == true"));
-        gen.set(k + "actions.left", List.of(action));
+        gen.set(k + "view-requirements", List.of(can));
+        gen.set(k + "actions.left", actions);
     }
 
     private static List<TitleLayer> titleLayers(ConfigurationSection section, String where, Consumer<String> warn) {

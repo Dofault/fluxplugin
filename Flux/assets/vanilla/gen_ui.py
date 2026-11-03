@@ -45,7 +45,7 @@ NS = "fluxui"
 TEXT_SHADOW = (40, 40, 40, 255)
 # characters of the menu font (lower case is drawn upper case by Flux)
 # \uE120 / \uE121: closed / open lock (pass milestones), written in a text like any letter
-CHARS = (list("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") + list("ÉÈÊÀÂÎÔ") + list("/%.:+-!'·?,()") + ["\uE120", "\uE121"])
+CHARS = (list("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") + list("ÉÈÊÀÂÎÔ") + list("/%.:+-!'·?,()_") + ["\uE120", "\uE121"])
 CELL_W, CELL_H = 8, 16         # accent rows 0-1, letter rows 2-6, shadow row 7, empty below: a glyph may stand
                                # up to 16 px above the baseline (ascent <= height), so text fits any row, plate too
 COLS = 16
@@ -70,7 +70,8 @@ fond = ui.fond_lib
 fond._EXTRA.update({"\uE120": ["..#..", ".#.#.", "#####", "##.##", "#####"],
                     "\uE121": ["..#..", ".#.#.", ".#...", "#####", "#####"],
                     "?": ["###", "..#", ".##", "...", ".#."], ",": [".", ".", ".", "#", "#"],
-                    "(": [".#", "#.", "#.", "#.", ".#"], ")": ["#.", ".#", ".#", ".#", "#."]})
+                    "(": [".#", "#.", "#.", "#.", ".#"], ")": ["#.", ".#", ".#", ".#", "#."],
+                    "_": ["...", "...", "...", "...", "###"]})
 
 
 def glyph_sheet(shadow=True):
@@ -483,16 +484,103 @@ def bg_profil(generic):
     return im
 
 
-def bg_window(generic, first=0, last=9, extra=0):
+# Villes et Pays (FluxLands territoires.yml, mockup 4 of 2026-10-31): back (9) and menu icon (17) on row 1, two dark
+# cards one under the other (Ma ville on rows 2-3, Mon pays on rows 4-5, invisible items over them for the click),
+# each with its big icon on the left (button of the theme twice its size) and three lines written by Flux beside it
+# (widgets of the menu, x 45), then the Explore buttons on the first inventory row, under the chest / inventory gap.
+TERRITORY_CARDS = {"ville": (6, 54, 169, 87), "pays": (6, 90, 169, 123)}
+PLUGINS = None                 # plugins dir of the server, set by main (pictures of other packs)
+
+
+def big_icon(ns, iid):
+    """A former-theme picture restyled as a button of the theme, twice its size (32 x 32), or None."""
+    path = os.path.join(PLUGINS or "", "ItemsAdder", "contents", ns, "textures", "icones", iid + ".png")
+    if not os.path.isfile(path):
+        return None
+    found = former_button(Image.open(path).convert("RGBA"))
+    if not found:
+        return None
+    face, glyph = found
+    return restyled_png(nearest_colour(face), glyph).resize((32, 32), Image.NEAREST)
+
+
+def bg_territoires(generic):
+    im = bg_window(generic, 1, 6)
+    d = ImageDraw.Draw(im, "RGBA")
+    for name, (x0, y0, x1, y1) in TERRITORY_CARDS.items():
+        ui.container(im, d, (x0, y0, x1, y1), "ardoise")
+        icon = big_icon("influville", name)
+        if icon:
+            im.alpha_composite(icon, (x0 + 2, (y0 + y1) // 2 - 15))
+    return im
+
+
+# Trade window of FluxCommerce (menu echange, 2026-11-01): on the first row the quit button (0), the two name fields (1-3,
+# 5-7, names written by Flux) and the help button (8); under it one dark box per player (rows 1-5, the middle column
+# free between them): his 12 offered stacks (rows 1-3), then his experience (row 4) and money (row 5), icon in a slot
+# and amount in a field (written by Flux). Countdown (40) and validate button (49) stand in the middle column, between
+# the two boxes; the player's inventory under them. A name field turns green when that player validated: overlays
+# bg_echange_pret_moi / bg_echange_pret_lui, as large as the window, shown by the menu.
+TRADE_MINE = [9, 10, 11, 12, 18, 19, 20, 21, 27, 28, 29, 30]
+TRADE_THEIRS = [14, 15, 16, 17, 23, 24, 25, 26, 32, 33, 34, 35]
+TRADE_ICONS = [36, 45, 44, 53]
+TRADE_NAMES = {"moi": (25, 19, 78, 32), "lui": (97, 19, 150, 32)}
+TRADE_FIELDS = [(26, 91, 77, 104), (26, 109, 77, 122), (98, 91, 149, 104), (98, 109, 149, 122)]
+TRADE_GREEN = rgb("#3E8E2E")
+
+
+def bg_echange(generic):
+    im = ui.window(generic)
+    d = ImageDraw.Draw(im, "RGBA")
+    for box in TRADE_NAMES.values():
+        ui.field(im, d, box)
+    for grid, icons in ((TRADE_MINE, (36, 45)), (TRADE_THEIRS, (44, 53))):
+        x0, y0, x1, _ = span(grid)
+        ui.container(im, d, (x0, y0, x1, ui.objet(45)[1] + 17), "ardoise")
+        for c in grid + list(icons):
+            ui.slot(d, c, "dark")
+    for box in TRADE_FIELDS:
+        ui.field(im, d, box)
+    # arrows between the offers, engraved in the middle column (x 80-95): mine to him above, his to me below
+    for y, way in ((52, 1), (66, -1)):
+        tip, tail = (93, 82) if way > 0 else (82, 93)
+        d.line((82, y, 93, y), fill=INK)
+        d.line((tip - 2 * way, y - 2, tip - 2 * way, y + 2), fill=INK)
+        d.line((tip - way, y - 1, tip - way, y + 1), fill=INK)
+    label(im, "Inventaire", 8, 130)
+    for i in range(36):
+        ui.slot(d, 54 + i)
+    return im
+
+
+def echange_ready(side):
+    """A name field of the trade window in green (the player validated), alone on a window-sized picture."""
+    im = Image.new("RGBA", (ui.W, ui.H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im, "RGBA")
+    x0, y0, x1, y1 = TRADE_NAMES[side]
+    d.rectangle((x0, y0, x1, y1), fill=BLACK)
+    d.rectangle((x0 + 1, y0 + 1, x1 - 1, y1 - 1), fill=TRADE_GREEN)
+    d.line((x0 + 1, y0 + 1, x1 - 1, y0 + 1), fill=tone(TRADE_GREEN, -0.4))
+    d.line((x0 + 1, y1 - 1, x1 - 1, y1 - 1), fill=tone(TRADE_GREEN, 0.25))
+    # a glyph advances up to its last non-transparent column: without this the picture of the left field advanced
+    # ~80 px instead of the window's 176 and every widget drawn after it slid left. Alpha 8 is discarded by the
+    # text shader (< 0.1), so the pixel never shows but still counts in the width.
+    im.putpixel((ui.W - 1, y0), (0, 0, 0, 8))
+    return im
+
+
+def bg_window(generic, first=0, last=9, extra=0, rows=6):
     """The bare window of the theme, fitted to the rows a menu uses (theme of Flux): it starts ``first`` rows lower
     than a full window (the plate moves with it) and ends 6 px under row ``last`` (0-5 chest, 6-8 inventory,
-    9 hotbar), so a menu of few rows is no taller than it needs and stays centred on the screen."""
+    9 hotbar), so a menu of few rows is no taller than it needs and stays centred on the screen. ``rows``: chest rows
+    of the menu, the inventory of a smaller chest is higher in game (18 px a row)."""
     full = ui.window(generic)
-    if first == 0 and last == 9 and not extra:
+    if first == 0 and last == 9 and not extra and rows == 6:
         return full
     dy = 18 * first
+    lift = 18 * (6 - rows) if last >= 6 else 0
     # last row of pixels of the window; extra: more grey under the last row (a box drawn down there keeps a margin)
-    bottom = min(full.height - 1, ROW_TOPS[last] + 16 + 6 + extra)
+    bottom = min(full.height - 1, ROW_TOPS[last] - lift + 16 + 6 + extra)
     im = Image.new("RGBA", full.size, (0, 0, 0, 0))
     body = bottom + 1 - dy - 3                # rows of the full window kept above its 3 bottom rows
     im.paste(full.crop((0, 0, full.width, body)), (0, dy))
@@ -500,7 +588,10 @@ def bg_window(generic, first=0, last=9, extra=0):
     return im
 
 
-BACKGROUNDS = {"metiers": bg_metiers, "window": bg_window, "pass": bg_pass, "profil": bg_profil}
+BACKGROUNDS = {"metiers": bg_metiers, "window": bg_window, "pass": bg_pass, "profil": bg_profil,
+               "territoires": bg_territoires, "echange": bg_echange,
+               "echange_pret_moi": lambda generic: echange_ready("moi"),
+               "echange_pret_lui": lambda generic: echange_ready("lui")}
 for _first in range(0, 6):
     for _last in range(_first, 10):
         if (_first, _last) != (0, 9):
@@ -510,6 +601,8 @@ for _first in range(0, 6):
 # ---------------------------------------------------------------------------------------------------- main
 
 def main(plugins, resources=None):
+    global PLUGINS
+    PLUGINS = plugins
     dest = os.path.join(plugins, "ItemsAdder", "contents", NS)
     # Pictures in the pack's textures/ (ItemsAdder copies it to assets/fluxui/textures/). Font files in a raw pack
     # of their own, contents/fluxui_fonts/resourcepack/assets/fluxui/font/: ItemsAdder copies a resourcepack/ folder

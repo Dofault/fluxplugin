@@ -192,7 +192,9 @@ public final class RankMenu implements org.bukkit.event.Listener {
         Rank r = ranks.get(i % ranks.size());
         int cycle = i / ranks.size();
         Lore lore = Lore.create().description(r.description());
-        for (String perk : r.perks()) lore.item(perk.replaceFirst("^&8(&m)?➤ ", ""));
+        // prestige cycles give nothing more: the player keeps every perk of the last rank, so none is listed
+        if (cycle == 0) for (String perk : r.perks()) lore.item(perk.replaceFirst("^&8(&m)?➤ ", ""));
+        else lore.info("Tu gardes tous les avantages de " + ranks.get(ranks.size() - 1).name() + ".");
         // badge of the rank (fluxui:rang_<n>_<cycle>_<on|off>, Flux/assets/vanilla/gen_ui.py): coloured once passed,
         // greyed further; the player's own step shows his head
         String badge = "itemsadder:fluxui:rang_" + (i % ranks.size() + 1) + "_" + cycle + "_";

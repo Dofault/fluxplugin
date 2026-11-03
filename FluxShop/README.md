@@ -2,7 +2,7 @@
 
 Plugin maison d'Influencraft : coffres magasins à menu d'achat/vente, blocs de vente, catalogue de prix (`prices.yml`) et objet « Vente Automatique ». Économie via Vault.
 
-Documentation complète : [`docs/technique/supermarket.md`](../../docs/technique/supermarket.md).
+Documentation complète : [`docs/technique/fluxshop.md`](../../docs/technique/fluxshop.md).
 
 ## Commandes (`/supermarket`)
 

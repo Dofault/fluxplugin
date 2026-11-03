@@ -93,13 +93,14 @@ def title(im, txt):
     write(im, txt, 88, 4, INK)
 
 
-def slot_box(case):
-    x, y = objet(case)
+def slot_box(case, rows=6):
+    x, y = objet(case, rows)
     return x - 1, y - 1, x + 16, y + 16
 
 
-def slot(d, case, kind="vanilla", colour=None):
-    x0, y0, x1, y1 = slot_box(case)
+def slot(d, case, kind="vanilla", colour=None, rows=6):
+    """rows: chest rows of the menu; under a smaller chest the inventory is higher in game."""
+    x0, y0, x1, y1 = slot_box(case, rows)
     if kind == "vanilla":
         base, tl, br = SLOT, SLOT_DARK, WHITE
     elif kind == "dark":

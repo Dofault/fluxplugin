@@ -79,13 +79,12 @@ public class FluxShop extends JavaPlugin {
         AutoSellMenu autoSellMenu = new AutoSellMenu(this, lang, priceManager, autoSellItemManager, autoSellExceptions);
         SellManager sellManager = new SellManager(this, lang, priceManager, activity, autoSellItemManager);
 
-        // Flux menus: lists drawn by code, clicks through [shop] <...>
-        shopMenu.register();
+        // Flux menus: lists drawn by code, clicks through [shop] <...> (shop chests: Flux trade window, [trade] <...>)
         shopEditor.register();
         sellManager.register();
         autoSellMenu.register();
         FluxApi.registerAction(this, "shop", (player, view, argument) ->
-                click(player, view, argument, shopMenu, shopEditor, sellManager.sellMenu(), autoSellMenu));
+                click(player, view, argument, shopEditor, sellManager.sellMenu(), autoSellMenu));
         Resources.shipMenus(this, FluxApi.language());
 
         PluginManager pm = getServer().getPluginManager();
@@ -99,7 +98,6 @@ public class FluxShop extends JavaPlugin {
             @EventHandler
             public void onQuit(PlayerQuitEvent event) {
                 UUID uuid = event.getPlayer().getUniqueId();
-                shopMenu.forget(uuid);
                 shopEditor.forget(uuid);
                 sellManager.sellMenu().forget(uuid);
                 autoSellMenu.forget(uuid);
@@ -168,13 +166,10 @@ public class FluxShop extends JavaPlugin {
     }
 
     /** {@code [shop] <action> <arguments>} clicks of the shop menus. */
-    private static void click(Player player, MenuView view, String argument, ShopMenu shopMenu, ShopEditor shopEditor,
+    private static void click(Player player, MenuView view, String argument, ShopEditor shopEditor,
             SellMenu sellMenu, AutoSellMenu autoSellMenu) {
         String[] args = argument.trim().split("\\s+");
         switch (args[0].toLowerCase(java.util.Locale.ROOT)) {
-            case "buy" -> {
-                if (args.length >= 3) shopMenu.click(player, view, number(args[1]), number(args[2]));
-            }
             case "editor-price" -> {
                 if (args.length >= 2) shopEditor.price(player, view, number(args[1]));
             }

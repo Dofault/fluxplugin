@@ -105,7 +105,7 @@ items:
     actions:
       left: ["[menu] mondes"]
 
-  # Menus Villes et Pays d'InfluLands (Lands, warps InfluPW, échoppes InfluEchoppe),
+  # Menus Villes et Pays de FluxLands (Lands, warps FluxPW, échoppes FluxCommerce),
   # générés par assets/ville/gen_menus_ville.py. Clic gauche : accueil partagé
   # Villes et Pays ; raccourcis directs vers Ma ville, l'Agence et Mon pays.
   ville:
@@ -120,9 +120,9 @@ items:
       - "@shift-right Mon pays"
     actions:
       left: ["[menu] territoires"]
-      right: ["[player] influlands ouvrir ville"]
-      shift-left: ["[player] influlands ouvrir agence depuis:territoires"]
-      shift-right: ["[player] influlands ouvrir pays"]
+      right: ["[player] fluxlands ouvrir ville"]
+      shift-left: ["[player] fluxlands ouvrir agence depuis:territoires"]
+      shift-right: ["[player] fluxlands ouvrir pays"]
 
   familiers:
     material: BONE
@@ -134,8 +134,7 @@ items:
     actions:
       left: ["[menu] familiers"]
 
-  # Marché d'InfluMarche : hôtel des ventes (AuctionHouse) et échoppes des villes
-  # (InfluEchoppe) réunis, menus générés par assets/marche/gen_menus_marche.py.
+  # Marché de FluxCommerce : hôtel des ventes et échoppes des villes réunis (menus livrés par FluxCommerce).
   marche:
     material: "itemsadder:influmarche:marche"
     name: "&#FFD94DMarché"
@@ -146,9 +145,9 @@ items:
       - "@right Mes ventes"
       - "@shift-left Vendre un objet"
     actions:
-      left: ["[player] influmarche ouvrir marche"]
-      right: ["[player] influmarche ouvrir ventes"]
-      shift-left: ["[player] influmarche ouvrir vendre"]
+      left: ["[hdv] open market"]
+      right: ["[hdv] open listings"]
+      shift-left: ["[hdv] open sell"]
 
   casino:
     material: "itemsadder:influcasino:jeton"
@@ -259,7 +258,7 @@ items:
 # Plus de tiroirs depuis le 2026-10-30 : vote, classement et parrainage ont chacun leur menu (vote.yml,
 # classement.yml, parrainage.yml).
 
-# Tableau de bord de la rangée 1 : tête (profil) en 9, pseudo gravé sur la fenêtre par Flux, bouton Compte en 17.
+# Tableau de bord de la rangée 1 : tête (profil) en 9 et pseudo à sa droite, solde abrégé et bouton Compte en 17 en miroir.
 widgets:
   pseudo:
     type: text
@@ -267,3 +266,12 @@ widgets:
     x: 28
     y: 41
     text: "%player_name%"
+  # solde en abrégé (80M), calé à droite contre le bouton Compte (case 17, x 152) : même écart de 4 px que le
+  # pseudo avec la tête (case 9 finit à 24, pseudo à 28), le dernier pixel tombe en 147
+  solde:
+    type: text
+    ink: true
+    x: 148
+    y: 41
+    align: right
+    text: "%flux_balance_vault_short%"

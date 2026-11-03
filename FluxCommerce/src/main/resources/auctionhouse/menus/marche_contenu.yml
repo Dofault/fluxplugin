@@ -1,0 +1,23 @@
+# Contents of a shulker box or a bundle for sale, seen before buying. Row 1: back. Rows 2-4: the items (copies).
+rows: 4
+player-inventory: hidden
+vanilla-background: false
+
+open-actions:
+  - "[sound] @page"
+
+lists:
+  hdv_contents:
+    slots: "9-35"
+    item:
+      material: entry
+
+items:
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
+    slots: [0]
+    lore:
+      - "@left Revenir à l'offre"
+    actions:
+      left: ["[hdv] contents-back"]

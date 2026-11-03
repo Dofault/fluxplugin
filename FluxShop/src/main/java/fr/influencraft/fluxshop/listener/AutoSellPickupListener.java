@@ -71,7 +71,7 @@ public class AutoSellPickupListener implements Listener {
 
         event.setCancelled(true);
         event.getItem().remove();
-        Money.give(player, price);
+        Money.give(player, price, "autosell");
         player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.2f, 1.5f);
     }
 }

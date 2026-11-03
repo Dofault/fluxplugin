@@ -30,6 +30,12 @@
     </repositories>
 
     <dependencies>
+        <dependency>
+            <groupId>fr.influencraft</groupId>
+            <artifactId>Flux</artifactId>
+            <version>0.1.0</version>
+            <scope>provided</scope>
+        </dependency>
         <!-- Paper API (provided by the server at runtime). Pinned to the actual SemiRP server
              version (1.21.11, not just any 1.21.x) because the in-game item-add editor uses
              the Dialog API (io.papermc.paper.dialog), only confirmed present from 1.21.6+. -->

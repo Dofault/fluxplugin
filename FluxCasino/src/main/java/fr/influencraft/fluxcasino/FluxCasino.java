@@ -1,7 +1,6 @@
 package fr.influencraft.fluxcasino;
 
 import fr.influencraft.flux.api.FluxPlugin;
-import fr.influencraft.flux.api.economy.Currency;
 import fr.influencraft.flux.api.util.Format;
 import fr.influencraft.flux.api.util.Players;
 import fr.influencraft.fluxcasino.games.Games;
@@ -17,9 +16,9 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Casino chips: balance and bet per player (SQLite, every movement logged), exchange against the main currency at
- * the configured prices, the {@code chips} currency of the suite, and the casino games played in Flux menus
- * (Plinko, slot machine, roulette).
+ * Casino: the bet of each player, the exchange of Flux's {@code chips} currency against the main currency at the
+ * configured prices, and the casino games played in Flux menus (Plinko, slot machine, roulette). The chips are kept
+ * by Flux since 2026-10-30 (currency {@code chips}: balances, account history, gain / loss messages).
  *
  * <pre>
  *   /chips                                balance and bet
@@ -50,7 +49,7 @@ public final class FluxCasino extends FluxPlugin implements Listener {
             return;
         }
         Casino.init(this);
-        currency(new Chips());
+        if (Casino.currency() == null) getLogger().severe("Flux has no 'chips' currency (currencies.chips.type: flux in Flux's config): the casino cannot work");
         placeholders("influcasino", this::placeholder);
         games = Games.enable(this);
         command("chips")
@@ -67,7 +66,6 @@ public final class FluxCasino extends FluxPlugin implements Listener {
     @Override
     protected void disable() {
         if (games != null) games.shutdown();
-        if (store != null) store.close();
     }
 
     Store store() {
@@ -141,18 +139,15 @@ public final class FluxCasino extends FluxPlugin implements Listener {
         long n = amount(player, arg, 0);
         if (n < 0) return;
         double price = n * getConfig().getDouble("exchange.buy-price", 10);
-        if (!money().take(player, price)) {
-            messages().send(player, "not-enough-money", "%price%", Format.number(price));
+        fr.influencraft.flux.api.economy.Origin origin = fr.influencraft.flux.api.economy.Origin.of(this, "exchange").notifyPlayer();
+        if (!money().take(player, price, origin)) {
+            messages().send(player, "not-enough-money", "%price%", money().format(price));
             return;
         }
-        try {
-            store.add(player.getUniqueId(), player.getName(), n, "buy (" + Format.number(price) + ")");
-        } catch (RuntimeException e) {
-            money().give(player, price);
-            throw e;
+        if (!Casino.currency().give(player, n, origin)) {
+            money().give(player, price, fr.influencraft.flux.api.economy.Origin.of(this, "refund"));
+            getLogger().warning("Purchase of " + n + " chips by " + player.getName() + " cancelled: chips not credited");
         }
-        messages().send(player, "bought-money", "%price%", Format.number(price));
-        messages().send(player, "bought-chips", "%amount%", Format.number(n));
     }
 
     /** Selling: the chips are taken first, then the money paid (chips given back if paying fails). */
@@ -161,17 +156,15 @@ public final class FluxCasino extends FluxPlugin implements Listener {
         long n = amount(player, arg, Casino.chips(player));
         if (n < 0) return;
         double price = n * getConfig().getDouble("exchange.sell-price", 10);
-        if (!store.add(player.getUniqueId(), player.getName(), -n, "sell (" + Format.number(price) + ")")) {
+        fr.influencraft.flux.api.economy.Origin origin = fr.influencraft.flux.api.economy.Origin.of(this, "exchange").notifyPlayer();
+        if (!Casino.currency().take(player, n, origin)) {
             messages().send(player, "not-enough-chips", "%amount%", Format.number(Casino.chips(player)));
             return;
         }
-        if (!money().give(player, price)) {
-            store.add(player.getUniqueId(), player.getName(), n, "sell cancelled");
+        if (!money().give(player, price, origin)) {
+            Casino.currency().give(player, n, fr.influencraft.flux.api.economy.Origin.of(this, "refund"));
             getLogger().warning("Sale of " + n + " chips by " + player.getName() + " cancelled: payment failed");
-            return;
         }
-        messages().send(player, "sold-chips", "%amount%", Format.number(n));
-        messages().send(player, "sold-money", "%price%", Format.number(price));
     }
 
     // ------------------------------------------------------------------ commands
@@ -216,10 +209,13 @@ public final class FluxCasino extends FluxPlugin implements Listener {
         String name = Players.name(target, args[2]);
         String sub = args[1].toLowerCase(Locale.ROOT);
         if (sub.equals("history") || sub.equals("historique")) {
-            for (String[] line : store.history(target.getUniqueId(), 15)) {
-                messages().send(sender, "admin-history-line", "%date%", Format.date(Long.parseLong(line[3])),
-                        "%delta%", (line[0].startsWith("-") ? "" : "+") + line[0], "%balance%", line[1], "%reason%", line[2]);
-            }
+            // the account history of Flux, chips only (loaded off the main thread when the player is offline)
+            fr.influencraft.flux.api.economy.Ledger.history(target.getUniqueId()).thenAccept(lines -> getServer().getScheduler().runTask(this, () -> {
+                lines.stream().filter(l -> l.currency().equals("chips")).limit(15).forEach(l -> messages().send(sender, "admin-history-line",
+                        "%date%", Format.date(l.last()), "%delta%", (l.gain() ? "+" : "") + Format.number(l.amount()),
+                        "%balance%", Format.number(l.balance()),
+                        "%reason%", fr.influencraft.flux.api.economy.Ledger.label(l.origin()) + (l.count() > 1 ? " x" + l.count() : "")));
+            }));
             return;
         }
         long n = args.length >= 4 ? Format.parseAmount(args[3]) : -1;
@@ -228,18 +224,22 @@ public final class FluxCasino extends FluxPlugin implements Listener {
             return;
         }
         n = Math.max(0, n);
-        long current = store.chips(target.getUniqueId());
-        String by = "admin " + sender.getName();
+        long current = Casino.chips(target);
+        fr.influencraft.flux.api.economy.Currency chips = Casino.currency();
+        fr.influencraft.flux.api.economy.Origin by = fr.influencraft.flux.api.economy.Origin.of(this, "admin").detail(sender.getName());
         switch (sub) {
-            case "give" -> store.add(target.getUniqueId(), name, n, by);
-            case "take" -> store.add(target.getUniqueId(), name, -Math.min(n, current), by);
-            case "set" -> store.add(target.getUniqueId(), name, n - current, by);
+            case "give" -> chips.give(target, n, by);
+            case "take" -> chips.take(target, Math.min(n, current), by);
+            case "set" -> {
+                if (n > current) chips.give(target, n - current, by);
+                else chips.take(target, current - n, by);
+            }
             default -> {
                 messages().send(sender, "admin-usage");
                 return;
             }
         }
-        messages().send(sender, "admin-done", "%player%", name, "%amount%", Format.number(store.chips(target.getUniqueId())));
+        messages().send(sender, "admin-done", "%player%", name, "%amount%", Format.number(Casino.chips(target)));
     }
 
     private List<String> complete(CommandSender sender, String[] args) {
@@ -288,40 +288,5 @@ public final class FluxCasino extends FluxPlugin implements Listener {
             case "mise" -> Format.number(Casino.bet(player));
             default -> null;
         };
-    }
-
-    /** The chips as a currency of the suite (id {@code chips}), usable by shops. */
-    private final class Chips implements Currency {
-        @Override
-        public String id() {
-            return "chips";
-        }
-
-        @Override
-        public boolean available() {
-            return isEnabled();
-        }
-
-        @Override
-        public double balance(OfflinePlayer player) {
-            return store.chips(player.getUniqueId());
-        }
-
-        @Override
-        public boolean take(OfflinePlayer player, double amount) {
-            long n = (long) Math.ceil(amount - 1e-9);
-            return n <= 0 || store.add(player.getUniqueId(), Players.name(player, "?"), -n, "spent");
-        }
-
-        @Override
-        public boolean give(OfflinePlayer player, double amount) {
-            long n = (long) Math.floor(amount + 1e-9);
-            return n <= 0 || store.add(player.getUniqueId(), Players.name(player, "?"), n, "received");
-        }
-
-        @Override
-        public String format(double amount) {
-            return fr.influencraft.flux.api.economy.Economy.format(id(), amount);
-        }
     }
 }

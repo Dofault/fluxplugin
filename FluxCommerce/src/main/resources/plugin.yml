@@ -1,0 +1,54 @@
+name: FluxCommerce
+version: 1.0.0
+main: fr.influencraft.fluxcommerce.FluxCommerce
+api-version: "26.2"
+description: Commerce between players - trades, auction house and chest shops - with shared forbidden items and bans.
+authors: [Influencraft]
+depend: [Flux]
+# FluxLands: town of a chest shop, market fee, town pages in the market (optional, read at run time).
+softdepend: [FluxLands]
+
+# fluxcommerce.ah.slots.<n> / fluxcommerce.ah.slots.unlimited: most listings a player may have (limits.default otherwise).
+# fluxcommerce.ah.duration.sale.<hours> / fluxcommerce.ah.duration.auction.<hours>: longer listings (the highest wins).
+# fluxcommerce.chestshop.limit.<n> / fluxcommerce.chestshop.limit.unlimited: most shops a player may own.
+permissions:
+  fluxcommerce.admin:
+    description: Everything of FluxCommerce - forbidden items, reload, bans, and the admin of every part.
+    default: op
+    children:
+      fluxcommerce.staff: true
+      fluxcommerce.trade.admin: true
+      fluxcommerce.ah.admin: true
+      fluxcommerce.chestshop.admin: true
+  fluxcommerce.staff:
+    description: Ban a player from commerce (trades, market, shops), pardon, list of bans (/commerce).
+    default: op
+
+  fluxcommerce.trade.use:
+    description: Send, accept and make trades; turn one's own requests on or off.
+    default: true
+  fluxcommerce.trade.staff:
+    description: Moderation of trades (/trade admin history, /trade admin cancel).
+    default: op
+  fluxcommerce.trade.admin:
+    description: Everything of fluxcommerce.trade.staff.
+    default: op
+    children:
+      fluxcommerce.trade.staff: true
+
+  fluxcommerce.ah.use:
+    description: Use the market (buy, bid, list within one's slots).
+    default: true
+  fluxcommerce.ah.admin:
+    description: Staff tools of the market (remove and delete listings, keepers), unlimited slots.
+    default: op
+
+  fluxcommerce.chestshop.use:
+    description: Trade with chest shops.
+    default: true
+  fluxcommerce.chestshop.create:
+    description: Create and manage one's own chest shops.
+    default: false
+  fluxcommerce.chestshop.admin:
+    description: Manage and remove every shop, unlimited (server) shops, /echoppe admin, containers of claims.
+    default: op

@@ -29,7 +29,7 @@ final class Registre {
         long transactions;
         /** jour (aaaa-mm-jj) -> montant perçu ce jour-là. */
         final TreeMap<String, Double> jours = new TreeMap<>();
-        /** identifiant d'échoppe FluxChestShop -> montant total reversé par elle. */
+        /** identifiant d'échoppe -> montant total reversé par elle. */
         final Map<Long, Double> parEchoppe = new HashMap<>();
 
         double jour(LocalDate d) {
@@ -50,6 +50,8 @@ final class Registre {
     private final Map<String, List<String>> vitrines = new ConcurrentHashMap<>();
     private final Map<String, Recette> recettes = new ConcurrentHashMap<>();
     private final Map<UUID, String> villeChoisie = new ConcurrentHashMap<>();
+    /** Active effects chosen by each country (key: country ULID), applied by {@link CountryEffects}. */
+    private final Map<String, List<String>> effetsPays = new ConcurrentHashMap<>();
     private volatile boolean modifie;
 
     Registre(FluxLands plugin) {
@@ -90,6 +92,12 @@ final class Registre {
                 }
             }
         }
+        effetsPays.clear();
+        ConfigurationSection pays = y.getConfigurationSection("pays");
+        if (pays != null) for (String id : pays.getKeys(false)) {
+            List<String> eff = pays.getStringList(id + ".effets");
+            if (!eff.isEmpty()) effetsPays.put(id, new ArrayList<>(eff));
+        }
         ConfigurationSection choix = y.getConfigurationSection("joueurs");
         if (choix != null) {
             for (String u : choix.getKeys(false)) {
@@ -128,6 +136,7 @@ final class Registre {
             }
         }
         for (Map.Entry<UUID, String> e : villeChoisie.entrySet()) y.set("joueurs." + e.getKey() + ".ville", e.getValue());
+        for (Map.Entry<String, List<String>> e : effetsPays.entrySet()) y.set("pays." + e.getKey() + ".effets", e.getValue());
         String contenu = y.saveToString();
         Runnable ecrire = () -> {
             try {
@@ -205,6 +214,22 @@ final class Registre {
     void choisirVille(UUID joueur, String ville) {
         villeChoisie.put(joueur, ville);
         modifie = true;
+    }
+
+    /** Effects a country chose (effect keys, e.g. speed), empty when none. */
+    List<String> effetsPays(String pays) {
+        return effetsPays.getOrDefault(pays, List.of());
+    }
+
+    void definirEffetsPays(String pays, List<String> effets) {
+        if (effets.isEmpty()) effetsPays.remove(pays);
+        else effetsPays.put(pays, new ArrayList<>(effets));
+        modifie = true;
+    }
+
+    /** Every country with chosen effects (key: country ULID). */
+    Map<String, List<String>> tousEffetsPays() {
+        return effetsPays;
     }
 
     void oublierVille(String ville) {

@@ -11,7 +11,7 @@
 - familier.yml : progression d'un familier (celui choisi par /pets select) : sa carte (4), ses 10 niveaux
   (rangées 2 et 3, colonnes 2 à 6 : débloqué, en cours, verrouillé, avec leurs effets), retour (49).
 Données : placeholders %influpet_view_...%, %influpet_slot_...%, %influpet_selected_...% ; actions : /pets
-toggle|filter|page|select|view|visibility|deactivate (cf. docs/technique/influpet.md). Portraits :
+toggle|filter|page|select|view|visibility|deactivate (cf. docs/technique/fluxpets.md). Portraits :
 itemsadder:influportraits:portrait_<id> (scripts/influcard/portraits.py).
 """
 import os

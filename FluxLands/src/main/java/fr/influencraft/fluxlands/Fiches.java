@@ -9,8 +9,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.UUID;
 
 /**
- * Instantanés des échoppes et adresses, indépendants des classes de FluxChestShop et de
- * InfluPW : les placeholders et menus les lisent sans dépendre de la présence de
+ * Instantanés des échoppes et adresses, indépendants des classes de FluxCommerce et de
+ * FluxPW : les placeholders et menus les lisent sans dépendre de la présence de
  * ces plugins.
  */
 final class Fiches {
@@ -18,13 +18,13 @@ final class Fiches {
     private Fiches() {
     }
 
-    /** Échoppe FluxChestShop vue au dernier passage de l'index. */
+    /** Échoppe vue au dernier passage de l'index. */
     record Echoppe(long id, Location lieu, UUID proprio, String proprioNom, String icone, String objet,
                    int quantite, double prix, boolean rachat, int stock, String villeId, String villeNom) {
 
         /**
          * Active = encore en mesure de vendre (stock) ou de racheter (place libre). Une échoppe vide
-         * ou un rachat plein (dernier stock connu à 0) est caché des listes publiques ; stock jamais
+         * ou un achat plein (dernier stock connu à 0) est caché des listes publiques ; stock jamais
          * relevé (-1) : affichée par défaut.
          */
         boolean active() {
@@ -32,7 +32,7 @@ final class Fiches {
         }
     }
 
-    /** Adresse InfluPW vue au dernier passage de l'index. */
+    /** Adresse FluxPW vue au dernier passage de l'index. */
     record Adresse(String id, String nom, String titre, UUID proprio, String proprioNom, Location lieu,
                    String villeId, String villeNom, int visites, float note, int prix, String icone,
                    String categorie, boolean ouverte, boolean motDePasse, String description, long creation) {
@@ -60,6 +60,15 @@ final class Fiches {
             return LegacyComponentSerializer.legacyAmpersand().serialize(meta.displayName());
         }
         return "lang:" + item.getType().translationKey();
+    }
+
+    /**
+     * Nom à glisser dans un message du tchat : nom personnalisé, sinon balise {@code <lang:clé>} que le client
+     * traduit dans sa langue (même principe que les offrandes). « lang:clé » n'est compris que dans les menus.
+     */
+    static String nomObjetTexte(ItemStack item) {
+        String nom = nomObjet(item);
+        return nom.startsWith("lang:") ? "<" + nom + ">" : nom;
     }
 
     /** Étoiles d'une note sur 5 (or pour les pleines, gris pour les vides). */

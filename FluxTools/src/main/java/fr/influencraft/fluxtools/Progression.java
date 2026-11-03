@@ -222,9 +222,9 @@ final class Progression implements Listener {
 
     private void payer(Player p, Etat e, double montant) {
         if (montant <= 0) return;
-        plugin.economie().give(p, montant);
+        // the standard gain message of Flux (style.yml money), recorded in the account history as a tool quest
+        plugin.economie().give(p, montant, fr.influencraft.flux.api.economy.Origin.of(plugin, "quest").notifyPlayer());
         e.gagne += montant;
-        p.sendMessage(Fmt.texte(plugin.texte("gain").replace("%montant%", Fmt.nombre(montant))));
     }
 
     /** Contrat rempli : l'outil se brise au tick suivant (après les dégâts vanilla du coup en cours). */

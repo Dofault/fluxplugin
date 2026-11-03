@@ -1,0 +1,60 @@
+# Family menu (/famille [player]), vanilla theme (theme.menus.famille of Flux's config): the family tree of one player.
+# Row 1: his parent and the parent's spouse. Row 2: the player, his status, his partner. Rows 4-5 (one row of air
+# between generations): the couple's children (adopted or referred). Below the chest / inventory gap (row 6): what
+# the viewer can do here, between the page buttons. Clicking a head shows that player's family;
+# the back button comes back to the viewer's own family, then to the main menu. Lists built by FluxFamily.
+rows: 6
+player-inventory: hidden
+vanilla-background: false
+
+open-actions:
+  - "[sound] @page"
+
+lists:
+  famille_info:
+    slots: [8]
+    item:
+      material: entry
+  famille_parents:
+    slots: 12, 14
+    item:
+      material: entry
+      actions:
+        left: ["%entry_clic%", "[refresh]"]
+  famille_couple:
+    slots: 21-23
+    item:
+      material: entry
+      actions:
+        left: ["%entry_clic%", "[refresh]"]
+  famille_enfants:
+    slots: 37-43, 46-52
+    item:
+      material: entry
+      actions:
+        left: ["%entry_clic%", "[refresh]"]
+  famille_actions:
+    slots: 56-60
+    item:
+      material: entry
+      actions:
+        left: ["%entry_clic%"]
+        right: ["%entry_droit%"]
+
+widgets:
+  pages:
+    type: pager
+    list: famille_enfants
+    prev: 54
+    next: 62
+
+items:
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
+    slots: [0]
+    lore:
+      - "@desc Revenir à ta famille, puis au menu."
+      - "@left Retour"
+    actions:
+      left: ["[famille] back", "[refresh]"]

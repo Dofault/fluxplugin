@@ -3,7 +3,7 @@
 Plugin Paper 26.2 du serveur Influencraft : cartes à collectionner, boosters, familiers (adoption par booster,
 progression par les cartes, modèles BetterModel qui suivent le joueur, effets propres aux familiers).
 
-Documentation complète : `docs/technique/influpet.md` du dépôt serveur.
+Documentation complète : `docs/technique/fluxpets.md` du dépôt serveur.
 
 ## Compiler
 

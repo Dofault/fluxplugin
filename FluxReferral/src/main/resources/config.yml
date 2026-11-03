@@ -6,8 +6,7 @@
 
 base-de-donnees:
   # La base elle-même (SQLite ou MySQL/MariaDB, hôte, identifiants) se règle une seule fois pour toute la suite,
-  # section database de plugins/Flux/config.yml. Ici : seulement le préfixe des tables du parrainage.
-  prefixe-tables: "parr_"
+  # dans plugins/Flux/storage.yml. Tables : flux_referral_* (les anciennes parr_* sont renommées au démarrage).
   # Ancien fichier SQLite local, recopié une fois dans la base de Flux au démarrage
   fichier-local: "parrainage.db"
 

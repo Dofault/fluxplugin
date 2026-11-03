@@ -1,0 +1,91 @@
+name: FluxPW
+version: 26.2
+main: fr.influencraft.fluxpw.FluxPW
+api-version: "26.2"
+description: Player warps (/pw), with categories, ratings, favourites, admission fees and sponsored places.
+authors: [Influencraft]
+depend: [Flux]
+
+# Permission nodes: those of the former warp plugin with the fluxpw. prefix instead of playerwarps. (same suffixes,
+# so moving the rank groups over is a plain prefix change). fluxpw.limit.<n> (most warps a player may own),
+# fluxpw.limit.unlimited, fluxpw.category.<key> (when a category asks for it) and fluxpw.icon.<item> / fluxpw.icon.*
+# (warp icons) are checked too.
+permissions:
+  fluxpw.use:
+    description: Open the warps menu and visit warps.
+    default: true
+  fluxpw.create:
+    description: Create a warp.
+    default: true
+  fluxpw.mywarps:
+    description: See one's own warps.
+    default: true
+  fluxpw.settings:
+    description: Open the settings of one's own warps from the menu.
+    default: true
+  fluxpw.manage:
+    description: /pw manage <warp> on one's own warps.
+    default: false
+  fluxpw.manage.others:
+    description: /pw admin info|list|manage|remove on every warp, whoever owns it (staff).
+    default: op
+  fluxpw.remove:
+    description: Delete one's own warps.
+    default: false
+  fluxpw.rename:
+    description: Rename one's own warps.
+    default: false
+  fluxpw.relocate:
+    description: Move one's own warps.
+    default: false
+  fluxpw.transfer:
+    description: Give one's own warps to another player.
+    default: false
+  fluxpw.feature:
+    description: Pay for a sponsored place.
+    default: false
+  fluxpw.review:
+    description: Rate warps.
+    default: false
+  fluxpw.favorite:
+    description: Keep favourite warps.
+    default: false
+  fluxpw.help:
+    description: /pw help.
+    default: true
+  fluxpw.about:
+    description: /pw admin about.
+    default: op
+  fluxpw.reload:
+    description: /pw admin reload.
+    default: op
+  fluxpw.teleport.others:
+    description: /pw admin send <warp> <player>, sending another player.
+    default: op
+  fluxpw.delay.bypass:
+    description: Teleport without the delay.
+    default: op
+  fluxpw.admin:
+    description: Every warp permission (all of /pw admin), and warps in the disabled worlds.
+    default: op
+  fluxpw.settings.setadmission:
+    description: Set the admission fee of one's warps.
+    default: false
+  fluxpw.settings.settype:
+    description: Set the category of one's warps.
+    default: false
+  fluxpw.settings.changedisplayname:
+    description: Set the display name of one's warps.
+    default: false
+  fluxpw.settings.setitem:
+    description: Set the icon of one's warps.
+    default: false
+  fluxpw.settings.setdescription:
+    description: Set the description of one's warps.
+    default: false
+  fluxpw.settings.setstatus:
+    description: Open, close or lock one's warps with a password.
+    default: false
+  fluxpw.settings.blockplayer:
+    description: Block players from one's warps.
+    default: false

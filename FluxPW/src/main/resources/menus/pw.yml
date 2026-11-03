@@ -1,0 +1,76 @@
+# Warps home menu (/pw), vanilla theme (theme.menus.pw of Flux's config). Row 1: back, menu icon. Row 2: the
+# categories. Row 3: the sponsored places. Row 4: own warps, favourites, search, create. Lists built by FluxPW.
+rows: 6
+player-inventory: hidden
+vanilla-background: false
+
+open-actions:
+  - "[sound] @page"
+
+lists:
+  pw_info:
+    slots: [8]
+    item:
+      material: entry
+  pw_categories:
+    slots: 9-17
+    item:
+      material: entry
+      actions:
+        left: ["%entry_clic%"]
+  pw_featured:
+    slots: 20-24
+    item:
+      material: entry
+      actions:
+        left: ["%entry_left%"]
+        right: ["%entry_right%"]
+        shift-left: ["%entry_shift_left%"]
+        shift-right: ["%entry_shift_right%"]
+
+items:
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
+    slots: [0]
+    lore:
+      - "@desc Revenir au menu principal."
+      - "@left Retour"
+    actions:
+      left: ["[menu] main"]
+  mes_warps:
+    material: ENDER_PEARL
+    name: "Mes warps"
+    slots: [28]
+    lore:
+      - "@desc Tes warps, ouverts ou fermés, et leurs réglages."
+      - "@left Voir"
+    actions:
+      left: ["[pw] mine"]
+  favoris:
+    material: NETHER_STAR
+    name: "Favoris"
+    slots: [30]
+    lore:
+      - "@desc Les warps que tu as gardés en favoris (Maj + clic droit sur un warp)."
+      - "@left Voir"
+    actions:
+      left: ["[pw] favorites"]
+  recherche:
+    material: "itemsadder:influitems:search"
+    name: "Rechercher"
+    slots: [32]
+    lore:
+      - "@desc Un warp par son nom ou par le pseudo de son propriétaire."
+      - "@left Rechercher"
+    actions:
+      left: ["[pw] search"]
+  creer:
+    material: "itemsadder:influitems:add"
+    name: "Créer un warp"
+    slots: [34]
+    lore:
+      - "@desc Un point de téléportation public, là où tu te tiens, dans ta ville ou une ville dont tu es habitant."
+      - "@left Créer"
+    actions:
+      left: ["[pw] create"]

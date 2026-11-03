@@ -1,0 +1,66 @@
+# FluxCommerce: texts shared by the three parts (trades, auction house, chest shops): bans from commerce, forbidden
+# items, the /commerce command, origin of money movements. Each part has its own texts (trade/lang, auctionhouse/lang,
+# chestshop/lang). A line starting with "!" has no prefix.
+prefix: "&#B376E5ᴄᴏᴍᴍᴇʀᴄᴇ&8 ▸ "
+
+no-permission: "&#FF5C5CYou may not do that."
+reloaded: "&#2ECF7BFluxCommerce reloaded."
+about: "&#8A8A8AFluxCommerce &f%version% &#8A8A8Aby &f%authors%&#8A8A8A. Parts running: &f%modules%&#8A8A8A. Bans: &f%bans%&#8A8A8A, forbidden items: &f%rules%&#8A8A8A."
+hold-item: "&#FF5C5CNothing in hand.&#8A8A8A Hold the item, then try again."
+
+# ---------------------------------------------------------------- ban from commerce (trades, auction house, chest shops)
+banned: "&#FF5C5CYou are banned from commerce for &f%duration%&#FF5C5C.&#8A8A8A Trades, auction house and chest shops are closed to you. Reason: &f%reason%"
+ban-usage: "&#8A8A8AUsage: [/commerce ban <player> <duration> <reason>] (duration: 3d, 12h, 90m)"
+player-unknown: "&#FF5C5CUnknown player:&#8A8A8A &#FFD94D%player%"
+bad-duration: "&#FF5C5CWrong duration.&#8A8A8A Examples: 3d, 12h, 1d12h, 90m."
+ban-done: "&#2ECF7B%player% is banned from commerce&#8A8A8A for &f%duration%&#8A8A8A (reason: &f%reason%&#8A8A8A)."
+not-banned: "&#FF5C5CThis player is not banned from commerce."
+pardon-done: "&#2ECF7B%player% may trade, use the auction house and chest shops again."
+bans-none: "&#8A8A8ANobody is banned from commerce."
+bans-line: "!&8 • &#FFD94D%player% &#8A8A8Afor &f%duration% &8· &#8A8A8A%reason% &8(by %by%)"
+
+# ---------------------------------------------------------------- forbidden items (trades, auction house, chest shops)
+blacklist-added: "&#2ECF7BRule added to the forbidden items:&#8A8A8A &f%rule%"
+blacklist-removed: "&#8A8A8ARule removed from the forbidden items: &f%rule%"
+blacklist-bad-index: "&#FF5C5CWrong number.&#8A8A8A List: [/commerce blacklist]"
+blacklist-empty: "&#8A8A8ANo forbidden item."
+blacklist-line: "!&8 %n%. &f%rule%"
+
+# ---------------------------------------------------------------- help of /commerce (Flux's help, as Lands')
+help:
+  header: "<#8A8A8A><st>             </st></#8A8A8A> %previous% <#FFD94D>ᴄᴏᴍᴍᴇʀᴄᴇ ʜᴇʟᴘ</#FFD94D> <dark_gray>·</dark_gray> <#8A8A8A>Page</#8A8A8A> <white>%page%</white><dark_gray>/</dark_gray><white>%pages%</white> %next% <#8A8A8A><st>             </st></#8A8A8A>"
+  header-admin: "<#8A8A8A><st>             </st></#8A8A8A> %previous% <#FFD94D>ᴄᴏᴍᴍᴇʀᴄᴇ ʜᴇʟᴘ</#FFD94D> <dark_gray>·</dark_gray> <#8A8A8A>Page</#8A8A8A> <white>%page%</white><dark_gray>/</dark_gray><white>%pages%</white> %next% <#8A8A8A><st>             </st></#8A8A8A>"
+  line: "<#F0A800>   %command%</#F0A800> <dark_gray>-</dark_gray> <#8A8A8A>%description%"
+  footer: "<#8A8A8A><st>             </st></#8A8A8A> %previous% <dark_gray>|</dark_gray> %next% <#8A8A8A><st>             </st></#8A8A8A>"
+  previous-arrow: "<#FFD94D>«</#FFD94D>"
+  next-arrow: "<#FFD94D>»</#FFD94D>"
+  previous: "<#FFD94D>« Previous</#FFD94D>"
+  next: "<#FFD94D>Next »</#FFD94D>"
+  previous-hover: "<#B376E5>Previous page"
+  next-hover: "<#B376E5>Next page"
+  hover-run: "<#B376E5>Click to run."
+  hover-suggest: "<#B376E5>Click to copy the command."
+  commands:
+    ban: "Ban a player from commerce (trades, auction house, chest shops)"
+    pardon: "Lift a ban"
+    bans: "Players banned from commerce"
+    blacklist: "Items forbidden everywhere (the item in hand, or a rule)"
+    about: "Version and parts running"
+    reload: "Reload the configurations"
+    help: "Show this help"
+
+# Origin of money movements (account history, gain and loss messages).
+origins:
+  trade: "Trade"
+  trade_refund: "Trade refund"
+  ah_buy: "Auction house purchase"
+  ah_sale: "Auction house sale"
+  ah_bid: "Auction house bid"
+  ah_bid_refund: "Bid given back"
+  ah_auction_sale: "Auction won (sale)"
+  ah_migration: "Former auction house"
+  chestshop_buy: "Chest shop purchase"
+  chestshop_sale: "Sale of your chest shop"
+  chestshop_purchase: "Purchase of your chest shop"
+  chestshop_sold: "Sale to a chest shop"
+  chestshop_refund: "Chest shop refund"

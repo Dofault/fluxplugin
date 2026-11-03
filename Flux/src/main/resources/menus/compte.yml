@@ -1,0 +1,73 @@
+# Flux: Account menu (/account): history of the gains and expenses of every currency, whatever plugin moved the
+# money. Lists ledger, ledger_summary, ledger_kind are built by Flux.
+title: "Account"
+rows: 6
+player-inventory: hidden
+vanilla-background: false
+update-interval: 40
+
+open-actions:
+  - "[sound] @page"
+
+lists:
+  ledger_summary:
+    slots: 17
+    item:
+      material: entry
+  ledger:
+    slots: 19-25,28-34,37-43
+    item:
+      material: entry
+  ledger_kind:
+    slots: 50
+    item:
+      material: entry
+      actions:
+        left: ["[list] ledger sort", "[refresh]"]
+        right: ["[list] ledger sort-prev", "[refresh]"]
+
+items:
+
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Back"
+    slots: [9]
+    lore:
+      - "@desc Back to the menu."
+      - "@left Main menu"
+    actions:
+      left: ["[menu] main"]
+
+  vide:
+    material: "itemsadder:influitems:checkmark"
+    name: "Nothing yet"
+    slots: [31]
+    view-requirements: ["placeholder: %flux_list_ledger_count% == 0"]
+    lore:
+      - "@desc Your gains and expenses in this currency will show here."
+
+  monnaie:
+    material: "itemsadder:influitems:filter"
+    name: "Currency"
+    slots: [48]
+    lore:
+      - "@filter ledger"
+    actions:
+      left: ["[list] ledger filter", "[refresh]"]
+      right: ["[list] ledger filter-prev", "[refresh]"]
+
+  precedente:
+    material: "itemsadder:influitems:btn_prev"
+    hide-tooltip: true
+    slots: [27]
+    view-requirements: ["placeholder: %flux_list_ledger_has_prev% == true"]
+    actions:
+      left: ["[list] ledger prev", "[sound] @page"]
+
+  suivante:
+    material: "itemsadder:influitems:btn_next"
+    hide-tooltip: true
+    slots: [35]
+    view-requirements: ["placeholder: %flux_list_ledger_has_next% == true"]
+    actions:
+      left: ["[list] ledger next", "[sound] @page"]

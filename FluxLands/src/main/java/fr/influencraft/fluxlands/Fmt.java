@@ -2,14 +2,13 @@ package fr.influencraft.fluxlands;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 
-/** Mise en forme des nombres et des messages (couleurs {@code &} et {@code &#RRGGBB}, PlaceholderAPI). */
+/** Numbers and messages: interface texts in {@code &} colours, chat messages in Lands' theme tokens. */
 final class Fmt {
 
     private Fmt() {
@@ -30,19 +29,78 @@ final class Fmt {
         return b ? "oui" : "non";
     }
 
-    /** Message de tchat : placeholders (glyphes %img_...%) puis couleurs, sans italique. */
+    /** Interface text (dialog option, item name): placeholders (glyphs %img_...%) then {@code &} colours. */
     static Component ligne(Player p, String brut) {
         // the Flux text pipeline (suite placeholders, PlaceholderAPI, glyphs, colours)
         return fr.influencraft.flux.api.text.Texts.parse(brut, p);
     }
 
-    static void envoyer(Player p, String brut) {
+    // ── Chat messages in Lands' look ────────────────────────────────────────
+    // Written with Lands' theme tokens (Lands/Locale/theme.yml, theme.custom; docs/notifications/villes.md):
+    // <t:texte> body, <t:valeur> highlighted value, <t:ville> town name, <t:commande> command... closed by </t>.
+    // Prefix and colours therefore follow Lands' own messages whenever its theme changes.
+
+    /** Chat line: Lands' prefix then the text in {@code texte}; {@code [/command]} shortcuts are clickable. */
+    static Component message(Player p, String texte) {
+        String legacy = Couleurs.legacy(Couleurs.prefixe() + "<t:texte>" + texte + "</t>");
+        return fr.influencraft.flux.api.text.Texts.parseClickable(legacy, p);
+    }
+
+    static void envoyer(Player p, String texte) {
+        if (p != null && p.isOnline()) p.sendMessage(message(p, texte));
+    }
+
+    /** Refusal: the whole sentence in Lands' error colour. */
+    static void erreur(Player p, String phrase) {
+        envoyer(p, "<t:erreur>" + phrase + "</t>");
+    }
+
+    /** Refusal as Lands writes it: the refusal in the error colour, then its explanation in the body colour. */
+    static void erreur(Player p, String phrase, String explication) {
+        envoyer(p, "<t:erreur>" + phrase + "</t> " + explication);
+    }
+
+    /** Message followed by Lands' action line {@code ➤ Label [CLIQUER]}, whose click runs {@code commande}. */
+    static void action(Player p, String texte, String libelle, String commande) {
+        if (p == null || !p.isOnline()) return;
+        Component ligne = fr.influencraft.flux.api.text.Texts.parse(Couleurs.legacy(
+                "<t:deco>➤</t> <t:texte>" + libelle + "</t> <t:bouton>[CLIQUER]</t>"), p)
+                .clickEvent(net.kyori.adventure.text.event.ClickEvent.runCommand(commande))
+                .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(
+                        fr.influencraft.flux.api.text.Texts.parse(Couleurs.legacy("<t:survol>Clique pour " + libelle.toLowerCase(Locale.ROOT) + "."), p)));
+        p.sendMessage(message(p, texte).append(Component.newline()).append(Component.text("  ")).append(ligne));
+    }
+
+    /**
+     * Money notification (droit de place): keeps the server-wide BitBlock gain / loss look
+     * (docs/notifications/bitblock.md) instead of Lands' one; {@code &} colours.
+     */
+    static void notification(Player p, String brut) {
         if (p != null && p.isOnline()) p.sendMessage(ligne(p, brut));
     }
 
-    /** Erreur courte (rouge de la charte). */
-    static void erreur(Player p, String texte) {
-        envoyer(p, "&#FF5C5C" + texte);
+    /** Highlighted value (plot, player, duration, coordinates); text from players is escaped. */
+    static String v(Object valeur) {
+        return "<t:valeur>" + echapper(valeur) + "</t>";
+    }
+
+    /** Town or nation name. */
+    static String ville(Object nom) {
+        return "<t:ville>" + echapper(nom) + "</t>";
+    }
+
+    /** Amount of BitBlock with its glyph (white before the glyph, docs/notifications/bitblock.md). */
+    static String bitblock(double montant) {
+        return "<t:montant>" + argent(montant) + " %img_bitblock%</t>";
+    }
+
+    /** Command shown to the player, between brackets (clickable, displayed in the server's command style). */
+    static String cmd(String commande) {
+        return "<t:commande>[" + commande + "]</t>";
+    }
+
+    private static String echapper(Object o) {
+        return net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().escapeTags(String.valueOf(o));
     }
 
     /** Splits a sentence to the suite's lore width (lores). */

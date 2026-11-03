@@ -18,9 +18,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * Remplace les menus natifs de Lands par ceux de FluxLands : {@code /lands}, {@code /v},
  * {@code /ville}... sans argument (ou {@code menu}) ouvrent Ma ville, {@code bank} la Banque,
  * {@code rental list} et {@code menu rentals} l'Agence, {@code area} et
- * {@code menu land areas} les Parcelles ; {@code /nations} et {@code /n} (ou {@code menu}) ouvrent
+ * {@code menu land areas} les Parcelles ; {@code /pays} et {@code /p} (alias de /nations, ou {@code menu}) ouvrent
  * Mon pays. Toutes les autres sous-commandes passent telles
- * quelles. Le bouton « Menu complet » de FluxLands ({@code /influlands natif}) laisse passer
+ * quelles. Le bouton « Menu complet » de FluxLands ({@code /fluxlands natif}) laisse passer
  * une seule commande pour atteindre les menus natifs non refaits.
  */
 final class Interception implements Listener {
@@ -46,7 +46,7 @@ final class Interception implements Listener {
         alias = s;
         Set<String> n = new HashSet<>();
         for (String a : plugin.getConfig().getStringList("menus-lands.alias-pays")) n.add(a.toLowerCase(Locale.ROOT));
-        if (n.isEmpty()) n.addAll(List.of("nations", "n"));
+        if (n.isEmpty()) n.addAll(List.of("pays", "p", "nations", "nation"));
         aliasPays = n;
     }
 
@@ -65,6 +65,12 @@ final class Interception implements Listener {
         if (mots.length == 0) return;
         String label = mots[0].startsWith("lands:") ? mots[0].substring(6) : mots[0];
         String reste = String.join(" ", java.util.Arrays.copyOfRange(mots, 1, mots.length));
+        // next-level objectives: our menu, never Lands' own
+        if ((aliasPays.contains(label) && reste.equals("menu nation level")) || (alias.contains(label) && reste.equals("menu land level"))) {
+            e.setCancelled(true);
+            p.performCommand(plugin.commande().label().substring(1) + " niveau " + (aliasPays.contains(label) ? "pays" : "ville"));
+            return;
+        }
         if (aliasPays.contains(label)) {
             String cible = switch (reste) {
                 case "", "menu", "menu nation", "menu nations" -> "pays";
@@ -73,19 +79,19 @@ final class Interception implements Listener {
             };
             if (cible == null) return;
             e.setCancelled(true);
-            p.performCommand("influlands ouvrir " + cible);
+            p.performCommand(plugin.commande().label().substring(1) + " ouvrir " + cible);
             return;
         }
         if (!alias.contains(label)) return;
         String cible = switch (reste) {
             case "", "menu", "menu land", "menu here" -> "ville";
-            case "bank" -> "banque";
+            case "bank" -> "ville";
             case "rental list", "rentals", "rentlist", "menu rentals" -> "agence";
             case "area", "area menu", "menu land areas" -> "parcelles";
             default -> null;
         };
         if (cible == null) return;
         e.setCancelled(true);
-        p.performCommand("influlands ouvrir " + cible);
+        p.performCommand(plugin.commande().label().substring(1) + " ouvrir " + cible);
     }
 }

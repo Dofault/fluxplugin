@@ -6,7 +6,7 @@
 
     <groupId>fr.influencraft</groupId>
     <artifactId>FluxLands</artifactId>
-    <version>0.3.0</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -44,15 +44,14 @@
             <artifactId>lands</artifactId>
             <version>8.9.4</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/libs/Lands-8.9.5.jar</systemPath>
+            <systemPath>${project.basedir}/libs/Lands-9.1.1.jar</systemPath>
         </dependency>
-        <!-- InfluPW (fork of PlayerWarps 5.1.1), jar built from plugins/InfluPW. Chest shops go through Flux. -->
+        <!-- FluxPW (player warps of the suite), through its API fr.influencraft.fluxpw.api. Chest shops go through Flux. -->
         <dependency>
             <groupId>fr.influencraft</groupId>
-            <artifactId>influpw</artifactId>
-            <version>5.1.1</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/InfluPW.jar</systemPath>
+            <artifactId>FluxPW</artifactId>
+            <version>26.2</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 

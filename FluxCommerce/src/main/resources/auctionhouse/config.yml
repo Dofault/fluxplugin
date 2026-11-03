@@ -1,0 +1,84 @@
+# FluxCommerce, auction house (auctionhouse/): the market (auction house and chest shops). Forbidden items and bans are
+# shared by all commerce (config.yml and /commerce of FluxCommerce). Data in Flux's database (plugins/Flux/storage.yml).
+# Prices are in the server's main currency (Flux's currencies.main).
+
+
+# Part of every auction house sale kept by the server, in percent (chest shops pay their town's market fee instead).
+tax-percent: 15
+
+listing:
+  # Allowed kinds of listing.
+  direct-sales: true
+  auctions: true
+  # Seconds between listing an item and its being online (the seller can still take it back).
+  setup-seconds: 30
+  # Duration of a listing ("72h", "1d", "90m"); fluxcommerce.ah.duration.<sale|auction>.<hours> gives more.
+  sale-duration: 72h
+  auction-duration: 24h
+  # Buyers may take part of a direct sale (x1, x2, x10, x64, any amount); false: the whole lot only.
+  partial-selling: true
+
+price:
+  # Lowest and highest price of a listing (0 = no highest).
+  sale-min: 1
+  sale-max: 99999999
+  auction-min: 1
+  auction-max: 0
+
+auction:
+  # A bid must be at least this much above the highest one, in percent.
+  increase-percent: 10
+  # A bid made in the last seconds pushes the end back to this many seconds (no last-second sniping).
+  extra-seconds: 120
+
+limits:
+  # Listings a player may have without any fluxcommerce.ah.slots.<n> permission (the highest <n> wins).
+  default: 0
+
+# Items coming back (expired listing, won auction) go straight into the inventory when there is room, at once or when
+# the player joins; else they wait in "Mes ventes" / "Mes enchères".
+auto-deliver: true
+
+# A message to every online player when a listing goes online (each player can turn them off: /hdv announcements).
+announcements:
+  enabled: false
+  # only listings of at least this price
+  min-price: 0
+
+# Items that can never be listed: material names, custom item ids (namespace:id, namespace:prefix*),
+# name:<text> (custom name contains), lore:<text> (description contains), model:<text> (item model contains),
+# cmd:<value> (custom model data: resource pack items). ItemsAdder items are best blacklisted by their id (namespace:id).
+# /hdv admin blacklist add|remove changes this list.
+blacklist: []
+
+# Market price: prices really paid (auction house and chest shops), over this many days.
+average:
+  days: 30
+  # a sale paid more than this many times above or below the median price (a typing mistake bought anyway) is left
+  # out; 0 = count everything
+  outlier: 3
+
+# Offers of the auction house and the shops are gathered at most every this many seconds (and after every trade).
+catalog-seconds: 2
+
+# Icons of the menu buttons built by the plugin (material, itemsadder:<namespace>:<id>).
+icons:
+  market: "itemsadder:fluxui:re_influmarche_marche"
+  auction: "itemsadder:fluxui:re_influmarche_enchere"
+  listings: "itemsadder:fluxui:re_influmarche_mes_ventes"
+  history: "itemsadder:fluxui:re_influmarche_historique"
+  average: "itemsadder:fluxui:re_influmarche_moyenne"
+  buy: "itemsadder:fluxui:re_influmarche_acheter"
+  add: "itemsadder:fluxui:btn_add_green"
+  remove: "itemsadder:fluxui:btn_remove_red"
+  filter: "itemsadder:fluxui:btn_filter_blue"
+  sort: "itemsadder:fluxui:re_influitems_stairs"
+  search: "itemsadder:fluxui:btn_search_blue"
+  collect: "itemsadder:fluxui:re_influitems_chest_item"
+  collect-none: "itemsadder:fluxui:re_influitems_chest"
+  locked: "itemsadder:fluxui:re_influitems_lock"
+  leading: "itemsadder:fluxui:re_influitems_checkmark"
+  staff: "itemsadder:fluxui:btn_settings_grey"
+  balance: "itemsadder:influitems:bitblock"
+  contents: "SHULKER_BOX"
+  hand: "itemsadder:fluxui:re_influmarche_mes_ventes"

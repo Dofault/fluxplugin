@@ -1,8 +1,6 @@
 package fr.influencraft.fluxlands;
 
-import dev.revivalo.playerwarps.PlayerWarpsPlugin;
-import dev.revivalo.playerwarps.warp.Warp;
-import dev.revivalo.playerwarps.warp.WarpStatus;
+import fr.influencraft.fluxpw.api.PlayerWarps;
 import me.angeschossen.lands.api.land.Land;
 import org.bukkit.Location;
 
@@ -12,9 +10,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Lien avec InfluPW (chargé seulement s'il est présent) : index des adresses (warps)
+ * Lien avec FluxPW (chargé seulement s'il est présent) : index des adresses (warps)
  * et de la ville où se trouve chacune, calculée d'après leur position. Rien n'est stocké
- * côté InfluPW : déplacer un warp change sa ville au passage suivant de l'index.
+ * côté FluxPW : déplacer un warp change sa ville au passage suivant de l'index.
  */
 final class ModulePlayerWarps {
 
@@ -43,19 +41,15 @@ final class ModulePlayerWarps {
         List<Fiches.Adresse> l = new ArrayList<>();
         Map<String, Fiches.Adresse> ids = new HashMap<>();
         Map<String, Fiches.Adresse> noms = new HashMap<>();
-        for (Warp w : PlayerWarpsPlugin.getWarpHandler().getWarps()) {
+        for (PlayerWarps.Info w : PlayerWarps.all()) {
             try {
-                if (w.hasUnresolvedLocation()) continue; // monde pas encore chargé
-                Location loc = w.getLocation();
-                if (loc == null || loc.getWorld() == null) continue;
+                Location loc = w.location();
+                if (loc == null || loc.getWorld() == null) continue; // monde pas encore chargé
                 Land land = plugin.villes().a(loc);
-                String titre = w.getRawDisplayName() != null && !w.getRawDisplayName().isBlank() ? w.getRawDisplayName() : w.getName();
-                Fiches.Adresse a = new Fiches.Adresse(w.getWarpID().toString(), w.getName(), titre, w.getOwner(),
-                        w.getOwnerName(), loc.clone(), land != null ? Villes.id(land) : "", land != null ? land.getName() : "",
-                        w.getVisits(), w.getConvertedRating(), w.getAdmission(), Fiches.materiau(w.getMenuItem()),
-                        w.getCategory() != null ? w.getCategory().getDisplayName() : "",
-                        w.getStatus() == WarpStatus.OPENED || w.getStatus() == WarpStatus.PASSWORD_PROTECTED,
-                        w.isPasswordProtected(), w.getDescription(), w.getDateCreated());
+                Fiches.Adresse a = new Fiches.Adresse(w.id(), w.name(), w.displayName(), w.owner(),
+                        w.ownerName(), loc.clone(), land != null ? Villes.id(land) : "", land != null ? land.getName() : "",
+                        w.visits(), (float) w.rating(), w.admission(), w.icon(), w.category(), w.open(),
+                        w.password(), w.description(), w.created());
                 l.add(a);
                 ids.put(a.id(), a);
                 noms.put(a.nom().toLowerCase(java.util.Locale.ROOT), a);

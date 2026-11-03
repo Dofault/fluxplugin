@@ -83,7 +83,7 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
             return true;
         }
 
-        int totalXp = getTotalXp(player);
+        int totalXp = (int) Math.min(Integer.MAX_VALUE, fr.influencraft.flux.api.util.Experience.total(player));
         int requested = totalXp / XP_PER_BOTTLE;
         if (requested == 0) {
             send(player, PREFIX + "&#FF5C5CIl faut être au moins niveau 30 pour remplir une fiole.");
@@ -103,7 +103,7 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
             return true;
         }
 
-        setTotalXp(player, totalXp - given * XP_PER_BOTTLE);
+        fr.influencraft.flux.api.util.Experience.set(player, totalXp - (long) given * XP_PER_BOTTLE);
         player.playSound(player.getLocation(), Sound.ITEM_BOTTLE_FILL, 1f, 1f);
 
         String fioles = given > 1 ? given + " fioles" : "1 fiole";
@@ -288,44 +288,5 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
         } else {
             sender.sendMessage(fr.influencraft.flux.api.text.Texts.colors(message));
         }
-    }
-
-    // ─── Calcul d'XP (formules vanilla) ───────────────────────────────────
-    // Player#getTotalExperience n'est pas fiable (pas décrémenté par la table
-    // d'enchantement ni l'enclume) : on recalcule depuis niveau + progression.
-
-    private static int xpToNextLevel(int level) {
-        if (level <= 15) {
-            return 2 * level + 7;
-        }
-        if (level <= 30) {
-            return 5 * level - 38;
-        }
-        return 9 * level - 158;
-    }
-
-    private static int xpForLevel(int level) {
-        int total = 0;
-        for (int i = 0; i < level; i++) {
-            total += xpToNextLevel(i);
-        }
-        return total;
-    }
-
-    static int getTotalXp(Player player) {
-        int level = player.getLevel();
-        return xpForLevel(level) + Math.round(player.getExp() * xpToNextLevel(level));
-    }
-
-    static void setTotalXp(Player player, int totalXp) {
-        int level = 0;
-        int remaining = Math.max(0, totalXp);
-        while (remaining >= xpToNextLevel(level)) {
-            remaining -= xpToNextLevel(level);
-            level++;
-        }
-        player.setLevel(level);
-        player.setExp((float) remaining / xpToNextLevel(level));
-        player.setTotalExperience(Math.max(0, totalXp));
     }
 }

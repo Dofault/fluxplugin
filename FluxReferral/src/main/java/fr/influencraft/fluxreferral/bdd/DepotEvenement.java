@@ -14,15 +14,13 @@ import java.util.UUID;
 public class DepotEvenement {
 
     private final GestionnaireBDD gestionnaireBDD;
-    private final String prefixe;
 
     public DepotEvenement(FluxReferralPlugin plugin, GestionnaireBDD gestionnaireBDD) {
         this.gestionnaireBDD = gestionnaireBDD;
-        this.prefixe = plugin.getGestionnaireConfig().getPrefixeTables();
     }
 
     public void insererEvenement(UUID parrainUuid, UUID filleulUuid) throws SQLException {
-        String sql = "INSERT INTO `" + prefixe + "evenements` (parrain_uuid, filleul_uuid) VALUES (?, ?)";
+        String sql = "INSERT INTO `" + Tables.EVENTS + "` (parrain_uuid, filleul_uuid) VALUES (?, ?)";
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, parrainUuid.toString());
@@ -44,7 +42,7 @@ public class DepotEvenement {
             try {
                 // 1. Récupérer le parrain actuel du filleul
                 UUID parrainUuid = null;
-                String sqlSelect = "SELECT parrain_uuid FROM `" + prefixe + "joueurs` WHERE uuid = ?";
+                String sqlSelect = "SELECT parrain_uuid FROM `" + Tables.PLAYERS + "` WHERE uuid = ?";
                 try (PreparedStatement stmt = conn.prepareStatement(sqlSelect)) {
                     stmt.setString(1, filleulUuid.toString());
                     try (ResultSet rs = stmt.executeQuery()) {
@@ -61,14 +59,14 @@ public class DepotEvenement {
                 }
 
                 // 2. Supprimer l'événement
-                String sqlDelEvt = "DELETE FROM `" + prefixe + "evenements` WHERE filleul_uuid = ?";
+                String sqlDelEvt = "DELETE FROM `" + Tables.EVENTS + "` WHERE filleul_uuid = ?";
                 try (PreparedStatement stmt = conn.prepareStatement(sqlDelEvt)) {
                     stmt.setString(1, filleulUuid.toString());
                     stmt.executeUpdate();
                 }
 
                 // 3. Effacer parrain_uuid du filleul
-                String sqlNullParrain = "UPDATE `" + prefixe + "joueurs` SET parrain_uuid = NULL WHERE uuid = ?";
+                String sqlNullParrain = "UPDATE `" + Tables.PLAYERS + "` SET parrain_uuid = NULL WHERE uuid = ?";
                 try (PreparedStatement stmt = conn.prepareStatement(sqlNullParrain)) {
                     stmt.setString(1, filleulUuid.toString());
                     stmt.executeUpdate();
@@ -76,7 +74,7 @@ public class DepotEvenement {
 
                 // 4. Décrémenter nb_filleuls du parrain (jamais en dessous de 0)
                 // CASE WHEN plutôt que GREATEST() (absent de SQLite) pour rester compatible avec le fallback local
-                String sqlDecr = "UPDATE `" + prefixe + "joueurs` SET nb_filleuls = CASE WHEN nb_filleuls - 1 < 0 THEN 0 ELSE nb_filleuls - 1 END WHERE uuid = ?";
+                String sqlDecr = "UPDATE `" + Tables.PLAYERS + "` SET nb_filleuls = CASE WHEN nb_filleuls - 1 < 0 THEN 0 ELSE nb_filleuls - 1 END WHERE uuid = ?";
                 try (PreparedStatement stmt = conn.prepareStatement(sqlDecr)) {
                     stmt.setString(1, parrainUuid.toString());
                     stmt.executeUpdate();
@@ -95,7 +93,7 @@ public class DepotEvenement {
     }
 
     public boolean estDejaFilleul(UUID filleulUuid) throws SQLException {
-        String sql = "SELECT 1 FROM `" + prefixe + "evenements` WHERE filleul_uuid = ?";
+        String sql = "SELECT 1 FROM `" + Tables.EVENTS + "` WHERE filleul_uuid = ?";
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, filleulUuid.toString());

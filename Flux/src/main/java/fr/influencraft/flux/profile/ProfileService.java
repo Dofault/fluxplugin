@@ -201,12 +201,8 @@ public final class ProfileService {
         public ItemStack item(Player viewer, OfflinePlayer s, int page) {
             Lore lore = Lore.create();
             for (Currency c : Economy.all()) {
-                String label = switch (c.id()) {
-                    case "vault" -> "BitBlock";
-                    case "playerpoints" -> "Influence";
-                    default -> null; // casino chips and the like: not part of the profile
-                };
-                if (label != null) lore.kv(label, c.format(c.balance(s)));
+                if (c.id().equals("chips")) continue; // casino chips: not part of the profile
+                lore.kv(c.displayName(), c.format(c.balance(s)));
             }
             Integer rank = Leaderboards.board("fortune") == null ? null : Leaderboards.rank("fortune", s.getUniqueId());
             if (rank != null && rank > 0) lore.kv("Classement fortune", place(rank));

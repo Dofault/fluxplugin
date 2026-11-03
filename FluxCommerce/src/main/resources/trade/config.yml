@@ -1,0 +1,55 @@
+# FluxCommerce, trades (trade/): secure trades between two players. A player sneaks and right clicks another one (or types /trade <player>),
+# the other accepts, and both put items, experience and money in one window. Nothing moves until both validated and a
+# short countdown ran out; any change of either offer cancels both validations.
+
+requests:
+  # sneak + right click on a player sends him a request (or accepts the one he sent)
+  sneak-click: true
+  # seconds a request stays valid
+  expire-seconds: 30
+  # sound played to the player who receives a request: "<key> [volume] [pitch]", "@<cue>" for a cue of Flux,
+  # "none" for silence
+  sound: "minecraft:entity.experience_orb.pickup 1 0.6"
+
+# Game modes in which a player may trade (both players, checked again during the trade and when it ends).
+gamemodes: [SURVIVAL]
+
+# Worlds without trades (names, any case).
+disabled-worlds: []
+
+# Most blocks between the two players, checked every second during the trade (-1: no limit, any world).
+max-distance: 10
+
+# false: two accounts connected from the same address cannot trade together.
+allow-same-ip: true
+
+trade:
+  # countdown once both players validated, in seconds (0: the trade happens at once)
+  confirm-seconds: 3
+  # after any change of an offer, nobody can validate for this many seconds (the other player sees the change first)
+  change-lock-seconds: 2
+  # refuse an item the partner would have no room for (his inventory as it is now)
+  block-when-full: true
+
+experience:
+  enabled: true
+
+money:
+  enabled: true
+  # most money one player may put in one trade (0: no limit)
+  max: 0
+
+# Completed trades kept in Flux's database (/trade admin history <player>).
+history:
+  enabled: true
+  # trades older than this are deleted at start-up (0: kept forever)
+  keep-days: 90
+
+# Sounds (same format as requests.sound).
+sounds:
+  started: "@page"
+  # the other player changed his offer while you had validated
+  changed: "@alert"
+  countdown: "@click"
+  completed: "@complete"
+  aborted: "@error"

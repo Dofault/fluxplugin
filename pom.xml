@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   Aggregator of the Flux suite. Each module keeps its own standalone pom; building from here
-  resolves the dependencies between Flux modules (e.g. FluxAuctionHouse needs Flux and FluxLands)
+  resolves the dependencies between Flux modules (e.g. FluxCommerce needs Flux and FluxLands)
   without copying their jars around. FluxReferral builds with Gradle (see its folder).
 
   mvn -o package          all modules, jars in <module>/target/
@@ -22,7 +22,7 @@
         <module>FluxTools</module>
         <module>FluxCasino</module>
         <module>FluxLands</module>
-        <module>FluxAuctionHouse</module>
+        <module>FluxCommerce</module>
         <module>FluxOffering</module>
         <module>FluxCalendar</module>
         <module>FluxCrate</module>
@@ -37,5 +37,8 @@
         <module>FluxMigration</module>
         <module>FluxTags</module>
         <module>FluxArmor</module>
+        <module>FluxFamily</module>
+        <module>FluxPW</module>
+        <module>FluxAFK</module>
     </modules>
 </project>

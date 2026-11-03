@@ -1,0 +1,31 @@
+name: FluxFamily
+version: 26.2
+main: fr.influencraft.fluxfamily.FluxFamily
+api-version: "26.2"
+description: Couples, paid marriage with a couple home, adoption and family trees (with the referrals of FluxReferral).
+authors: [Influencraft]
+depend: [Flux]
+softdepend: [FluxTags]
+
+permissions:
+  fluxfamily.use:
+    description: Open /famille, answer requests, see family trees.
+    default: true
+  fluxfamily.couple:
+    description: Ask a player to form a couple.
+    default: true
+  fluxfamily.marry:
+    description: Propose marriage to one's partner (and use the couple home).
+    default: false
+  fluxfamily.adopt:
+    description: Adopt a player.
+    default: false
+  fluxfamily.bypass.warmup:
+    description: Teleport to the couple home without the warm-up of the resource worlds.
+    default: op
+  fluxfamily.bypass.worlds:
+    description: Set the couple home in a blocked world.
+    default: op
+  fluxfamily.admin:
+    description: Info on a player's family, separate a couple, reload.
+    default: op

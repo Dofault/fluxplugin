@@ -12,6 +12,7 @@ import fr.influencraft.flux.api.list.ListEntry;
 import fr.influencraft.flux.api.list.Lists;
 import fr.influencraft.flux.api.text.Texts;
 import fr.influencraft.flux.api.util.Players;
+import fr.influencraft.fluxtags.api.Tags;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
@@ -63,9 +64,13 @@ public final class FluxTags extends FluxPlugin implements Listener {
     private static final int TAG_HEIGHT = 9;
 
     /** A tag of the catalogue; {@code job} or {@code special} set for those kinds. */
-    private record Tag(String id, String job, String special) {
+    private record Tag(String id, String job, String special, Tags.Provided provided) {
+        Tag(String id, String job, String special) {
+            this(id, job, special, null);
+        }
     }
 
+    /** Own tags (rebuilt by settings()); see all() for the tags of other plugins. */
     private final Map<String, Tag> catalogue = new LinkedHashMap<>();
     private final Map<UUID, String> selected = new ConcurrentHashMap<>();
     private final Map<String, int[]> sizes = new HashMap<>();
@@ -76,15 +81,32 @@ public final class FluxTags extends FluxPlugin implements Listener {
 
     @Override
     protected void enable() {
-        table = Database.table("fluxtags_selected");
+        table = Database.table("flux_tags_selected");
         try (Connection c = Database.connection(); Statement st = c.createStatement()) {
+            Database.renameTable(c, Database.table("fluxtags_selected"), table); // name before 2026-10-31
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + table + " (uuid " + Database.dialect().key(36)
                     + " PRIMARY KEY, tag VARCHAR(64) NOT NULL)");
         } catch (SQLException e) {
             getLogger().severe("Could not create " + table + ": " + e.getMessage());
         }
         settings();
+        Tags.bind(new Tags.Service() {
+            public String selected(UUID player) {
+                return selection(player);
+            }
+
+            public void select(UUID player, String tag) {
+                write(player, tag);
+                Player online = Bukkit.getPlayer(player);
+                if (online != null) fr.influencraft.flux.api.tab.TabList.refresh(online);
+            }
+        });
         placeholders("fluxtags", this::placeholder);
+        // {tag} of Flux's tab list (tab.yml), straight from Java
+        fr.influencraft.flux.api.tab.TabList.piece(this, "tag", p -> {
+            String image = shown(p);
+            return image == null ? "" : glyph(image);
+        });
         list("tags", q -> entries(q.viewer()));
         FluxApi.registerAction(this, "tags", (player, view, argument) -> pick(player, argument.trim()));
         command("tags")
@@ -103,19 +125,19 @@ public final class FluxTags extends FluxPlugin implements Listener {
                 .executor(this::onAdmin)
                 .completer((sender, args) -> args.length == 1 ? List.of("set", "clear", "reload")
                         : args.length == 2 ? Players.complete(args[1])
-                        : args.length == 3 ? List.copyOf(catalogue.keySet()) : List.of())
+                        : args.length == 3 ? List.copyOf(all().keySet()) : List.of())
                 .register();
         Bukkit.getPluginManager().registerEvents(this, this);
         fr.influencraft.flux.api.profile.Profiles.register(this, "tags", 60, new fr.influencraft.flux.api.profile.Profiles.Section() {
             public org.bukkit.inventory.ItemStack item(Player viewer, OfflinePlayer subject, int page) {
-                Tag t = catalogue.get(selection(subject.getUniqueId()));
+                Tag t = all().get(selection(subject.getUniqueId()));
                 Player online = subject.getPlayer();
                 Lore lore = Lore.create();
                 String image = t == null || online == null ? null : image(online, t);
                 lore.kv(messages().raw("current"), t == null || t.id().equals(NONE) ? "-"
                         : (image != null ? glyph(image) + " " : "") + name(viewer, t));
-                if (online != null) lore.kv("Débloqués", catalogue.values().stream()
-                        .filter(x -> !x.id().equals(NONE) && image(online, x) != null).count() + "&7/&f" + (catalogue.size() - 1));
+                if (online != null) lore.kv("Débloqués", all().values().stream()
+                        .filter(x -> !x.id().equals(NONE) && image(online, x) != null).count() + "&7/&f" + (all().size() - 1));
                 if (fr.influencraft.flux.api.profile.Profiles.own(viewer)) lore.left("Mes tags");
                 return Items.of("NAME_TAG", "Tags", lore.build(), viewer);
             }
@@ -154,6 +176,15 @@ public final class FluxTags extends FluxPlugin implements Listener {
         }
     }
 
+    /** Own tags, then the tags given by other plugins ({@link Tags#register}), in the order of /tags. */
+    private Map<String, Tag> all() {
+        Map<String, Tags.Provided> provided = Tags.provided();
+        if (provided.isEmpty()) return catalogue;
+        Map<String, Tag> out = new LinkedHashMap<>(catalogue);
+        for (Tags.Provided t : provided.values()) out.putIfAbsent(t.id(), new Tag(t.id(), null, null, t));
+        return out;
+    }
+
     // ---------------------------------------------------------------- tags of a player
 
     /** Image id of a tag for this player (rank or tier included), null when locked. */
@@ -164,6 +195,7 @@ public final class FluxTags extends FluxPlugin implements Listener {
             return tier == 0 ? null : "metier_" + t.job() + "_" + tier;
         }
         if (t.special() != null) return p.hasPermission("fluxtags.tag." + t.special()) ? t.special() : null;
+        if (t.provided() != null) return t.provided().image().apply(p);
         String rank = Texts.placeholders(rankPlaceholder, p).trim().toLowerCase(Locale.ROOT);
         return rank.isEmpty() || rank.indexOf('%') >= 0 ? null : "rang_" + rank;
     }
@@ -213,7 +245,7 @@ public final class FluxTags extends FluxPlugin implements Listener {
 
     /** The shown tag's image, null when none (or no longer unlocked). */
     private String shown(Player p) {
-        Tag t = catalogue.get(selection(p.getUniqueId()));
+        Tag t = all().get(selection(p.getUniqueId()));
         return t == null ? null : image(p, t);
     }
 
@@ -221,6 +253,7 @@ public final class FluxTags extends FluxPlugin implements Listener {
         if (t.id().equals(NONE)) return messages().raw("none-name");
         if (t.job() != null) return strip(Jobs.get().displayName(t.job()));
         if (t.special() != null) return getConfig().getString("specials." + t.special() + ".name", t.special());
+        if (t.provided() != null) return t.provided().name();
         return messages().raw("rank-name");
     }
 
@@ -239,7 +272,7 @@ public final class FluxTags extends FluxPlugin implements Listener {
         jobsReady();
         List<ListEntry> out = new ArrayList<>();
         String current = selection(p.getUniqueId());
-        for (Tag t : catalogue.values()) {
+        for (Tag t : all().values()) {
             String image = image(p, t);
             boolean unlocked = t.id().equals(NONE) || image != null;
             boolean shown = t.id().equals(current) && unlocked;
@@ -256,6 +289,9 @@ public final class FluxTags extends FluxPlugin implements Listener {
             } else if (t.special() != null) {
                 lore.description(getConfig().getString("specials." + t.special() + ".description", ""));
                 if (!unlocked) lore.ko(messages().raw("unlock-special"));
+            } else if (t.provided() != null) {
+                lore.description(t.provided().description());
+                if (!unlocked) lore.ko(messages().raw("locked-tag"));
             } else {
                 lore.description(messages().raw("rank-description"));
                 if (!unlocked) lore.ko(messages().raw("locked-tag"));
@@ -266,7 +302,7 @@ public final class FluxTags extends FluxPlugin implements Listener {
                 else if (!shown) lore.left(messages().raw("pick"));
             }
             // vanilla theme (2026-10-30): every tag is a name tag, the worn one glows; its name is the tag image itself
-            String shownImage = image == null ? (t.job() != null ? "metier_" + t.job() + "_1" : t.special()) : image;
+            String shownImage = image == null ? lockedImage(t) : image;
             String title = t.id().equals(NONE) || shownImage == null ? name(p, t) : "&f:" + shownImage + ":";
             org.bukkit.inventory.ItemStack tag = Items.of("NAME_TAG", title, lore.build(), p);
             if (shown && tag != null) {
@@ -276,19 +312,26 @@ public final class FluxTags extends FluxPlugin implements Listener {
             }
             out.add(ListEntry.of(t.id()).item(tag)
                     .set("clic", unlocked ? "[tags] " + t.id() : "[sound] @error")
-                    .set("image", image == null ? (t.job() != null ? "metier_" + t.job() + "_1" : t.special()) : image)
+                    .set("image", image == null ? lockedImage(t) : image)
                     .set("locked", String.valueOf(!unlocked)));
         }
         return out;
     }
 
+    /** Image drawn dark for a locked tag: the first look of a job, else the tag's own image id. */
+    private static String lockedImage(Tag t) {
+        if (t.job() != null) return "metier_" + t.job() + "_1";
+        return t.special() != null ? t.special() : t.provided() != null ? t.id() : null;
+    }
+
     private void pick(Player p, String id) {
-        Tag t = catalogue.get(id);
+        Tag t = all().get(id);
         if (t == null) return;
         String current = selection(p.getUniqueId());
         if (id.equals(NONE) || id.equals(current)) {
             write(p.getUniqueId(), NONE);
             messages().send(p, "cleared");
+            fr.influencraft.flux.api.tab.TabList.refresh(p);
             return;
         }
         if (image(p, t) == null) {
@@ -297,6 +340,7 @@ public final class FluxTags extends FluxPlugin implements Listener {
         }
         write(p.getUniqueId(), id);
         messages().send(p, "picked", "%tag%", name(p, t));
+        fr.influencraft.flux.api.tab.TabList.refresh(p);
     }
 
     /**
@@ -337,7 +381,7 @@ public final class FluxTags extends FluxPlugin implements Listener {
         jobsReady();
         switch (key) {
             case "total" -> {
-                return String.valueOf(catalogue.size() - 1);
+                return String.valueOf(all().size() - 1);
             }
             case "rows" -> {
                 return p == null ? "" : rows(p);
@@ -353,8 +397,8 @@ public final class FluxTags extends FluxPlugin implements Listener {
         return switch (key) {
             case "tag" -> image == null ? "" : glyph(image);
             case "tag_spaced" -> image == null ? "" : glyph(image) + " ";
-            case "name" -> image == null ? "" : name(p, catalogue.get(selection(p.getUniqueId())));
-            case "unlocked" -> String.valueOf(catalogue.values().stream().filter(t -> !t.id().equals(NONE) && image(p, t) != null).count());
+            case "name" -> image == null ? "" : name(p, all().get(selection(p.getUniqueId())));
+            case "unlocked" -> String.valueOf(all().values().stream().filter(t -> !t.id().equals(NONE) && image(p, t) != null).count());
             default -> null;
         };
     }
@@ -382,7 +426,7 @@ public final class FluxTags extends FluxPlugin implements Listener {
             return true;
         }
         String tag = sub.equals("clear") ? NONE : args.length > 2 ? args[2].toLowerCase(Locale.ROOT) : "";
-        if (!catalogue.containsKey(tag)) {
+        if (!all().containsKey(tag)) {
             messages().send(sender, "unknown-tag");
             return true;
         }

@@ -15,7 +15,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
- * Player-facing texts of a plugin, one file per language: {@code plugins/<Plugin>/lang/<language>.yml}.
+ * Player-facing texts of a plugin, one file per language: {@code plugins/<Plugin>/lang/<language>.yml}. A plugin made of
+ * several parts may give each part its own folder ({@link #load(JavaPlugin, String, String)}: {@code <part>/lang/}).
  *
  * <ul>
  *   <li>The file is written from the jar on first start ({@code lang/<language>.yml}, else {@code lang/en_US.yml}).</li>
@@ -34,17 +35,25 @@ public final class Messages {
 
     private final JavaPlugin plugin;
     private final String language;
+    /** Folder of the language files, in the jar and in the data folder ({@code lang}, {@code trade/lang}...). */
+    private final String folder;
     private YamlConfiguration messages = new YamlConfiguration();
 
-    private Messages(JavaPlugin plugin, String language) {
+    private Messages(JavaPlugin plugin, String language, String folder) {
         this.plugin = plugin;
         this.language = language;
+        this.folder = folder;
         reload();
     }
 
     /** Messages in {@code language} ({@code fr_FR}, {@code en_US}...). */
     public static Messages load(JavaPlugin plugin, String language) {
-        return new Messages(plugin, language == null || language.isBlank() ? FALLBACK : language.trim());
+        return load(plugin, language, "lang");
+    }
+
+    /** Messages in {@code language} read from {@code <folder>/<language>.yml} (jar and data folder). */
+    public static Messages load(JavaPlugin plugin, String language, String folder) {
+        return new Messages(plugin, language == null || language.isBlank() ? FALLBACK : language.trim(), folder);
     }
 
     public String language() {
@@ -52,19 +61,20 @@ public final class Messages {
     }
 
     public void reload() {
-        String path = "lang/" + language + ".yml";
+        String path = folder + "/" + language + ".yml";
+        String fallback = folder + "/" + FALLBACK + ".yml";
         File file = new File(plugin.getDataFolder(), path);
         if (!file.exists()) {
             if (plugin.getResource(path) != null) {
                 plugin.saveResource(path, false);
-            } else if (plugin.getResource("lang/" + FALLBACK + ".yml") != null) {
-                plugin.getLogger().warning(path + " is not shipped, starting from lang/" + FALLBACK + ".yml");
-                copy("lang/" + FALLBACK + ".yml", file);
+            } else if (plugin.getResource(fallback) != null) {
+                plugin.getLogger().warning(path + " is not shipped, starting from " + fallback);
+                copy(fallback, file);
             }
         }
         YamlConfiguration loaded = YamlConfiguration.loadConfiguration(file);
         YamlConfiguration defaults = bundled(path);
-        if (defaults == null) defaults = bundled("lang/" + FALLBACK + ".yml");
+        if (defaults == null) defaults = bundled(fallback);
         if (defaults != null) {
             boolean added = false;
             for (String key : defaults.getKeys(true)) {

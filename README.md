@@ -5,20 +5,22 @@ the player's inventory and draw buttons over it. Developed for the Influencraft 
 
 | Plugin | Role | Needs Flux |
 |---|---|---|
-| **Flux** | Core: menu engine, public API (`fr.influencraft.flux.api`), rewards, leaderboards | — |
-| **FluxAuctionHouse** | Auction house front-end (on top of AuctionHouse) unified with chest shops, sales history, average price | optional |
-| **FluxChestShop** | Player chest shops: fork of QuickShop-Hikari 6.3.0.1, **GPLv3** (see its `LICENSE` and `FORK.md`) | — |
+| **Flux** | Core: menu engine, public API (`fr.influencraft.flux.api`), rewards, leaderboards, money (currencies, account history `/compte`), tab list (replaces TAB) | — |
+| **FluxCommerce** | Commerce between players, three parts in one jar (merged on 2026-11-01): secure trades (`/trade`, replaces AxTrade), the market (`/hdv`, our own auction house unified with chest shops, history, market price; replaces AuctionHouse), player chest shops (`/echoppe`, replaces QuickShop-Hikari); shared forbidden items and bans (`/commerce`) | yes |
 | **FluxEnchant** | Enchantment weight per item and mastery enchantments on the crate tools (EcoEnchants) | optional |
 | **FluxCasino** | Casino tokens (balance, bets, exchange) | — |
+| **FluxAFK** | AFK zone: idle players are frozen there, brought back on their first move, and a bar filling under a title drops rewards into /rewards (replaces CMI's AFK) | — |
 | **FluxFly** | Fly time bank (/fly) in the allowed worlds, unlimited flight by permission (replaces PowerFly) | — |
 | **FluxLands** | Towns and nations on top of Lands: bank, plots, roles, shops, warps | optional |
 | **FluxMigration** | One-time data migrations from former plugins (deploy for a migration, remove afterwards) | — |
 | **FluxOffering** | Item offerings to rank up | — |
 | **FluxPets** | Collectible cards, boosters and pets | — |
+| **FluxPW** | Player warps (/pw): categories, sponsored places, ratings, favourites, admission fees, password, blocked players (replaces PlayerWarps) | — |
 | **FluxReferral** | Referral system with per-player server addresses | — |
 | **FluxCalendar** | Login calendar: one reward per day of the month (`/calendrier`) | — |
 | **FluxCrate** | Crates and keys, opened and previewed in Flux menus (replaces EcoCrates) | EcoCrates |
 | **FluxSorter** | Sorting chests and sorting golem (Lands) | — |
+| **FluxFamily** | Couples, paid marriage, couple home, adoption and family trees (a sponsor of FluxReferral is the parent of his referrals) | — |
 | **FluxTags** | Collectible player tags (rank, evolving job tags, specials), one shown in the chat and tab list | — |
 | **FluxArmor** | Armour in real 3D drawn by the resource pack's entity shader, built from Blockbench models, worn by items recognised by Flux | InfluArmor |
 | **FluxTools** | Levelled crate tools with quests, plus optional utility modules (jobs menu and XP boss bar, money action bar, /repair, /bottlexp, enchanted book splitter, Mending lock, anvil rules) | optional |
@@ -35,7 +37,6 @@ Third-party server jars are not committed (several are paid plugins): drop them 
 ```
 mvn package                 # every Maven module, jars in <module>/target/
 cd FluxReferral && ./gradlew build   # FluxReferral uses Gradle (run Gradle itself on JDK 21)
-cd FluxChestShop && ./gradlew :quickshop-bukkit:shadowJar --no-configuration-cache   # GPLv3 fork, Gradle
 ```
 
 ## Renamed plugins
@@ -47,12 +48,12 @@ identifiers, so menus, ranks and items already handed out keep working.
 | New name | Former name(s) |
 |---|---|
 | Flux | FluxMenu |
-| FluxAuctionHouse | InfluMarche |
-| FluxChestShop | InfluEchoppe, QuickShop-Hikari (data identity kept as `QuickShop-Hikari`) |
+| FluxCommerce | FluxAuctionHouse (InfluMarche), FluxChestShop (InfluEchoppe, QuickShop-Hikari fork rewritten; shops copied by FluxMigration, the fork's data folder moved to `FluxChestShop.fork`), FluxTrade: merged on 2026-11-01, new data folder, former tables renamed at start-up |
 | FluxCasino | InfluCasino |
 | FluxLands | InfluLands |
 | FluxOffering | InfluOffrande |
 | FluxPets | InfluPet, InfluCard |
+| FluxPW | PlayerWarps, InfluPW (rewritten; warps and favourites copied by FluxMigration, permissions `playerwarps.*` renamed `fluxpw.*`, groups moved by `FluxPW/assets/lp_playerwarps_to_fluxpw.py`) |
 | FluxReferral | InfluParrainage |
 | FluxCalendar (FluxRewards) | InfluRecompenses |
 | FluxSorter | SortingChest, InfluTri |

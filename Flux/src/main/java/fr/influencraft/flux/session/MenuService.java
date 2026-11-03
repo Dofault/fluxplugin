@@ -62,8 +62,11 @@ public final class MenuService {
         }
 
         MenuSession session = new MenuSession(player, menu, items);
-        session.render(player);
+        // inscrite avant le rendu : les placeholders du titre et des boutons (pages d'une liste : %flux_list_<id>_pages%)
+        // lisent la session courante ; avant le 2026-11-01 ils lisaient celle du menu précédent (pagination « 1/2 » d'une
+        // liste de 28 cases comptée sur 21 à l'ouverture, qui disparaissait au premier clic)
         sessions.put(player.getUniqueId(), session);
+        session.render(player);
 
         InventoryView view = player.openInventory(session.inventory());
         if (view == null || player.getOpenInventory().getTopInventory() != session.inventory()) {

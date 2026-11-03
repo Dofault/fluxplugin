@@ -7,8 +7,10 @@ import org.bukkit.event.HandlerList;
 import java.util.UUID;
 
 /**
- * The balance of a player changed in a currency, whatever plugin made the change (fired by the money events adapter
- * of Flux, {@code providers.money-events}: CMI today). May be fired off the main thread.
+ * The balance of a player changed in a currency, whatever plugin made the change: fired by the money events adapter
+ * of Flux for Vault ({@code providers.money-events}: CMI today), by Flux's own currencies, and by any currency
+ * registered by a plugin. Flux records it in the account history ({@link Ledger}), on the thread that fired it: fire
+ * it synchronously, from the code that moved the money. May be fired off the main thread.
  */
 public final class BalanceChangeEvent extends Event {
 
@@ -31,7 +33,7 @@ public final class BalanceChangeEvent extends Event {
 
     public UUID player() { return player; }
 
-    /** Currency id ({@code vault} for the main money). */
+    /** Currency id ({@code vault} for the main money, {@code influence}, {@code chips}...). */
     public String currency() { return currency; }
 
     public double from() { return from; }

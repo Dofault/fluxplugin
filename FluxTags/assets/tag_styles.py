@@ -71,20 +71,75 @@ GEMS = [  # 5x5 marks growing with the tier
 
 
 def gemme(name, colour, tier):
-    """Chosen 2026-10-28: dark plate of « bordure », frame of « plein » (the rarity colour, darkened), white name and a
-    rarity gem on the left that grows with the tier."""
+    """Chosen 2026-10-28, plate retinted 2026-10-30 (the black plate was too dark): frame of « plein » (the rarity
+    colour, darkened), plate a deep shade of the rarity colour with a lighter top line, white name with a shadow of
+    that colour, and a rarity gem on the left that grows with the tier."""
     col = c(colour)
     w = label_width(name, 6)
     im = Image.new("RGBA", (w, 9), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
     d.rectangle((0, 0, w - 1, 8), fill=mix(col, (0, 0, 0, 255), .45))
-    d.rectangle((1, 1, w - 2, 7), fill=DARK)
+    d.rectangle((1, 1, w - 2, 7), fill=mix(col, (0, 0, 0, 255), .62))
+    d.line((1, 1, w - 2, 1), fill=mix(col, (0, 0, 0, 255), .47))
+    gem = mix(col, (255, 255, 255, 255), .25)  # a touch lighter, to stand out of the tinted plate
     for y, row in enumerate(GEMS[tier]):
         for x, ch in enumerate(row):
             if ch == "#":
-                im.putpixel((2 + x, 2 + y), col)
-    text(im, name, 8 + (w - 8) // 2, 2, colour=WHITE, shadow=(0, 0, 0, 0))
+                im.putpixel((2 + x, 2 + y), gem)
+    text(im, name, 8 + (w - 8) // 2, 2, colour=WHITE, shadow=mix(col, (0, 0, 0, 255), .8))
     return im
 
 
 STYLES = {"bordure": bordure, "plein": plein, "gemme": gemme}
+
+
+def outlined_text(im, name, x, y, colour, outline):
+    """QuinqueFive capitals, top left at (x, y), with a 1 px outline on all 8 sides (accents included)."""
+    from fond_lib import _glyph
+    pts = []
+    for ch in name.upper():
+        g, extra = _glyph(ch)
+        if not g:
+            x += 4
+            continue
+        pts += [(x + dx, y + dy) for dy, r in enumerate(g) for dx, v in enumerate(r) if v == "#"]
+        pts += [(x + dx, y + dy) for dx, dy in extra]
+        x += len(g[0]) + 1
+    for a, b in pts:
+        for ox in (-1, 0, 1):
+            for oy in (-1, 0, 1):
+                im.putpixel((a + ox, b + oy), outline)
+    for p in pts:
+        im.putpixel(p, colour)
+
+
+def plaque(name, colour, tier=None):
+    """14 px tag from the one drawn by the owner on 2026-10-30 (« Éminent », 16 px), made 2 px lower the same day (one
+    line less above the name, one less in the lower band): outline, light inner border, plate in two bands, a dark
+    line below the plate, white name outlined in a dark shade, 5 px of plate each side of the name.
+    tier (0-5) = an evolving tag: its rarity gem on the left, drawn as the letters (None = no icon)."""
+    col = c(colour)
+    gem = 8 if tier is not None else 0
+    w = text_width(name) + 10 + gem
+    im = Image.new("RGBA", (w, 14), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    d.rectangle((0, 0, w - 1, 12), fill=mix(col, (0, 0, 0, 255), .65))      # outline
+    d.rectangle((1, 1, w - 2, 11), fill=mix(col, (255, 255, 255, 255), .4))  # light inner border
+    d.rectangle((2, 2, w - 3, 6), fill=col)                                  # upper band
+    d.rectangle((2, 7, w - 3, 10), fill=mix(col, (0, 0, 0, 255), .15))      # lower band
+    d.line((2, 11, w - 2, 11), fill=mix(col, (0, 0, 0, 255), .3))           # bottom edge of the plate
+    d.line((0, 13, w - 1, 13), fill=mix(col, (0, 0, 0, 255), .755))        # dark line below
+    dark = mix(col, (0, 0, 0, 255), .7)
+    if tier is not None:  # drawn as the letters (light, dark outline): it stays visible on a plate of its colour
+        pts = [(5 + x, 4 + y) for y, row in enumerate(GEMS[tier]) for x, ch in enumerate(row) if ch == "#"]
+        for a, b in pts:
+            for ox in (-1, 0, 1):
+                for oy in (-1, 0, 1):
+                    im.putpixel((a + ox, b + oy), dark)
+        for p in pts:
+            im.putpixel(p, mix(c(RARITIES[tier][1]), (255, 255, 255, 255), .6))
+    outlined_text(im, name, 5 + gem, 4, WHITE, dark)
+    return im
+
+
+STYLES["plaque"] = plaque

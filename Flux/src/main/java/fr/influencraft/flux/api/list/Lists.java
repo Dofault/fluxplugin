@@ -188,7 +188,10 @@ public final class Lists {
             }
         }
         if (!verb.equals("next") && !verb.equals("prev") && !verb.equals("first") && !verb.equals("page")) s.page = 0;
-        s.cached = null;
+        // every list of the player is drawn again: buttons built from this list's state (its filter shown on another
+        // button, a summary of the chosen filter) would otherwise keep their former picture for up to a second
+        Map<String, State> own = STATES.get(player.getUniqueId());
+        if (own != null) for (State other : own.values()) other.cached = null;
         return false;
     }
 

@@ -40,14 +40,6 @@ public final class Providers {
         String claims = choice(config, "claims");
         fr.influencraft.flux.api.claims.Claims.use((claims.equals("auto") || claims.equals("lands")) && enabled("Lands")
                 ? new fr.influencraft.flux.adapters.lands.LandsClaims(flux) : null);
-        String shops = choice(config, "chest-shops");
-        if ((shops.equals("auto") || shops.equals("quickshop")) && (enabled("FluxChestShop") || enabled("QuickShop-Hikari"))) {
-            var adapter = new fr.influencraft.flux.adapters.quickshop.QuickShopShops();
-            fr.influencraft.flux.api.shops.ChestShops.use(adapter);
-            Bukkit.getPluginManager().registerEvents(adapter, flux);
-        } else {
-            fr.influencraft.flux.api.shops.ChestShops.use(null);
-        }
         // Java or Bedrock client (Geyser + Floodgate), with the Bedrock equivalents of custom items and glyphs
         fr.influencraft.flux.api.client.Clients.Provider clients = null;
         if (!choice(config, "clients").equals("none") && enabled("floodgate")) {
@@ -61,9 +53,12 @@ public final class Providers {
         // packets to one client (Flux depends on packetevents)
         fr.influencraft.flux.api.client.ClientTags.use(enabled("packetevents") ? new fr.influencraft.flux.adapters.packetevents.PacketEventsTags() : null);
         String money = choice(config, "money-events");
-        if ((money.equals("auto") || money.equals("cmi")) && enabled("CMI")) {
+        boolean moneyEvents = (money.equals("auto") || money.equals("cmi")) && enabled("CMI");
+        if (moneyEvents) {
             Bukkit.getPluginManager().registerEvents(new fr.influencraft.flux.adapters.cmi.CmiMoneyEvents(), flux);
         }
+        // CMI reports every Vault change (any plugin): the Vault currency then fires no event of its own
+        fr.influencraft.flux.api.economy.Economy.vaultObserved(moneyEvents);
         if (enabled("eco")) {
             var world = new fr.influencraft.flux.adapters.eco.EcoWorld();
             fr.influencraft.flux.api.world.PlacedBlocks.use(world);

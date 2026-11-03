@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 /**
- * Fly time of every player, in Flux's database (table {@code fluxfly_time}): seconds left, {@link #UNLIMITED} for an
+ * Fly time of every player, in Flux's database (table {@code flux_fly_time}): seconds left, {@link #UNLIMITED} for an
  * unlimited bank. Online players are cached; every change is written through right away (one small row).
  */
 final class FlyStore {
@@ -30,8 +30,9 @@ final class FlyStore {
     }
 
     void open() {
-        table = Database.table("fluxfly_time");
+        table = Database.table("flux_fly_time");
         try (Connection c = Database.connection(); Statement st = c.createStatement()) {
+            Database.renameTable(c, Database.table("fluxfly_time"), table); // name before 2026-10-31
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + table + " (uuid " + Database.dialect().key(36)
                     + " PRIMARY KEY, seconds BIGINT NOT NULL)");
         } catch (SQLException e) {

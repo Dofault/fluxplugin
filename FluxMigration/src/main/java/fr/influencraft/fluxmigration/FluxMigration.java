@@ -16,7 +16,7 @@ import java.util.Locale;
 /**
  * FluxMigration: the one place for the one-time data migrations of the suite (former plugins to Flux plugins). Every
  * migration ready and not yet done runs once when the server starts, before players can join; its id
- * is then recorded in Flux's database ({@code fluxmigration_done}). Deploy it for a migration, remove the jar (and
+ * is then recorded in Flux's database ({@code flux_migration_done}). Deploy it for a migration, remove the jar (and
  * delete the migrations that ran everywhere) afterwards: no migration code lives in the other plugins.
  *
  * <pre>
@@ -30,8 +30,10 @@ public final class FluxMigration extends FluxPlugin {
 
     @Override
     protected void enable() {
-        table = Database.table("fluxmigration_done");
+        table = Database.table("flux_migration_done");
         try (Connection c = Database.connection(); Statement st = c.createStatement()) {
+            // name before 2026-10-31, renamed before anything is read: the migrations already done must stay done
+            Database.renameTable(c, Database.table("fluxmigration_done"), table);
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + table + " (id " + Database.dialect().key(100)
                     + " PRIMARY KEY, done_at BIGINT NOT NULL, report TEXT)");
         } catch (SQLException e) {

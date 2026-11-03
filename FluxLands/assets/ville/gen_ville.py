@@ -32,7 +32,7 @@ from fond_lib import generique_raccourci, objet, poser, tampon_case  # noqa: E40
 GENERIQUE, SORTIE = sys.argv[1], sys.argv[2]
 APERCUS = sys.argv[3] if len(sys.argv) > 3 else None
 METIER = os.path.join(os.path.dirname(os.path.abspath(GENERIQUE)), "menu_metier.png")
-POLICE = json.load(open(os.path.join(ICI, "..", "metiers", "quinquefive.json")))
+POLICE = json.load(open(os.path.join(ICI, "..", "..", "..", "Flux", "assets", "metiers", "quinquefive.json")))
 # Accents et ponctuation absents de QuinqueFive : lettre de base, accent ajouté au rendu (ACCENTS).
 POLICE["É"] = POLICE["È"] = POLICE["E"]
 POLICE["Ô"] = POLICE["O"]
@@ -103,7 +103,6 @@ PICTOS = {
     "parcelle": ["#.#.#.#.", "########", "#......#", "#......#", "########", "#.#.#.#."],
     "agence": ["..#.....", ".###....", "#####.##", "#.#.#.##", "#.#.#..#", "#####..#"],
     "roles": ["#..##..#", "##.##.##", "########", "########", ".######.", "........"],
-    "parametres": [".######.", "#.##...#", ".######.", ".######.", "#...##.#", ".######."],
     "deposer": ["...##...", "...##...", ".######.", "..####..", "#..##..#", "########"],
     "retirer": ["...##...", "..####..", ".######.", "...##...", "#..##..#", "########"],
     "renommer": ["......##", ".....###", "....###.", "...###..", ".####...", ".##....."],
@@ -134,7 +133,6 @@ ICONES = {
     "niveau": ("niveau", "lavande"),
     "entretien": ("entretien", "lavande"),
     "roles": ("roles", "lavande"),
-    "parametres": ("parametres", "lavande"),
     "renommer": ("renommer", "lavande"),
     "periode": ("periode", "lavande"),
     "taille": ("taille", "lavande"),
@@ -625,67 +623,28 @@ def liste(theme, graine, titre, barre=BARRE_LISTE):
 
 FONDS = {
     # id: (thème du bandeau, graine, titre, cases, étiquettes {rangée: texte})
-    "menu_ville": ("ville", 11, "MA VILLE", [0, 8] + list(range(19, 26)) + SELECTEUR + [45, 49, 53], {3: "GESTION"}),
-    "menu_ville_accueil": ("accueil", 5, "VILLES", [0, 29, 31, 33], {2: "FONDE OU REJOINS UNE VILLE"}),
+    "menu_ville": ("ville", 11, "MA VILLE", [0, 8, 20, 22, 24] + SELECTEUR + list(range(47, 52)), {3: "GESTION"}),
+    "menu_ville_accueil": ("accueil", 5, "VILLES", [0, 20, 22, 24], {}),
     "menu_ville_fiche": ("fiche", 23, "VILLE", [0, 8] + list(range(19, 26)) + [38, 40, 42] + [47, 49, 51], {3: "VITRINE"}),
-    "menu_ville_commerce": ("commerce", 37, "COMMERCE", [0, 8, 19, 21, 22, 23, 25] + SELECTEUR + list(range(47, 52)) + [53],
+    "menu_ville_commerce": ("commerce", 37, "COMMERCE", [0, 8, 19, 22, 25] + SELECTEUR + list(range(47, 52)) + [53],
                             {3: "SEPT DERNIERS JOURS"}),
-    "menu_ville_banque": ("banque", 83, "BANQUE", [0, 8, 20, 22, 24] + SELECTEUR + [47, 49, 51], {3: "MONTANT"}),
-    "menu_ville_reglages": ("reglages", 97, "RÉGLAGES", [0, 8, 20, 22, 24] + SELECTEUR + [45, 53], {3: "VILLE"}),
     "menu_ville_parcelle": ("parcelle", 101, "PARCELLE", [0, 8] + list(range(19, 26)) + SELECTEUR + [49, 53], {3: "GESTION"}),
-    "menu_ville_annonce": ("agence", 113, "ANNONCE", [0, 8, 20, 22, 24] + SELECTEUR + [45, 46, 47, 49, 51, 52, 53], {3: "PRIX"}),
     "menu_villes": liste("annuaire", 41, "ANNUAIRE"),
     "menu_warps": liste("warps", 53, "WARPS"),
-    "menu_echoppes": liste("echoppes", 67, "ÉCHOPPES"),
     "menu_habitants": liste("habitants", 71, "HABITANTS"),
     "menu_agence": liste("agence", 127, "AGENCE", BARRE_AGENCE),
     "menu_parcelles": liste("parcelles", 131, "PARCELLES"),
     "menu_roles": liste("roles", 139, "RÔLES"),
     "menu_droits": liste("roles", 149, "PERMISSIONS"),
     "menu_parametres": liste("ville", 157, "PARAMÈTRES"),
-    "menu_pays": ("pays", 163, "MON PAYS", [0, 8] + list(range(19, 26)) + SELECTEUR + [45, 46, 47, 49, 51, 52, 53], {3: "GESTION"}),
-    "menu_pays_accueil": ("pays", 167, "PAYS", [0, 29, 31, 33], {2: "FONDE OU REJOINS UN PAYS"}),
+    # Accueil partagé « Villes et Pays » : les cartes ne sont dessinées que dans le thème vanilla (bg_territoires de Flux).
+    "menu_territoires": ("ville", 191, "VILLES ET PAYS", [9, 17] + list(range(56, 61)), {}),
+    "menu_pays": ("pays", 163, "MON PAYS", [0, 8, 20, 22, 24] + list(range(38, 43)) + [47, 49, 51], {3: "GESTION"}),
+    "menu_pays_accueil": ("pays", 167, "PAYS", [0, 20, 22, 24], {}),
     "menu_pays_fiche": ("pays", 173, "PAYS", [0, 8] + list(range(19, 26)) + [38, 40, 42], {3: "DÉCOUVRIR"}),
     "menu_pays_annuaire": liste("pays", 179, "ANNUAIRE DES PAYS"),
     "menu_pays_villes": liste("pays", 181, "VILLES DU PAYS"),
 }
-
-# Accueil partagé « Villes et Pays » : deux grands panneaux illustrés côte à côte.
-PANNEAU_VILLE = (7, 17, 78, 70)    # colonnes 0 à 3, rangées 0 à 2
-PANNEAU_PAYS = (97, 17, 168, 70)   # colonnes 5 à 8, rangées 0 à 2
-# Allégé le 2026-10-19 : les deux panneaux (Ma ville, Mon pays) et une seule rangée « Explorer »
-# (ce qui n'est dans aucun des deux tableaux de bord), sans doublons.
-CASES_TERRITOIRES = [38, 39, 40, 41, 42, 49]
-
-
-def fond_territoires():
-    im = generique_raccourci(GENERIQUE, HAUT, BAS)
-    entete(im)
-    for (x0, y0, x1, y1), theme, graine, titre in ((PANNEAU_VILLE, "ville", 191, "VILLE"), (PANNEAU_PAYS, "pays", 193, "PAYS")):
-        im.alpha_composite(bandeau(x1 - x0 + 1, y1 - y0 + 1, graine, theme), (x0, y0))
-        cadre(im, x0, y0, x1, y1)
-        # plaque du titre en bas du panneau, dans la trame de l'onglet Métiers
-        w = largeur_texte(titre) + 10
-        cx = (x0 + x1) // 2
-        px = im.load()
-        for yy in range(y1 - 15, y1 - 5):
-            for xx in range(cx - w // 2, cx + w // 2 + 1):
-                bord = yy in (y1 - 15, y1 - 6) or xx in (cx - w // 2, cx + w // 2)
-                px[xx, yy] = NOIR if bord else hexa("594674")
-        for xx in range(cx - w // 2 + 1, cx + w // 2):
-            px[xx, y1 - 14] = hexa("7f66a3")
-        texte(im, titre, cx, y1 - 12)
-    # séparation centrale : pointillés dorés de haut en bas
-    px = im.load()
-    for y in range(20, 70, 3):
-        px[88, y] = OR_CADRE
-    onglet(im, "VILLES ET PAYS", 88)
-    tampon = tampon_case()
-    for c in CASES_TERRITOIRES:
-        poser(im, tampon, *objet(c))
-    etiquette(im, "EXPLORER", 3)
-    return im
-
 
 def fond(nom):
     theme, graine, titre, cases, etiquettes = FONDS[nom]
@@ -721,7 +680,6 @@ def main():
     for nom, im in images.items():
         im.save(os.path.join(ico, nom + ".png"))
     fonds = {nom: fond(nom) for nom in FONDS}
-    fonds["menu_territoires"] = fond_territoires()
     for nom, im in fonds.items():
         im.save(os.path.join(gui, nom + ".png"))
 

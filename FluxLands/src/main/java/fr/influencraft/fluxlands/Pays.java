@@ -2,6 +2,7 @@ package fr.influencraft.fluxlands;
 
 import me.angeschossen.lands.api.land.Land;
 import me.angeschossen.lands.api.nation.Nation;
+import me.angeschossen.lands.api.nation.invite.NationInvite;
 import org.bukkit.entity.Player;
 
 import java.text.SimpleDateFormat;
@@ -124,5 +125,49 @@ final class Pays {
         m.put("spawn", Fmt.oui(cap != null && cap.getSpawnPosition() != null));
         m.put("creation", new SimpleDateFormat("dd/MM/yyyy").format(new Date(n.getCreationTime())));
         return m;
+    }
+
+    // ── Invitations ─────────────────────────────────────────────────────────
+
+    /** Lands' method giving a country's pending invitation of a town (found once by its signature). */
+    private static volatile java.lang.reflect.Method inviteOf;
+    private static volatile boolean inviteMissing;
+
+    /**
+     * Invitations received by a town, by country name. Lands keeps them on each country and its API has no way to list
+     * them: the country's public method that returns the {@link NationInvite} of a given town is found by its signature
+     * (return type, one town parameter), whatever its obfuscated name; the invitation is then accepted through the API.
+     */
+    Map<String, NationInvite> invitations(Land land) {
+        Map<String, NationInvite> out = new HashMap<>();
+        for (Nation n : tous()) {
+            if (n.isMember(land)) continue;
+            NationInvite invite = invitation(n, land);
+            if (invite != null) out.put(n.getName(), invite);
+        }
+        return out;
+    }
+
+    private NationInvite invitation(Nation n, Land land) {
+        try {
+            java.lang.reflect.Method m = inviteOf;
+            if (m == null) {
+                for (java.lang.reflect.Method c : n.getClass().getMethods()) {
+                    if (c.getReturnType() == NationInvite.class && c.getParameterCount() == 1 && c.getParameterTypes()[0].isInstance(land)) {
+                        m = c;
+                        break;
+                    }
+                }
+                if (m == null) {
+                    if (!inviteMissing) plugin.getLogger().warning("Lands: no method found to read the invitations of a country (Lands update?)");
+                    inviteMissing = true;
+                    return null;
+                }
+                inviteOf = m;
+            }
+            return (NationInvite) m.invoke(n, land);
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return null;
+        }
     }
 }

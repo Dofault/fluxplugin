@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 public final class Texts {
 
     private static final Pattern GLYPH = Pattern.compile("%img_([a-z0-9_]+(?::[a-z0-9_]+)?)%");
-    private static final List<String> GLYPH_NAMESPACES = List.of("influpet", "influtags", "influemoji", "influitems", "influcards");
+    private static final List<String> GLYPH_NAMESPACES = List.of("influpet", "fluxtags", "influemoji", "influitems", "influcards");
     private static final Map<String, String> GLYPH_CACHE = new HashMap<>();
 
     private Texts() {

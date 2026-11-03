@@ -154,9 +154,9 @@ public final class UiTitle {
     }
 
     private static void pager(StringBuilder out, Player player, Widget.Pager p, int cursor, int rows) {
-        int pages = number(Text.placeholders(player, "%flux_list_" + p.list() + "_pages%"));
+        int pages = number(Text.placeholders(player, p.pages()));
         if (pages <= 1) return;
-        int page = number(Text.placeholders(player, "%flux_list_" + p.list() + "_page%"));
+        int page = number(Text.placeholders(player, p.page()));
         int[] a = fr.influencraft.flux.PathRenderer.slotPosition(p.prev(), rows);
         int[] b = fr.influencraft.flux.PathRenderer.slotPosition(p.next(), rows);
         int top = a[1] - 1;

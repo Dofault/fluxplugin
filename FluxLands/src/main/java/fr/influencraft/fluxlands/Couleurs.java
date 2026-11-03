@@ -23,24 +23,45 @@ import java.util.regex.Pattern;
  */
 final class Couleurs {
 
-    private static final Pattern JETON = Pattern.compile("<t:([a-zA-Z0-9_\\-]+)>");
+    /** {@code <t:name>} opens a theme token, {@code </t>} goes back to the enclosing one (as in Lands' locale). */
+    private static final Pattern JETON = Pattern.compile("<t:([a-zA-Z0-9_\\-]+)>|</t>");
+    private static final Pattern DECORATION = Pattern.compile("<(b|bold|i|italic|em|u|underlined|st|strikethrough|obf|obfuscated)>");
 
     private static Map<String, String> jetons = Map.of();
+    private static final String PREFIXE_DEFAUT = "<t:prefixe>ᴠɪʟʟᴇꜱ</t><t:prefixe_fleche> ▸ </t>";
+    /** Lands' chat prefix ({@code general.prefix.normal} of its French locale), with its theme tokens. */
+    private static String prefixe = PREFIXE_DEFAUT;
 
     private Couleurs() {
     }
 
-    /** Relit les jetons du thème de Lands (appelé au démarrage et au /influlands reload). */
+    /**
+     * Reads Lands' theme again (start and /fluxlands reload): native tokens ({@code theme.tokens}, used by its menus)
+     * and the server's message tokens ({@code theme.custom}: texte, valeur, ville, commande...), plus its chat prefix.
+     * Custom names never reuse a native one (docs/notifications/villes.md), so one map holds both.
+     */
     static void charger(Plugin lands) {
         Map<String, String> m = new HashMap<>();
+        String pre = PREFIXE_DEFAUT;
         if (lands != null) {
             File f = new File(lands.getDataFolder(), "Locale/theme.yml");
             if (f.exists()) {
-                ConfigurationSection s = YamlConfiguration.loadConfiguration(f).getConfigurationSection("theme.tokens");
-                if (s != null) for (String k : s.getKeys(false)) m.put(k, s.getString(k, ""));
+                YamlConfiguration theme = YamlConfiguration.loadConfiguration(f);
+                for (String section : new String[]{"theme.tokens", "theme.custom"}) {
+                    ConfigurationSection s = theme.getConfigurationSection(section);
+                    if (s != null) for (String k : s.getKeys(false)) m.put(k, s.getString(k, ""));
+                }
             }
+            File locale = new File(lands.getDataFolder(), "Locale/fr-FR.yml");
+            if (locale.exists()) pre = YamlConfiguration.loadConfiguration(locale).getString("general.prefix.normal", pre);
         }
         jetons = m;
+        prefixe = pre;
+    }
+
+    /** Lands' chat prefix, as theme-token text. */
+    static String prefixe() {
+        return prefixe;
     }
 
     private static Component composant(String brut) {
@@ -49,9 +70,25 @@ final class Couleurs {
         if (s.indexOf('<') < 0) return fr.influencraft.flux.api.text.Texts.colors(s); // déjà en & (ou texte nu)
         Matcher mt = JETON.matcher(s);
         StringBuilder sb = new StringBuilder();
-        while (mt.find()) mt.appendReplacement(sb, Matcher.quoteReplacement(jetons.getOrDefault(mt.group(1), "")));
+        java.util.Deque<String> ouverts = new java.util.ArrayDeque<>();
+        while (mt.find()) {
+            String remplacement;
+            if (mt.group(1) != null) {
+                ouverts.push(mt.group(1));
+                remplacement = jetons.getOrDefault(mt.group(1), "");
+            } else {
+                // closing: undo the decorations of the closed token, then the enclosing token's style again
+                String ferme = ouverts.isEmpty() ? "" : jetons.getOrDefault(ouverts.pop(), "");
+                StringBuilder r = new StringBuilder();
+                Matcher d = DECORATION.matcher(ferme);
+                while (d.find()) r.append("<!").append(d.group(1)).append('>');
+                if (!ouverts.isEmpty()) r.append(jetons.getOrDefault(ouverts.peek(), ""));
+                remplacement = r.toString();
+            }
+            mt.appendReplacement(sb, Matcher.quoteReplacement(remplacement));
+        }
         mt.appendTail(sb);
-        s = sb.toString().replace("</t>", "");
+        s = sb.toString();
         try {
             return MiniMessage.miniMessage().deserialize(s);
         } catch (RuntimeException e) {

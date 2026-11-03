@@ -12,3 +12,8 @@ annonce: "&#FF4D6D◆ &f%joueur% &#FFD6DEmastered their %outil%&#FFD6DE!"
 brise: "&#FFD6DEContract fulfilled, your tool broke."
 gain: "&#B376E5You earned &f%montant% &#2ECF7B▲ &7[tool]"
 verrou: "&#FFD6DEThe enchantments of this tool evolve with it: &fthey cannot be changed&#FFD6DE."
+# Names of the origins in Flux's account history and gain / loss messages.
+origins:
+  default: "Tool"
+  quest: "Tool"
+  repair: "Repair"

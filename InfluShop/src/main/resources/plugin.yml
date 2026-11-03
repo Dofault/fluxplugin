@@ -5,7 +5,7 @@ api-version: '26.2'
 author: dofault
 description: "Boutique payable en Influence (PlayerPoints), pas en BitBlock/Vault. Chaque item est ajoute en jeu en deposant l'objet reel (nom/lore/modele captures tels quels, marche avec n'importe quel plugin dont ItemsAdder) et en indiquant la commande a executer a l'achat, editable entierement en jeu."
 
-softdepend: [PlaceholderAPI, PlayerPoints, ItemsAdder]
+softdepend: [PlaceholderAPI, PlayerPoints, ItemsAdder, Flux]
 
 commands:
   shop:

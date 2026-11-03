@@ -1,0 +1,24 @@
+# FluxCommerce: commerce between players. Each part has its own folder next to this file (config.yml, lang/, menus/):
+#   trade/         secure trades between two players (/trade)
+#   auctionhouse/  the market: auction house and chest shops together (/hdv)
+#   chestshop/     the players' chest shops (/echoppe)
+# Shared by the three parts: the forbidden items below and the bans (/commerce ban). Data in Flux's database.
+
+# Language of the texts (lang/<language>.yml of each part); empty: the suite's language (Flux).
+language: ""
+
+# Parts started with the plugin (a restart applies a change). Chest shops are listed in the market only when both run.
+modules:
+  trade: true
+  auctionhouse: true
+  chestshop: true
+
+# Items that can never change hands: never traded, never listed at the auction house, never sold or bought by a chest
+# shop. Rules: a material name (DIAMOND), a custom item id (namespace:id, namespace:prefix*), or name:<text>,
+# lore:<text>, model:<text>, cmd:<custom model data>. Checked inside shulker boxes and bundles too.
+# Managed in game with /commerce blacklist.
+blacklist:
+  - BEDROCK
+  - BARRIER
+  - COMMAND_BLOCK
+  - STRUCTURE_VOID

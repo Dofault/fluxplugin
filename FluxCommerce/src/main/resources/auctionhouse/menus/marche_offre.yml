@@ -1,0 +1,106 @@
+# Buying a direct sale of the auction house, in Flux's trade window (TradeWindow, opened by FluxCommerce with
+# this menu): the item and its price (trade_item), x1, x2, x10, x64 (first click arms, second buys), any amount in a
+# window. Row 1: back, menu icon. Below: balance, market price, contents of a box; every offer of this item, the
+# seller's offers, staff tools. Inventory row: the cheapest other offers of the same item.
+rows: 6
+player-inventory: hidden
+vanilla-background: false
+
+open-actions:
+  - "[sound] @page"
+
+lists:
+  hdv_offer_info:
+    slots: [8]
+    item:
+      material: entry
+  hdv_balance:
+    slots: [20]
+    item:
+      material: entry
+  trade_item:
+    slots: [22]
+    item:
+      material: entry
+  hdv_offer_price:
+    slots: [24]
+    item:
+      material: entry
+  hdv_offer_contents:
+    slots: [26]
+    item:
+      material: entry
+      actions:
+        left: ["[hdv] contents"]
+  trade_buy_1:
+    slots: [29]
+    item:
+      material: entry
+      actions:
+        left: ["[trade] buy %entry_id% 1"]
+  trade_buy_2:
+    slots: [30]
+    item:
+      material: entry
+      actions:
+        left: ["[trade] buy %entry_id% 2"]
+  hdv_offer_custom:
+    slots: [31]
+    item:
+      material: entry
+      actions:
+        left: ["[hdv] custom"]
+  trade_buy_10:
+    slots: [32]
+    item:
+      material: entry
+      actions:
+        left: ["[trade] buy %entry_id% 10"]
+  trade_buy_64:
+    slots: [33]
+    item:
+      material: entry
+      actions:
+        left: ["[trade] buy %entry_id% 64"]
+  hdv_offer_staff:
+    slots: [40]
+    item:
+      material: entry
+      actions:
+        left: ["[hdv] staff remove"]
+        right: ["[hdv] staff delete"]
+  hdv_others:
+    slots: "55-61"
+    item:
+      material: entry
+      actions:
+        left: ["%entry_left%"]
+        right: ["%entry_right%"]
+
+items:
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
+    slots: [0]
+    lore:
+      - "@left Revenir"
+    actions:
+      left: ["[hdv] listing-back"]
+  toutes:
+    material: "itemsadder:influitems:search"
+    name: "Toutes les offres"
+    slots: [38]
+    lore:
+      - "@desc Toutes les offres de cet objet, à l'HDV et dans les échoppes."
+      - "@left Chercher"
+    actions:
+      left: ["[hdv] same"]
+  vendeur:
+    material: "itemsadder:influmarche:mes_ventes"
+    name: "Offres du vendeur"
+    slots: [42]
+    lore:
+      - "@desc Tout ce que ce joueur vend en ce moment."
+      - "@left Chercher"
+    actions:
+      left: ["[hdv] seller"]

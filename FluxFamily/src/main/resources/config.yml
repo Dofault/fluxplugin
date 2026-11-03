@@ -1,0 +1,25 @@
+# FluxFamily: couples, marriage, couple home and family trees.
+# A couple is free (both players agree). Marriage is the next step of a couple: the partner agrees, then the one who
+# proposed pays the price. The one who leaves a marriage keeps the "divorced" tag for good (FluxTags).
+
+marriage:
+  # Price of a marriage in the main currency, paid once by the one who proposes, when the partner accepts.
+  price: 500000
+  # Tell the whole server when two players get married.
+  announce: true
+
+# Seconds a request (couple, marriage, adoption) stays open.
+request-seconds: 120
+
+# One home per married couple.
+home:
+  # Teleport warm-up in seconds (standing still), except in the instant worlds.
+  warmup-seconds: 5
+  instant-worlds: [utopia, valdor]
+  # Worlds where the couple home cannot be set.
+  blocked-worlds: [atlas, atlas_nether, atlas_the_end, stratum]
+
+# Pieces of Flux's tab list (plugins/Flux/tab.yml).
+tab:
+  # {married}: after the name of a married player.
+  married: " &#E060A0❤"

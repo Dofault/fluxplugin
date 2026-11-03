@@ -13,12 +13,13 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Placeholders {@code %influlands_...%} (détail : docs/technique/influlands.md).
+ * Placeholders {@code %fluxlands_...%} (détail : docs/technique/fluxlands.md).
  * <pre>
  *   ma_&lt;champ&gt;            « ma ville » du joueur (nom, niveau, solde, taux, echoppes...)
  *   fiche_&lt;champ&gt;         ville consultée (fiche, habitants, filtre « Ville consultée »)
  *   ici_&lt;champ&gt;           ville où se tient le joueur
  *   nb_villes               nombre de villes dont le joueur est habitant
+ *   nb_villes_serveur       nombre de villes de joueurs du serveur
  *   monpays_&lt;champ&gt;       pays de ma ville (nom, niveau, villes, habitants, capitale, chef, tresor...)
  *   paysfiche_&lt;champ&gt;     pays consulté ; nb_pays : nombre de pays
  *   liste_&lt;n&gt;_&lt;champ&gt;     ligne n de la page affichée de la liste courante
@@ -27,9 +28,9 @@ import java.util.Map;
  *   vitrine_&lt;n&gt;_&lt;champ&gt;   adresses épinglées de la ville consultée
  *   top_&lt;n&gt;_&lt;champ&gt;       échoppes de ma ville qui ont le plus reversé
  *   jour_&lt;k&gt;_montant|nom|barre   recettes des 7 derniers jours de ma ville (k=1 : il y a 6 jours)
- *   adresseville_&lt;nom&gt;     ville d'une adresse (pour les menus d'InfluPW eux-mêmes)
+ *   adresseville_&lt;nom&gt;     ville d'une adresse (pour les menus de FluxPW eux-mêmes)
  *   taux_ici                droit de place là où se tient le joueur
- *   modules_echoppes|adresses  oui/non selon la présence de FluxChestShop / InfluPW
+ *   modules_echoppes|adresses  oui/non selon la présence des échoppes (FluxCommerce) / FluxPW
  * </pre>
  */
 final class Expansion {
@@ -57,6 +58,7 @@ final class Expansion {
         }
         if (s.startsWith("ici_")) return champ(plugin.champsVille(plugin.villes().a(p.getLocation()), p), s.substring(4));
         if (s.equals("nb_villes")) return String.valueOf(plugin.villes().duJoueur(p).size());
+        if (s.equals("nb_villes_serveur")) return String.valueOf(plugin.villes().toutes().size());
         if (s.startsWith("monpays_")) return champ(plugin.pays().champs(plugin.pays().monPays(p), p), s.substring(8));
         if (s.startsWith("paysfiche_")) return champ(plugin.pays().champs(plugin.pays().parId(plugin.vues().etat(p).paysFiche), p), s.substring(10));
         if (s.equals("nb_pays")) return String.valueOf(plugin.pays().tous().size());
@@ -78,7 +80,6 @@ final class Expansion {
         if (s.startsWith("parcelle_")) return parcelle(p, s.substring(9));
         if (s.startsWith("role_")) return role(p, s.substring(5));
         if (s.startsWith("banque_")) return banque(p, s.substring(7));
-        if (s.startsWith("annonce_")) return annonce(p, s.substring(8));
         if (s.equals("selection")) return plugin.gestion().selection(p);
         if (s.equals("annonces")) return String.valueOf(plugin.gestion().annonces().size());
         return null;
@@ -150,7 +151,7 @@ final class Expansion {
             if (f == null) return ""; // rien à consulter : choix masqué
             nom = "À " + f.getName();
         }
-        if (nom.equals("Ma nation") && plugin.villes().maVille(p) == null) return "";
+        if (nom.equals("Mon pays") && plugin.villes().maVille(p) == null) return "";
         return fr.influencraft.flux.api.text.Style.get().filterOption(nom, i == actif);
     }
 
@@ -202,12 +203,17 @@ final class Expansion {
         }
     }
 
-    // ── Gestion de ma ville : parcelle choisie, rôle choisi, banque, brouillon d'annonce ──
+    // ── Gestion de ma ville : parcelle choisie, rôle choisi, banque ──
 
     private String parcelle(Player p, String champ) {
         Land ma = plugin.villes().maVille(p);
         me.angeschossen.lands.api.land.Area a = plugin.gestion().parcelle(ma, plugin.vues().etat(p).parcelle);
         if (a == null) return champ.equals("existe") ? "non" : "";
+        if (champ.equals("brouillon")) {
+            // listing of this plot filled but not placed yet (per player, not part of the plot's fields)
+            Listings.Draft d = plugin.vues().etat(p).brouillon;
+            return Fmt.oui(d != null && d.plot().equalsIgnoreCase(a.getName()));
+        }
         return champ(plugin.gestion().champsParcelle(a), champ);
     }
 
@@ -228,13 +234,10 @@ final class Expansion {
 
     private String banque(Player p, String champ) {
         Land ma = plugin.villes().maVille(p);
-        Vues.Etat e = plugin.vues().etat(p);
         if (ma == null) return "";
         return switch (champ) {
-            case "montant" -> Fmt.argent(e.montant);
             case "solde" -> Fmt.argent(ma.getBalance());
             case "jours" -> ma.getUpkeepCosts() > 0 ? String.valueOf((long) Math.floor(ma.getBalance() / ma.getUpkeepCosts())) : "illimité";
-            case "assez" -> Fmt.oui(ma.getBalance() >= e.montant);
             case "perso" -> {
                 var money = fr.influencraft.flux.api.economy.Economy.main();
                 yield money != null ? Fmt.argent(money.balance(p)) : "?";
@@ -243,16 +246,4 @@ final class Expansion {
         };
     }
 
-    private String annonce(Player p, String champ) {
-        Vues.Etat e = plugin.vues().etat(p);
-        return switch (champ) {
-            case "type" -> e.location ? "Location" : "Vente";
-            case "location" -> Fmt.oui(e.location);
-            case "prix" -> Fmt.argent(e.prix);
-            case "periode" -> e.periode + " j";
-            case "duree" -> e.duree + " j";
-            case "parcelle" -> e.parcelle;
-            default -> "";
-        };
-    }
 }

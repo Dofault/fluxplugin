@@ -1,0 +1,32 @@
+# Settings of one warp (/pw manage <warp>, or from the player's warps), vanilla theme (theme.menus.pw_manage of
+# Flux's config). Row 1: back, the warp itself. Rows 2-3: one button per setting (a setting the player's rank does
+# not give yet shows locked). Lists built by FluxPW.
+rows: 6
+player-inventory: hidden
+vanilla-background: false
+
+open-actions:
+  - "[sound] @page"
+
+lists:
+  pw_manage_info:
+    slots: [8]
+    item:
+      material: entry
+  pw_manage:
+    slots: 10-16, 19-25
+    item:
+      material: entry
+      actions:
+        left: ["%entry_clic%"]
+
+items:
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
+    slots: [0]
+    lore:
+      - "@desc Revenir à la liste des warps."
+      - "@left Retour"
+    actions:
+      left: ["[pw] back"]

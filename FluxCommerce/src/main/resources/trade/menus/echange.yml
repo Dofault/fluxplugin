@@ -1,0 +1,110 @@
+# Trade window of FluxCommerce (one per player, both see the same trade from their side). Background bg_echange, drawn by
+# Flux/assets/vanilla/gen_ui.py (bg_echange: name fields, two offer grids, experience and money fields, inventory).
+# Items built by FluxCommerce (lists echange_*), texts of the fields by its placeholders %fluxtrade_*%.
+#   row 0     quit | my name           | . | his name           | how it works
+#   rows 1-3  my offer (12 slots)      | ⇄ | his offer (12 slots)
+#   row 4     xp   | my experience     | countdown | his experience | xp
+#   row 5     money| my money          | validate  | his money      | money
+# The player's inventory stays visible: a click on one of his items puts it in his offer.
+rows: 6
+player-inventory: visible
+vanilla-background: false
+
+theme:
+  title: "Trade"
+  background: bg_echange
+  frames: none
+
+close-actions:
+  - "[echange] closed"
+inventory-click-actions:
+  - "[echange] add %clicked_slot% %clicked_kind%"
+
+lists:
+  echange_me:
+    slots: 1-3
+    item:
+      material: entry
+  echange_partner:
+    slots: 5-7
+    item:
+      material: entry
+  echange_info:
+    slots: 8
+    item:
+      material: entry
+  echange_mine:
+    slots: 9-12, 18-21, 27-30
+    item:
+      material: entry
+      actions:
+        left: ["[echange] take %entry_id%"]
+        right: ["[echange] take-one %entry_id%"]
+  echange_theirs:
+    slots: 14-17, 23-26, 32-35
+    item:
+      material: entry
+  echange_xp:
+    slots: 36
+    item:
+      material: entry
+      actions:
+        left: ["[echange] xp"]
+        right: ["[echange] xp-clear"]
+  echange_status:
+    slots: 40
+    item:
+      material: entry
+  echange_xp_partner:
+    slots: 44
+    item:
+      material: entry
+  echange_money:
+    slots: 45
+    item:
+      material: entry
+      actions:
+        left: ["[echange] money"]
+        right: ["[echange] money-clear"]
+  echange_validate:
+    slots: 49
+    item:
+      material: entry
+      actions:
+        left: ["[echange] validate"]
+  echange_money_partner:
+    slots: 53
+    item:
+      material: entry
+
+items:
+  quit:
+    material: "itemsadder:fluxui:btn_close_red"
+    name: "Cancel the trade"
+    slots: [0]
+    lore:
+      - "@desc Everything you put in comes back to you."
+      - "@left Cancel"
+    actions:
+      left: ["[echange] cancel"]
+
+# Name fields turn green when that player validated; texts written by Flux in the fields of the background.
+widgets:
+  ready_me:
+    type: image
+    glyph: "bg_echange_pret_moi"
+    x: 0
+    width: 176
+    view-requirements: ["placeholder: %fluxtrade_ready_me% == yes"]
+  ready_partner:
+    type: image
+    glyph: "bg_echange_pret_lui"
+    x: 0
+    width: 176
+    view-requirements: ["placeholder: %fluxtrade_ready_partner% == yes"]
+  name_me: {type: text, x: 52, y: 23, align: center, text: "%fluxtrade_name_me%"}
+  name_partner: {type: text, x: 124, y: 23, align: center, text: "%fluxtrade_name_partner%"}
+  xp_me: {type: text, x: 52, y: 95, align: center, text: "%fluxtrade_xp_me%"}
+  xp_partner: {type: text, x: 124, y: 95, align: center, text: "%fluxtrade_xp_partner%"}
+  money_me: {type: text, x: 52, y: 113, align: center, text: "%fluxtrade_money_me%"}
+  money_partner: {type: text, x: 124, y: 113, align: center, text: "%fluxtrade_money_partner%"}

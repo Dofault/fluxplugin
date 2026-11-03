@@ -1,0 +1,84 @@
+# One listing of the auction house that is not bought in the trade window: an auction (bid in a window), the
+# player's own listing (take it back), a listing that ended (collect). Row 1: back, menu icon. Below: balance,
+# the item, market price, contents of a box; the action under the item; every offer of this item, the seller's
+# offers, staff tools. Inventory row: the cheapest other offers of the same item.
+rows: 6
+update-interval: 20
+player-inventory: hidden
+vanilla-background: false
+
+open-actions:
+  - "[sound] @page"
+
+lists:
+  hdv_offer_info:
+    slots: [8]
+    item:
+      material: entry
+  hdv_balance:
+    slots: [20]
+    item:
+      material: entry
+  hdv_detail_item:
+    slots: [22]
+    item:
+      material: entry
+  hdv_offer_price:
+    slots: [24]
+    item:
+      material: entry
+  hdv_offer_contents:
+    slots: [26]
+    item:
+      material: entry
+      actions:
+        left: ["[hdv] contents"]
+  hdv_detail_actions:
+    slots: [31]
+    item:
+      material: entry
+      actions:
+        left: ["%entry_left%"]
+        right: ["%entry_right%"]
+  hdv_offer_staff:
+    slots: [40]
+    item:
+      material: entry
+      actions:
+        left: ["[hdv] staff remove"]
+        right: ["[hdv] staff delete"]
+  hdv_others:
+    slots: "55-61"
+    item:
+      material: entry
+      actions:
+        left: ["%entry_left%"]
+        right: ["%entry_right%"]
+
+items:
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
+    slots: [0]
+    lore:
+      - "@left Revenir"
+    actions:
+      left: ["[hdv] listing-back"]
+  toutes:
+    material: "itemsadder:influitems:search"
+    name: "Toutes les offres"
+    slots: [38]
+    lore:
+      - "@desc Toutes les offres de cet objet, à l'HDV et dans les échoppes."
+      - "@left Chercher"
+    actions:
+      left: ["[hdv] same"]
+  vendeur:
+    material: "itemsadder:influmarche:mes_ventes"
+    name: "Offres du vendeur"
+    slots: [42]
+    lore:
+      - "@desc Tout ce que ce joueur vend en ce moment."
+      - "@left Chercher"
+    actions:
+      left: ["[hdv] seller"]

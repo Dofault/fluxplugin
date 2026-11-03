@@ -1,0 +1,28 @@
+# Storage of the suite: the one database where every plugin of the suite keeps its tables (flux_<module>_<category>).
+# FluxCommerce included (tables flux_commerce_*, since 2026-11-01).
+#
+# Change of engine with the data: /fluxmenu database migrate <sqlite|mysql> [replace], then restart. The copy runs at
+# start-up, before players join; the former SQLite file is kept as flux.db.migrated-<date>. Switching type from sqlite
+# to mysql by hand copies the file as well when the MySQL database holds nothing of the suite yet.
+
+# sqlite: local file below (default, nothing to install). mysql (or mariadb): MySQL or MariaDB server below.
+type: sqlite
+
+# SQLite file, in plugins/Flux/
+file: flux.db
+
+# MySQL / MariaDB server (type: mysql); the database must exist
+host: localhost
+port: 3306
+name: influencraft
+user: root
+password: ""
+# connections kept open (SQLite always uses one)
+pool-size: 6
+
+# prefix added to every table name (useful when the database is shared with other applications)
+table-prefix: ""
+
+# database unreachable at start-up (server down, failed migration): refuse players (operators may join) rather than
+# let them play without saving
+block-joins-on-error: true

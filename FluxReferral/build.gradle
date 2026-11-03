@@ -25,6 +25,8 @@ dependencies {
     compileOnly "io.papermc.paper:paper-api:${findProperty('paperApi') ?: '26.2.build.124-stable'}"
     // Flux (suite core), built by the Maven reactor first: mvn -pl Flux package
     compileOnly files('../Flux/target/Flux.jar')
+    // FluxFamily (family tree: a sponsor is his referrals' parent), optional at runtime
+    compileOnly files('../FluxFamily/target/FluxFamily.jar')
 
     // database: the shared pool of Flux (fr.influencraft.flux.api.data.Database), nothing shaded here
 }

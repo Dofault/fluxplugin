@@ -139,7 +139,7 @@ def build(plugins, window, generic):
         base_span = row_span(menu.all_slots(), top, hidden)
 
         def picture(span, frames):
-            im = window(generic, span[0], span[1])
+            im = window(generic, span[0], span[1], rows=rows)
             d = ImageDraw.Draw(im, "RGBA")
             if theme.get("title"):
                 ui.write(im, theme["title"], 88, 5 + 18 * span[0], INK, None)
@@ -148,7 +148,7 @@ def build(plugins, window, generic):
             if theme.get("frames", "vanilla") != "none":
                 kind = "dark" if theme.get("frames") == "dark" else "vanilla"
                 for s in sorted(frames):
-                    ui.slot(d, s, kind)
+                    ui.slot(d, s, kind, rows=rows)
             return im
 
         out[f"auto_{mid}"] = picture(base_span, base_frames)

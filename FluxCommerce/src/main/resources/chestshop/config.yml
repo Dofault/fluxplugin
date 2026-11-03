@@ -1,0 +1,50 @@
+# FluxCommerce, chest shops (chestshop/): shops of the players. Forbidden items and bans are shared by all commerce
+# (config.yml and /commerce of FluxCommerce). Data in Flux's database (plugins/Flux/storage.yml).
+
+# Blocks that can become a shop (a double chest counts as one shop).
+containers: [CHEST, TRAPPED_CHEST, BARREL]
+
+# Worlds where shops may be created: when set, only these; else every world but disabled-worlds.
+# Shops already there keep working wherever they are.
+worlds: []
+disabled-worlds: []
+
+# Price of a bundle, whole amounts of the main currency.
+price:
+  min: 1
+  max: 1000000000
+
+# Most shops a player may own (0 = no limit); fluxcommerce.chestshop.limit.<n> sets another one per rank.
+limits:
+  default: 0
+
+# Friends of a shop: players allowed to open it to fill or empty it, nothing else.
+friends:
+  max: 10
+
+# Tell the owner (when online) of every trade made with his shops.
+notify-owner: true
+
+# How shops are shown: the item always floats above the container (display entity, never saved), turning slowly; the
+# text is on a sign hung on the container (default) or a hologram above the item, as each owner picks.
+display:
+  # look of a new shop: sign or floating
+  default: sign
+  # wood of a new sign (OAK, SPRUCE, BIRCH, JUNGLE, ACACIA, DARK_OAK, PALE_OAK, MANGROVE, CHERRY, BAMBOO, CRIMSON, WARPED)
+  default-wood: OAK
+  # false: nothing above the containers (neither item nor hologram; signs still work)
+  enabled: true
+  # the item turns on itself and bobs slowly (a quarter turn every spin-ticks ticks, interpolated by the clients)
+  spin: true
+  spin-ticks: 40
+  bob-height: 0.06
+  # the item traded, scale of the item
+  item: true
+  item-scale: 0.45
+  # the text (selling / buying, bundle and price, seller), above the item
+  text: true
+  text-offset: 0.45
+  # height of the item above the block
+  height: 1.15
+  # view range factor of the displays (1 = 64 blocks)
+  view-range: 0.5

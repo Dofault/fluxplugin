@@ -26,17 +26,26 @@ public final class Resources {
      * written for the server).
      */
     public static void shipMenus(JavaPlugin plugin, String language) {
+        shipMenus(plugin, language, "menus");
+    }
+
+    /**
+     * Same with another folder ({@code trade/menus}...): for a plugin made of several parts, each one shipping its menus
+     * in its own folder of the jar and of the data folder (translation under {@code i18n/<language>/<folder>/}).
+     */
+    public static void shipMenus(JavaPlugin plugin, String language, String folderName) {
+        String prefix = folderName + "/";
         List<String> shipped = new ArrayList<>();
         try (JarFile jar = new JarFile(new File(plugin.getClass().getProtectionDomain().getCodeSource().getLocation().toURI()))) {
             Enumeration<JarEntry> entries = jar.entries();
             while (entries.hasMoreElements()) {
                 String name = entries.nextElement().getName();
-                if (name.startsWith("menus/") && name.endsWith(".yml")) shipped.add(name);
+                if (name.startsWith(prefix) && name.endsWith(".yml")) shipped.add(name);
             }
         } catch (Exception e) {
             plugin.getLogger().warning("Could not list the menus of the jar: " + e.getMessage());
         }
-        File folder = new File(plugin.getDataFolder(), "menus");
+        File folder = new File(plugin.getDataFolder(), folderName);
         if (shipped.isEmpty()) {
             if (folder.isDirectory()) FluxApi.registerMenuFolder(plugin, folder);
             return;

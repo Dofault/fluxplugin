@@ -13,7 +13,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * How each player discovered the server (table {@code <prefix>decouvertes}): source ({@code adresse}, {@code joueur},
+ * How each player discovered the server (table {@code flux_referral_discoveries}): source ({@code adresse}, {@code joueur},
  * or a source of the questionnaire such as {@code tiktok}, {@code vote}), the player who brought him if any, a detail
  * (address typed, "questionnaire", "code") and the date. The first answer stays.
  */
@@ -34,7 +34,7 @@ public class DepotDecouverte {
 
     public DepotDecouverte(FluxReferralPlugin plugin, GestionnaireBDD gestionnaireBDD) {
         this.gestionnaireBDD = gestionnaireBDD;
-        this.table = plugin.getGestionnaireConfig().getPrefixeTables() + "decouvertes";
+        this.table = Tables.DISCOVERIES;
     }
 
     public void ecouter(Ecouteur ecouteur) {

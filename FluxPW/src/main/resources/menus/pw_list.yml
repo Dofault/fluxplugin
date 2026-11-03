@@ -1,0 +1,78 @@
+# Warp list (a category, the player's warps or his favourites), vanilla theme (theme.menus.pw_list of Flux's config).
+# Row 1: back, sort, search, own warps, favourites, list icon. Rows 2-5: the warps (left: visit, right: rate or
+# settings, shift + right: favourite). Row 6: pages. Lists built by FluxPW.
+rows: 6
+player-inventory: hidden
+vanilla-background: false
+
+open-actions:
+  - "[sound] @page"
+
+lists:
+  pw_list_info:
+    slots: [8]
+    item:
+      material: entry
+  pw_sort:
+    slots: [2]
+    item:
+      material: entry
+      actions:
+        left: ["[list] pw_warps sort"]
+        right: ["[list] pw_warps sort-prev"]
+  pw_warps:
+    slots: 9-44
+    item:
+      material: entry
+      actions:
+        left: ["%entry_left%"]
+        right: ["%entry_right%"]
+        shift-left: ["%entry_shift_left%"]
+        shift-right: ["%entry_shift_right%"]
+
+widgets:
+  pages:
+    type: pager
+    list: pw_warps
+    prev: 45
+    next: 53
+
+items:
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
+    slots: [0]
+    lore:
+      - "@desc Revenir aux catégories."
+      - "@left Retour"
+    actions:
+      left: ["[pw] home"]
+  recherche:
+    material: "itemsadder:influitems:search"
+    name: "Rechercher"
+    slots: [3]
+    lore:
+      - "@desc Un warp par son nom ou par le pseudo de son propriétaire."
+      - "@left Rechercher"
+      - "@right Effacer la recherche"
+    actions:
+      left: ["[list] pw_warps search"]
+      right: ["[list] pw_warps clear"]
+  mes_warps:
+    material: ENDER_PEARL
+    name: "Mes warps"
+    slots: [5]
+    lore:
+      - "@desc Tes warps, ouverts ou fermés, et leurs réglages."
+      - "@left Voir"
+    actions:
+      left: ["[pw] mine"]
+  favoris:
+    material: NETHER_STAR
+    name: "Favoris"
+    slots: [6]
+    lore:
+      - "@desc Les warps que tu as gardés en favoris."
+      - "@left Voir"
+    actions:
+      left: ["[pw] favorites"]

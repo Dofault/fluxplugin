@@ -23,18 +23,17 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * État de navigation de chaque joueur (liste affichée, page, filtre, tri, recherche, ville
- * consultée, brouillons de la banque et des annonces) et calcul des lignes des listes. Une
+ * consultée, brouillon des annonces) et calcul des lignes des listes. Une
  * liste est recalculée quand l'état change ou au plus une fois par seconde : les
  * placeholders d'une même page la relisent sans frais.
  */
 final class Vues {
 
-    enum Type { VILLES, WARPS, ECHOPPES, HABITANTS, AGENCE, PARCELLES, ROLES, DROITS, PARAMETRES, PAYS, PAYS_VILLES }
+    enum Type { VILLES, WARPS, HABITANTS, AGENCE, PARCELLES, ROLES, DROITS, PARAMETRES, PAYS, PAYS_VILLES }
 
     static final Map<Type, List<String>> FILTRES = Map.ofEntries(
-            Map.entry(Type.VILLES, List.of("Toutes", "Avec échoppes", "Avec warps", "Ma nation")),
+            Map.entry(Type.VILLES, List.of("Toutes", "Avec échoppes", "Avec warps", "Mon pays")),
             Map.entry(Type.WARPS, List.of("Tous", "Ma ville", "Ville consultée", "Mes warps")),
-            Map.entry(Type.ECHOPPES, List.of("Toutes", "Ma ville", "Ville consultée", "Mes échoppes", "Ventes", "Rachats")),
             Map.entry(Type.HABITANTS, List.of("Tous", "En ligne")),
             Map.entry(Type.AGENCE, List.of("Toutes les annonces", "Locations", "Ventes", "Ma ville")),
             Map.entry(Type.PARCELLES, List.of("Toutes", "Libres", "En annonce", "Occupées")),
@@ -47,7 +46,6 @@ final class Vues {
     static final Map<Type, List<String>> TRIS = Map.ofEntries(
             Map.entry(Type.VILLES, List.of("Niveau", "Habitants", "Commerce", "Nom")),
             Map.entry(Type.WARPS, List.of("Visites", "Note", "Récents", "Nom")),
-            Map.entry(Type.ECHOPPES, List.of("Récentes", "Prix croissant", "Prix décroissant", "Droit reversé")),
             Map.entry(Type.HABITANTS, List.of("Rôle", "Nom")),
             Map.entry(Type.AGENCE, List.of("Prix croissant", "Prix décroissant", "Taille croissante", "Taille décroissante")),
             Map.entry(Type.PARCELLES, List.of("Nom", "Taille")),
@@ -82,13 +80,8 @@ final class Vues {
         /** Agence : tranche de budget et de taille. */
         int budget;
         int taille;
-        /** Banque : montant préparé. */
-        long montant = 1000;
-        /** Brouillon d'annonce de la parcelle choisie. */
-        boolean location;
-        long prix = 5000;
-        int periode = 7;
-        int duree = 28;
+        /** Listing filled in its window but not placed yet (player away from the right spot), or null. */
+        Listings.Draft brouillon;
         List<Map<String, String>> lignes = List.of();
         long calcule;
         boolean sale = true;
@@ -149,7 +142,6 @@ final class Vues {
             return switch (e.type) {
                 case VILLES -> villes(p, e);
                 case WARPS -> warps(p, e);
-                case ECHOPPES -> echoppes(p, e);
                 case HABITANTS -> habitants(p, e);
                 case AGENCE -> agence(p, e);
                 case PARCELLES -> parcelles(p, e);
@@ -261,36 +253,6 @@ final class Vues {
         return m;
     }
 
-    private List<Map<String, String>> echoppes(Player p, Etat e) {
-        List<Fiches.Echoppe> src = plugin.echoppes();
-        Land ma = plugin.villes().maVille(p);
-        String maId = ma != null ? Villes.id(ma) : "-";
-        List<Fiches.Echoppe> liste = new ArrayList<>();
-        for (Fiches.Echoppe s : src) {
-            // Échoppes vides / rachats pleins : visibles seulement dans « mes échoppes » (pour les remplir).
-            if (!s.active() && e.filtre != 3) continue;
-            boolean garde = switch (e.filtre) {
-                case 1 -> maId.equals(s.villeId());
-                case 2 -> e.fiche.equals(s.villeId());
-                case 3 -> p.getUniqueId().equals(s.proprio());
-                case 4 -> !s.rachat();
-                case 5 -> s.rachat();
-                default -> true;
-            };
-            if (garde && cherche(e, s.objet(), s.proprioNom(), s.villeNom())) liste.add(s);
-        }
-        Comparator<Fiches.Echoppe> cmp = switch (e.tri) {
-            case 1 -> Comparator.comparingDouble(Fiches.Echoppe::prix);
-            case 2 -> Comparator.comparingDouble(Fiches.Echoppe::prix).reversed();
-            case 3 -> Comparator.comparingDouble((Fiches.Echoppe s) -> droitReverse(s)).reversed();
-            default -> Comparator.comparingLong(Fiches.Echoppe::id).reversed();
-        };
-        liste.sort(cmp);
-        List<Map<String, String>> l = new ArrayList<>(liste.size());
-        for (Fiches.Echoppe s : liste) l.add(champsEchoppe(s));
-        return l;
-    }
-
     double droitReverse(Fiches.Echoppe s) {
         if (s.villeId().isEmpty()) return 0;
         return plugin.registre().recette(s.villeId()).parEchoppe.getOrDefault(s.id(), 0.0);
@@ -305,7 +267,7 @@ final class Vues {
         m.put("quantite", String.valueOf(s.quantite()));
         m.put("prix", Fmt.argent(s.prix()));
         m.put("prix_unite", Fmt.argent(s.quantite() > 0 ? s.prix() / s.quantite() : s.prix()));
-        m.put("type", s.rachat() ? "Rachat" : "Vente");
+        m.put("type", s.rachat() ? "Achat" : "Vente");
         m.put("rachat", Fmt.oui(s.rachat()));
         m.put("stock", s.stock() == Integer.MAX_VALUE ? "illimité" : s.stock() < 0 ? "?" : String.valueOf(s.stock()));
         m.put("vide", Fmt.oui(s.stock() == 0));
@@ -347,6 +309,10 @@ final class Vues {
             m.put("maire", Fmt.oui(Villes.estMaire(land, u)));
             m.put("en_ligne", Fmt.oui(Bukkit.getPlayer(u) != null));
             m.put("statut", Bukkit.getPlayer(u) != null ? "&#2ECF7B● En ligne" : "&7● Hors ligne");
+            m.put("uuid", u.toString());
+            // the mayor (or staff) changes the role of anyone but himself / the mayor
+            m.put("role_modifiable", Fmt.oui(!Villes.estMaire(land, u)
+                    && (Villes.estMaire(land, p.getUniqueId()) || p.hasPermission("fluxlands.admin"))));
             l.add(m);
         }
         return l;
@@ -428,6 +394,9 @@ final class Vues {
             m.put("priorite", String.valueOf(r.getPriority()));
             m.put("droits", String.valueOf(r.getActionFlags().size() + r.getManagementFlags().size()));
             m.put("modifiable", Fmt.oui(r.getType() != me.angeschossen.lands.api.role.enums.RoleType.OWNER));
+            // residents' roles (normal ones and the role of new residents): the mayor renames and orders them
+            m.put("habitant", Fmt.oui(Gestion.roleHabitant(r)));
+            m.put("supprimable", Fmt.oui(Gestion.roleHabitant(r) && r.isDeleteable()));
             l.add(m);
         }
         return l;
@@ -441,9 +410,9 @@ final class Vues {
         RoleFlagCategory cat = e.filtre == 1 ? RoleFlagCategory.MANAGEMENT : RoleFlagCategory.ACTION;
         List<RoleFlag> liste = new ArrayList<>();
         for (Object o : plugin.villes().api().getFlagRegistry().getRoleFlags(cat)) {
-            if (o instanceof RoleFlag f && visible(f, ma.getDefaultArea(), lp) && cherche(e, f.getDisplayName(), f.getName())) liste.add(f);
+            if (o instanceof RoleFlag f && visible(f, ma.getDefaultArea(), lp) && cherche(e, FlagTexts.name(f.getName(), f.getDisplayName()), f.getName())) liste.add(f);
         }
-        liste.sort(Comparator.comparing((RoleFlag f) -> Gestion.nu(f.getDisplayName()).toLowerCase(Locale.ROOT)));
+        liste.sort(Comparator.comparing((RoleFlag f) -> FlagTexts.name(f.getName(), Gestion.nu(f.getDisplayName())).toLowerCase(Locale.ROOT)));
         List<Map<String, String>> l = new ArrayList<>(liste.size());
         for (RoleFlag f : liste) l.add(champsDrapeau(f, role.hasFlag(f)));
         return l;
@@ -459,9 +428,9 @@ final class Vues {
             if (!(o instanceof NaturalFlag f) || !visible(f, zone, lp)) continue;
             boolean actif = zone.hasNaturalFlag(f);
             if ((e.filtre == 1 && !actif) || (e.filtre == 2 && actif)) continue;
-            if (cherche(e, f.getDisplayName(), f.getName())) liste.add(f);
+            if (cherche(e, FlagTexts.name(f.getName(), f.getDisplayName()), f.getName())) liste.add(f);
         }
-        liste.sort(Comparator.comparing((NaturalFlag f) -> Gestion.nu(f.getDisplayName()).toLowerCase(Locale.ROOT)));
+        liste.sort(Comparator.comparing((NaturalFlag f) -> FlagTexts.name(f.getName(), Gestion.nu(f.getDisplayName())).toLowerCase(Locale.ROOT)));
         List<Map<String, String>> l = new ArrayList<>(liste.size());
         for (NaturalFlag f : liste) l.add(champsDrapeau(f, zone.hasNaturalFlag(f)));
         return l;
@@ -479,16 +448,13 @@ final class Vues {
         Map<String, String> m = new HashMap<>();
         m.put("existe", "oui");
         m.put("id", f.getName());
-        m.put("nom", Gestion.nu(f.getDisplayName()));
+        // Lands 9's API only knows the flag id (entity_griefing): the French name and description come from its menus
+        m.put("nom", FlagTexts.name(f.getName(), Gestion.nu(f.getDisplayName())));
         m.put("icone", Fiches.materiau(f.getIcon()));
         m.put("actif", Fmt.oui(actif));
         m.put("etat", actif ? "&#2ECF7B✔ Autorisé" : "&#FF5C5C✖ Interdit");
-        List<String> desc = new ArrayList<>();
-        try {
-            for (Object o : f.getDescription()) desc.addAll(Fmt.couper(Gestion.nu(String.valueOf(o))));
-        } catch (RuntimeException ignored) {
-        }
-        for (int i = 0; i < 4; i++) m.put("desc_" + (i + 1), i < desc.size() ? desc.get(i) : "");
+        // one paragraph, wrapped by Flux to the lore width
+        m.put("desc", String.join(" ", FlagTexts.description(f.getName())));
         return m;
     }
 

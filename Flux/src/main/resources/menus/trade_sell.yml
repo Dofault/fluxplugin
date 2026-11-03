@@ -1,0 +1,27 @@
+# Flux: selling window of one item (TradeWindow.sell), e.g. a player's chest shop that buys. Put what you sell in the
+# 5 first rows, then click the confirm button twice: whole bundles within the room are taken, the rest goes back to
+# you. Closing the window gives everything back. Items drawn by Flux (trade service), texts trade.* of Flux's lang.
+title: "%flux_trade_title%"
+rows: 6
+player-inventory: interactive
+vanilla-background: true
+input-slots: 0-44
+input-change-actions: ["[trade] sell-changed"]
+
+lists:
+  trade_sell_item:
+    slots: 48
+    item:
+      material: entry
+  trade_sell_confirm:
+    slots: 49
+    item:
+      material: entry
+      actions:
+        left: ["[trade] sell-confirm"]
+
+items:
+  filler:
+    slots: 45,46,47,50,51,52,53
+    material: GRAY_STAINED_GLASS_PANE
+    hide-tooltip: true

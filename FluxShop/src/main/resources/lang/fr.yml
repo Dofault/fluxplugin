@@ -7,24 +7,6 @@ shop-menu-empty: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FF5C5CCe coffre n'a rien à
 # %price% déjà formaté, suivi de l'icône BitBlock (caractère brut, pas de hook PAPI).
 shop-menu-price: "&f%price% &r&f"
 shop-menu-unavailable: "&#FF5C5CNon disponible"
-shop-menu-item-lore:
-  - ""
-  - "&#B376E5Achat : %buy% &7x1"
-  - ""
-  - "&#B376E5Tu en as : &f%owned%"
-  - ""
-shop-menu-buy-name: "&r&7&#FFD94D Acheter x%amount%"
-shop-menu-buy-lore:
-  - ""
-  - "&#B376E5Prix : %price%"
-  - ""
-shop-menu-buy-armed-name: "&r&7&#FFD94D Confirmer l'achat x%amount%"
-shop-menu-buy-armed-lore:
-  - ""
-  - "&#FF5C5CClique une seconde fois pour acheter."
-  - ""
-  - "&#B376E5Prix : %price%"
-  - ""
 
 # %item% = nom de l'objet, traduit dans la langue du joueur.
 shop-buy-success: "&7:bitblock: &#B376E5Acheté &fx%amount% %item%&#B376E5 pour &f%price% &#FF5C5C▼&7 [ᴍᴀɢᴀꜱɪɴ]"

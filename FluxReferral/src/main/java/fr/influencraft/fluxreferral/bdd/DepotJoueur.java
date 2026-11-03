@@ -15,16 +15,14 @@ public class DepotJoueur {
 
     private final FluxReferralPlugin plugin;
     private final GestionnaireBDD gestionnaireBDD;
-    private final String prefixe;
 
     public DepotJoueur(FluxReferralPlugin plugin, GestionnaireBDD gestionnaireBDD) {
         this.plugin = plugin;
         this.gestionnaireBDD = gestionnaireBDD;
-        this.prefixe = plugin.getGestionnaireConfig().getPrefixeTables();
     }
 
     public Optional<JoueurParrainage> trouverParUUID(UUID uuid) throws SQLException {
-        String sql = "SELECT * FROM `" + prefixe + "joueurs` WHERE uuid = ?";
+        String sql = "SELECT * FROM `" + Tables.PLAYERS + "` WHERE uuid = ?";
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, uuid.toString());
@@ -35,7 +33,7 @@ public class DepotJoueur {
     }
 
     public Optional<JoueurParrainage> trouverParCode(String code) throws SQLException {
-        String sql = "SELECT * FROM `" + prefixe + "joueurs` WHERE code = ?";
+        String sql = "SELECT * FROM `" + Tables.PLAYERS + "` WHERE code = ?";
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, code.toUpperCase());
@@ -47,7 +45,7 @@ public class DepotJoueur {
 
     /** Recherche par pseudo, sans tenir compte de la casse (adresse personnelle). */
     public Optional<JoueurParrainage> trouverParPseudo(String pseudo) throws SQLException {
-        String sql = "SELECT * FROM `" + prefixe + "joueurs` WHERE LOWER(pseudo) = ?";
+        String sql = "SELECT * FROM `" + Tables.PLAYERS + "` WHERE LOWER(pseudo) = ?";
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, pseudo.toLowerCase(Locale.ROOT));
@@ -59,7 +57,7 @@ public class DepotJoueur {
 
     /** Enregistre l'empreinte (salée) de la dernière adresse IP du joueur. */
     public void mettreAJourIp(UUID uuid, String ipHash) throws SQLException {
-        String sql = "UPDATE `" + prefixe + "joueurs` SET ip_hash = ? WHERE uuid = ?";
+        String sql = "UPDATE `" + Tables.PLAYERS + "` SET ip_hash = ? WHERE uuid = ?";
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, ipHash);
@@ -69,7 +67,7 @@ public class DepotJoueur {
     }
 
     public Optional<String> obtenirIpHash(UUID uuid) throws SQLException {
-        String sql = "SELECT ip_hash FROM `" + prefixe + "joueurs` WHERE uuid = ?";
+        String sql = "SELECT ip_hash FROM `" + Tables.PLAYERS + "` WHERE uuid = ?";
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, uuid.toString());
@@ -81,8 +79,8 @@ public class DepotJoueur {
 
     /** Pseudos des derniers filleuls validés d'un parrain, du plus récent au plus ancien. */
     public List<String> listerFilleulsRecents(UUID parrainUuid, int limite) throws SQLException {
-        String sql = "SELECT j.pseudo FROM `" + prefixe + "evenements` e"
-            + " JOIN `" + prefixe + "joueurs` j ON j.uuid = e.filleul_uuid"
+        String sql = "SELECT j.pseudo FROM `" + Tables.EVENTS + "` e"
+            + " JOIN `" + Tables.PLAYERS + "` j ON j.uuid = e.filleul_uuid"
             + " WHERE e.parrain_uuid = ? ORDER BY e.date_validation DESC, e.id DESC LIMIT ?";
         List<String> pseudos = new ArrayList<>();
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
@@ -97,7 +95,7 @@ public class DepotJoueur {
     }
 
     public boolean existeCode(String code) throws SQLException {
-        String sql = "SELECT 1 FROM `" + prefixe + "joueurs` WHERE code = ?";
+        String sql = "SELECT 1 FROM `" + Tables.PLAYERS + "` WHERE code = ?";
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, code.toUpperCase());
@@ -109,7 +107,7 @@ public class DepotJoueur {
 
     /** Insère un nouveau joueur avec son code généré. */
     public void insererJoueur(UUID uuid, String pseudo, String code) throws SQLException {
-        String sql = "INSERT INTO `" + prefixe + "joueurs` (uuid, pseudo, code) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO `" + Tables.PLAYERS + "` (uuid, pseudo, code) VALUES (?, ?, ?)";
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, uuid.toString());
@@ -122,7 +120,7 @@ public class DepotJoueur {
     /** Met à jour le pseudo et la date de dernière connexion d'un joueur existant. */
     public void mettreAJourConnexion(UUID uuid, String pseudo) throws SQLException {
         // CURRENT_TIMESTAMP (et non NOW(), spécifique MySQL) pour rester compatible avec le fallback SQLite
-        String sql = "UPDATE `" + prefixe + "joueurs` SET pseudo = ?, derniere_connexion = CURRENT_TIMESTAMP WHERE uuid = ?";
+        String sql = "UPDATE `" + Tables.PLAYERS + "` SET pseudo = ?, derniere_connexion = CURRENT_TIMESTAMP WHERE uuid = ?";
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, pseudo);
@@ -132,7 +130,7 @@ public class DepotJoueur {
     }
 
     public void mettreAJourCode(UUID uuid, String code) throws SQLException {
-        String sql = "UPDATE `" + prefixe + "joueurs` SET code = ? WHERE uuid = ?";
+        String sql = "UPDATE `" + Tables.PLAYERS + "` SET code = ? WHERE uuid = ?";
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, code);
@@ -142,7 +140,7 @@ public class DepotJoueur {
     }
 
     public void mettreAJourParrain(UUID uuid, UUID parrainUuid) throws SQLException {
-        String sql = "UPDATE `" + prefixe + "joueurs` SET parrain_uuid = ? WHERE uuid = ?";
+        String sql = "UPDATE `" + Tables.PLAYERS + "` SET parrain_uuid = ? WHERE uuid = ?";
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             if (parrainUuid != null) {
@@ -156,7 +154,7 @@ public class DepotJoueur {
     }
 
     public void incrementerFilleuls(UUID parrainUuid) throws SQLException {
-        String sql = "UPDATE `" + prefixe + "joueurs` SET nb_filleuls = nb_filleuls + 1 WHERE uuid = ?";
+        String sql = "UPDATE `" + Tables.PLAYERS + "` SET nb_filleuls = nb_filleuls + 1 WHERE uuid = ?";
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, parrainUuid.toString());
@@ -165,7 +163,7 @@ public class DepotJoueur {
     }
 
     public int obtenirFilleulsRecompensesDonnees(UUID uuid) throws SQLException {
-        String sql = "SELECT filleuls_recompenses_donnees FROM `" + prefixe + "joueurs` WHERE uuid = ?";
+        String sql = "SELECT filleuls_recompenses_donnees FROM `" + Tables.PLAYERS + "` WHERE uuid = ?";
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, uuid.toString());
@@ -177,7 +175,7 @@ public class DepotJoueur {
 
     /** Augmente le compteur de récompenses de filleul déjà données (une par clic réussi). */
     public void incrementerFilleulsRecompensesDonnees(UUID uuid, int quantite) throws SQLException {
-        String sql = "UPDATE `" + prefixe + "joueurs` SET filleuls_recompenses_donnees = filleuls_recompenses_donnees + ? WHERE uuid = ?";
+        String sql = "UPDATE `" + Tables.PLAYERS + "` SET filleuls_recompenses_donnees = filleuls_recompenses_donnees + ? WHERE uuid = ?";
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, quantite);
@@ -187,7 +185,7 @@ public class DepotJoueur {
     }
 
     public boolean obtenirFilleulRecompenseRecuperee(UUID uuid) throws SQLException {
-        String sql = "SELECT filleul_recompense_recuperee FROM `" + prefixe + "joueurs` WHERE uuid = ?";
+        String sql = "SELECT filleul_recompense_recuperee FROM `" + Tables.PLAYERS + "` WHERE uuid = ?";
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, uuid.toString());
@@ -198,7 +196,7 @@ public class DepotJoueur {
     }
 
     public void marquerFilleulRecompenseRecuperee(UUID uuid) throws SQLException {
-        String sql = "UPDATE `" + prefixe + "joueurs` SET filleul_recompense_recuperee = 1 WHERE uuid = ?";
+        String sql = "UPDATE `" + Tables.PLAYERS + "` SET filleul_recompense_recuperee = 1 WHERE uuid = ?";
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, uuid.toString());
@@ -207,7 +205,7 @@ public class DepotJoueur {
     }
 
     public int obtenirNbFilleuls(UUID uuid) throws SQLException {
-        String sql = "SELECT nb_filleuls FROM `" + prefixe + "joueurs` WHERE uuid = ?";
+        String sql = "SELECT nb_filleuls FROM `" + Tables.PLAYERS + "` WHERE uuid = ?";
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, uuid.toString());
@@ -219,7 +217,7 @@ public class DepotJoueur {
 
     /** Supprime toutes les données d'un joueur (cascade sur événements et paliers). */
     public void reinitialiser(UUID uuid) throws SQLException {
-        String sql = "DELETE FROM `" + prefixe + "joueurs` WHERE uuid = ?";
+        String sql = "DELETE FROM `" + Tables.PLAYERS + "` WHERE uuid = ?";
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, uuid.toString());
@@ -229,7 +227,7 @@ public class DepotJoueur {
 
     /** Classement trié par nb_filleuls décroissant avec pseudo. */
     public List<Map.Entry<String, Integer>> obtenirClassementAvecPseudos(int limite) throws SQLException {
-        String sql = "SELECT pseudo, nb_filleuls FROM `" + prefixe + "joueurs` WHERE nb_filleuls > 0 ORDER BY nb_filleuls DESC LIMIT ?";
+        String sql = "SELECT pseudo, nb_filleuls FROM `" + Tables.PLAYERS + "` WHERE nb_filleuls > 0 ORDER BY nb_filleuls DESC LIMIT ?";
         List<Map.Entry<String, Integer>> classement = new ArrayList<>();
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -245,8 +243,8 @@ public class DepotJoueur {
 
     /** Rang du joueur dans le classement (1-indexé). */
     public int obtenirRang(UUID uuid) throws SQLException {
-        String sql = "SELECT COUNT(*) + 1 FROM `" + prefixe + "joueurs` " +
-                     "WHERE nb_filleuls > (SELECT nb_filleuls FROM `" + prefixe + "joueurs` WHERE uuid = ?)";
+        String sql = "SELECT COUNT(*) + 1 FROM `" + Tables.PLAYERS + "` " +
+                     "WHERE nb_filleuls > (SELECT nb_filleuls FROM `" + Tables.PLAYERS + "` WHERE uuid = ?)";
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, uuid.toString());

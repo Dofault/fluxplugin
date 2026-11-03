@@ -1,0 +1,131 @@
+# FluxPW: player warps. A player creates a warp where he stands (/pw create <name>), then sets it up from its menu.
+# Prices are in the server's main currency (Flux's currencies.main); 0 = free.
+
+# Language of the messages (lang/<language>.yml); empty = the language of the suite (Flux's config).
+language: ""
+
+teleport:
+  # Seconds to stand still before a teleport (fluxpw.delay.bypass skips it). 0 = right away.
+  delay: 3
+  # Taking damage while waiting cancels the teleport.
+  cancel-on-damage: true
+  # Warn before sending a player to a warp without room for the head or ground under the feet; visiting the
+  # same warp again within 15 seconds goes anyway.
+  safety-check: true
+  # While waiting: a ring of particles, a title each second and sounds. true = the same as CMI's warps, homes and
+  # spawn, read from CMI's files (particle preset below from Settings/ParticleEffects.yml, info.WarmUp.DontMove of
+  # CMI's locale, CommandWarmup / CommandWarmupRunning / TeleportWarp / TeleportFail of its Sounds): set it in CMI,
+  # FluxPW follows (read again when CMI's files change). Without CMI, the values below and the teleport-title /
+  # teleport-subtitle texts of the lang file are used.
+  look-from-cmi: true
+  cmi-particle: GlyphHead
+  particles-enabled: true
+  # Ring in CMI's format (effect, c = colour r,g,b, part = particles, radius, offset x,y,z, pitch, yaw,
+  # pitchc / yawc = degrees turned each frame, interval = ticks between frames).
+  particles: "circle;effect:reddust;c:179,118,229;part:12;radius:0.55;offset:0,1,0;pitchc:5;yawc:8"
+  # Sounds "<key> [volume] [pitch]" (empty = none): at the start, every second, on arrival, on cancel.
+  sounds:
+    start: "entity.experience_orb.pickup 1 1"
+    tick: "entity.experience_orb.pickup 1 1"
+    arrive: "block.respawn_anchor.deplete 0.5 1"
+    cancel: "entity.villager.no 2 1"
+
+limits:
+  # Warps a player may own without any fluxpw.limit.<n> permission (the highest <n> wins;
+  # fluxpw.limit.unlimited for no limit).
+  default: 0
+
+names:
+  # Longest warp name (the name typed in /pw <name>, no spaces) and display name (colour codes not counted).
+  max-length: 24
+  # Colour codes (&a, &#RRGGBB) allowed in display names.
+  display-name-colours: true
+
+description:
+  min-length: 5
+  max-length: 64
+
+admission:
+  # Highest admission fee an owner may ask from visitors (paid to the owner on arrival).
+  max: 500
+
+# Price of each action. Paid when confirmed, given back when the action fails.
+prices:
+  create: 5000
+  feature: 3000
+  relocate: 500
+  rename: 250
+  display-name: 100
+  transfer: 0
+  status: 0
+  category: 0
+  icon: 0
+  description: 0
+  admission: 0
+  # Given back to the owner when a warp is deleted.
+  delete-refund: 0
+
+# Sponsored places, shown on the warps home menu.
+featured:
+  # Number of places (the home menu shows 5).
+  slots: 5
+  # How long a place lasts once paid, in minutes (4320 = 3 days).
+  duration-minutes: 4320
+
+defaults:
+  # Icon of a warp until its owner picks one: a material or a custom item id (namespace:id).
+  icon: OAK_HANGING_SIGN
+  # Status of a new warp: OPENED, CLOSED or PASSWORD_PROTECTED.
+  status: OPENED
+
+# Materials that cannot be a warp icon.
+banned-icons: [DEBUG_STICK, BARRIER, STRUCTURE_VOID, COMMAND_BLOCK, COMMAND_BLOCK_MINECART, JIGSAW]
+
+# Worlds where warps cannot be created or moved to (fluxpw.admin can).
+disabled-worlds: []
+
+claims:
+  # Inside a claim (town), the owner can create a warp; with true, its residents (trusted players) too.
+  allow-residents: true
+
+announce:
+  # Tell everyone when a warp is created.
+  creation: true
+  # Tell the owner when someone visits his warp.
+  visit: false
+
+# Players can rate warps (1 to 5 stars, once per warp).
+rating: true
+
+# Sort orders of the warp lists, the first one by default: alphabetical, visits, rating, latest.
+sorts: [alphabetical, visits, rating, latest]
+
+# Categories, in the order of the menu. name: shown name; icon: material or custom item id; description: under the
+# name; permission (optional): needed to open the category and visit its warps. The category with "all: true" lists
+# every warp and holds the warps of no other category. Keys are stored with the warps: never rename one in use.
+categories:
+  shops:
+    name: "Shops"
+    icon: EMERALD
+    description: "Shops run by players."
+  farms:
+    name: "Farms"
+    icon: WHEAT
+    description: "Public farms and resources."
+  towns:
+    name: "Towns"
+    icon: BRICKS
+    description: "Towns and districts built by players."
+  sights:
+    name: "Sights"
+    icon: SPYGLASS
+    description: "Monuments and views worth a visit."
+  games:
+    name: "Games"
+    icon: BOW
+    description: "Mini-games, arenas, parkours and events."
+  all:
+    name: "All warps"
+    icon: ENDER_EYE
+    description: "Every warp of the server."
+    all: true

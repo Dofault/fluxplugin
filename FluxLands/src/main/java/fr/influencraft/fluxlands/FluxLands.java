@@ -17,11 +17,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * FluxLands : extension de Lands qui unifie les villes, les adresses (InfluPW) et les
- * échoppes (FluxChestShop). Fournit les placeholders {@code %influlands_...%} et la commande
- * {@code /influlands} lus et appelés par les menus Flux (menus/ville*.yml,
- * adresses.yml, echoppes.yml). InfluPW et FluxChestShop sont facultatifs : sans eux, les
- * listes correspondantes sont simplement vides.
+ * FluxLands: extension of Lands (towns, nations, plots, Agency) with Flux menus. Provides the {@code %fluxlands_...%}
+ * placeholders and the {@code /fluxlands} command read and run by the menus. FluxPW and the chest shops of FluxCommerce
+ * are optional: without them, their lists are empty.
  */
 public final class FluxLands extends JavaPlugin implements Listener {
 
@@ -31,15 +29,20 @@ public final class FluxLands extends JavaPlugin implements Listener {
     private Tetes tetes;
     private Saisie saisie;
     private Gestion gestion;
+    private Listings listings;
+    private Levels levels;
+    private CountryEffects countryEffects;
+    private CountryMenus countryMenus;
     private Pays pays;
     private Commande commande;
     private Interception interception;
-    private ModuleQuickShop quickShop;
+    private ModuleEchoppes echoppes;
     private ModulePlayerWarps playerWarps;
     private volatile Map<String, int[]> comptes = Map.of();
 
     @Override
     public void onLoad() {
+        // COMPAT 2026-10-26: data folder of the former InfluLands jar - remove once Flux runs in production
         fr.influencraft.flux.api.util.DataFolders.migrate(this, "InfluLands");
     }
 
@@ -49,44 +52,35 @@ public final class FluxLands extends JavaPlugin implements Listener {
         villes = new Villes(this);
         villes.recharger();
         Couleurs.charger(Bukkit.getPluginManager().getPlugin("Lands"));
+        FlagTexts.charger(Bukkit.getPluginManager().getPlugin("Lands"));
         registre = new Registre(this);
         registre.charger();
         vues = new Vues(this);
         tetes = new Tetes();
         saisie = new Saisie(this);
         gestion = new Gestion(this);
+        listings = new Listings(this);
+        levels = new Levels(this);
+        countryEffects = new CountryEffects(this);
+        countryMenus = new CountryMenus(this);
         pays = new Pays(this);
         interception = new Interception(this);
 
-        if (fr.influencraft.flux.api.shops.ChestShops.available()) {
-            // the main currency of the suite (Flux, currencies.main)
-            var money = fr.influencraft.flux.api.economy.Economy.main();
-            if (money == null) {
-                getLogger().warning("No currency in Flux: market fee disabled, chest shops still listed.");
-            }
-            quickShop = new ModuleQuickShop(this, money);
-            quickShop.chargerStocks();
-            if (money != null) Bukkit.getPluginManager().registerEvents(quickShop, this);
-            quickShop.enregistrerMenage();
-            getLogger().info("FluxChestShop trouvé : échoppes et droit de place actifs.");
-        } else {
-            getLogger().info("FluxChestShop absent : pas d'échoppes ni de droit de place.");
-        }
-        if (Bukkit.getPluginManager().isPluginEnabled("InfluPW")) {
+        if (Bukkit.getPluginManager().isPluginEnabled("FluxPW")) {
             playerWarps = new ModulePlayerWarps(this);
-            getLogger().info("InfluPW trouvé : warps actifs.");
+            getLogger().info("FluxPW trouvé : warps actifs.");
         } else {
-            getLogger().info("InfluPW absent : pas de warps.");
+            getLogger().info("FluxPW absent : pas de warps.");
         }
 
         Bukkit.getPluginManager().registerEvents(this, this);
         Bukkit.getPluginManager().registerEvents(interception, this);
         Commande cmd = new Commande(this);
         commande = cmd;
-        fr.influencraft.flux.api.command.Commands.create(this, "towns").aliases("influlands", "il", "influville", "iv")
+        fr.influencraft.flux.api.command.Commands.create(this, "fluxlands")
                 .description("Towns menus (buttons).").bukkit(cmd, cmd).register();
-        // %influlands_*%: resolved by Flux in menus, exposed to PlaceholderAPI by Flux
-        fr.influencraft.flux.api.FluxApi.registerPlaceholders(this, "influlands", new Expansion(this)::onRequest);
+        // %fluxlands_*%: resolved by Flux in menus, exposed to PlaceholderAPI by Flux
+        fr.influencraft.flux.api.FluxApi.registerPlaceholders(this, "fluxlands", new Expansion(this)::onRequest);
         // section « Ville » of the profile (/profil)
         fr.influencraft.flux.api.profile.Profiles.register(this, "town", 20, new fr.influencraft.flux.api.profile.Profiles.Section() {
             public org.bukkit.inventory.ItemStack item(org.bukkit.entity.Player viewer, org.bukkit.OfflinePlayer subject, int page) {
@@ -116,6 +110,32 @@ public final class FluxLands extends JavaPlugin implements Listener {
         // the town, country and warp menus live in plugins/FluxLands/menus/
         fr.influencraft.flux.api.util.Resources.shipMenus(this, fr.influencraft.flux.api.FluxApi.language());
         planifier();
+        // FluxCommerce (chest shops) loads after FluxLands (its market reads the towns): linked once every plugin is on
+        Bukkit.getScheduler().runTask(this, this::lierEchoppes);
+    }
+
+    /** Link with the chest shops (Flux's {@code shops} API, given by FluxCommerce): town shops, market fee. */
+    private void lierEchoppes() {
+        if (!fr.influencraft.flux.api.shops.ChestShops.available()) {
+            getLogger().info("Échoppes absentes (FluxCommerce) : pas d'échoppes ni de droit de place.");
+            return;
+        }
+        // the main currency of the suite (Flux, currencies.main)
+        var money = fr.influencraft.flux.api.economy.Economy.main();
+        if (money == null) {
+            getLogger().warning("No currency in Flux: market fee disabled, chest shops still listed.");
+        }
+        echoppes = new ModuleEchoppes(this, money);
+        if (money != null) {
+            Bukkit.getPluginManager().registerEvents(echoppes, this);
+            echoppes.enregistrerOptionVille();
+            echoppes.enregistrerNomVendeur();
+        }
+        echoppes.enregistrerMenage();
+        long resume = getConfig().getInt("droit-de-place.resume-secondes", 60) * 20L;
+        if (resume > 0) Bukkit.getScheduler().runTaskTimer(this, echoppes::envoyerResumes, resume, resume);
+        indexer();
+        getLogger().info("Échoppes trouvées (" + fr.influencraft.flux.api.shops.ChestShops.providerName() + ") : échoppes et droit de place actifs.");
     }
 
     private void planifier() {
@@ -125,27 +145,26 @@ public final class FluxLands extends JavaPlugin implements Listener {
         long index = Math.max(5, getConfig().getInt("index-secondes", 30)) * 20L;
         Bukkit.getScheduler().runTaskTimer(this, this::indexer, 100L, index);
         long resume = getConfig().getInt("droit-de-place.resume-secondes", 60) * 20L;
-        if (resume > 0 && quickShop != null) Bukkit.getScheduler().runTaskTimer(this, quickShop::envoyerResumes, resume, resume);
+        if (resume > 0 && echoppes != null) Bukkit.getScheduler().runTaskTimer(this, echoppes::envoyerResumes, resume, resume);
         long save = Math.max(1, getConfig().getInt("sauvegarde-minutes", 5)) * 1200L;
-        Bukkit.getScheduler().runTaskTimer(this, () -> {
-            registre.sauvegarder(false);
-            if (quickShop != null) quickShop.sauvegarderStocks();
-        }, save, save);
+        Bukkit.getScheduler().runTaskTimer(this, () -> registre.sauvegarder(false), save, save);
         // Parcelle en cours de sélection : la saisie du nom s'ouvre dès que la sélection est complète.
         Bukkit.getScheduler().runTaskTimer(this, () -> { if (commande != null) commande.verifierSelections(); }, 20L, 10L);
     }
 
     @Override
     public void onDisable() {
-        if (quickShop != null) quickShop.envoyerResumes();
+        if (echoppes != null) echoppes.envoyerResumes();
+        if (countryEffects != null) countryEffects.stop();
         if (registre != null) registre.sauvegarder(true);
-        if (quickShop != null) quickShop.sauvegarderStocks();
     }
 
     void recharger() {
         reloadConfig();
         villes.recharger();
         Couleurs.charger(Bukkit.getPluginManager().getPlugin("Lands"));
+        FlagTexts.charger(Bukkit.getPluginManager().getPlugin("Lands"));
+        countryEffects.start();
         interception.recharger();
         planifier();
     }
@@ -153,7 +172,7 @@ public final class FluxLands extends JavaPlugin implements Listener {
     /** Index des échoppes et adresses, puis compte par ville. */
     void indexer() {
         try {
-            if (quickShop != null) quickShop.indexer();
+            if (echoppes != null) echoppes.indexer();
             if (playerWarps != null) playerWarps.indexer();
         } catch (RuntimeException | LinkageError e) {
             getLogger().warning("Index des échoppes / adresses en échec : " + e);
@@ -194,6 +213,32 @@ public final class FluxLands extends JavaPlugin implements Listener {
         return gestion;
     }
 
+    /**
+     * Price Lands charges to put a town's spawn (first time) or to move it ({@code spawn.creation.cost} of its config),
+     * with the BitBlock glyph written raw (a value of ours is not read again by PlaceholderAPI), or « gratuit ».
+     */
+    String prixSpawn(boolean premiere) {
+        org.bukkit.plugin.Plugin lands = Bukkit.getPluginManager().getPlugin("Lands");
+        double prix = lands == null ? 0 : lands.getConfig().getDouble("spawn.creation.cost." + (premiere ? "set" : "change"), 0);
+        return prix > 0 ? Fmt.argent(prix) + " &r&f\uE023" : "gratuit";
+    }
+
+    CountryEffects countryEffects() {
+        return countryEffects;
+    }
+
+    CountryMenus countryMenus() {
+        return countryMenus;
+    }
+
+    Levels levels() {
+        return levels;
+    }
+
+    Listings listings() {
+        return listings;
+    }
+
     Pays pays() {
         return pays;
     }
@@ -203,7 +248,7 @@ public final class FluxLands extends JavaPlugin implements Listener {
     }
 
     boolean aEchoppes() {
-        return quickShop != null;
+        return echoppes != null;
     }
 
     boolean aAdresses() {
@@ -211,7 +256,7 @@ public final class FluxLands extends JavaPlugin implements Listener {
     }
 
     List<Fiches.Echoppe> echoppes() {
-        return quickShop != null ? quickShop.toutes() : List.of();
+        return echoppes != null ? echoppes.toutes() : List.of();
     }
 
     List<Fiches.Adresse> adresses() {
@@ -270,7 +315,7 @@ public final class FluxLands extends JavaPlugin implements Listener {
         m.put("solde", membre ? Fmt.argent(land.getBalance()) : "");
         m.put("entretien", Fmt.argent(land.getUpkeepCosts()));
         String nation = Villes.nation(land);
-        m.put("nation", nation.isEmpty() ? "Aucune" : nation);
+        m.put("nation", nation.isEmpty() ? "Aucun" : nation);
         m.put("a_nation", Fmt.oui(!nation.isEmpty()));
         m.put("maire", Villes.nomJoueur(land.getOwnerUID()));
         m.put("taux", Fmt.taux(registre.taux(id)));
@@ -284,6 +329,7 @@ public final class FluxLands extends JavaPlugin implements Listener {
         m.put("est_maire", Fmt.oui(maire));
         m.put("role", membre ? Villes.role(land, viewer.getUniqueId()) : "");
         m.put("spawn", Fmt.oui(land.getSpawnPosition() != null));
+        m.put("spawn_prix", prixSpawn(land.getSpawnPosition() == null));
         m.put("creation", new SimpleDateFormat("dd/MM/yyyy").format(new Date(land.getCreationTime())));
         m.put("vitrine", String.valueOf(registre.vitrine(id).size()));
         m.put("vitrine_max", String.valueOf(getConfig().getInt("vitrine.max-adresses", 3)));
@@ -294,8 +340,8 @@ public final class FluxLands extends JavaPlugin implements Listener {
         return commande;
     }
 
-    ModuleQuickShop quickShop() {
-        return quickShop;
+    ModuleEchoppes moduleEchoppes() {
+        return echoppes;
     }
 
     /** Ouvre un menu Flux (clé de config {@code menus.*} ou identifiant direct). */
@@ -310,6 +356,7 @@ public final class FluxLands extends JavaPlugin implements Listener {
     @EventHandler
     public void quitter(PlayerQuitEvent e) {
         vues.oublier(e.getPlayer().getUniqueId());
+        levels.forget(e.getPlayer().getUniqueId());
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

@@ -1,0 +1,61 @@
+# Tab list drawn by Flux (replaces the TAB plugin). /fluxmenu reload re-reads this file.
+#
+# Templates: colours (&a, &#RRGGBB, MiniMessage), pieces {id} / {id:argument} computed by Flux or a plugin, then
+# placeholders %...% (Flux's own, then PlaceholderAPI) for other plugins' data.
+# Flux pieces: {player} {nick} {ping} {online} (players the viewer can see) {max} {version} {world} {group}
+#   {meta:<key>} (permission plugin meta) {date:<pattern>} {tps} {ram_used} {ram_max} {balance:<currency>}
+#   {balance_raw:<currency>} {balance_short:<currency>} {afk:<duration>} ("true" when idle that long)
+#   {animation:<name>}, the pieces below, and the pieces of the plugins (FluxTags: {tag}; FluxFamily: {married}).
+enabled: true
+
+refresh:
+  # header and footer (animations), names and nametags
+  header-ticks: 3
+  names-ticks: 20
+
+# Header and footer: the first design whose conditions fit the viewer (groups: primary groups, permission, worlds).
+header-footer:
+  default:
+    header:
+      - "&f&lMy server"
+      - "&7Online: &f{online}&7/&f{max} &8• &7Ping: &f{ping} ms"
+    footer:
+      - "&7{date:dd/MM/yyyy HH:mm}"
+
+# Names per primary group, over _default_: tab-prefix, tab-name, tab-suffix (list), tag-prefix, tag-suffix (above
+# the head).
+names:
+  _default_:
+    tab-prefix: ""
+    tab-name: "{player}"
+    tab-suffix: "{idle}"
+    tag-prefix: ""
+    tag-suffix: ""
+
+# Order of the list, higher first: each value (0-999) sorts within the previous one; same order = by name.
+sorting:
+  - "{meta:weight}"
+
+nametags:
+  enabled: true
+  collision: true
+
+# A number below each player's name, shown with its own text (empty text = the number).
+below-name:
+  enabled: false
+  title: ""
+  value: "{balance_raw:vault}"
+  text: "&f{balance_short:vault}"
+
+# Pieces of your own: "set" when the placeholder is not empty (or equals "equals"), or the permission is held,
+# else "empty".
+pieces:
+  idle:
+    placeholder: "{afk:5m}"
+    set: " &7(idle)"
+    empty: ""
+
+animations:
+  example:
+    interval-ms: 500
+    frames: ["&fone", "&7two"]

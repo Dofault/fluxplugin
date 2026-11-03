@@ -73,8 +73,8 @@ ledger:
     "CMI:command": "Command"
   # origins never recorded ("Plugin:key" or "Plugin")
   ignored: []
-  # menu icon of a line by origin (Flux material syntax), else the currency icon
-  icons: {}
+  # true: log where a movement without origin comes from (thread and stack), to give it a name
+  debug-unknown: false
 
 # Couleurs des boîtes de dialogue (saisies, confirmations, copie, liens).
 dialogs:
@@ -91,6 +91,8 @@ dialogs:
   hover: "&f"
   line-length: 40
   link: "&#2BC4E8&n"
+  # error line of a window opened again after a wrong value (amount out of bounds...)
+  error: "&#FF5C5C"
 
 # Lores of every menu and item of the suite: a line longer than max-line-length visible characters (colour codes not
 # counted) is cut on spaces into several lines that keep the colours. repeat-prefix: a decoration at the start of the
@@ -111,8 +113,22 @@ leaderboards:
     playtime: {statistic: PLAY_ONE_MINUTE, format: ticks}
     fish: {statistic: FISH_CAUGHT}
     money: {money: true, format: money}
+    # any currency of Flux: currency: <id>, format: <id>
+    influence: {currency: influence, format: influence}
 
 # Reward manager: every plugin of the suite hands its rewards to Flux, players claim them all with /rewards.
+# Trade window of one item (api.trade.TradeWindow): buying buttons x1/x2/x10/x64 and the selling confirm button.
+trade:
+  # a first click arms a button, it disarms itself after this delay
+  confirm-timeout-seconds: 5
+  # right after a purchase, the same button buys again without confirmation during this time (0: off)
+  quick-buy-seconds: 1.0
+  # icons (material spec: MATERIAL, itemsadder:ns:id); the stack size of the buying buttons shows the quantity
+  buy-button: LIME_STAINED_GLASS_PANE
+  buy-button-armed: ORANGE_STAINED_GLASS_PANE
+  sell-button: itemsadder:influitems:accept
+  sell-button-armed: itemsadder:influitems:checkmark
+
 rewards:
   # /rewards opens the menu "rewards" (menus/rewards.yml); false: claims everything straight away
   command-opens-menu: true
@@ -127,20 +143,6 @@ rewards:
   discord-reminders: true
   # address shown in the Discord reminders (%ip%)
   server-address: "play.influencraft.fr"
-
-# The one database of the suite: every plugin of the suite keeps its tables here.
-database:
-  # sqlite: file plugins/Flux/<file> (nothing to install). mysql: MySQL or MariaDB server below.
-  type: sqlite
-  file: flux.db
-  host: localhost
-  port: 3306
-  name: influencraft
-  user: root
-  password: ""
-  pool-size: 6
-  # prefix added to every table name (useful when the database is shared with other applications)
-  table-prefix: ""
 
 # Interface sounds of the whole suite ("<sound> [volume] [pitch]", "none" = silent). Plugins and menus play them by
 # name (Sounds.cue in code, "@error" in a config or a [sound] action).
@@ -174,8 +176,6 @@ providers:
   fishing: auto
   # protected areas, for plugins that only need to know where a claim is (lands)
   claims: auto
-  # chest shops of the players (quickshop: FluxChestShop or QuickShop-Hikari)
-  chest-shops: auto
   # Java or Bedrock client of each player (floodgate), see the bedrock section
   clients: auto
   # every Vault balance change, whatever plugin made it: account history, "money gained" notifications (cmi)
@@ -259,36 +259,38 @@ theme:
     vote: {title: "Vote"}
     classement: {title: "Classement"}
     parrainage: {title: "Parrainage"}
+    famille: {title: "Famille", no-frame: "8, 56-60"}   # buttons (FluxFamily lists), no slot under them
     mondes: {title: "Mondes"}
     rewards: {title: "Récompenses"}
-    marche: {title: "Marché"}
-    marche_encheres: {title: "Enchères"}
-    marche_historique: {title: "Historique"}
-    marche_offre: {title: "Offre"}
-    marche_vendre: {title: "Vendre"}
-    marche_ventes: {title: "Mes ventes"}
+    marche: {title: "Marché", no-frame: "17, 18, 26, 27, 35, 36, 59"}   # FluxCommerce: buttons drawn by the plugin (pictures)
+    marche_contenu: {title: "Contenu"}
+    marche_detail: {title: "Offre", no-frame: "8, 20, 24, 31, 40"}
+    marche_encheres: {title: "Enchères", no-frame: "8, 55"}
+    marche_historique: {title: "Historique", no-frame: "8, 55"}
+    marche_offre: {title: "Offre", no-frame: "8, 20, 24, 31, 40"}
+    marche_vendre: {title: "Vendre", no-frame: "8, 13"}
+    marche_ventes: {title: "Mes ventes", no-frame: "8, 55"}
     casino: {title: "Casino"}
     caisse_apercu: {title: "Caisse"}
     agence: {title: "Agence"}
-    echoppes: {title: "Échoppes"}
     pays: {title: "Pays"}
     pays_accueil: {title: "Pays"}
     pays_annuaire: {title: "Annuaire"}
     pays_fiche: {title: "Pays"}
     pays_villes: {title: "Villes du pays"}
-    territoires: {title: "Territoires"}
+    pays_taxes: {title: "Taxes"}
+    pays_effets: {title: "Effets"}
+    territoires: {title: "Villes et Pays", background: bg_territoires, frames: none}   # two cards (gen_ui.py), texts by widgets of the menu
     ville: {title: "Ville"}
     ville_accueil: {title: "Ville"}
-    ville_annonce: {title: "Annonce"}
-    ville_banque: {title: "Banque"}
-    ville_commerce: {title: "Commerce"}
+    ville_commerce: {title: "Commerce", frame: "37-43"}   # the 7 days of takings: a slot under each, in the picture
+    ville_niveau: {title: "Niveau", frames: none}   # icon, objectives and level-up button are pictures: no slot under them
     ville_droits: {title: "Droits"}
     ville_fiche: {title: "Ville"}
     ville_habitants: {title: "Habitants"}
     ville_parametres: {title: "Paramètres"}
     ville_parcelle: {title: "Parcelle"}
     ville_parcelles: {title: "Parcelles"}
-    ville_reglages: {title: "Réglages"}
     ville_roles: {title: "Rôles"}
     villes: {title: "Annuaire"}
     warps: {title: "Warps"}

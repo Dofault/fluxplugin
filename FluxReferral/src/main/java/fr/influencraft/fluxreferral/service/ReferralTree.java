@@ -1,5 +1,7 @@
 package fr.influencraft.fluxreferral.service;
 
+import fr.influencraft.fluxreferral.bdd.Tables;
+
 import fr.influencraft.flux.api.inventory.Items;
 import fr.influencraft.flux.api.inventory.Lore;
 import fr.influencraft.flux.api.list.ListEntry;
@@ -26,12 +28,12 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 /**
- * Referral tree (2026-10-30): a player sees every player he brought, then the players they brought, and so on, one
- * row per generation in the {@code parrainage} menu.
+ * Referral graph (2026-10-30): who brought whom. The {@code parrainage} menu lists the players brought by the viewer
+ * (list {@code parrainage_filleuls}); the whole tree is drawn by FluxFamily, where a sponsor is his referrals' parent
+ * ({@link FamilyLink}).
  * <p>The whole graph (validated referrals, table {@code evenements}) is read off the main thread every minute and
- * kept in memory: it is small, and the menu never waits for the database. Lists {@code parrainage_gen1} to
- * {@code parrainage_gen<GENERATIONS>} (heads), placeholders {@code %parrainage_arbre_gen_<n>%} and
- * {@code %parrainage_arbre_total%}.
+ * kept in memory: it is small, and neither the menu nor the family tree ever wait for the database. Placeholders
+ * {@code %parrainage_arbre_gen_<n>%} and {@code %parrainage_arbre_total%}.
  */
 public final class ReferralTree {
 
@@ -44,28 +46,24 @@ public final class ReferralTree {
 
     private final Plugin plugin;
     private final GestionnaireBDD database;
-    private final String prefix;
     private volatile Map<UUID, List<Node>> children = Map.of();
+    private volatile Map<UUID, UUID> sponsors = Map.of();
 
-    public ReferralTree(Plugin plugin, GestionnaireBDD database, String prefix) {
+    public ReferralTree(Plugin plugin, GestionnaireBDD database) {
         this.plugin = plugin;
         this.database = database;
-        this.prefix = prefix;
     }
 
     public void start() {
         Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::reload, 20L, REFRESH_TICKS);
-        for (int g = 1; g <= GENERATIONS; g++) {
-            int generation = g;
-            Lists.register(plugin, "parrainage_gen" + g, q -> entries(q.viewer(), generation));
-        }
+        Lists.register(plugin, "parrainage_filleuls", q -> entries(q.viewer(), 1));
     }
 
     /** Reads every validated referral (off the main thread). */
     public void reload() {
-        String sql = "SELECT e.parrain_uuid, e.filleul_uuid, f.pseudo, p.pseudo FROM `" + prefix + "evenements` e"
-                + " JOIN `" + prefix + "joueurs` f ON f.uuid = e.filleul_uuid"
-                + " JOIN `" + prefix + "joueurs` p ON p.uuid = e.parrain_uuid";
+        String sql = "SELECT e.parrain_uuid, e.filleul_uuid, f.pseudo, p.pseudo FROM `" + Tables.EVENTS + "` e"
+                + " JOIN `" + Tables.PLAYERS + "` f ON f.uuid = e.filleul_uuid"
+                + " JOIN `" + Tables.PLAYERS + "` p ON p.uuid = e.parrain_uuid";
         Map<UUID, List<Node>> out = new HashMap<>();
         try (Connection conn = database.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql);
@@ -79,11 +77,24 @@ public final class ReferralTree {
             plugin.getLogger().log(Level.WARNING, "Referral tree: could not read the referrals", e);
             return;
         }
-        for (List<Node> l : out.values()) l.sort(Comparator.comparing(n -> n.name().toLowerCase()));
+        Map<UUID, UUID> up = new HashMap<>();
+        for (List<Node> l : out.values()) {
+            l.sort(Comparator.comparing(n -> n.name().toLowerCase()));
+            for (Node n : l) up.put(n.uuid(), n.sponsor());
+        }
         children = out;
-        Bukkit.getScheduler().runTask(plugin, () -> {
-            for (int g = 1; g <= GENERATIONS; g++) Lists.invalidate("parrainage_gen" + g);
-        });
+        sponsors = up;
+        Bukkit.getScheduler().runTask(plugin, () -> Lists.invalidate("parrainage_filleuls"));
+    }
+
+    /** Sponsor of a player, null when he was not referred. */
+    public UUID sponsor(UUID player) {
+        return sponsors.get(player);
+    }
+
+    /** Players brought by a sponsor. */
+    public List<UUID> referrals(UUID sponsor) {
+        return children.getOrDefault(sponsor, List.of()).stream().map(Node::uuid).toList();
     }
 
     /** Players of generation {@code generation} under {@code root} (1 = brought by him). */
@@ -120,9 +131,7 @@ public final class ReferralTree {
                 head.setItemMeta(skull);
             }
             int theirs = children.getOrDefault(n.uuid(), List.of()).size();
-            Lore lore = Lore.create().kv("Génération", String.valueOf(generation));
-            if (generation > 1) lore.kv("Parrainé par", n.sponsorName());
-            lore.kv("Filleuls", String.valueOf(theirs));
+            Lore lore = Lore.create().kv("Filleuls", String.valueOf(theirs));
             out.add(ListEntry.of(n.uuid().toString()).item(Items.dress(head, n.name(), lore.build(), viewer)));
         }
         return out;
