@@ -17,6 +17,12 @@ public final class SellPriceResolver {
     private SellPriceResolver() {
     }
 
+    /** Line of prices.yml for an item: its custom id ({@code fluxtools:pioche_virale}) when priced, else its material. */
+    private static String priceId(PriceManager priceManager, ItemStack item) {
+        String custom = fr.influencraft.flux.api.items.CustomItems.id(item);
+        return custom != null && (priceManager.isSellable(custom) || priceManager.isBuyable(custom)) ? custom : item.getType().name();
+    }
+
     /**
      * @return the total sell price for the full stack (unit price already multiplied by
      * amount), or 0 if the item isn't sellable at all.
@@ -29,9 +35,9 @@ public final class SellPriceResolver {
         if (cfPrice > 0) {
             return cfPrice;
         }
-        String materialId = item.getType().name();
-        if (priceManager.isSellable(materialId)) {
-            return priceManager.getSellPrice(materialId) * item.getAmount();
+        String priceId = priceId(priceManager, item);
+        if (priceManager.isSellable(priceId)) {
+            return priceManager.getSellPrice(priceId) * item.getAmount();
         }
         return 0.0;
     }
@@ -54,9 +60,9 @@ public final class SellPriceResolver {
             return base;
         }
         double total = base * multiplier;
-        String materialId = item.getType().name();
-        if (CustomFishingHook.getPrice(item) <= 0 && priceManager.isBuyable(materialId)) {
-            total = Math.min(total, Math.max(base, priceManager.getBuyPrice(materialId) * item.getAmount()));
+        String priceId = priceId(priceManager, item);
+        if (CustomFishingHook.getPrice(item) <= 0 && priceManager.isBuyable(priceId)) {
+            total = Math.min(total, Math.max(base, priceManager.getBuyPrice(priceId) * item.getAmount()));
         }
         return PriceManager.roundMoney(total);
     }

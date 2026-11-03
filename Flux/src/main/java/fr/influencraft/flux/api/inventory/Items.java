@@ -15,7 +15,7 @@ import java.util.List;
  *   <li>{@code itemsadder:<namespace>:<id>} or {@code itemsadder:<id>} (any ItemsAdder item);</li>
  *   <li>a vanilla material: {@code DIAMOND}, {@code minecraft:diamond};</li>
  *   <li>{@code head:<base64 texture>}, {@code player-head} (the viewer's head), {@code hdb:<id>} (HeadDatabase);</li>
- *   <li>{@code ecoitems:<id>}, {@code ecoarmor:<id>}: items of EcoItems and EcoArmor (tools and armours of the crates);</li>
+ *   <li>{@code <namespace>:<id>}: any item known to {@link fr.influencraft.flux.api.items.CustomItems} ({@code fluxarmor:virale_helmet});</li>
  *   <li>{@code source:<id>:<argument>}: an item provided by a plugin ({@link fr.influencraft.flux.api.FluxApi#registerItemSource}).</li>
  * </ul>
  * An unknown material gives a barrier (with one console warning), never null, except {@code air}.

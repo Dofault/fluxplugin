@@ -142,3 +142,12 @@ trade:
   click-sell: "Vendre"
   sell-nothing: "&#FF5C5CDépose d'abord les objets demandés."
   sell-no-room: "&#FF5C5CIl n'y a plus de place pour en acheter."
+
+# /fluxitems
+items-usage: "&7/fluxitems give <joueur> <id> [quantité] &8| &7list [filtre] &8| &7id"
+items-no-player: "&#FF5C5CJoueur absent : &f%player%&#FF5C5C."
+items-unknown: "&#FF5C5CObjet inconnu : &f%id%&#FF5C5C."
+items-given: "&#2ECF7B&f%amount% %id% &#2ECF7Bdonné à &f%player%&#2ECF7B."
+items-list: "&7%count% objets : &f%ids%"
+items-held: "&7Objet en main : &f%id%"
+items-held-none: "&7Cet objet n'a pas d'identifiant."

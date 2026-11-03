@@ -20,7 +20,7 @@ et configs/items.yml : objet ItemsAdder de la pioche, pour l'aperçu de sa caiss
 
 Veines et gemmes des modèles (pioche, casque) : lumineuses (light_emission) et animées. Les textures portées
 sur le corps ne peuvent être ni l'un ni l'autre (hors atlas, pas d'émission). Les modèles sont posés par
-FluxTools : clé `modele:` de l'outil pour la pioche, FluxTools/apparences.yml pour l'armure.
+FluxTools : clé `model:` de l'outil pour la pioche, FluxArmor/sets/<set>.yml pour l'armure.
 Le dossier d'aperçus reçoit des rendus PNG (moteur de rendu maison, approximatif) et un GIF.
 Relancer après toute modification, puis /iazip sur Labs.
 """

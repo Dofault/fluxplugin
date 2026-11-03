@@ -8,10 +8,15 @@ key:
 # Text above the placed crate, and the colour of its ring of particles.
 hologram: ["&f&lExample crate", "&7Left click: rewards  Right click: open"]
 particle: "#FFFFFF"
-# Rewards, drawn by weight (chance = weight / sum of weights). « display » is shown in the menus (item, lore,
-# optional « model-data » for a texture of the resource pack and « glow » for the enchantment shine); « items » are
-# given (« <spec> [amount] »), « commands » run from the console (%player% = player name).
+# Rewards, drawn by weight (chance = weight / sum of weights).
+# « item » is the id of the item it gives (« amount » of them): its name and description come from where the item is
+# defined, nothing to copy here. Otherwise « display » is shown in the menus (item, lore, optional « model-data » for a
+# texture of the resource pack and « glow » for the enchantment shine); « items » are given (« <spec> [amount] »),
+# « commands » run from the console (%player% = player name).
 rewards:
+  a_feather:
+    weight: 5
+    item: fluxfly:feather_10m
   diamonds:
     name: "&b3 diamonds"
     weight: 10

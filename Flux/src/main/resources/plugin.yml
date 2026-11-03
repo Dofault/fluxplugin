@@ -8,7 +8,7 @@ depend: [packetevents]
 # shared database pool of the suite (see the database section of config.yml)
 libraries:
   - com.zaxxer:HikariCP:7.0.2
-softdepend: [ItemsAdder, PlaceholderAPI, DeluxeMenus, EcoBattlepass, EcoJobs, EcoCollections, Vault, PlayerPoints, CMI, eco, CustomFishing, Lands, DiscordSRV]
+softdepend: [ItemsAdder, PlaceholderAPI, DeluxeMenus, EcoBattlepass, EcoJobs, EcoCollections, Vault, PlayerPoints, CMI, eco, libreforge, CustomFishing, Lands, DiscordSRV]
 
 commands:
   fluxmenu:
@@ -17,6 +17,9 @@ commands:
     aliases: [fmenu]
 
 permissions:
+  flux.items.admin:
+    description: /fluxitems (give, list, id).
+    default: op
   fluxmenu.admin:
     description: /fluxmenu (open, reload, list).
     default: op

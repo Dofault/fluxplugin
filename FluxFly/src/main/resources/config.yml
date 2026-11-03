@@ -21,3 +21,11 @@ mining-fatigue: 1
 bossbar:
   enabled: true
   color: WHITE
+
+# Items: right click adds fly-time to the bank (/fluxitems give <player> fluxfly:<id>). Any field of a Flux item.
+items:
+  feather_10m:
+    material: feather
+    name: "&fFly feather (10 minutes)"
+    lore: ["&7Right click: +10 minutes of fly time."]
+    fly-time: 10m

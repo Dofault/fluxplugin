@@ -2,6 +2,7 @@ package fr.influencraft.fluxcrate;
 
 import fr.influencraft.flux.api.FluxPlugin;
 import fr.influencraft.flux.api.inventory.Items;
+import fr.influencraft.flux.api.items.CustomItems;
 import fr.influencraft.flux.api.reward.Reward;
 import fr.influencraft.flux.api.reward.Rewards;
 import fr.influencraft.flux.api.util.Players;
@@ -96,6 +97,25 @@ public final class FluxCrate extends FluxPlugin implements Listener {
                     })
                     .register();
         }
+        // keys known to the suite as fluxcrate:key_<crate>
+        CustomItems.register(this, "fluxcrate", new CustomItems.Source() {
+            @Override
+            public String id(ItemStack item) {
+                String c = Keys.crateOf(item);
+                return c == null ? null : "key_" + c;
+            }
+
+            @Override
+            public ItemStack item(String id) {
+                Crate c = id.startsWith("key_") ? crate(id.substring(4)) : null;
+                return c == null ? null : Keys.create(c, 1);
+            }
+
+            @Override
+            public java.util.Collection<String> ids() {
+                return crates.keySet().stream().map(c -> "key_" + c).toList();
+            }
+        });
         Bukkit.getPluginManager().registerEvents(this, this);
         Bukkit.getScheduler().runTaskTimer(this, placed::tick, 40L, 20L);
     }
@@ -141,6 +161,9 @@ public final class FluxCrate extends FluxPlugin implements Listener {
 
     /** Gives a reward won: its items (what does not fit falls at the player's feet) and its commands. */
     void give(Player player, Crate crate, Crate.Reward reward) {
+        if (reward.item() != null && !CustomItems.give(player, reward.item(), reward.amount())) {
+            getLogger().warning("Crate " + crate.id() + ", reward " + reward.id() + ": unknown item " + reward.item());
+        }
         for (String spec : reward.items()) {
             String[] parts = spec.trim().split(" ");
             int amount = 1;
@@ -163,7 +186,7 @@ public final class FluxCrate extends FluxPlugin implements Listener {
         for (String cmd : reward.commands()) {
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("%player%", player.getName()));
         }
-        messages().send(player, "won", "%reward%", reward.name(), "%crate%", crate.name());
+        messages().send(player, "won", "%reward%", reward.shownName(), "%crate%", crate.name());
     }
 
     // ------------------------------------------------------------------ placed crates

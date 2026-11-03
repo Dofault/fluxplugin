@@ -40,7 +40,7 @@ The plugins are written **as English plugins, then adapted to French** for our s
 - French lives only in what the server deploys: `lang/fr_FR.yml`, the Labs copies of configs (comments may be French),
   menus shown to players.
 - **Commit messages: English**, short subject line, no French (older commits are French, do not rewrite history).
-- Some older code still has French identifiers (FluxTools: `Etat`, `Rendu`, `Verrous`, `Outil`...). When you touch
+- Some older code still has French identifiers (FluxLands: `Vues`, `Fiches`...). When you touch
   such code, convert the names you work with to English if it stays cheap; never rename PDC keys or config keys
   players' data depends on.
 
@@ -56,8 +56,11 @@ The plugins are written **as English plugins, then adapted to French** for our s
 | `command.Commands` | Every command is registered through it; names, aliases, description, `suggest` live in `plugins/Flux/commands.yml` (single source, also drives the "/" suggestion filter and `/aide`). Completers receive a **null** `Command`. |
 | `list.Lists` + `ListEntry` | Dynamic menu content. **Build items in Java** (`ListEntry.of(id).item(stack).set(k, v)`), the menu YAML only places them (`material: entry`, `%entry_<key>%`). Placeholders are for external plugins only: hundreds of internal placeholders made menus slow. `[list] <id> next/prev/page <n>`. |
 | `inventory.Lore`, `inventory.Items` | Lore builder in the server style (`│`/`└` frame, click lines); item from a spec (`itemsadder:ns:id`, `source:<plugin>:<arg>`). |
-| `items.CustomItems` | Shared recognition of custom items. Each suite plugin declares its own items with `CustomItems.register(plugin, namespace, Source)` (`fluxtools:<tool>`, `fluxpets:booster_<id>`). A source answers only for its own items. `id(item)` also knows eco items (`ecoarmor:virale_chestplate`); `matches(pattern, id)` for `ns:prefix*` patterns. |
-| `items.ItemLooks` | Looks given to items whoever made them (3D icon, worn appearance): `ItemLooks.register(plugin, (id, item) -> changed)`, keyed on the Flux id, applied by Flux at join, inventory open/close, item held, armour change, pickup. Never add your own listeners for that (FluxTools `apparences.yml`, FluxArmor). |
+| `items.CustomItems` | Shared registry of items: `id(item)`, `item(id)`, `give(player, id, n)`, `matches(pattern, id)` for `ns:prefix*` patterns, `bar(pattern, steps, ratio)` (picture of a bar). A plugin with stateful items declares them with `CustomItems.register(plugin, namespace, Source)` (`fluxtools:<tool>`, `fluxpets:booster_<id>`). `/fluxitems give\|list\|id` (Flux). See `docs/technique/flux-items.md`. |
+| `items.ItemCatalog` | **Items defined in config**, the default way to make an item: `ItemCatalog.create(plugin, namespace)`, `.load(section)`. One definition (`ItemDefinition`: material, model, equipment, name, lore, enchantments, attributes...), known by `flux:item`, in line with the config on items already handed out. Other plugins reference the id, never copy a name or lore. |
+| `items.ItemUses` | Right click with an item, whoever made it: `ItemUses.register(plugin, pattern, (player, item, id) -> consumed)`. Never listen to clicks to recognise an item again (FluxFly feathers). |
+| `effects.Effects` | Effects described in config (libreforge syntax, adapter in Flux): `whenReady`, `compile(plugin, id, effects, conditions)`, `provide(plugin, player -> bundles)`, `refresh(player)`. Effects are off, nothing fails, without libreforge (FluxArmor bonuses). |
+| `items.ItemLooks` | Looks given to items whoever made them (3D icon, worn appearance): `ItemLooks.register(plugin, (id, item) -> changed)`, keyed on the Flux id, applied by Flux at join, inventory open/close, item held, armour change, pickup. Never add your own listeners for that, nor to keep your items up to date (FluxArmor, FluxTools `refresh`). |
 | `reward.Rewards` | Give a reward (`Reward.of(source, label).icon(...).commands(...)`); claimed in the `rewards` menu. Expiry, reminders (in game and Discord through DiscordSRV), grouped notifications are handled by Flux. |
 | `util.Experience` | A player's experience in points (vanilla formulas; `getTotalExperience()` is wrong after enchanting): `total`, `set`, `take`, `give`, `pointsOfLevels`, `levelOf`. Used by the trades of FluxCommerce and `/bottlexp`. |
 | `util.Sounds` | Named cues only: `page`, `click`, `confirm` (first click of a double confirmation), `success`, `complete` (something earned), `error`, `remove`, `toggle-on/off`, `alert` (needs attention, 3 s cooldown). **One sound per click**: the action lines of a click run as a batch, a `[sound]` line wins over sounds played by code (`[list]` page sound, menu opening), else the first one plays. Do not add a `[sound]` that only repeats the automatic one. |
@@ -94,12 +97,14 @@ The plugins are written **as English plugins, then adapted to French** for our s
 - FluxLands owns every town and country screen: never send a player to one of Lands' own menus (levels, members,
   relations...), build ours on Lands' API (`Levels`, roles through `Area#setRole`). Shops of towns are listed by the
   market of FluxCommerce (`/influmarche depuis <back command> <source> [search]`), not by FluxLands.
+- FluxArmor owns armour sets (`sets/<id>.yml`, pieces `fluxarmor:<set>_<piece>`, replaces EcoArmor) and their 3D look.
 - FluxCrate owns crates and keys (`fluxcrate.api.Crates`, used by the migration of EcoCrates); give keys with
-  `fluxcrate give <player> <crate> <n>`, never with a third-party crates plugin.
+  `fluxcrate give <player> <crate> <n>`, never with a third-party crates plugin. A reward is an item id (`item:`), its
+  name and description come from where the item is defined.
 - FluxTools exposes `fr.influencraft.fluxtools.api` (`Tools.info/refresh`, `EnchantMastery` service) used by
   FluxEnchant: FluxTools owns its tools and their rendering, FluxEnchant owns enchantment weight and mastery levels.
 - Generated files: menus and tool configs come from scripts in `<module>/assets/*.py` (`gen_pages.py`,
-  `gen_outils.py`, `gen_metiers.py`...). Change the script and regenerate, never hand-edit generated YAML.
+  `gen_tools.py`, `gen_metiers.py`...). Change the script and regenerate, never hand-edit generated YAML.
   Exception: `Flux/assets/menu_recompenses.png` is hand-retouched by the owner, do not regenerate it.
 
 ## Menu layout rules

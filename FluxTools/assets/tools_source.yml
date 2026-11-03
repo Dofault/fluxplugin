@@ -1,0 +1,310 @@
+# Name, description, material of each crate tool, and the forced tool XP (rare ores, monsters of the weapons) per family.
+# Read by gen_tools.py.
+tools:
+  arc_tendance:
+    name: '&a&lArc tendance'
+    description:
+    - ''
+    - '&7&oSes tirs sont si propres qu''on jurerait'
+    - '&7&oqu''il vise tout seul.'
+    - ''
+    - '&7Rareté : &#37C44A✦ Unique'
+    tier: tendance
+    family: arc
+    material: bow
+    durability: 384
+  epee_ordinaire:
+    name: '&f&lÉpée ordinaire'
+    description:
+    - ''
+    - '&7&oUne lame simple, sans prestige, mais'
+    - '&7&oassez tranchante pour un premier duel.'
+    - ''
+    - '&7Rareté : &#AAAAAA✦ Commun'
+    tier: ordinaire
+    family: epee
+    material: iron_sword
+    durability: 150
+  epee_phenomene:
+    name: '&#F0A800&lÉpée phénomène'
+    description:
+    - ''
+    - '&7&oUne arme dont on parle encore'
+    - '&7&olongtemps après le duel.'
+    - ''
+    - '&7Rareté : &f'
+    tier: phenomene
+    family: epee
+    material: netherite_sword
+    durability: 0
+  epee_tendance:
+    name: '&a&lÉpée tendance'
+    description:
+    - ''
+    - '&7&oOn raconte qu''elle brille un peu plus'
+    - '&7&ofort entre les mains de ceux qui montent.'
+    - ''
+    - '&7Rareté : &#37C44A✦ Unique'
+    tier: tendance
+    family: epee
+    material: diamond_sword
+    durability: 1561
+  epee_virale:
+    name: '&#5A85EA&lÉpée virale'
+    description:
+    - ''
+    - '&7&oUne lame qui a fait le tour des réseaux'
+    - '&7&oavant même son premier coup.'
+    - ''
+    - '&7Rareté : &f'
+    tier: virale
+    family: epee
+    material: diamond_sword
+    durability: 0
+    model: influoutils:epee_virale
+  hache_ordinaire:
+    name: '&f&lHache ordinaire'
+    description:
+    - ''
+    - '&7&oElle a coupé plus de bois qu''elle'
+    - '&7&on''a connu de propriétaires.'
+    - ''
+    - '&7Rareté : &#AAAAAA✦ Commun'
+    tier: ordinaire
+    family: hache
+    material: iron_axe
+    durability: 150
+  hache_phenomene:
+    name: '&#F0A800&lHache phénomène'
+    description:
+    - ''
+    - '&7&oUn seul coup,'
+    - '&7&oet la légende commence.'
+    - ''
+    - '&7Rareté : &f'
+    tier: phenomene
+    family: hache
+    material: netherite_axe
+    durability: 0
+  hache_tendance:
+    name: '&a&lHache tendance'
+    description:
+    - ''
+    - '&7&oSon tranchant impeccable trahit'
+    - '&7&oune fabrication au-dessus du commun.'
+    - ''
+    - '&7Rareté : &#37C44A✦ Unique'
+    tier: tendance
+    family: hache
+    material: diamond_axe
+    durability: 1561
+  hache_virale:
+    name: '&#5A85EA&lHache virale'
+    description:
+    - ''
+    - '&7&oChaque coup de hache est devenu'
+    - '&7&oun clip qu''on partage.'
+    - ''
+    - '&7Rareté : &f'
+    tier: virale
+    family: hache
+    material: diamond_axe
+    durability: 0
+    model: influoutils:hache_virale
+  houe_ordinaire:
+    name: '&f&lHoue ordinaire'
+    description:
+    - ''
+    - '&7&oRetournée mille fois, elle sent encore'
+    - '&7&ola terre fraîche des premiers champs.'
+    - ''
+    - '&7Rareté : &#AAAAAA✦ Commun'
+    tier: ordinaire
+    family: houe
+    material: iron_hoe
+    durability: 150
+  houe_tendance:
+    name: '&a&lHoue tendance'
+    description:
+    - ''
+    - '&7&oLes récoltes qu''elle prépare ont, dit-on,'
+    - '&7&oun goût légèrement meilleur.'
+    - ''
+    - '&7Rareté : &#37C44A✦ Unique'
+    tier: tendance
+    family: houe
+    material: diamond_hoe
+    durability: 1561
+  houe_virale:
+    name: '&#5A85EA&lHoue virale'
+    description:
+    - ''
+    - '&7&oUne houe qu''on montre'
+    - '&7&oplus qu''on ne l''utilise.'
+    - ''
+    - '&7Rareté : &f'
+    tier: virale
+    family: houe
+    material: diamond_hoe
+    durability: 0
+    model: influoutils:houe_virale
+  masse_phenomene:
+    name: '&#F0A800&lMasse phénomène'
+    description:
+    - ''
+    - '&7&oLe tonnerre gronde avant elle,'
+    - '&7&oet se tait quand elle retombe.'
+    - ''
+    - '&7Rareté : &f'
+    tier: phenomene
+    family: masse
+    material: mace
+    durability: 0
+  pelle_ordinaire:
+    name: '&f&lPelle ordinaire'
+    description:
+    - ''
+    - '&7&oLe genre d''outil qu''on oublie vite,'
+    - '&7&ojusqu''au jour où on en a besoin.'
+    - ''
+    - '&7Rareté : &#AAAAAA✦ Commun'
+    tier: ordinaire
+    family: pelle
+    material: iron_shovel
+    durability: 150
+  pelle_tendance:
+    name: '&a&lPelle tendance'
+    description:
+    - ''
+    - '&7&oPlus légère, plus vive : creuser n''a'
+    - '&7&ojamais semblé aussi... tendance.'
+    - ''
+    - '&7Rareté : &#37C44A✦ Unique'
+    tier: tendance
+    family: pelle
+    material: diamond_shovel
+    durability: 1561
+  pelle_virale:
+    name: '&#5A85EA&lPelle virale'
+    description:
+    - ''
+    - '&7&oCreuser n''a jamais généré'
+    - '&7&oautant de vues.'
+    - ''
+    - '&7Rareté : &f'
+    tier: virale
+    family: pelle
+    material: diamond_shovel
+    durability: 0
+    model: influoutils:pelle_virale
+  pioche_ordinaire:
+    name: '&f&lPioche ordinaire'
+    description:
+    - ''
+    - '&7&oForgée à la chaîne pour les nouveaux venus,'
+    - '&7&oelle n''a rien d''exceptionnel, sauf qu''elle mine.'
+    - ''
+    - '&7Rareté : &#AAAAAA✦ Commun'
+    tier: ordinaire
+    family: pioche
+    material: iron_pickaxe
+    durability: 150
+  pioche_phenomene:
+    name: '&#F0A800&lPioche phénomène'
+    description:
+    - ''
+    - '&7&oOn raconte qu''un seul filon'
+    - '&7&osuffit à changer une vie.'
+    - ''
+    - '&7Rareté : &f'
+    tier: phenomene
+    family: pioche
+    material: netherite_pickaxe
+    durability: 0
+    model: influoutils:pioche_phenomene
+  pioche_tendance:
+    name: '&a&lPioche tendance'
+    description:
+    - ''
+    - '&7&oTaillée dans un éclat de diamant, elle'
+    - '&7&oattire les regards autant que les minerais.'
+    - ''
+    - '&7Rareté : &#37C44A✦ Unique'
+    tier: tendance
+    family: pioche
+    material: diamond_pickaxe
+    durability: 1561
+  pioche_virale:
+    name: '&#5A85EA&lPioche virale'
+    description:
+    - ''
+    - '&7&oElle a été filmée en train de miner un filon complet,'
+    - '&7&odepuis, tout le monde en veut une.'
+    - ''
+    - '&7Rareté : &f'
+    tier: virale
+    family: pioche
+    material: diamond_pickaxe
+    durability: 0
+    model: influoutils:pioche_virale
+forced-points:
+  epee:
+    blaze: 40.0
+    bogged: 30.0
+    cave_spider: 30.0
+    creeper: 40.0
+    drowned: 30.0
+    enderman: 100.0
+    guardian: 40.0
+    husk: 30.0
+    magma_cube: 40.0
+    skeleton: 30.0
+    slime: 40.0
+    spider: 30.0
+    stray: 30.0
+    witch: 200.0
+    wither_skeleton: 100.0
+    zombie: 30.0
+    zombie_villager: 30.0
+  hache:
+    cherry_log: 4.0
+    crimson_stem: 10.0
+    dark_oak_log: 3.0
+    pale_oak_log: 3.0
+    spruce_log: 3.33
+    warped_stem: 10.0
+  houe:
+    cocoa: 7.5
+  masse:
+    blaze: 40.0
+    bogged: 30.0
+    cave_spider: 30.0
+    creeper: 40.0
+    drowned: 30.0
+    enderman: 100.0
+    guardian: 40.0
+    husk: 30.0
+    magma_cube: 40.0
+    skeleton: 30.0
+    slime: 40.0
+    spider: 30.0
+    stray: 30.0
+    witch: 200.0
+    wither_skeleton: 100.0
+    zombie: 30.0
+    zombie_villager: 30.0
+  pioche:
+    ancient_debris: 240.0
+    basalt: 1.2
+    blackstone: 1.2
+    deepslate_diamond_ore: 120.0
+    deepslate_gold_ore: 40.0
+    deepslate_iron_ore: 15.0
+    deepslate_lapis_ore: 30.0
+    diamond_ore: 120.0
+    gold_ore: 40.0
+    iron_ore: 15.0
+    lapis_ore: 30.0
+    nether_gold_ore: 40.0
+    netherrack: 1.2
+    smooth_basalt: 1.2

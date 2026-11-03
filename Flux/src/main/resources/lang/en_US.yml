@@ -142,3 +142,12 @@ trade:
   click-sell: "Sell"
   sell-nothing: "&#FF5C5CPut the requested items in first."
   sell-no-room: "&#FF5C5CThere is no room left to buy more."
+
+# /fluxitems
+items-usage: "&7/fluxitems give <player> <id> [amount] &8| &7list [filter] &8| &7id"
+items-no-player: "&#FF5C5CPlayer not online: &f%player%&#FF5C5C."
+items-unknown: "&#FF5C5CUnknown item: &f%id%&#FF5C5C."
+items-given: "&#2ECF7BGave &f%amount% %id% &#2ECF7Bto &f%player%&#2ECF7B."
+items-list: "&7%count% items: &f%ids%"
+items-held: "&7Item in hand: &f%id%"
+items-held-none: "&7This item has no id."

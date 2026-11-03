@@ -121,6 +121,7 @@ public final class CustomItems {
         ON_LOAD.remove(owner);
         SOURCES.values().removeIf(o -> o.owner() == owner);
         ItemLooks.unregisterAll(owner);
+        ItemUses.unregisterAll(owner);
     }
 
     /** Declares the items of a plugin of the suite under {@code namespace}. */
@@ -161,13 +162,12 @@ public final class CustomItems {
     }
 
     /**
-     * Id of an item of the eco plugins ({@code ecoarmor:virale_chestplate}, {@code ecoitems:<id>}), asked to eco only
-     * when the item carries one of their keys.
+     * Id of an item of EcoItems ({@code ecoitems:<id>}), asked to eco only when the item carries its key.
      */
     private static String ecoId(ItemStack item) {
         boolean eco = false;
         for (org.bukkit.NamespacedKey k : item.getPersistentDataContainer().getKeys()) {
-            if (k.getNamespace().equals("ecoarmor") || k.getNamespace().equals("ecoitems")) {
+            if (k.getNamespace().equals("ecoitems")) {
                 eco = true;
                 break;
             }
@@ -192,6 +192,34 @@ public final class CustomItems {
         if (full == null) return null;
         Owned own = SOURCES.get(full.substring(0, full.indexOf(':')));
         return own != null ? own.source().item(full.substring(full.indexOf(':') + 1)) : provider.item(full);
+    }
+
+    /**
+     * Gives {@code amount} of an item to a player, what does not fit falls at his feet. Unstackable items are made one
+     * by one (a tool carries its own unique id). False when the item is unknown.
+     */
+    public static boolean give(org.bukkit.entity.Player player, String id, int amount) {
+        ItemStack first = item(id);
+        if (first == null) return false;
+        int left = amount;
+        for (ItemStack stack = first; left > 0 && stack != null; stack = left > 0 ? item(id) : null) {
+            int size = Math.min(left, stack.getMaxStackSize());
+            stack.setAmount(size);
+            left -= size;
+            for (ItemStack rest : player.getInventory().addItem(stack).values()) {
+                player.getWorld().dropItemNaturally(player.getLocation(), rest);
+            }
+        }
+        return true;
+    }
+
+    /**
+     * The picture of a bar at {@code ratio}, one glyph per step ({@code pattern} with {@code {step}}, 0 to {@code steps}),
+     * or null when the resource pack does not have it: the caller then draws a bar of text ({@code Format.bar}).
+     */
+    public static String bar(String pattern, int steps, double ratio) {
+        int step = (int) Math.floor(Math.max(0, Math.min(1, ratio)) * steps);
+        return glyph(pattern.replace("{step}", String.valueOf(step)));
     }
 
     public static boolean exists(String id) {

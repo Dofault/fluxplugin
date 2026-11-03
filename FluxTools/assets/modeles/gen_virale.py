@@ -12,7 +12,7 @@ Même pack que le set phénomène (gen_phenomene.py, dont on reprend le moteur d
 - models/item/casque_virale.json : casque porté tel quel sur la tête (grand V, yeux néon, crête, ailerons) ;
   icônes 3D du plastron, des jambières et des bottes (boîtes du joueur, mêmes textures que l'armure portée) ;
 - items/<pièce>_virale.json : définitions d'objets, cibles du composant item_model (clé `modele:` de l'outil,
-  FluxTools/apparences.yml pour l'armure) ;
+  FluxArmor/sets/<set>.yml pour l'armure) ;
 - equipment/virale.json et textures/entity/equipment/{humanoid,humanoid_leggings}/virale.png : armure portée
   (gabarit 64 x 32 du joueur, pixels doublés : plaques biseautées et néons en V) : le corps n'a ni animation
   ni émission ;

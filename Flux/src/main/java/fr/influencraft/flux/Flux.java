@@ -94,6 +94,9 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         getServer().getPluginManager().registerEvents(new MenuListener(this, menus), this);
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getPluginManager().registerEvents(commandManager, this);
+        fr.influencraft.flux.items.ItemsCommand itemsCommand = new fr.influencraft.flux.items.ItemsCommand(() -> messages);
+        fr.influencraft.flux.api.command.Commands.create(this, "fluxitems").description("Items of the suite: give, list, id.")
+                .permission("flux.items.admin").suggest(false).executor(itemsCommand::run).completer(itemsCommand::complete).register();
         fr.influencraft.flux.api.command.Commands.create(this, "commands").aliases("commandes")
                 .description("Liste des commandes").executor(commandManager::help).register();
         // help window (/aide and the pause menu) and settings window (/parametres): plugins/Flux/help.yml, settings.yml
@@ -309,6 +312,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         fr.influencraft.flux.api.tab.TabList.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.reward.Rewards.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.items.CustomItems.unregisterAll(event.getPlugin());
+        fr.influencraft.flux.api.effects.Effects.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.shops.ChestShops.unregisterAll(event.getPlugin());
         placeholdersChanged();
         if (hadMenus) menuFoldersChanged();

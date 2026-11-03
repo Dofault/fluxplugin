@@ -48,6 +48,7 @@ import java.util.UUID;
 public final class FluxFly extends FluxPlugin implements Listener {
 
     private final FlyStore store = new FlyStore(getLogger());
+    private fr.influencraft.flux.api.items.ItemCatalog catalog;
     /** Players flying through FluxFly. */
     private final Set<UUID> flying = new HashSet<>();
     /** Players whose next fall is harmless (flight just stopped), with the tick it stopped. */
@@ -66,8 +67,12 @@ public final class FluxFly extends FluxPlugin implements Listener {
 
     @Override
     protected void enable() {
+        catalog = fr.influencraft.flux.api.items.ItemCatalog.create(this, "fluxfly");
         settings();
         store.open();
+        fr.influencraft.flux.api.items.ItemUses.register(this, "fluxfly:*", (player, item, id) ->
+                useFeather(player, getConfig().getString("items." + id.substring("fluxfly:".length()) + ".fly-time", "")));
+        fr.influencraft.fluxfly.compat.ItemsAdderFeathers.register(this);
         FlyTime.register(new FlyTime.Service() {
             public long get(UUID p) {
                 return store.get(p, startingTime);
@@ -121,7 +126,22 @@ public final class FluxFly extends FluxPlugin implements Listener {
         settings();
     }
 
+    /** A feather was used: its fly time goes to the bank. False (not consumed) when the player has nothing to gain. */
+    public boolean useFeather(Player player, String duration) {
+        long seconds = Format.parseDuration(duration);
+        if (seconds <= 0) return false;
+        if (FlyTime.get(player.getUniqueId()) == FlyTime.UNLIMITED) {
+            messages().send(player, "feather-unlimited");
+            return false;
+        }
+        FlyTime.add(player.getUniqueId(), seconds);
+        messages().send(player, "feather-used", "%time%", Format.duration(seconds));
+        fr.influencraft.flux.api.util.Sounds.cue(player, "complete");
+        return true;
+    }
+
     private void settings() {
+        catalog.load(getConfig().getConfigurationSection("items"));
         worlds = getConfig().getStringList("worlds");
         startingTime = getConfig().getLong("starting-time", 10);
         combatSeconds = getConfig().getInt("combat-seconds", 10);

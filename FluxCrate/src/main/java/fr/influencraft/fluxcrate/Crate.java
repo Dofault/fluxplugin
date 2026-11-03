@@ -1,6 +1,9 @@
 package fr.influencraft.fluxcrate;
 
+import fr.influencraft.flux.api.items.CustomItems;
+import fr.influencraft.flux.api.text.Texts;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,9 +24,20 @@ public record Crate(String id, String name, String keyItem, String keyName, List
      *                 its custom model data (0 = none), {@code glow} the enchantment shine
      * @param commands console commands run when won ({@code %player%} = player name)
      * @param items    items given when won ({@code <spec>} or {@code <spec> <amount>})
+     * @param item     id of the item this reward is ({@code fluxarmor:virale_helmet}), null for none: given when won,
+     *                 and without {@code display} shown as it is, with its own name and description
+     * @param amount   how many of {@code item}
      */
     public record Reward(String id, String name, double weight, String display, List<String> lore, int modelData,
-                         boolean glow, List<String> commands, List<String> items) {
+                         boolean glow, List<String> commands, List<String> items, String item, int amount) {
+
+        /** Name of the reward in a text: its own, else the name of its item. */
+        public String shownName() {
+            if (name != null) return name;
+            ItemStack stack = item == null ? null : CustomItems.item(item);
+            if (stack == null) return id;
+            return Texts.legacy(stack.effectiveName());
+        }
     }
 
     static Crate read(String id, ConfigurationSection c) {
@@ -33,10 +47,10 @@ public record Crate(String id, String name, String keyItem, String keyName, List
             for (String rid : rs.getKeys(false)) {
                 ConfigurationSection r = rs.getConfigurationSection(rid);
                 if (r == null) continue;
-                rewards.add(new Reward(rid, r.getString("name", rid), Math.max(0, r.getDouble("weight", 1)),
-                        r.getString("display.item", "PAPER"), r.getStringList("display.lore"),
+                rewards.add(new Reward(rid, r.getString("name"), Math.max(0, r.getDouble("weight", 1)),
+                        r.getString("display.item"), r.getStringList("display.lore"),
                         r.getInt("display.model-data", 0), r.getBoolean("display.glow", false),
-                        r.getStringList("commands"), r.getStringList("items")));
+                        r.getStringList("commands"), r.getStringList("items"), r.getString("item"), Math.max(1, r.getInt("amount", 1))));
             }
         }
         return new Crate(id, c.getString("name", id), c.getString("key.item", "TRIPWIRE_HOOK"),

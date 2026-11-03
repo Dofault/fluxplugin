@@ -1,34 +1,43 @@
 package fr.influencraft.fluxtools;
 
+import fr.influencraft.flux.api.items.CustomItems;
+import fr.influencraft.flux.api.items.ItemLooks;
 import fr.influencraft.fluxtools.modules.Modules;
-import fr.influencraft.flux.api.economy.Currency;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.entity.Player;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * FluxTools : outils de progression des caisses de vote. Chaque outil porte sa progression (contrat ou
- * pass de 7 jours), ses statistiques et ses enchantements, fixés par son niveau. Interface : menus
- * Flux, alimentés par nos placeholders et la source d'objet {@code fluxitems}.
+ * FluxTools: the crate tools, known to the whole suite as {@code fluxtools:<id>}. A levelled tool climbs to its last
+ * level with the XP earned by using it, and its enchantments climb with it; all of it is written in the item, shown in
+ * its description. Also the utility modules (jobs, repair, bottled XP...).
  */
 public final class FluxTools extends fr.influencraft.flux.api.FluxPlugin {
 
-    private Map<String, Outil> outils = Map.of();
-    private Set<String> materiaux = Set.of();
-    private final Set<String> mondesExclus = new HashSet<>();
-    private Currency eco;
-    private Progression progression;
-    private final Apparences apparences = new Apparences(this);
-    private final Parures parures = new Parures(this);
+    /** Items {@code fluxtools:book_<enchantment>}: the only books a tool accepts at the anvil. */
+    private static final String BOOK_PREFIX = "book_";
+
+    private Map<String, Tool> tools = Map.of();
+    private final Set<String> excludedWorlds = new HashSet<>();
+    private final ToolRenderer renderer = new ToolRenderer(this);
+    private ToolProgress progress;
+    private String barGlyph = "";
+    private int barSteps = 20;
 
     @Override
     protected java.util.List<String> formerNames() {
@@ -39,186 +48,163 @@ public final class FluxTools extends fr.influencraft.flux.api.FluxPlugin {
     protected void enable() {
         // utility modules (ex-InfluBridge) do not need the crate tools, start them first
         new Modules(this).enable();
-        Etat.init(this);
-        // main currency of the suite, resolved by Flux on every call (CMI hooks into Vault late)
-        eco = fr.influencraft.flux.api.economy.Economy.main();
-        if (eco == null) {
-            getLogger().severe("No currency in Flux: crate tools disabled, the other modules keep running.");
-            return;
-        }
-        charger();
-        fr.influencraft.fluxtools.api.Tools.bind(this::info, this::rafraichir);
-        // outils reconnus par toute la suite : fluxtools:<id> (pioche_virale...)
-        fr.influencraft.flux.api.items.CustomItems.register(this, "fluxtools", new fr.influencraft.flux.api.items.CustomItems.Source() {
+        loadTools();
+        fr.influencraft.fluxtools.api.Tools.bind(this::info, this::rewrite);
+        CustomItems.register(this, "fluxtools", new CustomItems.Source() {
             @Override
             public String id(ItemStack item) {
-                String id = Etat.outil(item);
-                return id != null && outils.containsKey(id) ? id : null;
+                String id = ToolState.toolId(item);
+                return id != null && tools.containsKey(id) ? id : null;
             }
 
             @Override
             public ItemStack item(String id) {
-                Outil o = outils.get(id);
-                return o == null ? null : Rendu.creer(o);
+                if (id.startsWith(BOOK_PREFIX)) return book(id.substring(BOOK_PREFIX.length()));
+                Tool tool = tools.get(id);
+                return tool == null ? null : renderer.create(tool);
             }
 
             @Override
-            public java.util.Collection<String> ids() {
-                return outils.keySet();
+            public Collection<String> ids() {
+                List<String> ids = new ArrayList<>(tools.keySet());
+                for (String book : ToolRenderer.BOOKS) ids.add(BOOK_PREFIX + book);
+                return ids;
             }
         });
-
-        progression = new Progression(this);
-        Bukkit.getPluginManager().registerEvents(progression, this);
-        Bukkit.getPluginManager().registerEvents(new Verrous(this), this);
-        Bukkit.getPluginManager().registerEvents(new Ouverture(this), this);
-        Bukkit.getPluginManager().registerEvents(new Rafraichissement(this), this);
-        fr.influencraft.flux.api.items.ItemLooks.register(this, apparences::apply);
-        Bukkit.getPluginManager().registerEvents(parures, this);
-        Commande cmd = new Commande(this);
-        command("tool")
-                .description("Opens the menu of the tool in hand.")
-                .aliases("outil")
-                .executor((sender, label, args) -> {
-                    if (sender instanceof Player p) ouvrir(p);
-                    return true;
-                })
-                .register();
+        // tools already handed out follow the config (description, enchantments), at the moments Flux refreshes items
+        ItemLooks.register(this, this::refresh);
+        // the bar glyphs may only be known once the custom items are loaded: tools are then written again
+        CustomItems.onLoaded(this, () -> {
+            ToolRenderer.version = version(toolsFolder());
+            ItemLooks.refreshOnline();
+        });
+        progress = new ToolProgress(this);
+        Bukkit.getPluginManager().registerEvents(progress, this);
+        Bukkit.getPluginManager().registerEvents(new ToolLocks(this), this);
+        ToolCommand tool = new ToolCommand(this);
         command("tools")
                 .description("Admin of the crate tools.")
-                .aliases("fluxitems")
                 .permission("fluxitems.admin")
-                .executor(cmd::run)
-                .completer(cmd::complete)
+                .suggest(false)
+                .executor(tool::run)
+                .completer(tool::complete)
                 .register();
-
-        placeholders("fluxitems", new Expansion(this)::request);
-        Sources.inscrire(this);
     }
 
-    @Override
-    protected void disable() {
-        parures.arreter();
+    private File toolsFolder() {
+        return new File(getDataFolder(), "tools");
     }
 
-    void charger() {
-        reloadConfig();
-        mondesExclus.clear();
-        for (String m : getConfig().getStringList("mondes-exclus")) mondesExclus.add(m.toLowerCase(Locale.ROOT));
-        Map<String, Outil> lus = new LinkedHashMap<>();
-        File dossier = new File(getDataFolder(), "outils");
-        if (!dossier.isDirectory() && !dossier.mkdirs()) getLogger().warning("Dossier outils/ impossible à créer.");
-        File[] fichiers = dossier.listFiles((d, n) -> n.endsWith(".yml") && !n.startsWith("_"));
-        if (fichiers != null) {
-            java.util.Arrays.sort(fichiers);
-            for (File f : fichiers) {
-                Outil o = Outil.charger(f, getLogger());
-                if (o != null) lus.put(o.id, o);
+    void loadTools() {
+        reload();
+        excludedWorlds.clear();
+        for (String world : getConfig().getStringList("excluded-worlds")) excludedWorlds.add(world.toLowerCase(Locale.ROOT));
+        barGlyph = getConfig().getString("level-bar.glyph", "fluxafk:bar_{step}");
+        barSteps = Math.max(1, getConfig().getInt("level-bar.steps", 20));
+        Map<String, Tool> read = new LinkedHashMap<>();
+        File folder = toolsFolder();
+        if (!folder.isDirectory() && !folder.mkdirs()) getLogger().warning("Cannot create the tools folder.");
+        File[] files = folder.listFiles((d, n) -> n.endsWith(".yml") && !n.startsWith("_"));
+        if (files != null) {
+            Arrays.sort(files);
+            for (File f : files) {
+                Tool tool = Tool.load(f, getLogger());
+                if (tool != null) read.put(tool.id, tool);
             }
         }
-        // XP par bloc des outils à niveaux : métiers EcoJobs du serveur, les points du fichier de l'outil devant
-        Map<String, Map<String, Double>> parFamille = PointsMetiers.calculer(getConfig().getConfigurationSection("xp-metiers"),
+        // XP per block of the levelled tools: EcoJobs jobs of the server, the points of the tool's file come first
+        Map<String, Map<String, Double>> byFamily = JobPoints.compute(getConfig().getConfigurationSection("xp-metiers"),
                 getDataFolder().getParentFile(), getLogger());
-        for (Outil o : lus.values()) {
-            if (!o.aNiveaux()) continue;
-            parFamille.getOrDefault(o.famille, Map.of()).forEach(o.points::putIfAbsent);
+        for (Tool tool : read.values()) {
+            if (tool.hasLevels()) byFamily.getOrDefault(tool.family, Map.of()).forEach(tool.points::putIfAbsent);
         }
-        Set<String> mats = new HashSet<>();
-        for (Outil o : lus.values()) mats.add(o.materiau.getKey().getKey());
-        outils = lus;
-        materiaux = mats;
-        Rendu.version = version(dossier);
-        getLogger().info(outils.size() + " outils chargés.");
-        apparences.charger();
-        parures.charger(apparences.reglagesParures());
+        tools = read;
+        ToolRenderer.version = version(folder);
+        getLogger().info(tools.size() + " tools loaded.");
     }
 
     /**
-     * Empreinte du jar, de config.yml et des fichiers d'outils : un outil dont la description a été écrite avec
-     * une autre empreinte est réécrit à sa prochaine rencontre (cf. {@link Rafraichissement}).
+     * Fingerprint of the jar, config.yml, the tool files and the bar picture: a tool whose description was written with
+     * another one is written again ({@link #refresh}).
      */
-    private int version(File dossier) {
-        // Le jar compte aussi : une nouvelle version du rendu (code) réécrit les outils une fois.
+    private int version(File folder) {
         int h = Long.hashCode(getFile().lastModified());
+        h = 31 * h + (CustomItems.bar(barGlyph, barSteps, 0) == null ? 0 : 1);
         try {
-            h = 31 * h + java.util.Arrays.hashCode(java.nio.file.Files.readAllBytes(new File(getDataFolder(), "config.yml").toPath()));
-            File[] fichiers = dossier.listFiles((d, n) -> n.endsWith(".yml"));
-            if (fichiers != null) {
-                java.util.Arrays.sort(fichiers);
-                for (File f : fichiers) h = 31 * h + java.util.Arrays.hashCode(java.nio.file.Files.readAllBytes(f.toPath()));
+            h = 31 * h + Arrays.hashCode(java.nio.file.Files.readAllBytes(new File(getDataFolder(), "config.yml").toPath()));
+            File[] files = folder.listFiles((d, n) -> n.endsWith(".yml"));
+            if (files != null) {
+                Arrays.sort(files);
+                for (File f : files) h = 31 * h + Arrays.hashCode(java.nio.file.Files.readAllBytes(f.toPath()));
             }
-        } catch (java.io.IOException ex) {
-            getLogger().warning("Empreinte de config illisible : " + ex.getMessage());
+        } catch (java.io.IOException e) {
+            getLogger().warning("Cannot read the config for its fingerprint: " + e.getMessage());
         }
         return h;
     }
 
-    /** Matériau d'un de nos outils (filtre rapide avant de lire un objet). */
-    boolean materiau(String cle) {
-        return materiaux.contains(cle);
+    /** Writes a tool again when its description dates from another config (ItemLooks). */
+    private boolean refresh(String id, ItemStack item) {
+        if (!id.startsWith("fluxtools:")) return false;
+        Tool tool = tools.get(id.substring("fluxtools:".length()));
+        if (tool == null || ToolState.renderedVersion(item) == ToolRenderer.version) return false;
+        renderer.update(item, tool, ToolState.read(item), true);
+        return true;
     }
 
-    Map<String, Outil> outils() {
-        return Collections.unmodifiableMap(outils);
+    /** An enchanted book of one of the enchantments a tool accepts, null when unknown. */
+    private static ItemStack book(String enchantment) {
+        Enchantment ench = ToolRenderer.BOOKS.contains(enchantment) ? Tool.enchantment(enchantment) : null;
+        if (ench == null) return null;
+        ItemStack book = ItemStack.of(Material.ENCHANTED_BOOK);
+        book.editMeta(EnchantmentStorageMeta.class, m -> m.addStoredEnchant(ench, 1, true));
+        return book;
     }
 
-    /** Définition de l'outil FluxTools porté par l'objet, ou null. */
+    Map<String, Tool> tools() {
+        return Collections.unmodifiableMap(tools);
+    }
+
     /** The tool for other plugins ({@link fr.influencraft.fluxtools.api.Tools#info}). */
     fr.influencraft.fluxtools.api.ToolInfo info(ItemStack item) {
-        Outil o = outil(item);
-        if (o == null) return null;
-        Etat e = Etat.lire(item);
-        return info(o, e);
+        Tool tool = tool(item);
+        return tool == null ? null : info(tool, ToolState.read(item));
     }
 
-    void rafraichir(ItemStack item) {
-        Outil o = outil(item);
-        Etat e = o == null ? null : Etat.lire(item);
-        if (e != null) Rendu.maj(item, o, e, true);
+    private void rewrite(ItemStack item) {
+        Tool tool = tool(item);
+        if (tool != null) renderer.update(item, tool, ToolState.read(item), true);
     }
 
-    static fr.influencraft.fluxtools.api.ToolInfo info(Outil o, Etat e) {
-        int max = o.aNiveaux() ? o.niveauMax() : 0;
-        return new fr.influencraft.fluxtools.api.ToolInfo(o.id, o.palier, o.famille, e == null ? 0 : o.niveau(e.xp), max,
-                max > 0 ? o.seuil(max) : 0);
+    static fr.influencraft.fluxtools.api.ToolInfo info(Tool tool, ToolState state) {
+        int max = tool.hasLevels() ? tool.maxLevel() : 0;
+        return new fr.influencraft.fluxtools.api.ToolInfo(tool.id, tool.tier, tool.family, state == null ? 0 : tool.level(state.xp), max,
+                max > 0 ? tool.threshold(max) : 0);
     }
 
-    Outil outil(ItemStack item) {
-        String id = Etat.outil(item);
-        return id == null ? null : outils.get(id);
+    /** The tool carried by the item, or null. */
+    Tool tool(ItemStack item) {
+        String id = ToolState.toolId(item);
+        return id == null ? null : tools.get(id);
     }
 
-    boolean exclu(World w) {
-        return mondesExclus.contains(w.getName().toLowerCase(Locale.ROOT));
+    boolean excluded(World world) {
+        return excludedWorlds.contains(world.getName().toLowerCase(Locale.ROOT));
     }
 
-    Currency economie() {
-        return eco;
+    ToolRenderer renderer() {
+        return renderer;
     }
 
-    Progression progression() {
-        return progression;
+    ToolProgress progress() {
+        return progress;
     }
 
-    Apparences apparences() {
-        return apparences;
+    String barGlyph() {
+        return barGlyph;
     }
 
-    /** Raw text of the language file. */
-    String texte(String cle) {
-        return messages().raw(cle);
-    }
-
-    void message(Player p, String cle, String... remplacements) {
-        messages().send(p, cle, remplacements);
-    }
-
-    /** Opens the Flux menu of the tool in hand. */
-    void ouvrir(Player p) {
-        if (outil(p.getInventory().getItemInMainHand()) == null) {
-            message(p, "pas-d-outil");
-            return;
-        }
-        fr.influencraft.flux.api.FluxApi.open(p, getConfig().getString("menu", "outil"));
+    int barSteps() {
+        return barSteps;
     }
 }

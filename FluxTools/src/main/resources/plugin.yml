@@ -28,5 +28,5 @@ permissions:
     description: "Permet d'ouvrir le menu de réparation /repair. Accordé au groupe eminent (rang 5)."
     default: op
   fluxitems.admin:
-    description: /fluxitems
+    description: /tools
     default: op

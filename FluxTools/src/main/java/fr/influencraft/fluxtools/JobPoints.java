@@ -12,20 +12,20 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 /**
- * XP d'outil par bloc, calculée au chargement depuis les métiers EcoJobs du serveur (section {@code xp-metiers} de
- * la config) : un changement d'XP dans EcoJobs suit sur les outils au prochain {@code /fluxitems reload}.
- * <p>1 point = 1 seconde de farm. Chaque métier a sa propre échelle (une XP de Mineur ne vaut pas une XP de
- * Rochiste) : son bloc de référence se mine à {@code par-minute} unités par minute, donc
- * points(bloc) = 60 x XP(bloc) / (par-minute x XP(référence)). Ne dépend pas du joueur (métier actif, niveau,
- * bonus d'EcoJobs). Les {@code points} écrits dans le fichier d'un outil (rythmes forcés) passent devant.</p>
+ * Tool XP per block, computed on load from the EcoJobs jobs of the server ({@code xp-metiers} section of the config): a
+ * change of XP in EcoJobs follows on the tools at the next {@code /tools reload}.
+ * <p>1 point = 1 second of farming. Each job has its own scale (an XP of Mineur is not an XP of Rochiste): its reference
+ * block is mined at {@code par-minute} units per minute, so points(block) = 60 x XP(block) / (par-minute x
+ * XP(reference)). It does not depend on the player (active job, level, EcoJobs bonus). The {@code points} written in a
+ * tool's file (forced rates) come first.</p>
  */
-final class PointsMetiers {
+final class JobPoints {
 
-    private PointsMetiers() {
+    private JobPoints() {
     }
 
     /** famille -> {bloc: points}. */
-    static Map<String, Map<String, Double>> calculer(ConfigurationSection conf, File plugins, Logger log) {
+    static Map<String, Map<String, Double>> compute(ConfigurationSection conf, File plugins, Logger log) {
         Map<String, Map<String, Double>> out = new HashMap<>();
         if (conf == null) return out;
         File dossier = new File(plugins, conf.getString("dossier-ecojobs", "EcoJobs/jobs"));

@@ -1,18 +1,16 @@
-# FluxTools : réglages généraux. Les outils sont dans outils/<id>.yml (générés par
-# plugins/fluxplugin/FluxTools/assets/gen_outils.py, ne pas les modifier à la main).
+# FluxTools: general settings. Tools are in tools/<id>.yml, given by /fluxitems give <player> fluxtools:<id>.
 
-# Mondes où les outils ne progressent pas (comme les métiers, désactivés dans Utopia).
-mondes-exclus: [utopia]
+# Worlds where tools earn no XP.
+excluded-worlds: []
 
-# Renouvellement des quêtes journalières (pass Virale / Phénomène).
-fuseau: Europe/Paris
-heure-renouvellement: 6
+# Tell the whole server when a tool reaches its last level.
+announce-mastery: true
 
-# Menu Flux ouvert par accroupi + clic droit ou /outil.
-menu: outil
-
-# Annonce à tout le serveur quand un outil atteint son niveau maximum.
-annonce-maitrise: true
+# XP bar in the description of a levelled tool: one glyph per step ({step} from 0 to steps, pack of FluxAFK). Without
+# this picture, a bar of text is written instead.
+level-bar:
+  glyph: "fluxafk:bar_{step}"
+  steps: 20
 
 # Palette FluxTools (« rubis ») : rubis #FF4D6D (préfixe, titres), rose pâle #FFD6DE (texte),
 # grenat #A33A50 (filets), menthe #7BE0A1 (réussi), gris rosé #A89BA0 (pas atteint), blanc (valeurs). Le gain de BitBlock garde la convention commune (docs/notifications/bitblock.md).

@@ -226,10 +226,6 @@ public final class ItemFactory {
         if (lower.startsWith("hdb:") || lower.startsWith("hdb-")) {
             return headDatabase(m.substring(4).trim(), raw);
         }
-        if ((lower.startsWith("ecoitems:") || lower.startsWith("ecoarmor:")) && fr.influencraft.flux.adapters.eco.EcoItems.available()) {
-            ItemStack eco = fr.influencraft.flux.adapters.eco.EcoItems.lookup(m);
-            if (eco != null) return eco;
-        }
         if (lower.equals("player-head")) {
             ItemStack head = new ItemStack(Material.PLAYER_HEAD);
             if (viewer != null && head.getItemMeta() instanceof SkullMeta skull) {
@@ -248,6 +244,10 @@ public final class ItemFactory {
                 head.setItemMeta(skull);
             }
             return head;
+        }
+        // any item of the suite or of the custom item plugin, by its id (fluxarmor:virale_helmet)
+        if (lower.contains(":") && !lower.startsWith("minecraft:") && fr.influencraft.flux.api.items.CustomItems.exists(m)) {
+            return fr.influencraft.flux.api.items.CustomItems.item(m, viewer);
         }
         String name = lower.startsWith("minecraft:") ? m.substring(10) : m;
         Material material = Material.matchMaterial(name);

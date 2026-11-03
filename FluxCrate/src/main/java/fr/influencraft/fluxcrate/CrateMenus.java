@@ -4,10 +4,13 @@ import fr.influencraft.flux.api.FluxApi;
 import fr.influencraft.flux.api.MenuView;
 import fr.influencraft.flux.api.inventory.Items;
 import fr.influencraft.flux.api.inventory.Lore;
+import fr.influencraft.flux.api.items.CustomItems;
 import fr.influencraft.flux.api.list.ListEntry;
 import fr.influencraft.flux.api.list.Lists;
+import fr.influencraft.flux.api.text.Texts;
 import fr.influencraft.flux.api.util.Format;
 import fr.influencraft.flux.api.util.Sounds;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -181,7 +184,8 @@ final class CrateMenus {
     /** The item shown for a reward: its display item, name, lore, model data and shine. */
     @SuppressWarnings("deprecation") // custom model data: the number the resource pack of the server uses
     private static ItemStack display(Crate.Reward r, Lore lore, Player player, boolean shine) {
-        ItemStack item = Items.of(r.display(), r.name(), lore.build(), player);
+        ItemStack item = r.display() == null && r.item() != null ? fromItem(r, lore, player)
+                : Items.of(r.display() == null ? "PAPER" : r.display(), r.shownName(), lore.build(), player);
         if (item == null) item = new ItemStack(Material.PAPER);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
@@ -189,6 +193,18 @@ final class CrateMenus {
             if (r.glow() || shine) meta.setEnchantmentGlintOverride(true);
             item.setItemMeta(meta);
         }
+        return item;
+    }
+
+    /** The reward's item with its own name and description, the lines of the menu under them. */
+    private static ItemStack fromItem(Crate.Reward r, Lore lore, Player player) {
+        ItemStack item = CustomItems.item(r.item(), player);
+        if (item == null) return null;
+        item.setAmount(Math.min(r.amount(), item.getMaxStackSize()));
+        if (r.name() != null) item.editMeta(meta -> meta.displayName(Texts.parse(r.name(), player)));
+        List<Component> lines = new ArrayList<>(item.lore() == null ? List.of() : item.lore());
+        lines.addAll(Texts.lore(lore.build(), player));
+        item.lore(lines);
         return item;
     }
 

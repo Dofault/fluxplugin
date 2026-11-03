@@ -1,0 +1,58 @@
+# An armour set. Id = file name. Pieces are known to the whole suite as fluxarmor:<set>_<piece>
+# (/fluxitems give <player> fluxarmor:example_helmet). Copy this file without the « _ » to use it.
+
+# Effects (libreforge syntax) while the full set is worn, under these conditions.
+effects:
+  - id: damage_multiplier
+    args: {multiplier: 1.25}
+    triggers: [melee_attack, bow_attack]
+conditions: []
+
+# Effects while part of the set is worn. stacked: every step reached applies, else only the highest one.
+partial:
+  stacked: false
+  disabled-by-full: false
+  amounts:
+    2:
+      effects:
+        - id: damage_multiplier
+          args: {multiplier: 1.1}
+          triggers: [melee_attack]
+
+# Sounds of the full set being put on and taken off (Minecraft sound keys).
+sounds:
+  equip: {sound: item.armor.equip_netherite, volume: 1, pitch: 1}
+  unequip: {sound: item.armor.equip_generic, volume: 1, pitch: 0.8}
+
+# Optional: armour in real 3D (shader of the resource pack), written by /fluxarmor build. Blockbench model relative to
+# this plugin's folder. Frame: one skin pixel per unit, feet at y = 0, +x towards the player's left, +z forwards. Groups:
+# plastron_torse, plastron_bras_droit, plastron_bras_gauche, jambieres_torse, jambieres_jambe_droite,
+# jambieres_jambe_gauche, bottes_jambe_droite, bottes_jambe_gauche (a missing left limb mirrors the right one).
+# Flat fallback textures (64 x 32) are shown with Iris / OptiFine shaders, on macOS and Vulkan.
+# model: models/example.bbmodel
+# fallback-humanoid: models/example_humanoid.png
+# fallback-leggings: models/example_leggings.png
+# worn-by: ["otherplugin:some_item*"]   # other items wearing this 3D armour
+
+# Pieces: helmet, chestplate, leggings, boots, elytra (stands in for the chestplate). Every field of a Flux item
+# (material, model, equipment, name, lore, enchantments, attributes, flags, durability, unbreakable, glow), plus effects
+# and conditions of the piece alone, and an optional shaped recipe.
+pieces:
+  helmet:
+    material: iron_helmet
+    name: "&cExample helmet"
+    lore: ["&7Full set: +25% damage."]
+    enchantments: {protection: 4}
+    effects: []
+    recipe:
+      shape: ["DDD", "D D"]
+      ingredients: {D: DIAMOND}
+  chestplate:
+    material: iron_chestplate
+    name: "&cExample chestplate"
+  leggings:
+    material: iron_leggings
+    name: "&cExample leggings"
+  boots:
+    material: iron_boots
+    name: "&cExample boots"

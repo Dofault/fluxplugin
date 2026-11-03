@@ -521,8 +521,7 @@ public final class FluxAFK extends FluxPlugin {
 
     /** The textured bar (one glyph per step) when the pack has it, else a text bar (Bedrock players too). */
     private String bar(Player p, double ratio) {
-        int step = (int) Math.floor(ratio * barSteps);
-        String glyph = Clients.bedrock(p) ? null : CustomItems.glyph(barGlyph.replace("{step}", String.valueOf(step)));
+        String glyph = Clients.bedrock(p) ? null : CustomItems.bar(barGlyph, barSteps, ratio);
         if (glyph != null) return "&f" + glyph;
         return messages().raw("bar-text", "%bar%", Format.bar(ratio, 1.0, barSteps, "&#B376E5", "&8"));
     }
