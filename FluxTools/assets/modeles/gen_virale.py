@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Set viral en 3D (Labs) : pioche, pelle, hache, houe et épée FluxTools, armure EcoArmor, modèles et textures.
+"""Outils viraux en 3D (Labs) : pioche, pelle, hache, houe et épée FluxTools, modèles et textures.
+L'armure 3D (casque, icônes) vient de FluxArmor/assets/models/gen_virale_bbmodel.py ; ce script garde son calque 2D de secours.
 
     <venv avec Pillow et numpy>/python3 gen_virale.py <contents/influoutils> [dossier d'aperçus]
 
@@ -9,10 +10,7 @@ Même pack que le set phénomène (gen_phenomene.py, dont on reprend le moteur d
 - models/item/<outil>_virale.json : outils dessinés debout puis couchés en diagonale, comme une icône vanilla.
   Minecraft ne tourne un bloc que par pas de 22,5° entre -45° et 45° : chaque bloc est posé avec l'angle total
   (le sien + l'inclinaison de l'outil), ramené dans cet intervalle en échangeant largeur et hauteur ;
-- models/item/casque_virale.json : casque porté tel quel sur la tête (grand V, yeux néon, crête, ailerons) ;
-  icônes 3D du plastron, des jambières et des bottes (boîtes du joueur, mêmes textures que l'armure portée) ;
-- items/<pièce>_virale.json : définitions d'objets, cibles du composant item_model (clé `modele:` de l'outil,
-  FluxArmor/sets/<set>.yml pour l'armure) ;
+- items/<outil>_virale.json : définitions d'objets, cibles du composant item_model (clé `modele:` de l'outil) ;
 - equipment/virale.json et textures/entity/equipment/{humanoid,humanoid_leggings}/virale.png : armure portée
   (gabarit 64 x 32 du joueur, pixels doublés : plaques biseautées et néons en V) : le corps n'a ni animation
   ni émission ;
@@ -579,205 +577,6 @@ def tex_jambieres():
 
 
 # Casque : textures 16 x 16 posées en entier sur chaque face (plaques biseautées comme sur le corps).
-def tex_biseau(fond, reflet, ombre):
-    im = Image.new("RGBA", (16, 16))
-    for y in range(16):
-        for x in range(16):
-            im.putpixel((x, y), reflet if (x == 0 or y == 0) else ombre if (x == 15 or y == 15) else fond)
-    return im
-
-
-def tex_casque_neon(frames=12):
-    planche = Image.new("RGBA", (16, 16 * frames))
-    for f in range(frames):
-        for y in range(16):
-            for x in range(16):
-                v = 0.5 + 0.5 * math.sin(2 * math.pi * ((x + y) / 16 - f / frames))
-                planche.putpixel((x, y + 16 * f), palette(CRISTAL[3:], 0.35 + 0.65 * v))
-    return planche
-
-
-class Blocs:
-    """Blocs d'un modèle porté (sans inclinaison), symétrie gauche/droite, calque réseau sur l'acier."""
-
-    def __init__(self):
-        self.elements, self.acier = [], []
-
-    def __call__(self, f, t, tex, plein=False, rotation=None, reseau=True):
-        self.elements.append(element(f, t, tex, tex in ("cristal", "lueur", "c_neon"), plein, rotation))
-        if tex == "acier" and reseau:
-            self.acier.append((f, t, rotation))
-
-    def miroir(self, f, t, tex, plein=False, rotation=None, reseau=True):
-        self(f, t, tex, plein, rotation, reseau)
-        r = None
-        if rotation:
-            r = dict(rotation, origin=[16 - rotation["origin"][0]] + rotation["origin"][1:])
-            if r["axis"] != "x":
-                r["angle"] = -r["angle"]
-        self([16 - t[0], f[1], f[2]], [16 - f[0], t[1], t[2]], tex, plein, r, reseau)
-
-    def fini(self):
-        for f, t, rotation in self.acier:
-            self.elements.append(element([v - 0.02 for v in f], [v + 0.02 for v in t], "reseau", True, False, rotation))
-        return self.elements
-
-
-def casque():
-    """Porté tel quel sur la tête (sans calque d'armure) : la tête du joueur occupe 1,6 à 14,4, face au nord."""
-    b = Blocs()
-    P, C, N, L = "c_plaque", "c_clair", "c_noir", "c_neon"
-    # Coque : dôme en deux étages, nuque, côtés, front ; arcade claire en saillie.
-    b([0.8, 14.4, 0.8], [15.2, 15.4, 15.2], P, True)
-    b([2.2, 15.4, 2.2], [13.8, 16.0, 13.8], P, True)
-    b([0.8, 3.0, 14.4], [15.2, 14.4, 15.2], P, True)
-    b.miroir([0.8, 3.0, 1.6], [1.6, 14.4, 14.4], P, True)
-    b([0.8, 10.0, 0.8], [15.2, 14.4, 1.6], P, True)
-    b([1.2, 10.0, 0.2], [14.8, 11.0, 0.8], C, True)
-    # Visage en T : fente des yeux (deux yeux néon) et fente de la bouche, joues en deux épaisseurs.
-    b([4.0, 8.0, 1.2], [12.0, 10.0, 1.6], N, True)
-    b.miroir([4.6, 8.5, 1.0], [7.0, 9.5, 1.25], L)
-    b.miroir([0.8, 8.0, 0.8], [4.0, 10.0, 1.6], P, True)
-    b.miroir([0.8, 3.0, 0.8], [6.8, 8.0, 1.6], P, True)
-    b.miroir([0.6, 3.0, 0.2], [5.6, 6.8, 0.8], C, True)
-    b([6.8, 3.0, 1.2], [9.2, 8.0, 1.6], N, True)
-    # Grand V : deux lames claires du front jusqu'au-dessus de la tête, néon sur le devant, joyau à la pointe.
-    for cx, a in ((4.3, -45), (11.7, 45)):
-        r = {"angle": a, "axis": "z", "origin": [cx, 14.3, 0.2]}
-        b([cx - 5.5, 13.3, -0.4], [cx + 5.5, 15.3, 0.8], C, True, r)
-        b([cx - 5.0, 14.0, -0.6], [cx + 5.0, 14.6, -0.4], L, rotation=r)
-    b([7.0, 10.0, -0.7], [9.0, 12.0, 0.9], L, rotation={"angle": 45, "axis": "z", "origin": [8, 11, 0.1]})
-    # Crête du dessus, liseré néon.
-    b([7.0, 16.0, 2.5], [9.0, 17.0, 13.5], P, True)
-    b([7.5, 17.0, 3.0], [8.5, 17.3, 13.0], L)
-    # Cornes sur les tempes : partent vers l'extérieur, se relèvent, pointe néon.
-    b.miroir([-2.6, 10.6, 6.0], [1.0, 12.6, 10.0], C, True, {"angle": -22.5, "axis": "z", "origin": [1.0, 11.6, 8.0]})
-    r = {"angle": 22.5, "axis": "z", "origin": [-2.4, 12.4, 8.0]}
-    b.miroir([-3.3, 12.0, 6.9], [-1.5, 17.2, 9.1], C, True, r)
-    b.miroir([-3.0, 17.2, 7.2], [-1.8, 19.0, 8.8], L, rotation=r)
-    # Liseré néon au bas du casque, tout autour, et protège-nuque.
-    b([0.6, 2.6, 0.6], [15.4, 3.0, 1.0], L)
-    b([0.6, 2.6, 15.0], [15.4, 3.0, 15.4], L)
-    b.miroir([0.6, 2.6, 1.0], [1.0, 3.0, 15.0], L)
-    b([1.6, 1.6, 14.6], [14.4, 2.6, 15.4], P, True)
-    m = {"gui_light": "front", "textures": {k: TEX + k for k in CLES_CASQUE} | {"particle": TEX + "c_plaque"},
-         "elements": b.fini()}
-    m["display"] = affichages_objet({"rotation": [20, 155, 0], "translation": [0, -1.0, 0], "scale": [0.58, 0.58, 0.58]})
-    m["display"]["head"] = {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [1, 1, 1]}
-    return m
-
-
-CLES_CASQUE = ("c_plaque", "c_clair", "c_noir", "c_neon")
-
-
-def icone(elements, tex, gui):
-    m = {"gui_light": "front", "textures": {k: TEX + k for k in tex} | {"particle": TEX + tex[0]}, "elements": elements}
-    m["display"] = affichages_objet(gui)
-    return m
-
-
-def plastron():
-    els = [boite_entite([4, 2, 6], [12, 14, 10], 16, 16, 8, 12, 4, "armure", gonfle=1),
-           boite_entite([-2, 2, 6], [2, 14, 10], 40, 16, 4, 12, 4, "armure", gonfle=1),
-           boite_entite([14, 2, 6], [18, 14, 10], 40, 16, 4, 12, 4, "armure", miroir=True, gonfle=1)]
-    return icone(els, ["armure"], {"rotation": [10, -20, 0], "translation": [0, 1, 0], "scale": [0.55, 0.55, 0.55]})
-
-
-def jambieres():
-    els = [boite_entite([4, 12, 6], [12, 16, 10], 16, 16, 8, 12, 4, "jambieres", gonfle=0.5, rangs=(8, 12)),
-           boite_entite([3.9, 0, 6], [7.9, 12, 10], 0, 16, 4, 12, 4, "jambieres", gonfle=0.5),
-           boite_entite([8.1, 0, 6], [12.1, 12, 10], 0, 16, 4, 12, 4, "jambieres", miroir=True, gonfle=0.5)]
-    return icone(els, ["jambieres"], {"rotation": [10, -25, 0], "translation": [0, 0, 0], "scale": [0.8, 0.8, 0.8]})
-
-
-def bottes():
-    els = [boite_entite([2.5, 3, 6], [6.5, 9, 10], 0, 16, 4, 12, 4, "armure", gonfle=1, rangs=(6, 12), plein_haut=True),
-           boite_entite([9.5, 3, 6], [13.5, 9, 10], 0, 16, 4, 12, 4, "armure", miroir=True, gonfle=1, rangs=(6, 12), plein_haut=True)]
-    return icone(els, ["armure"], {"rotation": [20, -30, 0], "translation": [0, 0, 0], "scale": [0.9, 0.9, 0.9]})
-
-
-# ------------------------------------------------------------------ parures (pièces 3D suivies par FluxTools)
-# Repère : un pixel du skin = une unité, torse du joueur en x 4..12, y 2..14, z 6..10 (centre 8, 8, 8, celui de
-# l'entité d'affichage), devant vers +Z ; bras en x 0..4 et 12..16. L'armure portée est gonflée d'un pixel.
-
-
-def v_trois(b, apex_y, longueur, epais, z):
-    """Chevron en trois épaisseurs (plaque, bande claire, néon) dont la pointe est en bas, en (8, apex_y)."""
-    for a, sx in ((45, 1), (-45, -1)):
-        cx, cy = 8 + sx * longueur / 2 * 0.7071, apex_y + longueur / 2 * 0.7071
-        r = {"angle": a, "axis": "z", "origin": [round(cx, 3), round(cy, 3), z]}
-        dz = 1 if z > 8 else -1
-        for ep, z0, z1, tex in ((epais, 0.0, 1.6, "c_plaque"), (epais * 0.45, 1.6, 2.2, "c_clair"), (0.4, 2.2, 2.4, "c_neon")):
-            za, zb = sorted((z + dz * z0, z + dz * z1))
-            b([cx - longueur / 2, cy - ep / 2, za], [cx + longueur / 2, cy + ep / 2, zb], tex, tex != "c_neon", r)
-
-
-def parure_plastron():
-    b = Blocs()
-    # Grand V des épaules au sternum, petit V sur le ventre, même chose plus petit dans le dos.
-    v_trois(b, 6.4, 9.0, 2.6, 11.0)
-    v_trois(b, 2.6, 5.0, 1.8, 11.0)
-    v_trois(b, 7.4, 7.0, 2.2, 5.0)
-    # Gorgerin sous le menton.
-    b([4.6, 13.0, 10.4], [11.4, 15.4, 12.0], "c_plaque", True)
-    b([5.4, 14.6, 11.9], [10.6, 15.2, 12.2], "c_neon")
-    # Épaulières : trois plaques en escalier qui descendent vers l'extérieur, néon au bas de la dernière.
-    for x0, x1, y0, y1, z0, z1, tex in ((10.4, 18.8, 14.4, 16.4, 4.2, 11.8, "c_clair"), (13.0, 19.6, 12.0, 13.8, 4.6, 11.4, "c_plaque"),
-                                        (15.2, 20.2, 9.6, 11.2, 5.0, 11.0, "c_plaque")):
-        r = {"angle": -22.5, "axis": "z", "origin": [x0, (y0 + y1) / 2, 8]}
-        b.miroir([x0, y0, z0], [x1, y1, z1], tex, True, r)
-    r = {"angle": -22.5, "axis": "z", "origin": [15.2, 10.4, 8]}
-    b.miroir([15.6, 9.2, 5.2], [20.0, 9.6, 10.8], "c_neon", rotation=r)
-    return {"textures": {k: TEX + k for k in CLES_CASQUE} | {"particle": TEX + "c_plaque"}, "elements": b.fini()}
-
-
-def parure_jupe():
-    b = Blocs()
-    # Ceinture tout autour de la taille, boucle néon.
-    b([3.4, 1.0, 10.2], [12.6, 2.8, 11.6], "c_plaque", True)
-    b([3.4, 1.0, 4.4], [12.6, 2.8, 5.8], "c_plaque", True)
-    b.miroir([3.0, 1.0, 4.4], [4.2, 2.8, 11.6], "c_plaque", True)
-    b([7.1, 1.1, 11.4], [8.9, 2.7, 11.9], "c_neon", rotation={"angle": 45, "axis": "z", "origin": [8, 1.9, 11.6]})
-    # Pans évasés : deux devant (bande claire au milieu), un sur chaque côté, un derrière ; néon au bas.
-    for x0, x1 in ((4.0, 7.8), (8.2, 12.0)):
-        r = {"angle": -22.5, "axis": "x", "origin": [8, 1.2, 11.2]}
-        b([x0, -6.0, 10.6], [x1, 1.2, 11.8], "c_plaque", True, r)
-        b([x0 + 0.8, -4.8, 11.8], [x1 - 0.8, 0.6, 12.2], "c_clair", True, r)
-        b([x0, -6.4, 10.7], [x1, -6.0, 11.7], "c_neon", rotation=r)
-    r = {"angle": -22.5, "axis": "z", "origin": [3.2, 1.2, 8]}
-    b.miroir([2.4, -3.6, 5.2], [3.8, 1.2, 10.8], "c_plaque", True, r)
-    b.miroir([2.5, -4.0, 5.3], [3.7, -3.6, 10.7], "c_neon", rotation=r)
-    r = {"angle": 22.5, "axis": "x", "origin": [8, 1.2, 4.6]}
-    b([4.0, -5.0, 4.0], [12.0, 1.2, 5.2], "c_plaque", True, r)
-    b([4.0, -5.4, 4.1], [12.0, -5.0, 5.1], "c_neon", rotation=r)
-    return {"textures": {k: TEX + k for k in CLES_CASQUE} | {"particle": TEX + "c_plaque"}, "elements": b.fini()}
-
-
-PARURES = {"parure_virale_plastron": parure_plastron, "parure_virale_jupe": parure_jupe}
-
-
-ARMURE = {"casque": casque, "plastron": plastron, "jambieres": jambieres, "bottes": bottes}
-
-
-def joueur():
-    """Joueur debout (pixels, y vers le haut, de face vers +Z, sa droite vers -X), armure portée et casque."""
-    corps = [element([-4, 24, -4], [4, 32, 4], "peau", plein=True), element([-4, 12, -2], [4, 24, 2], "chemise", plein=True),
-             element([-8, 12, -2], [-4, 24, 2], "chemise", plein=True), element([4, 12, -2], [8, 24, 2], "chemise", plein=True),
-             element([-4, 0, -2], [0, 12, 2], "pantalon", plein=True), element([0, 0, -2], [4, 12, 2], "pantalon", plein=True)]
-    armure = [boite_entite([-4, 12, -2], [4, 24, 2], 16, 16, 8, 12, 4, "porte", gonfle=1),
-              boite_entite([-8, 12, -2], [-4, 24, 2], 40, 16, 4, 12, 4, "porte", gonfle=1),
-              boite_entite([4, 12, -2], [8, 24, 2], 40, 16, 4, 12, 4, "porte", miroir=True, gonfle=1),
-              boite_entite([-4, 0, -2], [0, 12, 2], 0, 16, 4, 12, 4, "porte", gonfle=1),
-              boite_entite([0, 0, -2], [4, 12, 2], 0, 16, 4, 12, 4, "porte", miroir=True, gonfle=1),
-              boite_entite([-4, 12, -2], [4, 24, 2], 16, 16, 8, 12, 4, "porte2", gonfle=0.5),
-              boite_entite([-4, 0, -2], [0, 12, 2], 0, 16, 4, 12, 4, "porte2", gonfle=0.5),
-              boite_entite([0, 0, -2], [4, 12, 2], 0, 16, 4, 12, 4, "porte2", miroir=True, gonfle=0.5)]
-    tete = pose(casque()["elements"], np.diag([-0.625, 0.625, -0.625]), np.array([5.0, 23.0, 5.0]))
-    # Parures : repère centré sur le torse (8, 8, 8), comme l'entité d'affichage de FluxTools.
-    parures = [e for fn in PARURES.values() for e in pose(fn()["elements"], np.eye(3), np.array([-8.0, 10.0, -8.0]))]
-    return corps + armure + tete + parures
-
-
 # ---------------------------------------------------------------------------------------- aperçus
 
 
@@ -796,30 +595,6 @@ def apercus(planches, armures, dossier):
         for k, h in (("peau", "#C8956D"), ("chemise", "#3D7A7A"), ("pantalon", "#3B4FA0")):
             out[k] = np.array(Image.new("RGBA", (4, 4), rgb(h) + (255,)), float)
         return out
-
-    # Joueur en armure : de face, trois quarts, de dos, trois quarts dos, et de nuit.
-    scene = joueur()
-    vues = [rot("y", 0), rot("x", 10) @ rot("y", 35), rot("y", 180), rot("x", 10) @ rot("y", 145)]
-    planche = Image.new("RGBA", (400 * 5, 520))
-    for i, v in enumerate(vues):
-        planche.paste(rendre(scene, tex(4), v, taille=520, echelle=12, centre=(0, 17)).crop((60, 0, 460, 520)), (400 * i, 0))
-    planche.paste(rendre(scene, tex(4), vues[1], taille=520, echelle=12, centre=(0, 17), nuit=True, fond=(6, 4, 10, 255)).crop((60, 0, 460, 520)), (1600, 0))
-    planche.save(os.path.join(dossier, "set_porte.png"))
-    # Icônes de l'armure, et casque de près.
-    planche = Image.new("RGBA", (256 * 4, 256))
-    for i, fn in enumerate(ARMURE.values()):
-        m = fn()
-        g = m["display"]["gui"]
-        r, s = g["rotation"], g["scale"][0]
-        A = rot("x", r[0]) @ rot("y", r[1]) @ rot("z", r[2]) * s
-        els = pose(m["elements"], A, np.array(g["translation"], float) - A @ np.array([8.0, 8.0, 8.0]))
-        planche.paste(rendre(els, tex(4), np.eye(3), taille=256, echelle=256 / 18), (256 * i, 0))
-    planche.save(os.path.join(dossier, "icones_armure.png"))
-    c = casque()["elements"]
-    planche = Image.new("RGBA", (420 * 3, 420))
-    for i, v in enumerate([rot("y", 180), rot("x", 15) @ rot("y", 145), rot("x", 15) @ rot("y", 250)]):
-        planche.paste(rendre(pose(c, np.eye(3), -np.array([8.0, 11.0, 8.0])), tex(4), v, taille=420, echelle=420 / 24), (420 * i, 0))
-    planche.save(os.path.join(dossier, "casque.png"))
 
     # Icônes d'inventaire (affichage gui = identité) sur fond d'inventaire, puis de nuit.
     for suffixe, fond, nuit in (("", (139, 139, 139, 255), False), ("_nuit", (8, 10, 22, 255), True)):
@@ -861,12 +636,10 @@ def main():
 
     planches = {"acier": tex_acier(), "sombre": tex_uni(SOMBRE, 121, 1.2), "argent": tex_argent(),
                 "bois": tex_uni(BOIS, 141), "poignee": tex_poignee(), "cristal": tex_cristal(),
-                "lueur": tex_lueur(), "reseau": tex_reseau(),
-                "c_plaque": tex_biseau(PLAQUE, CLAIR, OMBRE_P), "c_clair": tex_biseau(CLAIR, REFLET, PLAQUE),
-                "c_noir": tex_biseau(CREUX, CREUX, CREUX), "c_neon": tex_casque_neon()}
+                "lueur": tex_lueur(), "reseau": tex_reseau()}
     for nom, im in planches.items():
         im.save(os.path.join(texdir, nom + ".png"))
-    for nom, tempo in {"cristal": 2, "lueur": 2, "reseau": 2, "c_neon": 2}.items():
+    for nom, tempo in {"cristal": 2, "lueur": 2, "reseau": 2}.items():
         with open(os.path.join(texdir, nom + ".png.mcmeta"), "w") as fh:
             json.dump({"animation": {"frametime": tempo, "interpolate": True}}, fh, indent=2)
 
@@ -890,18 +663,6 @@ def main():
         armures[nom].save(os.path.join(d, "virale.png"))
     ecrire_json(os.path.join(pack, "equipment/virale.json"), {"layers": {
         "humanoid": [{"texture": NS + ":virale"}], "humanoid_leggings": [{"texture": NS + ":virale"}]}})
-    for nom, fn in PARURES.items():
-        m = fn()
-        verifier(nom, [e for e in m["elements"] if "rotation" in e])
-        ecrire_json(os.path.join(pack, "models/item", nom + ".json"), {"credit": credit} | m)
-        ecrire_json(os.path.join(pack, "items", nom + ".json"), {"model": {"type": "minecraft:model", "model": NS + ":item/" + nom}})
-    for piece, fn in ARMURE.items():
-        nom = piece + "_virale"
-        m = fn()
-        verifier(nom, [e for e in m["elements"] if "rotation" in e])
-        ecrire_json(os.path.join(pack, "models/item", nom + ".json"), {"credit": credit} | m)
-        ecrire_json(os.path.join(pack, "items", nom + ".json"), {"model": {"type": "minecraft:model", "model": NS + ":item/" + nom}})
-
     os.makedirs(os.path.join(dest, "configs"), exist_ok=True)
     with open(os.path.join(dest, "configs/virale.yml"), "w") as fh:
         fh.write(
