@@ -215,9 +215,10 @@ public final class RankMenu implements org.bukkit.event.Listener {
             icon = badge + "off";
             lore.ko("Pas encore accessible.");
         }
-        if (cycle == 0 && i <= position + 1 && offeringExists.test(r.id())) {
+        String offering = cycle == 0 ? r.id() : r.id() + "_p" + cycle;
+        if (i <= position + 1 && offeringExists.test(offering)) {
             lore.left(i == position + 1 ? "Faire l'offrande" : "Voir l'offrande");
-            click = "[player] offrande " + r.id();
+            click = "[player] offrande " + offering;
         }
         String prefix = cycles.get(cycle).isBlank() ? "" : " &7" + cycles.get(cycle);
         String name = "&" + r.colour() + "&l" + r.name() + prefix + " &8" + (i + 1) + "/" + ranks.size() * cycles.size();

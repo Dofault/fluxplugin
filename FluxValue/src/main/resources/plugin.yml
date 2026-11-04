@@ -1,0 +1,12 @@
+name: FluxValue
+version: 26.2
+main: fr.influencraft.fluxvalue.FluxValue
+api-version: "26.2"
+description: Engine of the economy. Weights of everything farmable; job XP and money, shop prices, offerings and collections derive from them.
+authors: [Influencraft]
+depend: [Flux]
+
+permissions:
+  fluxvalue.admin:
+    description: Read values, reload them, write the generated files.
+    default: op

@@ -40,5 +40,6 @@
         <module>FluxFamily</module>
         <module>FluxPW</module>
         <module>FluxAFK</module>
+        <module>FluxValue</module>
     </modules>
 </project>

@@ -1,0 +1,2 @@
+# Weights of everything that can be farmed, in points. See assets/gen_values.py for how a server builds its own.
+jobs: {}

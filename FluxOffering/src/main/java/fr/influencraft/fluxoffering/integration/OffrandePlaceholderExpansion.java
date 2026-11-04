@@ -48,7 +48,7 @@ public final class OffrandePlaceholderExpansion {
             PlayerData d = dataManager.get(online);
             return switch (params) {
                 case "current_name" -> current.displayName();
-                case "current_id" -> current.id();
+                case "current_id" -> current.id().replaceFirst("_p\\d+$", ""); // a prestige offering has the background of its rank
                 case "current_percent" -> String.valueOf(ProgressCalculator.percent(d, current));
                 case "current_progress" -> ProgressCalculator.completedTypeCount(d, current) + "/" + ProgressCalculator.totalTypesWithMoney(current);
                 case "current_complete" -> String.valueOf(ProgressCalculator.isComplete(d, current));

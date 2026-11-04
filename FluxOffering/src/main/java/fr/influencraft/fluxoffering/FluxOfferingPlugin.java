@@ -68,6 +68,8 @@ public final class FluxOfferingPlugin extends JavaPlugin {
                     () -> dataManager.loadIntoCache(player.getUniqueId(), player.getName()));
         }
 
+        fr.influencraft.flux.api.value.Values.onChange(configManager::reload);
+
         // rank menu (/grade): ranks.yml, Flux menu grades
         new fr.influencraft.fluxoffering.ranks.RankMenu(this, id -> configManager.getCollection(id) != null).enable();
 

@@ -13,7 +13,8 @@ the player's inventory and draw buttons over it. Developed for the Influencraft 
 | **FluxFly** | Fly time bank (/fly) in the allowed worlds, unlimited flight by permission (replaces PowerFly) | — |
 | **FluxLands** | Towns and nations on top of Lands: bank, plots, roles, shops, warps | optional |
 | **FluxMigration** | One-time data migrations from former plugins (deploy for a migration, remove afterwards) | — |
-| **FluxOffering** | Item offerings to rank up | — |
+| **FluxOffering** | Item offerings to rank up, quantities computed from a time budget | — |
+| **FluxValue** | Engine of the economy: one file of weights; job XP and money, shop prices, offerings and collections derive from it | yes |
 | **FluxPets** | Collectible cards, boosters and pets | — |
 | **FluxPW** | Player warps (/pw): categories, sponsored places, ratings, favourites, admission fees, password, blocked players (replaces PlayerWarps) | — |
 | **FluxReferral** | Referral system with per-player server addresses | — |

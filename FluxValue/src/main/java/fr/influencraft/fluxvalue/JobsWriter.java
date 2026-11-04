@@ -1,0 +1,127 @@
+package fr.influencraft.fluxvalue;
+
+import org.bukkit.configuration.file.YamlConfiguration;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.logging.Logger;
+
+/**
+ * Writes the numbers of each job into the job plugin (EcoJobs reads only its files). Only {@code level-xp-requirements},
+ * {@code xp-gain-methods}, the money effects and the money placeholders are generated; names, lore and menus stay
+ * hand-written. A job missing from sources.yml (Defenseur) is left alone. When FluxJobs replaces EcoJobs one day, it
+ * reads the model and this class goes away.
+ */
+final class JobsWriter {
+
+    private final Model model;
+    private final Logger log;
+
+    JobsWriter(Model model, Logger log) {
+        this.model = model;
+        this.log = log;
+    }
+
+    int write(File folder) throws IOException {
+        int written = 0;
+        for (Model.Job job : model.jobs.values()) {
+            File file = new File(folder, job.id() + ".yml");
+            if (!file.exists()) {
+                log.warning("No job file for " + job.id());
+                continue;
+            }
+            YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+            List<Map<String, Object>> methods = new ArrayList<>();
+            List<Map<?, ?>> effects = new ArrayList<>();
+            for (Map<?, ?> e : yaml.getMapList("effects")) {
+                if (!"give_money".equals(String.valueOf(e.get("id")))) effects.add(e);
+            }
+            for (List<Model.Source> group : groups(job)) {
+                methods.add(method(job, group));
+                effects.add(money(job, group));
+            }
+            yaml.set("level-xp-requirements", model.curve(job));
+            yaml.set("xp-gain-methods", methods);
+            yaml.set("effects", effects);
+            placeholders(yaml, job);
+            yaml.save(file);
+            written++;
+        }
+        return written;
+    }
+
+    /** Sources paying the same thing on the same trigger make one entry, as they would by hand. */
+    private List<List<Model.Source>> groups(Model.Job job) {
+        Map<String, List<Model.Source>> out = new LinkedHashMap<>();
+        for (Model.Source s : job.sources()) {
+            String key = s.trigger() + "|" + s.weight() + "|" + s.fixedValue() + "|" + s.filters() + "|" + s.label();
+            out.computeIfAbsent(key, k -> new ArrayList<>()).add(s);
+        }
+        return new ArrayList<>(out.values());
+    }
+
+    private Map<String, Object> filters(List<Model.Source> group) {
+        Model.Source first = group.get(0);
+        Map<String, Object> filters = new LinkedHashMap<>();
+        List<String> blocks = new ArrayList<>();
+        for (Model.Source s : group) blocks.addAll(s.blocks());
+        if (!blocks.isEmpty()) filters.put("blocks", blocks);
+        filters.putAll(first.filters());
+        return filters;
+    }
+
+    private Map<String, Object> method(Model.Job job, List<Model.Source> group) {
+        Model.Source first = group.get(0);
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("trigger", first.trigger());
+        if (first.label() != null) m.put("display-label", first.label());
+        m.put(first.fixedValue() ? "value" : "multiplier", first.weight());
+        m.put("conditions", job.conditions());
+        Map<String, Object> filters = filters(group);
+        if (!filters.isEmpty()) m.put("filters", filters);
+        return m;
+    }
+
+    private Map<String, Object> money(Model.Job job, List<Model.Source> group) {
+        Model.Source first = group.get(0);
+        Map<String, Object> e = new LinkedHashMap<>();
+        e.put("id", "give_money");
+        e.put("args", Map.of("amount", expression(first)));
+        Map<String, Object> filters = filters(group);
+        if (!filters.isEmpty()) e.put("filters", filters);
+        if (!job.conditions().isEmpty()) e.put("conditions", job.conditions());
+        e.put("triggers", List.of(first.trigger()));
+        return e;
+    }
+
+    /**
+     * Money follows XP everywhere: a trigger whose value multiplies the XP (mobs: health; table: level cost; brew:
+     * bottles; craft: amount) multiplies the money too.
+     */
+    private String expression(Model.Source s) {
+        String k = String.format(Locale.ROOT, "%.6f", s.weight() * model.moneyPerPoint());
+        return "max(round(" + k + " * %level%" + (s.fixedValue() ? "" : " * %v%") + ") / 100, 0.01)";
+    }
+
+    private void placeholders(YamlConfiguration yaml, Model.Job job) {
+        List<Map<?, ?>> list = yaml.getMapList("level-placeholders");
+        if (list.isEmpty()) return;
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Map<?, ?> p : list) {
+            Map<String, Object> copy = new LinkedHashMap<>();
+            for (Map.Entry<?, ?> e : p.entrySet()) copy.put(String.valueOf(e.getKey()), e.getValue());
+            for (Model.Source s : job.sources()) {
+                if (String.valueOf(p.get("id")).equals(s.placeholder())) {
+                    copy.put("value", String.format(Locale.ROOT, "max(round(%.6f * %%level%%) / 100, 0.01)", s.weight() * model.moneyPerPoint()));
+                }
+            }
+            out.add(copy);
+        }
+        yaml.set("level-placeholders", out);
+    }
+}

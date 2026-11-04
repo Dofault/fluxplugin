@@ -29,6 +29,8 @@ public final class ConfigManager {
 
     private Settings settings;
     private WikiLinks wikiLinks;
+    /** Offerings computed from offerings.yml and the values of the economy: nothing to write back. */
+    private boolean managed;
     private final Map<String, CollectionDefinition> collections = new LinkedHashMap<>();
 
     public ConfigManager(JavaPlugin plugin) {
@@ -73,6 +75,12 @@ public final class ConfigManager {
 
     private void loadCollections() {
         collections.clear();
+        Map<String, CollectionDefinition> computed = OfferingBudget.load(plugin);
+        managed = computed != null;
+        if (managed) {
+            collections.putAll(computed);
+            return;
+        }
         if (!collectionsFile.exists()) {
             plugin.saveResource("collections.yml", false);
         }
@@ -129,6 +137,10 @@ public final class ConfigManager {
      * after every add/remove/quantity change so progress is never lost on a crash.
      */
     public synchronized void saveCollections() {
+        if (managed) {
+            plugin.getLogger().warning("Offerings are computed from offerings.yml: an edit in game is not saved, change that file.");
+            return;
+        }
         YamlConfiguration yaml = new YamlConfiguration();
         ConfigurationSection root = yaml.createSection("collections");
         for (CollectionDefinition def : collections.values()) {

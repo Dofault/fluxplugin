@@ -1,0 +1,23 @@
+# Coefficients of the economy. Everything is counted in points, see sources.yml.
+# Points a player earns in 2 minutes of optimal play, in every job.
+points-per-2-minutes: 7050
+# BitBlock earned in those 2 minutes by a level 100 player. Money scales with the level: level 200 earns twice this.
+# This is the master switch of the money: doubling it doubles all job income and all shop prices.
+money-per-2-minutes-at-level-100: 705
+# How many more items an area enchantment harvests. Never counts for jobs. Blocks concerned: "area: true" in sources.yml.
+area-factor: 14
+shop:
+  # Share of the job income the shop pays for the same harvest (0.25: a quarter of what a level 100 job pays).
+  sell-share: 0.25
+  # Buying from the shop costs this many times what the shop pays.
+  buy-multiplier: 62.5
+jobs:
+  max-level: 400
+  # Optimal hours to reach max level, in each job.
+  hours-to-max-level: 400
+collections:
+  tiers: 7
+  # The last tier is what a player farms in these hours of optimal play.
+  hours-of-last-tier: 2
+  # Second tier = last tier ^ this. Higher: the first tiers take longer. The last tier does not change.
+  second-tier-exponent: 0.455

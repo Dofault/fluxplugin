@@ -7,7 +7,7 @@ main: fr.influencraft.fluxshop.FluxShop
 api-version: '26.2'
 
 depend: [Flux]
-softdepend: [LuckPerms]
+softdepend: [LuckPerms, FluxValue]
 
 permissions:
   supermarket.admin:

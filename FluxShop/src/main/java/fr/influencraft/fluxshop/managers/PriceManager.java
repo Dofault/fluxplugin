@@ -51,6 +51,7 @@ public class PriceManager {
         priceConfig.set(path + ".buy", buy);
         priceConfig.set(path + ".sell", sell);
         priceConfig.set(path + ".category", category);
+        priceConfig.set(path + ".fixed", true); // an admin's price wins over the computed one
         savePriceFile();
     }
 
@@ -66,12 +67,22 @@ public class PriceManager {
         return priceConfig.contains("items." + itemID + ".sell");
     }
 
+    /**
+     * prices.yml says what the shop trades and in which category; the amount comes from the values of the economy
+     * (FluxValue) unless the line is {@code fixed: true} or the item has no value, which keep their written price.
+     */
     public double getBuyPrice(String itemID) {
-        return priceConfig.getDouble("items." + itemID + ".buy", 0);
+        if (!hasBuyPrice(itemID)) return 0;
+        java.util.OptionalDouble value = priceConfig.getBoolean("items." + itemID + ".fixed") ? java.util.OptionalDouble.empty()
+                : fr.influencraft.flux.api.value.Values.buyPrice(itemID);
+        return value.isPresent() ? value.getAsDouble() : priceConfig.getDouble("items." + itemID + ".buy", 0);
     }
 
     public double getSellPrice(String itemID) {
-        return priceConfig.getDouble("items." + itemID + ".sell", 0);
+        if (!hasSellPrice(itemID)) return 0;
+        java.util.OptionalDouble value = priceConfig.getBoolean("items." + itemID + ".fixed") ? java.util.OptionalDouble.empty()
+                : fr.influencraft.flux.api.value.Values.sellPrice(itemID);
+        return value.isPresent() ? value.getAsDouble() : priceConfig.getDouble("items." + itemID + ".sell", 0);
     }
 
     /**
