@@ -29,7 +29,7 @@ import java.util.OptionalDouble;
  * mines 10 times slower than the optimal but fishes almost as fast, which is why the first grades ask for little stone
  * and a few fish. Before {@code area-from-grade}, items are counted without the area enchantment. A cycle asks for the
  * same items again ({@code slots}), only quantities change. Adding a grade or changing a weight moves everything.
- * The money asked follows the same curve, see {@link #money}.
+ * The first grades follow anchors in offerings.yml, the money asked too, see {@link #hours} and {@link #money}.
  */
 final class OfferingBudget {
 
@@ -96,22 +96,54 @@ final class OfferingBudget {
         return out;
     }
 
+    /**
+     * Hours of a grade. Up to the last of {@code budget.anchors} (optimal hours of effort by grade, the first offerings
+     * were tuned on what players know) the anchors decide, geometric between two of them; then the curve of total-hours.
+     */
     static double hours(YamlConfiguration c, int grade, int last) {
+        double anchored = anchored(c, "budget.anchors", grade);
+        if (!Double.isNaN(anchored)) return anchored / speed(c, "default", grade);
+        return curveHours(c, grade, last);
+    }
+
+    private static double curveHours(YamlConfiguration c, int grade, int last) {
         double total = c.getDouble("budget.total-hours", 1000);
         double exponent = c.getDouble("budget.exponent", 2.5);
         return total * (Math.pow((double) grade / last, exponent) - Math.pow((double) (grade - 1) / last, exponent));
     }
 
+    /** Effort of a grade in optimal hours: what the quantities of the resources grow with. */
+    private static double effort(YamlConfiguration c, int grade, int last) {
+        return hours(c, grade, last) * speed(c, "default", grade);
+    }
+
+    /** Value at this grade from anchors {@code grade: value}, geometric in between; NaN past the last one. */
+    private static double anchored(YamlConfiguration c, String path, int grade) {
+        ConfigurationSection section = c.getConfigurationSection(path);
+        if (section == null) return Double.NaN;
+        java.util.TreeMap<Integer, Double> anchors = new java.util.TreeMap<>();
+        for (String k : section.getKeys(false)) anchors.put(Integer.parseInt(k), section.getDouble(k));
+        if (anchors.isEmpty() || grade > anchors.lastKey()) return Double.NaN;
+        var low = anchors.floorEntry(grade);
+        var high = anchors.ceilingEntry(grade);
+        if (low == null) return high.getValue();
+        if (low.getKey().equals(high.getKey())) return low.getValue();
+        double t = (double) (grade - low.getKey()) / (high.getKey() - low.getKey());
+        return low.getValue() * Math.pow(high.getValue() / low.getValue(), t);
+    }
+
     /**
-     * Money follows the curve of the resources (hours x speed at a grade), anchored on one offering of the first cycle:
-     * {@code money.anchor-rank} asks {@code money.anchor-amount}. Two significant digits. 0 when no anchor is set.
+     * Money asked: {@code money.anchors} (grade: amount), then the curve of the resources from the last anchor on.
+     * Two significant digits. 0 when no anchor is set.
      */
     static long money(YamlConfiguration c, int grade, int last) {
-        int anchor = c.getStringList("ranks").indexOf(c.getString("money.anchor-rank", ""));
-        long amount = c.getLong("money.anchor-amount", 0);
-        if (anchor <= 0 || amount <= 0) return 0;
-        double reference = hours(c, anchor, last) * speed(c, "default", anchor);
-        double value = amount * hours(c, grade, last) * speed(c, "default", grade) / reference;
+        double value = anchored(c, "money.anchors", grade);
+        if (Double.isNaN(value)) {
+            ConfigurationSection section = c.getConfigurationSection("money.anchors");
+            if (section == null || section.getKeys(false).isEmpty()) return 0;
+            int end = section.getKeys(false).stream().mapToInt(Integer::parseInt).max().orElse(1);
+            value = section.getDouble(String.valueOf(end)) * effort(c, grade, last) / effort(c, end, last);
+        }
         if (value < 1) return 1;
         double scale = Math.pow(10, Math.floor(Math.log10(value)) - 1);
         return Math.round(Math.round(value / scale) * scale);
