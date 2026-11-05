@@ -28,6 +28,7 @@ final class DevGear implements CustomItems.Source {
 
     static {
         ITEMS.put("dev_pickaxe", Material.NETHERITE_PICKAXE);
+        ITEMS.put("dev_pickaxe_tranchee", Material.NETHERITE_PICKAXE);
         ITEMS.put("dev_pickaxe_silk", Material.NETHERITE_PICKAXE);
         ITEMS.put("dev_axe", Material.NETHERITE_AXE);
         ITEMS.put("dev_shovel", Material.NETHERITE_SHOVEL);
@@ -46,8 +47,18 @@ final class DevGear implements CustomItems.Source {
         ITEMS.put("dev_elytra", Material.ELYTRA);
     }
 
-    /** Would cancel what the gear is for: silk touch cancels fortune (see dev_pickaxe_silk), riptide stops a throw. */
+    /** Would cancel what the gear is for: silk touch cancels fortune, riptide stops a throw. */
     private static final Set<String> LEFT_OUT = Set.of("silk_touch", "riptide");
+
+    /** The pickaxes compare harvests: fortune alone, the area alone, silk touch. Left out instead of {@link #LEFT_OUT}. */
+    private static final Map<String, Set<String>> PICKAXES = Map.of(
+            "dev_pickaxe", Set.of("silk_touch", "tranchee"),
+            "dev_pickaxe_tranchee", Set.of("silk_touch", "fortune"),
+            "dev_pickaxe_silk", Set.of("fortune"));
+
+    /** Shown after the item's name where the id alone tells them apart. */
+    private static final Map<String, String> SUFFIX = Map.of(
+            "dev_pickaxe", " Fortune", "dev_pickaxe_tranchee", " Tranchée", "dev_pickaxe_silk", " Soie");
 
     private final NamespacedKey key;
 
@@ -66,17 +77,17 @@ final class DevGear implements CustomItems.Source {
         Material material = ITEMS.get(id);
         if (material == null) return null;
         ItemStack item = new ItemStack(material);
-        boolean silk = id.endsWith("_silk");
+        Set<String> leftOut = PICKAXES.getOrDefault(id, LEFT_OUT);
         for (Enchantment e : Registry.ENCHANTMENT) {
             String name = e.getKey().getKey();
             if (e.isCursed() || !e.canEnchantItem(item)) continue;
-            if (silk ? name.equals("fortune") : LEFT_OUT.contains(name)) continue;
-            if (name.equals("riptide")) continue;
+            if (leftOut.contains(name)) continue;
             item.addUnsafeEnchantment(e, e.getMaxLevel());
         }
         ItemMeta meta = item.getItemMeta();
         meta.setUnbreakable(true);
-        meta.displayName(Texts.colors("&#FF5C5C&lDEV ").append(Component.translatable(material.translationKey())));
+        meta.displayName(Texts.colors("&#FF5C5C&lDEV ").append(Component.translatable(material.translationKey()))
+                .append(Texts.colors("&f" + SUFFIX.getOrDefault(id, ""))));
         meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, id);
         item.setItemMeta(meta);
         return item;
