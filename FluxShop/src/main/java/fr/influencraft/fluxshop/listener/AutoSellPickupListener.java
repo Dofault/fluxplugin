@@ -10,7 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityPickupItemEvent;
+import org.bukkit.event.player.PlayerAttemptPickupItemEvent;
 import org.bukkit.inventory.ItemStack;
 
 /**
@@ -18,10 +18,12 @@ import org.bukkit.inventory.ItemStack;
  * ground (farming, mining, fishing, mob loot) that has a configured sell price is sold on the
  * spot instead of entering their inventory.
  * <p>
- * Deliberately hooks {@link EntityPickupItemEvent} rather than any inventory-add event:
- * that event only fires for a dropped item entity being vacuumed up from the world, never for
- * items moved between inventories (chest sorting, shift-clicking, hoppers) — so tidying up
- * storage is never mistaken for "farming" and never triggers a sale.
+ * Hooks Paper's {@link PlayerAttemptPickupItemEvent}, fired for an item on the ground the player
+ * touches <b>even when his inventory is full</b> (Paper calls it before checking the room left,
+ * checked in ItemEntity#playerTouch of 26.2), whereas the Bukkit pickup event only fires when the
+ * item fits: a full inventory is exactly when selling on the spot matters. Like the pickup event, it
+ * never fires for items moved between inventories (chest sorting, shift-clicking, hoppers), so
+ * tidying up storage is never mistaken for "farming" and never triggers a sale.
  * <p>
  * Deliberately sends no chat message per sale (farming fast would spam the chat into
  * uselessness) — {@code Money.give(...)} goes through Vault → CMI like every other
@@ -48,10 +50,8 @@ public class AutoSellPickupListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void onPickup(EntityPickupItemEvent event) {
-        if (!(event.getEntity() instanceof Player player)) {
-            return;
-        }
+    public void onPickup(PlayerAttemptPickupItemEvent event) {
+        Player player = event.getPlayer();
         if (!autoSellItemManager.hasActiveIn(player)) {
             return;
         }
