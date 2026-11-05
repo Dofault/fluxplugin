@@ -63,7 +63,7 @@ final class DevGear implements CustomItems.Source {
             "dev_fishing_rod_phenomene", " Phénomène");
 
     /** Gear built on an item of the server rather than a plain material: its custom behaviour is kept (crate rod). */
-    private static final Map<String, String> BASE = Map.of("dev_fishing_rod_phenomene", "influrewards:canne_peche_phenomene");
+    private static final Map<String, String> BASE = Map.of("dev_fishing_rod_phenomene", "customfishing:legendary_rod");
 
     private final NamespacedKey key;
 
