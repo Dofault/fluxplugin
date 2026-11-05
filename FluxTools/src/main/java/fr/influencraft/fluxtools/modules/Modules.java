@@ -68,6 +68,9 @@ public final class Modules {
                     "&#FFD94D&lRéglages &8► &#B376E5Notif. XP métier &#2ECF7Bactivée.",
                     "&#FFD94D&lRéglages &8► &#B376E5Notif. XP métier &#FF5C5Cdésactivée.");
         }
+        if (on("job-coefficient") && jobsAvailable("job-coefficient")) {
+            pm.registerEvents(new JobCoefficientListener((fr.influencraft.flux.api.FluxPlugin) plugin), plugin);
+        }
         if (on("money-gain-actionbar")) {
             enableMoneyGainActionBar();
         }

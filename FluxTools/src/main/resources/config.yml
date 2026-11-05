@@ -52,6 +52,9 @@ modules:
 
   # Boss bar on every job XP gain, hidden after hide-after-seconds without gain. Needs EcoJobs.
   # One bar per player, following the last action. Players toggle it with /jobxpbar on|off.
+  # Line in the chat at each job level: the money coefficient, before and after.
+  job-coefficient:
+    enabled: true
   job-xp-bossbar:
     enabled: true
     hide-after-seconds: 4

@@ -24,3 +24,4 @@ info: "&#FFD6DE%tool% &7uid &f%uid% &7level &f%level% &7xp &f%xp% &7blocks &f%bl
 origins:
   default: "Tool"
   repair: "Repair"
+job-coefficient: "!&8» &7Earning coefficient &8► &f×%before% &8→ &#2ECF7B×%after%"
