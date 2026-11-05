@@ -184,19 +184,23 @@ public final class RankMenu implements org.bukkit.event.Listener {
     }
 
     /**
-     * A step of the route: the rank's badge, coloured once passed, greyed further (the next one glows), the player's
-     * head on his step. A click opens the rank's offering up to the next step
-     * (the offering command checks the access again).
+     * A step of the route: the rank's badge, coloured once passed, greyed for the next one (which glows), the player's
+     * head on his step, and past the next one a single "?" badge that tells nothing about the rank. A click opens the
+     * rank's offering up to the next step (the offering command checks the access again).
      */
     private ListEntry stepEntry(Player player, int i, int position) {
+        if (i > position + 1) {
+            Lore hidden = Lore.create().description("Ce grade n'a pas encore été découvert.").ko("Pas encore accessible.");
+            String title = "&7&l? ? ? &8" + (i + 1) + "/" + ranks.size() * cycles.size();
+            return entry(player, "step:" + i, "itemsadder:fluxui:rang_hidden", title, hidden, 1, false).set("clic", "[sound] @error");
+        }
         Rank r = ranks.get(i % ranks.size());
         int cycle = i / ranks.size();
         Lore lore = Lore.create().description(r.description());
         // prestige cycles give nothing more: the player keeps every perk of the last rank, so none is listed
         if (cycle == 0) for (String perk : r.perks()) lore.item(perk.replaceFirst("^&8(&m)?➤ ", ""));
         else lore.info("Tu gardes tous les avantages de " + ranks.get(ranks.size() - 1).name() + ".");
-        // badge of the rank (fluxui:rang_<n>_<cycle>_<on|off>, Flux/assets/vanilla/gen_ui.py): coloured once passed,
-        // greyed further; the player's own step shows his head
+        // badge of the rank (fluxui:rang_<n>_<cycle>_<on|off>, Flux/assets/vanilla/gen_ui.py)
         String badge = "itemsadder:fluxui:rang_" + (i % ranks.size() + 1) + "_" + cycle + "_";
         String icon, click = "[sound] @error";
         boolean glow = false;
@@ -207,16 +211,13 @@ public final class RankMenu implements org.bukkit.event.Listener {
         } else if (i < position) {
             icon = badge + "on";
             lore.ok("Validé.");
-        } else if (i == position + 1) {
+        } else {
             icon = badge + "off";
             glow = true;
             lore.info("Prochaine étape.");
-        } else {
-            icon = badge + "off";
-            lore.ko("Pas encore accessible.");
         }
         String offering = cycle == 0 ? r.id() : r.id() + "_p" + cycle;
-        if (i <= position + 1 && offeringExists.test(offering)) {
+        if (offeringExists.test(offering)) {
             lore.left(i == position + 1 ? "Faire l'offrande" : "Voir l'offrande");
             click = "[player] offrande " + offering;
         }

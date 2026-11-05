@@ -337,6 +337,27 @@ def restyled_png(face_name, glyph):
     return im
 
 
+# Rank not discovered yet: one badge for all of them, whatever the rank and the cycle (no colour, no wings to give it away).
+RANK_HIDDEN_MARK = [".####.", "##..##", "##..##", "...##.", "..##..", "..##..", "......", "..##..", "..##.."]
+
+
+def rank_hidden_badge():
+    im = rank_badge(rgb("#6A6673"), 1, 0, True)
+    body = rgb("#6A6673")
+    for y in range(4, 14):
+        for x in range(3, 13):
+            im.putpixel((x, y), body)
+    for y, r in enumerate(RANK_HIDDEN_MARK):
+        for x, ch in enumerate(r):
+            if ch == "#" and (y == 8 or r[x] and RANK_HIDDEN_MARK[y + 1][x] != "#"):
+                im.putpixel((5 + x, 5 + y), tone(body, -0.5))
+    for y, r in enumerate(RANK_HIDDEN_MARK):
+        for x, ch in enumerate(r):
+            if ch == "#":
+                im.putpixel((5 + x, 4 + y), WHITE)
+    return im
+
+
 # Rank badges of the rank route (FluxOffering RankMenu, "winged badge", chosen on 2026-11-05 out of 5 mock-ups): a badge
 # in the rank's colour with the rank's symbol and no number, 16 wide with the axis between columns 7 and 8 so it is centred
 # in a slot and strictly symmetrical. Prestige shows in the silhouette, not only in the colour (silver on the grey of
@@ -792,6 +813,9 @@ def main(plugins, resources=None):
                     rank_badge(colour, n, cycle, on).save(os.path.join(dest, "textures", "rang", iid + ".png"))
                     lines += [f"  {iid}:", "    display_name: ' '", "    resource:", "      material: PAPER",
                               "      generate: true", "      textures:", f"      - rang/{iid}.png"]
+        rank_hidden_badge().save(os.path.join(dest, "textures", "rang", "rang_hidden.png"))
+        lines += ["  rang_hidden:", "    display_name: ' '", "    resource:", "      material: PAPER",
+                  "      generate: true", "      textures:", "      - rang/rang_hidden.png"]
     lines += ["", "font_images:"]
     generic = os.path.join(HERE, "menu_vanilla.png")
     for name, fn in BACKGROUNDS.items():
