@@ -20,8 +20,8 @@ import java.util.OptionalDouble;
  *   /fluxvalue worth &lt;item&gt;   what an item is worth and why
  *   /fluxvalue rates           money per 2 minutes
  *   /fluxvalue report          writes report.md (prices, checks)
- *   /fluxvalue reload          reads the files again: shop and offerings follow at once
- *   /fluxvalue apply           writes the job plugin and the collections, which have no live link to us
+ *   /fluxvalue reload          reads the files again: shop and offerings follow at once, the job plugin and the
+ *                              collections, which only read their own files, are rewritten and reloaded
  * </pre>
  */
 public final class FluxValue extends FluxPlugin {
@@ -64,32 +64,43 @@ public final class FluxValue extends FluxPlugin {
                 .suggest(false)
                 .executor(this::onCommand)
                 .completer((sender, args) -> args.length == 1
-                        ? List.of("worth", "rates", "report", "reload", "apply").stream().filter(s -> s.startsWith(args[0].toLowerCase(Locale.ROOT))).toList()
+                        ? List.of("worth", "rates", "report", "reload").stream().filter(s -> s.startsWith(args[0].toLowerCase(Locale.ROOT))).toList()
                         : List.of())
                 .register();
     }
 
-    private void compute() {
+    /** False when sources.yml gives nothing (unreadable YAML reads as empty): the values in use are kept. */
+    private boolean compute() {
         YamlConfiguration economy = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "economy.yml"));
         YamlConfiguration sources = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "sources.yml"));
-        model = Model.load(economy, sources, ServerRecipes.read());
-        if (model.jobs.isEmpty()) getLogger().warning("sources.yml has no job: every value will be missing.");
+        Model next = Model.load(economy, sources, ServerRecipes.read());
+        if (next.jobs.isEmpty()) {
+            getLogger().warning("sources.yml has no job (empty or unreadable): " + (model == null ? "no values." : "previous values kept, nothing written."));
+            if (model == null) model = next;
+            return false;
+        }
+        model = next;
         getLogger().info(model.market().all().size() + " item values from " + model.jobs.size() + " jobs.");
+        return true;
     }
 
     @Override
     public void reload() {
         super.reload();
-        compute();
-        Values.changed();
+        if (compute()) Values.changed();
     }
 
     private boolean onCommand(CommandSender sender, String label, String[] args) {
         String sub = args.length > 0 ? args[0].toLowerCase(Locale.ROOT) : "";
         switch (sub) {
             case "reload" -> {
-                reload();
-                messages().send(sender, "reloaded", "%count%", String.valueOf(model.market().all().size()));
+                super.reload();
+                if (!compute()) {
+                    messages().send(sender, "reload-failed");
+                    return true;
+                }
+                Values.changed();
+                write(sender);
             }
             case "worth" -> worth(sender, args);
             case "rates" -> rates(sender);
@@ -102,7 +113,6 @@ public final class FluxValue extends FluxPlugin {
                     getLogger().warning("report: " + e.getMessage());
                 }
             }
-            case "apply" -> apply(sender);
             default -> messages().send(sender, "usage");
         }
         return true;
@@ -134,17 +144,19 @@ public final class FluxValue extends FluxPlugin {
         }
     }
 
-    private void apply(CommandSender sender) {
+    /** Files of the plugins that have no live link to the values. */
+    private void write(CommandSender sender) {
         File plugins = getDataFolder().getParentFile();
         try {
             int jobs = new JobsWriter(model, getLogger()).write(new File(plugins, "EcoJobs/jobs"));
             int collections = new CollectionsWriter(model, getLogger()).write(new File(plugins, "EcoCollections/collections"));
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "ecojobs reload");
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "ecocollections reload");
-            messages().send(sender, "applied", "%jobs%", String.valueOf(jobs), "%collections%", String.valueOf(collections));
+            messages().send(sender, "reloaded", "%count%", String.valueOf(model.market().all().size()),
+                    "%jobs%", String.valueOf(jobs), "%collections%", String.valueOf(collections));
         } catch (IOException e) {
-            getLogger().severe("apply: " + e.getMessage());
-            messages().send(sender, "apply-failed");
+            getLogger().severe("Writing the generated files: " + e.getMessage());
+            messages().send(sender, "write-failed");
         }
     }
 }
