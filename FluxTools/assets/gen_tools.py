@@ -19,7 +19,9 @@ LEVELS = 20
 EXPONENT = 1.6  # first levels in minutes, last ones in hours
 HOURS_TO_MAX = {"virale": 30, "phenomene": 40}
 # tool level -> enchantment level: every enchantment of a levelled tool starts at 0
-MAIN_STEPS = {1: 1, 3: 2, 6: 3, 9: 4, 12: 5, 16: 6, 20: 7}  # Efficiency, Sharpness, Power, Density
+MAIN_STEPS = {1: 1, 3: 2, 6: 3, 9: 4, 12: 5, 16: 6, 20: 7}  # Sharpness, Power, Density
+EFFICIENCY_STEPS = {1: 1, 3: 2, 6: 3, 9: 4, 12: 5}          # Efficiency stops at V, Haste takes over
+HASTE_STEPS = {16: 1, 18: 2, 20: 3}                         # Celerite (EcoEnchants), 3 at most
 SECONDARY_STEPS = {4: 1, 10: 2, 17: 3}                      # Fortune, Looting
 UNBREAKING_STEPS = {2: 1, 8: 2, 14: 3}
 ABILITY_LEVELS = [5, 11]                                    # level of the 1st ability, then of the 2nd (mace)
@@ -65,7 +67,10 @@ def tool(tool_id, source, forced):
     out["durability"] = source["durability"]
     out["repairable"] = levelled
     if levelled:
-        enchants = {MAIN_ENCHANT[family]: dict(MAIN_STEPS)}
+        if MAIN_ENCHANT[family] == "efficiency":
+            enchants = {"efficiency": dict(EFFICIENCY_STEPS), "celerite": dict(HASTE_STEPS)}
+        else:
+            enchants = {MAIN_ENCHANT[family]: dict(MAIN_STEPS)}
         for e in LEVELLED[family]:
             enchants[e] = dict(UNBREAKING_STEPS if e == "unbreaking" else SECONDARY_STEPS)
         for i, (e, v) in enumerate(ABILITIES.get(tool_id, {}).items()):
