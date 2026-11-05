@@ -29,6 +29,7 @@ import java.util.OptionalDouble;
  * mines 10 times slower than the optimal but fishes almost as fast, which is why the first grades ask for little stone
  * and a few fish. Before {@code area-from-grade}, items are counted without the area enchantment. A cycle asks for the
  * same items again ({@code slots}), only quantities change. Adding a grade or changing a weight moves everything.
+ * The money asked follows the same curve, see {@link #money}.
  */
 final class OfferingBudget {
 
@@ -71,10 +72,10 @@ final class OfferingBudget {
             }
             def.displayName(c.getString("names." + rank, "Offrande " + rank) + suffix);
             def.permission("offrandes.collection." + id);
-            def.money(comp.getLong("money", 0));
             double hours = hours(c, g, offerings);
+            def.money(comp.contains("money") ? comp.getLong("money") : money(c, g, offerings));
             Map<String, Long> quantities = quantities(log, c, comp, g, hours);
-            StringBuilder row = new StringBuilder("\n## " + g + ". " + id + " (" + String.format(Locale.ROOT, "%.2f", hours) + " h)\n");
+            StringBuilder row = new StringBuilder("\n## " + g + ". " + id + " (" + String.format(Locale.ROOT, "%.2f", hours) + " h, " + def.money() + " money)\n");
             for (Map.Entry<String, Long> q : quantities.entrySet()) {
                 try {
                     def.items().put(ItemKey.parse(q.getKey()), (int) Math.min(Integer.MAX_VALUE, q.getValue()));
@@ -99,6 +100,21 @@ final class OfferingBudget {
         double total = c.getDouble("budget.total-hours", 1000);
         double exponent = c.getDouble("budget.exponent", 2.5);
         return total * (Math.pow((double) grade / last, exponent) - Math.pow((double) (grade - 1) / last, exponent));
+    }
+
+    /**
+     * Money follows the curve of the resources (hours x speed at a grade), anchored on one offering of the first cycle:
+     * {@code money.anchor-rank} asks {@code money.anchor-amount}. Two significant digits. 0 when no anchor is set.
+     */
+    static long money(YamlConfiguration c, int grade, int last) {
+        int anchor = c.getStringList("ranks").indexOf(c.getString("money.anchor-rank", ""));
+        long amount = c.getLong("money.anchor-amount", 0);
+        if (anchor <= 0 || amount <= 0) return 0;
+        double reference = hours(c, anchor, last) * speed(c, "default", anchor);
+        double value = amount * hours(c, grade, last) * speed(c, "default", grade) / reference;
+        if (value < 1) return 1;
+        double scale = Math.pow(10, Math.floor(Math.log10(value)) - 1);
+        return Math.round(Math.round(value / scale) * scale);
     }
 
     /** Geometric: a job stays near its beginner speed for the first grades, tools come late. */
