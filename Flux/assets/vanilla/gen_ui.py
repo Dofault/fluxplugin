@@ -337,38 +337,89 @@ def restyled_png(face_name, glyph):
     return im
 
 
-# Rank badges of the rank route (FluxOffering RankMenu, 2026-10-30): a shield in the rank's colour (ranks.yml) with its
-# number engraved, gold stars on top for the prestige cycle; "off" greyed for the steps not reached.
+# Rank badges of the rank route (FluxOffering RankMenu, "winged badge", chosen on 2026-11-05 out of 5 mock-ups): a badge
+# in the rank's colour with the rank's symbol and no number, 16 wide with the axis between columns 7 and 8 so it is centred
+# in a slot and strictly symmetrical. Prestige shows in the silhouette, not only in the colour (silver on the grey of
+# Inconnu, gold on the yellow of Légende): small silver wings, then big golden wings and a crown. "off" = all greyed.
 # Items fluxui:rang_<n>_<cycle>_<on|off> (n from 1, cycle 0-2).
+RANK_SYMBOLS = [  # 9 wide, symmetrical; the centre column is doubled to fit the even axis. Order of the ranks.
+    ["...###...", "..#####..", "..#####..", "...###...", "....#....", "..#####..", ".#######.", ".#######.", "........."],  # anonymous
+    ["....#....", "...###...", "..#####..", ".#######.", "#########", ".#######.", ".###.###.", ".###.###.", "........."],  # house
+    ["....#....", "...###...", "..#####..", "..#####..", "..#####..", ".#######.", "#########", ".........", "....#...."],  # bell
+    [".##...##.", "####.####", "#########", "#########", ".#######.", "..#####..", "...###...", "....#....", "........."],  # heart
+    ["....#....", "..#####..", "#########", ".........", ".#.#.#.#.", ".#.#.#.#.", ".#.#.#.#.", ".........", "#########"],  # temple
+    [".#######.", "#########", "##.###.##", "##.###.##", "#########", "###...###", ".##...##.", "..#####..", "...###..."],  # mask
+    [".#.....#.", "#..###..#", "#.#.#.#.#", "#..###..#", ".#..#..#.", "....#....", "...###...", "..#####..", "........."],  # antenna
+    ["....#....", "....#....", "...###...", "#########", ".#######.", "..#####..", "..#####..", ".###.###.", ".#.....#."],  # star
+    ["#...#...#", ".#.....#.", "...###...", "..#####..", "#.#####.#", "..#####..", "...###...", ".#.....#.", "#...#...#"],  # sun
+    ["....#....", "...###...", "...###...", "..#####..", ".###.###.", ".##...##.", ".##.#.##.", "..#####..", "...###..."],  # flame
+    ["....#....", "...###...", "...###...", "#..###..#", "##.###.##", ".#######.", "...###...", ".#######.", "...###..."],  # fleur-de-lis
+    ["....#....", "#...#...#", "#..###..#", "##.###.##", "#########", "#########", ".........", "#########", ".#######."],  # crown
+]
+BADGE_INK = rgb("#17121F")
+BADGE_SILVER, BADGE_SILVER_DARK = rgb("#E4EAF2"), rgb("#8E99A8")
+BADGE_GOLD, BADGE_GOLD_DARK = rgb("#FFD94D"), rgb("#C98A00")
+
+
 def rank_badge(colour, n, cycle, on):
+    def mix(c, t):
+        return tuple(max(0, min(255, round(v + (255 - v) * t if t >= 0 else v * (1 + t)))) for v in c[:3]) + (255,)
+
+    cells = {}
+
+    def put(x, y, c):
+        if 0 <= y < 16 and 0 <= x < 16:
+            cells[(x, y)] = c
+            cells[(15 - x, y)] = c
+
+    def row(y, a, b, c):
+        for x in range(a, b + 1):
+            put(x, y, c)
+
+    # body
+    row(2, 3, 13, BADGE_INK)
+    for y in range(3, 14):
+        row(y, 2, 13, BADGE_INK)
+    row(14, 3, 12, BADGE_INK)
+    row(15, 5, 10, BADGE_INK)
+    for y in range(3, 13):
+        row(y, 3, 12, colour)
+    row(13, 4, 11, colour)
+    row(14, 6, 9, colour)
+    row(3, 4, 11, mix(colour, 0.45))
+    row(14, 6, 9, mix(colour, -0.3))
+    # prestige: wings on columns 0-1, a crown above from the second one
+    if cycle == 1:
+        for x, y in ((0, 6), (0, 7), (0, 8), (1, 7), (1, 8), (1, 9), (1, 6)):
+            put(x, y, BADGE_SILVER)
+        put(1, 10, BADGE_SILVER_DARK)
+    elif cycle == 2:
+        for x, y in ((0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7), (0, 8), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8), (1, 9), (1, 10)):
+            put(x, y, BADGE_GOLD)
+        put(0, 9, BADGE_GOLD_DARK)
+        put(1, 11, BADGE_GOLD_DARK)
+        row(1, 3, 4, BADGE_GOLD)
+        row(1, 7, 7, BADGE_GOLD)
+        row(0, 7, 7, BADGE_GOLD)
+    # symbol: dark on a light rank, white with a shadow on a dark one
+    a = colour
+    light = (0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2]) / 255 > 0.6
+    ink, shadow = (mix(colour, -0.72), None) if light else (WHITE, mix(colour, -0.5))
+    glyph = [r[:5] + r[4:] for r in RANK_SYMBOLS[(n - 1) % len(RANK_SYMBOLS)]]
+    for y, r in enumerate(glyph):
+        for x, ch in enumerate(r):
+            if ch == "#" and shadow and y < 8 and glyph[y + 1][x] != "#":
+                put(3 + x, 5 + y, shadow)
+    for y, r in enumerate(glyph):
+        for x, ch in enumerate(r):
+            if ch == "#":
+                put(3 + x, 4 + y, ink)
     im = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
-    d = ImageDraw.Draw(im)
-    c = colour if on else (150, 150, 150, 255)
-    if not on:
-        g = sum(colour[:3]) // 3
-        c = (g, g, g, 255)
-    shield = [(2, 3), (13, 3), (13, 9), (8, 14), (7, 14), (2, 9)]
-    d.polygon([(1, 2), (14, 2), (14, 9), (8, 15), (7, 15), (1, 9)], fill=OUTLINE)
-    d.polygon(shield, fill=c)
-    d.line((3, 4, 12, 4), fill=tone(c, 0.5))
-    d.line((3, 4, 3, 8), fill=tone(c, 0.35))
-    digits = str(n)
-    w = sum(len(fond._glyph(ch)[0][0]) + 1 for ch in digits) - 1
-    x = 8 - w // 2
-    for ch in digits:
-        g, _ = fond._glyph(ch)
-        for dy, row in enumerate(g):
-            for dx, v in enumerate(row):
-                if v == "#":
-                    if 6 + dy + 1 <= 13:
-                        im.putpixel((x + dx, 6 + dy + 1), tone(c, -0.6))
-                    im.putpixel((x + dx, 6 + dy), WHITE if on else (225, 225, 225, 255))
-        x += len(g[0]) + 1
-    star = rgb("#FFD94D") if on else (200, 200, 200, 255)
-    for k in range(cycle):
-        sx = 8 - 2 * cycle + 4 * k + 1
-        for px_, py_ in ((sx, 0), (sx - 1, 1), (sx, 1), (sx + 1, 1), (sx, 2)):
-            im.putpixel((px_, py_), star)
+    for (x, y), c in cells.items():
+        if not on:
+            g = round(sum(c[:3]) / 3)
+            c = (g, g, g, 255)
+        im.putpixel((x, y), c)
     return im
 
 
