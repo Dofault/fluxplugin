@@ -41,6 +41,9 @@ public final class FluxEnchant extends FluxPlugin {
         command("fluxenchant").description("Enchantments administration.").permission("fluxenchant.admin")
                 .usage(messages().raw("admin-usage")).executor(this::onCommand)
                 .completer((sender, args) -> args.length == 1 ? List.of("reload", "info") : List.of()).register();
+        command("fluxcheat").description("Development gear with every enchantment.").permission("fluxenchant.cheat")
+                .suggest(false).executor(this::onCheat)
+                .completer((sender, args) -> args.length == 1 ? CheatGear.names() : List.of()).register();
     }
 
     @Override
@@ -77,6 +80,19 @@ public final class FluxEnchant extends FluxPlugin {
         boolean armor = name.endsWith("_HELMET") || name.endsWith("_CHESTPLATE") || name.endsWith("_LEGGINGS")
                 || name.endsWith("_BOOTS") || type == Material.ELYTRA;
         return getConfig().getInt("capacity." + (armor ? "armor" : "tools"), def);
+    }
+
+    private boolean onCheat(CommandSender sender, String label, String[] args) {
+        if (!(sender instanceof Player player)) return true;
+        String name = args.length > 0 ? args[0] : "all";
+        List<Material> items = CheatGear.resolve(name);
+        if (items.isEmpty()) {
+            messages().send(sender, "cheat-usage");
+            return true;
+        }
+        int enchants = CheatGear.give(player, items, name.equalsIgnoreCase("silk"));
+        messages().send(sender, "cheat-given", "%items%", String.valueOf(items.size()), "%enchants%", String.valueOf(enchants));
+        return true;
     }
 
     private boolean onCommand(CommandSender sender, String label, String[] args) {
