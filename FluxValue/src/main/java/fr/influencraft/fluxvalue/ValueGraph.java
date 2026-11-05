@@ -17,8 +17,8 @@ public final class ValueGraph {
     public record Slot(List<String> choices, int amount) {
     }
 
-    /** A recipe: {@code cost} points of work (a smelt pays its job) on top of the ingredients. */
-    public record Recipe(String id, String output, int count, List<Slot> slots, double cost) {
+    /** A recipe: {@code cost} points of work on top of the ingredients; {@code cooked} when it goes through a furnace. */
+    public record Recipe(String id, String output, int count, List<Slot> slots, double cost, boolean cooked) {
     }
 
     /** Where a value comes from: a job or group for a source, a recipe id when crafted. */
@@ -78,11 +78,15 @@ public final class ValueGraph {
     }
 
     /** Job or group behind an item: the source of the costliest ingredient, down the chain of its recipe. */
-    public String origin(String item, double smeltOver) {
-        return origin(item, smeltOver, 0);
+    public String origin(String item, double smeltWork) {
+        return origin(item, smeltWork, 0);
     }
 
-    private String origin(String item, double smeltCost, int depth) {
+    /**
+     * A cooked item goes to the job of the furnace when the smelt pays more than the ingredient is worth, even if the
+     * smelt adds nothing to its value: offerings keep asking something of that job.
+     */
+    private String origin(String item, double smeltWork, int depth) {
         Entry e = entries.get(item);
         if (e == null || depth > 16) return "divers";
         if (e.recipe() == null) return e.source();
@@ -103,7 +107,7 @@ public final class ValueGraph {
                 best = cheapest;
             }
         }
-        if (e.recipe().cost() > bestPoints && e.recipe().cost() == smeltCost) return "fondeur";
-        return best == null ? "divers" : origin(best, smeltCost, depth + 1);
+        if (e.recipe().cooked() && smeltWork > bestPoints) return "fondeur";
+        return best == null ? "divers" : origin(best, smeltWork, depth + 1);
     }
 }

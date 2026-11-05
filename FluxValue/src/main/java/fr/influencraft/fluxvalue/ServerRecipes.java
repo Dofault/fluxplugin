@@ -37,7 +37,7 @@ final class ServerRecipes {
             ItemStack result = recipe.getResult();
             if (result.getType().isAir() || result.hasItemMeta()) continue;
             List<ValueGraph.Slot> slots = new ArrayList<>();
-            double cost = 0;
+            boolean cooked = false;
             boolean ok;
             if (recipe instanceof ShapedRecipe r) {
                 ok = shaped(r, slots);
@@ -46,7 +46,7 @@ final class ServerRecipes {
                 for (RecipeChoice c : r.getChoiceList()) ok &= add(c, 1, slots);
             } else if (recipe instanceof CookingRecipe<?> r) {
                 ok = add(r.getInputChoice(), 1, slots);
-                cost = 1; // replaced by the weight of a smelt once sources are read
+                cooked = true;
             } else if (recipe instanceof StonecuttingRecipe r) {
                 ok = add(r.getInputChoice(), 1, slots);
             } else if (recipe instanceof SmithingTransformRecipe r) {
@@ -57,7 +57,7 @@ final class ServerRecipes {
                 continue;
             }
             if (ok && !slots.isEmpty()) {
-                out.add(new ValueGraph.Recipe("recipe_" + index, result.getType().name(), result.getAmount(), slots, cost));
+                out.add(new ValueGraph.Recipe("recipe_" + index, result.getType().name(), result.getAmount(), slots, 0, cooked));
             }
         }
         return out;

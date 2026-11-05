@@ -38,7 +38,9 @@ public final class Model {
     double collectionHours;
     int collectionTiers;
     double collectionSecondExponent;
+    /** Points of a smelt for its job: pays XP and money, adds nothing to the value of the item ({@link #smeltCost}). */
     double smeltPoints;
+    double smeltCost;
     double meterWindowSeconds;
 
     final Map<String, Job> jobs = new LinkedHashMap<>();
@@ -74,6 +76,7 @@ public final class Model {
         m.collectionTiers = economy.getInt("collections.tiers", 7);
         m.collectionSecondExponent = economy.getDouble("collections.second-tier-exponent", 0.455);
         m.meterWindowSeconds = Math.max(1, economy.getDouble("rate-meter.window-seconds", 10));
+        m.smeltCost = economy.getDouble("recipes.smelt-cost", 0);
         m.readJobs(sources);
         m.readDrops(sources);
         m.readFishing(sources);
@@ -89,12 +92,12 @@ public final class Model {
         if (aliases != null) for (String item : aliases.getKeys(false)) m.aliases.put(item, aliases.getString(item));
         List<ValueGraph.Recipe> all = new ArrayList<>();
         for (ValueGraph.Recipe r : recipes) {
-            all.add(r.cost() > 0 ? new ValueGraph.Recipe(r.id(), r.output(), r.count(), r.slots(), m.smeltPoints) : r);
+            all.add(r.cooked() ? new ValueGraph.Recipe(r.id(), r.output(), r.count(), r.slots(), m.smeltCost, true) : r);
         }
         // an alias is a recipe of one ingredient with no cost: it follows that item in both directions of a value change
         for (Map.Entry<String, String> a : m.aliases.entrySet()) {
             all.add(new ValueGraph.Recipe("alias_" + a.getKey(), a.getKey(), 1,
-                    List.of(new ValueGraph.Slot(List.of(a.getValue()), 1)), 0));
+                    List.of(new ValueGraph.Slot(List.of(a.getValue()), 1)), 0, false));
         }
         m.market.recipes(all);
         m.early.recipes(all);

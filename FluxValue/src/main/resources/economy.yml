@@ -25,3 +25,7 @@ collections:
 rate-meter:
   # /fluxvalue rate: seconds of gains the pace is measured on.
   window-seconds: 10
+
+recipes:
+  # Points a furnace adds to what it cooks. 0: fuel and time are free, an ingot is worth its ore. Crafting is always free.
+  smelt-cost: 0
