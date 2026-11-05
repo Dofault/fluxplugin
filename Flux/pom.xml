@@ -43,7 +43,7 @@
             <artifactId>libreforge</artifactId>
             <version>2026.39</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/libs/libreforge-standalone-2026.39.jar</systemPath>
+            <systemPath>${project.basedir}/libs/libreforge-standalone-2026.44.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>com.discordsrv</groupId>
@@ -72,7 +72,7 @@
             <artifactId>eco</artifactId>
             <version>2026.41</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/libs/eco-2026.41-modrinth.jar</systemPath>
+            <systemPath>${project.basedir}/libs/eco-2026.44.1-modrinth.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>com.willfp</groupId>

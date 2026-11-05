@@ -61,7 +61,7 @@ public final class LibreforgeEffects implements Effects.Engine {
 
     @Override
     public void start() {
-        HolderProviderKt.registerHolderProvider(dispatcher -> {
+        HolderProviderKt.registerGenericHolderProvider(dispatcher -> {
             List<ProvidedHolder> holders = new ArrayList<>();
             if (dispatcher.getDispatcher() instanceof Player player) {
                 for (Effects.Bundle bundle : Effects.bundles(player)) {

@@ -82,7 +82,7 @@ public final class Pets {
         if (!providerRegistered) {
             // comme EcoPets, un holder par familier actif à son niveau (plusieurs familiers actifs : leurs effets
             // s'appliquent ensemble)
-            HolderProviderKt.registerHolderProvider(dispatcher -> {
+            HolderProviderKt.registerGenericHolderProvider(dispatcher -> {
                 if (!enabled || !(dispatcher.getDispatcher() instanceof Player player)) {
                     return Collections.emptyList();
                 }
@@ -146,7 +146,6 @@ public final class Pets {
             display.reload();
         }
         if (enabled) {
-            HolderProviderKt.clearAllHolderCaches();
             Bukkit.getOnlinePlayers().forEach(Pets::refresh);
         }
     }
