@@ -56,12 +56,27 @@ public final class ItemsCommand {
                 return;
             }
         }
+        if (args[2].endsWith("*")) {
+            giveAll(sender, player, args[2], amount);
+            return;
+        }
         String id = CustomItems.resolve(args[2]);
         if (id == null || !CustomItems.give(player, id, amount)) {
             messages.get().send(sender, "items-unknown", "%id%", args[2]);
             return;
         }
         messages.get().send(sender, "items-given", "%player%", player.getName(), "%id%", id, "%amount%", String.valueOf(amount));
+    }
+
+    /** Every item whose id starts with the pattern ({@code fluxenchant:dev_*}). */
+    private void giveAll(CommandSender sender, Player player, String pattern, int amount) {
+        List<String> ids = CustomItems.ids().stream().filter(id -> CustomItems.matches(pattern, id)).sorted().toList();
+        if (ids.isEmpty()) {
+            messages.get().send(sender, "items-unknown", "%id%", pattern);
+            return;
+        }
+        for (String id : ids) CustomItems.give(player, id, amount);
+        messages.get().send(sender, "items-given", "%player%", player.getName(), "%id%", pattern + " (" + ids.size() + ")", "%amount%", String.valueOf(amount));
     }
 
     private void list(CommandSender sender, String[] args) {

@@ -15,5 +15,3 @@ mastered: "&#2ECF7B%enchant% is mastered! You can add another enchantment at the
 line: "&#B376E5✦ &f%enchant% %level%&7/&f%max% &8(mastery %percent% %)"
 line-mastered: "&#B376E5✦ &f%enchant% %level%"
 line-weight: "&8Weight &7%weight%&8/&7%capacity%"
-cheat-usage: "&cUsage: /fluxcheat <all|tools|weapons|armor|silk|<item>>"
-cheat-given: "&a%items% item(s) given, %enchants% enchantments in total."

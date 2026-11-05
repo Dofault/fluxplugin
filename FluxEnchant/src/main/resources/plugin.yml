@@ -8,9 +8,6 @@ depend: [Flux]
 softdepend: [FluxTools, EcoEnchants]
 
 permissions:
-  fluxenchant.cheat:
-    description: /fluxcheat, development gear with every enchantment. Not even operators have it by default.
-    default: false
   fluxenchant.admin:
     description: /fluxenchant reload and info.
     default: op
