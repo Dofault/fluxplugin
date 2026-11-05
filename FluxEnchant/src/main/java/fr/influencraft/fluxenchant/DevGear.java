@@ -35,6 +35,7 @@ final class DevGear implements CustomItems.Source {
         ITEMS.put("dev_hoe", Material.NETHERITE_HOE);
         ITEMS.put("dev_shears", Material.SHEARS);
         ITEMS.put("dev_fishing_rod", Material.FISHING_ROD);
+        ITEMS.put("dev_fishing_rod_phenomene", Material.FISHING_ROD);
         ITEMS.put("dev_sword", Material.NETHERITE_SWORD);
         ITEMS.put("dev_bow", Material.BOW);
         ITEMS.put("dev_crossbow", Material.CROSSBOW);
@@ -58,7 +59,11 @@ final class DevGear implements CustomItems.Source {
 
     /** Shown after the item's name where the id alone tells them apart. */
     private static final Map<String, String> SUFFIX = Map.of(
-            "dev_pickaxe", " Fortune", "dev_pickaxe_tranchee", " Tranchée", "dev_pickaxe_silk", " Soie");
+            "dev_pickaxe", " Fortune", "dev_pickaxe_tranchee", " Tranchée", "dev_pickaxe_silk", " Soie",
+            "dev_fishing_rod_phenomene", " Phénomène");
+
+    /** Gear built on an item of the server rather than a plain material: its custom behaviour is kept (crate rod). */
+    private static final Map<String, String> BASE = Map.of("dev_fishing_rod_phenomene", "influrewards:canne_peche_phenomene");
 
     private final NamespacedKey key;
 
@@ -76,7 +81,8 @@ final class DevGear implements CustomItems.Source {
     public ItemStack item(String id) {
         Material material = ITEMS.get(id);
         if (material == null) return null;
-        ItemStack item = new ItemStack(material);
+        ItemStack base = BASE.containsKey(id) ? CustomItems.item(BASE.get(id)) : null;
+        ItemStack item = base != null ? base.clone() : new ItemStack(material);
         Set<String> leftOut = PICKAXES.getOrDefault(id, LEFT_OUT);
         for (Enchantment e : Registry.ENCHANTMENT) {
             String name = e.getKey().getKey();
