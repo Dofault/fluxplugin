@@ -11,6 +11,9 @@ depend: [Lands, Flux]
 softdepend: [FluxPW]
 
 permissions:
+  fluxlands.voxel:
+    description: /v opens VoxelSniper (builders) instead of the towns, which stay on /ville.
+    default: op
   fluxlands.admin:
     description: Rechargement, diagnostic, réglage du droit de place de n'importe quelle ville.
     default: op

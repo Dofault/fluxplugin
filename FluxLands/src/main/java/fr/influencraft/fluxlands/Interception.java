@@ -50,6 +50,33 @@ final class Interception implements Listener {
         aliasPays = n;
     }
 
+    /**
+     * {@code /v} belongs to Lands (towns) for players, but VoxelSniper (FastAsyncVoxelSniper) also claims it: a builder
+     * with {@code fluxlands.voxel} (operators by default) gets VoxelSniper's {@code /v}, through its namespaced label.
+     * Towns stay reachable for him with /ville.
+     */
+    private boolean voxel(PlayerCommandPreprocessEvent e, Player p) {
+        String message = e.getMessage();
+        if (!(message.equalsIgnoreCase("/v") || message.regionMatches(true, 0, "/v ", 0, 3))) return false;
+        if (!p.hasPermission("fluxlands.voxel")) return false;
+        String label = voxelLabel();
+        if (label == null) return false;
+        e.setMessage("/" + label + message.substring(2));
+        return true;
+    }
+
+    /** Namespaced label of VoxelSniper's /v, null when the plugin is not there. */
+    private static String voxelLabel() {
+        var known = org.bukkit.Bukkit.getCommandMap().getKnownCommands();
+        for (String key : List.of("fastasyncvoxelsniper:v", "voxelsniper:v")) {
+            if (known.containsKey(key)) return key;
+        }
+        for (String key : known.keySet()) {
+            if (key.endsWith(":v") && key.contains("voxel")) return key;
+        }
+        return null;
+    }
+
     /** La prochaine commande Lands du joueur (dans la seconde) atteint le menu natif. */
     void laisserPasser(Player p) {
         passe.put(p.getUniqueId(), System.currentTimeMillis() + 1000);
@@ -57,8 +84,9 @@ final class Interception implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void commande(PlayerCommandPreprocessEvent e) {
-        if (!actif) return;
         Player p = e.getPlayer();
+        if (voxel(e, p)) return;
+        if (!actif) return;
         Long jusqua = passe.remove(p.getUniqueId());
         if (jusqua != null && jusqua >= System.currentTimeMillis()) return;
         String[] mots = e.getMessage().substring(1).trim().toLowerCase(Locale.ROOT).split("\\s+");
