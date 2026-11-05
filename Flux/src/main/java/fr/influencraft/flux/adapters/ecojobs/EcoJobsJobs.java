@@ -297,8 +297,9 @@ public final class EcoJobsJobs implements Jobs.Provider, Listener {
     /** {amount, every} of a give_money effect at this level, null when not computable here. */
     private static double[] money(Map<?, ?> effect, int level) {
         if (!(effect.get("args") instanceof Map<?, ?> args) || args.get("amount") == null) return null;
-        String amount = args.get("amount").toString().replace("%level%", String.valueOf(level));
-        if (amount.contains("%")) return null; // e.g. %v% (item_points)
+        // %v% is the value of the trigger (health of a mob, level cost, bottles): shown per unit, like the XP of the line
+        String amount = args.get("amount").toString().replace("%level%", String.valueOf(level)).replace("%v%", "1");
+        if (amount.contains("%")) return null;
         double every = args.get("every") == null ? 1
                 : NumberUtils.evaluateExpression(args.get("every").toString().replace("%level%", String.valueOf(level)));
         return new double[]{NumberUtils.evaluateExpression(amount), every};

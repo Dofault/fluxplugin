@@ -101,11 +101,12 @@ final class JobsWriter {
 
     /**
      * Money follows XP everywhere: a trigger whose value multiplies the XP (mobs: health; table: level cost; brew:
-     * bottles; craft: amount) multiplies the money too.
+     * bottles; craft: amount) multiplies the money too. A block is always worth 1: no factor to evaluate there.
      */
     private String expression(Model.Source s) {
         String k = String.format(Locale.ROOT, "%.6f", s.weight() * model.moneyPerPoint());
-        return "max(round(" + k + " * %level%" + (s.fixedValue() ? "" : " * %v%") + ") / 100, 0.01)";
+        boolean perUnit = !s.fixedValue() && s.blocks().isEmpty();
+        return "max(round(" + k + " * %level%" + (perUnit ? " * %v%" : "") + ") / 100, 0.01)";
     }
 
     private void placeholders(YamlConfiguration yaml, Model.Job job) {
