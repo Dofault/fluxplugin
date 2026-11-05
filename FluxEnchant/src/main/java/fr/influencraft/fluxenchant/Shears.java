@@ -43,6 +43,9 @@ final class Shears implements Listener {
         return e != null && hand.getEnchantmentLevel(e) > 0;
     }
 
+    /** Drops of shears for the blocks being broken, read before the block is gone, applied when it drops. */
+    private final java.util.Map<Block, Collection<ItemStack>> pending = new java.util.HashMap<>();
+
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
@@ -51,11 +54,31 @@ final class Shears implements Listener {
         if (!shearing(hand)) return;
         Block block = event.getBlock();
         Collection<ItemStack> sheared = block.getDrops(SHEARS, player);
-        Collection<ItemStack> normal = block.getDrops(hand, player);
-        if (sameItems(sheared, normal)) return;
-        event.setDropItems(false);
-        Location at = block.getLocation().add(0.5, 0.5, 0.5);
-        for (ItemStack drop : sheared) block.getWorld().dropItemNaturally(at, drop);
+        if (sameItems(sheared, block.getDrops(hand, player))) return;
+        pending.put(block, sheared);
+    }
+
+    /**
+     * The drops are swapped in the drop event itself, first of all, with entities the server spawns afterwards: every
+     * plugin that reads drops (Télépathie, auto-sell) sees the drops of the shears as if they were the normal ones.
+     */
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onDrop(org.bukkit.event.block.BlockDropItemEvent event) {
+        Collection<ItemStack> sheared = pending.remove(event.getBlock());
+        if (sheared == null) return;
+        Location at = event.getBlock().getLocation().add(0.5, 0.5, 0.5);
+        event.getItems().clear();
+        for (ItemStack drop : sheared) {
+            org.bukkit.entity.Item item = event.getBlock().getWorld().createEntity(at, org.bukkit.entity.Item.class);
+            item.setItemStack(drop);
+            event.getItems().add(item);
+        }
+    }
+
+    /** A break cancelled after we read it never drops: forget it at the end of the tick. */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onBreakDone(BlockBreakEvent event) {
+        if (event.isCancelled() || !event.isDropItems()) pending.remove(event.getBlock());
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
