@@ -32,6 +32,7 @@ public final class FluxEnchant extends FluxPlugin {
         getLogger().info(count + " enchantment(s) read in EcoEnchants.");
         Bukkit.getPluginManager().registerEvents(new Weight(this), this);
         Bukkit.getPluginManager().registerEvents(books, this);
+        Bukkit.getPluginManager().registerEvents(new Shears(), this);
         if (Bukkit.getPluginManager().getPlugin("FluxTools") != null) {
             mastery = new Mastery(this);
             Bukkit.getServicesManager().register(EnchantMastery.class, mastery, this, ServicePriority.Normal);
