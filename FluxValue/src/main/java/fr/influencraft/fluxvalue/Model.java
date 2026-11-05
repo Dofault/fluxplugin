@@ -21,7 +21,7 @@ public final class Model {
     /** One action of a job. */
     public record Source(String job, String id, String trigger, List<String> blocks, double weight, boolean fixedValue,
                          Map<String, Object> filters, Map<String, Double> yields, boolean area, String label,
-                         String placeholder) {
+                         String placeholder, List<?> conditions) {
     }
 
     /** A job as generated into the job plugin. */
@@ -127,7 +127,8 @@ public final class Model {
                 Map<String, Object> filters = s.isConfigurationSection("filters")
                         ? toPlain(s.getConfigurationSection("filters")) : (blocks.isEmpty() ? new LinkedHashMap<>() : new LinkedHashMap<>(Map.of("player_placed", false)));
                 Source src = new Source(jobId, id, trigger, blocks, s.getDouble("weight"), s.getBoolean("fixed-value"),
-                        filters, yields, s.getBoolean("area"), s.getString("label"), s.getString("placeholder"));
+                        filters, yields, s.getBoolean("area"), s.getString("label"), s.getString("placeholder"),
+                        s.contains("conditions") ? s.getList("conditions") : null);
                 sources.add(src);
                 for (Map.Entry<String, Double> e : yields.entrySet()) {
                     if (e.getValue() <= 0) continue;

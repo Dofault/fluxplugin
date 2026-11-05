@@ -59,7 +59,7 @@ final class JobsWriter {
     private List<List<Model.Source>> groups(Model.Job job) {
         Map<String, List<Model.Source>> out = new LinkedHashMap<>();
         for (Model.Source s : job.sources()) {
-            String key = s.trigger() + "|" + s.weight() + "|" + s.fixedValue() + "|" + s.filters() + "|" + s.label();
+            String key = s.trigger() + "|" + s.weight() + "|" + s.fixedValue() + "|" + s.filters() + "|" + s.label() + "|" + s.conditions();
             out.computeIfAbsent(key, k -> new ArrayList<>()).add(s);
         }
         return new ArrayList<>(out.values());
@@ -81,10 +81,15 @@ final class JobsWriter {
         m.put("trigger", first.trigger());
         if (first.label() != null) m.put("display-label", first.label());
         m.put(first.fixedValue() ? "value" : "multiplier", first.weight());
-        m.put("conditions", job.conditions());
+        m.put("conditions", conditions(job, first));
         Map<String, Object> filters = filters(group);
         if (!filters.isEmpty()) m.put("filters", filters);
         return m;
+    }
+
+    /** A source may ask for its own tool (nylium: a pickaxe in a shovel job); else the job's conditions. */
+    private static List<?> conditions(Model.Job job, Model.Source s) {
+        return s.conditions() != null ? s.conditions() : job.conditions();
     }
 
     private Map<String, Object> money(Model.Job job, List<Model.Source> group) {
@@ -94,7 +99,7 @@ final class JobsWriter {
         e.put("args", Map.of("amount", expression(first)));
         Map<String, Object> filters = filters(group);
         if (!filters.isEmpty()) e.put("filters", filters);
-        if (!job.conditions().isEmpty()) e.put("conditions", job.conditions());
+        if (!conditions(job, first).isEmpty()) e.put("conditions", conditions(job, first));
         e.put("triggers", List.of(first.trigger()));
         return e;
     }
