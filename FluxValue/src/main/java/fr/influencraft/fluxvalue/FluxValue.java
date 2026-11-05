@@ -20,6 +20,7 @@ import java.util.OptionalDouble;
  *   /fluxvalue worth &lt;item&gt;   what an item is worth and why
  *   /fluxvalue rates           money per 2 minutes
  *   /fluxvalue report          writes report.md (prices, checks)
+ *   /fluxvalue rate            boss bar: money per 2 minutes at the pace of the last seconds, for testing weights
  *   /fluxvalue reload          reads the files again: shop and offerings follow at once, the job plugin and the
  *                              collections, which only read their own files, are rewritten and reloaded
  * </pre>
@@ -27,6 +28,7 @@ import java.util.OptionalDouble;
 public final class FluxValue extends FluxPlugin {
 
     private Model model;
+    private RateMeter meter;
 
     @Override
     protected void enable() {
@@ -58,15 +60,23 @@ public final class FluxValue extends FluxPlugin {
                 return model.pointsPerSecond();
             }
         });
+        meter = new RateMeter(() -> model, key -> messages().raw(key));
+        Bukkit.getPluginManager().registerEvents(meter, this);
+        Bukkit.getScheduler().runTaskTimer(this, meter::tick, 10L, 10L);
         command("fluxvalue")
                 .description("Values of the economy: weights, prices, generated files.")
                 .permission("fluxvalue.admin")
                 .suggest(false)
                 .executor(this::onCommand)
                 .completer((sender, args) -> args.length == 1
-                        ? List.of("worth", "rates", "report", "reload").stream().filter(s -> s.startsWith(args[0].toLowerCase(Locale.ROOT))).toList()
+                        ? List.of("worth", "rates", "rate", "report", "reload").stream().filter(s -> s.startsWith(args[0].toLowerCase(Locale.ROOT))).toList()
                         : List.of())
                 .register();
+    }
+
+    @Override
+    protected void disable() {
+        if (meter != null) meter.stop();
     }
 
     /** False when sources.yml gives nothing (unreadable YAML reads as empty): the values in use are kept. */
@@ -104,6 +114,11 @@ public final class FluxValue extends FluxPlugin {
             }
             case "worth" -> worth(sender, args);
             case "rates" -> rates(sender);
+            case "rate" -> {
+                if (sender instanceof org.bukkit.entity.Player player) {
+                    messages().send(sender, meter.toggle(player) ? "rate-on" : "rate-off");
+                }
+            }
             case "report" -> {
                 try {
                     File file = new File(getDataFolder(), "report.md");

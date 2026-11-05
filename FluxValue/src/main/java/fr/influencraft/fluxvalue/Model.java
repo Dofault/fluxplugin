@@ -39,6 +39,7 @@ public final class Model {
     int collectionTiers;
     double collectionSecondExponent;
     double smeltPoints;
+    double meterWindowSeconds;
 
     final Map<String, Job> jobs = new LinkedHashMap<>();
     final Map<String, Double> mobWeights = new LinkedHashMap<>();
@@ -72,6 +73,7 @@ public final class Model {
         m.collectionHours = economy.getDouble("collections.hours-of-last-tier", 2);
         m.collectionTiers = economy.getInt("collections.tiers", 7);
         m.collectionSecondExponent = economy.getDouble("collections.second-tier-exponent", 0.455);
+        m.meterWindowSeconds = Math.max(1, economy.getDouble("rate-meter.window-seconds", 10));
         m.readJobs(sources);
         m.readDrops(sources);
         m.readFishing(sources);

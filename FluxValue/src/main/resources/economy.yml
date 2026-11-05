@@ -21,3 +21,7 @@ collections:
   hours-of-last-tier: 2
   # Second tier = last tier ^ this. Higher: the first tiers take longer. The last tier does not change.
   second-tier-exponent: 0.455
+
+rate-meter:
+  # /fluxvalue rate: seconds of gains the pace is measured on.
+  window-seconds: 10
