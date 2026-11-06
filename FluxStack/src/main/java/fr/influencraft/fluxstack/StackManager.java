@@ -29,6 +29,7 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Transformation;
 import org.joml.AxisAngle4f;
 import org.joml.Vector3f;
@@ -54,6 +55,12 @@ final class StackManager implements Listener {
     /** Marks our floating "×12" texts: never saved, rebuilt by the merge pass when missing. */
     private final NamespacedKey labelKey;
     private BukkitTask task;
+    /**
+     * Stack carriers nobody pushes and that push nobody: a team of the main scoreboard with collisions off, read by the
+     * server and by every client. Players are never put there: their teams are sent by Flux (TabList.collision).
+     */
+    private static final String NO_PUSH_TEAM = "fluxstack_nopush";
+    private Team noPush;
     private double radiusSquared;
     private double verticalRadius;
     private int maxStack;
@@ -81,6 +88,11 @@ final class StackManager implements Listener {
         disabledWorlds = lower(c.getStringList("disabled-worlds"));
         excluded = lower(c.getStringList("exclude-types"));
         labelFormat = c.getString("label", "&f×{count}");
+        noPush = Bukkit.getScoreboardManager().getMainScoreboard().getTeam(NO_PUSH_TEAM);
+        if (noPush == null) noPush = Bukkit.getScoreboardManager().getMainScoreboard().registerNewTeam(NO_PUSH_TEAM);
+        noPush.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
+        // entries left by a crash: the merge pass puts every living stack back
+        if (!noPush.getEntries().isEmpty()) noPush.removeEntries(new ArrayList<>(noPush.getEntries()));
         long period = Math.max(20, Math.round(c.getDouble("interval-seconds", 2) * 20));
         task = Bukkit.getScheduler().runTaskTimer(plugin, this::mergeAll, period, period);
     }
@@ -97,6 +109,7 @@ final class StackManager implements Listener {
             for (LivingEntity e : world.getLivingEntities()) {
                 if (count(e) > 1 && e instanceof Mob m) m.setAware(true);
                 removeLabels(e);
+                pushable(e, true);
             }
         }
     }
@@ -120,11 +133,23 @@ final class StackManager implements Listener {
             e.getPersistentDataContainer().remove(countKey);
             if (e instanceof Mob m) m.setAware(true);
             removeLabels(e);
+            pushable(e, true);
             return;
         }
         e.getPersistentDataContainer().set(countKey, PersistentDataType.INTEGER, n);
         if (e instanceof Mob m) m.setAware(false); // the mob that carries a stack stays put (no AI, gravity kept)
+        pushable(e, false);
         label(e, n);
+    }
+
+    private void pushable(Entity e, boolean pushable) {
+        if (noPush == null) return;
+        String entry = e.getUniqueId().toString();
+        if (pushable) {
+            if (noPush.hasEntry(entry)) noPush.removeEntry(entry);
+        } else if (!noPush.hasEntry(entry)) {
+            noPush.addEntry(entry);
+        }
     }
 
     private boolean isLabel(Entity e) {
@@ -176,6 +201,9 @@ final class StackManager implements Listener {
         if (e.customName() != null && e.getPersistentDataContainer().has(countKey)) e.customName(null);
         // a named mob: a name tag, a boss, a model of another plugin
         if (e.customName() != null) return false;
+        // already in another team (glow colour of another plugin...): joining ours would take it out of that one
+        Team team = Bukkit.getScoreboardManager().getMainScoreboard().getEntityTeam(e);
+        if (team != null && !team.getName().equals(NO_PUSH_TEAM)) return false;
         return e.getScoreboardTags().isEmpty();
     }
 
@@ -282,6 +310,7 @@ final class StackManager implements Listener {
     @EventHandler
     public void onRemove(EntityRemoveFromWorldEvent event) {
         removeLabels(event.getEntity());
+        pushable(event.getEntity(), true);
     }
 
     /** A copy of the mob (level, equipment, data), full health. */
