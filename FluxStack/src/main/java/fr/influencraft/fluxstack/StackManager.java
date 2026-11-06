@@ -24,7 +24,9 @@ import org.bukkit.entity.TextDisplay;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntityKnockbackEvent;
 import org.bukkit.event.entity.EntityRemoveEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.inventory.EntityEquipment;
@@ -58,6 +60,8 @@ final class StackManager implements Listener {
     /** Marks our floating "×12" texts: never saved, rebuilt by the merge pass when missing. */
     private final NamespacedKey labelKey;
     private BukkitTask task;
+    /** Snapshot of a stack carrier taken just before the hit that kills it: alive, not in its death animation. */
+    private final Map<java.util.UUID, EntitySnapshot> beforeDeath = new HashMap<>();
     /**
      * Stack carriers nobody pushes and that push nobody: a team of the main scoreboard with collisions off, read by the
      * server and by every client. Players are never put there: their teams are sent by Flux (TabList.collision).
@@ -310,14 +314,33 @@ final class StackManager implements Listener {
 
     // ---------------------------------------------------------------- splitting
 
+    /** A stack carrier never moves when hit: no knockback (hits, arrows, explosions). */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onKnockback(EntityKnockbackEvent event) {
+        if (count(event.getEntity()) > 1) event.setCancelled(true);
+    }
+
+    /**
+     * The hit that will kill a stack carrier: keep it as it is now, alive. A snapshot taken once it is dead carries
+     * its death (red, death animation), and the next mob would play it again.
+     */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onLethalHit(EntityDamageEvent event) {
+        if (!(event.getEntity() instanceof LivingEntity e) || count(e) <= 1) return;
+        if (event.getFinalDamage() < e.getHealth() + e.getAbsorptionAmount()) return;
+        EntitySnapshot snapshot = e.createSnapshot();
+        if (snapshot != null) beforeDeath.put(e.getUniqueId(), snapshot);
+    }
+
     /** The next mob of the stack takes the place of the one that died: every death stays a real death. */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onDeath(EntityDeathEvent event) {
         LivingEntity dead = event.getEntity();
+        EntitySnapshot alive = beforeDeath.remove(dead.getUniqueId());
         int n = count(dead);
         if (n <= 1) return;
         removeLabels(dead);
-        Entity next = respawn(dead, dead.getLocation());
+        Entity next = respawn(dead, alive, dead.getLocation());
         if (next instanceof LivingEntity living) setCount(living, n - 1);
     }
 
@@ -327,7 +350,7 @@ final class StackManager implements Listener {
         if (!(event.getRightClicked() instanceof LivingEntity clicked)) return;
         int n = count(clicked);
         if (n <= 1) return;
-        Entity rest = respawn(clicked, clicked.getLocation());
+        Entity rest = respawn(clicked, null, clicked.getLocation());
         if (rest instanceof LivingEntity living) setCount(living, n - 1);
         setCount(clicked, 1);
     }
@@ -339,6 +362,7 @@ final class StackManager implements Listener {
     @EventHandler
     public void onRemove(EntityRemoveEvent event) {
         if (event.getCause() != EntityRemoveEvent.Cause.UNLOAD) removeLabels(event.getEntity());
+        if (event.getCause() != EntityRemoveEvent.Cause.DEATH) beforeDeath.remove(event.getEntity().getUniqueId());
         pushable(event.getEntity(), true);
     }
 
@@ -376,8 +400,8 @@ final class StackManager implements Listener {
     }
 
     /** A copy of the mob (level, equipment, data), full health. */
-    private Entity respawn(LivingEntity from, Location at) {
-        EntitySnapshot snapshot = from.createSnapshot();
+    private Entity respawn(LivingEntity from, EntitySnapshot taken, Location at) {
+        EntitySnapshot snapshot = taken != null ? taken : from.createSnapshot();
         if (snapshot == null) return null;
         Entity copy = snapshot.createEntity(at);
         removeLabels(copy);
