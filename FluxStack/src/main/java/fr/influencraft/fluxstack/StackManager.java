@@ -27,6 +27,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityRemoveEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.inventory.EntityEquipment;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.Team;
@@ -45,8 +48,8 @@ import java.util.Set;
 
 /**
  * Merges identical mobs, splits a stack when one of its mobs dies or a player interacts with it. Two mobs are identical
- * when they share their type, age, variant (sheep colour, slime size) and base attributes: mob levels change health,
- * damage and speed, so two mobs of different levels never merge, without knowing the level plugin.
+ * when they share their type, age and variant (sheep colour, slime size); their levels and equipment may differ: one
+ * pile per kind of mob, and the next mob of a stack is a copy of its carrier (level and equipment included).
  */
 final class StackManager implements Listener {
 
@@ -215,10 +218,6 @@ final class StackManager implements Listener {
         if (e instanceof Ageable a) sb.append(a.isAdult() ? "|adult" : "|baby");
         if (e instanceof Sheep s) sb.append('|').append(s.getColor()).append(s.isSheared());
         if (e instanceof Slime s) sb.append("|size").append(s.getSize());
-        for (Attribute attribute : List.of(Attribute.MAX_HEALTH, Attribute.ATTACK_DAMAGE, Attribute.MOVEMENT_SPEED)) {
-            AttributeInstance a = e.getAttribute(attribute);
-            if (a != null) sb.append('|').append(Math.round(a.getValue() * 1000));
-        }
         return sb.toString();
     }
 
@@ -263,6 +262,7 @@ final class StackManager implements Listener {
                 if (total + n > maxStack) continue;
                 total += n;
                 gone.add(other);
+                dropPickedUp(other);
                 removeLabels(other);
                 other.remove();
             }
@@ -300,6 +300,7 @@ final class StackManager implements Listener {
                 if (total + n > maxStack) continue;
                 total += n;
                 gone.add(other);
+                dropPickedUp(other);
                 removeLabels(other);
                 other.remove();
             }
@@ -341,12 +342,46 @@ final class StackManager implements Listener {
         pushable(event.getEntity(), true);
     }
 
+    /**
+     * Items a mob drops for sure (dropChance 1: what it picked up from the ground, a player's sword...). A copy never
+     * keeps them, else every mob of the stack would drop the same item: a duplication.
+     */
+    private static void clearPickedUp(LivingEntity e) {
+        EntityEquipment eq = e.getEquipment();
+        if (eq == null) return;
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
+            try {
+                if (eq.getDropChance(slot) >= 1f) eq.setItem(slot, null);
+            } catch (IllegalArgumentException unsupported) {
+                // slot this mob does not have
+            }
+        }
+    }
+
+    /** A mob joining a stack leaves on the ground what it picked up, instead of taking it away. */
+    private static void dropPickedUp(LivingEntity e) {
+        EntityEquipment eq = e.getEquipment();
+        if (eq == null) return;
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
+            try {
+                ItemStack item = eq.getItem(slot);
+                if (eq.getDropChance(slot) >= 1f && !item.isEmpty()) {
+                    e.getWorld().dropItemNaturally(e.getLocation(), item);
+                    eq.setItem(slot, null);
+                }
+            } catch (IllegalArgumentException unsupported) {
+                // slot this mob does not have
+            }
+        }
+    }
+
     /** A copy of the mob (level, equipment, data), full health. */
     private Entity respawn(LivingEntity from, Location at) {
         EntitySnapshot snapshot = from.createSnapshot();
         if (snapshot == null) return null;
         Entity copy = snapshot.createEntity(at);
         removeLabels(copy);
+        if (copy instanceof LivingEntity living) clearPickedUp(living);
         if (copy instanceof LivingEntity living) {
             AttributeInstance max = living.getAttribute(Attribute.MAX_HEALTH);
             if (max != null) living.setHealth(max.getValue());
