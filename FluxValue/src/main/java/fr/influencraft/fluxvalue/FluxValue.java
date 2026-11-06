@@ -84,6 +84,7 @@ public final class FluxValue extends FluxPlugin {
         YamlConfiguration economy = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "economy.yml"));
         YamlConfiguration sources = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "sources.yml"));
         Model next = Model.load(economy, sources, ServerRecipes.read());
+        next.warnings.forEach(getLogger()::warning);
         if (next.jobs.isEmpty()) {
             getLogger().warning("sources.yml has no job (empty or unreadable): " + (model == null ? "no values." : "previous values kept, nothing written."));
             if (model == null) model = next;

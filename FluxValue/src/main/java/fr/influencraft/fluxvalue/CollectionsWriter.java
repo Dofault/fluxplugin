@@ -32,7 +32,8 @@ final class CollectionsWriter {
             for (Model.Source s : job.sources()) {
                 for (String b : s.blocks()) weightByBlock.merge(b, s.weight(), Math::max);
                 // a table use and a brew are counted one by one: the XP weight is per level or per bottle
-                if (s.blocks().isEmpty()) weightByTrigger.merge(s.trigger(), s.weight(), Math::max);
+                // kills are weighed per mob (mobWeights), never by the heaviest mob of the job
+                if (s.blocks().isEmpty() && !s.filters().containsKey("entities")) weightByTrigger.merge(s.trigger(), s.weight(), Math::max);
             }
         }
     }

@@ -1,16 +1,19 @@
 package fr.influencraft.fluxvalue;
 
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.EntityType;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.OptionalDouble;
-import java.util.Set;
 
 /**
  * economy.yml (coefficients) and sources.yml (weights), turned into values. Two graphs: with Tranchee (the market: what
@@ -42,11 +45,13 @@ public final class Model {
     double smeltPoints;
     double smeltCost;
     double meterWindowSeconds;
+    /** Points of one health point of a mob: the time it takes to kill it, before its weight. */
+    double pointsPerHealth;
 
     final Map<String, Job> jobs = new LinkedHashMap<>();
     final Map<String, Double> mobWeights = new LinkedHashMap<>();
     final Map<String, String> aliases = new LinkedHashMap<>();
-    final Set<String> unknownSources = new HashSet<>();
+    final List<String> warnings = new ArrayList<>();
     private final ValueGraph market = new ValueGraph();
     private final ValueGraph early = new ValueGraph();
 
@@ -77,6 +82,8 @@ public final class Model {
         m.collectionSecondExponent = economy.getDouble("collections.second-tier-exponent", 0.455);
         m.meterWindowSeconds = Math.max(1, economy.getDouble("rate-meter.window-seconds", 10));
         m.smeltCost = economy.getDouble("recipes.smelt-cost", 0);
+        m.pointsPerHealth = economy.getDouble("mobs.points-per-health", 4.23);
+        m.readMobWeights(sources);
         m.readJobs(sources);
         m.readDrops(sources);
         m.readFishing(sources);
@@ -142,6 +149,32 @@ public final class Model {
         }
     }
 
+    /**
+     * Points of one kill of a hostile mob = base health x points per health x weight. The health is the time it takes
+     * to kill it; the weight (relative, 1 = zombie, from the workbook) is how hard it is to find (a blaze has a
+     * zombie's health, but lives in a fortress). The base health comes from the server (default attributes), never
+     * from the config: it values the drops, offerings and collections.
+     */
+    private void readMobWeights(YamlConfiguration file) {
+        ConfigurationSection mobs = file.getConfigurationSection("mobs");
+        if (mobs == null) return;
+        for (String id : mobs.getKeys(false)) {
+            OptionalDouble health = baseHealth(id);
+            if (health.isEmpty()) {
+                warnings.add("Unknown mob or no health in mobs: " + id + " (no value, not paid)");
+                continue;
+            }
+            mobWeights.put(id, health.getAsDouble() * pointsPerHealth * mobs.getDouble(id + ".weight", 1));
+        }
+    }
+
+    private static OptionalDouble baseHealth(String id) {
+        EntityType type = Registry.ENTITY_TYPE.get(NamespacedKey.minecraft(id));
+        if (type == null || !type.hasDefaultAttributes()) return OptionalDouble.empty();
+        AttributeInstance health = type.getDefaultAttributes().getAttribute(Attribute.MAX_HEALTH);
+        return health == null ? OptionalDouble.empty() : OptionalDouble.of(health.getBaseValue());
+    }
+
     private static boolean isBlockTrigger(String trigger) {
         return trigger.equals("mine_block") || trigger.equals("mine_block_cascade") || trigger.equals("click_block");
     }
@@ -159,8 +192,7 @@ public final class Model {
             if (root == null) continue;
             String job = group.equals("mobs") ? "defenseur" : "divers";
             for (String id : root.getKeys(false)) {
-                double weight = root.getDouble(id + ".weight");
-                if (group.equals("mobs")) mobWeights.put(id, weight);
+                double weight = group.equals("mobs") ? mobWeights.getOrDefault(id, 0.0) : root.getDouble(id + ".weight");
                 ConfigurationSection y = root.getConfigurationSection(id + ".yields");
                 if (y == null || y.getKeys(false).isEmpty()) continue;
                 int shares = y.getKeys(false).size();

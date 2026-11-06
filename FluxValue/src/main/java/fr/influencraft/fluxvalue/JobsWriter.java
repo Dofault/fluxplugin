@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 /**
  * Writes the numbers of each job into the job plugin (EcoJobs reads only its files). Only {@code level-xp-requirements},
  * {@code xp-gain-methods}, the money effects and the money placeholders are generated; names, lore and menus stay
- * hand-written. A job missing from sources.yml (Defenseur) is left alone. When FluxJobs replaces EcoJobs one day, it
+ * hand-written. A job missing from sources.yml (Defenseur, paid per health point by hand) is left alone. When FluxJobs replaces EcoJobs one day, it
  * reads the model and this class goes away.
  */
 final class JobsWriter {
