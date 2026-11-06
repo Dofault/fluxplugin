@@ -55,6 +55,7 @@ final class StackManager implements Listener {
     private final NamespacedKey labelKey;
     private BukkitTask task;
     private double radiusSquared;
+    private double verticalRadius;
     private int maxStack;
     private boolean stackAnimals;
     private Set<String> worlds = Set.of();
@@ -71,8 +72,9 @@ final class StackManager implements Listener {
     void start() {
         stop();
         FileConfiguration c = plugin.getConfig();
-        double radius = Math.max(1, c.getDouble("radius", 6));
+        double radius = Math.max(1, c.getDouble("radius", 20));
         radiusSquared = radius * radius;
+        verticalRadius = Math.max(1, c.getDouble("vertical-radius", 8));
         maxStack = Math.max(2, c.getInt("max-stack", 50));
         stackAnimals = c.getBoolean("stack-animals", true);
         worlds = lower(c.getStringList("worlds"));
@@ -204,18 +206,43 @@ final class StackManager implements Listener {
         }
     }
 
-    /** Biggest stacks absorb their neighbours first, up to the maximum. */
+    /** Close enough to merge: within the radius around, and not too far above or below (no merging through a cave roof). */
+    private boolean near(Location a, Location b) {
+        double dx = a.getX() - b.getX(), dz = a.getZ() - b.getZ();
+        return dx * dx + dz * dz <= radiusSquared && Math.abs(a.getY() - b.getY()) <= verticalRadius;
+    }
+
+    /**
+     * Mobs linked by neighbours (A near B, B near C) form one cluster, even when A and C are far apart; each cluster
+     * goes into its biggest stack, then into the next biggest once the maximum is reached.
+     */
     private void merge(List<LivingEntity> group) {
-        group.sort(Comparator.comparingInt(this::count).reversed());
+        Set<LivingEntity> seen = new HashSet<>();
+        for (LivingEntity start : group) {
+            if (!seen.add(start)) continue;
+            List<LivingEntity> cluster = new ArrayList<>(List.of(start));
+            for (int i = 0; i < cluster.size(); i++) {
+                Location at = cluster.get(i).getLocation();
+                for (LivingEntity other : group) {
+                    if (!seen.contains(other) && near(at, other.getLocation())) {
+                        seen.add(other);
+                        cluster.add(other);
+                    }
+                }
+            }
+            if (cluster.size() > 1) absorb(cluster);
+        }
+    }
+
+    private void absorb(List<LivingEntity> cluster) {
+        cluster.sort(Comparator.comparingInt(this::count).reversed());
         Set<LivingEntity> gone = new HashSet<>();
-        for (LivingEntity host : group) {
+        for (LivingEntity host : cluster) {
             if (gone.contains(host)) continue;
             int total = count(host);
-            if (total >= maxStack) continue;
-            Location at = host.getLocation();
-            for (LivingEntity other : group) {
+            for (LivingEntity other : cluster) {
+                if (total >= maxStack) break;
                 if (other == host || gone.contains(other)) continue;
-                if (other.getLocation().distanceSquared(at) > radiusSquared) continue;
                 int n = count(other);
                 if (total + n > maxStack) continue;
                 total += n;

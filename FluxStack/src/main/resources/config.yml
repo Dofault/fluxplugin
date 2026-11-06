@@ -4,8 +4,10 @@
 
 # Seconds between two merge passes.
 interval-seconds: 2
-# Radius (blocks) in which two identical mobs merge.
-radius: 6
+# Radius (blocks) around a mob in which identical mobs merge; chains count (A near B, B near C).
+radius: 20
+# Most height difference (blocks) between two merging mobs: no merging through a cave roof.
+vertical-radius: 8
 # Most mobs in one stack.
 max-stack: 50
 # Worlds where mobs stack; empty = every world.
