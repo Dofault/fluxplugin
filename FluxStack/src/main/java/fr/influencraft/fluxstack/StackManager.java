@@ -62,6 +62,7 @@ final class StackManager implements Listener {
     private static final String NO_PUSH_TEAM = "fluxstack_nopush";
     private Team noPush;
     private double radiusSquared;
+    private double stackRadiusSquared;
     private double verticalRadius;
     private int maxStack;
     private boolean stackAnimals;
@@ -82,6 +83,8 @@ final class StackManager implements Listener {
         double radius = Math.max(1, c.getDouble("radius", 20));
         radiusSquared = radius * radius;
         verticalRadius = Math.max(1, c.getDouble("vertical-radius", 8));
+        double stackRadius = Math.max(radius, c.getDouble("stack-radius", 48));
+        stackRadiusSquared = stackRadius * stackRadius;
         maxStack = Math.max(2, c.getInt("max-stack", 50));
         stackAnimals = c.getBoolean("stack-animals", true);
         worlds = lower(c.getStringList("worlds"));
@@ -235,24 +238,46 @@ final class StackManager implements Listener {
     }
 
     /** Close enough to merge: within the radius around, and not too far above or below (no merging through a cave roof). */
-    private boolean near(Location a, Location b) {
+    private boolean near(Location a, Location b, double radiusSq) {
         double dx = a.getX() - b.getX(), dz = a.getZ() - b.getZ();
-        return dx * dx + dz * dz <= radiusSquared && Math.abs(a.getY() - b.getY()) <= verticalRadius;
+        return dx * dx + dz * dz <= radiusSq && Math.abs(a.getY() - b.getY()) <= verticalRadius;
     }
 
     /**
-     * Mobs linked by neighbours (A near B, B near C) form one cluster, even when A and C are far apart; each cluster
-     * goes into its biggest stack, then into the next biggest once the maximum is reached.
+     * Existing stacks first: each one, biggest first, takes every identical mob or smaller stack within the stack
+     * radius, so a newly spawned mob joins the pile already there instead of starting another one. Only the mobs left
+     * (no stack in reach) group with each other, in chains (A near B, B near C) within the radius.
      */
     private void merge(List<LivingEntity> group) {
+        group.sort(Comparator.comparingInt(this::count).reversed());
+        Set<LivingEntity> gone = new HashSet<>();
+        for (LivingEntity host : group) {
+            if (count(host) < 2) break; // sorted: only single mobs from here
+            if (gone.contains(host)) continue;
+            int total = count(host);
+            Location at = host.getLocation();
+            for (LivingEntity other : group) {
+                if (total >= maxStack) break;
+                if (other == host || gone.contains(other) || !near(at, other.getLocation(), stackRadiusSquared)) continue;
+                int n = count(other);
+                if (total + n > maxStack) continue;
+                total += n;
+                gone.add(other);
+                removeLabels(other);
+                other.remove();
+            }
+            if (total != count(host)) setCount(host, total);
+        }
+        List<LivingEntity> left = new ArrayList<>();
+        for (LivingEntity e : group) if (!gone.contains(e) && count(e) < 2) left.add(e);
         Set<LivingEntity> seen = new HashSet<>();
-        for (LivingEntity start : group) {
+        for (LivingEntity start : left) {
             if (!seen.add(start)) continue;
             List<LivingEntity> cluster = new ArrayList<>(List.of(start));
             for (int i = 0; i < cluster.size(); i++) {
                 Location at = cluster.get(i).getLocation();
-                for (LivingEntity other : group) {
-                    if (!seen.contains(other) && near(at, other.getLocation())) {
+                for (LivingEntity other : left) {
+                    if (!seen.contains(other) && near(at, other.getLocation(), radiusSquared)) {
                         seen.add(other);
                         cluster.add(other);
                     }

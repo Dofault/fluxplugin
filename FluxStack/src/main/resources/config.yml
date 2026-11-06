@@ -8,6 +8,8 @@ interval-seconds: 2
 radius: 20
 # Most height difference (blocks) between two merging mobs: no merging through a cave roof.
 vertical-radius: 8
+# Radius (blocks) in which an existing stack takes identical mobs and smaller stacks, before new stacks form.
+stack-radius: 48
 # Most mobs in one stack.
 max-stack: 10000
 # Worlds where mobs stack; empty = every world.
