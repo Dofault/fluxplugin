@@ -37,6 +37,6 @@ public final class FluxStack extends FluxPlugin {
 
     @Override
     protected void disable() {
-        if (stacks != null) stacks.stop();
+        if (stacks != null) stacks.shutdown();
     }
 }

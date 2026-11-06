@@ -24,5 +24,5 @@ exclude-types:
   - armor_stand
 # Animals: false = only hostile mobs stack.
 stack-animals: true
-# Name shown with the count ({name} = mob name, {count} = number of mobs).
-name: "{name} &7×{count}"
+# Floating text over a stack ({count} = number of mobs).
+label: "&f×{count}"

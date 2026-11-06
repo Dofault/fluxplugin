@@ -1,7 +1,8 @@
 package fr.influencraft.fluxstack;
 
 import fr.influencraft.flux.api.text.Texts;
-import fr.influencraft.flux.api.text.Translations;
+import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
@@ -11,6 +12,7 @@ import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Ageable;
 import org.bukkit.entity.Animals;
+import org.bukkit.entity.Display;
 import org.bukkit.entity.Enemy;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntitySnapshot;
@@ -19,6 +21,7 @@ import org.bukkit.entity.Mob;
 import org.bukkit.entity.Sheep;
 import org.bukkit.entity.Slime;
 import org.bukkit.entity.Tameable;
+import org.bukkit.entity.TextDisplay;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -26,6 +29,9 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.util.Transformation;
+import org.joml.AxisAngle4f;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -45,6 +51,8 @@ final class StackManager implements Listener {
 
     private final FluxStack plugin;
     private final NamespacedKey countKey;
+    /** Marks our floating "×12" texts: never saved, rebuilt by the merge pass when missing. */
+    private final NamespacedKey labelKey;
     private BukkitTask task;
     private double radiusSquared;
     private int maxStack;
@@ -52,11 +60,12 @@ final class StackManager implements Listener {
     private Set<String> worlds = Set.of();
     private Set<String> disabledWorlds = Set.of();
     private Set<String> excluded = Set.of();
-    private String nameFormat;
+    private String labelFormat;
 
     StackManager(FluxStack plugin) {
         this.plugin = plugin;
         this.countKey = new NamespacedKey(plugin, "count");
+        this.labelKey = new NamespacedKey(plugin, "label");
     }
 
     void start() {
@@ -69,7 +78,7 @@ final class StackManager implements Listener {
         worlds = lower(c.getStringList("worlds"));
         disabledWorlds = lower(c.getStringList("disabled-worlds"));
         excluded = lower(c.getStringList("exclude-types"));
-        nameFormat = c.getString("name", "{name} &7×{count}");
+        labelFormat = c.getString("label", "&f×{count}");
         long period = Math.max(20, Math.round(c.getDouble("interval-seconds", 2) * 20));
         task = Bukkit.getScheduler().runTaskTimer(plugin, this::mergeAll, period, period);
     }
@@ -77,6 +86,17 @@ final class StackManager implements Listener {
     void stop() {
         if (task != null) task.cancel();
         task = null;
+    }
+
+    /** Plugin off: labels go, frozen stacks move again (their count is kept and comes back at the next start). */
+    void shutdown() {
+        stop();
+        for (World world : Bukkit.getWorlds()) {
+            for (LivingEntity e : world.getLivingEntities()) {
+                if (count(e) > 1 && e instanceof Mob m) m.setAware(true);
+                removeLabels(e);
+            }
+        }
     }
 
     private static Set<String> lower(List<String> list) {
@@ -92,19 +112,46 @@ final class StackManager implements Listener {
         return n == null ? 1 : Math.max(1, n);
     }
 
+    /** Count, frozen state and floating label of a stack (n = 1: a normal mob again). */
     private void setCount(LivingEntity e, int n) {
         if (n <= 1) {
-            if (e.getPersistentDataContainer().has(countKey)) {
-                e.getPersistentDataContainer().remove(countKey);
-                e.customName(null);
-            }
+            e.getPersistentDataContainer().remove(countKey);
+            if (e instanceof Mob m) m.setAware(true);
+            removeLabels(e);
             return;
         }
         e.getPersistentDataContainer().set(countKey, PersistentDataType.INTEGER, n);
-        // seen by everybody at once: the server's language (Translations), as a shop sign
-        String name = Translations.server(e.getType().translationKey());
-        e.customName(Texts.colors(nameFormat.replace("{name}", name).replace("{count}", String.valueOf(n))));
-        e.setCustomNameVisible(false); // the level plugin draws the name tag, with this name in it
+        if (e instanceof Mob m) m.setAware(false); // the mob that carries a stack stays put (no AI, gravity kept)
+        label(e, n);
+    }
+
+    private boolean isLabel(Entity e) {
+        return e instanceof TextDisplay && e.getPersistentDataContainer().has(labelKey);
+    }
+
+    private void removeLabels(Entity host) {
+        for (Entity p : host.getPassengers()) if (isLabel(p)) p.remove();
+    }
+
+    /** The "×12" text riding the stack, created when missing, updated when the count changed. */
+    private void label(LivingEntity host, int n) {
+        Component text = Texts.colors(labelFormat.replace("{count}", String.valueOf(n)));
+        for (Entity p : host.getPassengers()) {
+            if (isLabel(p)) {
+                ((TextDisplay) p).text(text);
+                return;
+            }
+        }
+        TextDisplay label = host.getWorld().spawn(host.getLocation(), TextDisplay.class, d -> {
+            d.setPersistent(false);
+            d.getPersistentDataContainer().set(labelKey, PersistentDataType.BYTE, (byte) 1);
+            d.text(text);
+            d.setBillboard(Display.Billboard.CENTER);
+            d.setShadowed(true);
+            d.setTransformation(new Transformation(new Vector3f(0, 0.35f, 0), new AxisAngle4f(), new Vector3f(1, 1, 1),
+                    new AxisAngle4f()));
+        });
+        host.addPassenger(label);
     }
 
     // ---------------------------------------------------------------- merging
@@ -119,11 +166,14 @@ final class StackManager implements Listener {
         if (!(e instanceof Mob) || !e.isValid() || e.isDead()) return false;
         if (excluded.contains(e.getType().getKey().getKey())) return false;
         if (!stackAnimals && !(e instanceof Enemy)) return false;
-        if (e.isLeashed() || !e.getPassengers().isEmpty() || e.isInsideVehicle() || e.isInvisible()) return false;
+        if (e.isLeashed() || e.isInsideVehicle() || e.isInvisible()) return false;
+        for (Entity p : e.getPassengers()) if (!isLabel(p)) return false;
         if (e instanceof Tameable t && t.isTamed()) return false;
         if (e instanceof Animals a && a.isLoveMode()) return false;
-        // a name not given by us: a name tag, a boss, a model of another plugin
-        if (e.customName() != null && !e.getPersistentDataContainer().has(countKey)) return false;
+        // COMPAT 2026-11-06: stacks of the first version carry "Zombie ×12" as their name - remove when Labs restarted twice
+        if (e.customName() != null && e.getPersistentDataContainer().has(countKey)) e.customName(null);
+        // a named mob: a name tag, a boss, a model of another plugin
+        if (e.customName() != null) return false;
         return e.getScoreboardTags().isEmpty();
     }
 
@@ -146,7 +196,11 @@ final class StackManager implements Listener {
             for (LivingEntity e : world.getLivingEntities()) {
                 if (stackable(e)) groups.computeIfAbsent(signature(e), k -> new ArrayList<>()).add(e);
             }
-            for (List<LivingEntity> group : groups.values()) if (group.size() > 1) merge(group);
+            for (List<LivingEntity> group : groups.values()) {
+                if (group.size() > 1) merge(group);
+                // labels are never saved: a stack loaded from disk gets its label back, frozen again
+                for (LivingEntity e : group) if (e.isValid() && count(e) > 1) setCount(e, count(e));
+            }
         }
     }
 
@@ -166,6 +220,7 @@ final class StackManager implements Listener {
                 if (total + n > maxStack) continue;
                 total += n;
                 gone.add(other);
+                removeLabels(other);
                 other.remove();
             }
             if (total != count(host)) setCount(host, total);
@@ -180,6 +235,7 @@ final class StackManager implements Listener {
         LivingEntity dead = event.getEntity();
         int n = count(dead);
         if (n <= 1) return;
+        removeLabels(dead);
         Entity next = respawn(dead, dead.getLocation());
         if (next instanceof LivingEntity living) setCount(living, n - 1);
     }
@@ -195,11 +251,18 @@ final class StackManager implements Listener {
         setCount(clicked, 1);
     }
 
+    /** A stack leaving the world (despawn, unload, removal): its label goes with it, never left floating. */
+    @EventHandler
+    public void onRemove(EntityRemoveFromWorldEvent event) {
+        removeLabels(event.getEntity());
+    }
+
     /** A copy of the mob (level, equipment, data), full health. */
-    private static Entity respawn(LivingEntity from, Location at) {
+    private Entity respawn(LivingEntity from, Location at) {
         EntitySnapshot snapshot = from.createSnapshot();
         if (snapshot == null) return null;
         Entity copy = snapshot.createEntity(at);
+        removeLabels(copy);
         if (copy instanceof LivingEntity living) {
             AttributeInstance max = living.getAttribute(Attribute.MAX_HEALTH);
             if (max != null) living.setHealth(max.getValue());
