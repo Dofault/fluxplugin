@@ -5,7 +5,7 @@
 # Seconds between two merge passes.
 interval-seconds: 2
 # Radius (blocks) around a mob in which identical mobs merge; chains count (A near B, B near C).
-radius: 15
+radius: 10
 # Most height difference (blocks) between two merging mobs: no merging through a cave roof.
 vertical-radius: 8
 # Radius (blocks) in which an existing stack takes identical mobs and smaller stacks, before new stacks form.
@@ -26,7 +26,9 @@ exclude-types:
   - elder_guardian
   - allay
   - armor_stand
-# Animals: false = only hostile mobs stack.
-stack-animals: true
+# Who stacks: passive mobs, and mobs out of a spawner whatever their kind (never trial spawners).
+# Hostile mobs of the wild never stack.
+passive: true
+spawner: true
 # Floating text over a stack ({count} = number of mobs).
 label: "&f×{count}"

@@ -73,7 +73,8 @@ final class StackManager implements Listener {
     private double stackRadiusSquared;
     private double verticalRadius;
     private int maxStack;
-    private boolean stackAnimals;
+    private boolean stackPassive;
+    private boolean stackSpawner;
     private Set<String> worlds = Set.of();
     private Set<String> disabledWorlds = Set.of();
     private Set<String> excluded = Set.of();
@@ -88,13 +89,14 @@ final class StackManager implements Listener {
     void start() {
         stop();
         FileConfiguration c = plugin.getConfig();
-        double radius = Math.max(1, c.getDouble("radius", 15));
+        double radius = Math.max(1, c.getDouble("radius", 10));
         radiusSquared = radius * radius;
         verticalRadius = Math.max(1, c.getDouble("vertical-radius", 8));
         double stackRadius = Math.max(radius, c.getDouble("stack-radius", 48));
         stackRadiusSquared = stackRadius * stackRadius;
         maxStack = Math.max(2, c.getInt("max-stack", 50));
-        stackAnimals = c.getBoolean("stack-animals", true);
+        stackPassive = c.getBoolean("passive", true);
+        stackSpawner = c.getBoolean("spawner", true);
         worlds = lower(c.getStringList("worlds"));
         disabledWorlds = lower(c.getStringList("disabled-worlds"));
         excluded = lower(c.getStringList("exclude-types"));
@@ -203,7 +205,11 @@ final class StackManager implements Listener {
     private boolean stackable(LivingEntity e) {
         if (!(e instanceof Mob) || !e.isValid() || e.isDead()) return false;
         if (excluded.contains(e.getType().getKey().getKey())) return false;
-        if (!stackAnimals && !(e instanceof Enemy)) return false;
+        // passive mobs, and mobs out of a spawner whatever their kind; hostile mobs of the wild stay normal
+        // (existing stacks keep merging, whatever the rule was when they formed)
+        boolean passive = !(e instanceof Enemy);
+        boolean fromSpawner = e.getEntitySpawnReason() == CreatureSpawnEvent.SpawnReason.SPAWNER;
+        if (count(e) <= 1 && !(passive && stackPassive) && !(fromSpawner && stackSpawner)) return false;
         if (e.isLeashed() || e.isInsideVehicle() || e.isInvisible()) return false;
         for (Entity p : e.getPassengers()) if (!isLabel(p)) return false;
         if (e instanceof Tameable t && t.isTamed()) return false;
@@ -414,7 +420,8 @@ final class StackManager implements Listener {
             living.setNoDamageTicks(0);
             clearPickedUp(living);
         }
-        if (!copy.spawnAt(at, CreatureSpawnEvent.SpawnReason.CUSTOM)) return null;
+        // same origin as the carrier: a spawner stack stays a spawner stack after a death
+        if (!copy.spawnAt(at, from.getEntitySpawnReason())) return null;
         removeLabels(copy);
         return copy;
     }
