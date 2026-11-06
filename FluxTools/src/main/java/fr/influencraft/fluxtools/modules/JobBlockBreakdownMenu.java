@@ -30,22 +30,6 @@ public final class JobBlockBreakdownMenu {
     public static final String MENU = "job_actions";
     public static final String LIST = "job_actions";
 
-    // crop blocks whose block id is not an item ("POTATOES isn't an item")
-    private static final Map<String, Material> CROP_BLOCK_TO_ITEM = Map.of(
-            "potatoes", Material.POTATO, "carrots", Material.CARROT, "beetroots", Material.BEETROOT, "cocoa", Material.COCOA_BEANS);
-
-    static final Map<String, String> TRIGGER_LABELS = Map.ofEntries(
-            Map.entry("mine_block", "Miner un bloc"), Map.entry("mine_block_cascade", "Miner en cascade"),
-            Map.entry("catch_fish", "Pêcher un poisson"), Map.entry("kill", "Éliminer un mob"),
-            Map.entry("place_block", "Poser un bloc"), Map.entry("smelt", "Fondre un item"),
-            Map.entry("brew", "Brasser une potion"), Map.entry("enchant_item", "Enchanter un objet"));
-
-    private static final Map<String, Material> TRIGGER_ICONS = Map.ofEntries(
-            Map.entry("mine_block", Material.STONE_PICKAXE), Map.entry("mine_block_cascade", Material.STONE_PICKAXE),
-            Map.entry("catch_fish", Material.FISHING_ROD), Map.entry("kill", Material.IRON_SWORD),
-            Map.entry("place_block", Material.BRICKS), Map.entry("smelt", Material.FURNACE),
-            Map.entry("brew", Material.BREWING_STAND), Map.entry("enchant_item", Material.ENCHANTED_BOOK));
-
     private final Map<UUID, String> opened = new ConcurrentHashMap<>();
 
     public JobBlockBreakdownMenu(Plugin plugin) {
@@ -73,14 +57,12 @@ public final class JobBlockBreakdownMenu {
         if (job == null) return out;
         int i = 0;
         for (JobAction a : Jobs.get().actions(player, job)) {
-            boolean block = !a.targets().isEmpty();
-            String target = block ? a.targets().get(0) : null;
-            Material icon = block ? icon(target) : TRIGGER_ICONS.getOrDefault(a.trigger(), Material.PAPER);
-            String title = block ? prettify(target) : a.label() != null ? a.label() : TRIGGER_LABELS.getOrDefault(a.trigger(), a.trigger());
+            JobActionLook.Look look = JobActionLook.of(player, a);
             List<String> lore = new ArrayList<>();
             lore.add("&7XP &8► &#2ECF7B" + Format.decimal(a.xp()));
             lore.add(money(player, a));
-            out.add(ListEntry.of(String.valueOf(i++)).set("name", title).item(item(icon, "&#FFD94D" + title, lore)));
+            out.add(ListEntry.of(String.valueOf(i++)).set("name", look.name())
+                    .item(fr.influencraft.flux.api.inventory.Items.dress(look.icon(), look.name(), lore, player)));
         }
         return out;
     }
@@ -91,7 +73,9 @@ public final class JobBlockBreakdownMenu {
         List<JobAction> actions = Jobs.get().actions(player, job);
         List<String> lore = new ArrayList<>();
         if (actions.isEmpty()) lore.add("&7Aucune action rémunérée détectée.");
-        else if (actions.get(0).targets().isEmpty()) lore.add("&#B376E5Ce métier n'a pas de liste de blocs : détail par type d'action.");
+        else if (actions.get(0).trigger().equals("kill") && !actions.get(0).targets().isEmpty()) lore.add("&#B376E5Détail créature par créature, à leur niveau de base.");
+        else if (actions.get(0).trigger().equals("catch_fish")) lore.add("&#B376E5Détail par rareté de poisson.");
+        else if (actions.get(0).targets().isEmpty()) lore.add("&#B376E5Détail par type d'action.");
         else lore.add("&#B376E5Détail bloc par bloc.");
         return item(Material.PAPER, "&#FFD94D" + Jobs.get().displayName(job), lore);
     }
@@ -114,22 +98,5 @@ public final class JobBlockBreakdownMenu {
             stack.setItemMeta(meta);
         }
         return stack;
-    }
-
-    private static Material icon(String blockId) {
-        Material mapped = CROP_BLOCK_TO_ITEM.get(blockId);
-        if (mapped != null) return mapped;
-        Material material = Material.matchMaterial(blockId);
-        return material == null || !material.isItem() ? Material.BARRIER : material;
-    }
-
-    private static String prettify(String id) {
-        StringBuilder sb = new StringBuilder();
-        for (String part : id.split("_")) {
-            if (part.isEmpty()) continue;
-            if (!sb.isEmpty()) sb.append(' ');
-            sb.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
-        }
-        return sb.toString();
     }
 }

@@ -217,7 +217,8 @@ public final class EcoJobsJobs implements Jobs.Provider, Listener {
     }
 
     /**
-     * Paid actions: one per block when the job lists blocks, else one per XP gain method. Money is matched to each
+     * Paid actions: one per block when the job lists blocks, else one per XP gain method (one per mob when a method
+     * lists entities; the fish of a method as targets). Money is matched to each
      * line by identical filters first, then an unfiltered effect on the same trigger.
      */
     @Override
@@ -264,10 +265,36 @@ public final class EcoJobsJobs implements Jobs.Provider, Listener {
             if (trigger == null || xp == null) continue;
             double[] m = moneyFor(money, trigger.toString(), method.get("filters"), level);
             Object label = method.get("display-label") != null ? method.get("display-label") : method.get("display-name");
-            out.add(new JobAction(trigger.toString(), label == null ? null : label.toString(), List.of(),
-                    Double.parseDouble(xp.toString()), m == null ? null : m[0], m == null ? 1 : m[1]));
+            String name = label == null ? null : label.toString();
+            double value = Double.parseDouble(xp.toString());
+            Double amount = m == null ? null : m[0];
+            double every = m == null ? 1 : m[1];
+            Map<?, ?> filters = method.get("filters") instanceof Map<?, ?> f ? f : Map.of();
+            if (filters.get("entities") instanceof List<?> entities && !entities.isEmpty()) {
+                // one line per mob: the menu shows each of them, not one line per group of equal weight
+                // paid per health point (multiplier): shown for one kill of the mob at its base health
+                boolean perHealth = method.get("multiplier") != null && trigger.toString().equals("kill");
+                for (Object e : entities) {
+                    double hp = perHealth ? baseHealth(e.toString()) : 1;
+                    out.add(new JobAction(trigger.toString(), name, List.of(e.toString()), value * hp,
+                            amount == null ? null : amount * hp, every));
+                }
+                continue;
+            }
+            // fish of a tier: the menu picks one of them as the icon of the line
+            List<String> targets = filters.get("custom_fish_type") instanceof List<?> fish
+                    ? fish.stream().map(Object::toString).toList() : List.of();
+            out.add(new JobAction(trigger.toString(), name, targets, value, amount, every));
         }
         return out;
+    }
+
+    /** Base max health of a mob (default attributes), 1 when unknown. */
+    private static double baseHealth(String id) {
+        org.bukkit.entity.EntityType type = org.bukkit.Registry.ENTITY_TYPE.get(org.bukkit.NamespacedKey.minecraft(id.toLowerCase(java.util.Locale.ROOT)));
+        if (type == null || !type.hasDefaultAttributes()) return 1;
+        var health = type.getDefaultAttributes().getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
+        return health == null ? 1 : health.getBaseValue();
     }
 
     private static double[] moneyFor(List<Map<?, ?>> effects, String trigger, Object filters, int level) {

@@ -50,14 +50,6 @@ final class JobMenu implements Listener {
     /** Digit "chiffre_<n>": 5 px + shadow = 6 wide, advance 7. */
     private static final int DIGIT_ADVANCE = 7;
 
-    private static final Map<String, Material> CROP_BLOCK_TO_ITEM = Map.of(
-            "potatoes", Material.POTATO, "carrots", Material.CARROT, "beetroots", Material.BEETROOT, "cocoa", Material.COCOA_BEANS);
-    private static final Map<String, Material> TRIGGER_ICONS = Map.ofEntries(
-            Map.entry("mine_block", Material.STONE_PICKAXE), Map.entry("mine_block_cascade", Material.STONE_PICKAXE),
-            Map.entry("catch_fish", Material.FISHING_ROD), Map.entry("kill", Material.IRON_SWORD),
-            Map.entry("place_block", Material.BRICKS), Map.entry("smelt", Material.FURNACE),
-            Map.entry("brew", Material.BREWING_STAND), Map.entry("enchant_item", Material.ENCHANTED_BOOK));
-
     /** A job of the grid: icon and short description (config). */
     private record Shown(String id, String icon, List<String> description) {
     }
@@ -224,7 +216,8 @@ final class JobMenu implements Listener {
         int i = 0;
         for (JobAction a : Jobs.get().actions(player, job)) {
             Lore lore = Lore.create().kv("XP", Format.decimal(a.xp())).kv("Gain", money(player, a));
-            out.add(ListEntry.of(String.valueOf(i++)).item(item(icon(a).name(), actionName(a), lore.build(), player)));
+            JobActionLook.Look look = JobActionLook.of(player, a);
+            out.add(ListEntry.of(String.valueOf(i++)).item(Items.dress(look.icon(), look.name(), lore.build(), player)));
         }
         return out;
     }
@@ -309,23 +302,6 @@ final class JobMenu implements Listener {
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         if (glow) meta.setEnchantmentGlintOverride(true);
         item.setItemMeta(meta);
-    }
-
-    private static Material icon(JobAction a) {
-        if (a.targets().isEmpty()) return TRIGGER_ICONS.getOrDefault(a.trigger(), Material.PAPER);
-        String id = a.targets().get(0).toLowerCase(Locale.ROOT);
-        Material mapped = CROP_BLOCK_TO_ITEM.get(id);
-        if (mapped != null) return mapped;
-        Material material = Material.matchMaterial(id);
-        return material == null || !material.isItem() ? Material.BARRIER : material;
-    }
-
-    private static String actionName(JobAction a) {
-        if (a.targets().isEmpty()) {
-            return a.label() != null ? a.label() : JobBlockBreakdownMenu.TRIGGER_LABELS.getOrDefault(a.trigger(), a.trigger());
-        }
-        Material icon = icon(a);
-        return icon == Material.BARRIER ? a.targets().get(0) : "<lang:" + icon.translationKey() + ">";
     }
 
     /** Money line at the player's level, with the currency of the suite (glyph, never the ₿ character). */

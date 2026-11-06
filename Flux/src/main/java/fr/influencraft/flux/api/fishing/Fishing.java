@@ -141,6 +141,18 @@ public final class Fishing {
         return out;
     }
 
+    /** A fishing item by its id ({@code common_carp_fish}), or null when unknown or no fishing plugin. */
+    public static ItemStack item(Player player, String id) {
+        Provider p = provider;
+        if (p == null || id == null) return null;
+        try {
+            ItemStack item = p.build(player, id);
+            return item == null || item.getType().isAir() ? null : item;
+        } catch (RuntimeException | LinkageError e) {
+            return null;
+        }
+    }
+
     public static List<ItemStack> samples(Player player) {
         return new ArrayList<>(samplesByTier(player).values());
     }
