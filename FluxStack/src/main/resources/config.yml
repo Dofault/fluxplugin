@@ -9,7 +9,7 @@ radius: 20
 # Most height difference (blocks) between two merging mobs: no merging through a cave roof.
 vertical-radius: 8
 # Most mobs in one stack.
-max-stack: 50
+max-stack: 10000
 # Worlds where mobs stack; empty = every world.
 worlds: []
 # Worlds where mobs never stack (checked after "worlds").

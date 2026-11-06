@@ -1,7 +1,6 @@
 package fr.influencraft.fluxstack;
 
 import fr.influencraft.flux.api.text.Texts;
-import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -26,6 +25,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntityRemoveEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitTask;
@@ -306,10 +306,13 @@ final class StackManager implements Listener {
         setCount(clicked, 1);
     }
 
-    /** A stack leaving the world (despawn, unload, removal): its label goes with it, never left floating. */
+    /**
+     * A stack leaving the world: its label goes with it, never left floating. On a chunk unload Paper refuses removals
+     * (and labels are never saved, so they vanish with the chunk): only the team entry goes, put back when it loads.
+     */
     @EventHandler
-    public void onRemove(EntityRemoveFromWorldEvent event) {
-        removeLabels(event.getEntity());
+    public void onRemove(EntityRemoveEvent event) {
+        if (event.getCause() != EntityRemoveEvent.Cause.UNLOAD) removeLabels(event.getEntity());
         pushable(event.getEntity(), true);
     }
 
