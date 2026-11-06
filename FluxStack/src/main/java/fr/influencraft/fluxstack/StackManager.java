@@ -88,7 +88,7 @@ final class StackManager implements Listener {
     void start() {
         stop();
         FileConfiguration c = plugin.getConfig();
-        double radius = Math.max(1, c.getDouble("radius", 20));
+        double radius = Math.max(1, c.getDouble("radius", 15));
         radiusSquared = radius * radius;
         verticalRadius = Math.max(1, c.getDouble("vertical-radius", 8));
         double stackRadius = Math.max(radius, c.getDouble("stack-radius", 48));
