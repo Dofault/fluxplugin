@@ -61,8 +61,6 @@ public final class JobBlockBreakdownMenu {
             List<String> lore = new ArrayList<>();
             lore.add("&7XP &8► &#2ECF7B" + Format.decimal(a.xp()) + (a.perHealth() ? "&7 par point de vie" : ""));
             lore.add(money(player, a));
-            if (a.perHealth()) lore.add("&7Vie de base &8► &#2ECF7B" + Format.decimal(a.health()) + " &7(un kill : &#2ECF7B"
-                    + Format.decimal(a.xp() * a.health()) + " XP&7)");
             out.add(ListEntry.of(String.valueOf(i++)).set("name", look.name())
                     .item(fr.influencraft.flux.api.inventory.Items.dress(look.icon(), look.name(), lore, player)));
         }
@@ -75,7 +73,7 @@ public final class JobBlockBreakdownMenu {
         List<JobAction> actions = Jobs.get().actions(player, job);
         List<String> lore = new ArrayList<>();
         if (actions.isEmpty()) lore.add("&7Aucune action rémunérée détectée.");
-        else if (actions.get(0).trigger().equals("kill") && !actions.get(0).targets().isEmpty()) lore.add("&#B376E5Payé par point de vie de la créature tuée : un mob de haut niveau rapporte plus.");
+        else if (actions.get(0).perHealth()) lore.add("&#B376E5Payé par point de vie de la créature tuée : un mob de haut niveau rapporte plus.");
         else if (actions.get(0).trigger().equals("catch_fish")) lore.add("&#B376E5Détail par rareté de poisson.");
         else if (actions.get(0).targets().isEmpty()) lore.add("&#B376E5Détail par type d'action.");
         else lore.add("&#B376E5Détail bloc par bloc.");
