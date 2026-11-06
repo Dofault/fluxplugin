@@ -215,7 +215,10 @@ final class JobMenu implements Listener {
         if (job == null || !Jobs.available()) return out;
         int i = 0;
         for (JobAction a : Jobs.get().actions(player, job)) {
-            Lore lore = Lore.create().kv("XP", Format.decimal(a.xp())).kv("Gain", money(player, a));
+            Lore lore = a.perHealth()
+                    ? Lore.create().kv("XP", Format.decimal(a.xp()) + " par point de vie").kv("Gain", money(player, a))
+                            .kv("Vie de base", Format.decimal(a.health()) + " &7(un kill : " + Format.decimal(a.xp() * a.health()) + " XP)")
+                    : Lore.create().kv("XP", Format.decimal(a.xp())).kv("Gain", money(player, a));
             JobActionLook.Look look = JobActionLook.of(player, a);
             out.add(ListEntry.of(String.valueOf(i++)).item(Items.dress(look.icon(), look.name(), lore.build(), player)));
         }
@@ -308,6 +311,7 @@ final class JobMenu implements Listener {
     private static String money(Player player, JobAction a) {
         if (a.money() == null) return "&7Aucun gain d'argent";
         String text = "&7Gagne " + Lore.GREEN + amount(a.money());
+        if (a.perHealth()) return text + "&7 par point de vie";
         return a.every() <= 1 ? text + "&7 par action" : text + "&7 toutes les " + Lore.GREEN + Format.decimal(a.every()) + " &7actions";
     }
 

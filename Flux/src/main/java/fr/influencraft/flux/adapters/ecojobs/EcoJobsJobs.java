@@ -272,12 +272,11 @@ public final class EcoJobsJobs implements Jobs.Provider, Listener {
             Map<?, ?> filters = method.get("filters") instanceof Map<?, ?> f ? f : Map.of();
             if (filters.get("entities") instanceof List<?> entities && !entities.isEmpty()) {
                 // one line per mob: the menu shows each of them, not one line per group of equal weight
-                // paid per health point (multiplier): shown for one kill of the mob at its base health
+                // paid per health point of the victim (multiplier): the menu shows the rate and the mob's base health
                 boolean perHealth = method.get("multiplier") != null && trigger.toString().equals("kill");
                 for (Object e : entities) {
-                    double hp = perHealth ? baseHealth(e.toString()) : 1;
-                    out.add(new JobAction(trigger.toString(), name, List.of(e.toString()), value * hp,
-                            amount == null ? null : amount * hp, every));
+                    out.add(new JobAction(trigger.toString(), name, List.of(e.toString()), value, amount, every,
+                            perHealth ? baseHealth(e.toString()) : 0));
                 }
                 continue;
             }
