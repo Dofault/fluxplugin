@@ -205,11 +205,7 @@ final class StackManager implements Listener {
     private boolean stackable(LivingEntity e) {
         if (!(e instanceof Mob) || !e.isValid() || e.isDead()) return false;
         if (excluded.contains(e.getType().getKey().getKey())) return false;
-        // passive mobs, and mobs out of a spawner whatever their kind; hostile mobs of the wild stay normal
-        // (existing stacks keep merging, whatever the rule was when they formed)
-        boolean passive = !(e instanceof Enemy);
-        boolean fromSpawner = e.getEntitySpawnReason() == CreatureSpawnEvent.SpawnReason.SPAWNER;
-        if (count(e) <= 1 && !(passive && stackPassive) && !(fromSpawner && stackSpawner)) return false;
+        if (!allowedKind(e)) return false;
         if (e.isLeashed() || e.isInsideVehicle() || e.isInvisible()) return false;
         for (Entity p : e.getPassengers()) if (!isLabel(p)) return false;
         if (e instanceof Tameable t && t.isTamed()) return false;
@@ -222,6 +218,13 @@ final class StackManager implements Listener {
         Team team = Bukkit.getScoreboardManager().getMainScoreboard().getEntityTeam(e);
         if (team != null && !team.getName().equals(NO_PUSH_TEAM)) return false;
         return e.getScoreboardTags().isEmpty();
+    }
+
+    /** Passive mobs, and mobs out of a spawner whatever their kind; hostile mobs of the wild stay normal. */
+    private boolean allowedKind(LivingEntity e) {
+        boolean passive = !(e instanceof Enemy);
+        boolean fromSpawner = e.getEntitySpawnReason() == CreatureSpawnEvent.SpawnReason.SPAWNER;
+        return (passive && stackPassive) || (fromSpawner && stackSpawner);
     }
 
     private static String signature(LivingEntity e) {
@@ -237,7 +240,13 @@ final class StackManager implements Listener {
             if (!worldAllowed(world)) continue;
             Map<String, List<LivingEntity>> groups = new HashMap<>();
             for (LivingEntity e : world.getLivingEntities()) {
-                if (stackable(e)) groups.computeIfAbsent(signature(e), k -> new ArrayList<>()).add(e);
+                if (stackable(e)) {
+                    groups.computeIfAbsent(signature(e), k -> new ArrayList<>()).add(e);
+                } else if (count(e) > 1 && !allowedKind(e)) {
+                    // a stack of a kind that no longer stacks (a zombie of the wild): back to one normal mob, the rest
+                    // of the stack only existed as a number and goes, as if it had despawned
+                    setCount(e, 1);
+                }
             }
             for (List<LivingEntity> group : groups.values()) {
                 if (group.size() > 1) merge(group);
