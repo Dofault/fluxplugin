@@ -1,0 +1,10 @@
+name: FluxStack
+version: '1.0.0'
+main: fr.influencraft.fluxstack.FluxStack
+api-version: '1.21'
+description: Stacks nearby identical mobs into one entity; a stack dies one mob at a time, so jobs, loot and mob levels keep working.
+depend: [Flux]
+
+permissions:
+  fluxstack.admin:
+    default: op

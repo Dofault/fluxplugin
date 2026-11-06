@@ -1,0 +1,28 @@
+# FluxStack: nearby identical mobs merge into one entity that carries a count.
+# A stack dies one mob at a time (the next one takes its place), so every death is a real death:
+# job payments, loot, experience and mob levels work as without stacking.
+
+# Seconds between two merge passes.
+interval-seconds: 2
+# Radius (blocks) in which two identical mobs merge.
+radius: 6
+# Most mobs in one stack.
+max-stack: 50
+# Worlds where mobs stack; empty = every world.
+worlds: []
+# Worlds where mobs never stack (checked after "worlds").
+disabled-worlds: []
+# Mob types that never stack (lower case entity ids).
+exclude-types:
+  - villager
+  - wandering_trader
+  - ender_dragon
+  - wither
+  - warden
+  - elder_guardian
+  - allay
+  - armor_stand
+# Animals: false = only hostile mobs stack.
+stack-animals: true
+# Name shown with the count ({name} = mob name, {count} = number of mobs).
+name: "{name} &7×{count}"

@@ -41,5 +41,6 @@
         <module>FluxPW</module>
         <module>FluxAFK</module>
         <module>FluxValue</module>
+        <module>FluxStack</module>
     </modules>
 </project>
