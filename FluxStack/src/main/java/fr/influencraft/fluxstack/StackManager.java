@@ -24,6 +24,7 @@ import org.bukkit.entity.TextDisplay;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityKnockbackEvent;
@@ -403,15 +404,18 @@ final class StackManager implements Listener {
     private Entity respawn(LivingEntity from, EntitySnapshot taken, Location at) {
         EntitySnapshot snapshot = taken != null ? taken : from.createSnapshot();
         if (snapshot == null) return null;
-        Entity copy = snapshot.createEntity(at);
-        removeLabels(copy);
-        if (copy instanceof LivingEntity living) clearPickedUp(living);
+        // built outside the world, made healthy, then spawned: players never receive it at 0 health (a client plays
+        // the death animation of any mob it gets with no health, which the snapshot of a dead mob has)
+        Entity copy = snapshot.createEntity(at.getWorld());
         if (copy instanceof LivingEntity living) {
             AttributeInstance max = living.getAttribute(Attribute.MAX_HEALTH);
-            if (max != null) living.setHealth(max.getValue());
+            living.setHealth(max != null ? max.getValue() : Math.max(1, living.getHealth()));
             living.setFireTicks(0);
             living.setNoDamageTicks(0);
+            clearPickedUp(living);
         }
+        if (!copy.spawnAt(at, CreatureSpawnEvent.SpawnReason.CUSTOM)) return null;
+        removeLabels(copy);
         return copy;
     }
 }
