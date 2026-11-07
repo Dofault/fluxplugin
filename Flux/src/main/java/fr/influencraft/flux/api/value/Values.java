@@ -35,6 +35,11 @@ public final class Values {
 
         /** Points earned per second of optimal play, in every job. */
         double pointsPerSecond();
+
+        /** Money earned per second of optimal play by a level 100 player (the reference income of the server). */
+        default double moneyPerSecond() {
+            return 0;
+        }
     }
 
     private static volatile Provider provider;
@@ -80,6 +85,15 @@ public final class Values {
     public static double pointsPerSecond() {
         Provider p = provider;
         return p == null ? 0 : p.pointsPerSecond();
+    }
+
+    /**
+     * Money a level 100 player earns per second of optimal play: the unit to express a reward in ("as much as 5 minutes
+     * of play") instead of a hard-coded amount. 0 without FluxValue.
+     */
+    public static double moneyPerSecond() {
+        Provider p = provider;
+        return p == null ? 0 : p.moneyPerSecond();
     }
 
     /** Runs {@code listener} each time values change (FluxValue started or reloaded). */

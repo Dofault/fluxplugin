@@ -99,6 +99,11 @@ The plugins are written **as English plugins, then adapted to French** for our s
   relations...), build ours on Lands' API (`Levels`, roles through `Area#setRole`). Shops of towns are listed by the
   market of FluxCommerce (`/influmarche depuis <back command> <source> [search]`), not by FluxLands.
 - FluxValue owns the weights of everything farmable (`sources.yml`) and the coefficients (`economy.yml`); `JobsWriter` is the only code that knows EcoJobs' files and `CollectionsWriter` the only one for EcoCollections' tiers. FluxOffering computes its quantities from `offerings.yml` (`OfferingBudget`), FluxShop its prices (`PriceManager`).
+- FluxDungeons owns dungeons, classes and parties (`fluxdungeons.api.Dungeons`: `playing(player)`, `dungeonWorld(world)`):
+  a player in a run carries his **dungeon inventory**, his own things wait in `flux_dungeons_vault` (written before he
+  enters, deleted once given back, also at join after a crash). Never give, take or check items of a player in a run
+  from another plugin; stay out of runs with `Dungeons.playing`. Parties (`party.Parties`) know nothing of dungeons, to
+  move into Flux the day another plugin needs groups. BetterModel is only touched by `mob.ModelBridge`.
 - FluxArmor owns armour sets (`sets/<id>.yml`, pieces `fluxarmor:<set>_<piece>`, replaces EcoArmor) and their 3D look.
 - FluxCrate owns crates and keys (`fluxcrate.api.Crates`, used by the migration of EcoCrates); give keys with
   `fluxcrate give <player> <crate> <n>`, never with a third-party crates plugin. A reward is an item id (`item:`), its

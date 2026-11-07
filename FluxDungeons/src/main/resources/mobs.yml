@@ -1,0 +1,78 @@
+# Monsters of the dungeons. Ability types: leap, fireball, summon, slam, heal, shield, enrage.
+# every: seconds between two casts, below: only at or below this % of life.
+
+forge_worker:
+  type: ZOMBIE
+  name: '&#FF922BScorched Worker'
+  health: 24
+  damage: 4
+  speed: 0.24
+  armor: 2
+  xp: 8
+  equipment:
+    hand: IRON_PICKAXE
+    head: LEATHER_HELMET
+  abilities:
+  - type: leap
+    every: 8
+ember_skeleton:
+  type: SKELETON
+  name: '&#FF6B35Ember Skeleton'
+  health: 18
+  damage: 3
+  speed: 0.25
+  xp: 10
+  equipment:
+    hand: BOW
+  abilities:
+  - type: fireball
+    every: 6
+    speed: 1.2
+slag_brute:
+  type: VINDICATOR
+  name: '&#E63946Slag Brute'
+  health: 45
+  damage: 7
+  speed: 0.26
+  armor: 4
+  scale: 1.2
+  xp: 20
+  equipment:
+    hand: IRON_AXE
+  abilities:
+  - type: shield
+    every: 12
+    duration: 4
+  - type: leap
+    every: 9
+foundry_golem:
+  type: ZOMBIE
+  name: '&#F04A3A&lFoundry Golem'
+  boss: true
+  model: golem_fonderie
+  health: 420
+  damage: 9
+  speed: 0.2
+  armor: 8
+  scale: 1.6
+  xp: 150
+  abilities:
+  - type: slam
+    every: 7
+    power: 10
+    radius: 4
+    animation: attack
+    impact: 16
+  - type: summon
+    every: 18
+    below: 70
+    mob: forge_worker
+    count: 2
+  - type: shield
+    every: 15
+    below: 50
+    duration: 4
+  - type: enrage
+    every: 30
+    below: 35
+    duration: 10

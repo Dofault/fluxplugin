@@ -1,0 +1,16 @@
+name: FluxDungeons
+version: 0.1.0
+main: fr.influencraft.fluxdungeons.FluxDungeons
+api-version: "26.2"
+description: Instanced dungeons played in parties, with classes, abilities, dungeon gear and custom monsters.
+authors: [Influencraft]
+depend: [Flux]
+softdepend: [BetterModel]
+
+permissions:
+  fluxdungeons.play:
+    description: Choose a class, form a party and play dungeons.
+    default: true
+  fluxdungeons.admin:
+    description: Build the dungeon templates, start or stop runs for others, give dungeon items, reload.
+    default: op

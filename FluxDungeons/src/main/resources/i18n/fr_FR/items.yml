@@ -1,0 +1,177 @@
+# Équipement de donjon (fluxdungeons:<id>), format des objets Flux (docs/technique/flux-items.md). Les attributs sont les stats.
+
+warrior_sword:
+  material: IRON_SWORD
+  name: '&fÉpée de recrue'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    attack_damage: 6
+    attack_speed: -2.4
+  unbreakable: true
+warrior_chestplate:
+  material: IRON_CHESTPLATE
+  name: '&fCuirasse de recrue'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    armor: 6
+  unbreakable: true
+warrior_helmet:
+  material: IRON_HELMET
+  name: '&fCasque de recrue'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    armor: 2
+  unbreakable: true
+ranger_bow:
+  material: BOW
+  name: '&fArc d''éclaireur'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  enchantments:
+    infinity: 1
+    power: 1
+  unbreakable: true
+ranger_arrow:
+  material: ARROW
+  name: '&fFlèche de donjon'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+ranger_dagger:
+  material: STONE_SWORD
+  name: '&fDague d''éclaireur'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    attack_damage: 4
+    attack_speed: -2.0
+  unbreakable: true
+ranger_tunic:
+  material: LEATHER_CHESTPLATE
+  name: '&fTunique d''éclaireur'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    armor: 4
+  unbreakable: true
+mage_staff:
+  material: BLAZE_ROD
+  name: '&fBâton d''apprenti'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    attack_damage: 3
+    attack_speed: -2.0
+mage_robe:
+  material: LEATHER_CHESTPLATE
+  name: '&fRobe d''apprenti'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    armor: 3
+  unbreakable: true
+mage_hood:
+  material: LEATHER_HELMET
+  name: '&fCapuche d''apprenti'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    armor: 1
+  unbreakable: true
+cleric_scepter:
+  material: IRON_SHOVEL
+  name: '&fSceptre de novice'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    attack_damage: 5
+    attack_speed: -2.8
+  unbreakable: true
+cleric_chestplate:
+  material: CHAINMAIL_CHESTPLATE
+  name: '&fCotte de novice'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    armor: 5
+  unbreakable: true
+cleric_helmet:
+  material: GOLDEN_HELMET
+  name: '&fDiadème de novice'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    armor: 2
+  unbreakable: true
+foundry_blade:
+  material: IRON_SWORD
+  name: '&#FF922BLame de la Fonderie'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    attack_damage: 8
+    attack_speed: -2.4
+    max_health: 2
+  unbreakable: true
+  glow: true
+forge_bow:
+  material: BOW
+  name: '&#FF922BArc de forge'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  enchantments:
+    infinity: 1
+    power: 3
+  unbreakable: true
+  glow: true
+ember_staff:
+  material: BLAZE_ROD
+  name: '&#FF922BBâton de braise'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    attack_damage: 5
+    attack_speed: -2.0
+    max_health: 2
+  glow: true
+smelter_helm:
+  material: IRON_HELMET
+  name: '&#FF922BHeaume du fondeur'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    armor: 3
+    max_health: 4
+  unbreakable: true
+golem_plate:
+  material: IRON_CHESTPLATE
+  name: '&#FF922BPlastron du Golem'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    armor: 8
+    armor_toughness: 2
+    knockback_resistance: 0.1
+  unbreakable: true
+slag_boots:
+  material: IRON_BOOTS
+  name: '&#FF922BBottes de scories'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    armor: 3
+    movement_speed: 0.01
+  unbreakable: true
+golem_hammer:
+  material: NETHERITE_AXE
+  name: '&#F04A3A&lMarteau du Golem'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    attack_damage: 12
+    attack_speed: -3.0
+    max_health: 4
+  unbreakable: true
+  glow: true

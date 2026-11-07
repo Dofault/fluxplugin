@@ -1,0 +1,617 @@
+package fr.influencraft.fluxdungeons.dungeon;
+
+import fr.influencraft.flux.api.FluxPlugin;
+import fr.influencraft.flux.api.economy.Economy;
+import fr.influencraft.flux.api.economy.Origin;
+import fr.influencraft.flux.api.items.CustomItems;
+import fr.influencraft.flux.api.text.Texts;
+import fr.influencraft.flux.api.util.Format;
+import fr.influencraft.flux.api.value.Values;
+import fr.influencraft.fluxdungeons.Loadouts;
+import fr.influencraft.fluxdungeons.hero.Abilities;
+import fr.influencraft.fluxdungeons.hero.Heroes;
+import fr.influencraft.fluxdungeons.mob.MobTemplate;
+import fr.influencraft.fluxdungeons.mob.Mobs;
+import net.kyori.adventure.bossbar.BossBar;
+import net.kyori.adventure.title.Title;
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
+import org.bukkit.World;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
+import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.BoundingBox;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
+
+/**
+ * Every run of every dungeon: starting (copy of the template, players swapped to their dungeon inventory and
+ * teleported), rooms (a room wakes up when a player enters it, its gate opens once its waves are dead), deaths
+ * (lives shared by the party, then watching), victory (money, class experience, personal loot), defeat, leaving, and
+ * the wiping of the copy.
+ */
+public final class Runs {
+
+    /** Why a run could not start. */
+    public enum Refusal { NONE, NO_CLASS, TOO_FEW, TOO_MANY, BUSY_PLAYER, NO_SLOT, NOT_LEADER, UNKNOWN }
+
+    private final FluxPlugin plugin;
+    private final Arena arena;
+    private final Mobs mobs;
+    private final Heroes heroes;
+    private final Loadouts loadouts;
+    private final Map<String, DungeonDefinition> dungeons = new LinkedHashMap<>();
+    private final Map<String, Run> runs = new HashMap<>();
+    private final Map<UUID, Run> byPlayer = new HashMap<>();
+    /** Players this plugin is teleporting (the guard against leaving the dungeon world lets them through). */
+    private final Set<UUID> teleporting = new HashSet<>();
+    private int maxRuns = 8;
+    private int returnDelay = 10;
+    private double extraMobsPerPlayer = 0.5, bossHealthPerPlayer = 0.6;
+    private double fallbackMoneyPerMinute = 50;
+    private String origin = "victory";
+    private int ticks;
+
+    public Runs(FluxPlugin plugin, Arena arena, Mobs mobs, Heroes heroes, Loadouts loadouts) {
+        this.plugin = plugin;
+        this.arena = arena;
+        this.mobs = mobs;
+        this.heroes = heroes;
+        this.loadouts = loadouts;
+        mobs.onSummon((parent, child) -> {
+            Run run = runs.get(mobs.runOf(child));
+            if (run != null) run.mobs.add(child.getUniqueId());
+        });
+        mobs.onDeath(this::mobKilled);
+        Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 10L, 10L);
+    }
+
+    public void settings(org.bukkit.configuration.ConfigurationSection c) {
+        maxRuns = Math.max(1, c.getInt("max-runs", 8));
+        returnDelay = Math.max(1, c.getInt("return-delay", 10));
+        extraMobsPerPlayer = c.getDouble("scaling.extra-mobs-per-player", 0.5);
+        bossHealthPerPlayer = c.getDouble("scaling.boss-health-per-player", 0.6);
+        fallbackMoneyPerMinute = c.getDouble("reward.money-per-minute-without-fluxvalue", 50);
+    }
+
+    public void load(Map<String, DungeonDefinition> definitions) {
+        dungeons.clear();
+        dungeons.putAll(definitions);
+    }
+
+    public Collection<DungeonDefinition> dungeons() {
+        return dungeons.values();
+    }
+
+    public DungeonDefinition dungeon(String id) {
+        return dungeons.get(id);
+    }
+
+    public Run runOf(Player player) {
+        return byPlayer.get(player.getUniqueId());
+    }
+
+    public Run runOf(UUID uuid) {
+        return byPlayer.get(uuid);
+    }
+
+    public boolean teleporting(Player player) {
+        return teleporting.contains(player.getUniqueId());
+    }
+
+    public Collection<Run> all() {
+        return List.copyOf(runs.values());
+    }
+
+    // ---------------------------------------------------------------- templates
+
+    /** Builds the template of every dungeon whose definition changed since it was last built. */
+    public void buildChanged() {
+        for (DungeonDefinition def : dungeons.values()) {
+            if (!def.fingerprint().equals(arena.builtFrom(def.id()))) build(def, null);
+        }
+    }
+
+    public void build(DungeonDefinition def, Runnable done) {
+        plugin.getLogger().info("Building the template of dungeon " + def.id() + "...");
+        arena.build(def, def.fingerprint(), () -> {
+            plugin.getLogger().info("Template of dungeon " + def.id() + " built.");
+            if (done != null) done.run();
+        });
+    }
+
+    public Location templateOrigin(DungeonDefinition def) {
+        return arena.templateOrigin(def.id());
+    }
+
+    // ---------------------------------------------------------------- starting
+
+    /** Checks that these players can play this dungeon together. */
+    public Refusal check(DungeonDefinition def, List<Player> players) {
+        if (players.size() < def.minPlayers()) return Refusal.TOO_FEW;
+        if (players.size() > def.maxPlayers()) return Refusal.TOO_MANY;
+        for (Player p : players) {
+            if (byPlayer.containsKey(p.getUniqueId())) return Refusal.BUSY_PLAYER;
+            if (heroes.classOf(p.getUniqueId()) == null) return Refusal.NO_CLASS;
+        }
+        if (freeSlot() < 0) return Refusal.NO_SLOT;
+        return Refusal.NONE;
+    }
+
+    /** The first player who blocks {@link #check} for a refusal about one player (no class, already playing). */
+    public Player blocking(List<Player> players) {
+        for (Player p : players) {
+            if (byPlayer.containsKey(p.getUniqueId()) || heroes.classOf(p.getUniqueId()) == null) return p;
+        }
+        return null;
+    }
+
+    /** Starts a run for these players (checked before). The copy is made, then they are taken in. */
+    public Run start(DungeonDefinition def, List<Player> players) {
+        int slot = freeSlot();
+        if (slot < 0) return null;
+        Run run = new Run(UUID.randomUUID().toString().substring(0, 8), def, slot, arena.slotOrigin(slot));
+        runs.put(run.id, run);
+        for (Player p : players) {
+            run.expected.add(p.getUniqueId());
+            byPlayer.put(p.getUniqueId(), run);
+            plugin.messages().send(p, "run.preparing", "%dungeon%", def.name());
+        }
+        Runnable copy = () -> arena.copy(def, run.origin, () -> begin(run));
+        if (!def.fingerprint().equals(arena.builtFrom(def.id()))) build(def, copy);
+        else copy.run();
+        return run;
+    }
+
+    private int freeSlot() {
+        Set<Integer> used = new HashSet<>();
+        for (Run r : runs.values()) used.add(r.slot);
+        for (int i = 0; i < maxRuns; i++) if (!used.contains(i)) return i;
+        return -1;
+    }
+
+    /** The copy is ready: gates closed, players in. */
+    private void begin(Run run) {
+        if (!runs.containsKey(run.id)) return;
+        DungeonDefinition.Layout l = run.def.layout();
+        BlockData gate = run.def.material("gate", Material.IRON_BARS).createBlockData();
+        for (int i = 0; i < l.gates().size(); i++) setGate(run, i, gate);
+        arena.hold(run.box(), true);
+        run.checkpoint = run.roomCenter(0).add(0, 0, -Math.max(0, run.def.rooms().get(0).length() / 2 - 2));
+        run.state = Run.State.RUNNING;
+        run.started = System.currentTimeMillis();
+        for (UUID uuid : List.copyOf(run.expected)) {
+            Player p = Bukkit.getPlayer(uuid);
+            if (p == null || !p.isOnline()) {
+                byPlayer.remove(uuid);
+                continue;
+            }
+            if (!loadouts.enter(p)) {
+                byPlayer.remove(uuid);
+                plugin.messages().send(p, "run.save-failed");
+                continue;
+            }
+            run.players.add(uuid);
+            heroes.activate(p);
+            teleport(p, run.checkpoint);
+            p.showTitle(Title.title(Texts.parse(plugin.messages().raw("run.title", "%dungeon%", run.def.name())),
+                    Texts.parse(plugin.messages().raw("run.subtitle", "%lives%", String.valueOf(run.livesLeft))),
+                    Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(3), Duration.ofMillis(700))));
+            p.playSound(p.getLocation(), Sound.BLOCK_IRON_DOOR_CLOSE, 1f, 0.6f);
+        }
+        run.expected.clear();
+        if (run.players.isEmpty()) cleanup(run);
+    }
+
+    // ---------------------------------------------------------------- leaving
+
+    /** The player leaves his run (command, disconnect, end): his things given back, sent where he was. */
+    public void leave(Player player) {
+        Run run = byPlayer.remove(player.getUniqueId());
+        if (run == null) return;
+        run.expected.remove(player.getUniqueId());
+        boolean inside = run.players.remove(player.getUniqueId());
+        run.watching.remove(player.getUniqueId());
+        if (run.bossBar != null) player.hideBossBar(run.bossBar);
+        if (inside) {
+            heroes.deactivate(player);
+            Location back = loadouts.leave(player);
+            teleport(player, back != null ? back : Bukkit.getWorlds().get(0).getSpawnLocation());
+        }
+        if (run.players.isEmpty() && run.expected.isEmpty() && run.state != Run.State.PREPARING) cleanup(run);
+    }
+
+    /** Everybody out, nothing given (server stop, staff). */
+    public void stopAll() {
+        for (Run run : List.copyOf(runs.values())) stop(run);
+    }
+
+    public void stop(Run run) {
+        for (UUID uuid : List.copyOf(run.players)) {
+            Player p = Bukkit.getPlayer(uuid);
+            if (p != null) leave(p);
+        }
+        for (UUID uuid : List.copyOf(run.expected)) byPlayer.remove(uuid);
+        run.expected.clear();
+        cleanup(run);
+    }
+
+    private void cleanup(Run run) {
+        if (runs.remove(run.id) == null) return;
+        for (UUID uuid : run.players) byPlayer.remove(uuid);
+        mobs.removeRun(run.id);
+        arena.hold(run.box(), false);
+        if (plugin.isEnabled()) arena.clear(run.def, run.origin, () -> {
+        });
+    }
+
+    private void teleport(Player p, Location to) {
+        teleporting.add(p.getUniqueId());
+        try {
+            p.teleport(to, PlayerTeleportEvent.TeleportCause.PLUGIN);
+        } finally {
+            teleporting.remove(p.getUniqueId());
+        }
+    }
+
+    // ---------------------------------------------------------------- the game
+
+    private void tick() {
+        ticks++;
+        for (Run run : List.copyOf(runs.values())) {
+            if (run.state != Run.State.RUNNING) continue;
+            long elapsed = (System.currentTimeMillis() - run.started) / 1000;
+            long left = run.def.timeLimit() - elapsed;
+            if (run.def.timeLimit() > 0) {
+                int minutes = (int) (left / 60);
+                if (left <= 0) {
+                    fail(run, "run.time-up");
+                    continue;
+                }
+                if ((minutes == 5 || minutes == 1) && left % 60 >= 55 && run.warnedMinutes != minutes) {
+                    run.warnedMinutes = minutes;
+                    broadcast(run, "run.time-left", "%time%", Format.duration(left));
+                }
+            }
+            for (Player p : online(run)) {
+                if (p.getLocation().getY() < run.origin.getY() - 8) {
+                    teleport(p, run.checkpoint);
+                    p.setFallDistance(0);
+                }
+                if (ticks % 2 == 0 && !run.watching.contains(p.getUniqueId())) heroes.tick(p);
+            }
+            rooms(run);
+            if (run.bossBar != null) updateBossBar(run);
+        }
+    }
+
+    private void rooms(Run run) {
+        int index = run.currentRoom();
+        if (index >= run.rooms.length) return;
+        DungeonDefinition.Room room = run.def.rooms().get(index);
+        switch (run.rooms[index]) {
+            case WAITING -> {
+                if (!room.fight()) {
+                    clear(run, index);
+                    return;
+                }
+                BoundingBox box = run.room(index);
+                for (Player p : fighters(run)) {
+                    if (box.contains(p.getLocation().toVector())) {
+                        startRoom(run, index);
+                        return;
+                    }
+                }
+            }
+            case FIGHTING -> {
+                run.mobs.removeIf(uuid -> {
+                    Entity e = Bukkit.getEntity(uuid);
+                    return e == null || !e.isValid() || e.isDead();
+                });
+                leash(run, index);
+                if (!run.mobs.isEmpty()) return;
+                if (room.boss() == null && run.wave + 1 < room.waves().size()) {
+                    run.wave++;
+                    spawnWave(run, index);
+                } else {
+                    clear(run, index);
+                }
+            }
+            default -> {
+            }
+        }
+    }
+
+    private void startRoom(Run run, int index) {
+        DungeonDefinition.Room room = run.def.rooms().get(index);
+        run.rooms[index] = Run.RoomState.FIGHTING;
+        run.wave = 0;
+        BoundingBox box = run.room(index);
+        for (Player p : fighters(run)) {
+            if (!box.contains(p.getLocation().toVector())) teleport(p, run.roomEntrance(index));
+        }
+        String title = room.title() == null ? "" : room.title();
+        for (Player p : online(run)) {
+            p.showTitle(Title.title(Texts.parse(title), Texts.parse(plugin.messages().raw(room.boss() != null ? "room.boss" : "room.fight")),
+                    Title.Times.times(Duration.ofMillis(200), Duration.ofMillis(1800), Duration.ofMillis(400))));
+            p.playSound(p.getLocation(), room.boss() != null ? Sound.ENTITY_WITHER_SPAWN : Sound.EVENT_RAID_HORN, 0.7f, 1f);
+        }
+        if (room.boss() != null) spawnBoss(run, index, room.boss());
+        else spawnWave(run, index);
+    }
+
+    private void spawnWave(Run run, int index) {
+        DungeonDefinition.Room room = run.def.rooms().get(index);
+        Map<String, Integer> wave = room.waves().get(run.wave);
+        int players = Math.max(1, fighters(run).size());
+        if (room.waves().size() > 1) broadcast(run, "room.wave", "%wave%", String.valueOf(run.wave + 1), "%waves%", String.valueOf(room.waves().size()));
+        for (Map.Entry<String, Integer> e : wave.entrySet()) {
+            MobTemplate t = mobs.template(e.getKey());
+            if (t == null) {
+                plugin.getLogger().warning("Unknown monster " + e.getKey() + " in dungeon " + run.def.id());
+                continue;
+            }
+            int count = (int) Math.round(e.getValue() * (1 + extraMobsPerPlayer * (players - 1)));
+            for (int i = 0; i < count; i++) {
+                Location at = spawnSpot(run, index);
+                at.getWorld().spawnParticle(Particle.LARGE_SMOKE, at.clone().add(0, 0.5, 0), 8, 0.3, 0.4, 0.3, 0.01);
+                LivingEntity mob = mobs.spawn(t, at, run.id);
+                if (mob != null) run.mobs.add(mob.getUniqueId());
+            }
+        }
+    }
+
+    private void spawnBoss(Run run, int index, String id) {
+        MobTemplate t = mobs.template(id);
+        if (t == null) {
+            plugin.getLogger().warning("Unknown boss " + id + " in dungeon " + run.def.id());
+            return;
+        }
+        Location at = run.roomCenter(index);
+        at.setYaw(180);
+        LivingEntity boss = mobs.spawn(t, at, run.id);
+        if (boss == null) return;
+        int players = Math.max(1, fighters(run).size());
+        AttributeInstance max = boss.getAttribute(Attribute.MAX_HEALTH);
+        if (max != null) {
+            max.setBaseValue(t.health() * (1 + bossHealthPerPlayer * (players - 1)));
+            boss.setHealth(max.getValue());
+        }
+        run.mobs.add(boss.getUniqueId());
+        run.boss = boss.getUniqueId();
+        run.bossBar = BossBar.bossBar(Texts.parse(t.name()), 1f, BossBar.Color.RED, BossBar.Overlay.NOTCHED_10);
+        for (Player p : online(run)) p.showBossBar(run.bossBar);
+    }
+
+    private void updateBossBar(Run run) {
+        Entity e = run.boss == null ? null : Bukkit.getEntity(run.boss);
+        if (!(e instanceof LivingEntity boss) || !boss.isValid()) return;
+        AttributeInstance max = boss.getAttribute(Attribute.MAX_HEALTH);
+        double ratio = max == null ? 0 : boss.getHealth() / max.getValue();
+        run.bossBar.progress((float) Math.max(0, Math.min(1, ratio)));
+    }
+
+    /** Monsters pulled away from their room go back to its middle. */
+    private void leash(Run run, int index) {
+        BoundingBox box = run.room(index).expand(3);
+        for (UUID uuid : run.mobs) {
+            Entity e = Bukkit.getEntity(uuid);
+            if (e != null && !box.contains(e.getLocation().toVector())) e.teleport(run.roomCenter(index));
+        }
+    }
+
+    /** A free floor spot of the room, away from the players. */
+    private Location spawnSpot(Run run, int index) {
+        BoundingBox box = run.room(index);
+        World w = run.origin.getWorld();
+        ThreadLocalRandom r = ThreadLocalRandom.current();
+        Location fallback = run.roomCenter(index);
+        for (int attempt = 0; attempt < 30; attempt++) {
+            int x = (int) (box.getMinX() + 1 + r.nextInt(Math.max(1, (int) box.getWidthX() - 2)));
+            int z = (int) (box.getMinZ() + 1 + r.nextInt(Math.max(1, (int) box.getWidthZ() - 2)));
+            int y = (int) box.getMinY();
+            Block feet = w.getBlockAt(x, y, z);
+            if (!feet.isPassable() || !feet.getRelative(0, 1, 0).isPassable()) continue;
+            Location l = feet.getLocation().add(0.5, 0, 0.5);
+            boolean near = false;
+            for (Player p : fighters(run)) if (p.getLocation().distanceSquared(l) < 16) near = true;
+            if (!near) return l;
+        }
+        return fallback;
+    }
+
+    private void clear(Run run, int index) {
+        run.rooms[index] = Run.RoomState.CLEARED;
+        run.checkpoint = run.roomCenter(index);
+        if (index < run.def.layout().gates().size()) {
+            setGate(run, index, Material.AIR.createBlockData());
+            Location g = gateCenter(run, index);
+            g.getWorld().playSound(g, Sound.BLOCK_IRON_DOOR_OPEN, 1f, 0.6f);
+            g.getWorld().spawnParticle(Particle.CLOUD, g, 20, 1, 1, 0.2, 0.02);
+            if (run.def.rooms().get(index).fight()) broadcast(run, "room.cleared");
+        }
+        if (index == run.rooms.length - 1) victory(run);
+    }
+
+    private void setGate(Run run, int index, BlockData data) {
+        BoundingBox g = run.def.layout().gates().get(index);
+        World w = run.origin.getWorld();
+        for (int x = (int) g.getMinX(); x <= (int) g.getMaxX(); x++) {
+            for (int y = (int) g.getMinY(); y <= (int) g.getMaxY(); y++) {
+                for (int z = (int) g.getMinZ(); z <= (int) g.getMaxZ(); z++) {
+                    w.getBlockAt(run.origin.getBlockX() + x, run.origin.getBlockY() + y, run.origin.getBlockZ() + z).setBlockData(data, true);
+                }
+            }
+        }
+    }
+
+    private Location gateCenter(Run run, int index) {
+        BoundingBox g = run.def.layout().gates().get(index);
+        return run.origin.clone().add(g.getCenterX() + 0.5, g.getCenterY(), g.getCenterZ() + 0.5);
+    }
+
+    // ---------------------------------------------------------------- monsters and players
+
+    /** Can this entity be hurt by the abilities of this player? */
+    public Abilities.Context context(Player player) {
+        return new Abilities.Context() {
+            public boolean enemy(Entity entity) {
+                Run run = byPlayer.get(player.getUniqueId());
+                return run != null && entity instanceof LivingEntity && !(entity instanceof Player)
+                        && run.id.equals(mobs.runOf(entity));
+            }
+
+            public Collection<Player> allies(Player caster) {
+                Run run = byPlayer.get(caster.getUniqueId());
+                return run == null ? List.of(caster) : fighters(run);
+            }
+        };
+    }
+
+    /** A dungeon monster died (vanilla death or end of its death animation): experience for the whole party. */
+    public void mobKilled(LivingEntity mob, Player killer) {
+        Run run = runs.get(mobs.runOf(mob));
+        if (run == null) return;
+        run.mobs.remove(mob.getUniqueId());
+        MobTemplate t = mobs.templateOfEntity(mob);
+        if (t == null || t.xp() <= 0) return;
+        for (Player p : fighters(run)) heroes.giveXp(p, t.xp());
+    }
+
+    /** A player died in his run: a shared life is spent, or he watches the others. */
+    public void died(Player player) {
+        Run run = byPlayer.get(player.getUniqueId());
+        if (run == null || run.state != Run.State.RUNNING) return;
+        if (run.livesLeft > 0) {
+            run.livesLeft--;
+            broadcast(run, "run.died", "%player%", player.getName(), "%lives%", String.valueOf(run.livesLeft));
+            return;
+        }
+        run.watching.add(player.getUniqueId());
+        broadcast(run, "run.out", "%player%", player.getName());
+        if (fighters(run).isEmpty()) Bukkit.getScheduler().runTask(plugin, () -> fail(run, "run.wiped"));
+    }
+
+    /** Where a player of a run comes back after dying; watching players come back as spectators. */
+    public Location respawn(Player player) {
+        Run run = byPlayer.get(player.getUniqueId());
+        if (run == null) return null;
+        if (run.watching.contains(player.getUniqueId())) {
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (player.isOnline()) player.setGameMode(GameMode.SPECTATOR);
+            });
+        } else {
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                Heroes h = heroes;
+                if (player.isOnline() && h.hero(player) != null) {
+                    AttributeInstance max = player.getAttribute(Attribute.MAX_HEALTH);
+                    if (max != null) player.setHealth(max.getValue());
+                }
+            });
+        }
+        return run.checkpoint;
+    }
+
+    public boolean sameRun(Player a, Player b) {
+        Run run = byPlayer.get(a.getUniqueId());
+        return run != null && run == byPlayer.get(b.getUniqueId());
+    }
+
+    // ---------------------------------------------------------------- end
+
+    private void victory(Run run) {
+        if (run.state != Run.State.RUNNING) return;
+        run.state = Run.State.ENDING;
+        hideBossBar(run);
+        long seconds = (System.currentTimeMillis() - run.started) / 1000;
+        double perSecond = Values.moneyPerSecond();
+        double money = Economy.round(run.def.rewardMinutes() * 60 * (perSecond > 0 ? perSecond : fallbackMoneyPerMinute / 60));
+        for (Player p : online(run)) {
+            p.setGameMode(GameMode.ADVENTURE);
+            p.showTitle(Title.title(Texts.parse(plugin.messages().raw("run.victory")),
+                    Texts.parse(plugin.messages().raw("run.victory-sub", "%time%", Format.duration(seconds))),
+                    Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(4), Duration.ofMillis(800))));
+            p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
+            if (money > 0) Economy.main().give(p, money, Origin.of(plugin, origin).detail(run.def.name()).notifyPlayer());
+            heroes.giveXp(p, run.def.rewardXp());
+            List<String> found = new ArrayList<>();
+            for (DungeonDefinition.Loot loot : run.def.loot()) {
+                if (ThreadLocalRandom.current().nextDouble() >= loot.chance()) continue;
+                ItemStack item = CustomItems.item(loot.item(), p);
+                if (item == null) {
+                    plugin.getLogger().warning("Unknown loot item " + loot.item() + " in dungeon " + run.def.id());
+                    continue;
+                }
+                item.setAmount(Math.max(1, loot.amount()));
+                p.getInventory().addItem(item).values().forEach(left -> p.getWorld().dropItem(p.getLocation(), left));
+                found.add("<lang:" + item.translationKey() + ">");
+                if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
+                    found.set(found.size() - 1, Texts.ampersand(item.getItemMeta().displayName()));
+                }
+            }
+            plugin.messages().send(p, found.isEmpty() ? "run.loot-none" : "run.loot", "%items%", String.join("&7, ", found));
+            plugin.messages().send(p, "run.leaving", "%seconds%", String.valueOf(returnDelay));
+        }
+        Bukkit.getScheduler().runTaskLater(plugin, () -> stop(run), returnDelay * 20L);
+    }
+
+    private void fail(Run run, String reason) {
+        if (run.state != Run.State.RUNNING) return;
+        run.state = Run.State.ENDING;
+        hideBossBar(run);
+        for (Player p : online(run)) {
+            p.showTitle(Title.title(Texts.parse(plugin.messages().raw("run.defeat")), Texts.parse(plugin.messages().raw(reason)),
+                    Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(3), Duration.ofMillis(700))));
+            p.playSound(p.getLocation(), Sound.ENTITY_WITHER_DEATH, 0.5f, 1.2f);
+        }
+        Bukkit.getScheduler().runTaskLater(plugin, () -> stop(run), 100L);
+    }
+
+    private void hideBossBar(Run run) {
+        if (run.bossBar == null) return;
+        for (Player p : online(run)) p.hideBossBar(run.bossBar);
+        run.bossBar = null;
+    }
+
+    // ---------------------------------------------------------------- helpers
+
+    private List<Player> online(Run run) {
+        List<Player> out = new ArrayList<>();
+        for (UUID uuid : run.players) {
+            Player p = Bukkit.getPlayer(uuid);
+            if (p != null && p.isOnline()) out.add(p);
+        }
+        return out;
+    }
+
+    /** Players of the run still fighting (not out of lives). */
+    private List<Player> fighters(Run run) {
+        List<Player> out = online(run);
+        out.removeIf(p -> run.watching.contains(p.getUniqueId()) || p.isDead());
+        return out;
+    }
+
+    private void broadcast(Run run, String key, String... vars) {
+        for (Player p : online(run)) plugin.messages().send(p, key, vars);
+    }
+}

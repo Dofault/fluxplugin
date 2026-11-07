@@ -50,6 +50,11 @@ public final class Database {
             return this == SQLITE ? "TEXT" : "VARCHAR(" + length + ")";
         }
 
+        /** Text column without a size limit worth worrying about (serialized inventories: MySQL's TEXT stops at 64 KB). */
+        public String longText() {
+            return this == SQLITE ? "TEXT" : "LONGTEXT";
+        }
+
         /** {@code INSERT OR IGNORE INTO} / {@code INSERT IGNORE INTO}. */
         public String insertIgnore() {
             return this == SQLITE ? "INSERT OR IGNORE INTO" : "INSERT IGNORE INTO";

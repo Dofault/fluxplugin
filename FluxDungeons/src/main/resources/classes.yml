@@ -1,0 +1,205 @@
+# Classes of FluxDungeons. stats: added to the player's own values at level 1, per-level: added at each level.
+# Stats: max-health, attack, armor, speed (share: 0.1 = +10 %), attack-speed, knockback-resistance.
+# Ability types: charge, war_cry, whirlwind, volley, leap_back, arrow_rain, fireball, frost_nova, blink, heal, blessing, smite.
+
+warrior:
+  name: Warrior
+  color: '#FF5C5C'
+  icon: IRON_SWORD
+  description:
+  - Holds the front line and draws the monsters to him.
+  stats:
+    max-health: 8
+    attack: 1
+    armor: 2
+    knockback-resistance: 0.1
+  per-level:
+    max-health: 0.5
+    attack: 0.08
+    armor: 0.05
+  mana:
+    max: 100
+    regen: 6
+  kit:
+  - fluxdungeons:warrior_sword
+  - fluxdungeons:warrior_chestplate
+  - fluxdungeons:warrior_helmet
+  abilities:
+  - type: charge
+    name: Charge
+    icon: FEATHER
+    description:
+    - Rushes forward and hits the monsters on the way.
+    mana: 20
+    cooldown: 7
+    power: 6
+    distance: 1.6
+    radius: 2.5
+  - type: war_cry
+    name: War Cry
+    icon: GOAT_HORN
+    description:
+    - Monsters around attack you, you resist, allies grow stronger.
+    mana: 30
+    cooldown: 18
+    radius: 10
+    duration: 6
+    resistance: 1
+  - type: whirlwind
+    name: Whirlwind
+    icon: IRON_AXE
+    description:
+    - Spins and hits every monster around.
+    mana: 35
+    cooldown: 10
+    power: 7
+    radius: 4
+ranger:
+  name: Ranger
+  color: '#2ECF7B'
+  icon: BOW
+  description:
+  - Fast, deadly from afar, hard to catch.
+  stats:
+    max-health: 2
+    attack: 0.5
+    speed: 0.1
+  per-level:
+    max-health: 0.3
+    attack: 0.06
+    speed: 0.002
+  mana:
+    max: 100
+    regen: 7
+  kit:
+  - fluxdungeons:ranger_bow
+  - fluxdungeons:ranger_arrow
+  - fluxdungeons:ranger_dagger
+  - fluxdungeons:ranger_tunic
+  abilities:
+  - type: volley
+    name: Volley
+    icon: SPECTRAL_ARROW
+    description:
+    - Shoots a fan of five arrows.
+    mana: 25
+    cooldown: 6
+    power: 5
+    arrows: 5
+    spread: 8
+  - type: leap_back
+    name: Leap Back
+    icon: RABBIT_FOOT
+    description:
+    - Jumps back and runs faster for a moment.
+    mana: 15
+    cooldown: 8
+    strength: 1.4
+    duration: 3
+  - type: arrow_rain
+    name: Arrow Rain
+    icon: ARROW
+    description:
+    - Arrows fall where you aim for a few seconds.
+    mana: 45
+    cooldown: 16
+    power: 14
+    radius: 4
+    duration: 3
+    range: 30
+mage:
+  name: Mage
+  color: '#6FA8FF'
+  icon: BLAZE_ROD
+  description:
+  - Fragile, but burns and freezes whole groups.
+  stats:
+    max-health: -2
+  per-level:
+    max-health: 0.3
+    attack: 0.05
+  mana:
+    max: 140
+    regen: 9
+  kit:
+  - fluxdungeons:mage_staff
+  - fluxdungeons:mage_robe
+  - fluxdungeons:mage_hood
+  abilities:
+  - type: fireball
+    name: Fireball
+    icon: FIRE_CHARGE
+    description:
+    - A fireball that blasts the monsters around its impact.
+    mana: 20
+    cooldown: 2.5
+    power: 8
+    radius: 2.5
+    speed: 1.6
+  - type: frost_nova
+    name: Frost Nova
+    icon: SNOWBALL
+    description:
+    - Freezes and slows every monster around.
+    mana: 40
+    cooldown: 12
+    power: 7
+    radius: 5
+    duration: 4
+  - type: blink
+    name: Blink
+    icon: ENDER_PEARL
+    description:
+    - Teleports a few blocks forward.
+    mana: 25
+    cooldown: 8
+    distance: 8
+cleric:
+  name: Cleric
+  color: '#FFD94D'
+  icon: GOLDEN_HELMET
+  description:
+  - Heals and protects the party, punishes from afar.
+  stats:
+    max-health: 4
+    armor: 1
+  per-level:
+    max-health: 0.4
+    attack: 0.05
+    armor: 0.03
+  mana:
+    max: 120
+    regen: 8
+  kit:
+  - fluxdungeons:cleric_scepter
+  - fluxdungeons:cleric_chestplate
+  - fluxdungeons:cleric_helmet
+  abilities:
+  - type: heal
+    name: Heal
+    icon: GLISTERING_MELON_SLICE
+    description:
+    - Heals you and the allies around you.
+    mana: 35
+    cooldown: 8
+    power: 8
+    radius: 8
+  - type: blessing
+    name: Blessing
+    icon: TOTEM_OF_UNDYING
+    description:
+    - Extra hearts and regeneration for the allies around.
+    mana: 50
+    cooldown: 20
+    duration: 8
+    radius: 8
+    absorption: 1
+  - type: smite
+    name: Smite
+    icon: BLAZE_POWDER
+    description:
+    - Lightning strikes the monster you aim at.
+    mana: 25
+    cooldown: 5
+    power: 9
+    range: 20

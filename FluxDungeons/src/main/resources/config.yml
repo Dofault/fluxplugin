@@ -1,0 +1,36 @@
+# FluxDungeons: instanced dungeons played in parties.
+# Classes: classes.yml, monsters: mobs.yml, dungeon gear: items.yml, dungeons: dungeons/<id>.yml.
+
+# Language of the texts (lang/<language>.yml), empty = the suite's language.
+language: ""
+
+# World the dungeons are played in, created empty when missing. Templates sit at negative z, runs side by side at z 0.
+world: flux_dungeons
+# Distance between two runs (and two templates), in blocks.
+slot-spacing: 512
+# Blocks placed per tick when copying or wiping a dungeon (higher: faster start, heavier ticks).
+blocks-per-tick: 20000
+# Runs played at the same time, at most.
+max-runs: 8
+# Seconds between the victory and the return of the players.
+return-delay: 10
+
+party:
+  max-size: 4
+
+classes:
+  max-level: 30
+  # Experience to go from level n to n+1: xp-base × n ^ xp-exponent.
+  xp-base: 60
+  xp-exponent: 1.5
+
+scaling:
+  # Each extra player adds this share of the monsters of every wave (0.5: 4 monsters become 6 for two players).
+  extra-mobs-per-player: 0.5
+  # Each extra player adds this share of the boss's life.
+  boss-health-per-player: 0.6
+
+reward:
+  # The money of a victory is "reward.minutes" of a dungeon times the income of a level 100 player (FluxValue).
+  # Without FluxValue, this amount per minute is used instead.
+  money-per-minute-without-fluxvalue: 50
