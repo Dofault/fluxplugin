@@ -133,6 +133,8 @@ public final class FluxDungeons extends FluxPlugin {
     private void settings() {
         parties.maxSize(getConfig().getInt("party.max-size", 4));
         heroes.load(file("classes.yml"), getConfig().getConfigurationSection("classes"));
+        fr.influencraft.fluxdungeons.mob.Combat.load(getConfig().getConfigurationSection("combat"));
+        mobs.playerLevel(heroes::levelOf);
         List<org.bukkit.configuration.ConfigurationSection> mobFiles = new ArrayList<>();
         mobFiles.add(file("mobs.yml"));
         mobFiles.addAll(folder("mobs"));
@@ -457,8 +459,9 @@ public final class FluxDungeons extends FluxPlugin {
         switch (sub) {
             case "build" -> {
                 if (args.length < 2) return usage(sender);
-                List<DungeonDefinition> defs = args[1].equalsIgnoreCase("all") ? List.copyOf(runs.dungeons())
-                        : runs.dungeon(args[1]) == null ? List.of() : List.of(runs.dungeon(args[1]));
+                List<DungeonDefinition> defs = (args[1].equalsIgnoreCase("all") ? List.copyOf(runs.dungeons())
+                        : runs.dungeon(args[1]) == null ? List.<DungeonDefinition>of() : List.of(runs.dungeon(args[1])))
+                        .stream().filter(d -> d.map() == null).toList();
                 if (defs.isEmpty()) messages().send(sender, "unknown-dungeon");
                 for (DungeonDefinition def : defs) runs.build(def, () -> messages().send(sender, "admin.built", "%dungeon%", def.name()));
             }
@@ -467,6 +470,10 @@ public final class FluxDungeons extends FluxPlugin {
                 DungeonDefinition def = runs.dungeon(args[1]);
                 if (def == null) {
                     messages().send(sender, "unknown-dungeon");
+                    return true;
+                }
+                if (def.map() != null) {
+                    messages().send(sender, "admin.imported-no-template", "%dungeon%", def.name());
                     return true;
                 }
                 var at = runs.templateOrigin(def).add(def.layout().centerX() + 0.5, 1, 3.5);

@@ -7,7 +7,7 @@ Usage:
   <pack folder>   unzipped pack (content_packages/, custombosses/, customitems/, powers/, world_blueprints/)
   <world id>      dungeon world of the pack, e.g. em_id_the_mines
   <plugin folder> plugins/FluxDungeons of the server: writes dungeons/<id>.yml, mobs/<id>.yml, items/<id>.yml
-  --level         dungeon level: base life and damage of its monsters (default 10)
+  --level         dungeon level: the level its monsters fight at (normalized combat, default 10)
   --translations  YAML {english text: translated text}; texts without a translation are listed in
                   <plugin folder>/untranslated/<id>.yml so they can be translated and the import run again.
 
@@ -145,8 +145,6 @@ def main():
     if not info:
         sys.exit(f"{world} is not in assets/elitemobs_story_mode.yml")
     dungeon_id = world.replace("em_id_", "")
-    base_health = 20 + 3 * level
-    base_damage = 3 + 0.35 * level
 
     powers_dir = os.path.join(pack, "powers")
     custom_powers = {}
@@ -171,14 +169,17 @@ def main():
         if disguise in ENTITY_TYPES:
             etype = disguise
         boss_type = str(b.get("bossType", "NORMAL")).upper()
+        # normalized combat (FluxDungeons mob/Combat.java): EliteMobs' multipliers kept, counted in hits at the dungeon's level
         m = {
             "type": etype,
             "name": tr(clean_name(b.get("name", mob_id)), translations),
-            "health": round(base_health * float(b.get("healthMultiplier", 1)), 1),
-            "damage": round(base_damage * float(b.get("damageMultiplier", 1)), 2),
-            "speed": float(b.get("movementSpeedAttribute", 0.25)),
+            "level": level,
+            "health-multiplier": float(b.get("healthMultiplier", 1)),
+            "damage-multiplier": float(b.get("damageMultiplier", 1)),
             "xp": XP.get(boss_type, 8),
         }
+        if b.get("movementSpeedAttribute") is not None:
+            m["speed"] = float(b["movementSpeedAttribute"])
         if boss_type == "BOSS" or mob_id in objectives:
             m["boss"] = True
         if b.get("scale"):

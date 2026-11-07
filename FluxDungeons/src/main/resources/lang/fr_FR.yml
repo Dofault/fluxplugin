@@ -109,6 +109,7 @@ hud:
   separator: "&8 · "
 
 admin:
+  imported-no-template: "&#FF5C5C%dungeon% est une map importée : pas de modèle à retoucher, chaque partie copie la map d'origine."
   reset: "&#2ECF7BInventaire de donjon de %player% remis à zéro : les kits seront redonnés à la prochaine partie."
   reset-in-run: "&#FF5C5C%player% est dans un donjon, réessaie après sa partie."
   started: "&#2ECF7B%dungeon% lancé."

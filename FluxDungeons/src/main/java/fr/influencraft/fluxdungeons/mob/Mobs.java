@@ -123,6 +123,7 @@ public final class Mobs {
         }
 
         public double baseDamage() {
+            if (template.extra().level() > 0) return Combat.hit(template.extra().damageMultiplier());
             AttributeInstance a = entity.getAttribute(Attribute.ATTACK_DAMAGE);
             return a == null ? template.damage() : a.getValue();
         }
@@ -132,8 +133,15 @@ public final class Mobs {
         }
     }
 
+    /** Scoreboard tag of every dungeon monster: other plugins leave tagged mobs alone (FluxStack never stacks them). */
+    public static final String TAG = "fluxdungeons";
+
     private final Plugin plugin;
-    private final NamespacedKey mobKey, runKey, objectiveKey;
+    private final NamespacedKey mobKey, runKey, objectiveKey, spawnKey;
+    /** Class level of a player (normalized combat). */
+    private java.util.function.ToIntFunction<Player> playerLevel = p -> 1;
+    /** True while a hit already computed here is dealt: the damage listener must not normalize it again. */
+    private boolean dealing;
     private final Map<String, MobTemplate> templates = new LinkedHashMap<>();
     private final Map<UUID, Alive> alive = new HashMap<>();
     private final boolean models;
@@ -154,6 +162,7 @@ public final class Mobs {
         this.mobKey = new NamespacedKey(plugin, "mob");
         this.runKey = new NamespacedKey(plugin, "run");
         this.objectiveKey = new NamespacedKey(plugin, "objective");
+        this.spawnKey = new NamespacedKey(plugin, "spawn");
         this.models = Bukkit.getPluginManager().isPluginEnabled("BetterModel");
         this.engine = new ScriptEngine(plugin, new ScriptEngine.Services() {
             public ScriptHost host(Entity entity) {
@@ -170,6 +179,10 @@ public final class Mobs {
 
             public boolean fighting(Player player) {
                 return Mobs.fighting(player);
+            }
+
+            public void damage(ScriptHost by, Player target, double multiplier) {
+                deal(target, by.entity(), hitOn(by, target) * multiplier);
             }
         });
         Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 10L, 10L);
@@ -235,24 +248,27 @@ public final class Mobs {
     public LivingEntity spawn(MobTemplate t, Location at, String run) {
         Class<? extends Entity> type = t.type().getEntityClass();
         if (type == null || !LivingEntity.class.isAssignableFrom(type)) return null;
-        at.getChunk().addPluginChunkTicket(plugin);
         MobTemplate.Extra x = t.extra();
+        boolean normalized = x.level() > 0;
+        double health = normalized ? Combat.health(x.healthMultiplier()) : t.health();
         Entity spawned = at.getWorld().spawn(at, type, CreatureSpawnEvent.SpawnReason.CUSTOM, e -> {
             LivingEntity le = (LivingEntity) e;
             le.getPersistentDataContainer().set(mobKey, PersistentDataType.STRING, t.id());
             le.getPersistentDataContainer().set(runKey, PersistentDataType.STRING, run);
+            le.getPersistentDataContainer().set(spawnKey, PersistentDataType.STRING, at.getX() + "," + at.getY() + "," + at.getZ());
+            le.addScoreboardTag(TAG);
             le.customName(Texts.parse(t.name()));
             le.setCustomNameVisible(!t.boss());
             le.setRemoveWhenFarAway(false);
             le.setPersistent(true);
             le.setCanPickupItems(false);
-            base(le, Attribute.MAX_HEALTH, t.health());
-            base(le, Attribute.ATTACK_DAMAGE, t.damage());
-            base(le, Attribute.MOVEMENT_SPEED, t.speed());
+            base(le, Attribute.MAX_HEALTH, health);
+            base(le, Attribute.ATTACK_DAMAGE, normalized ? Combat.hit(x.damageMultiplier()) : t.damage());
+            if (t.speed() > 0) base(le, Attribute.MOVEMENT_SPEED, t.speed());
             base(le, Attribute.ARMOR, t.armor());
             base(le, Attribute.SCALE, t.scale());
             base(le, Attribute.FOLLOW_RANGE, x.followRange());
-            le.setHealth(t.health());
+            le.setHealth(Math.min(health, le.getAttribute(Attribute.MAX_HEALTH).getValue()));
             EntityEquipment eq = le.getEquipment();
             if (eq != null) {
                 eq.clear();
@@ -302,6 +318,39 @@ public final class Mobs {
         if (x.mount() != null) mount(a, x.mount());
         engine.fire(a, "EliteMobSpawnEvent", null, null);
         return le;
+    }
+
+    /**
+     * A dungeon monster loaded back with its chunk (players went away, then came back): tracked again, without its
+     * spawn scripts nor block states. False when its run is over (the caller removes it).
+     */
+    public boolean adopt(LivingEntity le) {
+        if (alive.containsKey(le.getUniqueId())) return true;
+        MobTemplate t = templateOfEntity(le);
+        String run = runOf(le);
+        if (t == null || run == null) return false;
+        Location spawn = le.getLocation();
+        String sp = le.getPersistentDataContainer().get(spawnKey, PersistentDataType.STRING);
+        if (sp != null) {
+            String[] p = sp.split(",");
+            try {
+                spawn = new Location(le.getWorld(), Double.parseDouble(p[0]), Double.parseDouble(p[1]), Double.parseDouble(p[2]));
+            } catch (RuntimeException ignored) {
+                // keeps its current place
+            }
+        }
+        ModelBridge.Handle model = null;
+        if (t.model() != null && models) {
+            try {
+                model = ModelBridge.attach(le, t.model());
+            } catch (LinkageError | RuntimeException ignored) {
+                // shown as its vanilla mob
+            }
+        }
+        Alive a = new Alive(le, t, run, spawn, model);
+        a.objective = le.getPersistentDataContainer().get(objectiveKey, PersistentDataType.STRING);
+        alive.put(le.getUniqueId(), a);
+        return true;
     }
 
     private void mount(Alive rider, String mount) {
@@ -397,7 +446,12 @@ public final class Mobs {
     public void hitPlayer(LivingEntity entity, Player player, EntityDamageEvent event) {
         Alive a = alive.get(entity.getUniqueId());
         if (a == null) return;
-        for (Powers.OnHit h : a.kit.onHit()) Powers.hit(h, player, entity, a.baseDamage());
+        dealing = true;
+        try {
+            for (Powers.OnHit h : a.kit.onHit()) Powers.hit(h, player, entity, hitOn(a, player));
+        } finally {
+            dealing = false;
+        }
         engine.fire(a, "PlayerDamagedByEliteMobEvent", player, event);
         if (!a.template.extra().hitMessages().isEmpty() && ThreadLocalRandom.current().nextDouble() < 0.2) say(a, a.template.extra().hitMessages());
     }
@@ -573,10 +627,50 @@ public final class Mobs {
         return inst == null ? 20 : inst.getValue();
     }
 
-    /** Power of an ability: absolute, or a multiple of the monster's damage ({@code relative: 1}, built-in powers). */
-    private static double power(Alive a, Ability ab, double fallback) {
-        double p = ab.number("power", fallback);
-        return ab.number("relative", 0) > 0 || !a.template.abilities().contains(ab) ? p * a.baseDamage() : p;
+    /** Class level of a player, for normalized combat. */
+    public void playerLevel(java.util.function.ToIntFunction<Player> level) {
+        this.playerLevel = level;
+    }
+
+    /** A dungeon monster's hit of multiplier 1 on this player: normalized (level gap included) or its attack. */
+    public double hitOn(LivingEntity mob, Player target) {
+        Alive a = alive.get(mob.getUniqueId());
+        return a == null ? 1 : hitOn(a, target);
+    }
+
+    private double hitOn(ScriptHost host, Player target) {
+        Alive a = host instanceof Alive al ? al : alive.get(host.entity().getUniqueId());
+        if (a == null) return host.baseDamage();
+        int level = a.template.extra().level();
+        if (level <= 0) return a.baseDamage();
+        return Combat.hit(a.template.extra().damageMultiplier()) * Combat.defensive(level, playerLevel.applyAsInt(target));
+    }
+
+    /** Normalized level of a dungeon monster, 0 when its numbers are absolute. */
+    public int level(LivingEntity mob) {
+        Alive a = alive.get(mob.getUniqueId());
+        return a == null ? 0 : a.template.extra().level();
+    }
+
+    /** True while a hit computed here is being dealt (the listener leaves its damage as it is). */
+    public boolean dealing() {
+        return dealing;
+    }
+
+    private void deal(Player target, LivingEntity by, double amount) {
+        dealing = true;
+        try {
+            target.damage(amount, by);
+        } finally {
+            dealing = false;
+        }
+    }
+
+    /** An ability hit: its {@code power} is absolute, or a multiple of the monster's hit (built-in powers, {@code relative}). */
+    private void strike(Alive a, Player p, Ability ab, double fallback) {
+        double v = ab.number("power", fallback);
+        boolean relative = ab.number("relative", 0) > 0 || !a.template.abilities().contains(ab);
+        deal(p, a.entity, relative ? v * hitOn(a, p) : v);
     }
 
     private void cast(Alive a, Ability ab, Player target) {
@@ -602,7 +696,7 @@ public final class Mobs {
             }
             case "arrow", "volley" -> {
                 int count = ab.type().equals("arrow") ? 1 : (int) ab.number("count", 5);
-                double dmg = power(a, ab, 1);
+                double dmg = a.baseDamage() * ab.number("power", 1);
                 Vector base = target.getEyeLocation().toVector().subtract(e.getEyeLocation().toVector()).normalize();
                 for (int i = 0; i < count; i++) {
                     Vector dir = base.clone().add(new Vector((Math.random() - 0.5) * 0.25 * (count > 1 ? 1 : 0), (Math.random() - 0.3) * 0.1, (Math.random() - 0.5) * 0.25 * (count > 1 ? 1 : 0)));
@@ -627,7 +721,7 @@ public final class Mobs {
                     if (!fighting(p)) continue;
                     Vector to = p.getLocation().toVector().subtract(at.toVector());
                     if (to.length() > range || to.clone().setY(0).normalize().dot(dir) < 0.7) continue;
-                    p.damage(power(a, ab, 0.6), e);
+                    strike(a, p, ab, 0.6);
                     if (fire) p.setFireTicks(60);
                     else p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 2));
                 }
@@ -635,7 +729,7 @@ public final class Mobs {
             case "taze" -> {
                 w.spawnParticle(Particle.ELECTRIC_SPARK, target.getLocation().add(0, 1, 0), 30, 0.3, 0.6, 0.3, 0.1);
                 w.playSound(target.getLocation(), Sound.ENTITY_GUARDIAN_ATTACK, 1f, 1.6f);
-                target.damage(power(a, ab, 0.8), e);
+                strike(a, target, ab, 0.8);
                 target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 4));
             }
             case "lightning" -> {
@@ -648,7 +742,7 @@ public final class Mobs {
                     w.spawnParticle(Particle.ELECTRIC_SPARK, spot, 20, 0.5, 0.1, 0.5, 0.05);
                     Bukkit.getScheduler().runTaskLater(plugin, () -> {
                         w.strikeLightningEffect(spot);
-                        for (Player q : w.getPlayers()) if (fighting(q) && q.getLocation().distanceSquared(spot) < 4) q.damage(power(a, ab, 1), e);
+                        for (Player q : w.getPlayers()) if (fighting(q) && q.getLocation().distanceSquared(spot) < 4) strike(a, q, ab, 1);
                     }, 20L + i * 10L);
                 }
             }
@@ -662,7 +756,7 @@ public final class Mobs {
                     for (Player p : w.getPlayers()) {
                         if (!fighting(p) || p.getLocation().distanceSquared(c) > radius * radius) continue;
                         p.setVelocity(c.toVector().subtract(p.getLocation().toVector()).normalize().multiply(1.2).setY(0.3));
-                        p.damage(power(a, ab, 0.8), e);
+                        strike(a, p, ab, 0.8);
                     }
                 }, 20L);
             }
@@ -685,7 +779,7 @@ public final class Mobs {
                     EntityType type = EntityType.valueOf(ab.text("entity", "SKELETON"));
                     MobTemplate copy = new MobTemplate(a.template.id() + "_summon", type, "&7" + type.name().toLowerCase(), false, null,
                             maxHealth(e) * 0.15, a.baseDamage() * 0.6, 0.25, 0, 1, 0, Map.of(), List.of(),
-                            new MobTemplate.Extra(false, false, 32, 0, List.of(), List.of(), null, List.of(), List.of(), List.of(),
+                            new MobTemplate.Extra(0, 1, 1, false, false, 32, 0, List.of(), List.of(), null, List.of(), List.of(), List.of(),
                                     List.of(), List.of(), List.of(), Map.of()));
                     for (int i = 0; i < (int) ab.number("count", 2); i++) {
                         LivingEntity s = spawn(copy, at.clone().add(ThreadLocalRandom.current().nextDouble(-2, 2), 0, ThreadLocalRandom.current().nextDouble(-2, 2)), a.run);
@@ -712,7 +806,7 @@ public final class Mobs {
                     w.playSound(hit, Sound.ENTITY_GENERIC_EXPLODE, 0.9f, 0.7f);
                     for (Player p : w.getPlayers()) {
                         if (!fighting(p) || p.getLocation().distanceSquared(hit) > radius * radius) continue;
-                        p.damage(power(a, ab, 8), e);
+                        strike(a, p, ab, 8);
                         p.setVelocity(p.getLocation().toVector().subtract(hit.toVector()).setY(0).normalize().multiply(0.7).setY(0.6));
                     }
                 }, impact);

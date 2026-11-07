@@ -122,6 +122,12 @@ public final class Heroes {
         return active.get(uuid);
     }
 
+    /** Class level of a player in a run (1 outside). */
+    public int levelOf(Player player) {
+        Hero h = active.get(player.getUniqueId());
+        return h == null ? 1 : h.level();
+    }
+
     // ---------------------------------------------------------------- entering / leaving a dungeon
 
     /**

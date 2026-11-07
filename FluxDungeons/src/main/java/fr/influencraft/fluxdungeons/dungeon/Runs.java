@@ -70,6 +70,7 @@ public final class Runs {
     private int returnDelay = 10;
     private double extraMobsPerPlayer = 0.5, bossHealthPerPlayer = 0.6;
     private double fallbackMoneyPerMinute = 50;
+    private double spawnDistance = 40;
     private String origin = "victory";
     private int ticks;
 
@@ -95,6 +96,7 @@ public final class Runs {
         extraMobsPerPlayer = c.getDouble("scaling.extra-mobs-per-player", 0.5);
         bossHealthPerPlayer = c.getDouble("scaling.boss-health-per-player", 0.6);
         fallbackMoneyPerMinute = c.getDouble("reward.money-per-minute-without-fluxvalue", 50);
+        spawnDistance = Math.max(8, c.getDouble("spawn-distance", 40));
     }
 
     public void load(Map<String, DungeonDefinition> definitions) {
@@ -230,25 +232,51 @@ public final class Runs {
                 return;
             }
             for (DungeonDefinition.Spawn sp : def.map().spawns()) {
-                MobTemplate t = mobs.template(sp.mob());
-                if (t == null) {
+                if (mobs.template(sp.mob()) == null) {
                     plugin.getLogger().warning("Unknown monster " + sp.mob() + " in dungeon " + def.id());
                     continue;
                 }
-                Location at = new Location(world, sp.x(), sp.y(), sp.z(), sp.yaw(), 0);
-                LivingEntity mob = mobs.spawn(t, at, run.id);
-                if (mob == null) continue;
-                run.mobs.add(mob.getUniqueId());
-                if (def.map().objectives().contains(sp.mob())) {
-                    mobs.objective(mob, sp.mob());
-                    run.objectivesLeft.add(sp.mob());
-                }
+                run.pending.add(sp);
+                if (def.map().objectives().contains(sp.mob())) run.objectivesLeft.add(sp.mob());
             }
             run.objectivesTotal = run.objectivesLeft.size();
             if (run.objectivesTotal == 0) plugin.getLogger().warning("Dungeon " + def.id() + " has no objective: it can only be left.");
             enter(run);
         });
         return run;
+    }
+
+    /** Monsters of an imported map appear once a player is within {@code spawn-distance} blocks of their place. */
+    private void spawnNear(Run run) {
+        if (run.pending.isEmpty()) return;
+        List<Player> near = fighters(run);
+        if (near.isEmpty()) return;
+        double d2 = spawnDistance * spawnDistance;
+        java.util.Iterator<DungeonDefinition.Spawn> it = run.pending.iterator();
+        int budget = 25; // at most this many per half second
+        while (it.hasNext() && budget > 0) {
+            DungeonDefinition.Spawn sp = it.next();
+            Location at = new Location(run.world, sp.x(), sp.y(), sp.z(), sp.yaw(), 0);
+            boolean close = false;
+            for (Player p : near) if (p.getWorld() == run.world && p.getLocation().distanceSquared(at) <= d2) close = true;
+            if (!close) continue;
+            it.remove();
+            budget--;
+            MobTemplate t = mobs.template(sp.mob());
+            LivingEntity mob = t == null ? null : mobs.spawn(t, at, run.id);
+            if (mob == null) continue;
+            run.mobs.add(mob.getUniqueId());
+            if (run.def.map().objectives().contains(sp.mob())) mobs.objective(mob, sp.mob());
+        }
+    }
+
+    /** A dungeon monster loaded back with its chunk: tracked again; false when its run is over. */
+    public boolean adopt(LivingEntity le) {
+        Run run = runs.get(mobs.runOf(le));
+        if (run == null || run.state == Run.State.ENDING || run.world == null && run.imported()) return false;
+        if (!mobs.adopt(le)) return false;
+        run.mobs.add(le.getUniqueId());
+        return true;
     }
 
     private int freeSlot() {
@@ -377,14 +405,15 @@ public final class Runs {
                     p.setFallDistance(0);
                 }
                 if (ticks % 2 == 0 && !run.watching.contains(p.getUniqueId())) heroes.tick(p);
-                // god modes make monsters ignore a player: none inside a dungeon (given back on leaving)
-                if (p.isInvulnerable()) p.setInvulnerable(false);
             }
             if (!run.imported()) rooms(run);
-            else run.mobs.removeIf(uuid -> {
-                Entity e = Bukkit.getEntity(uuid);
-                return e == null || !e.isValid();
-            });
+            else {
+                run.mobs.removeIf(uuid -> {
+                    Entity e = Bukkit.getEntity(uuid);
+                    return e == null || !e.isValid();
+                });
+                spawnNear(run);
+            }
             if (run.bossBar != null) updateBossBar(run);
         }
     }

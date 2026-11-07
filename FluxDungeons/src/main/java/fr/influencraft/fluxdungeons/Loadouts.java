@@ -56,7 +56,6 @@ public final class Loadouts {
         y.set("game-mode", player.getGameMode().name());
         y.set("allow-flight", player.getAllowFlight());
         y.set("flying", player.isFlying());
-        y.set("invulnerable", player.isInvulnerable());
         List<String> effects = new ArrayList<>();
         for (PotionEffect e : player.getActivePotionEffects()) {
             effects.add(e.getType().getKey() + ";" + e.getAmplifier() + ";" + e.getDuration() + ";" + e.isAmbient() + ";" + e.hasParticles());
@@ -79,7 +78,6 @@ public final class Loadouts {
         player.setFlying(false);
         player.setAllowFlight(false);
         player.setGameMode(GameMode.ADVENTURE);
-        player.setInvulnerable(false);
         ItemStack[] dungeon = store.loadout(player.getUniqueId());
         if (dungeon != null) {
             ItemStack[] contents = new ItemStack[player.getInventory().getContents().length];
@@ -162,7 +160,6 @@ public final class Loadouts {
         }
         player.setAllowFlight(y.getBoolean("allow-flight"));
         if (y.getBoolean("flying") && player.getAllowFlight()) player.setFlying(true);
-        player.setInvulnerable(y.getBoolean("invulnerable"));
         store.deleteVault(player.getUniqueId());
         World world = Bukkit.getWorld(y.getString("world", ""));
         if (world == null) return null;

@@ -106,7 +106,8 @@ final class WorldInstances {
         w.setGameRule(GameRules.MOB_GRIEFING, false);
         w.setGameRule(GameRules.MOB_DROPS, false);
         w.setGameRule(GameRules.BLOCK_DROPS, false);
-        w.setDifficulty(Difficulty.HARD);
+        // monster hits are normalized by FluxDungeons; the difficulty only changes vanilla extras (hunger, fire)
+        w.setDifficulty(Difficulty.NORMAL);
         w.setAutoSave(false);
     }
 

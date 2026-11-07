@@ -3,6 +3,7 @@ package fr.influencraft.fluxdungeons;
 import fr.influencraft.fluxdungeons.dungeon.Arena;
 import fr.influencraft.fluxdungeons.dungeon.Runs;
 import fr.influencraft.fluxdungeons.hero.Heroes;
+import fr.influencraft.fluxdungeons.mob.Combat;
 import fr.influencraft.fluxdungeons.mob.Mobs;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -178,6 +179,9 @@ final class DungeonListener implements Listener {
                 e.setCancelled(true);
                 return;
             }
+            // normalized combat: the level gap between the player's class and the monster scales his damage
+            int mobLevel = mobs.level(mob);
+            if (attacker != null && mobLevel > 0) e.setDamage(e.getDamage() * Combat.offensive(heroes.levelOf(attacker), mobLevel));
             if (attacker != null) mobs.damagedByPlayer(mob, attacker, e);
             if (e.getFinalDamage() >= mob.getHealth() && mobs.lethal(mob, attacker)) e.setCancelled(true);
             return;
@@ -185,7 +189,11 @@ final class DungeonListener implements Listener {
         // a dungeon monster (or its projectile) hit a player
         if (victim instanceof Player hurt) {
             Entity source = e.getDamager() instanceof Projectile pr && pr.getShooter() instanceof Entity sh ? sh : e.getDamager();
-            if (source instanceof LivingEntity mob && mobs.templateOf(mob) != null) mobs.hitPlayer(mob, hurt, e);
+            if (source instanceof LivingEntity mob && mobs.templateOf(mob) != null) {
+                // normalized combat: a hit counts in hits-to-kill, whatever the mob type deals in vanilla
+                if (!mobs.dealing() && mobs.level(mob) > 0) e.setDamage(mobs.hitOn(mob, hurt));
+                mobs.hitPlayer(mob, hurt, e);
+            }
         }
     }
 
@@ -220,6 +228,15 @@ final class DungeonListener implements Listener {
             return;
         }
         if (e.getEntity() instanceof LivingEntity mob) mobs.targeted(mob, p);
+    }
+
+    /** A chunk of a dungeon loaded back: its monsters are tracked again (or removed when their run is over). */
+    @EventHandler
+    public void onEntitiesLoad(org.bukkit.event.world.EntitiesLoadEvent e) {
+        for (Entity entity : e.getEntities()) {
+            if (!(entity instanceof LivingEntity le) || mobs.templateOf(le) == null) continue;
+            if (!runs.adopt(le)) le.remove();
+        }
     }
 
     /** Slimes of the dungeons do not split (their pieces would belong to no run). */

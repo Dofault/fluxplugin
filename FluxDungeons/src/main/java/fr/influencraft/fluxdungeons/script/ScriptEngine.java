@@ -56,6 +56,9 @@ public final class ScriptEngine {
 
         /** A player who can be targeted (alive, not watching). */
         boolean fighting(Player player);
+
+        /** A hit of the monster on a player, {@code multiplier} times its normal hit (normalized combat applied). */
+        void damage(ScriptHost by, Player target, double multiplier);
     }
 
     /** Why a script runs: its event, the entity the event involved, the damage it may change. */
@@ -461,7 +464,7 @@ public final class ScriptEngine {
                 for (Entity e : t.entities) {
                     if (!(e instanceof LivingEntity le) || le == self) continue;
                     if (le instanceof Player p) {
-                        if (services.fighting(p)) p.damage(host.baseDamage() * multiplier, self);
+                        if (services.fighting(p)) services.damage(host, p, multiplier);
                     } else {
                         le.damage(amount, self);
                     }
@@ -592,7 +595,7 @@ public final class ScriptEngine {
                 for (Location l : t.places()) {
                     w.strikeLightningEffect(l);
                     for (Entity e : w.getNearbyEntities(l, 1.5, 3, 1.5)) {
-                        if (e instanceof Player p && services.fighting(p)) p.damage(host.baseDamage(), self);
+                        if (e instanceof Player p && services.fighting(p)) services.damage(host, p, 1);
                     }
                 }
             }

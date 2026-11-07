@@ -43,6 +43,12 @@ import java.util.Map;
  *   blocks: {spawn: ["-2,0,3/minecraft:iron_bars"], remove: [...]}   # relative to its spawn point
  *   scripts: { ... }               # EliteScript format, see ScriptEngine
  * </pre>
+ *
+ * <b>Normalized combat</b> (imported dungeons, {@code level} above 0): life and damage are not absolute but counted in
+ * hits, as in EliteMobs. {@code health-multiplier} 1 = dies in {@code combat.hits-to-kill-mob} reference hits,
+ * {@code damage-multiplier} 1 = a player of the same level dies in {@code combat.hits-to-kill-player} hits; the level
+ * gap between the monster and the player's class doubles or halves both every {@code combat.levels-per-double}
+ * levels (see {@link Combat}).
  */
 public record MobTemplate(String id, EntityType type, String name, boolean boss, String model, double health,
                           double damage, double speed, double armor, double scale, double xp,
@@ -76,7 +82,8 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
     }
 
     /** Everything a monster brought from EliteMobs may need beyond the basics. */
-    public record Extra(boolean baby, boolean frozen, double followRange, double leash, List<String> powers,
+    public record Extra(int level, double healthMultiplier, double damageMultiplier,
+                        boolean baby, boolean frozen, double followRange, double leash, List<String> powers,
                         List<Phase> phases, String mount, List<Loot> loot, List<String> deathMessages,
                         List<String> hitMessages, List<String> hurtMessages, List<BlockState> spawnBlocks,
                         List<BlockState> removeBlocks, Map<String, Script> scripts) {
@@ -119,13 +126,14 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                     amount instanceof Number n ? n.intValue() : 1, l.get("group") == null ? null : String.valueOf(l.get("group")), classes));
         }
         Object scriptSection = c.isConfigurationSection("scripts") ? toMap(c.getConfigurationSection("scripts")) : null;
-        Extra extra = new Extra(c.getBoolean("baby"), c.getBoolean("frozen"), c.getDouble("follow-range", 32),
+        Extra extra = new Extra(c.getInt("level", 0), c.getDouble("health-multiplier", 1), c.getDouble("damage-multiplier", 1),
+                c.getBoolean("baby"), c.getBoolean("frozen"), c.getDouble("follow-range", 32),
                 c.getDouble("leash", 0), c.getStringList("powers"), phases, c.getString("mount"), loot,
                 c.getStringList("messages.death"), c.getStringList("messages.hit"), c.getStringList("messages.hurt"),
                 blocks(c.getStringList("blocks.spawn")), blocks(c.getStringList("blocks.remove")),
                 Script.parse(scriptSection));
         return new MobTemplate(id, type, c.getString("name", id), c.getBoolean("boss"), c.getString("model"),
-                c.getDouble("health", 20), c.getDouble("damage", 3), c.getDouble("speed", 0.23), c.getDouble("armor", 0),
+                c.getDouble("health", 20), c.getDouble("damage", 3), c.getDouble("speed", -1), c.getDouble("armor", 0),
                 c.getDouble("scale", 1), c.getDouble("xp", 10), equipment, abilities, extra);
     }
 

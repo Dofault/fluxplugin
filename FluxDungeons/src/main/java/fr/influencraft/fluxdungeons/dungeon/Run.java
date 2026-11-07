@@ -40,6 +40,8 @@ public final class Run {
     /** Objectives of an imported map still alive (monster ids). */
     final Set<String> objectivesLeft = new LinkedHashSet<>();
     int objectivesTotal;
+    /** Monsters of an imported map not spawned yet: they appear when a player comes near (memory stays low). */
+    final java.util.List<DungeonDefinition.Spawn> pending = new java.util.ArrayList<>();
 
     Run(String id, DungeonDefinition def, int slot, Location origin) {
         this.id = id;
