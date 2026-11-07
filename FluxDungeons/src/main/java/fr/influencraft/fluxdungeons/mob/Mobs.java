@@ -2,6 +2,9 @@ package fr.influencraft.fluxdungeons.mob;
 
 import fr.influencraft.flux.api.text.Texts;
 import fr.influencraft.fluxdungeons.mob.MobTemplate.Ability;
+import fr.influencraft.fluxdungeons.script.Script;
+import fr.influencraft.fluxdungeons.script.ScriptEngine;
+import fr.influencraft.fluxdungeons.script.ScriptHost;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -12,13 +15,18 @@ import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.AbstractArrow;
+import org.bukkit.entity.Ageable;
+import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.SmallFireball;
 import org.bukkit.entity.Zombie;
 import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
@@ -27,64 +35,160 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
-import java.util.function.BiConsumer;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Monsters of {@code mobs.yml}: spawned with their numbers and equipment, marked with their template and run, driven
- * every half second (target, abilities). A boss wearing a model plays its animations: {@code attack} before a slam
- * (damage at the impact tick of its fiche), {@code hurt} when hit, {@code death} instead of dying at once.
+ * Monsters of the dungeons: spawned with their numbers and equipment, marked with their template, run and objective,
+ * driven every half second (target, abilities, leash), running their scripts on their events ({@link ScriptEngine}),
+ * changing phase below a share of their life, changing blocks around their spawn point when they appear and
+ * disappear (doors of imported dungeons). A boss wearing a model plays its animations.
  */
 public final class Mobs {
 
+    /** What the dungeon is told when a monster is gone for good. */
+    public interface DeathHandler {
+        void dead(LivingEntity mob, Player killer, MobTemplate template, String objective);
+    }
+
     /** A monster alive in a run. */
-    private static final class Alive {
+    private final class Alive implements ScriptHost {
         final LivingEntity entity;
         final MobTemplate template;
         final String run;
+        final Location spawn;
         final Map<Integer, Long> lastCast = new HashMap<>();
         final ModelBridge.Handle model;
+        final Powers.Kit kit;
+        final List<Ability> abilities;
+        final Set<String> tags = new HashSet<>();
+        final Map<String, Long> cooldowns = new HashMap<>();
+        long globalCooldown;
+        List<MobTemplate.Phase> phases;
+        int nextPhase;
+        String objective;
         long lastHurt;
-        boolean dying;
+        boolean dying, inCombat, switching;
 
-        Alive(LivingEntity entity, MobTemplate template, String run, ModelBridge.Handle model) {
+        Alive(LivingEntity entity, MobTemplate template, String run, Location spawn, ModelBridge.Handle model) {
             this.entity = entity;
             this.template = template;
             this.run = run;
+            this.spawn = spawn.clone();
             this.model = model;
+            this.kit = Powers.of(template.extra().powers());
+            this.abilities = new ArrayList<>(template.abilities());
+            abilities.addAll(kit.abilities());
+            this.phases = template.extra().phases();
+        }
+
+        public LivingEntity entity() {
+            return entity;
+        }
+
+        public Location spawn() {
+            return spawn;
+        }
+
+        public String run() {
+            return run;
+        }
+
+        public Map<String, Script> scripts() {
+            return template.extra().scripts();
+        }
+
+        public Set<String> tags() {
+            return tags;
+        }
+
+        public Map<String, Long> cooldowns() {
+            return cooldowns;
+        }
+
+        public long globalCooldownUntil() {
+            return globalCooldown;
+        }
+
+        public void globalCooldownUntil(long tick) {
+            globalCooldown = tick;
+        }
+
+        public double baseDamage() {
+            AttributeInstance a = entity.getAttribute(Attribute.ATTACK_DAMAGE);
+            return a == null ? template.damage() : a.getValue();
+        }
+
+        public void animate(String animation) {
+            if (model != null && animation != null && !animation.isBlank()) model.play(animation);
         }
     }
 
     private final Plugin plugin;
-    private final NamespacedKey mobKey, runKey;
+    private final NamespacedKey mobKey, runKey, objectiveKey;
     private final Map<String, MobTemplate> templates = new LinkedHashMap<>();
     private final Map<UUID, Alive> alive = new HashMap<>();
     private final boolean models;
-    /** A monster summoned by another: the run must count it. */
-    private BiConsumer<LivingEntity, LivingEntity> onSummon = (parent, child) -> {
+    private final ScriptEngine engine;
+    private BiConsumerLiving onSummon = (parent, child) -> {
     };
-    /** A monster finished dying (after its death animation): the run counts the kill. */
-    private BiConsumer<LivingEntity, Player> onDeath = (mob, killer) -> {
+    private DeathHandler onDeath = (mob, killer, template, objective) -> {
     };
+    private int ticks;
+
+    @FunctionalInterface
+    public interface BiConsumerLiving {
+        void accept(LivingEntity parent, LivingEntity child);
+    }
 
     public Mobs(Plugin plugin) {
         this.plugin = plugin;
         this.mobKey = new NamespacedKey(plugin, "mob");
         this.runKey = new NamespacedKey(plugin, "run");
+        this.objectiveKey = new NamespacedKey(plugin, "objective");
         this.models = Bukkit.getPluginManager().isPluginEnabled("BetterModel");
+        this.engine = new ScriptEngine(plugin, new ScriptEngine.Services() {
+            public ScriptHost host(Entity entity) {
+                return alive.get(entity.getUniqueId());
+            }
+
+            public LivingEntity summon(ScriptHost by, String template, Location at) {
+                MobTemplate t = templates.get(template);
+                if (t == null) return null;
+                LivingEntity child = spawn(t, at, by.run());
+                if (child != null) onSummon.accept(by.entity(), child);
+                return child;
+            }
+
+            public boolean fighting(Player player) {
+                return Mobs.fighting(player);
+            }
+        });
         Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 10L, 10L);
     }
 
-    public void load(ConfigurationSection file) {
+    /** Loads every monster file (mobs.yml first, then each file of mobs/). */
+    public void load(List<ConfigurationSection> files) {
         templates.clear();
-        if (file == null) return;
-        for (String id : file.getKeys(false)) {
-            ConfigurationSection c = file.getConfigurationSection(id);
-            if (c != null) templates.put(id, MobTemplate.read(id, c));
+        for (ConfigurationSection file : files) {
+            if (file == null) continue;
+            for (String id : file.getKeys(false)) {
+                ConfigurationSection c = file.getConfigurationSection(id);
+                if (c == null) continue;
+                try {
+                    templates.put(id, MobTemplate.read(id, c));
+                } catch (RuntimeException e) {
+                    plugin.getLogger().warning("Monster " + id + " could not be read: " + e);
+                }
+            }
         }
     }
 
@@ -92,11 +196,15 @@ public final class Mobs {
         return templates.get(id);
     }
 
-    public void onSummon(BiConsumer<LivingEntity, LivingEntity> handler) {
+    public ScriptEngine engine() {
+        return engine;
+    }
+
+    public void onSummon(BiConsumerLiving handler) {
         this.onSummon = handler;
     }
 
-    public void onDeath(BiConsumer<LivingEntity, Player> handler) {
+    public void onDeath(DeathHandler handler) {
         this.onDeath = handler;
     }
 
@@ -115,11 +223,20 @@ public final class Mobs {
         return id == null ? null : templates.get(id);
     }
 
+    /** Marks a monster as an objective of its run (its last phase dying completes it). */
+    public void objective(LivingEntity entity, String objective) {
+        entity.getPersistentDataContainer().set(objectiveKey, PersistentDataType.STRING, objective);
+        Alive a = alive.get(entity.getUniqueId());
+        if (a != null) a.objective = objective;
+    }
+
     // ---------------------------------------------------------------- spawning
 
     public LivingEntity spawn(MobTemplate t, Location at, String run) {
         Class<? extends Entity> type = t.type().getEntityClass();
         if (type == null || !LivingEntity.class.isAssignableFrom(type)) return null;
+        at.getChunk().addPluginChunkTicket(plugin);
+        MobTemplate.Extra x = t.extra();
         Entity spawned = at.getWorld().spawn(at, type, CreatureSpawnEvent.SpawnReason.CUSTOM, e -> {
             LivingEntity le = (LivingEntity) e;
             le.getPersistentDataContainer().set(mobKey, PersistentDataType.STRING, t.id());
@@ -134,8 +251,7 @@ public final class Mobs {
             base(le, Attribute.MOVEMENT_SPEED, t.speed());
             base(le, Attribute.ARMOR, t.armor());
             base(le, Attribute.SCALE, t.scale());
-            base(le, Attribute.FOLLOW_RANGE, 32);
-            if (t.boss()) base(le, Attribute.KNOCKBACK_RESISTANCE, 1);
+            base(le, Attribute.FOLLOW_RANGE, x.followRange());
             le.setHealth(t.health());
             EntityEquipment eq = le.getEquipment();
             if (eq != null) {
@@ -158,11 +274,13 @@ public final class Mobs {
                 eq.setItemInMainHandDropChance(0);
                 eq.setItemInOffHandDropChance(0);
             }
-            if (le instanceof Zombie z) {
-                z.setShouldBurnInDay(false);
-                z.setAdult();
-            }
+            if (le instanceof Zombie z) z.setShouldBurnInDay(false);
             if (le instanceof org.bukkit.entity.AbstractSkeleton s) s.setShouldBurnInDay(false);
+            if (le instanceof Ageable ag) {
+                if (x.baby()) ag.setBaby();
+                else ag.setAdult();
+            }
+            if (x.frozen()) le.setAI(false);
         });
         LivingEntity le = (LivingEntity) spawned;
         ModelBridge.Handle model = null;
@@ -175,8 +293,46 @@ public final class Mobs {
                 plugin.getLogger().warning("Could not put model " + t.model() + " on " + t.id() + ": " + e);
             }
         }
-        alive.put(le.getUniqueId(), new Alive(le, t, run, model));
+        Alive a = new Alive(le, t, run, at, model);
+        if (a.kit.noKnockback()) base(le, Attribute.KNOCKBACK_RESISTANCE, 1);
+        else if (t.boss()) base(le, Attribute.KNOCKBACK_RESISTANCE, 1);
+        for (PotionEffect pe : a.kit.permanent()) le.addPotionEffect(pe);
+        alive.put(le.getUniqueId(), a);
+        blocks(a, x.spawnBlocks());
+        if (x.mount() != null) mount(a, x.mount());
+        engine.fire(a, "EliteMobSpawnEvent", null, null);
         return le;
+    }
+
+    private void mount(Alive rider, String mount) {
+        MobTemplate t = templates.get(mount.replace(".yml", ""));
+        LivingEntity horse = null;
+        if (t != null) {
+            horse = spawn(t, rider.spawn.clone(), rider.run);
+            if (horse != null) onSummon.accept(rider.entity, horse);
+        } else {
+            try {
+                EntityType type = EntityType.valueOf(mount.toUpperCase(java.util.Locale.ROOT));
+                if (type.getEntityClass() != null && LivingEntity.class.isAssignableFrom(type.getEntityClass())) {
+                    horse = (LivingEntity) rider.spawn.getWorld().spawn(rider.spawn, type.getEntityClass());
+                }
+            } catch (IllegalArgumentException ignored) {
+                // unknown mount
+            }
+        }
+        if (horse != null) horse.addPassenger(rider.entity);
+    }
+
+    /** Applies block states relative to the monster's spawn point (doors, arena walls). */
+    private void blocks(Alive a, List<MobTemplate.BlockState> states) {
+        for (MobTemplate.BlockState s : states) {
+            try {
+                Location l = a.spawn.clone().add(s.offset());
+                l.getBlock().setBlockData(Bukkit.createBlockData(s.data()), false);
+            } catch (IllegalArgumentException e) {
+                plugin.getLogger().warning("Bad block state " + s.data() + " of " + a.template.id());
+            }
+        }
     }
 
     private static void base(LivingEntity e, Attribute attribute, double value) {
@@ -190,7 +346,7 @@ public final class Mobs {
         while (it.hasNext()) {
             Alive a = it.next();
             if (!a.run.equals(run)) continue;
-            if (a.model != null) a.model.close();
+            close(a);
             a.entity.remove();
             it.remove();
         }
@@ -198,22 +354,106 @@ public final class Mobs {
 
     public void removeAll() {
         for (Alive a : alive.values()) {
-            if (a.model != null) a.model.close();
+            close(a);
             a.entity.remove();
         }
         alive.clear();
     }
 
-    // ---------------------------------------------------------------- damage and death
+    /** Chunk tickets are released by the run (whole map world unloaded, or arena slot released), not per monster. */
+    private void close(Alive a) {
+        if (a.model != null) a.model.close();
+        engine.forget(a);
+    }
 
-    /** A dungeon monster was hit: hurt animation of its model (at most twice a second). */
-    public void hurt(LivingEntity entity) {
+    // ---------------------------------------------------------------- events from the listener
+
+    /** A dungeon monster was hit by a player. */
+    public void damagedByPlayer(LivingEntity entity, Player player, EntityDamageEvent event) {
         Alive a = alive.get(entity.getUniqueId());
-        if (a == null || a.model == null || a.dying) return;
+        if (a == null) return;
+        if (!a.inCombat) {
+            a.inCombat = true;
+            engine.fire(a, "EliteMobEnterCombatEvent", player, null);
+        }
+        engine.fire(a, "EliteMobDamagedByPlayerEvent", player, event);
+        if (!a.template.extra().hurtMessages().isEmpty() && ThreadLocalRandom.current().nextDouble() < 0.15) say(a, a.template.extra().hurtMessages());
+    }
+
+    /** A dungeon monster took damage of any kind; returns true when the damage must be cancelled (immunity). */
+    public boolean damaged(LivingEntity entity, EntityDamageEvent event) {
+        Alive a = alive.get(entity.getUniqueId());
+        if (a == null) return false;
+        if (a.kit.immune().contains(event.getCause())) return true;
+        engine.fire(a, "EliteMobDamagedEvent", null, event);
+        hurt(a);
+        if (!a.phases.isEmpty() && a.nextPhase < a.phases.size()) {
+            Bukkit.getScheduler().runTask(plugin, () -> checkPhase(a));
+        }
+        return false;
+    }
+
+    /** A dungeon monster hit a player. */
+    public void hitPlayer(LivingEntity entity, Player player, EntityDamageEvent event) {
+        Alive a = alive.get(entity.getUniqueId());
+        if (a == null) return;
+        for (Powers.OnHit h : a.kit.onHit()) Powers.hit(h, player, entity, a.baseDamage());
+        engine.fire(a, "PlayerDamagedByEliteMobEvent", player, event);
+        if (!a.template.extra().hitMessages().isEmpty() && ThreadLocalRandom.current().nextDouble() < 0.2) say(a, a.template.extra().hitMessages());
+    }
+
+    /** A dungeon monster chose a player as target. */
+    public void targeted(LivingEntity entity, Player player) {
+        Alive a = alive.get(entity.getUniqueId());
+        if (a == null) return;
+        if (!a.inCombat) {
+            a.inCombat = true;
+            engine.fire(a, "EliteMobEnterCombatEvent", player, null);
+        }
+        engine.fire(a, "EliteMobTargetPlayerEvent", player, null);
+    }
+
+    private void hurt(Alive a) {
+        if (a.model == null || a.dying) return;
         long now = System.currentTimeMillis();
         if (now - a.lastHurt < 500) return;
         a.lastHurt = now;
         a.model.play("hurt");
+    }
+
+    /** Below the share of life of its next phase, the monster becomes the next one, life share kept. */
+    private void checkPhase(Alive a) {
+        if (a.switching || a.dying || !a.entity.isValid() || a.nextPhase >= a.phases.size()) return;
+        double ratio = a.entity.getHealth() / Math.max(1, maxHealth(a.entity));
+        MobTemplate.Phase phase = a.phases.get(a.nextPhase);
+        if (ratio > phase.below()) return;
+        MobTemplate next = templates.get(phase.mob());
+        if (next == null) {
+            a.nextPhase = a.phases.size();
+            return;
+        }
+        a.switching = true;
+        Location at = a.entity.getLocation();
+        blocks(a, a.template.extra().removeBlocks());
+        alive.remove(a.entity.getUniqueId());
+        close(a);
+        a.entity.remove();
+        LivingEntity child = spawnPhase(next, at, a, ratio);
+        if (child != null) onSummon.accept(a.entity, child);
+    }
+
+    private LivingEntity spawnPhase(MobTemplate next, Location at, Alive from, double ratio) {
+        LivingEntity child = spawn(next, at, from.run);
+        if (child == null) return null;
+        Alive c = alive.get(child.getUniqueId());
+        c.phases = from.phases;
+        c.nextPhase = from.nextPhase + 1;
+        c.inCombat = true;
+        c.tags.addAll(from.tags);
+        if (from.objective != null) objective(child, from.objective);
+        child.setHealth(Math.max(1, maxHealth(child) * ratio));
+        engine.fire(c, "ElitePhaseSwitchEvent", null, null);
+        return child;
     }
 
     /**
@@ -238,72 +478,93 @@ public final class Mobs {
             w.playSound(entity.getLocation(), Sound.BLOCK_ANVIL_LAND, 1f, 0.5f);
         }, 26L);
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            alive.remove(entity.getUniqueId());
-            a.model.close();
+            finish(a, killer);
             entity.remove();
-            onDeath.accept(entity, killer);
         }, 36L);
         return true;
     }
 
     /** A dungeon monster died the vanilla way. */
-    public void died(LivingEntity entity) {
-        Alive a = alive.remove(entity.getUniqueId());
-        if (a != null && a.model != null) a.model.close();
+    public void died(LivingEntity entity, Player killer) {
+        Alive a = alive.get(entity.getUniqueId());
+        if (a == null) return;
+        finish(a, killer);
+    }
+
+    private void finish(Alive a, Player killer) {
+        if (!alive.containsKey(a.entity.getUniqueId())) return;
+        engine.fire(a, "EliteMobDeathEvent", killer, null);
+        blocks(a, a.template.extra().removeBlocks());
+        if (!a.template.extra().deathMessages().isEmpty()) {
+            for (Player p : a.entity.getWorld().getPlayers()) for (String line : a.template.extra().deathMessages()) p.sendMessage(Texts.parse(line.replace("$players", killer == null ? "" : killer.getName())));
+        }
+        alive.remove(a.entity.getUniqueId());
+        close(a);
+        onDeath.dead(a.entity, killer, a.template, a.objective);
+    }
+
+    private void say(Alive a, List<String> lines) {
+        String line = lines.get(ThreadLocalRandom.current().nextInt(lines.size()));
+        for (Entity e : a.entity.getNearbyEntities(16, 8, 16)) if (e instanceof Player p) p.sendMessage(Texts.parse(a.template.name() + "&f : " + line));
     }
 
     // ---------------------------------------------------------------- behaviour
 
     private void tick() {
+        ticks++;
         long now = System.currentTimeMillis();
-        // abilities run after the loop: a summon adds monsters to the map being walked
-        java.util.List<Runnable> casts = new java.util.ArrayList<>();
+        // abilities and zone scripts run after the loop: they may add monsters to the map being walked
+        List<Runnable> later = new ArrayList<>();
         Iterator<Alive> it = alive.values().iterator();
         while (it.hasNext()) {
             Alive a = it.next();
             if (!a.entity.isValid()) {
-                if (a.model != null && !a.dying) a.model.close();
-                if (!a.dying) it.remove();
+                if (!a.dying && !a.entity.isDead()) {
+                    close(a);
+                    it.remove();
+                }
                 continue;
             }
             if (a.dying) continue;
+            double leash = a.template.extra().leash();
+            if (leash > 0 && a.entity.getLocation().distanceSquared(a.spawn) > leash * leash) a.entity.teleport(a.spawn);
+            if (!a.template.extra().scripts().isEmpty()) later.add(() -> engine.pollZones(a));
+            if (!a.entity.hasAI()) continue;
             Player target = target(a);
             if (target == null) continue;
             double life = 100 * a.entity.getHealth() / Math.max(1, maxHealth(a.entity));
-            for (int i = 0; i < a.template.abilities().size(); i++) {
-                Ability ab = a.template.abilities().get(i);
+            for (int i = 0; i < a.abilities.size(); i++) {
+                Ability ab = a.abilities.get(i);
                 if (life > ab.below()) continue;
-                long last = a.lastCast.getOrDefault(i, now - (long) (ab.every() * 500)); // first cast after half a period
+                long last = a.lastCast.getOrDefault(i, now - (long) (ab.every() * 500));
                 if (now - last < ab.every() * 1000) continue;
                 a.lastCast.put(i, now);
-                casts.add(() -> cast(a, ab, target));
+                later.add(() -> cast(a, ab, target));
                 break;
             }
         }
-        casts.forEach(Runnable::run);
+        later.forEach(Runnable::run);
     }
 
-    /** Current target, or the nearest player who can fight within 24 blocks. */
     private static Player target(Alive a) {
-        if (a.entity instanceof Mob m) {
-            if (m.getTarget() instanceof Player p && fighting(p)) return p;
-            Player best = null;
-            double bestD = 24 * 24;
-            for (Player p : a.entity.getWorld().getPlayers()) {
-                if (!fighting(p)) continue;
-                double d = p.getLocation().distanceSquared(a.entity.getLocation());
-                if (d < bestD) {
-                    bestD = d;
-                    best = p;
-                }
+        if (!(a.entity instanceof Mob m)) return null;
+        if (m.getTarget() instanceof Player p && fighting(p)) return p;
+        Player best = null;
+        double range = a.template.extra().followRange();
+        double bestD = Math.min(24, range) * Math.min(24, range);
+        for (Player p : a.entity.getWorld().getPlayers()) {
+            if (!fighting(p)) continue;
+            double d = p.getLocation().distanceSquared(a.entity.getLocation());
+            if (d < bestD) {
+                bestD = d;
+                best = p;
             }
-            if (best != null) m.setTarget(best);
-            return best;
         }
-        return null;
+        if (best != null) m.setTarget(best);
+        return best;
     }
 
-    private static boolean fighting(Player p) {
+    static boolean fighting(Player p) {
         return !p.isDead() && (p.getGameMode() == GameMode.SURVIVAL || p.getGameMode() == GameMode.ADVENTURE);
     }
 
@@ -312,8 +573,15 @@ public final class Mobs {
         return inst == null ? 20 : inst.getValue();
     }
 
+    /** Power of an ability: absolute, or a multiple of the monster's damage ({@code relative: 1}, built-in powers). */
+    private static double power(Alive a, Ability ab, double fallback) {
+        double p = ab.number("power", fallback);
+        return ab.number("relative", 0) > 0 || !a.template.abilities().contains(ab) ? p * a.baseDamage() : p;
+    }
+
     private void cast(Alive a, Ability ab, Player target) {
         LivingEntity e = a.entity;
+        if (!e.isValid()) return;
         World w = e.getWorld();
         Location at = e.getLocation();
         switch (ab.type()) {
@@ -332,6 +600,72 @@ public final class Mobs {
                 ball.setVelocity(dir.multiply(ab.number("speed", 1.2)));
                 w.playSound(at, Sound.ENTITY_BLAZE_SHOOT, 0.8f, 1f);
             }
+            case "arrow", "volley" -> {
+                int count = ab.type().equals("arrow") ? 1 : (int) ab.number("count", 5);
+                double dmg = power(a, ab, 1);
+                Vector base = target.getEyeLocation().toVector().subtract(e.getEyeLocation().toVector()).normalize();
+                for (int i = 0; i < count; i++) {
+                    Vector dir = base.clone().add(new Vector((Math.random() - 0.5) * 0.25 * (count > 1 ? 1 : 0), (Math.random() - 0.3) * 0.1, (Math.random() - 0.5) * 0.25 * (count > 1 ? 1 : 0)));
+                    Arrow arrow = w.spawn(e.getEyeLocation().add(dir), Arrow.class, ar -> {
+                        ar.setShooter(e);
+                        ar.setPickupStatus(AbstractArrow.PickupStatus.DISALLOWED);
+                        ar.setDamage(dmg / 2);
+                    });
+                    arrow.setVelocity(dir.normalize().multiply(1.8));
+                }
+                w.playSound(at, Sound.ENTITY_SKELETON_SHOOT, 1f, 1f);
+            }
+            case "cone" -> {
+                double range = ab.number("range", 6);
+                Vector dir = target.getLocation().toVector().subtract(at.toVector()).setY(0).normalize();
+                boolean fire = ab.number("fire", 0) > 0;
+                for (double d = 1; d <= range; d += 0.8) {
+                    w.spawnParticle(fire ? Particle.FLAME : Particle.SNOWFLAKE, at.clone().add(0, 1.2, 0).add(dir.clone().multiply(d)), 6, d * 0.12, 0.2, d * 0.12, 0.01);
+                }
+                w.playSound(at, fire ? Sound.ENTITY_BLAZE_SHOOT : Sound.BLOCK_GLASS_BREAK, 1f, 0.8f);
+                for (Player p : w.getPlayers()) {
+                    if (!fighting(p)) continue;
+                    Vector to = p.getLocation().toVector().subtract(at.toVector());
+                    if (to.length() > range || to.clone().setY(0).normalize().dot(dir) < 0.7) continue;
+                    p.damage(power(a, ab, 0.6), e);
+                    if (fire) p.setFireTicks(60);
+                    else p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 2));
+                }
+            }
+            case "taze" -> {
+                w.spawnParticle(Particle.ELECTRIC_SPARK, target.getLocation().add(0, 1, 0), 30, 0.3, 0.6, 0.3, 0.1);
+                w.playSound(target.getLocation(), Sound.ENTITY_GUARDIAN_ATTACK, 1f, 1.6f);
+                target.damage(power(a, ab, 0.8), e);
+                target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 4));
+            }
+            case "lightning" -> {
+                int count = (int) ab.number("count", 3);
+                List<Player> near = new ArrayList<>();
+                for (Player p : w.getPlayers()) if (fighting(p) && p.getLocation().distanceSquared(at) < 400) near.add(p);
+                for (int i = 0; i < count && !near.isEmpty(); i++) {
+                    Player p = near.get(ThreadLocalRandom.current().nextInt(near.size()));
+                    Location spot = p.getLocation().clone();
+                    w.spawnParticle(Particle.ELECTRIC_SPARK, spot, 20, 0.5, 0.1, 0.5, 0.05);
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                        w.strikeLightningEffect(spot);
+                        for (Player q : w.getPlayers()) if (fighting(q) && q.getLocation().distanceSquared(spot) < 4) q.damage(power(a, ab, 1), e);
+                    }, 20L + i * 10L);
+                }
+            }
+            case "implosion" -> {
+                double radius = ab.number("radius", 8);
+                w.spawnParticle(Particle.PORTAL, at.clone().add(0, 1, 0), 80, radius / 2, 1, radius / 2, 0.5);
+                w.playSound(at, Sound.ENTITY_ILLUSIONER_PREPARE_MIRROR, 1f, 0.6f);
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    if (!e.isValid()) return;
+                    Location c = e.getLocation();
+                    for (Player p : w.getPlayers()) {
+                        if (!fighting(p) || p.getLocation().distanceSquared(c) > radius * radius) continue;
+                        p.setVelocity(c.toVector().subtract(p.getLocation().toVector()).normalize().multiply(1.2).setY(0.3));
+                        p.damage(power(a, ab, 0.8), e);
+                    }
+                }, 20L);
+            }
             case "summon" -> {
                 MobTemplate child = templates.get(ab.text("mob", ""));
                 if (child == null) return;
@@ -346,24 +680,39 @@ public final class Mobs {
                     if (spawned != null) onSummon.accept(e, spawned);
                 }
             }
+            case "summon_vanilla" -> {
+                try {
+                    EntityType type = EntityType.valueOf(ab.text("entity", "SKELETON"));
+                    MobTemplate copy = new MobTemplate(a.template.id() + "_summon", type, "&7" + type.name().toLowerCase(), false, null,
+                            maxHealth(e) * 0.15, a.baseDamage() * 0.6, 0.25, 0, 1, 0, Map.of(), List.of(),
+                            new MobTemplate.Extra(false, false, 32, 0, List.of(), List.of(), null, List.of(), List.of(), List.of(),
+                                    List.of(), List.of(), List.of(), Map.of()));
+                    for (int i = 0; i < (int) ab.number("count", 2); i++) {
+                        LivingEntity s = spawn(copy, at.clone().add(ThreadLocalRandom.current().nextDouble(-2, 2), 0, ThreadLocalRandom.current().nextDouble(-2, 2)), a.run);
+                        if (s != null) onSummon.accept(e, s);
+                    }
+                } catch (IllegalArgumentException ignored) {
+                    // unknown entity
+                }
+            }
             case "slam" -> {
                 String animation = ab.text("animation", "attack");
-                long impact = (long) ab.number("impact", a.model == null ? 10 : 16);
+                long impact = (long) ab.number("impact", a.model == null ? 12 : 16);
                 if (a.model != null) a.model.play(animation);
+                double radius = ab.number("radius", 4);
+                w.spawnParticle(Particle.DUST, at, 30, radius / 2, 0.1, radius / 2, 0, new Particle.DustOptions(org.bukkit.Color.RED, 1.5f));
                 if (e instanceof Mob m) m.setAI(false);
                 w.playSound(at, Sound.ENTITY_IRON_GOLEM_ATTACK, 1f, 0.6f);
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
                     if (e instanceof Mob m) m.setAI(true);
                     if (!e.isValid() || a.dying) return;
-                    double radius = ab.number("radius", 4);
-                    // impact in front of the monster, where the hammer lands
-                    Location hit = e.getLocation().add(e.getLocation().getDirection().setY(0).normalize().multiply(radius * 0.5));
+                    Location hit = e.getLocation().add(e.getLocation().getDirection().setY(0).normalize().multiply(a.model == null ? 0 : radius * 0.5));
                     w.spawnParticle(Particle.EXPLOSION, hit, 2, 0.5, 0.1, 0.5, 0);
                     w.spawnParticle(Particle.LAVA, hit, 12, radius / 2, 0.2, radius / 2, 0);
                     w.playSound(hit, Sound.ENTITY_GENERIC_EXPLODE, 0.9f, 0.7f);
                     for (Player p : w.getPlayers()) {
                         if (!fighting(p) || p.getLocation().distanceSquared(hit) > radius * radius) continue;
-                        p.damage(ab.number("power", 8), e);
+                        p.damage(power(a, ab, 8), e);
                         p.setVelocity(p.getLocation().toVector().subtract(hit.toVector()).setY(0).normalize().multiply(0.7).setY(0.6));
                     }
                 }, impact);

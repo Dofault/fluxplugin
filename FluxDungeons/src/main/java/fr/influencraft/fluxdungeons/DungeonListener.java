@@ -174,8 +174,18 @@ final class DungeonListener implements Listener {
             }
         }
         if (victim instanceof LivingEntity mob && mobs.templateOf(mob) != null) {
-            mobs.hurt(mob);
+            if (mobs.damaged(mob, e)) {
+                e.setCancelled(true);
+                return;
+            }
+            if (attacker != null) mobs.damagedByPlayer(mob, attacker, e);
             if (e.getFinalDamage() >= mob.getHealth() && mobs.lethal(mob, attacker)) e.setCancelled(true);
+            return;
+        }
+        // a dungeon monster (or its projectile) hit a player
+        if (victim instanceof Player hurt) {
+            Entity source = e.getDamager() instanceof Projectile pr && pr.getShooter() instanceof Entity sh ? sh : e.getDamager();
+            if (source instanceof LivingEntity mob && mobs.templateOf(mob) != null) mobs.hitPlayer(mob, hurt, e);
         }
     }
 
@@ -183,10 +193,12 @@ final class DungeonListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onDamage(EntityDamageEvent e) {
         if (e instanceof EntityDamageByEntityEvent) return;
-        if (e.getEntity() instanceof LivingEntity mob && mobs.templateOf(mob) != null
-                && e.getFinalDamage() >= mob.getHealth() && mobs.lethal(mob, mob.getKiller())) {
+        if (!(e.getEntity() instanceof LivingEntity mob) || mobs.templateOf(mob) == null) return;
+        if (mobs.damaged(mob, e)) {
             e.setCancelled(true);
+            return;
         }
+        if (e.getFinalDamage() >= mob.getHealth() && mobs.lethal(mob, mob.getKiller())) e.setCancelled(true);
     }
 
     @EventHandler
@@ -196,14 +208,33 @@ final class DungeonListener implements Listener {
         if (mobs.templateOf(mob) == null) return;
         e.getDrops().clear();
         e.setDroppedExp(0);
-        mobs.died(mob);
-        runs.mobKilled(mob, mob.getKiller());
+        mobs.died(mob, mob.getKiller());
     }
 
     /** Dungeon monsters only fight players (never each other). */
     @EventHandler(ignoreCancelled = true)
     public void onTarget(EntityTargetEvent e) {
-        if (mobs.templateOf(e.getEntity()) != null && e.getTarget() != null && !(e.getTarget() instanceof Player)) e.setCancelled(true);
+        if (mobs.templateOf(e.getEntity()) == null || e.getTarget() == null) return;
+        if (!(e.getTarget() instanceof Player p)) {
+            e.setCancelled(true);
+            return;
+        }
+        if (e.getEntity() instanceof LivingEntity mob) mobs.targeted(mob, p);
+    }
+
+    /** Slimes of the dungeons do not split (their pieces would belong to no run). */
+    @EventHandler(ignoreCancelled = true)
+    public void onSplit(org.bukkit.event.entity.SlimeSplitEvent e) {
+        if (mobs.templateOf(e.getEntity()) != null) e.setCancelled(true);
+    }
+
+    /** Falling blocks of scripts are only a show: they never become blocks. */
+    @EventHandler(ignoreCancelled = true)
+    public void onFallingBlock(org.bukkit.event.entity.EntityChangeBlockEvent e) {
+        if (mobs.engine().ownsFallingBlock(e.getEntity())) {
+            e.setCancelled(true);
+            e.getEntity().remove();
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

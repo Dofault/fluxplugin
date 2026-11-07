@@ -60,6 +60,7 @@ public final class Runs {
     private final Mobs mobs;
     private final Heroes heroes;
     private final Loadouts loadouts;
+    private final WorldInstances instances;
     private final Map<String, DungeonDefinition> dungeons = new LinkedHashMap<>();
     private final Map<String, Run> runs = new HashMap<>();
     private final Map<UUID, Run> byPlayer = new HashMap<>();
@@ -78,6 +79,8 @@ public final class Runs {
         this.mobs = mobs;
         this.heroes = heroes;
         this.loadouts = loadouts;
+        this.instances = new WorldInstances(plugin);
+        instances.sweep();
         mobs.onSummon((parent, child) -> {
             Run run = runs.get(mobs.runOf(child));
             if (run != null) run.mobs.add(child.getUniqueId());
@@ -128,7 +131,7 @@ public final class Runs {
     /** Builds the template of every dungeon whose definition changed since it was last built. */
     public void buildChanged() {
         for (DungeonDefinition def : dungeons.values()) {
-            if (!def.fingerprint().equals(arena.builtFrom(def.id()))) build(def, null);
+            if (def.map() == null && !def.fingerprint().equals(arena.builtFrom(def.id()))) build(def, null);
         }
     }
 
@@ -154,7 +157,7 @@ public final class Runs {
             if (byPlayer.containsKey(p.getUniqueId())) return Refusal.BUSY_PLAYER;
             if (heroes.classOf(p.getUniqueId()) == null) return Refusal.NO_CLASS;
         }
-        if (freeSlot() < 0) return Refusal.NO_SLOT;
+        if (def.map() != null ? runs.size() >= maxRuns : freeSlot() < 0) return Refusal.NO_SLOT;
         return Refusal.NONE;
     }
 
@@ -168,6 +171,7 @@ public final class Runs {
 
     /** Starts a run for these players (checked before). The copy is made, then they are taken in. */
     public Run start(DungeonDefinition def, List<Player> players) {
+        if (def.map() != null) return startMap(def, players);
         int slot = freeSlot();
         if (slot < 0) return null;
         Run run = new Run(UUID.randomUUID().toString().substring(0, 8), def, slot, arena.slotOrigin(slot));
@@ -180,6 +184,63 @@ public final class Runs {
         Runnable copy = () -> arena.copy(def, run.origin, () -> begin(run));
         if (!def.fingerprint().equals(arena.builtFrom(def.id()))) build(def, copy);
         else copy.run();
+        return run;
+    }
+
+    /** An imported map: its world is copied for this run, its monsters placed, then the players come in. */
+    private Run startMap(DungeonDefinition def, List<Player> players) {
+        Run run = new Run(UUID.randomUUID().toString().substring(0, 8), def, -1, null);
+        runs.put(run.id, run);
+        for (Player p : players) {
+            run.expected.add(p.getUniqueId());
+            byPlayer.put(p.getUniqueId(), run);
+            plugin.messages().send(p, "run.preparing", "%dungeon%", def.name());
+        }
+        java.io.File folder = new java.io.File(plugin.getDataFolder(), def.map().folder());
+        if (!new java.io.File(folder, "region").isDirectory()) {
+            plugin.getLogger().severe("Map folder of dungeon " + def.id() + " not found: " + folder);
+            for (Player p : players) plugin.messages().send(p, "start.failed");
+            for (UUID u : run.expected) byPlayer.remove(u);
+            runs.remove(run.id);
+            return null;
+        }
+        instances.create(folder, "fd_" + run.id, world -> {
+            if (world == null) {
+                for (UUID u : run.expected) {
+                    Player p = Bukkit.getPlayer(u);
+                    if (p != null) plugin.messages().send(p, "start.failed");
+                    byPlayer.remove(u);
+                }
+                runs.remove(run.id);
+                return;
+            }
+            run.world = world;
+            double[] s = def.map().start();
+            run.origin = new Location(world, s[0], s[1], s[2], (float) s[3], (float) s[4]);
+            run.checkpoint = run.origin.clone();
+            if (!runs.containsKey(run.id)) {
+                instances.destroy(world);
+                return;
+            }
+            for (DungeonDefinition.Spawn sp : def.map().spawns()) {
+                MobTemplate t = mobs.template(sp.mob());
+                if (t == null) {
+                    plugin.getLogger().warning("Unknown monster " + sp.mob() + " in dungeon " + def.id());
+                    continue;
+                }
+                Location at = new Location(world, sp.x(), sp.y(), sp.z(), sp.yaw(), 0);
+                LivingEntity mob = mobs.spawn(t, at, run.id);
+                if (mob == null) continue;
+                run.mobs.add(mob.getUniqueId());
+                if (def.map().objectives().contains(sp.mob())) {
+                    mobs.objective(mob, sp.mob());
+                    run.objectivesLeft.add(sp.mob());
+                }
+            }
+            run.objectivesTotal = run.objectivesLeft.size();
+            if (run.objectivesTotal == 0) plugin.getLogger().warning("Dungeon " + def.id() + " has no objective: it can only be left.");
+            enter(run);
+        });
         return run;
     }
 
@@ -198,6 +259,11 @@ public final class Runs {
         for (int i = 0; i < l.gates().size(); i++) setGate(run, i, gate);
         arena.hold(run.box(), true);
         run.checkpoint = run.roomCenter(0).add(0, 0, -Math.max(0, run.def.rooms().get(0).length() / 2 - 2));
+        enter(run);
+    }
+
+    /** The dungeon is ready: the expected players swap to their dungeon inventory and come in. */
+    private void enter(Run run) {
         run.state = Run.State.RUNNING;
         run.started = System.currentTimeMillis();
         for (UUID uuid : List.copyOf(run.expected)) {
@@ -260,6 +326,10 @@ public final class Runs {
         if (runs.remove(run.id) == null) return;
         for (UUID uuid : run.players) byPlayer.remove(uuid);
         mobs.removeRun(run.id);
+        if (run.imported()) {
+            instances.destroy(run.world);
+            return;
+        }
         arena.hold(run.box(), false);
         if (plugin.isEnabled()) arena.clear(run.def, run.origin, () -> {
         });
@@ -294,13 +364,18 @@ public final class Runs {
                 }
             }
             for (Player p : online(run)) {
-                if (p.getLocation().getY() < run.origin.getY() - 8) {
+                double floor = run.imported() ? run.world.getMinHeight() + 4 : run.origin.getY() - 8;
+                if (p.getLocation().getY() < floor) {
                     teleport(p, run.checkpoint);
                     p.setFallDistance(0);
                 }
                 if (ticks % 2 == 0 && !run.watching.contains(p.getUniqueId())) heroes.tick(p);
             }
-            rooms(run);
+            if (!run.imported()) rooms(run);
+            else run.mobs.removeIf(uuid -> {
+                Entity e = Bukkit.getEntity(uuid);
+                return e == null || !e.isValid();
+            });
             if (run.bossBar != null) updateBossBar(run);
         }
     }
@@ -488,14 +563,54 @@ public final class Runs {
         };
     }
 
-    /** A dungeon monster died (vanilla death or end of its death animation): experience for the whole party. */
-    public void mobKilled(LivingEntity mob, Player killer) {
+    /**
+     * A dungeon monster is gone for good (vanilla death, end of its death animation, not a phase change): experience
+     * for the party, its loot rolled for each player, its objective done.
+     */
+    public void mobKilled(LivingEntity mob, Player killer, MobTemplate t, String objective) {
         Run run = runs.get(mobs.runOf(mob));
-        if (run == null) return;
+        if (run == null || run.state != Run.State.RUNNING) return;
         run.mobs.remove(mob.getUniqueId());
-        MobTemplate t = mobs.templateOfEntity(mob);
-        if (t == null || t.xp() <= 0) return;
-        for (Player p : fighters(run)) heroes.giveXp(p, t.xp());
+        List<Player> party = fighters(run);
+        if (t != null && t.xp() > 0) for (Player p : party) heroes.giveXp(p, t.xp());
+        if (t != null) {
+            for (Player p : online(run)) {
+                for (MobTemplate.Loot loot : rolls(t.extra().loot(), p)) {
+                    ItemStack item = CustomItems.item(loot.item(), p);
+                    if (item == null) continue;
+                    item.setAmount(Math.max(1, loot.amount()));
+                    p.getInventory().addItem(item).values().forEach(left -> p.getWorld().dropItem(p.getLocation(), left));
+                    String shown = item.hasItemMeta() && item.getItemMeta().hasDisplayName()
+                            ? Texts.ampersand(item.getItemMeta().displayName()) : "<lang:" + item.translationKey() + ">";
+                    plugin.messages().send(p, "run.loot", "%items%", shown);
+                    p.playSound(p.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.8f, 1.2f);
+                }
+            }
+        }
+        if (objective != null && run.objectivesLeft.remove(objective)) {
+            broadcast(run, "objective.done", "%done%", String.valueOf(run.objectivesDone()), "%total%", String.valueOf(run.objectivesTotal));
+            if (run.objectivesLeft.isEmpty()) victory(run);
+        }
+    }
+
+    /** Loot a player receives: each plain entry rolled, one entry of his class per group. */
+    private List<MobTemplate.Loot> rolls(List<MobTemplate.Loot> table, Player p) {
+        List<MobTemplate.Loot> out = new ArrayList<>();
+        Map<String, List<MobTemplate.Loot>> groups = new LinkedHashMap<>();
+        var heroClass = heroes.classOf(p.getUniqueId());
+        String cls = heroClass == null ? "" : heroClass.id();
+        ThreadLocalRandom r = ThreadLocalRandom.current();
+        for (MobTemplate.Loot l : table) {
+            if (l.group() == null) {
+                if (r.nextDouble() < l.chance()) out.add(l);
+            } else if (l.classes().isEmpty() || l.classes().contains(cls)) {
+                groups.computeIfAbsent(l.group(), k -> new ArrayList<>()).add(l);
+            }
+        }
+        for (List<MobTemplate.Loot> g : groups.values()) {
+            if (r.nextDouble() < g.get(0).chance()) out.add(g.get(r.nextInt(g.size())));
+        }
+        return out;
     }
 
     /** A player died in his run: a shared life is spent, or he watches the others. */
@@ -591,6 +706,70 @@ public final class Runs {
         if (run.bossBar == null) return;
         for (Player p : online(run)) p.hideBossBar(run.bossBar);
         run.bossBar = null;
+    }
+
+    // ---------------------------------------------------------------- placeholders (Typewriter scoreboard)
+
+    /**
+     * {@code %fluxdungeons_<params>%}: {@code in} (true/false), {@code dungeon}, {@code objective} (what to do now),
+     * {@code lives}, {@code time} (left), {@code mobs} (left in the room or the map), {@code done}/{@code total}
+     * (objectives of a map), {@code boss} (life of the boss in %), {@code class}, {@code level}.
+     */
+    public String placeholder(Player p, String params) {
+        if (p == null) return "";
+        Run run = byPlayer.get(p.getUniqueId());
+        switch (params.toLowerCase(java.util.Locale.ROOT)) {
+            case "in" -> {
+                return String.valueOf(run != null && run.state != Run.State.PREPARING);
+            }
+            case "class" -> {
+                var c = heroes.classOf(p.getUniqueId());
+                return c == null ? "" : c.name();
+            }
+            case "level" -> {
+                var c = heroes.classOf(p.getUniqueId());
+                return c == null ? "" : String.valueOf(heroes.level(p.getUniqueId(), c.id()));
+            }
+            default -> {
+            }
+        }
+        if (run == null) return "";
+        return switch (params.toLowerCase(java.util.Locale.ROOT)) {
+            case "dungeon" -> run.def.name();
+            case "lives" -> String.valueOf(run.livesLeft);
+            case "time" -> run.secondsLeft() < 0 ? "" : Format.duration(run.secondsLeft());
+            case "mobs" -> String.valueOf(run.mobs.size());
+            case "done" -> String.valueOf(run.objectivesDone());
+            case "total" -> String.valueOf(run.objectivesTotal);
+            case "boss" -> {
+                Entity e = run.boss == null ? null : Bukkit.getEntity(run.boss);
+                if (!(e instanceof LivingEntity b) || !b.isValid()) yield "";
+                AttributeInstance max = b.getAttribute(Attribute.MAX_HEALTH);
+                yield max == null ? "" : String.valueOf(Math.round(100 * b.getHealth() / max.getValue()));
+            }
+            case "objective" -> objective(run);
+            default -> null;
+        };
+    }
+
+    private String objective(Run run) {
+        if (run.state == Run.State.PREPARING) return plugin.messages().raw("objective.preparing");
+        if (run.state == Run.State.ENDING) return plugin.messages().raw("objective.ending");
+        if (run.imported()) {
+            return plugin.messages().raw("objective.map", "%done%", String.valueOf(run.objectivesDone()),
+                    "%total%", String.valueOf(run.objectivesTotal));
+        }
+        int index = run.currentRoom();
+        if (index >= run.rooms.length) return plugin.messages().raw("objective.ending");
+        DungeonDefinition.Room room = run.def.rooms().get(index);
+        String title = room.title() == null ? room.id() : room.title();
+        if (run.rooms[index] == Run.RoomState.WAITING) return plugin.messages().raw("objective.go", "%room%", title);
+        if (room.boss() != null) {
+            MobTemplate t = mobs.template(room.boss());
+            return plugin.messages().raw("objective.boss", "%boss%", t == null ? room.boss() : t.name());
+        }
+        return plugin.messages().raw("objective.room", "%room%", title, "%mobs%", String.valueOf(run.mobs.size()),
+                "%wave%", String.valueOf(run.wave + 1), "%waves%", String.valueOf(room.waves().size()));
     }
 
     // ---------------------------------------------------------------- helpers

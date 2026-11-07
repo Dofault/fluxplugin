@@ -61,6 +61,19 @@ public final class DungeonDefinition {
     private final List<Room> rooms = new ArrayList<>();
     private final Layout layout;
     private final String fingerprint;
+    /** Imported map (a whole world copied for each run), null for a dungeon drawn from its rooms. */
+    private final MapSpec map;
+
+    /** A monster placed in an imported map, at the coordinates of the original world. */
+    public record Spawn(String mob, double x, double y, double z, float yaw) {
+    }
+
+    /**
+     * An imported map: {@code folder} (world folder, relative to the plugin folder), {@code start} place, monsters at
+     * their spawn points, objectives (monsters whose death, last phase included, ends the dungeon).
+     */
+    public record MapSpec(String folder, double[] start, List<Spawn> spawns, List<String> objectives) {
+    }
 
     public DungeonDefinition(String id, ConfigurationSection c) {
         this.id = id;
@@ -98,7 +111,29 @@ public final class DungeonDefinition {
                     r.get("boss") == null ? null : String.valueOf(r.get("boss"))));
         }
         layout = computeLayout();
+        map = readMap(c.getConfigurationSection("map"));
         fingerprint = Integer.toHexString((String.valueOf(c.get("rooms")) + "|" + theme).hashCode());
+    }
+
+    private static MapSpec readMap(ConfigurationSection m) {
+        if (m == null) return null;
+        List<Double> st = m.getDoubleList("start");
+        double[] start = new double[]{0, 64, 0, 0, 0};
+        for (int i = 0; i < Math.min(5, st.size()); i++) start[i] = st.get(i);
+        List<Spawn> spawns = new ArrayList<>();
+        for (Map<?, ?> s : m.getMapList("spawns")) {
+            if (!(s.get("at") instanceof List<?> at) || at.size() < 3) continue;
+            spawns.add(new Spawn(String.valueOf(s.get("mob")), d(at.get(0)), d(at.get(1)), d(at.get(2)), at.size() > 3 ? (float) d(at.get(3)) : 0));
+        }
+        return new MapSpec(m.getString("folder", ""), start, spawns, m.getStringList("objectives"));
+    }
+
+    private static double d(Object o) {
+        return o instanceof Number n ? n.doubleValue() : 0;
+    }
+
+    public MapSpec map() {
+        return map;
     }
 
     /** Changes whenever the rooms or the theme change: the template must then be built again. */

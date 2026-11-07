@@ -84,6 +84,7 @@ public final class FluxDungeons extends FluxPlugin {
                 return arena.isArena(world);
             }
         });
+        placeholders("fluxdungeons", (player, params) -> runs.placeholder(player, params));
         Bukkit.getPluginManager().registerEvents(new DungeonListener(this, arena, runs, heroes, mobs, loadouts), this);
         command("dungeon")
                 .description("Dungeons: play, leave, choose your class.")
@@ -133,8 +134,17 @@ public final class FluxDungeons extends FluxPlugin {
     private void settings() {
         parties.maxSize(getConfig().getInt("party.max-size", 4));
         heroes.load(file("classes.yml"), getConfig().getConfigurationSection("classes"));
-        mobs.load(file("mobs.yml"));
-        items.load(file("items.yml"));
+        List<org.bukkit.configuration.ConfigurationSection> mobFiles = new ArrayList<>();
+        mobFiles.add(file("mobs.yml"));
+        mobFiles.addAll(folder("mobs"));
+        mobs.load(mobFiles);
+        // dungeon gear: items.yml, then every file of items/ (imported dungeons), one catalog
+        YamlConfiguration allItems = new YamlConfiguration();
+        List<YamlConfiguration> itemFiles = new ArrayList<>();
+        itemFiles.add(file("items.yml"));
+        itemFiles.addAll(folder("items"));
+        for (YamlConfiguration f : itemFiles) for (String k : f.getKeys(false)) allItems.set(k, f.get(k));
+        items.load(allItems);
         runs.settings(getConfig());
         Map<String, DungeonDefinition> defs = new LinkedHashMap<>();
         File folder = new File(getDataFolder(), "dungeons");
@@ -155,6 +165,16 @@ public final class FluxDungeons extends FluxPlugin {
         }
         if (defs.isEmpty()) getLogger().warning("No dungeon in plugins/FluxDungeons/dungeons/.");
         runs.load(defs);
+    }
+
+    /** Every .yml of a folder of the plugin, sorted by name. */
+    private List<YamlConfiguration> folder(String name) {
+        List<YamlConfiguration> out = new ArrayList<>();
+        File[] files = new File(getDataFolder(), name).listFiles((d, n) -> n.endsWith(".yml"));
+        if (files == null) return out;
+        java.util.Arrays.sort(files);
+        for (File f : files) out.add(YamlConfiguration.loadConfiguration(f));
+        return out;
     }
 
     /** A config file of the plugin, written from the jar (in the plugin's language when the jar has it) if missing. */

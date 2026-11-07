@@ -18,7 +18,7 @@ public final class Run {
     final String id;
     final DungeonDefinition def;
     final int slot;
-    final Location origin;
+    Location origin;
     /** Players who entered (still in the run, alive or watching). */
     final Set<UUID> players = new LinkedHashSet<>();
     /** Players invited when the run was started, teleported in once the copy is ready. */
@@ -35,6 +35,11 @@ public final class Run {
     Location checkpoint;
     long started;
     int warnedMinutes = -1;
+    /** World of an imported map (its own copy), null for a dungeon in the arena. */
+    org.bukkit.World world;
+    /** Objectives of an imported map still alive (monster ids). */
+    final Set<String> objectivesLeft = new LinkedHashSet<>();
+    int objectivesTotal;
 
     Run(String id, DungeonDefinition def, int slot, Location origin) {
         this.id = id;
@@ -64,6 +69,28 @@ public final class Run {
 
     public int livesLeft() {
         return livesLeft;
+    }
+
+    /** Played in a copy of an imported map (true) or in the arena (false). */
+    public boolean imported() {
+        return def.map() != null;
+    }
+
+    public int objectivesDone() {
+        return objectivesTotal - objectivesLeft.size();
+    }
+
+    public int objectivesTotal() {
+        return objectivesTotal;
+    }
+
+    public int mobsLeft() {
+        return mobs.size();
+    }
+
+    public long secondsLeft() {
+        if (def.timeLimit() <= 0 || started == 0) return -1;
+        return Math.max(0, def.timeLimit() - (System.currentTimeMillis() - started) / 1000);
     }
 
     /** Inside of a room, in world coordinates (blocks the players stand in). */

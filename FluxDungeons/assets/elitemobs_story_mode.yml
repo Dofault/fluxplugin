@@ -1,0 +1,83 @@
+em_id_the_bridge:
+  package: the_bridge_sanctum
+  name: '&2[Dynamic] &3The Bridge Sanctum'
+  teleport: em_id_the_bridge,-255.5,100,-14.5,-90.0,0.0
+  start: em_id_the_bridge,-216.5,103,-14.5,-90.0,0.0
+  bosses:
+  - the_bridge_ancient_guardian_p1.yml
+em_id_the_cave:
+  package: the_cave_sanctum
+  name: '&2[Dynamic] &3The Cave Sanctum'
+  teleport: em_id_the_cave,0.5,65,0.5,70,0
+  start: em_id_the_cave,-18.5,58,-17.5,90.0,30.0
+  bosses:
+  - the_cave_boiler_p1.yml
+em_id_the_city:
+  package: the_city_dungeon
+  name: '&2[Dynamic] &3The City Dungeon'
+  teleport: em_id_the_city,-87.5,119,-13.5,-90,0
+  start: em_id_the_city,-60.5,122,-12.5,-67,0
+  bosses:
+  - em_id_the_city_mini_boss_one.yml
+  - em_id_the_city_mini_boss_two.yml
+  - em_id_the_city_mini_boss_three.yml
+  - em_id_the_city_royal_guard_p1.yml
+em_id_the_climb:
+  package: the_climb_dungeon
+  name: '&2[Dynamic] &3The Climb Dungeon'
+  teleport: em_id_the_climb,371.5,34,350.5,-70.0,-10.0
+  start: em_id_the_climb,379.5,36,352.5,-70,-10
+  bosses:
+  - the_climb_undead_beastmaster.yml
+  - the_climb_skeletal_shadow.yml
+  - the_climb_bone_champion.yml
+  - the_climb_undead_guardian.yml
+em_id_the_deep_mines:
+  package: the_deep_mines_dungeon
+  name: '&2[Dynamic] &3The Deep Mines Dungeon'
+  teleport: em_id_the_deep_mines,-205.5,154,-85.5,0,0
+  start: em_id_the_deep_mines,-207.5,154,-68.5,0,0
+  bosses:
+  - em_id_the_deep_mines_tnt_box.yml
+  - em_id_the_deep_mines_boss_the_pursuer_p1.yml
+em_id_the_mines:
+  package: the_mines_dungeon
+  name: '&2[Dynamic] &3The Mines Dungeon'
+  teleport: em_id_the_mines,250.5,116,-113.5,-42.0,7.0
+  start: em_id_the_mines,256.5,116,-106.5,-29,8
+  bosses:
+  - the_mines_soulweaver_daine_p0.yml
+  - the_mines_boss_soulfire_p1.yml
+  - the_mines_mini_boss_tulpa.yml
+  - the_mines_mini_boss_forger.yml
+  - the_mines_mini_boss_tusk.yml
+em_id_the_nether_bell:
+  package: the_nether_bell_sanctum
+  name: '&2[Dynamic] &3The Nether Bell Sanctum'
+  teleport: em_id_the_nether_bell,231.5,87,-219.5,44,0
+  start: em_id_the_nether_bell,184.5,69,-192.5,43,0
+  bosses:
+  - em_id_the_nether_bell_boss_void_bell_p1.yml
+em_id_the_nether_wastes:
+  package: the_nether_wastes_dungeon
+  name: '&2[Dynamic] &3The Nether Wastes Dungeon'
+  teleport: em_id_the_nether_wastes,38.5,84,64.5,-155,0
+  start: em_id_the_nether_wastes,41.5,82.5,55.5,-167,0
+  bosses:
+  - em_id_the_nether_wastes_miniboss_5_shroud_p1.yml
+em_id_the_palace:
+  package: the_palace_sanctum
+  name: '&2[Dynamic] &3The Palace Sanctum'
+  teleport: em_id_the_palace,208.5,144,-101.5,-90.0,0.0
+  start: em_id_the_palace,238.5,144,-100.5,0.0,0.0
+  bosses:
+  - the_palace_old_stone_king_p1.yml
+em_id_the_quarry:
+  package: the_quarry_dungeon
+  name: '&2[Dynamic] &3The Quarry Dungeon'
+  teleport: em_id_the_quarry,230.5,144,102.5,-67,0
+  start: em_id_the_quarry,245.5,138,109.5,-90,30
+  bosses:
+  - em_id_the_quarry_quarry_smith.yml
+  - em_id_the_quarry_royal_wizard_three.yml
+  - LiftStateFinishDungeon.yml

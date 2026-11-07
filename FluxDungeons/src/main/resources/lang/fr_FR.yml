@@ -116,3 +116,12 @@ admin:
 
 origins:
   victory: "Victoire en donjon"
+
+objective:
+  preparing: "&#B376E5Préparation du donjon..."
+  ending: "&#2ECF7BDonjon terminé"
+  go: "&#FFD94DAvance jusqu'à : &f%room%"
+  room: "&#FFD94DNettoie &f%room% &7(vague %wave%/%waves%, %mobs% monstre(s))"
+  boss: "&#FF5C5CVaincs %boss%"
+  map: "&#FFD94DGardiens vaincus : &f%done%/%total%"
+  done: "&#2ECF7BGardien vaincu ! &#B376E5Gardiens : &f%done%/%total%"

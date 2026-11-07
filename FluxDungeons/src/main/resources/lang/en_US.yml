@@ -116,3 +116,12 @@ admin:
 
 origins:
   victory: "Dungeon victory"
+
+objective:
+  preparing: "&#B376E5Preparing the dungeon..."
+  ending: "&#2ECF7BDungeon cleared"
+  go: "&#FFD94DGo to: &f%room%"
+  room: "&#FFD94DClear &f%room% &7(wave %wave%/%waves%, %mobs% monster(s))"
+  boss: "&#FF5C5CDefeat %boss%"
+  map: "&#FFD94DGuardians defeated: &f%done%/%total%"
+  done: "&#2ECF7BGuardian defeated! &#B376E5Guardians: &f%done%/%total%"
