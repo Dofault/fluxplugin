@@ -19,6 +19,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityKnockbackEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
@@ -225,6 +226,16 @@ final class DungeonListener implements Listener {
             e.setCancelled(true);
             p.setFireTicks(0);
         }
+    }
+
+    /**
+     * No knockback in a dungeon, neither on players nor on dungeon monsters: hits never push. Movements cast on purpose
+     * (charge, leap, slam, implosion) set the velocity directly and still work.
+     */
+    @EventHandler(ignoreCancelled = true)
+    public void onKnockback(EntityKnockbackEvent e) {
+        Entity target = e.getEntity();
+        if (target instanceof Player p ? runs.runOf(p) != null : mobs.templateOf(target) != null) e.setCancelled(true);
     }
 
     /** No hunger in a dungeon. */
