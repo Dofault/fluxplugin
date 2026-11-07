@@ -6,7 +6,7 @@ unknown-player: "&#FF5C5CPlayer not found."
 not-in-run: "&#FF5C5CYou are not in a dungeon."
 dungeon-usage: "&#FF5C5C/%flux_cmd_fluxdungeons_dungeon% [play <dungeon> | leave | class [class] | list]"
 party-usage: "&#FF5C5C/%flux_cmd_fluxdungeons_party% [invite | accept | leave | kick | leader] [player]"
-admin-usage: "!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% build <dungeon|all> | template <dungeon> | start <dungeon> <player> | stop <player|all> | give <player> <item> [n] | reset <player> | runs | reload"
+admin-usage: "!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% visit [dungeon] | build <dungeon|all> | template <dungeon> | start <dungeon> <player> | stop <player|all> | give <player> <item> [n] | reset <player> | runs | reload"
 list-line: "&#FFD94D%dungeon% &8(&7%id%&8) &#B376E5%min% to %max% players, recommended level &f%level%"
 
 main:
@@ -109,6 +109,10 @@ hud:
   separator: "&8 · "
 
 admin:
+  visit-loading: "&#B376E5Opening &f%dungeon%&#B376E5..."
+  visit: "&#B376E5Visiting &f%dungeon%&#B376E5: copy of the map without monsters, nothing is kept. To leave: &f[/%flux_cmd_fluxdungeons_fluxdungeons% visit]"
+  visit-left: "&#B376E5Visit over."
+  visit-in-run: "&#FF5C5CLeave your dungeon first."
   imported-no-template: "&#FF5C5C%dungeon% is an imported map: no template to edit, each run copies the original map."
   reset: "&#2ECF7BDungeon inventory of %player% reset: kits are given again at the next run."
   reset-in-run: "&#FF5C5C%player% is in a dungeon, try again after the run."

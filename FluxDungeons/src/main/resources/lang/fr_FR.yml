@@ -6,7 +6,7 @@ unknown-player: "&#FF5C5CJoueur introuvable."
 not-in-run: "&#FF5C5CTu n'es pas dans un donjon."
 dungeon-usage: "&#FF5C5C/%flux_cmd_fluxdungeons_dungeon% [jouer <donjon> | quitter | classe [classe] | liste]"
 party-usage: "&#FF5C5C/%flux_cmd_fluxdungeons_party% [inviter | accepter | quitter | expulser | chef] [joueur]"
-admin-usage: "!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% build <donjon|all> | template <donjon> | start <donjon> <joueur> | stop <joueur|all> | give <joueur> <objet> [n] | reset <joueur> | runs | reload"
+admin-usage: "!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% voir [donjon] | build <donjon|all> | template <donjon> | start <donjon> <joueur> | stop <joueur|all> | give <joueur> <objet> [n] | reset <joueur> | runs | reload"
 list-line: "&#FFD94D%dungeon% &8(&7%id%&8) &#B376E5%min% à %max% joueurs, niveau conseillé &f%level%"
 
 main:
@@ -109,6 +109,10 @@ hud:
   separator: "&8 · "
 
 admin:
+  visit-loading: "&#B376E5Ouverture de &f%dungeon%&#B376E5..."
+  visit: "&#B376E5Visite de &f%dungeon%&#B376E5 : copie de la map sans monstres, rien n'est gardé. Pour sortir : &f[/%flux_cmd_fluxdungeons_fluxdungeons% voir]"
+  visit-left: "&#B376E5Fin de la visite."
+  visit-in-run: "&#FF5C5CQuitte d'abord ton donjon."
   imported-no-template: "&#FF5C5C%dungeon% est une map importée : pas de modèle à retoucher, chaque partie copie la map d'origine."
   reset: "&#2ECF7BInventaire de donjon de %player% remis à zéro : les kits seront redonnés à la prochaine partie."
   reset-in-run: "&#FF5C5C%player% est dans un donjon, réessaie après sa partie."

@@ -83,6 +83,7 @@ final class DungeonListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onQuit(PlayerQuitEvent e) {
         runs.leave(e.getPlayer());
+        runs.endVisit(e.getPlayer());
         lastHit.remove(e.getPlayer().getUniqueId());
         plugin.parties().leave(e.getPlayer().getUniqueId());
     }

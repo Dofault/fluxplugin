@@ -480,6 +480,16 @@ public final class FluxDungeons extends FluxPlugin {
                 p.teleport(at, PlayerTeleportEvent.TeleportCause.PLUGIN);
                 messages().send(p, "admin.template", "%dungeon%", def.name());
             }
+            case "visit", "voir" -> {
+                if (!(sender instanceof Player p)) return usage(sender);
+                if (args.length < 2) {
+                    if (!runs.endVisit(p)) usage(sender);
+                    return true;
+                }
+                DungeonDefinition def = runs.dungeon(args[1]);
+                if (def == null) messages().send(sender, "unknown-dungeon");
+                else runs.visit(p, def);
+            }
             case "start" -> {
                 if (args.length < 3) return usage(sender);
                 DungeonDefinition def = runs.dungeon(args[1]);
@@ -555,14 +565,14 @@ public final class FluxDungeons extends FluxPlugin {
     }
 
     private List<String> completeAdmin(CommandSender sender, String[] args) {
-        if (args.length == 1) return filter(List.of("build", "template", "start", "stop", "give", "reset", "runs", "reload"), args[0]);
+        if (args.length == 1) return filter(List.of("visit", "build", "template", "start", "stop", "give", "reset", "runs", "reload"), args[0]);
         List<String> ids = runs.dungeons().stream().map(DungeonDefinition::id).toList();
         List<String> online = Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
         String sub = args[0].toLowerCase(Locale.ROOT);
         if (args.length == 2) {
             return switch (sub) {
                 case "build" -> filter(concat(ids, List.of("all")), args[1]);
-                case "template", "start" -> filter(ids, args[1]);
+                case "visit", "voir", "template", "start" -> filter(ids, args[1]);
                 case "stop" -> filter(concat(online, List.of("all")), args[1]);
                 case "give", "reset" -> filter(online, args[1]);
                 default -> List.of();

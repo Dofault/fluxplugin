@@ -349,6 +349,80 @@ public final class Runs {
     /** Everybody out, nothing given (server stop, staff). */
     public void stopAll() {
         for (Run run : List.copyOf(runs.values())) stop(run);
+        for (UUID u : List.copyOf(visitReturn.keySet())) {
+            Player p = Bukkit.getPlayer(u);
+            if (p != null) endVisit(p);
+        }
+        for (World w : List.copyOf(visits.values())) instances.destroy(w);
+        visits.clear();
+    }
+
+    // ---------------------------------------------------------------- staff visits
+
+    /** Copies of maps opened by staff to look around: no monsters, no run, deleted once empty. */
+    private final Map<String, World> visits = new HashMap<>();
+    private final Map<UUID, Location> visitReturn = new HashMap<>();
+
+    /** True when the player is visiting a map copy. */
+    public boolean visiting(Player p) {
+        return visitReturn.containsKey(p.getUniqueId());
+    }
+
+    /**
+     * Opens a copy of an imported map (or the template of a generated dungeon) and brings the player to its start, to
+     * look around. Nothing is spawned and nothing done there is kept.
+     */
+    public void visit(Player p, DungeonDefinition def) {
+        if (byPlayer.containsKey(p.getUniqueId())) {
+            plugin.messages().send(p, "admin.visit-in-run");
+            return;
+        }
+        if (def.map() == null) {
+            visitReturn.putIfAbsent(p.getUniqueId(), p.getLocation());
+            p.teleport(templateOrigin(def).add(def.layout().centerX() + 0.5, 1, 3.5), PlayerTeleportEvent.TeleportCause.PLUGIN);
+            plugin.messages().send(p, "admin.template", "%dungeon%", def.name());
+            return;
+        }
+        java.io.File folder = new java.io.File(plugin.getDataFolder(), def.map().folder());
+        String name = new java.io.File(folder, "region").isDirectory() ? instances.freeName(maxRuns) : null;
+        if (name == null) {
+            plugin.messages().send(p, "start.failed");
+            return;
+        }
+        plugin.messages().send(p, "admin.visit-loading", "%dungeon%", def.name());
+        instances.create(folder, name, world -> {
+            if (world == null || !p.isOnline()) {
+                if (world != null) instances.destroy(world);
+                else plugin.messages().send(p, "start.failed");
+                return;
+            }
+            visits.put(world.getName(), world);
+            visitReturn.putIfAbsent(p.getUniqueId(), p.getLocation());
+            double[] s = def.map().start();
+            p.teleport(new Location(world, s[0], s[1], s[2], (float) s[3], (float) s[4]), PlayerTeleportEvent.TeleportCause.PLUGIN);
+            plugin.messages().send(p, "admin.visit", "%dungeon%", def.name());
+        });
+    }
+
+    /** Brings a visiting player back where he was; false when he was not visiting. */
+    public boolean endVisit(Player p) {
+        Location back = visitReturn.remove(p.getUniqueId());
+        if (back == null) return false;
+        if (back.getWorld() == null || visits.containsKey(back.getWorld().getName())) back = Bukkit.getWorlds().get(0).getSpawnLocation();
+        p.teleport(back, PlayerTeleportEvent.TeleportCause.PLUGIN);
+        plugin.messages().send(p, "admin.visit-left");
+        return true;
+    }
+
+    /** Visit copies nobody is in any more are deleted. */
+    private void sweepVisits() {
+        visitReturn.keySet().removeIf(u -> Bukkit.getPlayer(u) == null);
+        for (java.util.Iterator<World> it = visits.values().iterator(); it.hasNext(); ) {
+            World w = it.next();
+            if (!w.getPlayers().isEmpty()) continue;
+            it.remove();
+            instances.destroy(w);
+        }
     }
 
     public void stop(Run run) {
@@ -387,6 +461,7 @@ public final class Runs {
 
     private void tick() {
         ticks++;
+        if (!visits.isEmpty()) sweepVisits();
         for (Run run : List.copyOf(runs.values())) {
             if (run.state != Run.State.RUNNING) continue;
             long elapsed = (System.currentTimeMillis() - run.started) / 1000;
@@ -692,7 +767,7 @@ public final class Runs {
     /** The shared arena or the world of a running map. */
     public boolean isDungeonWorld(org.bukkit.World world) {
         if (world == null) return false;
-        if (arena.isArena(world)) return true;
+        if (arena.isArena(world) || visits.containsKey(world.getName())) return true;
         for (Run run : runs.values()) if (world.equals(run.world)) return true;
         return false;
     }
