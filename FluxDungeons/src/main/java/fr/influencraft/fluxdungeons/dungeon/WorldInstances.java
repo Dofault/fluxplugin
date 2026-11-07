@@ -46,13 +46,28 @@ final class WorldInstances {
     }
 
     private final Plugin plugin;
+    /** World names in use: loaded, or unloaded and still being deleted. */
+    private final java.util.Set<String> busy = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     WorldInstances(Plugin plugin) {
         this.plugin = plugin;
     }
 
+    /**
+     * A free run world name among {@code fd_0} to {@code fd_<max - 1>}, null when all are taken. Names are fixed so
+     * other plugins can be told about them once (LevelledMobs leaves the monsters of these worlds alone).
+     */
+    String freeName(int max) {
+        for (int i = 0; i < max; i++) {
+            String name = "fd_" + i;
+            if (!busy.contains(name) && Bukkit.getWorld(name) == null) return name;
+        }
+        return null;
+    }
+
     /** Copies the map into a new world and loads it; {@code done} receives it (null on failure) on the server thread. */
     void create(File source, String name, Consumer<World> done) {
+        busy.add(name);
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             File target = dimension(name);
             try {
@@ -60,6 +75,7 @@ final class WorldInstances {
                 copyTree(source.toPath(), target.toPath());
             } catch (IOException e) {
                 plugin.getLogger().severe("Could not copy map " + source + ": " + e.getMessage());
+                busy.remove(name);
                 Bukkit.getScheduler().runTask(plugin, () -> done.accept(null));
                 return;
             }
@@ -72,6 +88,7 @@ final class WorldInstances {
                     w = null;
                 }
                 if (w != null) rules(w);
+                else busy.remove(name);
                 done.accept(w);
             });
         });
@@ -102,10 +119,12 @@ final class WorldInstances {
             plugin.getLogger().warning("Could not unload " + w.getName() + ", its folder stays until the next start.");
             return;
         }
+        String name = w.getName();
         if (plugin.isEnabled()) {
             Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
                 try {
                     deleteTree(folder.toPath());
+                    busy.remove(name);
                 } catch (IOException e) {
                     plugin.getLogger().warning("Could not delete " + folder + ": " + e.getMessage());
                 }

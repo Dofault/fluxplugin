@@ -157,7 +157,7 @@ public final class Runs {
             if (byPlayer.containsKey(p.getUniqueId())) return Refusal.BUSY_PLAYER;
             if (heroes.classOf(p.getUniqueId()) == null) return Refusal.NO_CLASS;
         }
-        if (def.map() != null ? runs.size() >= maxRuns : freeSlot() < 0) return Refusal.NO_SLOT;
+        if (def.map() != null ? instances.freeName(maxRuns) == null : freeSlot() < 0) return Refusal.NO_SLOT;
         return Refusal.NONE;
     }
 
@@ -204,7 +204,14 @@ public final class Runs {
             runs.remove(run.id);
             return null;
         }
-        instances.create(folder, "fd_" + run.id, world -> {
+        String worldName = instances.freeName(maxRuns);
+        if (worldName == null) {
+            for (Player p : players) plugin.messages().send(p, "start.no-slot");
+            for (UUID u : run.expected) byPlayer.remove(u);
+            runs.remove(run.id);
+            return null;
+        }
+        instances.create(folder, worldName, world -> {
             if (world == null) {
                 for (UUID u : run.expected) {
                     Player p = Bukkit.getPlayer(u);
@@ -370,6 +377,8 @@ public final class Runs {
                     p.setFallDistance(0);
                 }
                 if (ticks % 2 == 0 && !run.watching.contains(p.getUniqueId())) heroes.tick(p);
+                // god modes make monsters ignore a player: none inside a dungeon (given back on leaving)
+                if (p.isInvulnerable()) p.setInvulnerable(false);
             }
             if (!run.imported()) rooms(run);
             else run.mobs.removeIf(uuid -> {
