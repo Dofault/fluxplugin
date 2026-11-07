@@ -80,7 +80,7 @@ public final class FluxDungeons extends FluxPlugin {
             }
 
             public boolean dungeonWorld(org.bukkit.World world) {
-                return arena.isArena(world);
+                return runs.isDungeonWorld(world);
             }
         });
         placeholders("fluxdungeons", (player, params) -> runs.placeholder(player, params));

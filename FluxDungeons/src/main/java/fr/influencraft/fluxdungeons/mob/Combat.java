@@ -17,6 +17,7 @@ public final class Combat {
 
     private static double referenceHit = 7, hitsToKillMob = 3, referenceHealth = 20, hitsToKillPlayer = 5;
     private static double levelsPerDouble = 7.5, minFactor = 0.25, maxFactor = 4;
+    private static int graceTicks = 15;
 
     private Combat() {
     }
@@ -30,6 +31,15 @@ public final class Combat {
         levelsPerDouble = Math.max(1, c.getDouble("levels-per-double", 7.5));
         minFactor = c.getDouble("min-factor", 0.25);
         maxFactor = c.getDouble("max-factor", 4);
+        graceTicks = Math.max(0, c.getInt("player-grace-ticks", 15));
+    }
+
+    /**
+     * Ticks during which a player hit by a dungeon monster takes no other monster hit: a group cannot chain him down,
+     * whatever its size (damage per second is capped by this, not by the number of monsters).
+     */
+    public static int graceTicks() {
+        return graceTicks;
     }
 
     /** Life of a normalized monster. */

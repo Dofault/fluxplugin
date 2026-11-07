@@ -90,6 +90,9 @@ public final class Runs {
         Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 10L, 10L);
     }
 
+    /** Monsters give their loot when killed; off: only the end of the dungeon rewards. */
+    private boolean mobLoot;
+
     public void settings(org.bukkit.configuration.ConfigurationSection c) {
         maxRuns = Math.max(1, c.getInt("max-runs", 8));
         returnDelay = Math.max(1, c.getInt("return-delay", 10));
@@ -97,6 +100,7 @@ public final class Runs {
         bossHealthPerPlayer = c.getDouble("scaling.boss-health-per-player", 0.6);
         fallbackMoneyPerMinute = c.getDouble("reward.money-per-minute-without-fluxvalue", 50);
         spawnDistance = Math.max(8, c.getDouble("spawn-distance", 40));
+        mobLoot = c.getBoolean("mob-loot", false);
     }
 
     public void load(Map<String, DungeonDefinition> definitions) {
@@ -611,7 +615,7 @@ public final class Runs {
         run.mobs.remove(mob.getUniqueId());
         List<Player> party = fighters(run);
         if (t != null && t.xp() > 0) for (Player p : party) heroes.giveXp(p, t.xp());
-        if (t != null) {
+        if (t != null && mobLoot) {
             for (Player p : online(run)) {
                 for (MobTemplate.Loot loot : rolls(t.extra().loot(), p)) {
                     ItemStack item = CustomItems.item(loot.item(), p);
@@ -683,6 +687,14 @@ public final class Runs {
             });
         }
         return run.checkpoint;
+    }
+
+    /** The shared arena or the world of a running map. */
+    public boolean isDungeonWorld(org.bukkit.World world) {
+        if (world == null) return false;
+        if (arena.isArena(world)) return true;
+        for (Run run : runs.values()) if (world.equals(run.world)) return true;
+        return false;
     }
 
     public boolean sameRun(Player a, Player b) {

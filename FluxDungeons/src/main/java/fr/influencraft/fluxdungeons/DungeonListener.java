@@ -17,7 +17,10 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
@@ -46,6 +49,8 @@ final class DungeonListener implements Listener {
     private final Heroes heroes;
     private final Mobs mobs;
     private final Loadouts loadouts;
+    /** Tick of the last monster hit taken by each player (grace against chained hits). */
+    private final java.util.Map<java.util.UUID, Integer> lastHit = new java.util.HashMap<>();
 
     DungeonListener(FluxDungeons plugin, Arena arena, Runs runs, Heroes heroes, Mobs mobs, Loadouts loadouts) {
         this.plugin = plugin;
@@ -78,6 +83,7 @@ final class DungeonListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onQuit(PlayerQuitEvent e) {
         runs.leave(e.getPlayer());
+        lastHit.remove(e.getPlayer().getUniqueId());
         plugin.parties().leave(e.getPlayer().getUniqueId());
     }
 
@@ -190,11 +196,49 @@ final class DungeonListener implements Listener {
         if (victim instanceof Player hurt) {
             Entity source = e.getDamager() instanceof Projectile pr && pr.getShooter() instanceof Entity sh ? sh : e.getDamager();
             if (source instanceof LivingEntity mob && mobs.templateOf(mob) != null) {
+                int now = Bukkit.getCurrentTick();
+                Integer last = lastHit.get(hurt.getUniqueId());
+                if (last != null && now - last < Combat.graceTicks()) {
+                    e.setCancelled(true);
+                    return;
+                }
+                lastHit.put(hurt.getUniqueId(), now);
                 // normalized combat: a hit counts in hits-to-kill, whatever the mob type deals in vanilla
                 if (!mobs.dealing() && mobs.level(mob) > 0) e.setDamage(mobs.hitOn(mob, hurt));
                 mobs.hitPlayer(mob, hurt, e);
             }
         }
+    }
+
+    /** Players never burn in a dungeon, whatever sets them on fire (monster power, script, lava, fire block). */
+    @EventHandler(ignoreCancelled = true)
+    public void onCombust(EntityCombustEvent e) {
+        if (e.getEntity() instanceof Player p && runs.runOf(p) != null) e.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void onPlayerFire(EntityDamageEvent e) {
+        if (!(e.getEntity() instanceof Player p) || runs.runOf(p) == null) return;
+        EntityDamageEvent.DamageCause c = e.getCause();
+        if (c == EntityDamageEvent.DamageCause.FIRE || c == EntityDamageEvent.DamageCause.FIRE_TICK) {
+            e.setCancelled(true);
+            p.setFireTicks(0);
+        }
+    }
+
+    /** No hunger in a dungeon. */
+    @EventHandler(ignoreCancelled = true)
+    public void onFood(FoodLevelChangeEvent e) {
+        if (!(e.getEntity() instanceof Player p) || runs.runOf(p) == null) return;
+        e.setCancelled(true);
+        p.setFoodLevel(20);
+        p.setSaturation(20);
+    }
+
+    /** Nothing ever lies on the ground in a dungeon world (monster loot, equipment, overflow). */
+    @EventHandler(ignoreCancelled = true)
+    public void onItemSpawn(ItemSpawnEvent e) {
+        if (runs.isDungeonWorld(e.getEntity().getWorld())) e.setCancelled(true);
     }
 
     /** Lethal damage of any other cause (fire, fall) still plays a boss's death animation. */

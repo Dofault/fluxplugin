@@ -37,17 +37,22 @@ reward:
 
 # Monsters of imported maps appear when a player comes this close to their place (blocks).
 spawn-distance: 40
+# Butin lâché par les monstres tués (false : seule la fin du donjon récompense).
+mob-loot: false
 
 # Normalized combat of imported dungeons (EliteMobs' model): life and damage counted in hits.
 combat:
   # Damage of a player's normal hit at the dungeon's level (starting weapon of a class, about 7).
   reference-hit: 7
   # Reference hits to kill a monster of health-multiplier 1.
-  hits-to-kill-mob: 3
+  hits-to-kill-mob: 2
   # Life of a reference player, and hits of damage-multiplier 1 he survives at the same level (before armour).
   reference-health: 20
-  hits-to-kill-player: 5
+  hits-to-kill-player: 8
   # Level gap (class level against dungeon level) that doubles or halves damage both ways.
   levels-per-double: 7.5
   min-factor: 0.25
   max-factor: 4
+  # Après un coup de monstre, le joueur ignore les autres coups de monstre pendant ce délai (20 = 1 s) :
+  # un groupe ne peut plus l'enchaîner, ses dégâts par seconde sont plafonnés quel que soit le nombre de monstres.
+  player-grace-ticks: 15
