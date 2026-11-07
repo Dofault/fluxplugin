@@ -175,3 +175,67 @@ golem_hammer:
     max_health: 4
   unbreakable: true
   glow: true
+warrior_leggings:
+  material: IRON_LEGGINGS
+  name: '&fJambières de recrue'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    armor: 5
+  unbreakable: true
+warrior_boots:
+  material: IRON_BOOTS
+  name: '&fBottes de recrue'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    armor: 2
+  unbreakable: true
+ranger_leggings:
+  material: LEATHER_LEGGINGS
+  name: '&fJambières d''éclaireur'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    armor: 3
+  unbreakable: true
+ranger_boots:
+  material: LEATHER_BOOTS
+  name: '&fBottes d''éclaireur'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    armor: 1
+  unbreakable: true
+mage_leggings:
+  material: LEATHER_LEGGINGS
+  name: '&fJambières d''apprenti'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    armor: 2
+  unbreakable: true
+mage_boots:
+  material: LEATHER_BOOTS
+  name: '&fSouliers d''apprenti'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    armor: 1
+  unbreakable: true
+cleric_leggings:
+  material: CHAINMAIL_LEGGINGS
+  name: '&fJambières de novice'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    armor: 4
+  unbreakable: true
+cleric_boots:
+  material: CHAINMAIL_BOOTS
+  name: '&fBottes de novice'
+  lore:
+  - '&7Équipement de donjon, utilisable seulement en donjon.'
+  attributes:
+    armor: 1
+  unbreakable: true

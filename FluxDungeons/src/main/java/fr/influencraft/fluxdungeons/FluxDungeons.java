@@ -72,7 +72,6 @@ public final class FluxDungeons extends FluxPlugin {
         loadouts = new Loadouts(store, getLogger(), heroes::isAbilityItem);
         arena = new Arena(this, getConfig().getString("world", "flux_dungeons"), getConfig().getInt("slot-spacing", 512),
                 getConfig().getInt("blocks-per-tick", 20000));
-        arena.world();
         runs = new Runs(this, arena, mobs, heroes, loadouts);
         settings();
         Dungeons.register(new Dungeons.Service() {
@@ -148,9 +147,6 @@ public final class FluxDungeons extends FluxPlugin {
         runs.settings(getConfig());
         Map<String, DungeonDefinition> defs = new LinkedHashMap<>();
         File folder = new File(getDataFolder(), "dungeons");
-        if (!folder.isDirectory()) {
-            ship("dungeons/foundry.yml");
-        }
         File[] files = folder.listFiles((d, n) -> n.endsWith(".yml"));
         if (files != null) {
             java.util.Arrays.sort(files);
@@ -164,7 +160,11 @@ public final class FluxDungeons extends FluxPlugin {
             }
         }
         if (defs.isEmpty()) getLogger().warning("No dungeon in plugins/FluxDungeons/dungeons/.");
-        runs.load(defs);
+        // menus list the dungeons from the easiest to the hardest
+        Map<String, DungeonDefinition> sorted = new LinkedHashMap<>();
+        defs.values().stream().sorted(java.util.Comparator.comparingInt(DungeonDefinition::recommendedLevel))
+                .forEach(d -> sorted.put(d.id(), d));
+        runs.load(sorted);
     }
 
     /** Every .yml of a folder of the plugin, sorted by name. */
@@ -508,6 +508,20 @@ public final class FluxDungeons extends FluxPlugin {
                 else if (!CustomItems.give(target, id, n)) messages().send(sender, "admin.unknown-item", "%item%", id);
                 else messages().send(sender, "admin.given", "%item%", id, "%player%", target.getName());
             }
+            case "reset" -> {
+                if (args.length < 2) return usage(sender);
+                OfflinePlayer t = Bukkit.getOfflinePlayerIfCached(args[1]);
+                if (t == null) {
+                    messages().send(sender, "unknown-player");
+                    return true;
+                }
+                if (runs.runOf(t.getUniqueId()) != null) {
+                    messages().send(sender, "admin.reset-in-run", "%player%", String.valueOf(t.getName()));
+                    return true;
+                }
+                store.reset(t.getUniqueId());
+                messages().send(sender, "admin.reset", "%player%", String.valueOf(t.getName()));
+            }
             case "runs" -> {
                 if (runs.all().isEmpty()) messages().send(sender, "admin.no-runs");
                 for (Run r : runs.all()) {
@@ -534,7 +548,7 @@ public final class FluxDungeons extends FluxPlugin {
     }
 
     private List<String> completeAdmin(CommandSender sender, String[] args) {
-        if (args.length == 1) return filter(List.of("build", "template", "start", "stop", "give", "runs", "reload"), args[0]);
+        if (args.length == 1) return filter(List.of("build", "template", "start", "stop", "give", "reset", "runs", "reload"), args[0]);
         List<String> ids = runs.dungeons().stream().map(DungeonDefinition::id).toList();
         List<String> online = Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
         String sub = args[0].toLowerCase(Locale.ROOT);
@@ -543,7 +557,7 @@ public final class FluxDungeons extends FluxPlugin {
                 case "build" -> filter(concat(ids, List.of("all")), args[1]);
                 case "template", "start" -> filter(ids, args[1]);
                 case "stop" -> filter(concat(online, List.of("all")), args[1]);
-                case "give" -> filter(online, args[1]);
+                case "give", "reset" -> filter(online, args[1]);
                 default -> List.of();
             };
         }

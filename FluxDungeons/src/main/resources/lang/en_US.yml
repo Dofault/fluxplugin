@@ -6,7 +6,7 @@ unknown-player: "&#FF5C5CPlayer not found."
 not-in-run: "&#FF5C5CYou are not in a dungeon."
 dungeon-usage: "&#FF5C5C/%flux_cmd_fluxdungeons_dungeon% [play <dungeon> | leave | class [class] | list]"
 party-usage: "&#FF5C5C/%flux_cmd_fluxdungeons_party% [invite | accept | leave | kick | leader] [player]"
-admin-usage: "!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% build <dungeon|all> | template <dungeon> | start <dungeon> <player> | stop <player|all> | give <player> <item> [n] | runs | reload"
+admin-usage: "!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% build <dungeon|all> | template <dungeon> | start <dungeon> <player> | stop <player|all> | give <player> <item> [n] | reset <player> | runs | reload"
 list-line: "&#FFD94D%dungeon% &8(&7%id%&8) &#B376E5%min% to %max% players, recommended level &f%level%"
 
 main:
@@ -91,18 +91,26 @@ level-up: "&#2ECF7BLevel up! &#B376E5%class% &#B376E5reaches level &f%level%&#B3
 ability:
   mana: "Mana"
   cooldown: "Cooldown"
-  how: "Key %key% to cast, your weapon stays in hand."
+  how: "%key%, your weapon stays in hand."
+  key-up: "Key %key% or wheel up"
+  key-down: "Key %key% or wheel down"
+  key-key: "Key %key%"
   cooling: "&#FF5C5C%ability%&7: &f%time% s &7left"
   no-mana: "&#FF5C5CNot enough mana for %ability%"
   no-target: "&#FF5C5C%ability%&7: no target"
 
 hud:
+  key-up: "%key%▲"
+  key-down: "%key%▼"
+  key-key: "%key%"
   bar: "&#6FA8FF✦ %mana%&7/&#6FA8FF%max%  %abilities%"
   ability-ready: "&#2ECF7B%key% %ability%"
   ability-cooling: "&7%key% %ability% &f%time%s"
   separator: "&8 · "
 
 admin:
+  reset: "&#2ECF7BDungeon inventory of %player% reset: kits are given again at the next run."
+  reset-in-run: "&#FF5C5C%player% is in a dungeon, try again after the run."
   started: "&#2ECF7B%dungeon% started."
   built: "&#2ECF7BTemplate of %dungeon% built."
   template: "&#B376E5Template of &f%dungeon%&#B376E5: your changes are used by the next runs. Do not change the size of the rooms."

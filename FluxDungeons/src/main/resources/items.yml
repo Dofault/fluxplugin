@@ -175,3 +175,67 @@ golem_hammer:
     max_health: 4
   unbreakable: true
   glow: true
+warrior_leggings:
+  material: IRON_LEGGINGS
+  name: '&fRecruit''s Greaves'
+  lore:
+  - '&7Dungeon gear, only usable in dungeons.'
+  attributes:
+    armor: 5
+  unbreakable: true
+warrior_boots:
+  material: IRON_BOOTS
+  name: '&fRecruit''s Boots'
+  lore:
+  - '&7Dungeon gear, only usable in dungeons.'
+  attributes:
+    armor: 2
+  unbreakable: true
+ranger_leggings:
+  material: LEATHER_LEGGINGS
+  name: '&fScout''s Leggings'
+  lore:
+  - '&7Dungeon gear, only usable in dungeons.'
+  attributes:
+    armor: 3
+  unbreakable: true
+ranger_boots:
+  material: LEATHER_BOOTS
+  name: '&fScout''s Boots'
+  lore:
+  - '&7Dungeon gear, only usable in dungeons.'
+  attributes:
+    armor: 1
+  unbreakable: true
+mage_leggings:
+  material: LEATHER_LEGGINGS
+  name: '&fApprentice''s Leggings'
+  lore:
+  - '&7Dungeon gear, only usable in dungeons.'
+  attributes:
+    armor: 2
+  unbreakable: true
+mage_boots:
+  material: LEATHER_BOOTS
+  name: '&fApprentice''s Shoes'
+  lore:
+  - '&7Dungeon gear, only usable in dungeons.'
+  attributes:
+    armor: 1
+  unbreakable: true
+cleric_leggings:
+  material: CHAINMAIL_LEGGINGS
+  name: '&fNovice''s Leggings'
+  lore:
+  - '&7Dungeon gear, only usable in dungeons.'
+  attributes:
+    armor: 4
+  unbreakable: true
+cleric_boots:
+  material: CHAINMAIL_BOOTS
+  name: '&fNovice''s Boots'
+  lore:
+  - '&7Dungeon gear, only usable in dungeons.'
+  attributes:
+    armor: 1
+  unbreakable: true

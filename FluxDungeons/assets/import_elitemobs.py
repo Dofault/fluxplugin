@@ -112,7 +112,8 @@ def walk_texts(obj, translations):
 
 def clean_name(name):
     name = re.sub(r"\$\w*[Ll]evel\s*", "", str(name or ""))
-    return name.replace("[$difficulty] ", "").replace("[Normal] ", "").strip()
+    name = re.sub(r"\[(\$difficulty|Normal)\]\s*", "", name)
+    return re.sub(r"\s+", " ", name).strip()
 
 
 def load(path):
@@ -130,6 +131,12 @@ def main():
     translations = {}
     if "--level" in args:
         level = int(args[args.index("--level") + 1])
+    file_id = None
+    job = None
+    if "--id" in args:
+        file_id = args[args.index("--id") + 1]
+    if "--job" in args:
+        job = args[args.index("--job") + 1]
     if "--translations" in args:
         translations = load(args[args.index("--translations") + 1])
 
@@ -303,7 +310,10 @@ def main():
     for sub in ("dungeons", "mobs", "items", "untranslated"):
         os.makedirs(os.path.join(plugin, sub), exist_ok=True)
     header = f"# Imported from EliteMobs ({world}) by FluxDungeons/assets/import_elitemobs.py: run the import again rather than editing.\n"
-    dungeon_path = os.path.join(plugin, "dungeons", f"{dungeon_id}.yml")
+    out_id = file_id or dungeon_id
+    if job:
+        dungeon["job"] = job
+    dungeon_path = os.path.join(plugin, "dungeons", f"{out_id}.yml")
     if os.path.exists(dungeon_path):
         # keep what the staff tuned (name, rewards, lives...), refresh the map
         old = load(dungeon_path)
@@ -313,6 +323,8 @@ def main():
     for path, data in ((dungeon_path, dungeon),
                        (os.path.join(plugin, "mobs", f"{dungeon_id}.yml"), mobs),
                        (os.path.join(plugin, "items", f"{dungeon_id}.yml"), items)):
+        if path != dungeon_path and file_id and os.path.exists(os.path.join(plugin, "dungeons", f"{dungeon_id}.yml")) and dungeon_id != file_id:
+            os.remove(os.path.join(plugin, "dungeons", f"{dungeon_id}.yml"))
         with open(path, "w", encoding="utf-8") as out:
             out.write(header)
             yaml.safe_dump(data, out, allow_unicode=True, sort_keys=False, width=160)

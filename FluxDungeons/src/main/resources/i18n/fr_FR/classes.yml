@@ -24,6 +24,8 @@ warrior:
   - fluxdungeons:warrior_sword
   - fluxdungeons:warrior_chestplate
   - fluxdungeons:warrior_helmet
+  - fluxdungeons:warrior_leggings
+  - fluxdungeons:warrior_boots
   abilities:
   - type: charge
     name: Charge
@@ -76,6 +78,8 @@ ranger:
   - fluxdungeons:ranger_arrow
   - fluxdungeons:ranger_dagger
   - fluxdungeons:ranger_tunic
+  - fluxdungeons:ranger_leggings
+  - fluxdungeons:ranger_boots
   abilities:
   - type: volley
     name: Salve
@@ -125,6 +129,8 @@ mage:
   - fluxdungeons:mage_staff
   - fluxdungeons:mage_robe
   - fluxdungeons:mage_hood
+  - fluxdungeons:mage_leggings
+  - fluxdungeons:mage_boots
   abilities:
   - type: fireball
     name: Boule de feu
@@ -174,6 +180,8 @@ cleric:
   - fluxdungeons:cleric_scepter
   - fluxdungeons:cleric_chestplate
   - fluxdungeons:cleric_helmet
+  - fluxdungeons:cleric_leggings
+  - fluxdungeons:cleric_boots
   abilities:
   - type: heal
     name: Soin

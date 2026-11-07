@@ -114,6 +114,20 @@ public final class Store {
         }
     }
 
+    /** Fresh start (staff): dungeon inventory deleted, every class kit given again at the next run. Levels are kept. */
+    public void reset(UUID uuid) {
+        try (Connection c = Database.connection();
+             PreparedStatement a = c.prepareStatement("DELETE FROM " + loadouts + " WHERE uuid = ?");
+             PreparedStatement b = c.prepareStatement("UPDATE " + heroes + " SET kit = 0 WHERE uuid = ?")) {
+            a.setString(1, uuid.toString());
+            a.executeUpdate();
+            b.setString(1, uuid.toString());
+            b.executeUpdate();
+        } catch (SQLException e) {
+            log.warning("Could not reset the dungeon inventory of " + uuid + ": " + e.getMessage());
+        }
+    }
+
     // ---------------------------------------------------------------- dungeon inventory
 
     public ItemStack[] loadout(UUID uuid) {
