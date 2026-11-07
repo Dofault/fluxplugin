@@ -38,7 +38,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * Action {@code [fluxpass] category <id>} shows a category. {@code %fluxpass_seasonend_<pass>%}: time left of the season
  * in its largest unit. Placeholder {@code %fluxpass_tierpage_<pass>_<n>%}: page
  * (n tiers per page) holding the player's tier, to open the path at the right place; {@code %fluxpass_tierstates_<pass>_<first>_<count>%}:
- * colours of the path steps.
+ * colours of the path steps. {@code %fluxpass_todo_count%}, {@code %fluxpass_todo_<n>_name%},
+ * {@code %fluxpass_todo_<n>_progress%}: missions not done yet in the open categories, plain text, for the sidebar
+ * drawn by Typewriter.
  */
 final class PassMenu implements Listener {
 
@@ -121,6 +123,7 @@ final class PassMenu implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         selected.remove(event.getPlayer().getUniqueId());
+        todoCache.remove(event.getPlayer().getUniqueId());
     }
 
     private interface Builder {
@@ -241,7 +244,82 @@ final class PassMenu implements Listener {
         return String.join(",", out);
     }
 
+    // ---------------------------------------------------------------- missions to do (sidebar of Typewriter)
+
+    /** A mission not done yet, plain text (no colour codes: the sidebar styles it). */
+    private record Todo(String name, String progress) {
+    }
+
+    private record CachedTodos(long at, List<Todo> todos) {
+    }
+
+    private static final long TODO_CACHE_MS = 1000;
+    private static final java.util.regex.Pattern CODES = java.util.regex.Pattern.compile(
+            "(?i)[§&]x([§&]\\p{XDigit}){6}|[§&]#\\p{XDigit}{6}|[§&][0-9a-fk-or]|<[^>]*>");
+    private static final java.util.regex.Pattern PROGRESS = java.util.regex.Pattern.compile("^(.+?)\\s*[►▸]\\s*(.*)$");
+    private final Map<UUID, CachedTodos> todoCache = new ConcurrentHashMap<>();
+
+    /**
+     * Missions not done yet in the open categories, in the order of the menu (daily first). Missions reserved to the
+     * premium pass come last. Cached one second: the sidebar asks every tick.
+     */
+    private List<Todo> todos(Player player) {
+        CachedTodos cached = todoCache.get(player.getUniqueId());
+        long now = System.currentTimeMillis();
+        if (cached != null && now - cached.at() < TODO_CACHE_MS) return cached.todos();
+        List<Todo> open = new ArrayList<>(), premium = new ArrayList<>();
+        try {
+            for (Shown s : shown) {
+                Object category = category(s.id());
+                if (category == null || !(boolean) isActive.invoke(category)) continue;
+                for (Object quest : (List<?>) getQuests.invoke(category)) {
+                    if ((boolean) hasCompleted.invoke(null, player, quest)) continue;
+                    String name = plain((String) formattedName.invoke(quest, player));
+                    String progress = "";
+                    boolean exclusive = false;
+                    for (String raw : lore(quest, player)) {
+                        String line = plain(raw);
+                        if (line.toLowerCase(Locale.ROOT).contains("exclusif")) exclusive = true;
+                        java.util.regex.Matcher kv = PROGRESS.matcher(line);
+                        if (kv.matches() && kv.group(1).strip().equalsIgnoreCase("Progression")) progress = kv.group(2).strip();
+                    }
+                    (exclusive ? premium : open).add(new Todo(name, progress));
+                }
+            }
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            if (!warned) {
+                warned = true;
+                plugin.getLogger().warning("Pass missions to do failed: " + e);
+            }
+        }
+        open.addAll(premium);
+        todoCache.put(player.getUniqueId(), new CachedTodos(now, open));
+        return open;
+    }
+
+    private static String plain(String text) {
+        return text == null ? "" : CODES.matcher(text).replaceAll("").strip();
+    }
+
+    /** {@code todo_count}, {@code todo_<n>_name}, {@code todo_<n>_progress} (n from 1). */
+    private String todo(Player player, String rest) {
+        if (player == null) return "";
+        List<Todo> todos = todos(player);
+        if (rest.equals("count")) return String.valueOf(todos.size());
+        String[] p = rest.split("_", 2);
+        if (p.length != 2) return "";
+        int n = number(p[0]);
+        if (n < 1 || n > todos.size()) return "";
+        Todo todo = todos.get(n - 1);
+        return switch (p[1]) {
+            case "name" -> todo.name();
+            case "progress" -> todo.progress();
+            default -> "";
+        };
+    }
+
     private String placeholder(Player player, String params) {
+        if (params.startsWith("todo_")) return todo(player, params.substring("todo_".length()));
         if (params.startsWith("tierstates_")) return tierStates(player, params.substring("tierstates_".length()));
         // seasonend_<pass>: time left in its largest unit only ("62j", "3h", "5min"), for the season card
         if (params.startsWith("seasonend_")) {
