@@ -50,6 +50,7 @@ final class DungeonListener implements Listener {
     private final Heroes heroes;
     private final Mobs mobs;
     private final Loadouts loadouts;
+    private static final int OUT_OF_COMBAT_TICKS = 100;
     /** Tick of the last monster hit taken by each player (grace against chained hits). */
     private final java.util.Map<java.util.UUID, Integer> lastHit = new java.util.HashMap<>();
 
@@ -60,6 +61,7 @@ final class DungeonListener implements Listener {
         this.heroes = heroes;
         this.mobs = mobs;
         this.loadouts = loadouts;
+        Bukkit.getScheduler().runTaskTimer(plugin, this::regenerate, 20L, 20L);
     }
 
     // ---------------------------------------------------------------- coming and going
@@ -196,7 +198,8 @@ final class DungeonListener implements Listener {
         }
         // a dungeon monster (or its projectile) hit a player
         if (victim instanceof Player hurt) {
-            Entity source = e.getDamager() instanceof Projectile pr && pr.getShooter() instanceof Entity sh ? sh : e.getDamager();
+            Entity source = e.getDamager() instanceof Projectile pr && pr.getShooter() instanceof Entity sh ? sh
+                    : e.getDamager() instanceof org.bukkit.entity.EvokerFangs f && f.getOwner() != null ? f.getOwner() : e.getDamager();
             if (source instanceof LivingEntity mob && mobs.templateOf(mob) != null) {
                 int now = Bukkit.getCurrentTick();
                 Integer last = lastHit.get(hurt.getUniqueId());
@@ -206,9 +209,33 @@ final class DungeonListener implements Listener {
                 }
                 lastHit.put(hurt.getUniqueId(), now);
                 // normalized combat: a hit counts in hits-to-kill, whatever the mob type deals in vanilla
-                if (!mobs.dealing() && mobs.level(mob) > 0) e.setDamage(mobs.hitOn(mob, hurt));
+                if (!mobs.dealing() && mobs.level(mob) > 0) {
+                    double hit = mobs.hitOn(mob, hurt) * explosionFalloff(e.getDamager(), hurt);
+                    e.setDamage(hit);
+                }
+                // as in EliteMobs, one hit never kills a player at full health
+                double max = hurt.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue();
+                if (e.getFinalDamage() > max - 1) e.setDamage(Math.max(0, e.getDamage() * (max - 1) / e.getFinalDamage()));
                 mobs.hitPlayer(mob, hurt, e);
             }
+        }
+    }
+
+    /** Explosions hurt less far from their centre (a normalized hit would otherwise land in full at any distance). */
+    private static double explosionFalloff(Entity damager, Player hurt) {
+        double radius;
+        if (damager instanceof org.bukkit.entity.Creeper c) radius = c.getExplosionRadius() * (c.isPowered() ? 2 : 1);
+        else if (damager instanceof org.bukkit.entity.Fireball f && !(damager instanceof org.bukkit.entity.SmallFireball)) radius = f.getYield();
+        else return 1;
+        if (radius <= 0 || !damager.getWorld().equals(hurt.getWorld())) return 1;
+        return Math.max(0.1, 1 - hurt.getLocation().distance(damager.getLocation()) / (radius * 2));
+    }
+
+    /** A dungeon creeper keeps its potion effects when it blows up (vanilla would leave them in an endless cloud). */
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onExplode(org.bukkit.event.entity.ExplosionPrimeEvent e) {
+        if (e.getEntity() instanceof org.bukkit.entity.Creeper c && mobs.templateOf(c) != null) {
+            for (org.bukkit.potion.PotionEffect pe : c.getActivePotionEffects()) c.removePotionEffect(pe.getType());
         }
     }
 
@@ -238,13 +265,30 @@ final class DungeonListener implements Listener {
         if (target instanceof Player p ? runs.runOf(p) != null : mobs.templateOf(target) != null) e.setCancelled(true);
     }
 
-    /** No hunger in a dungeon. */
+    /**
+     * No hunger in a dungeon. Saturation is not refilled: vanilla healing stays slow during a fight; out of combat
+     * ({@link #regenerate}) it is fast, as in EliteMobs, so a party recovers between two rooms.
+     */
     @EventHandler(ignoreCancelled = true)
     public void onFood(FoodLevelChangeEvent e) {
         if (!(e.getEntity() instanceof Player p) || runs.runOf(p) == null) return;
+        if (e.getFoodLevel() >= p.getFoodLevel()) return;
         e.setCancelled(true);
         p.setFoodLevel(20);
-        p.setSaturation(20);
+    }
+
+    /** Every second: players of a run who took no monster hit for a while heal quickly (one tick of saturation). */
+    void regenerate() {
+        int now = Bukkit.getCurrentTick();
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (runs.runOf(p) == null || p.isDead()) continue;
+            if (p.getFoodLevel() < 20) p.setFoodLevel(20);
+            Integer last = lastHit.get(p.getUniqueId());
+            if (last != null && now - last < OUT_OF_COMBAT_TICKS) continue;
+            if (p.getHealth() < p.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue()) {
+                p.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.SATURATION, 1, 0, false, false, false));
+            }
+        }
     }
 
     /** Nothing ever lies on the ground in a dungeon world (monster loot, equipment, overflow). */

@@ -76,6 +76,8 @@ public final class Mobs {
         int nextPhase;
         String objective;
         long lastHurt;
+        /** Last time it had a player to fight (leaves combat after a while without one). */
+        long lastEngaged;
         boolean dying, inCombat, switching;
 
         Alive(LivingEntity entity, MobTemplate template, String run, Location spawn, ModelBridge.Handle model) {
@@ -135,6 +137,11 @@ public final class Mobs {
 
     /** Scoreboard tag of every dungeon monster: other plugins leave tagged mobs alone (FluxStack never stacks them). */
     public static final String TAG = "fluxdungeons";
+    /** Out-of-combat speed cap and share of sight kept (EliteMobs: 0.12 and a third). */
+    private static final double CALM_SPEED = 0.12, CALM_SIGHT = 1 / 3.0;
+    /** A monster without a player to fight for this long leaves combat. */
+    private static final long COMBAT_TIMEOUT_MS = 10_000;
+    private final NamespacedKey calmKey;
 
     private final Plugin plugin;
     private final NamespacedKey mobKey, runKey, objectiveKey, spawnKey;
@@ -163,6 +170,7 @@ public final class Mobs {
         this.runKey = new NamespacedKey(plugin, "run");
         this.objectiveKey = new NamespacedKey(plugin, "objective");
         this.spawnKey = new NamespacedKey(plugin, "spawn");
+        this.calmKey = new NamespacedKey(plugin, "calm");
         this.models = Bukkit.getPluginManager().isPluginEnabled("BetterModel");
         this.engine = new ScriptEngine(plugin, new ScriptEngine.Services() {
             public ScriptHost host(Entity entity) {
@@ -314,6 +322,7 @@ public final class Mobs {
         else if (t.boss()) base(le, Attribute.KNOCKBACK_RESISTANCE, 1);
         for (PotionEffect pe : a.kit.permanent()) le.addPotionEffect(pe);
         alive.put(le.getUniqueId(), a);
+        calm(a, true);
         blocks(a, x.spawnBlocks());
         if (x.mount() != null) mount(a, x.mount());
         engine.fire(a, "EliteMobSpawnEvent", null, null);
@@ -350,6 +359,7 @@ public final class Mobs {
         Alive a = new Alive(le, t, run, spawn, model);
         a.objective = le.getPersistentDataContainer().get(objectiveKey, PersistentDataType.STRING);
         alive.put(le.getUniqueId(), a);
+        calm(a, true);
         return true;
     }
 
@@ -382,6 +392,32 @@ public final class Mobs {
                 plugin.getLogger().warning("Bad block state " + s.data() + " of " + a.template.id());
             }
         }
+    }
+
+    /**
+     * Out of combat, a dungeon monster is slowed and short-sighted (as EliteMobs does for its dungeon bosses): it
+     * only notices a player who comes close and in sight, so a room is fought a few monsters at a time instead of
+     * the whole map rushing in. Full speed and sight come back as soon as it fights.
+     */
+    private void calm(Alive a, boolean on) {
+        for (Attribute attribute : List.of(Attribute.MOVEMENT_SPEED, Attribute.FOLLOW_RANGE)) {
+            AttributeInstance inst = a.entity.getAttribute(attribute);
+            if (inst == null) continue;
+            inst.removeModifier(calmKey);
+            if (!on) continue;
+            double factor = attribute == Attribute.FOLLOW_RANGE ? CALM_SIGHT - 1
+                    : inst.getBaseValue() > CALM_SPEED ? CALM_SPEED / inst.getBaseValue() - 1 : 0;
+            if (factor != 0) inst.addModifier(new org.bukkit.attribute.AttributeModifier(calmKey, factor,
+                    org.bukkit.attribute.AttributeModifier.Operation.ADD_SCALAR, org.bukkit.inventory.EquipmentSlotGroup.ANY));
+        }
+    }
+
+    private void enterCombat(Alive a, Player player, boolean event) {
+        a.lastEngaged = System.currentTimeMillis();
+        if (a.inCombat) return;
+        a.inCombat = true;
+        calm(a, false);
+        if (event) engine.fire(a, "EliteMobEnterCombatEvent", player, null);
     }
 
     private static void base(LivingEntity e, Attribute attribute, double value) {
@@ -421,10 +457,7 @@ public final class Mobs {
     public void damagedByPlayer(LivingEntity entity, Player player, EntityDamageEvent event) {
         Alive a = alive.get(entity.getUniqueId());
         if (a == null) return;
-        if (!a.inCombat) {
-            a.inCombat = true;
-            engine.fire(a, "EliteMobEnterCombatEvent", player, null);
-        }
+        enterCombat(a, player, true);
         engine.fire(a, "EliteMobDamagedByPlayerEvent", player, event);
         if (!a.template.extra().hurtMessages().isEmpty() && ThreadLocalRandom.current().nextDouble() < 0.15) say(a, a.template.extra().hurtMessages());
     }
@@ -460,10 +493,7 @@ public final class Mobs {
     public void targeted(LivingEntity entity, Player player) {
         Alive a = alive.get(entity.getUniqueId());
         if (a == null) return;
-        if (!a.inCombat) {
-            a.inCombat = true;
-            engine.fire(a, "EliteMobEnterCombatEvent", player, null);
-        }
+        enterCombat(a, player, true);
         engine.fire(a, "EliteMobTargetPlayerEvent", player, null);
     }
 
@@ -502,7 +532,7 @@ public final class Mobs {
         Alive c = alive.get(child.getUniqueId());
         c.phases = from.phases;
         c.nextPhase = from.nextPhase + 1;
-        c.inCombat = true;
+        enterCombat(c, null, false);
         c.tags.addAll(from.tags);
         if (from.objective != null) objective(child, from.objective);
         child.setHealth(Math.max(1, maxHealth(child) * ratio));
@@ -585,7 +615,16 @@ public final class Mobs {
             if (!a.template.extra().scripts().isEmpty()) later.add(() -> engine.pollZones(a));
             if (!a.entity.hasAI()) continue;
             Player target = target(a);
-            if (target == null) continue;
+            if (target == null) {
+                if (a.inCombat && now - a.lastEngaged > COMBAT_TIMEOUT_MS) {
+                    a.inCombat = false;
+                    calm(a, true);
+                    if (a.entity instanceof Mob m) m.setTarget(null);
+                    later.add(() -> engine.fire(a, "EliteMobExitCombatEvent", null, null));
+                }
+                continue;
+            }
+            a.lastEngaged = now;
             double life = 100 * a.entity.getHealth() / Math.max(1, maxHealth(a.entity));
             for (int i = 0; i < a.abilities.size(); i++) {
                 Ability ab = a.abilities.get(i);
@@ -603,13 +642,15 @@ public final class Mobs {
     private static Player target(Alive a) {
         if (!(a.entity instanceof Mob m)) return null;
         if (m.getTarget() instanceof Player p && fighting(p)) return p;
+        // out of combat, only vanilla sight (shortened by calm) picks a target: never through walls
+        if (!a.inCombat) return null;
         Player best = null;
         double range = a.template.extra().followRange();
         double bestD = Math.min(24, range) * Math.min(24, range);
         for (Player p : a.entity.getWorld().getPlayers()) {
             if (!fighting(p)) continue;
             double d = p.getLocation().distanceSquared(a.entity.getLocation());
-            if (d < bestD) {
+            if (d < bestD && (a.template.boss() || a.entity.hasLineOfSight(p))) {
                 bestD = d;
                 best = p;
             }

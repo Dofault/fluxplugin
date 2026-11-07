@@ -46,6 +46,15 @@ final class WorldInstances {
     }
 
     private final Plugin plugin;
+    /**
+     * Copies and deletions run one at a time, in order (as EliteMobs' world operation queue): several big copies at
+     * once would fight for the disk and slow the whole server.
+     */
+    private final java.util.concurrent.ExecutorService disk = java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "FluxDungeons-worlds");
+        t.setDaemon(true);
+        return t;
+    });
     /** World names in use: loaded, or unloaded and still being deleted. */
     private final java.util.Set<String> busy = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
@@ -68,7 +77,7 @@ final class WorldInstances {
     /** Copies the map into a new world and loads it; {@code done} receives it (null on failure) on the server thread. */
     void create(File source, String name, Consumer<World> done) {
         busy.add(name);
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        disk.execute(() -> {
             File target = dimension(name);
             try {
                 deleteTree(target.toPath());
@@ -76,7 +85,11 @@ final class WorldInstances {
             } catch (IOException e) {
                 plugin.getLogger().severe("Could not copy map " + source + ": " + e.getMessage());
                 busy.remove(name);
-                Bukkit.getScheduler().runTask(plugin, () -> done.accept(null));
+                if (plugin.isEnabled()) Bukkit.getScheduler().runTask(plugin, () -> done.accept(null));
+                return;
+            }
+            if (!plugin.isEnabled()) {
+                busy.remove(name);
                 return;
             }
             Bukkit.getScheduler().runTask(plugin, () -> {
@@ -122,7 +135,7 @@ final class WorldInstances {
         }
         String name = w.getName();
         if (plugin.isEnabled()) {
-            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            disk.execute(() -> {
                 try {
                     deleteTree(folder.toPath());
                     busy.remove(name);
