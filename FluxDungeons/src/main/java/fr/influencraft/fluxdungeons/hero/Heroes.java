@@ -294,20 +294,22 @@ public final class Heroes {
         showMana(player, hero);
     }
 
-    /** Every second: mana comes back, the bar and the action bar show it. */
+    /** Every second: mana comes back, the action bar shows it. */
     public void tick(Player player) {
         Hero hero = hero(player);
         if (hero == null) return;
         hero.mana(hero.mana() + hero.heroClass().manaRegen());
-        showMana(player, hero);
         plugin.messages().actionBar(player, "hud.bar",
                 "%mana%", String.valueOf((int) hero.mana()), "%max%", String.valueOf((int) hero.heroClass().mana()));
     }
 
-    /** The experience bar is the mana bar, the level number is the class level. */
+    /**
+     * Shows the mana in the action bar at once (after a cast). The experience bar is left alone: it is the player's own
+     * experience (it showed the mana before, players took its moves for experience gains).
+     */
     private void showMana(Player player, Hero hero) {
-        player.setLevel(hero.level());
-        player.setExp((float) Math.max(0, Math.min(0.9999, hero.mana() / Math.max(1, hero.heroClass().mana()))));
+        plugin.messages().actionBar(player, "hud.bar",
+                "%mana%", String.valueOf((int) hero.mana()), "%max%", String.valueOf((int) hero.heroClass().mana()));
     }
 
     // ---------------------------------------------------------------- experience
