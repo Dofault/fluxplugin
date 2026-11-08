@@ -65,7 +65,7 @@ public final class AttackCadence implements Listener {
 
     private Assist assist = p -> null;
     private boolean assistOn = true;
-    private double assistRadius = 1.2;
+    private double assistRadius = 1.8;
 
     public AttackCadence(Plugin plugin) {
         ItemLooks.registerAny(plugin, (id, item) -> enabled ? apply(item) : clear(item));
@@ -78,7 +78,7 @@ public final class AttackCadence implements Listener {
     /** Aim assist of the dungeons ({@code aim-assist} of the config). */
     public void loadAssist(ConfigurationSection c) {
         assistOn = c == null || c.getBoolean("enabled", true);
-        assistRadius = c == null ? 1.2 : Math.max(0.2, c.getDouble("radius", 1.2));
+        assistRadius = c == null ? 1.8 : Math.max(0.2, c.getDouble("radius", 1.8));
     }
 
     public void load(ConfigurationSection c) {

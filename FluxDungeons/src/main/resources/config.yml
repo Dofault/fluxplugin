@@ -91,4 +91,4 @@ attack-cadence:
 dungeon-reach-bonus: 1.5
 aim-assist:
   enabled: true
-  radius: 1.2
+  radius: 1.8
