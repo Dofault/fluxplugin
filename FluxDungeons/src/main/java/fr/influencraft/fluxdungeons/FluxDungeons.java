@@ -63,6 +63,7 @@ public final class FluxDungeons extends FluxPlugin {
     private Loadouts loadouts;
     private ItemCatalog items;
     private fr.influencraft.fluxdungeons.combat.AttackCadence attackCadence;
+    private DungeonListener listener;
 
     @Override
     protected void enable() {
@@ -96,7 +97,9 @@ public final class FluxDungeons extends FluxPlugin {
             }
         });
         placeholders("fluxdungeons", (player, params) -> runs.placeholder(player, params));
-        Bukkit.getPluginManager().registerEvents(new DungeonListener(this, arena, runs, heroes, mobs, loadouts), this);
+        listener = new DungeonListener(this, arena, runs, heroes, mobs, loadouts);
+        listener.hitReaction(getConfig().getConfigurationSection("hit-reaction"));
+        Bukkit.getPluginManager().registerEvents(listener, this);
         command("dungeon")
                 .description("Dungeons: play, leave, choose your class.")
                 .permission("fluxdungeons.play")
@@ -152,8 +155,8 @@ public final class FluxDungeons extends FluxPlugin {
             attackCadence.load(getConfig().getConfigurationSection("attack-cadence"));
             attackCadence.loadAssist(getConfig().getConfigurationSection("aim-assist"));
         }
-        mobs.healthBar(getConfig().getBoolean("health-bar.enabled", true), getConfig().getString("health-bar.glyph", "fluxafk:bar_{step}"),
-                getConfig().getInt("health-bar.steps", 20));
+        mobs.healthBar(getConfig().getBoolean("health-bar.enabled", true), getConfig().getString("health-bar.font", "fluxdungeons:health"));
+        if (listener != null) listener.hitReaction(getConfig().getConfigurationSection("hit-reaction"));
         List<org.bukkit.configuration.ConfigurationSection> mobFiles = new ArrayList<>();
         mobFiles.add(file("mobs.yml"));
         mobFiles.addAll(folder("mobs"));

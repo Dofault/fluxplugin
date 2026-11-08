@@ -215,15 +215,11 @@ final class DungeonListener implements Listener {
             Entity source = e.getDamager() instanceof Projectile pr && pr.getShooter() instanceof Entity sh ? sh
                     : e.getDamager() instanceof org.bukkit.entity.EvokerFangs f && f.getOwner() != null ? f.getOwner() : e.getDamager();
             if (source instanceof LivingEntity mob && mobs.templateOf(mob) != null) {
-                // same rule as the monsters: no invulnerability, one melee hit of each monster every MELEE_GAP ticks
-                if (e.getCause() == EntityDamageEvent.DamageCause.ENTITY_ATTACK && !mobs.dealing()
-                        && tooSoon(hurt, mob.getUniqueId().toString(), MELEE_GAP)) {
+                // players take every hit (no invulnerability): what limits them is each monster's own melee pace
+                if (melee(e) && !mobs.meleeReady(mob)) {
                     e.setCancelled(true);
                     return;
                 }
-                // one hit out of KNOCKBACK_EVERY pushes the player back
-                int taken = hitsTaken.merge(hurt.getUniqueId(), 1, Integer::sum);
-                if (taken % KNOCKBACK_EVERY == 0) pushNext.add(hurt.getUniqueId());
                 lastHit.put(hurt.getUniqueId(), Bukkit.getCurrentTick());
                 mobs.hitPlayer(mob, hurt, e);
                 runs.petFocus(hurt, mob);
@@ -232,10 +228,11 @@ final class DungeonListener implements Listener {
     }
 
     /**
-     * Dungeon monsters have no vanilla invulnerability after a hit (it swallowed the hits of a party, its pets, its
-     * abilities and enchantments landing together). Instead, each source has its own small delay: melee of the same
-     * attacker {@link #MELEE_GAP} ticks, each environmental cause {@link #ENVIRONMENT_GAP}; projectiles, abilities,
-     * enchantment effects and explosions always land.
+     * No vanilla invulnerability after a hit, neither for dungeon monsters nor for players in a run (it swallowed the
+     * hits of a party, its pets, its abilities and enchantments landing together). Monsters: melee of the same attacker
+     * (player, pet) {@link #MELEE_GAP} ticks apart at least. Players: limited only by each monster's own pace
+     * ({@link Mobs#meleeReady}). Both: each environmental cause (lava, cactus...) {@link #ENVIRONMENT_GAP} ticks apart,
+     * else lava would hit every tick. Projectiles, abilities, enchantment effects and explosions always land.
      */
     private static final int MELEE_GAP = 5, ENVIRONMENT_GAP = 10;
     /** Tick of the last hit of each source on each monster ({@code <monster>|<source>}). */
@@ -305,25 +302,62 @@ final class DungeonListener implements Listener {
         }
     }
 
-    /** Hits a player took from monsters during his run (every {@link #KNOCKBACK_EVERY}th one pushes him). */
-    private final java.util.Map<java.util.UUID, Integer> hitsTaken = new java.util.HashMap<>();
-    /** Players whose next knockback is let through (the hit that counts was just taken). */
-    private final java.util.Set<java.util.UUID> pushNext = new java.util.HashSet<>();
-    private static final int KNOCKBACK_EVERY = 4;
+    /** A monster's own melee hit (not an ability nor a projectile). */
+    private boolean melee(EntityDamageByEntityEvent e) {
+        return !mobs.dealing() && !(e.getDamager() instanceof Projectile)
+                && (e.getCause() == EntityDamageEvent.DamageCause.ENTITY_ATTACK || e.getCause() == EntityDamageEvent.DamageCause.ENTITY_SWEEP_ATTACK);
+    }
+
+    /** Blocks a monster's melee hit pushes a player ({@code hit-reaction.melee-push}). */
+    private double meleePush = 2;
+    /** Slow after a hit from afar: ticks and level ({@code hit-reaction.ranged-slow}). */
+    private int slowTicks = 4, slowLevel = 2;
+
+    void hitReaction(org.bukkit.configuration.ConfigurationSection c) {
+        meleePush = c == null ? 2 : Math.max(0, c.getDouble("melee-push", 2));
+        slowTicks = c == null ? 4 : Math.max(0, c.getInt("ranged-slow.ticks", 4));
+        slowLevel = c == null ? 2 : Math.max(1, c.getInt("ranged-slow.level", 2));
+    }
 
     /**
-     * Dungeon monsters are never pushed by hits. Players are pushed by one monster hit out of
-     * {@link #KNOCKBACK_EVERY} only (they take hits quickly, no invulnerability: a push at each would throw them
-     * around). Movements cast on purpose (charge, leap, slam, implosion) set the velocity directly and still work.
+     * How a player reacts to a monster's hit that landed: a melee hit pushes him back {@code melee-push} blocks along
+     * the ground (never up: he keeps his footing; already in the air, his fall goes on); a hit from afar (arrow,
+     * ability) only slows him a moment, so he can still reach whoever shoots at him.
+     */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPlayerHit(EntityDamageByEntityEvent e) {
+        if (!(e.getEntity() instanceof Player hurt) || runs.runOf(hurt) == null) return;
+        Entity source = e.getDamager() instanceof Projectile pr && pr.getShooter() instanceof Entity sh ? sh
+                : e.getDamager() instanceof org.bukkit.entity.EvokerFangs f && f.getOwner() != null ? f.getOwner() : e.getDamager();
+        if (!(source instanceof LivingEntity mob) || mobs.templateOf(mob) == null) return;
+        if (melee(e)) {
+            if (meleePush <= 0) return;
+            org.bukkit.util.Vector away = hurt.getLocation().toVector().subtract(mob.getLocation().toVector()).setY(0);
+            if (away.lengthSquared() < 1.0E-4) away = mob.getLocation().getDirection().setY(0);
+            if (away.lengthSquared() < 1.0E-4) return;
+            boolean ground = hurt.isOnGround();
+            // speed that slides this far: friction keeps 54.6 % of the speed each tick on the ground, 91 % in the air
+            double speed = meleePush * (ground ? 1 - 0.546 : 1 - 0.91);
+            org.bukkit.util.Vector v = away.normalize().multiply(speed);
+            v.setY(ground ? -0.0784 : hurt.getVelocity().getY());
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (hurt.isOnline() && !hurt.isDead()) hurt.setVelocity(v);
+            });
+        } else if (slowTicks > 0) {
+            hurt.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.SLOWNESS,
+                    slowTicks, slowLevel - 1, false, false, false));
+        }
+    }
+
+    /**
+     * Vanilla knockback is off in a dungeon: monsters are never pushed by hits, players are pushed by
+     * {@link #onPlayerHit} only (along the ground). Movements cast on purpose (charge, leap, slam, implosion) set the
+     * velocity directly and still work.
      */
     @EventHandler(ignoreCancelled = true)
     public void onKnockback(EntityKnockbackEvent e) {
         Entity target = e.getEntity();
-        if (target instanceof Player p) {
-            if (runs.runOf(p) != null && !pushNext.remove(p.getUniqueId())) e.setCancelled(true);
-            return;
-        }
-        if (mobs.templateOf(target) != null) e.setCancelled(true);
+        if (target instanceof Player p ? runs.runOf(p) != null : mobs.templateOf(target) != null) e.setCancelled(true);
     }
 
     /**
@@ -342,8 +376,6 @@ final class DungeonListener implements Listener {
     void regenerate() {
         int now = Bukkit.getCurrentTick();
         lastSourceHit.values().removeIf(t -> now - t > 40);
-        pushNext.clear();
-        hitsTaken.keySet().removeIf(u -> Bukkit.getPlayer(u) == null);
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (runs.runOf(p) == null || p.isDead()) continue;
             if (p.getFoodLevel() < 20) p.setFoodLevel(20);

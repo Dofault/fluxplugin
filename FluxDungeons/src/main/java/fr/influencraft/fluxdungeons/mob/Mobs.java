@@ -757,15 +757,23 @@ public final class Mobs {
     // ---------------------------------------------------------------- life bar above the monsters
 
     private boolean healthBar = true;
-    private String barGlyph = "fluxafk:bar_{step}";
-    private int barSteps = 20;
+    private net.kyori.adventure.key.Key barFont = net.kyori.adventure.key.Key.key("fluxdungeons", "health");
 
-    /** {@code health-bar} of the config: the textured bar of FluxAFK and FluxTools, one picture per step. */
-    public void healthBar(boolean enabled, String glyph, int steps) {
+    /**
+     * {@code health-bar} of the config: a red bar with the life written inside, drawn by a font of the resource pack
+     * ({@code FluxDungeons/assets/gen_healthbar.py}: bar pictures U+E000 + step, digits in QuinqueFive, spaces).
+     */
+    public void healthBar(boolean enabled, String font) {
         healthBar = enabled;
-        barGlyph = glyph == null || glyph.isBlank() ? "fluxafk:bar_{step}" : glyph;
-        barSteps = Math.max(1, steps);
+        try {
+            barFont = net.kyori.adventure.key.Key.key(font == null || font.isBlank() ? "fluxdungeons:health" : font);
+        } catch (RuntimeException e) {
+            barFont = net.kyori.adventure.key.Key.key("fluxdungeons", "health");
+        }
     }
+
+    // numbers of the font, the same as gen_healthbar.py
+    private static final int BAR_STEPS = 32, BAR_ADVANCE = 65, BAR_WIDTH = 64, DIGIT_ADVANCE = 6;
 
     /**
      * Teleports a dungeon monster with what rides it (its life bar): a plain teleport refuses to move an entity that
@@ -809,17 +817,49 @@ public final class Mobs {
         }
         double max = Math.max(1, maxHealth(a.entity));
         double health = Math.max(0, a.entity.getHealth());
-        double ratio = health / max;
-        int step = (int) Math.floor(Math.min(1, ratio) * barSteps);
+        int step = (int) Math.floor(Math.min(1, health / max) * BAR_STEPS);
         if (step == a.labelStep && Math.abs(health - a.labelHealth) < 0.5) return;
         a.labelStep = step;
         a.labelHealth = health;
         int level = Math.max(0, a.template.extra().level());
         String head = a.template.name() + (level > 0 ? " &7Nv. &f" + level : "");
-        String glyph = fr.influencraft.flux.api.items.CustomItems.bar(barGlyph, barSteps, ratio);
-        String bar = glyph != null ? "&f" + glyph
-                : fr.influencraft.flux.api.util.Format.bar(ratio, 1.0, barSteps, "&#FF5C5C", "&8");
-        a.label.text(Texts.parse(head + "\n" + bar));
+        net.kyori.adventure.text.Component bar = net.kyori.adventure.text.Component.text(barText(step, health))
+                .font(barFont).color(net.kyori.adventure.text.format.NamedTextColor.WHITE)
+                .shadowColor(net.kyori.adventure.text.format.ShadowColor.shadowColor(0));
+        a.label.text(net.kyori.adventure.text.Component.empty().append(Texts.parse(head))
+                .append(net.kyori.adventure.text.Component.newline()).append(bar));
+    }
+
+    /** The bar picture of this step, then the life centred on it (moved back over the bar, then forward again). */
+    private static String barText(int step, double health) {
+        String life = shortNumber(health);
+        int width = DIGIT_ADVANCE * life.length() - 1;
+        int start = (BAR_WIDTH - width) / 2;
+        StringBuilder sb = new StringBuilder().append((char) (0xE000 + Math.max(0, Math.min(BAR_STEPS, step))));
+        space(sb, start - BAR_ADVANCE);
+        sb.append(life);
+        space(sb, BAR_ADVANCE - (start + DIGIT_ADVANCE * life.length()));
+        return sb.toString();
+    }
+
+    /** Life as written in the bar: 143, 12K, 3M. */
+    private static String shortNumber(double health) {
+        long h = (long) Math.ceil(health);
+        if (h < 10_000) return String.valueOf(h);
+        if (h < 10_000_000) return (h / 1000) + "K";
+        return (h / 1_000_000) + "M";
+    }
+
+    /** Moves the text by {@code pixels} (negative: back) with the space chars of the font. */
+    private static void space(StringBuilder sb, int pixels) {
+        int base = pixels < 0 ? 0xF001 : 0xF011;
+        int left = Math.abs(pixels);
+        for (int bit = 6; bit >= 0; bit--) {
+            while (left >= (1 << bit)) {
+                sb.append((char) (base + bit));
+                left -= 1 << bit;
+            }
+        }
     }
 
     /** The monster's life just changed (hit, heal): its bar is redrawn on the next tick, once the change is applied. */
@@ -831,12 +871,20 @@ public final class Mobs {
         });
     }
 
-    // ---------------------------------------------------------------- longer melee reach
+    // ---------------------------------------------------------------- melee: pace and longer reach
+
+    /**
+     * Whether this monster may land a melee hit now: players take hits without invulnerability, so what limits the
+     * hits a player takes is each monster's own pace ({@code attack-speed}).
+     */
+    public boolean meleeReady(LivingEntity mob) {
+        Alive a = alive.get(mob.getUniqueId());
+        return a == null || Bukkit.getCurrentTick() - a.lastMelee >= a.template.extra().attackTicks();
+    }
+
 
     /** Vanilla melee reach of a mob beyond its body (its attack box is its body widened by this, sideways). */
     private static final double VANILLA_REACH = Math.sqrt(2.04) - 0.6;
-    /** Ticks between two melee hits of a monster (vanilla melee goal: 20). */
-    private static final int MELEE_TICKS = 20;
     /** Blocks added to the melee reach of dungeon monsters: the same bonus as the players' reach. */
     private double reachBonus = 1;
 
@@ -846,7 +894,7 @@ public final class Mobs {
 
     /**
      * Every 2 ticks: a melee monster whose target stands beyond its vanilla reach but within {@code reachBonus} more
-     * hits it anyway, at the vanilla pace (players got the same bonus, monsters must keep up). Ranged monsters and
+     * hits it anyway, at its own pace ({@code attack-speed}; players got the same bonus, monsters must keep up). Ranged monsters and
      * monsters without attack are left to vanilla.
      */
     private void reachTick() {
@@ -856,14 +904,14 @@ public final class Mobs {
             if (a.dying || !a.inCombat || !(a.entity instanceof Mob m) || !m.hasAI() || !m.isValid()) continue;
             if (m instanceof com.destroystokyo.paper.entity.RangedEntity) continue;
             if (!(m.getTarget() instanceof Player target) || !fighting(target) || target.getWorld() != m.getWorld()) continue;
-            if (now - a.lastMelee < MELEE_TICKS) continue;
+            if (now - a.lastMelee < a.template.extra().attackTicks()) continue;
             AttributeInstance attack = m.getAttribute(Attribute.ATTACK_DAMAGE);
             if (attack == null || attack.getValue() <= 0) continue;
             org.bukkit.util.BoundingBox body = m.getBoundingBox(), aim = target.getBoundingBox();
             if (body.clone().expand(VANILLA_REACH, 0, VANILLA_REACH).overlaps(aim)) continue; // vanilla hits it
             if (!body.clone().expand(VANILLA_REACH + reachBonus, 0, VANILLA_REACH + reachBonus).overlaps(aim)) continue;
             if (!m.hasLineOfSight(target)) continue;
-            a.lastMelee = now;
+            // lastMelee is set by hitPlayer once the hit lands (set here, the hit would be refused as too soon)
             m.swingMainHand();
             a.animate("attack");
             m.attack(target);
@@ -1028,7 +1076,7 @@ public final class Mobs {
                     MobTemplate copy = new MobTemplate(a.template.id() + "_summon", type, "&7" + type.name().toLowerCase(), false, null,
                             maxHealth(e) * 0.15, a.baseDamage() * 0.6, 0.25, 0, 1, 0, Map.of(), List.of(),
                             new MobTemplate.Extra(1, 0.15, 0.6, false, false, 32, 0, List.of(), List.of(), null, List.of(), List.of(), List.of(),
-                                    List.of(), List.of(), List.of(), Map.of(), "TRASH"));
+                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1));
                     for (int i = 0; i < (int) ab.number("count", 2); i++) {
                         LivingEntity s = spawn(copy, at.clone().add(ThreadLocalRandom.current().nextDouble(-2, 2), 0, ThreadLocalRandom.current().nextDouble(-2, 2)), a.run);
                         if (s != null) onSummon.accept(e, s);

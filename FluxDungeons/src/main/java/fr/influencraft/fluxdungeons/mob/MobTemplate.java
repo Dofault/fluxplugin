@@ -37,6 +37,7 @@ import java.util.Map;
  *     - {type: slam, every: 7, power: 10, radius: 4, animation: attack, impact: 16}
  *   powers: [attack_blinding, invulnerability_fire]   # built-in powers, see Powers
  *   phases: [{mob: foundry_golem_p2, below: 0.5}]     # becomes another monster below this share of its life
+ *   attack-speed: 1                # melee hits per second at most (vanilla 1)
  *   mount: forge_horse
  *   messages: {death: [...], hit: [...], hurt: [...]}
  *   blocks: {spawn: ["-2,0,3/minecraft:iron_bars"], remove: [...]}   # relative to its spawn point
@@ -83,7 +84,12 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                         boolean baby, boolean frozen, double followRange, double leash, List<String> powers,
                         List<Phase> phases, String mount, List<Loot> loot, List<String> deathMessages,
                         List<String> hitMessages, List<String> hurtMessages, List<BlockState> spawnBlocks,
-                        List<BlockState> removeBlocks, Map<String, Script> scripts, String rank) {
+                        List<BlockState> removeBlocks, Map<String, Script> scripts, String rank,
+                        double attackSpeed) {
+        /** Ticks between two melee hits of this monster ({@code attack-speed}: hits per second, vanilla 1). */
+        public int attackTicks() {
+            return (int) Math.max(4, Math.round(20 / Math.max(0.05, attackSpeed)));
+        }
     }
 
     public static MobTemplate read(String id, ConfigurationSection c) {
@@ -128,7 +134,8 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                 c.getDouble("leash", 0), c.getStringList("powers"), phases, c.getString("mount"), loot,
                 c.getStringList("messages.death"), c.getStringList("messages.hit"), c.getStringList("messages.hurt"),
                 blocks(c.getStringList("blocks.spawn")), blocks(c.getStringList("blocks.remove")),
-                Script.parse(scriptSection), c.getString("rank", "TRASH").toUpperCase(Locale.ROOT));
+                Script.parse(scriptSection), c.getString("rank", "TRASH").toUpperCase(Locale.ROOT),
+                c.getDouble("attack-speed", 1));
         return new MobTemplate(id, type, c.getString("name", id), c.getBoolean("boss"), c.getString("model"),
                 c.getDouble("health", 20), c.getDouble("damage", 3), c.getDouble("speed", -1), c.getDouble("armor", 0),
                 c.getDouble("scale", 1), c.getDouble("xp", 10), equipment, abilities, extra);
