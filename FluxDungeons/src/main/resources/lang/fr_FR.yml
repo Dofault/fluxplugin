@@ -138,3 +138,6 @@ objective:
   boss: "&#FF5C5CVaincs %boss%"
   map: "&#FFD94DGardiens vaincus : &f%done%/%total%"
   done: "&#2ECF7BGardien vaincu ! &#B376E5Gardiens : &f%done%/%total%"
+
+item:
+  level: "&7Niveau d'objet : &f%level%"

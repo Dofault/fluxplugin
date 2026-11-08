@@ -138,3 +138,6 @@ objective:
   boss: "&#FF5C5CDefeat %boss%"
   map: "&#FFD94DGuardians defeated: &f%done%/%total%"
   done: "&#2ECF7BGuardian defeated! &#B376E5Guardians: &f%done%/%total%"
+
+item:
+  level: "&7Item level: &f%level%"
