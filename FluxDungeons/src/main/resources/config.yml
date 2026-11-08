@@ -78,7 +78,7 @@ pets:
     ground: WOLF
     flying: BEE
 
-# Attack cadence of weapons: a rule of the WHOLE server (PvP included), carried by FluxDungeons as it serves PvE first.
+# Attack cadence of weapons, in dungeons only (put on the weapons taken in when entering, taken off when leaving).
 # Attack cadence (as Wynncraft): a weapon attacks at its own pace, spam clicks do nothing until it is recharged,
 # the weapon visibly comes back slowly (slower for a slow weapon), the vanilla recharge indicator is hidden (empty
 # sprites over the pack influstatique). Hits always land at full charge. false: items lose it at their next refresh.
@@ -107,3 +107,8 @@ dungeon-reach-bonus: 1.5
 aim-assist:
   enabled: true
   radius: 1.8
+
+# Pack alert: a monster that spots a player (or is hit by one) brings in the calm monsters of the run within this many
+# blocks that see it (no chain). 0: each on its own.
+aggro:
+  alert-radius: 10

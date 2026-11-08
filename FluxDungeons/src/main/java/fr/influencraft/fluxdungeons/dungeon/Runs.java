@@ -90,6 +90,7 @@ public final class Runs {
         lobby.launcher(this::launch);
         this.pets = new PetFighters(plugin, mobs);
         loadouts.onOverflow((p, items) -> {
+            fr.influencraft.fluxdungeons.combat.AttackCadence.disarm(items.toArray(new ItemStack[0]));
             String id = store.addLost(p.getUniqueId(), "overflow", items.toArray(new ItemStack[0]), true);
             if (id != null) handBack(p.getUniqueId(), id, items.size(), plugin.messages().raw("lost.overflow-label"));
             plugin.messages().send(p, "lost.overflow");
@@ -130,6 +131,12 @@ public final class Runs {
     }
 
     private long shakeGap = 1000;
+    private fr.influencraft.fluxdungeons.combat.AttackCadence cadence;
+
+    /** Attack cadence: weapons armed when a player enters, disarmed when he leaves. */
+    public void cadence(fr.influencraft.fluxdungeons.combat.AttackCadence cadence) {
+        this.cadence = cadence;
+    }
 
     /** Minimum gap between two shakes of a player's screen while in a run. */
     public void shakeGap(long millis) {
@@ -504,6 +511,7 @@ public final class Runs {
             fr.influencraft.flux.api.pets.Companions.suppress(uuid, true);
             // many small hits: his screen shakes at most once a second (hit-reaction.screen-shake-ms)
             fr.influencraft.flux.api.client.HurtShake.limit(uuid, shakeGap);
+            if (cadence != null) cadence.arm(p);
             Loadouts.Selection chosen = run.selections.get(uuid);
             if (chosen != null) pets.spawn(p, chosen.pets(), run.checkpoint, context(p)::enemy);
             p.showTitle(Title.title(Texts.parse(plugin.messages().raw("run.title", "%dungeon%", run.def.name())),
@@ -538,6 +546,7 @@ public final class Runs {
             heroes.deactivate(player);
             player.setMaximumNoDamageTicks(20);
             Location back = loadouts.leave(player);
+            if (cadence != null) cadence.disarm(player);
             teleport(player, back != null ? back : Bukkit.getWorlds().get(0).getSpawnLocation());
         }
         if (run.players.isEmpty() && run.expected.isEmpty() && run.state != Run.State.PREPARING) cleanup(run);
@@ -1024,6 +1033,8 @@ public final class Runs {
         Run run = byPlayer.get(player.getUniqueId());
         if (run == null || run.state != Run.State.RUNNING) return;
         ItemStack[] carried = loadouts.strip(player);
+        fr.influencraft.fluxdungeons.combat.AttackCadence.disarm(carried);
+        if (cadence != null) cadence.disarm(player);
         String id = store.addLost(player.getUniqueId(), run.def.id(), carried, false);
         if (id == null && hasAny(carried)) {
             // could not lock it: never lose a player's things because of a database error

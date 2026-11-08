@@ -1,6 +1,5 @@
 package fr.influencraft.fluxdungeons.combat;
 
-import fr.influencraft.flux.api.items.ItemLooks;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ItemAttributeModifiers;
 import io.papermc.paper.datacomponent.item.SwingAnimation;
@@ -20,14 +19,15 @@ import org.bukkit.plugin.Plugin;
 import java.util.Map;
 
 /**
- * Attack cadence of the whole server (as Wynncraft): a weapon attacks at its own pace whatever the player clicks.
- * Carried by FluxDungeons because it serves the dungeons first, but it applies everywhere ({@code attack-cadence} of
- * FluxDungeons' config). In a dungeon it adds the aim assist ({@link Assist}).
+ * Attack cadence in dungeons (as Wynncraft): a weapon attacks at its own pace whatever the player clicks. Only in a
+ * run (decision of 2026-11-08, it was server-wide for a day): the weapons a player takes in get the components when
+ * he enters ({@link #arm}) and lose them when he leaves ({@link #disarm}); everywhere else clicks are vanilla. Also in
+ * a run: the swing particle and sound, and the aim assist ({@link Assist}).
  * <ul>
  *   <li>Every weapon (any item with an attack speed but mining tools: swords, axes, trident, mace) gets the vanilla item
  *   components {@code minimum_attack_charge} (the client refuses to attack before the weapon is recharged, so spam
  *   clicks do nothing) and {@code swing_animation} lasting the whole recharge (the weapon comes back slowly, slower
- *   for a slow weapon). Given through {@link ItemLooks#registerAny}, so vanilla items get it too.</li>
+ *   for a slow weapon). Given when he enters a run, vanilla items included.</li>
  *   <li>The server refuses an attack sent before the recharge (modified clients).</li>
  *   <li>The vanilla recharge indicator is hidden by the resource pack (empty sprites over those of the pack
  *   {@code influstatique}, {@code Flux/assets/gen_attack_indicator.py}).</li>
@@ -68,7 +68,30 @@ public final class AttackCadence implements Listener {
     private double assistRadius = 1.8;
 
     public AttackCadence(Plugin plugin) {
-        ItemLooks.registerAny(plugin, (id, item) -> enabled ? apply(item) : clear(item));
+    }
+
+    /** The player enters a run: every weapon he carries gets the cadence. */
+    public void arm(Player p) {
+        if (!enabled) return;
+        org.bukkit.inventory.PlayerInventory inv = p.getInventory();
+        for (int i = 0; i < inv.getSize(); i++) {
+            ItemStack item = inv.getItem(i);
+            if (item != null && !item.isEmpty() && apply(item)) inv.setItem(i, item);
+        }
+    }
+
+    /** The player left a run (or joins outside one): his items lose the cadence. */
+    public void disarm(Player p) {
+        org.bukkit.inventory.PlayerInventory inv = p.getInventory();
+        for (int i = 0; i < inv.getSize(); i++) {
+            ItemStack item = inv.getItem(i);
+            if (item != null && !item.isEmpty() && clear(item)) inv.setItem(i, item);
+        }
+    }
+
+    /** Items leaving a run another way (lost gear, overflow): the cadence taken off. */
+    public static void disarm(ItemStack[] items) {
+        for (ItemStack item : items) if (item != null && !item.isEmpty()) clear(item);
     }
 
     public void assist(Assist assist) {
@@ -97,7 +120,6 @@ public final class AttackCadence implements Listener {
         swingSound = c == null ? "minecraft:entity.player.attack.sweep" : sound == null || sound.isBlank() || sound.equalsIgnoreCase("none") ? null : sound;
         soundVolume = c == null ? 0.7f : (float) c.getDouble("swing-sound.volume", 0.7);
         soundPitch = c == null ? 1f : (float) c.getDouble("swing-sound.pitch", 1);
-        ItemLooks.refreshOnline();
     }
 
     /** Attack speed of an item (attacks per second, vanilla base 4 plus its modifiers), -1 when it has none. */
@@ -186,6 +208,7 @@ public final class AttackCadence implements Listener {
     public void onAttack(PrePlayerAttackEntityEvent e) {
         if (!enabled || !e.willAttack()) return;
         Player p = e.getPlayer();
+        if (assist.enemies(p) == null) return;
         ItemStack hand = p.getInventory().getItemInMainHand();
         if (hand.isEmpty() || !hand.isDataOverridden(DataComponentTypes.MINIMUM_ATTACK_CHARGE)) return;
         if (p.getAttackCooldown() + 0.1f < minimumCharge) e.setCancelled(true);
@@ -200,6 +223,7 @@ public final class AttackCadence implements Listener {
     public void onSwing(io.papermc.paper.event.player.PlayerArmSwingEvent e) {
         if (!enabled || swingParticle == null && swingSound == null || e.getHand() != EquipmentSlot.HAND) return;
         Player p = e.getPlayer();
+        if (assist.enemies(p) == null) return;
         ItemStack hand = p.getInventory().getItemInMainHand();
         if (hand.isEmpty() || !hand.isDataOverridden(DataComponentTypes.MINIMUM_ATTACK_CHARGE)) return;
         int now = org.bukkit.Bukkit.getCurrentTick();
@@ -289,6 +313,12 @@ public final class AttackCadence implements Listener {
             if (hit.getHitBlock() != null) distance = Math.max(0.8, distance - 0.3);
         }
         return eye.add(dir.multiply(distance)).subtract(0, 0.3, 0);
+    }
+
+    /** Items armed the day the cadence was server-wide, or left by a crash: taken off at join outside a run. */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onJoin(org.bukkit.event.player.PlayerJoinEvent e) {
+        if (assist.enemies(e.getPlayer()) == null) disarm(e.getPlayer());
     }
 
     @EventHandler

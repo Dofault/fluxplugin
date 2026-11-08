@@ -448,6 +448,39 @@ public final class Mobs {
         if (event) engine.fire(a, "EliteMobEnterCombatEvent", player, null);
     }
 
+    // ---------------------------------------------------------------- pack alert
+
+    /** Monsters this close to one that spots a player join the fight (aggro.alert-radius). */
+    private double alertRadius = 10;
+    /** True while a pack is being alerted: the monsters it wakes do not alert their own neighbours (no chain). */
+    private boolean alerting;
+
+    public void alertRadius(double blocks) {
+        alertRadius = Math.max(0, blocks);
+    }
+
+    /**
+     * A monster just spotted (or was hit by) a player: the calm monsters of its run around it that see it turn on that
+     * player too, as a pack (a skeleton that sees you warns those behind it). Only its direct neighbours, never further
+     * in a chain, so one pull never wakes the whole map.
+     */
+    private void alert(Alive a, Player player) {
+        if (alerting || alertRadius <= 0 || !fighting(player)) return;
+        alerting = true;
+        try {
+            double r2 = alertRadius * alertRadius;
+            for (Alive o : List.copyOf(alive.values())) {
+                if (o == a || o.inCombat || o.dying || !o.run.equals(a.run) || !(o.entity instanceof Mob m) || !m.hasAI()) continue;
+                if (o.entity.getWorld() != a.entity.getWorld() || o.entity.getLocation().distanceSquared(a.entity.getLocation()) > r2) continue;
+                if (!a.entity.hasLineOfSight(o.entity)) continue;
+                m.setTarget(player);
+                enterCombat(o, player, true);
+            }
+        } finally {
+            alerting = false;
+        }
+    }
+
     private static void base(LivingEntity e, Attribute attribute, double value) {
         AttributeInstance inst = e.getAttribute(attribute);
         if (inst != null) inst.setBaseValue(value);
@@ -490,7 +523,9 @@ public final class Mobs {
     public void damagedByPlayer(LivingEntity entity, Player player, EntityDamageEvent event) {
         Alive a = alive.get(entity.getUniqueId());
         if (a == null) return;
+        boolean wasCalm = !a.inCombat;
         enterCombat(a, player, true);
+        if (wasCalm) alert(a, player);
         a.damagers.merge(player.getUniqueId(), Math.min(event.getFinalDamage(), entity.getHealth()), Double::sum);
         engine.fire(a, "EliteMobDamagedByPlayerEvent", player, event);
         if (!a.template.extra().hurtMessages().isEmpty() && ThreadLocalRandom.current().nextDouble() < 0.15) say(a, a.template.extra().hurtMessages());
@@ -528,7 +563,9 @@ public final class Mobs {
     public void targeted(LivingEntity entity, Player player) {
         Alive a = alive.get(entity.getUniqueId());
         if (a == null) return;
+        boolean wasCalm = !a.inCombat;
         enterCombat(a, player, true);
+        if (wasCalm) alert(a, player);
         engine.fire(a, "EliteMobTargetPlayerEvent", player, null);
     }
 
