@@ -27,7 +27,10 @@ import java.util.Map;
  *   clicks do nothing) and {@code swing_animation} lasting the whole recharge (the weapon comes back slowly, slower
  *   for a slow weapon). Given through {@link ItemLooks#registerAny}, so vanilla items get it too.</li>
  *   <li>The server refuses an attack sent before the recharge (modified clients).</li>
- *   <li>The vanilla recharge indicator stays (pack {@code influstatique} styles it): it shows the same recharge.</li>
+ *   <li>The vanilla recharge indicator is hidden by the resource pack (empty sprites over those of the pack
+ *   {@code influstatique}, {@code Flux/assets/gen_attack_indicator.py}).</li>
+ *   <li>Every real swing (weapon recharged), on a target or in the air, shows a particle in front of the player
+ *   ({@code swing-particle}), so the attack is seen even when it hits nobody.</li>
  * </ul>
  * Hits always land at full charge: the damage is the vanilla one of a charged hit. Spears keep their own components.
  * Turned off ({@code combat.attack-cadence.enabled: false}), items lose the components at their next refresh.
@@ -37,6 +40,11 @@ public final class AttackCadence implements Listener {
     private boolean enabled = true;
     private float minimumCharge = 1f;
     private boolean slowSwing = true;
+    private org.bukkit.Particle swingParticle = org.bukkit.Particle.SWEEP_ATTACK;
+    /** Tick of each player's last attack let through (its swing packet comes after, recharge already reset). */
+    private final java.util.Map<java.util.UUID, Integer> attacked = new java.util.HashMap<>();
+    /** Tick of each player's last swing shown (one particle per swing). */
+    private final java.util.Map<java.util.UUID, Integer> shown = new java.util.HashMap<>();
 
     public AttackCadence(Plugin flux) {
         ItemLooks.registerAny(flux, (id, item) -> enabled ? apply(item) : clear(item));
@@ -46,6 +54,13 @@ public final class AttackCadence implements Listener {
         enabled = c == null || c.getBoolean("enabled", true);
         minimumCharge = c == null ? 1f : (float) Math.max(0, Math.min(1, c.getDouble("minimum-charge", 1)));
         slowSwing = c == null || c.getBoolean("slow-swing", true);
+        String particle = c == null ? "SWEEP_ATTACK" : c.getString("swing-particle", "SWEEP_ATTACK");
+        try {
+            swingParticle = particle == null || particle.isBlank() || particle.equalsIgnoreCase("none") ? null
+                    : org.bukkit.Particle.valueOf(particle.toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            swingParticle = org.bukkit.Particle.SWEEP_ATTACK;
+        }
         ItemLooks.refreshOnline();
     }
 
@@ -138,5 +153,33 @@ public final class AttackCadence implements Listener {
         ItemStack hand = p.getInventory().getItemInMainHand();
         if (hand.isEmpty() || !hand.isDataOverridden(DataComponentTypes.MINIMUM_ATTACK_CHARGE)) return;
         if (p.getAttackCooldown() + 0.1f < minimumCharge) e.setCancelled(true);
+        else attacked.put(p.getUniqueId(), org.bukkit.Bukkit.getCurrentTick());
+    }
+
+    /**
+     * A swing with a recharged weapon (or the swing of an attack just let through): a particle in front of the
+     * player, seen by everyone, even when the swing hits nobody.
+     */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onSwing(io.papermc.paper.event.player.PlayerArmSwingEvent e) {
+        if (!enabled || swingParticle == null || e.getHand() != EquipmentSlot.HAND) return;
+        Player p = e.getPlayer();
+        ItemStack hand = p.getInventory().getItemInMainHand();
+        if (hand.isEmpty() || !hand.isDataOverridden(DataComponentTypes.MINIMUM_ATTACK_CHARGE)) return;
+        int now = org.bukkit.Bukkit.getCurrentTick();
+        Integer hit = attacked.get(p.getUniqueId());
+        boolean real = hit != null && now - hit <= 1 || p.getAttackCooldown() + 0.1f >= minimumCharge;
+        Integer last = shown.get(p.getUniqueId());
+        if (!real || last != null && now - last < 4) return;
+        shown.put(p.getUniqueId(), now);
+        org.bukkit.Location eye = p.getEyeLocation();
+        org.bukkit.Location at = eye.add(eye.getDirection().multiply(1.6)).subtract(0, 0.35, 0);
+        p.getWorld().spawnParticle(swingParticle, at, 1, 0, 0, 0, 0);
+    }
+
+    @EventHandler
+    public void onQuit(org.bukkit.event.player.PlayerQuitEvent e) {
+        attacked.remove(e.getPlayer().getUniqueId());
+        shown.remove(e.getPlayer().getUniqueId());
     }
 }
