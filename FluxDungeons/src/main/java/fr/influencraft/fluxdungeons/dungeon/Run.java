@@ -40,6 +40,14 @@ public final class Run {
     /** Objectives of an imported map still alive (monster ids). */
     final Set<String> objectivesLeft = new LinkedHashSet<>();
     int objectivesTotal;
+    /** Room of each monster spawned from a spawn point that has one. */
+    final java.util.Map<UUID, String> mobRoom = new java.util.HashMap<>();
+    /** Monsters of each room killed so far. */
+    final java.util.Map<String, Integer> roomKills = new java.util.HashMap<>();
+    /** Doors already open. */
+    final java.util.Set<String> openDoors = new java.util.HashSet<>();
+    /** Counter shown on each door that opens with kills. */
+    final java.util.Map<String, org.bukkit.entity.TextDisplay> doorLabels = new java.util.HashMap<>();
     /** What each expected player chose on the launch screen, used when he enters. */
     final java.util.Map<UUID, fr.influencraft.fluxdungeons.Loadouts.Selection> selections = new java.util.HashMap<>();
     /** Monsters of an imported map not spawned yet: they appear when a player comes near (memory stays low). */

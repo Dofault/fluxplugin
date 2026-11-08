@@ -66,15 +66,55 @@ public final class DungeonDefinition {
     /** Console commands run on run events (enter, objective, victory, defeat, leave), one list per event. */
     private final Map<String, List<String>> commands = new LinkedHashMap<>();
 
-    /** A monster placed in an imported map, at the coordinates of the original world. */
-    public record Spawn(String mob, double x, double y, double z, float yaw) {
+    /**
+     * A monster placed in a map, at the coordinates of the original world, in a {@code room} (empty: none). The kills
+     * of a room's monsters open its doors.
+     */
+    public record Spawn(String mob, double x, double y, double z, float yaw, String room) {
+        public Spawn(String mob, double x, double y, double z, float yaw) {
+            this(mob, x, y, z, yaw, "");
+        }
+
+        public Spawn withRoom(String r) {
+            return new Spawn(mob, x, y, z, yaw, r == null ? "" : r);
+        }
+    }
+
+    /** How a door opens. */
+    public enum DoorType { PROXIMITY, KILLS }
+
+    /**
+     * A door of a map: the blocks between two corners, which disappear (sinking into the ground) when it opens: as soon
+     * as a player comes within {@code radius} blocks ({@link DoorType#PROXIMITY}), or once {@code kills} monsters of
+     * its {@code room} died ({@link DoorType#KILLS}; 0 = all of them).
+     */
+    public record Door(String id, DoorType type, int x1, int y1, int z1, int x2, int y2, int z2, String room, int kills, double radius) {
+        public boolean contains(int x, int y, int z) {
+            return x >= Math.min(x1, x2) && x <= Math.max(x1, x2) && y >= Math.min(y1, y2) && y <= Math.max(y1, y2)
+                    && z >= Math.min(z1, z2) && z <= Math.max(z1, z2);
+        }
+
+        public org.bukkit.util.BoundingBox box() {
+            return new org.bukkit.util.BoundingBox(Math.min(x1, x2), Math.min(y1, y2), Math.min(z1, z2),
+                    Math.max(x1, x2) + 1, Math.max(y1, y2) + 1, Math.max(z1, z2) + 1);
+        }
+
+        public Door with(DoorType t, String r, int k, double rad) {
+            return new Door(id, t, x1, y1, z1, x2, y2, z2, r == null ? "" : r, Math.max(0, k), Math.max(1, rad));
+        }
     }
 
     /**
      * An imported map: {@code folder} (world folder, relative to the plugin folder), {@code start} place, monsters at
-     * their spawn points, objectives (monsters whose death, last phase included, ends the dungeon).
+     * their spawn points, objectives (monsters whose death, last phase included, ends the dungeon), doors.
      */
-    public record MapSpec(String folder, double[] start, List<Spawn> spawns, List<String> objectives) {
+    public record MapSpec(String folder, double[] start, List<Spawn> spawns, List<String> objectives, List<Door> doors) {
+        /** Monsters placed in a room. */
+        public int roomSize(String room) {
+            int n = 0;
+            for (Spawn s : spawns) if (s.room().equals(room)) n++;
+            return n;
+        }
     }
 
     public DungeonDefinition(String id, ConfigurationSection c) {
@@ -127,9 +167,18 @@ public final class DungeonDefinition {
         List<Spawn> spawns = new ArrayList<>();
         for (Map<?, ?> s : m.getMapList("spawns")) {
             if (!(s.get("at") instanceof List<?> at) || at.size() < 3) continue;
-            spawns.add(new Spawn(String.valueOf(s.get("mob")), d(at.get(0)), d(at.get(1)), d(at.get(2)), at.size() > 3 ? (float) d(at.get(3)) : 0));
+            spawns.add(new Spawn(String.valueOf(s.get("mob")), d(at.get(0)), d(at.get(1)), d(at.get(2)), at.size() > 3 ? (float) d(at.get(3)) : 0,
+                    s.get("room") == null ? "" : String.valueOf(s.get("room"))));
         }
-        return new MapSpec(m.getString("folder", ""), start, spawns, m.getStringList("objectives"));
+        List<Door> doors = new ArrayList<>();
+        for (Map<?, ?> dm : m.getMapList("doors")) {
+            if (!(dm.get("from") instanceof List<?> a) || !(dm.get("to") instanceof List<?> b) || a.size() < 3 || b.size() < 3) continue;
+            DoorType type = "kills".equalsIgnoreCase(String.valueOf(dm.get("type"))) ? DoorType.KILLS : DoorType.PROXIMITY;
+            doors.add(new Door(String.valueOf(dm.get("id")), type, (int) d(a.get(0)), (int) d(a.get(1)), (int) d(a.get(2)),
+                    (int) d(b.get(0)), (int) d(b.get(1)), (int) d(b.get(2)), dm.get("room") == null ? "" : String.valueOf(dm.get("room")),
+                    dm.get("kills") instanceof Number n ? n.intValue() : 0, dm.get("radius") instanceof Number n ? n.doubleValue() : 4));
+        }
+        return new MapSpec(m.getString("folder", ""), start, spawns, m.getStringList("objectives"), doors);
     }
 
     private static double d(Object o) {

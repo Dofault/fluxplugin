@@ -1,78 +1,132 @@
-# Monsters of the dungeons. Ability types: leap, fireball, summon, slam, heal, shield, enrage.
-# every: seconds between two casts, below: only at or below this % of life.
+# Dungeon monsters written by hand (monsters imported from EliteMobs live in mobs/<dungeon>.yml).
+# Abilities: leap, fireball, arrow, volley, cone, taze, lightning, implosion, summon, slam, heal, shield, enrage,
+# and the rock ones: boulder (thrown rock), rockfall (rocks falling), quake (ring earthquake),
+# ice_spikes (line of ice spikes), stone_skin (stone skin).
+# every: seconds between two casts; below: only under this % of life; power: damage;
+# animation / impact: model animation and ticks before the effect. attack-speed: melee hits per second.
+# Dyed leather: "LEATHER_CHESTPLATE #7D7D7D". A block on the head (head: GRANITE) is worn as a helmet.
 
-forge_worker:
+# ─── Stonecutter dungeon ─────────────────────────────────────────────────────
+
+rochiste_tailleur:
   type: ZOMBIE
-  name: '&#FF922BScorched Worker'
-  health: 24
+  name: '&#B8B2AAStonecutter'
+  health: 30
   damage: 4
-  speed: 0.24
-  armor: 2
-  xp: 8
-  equipment:
-    hand: IRON_PICKAXE
-    head: LEATHER_HELMET
-  abilities:
-  - type: leap
-    every: 8
-ember_skeleton:
-  type: SKELETON
-  name: '&#FF6B35Ember Skeleton'
-  health: 18
-  damage: 3
   speed: 0.25
   xp: 10
   equipment:
-    hand: BOW
+    hand: STONE_PICKAXE
+    head: "LEATHER_HELMET #8A8580"
+    chest: "LEATHER_CHESTPLATE #6F6A64"
+    legs: "LEATHER_LEGGINGS #4E4A46"
+    feet: "LEATHER_BOOTS #3A3633"
   abilities:
-  - type: fireball
-    every: 6
-    speed: 1.2
-slag_brute:
-  type: VINDICATOR
-  name: '&#E63946Slag Brute'
-  health: 45
-  damage: 7
-  speed: 0.26
-  armor: 4
-  scale: 1.2
-  xp: 20
-  equipment:
-    hand: IRON_AXE
-  abilities:
-  - type: shield
-    every: 12
-    duration: 4
-  - type: leap
-    every: 9
-foundry_golem:
-  type: ZOMBIE
-  name: '&#F04A3A&lFoundry Golem'
-  boss: true
-  model: golem_fonderie
-  health: 420
-  damage: 9
-  speed: 0.2
-  armor: 8
-  scale: 1.6
-  xp: 150
-  abilities:
-  - type: slam
+  - type: boulder
     every: 7
-    power: 10
-    radius: 4
-    animation: attack
-    impact: 16
-  - type: summon
-    every: 18
-    below: 70
-    mob: forge_worker
-    count: 2
-  - type: shield
+    block: COBBLESTONE
+    size: 0.5
+    radius: 1.6
+    power: 4
+
+rochiste_lanceur:
+  type: HUSK
+  name: '&#D9B77ASandstone Thrower'
+  health: 26
+  damage: 3
+  speed: 0.23
+  xp: 12
+  equipment:
+    head: SANDSTONE
+    chest: "LEATHER_CHESTPLATE #C2A26B"
+    legs: "LEATHER_LEGGINGS #9C7F4E"
+    feet: "LEATHER_BOOTS #6E5836"
+  abilities:
+  - type: boulder
+    every: 6
+    block: SANDSTONE
+    size: 1.1
+    radius: 2.5
+    power: 7
+
+rochiste_sentinelle:
+  type: STRAY
+  name: '&#9FD6F0Frost Sentinel'
+  health: 24
+  damage: 3
+  speed: 0.24
+  xp: 12
+  equipment:
+    hand: BOW
+    head: PACKED_ICE
+    chest: "LEATHER_CHESTPLATE #9FD6F0"
+    legs: "LEATHER_LEGGINGS #6FB3D6"
+  abilities:
+  - type: ice_spikes
+    every: 9
+    range: 12
+    power: 5
+
+rochiste_golem:
+  type: ZOMBIE
+  name: '&#C0705AGranite Golem'
+  rank: MINIBOSS
+  health: 90
+  damage: 8
+  speed: 0.2
+  attack-speed: 0.7
+  scale: 1.5
+  xp: 40
+  equipment:
+    head: GRANITE
+    chest: "LEATHER_CHESTPLATE #9A5C48"
+    legs: "LEATHER_LEGGINGS #7A4535"
+    feet: "LEATHER_BOOTS #5A3226"
+  abilities:
+  - type: quake
+    every: 10
+    radius: 6
+    power: 6
+  - type: stone_skin
     every: 15
     below: 50
-    duration: 4
-  - type: enrage
-    every: 30
-    below: 35
-    duration: 10
+    duration: 5
+    level: 2
+
+rochiste_colosse:
+  type: RAVAGER
+  name: '&#7E6FA0&lAbyss Colossus'
+  boss: true
+  rank: BOSS
+  model: colosse_abime
+  health: 600
+  damage: 12
+  speed: 0.18
+  attack-speed: 0.6
+  xp: 200
+  abilities:
+  - type: quake
+    every: 9
+    animation: attack_stomp
+    impact: 20
+    radius: 8
+    power: 9
+  - type: boulder
+    every: 7
+    block: BASALT
+    size: 1.6
+    radius: 3
+    power: 8
+  - type: rockfall
+    every: 14
+    count: 8
+    spread: 3
+    block: COBBLED_DEEPSLATE
+    power: 7
+  - type: quake
+    every: 25
+    below: 40
+    animation: attack_ultimate
+    impact: 80
+    radius: 12
+    power: 12

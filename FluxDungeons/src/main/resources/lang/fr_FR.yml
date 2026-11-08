@@ -6,7 +6,7 @@ unknown-player: '&#FF5C5CJoueur introuvable.'
 not-in-run: '&#FF5C5CTu n''es pas dans un donjon.'
 dungeon-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_dungeon% [jouer <donjon> | quitter | classe [classe] | liste]'
 party-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_party% [inviter | accepter | quitter | expulser | chef] [joueur]'
-admin-usage: '!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% create <id> [monde] | voir [donjon] | edit <donjon> | build <donjon|all> | template <donjon> | start <donjon> <joueur> | stop <joueur|all> |
+admin-usage: '!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% create <id> [map|monde] | voir [donjon|map] | edit <donjon> | build <donjon|all> | template <donjon> | start <donjon> <joueur> | stop <joueur|all> |
   give <joueur> <objet> [n] | runs | reload'
 list-line: '&#FFD94D%dungeon% &8(&7%id%&8) &#B376E5%min% à %max% joueurs, niveau conseillé &f%level%'
 main:
@@ -138,12 +138,42 @@ edit:
   marker: '&#FFD94D%mob%'
   marker-objective: '&#FF5C5C★ %mob% &7(objectif)'
   marker-start: '&#2ECF7B▶ Départ'
+  marker-room: '&7[S%room%] '
+  marker-door-near: '&#FFD94DPorte &7: s''ouvre à &f%radius% &7blocs d''un joueur'
+  marker-door-kills: '&#FFD94DPorte &7: s''ouvre après &f%count% &7monstres de la salle &f%room% &7(&f%size% &7posés)'
+  room-current: '&#B376E5Les monstres posés vont maintenant dans la salle &f%room% &#B376E5(&f%count% &#B376E5déjà).'
+  room-set: '&#2ECF7B%mob% &#2ECF7Best dans la salle &f%room%&#2ECF7B.'
+  door-corner: '&#B376E5Premier coin noté, accroupi + clic droit sur le coin opposé.'
+  door-added: '&#2ECF7BPorte ajoutée.'
+  door-removed: '&#B376E5Porte oubliée, ses blocs restent.'
+  door:
+    title: Porte
+    body: '&#B376E5Une porte s''ouvre une fois pour toutes : à l''approche d''un joueur, ou quand les monstres de sa salle sont morts.'
+    kills-mode: S'ouvre après des monstres
+    kills-mode-desc: 'Coché : quand des monstres de la salle sont morts. Sinon : à l''approche d''un joueur.'
+    radius: Distance d'ouverture (blocs)
+    room: Salle
+    count: Monstres à tuer (0 = tous ceux de la salle)
+    save: Enregistrer
+    cancel: Annuler
   inventory-full: '&#FF5C5CInventaire plein : libère de la place pour recevoir les outils d''édition.'
   chosen: '&#2ECF7BMonstre choisi : &f%mob%&#2ECF7B. Clic droit pour le poser.'
   picked: '&#B376E5%mob% en main : clic droit sur un bloc pour le reposer, clic gauche pour le laisser où il était.'
   confirm-save: '&#2ECF7BClic droit encore une fois avec le colorant vert pour ENREGISTRER la map et les monstres.'
   confirm-quit: '&#FF5C5CClic droit encore une fois avec le colorant rouge pour QUITTER SANS ENREGISTRER : tes constructions seront perdues.'
   tool:
+    room:
+      name: '&#FFD94DSalle'
+      current: ' &7(salle %room%)'
+      description: 'Les monstres posés vont dans cette salle. Une porte peut s''ouvrir quand les monstres de sa salle sont morts. Clic droit : salle suivante (après la dernière, une nouvelle). Clic gauche ou droit sur un monstre posé : le mettre dans cette salle.'
+      action: Salle suivante
+      left: Salle précédente
+    door:
+      name: '&#FFD94DPorte'
+      description: 'Clic droit sur un bloc : construire une porte en bois de 6 de large et 5 de haut devant lui. Clic droit sur une porte : choisir quand elle s''ouvre. Clic gauche sur une porte : l''oublier (ses blocs restent).'
+      action: Construire / régler
+      left: Oublier la porte
+      sneak: Faire une porte avec les blocs entre deux coins
     place:
       name: '&#FFD94DPoser un monstre'
       chosen: ' &7(%mob%&7)'
@@ -240,3 +270,7 @@ lost:
   overflow: '&#B376E5Ton inventaire était plein : le reste t''attend dans &f[/%flux_cmd_flux_rewards%]&#B376E5.'
 pet:
   down: '&#FF5C5C%pet%&#FF5C5C est à terre.'
+door:
+  kills: '&#FF5C5C☠ &f%done%&7/&f%needed% &7monstres'
+  opened: '&#B376E5Une porte s''ouvre...'
+  opened-kills: '&#2ECF7BLa salle est nettoyée : la porte s''ouvre !'

@@ -18,15 +18,14 @@ import sys
 from PIL import Image
 
 STEPS = 32
-BAR_W, BAR_H = 64, 11
-FILL_X0, FILL_X1, FILL_Y0, FILL_Y1 = 2, 61, 2, 8   # inclusive
-BAR_ASCENT = 8
+BAR_W, BAR_H = 62, 8
+FILL_X0, FILL_X1, FILL_Y0, FILL_Y1 = 1, 60, 1, 6   # inclusive: a 1 px outline around 6 rows of fill
+BAR_ASCENT = 7
 
 OUTLINE = (13, 13, 13, 255)
 EMPTY = (52, 12, 20, 255)
-EMPTY_DARK = (36, 8, 14, 255)
 FILL = [(255, 150, 150, 255), (255, 92, 92, 255), (247, 78, 82, 255), (236, 64, 74, 255), (222, 52, 66, 255),
-        (200, 37, 58, 255), (150, 24, 43, 255)]                                  # top to bottom, 7 rows
+        (200, 37, 58, 255)]                                                      # top to bottom, 6 rows
 EDGE = (255, 205, 205, 255)
 DIGIT, DIGIT_SHADOW = (255, 255, 255, 255), (70, 0, 12, 255)
 
@@ -44,8 +43,6 @@ def bar(step):
                 continue
             if x in (0, BAR_W - 1) or y in (0, BAR_H - 1):
                 px[x, y] = OUTLINE
-            elif x in (1, BAR_W - 2) or y in (1, BAR_H - 2):
-                px[x, y] = EMPTY_DARK
             else:
                 px[x, y] = EMPTY
     width = FILL_X1 - FILL_X0 + 1

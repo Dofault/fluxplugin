@@ -6,7 +6,7 @@ unknown-player: '&#FF5C5CPlayer not found.'
 not-in-run: '&#FF5C5CYou are not in a dungeon.'
 dungeon-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_dungeon% [play <dungeon> | leave | class [class] | list]'
 party-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_party% [invite | accept | leave | kick | leader] [player]'
-admin-usage: '!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% create <id> [world] | visit [dungeon] | edit <dungeon> | build <dungeon|all> | template <dungeon> | start <dungeon> <player> | stop <player|all>
+admin-usage: '!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% create <id> [map|world] | visit [dungeon|map] | edit <dungeon> | build <dungeon|all> | template <dungeon> | start <dungeon> <player> | stop <player|all>
   | give <player> <item> [n] | runs | reload'
 list-line: '&#FFD94D%dungeon% &8(&7%id%&8) &#B376E5%min% to %max% players, recommended level &f%level%'
 main:
@@ -138,12 +138,42 @@ edit:
   marker: '&#FFD94D%mob%'
   marker-objective: '&#FF5C5C★ %mob% &7(objective)'
   marker-start: '&#2ECF7B▶ Start'
+  marker-room: '&7[R%room%] '
+  marker-door-near: '&#FFD94DDoor &7: opens within &f%radius% &7blocks of a player'
+  marker-door-kills: '&#FFD94DDoor &7: opens after &f%count% &7monsters of room &f%room% &7(&f%size% &7placed)'
+  room-current: '&#B376E5Monsters placed now go into room &f%room% &#B376E5(&f%count% &#B376E5already).'
+  room-set: '&#2ECF7B%mob% &#2ECF7Bis in room &f%room%&#2ECF7B.'
+  door-corner: '&#B376E5First corner noted, sneak + right click the opposite corner.'
+  door-added: '&#2ECF7BDoor added.'
+  door-removed: '&#B376E5Door forgotten, its blocks stay.'
+  door:
+    title: Door
+    body: '&#B376E5A door opens once and for all: when a player comes near, or when the monsters of its room are dead.'
+    kills-mode: Opens after monsters
+    kills-mode-desc: 'Ticked: when monsters of the room are dead. Else: when a player comes near.'
+    radius: Opening distance (blocks)
+    room: Room
+    count: Monsters to kill (0 = all those of the room)
+    save: Save
+    cancel: Cancel
   inventory-full: '&#FF5C5CInventory full: make room to receive the edit tools.'
   chosen: '&#2ECF7BChosen monster: &f%mob%&#2ECF7B. Right click to place it.'
   picked: '&#B376E5%mob% picked up: right click a block to put it down, left click to leave it where it was.'
   confirm-save: '&#2ECF7BRight click once more with the green dye to SAVE the map and the monsters.'
   confirm-quit: '&#FF5C5CRight click once more with the red dye to QUIT WITHOUT SAVING: your builds will be lost.'
   tool:
+    room:
+      name: '&#FFD94DRoom'
+      current: ' &7(room %room%)'
+      description: 'Monsters placed go into this room. A door may open once the monsters of its room are dead. Right click: next room (after the last one, a new one). Left or right click a placed monster: put it in this room.'
+      action: Next room
+      left: Previous room
+    door:
+      name: '&#FFD94DDoor'
+      description: 'Right click a block: build a wooden door 6 wide and 5 high in front of it. Right click a door: choose when it opens. Left click a door: forget it (its blocks stay).'
+      action: Build / set up
+      left: Forget the door
+      sneak: Make a door of the blocks between two corners
     place:
       name: '&#FFD94DPlace a monster'
       chosen: ' &7(%mob%&7)'
@@ -240,3 +270,7 @@ lost:
   overflow: '&#B376E5Your inventory was full: the rest waits in &f[/%flux_cmd_flux_rewards%]&#B376E5.'
 pet:
   down: '&#FF5C5C%pet%&#FF5C5C is down.'
+door:
+  kills: '&#FF5C5C☠ &f%done%&7/&f%needed% &7monsters'
+  opened: '&#B376E5A door opens...'
+  opened-kills: '&#2ECF7BThe room is cleared: the door opens!'

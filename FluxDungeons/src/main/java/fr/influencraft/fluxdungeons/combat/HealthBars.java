@@ -48,7 +48,7 @@ import java.util.function.Predicate;
 public final class HealthBars implements Listener {
 
     // numbers of the font, the same as gen_healthbar.py
-    private static final int STEPS = 32, BAR_ADVANCE = 65, BAR_WIDTH = 64, DIGIT_ADVANCE = 6;
+    private static final int STEPS = 32, BAR_ADVANCE = 63, BAR_WIDTH = 62, DIGIT_ADVANCE = 6;
     /** How far in front of the bar the life is drawn (blocks, towards the viewer). */
     private static final float FRONT = 0.02f;
     private static final String TAG = "fluxdungeons_bar";

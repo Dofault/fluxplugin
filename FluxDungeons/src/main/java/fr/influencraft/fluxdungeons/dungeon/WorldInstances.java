@@ -214,6 +214,21 @@ final class WorldInstances {
         });
     }
 
+    /** Copies a map folder (not loaded) into a new one, off the server thread; {@code done} on the server thread. */
+    void copyFolder(File source, File target, Consumer<Boolean> done) {
+        disk.execute(() -> {
+            boolean ok = true;
+            try {
+                copyTree(source.toPath(), target.toPath());
+            } catch (IOException e) {
+                plugin.getLogger().severe("Could not copy " + source + " into " + target + ": " + e.getMessage());
+                ok = false;
+            }
+            boolean result = ok;
+            if (plugin.isEnabled()) Bukkit.getScheduler().runTask(plugin, () -> done.accept(result));
+        });
+    }
+
     /** Folders of run worlds left by a crash: deleted at start. */
     void sweep() {
         File[] left = dimension("x").getParentFile().listFiles((d, n) -> n.startsWith("fd_") || n.startsWith("fde_"));

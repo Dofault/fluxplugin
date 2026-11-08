@@ -198,6 +198,7 @@ public final class Mobs {
         });
         Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 10L, 10L);
         Bukkit.getScheduler().runTaskTimer(plugin, this::reachTick, 2L, 2L);
+        this.rock = new RockPowers(plugin);
     }
 
     /** Loads every monster file (mobs.yml first, then each file of mobs/). */
@@ -295,6 +296,10 @@ public final class Mobs {
                 eq.clear();
                 t.equipment().forEach((slot, material) -> {
                     ItemStack item = new ItemStack(material);
+                    org.bukkit.Color dye = x.dyes().get(slot);
+                    if (dye != null) item.editMeta(m -> {
+                        if (m instanceof org.bukkit.inventory.meta.LeatherArmorMeta lm) lm.setColor(dye);
+                    });
                     switch (slot) {
                         case "head" -> eq.setHelmet(item);
                         case "chest" -> eq.setChestplate(item);
@@ -455,7 +460,11 @@ public final class Mobs {
         }
     }
 
+    /** Moving blocks of the rock abilities. */
+    private RockPowers rock;
+
     public void removeAll() {
+        if (rock != null) rock.clear();
         for (Alive a : alive.values()) {
             close(a);
             a.entity.remove();
@@ -870,6 +879,20 @@ public final class Mobs {
     private void cast(Alive a, Ability ab, Player target) {
         LivingEntity e = a.entity;
         if (!e.isValid()) return;
+        // rock and ice abilities (boulder, rockfall, quake, ice_spikes, stone_skin)
+        if (rock.cast(ab, new RockPowers.Caster() {
+            public LivingEntity entity() {
+                return e;
+            }
+
+            public void hit(Player p, double fallback) {
+                strike(a, p, ab, fallback);
+            }
+
+            public void animate(String animation) {
+                a.animate(animation);
+            }
+        }, target)) return;
         World w = e.getWorld();
         Location at = e.getLocation();
         switch (ab.type()) {
@@ -974,7 +997,7 @@ public final class Mobs {
                     MobTemplate copy = new MobTemplate(a.template.id() + "_summon", type, "&7" + type.name().toLowerCase(), false, null,
                             maxHealth(e) * 0.15, a.baseDamage() * 0.6, 0.25, 0, 1, 0, Map.of(), List.of(),
                             new MobTemplate.Extra(1, 0.15, 0.6, false, false, 32, 0, List.of(), List.of(), null, List.of(), List.of(), List.of(),
-                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1));
+                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of()));
                     for (int i = 0; i < (int) ab.number("count", 2); i++) {
                         LivingEntity s = spawn(copy, at.clone().add(ThreadLocalRandom.current().nextDouble(-2, 2), 0, ThreadLocalRandom.current().nextDouble(-2, 2)), a.run);
                         if (s != null) onSummon.accept(e, s);

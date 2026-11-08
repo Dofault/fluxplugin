@@ -32,7 +32,7 @@ import java.util.Map;
  *   frozen: false                  # no AI until a script wakes it up
  *   follow-range: 32
  *   leash: 0                       # pulled back to its spawn beyond this distance (0: never)
- *   equipment: {hand: IRON_AXE, head: IRON_HELMET}
+ *   equipment: {hand: IRON_AXE, head: IRON_HELMET, chest: "LEATHER_CHESTPLATE #7D7D7D"}   # leather may be dyed
  *   abilities:                     # our simple abilities, see Mobs
  *     - {type: slam, every: 7, power: 10, radius: 4, animation: attack, impact: 16}
  *   powers: [attack_blinding, invulnerability_fire]   # built-in powers, see Powers
@@ -85,7 +85,7 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                         List<Phase> phases, String mount, List<Loot> loot, List<String> deathMessages,
                         List<String> hitMessages, List<String> hurtMessages, List<BlockState> spawnBlocks,
                         List<BlockState> removeBlocks, Map<String, Script> scripts, String rank,
-                        double attackSpeed) {
+                        double attackSpeed, Map<String, org.bukkit.Color> dyes) {
         /** Ticks between two melee hits of this monster ({@code attack-speed}: hits per second, vanilla 1). */
         public int attackTicks() {
             return (int) Math.max(4, Math.round(20 / Math.max(0.05, attackSpeed)));
@@ -100,11 +100,18 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
             type = EntityType.ZOMBIE;
         }
         Map<String, Material> equipment = new LinkedHashMap<>();
+        Map<String, org.bukkit.Color> dyes = new LinkedHashMap<>();
         ConfigurationSection eq = c.getConfigurationSection("equipment");
         if (eq != null) {
             for (String slot : eq.getKeys(false)) {
-                Material m = Material.matchMaterial(eq.getString(slot, ""));
-                if (m != null) equipment.put(slot.toLowerCase(Locale.ROOT), m);
+                // "LEATHER_CHESTPLATE #7D7D7D": leather pieces may carry a colour
+                String[] spec = eq.getString(slot, "").trim().split("\\s+");
+                Material m = Material.matchMaterial(spec[0]);
+                if (m == null) continue;
+                equipment.put(slot.toLowerCase(Locale.ROOT), m);
+                if (spec.length > 1 && spec[1].matches("#?[0-9A-Fa-f]{6}")) {
+                    dyes.put(slot.toLowerCase(Locale.ROOT), org.bukkit.Color.fromRGB(Integer.parseInt(spec[1].replace("#", ""), 16)));
+                }
             }
         }
         List<Ability> abilities = new ArrayList<>();
@@ -135,7 +142,7 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                 c.getStringList("messages.death"), c.getStringList("messages.hit"), c.getStringList("messages.hurt"),
                 blocks(c.getStringList("blocks.spawn")), blocks(c.getStringList("blocks.remove")),
                 Script.parse(scriptSection), c.getString("rank", "TRASH").toUpperCase(Locale.ROOT),
-                c.getDouble("attack-speed", 1));
+                c.getDouble("attack-speed", 1), dyes);
         return new MobTemplate(id, type, c.getString("name", id), c.getBoolean("boss"), c.getString("model"),
                 c.getDouble("health", 20), c.getDouble("damage", 3), c.getDouble("speed", -1), c.getDouble("armor", 0),
                 c.getDouble("scale", 1), c.getDouble("xp", 10), equipment, abilities, extra);

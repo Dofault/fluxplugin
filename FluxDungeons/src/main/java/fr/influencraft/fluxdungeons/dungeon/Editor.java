@@ -60,6 +60,11 @@ import java.util.function.Function;
  *   the list of the dungeon's monsters to choose one.</li>
  *   <li>Move: right click a point picks it up, right click a block puts it down.</li>
  *   <li>Remove, objective: right click a point (or near one).</li>
+ *   <li>Room: right click changes the room new monsters are put in; on a monster (either click), puts it in that
+ *   room. The kills of a room's monsters open its doors.</li>
+ *   <li>Door: right click a block builds a wooden door 6 wide and 5 high in front of it (sneak + right click two
+ *   corners: the blocks between become a door); right click a door sets how it opens (when a player comes near, or
+ *   once monsters of a room died); left click a door forgets it (its blocks stay).</li>
  *   <li>Start: right click a block (or the air: where the player stands).</li>
  *   <li>Save, quit without saving: two right clicks.</li>
  * </ul>
@@ -75,6 +80,7 @@ public final class Editor implements Listener {
         final World world;
         final List<DungeonDefinition.Spawn> spawns;
         final Set<String> objectives;
+        final List<DungeonDefinition.Door> doors;
         final List<String> catalog;
         double[] start;
         final Map<String, Entity[]> markers = new HashMap<>();
@@ -85,6 +91,7 @@ public final class Editor implements Listener {
             this.world = world;
             this.spawns = new ArrayList<>(map.spawns());
             this.objectives = new LinkedHashSet<>(map.objectives());
+            this.doors = new ArrayList<>(map.doors());
             this.start = map.start().clone();
             Set<String> c = new LinkedHashSet<>();
             for (DungeonDefinition.Spawn sp : map.spawns()) c.add(sp.mob());
@@ -113,7 +120,8 @@ public final class Editor implements Listener {
 
     private enum Tool {
         PLACE(Material.ZOMBIE_SPAWN_EGG), MOVE(Material.LEAD), REMOVE(Material.BARRIER), OBJECTIVE(Material.NETHER_STAR),
-        START(Material.RECOVERY_COMPASS), SAVE(Material.LIME_DYE), QUIT(Material.RED_DYE);
+        ROOM(Material.NAME_TAG), DOOR(Material.SPRUCE_DOOR), START(Material.RECOVERY_COMPASS), SAVE(Material.LIME_DYE),
+        QUIT(Material.RED_DYE);
 
         final Material material;
 
@@ -146,6 +154,10 @@ public final class Editor implements Listener {
     private final Map<UUID, String> carried = new HashMap<>();
     /** First click of a save or quit: the tool and when (the second click must be on the same tool). */
     private final Map<UUID, Map.Entry<Tool, Long>> confirm = new HashMap<>();
+    /** Room each editor puts new monsters in. */
+    private final Map<UUID, String> rooms = new HashMap<>();
+    /** First corner of a door being drawn (sneak + right click with the door tool). */
+    private final Map<UUID, Block> corners = new HashMap<>();
 
     Editor(FluxPlugin plugin, WorldInstances instances, Function<String, DungeonDefinition> definitions, Mobs mobs) {
         this.plugin = plugin;
@@ -300,6 +312,7 @@ public final class Editor implements Listener {
         chosen.remove(p.getUniqueId());
         carried.remove(p.getUniqueId());
         confirm.remove(p.getUniqueId());
+        corners.remove(p.getUniqueId());
     }
 
     // ---------------------------------------------------------------- tools
@@ -325,8 +338,10 @@ public final class Editor implements Listener {
         String chosenMob = chosen.get(p.getUniqueId());
         String name = plugin.messages().raw("edit.tool." + t.key() + ".name");
         if (t == Tool.PLACE && chosenMob != null) name += plugin.messages().raw("edit.tool.place.chosen", "%mob%", mobName(chosenMob));
+        if (t == Tool.ROOM) name += plugin.messages().raw("edit.tool.room.current", "%room%", room(p));
         Lore l = Lore.create().description(plugin.messages().raw("edit.tool." + t.key() + ".description"));
-        if (t == Tool.PLACE || t == Tool.MOVE) l.left(plugin.messages().raw("edit.tool." + t.key() + ".left"));
+        if (t == Tool.PLACE || t == Tool.MOVE || t == Tool.ROOM || t == Tool.DOOR) l.left(plugin.messages().raw("edit.tool." + t.key() + ".left"));
+        if (t == Tool.DOOR) l.shiftRight(plugin.messages().raw("edit.tool.door.sneak"));
         List<String> lore = l.right(plugin.messages().raw("edit.tool." + t.key() + ".action")).build();
         ItemStack item = Items.of(t.material.name(), name, lore, p);
         item.editMeta(m -> m.getPersistentDataContainer().set(toolKey, PersistentDataType.STRING, t.key()));
@@ -342,8 +357,17 @@ public final class Editor implements Listener {
     }
 
     private void refreshPlaceTool(Player p) {
+        refreshTool(p, Tool.PLACE);
+    }
+
+    private void refreshTool(Player p, Tool t) {
         ItemStack[] contents = p.getInventory().getContents();
-        for (int i = 0; i < contents.length; i++) if (toolOf(contents[i]) == Tool.PLACE) p.getInventory().setItem(i, tool(p, Tool.PLACE));
+        for (int i = 0; i < contents.length; i++) if (toolOf(contents[i]) == t) p.getInventory().setItem(i, tool(p, t));
+    }
+
+    /** Room this editor puts new monsters in ("1" at first). */
+    private String room(Player p) {
+        return rooms.getOrDefault(p.getUniqueId(), "1");
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -364,6 +388,8 @@ public final class Editor implements Listener {
             // left click with the place tool: choose the monster
             if (t == Tool.PLACE) openMenu(p, s, 0);
             else if (t == Tool.MOVE) letGo(p, s);
+            else if (t == Tool.ROOM) nextRoom(p, s, -1);
+            else if (t == Tool.DOOR && e.getClickedBlock() != null) forgetDoor(p, s, e.getClickedBlock());
             return;
         }
         Block clicked = e.getAction() == Action.RIGHT_CLICK_BLOCK ? e.getClickedBlock() : null;
@@ -388,6 +414,10 @@ public final class Editor implements Listener {
                 if (i < 0) plugin.messages().send(p, "edit.none-near");
                 else if (t == Tool.REMOVE) removeAt(p, s, i);
                 else toggleObjective(p, s, i);
+            }
+            case ROOM -> nextRoom(p, s, 1);
+            case DOOR -> {
+                if (clicked != null) doorClick(p, s, clicked, e.getBlockFace());
             }
             case START -> startAt(p, s, at);
             case SAVE, QUIT -> finish(p, t);
@@ -435,6 +465,9 @@ public final class Editor implements Listener {
                 if (mob == null) openMenu(p, s, 0);
                 else addAt(p, s, mob, hit.getLocation());
             }
+            case ROOM -> setRoom(p, s, i);
+            case DOOR -> {
+            }
             case START -> startAt(p, s, hit.getLocation());
             case SAVE, QUIT -> finish(p, t);
         }
@@ -453,6 +486,11 @@ public final class Editor implements Listener {
         if (s == null || s.saving) return;
         if (held == Tool.MOVE) {
             letGo(p, s);
+            return;
+        }
+        if (held == Tool.ROOM) {
+            int r = indexOf(s, key);
+            if (r >= 0) setRoom(p, s, r);
             return;
         }
         if (held != Tool.PLACE) return;
@@ -625,7 +663,7 @@ public final class Editor implements Listener {
     // ---------------------------------------------------------------- points (shared)
 
     private void addAt(Player p, Session s, String mob, Location l) {
-        s.spawns.add(new DungeonDefinition.Spawn(mob, round(l.getX()), round(l.getY()), round(l.getZ()), Math.round(l.getYaw())));
+        s.spawns.add(new DungeonDefinition.Spawn(mob, round(l.getX()), round(l.getY()), round(l.getZ()), Math.round(l.getYaw()), room(p)));
         if (!s.catalog.contains(mob)) s.catalog.add(mob);
         changed(s);
         Sounds.cue(p, "success");
@@ -665,7 +703,7 @@ public final class Editor implements Listener {
         int i = indexOf(s, key);
         if (i < 0) return;
         DungeonDefinition.Spawn old = s.spawns.get(i);
-        s.spawns.set(i, new DungeonDefinition.Spawn(old.mob(), round(l.getX()), round(l.getY()), round(l.getZ()), Math.round(l.getYaw())));
+        s.spawns.set(i, new DungeonDefinition.Spawn(old.mob(), round(l.getX()), round(l.getY()), round(l.getZ()), Math.round(l.getYaw()), old.room()));
         changed(s);
         Sounds.cue(p, "success");
         plugin.messages().send(p, "edit.moved", "%mob%", mobName(old.mob()));
@@ -685,6 +723,171 @@ public final class Editor implements Listener {
         Sounds.cue(p, now ? "toggle-on" : "toggle-off");
         plugin.messages().send(p, now ? "edit.objective-on" : "edit.objective-off", "%mob%", mobName(mob),
                 "%objectives%", String.valueOf(s.objectives.size()));
+    }
+
+    // ---------------------------------------------------------------- rooms
+
+    /** Every room of the map: those of its monsters and doors, in order ("1", "2"...). */
+    private static List<String> roomsOf(Session s) {
+        Set<String> all = new java.util.TreeSet<>((a, b) -> {
+            try {
+                return Integer.compare(Integer.parseInt(a), Integer.parseInt(b));
+            } catch (NumberFormatException e) {
+                return a.compareTo(b);
+            }
+        });
+        for (DungeonDefinition.Spawn sp : s.spawns) if (!sp.room().isEmpty()) all.add(sp.room());
+        for (DungeonDefinition.Door d : s.doors) if (!d.room().isEmpty()) all.add(d.room());
+        return new ArrayList<>(all);
+    }
+
+    /** Next (or previous) room for new monsters; past the last one, a new room. */
+    private void nextRoom(Player p, Session s, int step) {
+        List<String> all = roomsOf(s);
+        String current = room(p);
+        int i = all.indexOf(current);
+        String next;
+        if (step > 0) {
+            if (i >= 0 && i + 1 < all.size()) next = all.get(i + 1);
+            else {
+                int max = 0;
+                for (String r : all) try {
+                    max = Math.max(max, Integer.parseInt(r));
+                } catch (NumberFormatException ignored) {
+                    // a room named by hand
+                }
+                next = i < 0 && !all.isEmpty() ? all.get(0) : String.valueOf(max + 1);
+            }
+        } else {
+            next = i > 0 ? all.get(i - 1) : all.isEmpty() ? "1" : all.get(all.size() - 1);
+        }
+        rooms.put(p.getUniqueId(), next);
+        refreshTool(p, Tool.ROOM);
+        Sounds.cue(p, "click");
+        plugin.messages().send(p, "edit.room-current", "%room%", next, "%count%",
+                String.valueOf(s.spawns.stream().filter(sp -> sp.room().equals(next)).count()));
+    }
+
+    private void setRoom(Player p, Session s, int i) {
+        DungeonDefinition.Spawn sp = s.spawns.get(i);
+        s.spawns.set(i, sp.withRoom(room(p)));
+        changed(s);
+        Sounds.cue(p, "success");
+        plugin.messages().send(p, "edit.room-set", "%mob%", mobName(sp.mob()), "%room%", room(p));
+    }
+
+    // ---------------------------------------------------------------- doors
+
+    private static DungeonDefinition.Door doorAt(Session s, Block b) {
+        for (DungeonDefinition.Door d : s.doors) if (d.contains(b.getX(), b.getY(), b.getZ())) return d;
+        return null;
+    }
+
+    /** Right click with the door tool: set up the door clicked, draw one from two corners, or build a new one. */
+    private void doorClick(Player p, Session s, Block clicked, BlockFace face) {
+        DungeonDefinition.Door existing = doorAt(s, clicked);
+        if (existing != null && !p.isSneaking()) {
+            doorDialog(p, s, existing);
+            return;
+        }
+        if (p.isSneaking()) {
+            Block first = corners.remove(p.getUniqueId());
+            if (first == null || !first.getWorld().equals(clicked.getWorld())) {
+                corners.put(p.getUniqueId(), clicked);
+                Sounds.cue(p, "click");
+                plugin.messages().send(p, "edit.door-corner");
+                return;
+            }
+            addDoor(p, s, first, clicked);
+            return;
+        }
+        buildDoor(p, s, clicked, face);
+    }
+
+    /** A wooden door 6 wide and 5 high, across the way the player looks, standing in front of the clicked face. */
+    private void buildDoor(Player p, Session s, Block clicked, BlockFace face) {
+        Block base = face == null || face == BlockFace.DOWN ? clicked.getRelative(BlockFace.UP) : clicked.getRelative(face);
+        if (face == BlockFace.UP || face == null) base = clicked.getRelative(BlockFace.UP);
+        float yaw = (p.getLocation().getYaw() % 360 + 360) % 360;
+        boolean alongX = (yaw >= 45 && yaw < 135) || (yaw >= 225 && yaw < 315) ? false : true;
+        // the player looks along z: the door spreads along x (and the other way round)
+        int dx = alongX ? 1 : 0, dz = alongX ? 0 : 1;
+        org.bukkit.Axis side = alongX ? org.bukkit.Axis.X : org.bukkit.Axis.Z;
+        for (int w = -2; w <= 3; w++) {
+            for (int h = 0; h < 5; h++) {
+                Block b = base.getRelative(dx * w, h, dz * w);
+                Material m;
+                org.bukkit.Axis axis = org.bukkit.Axis.Y;
+                if (w == -2 || w == 3) m = Material.SPRUCE_LOG;
+                else if (h == 4) {
+                    m = Material.DARK_OAK_LOG;
+                    axis = side;
+                } else if (h == 2) {
+                    m = Material.STRIPPED_SPRUCE_LOG;
+                    axis = side;
+                } else m = Material.SPRUCE_PLANKS;
+                b.setType(m, false);
+                if (b.getBlockData() instanceof org.bukkit.block.data.Orientable o) {
+                    o.setAxis(axis);
+                    b.setBlockData(o, false);
+                }
+            }
+        }
+        addDoor(p, s, base.getRelative(dx * -2, 0, dz * -2), base.getRelative(dx * 3, 4, dz * 3));
+        s.world.playSound(base.getLocation(), org.bukkit.Sound.BLOCK_WOOD_PLACE, 1f, 0.8f);
+    }
+
+    private void addDoor(Player p, Session s, Block a, Block b) {
+        String id = "door" + (System.currentTimeMillis() % 100000);
+        DungeonDefinition.Door d = new DungeonDefinition.Door(id, DungeonDefinition.DoorType.PROXIMITY,
+                a.getX(), a.getY(), a.getZ(), b.getX(), b.getY(), b.getZ(), room(p), 0, 4);
+        s.doors.add(d);
+        changed(s);
+        Sounds.cue(p, "success");
+        plugin.messages().send(p, "edit.door-added");
+        doorDialog(p, s, d);
+    }
+
+    private void forgetDoor(Player p, Session s, Block b) {
+        DungeonDefinition.Door d = doorAt(s, b);
+        if (d == null) return;
+        s.doors.remove(d);
+        changed(s);
+        Sounds.cue(p, "remove");
+        plugin.messages().send(p, "edit.door-removed");
+    }
+
+    /** How the door opens: near a player (radius), or once monsters of a room died (room, how many: 0 = all). */
+    private void doorDialog(Player p, Session s, DungeonDefinition.Door d) {
+        var m = plugin.messages();
+        fr.influencraft.flux.api.dialog.Dialogs.form(p, m.raw("edit.door.title")).width(300)
+                .body(m.raw("edit.door.body"))
+                .toggle("kills", m.raw("edit.door.kills-mode"), d.type() == DungeonDefinition.DoorType.KILLS, m.raw("edit.door.kills-mode-desc"))
+                .amount("radius", m.raw("edit.door.radius"), Math.round(d.radius()), 1, 32)
+                .input("room", m.raw("edit.door.room"), d.room().isEmpty() ? room(p) : d.room(), 16)
+                .amount("count", m.raw("edit.door.count"), d.kills(), 0, 999)
+                .buttons(m.raw("edit.door.save"), m.raw("edit.door.cancel"))
+                .onSubmit((pl, ans) -> {
+                    int i = s.doors.indexOf(d);
+                    if (i < 0 || s.saving) return;
+                    String r = ans.text("room") == null ? "" : ans.text("room").trim();
+                    DungeonDefinition.Door now = d.with(ans.toggle("kills") ? DungeonDefinition.DoorType.KILLS : DungeonDefinition.DoorType.PROXIMITY,
+                            r, (int) ans.amount("count"), ans.amount("radius"));
+                    s.doors.set(i, now);
+                    changed(s);
+                    Sounds.cue(pl, "success");
+                    pl.sendMessage(Texts.parse(m.raw("prefix") + doorText(s, now)));
+                }).open();
+    }
+
+    /** What a door does, as shown above it in edit mode. */
+    private String doorText(Session s, DungeonDefinition.Door d) {
+        if (d.type() == DungeonDefinition.DoorType.KILLS) {
+            int size = (int) s.spawns.stream().filter(sp -> sp.room().equals(d.room())).count();
+            return plugin.messages().raw("edit.marker-door-kills", "%room%", d.room(),
+                    "%count%", String.valueOf(d.kills() > 0 ? d.kills() : size), "%size%", String.valueOf(size));
+        }
+        return plugin.messages().raw("edit.marker-door-near", "%radius%", String.valueOf((int) d.radius()));
     }
 
     private int nearest(Session s, Location at) {
@@ -733,9 +936,23 @@ public final class Editor implements Listener {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("mob", sp.mob());
             m.put("at", List.of(sp.x(), sp.y(), sp.z(), (double) sp.yaw()));
+            if (!sp.room().isEmpty()) m.put("room", sp.room());
             spawns.add(m);
         }
         y.set("map.spawns", spawns);
+        List<Map<String, Object>> doors = new ArrayList<>();
+        for (DungeonDefinition.Door d : s.doors) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", d.id());
+            m.put("type", d.type().name().toLowerCase(Locale.ROOT));
+            m.put("from", List.of(d.x1(), d.y1(), d.z1()));
+            m.put("to", List.of(d.x2(), d.y2(), d.z2()));
+            if (!d.room().isEmpty()) m.put("room", d.room());
+            m.put("kills", d.kills());
+            m.put("radius", d.radius());
+            doors.add(m);
+        }
+        y.set("map.doors", doors);
         File f = new File(plugin.getDataFolder(), "edits/" + s.dungeon + ".yml");
         f.getParentFile().mkdirs();
         try {
@@ -771,9 +988,17 @@ public final class Editor implements Listener {
             Location feet = new Location(s.world, sp.x(), sp.y(), sp.z());
             if (s.markers.containsKey(key) || !near(feet, players)) continue;
             String text = plugin.messages().raw(s.objectives.contains(sp.mob()) ? "edit.marker-objective" : "edit.marker", "%mob%", mobName(sp.mob()));
+            if (!sp.room().isEmpty()) text = plugin.messages().raw("edit.marker-room", "%room%", sp.room()) + text;
             TextDisplay label = label(feet.clone().add(0, 2.3, 0), text);
             if (carriedKeys.contains(key)) label.setGlowing(true);
             s.markers.put(key, new Entity[]{label, body(feet, key)});
+        }
+        for (DungeonDefinition.Door d : s.doors) {
+            String key = "door:" + d.id() + ":" + d.type() + ":" + d.room() + ":" + d.kills() + ":" + d.radius();
+            org.bukkit.util.BoundingBox box = d.box();
+            Location top = new Location(s.world, box.getCenterX(), box.getMaxY() + 0.4, box.getCenterZ());
+            if (s.markers.containsKey(key) || !near(top, players)) continue;
+            s.markers.put(key, new Entity[]{label(top, doorText(s, d))});
         }
         Location start = new Location(s.world, s.start[0], s.start[1], s.start[2]);
         if (!s.markers.containsKey("start") && near(start, players)) {

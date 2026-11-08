@@ -99,7 +99,11 @@ public final class Runs {
         this.editor = new Editor(plugin, instances, this::dungeon, mobs);
         mobs.onSummon((parent, child) -> {
             Run run = runs.get(mobs.runOf(child));
-            if (run != null) run.mobs.add(child.getUniqueId());
+            if (run == null) return;
+            run.mobs.add(child.getUniqueId());
+            // a monster changing phase (the former body is already gone) stays in its room; summoned helpers do not count
+            String room = parent == null ? null : run.mobRoom.get(parent.getUniqueId());
+            if (room != null && !parent.isValid()) run.mobRoom.put(child.getUniqueId(), run.mobRoom.remove(parent.getUniqueId()));
         });
         mobs.onDeath(this::mobKilled);
         Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 10L, 10L);
@@ -296,6 +300,7 @@ public final class Runs {
                 if (def.map().objectives().contains(sp.mob())) run.objectivesLeft.add(sp.mob());
             }
             run.objectivesTotal = run.objectivesLeft.size();
+            for (DungeonDefinition.Door d : def.map().doors()) if (d.type() == DungeonDefinition.DoorType.KILLS) doorLabel(run, d);
             if (run.objectivesTotal == 0) plugin.getLogger().info("Dungeon " + def.id() + " has no objective: won once every monster is dead.");
             enter(run);
         });
@@ -322,8 +327,99 @@ public final class Runs {
             LivingEntity mob = t == null ? null : mobs.spawn(t, at, run.id);
             if (mob == null) continue;
             run.mobs.add(mob.getUniqueId());
+            if (!sp.room().isEmpty()) run.mobRoom.put(mob.getUniqueId(), sp.room());
             if (run.def.map().objectives().contains(sp.mob())) mobs.objective(mob, sp.mob());
         }
+    }
+
+    // ---------------------------------------------------------------- doors
+
+    /** Kills needed to open a door: its own number, or every monster placed in its room. */
+    private static int needed(Run run, DungeonDefinition.Door d) {
+        return d.kills() > 0 ? d.kills() : run.def.map().roomSize(d.room());
+    }
+
+    /** Twice a second and at each kill: doors whose condition is met open. */
+    private void doors(Run run) {
+        if (run.world == null || run.state != Run.State.RUNNING) return;
+        for (DungeonDefinition.Door d : run.def.map().doors()) {
+            if (run.openDoors.contains(d.id())) continue;
+            boolean open;
+            if (d.type() == DungeonDefinition.DoorType.KILLS) {
+                int done = run.roomKills.getOrDefault(d.room(), 0), need = needed(run, d);
+                open = done >= need;
+                org.bukkit.entity.TextDisplay label = run.doorLabels.get(d.id());
+                if (label != null && label.isValid() && !open) {
+                    label.text(Texts.parse(plugin.messages().raw("door.kills", "%done%", String.valueOf(done), "%needed%", String.valueOf(need))));
+                }
+            } else {
+                BoundingBox near = d.box().expand(d.radius());
+                open = false;
+                for (Player p : fighters(run)) if (p.getWorld() == run.world && near.contains(p.getLocation().toVector())) open = true;
+            }
+            if (open) openDoor(run, d);
+        }
+    }
+
+    /** The counter above a door that opens with kills. */
+    private void doorLabel(Run run, DungeonDefinition.Door d) {
+        BoundingBox box = d.box();
+        Location at = new Location(run.world, box.getCenterX(), box.getMaxY() + 0.5, box.getCenterZ());
+        org.bukkit.entity.TextDisplay label = run.world.spawn(at, org.bukkit.entity.TextDisplay.class, t -> {
+            t.setPersistent(false);
+            t.setBillboard(org.bukkit.entity.Display.Billboard.CENTER);
+            t.setShadowed(true);
+            t.setViewRange(0.6f);
+            t.text(Texts.parse(plugin.messages().raw("door.kills", "%done%", "0", "%needed%", String.valueOf(needed(run, d)))));
+        });
+        run.doorLabels.put(d.id(), label);
+    }
+
+    /**
+     * Opens a door: each of its blocks becomes a moving copy that sinks into the ground while the real block is taken
+     * away, with the sound of a heavy wooden door. The door never closes again.
+     */
+    private void openDoor(Run run, DungeonDefinition.Door d) {
+        run.openDoors.add(d.id());
+        org.bukkit.entity.TextDisplay label = run.doorLabels.remove(d.id());
+        if (label != null) label.remove();
+        BoundingBox box = d.box();
+        int height = (int) box.getHeight();
+        List<org.bukkit.entity.BlockDisplay> moving = new ArrayList<>();
+        for (int x = (int) box.getMinX(); x < box.getMaxX(); x++) {
+            for (int y = (int) box.getMinY(); y < box.getMaxY(); y++) {
+                for (int z = (int) box.getMinZ(); z < box.getMaxZ(); z++) {
+                    Block b = run.world.getBlockAt(x, y, z);
+                    if (b.getType().isAir()) continue;
+                    BlockData data = b.getBlockData();
+                    moving.add(run.world.spawn(b.getLocation(), org.bukkit.entity.BlockDisplay.class, bd -> {
+                        bd.setBlock(data);
+                        bd.setPersistent(false);
+                    }));
+                    b.setType(Material.AIR, false);
+                }
+            }
+        }
+        Location center = new Location(run.world, box.getCenterX(), box.getMinY() + 1, box.getCenterZ());
+        run.world.playSound(center, Sound.BLOCK_WOODEN_DOOR_OPEN, 1.5f, 0.5f);
+        run.world.playSound(center, Sound.BLOCK_PISTON_CONTRACT, 1.2f, 0.5f);
+        run.world.playSound(center, Sound.BLOCK_GRINDSTONE_USE, 0.8f, 0.5f);
+        run.world.spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, center, 12, box.getWidthX() / 3, 0.3, box.getWidthZ() / 3, 0.01);
+        int ticks = 30;
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            for (org.bukkit.entity.BlockDisplay bd : moving) {
+                if (!bd.isValid()) continue;
+                bd.setInterpolationDelay(0);
+                bd.setInterpolationDuration(ticks);
+                bd.setTransformation(new org.bukkit.util.Transformation(new org.joml.Vector3f(0, -height - 0.1f, 0),
+                        new org.joml.AxisAngle4f(), new org.joml.Vector3f(1, 1, 1), new org.joml.AxisAngle4f()));
+            }
+        }, 2L);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            for (org.bukkit.entity.BlockDisplay bd : moving) if (bd.isValid()) bd.remove();
+            run.world.playSound(center, Sound.BLOCK_WOOD_PLACE, 1f, 0.6f);
+        }, ticks + 3L);
+        broadcast(run, d.type() == DungeonDefinition.DoorType.KILLS ? "door.opened-kills" : "door.opened");
     }
 
     /** A dungeon monster loaded back with its chunk: tracked again; false when its run is over. */
@@ -491,6 +587,60 @@ public final class Runs {
         });
     }
 
+    /** A map kept as support (maps/maps.yml): its folder and where to stand in it. */
+    public record MapEntry(String name, java.io.File folder, double[] start) {
+    }
+
+    /** Maps of {@code maps/maps.yml}, by name: visited or copied to start a new dungeon. */
+    public Map<String, MapEntry> maps() {
+        Map<String, MapEntry> out = new LinkedHashMap<>();
+        java.io.File index = new java.io.File(plugin.getDataFolder(), "maps/maps.yml");
+        if (!index.isFile()) return out;
+        org.bukkit.configuration.file.YamlConfiguration y = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(index);
+        org.bukkit.configuration.ConfigurationSection c = y.getConfigurationSection("maps");
+        if (c == null) return out;
+        for (String name : c.getKeys(false)) {
+            java.io.File folder = new java.io.File(plugin.getDataFolder(), c.getString(name + ".folder", ""));
+            if (!new java.io.File(folder, "region").isDirectory()) continue;
+            List<Double> st = c.getDoubleList(name + ".start");
+            double[] start = {0.5, 64, 0.5, 0, 0};
+            for (int i = 0; i < Math.min(5, st.size()); i++) start[i] = st.get(i);
+            out.put(name, new MapEntry(name, folder, start));
+        }
+        return out;
+    }
+
+    /** Opens a copy of a map kept as support (no dungeon on it) to look around, as {@link #visit}. */
+    public void visitMap(Player p, MapEntry map) {
+        if (byPlayer.containsKey(p.getUniqueId())) {
+            plugin.messages().send(p, "admin.visit-in-run");
+            return;
+        }
+        String name = instances.freeName(maxRuns);
+        if (name == null) {
+            plugin.messages().send(p, "start.failed");
+            return;
+        }
+        plugin.messages().send(p, "admin.visit-loading", "%dungeon%", map.name());
+        instances.create(map.folder(), name, world -> {
+            if (world == null || !p.isOnline()) {
+                if (world != null) instances.destroy(world);
+                else plugin.messages().send(p, "start.failed");
+                return;
+            }
+            visits.put(world.getName(), world);
+            visitReturn.putIfAbsent(p.getUniqueId(), p.getLocation());
+            double[] s = map.start();
+            p.teleport(new Location(world, s[0], s[1], s[2], (float) s[3], (float) s[4]), PlayerTeleportEvent.TeleportCause.PLUGIN);
+            plugin.messages().send(p, "admin.visit", "%dungeon%", map.name());
+        });
+    }
+
+    /** Copies a map folder into a new one (new dungeon made from a map kept as support). */
+    public void copyMap(java.io.File source, java.io.File target, java.util.function.Consumer<Boolean> done) {
+        instances.copyFolder(source, target, done);
+    }
+
     /** Copies a loaded world into a new map folder (new dungeon made from a build). */
     public void copyWorld(World w, java.io.File target, java.util.function.Consumer<Boolean> done) {
         instances.copyWorld(w, target, done);
@@ -631,6 +781,7 @@ public final class Runs {
                     return e == null || !e.isValid();
                 });
                 spawnNear(run);
+                doors(run);
             }
             if (run.bossBar != null) updateBossBar(run);
         }
@@ -827,6 +978,11 @@ public final class Runs {
         Run run = runs.get(mobs.runOf(mob));
         if (run == null || run.state != Run.State.RUNNING) return;
         run.mobs.remove(mob.getUniqueId());
+        String room = run.mobRoom.remove(mob.getUniqueId());
+        if (room != null) {
+            run.roomKills.merge(room, 1, Integer::sum);
+            doors(run);
+        }
         List<Player> party = fighters(run);
         if (t != null && t.xp() > 0) for (Player p : party) heroes.giveXp(p, t.xp());
         if (objective != null && run.objectivesLeft.remove(objective)) {
