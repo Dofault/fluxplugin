@@ -176,8 +176,13 @@ combat:
     minimum-charge: 1.0
     # The swing of the weapon lasts the whole recharge.
     slow-swing: true
-    # Particle in front of the player at every real swing, even in the air (none: no particle).
+    # Particle and sound at every real swing, even in the air, where the swing reaches: the player's reach (attribute,
+    # bonuses of pets and effects included, or the weapon's range), stopped by the first block or creature. none: off.
     swing-particle: SWEEP_ATTACK
+    swing-sound:
+      key: minecraft:entity.player.attack.sweep
+      volume: 0.7
+      pitch: 1.0
 
 # Third-party plugins behind the services of the suite. The plugins of the suite only talk to Flux: changing one of
 # these plugins means one adapter in Flux, nothing else. auto: the known plugin that is installed; none: off.

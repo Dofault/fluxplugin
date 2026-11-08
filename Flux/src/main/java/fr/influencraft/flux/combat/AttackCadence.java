@@ -29,8 +29,10 @@ import java.util.Map;
  *   <li>The server refuses an attack sent before the recharge (modified clients).</li>
  *   <li>The vanilla recharge indicator is hidden by the resource pack (empty sprites over those of the pack
  *   {@code influstatique}, {@code Flux/assets/gen_attack_indicator.py}).</li>
- *   <li>Every real swing (weapon recharged), on a target or in the air, shows a particle in front of the player
- *   ({@code swing-particle}), so the attack is seen even when it hits nobody.</li>
+ *   <li>Every real swing (weapon recharged), on a target or in the air, shows a particle and plays a sound
+ *   ({@code swing-particle}, {@code swing-sound}) where the swing reaches: the player's reach (its attribute, so
+ *   bonuses of pets or effects count; the weapon's own attack range when it has one), stopped by the first block or
+ *   creature on the way. The attack is seen and heard even when it hits nobody.</li>
  * </ul>
  * Hits always land at full charge: the damage is the vanilla one of a charged hit. Spears keep their own components.
  * Turned off ({@code combat.attack-cadence.enabled: false}), items lose the components at their next refresh.
@@ -41,6 +43,8 @@ public final class AttackCadence implements Listener {
     private float minimumCharge = 1f;
     private boolean slowSwing = true;
     private org.bukkit.Particle swingParticle = org.bukkit.Particle.SWEEP_ATTACK;
+    private String swingSound = "minecraft:entity.player.attack.sweep";
+    private float soundVolume = 0.7f, soundPitch = 1f;
     /** Tick of each player's last attack let through (its swing packet comes after, recharge already reset). */
     private final java.util.Map<java.util.UUID, Integer> attacked = new java.util.HashMap<>();
     /** Tick of each player's last swing shown (one particle per swing). */
@@ -61,6 +65,10 @@ public final class AttackCadence implements Listener {
         } catch (IllegalArgumentException e) {
             swingParticle = org.bukkit.Particle.SWEEP_ATTACK;
         }
+        String sound = c == null ? null : c.getString("swing-sound.key", "minecraft:entity.player.attack.sweep");
+        swingSound = c == null ? "minecraft:entity.player.attack.sweep" : sound == null || sound.isBlank() || sound.equalsIgnoreCase("none") ? null : sound;
+        soundVolume = c == null ? 0.7f : (float) c.getDouble("swing-sound.volume", 0.7);
+        soundPitch = c == null ? 1f : (float) c.getDouble("swing-sound.pitch", 1);
         ItemLooks.refreshOnline();
     }
 
@@ -162,7 +170,7 @@ public final class AttackCadence implements Listener {
      */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onSwing(io.papermc.paper.event.player.PlayerArmSwingEvent e) {
-        if (!enabled || swingParticle == null || e.getHand() != EquipmentSlot.HAND) return;
+        if (!enabled || swingParticle == null && swingSound == null || e.getHand() != EquipmentSlot.HAND) return;
         Player p = e.getPlayer();
         ItemStack hand = p.getInventory().getItemInMainHand();
         if (hand.isEmpty() || !hand.isDataOverridden(DataComponentTypes.MINIMUM_ATTACK_CHARGE)) return;
@@ -172,9 +180,41 @@ public final class AttackCadence implements Listener {
         Integer last = shown.get(p.getUniqueId());
         if (!real || last != null && now - last < 4) return;
         shown.put(p.getUniqueId(), now);
+        org.bukkit.Location at = reachPoint(p, hand);
+        if (swingParticle != null) p.getWorld().spawnParticle(swingParticle, at, 1, 0, 0, 0, 0);
+        if (swingSound != null) {
+            float pitch = soundPitch * (0.9f + java.util.concurrent.ThreadLocalRandom.current().nextFloat() * 0.2f);
+            p.getWorld().playSound(at, swingSound, org.bukkit.SoundCategory.PLAYERS, soundVolume, pitch);
+        }
+    }
+
+    /** How far the player hits with this item: the weapon's attack range when it has one, else his reach attribute. */
+    static double reach(Player p, ItemStack hand) {
+        io.papermc.paper.datacomponent.item.AttackRange range = hand.getData(DataComponentTypes.ATTACK_RANGE);
+        if (range != null && range.maxReach() > 0) {
+            return p.getGameMode() == org.bukkit.GameMode.CREATIVE ? range.maxCreativeReach() : range.maxReach();
+        }
+        org.bukkit.attribute.AttributeInstance a = p.getAttribute(Attribute.ENTITY_INTERACTION_RANGE);
+        return a == null ? 3 : a.getValue();
+    }
+
+    /**
+     * Where the swing reaches: the first creature or block in front of the player within his reach, else the end of
+     * his reach; a little below the eyes, where the weapon passes.
+     */
+    private static org.bukkit.Location reachPoint(Player p, ItemStack hand) {
         org.bukkit.Location eye = p.getEyeLocation();
-        org.bukkit.Location at = eye.add(eye.getDirection().multiply(1.6)).subtract(0, 0.35, 0);
-        p.getWorld().spawnParticle(swingParticle, at, 1, 0, 0, 0, 0);
+        org.bukkit.util.Vector dir = eye.getDirection();
+        double reach = reach(p, hand);
+        org.bukkit.util.RayTraceResult hit = p.getWorld().rayTrace(eye, dir, reach, org.bukkit.FluidCollisionMode.NEVER,
+                true, 0.2, e -> e != p && e instanceof org.bukkit.entity.LivingEntity && !(e instanceof org.bukkit.entity.ArmorStand));
+        double distance = reach;
+        if (hit != null) {
+            distance = hit.getHitPosition().distance(eye.toVector());
+            // in front of a wall rather than inside it
+            if (hit.getHitBlock() != null) distance = Math.max(0.8, distance - 0.3);
+        }
+        return eye.add(dir.multiply(distance)).subtract(0, 0.3, 0);
     }
 
     @EventHandler
