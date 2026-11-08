@@ -493,6 +493,8 @@ public final class Runs {
             p.setMaximumNoDamageTicks(0);
             heroes.activate(p);
             teleport(p, run.checkpoint);
+            // the pets that follow him outside never come into a dungeon: only those taken as fighters do
+            fr.influencraft.flux.api.pets.Companions.suppress(uuid, true);
             Loadouts.Selection chosen = run.selections.get(uuid);
             if (chosen != null) pets.spawn(p, chosen.pets(), run.checkpoint, context(p)::enemy);
             p.showTitle(Title.title(Texts.parse(plugin.messages().raw("run.title", "%dungeon%", run.def.name())),
@@ -520,6 +522,7 @@ public final class Runs {
         run.watching.remove(player.getUniqueId());
         if (run.bossBar != null) player.hideBossBar(run.bossBar);
         pets.despawn(player);
+        fr.influencraft.flux.api.pets.Companions.suppress(player.getUniqueId(), false);
         if (inside) {
             hook(run, "leave", player, null);
             heroes.deactivate(player);

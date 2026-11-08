@@ -41,8 +41,7 @@ import java.util.function.Predicate;
  * side around the owner, how late it reacts when he moves, its speed, how often it fidgets around its place, how
  * readily it switches to the owner's target, the side it attacks from, the rhythm of its hits. Pets also spread over
  * the monsters around rather than all piling on the same one. For now every pet has the same life and attack
- * ({@code pets} of the config). Their models that follow players outside are hidden meanwhile
- * ({@link Companions#suppress}).
+ * ({@code pets} of the config). The pets that follow players outside are hidden by Runs for the whole run.
  */
 public final class PetFighters {
 
@@ -176,10 +175,7 @@ public final class PetFighters {
             Bukkit.getMobGoals().addGoal(mob, 0, new Brain(f));
             list.add(f);
         }
-        if (!list.isEmpty()) {
-            byOwner.put(owner.getUniqueId(), list);
-            Companions.suppress(owner.getUniqueId(), true);
-        }
+        if (!list.isEmpty()) byOwner.put(owner.getUniqueId(), list);
     }
 
     /** Removes a player's pets (he left, died, the run ended). */
@@ -189,7 +185,6 @@ public final class PetFighters {
 
     void despawn(UUID owner) {
         List<Fighter> list = byOwner.remove(owner);
-        Companions.suppress(owner, false);
         if (list == null) return;
         for (Fighter f : list) remove(f);
     }
@@ -247,10 +242,7 @@ public final class PetFighters {
             remove(f);
             return true;
         });
-        if (list.isEmpty()) {
-            byOwner.remove(owner.getUniqueId());
-            Companions.suppress(owner.getUniqueId(), false);
-        }
+        if (list.isEmpty()) byOwner.remove(owner.getUniqueId());
     }
 
     /** Where a pet stands when it has nothing to fight: its own place around its owner, from its temper. */

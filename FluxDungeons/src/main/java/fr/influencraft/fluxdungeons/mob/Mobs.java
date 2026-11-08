@@ -297,6 +297,9 @@ public final class Mobs {
                 eq.clear();
                 t.equipment().forEach((slot, material) -> {
                     ItemStack item = new ItemStack(material);
+                    // looks only: a weapon or an armour piece never adds its own damage or armour to the monster
+                    item.setData(io.papermc.paper.datacomponent.DataComponentTypes.ATTRIBUTE_MODIFIERS,
+                            io.papermc.paper.datacomponent.item.ItemAttributeModifiers.itemAttributes().build());
                     org.bukkit.Color dye = x.dyes().get(slot);
                     if (dye != null) item.editMeta(m -> {
                         if (m instanceof org.bukkit.inventory.meta.LeatherArmorMeta lm) lm.setColor(dye);
@@ -945,6 +948,22 @@ public final class Mobs {
         arrow.setVelocity(v.multiply(1.6));
     }
 
+    /**
+     * Damage of a monster's own melee hit, before the player's armour: its attack and nothing else (no weapon bonus,
+     * no enchantment, no difficulty scaling). FluxDungeons sets it on every melee hit, so a monster always hits for
+     * what its file says.
+     */
+    public double meleeDamage(LivingEntity mob) {
+        Alive a = alive.get(mob.getUniqueId());
+        return a == null ? -1 : a.baseDamage();
+    }
+
+    /** Arrows of a frost archer ({@code frost-arrows}) freeze and slow whoever they hit. */
+    public boolean frostArrows(LivingEntity mob) {
+        Alive a = alive.get(mob.getUniqueId());
+        return a != null && a.template.extra().frostArrows();
+    }
+
     /** Base damage of an arrow so that it hits for the monster's attack (an arrow hits for speed × base, rounded up). */
     private static double arrowDamage(Alive a) {
         return Math.max(0.5, a.baseDamage() / 1.6 - 0.01);
@@ -1080,7 +1099,7 @@ public final class Mobs {
                     MobTemplate copy = new MobTemplate(a.template.id() + "_summon", type, "&7" + type.name().toLowerCase(), false, null,
                             maxHealth(e) * 0.15, a.baseDamage() * 0.6, 0.25, 0, 1, 0, Map.of(), List.of(),
                             new MobTemplate.Extra(1, 0.15, 0.6, false, false, 32, 0, List.of(), List.of(), null, List.of(), List.of(), List.of(),
-                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of(), 0, 1));
+                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of(), 0, 1, false));
                     for (int i = 0; i < (int) ab.number("count", 2); i++) {
                         LivingEntity s = spawn(copy, at.clone().add(ThreadLocalRandom.current().nextDouble(-2, 2), 0, ThreadLocalRandom.current().nextDouble(-2, 2)), a.run);
                         if (s != null) onSummon.accept(e, s);

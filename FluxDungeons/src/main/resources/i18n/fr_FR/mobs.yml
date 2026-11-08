@@ -57,8 +57,9 @@ rochiste_sentinelle:
   health: 20
   damage: 1
   speed: 0.24
-  # archer : tire deux fois plus souvent qu'en vanilla (par défaut), des flèches légères
-  ranged-rate: 2
+  # archer harcelant : quatre fois la cadence vanilla (deux flèches par seconde), flèches légères qui gèlent
+  ranged-rate: 4
+  frost-arrows: true
   xp: 12
   equipment:
     hand: BOW

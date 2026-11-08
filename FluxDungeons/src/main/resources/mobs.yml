@@ -57,8 +57,9 @@ rochiste_sentinelle:
   health: 20
   damage: 1
   speed: 0.24
-  # archer: shoots twice as often as vanilla (default), light arrows
-  ranged-rate: 2
+  # harassing archer: four times the vanilla pace (two arrows a second), light arrows that freeze
+  ranged-rate: 4
+  frost-arrows: true
   xp: 12
   equipment:
     hand: BOW

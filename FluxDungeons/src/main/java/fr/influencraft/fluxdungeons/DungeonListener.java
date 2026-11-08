@@ -224,6 +224,11 @@ final class DungeonListener implements Listener {
                     e.setCancelled(true);
                     return;
                 }
+                // a melee hit is exactly the monster's attack (the player's armour still applies)
+                if (melee(e)) {
+                    double hit = mobs.meleeDamage(mob);
+                    if (hit >= 0) e.setDamage(hit);
+                }
                 lastHit.put(hurt.getUniqueId(), Bukkit.getCurrentTick());
                 mobs.hitPlayer(mob, hurt, e);
                 runs.petFocus(hurt, mob);
@@ -358,9 +363,16 @@ final class DungeonListener implements Listener {
             Bukkit.getScheduler().runTask(plugin, () -> {
                 if (hurt.isOnline() && !hurt.isDead()) hurt.setVelocity(v);
             });
-        } else if (slowTicks > 0) {
-            hurt.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.SLOWNESS,
+        } else {
+            if (slowTicks > 0) hurt.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.SLOWNESS,
                     slowTicks, slowLevel - 1, false, false, false));
+            // frost archers: the arrow freezes (blue screen, shivers) and slows for two seconds
+            if (e.getDamager() instanceof Projectile && mobs.frostArrows(mob)) {
+                hurt.setFreezeTicks(Math.min(hurt.getMaxFreezeTicks() + 60, hurt.getFreezeTicks() + 70));
+                hurt.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.SLOWNESS, 40, 1, false, true, true));
+                hurt.getWorld().spawnParticle(org.bukkit.Particle.SNOWFLAKE, hurt.getLocation().add(0, 1, 0), 12, 0.3, 0.5, 0.3, 0.02);
+                hurt.getWorld().playSound(hurt.getLocation(), org.bukkit.Sound.BLOCK_POWDER_SNOW_STEP, 1f, 0.8f);
+            }
         }
     }
 
