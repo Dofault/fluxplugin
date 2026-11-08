@@ -168,8 +168,8 @@ sounds:
 # Combat rules of the whole server.
 combat:
   # Attack cadence (as Wynncraft): a weapon attacks at its own pace, spam clicks do nothing until it is recharged,
-  # the weapon visibly comes back slowly (slower for a slow weapon), the vanilla recharge indicator is hidden (pack
-  # fluxui). Hits always land at full charge. false: items lose it at their next refresh.
+  # the weapon visibly comes back slowly (slower for a slow weapon), the recharge indicator of the crosshair shows it.
+  # Hits always land at full charge. false: items lose it at their next refresh.
   attack-cadence:
     enabled: true
     # Share of the recharge needed to attack again (1 = full).

@@ -27,7 +27,7 @@ import java.util.Map;
  *   clicks do nothing) and {@code swing_animation} lasting the whole recharge (the weapon comes back slowly, slower
  *   for a slow weapon). Given through {@link ItemLooks#registerAny}, so vanilla items get it too.</li>
  *   <li>The server refuses an attack sent before the recharge (modified clients).</li>
- *   <li>The vanilla recharge indicator is hidden by the resource pack (empty sprites, pack {@code fluxui}).</li>
+ *   <li>The vanilla recharge indicator stays (pack {@code influstatique} styles it): it shows the same recharge.</li>
  * </ul>
  * Hits always land at full charge: the damage is the vanilla one of a charged hit. Spears keep their own components.
  * Turned off ({@code combat.attack-cadence.enabled: false}), items lose the components at their next refresh.
