@@ -283,9 +283,10 @@ public final class Mobs {
             le.setCanPickupItems(false);
             // no vanilla invulnerability after a hit: every source lands (limits per source in DungeonListener)
             le.setMaximumNoDamageTicks(0);
-            double health = imported ? vanilla(le, Attribute.MAX_HEALTH, 20) * x.healthMultiplier() : t.health();
+            double[] level = run == null ? NO_SCALE : scaling.apply(run);
+            double health = (imported ? vanilla(le, Attribute.MAX_HEALTH, 20) * x.healthMultiplier() : t.health()) * level[0];
             base(le, Attribute.MAX_HEALTH, health);
-            base(le, Attribute.ATTACK_DAMAGE, imported ? vanilla(le, Attribute.ATTACK_DAMAGE, 2) * x.damageMultiplier() : t.damage());
+            base(le, Attribute.ATTACK_DAMAGE, (imported ? vanilla(le, Attribute.ATTACK_DAMAGE, 2) * x.damageMultiplier() : t.damage()) * level[1]);
             if (t.speed() > 0) base(le, Attribute.MOVEMENT_SPEED, t.speed());
             if (!imported) base(le, Attribute.ARMOR, t.armor());
             base(le, Attribute.SCALE, t.scale());
@@ -873,7 +874,80 @@ public final class Mobs {
     private void strike(Alive a, Player p, Ability ab, double fallback) {
         double v = ab.number("power", fallback);
         boolean relative = ab.number("relative", 0) > 0 || !a.template.abilities().contains(ab);
-        deal(p, a.entity, relative ? v * hitOn(a, p) : v);
+        // absolute powers follow the difficulty level of the run (relative ones already do, through the attack)
+        deal(p, a.entity, relative ? v * hitOn(a, p) : v * scaling.apply(a.run)[1]);
+    }
+
+    // ---------------------------------------------------------------- difficulty levels
+
+    private static final double[] NO_SCALE = {1, 1};
+    /** Life and damage multipliers of a run (its difficulty level). */
+    private java.util.function.Function<String, double[]> scaling = r -> NO_SCALE;
+
+    public void scaling(java.util.function.Function<String, double[]> scaling) {
+        this.scaling = r -> {
+            double[] v = r == null ? null : scaling.apply(r);
+            return v == null ? NO_SCALE : v;
+        };
+    }
+
+    // ---------------------------------------------------------------- archers
+
+    /** Ticks between two vanilla bow shots of a monster (normal difficulty, the one of dungeon worlds). */
+    private static final int VANILLA_SHOT_TICKS = 40;
+    /** True while FluxDungeons shoots an arrow itself (the shoot event must not schedule more). */
+    private boolean shooting;
+
+    /**
+     * A dungeon monster shot an arrow (vanilla): aimed straight at its target (vanilla misses a lot on normal
+     * difficulty), its damage set from the monster's attack (archers hit often and lightly), and {@code ranged-rate}
+     * - 1 more shots scheduled before the next vanilla one.
+     */
+    public void shot(LivingEntity mob, org.bukkit.entity.AbstractArrow arrow) {
+        Alive a = alive.get(mob.getUniqueId());
+        if (a == null) return;
+        LivingEntity target = mob instanceof Mob m ? m.getTarget() : null;
+        if (target != null) aim(mob, arrow, target);
+        arrow.setDamage(arrowDamage(a));
+        arrow.setPickupStatus(AbstractArrow.PickupStatus.DISALLOWED);
+        if (shooting) return;
+        int extra = (int) Math.round(a.template.extra().rangedRate()) - 1;
+        long gap = Math.max(4, VANILLA_SHOT_TICKS / (extra + 1));
+        for (int i = 1; i <= extra; i++) Bukkit.getScheduler().runTaskLater(plugin, () -> extraShot(a), gap * i);
+    }
+
+    private void extraShot(Alive a) {
+        LivingEntity e = a.entity;
+        if (!e.isValid() || e.isDead() || a.dying || !e.hasAI() || !(e instanceof Mob m)) return;
+        if (!(m.getTarget() instanceof Player target) || !fighting(target) || target.getWorld() != e.getWorld()) return;
+        if (target.getLocation().distanceSquared(e.getLocation()) > 24 * 24 || !e.hasLineOfSight(target)) return;
+        shooting = true;
+        try {
+            org.bukkit.entity.Arrow arrow = e.launchProjectile(org.bukkit.entity.Arrow.class);
+            shot(e, arrow);
+        } finally {
+            shooting = false;
+        }
+        m.swingMainHand();
+        e.getWorld().playSound(e.getLocation(), Sound.ENTITY_SKELETON_SHOOT, 1f, 1f / (0.8f + ThreadLocalRandom.current().nextFloat() * 0.4f));
+    }
+
+    /** Vanilla's aim of a skeleton (a little above the target to make up for the fall of the arrow), barely spread. */
+    private static void aim(LivingEntity mob, org.bukkit.entity.AbstractArrow arrow, LivingEntity target) {
+        Location from = arrow.getLocation();
+        double dx = target.getX() - from.getX();
+        double dy = target.getY() + target.getHeight() / 3 - from.getY();
+        double dz = target.getZ() - from.getZ();
+        double flat = Math.sqrt(dx * dx + dz * dz);
+        Vector v = new Vector(dx, dy + flat * 0.2, dz).normalize();
+        ThreadLocalRandom r = ThreadLocalRandom.current();
+        v.add(new Vector(r.nextGaussian() * 0.0075, r.nextGaussian() * 0.0075, r.nextGaussian() * 0.0075));
+        arrow.setVelocity(v.multiply(1.6));
+    }
+
+    /** Base damage of an arrow so that it hits for the monster's attack (an arrow hits for speed × base, rounded up). */
+    private static double arrowDamage(Alive a) {
+        return Math.max(0.5, a.baseDamage() / 1.6 - 0.01);
     }
 
     private void cast(Alive a, Ability ab, Player target) {
@@ -1006,7 +1080,7 @@ public final class Mobs {
                     MobTemplate copy = new MobTemplate(a.template.id() + "_summon", type, "&7" + type.name().toLowerCase(), false, null,
                             maxHealth(e) * 0.15, a.baseDamage() * 0.6, 0.25, 0, 1, 0, Map.of(), List.of(),
                             new MobTemplate.Extra(1, 0.15, 0.6, false, false, 32, 0, List.of(), List.of(), null, List.of(), List.of(), List.of(),
-                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of(), 0));
+                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of(), 0, 1));
                     for (int i = 0; i < (int) ab.number("count", 2); i++) {
                         LivingEntity s = spawn(copy, at.clone().add(ThreadLocalRandom.current().nextDouble(-2, 2), 0, ThreadLocalRandom.current().nextDouble(-2, 2)), a.run);
                         if (s != null) onSummon.accept(e, s);

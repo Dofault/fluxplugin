@@ -1,5 +1,7 @@
 package fr.influencraft.fluxdungeons.dungeon;
 
+import java.util.List;
+
 import net.kyori.adventure.bossbar.BossBar;
 import org.bukkit.Location;
 import org.bukkit.util.BoundingBox;
@@ -40,6 +42,14 @@ public final class Run {
     /** Objectives of an imported map still alive (monster ids). */
     final Set<String> objectivesLeft = new LinkedHashSet<>();
     int objectivesTotal;
+    /** Difficulty level played (index in the dungeon's levels; the first one until players can choose). */
+    int level;
+
+    public DungeonDefinition.Level levelSpec() {
+        List<DungeonDefinition.Level> all = def.levels();
+        return all.get(Math.max(0, Math.min(level, all.size() - 1)));
+    }
+
     /** Room of each monster spawned from a spawn point that has one. */
     final java.util.Map<UUID, String> mobRoom = new java.util.HashMap<>();
     /** Monsters of each room killed so far. */

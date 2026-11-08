@@ -106,6 +106,13 @@ public final class Runs {
             if (room != null && !parent.isValid()) run.mobRoom.put(child.getUniqueId(), run.mobRoom.remove(parent.getUniqueId()));
         });
         mobs.onDeath(this::mobKilled);
+        // every monster of a run follows its difficulty level
+        mobs.scaling(id -> {
+            Run r = runs.get(id);
+            if (r == null) return null;
+            DungeonDefinition.Level l = r.levelSpec();
+            return new double[]{l.health(), l.damage()};
+        });
         Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 10L, 10L);
     }
 
@@ -1090,7 +1097,8 @@ public final class Runs {
         hideBossBar(run);
         long seconds = (System.currentTimeMillis() - run.started) / 1000;
         double perSecond = Values.moneyPerSecond();
-        double money = Economy.round(run.def.rewardMinutes() * 60 * (perSecond > 0 ? perSecond : fallbackMoneyPerMinute / 60));
+        double money = Economy.round(run.def.rewardMinutes() * 60 * (perSecond > 0 ? perSecond : fallbackMoneyPerMinute / 60)
+                * run.levelSpec().reward());
         for (Player p : online(run)) {
             p.setGameMode(GameMode.ADVENTURE);
             p.showTitle(Title.title(Texts.parse(plugin.messages().raw("run.victory")),

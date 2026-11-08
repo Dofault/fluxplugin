@@ -65,6 +65,15 @@ public final class DungeonDefinition {
     private final MapSpec map;
     /** Console commands run on run events (enter, objective, victory, defeat, leave), one list per event. */
     private final Map<String, List<String>> commands = new LinkedHashMap<>();
+    /** Difficulty levels, easiest first: life and damage of every monster, reward (one level when none is set). */
+    private final List<Level> levels = new ArrayList<>();
+
+    /**
+     * A difficulty level of the dungeon: {@code health} and {@code damage} multiply every monster's, {@code reward} the
+     * money of a victory; {@code gear} says what it is made for (shown to players).
+     */
+    public record Level(String name, String gear, double health, double damage, double reward) {
+    }
 
     /**
      * A monster placed in a map, at the coordinates of the original world, in a {@code room} (empty: none). The kills
@@ -132,6 +141,12 @@ public final class DungeonDefinition {
         rewardXp = c.getDouble("reward.xp", 100);
         ConfigurationSection cmds = c.getConfigurationSection("commands");
         if (cmds != null) for (String k : cmds.getKeys(false)) commands.put(k.toLowerCase(java.util.Locale.ROOT), cmds.getStringList(k));
+        for (Map<?, ?> l : c.getMapList("levels")) {
+            levels.add(new Level(String.valueOf(l.get("name") == null ? "Normal" : l.get("name")), l.get("gear") == null ? "" : String.valueOf(l.get("gear")),
+                    l.get("health") instanceof Number n ? n.doubleValue() : 1, l.get("damage") instanceof Number n ? n.doubleValue() : 1,
+                    l.get("reward") instanceof Number n ? n.doubleValue() : 1));
+        }
+        if (levels.isEmpty()) levels.add(new Level("Normal", "", 1, 1, 1));
         for (Map<?, ?> l : c.getMapList("loot")) {
             Object chance = l.get("chance"), amount = l.get("amount");
             loot.add(new Loot(String.valueOf(l.get("item")), chance instanceof Number n ? n.doubleValue() : 1,
@@ -186,6 +201,11 @@ public final class DungeonDefinition {
     }
 
     /** Commands of a run event, empty when none. */
+    /** Difficulty levels, easiest first (at least one). */
+    public List<Level> levels() {
+        return levels;
+    }
+
     public List<String> commands(String event) {
         return commands.getOrDefault(event, List.of());
     }

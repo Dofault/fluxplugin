@@ -13,8 +13,8 @@
 rochiste_tailleur:
   type: ZOMBIE
   name: '&#B8B2AATailleur de pierre'
-  health: 30
-  damage: 4
+  health: 24
+  damage: 2
   speed: 0.25
   xp: 10
   equipment:
@@ -29,13 +29,13 @@ rochiste_tailleur:
     block: COBBLESTONE
     size: 0.5
     radius: 1.6
-    power: 4
+    power: 3
 
 rochiste_lanceur:
   type: HUSK
   name: '&#D9B77ALanceur de grès'
-  health: 26
-  damage: 3
+  health: 22
+  damage: 2
   speed: 0.23
   xp: 12
   equipment:
@@ -49,14 +49,16 @@ rochiste_lanceur:
     block: SANDSTONE
     size: 1.1
     radius: 2.5
-    power: 7
+    power: 5
 
 rochiste_sentinelle:
   type: STRAY
   name: '&#9FD6F0Sentinelle de givre'
-  health: 24
-  damage: 3
+  health: 20
+  damage: 1
   speed: 0.24
+  # archer : tire deux fois plus souvent qu'en vanilla (par défaut), des flèches légères
+  ranged-rate: 2
   xp: 12
   equipment:
     hand: BOW
@@ -67,16 +69,16 @@ rochiste_sentinelle:
   - type: ice_spikes
     every: 9
     range: 12
-    power: 5
+    power: 4
 
 rochiste_golem:
   type: ZOMBIE
   name: '&#C0705AGolem de granite'
   rank: MINIBOSS
-  health: 90
-  damage: 8
+  health: 80
+  damage: 5
   speed: 0.2
-  attack-speed: 0.7
+  attack-speed: 0.8
   scale: 1.5
   xp: 40
   equipment:
@@ -88,7 +90,7 @@ rochiste_golem:
   - type: quake
     every: 10
     radius: 6
-    power: 6
+    power: 5
   - type: stone_skin
     every: 15
     below: 50
@@ -101,10 +103,10 @@ rochiste_colosse:
   boss: true
   rank: BOSS
   model: colosse_abime
-  health: 700
-  damage: 10
-  # très lent, comme son animation de marche : environ 2 blocs par seconde
-  speed: 0.045
+  health: 500
+  damage: 7
+  # très lent, au rythme de son animation de marche : environ 1 bloc par seconde
+  speed: 0.022
   attack-speed: 0.5
   # la moitié des dégâts des projectiles : le corps à corps est la bonne façon de le battre
   ranged-resistance: 0.5
@@ -127,7 +129,7 @@ rochiste_colosse:
     hold: 46
     radius: 6
     height: 5
-    power: 6
+    power: 5
     title: '&#C0705ALe sol se dérobe !'
   - type: bite
     every: 5
@@ -135,8 +137,8 @@ rochiste_colosse:
     impact: 12
     hold: 28
     range: 4.5
-    power: 11
+    power: 10
   - type: rock_shard
     every: 3
     min-range: 7
-    power: 5
+    power: 4

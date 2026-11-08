@@ -312,15 +312,26 @@ final class DungeonListener implements Listener {
                 && (e.getCause() == EntityDamageEvent.DamageCause.ENTITY_ATTACK || e.getCause() == EntityDamageEvent.DamageCause.ENTITY_SWEEP_ATTACK);
     }
 
-    /** Blocks a monster's melee hit pushes a player ({@code hit-reaction.melee-push}). */
+    /** Blocks a monster's melee hit pushes a player ({@code hit-reaction.melee-push}), one hit out of {@link #pushEvery}. */
     private double meleePush = 2;
+    private int pushEvery = 4;
     /** Slow after a hit from afar: ticks and level ({@code hit-reaction.ranged-slow}). */
-    private int slowTicks = 4, slowLevel = 2;
+    private int slowTicks = 6, slowLevel = 3;
+    /** Melee hits each player took from monsters (every {@link #pushEvery}th one pushes him). */
+    private final java.util.Map<java.util.UUID, Integer> meleeTaken = new java.util.HashMap<>();
 
     void hitReaction(org.bukkit.configuration.ConfigurationSection c) {
         meleePush = c == null ? 2 : Math.max(0, c.getDouble("melee-push", 2));
-        slowTicks = c == null ? 4 : Math.max(0, c.getInt("ranged-slow.ticks", 4));
-        slowLevel = c == null ? 2 : Math.max(1, c.getInt("ranged-slow.level", 2));
+        pushEvery = c == null ? 4 : Math.max(1, c.getInt("melee-push-every", 4));
+        slowTicks = c == null ? 6 : Math.max(0, c.getInt("ranged-slow.ticks", 6));
+        slowLevel = c == null ? 3 : Math.max(1, c.getInt("ranged-slow.level", 3));
+    }
+
+    /** An arrow shot by a dungeon monster: aimed, damage set, more shots to come (see {@link Mobs#shot}). */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onShoot(org.bukkit.event.entity.EntityShootBowEvent e) {
+        if (mobs.templateOf(e.getEntity()) == null || !(e.getProjectile() instanceof org.bukkit.entity.AbstractArrow arrow)) return;
+        mobs.shot(e.getEntity(), arrow);
     }
 
     /**
@@ -335,7 +346,7 @@ final class DungeonListener implements Listener {
                 : e.getDamager() instanceof org.bukkit.entity.EvokerFangs f && f.getOwner() != null ? f.getOwner() : e.getDamager();
         if (!(source instanceof LivingEntity mob) || mobs.templateOf(mob) == null) return;
         if (melee(e)) {
-            if (meleePush <= 0) return;
+            if (meleePush <= 0 || meleeTaken.merge(hurt.getUniqueId(), 1, Integer::sum) % pushEvery != 0) return;
             org.bukkit.util.Vector away = hurt.getLocation().toVector().subtract(mob.getLocation().toVector()).setY(0);
             if (away.lengthSquared() < 1.0E-4) away = mob.getLocation().getDirection().setY(0);
             if (away.lengthSquared() < 1.0E-4) return;
@@ -380,6 +391,7 @@ final class DungeonListener implements Listener {
     void regenerate() {
         int now = Bukkit.getCurrentTick();
         lastSourceHit.values().removeIf(t -> now - t > 40);
+        meleeTaken.keySet().removeIf(u -> Bukkit.getPlayer(u) == null);
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (runs.runOf(p) == null || p.isDead()) continue;
             if (p.getFoodLevel() < 20) p.setFoodLevel(20);
