@@ -134,18 +134,18 @@ item:
   level: '&7Niveau d''objet : &f%level%'
 edit:
   opening: '&#B376E5Ouverture de &f%dungeon% &#B376E5en mode édition...'
-  opened: '&#B376E5Édition de &f%dungeon% &#B376E5(&f%spawns% &#B376E5points) : construis librement, tes outils sont dans l''inventaire. Clic droit avec un outil pour l''utiliser.'
+  opened: '&#B376E5Édition de &f%dungeon% &#B376E5(&f%spawns% &#B376E5monstres posés) : construis librement, tes outils sont dans l''inventaire.'
   not-editing: '&#FF5C5CTu n''es pas dans un donjon en édition.'
   saving: '&#B376E5Enregistrement de &f%dungeon%&#B376E5...'
-  saved: '&#2ECF7B%dungeon% enregistré : les prochaines parties utiliseront la nouvelle map et les nouveaux points.'
-  cancelled: '&#B376E5Édition fermée sans enregistrer les constructions (les points déplacés restent enregistrés).'
-  added: '&#2ECF7B%mob% ajouté ici &7(%spawns% points).'
-  removed: '&#2ECF7B%mob% retiré &7(%spawns% points).'
+  saved: '&#2ECF7B%dungeon% enregistré : les prochaines parties utiliseront la nouvelle map et les nouveaux monstres.'
+  cancelled: '&#B376E5Édition fermée sans enregistrer les constructions (les monstres posés, déplacés ou retirés restent enregistrés).'
+  added: '&#2ECF7B%mob% posé ici &7(%spawns% monstres posés).'
+  removed: '&#2ECF7B%mob% retiré &7(%spawns% monstres posés).'
   moved: '&#2ECF7B%mob% déplacé ici.'
   start: '&#2ECF7BDépart du donjon placé ici.'
   objective-on: '&#2ECF7B%mob% est maintenant un objectif &7(%objectives% objectifs).'
   objective-off: '&#B376E5%mob% n''est plus un objectif &7(%objectives% objectifs).'
-  none-near: '&#FF5C5CAucun point de monstre à moins de 6 blocs.'
+  none-near: '&#FF5C5CAucun monstre posé à moins de 6 blocs.'
   usage: '&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% edit <donjon> | add <monstre> | remove | move | start | objective | save | cancel'
   unknown-mob: '&#FF5C5CMonstre inconnu : %mob%'
   marker: '&#FFD94D%mob%'
@@ -153,27 +153,28 @@ edit:
   marker-start: '&#2ECF7B▶ Départ'
   inventory-full: '&#FF5C5CInventaire plein : libère de la place pour recevoir les outils d''édition.'
   chosen: '&#2ECF7BMonstre choisi : &f%mob%&#2ECF7B. Clic droit pour le poser.'
-  picked: '&#B376E5%mob% en main : clic droit sur un bloc pour le reposer.'
-  confirm-save: '&#FFD94DClic droit encore une fois pour enregistrer la map et les points.'
+  picked: '&#B376E5%mob% en main : clic droit sur un bloc pour le reposer, clic gauche pour le laisser où il était.'
+  confirm-save: '&#FFD94DClic droit encore une fois pour enregistrer la map et les monstres.'
   confirm-quit: '&#FFD94DClic droit encore une fois pour quitter sans enregistrer les constructions.'
   tool:
     place:
       name: '&#FFD94DPoser un monstre'
       chosen: ' &7(%mob%&7)'
-      description: 'Clic gauche : choisir le monstre (dans la liste, ou sur un point déjà posé pour reprendre son monstre). Clic droit : le poser sur le bloc visé, ou là où tu es.'
+      description: 'Clic gauche : choisir le monstre (dans la liste, ou sur un monstre déjà posé pour reprendre le même). Clic droit : le poser sur le bloc visé, ou là où tu es.'
       action: Poser
       left: Choisir le monstre
     move:
-      name: '&#FFD94DDéplacer un point'
-      description: Clic droit sur un point pour le prendre, puis sur un bloc pour le reposer.
+      name: '&#FFD94DDéplacer un monstre'
+      description: 'Clic droit sur un monstre posé pour le prendre, puis clic droit sur un bloc pour le reposer. Clic gauche : annuler.'
       action: Prendre / reposer
+      left: Annuler
     remove:
-      name: '&#FFD94DRetirer un point'
-      description: Retire le point visé, ou le plus proche à moins de 6 blocs.
+      name: '&#FFD94DRetirer un monstre'
+      description: Retire le monstre posé que tu vises, ou le plus proche à moins de 6 blocs.
       action: Retirer
     objective:
       name: '&#FFD94DObjectif'
-      description: Le monstre du point visé devient un objectif du donjon (à vaincre pour gagner), ou ne l'est plus.
+      description: Le monstre posé que tu vises devient un objectif du donjon (à vaincre pour gagner), ou ne l'est plus. Tous les monstres de ce type comptent.
       action: Basculer
     start:
       name: '&#FFD94DDépart'
@@ -185,7 +186,7 @@ edit:
       action: Enregistrer (deux fois)
     quit:
       name: '&#FF5C5CQuitter sans enregistrer'
-      description: Ferme l'édition sans garder les constructions. Les points déplacés restent enregistrés.
+      description: Ferme l'édition sans garder les constructions. Les monstres posés, déplacés ou retirés restent enregistrés.
       action: Quitter (deux fois)
   menu:
     title: 'Monstres : %dungeon%'
@@ -197,6 +198,7 @@ edit:
     objective: Objectif du donjon
     current: Monstre choisi
     choose: Choisir
+  let-go: '&#B376E5Déplacement annulé.'
 create:
   bad-id: '&#FF5C5CNom de donjon invalide : 2 à 32 caractères, minuscules, chiffres et _ seulement.'
   exists: '&#FF5C5CLe donjon %dungeon% existe déjà.'

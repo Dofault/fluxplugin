@@ -134,18 +134,18 @@ item:
   level: '&7Item level: &f%level%'
 edit:
   opening: '&#B376E5Opening &f%dungeon% &#B376E5in edit mode...'
-  opened: '&#B376E5Editing &f%dungeon% &#B376E5(&f%spawns% &#B376E5points): build freely, your tools are in your inventory. Right click with a tool to use it.'
+  opened: '&#B376E5Editing &f%dungeon% &#B376E5(&f%spawns% &#B376E5placed monsters): build freely, your tools are in your inventory.'
   not-editing: '&#FF5C5CYou are not in a dungeon being edited.'
   saving: '&#B376E5Saving &f%dungeon%&#B376E5...'
-  saved: '&#2ECF7B%dungeon% saved: the next runs use the new map and points.'
-  cancelled: '&#B376E5Edit closed without saving the builds (moved points stay saved).'
-  added: '&#2ECF7B%mob% added here &7(%spawns% points).'
-  removed: '&#2ECF7B%mob% removed &7(%spawns% points).'
+  saved: '&#2ECF7B%dungeon% saved: the next runs use the new map and monsters.'
+  cancelled: '&#B376E5Edit closed without saving the builds (placed, moved or removed monsters stay saved).'
+  added: '&#2ECF7B%mob% placed here &7(%spawns% placed monsters).'
+  removed: '&#2ECF7B%mob% removed &7(%spawns% placed monsters).'
   moved: '&#2ECF7B%mob% moved here.'
   start: '&#2ECF7BDungeon start placed here.'
   objective-on: '&#2ECF7B%mob% is now an objective &7(%objectives% objectives).'
   objective-off: '&#B376E5%mob% is no longer an objective &7(%objectives% objectives).'
-  none-near: '&#FF5C5CNo monster point within 6 blocks.'
+  none-near: '&#FF5C5CNo placed monster within 6 blocks.'
   usage: '&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% edit <dungeon> | add <monster> | remove | move | start | objective | save | cancel'
   unknown-mob: '&#FF5C5CUnknown monster: %mob%'
   marker: '&#FFD94D%mob%'
@@ -153,27 +153,28 @@ edit:
   marker-start: '&#2ECF7B▶ Start'
   inventory-full: '&#FF5C5CInventory full: make room to receive the edit tools.'
   chosen: '&#2ECF7BChosen monster: &f%mob%&#2ECF7B. Right click to place it.'
-  picked: '&#B376E5%mob% picked up: right click a block to put it down.'
-  confirm-save: '&#FFD94DRight click once more to save the map and the points.'
+  picked: '&#B376E5%mob% picked up: right click a block to put it down, left click to leave it where it was.'
+  confirm-save: '&#FFD94DRight click once more to save the map and the monsters.'
   confirm-quit: '&#FFD94DRight click once more to quit without saving the builds.'
   tool:
     place:
       name: '&#FFD94DPlace a monster'
       chosen: ' &7(%mob%&7)'
-      description: 'Left click: choose the monster (from the list, or on a placed point to take its monster). Right click: place it on the block aimed at, or where you stand.'
+      description: 'Left click: choose the monster (from the list, or on a placed monster to take the same). Right click: place it on the block aimed at, or where you stand.'
       action: Place
       left: Choose the monster
     move:
-      name: '&#FFD94DMove a point'
-      description: Right click a point to pick it up, then a block to put it down.
+      name: '&#FFD94DMove a monster'
+      description: 'Right click a placed monster to pick it up, then right click a block to put it down. Left click: cancel.'
       action: Pick up / put down
+      left: Cancel
     remove:
-      name: '&#FFD94DRemove a point'
-      description: Removes the point aimed at, or the nearest within 6 blocks.
+      name: '&#FFD94DRemove a monster'
+      description: Removes the placed monster aimed at, or the nearest within 6 blocks.
       action: Remove
     objective:
       name: '&#FFD94DObjective'
-      description: The monster of the point aimed at becomes an objective of the dungeon (to defeat to win), or no longer one.
+      description: The placed monster aimed at becomes an objective of the dungeon (to defeat to win), or no longer one. Every monster of that kind counts.
       action: Toggle
     start:
       name: '&#FFD94DStart'
@@ -185,7 +186,7 @@ edit:
       action: Save (twice)
     quit:
       name: '&#FF5C5CQuit without saving'
-      description: Closes the edit without keeping the builds. Moved points stay saved.
+      description: Closes the edit without keeping the builds. Placed, moved or removed monsters stay saved.
       action: Quit (twice)
   menu:
     title: 'Monsters: %dungeon%'
@@ -197,6 +198,7 @@ edit:
     objective: Dungeon objective
     current: Chosen monster
     choose: Choose
+  let-go: '&#B376E5Move cancelled.'
 create:
   bad-id: '&#FF5C5CInvalid dungeon name: 2 to 32 characters, lowercase letters, digits and _ only.'
   exists: '&#FF5C5CThe dungeon %dungeon% already exists.'

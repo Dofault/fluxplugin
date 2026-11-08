@@ -319,7 +319,7 @@ public final class Editor implements Listener {
         String name = plugin.messages().raw("edit.tool." + t.key() + ".name");
         if (t == Tool.PLACE && chosenMob != null) name += plugin.messages().raw("edit.tool.place.chosen", "%mob%", mobName(chosenMob));
         Lore l = Lore.create().description(plugin.messages().raw("edit.tool." + t.key() + ".description"));
-        if (t == Tool.PLACE) l.left(plugin.messages().raw("edit.tool.place.left"));
+        if (t == Tool.PLACE || t == Tool.MOVE) l.left(plugin.messages().raw("edit.tool." + t.key() + ".left"));
         List<String> lore = l.right(plugin.messages().raw("edit.tool." + t.key() + ".action")).build();
         ItemStack item = Items.of(t.material.name(), name, lore, p);
         item.editMeta(m -> m.getPersistentDataContainer().set(toolKey, PersistentDataType.STRING, t.key()));
@@ -347,11 +347,16 @@ public final class Editor implements Listener {
         e.setCancelled(true);
         Player p = e.getPlayer();
         Session s = sessionOf(p);
-        if (s == null || s.saving) return;
+        if (s == null) {
+            takeTools(p);
+            return;
+        }
+        if (s.saving) return;
         boolean right = e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK;
         if (!right) {
             // left click with the place tool: choose the monster
-            if (t == Tool.PLACE && (e.getAction() == Action.LEFT_CLICK_AIR || e.getAction() == Action.LEFT_CLICK_BLOCK)) openMenu(p, s, 0);
+            if (t == Tool.PLACE) openMenu(p, s, 0);
+            else if (t == Tool.MOVE) letGo(p, s);
             return;
         }
         Block clicked = e.getAction() == Action.RIGHT_CLICK_BLOCK ? e.getClickedBlock() : null;
@@ -378,20 +383,23 @@ public final class Editor implements Listener {
                 else toggleObjective(p, s, i);
             }
             case START -> startAt(p, s, at);
-            case SAVE, QUIT -> {
-                Long first = confirm.get(p.getUniqueId());
-                long now = System.currentTimeMillis();
-                if (first == null || now - first > CONFIRM_MS) {
-                    confirm.put(p.getUniqueId(), now);
-                    plugin.messages().send(p, t == Tool.SAVE ? "edit.confirm-save" : "edit.confirm-quit");
-                    Sounds.cue(p, "confirm");
-                    return;
-                }
-                confirm.remove(p.getUniqueId());
-                if (t == Tool.SAVE) save(p);
-                else cancel(p);
-            }
+            case SAVE, QUIT -> finish(p, t);
         }
+    }
+
+    /** Save or quit: the first right click asks, a second one within 3 s does it. */
+    private void finish(Player p, Tool t) {
+        Long first = confirm.get(p.getUniqueId());
+        long now = System.currentTimeMillis();
+        if (first == null || now - first > CONFIRM_MS) {
+            confirm.put(p.getUniqueId(), now);
+            plugin.messages().send(p, t == Tool.SAVE ? "edit.confirm-save" : "edit.confirm-quit");
+            Sounds.cue(p, "confirm");
+            return;
+        }
+        confirm.remove(p.getUniqueId());
+        if (t == Tool.SAVE) save(p);
+        else cancel(p);
     }
 
     /** Right click on a point's body with a tool. */
@@ -415,13 +423,13 @@ public final class Editor implements Listener {
                 else pickUp(p, s, i);
             }
             case PLACE -> {
-                // right click on a point: one more of the chosen monster right there
+                // right click on a placed monster: one more of the chosen monster right there
                 String mob = chosen.get(p.getUniqueId());
                 if (mob == null) openMenu(p, s, 0);
                 else addAt(p, s, mob, hit.getLocation());
             }
-            default -> {
-            }
+            case START -> startAt(p, s, hit.getLocation());
+            case SAVE, QUIT -> finish(p, t);
         }
     }
 
@@ -434,7 +442,13 @@ public final class Editor implements Listener {
         e.setCancelled(true);
         Player p = e.getPlayer();
         Session s = sessionOf(p);
-        if (s == null || s.saving || toolOf(p.getInventory().getItemInMainHand()) != Tool.PLACE) return;
+        Tool held = toolOf(p.getInventory().getItemInMainHand());
+        if (s == null || s.saving) return;
+        if (held == Tool.MOVE) {
+            letGo(p, s);
+            return;
+        }
+        if (held != Tool.PLACE) return;
         int i = indexOf(s, key);
         if (i < 0) return;
         chosen.put(p.getUniqueId(), s.spawns.get(i).mob());
@@ -627,6 +641,16 @@ public final class Editor implements Listener {
         if (m != null && m[0] instanceof TextDisplay d) d.setGlowing(true);
         Sounds.cue(p, "click");
         plugin.messages().send(p, "edit.picked", "%mob%", mobName(s.spawns.get(i).mob()));
+    }
+
+    /** Left click while carrying a monster: it stays where it was. */
+    private void letGo(Player p, Session s) {
+        String key = carried.remove(p.getUniqueId());
+        if (key == null) return;
+        Entity[] m = s.markers.get(key);
+        if (m != null && m[0] instanceof TextDisplay d) d.setGlowing(false);
+        Sounds.cue(p, "remove");
+        plugin.messages().send(p, "edit.let-go");
     }
 
     private void putDown(Player p, Session s, String key, Location l) {
