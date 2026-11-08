@@ -63,6 +63,8 @@ public final class DungeonDefinition {
     private final String fingerprint;
     /** Imported map (a whole world copied for each run), null for a dungeon drawn from its rooms. */
     private final MapSpec map;
+    /** Console commands run on run events (enter, objective, victory, defeat, leave), one list per event. */
+    private final Map<String, List<String>> commands = new LinkedHashMap<>();
 
     /** A monster placed in an imported map, at the coordinates of the original world. */
     public record Spawn(String mob, double x, double y, double z, float yaw) {
@@ -88,6 +90,8 @@ public final class DungeonDefinition {
         timeLimit = Format.parseDuration(c.getString("time-limit", "20m"));
         rewardMinutes = c.getDouble("reward.minutes", 5);
         rewardXp = c.getDouble("reward.xp", 100);
+        ConfigurationSection cmds = c.getConfigurationSection("commands");
+        if (cmds != null) for (String k : cmds.getKeys(false)) commands.put(k.toLowerCase(java.util.Locale.ROOT), cmds.getStringList(k));
         for (Map<?, ?> l : c.getMapList("loot")) {
             Object chance = l.get("chance"), amount = l.get("amount");
             loot.add(new Loot(String.valueOf(l.get("item")), chance instanceof Number n ? n.doubleValue() : 1,
@@ -130,6 +134,11 @@ public final class DungeonDefinition {
 
     private static double d(Object o) {
         return o instanceof Number n ? n.doubleValue() : 0;
+    }
+
+    /** Commands of a run event, empty when none. */
+    public List<String> commands(String event) {
+        return commands.getOrDefault(event, List.of());
     }
 
     public MapSpec map() {

@@ -319,6 +319,23 @@ public final class Runs {
     }
 
     /** The dungeon is ready: the expected players swap to their dungeon inventory and come in. */
+    /**
+     * Runs the console commands of a run event for a player ({@code commands.<event>} of the dungeon file), e.g.
+     * {@code typewriter cinematic start <page> %player%}. Placeholders: %player%, %dungeon% (id), %objective%.
+     */
+    private void hook(Run run, String event, Player p, String objective) {
+        for (String line : run.def.commands(event)) {
+            String cmd = line.replace("%player%", p.getName()).replace("%dungeon%", run.def.id())
+                    .replace("%objective%", objective == null ? "" : objective);
+            if (cmd.startsWith("/")) cmd = cmd.substring(1);
+            try {
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+            } catch (RuntimeException e) {
+                plugin.getLogger().warning("Command of " + run.def.id() + " (" + event + ") failed: " + cmd + ": " + e);
+            }
+        }
+    }
+
     private void enter(Run run) {
         run.state = Run.State.RUNNING;
         run.started = System.currentTimeMillis();
@@ -340,6 +357,10 @@ public final class Runs {
                     Texts.parse(plugin.messages().raw("run.subtitle", "%lives%", String.valueOf(run.livesLeft))),
                     Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(3), Duration.ofMillis(700))));
             p.playSound(p.getLocation(), Sound.BLOCK_IRON_DOOR_CLOSE, 1f, 0.6f);
+            // a second later, once the player stands in the dungeon (cinematics start from there)
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (p.isOnline() && byPlayer.get(p.getUniqueId()) == run) hook(run, "enter", p, null);
+            }, 20L);
         }
         run.expected.clear();
         if (run.players.isEmpty()) cleanup(run);
@@ -356,6 +377,7 @@ public final class Runs {
         run.watching.remove(player.getUniqueId());
         if (run.bossBar != null) player.hideBossBar(run.bossBar);
         if (inside) {
+            hook(run, "leave", player, null);
             heroes.deactivate(player);
             Location back = loadouts.leave(player);
             teleport(player, back != null ? back : Bukkit.getWorlds().get(0).getSpawnLocation());
@@ -379,6 +401,29 @@ public final class Runs {
     /** Copies of maps opened by staff to look around: no monsters, no run, deleted once empty. */
     private final Map<String, World> visits = new HashMap<>();
     private final Map<UUID, Location> visitReturn = new HashMap<>();
+
+    /** Diagnostics: opens and closes {@code n} copies of a map one after the other, without players. */
+    public void debugCycle(DungeonDefinition def, int n, Runnable done) {
+        if (n <= 0) {
+            done.run();
+            return;
+        }
+        String name = instances.freeName(maxRuns);
+        if (name == null) {
+            done.run();
+            return;
+        }
+        instances.create(new java.io.File(plugin.getDataFolder(), def.map().folder()), name, world -> {
+            if (world == null) {
+                done.run();
+                return;
+            }
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                instances.destroy(world);
+                Bukkit.getScheduler().runTaskLater(plugin, () -> debugCycle(def, n - 1, done), 40L);
+            }, 40L);
+        });
+    }
 
     /** True when the player is visiting a map copy. */
     public boolean visiting(Player p) {
@@ -724,6 +769,7 @@ public final class Runs {
             }
         }
         if (objective != null && run.objectivesLeft.remove(objective)) {
+            for (Player p : online(run)) hook(run, "objective", p, objective);
             broadcast(run, "objective.done", "%done%", String.valueOf(run.objectivesDone()), "%total%", String.valueOf(run.objectivesTotal));
             if (run.objectivesLeft.isEmpty()) victory(run);
         }
@@ -836,6 +882,7 @@ public final class Runs {
                     Texts.parse(plugin.messages().raw("run.victory-sub", "%time%", Format.duration(seconds))),
                     Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(4), Duration.ofMillis(800))));
             p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
+            hook(run, "victory", p, null);
             if (money > 0) Economy.main().give(p, money, Origin.of(plugin, origin).detail(run.def.name()).notifyPlayer());
             heroes.giveXp(p, run.def.rewardXp());
             List<String> found = new ArrayList<>();
@@ -867,6 +914,7 @@ public final class Runs {
             p.showTitle(Title.title(Texts.parse(plugin.messages().raw("run.defeat")), Texts.parse(plugin.messages().raw(reason)),
                     Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(3), Duration.ofMillis(700))));
             p.playSound(p.getLocation(), Sound.ENTITY_WITHER_DEATH, 0.5f, 1.2f);
+            hook(run, "defeat", p, null);
         }
         Bukkit.getScheduler().runTaskLater(plugin, () -> stop(run), 100L);
     }

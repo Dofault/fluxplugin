@@ -336,7 +336,7 @@ def main():
     if os.path.exists(dungeon_path):
         # keep what the staff tuned (name, rewards, lives...), refresh the map
         old = load(dungeon_path)
-        for k in ("name", "icon", "description", "players", "recommended-level", "time-limit", "lives", "reward", "loot"):
+        for k in ("name", "icon", "description", "players", "recommended-level", "time-limit", "lives", "reward", "loot", "commands"):
             if k in old:
                 dungeon[k] = old[k]
     for path, data in ((dungeon_path, dungeon),

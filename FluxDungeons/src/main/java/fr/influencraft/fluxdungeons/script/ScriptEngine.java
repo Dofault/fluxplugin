@@ -443,6 +443,17 @@ public final class ScriptEngine {
                 float volume = (float) Script.num(a, "volume", 1), pitch = (float) Script.num(a, "pitch", 1);
                 for (Location l : t.places()) w.playSound(l, sound.toLowerCase(Locale.ROOT), volume, pitch);
             }
+            case "RUN_COMMAND_AS_CONSOLE", "RUN_COMMAND_AS_PLAYER" -> {
+                // EliteScript: one command per target player; $player / %player% is his name
+                String cmd = Script.text(a, "sValue", "");
+                if (cmd.startsWith("/")) cmd = cmd.substring(1);
+                for (Entity e : t.entities) {
+                    if (!(e instanceof Player p)) continue;
+                    String line = cmd.replace("$playerName", p.getName()).replace("$player", p.getName()).replace("%player%", p.getName());
+                    if (type.equals("RUN_COMMAND_AS_PLAYER")) p.performCommand(line);
+                    else Bukkit.dispatchCommand(Bukkit.getConsoleSender(), line);
+                }
+            }
             case "MESSAGE" -> {
                 String msg = Script.text(a, "sValue", "");
                 for (Entity e : t.entities) if (e instanceof Player p) p.sendMessage(Texts.parse(msg));

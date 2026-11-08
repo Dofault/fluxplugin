@@ -57,6 +57,7 @@ public final class FluxDungeons extends FluxPlugin {
     private Heroes heroes;
     private Mobs mobs;
     private Arena arena;
+    private Diagnostics diagnostics;
     private Runs runs;
     private Loadouts loadouts;
     private ItemCatalog items;
@@ -70,6 +71,8 @@ public final class FluxDungeons extends FluxPlugin {
         mobs = new Mobs(this);
         items = ItemCatalog.create(this, "fluxdungeons");
         ItemLevels.register(this);
+        diagnostics = new Diagnostics(this);
+        getServer().getPluginManager().registerEvents(diagnostics, this);
         loadouts = new Loadouts(store, getLogger(), heroes::isAbilityItem);
         arena = new Arena(this, getConfig().getString("world", "flux_dungeons"), getConfig().getInt("slot-spacing", 512),
                 getConfig().getInt("blocks-per-tick", 20000));
@@ -547,6 +550,20 @@ public final class FluxDungeons extends FluxPlugin {
                     for (UUID u : r.players()) names.add(name(u));
                     messages().send(sender, "admin.run-line", "%id%", r.id(), "%dungeon%", r.definition().name(),
                             "%state%", r.state().name(), "%players%", String.join(", ", names), "%lives%", String.valueOf(r.livesLeft()));
+                }
+            }
+            case "debug" -> {
+                String what = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "";
+                switch (what) {
+                    case "leaks" -> diagnostics.leaks(sender);
+                    case "heapdump" -> diagnostics.heapDump(sender);
+                    case "cycle" -> {
+                        DungeonDefinition def = args.length > 2 ? runs.dungeon(args[2]) : null;
+                        int n = args.length > 3 ? Math.max(1, parse(args[3])) : 3;
+                        if (def == null || def.map() == null) sender.sendMessage("usage: fluxdungeons debug cycle <imported dungeon> [n]");
+                        else runs.debugCycle(def, n, () -> sender.sendMessage("cycle done: " + n + " copies opened and closed"));
+                    }
+                    default -> sender.sendMessage("fluxdungeons debug leaks | heapdump | cycle <dungeon> [n]");
                 }
             }
             case "reload" -> {
