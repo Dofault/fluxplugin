@@ -281,11 +281,13 @@ public final class FluxDungeons extends FluxPlugin {
             form.body(messages().raw("main.in-run", "%dungeon%", run.definition().name()));
             form.action("leave", messages().raw("main.leave"));
         } else {
+            // one button per dungeon; its details (players, level, description) show on mouse over
             for (DungeonDefinition def : runs.dungeons()) {
-                form.item(new ItemStack(def.icon()), messages().raw("main.dungeon", "%dungeon%", def.name(),
-                        "%min%", String.valueOf(def.minPlayers()), "%max%", String.valueOf(def.maxPlayers()),
-                        "%level%", String.valueOf(def.recommendedLevel())));
-                form.action("play:" + def.id(), messages().raw("main.play", "%dungeon%", def.name()));
+                List<String> tip = new ArrayList<>();
+                tip.add(messages().raw("main.tooltip", "%dungeon%", def.name(), "%min%", String.valueOf(def.minPlayers()),
+                        "%max%", String.valueOf(def.maxPlayers()), "%level%", String.valueOf(def.recommendedLevel())));
+                for (String d : def.description()) tip.add("&#B376E5" + d);
+                form.action("play:" + def.id(), def.name(), String.join("\n", tip));
             }
             form.action("class", messages().raw("main.choose-class"));
         }

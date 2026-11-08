@@ -371,7 +371,12 @@ public final class Dialogs {
          * tells which one. Buttons are laid out on {@link #columns} columns, below the fields.
          */
         public Form action(String id, String label) {
-            actions.add(new String[]{id, label});
+            return action(id, label, null);
+        }
+
+        /** An action button with a text shown when the mouse is over it ({@code tooltip}, null for none). */
+        public Form action(String id, String label, String tooltip) {
+            actions.add(new String[]{id, label, tooltip});
             return this;
         }
 
@@ -452,7 +457,8 @@ public final class Dialogs {
             List<ActionButton> buttons = new ArrayList<>();
             for (String[] a : actions) {
                 String id = a[0];
-                buttons.add(ActionButton.create(Texts.parse(style("option") + a[1], player), null, 150,
+                buttons.add(ActionButton.create(Texts.parse(style("option") + a[1], player),
+                        a[2] == null || a[2].isEmpty() ? null : Texts.parse(a[2], player), 150,
                         DialogAction.customClick((view, audience) -> submit(view, id, false), once)));
             }
             // Escape (or closing) runs onCancel, like the cancel button of a confirm/cancel form

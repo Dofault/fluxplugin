@@ -17,11 +17,12 @@ main:
   party: '&#B376E5Your party: &f%count% &#B376E5player(s), leader &f%leader%'
   in-run: '&#FFD94DYou are in %dungeon%.'
   leave: '&#FF5C5CLeave the dungeon'
-  dungeon: '&#FFD94D%dungeon%
-
-    &#B376E5%min% to %max% players, recommended level &f%level%'
-  play: '&#2ECF7BPlay: &f%dungeon%'
   choose-class: '&#FFD94DChoose my class'
+  tooltip: '&#FFD94D%dungeon%
+
+    &#B376E5Recommended level: &f%level%
+
+    &#B376E5Players: &f%min% to %max%'
 class:
   title: Classes
   intro: '&#B376E5Your class sets your life, your damage and your three abilities in dungeons. Each class keeps its own level: change it any time outside a dungeon.'

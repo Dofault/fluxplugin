@@ -17,11 +17,12 @@ main:
   party: '&#B376E5Ton groupe : &f%count% &#B376E5joueur(s), chef &f%leader%'
   in-run: '&#FFD94DTu es dans %dungeon%.'
   leave: '&#FF5C5CQuitter le donjon'
-  dungeon: '&#FFD94D%dungeon%
-
-    &#B376E5%min% à %max% joueurs, niveau conseillé &f%level%'
-  play: '&#2ECF7BJouer : &f%dungeon%'
   choose-class: '&#FFD94DChoisir ma classe'
+  tooltip: '&#FFD94D%dungeon%
+
+    &#B376E5Niveau conseillé : &f%level%
+
+    &#B376E5Joueurs : &f%min% à %max%'
 class:
   title: Classes
   intro: '&#B376E5Ta classe décide de ta vie, de tes dégâts et de tes trois compétences en donjon. Chaque classe garde son propre niveau : tu peux en changer à tout moment hors d''un donjon.'
