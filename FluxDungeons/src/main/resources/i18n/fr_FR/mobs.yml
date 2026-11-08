@@ -99,7 +99,10 @@ rochiste_golem:
     level: 2
 
 rochiste_colosse:
-  type: RAVAGER
+  # corps sans IA vanilla (le ravageur réécrivait sa propre vitesse à chaque tick) : FluxDungeons le pilote
+  type: POLAR_BEAR
+  controlled: true
+  silent: true
   name: '&#7E6FA0&lColosse d''Abîme'
   boss: true
   rank: BOSS
@@ -112,8 +115,9 @@ rochiste_colosse:
   # la moitié des dégâts des projectiles : le corps à corps est la bonne façon de le battre
   ranged-resistance: 0.5
   xp: 200
+  # au moins 2,5 s entre deux attaques, tirées au hasard parmi celles qui sont prêtes
+  cast-gap: 2.5
   abilities:
-  # par ordre de priorité quand plusieurs sont prêtes
   - type: cataclysm
     every: 35
     animation: attack_ultimate

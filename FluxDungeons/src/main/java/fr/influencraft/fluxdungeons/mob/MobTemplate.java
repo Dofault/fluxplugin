@@ -41,6 +41,9 @@ import java.util.Map;
  *   ranged-resistance: 0.5         # share of projectile damage it shrugs off (melee is the way)
  *   ranged-rate: 2                 # archers shoot this many times as often as vanilla (2 by default)
  *   frost-arrows: true             # its arrows freeze and slow whoever they hit
+ *   controlled: true               # no vanilla AI: FluxDungeons picks its target, walks it at its speed, hits it
+ *   silent: true                   # no vanilla sounds (a model with its own look)
+ *   cast-gap: 2.5                  # seconds between two abilities at least (the next one is drawn among those ready)
  *   mount: forge_horse
  *   messages: {death: [...], hit: [...], hurt: [...]}
  *   blocks: {spawn: ["-2,0,3/minecraft:iron_bars"], remove: [...]}   # relative to its spawn point
@@ -89,7 +92,7 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                         List<String> hitMessages, List<String> hurtMessages, List<BlockState> spawnBlocks,
                         List<BlockState> removeBlocks, Map<String, Script> scripts, String rank,
                         double attackSpeed, Map<String, org.bukkit.Color> dyes, double rangedResistance, double rangedRate,
-                        boolean frostArrows) {
+                        boolean frostArrows, boolean controlled, boolean silent, double castGap) {
         /** Ticks between two melee hits of this monster ({@code attack-speed}: hits per second, vanilla 1). */
         public int attackTicks() {
             return (int) Math.max(4, Math.round(20 / Math.max(0.05, attackSpeed)));
@@ -147,7 +150,8 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                 blocks(c.getStringList("blocks.spawn")), blocks(c.getStringList("blocks.remove")),
                 Script.parse(scriptSection), c.getString("rank", "TRASH").toUpperCase(Locale.ROOT),
                 c.getDouble("attack-speed", 1), dyes, Math.max(0, Math.min(1, c.getDouble("ranged-resistance", 0))),
-                Math.max(1, c.getDouble("ranged-rate", 2)), c.getBoolean("frost-arrows", false));
+                Math.max(1, c.getDouble("ranged-rate", 2)), c.getBoolean("frost-arrows", false),
+                c.getBoolean("controlled", false), c.getBoolean("silent", false), Math.max(0, c.getDouble("cast-gap", 0)));
         return new MobTemplate(id, type, c.getString("name", id), c.getBoolean("boss"), c.getString("model"),
                 c.getDouble("health", 20), c.getDouble("damage", 3), c.getDouble("speed", -1), c.getDouble("armor", 0),
                 c.getDouble("scale", 1), c.getDouble("xp", 10), equipment, abilities, extra);

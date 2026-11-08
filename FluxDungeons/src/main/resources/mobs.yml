@@ -99,7 +99,10 @@ rochiste_golem:
     level: 2
 
 rochiste_colosse:
-  type: RAVAGER
+  # body without vanilla AI (the ravager rewrote its own speed every tick): FluxDungeons drives it
+  type: POLAR_BEAR
+  controlled: true
+  silent: true
   name: '&#7E6FA0&lAbyss Colossus'
   boss: true
   rank: BOSS
@@ -112,8 +115,9 @@ rochiste_colosse:
   # half the damage of projectiles: melee is the way to beat it
   ranged-resistance: 0.5
   xp: 200
+  # at least 2.5 s between two attacks, drawn among those ready
+  cast-gap: 2.5
   abilities:
-  # by priority when several are ready
   - type: cataclysm
     every: 35
     animation: attack_ultimate

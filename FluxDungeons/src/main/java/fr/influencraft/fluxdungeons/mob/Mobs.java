@@ -83,6 +83,8 @@ public final class Mobs {
         boolean dying, inCombat, switching;
         /** Tick of its last melee hit on a player (vanilla's or the longer reach's). */
         int lastMelee = -1000;
+        /** No ability before this time (cast-gap after the last one). */
+        long nextCast;
 
         Alive(LivingEntity entity, MobTemplate template, String run, Location spawn, ModelBridge.Handle model) {
             this.entity = entity;
@@ -171,6 +173,7 @@ public final class Mobs {
         this.plugin = plugin;
         this.mobKey = new NamespacedKey(plugin, "mob");
         this.shotKey = new NamespacedKey(plugin, "mob_shot");
+        this.pilotKey = com.destroystokyo.paper.entity.ai.GoalKey.of(Mob.class, new NamespacedKey(plugin, "pilot"));
         this.runKey = new NamespacedKey(plugin, "run");
         this.objectiveKey = new NamespacedKey(plugin, "objective");
         this.spawnKey = new NamespacedKey(plugin, "spawn");
@@ -345,6 +348,7 @@ public final class Mobs {
         else if (t.boss()) base(le, Attribute.KNOCKBACK_RESISTANCE, 1);
         for (PotionEffect pe : a.kit.permanent()) le.addPotionEffect(pe);
         alive.put(le.getUniqueId(), a);
+        control(a);
         bar(a);
         calm(a, true);
         blocks(a, x.spawnBlocks());
@@ -384,6 +388,7 @@ public final class Mobs {
         Alive a = new Alive(le, t, run, spawn, model);
         a.objective = le.getPersistentDataContainer().get(objectiveKey, PersistentDataType.STRING);
         alive.put(le.getUniqueId(), a);
+        control(a);
         bar(a);
         calm(a, true);
         return true;
@@ -446,6 +451,81 @@ public final class Mobs {
         a.inCombat = true;
         calm(a, false);
         if (event) engine.fire(a, "EliteMobEnterCombatEvent", player, null);
+    }
+
+    // ---------------------------------------------------------------- controlled monsters
+
+    private final com.destroystokyo.paper.entity.ai.GoalKey<Mob> pilotKey;
+
+    /**
+     * A {@code controlled} monster loses every vanilla behaviour (some creatures rewrite their own speed each tick, as
+     * the ravager does) and gets {@link Pilot} instead: FluxDungeons alone decides where it goes and how fast (its
+     * {@code speed}), and its melee hits come from {@link #reachTick}.
+     */
+    private void control(Alive a) {
+        if (!a.template.extra().controlled() || !(a.entity instanceof Mob m)) return;
+        if (a.template.extra().silent()) m.setSilent(true);
+        Bukkit.getMobGoals().removeAllGoals(m);
+        Bukkit.getMobGoals().addGoal(m, 0, new Pilot(a));
+    }
+
+    /** The whole behaviour of a controlled monster: find a player, walk to him, face him. */
+    private final class Pilot implements com.destroystokyo.paper.entity.ai.Goal<Mob> {
+        private final Alive a;
+        private int ticks;
+
+        Pilot(Alive a) {
+            this.a = a;
+        }
+
+        @Override
+        public boolean shouldActivate() {
+            return true;
+        }
+
+        @Override
+        public void tick() {
+            if (a.dying || !(a.entity instanceof Mob m)) return;
+            ticks++;
+            Player target = m.getTarget() instanceof Player p && fighting(p) && p.getWorld() == m.getWorld() ? p : null;
+            if (target == null && ticks % 10 == 0) {
+                // calm: sees players within its (shortened) follow range, never through walls
+                AttributeInstance sight = m.getAttribute(Attribute.FOLLOW_RANGE);
+                double range = sight == null ? 16 : sight.getValue();
+                double best = range * range;
+                for (Player p : m.getWorld().getPlayers()) {
+                    if (!fighting(p)) continue;
+                    double d = p.getLocation().distanceSquared(m.getLocation());
+                    if (d < best && m.hasLineOfSight(p)) {
+                        best = d;
+                        target = p;
+                    }
+                }
+                if (target != null) m.setTarget(target);
+            }
+            if (target == null) {
+                m.getPathfinder().stopPathfinding();
+                return;
+            }
+            m.lookAt(target);
+            org.bukkit.util.BoundingBox reach = m.getBoundingBox().expand(VANILLA_REACH + reachBonus - 0.4, 0, VANILLA_REACH + reachBonus - 0.4);
+            if (reach.overlaps(target.getBoundingBox())) {
+                m.getPathfinder().stopPathfinding();
+            } else if (ticks % 10 == 0 || !m.getPathfinder().hasPath()) {
+                m.getPathfinder().moveTo(target, 1.0);
+            }
+        }
+
+        @Override
+        public com.destroystokyo.paper.entity.ai.GoalKey<Mob> getKey() {
+            return pilotKey;
+        }
+
+        @Override
+        public java.util.EnumSet<com.destroystokyo.paper.entity.ai.GoalType> getTypes() {
+            return java.util.EnumSet.of(com.destroystokyo.paper.entity.ai.GoalType.MOVE, com.destroystokyo.paper.entity.ai.GoalType.LOOK,
+                    com.destroystokyo.paper.entity.ai.GoalType.TARGET);
+        }
     }
 
     // ---------------------------------------------------------------- pack alert
@@ -701,15 +781,21 @@ public final class Mobs {
             }
             a.lastEngaged = now;
             double life = 100 * a.entity.getHealth() / Math.max(1, maxHealth(a.entity));
+            // one ability at a time, drawn among those ready (the first of the list would always win), cast-gap apart
+            if (now < a.nextCast) continue;
+            List<Integer> ready = new ArrayList<>();
             for (int i = 0; i < a.abilities.size(); i++) {
                 Ability ab = a.abilities.get(i);
                 if (life > ab.below()) continue;
                 long last = a.lastCast.getOrDefault(i, now - (long) (ab.every() * 500));
-                if (now - last < ab.every() * 1000) continue;
-                a.lastCast.put(i, now);
-                later.add(() -> cast(a, ab, target));
-                break;
+                if (now - last >= ab.every() * 1000) ready.add(i);
             }
+            if (ready.isEmpty()) continue;
+            int pick = ready.get(ThreadLocalRandom.current().nextInt(ready.size()));
+            Ability chosen = a.abilities.get(pick);
+            a.lastCast.put(pick, now);
+            a.nextCast = now + (long) (a.template.extra().castGap() * 1000);
+            later.add(() -> cast(a, chosen, target));
         }
         later.forEach(Runnable::run);
     }
@@ -857,7 +943,8 @@ public final class Mobs {
             AttributeInstance attack = m.getAttribute(Attribute.ATTACK_DAMAGE);
             if (attack == null || attack.getValue() <= 0) continue;
             org.bukkit.util.BoundingBox body = m.getBoundingBox(), aim = target.getBoundingBox();
-            if (body.clone().expand(VANILLA_REACH, 0, VANILLA_REACH).overlaps(aim)) continue; // vanilla hits it
+            boolean controlled = a.template.extra().controlled();
+            if (!controlled && body.clone().expand(VANILLA_REACH, 0, VANILLA_REACH).overlaps(aim)) continue; // vanilla hits it
             if (!body.clone().expand(VANILLA_REACH + reachBonus, 0, VANILLA_REACH + reachBonus).overlaps(aim)) continue;
             if (!m.hasLineOfSight(target)) continue;
             // lastMelee is set by hitPlayer once the hit lands (set here, the hit would be refused as too soon)
@@ -1145,7 +1232,7 @@ public final class Mobs {
                     MobTemplate copy = new MobTemplate(a.template.id() + "_summon", type, "&7" + type.name().toLowerCase(), false, null,
                             maxHealth(e) * 0.15, a.baseDamage() * 0.6, 0.25, 0, 1, 0, Map.of(), List.of(),
                             new MobTemplate.Extra(1, 0.15, 0.6, false, false, 32, 0, List.of(), List.of(), null, List.of(), List.of(), List.of(),
-                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of(), 0, 1, false));
+                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of(), 0, 1, false, false, false, 0));
                     for (int i = 0; i < (int) ab.number("count", 2); i++) {
                         LivingEntity s = spawn(copy, at.clone().add(ThreadLocalRandom.current().nextDouble(-2, 2), 0, ThreadLocalRandom.current().nextDouble(-2, 2)), a.run);
                         if (s != null) onSummon.accept(e, s);
