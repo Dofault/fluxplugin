@@ -162,17 +162,20 @@ final class WorldInstances {
      * Saves an edit world and writes its blocks and entities back into the map folder (region, entities, poi), then
      * deletes the working copy; {@code done} runs on the server thread.
      */
-    void saveBack(World w, File target, Runnable done) {
+    void saveBack(World w, File target, Consumer<Integer> done) {
         String name = w.getName();
         File folder = dimension(name);
         w.save();
         if (!Bukkit.unloadWorld(w, true)) {
             plugin.getLogger().warning("Could not unload " + name + ": the map was not written back.");
-            done.run();
+            done.accept(0);
             return;
         }
         disk.execute(() -> {
+            int files = 0;
             try {
+                File[] regions = new File(folder, "region").listFiles((d, n) -> n.endsWith(".mca"));
+                files = regions == null ? 0 : regions.length;
                 for (String sub : new String[]{"region", "entities", "poi"}) {
                     Path from = folder.toPath().resolve(sub);
                     if (Files.isDirectory(from)) copyTree(from, target.toPath().resolve(sub));
@@ -182,7 +185,8 @@ final class WorldInstances {
                 plugin.getLogger().severe("Could not write the map back into " + target + ": " + e.getMessage());
             }
             busy.remove(name);
-            if (plugin.isEnabled()) Bukkit.getScheduler().runTask(plugin, done);
+            int written = files;
+            if (plugin.isEnabled()) Bukkit.getScheduler().runTask(plugin, () -> done.accept(written));
         });
     }
 

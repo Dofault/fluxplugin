@@ -137,7 +137,7 @@ edit:
   opened: '&#B376E5Editing &f%dungeon% &#B376E5(&f%spawns% &#B376E5placed monsters): build freely, your tools are in your inventory.'
   not-editing: '&#FF5C5CYou are not in a dungeon being edited.'
   saving: '&#B376E5Saving &f%dungeon%&#B376E5...'
-  saved: '&#2ECF7B%dungeon% saved: the next runs use the new map and monsters.'
+  saved: '&#2ECF7B%dungeon% saved (%files% map files): the next runs use the new map and monsters.'
   cancelled: '&#B376E5Edit closed without saving the builds (placed, moved or removed monsters stay saved).'
   added: '&#2ECF7B%mob% placed here &7(%spawns% placed monsters).'
   removed: '&#2ECF7B%mob% removed &7(%spawns% placed monsters).'
@@ -154,8 +154,8 @@ edit:
   inventory-full: '&#FF5C5CInventory full: make room to receive the edit tools.'
   chosen: '&#2ECF7BChosen monster: &f%mob%&#2ECF7B. Right click to place it.'
   picked: '&#B376E5%mob% picked up: right click a block to put it down, left click to leave it where it was.'
-  confirm-save: '&#FFD94DRight click once more to save the map and the monsters.'
-  confirm-quit: '&#FFD94DRight click once more to quit without saving the builds.'
+  confirm-save: '&#2ECF7BRight click once more with the green dye to SAVE the map and the monsters.'
+  confirm-quit: '&#FF5C5CRight click once more with the red dye to QUIT WITHOUT SAVING: your builds will be lost.'
   tool:
     place:
       name: '&#FFD94DPlace a monster'
@@ -199,6 +199,7 @@ edit:
     current: Chosen monster
     choose: Choose
   let-go: '&#B376E5Move cancelled.'
+  saved-nothing: '&#FF5C5C%dungeon%: no build found to save. Tell a developer.'
 create:
   bad-id: '&#FF5C5CInvalid dungeon name: 2 to 32 characters, lowercase letters, digits and _ only.'
   exists: '&#FF5C5CThe dungeon %dungeon% already exists.'

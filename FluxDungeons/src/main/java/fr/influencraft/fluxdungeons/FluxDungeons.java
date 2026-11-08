@@ -596,6 +596,14 @@ public final class FluxDungeons extends FluxPlugin {
                 switch (what) {
                     case "leaks" -> diagnostics.leaks(sender);
                     case "heapdump" -> diagnostics.heapDump(sender);
+                    case "save" -> {
+                        DungeonDefinition def = args.length > 2 ? runs.dungeon(args[2]) : null;
+                        if (def == null || def.map() == null) sender.sendMessage("usage: fluxdungeons debug save <imported dungeon>");
+                        else runs.debugSave(def, msg -> {
+                            sender.sendMessage(msg);
+                            getLogger().info("debug save: " + msg);
+                        });
+                    }
                     case "cycle" -> {
                         DungeonDefinition def = args.length > 2 ? runs.dungeon(args[2]) : null;
                         int n = args.length > 3 ? Math.max(1, parse(args[3])) : 3;

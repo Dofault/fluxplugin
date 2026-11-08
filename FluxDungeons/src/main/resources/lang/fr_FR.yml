@@ -137,7 +137,7 @@ edit:
   opened: '&#B376E5Édition de &f%dungeon% &#B376E5(&f%spawns% &#B376E5monstres posés) : construis librement, tes outils sont dans l''inventaire.'
   not-editing: '&#FF5C5CTu n''es pas dans un donjon en édition.'
   saving: '&#B376E5Enregistrement de &f%dungeon%&#B376E5...'
-  saved: '&#2ECF7B%dungeon% enregistré : les prochaines parties utiliseront la nouvelle map et les nouveaux monstres.'
+  saved: '&#2ECF7B%dungeon% enregistré (%files% fichiers de map) : les prochaines parties utiliseront la nouvelle map et les nouveaux monstres.'
   cancelled: '&#B376E5Édition fermée sans enregistrer les constructions (les monstres posés, déplacés ou retirés restent enregistrés).'
   added: '&#2ECF7B%mob% posé ici &7(%spawns% monstres posés).'
   removed: '&#2ECF7B%mob% retiré &7(%spawns% monstres posés).'
@@ -154,8 +154,8 @@ edit:
   inventory-full: '&#FF5C5CInventaire plein : libère de la place pour recevoir les outils d''édition.'
   chosen: '&#2ECF7BMonstre choisi : &f%mob%&#2ECF7B. Clic droit pour le poser.'
   picked: '&#B376E5%mob% en main : clic droit sur un bloc pour le reposer, clic gauche pour le laisser où il était.'
-  confirm-save: '&#FFD94DClic droit encore une fois pour enregistrer la map et les monstres.'
-  confirm-quit: '&#FFD94DClic droit encore une fois pour quitter sans enregistrer les constructions.'
+  confirm-save: '&#2ECF7BClic droit encore une fois avec le colorant vert pour ENREGISTRER la map et les monstres.'
+  confirm-quit: '&#FF5C5CClic droit encore une fois avec le colorant rouge pour QUITTER SANS ENREGISTRER : tes constructions seront perdues.'
   tool:
     place:
       name: '&#FFD94DPoser un monstre'
@@ -199,6 +199,7 @@ edit:
     current: Monstre choisi
     choose: Choisir
   let-go: '&#B376E5Déplacement annulé.'
+  saved-nothing: '&#FF5C5C%dungeon% : aucune construction trouvée à enregistrer. Préviens un développeur.'
 create:
   bad-id: '&#FF5C5CNom de donjon invalide : 2 à 32 caractères, minuscules, chiffres et _ seulement.'
   exists: '&#FF5C5CLe donjon %dungeon% existe déjà.'

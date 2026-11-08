@@ -144,7 +144,8 @@ public final class Editor implements Listener {
     private final Map<UUID, GameMode> modes = new HashMap<>();
     private final Map<UUID, String> chosen = new HashMap<>();
     private final Map<UUID, String> carried = new HashMap<>();
-    private final Map<UUID, Long> confirm = new HashMap<>();
+    /** First click of a save or quit: the tool and when (the second click must be on the same tool). */
+    private final Map<UUID, Map.Entry<Tool, Long>> confirm = new HashMap<>();
 
     Editor(FluxPlugin plugin, WorldInstances instances, Function<String, DungeonDefinition> definitions, Mobs mobs) {
         this.plugin = plugin;
@@ -242,12 +243,17 @@ public final class Editor implements Listener {
         DungeonDefinition def = definitions.apply(s.dungeon);
         File folder = new File(plugin.getDataFolder(), def.map().folder());
         plugin.messages().send(p, "edit.saving", "%dungeon%", def.name());
-        instances.saveBack(s.world, folder, () -> {
+        instances.saveBack(s.world, folder, files -> {
             sessions.remove(s.dungeon);
             reload.run();
-            if (p.isOnline()) {
-                plugin.messages().send(p, "edit.saved", "%dungeon%", def.name());
+            plugin.getLogger().info("Edit of " + s.dungeon + " saved by " + p.getName() + ": " + files + " region files written into " + folder);
+            if (!p.isOnline()) return;
+            if (files > 0) {
+                plugin.messages().send(p, "edit.saved", "%dungeon%", def.name(), "%files%", String.valueOf(files));
                 Sounds.cue(p, "success");
+            } else {
+                plugin.messages().send(p, "edit.saved-nothing", "%dungeon%", def.name());
+                Sounds.cue(p, "error");
             }
         });
     }
@@ -259,6 +265,7 @@ public final class Editor implements Listener {
             plugin.messages().send(p, "edit.not-editing");
             return;
         }
+        plugin.getLogger().info("Edit of " + s.dungeon + " closed without saving the builds by " + p.getName());
         close(s);
         reload.run();
         plugin.messages().send(p, "edit.cancelled");
@@ -389,10 +396,10 @@ public final class Editor implements Listener {
 
     /** Save or quit: the first right click asks, a second one within 3 s does it. */
     private void finish(Player p, Tool t) {
-        Long first = confirm.get(p.getUniqueId());
+        Map.Entry<Tool, Long> first = confirm.get(p.getUniqueId());
         long now = System.currentTimeMillis();
-        if (first == null || now - first > CONFIRM_MS) {
-            confirm.put(p.getUniqueId(), now);
+        if (first == null || first.getKey() != t || now - first.getValue() > CONFIRM_MS) {
+            confirm.put(p.getUniqueId(), Map.entry(t, now));
             plugin.messages().send(p, t == Tool.SAVE ? "edit.confirm-save" : "edit.confirm-quit");
             Sounds.cue(p, "confirm");
             return;

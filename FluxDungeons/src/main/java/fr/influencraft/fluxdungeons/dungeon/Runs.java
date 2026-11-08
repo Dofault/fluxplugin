@@ -406,6 +406,27 @@ public final class Runs {
     private final Map<String, World> visits = new HashMap<>();
     private final Map<UUID, Location> visitReturn = new HashMap<>();
 
+    /**
+     * Diagnostics: opens a working copy of a map, places a block, saves it back into a test folder
+     * ({@code debug-save/}) and reports how many region files were written. The real map is not touched.
+     */
+    public void debugSave(DungeonDefinition def, java.util.function.Consumer<String> report) {
+        java.io.File folder = new java.io.File(plugin.getDataFolder(), def.map().folder());
+        java.io.File target = new java.io.File(plugin.getDataFolder(), "debug-save");
+        instances.create(folder, "fde_debug", world -> {
+            if (world == null) {
+                report.accept("could not open the copy");
+                return;
+            }
+            double[] st = def.map().start();
+            world.getBlockAt((int) Math.floor(st[0]), (int) Math.floor(st[1]) + 3, (int) Math.floor(st[2])).setType(org.bukkit.Material.GOLD_BLOCK);
+            instances.saveBack(world, target, files -> {
+                java.io.File[] out = new java.io.File(target, "region").listFiles((d, n) -> n.endsWith(".mca"));
+                report.accept("saved: " + files + " region files in the copy, " + (out == null ? 0 : out.length) + " in " + target);
+            });
+        });
+    }
+
     /** Diagnostics: opens and closes {@code n} copies of a map one after the other, without players. */
     public void debugCycle(DungeonDefinition def, int n, Runnable done) {
         if (n <= 0) {
