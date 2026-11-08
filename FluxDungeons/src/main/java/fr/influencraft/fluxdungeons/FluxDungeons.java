@@ -88,7 +88,6 @@ public final class FluxDungeons extends FluxPlugin {
         getServer().getPluginManager().registerEvents(healthBars, this);
         attackCadence = new fr.influencraft.fluxdungeons.combat.AttackCadence(this);
         attackCadence.assist(p -> runs.runOf(p) == null ? null : runs.context(p)::enemy);
-        runs.cadence(attackCadence);
         getServer().getPluginManager().registerEvents(attackCadence, this);
         getServer().getPluginManager().registerEvents(runs.lobby(), this);
         runs.editor().onSaved(this::reload);
