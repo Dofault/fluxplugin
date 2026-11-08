@@ -33,7 +33,6 @@ warrior:
     description:
     - Fonce droit devant et frappe les monstres sur son passage.
     mana: 20
-    cooldown: 7
     power: 6
     distance: 1.6
     radius: 2.5
@@ -43,7 +42,6 @@ warrior:
     description:
     - Les monstres proches t'attaquent, tu résistes, tes alliés frappent plus fort.
     mana: 30
-    cooldown: 18
     radius: 10
     duration: 6
     resistance: 1
@@ -53,7 +51,6 @@ warrior:
     description:
     - Tourne sur toi-même et frappe tous les monstres autour.
     mana: 35
-    cooldown: 10
     power: 7
     radius: 4
 ranger:
@@ -87,7 +84,6 @@ ranger:
     description:
     - Tire un éventail de cinq flèches.
     mana: 25
-    cooldown: 6
     power: 5
     arrows: 5
     spread: 8
@@ -97,7 +93,6 @@ ranger:
     description:
     - Saute en arrière et court plus vite un instant.
     mana: 15
-    cooldown: 8
     strength: 1.4
     duration: 3
   - type: arrow_rain
@@ -106,7 +101,6 @@ ranger:
     description:
     - Des flèches s'abattent là où tu vises pendant quelques secondes.
     mana: 45
-    cooldown: 16
     power: 14
     radius: 4
     duration: 3
@@ -138,7 +132,6 @@ mage:
     description:
     - Une boule de feu qui souffle les monstres autour de l'impact.
     mana: 20
-    cooldown: 2.5
     power: 8
     radius: 2.5
     speed: 1.6
@@ -148,7 +141,6 @@ mage:
     description:
     - Gèle et ralentit tous les monstres autour.
     mana: 40
-    cooldown: 12
     power: 7
     radius: 5
     duration: 4
@@ -158,7 +150,6 @@ mage:
     description:
     - Se téléporte quelques blocs plus loin.
     mana: 25
-    cooldown: 8
     distance: 8
 cleric:
   name: Clerc
@@ -189,7 +180,6 @@ cleric:
     description:
     - Soigne toi et les alliés autour de toi.
     mana: 35
-    cooldown: 8
     power: 8
     radius: 8
   - type: blessing
@@ -198,7 +188,6 @@ cleric:
     description:
     - Cœurs en plus et régénération pour les alliés proches.
     mana: 50
-    cooldown: 20
     duration: 8
     radius: 8
     absorption: 1
@@ -208,6 +197,5 @@ cleric:
     description:
     - La foudre frappe le monstre que tu vises.
     mana: 25
-    cooldown: 5
     power: 9
     range: 20

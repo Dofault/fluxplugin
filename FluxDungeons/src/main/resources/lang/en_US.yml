@@ -86,22 +86,14 @@ room:
 level-up: '&#2ECF7BLevel up! &#B376E5%class% &#B376E5reaches level &f%level%&#B376E5.'
 ability:
   mana: Mana
-  cooldown: Cooldown
   how: '%key%, your weapon stays in hand.'
   key-up: Key %key% or wheel up
   key-down: Key %key% or wheel down
   key-key: Key %key%
-  cooling: '&#FF5C5C%ability%&7: &f%time% s &7left'
   no-mana: '&#FF5C5CNot enough mana for %ability%'
   no-target: '&#FF5C5C%ability%&7: no target'
 hud:
-  key-up: '%key%▲'
-  key-down: '%key%▼'
-  key-key: '%key%'
-  bar: '&#6FA8FF✦ %mana%&7/&#6FA8FF%max%  %abilities%'
-  ability-ready: '&#2ECF7B%key% %ability%'
-  ability-cooling: '&7%key% %ability% &f%time%s'
-  separator: '&8 · '
+  bar: '&#6FA8FF✦ Mana %mana%&7/&#6FA8FF%max%'
 admin:
   visit-loading: '&#B376E5Opening &f%dungeon%&#B376E5...'
   visit: '&#B376E5Visiting &f%dungeon%&#B376E5: copy of the map without monsters, nothing is kept. To leave: &f[/%flux_cmd_fluxdungeons_fluxdungeons% visit]'
@@ -130,6 +122,7 @@ objective:
   boss: '&#FF5C5CDefeat %boss%'
   map: '&#FFD94DGuardians defeated: &f%done%/%total%'
   done: '&#2ECF7BGuardian defeated! &#B376E5Guardians: &f%done%/%total%'
+  clear: '&#FFD94DMonsters left: &f%mobs%'
 item:
   level: '&7Item level: &f%level%'
 edit:

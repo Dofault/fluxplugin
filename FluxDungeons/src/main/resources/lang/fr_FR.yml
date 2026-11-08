@@ -86,22 +86,14 @@ room:
 level-up: '&#2ECF7BNiveau supérieur ! &#B376E5%class% &#B376E5passe niveau &f%level%&#B376E5.'
 ability:
   mana: Mana
-  cooldown: Recharge
   how: '%key%, ton arme reste en main.'
   key-up: Touche %key% ou molette vers le haut
   key-down: Touche %key% ou molette vers le bas
   key-key: Touche %key%
-  cooling: '&#FF5C5C%ability% &7: encore &f%time% s'
   no-mana: '&#FF5C5CPas assez de mana pour %ability%'
   no-target: '&#FF5C5C%ability% &7: aucune cible'
 hud:
-  key-up: '%key%▲'
-  key-down: '%key%▼'
-  key-key: '%key%'
-  bar: '&#6FA8FF✦ %mana%&7/&#6FA8FF%max%  %abilities%'
-  ability-ready: '&#2ECF7B%key% %ability%'
-  ability-cooling: '&7%key% %ability% &f%time%s'
-  separator: '&8 · '
+  bar: '&#6FA8FF✦ Mana %mana%&7/&#6FA8FF%max%'
 admin:
   visit-loading: '&#B376E5Ouverture de &f%dungeon%&#B376E5...'
   visit: '&#B376E5Visite de &f%dungeon%&#B376E5 : copie de la map sans monstres, rien n''est gardé. Pour sortir : &f[/%flux_cmd_fluxdungeons_fluxdungeons% voir]'
@@ -130,6 +122,7 @@ objective:
   boss: '&#FF5C5CVaincs %boss%'
   map: '&#FFD94DGardiens vaincus : &f%done%/%total%'
   done: '&#2ECF7BGardien vaincu ! &#B376E5Gardiens : &f%done%/%total%'
+  clear: '&#FFD94DMonstres restants : &f%mobs%'
 item:
   level: '&7Niveau d''objet : &f%level%'
 edit:

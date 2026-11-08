@@ -33,7 +33,6 @@ warrior:
     description:
     - Rushes forward and hits the monsters on the way.
     mana: 20
-    cooldown: 7
     power: 6
     distance: 1.6
     radius: 2.5
@@ -43,7 +42,6 @@ warrior:
     description:
     - Monsters around attack you, you resist, allies grow stronger.
     mana: 30
-    cooldown: 18
     radius: 10
     duration: 6
     resistance: 1
@@ -53,7 +51,6 @@ warrior:
     description:
     - Spins and hits every monster around.
     mana: 35
-    cooldown: 10
     power: 7
     radius: 4
 ranger:
@@ -87,7 +84,6 @@ ranger:
     description:
     - Shoots a fan of five arrows.
     mana: 25
-    cooldown: 6
     power: 5
     arrows: 5
     spread: 8
@@ -97,7 +93,6 @@ ranger:
     description:
     - Jumps back and runs faster for a moment.
     mana: 15
-    cooldown: 8
     strength: 1.4
     duration: 3
   - type: arrow_rain
@@ -106,7 +101,6 @@ ranger:
     description:
     - Arrows fall where you aim for a few seconds.
     mana: 45
-    cooldown: 16
     power: 14
     radius: 4
     duration: 3
@@ -138,7 +132,6 @@ mage:
     description:
     - A fireball that blasts the monsters around its impact.
     mana: 20
-    cooldown: 2.5
     power: 8
     radius: 2.5
     speed: 1.6
@@ -148,7 +141,6 @@ mage:
     description:
     - Freezes and slows every monster around.
     mana: 40
-    cooldown: 12
     power: 7
     radius: 5
     duration: 4
@@ -158,7 +150,6 @@ mage:
     description:
     - Teleports a few blocks forward.
     mana: 25
-    cooldown: 8
     distance: 8
 cleric:
   name: Cleric
@@ -189,7 +180,6 @@ cleric:
     description:
     - Heals you and the allies around you.
     mana: 35
-    cooldown: 8
     power: 8
     radius: 8
   - type: blessing
@@ -198,7 +188,6 @@ cleric:
     description:
     - Extra hearts and regeneration for the allies around.
     mana: 50
-    cooldown: 20
     duration: 8
     radius: 8
     absorption: 1
@@ -208,6 +197,5 @@ cleric:
     description:
     - Lightning strikes the monster you aim at.
     mana: 25
-    cooldown: 5
     power: 9
     range: 20

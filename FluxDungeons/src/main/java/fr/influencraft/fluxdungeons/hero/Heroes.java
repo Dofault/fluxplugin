@@ -43,6 +43,9 @@ public final class Heroes {
     private static final int[] ABILITY_SLOTS = {0, 1, 2};
     /** Slots on each side of the weapon, reached with the wheel: a copy of abilities 1 (up) and 2 (down). */
     private static final int[] WHEEL_SLOTS = {3, 5};
+    /** Shortest time between two casts (a wheel turn fires several slot changes), never shown. */
+    private static final long CAST_GAP_MS = 250;
+    private final java.util.Map<java.util.UUID, Long> lastCast = new java.util.HashMap<>();
 
     private static final Map<String, Attribute> STATS = Map.of(
             "max-health", Attribute.MAX_HEALTH,
@@ -283,18 +286,17 @@ public final class Heroes {
                 || n.equals("STICK") || n.equals("BREEZE_ROD");
     }
 
-    /** How to use an ability, for its description ({@code ability.key-*}) and the action bar ({@code hud.key-*}). */
-    private String keyLabel(int index, boolean shortForm) {
+    /** How to use an ability, for its description ({@code ability.key-*}). */
+    private String keyLabel(int index) {
         String kind = index == 0 ? "up" : index == 1 ? "down" : "key";
-        return plugin.messages().raw((shortForm ? "hud.key-" : "ability.key-") + kind, "%key%", String.valueOf(ABILITY_SLOTS[index] + 1));
+        return plugin.messages().raw("ability.key-" + kind, "%key%", String.valueOf(ABILITY_SLOTS[index] + 1));
     }
 
     private ItemStack abilityItem(Player viewer, AbilitySpec spec, int index) {
         List<String> lore = Lore.create()
                 .description(spec.description())
                 .kv(plugin.messages().raw("ability.mana"), Format.number(spec.mana()))
-                .kv(plugin.messages().raw("ability.cooldown"), Format.decimal(spec.cooldown()) + " s")
-                .info(plugin.messages().raw("ability.how", "%key%", keyLabel(index, false)))
+                .info(plugin.messages().raw("ability.how", "%key%", keyLabel(index)))
                 .build();
         ItemStack item = Items.dress(new ItemStack(spec.icon()), spec.name(), lore, viewer);
         ItemMeta meta = item.getItemMeta();
@@ -321,12 +323,10 @@ public final class Heroes {
     private void cast(Player player, Hero hero, int index, Abilities.Context ctx) {
         AbilitySpec spec = hero.heroClass().abilities().get(index);
         if (player.isDead() || player.getGameMode() == org.bukkit.GameMode.SPECTATOR) return;
-        double cd = hero.cooldown(index);
-        if (cd > 0) {
-            plugin.messages().actionBar(player, "ability.cooling", "%ability%", spec.name(), "%time%", Format.decimal(cd));
-            Sounds.cue(player, "error");
-            return;
-        }
+        // abilities are limited by mana only; this short gap only stops one wheel turn from casting several times
+        long now = System.currentTimeMillis();
+        Long last = lastCast.get(player.getUniqueId());
+        if (last != null && now - last < CAST_GAP_MS) return;
         if (hero.mana() < spec.mana()) {
             plugin.messages().actionBar(player, "ability.no-mana", "%ability%", spec.name());
             Sounds.cue(player, "error");
@@ -337,9 +337,7 @@ public final class Heroes {
             return;
         }
         hero.mana(hero.mana() - spec.mana());
-        hero.cooldown(index, spec.cooldown());
-        ItemStack item = player.getInventory().getItem(ABILITY_SLOTS[index]);
-        if (item != null) player.setCooldown(item, (int) (spec.cooldown() * 20));
+        lastCast.put(player.getUniqueId(), now);
         showMana(player, hero);
     }
 
@@ -349,17 +347,8 @@ public final class Heroes {
         if (hero == null) return;
         hero.mana(hero.mana() + hero.heroClass().manaRegen());
         showMana(player, hero);
-        List<String> parts = new ArrayList<>();
-        List<AbilitySpec> specs = hero.heroClass().abilities();
-        for (int i = 0; i < specs.size(); i++) {
-            double cd = hero.cooldown(i);
-            parts.add(plugin.messages().raw(cd > 0 ? "hud.ability-cooling" : "hud.ability-ready",
-                    "%key%", keyLabel(i, true), "%ability%", specs.get(i).name(),
-                    "%time%", String.valueOf((int) Math.ceil(cd))));
-        }
         plugin.messages().actionBar(player, "hud.bar",
-                "%mana%", String.valueOf((int) hero.mana()), "%max%", String.valueOf((int) hero.heroClass().mana()),
-                "%abilities%", String.join(plugin.messages().raw("hud.separator"), parts));
+                "%mana%", String.valueOf((int) hero.mana()), "%max%", String.valueOf((int) hero.heroClass().mana()));
     }
 
     /** The experience bar is the mana bar, the level number is the class level. */

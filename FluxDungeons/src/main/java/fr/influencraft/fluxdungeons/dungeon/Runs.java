@@ -264,7 +264,7 @@ public final class Runs {
                 if (def.map().objectives().contains(sp.mob())) run.objectivesLeft.add(sp.mob());
             }
             run.objectivesTotal = run.objectivesLeft.size();
-            if (run.objectivesTotal == 0) plugin.getLogger().warning("Dungeon " + def.id() + " has no objective: it can only be left.");
+            if (run.objectivesTotal == 0) plugin.getLogger().info("Dungeon " + def.id() + " has no objective: won once every monster is dead.");
             enter(run);
         });
         return run;
@@ -808,6 +808,10 @@ public final class Runs {
             broadcast(run, "objective.done", "%done%", String.valueOf(run.objectivesDone()), "%total%", String.valueOf(run.objectivesTotal));
             if (run.objectivesLeft.isEmpty()) victory(run);
         }
+        // a dungeon without objective is won once every monster is dead (those not met yet included)
+        if (run.imported() && run.objectivesTotal == 0 && run.state == Run.State.RUNNING && run.pending.isEmpty() && run.mobs.isEmpty()) {
+            victory(run);
+        }
     }
 
     /**
@@ -1008,6 +1012,9 @@ public final class Runs {
         if (run.state == Run.State.PREPARING) return plugin.messages().raw("objective.preparing");
         if (run.state == Run.State.ENDING) return plugin.messages().raw("objective.ending");
         if (run.imported()) {
+            if (run.objectivesTotal == 0) {
+                return plugin.messages().raw("objective.clear", "%mobs%", String.valueOf(run.mobs.size() + run.pending.size()));
+            }
             return plugin.messages().raw("objective.map", "%done%", String.valueOf(run.objectivesDone()),
                     "%total%", String.valueOf(run.objectivesTotal));
         }

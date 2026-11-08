@@ -59,7 +59,7 @@ public final class Abilities {
         this.blastKey = new NamespacedKey(plugin, "ability_blast");
     }
 
-    /** Casts the ability; false when it found nothing to do (no target...), so no mana nor cooldown is spent. */
+    /** Casts the ability; false when it found nothing to do (no target...), so no mana is spent. */
     public boolean cast(Player p, Hero hero, AbilitySpec a, Context ctx) {
         double power = scaled(p, hero, a.param("power", 0));
         World w = p.getWorld();

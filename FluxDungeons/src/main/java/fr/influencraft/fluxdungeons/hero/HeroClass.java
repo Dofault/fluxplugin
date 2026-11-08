@@ -23,7 +23,7 @@ import java.util.Map;
  *   mana: {max: 100, regen: 5}                                # regen per second
  *   kit: [fluxdungeons:warrior_sword, ...]
  *   abilities:
- *     - {type: charge, name: "Charge", icon: FEATHER, mana: 25, cooldown: 8, power: 6}
+ *     - {type: charge, name: "Charge", icon: FEATHER, mana: 25, power: 6}
  * </pre>
  */
 public record HeroClass(String id, String name, String color, Material icon, List<String> description,
@@ -32,7 +32,7 @@ public record HeroClass(String id, String name, String color, Material icon, Lis
 
     /** One ability of a class: its behaviour ({@code type}, see {@link Abilities}) and its numbers. */
     public record AbilitySpec(String type, String name, Material icon, List<String> description, double mana,
-                              double cooldown, Map<String, Double> params) {
+                              Map<String, Double> params) {
 
         public double param(String key, double fallback) {
             return params.getOrDefault(key, fallback);
@@ -52,7 +52,7 @@ public record HeroClass(String id, String name, String color, Material icon, Lis
             abilities.add(new AbilitySpec(String.valueOf(a.get("type")).toLowerCase(Locale.ROOT),
                     String.valueOf(a.containsKey("name") ? a.get("name") : a.get("type")),
                     material(a.get("icon") == null ? null : String.valueOf(a.get("icon")), Material.BOOK), lines,
-                    params.getOrDefault("mana", 0.0), params.getOrDefault("cooldown", 5.0), params));
+                    params.getOrDefault("mana", 0.0), params));
         }
         return new HeroClass(id, c.getString("name", id), c.getString("color", "#FFD94D"),
                 material(c.getString("icon"), Material.IRON_SWORD), c.getStringList("description"),
