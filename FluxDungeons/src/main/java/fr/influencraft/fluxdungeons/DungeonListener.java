@@ -68,6 +68,8 @@ final class DungeonListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onJoin(PlayerJoinEvent e) {
         Player p = e.getPlayer();
+        // a run ended without him (crash): vanilla invulnerability back
+        if (p.getMaximumNoDamageTicks() == 0) p.setMaximumNoDamageTicks(20);
         boolean inArena = arena.isArena(p.getWorld());
         if (!loadouts.hasVault(p) && !inArena) {
             heroes.cleanLeftovers(p);
@@ -213,6 +215,15 @@ final class DungeonListener implements Listener {
             Entity source = e.getDamager() instanceof Projectile pr && pr.getShooter() instanceof Entity sh ? sh
                     : e.getDamager() instanceof org.bukkit.entity.EvokerFangs f && f.getOwner() != null ? f.getOwner() : e.getDamager();
             if (source instanceof LivingEntity mob && mobs.templateOf(mob) != null) {
+                // same rule as the monsters: no invulnerability, one melee hit of each monster every MELEE_GAP ticks
+                if (e.getCause() == EntityDamageEvent.DamageCause.ENTITY_ATTACK && !mobs.dealing()
+                        && tooSoon(hurt, mob.getUniqueId().toString(), MELEE_GAP)) {
+                    e.setCancelled(true);
+                    return;
+                }
+                // one hit out of KNOCKBACK_EVERY pushes the player back
+                int taken = hitsTaken.merge(hurt.getUniqueId(), 1, Integer::sum);
+                if (taken % KNOCKBACK_EVERY == 0) pushNext.add(hurt.getUniqueId());
                 lastHit.put(hurt.getUniqueId(), Bukkit.getCurrentTick());
                 mobs.hitPlayer(mob, hurt, e);
                 runs.petFocus(hurt, mob);
@@ -284,17 +295,35 @@ final class DungeonListener implements Listener {
         if (c == EntityDamageEvent.DamageCause.FIRE || c == EntityDamageEvent.DamageCause.FIRE_TICK) {
             e.setCancelled(true);
             p.setFireTicks(0);
+            return;
+        }
+        // no invulnerability in a run: lava, cactus, suffocation... hit once per cause every ENVIRONMENT_GAP ticks
+        if (!(e instanceof EntityDamageByEntityEvent) && c != EntityDamageEvent.DamageCause.CUSTOM
+                && c != EntityDamageEvent.DamageCause.MAGIC && c != EntityDamageEvent.DamageCause.POISON
+                && c != EntityDamageEvent.DamageCause.WITHER && tooSoon(p, c.name(), ENVIRONMENT_GAP)) {
+            e.setCancelled(true);
         }
     }
 
+    /** Hits a player took from monsters during his run (every {@link #KNOCKBACK_EVERY}th one pushes him). */
+    private final java.util.Map<java.util.UUID, Integer> hitsTaken = new java.util.HashMap<>();
+    /** Players whose next knockback is let through (the hit that counts was just taken). */
+    private final java.util.Set<java.util.UUID> pushNext = new java.util.HashSet<>();
+    private static final int KNOCKBACK_EVERY = 4;
+
     /**
-     * No knockback in a dungeon, neither on players nor on dungeon monsters: hits never push. Movements cast on purpose
-     * (charge, leap, slam, implosion) set the velocity directly and still work.
+     * Dungeon monsters are never pushed by hits. Players are pushed by one monster hit out of
+     * {@link #KNOCKBACK_EVERY} only (they take hits quickly, no invulnerability: a push at each would throw them
+     * around). Movements cast on purpose (charge, leap, slam, implosion) set the velocity directly and still work.
      */
     @EventHandler(ignoreCancelled = true)
     public void onKnockback(EntityKnockbackEvent e) {
         Entity target = e.getEntity();
-        if (target instanceof Player p ? runs.runOf(p) != null : mobs.templateOf(target) != null) e.setCancelled(true);
+        if (target instanceof Player p) {
+            if (runs.runOf(p) != null && !pushNext.remove(p.getUniqueId())) e.setCancelled(true);
+            return;
+        }
+        if (mobs.templateOf(target) != null) e.setCancelled(true);
     }
 
     /**
@@ -313,6 +342,8 @@ final class DungeonListener implements Listener {
     void regenerate() {
         int now = Bukkit.getCurrentTick();
         lastSourceHit.values().removeIf(t -> now - t > 40);
+        pushNext.clear();
+        hitsTaken.keySet().removeIf(u -> Bukkit.getPlayer(u) == null);
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (runs.runOf(p) == null || p.isDead()) continue;
             if (p.getFoodLevel() < 20) p.setFoodLevel(20);

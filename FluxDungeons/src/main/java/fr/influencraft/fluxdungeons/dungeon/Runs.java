@@ -385,6 +385,8 @@ public final class Runs {
                 continue;
             }
             run.players.add(uuid);
+            // no vanilla invulnerability in a run: hits are limited per source (DungeonListener), as for monsters
+            p.setMaximumNoDamageTicks(0);
             heroes.activate(p);
             teleport(p, run.checkpoint);
             Loadouts.Selection chosen = run.selections.get(uuid);
@@ -417,6 +419,7 @@ public final class Runs {
         if (inside) {
             hook(run, "leave", player, null);
             heroes.deactivate(player);
+            player.setMaximumNoDamageTicks(20);
             Location back = loadouts.leave(player);
             teleport(player, back != null ? back : Bukkit.getWorlds().get(0).getSpawnLocation());
         }
