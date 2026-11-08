@@ -77,6 +77,7 @@ public final class FluxDungeons extends FluxPlugin {
         arena = new Arena(this, getConfig().getString("world", "flux_dungeons"), getConfig().getInt("slot-spacing", 512),
                 getConfig().getInt("blocks-per-tick", 20000));
         runs = new Runs(this, arena, mobs, heroes, loadouts);
+        runs.editor().onSaved(this::reload);
         settings();
         Dungeons.register(new Dungeons.Service() {
             public boolean playing(Player player) {
@@ -159,7 +160,14 @@ public final class FluxDungeons extends FluxPlugin {
             for (File f : files) {
                 String id = f.getName().substring(0, f.getName().length() - 4);
                 try {
-                    defs.put(id, new DungeonDefinition(id, YamlConfiguration.loadConfiguration(f)));
+                    YamlConfiguration y = YamlConfiguration.loadConfiguration(f);
+                    // points moved in game (/fluxdungeons edit) replace the imported ones
+                    File edits = new File(getDataFolder(), "edits/" + id + ".yml");
+                    if (edits.isFile() && y.isConfigurationSection("map")) {
+                        YamlConfiguration e = YamlConfiguration.loadConfiguration(edits);
+                        for (String k : List.of("start", "spawns", "objectives")) if (e.contains("map." + k)) y.set("map." + k, e.get("map." + k));
+                    }
+                    defs.put(id, new DungeonDefinition(id, y));
                 } catch (RuntimeException e) {
                     getLogger().severe("Dungeon " + f.getName() + " could not be read: " + e);
                 }
@@ -357,6 +365,7 @@ public final class FluxDungeons extends FluxPlugin {
                 messages().send(by, "start.busy", "%player%", who == null ? "?" : who.getName());
             }
             case NO_SLOT -> messages().send(by, "start.no-slot");
+            case EDITING -> messages().send(by, "start.editing");
             default -> messages().send(by, "start.failed");
         }
     }
@@ -484,6 +493,30 @@ public final class FluxDungeons extends FluxPlugin {
                 p.teleport(at, PlayerTeleportEvent.TeleportCause.PLUGIN);
                 messages().send(p, "admin.template", "%dungeon%", def.name());
             }
+            case "edit", "editer" -> {
+                if (!(sender instanceof Player p)) return usage(sender);
+                var editor = runs.editor();
+                String sub2 = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "";
+                switch (sub2) {
+                    case "save", "sauver" -> editor.save(p);
+                    case "cancel", "annuler" -> editor.cancel(p);
+                    case "add", "ajouter" -> {
+                        if (args.length < 3) messages().send(p, "edit.usage");
+                        else if (mobs.template(args[2]) == null) messages().send(p, "edit.unknown-mob", "%mob%", args[2]);
+                        else editor.add(p, args[2]);
+                    }
+                    case "remove", "retirer" -> editor.remove(p);
+                    case "move", "deplacer" -> editor.move(p);
+                    case "start", "depart" -> editor.start(p);
+                    case "objective", "objectif" -> editor.objective(p);
+                    case "" -> messages().send(p, "edit.usage");
+                    default -> {
+                        DungeonDefinition def = runs.dungeon(args[1]);
+                        if (def == null) messages().send(p, "unknown-dungeon");
+                        else editor.open(p, def);
+                    }
+                }
+            }
             case "visit", "voir" -> {
                 if (!(sender instanceof Player p)) return usage(sender);
                 if (args.length < 2) {
@@ -583,7 +616,7 @@ public final class FluxDungeons extends FluxPlugin {
     }
 
     private List<String> completeAdmin(CommandSender sender, String[] args) {
-        if (args.length == 1) return filter(List.of("visit", "build", "template", "start", "stop", "give", "reset", "runs", "reload"), args[0]);
+        if (args.length == 1) return filter(List.of("edit", "visit", "build", "template", "start", "stop", "give", "reset", "runs", "reload"), args[0]);
         List<String> ids = runs.dungeons().stream().map(DungeonDefinition::id).toList();
         List<String> online = Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
         String sub = args[0].toLowerCase(Locale.ROOT);
@@ -591,12 +624,18 @@ public final class FluxDungeons extends FluxPlugin {
             return switch (sub) {
                 case "build" -> filter(concat(ids, List.of("all")), args[1]);
                 case "visit", "voir", "template", "start" -> filter(ids, args[1]);
+                case "edit", "editer" -> filter(concat(ids, List.of("add", "remove", "move", "start", "objective", "save", "cancel")), args[1]);
                 case "stop" -> filter(concat(online, List.of("all")), args[1]);
                 case "give", "reset" -> filter(online, args[1]);
                 default -> List.of();
             };
         }
         if (args.length == 3 && sub.equals("start")) return filter(online, args[2]);
+        if (args.length == 3 && (sub.equals("edit") || sub.equals("editer")) && (args[1].equalsIgnoreCase("add") || args[1].equalsIgnoreCase("ajouter"))) {
+            List<String> placed = sender instanceof Player p ? runs.editor().placedMobs(p) : List.of();
+            List<String> typed = filter(concat(placed, mobs.templateIds()), args[2]);
+            return typed.stream().distinct().limit(80).toList();
+        }
         if (args.length == 3 && sub.equals("give")) {
             return filter(CustomItems.ids().stream().filter(i -> i.startsWith("fluxdungeons:")).toList(), args[2]);
         }

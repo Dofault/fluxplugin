@@ -53,7 +53,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class Runs {
 
     /** Why a run could not start. */
-    public enum Refusal { NONE, NO_CLASS, TOO_FEW, TOO_MANY, BUSY_PLAYER, NO_SLOT, NOT_LEADER, UNKNOWN }
+    public enum Refusal { NONE, NO_CLASS, TOO_FEW, TOO_MANY, BUSY_PLAYER, NO_SLOT, NOT_LEADER, EDITING, UNKNOWN }
 
     private final FluxPlugin plugin;
     private final Arena arena;
@@ -61,6 +61,7 @@ public final class Runs {
     private final Heroes heroes;
     private final Loadouts loadouts;
     private final WorldInstances instances;
+    private final Editor editor;
     private final Map<String, DungeonDefinition> dungeons = new LinkedHashMap<>();
     private final Map<String, Run> runs = new HashMap<>();
     private final Map<UUID, Run> byPlayer = new HashMap<>();
@@ -82,6 +83,7 @@ public final class Runs {
         this.loadouts = loadouts;
         this.instances = new WorldInstances(plugin);
         instances.sweep();
+        this.editor = new Editor(plugin, instances, this::dungeon);
         mobs.onSummon((parent, child) -> {
             Run run = runs.get(mobs.runOf(child));
             if (run != null) run.mobs.add(child.getUniqueId());
@@ -172,6 +174,7 @@ public final class Runs {
 
     /** Checks that these players can play this dungeon together. */
     public Refusal check(DungeonDefinition def, List<Player> players) {
+        if (editor.locked(def.id())) return Refusal.EDITING;
         if (players.size() < def.minPlayers()) return Refusal.TOO_FEW;
         if (players.size() > def.maxPlayers()) return Refusal.TOO_MANY;
         for (Player p : players) {
@@ -388,6 +391,7 @@ public final class Runs {
     /** Everybody out, nothing given (server stop, staff). */
     public void stopAll() {
         for (Run run : List.copyOf(runs.values())) stop(run);
+        editor.closeAll();
         for (UUID u : List.copyOf(visitReturn.keySet())) {
             Player p = Bukkit.getPlayer(u);
             if (p != null) endVisit(p);
@@ -423,6 +427,10 @@ public final class Runs {
                 Bukkit.getScheduler().runTaskLater(plugin, () -> debugCycle(def, n - 1, done), 40L);
             }, 40L);
         });
+    }
+
+    public Editor editor() {
+        return editor;
     }
 
     /** True when the player is visiting a map copy. */
@@ -524,6 +532,7 @@ public final class Runs {
     private void tick() {
         ticks++;
         if (!visits.isEmpty()) sweepVisits();
+        if (ticks % 4 == 0) editor.tick();
         for (Run run : List.copyOf(runs.values())) {
             if (run.state != Run.State.RUNNING) continue;
             long elapsed = (System.currentTimeMillis() - run.started) / 1000;

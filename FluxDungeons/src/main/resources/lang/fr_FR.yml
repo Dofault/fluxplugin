@@ -6,7 +6,7 @@ unknown-player: "&#FF5C5CJoueur introuvable."
 not-in-run: "&#FF5C5CTu n'es pas dans un donjon."
 dungeon-usage: "&#FF5C5C/%flux_cmd_fluxdungeons_dungeon% [jouer <donjon> | quitter | classe [classe] | liste]"
 party-usage: "&#FF5C5C/%flux_cmd_fluxdungeons_party% [inviter | accepter | quitter | expulser | chef] [joueur]"
-admin-usage: "!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% voir [donjon] | build <donjon|all> | template <donjon> | start <donjon> <joueur> | stop <joueur|all> | give <joueur> <objet> [n] | reset <joueur> | runs | reload"
+admin-usage: "!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% voir [donjon] | edit <donjon> | build <donjon|all> | template <donjon> | start <donjon> <joueur> | stop <joueur|all> | give <joueur> <objet> [n] | reset <joueur> | runs | reload"
 list-line: "&#FFD94D%dungeon% &8(&7%id%&8) &#B376E5%min% à %max% joueurs, niveau conseillé &f%level%"
 
 main:
@@ -31,6 +31,7 @@ class:
   chosen: "&#2ECF7BTu joues maintenant %class% &#2ECF7B(niveau &f%level%&#2ECF7B)."
 
 start:
+  editing: "&#FF5C5CCe donjon est en cours d'édition, réessaie plus tard."
   not-leader: "&#FF5C5CSeul le chef du groupe peut lancer un donjon."
   too-few: "&#FF5C5CIl faut au moins &f%min% &#FF5C5Cjoueur(s) pour ce donjon."
   too-many: "&#FF5C5CCe donjon accepte au plus &f%max% &#FF5C5Cjoueurs."
@@ -141,3 +142,23 @@ objective:
 
 item:
   level: "&7Niveau d'objet : &f%level%"
+
+edit:
+  opening: "&#B376E5Ouverture de &f%dungeon% &#B376E5en mode édition..."
+  opened: "&#B376E5Édition de &f%dungeon% &#B376E5(&f%spawns% &#B376E5points). Construis librement ; &f/%flux_cmd_fluxdungeons_fluxdungeons% edit add <monstre> | remove | move | start | objective&#B376E5, puis &fsave &#B376E5ou &fcancel&#B376E5."
+  not-editing: "&#FF5C5CTu n'es pas dans un donjon en édition."
+  saving: "&#B376E5Enregistrement de &f%dungeon%&#B376E5..."
+  saved: "&#2ECF7B%dungeon% enregistré : les prochaines parties utiliseront la nouvelle map et les nouveaux points."
+  cancelled: "&#B376E5Édition fermée sans enregistrer les constructions (les points déplacés restent enregistrés)."
+  added: "&#2ECF7B%mob% ajouté ici &7(%spawns% points)."
+  removed: "&#2ECF7B%mob% retiré &7(%spawns% points)."
+  moved: "&#2ECF7B%mob% déplacé ici."
+  start: "&#2ECF7BDépart du donjon placé ici."
+  objective-on: "&#2ECF7B%mob% est maintenant un objectif &7(%objectives% objectifs)."
+  objective-off: "&#B376E5%mob% n'est plus un objectif &7(%objectives% objectifs)."
+  none-near: "&#FF5C5CAucun point de monstre à moins de 6 blocs."
+  usage: "&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% edit <donjon> | add <monstre> | remove | move | start | objective | save | cancel"
+  unknown-mob: "&#FF5C5CMonstre inconnu : %mob%"
+  marker: "&#FFD94D%mob%"
+  marker-objective: "&#FF5C5C★ %mob% &7(objectif)"
+  marker-start: "&#2ECF7B▶ Départ"

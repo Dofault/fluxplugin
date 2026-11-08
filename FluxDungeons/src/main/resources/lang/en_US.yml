@@ -6,7 +6,7 @@ unknown-player: "&#FF5C5CPlayer not found."
 not-in-run: "&#FF5C5CYou are not in a dungeon."
 dungeon-usage: "&#FF5C5C/%flux_cmd_fluxdungeons_dungeon% [play <dungeon> | leave | class [class] | list]"
 party-usage: "&#FF5C5C/%flux_cmd_fluxdungeons_party% [invite | accept | leave | kick | leader] [player]"
-admin-usage: "!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% visit [dungeon] | build <dungeon|all> | template <dungeon> | start <dungeon> <player> | stop <player|all> | give <player> <item> [n] | reset <player> | runs | reload"
+admin-usage: "!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% visit [dungeon] | edit <dungeon> | build <dungeon|all> | template <dungeon> | start <dungeon> <player> | stop <player|all> | give <player> <item> [n] | reset <player> | runs | reload"
 list-line: "&#FFD94D%dungeon% &8(&7%id%&8) &#B376E5%min% to %max% players, recommended level &f%level%"
 
 main:
@@ -31,6 +31,7 @@ class:
   chosen: "&#2ECF7BYou now play %class% &#2ECF7B(level &f%level%&#2ECF7B)."
 
 start:
+  editing: "&#FF5C5CThis dungeon is being edited, try again later."
   not-leader: "&#FF5C5COnly the party leader can start a dungeon."
   too-few: "&#FF5C5CThis dungeon needs at least &f%min% &#FF5C5Cplayer(s)."
   too-many: "&#FF5C5CThis dungeon takes at most &f%max% &#FF5C5Cplayers."
@@ -141,3 +142,23 @@ objective:
 
 item:
   level: "&7Item level: &f%level%"
+
+edit:
+  opening: "&#B376E5Opening &f%dungeon% &#B376E5in edit mode..."
+  opened: "&#B376E5Editing &f%dungeon% &#B376E5(&f%spawns% &#B376E5points). Build freely; &f/%flux_cmd_fluxdungeons_fluxdungeons% edit add <monster> | remove | move | start | objective&#B376E5, then &fsave &#B376E5or &fcancel&#B376E5."
+  not-editing: "&#FF5C5CYou are not in a dungeon being edited."
+  saving: "&#B376E5Saving &f%dungeon%&#B376E5..."
+  saved: "&#2ECF7B%dungeon% saved: the next runs use the new map and points."
+  cancelled: "&#B376E5Edit closed without saving the builds (moved points stay saved)."
+  added: "&#2ECF7B%mob% added here &7(%spawns% points)."
+  removed: "&#2ECF7B%mob% removed &7(%spawns% points)."
+  moved: "&#2ECF7B%mob% moved here."
+  start: "&#2ECF7BDungeon start placed here."
+  objective-on: "&#2ECF7B%mob% is now an objective &7(%objectives% objectives)."
+  objective-off: "&#B376E5%mob% is no longer an objective &7(%objectives% objectives)."
+  none-near: "&#FF5C5CNo monster point within 6 blocks."
+  usage: "&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% edit <dungeon> | add <monster> | remove | move | start | objective | save | cancel"
+  unknown-mob: "&#FF5C5CUnknown monster: %mob%"
+  marker: "&#FFD94D%mob%"
+  marker-objective: "&#FF5C5C★ %mob% &7(objective)"
+  marker-start: "&#2ECF7B▶ Start"

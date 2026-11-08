@@ -221,6 +221,11 @@ public final class Mobs {
         }
     }
 
+    /** Ids of every monster known (completion). */
+    public List<String> templateIds() {
+        return List.copyOf(templates.keySet());
+    }
+
     public MobTemplate template(String id) {
         return templates.get(id);
     }

@@ -158,9 +158,37 @@ final class WorldInstances {
         }
     }
 
+    /**
+     * Saves an edit world and writes its blocks and entities back into the map folder (region, entities, poi), then
+     * deletes the working copy; {@code done} runs on the server thread.
+     */
+    void saveBack(World w, File target, Runnable done) {
+        String name = w.getName();
+        File folder = dimension(name);
+        w.save();
+        if (!Bukkit.unloadWorld(w, true)) {
+            plugin.getLogger().warning("Could not unload " + name + ": the map was not written back.");
+            done.run();
+            return;
+        }
+        disk.execute(() -> {
+            try {
+                for (String sub : new String[]{"region", "entities", "poi"}) {
+                    Path from = folder.toPath().resolve(sub);
+                    if (Files.isDirectory(from)) copyTree(from, target.toPath().resolve(sub));
+                }
+                deleteTree(folder.toPath());
+            } catch (IOException e) {
+                plugin.getLogger().severe("Could not write the map back into " + target + ": " + e.getMessage());
+            }
+            busy.remove(name);
+            if (plugin.isEnabled()) Bukkit.getScheduler().runTask(plugin, done);
+        });
+    }
+
     /** Folders of run worlds left by a crash: deleted at start. */
     void sweep() {
-        File[] left = dimension("x").getParentFile().listFiles((d, n) -> n.startsWith("fd_"));
+        File[] left = dimension("x").getParentFile().listFiles((d, n) -> n.startsWith("fd_") || n.startsWith("fde_"));
         if (left == null) return;
         for (File f : left) {
             if (Bukkit.getWorld(f.getName()) != null) continue;
