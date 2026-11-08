@@ -551,7 +551,7 @@ public final class ScriptEngine {
                 Map<?, ?> fin = Script.map(a, "FinalTarget");
                 Location to = fin == null ? null : first(resolve(fin, host, ctx, script).places());
                 if (to == null) return;
-                for (Entity e : t.entities) e.teleport(to);
+                for (Entity e : t.entities) fr.influencraft.fluxdungeons.mob.Mobs.move(e, to);
             }
             case "NAVIGATE" -> {
                 Map<?, ?> fin = Script.map(a, "FinalTarget");
@@ -564,7 +564,7 @@ public final class ScriptEngine {
                     if (!(e instanceof Mob mob)) continue;
                     mob.getPathfinder().moveTo(to, speed);
                     if (force) Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                        if (mob.isValid() && mob.getLocation().distanceSquared(to) > 4) mob.teleport(to);
+                        if (mob.isValid() && mob.getLocation().distanceSquared(to) > 4) fr.influencraft.fluxdungeons.mob.Mobs.move(mob, to);
                     }, duration);
                 }
             }

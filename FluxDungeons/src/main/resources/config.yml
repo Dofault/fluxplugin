@@ -39,6 +39,13 @@ reward:
 spawn-distance: 40
 # View and simulation distance of dungeon worlds, in chunks (the server's would load the whole map).
 view-distance: 8
+# Life bar above the monsters, with their name and level: the picture bar of FluxAFK and FluxTools (one picture per
+# step, {step} from 0 to steps), a bar of text when the pack does not have these pictures.
+health-bar:
+  enabled: true
+  glyph: "fluxafk:bar_{step}"
+  steps: 20
+
 # Pets taken into a dungeon (chosen on the launch screen): how many at most, and their numbers, the same for every
 # pet for now. Each one is an invisible, silent mob wearing the pet's model, with the plugin's own behaviour (follow,
 # attack what the owner fights).

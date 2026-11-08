@@ -199,6 +199,7 @@ final class DungeonListener implements Listener {
                 if (!runs.isPet(e.getDamager())) runs.petFocus(attacker, mob);
             }
             if (e.getFinalDamage() >= mob.getHealth() && mobs.lethal(mob, attacker)) e.setCancelled(true);
+            else mobs.lifeChanged(mob);
             return;
         }
         // a dungeon monster (or its projectile) hit a player
@@ -311,6 +312,13 @@ final class DungeonListener implements Listener {
             return;
         }
         if (e.getFinalDamage() >= mob.getHealth() && mobs.lethal(mob, mob.getKiller())) e.setCancelled(true);
+        else mobs.lifeChanged(mob);
+    }
+
+    /** A dungeon monster healed: its life bar follows. */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onHeal(org.bukkit.event.entity.EntityRegainHealthEvent e) {
+        if (e.getEntity() instanceof LivingEntity mob && mobs.templateOf(mob) != null) mobs.lifeChanged(mob);
     }
 
     @EventHandler

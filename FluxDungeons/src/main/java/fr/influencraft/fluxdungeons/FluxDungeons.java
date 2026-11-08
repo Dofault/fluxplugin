@@ -140,6 +140,8 @@ public final class FluxDungeons extends FluxPlugin {
     private void settings() {
         parties.maxSize(getConfig().getInt("party.max-size", 4));
         heroes.load(file("classes.yml"), getConfig().getConfigurationSection("classes"));
+        mobs.healthBar(getConfig().getBoolean("health-bar.enabled", true), getConfig().getString("health-bar.glyph", "fluxafk:bar_{step}"),
+                getConfig().getInt("health-bar.steps", 20));
         List<org.bukkit.configuration.ConfigurationSection> mobFiles = new ArrayList<>();
         mobFiles.add(file("mobs.yml"));
         mobFiles.addAll(folder("mobs"));

@@ -743,7 +743,7 @@ public final class Runs {
         BoundingBox box = run.room(index).expand(3);
         for (UUID uuid : run.mobs) {
             Entity e = Bukkit.getEntity(uuid);
-            if (e != null && !box.contains(e.getLocation().toVector())) e.teleport(run.roomCenter(index));
+            if (e != null && !box.contains(e.getLocation().toVector())) Mobs.move(e, run.roomCenter(index));
         }
     }
 

@@ -81,6 +81,11 @@ public final class Mobs {
         /** Last time it had a player to fight (leaves combat after a while without one). */
         long lastEngaged;
         boolean dying, inCombat, switching;
+        /** Name, level and life bar floating above it (a text display riding it), null when off. */
+        org.bukkit.entity.TextDisplay label;
+        /** Bar step and health shown on the label (redrawn only when they change). */
+        int labelStep = -1;
+        double labelHealth = -1;
 
         Alive(LivingEntity entity, MobTemplate template, String run, Location spawn, ModelBridge.Handle model) {
             this.entity = entity;
@@ -272,7 +277,8 @@ public final class Mobs {
             le.getPersistentDataContainer().set(spawnKey, PersistentDataType.STRING, at.getX() + "," + at.getY() + "," + at.getZ());
             le.addScoreboardTag(TAG);
             le.customName(Texts.parse(t.name()));
-            le.setCustomNameVisible(!t.boss());
+            // the name shows on the life bar above it (label); without the bar, on the vanilla name tag
+            le.setCustomNameVisible(!t.boss() && !healthBar);
             le.setRemoveWhenFarAway(false);
             le.setPersistent(true);
             le.setCanPickupItems(false);
@@ -329,6 +335,7 @@ public final class Mobs {
         else if (t.boss()) base(le, Attribute.KNOCKBACK_RESISTANCE, 1);
         for (PotionEffect pe : a.kit.permanent()) le.addPotionEffect(pe);
         alive.put(le.getUniqueId(), a);
+        label(a);
         calm(a, true);
         blocks(a, x.spawnBlocks());
         if (x.mount() != null) mount(a, x.mount());
@@ -366,6 +373,7 @@ public final class Mobs {
         Alive a = new Alive(le, t, run, spawn, model);
         a.objective = le.getPersistentDataContainer().get(objectiveKey, PersistentDataType.STRING);
         alive.put(le.getUniqueId(), a);
+        label(a);
         calm(a, true);
         return true;
     }
@@ -380,7 +388,9 @@ public final class Mobs {
             try {
                 EntityType type = EntityType.valueOf(mount.toUpperCase(java.util.Locale.ROOT));
                 if (type.getEntityClass() != null && LivingEntity.class.isAssignableFrom(type.getEntityClass())) {
-                    horse = (LivingEntity) rider.spawn.getWorld().spawn(rider.spawn, type.getEntityClass());
+                    // tagged: a creature without the tag is refused in a dungeon world (DungeonListener)
+                    horse = (LivingEntity) rider.spawn.getWorld().spawn(rider.spawn, type.getEntityClass(),
+                            CreatureSpawnEvent.SpawnReason.CUSTOM, e -> e.addScoreboardTag(TAG));
                 }
             } catch (IllegalArgumentException ignored) {
                 // unknown mount
@@ -455,6 +465,10 @@ public final class Mobs {
     /** Chunk tickets are released by the run (whole map world unloaded, or arena slot released), not per monster. */
     private void close(Alive a) {
         if (a.model != null) a.model.close();
+        if (a.label != null) {
+            a.label.remove();
+            a.label = null;
+        }
         engine.forget(a);
     }
 
@@ -620,8 +634,9 @@ public final class Mobs {
                 continue;
             }
             if (a.dying) continue;
+            updateLabel(a);
             double leash = a.template.extra().leash();
-            if (leash > 0 && a.entity.getLocation().distanceSquared(a.spawn) > leash * leash) a.entity.teleport(a.spawn);
+            if (leash > 0 && a.entity.getLocation().distanceSquared(a.spawn) > leash * leash) move(a.entity, a.spawn);
             if (!a.template.extra().scripts().isEmpty()) later.add(() -> engine.pollZones(a));
             if (!a.entity.hasAI()) continue;
             Player target = target(a);
@@ -730,6 +745,83 @@ public final class Mobs {
             plugin.getLogger().warning("Could not put model " + model + " on " + entity.getType() + ": " + e);
             return null;
         }
+    }
+
+    // ---------------------------------------------------------------- life bar above the monsters
+
+    private boolean healthBar = true;
+    private String barGlyph = "fluxafk:bar_{step}";
+    private int barSteps = 20;
+
+    /** {@code health-bar} of the config: the textured bar of FluxAFK and FluxTools, one picture per step. */
+    public void healthBar(boolean enabled, String glyph, int steps) {
+        healthBar = enabled;
+        barGlyph = glyph == null || glyph.isBlank() ? "fluxafk:bar_{step}" : glyph;
+        barSteps = Math.max(1, steps);
+    }
+
+    /**
+     * Teleports a dungeon monster with what rides it (its life bar): a plain teleport refuses to move an entity that
+     * has passengers.
+     */
+    public static void move(Entity e, Location to) {
+        e.teleport(to, io.papermc.paper.entity.TeleportFlag.EntityState.RETAIN_PASSENGERS);
+    }
+
+    /** Puts the floating name, level and life bar on a monster. */
+    private void label(Alive a) {
+        if (!healthBar || a.label != null) return;
+        LivingEntity le = a.entity;
+        a.label = le.getWorld().spawn(le.getLocation(), org.bukkit.entity.TextDisplay.class, d -> {
+            d.setPersistent(false);
+            d.setBillboard(org.bukkit.entity.Display.Billboard.CENTER);
+            d.setDefaultBackground(false);
+            d.setBackgroundColor(org.bukkit.Color.fromARGB(0, 0, 0, 0));
+            d.setShadowed(true);
+            d.setSeeThrough(false);
+            d.setViewRange(0.45f);
+            d.setLineWidth(400);
+            d.setTransformation(new org.bukkit.util.Transformation(new org.joml.Vector3f(0, 0.25f, 0),
+                    new org.joml.AxisAngle4f(), new org.joml.Vector3f(1, 1, 1), new org.joml.AxisAngle4f()));
+            d.addScoreboardTag(TAG + "_label");
+        });
+        le.addPassenger(a.label);
+        a.labelStep = -1;
+        updateLabel(a);
+    }
+
+    /** Draws the label again when the monster's life changed. */
+    private void updateLabel(Alive a) {
+        if (a.label == null) return;
+        if (!a.label.isValid() || !a.entity.getPassengers().contains(a.label)) {
+            // lost (chunk saved without it, dismounted): put a new one
+            a.label.remove();
+            a.label = null;
+            label(a);
+            return;
+        }
+        double max = Math.max(1, maxHealth(a.entity));
+        double health = Math.max(0, a.entity.getHealth());
+        double ratio = health / max;
+        int step = (int) Math.floor(Math.min(1, ratio) * barSteps);
+        if (step == a.labelStep && Math.abs(health - a.labelHealth) < 0.5) return;
+        a.labelStep = step;
+        a.labelHealth = health;
+        int level = Math.max(0, a.template.extra().level());
+        String head = a.template.name() + (level > 0 ? " &7Nv. &f" + level : "");
+        String glyph = fr.influencraft.flux.api.items.CustomItems.bar(barGlyph, barSteps, ratio);
+        String bar = glyph != null ? "&f" + glyph
+                : fr.influencraft.flux.api.util.Format.bar(ratio, 1.0, barSteps, "&#FF5C5C", "&8");
+        a.label.text(Texts.parse(head + "\n" + bar));
+    }
+
+    /** The monster's life just changed (hit, heal): its bar is redrawn on the next tick, once the change is applied. */
+    public void lifeChanged(LivingEntity mob) {
+        Alive a = alive.get(mob.getUniqueId());
+        if (a == null || a.label == null) return;
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (a.entity.isValid()) updateLabel(a);
+        });
     }
 
     /** Default value of an attribute for this kind of creature (what vanilla gives it). */
