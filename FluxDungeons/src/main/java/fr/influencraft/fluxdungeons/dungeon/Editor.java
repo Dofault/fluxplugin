@@ -318,8 +318,9 @@ public final class Editor implements Listener {
         String chosenMob = chosen.get(p.getUniqueId());
         String name = plugin.messages().raw("edit.tool." + t.key() + ".name");
         if (t == Tool.PLACE && chosenMob != null) name += plugin.messages().raw("edit.tool.place.chosen", "%mob%", mobName(chosenMob));
-        List<String> lore = Lore.create().description(plugin.messages().raw("edit.tool." + t.key() + ".description"))
-                .right(plugin.messages().raw("edit.tool." + t.key() + ".action")).build();
+        Lore l = Lore.create().description(plugin.messages().raw("edit.tool." + t.key() + ".description"));
+        if (t == Tool.PLACE) l.left(plugin.messages().raw("edit.tool.place.left"));
+        List<String> lore = l.right(plugin.messages().raw("edit.tool." + t.key() + ".action")).build();
         ItemStack item = Items.of(t.material.name(), name, lore, p);
         item.editMeta(m -> m.getPersistentDataContainer().set(toolKey, PersistentDataType.STRING, t.key()));
         return item;
@@ -348,13 +349,18 @@ public final class Editor implements Listener {
         Session s = sessionOf(p);
         if (s == null || s.saving) return;
         boolean right = e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK;
-        if (!right) return;
+        if (!right) {
+            // left click with the place tool: choose the monster
+            if (t == Tool.PLACE && (e.getAction() == Action.LEFT_CLICK_AIR || e.getAction() == Action.LEFT_CLICK_BLOCK)) openMenu(p, s, 0);
+            return;
+        }
         Block clicked = e.getAction() == Action.RIGHT_CLICK_BLOCK ? e.getClickedBlock() : null;
         Location at = clicked == null ? p.getLocation() : on(clicked, e.getBlockFace(), p);
         switch (t) {
             case PLACE -> {
+                // right click: place the chosen monster on the block aimed at, or where the player stands
                 String mob = chosen.get(p.getUniqueId());
-                if (clicked == null || p.isSneaking() || mob == null) openMenu(p, s, 0);
+                if (mob == null) openMenu(p, s, 0);
                 else addAt(p, s, mob, at);
             }
             case MOVE -> {
@@ -409,14 +415,38 @@ public final class Editor implements Listener {
                 else pickUp(p, s, i);
             }
             case PLACE -> {
-                // the clicked point's monster becomes the chosen one
-                chosen.put(p.getUniqueId(), s.spawns.get(i).mob());
-                refreshPlaceTool(p);
-                plugin.messages().send(p, "edit.chosen", "%mob%", mobName(s.spawns.get(i).mob()));
+                // right click on a point: one more of the chosen monster right there
+                String mob = chosen.get(p.getUniqueId());
+                if (mob == null) openMenu(p, s, 0);
+                else addAt(p, s, mob, hit.getLocation());
             }
             default -> {
             }
         }
+    }
+
+    /** Left click on a point's body with the place tool: its monster becomes the chosen one. */
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onPointHit(io.papermc.paper.event.player.PrePlayerAttackEntityEvent e) {
+        if (!(e.getAttacked() instanceof Interaction hit)) return;
+        String key = hit.getPersistentDataContainer().get(pointKey, PersistentDataType.STRING);
+        if (key == null) return;
+        e.setCancelled(true);
+        Player p = e.getPlayer();
+        Session s = sessionOf(p);
+        if (s == null || s.saving || toolOf(p.getInventory().getItemInMainHand()) != Tool.PLACE) return;
+        int i = indexOf(s, key);
+        if (i < 0) return;
+        chosen.put(p.getUniqueId(), s.spawns.get(i).mob());
+        refreshPlaceTool(p);
+        Sounds.cue(p, "click");
+        plugin.messages().send(p, "edit.chosen", "%mob%", mobName(s.spawns.get(i).mob()));
+    }
+
+    /** Tools never break blocks (creative left click). */
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void onBreakWithTool(org.bukkit.event.block.BlockBreakEvent e) {
+        if (toolOf(e.getPlayer().getInventory().getItemInMainHand()) != null) e.setCancelled(true);
     }
 
     /** Where a click on a block puts a point: on top of it (or against the clicked face), facing the player. */

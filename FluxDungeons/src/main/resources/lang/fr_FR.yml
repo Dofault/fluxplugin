@@ -152,7 +152,7 @@ edit:
   marker-objective: '&#FF5C5C★ %mob% &7(objectif)'
   marker-start: '&#2ECF7B▶ Départ'
   inventory-full: '&#FF5C5CInventaire plein : libère de la place pour recevoir les outils d''édition.'
-  chosen: '&#2ECF7BMonstre choisi : &f%mob%&#2ECF7B. Clic droit sur un bloc pour le poser.'
+  chosen: '&#2ECF7BMonstre choisi : &f%mob%&#2ECF7B. Clic droit pour le poser.'
   picked: '&#B376E5%mob% en main : clic droit sur un bloc pour le reposer.'
   confirm-save: '&#FFD94DClic droit encore une fois pour enregistrer la map et les points.'
   confirm-quit: '&#FFD94DClic droit encore une fois pour quitter sans enregistrer les constructions.'
@@ -160,8 +160,9 @@ edit:
     place:
       name: '&#FFD94DPoser un monstre'
       chosen: ' &7(%mob%&7)'
-      description: 'Pose le monstre choisi sur le bloc visé. Clic droit dans le vide ou accroupi : choisir le monstre. Clic droit sur un point : prendre son monstre.'
-      action: Poser / choisir
+      description: 'Clic gauche : choisir le monstre (dans la liste, ou sur un point déjà posé pour reprendre son monstre). Clic droit : le poser sur le bloc visé, ou là où tu es.'
+      action: Poser
+      left: Choisir le monstre
     move:
       name: '&#FFD94DDéplacer un point'
       description: Clic droit sur un point pour le prendre, puis sur un bloc pour le reposer.

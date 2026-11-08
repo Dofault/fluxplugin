@@ -152,7 +152,7 @@ edit:
   marker-objective: '&#FF5C5C★ %mob% &7(objective)'
   marker-start: '&#2ECF7B▶ Start'
   inventory-full: '&#FF5C5CInventory full: make room to receive the edit tools.'
-  chosen: '&#2ECF7BChosen monster: &f%mob%&#2ECF7B. Right click a block to place it.'
+  chosen: '&#2ECF7BChosen monster: &f%mob%&#2ECF7B. Right click to place it.'
   picked: '&#B376E5%mob% picked up: right click a block to put it down.'
   confirm-save: '&#FFD94DRight click once more to save the map and the points.'
   confirm-quit: '&#FFD94DRight click once more to quit without saving the builds.'
@@ -160,8 +160,9 @@ edit:
     place:
       name: '&#FFD94DPlace a monster'
       chosen: ' &7(%mob%&7)'
-      description: 'Places the chosen monster on the block aimed at. Right click the air or sneak: choose the monster. Right click a point: take its monster.'
-      action: Place / choose
+      description: 'Left click: choose the monster (from the list, or on a placed point to take its monster). Right click: place it on the block aimed at, or where you stand.'
+      action: Place
+      left: Choose the monster
     move:
       name: '&#FFD94DMove a point'
       description: Right click a point to pick it up, then a block to put it down.
