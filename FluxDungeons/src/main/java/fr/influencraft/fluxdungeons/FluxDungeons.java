@@ -64,6 +64,7 @@ public final class FluxDungeons extends FluxPlugin {
     private ItemCatalog items;
     private fr.influencraft.fluxdungeons.combat.AttackCadence attackCadence;
     private DungeonListener listener;
+    private fr.influencraft.fluxdungeons.combat.HealthBars healthBars;
 
     @Override
     protected void enable() {
@@ -80,6 +81,11 @@ public final class FluxDungeons extends FluxPlugin {
                 getConfig().getInt("blocks-per-tick", 20000));
         runs = new Runs(this, arena, mobs, heroes, loadouts, store);
         // weapons' attack cadence: a rule of the whole server, carried here because it serves the dungeons first
+        // life bars above creatures: dungeon monsters, and every other one with health-bar.all-mobs
+        healthBars = new fr.influencraft.fluxdungeons.combat.HealthBars(this);
+        healthBars.skip(e -> mobs.templateOf(e) != null || runs.isPet(e) || runs.isDungeonWorld(e.getWorld()));
+        mobs.bars(healthBars);
+        getServer().getPluginManager().registerEvents(healthBars, this);
         attackCadence = new fr.influencraft.fluxdungeons.combat.AttackCadence(this);
         attackCadence.assist(p -> runs.runOf(p) == null ? null : runs.context(p)::enemy);
         getServer().getPluginManager().registerEvents(attackCadence, this);
@@ -133,6 +139,7 @@ public final class FluxDungeons extends FluxPlugin {
     protected void disable() {
         if (runs != null) runs.stopAll();
         if (mobs != null) mobs.removeAll();
+        if (healthBars != null) healthBars.clearAll();
     }
 
     @Override
@@ -155,7 +162,7 @@ public final class FluxDungeons extends FluxPlugin {
             attackCadence.load(getConfig().getConfigurationSection("attack-cadence"));
             attackCadence.loadAssist(getConfig().getConfigurationSection("aim-assist"));
         }
-        mobs.healthBar(getConfig().getBoolean("health-bar.enabled", true), getConfig().getString("health-bar.font", "fluxdungeons:health"));
+        if (healthBars != null) healthBars.load(getConfig().getConfigurationSection("health-bar"));
         if (listener != null) listener.hitReaction(getConfig().getConfigurationSection("hit-reaction"));
         List<org.bukkit.configuration.ConfigurationSection> mobFiles = new ArrayList<>();
         mobFiles.add(file("mobs.yml"));

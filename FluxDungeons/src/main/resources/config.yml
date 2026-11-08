@@ -44,6 +44,9 @@ view-distance: 8
 health-bar:
   enabled: true
   font: fluxdungeons:health
+  # Also above every other creature near a player, everywhere (name translated by the game, LevelledMobs level when
+  # it has one). Turn LevelledMobs' nametags off then.
+  all-mobs: false
 
 # How a player reacts to a monster's hit in a dungeon: a melee hit pushes him this many blocks along the ground (never
 # up); a hit from afar (arrow, ability) only slows him a moment (ticks, level).

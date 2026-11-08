@@ -81,11 +81,6 @@ public final class Mobs {
         /** Last time it had a player to fight (leaves combat after a while without one). */
         long lastEngaged;
         boolean dying, inCombat, switching;
-        /** Name, level and life bar floating above it (a text display riding it), null when off. */
-        org.bukkit.entity.TextDisplay label;
-        /** Bar step and health shown on the label (redrawn only when they change). */
-        int labelStep = -1;
-        double labelHealth = -1;
         /** Tick of its last melee hit on a player (vanilla's or the longer reach's). */
         int lastMelee = -1000;
 
@@ -280,8 +275,8 @@ public final class Mobs {
             le.getPersistentDataContainer().set(spawnKey, PersistentDataType.STRING, at.getX() + "," + at.getY() + "," + at.getZ());
             le.addScoreboardTag(TAG);
             le.customName(Texts.parse(t.name()));
-            // the name shows on the life bar above it (label); without the bar, on the vanilla name tag
-            le.setCustomNameVisible(!t.boss() && !healthBar);
+            // the name shows on the life bar above it; without the bar, on the vanilla name tag
+            le.setCustomNameVisible(!t.boss() && (bars == null || !bars.enabled()));
             le.setRemoveWhenFarAway(false);
             le.setPersistent(true);
             le.setCanPickupItems(false);
@@ -340,7 +335,7 @@ public final class Mobs {
         else if (t.boss()) base(le, Attribute.KNOCKBACK_RESISTANCE, 1);
         for (PotionEffect pe : a.kit.permanent()) le.addPotionEffect(pe);
         alive.put(le.getUniqueId(), a);
-        label(a);
+        bar(a);
         calm(a, true);
         blocks(a, x.spawnBlocks());
         if (x.mount() != null) mount(a, x.mount());
@@ -379,7 +374,7 @@ public final class Mobs {
         Alive a = new Alive(le, t, run, spawn, model);
         a.objective = le.getPersistentDataContainer().get(objectiveKey, PersistentDataType.STRING);
         alive.put(le.getUniqueId(), a);
-        label(a);
+        bar(a);
         calm(a, true);
         return true;
     }
@@ -471,10 +466,7 @@ public final class Mobs {
     /** Chunk tickets are released by the run (whole map world unloaded, or arena slot released), not per monster. */
     private void close(Alive a) {
         if (a.model != null) a.model.close();
-        if (a.label != null) {
-            a.label.remove();
-            a.label = null;
-        }
+        if (bars != null) bars.remove(a.entity);
         engine.forget(a);
     }
 
@@ -641,7 +633,6 @@ public final class Mobs {
                 continue;
             }
             if (a.dying) continue;
-            updateLabel(a);
             double leash = a.template.extra().leash();
             if (leash > 0 && a.entity.getLocation().distanceSquared(a.spawn) > leash * leash) move(a.entity, a.spawn);
             if (!a.template.extra().scripts().isEmpty()) later.add(() -> engine.pollZones(a));
@@ -756,24 +747,19 @@ public final class Mobs {
 
     // ---------------------------------------------------------------- life bar above the monsters
 
-    private boolean healthBar = true;
-    private net.kyori.adventure.key.Key barFont = net.kyori.adventure.key.Key.key("fluxdungeons", "health");
+    private fr.influencraft.fluxdungeons.combat.HealthBars bars;
 
-    /**
-     * {@code health-bar} of the config: a red bar with the life written inside, drawn by a font of the resource pack
-     * ({@code FluxDungeons/assets/gen_healthbar.py}: bar pictures U+E000 + step, digits in QuinqueFive, spaces).
-     */
-    public void healthBar(boolean enabled, String font) {
-        healthBar = enabled;
-        try {
-            barFont = net.kyori.adventure.key.Key.key(font == null || font.isBlank() ? "fluxdungeons:health" : font);
-        } catch (RuntimeException e) {
-            barFont = net.kyori.adventure.key.Key.key("fluxdungeons", "health");
-        }
+    /** Life bars above the monsters (name, level, life). */
+    public void bars(fr.influencraft.fluxdungeons.combat.HealthBars bars) {
+        this.bars = bars;
     }
 
-    // numbers of the font, the same as gen_healthbar.py
-    private static final int BAR_STEPS = 32, BAR_ADVANCE = 65, BAR_WIDTH = 64, DIGIT_ADVANCE = 6;
+    private void bar(Alive a) {
+        if (bars == null) return;
+        int level = Math.max(0, a.template.extra().level());
+        String head = a.template.name() + (level > 0 ? " &7Nv. &f" + level : "");
+        bars.attach(a.entity, e -> Texts.parse(head));
+    }
 
     /**
      * Teleports a dungeon monster with what rides it (its life bar): a plain teleport refuses to move an entity that
@@ -781,94 +767,6 @@ public final class Mobs {
      */
     public static void move(Entity e, Location to) {
         e.teleport(to, io.papermc.paper.entity.TeleportFlag.EntityState.RETAIN_PASSENGERS);
-    }
-
-    /** Puts the floating name, level and life bar on a monster. */
-    private void label(Alive a) {
-        if (!healthBar || a.label != null) return;
-        LivingEntity le = a.entity;
-        a.label = le.getWorld().spawn(le.getLocation(), org.bukkit.entity.TextDisplay.class, d -> {
-            d.setPersistent(false);
-            d.setBillboard(org.bukkit.entity.Display.Billboard.CENTER);
-            d.setDefaultBackground(false);
-            d.setBackgroundColor(org.bukkit.Color.fromARGB(0, 0, 0, 0));
-            d.setShadowed(true);
-            d.setSeeThrough(false);
-            d.setViewRange(0.45f);
-            d.setLineWidth(400);
-            d.setTransformation(new org.bukkit.util.Transformation(new org.joml.Vector3f(0, 0.25f, 0),
-                    new org.joml.AxisAngle4f(), new org.joml.Vector3f(1, 1, 1), new org.joml.AxisAngle4f()));
-            d.addScoreboardTag(TAG + "_label");
-        });
-        le.addPassenger(a.label);
-        a.labelStep = -1;
-        updateLabel(a);
-    }
-
-    /** Draws the label again when the monster's life changed. */
-    private void updateLabel(Alive a) {
-        if (a.label == null) return;
-        if (!a.label.isValid() || !a.entity.getPassengers().contains(a.label)) {
-            // lost (chunk saved without it, dismounted): put a new one
-            a.label.remove();
-            a.label = null;
-            label(a);
-            return;
-        }
-        double max = Math.max(1, maxHealth(a.entity));
-        double health = Math.max(0, a.entity.getHealth());
-        int step = (int) Math.floor(Math.min(1, health / max) * BAR_STEPS);
-        if (step == a.labelStep && Math.abs(health - a.labelHealth) < 0.5) return;
-        a.labelStep = step;
-        a.labelHealth = health;
-        int level = Math.max(0, a.template.extra().level());
-        String head = a.template.name() + (level > 0 ? " &7Nv. &f" + level : "");
-        net.kyori.adventure.text.Component bar = net.kyori.adventure.text.Component.text(barText(step, health))
-                .font(barFont).color(net.kyori.adventure.text.format.NamedTextColor.WHITE)
-                .shadowColor(net.kyori.adventure.text.format.ShadowColor.shadowColor(0));
-        a.label.text(net.kyori.adventure.text.Component.empty().append(Texts.parse(head))
-                .append(net.kyori.adventure.text.Component.newline()).append(bar));
-    }
-
-    /** The bar picture of this step, then the life centred on it (moved back over the bar, then forward again). */
-    private static String barText(int step, double health) {
-        String life = shortNumber(health);
-        int width = DIGIT_ADVANCE * life.length() - 1;
-        int start = (BAR_WIDTH - width) / 2;
-        StringBuilder sb = new StringBuilder().append((char) (0xE000 + Math.max(0, Math.min(BAR_STEPS, step))));
-        space(sb, start - BAR_ADVANCE);
-        sb.append(life);
-        space(sb, BAR_ADVANCE - (start + DIGIT_ADVANCE * life.length()));
-        return sb.toString();
-    }
-
-    /** Life as written in the bar: 143, 12K, 3M. */
-    private static String shortNumber(double health) {
-        long h = (long) Math.ceil(health);
-        if (h < 10_000) return String.valueOf(h);
-        if (h < 10_000_000) return (h / 1000) + "K";
-        return (h / 1_000_000) + "M";
-    }
-
-    /** Moves the text by {@code pixels} (negative: back) with the space chars of the font. */
-    private static void space(StringBuilder sb, int pixels) {
-        int base = pixels < 0 ? 0xF001 : 0xF011;
-        int left = Math.abs(pixels);
-        for (int bit = 6; bit >= 0; bit--) {
-            while (left >= (1 << bit)) {
-                sb.append((char) (base + bit));
-                left -= 1 << bit;
-            }
-        }
-    }
-
-    /** The monster's life just changed (hit, heal): its bar is redrawn on the next tick, once the change is applied. */
-    public void lifeChanged(LivingEntity mob) {
-        Alive a = alive.get(mob.getUniqueId());
-        if (a == null || a.label == null) return;
-        Bukkit.getScheduler().runTask(plugin, () -> {
-            if (a.entity.isValid()) updateLabel(a);
-        });
     }
 
     // ---------------------------------------------------------------- melee: pace and longer reach
