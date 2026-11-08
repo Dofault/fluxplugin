@@ -74,7 +74,7 @@ public final class Abilities {
                     Location l = p.getLocation();
                     w.spawnParticle(Particle.SWEEP_ATTACK, l.clone().add(0, 1, 0), 6, 0.8, 0.3, 0.8, 0);
                     for (LivingEntity e : enemies(l, radius, ctx)) {
-                        e.damage(power, p);
+                        hit(e, power, p);
                         e.setVelocity(e.getLocation().toVector().subtract(l.toVector()).setY(0).normalize().multiply(0.8).setY(0.35));
                     }
                 });
@@ -98,7 +98,7 @@ public final class Abilities {
                 double radius = a.param("radius", 4);
                 ring(at.clone().add(0, 1, 0), radius, Particle.SWEEP_ATTACK, 12);
                 w.playSound(at, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1f, 0.7f);
-                for (LivingEntity e : enemies(at, radius, ctx)) e.damage(power, p);
+                for (LivingEntity e : enemies(at, radius, ctx)) hit(e, power, p);
                 return true;
             }
             case "volley" -> {
@@ -142,7 +142,7 @@ public final class Abilities {
                         w.playSound(spot, Sound.ENTITY_ARROW_HIT, 0.6f, 1.2f);
                         for (LivingEntity e : enemies(spot, radius, ctx)) {
                             e.setNoDamageTicks(0);
-                            e.damage(power / pulses * 2, p);
+                            hit(e, power / pulses * 2, p);
                         }
                     }
                 }.runTaskTimer(plugin, 10L, 10L);
@@ -162,7 +162,7 @@ public final class Abilities {
                 ring(at.clone().add(0, 0.3, 0), radius, Particle.SNOWFLAKE, 40);
                 w.playSound(at, Sound.BLOCK_GLASS_BREAK, 1f, 0.6f);
                 for (LivingEntity e : enemies(at, radius, ctx)) {
-                    e.damage(power, p);
+                    hit(e, power, p);
                     e.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, ticks, 2, false, true));
                     e.setFreezeTicks(Math.max(e.getFreezeTicks(), ticks));
                 }
@@ -209,7 +209,7 @@ public final class Abilities {
                 Location l = target.getLocation();
                 w.strikeLightningEffect(l);
                 w.spawnParticle(Particle.ELECTRIC_SPARK, l.clone().add(0, 1, 0), 30, 0.4, 0.8, 0.4, 0.1);
-                target.damage(power, p);
+                hit(target, power, p);
                 return true;
             }
             default -> {
@@ -236,17 +236,35 @@ public final class Abilities {
         l.getWorld().playSound(l, Sound.ENTITY_GENERIC_EXPLODE, 0.6f, 1.4f);
         for (LivingEntity e : enemies(l, blast, ctx)) {
             e.setNoDamageTicks(0);
-            e.damage(power * 0.6, p);
+            hit(e, power * 0.6, p);
         }
     }
 
     // ---------------------------------------------------------------- helpers
 
-    /** Power grown with the level and the attack the player has (weapon in hand included). */
+    /**
+     * Power of an ability as written in classes.yml: it counts in normal hits (6 = an iron sword), the damage
+     * listener turns it into dungeon damage (Combat: level, weapon, potions), as EliteMobs scales its skills.
+     */
     private static double scaled(Player p, Hero hero, double power) {
-        AttributeInstance attack = p.getAttribute(Attribute.ATTACK_DAMAGE);
-        double bonus = attack == null ? 0 : Math.max(0, attack.getValue() - 1);
-        return power * levelFactor(hero) + bonus * 0.5;
+        return power;
+    }
+
+    /** Power of the ability hit being dealt, -1 outside. */
+    private double striking = -1;
+
+    public double striking() {
+        return striking;
+    }
+
+    private void hit(LivingEntity e, double power, Player p) {
+        double before = striking;
+        striking = power;
+        try {
+            e.damage(power, p);
+        } finally {
+            striking = before;
+        }
     }
 
     private static double levelFactor(Hero hero) {

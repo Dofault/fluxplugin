@@ -88,6 +88,7 @@ final class DungeonListener implements Listener {
         runs.leave(e.getPlayer());
         runs.endVisit(e.getPlayer());
         lastHit.remove(e.getPlayer().getUniqueId());
+        lastSwing.remove(e.getPlayer().getUniqueId());
         plugin.parties().leave(e.getPlayer().getUniqueId());
     }
 
@@ -174,6 +175,7 @@ final class DungeonListener implements Listener {
                 return;
             }
         }
+        double abilityPower = heroes.abilities().striking();
         if (e.getDamager() instanceof Projectile projectile) {
             double power = heroes.abilities().projectilePower(projectile);
             if (power >= 0) {
@@ -181,6 +183,7 @@ final class DungeonListener implements Listener {
                     e.setCancelled(true);
                     return;
                 }
+                abilityPower = power;
                 e.setDamage(power);
             }
         }
@@ -189,9 +192,8 @@ final class DungeonListener implements Listener {
                 e.setCancelled(true);
                 return;
             }
-            // normalized combat: the level gap between the player's class and the monster scales his damage
             int mobLevel = mobs.level(mob);
-            if (attacker != null && mobLevel > 0) e.setDamage(e.getDamage() * Combat.offensive(heroes.levelOf(attacker), mobLevel));
+            if (attacker != null && mobLevel > 0) pure(e, playerHit(e, attacker, mob, mobLevel, abilityPower));
             if (attacker != null) mobs.damagedByPlayer(mob, attacker, e);
             if (e.getFinalDamage() >= mob.getHealth() && mobs.lethal(mob, attacker)) e.setCancelled(true);
             return;
@@ -207,17 +209,54 @@ final class DungeonListener implements Listener {
                     e.setCancelled(true);
                     return;
                 }
-                lastHit.put(hurt.getUniqueId(), now);
-                // normalized combat: a hit counts in hits-to-kill, whatever the mob type deals in vanilla
-                if (!mobs.dealing() && mobs.level(mob) > 0) {
-                    double hit = mobs.hitOn(mob, hurt) * explosionFalloff(e.getDamager(), hurt);
-                    e.setDamage(hit);
+                if (mobs.level(mob) > 0) {
+                    // shield: arrows stop, other hits lose 80 % (EliteMobs; vanilla blocking is replaced)
+                    boolean blocking = hurt.isBlocking();
+                    if (blocking && e.getDamager() instanceof Projectile pr) {
+                        pr.remove();
+                        e.setCancelled(true);
+                        return;
+                    }
+                    double hit = mobs.dealing() ? e.getDamage()
+                            : mobs.hitOn(mob, hurt, Combat.type(e.getCause())) * explosionFalloff(e.getDamager(), hurt);
+                    if (blocking) hit *= Combat.shieldFactor();
+                    pure(e, Combat.capOneShot(hurt, hit));
                 }
-                // as in EliteMobs, one hit never kills a player at full health
-                double max = hurt.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue();
-                if (e.getFinalDamage() > max - 1) e.setDamage(Math.max(0, e.getDamage() * (max - 1) / e.getFinalDamage()));
+                lastHit.put(hurt.getUniqueId(), now);
                 mobs.hitPlayer(mob, hurt, e);
             }
+        }
+    }
+
+    /** Tick of each player's last melee swing on a dungeon monster (attack charge, as EliteMobs tracks it). */
+    private final java.util.Map<java.util.UUID, Integer> lastSwing = new java.util.HashMap<>();
+
+    /** A player's hit on a dungeon monster of a level: ability, bow or melee, through Combat. */
+    private double playerHit(EntityDamageByEntityEvent e, Player attacker, LivingEntity mob, int mobLevel, double abilityPower) {
+        int classLevel = heroes.levelOf(attacker);
+        org.bukkit.inventory.ItemStack weapon = attacker.getInventory().getItemInMainHand();
+        if (abilityPower >= 0) return Combat.abilityHit(attacker, mob, mobLevel, classLevel, weapon, abilityPower);
+        if (e.getDamager() instanceof Projectile projectile) {
+            double charge = Math.min(1, projectile.getVelocity().length() / 3);
+            return Combat.playerHit(attacker, mob, mobLevel, classLevel, weapon, charge, true, false);
+        }
+        boolean sweep = e.getCause() == EntityDamageEvent.DamageCause.ENTITY_SWEEP_ATTACK;
+        double charge = 1;
+        if (!sweep) {
+            int now = Bukkit.getCurrentTick();
+            Integer last = lastSwing.put(attacker.getUniqueId(), now);
+            if (last != null && now - last < 20 * 60) charge = Math.min(1, (now - last) / Combat.rechargeTicks(attacker));
+        }
+        return Combat.playerHit(attacker, mob, mobLevel, classLevel, weapon, charge, false, sweep);
+    }
+
+    /** Sets the damage computed by Combat and removes vanilla reductions (armour, resistance, blocking); absorption stays. */
+    @SuppressWarnings({"deprecation", "removal"})
+    private static void pure(EntityDamageByEntityEvent e, double damage) {
+        e.setDamage(damage);
+        for (EntityDamageEvent.DamageModifier m : EntityDamageEvent.DamageModifier.values()) {
+            if (m == EntityDamageEvent.DamageModifier.BASE || m == EntityDamageEvent.DamageModifier.ABSORPTION) continue;
+            if (e.isApplicable(m)) e.setDamage(m, 0);
         }
     }
 
@@ -228,7 +267,7 @@ final class DungeonListener implements Listener {
         else if (damager instanceof org.bukkit.entity.Fireball f && !(damager instanceof org.bukkit.entity.SmallFireball)) radius = f.getYield();
         else return 1;
         if (radius <= 0 || !damager.getWorld().equals(hurt.getWorld())) return 1;
-        return Math.max(0.1, 1 - hurt.getLocation().distance(damager.getLocation()) / (radius * 2));
+        return Math.max(0, 1 - hurt.getLocation().distance(damager.getLocation()) / radius);
     }
 
     /** A dungeon creeper keeps its potion effects when it blows up (vanilla would leave them in an endless cloud). */

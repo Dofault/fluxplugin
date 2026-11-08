@@ -40,6 +40,10 @@ public final class Run {
     /** Objectives of an imported map still alive (monster ids). */
     final Set<String> objectivesLeft = new LinkedHashSet<>();
     int objectivesTotal;
+    /** Level of every monster of the run: the party's average class level when it started (EliteMobs' dynamic dungeons). */
+    int level;
+    /** Players when the run started (monster life grows with it). */
+    int partySize = 1;
     /** Monsters of an imported map not spawned yet: they appear when a player comes near (memory stays low). */
     final java.util.List<DungeonDefinition.Spawn> pending = new java.util.ArrayList<>();
 
@@ -51,6 +55,10 @@ public final class Run {
         this.rooms = new RoomState[def.rooms().size()];
         java.util.Arrays.fill(rooms, RoomState.WAITING);
         this.livesLeft = def.lives();
+    }
+
+    public int level() {
+        return level;
     }
 
     public String id() {

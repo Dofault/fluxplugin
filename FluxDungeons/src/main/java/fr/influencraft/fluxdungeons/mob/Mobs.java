@@ -56,7 +56,7 @@ public final class Mobs {
 
     /** What the dungeon is told when a monster is gone for good. */
     public interface DeathHandler {
-        void dead(LivingEntity mob, Player killer, MobTemplate template, String objective);
+        void dead(LivingEntity mob, Player killer, MobTemplate template, String objective, Set<UUID> contributors);
     }
 
     /** A monster alive in a run. */
@@ -76,6 +76,8 @@ public final class Mobs {
         int nextPhase;
         String objective;
         long lastHurt;
+        /** Damage dealt by each player: loot goes to those who did at least a tenth of its life (EliteMobs). */
+        final Map<UUID, Double> damagers = new HashMap<>();
         /** Last time it had a player to fight (leaves combat after a while without one). */
         long lastEngaged;
         boolean dying, inCombat, switching;
@@ -125,7 +127,7 @@ public final class Mobs {
         }
 
         public double baseDamage() {
-            if (template.extra().level() > 0) return Combat.hit(template.extra().damageMultiplier());
+            if (template.extra().level() > 0) return 4 * template.extra().damageMultiplier();
             AttributeInstance a = entity.getAttribute(Attribute.ATTACK_DAMAGE);
             return a == null ? template.damage() : a.getValue();
         }
@@ -147,6 +149,10 @@ public final class Mobs {
     private final NamespacedKey mobKey, runKey, objectiveKey, spawnKey;
     /** Class level of a player (normalized combat). */
     private java.util.function.ToIntFunction<Player> playerLevel = p -> 1;
+    /** Level of a run (0: unknown, the monster keeps its own). */
+    private java.util.function.ToIntFunction<String> runLevel = r -> 0;
+    /** Players of a run when it started: from two, every monster has 75 % more life per player (EliteMobs). */
+    private java.util.function.ToIntFunction<String> runPlayers = r -> 1;
     /** True while a hit already computed here is dealt: the damage listener must not normalize it again. */
     private boolean dealing;
     private final Map<String, MobTemplate> templates = new LinkedHashMap<>();
@@ -155,7 +161,7 @@ public final class Mobs {
     private final ScriptEngine engine;
     private BiConsumerLiving onSummon = (parent, child) -> {
     };
-    private DeathHandler onDeath = (mob, killer, template, objective) -> {
+    private DeathHandler onDeath = (mob, killer, template, objective, contributors) -> {
     };
     private int ticks;
 
@@ -258,7 +264,10 @@ public final class Mobs {
         if (type == null || !LivingEntity.class.isAssignableFrom(type)) return null;
         MobTemplate.Extra x = t.extra();
         boolean normalized = x.level() > 0;
-        double health = normalized ? Combat.health(x.healthMultiplier()) : t.health();
+        int level = levelFor(t, run);
+        int players = run == null ? 1 : runPlayers.applyAsInt(run);
+        double health = (normalized ? Combat.health(level, x.healthMultiplier()) : t.health())
+                * (normalized && players >= 2 ? 0.75 * players : 1);
         Entity spawned = at.getWorld().spawn(at, type, CreatureSpawnEvent.SpawnReason.CUSTOM, e -> {
             LivingEntity le = (LivingEntity) e;
             le.getPersistentDataContainer().set(mobKey, PersistentDataType.STRING, t.id());
@@ -271,9 +280,10 @@ public final class Mobs {
             le.setPersistent(true);
             le.setCanPickupItems(false);
             base(le, Attribute.MAX_HEALTH, health);
-            base(le, Attribute.ATTACK_DAMAGE, normalized ? Combat.hit(x.damageMultiplier()) : t.damage());
+            base(le, Attribute.ATTACK_DAMAGE, normalized ? 1 : t.damage());
             if (t.speed() > 0) base(le, Attribute.MOVEMENT_SPEED, t.speed());
-            base(le, Attribute.ARMOR, t.armor());
+            // normalized monsters: their hits and the hits they take are computed by Combat, vanilla armour stays out
+            base(le, Attribute.ARMOR, normalized ? 0 : t.armor());
             base(le, Attribute.SCALE, t.scale());
             base(le, Attribute.FOLLOW_RANGE, x.followRange());
             le.setHealth(Math.min(health, le.getAttribute(Attribute.MAX_HEALTH).getValue()));
@@ -458,6 +468,7 @@ public final class Mobs {
         Alive a = alive.get(entity.getUniqueId());
         if (a == null) return;
         enterCombat(a, player, true);
+        a.damagers.merge(player.getUniqueId(), Math.min(event.getFinalDamage(), entity.getHealth()), Double::sum);
         engine.fire(a, "EliteMobDamagedByPlayerEvent", player, event);
         if (!a.template.extra().hurtMessages().isEmpty() && ThreadLocalRandom.current().nextDouble() < 0.15) say(a, a.template.extra().hurtMessages());
     }
@@ -534,6 +545,7 @@ public final class Mobs {
         c.nextPhase = from.nextPhase + 1;
         enterCombat(c, null, false);
         c.tags.addAll(from.tags);
+        c.damagers.putAll(from.damagers);
         if (from.objective != null) objective(child, from.objective);
         child.setHealth(Math.max(1, maxHealth(child) * ratio));
         engine.fire(c, "ElitePhaseSwitchEvent", null, null);
@@ -582,9 +594,10 @@ public final class Mobs {
         if (!a.template.extra().deathMessages().isEmpty()) {
             for (Player p : a.entity.getWorld().getPlayers()) for (String line : a.template.extra().deathMessages()) p.sendMessage(Texts.parse(line.replace("$players", killer == null ? "" : killer.getName())));
         }
+        Set<UUID> contributors = contributors(a.entity);
         alive.remove(a.entity.getUniqueId());
         close(a);
-        onDeath.dead(a.entity, killer, a.template, a.objective);
+        onDeath.dead(a.entity, killer, a.template, a.objective, contributors);
     }
 
     private void say(Alive a, List<String> lines) {
@@ -673,24 +686,52 @@ public final class Mobs {
         this.playerLevel = level;
     }
 
-    /** A dungeon monster's hit of multiplier 1 on this player: normalized (level gap included) or its attack. */
-    public double hitOn(LivingEntity mob, Player target) {
+    /** Level of each run, which every monster of the run takes. */
+    public void runLevel(java.util.function.ToIntFunction<String> level, java.util.function.ToIntFunction<String> players) {
+        this.runLevel = level;
+        this.runPlayers = players;
+    }
+
+    private int levelFor(MobTemplate t, String run) {
+        if (t.extra().level() <= 0) return 0;
+        int l = run == null ? 0 : runLevel.applyAsInt(run);
+        return l > 0 ? l : t.extra().level();
+    }
+
+    /** A dungeon monster's normal hit on this player (Combat, EliteMobs' model), or its attack when absolute. */
+    public double hitOn(LivingEntity mob, Player target, Combat.DamageType type) {
         Alive a = alive.get(mob.getUniqueId());
-        return a == null ? 1 : hitOn(a, target);
+        return a == null ? 1 : hitOn(a, target, type);
     }
 
     private double hitOn(ScriptHost host, Player target) {
-        Alive a = host instanceof Alive al ? al : alive.get(host.entity().getUniqueId());
-        if (a == null) return host.baseDamage();
-        int level = a.template.extra().level();
-        if (level <= 0) return a.baseDamage();
-        return Combat.hit(a.template.extra().damageMultiplier()) * Combat.defensive(level, playerLevel.applyAsInt(target));
+        return hitOn(host, target, Combat.DamageType.MELEE);
     }
 
-    /** Normalized level of a dungeon monster, 0 when its numbers are absolute. */
+    private double hitOn(ScriptHost host, Player target, Combat.DamageType type) {
+        Alive a = host instanceof Alive al ? al : alive.get(host.entity().getUniqueId());
+        if (a == null) return host.baseDamage();
+        int level = levelFor(a.template, a.run);
+        if (level <= 0) return a.baseDamage();
+        return Combat.hitOnPlayer(target, a.entity, level, playerLevel.applyAsInt(target), a.template.extra().damageMultiplier(), type);
+    }
+
+    /** Level of a dungeon monster, 0 when its numbers are absolute. */
     public int level(LivingEntity mob) {
         Alive a = alive.get(mob.getUniqueId());
-        return a == null ? 0 : a.template.extra().level();
+        return a == null ? 0 : levelFor(a.template, a.run);
+    }
+
+    /** Players who dealt at least a tenth of the monster's life (they share its loot). */
+    public Set<UUID> contributors(LivingEntity mob) {
+        Alive a = alive.get(mob.getUniqueId());
+        if (a == null) return Set.of();
+        double tenth = maxHealth(mob) * 0.1;
+        Set<UUID> out = new HashSet<>();
+        a.damagers.forEach((u, d) -> {
+            if (d >= tenth) out.add(u);
+        });
+        return out;
     }
 
     /** True while a hit computed here is being dealt (the listener leaves its damage as it is). */
@@ -820,8 +861,8 @@ public final class Mobs {
                     EntityType type = EntityType.valueOf(ab.text("entity", "SKELETON"));
                     MobTemplate copy = new MobTemplate(a.template.id() + "_summon", type, "&7" + type.name().toLowerCase(), false, null,
                             maxHealth(e) * 0.15, a.baseDamage() * 0.6, 0.25, 0, 1, 0, Map.of(), List.of(),
-                            new MobTemplate.Extra(0, 1, 1, false, false, 32, 0, List.of(), List.of(), null, List.of(), List.of(), List.of(),
-                                    List.of(), List.of(), List.of(), Map.of()));
+                            new MobTemplate.Extra(1, 0.15, 0.6, false, false, 32, 0, List.of(), List.of(), null, List.of(), List.of(), List.of(),
+                                    List.of(), List.of(), List.of(), Map.of(), "TRASH"));
                     for (int i = 0; i < (int) ab.number("count", 2); i++) {
                         LivingEntity s = spawn(copy, at.clone().add(ThreadLocalRandom.current().nextDouble(-2, 2), 0, ThreadLocalRandom.current().nextDouble(-2, 2)), a.run);
                         if (s != null) onSummon.accept(e, s);

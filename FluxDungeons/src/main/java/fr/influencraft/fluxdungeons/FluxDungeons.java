@@ -69,6 +69,7 @@ public final class FluxDungeons extends FluxPlugin {
         heroes = new Heroes(this, store);
         mobs = new Mobs(this);
         items = ItemCatalog.create(this, "fluxdungeons");
+        ItemLevels.register(this);
         loadouts = new Loadouts(store, getLogger(), heroes::isAbilityItem);
         arena = new Arena(this, getConfig().getString("world", "flux_dungeons"), getConfig().getInt("slot-spacing", 512),
                 getConfig().getInt("blocks-per-tick", 20000));

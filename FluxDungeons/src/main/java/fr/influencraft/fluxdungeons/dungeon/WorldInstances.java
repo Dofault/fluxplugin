@@ -122,7 +122,13 @@ final class WorldInstances {
         // monster hits are normalized by FluxDungeons; the difficulty only changes vanilla extras (hunger, fire)
         w.setDifficulty(Difficulty.NORMAL);
         w.setAutoSave(false);
+        // a dungeon is a small map: the server's view distance (32 on Labs) would load all of it for each player
+        w.setViewDistance(Math.max(2, Math.min(viewDistance, Bukkit.getViewDistance())));
+        w.setSimulationDistance(Math.max(2, Math.min(viewDistance, Bukkit.getSimulationDistance())));
     }
+
+    /** View and simulation distance of run worlds, in chunks. */
+    static int viewDistance = 8;
 
     /** Unloads the world (anyone still inside is sent to the main spawn) and deletes its folder. */
     void destroy(World w) {

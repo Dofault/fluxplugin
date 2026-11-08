@@ -62,6 +62,23 @@ CLASS_FAMILIES = {
 }
 
 
+def loot_rank(b, boss_type):
+    """EliteMobs' class loot rank (TRASH, MINIBOSS, BOSS): its chance of class loot (ClassLootCoverage.rank)."""
+    rank = str(b.get("classLootRank", "AUTO")).upper()
+    if rank in ("TRASH", "MINIBOSS", "BOSS"):
+        return rank
+    if boss_type in ("BOSS", "EVENT"):
+        return "BOSS"
+    if boss_type == "MINIBOSS":
+        return "MINIBOSS"
+    name = str(b.get("name", ""))
+    if "$minibossLevel" in name:
+        return "MINIBOSS"
+    if "$bossLevel" in name or "$eventBossLevel" in name:
+        return "BOSS"
+    return "TRASH"
+
+
 def item_id(dungeon_id, fname):
     name = fname[:-4] if fname.endswith(".yml") else fname
     return name if name.startswith(dungeon_id) else f"{dungeon_id}_{name}"
@@ -177,6 +194,7 @@ def main():
             "health-multiplier": float(b.get("healthMultiplier", 1)),
             "damage-multiplier": float(b.get("damageMultiplier", 1)),
             "xp": XP.get(boss_type, 8),
+            "rank": loot_rank(b, boss_type),
         }
         if b.get("movementSpeedAttribute") is not None:
             m["speed"] = float(b["movementSpeedAttribute"])

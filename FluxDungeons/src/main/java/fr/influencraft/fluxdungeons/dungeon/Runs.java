@@ -87,11 +87,20 @@ public final class Runs {
             if (run != null) run.mobs.add(child.getUniqueId());
         });
         mobs.onDeath(this::mobKilled);
+        mobs.runLevel(id -> {
+            Run r = runs.get(id);
+            return r == null ? 0 : r.level;
+        }, id -> {
+            Run r = runs.get(id);
+            return r == null ? 1 : r.partySize;
+        });
         Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 10L, 10L);
     }
 
     /** Monsters give their loot when killed; off: only the end of the dungeon rewards. */
     private boolean mobLoot;
+    private final Map<String, Double> classLootChance = new HashMap<>();
+    private double relevantChance = 0.8;
 
     public void settings(org.bukkit.configuration.ConfigurationSection c) {
         maxRuns = Math.max(1, c.getInt("max-runs", 8));
@@ -100,7 +109,13 @@ public final class Runs {
         bossHealthPerPlayer = c.getDouble("scaling.boss-health-per-player", 0.6);
         fallbackMoneyPerMinute = c.getDouble("reward.money-per-minute-without-fluxvalue", 50);
         spawnDistance = Math.max(8, c.getDouble("spawn-distance", 40));
-        mobLoot = c.getBoolean("mob-loot", false);
+        WorldInstances.viewDistance = Math.max(2, c.getInt("view-distance", 8));
+        mobLoot = c.getBoolean("mob-loot", true);
+        classLootChance.clear();
+        classLootChance.put("TRASH", c.getDouble("class-loot-chance.trash", 0.05));
+        classLootChance.put("MINIBOSS", c.getDouble("class-loot-chance.miniboss", 0.25));
+        classLootChance.put("BOSS", c.getDouble("class-loot-chance.boss", 1.0));
+        relevantChance = c.getDouble("class-loot-relevant-chance", 0.8);
     }
 
     public void load(Map<String, DungeonDefinition> definitions) {
@@ -196,6 +211,8 @@ public final class Runs {
     /** An imported map: its world is copied for this run, its monsters placed, then the players come in. */
     private Run startMap(DungeonDefinition def, List<Player> players) {
         Run run = new Run(UUID.randomUUID().toString().substring(0, 8), def, -1, null);
+        run.level = partyLevel(players);
+        run.partySize = Math.max(1, players.size());
         runs.put(run.id, run);
         for (Player p : players) {
             run.expected.add(p.getUniqueId());
@@ -684,7 +701,7 @@ public final class Runs {
      * A dungeon monster is gone for good (vanilla death, end of its death animation, not a phase change): experience
      * for the party, its loot rolled for each player, its objective done.
      */
-    public void mobKilled(LivingEntity mob, Player killer, MobTemplate t, String objective) {
+    public void mobKilled(LivingEntity mob, Player killer, MobTemplate t, String objective, Set<UUID> contributors) {
         Run run = runs.get(mobs.runOf(mob));
         if (run == null || run.state != Run.State.RUNNING) return;
         run.mobs.remove(mob.getUniqueId());
@@ -692,10 +709,12 @@ public final class Runs {
         if (t != null && t.xp() > 0) for (Player p : party) heroes.giveXp(p, t.xp());
         if (t != null && mobLoot) {
             for (Player p : online(run)) {
-                for (MobTemplate.Loot loot : rolls(t.extra().loot(), p)) {
+                if (!contributors.contains(p.getUniqueId())) continue;
+                for (MobTemplate.Loot loot : rolls(t.extra().loot(), t.extra().rank(), p)) {
                     ItemStack item = CustomItems.item(loot.item(), p);
                     if (item == null) continue;
                     item.setAmount(Math.max(1, loot.amount()));
+                    levelItem(item, run.level, p);
                     p.getInventory().addItem(item).values().forEach(left -> p.getWorld().dropItem(p.getLocation(), left));
                     String shown = item.hasItemMeta() && item.getItemMeta().hasDisplayName()
                             ? Texts.ampersand(item.getItemMeta().displayName()) : "<lang:" + item.translationKey() + ">";
@@ -710,8 +729,12 @@ public final class Runs {
         }
     }
 
-    /** Loot a player receives: each plain entry rolled, one entry of his class per group. */
-    private List<MobTemplate.Loot> rolls(List<MobTemplate.Loot> table, Player p) {
+    /**
+     * Loot a player receives, as EliteMobs: each plain entry rolled on its own chance; per group (class loot), one
+     * roll on the monster's rank ({@code class-loot-chance}: trash 5 %, miniboss 25 %, boss 100 %), then an item of
+     * his class 80 % of the time, of another class otherwise.
+     */
+    private List<MobTemplate.Loot> rolls(List<MobTemplate.Loot> table, String rank, Player p) {
         List<MobTemplate.Loot> out = new ArrayList<>();
         Map<String, List<MobTemplate.Loot>> groups = new LinkedHashMap<>();
         var heroClass = heroes.classOf(p.getUniqueId());
@@ -720,14 +743,35 @@ public final class Runs {
         for (MobTemplate.Loot l : table) {
             if (l.group() == null) {
                 if (r.nextDouble() < l.chance()) out.add(l);
-            } else if (l.classes().isEmpty() || l.classes().contains(cls)) {
+            } else {
                 groups.computeIfAbsent(l.group(), k -> new ArrayList<>()).add(l);
             }
         }
+        double chance = classLootChance.getOrDefault(rank, classLootChance.getOrDefault("TRASH", 0.05));
         for (List<MobTemplate.Loot> g : groups.values()) {
-            if (r.nextDouble() < g.get(0).chance()) out.add(g.get(r.nextInt(g.size())));
+            if (r.nextDouble() >= chance) continue;
+            List<MobTemplate.Loot> mine = g.stream().filter(l -> l.classes().isEmpty() || l.classes().contains(cls)).toList();
+            List<MobTemplate.Loot> other = g.stream().filter(l -> !mine.contains(l)).toList();
+            List<MobTemplate.Loot> pool = mine.isEmpty() ? other : other.isEmpty() || r.nextDouble() < relevantChance ? mine : other;
+            if (!pool.isEmpty()) out.add(pool.get(r.nextInt(pool.size())));
         }
         return out;
+    }
+
+    /** Average class level of the players starting a run, at least 1. */
+    private int partyLevel(List<Player> players) {
+        if (players.isEmpty()) return 1;
+        double sum = 0;
+        for (Player p : players) sum += heroes.levelOf(p);
+        return Math.max(1, (int) Math.round(sum / players.size()));
+    }
+
+    /** A dropped weapon or armour piece takes the level of the run (EliteMobs' scalable items). */
+    private void levelItem(ItemStack item, int level, Player p) {
+        if (item.getType().getMaxDurability() <= 0 || level <= 0) return;
+        item.editMeta(m -> m.getPersistentDataContainer().set(fr.influencraft.fluxdungeons.mob.Combat.ITEM_LEVEL,
+                org.bukkit.persistence.PersistentDataType.INTEGER, level));
+        fr.influencraft.fluxdungeons.ItemLevels.line(item);
     }
 
     /** A player died in his run: a shared life is spent, or he watches the others. */

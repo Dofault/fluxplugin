@@ -86,7 +86,7 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                         boolean baby, boolean frozen, double followRange, double leash, List<String> powers,
                         List<Phase> phases, String mount, List<Loot> loot, List<String> deathMessages,
                         List<String> hitMessages, List<String> hurtMessages, List<BlockState> spawnBlocks,
-                        List<BlockState> removeBlocks, Map<String, Script> scripts) {
+                        List<BlockState> removeBlocks, Map<String, Script> scripts, String rank) {
     }
 
     public static MobTemplate read(String id, ConfigurationSection c) {
@@ -131,7 +131,7 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                 c.getDouble("leash", 0), c.getStringList("powers"), phases, c.getString("mount"), loot,
                 c.getStringList("messages.death"), c.getStringList("messages.hit"), c.getStringList("messages.hurt"),
                 blocks(c.getStringList("blocks.spawn")), blocks(c.getStringList("blocks.remove")),
-                Script.parse(scriptSection));
+                Script.parse(scriptSection), c.getString("rank", "TRASH").toUpperCase(Locale.ROOT));
         return new MobTemplate(id, type, c.getString("name", id), c.getBoolean("boss"), c.getString("model"),
                 c.getDouble("health", 20), c.getDouble("damage", 3), c.getDouble("speed", -1), c.getDouble("armor", 0),
                 c.getDouble("scale", 1), c.getDouble("xp", 10), equipment, abilities, extra);
