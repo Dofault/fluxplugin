@@ -1,4 +1,4 @@
-package fr.influencraft.flux.combat;
+package fr.influencraft.fluxdungeons.combat;
 
 import fr.influencraft.flux.api.items.ItemLooks;
 import io.papermc.paper.datacomponent.DataComponentTypes;
@@ -21,6 +21,8 @@ import java.util.Map;
 
 /**
  * Attack cadence of the whole server (as Wynncraft): a weapon attacks at its own pace whatever the player clicks.
+ * Carried by FluxDungeons because it serves the dungeons first, but it applies everywhere ({@code attack-cadence} of
+ * FluxDungeons' config). In a dungeon it adds the aim assist ({@link Assist}).
  * <ul>
  *   <li>Every weapon (any item with an attack speed but mining tools: swords, axes, trident, mace) gets the vanilla item
  *   components {@code minimum_attack_charge} (the client refuses to attack before the weapon is recharged, so spam
@@ -55,8 +57,28 @@ public final class AttackCadence implements Listener {
     /** Tick of each player's last swing shown (one particle per swing). */
     private final java.util.Map<java.util.UUID, Integer> shown = new java.util.HashMap<>();
 
-    public AttackCadence(Plugin flux) {
-        ItemLooks.registerAny(flux, (id, item) -> enabled ? apply(item) : clear(item));
+    /** What the dungeons tell: who is fighting in one, and what he may hit. */
+    public interface Assist {
+        /** Monsters this player may hit, null when he is not in a dungeon (no assist). */
+        java.util.function.Predicate<org.bukkit.entity.Entity> enemies(Player player);
+    }
+
+    private Assist assist = p -> null;
+    private boolean assistOn = true;
+    private double assistRadius = 1.2;
+
+    public AttackCadence(Plugin plugin) {
+        ItemLooks.registerAny(plugin, (id, item) -> enabled ? apply(item) : clear(item));
+    }
+
+    public void assist(Assist assist) {
+        this.assist = assist;
+    }
+
+    /** Aim assist of the dungeons ({@code aim-assist} of the config). */
+    public void loadAssist(ConfigurationSection c) {
+        assistOn = c == null || c.getBoolean("enabled", true);
+        assistRadius = c == null ? 1.2 : Math.max(0.2, c.getDouble("radius", 1.2));
     }
 
     public void load(ConfigurationSection c) {
@@ -187,11 +209,57 @@ public final class AttackCadence implements Listener {
         if (!real || last != null && now - last < 4) return;
         shown.put(p.getUniqueId(), now);
         org.bukkit.Location at = reachPoint(p, hand);
+        // a swing in the air in a dungeon: aim assist hits the monster the player was aiming at
+        boolean missed = hit == null || now - hit > 1;
+        if (missed && assistOn) {
+            org.bukkit.entity.LivingEntity target = assisted(p, hand);
+            if (target != null) {
+                p.attack(target);
+                at = target.getLocation().add(0, target.getHeight() * 0.6, 0);
+            }
+        }
         if (swingParticle != null) p.getWorld().spawnParticle(swingParticle, at, 1, 0, 0, 0, 0);
         if (swingSound != null) {
             float pitch = soundPitch * (0.9f + java.util.concurrent.ThreadLocalRandom.current().nextFloat() * 0.2f);
             p.getWorld().playSound(at, swingSound, org.bukkit.SoundCategory.PLAYERS, soundVolume, pitch);
         }
+    }
+
+    /**
+     * The monster the player was aiming at: within his reach, in front of him, whose body passes within
+     * {@code aim-assist.radius} blocks of the aimed line, seen (no wall between); the closest to the line, then to the
+     * player. The hitboxes are not enlarged: only a swing that hit nothing is read this way.
+     */
+    private org.bukkit.entity.LivingEntity assisted(Player p, ItemStack hand) {
+        java.util.function.Predicate<org.bukkit.entity.Entity> enemy = assist.enemies(p);
+        if (enemy == null) return null;
+        org.bukkit.Location eye = p.getEyeLocation();
+        org.bukkit.util.Vector origin = eye.toVector(), dir = eye.getDirection().normalize();
+        double reach = reach(p, hand);
+        org.bukkit.util.RayTraceResult wall = p.getWorld().rayTraceBlocks(eye, dir, reach, org.bukkit.FluidCollisionMode.NEVER, true);
+        double limit = wall == null ? reach : wall.getHitPosition().distance(origin);
+        org.bukkit.entity.LivingEntity best = null;
+        double bestScore = Double.MAX_VALUE;
+        for (org.bukkit.entity.Entity e : p.getNearbyEntities(reach + 2, reach + 2, reach + 2)) {
+            if (!(e instanceof org.bukkit.entity.LivingEntity le) || le.isDead() || !enemy.test(le)) continue;
+            org.bukkit.util.BoundingBox box = le.getBoundingBox();
+            org.bukkit.util.Vector center = box.getCenter();
+            double half = Math.max(box.getWidthX(), box.getWidthZ()) / 2;
+            double along = center.clone().subtract(origin).dot(dir);
+            if (along <= 0 || along - half > limit) continue;
+            org.bukkit.util.Vector closest = origin.clone().add(dir.clone().multiply(along));
+            // distance from the aimed line to the body (its height counts: aiming at the legs or the head)
+            double dy = Math.max(0, Math.max(box.getMinY() - closest.getY(), closest.getY() - box.getMaxY()));
+            double dxz = Math.hypot(center.getX() - closest.getX(), center.getZ() - closest.getZ()) - half;
+            double gap = Math.hypot(Math.max(0, dxz), dy);
+            if (gap > assistRadius || !p.hasLineOfSight(le)) continue;
+            double score = gap * 4 + along;
+            if (score < bestScore) {
+                bestScore = score;
+                best = le;
+            }
+        }
+        return best;
     }
 
     /** How far the player hits with this item: the weapon's attack range when it has one, else his reach attribute. */

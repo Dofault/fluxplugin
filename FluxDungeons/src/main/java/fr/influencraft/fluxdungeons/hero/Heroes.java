@@ -187,8 +187,19 @@ public final class Heroes {
 
     // ---------------------------------------------------------------- stats
 
+    /** Blocks added to a player's reach in a dungeon (5 instead of 3), set by {@code dungeon-reach-bonus}. */
+    private double reachBonus = 2;
+
+    public void reachBonus(double blocks) {
+        reachBonus = Math.max(0, blocks);
+    }
+
     private void applyStats(Player player, Hero hero) {
         removeStats(player);
+        AttributeInstance range = player.getAttribute(Attribute.ENTITY_INTERACTION_RANGE);
+        if (range != null && reachBonus > 0) {
+            range.addModifier(new AttributeModifier(statKey("reach"), reachBonus, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.ANY));
+        }
         for (Map.Entry<String, Attribute> e : STATS.entrySet()) {
             double value = hero.heroClass().stat(e.getKey(), hero.level());
             if (value == 0) continue;
@@ -201,6 +212,8 @@ public final class Heroes {
     }
 
     private void removeStats(Player player) {
+        AttributeInstance range = player.getAttribute(Attribute.ENTITY_INTERACTION_RANGE);
+        if (range != null) range.removeModifier(statKey("reach"));
         for (Map.Entry<String, Attribute> e : STATS.entrySet()) {
             AttributeInstance inst = player.getAttribute(e.getValue());
             if (inst != null) inst.removeModifier(statKey(e.getKey()));

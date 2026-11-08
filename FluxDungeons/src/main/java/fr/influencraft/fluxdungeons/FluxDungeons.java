@@ -62,6 +62,7 @@ public final class FluxDungeons extends FluxPlugin {
     private Runs runs;
     private Loadouts loadouts;
     private ItemCatalog items;
+    private fr.influencraft.fluxdungeons.combat.AttackCadence attackCadence;
 
     @Override
     protected void enable() {
@@ -77,6 +78,10 @@ public final class FluxDungeons extends FluxPlugin {
         arena = new Arena(this, getConfig().getString("world", "flux_dungeons"), getConfig().getInt("slot-spacing", 512),
                 getConfig().getInt("blocks-per-tick", 20000));
         runs = new Runs(this, arena, mobs, heroes, loadouts, store);
+        // weapons' attack cadence: a rule of the whole server, carried here because it serves the dungeons first
+        attackCadence = new fr.influencraft.fluxdungeons.combat.AttackCadence(this);
+        attackCadence.assist(p -> runs.runOf(p) == null ? null : runs.context(p)::enemy);
+        getServer().getPluginManager().registerEvents(attackCadence, this);
         getServer().getPluginManager().registerEvents(runs.lobby(), this);
         runs.editor().onSaved(this::reload);
         getServer().getPluginManager().registerEvents(runs.editor(), this);
@@ -140,6 +145,11 @@ public final class FluxDungeons extends FluxPlugin {
     private void settings() {
         parties.maxSize(getConfig().getInt("party.max-size", 4));
         heroes.load(file("classes.yml"), getConfig().getConfigurationSection("classes"));
+        heroes.reachBonus(getConfig().getDouble("dungeon-reach-bonus", 2));
+        if (attackCadence != null) {
+            attackCadence.load(getConfig().getConfigurationSection("attack-cadence"));
+            attackCadence.loadAssist(getConfig().getConfigurationSection("aim-assist"));
+        }
         mobs.healthBar(getConfig().getBoolean("health-bar.enabled", true), getConfig().getString("health-bar.glyph", "fluxafk:bar_{step}"),
                 getConfig().getInt("health-bar.steps", 20));
         List<org.bukkit.configuration.ConfigurationSection> mobFiles = new ArrayList<>();

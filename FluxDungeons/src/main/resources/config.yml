@@ -62,3 +62,32 @@ pets:
   body:
     ground: WOLF
     flying: BEE
+
+# Attack cadence of weapons: a rule of the WHOLE server (PvP included), carried by FluxDungeons as it serves PvE first.
+# Attack cadence (as Wynncraft): a weapon attacks at its own pace, spam clicks do nothing until it is recharged,
+# the weapon visibly comes back slowly (slower for a slow weapon), the vanilla recharge indicator is hidden (empty
+# sprites over the pack influstatique). Hits always land at full charge. false: items lose it at their next refresh.
+attack-cadence:
+  enabled: true
+  # Share of the recharge needed to attack again (1 = full).
+  minimum-charge: 1.0
+  # The swing of the weapon lasts the whole recharge.
+  slow-swing: true
+  # Length of the swing as a share of the recharge: the game lets the next hit go a little before the end (around
+  # 80 %), a swing as long as the recharge restarted before the weapon was back. Raise it if the weapon comes back
+  # too fast, lower it if the swing still restarts before its end.
+  swing-share: 0.8
+  # Particle and sound at every real swing, even in the air, where the swing reaches: the player's reach (attribute,
+  # bonuses of pets and effects included, or the weapon's range), stopped by the first block or creature. none: off.
+  swing-particle: SWEEP_ATTACK
+  swing-sound:
+    key: minecraft:entity.player.attack.sweep
+    volume: 0.7
+    pitch: 1.0
+
+# In a dungeon: the player's reach grows by this many blocks (5 instead of 3), and aim assist: a swing in the air hits
+# the monster closest to the aimed direction, within the player's reach, if it passes within radius blocks of it.
+dungeon-reach-bonus: 2
+aim-assist:
+  enabled: true
+  radius: 1.2

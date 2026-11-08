@@ -102,9 +102,6 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         // help window (/aide and the pause menu) and settings window (/parametres): plugins/Flux/help.yml, settings.yml
         help = new fr.influencraft.flux.help.HelpService(this);
         help.start();
-        attackCadence = new fr.influencraft.flux.combat.AttackCadence(this);
-        getServer().getPluginManager().registerEvents(attackCadence, this);
-        attackCadence.load(getConfig().getConfigurationSection("combat.attack-cadence"));
         settings = new fr.influencraft.flux.settings.SettingsService(this);
         settings.start();
         // screens shown when a player joins (questionnaire, calendar...), one after another once the pack is loaded
@@ -170,9 +167,6 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
             getLogger().warning("Could not write menus/" + id + ".yml: " + e.getMessage());
         }
     }
-
-    /** Attack cadence of weapons (combat.attack-cadence of the config). */
-    private fr.influencraft.flux.combat.AttackCadence attackCadence;
 
     private void readSettings() {
         reloadConfig();
@@ -388,7 +382,6 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
                 backgrounds.reset();
                 PathRenderer.reset();
                 if (tab != null) tab.load();
-                if (attackCadence != null) attackCadence.load(getConfig().getConfigurationSection("combat.attack-cadence"));
                 int warnings = registry.load();
                 msg(sender, "&#2ECF7B" + registry.all().size() + " menu(s) rechargé(s)"
                         + (warnings > 0 ? " &#FF5C5C(" + warnings + " avertissement(s), voir la console)" : "") + ".");
