@@ -143,6 +143,8 @@ public final class Mobs {
     private static final double CALM_SPEED = 0.12, CALM_SIGHT = 1 / 3.0;
     /** A monster without a player to fight for this long leaves combat. */
     private static final long COMBAT_TIMEOUT_MS = 10_000;
+    /** Highest a flying monster stays above its target, or above its spawn point without one (blocks). */
+    private static final double FLYING_ABOVE_TARGET = 3, FLYING_ABOVE_SPAWN = 4;
     private final NamespacedKey calmKey;
 
     private final Plugin plugin;
@@ -628,6 +630,7 @@ public final class Mobs {
             if (!a.template.extra().scripts().isEmpty()) later.add(() -> engine.pollZones(a));
             if (!a.entity.hasAI()) continue;
             Player target = target(a);
+            keepLow(a, target);
             if (target == null) {
                 if (a.inCombat && now - a.lastEngaged > COMBAT_TIMEOUT_MS) {
                     a.inCombat = false;
@@ -650,6 +653,22 @@ public final class Mobs {
             }
         }
         later.forEach(Runnable::run);
+    }
+
+    /**
+     * Flying monsters (wither, blaze, ghast...) stay within reach: vanilla withers climb high above their target or,
+     * without one, wander upwards, out of reach of melee classes. Pushed down beyond a few blocks above their target
+     * (in combat) or above their spawn point.
+     */
+    private static void keepLow(Alive a, Player target) {
+        if (!(a.entity instanceof org.bukkit.entity.Flying) && !(a.entity instanceof org.bukkit.entity.Wither)
+                && !(a.entity instanceof org.bukkit.entity.Blaze) && !(a.entity instanceof org.bukkit.entity.Vex)) return;
+        double ceiling = target != null && target.getWorld() == a.entity.getWorld() ? target.getLocation().getY() + FLYING_ABOVE_TARGET
+                : a.spawn.getY() + FLYING_ABOVE_SPAWN;
+        double over = a.entity.getLocation().getY() - ceiling;
+        if (over <= 0) return;
+        org.bukkit.util.Vector v = a.entity.getVelocity();
+        a.entity.setVelocity(v.setY(Math.min(v.getY(), -Math.min(0.6, 0.15 + over * 0.1))));
     }
 
     private static Player target(Alive a) {
