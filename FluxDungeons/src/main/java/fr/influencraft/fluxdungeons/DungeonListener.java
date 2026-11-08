@@ -190,6 +190,12 @@ final class DungeonListener implements Listener {
             }
         }
         if (victim instanceof LivingEntity mob && mobs.templateOf(mob) != null) {
+            // melee: one hit of the same attacker (player, pet) every MELEE_GAP ticks at most
+            if (e.getCause() == EntityDamageEvent.DamageCause.ENTITY_ATTACK && heroes.abilities().striking() < 0
+                    && tooSoon(mob, e.getDamager().getUniqueId().toString(), MELEE_GAP)) {
+                e.setCancelled(true);
+                return;
+            }
             if (mobs.damaged(mob, e)) {
                 e.setCancelled(true);
                 return;
@@ -212,6 +218,27 @@ final class DungeonListener implements Listener {
                 runs.petFocus(hurt, mob);
             }
         }
+    }
+
+    /**
+     * Dungeon monsters have no vanilla invulnerability after a hit (it swallowed the hits of a party, its pets, its
+     * abilities and enchantments landing together). Instead, each source has its own small delay: melee of the same
+     * attacker {@link #MELEE_GAP} ticks, each environmental cause {@link #ENVIRONMENT_GAP}; projectiles, abilities,
+     * enchantment effects and explosions always land.
+     */
+    private static final int MELEE_GAP = 5, ENVIRONMENT_GAP = 10;
+    /** Tick of the last hit of each source on each monster ({@code <monster>|<source>}). */
+    private final java.util.Map<String, Integer> lastSourceHit = new java.util.HashMap<>();
+
+    private boolean tooSoon(LivingEntity mob, String source, int gap) {
+        int now = Bukkit.getCurrentTick();
+        String key = mob.getUniqueId() + "|" + source;
+        Integer last = lastSourceHit.get(key);
+        // the same tick always passes: enchantment effects hit along with the swing that triggered them
+        if (last != null && now == last) return false;
+        if (last != null && now - last < gap) return true;
+        lastSourceHit.put(key, now);
+        return false;
     }
 
     /** Players do not order their dungeon pets around (sitting...). */
@@ -285,6 +312,7 @@ final class DungeonListener implements Listener {
     /** Every second: players of a run who took no monster hit for a while heal quickly (one tick of saturation). */
     void regenerate() {
         int now = Bukkit.getCurrentTick();
+        lastSourceHit.values().removeIf(t -> now - t > 40);
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (runs.runOf(p) == null || p.isDead()) continue;
             if (p.getFoodLevel() < 20) p.setFoodLevel(20);
@@ -307,6 +335,13 @@ final class DungeonListener implements Listener {
     public void onDamage(EntityDamageEvent e) {
         if (e instanceof EntityDamageByEntityEvent) return;
         if (!(e.getEntity() instanceof LivingEntity mob) || mobs.templateOf(mob) == null) return;
+        // fire, lava, cactus...: one hit of each cause every ENVIRONMENT_GAP ticks (monsters have no invulnerability)
+        if (e.getCause() != EntityDamageEvent.DamageCause.CUSTOM && e.getCause() != EntityDamageEvent.DamageCause.MAGIC
+                && e.getCause() != EntityDamageEvent.DamageCause.POISON && e.getCause() != EntityDamageEvent.DamageCause.WITHER
+                && tooSoon(mob, e.getCause().name(), ENVIRONMENT_GAP)) {
+            e.setCancelled(true);
+            return;
+        }
         if (mobs.damaged(mob, e)) {
             e.setCancelled(true);
             return;

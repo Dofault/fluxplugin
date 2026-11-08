@@ -282,6 +282,8 @@ public final class Mobs {
             le.setRemoveWhenFarAway(false);
             le.setPersistent(true);
             le.setCanPickupItems(false);
+            // no vanilla invulnerability after a hit: every source lands (limits per source in DungeonListener)
+            le.setMaximumNoDamageTicks(0);
             double health = imported ? vanilla(le, Attribute.MAX_HEALTH, 20) * x.healthMultiplier() : t.health();
             base(le, Attribute.MAX_HEALTH, health);
             base(le, Attribute.ATTACK_DAMAGE, imported ? vanilla(le, Attribute.ATTACK_DAMAGE, 2) * x.damageMultiplier() : t.damage());
@@ -370,6 +372,7 @@ public final class Mobs {
                 // shown as its vanilla mob
             }
         }
+        le.setMaximumNoDamageTicks(0);
         Alive a = new Alive(le, t, run, spawn, model);
         a.objective = le.getPersistentDataContainer().get(objectiveKey, PersistentDataType.STRING);
         alive.put(le.getUniqueId(), a);
