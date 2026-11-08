@@ -3,7 +3,6 @@ package fr.influencraft.fluxdungeons;
 import fr.influencraft.fluxdungeons.dungeon.Arena;
 import fr.influencraft.fluxdungeons.dungeon.Runs;
 import fr.influencraft.fluxdungeons.hero.Heroes;
-import fr.influencraft.fluxdungeons.mob.Combat;
 import fr.influencraft.fluxdungeons.mob.Mobs;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -76,7 +75,7 @@ final class DungeonListener implements Listener {
         }
         // left a dungeon without getting his things back (disconnect during a crash): give them now
         heroes.cleanLeftovers(p);
-        Location back = loadouts.recover(p, inArena);
+        Location back = loadouts.recover(p);
         Location to = back != null ? back : Bukkit.getWorlds().get(0).getSpawnLocation();
         if (inArena || back != null) Bukkit.getScheduler().runTask(plugin, () -> {
             if (p.isOnline()) p.teleport(to, PlayerTeleportEvent.TeleportCause.PLUGIN);
@@ -88,7 +87,6 @@ final class DungeonListener implements Listener {
         runs.leave(e.getPlayer());
         runs.endVisit(e.getPlayer());
         lastHit.remove(e.getPlayer().getUniqueId());
-        lastSwing.remove(e.getPlayer().getUniqueId());
         plugin.parties().leave(e.getPlayer().getUniqueId());
     }
 
@@ -164,18 +162,23 @@ final class DungeonListener implements Listener {
 
     // ---------------------------------------------------------------- combat
 
+    /**
+     * Combat is vanilla: players fight with their own gear, so armour, enchantments and libreforge effects apply as
+     * anywhere else. Here only: no friendly fire (players and their pets), class abilities, monster scripts.
+     */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onDamageByEntity(EntityDamageByEntityEvent e) {
         Player attacker = attacker(e.getDamager());
         Entity victim = e.getEntity();
-        // no friendly fire inside a run
-        if (attacker != null && victim instanceof Player hurt && runs.runOf(hurt) != null) {
-            if (runs.sameRun(attacker, hurt) || attacker.equals(hurt)) {
+        // no friendly fire inside a run, pets included
+        if (attacker != null && (victim instanceof Player || runs.isPet(victim))) {
+            java.util.UUID petOwner = runs.petOwner(victim);
+            Player hurt = victim instanceof Player vp ? vp : petOwner == null ? null : Bukkit.getPlayer(petOwner);
+            if (hurt == null || runs.runOf(hurt) != null && (runs.sameRun(attacker, hurt) || attacker.equals(hurt))) {
                 e.setCancelled(true);
                 return;
             }
         }
-        double abilityPower = heroes.abilities().striking();
         if (e.getDamager() instanceof Projectile projectile) {
             double power = heroes.abilities().projectilePower(projectile);
             if (power >= 0) {
@@ -183,7 +186,6 @@ final class DungeonListener implements Listener {
                     e.setCancelled(true);
                     return;
                 }
-                abilityPower = power;
                 e.setDamage(power);
             }
         }
@@ -192,8 +194,6 @@ final class DungeonListener implements Listener {
                 e.setCancelled(true);
                 return;
             }
-            int mobLevel = mobs.level(mob);
-            if (attacker != null && mobLevel > 0) pure(e, playerHit(e, attacker, mob, mobLevel, abilityPower));
             if (attacker != null) mobs.damagedByPlayer(mob, attacker, e);
             if (e.getFinalDamage() >= mob.getHealth() && mobs.lethal(mob, attacker)) e.setCancelled(true);
             return;
@@ -203,71 +203,32 @@ final class DungeonListener implements Listener {
             Entity source = e.getDamager() instanceof Projectile pr && pr.getShooter() instanceof Entity sh ? sh
                     : e.getDamager() instanceof org.bukkit.entity.EvokerFangs f && f.getOwner() != null ? f.getOwner() : e.getDamager();
             if (source instanceof LivingEntity mob && mobs.templateOf(mob) != null) {
-                int now = Bukkit.getCurrentTick();
-                Integer last = lastHit.get(hurt.getUniqueId());
-                if (last != null && now - last < Combat.graceTicks()) {
-                    e.setCancelled(true);
-                    return;
-                }
-                if (mobs.level(mob) > 0) {
-                    // shield: arrows stop, other hits lose 80 % (EliteMobs; vanilla blocking is replaced)
-                    boolean blocking = hurt.isBlocking();
-                    if (blocking && e.getDamager() instanceof Projectile pr) {
-                        pr.remove();
-                        e.setCancelled(true);
-                        return;
-                    }
-                    double hit = mobs.dealing() ? e.getDamage()
-                            : mobs.hitOn(mob, hurt, Combat.type(e.getCause())) * explosionFalloff(e.getDamager(), hurt);
-                    if (blocking) hit *= Combat.shieldFactor();
-                    pure(e, Combat.capOneShot(hurt, hit));
-                }
-                lastHit.put(hurt.getUniqueId(), now);
+                lastHit.put(hurt.getUniqueId(), Bukkit.getCurrentTick());
                 mobs.hitPlayer(mob, hurt, e);
             }
         }
     }
 
-    /** Tick of each player's last melee swing on a dungeon monster (attack charge, as EliteMobs tracks it). */
-    private final java.util.Map<java.util.UUID, Integer> lastSwing = new java.util.HashMap<>();
-
-    /** A player's hit on a dungeon monster of a level: ability, bow or melee, through Combat. */
-    private double playerHit(EntityDamageByEntityEvent e, Player attacker, LivingEntity mob, int mobLevel, double abilityPower) {
-        int classLevel = heroes.levelOf(attacker);
-        org.bukkit.inventory.ItemStack weapon = attacker.getInventory().getItemInMainHand();
-        if (abilityPower >= 0) return Combat.abilityHit(attacker, mob, mobLevel, classLevel, weapon, abilityPower);
-        if (e.getDamager() instanceof Projectile projectile) {
-            double charge = Math.min(1, projectile.getVelocity().length() / 3);
-            return Combat.playerHit(attacker, mob, mobLevel, classLevel, weapon, charge, true, false);
-        }
-        boolean sweep = e.getCause() == EntityDamageEvent.DamageCause.ENTITY_SWEEP_ATTACK;
-        double charge = 1;
-        if (!sweep) {
-            int now = Bukkit.getCurrentTick();
-            Integer last = lastSwing.put(attacker.getUniqueId(), now);
-            if (last != null && now - last < 20 * 60) charge = Math.min(1, (now - last) / Combat.rechargeTicks(attacker));
-        }
-        return Combat.playerHit(attacker, mob, mobLevel, classLevel, weapon, charge, false, sweep);
+    /** Players do not order their dungeon pets around (sitting...). */
+    @EventHandler(ignoreCancelled = true)
+    public void onPetClick(org.bukkit.event.player.PlayerInteractEntityEvent e) {
+        if (runs.isPet(e.getRightClicked())) e.setCancelled(true);
     }
 
-    /** Sets the damage computed by Combat and removes vanilla reductions (armour, resistance, blocking); absorption stays. */
-    @SuppressWarnings({"deprecation", "removal"})
-    private static void pure(EntityDamageByEntityEvent e, double damage) {
-        e.setDamage(damage);
-        for (EntityDamageEvent.DamageModifier m : EntityDamageEvent.DamageModifier.values()) {
-            if (m == EntityDamageEvent.DamageModifier.BASE || m == EntityDamageEvent.DamageModifier.ABSORPTION) continue;
-            if (e.isApplicable(m)) e.setDamage(m, 0);
-        }
-    }
-
-    /** Explosions hurt less far from their centre (a normalized hit would otherwise land in full at any distance). */
-    private static double explosionFalloff(Entity damager, Player hurt) {
-        double radius;
-        if (damager instanceof org.bukkit.entity.Creeper c) radius = c.getExplosionRadius() * (c.isPowered() ? 2 : 1);
-        else if (damager instanceof org.bukkit.entity.Fireball f && !(damager instanceof org.bukkit.entity.SmallFireball)) radius = f.getYield();
-        else return 1;
-        if (radius <= 0 || !damager.getWorld().equals(hurt.getWorld())) return 1;
-        return Math.max(0, 1 - hurt.getLocation().distance(damager.getLocation()) / radius);
+    /**
+     * In a run world only dungeon monsters and pets appear: creatures summoned by something else (enchantments that
+     * call golems or blazes...) would fight the bosses for the players.
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onCreatureSpawn(org.bukkit.event.entity.CreatureSpawnEvent e) {
+        org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason r = e.getSpawnReason();
+        if (r != org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.CUSTOM && r != org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.DEFAULT
+                && r != org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.BUILD_IRONGOLEM
+                && r != org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.BUILD_SNOWMAN) return;
+        if (!runs.isDungeonWorld(e.getLocation().getWorld())) return;
+        LivingEntity le = e.getEntity();
+        if (le.getScoreboardTags().contains(Mobs.TAG) || runs.isPet(le)) return;
+        e.setCancelled(true);
     }
 
     /** A dungeon creeper keeps its potion effects when it blows up (vanilla would leave them in an endless cloud). */
@@ -427,9 +388,11 @@ final class DungeonListener implements Listener {
         if (arena.isArena(e.getEntity().getWorld())) e.blockList().clear();
     }
 
-    private static Player attacker(Entity damager) {
+    /** The player behind a hit: himself, his projectile or his dungeon pet. */
+    private Player attacker(Entity damager) {
         if (damager instanceof Player p) return p;
         if (damager instanceof Projectile pr && pr.getShooter() instanceof Player p) return p;
-        return null;
+        java.util.UUID owner = runs.petOwner(damager);
+        return owner == null ? null : Bukkit.getPlayer(owner);
     }
 }

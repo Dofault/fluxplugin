@@ -23,7 +23,7 @@ public final class Run {
     final Set<UUID> players = new LinkedHashSet<>();
     /** Players invited when the run was started, teleported in once the copy is ready. */
     final Set<UUID> expected = new LinkedHashSet<>();
-    /** Players out of lives, watching. */
+    /** Players who died, watching (their gear is locked in the dungeon). */
     final Set<UUID> watching = new LinkedHashSet<>();
     final Set<UUID> mobs = new LinkedHashSet<>();
     final RoomState[] rooms;
@@ -40,10 +40,8 @@ public final class Run {
     /** Objectives of an imported map still alive (monster ids). */
     final Set<String> objectivesLeft = new LinkedHashSet<>();
     int objectivesTotal;
-    /** Level of every monster of the run: the party's average class level when it started (EliteMobs' dynamic dungeons). */
-    int level;
-    /** Players when the run started (monster life grows with it). */
-    int partySize = 1;
+    /** What each expected player chose on the launch screen, used when he enters. */
+    final java.util.Map<UUID, fr.influencraft.fluxdungeons.Loadouts.Selection> selections = new java.util.HashMap<>();
     /** Monsters of an imported map not spawned yet: they appear when a player comes near (memory stays low). */
     final java.util.List<DungeonDefinition.Spawn> pending = new java.util.ArrayList<>();
 
@@ -55,10 +53,6 @@ public final class Run {
         this.rooms = new RoomState[def.rooms().size()];
         java.util.Arrays.fill(rooms, RoomState.WAITING);
         this.livesLeft = def.lives();
-    }
-
-    public int level() {
-        return level;
     }
 
     public String id() {

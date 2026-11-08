@@ -74,6 +74,9 @@ public final class PetDisplay {
         }
     }
 
+    /** Players whose pets another plugin shows itself (FluxDungeons during a run): no model here. */
+    public static final Set<UUID> SUPPRESSED = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
     /** Familiers affichés de chaque joueur, dans l'ordre de ses familiers actifs (le premier suit le joueur). */
     private final Map<UUID, List<Follower>> followers = new HashMap<>();
     /** Modèles introuvables déjà signalés (un avertissement par modèle, pas un par tick). */
@@ -112,7 +115,8 @@ public final class PetDisplay {
     /** Familiers à afficher pour ce joueur (ses familiers actifs, dans l'ordre), aucun s'il est caché, mort... */
     private List<Pet> wanted(Player player) {
         if (!Pets.enabled() || !Pets.settings().getBool("pet-entity.enabled") || player.isDead()
-                || player.isInvisible() || player.getGameMode() == GameMode.SPECTATOR || PetData.hidden(player)) {
+                || player.isInvisible() || player.getGameMode() == GameMode.SPECTATOR || PetData.hidden(player)
+                || SUPPRESSED.contains(player.getUniqueId())) {
             return List.of();
         }
         return PetData.actives(player);

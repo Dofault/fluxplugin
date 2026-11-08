@@ -7,7 +7,7 @@ not-in-run: '&#FF5C5CYou are not in a dungeon.'
 dungeon-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_dungeon% [play <dungeon> | leave | class [class] | list]'
 party-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_party% [invite | accept | leave | kick | leader] [player]'
 admin-usage: '!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% create <id> [world] | visit [dungeon] | edit <dungeon> | build <dungeon|all> | template <dungeon> | start <dungeon> <player> | stop <player|all>
-  | give <player> <item> [n] | reset <player> | runs | reload'
+  | give <player> <item> [n] | runs | reload'
 list-line: '&#FFD94D%dungeon% &8(&7%id%&8) &#B376E5%min% to %max% players, recommended level &f%level%'
 main:
   title: Dungeons
@@ -65,13 +65,12 @@ run:
   preparing: '&#B376E5Preparing &f%dungeon%&#B376E5...'
   save-failed: '&#FF5C5CYour things could not be put aside: entry cancelled, nothing moved.'
   title: '&#FFD94D%dungeon%'
-  subtitle: '&#B376E5%lives% life(s) for the party'
+  subtitle: '&#B376E5If you fall, your gear stays here'
   left: '&#B376E5You left the dungeon, your things are back.'
   no-teleport: '&#FF5C5CYou are in a dungeon: to get out, &f[/%flux_cmd_fluxdungeons_dungeon% leave]'
   time-up: '&#FF5C5CTime is up'
   time-left: '&#FFD94DOnly %time% left!'
-  died: '&#FF5C5C%player% fell. &#B376E5Lives left: &f%lives%'
-  out: '&#FF5C5C%player% has no life left and watches the others.'
+  out: '&#FF5C5C%player% fell and watches the others.'
   wiped: '&#FF5C5CThe whole party fell'
   victory: '&#2ECF7BVictory!'
   victory-sub: '&#B376E5Dungeon cleared in &f%time%'
@@ -88,8 +87,6 @@ level-up: '&#2ECF7BLevel up! &#B376E5%class% &#B376E5reaches level &f%level%&#B3
 ability:
   mana: Mana
   how: '%key%, your weapon stays in hand.'
-  key-up: Key %key% or wheel up
-  key-down: Key %key% or wheel down
   key-key: Key %key%
   no-mana: '&#FF5C5CNot enough mana for %ability%'
   no-target: '&#FF5C5C%ability%&7: no target'
@@ -101,8 +98,6 @@ admin:
   visit-left: '&#B376E5Visit over.'
   visit-in-run: '&#FF5C5CLeave your dungeon first.'
   imported-no-template: '&#FF5C5C%dungeon% is an imported map: no template to edit, each run copies the original map.'
-  reset: '&#2ECF7BDungeon inventory of %player% reset: kits are given again at the next run.'
-  reset-in-run: '&#FF5C5C%player% is in a dungeon, try again after the run.'
   started: '&#2ECF7B%dungeon% started.'
   built: '&#2ECF7BTemplate of %dungeon% built.'
   template: '&#B376E5Template of &f%dungeon%&#B376E5: your changes are used by the next runs. Do not change the size of the rooms.'
@@ -111,7 +106,7 @@ admin:
   unknown-item: '&#FF5C5CUnknown item: %item%'
   given: '&#2ECF7B%item% given to %player%.'
   no-runs: '&#B376E5No run in progress.'
-  run-line: '&#FFD94D%id% &f%dungeon% &7%state% &#B376E5%players% &7(lives: %lives%)'
+  run-line: '&#FFD94D%id% &f%dungeon% &7%state% &#B376E5%players%'
   reloaded: '&#2ECF7BFluxDungeons reloaded.'
 origins:
   victory: Dungeon victory
@@ -124,8 +119,6 @@ objective:
   map: '&#FFD94DGuardians defeated: &f%done%/%total%'
   done: '&#2ECF7BGuardian defeated! &#B376E5Guardians: &f%done%/%total%'
   clear: '&#FFD94DMonsters left: &f%mobs%'
-item:
-  level: '&7Item level: &f%level%'
 edit:
   opening: '&#B376E5Opening &f%dungeon% &#B376E5in edit mode...'
   opened: '&#B376E5Editing &f%dungeon% &#B376E5(&f%spawns% &#B376E5placed monsters): build freely, your tools are in your inventory.'
@@ -199,4 +192,49 @@ create:
   exists: '&#FF5C5CThe dungeon %dungeon% already exists.'
   unknown-world: '&#FF5C5CUnknown world: %world%'
   copying: '&#B376E5Copying the world &f%world%&#B376E5...'
-  created: '&#2ECF7BDungeon %dungeon% created. Set its name, lives and reward in dungeons/%dungeon%.yml.'
+  created: '&#2ECF7BDungeon %dungeon% created. Set its name and reward in dungeons/%dungeon%.yml.'
+lobby:
+  title: 'Getting ready: %dungeon%'
+  leave: Leave
+  leave-desc: Cancels the launch for the whole party.
+  leave-action: Leave
+  players: Players
+  level: Recommended level
+  locked-gear: '%count% gear set(s) lost here, given back to their owners if you win'
+  class: Class
+  class-change: Change class
+  head-ready: '&#2ECF7BReady'
+  head-waiting: '&7Choosing'
+  head-view: See their gear
+  armor-empty: No armour
+  armor-leave: Leave it behind
+  armor-left: Left behind
+  armor-take: Take it
+  pet-empty: Pet slot
+  pet-choose: Choose a pet
+  pet-none: You have no pet yet.
+  pet-remove: Remove
+  pet-level: Level
+  pet-title: Choose a pet
+  pet-taken: '&7Already taken'
+  pet-take: Take
+  back: Back
+  item-empty: Free slot
+  item-how: Click an item of your inventory to take it.
+  item-remove: Remove
+  items-full: '&#FF5C5CYou already take %max% items, remove one first.'
+  ready: Ready
+  not-ready: Not ready
+  ready-desc: '%ready%/%total% players ready. The dungeon starts once everybody is ready. If you die, what you take stays in the dungeon.'
+  ready-action: I am ready
+  unready-action: I am not ready
+  cancelled: '&#FF5C5CLaunch of %dungeon% cancelled by %player%.'
+  expired: '&#FF5C5CLaunch of %dungeon% cancelled.'
+  refused: '&#FF5C5CThe dungeon could not start, launch it again with &f[/%flux_cmd_fluxdungeons_dungeon%]&#FF5C5C.'
+lost:
+  locked: '&#FF5C5CYour gear stayed in &f%dungeon%&#FF5C5C. You get it back as soon as a player wins this dungeon.'
+  released: '&#2ECF7BYou freed the gear of &f%players%&#2ECF7B!'
+  released-owner: '&#2ECF7B%players% won &f%dungeon%&#2ECF7B: your gear waits in &f[/%flux_cmd_flux_rewards%]&#2ECF7B.'
+  reward-label: '&fLost gear (%dungeon%)'
+  overflow-label: '&fThings brought back from the dungeon'
+  overflow: '&#B376E5Your inventory was full: the rest waits in &f[/%flux_cmd_flux_rewards%]&#B376E5.'

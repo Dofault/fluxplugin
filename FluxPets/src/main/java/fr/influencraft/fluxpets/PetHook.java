@@ -68,6 +68,36 @@ public final class PetHook {
         }
     }
 
+    /** Pets seen by the other plugins of the suite through Flux ({@code api.pets.Companions}). */
+    static void provideCompanions() {
+        fr.influencraft.flux.api.pets.Companions.provide(new fr.influencraft.flux.api.pets.Companions.Provider() {
+            public List<fr.influencraft.flux.api.pets.Companions.Companion> owned(Player player) {
+                if (!available()) return List.of();
+                List<Pet> actives = PetData.actives(player);
+                List<fr.influencraft.flux.api.pets.Companions.Companion> out = new java.util.ArrayList<>();
+                for (Pet pet : actives) out.add(companion(player, pet));
+                for (Pet pet : Pets.values()) {
+                    if (!actives.contains(pet) && PetData.has(player, pet)) out.add(companion(player, pet));
+                }
+                return out;
+            }
+
+            public List<String> active(Player player) {
+                return available() ? PetData.actives(player).stream().map(Pet::id).toList() : List.of();
+            }
+
+            public void suppress(java.util.UUID player, boolean hidden) {
+                if (hidden) fr.influencraft.fluxpets.pets.PetDisplay.SUPPRESSED.add(player);
+                else fr.influencraft.fluxpets.pets.PetDisplay.SUPPRESSED.remove(player);
+            }
+        });
+    }
+
+    private static fr.influencraft.flux.api.pets.Companions.Companion companion(Player player, Pet pet) {
+        return new fr.influencraft.flux.api.pets.Companions.Companion(pet.id(), pet.name(),
+                PetItems.named(pet.baseItem(), pet.name(), null), pet.model(), pet.flying(), PetData.level(player, pet));
+    }
+
     /** XP de cartes : montant exact, sans multiplicateur de permission (une carte vaut toujours son XP). */
     public static void giveXp(OfflinePlayer player, String id, double amount) {
         Pet pet = available() ? Pets.get(id) : null;

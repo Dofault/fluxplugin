@@ -1,6 +1,5 @@
 package fr.influencraft.fluxdungeons;
 
-import fr.influencraft.flux.api.items.CustomItems;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -21,16 +20,44 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
- * The two inventories of a player. Outside, his own things; in a dungeon, his dungeon inventory (class kit, gear
- * found in dungeons), kept between runs and never seen outside. Entering saves everything he has on him (inventory,
- * experience, life, hunger, effects, game mode, place) in the database first, then swaps; leaving does the opposite.
- * Dungeon gear therefore never reaches the semi-RP world, and nothing of the semi-RP world enters a dungeon.
+ * What a player takes into a dungeon. Before he enters, everything he has on him (inventory, experience, life,
+ * hunger, effects, game mode, place) is saved in the database; he then carries only what he chose on the launch
+ * screen ({@link Selection}): his armour and six items, with his abilities on the first three hotbar slots.
+ * Leaving gives back the rest, plus what he still carries. Dying makes him lose what he carried ({@link #strip}).
+ * <p>
+ * The saved state also keeps a copy of what he carried when he entered: after a crash the player's own file may be
+ * older or newer than the run, so recovery ignores it and rebuilds everything from the saved state (no duplicate).
  */
 public final class Loadouts {
+
+    /** Hotbar slot of the first chosen item: slots 0 to 2 hold the abilities. */
+    public static final int FIRST_ITEM_SLOT = 3;
+    /** Items a player takes besides his armour. */
+    public static final int ITEMS = 6;
+    /** Inventory indexes of the armour pieces, boots to helmet. */
+    public static final int[] ARMOR = {36, 37, 38, 39};
+
+    /**
+     * What a player chose: {@code items} holds indexes of his inventory (-1 = empty), {@code snapshots} the items seen
+     * there when chosen (a changed item is left behind), {@code armor} which worn pieces he takes, boots to helmet.
+     */
+    public record Selection(int[] items, ItemStack[] snapshots, boolean[] armor, List<String> pets) {
+        public static Selection empty() {
+            return new Selection(filled(ITEMS), new ItemStack[ITEMS], new boolean[]{true, true, true, true}, new ArrayList<>());
+        }
+
+        private static int[] filled(int n) {
+            int[] a = new int[n];
+            java.util.Arrays.fill(a, -1);
+            return a;
+        }
+    }
 
     private final Store store;
     private final Logger log;
     private final java.util.function.Predicate<ItemStack> abilityItem;
+    /** Items that did not fit back into a player's inventory: handed over another way (rewards). */
+    private java.util.function.BiConsumer<Player, List<ItemStack>> overflow = (p, items) -> items.forEach(i -> p.getWorld().dropItem(p.getLocation(), i));
 
     public Loadouts(Store store, Logger log, java.util.function.Predicate<ItemStack> abilityItem) {
         this.store = store;
@@ -38,14 +65,34 @@ public final class Loadouts {
         this.abilityItem = abilityItem;
     }
 
+    public void onOverflow(java.util.function.BiConsumer<Player, List<ItemStack>> overflow) {
+        this.overflow = overflow;
+    }
+
     public boolean hasVault(Player player) {
         return store.vault(player.getUniqueId()) != null;
     }
 
-    /** Saves what the player has, then gives him his dungeon inventory. False (nothing changed) when saving failed. */
-    public boolean enter(Player player) {
+    /** Saves what the player has, then leaves him only what he chose. False (nothing changed) when saving failed. */
+    public boolean enter(Player player, Selection selection) {
+        ItemStack[] contents = player.getInventory().getContents();
+        ItemStack[] carried = new ItemStack[contents.length];
+        for (int k = 0; k < ITEMS && k < selection.items().length; k++) {
+            int index = selection.items()[k];
+            if (index < 0 || index >= 36 || contents[index] == null) continue;
+            ItemStack seen = selection.snapshots()[k];
+            if (seen != null && !(seen.isSimilar(contents[index]) && seen.getAmount() == contents[index].getAmount())) continue;
+            carried[FIRST_ITEM_SLOT + k] = contents[index];
+            contents[index] = null;
+        }
+        for (int a = 0; a < ARMOR.length; a++) {
+            if (!selection.armor()[a] || contents[ARMOR[a]] == null) continue;
+            carried[ARMOR[a]] = contents[ARMOR[a]];
+            contents[ARMOR[a]] = null;
+        }
         YamlConfiguration y = new YamlConfiguration();
-        y.set("items", Store.encode(player.getInventory().getContents()));
+        y.set("items", Store.encode(contents));
+        y.set("carried", Store.encode(carried));
         y.set("level", player.getLevel());
         y.set("exp", (double) player.getExp());
         y.set("total-exp", player.getTotalExperience());
@@ -72,53 +119,98 @@ public final class Loadouts {
 
         player.getInventory().clear();
         for (PotionEffect e : player.getActivePotionEffects()) player.removePotionEffect(e.getType());
-        player.setLevel(0);
-        player.setExp(0);
         player.setFireTicks(0);
         player.setFlying(false);
         player.setAllowFlight(false);
         player.setGameMode(GameMode.ADVENTURE);
-        ItemStack[] dungeon = store.loadout(player.getUniqueId());
-        if (dungeon != null) {
-            ItemStack[] contents = new ItemStack[player.getInventory().getContents().length];
-            System.arraycopy(dungeon, 0, contents, 0, Math.min(dungeon.length, contents.length));
-            player.getInventory().setContents(contents);
-        }
+        player.getInventory().setContents(carried);
+        player.getInventory().setHeldItemSlot(FIRST_ITEM_SLOT);
         return true;
     }
 
     /**
-     * Keeps the dungeon inventory the player has on him (ability items excluded) and gives him back what he had
-     * before. Returns where he stood before entering (null when unknown: the caller sends him to the spawn).
+     * Gives back what the player had before, plus what he still carries (ability items excluded). Returns where he
+     * stood before entering (null when unknown: the caller sends him to the spawn).
      */
     public Location leave(Player player) {
-        saveDungeonInventory(player);
-        return restore(player);
+        ItemStack[] carried = carried(player);
+        Location back = restore(player, null);
+        giveBack(player, carried);
+        return back;
     }
 
-    /** At join: a player who still has a saved state left a dungeon without getting it back (disconnect, crash). */
-    public Location recover(Player player, boolean inDungeonWorld) {
+    /**
+     * The player died: takes everything he carries (returned) and forgets it in the saved state. Items enchanted
+     * with Soulbound (EcoEnchants' {@code soulbound}) stay with him, as anywhere else on the server.
+     */
+    public ItemStack[] strip(Player player) {
+        ItemStack[] carried = carried(player);
+        ItemStack[] kept = new ItemStack[carried.length];
+        for (int i = 0; i < carried.length; i++) {
+            if (soulbound(carried[i])) {
+                kept[i] = carried[i];
+                carried[i] = null;
+            }
+        }
+        player.getInventory().clear();
+        player.getInventory().setContents(kept);
+        String data = store.vault(player.getUniqueId());
+        if (data != null) {
+            YamlConfiguration y = new YamlConfiguration();
+            try {
+                y.loadFromString(data);
+                y.set("carried", Store.encode(new ItemStack[0]));
+                store.saveVault(player.getUniqueId(), y.saveToString());
+            } catch (InvalidConfigurationException e) {
+                log.warning("Saved state of " + player.getName() + " is unreadable: " + e.getMessage());
+            }
+        }
+        return carried;
+    }
+
+    /**
+     * At join: a player who still has a saved state left a dungeon without getting it back (disconnect, crash).
+     * Everything is rebuilt from the saved state: his things, plus what he carried when he entered.
+     */
+    public Location recover(Player player) {
         if (!hasVault(player)) return null;
-        if (inDungeonWorld || carriesDungeonItems(player)) saveDungeonInventory(player);
-        return restore(player);
+        ItemStack[][] carried = new ItemStack[1][];
+        Location back = restore(player, carried);
+        if (carried[0] != null) giveBack(player, carried[0]);
+        return back;
     }
 
-    private void saveDungeonInventory(Player player) {
-        ItemStack[] contents = player.getInventory().getContents();
-        for (int i = 0; i < contents.length; i++) if (abilityItem.test(contents[i])) contents[i] = null;
-        store.loadout(player.getUniqueId(), contents);
-    }
-
-    private boolean carriesDungeonItems(Player player) {
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (abilityItem.test(item)) return true;
-            String id = item == null ? null : CustomItems.id(item);
-            if (id != null && id.startsWith("fluxdungeons:")) return true;
+    private static boolean soulbound(ItemStack item) {
+        if (item == null || !item.hasItemMeta()) return false;
+        for (org.bukkit.enchantments.Enchantment e : item.getEnchantments().keySet()) {
+            if (e.getKey().getKey().equals("soulbound")) return true;
         }
         return false;
     }
 
-    private Location restore(Player player) {
+    /** What the player carries now, ability items left out. */
+    private ItemStack[] carried(Player player) {
+        ItemStack[] contents = player.getInventory().getContents();
+        for (int i = 0; i < contents.length; i++) if (abilityItem.test(contents[i])) contents[i] = null;
+        return contents;
+    }
+
+    /** Puts carried items back: armour on when its slot is free, the rest in the inventory, overflow elsewhere. */
+    private void giveBack(Player player, ItemStack[] carried) {
+        org.bukkit.inventory.PlayerInventory inv = player.getInventory();
+        List<ItemStack> rest = new ArrayList<>();
+        for (int i = 0; i < carried.length; i++) {
+            ItemStack item = carried[i];
+            if (item == null || item.isEmpty() || abilityItem.test(item)) continue;
+            if (i >= 36 && i < 40 && (inv.getItem(i) == null || inv.getItem(i).isEmpty())) inv.setItem(i, item);
+            else rest.add(item);
+        }
+        List<ItemStack> left = new ArrayList<>();
+        for (ItemStack item : rest) left.addAll(inv.addItem(item).values());
+        if (!left.isEmpty()) overflow.accept(player, left);
+    }
+
+    private Location restore(Player player, ItemStack[][] carriedOut) {
         String data = store.vault(player.getUniqueId());
         if (data == null) return null;
         YamlConfiguration y = new YamlConfiguration();
@@ -128,6 +220,7 @@ public final class Loadouts {
             log.severe("Saved state of " + player.getName() + " is unreadable, kept in the database: " + e.getMessage());
             return null;
         }
+        if (carriedOut != null && y.contains("carried")) carriedOut[0] = Store.decode(y.getString("carried", ""));
         player.getInventory().clear();
         ItemStack[] saved = Store.decode(y.getString("items", ""));
         ItemStack[] contents = new ItemStack[player.getInventory().getContents().length];

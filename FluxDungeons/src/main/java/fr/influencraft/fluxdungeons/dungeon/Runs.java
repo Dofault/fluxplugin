@@ -45,9 +45,10 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Every run of every dungeon: starting (copy of the template, players swapped to their dungeon inventory and
- * teleported), rooms (a room wakes up when a player enters it, its gate opens once its waves are dead), deaths
- * (lives shared by the party, then watching), victory (money, class experience, personal loot), defeat, leaving, and
+ * Every run of every dungeon: the launch screen ({@link Lobby}: what each player takes in), starting (copy of the
+ * map, players keep only what they chose, pets come along), rooms (a room wakes up when a player enters it, its gate
+ * opens once its waves are dead), deaths (the player's gear stays locked in the dungeon, he watches), victory
+ * (money, class experience, loot, every gear locked in this dungeon handed back to its owner), defeat, leaving, and
  * the wiping of the copy.
  */
 public final class Runs {
@@ -60,7 +61,10 @@ public final class Runs {
     private final Mobs mobs;
     private final Heroes heroes;
     private final Loadouts loadouts;
+    private final fr.influencraft.fluxdungeons.Store store;
     private final WorldInstances instances;
+    private final Lobby lobby;
+    private final PetFighters pets;
     private final Editor editor;
     private final Map<String, DungeonDefinition> dungeons = new LinkedHashMap<>();
     private final Map<String, Run> runs = new HashMap<>();
@@ -75,12 +79,21 @@ public final class Runs {
     private String origin = "victory";
     private int ticks;
 
-    public Runs(FluxPlugin plugin, Arena arena, Mobs mobs, Heroes heroes, Loadouts loadouts) {
+    public Runs(FluxPlugin plugin, Arena arena, Mobs mobs, Heroes heroes, Loadouts loadouts, fr.influencraft.fluxdungeons.Store store) {
         this.plugin = plugin;
         this.arena = arena;
         this.mobs = mobs;
         this.heroes = heroes;
         this.loadouts = loadouts;
+        this.store = store;
+        this.lobby = new Lobby(plugin, heroes, store::lockedCount);
+        lobby.launcher(this::launch);
+        this.pets = new PetFighters(plugin, mobs);
+        loadouts.onOverflow((p, items) -> {
+            String id = store.addLost(p.getUniqueId(), "overflow", items.toArray(new ItemStack[0]), true);
+            if (id != null) handBack(p.getUniqueId(), id, items.size(), plugin.messages().raw("lost.overflow-label"));
+            plugin.messages().send(p, "lost.overflow");
+        });
         this.instances = new WorldInstances(plugin);
         instances.sweep();
         this.editor = new Editor(plugin, instances, this::dungeon, mobs);
@@ -89,20 +102,8 @@ public final class Runs {
             if (run != null) run.mobs.add(child.getUniqueId());
         });
         mobs.onDeath(this::mobKilled);
-        mobs.runLevel(id -> {
-            Run r = runs.get(id);
-            return r == null ? 0 : r.level;
-        }, id -> {
-            Run r = runs.get(id);
-            return r == null ? 1 : r.partySize;
-        });
         Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 10L, 10L);
     }
-
-    /** Monsters give their loot when killed; off: only the end of the dungeon rewards. */
-    private boolean mobLoot;
-    private final Map<String, Double> classLootChance = new HashMap<>();
-    private double relevantChance = 0.8;
 
     public void settings(org.bukkit.configuration.ConfigurationSection c) {
         maxRuns = Math.max(1, c.getInt("max-runs", 8));
@@ -112,12 +113,22 @@ public final class Runs {
         fallbackMoneyPerMinute = c.getDouble("reward.money-per-minute-without-fluxvalue", 50);
         spawnDistance = Math.max(8, c.getDouble("spawn-distance", 40));
         WorldInstances.viewDistance = Math.max(2, c.getInt("view-distance", 8));
-        mobLoot = c.getBoolean("mob-loot", true);
-        classLootChance.clear();
-        classLootChance.put("TRASH", c.getDouble("class-loot-chance.trash", 0.05));
-        classLootChance.put("MINIBOSS", c.getDouble("class-loot-chance.miniboss", 0.25));
-        classLootChance.put("BOSS", c.getDouble("class-loot-chance.boss", 1.0));
-        relevantChance = c.getDouble("class-loot-relevant-chance", 0.8);
+        lobby.maxPets(c.getInt("pets.max", 5));
+        pets.settings(c.getDouble("pets.health", 40), c.getDouble("pets.attack", 6));
+    }
+
+    public Lobby lobby() {
+        return lobby;
+    }
+
+    /** True for a pet fighting in a run. */
+    public boolean isPet(Entity e) {
+        return pets.isPet(e);
+    }
+
+    /** Owner of a pet fighting in a run, null for anything else. */
+    public UUID petOwner(Entity e) {
+        return pets.owner(e);
     }
 
     public void load(Map<String, DungeonDefinition> definitions) {
@@ -178,7 +189,7 @@ public final class Runs {
         if (players.size() < def.minPlayers()) return Refusal.TOO_FEW;
         if (players.size() > def.maxPlayers()) return Refusal.TOO_MANY;
         for (Player p : players) {
-            if (byPlayer.containsKey(p.getUniqueId())) return Refusal.BUSY_PLAYER;
+            if (byPlayer.containsKey(p.getUniqueId()) || lobby.waiting(p)) return Refusal.BUSY_PLAYER;
             if (heroes.classOf(p.getUniqueId()) == null) return Refusal.NO_CLASS;
         }
         if (def.map() != null ? instances.freeName(maxRuns) == null : freeSlot() < 0) return Refusal.NO_SLOT;
@@ -188,17 +199,33 @@ public final class Runs {
     /** The first player who blocks {@link #check} for a refusal about one player (no class, already playing). */
     public Player blocking(List<Player> players) {
         for (Player p : players) {
-            if (byPlayer.containsKey(p.getUniqueId()) || heroes.classOf(p.getUniqueId()) == null) return p;
+            if (byPlayer.containsKey(p.getUniqueId()) || lobby.waiting(p) || heroes.classOf(p.getUniqueId()) == null) return p;
         }
         return null;
     }
 
+    /** Opens the launch screen for these players (checked before): the run starts once they are all ready. */
+    public void prepare(DungeonDefinition def, List<Player> players) {
+        lobby.open(def, players);
+    }
+
+    /** Everybody is ready on the launch screen: checked again, then started. */
+    private void launch(DungeonDefinition def, List<Player> players, Map<UUID, Loadouts.Selection> selections) {
+        Refusal refusal = check(def, players);
+        if (refusal != Refusal.NONE) {
+            for (Player p : players) plugin.messages().send(p, "lobby.refused");
+            return;
+        }
+        start(def, players, selections);
+    }
+
     /** Starts a run for these players (checked before). The copy is made, then they are taken in. */
-    public Run start(DungeonDefinition def, List<Player> players) {
-        if (def.map() != null) return startMap(def, players);
+    private Run start(DungeonDefinition def, List<Player> players, Map<UUID, Loadouts.Selection> selections) {
+        if (def.map() != null) return startMap(def, players, selections);
         int slot = freeSlot();
         if (slot < 0) return null;
         Run run = new Run(UUID.randomUUID().toString().substring(0, 8), def, slot, arena.slotOrigin(slot));
+        run.selections.putAll(selections);
         runs.put(run.id, run);
         for (Player p : players) {
             run.expected.add(p.getUniqueId());
@@ -212,10 +239,9 @@ public final class Runs {
     }
 
     /** An imported map: its world is copied for this run, its monsters placed, then the players come in. */
-    private Run startMap(DungeonDefinition def, List<Player> players) {
+    private Run startMap(DungeonDefinition def, List<Player> players, Map<UUID, Loadouts.Selection> selections) {
         Run run = new Run(UUID.randomUUID().toString().substring(0, 8), def, -1, null);
-        run.level = partyLevel(players);
-        run.partySize = Math.max(1, players.size());
+        run.selections.putAll(selections);
         runs.put(run.id, run);
         for (Player p : players) {
             run.expected.add(p.getUniqueId());
@@ -348,7 +374,7 @@ public final class Runs {
                 byPlayer.remove(uuid);
                 continue;
             }
-            if (!loadouts.enter(p)) {
+            if (!loadouts.enter(p, run.selections.getOrDefault(uuid, Loadouts.Selection.empty()))) {
                 byPlayer.remove(uuid);
                 plugin.messages().send(p, "run.save-failed");
                 continue;
@@ -356,8 +382,10 @@ public final class Runs {
             run.players.add(uuid);
             heroes.activate(p);
             teleport(p, run.checkpoint);
+            Loadouts.Selection chosen = run.selections.get(uuid);
+            if (chosen != null) pets.spawn(p, chosen.pets(), run.checkpoint);
             p.showTitle(Title.title(Texts.parse(plugin.messages().raw("run.title", "%dungeon%", run.def.name())),
-                    Texts.parse(plugin.messages().raw("run.subtitle", "%lives%", String.valueOf(run.livesLeft))),
+                    Texts.parse(plugin.messages().raw("run.subtitle")),
                     Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(3), Duration.ofMillis(700))));
             p.playSound(p.getLocation(), Sound.BLOCK_IRON_DOOR_CLOSE, 1f, 0.6f);
             // a second later, once the player stands in the dungeon (cinematics start from there)
@@ -366,6 +394,7 @@ public final class Runs {
             }, 20L);
         }
         run.expected.clear();
+        run.selections.clear();
         if (run.players.isEmpty()) cleanup(run);
     }
 
@@ -379,6 +408,7 @@ public final class Runs {
         boolean inside = run.players.remove(player.getUniqueId());
         run.watching.remove(player.getUniqueId());
         if (run.bossBar != null) player.hideBossBar(run.bossBar);
+        pets.despawn(player);
         if (inside) {
             hook(run, "leave", player, null);
             heroes.deactivate(player);
@@ -390,7 +420,9 @@ public final class Runs {
 
     /** Everybody out, nothing given (server stop, staff). */
     public void stopAll() {
+        lobby.closeAll();
         for (Run run : List.copyOf(runs.values())) stop(run);
+        pets.despawnAll();
         editor.closeAll();
         for (UUID u : List.copyOf(visitReturn.keySet())) {
             Player p = Bukkit.getPlayer(u);
@@ -581,6 +613,7 @@ public final class Runs {
                     p.setFallDistance(0);
                 }
                 if (ticks % 2 == 0 && !run.watching.contains(p.getUniqueId())) heroes.tick(p);
+                if (!run.watching.contains(p.getUniqueId())) pets.tick(p, context(p)::enemy);
             }
             if (!run.imported()) rooms(run);
             else {
@@ -787,22 +820,6 @@ public final class Runs {
         run.mobs.remove(mob.getUniqueId());
         List<Player> party = fighters(run);
         if (t != null && t.xp() > 0) for (Player p : party) heroes.giveXp(p, t.xp());
-        if (t != null && mobLoot) {
-            for (Player p : online(run)) {
-                if (!contributors.contains(p.getUniqueId())) continue;
-                for (MobTemplate.Loot loot : rolls(t.extra().loot(), t.extra().rank(), p)) {
-                    ItemStack item = CustomItems.item(loot.item(), p);
-                    if (item == null) continue;
-                    item.setAmount(Math.max(1, loot.amount()));
-                    levelItem(item, run.level, p);
-                    p.getInventory().addItem(item).values().forEach(left -> p.getWorld().dropItem(p.getLocation(), left));
-                    String shown = item.hasItemMeta() && item.getItemMeta().hasDisplayName()
-                            ? Texts.ampersand(item.getItemMeta().displayName()) : "<lang:" + item.translationKey() + ">";
-                    plugin.messages().send(p, "run.loot", "%items%", shown);
-                    p.playSound(p.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.8f, 1.2f);
-                }
-            }
-        }
         if (objective != null && run.objectivesLeft.remove(objective)) {
             for (Player p : online(run)) hook(run, "objective", p, objective);
             broadcast(run, "objective.done", "%done%", String.valueOf(run.objectivesDone()), "%total%", String.valueOf(run.objectivesTotal));
@@ -815,81 +832,75 @@ public final class Runs {
     }
 
     /**
-     * Loot a player receives, as EliteMobs: each plain entry rolled on its own chance; per group (class loot), one
-     * roll on the monster's rank ({@code class-loot-chance}: trash 5 %, miniboss 25 %, boss 100 %), then an item of
-     * his class 80 % of the time, of another class otherwise.
+     * A player died in his run: everything he carried stays locked in this dungeon (handed back to him once someone
+     * wins it), his pets go, he watches the others.
      */
-    private List<MobTemplate.Loot> rolls(List<MobTemplate.Loot> table, String rank, Player p) {
-        List<MobTemplate.Loot> out = new ArrayList<>();
-        Map<String, List<MobTemplate.Loot>> groups = new LinkedHashMap<>();
-        var heroClass = heroes.classOf(p.getUniqueId());
-        String cls = heroClass == null ? "" : heroClass.id();
-        ThreadLocalRandom r = ThreadLocalRandom.current();
-        for (MobTemplate.Loot l : table) {
-            if (l.group() == null) {
-                if (r.nextDouble() < l.chance()) out.add(l);
-            } else {
-                groups.computeIfAbsent(l.group(), k -> new ArrayList<>()).add(l);
-            }
-        }
-        double chance = classLootChance.getOrDefault(rank, classLootChance.getOrDefault("TRASH", 0.05));
-        for (List<MobTemplate.Loot> g : groups.values()) {
-            if (r.nextDouble() >= chance) continue;
-            List<MobTemplate.Loot> mine = g.stream().filter(l -> l.classes().isEmpty() || l.classes().contains(cls)).toList();
-            List<MobTemplate.Loot> other = g.stream().filter(l -> !mine.contains(l)).toList();
-            List<MobTemplate.Loot> pool = mine.isEmpty() ? other : other.isEmpty() || r.nextDouble() < relevantChance ? mine : other;
-            if (!pool.isEmpty()) out.add(pool.get(r.nextInt(pool.size())));
-        }
-        return out;
-    }
-
-    /** Average class level of the players starting a run, at least 1. */
-    private int partyLevel(List<Player> players) {
-        if (players.isEmpty()) return 1;
-        double sum = 0;
-        for (Player p : players) sum += heroes.levelOf(p);
-        return Math.max(1, (int) Math.round(sum / players.size()));
-    }
-
-    /** A dropped weapon or armour piece takes the level of the run (EliteMobs' scalable items). */
-    private void levelItem(ItemStack item, int level, Player p) {
-        if (item.getType().getMaxDurability() <= 0 || level <= 0) return;
-        item.editMeta(m -> m.getPersistentDataContainer().set(fr.influencraft.fluxdungeons.mob.Combat.ITEM_LEVEL,
-                org.bukkit.persistence.PersistentDataType.INTEGER, level));
-        fr.influencraft.fluxdungeons.ItemLevels.line(item);
-    }
-
-    /** A player died in his run: a shared life is spent, or he watches the others. */
     public void died(Player player) {
         Run run = byPlayer.get(player.getUniqueId());
         if (run == null || run.state != Run.State.RUNNING) return;
-        if (run.livesLeft > 0) {
-            run.livesLeft--;
-            broadcast(run, "run.died", "%player%", player.getName(), "%lives%", String.valueOf(run.livesLeft));
-            return;
+        ItemStack[] carried = loadouts.strip(player);
+        String id = store.addLost(player.getUniqueId(), run.def.id(), carried, false);
+        if (id == null && hasAny(carried)) {
+            // could not lock it: never lose a player's things because of a database error
+            player.getInventory().setContents(carried);
         }
+        pets.despawn(player);
         run.watching.add(player.getUniqueId());
         broadcast(run, "run.out", "%player%", player.getName());
+        if (id != null) plugin.messages().send(player, "lost.locked", "%dungeon%", run.def.name());
         if (fighters(run).isEmpty()) Bukkit.getScheduler().runTask(plugin, () -> fail(run, "run.wiped"));
+    }
+
+    private static boolean hasAny(ItemStack[] items) {
+        for (ItemStack i : items) if (i != null && !i.isEmpty()) return true;
+        return false;
+    }
+
+    /** Hands a released gear to its owner through Flux's rewards ({@code /recompenses}). */
+    private void handBack(UUID owner, String id, int stacks, String label) {
+        fr.influencraft.flux.api.reward.Rewards.give(Bukkit.getOfflinePlayer(owner),
+                fr.influencraft.flux.api.reward.Reward.of("dungeons", label).icon("CHEST").slots(stacks)
+                        .key("fluxdungeons_lost:" + id).commands("fluxdungeons claimlost %player% " + id));
+    }
+
+    /** Someone won this dungeon: every gear locked in it goes back to its owner. */
+    private void releaseLost(Run run, List<Player> winners) {
+        List<fr.influencraft.fluxdungeons.Store.Lost> released = store.release(run.def.id());
+        if (released.isEmpty()) return;
+        Set<String> names = new java.util.LinkedHashSet<>();
+        for (fr.influencraft.fluxdungeons.Store.Lost l : released) {
+            handBack(l.owner(), l.id(), l.stacks(), plugin.messages().raw("lost.reward-label", "%dungeon%", run.def.name()));
+            String name = Bukkit.getOfflinePlayer(l.owner()).getName();
+            names.add(name == null ? "?" : name);
+            Player owner = Bukkit.getPlayer(l.owner());
+            if (owner != null && !winners.contains(owner)) {
+                plugin.messages().send(owner, "lost.released-owner", "%dungeon%", run.def.name(),
+                        "%players%", String.join(", ", winners.stream().map(Player::getName).toList()));
+            }
+        }
+        for (Player p : winners) {
+            plugin.messages().send(p, "lost.released", "%count%", String.valueOf(released.size()), "%players%", String.join(", ", names));
+        }
+    }
+
+    /** Gives a released gear (command run by Flux's rewards when the player claims it). */
+    public boolean claimLost(Player p, String id) {
+        ItemStack[] items = store.takeLost(id, p.getUniqueId());
+        if (items == null) return false;
+        for (ItemStack item : items) {
+            if (item == null || item.isEmpty()) continue;
+            p.getInventory().addItem(item).values().forEach(left -> p.getWorld().dropItem(p.getLocation(), left));
+        }
+        return true;
     }
 
     /** Where a player of a run comes back after dying; watching players come back as spectators. */
     public Location respawn(Player player) {
         Run run = byPlayer.get(player.getUniqueId());
         if (run == null) return null;
-        if (run.watching.contains(player.getUniqueId())) {
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                if (player.isOnline()) player.setGameMode(GameMode.SPECTATOR);
-            });
-        } else {
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                Heroes h = heroes;
-                if (player.isOnline() && h.hero(player) != null) {
-                    AttributeInstance max = player.getAttribute(Attribute.MAX_HEALTH);
-                    if (max != null) player.setHealth(max.getValue());
-                }
-            });
-        }
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (player.isOnline() && byPlayer.get(player.getUniqueId()) == run) player.setGameMode(GameMode.SPECTATOR);
+        });
         return run.checkpoint;
     }
 
@@ -942,6 +953,7 @@ public final class Runs {
             plugin.messages().send(p, found.isEmpty() ? "run.loot-none" : "run.loot", "%items%", String.join("&7, ", found));
             plugin.messages().send(p, "run.leaving", "%seconds%", String.valueOf(returnDelay));
         }
+        releaseLost(run, online(run));
         Bukkit.getScheduler().runTaskLater(plugin, () -> stop(run), returnDelay * 20L);
     }
 
@@ -968,7 +980,7 @@ public final class Runs {
 
     /**
      * {@code %fluxdungeons_<params>%}: {@code in} (true/false), {@code dungeon}, {@code objective} (what to do now),
-     * {@code lives}, {@code time} (left), {@code mobs} (left in the room or the map), {@code done}/{@code total}
+     * {@code time} (left), {@code mobs} (left in the room or the map), {@code done}/{@code total}
      * (objectives of a map), {@code boss} (life of the boss in %), {@code class}, {@code level}.
      */
     public String placeholder(Player p, String params) {
@@ -992,7 +1004,6 @@ public final class Runs {
         if (run == null) return "";
         return switch (params.toLowerCase(java.util.Locale.ROOT)) {
             case "dungeon" -> run.def.name();
-            case "lives" -> String.valueOf(run.livesLeft);
             case "time" -> run.secondsLeft() < 0 ? "" : Format.duration(run.secondsLeft());
             case "mobs" -> String.valueOf(run.mobs.size());
             case "done" -> String.valueOf(run.objectivesDone());

@@ -127,7 +127,6 @@ public final class Mobs {
         }
 
         public double baseDamage() {
-            if (template.extra().level() > 0) return 4 * template.extra().damageMultiplier();
             AttributeInstance a = entity.getAttribute(Attribute.ATTACK_DAMAGE);
             return a == null ? template.damage() : a.getValue();
         }
@@ -149,13 +148,7 @@ public final class Mobs {
 
     private final Plugin plugin;
     private final NamespacedKey mobKey, runKey, objectiveKey, spawnKey;
-    /** Class level of a player (normalized combat). */
-    private java.util.function.ToIntFunction<Player> playerLevel = p -> 1;
-    /** Level of a run (0: unknown, the monster keeps its own). */
-    private java.util.function.ToIntFunction<String> runLevel = r -> 0;
-    /** Players of a run when it started: from two, every monster has 75 % more life per player (EliteMobs). */
-    private java.util.function.ToIntFunction<String> runPlayers = r -> 1;
-    /** True while a hit already computed here is dealt: the damage listener must not normalize it again. */
+    /** True while a hit computed here (ability, power) is dealt. */
     private boolean dealing;
     private final Map<String, MobTemplate> templates = new LinkedHashMap<>();
     private final Map<UUID, Alive> alive = new HashMap<>();
@@ -270,11 +263,8 @@ public final class Mobs {
         Class<? extends Entity> type = t.type().getEntityClass();
         if (type == null || !LivingEntity.class.isAssignableFrom(type)) return null;
         MobTemplate.Extra x = t.extra();
-        boolean normalized = x.level() > 0;
-        int level = levelFor(t, run);
-        int players = run == null ? 1 : runPlayers.applyAsInt(run);
-        double health = (normalized ? Combat.health(level, x.healthMultiplier()) : t.health())
-                * (normalized && players >= 2 ? 0.75 * players : 1);
+        // imported monsters (a level): the vanilla creature's numbers times their multipliers; others: absolute numbers
+        boolean imported = x.level() > 0;
         Entity spawned = at.getWorld().spawn(at, type, CreatureSpawnEvent.SpawnReason.CUSTOM, e -> {
             LivingEntity le = (LivingEntity) e;
             le.getPersistentDataContainer().set(mobKey, PersistentDataType.STRING, t.id());
@@ -286,14 +276,14 @@ public final class Mobs {
             le.setRemoveWhenFarAway(false);
             le.setPersistent(true);
             le.setCanPickupItems(false);
+            double health = imported ? vanilla(le, Attribute.MAX_HEALTH, 20) * x.healthMultiplier() : t.health();
             base(le, Attribute.MAX_HEALTH, health);
-            base(le, Attribute.ATTACK_DAMAGE, normalized ? 1 : t.damage());
+            base(le, Attribute.ATTACK_DAMAGE, imported ? vanilla(le, Attribute.ATTACK_DAMAGE, 2) * x.damageMultiplier() : t.damage());
             if (t.speed() > 0) base(le, Attribute.MOVEMENT_SPEED, t.speed());
-            // normalized monsters: their hits and the hits they take are computed by Combat, vanilla armour stays out
-            base(le, Attribute.ARMOR, normalized ? 0 : t.armor());
+            if (!imported) base(le, Attribute.ARMOR, t.armor());
             base(le, Attribute.SCALE, t.scale());
             base(le, Attribute.FOLLOW_RANGE, x.followRange());
-            le.setHealth(Math.min(health, le.getAttribute(Attribute.MAX_HEALTH).getValue()));
+            le.setHealth(le.getAttribute(Attribute.MAX_HEALTH).getValue());
             EntityEquipment eq = le.getEquipment();
             if (eq != null) {
                 eq.clear();
@@ -705,45 +695,39 @@ public final class Mobs {
         return inst == null ? 20 : inst.getValue();
     }
 
-    /** Class level of a player, for normalized combat. */
-    public void playerLevel(java.util.function.ToIntFunction<Player> level) {
-        this.playerLevel = level;
+    /**
+     * Puts a BetterModel model on an entity that is not a dungeon monster (a pet of a player) and hides the entity
+     * under it. Returns what removes the model, null when BetterModel or the model is missing.
+     */
+    public Runnable dress(LivingEntity entity, String model) {
+        if (!models || model == null || model.isBlank()) return null;
+        try {
+            ModelBridge.Handle h = ModelBridge.attach(entity, model);
+            if (h == null) return null;
+            entity.setInvisible(true);
+            return h::close;
+        } catch (LinkageError | RuntimeException e) {
+            plugin.getLogger().warning("Could not put model " + model + " on " + entity.getType() + ": " + e);
+            return null;
+        }
     }
 
-    /** Level of each run, which every monster of the run takes. */
-    public void runLevel(java.util.function.ToIntFunction<String> level, java.util.function.ToIntFunction<String> players) {
-        this.runLevel = level;
-        this.runPlayers = players;
+    /** Default value of an attribute for this kind of creature (what vanilla gives it). */
+    private static double vanilla(LivingEntity le, Attribute attribute, double fallback) {
+        AttributeInstance inst = le.getAttribute(attribute);
+        return inst == null ? fallback : inst.getDefaultValue();
     }
 
-    private int levelFor(MobTemplate t, String run) {
-        if (t.extra().level() <= 0) return 0;
-        int l = run == null ? 0 : runLevel.applyAsInt(run);
-        return l > 0 ? l : t.extra().level();
-    }
-
-    /** A dungeon monster's normal hit on this player (Combat, EliteMobs' model), or its attack when absolute. */
-    public double hitOn(LivingEntity mob, Player target, Combat.DamageType type) {
-        Alive a = alive.get(mob.getUniqueId());
-        return a == null ? 1 : hitOn(a, target, type);
-    }
-
+    /** A dungeon monster's normal hit (its attack damage, vanilla armour of the target applies). */
     private double hitOn(ScriptHost host, Player target) {
-        return hitOn(host, target, Combat.DamageType.MELEE);
-    }
-
-    private double hitOn(ScriptHost host, Player target, Combat.DamageType type) {
         Alive a = host instanceof Alive al ? al : alive.get(host.entity().getUniqueId());
-        if (a == null) return host.baseDamage();
-        int level = levelFor(a.template, a.run);
-        if (level <= 0) return a.baseDamage();
-        return Combat.hitOnPlayer(target, a.entity, level, playerLevel.applyAsInt(target), a.template.extra().damageMultiplier(), type);
+        return a == null ? host.baseDamage() : a.baseDamage();
     }
 
-    /** Level of a dungeon monster, 0 when its numbers are absolute. */
+    /** Level of a dungeon monster (its template's, shown to players; 0 when it has none). */
     public int level(LivingEntity mob) {
         Alive a = alive.get(mob.getUniqueId());
-        return a == null ? 0 : levelFor(a.template, a.run);
+        return a == null ? 0 : Math.max(0, a.template.extra().level());
     }
 
     /** Players who dealt at least a tenth of the monster's life (they share its loot). */

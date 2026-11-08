@@ -165,6 +165,7 @@ public final class FluxPets extends JavaPlugin implements TabCompleter {
         } catch (Throwable t) {
             getLogger().warning("Coded pet effects unavailable: " + t);
         }
+        PetHook.provideCompanions();
         return true;
     }
 
@@ -210,6 +211,7 @@ public final class FluxPets extends JavaPlugin implements TabCompleter {
         if (petEffects != null) {
             petEffects.shutdown();
         }
+        fr.influencraft.flux.api.pets.Companions.provide(null);
         Pets.disable();
     }
 

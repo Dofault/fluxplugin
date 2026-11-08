@@ -1,5 +1,5 @@
 # FluxDungeons: instanced dungeons played in parties.
-# Classes: classes.yml, monsters: mobs.yml, dungeon gear: items.yml, dungeons: dungeons/<id>.yml.
+# Classes: classes.yml, monsters: mobs.yml, dungeons: dungeons/<id>.yml. Players fight with their own gear (vanilla combat).
 
 # Language of the texts (lang/<language>.yml), empty = the suite's language.
 language: ""
@@ -39,26 +39,9 @@ reward:
 spawn-distance: 40
 # View and simulation distance of dungeon worlds, in chunks (the server's would load the whole map).
 view-distance: 8
-# Monster loot, as EliteMobs: only players who dealt at least 10 % of a monster's life get it.
-# Unique items: each rolled on its own chance (mobs/ files). Class loot: one roll on the monster's rank, then an item of
-# the player's class 80 % of the time. Dropped weapons and armour take the level of the run.
-mob-loot: true
-class-loot-chance:
-  trash: 0.05
-  miniboss: 0.25
-  boss: 1.0
-class-loot-relevant-chance: 0.8
-
-# Dungeon combat, EliteMobs' model (mob/Combat.java): the run's level is the party's average class level; 3 hits kill a
-# normal monster with a weapon of that level, 5 of its hits kill a player wearing armour of that level; vanilla weapon
-# damage and armour are replaced.
-combat:
-  # Global multipliers (EliteMobs: 1).
-  damage-to-player-multiplier: 1
-  damage-to-monster-multiplier: 1
-  # Reduction of hits blocked with a shield (arrows are stopped).
-  shield-reduction: 0.8
-  # Ability powers of classes.yml count in hits of this value (6 = an iron sword).
-  ability-reference-hit: 6
-  # After a monster hit, others are ignored for this long (10 = vanilla invulnerability, 0.5 s).
-  player-grace-ticks: 10
+# Pets taken into a dungeon (chosen on the launch screen): how many at most, and their life and attack, the same for
+# every pet for now.
+pets:
+  max: 5
+  health: 40
+  attack: 6

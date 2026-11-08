@@ -7,7 +7,7 @@ not-in-run: '&#FF5C5CTu n''es pas dans un donjon.'
 dungeon-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_dungeon% [jouer <donjon> | quitter | classe [classe] | liste]'
 party-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_party% [inviter | accepter | quitter | expulser | chef] [joueur]'
 admin-usage: '!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% create <id> [monde] | voir [donjon] | edit <donjon> | build <donjon|all> | template <donjon> | start <donjon> <joueur> | stop <joueur|all> |
-  give <joueur> <objet> [n] | reset <joueur> | runs | reload'
+  give <joueur> <objet> [n] | runs | reload'
 list-line: '&#FFD94D%dungeon% &8(&7%id%&8) &#B376E5%min% à %max% joueurs, niveau conseillé &f%level%'
 main:
   title: Donjons
@@ -65,13 +65,12 @@ run:
   preparing: '&#B376E5Préparation de &f%dungeon%&#B376E5...'
   save-failed: '&#FF5C5CTes affaires n''ont pas pu être mises de côté : entrée annulée, rien n''a bougé.'
   title: '&#FFD94D%dungeon%'
-  subtitle: '&#B376E5%lives% vie(s) pour le groupe'
+  subtitle: '&#B376E5Si tu tombes, ton équipement reste ici'
   left: '&#B376E5Tu as quitté le donjon, tes affaires te sont rendues.'
   no-teleport: '&#FF5C5CTu es dans un donjon : pour sortir, &f[/%flux_cmd_fluxdungeons_dungeon% quitter]'
   time-up: '&#FF5C5CTemps écoulé'
   time-left: '&#FFD94DPlus que %time% !'
-  died: '&#FF5C5C%player% est tombé. &#B376E5Vies restantes : &f%lives%'
-  out: '&#FF5C5C%player% n''a plus de vie et regarde ses alliés.'
+  out: '&#FF5C5C%player% est tombé et regarde ses alliés.'
   wiped: '&#FF5C5CTout le groupe est tombé'
   victory: '&#2ECF7BVictoire !'
   victory-sub: '&#B376E5Donjon terminé en &f%time%'
@@ -88,8 +87,6 @@ level-up: '&#2ECF7BNiveau supérieur ! &#B376E5%class% &#B376E5passe niveau &f%l
 ability:
   mana: Mana
   how: '%key%, ton arme reste en main.'
-  key-up: Touche %key% ou molette vers le haut
-  key-down: Touche %key% ou molette vers le bas
   key-key: Touche %key%
   no-mana: '&#FF5C5CPas assez de mana pour %ability%'
   no-target: '&#FF5C5C%ability% &7: aucune cible'
@@ -101,8 +98,6 @@ admin:
   visit-left: '&#B376E5Fin de la visite.'
   visit-in-run: '&#FF5C5CQuitte d''abord ton donjon.'
   imported-no-template: '&#FF5C5C%dungeon% est une map importée : pas de modèle à retoucher, chaque partie copie la map d''origine.'
-  reset: '&#2ECF7BInventaire de donjon de %player% remis à zéro : les kits seront redonnés à la prochaine partie.'
-  reset-in-run: '&#FF5C5C%player% est dans un donjon, réessaie après sa partie.'
   started: '&#2ECF7B%dungeon% lancé.'
   built: '&#2ECF7BModèle de %dungeon% construit.'
   template: '&#B376E5Modèle de &f%dungeon%&#B376E5 : tes retouches serviront aux prochaines parties. Ne change pas la taille des salles.'
@@ -111,7 +106,7 @@ admin:
   unknown-item: '&#FF5C5CObjet inconnu : %item%'
   given: '&#2ECF7B%item% donné à %player%.'
   no-runs: '&#B376E5Aucune partie en cours.'
-  run-line: '&#FFD94D%id% &f%dungeon% &7%state% &#B376E5%players% &7(vies : %lives%)'
+  run-line: '&#FFD94D%id% &f%dungeon% &7%state% &#B376E5%players%'
   reloaded: '&#2ECF7BFluxDungeons rechargé.'
 origins:
   victory: Victoire en donjon
@@ -124,8 +119,6 @@ objective:
   map: '&#FFD94DGardiens vaincus : &f%done%/%total%'
   done: '&#2ECF7BGardien vaincu ! &#B376E5Gardiens : &f%done%/%total%'
   clear: '&#FFD94DMonstres restants : &f%mobs%'
-item:
-  level: '&7Niveau d''objet : &f%level%'
 edit:
   opening: '&#B376E5Ouverture de &f%dungeon% &#B376E5en mode édition...'
   opened: '&#B376E5Édition de &f%dungeon% &#B376E5(&f%spawns% &#B376E5monstres posés) : construis librement, tes outils sont dans l''inventaire.'
@@ -200,3 +193,48 @@ create:
   unknown-world: '&#FF5C5CMonde inconnu : %world%'
   copying: '&#B376E5Copie du monde &f%world%&#B376E5...'
   created: '&#2ECF7BDonjon %dungeon% créé. Règle son nom, ses vies et sa récompense dans dungeons/%dungeon%.yml.'
+lobby:
+  title: 'Préparation : %dungeon%'
+  leave: Quitter
+  leave-desc: Annule le lancement pour tout le groupe.
+  leave-action: Quitter
+  players: Joueurs
+  level: Niveau conseillé
+  locked-gear: '%count% équipement(s) perdu(s) ici, rendus à leurs propriétaires si vous gagnez'
+  class: Classe
+  class-change: Changer de classe
+  head-ready: '&#2ECF7BPrêt'
+  head-waiting: '&7En train de choisir'
+  head-view: Voir son équipement
+  armor-empty: Aucune armure
+  armor-leave: Ne pas l'emporter
+  armor-left: Pas emportée
+  armor-take: L'emporter
+  pet-empty: Emplacement de familier
+  pet-choose: Choisir un familier
+  pet-none: Tu n'as pas encore de familier.
+  pet-remove: Retirer
+  pet-level: Niveau
+  pet-title: Choisis un familier
+  pet-taken: '&7Déjà emmené'
+  pet-take: Emmener
+  back: Retour
+  item-empty: Emplacement libre
+  item-how: Clique sur un objet de ton inventaire pour l'emporter.
+  item-remove: Retirer
+  items-full: '&#FF5C5CTu emportes déjà %max% objets, retires-en un d''abord.'
+  ready: Prêt
+  not-ready: Pas prêt
+  ready-desc: '%ready%/%total% joueurs prêts. Le donjon démarre quand tout le monde est prêt. Si tu meurs, ce que tu emportes reste dans le donjon.'
+  ready-action: Je suis prêt
+  unready-action: Je ne suis plus prêt
+  cancelled: '&#FF5C5CLancement de %dungeon% annulé par %player%.'
+  expired: '&#FF5C5CLancement de %dungeon% annulé.'
+  refused: '&#FF5C5CLe donjon n''a pas pu démarrer, relance-le avec &f[/%flux_cmd_fluxdungeons_dungeon%]&#FF5C5C.'
+lost:
+  locked: '&#FF5C5CTon équipement est resté dans &f%dungeon%&#FF5C5C. Il te sera rendu dès qu''un joueur aura gagné ce donjon.'
+  released: '&#2ECF7BTu as libéré l''équipement de &f%players%&#2ECF7B !'
+  released-owner: '&#2ECF7B%players% a gagné &f%dungeon%&#2ECF7B : ton équipement t''attend dans &f[/%flux_cmd_flux_rewards%]&#2ECF7B.'
+  reward-label: '&fÉquipement perdu (%dungeon%)'
+  overflow-label: '&fAffaires rapportées du donjon'
+  overflow: '&#B376E5Ton inventaire était plein : le reste t''attend dans &f[/%flux_cmd_flux_rewards%]&#B376E5.'

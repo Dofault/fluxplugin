@@ -38,17 +38,14 @@ import java.util.Map;
  *   powers: [attack_blinding, invulnerability_fire]   # built-in powers, see Powers
  *   phases: [{mob: foundry_golem_p2, below: 0.5}]     # becomes another monster below this share of its life
  *   mount: forge_horse
- *   loot: [{item: fluxdungeons:foundry_blade, chance: 0.2}]   # rolled for each player when it dies
  *   messages: {death: [...], hit: [...], hurt: [...]}
  *   blocks: {spawn: ["-2,0,3/minecraft:iron_bars"], remove: [...]}   # relative to its spawn point
  *   scripts: { ... }               # EliteScript format, see ScriptEngine
  * </pre>
  *
- * <b>Normalized combat</b> (imported dungeons, {@code level} above 0): life and damage are not absolute but counted in
- * hits, as in EliteMobs. {@code health-multiplier} 1 = dies in {@code combat.hits-to-kill-mob} reference hits,
- * {@code damage-multiplier} 1 = a player of the same level dies in {@code combat.hits-to-kill-player} hits; the level
- * gap between the monster and the player's class doubles or halves both every {@code combat.levels-per-double}
- * levels (see {@link Combat}).
+ * <b>Imported monsters</b> ({@code level} above 0): life and attack are the vanilla creature's, times
+ * {@code health-multiplier} and {@code damage-multiplier}; the level is only shown for now. Players fight with their
+ * own gear, so vanilla armour, enchantments and libreforge effects apply as anywhere else.
  */
 public record MobTemplate(String id, EntityType type, String name, boolean boss, String model, double health,
                           double damage, double speed, double armor, double scale, double xp,

@@ -30,19 +30,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Classes of the server and the heroes playing them. A player picks a class outside dungeons ({@link #choose}); when
- * he enters a dungeon he becomes a {@link Hero} ({@link #activate}): his class stats are added to his own and his
- * experience bar shows his mana. Hotbar: abilities on keys 1, 2 and 3, the weapon in the middle (key 5), and the
- * slots on each side of it repeat abilities 1 and 2, so the wheel casts them too (up: ability 1, down: ability 2).
- * Selecting an ability slot casts it and keeps the weapon in hand ({@link #castSlot}).
+ * he enters a dungeon he becomes a {@link Hero} ({@link #activate}): his class stats are added to his own and the
+ * action bar shows his mana. Hotbar: abilities on keys 1, 2 and 3, then the six items he chose on the launch screen.
+ * Selecting an ability slot casts it and keeps the item in hand ({@link #castSlot}).
  */
 public final class Heroes {
 
-    /** Hotbar slot of the weapon (key 5). */
-    public static final int WEAPON_SLOT = 4;
     /** Hotbar slots of abilities 1, 2 and 3 (keys 1, 2, 3). */
     private static final int[] ABILITY_SLOTS = {0, 1, 2};
-    /** Slots on each side of the weapon, reached with the wheel: a copy of abilities 1 (up) and 2 (down). */
-    private static final int[] WHEEL_SLOTS = {3, 5};
     /** Shortest time between two casts (a wheel turn fires several slot changes), never shown. */
     private static final long CAST_GAP_MS = 250;
     private final java.util.Map<java.util.UUID, Long> lastCast = new java.util.HashMap<>();
@@ -134,8 +129,8 @@ public final class Heroes {
     // ---------------------------------------------------------------- entering / leaving a dungeon
 
     /**
-     * The player becomes a hero of his class: stats added, ability items placed, full life and mana. Gives the class
-     * kit the first time he plays it ({@code kitGiven}). Returns null when he has no class.
+     * The player becomes a hero of his class: stats added, ability items placed, full life and mana. Returns null
+     * when he has no class.
      */
     public Hero activate(Player player) {
         HeroClass heroClass = classOf(player.getUniqueId());
@@ -144,19 +139,6 @@ public final class Heroes {
         if (row == null) row = new Store.HeroRow(1, 0, false);
         Hero hero = new Hero(player.getUniqueId(), heroClass, row.level(), row.xp());
         active.put(player.getUniqueId(), hero);
-        if (!row.kitGiven()) {
-            for (String id : heroClass.kit()) {
-                ItemStack item = fr.influencraft.flux.api.items.CustomItems.item(id, player);
-                if (item == null) {
-                    plugin.getLogger().warning("Unknown kit item " + id + " of class " + heroClass.id());
-                    continue;
-                }
-                if (!equip(player, item)) {
-                    player.getInventory().addItem(item).values().forEach(left -> player.getWorld().dropItem(player.getLocation(), left));
-                }
-            }
-            store.hero(player.getUniqueId(), heroClass.id(), new Store.HeroRow(row.level(), row.xp(), true));
-        }
         applyStats(player, hero);
         placeAbilityItems(player, hero);
         AttributeInstance max = player.getAttribute(Attribute.MAX_HEALTH);
@@ -167,22 +149,15 @@ public final class Heroes {
         return hero;
     }
 
-    /** Puts a piece of armour on when its slot is free; false when the item is not armour or the slot is taken. */
-    private static boolean equip(Player player, ItemStack item) {
-        org.bukkit.inventory.EquipmentSlot slot = item.getType().getEquipmentSlot();
-        PlayerInventory inv = player.getInventory();
-        ItemStack worn = switch (slot) {
-            case HEAD -> inv.getHelmet();
-            case CHEST -> inv.getChestplate();
-            case LEGS -> inv.getLeggings();
-            case FEET -> inv.getBoots();
-            default -> null;
-        };
-        if (slot != org.bukkit.inventory.EquipmentSlot.HEAD && slot != org.bukkit.inventory.EquipmentSlot.CHEST
-                && slot != org.bukkit.inventory.EquipmentSlot.LEGS && slot != org.bukkit.inventory.EquipmentSlot.FEET) return false;
-        if (worn != null && !worn.isEmpty()) return false;
-        inv.setItem(slot, item);
-        return true;
+    /** Icons of the class abilities, in hotbar order (launch screen). */
+    public List<ItemStack> abilityIcons(Player viewer, HeroClass heroClass) {
+        List<ItemStack> out = new ArrayList<>();
+        for (int i = 0; i < heroClass.abilities().size() && i < ABILITY_SLOTS.length; i++) {
+            ItemStack icon = abilityItem(viewer, heroClass.abilities().get(i), i);
+            icon.editMeta(m -> m.getPersistentDataContainer().remove(abilityKey));
+            out.add(icon);
+        }
+        return out;
     }
 
     /** Back to a plain player: stats removed, ability items removed from the inventory. */
@@ -240,27 +215,15 @@ public final class Heroes {
 
     // ---------------------------------------------------------------- abilities
 
+    /** Abilities on the first hotbar slots (the launch screen keeps them free: whatever is there is moved away). */
     private void placeAbilityItems(Player player, Hero hero) {
         PlayerInventory inv = player.getInventory();
         removeAbilityItems(inv);
         List<AbilitySpec> specs = hero.heroClass().abilities();
-        List<Integer> reserved = new ArrayList<>();
-        for (int i = 0; i < specs.size() && i < ABILITY_SLOTS.length; i++) reserved.add(ABILITY_SLOTS[i]);
-        for (int i = 0; i < specs.size() && i < WHEEL_SLOTS.length; i++) reserved.add(WHEEL_SLOTS[i]);
-        // free the reserved slots (their items go elsewhere), keep the weapon slot for a weapon
-        for (int slot : reserved) moveAway(player, slot);
-        if (!weapon(inv.getItem(WEAPON_SLOT))) {
-            for (int i = 0; i < 36; i++) {
-                if (i == WEAPON_SLOT || reserved.contains(i) || !weapon(inv.getItem(i))) continue;
-                ItemStack there = inv.getItem(WEAPON_SLOT);
-                inv.setItem(WEAPON_SLOT, inv.getItem(i));
-                inv.setItem(i, there);
-                break;
-            }
+        for (int i = 0; i < specs.size() && i < ABILITY_SLOTS.length; i++) {
+            moveAway(player, ABILITY_SLOTS[i]);
+            inv.setItem(ABILITY_SLOTS[i], abilityItem(player, specs.get(i), i));
         }
-        for (int i = 0; i < specs.size() && i < ABILITY_SLOTS.length; i++) inv.setItem(ABILITY_SLOTS[i], abilityItem(player, specs.get(i), i));
-        for (int i = 0; i < specs.size() && i < WHEEL_SLOTS.length; i++) inv.setItem(WHEEL_SLOTS[i], abilityItem(player, specs.get(i), i));
-        inv.setHeldItemSlot(WEAPON_SLOT);
     }
 
     private static void moveAway(Player player, int slot) {
@@ -277,19 +240,9 @@ public final class Heroes {
         inv.addItem(there).values().forEach(left -> player.getWorld().dropItem(player.getLocation(), left));
     }
 
-    /** Something to fight with: a weapon, a staff, a tool held as a weapon (not armour, not arrows). */
-    private static boolean weapon(ItemStack item) {
-        if (item == null || item.isEmpty()) return false;
-        String n = item.getType().name();
-        return n.endsWith("_SWORD") || n.endsWith("_AXE") || n.endsWith("_SHOVEL") || n.endsWith("_HOE") || n.endsWith("_SPEAR")
-                || n.equals("BOW") || n.equals("CROSSBOW") || n.equals("TRIDENT") || n.equals("MACE") || n.equals("BLAZE_ROD")
-                || n.equals("STICK") || n.equals("BREEZE_ROD");
-    }
-
     /** How to use an ability, for its description ({@code ability.key-*}). */
     private String keyLabel(int index) {
-        String kind = index == 0 ? "up" : index == 1 ? "down" : "key";
-        return plugin.messages().raw("ability.key-" + kind, "%key%", String.valueOf(ABILITY_SLOTS[index] + 1));
+        return plugin.messages().raw("ability.key-key", "%key%", String.valueOf(ABILITY_SLOTS[index] + 1));
     }
 
     private ItemStack abilityItem(Player viewer, AbilitySpec spec, int index) {

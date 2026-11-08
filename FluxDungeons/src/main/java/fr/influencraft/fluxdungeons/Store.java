@@ -21,7 +21,8 @@ import java.util.logging.Logger;
  *   <li>{@code flux_dungeons_players}: the class each player plays.</li>
  *   <li>{@code flux_dungeons_heroes}: level and experience of a player in each class he tried, and whether its
  *   starting kit was handed out.</li>
- *   <li>{@code flux_dungeons_loadouts}: the dungeon inventory of each player, kept between runs, never seen outside.</li>
+ *   <li>{@code flux_dungeons_lost}: gear lost by players who died in a dungeon. Locked until someone wins that
+ *   dungeon, then handed back through Flux's rewards ({@code fluxdungeons claimlost}), deleted once claimed.</li>
  *   <li>{@code flux_dungeons_vault}: what a player had on him before entering a dungeon (inventory, experience,
  *   health, place...). Written before he enters, deleted once he got it back: a player who disconnects, or a server
  *   that crashes, during a run gets his things back on his next join.</li>
@@ -34,7 +35,11 @@ public final class Store {
     }
 
     private final Logger log;
-    private String players, heroes, loadouts, vault;
+    /** Gear lost in a dungeon. */
+    public record Lost(String id, UUID owner, String dungeon, int stacks) {
+    }
+
+    private String players, heroes, vault, lost;
 
     public Store(Logger log) {
         this.log = log;
@@ -43,16 +48,18 @@ public final class Store {
     public void open() {
         players = Database.table("flux_dungeons_players");
         heroes = Database.table("flux_dungeons_heroes");
-        loadouts = Database.table("flux_dungeons_loadouts");
         vault = Database.table("flux_dungeons_vault");
+        lost = Database.table("flux_dungeons_lost");
         String key = Database.dialect().key(36);
         String text = Database.dialect().longText();
         try (Connection c = Database.connection(); Statement st = c.createStatement()) {
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + players + " (uuid " + key + " PRIMARY KEY, hero_class VARCHAR(32) NOT NULL)");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + heroes + " (uuid " + key + " NOT NULL, hero_class " + Database.dialect().key(32)
                     + " NOT NULL, level INT NOT NULL, xp DOUBLE NOT NULL, kit INT NOT NULL, PRIMARY KEY (uuid, hero_class))");
-            st.executeUpdate("CREATE TABLE IF NOT EXISTS " + loadouts + " (uuid " + key + " PRIMARY KEY, items " + text + " NOT NULL)");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + vault + " (uuid " + key + " PRIMARY KEY, data " + text + " NOT NULL)");
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS " + lost + " (id " + key + " PRIMARY KEY, uuid " + Database.dialect().key(36)
+                    + " NOT NULL, dungeon VARCHAR(64) NOT NULL, items " + text + " NOT NULL, stacks INT NOT NULL, created BIGINT NOT NULL,"
+                    + " released INT NOT NULL)");
         } catch (SQLException e) {
             log.severe("Could not create the FluxDungeons tables: " + e.getMessage());
         }
@@ -114,31 +121,6 @@ public final class Store {
         }
     }
 
-    /** Fresh start (staff): dungeon inventory deleted, every class kit given again at the next run. Levels are kept. */
-    public void reset(UUID uuid) {
-        try (Connection c = Database.connection();
-             PreparedStatement a = c.prepareStatement("DELETE FROM " + loadouts + " WHERE uuid = ?");
-             PreparedStatement b = c.prepareStatement("UPDATE " + heroes + " SET kit = 0 WHERE uuid = ?")) {
-            a.setString(1, uuid.toString());
-            a.executeUpdate();
-            b.setString(1, uuid.toString());
-            b.executeUpdate();
-        } catch (SQLException e) {
-            log.warning("Could not reset the dungeon inventory of " + uuid + ": " + e.getMessage());
-        }
-    }
-
-    // ---------------------------------------------------------------- dungeon inventory
-
-    public ItemStack[] loadout(UUID uuid) {
-        String data = readText(loadouts, "items", uuid);
-        return data == null ? null : decode(data);
-    }
-
-    public void loadout(UUID uuid, ItemStack[] items) {
-        writeText(loadouts, "items", uuid, encode(items));
-    }
-
     // ---------------------------------------------------------------- vault (state before entering)
 
     public String vault(UUID uuid) {
@@ -156,6 +138,89 @@ public final class Store {
             ps.executeUpdate();
         } catch (SQLException e) {
             log.warning("Could not delete the saved state of " + uuid + ": " + e.getMessage());
+        }
+    }
+
+    // ---------------------------------------------------------------- gear lost in dungeons
+
+    /** Locks gear lost in a dungeon; returns its id, null when it could not be written (logged). */
+    public String addLost(UUID owner, String dungeon, ItemStack[] items, boolean released) {
+        int stacks = 0;
+        for (ItemStack i : items) if (i != null && !i.isEmpty()) stacks++;
+        if (stacks == 0) return null;
+        String id = UUID.randomUUID().toString();
+        try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement("INSERT INTO " + lost
+                + " (id, uuid, dungeon, items, stacks, created, released) VALUES (?, ?, ?, ?, ?, ?, ?)")) {
+            ps.setString(1, id);
+            ps.setString(2, owner.toString());
+            ps.setString(3, dungeon);
+            ps.setString(4, encode(items));
+            ps.setInt(5, stacks);
+            ps.setLong(6, System.currentTimeMillis());
+            ps.setInt(7, released ? 1 : 0);
+            ps.executeUpdate();
+            return id;
+        } catch (SQLException e) {
+            log.severe("Could not keep the gear lost by " + owner + " in " + dungeon + ": " + e.getMessage());
+            return null;
+        }
+    }
+
+    /** Releases every locked gear of a dungeon (someone won it) and returns what was released. */
+    public List<Lost> release(String dungeon) {
+        List<Lost> out = new java.util.ArrayList<>();
+        try (Connection c = Database.connection()) {
+            try (PreparedStatement ps = c.prepareStatement("SELECT id, uuid, stacks FROM " + lost + " WHERE dungeon = ? AND released = 0")) {
+                ps.setString(1, dungeon);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) out.add(new Lost(rs.getString(1), UUID.fromString(rs.getString(2)), dungeon, rs.getInt(3)));
+                }
+            }
+            try (PreparedStatement ps = c.prepareStatement("UPDATE " + lost + " SET released = 1 WHERE id = ?")) {
+                for (Lost l : out) {
+                    ps.setString(1, l.id());
+                    ps.executeUpdate();
+                }
+            }
+        } catch (SQLException e) {
+            log.warning("Could not release the gear lost in " + dungeon + ": " + e.getMessage());
+        }
+        return out;
+    }
+
+    /** Number of locked gears waiting in a dungeon. */
+    public int lockedCount(String dungeon) {
+        try (Connection c = Database.connection();
+             PreparedStatement ps = c.prepareStatement("SELECT COUNT(*) FROM " + lost + " WHERE dungeon = ? AND released = 0")) {
+            ps.setString(1, dungeon);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        } catch (SQLException e) {
+            return 0;
+        }
+    }
+
+    /** Takes a released gear out (claimed): its items, null when it does not exist, is still locked or is not his. */
+    public ItemStack[] takeLost(String id, UUID owner) {
+        try (Connection c = Database.connection()) {
+            String data;
+            try (PreparedStatement ps = c.prepareStatement("SELECT items FROM " + lost + " WHERE id = ? AND uuid = ? AND released = 1")) {
+                ps.setString(1, id);
+                ps.setString(2, owner.toString());
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) return null;
+                    data = rs.getString(1);
+                }
+            }
+            try (PreparedStatement ps = c.prepareStatement("DELETE FROM " + lost + " WHERE id = ?")) {
+                ps.setString(1, id);
+                if (ps.executeUpdate() == 0) return null;
+            }
+            return decode(data);
+        } catch (SQLException e) {
+            log.warning("Could not take the lost gear " + id + ": " + e.getMessage());
+            return null;
         }
     }
 

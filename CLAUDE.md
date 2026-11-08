@@ -100,9 +100,11 @@ The plugins are written **as English plugins, then adapted to French** for our s
   market of FluxCommerce (`/influmarche depuis <back command> <source> [search]`), not by FluxLands.
 - FluxValue owns the weights of everything farmable (`sources.yml`) and the coefficients (`economy.yml`); `JobsWriter` is the only code that knows EcoJobs' files and `CollectionsWriter` the only one for EcoCollections' tiers. FluxOffering computes its quantities from `offerings.yml` (`OfferingBudget`), FluxShop its prices (`PriceManager`).
 - FluxDungeons owns dungeons, classes and parties (`fluxdungeons.api.Dungeons`: `playing(player)`, `dungeonWorld(world)`):
-  a player in a run carries his **dungeon inventory**, his own things wait in `flux_dungeons_vault` (written before he
-  enters, deleted once given back, also at join after a crash). Never give, take or check items of a player in a run
-  from another plugin; stay out of runs with `Dungeons.playing`. Parties (`party.Parties`) know nothing of dungeons, to
+  a player in a run carries only what he chose on the launch screen (armour, six items), the rest of his things wait
+  in `flux_dungeons_vault` (written before he enters, deleted once given back, also at join after a crash). Gear of a
+  player who died stays locked in `flux_dungeons_lost` until someone wins that dungeon. Never give, take or check items
+  of a player in a run from another plugin; stay out of runs with `Dungeons.playing`. Pets come in through Flux's
+  `pets.Companions` (provided by FluxPets), never through FluxPets itself. Parties (`party.Parties`) know nothing of dungeons, to
   move into Flux the day another plugin needs groups. BetterModel is only touched by `mob.ModelBridge`.
 - FluxArmor owns armour sets (`sets/<id>.yml`, pieces `fluxarmor:<set>_<piece>`, replaces EcoArmor) and their 3D look.
 - FluxCrate owns crates and keys (`fluxcrate.api.Crates`, used by the migration of EcoCrates); give keys with
