@@ -39,9 +39,19 @@ reward:
 spawn-distance: 40
 # View and simulation distance of dungeon worlds, in chunks (the server's would load the whole map).
 view-distance: 8
-# Pets taken into a dungeon (chosen on the launch screen): how many at most, and their life and attack, the same for
-# every pet for now.
+# Pets taken into a dungeon (chosen on the launch screen): how many at most, and their numbers, the same for every
+# pet for now. Each one is an invisible, silent mob wearing the pet's model, with the plugin's own behaviour (follow,
+# attack what the owner fights).
 pets:
   max: 5
   health: 40
+  # Damage of a hit (the monster's vanilla armour applies) and ticks between two hits (20 = one second).
   attack: 6
+  attack-ticks: 20
+  # Moving speed (multiplier of the body's) and reach of a hit, in blocks.
+  speed: 1.2
+  reach: 1.2
+  # Bodies of the pets: a walking mob, and a flying one for "flying" pets.
+  body:
+    ground: WOLF
+    flying: BEE

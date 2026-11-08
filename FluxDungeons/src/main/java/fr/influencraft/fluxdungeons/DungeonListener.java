@@ -194,7 +194,10 @@ final class DungeonListener implements Listener {
                 e.setCancelled(true);
                 return;
             }
-            if (attacker != null) mobs.damagedByPlayer(mob, attacker, e);
+            if (attacker != null) {
+                mobs.damagedByPlayer(mob, attacker, e);
+                if (!runs.isPet(e.getDamager())) runs.petFocus(attacker, mob);
+            }
             if (e.getFinalDamage() >= mob.getHealth() && mobs.lethal(mob, attacker)) e.setCancelled(true);
             return;
         }
@@ -205,6 +208,7 @@ final class DungeonListener implements Listener {
             if (source instanceof LivingEntity mob && mobs.templateOf(mob) != null) {
                 lastHit.put(hurt.getUniqueId(), Bukkit.getCurrentTick());
                 mobs.hitPlayer(mob, hurt, e);
+                runs.petFocus(hurt, mob);
             }
         }
     }

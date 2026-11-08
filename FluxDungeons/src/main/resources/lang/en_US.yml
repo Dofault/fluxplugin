@@ -238,3 +238,5 @@ lost:
   reward-label: '&fLost gear (%dungeon%)'
   overflow-label: '&fThings brought back from the dungeon'
   overflow: '&#B376E5Your inventory was full: the rest waits in &f[/%flux_cmd_flux_rewards%]&#B376E5.'
+pet:
+  down: '&#FF5C5C%pet%&#FF5C5C is down.'

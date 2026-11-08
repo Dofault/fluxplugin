@@ -238,3 +238,5 @@ lost:
   reward-label: '&fÉquipement perdu (%dungeon%)'
   overflow-label: '&fAffaires rapportées du donjon'
   overflow: '&#B376E5Ton inventaire était plein : le reste t''attend dans &f[/%flux_cmd_flux_rewards%]&#B376E5.'
+pet:
+  down: '&#FF5C5C%pet%&#FF5C5C est à terre.'

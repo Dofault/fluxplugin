@@ -695,17 +695,37 @@ public final class Mobs {
         return inst == null ? 20 : inst.getValue();
     }
 
+    /** A model worn by an entity that is not a dungeon monster (pet of a player). */
+    public interface Worn {
+        /** Plays an animation once; false when the model has none of that name. */
+        boolean play(String animation);
+
+        void close();
+    }
+
     /**
      * Puts a BetterModel model on an entity that is not a dungeon monster (a pet of a player) and hides the entity
-     * under it. Returns what removes the model, null when BetterModel or the model is missing.
+     * under it. Null when BetterModel or the model is missing.
      */
-    public Runnable dress(LivingEntity entity, String model) {
+    public Worn dress(LivingEntity entity, String model) {
         if (!models || model == null || model.isBlank()) return null;
         try {
             ModelBridge.Handle h = ModelBridge.attach(entity, model);
             if (h == null) return null;
             entity.setInvisible(true);
-            return h::close;
+            return new Worn() {
+                public boolean play(String animation) {
+                    try {
+                        return h.play(animation);
+                    } catch (RuntimeException e) {
+                        return false;
+                    }
+                }
+
+                public void close() {
+                    h.close();
+                }
+            };
         } catch (LinkageError | RuntimeException e) {
             plugin.getLogger().warning("Could not put model " + model + " on " + entity.getType() + ": " + e);
             return null;

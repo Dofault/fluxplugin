@@ -114,7 +114,7 @@ public final class Runs {
         spawnDistance = Math.max(8, c.getDouble("spawn-distance", 40));
         WorldInstances.viewDistance = Math.max(2, c.getInt("view-distance", 8));
         lobby.maxPets(c.getInt("pets.max", 5));
-        pets.settings(c.getDouble("pets.health", 40), c.getDouble("pets.attack", 6));
+        pets.settings(c);
     }
 
     public Lobby lobby() {
@@ -124,6 +124,11 @@ public final class Runs {
     /** True for a pet fighting in a run. */
     public boolean isPet(Entity e) {
         return pets.isPet(e);
+    }
+
+    /** The player fights this monster (hit it, or was hit by it): his pets go for it. */
+    public void petFocus(Player player, LivingEntity monster) {
+        pets.focus(player, monster);
     }
 
     /** Owner of a pet fighting in a run, null for anything else. */
@@ -383,7 +388,7 @@ public final class Runs {
             heroes.activate(p);
             teleport(p, run.checkpoint);
             Loadouts.Selection chosen = run.selections.get(uuid);
-            if (chosen != null) pets.spawn(p, chosen.pets(), run.checkpoint);
+            if (chosen != null) pets.spawn(p, chosen.pets(), run.checkpoint, context(p)::enemy);
             p.showTitle(Title.title(Texts.parse(plugin.messages().raw("run.title", "%dungeon%", run.def.name())),
                     Texts.parse(plugin.messages().raw("run.subtitle")),
                     Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(3), Duration.ofMillis(700))));
@@ -613,7 +618,7 @@ public final class Runs {
                     p.setFallDistance(0);
                 }
                 if (ticks % 2 == 0 && !run.watching.contains(p.getUniqueId())) heroes.tick(p);
-                if (!run.watching.contains(p.getUniqueId())) pets.tick(p, context(p)::enemy);
+                pets.tick(p);
             }
             if (!run.imported()) rooms(run);
             else {
