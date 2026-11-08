@@ -176,6 +176,10 @@ combat:
     minimum-charge: 1.0
     # The swing of the weapon lasts the whole recharge.
     slow-swing: true
+    # Length of the swing as a share of the recharge: the game lets the next hit go a little before the end (around
+    # 80 %), a swing as long as the recharge restarted before the weapon was back. Raise it if the weapon comes back
+    # too fast, lower it if the swing still restarts before its end.
+    swing-share: 0.8
     # Particle and sound at every real swing, even in the air, where the swing reaches: the player's reach (attribute,
     # bonuses of pets and effects included, or the weapon's range), stopped by the first block or creature. none: off.
     swing-particle: SWEEP_ATTACK

@@ -42,6 +42,11 @@ public final class AttackCadence implements Listener {
     private boolean enabled = true;
     private float minimumCharge = 1f;
     private boolean slowSwing = true;
+    /**
+     * Length of the swing as a share of the recharge: the client lets the next attack go a little before the end of a
+     * swing as long as the recharge (seen around 80 %), which restarted the swing before the weapon was back in place.
+     */
+    private double swingShare = 0.8;
     private org.bukkit.Particle swingParticle = org.bukkit.Particle.SWEEP_ATTACK;
     private String swingSound = "minecraft:entity.player.attack.sweep";
     private float soundVolume = 0.7f, soundPitch = 1f;
@@ -58,6 +63,7 @@ public final class AttackCadence implements Listener {
         enabled = c == null || c.getBoolean("enabled", true);
         minimumCharge = c == null ? 1f : (float) Math.max(0, Math.min(1, c.getDouble("minimum-charge", 1)));
         slowSwing = c == null || c.getBoolean("slow-swing", true);
+        swingShare = c == null ? 0.8 : Math.max(0.2, Math.min(1, c.getDouble("swing-share", 0.8)));
         String particle = c == null ? "SWEEP_ATTACK" : c.getString("swing-particle", "SWEEP_ATTACK");
         try {
             swingParticle = particle == null || particle.isBlank() || particle.equalsIgnoreCase("none") ? null
@@ -125,7 +131,7 @@ public final class AttackCadence implements Listener {
             changed = true;
         }
         if (slowSwing) {
-            int ticks = rechargeTicks(speed);
+            int ticks = (int) Math.max(3, Math.round(20 / speed * swingShare));
             SwingAnimation swing = item.isDataOverridden(DataComponentTypes.SWING_ANIMATION) ? item.getData(DataComponentTypes.SWING_ANIMATION) : null;
             if (swing == null || swing.duration() != ticks || swing.type() != SwingAnimation.Animation.WHACK) {
                 item.setData(DataComponentTypes.SWING_ANIMATION, SwingAnimation.swingAnimation().type(SwingAnimation.Animation.WHACK).duration(ticks).build());
