@@ -60,6 +60,8 @@ hit-reaction:
 # pet for now. Each one is an invisible, silent mob wearing the pet's model, with the plugin's own behaviour (follow,
 # attack what the owner fights).
 pets:
+  # false: no pet in dungeons (slots greyed out on the launch screen).
+  enabled: true
   max: 5
   health: 40
   # Damage of a hit (the monster's vanilla armour applies) and ticks between two hits (20 = one second).

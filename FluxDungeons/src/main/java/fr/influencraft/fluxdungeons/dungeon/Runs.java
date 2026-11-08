@@ -113,7 +113,8 @@ public final class Runs {
         fallbackMoneyPerMinute = c.getDouble("reward.money-per-minute-without-fluxvalue", 50);
         spawnDistance = Math.max(8, c.getDouble("spawn-distance", 40));
         WorldInstances.viewDistance = Math.max(2, c.getInt("view-distance", 8));
-        lobby.maxPets(c.getInt("pets.max", 5));
+        // pets.enabled false: no pet slot on the launch screen, so none comes into a run
+        lobby.maxPets(c.getBoolean("pets.enabled", true) ? c.getInt("pets.max", 5) : 0);
         pets.settings(c);
     }
 
