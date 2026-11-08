@@ -1,7 +1,9 @@
 # Dungeon monsters written by hand (monsters imported from EliteMobs live in mobs/<dungeon>.yml).
 # Abilities: leap, fireball, arrow, volley, cone, taze, lightning, implosion, summon, slam, heal, shield, enrage,
 # and the rock ones: boulder (thrown rock), rockfall (rocks falling), quake (ring earthquake),
-# ice_spikes (line of ice spikes), stone_skin (stone skin).
+# ice_spikes (line of ice spikes), stone_skin (stone skin), bite, uplift (throws up and blinds),
+# cataclysm (ring of fire then a huge hit in that radius), rock_shard (shard chasing whoever keeps away).
+# hold: ticks standing still during the animation. ranged-resistance: share of projectile damage ignored.
 # every: seconds between two casts; below: only under this % of life; power: damage;
 # animation / impact: model animation and ticks before the effect. attack-speed: melee hits per second.
 # Dyed leather: "LEATHER_CHESTPLATE #7D7D7D". A block on the head (head: GRANITE) is worn as a helmet.
@@ -99,34 +101,42 @@ rochiste_colosse:
   boss: true
   rank: BOSS
   model: colosse_abime
-  health: 600
-  damage: 12
-  speed: 0.18
-  attack-speed: 0.6
+  health: 700
+  damage: 10
+  # very slow, as its walk animation: about 2 blocks per second
+  speed: 0.045
+  attack-speed: 0.5
+  # half the damage of projectiles: melee is the way to beat it
+  ranged-resistance: 0.5
   xp: 200
   abilities:
-  - type: quake
-    every: 9
-    animation: attack_stomp
-    impact: 20
-    radius: 8
-    power: 9
-  - type: boulder
-    every: 7
-    block: BASALT
-    size: 1.6
-    radius: 3
-    power: 8
-  - type: rockfall
-    every: 14
-    count: 8
-    spread: 3
-    block: COBBLED_DEEPSLATE
-    power: 7
-  - type: quake
-    every: 25
-    below: 40
+  # by priority when several are ready
+  - type: cataclysm
+    every: 35
     animation: attack_ultimate
     impact: 80
-    radius: 12
-    power: 12
+    hold: 160
+    radius: 10
+    power: 20
+    title: '&#FF5C5C&lCATACLYSM'
+    subtitle: '&#FFD94DGet out of the ring of fire!'
+  - type: uplift
+    every: 13
+    animation: attack_stomp
+    impact: 20
+    hold: 46
+    radius: 6
+    height: 5
+    power: 6
+    title: '&#C0705AThe ground gives way!'
+  - type: bite
+    every: 5
+    animation: attack_bite
+    impact: 12
+    hold: 28
+    range: 4.5
+    power: 11
+  - type: rock_shard
+    every: 3
+    min-range: 7
+    power: 5

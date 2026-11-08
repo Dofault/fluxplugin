@@ -202,6 +202,11 @@ final class DungeonListener implements Listener {
                 e.setCancelled(true);
                 return;
             }
+            // some monsters shrug off part of what is shot at them (ranged-resistance): melee is the way
+            if (e.getDamager() instanceof Projectile) {
+                var t = mobs.template(mobs.templateOf(mob));
+                if (t != null && t.extra().rangedResistance() > 0) e.setDamage(e.getDamage() * (1 - t.extra().rangedResistance()));
+            }
             if (attacker != null) {
                 mobs.damagedByPlayer(mob, attacker, e);
                 if (!runs.isPet(e.getDamager())) runs.petFocus(attacker, mob);

@@ -1,7 +1,9 @@
 # Monstres des donjons écrits à la main (les monstres importés d'EliteMobs vivent dans mobs/<donjon>.yml).
 # Compétences : leap, fireball, arrow, volley, cone, taze, lightning, implosion, summon, slam, heal, shield, enrage,
 # et celles de la roche : boulder (rocher lancé), rockfall (pluie de rochers), quake (séisme en anneau),
-# ice_spikes (ligne de pics de glace), stone_skin (peau de pierre).
+# ice_spikes (ligne de pics de glace), stone_skin (peau de pierre), bite (morsure), uplift (projette en l'air et aveugle),
+# cataclysm (cercle de feu puis énorme coup dans ce rayon), rock_shard (éclat qui poursuit qui reste loin).
+# hold : ticks d'immobilité pendant l'animation. ranged-resistance : part des dégâts de projectiles ignorée.
 # every : secondes entre deux lancers ; below : seulement sous ce % de vie ; power : dégâts ;
 # animation / impact : animation du modèle et ticks avant l'effet. attack-speed : coups au corps à corps par seconde.
 # Armures en cuir teintes : "LEATHER_CHESTPLATE #7D7D7D". Un bloc en tête (head: GRANITE) se porte comme un casque.
@@ -99,34 +101,42 @@ rochiste_colosse:
   boss: true
   rank: BOSS
   model: colosse_abime
-  health: 600
-  damage: 12
-  speed: 0.18
-  attack-speed: 0.6
+  health: 700
+  damage: 10
+  # très lent, comme son animation de marche : environ 2 blocs par seconde
+  speed: 0.045
+  attack-speed: 0.5
+  # la moitié des dégâts des projectiles : le corps à corps est la bonne façon de le battre
+  ranged-resistance: 0.5
   xp: 200
   abilities:
-  - type: quake
-    every: 9
-    animation: attack_stomp
-    impact: 20
-    radius: 8
-    power: 9
-  - type: boulder
-    every: 7
-    block: BASALT
-    size: 1.6
-    radius: 3
-    power: 8
-  - type: rockfall
-    every: 14
-    count: 8
-    spread: 3
-    block: COBBLED_DEEPSLATE
-    power: 7
-  - type: quake
-    every: 25
-    below: 40
+  # par ordre de priorité quand plusieurs sont prêtes
+  - type: cataclysm
+    every: 35
     animation: attack_ultimate
     impact: 80
-    radius: 12
-    power: 12
+    hold: 160
+    radius: 10
+    power: 20
+    title: '&#FF5C5C&lCATACLYSME'
+    subtitle: '&#FFD94DSors du cercle de feu !'
+  - type: uplift
+    every: 13
+    animation: attack_stomp
+    impact: 20
+    hold: 46
+    radius: 6
+    height: 5
+    power: 6
+    title: '&#C0705ALe sol se dérobe !'
+  - type: bite
+    every: 5
+    animation: attack_bite
+    impact: 12
+    hold: 28
+    range: 4.5
+    power: 11
+  - type: rock_shard
+    every: 3
+    min-range: 7
+    power: 5

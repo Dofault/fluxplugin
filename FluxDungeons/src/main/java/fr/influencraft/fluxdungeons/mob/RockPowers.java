@@ -44,7 +44,16 @@ import java.util.concurrent.ThreadLocalRandom;
  *   ({@code range}, {@code power}).</li>
  *   <li>{@code stone_skin}: stones circling the monster, which takes far less damage meanwhile ({@code duration},
  *   {@code level}).</li>
+ *   <li>{@code bite}: a heavy bite in front of the monster ({@code range}, {@code power}).</li>
+ *   <li>{@code uplift}: the monster strikes the ground, everyone around flies up {@code height} blocks, blinded while
+ *   in the air, with a text on screen ({@code radius}, {@code height}, {@code title}, {@code subtitle}).</li>
+ *   <li>{@code cataclysm}: a ring of fire shows the area from the start of the animation until the impact, a warning
+ *   is written on the screen of the players near; at the impact everyone inside the ring (the same radius) takes a
+ *   huge hit, then waves of rocks run outwards ({@code radius}, {@code power}, {@code title}, {@code subtitle}).</li>
+ *   <li>{@code rock_shard}: a shard of rock flies out of the monster and chases a player who keeps away (archers),
+ *   {@code min-range} blocks or more ({@code power}).</li>
  * </ul>
+ * {@code hold} (ticks): the monster stays still that long (its attack animation must not be cut by walking).
  * Damage goes through the monster's own hit ({@link Caster#hit}): {@code power} is absolute, as for other abilities.
  */
 final class RockPowers {
@@ -57,9 +66,13 @@ final class RockPowers {
         void hit(Player p, double fallback);
 
         void animate(String animation);
+
+        /** The monster stops moving (and casting) for this long. */
+        void hold(int ticks);
     }
 
-    static final Set<String> TYPES = Set.of("boulder", "rockfall", "quake", "ice_spikes", "stone_skin");
+    static final Set<String> TYPES = Set.of("boulder", "rockfall", "quake", "ice_spikes", "stone_skin", "bite", "uplift",
+            "cataclysm", "rock_shard");
     private static final String TAG = "fluxdungeons_fx";
     private static final Material[] ROCKS = {Material.STONE, Material.ANDESITE, Material.GRANITE, Material.DIORITE,
             Material.TUFF, Material.COBBLED_DEEPSLATE, Material.DEEPSLATE, Material.CALCITE};
@@ -76,7 +89,19 @@ final class RockPowers {
         if (!TYPES.contains(ab.type())) return false;
         String animation = ab.text("animation", "");
         long impact = (long) ab.number("impact", 0);
+        // a bite needs someone in front; a shard someone keeping away: otherwise nothing is played
+        if (ab.type().equals("bite") && closest(c.entity(), ab.number("range", 4.5) + 1) == null) return true;
+        if (ab.type().equals("rock_shard")) {
+            rockShard(ab, c);
+            return true;
+        }
         if (!animation.isBlank()) c.animate(animation);
+        int hold = (int) ab.number("hold", 0);
+        if (hold > 0) c.hold(hold);
+        if (ab.type().equals("cataclysm")) {
+            cataclysm(ab, c, impact);
+            return true;
+        }
         Runnable go = () -> {
             if (!c.entity().isValid() || c.entity().isDead()) return;
             switch (ab.type()) {
@@ -85,6 +110,8 @@ final class RockPowers {
                 case "quake" -> quake(ab, c);
                 case "ice_spikes" -> iceSpikes(ab, c, target);
                 case "stone_skin" -> stoneSkin(ab, c);
+                case "bite" -> bite(ab, c);
+                case "uplift" -> uplift(ab, c);
                 default -> {
                 }
             }
@@ -386,6 +413,244 @@ final class RockPowers {
                 }
             }
         }.runTaskTimer(plugin, 1L, 1L);
+    }
+
+    // ---------------------------------------------------------------- bite
+
+    private void bite(MobTemplate.Ability ab, Caster c) {
+        LivingEntity e = c.entity();
+        World w = e.getWorld();
+        double range = ab.number("range", 4.5);
+        Vector facing = e.getLocation().getDirection().setY(0);
+        if (facing.lengthSquared() < 0.01) facing = new Vector(0, 0, 1);
+        facing.normalize();
+        Location mouth = e.getLocation().add(facing.clone().multiply(Math.max(1.5, e.getWidth() * 0.8))).add(0, 1, 0);
+        w.playSound(mouth, Sound.ENTITY_EVOKER_FANGS_ATTACK, 1.5f, 0.5f);
+        w.playSound(mouth, Sound.BLOCK_DEEPSLATE_BREAK, 1.5f, 0.6f);
+        w.spawnParticle(Particle.BLOCK, mouth, 40, 0.8, 0.5, 0.8, 0.1, Material.DEEPSLATE.createBlockData());
+        w.spawnParticle(Particle.CRIT, mouth, 20, 0.6, 0.4, 0.6, 0.2);
+        for (Player p : w.getPlayers()) {
+            if (!Mobs.fighting(p)) continue;
+            Vector to = p.getLocation().toVector().subtract(e.getLocation().toVector());
+            double flat = Math.hypot(to.getX(), to.getZ());
+            if (flat > range + e.getWidth() / 2 || Math.abs(to.getY()) > 3) continue;
+            if (flat > 1 && to.clone().setY(0).normalize().dot(facing) < 0.35) continue;
+            c.hit(p, 1.5);
+        }
+    }
+
+    // ---------------------------------------------------------------- uplift
+
+    private void uplift(MobTemplate.Ability ab, Caster c) {
+        LivingEntity e = c.entity();
+        World w = e.getWorld();
+        Location center = e.getLocation();
+        double radius = ab.number("radius", 6);
+        double vy = launchSpeed(ab.number("height", 5));
+        w.playSound(center, Sound.ENTITY_GENERIC_EXPLODE, 1.2f, 0.4f);
+        w.playSound(center, Sound.BLOCK_ANVIL_LAND, 1f, 0.4f);
+        w.spawnParticle(Particle.EXPLOSION, center.clone().add(0, 0.5, 0), 4, 1.5, 0.2, 1.5, 0);
+        // a ring of rocks bursting out at once, as far as the hit goes
+        for (double r = 1.5; r <= radius; r += 1.5) {
+            int points = (int) Math.max(8, r * 6);
+            for (int i = 0; i < points; i++) {
+                double a = Math.PI * 2 * i / points;
+                Location l = ground(center.clone().add(Math.cos(a) * r, 0, Math.sin(a) * r));
+                if (l != null) pillar(l, ROCKS[ThreadLocalRandom.current().nextInt(ROCKS.length)].createBlockData(), 0.8f, 0.9f, 10);
+            }
+        }
+        String title = ab.text("title", ""), subtitle = ab.text("subtitle", "");
+        for (Player p : w.getPlayers()) {
+            if (!Mobs.fighting(p) || p.getLocation().distanceSquared(center) > radius * radius) continue;
+            c.hit(p, 0.6);
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (!p.isOnline() || p.isDead()) return;
+                p.setVelocity(new Vector(0, vy, 0));
+                p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 45, 0, false, false, false));
+                if (!title.isBlank() || !subtitle.isBlank()) {
+                    p.showTitle(net.kyori.adventure.title.Title.title(fr.influencraft.flux.api.text.Texts.parse(title),
+                            fr.influencraft.flux.api.text.Texts.parse(subtitle), net.kyori.adventure.title.Title.Times.times(
+                                    java.time.Duration.ofMillis(100), java.time.Duration.ofMillis(1500), java.time.Duration.ofMillis(400))));
+                }
+            });
+        }
+    }
+
+    /** Upward speed that lifts a player about {@code height} blocks (vanilla gravity and drag). */
+    private static double launchSpeed(double height) {
+        double v = 0.4;
+        for (int i = 0; i < 40; i++) {
+            double y = 0, s = v;
+            while (s > 0) {
+                y += s;
+                s = (s - 0.08) * 0.98;
+            }
+            v += (height - y) * 0.05;
+        }
+        return Math.max(0.3, Math.min(2.5, v));
+    }
+
+    // ---------------------------------------------------------------- cataclysm
+
+    private void cataclysm(MobTemplate.Ability ab, Caster c, long impact) {
+        LivingEntity e = c.entity();
+        World w = e.getWorld();
+        double radius = ab.number("radius", 10);
+        long charge = Math.max(20, impact);
+        String title = ab.text("title", ""), subtitle = ab.text("subtitle", "");
+        for (Player p : w.getPlayers()) {
+            if (!Mobs.fighting(p) || p.getLocation().distanceSquared(e.getLocation()) > radius * radius * 6.25) continue;
+            if (!title.isBlank() || !subtitle.isBlank()) {
+                p.showTitle(net.kyori.adventure.title.Title.title(fr.influencraft.flux.api.text.Texts.parse(title),
+                        fr.influencraft.flux.api.text.Texts.parse(subtitle), net.kyori.adventure.title.Title.Times.times(
+                                java.time.Duration.ofMillis(200), java.time.Duration.ofMillis(charge * 50 - 600), java.time.Duration.ofMillis(300))));
+            }
+            p.playSound(p.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1f, 0.5f);
+        }
+        w.playSound(e.getLocation(), Sound.ENTITY_RAVAGER_ROAR, 2f, 0.4f);
+        // the ring of fire shows exactly where the hit will land, brighter as the impact comes
+        new BukkitRunnable() {
+            long t;
+
+            @Override
+            public void run() {
+                if (!e.isValid() || e.isDead()) {
+                    cancel();
+                    return;
+                }
+                t += 2;
+                Location center = e.getLocation();
+                double k = Math.min(1, (double) t / charge);
+                int points = (int) (radius * 9);
+                double spin = t * 0.05;
+                for (int i = 0; i < points; i++) {
+                    double a = spin + Math.PI * 2 * i / points;
+                    Location l = center.clone().add(Math.cos(a) * radius, 0.15, Math.sin(a) * radius);
+                    w.spawnParticle(Particle.FLAME, l, 1, 0.05, 0.05, 0.05, 0.005);
+                    if (k > 0.5 && i % 3 == 0) w.spawnParticle(Particle.SOUL_FIRE_FLAME, l.clone().add(0, 0.4, 0), 1, 0.05, 0.2, 0.05, 0.01);
+                }
+                int inner = (int) (6 + 30 * k);
+                for (int i = 0; i < inner; i++) {
+                    double a = ThreadLocalRandom.current().nextDouble(Math.PI * 2), r = Math.sqrt(ThreadLocalRandom.current().nextDouble()) * radius;
+                    w.spawnParticle(k > 0.75 ? Particle.LAVA : Particle.SMALL_FLAME, center.clone().add(Math.cos(a) * r, 0.2, Math.sin(a) * r), 1, 0, 0, 0, 0);
+                }
+                if (t % 20 == 0) w.playSound(center, Sound.BLOCK_FIRE_AMBIENT, 2f, 0.6f + (float) k);
+                if (t >= charge) {
+                    cancel();
+                    cataclysmImpact(ab, c, center, radius);
+                }
+            }
+        }.runTaskTimer(plugin, 0L, 2L);
+    }
+
+    private void cataclysmImpact(MobTemplate.Ability ab, Caster c, Location center, double radius) {
+        World w = center.getWorld();
+        w.spawnParticle(Particle.EXPLOSION_EMITTER, center.clone().add(0, 1, 0), 2);
+        w.spawnParticle(Particle.FLAME, center.clone().add(0, 0.5, 0), 300, radius / 2, 0.5, radius / 2, 0.15);
+        w.playSound(center, Sound.ENTITY_GENERIC_EXPLODE, 3f, 0.4f);
+        w.playSound(center, Sound.ENTITY_WARDEN_SONIC_BOOM, 2f, 0.6f);
+        for (Player p : w.getPlayers()) {
+            if (!Mobs.fighting(p)) continue;
+            Location pl = p.getLocation();
+            if (Math.hypot(pl.getX() - center.getX(), pl.getZ() - center.getZ()) <= radius && Math.abs(pl.getY() - center.getY()) < 5) {
+                c.hit(p, 3);
+                p.setFireTicks(0);
+            }
+        }
+        // three waves of rock pillars running outwards, then the last pulse
+        for (int wave = 0; wave < 3; wave++) {
+            double r = radius * (0.4 + wave * 0.3);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                int points = (int) Math.max(10, r * 5);
+                for (int i = 0; i < points; i++) {
+                    double a = Math.PI * 2 * i / points;
+                    Location l = ground(center.clone().add(Math.cos(a) * r, 0, Math.sin(a) * r));
+                    if (l != null) pillar(l, (i % 2 == 0 ? Material.DEEPSLATE : Material.COBBLED_DEEPSLATE).createBlockData(), 1.1f, 1.8f, 16);
+                }
+                w.spawnParticle(Particle.BLOCK, center, 50, r / 2, 0.3, r / 2, 0.1, Material.AMETHYST_BLOCK.createBlockData());
+                w.playSound(center, Sound.BLOCK_DEEPSLATE_BREAK, 2f, 0.5f);
+            }, 10L + wave * 10L);
+        }
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            w.spawnParticle(Particle.REVERSE_PORTAL, center.clone().add(0, 1.5, 0), 120, radius / 3, 1, radius / 3, 0.05);
+            w.playSound(center, Sound.BLOCK_AMETHYST_BLOCK_RESONATE, 2f, 0.5f);
+        }, 40L);
+    }
+
+    // ---------------------------------------------------------------- rock shard
+
+    /** A shard of rock chasing a player who keeps away from the monster (archers): melee is the way to fight it. */
+    private void rockShard(MobTemplate.Ability ab, Caster c) {
+        LivingEntity e = c.entity();
+        World w = e.getWorld();
+        double min = ab.number("min-range", 7);
+        Player target = null;
+        double best = 0;
+        for (Player p : w.getPlayers()) {
+            if (!Mobs.fighting(p) || !e.hasLineOfSight(p)) continue;
+            double d = p.getLocation().distance(e.getLocation());
+            if (d < min || d > 32) continue;
+            if (d > best) {
+                best = d;
+                target = p;
+            }
+        }
+        if (target == null) return;
+        Player aim = target;
+        Location start = e.getLocation().add(0, Math.max(1.5, e.getHeight()), 0);
+        BlockDisplay shard = block(start, (ThreadLocalRandom.current().nextBoolean() ? Material.DEEPSLATE : Material.BASALT).createBlockData(), 0.55f);
+        shard.setTeleportDuration(1);
+        w.playSound(start, Sound.BLOCK_POINTED_DRIPSTONE_FALL, 1.5f, 0.6f);
+        w.spawnParticle(Particle.BLOCK, start, 15, 0.3, 0.3, 0.3, 0, Material.DEEPSLATE.createBlockData());
+        new BukkitRunnable() {
+            int t;
+            final Location pos = start.clone();
+
+            @Override
+            public void run() {
+                if (!shard.isValid() || ++t > 70 || !aim.isOnline() || aim.isDead() || aim.getWorld() != pos.getWorld()) {
+                    cancel();
+                    forget(shard);
+                    return;
+                }
+                Vector to = aim.getLocation().add(0, 1, 0).toVector().subtract(pos.toVector());
+                double dist = to.length();
+                if (dist < 1.1) {
+                    cancel();
+                    forget(shard);
+                    c.hit(aim, 0.5);
+                    w.spawnParticle(Particle.BLOCK, pos, 25, 0.3, 0.3, 0.3, 0.1, Material.DEEPSLATE.createBlockData());
+                    w.playSound(pos, Sound.BLOCK_DEEPSLATE_BREAK, 1.2f, 1.2f);
+                    return;
+                }
+                pos.add(to.multiply(Math.min(dist, 0.75) / dist));
+                pos.setYaw(pos.getYaw() + 35);
+                pos.setPitch((pos.getPitch() + 25) % 180 - 90);
+                if (!pos.getBlock().isPassable()) {
+                    cancel();
+                    forget(shard);
+                    w.spawnParticle(Particle.BLOCK, pos, 15, 0.2, 0.2, 0.2, 0.05, Material.DEEPSLATE.createBlockData());
+                    return;
+                }
+                shard.teleport(pos);
+                w.spawnParticle(Particle.FALLING_DUST, pos, 1, 0.1, 0.1, 0.1, 0, Material.DEEPSLATE.createBlockData());
+            }
+        }.runTaskTimer(plugin, 1L, 1L);
+    }
+
+    /** The closest player fighting within this distance of the monster, or null. */
+    private static Player closest(LivingEntity e, double distance) {
+        Player best = null;
+        double bestD = distance * distance;
+        for (Player p : e.getWorld().getPlayers()) {
+            if (!Mobs.fighting(p)) continue;
+            double d = p.getLocation().distanceSquared(e.getLocation());
+            if (d <= bestD) {
+                bestD = d;
+                best = p;
+            }
+        }
+        return best;
     }
 
     // ---------------------------------------------------------------- moving blocks

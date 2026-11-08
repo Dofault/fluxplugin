@@ -892,6 +892,15 @@ public final class Mobs {
             public void animate(String animation) {
                 a.animate(animation);
             }
+
+            public void hold(int ticks) {
+                // still during its attack (no walk over the animation, no other ability meanwhile)
+                if (!(e instanceof Mob m) || !m.hasAI()) return;
+                m.setAI(false);
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    if (m.isValid() && !a.dying) m.setAI(true);
+                }, ticks);
+            }
         }, target)) return;
         World w = e.getWorld();
         Location at = e.getLocation();
@@ -997,7 +1006,7 @@ public final class Mobs {
                     MobTemplate copy = new MobTemplate(a.template.id() + "_summon", type, "&7" + type.name().toLowerCase(), false, null,
                             maxHealth(e) * 0.15, a.baseDamage() * 0.6, 0.25, 0, 1, 0, Map.of(), List.of(),
                             new MobTemplate.Extra(1, 0.15, 0.6, false, false, 32, 0, List.of(), List.of(), null, List.of(), List.of(), List.of(),
-                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of()));
+                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of(), 0));
                     for (int i = 0; i < (int) ab.number("count", 2); i++) {
                         LivingEntity s = spawn(copy, at.clone().add(ThreadLocalRandom.current().nextDouble(-2, 2), 0, ThreadLocalRandom.current().nextDouble(-2, 2)), a.run);
                         if (s != null) onSummon.accept(e, s);
