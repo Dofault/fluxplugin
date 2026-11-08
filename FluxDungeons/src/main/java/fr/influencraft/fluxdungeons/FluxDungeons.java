@@ -78,6 +78,7 @@ public final class FluxDungeons extends FluxPlugin {
                 getConfig().getInt("blocks-per-tick", 20000));
         runs = new Runs(this, arena, mobs, heroes, loadouts);
         runs.editor().onSaved(this::reload);
+        getServer().getPluginManager().registerEvents(runs.editor(), this);
         settings();
         Dungeons.register(new Dungeons.Service() {
             public boolean playing(Player player) {

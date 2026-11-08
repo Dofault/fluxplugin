@@ -83,7 +83,7 @@ public final class Runs {
         this.loadouts = loadouts;
         this.instances = new WorldInstances(plugin);
         instances.sweep();
-        this.editor = new Editor(plugin, instances, this::dungeon);
+        this.editor = new Editor(plugin, instances, this::dungeon, mobs);
         mobs.onSummon((parent, child) -> {
             Run run = runs.get(mobs.runOf(child));
             if (run != null) run.mobs.add(child.getUniqueId());

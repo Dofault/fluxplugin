@@ -1,164 +1,198 @@
-prefix: "&#B376E5ᴅᴜɴɢᴇᴏɴ &8▸ "
-players-only: "&#FF5C5CPlayers only."
-unknown-dungeon: "&#FF5C5CUnknown dungeon."
-unknown-class: "&#FF5C5CUnknown class."
-unknown-player: "&#FF5C5CPlayer not found."
-not-in-run: "&#FF5C5CYou are not in a dungeon."
-dungeon-usage: "&#FF5C5C/%flux_cmd_fluxdungeons_dungeon% [play <dungeon> | leave | class [class] | list]"
-party-usage: "&#FF5C5C/%flux_cmd_fluxdungeons_party% [invite | accept | leave | kick | leader] [player]"
-admin-usage: "!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% visit [dungeon] | edit <dungeon> | build <dungeon|all> | template <dungeon> | start <dungeon> <player> | stop <player|all> | give <player> <item> [n] | reset <player> | runs | reload"
-list-line: "&#FFD94D%dungeon% &8(&7%id%&8) &#B376E5%min% to %max% players, recommended level &f%level%"
-
+prefix: '&#B376E5ᴅᴜɴɢᴇᴏɴ &8▸ '
+players-only: '&#FF5C5CPlayers only.'
+unknown-dungeon: '&#FF5C5CUnknown dungeon.'
+unknown-class: '&#FF5C5CUnknown class.'
+unknown-player: '&#FF5C5CPlayer not found.'
+not-in-run: '&#FF5C5CYou are not in a dungeon.'
+dungeon-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_dungeon% [play <dungeon> | leave | class [class] | list]'
+party-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_party% [invite | accept | leave | kick | leader] [player]'
+admin-usage: '!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% visit [dungeon] | edit <dungeon> | build <dungeon|all> | template <dungeon> | start <dungeon> <player> | stop <player|all> | give <player> <item>
+  [n] | reset <player> | runs | reload'
+list-line: '&#FFD94D%dungeon% &8(&7%id%&8) &#B376E5%min% to %max% players, recommended level &f%level%'
 main:
-  title: "Dungeons"
-  no-class: "&#FF5C5CYou have no class yet: pick one before entering."
-  class: "&#B376E5Your class: %class% &7level &f%level%"
-  solo: "&#B376E5You play alone. &7Form a party with /%flux_cmd_fluxdungeons_party% invite <player>."
-  party: "&#B376E5Your party: &f%count% &#B376E5player(s), leader &f%leader%"
-  in-run: "&#FFD94DYou are in %dungeon%."
-  leave: "&#FF5C5CLeave the dungeon"
-  dungeon: "&#FFD94D%dungeon%\n&#B376E5%min% to %max% players, recommended level &f%level%"
-  play: "&#2ECF7BPlay: &f%dungeon%"
-  choose-class: "&#FFD94DChoose my class"
+  title: Dungeons
+  no-class: '&#FF5C5CYou have no class yet: pick one before entering.'
+  class: '&#B376E5Your class: %class% &7level &f%level%'
+  solo: '&#B376E5You play alone. &7Form a party with /%flux_cmd_fluxdungeons_party% invite <player>.'
+  party: '&#B376E5Your party: &f%count% &#B376E5player(s), leader &f%leader%'
+  in-run: '&#FFD94DYou are in %dungeon%.'
+  leave: '&#FF5C5CLeave the dungeon'
+  dungeon: '&#FFD94D%dungeon%
 
+    &#B376E5%min% to %max% players, recommended level &f%level%'
+  play: '&#2ECF7BPlay: &f%dungeon%'
+  choose-class: '&#FFD94DChoose my class'
 class:
-  title: "Classes"
-  intro: "&#B376E5Your class sets your life, your damage and your three abilities in dungeons. Each class keeps its own level: change it any time outside a dungeon."
-  level: "level %level%"
-  current: "&#2ECF7B(current)"
-  abilities: "Abilities:"
-  in-run: "&#FF5C5CYou cannot change your class in a dungeon."
-  chosen: "&#2ECF7BYou now play %class% &#2ECF7B(level &f%level%&#2ECF7B)."
-
+  title: Classes
+  intro: '&#B376E5Your class sets your life, your damage and your three abilities in dungeons. Each class keeps its own level: change it any time outside a dungeon.'
+  level: level %level%
+  current: '&#2ECF7B(current)'
+  abilities: 'Abilities:'
+  in-run: '&#FF5C5CYou cannot change your class in a dungeon.'
+  chosen: '&#2ECF7BYou now play %class% &#2ECF7B(level &f%level%&#2ECF7B).'
 start:
-  editing: "&#FF5C5CThis dungeon is being edited, try again later."
-  not-leader: "&#FF5C5COnly the party leader can start a dungeon."
-  too-few: "&#FF5C5CThis dungeon needs at least &f%min% &#FF5C5Cplayer(s)."
-  too-many: "&#FF5C5CThis dungeon takes at most &f%max% &#FF5C5Cplayers."
-  no-class: "&#FF5C5C%player% has not chosen a class yet: &f[/%flux_cmd_fluxdungeons_dungeon% class]"
-  busy: "&#FF5C5C%player% is already in a dungeon."
-  no-slot: "&#FF5C5CEvery dungeon is taken, try again in a few minutes."
-  failed: "&#FF5C5CThe dungeon could not start."
-
+  editing: '&#FF5C5CThis dungeon is being edited, try again later.'
+  not-leader: '&#FF5C5COnly the party leader can start a dungeon.'
+  too-few: '&#FF5C5CThis dungeon needs at least &f%min% &#FF5C5Cplayer(s).'
+  too-many: '&#FF5C5CThis dungeon takes at most &f%max% &#FF5C5Cplayers.'
+  no-class: '&#FF5C5C%player% has not chosen a class yet: &f[/%flux_cmd_fluxdungeons_dungeon% class]'
+  busy: '&#FF5C5C%player% is already in a dungeon.'
+  no-slot: '&#FF5C5CEvery dungeon is taken, try again in a few minutes.'
+  failed: '&#FF5C5CThe dungeon could not start.'
 party:
-  invited: "&#2ECF7BInvitation sent to &f%player%&#2ECF7B."
-  invitation: "&#FFD94D%player% &#B376E5invites you to his party: &f[/%flux_cmd_fluxdungeons_party% accept %player%]"
-  joined: "&#2ECF7B%player% joined the party."
-  left: "&#B376E5You left the party."
-  member-left: "&#B376E5%player% left the party."
-  kicked: "&#B376E5%player% was removed from the party."
-  you-were-kicked: "&#FF5C5CYou were removed from the party."
-  new-leader: "&#FFD94D%player% &#B376E5now leads the party."
-  none: "&#B376E5You are in no party. &7Invite someone: /%flux_cmd_fluxdungeons_party% invite <player>"
-  pending: "&#B376E5Invitation from &f%player% &#B376E5waiting: &f[/%flux_cmd_fluxdungeons_party% accept %player%]"
-  info: "&#B376E5Party (&f%count%&7/&f%max%&#B376E5): %members%"
+  invited: '&#2ECF7BInvitation sent to &f%player%&#2ECF7B.'
+  invitation: '&#FFD94D%player% &#B376E5invites you to his party: &f[/%flux_cmd_fluxdungeons_party% accept %player%]'
+  joined: '&#2ECF7B%player% joined the party.'
+  left: '&#B376E5You left the party.'
+  member-left: '&#B376E5%player% left the party.'
+  kicked: '&#B376E5%player% was removed from the party.'
+  you-were-kicked: '&#FF5C5CYou were removed from the party.'
+  new-leader: '&#FFD94D%player% &#B376E5now leads the party.'
+  none: '&#B376E5You are in no party. &7Invite someone: /%flux_cmd_fluxdungeons_party% invite <player>'
+  pending: '&#B376E5Invitation from &f%player% &#B376E5waiting: &f[/%flux_cmd_fluxdungeons_party% accept %player%]'
+  info: '&#B376E5Party (&f%count%&7/&f%max%&#B376E5): %members%'
   error:
-    ok: ""
-    self: "&#FF5C5CYou cannot do that to yourself."
-    already-in-party: "&#FF5C5CAlready in a party."
-    not-leader: "&#FF5C5COnly the party leader can do that."
-    full: "&#FF5C5CThe party is full."
-    no-invite: "&#FF5C5CNo invitation waiting."
-    not-in-party: "&#FF5C5CYou are in no party."
-    not-member: "&#FF5C5C%player% is not in your party."
-
+    ok: ''
+    self: '&#FF5C5CYou cannot do that to yourself.'
+    already-in-party: '&#FF5C5CAlready in a party.'
+    not-leader: '&#FF5C5COnly the party leader can do that.'
+    full: '&#FF5C5CThe party is full.'
+    no-invite: '&#FF5C5CNo invitation waiting.'
+    not-in-party: '&#FF5C5CYou are in no party.'
+    not-member: '&#FF5C5C%player% is not in your party.'
 run:
-  preparing: "&#B376E5Preparing &f%dungeon%&#B376E5..."
-  save-failed: "&#FF5C5CYour things could not be put aside: entry cancelled, nothing moved."
-  title: "&#FFD94D%dungeon%"
-  subtitle: "&#B376E5%lives% life(s) for the party"
-  left: "&#B376E5You left the dungeon, your things are back."
-  no-teleport: "&#FF5C5CYou are in a dungeon: to get out, &f[/%flux_cmd_fluxdungeons_dungeon% leave]"
-  time-up: "&#FF5C5CTime is up"
-  time-left: "&#FFD94DOnly %time% left!"
-  died: "&#FF5C5C%player% fell. &#B376E5Lives left: &f%lives%"
-  out: "&#FF5C5C%player% has no life left and watches the others."
-  wiped: "&#FF5C5CThe whole party fell"
-  victory: "&#2ECF7BVictory!"
-  victory-sub: "&#B376E5Dungeon cleared in &f%time%"
-  loot: "&#FFD94DLoot: %items%"
-  loot-none: "&#B376E5No loot this time."
-  leaving: "&#B376E5Back in &f%seconds% s&#B376E5."
-  defeat: "&#FF5C5CDefeat"
-
+  preparing: '&#B376E5Preparing &f%dungeon%&#B376E5...'
+  save-failed: '&#FF5C5CYour things could not be put aside: entry cancelled, nothing moved.'
+  title: '&#FFD94D%dungeon%'
+  subtitle: '&#B376E5%lives% life(s) for the party'
+  left: '&#B376E5You left the dungeon, your things are back.'
+  no-teleport: '&#FF5C5CYou are in a dungeon: to get out, &f[/%flux_cmd_fluxdungeons_dungeon% leave]'
+  time-up: '&#FF5C5CTime is up'
+  time-left: '&#FFD94DOnly %time% left!'
+  died: '&#FF5C5C%player% fell. &#B376E5Lives left: &f%lives%'
+  out: '&#FF5C5C%player% has no life left and watches the others.'
+  wiped: '&#FF5C5CThe whole party fell'
+  victory: '&#2ECF7BVictory!'
+  victory-sub: '&#B376E5Dungeon cleared in &f%time%'
+  loot: '&#FFD94DLoot: %items%'
+  loot-none: '&#B376E5No loot this time.'
+  leaving: '&#B376E5Back in &f%seconds% s&#B376E5.'
+  defeat: '&#FF5C5CDefeat'
 room:
-  fight: "&#B376E5The monsters wake up"
-  boss: "&#FF5C5CThe guardian wakes up"
-  wave: "&#FFD94DWave %wave%/%waves%"
-  cleared: "&#2ECF7BRoom cleared, the gate opens."
-
-level-up: "&#2ECF7BLevel up! &#B376E5%class% &#B376E5reaches level &f%level%&#B376E5."
-
+  fight: '&#B376E5The monsters wake up'
+  boss: '&#FF5C5CThe guardian wakes up'
+  wave: '&#FFD94DWave %wave%/%waves%'
+  cleared: '&#2ECF7BRoom cleared, the gate opens.'
+level-up: '&#2ECF7BLevel up! &#B376E5%class% &#B376E5reaches level &f%level%&#B376E5.'
 ability:
-  mana: "Mana"
-  cooldown: "Cooldown"
-  how: "%key%, your weapon stays in hand."
-  key-up: "Key %key% or wheel up"
-  key-down: "Key %key% or wheel down"
-  key-key: "Key %key%"
-  cooling: "&#FF5C5C%ability%&7: &f%time% s &7left"
-  no-mana: "&#FF5C5CNot enough mana for %ability%"
-  no-target: "&#FF5C5C%ability%&7: no target"
-
+  mana: Mana
+  cooldown: Cooldown
+  how: '%key%, your weapon stays in hand.'
+  key-up: Key %key% or wheel up
+  key-down: Key %key% or wheel down
+  key-key: Key %key%
+  cooling: '&#FF5C5C%ability%&7: &f%time% s &7left'
+  no-mana: '&#FF5C5CNot enough mana for %ability%'
+  no-target: '&#FF5C5C%ability%&7: no target'
 hud:
-  key-up: "%key%▲"
-  key-down: "%key%▼"
-  key-key: "%key%"
-  bar: "&#6FA8FF✦ %mana%&7/&#6FA8FF%max%  %abilities%"
-  ability-ready: "&#2ECF7B%key% %ability%"
-  ability-cooling: "&7%key% %ability% &f%time%s"
-  separator: "&8 · "
-
+  key-up: '%key%▲'
+  key-down: '%key%▼'
+  key-key: '%key%'
+  bar: '&#6FA8FF✦ %mana%&7/&#6FA8FF%max%  %abilities%'
+  ability-ready: '&#2ECF7B%key% %ability%'
+  ability-cooling: '&7%key% %ability% &f%time%s'
+  separator: '&8 · '
 admin:
-  visit-loading: "&#B376E5Opening &f%dungeon%&#B376E5..."
-  visit: "&#B376E5Visiting &f%dungeon%&#B376E5: copy of the map without monsters, nothing is kept. To leave: &f[/%flux_cmd_fluxdungeons_fluxdungeons% visit]"
-  visit-left: "&#B376E5Visit over."
-  visit-in-run: "&#FF5C5CLeave your dungeon first."
-  imported-no-template: "&#FF5C5C%dungeon% is an imported map: no template to edit, each run copies the original map."
-  reset: "&#2ECF7BDungeon inventory of %player% reset: kits are given again at the next run."
-  reset-in-run: "&#FF5C5C%player% is in a dungeon, try again after the run."
-  started: "&#2ECF7B%dungeon% started."
-  built: "&#2ECF7BTemplate of %dungeon% built."
-  template: "&#B376E5Template of &f%dungeon%&#B376E5: your changes are used by the next runs. Do not change the size of the rooms."
-  stopped-all: "&#2ECF7BEvery run stopped."
-  stopped: "&#2ECF7BRun of %player% stopped."
-  unknown-item: "&#FF5C5CUnknown item: %item%"
-  given: "&#2ECF7B%item% given to %player%."
-  no-runs: "&#B376E5No run in progress."
-  run-line: "&#FFD94D%id% &f%dungeon% &7%state% &#B376E5%players% &7(lives: %lives%)"
-  reloaded: "&#2ECF7BFluxDungeons reloaded."
-
+  visit-loading: '&#B376E5Opening &f%dungeon%&#B376E5...'
+  visit: '&#B376E5Visiting &f%dungeon%&#B376E5: copy of the map without monsters, nothing is kept. To leave: &f[/%flux_cmd_fluxdungeons_fluxdungeons% visit]'
+  visit-left: '&#B376E5Visit over.'
+  visit-in-run: '&#FF5C5CLeave your dungeon first.'
+  imported-no-template: '&#FF5C5C%dungeon% is an imported map: no template to edit, each run copies the original map.'
+  reset: '&#2ECF7BDungeon inventory of %player% reset: kits are given again at the next run.'
+  reset-in-run: '&#FF5C5C%player% is in a dungeon, try again after the run.'
+  started: '&#2ECF7B%dungeon% started.'
+  built: '&#2ECF7BTemplate of %dungeon% built.'
+  template: '&#B376E5Template of &f%dungeon%&#B376E5: your changes are used by the next runs. Do not change the size of the rooms.'
+  stopped-all: '&#2ECF7BEvery run stopped.'
+  stopped: '&#2ECF7BRun of %player% stopped.'
+  unknown-item: '&#FF5C5CUnknown item: %item%'
+  given: '&#2ECF7B%item% given to %player%.'
+  no-runs: '&#B376E5No run in progress.'
+  run-line: '&#FFD94D%id% &f%dungeon% &7%state% &#B376E5%players% &7(lives: %lives%)'
+  reloaded: '&#2ECF7BFluxDungeons reloaded.'
 origins:
-  victory: "Dungeon victory"
-
+  victory: Dungeon victory
 objective:
-  preparing: "&#B376E5Preparing the dungeon..."
-  ending: "&#2ECF7BDungeon cleared"
-  go: "&#FFD94DGo to: &f%room%"
-  room: "&#FFD94DClear &f%room% &7(wave %wave%/%waves%, %mobs% monster(s))"
-  boss: "&#FF5C5CDefeat %boss%"
-  map: "&#FFD94DGuardians defeated: &f%done%/%total%"
-  done: "&#2ECF7BGuardian defeated! &#B376E5Guardians: &f%done%/%total%"
-
+  preparing: '&#B376E5Preparing the dungeon...'
+  ending: '&#2ECF7BDungeon cleared'
+  go: '&#FFD94DGo to: &f%room%'
+  room: '&#FFD94DClear &f%room% &7(wave %wave%/%waves%, %mobs% monster(s))'
+  boss: '&#FF5C5CDefeat %boss%'
+  map: '&#FFD94DGuardians defeated: &f%done%/%total%'
+  done: '&#2ECF7BGuardian defeated! &#B376E5Guardians: &f%done%/%total%'
 item:
-  level: "&7Item level: &f%level%"
-
+  level: '&7Item level: &f%level%'
 edit:
-  opening: "&#B376E5Opening &f%dungeon% &#B376E5in edit mode..."
-  opened: "&#B376E5Editing &f%dungeon% &#B376E5(&f%spawns% &#B376E5points). Build freely; &f/%flux_cmd_fluxdungeons_fluxdungeons% edit add <monster> | remove | move | start | objective&#B376E5, then &fsave &#B376E5or &fcancel&#B376E5."
-  not-editing: "&#FF5C5CYou are not in a dungeon being edited."
-  saving: "&#B376E5Saving &f%dungeon%&#B376E5..."
-  saved: "&#2ECF7B%dungeon% saved: the next runs use the new map and points."
-  cancelled: "&#B376E5Edit closed without saving the builds (moved points stay saved)."
-  added: "&#2ECF7B%mob% added here &7(%spawns% points)."
-  removed: "&#2ECF7B%mob% removed &7(%spawns% points)."
-  moved: "&#2ECF7B%mob% moved here."
-  start: "&#2ECF7BDungeon start placed here."
-  objective-on: "&#2ECF7B%mob% is now an objective &7(%objectives% objectives)."
-  objective-off: "&#B376E5%mob% is no longer an objective &7(%objectives% objectives)."
-  none-near: "&#FF5C5CNo monster point within 6 blocks."
-  usage: "&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% edit <dungeon> | add <monster> | remove | move | start | objective | save | cancel"
-  unknown-mob: "&#FF5C5CUnknown monster: %mob%"
-  marker: "&#FFD94D%mob%"
-  marker-objective: "&#FF5C5C★ %mob% &7(objective)"
-  marker-start: "&#2ECF7B▶ Start"
+  opening: '&#B376E5Opening &f%dungeon% &#B376E5in edit mode...'
+  opened: '&#B376E5Editing &f%dungeon% &#B376E5(&f%spawns% &#B376E5points): build freely, your tools are in your inventory. Right click with a tool to use it.'
+  not-editing: '&#FF5C5CYou are not in a dungeon being edited.'
+  saving: '&#B376E5Saving &f%dungeon%&#B376E5...'
+  saved: '&#2ECF7B%dungeon% saved: the next runs use the new map and points.'
+  cancelled: '&#B376E5Edit closed without saving the builds (moved points stay saved).'
+  added: '&#2ECF7B%mob% added here &7(%spawns% points).'
+  removed: '&#2ECF7B%mob% removed &7(%spawns% points).'
+  moved: '&#2ECF7B%mob% moved here.'
+  start: '&#2ECF7BDungeon start placed here.'
+  objective-on: '&#2ECF7B%mob% is now an objective &7(%objectives% objectives).'
+  objective-off: '&#B376E5%mob% is no longer an objective &7(%objectives% objectives).'
+  none-near: '&#FF5C5CNo monster point within 6 blocks.'
+  usage: '&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% edit <dungeon> | add <monster> | remove | move | start | objective | save | cancel'
+  unknown-mob: '&#FF5C5CUnknown monster: %mob%'
+  marker: '&#FFD94D%mob%'
+  marker-objective: '&#FF5C5C★ %mob% &7(objective)'
+  marker-start: '&#2ECF7B▶ Start'
+  inventory-full: '&#FF5C5CInventory full: make room to receive the edit tools.'
+  chosen: '&#2ECF7BChosen monster: &f%mob%&#2ECF7B. Right click a block to place it.'
+  picked: '&#B376E5%mob% picked up: right click a block to put it down.'
+  confirm-save: '&#FFD94DRight click once more to save the map and the points.'
+  confirm-quit: '&#FFD94DRight click once more to quit without saving the builds.'
+  tool:
+    place:
+      name: '&#FFD94DPlace a monster'
+      chosen: ' &7(%mob%&7)'
+      description: 'Places the chosen monster on the block aimed at. Right click the air or sneak: choose the monster. Right click a point: take its monster.'
+      action: Place / choose
+    move:
+      name: '&#FFD94DMove a point'
+      description: Right click a point to pick it up, then a block to put it down.
+      action: Pick up / put down
+    remove:
+      name: '&#FFD94DRemove a point'
+      description: Removes the point aimed at, or the nearest within 6 blocks.
+      action: Remove
+    objective:
+      name: '&#FFD94DObjective'
+      description: The monster of the point aimed at becomes an objective of the dungeon (to defeat to win), or no longer one.
+      action: Toggle
+    start:
+      name: '&#FFD94DStart'
+      description: 'Places the dungeon''s start on the block aimed at (in the air: where you stand).'
+      action: Place the start
+    save:
+      name: '&#2ECF7BSave'
+      description: Saves the builds into the map and closes the edit. The next runs use the new version.
+      action: Save (twice)
+    quit:
+      name: '&#FF5C5CQuit without saving'
+      description: Closes the edit without keeping the builds. Moved points stay saved.
+      action: Quit (twice)
+  menu:
+    title: 'Monsters: %dungeon%'
+    placed: Placed
+    rank: Rank
+    rank-trash: Trash
+    rank-miniboss: Miniboss
+    rank-boss: Boss
+    objective: Dungeon objective
+    current: Chosen monster
+    choose: Choose

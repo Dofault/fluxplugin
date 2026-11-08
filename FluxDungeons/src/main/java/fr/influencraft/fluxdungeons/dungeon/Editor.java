@@ -1,20 +1,49 @@
 package fr.influencraft.fluxdungeons.dungeon;
 
 import fr.influencraft.flux.api.FluxPlugin;
+import fr.influencraft.flux.api.inventory.Items;
+import fr.influencraft.flux.api.inventory.Lore;
 import fr.influencraft.flux.api.text.Texts;
+import fr.influencraft.flux.api.util.Sounds;
+import fr.influencraft.fluxdungeons.mob.MobTemplate;
+import fr.influencraft.fluxdungeons.mob.Mobs;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Display;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Interaction;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -24,12 +53,21 @@ import java.util.UUID;
 import java.util.function.Function;
 
 /**
- * Edit mode of an imported dungeon: its original map is opened (a working copy, written back on save), its spawn
- * points and start shown in the world, and moved in game. Builds go back into the map folder; points go into
- * {@code edits/<id>.yml}, which the importer never touches and which overrides the dungeon file's {@code map} points.
- * A dungeon being edited cannot be started.
+ * Edit mode of an imported dungeon: its original map is opened (a working copy, written back on save), and edited
+ * with tools in hand. Each spawn point is shown (name above, clickable body), the start too.
+ * <ul>
+ *   <li>Place: right click a block puts the chosen monster there; right click the air (or sneak + right click) opens
+ *   the list of the dungeon's monsters to choose one.</li>
+ *   <li>Move: right click a point picks it up, right click a block puts it down.</li>
+ *   <li>Remove, objective: right click a point (or near one).</li>
+ *   <li>Start: right click a block (or the air: where the player stands).</li>
+ *   <li>Save, quit without saving: two right clicks.</li>
+ * </ul>
+ * Builds go back into the map folder on save; points go into {@code edits/<id>.yml} at each change, which the
+ * importer never touches and which overrides the dungeon file's {@code map} points. A dungeon being edited cannot
+ * be started. Commands ({@code /fluxdungeons edit ...}) do the same as the tools.
  */
-public final class Editor {
+public final class Editor implements Listener {
 
     /** One open edit: the map's world, its points as being edited, the markers shown. */
     private static final class Session {
@@ -37,8 +75,9 @@ public final class Editor {
         final World world;
         final List<DungeonDefinition.Spawn> spawns;
         final Set<String> objectives;
+        final List<String> catalog;
         double[] start;
-        final List<TextDisplay> markers = new ArrayList<>();
+        final Map<String, Entity[]> markers = new HashMap<>();
         boolean saving;
 
         Session(String dungeon, World world, DungeonDefinition.MapSpec map) {
@@ -47,25 +86,73 @@ public final class Editor {
             this.spawns = new ArrayList<>(map.spawns());
             this.objectives = new LinkedHashSet<>(map.objectives());
             this.start = map.start().clone();
+            Set<String> c = new LinkedHashSet<>();
+            for (DungeonDefinition.Spawn sp : map.spawns()) c.add(sp.mob());
+            c.addAll(map.objectives());
+            this.catalog = new ArrayList<>(c);
+        }
+    }
+
+    /** The monster list menu. */
+    private static final class MobMenu implements InventoryHolder {
+        final Session session;
+        final int page;
+        final List<String> shown = new ArrayList<>();
+        Inventory inventory;
+
+        MobMenu(Session session, int page) {
+            this.session = session;
+            this.page = page;
+        }
+
+        @Override
+        public Inventory getInventory() {
+            return inventory;
+        }
+    }
+
+    private enum Tool {
+        PLACE(Material.ZOMBIE_SPAWN_EGG), MOVE(Material.LEAD), REMOVE(Material.BARRIER), OBJECTIVE(Material.NETHER_STAR),
+        START(Material.RECOVERY_COMPASS), SAVE(Material.LIME_DYE), QUIT(Material.RED_DYE);
+
+        final Material material;
+
+        Tool(Material material) {
+            this.material = material;
+        }
+
+        String key() {
+            return name().toLowerCase(Locale.ROOT);
         }
     }
 
     private static final String MARKER_TAG = "fluxdungeons_marker";
-    private static final double REACH = 6;
+    private static final double REACH = 6, MARKER_RANGE = 48;
+    private static final int PAGE = 45;
+    private static final long CONFIRM_MS = 3000;
 
     private final FluxPlugin plugin;
     private final WorldInstances instances;
     private final Function<String, DungeonDefinition> definitions;
+    private final Mobs mobs;
+    private final NamespacedKey toolKey, pointKey;
     private Runnable reload = () -> {
     };
     private final Map<String, Session> sessions = new HashMap<>();
     private final Set<String> opening = new java.util.HashSet<>();
     private final Map<UUID, Location> back = new HashMap<>();
+    private final Map<UUID, GameMode> modes = new HashMap<>();
+    private final Map<UUID, String> chosen = new HashMap<>();
+    private final Map<UUID, String> carried = new HashMap<>();
+    private final Map<UUID, Long> confirm = new HashMap<>();
 
-    Editor(FluxPlugin plugin, WorldInstances instances, Function<String, DungeonDefinition> definitions) {
+    Editor(FluxPlugin plugin, WorldInstances instances, Function<String, DungeonDefinition> definitions, Mobs mobs) {
         this.plugin = plugin;
         this.instances = instances;
         this.definitions = definitions;
+        this.mobs = mobs;
+        this.toolKey = new NamespacedKey(plugin, "edit_tool");
+        this.pointKey = new NamespacedKey(plugin, "edit_point");
     }
 
     /** What reloads the dungeons once a map or its points changed. */
@@ -78,15 +165,12 @@ public final class Editor {
         return sessions.containsKey(dungeon) || opening.contains(dungeon);
     }
 
-    /** True when the world is an edit world. */
-    public boolean editWorld(World w) {
-        if (w == null) return false;
-        for (Session s : sessions.values()) if (s.world.equals(w)) return true;
-        return false;
+    private Session sessionOf(Player p) {
+        return sessionOf(p.getWorld());
     }
 
-    private Session sessionOf(Player p) {
-        for (Session s : sessions.values()) if (s.world.equals(p.getWorld())) return s;
+    private Session sessionOf(World w) {
+        for (Session s : sessions.values()) if (s.world.equals(w)) return s;
         return null;
     }
 
@@ -94,7 +178,7 @@ public final class Editor {
         return "fde_" + dungeon.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_]", "_");
     }
 
-    // ---------------------------------------------------------------- open, save, cancel
+    // ---------------------------------------------------------------- open, save, quit
 
     /** Opens the dungeon in edit mode (or joins the open edit) and brings the player to its start. */
     public void open(Player p, DungeonDefinition def) {
@@ -129,9 +213,14 @@ public final class Editor {
     }
 
     private void enter(Player p, Session s) {
-        if (!s.world.equals(p.getWorld())) back.putIfAbsent(p.getUniqueId(), p.getLocation());
+        if (!s.world.equals(p.getWorld())) {
+            back.putIfAbsent(p.getUniqueId(), p.getLocation());
+            modes.putIfAbsent(p.getUniqueId(), p.getGameMode());
+        }
         p.teleport(new Location(s.world, s.start[0], s.start[1], s.start[2], (float) s.start[3], (float) s.start[4]),
                 PlayerTeleportEvent.TeleportCause.PLUGIN);
+        p.setGameMode(GameMode.CREATIVE);
+        giveTools(p);
         plugin.messages().send(p, "edit.opened", "%dungeon%", definitions.apply(s.dungeon).name(),
                 "%spawns%", String.valueOf(s.spawns.size()));
     }
@@ -153,7 +242,10 @@ public final class Editor {
         instances.saveBack(s.world, folder, () -> {
             sessions.remove(s.dungeon);
             reload.run();
-            if (p.isOnline()) plugin.messages().send(p, "edit.saved", "%dungeon%", def.name());
+            if (p.isOnline()) {
+                plugin.messages().send(p, "edit.saved", "%dungeon%", def.name());
+                Sounds.cue(p, "success");
+            }
         });
     }
 
@@ -183,25 +275,244 @@ public final class Editor {
 
     private void sendBack(Session s) {
         for (Player q : List.copyOf(s.world.getPlayers())) {
+            leaveEdit(q);
             Location to = back.remove(q.getUniqueId());
             if (to == null || to.getWorld() == null || to.getWorld().equals(s.world)) to = Bukkit.getWorlds().get(0).getSpawnLocation();
             q.teleport(to, PlayerTeleportEvent.TeleportCause.PLUGIN);
         }
     }
 
-    // ---------------------------------------------------------------- points
+    /** Tools taken back, game mode given back. */
+    private void leaveEdit(Player p) {
+        takeTools(p);
+        GameMode mode = modes.remove(p.getUniqueId());
+        if (mode != null) p.setGameMode(mode);
+        chosen.remove(p.getUniqueId());
+        carried.remove(p.getUniqueId());
+        confirm.remove(p.getUniqueId());
+    }
+
+    // ---------------------------------------------------------------- tools
+
+    private void giveTools(Player p) {
+        takeTools(p);
+        for (Tool t : Tool.values()) {
+            ItemStack item = tool(p, t);
+            var left = p.getInventory().addItem(item);
+            if (!left.isEmpty()) {
+                plugin.messages().send(p, "edit.inventory-full");
+                return;
+            }
+        }
+    }
+
+    private void takeTools(Player p) {
+        ItemStack[] contents = p.getInventory().getContents();
+        for (int i = 0; i < contents.length; i++) if (toolOf(contents[i]) != null) p.getInventory().setItem(i, null);
+    }
+
+    private ItemStack tool(Player p, Tool t) {
+        String chosenMob = chosen.get(p.getUniqueId());
+        String name = plugin.messages().raw("edit.tool." + t.key() + ".name");
+        if (t == Tool.PLACE && chosenMob != null) name += plugin.messages().raw("edit.tool.place.chosen", "%mob%", mobName(chosenMob));
+        List<String> lore = Lore.create().description(plugin.messages().raw("edit.tool." + t.key() + ".description"))
+                .right(plugin.messages().raw("edit.tool." + t.key() + ".action")).build();
+        ItemStack item = Items.of(t.material.name(), name, lore, p);
+        item.editMeta(m -> m.getPersistentDataContainer().set(toolKey, PersistentDataType.STRING, t.key()));
+        return item;
+    }
+
+    private Tool toolOf(ItemStack item) {
+        if (item == null || !item.hasItemMeta()) return null;
+        String k = item.getItemMeta().getPersistentDataContainer().get(toolKey, PersistentDataType.STRING);
+        if (k == null) return null;
+        for (Tool t : Tool.values()) if (t.key().equals(k)) return t;
+        return null;
+    }
+
+    private void refreshPlaceTool(Player p) {
+        ItemStack[] contents = p.getInventory().getContents();
+        for (int i = 0; i < contents.length; i++) if (toolOf(contents[i]) == Tool.PLACE) p.getInventory().setItem(i, tool(p, Tool.PLACE));
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onUse(PlayerInteractEvent e) {
+        if (e.getHand() != EquipmentSlot.HAND) return;
+        Tool t = toolOf(e.getItem());
+        if (t == null) return;
+        e.setCancelled(true);
+        Player p = e.getPlayer();
+        Session s = sessionOf(p);
+        if (s == null || s.saving) return;
+        boolean right = e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK;
+        if (!right) return;
+        Block clicked = e.getAction() == Action.RIGHT_CLICK_BLOCK ? e.getClickedBlock() : null;
+        Location at = clicked == null ? p.getLocation() : on(clicked, e.getBlockFace(), p);
+        switch (t) {
+            case PLACE -> {
+                String mob = chosen.get(p.getUniqueId());
+                if (clicked == null || p.isSneaking() || mob == null) openMenu(p, s, 0);
+                else addAt(p, s, mob, at);
+            }
+            case MOVE -> {
+                String key = carried.get(p.getUniqueId());
+                if (key == null) {
+                    int i = nearest(s, clicked == null ? p.getLocation() : clicked.getLocation().add(0.5, 1, 0.5));
+                    if (i < 0) plugin.messages().send(p, "edit.none-near");
+                    else pickUp(p, s, i);
+                } else putDown(p, s, key, at);
+            }
+            case REMOVE, OBJECTIVE -> {
+                int i = nearest(s, clicked == null ? p.getLocation() : clicked.getLocation().add(0.5, 1, 0.5));
+                if (i < 0) plugin.messages().send(p, "edit.none-near");
+                else if (t == Tool.REMOVE) removeAt(p, s, i);
+                else toggleObjective(p, s, i);
+            }
+            case START -> startAt(p, s, at);
+            case SAVE, QUIT -> {
+                Long first = confirm.get(p.getUniqueId());
+                long now = System.currentTimeMillis();
+                if (first == null || now - first > CONFIRM_MS) {
+                    confirm.put(p.getUniqueId(), now);
+                    plugin.messages().send(p, t == Tool.SAVE ? "edit.confirm-save" : "edit.confirm-quit");
+                    Sounds.cue(p, "confirm");
+                    return;
+                }
+                confirm.remove(p.getUniqueId());
+                if (t == Tool.SAVE) save(p);
+                else cancel(p);
+            }
+        }
+    }
+
+    /** Right click on a point's body with a tool. */
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onPoint(PlayerInteractEntityEvent e) {
+        if (e.getHand() != EquipmentSlot.HAND || !(e.getRightClicked() instanceof Interaction hit)) return;
+        String key = hit.getPersistentDataContainer().get(pointKey, PersistentDataType.STRING);
+        if (key == null) return;
+        e.setCancelled(true);
+        Player p = e.getPlayer();
+        Session s = sessionOf(p);
+        Tool t = toolOf(p.getInventory().getItemInMainHand());
+        if (s == null || s.saving || t == null) return;
+        int i = indexOf(s, key);
+        if (i < 0) return;
+        switch (t) {
+            case REMOVE -> removeAt(p, s, i);
+            case OBJECTIVE -> toggleObjective(p, s, i);
+            case MOVE -> {
+                if (carried.containsKey(p.getUniqueId())) putDown(p, s, carried.get(p.getUniqueId()), hit.getLocation());
+                else pickUp(p, s, i);
+            }
+            case PLACE -> {
+                // the clicked point's monster becomes the chosen one
+                chosen.put(p.getUniqueId(), s.spawns.get(i).mob());
+                refreshPlaceTool(p);
+                plugin.messages().send(p, "edit.chosen", "%mob%", mobName(s.spawns.get(i).mob()));
+            }
+            default -> {
+            }
+        }
+    }
+
+    /** Where a click on a block puts a point: on top of it (or against the clicked face), facing the player. */
+    private static Location on(Block b, BlockFace face, Player p) {
+        Block target = face == null || face == BlockFace.UP ? b.getRelative(BlockFace.UP) : b.getRelative(face);
+        Location l = target.getLocation().add(0.5, 0, 0.5);
+        l.setYaw(p.getLocation().getYaw() + 180);
+        return l;
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onDrop(PlayerDropItemEvent e) {
+        if (toolOf(e.getItemDrop().getItemStack()) != null) e.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onWorld(PlayerChangedWorldEvent e) {
+        if (sessionOf(e.getFrom()) != null && sessionOf(e.getPlayer()) == null) leaveEdit(e.getPlayer());
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent e) {
+        if (sessionOf(e.getPlayer()) != null) leaveEdit(e.getPlayer());
+    }
+
+    // ---------------------------------------------------------------- monster menu
+
+    private void openMenu(Player p, Session s, int page) {
+        int pages = Math.max(1, (s.catalog.size() + PAGE - 1) / PAGE);
+        int pg = Math.max(0, Math.min(page, pages - 1));
+        MobMenu menu = new MobMenu(s, pg);
+        Inventory inv = Bukkit.createInventory(menu, 54, Texts.parse(plugin.messages().raw("edit.menu.title",
+                "%dungeon%", Texts.ampersand(Texts.parse(definitions.apply(s.dungeon).name())))));
+        menu.inventory = inv;
+        String current = chosen.get(p.getUniqueId());
+        for (int i = pg * PAGE, slot = 0; i < s.catalog.size() && slot < PAGE; i++, slot++) {
+            String id = s.catalog.get(i);
+            MobTemplate t = mobs.template(id);
+            Material egg = t == null ? null : Material.matchMaterial(t.type().name() + "_SPAWN_EGG");
+            long placed = s.spawns.stream().filter(sp -> sp.mob().equals(id)).count();
+            Lore lore = Lore.create().kv(plugin.messages().raw("edit.menu.placed"), placed);
+            if (t != null) lore.kv(plugin.messages().raw("edit.menu.rank"), plugin.messages().raw("edit.menu.rank-" + t.extra().rank().toLowerCase(Locale.ROOT)));
+            if (s.objectives.contains(id)) lore.info(plugin.messages().raw("edit.menu.objective"));
+            if (id.equals(current)) lore.ok(plugin.messages().raw("edit.menu.current"));
+            lore.left(plugin.messages().raw("edit.menu.choose"));
+            ItemStack item = Items.of((egg == null ? Material.NAME_TAG : egg).name(), mobName(id), lore.build(), p);
+            inv.setItem(slot, item);
+            menu.shown.add(id);
+        }
+        if (pg > 0) inv.setItem(45, arrow(p, "influitems:btn_prev"));
+        if (pg < pages - 1) inv.setItem(53, arrow(p, "influitems:btn_next"));
+        p.openInventory(inv);
+    }
+
+    private static ItemStack arrow(Player p, String itemsAdder) {
+        ItemStack item = Items.of(Items.itemsAdderExists(itemsAdder) ? "itemsadder:" + itemsAdder : "ARROW", p);
+        item.editMeta(m -> m.setHideTooltip(true));
+        return item;
+    }
+
+    @EventHandler
+    public void onMenuClick(InventoryClickEvent e) {
+        if (!(e.getView().getTopInventory().getHolder() instanceof MobMenu menu)) return;
+        e.setCancelled(true);
+        if (!(e.getWhoClicked() instanceof Player p) || e.getClickedInventory() != e.getView().getTopInventory()) return;
+        int slot = e.getSlot();
+        if (slot == 45 && menu.page > 0) {
+            Sounds.cue(p, "page");
+            openMenu(p, menu.session, menu.page - 1);
+        } else if (slot == 53) {
+            Sounds.cue(p, "page");
+            openMenu(p, menu.session, menu.page + 1);
+        } else if (slot < menu.shown.size()) {
+            String id = menu.shown.get(slot);
+            chosen.put(p.getUniqueId(), id);
+            refreshPlaceTool(p);
+            p.closeInventory();
+            Sounds.cue(p, "click");
+            plugin.messages().send(p, "edit.chosen", "%mob%", mobName(id));
+        }
+    }
+
+    @EventHandler
+    public void onMenuDrag(InventoryDragEvent e) {
+        if (e.getView().getTopInventory().getHolder() instanceof MobMenu) e.setCancelled(true);
+    }
+
+    private String mobName(String id) {
+        MobTemplate t = mobs.template(id);
+        return t == null ? id : t.name();
+    }
+
+    // ---------------------------------------------------------------- points (commands)
 
     /** Adds a spawn point of this monster where the player stands. */
     public void add(Player p, String mob) {
         Session s = sessionOf(p);
-        if (s == null) {
-            plugin.messages().send(p, "edit.not-editing");
-            return;
-        }
-        Location l = p.getLocation();
-        s.spawns.add(new DungeonDefinition.Spawn(mob, round(l.getX()), round(l.getY()), round(l.getZ()), Math.round(l.getYaw())));
-        changed(s);
-        plugin.messages().send(p, "edit.added", "%mob%", mob, "%spawns%", String.valueOf(s.spawns.size()));
+        if (s == null) plugin.messages().send(p, "edit.not-editing");
+        else addAt(p, s, mob, p.getLocation());
     }
 
     /** Removes the spawn point nearest to the player (within a few blocks). */
@@ -212,14 +523,8 @@ public final class Editor {
             return;
         }
         int i = nearest(s, p.getLocation());
-        if (i < 0) {
-            plugin.messages().send(p, "edit.none-near");
-            return;
-        }
-        DungeonDefinition.Spawn gone = s.spawns.remove(i);
-        if (s.spawns.stream().noneMatch(sp -> sp.mob().equals(gone.mob()))) s.objectives.remove(gone.mob());
-        changed(s);
-        plugin.messages().send(p, "edit.removed", "%mob%", gone.mob(), "%spawns%", String.valueOf(s.spawns.size()));
+        if (i < 0) plugin.messages().send(p, "edit.none-near");
+        else removeAt(p, s, i);
     }
 
     /** Moves the spawn point nearest to the player to where he stands. */
@@ -230,28 +535,15 @@ public final class Editor {
             return;
         }
         int i = nearest(s, p.getLocation());
-        if (i < 0) {
-            plugin.messages().send(p, "edit.none-near");
-            return;
-        }
-        Location l = p.getLocation();
-        DungeonDefinition.Spawn old = s.spawns.get(i);
-        s.spawns.set(i, new DungeonDefinition.Spawn(old.mob(), round(l.getX()), round(l.getY()), round(l.getZ()), Math.round(l.getYaw())));
-        changed(s);
-        plugin.messages().send(p, "edit.moved", "%mob%", old.mob());
+        if (i < 0) plugin.messages().send(p, "edit.none-near");
+        else putDown(p, s, key(s.spawns.get(i)), p.getLocation());
     }
 
     /** Puts the start of the dungeon where the player stands. */
     public void start(Player p) {
         Session s = sessionOf(p);
-        if (s == null) {
-            plugin.messages().send(p, "edit.not-editing");
-            return;
-        }
-        Location l = p.getLocation();
-        s.start = new double[]{round(l.getX()), round(l.getY()), round(l.getZ()), Math.round(l.getYaw()), Math.round(l.getPitch())};
-        changed(s);
-        plugin.messages().send(p, "edit.start");
+        if (s == null) plugin.messages().send(p, "edit.not-editing");
+        else startAt(p, s, p.getLocation());
     }
 
     /** Makes the monster of the nearest point an objective of the dungeon, or no longer one. */
@@ -262,15 +554,8 @@ public final class Editor {
             return;
         }
         int i = nearest(s, p.getLocation());
-        if (i < 0) {
-            plugin.messages().send(p, "edit.none-near");
-            return;
-        }
-        String mob = s.spawns.get(i).mob();
-        boolean now = s.objectives.add(mob) || !s.objectives.remove(mob);
-        changed(s);
-        plugin.messages().send(p, now ? "edit.objective-on" : "edit.objective-off", "%mob%", mob,
-                "%objectives%", String.valueOf(s.objectives.size()));
+        if (i < 0) plugin.messages().send(p, "edit.none-near");
+        else toggleObjective(p, s, i);
     }
 
     /** Monsters already placed in the dungeon the player edits (completion). */
@@ -278,6 +563,61 @@ public final class Editor {
         Session s = sessionOf(p);
         if (s == null) return List.of();
         return s.spawns.stream().map(DungeonDefinition.Spawn::mob).distinct().sorted().toList();
+    }
+
+    // ---------------------------------------------------------------- points (shared)
+
+    private void addAt(Player p, Session s, String mob, Location l) {
+        s.spawns.add(new DungeonDefinition.Spawn(mob, round(l.getX()), round(l.getY()), round(l.getZ()), Math.round(l.getYaw())));
+        if (!s.catalog.contains(mob)) s.catalog.add(mob);
+        changed(s);
+        Sounds.cue(p, "success");
+        plugin.messages().send(p, "edit.added", "%mob%", mobName(mob), "%spawns%", String.valueOf(s.spawns.size()));
+    }
+
+    private void removeAt(Player p, Session s, int i) {
+        DungeonDefinition.Spawn gone = s.spawns.remove(i);
+        if (s.spawns.stream().noneMatch(sp -> sp.mob().equals(gone.mob()))) s.objectives.remove(gone.mob());
+        carried.values().remove(key(gone));
+        changed(s);
+        Sounds.cue(p, "remove");
+        plugin.messages().send(p, "edit.removed", "%mob%", mobName(gone.mob()), "%spawns%", String.valueOf(s.spawns.size()));
+    }
+
+    private void pickUp(Player p, Session s, int i) {
+        String key = key(s.spawns.get(i));
+        carried.put(p.getUniqueId(), key);
+        Entity[] m = s.markers.get(key);
+        if (m != null && m[0] instanceof TextDisplay d) d.setGlowing(true);
+        Sounds.cue(p, "click");
+        plugin.messages().send(p, "edit.picked", "%mob%", mobName(s.spawns.get(i).mob()));
+    }
+
+    private void putDown(Player p, Session s, String key, Location l) {
+        carried.remove(p.getUniqueId());
+        int i = indexOf(s, key);
+        if (i < 0) return;
+        DungeonDefinition.Spawn old = s.spawns.get(i);
+        s.spawns.set(i, new DungeonDefinition.Spawn(old.mob(), round(l.getX()), round(l.getY()), round(l.getZ()), Math.round(l.getYaw())));
+        changed(s);
+        Sounds.cue(p, "success");
+        plugin.messages().send(p, "edit.moved", "%mob%", mobName(old.mob()));
+    }
+
+    private void startAt(Player p, Session s, Location l) {
+        s.start = new double[]{round(l.getX()), round(l.getY()), round(l.getZ()), Math.round(l.getYaw()), Math.round(l.getPitch())};
+        changed(s);
+        Sounds.cue(p, "success");
+        plugin.messages().send(p, "edit.start");
+    }
+
+    private void toggleObjective(Player p, Session s, int i) {
+        String mob = s.spawns.get(i).mob();
+        boolean now = s.objectives.add(mob) || !s.objectives.remove(mob);
+        changed(s);
+        Sounds.cue(p, now ? "toggle-on" : "toggle-off");
+        plugin.messages().send(p, now ? "edit.objective-on" : "edit.objective-off", "%mob%", mobName(mob),
+                "%objectives%", String.valueOf(s.objectives.size()));
     }
 
     private int nearest(Session s, Location at) {
@@ -295,9 +635,19 @@ public final class Editor {
         return best;
     }
 
+    private static String key(DungeonDefinition.Spawn sp) {
+        return sp.mob() + "@" + sp.x() + "," + sp.y() + "," + sp.z();
+    }
+
+    private static int indexOf(Session s, String key) {
+        for (int i = 0; i < s.spawns.size(); i++) if (key(s.spawns.get(i)).equals(key)) return i;
+        return -1;
+    }
+
     private void changed(Session s) {
         writePoints(s);
-        markers(s);
+        clearMarkers(s);
+        draw(s);
     }
 
     private static double round(double v) {
@@ -313,7 +663,7 @@ public final class Editor {
         y.set("map.objectives", new ArrayList<>(s.objectives));
         List<Map<String, Object>> spawns = new ArrayList<>();
         for (DungeonDefinition.Spawn sp : s.spawns) {
-            Map<String, Object> m = new java.util.LinkedHashMap<>();
+            Map<String, Object> m = new LinkedHashMap<>();
             m.put("mob", sp.mob());
             m.put("at", List.of(sp.x(), sp.y(), sp.z(), (double) sp.yaw()));
             spawns.add(m);
@@ -330,52 +680,46 @@ public final class Editor {
 
     // ---------------------------------------------------------------- markers
 
-    /** Markers are redrawn around the players (next {@link #tick}). */
-    private void markers(Session s) {
-        clearMarkers(s);
-        draw(s);
-    }
-
     /** Every two seconds: markers within {@link #MARKER_RANGE} blocks of a player in an edit world, none farther. */
     void tick() {
         for (Session s : sessions.values()) if (!s.saving) draw(s);
     }
 
     /**
-     * Name of each monster above its spawn point (objectives marked), and the start, only near players: spawning a
-     * marker loads its chunk, and a map may have hundreds of points. Markers are never saved in the map.
+     * Each point shown near players: its monster's name above (objectives marked) and a clickable body; the start
+     * too. Only near players, since spawning a marker loads its chunk and a map may have hundreds of points; markers
+     * are never saved in the map.
      */
     private void draw(Session s) {
         List<Location> players = s.world.getPlayers().stream().map(Player::getLocation).toList();
-        s.markers.removeIf(d -> {
-            if (d.isValid() && near(d.getLocation(), players)) return false;
-            d.remove();
+        s.markers.entrySet().removeIf(en -> {
+            Entity[] m = en.getValue();
+            if (m[0].isValid() && near(m[0].getLocation(), players)) return false;
+            for (Entity x : m) x.remove();
             return true;
         });
-        Set<String> shown = new java.util.HashSet<>();
-        for (TextDisplay d : s.markers) shown.add(key(d.getLocation()));
+        Set<String> carriedKeys = new java.util.HashSet<>(carried.values());
         for (DungeonDefinition.Spawn sp : s.spawns) {
-            Location at = new Location(s.world, sp.x(), sp.y() + 2.3, sp.z());
-            if (!near(at, players) || !shown.add(key(at))) continue;
-            String text = plugin.messages().raw(s.objectives.contains(sp.mob()) ? "edit.marker-objective" : "edit.marker", "%mob%", sp.mob());
-            s.markers.add(marker(at, text));
+            String key = key(sp);
+            Location feet = new Location(s.world, sp.x(), sp.y(), sp.z());
+            if (s.markers.containsKey(key) || !near(feet, players)) continue;
+            String text = plugin.messages().raw(s.objectives.contains(sp.mob()) ? "edit.marker-objective" : "edit.marker", "%mob%", mobName(sp.mob()));
+            TextDisplay label = label(feet.clone().add(0, 2.3, 0), text);
+            if (carriedKeys.contains(key)) label.setGlowing(true);
+            s.markers.put(key, new Entity[]{label, body(feet, key)});
         }
-        Location start = new Location(s.world, s.start[0], s.start[1] + 2.3, s.start[2]);
-        if (near(start, players) && shown.add(key(start))) s.markers.add(marker(start, plugin.messages().raw("edit.marker-start")));
+        Location start = new Location(s.world, s.start[0], s.start[1], s.start[2]);
+        if (!s.markers.containsKey("start") && near(start, players)) {
+            s.markers.put("start", new Entity[]{label(start.clone().add(0, 2.3, 0), plugin.messages().raw("edit.marker-start"))});
+        }
     }
-
-    private static final double MARKER_RANGE = 48;
 
     private static boolean near(Location at, List<Location> players) {
         for (Location l : players) if (l.getWorld() == at.getWorld() && l.distanceSquared(at) <= MARKER_RANGE * MARKER_RANGE) return true;
         return false;
     }
 
-    private static String key(Location l) {
-        return Math.round(l.getX() * 10) + "," + Math.round(l.getY() * 10) + "," + Math.round(l.getZ() * 10);
-    }
-
-    private static TextDisplay marker(Location at, String text) {
+    private static TextDisplay label(Location at, String text) {
         return at.getWorld().spawn(at, TextDisplay.class, d -> {
             d.text(Texts.parse(text));
             d.setBillboard(Display.Billboard.CENTER);
@@ -385,10 +729,21 @@ public final class Editor {
         });
     }
 
+    private Interaction body(Location feet, String key) {
+        return feet.getWorld().spawn(feet, Interaction.class, i -> {
+            i.setInteractionWidth(0.9f);
+            i.setInteractionHeight(1.9f);
+            i.setResponsive(true);
+            i.setPersistent(false);
+            i.addScoreboardTag(MARKER_TAG);
+            i.getPersistentDataContainer().set(pointKey, PersistentDataType.STRING, key);
+        });
+    }
+
     private static void clearMarkers(Session s) {
-        for (TextDisplay d : s.markers) d.remove();
+        for (Entity[] m : s.markers.values()) for (Entity x : m) x.remove();
         s.markers.clear();
-        // chunks unloaded since keep their markers out of the list: never write them into the map
-        for (TextDisplay d : s.world.getEntitiesByClass(TextDisplay.class)) if (d.getScoreboardTags().contains(MARKER_TAG)) d.remove();
+        // markers left in chunks unloaded meanwhile: never write them into the map
+        for (Entity e : s.world.getEntities()) if (e.getScoreboardTags().contains(MARKER_TAG)) e.remove();
     }
 }

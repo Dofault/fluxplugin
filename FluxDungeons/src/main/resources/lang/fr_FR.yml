@@ -1,164 +1,198 @@
-prefix: "&#B376E5ᴅᴏɴᴊᴏɴ &8▸ "
-players-only: "&#FF5C5CCommande réservée aux joueurs."
-unknown-dungeon: "&#FF5C5CDonjon inconnu."
-unknown-class: "&#FF5C5CClasse inconnue."
-unknown-player: "&#FF5C5CJoueur introuvable."
-not-in-run: "&#FF5C5CTu n'es pas dans un donjon."
-dungeon-usage: "&#FF5C5C/%flux_cmd_fluxdungeons_dungeon% [jouer <donjon> | quitter | classe [classe] | liste]"
-party-usage: "&#FF5C5C/%flux_cmd_fluxdungeons_party% [inviter | accepter | quitter | expulser | chef] [joueur]"
-admin-usage: "!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% voir [donjon] | edit <donjon> | build <donjon|all> | template <donjon> | start <donjon> <joueur> | stop <joueur|all> | give <joueur> <objet> [n] | reset <joueur> | runs | reload"
-list-line: "&#FFD94D%dungeon% &8(&7%id%&8) &#B376E5%min% à %max% joueurs, niveau conseillé &f%level%"
-
+prefix: '&#B376E5ᴅᴏɴᴊᴏɴ &8▸ '
+players-only: '&#FF5C5CCommande réservée aux joueurs.'
+unknown-dungeon: '&#FF5C5CDonjon inconnu.'
+unknown-class: '&#FF5C5CClasse inconnue.'
+unknown-player: '&#FF5C5CJoueur introuvable.'
+not-in-run: '&#FF5C5CTu n''es pas dans un donjon.'
+dungeon-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_dungeon% [jouer <donjon> | quitter | classe [classe] | liste]'
+party-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_party% [inviter | accepter | quitter | expulser | chef] [joueur]'
+admin-usage: '!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% voir [donjon] | edit <donjon> | build <donjon|all> | template <donjon> | start <donjon> <joueur> | stop <joueur|all> | give <joueur> <objet>
+  [n] | reset <joueur> | runs | reload'
+list-line: '&#FFD94D%dungeon% &8(&7%id%&8) &#B376E5%min% à %max% joueurs, niveau conseillé &f%level%'
 main:
-  title: "Donjons"
-  no-class: "&#FF5C5CTu n'as pas encore de classe : choisis-en une avant d'entrer."
-  class: "&#B376E5Ta classe : %class% &7niveau &f%level%"
-  solo: "&#B376E5Tu joues seul. &7Forme un groupe avec /%flux_cmd_fluxdungeons_party% inviter <joueur>."
-  party: "&#B376E5Ton groupe : &f%count% &#B376E5joueur(s), chef &f%leader%"
-  in-run: "&#FFD94DTu es dans %dungeon%."
-  leave: "&#FF5C5CQuitter le donjon"
-  dungeon: "&#FFD94D%dungeon%\n&#B376E5%min% à %max% joueurs, niveau conseillé &f%level%"
-  play: "&#2ECF7BJouer : &f%dungeon%"
-  choose-class: "&#FFD94DChoisir ma classe"
+  title: Donjons
+  no-class: '&#FF5C5CTu n''as pas encore de classe : choisis-en une avant d''entrer.'
+  class: '&#B376E5Ta classe : %class% &7niveau &f%level%'
+  solo: '&#B376E5Tu joues seul. &7Forme un groupe avec /%flux_cmd_fluxdungeons_party% inviter <joueur>.'
+  party: '&#B376E5Ton groupe : &f%count% &#B376E5joueur(s), chef &f%leader%'
+  in-run: '&#FFD94DTu es dans %dungeon%.'
+  leave: '&#FF5C5CQuitter le donjon'
+  dungeon: '&#FFD94D%dungeon%
 
+    &#B376E5%min% à %max% joueurs, niveau conseillé &f%level%'
+  play: '&#2ECF7BJouer : &f%dungeon%'
+  choose-class: '&#FFD94DChoisir ma classe'
 class:
-  title: "Classes"
-  intro: "&#B376E5Ta classe décide de ta vie, de tes dégâts et de tes trois compétences en donjon. Chaque classe garde son propre niveau : tu peux en changer à tout moment hors d'un donjon."
-  level: "niveau %level%"
-  current: "&#2ECF7B(actuelle)"
-  abilities: "Compétences :"
-  in-run: "&#FF5C5CTu ne peux pas changer de classe dans un donjon."
-  chosen: "&#2ECF7BTu joues maintenant %class% &#2ECF7B(niveau &f%level%&#2ECF7B)."
-
+  title: Classes
+  intro: '&#B376E5Ta classe décide de ta vie, de tes dégâts et de tes trois compétences en donjon. Chaque classe garde son propre niveau : tu peux en changer à tout moment hors d''un donjon.'
+  level: niveau %level%
+  current: '&#2ECF7B(actuelle)'
+  abilities: 'Compétences :'
+  in-run: '&#FF5C5CTu ne peux pas changer de classe dans un donjon.'
+  chosen: '&#2ECF7BTu joues maintenant %class% &#2ECF7B(niveau &f%level%&#2ECF7B).'
 start:
-  editing: "&#FF5C5CCe donjon est en cours d'édition, réessaie plus tard."
-  not-leader: "&#FF5C5CSeul le chef du groupe peut lancer un donjon."
-  too-few: "&#FF5C5CIl faut au moins &f%min% &#FF5C5Cjoueur(s) pour ce donjon."
-  too-many: "&#FF5C5CCe donjon accepte au plus &f%max% &#FF5C5Cjoueurs."
-  no-class: "&#FF5C5C%player% n'a pas encore choisi de classe : &f[/%flux_cmd_fluxdungeons_dungeon% classe]"
-  busy: "&#FF5C5C%player% est déjà dans un donjon."
-  no-slot: "&#FF5C5CTous les donjons sont occupés, réessaie dans quelques minutes."
-  failed: "&#FF5C5CLe donjon n'a pas pu démarrer."
-
+  editing: '&#FF5C5CCe donjon est en cours d''édition, réessaie plus tard.'
+  not-leader: '&#FF5C5CSeul le chef du groupe peut lancer un donjon.'
+  too-few: '&#FF5C5CIl faut au moins &f%min% &#FF5C5Cjoueur(s) pour ce donjon.'
+  too-many: '&#FF5C5CCe donjon accepte au plus &f%max% &#FF5C5Cjoueurs.'
+  no-class: '&#FF5C5C%player% n''a pas encore choisi de classe : &f[/%flux_cmd_fluxdungeons_dungeon% classe]'
+  busy: '&#FF5C5C%player% est déjà dans un donjon.'
+  no-slot: '&#FF5C5CTous les donjons sont occupés, réessaie dans quelques minutes.'
+  failed: '&#FF5C5CLe donjon n''a pas pu démarrer.'
 party:
-  invited: "&#2ECF7BInvitation envoyée à &f%player%&#2ECF7B."
-  invitation: "&#FFD94D%player% &#B376E5t'invite dans son groupe : &f[/%flux_cmd_fluxdungeons_party% accepter %player%]"
-  joined: "&#2ECF7B%player% a rejoint le groupe."
-  left: "&#B376E5Tu as quitté le groupe."
-  member-left: "&#B376E5%player% a quitté le groupe."
-  kicked: "&#B376E5%player% a été exclu du groupe."
-  you-were-kicked: "&#FF5C5CTu as été exclu du groupe."
-  new-leader: "&#FFD94D%player% &#B376E5est le nouveau chef du groupe."
-  none: "&#B376E5Tu n'es dans aucun groupe. &7Invite quelqu'un : /%flux_cmd_fluxdungeons_party% inviter <joueur>"
-  pending: "&#B376E5Invitation de &f%player% &#B376E5en attente : &f[/%flux_cmd_fluxdungeons_party% accepter %player%]"
-  info: "&#B376E5Groupe (&f%count%&7/&f%max%&#B376E5) : %members%"
+  invited: '&#2ECF7BInvitation envoyée à &f%player%&#2ECF7B.'
+  invitation: '&#FFD94D%player% &#B376E5t''invite dans son groupe : &f[/%flux_cmd_fluxdungeons_party% accepter %player%]'
+  joined: '&#2ECF7B%player% a rejoint le groupe.'
+  left: '&#B376E5Tu as quitté le groupe.'
+  member-left: '&#B376E5%player% a quitté le groupe.'
+  kicked: '&#B376E5%player% a été exclu du groupe.'
+  you-were-kicked: '&#FF5C5CTu as été exclu du groupe.'
+  new-leader: '&#FFD94D%player% &#B376E5est le nouveau chef du groupe.'
+  none: '&#B376E5Tu n''es dans aucun groupe. &7Invite quelqu''un : /%flux_cmd_fluxdungeons_party% inviter <joueur>'
+  pending: '&#B376E5Invitation de &f%player% &#B376E5en attente : &f[/%flux_cmd_fluxdungeons_party% accepter %player%]'
+  info: '&#B376E5Groupe (&f%count%&7/&f%max%&#B376E5) : %members%'
   error:
-    ok: ""
-    self: "&#FF5C5CTu ne peux pas faire ça sur toi-même."
-    already-in-party: "&#FF5C5CDéjà dans un groupe."
-    not-leader: "&#FF5C5CSeul le chef du groupe peut faire ça."
-    full: "&#FF5C5CLe groupe est complet."
-    no-invite: "&#FF5C5CAucune invitation en attente."
-    not-in-party: "&#FF5C5CTu n'es dans aucun groupe."
-    not-member: "&#FF5C5C%player% n'est pas dans ton groupe."
-
+    ok: ''
+    self: '&#FF5C5CTu ne peux pas faire ça sur toi-même.'
+    already-in-party: '&#FF5C5CDéjà dans un groupe.'
+    not-leader: '&#FF5C5CSeul le chef du groupe peut faire ça.'
+    full: '&#FF5C5CLe groupe est complet.'
+    no-invite: '&#FF5C5CAucune invitation en attente.'
+    not-in-party: '&#FF5C5CTu n''es dans aucun groupe.'
+    not-member: '&#FF5C5C%player% n''est pas dans ton groupe.'
 run:
-  preparing: "&#B376E5Préparation de &f%dungeon%&#B376E5..."
-  save-failed: "&#FF5C5CTes affaires n'ont pas pu être mises de côté : entrée annulée, rien n'a bougé."
-  title: "&#FFD94D%dungeon%"
-  subtitle: "&#B376E5%lives% vie(s) pour le groupe"
-  left: "&#B376E5Tu as quitté le donjon, tes affaires te sont rendues."
-  no-teleport: "&#FF5C5CTu es dans un donjon : pour sortir, &f[/%flux_cmd_fluxdungeons_dungeon% quitter]"
-  time-up: "&#FF5C5CTemps écoulé"
-  time-left: "&#FFD94DPlus que %time% !"
-  died: "&#FF5C5C%player% est tombé. &#B376E5Vies restantes : &f%lives%"
-  out: "&#FF5C5C%player% n'a plus de vie et regarde ses alliés."
-  wiped: "&#FF5C5CTout le groupe est tombé"
-  victory: "&#2ECF7BVictoire !"
-  victory-sub: "&#B376E5Donjon terminé en &f%time%"
-  loot: "&#FFD94DButin : %items%"
-  loot-none: "&#B376E5Pas de butin cette fois."
-  leaving: "&#B376E5Retour dans &f%seconds% s&#B376E5."
-  defeat: "&#FF5C5CDéfaite"
-
+  preparing: '&#B376E5Préparation de &f%dungeon%&#B376E5...'
+  save-failed: '&#FF5C5CTes affaires n''ont pas pu être mises de côté : entrée annulée, rien n''a bougé.'
+  title: '&#FFD94D%dungeon%'
+  subtitle: '&#B376E5%lives% vie(s) pour le groupe'
+  left: '&#B376E5Tu as quitté le donjon, tes affaires te sont rendues.'
+  no-teleport: '&#FF5C5CTu es dans un donjon : pour sortir, &f[/%flux_cmd_fluxdungeons_dungeon% quitter]'
+  time-up: '&#FF5C5CTemps écoulé'
+  time-left: '&#FFD94DPlus que %time% !'
+  died: '&#FF5C5C%player% est tombé. &#B376E5Vies restantes : &f%lives%'
+  out: '&#FF5C5C%player% n''a plus de vie et regarde ses alliés.'
+  wiped: '&#FF5C5CTout le groupe est tombé'
+  victory: '&#2ECF7BVictoire !'
+  victory-sub: '&#B376E5Donjon terminé en &f%time%'
+  loot: '&#FFD94DButin : %items%'
+  loot-none: '&#B376E5Pas de butin cette fois.'
+  leaving: '&#B376E5Retour dans &f%seconds% s&#B376E5.'
+  defeat: '&#FF5C5CDéfaite'
 room:
-  fight: "&#B376E5Les monstres se réveillent"
-  boss: "&#FF5C5CLe gardien se réveille"
-  wave: "&#FFD94DVague %wave%/%waves%"
-  cleared: "&#2ECF7BSalle nettoyée, la grille s'ouvre."
-
-level-up: "&#2ECF7BNiveau supérieur ! &#B376E5%class% &#B376E5passe niveau &f%level%&#B376E5."
-
+  fight: '&#B376E5Les monstres se réveillent'
+  boss: '&#FF5C5CLe gardien se réveille'
+  wave: '&#FFD94DVague %wave%/%waves%'
+  cleared: '&#2ECF7BSalle nettoyée, la grille s''ouvre.'
+level-up: '&#2ECF7BNiveau supérieur ! &#B376E5%class% &#B376E5passe niveau &f%level%&#B376E5.'
 ability:
-  mana: "Mana"
-  cooldown: "Recharge"
-  how: "%key%, ton arme reste en main."
-  key-up: "Touche %key% ou molette vers le haut"
-  key-down: "Touche %key% ou molette vers le bas"
-  key-key: "Touche %key%"
-  cooling: "&#FF5C5C%ability% &7: encore &f%time% s"
-  no-mana: "&#FF5C5CPas assez de mana pour %ability%"
-  no-target: "&#FF5C5C%ability% &7: aucune cible"
-
+  mana: Mana
+  cooldown: Recharge
+  how: '%key%, ton arme reste en main.'
+  key-up: Touche %key% ou molette vers le haut
+  key-down: Touche %key% ou molette vers le bas
+  key-key: Touche %key%
+  cooling: '&#FF5C5C%ability% &7: encore &f%time% s'
+  no-mana: '&#FF5C5CPas assez de mana pour %ability%'
+  no-target: '&#FF5C5C%ability% &7: aucune cible'
 hud:
-  key-up: "%key%▲"
-  key-down: "%key%▼"
-  key-key: "%key%"
-  bar: "&#6FA8FF✦ %mana%&7/&#6FA8FF%max%  %abilities%"
-  ability-ready: "&#2ECF7B%key% %ability%"
-  ability-cooling: "&7%key% %ability% &f%time%s"
-  separator: "&8 · "
-
+  key-up: '%key%▲'
+  key-down: '%key%▼'
+  key-key: '%key%'
+  bar: '&#6FA8FF✦ %mana%&7/&#6FA8FF%max%  %abilities%'
+  ability-ready: '&#2ECF7B%key% %ability%'
+  ability-cooling: '&7%key% %ability% &f%time%s'
+  separator: '&8 · '
 admin:
-  visit-loading: "&#B376E5Ouverture de &f%dungeon%&#B376E5..."
-  visit: "&#B376E5Visite de &f%dungeon%&#B376E5 : copie de la map sans monstres, rien n'est gardé. Pour sortir : &f[/%flux_cmd_fluxdungeons_fluxdungeons% voir]"
-  visit-left: "&#B376E5Fin de la visite."
-  visit-in-run: "&#FF5C5CQuitte d'abord ton donjon."
-  imported-no-template: "&#FF5C5C%dungeon% est une map importée : pas de modèle à retoucher, chaque partie copie la map d'origine."
-  reset: "&#2ECF7BInventaire de donjon de %player% remis à zéro : les kits seront redonnés à la prochaine partie."
-  reset-in-run: "&#FF5C5C%player% est dans un donjon, réessaie après sa partie."
-  started: "&#2ECF7B%dungeon% lancé."
-  built: "&#2ECF7BModèle de %dungeon% construit."
-  template: "&#B376E5Modèle de &f%dungeon%&#B376E5 : tes retouches serviront aux prochaines parties. Ne change pas la taille des salles."
-  stopped-all: "&#2ECF7BToutes les parties sont arrêtées."
-  stopped: "&#2ECF7BPartie de %player% arrêtée."
-  unknown-item: "&#FF5C5CObjet inconnu : %item%"
-  given: "&#2ECF7B%item% donné à %player%."
-  no-runs: "&#B376E5Aucune partie en cours."
-  run-line: "&#FFD94D%id% &f%dungeon% &7%state% &#B376E5%players% &7(vies : %lives%)"
-  reloaded: "&#2ECF7BFluxDungeons rechargé."
-
+  visit-loading: '&#B376E5Ouverture de &f%dungeon%&#B376E5...'
+  visit: '&#B376E5Visite de &f%dungeon%&#B376E5 : copie de la map sans monstres, rien n''est gardé. Pour sortir : &f[/%flux_cmd_fluxdungeons_fluxdungeons% voir]'
+  visit-left: '&#B376E5Fin de la visite.'
+  visit-in-run: '&#FF5C5CQuitte d''abord ton donjon.'
+  imported-no-template: '&#FF5C5C%dungeon% est une map importée : pas de modèle à retoucher, chaque partie copie la map d''origine.'
+  reset: '&#2ECF7BInventaire de donjon de %player% remis à zéro : les kits seront redonnés à la prochaine partie.'
+  reset-in-run: '&#FF5C5C%player% est dans un donjon, réessaie après sa partie.'
+  started: '&#2ECF7B%dungeon% lancé.'
+  built: '&#2ECF7BModèle de %dungeon% construit.'
+  template: '&#B376E5Modèle de &f%dungeon%&#B376E5 : tes retouches serviront aux prochaines parties. Ne change pas la taille des salles.'
+  stopped-all: '&#2ECF7BToutes les parties sont arrêtées.'
+  stopped: '&#2ECF7BPartie de %player% arrêtée.'
+  unknown-item: '&#FF5C5CObjet inconnu : %item%'
+  given: '&#2ECF7B%item% donné à %player%.'
+  no-runs: '&#B376E5Aucune partie en cours.'
+  run-line: '&#FFD94D%id% &f%dungeon% &7%state% &#B376E5%players% &7(vies : %lives%)'
+  reloaded: '&#2ECF7BFluxDungeons rechargé.'
 origins:
-  victory: "Victoire en donjon"
-
+  victory: Victoire en donjon
 objective:
-  preparing: "&#B376E5Préparation du donjon..."
-  ending: "&#2ECF7BDonjon terminé"
-  go: "&#FFD94DAvance jusqu'à : &f%room%"
-  room: "&#FFD94DNettoie &f%room% &7(vague %wave%/%waves%, %mobs% monstre(s))"
-  boss: "&#FF5C5CVaincs %boss%"
-  map: "&#FFD94DGardiens vaincus : &f%done%/%total%"
-  done: "&#2ECF7BGardien vaincu ! &#B376E5Gardiens : &f%done%/%total%"
-
+  preparing: '&#B376E5Préparation du donjon...'
+  ending: '&#2ECF7BDonjon terminé'
+  go: '&#FFD94DAvance jusqu''à : &f%room%'
+  room: '&#FFD94DNettoie &f%room% &7(vague %wave%/%waves%, %mobs% monstre(s))'
+  boss: '&#FF5C5CVaincs %boss%'
+  map: '&#FFD94DGardiens vaincus : &f%done%/%total%'
+  done: '&#2ECF7BGardien vaincu ! &#B376E5Gardiens : &f%done%/%total%'
 item:
-  level: "&7Niveau d'objet : &f%level%"
-
+  level: '&7Niveau d''objet : &f%level%'
 edit:
-  opening: "&#B376E5Ouverture de &f%dungeon% &#B376E5en mode édition..."
-  opened: "&#B376E5Édition de &f%dungeon% &#B376E5(&f%spawns% &#B376E5points). Construis librement ; &f/%flux_cmd_fluxdungeons_fluxdungeons% edit add <monstre> | remove | move | start | objective&#B376E5, puis &fsave &#B376E5ou &fcancel&#B376E5."
-  not-editing: "&#FF5C5CTu n'es pas dans un donjon en édition."
-  saving: "&#B376E5Enregistrement de &f%dungeon%&#B376E5..."
-  saved: "&#2ECF7B%dungeon% enregistré : les prochaines parties utiliseront la nouvelle map et les nouveaux points."
-  cancelled: "&#B376E5Édition fermée sans enregistrer les constructions (les points déplacés restent enregistrés)."
-  added: "&#2ECF7B%mob% ajouté ici &7(%spawns% points)."
-  removed: "&#2ECF7B%mob% retiré &7(%spawns% points)."
-  moved: "&#2ECF7B%mob% déplacé ici."
-  start: "&#2ECF7BDépart du donjon placé ici."
-  objective-on: "&#2ECF7B%mob% est maintenant un objectif &7(%objectives% objectifs)."
-  objective-off: "&#B376E5%mob% n'est plus un objectif &7(%objectives% objectifs)."
-  none-near: "&#FF5C5CAucun point de monstre à moins de 6 blocs."
-  usage: "&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% edit <donjon> | add <monstre> | remove | move | start | objective | save | cancel"
-  unknown-mob: "&#FF5C5CMonstre inconnu : %mob%"
-  marker: "&#FFD94D%mob%"
-  marker-objective: "&#FF5C5C★ %mob% &7(objectif)"
-  marker-start: "&#2ECF7B▶ Départ"
+  opening: '&#B376E5Ouverture de &f%dungeon% &#B376E5en mode édition...'
+  opened: '&#B376E5Édition de &f%dungeon% &#B376E5(&f%spawns% &#B376E5points) : construis librement, tes outils sont dans l''inventaire. Clic droit avec un outil pour l''utiliser.'
+  not-editing: '&#FF5C5CTu n''es pas dans un donjon en édition.'
+  saving: '&#B376E5Enregistrement de &f%dungeon%&#B376E5...'
+  saved: '&#2ECF7B%dungeon% enregistré : les prochaines parties utiliseront la nouvelle map et les nouveaux points.'
+  cancelled: '&#B376E5Édition fermée sans enregistrer les constructions (les points déplacés restent enregistrés).'
+  added: '&#2ECF7B%mob% ajouté ici &7(%spawns% points).'
+  removed: '&#2ECF7B%mob% retiré &7(%spawns% points).'
+  moved: '&#2ECF7B%mob% déplacé ici.'
+  start: '&#2ECF7BDépart du donjon placé ici.'
+  objective-on: '&#2ECF7B%mob% est maintenant un objectif &7(%objectives% objectifs).'
+  objective-off: '&#B376E5%mob% n''est plus un objectif &7(%objectives% objectifs).'
+  none-near: '&#FF5C5CAucun point de monstre à moins de 6 blocs.'
+  usage: '&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% edit <donjon> | add <monstre> | remove | move | start | objective | save | cancel'
+  unknown-mob: '&#FF5C5CMonstre inconnu : %mob%'
+  marker: '&#FFD94D%mob%'
+  marker-objective: '&#FF5C5C★ %mob% &7(objectif)'
+  marker-start: '&#2ECF7B▶ Départ'
+  inventory-full: '&#FF5C5CInventaire plein : libère de la place pour recevoir les outils d''édition.'
+  chosen: '&#2ECF7BMonstre choisi : &f%mob%&#2ECF7B. Clic droit sur un bloc pour le poser.'
+  picked: '&#B376E5%mob% en main : clic droit sur un bloc pour le reposer.'
+  confirm-save: '&#FFD94DClic droit encore une fois pour enregistrer la map et les points.'
+  confirm-quit: '&#FFD94DClic droit encore une fois pour quitter sans enregistrer les constructions.'
+  tool:
+    place:
+      name: '&#FFD94DPoser un monstre'
+      chosen: ' &7(%mob%&7)'
+      description: 'Pose le monstre choisi sur le bloc visé. Clic droit dans le vide ou accroupi : choisir le monstre. Clic droit sur un point : prendre son monstre.'
+      action: Poser / choisir
+    move:
+      name: '&#FFD94DDéplacer un point'
+      description: Clic droit sur un point pour le prendre, puis sur un bloc pour le reposer.
+      action: Prendre / reposer
+    remove:
+      name: '&#FFD94DRetirer un point'
+      description: Retire le point visé, ou le plus proche à moins de 6 blocs.
+      action: Retirer
+    objective:
+      name: '&#FFD94DObjectif'
+      description: Le monstre du point visé devient un objectif du donjon (à vaincre pour gagner), ou ne l'est plus.
+      action: Basculer
+    start:
+      name: '&#FFD94DDépart'
+      description: 'Place le départ du donjon sur le bloc visé (dans le vide : là où tu es).'
+      action: Placer le départ
+    save:
+      name: '&#2ECF7BEnregistrer'
+      description: Enregistre les constructions dans la map et ferme l'édition. Les prochaines parties utiliseront la nouvelle version.
+      action: Enregistrer (deux fois)
+    quit:
+      name: '&#FF5C5CQuitter sans enregistrer'
+      description: Ferme l'édition sans garder les constructions. Les points déplacés restent enregistrés.
+      action: Quitter (deux fois)
+  menu:
+    title: 'Monstres : %dungeon%'
+    placed: Placés
+    rank: Rang
+    rank-trash: Simple
+    rank-miniboss: Mini-boss
+    rank-boss: Boss
+    objective: Objectif du donjon
+    current: Monstre choisi
+    choose: Choisir
