@@ -110,7 +110,10 @@ def build(plugins, window, generic):
     mapping.update({k.lower(): v for k, v in (theme_cfg.get("buttons") or {}).items()})
     content = {n.lower() for n in theme_cfg.get("content-namespaces") or []}
     files = {}
-    for f in glob.glob(os.path.join(plugins, "*", "menus", "*.yml")):
+    # plugins/<plugin>/menus, and plugins/<plugin>/<part>/menus for a plugin split in parts (FluxCommerce: auctionhouse/,
+    # trade/); without the second pattern the market menus had no picture, so no slot frames (2026-11-08)
+    for f in sorted(glob.glob(os.path.join(plugins, "*", "menus", "*.yml"))) + \
+            sorted(glob.glob(os.path.join(plugins, "*", "*", "menus", "*.yml"))):
         if "/FluxMenu/" in f:
             continue
         files.setdefault(os.path.basename(f)[:-4], f)

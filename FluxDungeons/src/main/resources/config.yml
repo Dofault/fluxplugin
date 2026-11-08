@@ -49,13 +49,15 @@ health-bar:
   all-mobs: false
 
 # How a player reacts to a monster's hit in a dungeon: one melee hit out of melee-push-every pushes him melee-push
-# blocks along the ground (never up); a hit from afar (arrow, ability) slows him a moment (ticks, level).
+# blocks along the ground (never up); a hit from afar (arrow, ability) stops his momentum for an instant
+# (ranged-stagger, no potion); each frost arrow adds frost-per-hit freezing ticks (progressive, never up to freezing
+# damage). His screen shakes at most once every screen-shake-ms (the sound of each hit still plays).
 hit-reaction:
   melee-push: 2
   melee-push-every: 4
-  ranged-slow:
-    ticks: 6
-    level: 3
+  ranged-stagger: true
+  frost-per-hit: 30
+  screen-shake-ms: 1000
 
 # Pets taken into a dungeon (chosen on the launch screen): how many at most, and their numbers, the same for every
 # pet for now. Each one is an invisible, silent mob wearing the pet's model, with the plugin's own behaviour (follow,

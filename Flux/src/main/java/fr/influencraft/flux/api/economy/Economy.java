@@ -162,7 +162,8 @@ public final class Economy {
     /**
      * Any Vault economy, looked up on every call (the provider can register late, e.g. CMI). When no adapter reports
      * Vault's balance changes ({@link #vaultObserved}), it fires the {@link BalanceChangeEvent} itself, so the
-     * movements made through the suite are still recorded.
+     * movements made through the suite are still recorded. When one does (CMI, events fired later on another thread),
+     * each change is announced to the ledger first ({@link Ledger#expect}), so it keeps the origin of the caller.
      */
     static final class VaultCurrency implements Currency {
         private static net.milkbowl.vault.economy.Economy provider() {
@@ -192,7 +193,9 @@ public final class Economy {
             if (e == null) return false;
             if (amount <= 0) return true;
             double before = vaultObserved ? 0 : e.getBalance(player);
+            Runnable expected = vaultObserved ? Ledger.expect(player.getUniqueId(), id(), -amount) : null;
             boolean done = e.has(player, amount) && e.withdrawPlayer(player, amount).transactionSuccess();
+            if (!done && expected != null) expected.run();
             if (done && !vaultObserved) fire(player, before, e.getBalance(player), false);
             return done;
         }
@@ -203,7 +206,9 @@ public final class Economy {
             if (e == null) return false;
             if (amount <= 0) return true;
             double before = vaultObserved ? 0 : e.getBalance(player);
+            Runnable expected = vaultObserved ? Ledger.expect(player.getUniqueId(), id(), amount) : null;
             boolean done = e.depositPlayer(player, amount).transactionSuccess();
+            if (!done && expected != null) expected.run();
             if (done && !vaultObserved) fire(player, before, e.getBalance(player), true);
             return done;
         }

@@ -556,11 +556,12 @@ def bg_profil(generic):
     return im
 
 
-# Villes et Pays (FluxLands territoires.yml, mockup 4 of 2026-10-31): back (9) and menu icon (17) on row 1, two dark
-# cards one under the other (Ma ville on rows 2-3, Mon pays on rows 4-5, invisible items over them for the click),
-# each with its big icon on the left (button of the theme twice its size) and three lines written by Flux beside it
-# (widgets of the menu, x 45), then the Explore buttons on the first inventory row, under the chest / inventory gap.
-TERRITORY_CARDS = {"ville": (6, 54, 169, 87), "pays": (6, 90, 169, 123)}
+# Villes et Pays (FluxLands territoires.yml, redone 2026-11-08): back (27) and menu icon (35) on the first drawn row,
+# then two big buttons of 2 x 2 slots side by side, symmetric (Ma ville columns 2-3, Mon pays columns 5-6, rows 4-5):
+# only their icon is drawn here (button of the theme twice its size), invisible items over them for the click. No card
+# and no text (owner's choice: only the title is written in a menu). Explore buttons on the first inventory row,
+# under the chest / inventory gap.
+TERRITORY_BUTTONS = {"ville": 38, "pays": 41}   # top-left slot of each 2 x 2 button, as CARTE_* of gen_menus_ville.py
 PLUGINS = None                 # plugins dir of the server, set by main (pictures of other packs)
 
 
@@ -577,13 +578,12 @@ def big_icon(ns, iid):
 
 
 def bg_territoires(generic):
-    im = bg_window(generic, 1, 6)
-    d = ImageDraw.Draw(im, "RGBA")
-    for name, (x0, y0, x1, y1) in TERRITORY_CARDS.items():
-        ui.container(im, d, (x0, y0, x1, y1), "ardoise")
+    im = bg_window(generic, 3, 6)
+    for name, case in TERRITORY_BUTTONS.items():
         icon = big_icon("influville", name)
         if icon:
-            im.alpha_composite(icon, (x0 + 2, (y0 + y1) // 2 - 15))
+            x, y = ui.objet(case)            # 2 x 2 slots = 34 px square from the top-left item, icon of 32 centred
+            im.alpha_composite(icon, (x + 1, y + 1))
     return im
 
 

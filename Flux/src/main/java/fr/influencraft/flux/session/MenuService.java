@@ -33,6 +33,8 @@ public final class MenuService {
     private final Flux plugin;
     private final ItemFactory items;
     private final Map<UUID, MenuSession> sessions = new ConcurrentHashMap<>();
+    /** Menu whose session is being built: its title is computed in the constructor, before the session is registered. */
+    private final Map<UUID, Menu> opening = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> creativeGuard = new ConcurrentHashMap<>();
 
     public MenuService(Flux plugin, ItemFactory items) {
@@ -50,6 +52,18 @@ public final class MenuService {
         return sessions.get(playerId);
     }
 
+    /**
+     * Menu the player is looking at for placeholders: the one being opened, else the open one. The title of a new
+     * session (pages of a list: %flux_list_<id>_pages%) is computed before the session is registered; read from the
+     * previous menu, a list of 28 slots was counted on the default 21 (pager "1/2" with exactly 28 offers, 2026-11-08).
+     */
+    public Menu currentMenu(UUID playerId) {
+        Menu m = opening.get(playerId);
+        if (m != null) return m;
+        MenuSession s = sessions.get(playerId);
+        return s == null ? null : s.menu();
+    }
+
     public boolean open(Player player, Menu menu) {
         if (!Bukkit.isPrimaryThread()) {
             Bukkit.getScheduler().runTask(plugin, () -> open(player, menu));
@@ -61,7 +75,13 @@ public final class MenuService {
             return false;
         }
 
-        MenuSession session = new MenuSession(player, menu, items);
+        MenuSession session;
+        opening.put(player.getUniqueId(), menu);
+        try {
+            session = new MenuSession(player, menu, items);
+        } finally {
+            opening.remove(player.getUniqueId());
+        }
         // inscrite avant le rendu : les placeholders du titre et des boutons (pages d'une liste : %flux_list_<id>_pages%)
         // lisent la session courante ; avant le 2026-11-01 ils lisaient celle du menu précédent (pagination « 1/2 » d'une
         // liste de 28 cases comptée sur 21 à l'ouverture, qui disparaissait au premier clic)

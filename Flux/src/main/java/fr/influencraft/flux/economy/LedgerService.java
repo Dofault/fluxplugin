@@ -103,6 +103,12 @@ public final class LedgerService implements Ledger.Backend, Listener {
     private volatile boolean debugUnknown;
     private volatile long lastUnknownLog;
     private volatile Map<String, String> ignored = Map.of();
+    /** Changes announced by {@link Ledger#expect}, waiting for their late event (CMI). Oldest first. */
+    private final java.util.Deque<Expected> expected = new java.util.concurrent.ConcurrentLinkedDeque<>();
+    private static final long EXPECT_MS = 30_000;
+
+    private record Expected(UUID player, String currency, double delta, Origin origin, long at) {
+    }
 
     public LedgerService(JavaPlugin flux) {
         this.flux = flux;
@@ -164,10 +170,34 @@ public final class LedgerService implements Ledger.Backend, Listener {
         double delta = Math.round(event.delta() * 100) / 100.0;
         if (Math.abs(delta) < 0.005) return;
         Origin origin = Ledger.current();
+        if (origin == null) origin = claimExpected(event);
         if (origin == null) origin = resolver.resolve();
         if (debugUnknown && origin == Origin.UNKNOWN) logUnknown(event);
         if (ignored.containsKey(origin.id().toLowerCase(java.util.Locale.ROOT))) return;
         record(event.player(), event.currency(), delta, event.to(), origin, System.currentTimeMillis());
+    }
+
+    @Override
+    public Runnable expect(UUID player, String currency, double delta) {
+        Origin origin = Ledger.current();
+        if (origin == null) origin = resolver.resolve();
+        if (origin == null || origin.unknown()) return () -> { };
+        Expected e = new Expected(player, currency, delta, origin, System.currentTimeMillis());
+        expected.add(e);
+        return () -> expected.remove(e);
+    }
+
+    /** Origin announced for this change (oldest matching announcement, consumed), or null. Drops stale ones. */
+    private Origin claimExpected(BalanceChangeEvent event) {
+        long now = System.currentTimeMillis();
+        expected.removeIf(e -> now - e.at() > EXPECT_MS);
+        for (Expected e : expected) {
+            if (e.player().equals(event.player()) && e.currency().equalsIgnoreCase(event.currency())
+                    && Math.abs(e.delta() - event.delta()) < 0.011 && expected.remove(e)) {
+                return e.origin();
+            }
+        }
+        return null;
     }
 
     /** One log line per 10 s at most: thread and the first frames of the stack, to write a class rule or fix a plugin. */

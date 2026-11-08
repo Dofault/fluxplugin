@@ -32,6 +32,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     private Actions actions;
     private PacketListenerCommon packetListener;
     private PacketListenerCommon backgroundListener;
+    private com.github.retrooper.packetevents.event.PacketListenerCommon hurtShakeListener;
     private ChestBackgrounds backgrounds;
     private PapiBridge papiBridge;
     private int clickCooldown;
@@ -113,6 +114,9 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         fr.influencraft.flux.api.FluxApi.registerPlaceholders(this, "flux", this::ownPlaceholder);
         packetListener = PacketEvents.getAPI().getEventManager()
                 .registerListener(new InventoryHider(menus), PacketListenerPriority.HIGH);
+        // players' screens shake at most as often as a plugin allows (api.client.HurtShake)
+        hurtShakeListener = PacketEvents.getAPI().getEventManager()
+                .registerListener(new fr.influencraft.flux.adapters.packetevents.HurtShakeFilter(this));
         backgrounds = new ChestBackgrounds(menus, getLogger());
         backgroundListener = PacketEvents.getAPI().getEventManager()
                 .registerListener(backgrounds, PacketListenerPriority.HIGH);
@@ -140,6 +144,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         if (menus != null) menus.closeAll();
         if (packetListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(packetListener);
         if (backgroundListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(backgroundListener);
+        if (hurtShakeListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(hurtShakeListener);
         if (registry != null) registry.unregisterCommands();
     }
 
@@ -249,8 +254,8 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
             for (String field : java.util.List.of("has_next", "has_prev", "pages", "page", "count", "filter", "sort", "search")) {
                 if (rest.endsWith("_" + field)) {
                     String id = rest.substring(0, rest.length() - field.length() - 1);
-                    var session = menus.session(player.getUniqueId());
-                    var spec = session == null ? null : session.menu().list(id);
+                    var menu = menus.currentMenu(player.getUniqueId());
+                    var spec = menu == null ? null : menu.list(id);
                     return fr.influencraft.flux.api.list.Lists.placeholder(player, id, field, spec == null ? 21 : spec.pageSize());
                 }
             }

@@ -29,7 +29,7 @@ rochiste_tailleur:
     block: COBBLESTONE
     size: 0.5
     radius: 1.6
-    power: 3
+    power: 2
 
 rochiste_lanceur:
   type: HUSK
@@ -49,13 +49,13 @@ rochiste_lanceur:
     block: SANDSTONE
     size: 1.1
     radius: 2.5
-    power: 5
+    power: 4
 
 rochiste_sentinelle:
   type: STRAY
   name: '&#9FD6F0Sentinelle de givre'
   health: 20
-  damage: 1
+  damage: 1.5
   speed: 0.24
   # archer harcelant : quatre fois la cadence vanilla (deux flèches par seconde), flèches légères qui gèlent
   ranged-rate: 4
@@ -70,14 +70,14 @@ rochiste_sentinelle:
   - type: ice_spikes
     every: 9
     range: 12
-    power: 4
+    power: 3
 
 rochiste_golem:
   type: ZOMBIE
   name: '&#C0705AGolem de granite'
   rank: MINIBOSS
   health: 80
-  damage: 5
+  damage: 4
   speed: 0.2
   attack-speed: 0.8
   scale: 1.5
@@ -91,7 +91,7 @@ rochiste_golem:
   - type: quake
     every: 10
     radius: 6
-    power: 5
+    power: 4
   - type: stone_skin
     every: 15
     below: 50
@@ -105,7 +105,7 @@ rochiste_colosse:
   rank: BOSS
   model: colosse_abime
   health: 500
-  damage: 7
+  damage: 5
   # très lent, au rythme de son animation de marche : environ 1 bloc par seconde
   speed: 0.022
   attack-speed: 0.5
@@ -120,7 +120,7 @@ rochiste_colosse:
     impact: 80
     hold: 160
     radius: 10
-    power: 20
+    power: 18
     title: '&#FF5C5C&lCATACLYSME'
     subtitle: '&#FFD94DSors du cercle de feu !'
   - type: uplift
@@ -130,7 +130,7 @@ rochiste_colosse:
     hold: 46
     radius: 6
     height: 5
-    power: 5
+    power: 4
     title: '&#C0705ALe sol se dérobe !'
   - type: bite
     every: 5
@@ -138,8 +138,8 @@ rochiste_colosse:
     impact: 12
     hold: 28
     range: 4.5
-    power: 10
+    power: 8
   - type: rock_shard
     every: 3
     min-range: 7
-    power: 4
+    power: 3

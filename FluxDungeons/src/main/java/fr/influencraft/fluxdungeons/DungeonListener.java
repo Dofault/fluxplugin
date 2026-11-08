@@ -224,8 +224,8 @@ final class DungeonListener implements Listener {
                     e.setCancelled(true);
                     return;
                 }
-                // a melee hit is exactly the monster's attack (the player's armour still applies)
-                if (melee(e)) {
+                // a melee hit, or an arrow it shot with its bow, is exactly the monster's attack (the armour still applies)
+                if (melee(e) || e.getDamager() instanceof Projectile pr && mobs.ownShot(pr)) {
                     double hit = mobs.meleeDamage(mob);
                     if (hit >= 0) e.setDamage(hit);
                 }
@@ -320,16 +320,35 @@ final class DungeonListener implements Listener {
     /** Blocks a monster's melee hit pushes a player ({@code hit-reaction.melee-push}), one hit out of {@link #pushEvery}. */
     private double meleePush = 2;
     private int pushEvery = 4;
-    /** Slow after a hit from afar: ticks and level ({@code hit-reaction.ranged-slow}). */
-    private int slowTicks = 6, slowLevel = 3;
+    /** A hit from afar stops the player's momentum for an instant ({@code hit-reaction.ranged-stagger}). */
+    private boolean stagger = true;
+    /** Frost added by each frost arrow, in freezing ticks (vanilla: 140 = fully frozen). */
+    private int frostPerHit = 30;
+    /** Minimum gap between two shakes of a player's screen in a run (he takes many small hits). */
+    private long shakeGap = 1000;
     /** Melee hits each player took from monsters (every {@link #pushEvery}th one pushes him). */
     private final java.util.Map<java.util.UUID, Integer> meleeTaken = new java.util.HashMap<>();
 
     void hitReaction(org.bukkit.configuration.ConfigurationSection c) {
         meleePush = c == null ? 2 : Math.max(0, c.getDouble("melee-push", 2));
         pushEvery = c == null ? 4 : Math.max(1, c.getInt("melee-push-every", 4));
-        slowTicks = c == null ? 6 : Math.max(0, c.getInt("ranged-slow.ticks", 6));
-        slowLevel = c == null ? 3 : Math.max(1, c.getInt("ranged-slow.level", 3));
+        stagger = c == null || c.getBoolean("ranged-stagger", true);
+        frostPerHit = c == null ? 30 : Math.max(0, c.getInt("frost-per-hit", 30));
+        shakeGap = c == null ? 1000 : Math.max(0, c.getLong("screen-shake-ms", 1000));
+        runs.shakeGap(shakeGap);
+    }
+
+    /**
+     * Frost on a player, progressive: each frost hit adds {@code amount} freezing ticks, never quite up to fully frozen
+     * (no freezing damage). Vanilla slows a player more the more frozen he is, and thaws him by itself. For any monster
+     * whose hits should chill.
+     */
+    void chill(Player p, int amount) {
+        if (amount <= 0) return;
+        int cap = p.getMaxFreezeTicks() - 10;
+        p.setFreezeTicks(Math.min(cap, Math.max(p.getFreezeTicks(), 0) + amount));
+        p.getWorld().spawnParticle(org.bukkit.Particle.SNOWFLAKE, p.getLocation().add(0, 1, 0), 8, 0.3, 0.5, 0.3, 0.02);
+        p.getWorld().playSound(p.getLocation(), org.bukkit.Sound.BLOCK_POWDER_SNOW_STEP, 0.8f, 0.9f);
     }
 
     /** An arrow shot by a dungeon monster: aimed, damage set, more shots to come (see {@link Mobs#shot}). */
@@ -364,15 +383,14 @@ final class DungeonListener implements Listener {
                 if (hurt.isOnline() && !hurt.isDead()) hurt.setVelocity(v);
             });
         } else {
-            if (slowTicks > 0) hurt.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.SLOWNESS,
-                    slowTicks, slowLevel - 1, false, false, false));
-            // frost archers: the arrow freezes (blue screen, shivers) and slows for two seconds
-            if (e.getDamager() instanceof Projectile && mobs.frostArrows(mob)) {
-                hurt.setFreezeTicks(Math.min(hurt.getMaxFreezeTicks() + 60, hurt.getFreezeTicks() + 70));
-                hurt.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.SLOWNESS, 40, 1, false, true, true));
-                hurt.getWorld().spawnParticle(org.bukkit.Particle.SNOWFLAKE, hurt.getLocation().add(0, 1, 0), 12, 0.3, 0.5, 0.3, 0.02);
-                hurt.getWorld().playSound(hurt.getLocation(), org.bukkit.Sound.BLOCK_POWDER_SNOW_STEP, 1f, 0.8f);
+            // a hit from afar: the player's run stops for an instant (no potion: no lasting slow, no change of view)
+            if (stagger && hurt.isOnGround()) {
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (hurt.isOnline() && !hurt.isDead() && hurt.isOnGround()) hurt.setVelocity(new org.bukkit.util.Vector(0, -0.0784, 0));
+                });
             }
+            // frost archers: each arrow chills a little more
+            if (e.getDamager() instanceof Projectile && mobs.frostArrows(mob)) chill(hurt, frostPerHit);
         }
     }
 

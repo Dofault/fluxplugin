@@ -129,6 +129,13 @@ public final class Runs {
         pets.settings(c);
     }
 
+    private long shakeGap = 1000;
+
+    /** Minimum gap between two shakes of a player's screen while in a run. */
+    public void shakeGap(long millis) {
+        shakeGap = millis;
+    }
+
     public Lobby lobby() {
         return lobby;
     }
@@ -495,6 +502,8 @@ public final class Runs {
             teleport(p, run.checkpoint);
             // the pets that follow him outside never come into a dungeon: only those taken as fighters do
             fr.influencraft.flux.api.pets.Companions.suppress(uuid, true);
+            // many small hits: his screen shakes at most once a second (hit-reaction.screen-shake-ms)
+            fr.influencraft.flux.api.client.HurtShake.limit(uuid, shakeGap);
             Loadouts.Selection chosen = run.selections.get(uuid);
             if (chosen != null) pets.spawn(p, chosen.pets(), run.checkpoint, context(p)::enemy);
             p.showTitle(Title.title(Texts.parse(plugin.messages().raw("run.title", "%dungeon%", run.def.name())),
@@ -523,6 +532,7 @@ public final class Runs {
         if (run.bossBar != null) player.hideBossBar(run.bossBar);
         pets.despawn(player);
         fr.influencraft.flux.api.pets.Companions.suppress(player.getUniqueId(), false);
+        fr.influencraft.flux.api.client.HurtShake.clear(player.getUniqueId());
         if (inside) {
             hook(run, "leave", player, null);
             heroes.deactivate(player);

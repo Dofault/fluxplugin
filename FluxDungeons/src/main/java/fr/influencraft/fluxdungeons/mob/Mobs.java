@@ -170,6 +170,7 @@ public final class Mobs {
     public Mobs(Plugin plugin) {
         this.plugin = plugin;
         this.mobKey = new NamespacedKey(plugin, "mob");
+        this.shotKey = new NamespacedKey(plugin, "mob_shot");
         this.runKey = new NamespacedKey(plugin, "run");
         this.objectiveKey = new NamespacedKey(plugin, "objective");
         this.spawnKey = new NamespacedKey(plugin, "spawn");
@@ -913,6 +914,7 @@ public final class Mobs {
         if (target != null) aim(mob, arrow, target);
         arrow.setDamage(arrowDamage(a));
         arrow.setPickupStatus(AbstractArrow.PickupStatus.DISALLOWED);
+        arrow.getPersistentDataContainer().set(shotKey, PersistentDataType.BYTE, (byte) 1);
         if (shooting) return;
         int extra = (int) Math.round(a.template.extra().rangedRate()) - 1;
         long gap = Math.max(4, VANILLA_SHOT_TICKS / (extra + 1));
@@ -956,6 +958,13 @@ public final class Mobs {
     public double meleeDamage(LivingEntity mob) {
         Alive a = alive.get(mob.getUniqueId());
         return a == null ? -1 : a.baseDamage();
+    }
+
+    private final NamespacedKey shotKey;
+
+    /** True for an arrow a dungeon monster shot with its bow (its damage is the monster's attack). */
+    public boolean ownShot(org.bukkit.entity.Projectile p) {
+        return p.getPersistentDataContainer().has(shotKey, PersistentDataType.BYTE);
     }
 
     /** Arrows of a frost archer ({@code frost-arrows}) freeze and slow whoever they hit. */

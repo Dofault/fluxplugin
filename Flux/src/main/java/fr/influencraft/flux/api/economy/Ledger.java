@@ -47,6 +47,11 @@ public final class Ledger {
 
         /** Label of an origin as players read it. */
         String label(Origin origin);
+
+        /** See {@link Ledger#expect}. */
+        default Runnable expect(UUID player, String currency, double delta) {
+            return () -> { };
+        }
     }
 
     private static final ThreadLocal<Deque<Origin>> CONTEXT = ThreadLocal.withInitial(ArrayDeque::new);
@@ -89,6 +94,18 @@ public final class Ledger {
     /** Origin set by {@link #within} on this thread, else null. */
     public static Origin current() {
         return CONTEXT.get().peek();
+    }
+
+    /**
+     * Announces a balance change about to be made, for a currency whose {@link BalanceChangeEvent} arrives later on
+     * another thread (CMI fires its balance events asynchronously: the origin set by {@link #within} and the call stack
+     * are gone by then). The origin is taken now (context, else call stack) and given to the matching event (same
+     * player, currency and amount, within a few seconds). Call it <b>before</b> the change (the event may come before
+     * the call returns) and run the returned handle when the change did not happen.
+     */
+    public static Runnable expect(UUID player, String currency, double delta) {
+        Backend b = backend;
+        return b == null ? () -> { } : b.expect(player, currency, delta);
     }
 
     /** History of a player, most recent first. Completes off the main thread. */
