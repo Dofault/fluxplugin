@@ -1,4 +1,5 @@
-# Monstres des donjons écrits à la main (les monstres importés d'EliteMobs vivent dans mobs/<donjon>.yml).
+# Monstres des donjons : de préférence un fichier par monstre, rangé par donjon (mobs/<donjon>/<id>.yml : le nom du
+# fichier est l'identifiant). Ce fichier documente le format et peut garder des monstres partagés.
 # Compétences : leap, fireball, arrow, volley, cone, taze, lightning, implosion, summon, slam, heal, shield, enrage,
 # et celles de la roche : boulder (rocher lancé), rockfall (pluie de rochers), quake (séisme en anneau),
 # ice_spikes (ligne de pics de glace), stone_skin (peau de pierre), bite (morsure), uplift (projette en l'air et aveugle),

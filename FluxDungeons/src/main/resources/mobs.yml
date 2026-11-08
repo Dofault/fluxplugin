@@ -1,4 +1,5 @@
-# Dungeon monsters written by hand (monsters imported from EliteMobs live in mobs/<dungeon>.yml).
+# Dungeon monsters. Best kept one file per monster, by dungeon: mobs/<dungeon>/<id>.yml (the file name is the id, its
+# keys at the root). This file documents the format and may hold monsters shared by several dungeons.
 # Abilities: leap, fireball, arrow, volley, cone, taze, lightning, implosion, summon, slam, heal, shield, enrage,
 # and the rock ones: boulder (thrown rock), rockfall (rocks falling), quake (ring earthquake),
 # ice_spikes (line of ice spikes), stone_skin (stone skin), bite, uplift (throws up and blinds),

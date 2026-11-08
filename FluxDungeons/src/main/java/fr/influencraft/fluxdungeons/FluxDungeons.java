@@ -167,7 +167,7 @@ public final class FluxDungeons extends FluxPlugin {
         if (listener != null) listener.hitReaction(getConfig().getConfigurationSection("hit-reaction"));
         List<org.bukkit.configuration.ConfigurationSection> mobFiles = new ArrayList<>();
         mobFiles.add(file("mobs.yml"));
-        mobFiles.addAll(folder("mobs"));
+        mobFiles.addAll(mobFiles(new File(getDataFolder(), "mobs")));
         mobs.load(mobFiles);
         // dungeon gear: items.yml, then every file of items/ (imported dungeons), one catalog
         YamlConfiguration allItems = new YamlConfiguration();
@@ -213,6 +213,33 @@ public final class FluxDungeons extends FluxPlugin {
         if (files == null) return out;
         java.util.Arrays.sort(files);
         for (File f : files) out.add(YamlConfiguration.loadConfiguration(f));
+        return out;
+    }
+
+    /**
+     * Monster files of {@code mobs/}, sub-folders included (one per dungeon: {@code mobs/roche/}). A file holds one
+     * monster, named after the file ({@code rochiste_tailleur.yml}: its keys at the root), or several under their ids.
+     */
+    private List<org.bukkit.configuration.ConfigurationSection> mobFiles(File dir) {
+        List<org.bukkit.configuration.ConfigurationSection> out = new ArrayList<>();
+        File[] files = dir.listFiles();
+        if (files == null) return out;
+        java.util.Arrays.sort(files);
+        for (File f : files) {
+            if (f.isDirectory()) {
+                out.addAll(mobFiles(f));
+                continue;
+            }
+            if (!f.getName().endsWith(".yml")) continue;
+            YamlConfiguration y = YamlConfiguration.loadConfiguration(f);
+            if (y.isString("type")) {
+                YamlConfiguration one = new YamlConfiguration();
+                one.createSection(f.getName().substring(0, f.getName().length() - 4), y.getValues(false));
+                out.add(one);
+            } else {
+                out.add(y);
+            }
+        }
         return out;
     }
 
