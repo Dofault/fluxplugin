@@ -145,7 +145,9 @@ public final class FluxDungeons extends FluxPlugin {
     private void settings() {
         parties.maxSize(getConfig().getInt("party.max-size", 4));
         heroes.load(file("classes.yml"), getConfig().getConfigurationSection("classes"));
-        heroes.reachBonus(getConfig().getDouble("dungeon-reach-bonus", 2));
+        // the players' reach bonus in a run, and the same for the monsters' melee
+        heroes.reachBonus(getConfig().getDouble("dungeon-reach-bonus", 1));
+        mobs.reachBonus(getConfig().getDouble("dungeon-reach-bonus", 1));
         if (attackCadence != null) {
             attackCadence.load(getConfig().getConfigurationSection("attack-cadence"));
             attackCadence.loadAssist(getConfig().getConfigurationSection("aim-assist"));

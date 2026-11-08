@@ -187,8 +187,8 @@ public final class Heroes {
 
     // ---------------------------------------------------------------- stats
 
-    /** Blocks added to a player's reach in a dungeon (5 instead of 3), set by {@code dungeon-reach-bonus}. */
-    private double reachBonus = 2;
+    /** Blocks added to a player's reach in a dungeon (4 instead of 3), set by {@code dungeon-reach-bonus}. */
+    private double reachBonus = 1;
 
     public void reachBonus(double blocks) {
         reachBonus = Math.max(0, blocks);

@@ -86,6 +86,8 @@ public final class Mobs {
         /** Bar step and health shown on the label (redrawn only when they change). */
         int labelStep = -1;
         double labelHealth = -1;
+        /** Tick of its last melee hit on a player (vanilla's or the longer reach's). */
+        int lastMelee = -1000;
 
         Alive(LivingEntity entity, MobTemplate template, String run, Location spawn, ModelBridge.Handle model) {
             this.entity = entity;
@@ -200,6 +202,7 @@ public final class Mobs {
             }
         });
         Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 10L, 10L);
+        Bukkit.getScheduler().runTaskTimer(plugin, this::reachTick, 2L, 2L);
     }
 
     /** Loads every monster file (mobs.yml first, then each file of mobs/). */
@@ -504,6 +507,7 @@ public final class Mobs {
     public void hitPlayer(LivingEntity entity, Player player, EntityDamageEvent event) {
         Alive a = alive.get(entity.getUniqueId());
         if (a == null) return;
+        if (event.getCause() == EntityDamageEvent.DamageCause.ENTITY_ATTACK && !dealing) a.lastMelee = Bukkit.getCurrentTick();
         dealing = true;
         try {
             for (Powers.OnHit h : a.kit.onHit()) Powers.hit(h, player, entity, hitOn(a, player));
@@ -825,6 +829,45 @@ public final class Mobs {
         Bukkit.getScheduler().runTask(plugin, () -> {
             if (a.entity.isValid()) updateLabel(a);
         });
+    }
+
+    // ---------------------------------------------------------------- longer melee reach
+
+    /** Vanilla melee reach of a mob beyond its body (its attack box is its body widened by this, sideways). */
+    private static final double VANILLA_REACH = Math.sqrt(2.04) - 0.6;
+    /** Ticks between two melee hits of a monster (vanilla melee goal: 20). */
+    private static final int MELEE_TICKS = 20;
+    /** Blocks added to the melee reach of dungeon monsters: the same bonus as the players' reach. */
+    private double reachBonus = 1;
+
+    public void reachBonus(double blocks) {
+        reachBonus = Math.max(0, blocks);
+    }
+
+    /**
+     * Every 2 ticks: a melee monster whose target stands beyond its vanilla reach but within {@code reachBonus} more
+     * hits it anyway, at the vanilla pace (players got the same bonus, monsters must keep up). Ranged monsters and
+     * monsters without attack are left to vanilla.
+     */
+    private void reachTick() {
+        if (reachBonus <= 0) return;
+        int now = Bukkit.getCurrentTick();
+        for (Alive a : alive.values()) {
+            if (a.dying || !a.inCombat || !(a.entity instanceof Mob m) || !m.hasAI() || !m.isValid()) continue;
+            if (m instanceof com.destroystokyo.paper.entity.RangedEntity) continue;
+            if (!(m.getTarget() instanceof Player target) || !fighting(target) || target.getWorld() != m.getWorld()) continue;
+            if (now - a.lastMelee < MELEE_TICKS) continue;
+            AttributeInstance attack = m.getAttribute(Attribute.ATTACK_DAMAGE);
+            if (attack == null || attack.getValue() <= 0) continue;
+            org.bukkit.util.BoundingBox body = m.getBoundingBox(), aim = target.getBoundingBox();
+            if (body.clone().expand(VANILLA_REACH, 0, VANILLA_REACH).overlaps(aim)) continue; // vanilla hits it
+            if (!body.clone().expand(VANILLA_REACH + reachBonus, 0, VANILLA_REACH + reachBonus).overlaps(aim)) continue;
+            if (!m.hasLineOfSight(target)) continue;
+            a.lastMelee = now;
+            m.swingMainHand();
+            a.animate("attack");
+            m.attack(target);
+        }
     }
 
     /** Default value of an attribute for this kind of creature (what vanilla gives it). */

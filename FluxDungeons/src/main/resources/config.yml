@@ -85,9 +85,10 @@ attack-cadence:
     volume: 0.7
     pitch: 1.0
 
-# In a dungeon: the player's reach grows by this many blocks (5 instead of 3), and aim assist: a swing in the air hits
-# the monster closest to the aimed direction, within the player's reach, if it passes within radius blocks of it.
-dungeon-reach-bonus: 2
+# In a dungeon: the player's reach grows by this many blocks (4 instead of 3), and the melee reach of the monsters by
+# as much. Aim assist: a swing in the air hits the monster closest to the aimed direction, within the player's reach,
+# if it passes within radius blocks of it.
+dungeon-reach-bonus: 1
 aim-assist:
   enabled: true
   radius: 1.2
