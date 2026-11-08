@@ -6,8 +6,8 @@ unknown-player: '&#FF5C5CPlayer not found.'
 not-in-run: '&#FF5C5CYou are not in a dungeon.'
 dungeon-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_dungeon% [play <dungeon> | leave | class [class] | list]'
 party-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_party% [invite | accept | leave | kick | leader] [player]'
-admin-usage: '!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% visit [dungeon] | edit <dungeon> | build <dungeon|all> | template <dungeon> | start <dungeon> <player> | stop <player|all> | give <player> <item>
-  [n] | reset <player> | runs | reload'
+admin-usage: '!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% create <id> [world] | visit [dungeon] | edit <dungeon> | build <dungeon|all> | template <dungeon> | start <dungeon> <player> | stop <player|all>
+  | give <player> <item> [n] | reset <player> | runs | reload'
 list-line: '&#FFD94D%dungeon% &8(&7%id%&8) &#B376E5%min% to %max% players, recommended level &f%level%'
 main:
   title: Dungeons
@@ -196,3 +196,9 @@ edit:
     objective: Dungeon objective
     current: Chosen monster
     choose: Choose
+create:
+  bad-id: '&#FF5C5CInvalid dungeon name: 2 to 32 characters, lowercase letters, digits and _ only.'
+  exists: '&#FF5C5CThe dungeon %dungeon% already exists.'
+  unknown-world: '&#FF5C5CUnknown world: %world%'
+  copying: '&#B376E5Copying the world &f%world%&#B376E5...'
+  created: '&#2ECF7BDungeon %dungeon% created. Set its name, lives and reward in dungeons/%dungeon%.yml.'

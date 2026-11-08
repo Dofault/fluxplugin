@@ -429,6 +429,11 @@ public final class Runs {
         });
     }
 
+    /** Copies a loaded world into a new map folder (new dungeon made from a build). */
+    public void copyWorld(World w, java.io.File target, java.util.function.Consumer<Boolean> done) {
+        instances.copyWorld(w, target, done);
+    }
+
     public Editor editor() {
         return editor;
     }

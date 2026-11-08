@@ -186,6 +186,30 @@ final class WorldInstances {
         });
     }
 
+    /**
+     * Copies a loaded world (saved first) into a new map folder: its blocks, entities and points of interest.
+     * {@code done} receives true on success, on the server thread.
+     */
+    void copyWorld(World w, File target, Consumer<Boolean> done) {
+        w.save();
+        File source = new File(w.getWorldFolder(), "region").isDirectory() ? w.getWorldFolder() : dimension(w.getName());
+        disk.execute(() -> {
+            boolean ok = true;
+            try {
+                Files.createDirectories(target.toPath().resolve("region"));
+                for (String sub : new String[]{"region", "entities", "poi"}) {
+                    Path from = source.toPath().resolve(sub);
+                    if (Files.isDirectory(from)) copyTree(from, target.toPath().resolve(sub));
+                }
+            } catch (IOException e) {
+                plugin.getLogger().severe("Could not copy " + w.getName() + " into " + target + ": " + e.getMessage());
+                ok = false;
+            }
+            boolean result = ok;
+            if (plugin.isEnabled()) Bukkit.getScheduler().runTask(plugin, () -> done.accept(result));
+        });
+    }
+
     /** Folders of run worlds left by a crash: deleted at start. */
     void sweep() {
         File[] left = dimension("x").getParentFile().listFiles((d, n) -> n.startsWith("fd_") || n.startsWith("fde_"));

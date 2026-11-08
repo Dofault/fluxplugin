@@ -6,8 +6,8 @@ unknown-player: '&#FF5C5CJoueur introuvable.'
 not-in-run: '&#FF5C5CTu n''es pas dans un donjon.'
 dungeon-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_dungeon% [jouer <donjon> | quitter | classe [classe] | liste]'
 party-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_party% [inviter | accepter | quitter | expulser | chef] [joueur]'
-admin-usage: '!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% voir [donjon] | edit <donjon> | build <donjon|all> | template <donjon> | start <donjon> <joueur> | stop <joueur|all> | give <joueur> <objet>
-  [n] | reset <joueur> | runs | reload'
+admin-usage: '!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% create <id> [monde] | voir [donjon] | edit <donjon> | build <donjon|all> | template <donjon> | start <donjon> <joueur> | stop <joueur|all> |
+  give <joueur> <objet> [n] | reset <joueur> | runs | reload'
 list-line: '&#FFD94D%dungeon% &8(&7%id%&8) &#B376E5%min% à %max% joueurs, niveau conseillé &f%level%'
 main:
   title: Donjons
@@ -196,3 +196,9 @@ edit:
     objective: Objectif du donjon
     current: Monstre choisi
     choose: Choisir
+create:
+  bad-id: '&#FF5C5CNom de donjon invalide : 2 à 32 caractères, minuscules, chiffres et _ seulement.'
+  exists: '&#FF5C5CLe donjon %dungeon% existe déjà.'
+  unknown-world: '&#FF5C5CMonde inconnu : %world%'
+  copying: '&#B376E5Copie du monde &f%world%&#B376E5...'
+  created: '&#2ECF7BDonjon %dungeon% créé. Règle son nom, ses vies et sa récompense dans dungeons/%dungeon%.yml.'

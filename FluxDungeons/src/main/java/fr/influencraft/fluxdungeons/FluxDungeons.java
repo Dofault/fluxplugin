@@ -20,6 +20,7 @@ import fr.influencraft.fluxdungeons.party.Party;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
+import org.bukkit.Location;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent;
@@ -494,6 +495,10 @@ public final class FluxDungeons extends FluxPlugin {
                 p.teleport(at, PlayerTeleportEvent.TeleportCause.PLUGIN);
                 messages().send(p, "admin.template", "%dungeon%", def.name());
             }
+            case "create", "creer" -> {
+                if (!(sender instanceof Player p) || args.length < 2) return usage(sender);
+                createDungeon(p, args[1].toLowerCase(Locale.ROOT), args.length > 2 ? args[2] : null);
+            }
             case "edit", "editer" -> {
                 if (!(sender instanceof Player p)) return usage(sender);
                 var editor = runs.editor();
@@ -611,13 +616,78 @@ public final class FluxDungeons extends FluxPlugin {
         return true;
     }
 
+    /**
+     * A new dungeon: its file ({@code dungeons/<id>.yml}, default values to adjust) and its map
+     * ({@code maps/custom/<id>}): empty, or a copy of a loaded world (a build). Then opened in edit mode.
+     */
+    private void createDungeon(Player p, String id, String fromWorld) {
+        if (!id.matches("[a-z0-9_]{2,32}")) {
+            messages().send(p, "create.bad-id");
+            return;
+        }
+        File file = new File(getDataFolder(), "dungeons/" + id + ".yml");
+        File map = new File(getDataFolder(), "maps/custom/" + id);
+        if (file.exists() || runs.dungeon(id) != null || map.exists()) {
+            messages().send(p, "create.exists", "%dungeon%", id);
+            return;
+        }
+        org.bukkit.World source = fromWorld == null ? null : Bukkit.getWorld(fromWorld);
+        if (fromWorld != null && source == null) {
+            messages().send(p, "create.unknown-world", "%world%", fromWorld);
+            return;
+        }
+        Location here = p.getLocation();
+        boolean fromHere = source != null && source.equals(p.getWorld());
+        YamlConfiguration y = new YamlConfiguration();
+        y.options().setHeader(List.of("Dungeon made in game (/fluxdungeons create). Points: /fluxdungeons edit " + id + "."));
+        y.set("name", "&#FFD94D" + id);
+        y.set("icon", "IRON_SWORD");
+        y.set("description", List.of());
+        y.set("players.min", 1);
+        y.set("players.max", 4);
+        y.set("recommended-level", 1);
+        y.set("time-limit", "30m");
+        y.set("lives", 3);
+        y.set("reward.minutes", 10);
+        y.set("reward.xp", 200);
+        y.set("loot", List.of());
+        y.set("map.folder", "maps/custom/" + id);
+        y.set("map.start", fromHere ? List.of(Math.floor(here.getX()) + 0.5, Math.floor(here.getY()), Math.floor(here.getZ()) + 0.5, (double) Math.round(here.getYaw()), 0.0)
+                : List.of(0.5, 64.0, 0.5, 0.0, 0.0));
+        y.set("map.objectives", List.of());
+        y.set("map.spawns", List.of());
+        Runnable finish = () -> {
+            try {
+                file.getParentFile().mkdirs();
+                y.save(file);
+            } catch (java.io.IOException e) {
+                messages().send(p, "start.failed");
+                return;
+            }
+            reload();
+            DungeonDefinition def = runs.dungeon(id);
+            messages().send(p, "create.created", "%dungeon%", id);
+            if (def != null && p.isOnline()) runs.editor().open(p, def);
+        };
+        if (source == null) {
+            new File(map, "region").mkdirs();
+            finish.run();
+        } else {
+            messages().send(p, "create.copying", "%world%", source.getName());
+            runs.copyWorld(source, map, ok -> {
+                if (ok) finish.run();
+                else messages().send(p, "start.failed");
+            });
+        }
+    }
+
     private boolean usage(CommandSender sender) {
         messages().send(sender, "admin-usage");
         return true;
     }
 
     private List<String> completeAdmin(CommandSender sender, String[] args) {
-        if (args.length == 1) return filter(List.of("edit", "visit", "build", "template", "start", "stop", "give", "reset", "runs", "reload"), args[0]);
+        if (args.length == 1) return filter(List.of("create", "edit", "visit", "build", "template", "start", "stop", "give", "reset", "runs", "reload"), args[0]);
         List<String> ids = runs.dungeons().stream().map(DungeonDefinition::id).toList();
         List<String> online = Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
         String sub = args[0].toLowerCase(Locale.ROOT);
@@ -632,6 +702,9 @@ public final class FluxDungeons extends FluxPlugin {
             };
         }
         if (args.length == 3 && sub.equals("start")) return filter(online, args[2]);
+        if (args.length == 3 && (sub.equals("create") || sub.equals("creer"))) {
+            return filter(Bukkit.getWorlds().stream().map(org.bukkit.World::getName).toList(), args[2]);
+        }
         if (args.length == 3 && (sub.equals("edit") || sub.equals("editer")) && (args[1].equalsIgnoreCase("add") || args[1].equalsIgnoreCase("ajouter"))) {
             List<String> placed = sender instanceof Player p ? runs.editor().placedMobs(p) : List.of();
             List<String> typed = filter(concat(placed, mobs.templateIds()), args[2]);

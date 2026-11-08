@@ -207,6 +207,9 @@ public final class Editor implements Listener {
             }
             Session s = new Session(def.id(), world, def.map());
             sessions.put(def.id(), s);
+            // a new map is empty: something to stand on at the start
+            Block under = world.getBlockAt((int) Math.floor(s.start[0]), (int) Math.floor(s.start[1]) - 1, (int) Math.floor(s.start[2]));
+            if (under.getType().isAir()) under.setType(Material.GLASS);
             if (p.isOnline()) enter(p, s);
             draw(s);
         });
@@ -442,15 +445,18 @@ public final class Editor implements Listener {
     // ---------------------------------------------------------------- monster menu
 
     private void openMenu(Player p, Session s, int page) {
-        int pages = Math.max(1, (s.catalog.size() + PAGE - 1) / PAGE);
+        // the dungeon's own monsters first, then every other known monster (a new dungeon has none of its own)
+        List<String> all = new ArrayList<>(s.catalog);
+        mobs.templateIds().stream().filter(id -> !all.contains(id)).sorted().forEach(all::add);
+        int pages = Math.max(1, (all.size() + PAGE - 1) / PAGE);
         int pg = Math.max(0, Math.min(page, pages - 1));
         MobMenu menu = new MobMenu(s, pg);
         Inventory inv = Bukkit.createInventory(menu, 54, Texts.parse(plugin.messages().raw("edit.menu.title",
                 "%dungeon%", Texts.ampersand(Texts.parse(definitions.apply(s.dungeon).name())))));
         menu.inventory = inv;
         String current = chosen.get(p.getUniqueId());
-        for (int i = pg * PAGE, slot = 0; i < s.catalog.size() && slot < PAGE; i++, slot++) {
-            String id = s.catalog.get(i);
+        for (int i = pg * PAGE, slot = 0; i < all.size() && slot < PAGE; i++, slot++) {
+            String id = all.get(i);
             MobTemplate t = mobs.template(id);
             Material egg = t == null ? null : Material.matchMaterial(t.type().name() + "_SPAWN_EGG");
             long placed = s.spawns.stream().filter(sp -> sp.mob().equals(id)).count();
