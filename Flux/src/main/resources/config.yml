@@ -165,6 +165,18 @@ sounds:
   alert: "minecraft:block.note_block.pling 0.7 1.6"
   # (open, close et reward n'existent plus : open joue page, reward joue complete, close est muet)
 
+# Combat rules of the whole server.
+combat:
+  # Attack cadence (as Wynncraft): a weapon attacks at its own pace, spam clicks do nothing until it is recharged,
+  # the weapon visibly comes back slowly (slower for a slow weapon), the vanilla recharge indicator is hidden (pack
+  # fluxui). Hits always land at full charge. false: items lose it at their next refresh.
+  attack-cadence:
+    enabled: true
+    # Share of the recharge needed to attack again (1 = full).
+    minimum-charge: 1.0
+    # The swing of the weapon lasts the whole recharge.
+    slow-swing: true
+
 # Third-party plugins behind the services of the suite. The plugins of the suite only talk to Flux: changing one of
 # these plugins means one adapter in Flux, nothing else. auto: the known plugin that is installed; none: off.
 providers:
