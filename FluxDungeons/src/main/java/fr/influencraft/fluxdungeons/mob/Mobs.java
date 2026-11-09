@@ -1062,7 +1062,9 @@ public final class Mobs {
             long last = a.lastCast.computeIfAbsent(i, k -> now - (long) (ab.every() * 500));
             double left = Math.max(0, ab.every() - (now - last) / 1000.0);
             out.add(" - " + ab.type() + (ab.params().get("spell") != null ? " [" + ab.params().get("spell") + "]" : "") + ": every " + ab.every()
-                    + " s, " + (life > ab.below() ? "only under " + ab.below() + " %" : left <= 0 ? "ready" : "in " + Math.round(left * 10) / 10.0 + " s"));
+                    + " s, " + (life > ab.below() ? "only under " + ab.below() + " %" : left <= 0 ? "ready" : "in " + Math.round(left * 10) / 10.0 + " s")
+                    + " " + ab.params().entrySet().stream().filter(en -> !List.of("type", "spell", "every", "title", "subtitle").contains(en.getKey()))
+                    .map(en -> en.getKey() + "=" + en.getValue()).toList());
         }
         return out;
     }
