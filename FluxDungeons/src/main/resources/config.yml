@@ -102,11 +102,11 @@ attack-cadence:
 
 # In a dungeon: the player's reach grows by this many blocks (4.5 instead of 3), and the melee reach of the monsters by
 # as much. Aim assist: a swing in the air hits the monster closest to the aimed direction, within the player's reach,
-# if it passes within radius blocks of it.
+# if it lies within angle degrees of where he looks (35: a monster 35 degrees aside still counts, 36 no longer does).
 dungeon-reach-bonus: 1.5
 aim-assist:
   enabled: true
-  radius: 1.8
+  angle: 35
 
 # Pack alert: a monster that spots a player (or is hit by one) brings in the calm monsters of the run within this many
 # blocks that see it (no chain). 0: each on its own.

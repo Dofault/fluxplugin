@@ -65,7 +65,8 @@ public final class AttackCadence implements Listener {
 
     private Assist assist = p -> null;
     private boolean assistOn = true;
-    private double assistRadius = 1.8;
+    /** Largest angle between where the player looks and a monster that still counts as aiming at it (degrees). */
+    private double assistAngle = 35;
 
     public AttackCadence(Plugin plugin) {
         ItemLooks.registerAny(plugin, (id, item) -> enabled ? apply(item) : clear(item));
@@ -78,7 +79,7 @@ public final class AttackCadence implements Listener {
     /** Aim assist of the dungeons ({@code aim-assist} of the config). */
     public void loadAssist(ConfigurationSection c) {
         assistOn = c == null || c.getBoolean("enabled", true);
-        assistRadius = c == null ? 1.8 : Math.max(0.2, c.getDouble("radius", 1.8));
+        assistAngle = c == null ? 35 : Math.max(1, Math.min(90, c.getDouble("angle", 35)));
     }
 
     public void load(ConfigurationSection c) {
@@ -181,47 +182,15 @@ public final class AttackCadence implements Listener {
         return changed;
     }
 
-    /** Tick of each player's last hit that went through (vanilla or aim assist): the recharge counts from there. */
-    private final java.util.Map<java.util.UUID, Integer> lastStrike = new java.util.HashMap<>();
-
-    /**
-     * True when the player's weapon is recharged, by FluxDungeons' own clock: the weapon's recharge (its attack
-     * speed) times {@code minimum-charge} since his last hit. Never the vanilla attack strength, which the game resets
-     * on its side and which another plugin may change.
-     */
-    private boolean ready(Player p, ItemStack hand) {
-        Integer last = lastStrike.get(p.getUniqueId());
-        if (last == null) return true;
-        double speed = attackSpeed(hand);
-        if (speed < 0) return true;
-        return org.bukkit.Bukkit.getCurrentTick() - last >= Math.floor(rechargeTicks(speed) * minimumCharge) - 1;
-    }
-
-    /** A weapon used without the components (never refreshed since a change): it gets them at once. */
-    private void armHeld(Player p, ItemStack hand) {
-        if (hand.isEmpty() || attackSpeed(hand) < 0) return;
-        ItemStack copy = hand.clone();
-        if (apply(copy)) p.getInventory().setItemInMainHand(copy);
-    }
-
-    /**
-     * Every hit with a weapon goes through FluxDungeons' clock: sent before the recharge, it is refused (the vanilla
-     * client never sends one when the weapon has its components; a weapon missing them gets them now).
-     */
+    /** A hit sent before the weapon is recharged is refused (the vanilla client never sends one). */
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onAttack(PrePlayerAttackEntityEvent e) {
         if (!enabled || !e.willAttack()) return;
         Player p = e.getPlayer();
         ItemStack hand = p.getInventory().getItemInMainHand();
-        if (hand.isEmpty() || attackSpeed(hand) < 0 || excluded(hand)) return;
-        armHeld(p, hand);
-        if (!ready(p, hand)) {
-            e.setCancelled(true);
-            return;
-        }
-        int now = org.bukkit.Bukkit.getCurrentTick();
-        lastStrike.put(p.getUniqueId(), now);
-        attacked.put(p.getUniqueId(), now);
+        if (hand.isEmpty() || !hand.isDataOverridden(DataComponentTypes.MINIMUM_ATTACK_CHARGE)) return;
+        if (p.getAttackCooldown() + 0.1f < minimumCharge) e.setCancelled(true);
+        else attacked.put(p.getUniqueId(), org.bukkit.Bukkit.getCurrentTick());
     }
 
     /**
@@ -233,11 +202,10 @@ public final class AttackCadence implements Listener {
         if (!enabled || swingParticle == null && swingSound == null || e.getHand() != EquipmentSlot.HAND) return;
         Player p = e.getPlayer();
         ItemStack hand = p.getInventory().getItemInMainHand();
-        if (hand.isEmpty() || attackSpeed(hand) < 0 || excluded(hand)) return;
-        armHeld(p, hand);
+        if (hand.isEmpty() || !hand.isDataOverridden(DataComponentTypes.MINIMUM_ATTACK_CHARGE)) return;
         int now = org.bukkit.Bukkit.getCurrentTick();
         Integer hit = attacked.get(p.getUniqueId());
-        boolean real = hit != null && now - hit <= 1 || ready(p, hand);
+        boolean real = hit != null && now - hit <= 1 || p.getAttackCooldown() + 0.1f >= minimumCharge;
         Integer last = shown.get(p.getUniqueId());
         if (!real || last != null && now - last < 4) return;
         shown.put(p.getUniqueId(), now);
@@ -247,7 +215,6 @@ public final class AttackCadence implements Listener {
         if (missed && assistOn) {
             org.bukkit.entity.LivingEntity target = assisted(p, hand);
             if (target != null) {
-                lastStrike.put(p.getUniqueId(), now);
                 p.attack(target);
                 at = target.getLocation().add(0, target.getHeight() * 0.6, 0);
             }
@@ -260,40 +227,39 @@ public final class AttackCadence implements Listener {
     }
 
     /**
-     * The monster the player was aiming at: within his reach, in front of him, whose body passes within
-     * {@code aim-assist.radius} blocks of the aimed line, seen (no wall between); the closest to the line, then to the
-     * player. The hitboxes are not enlarged: only a swing that hit nothing is read this way.
+     * The monster the player was aiming at: a swing in the air counts as a click on the monster closest to where he
+     * looks, if it lies within {@code aim-assist.angle} degrees of his view (35: a monster 35 degrees aside still
+     * counts, 36 no longer does) and within his reach, with no wall between. Nothing is enlarged: only the aim of a
+     * swing that hit nothing is read.
      */
     private org.bukkit.entity.LivingEntity assisted(Player p, ItemStack hand) {
         java.util.function.Predicate<org.bukkit.entity.Entity> enemy = assist.enemies(p);
         if (enemy == null) return null;
         org.bukkit.Location eye = p.getEyeLocation();
-        org.bukkit.util.Vector origin = eye.toVector(), dir = eye.getDirection().normalize();
+        org.bukkit.util.Vector origin = eye.toVector(), look = eye.getDirection().normalize();
         double reach = reach(p, hand);
-        org.bukkit.util.RayTraceResult wall = p.getWorld().rayTraceBlocks(eye, dir, reach, org.bukkit.FluidCollisionMode.NEVER, true);
-        double limit = wall == null ? reach : wall.getHitPosition().distance(origin);
+        double maxAngle = Math.toRadians(assistAngle);
         org.bukkit.entity.LivingEntity best = null;
-        double bestScore = Double.MAX_VALUE;
+        double bestAngle = Double.MAX_VALUE;
         for (org.bukkit.entity.Entity e : p.getNearbyEntities(reach + 2, reach + 2, reach + 2)) {
             if (!(e instanceof org.bukkit.entity.LivingEntity le) || le.isDead() || !enemy.test(le)) continue;
             org.bukkit.util.BoundingBox box = le.getBoundingBox();
-            org.bukkit.util.Vector center = box.getCenter();
-            double half = Math.max(box.getWidthX(), box.getWidthZ()) / 2;
-            double along = center.clone().subtract(origin).dot(dir);
-            if (along <= 0 || along - half > limit) continue;
-            org.bukkit.util.Vector closest = origin.clone().add(dir.clone().multiply(along));
-            // distance from the aimed line to the body (its height counts: aiming at the legs or the head)
-            double dy = Math.max(0, Math.max(box.getMinY() - closest.getY(), closest.getY() - box.getMaxY()));
-            double dxz = Math.hypot(center.getX() - closest.getX(), center.getZ() - closest.getZ()) - half;
-            double gap = Math.hypot(Math.max(0, dxz), dy);
-            if (gap > assistRadius || !p.hasLineOfSight(le)) continue;
-            double score = gap * 4 + along;
-            if (score < bestScore) {
-                bestScore = score;
-                best = le;
-            }
+            // the point of its body closest to the player's eyes: reach and angle are measured to it
+            org.bukkit.util.Vector near = new org.bukkit.util.Vector(clamp(origin.getX(), box.getMinX(), box.getMaxX()),
+                    clamp(origin.getY(), box.getMinY(), box.getMaxY()), clamp(origin.getZ(), box.getMinZ(), box.getMaxZ()));
+            if (near.distanceSquared(origin) > reach * reach) continue;
+            org.bukkit.util.Vector to = box.getCenter().subtract(origin);
+            if (to.lengthSquared() < 1.0E-6) return le;
+            double angle = look.angle(to);
+            if (angle > maxAngle || angle >= bestAngle || !p.hasLineOfSight(le)) continue;
+            bestAngle = angle;
+            best = le;
         }
         return best;
+    }
+
+    private static double clamp(double v, double min, double max) {
+        return Math.max(min, Math.min(max, v));
     }
 
     /** How far the player hits with this item: the weapon's attack range when it has one, else his reach attribute. */
@@ -329,6 +295,5 @@ public final class AttackCadence implements Listener {
     public void onQuit(org.bukkit.event.player.PlayerQuitEvent e) {
         attacked.remove(e.getPlayer().getUniqueId());
         shown.remove(e.getPlayer().getUniqueId());
-        lastStrike.remove(e.getPlayer().getUniqueId());
     }
 }

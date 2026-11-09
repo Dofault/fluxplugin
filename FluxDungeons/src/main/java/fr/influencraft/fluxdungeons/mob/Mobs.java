@@ -1258,14 +1258,14 @@ public final class Mobs {
                     if (to.length() > range || to.clone().setY(0).normalize().dot(dir) < 0.7) continue;
                     strike(a, p, ab, 0.6);
                     if (fire) p.setFireTicks(60);
-                    else fr.influencraft.fluxdungeons.combat.Statuses.slow(p, 0.4, 60);
+                    else p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 2));
                 }
             }
             case "taze" -> {
                 w.spawnParticle(Particle.ELECTRIC_SPARK, target.getLocation().add(0, 1, 0), 30, 0.3, 0.6, 0.3, 0.1);
                 w.playSound(target.getLocation(), Sound.ENTITY_GUARDIAN_ATTACK, 1f, 1.6f);
                 strike(a, target, ab, 0.8);
-                fr.influencraft.fluxdungeons.combat.Statuses.slow(target, 0.7, 40);
+                target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 4));
             }
             case "lightning" -> {
                 int count = (int) ab.number("count", 3);
@@ -1352,13 +1352,13 @@ public final class Mobs {
                 w.spawnParticle(Particle.HAPPY_VILLAGER, at.clone().add(0, 1.5, 0), 12, 0.6, 0.6, 0.6, 0);
             }
             case "shield" -> {
-                fr.influencraft.fluxdungeons.combat.Statuses.guard(e, 0.6, (int) (ab.number("duration", 4) * 20));
+                e.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, (int) (ab.number("duration", 4) * 20), 2));
                 w.spawnParticle(Particle.ENCHANTED_HIT, at.clone().add(0, 1, 0), 20, 0.6, 0.8, 0.6, 0.1);
                 w.playSound(at, Sound.ITEM_SHIELD_BLOCK, 1f, 0.8f);
             }
             case "enrage" -> {
-                fr.influencraft.fluxdungeons.combat.Statuses.haste(e, 0.4, (int) (ab.number("duration", 8) * 20));
-                fr.influencraft.fluxdungeons.combat.Statuses.might(e, 0.5, (int) (ab.number("duration", 8) * 20));
+                e.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, (int) (ab.number("duration", 8) * 20), 1));
+                e.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, (int) (ab.number("duration", 8) * 20), 0));
                 w.spawnParticle(Particle.FLAME, at.clone().add(0, 1, 0), 30, 0.6, 1, 0.6, 0.05);
                 w.playSound(at, Sound.ENTITY_WITHER_AMBIENT, 0.6f, 1.6f);
             }

@@ -533,7 +533,6 @@ public final class Runs {
         pets.despawn(player);
         fr.influencraft.flux.api.pets.Companions.suppress(player.getUniqueId(), false);
         fr.influencraft.flux.api.client.HurtShake.clear(player.getUniqueId());
-        fr.influencraft.fluxdungeons.combat.Statuses.clear(player);
         if (inside) {
             hook(run, "leave", player, null);
             heroes.deactivate(player);

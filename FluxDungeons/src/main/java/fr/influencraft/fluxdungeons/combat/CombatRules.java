@@ -45,7 +45,7 @@ import org.bukkit.inventory.EquipmentSlot;
 /**
  * Every combat rule of the dungeons in one place: no friendly fire, no vanilla invulnerability (limits per source),
  * each monster's own melee pace, the exact damage of monsters (their file, never their held items), ranged
- * resistance, FluxDungeons' effects ({@link Statuses}: guard, might), the players' reaction to hits (push along the
+ * resistance, the players' reaction to hits (push along the
  * ground one hit in four, stagger, frost), knockback off, fire off, lethal hits of bosses with a death animation.
  */
 public final class CombatRules implements Listener {
@@ -81,16 +81,6 @@ public final class CombatRules implements Listener {
         meleeTaken.keySet().removeIf(u -> Bukkit.getPlayer(u) == null);
     }
 
-    /**
-     * FluxDungeons' effects, last of all: the victim's guard cuts the hit, the attacker's might raises it (the
-     * shooter's, for a projectile).
-     */
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void onStatuses(EntityDamageByEntityEvent e) {
-        Entity source = e.getDamager() instanceof Projectile pr && pr.getShooter() instanceof Entity sh ? sh : e.getDamager();
-        double factor = Statuses.taken(e.getEntity()) * Statuses.dealt(source);
-        if (factor != 1) e.setDamage(e.getDamage() * factor);
-    }
 
     // ---------------------------------------------------------------- combat
 
@@ -296,7 +286,15 @@ public final class CombatRules implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onKnockback(EntityKnockbackEvent e) {
         Entity target = e.getEntity();
-        if (target instanceof Player p ? runs.runOf(p) != null : mobs.templateOf(target) != null) e.setCancelled(true);
+        if (target instanceof Player p) {
+            if (runs.runOf(p) != null) e.setCancelled(true);
+            return;
+        }
+        if (mobs.templateOf(target) == null) return;
+        // monsters are never pushed by hits, except by a weapon enchanted with Knockback (the enchantment keeps its use)
+        if (e instanceof org.bukkit.event.entity.EntityKnockbackByEntityEvent byEntity && attacker(byEntity.getSourceEntity()) instanceof Player hitter
+                && hitter.getInventory().getItemInMainHand().getEnchantmentLevel(org.bukkit.enchantments.Enchantment.KNOCKBACK) > 0) return;
+        e.setCancelled(true);
     }
 
     /** Lethal damage of any other cause (fire, fall) still plays a boss's death animation. */

@@ -104,7 +104,6 @@ public final class FluxDungeons extends FluxPlugin {
             }
         });
         placeholders("fluxdungeons", (player, params) -> runs.placeholder(player, params));
-        fr.influencraft.fluxdungeons.combat.Statuses.start(this);
         combat = new fr.influencraft.fluxdungeons.combat.CombatRules(this, runs, heroes, mobs);
         combat.hitReaction(getConfig().getConfigurationSection("hit-reaction"));
         Bukkit.getPluginManager().registerEvents(combat, this);
