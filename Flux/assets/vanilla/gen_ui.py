@@ -531,18 +531,16 @@ def bg_pass(generic):
 
 
 def bg_profil(generic):
-    """Player card of /profil (2026-10-30): back (18) and menu icon (26) above a light identity card: dark header band
-    with « Carte d'identité » on the left and the rank tag on the right (FluxTags, window x 110, y 74), dark photo
-    frame behind the bust (36-38, 46), the 8 sections in slots (40-43, 49-52), a signature under the photo and a
-    gold chip."""
+    """Player card of /profil (2026-10-30): back (18) and menu icon (26), the shown player's name between them (text
+    widget of the menu), above a light identity card. No header band since 2026-11-10 (the menu already says it is
+    the profile): dark photo frame of 3 x 3 slots (columns 0-2, rows 3-5) behind the bust (36-38, 46), the rank tag
+    centred over the sections on row 3 (FluxTags, centre x 112, y 74), the 8 sections in slots (40-43, 49-52), a
+    signature under the photo and a gold chip."""
     im = bg_window(generic, 2, 5, extra=22)
     d = ImageDraw.Draw(im, "RGBA")
     ui.container(im, d, (5, 71, 170, 141), "carte")
-    d.rectangle((6, 72, 169, 85), fill=rgb("#35363A"))
-    d.line((6, 86, 169, 86), fill=BLACK)
-    ui.write(im, "Carte d'identité", 0, 76, WHITE, TEXT_SHADOW, left=10)
-    d.rectangle((6, 87, 60, 126), fill=BLACK)                     # photo, behind the bust
-    d.rectangle((7, 88, 59, 125), fill=rgb("#4A4B50"))
+    d.rectangle((6, 72, 61, 126), fill=BLACK)                     # photo, behind the bust (slots 27-29 to 45-47)
+    d.rectangle((7, 72, 60, 125), fill=rgb("#4A4B50"))
     for c in (40, 41, 42, 43, 49, 50, 51, 52):
         ui.slot(d, c, "vanilla")
     sig = [(10 + i, 133 + 2 * math.sin(i / 2.2) * (1 - i / 50) + (1 if 18 < i < 26 else 0)) for i in range(0, 44)]

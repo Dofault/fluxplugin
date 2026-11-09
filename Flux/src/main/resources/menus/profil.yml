@@ -1,6 +1,7 @@
-# Profile menu (/profil [player]): a player card. Background influmenu:menu_profil (Flux/assets/profil/gen_fond.py).
-# Card lowered by 2 rows (gen_fond.SHIFT): back (18), menu icon (26). Photo: the shown player's bust (list profile_bust: left arm, torso, right arm, head
-# in slots 36, 37, 38, 46; models profile.bust-model of Flux's config + part, Flux/assets/buste/gen_buste.py).
+# Profile menu (/profil [player]): a player card. Vanilla theme background bg_profil (Flux/assets/vanilla/gen_ui.py), the
+# shown player's name between back (18) and menu icon (26) (widget of theme.menus.profil in Flux's config). Photo of 3 x 3
+# slots: the shown player's bust (list profile_bust: left arm, torso, right arm, head in slots 36, 37, 38, 46; models
+# profile.bust-model of Flux's config + part, Flux/assets/buste/gen_buste.py).
 # Above the sections, the shown player's rank tag drawn in the title (%fluxtags_profile%, FluxTags). Sections (list profile, slots 40-43 and 49-52): given by the plugins of the
 # suite (economy, leaderboards, jobs, statistics in Flux; town, collection, pets, tags in their plugins).
 title: ":offset_-8::menu_profil::offset_-177:%fluxtags_profile%"

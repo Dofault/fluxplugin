@@ -254,7 +254,8 @@ theme:
       background: bg_profil      # identity card (gen_ui.py), slots in it
       frames: none
       widgets:
-        rang: {type: raw, x: 0, text: "%fluxtags_profile%"}   # rank tag in the card header (FluxTags)
+        rang: {type: raw, x: 0, text: "%fluxtags_profile%"}   # rank tag centred over the sections (FluxTags)
+        pseudo: {type: text, ink: true, x: 88, y: 59, align: center, text: "%flux_profile_name%"}   # shown player, between back and icon
     tags: {title: "Tags", frame: "10-16, 19-25, 28-34, 37-43"}
     vote: {title: "Vote"}
     classement: {title: "Classement"}

@@ -49,7 +49,7 @@ LEGACY = [
     ["simple", "unique", "elite", "ultimate", "legendary", "fabled"], RARITIES)]
 CHAT_H = 10        # height in the chat and in item lores (chosen in game on 2026-10-30), y_position CHAT_Y
 CHAT_Y = 9
-PROFILE_Y = 74     # window y of the rank tag of the profile (header band of the identity card, vanilla theme)
+PROFILE_Y = 76     # window y of the rank tag of the profile (row 3 of the identity card, above the sections, vanilla theme)
 
 
 def glyph(gid, path, height, y):

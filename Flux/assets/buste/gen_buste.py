@@ -27,8 +27,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SHADER_OUT = os.path.join(HERE, "..", "..", "..", "FluxArmor", "assets", "shaders", "buste_constantes.glsl")
 
 VIEW = (12.0, 22.0)   # pitch, yaw (degrees) of the whole bust; unusual on purpose: no other head uses it
-K = 2.1               # skin pixel -> GUI pixel (2026-11-01: was 3.0, the head went over the « Carte d'identité » band)
-OFFSET = (-1.0, -8.0)  # GUI px (right, up) of the whole bust: fits it in the photo frame (window y 88 to 125, gen_ui.bg_profil)
+K = 3.0               # skin pixel -> GUI pixel: the bust is 3 slots high (2026-11-10, header band of the card removed)
+OFFSET = (0.0, -1.5)   # GUI px (right, up) of the whole bust: in the 3 x 3 slots photo frame (window x 7-60, y 72-125, gen_ui.bg_profil), cut torso on its bottom edge
 Z = 60.0              # towards the camera: in front of the menu background drawn by the title
 F = np.diag([1.0, -1.0, 1.0])
 ROTATIONS = {  # part -> quarter-turn marker (columns: where local x, y, z go)

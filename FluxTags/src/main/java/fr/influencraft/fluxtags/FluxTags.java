@@ -60,7 +60,7 @@ public final class FluxTags extends FluxPlugin implements Listener {
     private static final int ROWS = 6;
     /** Window x of the tags in /tags and of the rank tag in the profile (assets/gen_fonds.py). */
     private static final int TAG_X = 46;
-    private static final int PROFILE_X = 110;   // right part of the identity card header (vanilla theme)
+    private static final int PROFILE_CENTRE = 115;   // window x the profile's rank tag is centred on: over the 4 section columns (vanilla theme)
     private static final int TAG_HEIGHT = 9;
 
     /** A tag of the catalogue; {@code job} or {@code special} set for those kinds. */
@@ -365,7 +365,9 @@ public final class FluxTags extends FluxPlugin implements Listener {
         String rank = Texts.placeholders(rankPlaceholder, subject).trim().toLowerCase(Locale.ROOT);
         if (rank.isEmpty() || rank.indexOf('%') >= 0) return "";
         TitleOverlay out = new TitleOverlay("", 0);
-        place(out, "rang_" + rank + "_p", "rang_" + rank, PROFILE_X, "&f");
+        int[] size = sizes.get("rang_" + rank);
+        int width = size == null ? 0 : (int) Math.round(size[0] * (double) TAG_HEIGHT / size[1]);
+        place(out, "rang_" + rank + "_p", "rang_" + rank, PROFILE_CENTRE - width / 2, "&f");
         return out.moveTo(0).resolved();
     }
 
