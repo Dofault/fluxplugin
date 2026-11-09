@@ -848,7 +848,8 @@ public final class Mobs {
                 // first time seen: its clock starts half way (a fresh monster does not wait a full cooldown);
                 // stored once, else "now" moved with it and no ability was ever ready
                 long last = a.lastCast.computeIfAbsent(i, k -> now - (long) (ab.every() * 500));
-                if (now - last >= ab.every() * 1000) ready.add(i);
+                // ready, and somebody to hit (a ring cast with nobody in it is thrown in the void)
+                if (now - last >= ab.every() * 1000 && RockPowers.worthCasting(ab, a.entity)) ready.add(i);
             }
             if (ready.isEmpty()) continue;
             int pick = ready.get(ThreadLocalRandom.current().nextInt(ready.size()));

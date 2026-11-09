@@ -121,6 +121,30 @@ final class RockPowers {
         return true;
     }
 
+    /**
+     * Whether casting now makes sense: a player within the ability's reach (bite in front, uplift and quake within
+     * their radius, cataclysm a little beyond, shard someone keeping away). An ability that would hit nobody waits,
+     * its delay untouched, instead of being thrown in the void.
+     */
+    static boolean worthCasting(MobTemplate.Ability ab, LivingEntity e) {
+        return switch (ab.type()) {
+            case "bite" -> closest(e, ab.number("range", 4.5) + 1) != null;
+            case "uplift" -> closest(e, ab.number("radius", 6)) != null;
+            case "quake" -> closest(e, ab.number("radius", 7)) != null;
+            case "cataclysm" -> closest(e, ab.number("radius", 10) * 1.3) != null;
+            case "rock_shard" -> {
+                double min = ab.number("min-range", 7);
+                boolean far = false;
+                for (Player p : e.getWorld().getPlayers()) {
+                    double d = p.getLocation().distance(e.getLocation());
+                    if (Mobs.fighting(p) && d >= min && d <= 32 && e.hasLineOfSight(p)) far = true;
+                }
+                yield far;
+            }
+            default -> true;
+        };
+    }
+
     /** Every moving block left (plugin stopping). */
     void clear() {
         for (BlockDisplay d : alive) if (d.isValid()) d.remove();
