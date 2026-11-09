@@ -815,7 +815,9 @@ public final class Mobs {
             for (int i = 0; i < a.abilities.size(); i++) {
                 Ability ab = a.abilities.get(i);
                 if (life > ab.below()) continue;
-                long last = a.lastCast.getOrDefault(i, now - (long) (ab.every() * 500));
+                // first time seen: its clock starts half way (a fresh monster does not wait a full cooldown);
+                // stored once, else "now" moved with it and no ability was ever ready
+                long last = a.lastCast.computeIfAbsent(i, k -> now - (long) (ab.every() * 500));
                 if (now - last >= ab.every() * 1000) ready.add(i);
             }
             if (ready.isEmpty()) continue;
@@ -1027,7 +1029,7 @@ public final class Mobs {
         double life = 100 * a.entity.getHealth() / Math.max(1, maxHealth(a.entity));
         for (int i = 0; i < a.abilities.size(); i++) {
             Ability ab = a.abilities.get(i);
-            long last = a.lastCast.getOrDefault(i, now - (long) (ab.every() * 500));
+            long last = a.lastCast.computeIfAbsent(i, k -> now - (long) (ab.every() * 500));
             double left = Math.max(0, ab.every() - (now - last) / 1000.0);
             out.add(" - " + ab.type() + (ab.params().get("spell") != null ? " [" + ab.params().get("spell") + "]" : "") + ": every " + ab.every()
                     + " s, " + (life > ab.below() ? "only under " + ab.below() + " %" : left <= 0 ? "ready" : "in " + Math.round(left * 10) / 10.0 + " s"));
