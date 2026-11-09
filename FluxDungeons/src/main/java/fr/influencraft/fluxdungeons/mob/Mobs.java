@@ -297,8 +297,10 @@ public final class Mobs {
             base(le, Attribute.MAX_HEALTH, health);
             base(le, Attribute.ATTACK_DAMAGE, (imported ? vanilla(le, Attribute.ATTACK_DAMAGE, 2) * x.damageMultiplier() : t.damage()) * level[1]);
             if (t.speed() > 0) base(le, Attribute.MOVEMENT_SPEED, t.speed());
-            // walk-speed: blocks per second on flat ground (the speed attribute moves about 43 blocks a second per unit)
-            if (t.walkSpeed() > 0) base(le, Attribute.MOVEMENT_SPEED, t.walkSpeed() / 43.17);
+            // walk-speed: blocks per second on flat ground. A mob's walk grows with the SQUARE of its speed attribute (the
+            // game uses it both as its input and as its acceleration): about 44 × speed² blocks a second (zombie 0.23 =
+            // 2.3 blocks a second), so speed = sqrt(blocks a second / 44)
+            if (t.walkSpeed() > 0) base(le, Attribute.MOVEMENT_SPEED, Math.sqrt(t.walkSpeed() / 44.0));
             if (!imported) base(le, Attribute.ARMOR, t.armor());
             base(le, Attribute.SCALE, t.scale());
             base(le, Attribute.FOLLOW_RANGE, x.followRange());
