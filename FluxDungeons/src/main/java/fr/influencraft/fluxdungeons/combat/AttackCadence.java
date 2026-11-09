@@ -181,15 +181,47 @@ public final class AttackCadence implements Listener {
         return changed;
     }
 
-    /** A hit sent before the weapon is recharged is refused (the vanilla client never sends one). */
+    /** Tick of each player's last hit that went through (vanilla or aim assist): the recharge counts from there. */
+    private final java.util.Map<java.util.UUID, Integer> lastStrike = new java.util.HashMap<>();
+
+    /**
+     * True when the player's weapon is recharged, by FluxDungeons' own clock: the weapon's recharge (its attack
+     * speed) times {@code minimum-charge} since his last hit. Never the vanilla attack strength, which the game resets
+     * on its side and which another plugin may change.
+     */
+    private boolean ready(Player p, ItemStack hand) {
+        Integer last = lastStrike.get(p.getUniqueId());
+        if (last == null) return true;
+        double speed = attackSpeed(hand);
+        if (speed < 0) return true;
+        return org.bukkit.Bukkit.getCurrentTick() - last >= Math.floor(rechargeTicks(speed) * minimumCharge) - 1;
+    }
+
+    /** A weapon used without the components (never refreshed since a change): it gets them at once. */
+    private void armHeld(Player p, ItemStack hand) {
+        if (hand.isEmpty() || attackSpeed(hand) < 0) return;
+        ItemStack copy = hand.clone();
+        if (apply(copy)) p.getInventory().setItemInMainHand(copy);
+    }
+
+    /**
+     * Every hit with a weapon goes through FluxDungeons' clock: sent before the recharge, it is refused (the vanilla
+     * client never sends one when the weapon has its components; a weapon missing them gets them now).
+     */
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onAttack(PrePlayerAttackEntityEvent e) {
         if (!enabled || !e.willAttack()) return;
         Player p = e.getPlayer();
         ItemStack hand = p.getInventory().getItemInMainHand();
-        if (hand.isEmpty() || !hand.isDataOverridden(DataComponentTypes.MINIMUM_ATTACK_CHARGE)) return;
-        if (p.getAttackCooldown() + 0.1f < minimumCharge) e.setCancelled(true);
-        else attacked.put(p.getUniqueId(), org.bukkit.Bukkit.getCurrentTick());
+        if (hand.isEmpty() || attackSpeed(hand) < 0 || excluded(hand)) return;
+        armHeld(p, hand);
+        if (!ready(p, hand)) {
+            e.setCancelled(true);
+            return;
+        }
+        int now = org.bukkit.Bukkit.getCurrentTick();
+        lastStrike.put(p.getUniqueId(), now);
+        attacked.put(p.getUniqueId(), now);
     }
 
     /**
@@ -201,10 +233,11 @@ public final class AttackCadence implements Listener {
         if (!enabled || swingParticle == null && swingSound == null || e.getHand() != EquipmentSlot.HAND) return;
         Player p = e.getPlayer();
         ItemStack hand = p.getInventory().getItemInMainHand();
-        if (hand.isEmpty() || !hand.isDataOverridden(DataComponentTypes.MINIMUM_ATTACK_CHARGE)) return;
+        if (hand.isEmpty() || attackSpeed(hand) < 0 || excluded(hand)) return;
+        armHeld(p, hand);
         int now = org.bukkit.Bukkit.getCurrentTick();
         Integer hit = attacked.get(p.getUniqueId());
-        boolean real = hit != null && now - hit <= 1 || p.getAttackCooldown() + 0.1f >= minimumCharge;
+        boolean real = hit != null && now - hit <= 1 || ready(p, hand);
         Integer last = shown.get(p.getUniqueId());
         if (!real || last != null && now - last < 4) return;
         shown.put(p.getUniqueId(), now);
@@ -214,6 +247,7 @@ public final class AttackCadence implements Listener {
         if (missed && assistOn) {
             org.bukkit.entity.LivingEntity target = assisted(p, hand);
             if (target != null) {
+                lastStrike.put(p.getUniqueId(), now);
                 p.attack(target);
                 at = target.getLocation().add(0, target.getHeight() * 0.6, 0);
             }
@@ -295,5 +329,6 @@ public final class AttackCadence implements Listener {
     public void onQuit(org.bukkit.event.player.PlayerQuitEvent e) {
         attacked.remove(e.getPlayer().getUniqueId());
         shown.remove(e.getPlayer().getUniqueId());
+        lastStrike.remove(e.getPlayer().getUniqueId());
     }
 }

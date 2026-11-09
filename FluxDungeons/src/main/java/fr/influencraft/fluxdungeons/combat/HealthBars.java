@@ -27,6 +27,7 @@ import org.joml.Vector3f;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
@@ -108,6 +109,19 @@ public final class HealthBars implements Listener {
 
     public boolean enabled() {
         return enabled;
+    }
+
+    /** State of the bars (staff diagnostics, {@code /fluxdungeons debug bars}). */
+    public List<String> describe() {
+        List<String> out = new java.util.ArrayList<>();
+        out.add("enabled " + enabled + ", all-mobs " + allMobs + ", font " + font.asString() + ", bars " + bars.size());
+        int i = 0;
+        for (Bar b : bars.values()) {
+            if (i++ >= 10) break;
+            out.add(" - " + b.entity.getType() + " valid " + b.entity.isValid() + " world " + b.world + " main " + (b.main != null && b.main.isValid())
+                    + " riding " + riding(b.main, b.entity) + " passengers " + b.entity.getPassengers().size());
+        }
+        return out;
     }
 
     /** Puts a bar on a creature (a dungeon monster), with its own head line. */
@@ -239,12 +253,15 @@ public final class HealthBars implements Listener {
         if (!enabled) return;
         for (Iterator<Bar> it = bars.values().iterator(); it.hasNext(); ) {
             Bar b = it.next();
-            if (!b.entity.isValid() || b.entity.isDead() || b.world && !nearPlayer(b.entity, DROP)) {
+            // a dungeon monster's bar is only dropped by FluxDungeons (death, end of run): a monster spawned this very
+            // tick is not valid yet, dropping it here lost its bar for good
+            boolean gone = b.world ? !b.entity.isValid() || b.entity.isDead() || !nearPlayer(b.entity, DROP) : b.entity.isDead();
+            if (gone) {
                 drop(b);
                 it.remove();
                 continue;
             }
-            update(b);
+            if (b.entity.isValid()) update(b);
         }
         if (!allMobs) return;
         for (Player p : Bukkit.getOnlinePlayers()) {

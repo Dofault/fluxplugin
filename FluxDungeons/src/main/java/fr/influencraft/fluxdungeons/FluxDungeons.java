@@ -653,6 +653,10 @@ public final class FluxDungeons extends FluxPlugin {
                 String what = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "";
                 switch (what) {
                     case "leaks" -> diagnostics.leaks(sender);
+                    case "bars" -> {
+                        for (String line : healthBars.describe()) getLogger().info(line);
+                        for (String line : healthBars.describe()) sender.sendMessage("§7" + line);
+                    }
                     case "mob" -> {
                         if (!(sender instanceof Player dp)) return usage(sender);
                         for (String line : mobs.inspect(dp.getLocation())) sender.sendMessage("§7" + line);
