@@ -45,6 +45,7 @@ import java.util.Map;
  *   silent: true                   # no vanilla sounds (a model with its own look)
  *   cast-gap: 2.5                  # seconds between two abilities at least (the next one is drawn among those ready)
  *   bar-offset: 1.5                # life bar this many blocks higher (or lower) than the top of its body
+ *   walk-speed: 1.0                # blocks per second on flat ground (instead of the raw speed attribute)
  *   abilities: [{spell: colossus_bite, every: 6}]   # a spell of spells/, values here win
  *   mount: forge_horse
  *   messages: {death: [...], hit: [...], hurt: [...]}
@@ -59,6 +60,11 @@ import java.util.Map;
 public record MobTemplate(String id, EntityType type, String name, boolean boss, String model, double health,
                           double damage, double speed, double armor, double scale, double xp,
                           Map<String, Material> equipment, List<Ability> abilities, Extra extra) {
+
+    /** Walking speed in blocks per second ({@code walk-speed}), 0 when the raw {@code speed} attribute is used. */
+    public double walkSpeed() {
+        return extra.walkSpeed();
+    }
 
     /** One ability: cast every {@code every} seconds, once the mob's life is at or below {@code below} percent. */
     public record Ability(String type, double every, double below, Map<String, Object> params) {
@@ -94,7 +100,8 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                         List<String> hitMessages, List<String> hurtMessages, List<BlockState> spawnBlocks,
                         List<BlockState> removeBlocks, Map<String, Script> scripts, String rank,
                         double attackSpeed, Map<String, org.bukkit.Color> dyes, double rangedResistance, double rangedRate,
-                        boolean frostArrows, boolean controlled, boolean silent, double castGap, double barOffset) {
+                        boolean frostArrows, boolean controlled, boolean silent, double castGap, double barOffset,
+                        double walkSpeed) {
         /** Ticks between two melee hits of this monster ({@code attack-speed}: hits per second, vanilla 1). */
         public int attackTicks() {
             return (int) Math.max(4, Math.round(20 / Math.max(0.05, attackSpeed)));
@@ -156,7 +163,7 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                 c.getDouble("attack-speed", 1), dyes, Math.max(0, Math.min(1, c.getDouble("ranged-resistance", 0))),
                 Math.max(1, c.getDouble("ranged-rate", 2)), c.getBoolean("frost-arrows", false),
                 c.getBoolean("controlled", false), c.getBoolean("silent", false), Math.max(0, c.getDouble("cast-gap", 0)),
-                c.getDouble("bar-offset", 0));
+                c.getDouble("bar-offset", 0), c.getDouble("walk-speed", 0));
         return new MobTemplate(id, type, c.getString("name", id), c.getBoolean("boss"), c.getString("model"),
                 c.getDouble("health", 20), c.getDouble("damage", 3), c.getDouble("speed", -1), c.getDouble("armor", 0),
                 c.getDouble("scale", 1), c.getDouble("xp", 10), equipment, abilities, extra);

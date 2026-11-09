@@ -657,8 +657,13 @@ public final class FluxDungeons extends FluxPlugin {
                         for (String line : healthBars.describe()) sender.sendMessage("§7" + line);
                     }
                     case "mob" -> {
-                        if (!(sender instanceof Player dp)) return usage(sender);
-                        for (String line : mobs.inspect(dp.getLocation())) sender.sendMessage("§7" + line);
+                        // near the sender, or near a named player (from the console: written in the log too)
+                        Player near = args.length > 2 ? Bukkit.getPlayerExact(args[2]) : sender instanceof Player dp ? dp : null;
+                        if (near == null) return usage(sender);
+                        for (String line : mobs.inspect(near.getLocation())) {
+                            sender.sendMessage("§7" + line);
+                            if (!(sender instanceof Player)) getLogger().info(line);
+                        }
                     }
                     case "heapdump" -> diagnostics.heapDump(sender);
                     case "save" -> {

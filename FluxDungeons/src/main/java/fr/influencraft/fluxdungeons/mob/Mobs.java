@@ -297,6 +297,8 @@ public final class Mobs {
             base(le, Attribute.MAX_HEALTH, health);
             base(le, Attribute.ATTACK_DAMAGE, (imported ? vanilla(le, Attribute.ATTACK_DAMAGE, 2) * x.damageMultiplier() : t.damage()) * level[1]);
             if (t.speed() > 0) base(le, Attribute.MOVEMENT_SPEED, t.speed());
+            // walk-speed: blocks per second on flat ground (the speed attribute moves about 43 blocks a second per unit)
+            if (t.walkSpeed() > 0) base(le, Attribute.MOVEMENT_SPEED, t.walkSpeed() / 43.17);
             if (!imported) base(le, Attribute.ARMOR, t.armor());
             base(le, Attribute.SCALE, t.scale());
             base(le, Attribute.FOLLOW_RANGE, x.followRange());
@@ -519,9 +521,10 @@ public final class Mobs {
             ticks++;
             Player target = fightingTarget(a);
             if (target == null && ticks % 10 == 0) {
-                // calm: sees players within its (shortened) follow range, never through walls
+                // calm: sees players within its follow range (shortened by calm, but a boss sees as far as its file
+                // says: it guards its room), never through walls
                 AttributeInstance sight = m.getAttribute(Attribute.FOLLOW_RANGE);
-                double range = sight == null ? 16 : sight.getValue();
+                double range = a.template.boss() ? a.template.extra().followRange() : sight == null ? 16 : sight.getValue();
                 double best = range * range;
                 for (Player p : m.getWorld().getPlayers()) {
                     if (!fighting(p)) continue;
@@ -1317,7 +1320,7 @@ public final class Mobs {
                     MobTemplate copy = new MobTemplate(a.template.id() + "_summon", type, "&7" + type.name().toLowerCase(), false, null,
                             maxHealth(e) * 0.15, a.baseDamage() * 0.6, 0.25, 0, 1, 0, Map.of(), List.of(),
                             new MobTemplate.Extra(1, 0.15, 0.6, false, false, 32, 0, List.of(), List.of(), null, List.of(), List.of(), List.of(),
-                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of(), 0, 1, false, false, false, 0, 0));
+                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of(), 0, 1, false, false, false, 0, 0, 0));
                     for (int i = 0; i < (int) ab.number("count", 2); i++) {
                         LivingEntity s = spawn(copy, at.clone().add(ThreadLocalRandom.current().nextDouble(-2, 2), 0, ThreadLocalRandom.current().nextDouble(-2, 2)), a.run);
                         if (s != null) onSummon.accept(e, s);
