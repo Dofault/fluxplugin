@@ -44,6 +44,8 @@ import java.util.Map;
  *   controlled: true               # no vanilla AI: FluxDungeons picks its target, walks it at its speed, hits it
  *   silent: true                   # no vanilla sounds (a model with its own look)
  *   cast-gap: 2.5                  # seconds between two abilities at least (the next one is drawn among those ready)
+ *   bar-offset: 1.5                # life bar this many blocks higher (or lower) than the top of its body
+ *   abilities: [{spell: colossus_bite, every: 6}]   # a spell of spells/, values here win
  *   mount: forge_horse
  *   messages: {death: [...], hit: [...], hurt: [...]}
  *   blocks: {spawn: ["-2,0,3/minecraft:iron_bars"], remove: [...]}   # relative to its spawn point
@@ -92,7 +94,7 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                         List<String> hitMessages, List<String> hurtMessages, List<BlockState> spawnBlocks,
                         List<BlockState> removeBlocks, Map<String, Script> scripts, String rank,
                         double attackSpeed, Map<String, org.bukkit.Color> dyes, double rangedResistance, double rangedRate,
-                        boolean frostArrows, boolean controlled, boolean silent, double castGap) {
+                        boolean frostArrows, boolean controlled, boolean silent, double castGap, double barOffset) {
         /** Ticks between two melee hits of this monster ({@code attack-speed}: hits per second, vanilla 1). */
         public int attackTicks() {
             return (int) Math.max(4, Math.round(20 / Math.max(0.05, attackSpeed)));
@@ -122,9 +124,11 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
             }
         }
         List<Ability> abilities = new ArrayList<>();
-        for (Map<?, ?> a : c.getMapList("abilities")) {
-            Map<String, Object> params = new LinkedHashMap<>();
-            a.forEach((k, v) -> params.put(String.valueOf(k), v));
+        for (Map<?, ?> raw : c.getMapList("abilities")) {
+            // "- spell: <id>" takes a spell of spells/, the monster's own values win
+            Map<String, Object> a = Spells.resolve(raw, id, java.util.logging.Logger.getLogger("FluxDungeons"));
+            if (a.get("type") == null) continue;
+            Map<String, Object> params = new LinkedHashMap<>(a);
             Object every = a.get("every"), below = a.get("below");
             abilities.add(new Ability(String.valueOf(a.get("type")).toLowerCase(Locale.ROOT),
                     every instanceof Number n ? n.doubleValue() : 8, below instanceof Number n ? n.doubleValue() : 100, params));
@@ -151,7 +155,8 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                 Script.parse(scriptSection), c.getString("rank", "TRASH").toUpperCase(Locale.ROOT),
                 c.getDouble("attack-speed", 1), dyes, Math.max(0, Math.min(1, c.getDouble("ranged-resistance", 0))),
                 Math.max(1, c.getDouble("ranged-rate", 2)), c.getBoolean("frost-arrows", false),
-                c.getBoolean("controlled", false), c.getBoolean("silent", false), Math.max(0, c.getDouble("cast-gap", 0)));
+                c.getBoolean("controlled", false), c.getBoolean("silent", false), Math.max(0, c.getDouble("cast-gap", 0)),
+                c.getDouble("bar-offset", 0));
         return new MobTemplate(id, type, c.getString("name", id), c.getBoolean("boss"), c.getString("model"),
                 c.getDouble("health", 20), c.getDouble("damage", 3), c.getDouble("speed", -1), c.getDouble("armor", 0),
                 c.getDouble("scale", 1), c.getDouble("xp", 10), equipment, abilities, extra);

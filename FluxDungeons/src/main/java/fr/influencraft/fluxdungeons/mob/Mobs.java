@@ -85,6 +85,11 @@ public final class Mobs {
         int lastMelee = -1000;
         /** No ability before this time (cast-gap after the last one). */
         long nextCast;
+        /**
+         * The player it fights, kept by FluxDungeons (not the vanilla target, which any plugin may cancel or clear:
+         * every decision of the monster, abilities and melee, reads this one).
+         */
+        UUID target;
 
         Alive(LivingEntity entity, MobTemplate template, String run, Location spawn, ModelBridge.Handle model) {
             this.entity = entity;
@@ -445,6 +450,31 @@ public final class Mobs {
         }
     }
 
+    /**
+     * The monster fights this player from now on (it saw him, he hit it, its pack warned it): remembered as its own
+     * target, vanilla target set too (only for its look and path), its calm pack alerted.
+     */
+    private void engage(Alive a, Player player) {
+        if (player == null || !fighting(player)) return;
+        boolean wasCalm = !a.inCombat;
+        a.target = player.getUniqueId();
+        if (a.entity instanceof Mob m && m.getTarget() != player) m.setTarget(player);
+        enterCombat(a, player, true);
+        if (wasCalm) alert(a, player);
+    }
+
+    /** The player a monster fights now (its own target), null when none or when he is out of reach. */
+    private static Player fightingTarget(Alive a) {
+        if (a.target == null) return null;
+        Player p = Bukkit.getPlayer(a.target);
+        if (p == null || !fighting(p) || p.getWorld() != a.entity.getWorld()
+                || p.getLocation().distanceSquared(a.entity.getLocation()) > 48 * 48) {
+            a.target = null;
+            return null;
+        }
+        return p;
+    }
+
     private void enterCombat(Alive a, Player player, boolean event) {
         a.lastEngaged = System.currentTimeMillis();
         if (a.inCombat) return;
@@ -487,7 +517,7 @@ public final class Mobs {
         public void tick() {
             if (a.dying || !(a.entity instanceof Mob m)) return;
             ticks++;
-            Player target = m.getTarget() instanceof Player p && fighting(p) && p.getWorld() == m.getWorld() ? p : null;
+            Player target = fightingTarget(a);
             if (target == null && ticks % 10 == 0) {
                 // calm: sees players within its (shortened) follow range, never through walls
                 AttributeInstance sight = m.getAttribute(Attribute.FOLLOW_RANGE);
@@ -501,7 +531,7 @@ public final class Mobs {
                         target = p;
                     }
                 }
-                if (target != null) m.setTarget(target);
+                if (target != null) engage(a, target);
             }
             if (target == null) {
                 m.getPathfinder().stopPathfinding();
@@ -553,6 +583,7 @@ public final class Mobs {
                 if (o == a || o.inCombat || o.dying || !o.run.equals(a.run) || !(o.entity instanceof Mob m) || !m.hasAI()) continue;
                 if (o.entity.getWorld() != a.entity.getWorld() || o.entity.getLocation().distanceSquared(a.entity.getLocation()) > r2) continue;
                 if (!a.entity.hasLineOfSight(o.entity)) continue;
+                o.target = player.getUniqueId();
                 m.setTarget(player);
                 enterCombat(o, player, true);
             }
@@ -603,9 +634,7 @@ public final class Mobs {
     public void damagedByPlayer(LivingEntity entity, Player player, EntityDamageEvent event) {
         Alive a = alive.get(entity.getUniqueId());
         if (a == null) return;
-        boolean wasCalm = !a.inCombat;
-        enterCombat(a, player, true);
-        if (wasCalm) alert(a, player);
+        engage(a, player);
         a.damagers.merge(player.getUniqueId(), Math.min(event.getFinalDamage(), entity.getHealth()), Double::sum);
         engine.fire(a, "EliteMobDamagedByPlayerEvent", player, event);
         if (!a.template.extra().hurtMessages().isEmpty() && ThreadLocalRandom.current().nextDouble() < 0.15) say(a, a.template.extra().hurtMessages());
@@ -643,9 +672,7 @@ public final class Mobs {
     public void targeted(LivingEntity entity, Player player) {
         Alive a = alive.get(entity.getUniqueId());
         if (a == null) return;
-        boolean wasCalm = !a.inCombat;
-        enterCombat(a, player, true);
-        if (wasCalm) alert(a, player);
+        engage(a, player);
         engine.fire(a, "EliteMobTargetPlayerEvent", player, null);
     }
 
@@ -773,6 +800,7 @@ public final class Mobs {
             if (target == null) {
                 if (a.inCombat && now - a.lastEngaged > COMBAT_TIMEOUT_MS) {
                     a.inCombat = false;
+                    a.target = null;
                     calm(a, true);
                     if (a.entity instanceof Mob m) m.setTarget(null);
                     later.add(() -> engine.fire(a, "EliteMobExitCombatEvent", null, null));
@@ -818,7 +846,15 @@ public final class Mobs {
 
     private static Player target(Alive a) {
         if (!(a.entity instanceof Mob m)) return null;
-        if (m.getTarget() instanceof Player p && fighting(p)) return p;
+        Player own = fightingTarget(a);
+        if (own != null) {
+            if (m.getTarget() != own) m.setTarget(own);
+            return own;
+        }
+        if (m.getTarget() instanceof Player p && fighting(p)) {
+            a.target = p.getUniqueId();
+            return p;
+        }
         // out of combat, only vanilla sight (shortened by calm) picks a target: never through walls
         if (!a.inCombat) return null;
         Player best = null;
@@ -832,7 +868,10 @@ public final class Mobs {
                 best = p;
             }
         }
-        if (best != null) m.setTarget(best);
+        if (best != null) {
+            a.target = best.getUniqueId();
+            m.setTarget(best);
+        }
         return best;
     }
 
@@ -895,7 +934,7 @@ public final class Mobs {
         if (bars == null) return;
         int level = Math.max(0, a.template.extra().level());
         String head = a.template.name() + (level > 0 ? " &7Nv. &f" + level : "");
-        bars.attach(a.entity, e -> Texts.parse(head));
+        bars.attach(a.entity, e -> Texts.parse(head), a.template.extra().barOffset());
     }
 
     /**
@@ -938,7 +977,8 @@ public final class Mobs {
         for (Alive a : alive.values()) {
             if (a.dying || !a.inCombat || !(a.entity instanceof Mob m) || !m.hasAI() || !m.isValid()) continue;
             if (m instanceof com.destroystokyo.paper.entity.RangedEntity) continue;
-            if (!(m.getTarget() instanceof Player target) || !fighting(target) || target.getWorld() != m.getWorld()) continue;
+            Player target = fightingTarget(a);
+            if (target == null) continue;
             if (now - a.lastMelee < a.template.extra().attackTicks()) continue;
             AttributeInstance attack = m.getAttribute(Attribute.ATTACK_DAMAGE);
             if (attack == null || attack.getValue() <= 0) continue;
@@ -952,6 +992,47 @@ public final class Mobs {
             a.animate("attack");
             m.attack(target);
         }
+    }
+
+    /**
+     * What the monster nearest to this place thinks (staff, {@code /fluxdungeons debug mob}): target, combat, AI,
+     * each ability and when it is ready.
+     */
+    public List<String> inspect(Location at) {
+        Alive best = null;
+        double bestD = 32 * 32;
+        for (Alive a : alive.values()) {
+            if (!a.entity.isValid() || a.entity.getWorld() != at.getWorld()) continue;
+            double d = a.entity.getLocation().distanceSquared(at);
+            if (d < bestD) {
+                bestD = d;
+                best = a;
+            }
+        }
+        List<String> out = new ArrayList<>();
+        if (best == null) {
+            out.add("No dungeon monster within 32 blocks.");
+            return out;
+        }
+        Alive a = best;
+        long now = System.currentTimeMillis();
+        Player own = fightingTarget(a);
+        AttributeInstance speed = a.entity.getAttribute(Attribute.MOVEMENT_SPEED);
+        out.add(a.template.id() + " (" + a.entity.getType() + "), life " + Math.round(a.entity.getHealth()) + "/" + Math.round(maxHealth(a.entity))
+                + ", AI " + a.entity.hasAI() + ", controlled " + a.template.extra().controlled() + ", dying " + a.dying);
+        out.add("combat " + a.inCombat + ", target " + (own == null ? "none" : own.getName())
+                + ", vanilla target " + (a.entity instanceof Mob m && m.getTarget() != null ? m.getTarget().getName() : "none")
+                + ", model " + (a.model != null) + ", speed " + String.format(java.util.Locale.ROOT, "%.3f", speed == null ? 0 : speed.getValue()));
+        out.add("next ability in " + Math.max(0, (a.nextCast - now) / 100) / 10.0 + " s, melee ready " + meleeReady(a.entity));
+        double life = 100 * a.entity.getHealth() / Math.max(1, maxHealth(a.entity));
+        for (int i = 0; i < a.abilities.size(); i++) {
+            Ability ab = a.abilities.get(i);
+            long last = a.lastCast.getOrDefault(i, now - (long) (ab.every() * 500));
+            double left = Math.max(0, ab.every() - (now - last) / 1000.0);
+            out.add(" - " + ab.type() + (ab.params().get("spell") != null ? " [" + ab.params().get("spell") + "]" : "") + ": every " + ab.every()
+                    + " s, " + (life > ab.below() ? "only under " + ab.below() + " %" : left <= 0 ? "ready" : "in " + Math.round(left * 10) / 10.0 + " s"));
+        }
+        return out;
     }
 
     /** Default value of an attribute for this kind of creature (what vanilla gives it). */
@@ -1034,7 +1115,8 @@ public final class Mobs {
     public void shot(LivingEntity mob, org.bukkit.entity.AbstractArrow arrow) {
         Alive a = alive.get(mob.getUniqueId());
         if (a == null) return;
-        LivingEntity target = mob instanceof Mob m ? m.getTarget() : null;
+        LivingEntity target = fightingTarget(a);
+        if (target == null && mob instanceof Mob m) target = m.getTarget();
         if (target != null) aim(mob, arrow, target);
         arrow.setDamage(arrowDamage(a));
         arrow.setPickupStatus(AbstractArrow.PickupStatus.DISALLOWED);
@@ -1048,7 +1130,8 @@ public final class Mobs {
     private void extraShot(Alive a) {
         LivingEntity e = a.entity;
         if (!e.isValid() || e.isDead() || a.dying || !e.hasAI() || !(e instanceof Mob m)) return;
-        if (!(m.getTarget() instanceof Player target) || !fighting(target) || target.getWorld() != e.getWorld()) return;
+        Player target = fightingTarget(a);
+        if (target == null) return;
         if (target.getLocation().distanceSquared(e.getLocation()) > 24 * 24 || !e.hasLineOfSight(target)) return;
         shooting = true;
         try {
@@ -1175,14 +1258,14 @@ public final class Mobs {
                     if (to.length() > range || to.clone().setY(0).normalize().dot(dir) < 0.7) continue;
                     strike(a, p, ab, 0.6);
                     if (fire) p.setFireTicks(60);
-                    else p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 2));
+                    else fr.influencraft.fluxdungeons.combat.Statuses.slow(p, 0.4, 60);
                 }
             }
             case "taze" -> {
                 w.spawnParticle(Particle.ELECTRIC_SPARK, target.getLocation().add(0, 1, 0), 30, 0.3, 0.6, 0.3, 0.1);
                 w.playSound(target.getLocation(), Sound.ENTITY_GUARDIAN_ATTACK, 1f, 1.6f);
                 strike(a, target, ab, 0.8);
-                target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 4));
+                fr.influencraft.fluxdungeons.combat.Statuses.slow(target, 0.7, 40);
             }
             case "lightning" -> {
                 int count = (int) ab.number("count", 3);
@@ -1232,7 +1315,7 @@ public final class Mobs {
                     MobTemplate copy = new MobTemplate(a.template.id() + "_summon", type, "&7" + type.name().toLowerCase(), false, null,
                             maxHealth(e) * 0.15, a.baseDamage() * 0.6, 0.25, 0, 1, 0, Map.of(), List.of(),
                             new MobTemplate.Extra(1, 0.15, 0.6, false, false, 32, 0, List.of(), List.of(), null, List.of(), List.of(), List.of(),
-                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of(), 0, 1, false, false, false, 0));
+                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of(), 0, 1, false, false, false, 0, 0));
                     for (int i = 0; i < (int) ab.number("count", 2); i++) {
                         LivingEntity s = spawn(copy, at.clone().add(ThreadLocalRandom.current().nextDouble(-2, 2), 0, ThreadLocalRandom.current().nextDouble(-2, 2)), a.run);
                         if (s != null) onSummon.accept(e, s);
@@ -1269,13 +1352,13 @@ public final class Mobs {
                 w.spawnParticle(Particle.HAPPY_VILLAGER, at.clone().add(0, 1.5, 0), 12, 0.6, 0.6, 0.6, 0);
             }
             case "shield" -> {
-                e.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, (int) (ab.number("duration", 4) * 20), 2));
+                fr.influencraft.fluxdungeons.combat.Statuses.guard(e, 0.6, (int) (ab.number("duration", 4) * 20));
                 w.spawnParticle(Particle.ENCHANTED_HIT, at.clone().add(0, 1, 0), 20, 0.6, 0.8, 0.6, 0.1);
                 w.playSound(at, Sound.ITEM_SHIELD_BLOCK, 1f, 0.8f);
             }
             case "enrage" -> {
-                e.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, (int) (ab.number("duration", 8) * 20), 1));
-                e.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, (int) (ab.number("duration", 8) * 20), 0));
+                fr.influencraft.fluxdungeons.combat.Statuses.haste(e, 0.4, (int) (ab.number("duration", 8) * 20));
+                fr.influencraft.fluxdungeons.combat.Statuses.might(e, 0.5, (int) (ab.number("duration", 8) * 20));
                 w.spawnParticle(Particle.FLAME, at.clone().add(0, 1, 0), 30, 0.6, 1, 0.6, 0.05);
                 w.playSound(at, Sound.ENTITY_WITHER_AMBIENT, 0.6f, 1.6f);
             }

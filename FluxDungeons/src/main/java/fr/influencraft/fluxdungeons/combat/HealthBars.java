@@ -59,6 +59,8 @@ public final class HealthBars implements Listener {
         final LivingEntity entity;
         final Function<LivingEntity, Component> head;
         final boolean world;
+        /** Blocks above the default place (top of the body). */
+        double offset;
         TextDisplay main, life;
         int step = -1;
         double health = -1;
@@ -109,11 +111,12 @@ public final class HealthBars implements Listener {
     }
 
     /** Puts a bar on a creature (a dungeon monster), with its own head line. */
-    public void attach(LivingEntity entity, Function<LivingEntity, Component> head) {
+    public void attach(LivingEntity entity, Function<LivingEntity, Component> head, double offset) {
         if (!enabled) return;
         Bar old = bars.remove(entity.getUniqueId());
         if (old != null) drop(old);
         Bar b = new Bar(entity, head, false);
+        b.offset = offset;
         bars.put(entity.getUniqueId(), b);
         update(b);
     }
@@ -151,8 +154,8 @@ public final class HealthBars implements Listener {
         if (!riding(b.main, e) || !riding(b.life, e)) {
             if (b.main != null) b.main.remove();
             if (b.life != null) b.life.remove();
-            b.main = display(e, 0);
-            b.life = display(e, FRONT);
+            b.main = display(e, 0, b.offset);
+            b.life = display(e, FRONT, b.offset);
             b.step = -1;
         }
         double max = maxHealth(e);
@@ -182,7 +185,7 @@ public final class HealthBars implements Listener {
         return d != null && d.isValid() && e.getPassengers().contains(d);
     }
 
-    private TextDisplay display(LivingEntity e, float front) {
+    private TextDisplay display(LivingEntity e, float front, double offset) {
         TextDisplay d = e.getWorld().spawn(e.getLocation(), TextDisplay.class, t -> {
             t.setPersistent(false);
             t.setBillboard(Display.Billboard.CENTER);
@@ -192,7 +195,7 @@ public final class HealthBars implements Listener {
             t.setSeeThrough(false);
             t.setViewRange(0.45f);
             t.setLineWidth(400);
-            t.setTransformation(new Transformation(new Vector3f(0, 0.25f, front), new AxisAngle4f(), new Vector3f(1, 1, 1), new AxisAngle4f()));
+            t.setTransformation(new Transformation(new Vector3f(0, 0.25f + (float) offset, front), new AxisAngle4f(), new Vector3f(1, 1, 1), new AxisAngle4f()));
             t.addScoreboardTag(TAG);
         });
         e.addPassenger(d);

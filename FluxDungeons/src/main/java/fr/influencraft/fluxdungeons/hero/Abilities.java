@@ -84,10 +84,10 @@ public final class Abilities {
                 double radius = a.param("radius", 10);
                 int ticks = (int) (a.param("duration", 6) * 20);
                 for (LivingEntity e : enemies(at, radius, ctx)) if (e instanceof Mob m) m.setTarget(p);
-                p.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, ticks, (int) a.param("resistance", 1), false, true));
+                fr.influencraft.fluxdungeons.combat.Statuses.guard(p, 0.2 * (1 + a.param("resistance", 1)), ticks);
                 for (Player ally : ctx.allies(p)) {
                     if (ally.getLocation().distanceSquared(at) <= radius * radius) {
-                        ally.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, ticks, 0, false, true));
+                        fr.influencraft.fluxdungeons.combat.Statuses.might(ally, 0.3, ticks);
                     }
                 }
                 w.playSound(at, Sound.EVENT_RAID_HORN, 0.8f, 1.2f);
@@ -118,7 +118,7 @@ public final class Abilities {
             case "leap_back" -> {
                 Vector back = at.getDirection().setY(0).normalize().multiply(-a.param("strength", 1.4)).setY(0.55);
                 p.setVelocity(back);
-                p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, (int) (a.param("duration", 3) * 20), 1, false, true));
+                fr.influencraft.fluxdungeons.combat.Statuses.haste(p, 0.4, (int) (a.param("duration", 3) * 20));
                 w.spawnParticle(Particle.CLOUD, at, 12, 0.4, 0.1, 0.4, 0.02);
                 w.playSound(at, Sound.ENTITY_BAT_TAKEOFF, 0.8f, 1.2f);
                 return true;
@@ -163,7 +163,7 @@ public final class Abilities {
                 w.playSound(at, Sound.BLOCK_GLASS_BREAK, 1f, 0.6f);
                 for (LivingEntity e : enemies(at, radius, ctx)) {
                     hit(e, power, p);
-                    e.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, ticks, 2, false, true));
+                    fr.influencraft.fluxdungeons.combat.Statuses.slow(e, 0.45, ticks);
                     e.setFreezeTicks(Math.max(e.getFreezeTicks(), ticks));
                 }
                 return true;

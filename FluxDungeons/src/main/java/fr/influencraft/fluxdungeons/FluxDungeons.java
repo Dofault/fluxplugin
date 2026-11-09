@@ -64,6 +64,7 @@ public final class FluxDungeons extends FluxPlugin {
     private ItemCatalog items;
     private fr.influencraft.fluxdungeons.combat.AttackCadence attackCadence;
     private DungeonListener listener;
+    private fr.influencraft.fluxdungeons.combat.CombatRules combat;
     private fr.influencraft.fluxdungeons.combat.HealthBars healthBars;
 
     @Override
@@ -103,8 +104,11 @@ public final class FluxDungeons extends FluxPlugin {
             }
         });
         placeholders("fluxdungeons", (player, params) -> runs.placeholder(player, params));
-        listener = new DungeonListener(this, arena, runs, heroes, mobs, loadouts);
-        listener.hitReaction(getConfig().getConfigurationSection("hit-reaction"));
+        fr.influencraft.fluxdungeons.combat.Statuses.start(this);
+        combat = new fr.influencraft.fluxdungeons.combat.CombatRules(this, runs, heroes, mobs);
+        combat.hitReaction(getConfig().getConfigurationSection("hit-reaction"));
+        Bukkit.getPluginManager().registerEvents(combat, this);
+        listener = new DungeonListener(this, arena, runs, heroes, mobs, loadouts, combat);
         Bukkit.getPluginManager().registerEvents(listener, this);
         command("dungeon")
                 .description("Dungeons: play, leave, choose your class.")
@@ -164,7 +168,9 @@ public final class FluxDungeons extends FluxPlugin {
             attackCadence.loadAssist(getConfig().getConfigurationSection("aim-assist"));
         }
         if (healthBars != null) healthBars.load(getConfig().getConfigurationSection("health-bar"));
-        if (listener != null) listener.hitReaction(getConfig().getConfigurationSection("hit-reaction"));
+        if (combat != null) combat.hitReaction(getConfig().getConfigurationSection("hit-reaction"));
+        // spells first: monsters take them by id
+        fr.influencraft.fluxdungeons.mob.Spells.load(new File(getDataFolder(), "spells"), getLogger());
         List<org.bukkit.configuration.ConfigurationSection> mobFiles = new ArrayList<>();
         mobFiles.add(file("mobs.yml"));
         mobFiles.addAll(mobFiles(new File(getDataFolder(), "mobs")));
@@ -647,6 +653,10 @@ public final class FluxDungeons extends FluxPlugin {
                 String what = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "";
                 switch (what) {
                     case "leaks" -> diagnostics.leaks(sender);
+                    case "mob" -> {
+                        if (!(sender instanceof Player dp)) return usage(sender);
+                        for (String line : mobs.inspect(dp.getLocation())) sender.sendMessage("§7" + line);
+                    }
                     case "heapdump" -> diagnostics.heapDump(sender);
                     case "save" -> {
                         DungeonDefinition def = args.length > 2 ? runs.dungeon(args[2]) : null;

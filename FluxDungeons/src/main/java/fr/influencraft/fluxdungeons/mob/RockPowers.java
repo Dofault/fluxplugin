@@ -323,7 +323,7 @@ final class RockPowers {
                     if (Math.abs(p.getLocation().getY() - center.getY()) < 2.5 && d <= r + 0.4 && d >= r - 1.1) {
                         hit.add(p.getUniqueId());
                         c.hit(p, 1);
-                        p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 30, 1, false, true));
+                        fr.influencraft.fluxdungeons.combat.Statuses.slow(p, 0.3, 30);
                     }
                 }
                 r += 1;
@@ -367,7 +367,7 @@ final class RockPowers {
                     if (Math.hypot(pl.getX() - l.getX(), pl.getZ() - l.getZ()) < 1.3 && Math.abs(pl.getY() - l.getY()) < 2) {
                         hit.add(p.getUniqueId());
                         c.hit(p, 1);
-                        p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 50, 3, false, true));
+                        fr.influencraft.fluxdungeons.combat.Statuses.slow(p, 0.45, 40);
                         p.setFreezeTicks(Math.max(p.getFreezeTicks(), 120));
                     }
                 }
@@ -381,7 +381,8 @@ final class RockPowers {
     private void stoneSkin(MobTemplate.Ability ab, Caster c) {
         LivingEntity e = c.entity();
         int ticks = (int) (ab.number("duration", 6) * 20);
-        e.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, ticks, (int) ab.number("level", 2) - 1, false, true));
+        // takes 20 % less damage per level (FluxDungeons' guard, not a vanilla potion)
+        fr.influencraft.fluxdungeons.combat.Statuses.guard(e, 0.2 * ab.number("level", 2), ticks);
         e.getWorld().playSound(e.getLocation(), Sound.BLOCK_DEEPSLATE_PLACE, 1.2f, 0.5f);
         List<BlockDisplay> stones = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
