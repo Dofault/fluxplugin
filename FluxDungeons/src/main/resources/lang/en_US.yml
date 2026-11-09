@@ -93,6 +93,9 @@ ability:
 hud:
   bar: '&#6FA8FF✦ Mana %mana%&7/&#6FA8FF%max%'
 admin:
+  god-on: '&#2ECF7BInvulnerable, full life and hunger.'
+  god-off: '&#B376E5No longer invulnerable (full life and hunger).'
+  god-denied: '&#FF5C5CStaff only.'
   summoned: '&#2ECF7B%count% × %mob% &#2ECF7Bsummoned for a test (out of any dungeon). Remove them: &f/fluxdungeons summon clear'
   summon-cleared: '&#B376E5Test monsters removed.'
   visit-loading: '&#B376E5Opening &f%dungeon%&#B376E5...'

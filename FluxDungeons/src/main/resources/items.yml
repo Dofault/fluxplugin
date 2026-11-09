@@ -239,3 +239,12 @@ cleric_boots:
   attributes:
     armor: 1
   unbreakable: true
+
+# Staff tool (op or fluxdungeons.admin): right click = invulnerable on/off and full heal. /fluxdungeons god to get it.
+god_tool:
+  material: NETHER_STAR
+  name: '&#FFD94DStaff star'
+  lore:
+  - '&#B376E5Right click: invulnerable on or off, full life and hunger, effects removed.'
+  - '&7Staff only, to test dungeons.'
+  glow: true

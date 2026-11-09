@@ -239,3 +239,12 @@ cleric_boots:
   attributes:
     armor: 1
   unbreakable: true
+
+# Outil du staff (op ou fluxdungeons.admin) : clic droit = invincible ou plus, et soin complet. /fluxdungeons god pour l'obtenir.
+god_tool:
+  material: NETHER_STAR
+  name: '&#FFD94DÉtoile du staff'
+  lore:
+  - '&#B376E5Clic droit : passe invincible (ou ne l''est plus) et rend toute la vie, la faim et retire les effets.'
+  - '&7Réservé au staff, pour tester les donjons.'
+  glow: true

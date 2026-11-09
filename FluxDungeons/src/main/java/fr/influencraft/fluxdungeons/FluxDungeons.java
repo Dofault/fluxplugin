@@ -94,6 +94,25 @@ public final class FluxDungeons extends FluxPlugin {
         getServer().getPluginManager().registerEvents(attackCadence, this);
         getServer().getPluginManager().registerEvents(runs.lobby(), this);
         runs.editor().onSaved(this::reload);
+        // staff tool: invulnerable on or off and full heal, to test dungeons (fluxdungeons:god_tool)
+        fr.influencraft.flux.api.items.ItemUses.register(this, "fluxdungeons:god_tool", (player, item, id) -> {
+            if (!player.isOp() && !player.hasPermission("fluxdungeons.admin")) {
+                messages().send(player, "admin.god-denied");
+                return false;
+            }
+            boolean on = !player.isInvulnerable();
+            player.setInvulnerable(on);
+            var max = player.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
+            player.setHealth(max == null ? 20 : max.getValue());
+            player.setFoodLevel(20);
+            player.setSaturation(20);
+            player.setFireTicks(0);
+            player.setFreezeTicks(0);
+            for (org.bukkit.potion.PotionEffect pe : player.getActivePotionEffects()) player.removePotionEffect(pe.getType());
+            messages().send(player, on ? "admin.god-on" : "admin.god-off");
+            Sounds.cue(player, on ? "toggle-on" : "toggle-off");
+            return false;
+        });
         getServer().getPluginManager().registerEvents(runs.editor(), this);
         settings();
         Dungeons.register(new Dungeons.Service() {
@@ -624,6 +643,10 @@ public final class FluxDungeons extends FluxPlugin {
                     messages().send(sender, "admin.stopped", "%player%", target.getName());
                 }
             }
+            case "god" -> {
+                if (!(sender instanceof Player p)) return usage(sender);
+                if (!CustomItems.give(p, "fluxdungeons:god_tool", 1)) messages().send(p, "admin.unknown-item", "%item%", "fluxdungeons:god_tool");
+            }
             case "summon", "invoquer" -> {
                 // test a monster anywhere, out of any dungeon: /fluxdungeons summon <monster> [count] | summon clear
                 if (!(sender instanceof Player p) || args.length < 2) return usage(sender);
@@ -800,7 +823,7 @@ public final class FluxDungeons extends FluxPlugin {
     }
 
     private List<String> completeAdmin(CommandSender sender, String[] args) {
-        if (args.length == 1) return filter(List.of("create", "edit", "visit", "build", "template", "start", "stop", "summon", "give", "runs", "reload"), args[0]);
+        if (args.length == 1) return filter(List.of("create", "edit", "visit", "build", "template", "start", "stop", "summon", "god", "give", "runs", "reload"), args[0]);
         List<String> ids = runs.dungeons().stream().map(DungeonDefinition::id).toList();
         List<String> online = Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
         String sub = args[0].toLowerCase(Locale.ROOT);
