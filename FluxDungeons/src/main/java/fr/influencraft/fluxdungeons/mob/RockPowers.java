@@ -450,29 +450,43 @@ final class RockPowers {
         w.playSound(center, Sound.ENTITY_GENERIC_EXPLODE, 1.2f, 0.4f);
         w.playSound(center, Sound.BLOCK_ANVIL_LAND, 1f, 0.4f);
         w.spawnParticle(Particle.EXPLOSION, center.clone().add(0, 0.5, 0), 4, 1.5, 0.2, 1.5, 0);
-        // a ring of rocks bursting out at once, as far as the hit goes
-        for (double r = 1.5; r <= radius; r += 1.5) {
-            int points = (int) Math.max(8, r * 6);
-            for (int i = 0; i < points; i++) {
-                double a = Math.PI * 2 * i / points;
-                Location l = ground(center.clone().add(Math.cos(a) * r, 0, Math.sin(a) * r));
-                if (l != null) pillar(l, ROCKS[ThreadLocalRandom.current().nextInt(ROCKS.length)].createBlockData(), 0.8f, 0.9f, 10);
-            }
-        }
+        // the shock runs out from the monster: a ring of rocks bursts every tick a little further (the player sees it
+        // come), and each player flies up when it reaches him; blinded only once in the air
+        double step = 0.6;
+        int ticks = (int) Math.ceil(radius / step);
         String title = ab.text("title", ""), subtitle = ab.text("subtitle", "");
-        for (Player p : w.getPlayers()) {
-            if (!Mobs.fighting(p) || p.getLocation().distanceSquared(center) > radius * radius) continue;
-            c.hit(p, 0.6);
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                if (!p.isOnline() || p.isDead()) return;
-                p.setVelocity(new Vector(0, vy, 0));
-                p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 45, 0, false, false, false));
-                if (!title.isBlank() || !subtitle.isBlank()) {
-                    p.showTitle(net.kyori.adventure.title.Title.title(fr.influencraft.flux.api.text.Texts.parse(title),
-                            fr.influencraft.flux.api.text.Texts.parse(subtitle), net.kyori.adventure.title.Title.Times.times(
-                                    java.time.Duration.ofMillis(100), java.time.Duration.ofMillis(1500), java.time.Duration.ofMillis(400))));
+        java.util.Set<UUID> thrown = new HashSet<>();
+        for (int t = 0; t <= ticks; t++) {
+            double r = Math.max(1.2, t * step);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                int points = (int) Math.max(8, r * 5);
+                double offset = ThreadLocalRandom.current().nextDouble(Math.PI);
+                for (int i = 0; i < points; i++) {
+                    double a = offset + Math.PI * 2 * i / points;
+                    Location l = ground(center.clone().add(Math.cos(a) * r, 0, Math.sin(a) * r));
+                    if (l != null) pillar(l, ROCKS[ThreadLocalRandom.current().nextInt(ROCKS.length)].createBlockData(), 0.8f, 0.7f + (float) Math.random() * 0.5f, 18);
                 }
-            });
+                if (r == Math.max(1.2, 0)) w.playSound(center, Sound.BLOCK_DEEPSLATE_BREAK, 1.2f, 0.6f);
+                for (Player p : w.getPlayers()) {
+                    if (!Mobs.fighting(p) || thrown.contains(p.getUniqueId())) continue;
+                    Location pl = p.getLocation();
+                    double d = Math.hypot(pl.getX() - center.getX(), pl.getZ() - center.getZ());
+                    if (d > r + 0.3 || d > radius || Math.abs(pl.getY() - center.getY()) > 2.5) continue;
+                    thrown.add(p.getUniqueId());
+                    c.hit(p, 0.6);
+                    p.setVelocity(new Vector(0, vy, 0));
+                    w.spawnParticle(Particle.BLOCK, pl.clone().add(0, 0.3, 0), 25, 0.4, 0.2, 0.4, 0.1, Material.STONE.createBlockData());
+                    if (!title.isBlank() || !subtitle.isBlank()) {
+                        p.showTitle(net.kyori.adventure.title.Title.title(fr.influencraft.flux.api.text.Texts.parse(title),
+                                fr.influencraft.flux.api.text.Texts.parse(subtitle), net.kyori.adventure.title.Title.Times.times(
+                                        java.time.Duration.ofMillis(100), java.time.Duration.ofMillis(1500), java.time.Duration.ofMillis(400))));
+                    }
+                    // the dark comes once he is up in the air, he saw the rocks burst
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                        if (p.isOnline() && !p.isDead()) p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 30, 0, false, false, false));
+                    }, 8L);
+                }
+            }, t);
         }
     }
 
