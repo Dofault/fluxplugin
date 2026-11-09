@@ -62,6 +62,8 @@ party:
     not-in-party: '&#FF5C5CYou are in no party.'
     not-member: '&#FF5C5C%player% is not in your party.'
 run:
+  loaned: '&#B376E5Iron gear lent for this run: it stays in the dungeon when you leave.'
+  loan-lore: '&7Lent for the dungeon'
   preparing: '&#B376E5Preparing &f%dungeon%&#B376E5...'
   save-failed: '&#FF5C5CYour things could not be put aside: entry cancelled, nothing moved.'
   title: '&#FFD94D%dungeon%'
@@ -229,6 +231,19 @@ create:
   copying: '&#B376E5Copying the world &f%world%&#B376E5...'
   created: '&#2ECF7BDungeon %dungeon% created. Set its name and reward in dungeons/%dungeon%.yml.'
 lobby:
+  difficulty: 'Difficulty: %level%'
+  difficulty-desc: Chosen by the party leader, for the whole party.
+  difficulty-gear: Made for
+  difficulty-spells: Monster spells
+  spells-on: "yes"
+  spells-off: "no"
+  difficulty-loan: Iron armour and sword lent to whoever lacks them.
+  difficulty-required: Full armour and a weapon required.
+  difficulty-next: Harder
+  difficulty-prev: Easier
+  difficulty-leader: '%player% chooses the difficulty.'
+  need-armor: '&#FF5C5C%level% needs full armour: wear and take your four pieces.'
+  need-weapon: '&#FF5C5C%level% needs a weapon: take a sword, an axe, a bow or a crossbow.'
   title: 'Getting ready: %dungeon%'
   leave: Leave
   leave-desc: Cancels the launch for the whole party.

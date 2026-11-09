@@ -840,7 +840,7 @@ public final class Mobs {
             a.lastEngaged = now;
             double life = 100 * a.entity.getHealth() / Math.max(1, maxHealth(a.entity));
             // one ability at a time, drawn among those ready (the first of the list would always win), cast-gap apart
-            if (now < a.nextCast) continue;
+            if (now < a.nextCast || !castsAbilities(a)) continue;
             List<Integer> ready = new ArrayList<>();
             for (int i = 0; i < a.abilities.size(); i++) {
                 Ability ab = a.abilities.get(i);
@@ -1124,9 +1124,15 @@ public final class Mobs {
 
     // ---------------------------------------------------------------- difficulty levels
 
-    private static final double[] NO_SCALE = {1, 1};
-    /** Life and damage multipliers of a run (its difficulty level). */
+    private static final double[] NO_SCALE = {1, 1, 1};
+    /** Life and damage multipliers of a run (its difficulty level), then 1 when its monsters cast abilities, 0 when not. */
     private java.util.function.Function<String, double[]> scaling = r -> NO_SCALE;
+
+    /** False in an easy run: its monsters only fight with their weapons. */
+    private boolean castsAbilities(Alive a) {
+        double[] v = scaling.apply(a.run);
+        return v.length < 3 || v[2] > 0;
+    }
 
     public void scaling(java.util.function.Function<String, double[]> scaling) {
         this.scaling = r -> {

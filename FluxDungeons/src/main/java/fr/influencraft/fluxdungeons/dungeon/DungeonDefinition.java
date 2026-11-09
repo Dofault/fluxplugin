@@ -70,9 +70,12 @@ public final class DungeonDefinition {
 
     /**
      * A difficulty level of the dungeon: {@code health} and {@code damage} multiply every monster's, {@code reward} the
-     * money of a victory; {@code gear} says what it is made for (shown to players).
+     * money of a victory; {@code gear} says what it is made for (shown to players). {@code spells}: monsters cast their
+     * abilities; {@code loan}: a player missing armour or a weapon is lent iron ones for the run; {@code requireGear}:
+     * nobody gets ready without full armour and a weapon.
      */
-    public record Level(String name, String gear, double health, double damage, double reward) {
+    public record Level(String name, String gear, double health, double damage, double reward,
+                        boolean spells, boolean loan, boolean requireGear) {
     }
 
     /**
@@ -144,9 +147,11 @@ public final class DungeonDefinition {
         for (Map<?, ?> l : c.getMapList("levels")) {
             levels.add(new Level(String.valueOf(l.get("name") == null ? "Normal" : l.get("name")), l.get("gear") == null ? "" : String.valueOf(l.get("gear")),
                     l.get("health") instanceof Number n ? n.doubleValue() : 1, l.get("damage") instanceof Number n ? n.doubleValue() : 1,
-                    l.get("reward") instanceof Number n ? n.doubleValue() : 1));
+                    l.get("reward") instanceof Number n ? n.doubleValue() : 1,
+                    !(l.get("spells") instanceof Boolean b) || b, l.get("loan") instanceof Boolean b && b,
+                    l.get("require-gear") instanceof Boolean b && b));
         }
-        if (levels.isEmpty()) levels.add(new Level("Normal", "", 1, 1, 1));
+        if (levels.isEmpty()) levels.add(new Level("Normal", "", 1, 1, 1, true, false, false));
         for (Map<?, ?> l : c.getMapList("loot")) {
             Object chance = l.get("chance"), amount = l.get("amount");
             loot.add(new Loot(String.valueOf(l.get("item")), chance instanceof Number n ? n.doubleValue() : 1,

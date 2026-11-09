@@ -111,7 +111,7 @@ public final class Runs {
             Run r = runs.get(id);
             if (r == null) return null;
             DungeonDefinition.Level l = r.levelSpec();
-            return new double[]{l.health(), l.damage()};
+            return new double[]{l.health(), l.damage(), l.spells() ? 1 : 0};
         });
         Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 10L, 10L);
     }
@@ -234,21 +234,22 @@ public final class Runs {
     }
 
     /** Everybody is ready on the launch screen: checked again, then started. */
-    private void launch(DungeonDefinition def, List<Player> players, Map<UUID, Loadouts.Selection> selections) {
+    private void launch(DungeonDefinition def, List<Player> players, Map<UUID, Loadouts.Selection> selections, int level) {
         Refusal refusal = check(def, players);
         if (refusal != Refusal.NONE) {
             for (Player p : players) plugin.messages().send(p, "lobby.refused");
             return;
         }
-        start(def, players, selections);
+        start(def, players, selections, level);
     }
 
     /** Starts a run for these players (checked before). The copy is made, then they are taken in. */
-    private Run start(DungeonDefinition def, List<Player> players, Map<UUID, Loadouts.Selection> selections) {
-        if (def.map() != null) return startMap(def, players, selections);
+    private Run start(DungeonDefinition def, List<Player> players, Map<UUID, Loadouts.Selection> selections, int level) {
+        if (def.map() != null) return startMap(def, players, selections, level);
         int slot = freeSlot();
         if (slot < 0) return null;
         Run run = new Run(UUID.randomUUID().toString().substring(0, 8), def, slot, arena.slotOrigin(slot));
+        run.level = level;
         run.selections.putAll(selections);
         runs.put(run.id, run);
         for (Player p : players) {
@@ -263,8 +264,9 @@ public final class Runs {
     }
 
     /** An imported map: its world is copied for this run, its monsters placed, then the players come in. */
-    private Run startMap(DungeonDefinition def, List<Player> players, Map<UUID, Loadouts.Selection> selections) {
+    private Run startMap(DungeonDefinition def, List<Player> players, Map<UUID, Loadouts.Selection> selections, int level) {
         Run run = new Run(UUID.randomUUID().toString().substring(0, 8), def, -1, null);
+        run.level = level;
         run.selections.putAll(selections);
         runs.put(run.id, run);
         for (Player p : players) {
@@ -495,6 +497,8 @@ public final class Runs {
                 plugin.messages().send(p, "run.save-failed");
                 continue;
             }
+            // easy level: whoever lacks armour or a weapon is lent iron ones, taken back when he leaves or dies
+            if (run.levelSpec().loan() && loadouts.lend(p, plugin.messages().raw("run.loan-lore"))) plugin.messages().send(p, "run.loaned");
             run.players.add(uuid);
             // no vanilla invulnerability in a run: hits are limited per source (DungeonListener), as for monsters
             p.setMaximumNoDamageTicks(0);

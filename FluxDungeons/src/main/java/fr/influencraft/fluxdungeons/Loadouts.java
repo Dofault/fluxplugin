@@ -36,6 +36,11 @@ public final class Loadouts {
     public static final int ITEMS = 6;
     /** Inventory indexes of the armour pieces, boots to helmet. */
     public static final int[] ARMOR = {36, 37, 38, 39};
+    /** Iron pieces lent on easy levels, boots to helmet. */
+    private static final org.bukkit.Material[] LOAN_ARMOR = {org.bukkit.Material.IRON_BOOTS, org.bukkit.Material.IRON_LEGGINGS,
+            org.bukkit.Material.IRON_CHESTPLATE, org.bukkit.Material.IRON_HELMET};
+    /** Marks an item lent for a run: never given back, never locked with the player's gear. */
+    private static final NamespacedKey LOANED = new NamespacedKey("fluxdungeons", "loaned");
 
     /**
      * What a player chose: {@code items} holds indexes of his inventory (-1 = empty), {@code snapshots} the items seen
@@ -188,11 +193,65 @@ public final class Loadouts {
         return false;
     }
 
-    /** What the player carries now, ability items left out. */
+    /** What the player carries now, ability items and lent items left out. */
     private ItemStack[] carried(Player player) {
         ItemStack[] contents = player.getInventory().getContents();
-        for (int i = 0; i < contents.length; i++) if (abilityItem.test(contents[i])) contents[i] = null;
+        for (int i = 0; i < contents.length; i++) if (abilityItem.test(contents[i]) || loaned(contents[i])) contents[i] = null;
         return contents;
+    }
+
+    /**
+     * Easy levels: fills the armour slots the player left empty with iron pieces and gives him an iron sword when he
+     * carries no weapon, all marked as lent. True when something was lent.
+     */
+    public boolean lend(Player player, String label) {
+        org.bukkit.inventory.PlayerInventory inv = player.getInventory();
+        boolean lent = false;
+        for (int a = 0; a < ARMOR.length; a++) {
+            ItemStack worn = inv.getItem(ARMOR[a]);
+            if (worn != null && !worn.isEmpty()) continue;
+            inv.setItem(ARMOR[a], loan(LOAN_ARMOR[a], label));
+            lent = true;
+        }
+        for (ItemStack item : inv.getStorageContents()) if (isWeapon(item)) return lent;
+        int slot = -1;
+        for (int i = FIRST_ITEM_SLOT; i < 9 && slot < 0; i++) if (inv.getItem(i) == null || inv.getItem(i).isEmpty()) slot = i;
+        if (slot < 0) slot = inv.firstEmpty();
+        if (slot < 0) return lent;
+        inv.setItem(slot, loan(org.bukkit.Material.IRON_SWORD, label));
+        return true;
+    }
+
+    private static ItemStack loan(org.bukkit.Material material, String label) {
+        ItemStack item = new ItemStack(material);
+        item.editMeta(m -> {
+            m.getPersistentDataContainer().set(LOANED, org.bukkit.persistence.PersistentDataType.BYTE, (byte) 1);
+            m.lore(List.of(fr.influencraft.flux.api.text.Texts.parse(label)
+                    .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false)));
+        });
+        return item;
+    }
+
+    public static boolean loaned(ItemStack item) {
+        return item != null && item.hasItemMeta()
+                && item.getItemMeta().getPersistentDataContainer().has(LOANED, org.bukkit.persistence.PersistentDataType.BYTE);
+    }
+
+    /**
+     * A weapon to defend oneself: any sword, axe, spear, bow, crossbow, trident or mace, custom ones included (they
+     * keep their material); or an item known to Flux ({@code CustomItems}) made on another material that adds attack
+     * damage (a custom weapon drawn on paper).
+     */
+    public static boolean isWeapon(ItemStack item) {
+        if (item == null || item.isEmpty() || loaned(item)) return false;
+        String n = item.getType().name();
+        if (n.endsWith("_SWORD") || n.endsWith("_AXE") || n.endsWith("_SPEAR") || n.equals("BOW") || n.equals("CROSSBOW")
+                || n.equals("TRIDENT") || n.equals("MACE")) return true;
+        if (fr.influencraft.flux.api.items.CustomItems.id(item) == null || !item.hasItemMeta()) return false;
+        java.util.Collection<org.bukkit.attribute.AttributeModifier> mods = item.getItemMeta().getAttributeModifiers(Attribute.ATTACK_DAMAGE);
+        if (mods == null) return false;
+        for (org.bukkit.attribute.AttributeModifier m : mods) if (m.getAmount() > 0) return true;
+        return false;
     }
 
     /** Puts carried items back: armour on when its slot is free, the rest in the inventory, overflow elsewhere. */
@@ -201,7 +260,7 @@ public final class Loadouts {
         List<ItemStack> rest = new ArrayList<>();
         for (int i = 0; i < carried.length; i++) {
             ItemStack item = carried[i];
-            if (item == null || item.isEmpty() || abilityItem.test(item)) continue;
+            if (item == null || item.isEmpty() || abilityItem.test(item) || loaned(item)) continue;
             if (i >= 36 && i < 40 && (inv.getItem(i) == null || inv.getItem(i).isEmpty())) inv.setItem(i, item);
             else rest.add(item);
         }

@@ -42,7 +42,7 @@ public final class Run {
     /** Objectives of an imported map still alive (monster ids). */
     final Set<String> objectivesLeft = new LinkedHashSet<>();
     int objectivesTotal;
-    /** Difficulty level played (index in the dungeon's levels; the first one until players can choose). */
+    /** Difficulty level played (index in the dungeon's levels), chosen on the launch screen. */
     int level;
 
     public DungeonDefinition.Level levelSpec() {

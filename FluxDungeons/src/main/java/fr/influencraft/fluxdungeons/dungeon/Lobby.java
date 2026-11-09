@@ -44,7 +44,7 @@ import java.util.UUID;
 public final class Lobby implements Listener {
 
     private static final int SIZE = 54;
-    private static final int BACK = 0, INFO = 8, CLASS = 45, READY = 49;
+    private static final int BACK = 0, INFO = 8, CLASS = 45, LEVEL = 47, READY = 49;
     private static final int OWN = 9, MATE = 27;
     private static final int PETS = 5;
     /** A lobby nobody launches is dropped after this long. */
@@ -58,10 +58,13 @@ public final class Lobby implements Listener {
         final Set<UUID> ready = new HashSet<>();
         final Map<UUID, UUID> viewing = new HashMap<>();
         final long created = System.currentTimeMillis();
+        /** Difficulty level chosen by the leader (first member), index in the dungeon's levels. */
+        int level;
 
         Party(DungeonDefinition def, List<UUID> members) {
             this.def = def;
             this.members = members;
+            this.level = defaultLevel(def);
         }
     }
 
@@ -102,7 +105,13 @@ public final class Lobby implements Listener {
 
     /** Starts the run once everybody is ready (checks again, the players may have changed meanwhile). */
     public interface Launcher {
-        void launch(DungeonDefinition def, List<Player> players, Map<UUID, Loadouts.Selection> selections);
+        void launch(DungeonDefinition def, List<Player> players, Map<UUID, Loadouts.Selection> selections, int level);
+    }
+
+    /** The level offered first: the one named Normal, else the first. */
+    private static int defaultLevel(DungeonDefinition def) {
+        for (int i = 0; i < def.levels().size(); i++) if (def.levels().get(i).name().equalsIgnoreCase("normal")) return i;
+        return 0;
     }
 
     private final FluxPlugin plugin;
@@ -204,12 +213,57 @@ public final class Lobby implements Listener {
             inv.setItem(CLASS, Items.dress(new ItemStack(c.icon()), c.colored(),
                     Lore.create().description(c.description()).left(plugin.messages().raw("lobby.class-change")).build(), viewer));
         }
+        if (party.def.levels().size() > 1) inv.setItem(LEVEL, levelButton(party, viewer));
         boolean ready = party.ready.contains(screen.viewer);
         inv.setItem(READY, Items.of(ready ? "LIME_DYE" : "GRAY_DYE",
                 plugin.messages().raw(ready ? "lobby.ready" : "lobby.not-ready"),
                 Lore.create().description(plugin.messages().raw("lobby.ready-desc",
                                 "%ready%", String.valueOf(party.ready.size()), "%total%", String.valueOf(party.members.size())))
                         .left(plugin.messages().raw(ready ? "lobby.unready-action" : "lobby.ready-action")).build(), viewer));
+    }
+
+    private ItemStack levelButton(Party party, Player viewer) {
+        List<DungeonDefinition.Level> levels = party.def.levels();
+        DungeonDefinition.Level l = levels.get(party.level);
+        Lore lore = Lore.create().description(plugin.messages().raw("lobby.difficulty-desc"));
+        if (!l.gear().isEmpty()) lore.kv(plugin.messages().raw("lobby.difficulty-gear"), l.gear());
+        lore.kv(plugin.messages().raw("lobby.difficulty-spells"), plugin.messages().raw(l.spells() ? "lobby.spells-on" : "lobby.spells-off"));
+        if (l.loan()) lore.ok(plugin.messages().raw("lobby.difficulty-loan"));
+        if (l.requireGear()) lore.info(plugin.messages().raw("lobby.difficulty-required"));
+        lore.filter(levels.stream().map(DungeonDefinition.Level::name).toList(), party.level);
+        if (leader(party, viewer.getUniqueId())) {
+            lore.left(plugin.messages().raw("lobby.difficulty-next")).right(plugin.messages().raw("lobby.difficulty-prev"));
+        } else {
+            lore.line(plugin.messages().raw("lobby.difficulty-leader", "%player%", name(party.members.get(0))));
+        }
+        String[] icons = {"WOODEN_SWORD", "IRON_SWORD", "DIAMOND_SWORD", "NETHERITE_SWORD"};
+        int icon = levels.size() <= 1 ? 1 : Math.round((float) party.level * (icons.length - 1) / (levels.size() - 1));
+        return Items.of(icons[icon], plugin.messages().raw("lobby.difficulty", "%level%", l.name()), lore.build(), viewer);
+    }
+
+    private static boolean leader(Party party, UUID u) {
+        return !party.members.isEmpty() && party.members.get(0).equals(u);
+    }
+
+    private static String name(UUID u) {
+        Player p = Bukkit.getPlayer(u);
+        return p == null ? "?" : p.getName();
+    }
+
+    /**
+     * Why this player may not take this level, null when he may: levels with {@code require-gear} want his four armour
+     * pieces taken and a weapon among his chosen items.
+     */
+    private String missingGear(Party party, Player p) {
+        DungeonDefinition.Level l = party.def.levels().get(party.level);
+        if (!l.requireGear()) return null;
+        Loadouts.Selection sel = party.selections.get(p.getUniqueId());
+        for (int a = 0; a < Loadouts.ARMOR.length; a++) {
+            ItemStack worn = p.getInventory().getItem(Loadouts.ARMOR[a]);
+            if (worn == null || worn.isEmpty() || !sel.armor()[a]) return "lobby.need-armor";
+        }
+        for (int k = 0; k < Loadouts.ITEMS; k++) if (Loadouts.isWeapon(chosen(p, sel, k))) return null;
+        return "lobby.need-weapon";
     }
 
     /** Two rows: armour then pets, abilities then items. */
@@ -376,6 +430,19 @@ public final class Lobby implements Listener {
             toggleReady(p, party);
             return;
         }
+        if (raw == LEVEL && party.def.levels().size() > 1) {
+            if (!leader(party, p.getUniqueId())) {
+                Sounds.cue(p, "error");
+                return;
+            }
+            int n = party.def.levels().size();
+            party.level = (party.level + (e.getClick().isRightClick() ? n - 1 : 1)) % n;
+            // another level: everybody checks his gear again
+            party.ready.clear();
+            Sounds.cue(p, "click");
+            redraw(party);
+            return;
+        }
         if (raw >= 1 && raw <= 7) {
             int index = raw - 1;
             if (index < party.members.size() && !party.members.get(index).equals(p.getUniqueId())) {
@@ -449,6 +516,14 @@ public final class Lobby implements Listener {
     }
 
     private void toggleReady(Player p, Party party) {
+        if (!party.ready.contains(p.getUniqueId())) {
+            String missing = missingGear(party, p);
+            if (missing != null) {
+                plugin.messages().send(p, missing, "%level%", party.def.levels().get(party.level).name());
+                Sounds.cue(p, "error");
+                return;
+            }
+        }
         if (!party.ready.add(p.getUniqueId())) {
             party.ready.remove(p.getUniqueId());
             Sounds.cue(p, "toggle-off");
@@ -468,13 +543,21 @@ public final class Lobby implements Listener {
                 close(party, "lobby.cancelled", "?");
                 return;
             }
+            String missing = missingGear(party, m);
+            if (missing != null) {
+                // his gear changed since he got ready
+                party.ready.remove(u);
+                plugin.messages().send(m, missing, "%level%", party.def.levels().get(party.level).name());
+                redraw(party);
+                return;
+            }
             players.add(m);
         }
         for (UUID u : party.members) byPlayer.remove(u);
         for (Player m : players) {
             if (m.getOpenInventory().getTopInventory().getHolder() instanceof Screen s && s.party == party) m.closeInventory();
         }
-        launcher.launch(party.def, players, party.selections);
+        launcher.launch(party.def, players, party.selections, party.level);
     }
 
     private void openPicker(Player p, Party party, int slot) {

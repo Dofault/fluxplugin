@@ -62,6 +62,8 @@ party:
     not-in-party: '&#FF5C5CTu n''es dans aucun groupe.'
     not-member: '&#FF5C5C%player% n''est pas dans ton groupe.'
 run:
+  loaned: '&#B376E5Équipement en fer prêté pour ce donjon : il reste dans le donjon quand tu en sors.'
+  loan-lore: '&7Prêté pour le donjon'
   preparing: '&#B376E5Préparation de &f%dungeon%&#B376E5...'
   save-failed: '&#FF5C5CTes affaires n''ont pas pu être mises de côté : entrée annulée, rien n''a bougé.'
   title: '&#FFD94D%dungeon%'
@@ -229,6 +231,19 @@ create:
   copying: '&#B376E5Copie du monde &f%world%&#B376E5...'
   created: '&#2ECF7BDonjon %dungeon% créé. Règle son nom, ses vies et sa récompense dans dungeons/%dungeon%.yml.'
 lobby:
+  difficulty: 'Difficulté : %level%'
+  difficulty-desc: Choisie par le chef du groupe, pour tout le groupe.
+  difficulty-gear: Conseillé
+  difficulty-spells: Sorts des monstres
+  spells-on: oui
+  spells-off: non
+  difficulty-loan: Armure et épée en fer prêtées à qui n'en a pas.
+  difficulty-required: Armure complète et une arme obligatoires.
+  difficulty-next: Plus difficile
+  difficulty-prev: Plus facile
+  difficulty-leader: '%player% choisit la difficulté.'
+  need-armor: '&#FF5C5CLe mode %level% demande une armure complète : porte et emporte tes quatre pièces.'
+  need-weapon: '&#FF5C5CLe mode %level% demande une arme : emporte une épée, une hache, un arc ou une arbalète.'
   title: 'Préparation : %dungeon%'
   leave: Quitter
   leave-desc: Annule le lancement pour tout le groupe.
