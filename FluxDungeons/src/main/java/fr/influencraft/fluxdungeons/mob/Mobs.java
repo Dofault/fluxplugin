@@ -85,8 +85,6 @@ public final class Mobs {
         int lastMelee = -1000;
         /** No ability before this time (cast-gap after the last one). */
         long nextCast;
-        /** Ticks it has been driven (controlled monsters look for a player every 10). */
-        int steerTicks;
         /**
          * The player it fights, kept by FluxDungeons (not the vanilla target, which any plugin may cancel or clear:
          * every decision of the monster, abilities and melee, reads this one).
@@ -180,6 +178,7 @@ public final class Mobs {
         this.plugin = plugin;
         this.mobKey = new NamespacedKey(plugin, "mob");
         this.shotKey = new NamespacedKey(plugin, "mob_shot");
+        this.pilotKey = com.destroystokyo.paper.entity.ai.GoalKey.of(Mob.class, new NamespacedKey(plugin, "pilot"));
         this.runKey = new NamespacedKey(plugin, "run");
         this.objectiveKey = new NamespacedKey(plugin, "objective");
         this.spawnKey = new NamespacedKey(plugin, "spawn");
@@ -208,7 +207,6 @@ public final class Mobs {
         });
         Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 10L, 10L);
         Bukkit.getScheduler().runTaskTimer(plugin, this::reachTick, 2L, 2L);
-        Bukkit.getScheduler().runTaskTimer(plugin, this::steer, 1L, 1L);
         this.rock = new RockPowers(plugin);
     }
 
@@ -489,28 +487,42 @@ public final class Mobs {
 
     // ---------------------------------------------------------------- controlled monsters
 
+    private final com.destroystokyo.paper.entity.ai.GoalKey<Mob> pilotKey;
+
     /**
      * A {@code controlled} monster loses every vanilla behaviour (some creatures rewrite their own speed each tick, as
-     * the ravager does): FluxDungeons alone drives it every tick ({@link #steer}: where it goes and how fast), and its
-     * melee hits come from {@link #reachTick}.
+     * the ravager does) and gets {@link Pilot} instead: FluxDungeons alone decides where it goes and how fast (its
+     * {@code speed}), and its melee hits come from {@link #reachTick}.
      */
     private void control(Alive a) {
         if (!a.template.extra().controlled() || !(a.entity instanceof Mob m)) return;
         if (a.template.extra().silent()) m.setSilent(true);
         Bukkit.getMobGoals().removeAllGoals(m);
+        Bukkit.getMobGoals().addGoal(m, 0, new Pilot(a));
     }
 
-    /**
-     * Every tick, each controlled monster is driven by FluxDungeons itself, without any vanilla goal or path: it finds a
-     * player (calm: within its follow range, a boss within its full range, never through walls), turns to him and walks
-     * straight at him at its walking speed, hops up a block when it bumps into one, stops within melee reach.
-     */
-    private void steer() {
-        for (Alive a : alive.values()) {
-            if (!a.template.extra().controlled() || a.dying || !(a.entity instanceof Mob m) || !m.isValid() || !m.hasAI()) continue;
-            a.steerTicks++;
+    /** The whole behaviour of a controlled monster: find a player, walk to him, face him. */
+    private final class Pilot implements com.destroystokyo.paper.entity.ai.Goal<Mob> {
+        private final Alive a;
+        private int ticks;
+
+        Pilot(Alive a) {
+            this.a = a;
+        }
+
+        @Override
+        public boolean shouldActivate() {
+            return true;
+        }
+
+        @Override
+        public void tick() {
+            if (a.dying || !(a.entity instanceof Mob m)) return;
+            ticks++;
             Player target = fightingTarget(a);
-            if (target == null && a.steerTicks % 10 == 0) {
+            if (target == null && ticks % 10 == 0) {
+                // calm: sees players within its follow range (shortened by calm, but a boss sees as far as its file
+                // says: it guards its room), never through walls
                 AttributeInstance sight = m.getAttribute(Attribute.FOLLOW_RANGE);
                 double range = a.template.boss() ? a.template.extra().followRange() : sight == null ? 16 : sight.getValue();
                 double best = range * range;
@@ -524,39 +536,29 @@ public final class Mobs {
                 }
                 if (target != null) engage(a, target);
             }
-            Vector v = m.getVelocity();
             if (target == null) {
-                m.setVelocity(v.setX(0).setZ(0));
-                continue;
-            }
-            Location here = m.getLocation();
-            Vector to = target.getLocation().toVector().subtract(here.toVector()).setY(0);
-            if (to.lengthSquared() > 1.0E-4) {
-                float yaw = (float) Math.toDegrees(Math.atan2(-to.getX(), to.getZ()));
-                m.setRotation(yaw, 0);
-                m.setBodyYaw(yaw);
+                m.getPathfinder().stopPathfinding();
+                return;
             }
             m.lookAt(target);
             org.bukkit.util.BoundingBox reach = m.getBoundingBox().expand(VANILLA_REACH + reachBonus - 0.4, 0, VANILLA_REACH + reachBonus - 0.4);
-            if (reach.overlaps(target.getBoundingBox()) || to.lengthSquared() < 1.0E-4) {
-                m.setVelocity(v.setX(0).setZ(0));
-                continue;
+            if (reach.overlaps(target.getBoundingBox())) {
+                m.getPathfinder().stopPathfinding();
+            } else if (ticks % 10 == 0 || !m.getPathfinder().hasPath()) {
+                m.getPathfinder().moveTo(target, 1.0);
             }
-            double perTick = walkPerTick(a);
-            Vector step = to.normalize().multiply(perTick);
-            double y = v.getY();
-            // a block in the way at its feet: hop up (as a player steps up)
-            Location ahead = here.clone().add(step.clone().normalize().multiply(m.getWidth() / 2 + 0.3));
-            if (m.isOnGround() && !ahead.getBlock().isPassable() && ahead.clone().add(0, 1, 0).getBlock().isPassable()) y = 0.42;
-            m.setVelocity(new Vector(step.getX(), y, step.getZ()));
         }
-    }
 
-    /** Blocks per tick a controlled monster walks: its walk-speed, else what its speed attribute would give. */
-    private static double walkPerTick(Alive a) {
-        if (a.template.walkSpeed() > 0) return a.template.walkSpeed() / 20;
-        AttributeInstance speed = a.entity.getAttribute(Attribute.MOVEMENT_SPEED);
-        return (speed == null ? 0.1 : speed.getValue()) * 43.17 / 20;
+        @Override
+        public com.destroystokyo.paper.entity.ai.GoalKey<Mob> getKey() {
+            return pilotKey;
+        }
+
+        @Override
+        public java.util.EnumSet<com.destroystokyo.paper.entity.ai.GoalType> getTypes() {
+            // MOVE and LOOK only: with TARGET, Paper puts the goal among the target goals, whose ticks never walk the body
+            return java.util.EnumSet.of(com.destroystokyo.paper.entity.ai.GoalType.MOVE, com.destroystokyo.paper.entity.ai.GoalType.LOOK);
+        }
     }
 
     // ---------------------------------------------------------------- pack alert

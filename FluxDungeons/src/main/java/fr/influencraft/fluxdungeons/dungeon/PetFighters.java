@@ -448,7 +448,7 @@ public final class PetFighters {
 
         @Override
         public EnumSet<GoalType> getTypes() {
-            return EnumSet.of(GoalType.MOVE, GoalType.LOOK, GoalType.TARGET);
+            return EnumSet.of(GoalType.MOVE, GoalType.LOOK); // not TARGET: Paper would put it among the target goals, which never walk the body
         }
     }
 }
