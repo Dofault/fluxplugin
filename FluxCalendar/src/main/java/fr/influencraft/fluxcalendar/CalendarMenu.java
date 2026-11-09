@@ -28,18 +28,13 @@ import java.util.Locale;
  * <ul>
  *   <li>{@code calendrier_jours}: the 42 cases of the month's weeks (Monday first), a day's number shown by the item
  *   count; only today's case claims ({@code [fluxcalendar] claim});</li>
- *   <li>{@code calendrier_info} (menu icon), {@code calendrier_aujourdhui} (today's reward, shown only: the player
- *   claims it on the calendar), {@code calendrier_stats} (this month, next big reward);</li>
- *   <li>{@code %fluxcalendar_titre%}: the month and year drawn on the calendar's header (pack {@code fluxcalendar},
+ *   <li>{@code %fluxcalendar_titre%}: the month and year engraved on the window's plate (pack {@code fluxcalendar},
  *   widths in {@code glyphs.yml}, {@code assets/calendrier/gen_fond.py}).</li>
  * </ul>
  */
 final class CalendarMenu {
 
     static final String DAYS = "calendrier_jours";
-    static final String INFO = "calendrier_info";
-    static final String TODAY = "calendrier_aujourdhui";
-    static final String STATS = "calendrier_stats";
     private static final int CASES = 42;
     private static final String MARK = "itemsadder:fluxcalendar:";
     private static final String EMPTY = "itemsadder:influitems:invisible";
@@ -57,9 +52,6 @@ final class CalendarMenu {
     void enable() {
         reload();
         Lists.register(plugin, DAYS, q -> days(q.viewer()));
-        Lists.register(plugin, INFO, q -> List.of(info(q.viewer())));
-        Lists.register(plugin, TODAY, q -> List.of(today(q.viewer())));
-        Lists.register(plugin, STATS, q -> stats(q.viewer()));
         FluxApi.registerAction(plugin, "fluxcalendar", (player, view, argument) -> {
             if (argument.trim().equalsIgnoreCase("claim")) claim(player);
         });
@@ -72,7 +64,7 @@ final class CalendarMenu {
     private void claim(Player player) {
         ClaimResult result = calendar.claimToday(player);
         Sounds.cue(player, result.delivered() > 0 ? "complete" : "error");
-        for (String list : List.of(DAYS, INFO, TODAY, STATS)) Lists.invalidate(player, list);
+        Lists.invalidate(player, DAYS);
     }
 
     // ------------------------------------------------------------------ title
@@ -145,66 +137,14 @@ final class CalendarMenu {
                 lore.info(in == 1 ? "Demain." : "Dans " + in + " jours.");
             }
         }
+        // the month bonus, once shown in a box under the calendar, now told on the month's last date
+        DayReward complete = calendar.complete();
+        if (complete != null && day == date.lengthOfMonth()) {
+            lore.line("Tous les jours du mois récupérés :").items(placeholders(player, complete.lore()));
+        }
         // the game shows no count of 1: the 1st has its « 1 » drawn on its icon
         if (day == 1) icon = icon.equals(EMPTY) ? MARK + "jour_un" : icon + "_un";
         return entry(player, "jour:" + day, icon, dayName(date), lore, day, glow).set("clic", click);
-    }
-
-    // ------------------------------------------------------------------ around the calendar
-
-    private ListEntry info(Player player) {
-        Lore lore = Lore.create().description(
-                "Une récompense par jour du mois : clique sur la date du jour pour la récupérer, avant minuit.",
-                "Les cadeaux marquent les grosses récompenses. Le calendrier repart à zéro le 1er de chaque mois.");
-        return entry(player, "info", "itemsadder:influitems:reward", "Calendrier", lore, 1, false);
-    }
-
-    private ListEntry today(Player player) {
-        LocalDate date = calendar.today();
-        DayReward reward = calendar.reward(date.getDayOfMonth());
-        Lore lore = Lore.create();
-        if (reward != null) lore.items(placeholders(player, reward.lore()));
-        String icon;
-        if (calendar.claimable(player)) {
-            icon = MARK + "jour_cadeau";
-            lore.info("Clique sur le " + date.getDayOfMonth() + " dans le calendrier pour la récupérer.");
-        } else if (calendar.state(player, date.getDayOfMonth()) == LoginCalendar.State.CLAIMED) {
-            icon = MARK + "jour_recupere";
-            lore.ok("Déjà récupérée, reviens demain !");
-        } else {
-            icon = EMPTY;
-            lore.info("Pas de récompense aujourd'hui, reviens demain !");
-        }
-        return entry(player, "aujourdhui", icon, "Récompense du jour", lore, 1, calendar.claimable(player));
-    }
-
-    private List<ListEntry> stats(Player player) {
-        LocalDate today = calendar.today();
-        PlayerData d = calendar.data(player.getUniqueId());
-        Lore month = Lore.create()
-                .kv("Jours récupérés", calendar.claimedCount(player) + "&7/&f" + today.lengthOfMonth())
-                .kv("Jours de connexion", d == null ? 0 : d.days);
-        DayReward complete = calendar.complete();
-        if (complete != null) {
-            month.line("Récupère tous les jours du mois pour gagner :").items(placeholders(player, complete.lore()));
-            if (calendar.claimedCount(player) == today.lengthOfMonth()) month.ok("Mois complet !");
-        }
-        List<ListEntry> out = new ArrayList<>();
-        out.add(entry(player, "mois", MARK + "jour_recupere", "Ce mois-ci", month, 1, false));
-        Lore next = Lore.create();
-        LocalDate big = null;
-        for (int day = today.getDayOfMonth() + 1; day <= today.lengthOfMonth() && big == null; day++) {
-            DayReward r = calendar.reward(day);
-            if (r != null && r.big()) {
-                big = today.withDayOfMonth(day);
-                next.items(placeholders(player, r.lore()));
-            }
-        }
-        if (big == null) next.info("Plus de grosse récompense ce mois-ci : rendez-vous le 1er !");
-        else next.kv("Le", dayName(big)).info(big.getDayOfMonth() - today.getDayOfMonth() == 1 ? "Demain."
-                : "Dans " + (big.getDayOfMonth() - today.getDayOfMonth()) + " jours.");
-        out.add(entry(player, "prochaine", MARK + "jour_bonus", "Prochaine grosse récompense", next, 1, false));
-        return out;
     }
 
     // ------------------------------------------------------------------ helpers

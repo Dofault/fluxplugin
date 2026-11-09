@@ -60,15 +60,33 @@ public final class JoinScreenService implements JoinScreens.Service, Listener {
     public void onJoin(PlayerJoinEvent e) {
         Player p = e.getPlayer();
         state(p).ready = false;
+        // A pack applied before joining (ItemsAdder before_join) is answered during the configuration phase, where
+        // Paper fires no PlayerResourcePackStatusEvent: it only keeps the status on the connection. Without this
+        // check, such a player always waited the whole PACK_TIMEOUT.
+        if (finished(packStatus(p))) Bukkit.getScheduler().runTaskLater(flux, () -> ready(p), 20L);
         Bukkit.getScheduler().runTaskLater(flux, () -> ready(p), PACK_TIMEOUT * 20L);
     }
 
     @EventHandler
     public void onPack(PlayerResourcePackStatusEvent e) {
-        PlayerResourcePackStatusEvent.Status status = e.getStatus();
-        if (status == PlayerResourcePackStatusEvent.Status.ACCEPTED || status == PlayerResourcePackStatusEvent.Status.DOWNLOADED) return;
+        if (!finished(e.getStatus())) return;
         Player p = e.getPlayer();
         Bukkit.getScheduler().runTaskLater(flux, () -> ready(p), 20L);
+    }
+
+    /** Loaded, or failed for good: nothing more to wait for. Null (no pack sent yet), accepted, downloaded: wait. */
+    private static boolean finished(PlayerResourcePackStatusEvent.Status status) {
+        return status != null && status != PlayerResourcePackStatusEvent.Status.ACCEPTED
+                && status != PlayerResourcePackStatusEvent.Status.DOWNLOADED;
+    }
+
+    @SuppressWarnings("deprecation")
+    private static PlayerResourcePackStatusEvent.Status packStatus(Player p) {
+        try {
+            return p.getResourcePackStatus();
+        } catch (RuntimeException ex) {
+            return null;
+        }
     }
 
     @EventHandler

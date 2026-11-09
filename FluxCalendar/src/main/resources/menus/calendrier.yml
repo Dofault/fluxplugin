@@ -1,9 +1,9 @@
 # Calendar menu (/calendrier, FluxCalendar): opens by itself at the first login of a day when today's reward waits.
 # A real calendar of the month: weeks on chest rows 0 to 5, Monday to Sunday in columns 1 to 7 (calendrier_jours,
 # the day's number is the item count); the player claims today's reward by clicking today's date.
-# Month and year on the header (%fluxcalendar_titre%). Under the calendar: today's reward (58, shown only) between
-# this month's count (56) and the next big reward (60).
-# Background fluxcalendar:menu_calendrier (FluxCalendar/assets/calendrier/gen_fond.py).
+# Month and year engraved on the window's plate (%fluxcalendar_titre%). Nothing else: no back button, no menu icon,
+# no inventory row (decision of 2026-11-10, the calendar explains itself; Escape closes it).
+# Background fluxcalendar:menu_calendrier, vanilla theme (FluxCalendar/assets/calendrier/gen_fond.py).
 title: ":offset_-8::menu_calendrier::offset_-177:%fluxcalendar_titre%"
 rows: 6
 player-inventory: hidden
@@ -20,25 +20,3 @@ lists:
       material: entry
       actions:
         left: ["%entry_clic%", "[refresh]"]
-  calendrier_info:
-    slots: 8
-    item:
-      material: entry
-  calendrier_aujourdhui:
-    slots: 58
-    item:
-      material: entry
-  calendrier_stats:
-    slots: 56,60
-    item:
-      material: entry
-
-items:
-  retour:
-    material: "itemsadder:influitems:btn_back"
-    name: "Retour"
-    slots: [0]
-    lore:
-      - "@left Menu principal"
-    actions:
-      left: ["[menu] main"]
