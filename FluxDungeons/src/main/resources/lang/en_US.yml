@@ -93,6 +93,8 @@ ability:
 hud:
   bar: '&#6FA8FF✦ Mana %mana%&7/&#6FA8FF%max%'
 admin:
+  summoned: '&#2ECF7B%count% × %mob% &#2ECF7Bsummoned for a test (out of any dungeon). Remove them: &f/fluxdungeons summon clear'
+  summon-cleared: '&#B376E5Test monsters removed.'
   visit-loading: '&#B376E5Opening &f%dungeon%&#B376E5...'
   visit: '&#B376E5Visiting &f%dungeon%&#B376E5: copy of the map without monsters, nothing is kept. To leave: &f[/%flux_cmd_fluxdungeons_fluxdungeons% visit]'
   visit-left: '&#B376E5Visit over.'

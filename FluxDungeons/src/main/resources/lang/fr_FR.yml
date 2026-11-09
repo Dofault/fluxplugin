@@ -6,7 +6,7 @@ unknown-player: '&#FF5C5CJoueur introuvable.'
 not-in-run: '&#FF5C5CTu n''es pas dans un donjon.'
 dungeon-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_dungeon% [jouer <donjon> | quitter | classe [classe] | liste]'
 party-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_party% [inviter | accepter | quitter | expulser | chef] [joueur]'
-admin-usage: '!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% create <id> [map|monde] | voir [donjon|map] | edit <donjon> | build <donjon|all> | template <donjon> | start <donjon> <joueur> | stop <joueur|all> |
+admin-usage: '!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% create <id> [map|monde] | voir [donjon|map] | edit <donjon> | build <donjon|all> | template <donjon> | start <donjon> <joueur> | stop <joueur|all> | summon <monstre> [n]|clear |
   give <joueur> <objet> [n] | runs | reload'
 list-line: '&#FFD94D%dungeon% &8(&7%id%&8) &#B376E5%min% à %max% joueurs, niveau conseillé &f%level%'
 main:
@@ -93,6 +93,8 @@ ability:
 hud:
   bar: '&#6FA8FF✦ Mana %mana%&7/&#6FA8FF%max%'
 admin:
+  summoned: '&#2ECF7B%count% × %mob% &#2ECF7Binvoqué(s) pour un test (hors donjon). Les retirer : &f/fluxdungeons summon clear'
+  summon-cleared: '&#B376E5Monstres de test retirés.'
   visit-loading: '&#B376E5Ouverture de &f%dungeon%&#B376E5...'
   visit: '&#B376E5Visite de &f%dungeon%&#B376E5 : copie de la map sans monstres, rien n''est gardé. Pour sortir : &f[/%flux_cmd_fluxdungeons_fluxdungeons% voir]'
   visit-left: '&#B376E5Fin de la visite.'

@@ -64,6 +64,8 @@ public final class FluxDungeons extends FluxPlugin {
     private ItemCatalog items;
     private fr.influencraft.fluxdungeons.combat.AttackCadence attackCadence;
     private DungeonListener listener;
+    /** Run id of monsters summoned for a test (/fluxdungeons summon): belong to no run, removed by "summon clear". */
+    private static final String TEST_RUN = "test";
     private fr.influencraft.fluxdungeons.combat.CombatRules combat;
     private fr.influencraft.fluxdungeons.combat.HealthBars healthBars;
 
@@ -622,6 +624,27 @@ public final class FluxDungeons extends FluxPlugin {
                     messages().send(sender, "admin.stopped", "%player%", target.getName());
                 }
             }
+            case "summon", "invoquer" -> {
+                // test a monster anywhere, out of any dungeon: /fluxdungeons summon <monster> [count] | summon clear
+                if (!(sender instanceof Player p) || args.length < 2) return usage(sender);
+                if (args[1].equalsIgnoreCase("clear")) {
+                    mobs.removeRun(TEST_RUN);
+                    messages().send(p, "admin.summon-cleared");
+                    return true;
+                }
+                var t = mobs.template(args[1]);
+                if (t == null) {
+                    messages().send(p, "edit.unknown-mob", "%mob%", args[1]);
+                    return true;
+                }
+                int n = args.length > 2 ? Math.max(1, Math.min(20, parse(args[2]))) : 1;
+                org.bukkit.block.Block aimed = p.getTargetBlockExact(20);
+                Location at = aimed == null ? p.getLocation() : aimed.getLocation().add(0.5, 1, 0.5);
+                at.setYaw(p.getLocation().getYaw() + 180);
+                int done = 0;
+                for (int i = 0; i < n; i++) if (mobs.spawn(t, at, TEST_RUN) != null) done++;
+                messages().send(p, "admin.summoned", "%mob%", t.name(), "%count%", String.valueOf(done));
+            }
             case "give" -> {
                 if (args.length < 3) return usage(sender);
                 Player target = Bukkit.getPlayerExact(args[1]);
@@ -777,7 +800,7 @@ public final class FluxDungeons extends FluxPlugin {
     }
 
     private List<String> completeAdmin(CommandSender sender, String[] args) {
-        if (args.length == 1) return filter(List.of("create", "edit", "visit", "build", "template", "start", "stop", "give", "runs", "reload"), args[0]);
+        if (args.length == 1) return filter(List.of("create", "edit", "visit", "build", "template", "start", "stop", "summon", "give", "runs", "reload"), args[0]);
         List<String> ids = runs.dungeons().stream().map(DungeonDefinition::id).toList();
         List<String> online = Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
         String sub = args[0].toLowerCase(Locale.ROOT);
@@ -789,6 +812,7 @@ public final class FluxDungeons extends FluxPlugin {
                 case "edit", "editer" -> filter(concat(ids, List.of("add", "remove", "move", "start", "objective", "save", "cancel")), args[1]);
                 case "stop" -> filter(concat(online, List.of("all")), args[1]);
                 case "give" -> filter(online, args[1]);
+                case "summon", "invoquer" -> filter(concat(new ArrayList<>(mobs.templateIds()), List.of("clear")), args[1]);
                 default -> List.of();
             };
         }
