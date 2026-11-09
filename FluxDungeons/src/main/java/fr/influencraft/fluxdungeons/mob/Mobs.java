@@ -62,7 +62,8 @@ public final class Mobs {
     /** A monster alive in a run. */
     private final class Alive implements ScriptHost {
         final LivingEntity entity;
-        final MobTemplate template;
+        /** Its file; replaced at a reload (monsters already out take the new values). */
+        MobTemplate template;
         final String run;
         final Location spawn;
         final Map<Integer, Long> lastCast = new HashMap<>();
@@ -224,6 +225,30 @@ public final class Mobs {
                     plugin.getLogger().warning("Monster " + id + " could not be read: " + e);
                 }
             }
+        }
+        refreshAlive();
+    }
+
+    /**
+     * After a reload, monsters already out take their new file: abilities (their clocks start again), attack, walking
+     * speed, name and life bar. Their life is left as it is (a fight in progress is not healed).
+     */
+    private void refreshAlive() {
+        for (Alive a : alive.values()) {
+            MobTemplate t = templates.get(a.template.id());
+            if (t == null || a.dying || !a.entity.isValid()) continue;
+            a.template = t;
+            a.abilities.clear();
+            a.abilities.addAll(t.abilities());
+            a.abilities.addAll(a.kit.abilities());
+            a.lastCast.clear();
+            a.nextCast = 0;
+            boolean imported = t.extra().level() > 0;
+            if (!imported) base(a.entity, Attribute.ATTACK_DAMAGE, t.damage() * scaling.apply(a.run)[1]);
+            if (t.speed() > 0) base(a.entity, Attribute.MOVEMENT_SPEED, t.speed());
+            if (t.walkSpeed() > 0) base(a.entity, Attribute.MOVEMENT_SPEED, Math.sqrt(t.walkSpeed() / 44.0));
+            a.entity.customName(Texts.parse(t.name()));
+            bar(a);
         }
     }
 
