@@ -26,7 +26,8 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  * A monster swimming in its body of water ({@code swim:} section of its file), moved by FluxDungeons alone, like a
  * dolphin or a sea serpent: it never waits next to a player. It <b>passes</b> through him at full speed, from where it
- * is to a point beyond him (it does not stop at him), maybe several times in a row; <b>circles</b> around him, leaping
+ * is to a point beyond him (it does not stop at him), maybe several times in a row, bending its way towards him while
+ * it comes ({@code homing}: degrees a tick; once past him it goes straight on); <b>circles</b> around him, leaping
  * through the surface; then <b>retreats</b> far from the players and <b>surfaces</b> for a moment, the only time it
  * casts its abilities. Whoever it touches while passing or circling is hit and thrown. After an ability (a hold), it
  * dives again first.
@@ -37,6 +38,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * <pre>
  * swim:
  *   pass-speed: 10        # blocks a second while passing through a player
+ *   homing: 4             # degrees a tick it turns towards him while it comes (0: straight line)
  *   circle-speed: 7       # while circling around him
  *   cruise-speed: 6       # retreating
  *   overshoot: [5, 9]     # how far beyond the player a pass goes (blocks)
@@ -67,7 +69,7 @@ final class Swimmer {
 
     private enum Mode { DIVE, PASS, CIRCLE, RETREAT, PAUSE }
 
-    /** A planned move: where the monster's feet are at each tick of it. */
+    /** A planned move: where the monster's feet are at each tick of it (null: the move ended early). */
     private record Plan(Mode mode, int ticks, java.util.function.IntFunction<Location> at) {
     }
 
@@ -227,6 +229,13 @@ final class Swimmer {
             t = 0;
         }
         Location to = plan.at.apply(t++);
+        if (to == null) {
+            // the move ended before its time (a pass that went past its player and reached its end)
+            plan = plan(e.getLocation());
+            t = 0;
+            to = plan.at.apply(t++);
+            if (to == null) to = e.getLocation();
+        }
         Location from = last == null ? e.getLocation() : last;
         Vector delta = to.toVector().subtract(from.toVector());
         Player face = host.target();
@@ -310,7 +319,7 @@ final class Swimmer {
         Mode m = next.poll();
         Plan out = switch (m) {
             case DIVE -> dive(from);
-            case PASS -> p == null ? null : pass(from, aim(p));
+            case PASS -> p == null ? null : pass(from, p);
             case CIRCLE -> p == null ? null : circle(from, aim(p));
             case RETREAT -> retreat(from);
             case PAUSE -> pause(from);
@@ -337,35 +346,55 @@ final class Swimmer {
         return new Plan(Mode.DIVE, ticks, t -> lerp(from, to, ease((double) t / ticks)));
     }
 
-    /** Through the player, from where it is to a point beyond him, never stopping at him. */
-    private Plan pass(Location from, Location target) {
+    /**
+     * Through the player, from where it is to a point beyond him, never stopping at him. While it comes it bends its way
+     * towards where he is now ({@code homing} degrees a tick at most: a player who steps aside late is still caught, one
+     * who moves early and far is not); once past him (or right on him) it goes straight on for {@code overshoot} blocks,
+     * slowing at the end, and stops early at the edge of the water.
+     */
+    private Plan pass(Location from, Player target) {
         ThreadLocalRandom r = ThreadLocalRandom.current();
-        Vector dir = target.toVector().subtract(from.toVector()).setY(0);
-        if (dir.lengthSquared() < 1) dir = new Vector(r.nextDouble() - 0.5, 0, r.nextDouble() - 0.5);
-        dir.normalize();
+        double speed = num("pass-speed", 10) / 20, turn = Math.toRadians(num("homing", 4));
         double[] over = span("overshoot", 5, 9);
         double ov = over[0] + r.nextDouble() * (over[1] - over[0]);
-        Location end = null;
-        for (; ov >= 1.5; ov -= 0.5) {
-            Location b = target.clone().add(dir.clone().multiply(ov));
-            int[] c = column(b.getX(), b.getZ());
-            if (c != null && clear(target, b)) {
-                b.setY(depth(c));
-                end = b;
-                break;
+        Vector first = aim(target).toVector().subtract(from.toVector());
+        if (first.lengthSquared() < 0.01) first = new Vector(r.nextDouble() - 0.5, 0, r.nextDouble() - 0.5);
+        Vector dir = first.normalize();
+        Location[] pos = {from.clone()};
+        double[] left = {-1};
+        return new Plan(Mode.PASS, 200, t -> {
+            if (left[0] < 0) {
+                // coming: turn towards him, a little each tick; past him (or on him): go straight on
+                Vector to = target.isOnline() && target.getWorld() == world ? aim(target).toVector().subtract(pos[0].toVector()) : dir.clone();
+                if (to.length() < 1.2 || to.clone().normalize().dot(dir) < 0) left[0] = ov;
+                else turnTowards(dir, to.normalize(), turn);
             }
-        }
-        if (end == null) end = target.clone();
-        double l1 = dist(from, target), l2 = dist(target, end), total = l1 + l2;
-        double speed = num("pass-speed", 10) / 20;
-        int ticks = Math.max(4, (int) Math.ceil(total / speed));
-        Location a = from.clone(), m = target.clone(), b = end;
-        return new Plan(Mode.PASS, ticks, t -> {
-            // speeds up, full speed in the middle, slows at the end (no stop at the player on the way)
-            double u = (double) t / ticks;
-            double sdist = clamp(total * (0.5 - 0.5 * Math.cos(Math.PI * u)), 0, total);
-            return sdist <= l1 ? lerp(a, m, l1 == 0 ? 1 : sdist / l1) : lerp(m, b, l2 == 0 ? 1 : (sdist - l1) / l2);
+            double s = speed * Math.min(1, (t + 1) / 6.0);
+            if (left[0] >= 0) {
+                s *= Math.max(0.35, Math.min(1, left[0] / (ov * 0.4)));
+                left[0] -= s;
+                if (left[0] <= 0) return null;
+            }
+            Location next = pos[0].clone().add(dir.clone().multiply(s));
+            int[] c = column(next.getX(), next.getZ());
+            if (c == null) return null;
+            next.setY(clamp(next.getY(), low(c), surface(c) + 0.4));
+            pos[0] = next;
+            return next.clone();
         });
+    }
+
+    /** Turns {@code dir} towards {@code want} (both unit vectors) by {@code max} radians at most, in place. */
+    private static void turnTowards(Vector dir, Vector want, double max) {
+        double cos = Math.max(-1, Math.min(1, dir.dot(want)));
+        double angle = Math.acos(cos);
+        if (angle <= max || angle < 1e-4) {
+            dir.copy(want);
+            return;
+        }
+        double sin = Math.sin(angle);
+        Vector out = dir.clone().multiply(Math.sin(angle - max) / sin).add(want.clone().multiply(Math.sin(max) / sin));
+        dir.copy(out.normalize());
     }
 
     /** Around the player, leaping through the surface like a dolphin. */

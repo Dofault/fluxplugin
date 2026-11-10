@@ -31,8 +31,10 @@ import java.util.concurrent.ThreadLocalRandom;
  * <ul>
  *   <li>{@code geyser}: the water boils under each player (and a few spots around), then bursts up and throws whoever
  *   stayed there ({@code delay} ticks after the cast, {@code radius}, {@code height}, {@code extra} spots);</li>
- *   <li>{@code whirlpool}: a whirl at the monster's home (centre of its pool) pulls and spins the swimmers for
- *   {@code duration} ticks; at its heart they lose air and life ({@code radius}, {@code pull});</li>
+ *   <li>{@code whirlpool}: a whirl pulls and spins whoever is in it for {@code duration} ticks, their view turning
+ *   with it; at its heart they lose air and life ({@code radius}, {@code pull}, {@code spin} blocks a tick around it).
+ *   {@code center}: {@code home} (its pool, default), {@code target}, or {@code farthest} (the player furthest away,
+ *   with {@code min-range}: cast only when someone keeps that far, so nobody stays safe at a distance);</li>
  *   <li>{@code bubble_barrage}: {@code shots} bubbles spat one after the other at the players, slowly homing; a bubble
  *   slows and takes air ({@code speed}, {@code spacing});</li>
  *   <li>{@code tidal_breach}: the monster goes to its home, a warning ring shows the danger, then (with its animation
@@ -56,7 +58,7 @@ final class TidePowers {
         if (!TYPES.contains(ab.type())) return false;
         switch (ab.type()) {
             case "geyser" -> geyser(ab, c);
-            case "whirlpool" -> whirlpool(ab, c);
+            case "whirlpool" -> whirlpool(ab, c, target);
             case "bubble_barrage" -> barrage(ab, c, target);
             case "tidal_breach" -> breach(ab, c);
             default -> {
@@ -138,13 +140,13 @@ final class TidePowers {
 
     // ---------------------------------------------------------------- whirlpool
 
-    private void whirlpool(MobTemplate.Ability ab, RockPowers.Caster c) {
+    private void whirlpool(MobTemplate.Ability ab, RockPowers.Caster c, Player target) {
         start(ab, c);
         LivingEntity e = c.entity();
         World w = e.getWorld();
-        Location center = c.home().clone();
+        Location center = whirlCenter(ab, c, target);
         int duration = (int) ab.number("duration", 100), begin = (int) ab.number("impact", 12);
-        double radius = ab.number("radius", 7), pull = ab.number("pull", 0.07);
+        double radius = ab.number("radius", 7), pull = ab.number("pull", 0.07), spin = ab.number("spin-speed", 0.42);
         boolean clockwise = ThreadLocalRandom.current().nextBoolean();
         w.playSound(center, Sound.BLOCK_CONDUIT_ACTIVATE, 2f, 0.6f);
         // the monster itself spins (its animation leans and sweeps, the body turns here): {@code spin} turns in
@@ -189,14 +191,21 @@ final class TidePowers {
                     w.spawnParticle(Particle.BUBBLE_COLUMN_UP, center.clone().add(0, -1, 0), 10, 0.6, 0.6, 0.6, 0.1);
                 }
                 if (life % 20 == 0) w.playSound(center, Sound.BLOCK_CONDUIT_AMBIENT, 2f, 0.6f);
-                for (Player p : fighters(e, 40)) {
+                for (Player p : fighters(e, 60)) {
                     Location pl = p.getLocation();
                     Vector in = center.toVector().subtract(pl.toVector()).setY(0);
                     double d = in.length();
                     if (d > radius || Math.abs(pl.getY() - center.getY()) > 5 || d < 0.01) continue;
+                    // the whirl carries him round (its own speed, not added to his: water drag would eat it), drawn in
+                    // a little more towards the heart; his own swimming only bends it
+                    double near = 1 - d / radius;
                     Vector tangent = new Vector(-in.getZ(), 0, in.getX()).normalize().multiply(clockwise ? 1 : -1);
-                    Vector v = p.getVelocity().add(in.normalize().multiply(pull * k)).add(tangent.multiply(0.09 * k));
-                    p.setVelocity(v);
+                    Vector carry = tangent.multiply(spin * k * (0.55 + 0.45 * near)).add(in.normalize().multiply(pull * k));
+                    Vector v = p.getVelocity();
+                    p.setVelocity(new Vector(carry.getX() + v.getX() * 0.25, v.getY() - (d < 1.8 ? 0.03 * k : 0), carry.getZ() + v.getZ() * 0.25));
+                    // his view turns with the water (only the yaw changes, his speed is kept)
+                    float turn = (float) ((clockwise ? 1 : -1) * (6 + 10 * near) * k);
+                    p.teleport(new Location(w, 0, 0, 0, turn, 0), io.papermc.paper.entity.TeleportFlag.Relative.values());
                     if (d < 1.8 && life % 10 == 0) {
                         // the heart of the whirl drags him under: air and life go
                         c.hit(p, 0.5);
@@ -206,6 +215,31 @@ final class TidePowers {
                 }
             }
         }.runTaskTimer(plugin, 0L, 1L);
+    }
+
+    /** Where a whirl opens: its pool ({@code home}), its target, or the player furthest away ({@code farthest}). */
+    private static Location whirlCenter(MobTemplate.Ability ab, RockPowers.Caster c, Player target) {
+        String where = ab.text("center", "home").toLowerCase(java.util.Locale.ROOT);
+        if (where.equals("target") && target != null) return target.getLocation();
+        if (where.equals("farthest")) {
+            Player far = farthest(c.entity(), ab.number("min-range", 0));
+            if (far != null) return far.getLocation();
+        }
+        return c.home().clone();
+    }
+
+    /** The fighting player furthest from the monster (within 40 blocks), at least {@code min} blocks away, or null. */
+    static Player farthest(LivingEntity e, double min) {
+        Player best = null;
+        double bd = min * min;
+        for (Player p : fighters(e, 40)) {
+            double d = p.getLocation().distanceSquared(e.getLocation());
+            if (d >= bd) {
+                bd = d;
+                best = p;
+            }
+        }
+        return best;
     }
 
     // ---------------------------------------------------------------- bubble barrage

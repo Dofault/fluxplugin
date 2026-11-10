@@ -332,6 +332,24 @@ public final class CombatRules implements Listener {
         }
     }
 
+    /**
+     * An unavoidable ability hit ({@code unavoidable: true}, the ultimates) always lands: a raised shield takes nothing
+     * off, and a dodging enchantment of another plugin (libreforge's cancel_event: Trapu, Zenkai...) is undone here,
+     * after every other listener.
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onUnavoidable(EntityDamageEvent e) {
+        if (!(e.getEntity() instanceof Player) || !mobs.unavoidable()) return;
+        if (e.isCancelled()) e.setCancelled(false);
+        @SuppressWarnings("deprecation")
+        EntityDamageEvent.DamageModifier blocking = EntityDamageEvent.DamageModifier.BLOCKING;
+        try {
+            if (e.isApplicable(blocking)) e.setDamage(blocking, 0);
+        } catch (RuntimeException ignored) {
+            // the modifier API may refuse it on this version: the shield then keeps its part
+        }
+    }
+
     /** Lethal damage of any other cause (fire, fall) still plays a boss's death animation. */
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onDamage(EntityDamageEvent e) {

@@ -138,6 +138,8 @@ final class RockPowers {
             case "quake" -> closest(e, ab.number("radius", 7)) != null;
             case "cataclysm" -> closest(e, ab.number("radius", 10) * 1.3) != null;
             case "charge" -> closest(e, ab.number("distance", 8) + 1) != null;
+            // a whirl opened on the furthest player waits for someone to keep away
+            case "whirlpool" -> !"farthest".equalsIgnoreCase(ab.text("center", "home")) || TidePowers.farthest(e, ab.number("min-range", 0)) != null;
             case "rock_shard" -> {
                 double min = ab.number("min-range", 7);
                 boolean far = false;

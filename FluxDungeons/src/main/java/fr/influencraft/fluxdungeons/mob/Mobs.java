@@ -1373,8 +1373,21 @@ public final class Mobs {
     private void strike(Alive a, Player p, Ability ab, double fallback) {
         double v = ab.number("power", fallback);
         boolean relative = ab.number("relative", 0) > 0 || !a.template.abilities().contains(ab);
-        // absolute powers follow the difficulty level of the run (relative ones already do, through the attack)
-        deal(p, a.entity, relative ? v * hitOn(a, p) : v * scaling.apply(a.run)[1]);
+        // unavoidable (ultimates): neither a shield nor a dodging enchantment (cancel_event of another plugin) stops it
+        unavoidable = ab.flag("unavoidable", false);
+        try {
+            // absolute powers follow the difficulty level of the run (relative ones already do, through the attack)
+            deal(p, a.entity, relative ? v * hitOn(a, p) : v * scaling.apply(a.run)[1]);
+        } finally {
+            unavoidable = false;
+        }
+    }
+
+    /** True while an unavoidable ability hit is dealt (see CombatRules#onUnavoidable). */
+    private boolean unavoidable;
+
+    public boolean unavoidable() {
+        return unavoidable;
     }
 
     // ---------------------------------------------------------------- difficulty levels
