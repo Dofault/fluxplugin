@@ -69,6 +69,11 @@ final class RockPowers {
 
         /** The monster stops moving (and casting) for this long. */
         void hold(int ticks);
+
+        /** Its home: where it appeared (the centre of its pool for a swimmer). */
+        default org.bukkit.Location home() {
+            return entity().getLocation();
+        }
     }
 
     static final Set<String> TYPES = Set.of("boulder", "rockfall", "quake", "ice_spikes", "stone_skin", "bite", "uplift",
@@ -519,7 +524,7 @@ final class RockPowers {
     }
 
     /** Upward speed that lifts a player about {@code height} blocks (vanilla gravity and drag). */
-    private static double launchSpeed(double height) {
+    static double launchSpeed(double height) {
         double v = 0.4;
         for (int i = 0; i < 40; i++) {
             double y = 0, s = v;

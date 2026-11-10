@@ -82,6 +82,8 @@ public final class Mobs {
         /** Last time it had a player to fight (leaves combat after a while without one). */
         long lastEngaged;
         boolean dying, inCombat, switching;
+        /** Moves it in its water instead of walking ({@code swim} of its file), null for a walker. */
+        Swimmer swimmer;
         /** Tick of its last melee hit on a player (vanilla's or the longer reach's). */
         int lastMelee = -1000;
         /** No ability before this time (cast-gap after the last one). */
@@ -209,6 +211,7 @@ public final class Mobs {
         Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 10L, 10L);
         Bukkit.getScheduler().runTaskTimer(plugin, this::reachTick, 2L, 2L);
         this.rock = new RockPowers(plugin);
+        this.tide = new TidePowers(plugin);
     }
 
     /** Loads every monster file (mobs.yml first, then each file of mobs/). */
@@ -383,6 +386,7 @@ public final class Mobs {
         for (PotionEffect pe : a.kit.permanent()) le.addPotionEffect(pe);
         alive.put(le.getUniqueId(), a);
         control(a);
+        swim(a);
         bar(a);
         calm(a, true);
         blocks(a, x.spawnBlocks());
@@ -423,6 +427,7 @@ public final class Mobs {
         a.objective = le.getPersistentDataContainer().get(objectiveKey, PersistentDataType.STRING);
         alive.put(le.getUniqueId(), a);
         control(a);
+        swim(a);
         bar(a);
         calm(a, true);
         return true;
@@ -512,6 +517,44 @@ public final class Mobs {
         if (event) engine.fire(a, "EliteMobEnterCombatEvent", player, null);
     }
 
+    // ---------------------------------------------------------------- swimmers
+
+    /** A monster with a {@code swim} section swims in the water around it (see {@link Swimmer}). */
+    private void swim(Alive a) {
+        if (a.template.extra().swim().isEmpty()) return;
+        a.swimmer = Swimmer.start(plugin, new Swimmer.Host() {
+            public LivingEntity entity() {
+                return a.entity;
+            }
+
+            public boolean over() {
+                return a.dying || a.switching || !alive.containsKey(a.entity.getUniqueId());
+            }
+
+            public Player target() {
+                Player t = fightingTarget(a);
+                if (t != null) return t;
+                Player best = null;
+                double bd = 40 * 40;
+                for (Player p : a.entity.getWorld().getPlayers()) {
+                    if (!fighting(p)) continue;
+                    double d = p.getLocation().distanceSquared(a.entity.getLocation());
+                    if (d < bd) {
+                        bd = d;
+                        best = p;
+                    }
+                }
+                if (best != null) engage(a, best);
+                return best;
+            }
+
+            public void touch(Player p, double power) {
+                deal(p, a.entity, power * scaling.apply(a.run)[1]);
+            }
+        }, a.template.extra().swim());
+        if (a.swimmer == null) plugin.getLogger().warning("Monster " + a.template.id() + " should swim but has no water around it.");
+    }
+
     // ---------------------------------------------------------------- controlled monsters
 
     private final com.destroystokyo.paper.entity.ai.GoalKey<Mob> pilotKey;
@@ -545,6 +588,7 @@ public final class Mobs {
         @Override
         public void tick() {
             if (a.dying || !(a.entity instanceof Mob m)) return;
+            if (a.swimmer != null) return;
             ticks++;
             // the vanilla float goal went with the rest of the AI: without it a piloted monster sinks to the bottom
             if (m.isInWater() && ThreadLocalRandom.current().nextFloat() < 0.8f) m.setJumping(true);
@@ -766,9 +810,12 @@ public final class Mobs {
 
     /** Moving blocks of the rock abilities. */
     private RockPowers rock;
+    /** Abilities of the water (geysers, whirlpool, bubbles, tidal breach). */
+    private TidePowers tide;
 
     public void removeAll() {
         if (rock != null) rock.clear();
+        if (tide != null) tide.clear();
         for (Alive a : alive.values()) {
             close(a);
             a.entity.remove();
@@ -1014,7 +1061,7 @@ public final class Mobs {
             a.lastEngaged = now;
             double life = 100 * a.entity.getHealth() / Math.max(1, maxHealth(a.entity));
             // one ability at a time, drawn among those ready (the first of the list would always win), cast-gap apart
-            if (now < a.nextCast || !castsAbilities(a)) continue;
+            if (now < a.nextCast || !castsAbilities(a) || (a.swimmer != null && !a.swimmer.mayCast())) continue;
             List<Integer> ready = new ArrayList<>();
             for (int i = 0; i < a.abilities.size(); i++) {
                 Ability ab = a.abilities.get(i);
@@ -1403,8 +1450,8 @@ public final class Mobs {
     private void cast(Alive a, Ability ab, Player target) {
         LivingEntity e = a.entity;
         if (!e.isValid()) return;
-        // rock and ice abilities (boulder, rockfall, quake, ice_spikes, stone_skin)
-        if (rock.cast(ab, new RockPowers.Caster() {
+        // rock and ice abilities (boulder, rockfall, quake, ice_spikes, stone_skin), water abilities (TidePowers)
+        RockPowers.Caster caster = new RockPowers.Caster() {
             public LivingEntity entity() {
                 return e;
             }
@@ -1425,7 +1472,12 @@ public final class Mobs {
                     if (m.isValid() && !a.dying && !a.switching) m.setAI(true);
                 }, ticks);
             }
-        }, target)) return;
+
+            public Location home() {
+                return a.spawn.clone();
+            }
+        };
+        if (tide.cast(ab, caster, target) || rock.cast(ab, caster, target)) return;
         World w = e.getWorld();
         Location at = e.getLocation();
         switch (ab.type()) {
@@ -1530,7 +1582,7 @@ public final class Mobs {
                     MobTemplate copy = new MobTemplate(a.template.id() + "_summon", type, "&7" + type.name().toLowerCase(), false, null,
                             maxHealth(e) * 0.15, a.baseDamage() * 0.6, 0.25, 0, 1, 0, Map.of(), List.of(),
                             new MobTemplate.Extra(1, 0.15, 0.6, false, false, 32, 0, List.of(), List.of(), null, List.of(), List.of(), List.of(),
-                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of(), 0, 1, false, false, false, 0, 0, 0, 36, false));
+                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of(), 0, 1, false, false, false, 0, 0, 0, 36, false, Map.of()));
                     for (int i = 0; i < (int) ab.number("count", 2); i++) {
                         LivingEntity s = spawn(copy, at.clone().add(ThreadLocalRandom.current().nextDouble(-2, 2), 0, ThreadLocalRandom.current().nextDouble(-2, 2)), a.run);
                         if (s != null) onSummon.accept(e, s);

@@ -49,6 +49,7 @@ import java.util.Map;
  *       # ground are thrown onto the changed blocks (into the water); pull-title: shown to them
  *   death-ticks: 36                # a boss with a death animation disappears this many ticks after it starts
  *   stationary: true               # never walks: stays where it is and faces its target (charges still move it)
+ *   swim: {pass-speed: 10, ...}    # swims in the water around it instead of walking, see Swimmer
  *   attack-speed: 1                # melee hits per second at most (vanilla 1)
  *   ranged-resistance: 0.5         # share of projectile damage it shrugs off (melee is the way)
  *   ranged-rate: 2                 # archers shoot this many times as often as vanilla (2 by default)
@@ -134,7 +135,7 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                         List<BlockState> removeBlocks, Map<String, Script> scripts, String rank,
                         double attackSpeed, Map<String, org.bukkit.Color> dyes, double rangedResistance, double rangedRate,
                         boolean frostArrows, boolean controlled, boolean silent, double castGap, double barOffset,
-                        double walkSpeed, int deathTicks, boolean stationary) {
+                        double walkSpeed, int deathTicks, boolean stationary, Map<String, Object> swim) {
         /** Ticks between two melee hits of this monster ({@code attack-speed}: hits per second, vanilla 1). */
         public int attackTicks() {
             return (int) Math.max(4, Math.round(20 / Math.max(0.05, attackSpeed)));
@@ -200,7 +201,8 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                 Math.max(1, c.getDouble("ranged-rate", 2)), c.getBoolean("frost-arrows", false),
                 c.getBoolean("controlled", false), c.getBoolean("silent", false), Math.max(0, c.getDouble("cast-gap", 0)),
                 c.getDouble("bar-offset", 0), c.getDouble("walk-speed", 0), Math.max(1, c.getInt("death-ticks", 36)),
-                c.getBoolean("stationary", false));
+                c.getBoolean("stationary", false),
+                c.isConfigurationSection("swim") ? toMap(c.getConfigurationSection("swim")) : Map.of());
         return new MobTemplate(id, type, c.getString("name", id), c.getBoolean("boss"), c.getString("model"),
                 c.getDouble("health", 20), c.getDouble("damage", 3), c.getDouble("speed", -1), c.getDouble("armor", 0),
                 c.getDouble("scale", 1), c.getDouble("xp", 10), equipment, abilities, extra);
