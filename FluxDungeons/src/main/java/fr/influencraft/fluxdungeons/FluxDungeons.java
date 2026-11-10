@@ -422,6 +422,15 @@ public final class FluxDungeons extends FluxPlugin {
 
     /** Starts a dungeon for the player's party (he must lead it), or for him alone. */
     private void play(Player p, DungeonDefinition def) {
+        // a launch screen closed with Escape keeps him waiting: the same dungeon opens it again, another one replaces it
+        DungeonDefinition waiting = runs.lobby().dungeonOf(p);
+        if (waiting != null) {
+            if (waiting.id().equals(def.id())) {
+                runs.lobby().reopen(p);
+                return;
+            }
+            runs.lobby().cancel(p);
+        }
         Party party = parties.of(p);
         if (party != null && !party.isLeader(p.getUniqueId())) {
             messages().send(p, "start.not-leader");
@@ -637,7 +646,10 @@ public final class FluxDungeons extends FluxPlugin {
                 }
                 Player target = Bukkit.getPlayerExact(args[1]);
                 Run run = target == null ? null : runs.runOf(target);
-                if (run == null) messages().send(sender, "not-in-run");
+                if (run == null && target != null && runs.lobby().waiting(target)) {
+                    runs.lobby().cancel(target);
+                    messages().send(sender, "admin.stopped", "%player%", target.getName());
+                } else if (run == null) messages().send(sender, "not-in-run");
                 else {
                     runs.stop(run);
                     messages().send(sender, "admin.stopped", "%player%", target.getName());

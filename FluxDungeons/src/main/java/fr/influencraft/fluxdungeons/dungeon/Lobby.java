@@ -142,6 +142,12 @@ public final class Lobby implements Listener {
         return byPlayer.containsKey(p.getUniqueId());
     }
 
+    /** Dungeon of the launch screen this player waits on (he may have closed it), null when none. */
+    public DungeonDefinition dungeonOf(Player p) {
+        Party party = byPlayer.get(p.getUniqueId());
+        return party == null ? null : party.def;
+    }
+
     /** Opens the launch screen for these players (already checked). */
     public void open(DungeonDefinition def, List<Player> players) {
         List<UUID> ids = new ArrayList<>();
