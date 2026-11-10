@@ -225,6 +225,17 @@ final class DungeonListener implements Listener {
         }
     }
 
+    /**
+     * No Frost Walker in a dungeon world: the enchantment would freeze the water under the boots, and water is part of
+     * the fights (the Tide Otter's pool). The boots keep their enchantment, it just does nothing there.
+     */
+    @EventHandler(ignoreCancelled = true)
+    public void onFrostWalker(org.bukkit.event.block.EntityBlockFormEvent e) {
+        if (e.getNewState().getType() == org.bukkit.Material.FROSTED_ICE && runs.isDungeonWorld(e.getBlock().getWorld())) {
+            e.setCancelled(true);
+        }
+    }
+
     /** Nothing ever lies on the ground in a dungeon world (monster loot, equipment, overflow). */
     @EventHandler(ignoreCancelled = true)
     public void onItemSpawn(ItemSpawnEvent e) {
