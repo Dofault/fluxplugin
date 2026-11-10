@@ -413,7 +413,9 @@ public final class Lobby implements Listener {
             System.arraycopy(before.armor(), 0, sel.armor(), 0, sel.armor().length);
         }
         List<String> owned = Companions.owned(p).stream().map(Companions.Companion::id).toList();
-        List<String> pets = before != null && !before.pets().isEmpty() ? before.pets() : Companions.active(p);
+        // no pet unless the player chose some himself last time (an empty choice stays empty: never filled with the
+        // pets he has out)
+        List<String> pets = before != null ? before.pets() : List.of();
         for (String id : pets) if (owned.contains(id) && sel.pets().size() < maxPets) sel.pets().add(id);
         return sel;
     }
