@@ -123,10 +123,20 @@ public final class Lobby implements Listener {
     private final Map<UUID, Loadouts.Selection> last = new HashMap<>();
     private int maxPets = PETS;
 
-    Lobby(FluxPlugin plugin, Heroes heroes, java.util.function.ToIntFunction<String> lockedGear) {
+    /** Where the last choice of each player is kept between runs and restarts. */
+    interface Presets {
+        String load(UUID player);
+
+        void save(UUID player, String data);
+    }
+
+    private final Presets presets;
+
+    Lobby(FluxPlugin plugin, Heroes heroes, java.util.function.ToIntFunction<String> lockedGear, Presets presets) {
         this.plugin = plugin;
         this.heroes = heroes;
         this.lockedGear = lockedGear;
+        this.presets = presets;
         Bukkit.getScheduler().runTaskTimer(plugin, this::expire, 200L, 200L);
     }
 
@@ -148,11 +158,12 @@ public final class Lobby implements Listener {
         return party == null ? null : party.def;
     }
 
-    /** Opens the launch screen for these players (already checked). */
-    public void open(DungeonDefinition def, List<Player> players) {
+    /** Opens the launch screen for these players (already checked), at the difficulty level chosen (-1: default). */
+    public void open(DungeonDefinition def, List<Player> players, int level) {
         List<UUID> ids = new ArrayList<>();
         for (Player p : players) ids.add(p.getUniqueId());
         Party party = new Party(def, ids);
+        if (level >= 0 && level < def.levels().size()) party.level = level;
         for (Player p : players) {
             byPlayer.put(p.getUniqueId(), party);
             party.selections.put(p.getUniqueId(), initial(p));
@@ -376,12 +387,27 @@ public final class Lobby implements Listener {
 
     private Loadouts.Selection initial(Player p) {
         Loadouts.Selection sel = Loadouts.Selection.empty();
-        Loadouts.Selection before = last.get(p.getUniqueId());
+        Loadouts.Selection before = last.computeIfAbsent(p.getUniqueId(), u -> decode(presets.load(u)));
         if (before != null) {
+            java.util.Set<Integer> taken = new java.util.HashSet<>();
             for (int k = 0; k < Loadouts.ITEMS; k++) {
-                if (chosen(p, before, k) != null) {
+                if (chosen(p, before, k) != null && taken.add(before.items()[k])) {
                     sel.items()[k] = before.items()[k];
                     sel.snapshots()[k] = before.snapshots()[k];
+                }
+            }
+            // an item that moved (things come back in other slots after a run) or was partly used (arrows, food) is
+            // found again anywhere in the inventory
+            for (int k = 0; k < Loadouts.ITEMS; k++) {
+                ItemStack seen = before.snapshots()[k];
+                if (sel.items()[k] >= 0 || seen == null) continue;
+                for (int i = 0; i < 36; i++) {
+                    ItemStack item = p.getInventory().getItem(i);
+                    if (item == null || item.isEmpty() || taken.contains(i) || !item.isSimilar(seen)) continue;
+                    taken.add(i);
+                    sel.items()[k] = i;
+                    sel.snapshots()[k] = item.clone();
+                    break;
                 }
             }
             System.arraycopy(before.armor(), 0, sel.armor(), 0, sel.armor().length);
@@ -513,8 +539,44 @@ public final class Lobby implements Listener {
     /** A choice changed: the player is no longer ready, every screen of the party is redrawn. */
     private void changed(Player p, Party party) {
         party.ready.remove(p.getUniqueId());
-        last.put(p.getUniqueId(), copy(party.selections.get(p.getUniqueId())));
+        remember(p, party);
         redraw(party);
+    }
+
+    /** Keeps the player's current choice for next time (memory now, the database a moment later). */
+    private void remember(Player p, Party party) {
+        Loadouts.Selection sel = copy(party.selections.get(p.getUniqueId()));
+        last.put(p.getUniqueId(), sel);
+        String data = encode(sel);
+        UUID id = p.getUniqueId();
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> presets.save(id, data));
+    }
+
+    /** A choice as text: items seen (base64), their slots, armour taken, pets. */
+    private static String encode(Loadouts.Selection s) {
+        StringBuilder slots = new StringBuilder(), armor = new StringBuilder();
+        for (int i : s.items()) slots.append(slots.length() == 0 ? "" : ",").append(i);
+        for (boolean b : s.armor()) armor.append(b ? '1' : '0');
+        return fr.influencraft.fluxdungeons.Store.encode(s.snapshots()) + "|" + slots + "|" + armor + "|" + String.join(",", s.pets());
+    }
+
+    private static Loadouts.Selection decode(String data) {
+        if (data == null || data.isBlank()) return null;
+        try {
+            String[] p = data.split("\\|", -1);
+            Loadouts.Selection sel = Loadouts.Selection.empty();
+            ItemStack[] seen = fr.influencraft.fluxdungeons.Store.decode(p[0]);
+            String[] slots = p[1].split(",");
+            for (int k = 0; k < Loadouts.ITEMS && k < slots.length && k < seen.length; k++) {
+                sel.items()[k] = Integer.parseInt(slots[k].trim());
+                sel.snapshots()[k] = seen[k];
+            }
+            for (int k = 0; k < sel.armor().length && k < p[2].length(); k++) sel.armor()[k] = p[2].charAt(k) == '1';
+            if (p.length > 3 && !p[3].isBlank()) sel.pets().addAll(List.of(p[3].split(",")));
+            return sel;
+        } catch (RuntimeException e) {
+            return null;
+        }
     }
 
     private static Loadouts.Selection copy(Loadouts.Selection s) {
@@ -537,7 +599,7 @@ public final class Lobby implements Listener {
             return;
         }
         Sounds.cue(p, "confirm");
-        last.put(p.getUniqueId(), copy(party.selections.get(p.getUniqueId())));
+        remember(p, party);
         if (!party.ready.containsAll(party.members)) {
             redraw(party);
             return;

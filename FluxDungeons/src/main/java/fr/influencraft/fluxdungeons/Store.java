@@ -26,6 +26,8 @@ import java.util.logging.Logger;
  *   <li>{@code flux_dungeons_vault}: what a player had on him before entering a dungeon (inventory, experience,
  *   health, place...). Written before he enters, deleted once he got it back: a player who disconnects, or a server
  *   that crashes, during a run gets his things back on his next join.</li>
+ *   <li>{@code flux_dungeons_presets}: the last choice of each player on the launch screen (items, armour, pets),
+ *   offered again next time, even after a restart.</li>
  * </ul>
  */
 public final class Store {
@@ -39,7 +41,7 @@ public final class Store {
     public record Lost(String id, UUID owner, String dungeon, int stacks) {
     }
 
-    private String players, heroes, vault, lost;
+    private String players, heroes, vault, lost, presets;
 
     public Store(Logger log) {
         this.log = log;
@@ -50,6 +52,7 @@ public final class Store {
         heroes = Database.table("flux_dungeons_heroes");
         vault = Database.table("flux_dungeons_vault");
         lost = Database.table("flux_dungeons_lost");
+        presets = Database.table("flux_dungeons_presets");
         String key = Database.dialect().key(36);
         String text = Database.dialect().longText();
         try (Connection c = Database.connection(); Statement st = c.createStatement()) {
@@ -57,6 +60,7 @@ public final class Store {
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + heroes + " (uuid " + key + " NOT NULL, hero_class " + Database.dialect().key(32)
                     + " NOT NULL, level INT NOT NULL, xp DOUBLE NOT NULL, kit INT NOT NULL, PRIMARY KEY (uuid, hero_class))");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + vault + " (uuid " + key + " PRIMARY KEY, data " + text + " NOT NULL)");
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS " + presets + " (uuid " + key + " PRIMARY KEY, data " + text + " NOT NULL)");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + lost + " (id " + key + " PRIMARY KEY, uuid " + Database.dialect().key(36)
                     + " NOT NULL, dungeon VARCHAR(64) NOT NULL, items " + text + " NOT NULL, stacks INT NOT NULL, created BIGINT NOT NULL,"
                     + " released INT NOT NULL)");
@@ -119,6 +123,16 @@ public final class Store {
         } catch (SQLException e) {
             log.warning("Could not save the class progress of " + uuid + ": " + e.getMessage());
         }
+    }
+
+    // ---------------------------------------------------------------- presets (last launch screen choice)
+
+    public String preset(UUID uuid) {
+        return readText(presets, "data", uuid);
+    }
+
+    public void savePreset(UUID uuid, String data) {
+        writeText(presets, "data", uuid, data);
     }
 
     // ---------------------------------------------------------------- vault (state before entering)

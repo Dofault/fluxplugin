@@ -294,3 +294,25 @@ door:
   kills: '&#FF5C5C☠ &f%done%&7/&f%needed% &7monsters'
   opened: '&#B376E5A door opens...'
   opened-kills: '&#2ECF7BThe room is cleared: the door opens!'
+pick-level:
+  title: '%dungeon%'
+  intro: '&#B376E5Pick the difficulty for the whole party. &7(It can still be changed on the launch screen.)'
+  tooltip: '%level%
+
+    &#B376E5Advised gear: &f%gear%
+
+    &#B376E5Monster life: &fx%health%
+
+    &#B376E5Monster damage: &fx%damage%
+
+    &#B376E5Reward: &fx%reward%
+
+    &#B376E5Monster spells: &f%spells%%extra%'
+  spells-on: 'yes'
+  spells-off: 'no'
+  loan: '
+
+    &#2ECF7BIron armour and sword lent to whoever has none.'
+  required: '
+
+    &#FF5C5CFull armour and a weapon required.'

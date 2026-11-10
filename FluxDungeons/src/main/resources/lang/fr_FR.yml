@@ -294,3 +294,25 @@ door:
   kills: '&#FF5C5C☠ &f%done%&7/&f%needed% &7monstres'
   opened: '&#B376E5Une porte s''ouvre...'
   opened-kills: '&#2ECF7BLa salle est nettoyée : la porte s''ouvre !'
+pick-level:
+  title: '%dungeon%'
+  intro: '&#B376E5Choisis la difficulté pour tout le groupe. &7(Tu pourras encore la changer sur l''écran de lancement.)'
+  tooltip: '%level%
+
+    &#B376E5Équipement conseillé : &f%gear%
+
+    &#B376E5Vie des monstres : &fx%health%
+
+    &#B376E5Dégâts des monstres : &fx%damage%
+
+    &#B376E5Récompense : &fx%reward%
+
+    &#B376E5Sorts des monstres : &f%spells%%extra%'
+  spells-on: oui
+  spells-off: non
+  loan: '
+
+    &#2ECF7BArmure et épée en fer prêtées à qui n''en a pas.'
+  required: '
+
+    &#FF5C5CArmure complète et une arme obligatoires.'

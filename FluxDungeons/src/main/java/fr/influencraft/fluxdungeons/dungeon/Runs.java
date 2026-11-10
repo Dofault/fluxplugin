@@ -86,7 +86,15 @@ public final class Runs {
         this.heroes = heroes;
         this.loadouts = loadouts;
         this.store = store;
-        this.lobby = new Lobby(plugin, heroes, store::lockedCount);
+        this.lobby = new Lobby(plugin, heroes, store::lockedCount, new Lobby.Presets() {
+            public String load(UUID player) {
+                return store.preset(player);
+            }
+
+            public void save(UUID player, String data) {
+                store.savePreset(player, data);
+            }
+        });
         lobby.launcher(this::launch);
         this.pets = new PetFighters(plugin, mobs);
         loadouts.onOverflow((p, items) -> {
@@ -229,8 +237,9 @@ public final class Runs {
     }
 
     /** Opens the launch screen for these players (checked before): the run starts once they are all ready. */
-    public void prepare(DungeonDefinition def, List<Player> players) {
-        lobby.open(def, players);
+    /** Opens the launch screen at this difficulty level (-1: the default one). */
+    public void prepare(DungeonDefinition def, List<Player> players, int level) {
+        lobby.open(def, players, level);
     }
 
     /** Everybody is ready on the launch screen: checked again, then started. */

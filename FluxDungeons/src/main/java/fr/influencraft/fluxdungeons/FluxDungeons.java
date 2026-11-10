@@ -436,15 +436,49 @@ public final class FluxDungeons extends FluxPlugin {
             messages().send(p, "start.not-leader");
             return;
         }
-        List<Player> players = party == null ? List.of(p) : party.online();
-        start(p, def, players);
+        if (def.levels().size() > 1) {
+            pickLevel(p, def);
+            return;
+        }
+        start(p, def, party == null ? List.of(p) : party.online(), -1);
     }
 
-    private void start(CommandSender by, DungeonDefinition def, List<Player> players) {
+    /**
+     * A dungeon with several difficulty levels asks first, in a window: one button per level, its gear, multipliers
+     * and rules on mouse over. The launch screen then opens at that level (the leader may still change it there).
+     */
+    private void pickLevel(Player p, DungeonDefinition def) {
+        Dialogs.Form form = Dialogs.form(p, messages().raw("pick-level.title", "%dungeon%", def.name())).width(260).columns(1);
+        form.body(messages().raw("pick-level.intro"));
+        List<DungeonDefinition.Level> levels = def.levels();
+        // easiest in green, hardest in red, the ones between in gold
+        for (int i = 0; i < levels.size(); i++) {
+            DungeonDefinition.Level l = levels.get(i);
+            String color = i == 0 ? "&#2ECF7B" : i == levels.size() - 1 ? "&#FF5C5C" : "&#FFD94D";
+            String extra = (l.loan() ? messages().raw("pick-level.loan") : "") + (l.requireGear() ? messages().raw("pick-level.required") : "");
+            String tip = messages().raw("pick-level.tooltip", "%level%", color + "&l" + l.name(), "%gear%", l.gear(),
+                    "%health%", number(l.health()), "%damage%", number(l.damage()), "%reward%", number(l.reward()),
+                    "%spells%", messages().raw(l.spells() ? "pick-level.spells-on" : "pick-level.spells-off"), "%extra%", extra);
+            form.action("level:" + i, color + "&l" + l.name(), tip);
+        }
+        form.onSubmit((player, answer) -> {
+            String b = answer.button();
+            if (b == null || !b.startsWith("level:")) return;
+            Party party = parties.of(player);
+            if (party != null && !party.isLeader(player.getUniqueId())) return;
+            start(player, def, party == null ? List.of(player) : party.online(), Integer.parseInt(b.substring(6)));
+        }).open();
+    }
+
+    private static String number(double v) {
+        return v == Math.rint(v) ? String.valueOf((long) v) : String.valueOf(v).replace('.', ',');
+    }
+
+    private void start(CommandSender by, DungeonDefinition def, List<Player> players, int level) {
         Runs.Refusal refusal = runs.check(def, players);
         switch (refusal) {
             case NONE -> {
-                runs.prepare(def, players);
+                runs.prepare(def, players, level);
                 if (!(by instanceof Player bp && players.contains(bp))) messages().send(by, "admin.started", "%dungeon%", def.name());
             }
             case TOO_FEW -> messages().send(by, "start.too-few", "%min%", String.valueOf(def.minPlayers()));
@@ -635,7 +669,7 @@ public final class FluxDungeons extends FluxPlugin {
                     return true;
                 }
                 Party party = parties.of(target);
-                start(sender, def, party == null ? List.of(target) : party.online());
+                start(sender, def, party == null ? List.of(target) : party.online(), -1);
             }
             case "stop" -> {
                 if (args.length < 2) return usage(sender);
