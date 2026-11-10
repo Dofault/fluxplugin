@@ -59,6 +59,8 @@ public final class DungeonDefinition {
     private final List<Loot> loot = new ArrayList<>();
     /** Blocks the players may break in this dungeon, and whether each one drops its item (on top of the global list). */
     private final Map<Material, Boolean> breakable = new java.util.EnumMap<>(Material.class);
+    /** Breakable blocks that break at the first hit, whatever the tool ({@code instant: true}). */
+    private final java.util.Set<Material> instant = java.util.EnumSet.noneOf(Material.class);
     private final Map<String, Object> theme = new LinkedHashMap<>();
     private final List<Room> rooms = new ArrayList<>();
     private final Layout layout;
@@ -154,7 +156,7 @@ public final class DungeonDefinition {
                     l.get("require-gear") instanceof Boolean b && b));
         }
         if (levels.isEmpty()) levels.add(new Level("Normal", "", 1, 1, 1, true, false, false));
-        readBreakable(c, breakable);
+        readBreakable(c, breakable, instant);
         for (Map<?, ?> l : c.getMapList("loot")) {
             Object chance = l.get("chance"), amount = l.get("amount");
             loot.add(new Loot(String.valueOf(l.get("item")), chance instanceof Number n ? n.doubleValue() : 1,
@@ -313,6 +315,11 @@ public final class DungeonDefinition {
      * uprooted without drop; ores to take into the dungeon drop their item.
      */
     public static void readBreakable(ConfigurationSection c, Map<Material, Boolean> into) {
+        readBreakable(c, into, null);
+    }
+
+    /** Same, also collecting the blocks marked {@code instant: true} (broken at the first hit, any tool). */
+    public static void readBreakable(ConfigurationSection c, Map<Material, Boolean> into, java.util.Set<Material> instant) {
         if (c == null) return;
         if (c.isList("breakable")) {
             for (String name : c.getStringList("breakable")) {
@@ -327,12 +334,18 @@ public final class DungeonDefinition {
             Material m = Material.matchMaterial(k);
             if (m == null || !m.isBlock()) continue;
             into.put(m, s.getBoolean(k + ".drops", s.getBoolean(k, false)));
+            if (instant != null && s.getBoolean(k + ".instant", false)) instant.add(m);
         }
     }
 
     /** Null when the block may not be broken here, else whether it drops its item. */
     public Boolean breakable(Material m) {
         return breakable.get(m);
+    }
+
+    /** True when this breakable block breaks at the first hit (copper veins of the Copper T-Rex's mine). */
+    public boolean instant(Material m) {
+        return instant.contains(m);
     }
 
     public List<Loot> loot() {

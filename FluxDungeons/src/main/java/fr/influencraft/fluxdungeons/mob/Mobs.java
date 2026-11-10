@@ -321,6 +321,7 @@ public final class Mobs {
         this.rock = new RockPowers(plugin);
         this.fx = new Fx(plugin);
         this.harvest = new HarvestPowers(plugin, fx);
+        this.copper = new CopperPowers(plugin, fx);
         this.tide = new TidePowers(plugin);
     }
 
@@ -955,12 +956,15 @@ public final class Mobs {
     /** Abilities of the water (geysers, whirlpool, bubbles, tidal breach). */
     private TidePowers tide;
     private HarvestPowers harvest;
+    /** Abilities of the Copper T-Rex (Overcharge, bite, tail sweep, drill charge, resonance, veins). */
+    private CopperPowers copper;
     private Fx fx;
 
     public void removeAll() {
         if (rock != null) rock.clear();
         if (tide != null) tide.clear();
         if (harvest != null) harvest.clear();
+        if (copper != null) copper.clear();
         if (fx != null) fx.clear();
         for (Alive a : alive.values()) {
             close(a);
@@ -1275,7 +1279,7 @@ public final class Mobs {
                 if (reach < ab.number("target-min", 0) || reach > ab.number("target-max", 1000)) continue;
                 // ready, and somebody to hit (a ring cast with nobody in it is thrown in the void)
                 if (now - last >= ab.every() * 1000 && RockPowers.worthCasting(ab, a.entity)
-                        && harvest.worth(ab, a.entity, a.spawn)) ready.add(i);
+                        && harvest.worth(ab, a.entity, a.spawn) && copper.worth(ab, a.entity, a.spawn)) ready.add(i);
             }
             if (ready.isEmpty()) continue;
             // drawn by weight (1 by default); an opening move goes first
@@ -1498,6 +1502,8 @@ public final class Mobs {
         out.add("combat " + a.inCombat + ", target " + (own == null ? "none" : own.getName())
                 + ", vanilla target " + (a.entity instanceof Mob m && m.getTarget() != null ? m.getTarget().getName() : "none")
                 + ", model " + (a.model != null) + ", speed " + String.format(java.util.Locale.ROOT, "%.3f", speed == null ? 0 : speed.getValue()));
+        if (a.abilities.stream().anyMatch(x -> CopperPowers.TYPES.contains(x.type())))
+            out.add("overcharge " + Math.round(copper.overcharge(a.entity)) + "/100");
         out.add("next ability in " + Math.max(0, (a.nextCast - now) / 100) / 10.0 + " s, melee ready " + meleeReady(a.entity));
         double life = 100 * a.entity.getHealth() / Math.max(1, maxHealth(a.entity));
         for (int i = 0; i < a.abilities.size(); i++) {
@@ -1811,7 +1817,8 @@ public final class Mobs {
                 return a.spawn.clone();
             }
         };
-        if (tide.cast(ab, caster, target) || harvest.cast(ab, caster, target) || rock.cast(ab, caster, target)) return;
+        if (copper.cast(ab, caster, target) || tide.cast(ab, caster, target) || harvest.cast(ab, caster, target)
+                || rock.cast(ab, caster, target)) return;
         World w = e.getWorld();
         Location at = e.getLocation();
         switch (ab.type()) {

@@ -328,6 +328,14 @@ final class DungeonListener implements Listener {
         }
     }
 
+    /** Breakable blocks marked {@code instant: true} in the dungeon's file break at the first hit, any tool. */
+    @EventHandler(ignoreCancelled = true)
+    public void onDamage(org.bukkit.event.block.BlockDamageEvent e) {
+        if (!arena.isArena(e.getBlock().getWorld())) return;
+        var run = runs.runOf(e.getPlayer());
+        if (run != null && run.definition().instant(e.getBlock().getType())) e.setInstaBreak(true);
+    }
+
     private java.util.Map<Material, Boolean> globalBreakable;
 
     private java.util.Map<Material, Boolean> globalBreakable() {

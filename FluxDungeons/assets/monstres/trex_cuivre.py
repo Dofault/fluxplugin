@@ -436,21 +436,46 @@ def parts():
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    prev = None
-    if "--apercu" in args:
-        i = args.index("--apercu")
-        prev = args[i + 1]
-        del args[i:i + 2]
+    prev = anims_dir = only = None
+    show = "--mesures" in args
+    static = "--statique" in args
+    for flag in ("--mesures", "--statique"):
+        if flag in args:
+            args.remove(flag)
+    for key in ("--apercu", "--anims", "--only"):
+        if key in args:
+            i = args.index(key)
+            val = args[i + 1]
+            del args[i:i + 2]
+            if key == "--apercu":
+                prev = val
+            elif key == "--anims":
+                anims_dir = val
+            else:
+                only = set(val.split(","))
     out = args[0] if args else HERE
     P, groups, dims = ground(*parts(), scale=SCALE)
-    mats = dict(MATS)
-    uv, atlases, sizes = bake(P, {**mats, **GLOW}, GLOW)
+    uv, atlases, sizes = bake(P, {**MATS, **GLOW}, GLOW)
     data = export(IDENT, NS, P, groups, uv, atlases, sizes)
+    anims = []
+    if not static:
+        import trex_cuivre_anim as TA
+        anims = TA.build(data, TA.uid_for(NS, IDENT))
+        if anims_dir:
+            TA.strips(data, anims, atlases, sizes, anims_dir, only=only)
+        if show:
+            for name, rows in TA.measure(data, anims).items():
+                if only and name not in only:
+                    continue
+                print(f"--- {name}")
+                for r in rows:
+                    print(f"  tick {r['tick']:3d}  bas {r['low']:6.2f}  museau {r['snout']}")
+        data["animations"] = TA.finish(anims)
     path = os.path.join(out, IDENT + ".bbmodel")
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False)
     print(f"{len(P)} volumes ; {len(groups)} bones ; {dims[0]:.2f} x {dims[1]:.2f} x {dims[2]:.2f} blocs (l x h x p) ;"
-          f" textures {sizes[0]} + {sizes[1]}")
-    print("written", path)
+          f" textures {sizes[0]} + {sizes[1]} ; {len(anims)} animations")
+    print("written", path, f"({os.path.getsize(path) // 1024} Ko)")
     if prev:
         apercu(data, atlases, sizes, prev, GLOW_COLOURS, views=((35, 12), (0, 6), (90, 3), (205, 14)), size=420)
