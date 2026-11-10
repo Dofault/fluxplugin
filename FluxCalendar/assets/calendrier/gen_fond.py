@@ -6,6 +6,7 @@ Layout (the grey window starts LIFT px above the chest so the weekday band fits 
   calendar sheet     a red band with the weekday letters L M M J V S D, binder rings, pages piled under it
   chest rows 0 to 5  the weeks, Monday to Sunday in columns 1 to 7, one vanilla slot per date (the day's number is
                      the item count, white on grey as in any inventory); columns 0 and 8 are margins
+  welcome banner     a red ribbon « Bienvenue ! » under the piled pages, over the hidden inventory (back on 2026-11-10)
   nothing else: no back button, no info icon, the hidden inventory is not drawn (decision of 2026-11-10)
 
     <venv with Pillow>/python3 gen_fond.py <plugins dir of the server> [preview dir]
@@ -60,7 +61,8 @@ def day_slots(year, month):
 
 
 SHEET = (item(1)[0] - 5, BAND_TOP - 1, item(7)[0] + 20, item(45)[1] + 20)   # outline box of the sheet
-BOTTOM = SHEET[3] + 4 + 7     # last window row: the piled pages and a grey margin
+BANNER_Y = SHEET[3] + 8       # window y of the welcome ribbon, under the piled pages
+BOTTOM = BANNER_Y + 10 + 6    # last window row: the ribbon and a grey margin
 
 
 class Canvas:
@@ -120,6 +122,28 @@ def ring(c, x):
     c.point(x, BAND_TOP + 4, RED_DARK)
 
 
+def welcome(c, words="Bienvenue !"):
+    """Red ribbon under the calendar, in the colours of the weekday band: notched tails folded behind it,
+    white words with the band's dark red shadow."""
+    y, h = BANNER_Y, 9
+    w = text_width(words) + 14
+    x0, x1 = 88 - w // 2, 88 + (w + 1) // 2
+    for sign, edge in ((-1, x0), (1, x1)):          # tails, one step lower and behind the ribbon
+        far = edge + sign * 9
+        tail = [(edge, y + 2), (far, y + 2), (far - sign * 3, y + 2 + (h + 1) // 2), (far, y + h + 2), (edge, y + h + 2)]
+        c.d.polygon([(x, yy + LIFT) for x, yy in tail], fill=RED_DARK, outline=OUTLINE)
+        c.d.polygon([(edge, y + h + 1 + LIFT), (edge + sign * 3, y + h + 2 + LIFT), (edge, y + h + 2 + LIFT)],
+                    fill=OUTLINE)
+    c.rect((x0, y, x1, y + h), fill=RED, outline=OUTLINE)
+    c.line([(x0 + 1, y + 1), (x1 - 1, y + 1)], fill=RED_LIGHT)
+    c.line([(x0 + 1, y + h - 1), (x1 - 1, y + h - 1)], fill=RED_DARK)
+    for x in (x0 + 3, x1 - 3):                      # gold sparkles at both ends, the star motif of the server
+        c.point(x, y + 4, GOLD_LIGHT)
+        for dx, dy in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+            c.point(x + dx, y + 4 + dy, GOLD)
+    c.text(words, 88, y + 2, colour=WHITE, shadow=RED_DARK)
+
+
 def background():
     """Wall calendar on the grey window: paper sheet with a 1 px black outline, red weekday band, binder rings,
     two pages piled under it, a vanilla slot per date."""
@@ -139,6 +163,7 @@ def background():
     for r in range(6):
         for col in range(1, 8):
             c.slot(r * 9 + col)
+    welcome(c)
     return c.im
 
 
