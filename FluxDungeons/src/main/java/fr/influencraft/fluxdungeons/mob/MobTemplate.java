@@ -45,6 +45,7 @@ import java.util.Map;
  *       at-spawn: true               # goes back to its spawn point first
  *       flood: {crack: 33, at: 46, radius: 6, depth: 1, from: [ICE, PACKED_ICE], to: WATER}   # cracks from "crack", burst at "at"
  *   death-ticks: 36                # a boss with a death animation disappears this many ticks after it starts
+ *   stationary: true               # never walks: stays where it is and faces its target (charges still move it)
  *   attack-speed: 1                # melee hits per second at most (vanilla 1)
  *   ranged-resistance: 0.5         # share of projectile damage it shrugs off (melee is the way)
  *   ranged-rate: 2                 # archers shoot this many times as often as vanilla (2 by default)
@@ -129,7 +130,7 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                         List<BlockState> removeBlocks, Map<String, Script> scripts, String rank,
                         double attackSpeed, Map<String, org.bukkit.Color> dyes, double rangedResistance, double rangedRate,
                         boolean frostArrows, boolean controlled, boolean silent, double castGap, double barOffset,
-                        double walkSpeed, int deathTicks) {
+                        double walkSpeed, int deathTicks, boolean stationary) {
         /** Ticks between two melee hits of this monster ({@code attack-speed}: hits per second, vanilla 1). */
         public int attackTicks() {
             return (int) Math.max(4, Math.round(20 / Math.max(0.05, attackSpeed)));
@@ -194,7 +195,8 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                 c.getDouble("attack-speed", 1), dyes, Math.max(0, Math.min(1, c.getDouble("ranged-resistance", 0))),
                 Math.max(1, c.getDouble("ranged-rate", 2)), c.getBoolean("frost-arrows", false),
                 c.getBoolean("controlled", false), c.getBoolean("silent", false), Math.max(0, c.getDouble("cast-gap", 0)),
-                c.getDouble("bar-offset", 0), c.getDouble("walk-speed", 0), Math.max(1, c.getInt("death-ticks", 36)));
+                c.getDouble("bar-offset", 0), c.getDouble("walk-speed", 0), Math.max(1, c.getInt("death-ticks", 36)),
+                c.getBoolean("stationary", false));
         return new MobTemplate(id, type, c.getString("name", id), c.getBoolean("boss"), c.getString("model"),
                 c.getDouble("health", 20), c.getDouble("damage", 3), c.getDouble("speed", -1), c.getDouble("armor", 0),
                 c.getDouble("scale", 1), c.getDouble("xp", 10), equipment, abilities, extra);

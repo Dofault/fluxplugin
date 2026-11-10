@@ -132,6 +132,7 @@ final class RockPowers {
             case "uplift" -> closest(e, ab.number("radius", 6)) != null;
             case "quake" -> closest(e, ab.number("radius", 7)) != null;
             case "cataclysm" -> closest(e, ab.number("radius", 10) * 1.3) != null;
+            case "charge" -> closest(e, ab.number("distance", 8) + 1) != null;
             case "rock_shard" -> {
                 double min = ab.number("min-range", 7);
                 boolean far = false;

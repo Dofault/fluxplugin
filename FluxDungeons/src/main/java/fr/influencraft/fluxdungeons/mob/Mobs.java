@@ -546,6 +546,8 @@ public final class Mobs {
         public void tick() {
             if (a.dying || !(a.entity instanceof Mob m)) return;
             ticks++;
+            // the vanilla float goal went with the rest of the AI: without it a piloted monster sinks to the bottom
+            if (m.isInWater() && ThreadLocalRandom.current().nextFloat() < 0.8f) m.setJumping(true);
             Player target = fightingTarget(a);
             if (target == null && ticks % 10 == 0) {
                 // calm: sees players within its follow range (shortened by calm, but a boss sees as far as its file
@@ -568,6 +570,10 @@ public final class Mobs {
                 return;
             }
             m.lookAt(target);
+            if (a.template.extra().stationary()) {
+                m.getPathfinder().stopPathfinding();
+                return;
+            }
             org.bukkit.util.BoundingBox reach = m.getBoundingBox().expand(VANILLA_REACH + reachBonus - 0.4, 0, VANILLA_REACH + reachBonus - 0.4);
             if (reach.overlaps(target.getBoundingBox())) {
                 m.getPathfinder().stopPathfinding();
@@ -586,6 +592,125 @@ public final class Mobs {
             // MOVE and LOOK only: with TARGET, Paper puts the goal among the target goals, whose ticks never walk the body
             return java.util.EnumSet.of(com.destroystokyo.paper.entity.ai.GoalType.MOVE, com.destroystokyo.paper.entity.ai.GoalType.LOOK);
         }
+    }
+
+    // ---------------------------------------------------------------- charge
+
+    /**
+     * A rush in a straight line ({@code type: charge}): the animation starts, a line on the ground shows the way during
+     * {@code impact} ticks (the direction is taken at the end of it, towards where the target stands then: a player
+     * may step aside), then the monster moves {@code distance} blocks at most in {@code duration} ticks, slowing at the
+     * end, stopped by a wall. Every player within {@code width} on its way is hit once and thrown ({@code knockback}).
+     * {@code return: true} brings it back to where it started in {@code return-ticks}. Still and without gravity all
+     * along: the monster is moved by teleports, its model plays the rush.
+     */
+    private void charge(Alive a, Ability ab, Player target) {
+        LivingEntity e = a.entity;
+        World w = e.getWorld();
+        int windup = (int) Math.max(1, ab.number("impact", 10));
+        int dash = (int) Math.max(1, ab.number("duration", 12));
+        double distance = ab.number("distance", 8), width = ab.number("width", 2.5), knock = ab.number("knockback", 1);
+        boolean back = ab.flag("return", false);
+        int backTicks = back ? (int) Math.max(1, ab.number("return-ticks", 20)) : 0;
+        int total = (int) Math.max(windup + dash + backTicks, ab.number("hold", 0));
+        org.bukkit.Color color = org.bukkit.Color.fromRGB(Integer.parseInt(ab.text("color", "#43B7B0").replace("#", ""), 16));
+        a.animate(ab.text("animation", ""));
+        if (e instanceof Mob m) m.setAI(false);
+        e.setGravity(false);
+        Location start = e.getLocation().clone();
+        Set<UUID> hit = new HashSet<>();
+        new org.bukkit.scheduler.BukkitRunnable() {
+            int t;
+            Vector dir;
+            double length;
+            Location from, reached;
+
+            @Override
+            public void run() {
+                if (!e.isValid() || a.dying || a.switching) {
+                    end();
+                    return;
+                }
+                t++;
+                if (t <= windup) {
+                    // the way it will rush, drawn on the ground towards the target, brighter as it comes
+                    Vector to = target.getLocation().toVector().subtract(e.getLocation().toVector()).setY(0);
+                    if (to.lengthSquared() > 0.01 && t % 2 == 0) {
+                        double len = Math.min(distance, to.length() + 1.5);
+                        Vector step = to.normalize();
+                        for (double d = 1; d <= len; d += 0.6) {
+                            w.spawnParticle(Particle.DUST, e.getLocation().add(step.clone().multiply(d)).add(0, 0.15, 0), 1,
+                                    0.15, 0.02, 0.15, 0, new Particle.DustOptions(color, 1.2f + (float) t / windup));
+                        }
+                    }
+                    if (t == windup) {
+                        Vector to2 = target.getLocation().toVector().subtract(e.getLocation().toVector()).setY(0);
+                        dir = to2.lengthSquared() < 0.01 ? e.getLocation().getDirection().setY(0) : to2;
+                        if (dir.lengthSquared() < 0.01) dir = new Vector(0, 0, 1);
+                        dir.normalize();
+                        length = Math.min(distance, to2.length() + 2);
+                        from = e.getLocation().clone();
+                        from.setDirection(dir);
+                        move(e, from);
+                        w.playSound(from, e.isInWater() ? Sound.ENTITY_PLAYER_SPLASH_HIGH_SPEED : Sound.ENTITY_RAVAGER_ATTACK, 1.5f, 0.8f);
+                    }
+                    return;
+                }
+                if (t <= windup + dash) {
+                    double u = (double) (t - windup) / dash;
+                    // fast, then braking over the last third
+                    double f = u < 0.66 ? u / 0.66 * 0.8 : 0.8 + 0.2 * Math.sin((u - 0.66) / 0.34 * Math.PI / 2);
+                    Location next = from.clone().add(dir.clone().multiply(length * f));
+                    if (blocked(next)) {
+                        reached = e.getLocation().clone();
+                        t = windup + dash;
+                    } else {
+                        move(e, next);
+                        reached = next;
+                    }
+                    Location at = e.getLocation();
+                    w.spawnParticle(e.isInWater() ? Particle.SPLASH : Particle.CLOUD, at.clone().add(0, 0.3, 0), 12, 0.5, 0.2, 0.5, 0.1);
+                    if (e.isInWater()) w.spawnParticle(Particle.BUBBLE, at, 8, 0.4, 0.3, 0.4, 0.05);
+                    for (Player p : w.getPlayers()) {
+                        if (!fighting(p) || hit.contains(p.getUniqueId())) continue;
+                        Location pl = p.getLocation();
+                        if (Math.hypot(pl.getX() - at.getX(), pl.getZ() - at.getZ()) > width / 2 + 0.6 || Math.abs(pl.getY() - at.getY()) > 2.2) continue;
+                        hit.add(p.getUniqueId());
+                        strike(a, p, ab, 6);
+                        Vector side = pl.toVector().subtract(at.toVector()).setY(0);
+                        Vector push = dir.clone().multiply(0.8).add(side.lengthSquared() > 0.01 ? side.normalize().multiply(0.5) : new Vector());
+                        p.setVelocity(push.multiply(knock).setY(0.45 * knock));
+                        w.playSound(pl, Sound.ENTITY_PLAYER_ATTACK_KNOCKBACK, 1.2f, 0.7f);
+                    }
+                    return;
+                }
+                if (t <= windup + dash + backTicks && reached != null) {
+                    // back to its place, facing where it goes, then facing the fight again
+                    double u = (double) (t - windup - dash) / backTicks;
+                    double f = u * u * (3 - 2 * u);
+                    Location l = reached.clone().add(start.toVector().subtract(reached.toVector()).multiply(f));
+                    l.setDirection(start.toVector().subtract(reached.toVector()).setY(0).lengthSquared() > 0.01
+                            ? start.toVector().subtract(reached.toVector()).setY(0) : dir);
+                    if (u >= 1) l.setDirection(dir);
+                    move(e, l);
+                    return;
+                }
+                if (t >= total) end();
+            }
+
+            private void end() {
+                cancel();
+                if (!e.isValid()) return;
+                e.setGravity(true);
+                if (e instanceof Mob m && !a.dying && !a.switching) m.setAI(true);
+            }
+        }.runTaskTimer(plugin, 1L, 1L);
+    }
+
+    /** Whether a body of about two blocks high cannot stand at this spot (a solid block at its feet or head). */
+    private static boolean blocked(Location at) {
+        org.bukkit.block.Block feet = at.getBlock(), head = feet.getRelative(org.bukkit.block.BlockFace.UP);
+        return (feet.getType().isSolid() && !feet.isPassable()) || (head.getType().isSolid() && !head.isPassable());
     }
 
     // ---------------------------------------------------------------- pack alert
@@ -1405,7 +1530,7 @@ public final class Mobs {
                     MobTemplate copy = new MobTemplate(a.template.id() + "_summon", type, "&7" + type.name().toLowerCase(), false, null,
                             maxHealth(e) * 0.15, a.baseDamage() * 0.6, 0.25, 0, 1, 0, Map.of(), List.of(),
                             new MobTemplate.Extra(1, 0.15, 0.6, false, false, 32, 0, List.of(), List.of(), null, List.of(), List.of(), List.of(),
-                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of(), 0, 1, false, false, false, 0, 0, 0, 36));
+                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of(), 0, 1, false, false, false, 0, 0, 0, 36, false));
                     for (int i = 0; i < (int) ab.number("count", 2); i++) {
                         LivingEntity s = spawn(copy, at.clone().add(ThreadLocalRandom.current().nextDouble(-2, 2), 0, ThreadLocalRandom.current().nextDouble(-2, 2)), a.run);
                         if (s != null) onSummon.accept(e, s);
@@ -1436,6 +1561,7 @@ public final class Mobs {
                     }
                 }, impact);
             }
+            case "charge" -> charge(a, ab, target);
             case "heal" -> {
                 double max = maxHealth(e);
                 e.setHealth(Math.min(max, e.getHealth() + max * ab.number("percent", 10) / 100));
