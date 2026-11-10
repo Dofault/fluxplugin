@@ -71,6 +71,7 @@ public final class FluxDungeons extends FluxPlugin {
 
     @Override
     protected void enable() {
+        preloadClasses();
         store = new Store(getLogger());
         store.open();
         parties = new Parties();
@@ -164,6 +165,32 @@ public final class FluxDungeons extends FluxPlugin {
         if (runs != null) runs.stopAll();
         if (mobs != null) mobs.removeAll();
         if (healthBars != null) healthBars.clearAll();
+    }
+
+    /**
+     * Loads every class of the plugin now. A class first needed in the middle of a run (the ice breaking under the
+     * Tide Otter at half life) is otherwise read from the jar at that moment: once the jar has been replaced on a
+     * running server, that fails with ClassNotFoundException and the run breaks. Loaded at start, a replaced jar only
+     * waits for the next restart.
+     */
+    private void preloadClasses() {
+        int count = 0;
+        try (java.util.jar.JarFile jar = new java.util.jar.JarFile(getFile())) {
+            var entries = jar.entries();
+            while (entries.hasMoreElements()) {
+                String name = entries.nextElement().getName();
+                if (!name.startsWith("fr/influencraft/fluxdungeons/") || !name.endsWith(".class")) continue;
+                try {
+                    Class.forName(name.substring(0, name.length() - 6).replace('/', '.'), false, getClassLoader());
+                    count++;
+                } catch (ClassNotFoundException | LinkageError ignored) {
+                    // a class that cannot load now would not load later either
+                }
+            }
+        } catch (java.io.IOException e) {
+            getLogger().warning("Could not preload the classes of the plugin: " + e.getMessage());
+        }
+        getLogger().info(count + " classes preloaded.");
     }
 
     @Override
