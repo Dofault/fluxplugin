@@ -27,6 +27,11 @@ final class ArmorSet {
     final ConfigurationSection config;
     /** Piece name ({@code helmet}...) in the file's order. */
     final Map<String, ConfigurationSection> pieces = new LinkedHashMap<>();
+    /**
+     * Other items handed out with the set by {@code /set} ({@code extras.<id>}, same format as a piece: a weapon...),
+     * known as {@code fluxarmor:<set>_<id>}; never counted as pieces of the set.
+     */
+    final Map<String, ConfigurationSection> extras = new LinkedHashMap<>();
     /** Ids of other items wearing the 3D armour (patterns of {@code CustomItems.matches}). */
     final List<String> wornBy = new ArrayList<>();
     final SetSound equipSound;
@@ -44,6 +49,8 @@ final class ArmorSet {
         config = c;
         ConfigurationSection p = c.getConfigurationSection("pieces");
         if (p != null) for (String piece : p.getKeys(false)) if (p.isConfigurationSection(piece)) pieces.put(piece, p.getConfigurationSection(piece));
+        ConfigurationSection x = c.getConfigurationSection("extras");
+        if (x != null) for (String extra : x.getKeys(false)) if (x.isConfigurationSection(extra)) extras.put(extra, x.getConfigurationSection(extra));
         wornBy.add("fluxarmor:" + id + "_*");
         wornBy.addAll(c.getStringList("worn-by"));
         equipSound = SetSound.read(c.getConfigurationSection("sounds.equip"));

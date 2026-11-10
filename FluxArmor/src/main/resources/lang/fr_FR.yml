@@ -4,3 +4,8 @@ reloaded: "&#2ECF7BFluxArmor rechargé."
 built: "&7%summary%"
 written: "&#2ECF7BPack écrit dans &f%folder%&#2ECF7B : lancer /iazip."
 failed: "&#FF5C5CConstruction impossible : &f%error%"
+set:
+  usage: "!&#FF5C5C/%flux_cmd_fluxarmor_set% <set> [joueur]"
+  unknown: "&#FF5C5CSet %set% inconnu. Sets : &f%sets%"
+  no-player: "&#FF5C5CCe joueur n'est pas en ligne."
+  given: "&#2ECF7BSet &f%set%&#2ECF7B donné à &f%player%&#2ECF7B (%count% objets)."

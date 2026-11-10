@@ -89,7 +89,46 @@ public final class FluxArmor extends FluxPlugin implements Listener {
                 .executor(this::onCommand)
                 .completer((sender, args) -> args.length == 1 ? List.of("build", "reload") : List.of())
                 .register();
+        command("set")
+                .description("Gives a whole armour set (and its extras).")
+                .permission("fluxarmor.admin")
+                .suggest(false)
+                .usage(messages().raw("set.usage"))
+                .executor(this::onSet)
+                .completer((sender, args) -> args.length == 1 ? List.copyOf(sets.keySet())
+                        : args.length == 2 ? Bukkit.getOnlinePlayers().stream().map(org.bukkit.entity.Player::getName).toList() : List.of())
+                .register();
         ItemLooks.refreshOnline();
+    }
+
+    /** {@code /set <set> [player]}: every piece of the set, then its extras, into the inventory (the rest drops at his feet). */
+    private boolean onSet(CommandSender sender, String label, String[] args) {
+        if (args.length == 0) {
+            messages().send(sender, "set.usage");
+            return true;
+        }
+        ArmorSet set = sets.get(args[0].toLowerCase(Locale.ROOT));
+        if (set == null) {
+            messages().send(sender, "set.unknown", "%set%", args[0], "%sets%", String.join(", ", sets.keySet()));
+            return true;
+        }
+        org.bukkit.entity.Player to = args.length > 1 ? Bukkit.getPlayerExact(args[1]) : sender instanceof org.bukkit.entity.Player p ? p : null;
+        if (to == null) {
+            messages().send(sender, "set.no-player");
+            return true;
+        }
+        List<String> ids = new java.util.ArrayList<>();
+        set.pieces.keySet().forEach(piece -> ids.add("fluxarmor:" + set.id + "_" + piece));
+        set.extras.keySet().forEach(extra -> ids.add("fluxarmor:" + set.id + "_" + extra));
+        int given = 0;
+        for (String id : ids) {
+            ItemStack item = CustomItems.item(id);
+            if (item == null) continue;
+            to.getInventory().addItem(item).values().forEach(left -> to.getWorld().dropItem(to.getLocation(), left));
+            given++;
+        }
+        messages().send(sender, "set.given", "%set%", set.id, "%count%", String.valueOf(given), "%player%", to.getName());
+        return true;
     }
 
     @Override
@@ -119,6 +158,7 @@ public final class FluxArmor extends FluxPlugin implements Listener {
                 ArmorSet set = new ArmorSet(f.getName().replaceFirst("\\.yml$", ""), YamlConfiguration.loadConfiguration(f));
                 sets.put(set.id, set);
                 set.pieces.forEach((piece, section) -> catalog.add(set.id + "_" + piece, section));
+                set.extras.forEach((extra, section) -> catalog.add(set.id + "_" + extra, section));
             }
         }
         for (ArmorSet set : sets.values()) {
