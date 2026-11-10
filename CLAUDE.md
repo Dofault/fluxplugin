@@ -68,7 +68,7 @@ The plugins are written **as English plugins, then adapted to French** for our s
 | `staff.Staff` | `Staff.alert(topic, title, message)` to online staff. |
 | `dialog.Dialogs` | Paper dialogs (forms, copy buttons, links). Escape counts as the cancel button (`onCancel`). **Every amount, price or quantity a player types goes through `Form.amount(id, label, initial, min, max)`** (`Answer.amount`): the form refuses a wrong value itself and reopens with the error and what was typed; cross-field rules with `Form.check`, a short scale (rate) with `Form.slider`. Never parse a typed amount by hand or ask it in the chat. |
 | `trade.TradeWindow` | The window a player buys or sells a given item in (rows of x1/x2/x10/x64 bundles with double click and quick buy; deposit zone with a two-click confirm). The plugin gives the offer (item, bundle, price, stock) and does the trade; Flux draws it (menus `trade`, `trade_sell`, or the lists `trade_*` placed in the plugin's own menu). Used by FluxShop shop chests and FluxCommerce (chest shops, auction house). Never draw a buy/sell window again. |
-| `text.ChatHelp` | Paged chat help of a command (`/<cmd> help [page]`), the look of Lands' help; texts `help.*` of the plugin's lang file. Used by FluxPW and FluxCommerce: never write another help. |
+| `text.ChatHelp` | Paged chat help of a command (`/<cmd> help [page]`), the look of Lands' help; texts `help.*` of the plugin's lang file. Used by FluxPW, FluxCommerce and FluxReferral (`/parrainage aide`, `/parrainage admin aide`): never write another help. |
 | `text.Translations` | Minecraft names (items, blocks, enchantments) in the server's language, for a text written once for everybody (a sign, a search index): `server(key)`, `itemName(item)`. Anywhere else send the name to be translated by each client (`<lang:key>`). |
 | `welcome.JoinScreens` | Screens shown when a player joins (questionnaire, calendar...): `JoinScreens.request(player, order, (p, done) -> ...)`. Flux waits for the resource pack, shows them one at a time by order (questionnaire 10, calendar 100), the next once `done` ran. Never open a menu or dialog on join by yourself. |
 | `leaderboard.Leaderboards` | Leaderboards kept by Flux (`leaderboards` in Flux's config: statistic, money or placeholder; or `Leaderboards.register` from code). Placeholders `%flux_top_<board>_<n>_name/value%`, `%flux_top_<board>_rank/value%`. Replaces ajLeaderboards. |
@@ -81,6 +81,9 @@ The plugins are written **as English plugins, then adapted to French** for our s
 
 - FluxFamily owns couples and family trees (`fluxfamily.api.Family`: status, partner, `lineage(...)` for parent links
   kept by another plugin, as FluxReferral's sponsors). FluxTags takes tags from other plugins (`fluxtags.api.Tags`).
+- FluxReferral is a plain `JavaPlugin` (not `FluxPlugin`): its texts still go through Flux's `Messages`
+  (`lang/fr_FR.yml`, wrapped by `GestionnaireLangue`: `{var}` variables, `{code}`/`{adresse}` click-to-copy, `!` = no
+  prefix). Chat messages follow the CMI palette, like FluxCommerce.
 - FluxAFK owns the AFK state (`fluxafk.api.Afk`: `afk(player)`, `progress(player)`; tab piece `{away}`); CMI's AFK module is
   off, never read `%cmi_user_afk%` again.
 - FluxPW owns player warps (`fluxpw.api.PlayerWarps`: list, visit and create with every check of `/pw`, imports);
@@ -169,7 +172,8 @@ systemd-run --user --scope -q -p MemoryMax=2.5G nice -n 10 mvn -q -o -pl <Module
 
 - Offline (`-o`), `-am` so Flux is built with the module. Third-party jars go in `<module>/libs/` (see `LIBS.md`),
   **never commit them** (`.gitignore`).
-- FluxReferral uses Gradle (JDK 21), FluxProxy (Velocity) is compiled with `javac`
+- FluxReferral uses Gradle (JDK 21 for Gradle, see `docs/technique/flux-suite.md`): `./gradlew -q --offline shadowJar` inside the same
+  capped scope, jar `build/libs/FluxReferral-26.2.jar` deployed as `FluxReferral.jar`. FluxProxy (Velocity) is compiled with `javac`
   on JDK 25 (see its README).
 
 ## Deploying to Labs
@@ -197,7 +201,9 @@ systemd-run --user --scope -q -p MemoryMax=2.5G nice -n 10 mvn -q -o -pl <Module
 - Never teleport inside `PlayerMoveEvent` or `PlayerInputEvent`: schedule it on the next tick. `PlayerMoveEvent#setTo`
   fires a `PlayerTeleportEvent` (cause `PLUGIN`): a listener reacting to teleports must ignore that one.
 - A jar replaced while the server runs: even `/<plugin> reload` can fail with `ClassNotFoundException` (a class never
-  loaded before, read from the new jar). Only a restart is a valid test.
+  loaded before, read from the new jar). Only a restart is a valid test. FluxDungeons loads all its classes at start
+  (`preloadClasses`, 2026-11-10: the otter's ice break failed twice after a jar swap); do the same in any plugin
+  whose classes are first needed in the middle of play, or move it into `FluxPlugin`.
 - Do not compare against `Format.yesNo()` in menus (localised), use fixed values.
 - A menu needs `[refresh]` after a list page change to redraw its title (paths).
 - Inventory rows of a hidden-inventory menu: the item of the first row sits at y 139 in game (as `PathRenderer`), not 140 as `fond_lib.objet` computes. Check the first background of a new menu in game.
