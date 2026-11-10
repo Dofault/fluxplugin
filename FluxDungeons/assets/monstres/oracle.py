@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
-"""Oracle : mage ancestral, guide et donneur de quêtes, modèle Blockbench (.bbmodel) STATIQUE.
+"""Oracle: kindly cube wizard, guide and quest giver, STATIC Blockbench model (.bbmodel).
 
-Refonte complète du 2026-11-06 : personnage de fantasy original, pas un skin de joueur. Proportions du brief (en blocs)
-: 3,2 de haut chapeau compris, tête 0,72 x 0,68 x 0,62, chapeau 1,35 de large, épaules 0,95, torse 0,78, bas de robe
-1,05. Visage construit en volumes (face avancée, joues, sourcils inclinés séparés, yeux encastrés, nez en relief,
-bouche à deux lèvres, moustache), barbe en cinq volumes, grand chapeau à rebord relevé et cône courbé vers la gauche,
-robe en trois pans évasés. Palette officielle d'Oracle uniquement. Le cristal lévite au-dessus de la paume droite et la
-pierre du chapeau est légèrement lumineuse (texture émissive, os glow_).
+Third version (2026-11-10), built from the owner's design sheet ("L'Oracle, modèle 3D en cubes"): a compact, chibi
+mage made only of boxes. 15 units tall (1 unit = 2 drawing pixels): feet 1, robe and body 6, head 4, hat 4. Purple
+robe with a gold front band, brown belt with a square gold buckle, gold cuffs, light grey beard in blocks, wide hat
+brim with a gold band and buckle, pointed top bending back and to one side, brown staff topped by a light purple orb
+held in a brown claw. Flat colours of the sheet only, matte, no emissive texture, no effect.
 
-Usage : oracle.py [dossier de sortie] [--apercu <planche.png>]
-Face avant au nord (-z), côté droit du personnage en +x, origine au centre des pieds, sol en y = 0.
+Usage: oracle.py [output folder] [--apercu <sheet.png>]
+Front faces north (-z), the character's right side is +x, origin between the feet, ground at y = 0.
 """
 import json
 import os
@@ -18,316 +17,165 @@ import uuid
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from bbkit import LIGHT, apercu, attach, bake, export, ground, hx, tone  # noqa: E402
+from bbkit import apercu, attach, bake, export, ground, hx  # noqa: E402
 from golem_fonderie import rot  # noqa: E402
 
 IDENT = "oracle"
 NS = uuid.UUID("5b2d9e00-0000-4000-8000-00000000a7c1")
-HEIGHT = 3.2          # blocs, chapeau compris
+HEIGHT = 3.2          # blocks, hat included (same in-game size as the previous Oracle)
+U = 2.0               # drawing pixels per unit of the design sheet
+STAFF_SIDE = 1        # +1: staff in the character's right hand (as drawn on the sheet), -1: left hand
+TIP_SIDE = -1         # hat tip bends towards -x (the viewer's right on the front view, as drawn), +1 the other way
+
+# --------------------------------------------------------------------------- sheet palette
+PURPLE = hx("#542783")
+PURPLE_DARK = hx("#38204F")
+PURPLE_LIGHT = hx("#B86AE8")
+GOLD = hx("#E9B52F")
+SKIN = hx("#F2C49C")
+BEARD = hx("#E5E1E7")
+BROWN = hx("#56372E")
+BELT = hx("#4A2F27")          # a touch darker than the staff, so belt and staff do not read as one material
+DARK = hx("#211A29")          # eyes and shoes
 
 
-def pal(*c):
-    return [hx(x) for x in c]
-
-
-# --------------------------------------------------------------------------- palette officielle (sombre → clair)
-V = pal("#392743", "#493054", "#5D4072", "#705287", "#806397", "#9580AA", "#AD99BF", "#C3B2D2")
-BEARD = pal("#80788D", "#AAA2B4", "#D2C9DC", "#B6A0D0")
-SKIN = pal("#A98876", "#C6A68F", "#D7BCA6")
-CHEEK = hx("#C79E8E")                       # beige rosé très désaturé
-GOLD = hx("#B39A6B")
-AMETHYST = pal("#6E4A9A", "#9466C5", "#B18ADB", "#C3B2D2")
-
-
-# --------------------------------------------------------------------------- peintres
-def lit(face, sides=-1):
-    return LIGHT[face] + (sides if face in ("east", "west") else 0)
-
-
-def hat(w, h, r, face):
-    """Tissu ancien mat : un ton par face, dessous du rebord dans l'ombre, quelques amas lavande sur le dessus."""
-    b = 3 + lit(face)
-    px = [[tone(V, b)] * w for _ in range(h)]
-    if face == "up":
-        for _ in range(max(1, w * h // 30)):
-            x0, y0 = r.randrange(max(1, w - 2)), r.randrange(h)
-            for x in range(x0, min(w, x0 + 3)):
-                px[y0][x] = tone(V, 5)
-    elif face not in ("down",):
-        for _ in range(max(1, w * h // 22)):
-            x0, y0 = r.randrange(max(1, w - 2)), r.randrange(h)
-            for x in range(x0, min(w, x0 + 3)):
-                px[y0][x] = tone(V, b - 1)
-        if h >= 3:
-            px[h - 1] = [tone(V, b - 1)] * w
-    return px
-
-
-def tunic(base=3):
+def flat(color):
     def f(w, h, r, face):
-        """Tunique et manches : face éclairée, dessous et bas de face plus sombres (sous les bras)."""
-        b = base + lit(face)
-        px = [[tone(V, b)] * w for _ in range(h)]
-        if face not in ("up", "down"):
-            for _ in range(max(1, w * h // 20)):
-                x0, y0 = r.randrange(w), r.randrange(max(1, h - 2))
-                for y in range(y0, min(h, y0 + 3)):
-                    px[y][x0] = tone(V, b - 1)
-            for y in range(max(0, h - 2), h):
-                px[y] = [tone(V, b - 1)] * w
+        return [[color] * w for _ in range(h)]
+    return f
+
+
+def buckle(center):
+    def f(w, h, r, face):
+        """Square gold buckle, dark centre on the front face only."""
+        px = [[GOLD] * w for _ in range(h)]
+        if face == "north":
+            bx, by = max(1, w // 3), max(1, h // 3)
+            for y in range(by, h - by):
+                for x in range(bx, w - bx):
+                    px[y][x] = center
         return px
     return f
 
 
-def robe(w, h, r, face):
-    """Robe : plis verticaux larges (deux tons par bandes de 4), côtés plus sombres, quelques motifs anguleux discrets
-    (lignes et chevrons dorés) dans le bas du devant."""
-    b = 2 + lit(face)
-    if face in ("up", "down"):
-        return [[tone(V, b)] * w for _ in range(h)]
-    px = [[tone(V, b + (1 if (x // 4) % 2 == 0 else 0)) for x in range(w)] for y in range(h)]
-    if face == "north" and h >= 6 and w >= 6:
-        y = h - 4
-        for x in range(1, w - 1):
-            if x % 5 in (1, 2, 3):
-                px[y][x] = tone(V, 5)
-        for cx in range(3, w - 2, 5):
-            px[y - 1][cx] = GOLD
-    return px
-
-
-def band(w, h, r, face):
-    """Bande lavande : petits losanges et points d'or espacés."""
-    b = 6 + min(0, LIGHT[face])
-    px = [[tone(V, b)] * w for _ in range(h)]
-    if face == "north":
-        for y in range(1, h, 3):
-            for x in range(w):
-                px[y][x] = GOLD if (x + y) % 3 == 0 else tone(V, 5)
-    return px
-
-
-def trim(w, h, r, face):
-    """Bordures (poignets, bas de robe, bande du chapeau) : lavande, liseré d'or en haut."""
-    b = 5 + lit(face)
-    px = [[tone(V, b)] * w for _ in range(h)]
-    if face not in ("up", "down"):
-        px[0] = [GOLD if x % 4 == 1 else tone(V, b + 1) for x in range(w)]
-    return px
-
-
-def belt(w, h, r, face):
-    b = 1 + lit(face)
-    px = [[tone(V, b)] * w for _ in range(h)]
-    if face == "north":
-        for x in range(1, w, 3):
-            px[h // 2][x] = GOLD
-    return px
-
-
-def shoe(w, h, r, face):
-    b = 1 + lit(face)
-    px = [[tone(V, b)] * w for _ in range(h)]
-    if face not in ("up", "down"):
-        px[0] = [tone(V, 5)] * w
-    return px
-
-
-def beard(w, h, r, face):
-    """Barbe : mèches verticales de 2 pixels en trois nuances, ombre en bas, quelques reflets lavande."""
-    b = 1 + (1 if face == "up" else -1 if face in ("east", "west", "down") else 0)
-    px = [[tone(BEARD[:3], b + (1 if (x // 2) % 3 == 0 else -1 if (x // 2) % 3 == 2 else 0)) for x in range(w)]
-          for y in range(h)]
-    if face not in ("up", "down") and h >= 2:
-        px[h - 1] = [tone(BEARD[:3], b - 1)] * w
-        for _ in range(max(1, w * h // 20)):
-            x, y = r.randrange(w), r.randrange(h - 1)
-            px[y][x] = BEARD[3]
-    return px
-
-
-def skin(w, h, r, face):
-    b = 1 + lit(face)
-    return [[tone(SKIN, b)] * w for _ in range(h)]
-
-
-def cheek(w, h, r, face):
-    px = skin(w, h, r, face)
-    if face == "north":
-        for y in range(h // 2, h):
-            for x in range(w):
-                if (x + y) % 2 == 0:
-                    px[y][x] = CHEEK
-    return px
-
-
-def nose(w, h, r, face):
-    """Nez : face avant claire, un côté ombré, dessous dans l'ombre."""
-    b = {"north": 2, "up": 2, "west": 1, "east": 0, "south": 1, "down": 0}[face]
-    return [[tone(SKIN, b)] * w for _ in range(h)]
-
-
-def skull(w, h, r, face):
-    """Crâne : cheveux gris lavande en mèches sur les côtés et l'arrière (sous le chapeau), peau en bas des côtés."""
-    if face == "north":
-        return [[tone(SKIN, 1)] * w for _ in range(h)]
-    if face == "up":
-        return [[BEARD[1]] * w for _ in range(h)]
-    hair = h if face == "south" else h * 2 // 3
-    shade = hx("#968EA2")                         # entre l'ombre et la base de la barbe : mèches douces
-    return [[(shade if (x // 2) % 3 == 2 else BEARD[1]) if y < hair else tone(SKIN, 0) for x in range(w)]
-            for y in range(h)]
-
-
-def brow(w, h, r, face):
-    b = 0 + (1 if face == "up" else 0)
-    return [[tone(pal("#6E6276", "#80788D"), b)] * w for _ in range(h)]
-
-
-def eye(w, h, r, face):
-    """Œil (densité 2) : paupière d'ombre en haut, blanc lavande désaturé, iris violet, reflet lavande clair."""
-    if face != "north":
-        return [[SKIN[0]] * w for _ in range(h)]
-    px = [[hx("#D2C9DC")] * w for _ in range(h)]
-    px[0] = [SKIN[0]] * w                               # paupière : petite zone d'ombre
-    c = w // 2
-    for y in range(1, h):
-        for x in (c - 1, c, c + 1):
-            if 0 <= x < w:
-                px[y][x] = V[3]
-        px[y][c] = V[1]
-    px[1][c + 1 if c + 1 < w else c] = V[7]             # petit reflet
-    return px
-
-
-def mouth(w, h, r, face):
-    """Bouche (densité 2) : lèvre supérieure plus sombre aux coins relevés, lèvre inférieure plus claire au centre."""
-    if face != "north":
-        return [[SKIN[0]] * w for _ in range(h)]
-    px = [[SKIN[1]] * w for _ in range(h)]
-    upper, corner, lower = hx("#8A6660"), hx("#9C766B"), hx("#BE9483")
-    for x in range(1, w - 1):
-        px[min(1, h - 1)][x] = upper
-    px[0][0] = px[0][w - 1] = corner
-    if h >= 3:
-        for x in range(2, w - 2):
-            px[2][x] = lower
-    return px
-
-
-def crystal(w, h, r, face):
-    b = {"up": 2, "north": 2, "east": 1, "south": 1, "west": 0, "down": 0}[face]
-    px = [[tone(AMETHYST, b - (1 if (x + y) % 3 == 2 else 0)) for x in range(w)] for y in range(h)]
-    if face in ("north", "up") and w >= 2:
-        px[0][0] = AMETHYST[3]
-    return px
+def head(w, h, r, face):
+    """Skin face; grey hair on the back, and on the sides except a skin band at the front of the lower half."""
+    if face in ("north", "down"):
+        return [[SKIN] * w for _ in range(h)]
+    if face in ("south", "up"):
+        return [[BEARD] * w for _ in range(h)]
+    front = (lambda x: x >= w * 0.6) if face == "east" else (lambda x: x < w * 0.4)    # east u runs back to front
+    return [[SKIN if y >= h * 0.45 and front(x) else BEARD for x in range(w)] for y in range(h)]
 
 
 MATS = {
-    "hat": hat, "tunic": tunic(3), "yoke": tunic(4), "sleeve": tunic(3), "robe": robe, "band": band, "trim": trim,
-    "belt": belt, "shoe": shoe, "beard": beard, "skin": skin, "cheek": cheek, "nose": nose, "skull": skull,
-    "brow": brow, "eye": (eye, 2), "mouth": (mouth, 2), "gem": crystal,
+    "purple": flat(PURPLE), "purple_dark": flat(PURPLE_DARK), "gold": flat(GOLD), "skin": flat(SKIN),
+    "beard": flat(BEARD), "brown": flat(BROWN), "belt": flat(BELT), "dark": flat(DARK), "orb": flat(PURPLE_LIGHT),
+    "head": head, "belt_buckle": (buckle(DARK), 2), "hat_buckle": (buckle(PURPLE_DARK), 2),
 }
-GLOW_MATS = {"crystal": crystal}
 
-
-# --------------------------------------------------------------------------- Oracle (unités de dessin ; mis à 3,2 blocs)
-NECK = (0, 29.5, 0)
-HEAD_R = rot(-6, -10, 2)          # tête un peu inclinée vers l'avant et tournée vers le joueur
-HAT_R = rot(-2, 0, 4)             # chapeau penché vers la gauche du personnage
+# --------------------------------------------------------------------------- bones (units)
+S, T = STAFF_SIDE, TIP_SIDE
+HAND = (3.55 * S, 3.9, -0.7)
 GROUPS = {
     "Root": ((0, 0, 0), None),
-    "Body": ((0, 17, 0), "Root"),
-    "Head": (NECK, "Body"),
-    "Hat": ((0, 41, 0), "Head"),
-    "glow_hat_gem": ((0, 42.4, -5.6), "Hat"),
-    "Right_Arm": ((7.4, 27, 0), "Body"),
-    "Right_Forearm": ((9, 21.5, -2), "Right_Arm"),
-    "glow_crystal": ((9.2, 24.5, -10.6), "Right_Forearm"),
-    "Left_Arm": ((-7.4, 27, 0), "Body"),
-    "Left_Forearm": ((-9.2, 19.5, 0.3), "Left_Arm"),
-    "Right_Leg": ((3, 3, 0), "Root"),
-    "Left_Leg": ((-3, 3, 0), "Root"),
+    "Body": ((0, 1, 0), "Root"),
+    "Head": ((0, 7, 0), "Body"),
+    "Beard": ((0, 7.6, -2.3), "Head"),
+    "Hat": ((0, 11, 0), "Head"),
+    "Right_Arm": ((2.6, 7, 0), "Body"),
+    "Left_Arm": ((-2.6, 7, 0), "Body"),
+    "Staff": (HAND, "Right_Arm" if S > 0 else "Left_Arm"),
+    "Orb": ((HAND[0], 8.5, HAND[2]), "Staff"),
+    "Right_Leg": ((1.5, 1, 0), "Root"),
+    "Left_Leg": ((-1.5, 1, 0), "Root"),
 }
 
 
 def parts():
+    """Every piece in units: (bone, name, centre, size, rotation, material)."""
     P = []
 
     def add(g, name, c, size, r, mat):
         P.append((g, name, c, size, r, mat))
 
-    on_head = attach(NECK, HEAD_R)
-    on_hat = attach((0, 40.5, 0), HAT_R)
+    def box(g, name, x0, x1, y0, y1, z0, z1, mat, r=(0, 0, 0)):
+        add(g, name, ((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2), (x1 - x0, y1 - y0, z1 - z0), r, mat)
 
-    def hd(g, name, c, size, r, mat):
-        cc, M = on_head(c, r)
-        add(g, name, cc, size, M, mat)
-
-    def ht(g, name, c, size, r, mat):
-        c1, M1 = on_hat(c, r)                       # le chapeau penche, puis suit la tête
-        c2, M2 = on_head(c1, M1)
-        add(g, name, c2, size, M2, mat)
-
-    # ---------------------------------------------------------------- pieds, légèrement écartés
+    # ---------------------------------------------------------------- feet: small dark blocks peeking out under the robe
     for s, side in ((1, "Right"), (-1, "Left")):
-        add(f"{side}_Leg", "chaussure", (3.0 * s, 1.2, -1.4), (4.4, 2.4, 6.8), (0, -8 * s, 0), "shoe")
+        box(f"{side}_Leg", "pied", 1.5 * s - 1, 1.5 * s + 1, 0, 1.2, -2.6, 0.4, "dark")
 
-    # ---------------------------------------------------------------- robe en trois pans évasés, ceinture, torse
-    add("Body", "robe_bas", (0, 4.3, 0), (16.8, 2.6, 10.2), (0, 0, 0), "trim")
-    add("Body", "robe_centre", (0, 10.6, -0.2), (9, 12.6, 8.4), (-2, 0, 0), "robe")
-    add("Body", "robe_droite", (5.6, 9.8, 0.3), (4.6, 11.4, 8.8), (0, 0, 4), "robe")
-    add("Body", "robe_gauche", (-5.6, 9.8, 0.3), (4.6, 11.4, 8.8), (0, 0, -4), "robe")
-    add("Body", "ceinture", (0, 17.4, 0), (11.4, 1.8, 7.8), (0, 0, 0), "belt")
-    add("Body", "torse", (0, 22.8, 0), (12.5, 9.6, 7.4), (0, 0, 0), "tunic")
-    add("Body", "epaules", (0, 27.2, 0), (15.2, 3.2, 8), (0, 0, 0), "yoke")
-    add("Body", "bande", (0, 22.6, -3.9), (3, 10.4, 0.5), (0, 0, 0), "band")
-    add("Body", "pierre_sternum", (0, 25.2, -4.25), (1.8, 1.8, 0.6), (0, 0, 45), "gem")
+    # ---------------------------------------------------------------- robe: wider at the bottom, belt, torso, gold band
+    box("Body", "robe_bas", -3, 3, 1, 4.2, -2.2, 2.2, "purple")
+    box("Body", "ceinture", -2.7, 2.7, 4.2, 4.9, -2.15, 2.15, "belt")
+    box("Body", "boucle_ceinture", -0.7, 0.7, 3.85, 5.25, -2.4, -2.1, "belt_buckle")
+    box("Body", "torse", -2.5, 2.5, 4.9, 7, -2, 2, "purple")
+    box("Body", "bande_doree", -0.4, 0.4, 1, 6.6, -2.35, -2.05, "gold")
 
-    # ---------------------------------------------------------------- visage construit en volumes (tourné avec la tête)
-    hd("Head", "crane", (0, 35.4, 0.4), (11.5, 10, 9.4), (0, 0, 0), "skull")
-    hd("Head", "face", (0, 34.6, -4.65), (9.4, 7.8, 1.0), (0, 0, 0), "skin")
+    # ---------------------------------------------------------------- arms: short thick sleeves, slightly out, gold cuffs
+    for s, side in ((1, "Right"), (-1, "Left")):
+        g = f"{side}_Arm"
+        tilt = (0, 0, 7 * s)                       # bottom of the sleeve moves outwards
+        place = attach((2.6 * s, 7, 0), rot(*tilt))
+        for name, x0, x1, y0, y1, z0, z1, mat in (
+                ("manche", 2.5, 4.3, 4.9, 7, -1.3, 1.3, "purple"),
+                ("poignet", 2.4, 4.4, 4.3, 4.9, -1.4, 1.4, "gold")):
+            c, M = place((s * (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2), (0, 0, 0))
+            add(g, name, c, (x1 - x0, y1 - y0, z1 - z0), M, mat)
+        hand_z = HAND[2] if s == S else 0          # the hand holding the staff comes slightly forward
+        c, M = place((3.45 * s, 3.75, hand_z), (0, 0, 0))
+        add(g, "main", c, (1.2, 1.2, 1.2), M, "skin")
+
+    # ---------------------------------------------------------------- head: compact block, two eyes, nose
+    box("Head", "tete", -2.75, 2.75, 7, 11, -2.25, 2.25, "head")
+    for s, side in ((1, "droit"), (-1, "gauche")):
+        box("Head", f"oeil_{side}", 1.1 * s - 0.3, 1.1 * s + 0.3, 9.1, 10.1, -2.4, -2.2, "dark")
+    box("Head", "nez", -0.45, 0.45, 8.5, 9.3, -2.5, -2.2, "skin")
+
+    # ---------------------------------------------------------------- beard: moustache, base, two short sides, long middle
     for s, side in ((1, "droite"), (-1, "gauche")):
-        hd("Head", f"joue_{side}", (3.6 * s, 32.4, -5.0), (2.6, 2.6, 1.2), (0, -8 * s, 0), "cheek")
-        # sourcils séparés, inclinés : l'intérieur relevé (air interrogatif et bienveillant)
-        hd("Head", f"sourcil_{side}", (2.5 * s, 37.4, -5.45), (3.2, 0.9, 0.9), (0, 0, -10 * s), "brow")
-        hd("Head", f"oeil_{side}", (2.5 * s, 35.8, -5.2), (2.4, 1.4, 0.3), (0, 0, 0), "eye")
-    hd("Head", "nez", (0, 34.3, -5.6), (1.6, 2.6, 1.4), (0, 0, 0), "nose")
-    hd("Head", "moustache", (0, 32.85, -5.5), (4.8, 0.9, 0.7), (0, 0, 0), "beard")
-    hd("Head", "bouche", (0, 32.0, -5.25), (3.4, 1.4, 0.4), (0, 0, 0), "mouth")
-    # barbe : joues et mâchoire, menton, trois mèches décalées qui s'effilent sur le torse
-    hd("Head", "barbe_joues", (0, 30.4, -3.4), (10.4, 2.4, 3.6), (0, 0, 0), "beard")
-    hd("Head", "barbe_menton", (0, 28.2, -4.0), (6.8, 3.4, 2.8), (8, 0, 0), "beard")
-    hd("Head", "meche_droite", (1.6, 25.2, -4.3), (2.8, 4.2, 2.0), (4, 0, -6), "beard")
-    hd("Head", "meche_gauche", (-1.5, 25.6, -4.2), (2.8, 3.6, 2.0), (4, 0, 7), "beard")
-    hd("Head", "meche_pointe", (0.2, 22.3, -4.4), (2.2, 2.6, 1.6), (6, 0, 10), "beard")
+        box("Beard", f"moustache_{side}", 0.3 * s if s > 0 else -1.7, 1.7 if s > 0 else -0.3, 7.9, 8.6, -2.75, -2.25,
+            "beard")
+        box("Beard", f"barbe_{side}", 1.2 * s - 0.8, 1.2 * s + 0.8, 6.1, 7.9, -2.6, -1.9, "beard")
+    box("Beard", "barbe_base", -2.4, 2.4, 7.0, 8.2, -2.55, -1.9, "beard")
+    box("Beard", "barbe_centre", -1.05, 1.05, 5.5, 7.4, -2.7, -2.0, "beard")
 
-    # ---------------------------------------------------------------- chapeau : rebord relevé, cône courbé vers la gauche
-    ht("Hat", "rebord", (0, 40.9, 0), (21.6, 1.4, 19), (0, 0, 0), "hat")
-    ht("Hat", "rebord_droit", (10.4, 41.7, 0), (3.2, 1.2, 14), (0, 0, 16), "hat")
-    ht("Hat", "rebord_gauche", (-10.4, 41.7, 0), (3.2, 1.2, 14), (0, 0, -16), "hat")
-    ht("Hat", "bande", (0, 42.4, 0.2), (12.4, 1.8, 11), (0, 0, 0), "trim")
-    ht("glow_hat_gem", "pierre", (0, 42.4, -5.75), (1.8, 1.8, 0.6), (0, 0, 45), "crystal")
-    ht("Hat", "cone_bas", (0, 45.3, 0.5), (11, 4.4, 10), (0, 0, 3), "hat")
-    ht("Hat", "cone_milieu", (-0.8, 49.0, 1.4), (8, 4.2, 7.4), (5, 0, 9), "hat")
-    ht("Hat", "cone_haut", (-2.3, 52.4, 2.4), (5.4, 3.8, 5), (9, 0, 17), "hat")
-    ht("Hat", "pointe", (-4.4, 54.8, 3.4), (3.2, 2.8, 3.2), (14, 0, 34), "hat")
+    # ---------------------------------------------------------------- hat: wide flat brim, gold band and buckle, bent tip
+    box("Hat", "bord", -4, 4, 10.6, 11.6, -3.5, 3.5, "purple")
+    box("Hat", "bande", -2.6, 2.6, 11.6, 12.3, -2.4, 2.4, "gold")
+    box("Hat", "boucle", -0.8, 0.8, 11.45, 12.45, -2.65, -2.35, "hat_buckle")
+    box("Hat", "cone_bas", -2.3, 2.3, 12.3, 13.2, -2.1, 2.1, "purple")
+    # the tip climbs, shifts to one side and back, each block a little more tilted (sheet: 0 / 10-20 / 30 degrees)
+    for name, cx, cy, cz, w, h, d, ax, az in (
+            ("cone_milieu", 0.35, 13.7, 0.3, 3.2, 1.2, 3.0, 6, 8),
+            ("cone_haut", 0.9, 14.4, 0.75, 2.2, 1.0, 2.0, 12, 16),
+            ("pointe", 1.5, 14.95, 1.25, 1.3, 0.9, 1.3, 22, 30)):
+        add("Hat", name, (cx * T, cy, cz), (w, h, d), (ax, 0, az * T), "purple")
 
-    # ---------------------------------------------------------------- bras droit relevé, avant-bras vers l'avant
-    add("Right_Arm", "manche_haut", (8.6, 24.2, -0.5), (4.8, 7.5, 5.4), (-18, 0, 6), "sleeve")
-    add("Right_Forearm", "manche", (9.2, 20.4, -5.2), (5.6, 5.6, 7), (-72, 0, 0), "sleeve")
-    add("Right_Forearm", "poignet", (9.2, 20.7, -9.0), (6.4, 6.4, 1.4), (-72, 0, 0), "trim")
-    add("Right_Forearm", "main", (9.2, 21.0, -10.6), (3.4, 2.6, 3.4), (0, 0, 0), "skin")
-    # cristal qui lévite au-dessus de la paume
-    add("glow_crystal", "cristal", (9.2, 25.0, -10.8), (2.2, 3.8, 2.2), (12, 25, 15), "crystal")
-    add("glow_crystal", "cristal_2", (10.4, 24.0, -10.3), (1.3, 2.4, 1.3), (-8, 0, -24), "crystal")
-
-    # ---------------------------------------------------------------- bras gauche détendu, manche évasée
-    add("Left_Arm", "manche_haut", (-8.6, 23.4, 0.2), (4.8, 8, 5.4), (0, 0, -5), "sleeve")
-    add("Left_Forearm", "manche", (-9.4, 16.6, 0.4), (5.8, 6.4, 6.2), (0, 0, -8), "sleeve")
-    add("Left_Forearm", "poignet", (-9.8, 13.1, 0.4), (6.4, 1.4, 6.8), (0, 0, -8), "trim")
-    add("Left_Forearm", "main", (-10.0, 11.4, 0.4), (3.4, 3.2, 3.4), (0, 0, -6), "skin")
+    # ---------------------------------------------------------------- staff: three brown blocks, orb in a brown claw
+    g = "Staff"
+    lean = attach(HAND, rot(0, 0, -7 * S))          # top of the staff leans outwards
+    x, z = HAND[0], HAND[2]
+    for name, y0, y1, w in (("baton_bas", 0.2, 3.1, 0.6), ("baton_milieu", 3.1, 5.8, 0.66), ("baton_haut", 5.8, 7.9, 0.6)):
+        c, M = lean((x, (y0 + y1) / 2, z), (0, 0, 0))
+        add(g, name, c, (w, y1 - y0, w), M, "brown")
+    for name, dx, dy, size, mat, grp in (
+            ("griffe_base", 0, 7.95, (1.2, 0.4, 1.2), "brown", "Staff"),
+            ("orbe", 0, 8.7, (1.0, 1.0, 1.0), "orb", "Orb"),
+            ("griffe_droite", 0.65, 8.75, (0.4, 1.2, 0.5), "brown", "Staff"),
+            ("griffe_gauche", -0.65, 8.75, (0.4, 1.2, 0.5), "brown", "Staff"),
+            ("griffe_haut", 0, 9.4, (0.5, 0.4, 0.5), "brown", "Staff")):
+        c, M = lean((x + dx, dy, z), (0, 0, 0))
+        add(grp, name, c, size, M, mat)
     return P
+
+
+def drawn():
+    """Parts and bones in drawing pixels."""
+    P = [(g, n, [v * U for v in c], [v * U for v in size], r, m) for g, n, c, size, r, m in parts()]
+    groups = {k: ([v * U for v in pv], parent) for k, (pv, parent) in GROUPS.items()}
+    return P, groups
 
 
 if __name__ == "__main__":
@@ -338,15 +186,16 @@ if __name__ == "__main__":
         prev = args[i + 1]
         del args[i:i + 2]
     out = args[0] if args else HERE
-    _, _, dims = ground(parts(), GROUPS, center=False)
-    P, groups, dims = ground(parts(), GROUPS, scale=HEIGHT / dims[1], center=False)   # origine au centre des pieds
-    uv, atlases, sizes = bake(P, MATS, GLOW_MATS)
+    P0, G0 = drawn()
+    _, _, raw = ground(P0, G0, center=False)
+    P, groups, dims = ground(P0, G0, scale=HEIGHT / raw[1], center=False)   # origin between the feet
+    uv, atlases, sizes = bake(P, MATS, {})
     data = export(IDENT, NS, P, groups, uv, atlases, sizes)
-    print(f"{len(P)} volumes ; {dims[0]:.2f} x {dims[1]:.2f} x {dims[2]:.2f} blocs (l x h x p) ; textures {sizes[0]} et "
-          f"{sizes[1]}")
+    print(f"{len(P)} cubes ; {dims[0]:.2f} x {dims[1]:.2f} x {dims[2]:.2f} blocks (w x h x d) ; "
+          f"{raw[0] * 16 / U:.1f} x {raw[1] * 16 / U:.1f} x {raw[2] * 16 / U:.1f} units ; texture {sizes[0]}")
     path = os.path.join(out, IDENT + ".bbmodel")
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False)
-    print("écrit", path)
+    print("written", path)
     if prev:
-        apercu(data, atlases, sizes, prev, set(AMETHYST), views=((32, 8), (0, 2), (90, 2), (205, 10)), size=400)
+        apercu(data, atlases, sizes, prev, set(), views=((0, 2), (90, 2), (180, 2), (32, 10)), size=400)
