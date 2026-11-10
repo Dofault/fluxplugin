@@ -339,27 +339,6 @@ def animations():
     AIR["phase_shift_3"] = {leg: [(T(36), T(39.5))] for leg in LEGS}
     A.append(a)
 
-    # ------------------------------------------------------------------ death: 3.5 s (70 ticks)
-    # Last roar (0-14), collapse onto its left side (14-44: legs give way, body rolls and falls, head and tail come
-    # down; on the ground from 40), the resonance dies out (44-60), still to the end (70).
-    a = Anim("death", 70)
-    f = K((14, 0), (44, 1))
-    a.rot("Body", lambda t: (K((0, 0), (14, 6), (44, -4))(t), 0, -26 * f(t)))
-    a.pos("Body", lambda t: (0, -20 * f(t), 0))
-    a.rot("Neck", lambda t: (K((0, 0), (14, 14), (44, -10))(t), 0, -8 * f(t)))
-    a.rot("Head", lambda t: (K((0, 0), (14, 18), (44, -16), (52, -20))(t), 0, -14 * f(t)))
-    a.rot("Jaw", lambda t: (K((0, 0), (10, -30), (30, -20), (52, -8))(t), 0, 0))
-    tail(a, lambda t, i: (K((0, 0), (14, -2), (44, 6 + 2 * i))(t), 0, -10 * f(t)))
-    arms(a, lambda t, s: (30 * f(t), 0, 0))
-    for leg, s in (("Leg_right", 1), ("Leg_left", -1)):
-        a.rot(leg, lambda t: (40 * f(t), 0, -26 * f(t)))
-        a.rot(SHIN[leg], lambda t: (-70 * f(t), 0, 0))
-        a.pos(leg, lambda t, s=s: (-5 * f(t), -16 * f(t), 0))
-    AIR["death"] = {leg: [(T(14), T(70))] for leg in LEGS}
-    LOCK["death"] = [(T(42), T(70))]
-    FREE.add("death")
-    A.append(a)
-
     # ------------------------------------------------------------------ victory: 1.5 s (30 ticks)
     # Head up with a short growl (0-16), stamps its right foot at 20, back to its predator stance.
     a = Anim("victory", 30)

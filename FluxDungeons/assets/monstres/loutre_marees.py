@@ -564,9 +564,9 @@ if __name__ == "__main__":
     data["animations"] = loutre_marees_anim.build(lambda name: str(uuid.uuid5(NS, f"{IDENT}/{name}")))
     loutre_marees_anim.ground_lock(data)
     print(f"{len(P)} volumes ; {dims[0]:.2f} x {dims[1]:.2f} x {dims[2]:.2f} blocs (l x h x p) ; texture {sizes[0]}")
-    # Variantes jouées en jeu : BetterModel ne joue seul que idle et walk, FluxDungeons joue death à la mort.
-    # loutre_marees (phase terrestre) : toutes les animations + death = death_land ; loutre_marees_eau (phase
-    # aquatique) : idle = walk = swim, death = death_water, plus attack_wave et ultimate_breach.
+    # Variantes jouées en jeu : BetterModel ne joue seul que idle et walk.
+    # loutre_marees (phase terrestre) : toutes les animations ; loutre_marees_eau (phase aquatique) :
+    # idle = walk = swim, plus attack_wave, attack_spin, attack_spit et ultimate_breach.
     def alias(anims, pairs, keep=None):
         out = [a for a in anims if keep is None or a["name"] in keep]
         for new, old in pairs:
@@ -577,9 +577,9 @@ if __name__ == "__main__":
             out = [a for a in out if a["name"] != new] + [copy]
         return out
     variants = {
-        IDENT: alias(data["animations"], [("death", "death_land")]),
+        IDENT: alias(data["animations"], []),
         # dans l'eau elle reste à l'endroit (idle et walk = swim) : sur le dos, on la croyait à l'envers en nageant
-        IDENT + "_eau": alias(data["animations"], [("idle", "swim"), ("walk", "swim"), ("death", "death_water")],
+        IDENT + "_eau": alias(data["animations"], [("idle", "swim"), ("walk", "swim")],
                               keep={"attack_wave", "attack_spin", "attack_spit", "ultimate_breach"}),
     }
     full = data["animations"]

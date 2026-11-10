@@ -554,11 +554,6 @@ def apercu(data, body, glow, path, size=760, yaw=28, pitch=14):
 # vers l'avant ; position en (-x, y, z). Les réglages ci-dessous sont calés pour que rien ne passe sous le sol.
 ATK_ARM = -50        # bras du marteau à l'impact
 ATK_HAMMER = 28       # marteau à l'impact (tête au ras du sol)
-DEATH_DROP = -10     # descente du bassin une fois à genoux
-DEATH_HAMMER = -38     # marteau couché au sol à la fin
-DEATH_FOOT = -75     # pieds une fois à genoux
-DEATH_ARM = -50      # bras du marteau une fois effondré
-BASSIN_MID, SHIN_MID, FOOT_MID = 0.3, 75, -65   # mi-chute (0,9 s) : les tibias se couchent avant que le bassin descende
 
 
 def animations(data):
@@ -681,33 +676,6 @@ def animations(data):
         "marteau": {"rotation": [(0, Z), (0.14, (-5, 0, 0)), (0.4, Z)]},
     }))
 
-    # ------------------------------------------------------------------ death : défaillance, effondrement, extinction
-    D, DH, DF, DA = DEATH_DROP, DEATH_HAMMER, DEATH_FOOT, DEATH_ARM
-    out.append(anim("death", 1.8, "hold", {
-        # défaillance : secousses, puis tout s'affaisse
-        "torse": {"rotation": [(0, Z), (0.08, (-6, 3, 3)), (0.18, (4, -2, -2)), (0.3, (-2, 1, 2)), (0.5, (8, 0, 3)),
-                               (1.3, (38, 0, 5)), (1.4, (33, 0, 5)), (1.8, (35, 0, 5))],
-                  "position": [(0, Z), (0.5, (0, -0.6, 0)), (1.8, (0, -0.6, 0))]},
-        "tete": {"rotation": [(0, Z), (0.5, (16, 0, 3)), (1.3, (22, 6, 5)), (1.8, (24, 6, 5))]},
-        "epaule_d": {"rotation": [(0, Z), (0.5, (0, 0, -6)), (1.8, (0, 0, -9))]},
-        "epaule_g": {"rotation": [(0, Z), (0.5, (0, 0, 6)), (1.8, (0, 0, 9))]},
-        "bras_d": {"rotation": [(0, Z), (0.5, (6, 0, 4)), (1.3, (DA, 0, 6)), (1.4, (DA + 4, 0, 6)), (1.8, (DA + 2, 0, 6))]},
-        "marteau": {"rotation": [(0, Z), (0.5, (8, 0, 0)), (1.3, (DH, 0, 0)), (1.8, (DH, 0, 0))]},
-        "bras_g": {"rotation": [(0, Z), (0.5, (4, 0, -3)), (1.3, (-22, 0, -8)), (1.8, (-24, 0, -8))]},
-        "avant_bras_g": {"rotation": [(0, Z), (1.3, (-12, 0, 0)), (1.8, (-12, 0, 0))]},
-        # effondrement : les genoux cèdent, le bassin descend, les tibias se couchent
-        "bassin": {"position": [(0, Z), (0.5, (0, -0.5, 0)), (0.9, (0, D * BASSIN_MID, 0)), (1.3, (0, D, 0)), (1.4, (0, D + 0.6, 0)),
-                                (1.8, (0, D, 0))]},
-        "cuisse_d": {"rotation": [(0, Z), (0.5, (-3, 0, 0)), (1.3, (-22, 0, 0)), (1.8, (-22, 0, 0))]},
-        "cuisse_g": {"rotation": [(0, Z), (0.5, (-2, 0, 0)), (1.3, (-16, 0, 0)), (1.8, (-16, 0, 0))]},
-        "tibia_d": {"rotation": [(0, Z), (0.5, (6, 0, 0)), (0.9, (SHIN_MID, 0, 0)), (1.3, (92, 0, 0)), (1.8, (92, 0, 0))]},
-        "tibia_g": {"rotation": [(0, Z), (0.5, (4, 0, 0)), (0.9, (SHIN_MID - 4, 0, 0)), (1.3, (88, 0, 0)), (1.8, (88, 0, 0))]},
-        "pied_d": {"rotation": [(0, Z), (0.5, (-3, 0, 0)), (0.9, (FOOT_MID, 0, 0)), (1.3, (DF, 0, 0)), (1.8, (DF, 0, 0))]},
-        "pied_g": {"rotation": [(0, Z), (0.5, (-2, 0, 0)), (0.9, (FOOT_MID, 0, 0)), (1.3, (DF, 0, 0)), (1.8, (DF, 0, 0))]},
-        # extinction : la braise du fourneau puis les yeux rentrent dans le métal
-        "glow_torse": {"position": [(0, Z), (0.5, (0, 0, 0.15)), (1.3, (0, 0, 0.3)), (1.8, (0, 0, 1.0))]},
-        "glow_tete": {"position": [(0, Z), (1.3, Z), (1.8, (0, 0, 0.6))]},
-    }))
     return out
 
 

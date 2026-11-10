@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Animations du Colosse d'Abîme (2026-11-06) : idle, walk, attack_bite, attack_stomp, attack_ultimate (le Cataclysme
-abyssal), intro, death.
+abyssal), intro.
 
 Écrites en valeurs « réelles » (rotation en degrés dans les axes du modèle : x positif relève l'avant, z positif relève
 le côté +x ; position en unités de dessin), converties à l'écriture dans la convention Blockbench / BetterModel
@@ -234,39 +234,4 @@ def build(uid, k):
         "glow_heart": {"position": [(0, (0, -0.8, 0)), (3.0, (0, -0.8, 0)), (4.8, (0, 0.2, 0)), (6.0, Z),
                                     (7.6, (0, 0.4, 0)), (8.8, Z), (9.0, Z)]},
     }))
-
-    # ------------------------------------------------------------------ death : une montagne qui cesse de vivre, 5 s
-    # 0-1 s affaiblissement ; 1-2 s perte d'équilibre ; 2-3,5 s effondrement vers l'avant ; 3,5-4,5 s extinction ;
-    # 4,5-5 s pose finale stable (le jeu gère ensuite la disparition et le butin)
-    tracks = {}
-    for bone in LEGS:
-        s = 1 if "right" in bone else -1
-        front = "front" in bone
-        splay = (4, 9, 16) if front else (1.5, 3.5, 6)       # les pattes avant cèdent, les arrière suivent
-        # le pied plat penche avec la patte : la patte remonte d'autant, son bord intérieur reste au ras du sol
-        drop = tuple(-LEG_LIFT["front" if front else "back"] * a / splay[2] for a in splay)
-        tracks[bone] = {
-            "rotation": [(0, Z), (1.0, (0, 0, splay[0] * s)), (2.0, (0, 0, splay[1] * s)),
-                         (3.5, (0, 0, splay[2] * s)), (5.0, (0, 0, splay[2] * s))],
-            "position": [(0, Z), (1.0, (0, -drop[0], 0)), (2.0, (0, -drop[1], 0)), (3.5, (0, -drop[2], 0)),
-                         (5.0, (0, -drop[2], 0))]}
-    tracks.update({
-        "Body": {"position": [(0, Z), (1.0, (0, -0.5, 0)), (2.0, (0, -1.6, 0)), (3.3, (0, -4.4, 0)),
-                              (3.45, (0, -4.1, 0)), (3.6, (0, -4.4, 0)), (5.0, (0, -4.4, 0))],
-                 # petites secousses irrégulières, puis la carapace s'incline vers l'avant
-                 "rotation": [(0, Z), (0.3, (0, 0, 0.8)), (0.5, (0, 0, -0.6)), (0.75, (0, 0, 0.4)), (1.0, (-0.5, 0, 0)),
-                              (2.0, (-2, 0, -0.5)), (3.3, (-6, 0, -1.5)), (3.45, (-5.5, 0, -1.3)),
-                              (3.6, (-6, 0, -1.5)), (5.0, (-6, 0, -1.5))]},
-        "Shell": {"rotation": [(0, Z), (3.3, Z), (3.42, (0, 0, 0.6)), (3.6, Z), (5.0, Z)]},
-        "Head": {"rotation": [(0, Z), (1.0, (-5, 0, 0)), (2.0, (-9, 2, 0)), (3.4, (-6, 4, 0)), (5.0, (-6, 4, 0))],
-                 "position": [(0, Z), (2.0, (0, -0.5, 0.4)), (3.4, (0, HEAD_REST, 0.6)), (5.0, (0, HEAD_REST, 0.6))]},
-        "Jaw": {"rotation": [(0, Z), (1.0, (-3, 0, 0)), (3.4, (-2, 0, 0)), (5.0, (-2, 0, 0))]},
-        "Tail": {"rotation": [(0, Z), (1.0, (3, 0, 0)), (2.0, (8, -2, 0)), (3.4, (14, -4, 0)), (5.0, (14, -4, 0))]},
-        "Tail_tip": {"rotation": [(0, Z), (2.0, (4, 0, 0)), (3.5, (8, 0, 0)), (5.0, (8, 0, 0))]},
-        # extinction : les yeux reculent au fond de leurs cavités, les cristaux retombent dans la géode
-        "glow_eyes": {"position": [(0, Z), (1.0, (0, 0, 0.2)), (3.5, (0, 0, 0.3)), (4.4, (0, 0, 0.9)),
-                                   (5.0, (0, 0, 0.9))]},
-        "glow_heart": {"position": [(0, Z), (3.5, Z), (4.5, (0, -0.7, 0)), (5.0, (0, -0.7, 0))]},
-    })
-    out.append(anim("death", 5.0, "hold", tracks))
     return out

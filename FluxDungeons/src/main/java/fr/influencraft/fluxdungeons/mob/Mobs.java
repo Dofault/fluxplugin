@@ -81,7 +81,7 @@ public final class Mobs {
         final Map<UUID, Double> damagers = new HashMap<>();
         /** Last time it had a player to fight (leaves combat after a while without one). */
         long lastEngaged;
-        boolean dying, inCombat, switching;
+        boolean inCombat, switching;
         /** Moves it in its water instead of walking ({@code swim} of its file), null for a walker. */
         Swimmer swimmer;
         /** Tick of its last melee hit on a player (vanilla's or the longer reach's). */
@@ -171,7 +171,7 @@ public final class Mobs {
             if (!(o instanceof Map<?, ?> m)) continue;
             long tick = m.get("tick") instanceof Number n ? n.longValue() : 0;
             Runnable play = () -> {
-                if (!a.entity.isValid() || (a.dying && !"death".equals(animation))) return;
+                if (!a.entity.isValid()) return;
                 play(a.entity.getLocation(), m);
             };
             if (tick <= 0) play.run();
@@ -211,7 +211,7 @@ public final class Mobs {
      */
     private void cueTick() {
         for (Alive a : alive.values()) {
-            if (a.dying || !a.entity.isValid()) continue;
+            if (!a.entity.isValid()) continue;
             Map<String, Object> cues = a.template.extra().cues();
             if (cues.isEmpty()) continue;
             Location now = a.entity.getLocation();
@@ -350,7 +350,7 @@ public final class Mobs {
     private void refreshAlive() {
         for (Alive a : alive.values()) {
             MobTemplate t = templates.get(a.template.id());
-            if (t == null || a.dying || !a.entity.isValid()) continue;
+            if (t == null || !a.entity.isValid()) continue;
             a.template = t;
             a.abilities.clear();
             a.abilities.addAll(t.abilities());
@@ -654,7 +654,7 @@ public final class Mobs {
             }
 
             public boolean over() {
-                return a.dying || a.switching || !alive.containsKey(a.entity.getUniqueId());
+                return a.switching || !alive.containsKey(a.entity.getUniqueId());
             }
 
             public Player target() {
@@ -713,7 +713,7 @@ public final class Mobs {
 
         @Override
         public void tick() {
-            if (a.dying || !(a.entity instanceof Mob m)) return;
+            if (!(a.entity instanceof Mob m)) return;
             if (a.swimmer != null) return;
             ticks++;
             // the vanilla float goal went with the rest of the AI: without it a piloted monster sinks to the bottom
@@ -776,8 +776,8 @@ public final class Mobs {
         e.setInvulnerable(true);
         e.getWorld().playSound(e.getLocation(), Sound.ITEM_SHIELD_BLOCK, 1.5f, 0.6f);
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            // a monster dying or changing phase keeps the state its scene gave it
-            if (e.isValid() && !a.dying && !a.switching) e.setInvulnerable(false);
+            // a monster changing phase keeps the state its scene gave it
+            if (e.isValid() && !a.switching) e.setInvulnerable(false);
         }, ticks);
     }
 
@@ -814,7 +814,7 @@ public final class Mobs {
 
             @Override
             public void run() {
-                if (!e.isValid() || a.dying || a.switching) {
+                if (!e.isValid() || a.switching) {
                     end();
                     return;
                 }
@@ -889,7 +889,7 @@ public final class Mobs {
                 cancel();
                 if (!e.isValid()) return;
                 e.setGravity(true);
-                if (e instanceof Mob m && !a.dying && !a.switching) m.setAI(true);
+                if (e instanceof Mob m && !a.switching) m.setAI(true);
             }
         }.runTaskTimer(plugin, 1L, 1L);
     }
@@ -922,7 +922,7 @@ public final class Mobs {
         try {
             double r2 = alertRadius * alertRadius;
             for (Alive o : List.copyOf(alive.values())) {
-                if (o == a || o.inCombat || o.dying || !o.run.equals(a.run) || !(o.entity instanceof Mob m) || !m.hasAI()) continue;
+                if (o == a || o.inCombat || !o.run.equals(a.run) || !(o.entity instanceof Mob m) || !m.hasAI()) continue;
                 if (o.entity.getWorld() != a.entity.getWorld() || o.entity.getLocation().distanceSquared(a.entity.getLocation()) > r2) continue;
                 if (!a.entity.hasLineOfSight(o.entity)) continue;
                 o.target = player.getUniqueId();
@@ -999,7 +999,7 @@ public final class Mobs {
      * at most every {@code every} seconds. Never drawn among the other abilities.
      */
     private void counter(Alive a, Player shooter, EntityDamageEvent event) {
-        if (a.dying || !(event instanceof org.bukkit.event.entity.EntityDamageByEntityEvent ee)
+        if (!(event instanceof org.bukkit.event.entity.EntityDamageByEntityEvent ee)
                 || !(ee.getDamager() instanceof org.bukkit.entity.Projectile) || !castsAbilities(a)) return;
         long now = System.currentTimeMillis();
         double dist = shooter.getLocation().distance(a.entity.getLocation());
@@ -1075,7 +1075,7 @@ public final class Mobs {
     }
 
     private void hurt(Alive a) {
-        if (a.model == null || a.dying) return;
+        if (a.model == null) return;
         // an attack in progress is never cut by a flinch (it holds the monster still)
         if (Bukkit.getCurrentTick() < a.holdUntil) return;
         long now = System.currentTimeMillis();
@@ -1088,7 +1088,7 @@ public final class Mobs {
 
     /** Below the share of life of its next phase, the monster becomes the next one, life share kept. */
     private void checkPhase(Alive a) {
-        if (a.switching || a.dying || !a.entity.isValid() || a.nextPhase >= a.phases.size()) return;
+        if (a.switching || !a.entity.isValid() || a.nextPhase >= a.phases.size()) return;
         double ratio = a.entity.getHealth() / Math.max(1, maxHealth(a.entity));
         MobTemplate.Phase phase = a.phases.get(a.nextPhase);
         if (ratio > phase.below()) return;
@@ -1141,14 +1141,14 @@ public final class Mobs {
         if (flood != null) {
             int at = Math.max(0, flood.at());
             if (flood.crack() >= 0 && flood.crack() < at) Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                if (e.isValid() && !a.dying) FloorBreak.crack(plugin, e.getLocation(), flood, at - flood.crack());
+                if (e.isValid()) FloorBreak.crack(plugin, e.getLocation(), flood, at - flood.crack());
             }, flood.crack());
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                if (e.isValid() && !a.dying) FloorBreak.burst(plugin, e.getLocation(), flood);
+                if (e.isValid()) FloorBreak.burst(plugin, e.getLocation(), flood);
             }, at);
         }
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (!e.isValid() || a.dying || !alive.containsKey(e.getUniqueId())) return;
+            if (!e.isValid() || !alive.containsKey(e.getUniqueId())) return;
             double ratio = e.getHealth() / Math.max(1, maxHealth(e));
             becomeNext(a, next, ratio);
         }, Math.max(1, phase.duration()));
@@ -1167,37 +1167,6 @@ public final class Mobs {
         child.setHealth(Math.max(1, maxHealth(child) * ratio));
         engine.fire(c, "ElitePhaseSwitchEvent", null, null);
         return child;
-    }
-
-    /**
-     * A hit would kill this monster. A boss wearing a model with a {@code death} animation does not die at once: it
-     * stops, plays the animation, then disappears and counts as killed (returns true: cancel the hit).
-     */
-    public boolean lethal(LivingEntity entity, Player killer) {
-        Alive a = alive.get(entity.getUniqueId());
-        if (a == null) return false;
-        if (a.dying) return true;
-        if (a.model == null || !a.template.boss() || !a.model.play("death")) return false;
-        a.dying = true;
-        cue(a, "death");
-        entity.setInvulnerable(true);
-        if (entity instanceof Mob m) {
-            m.setAI(false);
-            m.setTarget(null);
-        }
-        entity.setHealth(Math.max(1, entity.getHealth()));
-        World w = entity.getWorld();
-        // death-ticks: the length of its death animation (36 by default, the fall shown 10 ticks before the end)
-        int ticks = a.template.extra().deathTicks();
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            w.spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, entity.getLocation().add(0, 1, 0), 20, 0.8, 0.4, 0.8, 0.02);
-            w.playSound(entity.getLocation(), Sound.BLOCK_ANVIL_LAND, 1f, 0.5f);
-        }, Math.max(1, ticks - 10));
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            finish(a, killer);
-            entity.remove();
-        }, ticks);
-        return true;
     }
 
     /** A dungeon monster died the vanilla way. */
@@ -1236,13 +1205,13 @@ public final class Mobs {
         while (it.hasNext()) {
             Alive a = it.next();
             if (!a.entity.isValid()) {
-                if (!a.dying && !a.entity.isDead()) {
+                if (!a.entity.isDead()) {
                     close(a);
                     it.remove();
                 }
                 continue;
             }
-            if (a.dying || a.switching) continue;
+            if (a.switching) continue;
             double leash = a.template.extra().leash();
             if (leash > 0 && a.entity.getLocation().distanceSquared(a.spawn) > leash * leash) move(a.entity, a.spawn);
             if (!a.template.extra().scripts().isEmpty()) later.add(() -> engine.pollZones(a));
@@ -1454,7 +1423,7 @@ public final class Mobs {
         if (reachBonus <= 0) return;
         int now = Bukkit.getCurrentTick();
         for (Alive a : alive.values()) {
-            if (a.dying || !a.inCombat || !(a.entity instanceof Mob m) || !m.hasAI() || !m.isValid()) continue;
+            if (!a.inCombat || !(a.entity instanceof Mob m) || !m.hasAI() || !m.isValid()) continue;
             if (m instanceof com.destroystokyo.paper.entity.RangedEntity) continue;
             Player target = fightingTarget(a);
             if (target == null) continue;
@@ -1498,7 +1467,7 @@ public final class Mobs {
         Player own = fightingTarget(a);
         AttributeInstance speed = a.entity.getAttribute(Attribute.MOVEMENT_SPEED);
         out.add(a.template.id() + " (" + a.entity.getType() + "), life " + Math.round(a.entity.getHealth() * healthScale(a.entity)) + "/" + Math.round(maxHealth(a.entity) * healthScale(a.entity))
-                + ", AI " + a.entity.hasAI() + ", controlled " + a.template.extra().controlled() + ", dying " + a.dying);
+                + ", AI " + a.entity.hasAI() + ", controlled " + a.template.extra().controlled());
         out.add("combat " + a.inCombat + ", target " + (own == null ? "none" : own.getName())
                 + ", vanilla target " + (a.entity instanceof Mob m && m.getTarget() != null ? m.getTarget().getName() : "none")
                 + ", model " + (a.model != null) + ", speed " + String.format(java.util.Locale.ROOT, "%.3f", speed == null ? 0 : speed.getValue()));
@@ -1696,7 +1665,7 @@ public final class Mobs {
 
     private void extraShot(Alive a) {
         LivingEntity e = a.entity;
-        if (!e.isValid() || e.isDead() || a.dying || !e.hasAI() || !(e instanceof Mob m)) return;
+        if (!e.isValid() || e.isDead() || !e.hasAI() || !(e instanceof Mob m)) return;
         Player target = fightingTarget(a);
         if (target == null) return;
         if (target.getLocation().distanceSquared(e.getLocation()) > 24 * 24 || !e.hasLineOfSight(target)) return;
@@ -1780,7 +1749,7 @@ public final class Mobs {
                 m.setAI(false);
                 a.holdUntil = Math.max(a.holdUntil, now + ticks);
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    if (Bukkit.getCurrentTick() >= a.holdUntil && m.isValid() && !a.dying && !a.switching) m.setAI(true);
+                    if (Bukkit.getCurrentTick() >= a.holdUntil && m.isValid() && !a.switching) m.setAI(true);
                 }, ticks);
             }
 
@@ -1794,7 +1763,7 @@ public final class Mobs {
 
             public void release() {
                 a.holdUntil = Bukkit.getCurrentTick();
-                if (e instanceof Mob m && m.isValid() && !a.dying && !a.switching) m.setAI(true);
+                if (e instanceof Mob m && m.isValid() && !a.switching) m.setAI(true);
             }
 
             public void loop(String animation) {
@@ -1923,7 +1892,7 @@ public final class Mobs {
                     MobTemplate copy = new MobTemplate(a.template.id() + "_summon", type, "&7" + type.name().toLowerCase(), false, null,
                             maxHealth(e) * 0.15, a.baseDamage() * 0.6, 0.25, 0, 1, 0, Map.of(), List.of(),
                             new MobTemplate.Extra(1, 0.15, 0.6, false, false, 32, 0, List.of(), List.of(), null, List.of(), List.of(), List.of(),
-                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of(), 0, 1, false, false, false, 0, 0, 0, 36, false, Map.of(), Map.of()));
+                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of(), 0, 1, false, false, false, 0, 0, 0, false, Map.of(), Map.of()));
                     for (int i = 0; i < (int) ab.number("count", 2); i++) {
                         LivingEntity s = spawn(copy, at.clone().add(ThreadLocalRandom.current().nextDouble(-2, 2), 0, ThreadLocalRandom.current().nextDouble(-2, 2)), a.run);
                         if (s != null) onSummon.accept(e, s);
@@ -1942,7 +1911,7 @@ public final class Mobs {
                 w.playSound(at, Sound.ENTITY_IRON_GOLEM_ATTACK, 1f, 0.6f);
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
                     if (e instanceof Mob m) m.setAI(true);
-                    if (!e.isValid() || a.dying) return;
+                    if (!e.isValid()) return;
                     Location hit = e.getLocation().add(e.getLocation().getDirection().setY(0).normalize().multiply(a.model == null ? 0 : radius * 0.5));
                     w.spawnParticle(Particle.EXPLOSION, hit, 2, 0.5, 0.1, 0.5, 0);
                     w.spawnParticle(Particle.LAVA, hit, 12, radius / 2, 0.2, radius / 2, 0);

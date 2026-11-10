@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Animations de la Loutre des Marées (2026-11-10).
 
-Phase terrestre : idle, walk, attack_claw, attack_tail, attack_slide, death_land.
+Phase terrestre : idle, walk, attack_claw, attack_tail, attack_slide.
 Transition (mi-vie) : transition_dive (casse le sol et plonge sur place).
-Phase aquatique : swim, swim_idle (flotte sur le dos), attack_wave, attack_spin, attack_spit, ultimate_breach, death_water.
+Phase aquatique : swim, swim_idle (flotte sur le dos), attack_wave, attack_spin, attack_spit, ultimate_breach.
 
 Valeurs « réelles » : rotation en degrés dans les axes du modèle (x positif relève l'avant d'un os, et avance le pied
 d'une patte ; y positif tourne l'avant vers la gauche du monstre (-x) ; z positif relève le côté droit (+x)) ;
@@ -279,31 +279,6 @@ def build(uid):
                                                    (3 + 2 * i) * S(TAU * 2 * t - 0.7 * i) * slide(t), 0))
     tr.update(whiskers(2.6, base=-14, amp=3, freq=4))
     out.append(anim("attack_slide", 2.6, "once", tr))
-
-    # ------------------------------------------------------------------ death_land : mort au sol, 3 s (60 ticks), tenue
-    # Touchée, elle vacille (0-0,5 s), les pattes cèdent (0,5-1,2 s), elle bascule sur le flanc gauche (1,2-1,8 s),
-    # petit rebond, se pose (2,3 s) ; pose finale tenue.
-    fall = lambda t: smooth(1.2, 1.8, t) - 0.08 * bump(1.8, 2.3, t)           # noqa: E731
-    tr = {
-        "Body": track(3.0, rotation=lambda t: (0, 0, -6 * bump(0, 0.6, t) + 84 * fall(t)),
-                      position=lambda t: (0, -1.5 * smooth(0.4, 1.2, t) - 4.6 * fall(t), 0)),
-        "Chest": track(3.0, rotation=lambda t: (-8 * smooth(0.5, 1.2, t) * (1 - fall(t)), 0, 0)),
-        "Head": track(3.0, rotation=lambda t: (-14 * smooth(1.2, 2.0, t), 14 * S(TAU * 4 * t) * bump(0, 0.6, t),
-                                               10 * smooth(1.4, 2.2, t))),
-        "Jaw": track(3.0, rotation=lambda t: (-16 * smooth(0, 0.4, t) + 4 * smooth(1.8, 2.6, t), 0, 0)),
-    }
-    for leg in LEGS:
-        s = 1 if "right" in leg else -1
-        tr[leg] = track(3.0, rotation=lambda t, s=s: (10 * smooth(1.4, 2.3, t), 0,
-                                                      (8 * s) * smooth(0.5, 1.2, t) - 32 * smooth(1.5, 2.3, t)))
-    for i, b in enumerate(TAIL):
-        tr[b] = track(3.0, rotation=lambda t, i=i: (-8 * smooth(1.4, 2.3, t), -6 * smooth(1.6, 2.4, t),
-                                                   -10 * smooth(1.5, 2.3, t) if i == 0 else 0))
-    tr["Whiskers_right"] = track(3.0, rotation=lambda t: (0, -3 * S(TAU * 3 * t) * (1 - smooth(1.5, 2.5, t)),
-                                                          -12 * smooth(1.5, 2.5, t)))
-    tr["Whiskers_left"] = track(3.0, rotation=lambda t: (0, 3 * S(TAU * 3 * t) * (1 - smooth(1.5, 2.5, t)),
-                                                         12 * smooth(1.5, 2.5, t)))
-    out.append(anim("death_land", 3.0, "hold", tr))
 
     # ================================================================== TRANSITION (mi-vie)
     # ------------------------------------------------------------------ transition_dive : 3,6 s (72 ticks)
@@ -645,29 +620,6 @@ def build(uid):
     tr["Whiskers_left"] = track(5.0, rotation=lambda t: (0, 18 * tuck(t) - 3 * S(TAU * 2 * t), 14 * smooth(3.8, 4.2, t)))
     out.append(anim("ultimate_breach", 5.0, "once", tr))
 
-    # ------------------------------------------------------------------ death_water : mort dans l'eau, 4 s (80 ticks),
-    # tenue. Depuis swim_idle : spasme (0-0,4 s), les membres se relâchent, la tête part en arrière (0,4-1,4 s), puis
-    # elle coule lentement en penchant la tête vers le fond (1,4-4 s), jusqu'à 2,5 blocs sous la surface.
-    sink = lambda t: smooth(1.4, 4.0, t)                                            # noqa: E731
-    limp = lambda t: smooth(0.4, 1.4, t)                                            # noqa: E731
-    tr = {
-        "Body": track(4.0, rotation=lambda t: (-12 * sink(t), 0, 180 * smooth(0, 0.6, t) + 12 * S(TAU * 5 * t) * bump(0, 0.4, t) + 22 * sink(t)),
-                      position=lambda t: (0, SURFACE_Y * smooth(0, 0.6, t) + (-2.5 * BL - SURFACE_Y) * sink(t), 0)),
-        "Chest": track(4.0, rotation=lambda t: (-6 * (1 - limp(t)), 0, 0)),
-        "Hips": track(4.0, rotation=lambda t: (-4 * (1 - limp(t)), 0, 0)),
-        "Head": track(4.0, rotation=lambda t: (-30 + 38 * limp(t), 10 * S(TAU * 6 * t) * bump(0, 0.4, t), 8 * limp(t))),
-        "Jaw": track(4.0, rotation=lambda t: (-22 * smooth(0, 0.2, t) + 6 * limp(t), 0, 0)),
-    }
-    for side in ("right", "left"):
-        s = 1 if side == "right" else -1
-        tr[f"Leg_front_{side}"] = track(4.0, rotation=lambda t, s=s: (45 - 25 * limp(t), 0, -38 * s * (1 - limp(t)) + 15 * s * limp(t)))
-        tr[f"Paw_front_{side}"] = track(4.0, rotation=lambda t: (40 * (1 - limp(t)), 0, 0))
-        tr[f"Leg_back_{side}"] = track(4.0, rotation=lambda t, s=s: (-25 + 10 * S(TAU * 6 * t) * bump(0, 0.4, t) + 15 * limp(t), 0, 20 * s * limp(t)))
-    for i, b in enumerate(TAIL):
-        tr[b] = track(4.0, rotation=lambda t, i=i: ((-30, -6, 0, 0)[i] * (1 - limp(t)) + 6 * limp(t), 4 * limp(t), 0))
-    tr["Whiskers_right"] = track(4.0, rotation=lambda t: (0, 4 * S(TAU * 6 * t) * bump(0, 0.4, t), -14 * limp(t)))
-    tr["Whiskers_left"] = track(4.0, rotation=lambda t: (0, -4 * S(TAU * 6 * t) * bump(0, 0.4, t), 14 * limp(t)))
-    out.append(anim("death_water", 4.0, "hold", tr))
     return out
 
 
@@ -735,7 +687,7 @@ def mesures(data, only=None):
 # sol), avec les fenêtres (en secondes) où le corps a le droit de quitter le sol ou d'y entrer.
 GROUND_LOCK = {
     "idle": (), "walk": (), "attack_claw": (), "attack_tail": ((0.95, 1.5),), "attack_slide": (),
-    "death_land": (), "transition_dive": ((2.25, 99),),
+    "transition_dive": ((2.25, 99),),
 }
 
 

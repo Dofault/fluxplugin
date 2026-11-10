@@ -531,27 +531,6 @@ def animations():
     PLANT["great_feast"].update({leg: [(0, T(61)), (T(87), T(150))] for leg in FRONT})
     A.append(a)
 
-    # ------------------------------------------------------------------ death: 3.5 s (70 ticks)
-    # 0-12 struck (recoil, head up, ears down, still standing), 12-32 the legs give way, head lowers, starts to lean,
-    # 32-40 falls on its left side, small bounce (death_impact at 40), 46-60 a last breath, the eyes close, 60-70 still.
-    a = Anim("death", 70)
-    tip = lambda t: keys(t, [(0, 0), (T(12), 0), (T(32), 22), (T(39), 84), (T(41), 78), (T(45), 84)])  # noqa: E731
-    a.rot("Body", lambda t: (keys(t, [(0, 0), (T(4), 7), (T(12), 4), (T(32), -6), (T(40), 0)]), 0, tip(t)))
-    a.pos("Body", lambda t: (0, keys(t, [(0, 0), (T(12), 0), (T(32), -4)]), keys(t, [(0, 0), (T(4), 2), (T(12), 1.5), (T(32), 0)])))
-    a.scale("Body", lambda t: (1, 1 + 0.035 * bump(T(48), T(58), t), 1))
-    for leg in LEGS:
-        fz = 1 if leg in FRONT else -1
-        a.rot(leg, lambda t, fz=fz: (26 * fz * smooth(T(34), T(46), t), 0, 0))
-    a.rot("Head", lambda t: (keys(t, [(0, 0), (T(4), 12), (T(12), 8), (T(32), -15), (T(40), -8), (T(60), -10)]), 0,
-                             keys(t, [(0, 0), (T(32), 0), (T(42), -10)])))
-    both(a, ("Ear_right", "Ear_left"), "rotation", lambda t: (35 * smooth(0, T(5), t), 0, 0))
-    a.rot("Jaw", lambda t: (-6 * smooth(T(40), T(48), t), 0, 0))
-    lids(a, lambda t: 0.3 * smooth(T(12), T(30), t) + 0.7 * smooth(T(52), T(60), t))
-    cheeks(a, lambda t: sc(1 - 0.06 * smooth(T(46), T(60), t)))
-    PLANT["death"] = {leg: [(0, T(30))] for leg in LEGS}
-    LOCK["death"] = [(T(31), T(70))]
-    A.append(a)
-
     # ------------------------------------------------------------------ spawn: 3 s (60 ticks), entrance
     # 0-20 runs in (the game moves it), 20-24 stops short, 24-34 sniffs the ground, 34-38 notices the crops (head up,
     # ears up), 38 the game turns it to the player, 42-56 sits up on its haunches, front paws off the ground, a nod at

@@ -46,7 +46,7 @@ import org.bukkit.inventory.EquipmentSlot;
  * Every combat rule of the dungeons in one place: no friendly fire, no vanilla invulnerability (limits per source),
  * each monster's own melee pace, the exact damage of monsters (their file, never their held items), ranged
  * resistance, the players' reaction to hits (push along the
- * ground one hit in four, stagger, frost), knockback off, fire off, lethal hits of bosses with a death animation.
+ * ground one hit in four, stagger, frost), knockback off, fire off.
  */
 public final class CombatRules implements Listener {
 
@@ -131,7 +131,6 @@ public final class CombatRules implements Listener {
                 mobs.damagedByPlayer(mob, attacker, e);
                 if (!runs.isPet(e.getDamager())) runs.petFocus(attacker, mob);
             }
-            if (e.getFinalDamage() >= mob.getHealth() && mobs.lethal(mob, attacker)) e.setCancelled(true);
             return;
         }
         // a dungeon monster (or its projectile) hit a player
@@ -362,7 +361,7 @@ public final class CombatRules implements Listener {
         }
     }
 
-    /** Lethal damage of any other cause (fire, fall) still plays a boss's death animation. */
+    /** Damage of any other cause (fire, fall...): pacing and monster-specific handling. */
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onDamage(EntityDamageEvent e) {
         if (e instanceof EntityDamageByEntityEvent) return;
@@ -378,7 +377,6 @@ public final class CombatRules implements Listener {
             e.setCancelled(true);
             return;
         }
-        if (e.getFinalDamage() >= mob.getHealth() && mobs.lethal(mob, mob.getKiller())) e.setCancelled(true);
     }
 
     /** The player behind a hit: himself, his projectile or his dungeon pet. */

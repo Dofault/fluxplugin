@@ -47,7 +47,6 @@ import java.util.Map;
  *       # area: connected = every block of those kinds joined to the one under it (a whole frozen pool, any shape),
  *       # up to "limit" blocks, instead of a circle of "radius"; pull: players within that many blocks left on dry
  *       # ground are thrown onto the changed blocks (into the water); pull-title: shown to them
- *   death-ticks: 36                # a boss with a death animation disappears this many ticks after it starts
  *   stationary: true               # never walks: stays where it is and faces its target (charges still move it)
  *   swim: {pass-speed: 10, ...}    # swims in the water around it instead of walking, see Swimmer
  *   abilities: [{spell: colossus_cataclysm, invulnerable: true}]   # invulnerable while it holds for it (or N ticks)
@@ -136,7 +135,7 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                         List<BlockState> removeBlocks, Map<String, Script> scripts, String rank,
                         double attackSpeed, Map<String, org.bukkit.Color> dyes, double rangedResistance, double rangedRate,
                         boolean frostArrows, boolean controlled, boolean silent, double castGap, double barOffset,
-                        double walkSpeed, int deathTicks, boolean stationary, Map<String, Object> swim,
+                        double walkSpeed, boolean stationary, Map<String, Object> swim,
                         Map<String, Object> cues) {
         /** Ticks between two melee hits of this monster ({@code attack-speed}: hits per second, vanilla 1). */
         public int attackTicks() {
@@ -202,7 +201,7 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                 c.getDouble("attack-speed", 1), dyes, Math.max(0, Math.min(1, c.getDouble("ranged-resistance", 0))),
                 Math.max(1, c.getDouble("ranged-rate", 2)), c.getBoolean("frost-arrows", false),
                 c.getBoolean("controlled", false), c.getBoolean("silent", false), Math.max(0, c.getDouble("cast-gap", 0)),
-                c.getDouble("bar-offset", 0), c.getDouble("walk-speed", 0), Math.max(1, c.getInt("death-ticks", 36)),
+                c.getDouble("bar-offset", 0), c.getDouble("walk-speed", 0),
                 c.getBoolean("stationary", false),
                 c.isConfigurationSection("swim") ? toMap(c.getConfigurationSection("swim")) : Map.of(),
                 c.isConfigurationSection("cues") ? toMap(c.getConfigurationSection("cues")) : Map.of());
