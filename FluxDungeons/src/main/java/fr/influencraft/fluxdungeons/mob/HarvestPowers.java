@@ -630,10 +630,12 @@ final class HarvestPowers {
         LivingEntity e = c.entity();
         World w = e.getWorld();
         double v0 = ab.number("start-speed", 0.21), v1 = ab.number("end-speed", 0.89);
-        double width = ab.number("width", 1.7), homing = Math.toRadians(ab.number("homing", 6));
+        double width = ab.number("width", 2.0), homing = Math.toRadians(ab.number("homing", 6));
         int lock = (int) ab.number("lock", 36);
         Vector[] dir = {flat(e.getLocation(), target.getLocation())};
         Set<UUID> struck = new HashSet<>();
+        Map<UUID, Integer> touched = new HashMap<>();
+        ThreadLocalRandom r3 = ThreadLocalRandom.current();
         boolean[] crashed = {false};
         c.hold(64);
         c.animate("roll");
@@ -670,17 +672,21 @@ final class HarvestPowers {
                 if (t % 3 == 0) fx.crater(at, 1.3, 40, 0.3, Fx.BROKEN_EARTH);
                 if (t % 4 == 0) w.playSound(at, Sound.ENTITY_ARMADILLO_ROLL, 1.2f, 1f + (float) u * 0.7f);
                 if (t % 6 == 0) w.playSound(at, Sound.BLOCK_ROOTED_DIRT_BREAK, 1f, 0.7f);
-                for (Player p : fighters(e, 4)) {
-                    if (struck.contains(p.getUniqueId())) continue;
+                // run over: a small hit every 3 ticks while the player stays under the ball, pushed ahead of it (he
+                // keeps being rolled over until he gets out of its way)
+                for (Player p : fighters(e, 5)) {
                     Location pl = p.getLocation();
                     if (Math.hypot(pl.getX() - at.getX(), pl.getZ() - at.getZ()) > width || Math.abs(pl.getY() - at.getY()) > 2) continue;
                     struck.add(p.getUniqueId());
-                    c.hit(p, ab.number("hit-power", 6));
+                    Integer last = touched.get(p.getUniqueId());
+                    if (last != null && t - last < 3) continue;
+                    touched.put(p.getUniqueId(), t);
+                    c.hit(p, ab.number("tick-power", 2));
                     Vector side = new Vector(-dir[0].getZ(), 0, dir[0].getX());
                     if (side.dot(pl.toVector().subtract(at.toVector())) < 0) side.multiply(-1);
-                    p.setVelocity(side.multiply(1.0).add(dir[0].clone().multiply(0.7)).setY(0.6));
-                    w.playSound(pl, Sound.ENTITY_PLAYER_ATTACK_KNOCKBACK, 1.2f, 0.7f);
-                    w.spawnParticle(Particle.EXPLOSION, pl.clone().add(0, 1, 0), 1);
+                    p.setVelocity(dir[0].clone().multiply(v * 1.6 + 0.2).add(side.multiply(0.12)).setY(0.22));
+                    w.playSound(pl, Sound.ENTITY_PLAYER_ATTACK_KNOCKBACK, 1f, 0.8f + r3.nextFloat() * 0.3f);
+                    w.spawnParticle(Particle.BLOCK, pl.clone().add(0, 0.6, 0), 8, 0.3, 0.3, 0.3, 0, Material.FARMLAND.createBlockData());
                 }
                 return;
             }
@@ -732,72 +738,110 @@ final class HarvestPowers {
 
     // ---------------------------------------------------------------- crush leap
 
-    /** A ring marks the landing; leaps at tick 9, lands at tick 24: shockwave, cracked ground, debris. */
+    /**
+     * A ring marks the landing and follows the target until the leap (tick 9), then stays. Taking off hurts whoever
+     * is next to it; landing (tick 24) hurts the whole ring (more in the middle) with a shockwave, cracked ground and
+     * debris; the crater then keeps hurting and slowing whoever stands in its middle for 1.5 seconds.
+     */
     private void leap(MobTemplate.Ability ab, RockPowers.Caster c, Player target) {
         LivingEntity e = c.entity();
         World w = e.getWorld();
-        double radius = ab.number("radius", 6), max = ab.number("max-distance", 12);
+        double radius = ab.number("radius", 8), max = ab.number("max-distance", 12);
         Location start = e.getLocation().clone();
-        Vector to = target.getLocation().toVector().subtract(start.toVector()).setY(0);
-        if (to.length() > max) to.normalize().multiply(max);
-        Location spot = start.clone().add(to);
-        spot.setY(groundY(w, spot.getX(), target.getLocation().getY(), spot.getZ()));
-        double height = 2.6 + to.length() * 0.15;
-        int launch = 9, land = 24;
+        Location[] spot = {aimLeap(start, target.getLocation(), max, w)};
+        int launch = 9, land = 24, after = (int) ab.number("aftershock", 30);
         c.hold(42);
         c.animate("leap");
-        face(e, spot);
+        face(e, spot[0]);
         w.playSound(start, Sound.ENTITY_RAVAGER_ROAR, 0.6f, 1.8f);
-        timeline(e, 42, t -> {
+        timeline(e, land + after, t -> {
+            if (t <= launch && target.isValid() && Mobs.fighting(target)) {
+                // the landing follows the target until the leap
+                Location want = aimLeap(start, target.getLocation(), max, w);
+                Vector move = want.toVector().subtract(spot[0].toVector()).setY(0);
+                if (move.length() > 0.7) move.normalize().multiply(0.7);
+                spot[0] = spot[0].clone().add(move);
+                spot[0].setY(groundY(w, spot[0].getX(), want.getY(), spot[0].getZ()));
+                face(e, spot[0]);
+            }
+            Location sp = spot[0];
             if (t <= land && t % 2 == 0) {
-                // where it will land: a ring that tightens, the inner disc filling up
                 double k = t / (double) land;
-                Fx.ring(spot, radius, HARVEST, 1.6f, t * 0.05);
-                Fx.ring(spot, radius * (1 - k), Color.fromRGB(0xFF5C5C), 1.1f, -t * 0.08);
-                Fx.ring(spot, radius * 0.5, EARTH, 1.0f, 0);
-                if (t % 6 == 0) w.playSound(spot, Sound.BLOCK_NOTE_BLOCK_BASEDRUM, 1.5f, 0.6f + (float) k);
+                Fx.ring(sp, radius, HARVEST, 1.6f, t * 0.05);
+                Fx.ring(sp, radius * (1 - k), Color.fromRGB(0xFF5C5C), 1.1f, -t * 0.08);
+                Fx.ring(sp, radius * 0.5, Color.fromRGB(0xFF5C5C), 1.2f, 0);
+                if (t % 6 == 0) w.playSound(sp, Sound.BLOCK_NOTE_BLOCK_BASEDRUM, 1.5f, 0.6f + (float) k);
             }
             if (t == launch) {
                 w.playSound(start, Sound.ENTITY_RABBIT_JUMP, 2f, 0.5f);
                 w.playSound(start, Sound.ENTITY_WIND_CHARGE_WIND_BURST, 1.2f, 0.8f);
-                fx.crater(start, 1.8, 40, 0.5, Fx.BROKEN_EARTH);
+                fx.crater(start, 2.5, 40, 0.5, Fx.BROKEN_EARTH);
+                fx.shockwave(start, 3, 4, 0.35);
                 w.spawnParticle(Particle.CLOUD, start, 16, 0.8, 0.1, 0.8, 0.05);
+                for (Player p : fighters(e, 3.5)) {
+                    c.hit(p, ab.number("takeoff-power", 3));
+                    Vector out = p.getLocation().toVector().subtract(start.toVector()).setY(0);
+                    if (out.lengthSquared() < 1e-4) out = new Vector(1, 0, 0);
+                    p.setVelocity(out.normalize().multiply(0.6).setY(0.4));
+                }
             }
             if (t >= launch && t <= land) {
                 double k = (t - launch) / (double) (land - launch);
-                Location at = start.clone().add(spot.clone().subtract(start).toVector().multiply(k));
-                at.setY(start.getY() + (spot.getY() - start.getY()) * k + 4 * height * k * (1 - k));
-                at.setYaw(yawTo(to.lengthSquared() < 1e-6 ? start.getDirection() : to.clone().normalize()));
+                Location at = start.clone().add(sp.clone().subtract(start).toVector().multiply(k));
+                at.setY(start.getY() + (sp.getY() - start.getY()) * k + 4 * (2.6 + start.distance(sp) * 0.15) * k * (1 - k));
+                Vector flat = sp.toVector().subtract(start.toVector()).setY(0);
+                at.setYaw(yawTo(flat.lengthSquared() < 1e-6 ? start.getDirection() : flat.normalize()));
                 at.setPitch(0);
                 e.teleport(at);
                 w.spawnParticle(Particle.DUST, at.clone().add(0, 1, 0), 2, 0.4, 0.4, 0.4, 0, new Particle.DustOptions(HARVEST, 1.1f));
             }
             if (t == land) {
-                w.playSound(spot, Sound.ENTITY_GENERIC_BIG_FALL, 2f, 0.5f);
-                w.playSound(spot, Sound.ENTITY_RAVAGER_STEP, 2f, 0.5f);
-                w.playSound(spot, Sound.ENTITY_GENERIC_EXPLODE, 1.2f, 1.3f);
-                w.playSound(spot, Sound.BLOCK_ROOTED_DIRT_BREAK, 2f, 0.6f);
-                w.spawnParticle(Particle.EXPLOSION_EMITTER, spot, 1);
-                w.spawnParticle(Particle.CLOUD, spot.clone().add(0, 0.3, 0), 40, radius * 0.4, 0.2, radius * 0.4, 0.08);
-                Block under = Fx.ground(w, spot.getBlockX(), spot.getY(), spot.getBlockZ());
+                w.playSound(sp, Sound.ENTITY_GENERIC_BIG_FALL, 2f, 0.5f);
+                w.playSound(sp, Sound.ENTITY_RAVAGER_STEP, 2f, 0.5f);
+                w.playSound(sp, Sound.ENTITY_GENERIC_EXPLODE, 1.2f, 1.3f);
+                w.playSound(sp, Sound.BLOCK_ROOTED_DIRT_BREAK, 2f, 0.6f);
+                w.spawnParticle(Particle.EXPLOSION_EMITTER, sp, 1);
+                w.spawnParticle(Particle.CLOUD, sp.clone().add(0, 0.3, 0), 50, radius * 0.4, 0.2, radius * 0.4, 0.08);
+                Block under = Fx.ground(w, sp.getBlockX(), sp.getY(), sp.getBlockZ());
                 BlockData data = under == null ? Material.DIRT.createBlockData() : under.getBlockData();
-                fx.crater(spot, radius * 0.8, 80, 0.5, Fx.BROKEN_EARTH);
-                fx.shockwave(spot, radius, 7, 0.55);
-                fx.debris(spot.clone().add(0, 0.4, 0), 16, data, 1.3);
-                crush(spot, 2.2);
+                fx.crater(sp, radius * 0.8, 90, 0.5, Fx.BROKEN_EARTH);
+                fx.shockwave(sp, radius, 8, 0.55);
+                fx.debris(sp.clone().add(0, 0.4, 0), 18, data, 1.4);
+                crush(sp, 2.2);
                 for (Player p : fighters(e, radius + 2)) {
                     Location pl = p.getLocation();
-                    double d = Math.hypot(pl.getX() - spot.getX(), pl.getZ() - spot.getZ());
-                    if (d > radius || Math.abs(pl.getY() - spot.getY()) > 2.5) continue;
+                    double d = Math.hypot(pl.getX() - sp.getX(), pl.getZ() - sp.getZ());
+                    if (d > radius || Math.abs(pl.getY() - sp.getY()) > 2.5) continue;
                     // full blow near the middle, less at the edge of the wave
                     c.hit(p, d < radius / 2 ? ab.number("power-center", 7) : ab.number("power-edge", 4));
-                    Vector out = pl.toVector().subtract(spot.toVector()).setY(0);
+                    Vector out = pl.toVector().subtract(sp.toVector()).setY(0);
                     if (out.lengthSquared() < 1e-4) out = new Vector(1, 0, 0);
                     p.setVelocity(out.normalize().multiply(d < radius / 2 ? 1.0 : 0.6).setY(0.5));
                 }
             }
+            if (t > land && (t - land) % 5 == 0) {
+                // aftershock: the middle of the crater keeps shaking
+                for (Player p : fighters(e, radius)) {
+                    Location pl = p.getLocation();
+                    if (Math.hypot(pl.getX() - sp.getX(), pl.getZ() - sp.getZ()) > radius / 2 || Math.abs(pl.getY() - sp.getY()) > 2) continue;
+                    c.hit(p, ab.number("aftershock-power", 1));
+                    p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 15, 1));
+                }
+                w.spawnParticle(Particle.BLOCK, sp.clone().add(0, 0.1, 0), 12, radius * 0.25, 0.05, radius * 0.25, 0,
+                        Material.COARSE_DIRT.createBlockData());
+                if ((t - land) % 10 == 0) w.playSound(sp, Sound.BLOCK_GRAVEL_BREAK, 1.2f, 0.6f);
+            }
             if (t == 42) c.release();
         });
+    }
+
+    /** Where a leap aimed at a place lands: that place, no further than {@code max} blocks, on the ground. */
+    private static Location aimLeap(Location start, Location at, double max, World w) {
+        Vector to = at.toVector().subtract(start.toVector()).setY(0);
+        if (to.length() > max) to.normalize().multiply(max);
+        Location spot = start.clone().add(to);
+        spot.setY(groundY(w, spot.getX(), at.getY(), spot.getZ()));
+        return spot;
     }
 
     // ---------------------------------------------------------------- root eruption
@@ -806,8 +850,7 @@ final class HarvestPowers {
     private void roots(MobTemplate.Ability ab, RockPowers.Caster c) {
         LivingEntity e = c.entity();
         World w = e.getWorld();
-        int around = (int) ab.number("around", 4), life = (int) ab.number("life", 30);
-        double ring = ab.number("ring", 2.3);
+        int life = (int) ab.number("life", 30);
         c.hold(45);
         c.animate("roots");
         w.playSound(e.getLocation(), Sound.BLOCK_BEACON_AMBIENT, 1.5f, 1.4f);
@@ -832,29 +875,84 @@ final class HarvestPowers {
                 w.playSound(paws, Sound.ENTITY_WARDEN_DIG, 1f, 1.4f);
                 fx.crater(paws, 2.8, 70, 0.5, Fx.BROKEN_EARTH);
                 fx.shockwave(paws, 3.5, 5, 0.35);
-                ThreadLocalRandom r = ThreadLocalRandom.current();
-                for (Player p : fighters(e, ab.number("range", 20))) {
-                    Location base = p.getLocation();
-                    spots.add(base.clone());
-                    double a0 = r.nextDouble(Math.PI * 2);
-                    for (int i = 0; i < around; i++) {
-                        double a = a0 + Math.PI * 2 * i / around;
-                        spots.add(base.clone().add(Math.cos(a) * ring, 0, Math.sin(a) * ring));
-                    }
-                }
-                // each crack runs from the boss to its spot (1.6 block a tick), the root bursts 6 ticks after it
-                // arrived; the roots come out one after the other
-                for (int i = 0; i < spots.size(); i++) {
-                    Location s = spots.get(i);
+                for (Player p : fighters(e, ab.number("range", 20))) spots.add(p.getLocation().clone());
+                // a crack runs from the boss to each player (1.6 block a tick); where it arrives, a wide zone is
+                // shown, then a forest of roots bursts out of all of it
+                for (Location s : spots) {
                     s.setY(groundY(w, s.getX(), s.getY(), s.getZ()));
                     int travel = (int) Math.ceil(s.distance(paws) / 1.6);
                     crack(paws, s, travel);
-                    int delay = travel + 6 + i;
-                    Bukkit.getScheduler().runTaskLater(plugin, () -> root(ab, c, s, life), delay);
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> zone(ab, c, s, life), travel);
                 }
             }
             if (t == 45) c.release();
         });
+    }
+
+    /**
+     * A wide zone of roots ({@code zone} blocks of radius) where a crack arrived: shown for {@code warn} ticks (red
+     * circle, a golden one closing in, the ground cracking), then roots burst out all over it one after the other;
+     * whoever is in it is hurt and slowed, and keeps taking small hits while the roots stand.
+     */
+    private void zone(MobTemplate.Ability ab, RockPowers.Caster c, Location center, int life) {
+        World w = center.getWorld();
+        double radius = ab.number("zone", 4);
+        int warn = (int) ab.number("warn", 8);
+        fx.crater(center, radius, warn + life + 20, 0.35, Material.ROOTED_DIRT, Material.COARSE_DIRT);
+        w.playSound(center, Sound.BLOCK_ROOTED_DIRT_BREAK, 1.6f, 0.5f);
+        ThreadLocalRandom r = ThreadLocalRandom.current();
+        List<Location> spots = new ArrayList<>();
+        spots.add(center.clone());
+        double a0 = r.nextDouble(Math.PI * 2);
+        for (int i = 0; i < 5; i++) {
+            double a = a0 + Math.PI * 2 * i / 5;
+            spots.add(center.clone().add(Math.cos(a) * radius * 0.5, 0, Math.sin(a) * radius * 0.5));
+        }
+        for (int i = 0; i < 8; i++) {
+            double a = a0 + Math.PI * 2 * (i + 0.5) / 8;
+            spots.add(center.clone().add(Math.cos(a) * radius * 0.88, 0, Math.sin(a) * radius * 0.88));
+        }
+        for (Location s : spots) s.setY(groundY(w, s.getX(), s.getY(), s.getZ()));
+        new BukkitRunnable() {
+            int t;
+
+            @Override
+            public void run() {
+                t++;
+                if (t <= warn) {
+                    if (t % 2 == 0) {
+                        Fx.ring(center, radius, Color.fromRGB(0xFF5C5C), 1.4f, t * 0.1);
+                        Fx.ring(center, radius * (1 - t / (double) warn), GOLD, 1.0f, 0);
+                        w.spawnParticle(Particle.BLOCK, center.clone().add(0, 0.1, 0), 10, radius * 0.4, 0.02, radius * 0.4, 0,
+                                Material.ROOTED_DIRT.createBlockData());
+                    }
+                    if (t == warn) {
+                        for (int i = 0; i < spots.size(); i++) {
+                            Location s = spots.get(i);
+                            Bukkit.getScheduler().runTaskLater(plugin, () -> root(ab, c, s, life, false), 1L + i / 3);
+                        }
+                        w.playSound(center, Sound.BLOCK_ROOTS_BREAK, 2f, 0.5f);
+                        w.playSound(center, Sound.ENTITY_EVOKER_FANGS_ATTACK, 1.6f, 0.6f);
+                    }
+                    return;
+                }
+                int since = t - warn;
+                for (Player p : w.getPlayers()) {
+                    if (!Mobs.fighting(p)) continue;
+                    Location pl = p.getLocation();
+                    if (Math.hypot(pl.getX() - center.getX(), pl.getZ() - center.getZ()) > radius || Math.abs(pl.getY() - center.getY()) > 2.5) continue;
+                    if (since == 3) {
+                        c.hit(p, ab.number("burst-power", 4));
+                        p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 2));
+                        p.setVelocity(p.getVelocity().setY(0.45));
+                    } else if (since > 3 && since < life && since % 6 == 0) {
+                        c.hit(p, ab.number("linger-power", 1));
+                        p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 25, 1));
+                    }
+                }
+                if (since >= life) cancel();
+            }
+        }.runTaskTimer(plugin, 1L, 1L);
     }
 
     /** A line of earth particles running underground from a place to another, then a crack marking the spot. */
@@ -887,7 +985,7 @@ final class HarvestPowers {
      * A root bursting out: four bent segments (mangrove roots, then a glowing tip), rising in 4 ticks; hurts and slows
      * whoever stands on it, slows whoever touches it while it stands, sinks back after {@code life} ticks.
      */
-    private void root(MobTemplate.Ability ab, RockPowers.Caster c, Location at, int life) {
+    private void root(MobTemplate.Ability ab, RockPowers.Caster c, Location at, int life, boolean hurts) {
         World w = at.getWorld();
         ThreadLocalRandom r = ThreadLocalRandom.current();
         double bend = r.nextDouble(Math.PI * 2);
@@ -931,8 +1029,8 @@ final class HarvestPowers {
                         tr.getScale(), tr.getRightRotation()));
             }
         }, 1L);
-        // the burst
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+        // the burst (a lone root; roots of a zone leave the damage to their zone)
+        if (hurts) Bukkit.getScheduler().runTaskLater(plugin, () -> {
             for (Player p : w.getPlayers()) {
                 if (!Mobs.fighting(p)) continue;
                 Location pl = p.getLocation();
@@ -949,7 +1047,7 @@ final class HarvestPowers {
             @Override
             public void run() {
                 t++;
-                if (t < life && t % 10 == 0) {
+                if (hurts && t < life && t % 10 == 0) {
                     for (Player p : w.getPlayers()) {
                         if (!Mobs.fighting(p)) continue;
                         Location pl = p.getLocation();
