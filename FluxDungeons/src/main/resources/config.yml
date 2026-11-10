@@ -112,3 +112,12 @@ aim-assist:
 # blocks that see it (no chain). 0: each on its own.
 aggro:
   alert-radius: 10
+
+# Blocks players may break in dungeons (every other block stays), plus the "breakable" list of each dungeon.
+# drops: false = the block goes without dropping anything (crops uprooted before the Harvest Hamster eats them);
+# drops: true = it drops its item (ores to mine and carry into the dungeon).
+breakable:
+  CARROTS: {drops: false}
+  POTATOES: {drops: false}
+  WHEAT: {drops: false}
+  BEETROOTS: {drops: false}

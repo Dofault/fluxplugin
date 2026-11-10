@@ -57,6 +57,8 @@ public final class DungeonDefinition {
     private final long timeLimit;
     private final double rewardMinutes, rewardXp;
     private final List<Loot> loot = new ArrayList<>();
+    /** Blocks the players may break in this dungeon, and whether each one drops its item (on top of the global list). */
+    private final Map<Material, Boolean> breakable = new java.util.EnumMap<>(Material.class);
     private final Map<String, Object> theme = new LinkedHashMap<>();
     private final List<Room> rooms = new ArrayList<>();
     private final Layout layout;
@@ -152,6 +154,7 @@ public final class DungeonDefinition {
                     l.get("require-gear") instanceof Boolean b && b));
         }
         if (levels.isEmpty()) levels.add(new Level("Normal", "", 1, 1, 1, true, false, false));
+        readBreakable(c, breakable);
         for (Map<?, ?> l : c.getMapList("loot")) {
             Object chance = l.get("chance"), amount = l.get("amount");
             loot.add(new Loot(String.valueOf(l.get("item")), chance instanceof Number n ? n.doubleValue() : 1,
@@ -303,6 +306,33 @@ public final class DungeonDefinition {
 
     public double rewardXp() {
         return rewardXp;
+    }
+
+    /**
+     * Reads {@code breakable}: a list of materials (no drop) or a section {@code MATERIAL: {drops: true}}. Crops are
+     * uprooted without drop; ores to take into the dungeon drop their item.
+     */
+    public static void readBreakable(ConfigurationSection c, Map<Material, Boolean> into) {
+        if (c == null) return;
+        if (c.isList("breakable")) {
+            for (String name : c.getStringList("breakable")) {
+                Material m = Material.matchMaterial(name);
+                if (m != null && m.isBlock()) into.put(m, false);
+            }
+            return;
+        }
+        ConfigurationSection s = c.getConfigurationSection("breakable");
+        if (s == null) return;
+        for (String k : s.getKeys(false)) {
+            Material m = Material.matchMaterial(k);
+            if (m == null || !m.isBlock()) continue;
+            into.put(m, s.getBoolean(k + ".drops", s.getBoolean(k, false)));
+        }
+    }
+
+    /** Null when the block may not be broken here, else whether it drops its item. */
+    public Boolean breakable(Material m) {
+        return breakable.get(m);
     }
 
     public List<Loot> loot() {

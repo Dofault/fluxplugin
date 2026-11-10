@@ -170,6 +170,7 @@ public final class FluxDungeons extends FluxPlugin {
     public void reload() {
         super.reload();
         settings();
+        if (listener != null) listener.reloadBreakable();
     }
 
     public Parties parties() {

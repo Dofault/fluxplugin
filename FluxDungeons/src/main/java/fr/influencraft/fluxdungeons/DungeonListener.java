@@ -14,6 +14,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.Material;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityCombustEvent;
@@ -306,9 +307,52 @@ final class DungeonListener implements Listener {
 
     // ---------------------------------------------------------------- the dungeon world is not built in
 
+    /**
+     * Players break only the blocks listed in {@code breakable} (config.yml, and the dungeon's own list): crops of a
+     * farm boss (uprooted, no drop), later ores to take into the dungeon (dropped). Everything else stays.
+     */
     @EventHandler(ignoreCancelled = true)
     public void onBreak(BlockBreakEvent e) {
-        if (arena.isArena(e.getBlock().getWorld()) && !e.getPlayer().hasPermission("fluxdungeons.admin")) e.setCancelled(true);
+        if (!arena.isArena(e.getBlock().getWorld()) || e.getPlayer().hasPermission("fluxdungeons.admin")) return;
+        var run = runs.runOf(e.getPlayer());
+        Material type = e.getBlock().getType();
+        Boolean drops = run == null ? null : run.definition().breakable(type);
+        if (drops == null && run != null) drops = globalBreakable().get(type);
+        if (drops == null) {
+            e.setCancelled(true);
+            return;
+        }
+        if (!drops) {
+            e.setDropItems(false);
+            e.setExpToDrop(0);
+        }
+    }
+
+    private java.util.Map<Material, Boolean> globalBreakable;
+
+    private java.util.Map<Material, Boolean> globalBreakable() {
+        if (globalBreakable == null) {
+            globalBreakable = new java.util.EnumMap<>(Material.class);
+            fr.influencraft.fluxdungeons.dungeon.DungeonDefinition.readBreakable(plugin.getConfig(), globalBreakable);
+        }
+        return globalBreakable;
+    }
+
+    /** Read again at the next break (after a reload of config.yml). */
+    void reloadBreakable() {
+        globalBreakable = null;
+    }
+
+    /** Farmland of the dungeons is never trampled (its crops are only lost to a player's hand or to the boss). */
+    @EventHandler(ignoreCancelled = true)
+    public void onTrample(org.bukkit.event.player.PlayerInteractEvent e) {
+        if (e.getAction() == org.bukkit.event.block.Action.PHYSICAL && e.getClickedBlock() != null
+                && e.getClickedBlock().getType() == Material.FARMLAND && arena.isArena(e.getClickedBlock().getWorld())) e.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onMobTrample(org.bukkit.event.entity.EntityInteractEvent e) {
+        if (e.getBlock().getType() == Material.FARMLAND && arena.isArena(e.getBlock().getWorld())) e.setCancelled(true);
     }
 
     @EventHandler(ignoreCancelled = true)
