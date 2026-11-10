@@ -7,8 +7,9 @@
 #
 # Disposition (centrée) :
 #   Thème vanilla (2026-10-30, theme.menus.main de la config de Flux) : rangée 1 = tableau de bord (tête = profil
-#   en 9, pseudo : widget, bouton Compte en 17 : soldes et historique), fonctionnalités en carré 3 x 3 centré (21-23, 30-32, 39-41)
-#   coffre rangée 6 : Vote 45, Parrainage 46, Classement 47, Rangs 48, Casino 49, Récompenses 51 (calendrier au clic droit),
+#   en 9, pseudo : widget, bouton Compte en 17 : soldes et historique), fonctionnalités dans un bloc de 2 x 5 (2026-11-10, fond bg_main de gen_ui.py) :
+#   20-24 Rangs, Carrières, Quêtes, Collections, Tags ; 29-33 Marché, Mondes, Villes et Pays, Familiers, Casino
+#   coffre rangée 6 : Vote 45, Parrainage 46, Classement 47, Récompenses 51 (calendrier au clic droit),
 #   Pass 52, Autre 53
 #   (Autre = fenêtre des paramètres au clic gauche, fenêtre d'aide au clic droit : Flux, settings.yml et help.yml)
 #   inventaire du joueur : masqué, aucun bouton
@@ -45,7 +46,7 @@ lists:
 
 items:
 
-  # ── Fonctionnalités : rangée 4 du coffre (cases 28 à 34) ────────────────
+  # ── Fonctionnalités : bloc de 2 x 5 (cases 20 à 24 et 29 à 33) ──────────
 
   carrieres:
     material: DIAMOND_PICKAXE
@@ -105,7 +106,7 @@ items:
     actions:
       left: ["[menu] mondes"]
 
-  # Menus Villes et Pays de FluxLands (Lands, warps FluxPW, échoppes FluxCommerce),
+  # Menus Villes et Pays de FluxLands (Lands, warps FluxPW, échoppes FluxChestShop),
   # générés par assets/ville/gen_menus_ville.py. Clic gauche : accueil partagé
   # Villes et Pays ; raccourcis directs vers Ma ville, l'Agence et Mon pays.
   ville:
@@ -134,11 +135,11 @@ items:
     actions:
       left: ["[menu] familiers"]
 
-  # Marché de FluxCommerce : hôtel des ventes et échoppes des villes réunis (menus livrés par FluxCommerce).
+  # Marché de FluxAuctionHouse : hôtel des ventes et échoppes des villes réunis (menus livrés par FluxAuctionHouse).
   marche:
     material: "itemsadder:influmarche:marche"
     name: "&#FFD94DMarché"
-    slots: [39]
+    slots: [29]
     lore:
       - "@desc Hôtel des ventes et échoppes des villes : achète, vends, compare les prix."
       - "@left Ouvrir le marché"
@@ -152,7 +153,7 @@ items:
   casino:
     material: "itemsadder:influcasino:jeton"
     name: "&#FFD94DCasino"
-    slots: [41]
+    slots: [33]
     lore:
       - "@desc Plinko et bientôt d'autres jeux, avec des jetons échangeables contre des Bitblock."
       - "@left Ouvrir le casino"
@@ -165,7 +166,7 @@ items:
   rangs:
     material: "itemsadder:influitems:stairs"
     name: "&#FFD94DRangs"
-    slots: [40]
+    slots: [20]
     lore:
       - "@desc Les 12 rangs, leurs avantages et les coffres de palier."
       - "@kv Ton rang | %grades_rank%"
@@ -177,7 +178,7 @@ items:
   tags:
     material: NAME_TAG
     name: "&#FFD94DTags"
-    slots: [49]
+    slots: [24]
     lore:
       - "@desc Choisis le tag affiché à côté de ton pseudo."
       - "@left Ouvrir"

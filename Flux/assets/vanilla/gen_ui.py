@@ -554,17 +554,35 @@ def bg_profil(generic):
     return im
 
 
-# Villes et Pays (FluxLands territoires.yml, redone 2026-11-08): back (27) and menu icon (35) on the first drawn row,
-# then two big buttons of 2 x 2 slots side by side, symmetric (Ma ville columns 2-3, Mon pays columns 5-6, rows 4-5):
-# only their icon is drawn here (button of the theme twice its size), invisible items over them for the click. No card
+# Main menu (/menu2, Flux menus/main.yml, 2026-11-10): profile row (9, 17, name and balance written by Flux), then the
+# main features in one box of 2 rows x 5 (20-24: ranks, jobs, quests, collections, tags; 29-33: market, worlds,
+# towns, pets, casino), the shortcut row on chest row 5 (45-53), drawn by the menu's own buttons.
+MAIN_GRID = [20, 21, 22, 23, 24, 29, 30, 31, 32, 33]
+
+
+def bg_main(generic):
+    im = bg_window(generic, 1, 5)
+    d = ImageDraw.Draw(im, "RGBA")
+    ui.container(im, d, span(MAIN_GRID), "ardoise")
+    for c in MAIN_GRID:
+        ui.slot(d, c, "dark")
+    for c in (9, 17):                     # profile head and account button
+        ui.slot(d, c, "vanilla")
+    return im
+
+
+# Villes et Pays (FluxLands territoires.yml, redone 2026-11-08, buttons 3 x 3 since 2026-11-10): back (18) and menu
+# icon (26) on the first drawn row, then two big buttons of 3 x 3 slots side by side, symmetric (Ma ville columns 1-3,
+# Mon pays columns 5-7, rows 3-5): only their icon is drawn here (button of the theme three times its size), invisible
+# items over them for the click. No card
 # and no text (owner's choice: only the title is written in a menu). Explore buttons on the first inventory row,
 # under the chest / inventory gap.
-TERRITORY_BUTTONS = {"ville": 38, "pays": 41}   # top-left slot of each 2 x 2 button, as CARTE_* of gen_menus_ville.py
+TERRITORY_BUTTONS = {"ville": 28, "pays": 32}   # top-left slot of each 2 x 2 button, as CARTE_* of gen_menus_ville.py
 PLUGINS = None                 # plugins dir of the server, set by main (pictures of other packs)
 
 
-def big_icon(ns, iid):
-    """A former-theme picture restyled as a button of the theme, twice its size (32 x 32), or None."""
+def big_icon(ns, iid, scale=2):
+    """A former-theme picture restyled as a button of the theme, ``scale`` times its size, or None."""
     path = os.path.join(PLUGINS or "", "ItemsAdder", "contents", ns, "textures", "icones", iid + ".png")
     if not os.path.isfile(path):
         return None
@@ -572,16 +590,16 @@ def big_icon(ns, iid):
     if not found:
         return None
     face, glyph = found
-    return restyled_png(nearest_colour(face), glyph).resize((32, 32), Image.NEAREST)
+    return restyled_png(nearest_colour(face), glyph).resize((16 * scale, 16 * scale), Image.NEAREST)
 
 
 def bg_territoires(generic):
-    im = bg_window(generic, 3, 6)
+    im = bg_window(generic, 2, 6)
     for name, case in TERRITORY_BUTTONS.items():
-        icon = big_icon("influville", name)
+        icon = big_icon("influville", name, 3)
         if icon:
-            x, y = ui.objet(case)            # 2 x 2 slots = 34 px square from the top-left item, icon of 32 centred
-            im.alpha_composite(icon, (x + 1, y + 1))
+            x, y = ui.objet(case)            # 3 x 3 slots = 52 px square from the top-left item, icon of 48 centred
+            im.alpha_composite(icon, (x + 2, y + 2))
     return im
 
 
@@ -658,7 +676,7 @@ def bg_window(generic, first=0, last=9, extra=0, rows=6):
     return im
 
 
-BACKGROUNDS = {"metiers": bg_metiers, "window": bg_window, "pass": bg_pass, "profil": bg_profil,
+BACKGROUNDS = {"metiers": bg_metiers, "main": bg_main, "window": bg_window, "pass": bg_pass, "profil": bg_profil,
                "territoires": bg_territoires, "echange": bg_echange,
                "echange_pret_moi": lambda generic: echange_ready("moi"),
                "echange_pret_lui": lambda generic: echange_ready("lui")}
