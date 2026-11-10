@@ -81,7 +81,11 @@ public final class HealthBars implements Listener {
     /** Creatures the world bars leave alone (dungeon monsters and pets: FluxDungeons draws or hides theirs). */
     private Predicate<Entity> skip = e -> false;
 
+    /** Stretch of a monster's life beyond Minecraft's 1024 cap (set by Mobs#maxHealth): the bar shows the life asked. */
+    private final org.bukkit.NamespacedKey healthScale;
+
     public HealthBars(Plugin plugin) {
+        this.healthScale = new org.bukkit.NamespacedKey(plugin, "health_scale");
         this.plugin = plugin;
         Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 20L, 10L);
     }
@@ -179,7 +183,8 @@ public final class HealthBars implements Listener {
         b.step = step;
         b.health = health;
         Component head = b.head.apply(e);
-        String number = shortNumber(health);
+        Double stretch = e.getPersistentDataContainer().get(healthScale, org.bukkit.persistence.PersistentDataType.DOUBLE);
+        String number = shortNumber(health * (stretch == null || stretch < 1 ? 1 : stretch));
         int width = DIGIT_ADVANCE * number.length() - 1;
         int start = (BAR_WIDTH - width) / 2;
         // same two lines in both displays, so the life sits exactly on the bar: name + bar, then blank + life
