@@ -43,7 +43,7 @@ import java.util.Map;
  *       animation: transition_dive   # animation of its model
  *       duration: 72                 # ticks before the next monster appears
  *       at-spawn: true               # goes back to its spawn point first
- *       flood: {at: 46, radius: 6, depth: 1, from: [ICE, PACKED_ICE], to: WATER}   # blocks under it, changed at that tick
+ *       flood: {crack: 33, at: 46, radius: 6, depth: 1, from: [ICE, PACKED_ICE], to: WATER}   # cracks from "crack", burst at "at"
  *   death-ticks: 36                # a boss with a death animation disappears this many ticks after it starts
  *   attack-speed: 1                # melee hits per second at most (vanilla 1)
  *   ranged-resistance: 0.5         # share of projectile damage it shrugs off (melee is the way)
@@ -103,8 +103,11 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
         }
     }
 
-    /** Blocks of the listed kinds under a monster turned into another one, {@code at} ticks into its transition. */
-    public record Flood(int at, double radius, int depth, java.util.Set<Material> from, Material to) {
+    /**
+     * Blocks of the listed kinds under a monster turned into another one, {@code at} ticks into its transition, after
+     * cracks drawn on them from {@code crack} (no crack when {@code crack} is negative or not before {@code at}).
+     */
+    public record Flood(int crack, int at, double radius, int depth, java.util.Set<Material> from, Material to) {
     }
 
     /**
@@ -206,7 +209,7 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
             }
         }
         Material to = Material.matchMaterial(String.valueOf(f.get("to")));
-        return new Flood(f.get("at") instanceof Number n ? n.intValue() : 0,
+        return new Flood(f.get("crack") instanceof Number n ? n.intValue() : -1, f.get("at") instanceof Number n ? n.intValue() : 0,
                 f.get("radius") instanceof Number n ? n.doubleValue() : 3,
                 f.get("depth") instanceof Number n ? Math.max(1, n.intValue()) : 1, from, to == null ? Material.WATER : to);
     }

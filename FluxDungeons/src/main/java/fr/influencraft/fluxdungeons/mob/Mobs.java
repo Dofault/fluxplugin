@@ -766,38 +766,20 @@ public final class Mobs {
         }
         a.model.play(phase.animation());
         MobTemplate.Flood flood = phase.flood();
-        if (flood != null) Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (e.isValid() && !a.dying) flood(e.getLocation(), flood);
-        }, Math.max(0, flood.at()));
+        if (flood != null) {
+            int at = Math.max(0, flood.at());
+            if (flood.crack() >= 0 && flood.crack() < at) Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (e.isValid() && !a.dying) FloorBreak.crack(plugin, e.getLocation(), flood, at - flood.crack());
+            }, flood.crack());
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (e.isValid() && !a.dying) FloorBreak.burst(plugin, e.getLocation(), flood);
+            }, at);
+        }
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (!e.isValid() || a.dying || !alive.containsKey(e.getUniqueId())) return;
             double ratio = e.getHealth() / Math.max(1, maxHealth(e));
             becomeNext(a, next, ratio);
         }, Math.max(1, phase.duration()));
-    }
-
-    /** Turns the blocks of the listed kinds under a spot into another kind (ice breaking into water). */
-    private static void flood(Location center, MobTemplate.Flood f) {
-        World w = center.getWorld();
-        int cx = center.getBlockX(), cz = center.getBlockZ(), top = (int) Math.floor(center.getY() - 0.01) - 1;
-        int r = (int) Math.ceil(f.radius());
-        org.bukkit.block.data.BlockData into = f.to().createBlockData();
-        for (int dx = -r; dx <= r; dx++) {
-            for (int dz = -r; dz <= r; dz++) {
-                if (dx * dx + dz * dz > f.radius() * f.radius()) continue;
-                for (int dy = 0; dy < f.depth(); dy++) {
-                    org.bukkit.block.Block b = w.getBlockAt(cx + dx, top - dy, cz + dz);
-                    if (!f.from().contains(b.getType())) continue;
-                    Location l = b.getLocation().add(0.5, 1, 0.5);
-                    w.spawnParticle(Particle.BLOCK, l, 6, 0.4, 0.1, 0.4, 0.1, b.getBlockData());
-                    b.setBlockData(into, false);
-                    if ((dx + dz) % 3 == 0) w.spawnParticle(Particle.SPLASH, l, 6, 0.3, 0.1, 0.3, 0.1);
-                }
-            }
-        }
-        w.playSound(center, Sound.BLOCK_GLASS_BREAK, 2f, 0.5f);
-        w.playSound(center, Sound.ENTITY_GENERIC_EXPLODE, 1.2f, 0.6f);
-        w.playSound(center, Sound.ENTITY_PLAYER_SPLASH_HIGH_SPEED, 1.5f, 0.7f);
     }
 
     private LivingEntity spawnPhase(MobTemplate next, Location at, Alive from, double ratio) {
