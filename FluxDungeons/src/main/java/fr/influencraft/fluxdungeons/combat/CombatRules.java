@@ -302,6 +302,36 @@ public final class CombatRules implements Listener {
         e.setCancelled(true);
     }
 
+    /**
+     * A boss is never pushed, whoever pushes it: vanilla knockback is cancelled above, but enchantments of other plugins
+     * (libreforge's knock_away, set_victim_velocity...) and special weapons set its velocity directly, without any
+     * event. So every hit on a boss notes where it stood, and the next tick puts it back there if it was pushed (its own
+     * walk moves it far less in a tick). A swimming boss needs nothing: its swim puts it back every tick.
+     */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBossHit(EntityDamageEvent e) {
+        if (!(e.getEntity() instanceof LivingEntity boss) || !boss.getScoreboardTags().contains(Mobs.BOSS_TAG)) return;
+        if (mobs.swims(boss)) return;
+        Location before = boss.getLocation();
+        Bukkit.getScheduler().runTask(plugin, () -> anchor(boss, before));
+    }
+
+    private static void anchor(LivingEntity boss, Location before) {
+        if (!boss.isValid() || boss.isDead() || boss.getWorld() != before.getWorld()) return;
+        Location now = boss.getLocation();
+        org.bukkit.util.Vector v = boss.getVelocity();
+        boolean moved = Math.hypot(now.getX() - before.getX(), now.getZ() - before.getZ()) > 0.2 || now.getY() - before.getY() > 0.25;
+        boolean flying = Math.hypot(v.getX(), v.getZ()) > 0.2 || v.getY() > 0.2;
+        if (!moved && !flying) return;
+        boss.setVelocity(new org.bukkit.util.Vector(0, Math.min(0, v.getY()), 0));
+        if (moved) {
+            Location back = before.clone();
+            back.setYaw(now.getYaw());
+            back.setPitch(now.getPitch());
+            Mobs.move(boss, back);
+        }
+    }
+
     /** Lethal damage of any other cause (fire, fall) still plays a boss's death animation. */
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onDamage(EntityDamageEvent e) {

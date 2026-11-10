@@ -239,6 +239,8 @@ final class Swimmer {
         }
         to.setPitch(0);
         Mobs.move(e, to);
+        // whatever pushed it (a hit, an enchantment) is undone: only the swim moves it
+        e.setVelocity(new Vector());
         last = to;
         effects(to, delta);
         if (plan.mode == Mode.PASS || plan.mode == Mode.CIRCLE) touch(to, delta);

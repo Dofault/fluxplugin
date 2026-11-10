@@ -278,6 +278,12 @@ public final class Mobs {
         this.onDeath = handler;
     }
 
+    /** Whether this monster is moved by its {@link Swimmer} (it puts itself back in place every tick). */
+    public boolean swims(Entity entity) {
+        Alive a = alive.get(entity.getUniqueId());
+        return a != null && a.swimmer != null;
+    }
+
     /** Template id of a dungeon monster, null for anything else. */
     public String templateOf(Entity entity) {
         return entity.getPersistentDataContainer().get(mobKey, PersistentDataType.STRING);
@@ -314,7 +320,11 @@ public final class Mobs {
             le.getPersistentDataContainer().set(runKey, PersistentDataType.STRING, run);
             le.getPersistentDataContainer().set(spawnKey, PersistentDataType.STRING, at.getX() + "," + at.getY() + "," + at.getZ());
             le.addScoreboardTag(TAG);
-            if (t.boss()) le.addScoreboardTag(BOSS_TAG);
+            if (t.boss()) {
+                le.addScoreboardTag(BOSS_TAG);
+                // nothing pushes a boss, not even players walking into it
+                le.setCollidable(false);
+            }
             le.customName(Texts.parse(t.name()));
             // the name shows on the life bar above it; without the bar, on the vanilla name tag
             le.setCustomNameVisible(!t.boss() && (bars == null || !bars.enabled()));
@@ -426,7 +436,10 @@ public final class Mobs {
             }
         }
         le.setMaximumNoDamageTicks(0);
-        if (t.boss()) le.addScoreboardTag(BOSS_TAG);
+        if (t.boss()) {
+            le.addScoreboardTag(BOSS_TAG);
+            le.setCollidable(false);
+        }
         Alive a = new Alive(le, t, run, spawn, model);
         a.objective = le.getPersistentDataContainer().get(objectiveKey, PersistentDataType.STRING);
         alive.put(le.getUniqueId(), a);
