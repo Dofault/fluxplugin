@@ -244,6 +244,9 @@ public final class Runs {
 
     /** Everybody is ready on the launch screen: checked again, then started. */
     private void launch(DungeonDefinition def, List<Player> players, Map<UUID, Loadouts.Selection> selections, int level) {
+        // the file as it is now: a launch screen opened before /fluxdungeons reload still held the former one
+        DungeonDefinition current = dungeons.get(def.id());
+        if (current != null) def = current;
         Refusal refusal = check(def, players);
         if (refusal != Refusal.NONE) {
             for (Player p : players) plugin.messages().send(p, "lobby.refused");
