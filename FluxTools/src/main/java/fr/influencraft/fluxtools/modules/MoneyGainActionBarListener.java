@@ -18,8 +18,6 @@ import org.bukkit.scheduler.BukkitTask;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -45,10 +43,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * continue de s'accumuler normalement, mais l'affichage est simplement
  * différé tant que l'outil en main est sous le seuil de durabilité de
  * DurabilityNotifier — rien n'est perdu, juste montré plus tard.</p>
- *
- * <p>Hype bar after the amount (2026-11-10): the textured bar of FluxAFK, filled by the money of the last
- * {@code hype-bar.window-seconds} against the pace of an optimal level 100 player (FluxValue). Without FluxValue,
- * no bar; without the picture (pack not zipped, Bedrock player), a bar of text.</p>
  */
 public final class MoneyGainActionBarListener implements Listener {
 
@@ -65,18 +59,10 @@ public final class MoneyGainActionBarListener implements Listener {
     private final int durabilityThreshold;
 
     private final Map<UUID, BigDecimal> totals = new ConcurrentHashMap<>();
-    private final Map<UUID, Deque<double[]>> recent = new ConcurrentHashMap<>(); // {time, amount}, main thread only
-    private final String hypeGlyph;
-    private final int hypeSteps;
-    private final double hypeWindowSeconds;
     private final Map<UUID, BukkitTask> hideTasks = new ConcurrentHashMap<>();
 
     public MoneyGainActionBarListener(Plugin plugin, double hideAfterSeconds, String color,
-                                       boolean durabilityGuardEnabled, int durabilityThreshold,
-                                       String hypeGlyph, int hypeSteps, double hypeWindowSeconds) {
-        this.hypeGlyph = hypeGlyph;
-        this.hypeSteps = Math.max(1, hypeSteps);
-        this.hypeWindowSeconds = Math.max(1, hypeWindowSeconds);
+                                       boolean durabilityGuardEnabled, int durabilityThreshold) {
         this.plugin = plugin;
         this.hideAfterTicks = Math.round(hideAfterSeconds * 20.0);
         this.color = color;
@@ -116,13 +102,12 @@ public final class MoneyGainActionBarListener implements Listener {
     private void handleGain(Player player, BigDecimal delta) {
         UUID uuid = player.getUniqueId();
         BigDecimal total = totals.merge(uuid, delta, BigDecimal::add);
-        String hype = hype(player, delta.doubleValue());
 
         if (!(durabilityGuardEnabled && isHeldItemDurabilityLow(player))) {
             // amount in the main currency format of the suite (Flux config: currencies.<id>.format)
             fr.influencraft.flux.api.economy.Currency money = fr.influencraft.flux.api.economy.Economy.main();
             String amount = money == null ? AMOUNT_FORMAT.format(total) : money.format(total.doubleValue());
-            player.sendActionBar(fr.influencraft.flux.api.text.Texts.parse(color + "+" + amount + hype, player));
+            player.sendActionBar(fr.influencraft.flux.api.text.Texts.parse(color + "+" + amount, player));
         }
 
         BukkitTask previousTask = hideTasks.remove(uuid);
@@ -133,27 +118,9 @@ public final class MoneyGainActionBarListener implements Listener {
         BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, () -> {
             player.sendActionBar(Component.empty());
             totals.remove(uuid);
-            recent.remove(uuid);
             hideTasks.remove(uuid);
         }, hideAfterTicks);
         hideTasks.put(uuid, task);
-    }
-
-    /** " " + the hype bar, empty when off (no glyph pattern) or without FluxValue. */
-    private String hype(Player player, double gain) {
-        double reference = fr.influencraft.flux.api.value.Values.moneyPerSecond() * hypeWindowSeconds;
-        if (hypeGlyph == null || hypeGlyph.isEmpty() || reference <= 0) return "";
-        long now = System.currentTimeMillis();
-        Deque<double[]> gains = recent.computeIfAbsent(player.getUniqueId(), k -> new ArrayDeque<>());
-        gains.addLast(new double[]{now, gain});
-        while (gains.peekFirst()[0] < now - hypeWindowSeconds * 1000) gains.pollFirst();
-        double sum = 0;
-        for (double[] g : gains) sum += g[1];
-        double ratio = Math.min(1, sum / reference);
-        String glyph = fr.influencraft.flux.api.client.Clients.bedrock(player) ? null
-                : fr.influencraft.flux.api.items.CustomItems.bar(hypeGlyph, hypeSteps, ratio);
-        return " &r&f" + (glyph != null ? glyph
-                : fr.influencraft.flux.api.util.Format.bar(ratio, 1.0, hypeSteps, "&#B376E5", "&8"));
     }
 
     // Même formule que DurabilityUtil#getDurability/isDurabilityLow de DurabilityNotifierSpigot
