@@ -21,3 +21,6 @@ libs/*.jar
 # Python caches
 __pycache__/
 *.pyc
+
+# Generated BetterModel models of the monsters (regenerate with FluxDungeons/assets/monstres/<id>.py; copies live on Labs)
+FluxDungeons/assets/monstres/*.bbmodel
