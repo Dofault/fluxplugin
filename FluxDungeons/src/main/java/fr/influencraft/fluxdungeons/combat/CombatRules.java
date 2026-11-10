@@ -291,6 +291,11 @@ public final class CombatRules implements Listener {
             return;
         }
         if (mobs.templateOf(target) == null) return;
+        // a boss is never pushed, whatever the hit (its place belongs to its animations and abilities)
+        if (target.getScoreboardTags().contains(fr.influencraft.fluxdungeons.mob.Mobs.BOSS_TAG)) {
+            e.setCancelled(true);
+            return;
+        }
         // monsters are never pushed by hits, except by a weapon enchanted with Knockback (the enchantment keeps its use)
         if (e instanceof org.bukkit.event.entity.EntityKnockbackByEntityEvent byEntity && attacker(byEntity.getSourceEntity()) instanceof Player hitter
                 && hitter.getInventory().getItemInMainHand().getEnchantmentLevel(org.bukkit.enchantments.Enchantment.KNOCKBACK) > 0) return;

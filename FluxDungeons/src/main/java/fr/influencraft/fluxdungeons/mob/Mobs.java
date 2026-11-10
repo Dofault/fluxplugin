@@ -150,6 +150,8 @@ public final class Mobs {
 
     /** Scoreboard tag of every dungeon monster: other plugins leave tagged mobs alone (FluxStack never stacks them). */
     public static final String TAG = "fluxdungeons";
+    /** Scoreboard tag of a boss: nothing pushes it (hits, Knockback, class abilities). */
+    public static final String BOSS_TAG = "fluxdungeons_boss";
     /** Out-of-combat speed cap and share of sight kept (EliteMobs: 0.12 and a third). */
     private static final double CALM_SPEED = 0.12, CALM_SIGHT = 1 / 3.0;
     /** A monster without a player to fight for this long leaves combat. */
@@ -312,6 +314,7 @@ public final class Mobs {
             le.getPersistentDataContainer().set(runKey, PersistentDataType.STRING, run);
             le.getPersistentDataContainer().set(spawnKey, PersistentDataType.STRING, at.getX() + "," + at.getY() + "," + at.getZ());
             le.addScoreboardTag(TAG);
+            if (t.boss()) le.addScoreboardTag(BOSS_TAG);
             le.customName(Texts.parse(t.name()));
             // the name shows on the life bar above it; without the bar, on the vanilla name tag
             le.setCustomNameVisible(!t.boss() && (bars == null || !bars.enabled()));
@@ -423,6 +426,7 @@ public final class Mobs {
             }
         }
         le.setMaximumNoDamageTicks(0);
+        if (t.boss()) le.addScoreboardTag(BOSS_TAG);
         Alive a = new Alive(le, t, run, spawn, model);
         a.objective = le.getPersistentDataContainer().get(objectiveKey, PersistentDataType.STRING);
         alive.put(le.getUniqueId(), a);

@@ -75,7 +75,9 @@ public final class Abilities {
                     w.spawnParticle(Particle.SWEEP_ATTACK, l.clone().add(0, 1, 0), 6, 0.8, 0.3, 0.8, 0);
                     for (LivingEntity e : enemies(l, radius, ctx)) {
                         hit(e, power, p);
-                        e.setVelocity(e.getLocation().toVector().subtract(l.toVector()).setY(0).normalize().multiply(0.8).setY(0.35));
+                        if (!e.getScoreboardTags().contains(fr.influencraft.fluxdungeons.mob.Mobs.BOSS_TAG)) {
+                            e.setVelocity(e.getLocation().toVector().subtract(l.toVector()).setY(0).normalize().multiply(0.8).setY(0.35));
+                        }
                     }
                 });
                 return true;
