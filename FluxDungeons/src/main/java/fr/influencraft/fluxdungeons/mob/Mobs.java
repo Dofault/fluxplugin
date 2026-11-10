@@ -1511,14 +1511,79 @@ public final class Mobs {
 
     /** An ability hit: its {@code power} is absolute, or a multiple of the monster's hit (built-in powers, {@code relative}). */
     private void strike(Alive a, Player p, Ability ab, double fallback) {
+        strike(a, p, ab, fallback, 1, false);
+    }
+
+    /**
+     * An ability hit, or {@code share} of it. A {@code combo: {first, hits, every}} on the ability turns one big hit
+     * into a series: {@code first} of it lands at once, the rest in {@code hits} small hits {@code every} ticks
+     * apart, so the player sees his life going down and can still react (heal, flee). A {@code drain} part is a
+     * small hit without knockback, never blocked (ultimates take a share of their hit that way before the impact,
+     * {@code lead-in}). Parts always take, after armour, their exact share of what the whole hit would have taken:
+     * splitting never weakens an attack (vanilla armour stops a larger part of small hits).
+     */
+    private void strike(Alive a, Player p, Ability ab, double fallback, double share, boolean drain) {
         double v = ab.number("power", fallback);
         boolean relative = ab.number("relative", 0) > 0 || !a.template.abilities().contains(ab);
+        // absolute powers follow the difficulty level of the run (relative ones already do, through the attack)
+        double full = relative ? v * hitOn(a, p) : v * scaling.apply(a.run)[1];
+        boolean unavoid = ab.flag("unavoidable", false);
+        if (drain) {
+            bleed(p, afterArmor(p, full) * share, unavoid);
+            return;
+        }
+        double first = share;
+        int hits = 0, every = 4;
+        if (ab.params().get("combo") instanceof Map<?, ?> combo && share >= 1) {
+            first = combo.get("first") instanceof Number n ? Math.max(0.05, Math.min(1, n.doubleValue())) : 0.5;
+            hits = combo.get("hits") instanceof Number n ? Math.max(1, n.intValue()) : 5;
+            every = combo.get("every") instanceof Number n ? Math.max(1, n.intValue()) : 4;
+        }
         // unavoidable (ultimates): neither a shield nor a dodging enchantment (cancel_event of another plugin) stops it
-        unavoidable = ab.flag("unavoidable", false);
+        unavoidable = unavoid;
         try {
-            // absolute powers follow the difficulty level of the run (relative ones already do, through the attack)
-            deal(p, a.entity, relative ? v * hitOn(a, p) : v * scaling.apply(a.run)[1]);
+            deal(p, a.entity, first >= 1 ? full : rawFor(p, full, first));
         } finally {
+            unavoidable = false;
+        }
+        if (hits > 0 && first < 1) {
+            double each = afterArmor(p, full) * (1 - first) / hits;
+            for (int i = 1; i <= hits; i++) Bukkit.getScheduler().runTaskLater(plugin, () -> bleed(p, each, unavoid), (long) i * every);
+        }
+    }
+
+    /** Life a hit of {@code raw} takes through the player's armour (vanilla formula, toughness included). */
+    private static double afterArmor(Player p, double raw) {
+        AttributeInstance ar = p.getAttribute(Attribute.ARMOR), to = p.getAttribute(Attribute.ARMOR_TOUGHNESS);
+        double armor = ar == null ? 0 : ar.getValue(), tough = to == null ? 0 : to.getValue();
+        double cut = Math.max(armor * 0.2, Math.min(20, armor - 4 * raw / (tough + 8)));
+        return raw * (1 - cut / 25);
+    }
+
+    /** The raw hit whose damage through armour is {@code share} of what {@code full} would take. */
+    private static double rawFor(Player p, double full, double share) {
+        double want = afterArmor(p, full) * share, lo = 0, hi = full;
+        for (int i = 0; i < 30; i++) {
+            double mid = (lo + hi) / 2;
+            if (afterArmor(p, mid) < want) lo = mid;
+            else hi = mid;
+        }
+        return hi;
+    }
+
+    /**
+     * Takes this much life (already counted through armour) as a small hit: no knockback, not blocked, the hurt
+     * flash and sound of the player kept so that he notices it.
+     */
+    private void bleed(Player p, double amount, boolean unavoid) {
+        if (amount <= 0 || !p.isOnline() || !fighting(p)) return;
+        p.setNoDamageTicks(0);
+        unavoidable = unavoid;
+        dealing = true;
+        try {
+            p.damage(amount, org.bukkit.damage.DamageSource.builder(org.bukkit.damage.DamageType.MAGIC).build());
+        } finally {
+            dealing = false;
             unavoidable = false;
         }
     }
@@ -1663,6 +1728,14 @@ public final class Mobs {
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
                     if (Bukkit.getCurrentTick() >= a.holdUntil && m.isValid() && !a.dying && !a.switching) m.setAI(true);
                 }, ticks);
+            }
+
+            public void hitShare(Player p, double fallback, double share) {
+                strike(a, p, ab, fallback, share, false);
+            }
+
+            public void drain(Player p, double fallback, double share) {
+                strike(a, p, ab, fallback, share, true);
             }
 
             public void release() {

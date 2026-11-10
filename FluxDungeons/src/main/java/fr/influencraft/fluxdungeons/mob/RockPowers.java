@@ -75,6 +75,23 @@ final class RockPowers {
             return entity().getLocation();
         }
 
+        /**
+         * Part of a hit: {@code share} of what {@link #hit} would take from the player's life, armour included (the
+         * last part of an ultimate whose first part was drained beforehand).
+         */
+        default void hitShare(Player p, double fallback, double share) {
+            hit(p, fallback * share);
+        }
+
+        /**
+         * A small warning hit, no knockback, never blocked: {@code share} of what {@link #hit} would take from the
+         * player's life. Called again and again while a player stays in the zone of a coming ultimate, so that he
+         * sees his life go down and can still get away (cf. {@link #leadIn}).
+         */
+        default void drain(Player p, double fallback, double share) {
+            hit(p, fallback * share);
+        }
+
         /** Ends a hold now (an ability that finished earlier than planned). */
         default void release() {
         }
@@ -92,6 +109,27 @@ final class RockPowers {
 
         /** Outline glow of its model (0xRRGGBB), off with a negative colour. */
         default void glow(int rgb) {
+        }
+    }
+
+    /**
+     * Life taken before the impact of an ultimate ({@code lead-in}: share of its hit, 0 = none; {@code lead-ticks}:
+     * over how many ticks before the impact, 40 by default): one drain every 4 ticks to each player standing in the
+     * zone. Returns the share left for the impact itself.
+     */
+    static double leadIn(MobTemplate.Ability ab) {
+        return Math.max(0, Math.min(0.9, ab.number("lead-in", 0)));
+    }
+
+    /** Called every tick {@code t} of a charge whose impact falls on tick {@code impact}: drains who {@code inZone}. */
+    static void leadTick(MobTemplate.Ability ab, Caster c, int t, int impact, double fallback,
+                         java.util.function.Predicate<Player> inZone) {
+        double lead = leadIn(ab);
+        int ticks = (int) Math.max(4, ab.number("lead-ticks", 40));
+        if (lead <= 0 || t < impact - ticks || t >= impact || (impact - t) % 4 != 0) return;
+        double share = lead / (ticks / 4.0);
+        for (Player p : c.entity().getWorld().getPlayers()) {
+            if (Mobs.fighting(p) && inZone.test(p)) c.drain(p, fallback, share);
         }
     }
 
@@ -605,6 +643,11 @@ final class RockPowers {
                     w.spawnParticle(inside, center.clone().add(Math.cos(a) * r, 0.2, Math.sin(a) * r), 1, 0, 0, 0, 0);
                 }
                 if (t % 20 == 0) w.playSound(center, water ? Sound.BLOCK_WATER_AMBIENT : Sound.BLOCK_FIRE_AMBIENT, 2f, 0.6f + (float) k);
+                // whoever stays in the ring already burns: life going down, time to get out
+                leadTick(ab, c, (int) t, (int) charge, 3, p -> {
+                    Location pl = p.getLocation();
+                    return Math.hypot(pl.getX() - center.getX(), pl.getZ() - center.getZ()) <= radius && Math.abs(pl.getY() - center.getY()) < 5;
+                });
                 if (t >= charge) {
                     cancel();
                     cataclysmImpact(ab, c, center, radius, water);
@@ -629,7 +672,7 @@ final class RockPowers {
             if (!Mobs.fighting(p)) continue;
             Location pl = p.getLocation();
             if (Math.hypot(pl.getX() - center.getX(), pl.getZ() - center.getZ()) <= radius && Math.abs(pl.getY() - center.getY()) < 5) {
-                c.hit(p, 3);
+                c.hitShare(p, 3, 1 - leadIn(ab));
                 p.setFireTicks(0);
                 if (launch > 0) {
                     Vector away = pl.toVector().subtract(center.toVector()).setY(0);

@@ -14,6 +14,10 @@
 # Choosing abilities, for every one: target-min / target-max (distance to the target, blocks), weight (draw weight,
 # 1 by default), once: true (cast once), opening: true (first move of the fight, once), wait (seconds below "below"
 # before the first cast, an ultimate kept for later).
+# Damage in several hits: combo: {first, hits, every} on an ability = that share of the hit at once, the rest in
+# small hits every few ticks (the player sees his life go down and can react); lead-in (share) and lead-ticks on an
+# ultimate (cataclysm, tidal_breach, great_feast) = that share drained before the impact from whoever stays in the
+# shown zone, the impact dealing the rest. The total is the same as one hit, armour included.
 # cues: sounds and effects of the animations (a model carries none). cues.<animation>: list of {tick, sound, volume,
 # pitch, particle, count, height, spread}; cues.steps: {sound, stride, volume, pitch} (a step every stride blocks);
 # cues.ambient: {every (ticks), chance, animations, sounds} (standing still, nobody within 8 blocks).

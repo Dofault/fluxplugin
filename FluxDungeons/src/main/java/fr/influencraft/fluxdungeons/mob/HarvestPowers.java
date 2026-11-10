@@ -319,7 +319,7 @@ final class HarvestPowers {
      * player it meets (each player once per salvo), breaks on walls.
      */
     private void shoot(RockPowers.Caster c, Location from, Vector vel, Material item, boolean glowing, double fallback,
-                       Set<UUID> hitBySalvo) {
+                       double share, Set<UUID> hitBySalvo) {
         World w = from.getWorld();
         ItemDisplay d = w.spawn(from, ItemDisplay.class, it -> {
             it.setItemStack(new ItemStack(item));
@@ -369,7 +369,8 @@ final class HarvestPowers {
                     if (!Mobs.fighting(p) || hitBySalvo.contains(p.getUniqueId())) continue;
                     if (!p.getBoundingBox().expand(0.3).contains(pos.toVector())) continue;
                     hitBySalvo.add(p.getUniqueId());
-                    c.hit(p, fallback);
+                    if (share >= 1) c.hit(p, fallback);
+                    else c.hitShare(p, fallback, share);
                     p.setVelocity(p.getVelocity().add(vel.clone().setY(0).normalize().multiply(0.35)).setY(0.25));
                     w.spawnParticle(Particle.ITEM, pos, 10, 0.15, 0.15, 0.15, 0.1, new ItemStack(item));
                     w.playSound(pos, Sound.ENTITY_SLIME_SQUISH_SMALL, 1f, 1.2f);
@@ -399,7 +400,7 @@ final class HarvestPowers {
 
     /** A fan of {@code count} shots towards a place, spread over {@code spread} degrees around the aim. */
     private void fan(RockPowers.Caster c, MobTemplate.Ability ab, Location aim, int count, double spread, double speed,
-                     List<Material> items, boolean glowing, double fallback) {
+                     List<Material> items, boolean glowing, double fallback, double share) {
         LivingEntity e = c.entity();
         Location from = mouth(e, ab);
         Vector base = aim.clone().add(0, 0.9, 0).toVector().subtract(from.toVector());
@@ -416,7 +417,7 @@ final class HarvestPowers {
             v.setY(v.getY() + r.nextDouble(-0.05, 0.07));
             Material item = items.isEmpty() ? Material.CARROT : produce(items.get(r.nextInt(items.size())));
             shoot(c, from.clone().add(r.nextDouble(-0.15, 0.15), r.nextDouble(-0.1, 0.1), r.nextDouble(-0.15, 0.15)),
-                    v.multiply(speed * r.nextDouble(0.9, 1.1)), item, glowing, fallback, salvo);
+                    v.multiply(speed * r.nextDouble(0.9, 1.1)), item, glowing, fallback, share, salvo);
         }
     }
 
@@ -581,7 +582,7 @@ final class HarvestPowers {
             if (salvo >= 0 && split[salvo] > 0) {
                 Location aim = p != null ? p.getLocation() : e.getLocation().add(e.getLocation().getDirection().multiply(8));
                 double spread = new double[]{24, 40, 70}[salvo];
-                fan(c, ab, aim, split[salvo], spread, speed, items, false, fallback);
+                fan(c, ab, aim, split[salvo], spread, speed, items, false, fallback, 1);
                 w.playSound(e.getLocation(), Sound.ENTITY_BREEZE_SHOOT, 1.4f, 1.3f);
                 w.playSound(e.getLocation(), Sound.ENTITY_LLAMA_SPIT, 1.4f, 0.8f + salvo * 0.15f);
                 w.spawnParticle(Particle.CLOUD, mouth(e, ab), 6, 0.2, 0.1, 0.2, 0.05);
@@ -998,6 +999,7 @@ final class HarvestPowers {
         double[] spreads = {28, 55, 85};
         Vector[] aims = new Vector[3];
         double ringRadius = ab.number("ring", 5);
+        double lead = RockPowers.leadIn(ab);
         c.hold(150);
         c.animate("great_feast");
         c.glow(0xF0A800);
@@ -1074,11 +1076,24 @@ final class HarvestPowers {
                     Fx.cone(at, aims[i], spreads[i], 15, Color.fromRGB(0xFF5C5C), HARVEST);
                     if (i == 2) Fx.ring(at, ringRadius, Color.fromRGB(0xFF5C5C), 1.4f, t * 0.1);
                 }
+                // whoever stays in the red cone (or ring) already loses life: time to get out before the wave
+                if (aims[i] != null && lead > 0 && t >= wt - 12 && t < wt && (wt - t) % 4 == 0) {
+                    double hit = (i == 2 ? 1.4 : 1.0) * power[0];
+                    Vector aimDir = aims[i];
+                    double half = Math.toRadians(spreads[i] / 2);
+                    for (Player q : fighters(e, 16)) {
+                        Vector to = q.getLocation().toVector().subtract(at.toVector()).setY(0);
+                        boolean inCone = to.length() <= 15 && to.length() > 0.1 && to.clone().normalize().angle(aimDir) <= half;
+                        boolean inRing = i == 2 && to.length() <= ringRadius;
+                        if (inCone) c.drain(q, hit, lead / 3);
+                        if (inRing) c.drain(q, 1.2 * power[0], lead / 3);
+                    }
+                }
                 if (t == wt && aims[i] != null) {
                     Location aim = at.clone().add(aims[i].clone().multiply(10));
                     int n = Math.max(6, (int) Math.round(counts[i] * power[0]));
                     fan(c, ab, aim, n, spreads[i], ab.number("speed", 1.25), List.of(Material.GOLDEN_CARROT), true,
-                            (i == 2 ? 1.4 : 1.0) * power[0]);
+                            (i == 2 ? 1.4 : 1.0) * power[0], 1 - lead);
                     w.playSound(at, Sound.ENTITY_BREEZE_SHOOT, 2f, 0.7f);
                     w.playSound(at, Sound.ENTITY_BLAZE_SHOOT, 1.6f, 1.3f);
                     w.playSound(at, Sound.ENTITY_GENERIC_EXPLODE, 0.8f, 1.6f);
@@ -1092,7 +1107,7 @@ final class HarvestPowers {
                         for (Player q : fighters(e, ringRadius + 1)) {
                             Location ql = q.getLocation();
                             if (Math.hypot(ql.getX() - at.getX(), ql.getZ() - at.getZ()) > ringRadius) continue;
-                            c.hit(q, 1.2 * power[0]);
+                            c.hitShare(q, 1.2 * power[0], 1 - lead);
                             q.setVelocity(ql.toVector().subtract(at.toVector()).setY(0).normalize().multiply(1.1).setY(0.6));
                         }
                     }

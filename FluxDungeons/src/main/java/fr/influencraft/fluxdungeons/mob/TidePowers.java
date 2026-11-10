@@ -382,6 +382,11 @@ final class TidePowers {
                     }
                     if (t % 20 == 0) w.playSound(center, Sound.BLOCK_CONDUIT_AMBIENT_SHORT, 2f, 0.5f + (float) k);
                 }
+                // whoever stays in the ring is already caught by the undertow: life going down, time to get out
+                RockPowers.leadTick(ab, c, t, move + impact, 2.5, p -> {
+                    Location pl = p.getLocation();
+                    return Math.hypot(pl.getX() - center.getX(), pl.getZ() - center.getZ()) <= radius && Math.abs(pl.getY() - center.getY()) < 4;
+                });
                 if (t == move + impact) {
                     wave(ab, c, center, radius, launch);
                     cancel();
@@ -420,7 +425,7 @@ final class TidePowers {
                     double d = Math.hypot(pl.getX() - center.getX(), pl.getZ() - center.getZ());
                     if (d > r + 0.8 || Math.abs(pl.getY() - center.getY()) > 4) continue;
                     hit.add(p.getUniqueId());
-                    c.hit(p, 2.5);
+                    c.hitShare(p, 2.5, 1 - RockPowers.leadIn(ab));
                     Vector out = pl.toVector().subtract(center.toVector()).setY(0);
                     if (out.lengthSquared() < 0.01) out = new Vector(1, 0, 0);
                     p.setVelocity(out.normalize().multiply(1.2).setY(vy));
