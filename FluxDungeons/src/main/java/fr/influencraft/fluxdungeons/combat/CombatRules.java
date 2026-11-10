@@ -114,7 +114,7 @@ public final class CombatRules implements Listener {
         if (victim instanceof LivingEntity mob && mobs.templateOf(mob) != null) {
             // melee: one hit of the same attacker (player, pet) every MELEE_GAP ticks at most
             if (e.getCause() == EntityDamageEvent.DamageCause.ENTITY_ATTACK && heroes.abilities().striking() < 0
-                    && tooSoon(mob, e.getDamager().getUniqueId().toString(), MELEE_GAP)) {
+                    && tooSoon(mob, e.getDamager().getUniqueId().toString(), meleeGap(e.getDamager()))) {
                 e.setCancelled(true);
                 return;
             }
@@ -163,9 +163,21 @@ public final class CombatRules implements Listener {
      * ({@link Mobs#meleeReady}). Both: each environmental cause (lava, cactus...) {@link #ENVIRONMENT_GAP} ticks apart,
      * else lava would hit every tick. Projectiles, abilities, enchantment effects and explosions always land.
      */
-    private static final int MELEE_GAP = 5, ENVIRONMENT_GAP = 10;
+    private static final int MELEE_GAP = 5, ENVIRONMENT_GAP = 10, VANILLA_GAP = 10;
     /** Tick of the last hit of each source on each monster ({@code <monster>|<source>}). */
     private final java.util.Map<String, Integer> lastSourceHit = new java.util.HashMap<>();
+
+    /**
+     * Melee gap of an attacker. A player hitting with his hand or an item that is not a weapon (no attack cadence:
+     * hand, pickaxe, block...) keeps the vanilla invulnerability of the monster ({@link #VANILLA_GAP}), else spam clicks
+     * landed a hit every {@link #MELEE_GAP} ticks. Weapons are already paced by their recharge (AttackCadence).
+     */
+    private static int meleeGap(Entity damager) {
+        if (!(damager instanceof Player p)) return MELEE_GAP;
+        org.bukkit.inventory.ItemStack hand = p.getInventory().getItemInMainHand();
+        boolean paced = !hand.isEmpty() && hand.isDataOverridden(io.papermc.paper.datacomponent.DataComponentTypes.MINIMUM_ATTACK_CHARGE);
+        return paced ? MELEE_GAP : VANILLA_GAP;
+    }
 
     private boolean tooSoon(LivingEntity mob, String source, int gap) {
         int now = Bukkit.getCurrentTick();
