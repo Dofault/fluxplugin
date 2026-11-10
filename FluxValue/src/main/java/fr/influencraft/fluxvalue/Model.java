@@ -45,6 +45,8 @@ public final class Model {
     double smeltPoints;
     double smeltCost;
     double meterWindowSeconds;
+    String meterGlyph;
+    int meterSteps;
     /** Points of one health point of a mob: the time it takes to kill it, before its weight. */
     double pointsPerHealth;
 
@@ -81,6 +83,8 @@ public final class Model {
         m.collectionTiers = economy.getInt("collections.tiers", 7);
         m.collectionSecondExponent = economy.getDouble("collections.second-tier-exponent", 0.455);
         m.meterWindowSeconds = Math.max(1, economy.getDouble("rate-meter.window-seconds", 10));
+        m.meterGlyph = economy.getString("rate-meter.bar.glyph", "fluxafk:bar_{step}");
+        m.meterSteps = Math.max(1, economy.getInt("rate-meter.bar.steps", 20));
         m.smeltCost = economy.getDouble("recipes.smelt-cost", 0);
         m.pointsPerHealth = economy.getDouble("mobs.points-per-health", 4.23);
         m.readMobWeights(sources);

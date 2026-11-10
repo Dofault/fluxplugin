@@ -3,8 +3,10 @@ package fr.influencraft.fluxvalue;
 import fr.influencraft.flux.api.economy.BalanceChangeEvent;
 import fr.influencraft.flux.api.economy.Currency;
 import fr.influencraft.flux.api.economy.Economy;
+import fr.influencraft.flux.api.client.Clients;
+import fr.influencraft.flux.api.items.CustomItems;
+import fr.influencraft.flux.api.util.Format;
 import fr.influencraft.flux.api.text.Texts;
-import net.kyori.adventure.bossbar.BossBar;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -20,9 +22,10 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * Testing tool ({@code /fluxvalue rate}): a boss bar with the money a player would make in 2 minutes at the pace of his
+ * Testing tool ({@code /fluxvalue rate}): a "hype bar" in the action bar (the textured bar of FluxAFK) with the money a player would make in 2 minutes at the pace of his
  * last seconds, whatever gave it (jobs, shop, rewards), read on {@link BalanceChangeEvent} like the money action bar.
- * The bar fills up to what the economy plans at the maximum level. Before a full window has passed, the time elapsed
+ * The bar fills up to what the economy plans at the maximum level.
+ * Without the picture (pack not zipped, Bedrock player) a bar of text is drawn instead. Before a full window has passed, the time elapsed
  * since the meter started counts instead, so a reading comes at once.
  */
 final class RateMeter implements Listener {
@@ -30,13 +33,8 @@ final class RateMeter implements Listener {
     private static final double WINDOW_REFERENCE_SECONDS = 120;
 
     private static final class Meter {
-        final BossBar bar;
         final long started = System.currentTimeMillis();
         final Deque<double[]> gains = new ArrayDeque<>(); // {time, amount}, also touched by the async event
-
-        Meter(BossBar bar) {
-            this.bar = bar;
-        }
     }
 
     private final Map<UUID, Meter> meters = new ConcurrentHashMap<>();
@@ -50,14 +48,11 @@ final class RateMeter implements Listener {
 
     /** Turns the meter on or off for this player; true when it is now on. */
     boolean toggle(Player player) {
-        Meter current = meters.remove(player.getUniqueId());
-        if (current != null) {
-            player.hideBossBar(current.bar);
+        if (meters.remove(player.getUniqueId()) != null) {
+            player.sendActionBar(net.kyori.adventure.text.Component.empty());
             return false;
         }
-        Meter meter = new Meter(BossBar.bossBar(Texts.colors(" "), 0, BossBar.Color.PURPLE, BossBar.Overlay.PROGRESS));
-        meters.put(player.getUniqueId(), meter);
-        player.showBossBar(meter.bar);
+        meters.put(player.getUniqueId(), new Meter());
         return true;
     }
 
@@ -79,13 +74,21 @@ final class RateMeter implements Listener {
             double seen = Math.max(1, Math.min(window, (now - meter.started) / 1000.0));
             double rate = sum * WINDOW_REFERENCE_SECONDS / seen;
             double planned = m.moneyPer2Minutes * m.maxLevel / 100.0;
-            String title = text.apply("rate-bar")
+            double ratio = planned <= 0 ? 0 : Math.max(0, Math.min(1, rate / planned));
+            String line = text.apply("rate-bar")
+                    .replace("%bar%", bar(player, m, ratio))
+                    .replace("%percent%", String.valueOf(Math.round(ratio * 100)))
                     .replace("%money%", format(currency, rate, player))
                     .replace("%gain%", format(currency, sum, player))
                     .replace("%seconds%", String.valueOf(Math.round(seen)));
-            meter.bar.name(Texts.colors(title));
-            meter.bar.progress((float) Math.max(0, Math.min(1, rate / planned)));
+            player.sendActionBar(Texts.colors(line));
         }
+    }
+
+    /** The textured bar of FluxAFK when the pack has it, else a bar of text. */
+    private static String bar(Player player, Model m, double ratio) {
+        String glyph = Clients.bedrock(player) ? null : CustomItems.bar(m.meterGlyph, m.meterSteps, ratio);
+        return glyph != null ? "&f" + glyph : Format.bar(ratio, 1.0, m.meterSteps, "&#B376E5", "&8");
     }
 
     private static String format(Currency currency, double amount, Player player) {
@@ -108,9 +111,9 @@ final class RateMeter implements Listener {
     }
 
     void stop() {
-        for (Map.Entry<UUID, Meter> e : meters.entrySet()) {
-            Player player = Bukkit.getPlayer(e.getKey());
-            if (player != null) player.hideBossBar(e.getValue().bar);
+        for (UUID id : meters.keySet()) {
+            Player player = Bukkit.getPlayer(id);
+            if (player != null) player.sendActionBar(net.kyori.adventure.text.Component.empty());
         }
         meters.clear();
     }

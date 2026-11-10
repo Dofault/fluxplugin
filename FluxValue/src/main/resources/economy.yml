@@ -25,6 +25,10 @@ collections:
 rate-meter:
   # /fluxvalue rate: seconds of gains the pace is measured on.
   window-seconds: 10
+  # Hype bar in the action bar: the textured bar of FluxAFK ({step} from 0 to steps), a bar of text without it.
+  bar:
+    glyph: "fluxafk:bar_{step}"
+    steps: 20
 
 recipes:
   # Points a furnace adds to what it cooks. 0: fuel and time are free, an ingot is worth its ore. Crafting is always free.
