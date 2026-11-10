@@ -4,9 +4,10 @@
 A real Tyrannosaurus whose anatomy is copper grown around a fossil, found deep in a mine: big skull of copper plates,
 long jaw with ivory teeth, thick neck, massive body leaning forward over two long and powerful hind legs, tiny arms,
 long tail that dips at its base then rises as it thins.
-Texture revised on 2026-11-10 at the owner's request: the copper is the vanilla Block of Copper (unoxidised), its own
-pixels tiled on every copper part, soft and low-contrast; no patina, no gold, no outlines, no painted reflections (the
-light is the game's face shading). Plates differ only by geometry and a slightly darker lower edge. Kept apart: a few
+Texture revised twice on 2026-11-10 at the owner's request. Three levels of contrast: inside a surface low (the
+vanilla Block of Copper pattern, unoxidised, its own pixels tiled and softened by TEXTURE_CONTRAST); between anatomical
+volumes moderate to marked (one shade of copper per zone, see MATS, plus ambient occlusion where parts meet); between
+materials marked (stone, teeth, claws, eyes). No patina, no gold, no black outlines, no painted reflections. Kept apart: a few
 grey-brown rocks, ivory teeth, dark claws, orange eyes and three tiny amber crystals (both emissive).
 
 Built like the two references (Colosse d'Abime, the rock turtle, and Loutre des Marees): a few dozen volumes of
@@ -49,10 +50,10 @@ CU_TILE = (
     "24200116561130", "42001365611300", "20013366111002", "00133631110024", "01333311300242", "14363113002430",
     "33531330022351", "65313300222011",
 )
-ROCK = pal("#5F544C", "#6E6259", "#7D7066", "#8C8075")          # moderate grey-brown stone
+ROCK = pal("#4F4842", "#635B54", "#776F67", "#8E867D")          # grey-brown stone, clearly not copper
 AMBER = pal("#C98A2A", "#F5B942", "#FFD47A")                     # the three small crystals only
 TOOTH, TOOTH_SHADE = hx("#E5D4A6"), hx("#C4B07E")
-CLAW = hx("#5A3A2E")
+CLAW = hx("#3F2A22")
 EYE_RIM, IRIS, GLINT, PUPIL = hx("#38251D"), hx("#F18A24"), hx("#FFD47A"), hx("#170F0A")
 
 
@@ -60,48 +61,60 @@ def shade(c, k):
     return tuple(max(0, min(255, round(v * k))) for v in c)
 
 
-def cu(w, h, r, k=1.0):
-    """The vanilla copper surface, from a random offset of the tile, uniformly darkened by k (never below 0.88:
-    a part in shadow stays copper)."""
+TEXTURE_CONTRAST = 0.7      # contrast inside a surface: the block's own, softened (low to moderate)
+
+
+def cu(w, h, r, base=CU[0]):
+    """The vanilla copper pattern, from a random offset of the tile, recentred on the colour of the anatomical zone:
+    each pixel keeps its ratio to the block's main colour (#C87456), softened by TEXTURE_CONTRAST."""
     ox, oy = r.randrange(14), r.randrange(14)
-    return [[shade(CU[int(CU_TILE[(y + oy) % 14][(x + ox) % 14])], k) for x in range(w)] for y in range(h)]
+    out = []
+    for y in range(h):
+        row = []
+        for x in range(w):
+            c = CU[int(CU_TILE[(y + oy) % 14][(x + ox) % 14])]
+            row.append(tuple(max(0, min(255, round(base[i] * (1 + TEXTURE_CONTRAST * (c[i] / CU[0][i] - 1)))))
+                             for i in range(3)))
+        out.append(row)
+    return out
 
 
-def occlude(px, rows=1, k=0.92):
+def occlude(px, rows=2, k=0.82):
     """Light ambient occlusion on the bottom rows of a side face (where it meets the part below)."""
     h = len(px)
-    for y in range(max(0, h - rows), h):
-        px[y] = [shade(c, k) for c in px[y]]
+    for n, y in enumerate(range(max(0, h - rows), h)):
+        px[y] = [shade(c, k if n == rows - 1 else (1 + k) / 2) for c in px[y]]
 
 
 # --------------------------------------------------------------------------- painters
-def copper(k=1.0):
+def copper(zone="#C87456"):
     def f(w, h, r, face):
-        """Copper hide: the vanilla block, faint occlusion at the bottom of the sides. The light (top lighter,
-        bottom darker) is the game's face shading, not painted."""
-        px = cu(w, h, r, k * (0.96 if face == "down" else 1.0))
+        """Copper hide in the colour of its zone; ambient occlusion at the bottom of the sides (where the part
+        meets the one below) and a darker underside."""
+        base = hx(zone)
+        px = cu(w, h, r, shade(base, 0.9) if face == "down" else base)
         if face not in ("up", "down") and h >= 4:
             occlude(px)
         return px
     return f
 
 
-def plate(k=1.0):
+def plate(zone="#D08768"):
     def f(w, h, r, face):
-        """Copper plate: the same block, its edge only suggested by a slightly darker bottom row and right column
-        (the gap under the plate), no black outline, no light border."""
-        px = cu(w, h, r, k)
+        """Copper plate, a shade lighter than the hide it lies on; its edge drawn by the separation colour
+        #AD634B on the bottom row (the gap under the plate) and a darker right column, no black outline."""
+        px = cu(w, h, r, hx(zone))
         if w >= 3 and h >= 3:
-            px[h - 1] = [shade(c, 0.9) for c in px[h - 1]]
+            px[h - 1] = [shade(c, 0.86) for c in px[h - 1]]
             for y in range(h - 1):
-                px[y][w - 1] = shade(px[y][w - 1], 0.93)
+                px[y][w - 1] = shade(px[y][w - 1], 0.92)
         return px
     return f
 
 
 def snout(w, h, r, face):
     """Snout: the copper block, two nostrils on top of the tip in the block's darkest colour."""
-    px = copper()(w, h, r, face)
+    px = copper("#D08768")(w, h, r, face)   # snout: lighter than the skull
     if face == "up" and w >= 6 and h >= 3:
         for x in (1, w - 2):
             px[0][x] = CU[5]
@@ -145,7 +158,7 @@ def claw(w, h, r, face):
 
 def toe(w, h, r, face):
     """Toe (density 2): copper, claw colour at the front tip (u = 0 is the front on the sides)."""
-    px = cu(w, h, r, 0.96)
+    px = cu(w, h, r, hx("#9A533E"))
     if face == "north":
         px = [[CLAW] * w for _ in range(h)]
     elif face == "up":
@@ -181,13 +194,25 @@ def crystal(w, h, r, face):
     return px
 
 
-# One material, the vanilla block; the names only keep the role of each part (a whisper of shade, at most 6 %).
+# One copper (the vanilla block pattern), one shade per anatomical zone from the owner's palette, each with a role:
+# lighter where the light falls (back, top of the skull, snout, plates), main colour on the flanks, darker under
+# the body, under the neck (separates head from torso), on the lower jaw (separates it from the snout), on the joints.
 MATS = {
-    "copper": copper(), "copper_light": copper(), "copper_aged": copper(0.97), "copper_dark": copper(0.95),
-    "flank": copper(), "hips": copper(), "belly": copper(0.95), "skull": plate(), "snout": snout,
-    "plate": plate(), "plate_light": plate(), "plate_aged": plate(0.97), "plate_ox": plate(0.97),
-    "plate_crack": plate(), "plate_crystal": plate(), "joint": copper(0.94),
-    "tail": copper(), "tail_mid": copper(), "tail_end": copper(0.97),
+    "copper_light": copper("#D58C70"),     # back, croup
+    "flank": copper("#C87456"), "hips": copper("#C87456"), "copper": copper("#C87456"),   # flanks, shoulders
+    "thigh": copper("#B8694E"),             # thighs: a step under the flanks, the leg reads as its own limb
+    "muscle": copper("#C87456"),            # front of the thigh, catching the light
+    "neck": copper("#B4664B"),              # neck: darker than torso and skull
+    "copper_aged": copper("#AA5F46"),      # chest, cheeks, arms, shins
+    "jaw": copper("#9F563F"),               # lower jaw, clearly darker than the snout
+    "copper_dark": copper("#9A533E"),      # back of the skull, forearms, ankles, feet
+    "belly": copper("#934E3A"),             # belly and throat: separates head from torso, body from legs
+    "joint": copper("#874733"),             # knees, jaw hinges
+    "skull": plate("#C87456"), "snout": snout,
+    "plate": plate("#D08768"), "plate_light": plate("#D58C70"), "plate_aged": plate("#BD6C50"),
+    "plate_ox": plate("#BD6C50"), "plate_crack": plate("#D08768"), "plate_crystal": plate("#D08768"),
+    "plate_dark": plate("#A35A43"),
+    "tail": copper("#C87456"), "tail_b": copper("#B4664B"), "tail_end": copper("#A85E46"),   # segments alternate
     "rock": rock(0), "rock_ore": rock(2), "tooth": tooth, "fang_up": fang_up, "claw": claw, "toe": (toe, 2),
 }
 GLOW = {"eye": (eye, 2), "crystal": crystal}
@@ -211,9 +236,9 @@ SHOULDERS = {"right": (8, 27, -12), "left": (-8, 27, -12)}
 # Five segments, each smaller, overlapping by TAIL_OVERLAP; it dips at the base then rises, and curves gently.
 TAIL = (
     ("Tail_1", "queue_base", (16, 14, 10), 14, 0, "tail"),
-    ("Tail_2", "queue_milieu_1", (12.5, 10.5, 9), 4, 4, "tail"),
-    ("Tail_3", "queue_milieu_2", (9.5, 8, 9), -5, 5, "tail_mid"),
-    ("Tail_4", "queue_fin", (7, 6, 8), -10, 5, "tail_mid"),
+    ("Tail_2", "queue_milieu_1", (12.5, 10.5, 9), 4, 4, "tail_b"),
+    ("Tail_3", "queue_milieu_2", (9.5, 8, 9), -5, 5, "tail"),
+    ("Tail_4", "queue_fin", (7, 6, 8), -10, 5, "tail_b"),
     ("Tail_5", "queue_pointe", (4.5, 4, 7), -13, 5, "tail_end"),
 )
 TAIL_START = (0, 31.5, 13)
@@ -266,7 +291,7 @@ def parts():
     add("glow_crystals", "cristal_hanche", (16.2, 38.5, 10.5), (1.3, 2.8, 1.3), (6, 0, -24), "crystal")
 
     # ---------------------------------------------------------------- neck: thick, leaning forward, plated
-    add("Neck", "cou", (0, 38, -17), (17, 14, 12), (22, 0, 0), "copper")
+    add("Neck", "cou", (0, 38, -17), (17, 14, 12), (22, 0, 0), "neck")
     add("Neck", "gorge", (0, 31.5, -16.5), (14, 8, 10), (30, 0, 0), "belly")
     add("Neck", "plaque_nuque", (0, 45.3, -15.5), (11, 2, 10), (24, 0, 0), "plate_aged")
     add("Neck", "plaque_cou_droite", (8.8, 38.5, -16.5), (1.6, 9, 9), (22, 0, 6), "plate")
@@ -320,9 +345,9 @@ def parts():
         P.append(("Jaw", name, cc, size, M, mat))
         return cc, M
 
-    jc, jM = jw("machoire", (0, 38.6, -33), (14, 5.5, 16), (-4, 0, 0), "copper_aged")
-    jw("menton", (0, 38.7, -42.5), (10, 5, 4), (-6, 0, 0), "copper_aged")
-    jw("plaque_machoire", (0, 35.6, -32), (10, 1.5, 11), (-4, 0, 0), "plate_aged")
+    jc, jM = jw("machoire", (0, 38.6, -33), (14, 5.5, 16), (-4, 0, 0), "jaw")
+    jw("menton", (0, 38.7, -42.5), (10, 5, 4), (-6, 0, 0), "jaw")
+    jw("plaque_machoire", (0, 35.6, -32), (10, 1.5, 11), (-4, 0, 0), "plate_dark")
     for s, side in ((1, "droite"), (-1, "gauche")):
         jw(f"articulation_{side}", (s * 7.4, 40.3, -23.5), (1.6, 3, 3), (0, 0, 0), "joint")
         for k, dz in enumerate((-5.5, -2.5, 0.5, 3.5)):
@@ -347,8 +372,8 @@ def parts():
         up, low = f"Leg_{side}", f"Shin_{side}"
         hx_, hy, hz = HIPS[side]
         G[up] = ((hx_, hy, hz), "Root")
-        add(up, "cuisse", (hx_ + 1.2 * s, hy - 6.5, hz - 1.5), (12, 17, 14), (14, 0, 0), "copper")
-        add(up, "cuisse_muscle", (hx_ + 3.6 * s, hy - 4, hz - 0.5), (5, 10, 11), (14, 0, 5 * s), "copper_light")
+        add(up, "cuisse", (hx_ + 1.2 * s, hy - 6.5, hz - 1.5), (12, 17, 14), (14, 0, 0), "thigh")
+        add(up, "cuisse_muscle", (hx_ + 3.6 * s, hy - 4, hz - 0.5), (5, 10, 11), (14, 0, 5 * s), "muscle")
         add(up, "plaque_cuisse", (hx_ + 6.6 * s, hy - 6, hz - 1), (1.5, 9, 9), (14, 0, 2 * s), "plate_crack" if s > 0 else "plate")
         knee = (hx_ + 1.2 * s, hy - 14, hz - 4.5)
         G[low] = (knee, up)
