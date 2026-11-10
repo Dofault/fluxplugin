@@ -47,6 +47,9 @@ health-bar:
   # Also above every other creature near a player, everywhere (name translated by the game, LevelledMobs level when
   # it has one). Turn LevelledMobs' nametags off then.
   all-mobs: false
+  # Outside the dungeons, a creature shows its bar only once hurt (it appears on the first hit) and loses it back at
+  # full life. false = a bar on every creature nearby, even unhurt.
+  only-hurt: true
 
 # How a player reacts to a monster's hit in a dungeon: one melee hit out of melee-push-every pushes him melee-push
 # blocks along the ground (never up); a hit from afar (arrow, ability) stops his momentum for an instant

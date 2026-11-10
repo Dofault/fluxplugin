@@ -76,7 +76,7 @@ public final class HealthBars implements Listener {
     private final Plugin plugin;
     private final Map<UUID, Bar> bars = new HashMap<>();
     private final NamespacedKey levelledMobsLevel = new NamespacedKey("levelledmobs", "level");
-    private boolean enabled = true, allMobs;
+    private boolean enabled = true, allMobs, onlyHurt = true;
     private Key font = Key.key("fluxdungeons", "health");
     /** Creatures the world bars leave alone (dungeon monsters and pets: FluxDungeons draws or hides theirs). */
     private Predicate<Entity> skip = e -> false;
@@ -98,6 +98,8 @@ public final class HealthBars implements Listener {
     public void load(org.bukkit.configuration.ConfigurationSection c) {
         enabled = c == null || c.getBoolean("enabled", true);
         allMobs = c != null && c.getBoolean("all-mobs", false);
+        // world creatures (outside the dungeons) show a bar only once hurt, and lose it back at full life
+        onlyHurt = c == null || c.getBoolean("only-hurt", true);
         try {
             font = Key.key(c == null ? "fluxdungeons:health" : c.getString("font", "fluxdungeons:health"));
         } catch (RuntimeException e) {
@@ -260,7 +262,8 @@ public final class HealthBars implements Listener {
             Bar b = it.next();
             // a dungeon monster's bar is only dropped by FluxDungeons (death, end of run): a monster spawned this very
             // tick is not valid yet, dropping it here lost its bar for good
-            boolean gone = b.world ? !b.entity.isValid() || b.entity.isDead() || !nearPlayer(b.entity, DROP) : b.entity.isDead();
+            boolean gone = b.world ? !b.entity.isValid() || b.entity.isDead() || !nearPlayer(b.entity, DROP)
+                    || (onlyHurt && full(b.entity)) : b.entity.isDead();
             if (gone) {
                 drop(b);
                 it.remove();
@@ -272,6 +275,7 @@ public final class HealthBars implements Listener {
         for (Player p : Bukkit.getOnlinePlayers()) {
             for (Entity e : p.getNearbyEntities(NEAR, NEAR / 2, NEAR)) {
                 if (!(e instanceof LivingEntity le) || bars.containsKey(le.getUniqueId()) || !worldBar(le)) continue;
+                if (onlyHurt && full(le)) continue;
                 Bar b = new Bar(le, this::worldHead, true);
                 bars.put(le.getUniqueId(), b);
                 update(b);
@@ -302,7 +306,21 @@ public final class HealthBars implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onDamage(EntityDamageEvent e) {
-        if (e.getEntity() instanceof LivingEntity le) changed(le);
+        if (!(e.getEntity() instanceof LivingEntity le)) return;
+        changed(le);
+        // a world creature hurt for the first time gets its bar at once (not at the next round of the tick)
+        if (enabled && allMobs && !bars.containsKey(le.getUniqueId())) {
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (!le.isValid() || bars.containsKey(le.getUniqueId()) || !worldBar(le) || full(le) || !nearPlayer(le, DROP)) return;
+                Bar b = new Bar(le, this::worldHead, true);
+                bars.put(le.getUniqueId(), b);
+                update(b);
+            });
+        }
+    }
+
+    private static boolean full(LivingEntity e) {
+        return e.getHealth() >= maxHealth(e) - 0.01;
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
