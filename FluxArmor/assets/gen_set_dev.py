@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Writes the staff test set (sets/dev.yml of FluxArmor on Labs, given with /set dev): every piece and the sword carry
-every enchantment of production (EcoEnchants of 03_semirp, files starting with "_" are disabled ones) that targets
-them, at its max level, plus vanilla enchantments at their max (all protections stacked); unbreakable. Full set bonus:
+every enchantment of production (EcoEnchants of 03_semirp, files starting with "_" are disabled ones) still active
+on Labs that targets them, at its max level, plus vanilla enchantments at their max (all protections stacked); unbreakable. Full set bonus:
 +75 % damage (the Phenomenon set gives +70 %). Run it again when production enchantments change.
 
 Usage: gen_set_dev.py [server root, default /home/influencraft/serveurs]
@@ -14,12 +14,14 @@ import yaml
 
 ROOT = sys.argv[1] if len(sys.argv) > 1 else "/home/influencraft/serveurs"
 PROD = os.path.join(ROOT, "03_semirp/plugins/EcoEnchants/enchants")
+LABS = os.path.join(ROOT, "04_labs/plugins/EcoEnchants/enchants")
 OUT = os.path.join(ROOT, "04_labs/plugins/FluxArmor/sets/dev.yml")
 
 custom = {}
 for f in sorted(glob.glob(PROD + "/*.yml")):
     n = os.path.basename(f)[:-4]
-    if n.startswith("_"):
+    # disabled in production, or already removed from Labs (an enchantment leaving at go-live: Réflexion)
+    if n.startswith("_") or not os.path.exists(os.path.join(LABS, n + ".yml")):
         continue
     d = yaml.safe_load(open(f, encoding="utf-8"))
     custom[n] = (d.get("targets") or [], d.get("max-level", 1))
