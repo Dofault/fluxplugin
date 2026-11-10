@@ -254,7 +254,7 @@ final class Levels {
 
     private static String icon(String requirementId) {
         return switch (requirementId) {
-            case "members" -> "itemsadder:influville:habitants";
+            case "members", Residents.ID -> "itemsadder:influville:habitants";
             case "chunks" -> "itemsadder:influville:chunks";
             case "lands" -> "itemsadder:influville:ville";
             default -> "itemsadder:influville:niveau";

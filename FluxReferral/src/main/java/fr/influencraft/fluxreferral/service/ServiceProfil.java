@@ -95,6 +95,7 @@ public class ServiceProfil {
             Set<Integer> paliersRecuperes = new java.util.HashSet<>(paliersObtenus);
             paliersRecuperes.removeAll(paliersEnAttente);
 
+            List<String> filleuls = depotJoueur.listerFilleuls(uuid);
             Profil profil = new Profil(
                 j.code(),
                 serviceAdresse.adressePour(j.pseudo(), j.code()),
@@ -108,13 +109,21 @@ public class ServiceProfil {
                 Set.copyOf(paliersRecuperes),
                 j.parrainUuid() != null && !depotJoueur.obtenirFilleulRecompenseRecuperee(uuid),
                 List.copyOf(depotInvitation.listerParParrain(uuid)),
-                List.copyOf(depotJoueur.listerFilleulsRecents(uuid, NB_RECENTS))
+                recents(filleuls),
+                List.copyOf(filleuls)
             );
             // Le joueur a pu se déconnecter pendant la lecture
             if (Bukkit.getPlayer(uuid) != null) cache.put(uuid, profil);
         } catch (SQLException e) {
             plugin.getLogger().log(Level.WARNING, "Lecture du profil de parrainage impossible pour " + uuid, e);
         }
+    }
+
+    /** The last referrals validated, most recent first (read from the full list, oldest first). */
+    private static List<String> recents(List<String> filleuls) {
+        List<String> out = new java.util.ArrayList<>(filleuls.subList(Math.max(0, filleuls.size() - NB_RECENTS), filleuls.size()));
+        java.util.Collections.reverse(out);
+        return List.copyOf(out);
     }
 
     public void retirer(UUID uuid) {

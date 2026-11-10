@@ -1,8 +1,9 @@
 # FluxCommerce, échoppes (chestshop/) : textes en français pour tous les joueurs ; %item% = nom de l'objet dans la langue du jeu du joueur.
 # Une ligne qui commence par « ! » n'a pas le préfixe. Prix déjà formatés par Flux (montant puis glyphe BitBlock).
-# Charte des messages : celle de Lands et de CMI (docs/notifications/villes.md, cmi.md) : préfixe en petites
-# capitales, texte gris, valeurs en or, chiffres en blanc, erreur en rouge puis explication en gris, réussite en vert,
-# commandes entre crochets (cliquables). Les messages d'argent suivent la convention BitBlock (trade.bought...).
+# Charte des messages : celle de CMI (docs/notifications/cmi.md) : texte gris #8A8A8A (jamais &7 ni &8, sauf la
+# flèche du préfixe et la pancarte), pseudos et durées en or, chiffres en blanc, erreur en rouge puis explication en
+# gris, réussite en vert, info système en bleu, commandes entre crochets (cliquables). Les messages d'argent suivent
+# la convention BitBlock commune à Flux (source [ʜᴅᴠ] / [ᴇᴄʜᴏᴘᴘᴇ] en &7, docs/notifications/bitblock.md).
 prefix: "&#B376E5ᴇᴄʜᴏᴘᴘᴇꜱ&8 ▸ "
 
 no-permission: "&#FF5C5CTu n'as pas la permission de faire ça."
@@ -35,11 +36,11 @@ mode-selling: "Vente"
 mode-buying: "Rachat"
 info:
   - "&#FFD94DÉchoppe n°%id% &#8A8A8A: %item%"
-  - "!&#8A8A8APropriétaire : &#FFD94D%owner% &8· &#8A8A8A%mode% &f%bundle%&#8A8A8A pour &f%price%"
-  - "!&#8A8A8AStock : &f%stock% &8· &#8A8A8AAmis : &f%friends% &8· &#8A8A8AOptions : &#FFD94D%options%"
+  - "!&#8A8A8APropriétaire : &#FFD94D%owner% &#8A8A8A· %mode% &f%bundle%&#8A8A8A pour &f%price%"
+  - "!&#8A8A8AStock : &f%stock% &#8A8A8A· Amis : &f%friends% &#8A8A8A· Options : &#FFD94D%options%"
 list-none: "&#8A8A8ATu n'as pas encore d'échoppe. Accroupi + clic droit sur un coffre, l'objet en main."
 list-header: "&#FFD94DTes échoppes &#8A8A8A(&f%count%&#8A8A8A)"
-list-line: "!&8 • &#8A8A8A%mode% &f%bundle% &#FFD94D%item% &#8A8A8Apour &f%price% &8· &#8A8A8Astock &f%stock% &8· &#FFD94D%world% &#8A8A8A• &f%place%"
+list-line: "!&#8A8A8A • %mode% &f%bundle% &#FFD94D%item% &#8A8A8Apour &f%price% &#8A8A8A· stock &f%stock% &#8A8A8A· &#FFD94D%world% &#8A8A8A• &f%place%"
 
 # Aide paginée /echoppe help et /echoppe admin help, au format de l'aide de Lands et de FluxPW (Flux : ChatHelp).
 help:
@@ -70,11 +71,11 @@ help:
 display:
   selling: "&#FFD94DÀ vendre\n&f%unit%%bundle%"
   buying: "&#2BC4E8Rachète\n&f%unit%%bundle%"
-  bundle: " &7par lot de &f%bundle%"
+  bundle: " &#8A8A8Apar lot de &f%bundle%"
   empty: "&#FF5C5CRupture de stock"
   full: "&#FF5C5CPlus de place"
-  seller: "&7%seller%"
-  seller-prefix: "&7"
+  seller: "&#8A8A8A%seller%"
+  seller-prefix: "&#8A8A8A"
   server: "&#FFD94DÉchoppe du serveur"
   server-name: "Serveur"
 

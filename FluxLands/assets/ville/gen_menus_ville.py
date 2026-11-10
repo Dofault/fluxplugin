@@ -332,10 +332,12 @@ def choix_lignes(prefixe, nb):
 
 
 def barre_liste(info_icone, info_nom, info_desc, action=None, gauche=None, filtre=True, tri=True, extra=()):
-    """Barre du bas : raccourci (45), filtre (47), pages (48, 50), recherche (49), tri (51), action (53)."""
+    """Barre du bas : raccourci (45), filtre (47), pages (48, 50), recherche (49), tri (51), action (53).
+    gauche=False : pas de raccourci (liste ouverte seulement depuis Ma ville, le Retour y mène déjà)."""
     items = [bouton("info", 8, info_icone, OR + info_nom, lore(info_desc + ["", "Résultats : &f%fluxlands_liste_total%"]))]
-    items.append(gauche or bouton("ma_ville", 45, "itemsadder:influville:ville", OR + "Ma ville", lore([], [(GAUCHE, "Ouvrir")]),
-                                  {"left": [iv("ouvrir ville")]}))
+    if gauche is not False:
+        items.append(gauche or bouton("ma_ville", 45, "itemsadder:influville:ville", OR + "Ma ville", lore([], [(GAUCHE, "Ouvrir")]),
+                                      {"left": [iv("ouvrir ville")]}))
     if filtre:
         items.append(bouton("filtre", 47, "itemsadder:influitems:filter", OR + "Filtre",
                             choix_lignes("filtre", 6) + ["@left Suivant", "@right Précédent"],
@@ -539,7 +541,7 @@ parcelle = [
            {"left": [iv("parcelle supprimer")]}, conditions=[MAIRE],
            extra={"confirm": q("&#FF5C5CClique encore pour supprimer la parcelle " + pc("nom"))}),
 ]
-menu("ville_parcelle", "menu_ville_parcelle", parcelle, doc="Une parcelle de ma ville : état, annonce, occupant, gestion.")
+menu("ville_parcelle", "menu_ville_parcelle", parcelle, widgets=NOM_EN_TETE % pc("nom"), doc="Une parcelle de ma ville : état, annonce, occupant, gestion.")
 
 # Rôles de ma ville
 # Le maire gère les rôles d'habitants (2026-11-01) : clic gauche permissions, clic droit renommer ou supprimer,
@@ -600,43 +602,26 @@ for n, slot in enumerate(GRILLE, start=1):
                              {"left": [iv("clic %d gauche" % n), SON, "[refresh]"]},
                              conditions=["placeholder: %s == oui" % l(n, "existe")]))
 parametres += barre_liste("itemsadder:influitems:settings", "Paramètres de " + m("nom"),
-                          ["Règles naturelles de la ville", "(explosions, feu, monstres...).", "Brillant = activé."], tri=False)
+                          ["Règles naturelles de la ville", "(explosions, feu, monstres...).", "Brillant = activé."], tri=False,
+                          gauche=False)
 menu("ville_parametres", "menu_parametres", parametres, ouverture=[iv("vue parametres"), "[refresh]"], doc="Paramètres naturels de ma ville.")
 
 # ── Accueil partagé « Villes et Pays » ─────────────────────────────────────
-# Maquette 4 du 2026-10-31 : Retour (9) et information sans action (17) sur la rangée 1, deux cartes sombres l'une
-# sous l'autre (Ma ville rangées 2-3, Mon pays rangées 4-5 : objets invisibles pour le clic et l'infobulle), grande
-# icône dans le fond (fluxui:bg_territoires, Flux/assets/vanilla/gen_ui.py), trois lignes écrites par Flux à côté
-# (widgets ci-dessous, positions liées aux cartes du fond), puis Explorer sur la première rangée de l'inventaire.
+# Refait le 2026-11-08 (demande de l'utilisateur : plus de texte dans le menu hors titre, plus de cartes sombres),
+# boutons en 3 x 3 depuis le 2026-11-10 : Retour (18) et information sans action (26) sur la première rangée dessinée,
+# puis deux grands boutons de 3 x 3 cases côte à côte et symétriques (Ma ville colonnes 1-3, Mon pays colonnes 5-7, rangées 3-5 : objets invisibles pour le
+# clic et l'infobulle, grande icône dessinée dans le fond fluxui:bg_territoires, Flux/assets/vanilla/gen_ui.py), puis
+# Explorer sur la première rangée de l'inventaire (colonnes 2 à 6), sous l'écart entre le coffre et l'inventaire.
 INVISIBLE = "itemsadder:influitems:invisible"
-CARTE_VILLE = list(range(18, 36))
-CARTE_PAYS = list(range(36, 54))
+CARTE_VILLE = [28, 29, 30, 37, 38, 39, 46, 47, 48]   # garder identique à TERRITORY_BUTTONS de gen_ui.py
+CARTE_PAYS = [32, 33, 34, 41, 42, 43, 50, 51, 52]
 VISIBLE = {"hide-tooltip": "false"}
-
-
-def lignes_carte(cle, y0, lignes, condition):
-    """Trois lignes d'une carte : la première en blanc (nom), les autres en gris clair."""
-    out = []
-    for k, texte in enumerate(lignes):
-        out += ["  %s_%d:" % (cle, k), "    type: text", "    x: 45", "    y: %d" % (y0 + 9 * k), "    text: %s" % q(texte)]
-        if k:
-            out.append('    colour: "#BDBDBD"')
-        out += ["    view-requirements:", "      - %s" % q(condition)]
-    return out
-
-
-AVEC_VILLE, SANS_VILLE = "placeholder: " + m("existe") + " == oui", "placeholder: " + m("existe") + " != oui"
-AVEC_PAYS, SANS_PAYS = "placeholder: " + mp("existe") + " == oui", "placeholder: " + mp("existe") + " != oui"
-WIDGETS_TERRITOIRES = "\n".join(
-    ["widgets:"]
-    + lignes_carte("ville", 59, [m("nom"), "Niveau " + m("niveau_num") + " · " + m("niveau"), m("habitants") + " habitants"], AVEC_VILLE)
-    + lignes_carte("sans_ville", 59, ["Aucune ville", "Fonde la tienne ou", "rejoins une ville"], SANS_VILLE)
-    + lignes_carte("pays", 95, [mp("nom"), mp("niveau") + " · " + mp("villes") + " villes", "Capitale " + mp("capitale")], AVEC_PAYS)
-    + lignes_carte("sans_pays", 95, ["Aucun pays", "Réunis plusieurs villes", "autour d'une capitale"], SANS_PAYS)) + "\n"
+AVEC_VILLE = "placeholder: " + m("existe") + " == oui"
+AVEC_PAYS = "placeholder: " + mp("existe") + " == oui"
 
 territoires = [
-    retour(9, ["[menu] main"], "Menu principal"),
-    bouton("info", 17, "itemsadder:influville:ville", OR + "Villes et Pays",
+    retour(18, ["[menu] main"], "Menu principal"),
+    bouton("info", 26, "itemsadder:influville:ville", OR + "Villes et Pays",
            lore(["Gère ta ville et ton pays, et explore ceux des autres joueurs.", "",
                  "Villes : &f%fluxlands_nb_villes_serveur%", "Pays : &f%fluxlands_nb_pays%",
                  "Annonces à l'Agence : &f%fluxlands_annonces%"])),
@@ -669,7 +654,7 @@ territoires = [
     bouton("annuaire_pays", 60, "itemsadder:influville:nation", OR + "Annuaire des pays", lore(["Tous les pays du serveur."], [(GAUCHE, "Ouvrir")]),
            {"left": [iv("ouvrir pays_annuaire depuis:territoires")]}),
 ]
-menu("territoires", "menu_territoires", territoires, widgets=WIDGETS_TERRITOIRES,
+menu("territoires", "menu_territoires", territoires,
      doc="Villes et Pays : accueil partagé ouvert par le bouton Ville et Pays de /menu2.")
 
 # ── Mon pays ───────────────────────────────────────────────────────────────

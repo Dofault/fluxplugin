@@ -55,7 +55,7 @@ public class FluxReferralPlugin extends JavaPlugin {
     public void onEnable() {
         // --- Configuration ---
         gestionnaireConfig = new GestionnaireConfig(this);
-        gestionnaireLangue = new GestionnaireLangue(this, gestionnaireConfig);
+        gestionnaireLangue = new GestionnaireLangue(this);
 
         // --- Base de données ---
         gestionnaireBDD = new GestionnaireBDD(this, gestionnaireConfig);
@@ -102,7 +102,7 @@ public class FluxReferralPlugin extends JavaPlugin {
 
         // --- Commandes ---
         var cmdParrainage = new CommandeParrainage(this, depotJoueur, serviceParrainage,
-            servicePalier, serviceClassement, serviceProfil, serviceRecuperation, gestionnaireConfig, gestionnaireLangue);
+            servicePalier, serviceClassement, serviceProfil, serviceRecuperation, depotInvitation, gestionnaireConfig, gestionnaireLangue);
 
         fr.influencraft.flux.api.command.Commands.create(this, "referral").aliases("parrainage", "parr")
             .description("Referral system.").bukkit(cmdParrainage, cmdParrainage).register();

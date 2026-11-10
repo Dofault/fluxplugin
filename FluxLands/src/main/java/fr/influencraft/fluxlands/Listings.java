@@ -170,7 +170,8 @@ final class Listings {
     }
 
     private void link(Player p, Area zone) {
-        Fmt.action(p, "Ton annonce pour " + Fmt.v(zone.getName()) + " est prête. Une fois au bon endroit :",
+        Fmt.action(p, "Ton annonce pour " + Fmt.v(zone.getName()) + " est prête. Une fois au bon endroit, clique ou tape "
+                        + Fmt.cmd("/v annonce") + " :",
                 "Poser l'annonce ici", plugin.commande().label() + " annonce publier");
     }
 

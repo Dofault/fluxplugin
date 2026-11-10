@@ -282,7 +282,7 @@ public class ServiceDecouverte {
                         "date", dec.date() == null ? "?" : fr.influencraft.flux.api.util.Format.date(dec.date().getTime())));
             }
             String m = message;
-            Bukkit.getScheduler().runTask(plugin, () -> sender.sendMessage(fr.influencraft.flux.api.text.Texts.parse(m)));
+            Bukkit.getScheduler().runTask(plugin, () -> sender.sendMessage(langue.chat(m)));
         });
     }
 
@@ -298,7 +298,7 @@ public class ServiceDecouverte {
                         "nombre", String.valueOf(e.getValue()), "pourcent", String.valueOf(pct))));
             }
             String m = sb.toString();
-            Bukkit.getScheduler().runTask(plugin, () -> sender.sendMessage(fr.influencraft.flux.api.text.Texts.parse(m)));
+            Bukkit.getScheduler().runTask(plugin, () -> sender.sendMessage(langue.chat(m)));
         });
     }
 

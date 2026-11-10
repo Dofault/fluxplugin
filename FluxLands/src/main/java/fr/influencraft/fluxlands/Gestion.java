@@ -73,6 +73,25 @@ final class Gestion {
         return a != null && !a.isDefault() ? a : null;
     }
 
+    /** Plot of the town nearest to {@code loc} (horizontal distance to its box), within {@code range} blocks, or null. */
+    Area plusProche(Land land, Location loc, int range) {
+        if (land == null || loc == null || loc.getWorld() == null) return null;
+        Area best = null;
+        double bestDist = (double) range * range;
+        for (Object o : land.getSubAreas(loc.getWorld())) {
+            if (!(o instanceof LandArea la) || la.isDefault() || la.getBoundingBox() == null) continue;
+            BoundingBox b = la.getBoundingBox();
+            double dx = Math.max(0, Math.max(b.getMin().getX() - loc.getX(), loc.getX() - (b.getMax().getX() + 1)));
+            double dz = Math.max(0, Math.max(b.getMin().getZ() - loc.getZ(), loc.getZ() - (b.getMax().getZ() + 1)));
+            double d = dx * dx + dz * dz;
+            if (d <= bestDist) {
+                bestDist = d;
+                best = la;
+            }
+        }
+        return best;
+    }
+
     long volume(Area a) {
         if (a instanceof LandArea la && la.getBoundingBox() != null) {
             BoundingBox b = la.getBoundingBox();

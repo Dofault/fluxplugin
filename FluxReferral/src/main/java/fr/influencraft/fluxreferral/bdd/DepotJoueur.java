@@ -77,16 +77,15 @@ public class DepotJoueur {
         }
     }
 
-    /** Pseudos des derniers filleuls validés d'un parrain, du plus récent au plus ancien. */
-    public List<String> listerFilleulsRecents(UUID parrainUuid, int limite) throws SQLException {
+    /** Names of every validated referral of a sponsor, in the order they were validated (the n-th = referral n). */
+    public List<String> listerFilleuls(UUID parrainUuid) throws SQLException {
         String sql = "SELECT j.pseudo FROM `" + Tables.EVENTS + "` e"
             + " JOIN `" + Tables.PLAYERS + "` j ON j.uuid = e.filleul_uuid"
-            + " WHERE e.parrain_uuid = ? ORDER BY e.date_validation DESC, e.id DESC LIMIT ?";
+            + " WHERE e.parrain_uuid = ? ORDER BY e.date_validation ASC, e.id ASC";
         List<String> pseudos = new ArrayList<>();
         try (Connection conn = gestionnaireBDD.obtenirConnexion();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, parrainUuid.toString());
-            stmt.setInt(2, limite);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) pseudos.add(rs.getString(1));
             }

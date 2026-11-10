@@ -196,7 +196,6 @@ history:
 menu:
   market-name: "Market"
   market-description: "The auction house and the chest shops of the towns together. Search an item, see every offer."
-  beta: "&7Beta server: feedback welcome on Discord."
   tax: "Auction house tax"
   offers: "Offers"
   balance: "Your balance"

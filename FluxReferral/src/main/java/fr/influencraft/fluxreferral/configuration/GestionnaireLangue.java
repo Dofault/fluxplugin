@@ -1,82 +1,56 @@
 package fr.influencraft.fluxreferral.configuration;
 
+import fr.influencraft.flux.api.FluxApi;
+import fr.influencraft.flux.api.text.Messages;
+import fr.influencraft.flux.api.text.Texts;
 import fr.influencraft.fluxreferral.FluxReferralPlugin;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 /**
- * Gestionnaire des fichiers de langue du plugin.
- * Charge le fichier langue_{code}.yml et résout les messages avec MiniMessage.
- * Les variables {code} et {adresse} sont automatiquement rendues cliquables (copie presse-papier).
+ * Player-facing texts of the referral system, read through Flux's {@link Messages}: {@code lang/<language>.yml}
+ * (suite language), new keys appended on update, legacy {@code &} codes and MiniMessage mixed, {@code [/command]}
+ * clickable. Since 2026-11-09 (before: {@code langue_fr.yml} with a {@code messages:} section, prefix in config.yml).
  *
- * @author Entr0pik
+ * <ul>
+ *   <li>{@code prefix} goes before every chat message; a text starting with {@code !} is sent without it.</li>
+ *   <li>Variables are written {@code {name}}; {@code {code}} and {@code {adresse}} become click-to-copy.</li>
+ * </ul>
  */
 public class GestionnaireLangue {
 
     private final FluxReferralPlugin plugin;
-    private final GestionnaireConfig gestionnaireConfig;
-    private final MiniMessage miniMessage;
-    private FileConfiguration langue;
+    private final Messages messages;
 
-    public GestionnaireLangue(FluxReferralPlugin plugin, GestionnaireConfig gestionnaireConfig) {
+    public GestionnaireLangue(FluxReferralPlugin plugin) {
         this.plugin = plugin;
-        this.gestionnaireConfig = gestionnaireConfig;
-        this.miniMessage = MiniMessage.miniMessage();
-        charger();
+        this.messages = Messages.load(plugin, FluxApi.language());
+        retireAncienFichier();
     }
 
     public void charger() {
-        String codeLangue = gestionnaireConfig.getLangue();
-        String nomFichier = "langue_" + codeLangue + ".yml";
-        File fichierLangue = new File(plugin.getDataFolder(), nomFichier);
+        messages.reload();
+    }
 
-        if (!fichierLangue.exists()) {
-            plugin.saveResource(nomFichier, false);
-        }
-
-        this.langue = YamlConfiguration.loadConfiguration(fichierLangue);
-
-        InputStream defautStream = plugin.getResource(nomFichier);
-        if (defautStream != null) {
-            YamlConfiguration defaut = YamlConfiguration.loadConfiguration(
-                new InputStreamReader(defautStream, StandardCharsets.UTF_8)
-            );
-            langue.setDefaults(defaut);
-        }
-
-        plugin.getLogger().info("Fichier de langue '" + nomFichier + "' chargé avec succès.");
+    /** Flux's messages of the plugin (paged help: {@code help.*}). */
+    public Messages messages() {
+        return messages;
     }
 
     /**
-     * Résout un message localisé. Le placeholder {prefixe} est injecté automatiquement.
-     * Les placeholders {code} et {adresse} sont rendus cliquables (copy_to_clipboard + hover).
-     * Tous les autres placeholders sont substitués en texte brut.
-     *
-     * @param cle       clé dans messages.* du fichier de langue
-     * @param variables paires clé/valeur à substituer (ex: "joueur" → "Steve")
-     * @return composant Adventure désérialisé
+     * Chat message: prefix (unless the text starts with {@code !}), variables, click-to-copy code and address. A list
+     * key gives one line per entry, each with its own prefix rule.
      */
     public Component getMessage(String cle, Map<String, String> variables) {
-        String brut = langue.getString("messages." + cle, "<red>[Parrainage] Message manquant : " + cle);
-        brut = brut.replace("{prefixe}", gestionnaireConfig.getPrefixe());
-        for (Map.Entry<String, String> entree : variables.entrySet()) {
-            if ("code".equals(entree.getKey())) {
-                brut = brut.replace("{code}", construireTagCopie(entree.getValue(), "code-survol-copier"));
-            } else if ("adresse".equals(entree.getKey())) {
-                brut = brut.replace("{adresse}", construireTagCopie(entree.getValue(), "adresse-survol-copier"));
-            } else {
-                brut = brut.replace("{" + entree.getKey() + "}", entree.getValue());
-            }
+        Component out = null;
+        for (String ligne : messages.rawList(cle)) {
+            if (ligne.isEmpty()) continue;
+            Component c = chat(remplacer(ligne, variables, true));
+            out = out == null ? c : out.append(Component.newline()).append(c);
         }
-        return miniMessage.deserialize(brut);
+        return out != null ? out : chat("&#FF5C5C[" + cle + "]");
     }
 
     public Component getMessage(String cle) {
@@ -84,35 +58,42 @@ public class GestionnaireLangue {
     }
 
     /**
-     * Retourne le texte brut MiniMessage d'un message après substitution des variables.
-     * Le placeholder {code} est remplacé en texte simple (sans click event).
-     * Utilisé pour les annonces globales multi-joueurs et les textes embarqués dans d'autres messages.
+     * Raw text of a key, variables replaced as plain text, without prefix (a leading {@code !} is dropped): dialog
+     * texts, reward labels, staff alerts, or pieces put into another message.
      */
     public String getMessageBrut(String cle, Map<String, String> variables) {
-        String brut = langue.getString("messages." + cle, "<red>[Parrainage] Message manquant : " + cle);
-        brut = brut.replace("{prefixe}", gestionnaireConfig.getPrefixe());
-        for (Map.Entry<String, String> entree : variables.entrySet()) {
-            brut = brut.replace("{" + entree.getKey() + "}", entree.getValue());
+        String brut = remplacer(messages.raw(cle), variables, false);
+        return brut.startsWith("!") ? brut.substring(1) : brut;
+    }
+
+    /** A text already filled, sent as a chat message: prefix unless it starts with {@code !}. */
+    public Component chat(String brut) {
+        String texte = brut.startsWith("!") ? brut.substring(1) : messages.raw("prefix") + brut;
+        return Texts.parseClickable(texte, null);
+    }
+
+    private String remplacer(String brut, Map<String, String> variables, boolean copiable) {
+        for (Map.Entry<String, String> e : variables.entrySet()) {
+            String valeur = e.getValue() == null ? "" : e.getValue();
+            if (copiable && "code".equals(e.getKey())) valeur = copie(valeur, "code-survol-copier");
+            else if (copiable && "adresse".equals(e.getKey())) valeur = copie(valeur, "adresse-survol-copier");
+            brut = brut.replace("{" + e.getKey() + "}", valeur);
         }
         return brut;
     }
 
-    /**
-     * Construit la balise MiniMessage pour un code cliquable.
-     * Produit un click:copy_to_clipboard avec infobulle hover.
-     * Les guillemets simples présents dans les valeurs sont échappés pour l'attribut MiniMessage.
-     */
-    private String construireTagCopie(String valeurCode, String cleSurvol) {
-        String tooltipBrut = langue.getString("messages." + cleSurvol, "<gray>Clique pour copier");
-        tooltipBrut = tooltipBrut.replace("{prefixe}", gestionnaireConfig.getPrefixe());
+    /** MiniMessage click-to-copy around a value, with its tooltip (quotes and backslashes escaped). */
+    private String copie(String valeur, String cleSurvol) {
+        String survol = messages.raw(cleSurvol).replace("\\", "\\\\").replace("'", "\\'");
+        String echappee = valeur.replace("\\", "\\\\").replace("'", "\\'");
+        return "<click:copy_to_clipboard:'" + echappee + "'><hover:show_text:'" + survol + "'>" + valeur + "</hover></click>";
+    }
 
-        // Échapper les antislash puis les guillemets simples (délimiteurs MiniMessage)
-        String tooltipEchappe = tooltipBrut.replace("\\", "\\\\").replace("'", "\\'");
-        String codeEchappe   = valeurCode  .replace("\\", "\\\\").replace("'", "\\'");
-
-        return "<click:copy_to_clipboard:'" + codeEchappe + "'>"
-             + "<hover:show_text:'"         + tooltipEchappe + "'>"
-             + valeurCode
-             + "</hover></click>";
+    /** The former {@code langue_fr.yml} is no longer read: renamed once so nobody edits it by mistake. */
+    private void retireAncienFichier() {
+        File ancien = new File(plugin.getDataFolder(), "langue_fr.yml");
+        if (ancien.exists() && ancien.renameTo(new File(plugin.getDataFolder(), "langue_fr.yml.old"))) {
+            plugin.getLogger().info("langue_fr.yml is replaced by lang/" + messages.language() + ".yml (renamed langue_fr.yml.old)");
+        }
     }
 }

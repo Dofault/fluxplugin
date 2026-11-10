@@ -154,7 +154,7 @@ final class Commande implements TabExecutor {
             case "droit" -> droit(p);
             case "banque" -> banque(p, arg(a, 1), arg(a, 2));
             case "parcelle" -> parcelle(p, e, arg(a, 1));
-            case "annonce" -> annonce(p, arg(a, 1));
+            case "annonce" -> annonce(p, a.length > 1 ? a[1] : "", arg(a, 2));
             case "reglages" -> reglages(p, arg(a, 1));
             case "natif" -> natif(p, "lands", a.length > 1 ? String.join(" ", java.util.Arrays.copyOfRange(a, 1, a.length)) : "menu");
             case "natifpays" -> natif(p, "nations", a.length > 1 ? String.join(" ", java.util.Arrays.copyOfRange(a, 1, a.length)) : "menu");
@@ -1044,14 +1044,49 @@ final class Commande implements TabExecutor {
 
     // ── Annonce en attente (remplie loin de la parcelle) ────────────────────
 
-    private void annonce(Player p, String quoi) {
+    /**
+     * {@code annonce publier|abandonner} (buttons and chat link of a pending listing), and the player command
+     * {@code /v annonce [plot] [location|vente]} (Interception): without a plot, places the pending listing where the
+     * mayor stands, else opens the listing window of the nearest plot of their town; with a plot, opens its window.
+     * A plot already listed gets its window prefilled and is placed again where the mayor stands (lost hologram).
+     */
+    private void annonce(Player p, String quoi, String type) {
         Land ma = gerable(p);
         if (ma == null) return;
-        switch (quoi) {
+        switch (quoi.toLowerCase(Locale.ROOT)) {
             case "publier" -> plugin.listings().place(p, ma);
             case "abandonner" -> plugin.listings().abandon(p);
-            default -> p.sendMessage("annonce publier|abandonner");
+            default -> annoncer(p, ma, quoi, type);
         }
+    }
+
+    /** Distance (blocks) within which {@code /v annonce} without a name finds a plot: the mayor stands in the street. */
+    private static final int ANNONCE_PORTEE = 24;
+
+    private void annoncer(Player p, Land ma, String nom, String type) {
+        Vues.Etat e = plugin.vues().etat(p);
+        if (nom.isEmpty() && e.brouillon != null) {
+            plugin.listings().place(p, ma);
+            return;
+        }
+        Area zone = nom.isEmpty() ? plugin.gestion().plusProche(ma, p.getLocation(), ANNONCE_PORTEE) : plugin.gestion().parcelle(ma, nom);
+        if (zone == null) {
+            if (nom.isEmpty()) {
+                Fmt.erreur(p, "Aucune parcelle de " + Fmt.ville(ma.getName()) + " à moins de " + ANNONCE_PORTEE + " blocs.",
+                        "Place-toi juste à côté, ou donne son nom : " + Fmt.cmd("/v annonce <parcelle>") + ".");
+            } else {
+                Fmt.erreur(p, "Aucune parcelle " + Fmt.v(nom) + " dans " + Fmt.ville(ma.getName()) + ".");
+            }
+            return;
+        }
+        e.parcelle = zone.getName();
+        var offre = zone.getRentalOffer();
+        boolean location = switch (type) {
+            case "vente", "vendre", "sell" -> false;
+            case "location", "louer", "rent" -> true;
+            default -> offre == null || offre.getType() != me.angeschossen.lands.api.land.rental.offer.types.RentalType.SELL;
+        };
+        plugin.listings().open(p, ma, zone, location);
     }
 
     // ── Réglages de ma ville ────────────────────────────────────────────────

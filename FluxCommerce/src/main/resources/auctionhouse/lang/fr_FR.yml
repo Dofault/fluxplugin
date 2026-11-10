@@ -1,13 +1,15 @@
 # FluxCommerce, HDV (auctionhouse/) : textes en français pour tous les joueurs ; %item% = nom de l'objet dans la langue du jeu du joueur
 # (survol : l'objet). Une ligne qui commence par « ! » n'a pas le préfixe. Prix déjà formatés par Flux (montant puis
-# glyphe BitBlock). Charte des messages : celle de FluxCommerce et FluxPW (préfixe en petites capitales, texte gris,
-# valeurs en or, chiffres en blanc, erreur en rouge puis explication en gris, réussite en vert, commandes entre crochets,
-# cliquables). Les messages d'argent suivent la convention BitBlock (docs/notifications/bitblock.md).
+# glyphe BitBlock).
+# Charte des messages : celle de CMI (docs/notifications/cmi.md) : texte gris #8A8A8A (jamais &7 ni &8, sauf la
+# flèche du préfixe et la pancarte), pseudos et durées en or, chiffres en blanc, erreur en rouge puis explication en
+# gris, réussite en vert, info système en bleu, commandes entre crochets (cliquables). Les messages d'argent suivent
+# la convention BitBlock commune à Flux (source [ʜᴅᴠ] / [ᴇᴄʜᴏᴘᴘᴇ] en &7, docs/notifications/bitblock.md).
 prefix: "&#B376E5ʜᴅᴠ&8 ▸ "
 
 # ---------------------------------------------------------------- général
 no-permission: "&#FF5C5CTu n'as pas la permission de faire ça."
-reloaded: "&#2ECF7BFluxCommerce rechargé."
+reloaded: "&#2BC4E8FluxCommerce rechargé."
 usage: "&#8A8A8AAide de l'HDV : [/%cmd% help]"
 about: "&#8A8A8AFluxCommerce &f%version% &#8A8A8Apar &f%authors%&#8A8A8A, &f%listings% &#8A8A8Aannonce(s) en mémoire."
 gone: "&#FF5C5CCette offre n'existe plus.&#8A8A8A Elle vient d'être vendue, retirée ou elle a pris fin."
@@ -25,27 +27,27 @@ bad-amount: "&#FF5C5CQuantité invalide.&#8A8A8A Tu as &f%max%&#8A8A8A objet(s) 
 price-too-low: "&#FF5C5CPrix trop bas.&#8A8A8A Minimum : &f%price%"
 price-too-high: "&#FF5C5CPrix trop haut.&#8A8A8A Maximum : &f%price%"
 blacklisted: "&#FF5C5CCet objet ne peut pas être vendu à l'HDV."
-listed-sale: "&#2ECF7BMis en vente !&#8A8A8A &f%amount% %item% &#8A8A8Apour &f%price%&#8A8A8A (tu recevras &f%net%&#8A8A8A, taxe de &f%tax% %&#8A8A8A). En ligne dans &f%delay%&#8A8A8A, pendant &f%duration%&#8A8A8A."
-listed-auction: "&#2ECF7BEnchère ouverte !&#8A8A8A &f%amount% %item% &#8A8A8Aà partir de &f%price%&#8A8A8A. En ligne dans &f%delay%&#8A8A8A, pendant &f%duration%&#8A8A8A. Taxe de &f%tax% %&#8A8A8A sur le prix final."
+listed-sale: "&#2ECF7BMis en vente !&#8A8A8A &f%amount% %item% &#8A8A8Apour &f%price%&#8A8A8A (tu recevras &f%net%&#8A8A8A, taxe de &f%tax% %&#8A8A8A). En ligne dans &#FFD94D%delay%&#8A8A8A, pendant &#FFD94D%duration%&#8A8A8A."
+listed-auction: "&#2ECF7BEnchère ouverte !&#8A8A8A &f%amount% %item% &#8A8A8Aà partir de &f%price%&#8A8A8A. En ligne dans &#FFD94D%delay%&#8A8A8A, pendant &#FFD94D%duration%&#8A8A8A. Taxe de &f%tax% %&#8A8A8A sur le prix final."
 
 # ---------------------------------------------------------------- achat
 is-auction: "&#FF5C5CC'est une enchère.&#8A8A8A Fais une offre depuis sa fiche."
 not-auction: "&#FF5C5CCe n'est pas une enchère."
 own-listing: "&#FF5C5CC'est ta propre offre.&#8A8A8A Retrouve-la dans [/hdv listings]"
-not-yet: "&#FF5C5CPas encore en vente.&#8A8A8A Cette offre sera en ligne dans &f%delay%&#8A8A8A."
+not-yet: "&#FF5C5CPas encore en vente.&#8A8A8A Cette offre sera en ligne dans &#FFD94D%delay%&#8A8A8A."
 inventory-full: "&#FF5C5CInventaire plein.&#8A8A8A Fais de la place, puis recommence."
 no-money: "&#FF5C5CSolde insuffisant.&#8A8A8A Il te faut &f%price%&#8A8A8A."
 bought: "!&#B376E5Tu as acheté &f%amount% %item% &#B376E5à &f%seller% &#B376E5pour &f%price% &#FF5C5C▼&7 [ʜᴅᴠ]"
-sold: "!&#B376E5Tu as vendu &f%amount% %item% &#B376E5à &f%buyer% &#B376E5pour &f%price% &#2ECF7B▲&7 [ʜᴅᴠ] &8(taxe %tax% %)"
+sold: "!&#B376E5Tu as vendu &f%amount% %item% &#B376E5à &f%buyer% &#B376E5pour &f%price% &#2ECF7B▲&7 [ʜᴅᴠ] &#8A8A8A(taxe %tax% %)"
 
 # ---------------------------------------------------------------- enchères
 already-highest: "&#FF5C5CTu as déjà la meilleure offre."
 bid-too-low: "&#FF5C5COffre trop basse.&#8A8A8A Il faut au moins &f%price%&#8A8A8A."
-bid-placed: "!&#B376E5Tu as enchéri &f%price% &#B376E5sur %item% &#FF5C5C▼&7 [ʜᴅᴠ] &8(fin dans %time%, rendus si quelqu'un fait mieux)"
+bid-placed: "!&#B376E5Tu as enchéri &f%price% &#B376E5sur %item% &#FF5C5C▼&7 [ʜᴅᴠ] &#8A8A8A(fin dans %time%, rendus si quelqu'un fait mieux)"
 outbid: "!&#B376E5Ton offre sur %item% &#B376E5a été dépassée par &f%player% &#B376E5(&f%price%&#B376E5) : &f%refund% &#B376E5te sont rendus &#2ECF7B▲&7 [ʜᴅᴠ] [/hdv view %id%]"
 bid-received: "&#8A8A8ANouvelle offre de &#FFD94D%player%&#8A8A8A sur ton enchère %item%&#8A8A8A : &f%price%&#8A8A8A."
 bid-refunded: "!&#B376E5L'enchère sur %item% &#B376E5a été retirée par la modération : &f%price% &#B376E5te sont rendus &#2ECF7B▲&7 [ʜᴅᴠ]"
-auction-sold: "!&#B376E5Ton enchère %item% &#B376E5est remportée par &f%buyer% &#B376E5: tu reçois &f%price% &#2ECF7B▲&7 [ʜᴅᴠ] &8(taxe %tax% %)"
+auction-sold: "!&#B376E5Ton enchère %item% &#B376E5est remportée par &f%buyer% &#B376E5: tu reçois &f%price% &#2ECF7B▲&7 [ʜᴅᴠ] &#8A8A8A(taxe %tax% %)"
 auction-won: "&#2ECF7BEnchère remportée !&#8A8A8A %item% &#8A8A8Aest à toi pour &f%price%&#8A8A8A. Récupère-le : [/hdv bids]"
 
 # ---------------------------------------------------------------- retrait, récupération
@@ -65,8 +67,8 @@ away-sales: "!&#B376E5Pendant ton absence, tu as vendu &f%count% &#B376E5offre(s
 shop-location: "&#8A8A8AL'échoppe de &#FFD94D%owner%&#8A8A8A est en &f%x% %y% %z%&#8A8A8A (&f%world%&#8A8A8A)."
 
 # ---------------------------------------------------------------- annonces
-announce-sale: "&#8A8A8A&f%player% &#8A8A8Amet en vente &f%amount% %item% &#8A8A8Apour &f%price%&#8A8A8A. [/hdv view %id%]"
-announce-auction: "&#8A8A8A&f%player% &#8A8A8Aouvre une enchère : &f%amount% %item% &#8A8A8Aà partir de &f%price%&#8A8A8A. [/hdv view %id%]"
+announce-sale: "&#FFD94D%player% &#8A8A8Amet en vente &f%amount% %item% &#8A8A8Apour &f%price%&#8A8A8A. [/hdv view %id%]"
+announce-auction: "&#FFD94D%player% &#8A8A8Aouvre une enchère : &f%amount% %item% &#8A8A8Aà partir de &f%price%&#8A8A8A. [/hdv view %id%]"
 announcements-on: "&#2ECF7BAnnonces de l'HDV activées."
 announcements-off: "&#8A8A8AAnnonces de l'HDV désactivées. Réactive-les avec [/hdv announcements]"
 
@@ -76,15 +78,15 @@ staff-removed-done: "&#2ECF7BOffre retirée.&#8A8A8A &#FFD94D%player%&#8A8A8A r�
 staff-deleted-done: "&#2ECF7BOffre supprimée.&#8A8A8A L'objet de &#FFD94D%player%&#8A8A8A est détruit, il lira le motif."
 info:
   - "&#FFD94DOffre &f%id%"
-  - "!&#8A8A8AVendeur : &#FFD94D%seller% &8· &#8A8A8A%type% &8· &#8A8A8A%amount% &f%item% &8· &#8A8A8Aprix &f%price%"
-  - "!&#8A8A8AÉtat : &f%state% &8· &#8A8A8Areste &f%time% &8· &#8A8A8Aoffres &f%bids% &#8A8A8A(&f%leader%&#8A8A8A) &8· &#8A8A8Amotif &f%reason%"
+  - "!&#8A8A8AVendeur : &#FFD94D%seller% &#8A8A8A· %type% &#8A8A8A· %amount% &f%item% &#8A8A8A· prix &f%price%"
+  - "!&#8A8A8AÉtat : &f%state% &#8A8A8A· reste &#FFD94D%time% &#8A8A8A· offres &f%bids% &#8A8A8A(&#FFD94D%leader%&#8A8A8A) &#8A8A8A· motif &f%reason%"
 
 # ---------------------------------------------------------------- prix du marché (/hdv average)
 average:
   header: "&#FFD94DPrix du marché &#8A8A8A: %item%"
-  line: "!&8 • &#8A8A8A%key% : &f%value%"
-  plain: "!&8 • &#8A8A8A%text%"
-  footer: "!&8   Prix réellement payés, à l'unité, à l'HDV et dans les échoppes."
+  line: "!&#8A8A8A • %key% : &f%value%"
+  plain: "!&#8A8A8A • %text%"
+  footer: "!&#8A8A8A   Prix réellement payés, à l'unité, à l'HDV et dans les échoppes."
   none: "Aucune vente ces %days% derniers jours."
   unit: "Prix moyen à l'unité"
   sales: "Sur"
@@ -199,7 +201,6 @@ history:
 menu:
   market-name: "Marché"
   market-description: "L'HDV et les échoppes des villes réunis. Cherche un objet, tu vois toutes ses offres."
-  beta: "&7Serveur en bêta : retours bienvenus sur Discord."
   tax: "Taxe de l'HDV"
   offers: "Offres"
   balance: "Ton solde"

@@ -425,7 +425,6 @@ final class Menus {
         lore.kv(raw("menu.tax"), Format.percent(plugin.market().taxRate() * 100) + " %");
         lore.kv(raw("menu.offers"), String.valueOf(plugin.catalog().all().size()));
         lore.kv(raw("menu.balance"), price(plugin.money().balance(p)));
-        lore.line(raw("menu.beta"));
         return button(p, "market", "menu.market-name", lore);
     }
 

@@ -5,7 +5,6 @@ import fr.influencraft.fluxreferral.bdd.DepotPalier;
 import fr.influencraft.fluxreferral.configuration.GestionnaireConfig;
 import fr.influencraft.fluxreferral.configuration.GestionnaireLangue;
 import fr.influencraft.fluxreferral.modele.Palier;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -94,12 +93,10 @@ public class ServicePalier {
         }
 
         if (palier.annonceGlobale()) {
-            var composant = MiniMessage.miniMessage().deserialize(
-                langue.getMessageBrut("palier-atteint-annonce", Map.of(
-                    "joueur", pseudoParrain,
-                    "compteur", String.valueOf(palier.filleuls())
-                ))
-            );
+            var composant = langue.getMessage("palier-atteint-annonce", Map.of(
+                "joueur", pseudoParrain,
+                "compteur", String.valueOf(palier.filleuls())
+            ));
             for (Player joueurEnLigne : Bukkit.getOnlinePlayers()) {
                 joueurEnLigne.sendMessage(composant);
             }

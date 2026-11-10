@@ -638,7 +638,7 @@ FONDS = {
     "menu_droits": liste("roles", 149, "PERMISSIONS"),
     "menu_parametres": liste("ville", 157, "PARAMÈTRES"),
     # Accueil partagé « Villes et Pays » : les cartes ne sont dessinées que dans le thème vanilla (bg_territoires de Flux).
-    "menu_territoires": ("ville", 191, "VILLES ET PAYS", [9, 17] + list(range(56, 61)), {}),
+    "menu_territoires": ("ville", 191, "VILLES ET PAYS", [27, 35] + list(range(56, 61)), {}),
     "menu_pays": ("pays", 163, "MON PAYS", [0, 8, 20, 22, 24] + list(range(38, 43)) + [47, 49, 51], {3: "GESTION"}),
     "menu_pays_accueil": ("pays", 167, "PAYS", [0, 20, 22, 24], {}),
     "menu_pays_fiche": ("pays", 173, "PAYS", [0, 8] + list(range(19, 26)) + [38, 40, 42], {3: "DÉCOUVRIR"}),

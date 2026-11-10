@@ -395,6 +395,14 @@ public class ServiceParrainage {
         return parrainUuid;
     }
 
+    /** Play time of a pending referral against the time required: « 34/60 min » or « 1h20/2h ». */
+    public String progressionTemps(long secondes) {
+        long requis = config.getTempsJeuMinimum();
+        long fait = Math.min(secondes, requis);
+        if (requis <= 3600) return (fait / 60) + "/" + (requis / 60) + " min";
+        return formaterDuree(fait) + "/" + formaterDuree(requis);
+    }
+
     /** Formate une durée en secondes en chaîne lisible (ex : "1h", "30min", "45s"). */
     public String formaterDuree(long secondes) {
         if (secondes < 60) return secondes + "s";

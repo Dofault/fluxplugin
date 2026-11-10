@@ -47,12 +47,6 @@ public class GestionnaireConfig {
     public String getPrefixeTables()    { return config.getString("base-de-donnees.prefixe-tables", "parr_"); }
     public String getFichierLocalBDD()  { return config.getString("base-de-donnees.fichier-local", "parrainage.db"); }
 
-    // --- Langue ---
-    public String getLangue()           { return config.getString("langue", "fr"); }
-
-    // --- Préfixe messages ---
-    public String getPrefixe()          { return config.getString("prefixe", "<dark_gray>[<gold>Parrainage</gold>]</dark_gray>"); }
-
     // --- Parrainage ---
     public long    getTempsJeuMinimum()       { return config.getLong("parrainage.temps-jeu-minimum", 3600L); }
     public boolean isBloquerCirculaire()      { return config.getBoolean("parrainage.bloquer-circulaire", true); }

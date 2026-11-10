@@ -33,6 +33,8 @@ import java.util.List;
  *       {@code filleul_recompense_attente} (oui/non, récompense d'accueil de ce joueur en tant que filleul)</li>
  *   <li>{@code attente_<n>_pseudo|progression}, {@code attente_<n>} (ligne prête à afficher),
  *       {@code recent_<n>}, {@code recompense_parrain_<j>}, {@code recompense_filleul_<j>}</li>
+ *   <li>{@code filleuls_liste} (every referral, « A, B, C », the {@code aucun} text of the lang file without any),
+ *       {@code filleul_<f>_pseudo} (referral number f, in the order they were validated)</li>
  *   <li>{@code top_<n>_pseudo|filleuls}</li>
  * </ul>
  *
@@ -82,6 +84,7 @@ public class ExpansionParrainage {
 
         if (params.startsWith("palier_")) return traiterPalier(player, p, params);
         if (params.startsWith("filleul_")) return traiterFilleul(player.getUniqueId(), p, params);
+        if (params.equals("filleuls_liste")) return p.filleuls().isEmpty() ? aucun() : String.join(", ", p.filleuls());
         if (params.startsWith("attente_") && !params.equals("attente_progression")) return traiterAttente(p, params);
         if (params.startsWith("recent_")) {
             int n = entier(params.substring("recent_".length()));
@@ -95,7 +98,7 @@ public class ExpansionParrainage {
             case "filleuls"        -> String.valueOf(p.nbFilleuls());
             case "en_attente"      -> String.valueOf(p.attente().size());
             case "rang"            -> String.valueOf(p.rang());
-            case "parrain"         -> p.parrain() != null ? p.parrain() : "Aucun";
+            case "parrain"         -> p.parrain() != null ? p.parrain() : aucun();
             case "a_parrain"       -> p.parrain() != null ? "oui" : (p.parrainAttente() != null ? "attente" : "non");
             case "parrain_attente" -> p.parrainAttente() != null ? p.parrainAttente() : "";
             case "attente_progression" -> progressionTemps(p.tempsJoueAttente());
@@ -159,13 +162,18 @@ public class ExpansionParrainage {
         };
     }
 
-    /** filleul_<f>_etat : verrouille / disponible (atteint, récompense pas récupérée) / obtenu. */
+    /**
+     * filleul_<f>_etat : verrouille / disponible (atteint, récompense pas récupérée) / obtenu ;
+     * filleul_<f>_pseudo : name of referral number f, empty when there is none.
+     */
     private String traiterFilleul(java.util.UUID uuid, Profil p, String params) {
         String reste = params.substring("filleul_".length());
         int sep = reste.indexOf('_');
-        if (sep < 0 || !reste.endsWith("_etat")) return "";
+        if (sep < 0) return "";
         int f = entier(reste.substring(0, sep));
         if (f < 1) return "";
+        if (reste.endsWith("_pseudo")) return f <= p.filleuls().size() ? p.filleuls().get(f - 1) : "";
+        if (!reste.endsWith("_etat")) return "";
         if (f > p.nbFilleuls()) return "verrouille";
         boolean enAttente = fr.influencraft.flux.api.reward.Rewards.waiting(uuid, ServiceRecuperation.cleFilleul(f));
         return f <= p.filleulsRecompensesDonnees() && !enAttente ? "obtenu" : "disponible";
@@ -196,12 +204,12 @@ public class ExpansionParrainage {
         };
     }
 
-    /** « 34/60 min » ou « 1h20/2h » selon le temps requis. */
     private String progressionTemps(long secondes) {
-        long requis = config.getTempsJeuMinimum();
-        long fait = Math.min(secondes, requis);
-        if (requis <= 3600) return (fait / 60) + "/" + (requis / 60) + " min";
-        return serviceParrainage.formaterDuree(fait) + "/" + serviceParrainage.formaterDuree(requis);
+        return serviceParrainage.progressionTemps(secondes);
+    }
+
+    private String aucun() {
+        return plugin.getGestionnaireLangue().getMessageBrut("aucun", java.util.Map.of());
     }
 
     /** Ligne de description de la config ; ses propres placeholders (%img_bitblock%...) sont résolus. */

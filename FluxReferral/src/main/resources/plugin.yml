@@ -33,16 +33,16 @@ permissions:
     description: Consulter les informations de parrainage d'un autre joueur
     default: op
 
+  parrainage.commande.filleuls:
+    description: Lister ses filleuls (/parrainage filleuls ; ceux d'un autre joueur avec parrainage.commande.info.autres)
+    default: true
+
   parrainage.commande.top:
     description: Afficher le classement des parrains
     default: true
 
   parrainage.commande.recuperer:
     description: Récupérer les récompenses de parrainage en attente
-    default: true
-
-  parrainage.commande.aide:
-    description: Afficher l'aide des commandes joueur
     default: true
 
   # --- Commandes admin (sous /parrainage admin) ---

@@ -7,7 +7,7 @@ Copy each jar from the server's `plugins/` folder (same version, or update the p
 | Flux | `packetevents-spigot-2.13.0.jar`, `libreforge-standalone-2026.44.jar` (optional at runtime, api.effects), `DiscordSRV-Build-1.30.5.jar` (optional at runtime), `ItemsAdder_4.0.18.jar`, `PlaceholderAPI-2.12.3.jar`, `VaultUnlocked-2.20.3.jar`, `HikariCP-7.0.2.jar` (from the server's `libraries/com/zaxxer/HikariCP/`) |
 | FluxCommerce | none (Flux and FluxLands come from the reactor) |
 | FluxCasino | `PlaceholderAPI-2.12.3.jar`, `VaultAPI-1.7.jar` |
-| FluxLands | `Lands-9.1.1.jar` (jar en service sur Labs, API des niveaux), `VaultUnlocked-2.20.3.jar`, `PlaceholderAPI-2.12.3.jar`, `ItemsAdder_4.0.18.jar` |
+| FluxLands | `Lands-9.2.0.jar` (jar en service sur Labs, API des niveaux et objectif `residents`), `VaultUnlocked-2.20.3.jar`, `PlaceholderAPI-2.12.3.jar`, `ItemsAdder_4.0.18.jar` |
 | FluxOffering | `ItemsAdder_4.0.18.jar` |
 | FluxPets | `ItemsAdder_4.0.18.jar`, `eco-2026.38-modrinth.jar`, `libreforge-2026.38.jar`, `EcoJobs-2026.38-spigot.jar`, `PlaceholderAPI-2.12.3.jar`, `bettermodel-3.5.0-paper.jar`, `VaultSuperMarket-26.2.jar`, `packetevents-spigot-2.13.0.jar` |
 | FluxDungeons | `bettermodel-3.5.1-paper.jar` |

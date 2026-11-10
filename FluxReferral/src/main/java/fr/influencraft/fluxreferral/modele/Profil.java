@@ -20,6 +20,7 @@ import java.util.Set;
  * @param filleulRecompenseEnAttente ce joueur, en tant que filleul, a une récompense d'accueil non récupérée
  * @param attente                    filleuls arrivés par l'adresse, pas encore validés
  * @param recents                    derniers filleuls validés, du plus récent au plus ancien
+ * @param filleuls                   every validated referral, in the order they were validated
  */
 public record Profil(
     String code,
@@ -34,7 +35,8 @@ public record Profil(
     Set<Integer> paliersRecuperes,
     boolean filleulRecompenseEnAttente,
     List<Filleul> attente,
-    List<String> recents
+    List<String> recents,
+    List<String> filleuls
 ) {
 
     /** Filleul en attente : pseudo et dernier temps de jeu connu (secondes). */

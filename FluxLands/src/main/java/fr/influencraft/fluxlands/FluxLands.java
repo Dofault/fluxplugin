@@ -44,6 +44,8 @@ public final class FluxLands extends JavaPlugin implements Listener {
     public void onLoad() {
         // COMPAT 2026-10-26: data folder of the former InfluLands jar - remove once Flux runs in production
         fr.influencraft.flux.api.util.DataFolders.migrate(this, "InfluLands");
+        // level requirement "residents" (town and plot residents): Lands reads levels.yml when it enables
+        Residents.register(this);
     }
 
     @Override

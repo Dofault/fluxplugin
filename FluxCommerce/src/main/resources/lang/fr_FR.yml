@@ -1,32 +1,34 @@
 # FluxCommerce : textes communs aux trois parties (échanges, HDV, échoppes) : exclusions du commerce, objets interdits,
 # commande /commerce, origine des mouvements d'argent. Les textes propres à chaque partie sont dans trade/lang,
-# auctionhouse/lang et chestshop/lang. Une ligne qui commence par « ! » n'a pas le préfixe. Charte : celle des autres
-# plugins Flux (préfixe en petites capitales, texte gris, valeurs en or, erreur en rouge puis explication en gris,
-# réussite en vert, commandes entre crochets, cliquables).
+# auctionhouse/lang et chestshop/lang. Une ligne qui commence par « ! » n'a pas le préfixe.
+# Charte des messages : celle de CMI (docs/notifications/cmi.md) : texte gris #8A8A8A (jamais &7 ni &8, sauf la
+# flèche du préfixe et la pancarte), pseudos et durées en or, chiffres en blanc, erreur en rouge puis explication en
+# gris, réussite en vert, info système en bleu, commandes entre crochets (cliquables). Les messages d'argent suivent
+# la convention BitBlock commune à Flux (source [ʜᴅᴠ] / [ᴇᴄʜᴏᴘᴘᴇ] en &7, docs/notifications/bitblock.md).
 prefix: "&#B376E5ᴄᴏᴍᴍᴇʀᴄᴇ&8 ▸ "
 
 no-permission: "&#FF5C5CTu n'as pas la permission de faire ça."
-reloaded: "&#2ECF7BFluxCommerce rechargé."
+reloaded: "&#2BC4E8FluxCommerce rechargé."
 about: "&#8A8A8AFluxCommerce &f%version% &#8A8A8Apar &f%authors%&#8A8A8A. Parties actives : &f%modules%&#8A8A8A. Exclusions : &f%bans%&#8A8A8A, objets interdits : &f%rules%&#8A8A8A."
 hold-item: "&#FF5C5CAucun objet en main.&#8A8A8A Prends l'objet concerné en main, puis recommence."
 
 # ---------------------------------------------------------------- exclusion du commerce (échanges, HDV, échoppes)
-banned: "&#FF5C5CTu es exclu du commerce encore &f%duration%&#FF5C5C.&#8A8A8A Échanges, HDV et échoppes te sont fermés. Motif : &f%reason%"
+banned: "&#FF5C5CTu es exclu du commerce encore &#FFD94D%duration%&#FF5C5C.&#8A8A8A Échanges, HDV et échoppes te sont fermés. Motif : &f%reason%"
 ban-usage: "&#8A8A8AUsage : [/commerce ban <joueur> <durée> <motif>] (durée : 3d, 12h, 90m)"
 player-unknown: "&#FF5C5CJoueur inconnu :&#8A8A8A &#FFD94D%player%"
 bad-duration: "&#FF5C5CDurée invalide.&#8A8A8A Exemples : 3d, 12h, 1d12h, 90m."
-ban-done: "&#2ECF7B%player% est exclu du commerce&#8A8A8A pour &f%duration%&#8A8A8A (motif : &f%reason%&#8A8A8A)."
+ban-done: "&#FFD94D%player% &#2ECF7Best exclu du commerce&#8A8A8A pour &#FFD94D%duration%&#8A8A8A (motif : &f%reason%&#8A8A8A)."
 not-banned: "&#FF5C5CCe joueur n'est pas exclu du commerce."
-pardon-done: "&#2ECF7B%player% peut de nouveau échanger, utiliser l'HDV et les échoppes."
+pardon-done: "&#FFD94D%player% &#2ECF7Bpeut de nouveau échanger, utiliser l'HDV et les échoppes."
 bans-none: "&#8A8A8APersonne n'est exclu du commerce."
-bans-line: "!&8 • &#FFD94D%player% &#8A8A8Aencore &f%duration% &8· &#8A8A8A%reason% &8(par %by%)"
+bans-line: "!&#8A8A8A • &#FFD94D%player% &#8A8A8Aencore &#FFD94D%duration% &#8A8A8A· %reason% &#8A8A8A(par %by%)"
 
 # ---------------------------------------------------------------- objets interdits (échanges, HDV, échoppes)
 blacklist-added: "&#2ECF7BRègle ajoutée aux objets interdits :&#8A8A8A &f%rule%"
 blacklist-removed: "&#8A8A8ARègle retirée des objets interdits : &f%rule%"
 blacklist-bad-index: "&#FF5C5CNuméro invalide.&#8A8A8A Liste : [/commerce blacklist]"
 blacklist-empty: "&#8A8A8AAucun objet interdit."
-blacklist-line: "!&8 %n%. &f%rule%"
+blacklist-line: "!&#8A8A8A %n%. &f%rule%"
 
 # ---------------------------------------------------------------- aide de /commerce (aide de Flux, comme Lands)
 help:

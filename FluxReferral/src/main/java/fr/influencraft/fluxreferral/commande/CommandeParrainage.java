@@ -1,6 +1,8 @@
 package fr.influencraft.fluxreferral.commande;
 
 import fr.influencraft.fluxreferral.FluxReferralPlugin;
+import fr.influencraft.flux.api.text.ChatHelp;
+import fr.influencraft.fluxreferral.bdd.DepotInvitation;
 import fr.influencraft.fluxreferral.bdd.DepotJoueur;
 import fr.influencraft.fluxreferral.configuration.GestionnaireConfig;
 import fr.influencraft.fluxreferral.configuration.GestionnaireLangue;
@@ -38,32 +40,42 @@ import java.util.logging.Level;
  */
 public class CommandeParrainage implements CommandExecutor, TabCompleter {
 
-    // --- Entrées de l'aide ---
-    private record EntreeAide(String commande, String permission, String cleDescription) {}
+    /** Permission of the « admin » line of the player help: any admin permission of the referral system. */
+    private static final String ANY_ADMIN = "parrainage.admin";
+    private static final String OTHERS = "parrainage.commande.info.autres";
 
-    private static final List<EntreeAide> COMMANDES_JOUEUR = List.of(
-        new EntreeAide("/parrainage adresse",                "parrainage.commande.code",        "aide-desc-adresse"),
-        new EntreeAide("/parrainage code",                   "parrainage.commande.code",        "aide-desc-code"),
-        new EntreeAide("/parrainage utiliser \\<code>",      "parrainage.commande.utiliser",    "aide-desc-utiliser"),
-        new EntreeAide("/parrainage info",                   "parrainage.commande.info.soi",    "aide-desc-info-soi"),
-        new EntreeAide("/parrainage info \\<joueur>",        "parrainage.commande.info.autres", "aide-desc-info-autres"),
-        new EntreeAide("/parrainage top",                    "parrainage.commande.top",         "aide-desc-top"),
-        new EntreeAide("/parrainage recuperer",              "parrainage.commande.recuperer",   "aide-desc-recuperer")
-    );
+    private static final List<String> ADMIN_SUBCOMMANDS = List.of("aide", "recharger", "reinitialiser",
+        "definirparrain", "supprimerparrain", "forcerpalier", "info", "simuler", "valider", "decouverte", "decouvertes",
+        "questionnaire");
 
-    private static final List<EntreeAide> COMMANDES_ADMIN = List.of(
-        new EntreeAide("/parrainage admin recharger",                              "parrainage.admin.recharger",      "aide-admin-desc-recharger"),
-        new EntreeAide("/parrainage admin reinitialiser \\<joueur>",               "parrainage.admin.reinitialiser",  "aide-admin-desc-reinitialiser"),
-        new EntreeAide("/parrainage admin definirparrain \\<joueur> \\<parrain>",  "parrainage.admin.definirparrain", "aide-admin-desc-definirparrain"),
-        new EntreeAide("/parrainage admin supprimerparrain \\<joueur>",            "parrainage.admin.supprimerparrain","aide-admin-desc-supprimerparrain"),
-        new EntreeAide("/parrainage admin forcerpalier \\<joueur> \\<n>",          "parrainage.admin.forcerpalier",   "aide-admin-desc-forcerpalier"),
-        new EntreeAide("/parrainage admin info \\<joueur>",                        "parrainage.admin.info",           "aide-admin-desc-info"),
-        new EntreeAide("/parrainage admin simuler \\<joueur> \\<adresse>",         "parrainage.admin.simuler",        "aide-admin-desc-simuler"),
-        new EntreeAide("/parrainage admin valider \\<joueur>",                     "parrainage.admin.valider",        "aide-admin-desc-valider"),
-        new EntreeAide("/parrainage admin decouverte \\<joueur>",                  "parrainage.admin.decouverte",     "aide-admin-desc-decouverte"),
-        new EntreeAide("/parrainage admin decouvertes",                            "parrainage.admin.decouvertes",    "aide-admin-desc-decouvertes"),
-        new EntreeAide("/parrainage admin questionnaire [joueur]",                 "parrainage.admin.questionnaire",  "aide-admin-desc-questionnaire")
-    );
+    /** Player help (Flux's ChatHelp, as FluxCommerce): sub-command, lang key, permission (null = everybody). */
+    private List<ChatHelp.Entry> help() {
+        return List.of(
+            entry("adresse", "adresse", "parrainage.commande.code"),
+            entry("code", "code", "parrainage.commande.code"),
+            entry("utiliser", "utiliser", "parrainage.commande.utiliser"),
+            entry("filleuls", "filleuls", "parrainage.commande.filleuls"),
+            entry("info", "info", "parrainage.commande.info.soi"),
+            entry("info", "info-autres", OTHERS),
+            entry("top", "top", "parrainage.commande.top"),
+            entry("recuperer", "recuperer", "parrainage.commande.recuperer"),
+            entry("aide", "aide", null),
+            entry("admin aide", "admin", ANY_ADMIN));
+    }
+
+    private List<ChatHelp.Entry> adminHelp() {
+        List<ChatHelp.Entry> out = new ArrayList<>();
+        for (String sub : ADMIN_SUBCOMMANDS) {
+            if (!sub.equals("aide")) out.add(entry("admin " + sub, "admin-" + sub, "parrainage.admin." + sub));
+        }
+        out.add(entry("admin aide", "admin-aide", ANY_ADMIN));
+        return out;
+    }
+
+    /** {@code sub} followed by its arguments as the lang file writes them ({@code help.args.<key>}). */
+    private ChatHelp.Entry entry(String sub, String key, String permission) {
+        return new ChatHelp.Entry((sub + " " + langue.messages().raw("help.args." + key)).trim(), key, permission);
+    }
 
     private final FluxReferralPlugin plugin;
     private final DepotJoueur depotJoueur;
@@ -72,13 +84,14 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
     private final ServiceClassement serviceClassement;
     private final ServiceProfil serviceProfil;
     private final ServiceRecuperation serviceRecuperation;
+    private final DepotInvitation depotInvitation;
     private final GestionnaireConfig config;
     private final GestionnaireLangue langue;
 
     public CommandeParrainage(FluxReferralPlugin plugin, DepotJoueur depotJoueur,
                                ServiceParrainage serviceParrainage, ServicePalier servicePalier,
                                ServiceClassement serviceClassement, ServiceProfil serviceProfil,
-                               ServiceRecuperation serviceRecuperation,
+                               ServiceRecuperation serviceRecuperation, DepotInvitation depotInvitation,
                                GestionnaireConfig config, GestionnaireLangue langue) {
         this.plugin = plugin;
         this.depotJoueur = depotJoueur;
@@ -87,6 +100,7 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
         this.serviceClassement = serviceClassement;
         this.serviceProfil = serviceProfil;
         this.serviceRecuperation = serviceRecuperation;
+        this.depotInvitation = depotInvitation;
         this.config = config;
         this.langue = langue;
     }
@@ -99,7 +113,13 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         // Branche admin — console et joueurs autorisés
         if (args.length > 0 && args[0].equalsIgnoreCase("admin")) {
-            traiterAdmin(sender, args);
+            traiterAdmin(sender, label, args);
+            return true;
+        }
+
+        String sous = args.length == 0 ? "aide" : args[0].toLowerCase(java.util.Locale.ROOT);
+        if (sous.equals("aide") || sous.equals("help")) {
+            aide(sender, label, args, false, 1);
             return true;
         }
 
@@ -109,12 +129,7 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (args.length == 0) {
-            traiterAide(joueur);
-            return true;
-        }
-
-        switch (args[0].toLowerCase()) {
+        switch (sous) {
             case "adresse", "lien", "ip" -> {
                 if (!joueur.hasPermission("parrainage.commande.code")) {
                     joueur.sendMessage(langue.getMessage("permission-refusee")); return true;
@@ -156,13 +171,13 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
                 }
                 traiterTop(joueur);
             }
-            case "aide" -> {
-                if (!joueur.hasPermission("parrainage.commande.aide")) {
+            case "filleuls" -> {
+                if (!joueur.hasPermission("parrainage.commande.filleuls")) {
                     joueur.sendMessage(langue.getMessage("permission-refusee")); return true;
                 }
-                traiterAide(joueur);
+                traiterFilleuls(joueur, args.length > 1 ? args[1] : null);
             }
-            default -> traiterAide(joueur);
+            default -> aide(sender, label, args, false, 1);
         }
         return true;
     }
@@ -171,26 +186,78 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
     // Commandes joueur
     // ====================================================================
 
-    private void traiterAide(Player joueur) {
-        List<EntreeAide> accessibles = COMMANDES_JOUEUR.stream()
-            .filter(e -> joueur.hasPermission(e.permission()))
-            .toList();
+    /**
+     * Paged help (Flux's ChatHelp, the look of Lands' help, as FluxCommerce); {@code pageArg}: index of the page
+     * number in {@code args}. Only the commands the sender may use are listed.
+     */
+    private void aide(CommandSender sender, String label, String[] args, boolean admin, int pageArg) {
+        int page = 1;
+        if (args.length > pageArg) {
+            try {
+                page = Integer.parseInt(args[pageArg]);
+            } catch (NumberFormatException ignored) {
+                // first page
+            }
+        }
+        ChatHelp.show(sender, langue.messages(), label, admin ? adminHelp() : help(), admin ? "admin aide" : "aide",
+            admin, page, permission -> autorise(sender, permission));
+    }
 
-        if (accessibles.isEmpty()) {
+    /** Help filter: admin nodes follow {@link #aPermissionAdmin}, the console may use every admin command. */
+    private boolean autorise(CommandSender sender, String permission) {
+        if (permission.equals(ANY_ADMIN)) return aPermissionAdminQuelconque(sender);
+        if (permission.startsWith(ANY_ADMIN + ".")) return aPermissionAdmin(sender, permission.substring(ANY_ADMIN.length() + 1));
+        return sender.hasPermission(permission);
+    }
+
+    /**
+     * {@code /parrainage filleuls [joueur]}: names of the validated referrals (in the order they came), then those
+     * still waiting for their play time. Read from the database, so it works for an offline player too.
+     */
+    private void traiterFilleuls(Player joueur, String cibleNom) {
+        boolean soi = cibleNom == null || cibleNom.equalsIgnoreCase(joueur.getName());
+        if (!soi && !joueur.hasPermission(OTHERS)) {
             joueur.sendMessage(langue.getMessage("permission-refusee"));
             return;
         }
+        var cible = soi ? joueur : Bukkit.getOfflinePlayer(cibleNom);
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                if (!soi && depotJoueur.trouverParUUID(cible.getUniqueId()).isEmpty()) {
+                    Bukkit.getScheduler().runTask(plugin, () -> joueur.sendMessage(langue.getMessage("info-joueur-introuvable")));
+                    return;
+                }
+                List<String> filleuls = depotJoueur.listerFilleuls(cible.getUniqueId());
+                var attente = depotInvitation.listerParParrain(cible.getUniqueId());
+                String nom = soi ? joueur.getName() : (cible.getName() != null ? cible.getName() : cibleNom);
+                Bukkit.getScheduler().runTask(plugin, () -> afficherFilleuls(joueur, soi, nom, filleuls, attente));
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Database error while listing the referrals of " + cible.getUniqueId(), e);
+                Bukkit.getScheduler().runTask(plugin, () -> joueur.sendMessage(langue.getMessage("erreur-bdd")));
+            }
+        });
+    }
 
-        joueur.sendMessage(langue.getMessage("aide-entete"));
-        for (EntreeAide entree : accessibles) {
-            String desc = langue.getMessageBrut(entree.cleDescription(), Map.of());
-            joueur.sendMessage(langue.getMessage("aide-ligne", Map.of(
-                "commande",    entree.commande(),
-                "description", desc
-            )));
+    private void afficherFilleuls(Player joueur, boolean soi, String nom, List<String> filleuls,
+                                  List<fr.influencraft.fluxreferral.modele.Profil.Filleul> attente) {
+        if (filleuls.isEmpty() && attente.isEmpty()) {
+            joueur.sendMessage(soi ? langue.getMessage("filleuls-aucun") : langue.getMessage("filleuls-aucun-autre", Map.of("joueur", nom)));
+            return;
         }
-        if (aPermissionAdminQuelconque(joueur)) {
-            joueur.sendMessage(langue.getMessage("aide-pied"));
+        joueur.sendMessage(langue.getMessage(soi ? "filleuls-entete" : "filleuls-entete-autre",
+            Map.of("joueur", nom, "compteur", String.valueOf(filleuls.size()))));
+        if (!filleuls.isEmpty()) {
+            String separateur = langue.getMessageBrut("filleuls-separateur", Map.of());
+            String liste = String.join(separateur, filleuls.stream()
+                .map(f -> langue.getMessageBrut("filleuls-nom", Map.of("joueur", f))).toList());
+            joueur.sendMessage(langue.getMessage("filleuls-liste", Map.of("liste", liste)));
+        }
+        if (!attente.isEmpty()) {
+            joueur.sendMessage(langue.getMessage("filleuls-attente-entete", Map.of("compteur", String.valueOf(attente.size()))));
+            for (var f : attente) {
+                joueur.sendMessage(langue.getMessage("filleuls-attente-ligne", Map.of(
+                    "joueur", f.pseudo(), "progression", serviceParrainage.progressionTemps(f.tempsJoue()))));
+            }
         }
     }
 
@@ -355,7 +422,7 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
                 final String palierFinal = prochainPalier;
 
                 Bukkit.getScheduler().runTask(plugin, () -> {
-                    joueur.sendMessage(langue.getMessage("info-entete"));
+                    joueur.sendMessage(langue.getMessage("info-entete", Map.of("joueur", j.pseudo())));
                     if (ppFinal == null) {
                         joueur.sendMessage(langue.getMessage("info-parrain-aucun"));
                     } else {
@@ -400,18 +467,14 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
     // Commandes admin
     // ====================================================================
 
-    private void traiterAdmin(CommandSender sender, String[] args) {
-        if (args.length < 2) {
-            // /parrainage admin sans sous-commande → aide admin
-            if (!aPermissionAdminQuelconque(sender)) {
-                sender.sendMessage(langue.getMessage("permission-refusee"));
-                return;
-            }
-            traiterAdminAide(sender);
+    private void traiterAdmin(CommandSender sender, String label, String[] args) {
+        String sousCommande = args.length < 2 ? "aide" : args[1].toLowerCase(java.util.Locale.ROOT);
+        if (sousCommande.equals("aide") || sousCommande.equals("help") || !ADMIN_SUBCOMMANDS.contains(sousCommande)) {
+            // /parrainage admin [aide [page]], or an unknown sub-command: admin help
+            if (!aPermissionAdminQuelconque(sender)) sender.sendMessage(langue.getMessage("permission-refusee"));
+            else aide(sender, label, args, true, 2);
             return;
         }
-
-        String sousCommande = args[1].toLowerCase();
 
         if (!aPermissionAdmin(sender, sousCommande)) {
             sender.sendMessage(langue.getMessage("permission-refusee"));
@@ -419,7 +482,6 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
         }
 
         switch (sousCommande) {
-            case "aide"             -> traiterAdminAide(sender);
             case "recharger"        -> traiterAdminRecharger(sender);
             case "reinitialiser"    -> {
                 if (args.length < 3) { usageAdmin(sender, "reinitialiser \\<joueur>"); return; }
@@ -461,27 +523,7 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
                 if (args.length < 3) { usageAdmin(sender, "valider \\<joueur>"); return; }
                 traiterAdminValider(sender, args[2]);
             }
-            default -> traiterAdminAide(sender);
-        }
-    }
-
-    private void traiterAdminAide(CommandSender sender) {
-        List<EntreeAide> accessibles = COMMANDES_ADMIN.stream()
-            .filter(e -> aPermissionAdmin(sender, e.permission().replace("parrainage.admin.", "")))
-            .toList();
-
-        if (accessibles.isEmpty()) {
-            sender.sendMessage(langue.getMessage("permission-refusee"));
-            return;
-        }
-
-        sender.sendMessage(langue.getMessage("aide-admin-entete"));
-        for (EntreeAide entree : accessibles) {
-            String desc = langue.getMessageBrut(entree.cleDescription(), Map.of());
-            sender.sendMessage(langue.getMessage("aide-admin-ligne", Map.of(
-                "commande",    entree.commande(),
-                "description", desc
-            )));
+            default -> aide(sender, label, args, true, 2);
         }
     }
 
@@ -499,7 +541,6 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     sender.sendMessage(langue.getMessage("admin-reinitialisation-succes",
                         Map.of("joueur", nomJoueur)));
-                    sender.sendMessage(langue.getMessage("admin-reinitialisation-avertissement"));
                 });
             } catch (SQLException e) {
                 plugin.getLogger().log(Level.SEVERE, "Erreur BDD lors de la réinitialisation de " + nomJoueur, e);
@@ -606,7 +647,7 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
                 final String palierFinal = prochainPalier;
 
                 Bukkit.getScheduler().runTask(plugin, () -> {
-                    sender.sendMessage(langue.getMessage("info-entete"));
+                    sender.sendMessage(langue.getMessage("info-entete", Map.of("joueur", j.pseudo())));
                     if (ppFinal == null) {
                         sender.sendMessage(langue.getMessage("info-parrain-aucun"));
                     } else {
@@ -688,7 +729,8 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
     /** Vérifie si le sender a au moins une permission admin (pour le pied de page d'aide). */
     private boolean aPermissionAdminQuelconque(CommandSender sender) {
         if (sender instanceof ConsoleCommandSender) return true;
-        return COMMANDES_ADMIN.stream().anyMatch(e -> sender.hasPermission(e.permission()));
+        return sender.hasPermission("parrainage.admin.*")
+            || ADMIN_SUBCOMMANDS.stream().anyMatch(sub -> sender.hasPermission("parrainage.admin." + sub));
     }
 
     private void usageAdmin(CommandSender sender, String sousUsage) {
@@ -703,19 +745,21 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            List<String> suggestions = new ArrayList<>(List.of("adresse", "code", "utiliser", "recuperer", "info", "top", "aide"));
+            List<String> suggestions = new ArrayList<>(List.of("adresse", "code", "utiliser", "filleuls", "recuperer", "info", "top", "aide"));
             if (aPermissionAdminQuelconque(sender)) suggestions.add("admin");
             return suggestions.stream()
                 .filter(s -> s.startsWith(args[0].toLowerCase()))
                 .toList();
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("admin")) {
-            List<String> sousCommandes = List.of("aide", "recharger", "reinitialiser",
-                "definirparrain", "supprimerparrain", "forcerpalier", "info", "simuler", "valider", "decouverte", "decouvertes", "questionnaire");
-            return sousCommandes.stream()
+            return ADMIN_SUBCOMMANDS.stream()
                 .filter(s -> s.startsWith(args[1].toLowerCase()))
                 .filter(s -> aPermissionAdmin(sender, s))
                 .toList();
+        }
+        if (args.length == 2 && (args[0].equalsIgnoreCase("filleuls") || args[0].equalsIgnoreCase("info"))
+                && sender.hasPermission(OTHERS)) {
+            return fr.influencraft.flux.api.util.Players.complete(args[1]);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("recuperer")) {
             return List.of("filleul", "palier").stream().filter(s -> s.startsWith(args[1].toLowerCase())).toList();

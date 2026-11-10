@@ -10,11 +10,7 @@ base-de-donnees:
   # Ancien fichier SQLite local, recopié une fois dans la base de Flux au démarrage
   fichier-local: "parrainage.db"
 
-# Code de langue : correspond au fichier langue_{code}.yml
-langue: fr
-
-# Préfixe affiché devant chaque message du plugin (format MiniMessage)
-prefixe: "<color:#B376E5>ᴘᴀʀʀᴀɪɴᴀɢᴇ</color> <dark_gray>▸</dark_gray>"
+# Textes et préfixe des messages : lang/<langue>.yml (langue de toute la suite, réglée dans la config de Flux)
 
 # ===================================================
 # Adresse personnelle : <pseudo>.<domaine>
