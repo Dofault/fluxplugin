@@ -275,6 +275,7 @@ def parts():
     add("Body", "poitrail", (0, 29.5, -8.5), (19, 14, 12), (-8, 0, 0), "copper_aged")       # chest, a bit lower
     add("Body", "torse", (0, 31.5, 2), (21, 14, 12), (-3, 0, 0), "flank")
     add("Body", "bassin", (0, 32.5, 10), (22, 13, 9), (6, 0, 0), "hips")                   # carries the legs
+    add("Body", "bas_bassin", (0, 25.5, 10.5), (10, 5, 9), (10, 0, 0), "belly")     # between the thighs, seen from behind
     add("Body", "dos", (0, 39, 0), (14, 2.5, 26), (-2, 0, 0), "copper_light")              # gently arched back
     add("Body", "ventre", (0, 23.6, -2), (14, 2.5, 14), (-5, 0, 0), "belly")               # flat, not a ball
     add("Body", "plaque_flanc_droit", (10.8, 31.5, 1), (1.4, 8, 11), (-3, 2, 3), "plate")
@@ -379,6 +380,8 @@ def parts():
         G[up] = (H, "Root")
         c, size, r = seg(H, K, 8, 11, extra=4)
         add(up, "cuisse", c, size, r, "thigh")                                       # big, muscular
+        # upper thigh wider and set a bit inward: a drumstick joined to the pelvis, not a straight column
+        add(up, "cuisse_haut", (hx_ - 0.6 * s, hy - 4.5, hz - 1.2), (10.5, 9, 11.5), r, "thigh")
         add(up, "cuisse_muscle", (c[0] + 2.6 * s, c[1] + 1.5, c[2] - 1), (3.5, 10, 9), (r[0], 0, 4 * s), "muscle")
         add(up, "plaque_cuisse", (c[0] + 4.3 * s, c[1] + 1, c[2]), (1.3, 8, 8), (r[0], 0, 2 * s),
             "plate_crack" if s > 0 else "plate")
