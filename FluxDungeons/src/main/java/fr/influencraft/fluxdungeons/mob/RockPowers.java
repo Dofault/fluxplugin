@@ -74,6 +74,25 @@ final class RockPowers {
         default org.bukkit.Location home() {
             return entity().getLocation();
         }
+
+        /** Ends a hold now (an ability that finished earlier than planned). */
+        default void release() {
+        }
+
+        /** Plays an animation of its model in a loop, until {@link #stopLoop}. */
+        default void loop(String animation) {
+        }
+
+        default void stopLoop(String animation) {
+        }
+
+        /** Shows or hides bones of its model. */
+        default void parts(boolean visible, java.util.Collection<String> bones) {
+        }
+
+        /** Outline glow of its model (0xRRGGBB), off with a negative colour. */
+        default void glow(int rgb) {
+        }
     }
 
     static final Set<String> TYPES = Set.of("boulder", "rockfall", "quake", "ice_spikes", "stone_skin", "bite", "uplift",

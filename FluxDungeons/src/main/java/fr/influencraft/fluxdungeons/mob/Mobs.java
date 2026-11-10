@@ -88,6 +88,11 @@ public final class Mobs {
         int lastMelee = -1000;
         /** No ability before this time (cast-gap after the last one). */
         long nextCast;
+        /** Server tick until which an ability keeps it still (hold), extended by later holds. */
+        int holdUntil;
+        /** Abilities cast once and done ({@code once: true}), and when each one became allowed by its life share. */
+        final Set<Integer> spent = new HashSet<>();
+        final Map<Integer, Long> allowedSince = new HashMap<>();
         /**
          * The player it fights, kept by FluxDungeons (not the vanilla target, which any plugin may cancel or clear:
          * every decision of the monster, abilities and melee, reads this one).
@@ -213,6 +218,7 @@ public final class Mobs {
         Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 10L, 10L);
         Bukkit.getScheduler().runTaskTimer(plugin, this::reachTick, 2L, 2L);
         this.rock = new RockPowers(plugin);
+        this.harvest = new HarvestPowers(plugin);
         this.tide = new TidePowers(plugin);
     }
 
@@ -846,10 +852,12 @@ public final class Mobs {
     private RockPowers rock;
     /** Abilities of the water (geysers, whirlpool, bubbles, tidal breach). */
     private TidePowers tide;
+    private HarvestPowers harvest;
 
     public void removeAll() {
         if (rock != null) rock.clear();
         if (tide != null) tide.clear();
+        if (harvest != null) harvest.clear();
         for (Alive a : alive.values()) {
             close(a);
             a.entity.remove();
@@ -914,10 +922,13 @@ public final class Mobs {
 
     private void hurt(Alive a) {
         if (a.model == null || a.dying) return;
+        // an attack in progress is never cut by a flinch (it holds the monster still)
+        if (Bukkit.getCurrentTick() < a.holdUntil) return;
         long now = System.currentTimeMillis();
         if (now - a.lastHurt < 500) return;
         a.lastHurt = now;
-        a.model.play("hurt");
+        // a second reaction, when the model has one, half of the time
+        if (!(ThreadLocalRandom.current().nextBoolean() && a.model.play("hurt_2"))) a.model.play("hurt");
     }
 
     /** Below the share of life of its next phase, the monster becomes the next one, life share kept. */
@@ -1089,6 +1100,7 @@ public final class Mobs {
                     calm(a, true);
                     if (a.entity instanceof Mob m) m.setTarget(null);
                     later.add(() -> engine.fire(a, "EliteMobExitCombatEvent", null, null));
+                    a.animate("victory");
                 }
                 continue;
             }
@@ -1097,18 +1109,41 @@ public final class Mobs {
             // one ability at a time, drawn among those ready (the first of the list would always win), cast-gap apart
             if (now < a.nextCast || !castsAbilities(a) || (a.swimmer != null && !a.swimmer.mayCast())) continue;
             List<Integer> ready = new ArrayList<>();
+            double reach = target.getLocation().distance(a.entity.getLocation());
             for (int i = 0; i < a.abilities.size(); i++) {
                 Ability ab = a.abilities.get(i);
-                if (life > ab.below()) continue;
-                // first time seen: its clock starts half way (a fresh monster does not wait a full cooldown);
-                // stored once, else "now" moved with it and no ability was ever ready
-                long last = a.lastCast.computeIfAbsent(i, k -> now - (long) (ab.every() * 500));
+                if (life > ab.below() || a.spent.contains(i)) continue;
+                // wait: seconds after its life share is reached before the first cast (an ultimate kept for later)
+                long since = a.allowedSince.computeIfAbsent(i, k -> now);
+                if (now - since < ab.number("wait", 0) * 1000) continue;
+                // first time seen: its clock starts half way (a fresh monster does not wait a full cooldown), or
+                // full for an opening move; stored once, else "now" moved with it and no ability was ever ready
+                long last = a.lastCast.computeIfAbsent(i, k -> now - (long) (ab.every() * (ab.flag("opening", false) ? 1000 : 500)) - 1);
+                // distance to its target (target-min / target-max, blocks)
+                if (reach < ab.number("target-min", 0) || reach > ab.number("target-max", 1000)) continue;
                 // ready, and somebody to hit (a ring cast with nobody in it is thrown in the void)
-                if (now - last >= ab.every() * 1000 && RockPowers.worthCasting(ab, a.entity)) ready.add(i);
+                if (now - last >= ab.every() * 1000 && RockPowers.worthCasting(ab, a.entity)
+                        && harvest.worth(ab, a.entity, a.spawn)) ready.add(i);
             }
             if (ready.isEmpty()) continue;
-            int pick = ready.get(ThreadLocalRandom.current().nextInt(ready.size()));
+            // drawn by weight (1 by default); an opening move goes first
+            int pick = -1;
+            for (int i : ready) if (a.abilities.get(i).flag("opening", false)) pick = i;
+            if (pick < 0) {
+                double total = 0;
+                for (int i : ready) total += Math.max(0, a.abilities.get(i).number("weight", 1));
+                double roll = ThreadLocalRandom.current().nextDouble(Math.max(1e-9, total));
+                for (int i : ready) {
+                    roll -= Math.max(0, a.abilities.get(i).number("weight", 1));
+                    if (roll <= 0) {
+                        pick = i;
+                        break;
+                    }
+                }
+                if (pick < 0) pick = ready.get(ready.size() - 1);
+            }
             Ability chosen = a.abilities.get(pick);
+            if (chosen.flag("once", false) || chosen.flag("opening", false)) a.spent.add(pick);
             a.lastCast.put(pick, now);
             a.nextCast = now + (long) (a.template.extra().castGap() * 1000);
             later.add(() -> cast(a, chosen, target));
@@ -1513,19 +1548,44 @@ public final class Mobs {
             }
 
             public void hold(int ticks) {
-                // still during its attack (no walk over the animation, no other ability meanwhile)
-                if (!(e instanceof Mob m) || !m.hasAI()) return;
+                // still during its attack (no walk over the animation, no other ability meanwhile); a later hold
+                // extends it (a rolling charge ending in a wall); AI off for another reason is left alone
+                if (!(e instanceof Mob m)) return;
+                int now = Bukkit.getCurrentTick();
+                if (!m.hasAI() && now >= a.holdUntil) return;
                 m.setAI(false);
+                a.holdUntil = Math.max(a.holdUntil, now + ticks);
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    if (m.isValid() && !a.dying && !a.switching) m.setAI(true);
+                    if (Bukkit.getCurrentTick() >= a.holdUntil && m.isValid() && !a.dying && !a.switching) m.setAI(true);
                 }, ticks);
+            }
+
+            public void release() {
+                a.holdUntil = Bukkit.getCurrentTick();
+                if (e instanceof Mob m && m.isValid() && !a.dying && !a.switching) m.setAI(true);
+            }
+
+            public void loop(String animation) {
+                if (a.model != null) a.model.loop(animation);
+            }
+
+            public void stopLoop(String animation) {
+                if (a.model != null) a.model.stop(animation);
+            }
+
+            public void parts(boolean visible, java.util.Collection<String> bones) {
+                if (a.model != null) a.model.parts(visible, bones);
+            }
+
+            public void glow(int rgb) {
+                if (a.model != null) a.model.glow(rgb);
             }
 
             public Location home() {
                 return a.spawn.clone();
             }
         };
-        if (tide.cast(ab, caster, target) || rock.cast(ab, caster, target)) return;
+        if (tide.cast(ab, caster, target) || harvest.cast(ab, caster, target) || rock.cast(ab, caster, target)) return;
         World w = e.getWorld();
         Location at = e.getLocation();
         switch (ab.type()) {

@@ -1,14 +1,22 @@
 package fr.influencraft.fluxdungeons.mob;
 
 import kr.toxicity.model.api.BetterModel;
+import kr.toxicity.model.api.animation.AnimationIterator;
 import kr.toxicity.model.api.animation.AnimationModifier;
 import kr.toxicity.model.api.bukkit.platform.BukkitAdapter;
 import kr.toxicity.model.api.tracker.EntityTracker;
+import kr.toxicity.model.api.tracker.TrackerUpdateAction;
+import kr.toxicity.model.api.util.function.BonePredicate;
 import org.bukkit.entity.LivingEntity;
+
+import java.util.Collection;
 
 /**
  * The only class touching BetterModel: an animated model worn by a monster. Loaded only when BetterModel runs
  * (checked by {@link Mobs}), so FluxDungeons works without it (bosses then show their vanilla mob).
+ * <p>
+ * Bones whose name ends with {@code _empty} are a second look of a part (the empty cheeks of the Harvest Hamster):
+ * hidden when the model is put on, shown by the monster's abilities ({@link Handle#parts}).
  */
 final class ModelBridge {
 
@@ -16,6 +24,22 @@ final class ModelBridge {
     interface Handle {
         /** Plays an animation once (attack, hurt, death...); false when the model has no such animation. */
         boolean play(String animation);
+
+        /** Plays an animation in a loop until {@link #stop(String)} (running while an ability moves the monster). */
+        default boolean loop(String animation) {
+            return false;
+        }
+
+        default void stop(String animation) {
+        }
+
+        /** Shows or hides bones (by name). */
+        default void parts(boolean visible, Collection<String> bones) {
+        }
+
+        /** Outline glow of the whole model in this colour (0xRRGGBB), off with a negative colour. */
+        default void glow(int rgb) {
+        }
 
         void close();
     }
@@ -28,9 +52,30 @@ final class ModelBridge {
         var renderer = BetterModel.modelOrNull(model);
         if (renderer == null) return null;
         EntityTracker tracker = renderer.getOrCreate(BukkitAdapter.adapt(entity));
+        tracker.update(TrackerUpdateAction.togglePart(false), BonePredicate.from(b -> b.name().rawName().endsWith("_empty")));
         return new Handle() {
             public boolean play(String animation) {
                 return !tracker.isClosed() && tracker.animate(animation, AnimationModifier.DEFAULT_WITH_PLAY_ONCE);
+            }
+
+            public boolean loop(String animation) {
+                return !tracker.isClosed() && tracker.animate(animation,
+                        AnimationModifier.builder().type(AnimationIterator.Type.LOOP).build());
+            }
+
+            public void stop(String animation) {
+                if (!tracker.isClosed()) tracker.stopAnimation(animation);
+            }
+
+            public void parts(boolean visible, Collection<String> bones) {
+                if (tracker.isClosed()) return;
+                tracker.update(TrackerUpdateAction.togglePart(visible), BonePredicate.from(b -> bones.contains(b.name().rawName())));
+            }
+
+            public void glow(int rgb) {
+                if (tracker.isClosed()) return;
+                tracker.update(rgb < 0 ? TrackerUpdateAction.glow(false)
+                        : TrackerUpdateAction.composite(TrackerUpdateAction.glow(true), TrackerUpdateAction.glowColor(rgb)), BonePredicate.TRUE);
             }
 
             public void close() {

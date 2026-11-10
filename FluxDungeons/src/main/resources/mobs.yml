@@ -8,6 +8,13 @@
 # every: seconds between two casts; below: only under this % of life; power: damage;
 # animation / impact: model animation and ticks before the effect. attack-speed: melee hits per second.
 # Dyed leather: "LEATHER_CHESTPLATE #7D7D7D". A block on the head (head: GRANITE) is worn as a helmet.
+# Farm abilities (HarvestPowers, Harvest Hamster): harvest (eats the crops of its field, spits them back), rolling_charge
+# (rolls as a ball, stunned by a wall), crush_leap (leap and shockwave), root_eruption (roots under the players),
+# great_feast (ultimate), phase_shift (shakes itself, speed-bonus), entrance (first move), scurry (runs at whoever keeps away).
+# Choosing abilities, for every one: target-min / target-max (distance to the target, blocks), weight (draw weight,
+# 1 by default), once: true (cast once), opening: true (first move of the fight, once), wait (seconds below "below"
+# before the first cast, an ultimate kept for later).
+# Bones of a model whose name ends with _empty: a second look of a part, hidden when the model is put on (empty cheeks).
 
 # ─── Stonecutter dungeon ─────────────────────────────────────────────────────
 
