@@ -136,7 +136,8 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                         List<BlockState> removeBlocks, Map<String, Script> scripts, String rank,
                         double attackSpeed, Map<String, org.bukkit.Color> dyes, double rangedResistance, double rangedRate,
                         boolean frostArrows, boolean controlled, boolean silent, double castGap, double barOffset,
-                        double walkSpeed, int deathTicks, boolean stationary, Map<String, Object> swim) {
+                        double walkSpeed, int deathTicks, boolean stationary, Map<String, Object> swim,
+                        Map<String, Object> cues) {
         /** Ticks between two melee hits of this monster ({@code attack-speed}: hits per second, vanilla 1). */
         public int attackTicks() {
             return (int) Math.max(4, Math.round(20 / Math.max(0.05, attackSpeed)));
@@ -203,7 +204,8 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                 c.getBoolean("controlled", false), c.getBoolean("silent", false), Math.max(0, c.getDouble("cast-gap", 0)),
                 c.getDouble("bar-offset", 0), c.getDouble("walk-speed", 0), Math.max(1, c.getInt("death-ticks", 36)),
                 c.getBoolean("stationary", false),
-                c.isConfigurationSection("swim") ? toMap(c.getConfigurationSection("swim")) : Map.of());
+                c.isConfigurationSection("swim") ? toMap(c.getConfigurationSection("swim")) : Map.of(),
+                c.isConfigurationSection("cues") ? toMap(c.getConfigurationSection("cues")) : Map.of());
         return new MobTemplate(id, type, c.getString("name", id), c.getBoolean("boss"), c.getString("model"),
                 c.getDouble("health", 20), c.getDouble("damage", 3), c.getDouble("speed", -1), c.getDouble("armor", 0),
                 c.getDouble("scale", 1), c.getDouble("xp", 10), equipment, abilities, extra);

@@ -89,11 +89,13 @@ final class HarvestPowers {
     }
 
     private final Plugin plugin;
+    private final Fx fx;
     private final Map<UUID, Larder> larders = new HashMap<>();
     private final Set<Entity> alive = new HashSet<>();
 
-    HarvestPowers(Plugin plugin) {
+    HarvestPowers(Plugin plugin, Fx fx) {
         this.plugin = plugin;
+        this.fx = fx;
     }
 
     boolean cast(MobTemplate.Ability ab, RockPowers.Caster c, Player target) {
@@ -193,6 +195,12 @@ final class HarvestPowers {
             }
         }
         return out;
+    }
+
+    /** A flash of light (coloured where the game allows it). */
+    private static void flash(Location at) {
+        if (Particle.FLASH.getDataType() == Color.class) at.getWorld().spawnParticle(Particle.FLASH, at, 1, 0, 0, 0, 0, GOLD);
+        else if (Particle.FLASH.getDataType() == Void.class) at.getWorld().spawnParticle(Particle.FLASH, at, 1, 0, 0, 0, 0);
     }
 
     private static List<Player> fighters(LivingEntity e, double within) {
@@ -345,6 +353,11 @@ final class HarvestPowers {
                 if (!pos.getBlock().isPassable()) {
                     w.spawnParticle(Particle.ITEM, pos, 8, 0.1, 0.1, 0.1, 0.08, new ItemStack(item));
                     w.playSound(pos, Sound.BLOCK_CROP_BREAK, 0.6f, 1.3f);
+                    if (glowing) {
+                        w.spawnParticle(Particle.DUST, pos, 12, 0.35, 0.2, 0.35, 0, new Particle.DustOptions(GOLD, 1.5f));
+                        flash(pos);
+                        fx.crater(pos, 1.2, 30, 0);
+                    }
                     cancel();
                     forget(d);
                     return;
@@ -450,7 +463,7 @@ final class HarvestPowers {
         Location stand = patch.clone().subtract(toPatch.clone().multiply(1.6));
         World w = e.getWorld();
         int seek = (int) ab.number("seek-ticks", 10), runMax = (int) ab.number("run-max", 90);
-        double speed = ab.number("run-speed", 3.0) / 20;
+        double speed = ab.number("run-speed", 5.0) / 20;
         c.hold(seek + runMax + 45 + 46 + 10);
         c.animate("harvest_seek");
         face(e, patch);
@@ -523,6 +536,7 @@ final class HarvestPowers {
                     w.playSound(mouth, Sound.BLOCK_CROP_BREAK, 0.8f, 1f);
                 }
             }
+            if (t == length - 3 && l.reserve > 0) w.playSound(e.getLocation(), Sound.ENTITY_PUFFER_FISH_BLOW_UP, 1.6f, 1.2f);
             if (t == length) {
                 if (l.reserve <= 0) {
                     c.release();
@@ -559,7 +573,10 @@ final class HarvestPowers {
         timeline(e, 46, t -> {
             Player p = target.isValid() && Mobs.fighting(target) ? target : null;
             if (t <= 12 && p != null) face(e, p.getLocation());
+            if (t == 2) w.playSound(e.getLocation(), Sound.ENTITY_PUFFER_FISH_BLOW_UP, 1.8f, 0.8f);
             if (t == 12) w.playSound(e.getLocation(), Sound.ENTITY_LLAMA_SPIT, 1.6f, 0.6f);
+            if (t == 24) w.playSound(e.getLocation(), Sound.ENTITY_PUFFER_FISH_BLOW_OUT, 1.8f, 0.9f);
+            if (t == 36 || t == 40) w.playSound(e.getLocation(), Sound.ENTITY_PLAYER_BREATH, 1.2f, 1.6f);
             int salvo = t == 14 ? 0 : t == 18 ? 1 : t == 22 ? 2 : -1;
             if (salvo >= 0 && split[salvo] > 0) {
                 Location aim = p != null ? p.getLocation() : e.getLocation().add(e.getLocation().getDirection().multiply(8));
@@ -568,6 +585,7 @@ final class HarvestPowers {
                 w.playSound(e.getLocation(), Sound.ENTITY_BREEZE_SHOOT, 1.4f, 1.3f);
                 w.playSound(e.getLocation(), Sound.ENTITY_LLAMA_SPIT, 1.4f, 0.8f + salvo * 0.15f);
                 w.spawnParticle(Particle.CLOUD, mouth(e, ab), 6, 0.2, 0.1, 0.2, 0.05);
+                w.spawnParticle(Particle.SWEEP_ATTACK, mouth(e, ab), 1, 0, 0, 0, 0);
             }
             if (t == 24) {
                 l.full = false;
@@ -601,12 +619,17 @@ final class HarvestPowers {
 
     // ---------------------------------------------------------------- rolling charge
 
-    /** Curls up (0-18), rolls along a line locked at tick 18 until tick 43, unrolls; a wall stuns it. */
+    /**
+     * Curls up (0-18), then rolls faster and faster until tick 43 (0.21 to 0.89 block a tick, about 14 blocks),
+     * homing on its target ({@code homing} degrees a tick) until tick {@code lock} (36): only the last steps go
+     * straight, a quick side step at the end still dodges it. Unrolls with a jolt; a wall stuns it.
+     */
     private void roll(MobTemplate.Ability ab, RockPowers.Caster c, Player target) {
         LivingEntity e = c.entity();
         World w = e.getWorld();
-        double v0 = ab.number("start-speed", 0.1), v1 = ab.number("end-speed", 0.56);
-        double width = ab.number("width", 1.6);
+        double v0 = ab.number("start-speed", 0.21), v1 = ab.number("end-speed", 0.89);
+        double width = ab.number("width", 1.7), homing = Math.toRadians(ab.number("homing", 6));
+        int lock = (int) ab.number("lock", 36);
         Vector[] dir = {flat(e.getLocation(), target.getLocation())};
         Set<UUID> struck = new HashSet<>();
         boolean[] crashed = {false};
@@ -620,40 +643,53 @@ final class HarvestPowers {
                     face(e, target.getLocation());
                     dir[0] = flat(e.getLocation(), target.getLocation());
                 }
-                if (t >= 12) w.spawnParticle(Particle.BLOCK, e.getLocation(), 4, 0.6, 0.05, 0.6, 0, Material.FARMLAND.createBlockData());
+                if (t % 3 == 0) w.playSound(e.getLocation(), Sound.ENTITY_ARMADILLO_SCUTE_DROP, 1.2f, 0.6f + t * 0.06f);
+                if (t >= 10) w.spawnParticle(Particle.BLOCK, e.getLocation(), 6, 0.6, 0.05, 0.6, 0, Material.FARMLAND.createBlockData());
+                if (t == 17) w.playSound(e.getLocation(), Sound.ENTITY_BREEZE_CHARGE, 1.6f, 0.7f);
                 return;
             }
             if (t < 43) {
                 double u = (t - 18) / 25.0;
                 double v = v0 + (v1 - v0) * u;
+                if (t < lock && target.isValid() && Mobs.fighting(target)) {
+                    // turns towards its target, at most `homing` a tick
+                    Vector want = flat(e.getLocation(), target.getLocation());
+                    double angle = Math.atan2(dir[0].getX() * want.getZ() - dir[0].getZ() * want.getX(), dir[0].dot(want));
+                    dir[0].rotateAroundY(-Math.max(-homing, Math.min(homing, angle))).normalize();
+                }
                 if (wallAhead(e, dir[0], 1.2 + v)) {
                     crashed[0] = true;
-                    crash(ab, c);
+                    crash(ab, c, dir[0]);
                     return;
                 }
                 Location at = step(e, dir[0], v);
                 crush(at, 1.0);
-                w.spawnParticle(Particle.BLOCK, at, 6, 0.5, 0.05, 0.5, 0, Material.FARMLAND.createBlockData());
-                if (t % 5 == 0) w.playSound(at, Sound.ENTITY_ARMADILLO_ROLL, 1f, 1f + (float) u * 0.6f);
+                w.spawnParticle(Particle.BLOCK, at, 8, 0.5, 0.05, 0.5, 0, Material.FARMLAND.createBlockData());
+                if (t % 3 == 0) fx.crater(at, 1.3, 40, 0.3, Fx.BROKEN_EARTH);
+                if (t % 4 == 0) w.playSound(at, Sound.ENTITY_ARMADILLO_ROLL, 1.2f, 1f + (float) u * 0.7f);
+                if (t % 6 == 0) w.playSound(at, Sound.BLOCK_ROOTED_DIRT_BREAK, 1f, 0.7f);
                 for (Player p : fighters(e, 4)) {
                     if (struck.contains(p.getUniqueId())) continue;
                     Location pl = p.getLocation();
                     if (Math.hypot(pl.getX() - at.getX(), pl.getZ() - at.getZ()) > width || Math.abs(pl.getY() - at.getY()) > 2) continue;
                     struck.add(p.getUniqueId());
-                    c.hit(p, 1.2);
+                    c.hit(p, 1.4);
                     Vector side = new Vector(-dir[0].getZ(), 0, dir[0].getX());
                     if (side.dot(pl.toVector().subtract(at.toVector())) < 0) side.multiply(-1);
-                    p.setVelocity(side.multiply(0.9).add(dir[0].clone().multiply(0.5)).setY(0.55));
-                    w.playSound(pl, Sound.ENTITY_PLAYER_ATTACK_KNOCKBACK, 1f, 0.8f);
+                    p.setVelocity(side.multiply(1.0).add(dir[0].clone().multiply(0.7)).setY(0.6));
+                    w.playSound(pl, Sound.ENTITY_PLAYER_ATTACK_KNOCKBACK, 1.2f, 0.7f);
+                    w.spawnParticle(Particle.EXPLOSION, pl.clone().add(0, 1, 0), 1);
                 }
                 return;
             }
             if (t == 43) {
-                // unrolls with a small jolt on the ground
+                // unrolls with a jolt: a small shockwave
                 Location at = e.getLocation();
-                w.spawnParticle(Particle.BLOCK, at, 30, 1.0, 0.1, 1.0, 0.05, Material.FARMLAND.createBlockData());
-                w.playSound(at, Sound.ENTITY_GENERIC_SMALL_FALL, 1.2f, 0.7f);
-                for (Player p : fighters(e, 2.2)) {
+                w.playSound(at, Sound.ENTITY_GENERIC_SMALL_FALL, 1.4f, 0.6f);
+                w.playSound(at, Sound.ENTITY_RAVAGER_STEP, 1.2f, 1.3f);
+                fx.shockwave(at, 3, 5, 0.4);
+                fx.crater(at, 2.5, 50, 0.4, Fx.BROKEN_EARTH);
+                for (Player p : fighters(e, 2.5)) {
                     if (struck.add(p.getUniqueId())) c.hit(p, 0.6);
                 }
             }
@@ -662,15 +698,21 @@ final class HarvestPowers {
     }
 
     /** Rolled into a wall: unrolls with a jolt, dizzy for two seconds (stars), shakes it off. */
-    private void crash(MobTemplate.Ability ab, RockPowers.Caster c) {
+    private void crash(MobTemplate.Ability ab, RockPowers.Caster c, Vector dir) {
         LivingEntity e = c.entity();
         World w = e.getWorld();
         int stun = 62;
         c.hold(stun);
         c.animate("roll_crash");
-        w.playSound(e.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.6f, 1.6f);
-        w.playSound(e.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.2f, 0.6f);
-        w.spawnParticle(Particle.BLOCK, e.getLocation().add(0, 1, 0), 30, 0.6, 0.6, 0.6, 0.1, Material.FARMLAND.createBlockData());
+        Location wall = e.getLocation().add(dir.clone().multiply(1.6)).add(0, 0.8, 0);
+        Block hit = wall.getBlock();
+        BlockData data = hit.getType().isAir() ? Material.HAY_BLOCK.createBlockData() : hit.getBlockData();
+        w.playSound(e.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.7f, 1.6f);
+        w.playSound(e.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.4f, 0.6f);
+        w.playSound(e.getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR, 1.2f, 0.8f);
+        w.spawnParticle(Particle.EXPLOSION, wall, 2, 0.3, 0.3, 0.3, 0);
+        fx.debris(wall, 10, data, 1.0);
+        fx.crater(e.getLocation(), 2, 60, 0.4, Fx.BROKEN_EARTH);
         timeline(e, stun, t -> {
             if (t >= 6 && t <= 46 && t % 2 == 0) {
                 double a = t * 0.35;
@@ -680,6 +722,7 @@ final class HarvestPowers {
                     w.spawnParticle(Particle.WAX_ON, head.clone().add(Math.cos(b) * 0.7, 0, Math.sin(b) * 0.7), 1, 0, 0, 0, 0);
                 }
             }
+            if (t % 12 == 6 && t <= 46) w.playSound(e.getLocation(), Sound.BLOCK_NOTE_BLOCK_CHIME, 0.8f, 1.6f + (t % 24 == 6 ? 0.2f : 0f));
             if (t == 46) w.playSound(e.getLocation(), Sound.ENTITY_HORSE_BREATHE, 1f, 1.5f);
             if (t == stun) c.release();
         });
@@ -687,66 +730,71 @@ final class HarvestPowers {
 
     // ---------------------------------------------------------------- crush leap
 
-    /** A ring marks the landing; leaps at tick 13, lands at tick 34 in a shockwave. */
+    /** A ring marks the landing; leaps at tick 9, lands at tick 24: shockwave, cracked ground, debris. */
     private void leap(MobTemplate.Ability ab, RockPowers.Caster c, Player target) {
         LivingEntity e = c.entity();
         World w = e.getWorld();
-        double radius = ab.number("radius", 4), max = ab.number("max-distance", 9);
+        double radius = ab.number("radius", 6), max = ab.number("max-distance", 12);
         Location start = e.getLocation().clone();
         Vector to = target.getLocation().toVector().subtract(start.toVector()).setY(0);
         if (to.length() > max) to.normalize().multiply(max);
         Location spot = start.clone().add(to);
         spot.setY(groundY(w, spot.getX(), target.getLocation().getY(), spot.getZ()));
-        double height = 2.4 + to.length() * 0.14;
-        c.hold(55);
+        double height = 2.6 + to.length() * 0.15;
+        int launch = 9, land = 24;
+        c.hold(42);
         c.animate("leap");
         face(e, spot);
-        timeline(e, 55, t -> {
-            if (t <= 34 && t % 2 == 0) {
-                // where it will land: a ring of dust that tightens and pulses
-                double k = t / 34.0;
-                for (int i = 0; i < 28; i++) {
-                    double a = Math.PI * 2 * i / 28 + t * 0.05;
-                    w.spawnParticle(Particle.DUST, spot.clone().add(Math.cos(a) * radius, 0.15, Math.sin(a) * radius), 1, 0, 0, 0, 0,
-                            new Particle.DustOptions(HARVEST, 1.4f));
-                    if (i % 2 == 0) w.spawnParticle(Particle.DUST, spot.clone().add(Math.cos(a) * radius * (1 - k), 0.12, Math.sin(a) * radius * (1 - k)),
-                            1, 0, 0, 0, 0, new Particle.DustOptions(EARTH, 1.1f));
-                }
+        w.playSound(start, Sound.ENTITY_RAVAGER_ROAR, 0.6f, 1.8f);
+        timeline(e, 42, t -> {
+            if (t <= land && t % 2 == 0) {
+                // where it will land: a ring that tightens, the inner disc filling up
+                double k = t / (double) land;
+                Fx.ring(spot, radius, HARVEST, 1.6f, t * 0.05);
+                Fx.ring(spot, radius * (1 - k), Color.fromRGB(0xFF5C5C), 1.1f, -t * 0.08);
+                Fx.ring(spot, radius * 0.5, EARTH, 1.0f, 0);
+                if (t % 6 == 0) w.playSound(spot, Sound.BLOCK_NOTE_BLOCK_BASEDRUM, 1.5f, 0.6f + (float) k);
             }
-            if (t == 13) w.playSound(start, Sound.ENTITY_RABBIT_JUMP, 2f, 0.5f);
-            if (t >= 13 && t <= 34) {
-                double k = (t - 13) / 21.0;
+            if (t == launch) {
+                w.playSound(start, Sound.ENTITY_RABBIT_JUMP, 2f, 0.5f);
+                w.playSound(start, Sound.ENTITY_WIND_CHARGE_WIND_BURST, 1.2f, 0.8f);
+                fx.crater(start, 1.8, 40, 0.5, Fx.BROKEN_EARTH);
+                w.spawnParticle(Particle.CLOUD, start, 16, 0.8, 0.1, 0.8, 0.05);
+            }
+            if (t >= launch && t <= land) {
+                double k = (t - launch) / (double) (land - launch);
                 Location at = start.clone().add(spot.clone().subtract(start).toVector().multiply(k));
                 at.setY(start.getY() + (spot.getY() - start.getY()) * k + 4 * height * k * (1 - k));
                 at.setYaw(yawTo(to.lengthSquared() < 1e-6 ? start.getDirection() : to.clone().normalize()));
                 at.setPitch(0);
                 e.teleport(at);
+                w.spawnParticle(Particle.DUST, at.clone().add(0, 1, 0), 2, 0.4, 0.4, 0.4, 0, new Particle.DustOptions(HARVEST, 1.1f));
             }
-            if (t == 34) {
-                w.playSound(spot, Sound.ENTITY_GENERIC_BIG_FALL, 2f, 0.6f);
-                w.playSound(spot, Sound.ENTITY_RAVAGER_STEP, 2f, 0.6f);
-                w.spawnParticle(Particle.EXPLOSION, spot, 1);
-                crush(spot, 1.8);
+            if (t == land) {
+                w.playSound(spot, Sound.ENTITY_GENERIC_BIG_FALL, 2f, 0.5f);
+                w.playSound(spot, Sound.ENTITY_RAVAGER_STEP, 2f, 0.5f);
+                w.playSound(spot, Sound.ENTITY_GENERIC_EXPLODE, 1.2f, 1.3f);
+                w.playSound(spot, Sound.BLOCK_ROOTED_DIRT_BREAK, 2f, 0.6f);
+                w.spawnParticle(Particle.EXPLOSION_EMITTER, spot, 1);
+                w.spawnParticle(Particle.CLOUD, spot.clone().add(0, 0.3, 0), 40, radius * 0.4, 0.2, radius * 0.4, 0.08);
+                Block under = Fx.ground(w, spot.getBlockX(), spot.getY(), spot.getBlockZ());
+                BlockData data = under == null ? Material.DIRT.createBlockData() : under.getBlockData();
+                fx.crater(spot, radius * 0.8, 80, 0.5, Fx.BROKEN_EARTH);
+                fx.shockwave(spot, radius, 7, 0.55);
+                fx.debris(spot.clone().add(0, 0.4, 0), 16, data, 1.3);
+                crush(spot, 2.2);
                 for (Player p : fighters(e, radius + 2)) {
                     Location pl = p.getLocation();
                     double d = Math.hypot(pl.getX() - spot.getX(), pl.getZ() - spot.getZ());
                     if (d > radius || Math.abs(pl.getY() - spot.getY()) > 2.5) continue;
-                    c.hit(p, 1.4);
+                    // full blow near the middle, less at the edge of the wave
+                    c.hit(p, d < radius / 2 ? 1.6 : 0.9);
                     Vector out = pl.toVector().subtract(spot.toVector()).setY(0);
                     if (out.lengthSquared() < 1e-4) out = new Vector(1, 0, 0);
-                    p.setVelocity(out.normalize().multiply(0.8).setY(0.45));
+                    p.setVelocity(out.normalize().multiply(d < radius / 2 ? 1.0 : 0.6).setY(0.5));
                 }
             }
-            if (t >= 34 && t <= 40) {
-                // the shockwave runs out to the radius
-                double rr = radius * (t - 33) / 7.0;
-                for (int i = 0; i < 24; i++) {
-                    double a = Math.PI * 2 * i / 24;
-                    w.spawnParticle(Particle.BLOCK, spot.clone().add(Math.cos(a) * rr, 0.1, Math.sin(a) * rr), 2, 0.1, 0.05, 0.1, 0,
-                            Material.FARMLAND.createBlockData());
-                }
-            }
-            if (t == 55) c.release();
+            if (t == 42) c.release();
         });
     }
 
@@ -779,6 +827,9 @@ final class HarvestPowers {
                 w.spawnParticle(Particle.BLOCK, paws, 30, 0.8, 0.1, 0.8, 0.1, Material.ROOTED_DIRT.createBlockData());
                 w.playSound(paws, Sound.BLOCK_ROOTED_DIRT_BREAK, 2f, 0.6f);
                 w.playSound(paws, Sound.ITEM_HOE_TILL, 2f, 0.6f);
+                w.playSound(paws, Sound.ENTITY_WARDEN_DIG, 1f, 1.4f);
+                fx.crater(paws, 2.8, 70, 0.5, Fx.BROKEN_EARTH);
+                fx.shockwave(paws, 3.5, 5, 0.35);
                 ThreadLocalRandom r = ThreadLocalRandom.current();
                 for (Player p : fighters(e, ab.number("range", 20))) {
                     Location base = p.getLocation();
@@ -806,6 +857,7 @@ final class HarvestPowers {
 
     /** A line of earth particles running underground from a place to another, then a crack marking the spot. */
     private void crack(Location from, Location to, int travel) {
+        fx.crater(to, 0.9, travel + 14, 0);
         World w = from.getWorld();
         BlockData dirt = Material.ROOTED_DIRT.createBlockData();
         new BukkitRunnable() {
@@ -863,7 +915,10 @@ final class HarvestPowers {
             y += 0.55f;
         }
         w.playSound(at, Sound.BLOCK_ROOTS_BREAK, 1.6f, 0.6f);
+        w.playSound(at, Sound.BLOCK_MANGROVE_ROOTS_BREAK, 1.6f, 0.7f);
         w.spawnParticle(Particle.BLOCK, at.clone().add(0, 0.2, 0), 18, 0.35, 0.1, 0.35, 0.05, Material.ROOTED_DIRT.createBlockData());
+        fx.crater(at, 1.4, life + 20, 0.6, Material.ROOTED_DIRT, Material.COARSE_DIRT);
+        fx.debris(at.clone().add(0, 0.3, 0), 5, Material.ROOTED_DIRT.createBlockData(), 0.8);
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             for (BlockDisplay d : parts) {
                 if (!d.isValid()) continue;
@@ -923,8 +978,11 @@ final class HarvestPowers {
     // ---------------------------------------------------------------- the Great Feast
 
     /**
-     * 0-25 announced (glows, text), 25-58 draws the energy of every crop left (they wither at 58), 60 full cheeks,
-     * 60-85 overload, waves at 88, 96 and 104, empty cheeks at 108, glow off at 110, exhausted until 150.
+     * 0-25 announced (glows, text and warning, a column of light, golden runes on the ground until 85), 25-58 the
+     * crops of the field fly into its mouth as golden carrots one after the other (none left at 58), 60 full cheeks,
+     * 60-85 overload (sits up, ground cracking around it, heartbeat), then three waves at 88, 96 and 104: each one
+     * aimed and drawn on the ground as a cone 12 ticks before (move out of it); the last one also throws a ring
+     * around it. Empty cheeks at 108, glow off at 110, exhausted until 150.
      */
     private void feast(MobTemplate.Ability ab, RockPowers.Caster c, Player target) {
         LivingEntity e = c.entity();
@@ -932,11 +990,19 @@ final class HarvestPowers {
         Larder l = larder(e, ab);
         List<Block> field = new ArrayList<>(crops(e, ab, l));
         Collections.shuffle(field);
+        int total = field.size();
+        int[] absorbed = {0};
         double[] power = {1};
+        int[] waves = {88, 96, 104};
+        int[] counts = {9, 13, 19};
+        double[] spreads = {28, 55, 85};
+        Vector[] aims = new Vector[3];
+        double ringRadius = ab.number("ring", 5);
         c.hold(150);
         c.animate("great_feast");
         c.glow(0xF0A800);
         title(e, ab, 85);
+        w.playSound(e.getLocation(), Sound.BLOCK_TRIAL_SPAWNER_OMINOUS_ACTIVATE, 2f, 0.8f);
         w.playSound(e.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 2f, 0.6f);
         w.playSound(e.getLocation(), Sound.ENTITY_FOX_SNIFF, 1.6f, 0.7f);
         timeline(e, 150, t -> {
@@ -944,59 +1010,93 @@ final class HarvestPowers {
             Location mouth = mouth(e, ab);
             Player p = target.isValid() && Mobs.fighting(target) ? target : null;
             if (t <= 25 && p != null && t % 2 == 0) face(e, p.getLocation());
-            if (t >= 25 && t < 58) {
-                // golden threads from the crops to its mouth
-                field.removeIf(b -> !CROPS.contains(b.getType()));
-                int n = Math.min(12, field.size());
-                double k = ((t - 25) % 8) / 8.0;
-                for (int i = 0; i < n; i++) {
-                    Location from = field.get((i + t) % field.size()).getLocation().add(0.5, 0.4, 0.5);
-                    Location pt = from.clone().add(mouth.clone().subtract(from).toVector().multiply(k));
-                    w.spawnParticle(Particle.DUST, pt, 1, 0, 0, 0, 0, new Particle.DustOptions(i % 2 == 0 ? GOLD : HARVEST, 1.2f));
+            if (t < 86 && t % 2 == 0) {
+                // golden runes turning on the ground, a column of light
+                Fx.ring(at, 6.5, GOLD, 1.5f, t * 0.04);
+                Fx.ring(at, 3.5, HARVEST, 1.2f, -t * 0.07);
+                if (t % 4 == 0) Fx.column(at, 9, Particle.END_ROD, 1);
+            }
+            if (t >= 25 && t < 58 && !field.isEmpty()) {
+                // the crops leave the field one after the other, flying into its mouth as golden carrots
+                int due = (int) Math.ceil(total * (t - 24) / 33.0);
+                while (absorbed[0] < due && !field.isEmpty()) {
+                    Block b = field.remove(field.size() - 1);
+                    if (!CROPS.contains(b.getType())) continue;
+                    Location from = b.getLocation().add(0.5, 0.4, 0.5);
+                    w.spawnParticle(Particle.BLOCK, from, 6, 0.2, 0.2, 0.2, 0, b.getBlockData());
+                    b.setType(Material.AIR);
+                    absorbed[0]++;
+                    if (absorbed[0] % 3 == 1) fly(from, e, ab);
                 }
-                if (t % 6 == 0) w.playSound(at, Sound.BLOCK_AMETHYST_BLOCK_CHIME, 1.2f, 0.6f + (t - 25) / 40f);
+                if (t % 3 == 0) w.playSound(at, Sound.BLOCK_AMETHYST_BLOCK_CHIME, 1.4f, 0.6f + (t - 25) / 40f);
             }
             if (t == 58) {
-                field.removeIf(b -> !CROPS.contains(b.getType()));
-                int absorbed = field.size();
-                for (Block b : field) {
-                    w.spawnParticle(Particle.DUST, b.getLocation().add(0.5, 0.4, 0.5), 3, 0.2, 0.2, 0.2, 0, new Particle.DustOptions(GOLD, 1.3f));
-                    b.setType(Material.AIR);
-                }
+                power[0] = 0.6 + 0.4 * Math.min(1, absorbed[0] / ab.number("full-at", 20));
                 l.crops = new ArrayList<>();
-                double full = ab.number("full-at", 20);
-                power[0] = 0.6 + 0.4 * Math.min(1, absorbed / full);
-                if (absorbed == 0) {
+                if (absorbed[0] == 0) {
                     // nothing left in the field: it burns its own energy
                     double cost = ab.number("self-cost", 0.06);
                     AttributeInstance max = e.getAttribute(Attribute.MAX_HEALTH);
                     double hp = max == null ? 20 : max.getValue();
                     e.setHealth(Math.max(1, e.getHealth() - hp * cost));
-                    w.spawnParticle(Particle.DAMAGE_INDICATOR, at.clone().add(0, 1.5, 0), 12, 0.6, 0.6, 0.6, 0.1);
+                    w.spawnParticle(Particle.DAMAGE_INDICATOR, at.clone().add(0, 1.5, 0), 16, 0.6, 0.6, 0.6, 0.1);
+                    w.playSound(at, Sound.ENTITY_PLAYER_HURT_ON_FIRE, 1.4f, 0.7f);
                 }
+                w.playSound(at, Sound.ENTITY_GENERIC_DRINK, 1.6f, 0.6f);
             }
             if (t == 60) {
                 l.full = true;
                 c.parts(true, FULL);
                 c.parts(false, EMPTY);
+                w.playSound(at, Sound.ENTITY_PUFFER_FISH_BLOW_UP, 2f, 0.6f);
             }
-            if (t > 60 && t < 85 && t % 2 == 0) {
-                w.spawnParticle(Particle.DUST, at.clone().add(0, 1.3, 0), 6, 1.2, 0.8, 1.2, 0, new Particle.DustOptions(GOLD, 1.3f));
-                w.spawnParticle(Particle.END_ROD, mouth, 1, 0.3, 0.2, 0.3, 0.01);
-                if (t % 8 == 0) w.playSound(at, Sound.BLOCK_BEACON_AMBIENT, 1.6f, 1.6f);
+            if (t > 60 && t < 86) {
+                if (t % 2 == 0) {
+                    w.spawnParticle(Particle.DUST, at.clone().add(0, 1.3, 0), 8, 1.3, 0.9, 1.3, 0, new Particle.DustOptions(GOLD, 1.4f));
+                    w.spawnParticle(Particle.ELECTRIC_SPARK, mouth, 3, 0.4, 0.3, 0.4, 0.05);
+                }
+                int beat = t < 74 ? 8 : 4;
+                if (t % beat == 0) w.playSound(at, Sound.ENTITY_WARDEN_HEARTBEAT, 2f, 1.6f);
+                if (t == 62) fx.crater(at, 3, 90, 0.4, Fx.BROKEN_EARTH);
+                if (t == 74) fx.crater(at, 5, 80, 0.4, Fx.BROKEN_EARTH);
+                if (t == 66 || t == 78) fx.shockwave(at, 3, 4, 0.3);
             }
-            int wave = t == 88 ? 0 : t == 96 ? 1 : t == 104 ? 2 : -1;
-            if (wave >= 0) {
-                Location aim = p != null ? p.getLocation() : at.clone().add(at.getDirection().multiply(8));
-                if (p != null) face(e, aim);
-                int[] counts = {7, 11, 15};
-                double[] spreads = {25, 50, 75};
-                int n = Math.max(5, (int) Math.round(counts[wave] * power[0]));
-                fan(c, ab, aim, n, spreads[wave], ab.number("speed", 1.1), List.of(), true,
-                        (wave == 2 ? 1.4 : 1.0) * power[0]);
-                w.playSound(at, Sound.ENTITY_BREEZE_SHOOT, 2f, 0.8f);
-                w.playSound(at, Sound.ENTITY_BLAZE_SHOOT, 1.4f, 1.4f);
-                w.spawnParticle(Particle.FLASH, mouth, 1, 0, 0, 0, 0, Color.fromRGB(0xFFD94D));
+            for (int i = 0; i < 3; i++) {
+                int wt = waves[i];
+                if (t == wt - 12) {
+                    // aim locked and shown 12 ticks before the wave
+                    Location aim = p != null ? p.getLocation() : at.clone().add(at.getDirection().multiply(8));
+                    aims[i] = flat(at, aim);
+                    face(e, aim);
+                    w.playSound(at, Sound.BLOCK_NOTE_BLOCK_BELL, 2f, 0.7f + i * 0.25f);
+                }
+                if (aims[i] != null && t >= wt - 12 && t < wt && t % 2 == 0) {
+                    Fx.cone(at, aims[i], spreads[i], 15, Color.fromRGB(0xFF5C5C), HARVEST);
+                    if (i == 2) Fx.ring(at, ringRadius, Color.fromRGB(0xFF5C5C), 1.4f, t * 0.1);
+                }
+                if (t == wt && aims[i] != null) {
+                    Location aim = at.clone().add(aims[i].clone().multiply(10));
+                    int n = Math.max(6, (int) Math.round(counts[i] * power[0]));
+                    fan(c, ab, aim, n, spreads[i], ab.number("speed", 1.25), List.of(Material.GOLDEN_CARROT), true,
+                            (i == 2 ? 1.4 : 1.0) * power[0]);
+                    w.playSound(at, Sound.ENTITY_BREEZE_SHOOT, 2f, 0.7f);
+                    w.playSound(at, Sound.ENTITY_BLAZE_SHOOT, 1.6f, 1.3f);
+                    w.playSound(at, Sound.ENTITY_GENERIC_EXPLODE, 0.8f, 1.6f);
+                    flash(mouth);
+                    w.spawnParticle(Particle.EXPLOSION, mouth, 2, 0.3, 0.2, 0.3, 0);
+                    fx.shockwave(at, 2.5 + i, 4, 0.35);
+                    if (i == 2) {
+                        // the last one: a ring blasts out around it too
+                        fx.shockwave(at, ringRadius, 6, 0.6);
+                        fx.crater(at, ringRadius, 100, 0.5, Fx.BROKEN_EARTH);
+                        for (Player q : fighters(e, ringRadius + 1)) {
+                            Location ql = q.getLocation();
+                            if (Math.hypot(ql.getX() - at.getX(), ql.getZ() - at.getZ()) > ringRadius) continue;
+                            c.hit(q, 1.2 * power[0]);
+                            q.setVelocity(ql.toVector().subtract(at.toVector()).setY(0).normalize().multiply(1.1).setY(0.6));
+                        }
+                    }
+                }
             }
             if (t == 108) {
                 l.full = false;
@@ -1004,13 +1104,52 @@ final class HarvestPowers {
                 l.eaten.clear();
                 c.parts(true, EMPTY);
                 c.parts(false, FULL);
+                w.playSound(at, Sound.ENTITY_PUFFER_FISH_BLOW_OUT, 2f, 0.6f);
             }
             if (t == 110) {
                 c.glow(-1);
                 w.playSound(at, Sound.ENTITY_PLAYER_BREATH, 1.6f, 0.7f);
             }
+            if (t > 110 && t < 145 && t % 6 == 0) {
+                // exhausted: puffs of breath, a sleepy sound now and then
+                w.spawnParticle(Particle.CLOUD, mouth, 3, 0.15, 0.1, 0.15, 0.01);
+                if (t % 18 == 0) w.playSound(at, Sound.ENTITY_PLAYER_BREATH, 1.2f, 0.6f);
+            }
             if (t == 150) c.release();
         });
+    }
+
+    /** A golden carrot flying from a crop of the field into the mouth of the monster (14 ticks). */
+    private void fly(Location from, LivingEntity e, MobTemplate.Ability ab) {
+        World w = from.getWorld();
+        ItemDisplay d = w.spawn(from, ItemDisplay.class, it -> {
+            it.setItemStack(new ItemStack(Material.GOLDEN_CARROT));
+            it.setPersistent(false);
+            it.setTeleportDuration(1);
+            it.setBrightness(new Display.Brightness(15, 15));
+            it.setGlowing(true);
+            it.setGlowColorOverride(GOLD);
+            it.addScoreboardTag(TAG);
+        });
+        alive.add(d);
+        new BukkitRunnable() {
+            int t;
+
+            @Override
+            public void run() {
+                if (!d.isValid() || !e.isValid() || ++t > 14) {
+                    cancel();
+                    forget(d);
+                    return;
+                }
+                double k = t / 14.0;
+                Location to = mouth(e, ab);
+                Location pos = from.clone().add(to.clone().subtract(from).toVector().multiply(k)).add(0, 2.5 * k * (1 - k) * 4, 0);
+                d.teleport(pos);
+                orient(d, to.toVector().subtract(pos.toVector()));
+                w.spawnParticle(Particle.DUST, pos, 1, 0, 0, 0, 0, new Particle.DustOptions(GOLD, 1.0f));
+            }
+        }.runTaskTimer(plugin, 1L, 1L);
     }
 
     // ---------------------------------------------------------------- phase shift, entrance, scurry
@@ -1022,6 +1161,9 @@ final class HarvestPowers {
         c.animate("phase_shift");
         title(e, ab, 40);
         w.playSound(e.getLocation(), Sound.ENTITY_WOLF_SHAKE, 2f, 0.7f);
+        w.playSound(e.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.2f, 0.6f);
+        fx.shockwave(e.getLocation(), 4, 6, 0.4);
+        fx.crater(e.getLocation(), 3, 60, 0.4, Fx.BROKEN_EARTH);
         w.spawnParticle(Particle.DUST, e.getLocation().add(0, 1.4, 0), 40, 1.2, 0.8, 1.2, 0, new Particle.DustOptions(GOLD, 1.4f));
         double bonus = ab.number("speed-bonus", 0);
         AttributeInstance speed = e.getAttribute(Attribute.MOVEMENT_SPEED);
@@ -1055,7 +1197,10 @@ final class HarvestPowers {
         c.hold(60);
         c.animate("spawn");
         timeline(e, 60, t -> {
-            if (t < 18 && run > 0 && !wallAhead(e, dir, 1)) step(e, dir, run / 18);
+            if (t < 18 && run > 0 && !wallAhead(e, dir, 1)) {
+                step(e, dir, run / 18);
+                if (t % 2 == 0) w.spawnParticle(Particle.BLOCK, e.getLocation(), 5, 0.4, 0.05, 0.4, 0, Material.FARMLAND.createBlockData());
+            }
             if (t == 26 || t == 30) w.playSound(e.getLocation(), Sound.ENTITY_FOX_SNIFF, 1.4f, 1.3f);
             if (t == 35) w.playSound(e.getLocation(), Sound.ENTITY_RABBIT_AMBIENT, 2f, 0.7f);
             if (t == 38 && target.isValid()) face(e, target.getLocation());
@@ -1068,7 +1213,7 @@ final class HarvestPowers {
     private void scurry(MobTemplate.Ability ab, RockPowers.Caster c, Player target) {
         LivingEntity e = c.entity();
         int max = (int) ab.number("ticks", 40);
-        double speed = ab.number("run-speed", 3.0) / 20, stop = ab.number("stop", 4);
+        double speed = ab.number("run-speed", 5.0) / 20, stop = ab.number("stop", 4);
         c.hold(max + 2);
         c.loop("run");
         new BukkitRunnable() {

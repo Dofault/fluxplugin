@@ -204,13 +204,13 @@ def animations():
     blink(a, 22, 63)
     A.append(a)
 
-    # ------------------------------------------------------------------ walk: 0.7 s loop (14 ticks)
-    # Lateral sequence walk (back left, front left, back right, front right, a quarter apart), short shuffling steps,
-    # the body waddles and bobs, the head stays steady. Planted feet do not slide at 1.0 block a second.
-    L = 0.7
-    a = Anim("walk", 14, loop=True)
+    # ------------------------------------------------------------------ walk: 0.6 s loop (12 ticks)
+    # Lateral sequence walk (back left, front left, back right, front right, a quarter apart), quick little steps,
+    # the body waddles and bobs, the head stays steady. Planted feet do not slide at 1.6 blocks a second.
+    L = 0.6
+    a = Anim("walk", 12, loop=True)
     legs, planted = gait(L, {"Leg_back_left": 0.0, "Leg_front_left": 0.25, "Leg_back_right": 0.5,
-                             "Leg_front_right": 0.75}, duty=0.7, stride=3.9, lift=1.6)
+                             "Leg_front_right": 0.75}, duty=0.65, stride=5.0, lift=2.0)
     for leg, (p, r) in legs.items():
         a.pos(leg, p).rot(leg, r)
     PLANT["walk"] = planted
@@ -223,13 +223,13 @@ def animations():
     mirror(a, "Cheek_right_empty", "Cheek_left_empty", "rotation", lambda t, s: (0, 0, 1.5 * S(TAU * t / L - 0.8) * s))
     A.append(a)
 
-    # ------------------------------------------------------------------ run: 0.4 s loop (8 ticks)
+    # ------------------------------------------------------------------ run: 0.35 s loop (7 ticks)
     # Half bound: the front pair, then the back pair; body low, pitching, head down and forward, ears laid back so
-    # they do not flap. Planted feet do not slide at 3 blocks a second.
-    L = 0.4
-    a = Anim("run", 8, loop=True)
+    # they do not flap. Planted feet do not slide at 5 blocks a second.
+    L = 0.35
+    a = Anim("run", 7, loop=True)
     legs, planted = gait(L, {"Leg_front_right": 0.0, "Leg_front_left": 0.06, "Leg_back_right": 0.5,
-                             "Leg_back_left": 0.56}, duty=0.45, stride=4.3, lift=2.4, swing_rot=18)
+                             "Leg_back_left": 0.56}, duty=0.4, stride=5.6, lift=2.8, swing_rot=22)
     for leg, (p, r) in legs.items():
         a.pos(leg, p).rot(leg, r)
     PLANT["run"] = planted
@@ -389,10 +389,10 @@ def animations():
 
     # ------------------------------------------------------------------ roll: 3.2 s (64 ticks)
     # 0-12 wind up (lowered, legs drawn in, head down, ears flat), 12-18 curls into a ball (legs and head tucked in,
-    # cheeks pressed), 18-43 rolls forwards faster and faster (the game moves it; two full turns at tick 43), 43-49
+    # cheeks pressed), 18-43 rolls forwards faster and faster (the game moves it; three full turns at tick 43), 43-49
     # unrolls (legs out, head pops up, squash), 49-64 dizzy shake, back to rest.
     a = Anim("roll", 64)
-    w0, w1 = 8.0, 46.4                     # degrees per tick at tick 18 and 43 (two turns from tick 12)
+    w0, w1 = 16.0, 67.2                    # degrees per tick at tick 18 and 43 (three turns from tick 12)
 
     def angle(t):
         tick = t * 20
@@ -403,7 +403,7 @@ def animations():
         if tick <= 43:
             u = (tick - 18) / 25
             return -40 - 25 * (w0 * u + (w1 - w0) * u * u / 2)
-        return -720 - 12 * bump(T(43), T(49), t)
+        return -1080 - 12 * bump(T(43), T(49), t)
     curl = lambda t: smooth(T(10), T(17), t) * (1 - smooth(T(43), T(47), t))          # noqa: E731
     gather = lambda t: smooth(0, T(12), t) * (1 - smooth(T(43), T(48), t))           # noqa: E731
     a.rot("Body", lambda t: (angle(t), 0, 0))
@@ -445,29 +445,30 @@ def animations():
     LOCK["roll_crash"] = [(0, T(3))]
     A.append(a)
 
-    # ------------------------------------------------------------------ leap: 2.75 s (55 ticks)
-    # 0-12 crouch (back legs more), 12-16 push (launch at tick 13: the game moves the entity along its arc until tick
-    # 34), 16-34 compact in the air, front first at the end, 34 landing (shockwave), 34-40 squash, 40-55 recovery.
-    a = Anim("leap", 55)
-    crouch = lambda t: smooth(0, T(12), t) * (1 - smooth(T(12), T(15), t))           # noqa: E731
-    air = lambda t: smooth(T(13), T(17), t) * (1 - smooth(T(32), T(35), t))          # noqa: E731
-    land = lambda t: bump(T(34), T(42), t)                                            # noqa: E731
-    a.pos("Body", lambda t: (0, -3.2 * crouch(t) + 1.5 * air(t) - 3.0 * land(t), 0))
-    a.rot("Body", lambda t: (5 * crouch(t) + keys(t, [(0, 0), (T(13), 0), (T(16), -6), (T(25), 4), (T(33), -10),
-                                                   (T(36), 0)]) * (1 if T(13) <= t <= T(36) else 0), 0, 0))
-    a.scale("Body", lambda t: (1 + 0.06 * land(t), 1 - 0.1 * land(t), 1 + 0.04 * land(t)))
-    for leg in LEGS:
-        fz = 1 if leg in FRONT else -1
-        a.rot(leg, lambda t, fz=fz: ((30 if fz > 0 else -22) * air(t) + (-35 * bump(T(12), T(16), t) if fz < 0 else 0), 0, 0))
+    # ------------------------------------------------------------------ leap: 2.1 s (42 ticks)
+    # 0-9 crouch (back legs more), 9-12 push (launch at tick 9: the game moves the entity along its arc until tick
+    # 24), 12-24 compact in the air, front first at the end, 24 landing (shockwave), 24-30 squash, 30-42 recovery.
+    a = Anim("leap", 42)
+    crouch = lambda t: smooth(0, T(9), t) * (1 - smooth(T(9), T(11), t))             # noqa: E731
+    air = lambda t: smooth(T(9), T(12), t) * (1 - smooth(T(22), T(25), t))           # noqa: E731
+    land = lambda t: bump(T(24), T(32), t)                                            # noqa: E731
+    a.pos("Body", lambda t: (0, -3.4 * crouch(t) + 1.5 * air(t) - 3.4 * land(t), 0))
+    a.rot("Body", lambda t: (6 * crouch(t) + keys(t, [(0, 0), (T(9), 0), (T(12), -8), (T(18), 5), (T(23), -12),
+                                                   (T(26), 0)]) * (1 if T(9) <= t <= T(26) else 0), 0, 0))
+    a.scale("Body", lambda t: (1 + 0.08 * land(t), 1 - 0.13 * land(t), 1 + 0.05 * land(t)))
+    for leg in BACK:
+        a.rot(leg, lambda t: (-22 * air(t) - 38 * bump(T(8), T(12), t), 0, 0))
         a.pos(leg, lambda t: (0, 3.0 * air(t), 0))
-    mirror(a, "Leg_front_right", "Leg_front_left", "rotation",
-           lambda t, s: (30 * air(t), 0, -10 * s * land(t)))
-    a.rot("Head", lambda t: (-10 * crouch(t) + 5 * air(t) - 6 * land(t), 9 * bump(T(42), T(54), t) * S(TAU * (t - T(42)) / 0.3), 0))
+    mirror(a, "Leg_front_right", "Leg_front_left", "rotation", lambda t, s: (32 * air(t), 0, -12 * s * land(t)))
+    for leg in FRONT:
+        a.pos(leg, lambda t: (0, 3.0 * air(t), 0))
+    a.rot("Head", lambda t: (-10 * crouch(t) + 5 * air(t) - 8 * land(t), 9 * bump(T(30), T(41), t) * S(TAU * (t - T(30)) / 0.3), 0))
+    a.rot("Jaw", lambda t: (-12 * bump(T(10), T(22), t), 0, 0))
     both(a, ("Ear_right", "Ear_left"), "rotation",
-         lambda t: (25 * crouch(t) + keys(t, [(0, 0), (T(13), 0), (T(17), 40), (T(26), 10), (T(34), -12), (T(37), 30),
-                                             (T(46), 0)]) * (1 if t >= T(13) else 0), 0, 0))
-    cheeks(a, lambda t: sc(1 + 0.07 * land(t) * C(TAU * (t - T(34)) / 0.2)))
-    PLANT["leap"] = {leg: [(0, T(12.5)), (T(35), T(55))] for leg in LEGS}
+         lambda t: (25 * crouch(t) + keys(t, [(0, 0), (T(9), 0), (T(12), 42), (T(18), 10), (T(24), -14), (T(27), 32),
+                                             (T(36), 0)]) * (1 if t >= T(9) else 0), 0, 0))
+    cheeks(a, lambda t: sc(1 + 0.09 * land(t) * C(TAU * (t - T(24)) / 0.2)))
+    PLANT["leap"] = {leg: [(0, T(8.5)), (T(25), T(42))] for leg in LEGS}
     LOCK["leap"] = []
     A.append(a)
 
@@ -506,11 +507,16 @@ def animations():
     tremble = lambda t: smooth(T(60), T(66), t) * (1 - smooth(T(84), T(86), t))      # noqa: E731
     a.pos("Body", lambda t: (0.35 * tremble(t) * S(TAU * 10 * t), -1.0 * smooth(0, T(25), t) * (1 - smooth(T(60), T(66), t))
                              + 1.0 * tremble(t) - 3.0 * slump(t), 1.2 * wave(t)))
-    a.rot("Body", lambda t: (-8 * absorb(t) + 6 * tremble(t) - 2 * wave(t) - 6 * slump(t), 0, 0))
+    situp = lambda t: smooth(T(62), T(70), t) * (1 - smooth(T(83), T(87), t))        # noqa: E731
+    a.rot("Body", lambda t: (-8 * absorb(t) + 4 * tremble(t) + 26 * situp(t) - 2 * wave(t) - 6 * slump(t), 0, 0))
+    mirror(a, "Leg_front_right", "Leg_front_left", "rotation",
+           lambda t, s: (-30 * situp(t) + 6 * situp(t) * S(TAU * 3 * t + s), 0, -8 * s * situp(t)))
+    for leg in BACK:
+        a.rot(leg, lambda t: (-26 * situp(t), 0, 0))
     a.scale("Body", lambda t: (1 - 0.03 * tremble(t), 1 - 0.02 * tremble(t) + 0.03 * slump(t) * S(TAU * 2 * t),
                                1 - 0.04 * tremble(t)))
     mirror(a, "Leg_front_right", "Leg_front_left", "position", lambda t, s: (0.8 * s * absorb(t), 0, -1.8 * absorb(t)))
-    a.rot("Head", lambda t: (keys(t, [(0, 0), (T(25), -16), (T(32), -20), (T(58), -20), (T(66), 8), (T(85), 8), (T(88), -6),
+    a.rot("Head", lambda t: (-22 * situp(t) + keys(t, [(0, 0), (T(25), -16), (T(32), -20), (T(58), -20), (T(66), 8), (T(85), 8), (T(88), -6),
                                       (T(104), -6), (T(110), -10), (T(118), -22), (T(135), -18), (T(150), 0)]) - 8 * wave(t), 0, 0))
     a.pos("Neck", lambda t: (0, 0, -2.5 * wave(t)))
     a.rot("Jaw", lambda t: (-8 * absorb(t) - 32 * wave(t) - (5 + 3 * S(TAU * 3 * t)) * slump(t), 0, 0))
@@ -521,7 +527,8 @@ def animations():
     cheeks(a, lambda t: sc(1 + (EMPTY - 1) * smooth(T(27), T(58), t)), ("empty",))
     cheeks(a, lambda t: sc(keys(t, [(0, 1.0), (T(60), 1.0), (T(84), 1.5), (T(87), 1.5), (T(89), 1.25), (T(95), 1.25),
                                      (T(97), 0.95), (T(103), 0.95), (T(106), 0.62)])), ("full",))
-    PLANT["great_feast"] = {leg: [(0, T(150))] for leg in LEGS}
+    PLANT["great_feast"] = {leg: [(0, T(150))] for leg in BACK}
+    PLANT["great_feast"].update({leg: [(0, T(61)), (T(87), T(150))] for leg in FRONT})
     A.append(a)
 
     # ------------------------------------------------------------------ death: 3.5 s (70 ticks)
@@ -550,9 +557,9 @@ def animations():
     # ears up), 38 the game turns it to the player, 42-56 sits up on its haunches, front paws off the ground, a nod at
     # 50, 56-60 back on all fours.
     a = Anim("spawn", 60)
-    L = 0.4
+    L = 0.35
     legs, planted = gait(L, {"Leg_front_right": 0.0, "Leg_front_left": 0.06, "Leg_back_right": 0.5,
-                             "Leg_back_left": 0.56}, duty=0.45, stride=4.3, lift=2.4, swing_rot=18)
+                             "Leg_back_left": 0.56}, duty=0.4, stride=5.6, lift=2.8, swing_rot=22)
     runk = lambda t: 1 - smooth(T(18), T(22), t)                                      # noqa: E731
     for leg, (p, r) in legs.items():
         a.pos(leg, lambda t, p=p: tuple(v * runk(t) for v in p(t % L)))
@@ -603,6 +610,40 @@ def animations():
     mirror(a, "Cheek_right", "Cheek_left", "rotation", lambda t, s: (0, 0, 6 * shake(t) * S(TAU * t / 0.2 - 2.2)))
     mirror(a, "Cheek_right_empty", "Cheek_left_empty", "rotation", lambda t, s: (0, 0, 6 * shake(t) * S(TAU * t / 0.2 - 2.2)))
     a.scale("Body", lambda t: (1, 1 + 0.04 * bump(T(16), T(30), t), 1))
+    A.append(a)
+
+    # ------------------------------------------------------------------ groom: 2.4 s (48 ticks), ambient
+    # Sits back on its haunches and washes its face with both front paws (the hamster's own toilet), eyes shut,
+    # then a shake of the head and back on all fours.
+    a = Anim("groom", 48)
+    sit = lambda t: smooth(T(2), T(9), t) * (1 - smooth(T(38), T(45), t))            # noqa: E731
+    rub = lambda t: smooth(T(9), T(12), t) * (1 - smooth(T(34), T(38), t))           # noqa: E731
+    a.rot("Body", lambda t: (28 * sit(t), 0, 0))
+    for leg in BACK:
+        a.rot(leg, lambda t: (-28 * sit(t), 0, 0))
+    mirror(a, "Leg_front_right", "Leg_front_left", "rotation",
+           lambda t, s: (-34 * sit(t) - 30 * rub(t) - 14 * rub(t) * (0.5 + 0.5 * S(TAU * 3 * t + (0 if s > 0 else 2.2))), 0,
+                         14 * s * rub(t)))
+    mirror(a, "Leg_front_right", "Leg_front_left", "position", lambda t, s: (-1.2 * s * rub(t), 1.5 * rub(t), -1.5 * rub(t)))
+    a.rot("Head", lambda t: (-24 * sit(t) - 6 * rub(t) * S(TAU * 3 * t), 6 * rub(t) * S(TAU * 1.5 * t),
+                             10 * bump(T(38), T(46), t) * S(TAU * (t - T(38)) / 0.2)))
+    lids(a, lambda t: rub(t))
+    both(a, ("Ear_right", "Ear_left"), "rotation", lambda t: (14 * rub(t), 0, 0))
+    cheeks(a, lambda t: sc(1 + 0.04 * rub(t) * S(TAU * 3 * t)))
+    PLANT["groom"] = {leg: [(0, T(48))] for leg in BACK}
+    PLANT["groom"].update({leg: [(0, T(3)), (T(45), T(48))] for leg in FRONT})
+    A.append(a)
+
+    # ------------------------------------------------------------------ sniff_air: 1.2 s (24 ticks), ambient
+    # Lifts its head high, sniffs the air (nose twitching fast), ears forward, looks left then right.
+    a = Anim("sniff_air", 24)
+    up = lambda t: smooth(0, T(5), t) * (1 - smooth(T(19), T(24), t))                # noqa: E731
+    a.rot("Body", lambda t: (6 * up(t), 0, 0))
+    a.rot("Head", lambda t: (20 * up(t), 14 * bump(T(6), T(13), t) - 14 * bump(T(12), T(19), t), 0))
+    a.pos("Nose", lambda t: (0, 0.4 * up(t) * S(TAU * 11 * t), 0))
+    a.rot("Muzzle", lambda t: (3 * up(t) * S(TAU * 11 * t + 1), 0, 0))
+    both(a, ("Ear_right", "Ear_left"), "rotation", lambda t: (-16 * up(t), 0, 0))
+    blink(a, 20)
     A.append(a)
 
     return A, PLANT, LOCK

@@ -93,6 +93,10 @@ public final class Mobs {
         /** Abilities cast once and done ({@code once: true}), and when each one became allowed by its life share. */
         final Set<Integer> spent = new HashSet<>();
         final Map<Integer, Long> allowedSince = new HashMap<>();
+        /** Where it stood at the last cue tick, distance walked since its last step sound, ticks standing still. */
+        Location lastPos;
+        double walked;
+        int still;
         /**
          * The player it fights, kept by FluxDungeons (not the vanilla target, which any plugin may cancel or clear:
          * every decision of the monster, abilities and melee, reads this one).
@@ -149,7 +153,102 @@ public final class Mobs {
         }
 
         public void animate(String animation) {
-            if (model != null && animation != null && !animation.isBlank()) model.play(animation);
+            if (model != null && animation != null && !animation.isBlank() && model.play(animation)) cue(this, animation);
+        }
+    }
+
+    // ---------------------------------------------------------------- cues: sounds and effects of the model
+
+    /**
+     * Sounds and particles tied to an animation ({@code cues.<animation>} of the monster's file): a list of
+     * {@code {tick, sound, volume, pitch, particle, count, height, spread}}, played from the moment the animation
+     * starts. The model itself cannot carry sounds (BetterModel ignores sound keyframes).
+     */
+    private void cue(Alive a, String animation) {
+        Object list = a.template.extra().cues().get(animation);
+        if (!(list instanceof List<?> entries)) return;
+        for (Object o : entries) {
+            if (!(o instanceof Map<?, ?> m)) continue;
+            long tick = m.get("tick") instanceof Number n ? n.longValue() : 0;
+            Runnable play = () -> {
+                if (!a.entity.isValid() || (a.dying && !"death".equals(animation))) return;
+                play(a.entity.getLocation(), m);
+            };
+            if (tick <= 0) play.run();
+            else Bukkit.getScheduler().runTaskLater(plugin, play, tick);
+        }
+    }
+
+    private static void play(Location at, Map<?, ?> m) {
+        World w = at.getWorld();
+        double height = m.get("height") instanceof Number n ? n.doubleValue() : 1;
+        if (m.get("sound") != null) {
+            float volume = m.get("volume") instanceof Number n ? n.floatValue() : 1f;
+            float pitch = m.get("pitch") instanceof Number n ? n.floatValue() : 1f;
+            w.playSound(at, String.valueOf(m.get("sound")), org.bukkit.SoundCategory.HOSTILE, volume, pitch);
+        }
+        if (m.get("particle") != null) {
+            try {
+                Particle p = Particle.valueOf(String.valueOf(m.get("particle")).toUpperCase(java.util.Locale.ROOT));
+                int count = m.get("count") instanceof Number n ? n.intValue() : 10;
+                double spread = m.get("spread") instanceof Number n ? n.doubleValue() : 0.5;
+                Location l = at.clone().add(0, height, 0);
+                if (p.getDataType() == Particle.DustOptions.class) {
+                    w.spawnParticle(p, l, count, spread, spread * 0.6, spread, 0, new Particle.DustOptions(org.bukkit.Color.fromRGB(0xFFD94D), 1.2f));
+                } else if (p.getDataType() == Void.class) {
+                    w.spawnParticle(p, l, count, spread, spread * 0.6, spread, 0.02);
+                }
+            } catch (IllegalArgumentException ignored) {
+                // unknown particle
+            }
+        }
+    }
+
+    /**
+     * Every 2 ticks: step sounds of a walking monster ({@code cues.steps: {sound, stride, volume, pitch}}: one sound
+     * every {@code stride} blocks walked) and, standing still out of any ability, now and then a little animation or
+     * sound of its own ({@code cues.ambient: {every, chance, animations, sounds}}).
+     */
+    private void cueTick() {
+        for (Alive a : alive.values()) {
+            if (a.dying || !a.entity.isValid()) continue;
+            Map<String, Object> cues = a.template.extra().cues();
+            if (cues.isEmpty()) continue;
+            Location now = a.entity.getLocation();
+            double moved = a.lastPos != null && a.lastPos.getWorld() == now.getWorld()
+                    ? Math.hypot(now.getX() - a.lastPos.getX(), now.getZ() - a.lastPos.getZ()) : 0;
+            a.lastPos = now;
+            if (moved > 0.02) {
+                a.still = 0;
+                if (cues.get("steps") instanceof Map<?, ?> steps) {
+                    double stride = steps.get("stride") instanceof Number n ? n.doubleValue() : 0.6;
+                    a.walked += moved;
+                    if (a.walked >= stride) {
+                        a.walked = 0;
+                        play(now, steps);
+                    }
+                }
+                continue;
+            }
+            a.still += 2;
+            if (!(cues.get("ambient") instanceof Map<?, ?> amb) || Bukkit.getCurrentTick() < a.holdUntil) continue;
+            int every = amb.get("every") instanceof Number n ? n.intValue() : 120;
+            if (a.still < every) continue;
+            a.still = 0;
+            // never in the middle of a fight
+            Player near = fightingTarget(a);
+            if (near != null && near.getWorld() == now.getWorld() && near.getLocation().distanceSquared(now) < 64) continue;
+            double chance = amb.get("chance") instanceof Number n ? n.doubleValue() : 0.5;
+            ThreadLocalRandom r = ThreadLocalRandom.current();
+            if (r.nextDouble() > chance) continue;
+            List<?> anims = amb.get("animations") instanceof List<?> l ? l : List.of();
+            List<?> sounds = amb.get("sounds") instanceof List<?> l ? l : List.of();
+            if (!anims.isEmpty() && (sounds.isEmpty() || r.nextBoolean())) {
+                a.animate(String.valueOf(anims.get(r.nextInt(anims.size()))));
+            } else if (!sounds.isEmpty()) {
+                a.entity.getWorld().playSound(now, String.valueOf(sounds.get(r.nextInt(sounds.size()))),
+                        org.bukkit.SoundCategory.HOSTILE, 1.2f, (float) r.nextDouble(0.9, 1.3));
+            }
         }
     }
 
@@ -217,8 +316,10 @@ public final class Mobs {
         });
         Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 10L, 10L);
         Bukkit.getScheduler().runTaskTimer(plugin, this::reachTick, 2L, 2L);
+        Bukkit.getScheduler().runTaskTimer(plugin, this::cueTick, 2L, 2L);
         this.rock = new RockPowers(plugin);
-        this.harvest = new HarvestPowers(plugin);
+        this.fx = new Fx(plugin);
+        this.harvest = new HarvestPowers(plugin, fx);
         this.tide = new TidePowers(plugin);
     }
 
@@ -853,11 +954,13 @@ public final class Mobs {
     /** Abilities of the water (geysers, whirlpool, bubbles, tidal breach). */
     private TidePowers tide;
     private HarvestPowers harvest;
+    private Fx fx;
 
     public void removeAll() {
         if (rock != null) rock.clear();
         if (tide != null) tide.clear();
         if (harvest != null) harvest.clear();
+        if (fx != null) fx.clear();
         for (Alive a : alive.values()) {
             close(a);
             a.entity.remove();
@@ -928,7 +1031,8 @@ public final class Mobs {
         if (now - a.lastHurt < 500) return;
         a.lastHurt = now;
         // a second reaction, when the model has one, half of the time
-        if (!(ThreadLocalRandom.current().nextBoolean() && a.model.play("hurt_2"))) a.model.play("hurt");
+        if (ThreadLocalRandom.current().nextBoolean() && a.model.play("hurt_2")) cue(a, "hurt_2");
+        else if (a.model.play("hurt")) cue(a, "hurt");
     }
 
     /** Below the share of life of its next phase, the monster becomes the next one, life share kept. */
@@ -1024,6 +1128,7 @@ public final class Mobs {
         if (a.dying) return true;
         if (a.model == null || !a.template.boss() || !a.model.play("death")) return false;
         a.dying = true;
+        cue(a, "death");
         entity.setInvulnerable(true);
         if (entity instanceof Mob m) {
             m.setAI(false);
@@ -1690,7 +1795,7 @@ public final class Mobs {
                     MobTemplate copy = new MobTemplate(a.template.id() + "_summon", type, "&7" + type.name().toLowerCase(), false, null,
                             maxHealth(e) * 0.15, a.baseDamage() * 0.6, 0.25, 0, 1, 0, Map.of(), List.of(),
                             new MobTemplate.Extra(1, 0.15, 0.6, false, false, 32, 0, List.of(), List.of(), null, List.of(), List.of(), List.of(),
-                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of(), 0, 1, false, false, false, 0, 0, 0, 36, false, Map.of()));
+                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of(), 0, 1, false, false, false, 0, 0, 0, 36, false, Map.of(), Map.of()));
                     for (int i = 0; i < (int) ab.number("count", 2); i++) {
                         LivingEntity s = spawn(copy, at.clone().add(ThreadLocalRandom.current().nextDouble(-2, 2), 0, ThreadLocalRandom.current().nextDouble(-2, 2)), a.run);
                         if (s != null) onSummon.accept(e, s);
