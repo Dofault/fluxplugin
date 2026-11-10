@@ -103,7 +103,9 @@ public final class Modules {
             }
         }
         MoneyGainActionBarListener bar = new MoneyGainActionBarListener(plugin, c.getDouble("hide-after-seconds", 1.5),
-                c.getString("color", "&#B376E5"), durabilityGuard, durabilityThreshold);
+                c.getString("color", "&#B376E5"), durabilityGuard, durabilityThreshold,
+                c.getString("hype-bar.glyph", "fluxafk:bar_{step}"), c.getInt("hype-bar.steps", 20),
+                c.getDouble("hype-bar.window-seconds", 10));
         pm.registerEvents(bar, plugin);
         toggleCommand("moneynotif", new String[]{"bitblocknotif"}, false, null, bar::setEnabled,
                 "&#FFD94D&lRéglages &8► &#B376E5Notif. gain %img_bitblock% &#2ECF7Bactivées.",

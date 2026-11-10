@@ -70,6 +70,12 @@ modules:
     hide-after-seconds: 1.5
     # colour of the amount (shown in the main currency format of Flux)
     color: "&#B376E5"
+    # Hype bar after the amount: FluxAFK's textured bar ({step} from 0 to steps), full when the money of the last
+    # window-seconds matches an optimal level 100 player (FluxValue). glyph: "" to turn it off.
+    hype-bar:
+      glyph: "fluxafk:bar_{step}"
+      steps: 20
+      window-seconds: 10
 
   # Locks Mending: removed from anvil results, generated loot and fishing. Books still circulate, they just
   # become useless. log: one console line per removal.
