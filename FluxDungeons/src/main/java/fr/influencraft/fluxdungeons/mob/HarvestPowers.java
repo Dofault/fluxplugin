@@ -69,7 +69,7 @@ import java.util.concurrent.ThreadLocalRandom;
 final class HarvestPowers {
 
     static final Set<String> TYPES = Set.of("harvest", "rolling_charge", "crush_leap", "root_eruption", "great_feast",
-            "phase_shift", "entrance", "scurry");
+            "phase_shift", "entrance", "scurry", "counter_shot");
     static final Set<Material> CROPS = Set.of(Material.CARROTS, Material.POTATOES, Material.WHEAT, Material.BEETROOTS);
     private static final List<String> FULL = List.of("Cheek_right", "Cheek_left");
     private static final List<String> EMPTY = List.of("Cheek_right_empty", "Cheek_left_empty");
@@ -111,6 +111,7 @@ final class HarvestPowers {
             case "phase_shift" -> phaseShift(ab, c);
             case "entrance" -> entrance(ab, c, target);
             case "scurry" -> scurry(ab, c, target);
+            case "counter_shot" -> counterShot(ab, c, target);
             default -> {
             }
         }
@@ -1389,6 +1390,40 @@ final class HarvestPowers {
             if (t == 50) w.playSound(e.getLocation(), Sound.ENTITY_RABBIT_AMBIENT, 2f, 1.1f);
             if (t == 60) c.release();
         });
+    }
+
+    /**
+     * A reflex against a player shooting from afar: turns its head and spits {@code count} fast projectiles at him
+     * ({@code item}, carrot by default), 3 ticks apart, aimed where he is going. No hold: it may come in the middle
+     * of another ability.
+     */
+    private void counterShot(MobTemplate.Ability ab, RockPowers.Caster c, Player target) {
+        LivingEntity e = c.entity();
+        World w = e.getWorld();
+        int count = (int) ab.number("count", 3);
+        double speed = ab.number("speed", 1.8), fallback = ab.number("shot-power", 3);
+        Material item = Material.matchMaterial(ab.text("item", "CARROT"));
+        Material shot = item == null ? Material.CARROT : item;
+        w.playSound(e.getLocation(), Sound.ENTITY_LLAMA_SPIT, 1.8f, 1.2f);
+        w.playSound(e.getLocation(), Sound.ENTITY_RABBIT_ATTACK, 1.6f, 0.8f);
+        Set<UUID> salvo = new HashSet<>();
+        for (int k = 0; k < count; k++) {
+            int shotIndex = k;
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (!e.isValid() || e.isDead() || !target.isValid() || !Mobs.fighting(target)) return;
+                Location from = mouth(e, ab);
+                Location aim = target.getEyeLocation().add(0, -0.4, 0);
+                double dist = from.distance(aim);
+                // aim where he will be when the shot arrives
+                aim.add(target.getVelocity().clone().setY(0).multiply(dist / speed));
+                Vector v = aim.toVector().subtract(from.toVector()).normalize();
+                v.setY(v.getY() + Math.min(0.12, dist * 0.004));
+                v.rotateAroundY(Math.toRadians((shotIndex - (count - 1) / 2.0) * 3));
+                salvo.clear();
+                shoot(c, from, v.multiply(speed), shot, false, fallback, 1, salvo);
+                w.spawnParticle(Particle.CLOUD, from, 3, 0.1, 0.1, 0.1, 0.02);
+            }, 2L + 3L * k);
+        }
     }
 
     /** Runs at a player who keeps away, until it is close (or {@code ticks} ticks). */

@@ -984,7 +984,31 @@ public final class Mobs {
         engage(a, player);
         a.damagers.merge(player.getUniqueId(), Math.min(event.getFinalDamage(), entity.getHealth()), Double::sum);
         engine.fire(a, "EliteMobDamagedByPlayerEvent", player, event);
+        counter(a, player, event);
         if (!a.template.extra().hurtMessages().isEmpty() && ThreadLocalRandom.current().nextDouble() < 0.15) say(a, a.template.extra().hurtMessages());
+    }
+
+    /**
+     * Reflexes against players who shoot from afar ({@code counter_shot} abilities): hit by a projectile of a player
+     * at least {@code min-range} blocks away, the monster answers at once, even in the middle of another ability,
+     * at most every {@code every} seconds. Never drawn among the other abilities.
+     */
+    private void counter(Alive a, Player shooter, EntityDamageEvent event) {
+        if (a.dying || !(event instanceof org.bukkit.event.entity.EntityDamageByEntityEvent ee)
+                || !(ee.getDamager() instanceof org.bukkit.entity.Projectile) || !castsAbilities(a)) return;
+        long now = System.currentTimeMillis();
+        double dist = shooter.getLocation().distance(a.entity.getLocation());
+        for (int i = 0; i < a.abilities.size(); i++) {
+            Ability ab = a.abilities.get(i);
+            if (!"counter_shot".equals(ab.type()) || dist < ab.number("min-range", 8)) continue;
+            double life = 100 * a.entity.getHealth() / Math.max(1, maxHealth(a.entity));
+            if (life > ab.below()) continue;
+            Long last = a.lastCast.get(i);
+            if (last != null && now - last < ab.every() * 1000) continue;
+            a.lastCast.put(i, now);
+            Bukkit.getScheduler().runTask(plugin, () -> cast(a, ab, shooter));
+            return;
+        }
     }
 
     /** A dungeon monster took damage of any kind; returns true when the damage must be cancelled (immunity). */
@@ -1217,7 +1241,7 @@ public final class Mobs {
             double reach = target.getLocation().distance(a.entity.getLocation());
             for (int i = 0; i < a.abilities.size(); i++) {
                 Ability ab = a.abilities.get(i);
-                if (life > ab.below() || a.spent.contains(i)) continue;
+                if (life > ab.below() || a.spent.contains(i) || "counter_shot".equals(ab.type())) continue;
                 // wait: seconds after its life share is reached before the first cast (an ultimate kept for later)
                 long since = a.allowedSince.computeIfAbsent(i, k -> now);
                 if (now - since < ab.number("wait", 0) * 1000) continue;
