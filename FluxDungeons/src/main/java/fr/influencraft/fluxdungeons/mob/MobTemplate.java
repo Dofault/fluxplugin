@@ -44,6 +44,9 @@ import java.util.Map;
  *       duration: 72                 # ticks before the next monster appears
  *       at-spawn: true               # goes back to its spawn point first
  *       flood: {crack: 33, at: 46, radius: 6, depth: 1, from: [ICE, PACKED_ICE], to: WATER}   # cracks from "crack", burst at "at"
+ *       # area: connected = every block of those kinds joined to the one under it (a whole frozen pool, any shape),
+ *       # up to "limit" blocks, instead of a circle of "radius"; pull: players within that many blocks left on dry
+ *       # ground are thrown onto the changed blocks (into the water); pull-title: shown to them
  *   death-ticks: 36                # a boss with a death animation disappears this many ticks after it starts
  *   stationary: true               # never walks: stays where it is and faces its target (charges still move it)
  *   attack-speed: 1                # melee hits per second at most (vanilla 1)
@@ -108,7 +111,8 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
      * Blocks of the listed kinds under a monster turned into another one, {@code at} ticks into its transition, after
      * cracks drawn on them from {@code crack} (no crack when {@code crack} is negative or not before {@code at}).
      */
-    public record Flood(int crack, int at, double radius, int depth, java.util.Set<Material> from, Material to) {
+    public record Flood(int crack, int at, double radius, int depth, java.util.Set<Material> from, Material to,
+                        boolean connected, int limit, double pull, String pullTitle) {
     }
 
     /**
@@ -213,7 +217,11 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
         Material to = Material.matchMaterial(String.valueOf(f.get("to")));
         return new Flood(f.get("crack") instanceof Number n ? n.intValue() : -1, f.get("at") instanceof Number n ? n.intValue() : 0,
                 f.get("radius") instanceof Number n ? n.doubleValue() : 3,
-                f.get("depth") instanceof Number n ? Math.max(1, n.intValue()) : 1, from, to == null ? Material.WATER : to);
+                f.get("depth") instanceof Number n ? Math.max(1, n.intValue()) : 1, from, to == null ? Material.WATER : to,
+                "connected".equalsIgnoreCase(String.valueOf(f.get("area"))),
+                f.get("limit") instanceof Number n ? Math.max(1, n.intValue()) : 4096,
+                f.get("pull") instanceof Number n ? n.doubleValue() : 0,
+                f.get("pull-title") == null ? "" : String.valueOf(f.get("pull-title")));
     }
 
     private static List<BlockState> blocks(List<String> lines) {
