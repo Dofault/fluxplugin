@@ -655,6 +655,23 @@ public final class Mobs {
         }
     }
 
+    /**
+     * {@code invulnerable} on an ability (its ultimate): {@code true} = nothing hurts the monster while it holds for
+     * that ability ({@code hold} ticks), a number = that many ticks. Its life bar shows it is out of reach.
+     */
+    private void shield(Alive a, Ability ab) {
+        Object v = ab.params().get("invulnerable");
+        int ticks = Boolean.TRUE.equals(v) ? (int) ab.number("hold", 0) : v instanceof Number n ? n.intValue() : 0;
+        if (ticks <= 0) return;
+        LivingEntity e = a.entity;
+        e.setInvulnerable(true);
+        e.getWorld().playSound(e.getLocation(), Sound.ITEM_SHIELD_BLOCK, 1.5f, 0.6f);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            // a monster dying or changing phase keeps the state its scene gave it
+            if (e.isValid() && !a.dying && !a.switching) e.setInvulnerable(false);
+        }, ticks);
+    }
+
     // ---------------------------------------------------------------- charge
 
     /**
@@ -1467,6 +1484,7 @@ public final class Mobs {
     private void cast(Alive a, Ability ab, Player target) {
         LivingEntity e = a.entity;
         if (!e.isValid()) return;
+        shield(a, ab);
         // rock and ice abilities (boulder, rockfall, quake, ice_spikes, stone_skin), water abilities (TidePowers)
         RockPowers.Caster caster = new RockPowers.Caster() {
             public LivingEntity entity() {

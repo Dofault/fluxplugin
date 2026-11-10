@@ -50,6 +50,7 @@ import java.util.Map;
  *   death-ticks: 36                # a boss with a death animation disappears this many ticks after it starts
  *   stationary: true               # never walks: stays where it is and faces its target (charges still move it)
  *   swim: {pass-speed: 10, ...}    # swims in the water around it instead of walking, see Swimmer
+ *   abilities: [{spell: colossus_cataclysm, invulnerable: true}]   # invulnerable while it holds for it (or N ticks)
  *   attack-speed: 1                # melee hits per second at most (vanilla 1)
  *   ranged-resistance: 0.5         # share of projectile damage it shrugs off (melee is the way)
  *   ranged-rate: 2                 # archers shoot this many times as often as vanilla (2 by default)
