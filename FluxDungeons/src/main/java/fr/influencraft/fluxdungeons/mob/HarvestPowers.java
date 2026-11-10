@@ -566,7 +566,8 @@ final class HarvestPowers {
                 : new int[]{(int) Math.round(shots * 0.55), 0, 0};
         split[2] = reserve >= 6 ? shots - split[0] - split[1] : 0;
         split[1] = reserve >= 6 ? split[1] : shots - split[0];
-        double fallback = 0.7 + 0.3 * Math.min(1, reserve / 12.0);
+        // a carrot hits for shot-power, less after a small meal
+        double fallback = ab.number("shot-power", 3) * (0.7 + 0.3 * Math.min(1, reserve / 12.0));
         double speed = ab.number("speed", 0.9);
         c.hold(46);
         c.animate("harvest_spit");
@@ -674,7 +675,7 @@ final class HarvestPowers {
                     Location pl = p.getLocation();
                     if (Math.hypot(pl.getX() - at.getX(), pl.getZ() - at.getZ()) > width || Math.abs(pl.getY() - at.getY()) > 2) continue;
                     struck.add(p.getUniqueId());
-                    c.hit(p, 1.4);
+                    c.hit(p, ab.number("hit-power", 6));
                     Vector side = new Vector(-dir[0].getZ(), 0, dir[0].getX());
                     if (side.dot(pl.toVector().subtract(at.toVector())) < 0) side.multiply(-1);
                     p.setVelocity(side.multiply(1.0).add(dir[0].clone().multiply(0.7)).setY(0.6));
@@ -691,7 +692,7 @@ final class HarvestPowers {
                 fx.shockwave(at, 3, 5, 0.4);
                 fx.crater(at, 2.5, 50, 0.4, Fx.BROKEN_EARTH);
                 for (Player p : fighters(e, 2.5)) {
-                    if (struck.add(p.getUniqueId())) c.hit(p, 0.6);
+                    if (struck.add(p.getUniqueId())) c.hit(p, ab.number("jolt-power", 2.5));
                 }
             }
             if (t == 64) c.release();
@@ -789,7 +790,7 @@ final class HarvestPowers {
                     double d = Math.hypot(pl.getX() - spot.getX(), pl.getZ() - spot.getZ());
                     if (d > radius || Math.abs(pl.getY() - spot.getY()) > 2.5) continue;
                     // full blow near the middle, less at the edge of the wave
-                    c.hit(p, d < radius / 2 ? 1.6 : 0.9);
+                    c.hit(p, d < radius / 2 ? ab.number("power-center", 7) : ab.number("power-edge", 4));
                     Vector out = pl.toVector().subtract(spot.toVector()).setY(0);
                     if (out.lengthSquared() < 1e-4) out = new Vector(1, 0, 0);
                     p.setVelocity(out.normalize().multiply(d < radius / 2 ? 1.0 : 0.6).setY(0.5));
@@ -807,23 +808,23 @@ final class HarvestPowers {
         World w = e.getWorld();
         int around = (int) ab.number("around", 4), life = (int) ab.number("life", 30);
         double ring = ab.number("ring", 2.3);
-        c.hold(65);
+        c.hold(45);
         c.animate("roots");
         w.playSound(e.getLocation(), Sound.BLOCK_BEACON_AMBIENT, 1.5f, 1.4f);
         List<Location> spots = new ArrayList<>();
-        timeline(e, 65, t -> {
+        timeline(e, 45, t -> {
             Location at = e.getLocation();
             Vector fwd = at.getDirection().setY(0).normalize();
             Vector side = new Vector(-fwd.getZ(), 0, fwd.getX());
-            if (t < 34 && t % 2 == 0) {
+            if (t < 20 && t % 2 == 0) {
                 // golden light around the cheeks, then rising from the feet
                 for (int s = -1; s <= 1; s += 2) {
                     Location cheek = at.clone().add(fwd.clone().multiply(1.3)).add(side.clone().multiply(0.8 * s)).add(0, 1.5, 0);
                     w.spawnParticle(Particle.DUST, cheek, 2, 0.2, 0.2, 0.2, 0, new Particle.DustOptions(GOLD, 1.0f));
                 }
-                if (t >= 18) w.spawnParticle(Particle.WAX_ON, at.clone().add(0, 0.2, 0), 4, 1.0, 0.1, 1.0, 0.02);
+                if (t >= 10) w.spawnParticle(Particle.WAX_ON, at.clone().add(0, 0.2, 0), 4, 1.0, 0.1, 1.0, 0.02);
             }
-            if (t == 38) {
+            if (t == 22) {
                 Location paws = at.clone().add(fwd.clone().multiply(1.2));
                 w.spawnParticle(Particle.BLOCK, paws, 30, 0.8, 0.1, 0.8, 0.1, Material.ROOTED_DIRT.createBlockData());
                 w.playSound(paws, Sound.BLOCK_ROOTED_DIRT_BREAK, 2f, 0.6f);
@@ -841,18 +842,18 @@ final class HarvestPowers {
                         spots.add(base.clone().add(Math.cos(a) * ring, 0, Math.sin(a) * ring));
                     }
                 }
-                // each crack runs from the boss to its spot (0.9 block a tick), the root bursts 10 ticks after it
+                // each crack runs from the boss to its spot (1.6 block a tick), the root bursts 6 ticks after it
                 // arrived; the roots come out one after the other
                 for (int i = 0; i < spots.size(); i++) {
                     Location s = spots.get(i);
                     s.setY(groundY(w, s.getX(), s.getY(), s.getZ()));
-                    int travel = (int) Math.ceil(s.distance(paws) / 0.9);
+                    int travel = (int) Math.ceil(s.distance(paws) / 1.6);
                     crack(paws, s, travel);
-                    int delay = travel + 10 + i * 2;
+                    int delay = travel + 6 + i;
                     Bukkit.getScheduler().runTaskLater(plugin, () -> root(ab, c, s, life), delay);
                 }
             }
-            if (t == 65) c.release();
+            if (t == 45) c.release();
         });
     }
 
@@ -936,7 +937,7 @@ final class HarvestPowers {
                 if (!Mobs.fighting(p)) continue;
                 Location pl = p.getLocation();
                 if (Math.hypot(pl.getX() - at.getX(), pl.getZ() - at.getZ()) > 1.1 || Math.abs(pl.getY() - at.getY()) > 2) continue;
-                c.hit(p, 1.0);
+                c.hit(p, ab.number("burst-power", 4));
                 p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 2));
                 p.setVelocity(p.getVelocity().setY(0.45));
             }
@@ -953,7 +954,7 @@ final class HarvestPowers {
                         if (!Mobs.fighting(p)) continue;
                         Location pl = p.getLocation();
                         if (Math.hypot(pl.getX() - at.getX(), pl.getZ() - at.getZ()) > 0.8 || Math.abs(pl.getY() - at.getY()) > 2) continue;
-                        c.hit(p, 0.25);
+                        c.hit(p, ab.number("linger-power", 1));
                         p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 25, 1));
                     }
                 }
@@ -998,7 +999,9 @@ final class HarvestPowers {
         int[] counts = {9, 13, 19};
         double[] spreads = {28, 55, 85};
         Vector[] aims = new Vector[3];
-        double ringRadius = ab.number("ring", 5);
+        double ringRadius = ab.number("ring", 2.5), wavePower = ab.number("wave-power", 4),
+                ringPower = ab.number("ring-power", 40), rainPower = ab.number("rain-power", 4), far = ab.number("far", 6);
+        List<Map<UUID, Location>> rains = List.of(new HashMap<>(), new HashMap<>(), new HashMap<>());
         double lead = RockPowers.leadIn(ab);
         c.hold(150);
         c.animate("great_feast");
@@ -1070,15 +1073,25 @@ final class HarvestPowers {
                     Location aim = p != null ? p.getLocation() : at.clone().add(at.getDirection().multiply(8));
                     aims[i] = flat(at, aim);
                     face(e, aim);
+                    // who keeps away gets a rain of golden carrots on his head (waves 2 and 3), shown where he stands
+                    if (i >= 1) {
+                        for (Player q : fighters(e, 40)) {
+                            if (q.getLocation().distance(at) > far) rains.get(i).put(q.getUniqueId(), q.getLocation().clone());
+                        }
+                    }
                     w.playSound(at, Sound.BLOCK_NOTE_BLOCK_BELL, 2f, 0.7f + i * 0.25f);
                 }
                 if (aims[i] != null && t >= wt - 12 && t < wt && t % 2 == 0) {
                     Fx.cone(at, aims[i], spreads[i], 15, Color.fromRGB(0xFF5C5C), HARVEST);
                     if (i == 2) Fx.ring(at, ringRadius, Color.fromRGB(0xFF5C5C), 1.4f, t * 0.1);
+                    for (Location spot : rains.get(i).values()) {
+                        Fx.ring(spot, 2, Color.fromRGB(0xFF5C5C), 1.3f, t * 0.12);
+                        Fx.ring(spot, 2 * (wt - t) / 12.0, GOLD, 1.0f, 0);
+                    }
                 }
                 // whoever stays in the red cone (or ring) already loses life: time to get out before the wave
                 if (aims[i] != null && lead > 0 && t >= wt - 12 && t < wt && (wt - t) % 4 == 0) {
-                    double hit = (i == 2 ? 1.4 : 1.0) * power[0];
+                    double hit = wavePower * (i == 2 ? 1.4 : 1.0) * power[0];
                     Vector aimDir = aims[i];
                     double half = Math.toRadians(spreads[i] / 2);
                     for (Player q : fighters(e, 16)) {
@@ -1086,14 +1099,18 @@ final class HarvestPowers {
                         boolean inCone = to.length() <= 15 && to.length() > 0.1 && to.clone().normalize().angle(aimDir) <= half;
                         boolean inRing = i == 2 && to.length() <= ringRadius;
                         if (inCone) c.drain(q, hit, lead / 3);
-                        if (inRing) c.drain(q, 1.2 * power[0], lead / 3);
+                        if (inRing) c.drain(q, ringPower * power[0], lead / 3);
+                        Location spot = rains.get(i).get(q.getUniqueId());
+                        if (spot != null && Math.hypot(q.getLocation().getX() - spot.getX(), q.getLocation().getZ() - spot.getZ()) <= 2)
+                            c.drain(q, rainPower * power[0], lead / 3);
                     }
                 }
                 if (t == wt && aims[i] != null) {
                     Location aim = at.clone().add(aims[i].clone().multiply(10));
                     int n = Math.max(6, (int) Math.round(counts[i] * power[0]));
                     fan(c, ab, aim, n, spreads[i], ab.number("speed", 1.25), List.of(Material.GOLDEN_CARROT), true,
-                            (i == 2 ? 1.4 : 1.0) * power[0], 1 - lead);
+                            wavePower * (i == 2 ? 1.4 : 1.0) * power[0], 1 - lead);
+                    for (Location spot : rains.get(i).values()) rain(c, spot, rainPower * power[0], 1 - lead);
                     w.playSound(at, Sound.ENTITY_BREEZE_SHOOT, 2f, 0.7f);
                     w.playSound(at, Sound.ENTITY_BLAZE_SHOOT, 1.6f, 1.3f);
                     w.playSound(at, Sound.ENTITY_GENERIC_EXPLODE, 0.8f, 1.6f);
@@ -1107,7 +1124,7 @@ final class HarvestPowers {
                         for (Player q : fighters(e, ringRadius + 1)) {
                             Location ql = q.getLocation();
                             if (Math.hypot(ql.getX() - at.getX(), ql.getZ() - at.getZ()) > ringRadius) continue;
-                            c.hitShare(q, 1.2 * power[0], 1 - lead);
+                            c.hitShare(q, ringPower * power[0], 1 - lead);
                             q.setVelocity(ql.toVector().subtract(at.toVector()).setY(0).normalize().multiply(1.1).setY(0.6));
                         }
                     }
@@ -1132,6 +1149,58 @@ final class HarvestPowers {
             }
             if (t == 150) c.release();
         });
+    }
+
+    /**
+     * Golden carrots falling from the sky into a circle of 2 blocks (8 ticks), then a small golden blast: hurts who is
+     * still in the circle (for players who keep away from the Great Feast).
+     */
+    private void rain(RockPowers.Caster c, Location spot, double fallback, double share) {
+        World w = spot.getWorld();
+        ThreadLocalRandom r = ThreadLocalRandom.current();
+        for (int k = 0; k < 5; k++) {
+            Location top = spot.clone().add(r.nextDouble(-1.5, 1.5), 9 + r.nextDouble(0, 2), r.nextDouble(-1.5, 1.5));
+            ItemDisplay d = w.spawn(top, ItemDisplay.class, it -> {
+                it.setItemStack(new ItemStack(Material.GOLDEN_CARROT));
+                it.setPersistent(false);
+                it.setTeleportDuration(1);
+                it.setBrightness(new Display.Brightness(15, 15));
+                it.setGlowing(true);
+                it.setGlowColorOverride(GOLD);
+                it.addScoreboardTag(TAG);
+            });
+            alive.add(d);
+            orient(d, new Vector(0, -1, 0));
+            new BukkitRunnable() {
+                int t;
+
+                @Override
+                public void run() {
+                    if (!d.isValid() || ++t > 8) {
+                        cancel();
+                        forget(d);
+                        return;
+                    }
+                    Location pos = top.clone().add(0, -(top.getY() - spot.getY()) * t / 8.0, 0);
+                    d.teleport(pos);
+                    w.spawnParticle(Particle.DUST, pos, 1, 0, 0, 0, 0, new Particle.DustOptions(GOLD, 1.0f));
+                }
+            }.runTaskTimer(plugin, 1L, 1L);
+        }
+        w.playSound(spot, Sound.ENTITY_ARROW_SHOOT, 1.4f, 0.6f);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            flash(spot.clone().add(0, 0.5, 0));
+            w.spawnParticle(Particle.EXPLOSION, spot.clone().add(0, 0.4, 0), 2, 0.6, 0.1, 0.6, 0);
+            w.spawnParticle(Particle.DUST, spot.clone().add(0, 0.3, 0), 30, 1.2, 0.2, 1.2, 0, new Particle.DustOptions(GOLD, 1.5f));
+            w.playSound(spot, Sound.ENTITY_GENERIC_EXPLODE, 1f, 1.5f);
+            fx.crater(spot, 2, 60, 0.4, Fx.BROKEN_EARTH);
+            for (Player q : w.getPlayers()) {
+                if (!Mobs.fighting(q)) continue;
+                Location ql = q.getLocation();
+                if (Math.hypot(ql.getX() - spot.getX(), ql.getZ() - spot.getZ()) > 2 || Math.abs(ql.getY() - spot.getY()) > 3) continue;
+                c.hitShare(q, fallback, share);
+            }
+        }, 9L);
     }
 
     /** A golden carrot flying from a crop of the field into the mouth of the monster (14 ticks). */

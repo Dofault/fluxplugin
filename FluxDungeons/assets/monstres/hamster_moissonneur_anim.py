@@ -472,25 +472,25 @@ def animations():
     LOCK["leap"] = []
     A.append(a)
 
-    # ------------------------------------------------------------------ roots: 3.25 s (65 ticks)
-    # 0-18 concentration (low, feet planted wide, eyes shut, ears up and still), 18-34 the head rises, eyes open at
-    # 32, 34-38 rears a little and slams both front paws (roots_slam at tick 38: the roots rise), 38-65 watches them,
-    # back to rest.
-    a = Anim("roots", 65)
-    low = lambda t: smooth(0, T(8), t) * (1 - smooth(T(55), T(65), t))               # noqa: E731
+    # ------------------------------------------------------------------ roots: 2.25 s (45 ticks)
+    # 0-12 quick concentration (low, feet planted wide, eyes shut, ears up), 10-18 the head rises, eyes open at 17,
+    # 18-22 rears a little and slams both front paws (roots_slam at tick 22: the cracks leave), 22-45 watches the
+    # roots, back to rest.
+    a = Anim("roots", 45)
+    low = lambda t: smooth(0, T(5), t) * (1 - smooth(T(36), T(45), t))               # noqa: E731
     a.pos("Body", lambda t: (0, -2.0 * low(t), 0))
-    a.rot("Body", lambda t: (keys(t, [(0, 0), (T(34), 0), (T(36.5), 13), (T(38), -4), (T(46), -2), (T(65), 0)]), 0, 0))
+    a.rot("Body", lambda t: (keys(t, [(0, 0), (T(18), 0), (T(20.5), 13), (T(22), -4), (T(30), -2), (T(45), 0)]), 0, 0))
     for leg in LEGS:
         sx = 1 if "right" in leg else -1
         a.rot(leg, lambda t, sx=sx: (0, 0, -6 * sx * low(t)))
-    a.rot("Head", lambda t: (keys(t, [(0, 0), (T(8), -6), (T(18), -6), (T(32), 12), (T(36), 8), (T(38), -14), (T(44), -6),
-                                      (T(65), 0)]), 0, 0))
-    lids(a, lambda t: smooth(T(3), T(8), t) * (1 - smooth(T(30), T(33), t)))
+    a.rot("Head", lambda t: (keys(t, [(0, 0), (T(5), -6), (T(10), -6), (T(17), 12), (T(20), 8), (T(22), -14), (T(28), -6),
+                                      (T(45), 0)]), 0, 0))
+    lids(a, lambda t: smooth(T(2), T(5), t) * (1 - smooth(T(15), T(17), t)))
     both(a, ("Ear_right", "Ear_left"), "rotation",
-         lambda t: (keys(t, [(0, 0), (T(8), -10), (T(34), -10), (T(38), 20), (T(46), 0)]) + 2 * bump(T(46), T(60), t) * S(TAU * 4 * t), 0, 0))
-    cheeks(a, lambda t: sc(1 + 0.04 * bump(T(4), T(34), t) * (0.5 + 0.5 * S(TAU * 3 * t))))
-    PLANT["roots"] = {leg: [(0, T(65))] for leg in BACK}
-    PLANT["roots"].update({leg: [(0, T(34)), (T(38), T(65))] for leg in FRONT})
+         lambda t: (keys(t, [(0, 0), (T(5), -10), (T(18), -10), (T(22), 20), (T(30), 0)]) + 2 * bump(T(30), T(42), t) * S(TAU * 4 * t), 0, 0))
+    cheeks(a, lambda t: sc(1 + 0.04 * bump(T(2), T(18), t) * (0.5 + 0.5 * S(TAU * 4 * t))))
+    PLANT["roots"] = {leg: [(0, T(45))] for leg in BACK}
+    PLANT["roots"].update({leg: [(0, T(18)), (T(22), T(45))] for leg in FRONT})
     A.append(a)
 
     # ------------------------------------------------------------------ great_feast: 7.5 s (150 ticks), the ultimate
