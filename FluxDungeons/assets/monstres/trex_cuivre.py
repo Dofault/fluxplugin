@@ -3,14 +3,16 @@
 
 A real Tyrannosaurus whose anatomy is copper grown around a fossil, found deep in a mine: big skull of copper plates,
 long jaw with ivory teeth, thick neck, massive body leaning forward over two long and powerful hind legs, tiny arms,
-long tail that dips at its base then rises as it thins. Copper dominates (warm, light, aged, dark), turquoise patina
-stays secondary (joints, between plates, end of the tail, one side of the skull), a few rocks with copper ore grown
-into the body and a few small amber crystals on the back and shoulder (emissive, like the eyes).
+long tail that dips at its base then rises as it thins.
+Texture revised on 2026-11-10 at the owner's request: the copper is the vanilla Block of Copper (unoxidised), its own
+pixels tiled on every copper part, soft and low-contrast; no patina, no gold, no outlines, no painted reflections (the
+light is the game's face shading). Plates differ only by geometry and a slightly darker lower edge. Kept apart: a few
+grey-brown rocks, ivory teeth, dark claws, orange eyes and three tiny amber crystals (both emissive).
 
 Built like the two references (Colosse d'Abime, the rock turtle, and Loutre des Marees): a few dozen volumes of
-different sizes, overlapped and tilted for the silhouette; plates, patina, cracks and claws are painted (1 texel per
+different sizes, overlapped and tilted for the silhouette; plates and claws are painted (1 texel per
 unit, like a 16 x 16 block), never built from tiny cubes. Details on purpose asymmetric (bigger plate over the right
-eye, patina on the left of the skull, different mineral marks on each side of the snout); the anatomy stays symmetric.
+eye, rock on the left of the skull); the anatomy stays symmetric.
 
 Pose baked into the cubes, bones at the joints for a future animation; no animation here.
 SCALE sets the overall size at once (parts are drawn at their brief size, 16 units = 1 block).
@@ -37,193 +39,90 @@ def pal(*c):
     return [hx(x) for x in c]
 
 
-# --------------------------------------------------------------------------- brief palette (dark -> light)
-COPPER = pal("#4F2C21", "#713F2B", "#8C4C2E", "#A95D32", "#C87538", "#E69A50", "#E5A04B")
-OX = pal("#347D75", "#58A995")
-ROCK = pal("#3E322A", "#554438", "#6B5849", "#82705D")
-AMBER = pal("#C98A2A", "#F5B942", "#FFD47A")
+# --------------------------------------------------------------------------- vanilla Block of Copper
+# The copper IS the vanilla block (unoxidised Block of Copper, 16 x 16): its 8 colours and the inside of its texture
+# (14 x 14, without the light/dark border that would draw a grid of blocks), tiled at 1 texel per unit, so one pixel
+# of the T-Rex is one pixel of the block. Each face starts at a random offset: no two faces show the same pattern.
+CU = pal("#C87456", "#C26B4C", "#D67B5B", "#B26247", "#E3826C", "#9A5038", "#A75A40", "#904931")
+CU_TILE = (
+    "00110024222113", "04300242221433", "13502420211353", "10022200116631", "00222001165613", "02420011656133",
+    "24200116561130", "42001365611300", "20013366111002", "00133631110024", "01333311300242", "14363113002430",
+    "33531330022351", "65313300222011",
+)
+ROCK = pal("#5F544C", "#6E6259", "#7D7066", "#8C8075")          # moderate grey-brown stone
+AMBER = pal("#C98A2A", "#F5B942", "#FFD47A")                     # the three small crystals only
 TOOTH, TOOTH_SHADE = hx("#E5D4A6"), hx("#C4B07E")
-CLAW = hx("#38251D")
+CLAW = hx("#5A3A2E")
 EYE_RIM, IRIS, GLINT, PUPIL = hx("#38251D"), hx("#F18A24"), hx("#FFD47A"), hx("#170F0A")
 
-# light from above, a little from the front: tone shift per face
-SIDE = {"up": 1, "north": 0, "east": 0, "west": 0, "south": -1, "down": -2}
+
+def shade(c, k):
+    return tuple(max(0, min(255, round(v * k))) for v in c)
 
 
-def speckle(px, r, n, colour):
-    h, w = len(px), len(px[0])
-    for _ in range(n):
-        x, y = r.randrange(w), r.randrange(h)
-        px[y][x] = colour
-        if r.random() < 0.35 and x + 1 < w:          # two-pixel marks read better from afar
-            px[y][x + 1] = colour
+def cu(w, h, r, k=1.0):
+    """The vanilla copper surface, from a random offset of the tile, uniformly darkened by k (never below 0.88:
+    a part in shadow stays copper)."""
+    ox, oy = r.randrange(14), r.randrange(14)
+    return [[shade(CU[int(CU_TILE[(y + oy) % 14][(x + ox) % 14])], k) for x in range(w)] for y in range(h)]
 
 
-def patina(px, r, n, rows=None):
-    """Small turquoise clusters, kept to the given rows (bottom edge by default: where water ran)."""
-    h, w = len(px), len(px[0])
-    rows = rows or range(max(0, h - 3), h)
-    rows = list(rows)
-    for _ in range(n):
-        x, y = r.randrange(w), r.choice(rows)
-        px[y][x] = OX[1]
-        for dx, dy in ((1, 0), (0, -1), (-1, 0)):
-            if 0 <= x + dx < w and 0 <= y + dy < h and r.random() < 0.45:
-                px[y + dy][x + dx] = OX[0]
-
-
-def crack(px, r):
-    """Thin amber crack between plates: a broken diagonal line of 3 to 5 pixels."""
-    h, w = len(px), len(px[0])
-    if w < 6 or h < 5:
-        return
-    x, y = r.randrange(1, w - 4), r.randrange(1, h - 3)
-    for k in range(r.randrange(3, 6)):
-        if 0 <= x < w and 0 <= y < h:
-            px[y][x] = AMBER[1] if k % 2 == 0 else AMBER[0]
-        x += 1
-        y += r.choice((0, 1, 1))
-
-
-def ore(px, r, n):
-    """Copper ore spots in the rock, like the block: a light pixel next to a warm one."""
-    h, w = len(px), len(px[0])
-    for _ in range(n):
-        x, y = r.randrange(w), r.randrange(h)
-        px[y][x] = COPPER[5]
-        if x + 1 < w:
-            px[y][x + 1] = COPPER[4]
-        if y + 1 < h:
-            px[y + 1][x] = COPPER[3]
+def occlude(px, rows=1, k=0.92):
+    """Light ambient occlusion on the bottom rows of a side face (where it meets the part below)."""
+    h = len(px)
+    for y in range(max(0, h - rows), h):
+        px[y] = [shade(c, k) for c in px[y]]
 
 
 # --------------------------------------------------------------------------- painters
-def copper(base=4, ox=0, cracks=0):
+def copper(k=1.0):
     def f(w, h, r, face):
-        """Copper hide: flat tone, hammered darker marks, lighter on top, bottom row in shadow; `ox` patina
-        clusters along the bottom of the sides, `cracks` amber cracks on the sides."""
-        b = base + SIDE[face]
-        px = [[tone(COPPER, b)] * w for _ in range(h)]
-        speckle(px, r, max(1, w * h // 22), tone(COPPER, b - 1))
-        speckle(px, r, max(1, w * h // 45), tone(COPPER, b + 1))
+        """Copper hide: the vanilla block, faint occlusion at the bottom of the sides. The light (top lighter,
+        bottom darker) is the game's face shading, not painted."""
+        px = cu(w, h, r, k * (0.96 if face == "down" else 1.0))
         if face not in ("up", "down") and h >= 4:
-            px[h - 1] = [tone(COPPER, b - 1)] * w
-            for x in range(w):
-                if r.random() < 0.3:
-                    px[0][x] = tone(COPPER, b + 1)       # top edge catching the light
-            if ox and r.random() < 0.6:
-                patina(px, r, ox * max(1, w // 14))
-            for _ in range(cracks):
-                crack(px, r)
+            occlude(px)
         return px
     return f
 
 
-def plate(base=4, ox=1, cracks=0, crystal=False):
+def plate(k=1.0):
     def f(w, h, r, face):
-        """Copper plate: darker one-pixel outline (it reads as a separate plate), light top row, patina in the
-        outline (between plates), sometimes an amber crack or an inlaid amber crystal."""
-        b = base + SIDE[face]
-        px = [[tone(COPPER, b)] * w for _ in range(h)]
-        speckle(px, r, max(1, w * h // 26), tone(COPPER, b - 1))
+        """Copper plate: the same block, its edge only suggested by a slightly darker bottom row and right column
+        (the gap under the plate), no black outline, no light border."""
+        px = cu(w, h, r, k)
         if w >= 3 and h >= 3:
-            for x in range(w):
-                px[0][x] = tone(COPPER, b + 1)
-                px[h - 1][x] = tone(COPPER, b - 2)
-            for y in range(h):
-                px[y][0] = tone(COPPER, b - 1)
-                px[y][w - 1] = tone(COPPER, b - 2)
-            edge = [(x, h - 1) for x in range(w)] + [(w - 1, y) for y in range(h // 2, h)]
-            for _ in range(ox * max(1, (w + h) // 14)):
-                x, y = r.choice(edge)
-                px[y][x] = OX[r.randrange(2)]
-        for _ in range(cracks):
-            crack(px, r)
-        if crystal and face == "up" and w >= 4 and h >= 4:
-            x, y = w // 2 - 1, h // 2 - 1
-            px[y][x], px[y][x + 1], px[y + 1][x], px[y + 1][x + 1] = AMBER[2], AMBER[1], AMBER[1], AMBER[0]
+            px[h - 1] = [shade(c, 0.9) for c in px[h - 1]]
+            for y in range(h - 1):
+                px[y][w - 1] = shade(px[y][w - 1], 0.93)
         return px
     return f
-
-
-def belly(w, h, r, face):
-    """Belly and throat: dark copper in horizontal bands (old fossil copper), a pixel of patina here and there."""
-    b = 2 + max(-1, SIDE[face])
-    px = [[tone(COPPER, b)] * w for _ in range(h)]
-    for y in range(1, h, 3):
-        px[y] = [tone(COPPER, b - 1) if r.random() < 0.75 else px[y][x] for x in range(w)]
-    if r.random() < 0.3:
-        speckle(px, r, 1, OX[0])
-    return px
-
-
-def skull(w, h, r, face):
-    """Skull: copper plates, asymmetric details: patina patch on the left side (west), copper ore marks on the
-    right side (east), one amber crack on top."""
-    px = plate(4, ox=1)(w, h, r, face)
-    if face == "west" and w >= 6:
-        patina(px, r, 5, rows=range(h // 3, h - 1))
-    elif face == "east" and w >= 6:
-        ore(px, r, 2)
-    elif face == "up":
-        crack(px, r)
-    return px
 
 
 def snout(w, h, r, face):
-    """Snout: lighter copper, nostrils painted dark on the front, different marks on each side."""
-    px = copper(5)(w, h, r, face)
+    """Snout: the copper block, two nostrils on top of the tip in the block's darkest colour."""
+    px = copper()(w, h, r, face)
     if face == "up" and w >= 6 and h >= 3:
-        for x in (1, w - 2):                               # nostrils on top of the snout tip (seen from the side
-            px[0][x] = COPPER[0]                           # and above, never as a second pair of eyes)
-    elif face == "east":
-        patina(px, r, 2)
-    elif face == "west" and w >= 4:
-        crack(px, r)
+        for x in (1, w - 2):
+            px[0][x] = CU[5]
     return px
 
 
 def rock(ore_spots=0):
     def f(w, h, r, face):
-        """Rock grown into the copper: warm brown and grey-brown, lighter pixels for the grain, copper ore spots."""
-        b = 2 + max(-1, min(1, SIDE[face]))
-        px = [[tone(ROCK, b)] * w for _ in range(h)]
-        speckle(px, r, max(1, w * h // 8), tone(ROCK, b + 1))
-        speckle(px, r, max(1, w * h // 14), tone(ROCK, b - 1))
-        ore(px, r, ore_spots)
-        return px
-    return f
-
-
-def joint(w, h, r, face):
-    """Mineral joint: dark copper with a turquoise ring (patina gathers in the joints)."""
-    px = [[COPPER[1]] * w for _ in range(h)]
-    if w >= 3 and h >= 3:
-        for x in range(w):
-            px[0][x] = px[h - 1][x] = OX[0]
-        for y in range(h):
-            px[y][0] = px[y][w - 1] = OX[0]
-        px[h // 2][w // 2] = OX[1]
-    return px
-
-
-def tail(base=4, ox=0):
-    def f(w, h, r, face):
-        """Tail: copper with darker bands across (segments of a fossil spine), patina growing toward the end."""
-        px = copper(base, ox=ox)(w, h, r, face)
-        b = base + SIDE[face]
-        if face in ("east", "west"):
-            for x in range(1, w, 4):
-                for y in range(h):
-                    if r.random() < 0.6:
-                        px[y][x] = tone(COPPER, b - 1)
-        elif face == "up":
-            for y in range(1, h, 4):
-                for x in range(w):
-                    if r.random() < 0.6:
-                        px[y][x] = tone(COPPER, b - 1)
-        elif face == "down" and ox:
-            patina(px, r, ox * 3, rows=range(h))
+        """Stone grown into the copper: moderate grey-brown in small groups, a few copper spots of the block."""
+        px = [[ROCK[1]] * w for _ in range(h)]
+        for _ in range(max(1, w * h // 6)):
+            x, y = r.randrange(w), r.randrange(h)
+            c = ROCK[r.choice((0, 2, 2, 3))]
+            for dx, dy in ((0, 0), (1, 0), (0, 1)):
+                if x + dx < w and y + dy < h and r.random() < 0.7:
+                    px[y + dy][x + dx] = c
+        for _ in range(ore_spots):
+            x, y = r.randrange(w), r.randrange(h)
+            px[y][x] = CU[0]
+            if x + 1 < w:
+                px[y][x + 1] = CU[2]
         return px
     return f
 
@@ -241,13 +140,12 @@ def fang_up(w, h, r, face):
 
 
 def claw(w, h, r, face):
-    return [[CLAW if (x + y) % 3 else COPPER[0] for x in range(w)] for y in range(h)]
+    return [[CLAW] * w for _ in range(h)]
 
 
 def toe(w, h, r, face):
-    """Toe: dark copper, lighter top, claw colour at the front tip (u = 0 is the front on the sides)."""
-    b = {"up": 3, "down": 1}.get(face, 2)
-    px = [[COPPER[b]] * w for _ in range(h)]
+    """Toe (density 2): copper, claw colour at the front tip (u = 0 is the front on the sides)."""
+    px = cu(w, h, r, 0.96)
     if face == "north":
         px = [[CLAW] * w for _ in range(h)]
     elif face == "up":
@@ -263,21 +161,18 @@ def eye(w, h, r, face):
     if face not in ("east", "west"):
         return [[EYE_RIM] * w for _ in range(h)]
     px = [[EYE_RIM] * w for _ in range(h)]
-    for y in range(1, h - 1):
+    for y in range(2, h - 1):
         for x in range(1, w - 1):
             px[y][x] = IRIS
     c = w // 2
-    for y in range(1, h - 1):
+    for y in range(2, h - 1):
         px[y][c] = PUPIL
-    px[1][c + 1 if face == "east" else c - 1] = GLINT
-    px[1] = [EYE_RIM] * w if h >= 6 else px[1]             # heavy upper lid under the brow
-    if h >= 6:
-        px[2][c + 1 if face == "east" else c - 1] = GLINT
+    px[2][c + 1 if face == "east" else c - 1] = GLINT
     return px
 
 
 def crystal(w, h, r, face):
-    """Amber crystal (emissive): light core, darker edges."""
+    """Amber crystal (emissive, three small ones in all): light core, darker edge."""
     px = [[AMBER[1]] * w for _ in range(h)]
     for y in range(h):
         px[y][0] = AMBER[0]
@@ -286,14 +181,14 @@ def crystal(w, h, r, face):
     return px
 
 
+# One material, the vanilla block; the names only keep the role of each part (a whisper of shade, at most 6 %).
 MATS = {
-    "copper": copper(4), "copper_light": copper(5), "copper_aged": copper(3, ox=1), "copper_dark": copper(2, ox=1),
-    "flank": copper(4, ox=1, cracks=1), "hips": copper(4, ox=1),
-    "plate": plate(4), "plate_light": plate(5, ox=0), "plate_aged": plate(3, ox=2), "plate_ox": plate(2, ox=3),
-    "plate_crack": plate(4, ox=1, cracks=1), "plate_crystal": plate(4, ox=1, crystal=True),
-    "belly": belly, "skull": skull, "snout": snout, "rock": rock(0), "rock_ore": rock(2), "joint": joint,
-    "tail": tail(4), "tail_mid": tail(3, ox=1), "tail_end": tail(2, ox=2),
-    "tooth": tooth, "fang_up": fang_up, "claw": claw, "toe": (toe, 2),
+    "copper": copper(), "copper_light": copper(), "copper_aged": copper(0.97), "copper_dark": copper(0.95),
+    "flank": copper(), "hips": copper(), "belly": copper(0.95), "skull": plate(), "snout": snout,
+    "plate": plate(), "plate_light": plate(), "plate_aged": plate(0.97), "plate_ox": plate(0.97),
+    "plate_crack": plate(), "plate_crystal": plate(), "joint": copper(0.94),
+    "tail": copper(), "tail_mid": copper(), "tail_end": copper(0.97),
+    "rock": rock(0), "rock_ore": rock(2), "tooth": tooth, "fang_up": fang_up, "claw": claw, "toe": (toe, 2),
 }
 GLOW = {"eye": (eye, 2), "crystal": crystal}
 GLOW_COLOURS = {EYE_RIM, IRIS, GLINT, PUPIL, *AMBER}
