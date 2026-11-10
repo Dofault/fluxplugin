@@ -726,6 +726,15 @@ public final class Mobs {
             return;
         }
         a.switching = true;
+        if (phase.transition() && a.model != null) {
+            transition(a, phase, next);
+            return;
+        }
+        becomeNext(a, next, ratio);
+    }
+
+    /** Removes the monster and puts the next one of its phases in its place, with the same share of life. */
+    private void becomeNext(Alive a, MobTemplate next, double ratio) {
         Location at = a.entity.getLocation();
         blocks(a, a.template.extra().removeBlocks());
         alive.remove(a.entity.getUniqueId());
@@ -733,6 +742,62 @@ public final class Mobs {
         a.entity.remove();
         LivingEntity child = spawnPhase(next, at, a, ratio);
         if (child != null) onSummon.accept(a.entity, child);
+    }
+
+    /**
+     * Phase switch played as a scene: the monster stops, invulnerable and without gravity (the animation moves the
+     * model, not the body), maybe back at its spawn point; the blocks under it change at the tick given
+     * ({@code flood}: ice breaking into water); once the animation is over, the next monster takes its place.
+     */
+    private void transition(Alive a, MobTemplate.Phase phase, MobTemplate next) {
+        LivingEntity e = a.entity;
+        e.setInvulnerable(true);
+        if (e instanceof Mob m) {
+            m.setAI(false);
+            m.setTarget(null);
+        }
+        e.setGravity(false);
+        e.setVelocity(new Vector());
+        if (phase.atSpawn() && e.getLocation().distanceSquared(a.spawn) > 0.25) {
+            Location back = a.spawn.clone();
+            back.setYaw(e.getLocation().getYaw());
+            e.getWorld().spawnParticle(Particle.CLOUD, e.getLocation().add(0, 0.5, 0), 20, 0.6, 0.3, 0.6, 0.02);
+            move(e, back);
+        }
+        a.model.play(phase.animation());
+        MobTemplate.Flood flood = phase.flood();
+        if (flood != null) Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (e.isValid() && !a.dying) flood(e.getLocation(), flood);
+        }, Math.max(0, flood.at()));
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (!e.isValid() || a.dying || !alive.containsKey(e.getUniqueId())) return;
+            double ratio = e.getHealth() / Math.max(1, maxHealth(e));
+            becomeNext(a, next, ratio);
+        }, Math.max(1, phase.duration()));
+    }
+
+    /** Turns the blocks of the listed kinds under a spot into another kind (ice breaking into water). */
+    private static void flood(Location center, MobTemplate.Flood f) {
+        World w = center.getWorld();
+        int cx = center.getBlockX(), cz = center.getBlockZ(), top = (int) Math.floor(center.getY() - 0.01) - 1;
+        int r = (int) Math.ceil(f.radius());
+        org.bukkit.block.data.BlockData into = f.to().createBlockData();
+        for (int dx = -r; dx <= r; dx++) {
+            for (int dz = -r; dz <= r; dz++) {
+                if (dx * dx + dz * dz > f.radius() * f.radius()) continue;
+                for (int dy = 0; dy < f.depth(); dy++) {
+                    org.bukkit.block.Block b = w.getBlockAt(cx + dx, top - dy, cz + dz);
+                    if (!f.from().contains(b.getType())) continue;
+                    Location l = b.getLocation().add(0.5, 1, 0.5);
+                    w.spawnParticle(Particle.BLOCK, l, 6, 0.4, 0.1, 0.4, 0.1, b.getBlockData());
+                    b.setBlockData(into, false);
+                    if ((dx + dz) % 3 == 0) w.spawnParticle(Particle.SPLASH, l, 6, 0.3, 0.1, 0.3, 0.1);
+                }
+            }
+        }
+        w.playSound(center, Sound.BLOCK_GLASS_BREAK, 2f, 0.5f);
+        w.playSound(center, Sound.ENTITY_GENERIC_EXPLODE, 1.2f, 0.6f);
+        w.playSound(center, Sound.ENTITY_PLAYER_SPLASH_HIGH_SPEED, 1.5f, 0.7f);
     }
 
     private LivingEntity spawnPhase(MobTemplate next, Location at, Alive from, double ratio) {
@@ -767,14 +832,16 @@ public final class Mobs {
         }
         entity.setHealth(Math.max(1, entity.getHealth()));
         World w = entity.getWorld();
+        // death-ticks: the length of its death animation (36 by default, the fall shown 10 ticks before the end)
+        int ticks = a.template.extra().deathTicks();
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             w.spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, entity.getLocation().add(0, 1, 0), 20, 0.8, 0.4, 0.8, 0.02);
             w.playSound(entity.getLocation(), Sound.BLOCK_ANVIL_LAND, 1f, 0.5f);
-        }, 26L);
+        }, Math.max(1, ticks - 10));
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             finish(a, killer);
             entity.remove();
-        }, 36L);
+        }, ticks);
         return true;
     }
 
@@ -820,7 +887,7 @@ public final class Mobs {
                 }
                 continue;
             }
-            if (a.dying) continue;
+            if (a.dying || a.switching) continue;
             double leash = a.template.extra().leash();
             if (leash > 0 && a.entity.getLocation().distanceSquared(a.spawn) > leash * leash) move(a.entity, a.spawn);
             if (!a.template.extra().scripts().isEmpty()) later.add(() -> engine.pollZones(a));
@@ -1248,7 +1315,7 @@ public final class Mobs {
                 if (!(e instanceof Mob m) || !m.hasAI()) return;
                 m.setAI(false);
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    if (m.isValid() && !a.dying) m.setAI(true);
+                    if (m.isValid() && !a.dying && !a.switching) m.setAI(true);
                 }, ticks);
             }
         }, target)) return;
@@ -1356,7 +1423,7 @@ public final class Mobs {
                     MobTemplate copy = new MobTemplate(a.template.id() + "_summon", type, "&7" + type.name().toLowerCase(), false, null,
                             maxHealth(e) * 0.15, a.baseDamage() * 0.6, 0.25, 0, 1, 0, Map.of(), List.of(),
                             new MobTemplate.Extra(1, 0.15, 0.6, false, false, 32, 0, List.of(), List.of(), null, List.of(), List.of(), List.of(),
-                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of(), 0, 1, false, false, false, 0, 0, 0));
+                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of(), 0, 1, false, false, false, 0, 0, 0, 36));
                     for (int i = 0; i < (int) ab.number("count", 2); i++) {
                         LivingEntity s = spawn(copy, at.clone().add(ThreadLocalRandom.current().nextDouble(-2, 2), 0, ThreadLocalRandom.current().nextDouble(-2, 2)), a.run);
                         if (s != null) onSummon.accept(e, s);

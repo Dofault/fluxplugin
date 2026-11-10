@@ -37,6 +37,14 @@ import java.util.Map;
  *     - {type: slam, every: 7, power: 10, radius: 4, animation: attack, impact: 16}
  *   powers: [attack_blinding, invulnerability_fire]   # built-in powers, see Powers
  *   phases: [{mob: foundry_golem_p2, below: 0.5}]     # becomes another monster below this share of its life
+ *   phases:                        # ...or with a transition played first (invulnerable, still, no gravity):
+ *     - mob: otter_water
+ *       below: 0.5
+ *       animation: transition_dive   # animation of its model
+ *       duration: 72                 # ticks before the next monster appears
+ *       at-spawn: true               # goes back to its spawn point first
+ *       flood: {at: 46, radius: 6, depth: 1, from: [ICE, PACKED_ICE], to: WATER}   # blocks under it, changed at that tick
+ *   death-ticks: 36                # a boss with a death animation disappears this many ticks after it starts
  *   attack-speed: 1                # melee hits per second at most (vanilla 1)
  *   ranged-resistance: 0.5         # share of projectile damage it shrugs off (melee is the way)
  *   ranged-rate: 2                 # archers shoot this many times as often as vanilla (2 by default)
@@ -77,9 +85,26 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
             Object v = params.get(key);
             return v == null ? fallback : String.valueOf(v);
         }
+
+        public boolean flag(String key, boolean fallback) {
+            return params.get(key) instanceof Boolean b ? b : fallback;
+        }
     }
 
-    public record Phase(String mob, double below) {
+    /**
+     * The next monster it becomes below a share of its life. With an {@code animation}, the switch waits
+     * {@code duration} ticks: the monster plays it, invulnerable and still, maybe back at its spawn point first, and
+     * may change the blocks under it on the way ({@code flood}).
+     */
+    public record Phase(String mob, double below, String animation, int duration, boolean atSpawn, Flood flood) {
+
+        public boolean transition() {
+            return animation != null && !animation.isBlank();
+        }
+    }
+
+    /** Blocks of the listed kinds under a monster turned into another one, {@code at} ticks into its transition. */
+    public record Flood(int at, double radius, int depth, java.util.Set<Material> from, Material to) {
     }
 
     /**
@@ -101,7 +126,7 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                         List<BlockState> removeBlocks, Map<String, Script> scripts, String rank,
                         double attackSpeed, Map<String, org.bukkit.Color> dyes, double rangedResistance, double rangedRate,
                         boolean frostArrows, boolean controlled, boolean silent, double castGap, double barOffset,
-                        double walkSpeed) {
+                        double walkSpeed, int deathTicks) {
         /** Ticks between two melee hits of this monster ({@code attack-speed}: hits per second, vanilla 1). */
         public int attackTicks() {
             return (int) Math.max(4, Math.round(20 / Math.max(0.05, attackSpeed)));
@@ -142,8 +167,11 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
         }
         List<Phase> phases = new ArrayList<>();
         for (Map<?, ?> p : c.getMapList("phases")) {
-            Object below = p.get("below");
-            phases.add(new Phase(String.valueOf(p.get("mob")), below instanceof Number n ? n.doubleValue() : 0.5));
+            Object below = p.get("below"), duration = p.get("duration");
+            phases.add(new Phase(String.valueOf(p.get("mob")), below instanceof Number n ? n.doubleValue() : 0.5,
+                    p.get("animation") == null ? null : String.valueOf(p.get("animation")),
+                    duration instanceof Number n ? n.intValue() : 0, Boolean.TRUE.equals(p.get("at-spawn")),
+                    p.get("flood") instanceof Map<?, ?> f ? flood(f) : null));
         }
         List<Loot> loot = new ArrayList<>();
         for (Map<?, ?> l : c.getMapList("loot")) {
@@ -163,10 +191,24 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                 c.getDouble("attack-speed", 1), dyes, Math.max(0, Math.min(1, c.getDouble("ranged-resistance", 0))),
                 Math.max(1, c.getDouble("ranged-rate", 2)), c.getBoolean("frost-arrows", false),
                 c.getBoolean("controlled", false), c.getBoolean("silent", false), Math.max(0, c.getDouble("cast-gap", 0)),
-                c.getDouble("bar-offset", 0), c.getDouble("walk-speed", 0));
+                c.getDouble("bar-offset", 0), c.getDouble("walk-speed", 0), Math.max(1, c.getInt("death-ticks", 36)));
         return new MobTemplate(id, type, c.getString("name", id), c.getBoolean("boss"), c.getString("model"),
                 c.getDouble("health", 20), c.getDouble("damage", 3), c.getDouble("speed", -1), c.getDouble("armor", 0),
                 c.getDouble("scale", 1), c.getDouble("xp", 10), equipment, abilities, extra);
+    }
+
+    private static Flood flood(Map<?, ?> f) {
+        java.util.Set<Material> from = java.util.EnumSet.noneOf(Material.class);
+        if (f.get("from") instanceof List<?> l) {
+            for (Object o : l) {
+                Material m = Material.matchMaterial(String.valueOf(o));
+                if (m != null) from.add(m);
+            }
+        }
+        Material to = Material.matchMaterial(String.valueOf(f.get("to")));
+        return new Flood(f.get("at") instanceof Number n ? n.intValue() : 0,
+                f.get("radius") instanceof Number n ? n.doubleValue() : 3,
+                f.get("depth") instanceof Number n ? Math.max(1, n.intValue()) : 1, from, to == null ? Material.WATER : to);
     }
 
     private static List<BlockState> blocks(List<String> lines) {

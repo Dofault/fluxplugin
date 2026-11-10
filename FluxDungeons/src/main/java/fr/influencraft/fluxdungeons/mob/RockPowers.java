@@ -479,6 +479,9 @@ final class RockPowers {
         double step = 0.6;
         int ticks = (int) Math.ceil(radius / step);
         String title = ab.text("title", ""), subtitle = ab.text("subtitle", "");
+        boolean blind = ab.flag("blind", true);
+        BlockData[] burst = ab.text("block", "").isBlank() ? null
+                : new BlockData[]{material(ab.text("block", ""), Material.STONE).createBlockData()};
         java.util.Set<UUID> thrown = new HashSet<>();
         for (int t = 0; t <= ticks; t++) {
             double r = Math.max(1.2, t * step);
@@ -488,7 +491,7 @@ final class RockPowers {
                 for (int i = 0; i < points; i++) {
                     double a = offset + Math.PI * 2 * i / points;
                     Location l = ground(center.clone().add(Math.cos(a) * r, 0, Math.sin(a) * r));
-                    if (l != null) pillar(l, ROCKS[ThreadLocalRandom.current().nextInt(ROCKS.length)].createBlockData(), 0.8f, 0.7f + (float) Math.random() * 0.5f, 18);
+                    if (l != null) pillar(l, burst != null ? burst[0] : ROCKS[ThreadLocalRandom.current().nextInt(ROCKS.length)].createBlockData(), 0.8f, 0.7f + (float) Math.random() * 0.5f, 18);
                 }
                 if (r == Math.max(1.2, 0)) w.playSound(center, Sound.BLOCK_DEEPSLATE_BREAK, 1.2f, 0.6f);
                 for (Player p : w.getPlayers()) {
@@ -506,7 +509,7 @@ final class RockPowers {
                                         java.time.Duration.ofMillis(100), java.time.Duration.ofMillis(1500), java.time.Duration.ofMillis(400))));
                     }
                     // the dark comes once he is up in the air, he saw the rocks burst
-                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    if (blind) Bukkit.getScheduler().runTaskLater(plugin, () -> {
                         if (p.isOnline() && !p.isDead()) p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 30, 0, false, false, false));
                     }, 8L);
                 }
@@ -535,6 +538,7 @@ final class RockPowers {
         World w = e.getWorld();
         double radius = ab.number("radius", 10);
         long charge = Math.max(20, impact);
+        boolean water = "water".equalsIgnoreCase(ab.text("theme", ""));
         String title = ab.text("title", ""), subtitle = ab.text("subtitle", "");
         for (Player p : w.getPlayers()) {
             if (!Mobs.fighting(p) || p.getLocation().distanceSquared(e.getLocation()) > radius * radius * 6.25) continue;
@@ -545,7 +549,7 @@ final class RockPowers {
             }
             p.playSound(p.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1f, 0.5f);
         }
-        w.playSound(e.getLocation(), Sound.ENTITY_RAVAGER_ROAR, 2f, 0.4f);
+        w.playSound(e.getLocation(), water ? Sound.ENTITY_ELDER_GUARDIAN_CURSE : Sound.ENTITY_RAVAGER_ROAR, 2f, water ? 0.7f : 0.4f);
         // the ring of fire shows exactly where the hit will land, brighter as the impact comes
         new BukkitRunnable() {
             long t;
@@ -564,35 +568,47 @@ final class RockPowers {
                 for (int i = 0; i < points; i++) {
                     double a = spin + Math.PI * 2 * i / points;
                     Location l = center.clone().add(Math.cos(a) * radius, 0.15, Math.sin(a) * radius);
-                    w.spawnParticle(Particle.FLAME, l, 1, 0.05, 0.05, 0.05, 0.005);
-                    if (k > 0.5 && i % 3 == 0) w.spawnParticle(Particle.SOUL_FIRE_FLAME, l.clone().add(0, 0.4, 0), 1, 0.05, 0.2, 0.05, 0.01);
+                    w.spawnParticle(water ? Particle.SPLASH : Particle.FLAME, l, water ? 2 : 1, 0.05, 0.05, 0.05, 0.005);
+                    if (k > 0.5 && i % 3 == 0) w.spawnParticle(water ? Particle.SNOWFLAKE : Particle.SOUL_FIRE_FLAME, l.clone().add(0, 0.4, 0), 1, 0.05, 0.2, 0.05, 0.01);
                 }
                 int inner = (int) (6 + 30 * k);
                 for (int i = 0; i < inner; i++) {
                     double a = ThreadLocalRandom.current().nextDouble(Math.PI * 2), r = Math.sqrt(ThreadLocalRandom.current().nextDouble()) * radius;
-                    w.spawnParticle(k > 0.75 ? Particle.LAVA : Particle.SMALL_FLAME, center.clone().add(Math.cos(a) * r, 0.2, Math.sin(a) * r), 1, 0, 0, 0, 0);
+                    Particle inside = water ? (k > 0.75 ? Particle.FALLING_WATER : Particle.BUBBLE_POP) : (k > 0.75 ? Particle.LAVA : Particle.SMALL_FLAME);
+                    w.spawnParticle(inside, center.clone().add(Math.cos(a) * r, 0.2, Math.sin(a) * r), 1, 0, 0, 0, 0);
                 }
-                if (t % 20 == 0) w.playSound(center, Sound.BLOCK_FIRE_AMBIENT, 2f, 0.6f + (float) k);
+                if (t % 20 == 0) w.playSound(center, water ? Sound.BLOCK_WATER_AMBIENT : Sound.BLOCK_FIRE_AMBIENT, 2f, 0.6f + (float) k);
                 if (t >= charge) {
                     cancel();
-                    cataclysmImpact(ab, c, center, radius);
+                    cataclysmImpact(ab, c, center, radius, water);
                 }
             }
         }.runTaskTimer(plugin, 0L, 2L);
     }
 
-    private void cataclysmImpact(MobTemplate.Ability ab, Caster c, Location center, double radius) {
+    /**
+     * The hit of the cataclysm. {@code theme: water} (an otter falling flat on the water) draws it with splashes and
+     * ice instead of fire and deepslate; {@code launch} throws the players hit up and away (blocks high, 0: no throw).
+     */
+    private void cataclysmImpact(MobTemplate.Ability ab, Caster c, Location center, double radius, boolean water) {
         World w = center.getWorld();
         w.spawnParticle(Particle.EXPLOSION_EMITTER, center.clone().add(0, 1, 0), 2);
-        w.spawnParticle(Particle.FLAME, center.clone().add(0, 0.5, 0), 300, radius / 2, 0.5, radius / 2, 0.15);
+        w.spawnParticle(water ? Particle.SPLASH : Particle.FLAME, center.clone().add(0, 0.5, 0), water ? 500 : 300, radius / 2, 0.5, radius / 2, 0.15);
+        if (water) w.spawnParticle(Particle.FALLING_WATER, center.clone().add(0, 3, 0), 200, radius / 2, 2, radius / 2, 0);
         w.playSound(center, Sound.ENTITY_GENERIC_EXPLODE, 3f, 0.4f);
-        w.playSound(center, Sound.ENTITY_WARDEN_SONIC_BOOM, 2f, 0.6f);
+        w.playSound(center, water ? Sound.ENTITY_PLAYER_SPLASH_HIGH_SPEED : Sound.ENTITY_WARDEN_SONIC_BOOM, 2f, 0.6f);
+        double launch = ab.number("launch", 0);
         for (Player p : w.getPlayers()) {
             if (!Mobs.fighting(p)) continue;
             Location pl = p.getLocation();
             if (Math.hypot(pl.getX() - center.getX(), pl.getZ() - center.getZ()) <= radius && Math.abs(pl.getY() - center.getY()) < 5) {
                 c.hit(p, 3);
                 p.setFireTicks(0);
+                if (launch > 0) {
+                    Vector away = pl.toVector().subtract(center.toVector()).setY(0);
+                    if (away.lengthSquared() < 0.01) away = new Vector(1, 0, 0);
+                    p.setVelocity(away.normalize().multiply(0.9).setY(launchSpeed(launch)));
+                }
             }
         }
         // three waves of rock pillars running outwards, then the last pulse
@@ -603,15 +619,16 @@ final class RockPowers {
                 for (int i = 0; i < points; i++) {
                     double a = Math.PI * 2 * i / points;
                     Location l = ground(center.clone().add(Math.cos(a) * r, 0, Math.sin(a) * r));
-                    if (l != null) pillar(l, (i % 2 == 0 ? Material.DEEPSLATE : Material.COBBLED_DEEPSLATE).createBlockData(), 1.1f, 1.8f, 16);
+                    Material m = water ? (i % 2 == 0 ? Material.PACKED_ICE : Material.BLUE_ICE) : (i % 2 == 0 ? Material.DEEPSLATE : Material.COBBLED_DEEPSLATE);
+                    if (l != null) pillar(l, m.createBlockData(), 1.1f, 1.8f, 16);
                 }
-                w.spawnParticle(Particle.BLOCK, center, 50, r / 2, 0.3, r / 2, 0.1, Material.AMETHYST_BLOCK.createBlockData());
-                w.playSound(center, Sound.BLOCK_DEEPSLATE_BREAK, 2f, 0.5f);
+                w.spawnParticle(Particle.BLOCK, center, 50, r / 2, 0.3, r / 2, 0.1, (water ? Material.ICE : Material.AMETHYST_BLOCK).createBlockData());
+                w.playSound(center, water ? Sound.BLOCK_GLASS_BREAK : Sound.BLOCK_DEEPSLATE_BREAK, 2f, 0.5f);
             }, 10L + wave * 10L);
         }
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            w.spawnParticle(Particle.REVERSE_PORTAL, center.clone().add(0, 1.5, 0), 120, radius / 3, 1, radius / 3, 0.05);
-            w.playSound(center, Sound.BLOCK_AMETHYST_BLOCK_RESONATE, 2f, 0.5f);
+            w.spawnParticle(water ? Particle.SNOWFLAKE : Particle.REVERSE_PORTAL, center.clone().add(0, 1.5, 0), 120, radius / 3, 1, radius / 3, 0.05);
+            w.playSound(center, water ? Sound.BLOCK_AMETHYST_BLOCK_CHIME : Sound.BLOCK_AMETHYST_BLOCK_RESONATE, 2f, 0.5f);
         }, 40L);
     }
 
