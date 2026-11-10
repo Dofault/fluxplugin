@@ -317,10 +317,12 @@ final class HarvestPowers {
 
     /**
      * A crop spat out: a flying item (carrot, potato...) pointed along its path, slightly falling. Hits the first
-     * player it meets (each player once per salvo), breaks on walls.
+     * player on its way (tested along the whole step of each tick: a fast shot never jumps over a player) and breaks
+     * on him, or on a wall. Every hit hurts; within one salvo, each further hit on the same player hurts half as much
+     * as the one before ({@code hitBySalvo} counts them), so a salvo never takes more than twice one hit.
      */
     private void shoot(RockPowers.Caster c, Location from, Vector vel, Material item, boolean glowing, double fallback,
-                       double share, Set<UUID> hitBySalvo) {
+                       double share, Map<UUID, Integer> hitBySalvo) {
         World w = from.getWorld();
         ItemDisplay d = w.spawn(from, ItemDisplay.class, it -> {
             it.setItemStack(new ItemStack(item));
@@ -344,12 +346,47 @@ final class HarvestPowers {
 
             @Override
             public void run() {
-                if (!d.isValid() || ++t > 40) {
+                if (!d.isValid() || ++t > 60) {
                     cancel();
                     forget(d);
                     return;
                 }
                 vel.setY(vel.getY() - 0.012);
+                Vector before = pos.toVector();
+                double step = vel.length();
+                // the first player along this tick's step, before any wall
+                Player struck = null;
+                double nearest = step + 1;
+                for (Player p : w.getPlayers()) {
+                    if (!Mobs.fighting(p) || step < 1e-6) continue;
+                    var ray = p.getBoundingBox().expand(0.3).rayTrace(before, vel.clone().normalize(), step);
+                    if (ray == null && !p.getBoundingBox().expand(0.3).contains(before)) continue;
+                    double d0 = ray == null ? 0 : ray.getHitPosition().distance(before);
+                    if (d0 < nearest) {
+                        nearest = d0;
+                        struck = p;
+                    }
+                }
+                if (struck != null) {
+                    var wall = w.rayTraceBlocks(pos, vel, nearest, org.bukkit.FluidCollisionMode.NEVER, true);
+                    if (wall == null || wall.getHitPosition().distance(before) >= nearest) {
+                        pos.add(vel.clone().normalize().multiply(nearest));
+                        int n = hitBySalvo.merge(struck.getUniqueId(), 1, Integer::sum);
+                        double part = Math.pow(0.5, n - 1);
+                        if (share >= 1 && part >= 1) c.hit(struck, fallback);
+                        else c.hitShare(struck, fallback, share * part);
+                        struck.setVelocity(struck.getVelocity().add(vel.clone().setY(0).normalize().multiply(0.35 * part)).setY(0.25));
+                        w.spawnParticle(Particle.ITEM, pos, 10, 0.15, 0.15, 0.15, 0.1, new ItemStack(item));
+                        w.playSound(pos, Sound.ENTITY_SLIME_SQUISH_SMALL, 1f, 1.2f);
+                        if (glowing) {
+                            w.spawnParticle(Particle.DUST, pos, 10, 0.3, 0.3, 0.3, 0, new Particle.DustOptions(GOLD, 1.4f));
+                            flash(pos);
+                        }
+                        cancel();
+                        forget(d);
+                        return;
+                    }
+                }
                 pos.add(vel);
                 if (!pos.getBlock().isPassable()) {
                     w.spawnParticle(Particle.ITEM, pos, 8, 0.1, 0.1, 0.1, 0.08, new ItemStack(item));
@@ -366,19 +403,6 @@ final class HarvestPowers {
                 d.teleport(pos);
                 orient(d, vel);
                 if (glowing && t % 2 == 0) w.spawnParticle(Particle.DUST, pos, 1, 0, 0, 0, 0, new Particle.DustOptions(GOLD, 1.0f));
-                for (Player p : w.getPlayers()) {
-                    if (!Mobs.fighting(p) || hitBySalvo.contains(p.getUniqueId())) continue;
-                    if (!p.getBoundingBox().expand(0.3).contains(pos.toVector())) continue;
-                    hitBySalvo.add(p.getUniqueId());
-                    if (share >= 1) c.hit(p, fallback);
-                    else c.hitShare(p, fallback, share);
-                    p.setVelocity(p.getVelocity().add(vel.clone().setY(0).normalize().multiply(0.35)).setY(0.25));
-                    w.spawnParticle(Particle.ITEM, pos, 10, 0.15, 0.15, 0.15, 0.1, new ItemStack(item));
-                    w.playSound(pos, Sound.ENTITY_SLIME_SQUISH_SMALL, 1f, 1.2f);
-                    cancel();
-                    forget(d);
-                    return;
-                }
             }
         }.runTaskTimer(plugin, 1L, 1L);
     }
@@ -409,7 +433,7 @@ final class HarvestPowers {
         base.normalize();
         // aim a little above the target: the shots fall a bit on the way
         base.setY(base.getY() + Math.min(0.25, dist * 0.012)).normalize();
-        Set<UUID> salvo = new HashSet<>();
+        Map<UUID, Integer> salvo = new HashMap<>();
         ThreadLocalRandom r = ThreadLocalRandom.current();
         for (int i = 0; i < count; i++) {
             double k = count == 1 ? 0 : (i / (double) (count - 1)) - 0.5;
@@ -1406,7 +1430,7 @@ final class HarvestPowers {
         Material shot = item == null ? Material.CARROT : item;
         w.playSound(e.getLocation(), Sound.ENTITY_LLAMA_SPIT, 1.8f, 1.2f);
         w.playSound(e.getLocation(), Sound.ENTITY_RABBIT_ATTACK, 1.6f, 0.8f);
-        Set<UUID> salvo = new HashSet<>();
+        Map<UUID, Integer> salvo = new HashMap<>();
         for (int k = 0; k < count; k++) {
             int shotIndex = k;
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
