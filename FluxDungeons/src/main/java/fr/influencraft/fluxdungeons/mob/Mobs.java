@@ -287,6 +287,7 @@ public final class Mobs {
         this.plugin = plugin;
         this.mobKey = new NamespacedKey(plugin, "mob");
         this.shotKey = new NamespacedKey(plugin, "mob_shot");
+        this.healthScaleKey = new NamespacedKey(plugin, "health_scale");
         this.pilotKey = com.destroystokyo.paper.entity.ai.GoalKey.of(Mob.class, new NamespacedKey(plugin, "pilot"));
         this.runKey = new NamespacedKey(plugin, "run");
         this.objectiveKey = new NamespacedKey(plugin, "objective");
@@ -442,7 +443,7 @@ public final class Mobs {
             le.setMaximumNoDamageTicks(0);
             double[] level = run == null ? NO_SCALE : scaling.apply(run);
             double health = (imported ? vanilla(le, Attribute.MAX_HEALTH, 20) * x.healthMultiplier() : t.health()) * level[0];
-            base(le, Attribute.MAX_HEALTH, health);
+            maxHealth(le, health);
             base(le, Attribute.ATTACK_DAMAGE, (imported ? vanilla(le, Attribute.ATTACK_DAMAGE, 2) * x.damageMultiplier() : t.damage()) * level[1]);
             if (t.speed() > 0) base(le, Attribute.MOVEMENT_SPEED, t.speed());
             // walk-speed: blocks per second on flat ground. A mob's walk grows with the SQUARE of its speed attribute (the
@@ -1011,11 +1012,33 @@ public final class Mobs {
         }
     }
 
+    /** Highest max health Minecraft allows a creature (the attribute is clamped there). */
+    private static final double HEALTH_CAP = 1024;
+
+    /**
+     * Sets a monster's max health, even beyond what Minecraft allows (1024): above it the monster keeps 1024 and every
+     * hit it takes is divided by the same factor ({@code health_scale} in its data), so it lasts as long as asked.
+     */
+    public void maxHealth(LivingEntity le, double health) {
+        double scale = health > HEALTH_CAP ? health / HEALTH_CAP : 1;
+        base(le, Attribute.MAX_HEALTH, Math.min(health, HEALTH_CAP));
+        if (scale > 1) le.getPersistentDataContainer().set(healthScaleKey, PersistentDataType.DOUBLE, scale);
+        else le.getPersistentDataContainer().remove(healthScaleKey);
+    }
+
+    /** How much a monster's life is stretched beyond the 1024 cap (1 = not). */
+    public double healthScale(LivingEntity le) {
+        Double v = le.getPersistentDataContainer().get(healthScaleKey, PersistentDataType.DOUBLE);
+        return v == null || v < 1 ? 1 : v;
+    }
+
     /** A dungeon monster took damage of any kind; returns true when the damage must be cancelled (immunity). */
     public boolean damaged(LivingEntity entity, EntityDamageEvent event) {
         Alive a = alive.get(entity.getUniqueId());
         if (a == null) return false;
         if (a.kit.immune().contains(event.getCause())) return true;
+        double stretch = healthScale(entity);
+        if (stretch > 1) event.setDamage(event.getDamage() / stretch);
         engine.fire(a, "EliteMobDamagedEvent", null, event);
         hurt(a);
         if (!a.phases.isEmpty() && a.nextPhase < a.phases.size()) {
@@ -1470,7 +1493,7 @@ public final class Mobs {
         long now = System.currentTimeMillis();
         Player own = fightingTarget(a);
         AttributeInstance speed = a.entity.getAttribute(Attribute.MOVEMENT_SPEED);
-        out.add(a.template.id() + " (" + a.entity.getType() + "), life " + Math.round(a.entity.getHealth()) + "/" + Math.round(maxHealth(a.entity))
+        out.add(a.template.id() + " (" + a.entity.getType() + "), life " + Math.round(a.entity.getHealth() * healthScale(a.entity)) + "/" + Math.round(maxHealth(a.entity) * healthScale(a.entity))
                 + ", AI " + a.entity.hasAI() + ", controlled " + a.template.extra().controlled() + ", dying " + a.dying);
         out.add("combat " + a.inCombat + ", target " + (own == null ? "none" : own.getName())
                 + ", vanilla target " + (a.entity instanceof Mob m && m.getTarget() != null ? m.getTarget().getName() : "none")
@@ -1706,6 +1729,7 @@ public final class Mobs {
     }
 
     private final NamespacedKey shotKey;
+    private final NamespacedKey healthScaleKey;
 
     /** True for an arrow a dungeon monster shot with its bow (its damage is the monster's attack). */
     public boolean ownShot(org.bukkit.entity.Projectile p) {

@@ -912,7 +912,9 @@ public final class Runs {
         int players = Math.max(1, fighters(run).size());
         AttributeInstance max = boss.getAttribute(Attribute.MAX_HEALTH);
         if (max != null) {
-            max.setBaseValue(t.health() * (1 + bossHealthPerPlayer * (players - 1)));
+            // its life follows the difficulty level too (this line used to drop it), beyond 1024 if need be
+            double level = run.levelSpec().health();
+            mobs.maxHealth(boss, t.health() * level * (1 + bossHealthPerPlayer * (players - 1)));
             boss.setHealth(max.getValue());
         }
         run.mobs.add(boss.getUniqueId());
