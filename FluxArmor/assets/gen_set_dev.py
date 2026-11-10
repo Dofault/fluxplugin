@@ -2,7 +2,7 @@
 """Writes the staff test set (sets/dev.yml of FluxArmor on Labs, given with /set dev): every piece and the sword carry
 every enchantment of production (EcoEnchants of 03_semirp, files starting with "_" are disabled ones) still active
 on Labs that targets them, at its max level, plus vanilla enchantments at their max (all protections stacked); unbreakable. Full set bonus:
-+75 % damage (the Phenomenon set gives +70 %). Run it again when production enchantments change.
++75 % damage (the Phenomenon set gives +30 % since 2026-11-10). Run it again when production enchantments change.
 
 Usage: gen_set_dev.py [server root, default /home/influencraft/serveurs]
 """
