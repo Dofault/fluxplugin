@@ -70,6 +70,8 @@ final class DungeonListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onJoin(PlayerJoinEvent e) {
         Player p = e.getPlayer();
+        // advantages of a run (offering doors, prefix fdgrant_) never outlive it, even after a crash
+        for (String tag : java.util.List.copyOf(p.getScoreboardTags())) if (tag.startsWith("fdgrant_")) p.removeScoreboardTag(tag);
         // a run ended without him (crash): vanilla invulnerability back
         if (p.getMaximumNoDamageTicks() == 0) p.setMaximumNoDamageTicks(20);
         boolean inArena = arena.isArena(p.getWorld());
@@ -130,6 +132,11 @@ final class DungeonListener implements Listener {
             if (heroes.hero(p) != null && (e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK)) {
                 heroes.castSlot(p, p.getInventory().getHeldItemSlot(), runs.context(p));
             }
+            return;
+        }
+        // the altar of an offering door takes what the player holds (never the vanilla use of the block)
+        if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock() != null && runs.offer(p, e.getClickedBlock(), e.getItem())) {
+            e.setCancelled(true);
             return;
         }
         // containers and switches of the dungeon are decor

@@ -13,20 +13,22 @@ Face reworked to look menacing: eyes 18 % less tall, upper lid slanting down to 
 vertical slit pupil; thin dark leaf brows frowning (inner end down on the eye, outer end up); head turned less
 (gaze straight at the intruder). These three are the only geometry changes.
 
-Usage: renard_feuilles.py [output folder] [--apercu <sheet.png>]
+Usage: renard_feuilles.py [output folder] [--apercu <sheet.png>] [--anims <folder>] [--mesures]
+Animations of the boss (Renard sylvestre): renard_feuilles_anim.py.
 Writes renard_feuilles.bbmodel and its two textures as PNG (renard_feuilles.png, renard_feuilles_lumiere.png).
 """
 import json
 import math
 import os
 import sys
+import uuid
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import renard_herboriste as R  # noqa: E402
-from bbkit import apercu, attach, bake, export, ground, hx  # noqa: E402
+from bbkit import apercu, attach, bake, export, ground, hx, matrix  # noqa: E402
 from chauve_souris import pick  # noqa: E402
-from golem_fonderie import rot  # noqa: E402
+from golem_fonderie import app, rot  # noqa: E402
 from png_util import write  # noqa: E402
 
 IDENT = "renard_feuilles"
@@ -244,11 +246,29 @@ LEAF_MATS = {
 }
 # accessories (satchel, vials, collar, leaf by the ear) keep the materials of the herbalist fox
 MATS = {**{k: v for k, v in R.MATS.items() if k not in LEAF_MATS}, **LEAF_MATS}
-GLOW = R.GLOW
-GLOW_COLOURS = R.GLOW_COLOURS
+def mouth(w, h, r, face):
+    """Inside of the mouth: dark red-brown, a darker throat at the back."""
+    return [[pick(MOUTH, 0.8 + (0.6 if face == "up" else 0), r, 0.4) for _ in range(w)] for _ in range(h)]
+
+
+def eye_lit(inner_left):
+    """The menacing eye, brighter (ultimate): the same drawing with a glowing amber iris."""
+    base = eye(inner_left)
+
+    def f(w, h, r, face):
+        grid = base(w, h, r, face)
+        return [[IRIS_LIT if c == IRIS else IRIS_LIT_DARK if c == IRIS_DARK else c for c in row] for row in grid]
+    return f
+
+
+MOUTH = pal("#1E1310", "#3A1F1A", "#5A2A24")
+IRIS_LIT, IRIS_LIT_DARK = hx("#FFD36A"), hx("#E0A43A")
+MATS["mouth"] = (mouth, 2)
+GLOW = {**R.GLOW, "eye_r_lit": (eye_lit(inner_left=False), 3), "eye_l_lit": (eye_lit(inner_left=True), 3)}
+GLOW_COLOURS = R.GLOW_COLOURS | {IRIS_LIT, IRIS_LIT_DARK, PUPIL}
 
 # --------------------------------------------------------------------------- geometry changes (face only)
-R.HEAD_POSE = rot(-4, 4, 2)          # was (-7, 12, 3): gaze straight at the intruder
+R.HEAD_POSE = rot(-4, 0, 0)          # was (-7, 12, 3): gaze straight ahead (the boss turns its h_Head with its gaze)
 
 
 def tail_mat(name):
@@ -285,9 +305,58 @@ def parts():
     return out
 
 
-def build():
-    raw = parts()
+# --------------------------------------------------------------------------- rig for the boss (2026-11-11)
+# Bones added for the animations of the Sylvan Fox boss, the look is unchanged: h_Head (BetterModel turns a bone named
+# h_* with the gaze: the head turns first, the body follows), Jaw (the lower jaw and a dark mouth hidden inside the
+# snout while closed), Paw_* (shin and foot of each leg, pivot at the knee), Eyes_lit_empty (copies of the eyes in a
+# brighter amber on the emissive texture, hidden until the ultimate shows them: bones ending in _empty are hidden
+# when the model is put on).
+LEG_OF = {"av_d": "front_right", "av_g": "front_left", "ar_d": "back_right", "ar_g": "back_left"}
+PAW_PARTS = ("patte_bas_", "pied_", "orteil_", "pied_creme_")
+
+
+def _offset(c, r, v):
+    M = matrix(r)
+    d = app(M, v)
+    return [c[i] + d[i] for i in range(3)]
+
+
+def rig(raw):
     groups = {k: v for k, v in R.GROUPS.items() if k != "Bag"}
+    groups = {("h_Head" if k == "Head" else k): (pv, "h_Head" if par == "Head" else par) for k, (pv, par) in groups.items()}
+    out = []
+    for g, n, c, size, r, m in raw:
+        if g == "Head":
+            g = "h_Head"
+        if n == "machoire":
+            # pivot at the top of its back edge; the mouth sits on it, inside the snout
+            groups["Jaw"] = (_offset(c, r, [0, size[1] / 2, size[2] / 2 - 0.2]), "h_Head")
+            out.append(("Jaw", n, c, size, r, m))
+            out.append(("Jaw", "gueule", _offset(c, r, [0, size[1] / 2 - 0.05, -0.4]), [3.2, 0.3, 3.4], r, "mouth"))
+            continue
+        if n.startswith(("oeil_d", "oeil_g")):
+            out.append((g, n, c, size, r, m))
+            lit = "eye_r_lit" if n.endswith("_d") else "eye_l_lit"
+            out.append(("Eyes_lit_empty", n + "_lumiere", _offset(c, r, [0, 0, -0.08]),
+                        [size[0] * 1.04, size[1] * 1.04, size[2]], r, lit))
+            groups.setdefault("Eyes_lit_empty", (list(c), "h_Head"))
+            continue
+        if g.startswith("Leg_") and n.startswith(PAW_PARTS):
+            sd = next(k for k in LEG_OF if n.endswith("_" + k) or ("_" + k + "_") in n)
+            paw = "Paw_" + LEG_OF[sd]
+            if n.startswith("patte_bas_"):
+                groups[paw] = (_offset(c, r, [0, size[1] / 2 - 0.6, 0]), g)
+            out.append((paw, n, c, size, r, m))
+            continue
+        out.append((g, n, c, size, r, m))
+    # parents first (Blockbench outliner order)
+    order = ["Root", "Body", "Neck", "h_Head", "Jaw", "Eyes_lit_empty", "Ear_right", "Ear_left", "Tail_base", "Tail_mid",
+             "Tail_tip"] + [f"Leg_{k}" for k in LEG_OF.values()] + [f"Paw_{k}" for k in LEG_OF.values()]
+    return out, {k: groups[k] for k in order if k in groups}
+
+
+def build():
+    raw, groups = rig(parts())
     return ground(raw, groups, center=False)
 
 
@@ -298,12 +367,31 @@ if __name__ == "__main__":
         i = args.index("--apercu")
         prev = args[i + 1]
         del args[i:i + 2]
+    anims_dir = None
+    show = "--mesures" in args
+    if show:
+        args.remove("--mesures")
+    if "--anims" in args:
+        i = args.index("--anims")
+        anims_dir = args[i + 1]
+        del args[i:i + 2]
     out = args[0] if args else HERE
     P_, groups, dims = build()
     uv, atlases, sizes = bake(P_, MATS, GLOW, seed=7313)
     data = export(IDENT, NS, P_, groups, uv, atlases, sizes)
-    print(f"{len(P_)} volumes ; {dims[0]:.2f} x {dims[1]:.2f} x {dims[2]:.2f} blocs (larg x haut x long) ; "
-          f"textures {sizes[0]} + {sizes[1]}")
+    import renard_feuilles_anim as RA
+    anims = RA.build(data, lambda name: str(uuid.uuid5(NS, f"{IDENT}/{name}")))
+    data["animations"] = anims
+    if anims_dir:
+        RA.strips(data, anims, atlases, sizes, anims_dir)
+    if show:
+        for name, rows in RA.measure(data, anims).items():
+            print(f"--- {name}: plus bas {min(r['low'] for r in rows):.2f}, corps {min(r['body_low'] for r in rows):.2f}")
+            for r in rows[::4]:
+                print(f"  tick {r['tick']:3d}  bas {r['low']:5.2f}  corps {r['body_low']:5.2f}  pieds {r['feet']}  museau {r['snout']}")
+    data["animations"] = RA.finish(anims)
+    print(f"{len(P_)} volumes, {len(groups)} os, {len(anims)} animations ; {dims[0]:.2f} x {dims[1]:.2f} x {dims[2]:.2f} "
+          f"blocs (larg x haut x long) ; textures {sizes[0]} + {sizes[1]}")
     if prev:
         apercu(data, atlases, sizes, prev, GLOW_COLOURS, views=((35, 12), (0, 4), (90, 3), (200, 10)), size=420)
     for t, suffix in ((0, ""), (1, "_lumiere")):

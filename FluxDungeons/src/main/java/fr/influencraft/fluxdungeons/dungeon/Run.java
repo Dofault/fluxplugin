@@ -58,6 +58,10 @@ public final class Run {
     final java.util.Map<String, Integer> roomKills = new java.util.HashMap<>();
     /** Doors already open. */
     final java.util.Set<String> openDoors = new java.util.HashSet<>();
+    /** What each offering door received so far (counts per entry of its offering). */
+    final java.util.Map<String, int[]> offerings = new java.util.HashMap<>();
+    /** Scoreboard tags given to the players by completed offering doors (taken back when they leave). */
+    final java.util.Set<String> grants = new java.util.HashSet<>();
     /** Counter shown on each door that opens with kills. */
     final java.util.Map<String, org.bukkit.entity.TextDisplay> doorLabels = new java.util.HashMap<>();
     /** What each expected player chose on the launch screen, used when he enters. */

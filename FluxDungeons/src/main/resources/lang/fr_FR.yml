@@ -297,6 +297,18 @@ door:
   kills: '&#FF5C5C☠ &f%done%&7/&f%needed% &7monstres'
   opened: '&#B376E5Une porte s''ouvre...'
   opened-kills: '&#2ECF7BLa salle est nettoyée : la porte s''ouvre !'
+  opened-offering: '&#2ECF7BL''autel est satisfait : la porte s''ouvre !'
+offering:
+  title: '&#A5C96B&l%title%'
+  line: '&#B376E5• %hint% &7(&f%done%&7/&f%amount%&7)'
+  line-next: '&#FFD94D➜ %hint% &7(&f%done%&7/&f%amount%&7)'
+  line-later: '&7• %hint% &8(%done%/%amount%)'
+  line-done: '&#2ECF7B✔ &7%hint%'
+  empty-hand: '&#B376E5L''autel attend des plantes : prends-en une en main et clique dessus (accroupi : tout ce qu''il faut).'
+  wrong: '&#FF5C5CCe n''est pas ce que décrit l''autel. Relis les indices.'
+  not-yet: '&#B376E5Pas encore : la préparation suit un ordre précis.'
+  enough: '&#B376E5L''autel en a déjà assez de celle-ci.'
+  given: '&#A5C96B%player% &7dépose &f%count% × %item%&7.'
 pick-level:
   title: '%dungeon%'
   intro: '&#B376E5Choisis la difficulté pour tout le groupe. &7(Tu pourras encore la changer sur l''écran de lancement.)'

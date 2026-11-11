@@ -871,7 +871,9 @@ public final class Editor implements Listener {
                     int i = s.doors.indexOf(d);
                     if (i < 0 || s.saving) return;
                     String r = ans.text("room") == null ? "" : ans.text("room").trim();
-                    DungeonDefinition.Door now = d.with(ans.toggle("kills") ? DungeonDefinition.DoorType.KILLS : DungeonDefinition.DoorType.PROXIMITY,
+                    // an offering door (written by a map script) keeps its type: only its room and radius change here
+                    DungeonDefinition.Door now = d.with(d.type() == DungeonDefinition.DoorType.OFFERING ? d.type()
+                                    : ans.toggle("kills") ? DungeonDefinition.DoorType.KILLS : DungeonDefinition.DoorType.PROXIMITY,
                             r, (int) ans.amount("count"), ans.amount("radius"));
                     s.doors.set(i, now);
                     changed(s);
@@ -950,6 +952,7 @@ public final class Editor implements Listener {
             if (!d.room().isEmpty()) m.put("room", d.room());
             m.put("kills", d.kills());
             m.put("radius", d.radius());
+            if (d.offering() != null) m.put("offering", d.offering().toMap());
             doors.add(m);
         }
         y.set("map.doors", doors);

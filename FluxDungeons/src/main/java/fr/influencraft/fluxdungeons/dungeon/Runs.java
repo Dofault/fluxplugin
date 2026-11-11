@@ -365,7 +365,7 @@ public final class Runs {
                 if (def.map().objectives().contains(sp.mob())) run.objectivesLeft.add(sp.mob());
             }
             run.objectivesTotal = run.objectivesLeft.size();
-            for (DungeonDefinition.Door d : def.map().doors()) if (d.type() == DungeonDefinition.DoorType.KILLS) doorLabel(run, d);
+            for (DungeonDefinition.Door d : def.map().doors()) if (d.type() != DungeonDefinition.DoorType.PROXIMITY) doorLabel(run, d);
             // a digging boss' lair: arena and galleries built in the run's world first (the boss is its objective)
             if (def.burrows() != null) {
                 burrows.prepare(run, () -> {
@@ -417,7 +417,12 @@ public final class Runs {
         for (DungeonDefinition.Door d : run.def.map().doors()) {
             if (run.openDoors.contains(d.id())) continue;
             boolean open;
-            if (d.type() == DungeonDefinition.DoorType.KILLS) {
+            if (d.type() == DungeonDefinition.DoorType.OFFERING) {
+                // opened by its altar (offer); a few motes over the altar show where to bring the plants
+                Offering o = d.offering();
+                run.world.spawnParticle(Particle.COMPOSTER, o.ax() + 0.5, o.ay() + 1.2, o.az() + 0.5, 3, 0.25, 0.2, 0.25, 0);
+                continue;
+            } else if (d.type() == DungeonDefinition.DoorType.KILLS) {
                 int done = run.roomKills.getOrDefault(d.room(), 0), need = needed(run, d);
                 open = done >= need;
                 org.bukkit.entity.TextDisplay label = run.doorLabels.get(d.id());
@@ -433,16 +438,19 @@ public final class Runs {
         }
     }
 
-    /** The counter above a door that opens with kills. */
+    /** The counter above a door that opens with kills, or the list of what an offering door's altar asks. */
     private void doorLabel(Run run, DungeonDefinition.Door d) {
         BoundingBox box = d.box();
-        Location at = new Location(run.world, box.getCenterX(), box.getMaxY() + 0.5, box.getCenterZ());
+        boolean offering = d.type() == DungeonDefinition.DoorType.OFFERING;
+        Location at = offering ? new Location(run.world, d.offering().ax() + 0.5, d.offering().ay() + 1.6, d.offering().az() + 0.5)
+                : new Location(run.world, box.getCenterX(), box.getMaxY() + 0.5, box.getCenterZ());
         org.bukkit.entity.TextDisplay label = run.world.spawn(at, org.bukkit.entity.TextDisplay.class, t -> {
             t.setPersistent(false);
             t.setBillboard(org.bukkit.entity.Display.Billboard.CENTER);
             t.setShadowed(true);
             t.setViewRange(0.6f);
-            t.text(Texts.parse(plugin.messages().raw("door.kills", "%done%", "0", "%needed%", String.valueOf(needed(run, d)))));
+            t.setLineWidth(260);
+            t.text(Texts.parse(offering ? offeringText(run, d) : plugin.messages().raw("door.kills", "%done%", "0", "%needed%", String.valueOf(needed(run, d)))));
         });
         run.doorLabels.put(d.id(), label);
     }
@@ -491,7 +499,84 @@ public final class Runs {
             for (org.bukkit.entity.BlockDisplay bd : moving) if (bd.isValid()) bd.remove();
             run.world.playSound(center, Sound.BLOCK_WOOD_PLACE, 1f, 0.6f);
         }, ticks + 3L);
-        broadcast(run, d.type() == DungeonDefinition.DoorType.KILLS ? "door.opened-kills" : "door.opened");
+        broadcast(run, d.type() == DungeonDefinition.DoorType.KILLS ? "door.opened-kills"
+                : d.type() == DungeonDefinition.DoorType.OFFERING ? "door.opened-offering" : "door.opened");
+    }
+
+    // ---------------------------------------------------------------- offering doors (herbalist altars)
+
+    /** What the altar of an offering door asks, line by line (hint, count; the next one marked when ordered). */
+    private String offeringText(Run run, DungeonDefinition.Door d) {
+        Offering o = d.offering();
+        int[] p = run.offerings.computeIfAbsent(d.id(), k -> o.fresh());
+        StringBuilder sb = new StringBuilder(plugin.messages().raw("offering.title", "%title%", o.title().isEmpty() ? "Autel" : o.title()));
+        boolean nextShown = false;
+        for (int i = 0; i < o.entries().size(); i++) {
+            Offering.Entry e = o.entries().get(i);
+            String key;
+            if (p[i] >= e.amount()) key = "offering.line-done";
+            else if (o.ordered() && !nextShown) {
+                key = "offering.line-next";
+                nextShown = true;
+            } else key = o.ordered() ? "offering.line-later" : "offering.line";
+            sb.append('\n').append(plugin.messages().raw(key, "%hint%", e.hint(), "%done%", String.valueOf(p[i]), "%amount%", String.valueOf(e.amount())));
+        }
+        return sb.toString();
+    }
+
+    /**
+     * A player right-clicks a block: when it is the altar of a closed offering door of his run, what he holds is put on
+     * it (as many as it still wants when he sneaks, else one), the door opens once everything is in. True when the
+     * click was for an altar (the click is then cancelled: a composter must not eat the plants).
+     */
+    public boolean offer(Player p, Block b, ItemStack item) {
+        Run run = runOf(p);
+        if (run == null || run.world == null || b.getWorld() != run.world || run.state != Run.State.RUNNING) return false;
+        for (DungeonDefinition.Door d : run.def.map().doors()) {
+            Offering o = d.offering();
+            if (d.type() != DungeonDefinition.DoorType.OFFERING || o == null || run.openDoors.contains(d.id())) continue;
+            if (b.getX() != o.ax() || b.getY() != o.ay() || b.getZ() != o.az()) continue;
+            int[] progress = run.offerings.computeIfAbsent(d.id(), k -> o.fresh());
+            if (item == null || item.getType().isAir()) {
+                plugin.messages().send(p, "offering.empty-hand");
+                return true;
+            }
+            int[] taken = new int[1];
+            Offering.Result res = o.offer(progress, item.getType(), p.isSneaking() ? item.getAmount() : 1, taken);
+            Location at = b.getLocation().add(0.5, 1.0, 0.5);
+            switch (res) {
+                case WRONG, NOT_YET, ENOUGH -> {
+                    plugin.messages().send(p, res == Offering.Result.WRONG ? "offering.wrong" : res == Offering.Result.NOT_YET ? "offering.not-yet" : "offering.enough");
+                    run.world.playSound(at, Sound.BLOCK_COMPOSTER_EMPTY, 1f, 0.6f);
+                    run.world.spawnParticle(Particle.SMOKE, at, 6, 0.2, 0.2, 0.2, 0.01);
+                    return true;
+                }
+                default -> {
+                }
+            }
+            item.setAmount(item.getAmount() - taken[0]);
+            run.world.playSound(at, Sound.BLOCK_COMPOSTER_FILL_SUCCESS, 1f, 1f);
+            run.world.playSound(at, Sound.BLOCK_BREWING_STAND_BREW, 0.6f, 1.4f);
+            run.world.spawnParticle(Particle.HAPPY_VILLAGER, at, 8, 0.3, 0.3, 0.3, 0);
+            broadcast(run, "offering.given", "%player%", p.getName(), "%count%", String.valueOf(taken[0]),
+                    "%item%", "<lang:" + item.getType().translationKey() + ">");
+            org.bukkit.entity.TextDisplay label = run.doorLabels.get(d.id());
+            if (label != null && label.isValid()) label.text(Texts.parse(offeringText(run, d)));
+            if (res == Offering.Result.COMPLETE) {
+                run.world.playSound(at, Sound.BLOCK_BEACON_ACTIVATE, 1f, 1.4f);
+                run.world.spawnParticle(Particle.TOTEM_OF_UNDYING, at, 30, 0.4, 0.6, 0.4, 0.2);
+                if (!o.grant().isEmpty()) {
+                    run.grants.add(o.grant());
+                    for (Player o2 : online(run)) {
+                        o2.addScoreboardTag(o.grant());
+                        if (!o.grantMessage().isEmpty()) o2.sendMessage(Texts.parse(o.grantMessage()));
+                    }
+                }
+                openDoor(run, d);
+            }
+            return true;
+        }
+        return false;
     }
 
     /** A dungeon monster loaded back with its chunk: tracked again; false when its run is over. */
@@ -592,6 +677,7 @@ public final class Runs {
         run.expected.remove(player.getUniqueId());
         boolean inside = run.players.remove(player.getUniqueId());
         run.watching.remove(player.getUniqueId());
+        for (String tag : run.grants) player.removeScoreboardTag(tag);
         if (run.bossBar != null) player.hideBossBar(run.bossBar);
         stopMusic(run, player);
         pets.despawn(player);

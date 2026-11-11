@@ -106,14 +106,20 @@ public final class DungeonDefinition {
     }
 
     /** How a door opens. */
-    public enum DoorType { PROXIMITY, KILLS }
+    public enum DoorType { PROXIMITY, KILLS, OFFERING }
 
     /**
      * A door of a map: the blocks between two corners, which disappear (sinking into the ground) when it opens: as soon
-     * as a player comes within {@code radius} blocks ({@link DoorType#PROXIMITY}), or once {@code kills} monsters of
-     * its {@code room} died ({@link DoorType#KILLS}; 0 = all of them).
+     * as a player comes within {@code radius} blocks ({@link DoorType#PROXIMITY}), once {@code kills} monsters of
+     * its {@code room} died ({@link DoorType#KILLS}; 0 = all of them), or once players brought what its altar asks
+     * ({@link DoorType#OFFERING}, {@code offering}, null for the other types).
      */
-    public record Door(String id, DoorType type, int x1, int y1, int z1, int x2, int y2, int z2, String room, int kills, double radius) {
+    public record Door(String id, DoorType type, int x1, int y1, int z1, int x2, int y2, int z2, String room, int kills, double radius,
+                       Offering offering) {
+        public Door(String id, DoorType type, int x1, int y1, int z1, int x2, int y2, int z2, String room, int kills, double radius) {
+            this(id, type, x1, y1, z1, x2, y2, z2, room, kills, radius, null);
+        }
+
         public boolean contains(int x, int y, int z) {
             return x >= Math.min(x1, x2) && x <= Math.max(x1, x2) && y >= Math.min(y1, y2) && y <= Math.max(y1, y2)
                     && z >= Math.min(z1, z2) && z <= Math.max(z1, z2);
@@ -125,7 +131,7 @@ public final class DungeonDefinition {
         }
 
         public Door with(DoorType t, String r, int k, double rad) {
-            return new Door(id, t, x1, y1, z1, x2, y2, z2, r == null ? "" : r, Math.max(0, k), Math.max(1, rad));
+            return new Door(id, t, x1, y1, z1, x2, y2, z2, r == null ? "" : r, Math.max(0, k), Math.max(1, rad), offering);
         }
     }
 
@@ -210,10 +216,12 @@ public final class DungeonDefinition {
         List<Door> doors = new ArrayList<>();
         for (Map<?, ?> dm : m.getMapList("doors")) {
             if (!(dm.get("from") instanceof List<?> a) || !(dm.get("to") instanceof List<?> b) || a.size() < 3 || b.size() < 3) continue;
-            DoorType type = "kills".equalsIgnoreCase(String.valueOf(dm.get("type"))) ? DoorType.KILLS : DoorType.PROXIMITY;
+            String kind = String.valueOf(dm.get("type"));
+            Offering offering = "offering".equalsIgnoreCase(kind) ? Offering.read(dm.get("offering")) : null;
+            DoorType type = "kills".equalsIgnoreCase(kind) ? DoorType.KILLS : offering != null ? DoorType.OFFERING : DoorType.PROXIMITY;
             doors.add(new Door(String.valueOf(dm.get("id")), type, (int) d(a.get(0)), (int) d(a.get(1)), (int) d(a.get(2)),
                     (int) d(b.get(0)), (int) d(b.get(1)), (int) d(b.get(2)), dm.get("room") == null ? "" : String.valueOf(dm.get("room")),
-                    dm.get("kills") instanceof Number n ? n.intValue() : 0, dm.get("radius") instanceof Number n ? n.doubleValue() : 4));
+                    dm.get("kills") instanceof Number n ? n.intValue() : 0, dm.get("radius") instanceof Number n ? n.doubleValue() : 4, offering));
         }
         return new MapSpec(m.getString("folder", ""), start, spawns, m.getStringList("objectives"), doors);
     }

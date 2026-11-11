@@ -297,6 +297,18 @@ door:
   kills: '&#FF5C5C☠ &f%done%&7/&f%needed% &7monsters'
   opened: '&#B376E5A door opens...'
   opened-kills: '&#2ECF7BThe room is cleared: the door opens!'
+  opened-offering: '&#2ECF7BThe altar is satisfied: the door opens!'
+offering:
+  title: '&#A5C96B&l%title%'
+  line: '&#B376E5• %hint% &7(&f%done%&7/&f%amount%&7)'
+  line-next: '&#FFD94D➜ %hint% &7(&f%done%&7/&f%amount%&7)'
+  line-later: '&7• %hint% &8(%done%/%amount%)'
+  line-done: '&#2ECF7B✔ &7%hint%'
+  empty-hand: '&#B376E5The altar waits for plants: hold one and click it (sneaking: all it needs).'
+  wrong: '&#FF5C5CThis is not what the altar describes. Read the hints again.'
+  not-yet: '&#B376E5Not yet: the preparation follows a precise order.'
+  enough: '&#B376E5The altar already has enough of this one.'
+  given: '&#A5C96B%player% &7puts &f%count% × %item%&7.'
 pick-level:
   title: '%dungeon%'
   intro: '&#B376E5Pick the difficulty for the whole party. &7(It can still be changed on the launch screen.)'
