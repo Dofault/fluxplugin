@@ -316,3 +316,8 @@ pick-level:
   required: '
 
     &#FF5C5CArmure complète et une arme obligatoires.'
+
+rpg:
+  unavailable: "&#FF5C5CLe monde RPG n'est pas disponible pour le moment."
+  not-in-rpg: "&#B376E5Tu n'es pas dans le monde RPG."
+  busy-elsewhere: "&#FF5C5CTermine d'abord ce que tu fais (donjon) avant de changer de monde."

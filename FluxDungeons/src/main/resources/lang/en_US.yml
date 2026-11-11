@@ -316,3 +316,8 @@ pick-level:
   required: '
 
     &#FF5C5CFull armour and a weapon required.'
+
+rpg:
+  unavailable: "&#FF5C5CThe rpg world is not available right now."
+  not-in-rpg: "&#B376E5You are not in the rpg world."
+  busy-elsewhere: "&#FF5C5CFinish what you are doing (dungeon) before changing worlds."
