@@ -30,6 +30,8 @@ public final class DamageNumbers implements Listener {
     private final Plugin plugin;
     private boolean enabled = true;
     private String mobFormat = "&c❤{damage}", playerFormat = "&c⚔{damage}";
+    /** Rpg extras in the same style: a crit, a dodge. */
+    private String critFormat = "&#FFD94D❤{damage} ✦", dodgeFormat = "&7Esquive";
     /** Entities whose hits the rpg engine shows itself (their game damage is cancelled, never seen here). */
     private java.util.function.Predicate<Entity> handledElsewhere = e -> false;
 
@@ -41,6 +43,8 @@ public final class DamageNumbers implements Listener {
         enabled = c == null || c.getBoolean("enabled", true);
         mobFormat = c == null ? "&c❤{damage}" : c.getString("mob-format", "&c❤{damage}");
         playerFormat = c == null ? "&c⚔{damage}" : c.getString("player-format", "&c⚔{damage}");
+        critFormat = c == null ? "&#FFD94D❤{damage} ✦" : c.getString("crit-format", "&#FFD94D❤{damage} ✦");
+        dodgeFormat = c == null ? "&7Esquive" : c.getString("dodge-format", "&7Esquive");
     }
 
     public void handledElsewhere(java.util.function.Predicate<Entity> p) {
@@ -59,9 +63,22 @@ public final class DamageNumbers implements Listener {
 
     /** Shows a hit a player dealt to this entity (also called by the rpg engine). */
     public void show(LivingEntity target, double amount) {
+        show(target, amount, false);
+    }
+
+    /**
+     * A hit: on a player {@code player-format} (a monster's rpg hit included), on a creature {@code mob-format}, or
+     * {@code crit-format} for an rpg crit.
+     */
+    public void show(LivingEntity target, double amount, boolean crit) {
         if (!enabled || amount <= 0 || !target.isValid()) return;
-        String text = (target instanceof Player ? playerFormat : mobFormat).replace("{damage}", format(amount));
-        rise(target, Texts.colors(text));
+        String format = target instanceof Player ? playerFormat : crit ? critFormat : mobFormat;
+        rise(target, Texts.colors(format.replace("{damage}", format(amount))));
+    }
+
+    /** An rpg hit dodged ({@code dodge-format}). */
+    public void dodge(LivingEntity target) {
+        if (enabled && target.isValid()) rise(target, Texts.colors(dodgeFormat));
     }
 
     /** A text rising above an entity for a moment (also the rpg heals). */

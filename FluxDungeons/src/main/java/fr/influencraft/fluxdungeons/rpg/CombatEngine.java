@@ -292,7 +292,10 @@ public final class CombatEngine implements Listener {
             double dmg = CombatMath.round(Math.max(set.balance().minimumDamage(), o.damage() * (1 - targetMob.rangedResistance)));
             o = new CombatMath.Outcome(dmg, o.crit(), false, CombatMath.round(dmg * a.get("lifesteal")), CombatMath.round(dmg * a.get("manasteal")));
         }
-        if (o.dodged()) return o;
+        if (o.dodged()) {
+            if (numbers != null) numbers.dodge(target);
+            return o;
+        }
         // told to the others with the real amount first: the dungeon rules may refuse it (boss phases, pacing)
         if (fromPlayer && !allowed((Player) attacker, target, cast, o.damage())) return null;
         damage(target, o.damage(), attacker, o.crit());
@@ -357,8 +360,9 @@ public final class CombatEngine implements Listener {
                 m.mirrored = target.getHealth();
             }
         }
-        // the server's damage numbers (as CMI's were): only what a player deals
-        if (source instanceof Player && numbers != null) numbers.show(target, amount);
+        // the server's damage numbers (CMI's look): what a player deals (crits in gold), and in the rpg what a player
+        // takes from a monster
+        if (numbers != null && (source instanceof Player || target instanceof Player)) numbers.show(target, amount, crit);
     }
 
     /**

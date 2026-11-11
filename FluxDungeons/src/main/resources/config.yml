@@ -53,6 +53,9 @@ damage-numbers:
   enabled: true
   mob-format: "&c❤{damage}"
   player-format: "&c⚔{damage}"
+  # rpg extras in the same style: a crit dealt, a dodge (a monster's rpg hit on a player uses player-format)
+  crit-format: "&#FFD94D❤{damage} ✦"
+  dodge-format: "&7Esquive"
 
 # Life bar above the monsters, with their name and level: a red bar with the life written inside in QuinqueFive,
 # drawn by a font of the pack (FluxDungeons/assets/gen_healthbar.py, then /iazip).
