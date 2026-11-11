@@ -66,9 +66,9 @@ final class OfferingSidebar {
         int to = Math.min(icons.size(), from + PER_LINE);
         // the last line says how many more do not fit
         if (line == LINES && icons.size() > to) {
-            return String.join(" ", icons.subList(from, to - 1)) + " <white>+" + (icons.size() - to + 1) + "</white>";
+            return String.join("", icons.subList(from, to - 1)) + " <white>+" + (icons.size() - to + 1) + "</white>";
         }
-        return String.join(" ", icons.subList(from, to));
+        return String.join("", icons.subList(from, to));
     }
 
     private Cached cached(Player player) {
