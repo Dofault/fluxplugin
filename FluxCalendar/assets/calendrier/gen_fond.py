@@ -33,7 +33,7 @@ LIFT = 14                     # the window starts this far above the chest (room
 WEEKDAYS = "LMMJVSD"
 WHITE = (255, 255, 255, 255)
 OUTLINE = (0, 0, 0, 255)
-INK = ui.INK                  # engraved text of the plate
+INK = ui.rgb("#33365A")       # engraved text of the plate (holographic theme)
 RED, RED_DARK, RED_LIGHT = ui.rgb("#C0392B"), ui.rgb("#7E241B"), ui.rgb("#E0645A")
 GOLD, GOLD_DARK, GOLD_LIGHT = ui.rgb("#F0A800"), ui.rgb("#8A5A14"), ui.rgb("#FFD94D")
 GREEN, GREEN_DARK = ui.rgb("#5DC73A"), ui.rgb("#1F5A16")
@@ -89,20 +89,68 @@ class Canvas:
     def slot(self, slot):
         x, y = item(slot)
         x0, y0, x1, y1 = x - 1, y - 1 + LIFT, x + 16, y + 16 + LIFT
-        self.d.rectangle((x0, y0, x1, y1), fill=ui.SLOT)
-        self.d.line((x0, y0, x1 - 1, y0), fill=ui.SLOT_DARK)
-        self.d.line((x0, y0, x0, y1 - 1), fill=ui.SLOT_DARK)
-        self.d.line((x0 + 1, y1, x1, y1), fill=WHITE)
-        self.d.line((x1, y0 + 1, x1, y1), fill=WHITE)
+        self.d.rectangle((x0, y0, x1, y1), fill=SLOT_FILL)
+        self.d.line((x0, y0, x1 - 1, y0), fill=SLOT_DARK)
+        self.d.line((x0, y0, x0, y1 - 1), fill=SLOT_DARK)
+        self.d.line((x0 + 1, y1, x1, y1), fill=SLOT_LIGHT)
+        self.d.line((x1, y0 + 1, x1, y1), fill=SLOT_LIGHT)
+
+
+CUT = 12                      # plain columns taken off each side of the vanilla window (it was too wide, 2026-11-11)
+# Holographic theme (chosen on 2026-11-11 among 12 art directions, apercus/themes): every grey of the window and the
+# colours of its tabs are replaced, the window fill gets an iridescent diagonal sheen
+FRAME_GREYS = {0: "#1A1830", 55: "#33365A", 85: "#4B4E6E", 139: "#8A93B8", 193: "fill", 198: "fill", 255: "#E9EEFF"}
+FRAME_TABS = {(254, 255, 125): "#E9EEFF", (255, 213, 66): "#7FE8FF", (233, 134, 28): "#B48CFF", (189, 89, 17): "#4B4E6E",
+              (140, 51, 12): "#4B4E6E"}
+SHEET_OUTLINE, SHEET_GLOW = ui.rgb("#6A5AE0"), ui.rgb("#B8C6FF")
+HOLO_PAPER, HOLO_PAPER_HI, HOLO_PAPER_LO, HOLO_SHEEN = (ui.rgb(c) for c in ("#D7DDF0", "#F4F6FF", "#9AA3C8", "#EEF2FF"))
+BAND_HI, BAND_LO = ui.rgb("#E9EEFF"), ui.rgb("#3A2A7A")
+LETTERS, WEEKEND = WHITE, ui.rgb("#FFF4A8")
+HOLO_RING, HOLO_RING_DARK = ui.rgb("#E9EEFF"), ui.rgb("#4B4E6E")
+STAR, STAR_GLOW = WHITE, ui.rgb("#7FE8FF")
+SLOT_FILL, SLOT_DARK, SLOT_LIGHT = ui.rgb("#5B5F86"), ui.rgb("#33365A"), ui.rgb("#B8C6FF")
+RIBBON = dict(body=ui.rgb("#7A6AF0"), light=ui.rgb("#B8C6FF"), dark=ui.rgb("#3A2A7A"), outline=ui.rgb("#33365A"))
+
+
+def iridescent(x, y, saturation=0.18, value=0.86, period=48):
+    import colorsys
+    r, g, b = colorsys.hsv_to_rgb(((x + y) % period) / period, saturation, value)
+    return int(r * 255), int(g * 255), int(b * 255), 255
+
+
+def band_colour(x):
+    """Weekday band: cyan on the left to violet then pink on the right."""
+    import colorsys
+    r, g, b = colorsys.hsv_to_rgb((0.48 + 0.35 * (x - SHEET[0]) / (SHEET[2] - SHEET[0])) % 1, 0.55, 0.92)
+    return int(r * 255), int(g * 255), int(b * 255), 255
 
 
 def frame():
-    """The vanilla window of the theme, from LIFT px above the chest down to BOTTOM (its 3 bottom rows kept)."""
+    """The vanilla window of the theme from LIFT px above the chest down to BOTTOM, CUT plain columns narrower on
+    each side (the plate stays centred on x 88), recoloured to the holographic theme."""
     full = ui.window(GENERIC)
-    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    tall = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     last = BOTTOM + LIFT                     # image row of the window's last pixel row
-    im.paste(full.crop((0, 0, W, last + 1 - 3)), (0, 0))
-    im.paste(full.crop((0, full.height - 3, W, full.height)), (0, last - 2))
+    tall.paste(full.crop((0, 0, W, last + 1 - 3)), (0, 0))
+    tall.paste(full.crop((0, full.height - 3, W, full.height)), (0, last - 2))
+    # columns taken off: left interior, then right between the plate and the tabs and before the border
+    gone = set(range(8, 8 + CUT)) | set((list(range(139, 143)) + list(range(163, 172)))[:CUT])
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    for i, x in enumerate(x for x in range(W) if x not in gone):
+        im.paste(tall.crop((x, 0, x + 1, H)), (CUT + i, 0))
+    px = im.load()
+    for y in range(H):
+        for x in range(W):
+            p = px[x, y]
+            if p[3] < 255:
+                continue
+            if p[0] == p[1] == p[2] and p[0] in FRAME_GREYS:
+                role = FRAME_GREYS[p[0]]
+                px[x, y] = iridescent(x, y) if role == "fill" else ui.rgb(role)
+            elif p[:3] in FRAME_TABS:
+                px[x, y] = ui.rgb(FRAME_TABS[p[:3]])
+    # a glyph advances up to its last opaque column: an invisible pixel keeps the 176 px of the title offsets
+    im.putpixel((W - 1, LIFT + 20), (0, 0, 0, 8))
     return Canvas(im)
 
 
@@ -116,50 +164,57 @@ def bevel(c, box, fill, hi, lo):
 
 
 def ring(c, x):
-    """A binder ring over the top of the band: a small grey loop going through the sheet."""
-    c.rect((x - 1, BAND_TOP - 3, x + 1, BAND_TOP + 3), fill=RING_DARK)
-    c.line([(x, BAND_TOP - 2), (x, BAND_TOP + 2)], fill=RING)
-    c.point(x, BAND_TOP + 4, RED_DARK)
+    """A binder ring over the top of the band."""
+    c.rect((x - 1, BAND_TOP - 3, x + 1, BAND_TOP + 3), fill=HOLO_RING_DARK)
+    c.line([(x, BAND_TOP - 2), (x, BAND_TOP + 2)], fill=HOLO_RING)
+
+
+def star(c, x, y, centre=STAR, glow=STAR_GLOW):
+    c.point(x, y, centre)
+    for dx, dy in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+        c.point(x + dx, y + dy, glow)
 
 
 def welcome(c, words="Bienvenue !"):
-    """Red ribbon under the calendar, in the colours of the weekday band: notched tails folded behind it,
-    white words with the band's dark red shadow."""
+    """Violet ribbon under the calendar: notched tails folded behind it, white words, a star at both ends."""
     y, h = BANNER_Y, 9
     w = text_width(words) + 14
     x0, x1 = 88 - w // 2, 88 + (w + 1) // 2
+    o = RIBBON["outline"]
     for sign, edge in ((-1, x0), (1, x1)):          # tails, one step lower and behind the ribbon
         far = edge + sign * 9
         tail = [(edge, y + 2), (far, y + 2), (far - sign * 3, y + 2 + (h + 1) // 2), (far, y + h + 2), (edge, y + h + 2)]
-        c.d.polygon([(x, yy + LIFT) for x, yy in tail], fill=RED_DARK, outline=OUTLINE)
-        c.d.polygon([(edge, y + h + 1 + LIFT), (edge + sign * 3, y + h + 2 + LIFT), (edge, y + h + 2 + LIFT)],
-                    fill=OUTLINE)
-    c.rect((x0, y, x1, y + h), fill=RED, outline=OUTLINE)
-    c.line([(x0 + 1, y + 1), (x1 - 1, y + 1)], fill=RED_LIGHT)
-    c.line([(x0 + 1, y + h - 1), (x1 - 1, y + h - 1)], fill=RED_DARK)
-    for x in (x0 + 3, x1 - 3):                      # gold sparkles at both ends, the star motif of the server
-        c.point(x, y + 4, GOLD_LIGHT)
-        for dx, dy in ((-1, 0), (1, 0), (0, -1), (0, 1)):
-            c.point(x + dx, y + 4 + dy, GOLD)
-    c.text(words, 88, y + 2, colour=WHITE, shadow=RED_DARK)
+        c.d.polygon([(x, yy + LIFT) for x, yy in tail], fill=RIBBON["dark"], outline=o)
+    c.rect((x0, y, x1, y + h), fill=RIBBON["body"], outline=o)
+    c.line([(x0 + 1, y + 1), (x1 - 1, y + 1)], fill=RIBBON["light"])
+    c.line([(x0 + 1, y + h - 1), (x1 - 1, y + h - 1)], fill=RIBBON["dark"])
+    for x in (x0 + 3, x1 - 3):
+        star(c, x, y + 4)
+    c.text(words, 88, y + 2, colour=WHITE, shadow=RIBBON["dark"])
 
 
 def background():
-    """Wall calendar on the grey window: paper sheet with a 1 px black outline, red weekday band, binder rings,
-    two pages piled under it, a vanilla slot per date."""
+    """Holographic wall calendar on the narrowed window: pale sheet with a violet outline, light halo and diagonal
+    sheen, iridescent weekday band, binder rings, stars at the band's ends, a slot per date."""
     c = frame()
     x0, y0, x1, y1 = SHEET
-    for k, colour in ((2, PILE[1]), (1, PILE[0])):          # pages piled under, offset down and right
-        c.rect((x0 + 1 + k, y1 - 4 + k * 2, x1 + k, y1 + k * 2), fill=colour, outline=OUTLINE)
-    c.rect(SHEET, outline=OUTLINE)
-    bevel(c, (x0 + 1, y0 + 1, x1 - 1, y1 - 1), PAPER, PAPER_HI, PAPER_LO)
-    c.rect((x0 + 1, BAND_TOP, x1 - 1, BAND_BOTTOM), fill=RED)
-    c.line([(x0 + 1, BAND_TOP), (x1 - 1, BAND_TOP)], fill=RED_LIGHT)
-    c.line([(x0 + 1, BAND_BOTTOM + 1), (x1 - 1, BAND_BOTTOM + 1)], fill=RED_DARK)
+    c.rect((x0 - 1, y0 - 1, x1 + 1, y1 + 1), outline=SHEET_GLOW)
+    c.rect(SHEET, outline=SHEET_OUTLINE)
+    bevel(c, (x0 + 1, y0 + 1, x1 - 1, y1 - 1), HOLO_PAPER, HOLO_PAPER_HI, HOLO_PAPER_LO)
+    for y in range(BAND_BOTTOM + 2, y1):
+        for x in range(x0 + 2, x1 - 1):
+            if (x - y) % 23 == 0:
+                c.point(x, y, HOLO_SHEEN)
+    for x in range(x0 + 1, x1):
+        c.line([(x, BAND_TOP), (x, BAND_BOTTOM)], fill=band_colour(x))
+    c.line([(x0 + 1, BAND_TOP), (x1 - 1, BAND_TOP)], fill=BAND_HI)
+    c.line([(x0 + 1, BAND_BOTTOM + 1), (x1 - 1, BAND_BOTTOM + 1)], fill=BAND_LO)
     for i, ch in enumerate(WEEKDAYS):
-        c.text(ch, item(1 + i)[0] + 8, BAND_TOP + 3, colour=GOLD_LIGHT if i >= 5 else WHITE, shadow=RED_DARK)
+        c.text(ch, item(1 + i)[0] + 8, BAND_TOP + 3, colour=WEEKEND if i >= 5 else LETTERS, shadow=BAND_LO)
     for x in (item(3)[0] - 1, item(6)[0] - 1):   # in the gaps between the letters, symmetric about the centre
         ring(c, x)
+    for x in (x0 + 4, x1 - 4):
+        star(c, x, BAND_TOP + 5)
     for r in range(6):
         for col in range(1, 8):
             c.slot(r * 9 + col)
@@ -169,28 +224,42 @@ def background():
 
 # ---------------------------------------------------------------- day marks, title words, preview
 
+CHECK = ["......#.", ".....##.", ".#..##..", ".####...", "..##....", "........"]   # icons of the Flux buttons
+CLOSE = [".#....#.", "..#..#..", "...##...", "...##...", "..#..#..", ".#....#."]   # (Flux/assets/vanilla/gen_ui.py)
+
+
+def symbol(rows, fill, outline, at=(1, 1)):
+    """A button icon alone, without its square: pixels of ``rows`` with a 1 px outline, top left of the case so the
+    day's number stays readable bottom right."""
+    pts = {(x + at[0], y + at[1]) for y, r in enumerate(rows) for x, ch in enumerate(r) if ch == "#"}
+    im = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    for x, y in pts:
+        for dx, dy in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+            if (x + dx, y + dy) not in pts and 0 <= x + dx < 16 and 0 <= y + dy < 16:
+                im.putpixel((x + dx, y + dy), outline)
+    for x, y in pts:
+        im.putpixel((x, y), fill)
+    return im
+
+
 def mark(kind):
-    """The day marks (16 x 16, readable on a grey vanilla slot): tick (claimed), cross (missed), red gift with a gold
-    ribbon (today), small blue gift (a big reward to come)."""
+    """The day marks (16 x 16): the V (claimed) and X (missed) of the Flux buttons without their square (chosen on
+    2026-11-11), red gift with a gold ribbon (today), small blue gift (a big reward to come)."""
+    if kind == "tick":
+        return symbol(CHECK, GREEN, GREEN_DARK)
+    if kind == "cross":
+        return symbol(CLOSE, CROSS, CROSS_DARK)
     im = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
-    if kind == "tick":
-        for w, col in ((3, GREEN_DARK), (1, GREEN)):
-            d.line([(3, 8), (6, 11), (12, 4)], fill=col, width=w)
-    elif kind == "cross":
-        for w, col in ((3, CROSS_DARK), (1, CROSS)):
-            d.line([(4, 4), (11, 11)], fill=col, width=w)
-            d.line([(11, 4), (4, 11)], fill=col, width=w)
-    else:
-        big = kind == "gift"
-        box = (2, 6, 13, 14) if big else (4, 8, 11, 14)
-        body, lid = (RED, RED_LIGHT) if big else (BLUE, BLUE_LIGHT)
-        d.rectangle(box, fill=body, outline=OUTLINE)
-        d.rectangle((box[0], box[1], box[2], box[1] + 2), fill=lid, outline=OUTLINE)
-        cx = (box[0] + box[2]) // 2
-        d.line([(cx, box[1]), (cx, box[3] - 1)], fill=GOLD_LIGHT)
-        d.polygon([(cx, box[1]), (cx - 3, box[1] - 3), (cx - 1, box[1])], fill=GOLD)
-        d.polygon([(cx, box[1]), (cx + 3, box[1] - 3), (cx + 1, box[1])], fill=GOLD)
+    big = kind == "gift"
+    box = (2, 6, 13, 14) if big else (4, 8, 11, 14)
+    body, lid = (RED, RED_LIGHT) if big else (BLUE, BLUE_LIGHT)
+    d.rectangle(box, fill=body, outline=OUTLINE)
+    d.rectangle((box[0], box[1], box[2], box[1] + 2), fill=lid, outline=OUTLINE)
+    cx = (box[0] + box[2]) // 2
+    d.line([(cx, box[1]), (cx, box[3] - 1)], fill=GOLD_LIGHT)
+    d.polygon([(cx, box[1]), (cx - 3, box[1] - 3), (cx - 1, box[1])], fill=GOLD)
+    d.polygon([(cx, box[1]), (cx + 3, box[1] - 3), (cx + 1, box[1])], fill=GOLD)
     return im
 
 
