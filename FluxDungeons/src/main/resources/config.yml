@@ -19,6 +19,9 @@ return-delay: 10
 # listed in the "rpg" universe of plugins/Flux/universes.yml.
 rpg:
   world: flux_rpg
+  # Where players arrive in the lobby (/rpg, respawn, the void): set it standing there with /rpgadmin setspawn.
+  # Missing: the middle of the platform.
+  # spawn: {x: 0.5, y: 65, z: 0.5, yaw: 180, pitch: 0}
 
 party:
   max-size: 4

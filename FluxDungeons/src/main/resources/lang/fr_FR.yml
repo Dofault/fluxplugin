@@ -321,6 +321,8 @@ rpg:
   unavailable: "&#FF5C5CLe monde RPG n'est pas disponible pour le moment."
   not-in-rpg: "&#B376E5Tu n'es pas dans le monde RPG."
   busy-elsewhere: "&#FF5C5CTermine d'abord ce que tu fais (donjon) avant de changer de monde."
+  spawn-set: "&#2ECF7BSpawn du monde RPG placé ici (position et regard)."
+  spawn-wrong-world: "&#FF5C5CVa dans le lobby RPG pour y placer son spawn : &f[/rpg]"
   level-up: "&#FFD94DNiveau &f%level% &#FFD94Datteint ! &#B376E5Tes statistiques augmentent."
 
 choice:

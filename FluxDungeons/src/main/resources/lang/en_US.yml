@@ -321,6 +321,8 @@ rpg:
   unavailable: "&#FF5C5CThe rpg world is not available right now."
   not-in-rpg: "&#B376E5You are not in the rpg world."
   busy-elsewhere: "&#FF5C5CFinish what you are doing (dungeon) before changing worlds."
+  spawn-set: "&#2ECF7BRpg world spawn set here (place and facing)."
+  spawn-wrong-world: "&#FF5C5CGo to the rpg lobby to set its spawn: &f[/rpg]"
   level-up: "&#FFD94DLevel &f%level% &#FFD94Dreached! &#B376E5Your stats grow."
 
 choice:

@@ -67,7 +67,7 @@ public final class RpgModule implements Listener {
             return true;
         }).register();
         Commands.create(plugin, "rpgadmin").description("Rpg administration: reload, balance, dummy, xp.")
-                .permission("fluxdungeons.admin").suggest(false).usage("/rpgadmin <reload|balance [level]|mannequin [level] [rank]|xp <player> <amount>>")
+                .permission("fluxdungeons.admin").suggest(false).usage("/rpgadmin <reload|balance [level]|mannequin [level] [rank]|xp <player> <amount>|setspawn>")
                 .executor(this::admin).register();
     }
 
@@ -147,6 +147,11 @@ public final class RpgModule implements Listener {
                     h.customName(net.kyori.adventure.text.Component.text("Mannequin " + rank + " " + level));
                     h.setCustomNameVisible(true);
                 });
+            }
+            case "setspawn" -> {
+                if (!(sender instanceof Player p)) return true;
+                if (world.spawn(p.getLocation())) plugin.messages().send(p, "rpg.spawn-set");
+                else plugin.messages().send(p, "rpg.spawn-wrong-world");
             }
             case "xp" -> {
                 if (args.length < 3) return false;

@@ -53,6 +53,7 @@ public final class RpgWorld implements Listener {
             plugin.getLogger().info("Rpg lobby world " + name + " created");
         }
         rules(world);
+        world.setSpawnLocation(spawn());
         platform();
         if (!UNIVERSE.equals(Universes.of(world))) {
             plugin.getLogger().warning("World " + name + " is not in the \"" + UNIVERSE + "\" universe: add it to plugins/Flux/universes.yml");
@@ -66,8 +67,27 @@ public final class RpgWorld implements Listener {
         return world;
     }
 
+    /**
+     * Where players arrive (/rpg, respawn, the void): {@code rpg.spawn} of the config, set with
+     * {@code /rpgadmin setspawn}; the middle of the platform until then.
+     */
     public Location spawn() {
-        return new Location(world, 0.5, PLATFORM_Y + 1, 0.5, 180, 0);
+        org.bukkit.configuration.ConfigurationSection s = plugin.getConfig().getConfigurationSection("rpg.spawn");
+        if (s == null) return new Location(world, 0.5, PLATFORM_Y + 1, 0.5, 180, 0);
+        return new Location(world, s.getDouble("x"), s.getDouble("y"), s.getDouble("z"), (float) s.getDouble("yaw"), (float) s.getDouble("pitch"));
+    }
+
+    /** Saves a new spawn (the place given, in this world), also the world's own spawn point. */
+    public boolean spawn(Location at) {
+        if (world == null || at.getWorld() != world) return false;
+        plugin.getConfig().set("rpg.spawn.x", at.getX());
+        plugin.getConfig().set("rpg.spawn.y", at.getY());
+        plugin.getConfig().set("rpg.spawn.z", at.getZ());
+        plugin.getConfig().set("rpg.spawn.yaw", (double) at.getYaw());
+        plugin.getConfig().set("rpg.spawn.pitch", (double) at.getPitch());
+        plugin.saveConfig();
+        world.setSpawnLocation(at);
+        return true;
     }
 
     private static void rules(World w) {
@@ -87,7 +107,6 @@ public final class RpgWorld implements Listener {
         // not peaceful: training dummies and future monsters would vanish (nothing spawns by itself anyway)
         w.setDifficulty(Difficulty.NORMAL);
         w.setGameRule(GameRules.NATURAL_HEALTH_REGENERATION, false);
-        w.setSpawnLocation(0, PLATFORM_Y + 1, 0);
     }
 
     /** A round stone platform around 0,0, built once (left alone afterwards: the staff may decorate it). */
