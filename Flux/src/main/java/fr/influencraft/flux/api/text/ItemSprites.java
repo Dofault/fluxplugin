@@ -14,7 +14,9 @@ import java.util.Map;
 /**
  * Inline icon of a vanilla item in any text (chat, sidebar, lore, titles): a sprite of the client's block or item
  * atlas, nothing in the resource pack. MiniMessage tag {@code <sprite:block/stone>} or
- * {@code <sprite:items:item/diamond>}.
+ * {@code <sprite:items:item/diamond>}, given wrapped in a translation {@code %s}
+ * ({@code <lang:'%s':'<sprite:...>'>}): the client shows the same icon, and tools that keep only text and translation
+ * components drop a bare sprite silently (Typewriter's sidebar splits its lines that way).
  * Table: {@code item_sprites.json} of Flux's jar, generated from the client jar by
  * {@code Flux/assets/vanilla/gen_item_sprites.py} (rerun after a Minecraft update).
  */
@@ -42,7 +44,7 @@ public final class ItemSprites {
     public static String tag(String item) {
         if (item == null) return "";
         String sprite = sprites.get(item.toLowerCase(Locale.ROOT).replace("minecraft:", "").strip());
-        return sprite == null ? "" : "<sprite:" + sprite + ">";
+        return sprite == null ? "" : "<lang:'%s':'<sprite:" + sprite + ">'>";
     }
 
     public static String tag(Material material) {
