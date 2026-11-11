@@ -708,20 +708,35 @@ def main(plugins, resources=None):
 
     sheet, widths, grid = glyph_sheet()
     sheet.save(os.path.join(tex, "text.png"))
-    for ci, (cname, colour) in enumerate(BAR_COLOURS.items()):
-        for k, w in enumerate(CHUNKS):
-            chunk(colour, w).save(os.path.join(tex, f"bar_{cname}_{w}.png"))
-    sprite_pager().save(os.path.join(tex, "pager.png"))
-    sprite_lit().save(os.path.join(tex, "lit.png"))
-    for w in CHUNKS:
-        bar_frame_chunk(w).save(os.path.join(tex, f"barframe_{w}.png"))
-    bar_frame_chunk(1, edge=True).save(os.path.join(tex, "barframe_edge.png"))
-    sprite_slot("vanilla").save(os.path.join(tex, "slot.png"))
-    sprite_slot("dark").save(os.path.join(tex, "slot_dark.png"))
     glyph_sheet(shadow=False)[0].save(os.path.join(tex, "text_ink.png"))
     pager_buttons = [("left", True), ("left", False), ("right", True), ("right", False)]
-    for direction, on in pager_buttons:
-        sprite_pager_button(direction, on).save(os.path.join(tex, f"pager_{direction}_{'on' if on else 'off'}.png"))
+    # Sprites packed in two sheets, one bitmap provider each: the client reads and decodes the picture of every
+    # provider of every font again (no cache between providers), and each of the 221 y fonts used to carry ~57 of
+    # them. A glyph advances up to its last non-transparent column and its top sits at the ascent, so a sprite
+    # padded with transparency on the right and at the bottom of a larger cell draws exactly as on its own.
+    bars = [[(chr(CHUNK_BASE + 16 * ci + k), chunk(colour, w)) for k, w in enumerate(CHUNKS)]
+            for ci, colour in enumerate(BAR_COLOURS.values())]
+    bars.append([(chr(FRAME_BASE + k), bar_frame_chunk(w)) for k, w in enumerate(CHUNKS)]
+                + [(chr(FRAME_BASE + 8), bar_frame_chunk(1, edge=True))])
+    misc = [[(chr(SPRITE_BASE), sprite_pager()), (chr(SPRITE_BASE + 1), sprite_lit())]
+            + [(chr(SPRITE_BASE + 2 + k), sprite_pager_button(d, on)) for k, (d, on) in enumerate(pager_buttons)]
+            + [(chr(SPRITE_BASE + 6), sprite_slot("vanilla")), (chr(SPRITE_BASE + 7), sprite_slot("dark"))]]
+    sheets = []
+    for name, rows in (("sprites_bar", bars), ("sprites_misc", misc)):
+        cw = max(im.width for row in rows for _, im in row)
+        ch = max(im.height for row in rows for _, im in row)
+        cols = max(len(row) for row in rows)
+        im_sheet = Image.new("RGBA", (cw * cols, ch * len(rows)), (0, 0, 0, 0))
+        chars = []
+        for r, row in enumerate(rows):
+            for c, (_, im) in enumerate(row):
+                im_sheet.paste(im, (c * cw, r * ch))
+            chars.append("".join(cp for cp, _ in row).ljust(cols, "\u0000"))
+        im_sheet.save(os.path.join(tex, name + ".png"))
+        sheets.append((name, ch, chars))
+    for old in os.listdir(tex):     # single sprites of the former layout
+        if old.startswith(("bar_", "barframe_", "pager", "lit", "slot")):
+            os.remove(os.path.join(tex, old))
 
     for y in range(0, 221):
         # \uE1F0: 1 px back (slots side by side: a sprite advances by its width + 1)
@@ -729,31 +744,10 @@ def main(plugins, resources=None):
         if True:     # text: cell top = letter top - 2 (ascent 15 - y <= 16)
             providers.append({"type": "bitmap", "file": f"{NS}:font/text.png", "ascent": 13 - (y - 2),
                               "height": CELL_H, "chars": grid})
-        if 13 - y <= BAR_H:
-            for ci, cname in enumerate(BAR_COLOURS):
-                for k, w in enumerate(CHUNKS):
-                    providers.append({"type": "bitmap", "file": f"{NS}:font/bar_{cname}_{w}.png", "ascent": 13 - y,
-                                      "height": BAR_H, "chars": [chr(CHUNK_BASE + 16 * ci + k)]})
-        if 13 - y <= PAGER_H:
-            providers.append({"type": "bitmap", "file": f"{NS}:font/pager.png", "ascent": 13 - y, "height": PAGER_H,
-                              "chars": [chr(SPRITE_BASE)]})
-        if 13 - y <= PAGER_H:
-            for k, (direction, on) in enumerate(pager_buttons):
-                providers.append({"type": "bitmap", "file": f"{NS}:font/pager_{direction}_{'on' if on else 'off'}.png",
-                                  "ascent": 13 - y, "height": PAGER_H, "chars": [chr(SPRITE_BASE + 2 + k)]})
-        if 13 - y <= 20:
-            providers.append({"type": "bitmap", "file": f"{NS}:font/lit.png", "ascent": 13 - y, "height": 20,
-                              "chars": [chr(SPRITE_BASE + 1)]})
-        if 13 - y <= BAR_H + 3:
-            for k, w in enumerate(CHUNKS):
-                providers.append({"type": "bitmap", "file": f"{NS}:font/barframe_{w}.png", "ascent": 13 - y,
-                                  "height": BAR_H + 3, "chars": [chr(FRAME_BASE + k)]})
-            providers.append({"type": "bitmap", "file": f"{NS}:font/barframe_edge.png", "ascent": 13 - y,
-                              "height": BAR_H + 3, "chars": [chr(FRAME_BASE + 8)]})
-        if 13 - y <= 18:
-            for k, name in enumerate(("slot", "slot_dark")):
-                providers.append({"type": "bitmap", "file": f"{NS}:font/{name}.png", "ascent": 13 - y, "height": 18,
-                                  "chars": [chr(SPRITE_BASE + 6 + k)]})
+        for name, ch, chars in sheets:
+            if 13 - y <= ch:
+                providers.append({"type": "bitmap", "file": f"{NS}:font/{name}.png", "ascent": 13 - y,
+                                  "height": ch, "chars": chars})
         with open(os.path.join(rp, "font", f"y{y}.json"), "w", encoding="utf-8") as f:
             json.dump({"providers": providers}, f, ensure_ascii=False, separators=(",", ":"))
         # n<Y>: the menu font without shadow, engraved dark grey on the light window (Flux tints it)
