@@ -439,3 +439,12 @@ burrows:
   thrown: "&#B376E5Projetés vers la surface !"
   fight-title: "&#B49A78&lLE ROI TAUPÉRION"
   fight-subtitle: "&#FFD94DLe combat commence"
+
+sheet:
+  title: "Mon personnage"
+  head: "&#FFD94D%class% &7niveau &f%level% &8· &7XP &f%xp%&7/&f%need%"
+  offense: "Attaque"
+  defense: "Défense"
+  resource: "Ressources"
+  utility: "Utilitaire"
+  close: "Fermer"

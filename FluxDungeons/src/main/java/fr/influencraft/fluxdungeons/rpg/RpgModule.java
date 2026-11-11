@@ -69,6 +69,10 @@ public final class RpgModule implements Listener {
             if (s instanceof Player p) players.changeClass(p);
             return true;
         }).register();
+        Commands.create(plugin, "personnage").aliases("perso").description("Rpg: your class, level and stats.").executor((s, l, a) -> {
+            if (s instanceof Player p) players.showSheet(p);
+            return true;
+        }).register();
         Commands.create(plugin, "rpgadmin").description("Rpg administration: reload, balance, dummy, xp.")
                 .permission("fluxdungeons.admin").suggest(false).usage("/rpgadmin <reload|balance [level]|mannequin [level] [rank]|mannequin retirer [tous]|xp <player> <amount>|setspawn>")
                 .executor(this::admin).register();

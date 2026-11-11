@@ -530,6 +530,53 @@ public final class RpgPlayers implements Listener {
         });
     }
 
+    // ------------------------------------------------------------------ /personnage
+
+    /**
+     * The player's rpg sheet: class, level and experience, every stat that is not zero (grouped as in stats.yml),
+     * and what he wears and holds.
+     */
+    public void showSheet(Player p) {
+        RpgPlayer r = online.get(p.getUniqueId());
+        RpgConfig.Set set = config.get();
+        if (r == null || set == null || r.stats() == null) {
+            plugin.messages().send(p, "rpg.not-in-rpg");
+            return;
+        }
+        var m = plugin.messages();
+        Dialogs.Form form = Dialogs.form(p, m.raw("sheet.title")).width(320);
+        double need = set.balance().xpToNext(r.level());
+        form.body(m.raw("sheet.head", "%class%", m.raw("classes." + r.heroClass().id() + ".name"), "%level%", String.valueOf(r.level()),
+                "%xp%", String.valueOf(Math.round(r.xp())), "%need%", String.valueOf(Math.round(need))));
+        for (String category : java.util.List.of("offense", "defense", "resource", "utility")) {
+            StringBuilder lines = new StringBuilder();
+            for (fr.influencraft.fluxdungeons.rpg.core.StatRegistry.Def d : set.stats().all()) {
+                if (!d.category().equals(category)) continue;
+                double v = r.stats().get(d.id());
+                if (Math.abs(v) < 1e-9) continue;
+                if (lines.length() > 0) lines.append("\n");
+                lines.append("&7").append(items.statName(d.id())).append(" &f").append(total(d, v));
+            }
+            if (lines.length() == 0) continue;
+            form.body("&#FFD94D" + m.raw("sheet." + category));
+            form.body(lines.toString());
+        }
+        PlayerInventory inv = p.getInventory();
+        for (ItemStack worn : new ItemStack[]{inv.getItemInMainHand(), inv.getHelmet(), inv.getChestplate(), inv.getLeggings(), inv.getBoots()}) {
+            if (RpgItems.idOf(worn) != null) form.item(worn, "");
+        }
+        form.action("close", m.raw("sheet.close")).open();
+    }
+
+    /** A stat's total as shown on the sheet: 26, 12.5, 15 %. */
+    private static String total(fr.influencraft.fluxdungeons.rpg.core.StatRegistry.Def d, double v) {
+        if (d.kind() == fr.influencraft.fluxdungeons.rpg.core.StatRegistry.Kind.PERCENT) {
+            double pct = v * 100;
+            return (pct == Math.floor(pct) ? String.valueOf((long) pct) : String.format(java.util.Locale.ROOT, "%.1f", pct)) + " %";
+        }
+        return v == Math.floor(v) ? String.valueOf((long) v) : String.format(java.util.Locale.ROOT, "%.1f", v);
+    }
+
     // ------------------------------------------------------------------ experience
 
     /** Gives rpg experience (monsters, dungeons); levels go up by the curve of balance.yml. */

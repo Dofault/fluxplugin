@@ -439,3 +439,12 @@ burrows:
   thrown: "&#B376E5Thrown to the surface!"
   fight-title: "&#B49A78&lKING TAUPERION"
   fight-subtitle: "&#FFD94DThe fight begins"
+
+sheet:
+  title: "My character"
+  head: "&#FFD94D%class% &7level &f%level% &8· &7XP &f%xp%&7/&f%need%"
+  offense: "Offense"
+  defense: "Defense"
+  resource: "Resources"
+  utility: "Utility"
+  close: "Close"
