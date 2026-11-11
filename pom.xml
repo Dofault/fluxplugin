@@ -43,5 +43,6 @@
         <module>FluxValue</module>
         <module>FluxStack</module>
         <module>FluxDungeons</module>
+        <module>FluxPortal</module>
     </modules>
 </project>

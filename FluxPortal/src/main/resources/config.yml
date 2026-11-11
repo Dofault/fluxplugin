@@ -1,0 +1,34 @@
+# FluxPortal: permanent portals (docs/technique/fluxportal.md). Portals are saved in Flux's database.
+
+# Language of the texts (lang/<language>.yml), empty = the suite's language.
+language: ""
+
+# Diameter of a new portal's rings, in blocks (the hole is 80 % of it), and the sizes allowed by /portail.
+size: 4
+min-size: 2
+max-size: 12
+# How far in front of the player /portail places a ring, in blocks.
+distance: 2.5
+
+look:
+  # The swirl filling the hole, as a share of the hole (a little more hides its edge under the ring).
+  surface-scale: 1.08
+  # Ring colours, from one to the other while it turns.
+  ring-from: "#B376E5"
+  ring-to: "#E060A0"
+  # Motes drawn into the middle, per ring, every 2 ticks.
+  motes: 2
+  # Rings and motes are drawn for players within this distance (blocks).
+  particle-distance: 48
+  # Low hum of a portal, every hum-every ticks, heard within 16 blocks.
+  hum-every: 80
+  hum:
+    sound: minecraft:block.beacon.ambient
+    volume: 0.5
+    pitch: 0.6
+  # Going through: a whoosh and a crystal chime where the traveller comes out.
+  travel:
+    sound: minecraft:entity.illusioner.mirror_move
+    chime: minecraft:block.amethyst_block.resonate
+    volume: 0.9
+    pitch: 1.2

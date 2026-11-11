@@ -1,0 +1,12 @@
+name: FluxPortal
+version: 26.2
+main: fr.influencraft.fluxportal.FluxPortal
+api-version: "26.2"
+description: Permanent portals linking two places both ways (/portail), drawn in the server's own resource pack.
+authors: [Influencraft]
+depend: [Flux]
+
+permissions:
+  fluxportal.admin:
+    description: /portail (place the entry or exit of a portal, remove, list).
+    default: op
