@@ -54,6 +54,11 @@ public final class Model {
     final Map<String, Double> animalWeights = new LinkedHashMap<>();
     /** Points of one catch ({@code fishing.catch-weight}). */
     double catchWeight;
+    /**
+     * Points of actions no job pays ({@code actions.<trigger>.<target>}, {@code default} for any target): breeding,
+     * shearing, a block travelled, a job XP point... Read by quests (FluxPass) through {@code Values.actionPoints}.
+     */
+    final Map<String, Map<String, Double>> actions = new LinkedHashMap<>();
     final Map<String, String> aliases = new LinkedHashMap<>();
     final List<String> warnings = new ArrayList<>();
     private final ValueGraph market = new ValueGraph();
@@ -92,6 +97,7 @@ public final class Model {
         m.readDrops(sources);
         m.readFishing(sources);
         m.readEnchantments(sources);
+        m.readActions(sources);
         ConfigurationSection others = sources.getConfigurationSection("others");
         if (others != null) {
             for (String item : others.getKeys(false)) {
@@ -230,6 +236,21 @@ public final class Model {
         }
     }
 
+    private void readActions(YamlConfiguration file) {
+        ConfigurationSection root = file.getConfigurationSection("actions");
+        if (root == null) return;
+        for (String trigger : root.getKeys(false)) {
+            Map<String, Double> targets = new LinkedHashMap<>();
+            if (root.isConfigurationSection(trigger)) {
+                ConfigurationSection t = root.getConfigurationSection(trigger);
+                for (String target : t.getKeys(false)) targets.put(target.toLowerCase(Locale.ROOT), t.getDouble(target));
+            } else {
+                targets.put("default", root.getDouble(trigger));
+            }
+            actions.put(trigger.toLowerCase(Locale.ROOT), targets);
+        }
+    }
+
     /** A level of an enchantment costs the table uses it takes to get it on a book. */
     private void readEnchantments(YamlConfiguration file) {
         ConfigurationSection e = file.getConfigurationSection("enchantments");
@@ -251,6 +272,16 @@ public final class Model {
     OptionalDouble actionPoints(String trigger, String target) {
         String t = trigger.toLowerCase(Locale.ROOT);
         String id = target == null ? null : target.toLowerCase(Locale.ROOT).replace("minecraft:", "");
+        Map<String, Double> own = actions.get(t);
+        if (own != null) {
+            Double w = id != null && own.containsKey(id) ? own.get(id) : own.get("default");
+            if (w != null && w > 0) return OptionalDouble.of(w);
+        }
+        // a precise catch (customfishing:<rarity>_<species>) or a precise enchantment is worth that item
+        if (id != null && (t.equals("catch_fish") || t.equals("enchant_item"))) {
+            OptionalDouble item = pointsWithoutArea(t.equals("enchant_item") && !id.startsWith("enchant:") ? "enchant:" + id : id);
+            if (item.isPresent()) return item;
+        }
         if (t.equals("kill")) {
             if (id == null) return OptionalDouble.empty();
             Double w = mobWeights.containsKey(id) ? mobWeights.get(id) : animalWeights.get(id);

@@ -1,2 +1,44 @@
 # Weights of everything that can be farmed, in points. See assets/gen_values.py for how a server builds its own.
 jobs: {}
+
+# actions : ce que vaut une action qu'aucun métier ne paie (points, même échelle que le reste : 7050 = 2 min de jeu
+# optimal). Lu par les missions du pass (FluxPass) : quantité d'une mission = effort / poids de l'action.
+# actions.<déclencheur>.<cible> ; default = n'importe quelle cible. Poids de départ (2026-11-11) déduits des
+# quantités des missions d'avant ; une mission qui demande trop ou trop peu = corriger son poids ici.
+# gain_job_xp vaut 1 par définition (1 XP de métier = 1 point).
+actions:
+  gain_job_xp: 1
+  breed:
+    default: 50
+    rabbit: 75
+    bee: 75
+  shear_entity:
+    default: 19
+    black_sheep: 50
+  shear:
+    beehive: 50
+    carved_pumpkin: 38
+  tame_animal:
+    default: 150
+    wolf: 400
+  click_entity:
+    cow: 60
+  bonemeal_crop: 15
+  headshot: 58
+  trident_hit: 35
+  bow_attack: 17
+  kill:
+    sulfur_cube: 44
+  mine_block:
+    amethyst_cluster: 33
+    sulfur_spike: 17
+    decorated_pot: 67
+  smith_item: 150
+  change_biome: 200
+  change_world: 200
+  level_up_xp: 40
+  consume: 8
+  move:
+    gliding: 0.2
+    riding: 0.67
+    underground: 1
