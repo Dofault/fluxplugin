@@ -1,23 +1,25 @@
 #!/usr/bin/env python3
-"""Taupe des Champs: farm boss, STATIC Blockbench model (.bbmodel) (2026-11-11).
+"""Taupe des Champs (Roi Taupérion): farm boss, STATIC Blockbench model (.bbmodel) (2026-11-11).
 
-A real mole first, a boss second: a plump spindle-shaped body low on the ground (the belly is the widest part), a head
-that flows straight out of the shoulders with no neck, a long snout tilted down with a small dark nose, tiny eyes and
-ears lost in the fur, and two huge shovel forepaws turned outwards with four thick ivory claws each. Hind legs are
-small and half hidden under the belly, the tail is a short stub. Built like the Sea Otter and the Abyss Colossus: a
-few large boxes per mass, side, top and rear boxes smaller and tilted a few degrees to round the silhouette, every
-small detail (fur, mineral marks, claw stripes) painted at 1 texel per unit.
+A real mole body, a boss head: a plump spindle-shaped body low on the ground (the belly is the widest part), two huge
+shovel forepaws turned outwards with four thick ivory claws each, small hind legs half hidden under the belly, a short
+stub tail. In place of a head (2026-11-11, second version) a living drill grows out of a fur collar: a faceted cone of
+stone plates, each turned 22.5 degrees further (reads as a spiral), bands of living flesh between them, one cutting
+spiral of ivory blades, a hardened point, four rock fangs on the collar leaning in around its base. No eyes, snout or
+ears. Built like the Sea Otter and the Abyss Colossus: a few large boxes per mass, side, top and rear boxes smaller and
+tilted a few degrees to round the silhouette, every small detail painted at 1 texel per unit.
 
-Fantasy stays discreet: ochre mineral marks painted on the shoulders and flanks, four small rock shards along the
-spine (tilted backwards, less than 0.3 block high), darker fur around the eyes, a stony shade at the base of the claws.
-No food, no tools, no armour, no glow.
+Fantasy stays discreet on the body: ochre mineral marks painted on the shoulders and flanks, four small rock shards
+along the spine (tilted backwards, less than 0.3 block high), a stony shade at the base of the claws. No glow.
 
-Pose baked in the boxes, bones placed at the joints for a later animation; no animation.
+Pose baked in the boxes, bones placed at the joints for a later animation (the `Drill` bone can spin the drill alone);
+no animation.
 
 Usage: taupe_champs.py [output folder] [--apercu <sheet.png>]
 Front towards north (-z), the monster's right towards +x, ground at y = 0, 16 units = 1 block.
 """
 import json
+import math
 import os
 import sys
 import uuid
@@ -39,13 +41,10 @@ def pal(*c):
 # --------------------------------------------------------------------------- brief palette (dark -> light)
 FUR = pal("#4B3026", "#5A392B", "#67432F", "#76513D", "#91674D", "#A77B5D")   # base = index 3
 BELLY = pal("#674735", "#856149", "#A1785A")
-SNOUT = pal("#694635", "#8D6651", "#A98268")
-NOSE = pal("#211714", "#30201C", "#594039")
 PAW = pal("#3C2A22", "#59402F", "#75543C")
 CLAW = pal("#A18D70", "#C8B99A", "#E0D2B7")
 STONE = pal("#51483F", "#716456", "#968675", "#B3A18A")
 OCHRE = pal("#78502C", "#A36F38", "#C09252")
-EYE, EYE_GLINT = hx("#1C130F"), hx("#E0D2B7")
 
 SIDE = {"up": 0, "north": 0, "east": 0, "west": 0, "south": -1, "down": -2}   # light from above, a bit from the front
 
@@ -126,57 +125,9 @@ def belly(w, h, r, face):
     return px
 
 
-def snout(base=1):
-    def f(w, h, r, face):
-        """Snout: warmer and lighter than the skull, top a tone lighter, underside shaded."""
-        b = base + {"up": 1, "down": -1}.get(face, 0)
-        px = [[tone(SNOUT, b)] * w for _ in range(h)]
-        speckle(px, r, SNOUT, b, 0.18, 0.0, 0.04)
-        if face in ("east", "west", "north", "south") and h >= 3:
-            px[h - 1] = [tone(SNOUT, b - 1)] * w
-        return px
-    return f
 
 
-def nose(w, h, r, face):
-    """Nose: very dark brown, two nostrils on the front, a one-pixel highlight on the top edge."""
-    px = [[NOSE[1]] * w for _ in range(h)]
-    if face == "north":
-        if w >= 4 and h >= 2:
-            px[h - 1][1] = px[h - 1][w - 2] = NOSE[0]
-            if h >= 3:
-                px[h - 2][1] = px[h - 2][w - 2] = NOSE[0]
-        px[0][w // 2] = NOSE[2]
-    elif face == "up":
-        px[h - 1][w // 2] = NOSE[2]
-    elif face == "down":
-        px = [[NOSE[0]] * w for _ in range(h)]
-    return px
 
-
-def eye(w, h, r, face):
-    """Tiny eye (density 2): almost black brown, one cream glint pixel."""
-    px = [[EYE] * w for _ in range(h)]
-    if face in ("east", "west") and w >= 2 and h >= 2:
-        px[0][1 if face == "east" else w - 2] = EYE_GLINT
-    return px
-
-
-def eye_ring(w, h, r, face):
-    """Darker fur around the eye (not a full mask)."""
-    px = [[FUR[0] if r.random() < 0.7 else FUR[1]] * 1 for _ in range(h)]
-    return [[FUR[0] if r.random() < 0.65 else FUR[1] for _ in range(w)] for _ in range(h)]
-
-
-def ear(w, h, r, face):
-    """Ear opening: dark brown inside, lighter brown rim, lost in the fur."""
-    px = [[FUR[3]] * w for _ in range(h)]
-    if face in ("east", "west") and w >= 3 and h >= 3:
-        for y in range(1, h - 1):
-            for x in range(1, w - 1):
-                px[y][x] = FUR[0]
-        px[0] = [FUR[4]] * w
-    return px
 
 
 def paw(base=1):
@@ -258,11 +209,81 @@ def stone(w, h, r, face):
     return px
 
 
+def drill(base=1, seams=True):
+    def f(w, h, r, face):
+        """Drill ring: rough stone of compacted earth, contrasted greys, dark organic seams (living matter between the
+        stone plates), a rare ochre vein; the front face of each ring is darker at its rim."""
+        b = base + {"up": 1, "down": -1, "south": -1}.get(face, 0)
+        px = [[tone(STONE, b)] * w for _ in range(h)]
+        for _ in range(max(1, w * h // 3)):
+            x, y = r.randrange(w), r.randrange(h)
+            px[y][x] = tone(STONE, b + r.choice((-1, -1, 1)))
+        if seams:
+            for _ in range(max(1, (w + h) // 6)):                 # short cracks of dark flesh
+                x, y = r.randrange(w), r.randrange(h)
+                for _ in range(r.randrange(2, 5)):
+                    if 0 <= x < w and 0 <= y < h:
+                        px[y][x] = PAW[0]
+                    x, y = x + r.choice((-1, 0, 1)), y + 1
+        if r.random() < 0.5:
+            x, y = r.randrange(w), r.randrange(h)
+            px[y][x] = OCHRE[1]
+            if x + 1 < w:
+                px[y][x + 1] = OCHRE[0]
+        if face == "north" and w >= 4 and h >= 4:
+            for i in range(w):
+                px[0][i] = px[h - 1][i] = tone(STONE, b - 1)
+            for j in range(h):
+                px[j][0] = px[j][w - 1] = tone(STONE, b - 1)
+        return px
+    return f
+
+
+def drill_flesh(w, h, r, face):
+    """Living band between two stone rings: dark leathery brown of the paws, stone scales scattered over it."""
+    b = {"up": 2, "down": 0}.get(face, 1)
+    px = [[PAW[b]] * w for _ in range(h)]
+    for _ in range(max(1, w * h // 4)):
+        x, y = r.randrange(w), r.randrange(h)
+        px[y][x] = STONE[0] if r.random() < 0.6 else STONE[1]
+    for _ in range(max(1, w * h // 10)):
+        px[r.randrange(h)][r.randrange(w)] = PAW[0]
+    return px
+
+
+def drill_root(w, h, r, face):
+    """Where the drill grows out of the body: fur on the outer rows turning into stone towards the middle."""
+    px = [[FUR[2]] * w for _ in range(h)]
+    speckle(px, r, FUR, 2)
+    if face in ("north", "south"):
+        cx, cy = (w - 1) / 2, (h - 1) / 2
+        for y in range(h):
+            for x in range(w):
+                d = max(abs(x - cx) / max(cx, 1), abs(y - cy) / max(cy, 1))
+                if d < 0.62 or (d < 0.8 and r.random() < 0.5):
+                    px[y][x] = tone(STONE, 0 if r.random() < 0.6 else 1)
+                elif d < 0.86 and r.random() < 0.5:
+                    px[y][x] = PAW[0]
+    return px
+
+
+def drill_tip(w, h, r, face):
+    """Hardened point: darkest stone, light edges where it is worn sharp."""
+    px = [[STONE[0]] * w for _ in range(h)]
+    for _ in range(max(1, w * h // 4)):
+        px[r.randrange(h)][r.randrange(w)] = STONE[1]
+    if face != "south" and w >= 2:
+        for j in range(h):
+            px[j][0] = STONE[2]
+    return px
+
+
 MATS = {
     "body": fur(3, belly_edge=2), "flank": fur(3, marks=1, belly_edge=3), "shoulder": fur(3, marks=1),
     "back": fur(3, marks=1), "rump": fur(3, belly_edge=2), "head": fur(3), "head_low": fur(2),
-    "chest": fur(2, top_light=False), "belly": belly, "snout": snout(1), "snout_tip": snout(1),
-    "nose": (nose, 2), "eye": (eye, 2), "eye_ring": (eye_ring, 2), "ear": (ear, 2),
+    "chest": fur(2, top_light=False), "belly": belly,
+    "drill": drill(1), "drill_light": drill(2), "drill_flesh": drill_flesh, "drill_root": drill_root,
+    "drill_tip": drill_tip,
     "arm": paw(1), "forearm": paw(1), "shovel": shovel, "claw": (claw(False), 2), "claw_tip": (claw(True), 2),
     "foot": paw(1), "tail": fur(2), "stone": stone,
 }
@@ -275,6 +296,18 @@ TAIL_ROOT = (0, 14, 33)
 SHOULDERS = {1: (19, 17, -12), -1: (-19, 17, -12)}
 WRISTS = {1: (21.5, 7.5, -22), -1: (-22, 7.5, -21)}
 HIPS = {1: (15, 9, 24), -1: (-15, 9, 24)}
+
+def look(d):
+    """Rotation matrix turning a box drawn along -z so that it points along d."""
+    n = math.sqrt(sum(v * v for v in d))
+    z = [-v / n for v in d]
+    up = [0, 1, 0]
+    x = [up[1] * z[2] - up[2] * z[1], up[2] * z[0] - up[0] * z[2], up[0] * z[1] - up[1] * z[0]]
+    m = math.sqrt(sum(v * v for v in x))
+    x = [v / m for v in x]
+    y = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]]
+    return [[x[i], y[i], z[i]] for i in range(3)]
+
 
 GROUPS = {"Root": ((0, 0, 0), None), "Body": (BODY_C, "Root"), "Head": (NECK, "Body"), "Tail": (TAIL_ROOT, "Body")}
 
@@ -313,26 +346,54 @@ def parts():
         top = 35.8 - 0.06 * abs(z - 7)
         add("Body", f"eclat_{i + 1}", (0.6 * (-1) ** i, top + sz[1] / 2 - 1.5, z), sz, (13, ry, rz), "stone")
 
-    # ---------------------------------------------------------------- head: straight out of the shoulders
+    # ---------------------------------------------------------------- head: a living drill instead of a head
+    # No skull, snout, eyes nor ears: the fur of the shoulders closes into a collar, from which a drill of stone grows.
+    # The drill is a faceted cone of square rings, each turned 22.5 degrees more than the previous one (reads as a
+    # spiral), stone rings alternating with bands of living flesh, two spiral cutting blades per ring, a hardened
+    # point. Four rock fangs on the collar lean in around the base like the jaws of a digging tool. The rings are in
+    # the `Drill` bone, pivot on the axis: an animation can spin the drill without moving the collar.
     on_head = attach(NECK, rot(-6, 0, 0))
+    axis = (0, 21, -25)
+    on_drill = attach(axis, rot(-3, 0, 0))                       # drill aims a little more towards the ground
 
-    def hd(name, c, size, r, mat):
-        cc, M = on_head(c, r)
-        add("Head", name, cc, size, M, mat)
+    def hd(name, c, size, r, mat, bone="Head", drilled=False):
+        cc, M = on_drill(c, r) if drilled else (c, r)
+        cc, M = on_head(cc, M)
+        add(bone, name, cc, size, M, mat)
 
-    hd("nuque", (0, 27, -18), (28, 8, 10), (-14, 0, 0), "head")          # skull continues the back line
-    hd("crane", (0, 20, -22.5), (28, 20, 11), (0, 0, 0), "head")
-    hd("joues", (0, 15, -24), (30, 10, 9), (0, 0, 0), "head_low")         # cheeks melt into the shoulders
-    hd("tete_avant", (0, 18.5, -30), (20, 16, 8), (-4, 0, 0), "head")
-    hd("menton", (0, 11.5, -29), (15, 4, 9), (0, 0, 0), "head_low")
-    hd("museau", (0, 15.5, -37), (11, 9, 9), (-9, 0, 0), "snout")
-    hd("museau_dessus", (0, 20, -36), (8, 2.5, 8), (-11, 0, 0), "snout")  # rounded top of the snout
-    hd("museau_bout", (0, 13.6, -43.8), (7, 6, 7), (-12, 0, 0), "snout_tip")
-    hd("nez", (0, 14.6, -47.6), (4.6, 3.2, 2.2), (-12, 0, 0), "nose")
-    for s, side in ((1, "droit"), (-1, "gauche")):
-        hd(f"cerne_{side}", (10.1 * s, 20.6, -30.5), (0.4, 3.5, 3.5), (0, 0, 0), "eye_ring")
-        hd(f"oeil_{side}", (10.3 * s, 20.6, -30.6), (0.5, 1.5, 1.5), (0, 0, 0), "eye")
-        hd(f"oreille_{side}", (14.15 * s, 23, -20), (0.6, 2.5, 3), (0, 0, 0), "ear")
+    GROUPS["Drill"] = (on_head(*on_drill(axis, (0, 0, 0)))[0], "Head")
+    hd("nuque", (0, 27, -18), (28, 8, 10), (-14, 0, 0), "head")          # the back line runs on into the collar
+    hd("col", (0, 20, -20.5), (30, 22, 8), (0, 0, 0), "head")
+    hd("col_bas", (0, 11, -20.5), (25, 6, 8), (0, 0, 0), "head_low")
+    # base of the drill: two squares turned 45 degrees from each other (an octagon), growing out of the collar
+    hd("racine", (0, axis[1], -25.2), (26, 26, 3.6), (0, 0, 0), "drill_root", drilled=True)
+    hd("racine_biais", (0, axis[1], -25.4), (22, 22, 3.4), (0, 0, 45), "drill_root", drilled=True)
+
+    # stone plates (each a little smaller and turned further) with thinner bands of living flesh between them
+    rings = ((25, "drill", 5.2), (20, "drill_flesh", 3.2), (20.5, "drill_light", 5), (15.5, "drill_flesh", 3),
+             (16, "drill", 4.8), (11, "drill_flesh", 2.8), (11.5, "drill_light", 4.6), (7, "drill", 4.2))
+    z = axis[2] - 1.0
+    for k, (side, mat, depth) in enumerate(rings):
+        z -= depth / 2
+        hd(f"anneau_{k + 1}", (0, axis[1], z), (side, side, depth), (0, 0, 22.5 * k), mat, "Drill", True)
+        if mat != "drill_flesh" and side >= 9:                   # one continuous cutting spiral around the plates
+            a = math.radians(40 * k + 30)
+            rad = side * 0.5 + 1.2
+            c = (rad * math.cos(a), axis[1] + rad * math.sin(a), z)
+            blade = (2.4, 5.6 - 0.3 * k, 6.4)
+            hd(f"lame_{k + 1}", c, blade, (0, 28, math.degrees(a) - 90), "claw", "Drill", True)
+        z -= depth / 2 - 0.4                                     # rings overlap a little: no gap in the cone
+    tip_z = z - 1.2
+    hd("pointe", (0, axis[1], tip_z + 0.8), (4.6, 4.6, 4.2), (0, 0, 45), "drill_tip", "Drill", True)
+    hd("pointe_bout", (0, axis[1], tip_z - 2.6), (2.4, 2.4, 3.6), (0, 0, 0), "claw_tip", "Drill", True)
+
+    # rock fangs on the collar, leaning in towards the drill
+    for j, ang in enumerate((35, 145, 215, 325)):
+        a = math.radians(ang)
+        base = (13 * math.cos(a), axis[1] + 13 * math.sin(a), axis[2] - 1.5)
+        d = [-0.32 * math.cos(a), -0.32 * math.sin(a), -1]
+        hd(f"croc_{j + 1}", (base[0] + d[0] * 3.5, base[1] + d[1] * 3.5, base[2] + d[2] * 3.5), (4, 4, 9),
+           look(d), "claw", "Head", True)
 
     # ---------------------------------------------------------------- tail: short thick stub
     on_tail = attach(TAIL_ROOT, rot(16, 0, 0))
