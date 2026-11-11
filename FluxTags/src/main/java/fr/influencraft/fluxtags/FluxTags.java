@@ -58,6 +58,8 @@ public final class FluxTags extends FluxPlugin implements Listener {
     /** The rank tag: shown until the player picks another one (or none). */
     private static final String RANK = "rang";
     private static final int ROWS = 6;
+    /** First character of the menu sheet fonts (gen_tags.MENU_BASE). */
+    private static final int MENU_BASE = 0xE000;
     /** Window x of the tags in /tags and of the rank tag in the profile (assets/gen_fonds.py). */
     private static final int TAG_X = 46;
     private static final int PROFILE_CENTRE = 115;   // window x the profile's rank tag is centred on: over the 4 section columns (vanilla theme)
@@ -172,7 +174,8 @@ public final class FluxTags extends FluxPlugin implements Listener {
         YamlConfiguration glyphs = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "glyphs.yml"));
         for (String id : glyphs.getKeys(false)) {
             List<Integer> wh = glyphs.getIntegerList(id);
-            if (wh.size() == 2) sizes.put(id, new int[]{wh.get(0), wh.get(1)});
+            // [width, height, index in the menu sheet] (gen_tags.py; index -1 for an old two-value file)
+            if (wh.size() >= 2) sizes.put(id, new int[]{wh.get(0), wh.get(1), wh.size() > 2 ? wh.get(2) : -1});
         }
     }
 
@@ -354,7 +357,7 @@ public final class FluxTags extends FluxPlugin implements Listener {
         for (int r = 0; r < ROWS && page * ROWS + r < all.size(); r++) {
             ListEntry e = all.get(page * ROWS + r);
             String image = e.values().get("image");
-            if (image != null) place(out, image + "_r" + (r + 1), image, TAG_X, "true".equals(e.values().get("locked")) ? "&8" : "&f");
+            if (image != null) place(out, "r" + (r + 1), image, TAG_X, "true".equals(e.values().get("locked")) ? "&8" : "&f");
         }
         return out.moveTo(0).resolved();
     }
@@ -367,14 +370,16 @@ public final class FluxTags extends FluxPlugin implements Listener {
         TitleOverlay out = new TitleOverlay("", 0);
         int[] size = sizes.get("rang_" + rank);
         int width = size == null ? 0 : (int) Math.round(size[0] * (double) TAG_HEIGHT / size[1]);
-        place(out, "rang_" + rank + "_p", "rang_" + rank, PROFILE_CENTRE - width / 2, "&f");
+        place(out, "p", "rang_" + rank, PROFILE_CENTRE - width / 2, "&f");
         return out.moveTo(0).resolved();
     }
 
-    private void place(TitleOverlay out, String glyph, String image, int x, String colour) {
+    /** Draws a tag from the menu sheet with the font of the line ({@code r1..r6}, {@code p}, gen_tags.menu_fonts). */
+    private void place(TitleOverlay out, String font, String image, int x, String colour) {
         int[] size = sizes.get(image);
-        if (size != null && CustomItems.glyph("fluxtags:" + glyph) != null)
-            out.add("fluxtags:" + glyph, x, (int) Math.round(size[0] * (double) TAG_HEIGHT / size[1]), colour);
+        if (size == null || size[2] < 0) return;
+        out.addText("<font:fluxtags:" + font + ">" + (char) (MENU_BASE + size[2]) + "</font>", x,
+                (int) Math.round(size[0] * (double) TAG_HEIGHT / size[1]), colour);
     }
 
     // ---------------------------------------------------------------- placeholders and admin
