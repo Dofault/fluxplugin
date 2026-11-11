@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 """Sand Pharaoh (Pharaon des Sables): boss of the Deblayeur dungeon, STATIC Blockbench model (.bbmodel).
 
-Second version (2026-11-11), rebuilt from scratch: a standing humanoid pharaoh whose body itself is mineral, cut out
-of an old Egyptian temple. Heavy statue proportions (short pillar legs, massive torso, wide shoulders, long arms with
-thick forearms and big fists), clay joints, a nemes headdress wrapping the skull and framing the face, a demonic face
-(V brows, narrow glowing amber eyes, massive brow, dark mouth), head slightly lowered: he looks down on the players.
-Gold and lapis only underline the royal parts.
+Third version (2026-11-11), rebuilt from scratch to the letter of the brief "Pharaon des Sables, specification de
+modelisation 3D, recreation integrale": a standing, massive humanoid pharaoh made of compact sand, sandstone and
+terracotta, like an old Egyptian statue come to life; nemes headdress, demonic face, statue proportions.
 
-Built from the brief "Pharaon des Sables, recreation integrale": positions and sizes of the brief converted to units
-(1 block = 16), then fixed where the brief hid a piece (collar behind the chest plate), left one floating (loincloth,
-bracelets only on the front of the forearm) or went past 3.9 blocks high (upper body lowered by LOWER units).
+The 36 volumes of the brief are placed at the brief's own centres, sizes and rotations (blocks converted to units,
+1 block = 16). Only local fixes, each marked "FIX" below: pieces that floated (legs under the pelvis, neck under the
+torso, sun symbol, collar), eyes sunk under the brows, shoulders and arms brought in a little to stay inside the
+2.55-block width. Added on top: head lowered by HEAD_PITCH (chin down, asked by the brief), feet turned out by FOOT_YAW.
 
 Usage: pharaon_sables.py [output folder] [--apercu <sheet.png>]
 Front faces north (-z), the model's right side is +x, ground at y = 0, origin between the feet.
@@ -21,406 +20,336 @@ import uuid
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from bbkit import apercu, attach, bake, corners, export, ground, hx  # noqa: E402
+from bbkit import apercu, attach, bake, export, ground, hx  # noqa: E402
 from golem_fonderie import rot  # noqa: E402
 
 IDENT = "pharaon_sables"
-NS = uuid.UUID("5b2d9e00-0000-4000-8000-00000050a1e6")
-SCALE = 1.0
-LOWER = 2.0           # units the whole upper body (pelvis and above) is lowered so the headdress stays under 3.9
+NS = uuid.UUID("5b2d9e00-0000-4000-8000-00000050a1e7")
+HEAD_PITCH = -4       # degrees, chin slightly down
+FOOT_YAW = 4          # degrees, toes turned out (5 at most in the brief)
 
 
-def pal(*c):
-    return [hx(x) for x in c]
+# --------------------------------------------------------------------------- brief palette, only these hues
+SAND, SAND_LIGHT, OCHRE = hx("#D5AC70"), hx("#E7C58E"), hx("#B67C43")
+CLAY, EARTH, GOLD, LAPIS, AMBER = hx("#98523A"), hx("#50352A"), hx("#D5A23F"), hx("#263F70"), hx("#FF9918")
+# shades of the same hues (one step darker / lighter), for face variation and edges only
+SAND_D, OCHRE_D, OCHRE_L = hx("#C49B62"), hx("#A06C39"), hx("#C48E56")
+CLAY_D, EARTH_D, GOLD_D, GOLD_L = hx("#83452F"), hx("#3F2A21"), hx("#B88A33"), hx("#E6B85A")
+LAPIS_D, LAPIS_L, AMBER_D, AMBER_L = hx("#1B2E54"), hx("#33528A"), hx("#D97A0C"), hx("#FFC66A")
 
-
-# --------------------------------------------------------------------------- brief palette (dark, base, light)
-SAND = pal("#BF9860", "#D5AC70", "#E0BA80")        # main sandstone
-OCHRE = pal("#A0703C", "#B98249", "#C99459")       # secondary sandstone
-PALE = pal("#D2AE78", "#E5C18A", "#F0D29E")        # pale sandstone
-CLAY = pal("#7E4630", "#98563B", "#AA6748")        # clay
-EARTH = pal("#3E2920", "#573A2C", "#6C4A39")       # dark earth
-GOLD = pal("#AE8233", "#D6A444", "#EAC066")        # antique gold
-LAPIS = pal("#1A2C52", "#263E70", "#38568F")       # lapis-lazuli
-AMBER = pal("#D97A0C", "#FF9B19", "#FFC66A")       # eyes
-
-SHADE = {"up": 2, "north": 1, "south": 1, "east": 1, "west": 1, "down": 0}
+# per material: (up, front, side, back, down, edge/joint) following the brief: top light, front main, sides a little
+# darker, bottom terracotta.
+STONES = {
+    "sand": (SAND_LIGHT, SAND, SAND_D, SAND_D, CLAY, OCHRE_D),
+    "sand_light": (SAND_LIGHT, SAND_LIGHT, SAND, SAND, CLAY, SAND_D),
+    "ochre": (OCHRE_L, OCHRE, OCHRE_D, OCHRE_D, CLAY_D, CLAY_D),
+    "clay": (CLAY, CLAY, CLAY_D, CLAY_D, EARTH, EARTH),
+    "earth": (EARTH, EARTH, EARTH_D, EARTH_D, EARTH_D, EARTH_D),
+}
+FACE_INDEX = {"up": 0, "north": 1, "east": 2, "west": 2, "south": 3, "down": 4}
 
 
 # --------------------------------------------------------------------------- painters
-def stone(P, cracks=0.3, joints=True):
+def stone(kind, joints=True):
     def f(w, h, r, face):
-        """Cut sandstone block: flat colour (lighter top, darker bottom), darker lower edge, short tool marks,
-        a stepped dark-earth joint between two stones and sometimes a small crack."""
-        base, dark = P[SHADE[face]], P[max(0, SHADE[face] - 1)]
+        """Cut sandstone: flat colour per face, a few short tool marks, a stepped joint between two stones on the
+        large faces, a lighter top edge. No cracks (compact, solid sand)."""
+        cols = STONES[kind]
+        base, edge = cols[FACE_INDEX[face]], cols[5]
         px = [[base] * w for _ in range(h)]
-        for _ in range(max(1, w * h // 20)):                      # tool marks, never long lines
+        for _ in range(max(1, w * h // 28)):
             x, y = r.randrange(w), r.randrange(h)
-            for k in range(r.randrange(1, 4)):
+            for k in range(r.randrange(1, 3)):
                 if x + k < w:
-                    px[y][x + k] = dark if r.random() < 0.75 else P[min(2, SHADE[face] + 1)]
+                    px[y][x + k] = edge if face != "down" else cols[4]
         if face not in ("up", "down") and h >= 4:
-            px[h - 1] = [dark] * w                                 # darker lower edge
-            if r.random() < 0.6:
-                px[0] = [P[2] if (x + r.randrange(3)) % 3 else base for x in range(w)]
-        if joints and face != "down" and w >= 8 and h >= 7 and r.random() < 0.7:
-            y = r.randrange(2, h - 2)                              # joint between two stone blocks, stepped
-            px[y] = [EARTH[1]] * w
+            px[0] = [cols[0]] * w                                   # light top edge
+            px[h - 1] = [edge] * w                                  # dark bottom edge
+        if joints and face in ("north", "east", "west", "south") and w >= 9 and h >= 9:
+            y = r.randrange(3, h - 3)
+            px[y] = [edge] * w
             x = r.randrange(2, w - 2)
             for yy in range(y + 1, h):
-                px[yy][x] = EARTH[1]
-        if r.random() < cracks and w >= 5 and h >= 5:              # small dark-earth crack
-            x, y = r.randrange(1, w - 2), r.randrange(1, h - 2)
-            for k in range(r.randrange(2, 5)):
-                px[min(h - 1, y + k)][min(w - 1, x + k // 2)] = EARTH[0]
-        return px
-    return f
-
-
-def flat(P):
-    def f(w, h, r, face):
-        """Plain stone with only light, for small parts."""
-        px = [[P[SHADE[face]]] * w for _ in range(h)]
-        if face not in ("up", "down") and h >= 3:
-            px[h - 1] = [P[max(0, SHADE[face] - 1)]] * w
+                px[yy][x] = edge
         return px
     return f
 
 
 def nemes_lappet(w, h, r, face):
-    """Nemes lappet: lapis with thin gold stripes every 3 pixels (the classic striped cloth), plain lapis edge."""
+    """Nemes lappet: one large lapis shape, geometric gold lines every 4 pixels and a gold edge at the bottom."""
     if face in ("up", "down"):
-        return [[LAPIS[1 if face == "up" else 0]] * w for _ in range(h)]
-    px = [[LAPIS[1]] * w for _ in range(h)]
+        return [[LAPIS if face == "up" else LAPIS_D] * w for _ in range(h)]
+    px = [[LAPIS] * w for _ in range(h)]
     for y in range(h):
-        if y % 3 == 1:
-            px[y] = [GOLD[1] if face in ("east", "west") else PALE[0]] * w
-    px[h - 1] = [LAPIS[0]] * w
+        if y % 4 == 2:
+            px[y] = [GOLD] * w
+    px[h - 1] = [GOLD_D] * w
+    if face in ("north", "south"):
+        for y in range(h):
+            px[y][0] = px[y][w - 1] = LAPIS_D
     return px
 
 
 def nemes_top(w, h, r, face):
-    """Top of the nemes: lapis, stripes front to back on top and sides (pale sandstone, gold on the sides)."""
-    px = [[LAPIS[SHADE[face] if face != "up" else 1]] * w for _ in range(h)]
+    """Top of the nemes: lapis, gold lines front to back on the top and around the sides."""
+    if face == "down":
+        return [[LAPIS_D] * w for _ in range(h)]
+    px = [[LAPIS_L if face == "up" else LAPIS] * w for _ in range(h)]
     if face == "up":
         for y in range(h):
-            for x in range(1, w, 3):
-                px[y][x] = PALE[0]
-    elif face in ("east", "west", "south"):
+            for x in range(2, w, 4):
+                px[y][x] = GOLD
+    else:
         for y in range(h):
-            if y % 3 == 1:
-                px[y] = [GOLD[1]] * w
+            if y % 4 == 2:
+                px[y] = [GOLD] * w
+        px[h - 1] = [LAPIS_D] * w
+    return px
+
+
+def gold_band(w, h, r, face):
+    """Headband: matt gold, small lapis squares in the middle row, darker lower edge."""
+    px = [[GOLD_L if face == "up" else GOLD_D if face == "down" else GOLD] * w for _ in range(h)]
+    if face == "north" and h >= 3:
+        for x in range(1, w - 1, 3):
+            px[h // 2][x] = LAPIS
+        px[h - 1] = [GOLD_D] * w
     return px
 
 
 def sun(w, h, r, face):
-    """Sun symbol (density 2): clay disc ringed with gold, stepped rays on top, dark gold sides."""
+    """Front symbol (density 2): clay sun disc ringed with gold, small rays on top."""
     if face != "north":
-        return [[GOLD[0]] * w for _ in range(h)]
-    px = [[GOLD[1]] * w for _ in range(h)]
+        return [[GOLD_D] * w for _ in range(h)]
+    px = [[GOLD] * w for _ in range(h)]
     cx, cy = (w - 1) / 2, (h - 1) / 2 + 0.5
     for y in range(h):
         for x in range(w):
             d = max(abs(x - cx), abs(y - cy))
             if d <= 1.5:
-                px[y][x] = CLAY[1]
+                px[y][x] = CLAY
             elif d <= 2.5:
-                px[y][x] = GOLD[2]
+                px[y][x] = GOLD_L
             if x in (0, w - 1) or y == h - 1:
-                px[y][x] = GOLD[0]
+                px[y][x] = GOLD_D
     for x in range(1, w - 1, 2):
-        px[0][x] = GOLD[2]
-    return px
-
-
-def band(w, h, r, face):
-    """Gold band with small lapis squares (headband, belt)."""
-    if face in ("up", "down"):
-        return [[GOLD[0 if face == "down" else 2]] * w for _ in range(h)]
-    px = [[GOLD[1]] * w for _ in range(h)]
-    if h >= 3:
-        for x in range(1, w - 1, 3):
-            px[h // 2][x] = LAPIS[1]
-    px[h - 1] = [GOLD[0]] * w
+        px[0][x] = GOLD_L
     return px
 
 
 def collar(w, h, r, face):
-    """Usekh collar: rows of gold, lapis and clay beads."""
-    if face == "down":
-        return [[GOLD[0]] * w for _ in range(h)]
-    rows = [GOLD[2], LAPIS[1], GOLD[1], CLAY[1], LAPIS[1], GOLD[0]]
-    px = [[rows[min(y, len(rows) - 1)]] * w for y in range(h)]
-    if h >= 4:
-        px[3] = [CLAY[1] if x % 2 else GOLD[1] for x in range(w)]
-    return px
-
-
-def lapis_framed(w, h, r, face):
-    """Lapis plate framed with gold (chest ornament, collar plate), a gold chevron in the middle."""
-    px = [[LAPIS[1]] * w for _ in range(h)]
+    """Pharaoh collar (density 2): horizontal geometric bands, gold and lapis, a row of clay beads."""
+    if face in ("up", "down"):
+        return [[GOLD if face == "up" else GOLD_D] * w for _ in range(h)]
+    rows = [GOLD_L, GOLD, LAPIS, GOLD, CLAY, GOLD, LAPIS_D]
+    px = []
     for y in range(h):
-        for x in range(w):
-            if x in (0, w - 1) or y in (0, h - 1):
-                px[y][x] = GOLD[1]
-    if face == "north" and w >= 5 and h >= 5:
-        c = w // 2
-        for k in range(min(c, h - 2)):                             # chevrons pointing down
-            for y in (1 + k, 4 + k):
-                if y < h - 1:
-                    for x in (c - 1 - k, c + k):
-                        if 0 < x < w - 1:
-                            px[y][x] = GOLD[2]
+        c = rows[min(y * len(rows) // h, len(rows) - 1)]
+        px.append([CLAY if x % 2 else GOLD for x in range(w)] if c == CLAY else [c] * w)
     return px
 
 
-def gold_inlay(w, h, r, face):
-    px = [[GOLD[1]] * w for _ in range(h)]
-    if face == "north" and h >= 4:
-        for y in range(1, h - 1, 2):
-            px[y] = [GOLD[2]] * w
+def lapis_band(w, h, r, face):
+    """Blue band of the collar (density 2): lapis, small gold squares."""
+    px = [[LAPIS] * w for _ in range(h)]
+    if face == "north":
+        for x in range(1, w - 1, 3):
+            px[h // 2][x] = GOLD
     return px
-
-
-def lapis_inlay(w, h, r, face):
-    px = [[LAPIS[1]] * w for _ in range(h)]
-    if face == "north" and h >= 4:
-        for y in range(1, h - 1, 2):
-            px[y] = [LAPIS[2]] * w
-    return px
-
-
-def shin(P, Q):
-    def f(w, h, r, face):
-        """Shin guard: plate of P with a frame of Q, horizontal bands of Q and a small square of Q between them."""
-        px = [[P[1] if face != "down" else P[0]] * w for _ in range(h)]
-        if face == "north":
-            c = w // 2
-            for y in range(h):
-                px[y][0] = px[y][w - 1] = Q[0]
-            for y in range(2, h - 1, 4):
-                px[y] = [Q[0]] + [Q[1]] * (w - 2) + [Q[0]]
-                if y + 2 < h - 1:
-                    px[y + 2][c - 1] = px[y + 2][c] = Q[1]
-            px[0] = px[h - 1] = [Q[0]] * w
-        return px
-    return f
 
 
 def bracelet(w, h, r, face):
-    """Bracelet: gold, a lapis row in the middle, darker edges."""
-    if face in ("up", "down"):
-        return [[GOLD[0 if face == "down" else 2]] * w for _ in range(h)]
-    px = [[GOLD[1]] * w for _ in range(h)]
-    if h >= 3:
-        px[h // 2] = [LAPIS[1] if x % 3 else GOLD[2] for x in range(w)]
-    px[h - 1] = [GOLD[0]] * w
+    """Bracelet (density 2), inlaid in the stone: gold, one lapis line, darker edges."""
+    px = [[GOLD] * w for _ in range(h)]
+    if face == "north" and h >= 3:
+        px[h // 2] = [LAPIS if x % 3 else GOLD_L for x in range(w)]
+        px[0] = [GOLD_L] * w
+        px[h - 1] = [GOLD_D] * w
     return px
 
 
-def loincloth(w, h, r, face):
-    """Front cloth of the shendyt: clay, parallel vertical folds, pale chevrons at the bottom."""
-    px = [[CLAY[1 if face != "down" else 0]] * w for _ in range(h)]
+def abdomen(w, h, r, face):
+    """Clay belly plate: two horizontal grooves and a middle line (statue abdomen), darker than the chest."""
+    px = stone("clay", joints=False)(w, h, r, face)
     if face == "north":
-        for x in range(1, w, 3):
-            for y in range(h):
-                px[y][x] = CLAY[0]
-        for k in range(min(3, h)):
-            y = h - 3 + k
-            for x in range(w):
-                if (x + k) % 4 == 0:
-                    px[y][x] = PALE[0]
-        px[h - 1] = [CLAY[0]] * w
+        for y in (h // 3, (2 * h) // 3):
+            px[y] = [CLAY_D] * w
+        for y in range(h):
+            px[y][w // 2] = CLAY_D
     return px
 
 
 def jaw(w, h, r, face):
-    """Jaw: dark earth; open dark mouth on the upper front with two short pale fangs, nothing more."""
-    px = [[EARTH[SHADE[face] if face != "up" else 0]] * w for _ in range(h)]
+    """Jaw: dark earth, the open mouth darker across the upper front, a strong chin edge."""
+    px = [[EARTH if face not in ("down", "south") else EARTH_D] * w for _ in range(h)]
     if face == "north":
-        for y in range(min(2, h)):
-            px[y] = [EARTH[0]] * w
-        for x in (w // 2 - 3, w // 2 + 2):
-            if 0 <= x < w and h >= 2:
-                px[0][x] = PALE[1]
-                px[1][x] = PALE[0]
-        px[h - 1] = [EARTH[1]] * w
+        for y in range(max(1, h // 2)):
+            px[y] = [EARTH_D] * w
+        px[h - 1] = [OCHRE_D] * w                                   # chin edge
     return px
 
 
-def face_plate(w, h, r, face):
-    """Middle of the face: ochre sandstone, nose ridge one shade lighter, a dark slit under it (upper lip)."""
-    px = stone(OCHRE, cracks=0, joints=False)(w, h, r, face)
+def face_mid(w, h, r, face):
+    """Middle of the face (density 2): ochre, nose ridge lighter, nostrils dark, upper lip line dark."""
+    px = [[OCHRE if face != "up" else OCHRE_L] * w for _ in range(h)]
     if face == "north":
         c = w // 2
-        for y in range(h - 2):
-            px[y][c - 1] = px[y][c] = OCHRE[2]
-        px[h - 1] = [EARTH[0]] * w
-        px[h - 2][c - 2] = px[h - 2][c + 1] = EARTH[1]            # nostrils
+        for y in range(h - 1):
+            px[y][c - 1] = px[y][c] = OCHRE_L
+        px[h - 1] = [EARTH] * w
+        if h >= 3:
+            px[h - 2][c - 2] = px[h - 2][c + 1] = EARTH
     return px
 
 
 def eye(w, h, r, face):
-    """Eye (density 2, emissive): amber, a light narrow slit, darker rim."""
+    """Eye (density 4, emissive): narrow amber slit, light core, darker rim."""
     if face != "north":
-        return [[AMBER[0]] * w for _ in range(h)]
-    px = [[AMBER[1]] * w for _ in range(h)]
-    px[0] = [AMBER[0]] * w
+        return [[AMBER_D] * w for _ in range(h)]
+    px = [[AMBER] * w for _ in range(h)]
+    px[0] = [AMBER_D] * w
+    px[h - 1] = [AMBER_D] * w
     for x in range(1, w - 1):
-        px[h // 2][x] = AMBER[2]
+        px[h // 2][x] = AMBER_L
     return px
 
 
-def fist(P):
+def fist(kind):
     def f(w, h, r, face):
-        """Mineral fist: four fingers split by dark grooves on the front and below, knuckles lighter on top."""
-        px = flat(P)(w, h, r, face)
+        """Mineral fist, half closed: three grooves split four fingers on the front and below, knuckle row across
+        the fingers, thumb line on the sides."""
+        cols = STONES[kind]
+        px = [[cols[FACE_INDEX[face]]] * w for _ in range(h)]
         if face in ("north", "down"):
             for x in (w // 4, w // 2, (3 * w) // 4):
                 for y in range(h // 3 if face == "north" else 0, h):
-                    px[y][x] = EARTH[1]
+                    px[y][x] = cols[5]
         if face == "north":
-            px[h // 3] = [P[2] if x % 2 else P[1] for x in range(w)]
-        if face == "up":
-            for x in range(0, w, 2):
-                px[0][x] = P[2]
+            px[h // 3] = [cols[0] if x % 2 else cols[5] for x in range(w)]
+        if face in ("east", "west"):
+            for y in range(h // 3, h - 1):
+                px[y][1] = cols[5]
         return px
     return f
 
 
-def foot(P):
+def foot(kind):
     def f(w, h, r, face):
-        """Mineral sandal: sole line of dark earth, toes split by grooves at the front."""
-        px = flat(P)(w, h, r, face)
+        """Flat mineral foot: dark sole line, two toe grooves at the front."""
+        cols = STONES[kind]
+        px = [[cols[FACE_INDEX[face]]] * w for _ in range(h)]
         if face not in ("up", "down"):
-            px[h - 1] = [EARTH[1]] * w
+            px[h - 1] = [EARTH] * w
         if face == "north":
             for x in (w // 3, (2 * w) // 3):
                 for y in range(1, h - 1):
-                    px[y][x] = EARTH[1]
-        if face == "up":
-            for y in range(h // 2, h):
-                px[y][w // 2] = GOLD[1]                            # sandal strap
+                    px[y][x] = cols[5]
         return px
     return f
 
 
 MATS = {
-    "sand": stone(SAND), "ochre": stone(OCHRE), "pale": stone(PALE, cracks=0.2), "clay": stone(CLAY, joints=False),
-    "sand_flat": flat(SAND), "ochre_flat": flat(OCHRE), "pale_flat": flat(PALE), "clay_flat": flat(CLAY),
-    "earth_flat": flat(EARTH), "nemes_lappet": nemes_lappet, "nemes_top": nemes_top, "sun": (sun, 2),
-    "band": band, "collar": collar, "lapis_framed": (lapis_framed, 2), "gold_inlay": gold_inlay,
-    "lapis_inlay": lapis_inlay, "shin_gold": shin(GOLD, LAPIS), "shin_lapis": shin(LAPIS, GOLD), "bracelet": bracelet,
-    "loincloth": loincloth, "jaw": jaw, "face": face_plate, "fist_clay": fist(CLAY), "fist_sand": fist(SAND),
-    "foot_ochre": foot(OCHRE), "foot_sand": foot(SAND),
+    "sand": stone("sand"), "sand_light": stone("sand_light"), "ochre": stone("ochre"),
+    "earth": stone("earth", joints=False), "ochre_plain": stone("ochre", joints=False),
+    "nemes_lappet": nemes_lappet, "nemes_top": nemes_top, "gold_band": gold_band, "sun": (sun, 2),
+    "collar": (collar, 2), "lapis_band": (lapis_band, 2), "bracelet": (bracelet, 2), "abdomen": abdomen,
+    "jaw": jaw, "face": (face_mid, 2), "fist_earth": fist("earth"), "fist_sand": fist("sand"),
+    "foot_ochre": foot("ochre"), "foot_sand": foot("sand"),
 }
-GLOW_MATS = {"eye": (eye, 2)}
+GLOW_MATS = {"eye": (eye, 4)}
 
 
 # --------------------------------------------------------------------------- skeleton (units, 16 = 1 block)
-NECK = (0, 50.5 - LOWER, 0)
-HEAD_R = rot(-7, 0, 0)                     # head slightly lowered: he looks down on the players
-ARM_R = {1: rot(0, 0, 3), -1: rot(0, 0, -3)}     # arms a little away from the body
+def u(*v):
+    """Brief values in blocks to units."""
+    return tuple(round(x * 16, 3) for x in v)
+
+
+NECK = u(0, 2.65, 0)
+HEAD_R = rot(HEAD_PITCH, 0, 0)
 GROUPS = {
     "Root": ((0, 0, 0), None),
-    "Body": ((0, 26 - LOWER, 0), "Root"),
+    "Body": (u(0, 1.38, 0), "Root"),
     "Head": (NECK, "Body"),
-    "Jaw": (attach(NECK, HEAD_R)((0, 52 - LOWER, -4.5), (0, 0, 0))[0], "Head"),
-    "glow_eyes": (attach(NECK, HEAD_R)((0, 55.5 - LOWER, -7.3), (0, 0, 0))[0], "Head"),
-    "Arm_right": ((17.5, 44 - LOWER, 0), "Body"),
-    "Arm_left": ((-17.5, 44 - LOWER, 0), "Body"),
-    "Forearm_right": ((18.2, 30 - LOWER, 0), "Arm_right"),
-    "Forearm_left": ((-18.2, 30 - LOWER, 0), "Arm_left"),
-    "Leg_right": ((7.7, 23, 0), "Root"),
-    "Leg_left": ((-7.7, 23, 0), "Root"),
+    "Jaw": (attach(NECK, HEAD_R)(u(0, 2.86, -0.26), (0, 0, 0))[0], "Head"),
+    "glow_eyes": (attach(NECK, HEAD_R)(u(0, 3.06, -0.44), (0, 0, 0))[0], "Head"),
+    "Arm_right": (u(0.95, 2.30, 0), "Body"),
+    "Arm_left": (u(-0.95, 2.30, 0), "Body"),
+    "Forearm_right": (u(1.0, 1.52, 0), "Arm_right"),
+    "Forearm_left": (u(-1.0, 1.52, 0), "Arm_left"),
+    "Leg_right": (u(0.48, 1.15, 0), "Root"),
+    "Leg_left": (u(-0.48, 1.15, 0), "Root"),
 }
 
 
 def parts():
     P = []
 
-    def add(g, name, c, size, r, mat, lower=True):
-        if lower:
-            c = (c[0], c[1] - LOWER, c[2])
-        P.append((g, name, c, size, r, mat))
+    def add(g, name, c, size, r, mat):
+        """Brief volume: centre and size in blocks, rotation (x, y, z) in degrees."""
+        P.append((g, name, u(*c), u(*size), r, mat))
 
     on_head = attach(NECK, HEAD_R)
 
     def hd(g, name, c, size, r, mat):
-        cc, M = on_head((c[0], c[1] - LOWER, c[2]), r)
-        P.append((g, name, cc, size, M, mat))
+        cc, M = on_head(u(*c), r)
+        P.append((g, name, cc, u(*size), M, mat))
 
-    def arm(s, g, name, c, size, r, mat):
-        """Arm piece drawn straight, then the whole arm opened a little from the shoulder."""
-        side = "Arm_right" if s > 0 else "Arm_left"
-        pv = GROUPS[side][0]
-        cc, M = attach(pv, ARM_R[s])((c[0], c[1] - LOWER, c[2]), r)
-        P.append((g, name, cc, size, M, mat))
-
-    # ---------------------------------------------------------------- A. legs and feet (temple pillars)
-    for s, side, m_foot, m_leg, m_knee, m_shin in ((-1, "gauche", "foot_ochre", "sand", "pale_flat", "shin_gold"),
-                                                    (1, "droit", "foot_sand", "ochre", "sand_flat", "shin_lapis")):
-        g = "Leg_right" if s > 0 else "Leg_left"
-        add(g, f"pied_{side}", (7.68 * s, 2.88, -2.4), (11.52, 5.76, 15.2), (0, 0, 0), m_foot, lower=False)
-        add(g, f"jambe_{side}", (7.68 * s, 14.4, 0.32), (10.24, 18.0, 10.72), (0, 0, 2 * s), m_leg, lower=False)
-        add(g, f"genou_{side}", (7.68 * s, 18.0, -5.0), (10.72, 5.12, 3.2), (0, 0, 2 * s), m_knee, lower=False)
-        add(g, f"tibia_{side}", (7.68 * s, 10.0, -5.3), (7.68, 9.6, 1.28), (0, 0, 2 * s), m_shin, lower=False)
+    # ---------------------------------------------------------------- A. feet and legs
+    add("Leg_left", "pied_gauche", (-0.48, 0.16, -0.12), (0.58, 0.32, 0.72), (0, FOOT_YAW, 0), "foot_ochre")
+    add("Leg_right", "pied_droit", (0.48, 0.16, -0.12), (0.58, 0.32, 0.72), (0, -FOOT_YAW, 0), "foot_sand")
+    # FIX: legs reach up into the pelvis (brief: top at 1.07, pelvis from 1.18, they floated); same width and depth
+    add("Leg_left", "jambe_gauche", (-0.48, 0.725, 0.03), (0.55, 0.87, 0.62), (0, 0, -2), "sand")
+    add("Leg_right", "jambe_droite", (0.48, 0.725, 0.03), (0.55, 0.87, 0.62), (0, 0, 2), "ochre")
+    add("Leg_left", "genou_gauche", (-0.48, 0.92, -0.30), (0.50, 0.24, 0.10), (0, 0, -3), "sand_light")
+    add("Leg_right", "genou_droit", (0.48, 0.92, -0.30), (0.50, 0.24, 0.10), (0, 0, 3), "ochre_plain")
 
     # ---------------------------------------------------------------- B. pelvis and torso
-    add("Body", "bassin", (0, 26.4, 0), (24.8, 7.68, 13.6), (0, 0, 0), "ochre")
-    add("Body", "torse", (0, 36.8, 0), (28, 16.8, 15.2), (0, 0, 0), "sand")
-    add("Body", "taille", (0, 31.0, 0), (25.0, 4.0, 14.4), (0, 0, 0), "clay_flat")        # clay joint at the waist
-    add("Body", "poitrine", (0, 42.6, -7.7), (24, 7.2, 2.56), (-3, 0, 0), "pale")
-    add("Body", "plaque_abdominale", (0, 33.6, -7.8), (17.92, 6.4, 2.4), (0, 0, 0), "clay")
-    add("Body", "plaque_dorsale", (0, 37.6, 8.0), (23.2, 13.12, 2.4), (0, 0, 0), "ochre")
-    add("Body", "ornement_poitrine", (0, 39.2, -9.3), (5.12, 7.2, 1.28), (0, 0, 0), "lapis_framed")
-    add("Body", "ceinture", (0, 29.0, -7.6), (24.8, 3.2, 2.08), (0, 0, 0), "band")
-    add("Body", "pagne", (0, 23.6, -7.4), (6.08, 12.8, 1.92), (0, 0, 0), "loincloth")
-    add("Body", "ornement_pagne", (0, 28.9, -8.9), (2.88, 4.0, 0.96), (0, 0, 0), "gold_inlay")
-    add("Body", "cou", (0, 47.7, 0), (9.28, 5.6, 9.28), (0, 0, 0), "clay_flat")
-    add("Body", "collier", (0, 45.0, -9.4), (19.0, 4.2, 2.0), (-6, 0, 0), "collar")
-    add("Body", "plaque_collier", (0, 43.6, -10.5), (6.4, 3.52, 1.28), (-6, 0, 0), "lapis_framed")
+    add("Body", "bassin", (0, 1.38, 0), (1.32, 0.40, 0.78), (0, 0, 0), "ochre")
+    add("Body", "torse", (0, 2.02, 0), (1.48, 0.94, 0.82), (0, 0, 0), "sand")
+    add("Body", "poitrine", (0, 2.38, -0.40), (1.30, 0.34, 0.12), (-3, 0, 0), "sand_light")
+    add("Body", "plaque_abdominale", (0, 1.87, -0.43), (1.00, 0.40, 0.12), (0, 0, 0), "abdomen")
+    add("Body", "plaque_dorsale", (0, 2.03, 0.43), (1.25, 0.70, 0.12), (0, 0, 0), "ochre_plain")
 
     # ---------------------------------------------------------------- C. shoulders and arms
-    for s, side, m_sh, m_up, m_fore, m_hand, m_inl in ((-1, "gauche", "sand", "ochre", "sand", "fist_clay", "lapis_inlay"),
-                                                       (1, "droite", "ochre", "sand", "ochre", "fist_sand", "gold_inlay")):
-        ga = "Arm_right" if s > 0 else "Arm_left"
-        gf = "Forearm_right" if s > 0 else "Forearm_left"
-        add("Body", f"epaule_{side}", (16.8 * s, 43.5, 0), (11.52, 10.4, 12.16), (0, 0, 8 * s), m_sh)
-        add("Body", f"epaulette_{side}", (16.9 * s, 45.9, -6.0), (8.8, 4.48, 2.4), (0, 0, 8 * s), "gold_inlay")
-        arm(s, ga, f"bras_{side}", (17.8 * s, 34.4, 0), (8, 13.6, 8.8), (0, 0, 2 * s), m_up)
-        arm(s, ga, f"incrustation_bras_{side}", (18.1 * s, 34.4, -4.6), (2.56, 4.8, 1.28), (0, 0, 2 * s), m_inl)
-        arm(s, gf, f"coude_{side}", (18.2 * s, 28.4, 0), (7.2, 3.2, 7.6), (0, 0, 0), "clay_flat")
-        arm(s, gf, f"avant_bras_{side}", (18.4 * s, 22.4, -0.9), (8.3, 10.4, 8.6), (7, 0, 0), m_fore)
-        arm(s, gf, f"bracelet_{side}", (18.4 * s, 19.6, -1.3), (9.0, 2.9, 9.3), (7, 0, 0), "bracelet")
-        arm(s, gf, f"main_{side}", (18.6 * s, 13.4, -2.4), (8.4, 7.68, 7.6), (9, 0, 0), m_hand)
-        arm(s, gf, f"pouce_{side}", (15.4 * s, 15.0, -5.3), (2.4, 3.6, 2.6), (9, 0, 0), m_hand)
+    # FIX: shoulders and arms 0.035 block closer to the body, else the brief's volumes are 2.61 blocks wide (max 2.55)
+    add("Body", "epaule_gauche", (-0.875, 2.42, 0), (0.72, 0.65, 0.76), (0, 0, -7), "sand")
+    add("Body", "epaule_droite", (0.875, 2.42, 0), (0.72, 0.65, 0.76), (0, 0, 7), "ochre")
+    add("Arm_left", "bras_gauche", (-0.985, 1.90, 0), (0.48, 0.82, 0.55), (0, 0, -4), "ochre")
+    add("Arm_right", "bras_droit", (0.985, 1.90, 0), (0.48, 0.82, 0.55), (0, 0, 4), "sand")
+    add("Forearm_left", "avant_bras_gauche", (-1.015, 1.30, -0.03), (0.44, 0.55, 0.50), (0, 0, -2), "sand")
+    add("Forearm_right", "avant_bras_droit", (1.015, 1.30, -0.03), (0.44, 0.55, 0.50), (0, 0, 2), "ochre")
+    # FIX: hands 0.02 higher so they hold to the forearms (they only touched them)
+    add("Forearm_left", "main_gauche", (-1.015, 0.85, -0.08), (0.42, 0.40, 0.38), (0, 0, -3), "fist_earth")
+    add("Forearm_right", "main_droite", (1.015, 0.85, -0.08), (0.42, 0.40, 0.38), (0, 0, 3), "fist_sand")
 
-    # ---------------------------------------------------------------- D. demonic head (drawn straight, then lowered)
-    hd("Head", "crane", (0, 54.1, -0.3), (14.72, 12.48, 13.12), (0, 0, 0), "sand")
-    hd("Head", "tempes", (0, 56.4, 0.4), (16.4, 5.4, 11.0), (0, 0, 0), "sand_flat")      # wider at the temples
-    hd("Head", "front", (0, 58.6, -6.6), (13.6, 2.6, 2.6), (-8, 0, 0), "pale_flat")      # massive upper face
-    hd("Jaw", "machoire", (0, 50.2, -6.4), (12.16, 4.48, 3.52), (0, 0, 0), "jaw")
-    hd("Head", "visage", (0, 53.0, -7.6), (9.6, 3.0, 2.6), (0, 0, 0), "face")
-    hd("Head", "arcade_gauche", (-3.9, 57.0, -7.8), (6.4, 2.2, 2.4), (0, 0, -18), "earth_flat")
-    hd("Head", "arcade_droite", (3.9, 57.0, -7.8), (6.4, 2.2, 2.4), (0, 0, 18), "earth_flat")
-    hd("glow_eyes", "oeil_gauche", (-3.4, 55.5, -7.3), (2.8, 1.4, 0.9), (0, 0, -10), "eye")
-    hd("glow_eyes", "oeil_droit", (3.4, 55.5, -7.3), (2.8, 1.4, 0.9), (0, 0, 10), "eye")
+    # ---------------------------------------------------------------- D. neck and head
+    # FIX: neck goes down into the torso (brief: bottom at 2.50, torso top at 2.49)
+    add("Body", "cou", (0, 2.63, 0), (0.55, 0.34, 0.55), (0, 0, 0), "earth")
+    hd("Head", "crane", (0, 3.00, -0.02), (0.88, 0.70, 0.66), (0, 0, 0), "sand")
+    hd("Jaw", "machoire", (0, 2.80, -0.32), (0.72, 0.24, 0.16), (0, 0, 0), "jaw")
+    hd("Head", "visage", (0, 3.04, -0.36), (0.62, 0.25, 0.12), (0, 0, 0), "face")
+    hd("Head", "arcade_gauche", (-0.23, 3.17, -0.43), (0.40, 0.13, 0.12), (0, 0, -18), "earth")
+    hd("Head", "arcade_droite", (0.23, 3.17, -0.43), (0.40, 0.13, 0.12), (0, 0, 18), "earth")
+    # FIX: eyes 0.02 back, so the brows overhang them (sunk under the brows, as asked)
+    hd("glow_eyes", "oeil_gauche", (-0.20, 3.06, -0.44), (0.13, 0.075, 0.05), (0, 0, -12), "eye")
+    hd("glow_eyes", "oeil_droit", (0.20, 3.06, -0.44), (0.13, 0.075, 0.05), (0, 0, 12), "eye")
 
     # ---------------------------------------------------------------- E. nemes headdress
-    hd("Head", "coiffe", (0, 61.4, 0), (18.4, 3.8, 15.2), (0, 0, 0), "nemes_top")
-    hd("Head", "pan_gauche", (-9.0, 52.8, -0.6), (4.6, 15.2, 8.32), (0, 0, -5), "nemes_lappet")
-    hd("Head", "pan_droit", (9.0, 52.8, -0.6), (4.6, 15.2, 8.32), (0, 0, 5), "nemes_lappet")
-    hd("Head", "nemes_arriere", (0, 52.0, 7.3), (9.6, 11.0, 2.4), (8, 0, 0), "nemes_lappet")  # tail of the cloth
-    hd("Head", "bande_frontale", (0, 59.6, -7.4), (16.8, 2.56, 1.92), (0, 0, 0), "band")
-    hd("Head", "ornement_solaire", (0, 61.4, -8.4), (4.0, 3.68, 1.6), (0, 0, 0), "sun")
+    hd("Head", "coiffe", (0, 3.50, 0), (1.12, 0.40, 0.82), (0, 0, 0), "nemes_top")
+    hd("Head", "pan_gauche", (-0.53, 3.05, -0.03), (0.25, 0.85, 0.48), (0, 0, -4), "nemes_lappet")
+    hd("Head", "pan_droit", (0.53, 3.05, -0.03), (0.25, 0.85, 0.48), (0, 0, 4), "nemes_lappet")
+    hd("Head", "bande_frontale", (0, 3.39, -0.43), (1.00, 0.12, 0.08), (0, 0, 0), "gold_band")
+    # FIX: symbol 0.03 back, against the headdress (it floated 0.02 in front of it)
+    hd("Head", "symbole_frontal", (0, 3.53, -0.44), (0.20, 0.20, 0.08), (0, 0, 0), "sun")
 
-    # every foot rests exactly on the ground (y = 0)
-    low = {}
-    for g, n, c, size, r, m in P:
-        if g.startswith("Leg_"):
-            low[g] = min([low.get(g, 1e9)] + [q[1] for q in corners(c, size, r)])
-    return [(g, n, [c[0], c[1] - low.get(g, 0), c[2]], size, r, m) for g, n, c, size, r, m in P]
+    # ---------------------------------------------------------------- F. royal ornaments
+    # FIX: collar as deep as the gap to the neck (0.10 deep at -0.43 it floated in front of the neck)
+    add("Body", "collier", (0, 2.70, -0.365), (1.12, 0.20, 0.23), (0, 0, 0), "collar")
+    add("Body", "bande_bleue", (0, 2.66, -0.50), (0.78, 0.09, 0.05), (0, 0, 0), "lapis_band")
+    add("Forearm_left", "bracelet_gauche", (-1.015, 1.43, -0.28), (0.48, 0.15, 0.08), (0, 0, -2), "bracelet")
+    add("Forearm_right", "bracelet_droit", (1.015, 1.43, -0.28), (0.48, 0.15, 0.08), (0, 0, 2), "bracelet")
+    return P
 
 
 if __name__ == "__main__":
@@ -431,7 +360,7 @@ if __name__ == "__main__":
         prev = args[i + 1]
         del args[i:i + 2]
     out = args[0] if args else HERE
-    P, groups, dims = ground(parts(), GROUPS, scale=SCALE, center=False)
+    P, groups, dims = ground(parts(), GROUPS, center=False)
     uv, atlases, sizes = bake(P, MATS, GLOW_MATS)
     data = export(IDENT, NS, P, groups, uv, atlases, sizes)
     print(f"{len(P)} volumes ; {dims[0]:.2f} x {dims[1]:.2f} x {dims[2]:.2f} blocs (l x h x p) ; "
@@ -441,4 +370,5 @@ if __name__ == "__main__":
         json.dump(data, f, ensure_ascii=False)
     print("écrit", path)
     if prev:
-        apercu(data, atlases, sizes, prev, set(AMBER), views=((30, 8), (0, 4), (90, 2), (210, 10)), size=420)
+        apercu(data, atlases, sizes, prev, {AMBER, AMBER_D, AMBER_L}, views=((30, 6), (0, 3), (90, 2), (210, 8)),
+               size=420)
