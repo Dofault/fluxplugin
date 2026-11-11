@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 final class OfferingSidebar {
 
-    static final int PER_LINE = 11, LINES = 3;
+    static final int PER_LINE = 16, LINES = 2;
     private static final String READY = "#FFA500";
     /** BitBlock glyph of the resource pack (raw character: Typewriter does not resolve %img_...% here). */
     private static final String MONEY = "";
