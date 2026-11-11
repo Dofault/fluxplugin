@@ -1,0 +1,21 @@
+# Défaite (mort en donjon, partie perdue) : environ 7 secondes, ré mineur, descente lente.
+title: "Défaite"
+author: "Influencraft"
+bpm: 100
+steps-per-beat: 2
+beats-per-bar: 4
+
+tracks:
+  harpe:      { instrument: harp, volume: 0.8 }
+  guitare:    { instrument: guitar, volume: 0.6 }
+  basse:      { instrument: bass, volume: 0.8 }
+  grondement: { instrument: didgeridoo, volume: 0.45 }
+  cloche:     { instrument: bell, volume: 0.25 }
+
+sections:
+  chute:
+    harpe: "A4:2 G4:2 F4:2 E4:2 | D4:2 F4:2 E4:2 C#4:2 | D4:8"
+    guitare: "D3+F3+A3:4 Bb2+D3+F3:4 | G2+Bb2+D3:4 A2+C#3+E3:4 | D3+F3+A3:8"
+    basse: "D2:4 Bb1:4 | G1:4 A1:4 | D2:8"
+    grondement: ".:8 | .:8 | D2:8"
+    cloche: ".:8 | .:8 | D6:8"

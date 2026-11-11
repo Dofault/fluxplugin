@@ -32,12 +32,12 @@ import java.util.regex.Pattern;
  *
  * A token is a note ({@code C4}, {@code F#5}, {@code Bb3}), a chord ({@code D4+F4+A4}), {@code x} (the
  * instrument's own pitch, for drums) or a rest ({@code .} / {@code -}), followed by {@code :n} to last n steps
- * (default 1). {@code |} separates bars: each bar is checked against {@code beats-per-bar}.
+ * (default 1). A pattern of a single token takes a duration too ({@code @chord:4}). {@code |} separates bars: each bar is checked against {@code beats-per-bar}.
  */
 public final class ScoreReader {
 
     private static final Pattern NOTE = Pattern.compile("([A-Ga-g])([#b]?)(-?\\d)");
-    private static final Pattern PATTERN_REF = Pattern.compile("@([A-Za-z0-9_]+)(?:\\*(\\d+))?");
+    private static final Pattern PATTERN_REF = Pattern.compile("@([A-Za-z0-9_]+)(?:\\*(\\d+))?(:\\d+)?");
     private static final int[] LETTER = {9, 11, 0, 2, 4, 5, 7}; // A B C D E F G
 
     private record Track(Instrument instrument, float volume) {
@@ -115,7 +115,14 @@ public final class ScoreReader {
             String body = patterns.get(m.group(1));
             if (body == null) throw new IllegalArgumentException(where + ": unknown pattern @" + m.group(1));
             int times = m.group(2) == null ? 1 : Integer.parseInt(m.group(2));
-            String once = expand(body, patterns, where, depth + 1);
+            String once = expand(body, patterns, where, depth + 1).trim();
+            if (m.group(3) != null) {
+                // @chord:4 gives a duration to a pattern made of one token without its own duration
+                if (once.contains(" ") || once.contains(":"))
+                    throw new IllegalArgumentException(where + ": @" + m.group(1) + m.group(3)
+                            + " needs a pattern of a single token without duration");
+                once += m.group(3);
+            }
             m.appendReplacement(out, Matcher.quoteReplacement(" " + (once + " ").repeat(times) + " "));
         }
         m.appendTail(out);

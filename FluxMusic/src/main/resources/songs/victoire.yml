@@ -1,0 +1,23 @@
+# Petite victoire (quête finie, objectif atteint) : environ 2 secondes, do majeur.
+title: "Victoire"
+author: "Influencraft"
+bpm: 140
+steps-per-beat: 4
+beats-per-bar: 4
+
+tracks:
+  pling:    { instrument: pling, volume: 0.7 }
+  carillon: { instrument: chime, volume: 0.4 }
+  flute:    { instrument: flute, volume: 0.6 }
+  guitare:  { instrument: guitar, volume: 0.6 }
+  basse:    { instrument: bass, volume: 0.8 }
+  grosse:   { instrument: basedrum, volume: 0.6 }
+
+sections:
+  jingle:
+    pling: "C4 E4 G4 C5:3 G4:2 C5:8"
+    carillon: ".:3 C6:3 .:2 E6+G6+C7:8"
+    flute: ".:3 E5:3 .:2 G5:8"
+    guitare: ".:8 C3+G3+C4+E4:8"
+    basse: ".:8 C2:8"
+    grosse: ".:8 x:8"

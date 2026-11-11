@@ -1,0 +1,25 @@
+# Grande victoire (boss vaincu, donjon terminé) : fanfare d'environ 6 secondes en ré majeur.
+title: "Triomphe"
+author: "Influencraft"
+bpm: 120
+steps-per-beat: 4
+beats-per-bar: 4
+
+tracks:
+  flute:   { instrument: flute, volume: 1.0 }
+  cloche:  { instrument: bell, volume: 0.4 }
+  harpe:   { instrument: harp, volume: 0.5 }
+  guitare: { instrument: guitar, volume: 0.65 }
+  basse:   { instrument: bass, volume: 0.85 }
+  grosse:  { instrument: basedrum, volume: 0.65 }
+  caisse:  { instrument: snare, volume: 0.35 }
+
+sections:
+  fanfare:
+    flute: "A4 A4 A4:2 D5:4 F#5:4 E5:2 D5:2 | E5:2 F#5:2 G5:2 A5:6 B5:2 C#6:2 | D6:16"
+    cloche: ".:16 | .:12 A5:2 C#6:2 | D6+F#6+A6:16"
+    harpe: ".:16 | .:16 | D4 F#4 A4 D5 F#5:12"
+    guitare: "D3+A3+D4+F#4:4 D3+A3+D4+F#4:2 D3+A3+D4+F#4:2 D3+A3+D4+F#4:4 D3+A3+D4+F#4:4 | G2+D3+G3+B3:4 G2+D3+G3+B3:4 A2+E3+A3+C#4:4 A2+E3+A3+C#4:4 | D3+A3+D4+F#4:16"
+    basse: "D2:4 D2:4 A1:4 D2:4 | G1:8 A1:8 | D2:16"
+    grosse: "x:4 x:4 x:4 x:4 | x:4 x:4 x:2 x:2 x:2 x:2 | x:16"
+    caisse: ".:4 x:4 .:4 x:4 | x x x:2 x x x:2 x x x:2 x x x x | .:16"

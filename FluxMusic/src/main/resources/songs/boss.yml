@@ -1,0 +1,79 @@
+# La Fureur du Colosse : combat de boss en do mineur (sol majeur en dominante), 150 BPM.
+# Basse en octaves pulsée, guitare en accords plaqués, mélodie 8 bits, didgeridoo pour le grondement.
+title: "La Fureur du Colosse"
+author: "Influencraft"
+bpm: 150
+steps-per-beat: 4
+beats-per-bar: 4
+loop: false
+
+tracks:
+  lead:     { instrument: bit, volume: 0.7 }
+  aigu:     { instrument: flute, volume: 0.5 }
+  cloche:   { instrument: bell, volume: 0.35 }
+  guitare:  { instrument: guitar, volume: 0.65 }
+  basse:    { instrument: bass, volume: 0.85 }
+  grondement: { instrument: didgeridoo, volume: 0.5 }
+  grosse:   { instrument: basedrum, volume: 0.7 }
+  caisse:   { instrument: snare, volume: 0.4 }
+  charley:  { instrument: hat, volume: 0.2 }
+
+patterns:
+  b_cm: "C2:2 C3:2 C2:2 C3:2 C2:2 C3:2 C2:2 C3:2"
+  b_ab: "Ab1:2 Ab2:2 Ab1:2 Ab2:2 Ab1:2 Ab2:2 Ab1:2 Ab2:2"
+  b_bb: "Bb1:2 Bb2:2 Bb1:2 Bb2:2 Bb1:2 Bb2:2 Bb1:2 Bb2:2"
+  b_g:  "G1:2 G2:2 G1:2 G2:2 G1:2 G2:2 G1:2 G2:2"
+  st_cm: "C3+G3+C4:3 C3+G3+C4:3 C3+G3+C4:2 .:8"
+  st_ab: "Ab2+Eb3+Ab3:3 Ab2+Eb3+Ab3:3 Ab2+Eb3+Ab3:2 .:8"
+  st_bb: "Bb2+F3+Bb3:3 Bb2+F3+Bb3:3 Bb2+F3+Bb3:2 .:8"
+  st_g:  "G2+D3+G3:3 G2+D3+G3:3 G2+D3+G3:2 .:8"
+  kick: "x:4 x:4 x:4 x:4"
+  snare: ".:4 x:8 x:4"
+  hats: "x:2 x:2 x:2 x:2 x:2 x:2 x:2 x:2"
+  hats16: "x x x x x x x x x x x x x x x x"
+  riff: "C5:4 Eb5:2 G5:2 F5:4 Eb5:2 D5:2 | Eb5:6 C5:2 Ab4:8 | D5:4 F5:2 D5:2 Bb4:4 D5:4 | B4:4 D5:2 G5:2 F5:4 D5:4 | G5:2 G5:2 G5:4 Eb5:4 C5:4 | F5:4 Eb5:4 C5:4 Ab4:4 | Bb4:4 D5:4 F5:4 D5:4 | G5:8 F5:2 Eb5:2 D5:2 B4:2"
+  riff_bas: "C4:4 Eb4:2 G4:2 F4:4 Eb4:2 D4:2 | Eb4:6 C4:2 Ab3:8 | D4:4 F4:2 D4:2 Bb3:4 D4:4 | B3:4 D4:2 G4:2 F4:4 D4:4 | G4:2 G4:2 G4:4 Eb4:4 C4:4 | F4:4 Eb4:4 C4:4 Ab3:4 | Bb3:4 D4:4 F4:4 D4:4 | G4:8 F4:2 Eb4:2 D4:2 B3:2"
+  basse_riff: "@b_cm | @b_ab | @b_bb | @b_g | @b_cm | @b_ab | @b_bb | @b_g"
+  gt_riff: "@st_cm | @st_ab | @st_bb | @st_g | @st_cm | @st_ab | @st_bb | @st_g"
+
+sections:
+  intro:
+    grondement: "C2:16 | C2:16"
+    basse: "@b_cm | @b_cm"
+    grosse: "@kick | @kick"
+    charley: ".:16 | @hats16"
+  riff:
+    lead: "@riff_bas"
+    aigu: "@riff"
+    guitare: "@gt_riff"
+    basse: "@basse_riff"
+    grondement: "C2:16 | Ab1:16 | Bb1:16 | G1:16 | C2:16 | Ab1:16 | Bb1:16 | G1:16"
+    grosse: "@kick*8"
+    caisse: "@snare*8"
+    charley: "@hats*8"
+  pause:
+    cloche: "G6:4 Eb6:4 C6:8 | Ab6:4 Eb6:4 C6:8 | Bb6:4 F6:4 D6:8 | B6:4 G6:4 D6:4 F6:4"
+    guitare: "@st_ab | @st_bb | @st_cm | @st_g"
+    basse: "Ab1:16 | Bb1:16 | C2:16 | G1:16"
+    grosse: "x:16 | x:16 | x:16 | x:4 x:4 x:2 x:2 x:2 x:2"
+    caisse: ".:16 | .:16 | .:16 | .:8 x:2 x:2 x x x x"
+  riff_final:
+    lead: "@riff_bas"
+    aigu: "@riff"
+    cloche: ".:64 | G6:2 G6:2 G6:4 Eb6:4 C6:4 | F6:4 Eb6:4 C6:4 Ab5:4 | Bb5:4 D6:4 F6:4 D6:4 | G6:8 F6:2 Eb6:2 D6:2 B5:2"
+    guitare: "@gt_riff"
+    basse: "@basse_riff"
+    grondement: "C2:16 | Ab1:16 | Bb1:16 | G1:16 | C2:16 | Ab1:16 | Bb1:16 | G1:16"
+    grosse: "@kick*8"
+    caisse: "@snare*8"
+    charley: "@hats16*8"
+  fin:
+    lead: "C4:16"
+    aigu: "C5:16"
+    guitare: "C3+G3+C4:16"
+    basse: "C2+C3:16"
+    grondement: "C2:16"
+    grosse: "x:16"
+    cloche: "C6+G6:16"
+
+order: [intro, riff, pause, riff_final, fin]
