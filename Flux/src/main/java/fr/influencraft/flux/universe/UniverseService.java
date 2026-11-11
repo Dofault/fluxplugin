@@ -83,7 +83,8 @@ public final class UniverseService implements Universes.Backend, Listener {
     public static final String ADMIN = "flux.universe.admin";
 
     /** One universe of universes.yml. */
-    private record Settings(String id, Set<String> worlds, List<String> prefixes, GameMode gameMode, Set<String> commands) {
+    private record Settings(String id, Set<String> worlds, List<String> prefixes, GameMode gameMode, Set<String> commands,
+                            boolean checkItems) {
     }
 
     private record Claim(Plugin plugin, String universe, Predicate<World> worlds) {
@@ -167,7 +168,8 @@ public final class UniverseService implements Universes.Backend, Listener {
                 commands = new HashSet<>();
                 for (String c : s.getStringList("commands")) commands.add(c.toLowerCase(Locale.ROOT));
             }
-            universes.put(key, new Settings(key, new HashSet<>(s.getStringList("worlds")), s.getStringList("world-prefixes"), mode, commands));
+            universes.put(key, new Settings(key, new HashSet<>(s.getStringList("worlds")), s.getStringList("world-prefixes"), mode, commands,
+                    s.getBoolean("check-items", false)));
         }
     }
 
@@ -377,10 +379,22 @@ public final class UniverseService implements Universes.Backend, Listener {
         return p.hasPermission(BYPASS) && p.getGameMode() == GameMode.CREATIVE;
     }
 
+    /**
+     * Whether items held in this universe are checked. Vanilla always (an item of another universe must never stay
+     * there); another universe only with {@code check-items: true} (its own profile keeps whatever lands in it, and it
+     * never goes back to vanilla).
+     */
+    private boolean checked(String universe) {
+        if (!isolated(universe)) return true;
+        Settings s = universes.get(universe);
+        return s != null && s.checkItems();
+    }
+
     /** Takes every item of the wrong universe from the player (inventory, cursor, and ender chest when asked). */
     private void scan(Player p, boolean ender, String reason) {
         if (locked.contains(p.getUniqueId()) || exempt(p)) return;
         String universe = of(p);
+        if (!checked(universe)) return;
         ItemStack[] contents = p.getInventory().getContents();
         for (int i = 0; i < contents.length; i++) {
             ItemStack item = contents[i];
@@ -520,14 +534,15 @@ public final class UniverseService implements Universes.Backend, Listener {
         ItemStack stack = e.getItem().getItemStack();
         String universe = e.getEntity() instanceof Player p ? of(p) : ofWorld(e.getEntity().getWorld());
         if (e.getEntity() instanceof Player p && lockedOut(p, e)) return;
-        if (belongs(stack, universe)) return;
+        if (!checked(universe) || belongs(stack, universe)) return;
         e.setCancelled(true);
         if (e.getEntity() instanceof Player p && quarantine(p, Universes.universeOf(stack), stack, "ground", true)) e.getItem().remove();
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onItemSpawn(ItemSpawnEvent e) {
-        if (belongs(e.getEntity().getItemStack(), ofWorld(e.getEntity().getWorld()))) return;
+        String universe = ofWorld(e.getEntity().getWorld());
+        if (!checked(universe) || belongs(e.getEntity().getItemStack(), universe)) return;
         e.setCancelled(true);
         flux.getLogger().warning("Item of universe " + Universes.universeOf(e.getEntity().getItemStack()) + " kept from appearing in "
                 + e.getEntity().getWorld().getName());
@@ -536,13 +551,16 @@ public final class UniverseService implements Universes.Backend, Listener {
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onHopperPickup(InventoryPickupItemEvent e) {
         Item item = e.getItem();
-        if (!belongs(item.getItemStack(), ofWorld(item.getWorld()))) e.setCancelled(true);
+        String universe = ofWorld(item.getWorld());
+        if (checked(universe) && !belongs(item.getItemStack(), universe)) e.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onHopperMove(InventoryMoveItemEvent e) {
         Location at = e.getSource().getLocation();
-        if (at != null && !belongs(e.getItem(), ofWorld(at.getWorld()))) e.setCancelled(true);
+        if (at == null) return;
+        String universe = ofWorld(at.getWorld());
+        if (checked(universe) && !belongs(e.getItem(), universe)) e.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)

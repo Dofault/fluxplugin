@@ -2,14 +2,17 @@
 # chest, experience, life, hunger, effects, game mode). Every world not listed here belongs to "vanilla".
 # Plugins add the worlds they create themselves (FluxDungeons: its dungeon worlds). Reload: /universes reload.
 #
-# Items made for a universe carry its mark; an item held in the wrong universe is taken away and given back in its own
-# universe (quarantine, logged, staff told). Outside vanilla: nothing is dropped on the ground, no container, ender
+# Items made for a universe carry its mark; in vanilla, an item of another universe is taken away and given back in its
+# own universe (quarantine, logged, staff told); other universes do the same only with check-items: true. Outside vanilla: nothing is dropped on the ground, no container, ender
 # chest, crafting or portal, inventory kept on death.
 
 universes:
   rpg:
     worlds: [flux_rpg]
     world-prefixes: []
+    # Check the items held there (quarantine of items of another universe). Vanilla is always checked: an rpg item
+    # never stays there. Off here: a vanilla item that lands in the rpg (creative, building) stays in the rpg profile.
+    check-items: false
     # game mode of a player's first visit (his own afterwards)
     game-mode: ADVENTURE
     # commands a player may type there (first word, without "/"); remove the list to allow every command
