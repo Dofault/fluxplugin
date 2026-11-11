@@ -9,6 +9,11 @@ close: "Close"
 text:
   - "Tick what you want. Hover an option to see what it does."
 options:
+  music:
+    label: "Music"
+    description: "Music of some moments of the game (dungeon bosses, crates, level up). Its volume is the Jukebox/Note Blocks slider of Minecraft's sound options."
+    default: true
+    off: ["[console] musique stop %player%"]
   msg:
     label: "Private messages"
     description: "Lets other players send you private messages."

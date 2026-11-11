@@ -7,7 +7,8 @@ import java.util.Set;
 /**
  * Music played to players, note by note with the client's note block sounds (nothing in the resource pack). The
  * songs and the player are provided by FluxMusic ({@code plugins/FluxMusic/songs/<id>.yml|.nbs}); without it every
- * call does nothing and returns false, so a caller may fall back to a plain sound.
+ * call does nothing and returns false, so a caller may fall back to a plain sound. A player who turned music off
+ * in the settings ({@link #SETTING}) hears nothing either: calls for him return false the same way.
  *
  * <p>Two layers per player:</p>
  * <ul>
@@ -18,6 +19,9 @@ import java.util.Set;
  * Calls are safe from any thread.
  */
 public final class Music {
+
+    /** Player setting (settings window, option {@code music}): false = this player hears no music. */
+    public static final String SETTING = "flux:music";
 
     /** What the music plugin provides. */
     public interface Provider {

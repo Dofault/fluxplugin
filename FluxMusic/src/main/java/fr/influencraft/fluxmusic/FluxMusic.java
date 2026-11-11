@@ -5,6 +5,7 @@ import fr.influencraft.flux.api.util.Format;
 import fr.influencraft.flux.api.util.Players;
 import fr.influencraft.flux.api.jobs.JobLevelUpEvent;
 import fr.influencraft.flux.api.music.Music;
+import fr.influencraft.flux.api.util.PlayerSettings;
 import fr.influencraft.fluxmusic.play.Jukebox;
 import fr.influencraft.fluxmusic.song.NbsReader;
 import fr.influencraft.fluxmusic.song.ScoreReader;
@@ -54,14 +55,14 @@ public final class FluxMusic extends FluxPlugin implements Listener {
         Music.provide(new Music.Provider() {
             public boolean play(Player player, String id, Boolean loop) {
                 Song song = song(id);
-                if (song == null) return false;
+                if (song == null || !wants(player)) return false;
                 jukebox.play(player, song, loop == null ? song.loop() : loop);
                 return true;
             }
 
             public boolean jingle(Player player, String id) {
                 Song song = song(id);
-                if (song == null) return false;
+                if (song == null || !wants(player)) return false;
                 jukebox.jingle(player, song);
                 return true;
             }
@@ -111,9 +112,16 @@ public final class FluxMusic extends FluxPlugin implements Listener {
         return getConfig().getString("moments." + key, "");
     }
 
+    /** Whether the player wants music (settings window, option {@code music}). */
+    private static boolean wants(Player player) {
+        return PlayerSettings.flag(player, Music.SETTING, true);
+    }
+
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJobLevelUp(JobLevelUpEvent e) {
-        Music.jingle(e.player(), moment("job-level-up"));
+        Player p = e.player();
+        // without music, the plain level up sound (the jobs plugin's own sound is turned off for the jingle)
+        if (!Music.jingle(p, moment("job-level-up"))) p.playSound(p, org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.3f);
     }
 
     // ---------------------------------------------------------------- songs
@@ -194,6 +202,8 @@ public final class FluxMusic extends FluxPlugin implements Listener {
                 Collection<? extends Player> targets = targets(sender, args, 2);
                 if (targets == null) return true;
                 for (Player p : targets) {
+                    // a player who turned music off only hears what he asked for himself
+                    if (p != sender && !wants(p)) continue;
                     jukebox.play(p, song, song.loop());
                     messages().send(p, "now-playing", "%title%", song.title());
                 }
