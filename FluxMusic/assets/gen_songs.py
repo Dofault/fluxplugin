@@ -46,7 +46,7 @@ def chord(symbol):
     root = NAMES[m.group(1)] + (1 if m.group(2) == '#' else -1 if m.group(2) == 'b' else 0)
     q = m.group(3)
     intervals = {'': [0, 4, 7], 'm': [0, 3, 7], '7': [0, 4, 7, 10], 'm7': [0, 3, 7, 10],
-                 'dim': [0, 3, 6], 'sus': [0, 5, 7]}[q]
+                 'dim': [0, 3, 6], 'sus': [0, 5, 7], 'maj7': [0, 4, 7, 11]}[q]
     return root % 12, intervals
 
 
@@ -74,6 +74,7 @@ def bass(style, sym, L, i, flats):
             'drive': ' '.join(t(r, 2) for _ in range(8)),
             'long': f'{t(r, 8)} {t(f, 8)}',
             'half': f'{t(r, 6)} {t(r, 2)} {t(f, 8)}',
+            'walk': ' '.join(t(n, 4) for n in (r, r + iv[1], f, r + iv[1])),
         }[style]
     if L == 12:
         return {
@@ -86,7 +87,7 @@ def bass(style, sym, L, i, flats):
 def guitar(style, sym, L, flats):
     root, iv = chord(sym)
     r = lowest(root, 45)
-    triad = [r + x for x in iv]
+    triad = [n - 12 if n > 66 else n for n in (r + x for x in iv)]
     low = lowest(root, 43)
     spread = [low + x for x in iv[:3]] + [low + 12]     # arpeggio: root to octave, within the guitar's range
     power = [lowest(root, 42), lowest(root, 42) + 7, lowest(root, 42) + 12]
@@ -143,6 +144,9 @@ DRUMS = {
         'march': (' '.join(['x:4'] * 4), 'x:2 x x x:2 x:2 x:2 x x x:2 x:2', '.:16'),
         'sparse': ('x:16', '.:16', '.:4 x:4 .:4 x:4'),
         'fill': ('x:4 x:4 x:2 x:2 x:2 x:2', '.:8 x x x x x x x x', '.:16'),
+        'soft': ('x:8 x:8', '.:16', '.:4 x:4 .:4 x:4'),
+        'clap': ('x:8 x:8', '.:4 x:8 x:4', ' '.join(['x:2'] * 8)),   # hands clapping on 2 and 4
+        'none': ('.:16', '.:16', '.:16'),
     },
     12: {
         'rock': ('x:6 x:6', '.:3 x:6 x:3', ' '.join(['x:2 x'] * 4)),
@@ -150,6 +154,8 @@ DRUMS = {
         'half': ('x:6 x:6', '.:6 x:6', ' '.join(['x:2 x'] * 4)),
         'sparse': ('x:12', '.:12', '.:3 x:3 .:3 x:3'),
         'fill': ('x:3 x:3 x:2 x x:2 x', '.:6 x x x x x x', '.:12'),
+        'soft': ('x:6 x:6', '.:12', '.:3 x:3 .:3 x:3'),
+        'none': ('.:12', '.:12', '.:12'),
     },
     6: {
         'waltz': ('.:6', '.:6', '.:2 x:2 x:2'),
@@ -218,7 +224,12 @@ def build(spec):
         out['basse'] = ' | '.join(bass(style['bass'], c, L, i, flats) for i, c in enumerate(chords))
         if 'grondement' in tracks:
             out['grondement'] = ' | '.join(drone(c, L, flats) for c in chords)
-        names = ['sparse'] * (bars - 1) + ['fill'] if sec == 'intro' else [style['drums']] * (bars - 1) + ['fill']
+        if not spec.get('fills', True):
+            names = [style['drums']] * bars                   # calm songs: no drum roll at the end of a section
+        elif sec == 'intro':
+            names = ['sparse'] * (bars - 1) + ['fill']
+        else:
+            names = [style['drums']] * (bars - 1) + ['fill']
         parts = [DRUMS[L][n] for n in names]
         for k, track in enumerate(('grosse', 'caisse', 'charley')):
             line = ' | '.join(p[k] for p in parts)
@@ -377,10 +388,73 @@ TOWN = dict(id='ville', title="Les Boulevards d'Utopia", bpm=160, meter='3/4', f
                     'b': dict(bass='waltz', guitar='waltz', drums='waltz')})
 
 
+# More town songs: one mood of Utopia each, warm and friendly (a community meeting up), major keys, no drone.
+TOWNS = [
+    dict(id='ville_marche', title='Jour de Marché', bpm=120, meter='4/4', drone=False, fills=False,
+         comment='Musique de ville : matinée de marché sur la place, sol majeur enjoué, flûte et banjo.',
+         lead='flute', b_lead='banjo', echo='chime', arp='pling',
+         prog={'a': 'G C G D G C D G', 'b': 'Em C G D Em C Am D'},
+         mel_a='D5:2 G5:2 B5:2 G5:2 A5:4 G5:4 | E5:4 G5:2 E5:2 C5:8 | B4:2 D5:2 G5:2 B5:2 D6:4 B5:4 '
+               '| A5:6 G5:2 F#5:4 D5:4 | D5:2 G5:2 B5:2 G5:2 C6:4 B5:4 | A5:2 G5:2 E5:2 G5:2 C6:8 '
+               '| B5:4 A5:2 G5:2 F#5:4 A5:4 | G5:12 .:4',
+         mel_b='G5:4 E5:4 B4:8 | C5:4 E5:4 G5:8 | D5:4 B4:4 G4:8 | A4:4 D5:4 F#5:8 | E5:2 F#5:2 G5:4 B5:8 '
+               '| A5:4 G5:4 E5:8 | C5:4 E5:4 A5:4 G5:4 | F#5:8 D5:8',
+         volumes={'grosse': ('basedrum', 0.4), 'charley': ('hat', 0.13)},
+         styles={'a': dict(bass='pump', guitar='off', drums='soft'),
+                 'b': dict(bass='long', guitar='off', drums='soft')}),
+    dict(id='ville_soir', title='Lanternes du Soir', bpm=84, meter='4/4', drone=False, fills=False, flats=True,
+         comment="Musique de ville : soirée calme quand les lanternes s'allument, mi bémol majeur, harpe et cloches.",
+         lead='harp', b_lead='flute', echo='bell', arp='chime',
+         prog={'a': 'Eb Ab Bb Eb Cm Ab Bb Bb', 'b': 'Ab Bb Gm Cm Ab Bb Eb Eb'},
+         mel_a='G5:8 Bb5:4 G5:4 | C6:8 Bb5:4 Ab5:4 | F5:8 D5:4 F5:4 | Eb5:16 | G5:8 C6:4 Bb5:4 | Ab5:8 C6:4 Eb6:4 '
+               '| D6:8 C6:4 Bb5:4 | F5:16',
+         mel_b='Eb6:8 C6:8 | D6:8 Bb5:8 | Bb5:4 G5:4 D6:8 | C6:16 | Ab5:4 C6:4 Eb6:8 | F6:8 D6:8 | Eb6:4 Bb5:4 G5:8 '
+               '| Eb5:16',
+         volumes={'arpege': ('chime', 0.2), 'grosse': ('basedrum', 0.35)},
+         styles={'a': dict(bass='long', guitar='arp', drums='sparse'),
+                 'b': dict(bass='long', guitar='arp', drums='none')}),
+    dict(id='ville_port', title='Le Port de Commerce', bpm=100, meter='12/8', drone=False, fills=False,
+         comment='Musique de ville : le Port de Commerce, ré majeur à 12/8 qui tangue, flûte, banjo et guitare.',
+         lead='flute', b_lead='banjo', echo='bell', arp='harp',
+         prog={'a': 'D G D A D G A D', 'b': 'Bm G D A Bm G Em A'},
+         mel_a='A4:2 D5 F#5:2 A5 D6:3 A5:3 | B5:2 A5 G5:2 B5 D6:6 | A5:2 F#5 D5:2 F#5 A5:6 | G5:2 F#5 E5:2 C#5 E5:6 '
+               '| F#5:2 G5 A5:2 B5 A5:3 F#5:3 | G5:2 B5 D6:2 B5 G5:6 | E5:2 F#5 G5:2 E5 C#5:3 E5:3 | D5:12',
+         mel_b='F#5:6 D5:6 | G5:3 B5:3 D5:6 | A5:6 F#5:6 | E5:12 | D5:2 F#5 B5:2 F#5 D5:6 | B4:2 D5 G5:2 D5 B4:6 '
+               '| E5:3 G5:3 B5:6 | C#5:12',
+         volumes={'grosse': ('basedrum', 0.4), 'charley': ('hat', 0.13)},
+         styles={'a': dict(bass='rock', guitar='strum', drums='soft'),
+                 'b': dict(bass='long', guitar='strum', drums='soft')}),
+    dict(id='ville_cafe', title='Café des Héros', bpm=112, meter='4/4', drone=False, fills=False, flats=True,
+         comment='Musique de ville : terrasse de café sur la Place des Héros, fa majeur aux accords de septième, basse qui marche.',
+         lead='pling', b_lead='flute', echo='bell', arp='harp',
+         prog={'a': 'Fmaj7 Dm7 Gm7 C7 Fmaj7 Dm7 Gm7 C7', 'b': 'Bbmaj7 Bbm Am7 D7 Gm7 C7 Fmaj7 C7'},
+         mel_a='A5:3 G5 F5:2 E5:2 F5:4 C5:4 | D5:2 F5:2 A5:2 C6:6 A5:4 | Bb5:3 A5 G5:2 F5:2 D5:8 '
+               '| E5:4 G5:4 Bb5:4 A5:2 G5:2 | A5:3 G5 F5:2 E5:2 F5:4 A5:4 | C6:4 D6:2 C6:2 A5:8 '
+               '| G5:2 A5:2 Bb5:2 D6:2 C6:4 Bb5:4 | G5:4 E5:4 C5:8',
+         mel_b='D6:4 C6:4 A5:8 | Db6:4 C6:4 Bb5:8 | C6:4 A5:4 E5:8 | F#5:4 A5:4 C6:8 | Bb5:4 A5:4 G5:8 '
+               '| E5:4 G5:4 Bb5:8 | A5:16 | G5:8 E5:8',
+         volumes={'grosse': ('basedrum', 0.35), 'charley': ('hat', 0.13), 'arpege': ('harp', 0.22)},
+         styles={'a': dict(bass='walk', guitar='off', drums='soft'),
+                 'b': dict(bass='walk', guitar='off', drums='soft')}),
+    dict(id='ville_guinguette', title='La Guinguette', bpm=132, meter='4/4', drone=False, fills=False,
+         comment='Musique de ville : fête populaire où tout le monde se retrouve, do majeur, air à fredonner, mains qui battent la mesure.',
+         lead='flute', b_lead='banjo', echo='pling', arp='pling',
+         prog={'a': 'C F C G C F G C', 'b': 'Am F C G F C G G'},
+         mel_a='G5:2 E5:2 G5:2 C6:2 E6:4 C6:4 | A5:2 C6:2 F6:4 E6:2 D6:2 C6:4 | G5:2 E5:2 G5:2 C6:2 D6:2 E6:2 C6:4 '
+               '| D6:4 B5:4 G5:8 | E6:2 E6:2 D6:2 C6:2 G5:4 C6:4 | F6:2 F6:2 E6:2 D6:2 A5:4 D6:4 '
+               '| C6:2 B5:2 A5:2 B5:2 D6:4 B5:4 | C6:12 .:4',
+         mel_b='E5:2 A5:2 C6:4 B5:2 A5:2 E5:4 | F5:2 A5:2 C6:4 A5:8 | G5:2 E5:2 C5:4 E5:2 G5:2 C6:4 | B5:4 G5:4 D5:8 '
+               '| A5:4 C6:4 F5:8 | E5:4 G5:4 C6:8 | D6:4 B5:4 G5:4 B5:4 | D6:16',
+         volumes={'grosse': ('basedrum', 0.45), 'caisse': ('snare', 0.25), 'charley': ('hat', 0.12)},
+         styles={'a': dict(bass='pump', guitar='off', drums='clap'),
+                 'b': dict(bass='pump', guitar='off', drums='clap')}),
+]
+
+
 def main():
     out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                                              '..', 'src', 'main', 'resources', 'songs')
-    for spec in SONGS + [TOWN]:
+    for spec in SONGS + [TOWN] + TOWNS:
         text = yaml(*build(spec))
         with open(os.path.join(out, spec['id'] + '.yml'), 'w', encoding='utf-8') as f:
             f.write(text)

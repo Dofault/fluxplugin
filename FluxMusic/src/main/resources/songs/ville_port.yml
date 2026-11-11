@@ -1,0 +1,49 @@
+# Musique de ville : le Port de Commerce, ré majeur à 12/8 qui tangue, flûte, banjo et guitare.
+# Généré par FluxMusic/assets/gen_songs.py : modifier le script, pas ce fichier.
+title: "Le Port de Commerce"
+author: "Influencraft"
+bpm: 100
+steps-per-beat: 3
+beats-per-bar: 4
+loop: true
+loop-from: a
+
+tracks:
+  lead: { instrument: flute, volume: 0.8 }
+  chant: { instrument: banjo, volume: 0.7 }
+  echo: { instrument: bell, volume: 0.3 }
+  arpege: { instrument: harp, volume: 0.32 }
+  guitare: { instrument: guitar, volume: 0.55 }
+  basse: { instrument: bass, volume: 0.85 }
+  grosse: { instrument: basedrum, volume: 0.4 }
+  charley: { instrument: hat, volume: 0.13 }
+
+sections:
+  intro:
+    arpege: "D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 A4 F#4 | D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 A4 F#4"
+    basse: "D2:2 D3 D2:2 D3 D2:2 D3 D2:2 D3 | D2:2 D3 D2:2 D3 D2:2 D3 D2:2 D3"
+    grosse: "x:6 x:6 | x:6 x:6"
+    charley: ".:3 x:3 .:3 x:3 | .:3 x:3 .:3 x:3"
+  a:
+    lead: "A4:2 D5 F#5:2 A5 D6:3 A5:3 | B5:2 A5 G5:2 B5 D6:6 | A5:2 F#5 D5:2 F#5 A5:6 | G5:2 F#5 E5:2 C#5 E5:6 | F#5:2 G5 A5:2 B5 A5:3 F#5:3 | G5:2 B5 D6:2 B5 G5:6 | E5:2 F#5 G5:2 E5 C#5:3 E5:3 | D5:12"
+    guitare: "D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 | G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 | D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 | A2+C#3+E3:2 A2+C#3+E3 A2+C#3+E3:2 A2+C#3+E3 A2+C#3+E3:2 A2+C#3+E3 A2+C#3+E3:2 A2+C#3+E3 | D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 | G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 | A2+C#3+E3:2 A2+C#3+E3 A2+C#3+E3:2 A2+C#3+E3 A2+C#3+E3:2 A2+C#3+E3 A2+C#3+E3:2 A2+C#3+E3 | D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3"
+    basse: "D2:2 D3 D2:2 D3 D2:2 D3 D2:2 D3 | G1:2 G2 G1:2 G2 G1:2 G2 G1:2 G2 | D2:2 D3 D2:2 D3 D2:2 D3 D2:2 D3 | A1:2 A2 A1:2 A2 A1:2 A2 A1:2 A2 | D2:2 D3 D2:2 D3 D2:2 D3 D2:2 D3 | G1:2 G2 G1:2 G2 G1:2 G2 G1:2 G2 | A1:2 A2 A1:2 A2 A1:2 A2 A1:2 A2 | D2:2 D3 D2:2 D3 D2:2 D3 D2:2 D3"
+    grosse: "x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6"
+    charley: ".:3 x:3 .:3 x:3 | .:3 x:3 .:3 x:3 | .:3 x:3 .:3 x:3 | .:3 x:3 .:3 x:3 | .:3 x:3 .:3 x:3 | .:3 x:3 .:3 x:3 | .:3 x:3 .:3 x:3 | .:3 x:3 .:3 x:3"
+  b:
+    chant: "F#4:6 D4:6 | G4:3 B4:3 D4:6 | A4:6 F#4:6 | E4:12 | D4:2 F#4 B4:2 F#4 D4:6 | B3:2 D4 G4:2 D4 B3:6 | E4:3 G4:3 B4:6 | C#4:12"
+    arpege: "B3 D4 F#4 B4 F#4 D4 B3 D4 F#4 B4 F#4 D4 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 | D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 A4 F#4 | A3 C#4 E4 A4 E4 C#4 A3 C#4 E4 A4 E4 C#4 | B3 D4 F#4 B4 F#4 D4 B3 D4 F#4 B4 F#4 D4 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 | E4 G4 B4 E5 B4 G4 E4 G4 B4 E5 B4 G4 | A3 C#4 E4 A4 E4 C#4 A3 C#4 E4 A4 E4 C#4"
+    guitare: "B2+D3+F#3:2 B2+D3+F#3 B2+D3+F#3:2 B2+D3+F#3 B2+D3+F#3:2 B2+D3+F#3 B2+D3+F#3:2 B2+D3+F#3 | G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 | D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 | A2+C#3+E3:2 A2+C#3+E3 A2+C#3+E3:2 A2+C#3+E3 A2+C#3+E3:2 A2+C#3+E3 A2+C#3+E3:2 A2+C#3+E3 | B2+D3+F#3:2 B2+D3+F#3 B2+D3+F#3:2 B2+D3+F#3 B2+D3+F#3:2 B2+D3+F#3 B2+D3+F#3:2 B2+D3+F#3 | G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 | E3+G3+B3:2 E3+G3+B3 E3+G3+B3:2 E3+G3+B3 E3+G3+B3:2 E3+G3+B3 E3+G3+B3:2 E3+G3+B3 | A2+C#3+E3:2 A2+C#3+E3 A2+C#3+E3:2 A2+C#3+E3 A2+C#3+E3:2 A2+C#3+E3 A2+C#3+E3:2 A2+C#3+E3"
+    basse: "B1:6 F#2:6 | G1:6 D2:6 | D2:6 A2:6 | A1:6 E2:6 | B1:6 F#2:6 | G1:6 D2:6 | E2:6 B2:6 | A1:6 E2:6"
+    grosse: "x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6"
+    charley: ".:3 x:3 .:3 x:3 | .:3 x:3 .:3 x:3 | .:3 x:3 .:3 x:3 | .:3 x:3 .:3 x:3 | .:3 x:3 .:3 x:3 | .:3 x:3 .:3 x:3 | .:3 x:3 .:3 x:3 | .:3 x:3 .:3 x:3"
+  a2:
+    lead: "A4:2 D5 F#5:2 A5 D6:3 A5:3 | B5:2 A5 G5:2 B5 D6:6 | A5:2 F#5 D5:2 F#5 A5:6 | G5:2 F#5 E5:2 C#5 E5:6 | F#5:2 G5 A5:2 B5 A5:3 F#5:3 | G5:2 B5 D6:2 B5 G5:6 | E5:2 F#5 G5:2 E5 C#5:3 E5:3 | D5:12"
+    echo: "A5:2 D6 F#6:2 A6 D7:3 A6:3 | B6:2 A6 G6:2 B6 D7:6 | A6:2 F#6 D6:2 F#6 A6:6 | G6:2 F#6 E6:2 C#6 E6:6 | F#6:2 G6 A6:2 B6 A6:3 F#6:3 | G6:2 B6 D7:2 B6 G6:6 | E6:2 F#6 G6:2 E6 C#6:3 E6:3 | D6:12"
+    arpege: "D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 A4 F#4 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 | D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 A4 F#4 | A3 C#4 E4 A4 E4 C#4 A3 C#4 E4 A4 E4 C#4 | D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 A4 F#4 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 | A3 C#4 E4 A4 E4 C#4 A3 C#4 E4 A4 E4 C#4 | D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 A4 F#4"
+    guitare: "D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 | G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 | D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 | A2+C#3+E3:2 A2+C#3+E3 A2+C#3+E3:2 A2+C#3+E3 A2+C#3+E3:2 A2+C#3+E3 A2+C#3+E3:2 A2+C#3+E3 | D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 | G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 | A2+C#3+E3:2 A2+C#3+E3 A2+C#3+E3:2 A2+C#3+E3 A2+C#3+E3:2 A2+C#3+E3 A2+C#3+E3:2 A2+C#3+E3 | D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3 D3+F#3+A3:2 D3+F#3+A3"
+    basse: "D2:2 D3 D2:2 D3 D2:2 D3 D2:2 D3 | G1:2 G2 G1:2 G2 G1:2 G2 G1:2 G2 | D2:2 D3 D2:2 D3 D2:2 D3 D2:2 D3 | A1:2 A2 A1:2 A2 A1:2 A2 A1:2 A2 | D2:2 D3 D2:2 D3 D2:2 D3 D2:2 D3 | G1:2 G2 G1:2 G2 G1:2 G2 G1:2 G2 | A1:2 A2 A1:2 A2 A1:2 A2 A1:2 A2 | D2:2 D3 D2:2 D3 D2:2 D3 D2:2 D3"
+    grosse: "x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6"
+    charley: ".:3 x:3 .:3 x:3 | .:3 x:3 .:3 x:3 | .:3 x:3 .:3 x:3 | .:3 x:3 .:3 x:3 | .:3 x:3 .:3 x:3 | .:3 x:3 .:3 x:3 | .:3 x:3 .:3 x:3 | .:3 x:3 .:3 x:3"
+
+order: [intro, a, b, a2]

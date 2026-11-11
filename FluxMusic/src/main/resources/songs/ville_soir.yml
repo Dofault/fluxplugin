@@ -1,0 +1,47 @@
+# Musique de ville : soirée calme quand les lanternes s'allument, mi bémol majeur, harpe et cloches.
+# Généré par FluxMusic/assets/gen_songs.py : modifier le script, pas ce fichier.
+title: "Lanternes du Soir"
+author: "Influencraft"
+bpm: 84
+steps-per-beat: 4
+beats-per-bar: 4
+loop: true
+loop-from: a
+
+tracks:
+  lead: { instrument: harp, volume: 0.8 }
+  chant: { instrument: flute, volume: 0.7 }
+  echo: { instrument: bell, volume: 0.3 }
+  arpege: { instrument: chime, volume: 0.2 }
+  guitare: { instrument: guitar, volume: 0.55 }
+  basse: { instrument: bass, volume: 0.85 }
+  grosse: { instrument: basedrum, volume: 0.35 }
+  charley: { instrument: hat, volume: 0.17 }
+
+sections:
+  intro:
+    arpege: "Eb6 G6 Bb6 Eb7 Bb6 G6 Eb6 G6 Bb6 Eb7 Bb6 G6 Eb6 G6 Bb6 Eb7 | Eb6 G6 Bb6 Eb7 Bb6 G6 Eb6 G6 Bb6 Eb7 Bb6 G6 Eb6 G6 Bb6 Eb7"
+    basse: "Eb2:8 Bb2:8 | Eb2:8 Bb2:8"
+    grosse: "x:16 | x:16"
+    charley: ".:4 x:4 .:4 x:4 | .:4 x:4 .:4 x:4"
+  a:
+    lead: "G4:8 Bb4:4 G4:4 | C5:8 Bb4:4 Ab4:4 | F4:8 D4:4 F4:4 | Eb4:16 | G4:8 C5:4 Bb4:4 | Ab4:8 C5:4 Eb5:4 | D5:8 C5:4 Bb4:4 | F4:16"
+    guitare: "Eb3:2 G3:2 Bb3:2 Eb4:2 Bb3:2 G3:2 Eb3:2 G3:2 | Ab2:2 C3:2 Eb3:2 Ab3:2 Eb3:2 C3:2 Ab2:2 C3:2 | Bb2:2 D3:2 F3:2 Bb3:2 F3:2 D3:2 Bb2:2 D3:2 | Eb3:2 G3:2 Bb3:2 Eb4:2 Bb3:2 G3:2 Eb3:2 G3:2 | C3:2 Eb3:2 G3:2 C4:2 G3:2 Eb3:2 C3:2 Eb3:2 | Ab2:2 C3:2 Eb3:2 Ab3:2 Eb3:2 C3:2 Ab2:2 C3:2 | Bb2:2 D3:2 F3:2 Bb3:2 F3:2 D3:2 Bb2:2 D3:2 | Bb2:2 D3:2 F3:2 Bb3:2 F3:2 D3:2 Bb2:2 D3:2"
+    basse: "Eb2:8 Bb2:8 | Ab1:8 Eb2:8 | Bb1:8 F2:8 | Eb2:8 Bb2:8 | C2:8 G2:8 | Ab1:8 Eb2:8 | Bb1:8 F2:8 | Bb1:8 F2:8"
+    grosse: "x:16 | x:16 | x:16 | x:16 | x:16 | x:16 | x:16 | x:16"
+    charley: ".:4 x:4 .:4 x:4 | .:4 x:4 .:4 x:4 | .:4 x:4 .:4 x:4 | .:4 x:4 .:4 x:4 | .:4 x:4 .:4 x:4 | .:4 x:4 .:4 x:4 | .:4 x:4 .:4 x:4 | .:4 x:4 .:4 x:4"
+  b:
+    chant: "Eb6:8 C6:8 | D6:8 Bb5:8 | Bb5:4 G5:4 D6:8 | C6:16 | Ab5:4 C6:4 Eb6:8 | F6:8 D6:8 | Eb6:4 Bb5:4 G5:8 | Eb5:16"
+    arpege: "Ab6 C7 Eb7 C7 Ab6 C7 Eb7 C7 Ab6 C7 Eb7 C7 Ab6 C7 Eb7 C7 | Bb5 D6 F6 Bb6 F6 D6 Bb5 D6 F6 Bb6 F6 D6 Bb5 D6 F6 Bb6 | G6 Bb6 D7 Bb6 G6 Bb6 D7 Bb6 G6 Bb6 D7 Bb6 G6 Bb6 D7 Bb6 | C6 Eb6 G6 C7 G6 Eb6 C6 Eb6 G6 C7 G6 Eb6 C6 Eb6 G6 C7 | Ab6 C7 Eb7 C7 Ab6 C7 Eb7 C7 Ab6 C7 Eb7 C7 Ab6 C7 Eb7 C7 | Bb5 D6 F6 Bb6 F6 D6 Bb5 D6 F6 Bb6 F6 D6 Bb5 D6 F6 Bb6 | Eb6 G6 Bb6 Eb7 Bb6 G6 Eb6 G6 Bb6 Eb7 Bb6 G6 Eb6 G6 Bb6 Eb7 | Eb6 G6 Bb6 Eb7 Bb6 G6 Eb6 G6 Bb6 Eb7 Bb6 G6 Eb6 G6 Bb6 Eb7"
+    guitare: "Ab2:2 C3:2 Eb3:2 Ab3:2 Eb3:2 C3:2 Ab2:2 C3:2 | Bb2:2 D3:2 F3:2 Bb3:2 F3:2 D3:2 Bb2:2 D3:2 | G2:2 Bb2:2 D3:2 G3:2 D3:2 Bb2:2 G2:2 Bb2:2 | C3:2 Eb3:2 G3:2 C4:2 G3:2 Eb3:2 C3:2 Eb3:2 | Ab2:2 C3:2 Eb3:2 Ab3:2 Eb3:2 C3:2 Ab2:2 C3:2 | Bb2:2 D3:2 F3:2 Bb3:2 F3:2 D3:2 Bb2:2 D3:2 | Eb3:2 G3:2 Bb3:2 Eb4:2 Bb3:2 G3:2 Eb3:2 G3:2 | Eb3:2 G3:2 Bb3:2 Eb4:2 Bb3:2 G3:2 Eb3:2 G3:2"
+    basse: "Ab1:8 Eb2:8 | Bb1:8 F2:8 | G1:8 D2:8 | C2:8 G2:8 | Ab1:8 Eb2:8 | Bb1:8 F2:8 | Eb2:8 Bb2:8 | Eb2:8 Bb2:8"
+  a2:
+    lead: "G4:8 Bb4:4 G4:4 | C5:8 Bb4:4 Ab4:4 | F4:8 D4:4 F4:4 | Eb4:16 | G4:8 C5:4 Bb4:4 | Ab4:8 C5:4 Eb5:4 | D5:8 C5:4 Bb4:4 | F4:16"
+    echo: "G6:8 Bb6:4 G6:4 | C7:8 Bb6:4 Ab6:4 | F6:8 D6:4 F6:4 | Eb6:16 | G6:8 C7:4 Bb6:4 | Ab6:8 C7:4 Eb7:4 | D7:8 C7:4 Bb6:4 | F6:16"
+    arpege: "Eb6 G6 Bb6 Eb7 Bb6 G6 Eb6 G6 Bb6 Eb7 Bb6 G6 Eb6 G6 Bb6 Eb7 | Ab6 C7 Eb7 C7 Ab6 C7 Eb7 C7 Ab6 C7 Eb7 C7 Ab6 C7 Eb7 C7 | Bb5 D6 F6 Bb6 F6 D6 Bb5 D6 F6 Bb6 F6 D6 Bb5 D6 F6 Bb6 | Eb6 G6 Bb6 Eb7 Bb6 G6 Eb6 G6 Bb6 Eb7 Bb6 G6 Eb6 G6 Bb6 Eb7 | C6 Eb6 G6 C7 G6 Eb6 C6 Eb6 G6 C7 G6 Eb6 C6 Eb6 G6 C7 | Ab6 C7 Eb7 C7 Ab6 C7 Eb7 C7 Ab6 C7 Eb7 C7 Ab6 C7 Eb7 C7 | Bb5 D6 F6 Bb6 F6 D6 Bb5 D6 F6 Bb6 F6 D6 Bb5 D6 F6 Bb6 | Bb5 D6 F6 Bb6 F6 D6 Bb5 D6 F6 Bb6 F6 D6 Bb5 D6 F6 Bb6"
+    guitare: "Eb3:2 G3:2 Bb3:2 Eb4:2 Bb3:2 G3:2 Eb3:2 G3:2 | Ab2:2 C3:2 Eb3:2 Ab3:2 Eb3:2 C3:2 Ab2:2 C3:2 | Bb2:2 D3:2 F3:2 Bb3:2 F3:2 D3:2 Bb2:2 D3:2 | Eb3:2 G3:2 Bb3:2 Eb4:2 Bb3:2 G3:2 Eb3:2 G3:2 | C3:2 Eb3:2 G3:2 C4:2 G3:2 Eb3:2 C3:2 Eb3:2 | Ab2:2 C3:2 Eb3:2 Ab3:2 Eb3:2 C3:2 Ab2:2 C3:2 | Bb2:2 D3:2 F3:2 Bb3:2 F3:2 D3:2 Bb2:2 D3:2 | Bb2:2 D3:2 F3:2 Bb3:2 F3:2 D3:2 Bb2:2 D3:2"
+    basse: "Eb2:8 Bb2:8 | Ab1:8 Eb2:8 | Bb1:8 F2:8 | Eb2:8 Bb2:8 | C2:8 G2:8 | Ab1:8 Eb2:8 | Bb1:8 F2:8 | Bb1:8 F2:8"
+    grosse: "x:16 | x:16 | x:16 | x:16 | x:16 | x:16 | x:16 | x:16"
+    charley: ".:4 x:4 .:4 x:4 | .:4 x:4 .:4 x:4 | .:4 x:4 .:4 x:4 | .:4 x:4 .:4 x:4 | .:4 x:4 .:4 x:4 | .:4 x:4 .:4 x:4 | .:4 x:4 .:4 x:4 | .:4 x:4 .:4 x:4"
+
+order: [intro, a, b, a2]
