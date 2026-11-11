@@ -105,9 +105,11 @@ The plugins are written **as English plugins, then adapted to French** for our s
   market of FluxCommerce (`/influmarche depuis <back command> <source> [search]`), not by FluxLands.
 - FluxValue owns the weights of everything farmable (`sources.yml`) and the coefficients (`economy.yml`); `JobsWriter` is the only code that knows EcoJobs' files and `CollectionsWriter` the only one for EcoCollections' tiers. FluxOffering computes its quantities from `offerings.yml` (`OfferingBudget`), FluxShop its prices (`PriceManager`).
 - FluxDungeons owns the rpg universe (`rpg` package: lobby world, classes, stats, `CombatEngine` = the only thing that changes life there, skills; pure core in `rpg.core`, tested by `mvn -pl FluxDungeons -am test`; configs `rpg/*.yml`, see `docs/technique/rpg.md`), dungeons, classes and parties (`fluxdungeons.api.Dungeons`: `playing(player)`, `dungeonWorld(world)`):
-  a player in a run carries only what he chose on the launch screen (armour, six items), the rest of his things wait
-  in `flux_dungeons_vault` (written before he enters, deleted once given back, also at join after a crash). Gear of a
-  player who died stays locked in `flux_dungeons_lost` until someone wins that dungeon. Never give, take or check items
+  dungeon worlds belong to the rpg universe (`dungeon.RpgBridge`, set by `FluxDungeons#wireRpg`): a run uses the
+  rpg profile, class, experience and lobby; the rpg `CombatEngine` fights dungeon monsters after the dungeon rules
+  (`combat.CombatRules`, which may refuse or react to a hit; a player's hit reaches them as a synthetic Bukkit hit).
+  Without the rpg module, the former vanilla-gear play (launch screen gear, `flux_dungeons_vault`, gear locked in
+  `flux_dungeons_lost` on death) still runs. Never give, take or check items
   of a player in a run from another plugin; stay out of runs with `Dungeons.playing`. Pets come in through Flux's
   `pets.Companions` (provided by FluxPets), never through FluxPets itself. Parties (`party.Parties`) know nothing of dungeons, to
   move into Flux the day another plugin needs groups. BetterModel is only touched by `mob.ModelBridge`.
