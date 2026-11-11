@@ -6,6 +6,7 @@ import fr.influencraft.flux.api.util.Players;
 import fr.influencraft.flux.api.jobs.JobLevelUpEvent;
 import fr.influencraft.flux.api.music.Music;
 import fr.influencraft.flux.api.util.PlayerSettings;
+import fr.influencraft.fluxmusic.play.Ambience;
 import fr.influencraft.fluxmusic.play.Jukebox;
 import fr.influencraft.fluxmusic.song.NbsReader;
 import fr.influencraft.fluxmusic.song.ScoreReader;
@@ -41,17 +42,22 @@ import java.util.stream.Stream;
  * </pre>
  *
  * Other plugins play music through Flux's {@link Music} (this plugin is its provider); moments of the game that
- * FluxMusic follows itself (job level up) are given a song in {@code moments} of config.yml.
+ * FluxMusic follows itself (job level up) are given a song in {@code moments} of config.yml, and places (worlds)
+ * their ambient songs in {@code ambience} (see {@link Ambience}).
  */
 public final class FluxMusic extends FluxPlugin implements Listener {
 
     private volatile Map<String, Song> songs = Map.of();
     private Jukebox jukebox;
+    private Ambience ambience;
 
     @Override
     protected void enable() {
         jukebox = new Jukebox();
+        ambience = new Ambience(jukebox, this::song, FluxMusic::wants);
         loadSongs();
+        ambience.load(getConfig().getConfigurationSection("ambience"), getLogger());
+        Bukkit.getScheduler().runTaskTimer(this, ambience::tick, 40L, 20L);
         Music.provide(new Music.Provider() {
             public boolean play(Player player, String id, Boolean loop) {
                 Song song = song(id);
@@ -100,11 +106,13 @@ public final class FluxMusic extends FluxPlugin implements Listener {
     public void reload() {
         super.reload();
         loadSongs();
+        if (ambience != null) ambience.load(getConfig().getConfigurationSection("ambience"), getLogger());
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
         jukebox.stopAll(e.getPlayer().getUniqueId());
+        ambience.forget(e.getPlayer().getUniqueId());
     }
 
     /** Moments of the game given a song in config.yml ({@code moments}); empty = nothing played. */

@@ -5,3 +5,10 @@ volume: 1.0
 # Song played (as a jingle, over the music) at moments of the game. Empty = nothing.
 moments:
   job-level-up: niveau
+# Ambient music of places: while a player is in one of the worlds, these songs play one after another (shuffled),
+# with a pause between two. Other music (crates, dungeons) always wins; the ambience comes back after it.
+ambience:
+  resaac:
+    worlds: [resaac]
+    pause-seconds: 6
+    songs: [spawn_matin, spawn_brise, spawn_etoiles, spawn_jardin, spawn_fontaine]

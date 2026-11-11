@@ -465,7 +465,7 @@ SPAWN = [
          volumes=CALM,
          styles={'a': dict(bass='long', guitar='arp', drums='none'),
                  'b': dict(bass='long', guitar='arp', drums='none')}),
-    dict(id='spawn_brise', title='Brise sur Utopia', bpm=66, meter='12/8', drone=False, fills=False,
+    dict(id='spawn_brise', title='Brise sur Resaac', bpm=66, meter='12/8', drone=False, fills=False,
          comment='Spawn : une brise qui balance doucement, sol majeur à 12/8, flûte puis harpe.',
          lead='flute', b_lead='harp', echo='chime', arp='harp',
          prog={'a': 'G Em C D G Em C G', 'b': 'C D Bm Em C D G G'},
