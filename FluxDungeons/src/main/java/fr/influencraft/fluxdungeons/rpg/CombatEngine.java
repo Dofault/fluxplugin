@@ -162,10 +162,18 @@ public final class CombatEngine implements Listener {
         life.remove(p.getUniqueId());
     }
 
-    /** The game's health shows the engine's share of life (never 0 while alive: death is the engine's call). */
+    /**
+     * The game's health of a creature shows the engine's share of life (boss phases "below half", its bar; never 0
+     * while alive: death is the engine's call). A player's stays full: his hearts are covered by the hud's life bar,
+     * full hearts never shake nor blink out from under it.
+     */
     private void mirror(LivingEntity e, double hp, double max) {
         AttributeInstance a = e.getAttribute(Attribute.MAX_HEALTH);
         double vanillaMax = a == null ? 20 : a.getValue();
+        if (e instanceof Player) {
+            if (hp > 0 && e.getHealth() != vanillaMax) e.setHealth(vanillaMax);
+            return;
+        }
         double v = max <= 0 ? vanillaMax : vanillaMax * hp / max;
         if (hp > 0) v = Math.max(Math.min(0.5, vanillaMax), v);
         e.setHealth(Math.max(0, Math.min(vanillaMax, v)));

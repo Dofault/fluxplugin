@@ -1,6 +1,7 @@
-"""Rpg hud: a life bar and a mana bar drawn exactly where the hearts and the food are (2026-11-11). The hearts, food
-and armour themselves are hidden by an overlay pack FluxDungeons sends to players of the rpg universe. Writes a font
-of its own into an ItemsAdder pack folder:
+"""Rpg hud: a life bar and a mana bar drawn over the hearts and the food (2026-11-11), in the server's one pack.
+The bars are opaque and one pixel larger than the vanilla rows on every side: sent in the action bar (drawn after
+the hearts and food), they cover them. In the rpg universe the vanilla life, food and saturation stay full, so the
+rows underneath never shake nor blink out of the cover. Writes a font of its own into an ItemsAdder pack folder:
 
     <pack>/resourcepack/assets/fluxdungeons/font/hud.json
     <pack>/resourcepack/assets/fluxdungeons/textures/font/hud_life.png    (one picture per step, STEPS + 1)
@@ -9,9 +10,9 @@ of its own into an ItemsAdder pack folder:
 
     python3 gen_hud.py <ItemsAdder/contents/fluxdungeons>      (needs Pillow), then /iazip
 
-The bars are sent in the action bar: its text sits 68 px above the bottom of the screen, the hearts row 39 px; a
-negative ascent brings the bars down onto that row (ASCENT, tuned in game). Hearts span the 81 px left of the centre
-(minus 10), food the 81 px right of it: one bar each, a 20 px gap between them, 182 px in all (the hotbar).
+The action bar's text sits 72 px above the bottom of the screen, the hearts row 39 px; a negative ascent brings the
+bars down onto that row, one pixel above it (ASCENT, check in game). Hearts span the 81 px left of the centre (minus
+10), food the 81 px right of it: one 83 px bar each from one pixel before, 18 px between them, 184 px in all.
 
 Chars: U+E100 + step = life bar, U+E200 + step = mana bar, U+E300.. = '0'-'9' then '/', U+F001-U+F008 move back 1, 2,
 4 ... 128 px, U+F011-U+F018 forward as much. FluxDungeons (rpg/RpgHud.java) writes the same numbers: keep STEPS,
@@ -25,18 +26,18 @@ import sys
 from PIL import Image
 
 STEPS = 40
-BAR_W, BAR_H = 81, 9
-FILL_X0, FILL_X1, FILL_Y0, FILL_Y1 = 1, 79, 1, 7
-ASCENT = -26          # top of the bar on the hearts row (68 - 39 - 7 = 22, plus the 4 px of the action bar line)
+BAR_W, BAR_H = 83, 11
+FILL_X0, FILL_X1, FILL_Y0, FILL_Y1 = 1, 81, 1, 9
+ASCENT = -25          # top of the hearts row = 72 - 39 = 33 px under the top of the line (ascent 7), minus 1
 DIGIT_W, DIGIT_H = 5, 5
 
 OUTLINE = (13, 13, 13, 255)
 LIFE_EMPTY = (52, 12, 20, 255)
-LIFE = [(255, 150, 150, 255), (255, 110, 110, 255), (255, 92, 92, 255), (247, 78, 82, 255), (236, 64, 74, 255),
-        (220, 50, 66, 255), (200, 37, 58, 255)]
+LIFE = [(255, 160, 160, 255), (255, 130, 130, 255), (255, 110, 110, 255), (255, 92, 92, 255), (247, 78, 82, 255),
+        (236, 64, 74, 255), (220, 50, 66, 255), (210, 44, 62, 255), (200, 37, 58, 255)]
 MANA_EMPTY = (10, 28, 52, 255)
-MANA = [(170, 236, 255, 255), (120, 220, 250, 255), (80, 205, 240, 255), (43, 196, 232, 255), (32, 170, 214, 255),
-        (24, 146, 196, 255), (18, 120, 176, 255)]
+MANA = [(180, 240, 255, 255), (150, 230, 252, 255), (120, 220, 250, 255), (80, 205, 240, 255), (43, 196, 232, 255),
+        (32, 170, 214, 255), (24, 146, 196, 255), (20, 132, 186, 255), (18, 120, 176, 255)]
 DIGIT, DIGIT_SHADOW = (255, 255, 255, 255), (13, 13, 13, 255)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -47,10 +48,9 @@ SLASH = ["....#", "...#.", "..#..", ".#...", "#...."]
 def bar(step, empty, fill):
     im = Image.new("RGBA", (BAR_W, BAR_H), (0, 0, 0, 0))
     px = im.load()
+    # fully opaque, corners too: it must hide the vanilla row under it
     for x in range(BAR_W):
         for y in range(BAR_H):
-            if (x in (0, BAR_W - 1)) and (y in (0, BAR_H - 1)):
-                continue
             px[x, y] = OUTLINE if x in (0, BAR_W - 1) or y in (0, BAR_H - 1) else empty
     width = FILL_X1 - FILL_X0 + 1
     filled = round(width * step / STEPS)
@@ -105,7 +105,7 @@ def main(pack):
          "chars": ["".join(chr(0xE100 + s) for s in range(STEPS + 1))]},
         {"type": "bitmap", "file": "fluxdungeons:font/hud_mana.png", "ascent": ASCENT, "height": BAR_H,
          "chars": ["".join(chr(0xE200 + s) for s in range(STEPS + 1))]},
-        {"type": "bitmap", "file": "fluxdungeons:font/hud_digits.png", "ascent": ASCENT - 2, "height": DIGIT_H,
+        {"type": "bitmap", "file": "fluxdungeons:font/hud_digits.png", "ascent": ASCENT - 3, "height": DIGIT_H,
          "chars": ["".join(chr(0xE300 + i) for i in range(count))]},
     ]}
     with open(os.path.join(root, "font", "hud.json"), "w", encoding="utf-8") as f:

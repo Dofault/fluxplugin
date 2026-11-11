@@ -69,14 +69,15 @@ public final class RpgPlayers implements Listener {
         this.config = config;
         this.store = store;
         this.items = items;
-        this.hud = new RpgHud(plugin);
-        this.hud.register();
+        this.hud = new RpgHud();
     }
 
     void bind(RpgWorld world, CombatEngine combat) {
         this.world = world;
         this.combat = combat;
         Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 10L, 10L);
+        // the bars cover the hearts and the food: refreshed often, so another plugin's action bar uncovers them briefly
+        Bukkit.getScheduler().runTaskTimer(plugin, this::drawHud, 5L, 4L);
         Bukkit.getScheduler().runTaskTimer(plugin, this::saveAll, 1200L, 1200L);
     }
 
@@ -95,7 +96,6 @@ public final class RpgPlayers implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent e) {
-        overlaidAfterJoin.remove(e.getPlayer().getUniqueId());
         stop(e.getPlayer(), false);
     }
 
@@ -107,7 +107,6 @@ public final class RpgPlayers implements Listener {
         }
         UUID id = p.getUniqueId();
         if (online.containsKey(id) || !loading.add(id)) return;
-        hud.show(p);
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             RpgStore.Hero hero;
             RpgStore.Progress progress = null;
@@ -141,15 +140,14 @@ public final class RpgPlayers implements Listener {
     private void setup(Player p, ClassDef c, int level, double xp, boolean fresh) {
         RpgPlayer r = new RpgPlayer(p.getUniqueId(), c, Math.max(1, level), xp);
         online.put(p.getUniqueId(), r);
-        // the game's health of his rpg profile holds the share of life he left with
-        AttributeInstance max = p.getAttribute(Attribute.MAX_HEALTH);
-        double share = fresh || max == null ? 1 : p.getHealth() / max.getValue();
+        // entering the universe: full life and mana (the game's own life stays full there, the engine's is the real one)
         recompute(p);
         r.mana(r.stats().get("max_mana"));
-        combat.life(p, share * r.stats().get("max_health"));
+        combat.life(p, r.stats().get("max_health"));
         giveWeaponIfMissing(p, r);
+        // full food and saturation: the food row never shakes out from under the mana bar
         p.setFoodLevel(20);
-        p.setSaturation(0);
+        p.setSaturation(20);
         showLevel(p, r);
     }
 
@@ -164,7 +162,6 @@ public final class RpgPlayers implements Listener {
         if (attackSpeed != null) attackSpeed.removeModifier(ATTACK_SPEED);
         AttributeInstance reach = p.getAttribute(Attribute.ENTITY_INTERACTION_RANGE);
         if (reach != null) reach.removeModifier(REACH);
-        if (left) hud.hide(p);
         if (r == null) return;
         if (combat != null) combat.forget(p);
         int level = r.level();
@@ -452,21 +449,6 @@ public final class RpgPlayers implements Listener {
         recomputeSoon(e.getPlayer());
     }
 
-    /**
-     * Another pack just loaded (the server's own pack at join may replace every pack): the hud overlay goes back on top
-     * for a player of the rpg universe.
-     */
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onPack(org.bukkit.event.player.PlayerResourcePackStatusEvent e) {
-        if (e.getStatus() != org.bukkit.event.player.PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED) return;
-        if (fr.influencraft.flux.api.client.ResourceOverlays.isOverlay(e.getID())) return;
-        Player p = e.getPlayer();
-        // once per connection: RPEngine sends its packs again whenever another one comes after them (no loop)
-        if (RpgWorld.UNIVERSE.equals(Universes.of(p)) && overlaidAfterJoin.add(p.getUniqueId())) hud.show(p);
-    }
-
-    private final Set<UUID> overlaidAfterJoin = new HashSet<>();
-
     /** Back on his feet in the lobby, full life and mana. */
     @EventHandler(priority = EventPriority.HIGH)
     public void onRespawn(PlayerRespawnEvent e) {
@@ -535,7 +517,14 @@ public final class RpgPlayers implements Listener {
             boolean calm = now - r.lastHurt() > CALM_TICKS && now - r.lastAttack() > CALM_TICKS;
             if (calm) regen += s.get("max_health") * 0.05 * 0.5;
             if (regen > 0) combat.heal(p, regen, false);
-            hud(p, r, now);
+        }
+    }
+
+    private void drawHud() {
+        long now = CombatEngine.now();
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            RpgPlayer r = online.get(p.getUniqueId());
+            if (r != null && r.stats() != null && !p.isDead()) hud(p, r, now);
         }
     }
 
