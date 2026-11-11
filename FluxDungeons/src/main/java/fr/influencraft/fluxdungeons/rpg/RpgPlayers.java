@@ -92,6 +92,23 @@ public final class RpgPlayers implements Listener {
         return online.get(p.getUniqueId());
     }
 
+    /** Whether he may enter a dungeon: an rpg class loaded, or outside the rpg universe (chosen on arriving). */
+    public boolean mayPlay(Player p) {
+        return online.containsKey(p.getUniqueId()) || !RpgWorld.UNIVERSE.equals(Universes.of(p));
+    }
+
+    /** Average rpg level of the players in this world (a dungeon's party), 1 when none. */
+    public int averageLevel(org.bukkit.World w) {
+        int sum = 0, n = 0;
+        for (Player p : w.getPlayers()) {
+            RpgPlayer r = online.get(p.getUniqueId());
+            if (r == null) continue;
+            sum += r.level();
+            n++;
+        }
+        return n == 0 ? 1 : Math.max(1, Math.round((float) sum / n));
+    }
+
     // ------------------------------------------------------------------ entering and leaving the universe
 
     @EventHandler

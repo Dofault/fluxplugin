@@ -132,6 +132,13 @@ public final class Lobby implements Listener {
 
     private final Presets presets;
 
+    /** Dungeons played with the rpg profile (Runs#rpg). */
+    private boolean rpgMode;
+
+    void rpgMode(boolean on) {
+        this.rpgMode = on;
+    }
+
     Lobby(FluxPlugin plugin, Heroes heroes, java.util.function.ToIntFunction<String> lockedGear, Presets presets) {
         this.plugin = plugin;
         this.heroes = heroes;
@@ -273,7 +280,8 @@ public final class Lobby implements Listener {
      */
     private String missingGear(Party party, Player p) {
         DungeonDefinition.Level l = party.def.levels().get(party.level);
-        if (!l.requireGear()) return null;
+        // rpg dungeons are played with the rpg profile: no gear to choose nor to require
+        if (rpgMode || !l.requireGear()) return null;
         Loadouts.Selection sel = party.selections.get(p.getUniqueId());
         for (int a = 0; a < Loadouts.ARMOR.length; a++) {
             ItemStack worn = p.getInventory().getItem(Loadouts.ARMOR[a]);

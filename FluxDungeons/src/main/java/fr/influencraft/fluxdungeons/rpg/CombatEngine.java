@@ -47,21 +47,27 @@ import java.util.function.Supplier;
  */
 public final class CombatEngine implements Listener {
 
-    /** Level, rank and family of a creature; the plugin owning it says (dungeon monsters), else level 1 normal. */
-    public record MobProfile(int level, String rank, String family, List<Modifier> extra) {
-        public static final MobProfile DEFAULT = new MobProfile(1, "normal", null, List.of());
+    /**
+     * Level, rank and family of a creature; the plugin owning it says (dungeon monsters), else level 1 normal.
+     * {@code unit}: the game damage of its plain hit (a dungeon monster's melee), so that an ability dealing twice
+     * that is a hit of coefficient 2; 0 = every hit of it counts as coefficient 1.
+     */
+    public record MobProfile(int level, String rank, String family, List<Modifier> extra, double unit) {
+        public static final MobProfile DEFAULT = new MobProfile(1, "normal", null, List.of(), 0);
     }
 
     private static final class MobState {
         final StatSheet stats;
         final int level;
         final String family;
+        final double unit;
         double hp;
 
-        MobState(StatSheet stats, int level, String family) {
+        MobState(StatSheet stats, int level, String family, double unit) {
             this.stats = stats;
             this.level = level;
             this.family = family;
+            this.unit = unit;
             this.hp = stats.get("max_health");
         }
     }
@@ -87,6 +93,20 @@ public final class CombatEngine implements Listener {
     private final Map<UUID, Double> life = new HashMap<>();
     /** True while the engine itself kills: its own death call passes through. */
     private boolean killing;
+    /** True while the engine asks the others about a hit (the event it fires is not a hit to turn into one). */
+    private boolean asking;
+    /** Told after a monster's hit on a player was turned into an engine hit (dungeon on-hit powers, frost arrows). */
+    private java.util.function.Consumer<EntityDamageByEntityEvent> afterMonsterHit = e -> { };
+    /** Owner of a creature fighting for a player (dungeon pets), null for any other. */
+    private Function<Entity, Player> petOwner = e -> null;
+
+    public void afterMonsterHit(java.util.function.Consumer<EntityDamageByEntityEvent> hook) {
+        this.afterMonsterHit = hook;
+    }
+
+    public void petOwner(Function<Entity, Player> owner) {
+        this.petOwner = owner;
+    }
 
     CombatEngine(JavaPlugin plugin, Supplier<RpgConfig.Set> config, Function<Player, RpgPlayer> players) {
         this.plugin = plugin;
@@ -139,7 +159,7 @@ public final class CombatEngine implements Listener {
         if (p == null) return null;
         List<Modifier> mods = new ArrayList<>(set.balance().monster(p.level(), p.rank()));
         mods.addAll(p.extra());
-        m = new MobState(StatSheet.compute(set.stats(), mods), p.level(), p.family());
+        m = new MobState(StatSheet.compute(set.stats(), mods), p.level(), p.family(), p.unit());
         mobs.put(e.getUniqueId(), m);
         mirror(e, m.hp, m.stats.get("max_health"));
         return m;
@@ -207,6 +227,7 @@ public final class CombatEngine implements Listener {
         }
         StatSheet a = stats(attacker), d = stats(target);
         if (a == null || d == null) return null;
+        if (fromPlayer && !allowed((Player) attacker, target, cast)) return null;
         MobState targetMob = toPlayer ? null : mob(target);
         String family = targetMob == null ? null : targetMob.family;
         CombatMath.Outcome o = CombatMath.hit(set.balance(), a, level(attacker), d, family, hit,
@@ -227,6 +248,27 @@ public final class CombatEngine implements Listener {
         return o;
     }
 
+    /**
+     * A player's hit on a creature, told to the other plugins as a Bukkit hit first: the dungeons may refuse it (a
+     * boss between two phases, a melee too soon) and react to it (aggro, scripts, boss reactions, pets). Only the
+     * engine decides how much it takes.
+     */
+    private boolean allowed(Player attacker, LivingEntity target, String cast) {
+        boolean melee = cast != null && cast.contains(":basic:");
+        org.bukkit.damage.DamageSource source = org.bukkit.damage.DamageSource.builder(melee
+                        ? org.bukkit.damage.DamageType.PLAYER_ATTACK : org.bukkit.damage.DamageType.MAGIC)
+                .withCausingEntity(attacker).withDirectEntity(attacker).build();
+        EntityDamageByEntityEvent ask = new EntityDamageByEntityEvent(attacker, target, melee
+                ? EntityDamageEvent.DamageCause.ENTITY_ATTACK : EntityDamageEvent.DamageCause.MAGIC, source, 1);
+        asking = true;
+        try {
+            Bukkit.getPluginManager().callEvent(ask);
+        } finally {
+            asking = false;
+        }
+        return !ask.isCancelled();
+    }
+
     /** Takes life from a creature or a player, with the hurt look and the number. */
     public void damage(LivingEntity target, double amount, LivingEntity source, boolean crit) {
         if (amount <= 0 || target.isDead()) return;
@@ -238,6 +280,7 @@ public final class CombatEngine implements Listener {
             double hp = life.getOrDefault(p.getUniqueId(), maxHealth(p)) - left;
             life.put(p.getUniqueId(), Math.max(0, hp));
             p.playHurtAnimation(0);
+            hurtSound(p, org.bukkit.SoundCategory.PLAYERS);
             if (hp <= 0) kill(p, source);
             else mirror(p, hp, maxHealth(p));
         } else {
@@ -245,6 +288,7 @@ public final class CombatEngine implements Listener {
             if (m == null) return;
             m.hp -= amount;
             target.playHurtAnimation(0);
+            hurtSound(target, org.bukkit.SoundCategory.HOSTILE);
             if (source instanceof Player p && target instanceof org.bukkit.entity.Mob mob && mob.getTarget() == null) mob.setTarget(p);
             if (m.hp <= 0 && immortal.test(target)) m.hp = m.stats.get("max_health");
             if (m.hp <= 0) kill(target, source);
@@ -252,6 +296,17 @@ public final class CombatEngine implements Listener {
         }
         indicator(target, Component.text((crit ? "✦ " : "") + format(amount),
                 TextColor.color(target instanceof Player ? 0xFF5C5C : crit ? 0xFFD94D : 0xFFFFFF)));
+    }
+
+    /**
+     * The creature's own hurt sound: the game plays it with the damage it applies, and the engine cancels that damage
+     * (players heard nothing when hit).
+     */
+    private static void hurtSound(LivingEntity target, org.bukkit.SoundCategory category) {
+        org.bukkit.Sound s = target.getHurtSound();
+        if (s == null) return;
+        float pitch = 0.8f + ThreadLocalRandom.current().nextFloat() * 0.4f;
+        target.getWorld().playSound(target.getLocation(), s, category, 1f, pitch);
     }
 
     private void kill(LivingEntity target, LivingEntity source) {
@@ -298,9 +353,13 @@ public final class CombatEngine implements Listener {
 
     // ------------------------------------------------------------------ every Bukkit damage becomes an engine hit
 
-    @EventHandler(priority = EventPriority.LOWEST)
+    /**
+     * After the other plugins (the dungeons pace their monsters and give them their power, and may refuse a hit):
+     * what is left becomes an engine hit, and the game's own damage never happens.
+     */
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onDamage(EntityDamageEvent e) {
-        if (killing || !(e.getEntity() instanceof LivingEntity target) || !rpg(target)) return;
+        if (killing || asking || !(e.getEntity() instanceof LivingEntity target) || !rpg(target)) return;
         e.setCancelled(true);
         if (e.getCause() == EntityDamageEvent.DamageCause.VOID || e.getCause() == EntityDamageEvent.DamageCause.KILL) {
             if (e.getCause() == EntityDamageEvent.DamageCause.KILL) kill(target, null);
@@ -312,9 +371,18 @@ public final class CombatEngine implements Listener {
                     : damager instanceof LivingEntity le ? le : null;
             // a player's hits come through his controls (basic attack, skills), never through vanilla melee
             if (source == null || source instanceof Player) return;
+            Player owner = petOwner.apply(source);
+            if (owner != null) {
+                // a pet fighting for its owner: a light hit of the owner
+                if (!(target instanceof Player)) strike(owner, target, CombatMath.Hit.physical(0.6), null);
+                return;
+            }
             if (!(target instanceof Player)) return;
-            double coefficient = damager instanceof Projectile ? 1 : by.getCause() == EntityDamageEvent.DamageCause.ENTITY_EXPLOSION ? 1.5 : 1;
-            strike(source, target, CombatMath.Hit.physical(coefficient), null);
+            MobState m = mob(source);
+            double unit = m == null ? 0 : m.unit;
+            double coefficient = unit > 0 ? Math.max(0.1, by.getDamage() / unit)
+                    : by.getCause() == EntityDamageEvent.DamageCause.ENTITY_EXPLOSION ? 1.5 : 1;
+            if (strike(source, target, CombatMath.Hit.physical(coefficient), null) != null) afterMonsterHit.accept(by);
             return;
         }
         // the environment: its vanilla damage read as a share of 20 points of life (2 = a tenth of the life)

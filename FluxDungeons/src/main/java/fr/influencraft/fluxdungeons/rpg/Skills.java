@@ -110,7 +110,8 @@ public final class Skills implements Listener {
         // the swing is seen where it reaches: the first creature or wall within range, else the end of the range
         Location at = reachPoint(p, a.range());
         p.getWorld().spawnParticle(Particle.SWEEP_ATTACK, at, 1, 0, 0, 0, 0);
-        p.getWorld().playSound(at, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 0.8f, 1f);
+        // the one swing sound of every weapon (same volume and category as a vanilla sword)
+        fr.influencraft.fluxdungeons.combat.AttackCadence.playSwing(at);
         for (LivingEntity t : targets) {
             if (combat.strike(p, t, a.hit(), cast) != null) t.setVelocity(t.getVelocity().add(look.clone().multiply(0.25).setY(0.15)));
         }
@@ -128,7 +129,7 @@ public final class Skills implements Listener {
         double cost = CombatMath.manaCost(s.mana(), r.stats());
         if (r.mana() < cost) {
             plugin.messages().send(p, "skill.no-mana");
-            p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.6f);
+            p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, org.bukkit.SoundCategory.PLAYERS, 0.6f, 0.6f);
             return;
         }
         if (!run(p, r, s, r.cast(slot))) return;
@@ -143,7 +144,7 @@ public final class Skills implements Listener {
             case "charge" -> {
                 Vector dir = p.getLocation().getDirection().setY(0).normalize();
                 p.setVelocity(dir.clone().multiply(s.number("distance", 8) / 5).setY(0.2));
-                w.playSound(p.getLocation(), Sound.ENTITY_RAVAGER_ROAR, 0.6f, 1.4f);
+                w.playSound(p.getLocation(), Sound.ENTITY_RAVAGER_ROAR, org.bukkit.SoundCategory.PLAYERS, 0.6f, 1.4f);
                 repeat(10, 1, tick -> {
                     w.spawnParticle(Particle.CLOUD, p.getLocation().add(0, 0.2, 0), 3, 0.2, 0.1, 0.2, 0.01);
                     for (LivingEntity e : enemies(p.getLocation(), 1.8)) {
@@ -153,7 +154,7 @@ public final class Skills implements Listener {
             }
             case "war_cry" -> {
                 double radius = s.number("radius", 10);
-                w.playSound(p.getLocation(), Sound.EVENT_RAID_HORN, 0.7f, 1.2f);
+                w.playSound(p.getLocation(), Sound.EVENT_RAID_HORN, org.bukkit.SoundCategory.PLAYERS, 0.7f, 1.2f);
                 w.spawnParticle(Particle.ANGRY_VILLAGER, p.getLocation().add(0, 1, 0), 12, radius / 3, 0.5, radius / 3);
                 for (LivingEntity e : enemies(p.getLocation(), radius)) if (e instanceof Mob m) m.setTarget(p);
                 long until = CombatEngine.now() + Math.round(20 * CombatMath.duration(s.duration(), r.stats(), null, false));
@@ -165,7 +166,7 @@ public final class Skills implements Listener {
                 int hits = s.hits();
                 repeat(hits, 5, tick -> {
                     w.spawnParticle(Particle.SWEEP_ATTACK, p.getLocation().add(0, 1, 0), 6, radius / 2, 0.2, radius / 2);
-                    w.playSound(p.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 0.8f, 0.8f);
+                    w.playSound(p.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, org.bukkit.SoundCategory.PLAYERS, 0.8f, 0.8f);
                     String hitCast = cast + "#" + tick;
                     for (LivingEntity e : enemies(p.getLocation(), radius)) combat.strike(p, e, s.hit(), hitCast);
                 });
@@ -174,7 +175,7 @@ public final class Skills implements Listener {
                 Vector back = p.getLocation().getDirection().setY(0).normalize().multiply(-s.number("strength", 1.4)).setY(0.5);
                 p.setVelocity(back);
                 w.spawnParticle(Particle.CLOUD, p.getLocation(), 8, 0.3, 0.1, 0.3, 0.02);
-                w.playSound(p.getLocation(), Sound.ENTITY_RABBIT_JUMP, 1f, 1f);
+                w.playSound(p.getLocation(), Sound.ENTITY_RABBIT_JUMP, org.bukkit.SoundCategory.PLAYERS, 1f, 1f);
                 long until = CombatEngine.now() + Math.round(20 * CombatMath.duration(s.duration(), r.stats(), null, false));
                 r.buff("leap_back", List.of(Modifier.add("movement_speed", s.number("speed", 0.3), "leap_back")), until);
                 players.recompute(p);
@@ -196,7 +197,7 @@ public final class Skills implements Listener {
                 long period = Math.max(1, Math.round(20 * Math.max(0.5, s.duration()) / hits));
                 repeat(hits, period, tick -> {
                     w.spawnParticle(Particle.CRIT, at.clone().add(0, 4, 0), 30, radius / 2, 1.5, radius / 2, 0.05);
-                    w.playSound(at, Sound.ENTITY_ARROW_HIT, 0.6f, 1.2f);
+                    w.playSound(at, Sound.ENTITY_ARROW_HIT, org.bukkit.SoundCategory.PLAYERS, 0.6f, 1.2f);
                     String hitCast = cast + "#" + tick;
                     for (LivingEntity e : enemies(at, radius)) combat.strike(p, e, s.hit(), hitCast);
                 });
@@ -211,21 +212,21 @@ public final class Skills implements Listener {
                 w.spawnParticle(Particle.PORTAL, from.clone().add(0, 1, 0), 30, 0.3, 0.6, 0.3, 0.2);
                 p.teleport(to, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.PLUGIN);
                 w.spawnParticle(Particle.PORTAL, to.clone().add(0, 1, 0), 30, 0.3, 0.6, 0.3, 0.2);
-                w.playSound(to, Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 1.2f);
+                w.playSound(to, Sound.ENTITY_ENDERMAN_TELEPORT, org.bukkit.SoundCategory.PLAYERS, 0.8f, 1.2f);
             }
             case "fireball" -> {
                 double radius = s.number("radius", 3);
                 travel(p, s.number("range", 25), s.number("speed", 1.6), Particle.FLAME, (at, direct) -> {
                     w.spawnParticle(Particle.EXPLOSION, at, 1);
-                    w.playSound(at, Sound.ENTITY_GENERIC_EXPLODE, 0.6f, 1.3f);
+                    w.playSound(at, Sound.ENTITY_GENERIC_EXPLODE, org.bukkit.SoundCategory.PLAYERS, 0.6f, 1.3f);
                     for (LivingEntity e : enemies(at, radius)) combat.strike(p, e, s.hit(), cast);
                 });
-                w.playSound(p.getLocation(), Sound.ENTITY_BLAZE_SHOOT, 0.8f, 1f);
+                w.playSound(p.getLocation(), Sound.ENTITY_BLAZE_SHOOT, org.bukkit.SoundCategory.PLAYERS, 0.8f, 1f);
             }
             case "frost_nova" -> {
                 double radius = s.number("radius", 5);
                 w.spawnParticle(Particle.SNOWFLAKE, p.getLocation().add(0, 0.5, 0), 80, radius / 2, 0.3, radius / 2, 0.05);
-                w.playSound(p.getLocation(), Sound.BLOCK_GLASS_BREAK, 0.8f, 0.7f);
+                w.playSound(p.getLocation(), Sound.BLOCK_GLASS_BREAK, org.bukkit.SoundCategory.PLAYERS, 0.8f, 0.7f);
                 for (LivingEntity e : enemies(p.getLocation(), radius)) {
                     if (combat.strike(p, e, s.hit(), cast) != null) slow(e, s.duration(), 2, r);
                 }
@@ -235,13 +236,13 @@ public final class Skills implements Listener {
                 double amount = CombatMath.heal(r.stats(), s.coefficient(), 0);
                 combat.heal(target, amount, true);
                 w.spawnParticle(Particle.HEART, target.getLocation().add(0, 2, 0), 5, 0.3, 0.3, 0.3);
-                w.playSound(target.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 1f, 1.4f);
+                w.playSound(target.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, org.bukkit.SoundCategory.PLAYERS, 1f, 1.4f);
                 if (target != p) plugin.messages().send(target, "skill.healed-by", "%player%", p.getName());
             }
             case "blessing" -> {
                 double radius = s.number("radius", 8);
                 long until = CombatEngine.now() + Math.round(20 * CombatMath.duration(s.duration(), r.stats(), null, false));
-                w.playSound(p.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 0.8f, 1.5f);
+                w.playSound(p.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, org.bukkit.SoundCategory.PLAYERS, 0.8f, 1.5f);
                 for (Player ally : allies(p.getLocation(), radius)) {
                     RpgPlayer ar = players.get(ally);
                     if (ar == null) continue;
@@ -256,7 +257,7 @@ public final class Skills implements Listener {
                 int hits = s.hits();
                 long period = Math.max(1, Math.round(20 * Math.max(1, s.duration()) / hits));
                 double each = CombatMath.heal(r.stats(), s.coefficient(), 0);
-                w.playSound(at, Sound.BLOCK_BEACON_ACTIVATE, 0.8f, 1.4f);
+                w.playSound(at, Sound.BLOCK_BEACON_ACTIVATE, org.bukkit.SoundCategory.PLAYERS, 0.8f, 1.4f);
                 repeat(hits, period, tick -> {
                     ring(at, radius, Particle.HAPPY_VILLAGER);
                     for (Player ally : allies(at, radius)) combat.heal(ally, each, true);
@@ -295,7 +296,7 @@ public final class Skills implements Listener {
         arrow.setPersistent(false);
         arrow.setCritical(false);
         arrow.setMetadata(ARROW, new FixedMetadataValue(plugin, new Shot(p, cast, hit)));
-        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ARROW_SHOOT, 0.8f, 1.1f);
+        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ARROW_SHOOT, org.bukkit.SoundCategory.PLAYERS, 0.8f, 1.1f);
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (arrow.isValid()) arrow.remove();
         }, 60L);
@@ -316,7 +317,7 @@ public final class Skills implements Listener {
         travel(p, range, speed, trail, (at, direct) -> {
             if (direct != null) combat.strike(p, direct, hit, cast);
         });
-        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ILLUSIONER_CAST_SPELL, 0.5f, 1.6f);
+        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ILLUSIONER_CAST_SPELL, org.bukkit.SoundCategory.PLAYERS, 0.5f, 1.6f);
     }
 
     /** Something flying from the eyes: calls {@code impact} at the first creature (given) or block (null) hit. */

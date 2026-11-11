@@ -68,7 +68,24 @@ public final class AttackCadence implements Listener {
     /** Largest angle between where the player looks and a monster that still counts as aiming at it (degrees). */
     private double assistAngle = 35;
 
+    /** The cadence in use: its swing sound is the one sound of every weapon swing (rpg skills included). */
+    private static volatile AttackCadence current;
+
+    /**
+     * Plays the swing sound of weapons where a swing reaches: the same sound, volume, pitch and category for every
+     * weapon, vanilla or rpg ({@code swing-sound} of the config), so none sounds louder than another.
+     */
+    public static void playSwing(org.bukkit.Location at) {
+        AttackCadence c = current;
+        String sound = c == null ? "minecraft:entity.player.attack.sweep" : c.swingSound;
+        if (sound == null) return;
+        float volume = c == null ? 0.7f : c.soundVolume, pitch = c == null ? 1f : c.soundPitch;
+        at.getWorld().playSound(at, sound, org.bukkit.SoundCategory.PLAYERS, volume,
+                pitch * (0.9f + java.util.concurrent.ThreadLocalRandom.current().nextFloat() * 0.2f));
+    }
+
     public AttackCadence(Plugin plugin) {
+        current = this;
         // items of the rpg universe get the same cadence from the rpg layer (rpg.RpgPlayers#cadence: the pace depends
         // on each player's attack speed stat, not on the item): left untouched here
         ItemLooks.registerAny(plugin, (id, item) -> !rpg(item) && (enabled ? apply(item) : clear(item)));

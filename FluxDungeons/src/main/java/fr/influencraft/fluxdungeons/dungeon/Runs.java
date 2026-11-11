@@ -79,6 +79,29 @@ public final class Runs {
     private String origin = "victory";
     private int ticks;
 
+    /** The rpg universe the dungeons are played in (null: the former vanilla-gear dungeons). */
+    private RpgBridge rpg;
+
+    /** Difficulty level of a running run (its monsters' life and damage multipliers), null when unknown. */
+    public DungeonDefinition.Level levelOf(String runId) {
+        Run run = runId == null ? null : runs.get(runId);
+        return run == null ? null : run.levelSpec();
+    }
+
+    public void rpg(RpgBridge bridge) {
+        this.rpg = bridge;
+        lobby.rpgMode(bridge != null);
+    }
+
+    private boolean noClass(Player p) {
+        return rpg != null ? !rpg.mayPlay(p) : heroes.classOf(p.getUniqueId()) == null;
+    }
+
+    private void giveXp(Player p, double xp) {
+        if (rpg != null) rpg.giveXp(p, xp);
+        else heroes.giveXp(p, xp);
+    }
+
     public Runs(FluxPlugin plugin, Arena arena, Mobs mobs, Heroes heroes, Loadouts loadouts, fr.influencraft.fluxdungeons.Store store) {
         this.plugin = plugin;
         this.arena = arena;
@@ -222,7 +245,7 @@ public final class Runs {
         if (players.size() > def.maxPlayers()) return Refusal.TOO_MANY;
         for (Player p : players) {
             if (byPlayer.containsKey(p.getUniqueId()) || lobby.waiting(p)) return Refusal.BUSY_PLAYER;
-            if (heroes.classOf(p.getUniqueId()) == null) return Refusal.NO_CLASS;
+            if (noClass(p)) return Refusal.NO_CLASS;
         }
         if (def.map() != null ? instances.freeName(maxRuns) == null : freeSlot() < 0) return Refusal.NO_SLOT;
         return Refusal.NONE;
@@ -231,7 +254,7 @@ public final class Runs {
     /** The first player who blocks {@link #check} for a refusal about one player (no class, already playing). */
     public Player blocking(List<Player> players) {
         for (Player p : players) {
-            if (byPlayer.containsKey(p.getUniqueId()) || lobby.waiting(p) || heroes.classOf(p.getUniqueId()) == null) return p;
+            if (byPlayer.containsKey(p.getUniqueId()) || lobby.waiting(p) || noClass(p)) return p;
         }
         return null;
     }
@@ -504,17 +527,20 @@ public final class Runs {
                 byPlayer.remove(uuid);
                 continue;
             }
-            if (!loadouts.enter(p, run.selections.getOrDefault(uuid, Loadouts.Selection.empty()))) {
-                byPlayer.remove(uuid);
-                plugin.messages().send(p, "run.save-failed");
-                continue;
+            // rpg: he plays with his rpg profile (the universe swap brings it as he arrives), nothing is set aside
+            if (rpg == null) {
+                if (!loadouts.enter(p, run.selections.getOrDefault(uuid, Loadouts.Selection.empty()))) {
+                    byPlayer.remove(uuid);
+                    plugin.messages().send(p, "run.save-failed");
+                    continue;
+                }
+                // easy level: whoever lacks armour or a weapon is lent iron ones, taken back when he leaves or dies
+                if (run.levelSpec().loan() && loadouts.lend(p, plugin.messages().raw("run.loan-lore"))) plugin.messages().send(p, "run.loaned");
             }
-            // easy level: whoever lacks armour or a weapon is lent iron ones, taken back when he leaves or dies
-            if (run.levelSpec().loan() && loadouts.lend(p, plugin.messages().raw("run.loan-lore"))) plugin.messages().send(p, "run.loaned");
             run.players.add(uuid);
             // no vanilla invulnerability in a run: hits are limited per source (DungeonListener), as for monsters
             p.setMaximumNoDamageTicks(0);
-            heroes.activate(p);
+            if (rpg == null) heroes.activate(p);
             teleport(p, run.checkpoint);
             // the pets that follow him outside never come into a dungeon: only those taken as fighters do
             fr.influencraft.flux.api.pets.Companions.suppress(uuid, true);
@@ -551,10 +577,17 @@ public final class Runs {
         fr.influencraft.flux.api.client.HurtShake.clear(player.getUniqueId());
         if (inside) {
             hook(run, "leave", player, null);
-            heroes.deactivate(player);
             player.setMaximumNoDamageTicks(20);
-            Location back = loadouts.leave(player);
-            teleport(player, back != null ? back : Bukkit.getWorlds().get(0).getSpawnLocation());
+            if (rpg != null) {
+                // back to the rpg lobby, his rpg things never left him
+                if (player.isDead()) player.spigot().respawn();
+                player.setGameMode(GameMode.ADVENTURE);
+                teleport(player, rpg.lobby());
+            } else {
+                heroes.deactivate(player);
+                Location back = loadouts.leave(player);
+                teleport(player, back != null ? back : Bukkit.getWorlds().get(0).getSpawnLocation());
+            }
         }
         if (run.players.isEmpty() && run.expected.isEmpty() && run.state != Run.State.PREPARING) cleanup(run);
     }
@@ -807,7 +840,7 @@ public final class Runs {
                     teleport(p, run.checkpoint);
                     p.setFallDistance(0);
                 }
-                if (ticks % 2 == 0 && !run.watching.contains(p.getUniqueId())) heroes.tick(p);
+                if (rpg == null && ticks % 2 == 0 && !run.watching.contains(p.getUniqueId())) heroes.tick(p);
                 pets.tick(p);
             }
             if (!run.imported()) rooms(run);
@@ -1022,7 +1055,7 @@ public final class Runs {
             doors(run);
         }
         List<Player> party = fighters(run);
-        if (t != null && t.xp() > 0) for (Player p : party) heroes.giveXp(p, t.xp());
+        if (t != null && t.xp() > 0) for (Player p : party) giveXp(p, t.xp());
         if (objective != null && run.objectivesLeft.remove(objective)) {
             for (Player p : online(run)) hook(run, "objective", p, objective);
             broadcast(run, "objective.done", "%done%", String.valueOf(run.objectivesDone()), "%total%", String.valueOf(run.objectivesTotal));
@@ -1041,6 +1074,14 @@ public final class Runs {
     public void died(Player player) {
         Run run = byPlayer.get(player.getUniqueId());
         if (run == null || run.state != Run.State.RUNNING) return;
+        if (rpg != null) {
+            // rpg: nothing is lost on death (the universe keeps the inventory), he watches the others
+            pets.despawn(player);
+            run.watching.add(player.getUniqueId());
+            broadcast(run, "run.out", "%player%", player.getName());
+            if (fighters(run).isEmpty()) Bukkit.getScheduler().runTask(plugin, () -> fail(run, "run.wiped"));
+            return;
+        }
         ItemStack[] carried = loadouts.strip(player);
         String id = store.addLost(player.getUniqueId(), run.def.id(), carried, false);
         if (id == null && hasAny(carried)) {
@@ -1159,7 +1200,7 @@ public final class Runs {
             p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
             hook(run, "victory", p, null);
             if (money > 0) Economy.main().give(p, money, Origin.of(plugin, origin).detail(run.def.name()).notifyPlayer());
-            heroes.giveXp(p, run.def.rewardXp());
+            giveXp(p, run.def.rewardXp());
             List<String> found = new ArrayList<>();
             for (DungeonDefinition.Loot loot : run.def.loot()) {
                 if (ThreadLocalRandom.current().nextDouble() >= loot.chance()) continue;

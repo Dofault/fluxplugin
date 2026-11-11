@@ -71,6 +71,53 @@ public final class FluxDungeons extends FluxPlugin {
 
     private fr.influencraft.fluxdungeons.rpg.RpgModule rpg;
 
+    /**
+     * Dungeons belong to the rpg universe (docs/technique/rpg.md): their worlds swap players to their rpg profile,
+     * runs use the rpg class, experience and lobby, and the rpg engine fights their monsters (level of the party,
+     * rank from the monster, life and damage times the difficulty), the dungeon rules still pacing and reacting.
+     */
+    private void wireRpg() {
+        if (rpg == null || rpg.combat() == null) {
+            getLogger().warning("Rpg module off: dungeons keep the former vanilla-gear play");
+            return;
+        }
+        fr.influencraft.flux.api.universe.Universes.claim(this, fr.influencraft.fluxdungeons.rpg.RpgWorld.UNIVERSE, runs::isDungeonWorld);
+        var players = rpg.players();
+        runs.rpg(new fr.influencraft.fluxdungeons.dungeon.RpgBridge() {
+            public boolean mayPlay(Player p) {
+                return players.mayPlay(p);
+            }
+
+            public void giveXp(Player p, double xp) {
+                players.giveXp(p, xp);
+            }
+
+            public org.bukkit.Location lobby() {
+                return rpg.world().spawn();
+            }
+        });
+        var engine = rpg.combat();
+        engine.profiles(e -> {
+            var t = mobs.templateOfEntity(e);
+            if (t == null) return fr.influencraft.fluxdungeons.rpg.RpgModule.profileFromTags(e);
+            var level = runs.levelOf(mobs.runOf(e));
+            java.util.List<fr.influencraft.fluxdungeons.rpg.core.Modifier> extra = new java.util.ArrayList<>();
+            if (level != null) {
+                extra.add(fr.influencraft.fluxdungeons.rpg.core.Modifier.multiply("max_health", level.health() - 1, "difficulty"));
+                extra.add(fr.influencraft.fluxdungeons.rpg.core.Modifier.multiply("physical_attack", level.damage() - 1, "difficulty"));
+            }
+            double unit = mobs.meleeDamage(e);
+            return new fr.influencraft.fluxdungeons.rpg.CombatEngine.MobProfile(players.averageLevel(e.getWorld()),
+                    t.boss() ? "boss" : "normal", null, extra, unit > 0 ? unit : t.damage());
+        });
+        engine.afterMonsterHit(combat::onPlayerHit);
+        engine.petOwner(e -> {
+            java.util.UUID owner = runs.petOwner(e);
+            return owner == null ? null : getServer().getPlayer(owner);
+        });
+        healthBars.life(e -> engine.rpg(e) && !(e instanceof Player) ? new double[]{engine.health(e), engine.maxHealth(e)} : null);
+    }
+
     @Override
     protected void enable() {
         preloadClasses();
@@ -133,6 +180,7 @@ public final class FluxDungeons extends FluxPlugin {
         placeholders("fluxdungeons", (player, params) -> runs.placeholder(player, params));
         combat = new fr.influencraft.fluxdungeons.combat.CombatRules(this, runs, heroes, mobs);
         combat.hitReaction(getConfig().getConfigurationSection("hit-reaction"));
+        wireRpg();
         Bukkit.getPluginManager().registerEvents(combat, this);
         listener = new DungeonListener(this, arena, runs, heroes, mobs, loadouts, combat);
         Bukkit.getPluginManager().registerEvents(listener, this);

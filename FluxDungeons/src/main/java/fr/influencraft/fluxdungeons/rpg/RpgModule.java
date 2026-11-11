@@ -86,8 +86,12 @@ public final class RpgModule implements Listener {
         return players;
     }
 
+    public RpgWorld world() {
+        return world;
+    }
+
     /** Creatures without an owner: level, rank and family from their tags (dummies), level 1 normal otherwise. */
-    private static CombatEngine.MobProfile profileFromTags(LivingEntity e) {
+    public static CombatEngine.MobProfile profileFromTags(LivingEntity e) {
         int level = 1;
         String rank = "normal", family = null;
         for (String t : e.getScoreboardTags()) {
@@ -99,7 +103,7 @@ public final class RpgModule implements Listener {
             if (t.startsWith(TAG_RANK)) rank = t.substring(TAG_RANK.length());
             if (t.startsWith(TAG_FAMILY)) family = t.substring(TAG_FAMILY.length());
         }
-        return new CombatEngine.MobProfile(level, rank, family, List.of());
+        return new CombatEngine.MobProfile(level, rank, family, List.of(), 0);
     }
 
     @EventHandler

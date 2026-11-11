@@ -178,15 +178,16 @@ public final class HealthBars implements Listener {
             b.life = display(e, FRONT, b.offset);
             b.step = -1;
         }
-        double max = maxHealth(e);
-        double health = Math.max(0, e.getHealth());
+        double[] own = life.apply(e);
+        double max = own != null ? Math.max(1, own[1]) : maxHealth(e);
+        double health = Math.max(0, own != null ? own[0] : e.getHealth());
         int step = (int) Math.floor(Math.min(1, health / max) * STEPS);
         if (step == b.step && Math.abs(health - b.health) < 0.5) return;
         b.step = step;
         b.health = health;
         Component head = b.head.apply(e);
         Double stretch = e.getPersistentDataContainer().get(healthScale, org.bukkit.persistence.PersistentDataType.DOUBLE);
-        String number = shortNumber(health * (stretch == null || stretch < 1 ? 1 : stretch));
+        String number = shortNumber(health * (own != null || stretch == null || stretch < 1 ? 1 : stretch));
         int width = DIGIT_ADVANCE * number.length() - 1;
         int start = (BAR_WIDTH - width) / 2;
         // same two lines in both displays, so the life sits exactly on the bar: name + bar, then blank + life
@@ -226,6 +227,13 @@ public final class HealthBars implements Listener {
     private static void drop(Bar b) {
         if (b.main != null) b.main.remove();
         if (b.life != null) b.life.remove();
+    }
+
+    /** Life and max life of a creature when another system owns it (the rpg engine), else null (the game's). */
+    private java.util.function.Function<LivingEntity, double[]> life = e -> null;
+
+    public void life(java.util.function.Function<LivingEntity, double[]> life) {
+        this.life = life;
     }
 
     private static double maxHealth(LivingEntity e) {
