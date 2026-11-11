@@ -11,6 +11,7 @@ Copy each jar from the server's `plugins/` folder (same version, or update the p
 | FluxOffering | `ItemsAdder_4.0.18.jar` |
 | FluxPets | `ItemsAdder_4.0.18.jar`, `eco-2026.38-modrinth.jar`, `libreforge-2026.38.jar`, `EcoJobs-2026.38-spigot.jar`, `PlaceholderAPI-2.12.3.jar`, `bettermodel-3.5.0-paper.jar`, `VaultSuperMarket-26.2.jar`, `packetevents-spigot-2.13.0.jar` |
 | FluxDungeons | `bettermodel-3.5.1-paper.jar` |
+| FluxPortal | `RPE-portals.jar` (copy of the Labs one, ResourcePack AI, GPL-3.0: API of the 3D portal window) |
 | FluxProxy | `velocity.jar` (copie de `01_velocity/velocity.jar`) |
 | FluxRewards | `PlaceholderAPI-2.12.3.jar` |
 | FluxSorter | `Lands-8.6.2.jar`, `blocklocker-1.15.jar`, `CoreProtect-24.0.jar` |

@@ -34,6 +34,14 @@
             <version>26.2.build.124-stable</version>
             <scope>provided</scope>
         </dependency>
+        <!-- RPE-portals (softdepend, GPL-3.0): draws the 3D window of the portals, only touched by RpeRenderer -->
+        <dependency>
+            <groupId>ai.resourcepack</groupId>
+            <artifactId>rpe-portals</artifactId>
+            <version>0.1.2</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/RPE-portals.jar</systemPath>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

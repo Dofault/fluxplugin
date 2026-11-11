@@ -47,6 +47,9 @@ public final class FluxPortal extends FluxPlugin implements Listener {
     private PortalVisuals visuals;
     private final Map<String, Portal> portals = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> lastTravel = new HashMap<>();
+    /** Draws the 3D window and carries travellers (RPE-portals when present), else null. */
+    private PortalRenderer renderer;
+    private BedrockView bedrock;
 
     @Override
     protected void enable() {
@@ -60,6 +63,10 @@ public final class FluxPortal extends FluxPlugin implements Listener {
         }
         visuals = new PortalVisuals(this, () -> portals.values());
         visuals.start();
+        // Bedrock players see neither the 3D window nor the swirl: nether portal blocks, for them alone
+        bedrock = new BedrockView(this, () -> portals.values());
+        bedrock.start();
+        getServer().getPluginManager().registerEvents(bedrock, this);
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getPluginManager().registerEvents(visuals, this);
         Portals.register(new Portals.Service() {
@@ -79,14 +86,52 @@ public final class FluxPortal extends FluxPlugin implements Listener {
                 return List.copyOf(portals.values());
             }
         });
+        // once every plugin is up (RPE needs RP Engine's content): the 3D windows
+        Bukkit.getScheduler().runTask(this, this::startRenderer);
         Commands.create(this, "portail").description("Permanent portals: entry, exit, remove, list.")
                 .permission("fluxportal.admin").usage("/portail <entree|sortie|retirer|liste> [name] [size]")
                 .executor(this::command).completer((sender, args) -> complete(args)).register();
         getLogger().info(portals.size() + " portal(s)");
     }
 
+    private void startRenderer() {
+        if (!getServer().getPluginManager().isPluginEnabled("RPEPortals")) {
+            getLogger().info("RPE-portals missing: flat portals (no 3D window)");
+            return;
+        }
+        fr.influencraft.fluxportal.rpe.RpeRenderer rpe = new fr.influencraft.fluxportal.rpe.RpeRenderer(this, this::crossing);
+        getServer().getPluginManager().registerEvents(rpe, this);
+        renderer = rpe;
+        visuals.flatSurfaces(false);
+        for (Portal p : portals.values()) renderer.show(p);
+        getLogger().info("3D windows drawn by RPE-portals");
+    }
+
+    /**
+     * A traveller about to go through a renderer's window: FluxPortal's event first (other plugins may refuse it or
+     * move the arrival), then its effects. Null = refused.
+     */
+    private Location crossing(Portal portal, Map.Entry<Player, Location> who) {
+        Player p = who.getKey();
+        PortalTravelEvent event = new PortalTravelEvent(p, portal, who.getValue().clone());
+        Bukkit.getPluginManager().callEvent(event);
+        if (event.isCancelled()) return null;
+        lastTravel.put(p.getUniqueId(), Bukkit.getCurrentTick());
+        PortalEnd from = nearest(portal, p.getLocation());
+        visuals.departure(p.getLocation(), from);
+        visuals.arrivalSoon(event.to(), portal.other(from));
+        return event.to();
+    }
+
+    private static PortalEnd nearest(Portal p, Location at) {
+        if (!p.entry().world().equals(at.getWorld().getName())) return p.exit();
+        if (!p.exit().world().equals(at.getWorld().getName())) return p.entry();
+        return p.entry().center().distanceSquared(at.toVector()) <= p.exit().center().distanceSquared(at.toVector()) ? p.entry() : p.exit();
+    }
+
     @Override
     protected void disable() {
+        if (renderer != null) renderer.stop();
         Portals.register(null);
         if (visuals != null) visuals.stop();
     }
@@ -105,6 +150,8 @@ public final class FluxPortal extends FluxPlugin implements Listener {
         if (!store.save(p)) return null;
         portals.put(k, p);
         visuals.refresh(p);
+        if (renderer != null) renderer.show(p);
+        bedrock.reset();
         return p;
     }
 
@@ -113,6 +160,8 @@ public final class FluxPortal extends FluxPlugin implements Listener {
         if (p == null) return false;
         store.delete(p.name());
         visuals.remove(p);
+        if (renderer != null) renderer.hide(p);
+        bedrock.reset();
         return true;
     }
 
@@ -122,6 +171,8 @@ public final class FluxPortal extends FluxPlugin implements Listener {
     public void onMove(PlayerMoveEvent e) {
         Location from = e.getFrom(), to = e.getTo();
         if (from.getX() == to.getX() && from.getY() == to.getY() && from.getZ() == to.getZ()) return;
+        // the renderer carries travellers through its own window
+        if (renderer != null) return;
         Player p = e.getPlayer();
         if (p.isInsideVehicle() || p.getGameMode() == org.bukkit.GameMode.SPECTATOR) return;
         int now = Bukkit.getCurrentTick();

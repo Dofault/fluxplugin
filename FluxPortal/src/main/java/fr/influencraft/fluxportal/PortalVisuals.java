@@ -55,6 +55,13 @@ final class PortalVisuals implements Listener {
     private final Map<String, UUID> surfaces = new HashMap<>();
     private BukkitTask task;
     private long tick;
+    /** False when a renderer draws the 3D window: no flat swirl then. */
+    private boolean flatSurfaces = true;
+
+    void flatSurfaces(boolean on) {
+        flatSurfaces = on;
+        if (!on) for (Portal p : portals.get()) remove(p);
+    }
 
     PortalVisuals(JavaPlugin plugin, Supplier<Collection<Portal>> portals) {
         this.plugin = plugin;
@@ -87,7 +94,7 @@ final class PortalVisuals implements Listener {
     /** Puts the surfaces of a portal where they belong (removes them while it is incomplete). */
     void refresh(Portal p) {
         remove(p);
-        if (!p.complete()) return;
+        if (!p.complete() || !flatSurfaces) return;
         surface(p, p.entry(), "entry");
         surface(p, p.exit(), "exit");
     }
@@ -220,6 +227,11 @@ final class PortalVisuals implements Listener {
 
     void departure(Location at, PortalEnd end) {
         burst(at);
+    }
+
+    /** Arrival through a renderer's window: its own teleport happens right after, the effects follow it. */
+    void arrivalSoon(Location at, PortalEnd end) {
+        Bukkit.getScheduler().runTask(plugin, () -> arrival(at, end));
     }
 
     void arrival(Location at, PortalEnd end) {
