@@ -7,6 +7,7 @@ import fr.influencraft.flux.api.list.ListEntry;
 import fr.influencraft.flux.api.list.Lists;
 import fr.influencraft.flux.api.text.Texts;
 import org.bukkit.Bukkit;
+import fr.influencraft.flux.api.text.ItemSprites;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
@@ -39,7 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * in its largest unit. Placeholder {@code %fluxpass_tierpage_<pass>_<n>%}: page
  * (n tiers per page) holding the player's tier, to open the path at the right place; {@code %fluxpass_tierstates_<pass>_<first>_<count>%}:
  * colours of the path steps. {@code %fluxpass_todo_count%}, {@code %fluxpass_todo_<n>_name%},
- * {@code %fluxpass_todo_<n>_progress%}: missions not done yet in the open categories, plain text, for the sidebar
+ * {@code %fluxpass_todo_<n>_progress%}, {@code %fluxpass_todo_<n>_icon%} (sprite tag of what to farm): missions not done yet in the open categories, plain text, for the sidebar
  * drawn by Typewriter.
  */
 final class PassMenu implements Listener {
@@ -246,8 +247,11 @@ final class PassMenu implements Listener {
 
     // ---------------------------------------------------------------- missions to do (sidebar of Typewriter)
 
-    /** A mission not done yet, plain text (no colour codes: the sidebar styles it). */
-    private record Todo(String name, String progress) {
+    /**
+     * A mission not done yet: name of its task (plain text, no colour codes: the sidebar styles it), progress, and the
+     * icon of what to farm (MiniMessage sprite tag, "" when none).
+     */
+    private record Todo(String name, String progress, String icon) {
     }
 
     private record CachedTodos(long at, List<Todo> todos) {
@@ -274,7 +278,10 @@ final class PassMenu implements Listener {
                 if (category == null || !(boolean) isActive.invoke(category)) continue;
                 for (Object quest : (List<?>) getQuests.invoke(category)) {
                     if ((boolean) hasCompleted.invoke(null, player, quest)) continue;
-                    String name = plain((String) formattedName.invoke(quest, player));
+                    String name = taskName(quest);
+                    if (name.isEmpty()) name = plain((String) formattedName.invoke(quest, player));
+                    String material = icon(quest);
+                    String icon = material.equals("paper") ? "" : ItemSprites.tag(material);
                     String progress = "";
                     boolean exclusive = false;
                     for (String raw : lore(quest, player)) {
@@ -283,7 +290,7 @@ final class PassMenu implements Listener {
                         java.util.regex.Matcher kv = PROGRESS.matcher(line);
                         if (kv.matches() && kv.group(1).strip().equalsIgnoreCase("Progression")) progress = kv.group(2).strip();
                     }
-                    (exclusive ? premium : open).add(new Todo(name, progress));
+                    (exclusive ? premium : open).add(new Todo(name, progress, icon));
                 }
             }
         } catch (ReflectiveOperationException | RuntimeException e) {
@@ -301,7 +308,15 @@ final class PassMenu implements Listener {
         return text == null ? "" : CODES.matcher(text).replaceAll("").strip();
     }
 
-    /** {@code todo_count}, {@code todo_<n>_name}, {@code todo_<n>_progress} (n from 1). */
+    /** Name of the task drawn for the mission (daily missions draw one task of a family), "" when none. */
+    private String taskName(Object quest) throws ReflectiveOperationException {
+        List<?> tasks = (List<?>) questTasks.invoke(quest);
+        if (tasks.isEmpty()) return "";
+        Object config = parentConfig.invoke(taskParent.invoke(tasks.get(0)));
+        return plain((String) cfgString.invoke(config, "display.display-name"));
+    }
+
+    /** {@code todo_count}, {@code todo_<n>_name}, {@code todo_<n>_progress}, {@code todo_<n>_icon} (n from 1). */
     private String todo(Player player, String rest) {
         if (player == null) return "";
         List<Todo> todos = todos(player);
@@ -314,6 +329,7 @@ final class PassMenu implements Listener {
         return switch (p[1]) {
             case "name" -> todo.name();
             case "progress" -> todo.progress();
+            case "icon" -> todo.icon();
             default -> "";
         };
     }

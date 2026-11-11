@@ -195,6 +195,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         // suite-wide settings: language, currencies, dialogs
         messages = fr.influencraft.flux.api.text.Messages.load(this, getConfig().getString("language", "en_US"));
         fr.influencraft.flux.api.text.Translations.load(this, messages.language());
+        fr.influencraft.flux.api.text.ItemSprites.load(this);
         java.util.Locale numbers = java.util.Locale.forLanguageTag(messages.language().replace('_', '-'));
         fr.influencraft.flux.api.util.Format.configure(key -> {
             String w = messages.raw("format." + key);
