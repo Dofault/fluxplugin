@@ -36,6 +36,8 @@ public final class RpeRenderer implements fr.influencraft.fluxportal.PortalRende
     private final JavaPlugin plugin;
     private final Map<String, UUID> pairs = new HashMap<>();
     private final Map<UUID, Portal> byPair = new HashMap<>();
+    /** name -> middles of its rings as RPE placed them (entry, exit). */
+    private final Map<String, Location[]> middles = new HashMap<>();
 
     public RpeRenderer(JavaPlugin plugin, BiFunction<Portal, Map.Entry<Player, Location>, Location> crossing) {
         this.plugin = plugin;
@@ -64,10 +66,16 @@ public final class RpeRenderer implements fr.influencraft.fluxportal.PortalRende
         }
         pairs.put(p.name(), pair.get().id());
         byPair.put(pair.get().id(), p);
+        try {
+            middles.put(p.name(), new Location[]{pair.get().here().middle().clone(), pair.get().there().middle().clone()});
+        } catch (RuntimeException e) {
+            middles.remove(p.name());
+        }
     }
 
     @Override
     public void hide(Portal p) {
+        middles.remove(p.name());
         UUID id = pairs.remove(p.name());
         if (id == null) return;
         byPair.remove(id);
@@ -84,6 +92,12 @@ public final class RpeRenderer implements fr.influencraft.fluxportal.PortalRende
             Portal p = byPair.get(pairs.get(name));
             if (p != null) hide(p);
         }
+    }
+
+    @Override
+    public Location middle(Portal p, boolean entry) {
+        Location[] m = middles.get(p.name());
+        return m == null ? null : m[entry ? 0 : 1].clone();
     }
 
     /** The ground under the ring's middle and the way its front faces: RPE's place of a ring. */

@@ -43,6 +43,11 @@ final class BedrockView implements Listener {
     /** Player -> blocks shown to him (to put the real ones back). */
     private final Map<UUID, Set<Location>> shown = new HashMap<>();
     private int passes;
+    private java.util.function.BiFunction<Portal, Boolean, Location> middle = (p, entry) -> null;
+
+    void middle(java.util.function.BiFunction<Portal, Boolean, Location> middle) {
+        this.middle = middle;
+    }
 
     BedrockView(JavaPlugin plugin, Supplier<Collection<Portal>> portals) {
         this.plugin = plugin;
@@ -65,7 +70,9 @@ final class BedrockView implements Listener {
                 if (!portal.complete()) continue;
                 for (PortalEnd end : new PortalEnd[]{portal.entry(), portal.exit()}) {
                     if (!end.world().equals(p.getWorld().getName()) || end.center().distanceSquared(p.getLocation().toVector()) > RANGE * RANGE) continue;
-                    for (Location l : disc(p.getWorld(), end, portal.holeRadius())) {
+                    Location real = middle.apply(portal, end == portal.entry());
+                    PortalEnd at = real == null ? end : new PortalEnd(end.world(), real.getX(), real.getY(), real.getZ(), end.yaw());
+                    for (Location l : disc(p.getWorld(), at, portal.holeRadius())) {
                         want.add(l);
                         send.put(l, portalBlock(end));
                     }

@@ -103,6 +103,8 @@ public final class FluxPortal extends FluxPlugin implements Listener {
         getServer().getPluginManager().registerEvents(rpe, this);
         renderer = rpe;
         visuals.flatSurfaces(false);
+        visuals.middle((p, entry) -> renderer.middle(p, entry));
+        bedrock.middle((p, entry) -> renderer.middle(p, entry));
         for (Portal p : portals.values()) renderer.show(p);
         getLogger().info("3D windows drawn by RPE-portals");
     }

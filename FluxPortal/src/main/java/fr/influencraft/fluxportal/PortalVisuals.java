@@ -57,6 +57,12 @@ final class PortalVisuals implements Listener {
     private long tick;
     /** False when a renderer draws the 3D window: no flat swirl then. */
     private boolean flatSurfaces = true;
+    /** Real middle of a ring when a renderer placed it (else the saved centre). */
+    private java.util.function.BiFunction<Portal, Boolean, Location> middle = (p, entry) -> null;
+
+    void middle(java.util.function.BiFunction<Portal, Boolean, Location> middle) {
+        this.middle = middle;
+    }
 
     void flatSurfaces(boolean on) {
         flatSurfaces = on;
@@ -160,7 +166,8 @@ final class PortalVisuals implements Listener {
                 if (end == null) continue;
                 World w = Bukkit.getWorld(end.world());
                 if (w == null) continue;
-                Location c = new Location(w, end.x(), end.y(), end.z());
+                Location real = p.complete() ? middle.apply(p, end == p.entry()) : null;
+                Location c = real != null && real.getWorld() == w ? real : new Location(w, end.x(), end.y(), end.z());
                 if (!near(c, seen)) continue;
                 ring(p, end, c);
                 if (p.complete() && tick % cfg().getLong("hum-every", 80) == 0 && near(c, 16)) {
