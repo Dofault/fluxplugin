@@ -28,7 +28,7 @@ EMPTY = (52, 12, 20, 255)
 FILL = [(255, 150, 150, 255), (255, 92, 92, 255), (247, 78, 82, 255), (236, 64, 74, 255),
         (200, 37, 58, 255)]                                                      # top to bottom, 5 rows
 EDGE = (255, 205, 205, 255)
-DIGIT, DIGIT_SHADOW = (255, 255, 255, 255), (70, 0, 12, 255)
+DIGIT = (255, 255, 255, 255)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FONT = os.path.join(HERE, "..", "..", "Flux", "assets", "metiers", "quinquefive.json")
@@ -66,12 +66,10 @@ def digits():
     cell_w, cell_h = 5, FILL_Y1 - FILL_Y0 + 1
     im = Image.new("RGBA", (cell_w * len(chars), cell_h), (0, 0, 0, 0))
     px = im.load()
+    # no shadow: a digit fills its 5 px cell, so a shadow one row lower only ever fell inside it (dark pixels in
+    # the hollow of the 0, 6, 8, 9, under the top of the 1...), never under it
     for i, c in enumerate(chars):
         g = font[c]
-        for dy, row in enumerate(g):
-            for dx, ch in enumerate(row):
-                if ch == "#" and dy + 1 < cell_h:
-                    px[i * cell_w + dx, dy + 1] = DIGIT_SHADOW
         for dy, row in enumerate(g):
             for dx, ch in enumerate(row):
                 if ch == "#":

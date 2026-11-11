@@ -325,7 +325,7 @@ rpg:
 
 choice:
   title: "Choisis ta classe"
-  intro: "&#B376E5Ta classe décide de ton arme, de tes statistiques et de tes sorts. Tu pourras en changer plus tard depuis le lobby, avec &f/classe&#B376E5."
+  intro: "&#B376E5Ta classe décide de ton arme, de tes statistiques et de tes sorts. Tu pourras en changer plus tard depuis le lobby, avec &f[/classe]&#B376E5."
   confirm-title: "Confirmer"
   confirm: "&#B376E5Devenir &#FFD94D%class% &#B376E5?"
   done: "&#2ECF7BTu es maintenant &#FFD94D%class%&#2ECF7B. &#B376E5Arme en main : clic gauche pour attaquer, clic droit, &fA &#B376E5et &fF &#B376E5pour tes sorts."

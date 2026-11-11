@@ -38,7 +38,7 @@ LIFE = [(255, 160, 160, 255), (255, 130, 130, 255), (255, 110, 110, 255), (255, 
 MANA_EMPTY = (10, 28, 52, 255)
 MANA = [(180, 240, 255, 255), (150, 230, 252, 255), (120, 220, 250, 255), (80, 205, 240, 255), (43, 196, 232, 255),
         (32, 170, 214, 255), (24, 146, 196, 255), (20, 132, 186, 255), (18, 120, 176, 255)]
-DIGIT, DIGIT_SHADOW = (255, 255, 255, 255), (13, 13, 13, 255)
+DIGIT = (255, 255, 255, 255)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FONT = os.path.join(HERE, "..", "..", "Flux", "assets", "metiers", "quinquefive.json")
@@ -72,11 +72,9 @@ def digits():
     glyphs = [font[c] for c in "0123456789"] + [SLASH]
     im = Image.new("RGBA", (DIGIT_W * len(glyphs), DIGIT_H), (0, 0, 0, 0))
     px = im.load()
+    # no shadow: a digit fills its 5 px cell, so a shadow one row lower only ever fell inside it (dark pixels in
+    # the hollow of the 0, 6, 8, 9, under the top of the 1...), never under it
     for i, g in enumerate(glyphs):
-        for dy, row in enumerate(g):
-            for dx, ch in enumerate(row):
-                if ch == "#" and dy + 1 < DIGIT_H:
-                    px[i * DIGIT_W + dx, dy + 1] = DIGIT_SHADOW
         for dy, row in enumerate(g):
             for dx, ch in enumerate(row):
                 if ch == "#":
