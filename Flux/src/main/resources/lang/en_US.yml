@@ -28,7 +28,7 @@ dialogs:
   amount-min: "At least %min%."
   amount-max: "At most %max%."
 rewards:
-  other-universe: "&#FF5C5CYour rewards are claimed in the main world, not here."
+  other-universe: "&#B376E5Your waiting rewards are claimed in their own universe (main world or rpg world), not here."
   help: "&#B376E5Claim your rewards with &f[/%flux_cmd_flux_rewards%]&#B376E5."
   reminder: "&#B376E5You have &f%count% &#B376E5reward(s) waiting: &f[/%flux_cmd_flux_rewards%]"
   given: "&#B376E5New reward waiting for you: &f%label%&#B376E5, &f[/%flux_cmd_flux_rewards%]"

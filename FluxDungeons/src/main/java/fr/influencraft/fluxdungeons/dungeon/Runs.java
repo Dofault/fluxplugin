@@ -1059,11 +1059,33 @@ public final class Runs {
         return false;
     }
 
-    /** Hands a released gear to its owner through Flux's rewards ({@code /recompenses}). */
+    /**
+     * Hands kept items to their owner through Flux's rewards ({@code /recompenses}), claimed in the universe they
+     * belong to (the owner's own when he is online, else vanilla).
+     */
     private void handBack(UUID owner, String id, int stacks, String label) {
+        Player online = Bukkit.getPlayer(owner);
+        String universe = online == null ? fr.influencraft.flux.api.universe.Universes.VANILLA : fr.influencraft.flux.api.universe.Universes.of(online);
         fr.influencraft.flux.api.reward.Rewards.give(Bukkit.getOfflinePlayer(owner),
                 fr.influencraft.flux.api.reward.Reward.of("dungeons", label).icon("CHEST").slots(stacks)
-                        .key("fluxdungeons_lost:" + id).commands("fluxdungeons claimlost %player% " + id));
+                        .key("fluxdungeons_lost:" + id).commands("fluxdungeons claimlost %player% " + id).universe(universe));
+    }
+
+    /**
+     * Gives items straight into the inventory; what does not fit is kept in the database and handed back through
+     * {@code /recompenses} (never dropped: nothing lies on the ground in a dungeon world, it would be lost).
+     */
+    private void deliver(Player p, List<ItemStack> items) {
+        List<ItemStack> left = new ArrayList<>();
+        for (ItemStack item : items) left.addAll(p.getInventory().addItem(item).values());
+        if (left.isEmpty()) return;
+        String id = store.addLost(p.getUniqueId(), "overflow", left.toArray(new ItemStack[0]), true);
+        if (id == null) {
+            plugin.getLogger().severe("Overflow of " + p.getName() + " not kept: " + left);
+            return;
+        }
+        handBack(p.getUniqueId(), id, left.size(), plugin.messages().raw("lost.overflow-label"));
+        plugin.messages().send(p, "lost.overflow");
     }
 
     /** Someone won this dungeon: every gear locked in it goes back to its owner. */
@@ -1090,10 +1112,9 @@ public final class Runs {
     public boolean claimLost(Player p, String id) {
         ItemStack[] items = store.takeLost(id, p.getUniqueId());
         if (items == null) return false;
-        for (ItemStack item : items) {
-            if (item == null || item.isEmpty()) continue;
-            p.getInventory().addItem(item).values().forEach(left -> p.getWorld().dropItem(p.getLocation(), left));
-        }
+        List<ItemStack> list = new ArrayList<>();
+        for (ItemStack item : items) if (item != null && !item.isEmpty()) list.add(item);
+        deliver(p, list);
         return true;
     }
 
@@ -1148,7 +1169,7 @@ public final class Runs {
                     continue;
                 }
                 item.setAmount(Math.max(1, loot.amount()));
-                p.getInventory().addItem(item).values().forEach(left -> p.getWorld().dropItem(p.getLocation(), left));
+                deliver(p, List.of(item));
                 found.add("<lang:" + item.translationKey() + ">");
                 if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
                     found.set(found.size() - 1, Texts.ampersand(item.getItemMeta().displayName()));

@@ -130,15 +130,17 @@ public final class RewardService implements Rewards.Backend, Listener {
 
     @Override
     public ClaimResult claim(Player player, String source, long id, boolean verbose) {
-        // rewards land in the vanilla inventory only: never claimed from another universe (rpg world...)
-        if (!fr.influencraft.flux.api.universe.Universes.isVanilla(player)) {
-            if (verbose) messages.get().send(player, "rewards.other-universe");
-            return ClaimResult.NONE;
-        }
+        // a reward is delivered only in its own universe (an rpg item never lands in a vanilla inventory)
+        if (fr.influencraft.flux.api.universe.Universes.transitioning(player)) return ClaimResult.NONE;
+        String here = fr.influencraft.flux.api.universe.Universes.of(player);
         int room = Inventories.freeSlots(player);
-        int delivered = 0, remaining = 0;
+        int delivered = 0, remaining = 0, elsewhere = 0;
         for (StoredReward stored : store.pending(player.getUniqueId())) {
             Reward r = stored.reward();
+            if (!here.equals(r.universe())) {
+                elsewhere++;
+                continue;
+            }
             if (id >= 0 && stored.id() != id) continue;
             if (source != null && !source.equalsIgnoreCase(r.source())) continue;
             if (r.slots() > room) {
@@ -156,7 +158,7 @@ public final class RewardService implements Rewards.Backend, Listener {
         }
         if (verbose) {
             Messages m = messages.get();
-            if (delivered == 0 && remaining == 0) m.send(player, "rewards.nothing");
+            if (delivered == 0 && remaining == 0) m.send(player, elsewhere > 0 ? "rewards.other-universe" : "rewards.nothing");
             if (delivered > 0) m.send(player, "rewards.claimed", "%count%", String.valueOf(delivered));
             if (remaining > 0) m.send(player, "rewards.remaining", "%count%", String.valueOf(remaining));
         }
@@ -170,10 +172,6 @@ public final class RewardService implements Rewards.Backend, Listener {
 
     @Override
     public void open(Player player) {
-        if (!fr.influencraft.flux.api.universe.Universes.isVanilla(player)) {
-            messages.get().send(player, "rewards.other-universe");
-            return;
-        }
         Rewards.collect(player);
         Lists.reset(player, LIST);
         if (!FluxApi.hasMenu(MENU) || !FluxApi.open(player, MENU)) claim(player, null, -1, true);
@@ -317,8 +315,10 @@ public final class RewardService implements Rewards.Backend, Listener {
     private List<ListEntry> entries(Player viewer) {
         List<ListEntry> out = new ArrayList<>();
         Messages m = messages.get();
+        String here = fr.influencraft.flux.api.universe.Universes.of(viewer);
         for (StoredReward stored : store.pending(viewer.getUniqueId())) {
             Reward r = stored.reward();
+            if (!here.equals(r.universe())) continue;   // claimed in its own universe only
             ItemStack icon = Items.of(r.icon(), viewer);
             if (icon != null) icon.setAmount(Math.max(1, Math.min(99, r.amount())));
             String source = m.raw("rewards.sources." + r.source());

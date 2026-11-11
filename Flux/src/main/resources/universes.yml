@@ -15,4 +15,4 @@ universes:
     # commands a player may type there (first word, without "/"); remove the list to allow every command
     commands: [spawn, lobby, msg, tell, w, r, m, mail, groupe, party, donjon, donjons, dungeon, rpg, classe,
                aide, help, list, discord, regles, report, signaler, ignore,
-               rpgadmin, fluxdungeons, universes]
+               rpgadmin, fluxdungeons, universes, recompenses, rewards]

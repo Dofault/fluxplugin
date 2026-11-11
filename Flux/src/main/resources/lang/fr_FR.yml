@@ -28,7 +28,7 @@ dialogs:
   amount-min: "Au moins %min%."
   amount-max: "Au plus %max%."
 rewards:
-  other-universe: "&#FF5C5CTes récompenses se récupèrent dans le monde principal, pas ici."
+  other-universe: "&#B376E5Tes récompenses en attente se récupèrent dans leur univers (monde principal ou monde RPG), pas ici."
   help: "&#B376E5Récupère tes récompenses avec &f[/%flux_cmd_flux_rewards%]&#B376E5."
   reminder: "&#B376E5Tu as &f%count% &#B376E5récompense(s) en attente : &f[/%flux_cmd_flux_rewards%]"
   given: "&#B376E5Nouvelle récompense en attente : &f%label%&#B376E5, &f[/%flux_cmd_flux_rewards%]"

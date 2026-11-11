@@ -24,10 +24,14 @@ import java.util.List;
  * @param slots    free storage slots needed to claim it (0 for money, permissions...)
  * @param commands console commands run on claim; {@code %player%} (and {@code {joueur}}) = player name,
  *                 {@code %uuid%} = his UUID
+ * @param universe universe it is claimed in ({@code api.universe.Universes}, vanilla by default): an item made for
+ *                 the rpg universe is only ever delivered there
  */
-public record Reward(String source, String key, String label, String icon, int amount, int slots, List<String> commands) {
+public record Reward(String source, String key, String label, String icon, int amount, int slots, List<String> commands,
+                     String universe) {
 
     public Reward {
+        universe = universe == null || universe.isBlank() ? fr.influencraft.flux.api.universe.Universes.VANILLA : universe;
         source = source == null || source.isBlank() ? "rewards" : source;
         label = label == null ? "" : label;
         icon = icon == null || icon.isBlank() ? "CHEST" : icon;
@@ -36,8 +40,18 @@ public record Reward(String source, String key, String label, String icon, int a
         commands = commands == null ? List.of() : List.copyOf(commands);
     }
 
+    /** A vanilla reward (the form used before universes). */
+    public Reward(String source, String key, String label, String icon, int amount, int slots, List<String> commands) {
+        this(source, key, label, icon, amount, slots, commands, null);
+    }
+
     public static Reward of(String source, String label) {
         return new Reward(source, null, label, null, 1, 1, List.of());
+    }
+
+    /** Claimed only in this universe. */
+    public Reward universe(String universe) {
+        return new Reward(source, key, label, icon, amount, slots, commands, universe);
     }
 
     /**
@@ -55,31 +69,31 @@ public record Reward(String source, String key, String label, String icon, int a
         if (commands.isEmpty()) commands.addAll(section.getStringList("commandes"));
         String label = section.getString("label", section.getString("name", defaultLabel));
         return new Reward(source, null, label, section.getString("icon", null), section.getInt("amount", 1),
-                section.getInt("slots", commands.isEmpty() ? 0 : 1), commands);
+                section.getInt("slots", commands.isEmpty() ? 0 : 1), commands, null);
     }
 
     public Reward key(String key) {
-        return new Reward(source, key, label, icon, amount, slots, commands);
+        return new Reward(source, key, label, icon, amount, slots, commands, universe);
     }
 
     public Reward label(String label) {
-        return new Reward(source, key, label, icon, amount, slots, commands);
+        return new Reward(source, key, label, icon, amount, slots, commands, universe);
     }
 
     public Reward icon(String icon) {
-        return new Reward(source, key, label, icon, amount, slots, commands);
+        return new Reward(source, key, label, icon, amount, slots, commands, universe);
     }
 
     public Reward amount(int amount) {
-        return new Reward(source, key, label, icon, amount, slots, commands);
+        return new Reward(source, key, label, icon, amount, slots, commands, universe);
     }
 
     public Reward slots(int slots) {
-        return new Reward(source, key, label, icon, amount, slots, commands);
+        return new Reward(source, key, label, icon, amount, slots, commands, universe);
     }
 
     public Reward commands(List<String> commands) {
-        return new Reward(source, key, label, icon, amount, slots, commands);
+        return new Reward(source, key, label, icon, amount, slots, commands, universe);
     }
 
     public Reward commands(String... commands) {

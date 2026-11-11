@@ -46,6 +46,8 @@ final class RewardStore {
             Database.index(c, "flux_core_rewards_key", table, "uuid, reward_key", true);
             addColumn(st, "expired BIGINT");
             addColumn(st, "warned INTEGER NOT NULL DEFAULT 0");
+            // 2026-11-11: universe a reward is claimed in (rows made before are vanilla)
+            addColumn(st, "universe " + d.key(32) + " NOT NULL DEFAULT 'vanilla'");
             st.execute("CREATE TABLE IF NOT EXISTS " + optOut + " (uuid " + d.key(36) + " NOT NULL PRIMARY KEY, since BIGINT NOT NULL)");
         }
         // former file of the first version
@@ -69,7 +71,7 @@ final class RewardStore {
     boolean add(UUID uuid, Reward r) {
         recent.remove(uuid);
         try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement(Database.dialect().insertIgnore() + " " + table
-                + " (uuid, source, reward_key, label, icon, amount, slots, commands, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                + " (uuid, source, reward_key, label, icon, amount, slots, commands, created, universe) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
             ps.setString(1, uuid.toString());
             ps.setString(2, r.source());
             ps.setString(3, r.key());
@@ -79,6 +81,7 @@ final class RewardStore {
             ps.setInt(7, r.slots());
             ps.setString(8, String.join(SEPARATOR, r.commands()));
             ps.setLong(9, System.currentTimeMillis());
+            ps.setString(10, r.universe());
             return ps.executeUpdate() == 1;
         } catch (SQLException e) {
             log.severe("Reward NOT kept for " + uuid + " (" + r + "): " + e);
@@ -116,14 +119,14 @@ final class RewardStore {
     List<StoredReward> pending(UUID uuid) {
         List<StoredReward> out = new ArrayList<>();
         try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement("SELECT id, created, source, reward_key, label, icon, amount, slots,"
-                + " commands FROM " + table + " WHERE uuid = ? AND claimed IS NULL AND expired IS NULL ORDER BY id")) {
+                + " commands, universe FROM " + table + " WHERE uuid = ? AND claimed IS NULL AND expired IS NULL ORDER BY id")) {
             ps.setString(1, uuid.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     String cmds = rs.getString(9);
                     out.add(new StoredReward(rs.getLong(1), rs.getLong(2), new Reward(rs.getString(3), rs.getString(4),
                             rs.getString(5), rs.getString(6), rs.getInt(7), rs.getInt(8),
-                            cmds.isEmpty() ? List.of() : Arrays.asList(cmds.split(SEPARATOR)))));
+                            cmds.isEmpty() ? List.of() : Arrays.asList(cmds.split(SEPARATOR)), rs.getString(10))));
                 }
             }
         } catch (SQLException e) {
