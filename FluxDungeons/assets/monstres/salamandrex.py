@@ -19,7 +19,7 @@ meet: smooth transitions, no outline, no near-black, the main green #70CC98 domi
 
 Pose baked in the cubes, bones at the joints for a future animation; no animation, no glow, no particle.
 
-Usage: salamandrex.py [output folder] [--apercu <sheet.png>] [--table <cubes.md>]
+Usage: salamandrex.py [output folder] [--apercu <sheet.png>] [--table <cubes.md>]   (model + its animations)
 Blockbench axes: x = width (+x = the creature's right), y = height (ground at 0), z = length (head towards -z).
 """
 import json
@@ -200,7 +200,7 @@ PAINTERS = {
     "flank": emerald(3.8, BODY), "neck": emerald(4.0, HEAD),
     "head": emerald(4.0, HEAD, inclusions=110), "head_top": emerald(4.2, HEAD, gloss=1.1, gloss_at=0.55),
     "muzzle": emerald(4.3, HEAD, gloss=0.8, inclusions=90), "muzzle_tip": (muzzle_tip, 2),
-    "brow": emerald(3.9, HEAD, grad=0.5), "socket": emerald(3.5, HEAD, grad=0.4, inclusions=0),
+    "brow": emerald(3.9, HEAD, grad=0.5), "lid": emerald(3.6, HEAD, grad=0.3, inclusions=0), "socket": emerald(3.5, HEAD, grad=0.4, inclusions=0),
     "jaw": jaw, "belly": belly,
     "limb": emerald(4.0, LEG, gloss=0.8), "joint": emerald(3.6, LEG, inclusions=0),
     "joint_body": emerald(3.6, BODY, inclusions=0), "toe": (toe, 2),
@@ -216,7 +216,7 @@ MATERIAL_TEXT = {
     "neck": "peau d'émeraude", "head": "peau d'émeraude, inclusions discrètes",
     "head_top": "peau d'émeraude claire, reflet poli", "muzzle": "peau d'émeraude claire, reflet poli",
     "muzzle_tip": "peau claire, deux narines vert profond", "brow": "arcade lourde au-dessus de l'œil",
-    "socket": "peau plus sombre autour de l'œil", "jaw": "peau, ligne d'ombre de la bouche, dessous jade",
+    "socket": "peau plus sombre autour de l'œil", "lid": "paupière (cachée dans l'orbite, sortie par les animations)", "jaw": "peau, ligne d'ombre de la bouche, dessous jade",
     "belly": "ventre jade laiteux (#91DDB0), mat", "limb": "peau d'émeraude, reflet sur le dessus",
     "joint": "peau plus sombre (articulation)", "joint_body": "peau plus sombre (jonction)",
     "toe": "peau, bout arrondi plus clair", "tail": "peau d'émeraude, plus sombre vers le bout, reflet longitudinal",
@@ -269,6 +269,26 @@ def face_point(face, size, u, v):
 # --------------------------------------------------------------------------- skeleton (drawing units, 16 = 1 block)
 NECK = (0, 14, -35)
 HEAD_UP = rot(10, 0, 0)          # head raised 10 degrees: it watches something in front of it
+# Origin of the delivered model (where the creature carrying it stands): between the front shoulders (drawing z), so
+# that its body box, its bite reach and every distance of its abilities start at its chest, not at the middle of
+# its 8 blocks (half of them are tail).
+ORIGIN_Z = -22.0
+LID_REST, LID_OUT = -1.6, 2.7    # eyelid centre from the eye centre along its outward normal: hidden, then + LID_OUT
+
+
+def EYE_AT(s):
+    return (13.3 * s, 18.8, -47.8)
+
+
+def lid_axis(s):
+    """Outward normal of an eye in the head's drawing (before the head is raised)."""
+    a = math.radians(24)
+    return (s * math.cos(a), 0.0, -math.sin(a))
+
+
+def lid_normal(s):
+    """The same normal in the delivered model (head raised): the direction the lid slides to close."""
+    return app(HEAD_UP, list(lid_axis(s)))
 # legs: (shoulder or hip, elbow or knee, wrist or ankle, foot centre, foot yaw outward in degrees, foot size)
 LEGS = {
     "front": ((14.0, 12.0, -22.0), (19.6, 7.6, -23.6), (20.4, 2.6, -25.6), (20.6, 1.4, -27.6), 18, (8.0, 2.8, 6.4)),
@@ -328,7 +348,14 @@ def parts():
     for s, side in ((1, "droite"), (-1, "gauche")):
         hd(f"joue_{side}", (11.6 * s, 14.6, -45.0), (3.6, 7.4, 14), (0, 10 * s, 0), "head")
         hd(f"orbite_{side}", (12.0 * s, 18.8, -47.4), (2.8, 7.6, 10.0), (0, 24 * s, 0), "socket")
-        hd(f"oeil_{side}", (13.3 * s, 18.8, -47.8), (1.4, 6.6, 8.8), (0, 24 * s, 0), "eye_r" if s > 0 else "eye_l")
+        hd(f"oeil_{side}", EYE_AT(s), (1.4, 6.6, 8.8), (0, 24 * s, 0), "eye_r" if s > 0 else "eye_l")
+        # eyelid hidden inside the orbit, slid out over the eye by the animations (closed eyes, blinks): LID_OUT
+        # pixels along the eye's normal (lid_normal) from where it rests
+        lid = f"Lid_{'right' if s > 0 else 'left'}"
+        G[lid] = (on_head(EYE_AT(s), (0, 0, 0))[0], "Head")
+        c0 = EYE_AT(s)
+        n = lid_axis(s)
+        hd(f"paupiere_{side}", [c0[i] + n[i] * (LID_REST) for i in range(3)], (0.8, 7.0, 9.2), (0, 24 * s, 0), "lid", lid)
         # heavy brow ridge right over the eye, lower towards the snout: the angry V seen from the front
         hd(f"arcade_{side}", (12.2 * s, 21.6, -48.4), (4.2, 2.2, 10.0), (-20, 24 * s, 0), "brow")
 
@@ -407,7 +434,9 @@ def lit(P):
 
 def build():
     raw, groups = parts()
-    P, groups, dims = ground(raw, groups, scale=1.0, center=True)
+    raw = [(g, n, [c[0], c[1], c[2] - ORIGIN_Z], size, r, m) for g, n, c, size, r, m in raw]
+    groups = {k: ((pv[0], pv[1], pv[2] - ORIGIN_Z), par) for k, (pv, par) in groups.items()}
+    P, groups, dims = ground(raw, groups, scale=1.0, center=False)
     P, mats = lit(P)
     uv, atlases, sizes = bake(P, mats, {})
     data = export(IDENT, NS, P, groups, uv, atlases, sizes)
@@ -438,7 +467,7 @@ FUNCTIONS = (
     ("bassin", "bassin"), ("hanche_rotule", "articulation de la hanche"), ("hanche", "hanche"), ("crane", "crâne aplati"),
     ("museau", "museau arrondi"), ("machoire", "mâchoire inférieure"), ("menton", "avant de la mâchoire"),
     ("joue", "joue"), ("arcade", "arcade au-dessus de l'œil (regard en colère)"), ("orbite", "contour de l'œil"),
-    ("oeil", "œil"), ("bras", "segment supérieur de patte avant"), ("coude", "coude"),
+    ("oeil", "œil"), ("paupiere", "paupière (clignement, yeux fermés)"), ("bras", "segment supérieur de patte avant"), ("coude", "coude"),
     ("avant_bras", "segment inférieur de patte avant"), ("poignet", "poignet"),
     ("cuisse", "segment supérieur de patte arrière"), ("genou", "genou"), ("jambe", "segment inférieur de patte arrière"),
     ("cheville", "cheville"), ("pied", "pied"), ("doigt", "doigt"), ("queue", "segment de queue"),
@@ -483,6 +512,12 @@ if __name__ == "__main__":
             del args[i:i + 2]
     out = args[0] if args else HERE
     P, groups, dims, data, atlases, sizes = build()
+    # the animations (salamandrex_anim.py) are part of the delivered model
+    import salamandrex_anim
+    anims = salamandrex_anim.build(data, lambda name: str(uuid.uuid5(NS, f"{IDENT}/{name}")))
+    for anim in anims:
+        anim.pop("_values", None)
+    data["animations"] = anims
     path = os.path.join(out, IDENT + ".bbmodel")
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False)
