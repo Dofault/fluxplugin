@@ -24,7 +24,7 @@ import java.util.Map;
  * Carried by FluxDungeons because it serves the dungeons first, but it applies everywhere ({@code attack-cadence} of
  * FluxDungeons' config). In a dungeon it adds the aim assist ({@link Assist}).
  * <ul>
- *   <li>Every weapon (any item with an attack speed but mining tools: swords, axes, trident, mace) gets the vanilla item
+ *   <li>Swords and axes (nothing else since 2026-11-11: bows, tridents, maces, tools stay vanilla) get the vanilla item
  *   components {@code minimum_attack_charge} (the client refuses to attack before the weapon is recharged, so spam
  *   clicks do nothing) and {@code swing_animation} lasting the whole recharge (the weapon comes back slowly, slower
  *   for a slow weapon). Given through {@link ItemLooks#registerAny}, so vanilla items get it too.</li>
@@ -145,8 +145,9 @@ public final class AttackCadence implements Listener {
      * Spears keep their own components.
      */
     private static boolean excluded(ItemStack item) {
+        // swords and axes only (2026-11-11): bows, tridents, maces, tools and every other item stay vanilla
         String n = item.getType().name();
-        return n.endsWith("_SPEAR") || n.endsWith("_PICKAXE") || n.endsWith("_SHOVEL") || n.endsWith("_HOE");
+        return !(n.endsWith("_SWORD") || n.endsWith("_AXE") && !n.endsWith("_PICKAXE"));
     }
 
     private boolean apply(ItemStack item) {

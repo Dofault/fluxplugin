@@ -91,7 +91,10 @@ public final class RpgPlayers implements Listener {
     public void onEnter(UniverseEnterEvent e) {
         Player p = e.getPlayer();
         if (RpgWorld.UNIVERSE.equals(e.universe())) start(p);
-        else if (RpgWorld.UNIVERSE.equals(e.previous())) stop(p, true);
+        else {
+            if (online.containsKey(p.getUniqueId()) || RpgWorld.UNIVERSE.equals(e.previous())) stop(p, true);
+            clean(p);
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -386,7 +389,10 @@ public final class RpgPlayers implements Listener {
      */
     private void cadence(Player p, RpgPlayer r) {
         double attacks = r.stats().get("attack_speed");
-        set(p, Attribute.ATTACK_SPEED, ATTACK_SPEED, attacks);
+        // never on the player: the game raises every held item at his attack speed (any item looked hidden for a
+        // second); on the weapon only, below
+        AttributeInstance own = p.getAttribute(Attribute.ATTACK_SPEED);
+        if (own != null) own.removeModifier(ATTACK_SPEED);
         ClassDef.Attack basic = r.heroClass().basic();
         if (basic.melee()) set(p, Attribute.ENTITY_INTERACTION_RANGE, REACH, basic.range());
         else {
@@ -396,7 +402,7 @@ public final class RpgPlayers implements Listener {
         ItemStack hand = p.getInventory().getItemInMainHand();
         if (RpgItems.idOf(hand) == null) return;
         int swing = (int) Math.max(3, Math.round(20 / Math.max(0.1, attacks) * SWING_SHARE));
-        boolean changed = false;
+        boolean changed = weaponSpeed(hand, attacks);
         Float charge = hand.isDataOverridden(io.papermc.paper.datacomponent.DataComponentTypes.MINIMUM_ATTACK_CHARGE)
                 ? hand.getData(io.papermc.paper.datacomponent.DataComponentTypes.MINIMUM_ATTACK_CHARGE) : null;
         if (charge == null || charge < 0.999f) {
@@ -412,6 +418,32 @@ public final class RpgPlayers implements Listener {
             changed = true;
         }
         if (changed) p.getInventory().setItemInMainHand(hand);
+    }
+
+    /**
+     * The weapon's own attack speed (main hand), so that holding it, and only it, paces the attacks at the player's
+     * rpg attack speed. True when it changed.
+     */
+    private static boolean weaponSpeed(ItemStack hand, double attacks) {
+        double amount = attacks - 4;   // the player's base attack speed is 4
+        var meta = hand.getItemMeta();
+        var mods = meta.getAttributeModifiers(Attribute.ATTACK_SPEED);
+        if (mods != null) for (AttributeModifier m : mods) {
+            if (m.getKey().equals(ATTACK_SPEED) && Math.abs(m.getAmount() - amount) < 1e-6) return false;
+        }
+        meta.removeAttributeModifier(Attribute.ATTACK_SPEED);
+        meta.addAttributeModifier(Attribute.ATTACK_SPEED, new AttributeModifier(ATTACK_SPEED, amount,
+                AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.MAINHAND));
+        hand.setItemMeta(meta);
+        return true;
+    }
+
+    /** Takes back every rpg change of the player (left over by a swap that broke off, or saved in his file). */
+    void clean(Player p) {
+        for (var e : new Object[][]{{Attribute.MOVEMENT_SPEED, SPEED}, {Attribute.ATTACK_SPEED, ATTACK_SPEED}, {Attribute.ENTITY_INTERACTION_RANGE, REACH}}) {
+            AttributeInstance a = p.getAttribute((Attribute) e[0]);
+            if (a != null) a.removeModifier((NamespacedKey) e[1]);
+        }
     }
 
     /** Sets an attribute to a total value through our own modifier (base untouched, removed when leaving). */
@@ -526,6 +558,12 @@ public final class RpgPlayers implements Listener {
         long now = CombatEngine.now();
         for (Player p : Bukkit.getOnlinePlayers()) {
             RpgPlayer r = online.get(p.getUniqueId());
+            if (r != null && !RpgWorld.UNIVERSE.equals(Universes.of(p)) && !Universes.transitioning(p)) {
+                // an rpg state outside the rpg universe (a swap that broke off): never shown, taken back
+                stop(p, true);
+                clean(p);
+                continue;
+            }
             // drawn on the death screen too: never a fade-out showing the hearts underneath
             if (r != null && r.stats() != null) hud(p, r, now);
         }
