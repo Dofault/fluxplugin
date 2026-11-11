@@ -45,7 +45,14 @@ import java.util.UUID;
 public final class RpgPlayers implements Listener {
 
     private static final NamespacedKey SPEED = new NamespacedKey("fluxdungeons", "rpg_speed");
+    /** Former modifier on the player himself (taken back wherever it is left): never the weapon's key below. */
     private static final NamespacedKey ATTACK_SPEED = new NamespacedKey("fluxdungeons", "rpg_attack_speed");
+    /**
+     * The weapon's own attack speed. Its own key: the game applies a held item's modifiers to the player under the
+     * item's key, and the cleaning of {@link #ATTACK_SPEED} took it away (the client then recharged at 4 hits per
+     * second and swung again at every click, the server hit once).
+     */
+    private static final NamespacedKey WEAPON_SPEED = new NamespacedKey("fluxdungeons", "rpg_weapon_speed");
     private static final NamespacedKey REACH = new NamespacedKey("fluxdungeons", "rpg_reach");
     /** Swing of the weapon as a share of its recharge (the client restarts a swing a little before its end). */
     private static final double SWING_SHARE = 0.8;
@@ -428,11 +435,11 @@ public final class RpgPlayers implements Listener {
         double amount = attacks - 4;   // the player's base attack speed is 4
         var meta = hand.getItemMeta();
         var mods = meta.getAttributeModifiers(Attribute.ATTACK_SPEED);
-        if (mods != null) for (AttributeModifier m : mods) {
-            if (m.getKey().equals(ATTACK_SPEED) && Math.abs(m.getAmount() - amount) < 1e-6) return false;
+        if (mods != null && mods.size() == 1) for (AttributeModifier m : mods) {
+            if (m.getKey().equals(WEAPON_SPEED) && Math.abs(m.getAmount() - amount) < 1e-6) return false;
         }
         meta.removeAttributeModifier(Attribute.ATTACK_SPEED);
-        meta.addAttributeModifier(Attribute.ATTACK_SPEED, new AttributeModifier(ATTACK_SPEED, amount,
+        meta.addAttributeModifier(Attribute.ATTACK_SPEED, new AttributeModifier(WEAPON_SPEED, amount,
                 AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.MAINHAND));
         hand.setItemMeta(meta);
         return true;
