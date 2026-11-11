@@ -195,7 +195,13 @@ public final class Model {
         return out;
     }
 
-    /** The weight of a kill is shared between what it drops: one kill is never worth more than its weight in total. */
+    /**
+     * A drop costs the kills it takes to farm it: kill weight / how many drop per kill. Not shared between the drops
+     * (2026-11-11): sharing gave each kind of drop an equal part, so a zombie's flesh carried only a quarter of the
+     * kill (the rest went to iron, carrots and potatoes, which nobody farms from zombies) and offerings asked four
+     * times the play time of their other lines. A drop that is cheaper to get elsewhere (iron from ore) keeps that
+     * cheaper value: the graph takes the cheapest source, as for every item.
+     */
     private void readDrops(YamlConfiguration file) {
         for (String group : List.of("mobs", "animals")) {
             ConfigurationSection root = file.getConfigurationSection(group);
@@ -206,18 +212,21 @@ public final class Model {
                 if (group.equals("animals")) animalWeights.put(id, weight);
                 ConfigurationSection y = root.getConfigurationSection(id + ".yields");
                 if (y == null || y.getKeys(false).isEmpty()) continue;
-                int shares = y.getKeys(false).size();
                 for (String item : y.getKeys(false)) {
                     double count = y.getDouble(item);
                     if (count <= 0) continue;
-                    market.source(item, weight / shares / count, job);
-                    early.source(item, weight / shares / count, job);
+                    market.source(item, weight / count, job);
+                    early.source(item, weight / count, job);
                 }
             }
         }
     }
 
-    /** A fish costs the catches it takes to get its rarity. */
+    /**
+     * A fish costs the catches it takes to get its rarity and its species: {@code species} is a list (one species
+     * per biome: fishing in its biome, every catch of the rarity is that species) or a map species: share of the
+     * catches of its biome (2 species in the temperate ocean = 0.5 each).
+     */
     private void readFishing(YamlConfiguration file) {
         ConfigurationSection f = file.getConfigurationSection("fishing");
         if (f == null) return;
@@ -228,10 +237,18 @@ public final class Model {
         for (String rarity : rarities.getKeys(false)) {
             double share = rarities.getDouble(rarity);
             if (share <= 0) continue;
-            for (String species : f.getStringList("species")) {
-                String id = "customfishing:" + rarity + "_" + species;
-                market.source(id, weight / share, "pecheur");
-                early.source(id, weight / share, "pecheur");
+            Map<String, Double> species = new LinkedHashMap<>();
+            if (f.isConfigurationSection("species")) {
+                ConfigurationSection sp = f.getConfigurationSection("species");
+                for (String k : sp.getKeys(false)) species.put(k, sp.getDouble(k, 1));
+            } else {
+                for (String k : f.getStringList("species")) species.put(k, 1.0);
+            }
+            for (Map.Entry<String, Double> sp : species.entrySet()) {
+                if (sp.getValue() <= 0) continue;
+                String id = "customfishing:" + rarity + "_" + sp.getKey();
+                market.source(id, weight / share / sp.getValue(), "pecheur");
+                early.source(id, weight / share / sp.getValue(), "pecheur");
             }
         }
     }
