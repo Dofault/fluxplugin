@@ -36,6 +36,15 @@ public final class Values {
         /** Points earned per second of optimal play, in every job. */
         double pointsPerSecond();
 
+        /**
+         * Points of one action ({@code trigger} as in libreforge: {@code mine_block}, {@code kill}, {@code catch_fish},
+         * {@code brew}...) on {@code target} (a block or a creature id, null when the trigger has none); empty when
+         * nothing values it.
+         */
+        default OptionalDouble actionPoints(String trigger, String target) {
+            return OptionalDouble.empty();
+        }
+
         /** Money earned per second of optimal play by a level 100 player (the reference income of the server). */
         default double moneyPerSecond() {
             return 0;
@@ -80,6 +89,16 @@ public final class Values {
     public static OptionalDouble buyPrice(String item) {
         Provider p = provider;
         return p == null ? OptionalDouble.empty() : p.buyPrice(item);
+    }
+
+    /**
+     * Points of one action: breaking a block ({@code mine_block}, {@code coal_ore}), killing a creature
+     * ({@code kill}, {@code zombie}), a catch, a brew, a smelt... Empty when nothing values it. What a quest asks
+     * comes from here: {@code amount = effort points / actionPoints}, so every quest costs the same play time.
+     */
+    public static OptionalDouble actionPoints(String trigger, String target) {
+        Provider p = provider;
+        return p == null || trigger == null ? OptionalDouble.empty() : p.actionPoints(trigger, target);
     }
 
     public static double pointsPerSecond() {

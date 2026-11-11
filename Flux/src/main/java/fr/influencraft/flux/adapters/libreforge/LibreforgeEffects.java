@@ -60,6 +60,17 @@ public final class LibreforgeEffects implements Effects.Engine {
     }
 
     @Override
+    @SuppressWarnings("unchecked") // map read from YAML: its keys are strings
+    public Effects.Counter count(String owner, String id, Map<?, ?> config, Effects.Accumulator accumulator) {
+        ViolationContext context = new ViolationContext(libreforge, owner + " " + id);
+        com.willfp.libreforge.counters.Counter counter = com.willfp.libreforge.counters.Counters.compile(
+                new TransientConfig((Map<String, Object>) config), context);
+        if (counter == null) return null;
+        counter.bind(accumulator::accept);
+        return counter::unbind;
+    }
+
+    @Override
     public void start() {
         HolderProviderKt.registerGenericHolderProvider(dispatcher -> {
             List<ProvidedHolder> holders = new ArrayList<>();

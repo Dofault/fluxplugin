@@ -1,0 +1,16 @@
+name: FluxPass
+version: 26.2
+main: fr.influencraft.fluxpass.FluxPass
+api-version: "26.2"
+description: Season pass (free and premium tracks, tier rewards) and its missions, priced by FluxValue.
+authors: [Influencraft]
+depend: [Flux]
+softdepend: [FluxValue]
+
+permissions:
+  fluxpass.use:
+    description: Open the pass and claim its rewards.
+    default: true
+  fluxpass.admin:
+    description: Give points, set tiers, reset, complete missions, renew a category, preview amounts, reload.
+    default: op

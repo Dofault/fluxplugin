@@ -1,0 +1,27 @@
+# The season: dates, tiers, points per tier and rewards.
+season:
+  name: "Season 1"
+  start: "2026-01-01 00:00"
+  end: "2026-03-31 23:59"
+
+tiers: 10
+
+# Points to reach a tier from the one before. Keys: a tier or a range "from-to"; tier 1 at 0 = reached at once.
+points-per-tier:
+  "1": 0
+  "2-10": 100
+
+# Rewards: per tier, one per track (free, premium). icon = what the menu shows (material, itemsadder:ns:id...),
+# lines = what the tooltip lists, commands = run by the console on claim (%player%).
+rewards:
+  1:
+    free:
+      icon: "CHEST"
+      amount: 1
+      lines: ["&fWelcome gift"]
+      commands: ["give %player% bread 8"]
+    premium:
+      icon: "ENDER_CHEST"
+      amount: 1
+      lines: ["&fPremium welcome gift"]
+      commands: ["give %player% cooked_beef 16"]

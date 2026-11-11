@@ -50,6 +50,10 @@ public final class Model {
 
     final Map<String, Job> jobs = new LinkedHashMap<>();
     final Map<String, Double> mobWeights = new LinkedHashMap<>();
+    /** Points of one kill of a farm animal ({@code animals:}, direct points). */
+    final Map<String, Double> animalWeights = new LinkedHashMap<>();
+    /** Points of one catch ({@code fishing.catch-weight}). */
+    double catchWeight;
     final Map<String, String> aliases = new LinkedHashMap<>();
     final List<String> warnings = new ArrayList<>();
     private final ValueGraph market = new ValueGraph();
@@ -193,6 +197,7 @@ public final class Model {
             String job = group.equals("mobs") ? "defenseur" : "divers";
             for (String id : root.getKeys(false)) {
                 double weight = group.equals("mobs") ? mobWeights.getOrDefault(id, 0.0) : root.getDouble(id + ".weight");
+                if (group.equals("animals")) animalWeights.put(id, weight);
                 ConfigurationSection y = root.getConfigurationSection(id + ".yields");
                 if (y == null || y.getKeys(false).isEmpty()) continue;
                 int shares = y.getKeys(false).size();
@@ -211,6 +216,7 @@ public final class Model {
         ConfigurationSection f = file.getConfigurationSection("fishing");
         if (f == null) return;
         double weight = f.getDouble("catch-weight");
+        catchWeight = weight;
         ConfigurationSection rarities = f.getConfigurationSection("rarities");
         if (rarities == null) return;
         for (String rarity : rarities.getKeys(false)) {
@@ -236,6 +242,30 @@ public final class Model {
             market.source(key, weight / chance.getDouble(id), "enchanteur");
             early.source(key, weight / chance.getDouble(id), "enchanteur");
         }
+    }
+
+    /**
+     * Points of one action: the job source with this trigger on this block (a cascade counts as a break), a kill of a
+     * hostile mob or a farm animal, a catch. {@code target} null = any source of the trigger.
+     */
+    OptionalDouble actionPoints(String trigger, String target) {
+        String t = trigger.toLowerCase(Locale.ROOT);
+        String id = target == null ? null : target.toLowerCase(Locale.ROOT).replace("minecraft:", "");
+        if (t.equals("kill")) {
+            if (id == null) return OptionalDouble.empty();
+            Double w = mobWeights.containsKey(id) ? mobWeights.get(id) : animalWeights.get(id);
+            return w == null || w <= 0 ? OptionalDouble.empty() : OptionalDouble.of(w);
+        }
+        if (t.equals("catch_fish") && catchWeight > 0) return OptionalDouble.of(catchWeight);
+        for (Job job : jobs.values()) {
+            for (Source s : job.sources()) {
+                String st = s.trigger().equals("mine_block_cascade") ? "mine_block" : s.trigger();
+                if (!st.equals(t) || s.weight() <= 0) continue;
+                if (id == null || s.blocks().isEmpty() && !isBlockTrigger(s.trigger())
+                        || s.blocks().contains(id) || s.id().equalsIgnoreCase(id)) return OptionalDouble.of(s.weight());
+            }
+        }
+        return OptionalDouble.empty();
     }
 
     OptionalDouble points(String item) {

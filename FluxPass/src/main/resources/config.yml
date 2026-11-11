@@ -1,0 +1,25 @@
+# FluxPass: the season pass of the suite.
+#   pass.yml           season, tiers, points per tier, rewards of both tracks
+#   missions/<id>.yml  one category of missions per file (daily, weeks...)
+# What a mission asks is priced by FluxValue: amount = effort / points of one action, so every mission of a
+# category costs the same play time. A mission keeps a fixed "amount" when FluxValue cannot price its action.
+
+# Language of the texts (empty = the suite's language).
+language: ""
+
+# Permission of the premium track.
+premium-permission: "fluxpass.premium"
+
+# How often the renewal of the categories is checked (seconds).
+renewal-check-seconds: 30
+
+# Progress of online players is saved this often (seconds) and when they leave.
+save-seconds: 60
+
+menu:
+  # Menu opened by /pass.
+  id: "pass"
+  # Tiers shown per page of the path.
+  tiers-per-page: 7
+  # Slots of the missions row (odd: an even count leaves the middle slot empty).
+  mission-slots: 7

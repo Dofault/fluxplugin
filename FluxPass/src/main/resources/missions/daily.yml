@@ -1,0 +1,55 @@
+# A category of missions (file name = its id). Shown in the menu in "order".
+name: "Daily missions"
+icon: CLOCK
+# stack size shown on the icon (week number...)
+amount: 1
+order: 0
+
+# When the missions start again (progress cleared, variants drawn again):
+#   daily:   every day at "time"
+#   monthly: every month on "day" at "time"; the category opens "offset-days" later (week 2 = 7)
+#   none:    never
+renewal:
+  type: daily
+  time: "06:00"
+
+# Pass points a mission gives (default; a mission may set its own "points").
+points: 30
+# Value of a mission in FluxValue points (7050 = 2 minutes of optimal play): what it asks is
+# effort / points of one action. effort-per-point x the points of the mission, so a mission costs play time in
+# proportion to what it pays ("effort" sets it directly). A variant may set "effort-factor", a fixed "amount", or a
+# "default-amount" used only when FluxValue cannot price its action.
+effort-per-point: 20
+
+missions:
+  # A mission with variants: one is drawn at each renewal, the same for everybody.
+  harvest:
+    name: "Harvest of the day"
+    icon: OAK_LOG
+    variants:
+      oak:
+        name: "Woodcutter (oak)"
+        description: "Cut {amount} oak logs."
+        counters:
+          - trigger: mine_block
+            value: 1
+            filters:
+              blocks: [oak_log, oak_wood]
+              player_placed: false
+      zombies:
+        name: "Zombie hunter"
+        description: "Kill {amount} zombies."
+        counters:
+          - trigger: kill
+            value: 1
+            filters:
+              entities: [zombie]
+  # A mission without variants: its counters directly. "premium: true" = premium track only.
+  fisher:
+    name: "Fisher"
+    icon: FISHING_ROD
+    description: "Catch {amount} fish."
+    amount: 5
+    counters:
+      - trigger: catch_fish
+        value: 1

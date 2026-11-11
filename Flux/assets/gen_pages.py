@@ -296,60 +296,18 @@ def pass_entete(pid_pass, infos):
 
 
 def pass_infos(pid_pass):
-    T = f"%ecobattlepass_tier_{pid_pass}%"
-    return APROPOS["pass"] + ["", f"Pass : %ecobattlepass_{pid_pass}_pass_type%",
-                              f"Palier : &f{T}&7/&f%ecobattlepass_{pid_pass}_max_tiers%",
-                              f"Points : &f%ecobattlepass_xp_{pid_pass}%&7/&f%ecobattlepass_xp_required_{pid_pass}%",
-                              f"Fin de saison : &f%ecobattlepass_time_to_season_end_{pid_pass}%"]
+    return APROPOS["pass"] + ["", "Pass : %fluxpass_track%",
+                              "Palier : &f%fluxpass_tier%&7/&f%fluxpass_max_tiers%",
+                              "Points : &f%fluxpass_points%&7/&f%fluxpass_points_required%",
+                              "Fin de saison : &f%fluxpass_seasonend_full%"]
 
 
-# Objet affiché pour une récompense du pass (2026-10-30) : le lot lui-même plutôt qu'un coffre, lu dans les
-# effets de la récompense EcoBattlepass (premier objet donné), avec sa quantité.
-CLES = {"ordinaire": "itemsadder:influkey:common_key", "tendance": "itemsadder:influkey:epic_key",
-        "virale": "itemsadder:influkey:rare_key", "phenomene": "itemsadder:influkey:legendary_key"}
-ECOBP = os.environ.get("ECOBATTLEPASS", "/home/influencraft/serveurs/04_labs/plugins/EcoBattlepass")
-
-
-def lot(reward_id):
-    """(matériau, quantité) du lot le plus parlant de la récompense : un objet (livre, élytres, œuf...) avant un
-    objet de pêche, une clé de caisse puis l'Influence ; un coffre si rien n'est reconnu."""
-    trouves = []
-    for piste in ("standard", "prestige"):
-        f = os.path.join(ECOBP, "rewards", piste, reward_id + ".yml")
-        if not os.path.isfile(f):
-            continue
-        for eff in yaml.safe_load(open(f, encoding="utf-8")).get("effects") or []:
-            cmd = str(((eff or {}).get("args") or {}).get("command", "")).split()
-            if len(cmd) >= 4 and cmd[0] == "iagive":
-                trouves.append((0, "itemsadder:" + cmd[2], int(cmd[3])))
-            elif len(cmd) >= 4 and cmd[0] == "cmi" and cmd[1] == "give":
-                trouves.append((0, cmd[3].upper(), int(cmd[4]) if len(cmd) > 4 else 1))
-            elif len(cmd) >= 5 and cmd[0] == "customfishing" and cmd[1] == "items":
-                trouves.append((1, "STRING", int(cmd[5]) if len(cmd) > 5 else 1))
-            elif len(cmd) >= 6 and cmd[0] == "ecocrates" and cmd[3] == "key" and cmd[4] in CLES:
-                trouves.append((2, CLES[cmd[4]], int(cmd[6]) if len(cmd) > 6 else 1))
-            elif len(cmd) >= 4 and cmd[0] == "points" and cmd[1] == "give":
-                trouves.append((3, "itemsadder:influitems:influence", int(cmd[3])))
-    if not trouves:
-        return "itemsadder:influitems:chest", 1
-    _, mat, qte = min(trouves, key=lambda x: x[0])
-    return mat, qte
-
-
-def lots_palier(t):
-    """(lot gratuit, lot premium) du palier t, d'après battlepasses/pass.yml."""
-    f = os.path.join(ECOBP, "battlepasses", "pass.yml")
-    if os.path.isfile(f):
-        for tier in yaml.safe_load(open(f, encoding="utf-8")).get("tiers") or []:
-            if tier.get("tier") == t:
-                ids = {r.get("tier"): r.get("id") for r in tier.get("rewards") or []}
-                return lot(ids.get("free", "")), lot(ids.get("premium", ""))
-    return ("itemsadder:influitems:chest", 1), ("itemsadder:influitems:chest", 1)
-
-
+# Paliers du chemin (2026-11-11) : listes construites par FluxPass (pass_free_<page>, pass_premium_<page>), le lot
+# de chaque palier, son état et sa description venant de plugins/FluxPass/pass.yml (icon, amount, lines).
 def pass_chemin(pid_pass, n, total, paliers_max):
-    """Page n : les 7 paliers (gratuit rangée 4, premium juste dessous), flèches, numéros et cadenas (widgets)."""
-    T = f"%ecobattlepass_tier_{pid_pass}%"
+    """Page n : flèches, listes des 7 paliers (gratuit rangée 4, premium juste dessous, construites par FluxPass),
+    numéros et cadenas (widgets)."""
+    T = "%fluxpass_tier%"
     debut = (n - 1) * PAR_PAGE
     nb = min(PAR_PAGE, paliers_max - debut)
     slots = P_PALIERS[:nb]
@@ -366,34 +324,15 @@ def pass_chemin(pid_pass, n, total, paliers_max):
         its += fleche("precedent", P_PREV, "pass_prev", "Page précédente", n - 1)
     if n < total:
         its += fleche("suivant", P_NEXT, "pass_next", "Page suivante", n + 1)
+    # the tiers: one list per track, each entry built by FluxPass (entry id = the tier); the sound of a claim is
+    # played by FluxPass (success or error)
+    listes = []
+    for piste, rangee in (("free", slots), ("premium", [s + 9 for s in slots])):
+        listes += [f"      paliers_{piste}:", f"        source: pass_{piste}_{n}",
+                   f"        slots: [{', '.join(map(str, rangee))}]", "        item:", "          material: entry",
+                   "          actions:", f'            left: ["[fluxpass] claim %entry_id% {piste}"]']
     for k, slot in enumerate(slots):
         t = debut + k + 1
-        etat = f"%ecobattlepass_tier_state_{pid_pass}_{t}%"
-        # reward-lore lines of EcoBattlepass (its *-rewards-format must be "%reward%": the frame comes from Flux)
-        libre = [f"@item %ecobattlepass_tier_free_reward_{pid_pass}_{t}_{i}%" for i in range(1, 6)]
-        prest = [f"@item %ecobattlepass_tier_premium_reward_{pid_pass}_{t}_{i}%" for i in range(1, 6)]
-        nom = f"Palier {t}"
-        (mat_l, qte_l), (mat_p, qte_p) = lots_palier(t)
-        ql, qp = min(64, max(1, qte_l)), min(64, max(1, qte_p))
-        # le lot lui-même dans chaque état : brillant quand il attend d'être récupéré
-        its.append(item(f"libre{t}_ok", mat_l, nom, slot, libre + ["&#2ECF7BRécupéré."],
-                        priorite=1, conditions=[f"placeholder: {etat} != NOT_RECEIVED", f"placeholder: {etat} != RECEIVED_PREMIUM"], quantite=ql))
-        its.append(item(f"libre{t}_dispo", mat_l, nom, slot, libre,
-                        [CLIC_G_OK + "Récupérer"],
-                        {"left": [f"[player] {pid_pass} claim {t} free", "[sound] @complete", "[refresh]"]},
-                        priorite=2, conditions=[f"placeholder: {T} >= {t}"], glow=True, quantite=ql))
-        its.append(item(f"libre{t}", mat_l, nom, slot, libre + [ROUGE + "Pas encore atteint."], priorite=3, quantite=ql))
-        bas = slot + 9
-        nomp = f"★ Palier {t} Premium"
-        its.append(item(f"prestige{t}_ok", mat_p, nomp, bas, prest + ["&#2ECF7BRécupéré."],
-                        priorite=1, conditions=[f"placeholder: {etat} != NOT_RECEIVED", f"placeholder: {etat} != RECEIVED_FREE"], quantite=qp))
-        its.append(item(f"prestige{t}_requis", mat_p, nomp, bas, prest + ["&#FF5C5CPass premium requis."],
-                        priorite=2, conditions=["!permission: battlepass.premium"], quantite=qp))
-        its.append(item(f"prestige{t}_dispo", mat_p, nomp, bas, prest,
-                        [CLIC_G_OK + "Récupérer"],
-                        {"left": [f"[player] {pid_pass} claim {t} premium", "[sound] @complete", "[refresh]"]},
-                        priorite=3, conditions=[f"placeholder: {T} >= {t}"], glow=True, quantite=qp))
-        its.append(item(f"prestige{t}", mat_p, nomp, bas, prest + [ROUGE + "Pas encore atteint."], priorite=4, quantite=qp))
         cx = 8 + 18 * (slot % 9) + 8
         widgets += [f"      numero{t}:", "        type: text", "        ink: true", f"        x: {cx}", "        y: 83",
                     "        align: center", f'        text: "{t}"',
@@ -403,18 +342,17 @@ def pass_chemin(pid_pass, n, total, paliers_max):
                     f"      ferme{t}:", "        type: text", "        ink: true", f"        x: {cx}", "        y: 76",
                     "        align: center", '        text: "\\uE120"',
                     f'        view-requirements: ["placeholder: {T} < {t}"]']
-    return its, widgets
+    return its, widgets, listes
 
 
 def pass_pages(paliers_max, pid_pass="pass"):
     total = -(-paliers_max // PAR_PAGE)
-    T = f"%ecobattlepass_tier_{pid_pass}%"
-    infos = pass_infos(pid_pass)
+    T = "%fluxpass_tier%"
     pages = []
     for n in range(1, total + 1):
-        its, widgets = pass_chemin(pid_pass, n, total, paliers_max)
+        its, widgets, listes = pass_chemin(pid_pass, n, total, paliers_max)
         bloc = page(f"{pid_pass}_{n}", its, {}, TITRE_PASS, animation=False)
-        pages.append(bloc.rstrip("\n") + "\n    widgets:\n" + "\n".join(widgets) + "\n")
+        pages.append(bloc.rstrip("\n") + "\n    lists:\n" + "\n".join(listes) + "\n    widgets:\n" + "\n".join(widgets) + "\n")
     principal = [item("pass", "itemsadder:influitems:pass", "Pass", 52,
                       [f"Palier &f{T}" + VIOLET + ", récompenses", "Standard et Prestige."], [CLIC_G + "Ouvrir"],
                       {"left": [f"[menu] {pid_pass}"]})]
@@ -424,11 +362,11 @@ def pass_pages(paliers_max, pid_pass="pass"):
 def menu_pass(pid_pass="pass"):
     """menus/pass.yml : en-tête, catégories et missions (listes de FluxTools) ; le chemin des paliers est dans
     les pages _pages/pass.yml (une par tranche de 7 paliers). Ouverture sur la page du palier du joueur
-    (%fluxpass_tierpage_...%), missions quotidiennes."""
+    (%fluxpass_tierpage_...%), missions quotidiennes. Les paliers sont des listes de FluxPass."""
     entete = "\n".join("\n".join(l[4:] for l in b.split("\n")) for b in pass_entete(pid_pass, pass_infos(pid_pass)))
     return f"""# Généré par plugins/fluxplugin/Flux/assets/gen_pages.py : ne pas modifier à la main.
-# Menu du pass (EcoBattlepass « {pid_pass} »), à part du menu principal, ouvert par son bouton Pass.
-# Catégories et missions : listes construites par FluxTools (PassMenu).
+# Menu du pass (FluxPass), à part du menu principal, ouvert par son bouton Pass et par /pass.
+# Paliers, catégories et missions : listes construites par FluxPass (PassMenu).
 
 title: {TITRE_PASS}
 rows: 6
@@ -438,7 +376,7 @@ update-interval: 0
 
 open-actions:
   - "[fluxpass] category quotidiennes"
-  - "[page-swap] {pid_pass}_%fluxpass_tierpage_{pid_pass}_{PAR_PAGE}%"
+  - "[page-swap] {pid_pass}_%fluxpass_tierpage_{PAR_PAGE}%"
 
 page-files:
   - _pages/{pid_pass}.yml
@@ -460,7 +398,7 @@ widgets:
     x: 48
     y: 49
     colour: "#B4B4B4"
-    text: "Fin dans %fluxpass_seasonend_{pid_pass}%"
+    text: "Fin dans %fluxpass_seasonend%"
   paliers:
     type: bar
     frame: true
@@ -468,9 +406,9 @@ widgets:
     y: 57
     width: 116
     colour: gold
-    progress: "%ecobattlepass_tier_{pid_pass}%"
-    max: "%ecobattlepass_{pid_pass}_max_tiers%"
-    text: "%ecobattlepass_tier_{pid_pass}%/%ecobattlepass_{pid_pass}_max_tiers%"
+    progress: "%fluxpass_tier%"
+    max: "%fluxpass_max_tiers%"
+    text: "%fluxpass_tier%/%fluxpass_max_tiers%"
 
 lists:
   pass_categories:
@@ -545,11 +483,17 @@ def vote():
 
 # ════════════════════════════════════════════════════════════════════════
 
+def paliers_fluxpass(defaut=50):
+    """Nombre de paliers de la saison (plugins/FluxPass/pass.yml de Labs)."""
+    f = "/home/influencraft/serveurs/04_labs/plugins/FluxPass/pass.yml"
+    return int((yaml.safe_load(open(f, encoding="utf-8")) or {}).get("tiers", defaut)) if os.path.isfile(f) else defaut
+
+
 def main():
     menus, conf_parr, conf_rec = sys.argv[1:4]
     seuils = lire_paliers_parrainage(conf_parr)
     cycle, nb_temps = lire_recompenses(conf_rec)
-    pass_max = int(sys.argv[4]) if len(sys.argv) > 4 else 50
+    pass_max = int(sys.argv[4]) if len(sys.argv) > 4 else paliers_fluxpass()
 
     principaux = []
     for nom, (contenu, principal) in {

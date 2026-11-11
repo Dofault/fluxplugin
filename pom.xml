@@ -45,5 +45,6 @@
         <module>FluxDungeons</module>
         <module>FluxPortal</module>
         <module>FluxMusic</module>
+        <module>FluxPass</module>
     </modules>
 </project>

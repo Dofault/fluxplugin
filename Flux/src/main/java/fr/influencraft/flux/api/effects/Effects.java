@@ -20,11 +20,30 @@ import java.util.function.Function;
  *   Effects.provide(this, player -> wearing(player) ? List.of(bonus) : List.of());
  *   Effects.refresh(player);   // when what the provider answers changed
  * </pre>
+ *
+ * <p>Counters: an action of a player counted by the engine's triggers and filters (the format of EcoJobs' and
+ * EcoBattlepass' {@code xp-gain-methods}: {@code trigger}, {@code value} or {@code multiplier}, {@code filters},
+ * {@code conditions}). {@link #count} calls back with the amount each time the action happens.</p>
+ * <pre>
+ *   Effects.Counter c = Effects.count(this, "mine_coal", Map.of("trigger", "mine_block", "value", 1,
+ *           "filters", Map.of("blocks", List.of("coal_ore"))), (player, amount) -> ...);
+ *   c.close();   // stops counting
+ * </pre>
  */
 public final class Effects {
 
     /** Compiled effects, to give back to {@link #provide}. */
     public interface Bundle {
+    }
+
+    /** An action being counted; {@link #close} stops it. */
+    public interface Counter {
+        void close();
+    }
+
+    /** Receives the amount of a counted action. Runs on the main thread. */
+    public interface Accumulator {
+        void accept(Player player, double amount);
     }
 
     /** What an adapter provides. */
@@ -35,11 +54,17 @@ public final class Effects {
         void start();
 
         void refresh(Player player);
+
+        /** Counts an action (null when the config is not valid). */
+        default Counter count(String owner, String id, Map<?, ?> config, Accumulator accumulator) {
+            return null;
+        }
     }
 
     private static final Bundle EMPTY = new Bundle() {
     };
     private static final Map<Plugin, Function<Player, Collection<Bundle>>> PROVIDERS = new ConcurrentHashMap<>();
+    private static final Map<Plugin, List<Counter>> COUNTERS = new ConcurrentHashMap<>();
     private static volatile Engine engine;
 
     private Effects() {
@@ -76,6 +101,24 @@ public final class Effects {
         PROVIDERS.put(owner, provider);
     }
 
+    /**
+     * Counts an action of every player (see the class comment for the format); {@code null} without an engine or
+     * when the config is not valid (the engine logs why). Closed with the owner when it stops. Call it from
+     * {@link #whenReady}: the engine may start after the plugins of the suite.
+     */
+    public static Counter count(Plugin owner, String id, Map<?, ?> config, Accumulator accumulator) {
+        Engine e = engine();
+        if (e == null) return null;
+        Counter counter = e.count(owner.getName().toLowerCase(java.util.Locale.ROOT), id, config, accumulator);
+        if (counter == null) return null;
+        List<Counter> owned = COUNTERS.computeIfAbsent(owner, k -> new java.util.concurrent.CopyOnWriteArrayList<>());
+        owned.add(counter);
+        return () -> {
+            owned.remove(counter);
+            counter.close();
+        };
+    }
+
     public static void refresh(Player player) {
         Engine e = engine;
         if (e != null) e.refresh(player);
@@ -89,6 +132,8 @@ public final class Effects {
     /** Called by Flux when a plugin stops. */
     public static void unregisterAll(Plugin owner) {
         PROVIDERS.remove(owner);
+        List<Counter> counters = COUNTERS.remove(owner);
+        if (counters != null) for (Counter c : counters) c.close();
     }
 
     private static Engine engine() {

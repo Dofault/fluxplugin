@@ -56,6 +56,10 @@ public final class FluxValue extends FluxPlugin {
                 return model.buyPrice(item);
             }
 
+            public OptionalDouble actionPoints(String trigger, String target) {
+                return model.actionPoints(trigger, target);
+            }
+
             public double pointsPerSecond() {
                 return model.pointsPerSecond();
             }
