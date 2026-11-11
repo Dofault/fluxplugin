@@ -461,20 +461,38 @@ def parts():
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    prev = None
+    prev = anims_dir = None
+    show = "--mesures" in args
+    if show:
+        args.remove("--mesures")
     if "--apercu" in args:
         i = args.index("--apercu")
         prev = args[i + 1]
+        del args[i:i + 2]
+    if "--anims" in args:
+        i = args.index("--anims")
+        anims_dir = args[i + 1]
         del args[i:i + 2]
     out = args[0] if args else HERE
     P, groups, dims = ground(parts(), GROUPS, scale=SCALE)
     uv, atlases, sizes = bake(P, MATS, {})
     data = export(IDENT, NS, P, groups, uv, atlases, sizes)
     data["textures"] = data["textures"][:1]          # nothing glows: no emissive texture
-    print(f"{len(P)} volumes ; {dims[0]:.2f} x {dims[1]:.2f} x {dims[2]:.2f} blocs (l x h x p) ; texture {sizes[0]}")
+    import taupe_champs_anim as TA
+    anims = TA.build(data, TA.uid_for(NS, IDENT))
+    print(f"{len(P)} volumes ; {dims[0]:.2f} x {dims[1]:.2f} x {dims[2]:.2f} blocs (l x h x p) ; texture {sizes[0]} ; "
+          f"{len(anims)} animations")
+    if anims_dir:
+        TA.strips(data, anims, atlases, sizes, anims_dir)
+    if show:
+        for name, rows in TA.measure(data, anims).items():
+            print(f"--- {name}")
+            for r in rows:
+                print(f"  tick {r['tick']:3d}  bas {r['low']:6.2f}  haut {r['high']:5.2f}  pointe {r['tip']}")
+    if prev:
+        apercu(data, atlases, sizes, prev, set(), views=((35, 12), (0, 6), (90, 3), (0, 88)), size=420)
+    data["animations"] = TA.finish(anims)
     path = os.path.join(out, IDENT + ".bbmodel")
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False)
     print("écrit", path)
-    if prev:
-        apercu(data, atlases, sizes, prev, set(), views=((35, 12), (0, 6), (90, 3), (0, 88)), size=420)

@@ -59,6 +59,8 @@ public final class Runs {
     private final FluxPlugin plugin;
     private final Arena arena;
     private final Mobs mobs;
+    /** Lairs of digging bosses (dungeons with a burrows section). */
+    private final Burrows burrows;
     private final Heroes heroes;
     private final Loadouts loadouts;
     private final fr.influencraft.fluxdungeons.Store store;
@@ -109,6 +111,7 @@ public final class Runs {
         this.plugin = plugin;
         this.arena = arena;
         this.mobs = mobs;
+        this.burrows = new Burrows(plugin, this, mobs);
         this.heroes = heroes;
         this.loadouts = loadouts;
         this.store = store;
@@ -355,6 +358,13 @@ public final class Runs {
             }
             run.objectivesTotal = run.objectivesLeft.size();
             for (DungeonDefinition.Door d : def.map().doors()) if (d.type() == DungeonDefinition.DoorType.KILLS) doorLabel(run, d);
+            // a digging boss' lair: arena and galleries built in the run's world first (the boss is its objective)
+            if (def.burrows() != null) {
+                burrows.prepare(run, () -> {
+                    if (runs.containsKey(run.id)) enter(run);
+                });
+                return;
+            }
             if (run.objectivesTotal == 0) plugin.getLogger().info("Dungeon " + def.id() + " has no objective: won once every monster is dead.");
             enter(run);
         });
@@ -798,6 +808,7 @@ public final class Runs {
         if (runs.remove(run.id) == null) return;
         for (UUID uuid : run.players) byPlayer.remove(uuid);
         mobs.removeRun(run.id);
+        burrows.forget(run);
         if (run.imported()) {
             instances.destroy(run.world);
             return;
@@ -807,7 +818,7 @@ public final class Runs {
         });
     }
 
-    private void teleport(Player p, Location to) {
+    void teleport(Player p, Location to) {
         teleporting.add(p.getUniqueId());
         try {
             p.teleport(to, PlayerTeleportEvent.TeleportCause.PLUGIN);
@@ -854,6 +865,7 @@ public final class Runs {
                 });
                 spawnNear(run);
                 doors(run);
+                if (run.def.burrows() != null) burrows.tick(run);
             }
             if (run.bossBar != null) updateBossBar(run);
         }
@@ -945,6 +957,17 @@ public final class Runs {
         at.setYaw(180);
         LivingEntity boss = mobs.spawn(t, at, run.id);
         if (boss == null) return;
+        run.mobs.add(boss.getUniqueId());
+        bossOf(run, boss);
+    }
+
+    /**
+     * Makes a monster the boss of the run: its life follows the difficulty level and the number of players, and its
+     * bar is shown to everyone.
+     */
+    void bossOf(Run run, LivingEntity boss) {
+        MobTemplate t = mobs.templateOfEntity(boss);
+        if (t == null) return;
         int players = Math.max(1, fighters(run).size());
         AttributeInstance max = boss.getAttribute(Attribute.MAX_HEALTH);
         if (max != null) {
@@ -953,7 +976,6 @@ public final class Runs {
             mobs.maxHealth(boss, t.health() * level * (1 + bossHealthPerPlayer * (players - 1)));
             boss.setHealth(max.getValue());
         }
-        run.mobs.add(boss.getUniqueId());
         run.boss = boss.getUniqueId();
         run.bossBar = BossBar.bossBar(Texts.parse(t.name()), 1f, BossBar.Color.RED, BossBar.Overlay.NOTCHED_10);
         for (Player p : online(run)) p.showBossBar(run.bossBar);
@@ -1322,7 +1344,7 @@ public final class Runs {
 
     // ---------------------------------------------------------------- helpers
 
-    private List<Player> online(Run run) {
+    List<Player> online(Run run) {
         List<Player> out = new ArrayList<>();
         for (UUID uuid : run.players) {
             Player p = Bukkit.getPlayer(uuid);
@@ -1332,7 +1354,7 @@ public final class Runs {
     }
 
     /** Players of the run still fighting (not out of lives). */
-    private List<Player> fighters(Run run) {
+    List<Player> fighters(Run run) {
         List<Player> out = online(run);
         out.removeIf(p -> run.watching.contains(p.getUniqueId()) || p.isDead());
         return out;

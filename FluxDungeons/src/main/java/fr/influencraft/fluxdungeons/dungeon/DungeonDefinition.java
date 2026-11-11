@@ -67,6 +67,11 @@ public final class DungeonDefinition {
     private final String fingerprint;
     /** Imported map (a whole world copied for each run), null for a dungeon drawn from its rooms. */
     private final MapSpec map;
+    /**
+     * Lair of a digging boss ({@code burrows:} section, cf. {@link Burrows}): arena and galleries generated in the run's
+     * world when it starts, hunt, encounter in the nest, fight in the arena. Null for other dungeons.
+     */
+    private final ConfigurationSection burrows;
     /** Console commands run on run events (enter, objective, victory, defeat, leave), one list per event. */
     private final Map<String, List<String>> commands = new LinkedHashMap<>();
     /** Difficulty levels, easiest first: life and damage of every monster, reward (one level when none is set). */
@@ -181,6 +186,7 @@ public final class DungeonDefinition {
         }
         layout = computeLayout();
         map = readMap(c.getConfigurationSection("map"));
+        burrows = c.getConfigurationSection("burrows");
         fingerprint = Integer.toHexString((String.valueOf(c.get("rooms")) + "|" + theme).hashCode());
     }
 
@@ -222,6 +228,11 @@ public final class DungeonDefinition {
 
     public MapSpec map() {
         return map;
+    }
+
+    /** The lair section of a digging boss' dungeon, null when it has none. */
+    public ConfigurationSection burrows() {
+        return burrows;
     }
 
     /** Changes whenever the rooms or the theme change: the template must then be built again. */

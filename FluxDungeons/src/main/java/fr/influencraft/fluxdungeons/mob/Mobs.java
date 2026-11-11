@@ -82,6 +82,8 @@ public final class Mobs {
         /** Last time it had a player to fight (leaves combat after a while without one). */
         long lastEngaged;
         boolean inCombat, switching;
+        /** Asleep, waiting for a scene (no AI, no ability, cannot be hurt): {@link #sleep}. */
+        boolean dormant;
         /** Moves it in its water instead of walking ({@code swim} of its file), null for a walker. */
         Swimmer swimmer;
         /** Tick of its last melee hit on a player (vanilla's or the longer reach's). */
@@ -322,6 +324,7 @@ public final class Mobs {
         this.fx = new Fx(plugin);
         this.harvest = new HarvestPowers(plugin, fx);
         this.copper = new CopperPowers(plugin, fx);
+        this.mole = new MolePowers(plugin, fx);
         this.tide = new TidePowers(plugin);
     }
 
@@ -714,7 +717,7 @@ public final class Mobs {
         @Override
         public void tick() {
             if (!(a.entity instanceof Mob m)) return;
-            if (a.swimmer != null) return;
+            if (a.swimmer != null || a.dormant) return;
             ticks++;
             // the vanilla float goal went with the rest of the AI: without it a piloted monster sinks to the bottom
             if (m.isInWater() && ThreadLocalRandom.current().nextFloat() < 0.8f) m.setJumping(true);
@@ -940,6 +943,60 @@ public final class Mobs {
     }
 
     /** Removes every monster of a run (end of run). */
+    // ---------------------------------------------------------------- scenes (dungeon features driving a monster)
+
+    /**
+     * Puts a monster to sleep for a scene (true: no AI, no ability, cannot be hurt, stays where it is) or wakes it up
+     * (false). The boss of a lair waits asleep in its nest until the players find it.
+     */
+    public void sleep(LivingEntity e, boolean asleep) {
+        Alive a = alive.get(e.getUniqueId());
+        if (a == null) return;
+        a.dormant = asleep;
+        e.setInvulnerable(asleep);
+        if (e instanceof Mob m) {
+            m.setAI(!asleep);
+            if (asleep) m.getPathfinder().stopPathfinding();
+        }
+    }
+
+    /** A new home for a monster (where it is pulled back, where its abilities think its arena is). */
+    public void rehome(LivingEntity e, Location home) {
+        Alive a = alive.get(e.getUniqueId());
+        if (a == null) return;
+        a.spawn.setWorld(home.getWorld());
+        a.spawn.setX(home.getX());
+        a.spawn.setY(home.getY());
+        a.spawn.setZ(home.getZ());
+    }
+
+    /** Plays an animation of a monster's model (with its cues), false when it has none. */
+    public boolean play(LivingEntity e, String animation) {
+        Alive a = alive.get(e.getUniqueId());
+        if (a == null || a.model == null) return false;
+        a.animate(animation);
+        return true;
+    }
+
+    /** Plays an animation of a monster's model in a loop, or stops it. */
+    public void loop(LivingEntity e, String animation, boolean on) {
+        Alive a = alive.get(e.getUniqueId());
+        if (a == null || a.model == null) return;
+        if (on) a.model.loop(animation);
+        else a.model.stop(animation);
+    }
+
+    /** Shows or hides bones of a monster's model. */
+    public void parts(LivingEntity e, boolean visible, java.util.Collection<String> bones) {
+        Alive a = alive.get(e.getUniqueId());
+        if (a != null && a.model != null) a.model.parts(visible, bones);
+    }
+
+    /** Effects shared by every boss (cracks, eruptions, collapses...), for dungeon features. */
+    public Fx fx() {
+        return fx;
+    }
+
     public void removeRun(String run) {
         Iterator<Alive> it = alive.values().iterator();
         while (it.hasNext()) {
@@ -958,6 +1015,8 @@ public final class Mobs {
     private HarvestPowers harvest;
     /** Abilities of the Copper T-Rex (Overcharge, bite, tail sweep, drill charge, resonance, veins). */
     private CopperPowers copper;
+    /** Abilities of the Field Mole (ram, burrow and surge, drill sweep, seismic drill). */
+    private MolePowers mole;
     private Fx fx;
 
     public void removeAll() {
@@ -965,6 +1024,7 @@ public final class Mobs {
         if (tide != null) tide.clear();
         if (harvest != null) harvest.clear();
         if (copper != null) copper.clear();
+        if (mole != null) mole.clear();
         if (fx != null) fx.clear();
         for (Alive a : alive.values()) {
             close(a);
@@ -1215,7 +1275,7 @@ public final class Mobs {
             double leash = a.template.extra().leash();
             if (leash > 0 && a.entity.getLocation().distanceSquared(a.spawn) > leash * leash) move(a.entity, a.spawn);
             if (!a.template.extra().scripts().isEmpty()) later.add(() -> engine.pollZones(a));
-            if (!a.entity.hasAI()) continue;
+            if (a.dormant || !a.entity.hasAI()) continue;
             Player target = target(a);
             keepLow(a, target);
             if (target == null) {
@@ -1248,7 +1308,8 @@ public final class Mobs {
                 if (reach < ab.number("target-min", 0) || reach > ab.number("target-max", 1000)) continue;
                 // ready, and somebody to hit (a ring cast with nobody in it is thrown in the void)
                 if (now - last >= ab.every() * 1000 && RockPowers.worthCasting(ab, a.entity)
-                        && harvest.worth(ab, a.entity, a.spawn) && copper.worth(ab, a.entity, a.spawn)) ready.add(i);
+                        && harvest.worth(ab, a.entity, a.spawn) && copper.worth(ab, a.entity, a.spawn)
+                        && mole.worth(ab, a.entity)) ready.add(i);
             }
             if (ready.isEmpty()) continue;
             // drawn by weight (1 by default); an opening move goes first
@@ -1749,7 +1810,7 @@ public final class Mobs {
                 m.setAI(false);
                 a.holdUntil = Math.max(a.holdUntil, now + ticks);
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    if (Bukkit.getCurrentTick() >= a.holdUntil && m.isValid() && !a.switching) m.setAI(true);
+                    if (Bukkit.getCurrentTick() >= a.holdUntil && m.isValid() && !a.switching && !a.dormant) m.setAI(true);
                 }, ticks);
             }
 
@@ -1763,7 +1824,7 @@ public final class Mobs {
 
             public void release() {
                 a.holdUntil = Bukkit.getCurrentTick();
-                if (e instanceof Mob m && m.isValid() && !a.switching) m.setAI(true);
+                if (e instanceof Mob m && m.isValid() && !a.switching && !a.dormant) m.setAI(true);
             }
 
             public void loop(String animation) {
@@ -1786,7 +1847,7 @@ public final class Mobs {
                 return a.spawn.clone();
             }
         };
-        if (copper.cast(ab, caster, target) || tide.cast(ab, caster, target) || harvest.cast(ab, caster, target)
+        if (copper.cast(ab, caster, target) || mole.cast(ab, caster, target) || tide.cast(ab, caster, target) || harvest.cast(ab, caster, target)
                 || rock.cast(ab, caster, target)) return;
         World w = e.getWorld();
         Location at = e.getLocation();

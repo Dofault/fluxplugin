@@ -429,3 +429,13 @@ elements:
   lightning: "à la foudre"
   holy: "au sacré"
   shadow: "à l'ombre"
+
+# Repaire d'un boss fouisseur (Burrows : Les Galeries de Taupérion)
+burrows:
+  hint: "&#B376E5Suis les anneaux de forage et la poussière qui tombe : ils mènent au nid."
+  tremor: "&#B49A78Le sol tremble... &#B376E5ça vient de plus loin dans les galeries."
+  found-title: "&#B49A78&lLE ROI TAUPÉRION"
+  found-subtitle: "&#FF5C5CIl vous a repérés !"
+  thrown: "&#B376E5Projetés vers la surface !"
+  fight-title: "&#B49A78&lLE ROI TAUPÉRION"
+  fight-subtitle: "&#FFD94DLe combat commence"
