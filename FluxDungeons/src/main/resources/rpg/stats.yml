@@ -1,0 +1,53 @@
+# Stats of the rpg universe: the single definition of every stat (docs/technique/rpg.md §4).
+# kind: flat (a number) or percent (0.25 = 25 %). base: value of every combatant before any source.
+# Classes (classes.yml), monsters (balance.yml), items and effects only add modifiers; a stat is computed as
+#   value = limit( (base + sum of adds) x (1 + sum of percents) x product of (1 + multipliers) )
+# limit = soft cap (above "from", each extra point counts "rate") then the min / max bounds.
+# A stat unknown here, used anywhere else, makes the config refused at load with the list of problems.
+
+families: [undead, beast, construct, elemental]
+elements: [fire, frost, lightning, holy, shadow]
+
+stats:
+  # ---- offense
+  physical_attack:   {category: offense, kind: flat, base: 0, min: 0, max: 100000}
+  magic_power:       {category: offense, kind: flat, base: 0, min: 0, max: 100000}
+  damage_bonus:      {category: offense, kind: percent, base: 0, min: -0.9, max: 3, soft-cap: {from: 1, rate: 0.5}}
+  crit_chance:       {category: offense, kind: percent, base: 0.05, min: 0, max: 0.75, soft-cap: {from: 0.5, rate: 0.5}}
+  # total multiplier of a crit (1.5 = +50 %)
+  crit_damage:       {category: offense, kind: percent, base: 1.5, min: 1, max: 4, soft-cap: {from: 2.5, rate: 0.5}}
+  # basic attacks per second
+  attack_speed:      {category: offense, kind: flat, base: 1.0, min: 0.25, max: 3, soft-cap: {from: 2, rate: 0.5}}
+  armor_penetration: {category: offense, kind: percent, base: 0, min: 0, max: 0.6}
+  magic_penetration: {category: offense, kind: percent, base: 0, min: 0, max: 0.6}
+  # ---- defense
+  max_health:        {category: defense, kind: flat, base: 1, min: 1, max: 10000000}
+  physical_defense:  {category: defense, kind: flat, base: 0, min: 0, max: 100000}
+  magic_defense:     {category: defense, kind: flat, base: 0, min: 0, max: 100000}
+  damage_reduction:  {category: defense, kind: percent, base: 0, min: 0, max: 0.5, soft-cap: {from: 0.3, rate: 0.5}}
+  crit_resistance:   {category: defense, kind: percent, base: 0, min: 0, max: 0.8}
+  dodge:             {category: defense, kind: percent, base: 0, min: 0, max: 0.3, soft-cap: {from: 0.2, rate: 0.5}}
+  # shortens harmful effects suffered (slow, stun, burn...)
+  tenacity:          {category: defense, kind: percent, base: 0, min: 0, max: 0.6}
+  # ---- resources
+  max_mana:          {category: resource, kind: flat, base: 100, min: 0, max: 100000}
+  # per second
+  mana_regen:        {category: resource, kind: flat, base: 5, min: 0, max: 10000}
+  health_regen:      {category: resource, kind: flat, base: 0, min: 0, max: 100000}
+  cost_reduction:    {category: resource, kind: percent, base: 0, min: 0, max: 0.4}
+  lifesteal:         {category: resource, kind: percent, base: 0, min: 0, max: 0.25}
+  manasteal:         {category: resource, kind: percent, base: 0, min: 0, max: 0.1}
+  # ---- utility
+  movement_speed:    {category: utility, kind: percent, base: 0, min: -0.5, max: 0.6}
+  cooldown_reduction: {category: utility, kind: percent, base: 0, min: 0, max: 0.4, soft-cap: {from: 0.3, rate: 0.5}}
+  # lengthens positive effects given and harmful effects inflicted
+  effect_duration:   {category: utility, kind: percent, base: 0, min: 0, max: 1}
+  healing_power:     {category: utility, kind: percent, base: 0, min: 0, max: 2}
+  shield_power:      {category: utility, kind: percent, base: 0, min: 0, max: 2}
+  # chance of the special effects of items (affixes)
+  proc_chance:       {category: utility, kind: percent, base: 0, min: 0, max: 1}
+
+templates:
+  "damage_vs.{family}": {category: offense, kind: percent, base: 0, min: 0, max: 1}
+  # negative = weakness
+  "resist.{element}":   {category: defense, kind: percent, base: 0, min: -1, max: 0.75}
