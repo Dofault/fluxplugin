@@ -20,7 +20,7 @@ items:
     rarity: common
     stats: {physical_attack: 8}
     description: ["A plain, heavy blade.", "Hits everything in front of you."]
-    look: {material: IRON_SWORD, name: "Warrior's Blade"}
+    look: {material: IRON_SWORD, name: "Dawnbreaker", model: "fluxdungeons:brise_aube"}
   class_archer_weapon:
     slot: weapon
     classes: [archer]
@@ -28,7 +28,7 @@ items:
     rarity: common
     stats: {physical_attack: 10}
     description: ["Shoots with a left click."]
-    look: {material: BOW, name: "Hunter's Bow"}
+    look: {material: BOW, name: "Skyglade", model: "fluxdungeons:sylve_celeste"}
   class_mage_weapon:
     slot: weapon
     classes: [mage]
@@ -36,7 +36,7 @@ items:
     rarity: common
     stats: {magic_power: 10, max_mana: 10}
     description: ["Throws an arcane bolt with a left click."]
-    look: {material: BLAZE_ROD, name: "Apprentice Staff"}
+    look: {material: BLAZE_ROD, name: "Void Sceptre", model: "fluxdungeons:sceptre_neant"}
   class_healer_weapon:
     slot: weapon
     classes: [healer]
@@ -44,7 +44,7 @@ items:
     rarity: common
     stats: {magic_power: 8, healing_power: 0.05}
     description: ["Its light hurts monsters", "and mends allies."]
-    look: {material: GOLDEN_HOE, name: "Healer's Sceptre"}
+    look: {material: GOLDEN_HOE, name: "Dawn Reliquary", model: "fluxdungeons:reliquaire_aube"}
 
   # ---- Stonecutter dungeon (roche): warrior, level 5
   roc_helmet:     {slot: helmet, classes: [warrior], level: 5, rarity: rare, set: roc, stats: {max_health: 40, physical_defense: 6}, look: {material: IRON_HELMET, name: "Rock Helm"}}
