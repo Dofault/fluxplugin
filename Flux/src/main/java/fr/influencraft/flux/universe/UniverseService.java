@@ -301,7 +301,7 @@ public final class UniverseService implements Universes.Backend, Listener {
         Transition.swap(live(p, origin(p, from), store.cached(id, from)), store.repository(id), target,
                 r -> Bukkit.getScheduler().runTaskAsynchronously(flux, r),
                 r -> {
-                    if (flux.isEnabled()) Bukkit.getScheduler().runTask(flux, r);
+                    if (flux.isEnabled()) whenGrounded(p, r);
                 },
                 p::isOnline,
                 outcome -> {
@@ -319,6 +319,21 @@ public final class UniverseService implements Universes.Backend, Listener {
                         }
                     }
                 });
+    }
+
+    /**
+     * Runs the end of a swap once the player stands on the ground (at most 2 seconds later): changing his game mode
+     * and flight while a portal still throws him through the air left his client stuck until he jumped. He stays
+     * locked meanwhile (nothing in, nothing out).
+     */
+    private void whenGrounded(Player p, Runnable r) {
+        int[] waited = {0};
+        Bukkit.getScheduler().runTaskTimer(flux, task -> {
+            if (!p.isOnline() || p.isOnGround() || p.isFlying() || p.isInWater() || ++waited[0] >= 40) {
+                task.cancel();
+                r.run();
+            }
+        }, 1L, 1L);
     }
 
     /** The swap could not be done: the player keeps his profile and goes back to a world of its universe. */

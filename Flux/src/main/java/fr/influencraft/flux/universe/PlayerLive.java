@@ -182,9 +182,12 @@ final class PlayerLive implements Transition.Live<String> {
         } catch (IllegalArgumentException e) {
             mode = freshMode.apply(universe);
         }
-        player.setGameMode(mode);
-        player.setAllowFlight(y.getBoolean("allow-flight", mode == GameMode.CREATIVE || mode == GameMode.SPECTATOR));
-        if (y.getBoolean("flying") && player.getAllowFlight()) player.setFlying(true);
+        // only what really changes is sent: a needless game mode or flight packet can unsettle a moving client
+        if (player.getGameMode() != mode) player.setGameMode(mode);
+        boolean allow = y.getBoolean("allow-flight", mode == GameMode.CREATIVE || mode == GameMode.SPECTATOR);
+        if (player.getAllowFlight() != allow) player.setAllowFlight(allow);
+        boolean fly = y.getBoolean("flying") && allow;
+        if (player.isFlying() != fly) player.setFlying(fly);
         mark(universe, version);
         List<ItemStack> left = new ArrayList<>();
         for (ItemStack i : decode(y.getString("loose", ""))) if (i != null) left.addAll(player.getInventory().addItem(i).values());
