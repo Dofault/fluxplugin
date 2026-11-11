@@ -19,7 +19,7 @@ save-seconds: 60
 menu:
   # Menu opened by /pass.
   id: "pass"
-  # Tiers shown per page of the path.
+  # Tiers shown per page of the path; must equal PAR_PAGE of Flux/assets/gen_pages.py (regenerate the menu).
   tiers-per-page: 7
   # Slots of the missions row (odd: an even count leaves the middle slot empty).
   mission-slots: 7

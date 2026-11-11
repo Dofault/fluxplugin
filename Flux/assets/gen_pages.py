@@ -24,7 +24,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "."))
 from menu_lore import lore  # noqa: E402  (button lore in the tags of Flux's style.yml)
 
-PAR_PAGE = 7
+PAR_PAGE = 7  # pass: = menu.tiers-per-page of plugins/FluxPass/config.yml (lists pass_free_<page> / pass_premium_<page>)
 CHEMIN = [64 + k for k in range(PAR_PAGE)]
 PREV, NEXT, RETOUR = 63, 71, 58
 # Boutons d'action alignés dans la barre d'action (une case sur deux, centrés).
