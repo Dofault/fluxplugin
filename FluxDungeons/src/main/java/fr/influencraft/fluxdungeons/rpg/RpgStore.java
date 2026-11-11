@@ -25,13 +25,16 @@ final class RpgStore {
     }
 
     private final Logger log;
-    private final String heroes = Database.table("dungeons_rpg_heroes");
-    private final String progress = Database.table("dungeons_rpg_progress");
+    private final String heroes = Database.table("flux_dungeons_rpg_heroes");
+    private final String progress = Database.table("flux_dungeons_rpg_progress");
 
     RpgStore(Logger log) throws SQLException {
         this.log = log;
         try (Connection c = Database.connection(); Statement st = c.createStatement()) {
             Database.Dialect d = Database.dialect();
+            // names of the first days (2026-11-11), without the suite's flux_ prefix
+            Database.renameTable(c, Database.table("dungeons_rpg_heroes"), heroes);
+            Database.renameTable(c, Database.table("dungeons_rpg_progress"), progress);
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + heroes + " (uuid " + d.key(36) + " PRIMARY KEY, hero_class "
                     + d.key(32) + " NOT NULL, chosen BIGINT NOT NULL, changed BIGINT NOT NULL)");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + progress + " (uuid " + d.key(36) + " NOT NULL, hero_class "

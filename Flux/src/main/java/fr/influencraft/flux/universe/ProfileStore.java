@@ -26,8 +26,8 @@ final class ProfileStore {
     }
 
     private final Logger log;
-    private final String profiles = Database.table("universe_profiles");
-    private final String quarantine = Database.table("universe_quarantine");
+    private final String profiles = Database.table("flux_universe_profiles");
+    private final String quarantine = Database.table("flux_universe_quarantine");
     /** uuid -> universe -> stored profile; a key present with no universe = loaded, nothing stored. */
     private final Map<UUID, Map<String, Transition.Stored<String>>> cache = new ConcurrentHashMap<>();
 
@@ -35,6 +35,9 @@ final class ProfileStore {
         this.log = log;
         try (Connection c = Database.connection(); Statement st = c.createStatement()) {
             Database.Dialect d = Database.dialect();
+            // names of the first days (2026-11-11), without the suite's flux_ prefix
+            Database.renameTable(c, Database.table("universe_profiles"), profiles);
+            Database.renameTable(c, Database.table("universe_quarantine"), quarantine);
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + profiles + " (uuid " + d.key(36) + " NOT NULL, universe "
                     + d.key(32) + " NOT NULL, version BIGINT NOT NULL, data " + d.longText() + " NOT NULL, updated BIGINT NOT NULL,"
                     + " PRIMARY KEY (uuid, universe))");

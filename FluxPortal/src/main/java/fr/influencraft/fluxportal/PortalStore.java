@@ -17,12 +17,14 @@ import java.util.logging.Logger;
 final class PortalStore {
 
     private final Logger log;
-    private final String table = Database.table("portal_portals");
+    private final String table = Database.table("flux_portal_portals");
 
     PortalStore(Logger log) throws SQLException {
         this.log = log;
         try (Connection c = Database.connection(); Statement st = c.createStatement()) {
             Database.Dialect d = Database.dialect();
+            // name of the first day (2026-11-11), without the suite's flux_ prefix
+            Database.renameTable(c, Database.table("portal_portals"), table);
             StringBuilder sql = new StringBuilder("CREATE TABLE IF NOT EXISTS " + table + " (name " + d.key(64) + " PRIMARY KEY, size DOUBLE PRECISION NOT NULL");
             for (String e : List.of("entry", "exit")) {
                 sql.append(", ").append(e).append("_world ").append(d.key(64)).append(", ").append(e).append("_x DOUBLE PRECISION, ")
