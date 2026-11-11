@@ -1,0 +1,9 @@
+# Pictures drawn at any height of a menu title through the fluxui:y<Y> fonts (sprites_misc sheet of gen_ui.py): one
+# entry here instead of one ItemsAdder glyph per height (the casino balls were 388 glyphs, each read on its own by the
+# client at every resource reload). At most 20 px high. Then: gen_ui.py, build Flux, /iazip.
+# In code: TitleOverlay.addSprite(id, x, y) (top left corner in window pixels).
+# id: PNG path from plugins/fluxplugin
+plinko_bille: FluxCasino/assets/sprites/plinko_bille.png
+plinko_clou: FluxCasino/assets/sprites/plinko_clou.png
+roulette_bille: FluxCasino/assets/sprites/roulette_bille.png
+roulette_traine: FluxCasino/assets/sprites/roulette_traine.png

@@ -13,15 +13,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Chemins de progression : transforme des {@link PathSpec} en une suite de glyphes
- * ItemsAdder (pack influroad) à coller dans le titre, juste après l'image de fond.
+ * Chemins de progression : transforme des {@link PathSpec} en pièces à coller dans le titre, juste après l'image
+ * de fond. Depuis le 2026-11-11 les pièces sont des caractères des polices {@code fluxui:y<Y>} (planche
+ * {@code sprites_misc} de Flux/assets/vanilla/gen_ui.py, sources dans Flux/assets/vanilla/chemin/) : plus aucun
+ * glyphe ItemsAdder par hauteur (l'ancien pack influroad en comptait 595, lus un par un au chargement du client).
  *
- * <p>Géométrie (grille Minecraft de 18 px, cf. plugins/fluxplugin/Flux/assets/influroad/LISEZMOI.md) :
+ * <p>Géométrie (grille Minecraft de 18 px, cf. plugins/fluxplugin/Flux/assets/vanilla/chemin/LISEZMOI.md) :
  * case en colonne c, haut en y : {@code slot_x = 8 + 18c}. Pièces : h (19x3) en
  * {@code (slot_x+8, y+7)}, v (3x19) en {@code (slot_x+7, y+8)}, demi-pièces de départ / fin,
- * losange (5x5) en {@code (slot_x+6, y+6)}. Chaque glyphe ItemsAdder a une hauteur fixe :
- * son nom porte la position verticale ({@code chemin_h_vert_y146}), la position
- * horizontale se règle avec des {@code :offset_N:} (un glyphe de largeur w avance de w+1).
+ * losange (5x5) en {@code (slot_x+6, y+6)}. La police {@code fluxui:y<Y>} pose le haut de la pièce Y px sous le
+ * haut de la fenêtre ; la position horizontale se règle avec des {@code :offset_N:}. Chaque pièce est suivie d'un
+ * espace négatif de sa largeur + 1 : elle laisse le curseur où elle l'a trouvé, et le titre complet garde l'avance
+ * de son fond (mesurable par {@link #advance}).
  *
  * <p>Allumage : une liaison est colorée si ses deux cases sont atteintes ; le départ dès la
  * 1re étape ; une branche dès que sa case de départ est atteinte ; au-delà de la longueur
@@ -31,6 +34,11 @@ import java.util.regex.Pattern;
 public final class PathRenderer {
 
     private static final int H_W = 19, V_W = 3, H_DEMI_W = 10, V_DEMI_W = 3, NODE_W = 5;
+    /** Same order as PATH_PIECES / PATH_STATES of gen_ui.py: char = PATH_BASE + 8 * piece + state. */
+    private static final List<String> PIECES = List.of("chemin_h", "chemin_v", "chemin_h_demi", "chemin_v_demi", "chemin_noeud");
+    private static final List<String> STATE_ORDER = List.of("eteint", "vert", "or", "bleu", "rose", "rouge", "orange");
+    private static final int PATH_BASE = 0xE140, BACK_BASE = 0xE1F1, MAX_Y = 220;
+    private static final Pattern FONT_SEGMENT = Pattern.compile("<font:[^>]*>.*?</font>");
     private static final Pattern TOKEN = Pattern.compile(":([a-z0-9_-]+):");
     private static final Pattern OFFSET = Pattern.compile("offset_(-?\\d+)");
 
@@ -50,8 +58,8 @@ public final class PathRenderer {
         WARNED.clear();
     }
 
-    /** Une pièce à dessiner : glyphe et position (x depuis le bord gauche de la fenêtre). */
-    private record Piece(String glyph, int x, int width) {
+    /** Une pièce à dessiner : index de pièce et d'état, haut y et position x depuis le bord gauche de la fenêtre. */
+    private record Piece(int piece, int state, int y, int x, int width) {
     }
 
     /**
@@ -68,15 +76,23 @@ public final class PathRenderer {
 
         StringBuilder out = new StringBuilder();
         // Position du curseur (depuis le début du titre) une fois le fond dessiné.
-        int cursor = advance(title);
+        int start = advance(title);
+        int cursor = start;
         for (List<Piece> layer : List.of(vertical, horizontal, nodes)) {
             for (Piece p : layer) {
+                if (p.y() < 0 || p.y() > MAX_Y) {
+                    warnOnce("y" + p.y(), "pièce de chemin à y " + p.y() + " hors des polices fluxui (ignorée)");
+                    continue;
+                }
                 int target = p.x() - 8; // le titre commence 8 px à droite du bord de la fenêtre
                 if (target != cursor) out.append(":offset_").append(target - cursor).append(':');
-                out.append(':').append(p.glyph()).append(':');
-                cursor = target + p.width() + 1;
+                out.append("<font:fluxui:y").append(p.y()).append("><white>")
+                        .append((char) (PATH_BASE + 8 * p.piece() + p.state()))
+                        .append((char) (BACK_BASE + p.piece())).append("</font>");
+                cursor = target;
             }
         }
+        if (cursor != start) out.append(":offset_").append(start - cursor).append(':');
         return out.toString();
     }
 
@@ -144,7 +160,7 @@ public final class PathRenderer {
                 }
             }
             int[] pos = position(slot, rows);
-            nodes.add(new Piece(glyph("chemin_noeud", state, pos[1] + 6), pos[0] + 6, NODE_W));
+            nodes.add(piece("chemin_noeud", state, pos[1] + 6, pos[0] + 6, NODE_W));
         }
     }
 
@@ -192,10 +208,10 @@ public final class PathRenderer {
         int x = p[0], y = p[1];
         // towardOutside = direction depuis le voisin vers cette case : la demi-pièce continue dans ce sens.
         switch (towardOutside) {
-            case LEFT -> horizontal.add(new Piece(glyph("chemin_h_demi", state, y + 7), x - 1, H_DEMI_W));
-            case RIGHT -> horizontal.add(new Piece(glyph("chemin_h_demi", state, y + 7), x + 8, H_DEMI_W));
-            case UP -> vertical.add(new Piece(glyph("chemin_v_demi", state, y - 1), x + 7, V_DEMI_W));
-            default -> vertical.add(new Piece(glyph("chemin_v_demi", state, y + 8), x + 7, V_DEMI_W));
+            case LEFT -> horizontal.add(piece("chemin_h_demi", state, y + 7, x - 1, H_DEMI_W));
+            case RIGHT -> horizontal.add(piece("chemin_h_demi", state, y + 7, x + 8, H_DEMI_W));
+            case UP -> vertical.add(piece("chemin_v_demi", state, y - 1, x + 7, V_DEMI_W));
+            default -> vertical.add(piece("chemin_v_demi", state, y + 8, x + 7, V_DEMI_W));
         }
     }
 
@@ -205,14 +221,14 @@ public final class PathRenderer {
         int[] a = position(from, rows), b = position(to, rows);
         if (a[1] == b[1]) {
             int x1 = Math.min(a[0], b[0]), x2 = Math.max(a[0], b[0]);
-            for (int x = x1; x < x2; x += 18) horizontal.add(new Piece(glyph("chemin_h", state, a[1] + 7), x + 8, H_W));
+            for (int x = x1; x < x2; x += 18) horizontal.add(piece("chemin_h", state, a[1] + 7, x + 8, H_W));
         } else if (a[0] == b[0]) {
             int y1 = Math.min(a[1], b[1]), y2 = Math.max(a[1], b[1]);
             // whole rows: one piece per row; across the gap between the chest and the inventory (not a multiple of
-            // 18), the last piece is pulled up so it ends on the lower slot (influroad has those heights)
+            // 18), the last piece is pulled up so it ends on the lower slot (any height works, the fonts cover y 0 to 220)
             int y = y1;
-            for (; y + 18 <= y2; y += 18) vertical.add(new Piece(glyph("chemin_v", state, y + 8), a[0] + 7, V_W));
-            if (y < y2) vertical.add(new Piece(glyph("chemin_v", state, y2 - 18 + 8), a[0] + 7, V_W));
+            for (; y + 18 <= y2; y += 18) vertical.add(piece("chemin_v", state, y + 8, a[0] + 7, V_W));
+            if (y < y2) vertical.add(piece("chemin_v", state, y2 - 18 + 8, a[0] + 7, V_W));
         } else {
             warnOnce(path.id() + from + "-" + to, "chemin " + path.id() + " : cases " + from + " et " + to
                     + " ni sur la même ligne ni sur la même colonne (liaison ignorée)");
@@ -233,8 +249,13 @@ public final class PathRenderer {
         return new int[]{8 + 18 * (i % 9), 161 + (rows - 4) * 18};
     }
 
-    private static String glyph(String piece, String state, int y) {
-        return piece + "_" + state + "_y" + y;
+    private static Piece piece(String piece, String state, int y, int x, int width) {
+        int s = STATE_ORDER.indexOf(state);
+        if (s < 0) {
+            warnOnce("state" + state, "état de chemin inconnu « " + state + " » (éteint utilisé)");
+            s = 0;
+        }
+        return new Piece(PIECES.indexOf(piece), s, y, x, width);
     }
 
     /**
@@ -276,7 +297,8 @@ public final class PathRenderer {
      * pour 0 (à eux d'avoir une avance nette nulle, ex : %fluxjob_<id>_levelglyphs_<c>%).
      */
     private static boolean libre(String text) {
-        return text.replaceAll("%[^%\\s]+%", "").isBlank();
+        // <font:...>...</font>: Flux sprites (path pieces, widgets) that bring the cursor back themselves
+        return FONT_SEGMENT.matcher(text).replaceAll("").replaceAll("%[^%\\s]+%", "").isBlank();
     }
 
     private static int width(String name) {

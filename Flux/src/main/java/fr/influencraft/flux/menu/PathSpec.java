@@ -4,7 +4,7 @@ import java.util.List;
 
 /**
  * Chemin de progression (section paths.<id> d'un menu ou d'une page) : des pièces
- * ItemsAdder (pack influroad) dessinées dans le titre, entre les cases, qui s'allument
+ * (polices fluxui:y<Y>, cf. PathRenderer) dessinées dans le titre, entre les cases, qui s'allument
  * au fur et à mesure de la progression du joueur.
  *
  * @param slots    cases du chemin, dans l'ordre (voisines sur une ligne ou une colonne)

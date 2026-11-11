@@ -12,7 +12,7 @@ Disposition (fond influmenu:menu_collection_categorie) :
   dans EcoCollections (page, rangée, colonne) ; clic = la sélectionner ;
 - rangée 5 : précédent (48), retour au menu Collection (49), suivant (50) ;
 - inventaire, 1re rangée au milieu (58) : la collection sélectionnée ; 2e rangée (64 à 70) :
-  barre de progression de ses paliers (chemin influroad, %fluxcoll_selected_tier%).
+  barre de progression de ses paliers (chemin de progression Flux, %fluxcoll_selected_tier%).
 """
 import glob
 import os

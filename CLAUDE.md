@@ -78,7 +78,7 @@ The plugins are written **as English plugins, then adapted to French** for our s
 | `tab.TabList` | The tab list (header, names, nametags, order, line below the name) is drawn by Flux from `plugins/Flux/tab.yml`. A plugin shows its data there with a piece: `TabList.piece(this, "id", player -> text)` (`{id}` in tab.yml), `TabList.refresh(player)` when it changed. `TabList.collision(player, false)`: nobody pushes him (pushing is computed by each client from the teams Flux sends: never create a scoreboard team for a player). Mobs are not in Flux's teams: FluxStack puts stack carriers in the main scoreboard team `fluxstack_nopush`. See `docs/technique/flux-tab.md`. |
 | `profile.Profiles` | Sections of the profile menu (`/profil [player]`): each plugin registers the section of the data it owns (`Profiles.register(plugin, id, order, section)`), built for the shown player (`subject`, possibly offline). A profile is a summary: clicks only turn a section's pages or open the viewer's own menu. Flux gives economy, leaderboards, jobs, statistics; FluxLands town, FluxTools collection, FluxPets pets, FluxTags tags. |
 | `universe.Universes` | Universes: groups of worlds with fully separate player profiles (Flux, `plugins/Flux/universes.yml`). `of(player)`, `of(world)`, `allows(player, item)` before handing an item over, `tag(item, universe)` (or `universe:` in an item definition), `transitioning(player)` (never touch his items then), `claim(plugin, universe, worlds)`, `returnLocation`. `UniverseEnterEvent` = the player now carries that universe's profile: set up per-universe things there, never on world change. Rewards are claimed in vanilla only. See `docs/technique/rpg.md`. |
-| Menu `paths` | Progress paths drawn in the title (pack `influroad`). `states` placeholder gives one colour per step: `vert` claimed, `orange` waiting, `rouge` missed, `eteint` locked. |
+| Menu `paths` | Progress paths drawn in the title (pieces in the `fluxui:y<Y>` fonts, sources in `Flux/assets/vanilla/chemin/`). `states` placeholder gives one colour per step: `vert` claimed, `orange` waiting, `rouge` missed, `eteint` locked. |
 
 - FluxFamily owns couples and family trees (`fluxfamily.api.Family`: status, partner, `lineage(...)` for parent links
   kept by another plugin, as FluxReferral's sponsors). FluxTags takes tags from other plugins (`fluxtags.api.Tags`).
@@ -132,7 +132,13 @@ The plugins are written **as English plugins, then adapted to French** for our s
 - **Use the window's own spacing instead of empty rows.** The hidden inventory starts 14 px lower than a regular row
   would: rather than wasting an empty slot row to separate two groups, shift the whole drawing (background
   included) so the separation falls on the chest/inventory gap. A menu does not have to start at row 0. Paths cross
-  that gap (`PathRenderer`, `influroad` crossing pieces).
+  that gap (`PathRenderer`, crossing pieces).
+- **Never one ItemsAdder glyph per height or per frame.** The client reads every font picture on its own at each
+  resource reload (that made the Labs pack take ~90 s to load). A small picture drawn at any height goes in
+  `Flux/assets/vanilla/sprites.yml` (fluxui:y<Y> fonts, `TitleOverlay.addSprite`); a set of same-size pictures
+  (frames, tags) goes in one sheet with a font of its own in a raw pack folder `contents/<plugin>_fonts`
+  (examples: `FluxTags/assets/gen_tags.py` menu_fonts, `FluxCasino/assets/slots/gen_slots.py`). Check with
+  `python3 scripts/pack/audit_pack.py` (repo influencraft) before and after; see docs/technique/pack-ressources.md.
 - Backgrounds are free drawings (any height, any position); keep a reminder of the generic background
   (`Flux/assets/menu_generique.png`) and the violet theme, plus a colour accent of the menu's own.
 

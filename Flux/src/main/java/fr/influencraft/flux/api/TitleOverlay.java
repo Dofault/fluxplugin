@@ -47,6 +47,53 @@ public final class TitleOverlay {
         return add(glyph, x, width);
     }
 
+    /**
+     * Places already formatted text {@code width} px wide (its advance minus 1) with its left edge at {@code x}, for
+     * sprites in a font of their own ({@code <font:fluxtags:r1>\uE000</font>}): one bitmap provider for a whole sheet
+     * instead of one ItemsAdder glyph per picture and height.
+     */
+    public TitleOverlay addText(String text, int x, int width, String colour) {
+        int offset = x - cursor;
+        if (offset != 0) sb.append(":offset_").append(offset).append(':');
+        sb.append(colour).append(text);
+        cursor = x + width + 1;
+        return this;
+    }
+
+    /** Sprites of Flux/assets/vanilla/sprites.yml: id -> {character, width} (ui/sprites.yml, written by gen_ui.py). */
+    private static final java.util.Map<String, int[]> SPRITES = new java.util.HashMap<>();
+
+    static {
+        try (java.io.InputStream in = TitleOverlay.class.getResourceAsStream("/ui/sprites.yml")) {
+            if (in != null) {
+                var yml = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(
+                        new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8));
+                for (String id : yml.getKeys(false)) {
+                    java.util.List<Integer> v = yml.getIntegerList(id);
+                    if (v.size() == 2) SPRITES.put(id, new int[]{v.get(0), v.get(1)});
+                }
+            }
+        } catch (java.io.IOException ignored) {
+            // no table: addSprite draws nothing
+        }
+    }
+
+    /**
+     * Places a shared sprite (Flux/assets/vanilla/sprites.yml) with its top left corner at window pixel (x, y), y from
+     * 0 to 220: one character of the {@code fluxui:y<y>} font, no ItemsAdder glyph per height. Unknown id: nothing.
+     */
+    public TitleOverlay addSprite(String id, int x, int y) {
+        int[] s = SPRITES.get(id);
+        if (s == null || y < 0 || y > 220) return this;
+        return addText("<font:fluxui:y" + y + "><white>" + (char) s[0] + "</font>", x, s[1], "");
+    }
+
+    /** Width in px of a shared sprite (0 when unknown). */
+    public static int spriteWidth(String id) {
+        int[] s = SPRITES.get(id);
+        return s == null ? 0 : s[1];
+    }
+
     /** Moves the cursor to x without drawing (0: back to where a placeholder started). */
     public TitleOverlay moveTo(int x) {
         if (x != cursor) sb.append(":offset_").append(x - cursor).append(':');

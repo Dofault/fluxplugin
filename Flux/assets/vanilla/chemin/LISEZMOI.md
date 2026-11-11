@@ -1,6 +1,8 @@
 # Kit chemin de progression (générique)
 
 Pièces de chemin à poser entre les slots de n'importe quel menu (grille Minecraft de 18 px).
+
+Depuis le 2026-11-11, ces PNG sont rangés par `gen_ui.py` dans la planche `sprites_misc` des polices `fluxui:y<Y>` (une ligne par pièce, une colonne par état) et dessinés par `PathRenderer` : plus de pack ItemsAdder `influroad` (595 glyphes, un par pièce, état et hauteur). Modifier un PNG ici puis relancer `gen_ui.py`.
 Chaque pièce existe en 7 états : `eteint`, `vert`, `or`, `bleu`, `rose`, `rouge`, `orange`. Convention des chemins à états (2026-10-28) : `vert` récupéré / atteint, `orange` en attente, `rouge` manqué, `eteint` pas encore.
 
 | Fichier | Taille | Rôle |

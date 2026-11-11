@@ -138,8 +138,7 @@ public final class MenuSession {
         if (!widgets.isEmpty()) {
             // window x of the title cursor: the title starts at x 8; an ItemsAdder picture advances by its width only
             // (advance counts width + 1: one pixel too many per picture, the widgets were drawn 1 px to the left).
-            // Only the background pictures: PathRenderer moves on with width + 1 after each path piece, so counting
-            // its pieces pushed the widgets of a menu with a path one pixel right per piece (grades: ~3 slots)
+            // Only the background pictures: path pieces leave the cursor where they found it (PathRenderer)
             String so_far = full.toString();
             int cursor = 8 + fr.influencraft.flux.PathRenderer.advance(so_far) - fr.influencraft.flux.PathRenderer.glyphCount(base);
             full.append(fr.influencraft.flux.menu.UiTitle.render(player, widgets, cursor, menu.rows()));
