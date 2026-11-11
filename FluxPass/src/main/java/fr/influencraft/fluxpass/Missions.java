@@ -242,10 +242,19 @@ final class Missions {
     private static String iconOf(String trigger, String target, String fallback) {
         Material m = Material.matchMaterial(target);
         if (m != null && m.isItem()) return m.name();
+        // a block that is no item (carrots, potatoes, cocoa...): the item it comes from
+        if (m != null && m.isBlock()) {
+            Material item = CROP_ITEMS.getOrDefault(m, m.createBlockData().getPlacementMaterial());
+            if (item != null && item.isItem() && !item.isAir()) return item.name();
+        }
         Material egg = Material.matchMaterial(target + "_spawn_egg");
         if (egg != null) return egg.name();
         return fallback;
     }
+
+    /** Crops whose placement item is not the harvest (beetroots are planted from seeds). */
+    private static final Map<Material, Material> CROP_ITEMS = Map.of(Material.BEETROOTS, Material.BEETROOT,
+            Material.MELON_STEM, Material.MELON_SLICE, Material.PUMPKIN_STEM, Material.PUMPKIN);
 
     /** All the variants, for reports. */
     Map<String, List<Variant>> variantsByMission() {

@@ -23,6 +23,12 @@ public final class OffrandePlaceholderExpansion {
     private final ConfigManager configManager;
     private final DataManager dataManager;
     private fr.influencraft.fluxoffering.gui.OfferingMenu menu;
+    private OfferingSidebar sidebar;
+
+    /** The offering of the player's rank in the sidebar ({@code %offrandes_sidebar_...%}). */
+    public void sidebar(fr.influencraft.fluxoffering.service.DepositService deposits) {
+        this.sidebar = new OfferingSidebar(configManager, dataManager, deposits);
+    }
 
     public void menu(fr.influencraft.fluxoffering.gui.OfferingMenu offeringMenu) {
         this.menu = offeringMenu;
@@ -40,6 +46,10 @@ public final class OffrandePlaceholderExpansion {
      * {@code %offrandes_editing%} (collection the player looks at). Registered with Flux.
      */
     public String onRequest(OfflinePlayer player, String params) {
+        if (params.startsWith("sidebar_")) {
+            if (!(player instanceof org.bukkit.entity.Player online) || sidebar == null) return "";
+            return sidebar.request(online, params.substring("sidebar_".length()));
+        }
         if (params.startsWith("current_") || params.equals("editing")) {
             if (!(player instanceof org.bukkit.entity.Player online) || menu == null) return "";
             if (params.equals("editing")) return String.valueOf(menu.editing(online));

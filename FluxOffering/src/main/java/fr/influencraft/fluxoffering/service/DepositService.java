@@ -230,6 +230,21 @@ public final class DepositService {
         return new MoneyDepositResult(toConsume, newTotal, required, moneyJustCompleted, collectionJustCompleted);
     }
 
+    /**
+     * Units of {@code key} the player carries that a deposit would accept (same rules: renamed or damaged items
+     * refused as configured; enchantments counted in levels).
+     */
+    public long available(Player player, ItemKey key) {
+        Settings settings = configManager.settings();
+        long units = 0;
+        for (ItemStack stack : player.getInventory().getStorageContents()) {
+            if (stack != null && key.matches(stack) && isAcceptable(stack, settings)) {
+                units += (long) stack.getAmount() * key.unitsPerItem(stack);
+            }
+        }
+        return units;
+    }
+
     private static ItemStack withAmount(ItemStack stack, int amount) {
         ItemStack clone = stack.clone();
         clone.setAmount(amount);

@@ -75,6 +75,7 @@ public final class FluxOfferingPlugin extends JavaPlugin {
 
         OffrandePlaceholderExpansion placeholders = new OffrandePlaceholderExpansion(this, configManager, dataManager);
         placeholders.menu(offeringMenu);
+        placeholders.sidebar(depositService);
         FluxApi.registerPlaceholders(this, "offrandes", placeholders::onRequest);
 
         if (getServer().getPluginManager().isPluginEnabled("ItemsAdder")) {
