@@ -102,7 +102,7 @@ final class Missions {
     }
 
     /** Reads every {@code missions/*.yml} of the folder, amounts priced now (FluxValue may change them on reload). */
-    static Missions load(File folder, Consumer<String> warn) {
+    static Missions load(File folder, java.util.Set<String> priced, Consumer<String> warn) {
         Missions m = new Missions();
         File[] files = folder.listFiles((d, n) -> n.endsWith(".yml"));
         if (files == null) return m;
@@ -142,11 +142,11 @@ final class Missions {
                     ConfigurationSection vs = s.getConfigurationSection("variants");
                     if (vs != null) {
                         for (String vid : vs.getKeys(false)) {
-                            Variant v = variant(vid, vs.getConfigurationSection(vid), s.getString("icon", "PAPER"), missionEffort, where + " > " + vid, warn);
+                            Variant v = variant(vid, vs.getConfigurationSection(vid), s.getString("icon", "PAPER"), missionEffort, priced, where + " > " + vid, warn);
                             if (v != null) variants.add(v);
                         }
                     } else {
-                        Variant v = variant(mid, s, s.getString("icon", "PAPER"), missionEffort, where, warn);
+                        Variant v = variant(mid, s, s.getString("icon", "PAPER"), missionEffort, priced, where, warn);
                         if (v != null) variants.add(v);
                     }
                     if (variants.isEmpty()) {
@@ -166,7 +166,8 @@ final class Missions {
     }
 
     @SuppressWarnings("unchecked")
-    private static Variant variant(String id, ConfigurationSection s, String missionIcon, double effort, String where, Consumer<String> warn) {
+    private static Variant variant(String id, ConfigurationSection s, String missionIcon, double effort, java.util.Set<String> priced,
+                                   String where, Consumer<String> warn) {
         if (s == null) return null;
         List<Map<?, ?>> counters = s.getMapList("counters");
         if (counters.isEmpty()) return null;
@@ -179,16 +180,17 @@ final class Missions {
         String pricedBy = "amount";
         if (amount <= 0) {
             double factor = s.getDouble("effort-factor", 1);
-            OptionalDouble one = pointsOfOne(trigger, target);
+            // only the triggers FluxValue measures well are priced (config priced-triggers): the others keep their amount
+            OptionalDouble one = priced.contains(trigger) ? pointsOfOne(trigger, target) : OptionalDouble.empty();
             if (one.isPresent() && one.getAsDouble() > 0) {
                 amount = nice(s.getDouble("effort", effort) * factor / one.getAsDouble());
                 pricedBy = trigger + (target == null ? "" : " " + target) + " = " + Math.round(one.getAsDouble() * 100) / 100.0;
             } else if (s.getInt("default-amount", 0) > 0) {
                 amount = s.getInt("default-amount");
-                pricedBy = "default-amount (FluxValue cannot price " + trigger + (target == null ? "" : " " + target) + ")";
+                pricedBy = "default-amount" + (priced.contains(trigger) ? " (FluxValue cannot price " + trigger + (target == null ? "" : " " + target) + ")" : "");
             } else {
-                warn.accept(where + ": FluxValue cannot price " + trigger + (target == null ? "" : " " + target)
-                        + " and no amount is set (asks 1)");
+                warn.accept(where + ": " + trigger + (target == null ? "" : " " + target)
+                        + " is not priced by FluxValue and no amount is set (asks 1)");
                 amount = 1;
                 pricedBy = "none";
             }

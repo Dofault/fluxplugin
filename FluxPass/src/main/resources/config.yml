@@ -4,6 +4,10 @@
 # What a mission asks is priced by FluxValue: amount = effort / points of one action, so every mission of a
 # category costs the same play time. A mission keeps a fixed "amount" when FluxValue cannot price its action.
 
+# Triggers whose amount FluxValue computes. FluxValue measures gathering in bulk well (blocks broken), not the
+# time to craft, smelt or find a creature: missions with another trigger keep their "amount" / "default-amount".
+priced-triggers: [mine_block]
+
 # Language of the texts (empty = the suite's language).
 language: ""
 

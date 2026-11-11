@@ -110,7 +110,7 @@ public final class FluxPass extends FluxPlugin implements Listener {
         menu.perPage = Math.max(1, getConfig().getInt("menu.tiers-per-page", 7));
         menu.missionSlots = Math.max(1, getConfig().getInt("menu.mission-slots", 7));
         Season season = Season.load(YamlConfiguration.loadConfiguration(new File(getDataFolder(), "pass.yml")), getLogger()::warning);
-        pass.configure(season, Missions.load(new File(getDataFolder(), "missions"), getLogger()::warning),
+        pass.configure(season, Missions.load(new File(getDataFolder(), "missions"), priced(), getLogger()::warning),
                 getConfig().getString("premium-permission", "fluxpass.premium"));
         menu.register();
         if (renewalTask != -1) Bukkit.getScheduler().cancelTask(renewalTask);
@@ -126,9 +126,16 @@ public final class FluxPass extends FluxPlugin implements Listener {
         }
     }
 
+    /** Triggers whose amount FluxValue computes (config priced-triggers); other missions keep their own amount. */
+    private java.util.Set<String> priced() {
+        java.util.Set<String> out = new java.util.HashSet<>();
+        for (String t : getConfig().getStringList("priced-triggers")) out.add(t.toLowerCase(Locale.ROOT));
+        return out;
+    }
+
     /** FluxValue changed its values: what the missions ask is priced again. */
     private void reloadMissions() {
-        pass.configure(pass.season, Missions.load(new File(getDataFolder(), "missions"), getLogger()::warning), pass.premiumPermission);
+        pass.configure(pass.season, Missions.load(new File(getDataFolder(), "missions"), priced(), getLogger()::warning), pass.premiumPermission);
         for (Player p : Bukkit.getOnlinePlayers()) PassMenu.invalidate(p);
     }
 
