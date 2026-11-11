@@ -97,6 +97,13 @@ public final class RpgPlayers implements Listener {
         return online.containsKey(p.getUniqueId()) || !RpgWorld.UNIVERSE.equals(Universes.of(p));
     }
 
+    /** Rpg players in this world (a dungeon's party). */
+    public int countIn(org.bukkit.World w) {
+        int n = 0;
+        for (Player p : w.getPlayers()) if (online.containsKey(p.getUniqueId())) n++;
+        return n;
+    }
+
     /** Average rpg level of the players in this world (a dungeon's party), 1 when none. */
     public int averageLevel(org.bukkit.World w) {
         int sum = 0, n = 0;

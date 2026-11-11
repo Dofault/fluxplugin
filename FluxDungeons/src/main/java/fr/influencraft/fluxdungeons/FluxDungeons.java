@@ -130,11 +130,20 @@ public final class FluxDungeons extends FluxPlugin {
                 extra.add(fr.influencraft.fluxdungeons.rpg.core.Modifier.multiply("max_health", level.health() - 1, "difficulty"));
                 extra.add(fr.influencraft.fluxdungeons.rpg.core.Modifier.multiply("physical_attack", level.damage() - 1, "difficulty"));
             }
+            String rank = rpgRank(t);
+            if (rank.equals("boss")) {
+                // a boss's life in balance.yml is for a party of four: each player present brings a quarter of it
+                int size = runs.partySize(mobs.runOf(e));
+                int n = Math.max(1, size > 0 ? size : players.countIn(e.getWorld()));
+                extra.add(fr.influencraft.fluxdungeons.rpg.core.Modifier.multiply("max_health", Math.min(4, n) / 4.0 - 1 + Math.max(0, n - 4) * 0.25, "party"));
+            }
             double unit = mobs.meleeDamage(e);
             return new fr.influencraft.fluxdungeons.rpg.CombatEngine.MobProfile(players.averageLevel(e.getWorld()),
-                    rpgRank(t), null, extra, unit > 0 ? unit : t.damage());
+                    rank, null, extra, unit > 0 ? unit : t.damage(), t.extra().rangedResistance());
         });
         engine.afterMonsterHit(combat::onPlayerHit);
+        // players hit a model's hit box: the creature under it takes the hit
+        engine.body(fr.influencraft.fluxdungeons.mob.Mobs::body);
         engine.petOwner(e -> {
             java.util.UUID owner = runs.petOwner(e);
             return owner == null ? null : getServer().getPlayer(owner);
@@ -181,6 +190,8 @@ public final class FluxDungeons extends FluxPlugin {
             player.setInvulnerable(on);
             var max = player.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
             player.setHealth(max == null ? 20 : max.getValue());
+            // the rpg life too (the engine's, the game's health only mirrors it there)
+            if (rpg != null && rpg.combat() != null) rpg.combat().heal(player, 1e9, false);
             player.setFoodLevel(20);
             player.setSaturation(20);
             player.setFireTicks(0);

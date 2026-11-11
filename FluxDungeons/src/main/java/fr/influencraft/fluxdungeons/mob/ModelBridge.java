@@ -83,4 +83,20 @@ final class ModelBridge {
             }
         };
     }
+
+    /**
+     * The creature a BetterModel hit box stands for (players hit the box of a model, not the creature under it), else
+     * the entity itself.
+     */
+    public static org.bukkit.entity.Entity body(org.bukkit.entity.Entity e) {
+        if (e instanceof kr.toxicity.model.api.nms.HitBox box) {
+            try {
+                org.bukkit.entity.Entity source = org.bukkit.Bukkit.getEntity(box.source().uuid());
+                if (source != null) return source;
+            } catch (RuntimeException ignored) {
+                // a box whose creature is gone
+            }
+        }
+        return e;
+    }
 }

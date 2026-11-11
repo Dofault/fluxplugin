@@ -61,7 +61,8 @@ final class Controls implements Listener {
         // vanilla melee never hurts in the rpg universe: the basic attack does
         e.setCancelled(true);
         RpgPlayer r = armed(p, p.getInventory().getItemInMainHand());
-        if (r != null) skills.basic(p, r, e.getAttacked() instanceof LivingEntity le ? le : null);
+        // the clicked creature (a model's hit box stands for the creature under it)
+        if (r != null) skills.basic(p, r, skills.body(e.getAttacked()));
     }
 
     @EventHandler(priority = EventPriority.LOW)

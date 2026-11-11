@@ -361,8 +361,11 @@ public final class CombatRules implements Listener {
         }
     }
 
-    /** Damage of any other cause (fire, fall...): pacing and monster-specific handling. */
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    /**
+     * Damage of any other cause (fire, fall...): pacing and monster-specific handling. HIGH: before the rpg engine
+     * (HIGHEST), which turns what is left into its own hit.
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onDamage(EntityDamageEvent e) {
         if (e instanceof EntityDamageByEntityEvent) return;
         if (!(e.getEntity() instanceof LivingEntity mob) || mobs.templateOf(mob) == null) return;

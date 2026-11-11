@@ -641,10 +641,15 @@ public final class UniverseService implements Universes.Backend, Listener {
         Player p = e.getPlayer();
         Settings s = universes.get(of(p));
         if (s == null || s.commands() == null || p.hasPermission(BYPASS)) return;
-        String label = e.getMessage().substring(1).split(" ", 2)[0].toLowerCase(Locale.ROOT);
-        int colon = label.indexOf(':');
-        if (colon >= 0) label = label.substring(colon + 1);
+        String typed = e.getMessage().substring(1).split(" ", 2)[0].toLowerCase(Locale.ROOT);
+        String label = typed.indexOf(':') >= 0 ? typed.substring(typed.indexOf(':') + 1) : typed;
         if (s.commands().contains(label)) return;
+        // a listed command is allowed under every alias it really has (commands.yml may rename or add some)
+        org.bukkit.command.Command cmd = Bukkit.getCommandMap().getCommand(typed);
+        if (cmd != null) {
+            if (s.commands().contains(cmd.getName().toLowerCase(Locale.ROOT)) || s.commands().contains(cmd.getLabel().toLowerCase(Locale.ROOT))) return;
+            for (String alias : cmd.getAliases()) if (s.commands().contains(alias.toLowerCase(Locale.ROOT))) return;
+        }
         e.setCancelled(true);
         messages.get().send(p, "universe.no-command");
     }

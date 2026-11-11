@@ -401,6 +401,11 @@ public final class Mobs {
         return entity.getPersistentDataContainer().get(mobKey, PersistentDataType.STRING);
     }
 
+    /** The creature an entity stands for: a model's hit box stands for the creature under it (ModelBridge). */
+    public static org.bukkit.entity.Entity body(org.bukkit.entity.Entity e) {
+        return ModelBridge.body(e);
+    }
+
     /** Run a dungeon monster belongs to, null for anything else. */
     public String runOf(Entity entity) {
         return entity.getPersistentDataContainer().get(runKey, PersistentDataType.STRING);

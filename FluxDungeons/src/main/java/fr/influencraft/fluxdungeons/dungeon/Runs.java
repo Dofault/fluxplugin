@@ -84,6 +84,12 @@ public final class Runs {
     /** The rpg universe the dungeons are played in (null: the former vanilla-gear dungeons). */
     private RpgBridge rpg;
 
+    /** Players of a running run (fighting or watching, not those still arriving), 0 when unknown. */
+    public int partySize(String runId) {
+        Run run = runId == null ? null : runs.get(runId);
+        return run == null ? 0 : run.players.size() + run.expected.size();
+    }
+
     /** Difficulty level of a running run (its monsters' life and damage multipliers), null when unknown. */
     public DungeonDefinition.Level levelOf(String runId) {
         Run run = runId == null ? null : runs.get(runId);

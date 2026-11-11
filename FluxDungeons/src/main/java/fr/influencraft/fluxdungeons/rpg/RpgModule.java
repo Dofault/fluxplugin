@@ -108,7 +108,7 @@ public final class RpgModule implements Listener {
             if (t.startsWith(TAG_RANK)) rank = t.substring(TAG_RANK.length());
             if (t.startsWith(TAG_FAMILY)) family = t.substring(TAG_FAMILY.length());
         }
-        return new CombatEngine.MobProfile(level, rank, family, List.of(), 0);
+        return new CombatEngine.MobProfile(level, rank, family, List.of(), 0, 0);
     }
 
     @EventHandler

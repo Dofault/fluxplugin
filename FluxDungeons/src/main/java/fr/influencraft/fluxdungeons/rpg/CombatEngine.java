@@ -52,8 +52,8 @@ public final class CombatEngine implements Listener {
      * {@code unit}: the game damage of its plain hit (a dungeon monster's melee), so that an ability dealing twice
      * that is a hit of coefficient 2; 0 = every hit of it counts as coefficient 1.
      */
-    public record MobProfile(int level, String rank, String family, List<Modifier> extra, double unit) {
-        public static final MobProfile DEFAULT = new MobProfile(1, "normal", null, List.of(), 0);
+    public record MobProfile(int level, String rank, String family, List<Modifier> extra, double unit, double rangedResistance) {
+        public static final MobProfile DEFAULT = new MobProfile(1, "normal", null, List.of(), 0, 0);
     }
 
     private static final class MobState {
@@ -61,15 +61,18 @@ public final class CombatEngine implements Listener {
         final int level;
         final String family;
         final double unit;
+        /** Share of an arrow's hit it shrugs off (a dungeon monster's ranged-resistance: melee is the way). */
+        final double rangedResistance;
         double hp;
         /** The game's health the engine last wrote: anything else means a script or an ability changed it. */
         double mirrored = -1;
 
-        MobState(StatSheet stats, int level, String family, double unit) {
+        MobState(StatSheet stats, int level, String family, double unit, double rangedResistance) {
             this.stats = stats;
             this.level = level;
             this.family = family;
             this.unit = unit;
+            this.rangedResistance = Math.max(0, Math.min(1, rangedResistance));
             this.hp = stats.get("max_health");
         }
     }
@@ -99,6 +102,24 @@ public final class CombatEngine implements Listener {
     private boolean asking;
     /** Told after a monster's hit on a player was turned into an engine hit (dungeon on-hit powers, frost arrows). */
     private java.util.function.Consumer<EntityDamageByEntityEvent> afterMonsterHit = e -> { };
+    /** The creature an entity stands for (a model's hit box stands for its creature), the entity itself else. */
+    private Function<Entity, Entity> body = e -> e;
+
+    public void body(Function<Entity, Entity> body) {
+        this.body = body;
+    }
+
+    /** The creature really hit when this entity is hit (a model's hit box: the creature under it). */
+    public LivingEntity body(Entity e) {
+        Entity b = e == null ? null : body.apply(e);
+        return b instanceof LivingEntity le ? le : e instanceof LivingEntity le2 ? le2 : null;
+    }
+
+    /** Whether a creature fights for a player (a pet): never a target of players. */
+    public boolean ally(Entity e) {
+        return e != null && petOwner.apply(e) != null;
+    }
+
     /** Owner of a creature fighting for a player (dungeon pets), null for any other. */
     private Function<Entity, Player> petOwner = e -> null;
 
@@ -168,7 +189,7 @@ public final class CombatEngine implements Listener {
         if (p == null) return null;
         List<Modifier> mods = new ArrayList<>(set.balance().monster(p.level(), p.rank()));
         mods.addAll(p.extra());
-        m = new MobState(StatSheet.compute(set.stats(), mods), p.level(), p.family(), p.unit());
+        m = new MobState(StatSheet.compute(set.stats(), mods), p.level(), p.family(), p.unit(), p.rangedResistance());
         // a creature arriving hurt (the next phase of a boss keeps the share of life of the former) keeps its share
         m.hp = m.stats.get("max_health") * share(e);
         mobs.put(e.getUniqueId(), m);
@@ -231,12 +252,21 @@ public final class CombatEngine implements Listener {
      * (invalid, friendly, already hit, a side not ready).
      */
     public CombatMath.Outcome strike(LivingEntity attacker, LivingEntity target, CombatMath.Hit hit, String cast) {
+        return strike(attacker, target, hit, cast, false);
+    }
+
+    /** Same, {@code arrow}: a shot hit, lessened by the creature's resistance to them. */
+    public CombatMath.Outcome strike(LivingEntity attacker, LivingEntity target, CombatMath.Hit hit, String cast, boolean arrow) {
         RpgConfig.Set set = config.get();
+        target = body(target);
         if (set == null || attacker == null || target == null || attacker.equals(target)) return null;
         if (target.isDead() || attacker.isDead() || target.getWorld() != attacker.getWorld()) return null;
+        // the game's invulnerability counts (a burrowed or sleeping boss, a script, the staff's god tool)
+        if (target.isInvulnerable()) return null;
         if (!rpg(attacker) || !rpg(target)) return null;
         boolean fromPlayer = attacker instanceof Player, toPlayer = target instanceof Player;
         if (fromPlayer == toPlayer) return null;          // no player versus player, no monster versus monster
+        if (fromPlayer && ally(target)) return null;     // a player's pet is on his side
         if (target instanceof Player tp && tp.getGameMode() != org.bukkit.GameMode.SURVIVAL && tp.getGameMode() != org.bukkit.GameMode.ADVENTURE) return null;
         if (cast != null) {
             String key = cast + "|" + target.getUniqueId();
@@ -250,6 +280,10 @@ public final class CombatEngine implements Listener {
         String family = targetMob == null ? null : targetMob.family;
         CombatMath.Outcome o = CombatMath.hit(set.balance(), a, level(attacker), d, family, hit,
                 () -> ThreadLocalRandom.current().nextDouble());
+        if (arrow && targetMob != null && targetMob.rangedResistance > 0 && !o.dodged()) {
+            double dmg = CombatMath.round(Math.max(set.balance().minimumDamage(), o.damage() * (1 - targetMob.rangedResistance)));
+            o = new CombatMath.Outcome(dmg, o.crit(), false, CombatMath.round(dmg * a.get("lifesteal")), CombatMath.round(dmg * a.get("manasteal")));
+        }
         if (o.dodged()) {
             indicator(target, Component.text("Esquive", TextColor.color(0xB376E5)));
             return o;
@@ -324,6 +358,8 @@ public final class CombatEngine implements Listener {
      * (players heard nothing when hit).
      */
     private static void hurtSound(LivingEntity target, org.bukkit.SoundCategory category) {
+        // a silent creature (a model on an invisible mob) plays its own hurt cues, never the mob's
+        if (target.isSilent()) return;
         org.bukkit.Sound s = target.getHurtSound();
         if (s == null) return;
         float pitch = 0.8f + ThreadLocalRandom.current().nextFloat() * 0.4f;
@@ -407,6 +443,7 @@ public final class CombatEngine implements Listener {
             return;
         }
         // the environment: its vanilla damage read as a share of 20 points of life (2 = a tenth of the life)
+        if (target.isInvulnerable()) return;
         Long last = environment.get(target.getUniqueId());
         if (last != null && now() - last < ENVIRONMENT_GAP) return;
         environment.put(target.getUniqueId(), now());

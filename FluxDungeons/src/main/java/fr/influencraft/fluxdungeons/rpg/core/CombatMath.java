@@ -31,7 +31,7 @@ public final class CombatMath {
     }
 
     public record Outcome(double damage, boolean crit, boolean dodged, double lifesteal, double manasteal) {
-        static final Outcome DODGED = new Outcome(0, false, true, 0, 0);
+        public static final Outcome DODGED = new Outcome(0, false, true, 0, 0);
     }
 
     private CombatMath() {

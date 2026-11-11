@@ -57,12 +57,20 @@ public final class Skills implements Listener {
 
     // ------------------------------------------------------------------ targets
 
+    /** The creature an entity stands for (a model's hit box: its creature). */
+    LivingEntity body(Entity e) {
+        return combat.body(e);
+    }
+
     /** Creatures of the rpg around a point a player may hurt (never players, displays, armour stands). */
     List<LivingEntity> enemies(Location at, double radius) {
         List<LivingEntity> out = new ArrayList<>();
         for (Entity e : at.getWorld().getNearbyEntities(at, radius, radius, radius)) {
-            if (e instanceof LivingEntity le && !(e instanceof Player) && !(e instanceof org.bukkit.entity.ArmorStand)
-                    && !le.isDead() && le.getLocation().distanceSquared(at) <= radius * radius && combat.rpg(le)) out.add(le);
+            // a model's hit box counts as its creature (once), wherever the box stands
+            LivingEntity le = e instanceof Player ? null : combat.body(e);
+            if (le == null || le instanceof Player || le instanceof org.bukkit.entity.ArmorStand || le.isDead() || out.contains(le)) continue;
+            if (combat.ally(le)) continue;   // the players' pets
+            if (e.getLocation().distanceSquared(at) <= radius * radius && combat.rpg(le)) out.add(le);
         }
         return out;
     }
@@ -199,7 +207,7 @@ public final class Skills implements Listener {
                     w.spawnParticle(Particle.CRIT, at.clone().add(0, 4, 0), 30, radius / 2, 1.5, radius / 2, 0.05);
                     w.playSound(at, Sound.ENTITY_ARROW_HIT, org.bukkit.SoundCategory.PLAYERS, 0.6f, 1.2f);
                     String hitCast = cast + "#" + tick;
-                    for (LivingEntity e : enemies(at, radius)) combat.strike(p, e, s.hit(), hitCast);
+                    for (LivingEntity e : enemies(at, radius)) combat.strike(p, e, s.hit(), hitCast, true);
                 });
             }
             case "blink" -> {
@@ -305,10 +313,14 @@ public final class Skills implements Listener {
     @EventHandler(priority = EventPriority.HIGH)
     public void onArrow(ProjectileHitEvent e) {
         if (!e.getEntity().hasMetadata(ARROW)) return;
-        e.setCancelled(e.getHitEntity() instanceof Player);   // flies through allies
-        if (e.getHitEntity() instanceof Player) return;
+        if (e.getHitEntity() instanceof Player) {
+            e.setCancelled(true);   // flies through allies
+            return;
+        }
+        // the engine hits (and tells the dungeon once); the game's own arrow damage never happens
+        if (e.getHitEntity() != null) e.setCancelled(true);
         Object v = e.getEntity().getMetadata(ARROW).get(0).value();
-        if (v instanceof Shot shot && e.getHitEntity() instanceof LivingEntity target) combat.strike(shot.owner(), target, shot.hit(), shot.cast());
+        if (v instanceof Shot shot && e.getHitEntity() instanceof LivingEntity target) combat.strike(shot.owner(), target, shot.hit(), shot.cast(), true);
         e.getEntity().remove();
     }
 
