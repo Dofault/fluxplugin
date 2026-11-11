@@ -1,0 +1,26 @@
+# Passage de niveau : environ 1,5 seconde, sol majeur. Gamme qui grimpe, accord final avec étincelles aiguës.
+# Court exprès : il revient souvent (métiers, rangs, classes).
+title: "Niveau supérieur"
+author: "Influencraft"
+bpm: 160
+steps-per-beat: 4
+beats-per-bar: 4
+
+tracks:
+  montee:   { instrument: pling, volume: 0.65 }
+  cloche:   { instrument: bell, volume: 0.4 }
+  carillon: { instrument: chime, volume: 0.35 }
+  guitare:  { instrument: guitar, volume: 0.6 }
+  basse:    { instrument: bass, volume: 0.8 }
+  grosse:   { instrument: basedrum, volume: 0.6 }
+  caisse:   { instrument: snare, volume: 0.3 }
+
+sections:
+  jingle:
+    montee: "G3 A3 B3 D4 E4 G4 A4 B4 D5:8"
+    cloche: ".:8 G5 B5 D6 G6:5"
+    carillon: ".:12 D7:4"
+    guitare: ".:8 G2+D3+G3+B3:8"
+    basse: ".:8 G1:8"
+    grosse: ".:8 x:8"
+    caisse: ".:6 x x .:8"

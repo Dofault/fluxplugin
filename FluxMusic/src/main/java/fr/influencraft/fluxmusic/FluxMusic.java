@@ -41,7 +41,7 @@ public final class FluxMusic extends FluxPlugin implements Listener {
 
     /** Songs shipped in the jar, written to the songs folder when missing. */
     private static final List<String> SHIPPED = List.of("eveil_de_valdor.yml", "taverne.yml", "foret.yml", "boss.yml",
-            "victoire.yml", "victoire_boss.yml", "defaite.yml");
+            "victoire.yml", "victoire_boss.yml", "defaite.yml", "niveau.yml");
 
     private volatile Map<String, Song> songs = Map.of();
     private Jukebox jukebox;
