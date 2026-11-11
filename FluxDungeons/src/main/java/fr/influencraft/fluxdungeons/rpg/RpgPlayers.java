@@ -45,6 +45,10 @@ import java.util.UUID;
 public final class RpgPlayers implements Listener {
 
     private static final NamespacedKey SPEED = new NamespacedKey("fluxdungeons", "rpg_speed");
+    private static final NamespacedKey ATTACK_SPEED = new NamespacedKey("fluxdungeons", "rpg_attack_speed");
+    private static final NamespacedKey REACH = new NamespacedKey("fluxdungeons", "rpg_reach");
+    /** Swing of the weapon as a share of its recharge (the client restarts a swing a little before its end). */
+    private static final double SWING_SHARE = 0.8;
     /** Seconds without hitting nor being hit before the fast out-of-combat regeneration. */
     private static final int CALM_TICKS = 100;
 
@@ -58,12 +62,15 @@ public final class RpgPlayers implements Listener {
     /** Players whose data is being read (they can do nothing yet). */
     private final Set<UUID> loading = new HashSet<>();
     private final Set<UUID> dirty = new HashSet<>();
+    private final RpgHud hud;
 
     RpgPlayers(FluxPlugin plugin, RpgConfig config, RpgStore store, RpgItems items) {
         this.plugin = plugin;
         this.config = config;
         this.store = store;
         this.items = items;
+        this.hud = new RpgHud(plugin);
+        this.hud.register();
     }
 
     void bind(RpgWorld world, CombatEngine combat) {
@@ -88,6 +95,7 @@ public final class RpgPlayers implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent e) {
+        overlaidAfterJoin.remove(e.getPlayer().getUniqueId());
         stop(e.getPlayer(), false);
     }
 
@@ -99,6 +107,7 @@ public final class RpgPlayers implements Listener {
         }
         UUID id = p.getUniqueId();
         if (online.containsKey(id) || !loading.add(id)) return;
+        hud.show(p);
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             RpgStore.Hero hero;
             RpgStore.Progress progress = null;
@@ -151,6 +160,11 @@ public final class RpgPlayers implements Listener {
         RpgPlayer r = online.remove(id);
         AttributeInstance speed = p.getAttribute(Attribute.MOVEMENT_SPEED);
         if (speed != null) speed.removeModifier(SPEED);
+        AttributeInstance attackSpeed = p.getAttribute(Attribute.ATTACK_SPEED);
+        if (attackSpeed != null) attackSpeed.removeModifier(ATTACK_SPEED);
+        AttributeInstance reach = p.getAttribute(Attribute.ENTITY_INTERACTION_RANGE);
+        if (reach != null) reach.removeModifier(REACH);
+        if (left) hud.hide(p);
         if (r == null) return;
         if (combat != null) combat.forget(p);
         int level = r.level();
@@ -362,6 +376,54 @@ public final class RpgPlayers implements Listener {
             double bonus = sheet.get("movement_speed");
             if (bonus != 0) speed.addModifier(new AttributeModifier(SPEED, bonus, AttributeModifier.Operation.ADD_SCALAR, EquipmentSlotGroup.ANY));
         }
+        cadence(p, r);
+    }
+
+    /**
+     * The weapon's pace as the server's own attack cadence (combat.AttackCadence) gives it to vanilla weapons: the
+     * game's attack speed is the player's rpg attack speed (rpg items carry no attribute), the weapon in hand cannot
+     * attack before it is recharged (spam clicks do nothing, the next click lands at full charge) and comes back slowly
+     * to its place. The reach of a melee class is its basic attack's range.
+     */
+    private void cadence(Player p, RpgPlayer r) {
+        double attacks = r.stats().get("attack_speed");
+        set(p, Attribute.ATTACK_SPEED, ATTACK_SPEED, attacks);
+        ClassDef.Attack basic = r.heroClass().basic();
+        if (basic.melee()) set(p, Attribute.ENTITY_INTERACTION_RANGE, REACH, basic.range());
+        else {
+            AttributeInstance reach = p.getAttribute(Attribute.ENTITY_INTERACTION_RANGE);
+            if (reach != null) reach.removeModifier(REACH);
+        }
+        ItemStack hand = p.getInventory().getItemInMainHand();
+        if (RpgItems.idOf(hand) == null) return;
+        int swing = (int) Math.max(3, Math.round(20 / Math.max(0.1, attacks) * SWING_SHARE));
+        boolean changed = false;
+        Float charge = hand.isDataOverridden(io.papermc.paper.datacomponent.DataComponentTypes.MINIMUM_ATTACK_CHARGE)
+                ? hand.getData(io.papermc.paper.datacomponent.DataComponentTypes.MINIMUM_ATTACK_CHARGE) : null;
+        if (charge == null || charge < 0.999f) {
+            hand.setData(io.papermc.paper.datacomponent.DataComponentTypes.MINIMUM_ATTACK_CHARGE, 1f);
+            changed = true;
+        }
+        var anim = hand.isDataOverridden(io.papermc.paper.datacomponent.DataComponentTypes.SWING_ANIMATION)
+                ? hand.getData(io.papermc.paper.datacomponent.DataComponentTypes.SWING_ANIMATION) : null;
+        if (anim == null || anim.duration() != swing) {
+            hand.setData(io.papermc.paper.datacomponent.DataComponentTypes.SWING_ANIMATION,
+                    io.papermc.paper.datacomponent.item.SwingAnimation.swingAnimation()
+                            .type(io.papermc.paper.datacomponent.item.SwingAnimation.Animation.WHACK).duration(swing).build());
+            changed = true;
+        }
+        if (changed) p.getInventory().setItemInMainHand(hand);
+    }
+
+    /** Sets an attribute to a total value through our own modifier (base untouched, removed when leaving). */
+    private static void set(Player p, Attribute attribute, NamespacedKey key, double total) {
+        AttributeInstance a = p.getAttribute(attribute);
+        if (a == null) return;
+        AttributeModifier current = a.getModifier(key);
+        double amount = total - a.getBaseValue();
+        if (current != null && Math.abs(current.getAmount() - amount) < 1e-6) return;
+        if (current != null) a.removeModifier(key);
+        if (Math.abs(amount) > 1e-6) a.addModifier(new AttributeModifier(key, amount, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.ANY));
     }
 
     private void recomputeSoon(Player p) {
@@ -389,6 +451,21 @@ public final class RpgPlayers implements Listener {
     public void onArmor(com.destroystokyo.paper.event.player.PlayerArmorChangeEvent e) {
         recomputeSoon(e.getPlayer());
     }
+
+    /**
+     * Another pack just loaded (the server's own pack at join may replace every pack): the hud overlay goes back on top
+     * for a player of the rpg universe.
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPack(org.bukkit.event.player.PlayerResourcePackStatusEvent e) {
+        if (e.getStatus() != org.bukkit.event.player.PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED) return;
+        if (fr.influencraft.flux.api.client.ResourceOverlays.isOverlay(e.getID())) return;
+        Player p = e.getPlayer();
+        // once per connection: RPEngine sends its packs again whenever another one comes after them (no loop)
+        if (RpgWorld.UNIVERSE.equals(Universes.of(p)) && overlaidAfterJoin.add(p.getUniqueId())) hud.show(p);
+    }
+
+    private final Set<UUID> overlaidAfterJoin = new HashSet<>();
 
     /** Back on his feet in the lobby, full life and mana. */
     @EventHandler(priority = EventPriority.HIGH)
@@ -462,17 +539,9 @@ public final class RpgPlayers implements Listener {
         }
     }
 
-    /** Life, mana and cooldowns above the hotbar (until the bars of the interface pack replace it). */
+    /** Life and mana bars in place of the hearts and the food (text for Bedrock players). */
     private void hud(Player p, RpgPlayer r, long now) {
-        StringBuilder b = new StringBuilder();
-        b.append("&#FF5C5C❤ &f").append(Math.round(combat.health(p))).append("&7/").append(Math.round(r.stats().get("max_health")));
-        b.append("   &#2BC4E8✦ &f").append(Math.round(r.mana())).append("&7/").append(Math.round(r.stats().get("max_mana")));
-        for (String slot : ClassDef.SLOTS) {
-            long left = r.readyAt(slot) - now;
-            String key = plugin.messages().raw("rpg-hud.key-" + slot);
-            b.append("   &7").append(key).append(left > 0 ? " &#FF5C5C" + (left / 20 + 1) + "s" : " &#2ECF7B✔");
-        }
-        p.sendActionBar(fr.influencraft.flux.api.text.Texts.colors(b.toString()));
+        p.sendActionBar(hud.render(p, combat.health(p), r.stats().get("max_health"), r.mana(), r.stats().get("max_mana")));
     }
 
     public void markDirty(Player p) {

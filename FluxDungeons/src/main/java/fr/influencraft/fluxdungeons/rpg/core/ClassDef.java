@@ -15,7 +15,7 @@ import java.util.Map;
  * warrior:
  *   stats: {max_health: 300, physical_attack: 18, physical_defense: 25}   # added at level 1
  *   per-level: {max_health: 30, physical_attack: 1.6}                    # added per level above 1
- *   basic: {damage: physical, coefficient: 1.0, targets: 3, range: 3.5}
+ *   basic: {style: melee, damage: physical, coefficient: 1.0, targets: 3, range: 3.5}
  *   skills:
  *     right: {type: charge, kind: damage, damage: physical, coefficient: 2.2, cooldown: 8, mana: 20}
  *     a: {type: war_cry, kind: buff, cooldown: 18, mana: 30, duration: 6}
@@ -27,10 +27,19 @@ public record ClassDef(String id, Map<String, Double> stats, Map<String, Double>
 
     public static final List<String> SLOTS = List.of("right", "a", "f");
 
-    /** The basic attack (left click). */
-    public record Attack(CombatMath.Type type, String element, double coefficient, int targets, double range) {
+    /**
+     * The basic attack (left click). {@code style}: melee (a swing hitting up to {@code targets} enemies in front,
+     * within {@code range}), arrow (a real arrow), arcane or holy (a bolt of particles).
+     */
+    public record Attack(String style, CombatMath.Type type, String element, double coefficient, int targets, double range) {
+        public static final List<String> STYLES = List.of("melee", "arrow", "arcane", "holy");
+
         public CombatMath.Hit hit() {
             return new CombatMath.Hit(type, element, coefficient, 0, true, true);
+        }
+
+        public boolean melee() {
+            return style.equals("melee");
         }
     }
 
@@ -75,7 +84,9 @@ public record ClassDef(String id, Map<String, Double> stats, Map<String, Double>
         for (String s : registry.unknown(stats.keySet())) n.problem("stats." + s, "unknown stat");
         for (String s : registry.unknown(per.keySet())) n.problem("per-level." + s, "unknown stat");
         Node b = n.required("basic");
-        Attack basic = new Attack(type(b), element(b, registry), b.number("coefficient", 1, 0, 100),
+        String style = b.text("style", "melee");
+        if (!Attack.STYLES.contains(style)) b.problem("style", "one of " + Attack.STYLES);
+        Attack basic = new Attack(style, type(b), element(b, registry), b.number("coefficient", 1, 0, 100),
                 (int) b.number("targets", 1, 1, 20), b.number("range", 3, 0.5, 40));
         Map<String, Skill> skills = new LinkedHashMap<>();
         Node sk = n.required("skills");

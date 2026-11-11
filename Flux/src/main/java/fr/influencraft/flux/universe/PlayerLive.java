@@ -40,10 +40,25 @@ final class PlayerLive implements Transition.Live<String> {
     /** Loose items of an applied profile that found no room (handed over later, in that universe). */
     private final java.util.function.BiConsumer<String, List<ItemStack>> overflow;
 
+    /**
+     * Where the player stood in the outgoing universe (the return point of its profile). The swap happens once he is
+     * already in the other universe's world, so his current place is never it: the caller gives the place before the
+     * teleport, or null to keep the return point of the stored profile.
+     */
+    private final Location origin;
+    private final String previous;
+
     PlayerLive(Player player, Function<String, GameMode> freshMode, java.util.function.BiConsumer<String, List<ItemStack>> overflow) {
+        this(player, freshMode, overflow, null, null);
+    }
+
+    PlayerLive(Player player, Function<String, GameMode> freshMode, java.util.function.BiConsumer<String, List<ItemStack>> overflow,
+               Location origin, String previous) {
         this.player = player;
         this.freshMode = freshMode;
         this.overflow = overflow;
+        this.origin = origin;
+        this.previous = previous;
     }
 
     /**
@@ -111,7 +126,8 @@ final class PlayerLive implements Transition.Live<String> {
             effects.add(e.getType().getKey() + ";" + e.getAmplifier() + ";" + e.getDuration() + ";" + e.isAmbient() + ";" + e.hasParticles());
         }
         y.set("effects", effects);
-        Location l = player.getLocation();
+        Location l = origin != null ? origin : location(previous);
+        if (l == null) return y.saveToString();   // no known return point: /rpg quitter falls back to the spawn
         y.set("world", l.getWorld().getName());
         y.set("x", l.getX());
         y.set("y", l.getY());

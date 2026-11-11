@@ -69,9 +69,13 @@ public final class AttackCadence implements Listener {
     private double assistAngle = 35;
 
     public AttackCadence(Plugin plugin) {
-        // items of the rpg universe: the rpg engine paces their basic attack (attack speed stat), no vanilla charge
-        ItemLooks.registerAny(plugin, (id, item) -> enabled && fr.influencraft.flux.api.universe.Universes.VANILLA
-                .equals(fr.influencraft.flux.api.universe.Universes.universeOf(item)) ? apply(item) : clear(item));
+        // items of the rpg universe get the same cadence from the rpg layer (rpg.RpgPlayers#cadence: the pace depends
+        // on each player's attack speed stat, not on the item): left untouched here
+        ItemLooks.registerAny(plugin, (id, item) -> !rpg(item) && (enabled ? apply(item) : clear(item)));
+    }
+
+    private static boolean rpg(ItemStack item) {
+        return !fr.influencraft.flux.api.universe.Universes.VANILLA.equals(fr.influencraft.flux.api.universe.Universes.universeOf(item));
     }
 
     public void assist(Assist assist) {
@@ -205,6 +209,7 @@ public final class AttackCadence implements Listener {
         Player p = e.getPlayer();
         ItemStack hand = p.getInventory().getItemInMainHand();
         if (hand.isEmpty() || !hand.isDataOverridden(DataComponentTypes.MINIMUM_ATTACK_CHARGE)) return;
+        if (rpg(hand)) return;   // the rpg skills draw their own swing (rpg.Skills#cleave)
         int now = org.bukkit.Bukkit.getCurrentTick();
         Integer hit = attacked.get(p.getUniqueId());
         boolean real = hit != null && now - hit <= 1 || p.getAttackCooldown() + 0.1f >= minimumCharge;

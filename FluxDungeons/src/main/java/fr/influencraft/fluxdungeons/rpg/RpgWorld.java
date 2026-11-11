@@ -146,7 +146,11 @@ public final class RpgWorld implements Listener {
             return true;
         }
         Location back = Universes.returnLocation(p, Universes.VANILLA);
-        if (back == null) back = Bukkit.getWorlds().get(0).getSpawnLocation();
+        // a return point outside vanilla (profile saved before 2026-11-11) would keep him here: the spawn instead
+        if (back == null || !Universes.VANILLA.equals(Universes.of(back.getWorld()))) {
+            p.performCommand("spawn");
+            return true;
+        }
         p.teleport(back, PlayerTeleportEvent.TeleportCause.COMMAND);
         return true;
     }

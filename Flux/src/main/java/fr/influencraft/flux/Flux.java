@@ -76,6 +76,8 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         rewards = fr.influencraft.flux.rewards.RewardService.start(this, () -> messages);
         // universes (plugins/Flux/universes.yml): separate profiles per group of worlds, items kept in their universe
         universes = fr.influencraft.flux.universe.UniverseService.start(this, () -> messages);
+        // small resource packs laid over the server's pack for some players (api.client.ResourceOverlays)
+        overlays = fr.influencraft.flux.client.OverlayServer.start(this, getConfig().getConfigurationSection("resource-overlays"));
         // buying / selling window of one item (shop chests, chest shops): api.trade.TradeWindow
         trades = fr.influencraft.flux.trade.TradeService.start(this, () -> messages);
         if (rewards != null) rewards.importFormerMailbox(getDataFolder().getParentFile());
@@ -137,6 +139,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         fr.influencraft.flux.api.FluxApi.bind(null);
         if (rewards != null) rewards.stop();
         if (universes != null) universes.stop();
+        if (overlays != null) overlays.stop();
         if (trades != null) trades.stop();
         if (leaderboards != null) leaderboards.stop();
         if (currencies != null) currencies.stop();
@@ -154,6 +157,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     private fr.influencraft.flux.api.text.Messages messages;
     private fr.influencraft.flux.rewards.RewardService rewards;
     private fr.influencraft.flux.universe.UniverseService universes;
+    private fr.influencraft.flux.client.OverlayServer overlays;
     private fr.influencraft.flux.trade.TradeService trades;
     private fr.influencraft.flux.economy.CurrencyService currencies;
     private fr.influencraft.flux.tab.TabService tab;
@@ -318,6 +322,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         fr.influencraft.flux.api.list.Lists.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.command.Commands.unregisterAll(event.getPlugin());
         if (universes != null) universes.unclaimAll(event.getPlugin());
+        fr.influencraft.flux.api.client.ResourceOverlays.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.economy.Economy.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.tab.TabList.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.reward.Rewards.unregisterAll(event.getPlugin());

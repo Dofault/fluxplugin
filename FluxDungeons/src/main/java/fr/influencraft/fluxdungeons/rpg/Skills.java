@@ -82,13 +82,15 @@ public final class Skills implements Listener {
     void basic(Player p, RpgPlayer r, LivingEntity clicked) {
         long now = CombatEngine.now();
         if (now < r.nextBasic()) return;
-        r.nextBasic(now + Math.max(2, Math.round(20 * CombatMath.attackInterval(r.stats()))));
+        // the client already waits for the full recharge (minimum attack charge): 2 ticks of slack so a click it lets
+        // through is never lost to a rounding
+        r.nextBasic(now + Math.max(2, Math.round(20 * CombatMath.attackInterval(r.stats())) - 2));
         ClassDef.Attack a = r.heroClass().basic();
         String cast = r.cast("basic");
-        switch (r.heroClass().id()) {
-            case "archer" -> shoot(p, cast, a.hit(), p.getEyeLocation().getDirection(), 3.0);
-            case "mage" -> bolt(p, cast, a.hit(), a.range(), Particle.WITCH, null, 1.4);
-            case "healer" -> bolt(p, cast, a.hit(), a.range(), Particle.END_ROD, null, 1.2);
+        switch (a.style()) {
+            case "arrow" -> shoot(p, cast, a.hit(), p.getEyeLocation().getDirection(), 3.0);
+            case "arcane" -> bolt(p, cast, a.hit(), a.range(), Particle.WITCH, null, 1.4);
+            case "holy" -> bolt(p, cast, a.hit(), a.range(), Particle.END_ROD, null, 1.2);
             default -> cleave(p, cast, a, clicked);
         }
     }
@@ -105,8 +107,10 @@ public final class Skills implements Listener {
             Vector to = e.getLocation().toVector().subtract(p.getLocation().toVector()).setY(0);
             if (to.lengthSquared() < 0.01 || to.normalize().dot(look) > 0.5) targets.add(e);
         }
-        p.getWorld().spawnParticle(Particle.SWEEP_ATTACK, eye.clone().add(look.clone().multiply(1.5)).add(0, -0.4, 0), 1);
-        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 0.8f, 1f);
+        // the swing is seen where it reaches: the first creature or wall within range, else the end of the range
+        Location at = reachPoint(p, a.range());
+        p.getWorld().spawnParticle(Particle.SWEEP_ATTACK, at, 1, 0, 0, 0, 0);
+        p.getWorld().playSound(at, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 0.8f, 1f);
         for (LivingEntity t : targets) {
             if (combat.strike(p, t, a.hit(), cast) != null) t.setVelocity(t.getVelocity().add(look.clone().multiply(0.25).setY(0.15)));
         }
@@ -345,6 +349,20 @@ public final class Skills implements Listener {
                 }
             }
         }.runTaskTimer(plugin, 0L, 1L);
+    }
+
+    /** Where a swing of this range reaches, a little below the eyes (where the weapon passes). */
+    private Location reachPoint(Player p, double range) {
+        Location eye = p.getEyeLocation();
+        Vector dir = eye.getDirection();
+        RayTraceResult hit = p.getWorld().rayTrace(eye, dir, range, FluidCollisionMode.NEVER, true, 0.2,
+                e -> e != p && e instanceof LivingEntity && !(e instanceof org.bukkit.entity.ArmorStand) && !(e instanceof Player));
+        double d = range;
+        if (hit != null) {
+            d = hit.getHitPosition().distance(eye.toVector());
+            if (hit.getHitBlock() != null) d = Math.max(0.8, d - 0.3);
+        }
+        return eye.add(dir.multiply(d)).subtract(0, 0.3, 0);
     }
 
     /** Where the player aims (block or max range). */

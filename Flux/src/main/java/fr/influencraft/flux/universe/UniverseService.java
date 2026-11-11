@@ -219,9 +219,23 @@ public final class UniverseService implements Universes.Backend, Listener {
     }
 
     private PlayerLive live(Player p) {
+        return live(p, null, null);
+    }
+
+    private PlayerLive live(Player p, Location origin, String previous) {
         return new PlayerLive(p, this::freshMode, (universe, items) -> {
             for (ItemStack i : items) quarantine(p, universe, i, "overflow", false);
-        });
+        }, origin, previous);
+    }
+
+    /**
+     * Return point of the outgoing universe: where the player stood before the teleport that brought him here, or his
+     * current place when he still stands in that universe; null otherwise (the stored one is kept).
+     */
+    private Location origin(Player p, String outgoing) {
+        Location b = before.get(p.getUniqueId());
+        if (b != null && b.getWorld() != null && ofWorld(b.getWorld()).equals(outgoing)) return b;
+        return ofWorld(p.getWorld()).equals(outgoing) ? p.getLocation() : null;
     }
 
     // ------------------------------------------------------------------ join, swap
@@ -284,7 +298,7 @@ public final class UniverseService implements Universes.Backend, Listener {
         UUID id = p.getUniqueId();
         if (!locked.add(id)) return;      // the end of the running swap checks the world again
         String from = of(p);
-        Transition.swap(live(p), store.repository(id), target,
+        Transition.swap(live(p, origin(p, from), store.cached(id, from)), store.repository(id), target,
                 r -> Bukkit.getScheduler().runTaskAsynchronously(flux, r),
                 r -> {
                     if (flux.isEnabled()) Bukkit.getScheduler().runTask(flux, r);

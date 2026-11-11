@@ -400,3 +400,10 @@ theme:
         paliers: {type: bar, frame: true, x: 25, y: 159, width: 126, colour: green,
                   progress: "%fluxcoll_selected_tier%", max: "%fluxcoll_selected_max_tier%",
                   text: "Palier %fluxcoll_selected_tier%/%fluxcoll_selected_max_tier%"}
+
+# Small resource packs laid over the server's pack for some players only (api.client.ResourceOverlays: the rpg hud
+# hides hearts and food in the rpg universe). Flux serves them on this port, to open in the firewall; 0 = off.
+resource-overlays:
+  port: 0
+  # address the players download from
+  host: play.influencraft.fr
