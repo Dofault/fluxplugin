@@ -117,6 +117,14 @@
             <scope>system</scope>
             <systemPath>${project.basedir}/libs/PlaceholderAPI-2.12.3.jar</systemPath>
         </dependency>
+        <!-- MC GUI (ResourcePack AI, GPL-3.0): HTML pages behind api.screen.Screens, optional at runtime -->
+        <dependency>
+            <groupId>ai.resourcepack</groupId>
+            <artifactId>mcgui</artifactId>
+            <version>0.8.4</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/MCGUI-0.8.4.jar</systemPath>
+        </dependency>
         <!-- tests of the logic written without Bukkit (universe transitions): mvn -pl Flux test -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

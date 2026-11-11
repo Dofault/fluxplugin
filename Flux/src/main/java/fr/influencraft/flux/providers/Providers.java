@@ -50,6 +50,14 @@ public final class Providers {
             }
         }
         fr.influencraft.flux.api.client.Clients.use(clients, flux.getConfig().getConfigurationSection("bedrock"));
+        // full screen HTML pages (MC GUI), an extra: plugins open their own menu when no page can be shown
+        if (!choice(config, "screens").equals("none") && enabled("MCGUI")) {
+            var screens = new fr.influencraft.flux.adapters.mcgui.McguiScreens();
+            fr.influencraft.flux.api.screen.Screens.use(screens);
+            Bukkit.getPluginManager().registerEvents(screens, flux);
+        } else {
+            fr.influencraft.flux.api.screen.Screens.use(null);
+        }
         // packets to one client (Flux depends on packetevents)
         fr.influencraft.flux.api.client.ClientTags.use(enabled("packetevents") ? new fr.influencraft.flux.adapters.packetevents.PacketEventsTags() : null);
         String money = choice(config, "money-events");
@@ -79,7 +87,8 @@ public final class Providers {
                 + ", fishing = " + fr.influencraft.flux.api.fishing.Fishing.providerName()
                 + ", claims = " + fr.influencraft.flux.api.claims.Claims.providerName()
                 + ", chest shops = " + fr.influencraft.flux.api.shops.ChestShops.providerName()
-                + ", clients = " + fr.influencraft.flux.api.client.Clients.providerName());
+                + ", clients = " + fr.influencraft.flux.api.client.Clients.providerName()
+                + ", screens = " + fr.influencraft.flux.api.screen.Screens.providerName());
     }
 
     static String choice(ConfigurationSection config, String key) {
