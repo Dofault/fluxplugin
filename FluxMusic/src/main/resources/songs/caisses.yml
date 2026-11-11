@@ -1,0 +1,57 @@
+# Fièvre des caisses : boucle de fond pendant l'ouverture des caisses, la mineur, 128 BPM.
+# Tension (arpège scintillant, pulsation) puis mélodie de cloche brillante ; la dernière mesure (mi majeur)
+# relance la boucle. Volumes bas : c'est une musique de fond.
+title: "Fièvre des caisses"
+author: "Influencraft"
+bpm: 128
+steps-per-beat: 4
+beats-per-bar: 4
+loop: true
+
+tracks:
+  arpege:  { instrument: pling, volume: 0.35 }
+  cloche:  { instrument: bell, volume: 0.35 }
+  guitare: { instrument: guitar, volume: 0.4 }
+  basse:   { instrument: bass, volume: 0.6 }
+  grosse:  { instrument: basedrum, volume: 0.45 }
+  caisse:  { instrument: snare, volume: 0.22 }
+  charley: { instrument: hat, volume: 0.15 }
+
+patterns:
+  arp_am: "A3 C4 E4 A4 C5 A4 E4 C4 A3 C4 E4 A4 C5 A4 E4 C4"
+  arp_f:  "A3 C4 F4 A4 C5 A4 F4 C4 A3 C4 F4 A4 C5 A4 F4 C4"
+  arp_c:  "G3 C4 E4 G4 C5 G4 E4 C4 G3 C4 E4 G4 C5 G4 E4 C4"
+  arp_g:  "G3 B3 D4 G4 B4 G4 D4 B3 G3 B3 D4 G4 B4 G4 D4 B3"
+  arp_e:  "G#3 B3 E4 G#4 B4 G#4 E4 B3 G#3 B3 E4 G#4 B4 G#4 E4 B3"
+  b_am: "A1:2 A2:2 A1:2 A2:2 A1:2 A2:2 A1:2 A2:2"
+  b_f:  "F2:2 F3:2 F2:2 F3:2 F2:2 F3:2 F2:2 F3:2"
+  b_c:  "C2:2 C3:2 C2:2 C3:2 C2:2 C3:2 C2:2 C3:2"
+  b_g:  "G1:2 G2:2 G1:2 G2:2 G1:2 G2:2 G1:2 G2:2"
+  b_e:  "E2:2 E3:2 E2:2 E3:2 E2:2 E3:2 E2:2 E3:2"
+  gt_am: ".:2 A2+E3+A3+C4:4 A2+E3+A3+C4:2 .:2 A2+E3+A3+C4:4 A2+E3+A3+C4:2"
+  gt_f:  ".:2 F3+A3+C4:4 F3+A3+C4:2 .:2 F3+A3+C4:4 F3+A3+C4:2"
+  gt_c:  ".:2 C3+G3+C4+E4:4 C3+G3+C4+E4:2 .:2 C3+G3+C4+E4:4 C3+G3+C4+E4:2"
+  gt_g:  ".:2 G2+D3+G3+B3:4 G2+D3+G3+B3:2 .:2 G2+D3+G3+B3:4 G2+D3+G3+B3:2"
+  gt_e:  ".:2 E3+G#3+B3+E4:4 E3+G#3+B3+E4:2 .:2 E3+G#3+B3+E4:4 E3+G#3+B3+E4:2"
+  kick: "x:4 x:4 x:4 x:4"
+  snare: ".:4 x:8 x:4"
+  roll: "x:2 x:2 x:2 x:2 x x x x x x x x"
+  hats: ".:2 x:2 .:2 x:2 .:2 x:2 .:2 x:2"
+
+sections:
+  tension:
+    arpege: "@arp_am | @arp_f | @arp_g | @arp_e"
+    basse: "@b_am | @b_f | @b_g | @b_e"
+    grosse: "@kick*4"
+    charley: "@hats*4"
+    caisse: ".:48 | @roll"
+  plein:
+    cloche: "E6:4 C6:2 A5:2 E6:4 D6:2 C6:2 | C6:4 A5:2 C6:2 F6:8 | G6:4 E6:2 C6:2 G6:4 F6:2 E6:2 | D6:6 B5:2 D6:2 G6:6 | E6:4 C6:2 A5:2 E6:4 A6:4 | A6:4 G6:2 F6:2 C6:8 | B5:4 D6:4 G6:4 F6:4 | G#6:4 E6:4 B5:4 G#5:4"
+    arpege: "@arp_am | @arp_f | @arp_c | @arp_g | @arp_am | @arp_f | @arp_g | @arp_e"
+    guitare: "@gt_am | @gt_f | @gt_c | @gt_g | @gt_am | @gt_f | @gt_g | @gt_e"
+    basse: "@b_am | @b_f | @b_c | @b_g | @b_am | @b_f | @b_g | @b_e"
+    grosse: "@kick*8"
+    caisse: "@snare*7 | @roll"
+    charley: "@hats*8"
+
+order: [tension, plein]

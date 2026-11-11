@@ -2,3 +2,6 @@
 language: ""
 # Multiplies the volume of every note (1.0 = as written in the songs).
 volume: 1.0
+# Song played (as a jingle, over the music) at moments of the game. Empty = nothing.
+moments:
+  job-level-up: niveau

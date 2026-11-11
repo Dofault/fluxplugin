@@ -3,7 +3,8 @@ package fr.influencraft.fluxmusic;
 import fr.influencraft.flux.api.FluxPlugin;
 import fr.influencraft.flux.api.util.Format;
 import fr.influencraft.flux.api.util.Players;
-import fr.influencraft.fluxmusic.api.Music;
+import fr.influencraft.flux.api.jobs.JobLevelUpEvent;
+import fr.influencraft.flux.api.music.Music;
 import fr.influencraft.fluxmusic.play.Jukebox;
 import fr.influencraft.fluxmusic.song.NbsReader;
 import fr.influencraft.fluxmusic.song.ScoreReader;
@@ -12,6 +13,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 
@@ -36,25 +38,36 @@ import java.util.stream.Stream;
  *   /musique stop [player|*]
  *   /musique reload
  * </pre>
+ *
+ * Other plugins play music through Flux's {@link Music} (this plugin is its provider); moments of the game that
+ * FluxMusic follows itself (job level up) are given a song in {@code moments} of config.yml.
  */
 public final class FluxMusic extends FluxPlugin implements Listener {
 
     /** Songs shipped in the jar, written to the songs folder when missing. */
     private static final List<String> SHIPPED = List.of("eveil_de_valdor.yml", "taverne.yml", "foret.yml", "boss.yml",
-            "victoire.yml", "victoire_boss.yml", "defaite.yml", "niveau.yml");
+            "victoire.yml", "victoire_boss.yml", "defaite.yml", "niveau.yml",
+            "caisses.yml");
 
     private volatile Map<String, Song> songs = Map.of();
     private Jukebox jukebox;
 
     @Override
     protected void enable() {
-        jukebox = new Jukebox((player, song) -> { });
+        jukebox = new Jukebox();
         loadSongs();
-        Music.register(new Music.Service() {
-            public boolean play(Player player, String id) {
-                Song song = songs.get(id.toLowerCase(Locale.ROOT));
+        Music.provide(new Music.Provider() {
+            public boolean play(Player player, String id, Boolean loop) {
+                Song song = song(id);
                 if (song == null) return false;
-                jukebox.play(player, song);
+                jukebox.play(player, song, loop == null ? song.loop() : loop);
+                return true;
+            }
+
+            public boolean jingle(Player player, String id) {
+                Song song = song(id);
+                if (song == null) return false;
+                jukebox.jingle(player, song);
                 return true;
             }
 
@@ -83,7 +96,7 @@ public final class FluxMusic extends FluxPlugin implements Listener {
 
     @Override
     protected void disable() {
-        Music.register(null);
+        Music.provide(null);
         if (jukebox != null) jukebox.shutdown();
     }
 
@@ -95,10 +108,24 @@ public final class FluxMusic extends FluxPlugin implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
-        jukebox.stop(e.getPlayer().getUniqueId());
+        jukebox.stopAll(e.getPlayer().getUniqueId());
+    }
+
+    /** Moments of the game given a song in config.yml ({@code moments}); empty = nothing played. */
+    private String moment(String key) {
+        return getConfig().getString("moments." + key, "");
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onJobLevelUp(JobLevelUpEvent e) {
+        Music.jingle(e.player(), moment("job-level-up"));
     }
 
     // ---------------------------------------------------------------- songs
+
+    private Song song(String id) {
+        return id == null ? null : songs.get(id.toLowerCase(Locale.ROOT));
+    }
 
     private float masterVolume() {
         return (float) Math.max(0, getConfig().getDouble("volume", 1.0));
@@ -162,7 +189,7 @@ public final class FluxMusic extends FluxPlugin implements Listener {
                 Collection<? extends Player> targets = targets(sender, args, 2);
                 if (targets == null) return true;
                 for (Player p : targets) {
-                    jukebox.play(p, song);
+                    jukebox.play(p, song, song.loop());
                     messages().send(p, "now-playing", "%title%", song.title());
                 }
                 if (args.length > 2) messages().send(sender, "played-to", "%title%", song.title(),
