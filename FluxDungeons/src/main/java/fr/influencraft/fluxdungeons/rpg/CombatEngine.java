@@ -122,6 +122,13 @@ public final class CombatEngine implements Listener {
         return e != null && petOwner.apply(e) != null;
     }
 
+    /** The server's damage numbers (combat.DamageNumbers): the engine's hits are shown there, as vanilla ones. */
+    private fr.influencraft.fluxdungeons.combat.DamageNumbers numbers;
+
+    public void numbers(fr.influencraft.fluxdungeons.combat.DamageNumbers numbers) {
+        this.numbers = numbers;
+    }
+
     /** Owner of a creature fighting for a player (dungeon pets), null for any other. */
     private Function<Entity, Player> petOwner = e -> null;
 
@@ -285,10 +292,7 @@ public final class CombatEngine implements Listener {
             double dmg = CombatMath.round(Math.max(set.balance().minimumDamage(), o.damage() * (1 - targetMob.rangedResistance)));
             o = new CombatMath.Outcome(dmg, o.crit(), false, CombatMath.round(dmg * a.get("lifesteal")), CombatMath.round(dmg * a.get("manasteal")));
         }
-        if (o.dodged()) {
-            indicator(target, Component.text("Esquive", TextColor.color(0xB376E5)));
-            return o;
-        }
+        if (o.dodged()) return o;
         // told to the others with the real amount first: the dungeon rules may refuse it (boss phases, pacing)
         if (fromPlayer && !allowed((Player) attacker, target, cast, o.damage())) return null;
         damage(target, o.damage(), attacker, o.crit());
@@ -353,8 +357,8 @@ public final class CombatEngine implements Listener {
                 m.mirrored = target.getHealth();
             }
         }
-        indicator(target, Component.text((crit ? "✦ " : "") + format(amount),
-                TextColor.color(target instanceof Player ? 0xFF5C5C : crit ? 0xFFD94D : 0xFFFFFF)));
+        // the server's damage numbers (as CMI's were): only what a player deals
+        if (source instanceof Player && numbers != null) numbers.show(target, amount);
     }
 
     /**
@@ -387,29 +391,11 @@ public final class CombatEngine implements Listener {
         double hp = Math.min(max, life.get(p.getUniqueId()) + amount);
         life.put(p.getUniqueId(), hp);
         mirror(p, hp, max);
-        if (show) indicator(p, Component.text("+" + format(amount), TextColor.color(0x2ECF7B)));
+        if (show && numbers != null) numbers.rise(p, Component.text("+" + format(amount), TextColor.color(0x2ECF7B)));
     }
 
     private static String format(double v) {
         return v >= 100 || v == Math.floor(v) ? String.valueOf(Math.round(v)) : String.format(java.util.Locale.ROOT, "%.1f", v);
-    }
-
-    /** A number rising above a creature for a moment. */
-    private void indicator(LivingEntity target, Component text) {
-        ThreadLocalRandom r = ThreadLocalRandom.current();
-        Location at = target.getEyeLocation().add(r.nextDouble(-0.4, 0.4), 0.3 + r.nextDouble(0, 0.3), r.nextDouble(-0.4, 0.4));
-        TextDisplay d = target.getWorld().spawn(at, TextDisplay.class, t -> {
-            t.text(text);
-            t.setBillboard(Display.Billboard.CENTER);
-            t.setPersistent(false);
-            t.setShadowed(true);
-            t.setBackgroundColor(org.bukkit.Color.fromARGB(0, 0, 0, 0));
-            t.setTeleportDuration(10);
-        });
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (d.isValid()) d.teleport(d.getLocation().add(0, 0.6, 0));
-        }, 1L);
-        Bukkit.getScheduler().runTaskLater(plugin, d::remove, 16L);
     }
 
     // ------------------------------------------------------------------ every Bukkit damage becomes an engine hit

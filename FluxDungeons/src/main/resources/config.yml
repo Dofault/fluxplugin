@@ -47,6 +47,13 @@ reward:
 spawn-distance: 40
 # View and simulation distance of dungeon worlds, in chunks (the server's would load the whole map).
 view-distance: 8
+# Damage numbers of the whole server (in place of CMI's, ShowDamageNumbers off in CMI/Settings/Combat.yml): a number
+# rising above whoever a player hurts, in every world (rpg engine hits included). {damage}: 5, 4.5.
+damage-numbers:
+  enabled: true
+  mob-format: "&c❤{damage}"
+  player-format: "&c⚔{damage}"
+
 # Life bar above the monsters, with their name and level: a red bar with the life written inside in QuinqueFive,
 # drawn by a font of the pack (FluxDungeons/assets/gen_healthbar.py, then /iazip).
 health-bar:

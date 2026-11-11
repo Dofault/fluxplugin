@@ -70,6 +70,7 @@ public final class FluxDungeons extends FluxPlugin {
     private fr.influencraft.fluxdungeons.combat.HealthBars healthBars;
 
     private fr.influencraft.fluxdungeons.rpg.RpgModule rpg;
+    private fr.influencraft.fluxdungeons.combat.DamageNumbers damageNumbers;
 
     /**
      * Dungeons belong to the rpg universe (docs/technique/rpg.md): their worlds swap players to their rpg profile,
@@ -142,6 +143,8 @@ public final class FluxDungeons extends FluxPlugin {
                     rank, null, extra, unit > 0 ? unit : t.damage(), t.extra().rangedResistance());
         });
         engine.afterMonsterHit(combat::onPlayerHit);
+        engine.numbers(damageNumbers);
+        damageNumbers.handledElsewhere(engine::rpg);
         // players hit a model's hit box: the creature under it takes the hit
         engine.body(fr.influencraft.fluxdungeons.mob.Mobs::body);
         engine.petOwner(e -> {
@@ -169,6 +172,10 @@ public final class FluxDungeons extends FluxPlugin {
         // rpg universe (docs/technique/rpg.md): lobby world, classes, stats, combat engine, skills, /rpg, /classe
         rpg = new fr.influencraft.fluxdungeons.rpg.RpgModule(this);
         rpg.start();
+        // damage numbers of the whole server, in place of CMI's
+        damageNumbers = new fr.influencraft.fluxdungeons.combat.DamageNumbers(this);
+        damageNumbers.load(getConfig().getConfigurationSection("damage-numbers"));
+        getServer().getPluginManager().registerEvents(damageNumbers, this);
         // weapons' attack cadence: a rule of the whole server, carried here because it serves the dungeons first
         // life bars above creatures: dungeon monsters, and every other one with health-bar.all-mobs
         healthBars = new fr.influencraft.fluxdungeons.combat.HealthBars(this);
@@ -294,6 +301,7 @@ public final class FluxDungeons extends FluxPlugin {
     }
 
     private void settings() {
+        if (damageNumbers != null) damageNumbers.load(getConfig().getConfigurationSection("damage-numbers"));
         parties.maxSize(getConfig().getInt("party.max-size", 4));
         heroes.load(file("classes.yml"), getConfig().getConfigurationSection("classes"));
         // the players' reach bonus in a run, and the same for the monsters' melee
