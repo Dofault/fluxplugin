@@ -325,6 +325,7 @@ public final class Mobs {
         this.harvest = new HarvestPowers(plugin, fx);
         this.copper = new CopperPowers(plugin, fx);
         this.mole = new MolePowers(plugin, fx);
+        this.bone = new BonePowers(plugin, fx);
         this.tide = new TidePowers(plugin);
     }
 
@@ -1022,6 +1023,7 @@ public final class Mobs {
     private CopperPowers copper;
     /** Abilities of the Field Mole (ram, burrow and surge, drill sweep, seismic drill). */
     private MolePowers mole;
+    private BonePowers bone;
     private Fx fx;
 
     public void removeAll() {
@@ -1030,6 +1032,7 @@ public final class Mobs {
         if (harvest != null) harvest.clear();
         if (copper != null) copper.clear();
         if (mole != null) mole.clear();
+        if (bone != null) bone.clear();
         if (fx != null) fx.clear();
         for (Alive a : alive.values()) {
             close(a);
@@ -1314,7 +1317,7 @@ public final class Mobs {
                 // ready, and somebody to hit (a ring cast with nobody in it is thrown in the void)
                 if (now - last >= ab.every() * 1000 && RockPowers.worthCasting(ab, a.entity)
                         && harvest.worth(ab, a.entity, a.spawn) && copper.worth(ab, a.entity, a.spawn)
-                        && mole.worth(ab, a.entity)) ready.add(i);
+                        && mole.worth(ab, a.entity) && bone.worth(ab, a.entity)) ready.add(i);
             }
             if (ready.isEmpty()) continue;
             // drawn by weight (1 by default); an opening move goes first
@@ -1852,7 +1855,7 @@ public final class Mobs {
                 return a.spawn.clone();
             }
         };
-        if (copper.cast(ab, caster, target) || mole.cast(ab, caster, target) || tide.cast(ab, caster, target) || harvest.cast(ab, caster, target)
+        if (copper.cast(ab, caster, target) || mole.cast(ab, caster, target) || bone.cast(ab, caster, target) || tide.cast(ab, caster, target) || harvest.cast(ab, caster, target)
                 || rock.cast(ab, caster, target)) return;
         World w = e.getWorld();
         Location at = e.getLocation();
