@@ -3,7 +3,7 @@ package fr.influencraft.fluxdungeons.rpg.core;
 import java.util.function.DoubleSupplier;
 
 /**
- * The damage, heal and shield formulas of the rpg: the only place they are written. Pure functions; the random draws
+ * The damage and heal formulas of the rpg: the only place they are written. Pure functions; the random draws
  * come from a supplier so tests replay thousands of hits exactly. The order is documented in docs/technique/rpg.md §5.
  */
 public final class CombatMath {
@@ -93,11 +93,6 @@ public final class CombatMath {
     /** A heal: (magic power × coefficient + flat) × (1 + healing power). Heals never crit (predictable support). */
     public static double heal(StatSheet healer, double coefficient, double flat) {
         return round(Math.max(0, healer.get("magic_power") * coefficient + flat) * (1 + healer.get("healing_power")));
-    }
-
-    /** A shield: (magic power × coefficient + flat) × (1 + shield power). */
-    public static double shield(StatSheet caster, double coefficient, double flat) {
-        return round(Math.max(0, caster.get("magic_power") * coefficient + flat) * (1 + caster.get("shield_power")));
     }
 
     /** Duration of an effect: × (1 + the caster's effect duration), × (1 − the target's tenacity) when harmful. */

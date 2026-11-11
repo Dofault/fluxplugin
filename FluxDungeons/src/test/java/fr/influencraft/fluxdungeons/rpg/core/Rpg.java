@@ -13,11 +13,13 @@ final class Rpg {
     final StatRegistry stats;
     final Map<String, ClassDef> classes;
     final Balance balance;
+    final Equipment equipment;
 
     private Rpg() throws ConfigException {
         stats = StatRegistry.load(node("stats.yml"));
         classes = ClassDef.load(node("classes.yml"), stats);
         balance = Balance.load(node("balance.yml"), stats, classes.keySet());
+        equipment = Equipment.load(node("equipment.yml"), stats, classes.keySet());
     }
 
     static Rpg shipped() {

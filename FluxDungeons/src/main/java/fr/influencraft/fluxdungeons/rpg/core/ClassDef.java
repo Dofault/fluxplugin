@@ -35,7 +35,7 @@ public record ClassDef(String id, Map<String, Double> stats, Map<String, Double>
     }
 
     /**
-     * A skill. {@code kind}: damage, heal, shield, buff, mobility. {@code hits}: number of hits of one cast (a
+     * A skill. {@code kind}: damage, heal, buff, mobility. {@code hits}: number of hits of one cast (a
      * whirlwind hits 3 times), {@code targets}: how many enemies it is made for (for the simulator and the menus),
      * {@code extra}: the type's own numbers (radius, distance, slow...), read by its code.
      */
@@ -86,7 +86,7 @@ public record ClassDef(String id, Map<String, Double> stats, Map<String, Double>
             }
             Node s = sk.child(slot);
             String kind = s.text("kind", "damage");
-            if (!List.of("damage", "heal", "shield", "buff", "mobility").contains(kind)) s.problem("kind", "damage, heal, shield, buff or mobility");
+            if (!List.of("damage", "heal", "buff", "mobility").contains(kind)) s.problem("kind", "damage, heal, buff or mobility");
             Map<String, Double> extra = new LinkedHashMap<>();
             Node ex = s.child("extra");
             for (String k : ex.keys()) extra.put(k, ex.number(k, 0));

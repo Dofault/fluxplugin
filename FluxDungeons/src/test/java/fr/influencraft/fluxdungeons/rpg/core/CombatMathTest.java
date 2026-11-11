@@ -105,9 +105,8 @@ class CombatMathTest {
     }
 
     @Test
-    void healsAndShieldsScale() {
+    void healsScaleWithHealingPower() {
         StatSheet h = StatSheet.compute(rpg.stats, List.of(Modifier.add("magic_power", 50, "x"), Modifier.add("healing_power", 0.5, "x")));
         assertEquals(225, CombatMath.heal(h, 3, 0), 1e-9);
-        assertEquals(100, CombatMath.shield(h, 2, 0), 1e-9);
     }
 }

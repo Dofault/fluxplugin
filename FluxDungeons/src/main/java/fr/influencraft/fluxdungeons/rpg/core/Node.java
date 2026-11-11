@@ -23,11 +23,27 @@ public final class Node {
     }
 
     /** Root of a file; problems are collected in the given list. */
-    @SuppressWarnings("unchecked")
     public static Node root(String file, Object yaml, List<String> problems) {
-        Map<String, Object> m = yaml instanceof Map<?, ?> raw ? (Map<String, Object>) raw : new LinkedHashMap<>();
+        Map<String, Object> m = yaml instanceof Map<?, ?> raw ? keys(raw) : new LinkedHashMap<>();
         if (!(yaml instanceof Map<?, ?>)) problems.add(file + ": empty or not a map");
         return new Node(file, m, problems);
+    }
+
+    /** YAML reads {@code 2:} as a number: every key becomes text, in nested maps and lists too. */
+    private static Map<String, Object> keys(Map<?, ?> raw) {
+        Map<String, Object> out = new LinkedHashMap<>();
+        for (Map.Entry<?, ?> e : raw.entrySet()) out.put(String.valueOf(e.getKey()), value(e.getValue()));
+        return out;
+    }
+
+    private static Object value(Object v) {
+        if (v instanceof Map<?, ?> m) return keys(m);
+        if (v instanceof List<?> l) {
+            List<Object> out = new ArrayList<>(l.size());
+            for (Object o : l) out.add(value(o));
+            return out;
+        }
+        return v;
     }
 
     public String path() {

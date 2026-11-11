@@ -84,7 +84,9 @@ public final class RpgWorld implements Listener {
         w.setGameRule(GameRules.FALL_DAMAGE, false);
         w.setTime(6000);
         w.setStorm(false);
-        w.setDifficulty(Difficulty.PEACEFUL);
+        // not peaceful: training dummies and future monsters would vanish (nothing spawns by itself anyway)
+        w.setDifficulty(Difficulty.NORMAL);
+        w.setGameRule(GameRules.NATURAL_HEALTH_REGENERATION, false);
         w.setSpawnLocation(0, PLATFORM_Y + 1, 0);
     }
 

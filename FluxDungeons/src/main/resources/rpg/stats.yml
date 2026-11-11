@@ -43,7 +43,6 @@ stats:
   # lengthens positive effects given and harmful effects inflicted
   effect_duration:   {category: utility, kind: percent, base: 0, min: 0, max: 1}
   healing_power:     {category: utility, kind: percent, base: 0, min: 0, max: 2}
-  shield_power:      {category: utility, kind: percent, base: 0, min: 0, max: 2}
   # chance of the special effects of items (affixes)
   proc_chance:       {category: utility, kind: percent, base: 0, min: 0, max: 1}
 

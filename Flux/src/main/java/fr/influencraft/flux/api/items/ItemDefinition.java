@@ -42,6 +42,8 @@ import java.util.Objects;
  *   durability: 500
  *   unbreakable: false
  *   glow: true
+ *   universe: rpg                   # belongs to that universe (api.universe.Universes): marked, and, outside
+ *                                   # vanilla, no enchantment nor vanilla attribute ever (its own system rules)
  * </pre>
  *
  * Everything but {@code material} is optional. Name, lore, look, attributes and flags follow the config on items
@@ -61,6 +63,8 @@ public final class ItemDefinition {
     private final int durability;
     private final boolean unbreakable;
     private final Boolean glow;
+    /** Universe the item belongs to (null = vanilla). */
+    private final String universe;
     /** Fingerprint of the definition: an item made with another one is brought up to date. */
     final int revision;
 
@@ -86,7 +90,9 @@ public final class ItemDefinition {
         durability = c.getInt("durability", 0);
         unbreakable = c.getBoolean("unbreakable", false);
         glow = c.contains("glow") ? c.getBoolean("glow") : null;
-        revision = Objects.hash(material, model, equip, equipment, name, lore, attributes, flags, durability, unbreakable, glow);
+        String u = c.getString("universe");
+        universe = u == null || u.isBlank() || u.equalsIgnoreCase(fr.influencraft.flux.api.universe.Universes.VANILLA) ? null : u.toLowerCase(Locale.ROOT);
+        revision = Objects.hash(material, model, equip, equipment, name, lore, attributes, flags, durability, unbreakable, glow, universe);
     }
 
     public static ItemDefinition read(ConfigurationSection section) {
@@ -97,7 +103,7 @@ public final class ItemDefinition {
     ItemStack create() {
         ItemStack item = Items.of(material);
         if (item == null) throw new IllegalArgumentException("air cannot be an item: " + material);
-        item.editMeta(meta -> enchantments.forEach((id, level) -> {
+        if (universe == null) item.editMeta(meta -> enchantments.forEach((id, level) -> {
             Enchantment ench = enchantment(id);
             if (ench != null) meta.addEnchant(ench, level, true);
             else org.bukkit.Bukkit.getLogger().warning("[Flux] Item definition: unknown enchantment " + id);
@@ -113,6 +119,20 @@ public final class ItemDefinition {
         Equippable eq = item.getData(DataComponentTypes.EQUIPPABLE);
         if (equip && eq != null) item.setData(DataComponentTypes.EQUIPPABLE, eq.toBuilder().assetId(equipment));
         if (!attributes.isEmpty()) writeAttributes(item, eq);
+        if (universe != null) {
+            // its universe has its own stats: no vanilla enchantment nor attribute may count, even added later
+            item.editMeta(meta -> {
+                meta.removeEnchantments();
+                meta.setAttributeModifiers(com.google.common.collect.ImmutableMultimap.of());
+                meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+            });
+            fr.influencraft.flux.api.universe.Universes.tag(item, universe);
+        }
+    }
+
+    /** Universe of the items made from this definition (null = vanilla). */
+    public String universe() {
+        return universe;
     }
 
     private void meta(ItemMeta meta) {

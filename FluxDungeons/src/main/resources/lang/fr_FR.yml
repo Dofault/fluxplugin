@@ -321,3 +321,107 @@ rpg:
   unavailable: "&#FF5C5CLe monde RPG n'est pas disponible pour le moment."
   not-in-rpg: "&#B376E5Tu n'es pas dans le monde RPG."
   busy-elsewhere: "&#FF5C5CTermine d'abord ce que tu fais (donjon) avant de changer de monde."
+  level-up: "&#FFD94DNiveau &f%level% &#FFD94Datteint ! &#B376E5Tes statistiques augmentent."
+
+choice:
+  title: "Choisis ta classe"
+  intro: "&#B376E5Ta classe décide de ton arme, de tes statistiques et de tes sorts. Tu pourras en changer plus tard depuis le lobby, avec &f/classe&#B376E5."
+  confirm-title: "Confirmer"
+  confirm: "&#B376E5Devenir &#FFD94D%class% &#B376E5?"
+  done: "&#2ECF7BTu es maintenant &#FFD94D%class%&#2ECF7B. &#B376E5Arme en main : clic gauche pour attaquer, clic droit, &fA &#B376E5et &fF &#B376E5pour tes sorts."
+  weapon: "&#B376E5Ton arme de classe t'a été donnée."
+  lobby-only: "&#FF5C5CTu ne peux changer de classe que dans le lobby RPG."
+  change-title: "Changer de classe"
+  change-intro: "&#B376E5Ta progression dans chaque classe est gardée. Un changement toutes les &f%hours% h &#B376E5au plus."
+  cooldown: "&#FF5C5CTu pourras changer de classe dans &f%minutes% min&#FF5C5C."
+  changed-elsewhere: "&#FF5C5CTa classe a déjà changé entre-temps."
+  changed: "&#2ECF7BTu es maintenant &#FFD94D%class%&#2ECF7B."
+
+skill:
+  cooldown: "&#FF5C5CEncore &f%seconds% s &#FF5C5Cde recharge."
+  no-mana: "&#FF5C5CPas assez de mana."
+  blocked: "&#FF5C5CPas de place devant toi."
+  healed-by: "&#2ECF7B%player% &#B376E5t'a soigné."
+
+rpg-hud:
+  key-right: "Clic droit"
+  key-a: "A"
+  key-f: "F"
+
+classes:
+  warrior:
+    name: "Guerrier"
+    description: "Encaisse au contact, attire les monstres et frappe plusieurs ennemis à la fois."
+  archer:
+    name: "Archer"
+    description: "Dégâts à distance et critiques, rapide, mais fragile au contact."
+  mage:
+    name: "Mage"
+    description: "Sorts de zone de feu et de glace, gros dégâts, dépend de son mana."
+  healer:
+    name: "Soigneur"
+    description: "Soigne et renforce le groupe, frappe peu mais n'est jamais sans défense."
+
+item:
+  classes: "Classe :"
+  level: "Niveau requis :"
+  rarity: "Rareté :"
+  set: "Ensemble %set%"
+  set-bonus: "%pieces% pièces :"
+
+rarities:
+  common: "Commun"
+  uncommon: "Peu commun"
+  rare: "Rare"
+  epic: "Épique"
+  legendary: "Légendaire"
+
+sets:
+  roc: "du Roc"
+  herb: "de l'Herboriste"
+  harvest: "de la Moisson"
+  tide: "de la Marée"
+  copper: "du Cuivre"
+
+stats:
+  physical_attack: "Attaque physique"
+  magic_power: "Puissance magique"
+  damage_bonus: "Dégâts"
+  crit_chance: "Chance de critique"
+  crit_damage: "Dégâts critiques"
+  attack_speed: "Vitesse d'attaque"
+  armor_penetration: "Pénétration physique"
+  magic_penetration: "Pénétration magique"
+  max_health: "Santé"
+  physical_defense: "Défense physique"
+  magic_defense: "Défense magique"
+  damage_reduction: "Réduction des dégâts"
+  crit_resistance: "Résistance aux critiques"
+  dodge: "Esquive"
+  tenacity: "Ténacité"
+  max_mana: "Mana"
+  mana_regen: "Régénération de mana"
+  health_regen: "Régénération de santé"
+  cost_reduction: "Coût des sorts réduit"
+  lifesteal: "Vol de vie"
+  manasteal: "Vol de mana"
+  movement_speed: "Vitesse de déplacement"
+  cooldown_reduction: "Recharge réduite"
+  effect_duration: "Durée des effets"
+  healing_power: "Puissance des soins"
+  proc_chance: "Chance d'effet spécial"
+  damage_vs: "Dégâts contre %what%"
+  resist: "Résistance %what%"
+
+families:
+  undead: "les morts-vivants"
+  beast: "les bêtes"
+  construct: "les créatures de pierre"
+  elemental: "les élémentaires"
+
+elements:
+  fire: "au feu"
+  frost: "à la glace"
+  lightning: "à la foudre"
+  holy: "au sacré"
+  shadow: "à l'ombre"

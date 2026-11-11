@@ -69,7 +69,7 @@ public final class FluxDungeons extends FluxPlugin {
     private fr.influencraft.fluxdungeons.combat.CombatRules combat;
     private fr.influencraft.fluxdungeons.combat.HealthBars healthBars;
 
-    private fr.influencraft.fluxdungeons.rpg.RpgWorld rpgWorld;
+    private fr.influencraft.fluxdungeons.rpg.RpgModule rpg;
 
     @Override
     protected void enable() {
@@ -86,9 +86,9 @@ public final class FluxDungeons extends FluxPlugin {
         arena = new Arena(this, getConfig().getString("world", "flux_dungeons"), getConfig().getInt("slot-spacing", 512),
                 getConfig().getInt("blocks-per-tick", 20000));
         runs = new Runs(this, arena, mobs, heroes, loadouts, store);
-        // lobby of the rpg universe (docs/technique/rpg.md): empty world, stone platform, /rpg
-        rpgWorld = new fr.influencraft.fluxdungeons.rpg.RpgWorld(this, getConfig().getString("rpg.world", "flux_rpg"));
-        rpgWorld.start();
+        // rpg universe (docs/technique/rpg.md): lobby world, classes, stats, combat engine, skills, /rpg, /classe
+        rpg = new fr.influencraft.fluxdungeons.rpg.RpgModule(this);
+        rpg.start();
         // weapons' attack cadence: a rule of the whole server, carried here because it serves the dungeons first
         // life bars above creatures: dungeon monsters, and every other one with health-bar.all-mobs
         healthBars = new fr.influencraft.fluxdungeons.combat.HealthBars(this);
@@ -167,6 +167,7 @@ public final class FluxDungeons extends FluxPlugin {
 
     @Override
     protected void disable() {
+        if (rpg != null) rpg.stop();
         if (runs != null) runs.stopAll();
         if (mobs != null) mobs.removeAll();
         if (healthBars != null) healthBars.clearAll();

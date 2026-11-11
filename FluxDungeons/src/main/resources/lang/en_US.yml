@@ -321,3 +321,107 @@ rpg:
   unavailable: "&#FF5C5CThe rpg world is not available right now."
   not-in-rpg: "&#B376E5You are not in the rpg world."
   busy-elsewhere: "&#FF5C5CFinish what you are doing (dungeon) before changing worlds."
+  level-up: "&#FFD94DLevel &f%level% &#FFD94Dreached! &#B376E5Your stats grow."
+
+choice:
+  title: "Choose your class"
+  intro: "&#B376E5Your class decides your weapon, stats and spells. You can change it later from the lobby with &f/classe&#B376E5."
+  confirm-title: "Confirm"
+  confirm: "&#B376E5Become a &#FFD94D%class%&#B376E5?"
+  done: "&#2ECF7BYou are now a &#FFD94D%class%&#2ECF7B. &#B376E5Weapon in hand: left click to attack, right click, &fA &#B376E5and &fF &#B376E5for your spells."
+  weapon: "&#B376E5Your class weapon was given to you."
+  lobby-only: "&#FF5C5CYou can only change class in the rpg lobby."
+  change-title: "Change class"
+  change-intro: "&#B376E5Your progress in every class is kept. One change every &f%hours% h &#B376E5at most."
+  cooldown: "&#FF5C5CYou can change class again in &f%minutes% min&#FF5C5C."
+  changed-elsewhere: "&#FF5C5CYour class already changed meanwhile."
+  changed: "&#2ECF7BYou are now a &#FFD94D%class%&#2ECF7B."
+
+skill:
+  cooldown: "&#FF5C5C&f%seconds% s &#FF5C5Cof cooldown left."
+  no-mana: "&#FF5C5CNot enough mana."
+  blocked: "&#FF5C5CNo room in front of you."
+  healed-by: "&#2ECF7B%player% &#B376E5healed you."
+
+rpg-hud:
+  key-right: "Right click"
+  key-a: "A"
+  key-f: "F"
+
+classes:
+  warrior:
+    name: "Warrior"
+    description: "Takes hits up close, draws the monsters and strikes several enemies at once."
+  archer:
+    name: "Archer"
+    description: "Ranged damage and crits, fast, but fragile up close."
+  mage:
+    name: "Mage"
+    description: "Fire and frost area spells, high damage, depends on mana."
+  healer:
+    name: "Healer"
+    description: "Heals and strengthens the party, hits little but is never defenceless."
+
+item:
+  classes: "Class:"
+  level: "Required level:"
+  rarity: "Rarity:"
+  set: "%set% set"
+  set-bonus: "%pieces% pieces:"
+
+rarities:
+  common: "Common"
+  uncommon: "Uncommon"
+  rare: "Rare"
+  epic: "Epic"
+  legendary: "Legendary"
+
+sets:
+  roc: "Rock"
+  herb: "Herbalist"
+  harvest: "Harvest"
+  tide: "Tide"
+  copper: "Copper"
+
+stats:
+  physical_attack: "Physical attack"
+  magic_power: "Magic power"
+  damage_bonus: "Damage"
+  crit_chance: "Crit chance"
+  crit_damage: "Crit damage"
+  attack_speed: "Attack speed"
+  armor_penetration: "Armour penetration"
+  magic_penetration: "Magic penetration"
+  max_health: "Health"
+  physical_defense: "Physical defense"
+  magic_defense: "Magic defense"
+  damage_reduction: "Damage reduction"
+  crit_resistance: "Crit resistance"
+  dodge: "Dodge"
+  tenacity: "Tenacity"
+  max_mana: "Mana"
+  mana_regen: "Mana regeneration"
+  health_regen: "Health regeneration"
+  cost_reduction: "Spell cost reduction"
+  lifesteal: "Lifesteal"
+  manasteal: "Mana steal"
+  movement_speed: "Movement speed"
+  cooldown_reduction: "Cooldown reduction"
+  effect_duration: "Effect duration"
+  healing_power: "Healing power"
+  proc_chance: "Special effect chance"
+  damage_vs: "Damage against %what%"
+  resist: "%what% resistance"
+
+families:
+  undead: "undead"
+  beast: "beasts"
+  construct: "constructs"
+  elemental: "elementals"
+
+elements:
+  fire: "Fire"
+  frost: "Frost"
+  lightning: "Lightning"
+  holy: "Holy"
+  shadow: "Shadow"

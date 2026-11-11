@@ -69,7 +69,9 @@ public final class AttackCadence implements Listener {
     private double assistAngle = 35;
 
     public AttackCadence(Plugin plugin) {
-        ItemLooks.registerAny(plugin, (id, item) -> enabled ? apply(item) : clear(item));
+        // items of the rpg universe: the rpg engine paces their basic attack (attack speed stat), no vanilla charge
+        ItemLooks.registerAny(plugin, (id, item) -> enabled && fr.influencraft.flux.api.universe.Universes.VANILLA
+                .equals(fr.influencraft.flux.api.universe.Universes.universeOf(item)) ? apply(item) : clear(item));
     }
 
     public void assist(Assist assist) {

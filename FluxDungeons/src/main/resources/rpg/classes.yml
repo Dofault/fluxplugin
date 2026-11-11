@@ -37,5 +37,5 @@ healer:
   basic: {damage: magic, element: holy, coefficient: 0.6, targets: 1, range: 15}
   skills:
     right: {type: heal, kind: heal, coefficient: 3.0, cooldown: 4, mana: 20, targets: 1, extra: {range: 20}}
-    a: {type: aegis, kind: shield, coefficient: 2.0, cooldown: 14, mana: 35, targets: 4, duration: 6, extra: {radius: 8}}
+    a: {type: blessing, kind: buff, cooldown: 18, mana: 35, targets: 4, duration: 8, extra: {radius: 8, damage_bonus: 0.15}}
     f: {type: sanctuary, kind: heal, coefficient: 0.5, hits: 8, cooldown: 20, mana: 45, targets: 4, duration: 8, extra: {radius: 6}}
