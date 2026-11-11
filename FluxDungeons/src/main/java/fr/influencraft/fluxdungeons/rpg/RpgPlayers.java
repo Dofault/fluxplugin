@@ -162,6 +162,8 @@ public final class RpgPlayers implements Listener {
         if (attackSpeed != null) attackSpeed.removeModifier(ATTACK_SPEED);
         AttributeInstance reach = p.getAttribute(Attribute.ENTITY_INTERACTION_RANGE);
         if (reach != null) reach.removeModifier(REACH);
+        // the bars go at once: left alone, the game fades the action bar out over the hearts it covered
+        if (left) p.sendActionBar(net.kyori.adventure.text.Component.empty());
         if (r == null) return;
         if (combat != null) combat.forget(p);
         int level = r.level();
@@ -524,7 +526,8 @@ public final class RpgPlayers implements Listener {
         long now = CombatEngine.now();
         for (Player p : Bukkit.getOnlinePlayers()) {
             RpgPlayer r = online.get(p.getUniqueId());
-            if (r != null && r.stats() != null && !p.isDead()) hud(p, r, now);
+            // drawn on the death screen too: never a fade-out showing the hearts underneath
+            if (r != null && r.stats() != null) hud(p, r, now);
         }
     }
 
