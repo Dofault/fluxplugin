@@ -275,7 +275,6 @@ public final class CombatEngine implements Listener {
         }
         StatSheet a = stats(attacker), d = stats(target);
         if (a == null || d == null) return null;
-        if (fromPlayer && !allowed((Player) attacker, target, cast)) return null;
         MobState targetMob = toPlayer ? null : mob(target);
         String family = targetMob == null ? null : targetMob.family;
         CombatMath.Outcome o = CombatMath.hit(set.balance(), a, level(attacker), d, family, hit,
@@ -288,6 +287,8 @@ public final class CombatEngine implements Listener {
             indicator(target, Component.text("Esquive", TextColor.color(0xB376E5)));
             return o;
         }
+        // told to the others with the real amount (the dungeons may refuse it; CMI shows its damage number from it)
+        if (fromPlayer && !allowed((Player) attacker, target, cast, o.damage())) return null;
         damage(target, o.damage(), attacker, o.crit());
         if (attacker instanceof Player p) {
             RpgPlayer r = players.apply(p);
@@ -305,13 +306,13 @@ public final class CombatEngine implements Listener {
      * boss between two phases, a melee too soon) and react to it (aggro, scripts, boss reactions, pets). Only the
      * engine decides how much it takes.
      */
-    private boolean allowed(Player attacker, LivingEntity target, String cast) {
+    private boolean allowed(Player attacker, LivingEntity target, String cast, double amount) {
         boolean melee = cast != null && cast.contains(":basic:");
         org.bukkit.damage.DamageSource source = org.bukkit.damage.DamageSource.builder(melee
                         ? org.bukkit.damage.DamageType.PLAYER_ATTACK : org.bukkit.damage.DamageType.MAGIC)
                 .withCausingEntity(attacker).withDirectEntity(attacker).build();
         EntityDamageByEntityEvent ask = new EntityDamageByEntityEvent(attacker, target, melee
-                ? EntityDamageEvent.DamageCause.ENTITY_ATTACK : EntityDamageEvent.DamageCause.MAGIC, source, 1);
+                ? EntityDamageEvent.DamageCause.ENTITY_ATTACK : EntityDamageEvent.DamageCause.MAGIC, source, amount);
         asking = true;
         try {
             Bukkit.getPluginManager().callEvent(ask);
@@ -349,8 +350,9 @@ public final class CombatEngine implements Listener {
                 m.mirrored = target.getHealth();
             }
         }
-        indicator(target, Component.text((crit ? "✦ " : "") + format(amount),
-                TextColor.color(target instanceof Player ? 0xFF5C5C : crit ? 0xFFD94D : 0xFFFFFF)));
+        // a creature's number is CMI's (shown from the hit told to the others); a player hit gets ours (CMI never
+        // sees it: the game's damage is cancelled)
+        if (target instanceof Player) indicator(target, Component.text(format(amount), TextColor.color(0xFF5C5C)));
     }
 
     /**
