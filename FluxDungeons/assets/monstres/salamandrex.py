@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
-"""Salamandrex: emerald salamander boss. STATIC Blockbench model (2026-11-11, second version, replaces the bipedal one).
+"""Salamandrex: emerald salamander boss. STATIC Blockbench model (2026-11-11, third version: smooth back, new skin).
 
-A real four-legged salamander whose body is living emerald: wide flat head with a round muzzle and big side eyes, long
-low body with the belly just above the ground, four short legs sprawled sideways (zigzag: upper segment out and down,
-marked elbow or knee, lower segment back to the ground), wide feet with four short round toes, long tail thick at the
-base, tapering, with a soft S curve seen from above and staying close to the ground. A row of seven cut emerald
-crystals follows the spine (the biggest in the middle of the back, a little forward), with three small side crystals,
-two small crystals behind the eye ridges and three at the start of the tail. Never a dragon, a lizard or a shell.
+A real four-legged salamander whose body is living emerald: wide flat head with a round muzzle, big side eyes under
+heavy brow ridges (narrow, angry, vertical slit pupils), long low body with the belly just above the ground, four
+short legs sprawled sideways (zigzag: upper segment out and down, marked elbow or knee, lower segment back to the
+ground), wide feet with four short round toes, long tail thick at the base, tapering, with a soft S curve seen from
+above and staying close to the ground. No crystal, spike, plate or horn anywhere: the back is a smooth line, the
+emerald is suggested by the colour, the depth and the polished reflections only.
 
 Same building language as the otter (loutre_marees.py) and the stone turtle (colosse_abime.py): big tilted volumes,
-details painted at 1 texel per unit (2 for the eyes, the toes and the crystals). Skin and crystals are the same
-material with two treatments: the skin is polished with discreet facets (large soft patches), the crystals have sharp
-planes, strong contrasts and rare near-white pixels on lit edges. Light is computed per face from its real orientation
-(LIGHT: from above, the front and slightly to the creature's left), so tilted legs and crystals stay consistent.
+details painted at 1 texel per unit (2 for the eyes and the toes).
+
+Painting: every pixel gets a continuous tone from where it really is (`emerald`): the light of its face (from above,
+the front and slightly to the creature's left, LIGHT), a vertical gradient in world space (so stacked cubes share one
+gradient instead of each restarting it), soft polished highlights along the top faces, a few low-contrast inclusions.
+The tone is then cut into the palette of the brief one step at a time, with a single checkered row where two steps
+meet: smooth transitions, no outline, no near-black, the main green #70CC98 dominant.
 
 Pose baked in the cubes, bones at the joints for a future animation; no animation, no glow, no particle.
 
@@ -27,7 +30,7 @@ import uuid
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from bbkit import attach, bake, corners, export, ground, hx, matrix, tone  # noqa: E402
+from bbkit import attach, bake, corners, export, ground, hx, matrix  # noqa: E402
 from golem_fonderie import app, euler, rot  # noqa: E402
 
 IDENT = "salamandrex"
@@ -39,11 +42,10 @@ def pal(*c):
 
 
 # --------------------------------------------------------------------------- palettes of the brief (dark -> light)
-SKIN = pal("#032820", "#063B32", "#07543F", "#087A55", "#159B67", "#38C98A", "#70DFA1", "#A5F2B1")   # main = 4
-BELLY = pal("#356B4D", "#538957", "#72AD69", "#8FCB7C", "#B6E8A0")                                 # main = 3
-CRYSTAL = pal("#033B34", "#075344", "#087D62", "#12A875", "#2AD99A", "#64EFB4", "#A9FFD9", "#D9FFF0")
-EYE = {"iris": hx("#D9F5A3"), "ring": hx("#8DDC73"), "pupil": hx("#183F2D"), "shadow": hx("#0C291F"),
-       "glint": hx("#F4FFE4"), "glint2": hx("#B9F2A0")}
+SKIN = pal("#1C624A", "#277D5A", "#389B6C", "#55B982", "#70CC98", "#91DDB0", "#B5EBC5")   # main #70CC98 = 4
+BELLY = pal("#55B982", "#70CC98", "#91DDB0", "#B5EBC5")                                   # milky jade, main = 2
+EYE = {"iris": hx("#2E9667"), "iris_light": hx("#68C99A"), "iris_dark": hx("#176044"), "pupil": hx("#123D31"),
+       "glint": hx("#D8F7E5")}
 
 # light: from above, from the front (-z) and slightly from the creature's left (-x)
 LIGHT = (lambda v: [a / math.sqrt(sum(b * b for b in v)) for a in v])([-0.28, 0.82, -0.5])
@@ -51,184 +53,174 @@ NORMALS = {"north": (0, 0, -1), "south": (0, 0, 1), "east": (1, 0, 0), "west": (
            "down": (0, -1, 0)}
 
 
-def light_step(d):
-    """Tone offset of a face from the cosine between its normal and the light."""
-    return 1 if d > 0.7 else 0 if d > 0.2 else -1 if d > -0.35 else -2 if d > -0.7 else -3
+def quantize(t, x, y, pal_, low=1):
+    """Continuous tone -> palette index, one step at a time; the border between two steps is gently wavy (a slow
+    wobble of the tone) so it follows the surface instead of a ruler line or a checker pattern. The darkest colour
+    only for real hollows (t < 0.6), never as an outline."""
+    t += 0.16 * math.sin(0.7 * x + 0.23 * y + 1.3) + 0.09 * math.sin(0.41 * y - 0.5 * x)
+    i = math.floor(t + 0.5)
+    lo = 0 if t < 0.6 else low
+    return pal_[max(lo, min(len(pal_) - 1, i))]
 
 
-# --------------------------------------------------------------------------- painters: (w, h, rng, face, step)
-def patches(w, h, r, area):
-    """Large soft facets: Voronoi cells over the face; a cell high on the face tends lighter, low tends darker (the
-    facets follow the volume instead of random noise)."""
-    n = max(1, round(w * h / area))
-    seeds = [(r.uniform(0, w), r.uniform(0, h)) for _ in range(n)]
-    offs = []
-    for sx, sy in seeds:
-        v = sy / max(1, h)
-        offs.append(r.choice((0, 0, 0, 1)) if v < 0.35 else r.choice((0, 0, -1)) if v > 0.7 else r.choice((0, 0, 0, 0, 1, -1)))
-    grid = []
-    for y in range(h):
-        row = []
-        for x in range(w):
-            k = min(range(n), key=lambda i: (seeds[i][0] - x - 0.5) ** 2 + (seeds[i][1] - y - 0.5) ** 2)
-            row.append(offs[k])
-        grid.append(row)
-    return grid
+# --------------------------------------------------------------------------- painters
+# A painter receives a `Face`: pixel size, face name, light (cosine with LIGHT) and `at(x, y)`, the world position of a
+# pixel centre. It returns a grid of RGB colours.
+class Face:
+    def __init__(self, w, h, name, light, at, rng):
+        self.w, self.h, self.name, self.light, self.at, self.r = w, h, name, light, at, rng
 
 
-def skin(base=4, area=70, crest=False):
-    def f(w, h, r, face, step):
-        """Polished emerald skin: big discreet facets, a lit top edge with a few turquoise pixels on faces facing
-        the light, a darker hollow row low on the sides. `crest`: a faint crystallised line on the top face."""
-        b = base + step
-        g = patches(w, h, r, area)
-        px = [[tone(SKIN, b + g[y][x]) for x in range(w)] for y in range(h)]
-        if face not in ("up", "down") and h >= 4:
-            px[h - 1] = [tone(SKIN, b - 1)] * w
-            if step >= 0:
-                px[0] = [tone(SKIN, b + 1)] * w
-                for x in range(1, w - 1, 5):
-                    px[0][x] = tone(SKIN, b + 2)
-        if face == "up" and step >= 0 and w * h >= 30:
-            for _ in range(max(1, w * h // 120)):
-                px[r.randrange(h)][r.randrange(w)] = tone(SKIN, b + 2)
-        if crest and face == "up" and w >= 5:
-            c = w // 2
-            for y in range(1, h - 1, 4):
-                px[y][c] = CRYSTAL[5]
-                if y + 1 < h:
-                    px[y + 1][c] = CRYSTAL[4]
-        return px
+def emerald(base=4.0, span=(5.0, 24.0), grad=1.25, gloss=0.0, gloss_at=0.45, inclusions=150, local=False,
+            pal_=SKIN, low=1):
+    """Living emerald: base tone, + face light, + vertical gradient (world height between span, or the face's own
+    height when `local`), + rounded top faces (centre lighter), + a soft elongated polished highlight on the top face
+    (`gloss`, centred at `gloss_at` of its length), + rare low-contrast inclusions."""
+    def f(F):
+        w, h = F.w, F.h
+        t0 = base - 0.3 + 1.1 * F.light
+        y0, y1 = span
+        rows = []
+        for y in range(h):
+            row = []
+            for x in range(w):
+                if local:
+                    g = grad * (1 - 2 * (y + 0.5) / h) if F.name not in ("up", "down") else 0.3 * grad
+                else:
+                    wy = F.at(x, y)[1]
+                    g = grad * (2 * (wy - y0) / (y1 - y0) - 1)
+                t = t0 + g
+                if F.name == "up":
+                    u = (x + 0.5) / w
+                    t += 0.35 * (1 - abs(2 * u - 1)) - 0.15
+                    if gloss:
+                        v = (y + 0.5) / h
+                        t += gloss * math.exp(-(((u - 0.5) / 0.2) ** 2 + ((v - gloss_at) / 0.3) ** 2))
+                row.append(t)
+            rows.append(row)
+        if inclusions and w * h >= 36:
+            for _ in range(w * h // inclusions):
+                x, y = F.r.randrange(1, w - 1), F.r.randrange(1, h - 1)
+                d = F.r.choice((0.55, -0.55))
+                for dx, dy in ((0, 0), (1, 0)) if F.r.random() < 0.5 else ((0, 0),):
+                    rows[y][x + dx] += d
+        return [[quantize(rows[y][x], x, y, pal_, low) for x in range(w)] for y in range(h)]
     return f
 
 
-def belly(w, h, r, face, step):
-    """Belly: softer greens, very large patches, no crystal facets; shadow on its lowest row."""
-    b = 3 + max(-2, min(1, step))
-    g = patches(w, h, r, 160)
-    px = [[tone(BELLY, b + (g[y][x] if g[y][x] < 1 else 0)) for x in range(w)] for y in range(h)]
-    if face not in ("up", "down") and h >= 3:
-        px[h - 1] = [tone(BELLY, b - 1)] * w
-    return px
-
-
-def crystal(w, h, r, face, step):
-    """Cut emerald (density 2): every face one plane split in two along a diagonal (two sharp tones), a clear edge on
-    the lit side, near-white pixels only at the top of lit faces, darker base rows where it leaves the skin."""
-    b = {1: 5, 0: 3, -1: 2, -2: 1, -3: 0}[step]
-    px = []
+def belly(F):
+    """Milky jade belly, matte (no highlight): its sides start one tone darker on a wavy line (no straight border
+    with the flanks), the rest a soft gradient."""
+    w, h = F.w, F.h
+    out = []
     for y in range(h):
         row = []
         for x in range(w):
-            above = x * h > y * w if face in ("north", "east") else (w - 1 - x) * h > y * w
-            row.append(tone(CRYSTAL, b + (1 if above else 0)))
-        px.append(row)
-    if step >= 0 and w >= 3:
-        for y in range(h):
-            px[y][0] = tone(CRYSTAL, b + 2)
-        px[0][0] = CRYSTAL[7]
-        if h >= 3:
-            px[1][0] = CRYSTAL[6]
-    if w >= 3:
-        for y in range(h):
-            px[y][w - 1] = tone(CRYSTAL, b - 1)
-    if face not in ("up", "down") and h >= 6:
-        px[h - 1] = [CRYSTAL[0]] * w
-        px[h - 2] = [tone(CRYSTAL, min(b, 2) - 1)] * w
+            t = 2.0 + 0.5 * F.light
+            if F.name not in ("up", "down"):
+                edge = 1.2 + 0.8 * math.sin(x * 0.55)
+                if y < edge:
+                    t -= 1.0
+                t -= 0.5 * (y + 0.5) / h
+            row.append(quantize(t, x, y, BELLY, 0))
+        out.append(row)
+    return out
+
+
+def jaw(F):
+    """Lower jaw: skin, a soft shadow line (#389B6C, not black) on its top edge for the closed mouth, belly below."""
+    if F.name == "down":
+        return belly(F)
+    px = emerald(4.0, (8.0, 26.0))(F)
+    if F.name in ("north", "east", "west"):
+        px[0] = [SKIN[2]] * F.w
+    return px
+
+
+def muzzle_tip(F):
+    """Front of the muzzle (density 2): lighter, two small nostrils in deep green (never black)."""
+    px = emerald(4.3, (8.0, 26.0), gloss=0.9)(F)
+    if F.name == "north" and F.w >= 10:
+        for x in (F.w // 2 - 5, F.w // 2 + 4):
+            px[2][x] = SKIN[1]
+            px[2][x + 1] = SKIN[2]
     return px
 
 
 def eye(outer):
-    def f(w, h, r, face, step):
-        """Big slightly oval eye (density 2) on its outer face: dark shadow rim, light green ring, pale iris, round
-        pupil a little forward, one main glint high and a small one low: alive and calm."""
-        px = [[SKIN[2]] * w for _ in range(h)]
-        if face != outer:
+    def f(F):
+        """Narrow almond eye (density 2) on its outer face: heavy upper lid sloping down towards the snout (anger),
+        iris dark under the lid, deep green in the middle, lighter low; narrow vertical pupil a little forward and
+        low (it watches its prey); one tiny glint. No black outline: lids in deep greens."""
+        w, h = F.w, F.h
+        px = [[SKIN[3]] * w for _ in range(h)]
+        if F.name != outer:
             return px
-        cx, cy = (w - 1) / 2, (h - 1) / 2
-        rx, ry = w / 2, h / 2 * 0.9
-        fwd = 1 if outer == "west" else -1        # u towards the front of the head on this face
+        fwd = 1 if outer == "east" else -1                  # u grows towards the front on the east face (face_point)
+        cy = h * 0.55
+        for x in range(w):
+            t = (x + 0.5) / w
+            front = t if fwd == 1 else 1 - t                 # 1 at the inner (front) corner
+            open_ = math.sqrt(max(0.0, 1 - (2 * t - 1) ** 2))
+            top = max(cy - 0.42 * h * open_, h * (0.08 + 0.55 * front))     # lid line: lower towards the snout
+            bottom = cy + 0.34 * h * open_
+            for y in range(h):
+                if top <= y + 0.5 <= bottom:
+                    rel = (y + 0.5 - top) / max(0.5, bottom - top)
+                    px[y][x] = EYE["iris_dark"] if rel < 0.28 else EYE["iris"] if rel < 0.6 else EYE["iris_light"]
+                elif top - 1.8 <= y + 0.5 < top:
+                    px[y][x] = SKIN[1]                          # heavy lid edge, deep green
+                elif y + 0.5 > bottom and y + 0.5 <= bottom + 1:
+                    px[y][x] = SKIN[2]
+        pc = int(round(w / 2 - 0.5 + fwd * w * 0.1))
         for y in range(h):
-            for x in range(w):
-                d = math.hypot((x - cx) / rx, (y - cy) / ry)
-                if d <= 1.0:
-                    px[y][x] = EYE["shadow"]
-                if d <= 0.82:
-                    px[y][x] = EYE["ring"]
-                if d <= 0.66:
-                    px[y][x] = EYE["iris"]
-                if math.hypot((x - cx - fwd * 0.6) / rx, (y - cy) / ry) <= 0.3:
+            for x in (pc, pc + 1):
+                if px[y][x] in (EYE["iris"], EYE["iris_light"], EYE["iris_dark"]) and y >= h * 0.3:
                     px[y][x] = EYE["pupil"]
-        gx, gy = int(round(cx + fwd * rx * 0.3)), int(round(cy - ry * 0.4))
-        for dx, dy in ((0, 0), (fwd, 0), (0, 1)):
-            if 0 <= gx + dx < w and 0 <= gy + dy < h:
-                px[gy + dy][gx + dx] = EYE["glint"]
-        bx, by = int(round(cx - fwd * rx * 0.35)), int(round(cy + ry * 0.4))
-        px[by][bx] = EYE["glint2"]
+        gx = pc - fwd * 2
+        for y in range(h):
+            if px[y][gx] == EYE["iris"]:
+                px[y][gx] = EYE["glint"]
+                break
         return px
     return f
 
 
-def muzzle(nostrils=False):
-    def f(w, h, r, face, step):
-        """Muzzle: skin; `nostrils`: two small dark openings high on the front."""
-        px = skin(4, 50)(w, h, r, face, step)
-        if nostrils and face == "north" and w >= 8 and h >= 3:
-            for x in (w // 2 - 4, w // 2 + 3):
-                px[1][x] = SKIN[0]
-                px[1][x + 1 if x + 1 < w else x] = SKIN[1]
-        return px
-    return f
-
-
-def jaw(w, h, r, face, step):
-    """Lower jaw: skin, a thin shadow line on its top edge (closed mouth), pale belly green underneath."""
-    if face == "down":
-        return belly(w, h, r, face, step)
-    px = skin(4, 60)(w, h, r, face, step)
-    if face in ("north", "east", "west"):
-        px[0] = [SKIN[1]] * w
+def toe(F):
+    """Toe (density 2): body greens, rounded end a touch lighter, no claw, no outline."""
+    px = emerald(3.8, (0.0, 13.0), inclusions=0)(F)
+    if F.name == "north":
+        px = [[SKIN[5] if 0 < x < F.w - 1 and 0 < y < F.h - 1 else SKIN[4] for x in range(F.w)] for y in range(F.h)]
     return px
 
 
-def joint(light=False):
-    def f(w, h, r, face, step):
-        """Joint: one tone darker where the limb leaves the body; elbows and knees get a lighter facet on top."""
-        px = skin(3 if not light else 4, 40)(w, h, r, face, step)
-        if light and face in ("up", "north", "west") and w >= 4 and h >= 4:
-            for y in range(1, min(3, h - 1)):
-                for x in range(1, w // 2 + 1):
-                    px[y][x] = tone(SKIN, 4 + step + 1)
-        return px
-    return f
-
-
-def toe(w, h, r, face, step):
-    """Toe (density 2): short and round, rounded lighter end, no claw."""
-    px = skin(4, 30)(w, h, r, face, step)
-    if face == "north":
-        px = [[tone(SKIN, 5 + min(0, step)) if 0 < x < w - 1 or 0 < y < h - 1 else tone(SKIN, 3 + step)
-               for x in range(w)] for y in range(h)]
-    return px
-
-
+BODY, HEAD, LEG = (5.0, 24.0), (8.0, 27.0), (0.0, 13.0)
 PAINTERS = {
-    "skin": skin(4, 45), "back": skin(4, 45, crest=True), "flank": skin(4, 50), "head": skin(4, 45),
-    "head_top": skin(5, 45), "limb": skin(4, 40), "tail": skin(4, 45, crest=True), "tail_end": skin(4, 35),
-    "belly": belly, "jaw": jaw, "muzzle": muzzle(), "muzzle_tip": (muzzle(True), 2),
-    "joint": joint(), "joint_light": joint(True), "toe": (toe, 2), "crystal": (crystal, 2),
+    "skin": emerald(4.0, BODY), "back": emerald(4.1, BODY, gloss=1.0), "shoulder": emerald(4.0, BODY, gloss=0.9),
+    "flank": emerald(3.8, BODY), "neck": emerald(4.0, HEAD),
+    "head": emerald(4.0, HEAD, inclusions=110), "head_top": emerald(4.2, HEAD, gloss=1.1, gloss_at=0.55),
+    "muzzle": emerald(4.3, HEAD, gloss=0.8, inclusions=90), "muzzle_tip": (muzzle_tip, 2),
+    "brow": emerald(3.9, HEAD, grad=0.5), "socket": emerald(3.5, HEAD, grad=0.4, inclusions=0),
+    "jaw": jaw, "belly": belly,
+    "limb": emerald(4.0, LEG, gloss=0.8), "joint": emerald(3.6, LEG, inclusions=0),
+    "joint_body": emerald(3.6, BODY, inclusions=0), "toe": (toe, 2),
     "eye_r": (eye("east"), 2), "eye_l": (eye("west"), 2),
 }
+# tail: the base close to the body colour, a little darker towards the tip, longitudinal highlight on top
+for k in range(11):
+    PAINTERS[f"tail_{k}"] = emerald(4.0 - 0.08 * k, local=True, grad=1.1, gloss=0.8 - 0.05 * k, gloss_at=0.5)
+
 MATERIAL_TEXT = {
-    "skin": "peau d'émeraude (vert principal #159B67, facettes discrètes)",
-    "back": "peau d'émeraude, ligne cristallisée sur le dessus",
-    "flank": "peau d'émeraude, grandes facettes", "head": "peau d'émeraude", "head_top": "peau d'émeraude claire",
-    "limb": "peau d'émeraude", "tail": "peau d'émeraude, dessus cristallisé", "tail_end": "peau d'émeraude",
-    "belly": "ventre vert pâle (#8FCB7C)", "jaw": "peau, ligne d'ombre de la bouche, dessous vert pâle",
-    "muzzle": "peau d'émeraude", "muzzle_tip": "peau, deux narines sombres", "joint": "peau plus sombre (jonction)",
-    "joint_light": "peau, facette claire sur le dessus", "toe": "peau, bout arrondi plus clair",
-    "crystal": "émeraude taillée (facettes nettes, reflets presque blancs)",
-    "eye_r": "œil (iris #D9F5A3, pupille #183F2D)", "eye_l": "œil (iris #D9F5A3, pupille #183F2D)",
+    "skin": "peau d'émeraude (#70CC98, dégradé vertical)", "back": "peau d'émeraude, reflet poli sur le dessus",
+    "shoulder": "peau d'émeraude, reflet poli", "flank": "peau d'émeraude un peu plus sombre",
+    "neck": "peau d'émeraude", "head": "peau d'émeraude, inclusions discrètes",
+    "head_top": "peau d'émeraude claire, reflet poli", "muzzle": "peau d'émeraude claire, reflet poli",
+    "muzzle_tip": "peau claire, deux narines vert profond", "brow": "arcade lourde au-dessus de l'œil",
+    "socket": "peau plus sombre autour de l'œil", "jaw": "peau, ligne d'ombre de la bouche, dessous jade",
+    "belly": "ventre jade laiteux (#91DDB0), mat", "limb": "peau d'émeraude, reflet sur le dessus",
+    "joint": "peau plus sombre (articulation)", "joint_body": "peau plus sombre (jonction)",
+    "toe": "peau, bout arrondi plus clair", "tail": "peau d'émeraude, plus sombre vers le bout, reflet longitudinal",
+    "eye_r": "œil plissé (iris #2E9667, pupille fendue #123D31)", "eye_l": "œil plissé (iris #2E9667, pupille fendue #123D31)",
 }
 
 
@@ -256,48 +248,22 @@ def frame(axis, hint, along):
 
 
 def rod(p_from, p_to, w, t, along, hint, ext=0.0):
-    """Box from p_from to p_to, lengthened by `ext` at both ends: along='y' for a leg segment or a crystal (p_from is
-    the top end), along='z' for a tail segment or a toe (north face towards p_to)."""
+    """Box from p_from to p_to, lengthened by `ext` at both ends: along='y' for a leg segment (p_from is the top
+    end), along='z' for a tail segment or a toe (north face towards p_to)."""
     d = [p_from[i] - p_to[i] for i in range(3)]
     L = math.sqrt(dot(d, d)) + 2 * ext
     c = [(p_from[i] + p_to[i]) / 2 for i in range(3)]
     return c, ((w, L, t) if along == "y" else (w, t, L)), frame(d, hint, along)
 
 
-def spin(v, axis, deg):
-    k, a = norm(axis), math.radians(deg)
-    c, s = math.cos(a), math.sin(a)
-    kv = cross(k, v)
-    return [v[i] * c + kv[i] * s + k[i] * dot(k, v) * (1 - c) for i in range(3)]
-
-
-def direction(back_deg, out_deg, side):
-    """Unit vector leaning backward (+z) by back_deg and outward (side * x) by out_deg from the vertical."""
-    return norm([side * math.tan(math.radians(out_deg)), 1, math.tan(math.radians(back_deg))])
-
-
-def cut_crystal(prefix, base, d, H, W, roll, small=False):
-    """Cut emerald growing from `base` along d: wide anchored base, faceted body made of two prisms turned 45 degrees
-    from each other (eight planes), narrower upper part, slightly off-centre point. Small ones: base, body, point."""
-    side = norm(cross(d, [0, 0, 1])) if abs(d[2]) < 0.99 else [1, 0, 0]
-
-    def at(f, off=0.0):
-        return [base[i] + d[i] * f * H + side[i] * off * W for i in range(3)]
-
-    def hint(deg):
-        return spin([0, 0, 1], d, roll + deg)
-    if small:
-        spec = (("base", -0.2, 0.35, 1.1, 1.0, 0), ("corps", 0.2, 0.75, 0.75, 0.7, 45),
-                ("pointe", 0.65, 1.0, 0.46, 0.42, 20, 0.1))
-    else:
-        spec = (("base", -0.15, 0.2, 1.15, 1.0, 0), ("corps", 0.1, 0.7, 0.95, 0.8, 0),
-                ("corps_taille", 0.12, 0.66, 0.78, 0.95, 45), ("haut", 0.6, 0.88, 0.66, 0.6, 45, 0.05),
-                ("pointe", 0.82, 1.0, 0.42, 0.38, 20, 0.12))
-    out = []
-    for name, f0, f1, kw, kt, dr, *off in spec:
-        o = off[0] if off else 0.0
-        out.append((f"{prefix}_{name}", *rod(at(f1, o), at(f0, o * 0.5), W * kw, W * kt, "y", hint(dr))))
-    return out
+def face_point(face, size, u, v):
+    """Local point of a cube face at texture coordinates (u, v) in 0..1 (Blockbench face orientation)."""
+    sx, sy, sz = (s / 2 for s in size)
+    return {
+        "north": (sx - 2 * sx * u, sy - 2 * sy * v, -sz), "south": (-sx + 2 * sx * u, sy - 2 * sy * v, sz),
+        "east": (sx, sy - 2 * sy * v, sz - 2 * sz * u), "west": (-sx, sy - 2 * sy * v, -sz + 2 * sz * u),
+        "up": (-sx + 2 * sx * u, sy, -sz + 2 * sz * v), "down": (-sx + 2 * sx * u, -sy, sz - 2 * sz * v),
+    }[face]
 
 
 # --------------------------------------------------------------------------- skeleton (drawing units, 16 = 1 block)
@@ -315,18 +281,6 @@ TAIL = (
     (4.6, 10.0, 8.4, -10, 16), (4.4, 8.8, 7.6, -8, 0), (4.2, 7.6, 6.8, -6, -16), (4.0, 6.4, 5.8, -4, -24),
     (3.8, 5.2, 4.8, -2, -18), (3.6, 4.2, 4.0, 0, -8), (3.4, 3.2, 3.2, 0, 0),
 )
-# dorsal crystals: (z, height, width, backward tilt, outward tilt, x offset)
-DORSAL = (
-    (-28.0, 12.8, 4.4, 6, 4, 1.0), (-19.5, 20.8, 5.6, 8, -5, -1.2), (-10.0, 27.2, 7.6, 9, 3, 0.6),
-    (0.0, 24.0, 6.6, 11, -5, -1.0), (9.0, 17.6, 5.6, 12, 6, 1.2), (16.5, 12.8, 4.6, 13, -6, -1.0),
-    (22.5, 8.0, 3.8, 15, 5, 0.8),
-)
-SIDE_CRYSTALS = ((7.5, -15.0, 8.0, 3.0, 30), (-7.2, -5.0, 7.0, 2.8, 32), (6.6, 4.5, 5.6, 2.4, 34))
-
-
-def back_height(z):
-    """Top of the back at length z (drawing units), the crystals sink into it."""
-    return 22.6 if z < 2 else 22.0 if z < 12 else 21.0 if z < 21 else 19.4
 
 
 def parts():
@@ -336,7 +290,7 @@ def parts():
     def add(g, name, c, size, r, mat):
         P.append((g, name, list(c), tuple(size), r, mat))
 
-    # ---------------------------------------------------------------- phase 1: body, low and long, wider at the front
+    # ---------------------------------------------------------------- body: low and long, wider at the front, smooth
     add("Body", "torse_avant", (0, 14.4, -21.0), (31, 13.6, 16), (2, 0, 0), "skin")
     add("Body", "torse_milieu", (0, 14.6, -7.0), (30, 14.0, 16), (0, 0, 0), "skin")
     add("Body", "torse_arriere", (0, 14.2, 5.0), (28, 13.0, 12), (-2, 0, 0), "skin")
@@ -344,17 +298,17 @@ def parts():
     add("Body", "dos_arriere", (0, 21.4, 2.0), (19, 2.2, 18), (-2, 0, 0), "back")
     for s, side in ((1, "droit"), (-1, "gauche")):
         add("Body", f"flanc_{side}", (15.2 * s, 13.0, -10.0), (4.4, 10.0, 32), (0, -3 * s, 4 * s), "flank")
-        add("Body", f"epaule_{side}", (13.6 * s, 15.0, -22.0), (6.0, 9.0, 11), (0, 0, 8 * s), "skin")
+        add("Body", f"epaule_{side}", (13.6 * s, 15.0, -22.0), (6.0, 9.0, 11), (0, 0, 8 * s), "shoulder")
     add("Body", "ventre", (0, 7.4, -9.0), (31, 3.2, 40), (0, 0, 0), "belly")
     # neck: short, as wide as the head's back, following the raised head
-    add("Body", "cou", (0, 14.6, -32.0), (27, 12.6, 9), (5, 0, 0), "skin")
+    add("Body", "cou", (0, 14.6, -32.0), (27, 12.6, 9), (5, 0, 0), "neck")
     add("Body", "gorge", (0, 8.8, -32.0), (23, 3.0, 9), (5, 0, 0), "belly")
     # pelvis: narrower than the chest, start of the hind legs and the tail
     add("Body", "bassin", (0, 13.8, 16.0), (26, 12.0, 13), (0, 0, 0), "skin")
     add("Body", "bassin_dessus", (0, 20.2, 16.0), (18, 2.0, 11), (-3, 0, 0), "back")
     add("Body", "ventre_bassin", (0, 7.6, 15.0), (22, 3.2, 12), (0, 0, 0), "belly")
     for s, side in ((1, "droite"), (-1, "gauche")):
-        add("Body", f"hanche_{side}", (12.4 * s, 12.6, 14.0), (5.0, 8.0, 9), (0, 0, 6 * s), "joint")
+        add("Body", f"hanche_{side}", (12.4 * s, 12.6, 14.0), (5.0, 8.0, 9), (0, 0, 6 * s), "joint_body")
 
     # ---------------------------------------------------------------- head: wide, flat, round muzzle, raised 10 deg
     G["Head"] = (NECK, "Body")
@@ -373,9 +327,10 @@ def parts():
     hd("menton", (0, 11.2, -58.9), (15, 3.2, 2.4), (0, 0, 0), "jaw", "Jaw")
     for s, side in ((1, "droite"), (-1, "gauche")):
         hd(f"joue_{side}", (11.6 * s, 14.6, -45.0), (3.6, 7.4, 14), (0, 10 * s, 0), "head")
-        hd(f"arcade_{side}", (8.6 * s, 22.4, -46.5), (6.5, 2.2, 8), (0, 0, -8 * s), "head_top")
-        hd(f"orbite_{side}", (12.2 * s, 19.4, -47.0), (2.6, 7.8, 7.8), (0, 15 * s, 0), "joint")
-        hd(f"oeil_{side}", (13.3 * s, 19.6, -47.2), (1.4, 6.6, 6.6), (0, 15 * s, 0), "eye_r" if s > 0 else "eye_l")
+        hd(f"orbite_{side}", (12.0 * s, 18.8, -47.4), (2.8, 7.6, 10.0), (0, 24 * s, 0), "socket")
+        hd(f"oeil_{side}", (13.3 * s, 18.8, -47.8), (1.4, 6.6, 8.8), (0, 24 * s, 0), "eye_r" if s > 0 else "eye_l")
+        # heavy brow ridge right over the eye, lower towards the snout: the angry V seen from the front
+        hd(f"arcade_{side}", (12.2 * s, 21.6, -48.4), (4.2, 2.2, 10.0), (-20, 24 * s, 0), "brow")
 
     # ---------------------------------------------------------------- legs: sprawled zigzag, joints a bit wider
     for kind, (S0, E0, W0, F0, yaw, fsize) in LEGS.items():
@@ -389,7 +344,7 @@ def parts():
             big = 1.0 if kind == "front" else 1.12          # knees more marked than elbows
             add(up_, f"{j1}_{side}", S, (7.6, 7.6, 7.6), (0, 0, 0), "joint")
             add(up_, f"{u}_{side}", *rod(S, E, 7.0 * big, 7.0, "y", [0, 0, 1], 0.8), "limb")
-            add(low, f"{j2}_{side}", E, (7.6 * big, 7.0 * big, 7.6 * big), (0, 0, 8 * s), "joint_light")
+            add(low, f"{j2}_{side}", E, (7.6 * big, 7.0 * big, 7.6 * big), (0, 0, 8 * s), "joint")
             add(low, f"{l_}_{side}", *rod(E, W, 6.0, 6.0, "y", [0, 0, 1], 0.8), "limb")
             add(low, f"{j3}_{side}", (W[0], W[1], W[2]), (6.8, 3.6, 6.4), (0, -yaw * s, 0), "joint")
             # wide flat foot turned outward, four short round toes fanned out and touching the ground
@@ -416,35 +371,8 @@ def parts():
         q = [p[i] + d[i] * L for i in range(3)]
         g = f"Tail_{k + 1}"
         G[g] = (tuple(p), parent)
-        add(g, f"queue_{k + 1}", *rod(p, q, w, h, "z", [0, 1, 0], 1.4 if k == 0 else 0.9),
-            "tail" if k < 7 else "tail_end")
+        add(g, f"queue_{k + 1}", *rod(p, q, w, h, "z", [0, 1, 0], 1.4 if k == 0 else 0.9), f"tail_{k}")
         parent, p = g, q
-
-    # ---------------------------------------------------------------- phase 3: crystals
-    for k, (z, H, W, back, out, x) in enumerate(DORSAL):
-        base = [x, back_height(z) - 1.6, z]
-        side = 1 if out >= 0 else -1
-        for name, c, size, M in cut_crystal(f"cristal_dos_{k + 1}", base, direction(back, abs(out), side), H, W,
-                                            roll=12 * (k % 3) - 12):
-            add("Body", name, c, size, M, "crystal")
-    for k, (x, z, H, W, out) in enumerate(SIDE_CRYSTALS):
-        base = [x, back_height(z) - 2.2, z]
-        for name, c, size, M in cut_crystal(f"cristal_flanc_{k + 1}", base, direction(10, out, 1 if x > 0 else -1),
-                                            H, W, roll=20 * k, small=True):
-            add("Body", name, c, size, M, "crystal")
-    # two small crystals behind the eye ridges, leaning back, never over the eyes
-    for s, side in ((1, "droit"), (-1, "gauche")):
-        for name, c, size, M in cut_crystal(f"cristal_tete_{side}", [8.4 * s, 22.4, -42.0],
-                                            direction(22, 12, s), 5.6, 2.6, roll=15 * s, small=True):
-            hd(name, c, size, M, "crystal")
-    # three small crystals at the start of the tail, following its axis (leaning back with it)
-    for k, (seg, H, W) in enumerate(((1, 6.4, 3.0), (2, 4.8, 2.5), (3, 3.4, 2.0))):
-        g, n, c, size, M, m = next(q for q in P if q[1] == f"queue_{seg}")
-        Mm = matrix(M)
-        top = [c[i] + Mm[i][1] * size[1] / 2 for i in range(3)]
-        for name, cc, sz, R in cut_crystal(f"cristal_queue_{k + 1}", [top[0], top[1] - 1.2, top[2]],
-                                           direction(32, 0, 1), H, W, roll=10 * k, small=True):
-            add(g, name, cc, sz, R, "crystal")
 
     order, done = [], set()
     while len(order) < len(G):
@@ -457,16 +385,20 @@ def parts():
 
 # --------------------------------------------------------------------------- build
 def lit(P):
-    """One material per piece, painted with the light of each of its faces (real orientation of the cube)."""
+    """One material per piece: its painter receives each face's light and the world position of every pixel."""
     mats, out = {}, []
     for i, (g, n, c, size, r, m, raw) in enumerate(P):
         M = matrix(r)
-        steps = {f: light_step(dot(app(M, v), LIGHT)) for f, v in NORMALS.items()}
         p = PAINTERS[m]
         fn, dens = p if isinstance(p, tuple) else (p, 1)
 
-        def painter(w, h, rr, face, fn=fn, steps=steps):
-            return fn(w, h, rr, face, steps[face])
+        def painter(w, h, rr, face, fn=fn, M=M, c=c, size=size):
+            light = dot(app(M, NORMALS[face]), LIGHT)
+
+            def at(x, y):
+                q = app(M, face_point(face, size, (x + 0.5) / w, (y + 0.5) / h))
+                return [c[j] + q[j] for j in range(3)]
+            return fn(Face(w, h, face, light, at, rr))
         key = f"{m}@{i}"
         mats[key] = (painter, dens)
         out.append((g, n, c, size, r, key, raw))
@@ -505,12 +437,11 @@ FUNCTIONS = (
     ("epaule", "épaule (avant du tronc plus large)"), ("ventre", "ventre"), ("cou", "cou"), ("gorge", "dessous du cou"),
     ("bassin", "bassin"), ("hanche_rotule", "articulation de la hanche"), ("hanche", "hanche"), ("crane", "crâne aplati"),
     ("museau", "museau arrondi"), ("machoire", "mâchoire inférieure"), ("menton", "avant de la mâchoire"),
-    ("joue", "joue"), ("arcade", "arcade oculaire"), ("orbite", "contour de l'œil"), ("oeil", "œil"),
-    ("bras", "segment supérieur de patte avant"), ("coude", "coude"), ("avant_bras", "segment inférieur de patte avant"),
-    ("poignet", "poignet"), ("cuisse", "segment supérieur de patte arrière"), ("genou", "genou"),
-    ("jambe", "segment inférieur de patte arrière"), ("cheville", "cheville"), ("pied", "pied"), ("doigt", "doigt"),
-    ("queue", "segment de queue"), ("cristal_dos", "grand cristal dorsal"), ("cristal_flanc", "cristal secondaire du dos"),
-    ("cristal_tete", "petit cristal de la tête"), ("cristal_queue", "petit cristal de la queue"),
+    ("joue", "joue"), ("arcade", "arcade au-dessus de l'œil (regard en colère)"), ("orbite", "contour de l'œil"),
+    ("oeil", "œil"), ("bras", "segment supérieur de patte avant"), ("coude", "coude"),
+    ("avant_bras", "segment inférieur de patte avant"), ("poignet", "poignet"),
+    ("cuisse", "segment supérieur de patte arrière"), ("genou", "genou"), ("jambe", "segment inférieur de patte arrière"),
+    ("cheville", "cheville"), ("pied", "pied"), ("doigt", "doigt"), ("queue", "segment de queue"),
 )
 
 
@@ -521,11 +452,25 @@ def table(P, groups, path):
         fn = next((t for pre, t in FUNCTIONS if n.startswith(pre)), "")
         rr = euler(matrix(r))
         parent = groups[g][1]
+        mat = m.split("@")[0]
         lines.append(f"| `{n}` | {fn} | `{g}` ({'`' + parent + '`' if parent else 'racine'}) | "
                      f"{c[0]:.1f}, {c[1]:.1f}, {c[2]:.1f} | {size[0]:.1f}, {size[1]:.1f}, {size[2]:.1f} | "
-                     f"{int(round(rr[0]))}, {int(round(rr[1]))}, {int(round(rr[2]))} | {MATERIAL_TEXT[m.split('@')[0]]} |")
+                     f"{int(round(rr[0]))}, {int(round(rr[1]))}, {int(round(rr[2]))} | "
+                     f"{MATERIAL_TEXT['tail' if mat.startswith('tail') else mat]} |")
     with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
+
+
+def palette_share(atlases):
+    """Share of each skin colour among the painted texels (check of the brief's proportions)."""
+    count = {c: 0 for c in SKIN}
+    total = 0
+    for row in atlases[0]:
+        for px in row:
+            if px[3] and tuple(px[:3]) in count:
+                count[tuple(px[:3])] += 1
+                total += 1
+    return {"#%02X%02X%02X" % c: round(100 * n / max(1, total)) for c, n in count.items()}
 
 
 if __name__ == "__main__":
@@ -541,10 +486,10 @@ if __name__ == "__main__":
     path = os.path.join(out, IDENT + ".bbmodel")
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False)
-    body_w = max(q[0] for g, n, c, size, r, m, raw in P if g == "Body" and "cristal" not in n
-                 for q in corners(c, size, r)) * 2 / 16
+    body_w = max(q[0] for g, n, c, size, r, m, raw in P if g == "Body" for q in corners(c, size, r)) * 2 / 16
     print(f"{len(P)} volumes ; {dims[0]:.2f} x {dims[1]:.2f} x {dims[2]:.2f} blocs (l x h x p) ; "
           f"corps {body_w:.2f} de large ; texture {sizes[0]}")
+    print("peau (% des texels) :", palette_share(atlases))
     print("écrit", path)
     if "--apercu" in opts:
         sheet(data, atlases, sizes, opts["--apercu"])
