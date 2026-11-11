@@ -90,6 +90,11 @@ public final class RpgModule implements Listener {
         return world;
     }
 
+    /** The balance in use (null when the rpg configs never loaded). */
+    public fr.influencraft.fluxdungeons.rpg.core.Balance balance() {
+        return config.get() == null ? null : config.get().balance();
+    }
+
     /** Creatures without an owner: level, rank and family from their tags (dummies), level 1 normal otherwise. */
     public static CombatEngine.MobProfile profileFromTags(LivingEntity e) {
         int level = 1;

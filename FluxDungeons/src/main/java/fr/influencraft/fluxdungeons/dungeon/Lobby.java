@@ -135,8 +135,12 @@ public final class Lobby implements Listener {
     /** Dungeons played with the rpg profile (Runs#rpg). */
     private boolean rpgMode;
 
-    void rpgMode(boolean on) {
+    /** Class and level of a player in the rpg ("Guerrier 5"), null when he has none yet. */
+    private java.util.function.Function<UUID, String> rpgClass = u -> null;
+
+    void rpgMode(boolean on, java.util.function.Function<UUID, String> classLine) {
         this.rpgMode = on;
+        this.rpgClass = classLine == null ? u -> null : classLine;
     }
 
     Lobby(FluxPlugin plugin, Heroes heroes, java.util.function.ToIntFunction<String> lockedGear, Presets presets) {
@@ -250,10 +254,10 @@ public final class Lobby implements Listener {
         List<DungeonDefinition.Level> levels = party.def.levels();
         DungeonDefinition.Level l = levels.get(party.level);
         Lore lore = Lore.create().description(plugin.messages().raw("lobby.difficulty-desc"));
-        if (!l.gear().isEmpty()) lore.kv(plugin.messages().raw("lobby.difficulty-gear"), l.gear());
+        if (!rpgMode && !l.gear().isEmpty()) lore.kv(plugin.messages().raw("lobby.difficulty-gear"), l.gear());
         lore.kv(plugin.messages().raw("lobby.difficulty-spells"), plugin.messages().raw(l.spells() ? "lobby.spells-on" : "lobby.spells-off"));
-        if (l.loan()) lore.ok(plugin.messages().raw("lobby.difficulty-loan"));
-        if (l.requireGear()) lore.info(plugin.messages().raw("lobby.difficulty-required"));
+        if (!rpgMode && l.loan()) lore.ok(plugin.messages().raw("lobby.difficulty-loan"));
+        if (!rpgMode && l.requireGear()) lore.info(plugin.messages().raw("lobby.difficulty-required"));
         lore.filter(levels.stream().map(DungeonDefinition.Level::name).toList(), party.level);
         if (leader(party, viewer.getUniqueId())) {
             lore.left(plugin.messages().raw("lobby.difficulty-next")).right(plugin.messages().raw("lobby.difficulty-prev"));
@@ -299,6 +303,12 @@ public final class Lobby implements Listener {
         PlayerInventory pi = owner.getInventory();
         for (int a = 0; a < Loadouts.ARMOR.length; a++) {
             ItemStack worn = pi.getItem(Loadouts.ARMOR[a]);
+            if (rpgMode) {
+                // rpg: his rpg armour, shown as it is (nothing to choose, nothing set aside)
+                inv.setItem(at + a, worn == null || worn.isEmpty()
+                        ? Items.of("LIGHT_GRAY_STAINED_GLASS_PANE", plugin.messages().raw("lobby.armor-empty"), List.of(), viewer) : worn.clone());
+                continue;
+            }
             if (worn == null || worn.isEmpty()) {
                 inv.setItem(at + a, Items.of("LIGHT_GRAY_STAINED_GLASS_PANE", plugin.messages().raw("lobby.armor-empty"), List.of(), viewer));
             } else if (sel.armor()[a]) {
@@ -329,6 +339,13 @@ public final class Lobby implements Listener {
                                 : own ? Lore.create().description(plugin.messages().raw("lobby.pet-none")).build() : List.of(), viewer));
             }
         }
+        if (rpgMode) {
+            // rpg: he fights with his rpg profile (class weapon, skills on right click, A and F)
+            inv.setItem(at + 9, Items.of("BOOK", plugin.messages().raw("lobby.rpg-gear"),
+                    Lore.create().description(plugin.messages().raw("lobby.rpg-gear-desc")).build(), viewer));
+            for (int k = 1; k < 9; k++) inv.setItem(at + 9 + k, Items.of("BLACK_STAINED_GLASS_PANE", " ", List.of(), viewer));
+            return;
+        }
         HeroClass c = heroes.classOf(who);
         List<ItemStack> abilities = c == null ? List.of() : heroes.abilityIcons(viewer, c);
         for (int k = 0; k < Loadouts.FIRST_ITEM_SLOT; k++) {
@@ -354,9 +371,14 @@ public final class Lobby implements Listener {
         });
         Player p = Bukkit.getPlayer(u);
         String name = p == null ? "?" : p.getName();
-        HeroClass c = heroes.classOf(u);
         Lore lore = Lore.create();
-        if (c != null) lore.kv(plugin.messages().raw("lobby.class"), c.colored() + " " + heroes.level(u, c.id()));
+        if (rpgMode) {
+            String line = rpgClass.apply(u);
+            if (line != null) lore.kv(plugin.messages().raw("lobby.class"), line);
+        } else {
+            HeroClass c = heroes.classOf(u);
+            if (c != null) lore.kv(plugin.messages().raw("lobby.class"), c.colored() + " " + heroes.level(u, c.id()));
+        }
         lore.line(plugin.messages().raw(party.ready.contains(u) ? "lobby.head-ready" : "lobby.head-waiting"));
         if (!u.equals(viewer.getUniqueId()) && !u.equals(mate)) lore.left(plugin.messages().raw("lobby.head-view"));
         return Items.dress(skull, name, lore.build(), viewer);
@@ -453,8 +475,8 @@ public final class Lobby implements Listener {
         Loadouts.Selection sel = party.selections.get(p.getUniqueId());
         int raw = e.getRawSlot();
         if (raw >= SIZE) {
-            // his own inventory: add the clicked item
-            if (!(e.getClickedInventory() instanceof PlayerInventory) || e.getSlot() >= 36) return;
+            // his own inventory: add the clicked item (never in rpg: he plays with all his rpg things)
+            if (rpgMode || !(e.getClickedInventory() instanceof PlayerInventory) || e.getSlot() >= 36) return;
             ItemStack item = e.getCurrentItem();
             if (item == null || item.isEmpty()) return;
             addItem(p, party, sel, e.getSlot(), item);
@@ -496,6 +518,7 @@ public final class Lobby implements Listener {
         }
         int rel = raw - OWN;
         if (rel < 0 || rel >= 18) return;
+        if (rpgMode && (rel < 4 || rel >= 9)) return;   // rpg: armour shown, items not chosen
         if (rel < 4) {
             ItemStack worn = p.getInventory().getItem(Loadouts.ARMOR[rel]);
             if (worn == null || worn.isEmpty()) return;

@@ -62,6 +62,8 @@ public final class CombatEngine implements Listener {
         final String family;
         final double unit;
         double hp;
+        /** The game's health the engine last wrote: anything else means a script or an ability changed it. */
+        double mirrored = -1;
 
         MobState(StatSheet stats, int level, String family, double unit) {
             this.stats = stats;
@@ -152,7 +154,14 @@ public final class CombatEngine implements Listener {
     private MobState mob(LivingEntity e) {
         if (e instanceof Player || e.isDead()) return null;
         MobState m = mobs.get(e.getUniqueId());
-        if (m != null) return m;
+        if (m != null) {
+            // the game's health changed behind the engine (a monster healing itself, a script): its share is taken
+            if (m.mirrored >= 0 && Math.abs(e.getHealth() - m.mirrored) > 0.01) {
+                m.hp = m.stats.get("max_health") * share(e);
+                m.mirrored = e.getHealth();
+            }
+            return m;
+        }
         RpgConfig.Set set = config.get();
         if (set == null) return null;
         MobProfile p = profiles.apply(e);
@@ -160,9 +169,18 @@ public final class CombatEngine implements Listener {
         List<Modifier> mods = new ArrayList<>(set.balance().monster(p.level(), p.rank()));
         mods.addAll(p.extra());
         m = new MobState(StatSheet.compute(set.stats(), mods), p.level(), p.family(), p.unit());
+        // a creature arriving hurt (the next phase of a boss keeps the share of life of the former) keeps its share
+        m.hp = m.stats.get("max_health") * share(e);
         mobs.put(e.getUniqueId(), m);
         mirror(e, m.hp, m.stats.get("max_health"));
+        m.mirrored = e.getHealth();
         return m;
+    }
+
+    private static double share(LivingEntity e) {
+        AttributeInstance a = e.getAttribute(Attribute.MAX_HEALTH);
+        double max = a == null ? 20 : a.getValue();
+        return max <= 0 ? 1 : Math.max(0, Math.min(1, e.getHealth() / max));
     }
 
     public double health(LivingEntity e) {
@@ -292,7 +310,10 @@ public final class CombatEngine implements Listener {
             if (source instanceof Player p && target instanceof org.bukkit.entity.Mob mob && mob.getTarget() == null) mob.setTarget(p);
             if (m.hp <= 0 && immortal.test(target)) m.hp = m.stats.get("max_health");
             if (m.hp <= 0) kill(target, source);
-            else mirror(target, m.hp, m.stats.get("max_health"));
+            else {
+                mirror(target, m.hp, m.stats.get("max_health"));
+                m.mirrored = target.getHealth();
+            }
         }
         indicator(target, Component.text((crit ? "✦ " : "") + format(amount),
                 TextColor.color(target instanceof Player ? 0xFF5C5C : crit ? 0xFFD94D : 0xFFFFFF)));

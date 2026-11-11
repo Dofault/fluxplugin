@@ -231,6 +231,8 @@ create:
   copying: '&#B376E5Copie du monde &f%world%&#B376E5...'
   created: '&#2ECF7BDonjon %dungeon% créé. Règle son nom, ses vies et sa récompense dans dungeons/%dungeon%.yml.'
 lobby:
+  rpg-gear: "&#FFD94DÉquipement RPG"
+  rpg-gear-desc: "Tu joues avec ton équipement RPG : ton arme de classe, ton armure et tes sorts (clic droit, A, F). Rien n'est mis de côté et rien ne se perd."
   difficulty: 'Difficulté : %level%'
   difficulty-desc: Choisie par le chef du groupe, pour tout le groupe.
   difficulty-gear: Conseillé

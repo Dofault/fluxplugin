@@ -76,6 +76,15 @@ public final class FluxDungeons extends FluxPlugin {
      * runs use the rpg class, experience and lobby, and the rpg engine fights their monsters (level of the party,
      * rank from the monster, life and damage times the difficulty), the dungeon rules still pacing and reacting.
      */
+    /** Rank of a dungeon monster in balance.yml: its file's {@code rank} (ELITE, MINIBOSS, BOSS), a boss is a boss. */
+    private static String rpgRank(fr.influencraft.fluxdungeons.mob.MobTemplate t) {
+        String r = t.extra().rank();
+        if (t.boss() || "BOSS".equals(r)) return "boss";
+        if ("MINIBOSS".equals(r) || "MINI_BOSS".equals(r)) return "miniboss";
+        if ("ELITE".equals(r)) return "elite";
+        return "normal";
+    }
+
     private void wireRpg() {
         if (rpg == null || rpg.combat() == null) {
             getLogger().warning("Rpg module off: dungeons keep the former vanilla-gear play");
@@ -95,6 +104,21 @@ public final class FluxDungeons extends FluxPlugin {
             public org.bukkit.Location lobby() {
                 return rpg.world().spawn();
             }
+
+            public double killXp(org.bukkit.entity.LivingEntity mob, fr.influencraft.fluxdungeons.mob.MobTemplate t) {
+                var b = rpg.balance();
+                return b == null ? 0 : b.monsterXp(players.averageLevel(mob.getWorld()), rpgRank(t));
+            }
+
+            public double victoryXp(org.bukkit.World w) {
+                var b = rpg.balance();
+                return b == null ? 0 : b.monsterXp(players.averageLevel(w), "miniboss");
+            }
+
+            public String classLine(Player p) {
+                var r = players.get(p);
+                return r == null ? null : messages().raw("classes." + r.heroClass().id() + ".name") + " " + r.level();
+            }
         });
         var engine = rpg.combat();
         engine.profiles(e -> {
@@ -108,7 +132,7 @@ public final class FluxDungeons extends FluxPlugin {
             }
             double unit = mobs.meleeDamage(e);
             return new fr.influencraft.fluxdungeons.rpg.CombatEngine.MobProfile(players.averageLevel(e.getWorld()),
-                    t.boss() ? "boss" : "normal", null, extra, unit > 0 ? unit : t.damage());
+                    rpgRank(t), null, extra, unit > 0 ? unit : t.damage());
         });
         engine.afterMonsterHit(combat::onPlayerHit);
         engine.petOwner(e -> {
@@ -401,7 +425,10 @@ public final class FluxDungeons extends FluxPlugin {
                 }
             }
             case "class", "classe" -> {
-                if (args.length >= 2) {
+                if (rpg != null && rpg.combat() != null) {
+                    // the rpg class (/classe), not the former dungeon classes
+                    p.performCommand("classe");
+                } else if (args.length >= 2) {
                     HeroClass c = classByName(args[1]);
                     if (c == null) messages().send(p, "unknown-class");
                     else choose(p, c);
@@ -429,11 +456,25 @@ public final class FluxDungeons extends FluxPlugin {
     }
 
     /** Main window: class, party, dungeons to play. */
+    /** The rpg class line of a player ("Guerrier", level), null without the rpg module or a class. */
+    private String[] rpgClass(Player p) {
+        if (rpg == null || rpg.players() == null) return null;
+        var r = rpg.players().get(p);
+        return r == null ? null : new String[]{messages().raw("classes." + r.heroClass().id() + ".name"), String.valueOf(r.level())};
+    }
+
     private void openMain(Player p) {
-        HeroClass mine = heroes.classOf(p.getUniqueId());
         Dialogs.Form form = Dialogs.form(p, messages().raw("main.title")).width(300).columns(1);
-        if (mine == null) form.body(messages().raw("main.no-class"));
-        else form.body(messages().raw("main.class", "%class%", mine.colored(), "%level%", String.valueOf(heroes.level(p.getUniqueId(), mine.id()))));
+        if (rpg != null && rpg.combat() != null) {
+            // dungeons are played with the rpg class (docs/technique/rpg.md)
+            String[] c = rpgClass(p);
+            if (c == null) form.body(messages().raw("main.no-class"));
+            else form.body(messages().raw("main.class", "%class%", "&#FFD94D" + c[0], "%level%", c[1]));
+        } else {
+            HeroClass mine = heroes.classOf(p.getUniqueId());
+            if (mine == null) form.body(messages().raw("main.no-class"));
+            else form.body(messages().raw("main.class", "%class%", mine.colored(), "%level%", String.valueOf(heroes.level(p.getUniqueId(), mine.id()))));
+        }
         Party party = parties.of(p);
         form.body(party == null ? messages().raw("main.solo")
                 : messages().raw("main.party", "%count%", String.valueOf(party.size()), "%leader%", name(party.leader())));
@@ -456,7 +497,10 @@ public final class FluxDungeons extends FluxPlugin {
             String b = answer.button();
             if (b == null) return;
             if (b.equals("leave")) player.performCommand("dungeon leave");
-            else if (b.equals("class")) openClasses(player);
+            else if (b.equals("class")) {
+                if (rpg != null && rpg.combat() != null) player.performCommand("classe");
+                else openClasses(player);
+            }
             else if (b.startsWith("play:")) {
                 DungeonDefinition def = runs.dungeon(b.substring(5));
                 if (def != null) play(player, def);

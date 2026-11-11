@@ -90,7 +90,10 @@ public final class Runs {
 
     public void rpg(RpgBridge bridge) {
         this.rpg = bridge;
-        lobby.rpgMode(bridge != null);
+        lobby.rpgMode(bridge != null, bridge == null ? null : u -> {
+            Player p = Bukkit.getPlayer(u);
+            return p == null ? null : bridge.classLine(p);
+        });
     }
 
     private boolean noClass(Player p) {
@@ -1055,7 +1058,8 @@ public final class Runs {
             doors(run);
         }
         List<Player> party = fighters(run);
-        if (t != null && t.xp() > 0) for (Player p : party) giveXp(p, t.xp());
+        double xp = rpg != null ? (t == null ? 0 : rpg.killXp(mob, t)) : t != null ? t.xp() : 0;
+        if (xp > 0) for (Player p : party) giveXp(p, xp);
         if (objective != null && run.objectivesLeft.remove(objective)) {
             for (Player p : online(run)) hook(run, "objective", p, objective);
             broadcast(run, "objective.done", "%done%", String.valueOf(run.objectivesDone()), "%total%", String.valueOf(run.objectivesTotal));
@@ -1200,7 +1204,7 @@ public final class Runs {
             p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
             hook(run, "victory", p, null);
             if (money > 0) Economy.main().give(p, money, Origin.of(plugin, origin).detail(run.def.name()).notifyPlayer());
-            giveXp(p, run.def.rewardXp());
+            giveXp(p, rpg != null ? rpg.victoryXp(run.world == null ? p.getWorld() : run.world) * run.levelSpec().reward() : run.def.rewardXp());
             List<String> found = new ArrayList<>();
             for (DungeonDefinition.Loot loot : run.def.loot()) {
                 if (ThreadLocalRandom.current().nextDouble() >= loot.chance()) continue;
@@ -1257,10 +1261,18 @@ public final class Runs {
                 return String.valueOf(run != null && run.state != Run.State.PREPARING);
             }
             case "class" -> {
+                if (rpg != null) {
+                    String line = rpg.classLine(p);
+                    return line == null ? "" : line.substring(0, line.lastIndexOf(' '));
+                }
                 var c = heroes.classOf(p.getUniqueId());
                 return c == null ? "" : c.name();
             }
             case "level" -> {
+                if (rpg != null) {
+                    String line = rpg.classLine(p);
+                    return line == null ? "" : line.substring(line.lastIndexOf(' ') + 1);
+                }
                 var c = heroes.classOf(p.getUniqueId());
                 return c == null ? "" : String.valueOf(heroes.level(p.getUniqueId(), c.id()));
             }

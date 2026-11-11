@@ -231,6 +231,8 @@ create:
   copying: '&#B376E5Copying the world &f%world%&#B376E5...'
   created: '&#2ECF7BDungeon %dungeon% created. Set its name and reward in dungeons/%dungeon%.yml.'
 lobby:
+  rpg-gear: "&#FFD94DRpg gear"
+  rpg-gear-desc: "You play with your rpg gear: your class weapon, armour and spells (right click, A, F). Nothing is set aside and nothing is lost."
   difficulty: 'Difficulty: %level%'
   difficulty-desc: Chosen by the party leader, for the whole party.
   difficulty-gear: Made for
