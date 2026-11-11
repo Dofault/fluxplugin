@@ -1,0 +1,92 @@
+# L'Éveil de Valdor : thème d'aventure en ré mineur.
+# Un pas = une double croche (4 par temps), 16 pas par mesure. Format décrit dans docs/technique/fluxmusic.md.
+title: "L'Éveil de Valdor"
+author: "Influencraft"
+bpm: 100
+steps-per-beat: 4
+beats-per-bar: 4
+loop: false
+
+tracks:
+  melodie: { instrument: flute, volume: 1.0 }
+  echo:    { instrument: chime, volume: 0.3 }
+  arpege:  { instrument: harp, volume: 0.5 }
+  basse:   { instrument: bass, volume: 0.85 }
+  cloche:  { instrument: bell, volume: 0.35 }
+  grosse:  { instrument: basedrum, volume: 0.6 }
+  caisse:  { instrument: snare, volume: 0.3 }
+  charley: { instrument: hat, volume: 0.2 }
+
+patterns:
+  # Arpèges de harpe en croches, un par accord
+  arp_dm: "D4:2 F4:2 A4:2 D5:2 F5:2 D5:2 A4:2 F4:2"
+  arp_bb: "Bb3:2 D4:2 F4:2 Bb4:2 D5:2 Bb4:2 F4:2 D4:2"
+  arp_f:  "A3:2 C4:2 F4:2 A4:2 C5:2 A4:2 F4:2 C4:2"
+  arp_c:  "G3:2 C4:2 E4:2 G4:2 C5:2 G4:2 E4:2 C4:2"
+  arp_gm: "G3:2 Bb3:2 D4:2 G4:2 Bb4:2 G4:2 D4:2 Bb3:2"
+  arp_a:  "A3:2 C#4:2 E4:2 A4:2 C#5:2 A4:2 E4:2 C#4:2"
+  # Basse : fondamentale, quinte, fondamentale
+  bass_dm: "D2:8 A1:4 D2:4"
+  bass_bb: "Bb1:8 F2:4 Bb1:4"
+  bass_f:  "F2:8 C2:4 F2:4"
+  bass_c:  "C2:8 G1:4 C2:4"
+  bass_gm: "G1:8 D2:4 G1:4"
+  bass_a:  "A1:8 E2:4 A1:4"
+  bass_walk: "A1:4 C#2:4 E2:4 G2:4"
+  # Batterie
+  kick:  "x:8 x:6 x:2"
+  snare: ".:4 x:8 x:4"
+  hats:  "x:2 x:2 x:2 x:2 x:2 x:2 x:2 x:2"
+  rest:  ".:16"
+  # Thème principal (4 mesures) et son écho une octave plus haut
+  mel_a: "A4:4 D5:2 E5:2 F5:4 E5:2 D5:2 | F5:6 G5:2 F5:2 E5:2 D5:4 | C5:4 F5:2 G5:2 A5:4 G5:2 F5:2 | E5:6 F5:2 E5:2 D5:2 C5:4"
+  mel_a_haut: "A5:4 D6:2 E6:2 F6:4 E6:2 D6:2 | F6:6 G6:2 F6:2 E6:2 D6:4 | C6:4 F6:2 G6:2 A6:4 G6:2 F6:2 | E6:6 F6:2 E6:2 D6:2 C6:4"
+
+sections:
+  intro:
+    arpege: "@arp_dm | @arp_bb | @arp_f | @arp_c"
+    basse: "@rest | @rest | @bass_f | @bass_c"
+    cloche: "D6:16 | D6:16 | C6:16 | E6:16"
+    charley: "@rest*3 | @hats"
+
+  theme_a:
+    melodie: "@mel_a"
+    arpege: "@arp_dm | @arp_bb | @arp_f | @arp_c"
+    basse: "@bass_dm | @bass_bb | @bass_f | @bass_c"
+    grosse: "@kick*4"
+    caisse: "@snare*4"
+    charley: "@hats*4"
+
+  theme_a2:
+    melodie: "@mel_a"
+    echo: "@mel_a_haut"
+    arpege: "@arp_dm | @arp_bb | @arp_f | @arp_c"
+    basse: "@bass_dm | @bass_bb | @bass_f | @bass_c"
+    grosse: "@kick*4"
+    caisse: "@snare*4"
+    charley: "@hats*4"
+
+  montee:
+    melodie: "D5:4 F5:2 A5:2 D6:6 C6:2 | Bb5:4 A5:2 G5:2 D5:4 G5:4 | A5:4 G5:2 F5:2 E5:4 C#5:2 E5:2 | E5:2 F5:2 G5:2 A5:10"
+    arpege: "@arp_dm | @arp_gm | @arp_a | @arp_a"
+    basse: "@bass_dm | @bass_gm | @bass_a | @bass_walk"
+    cloche: "@rest*3 | A6:4 E6:4 C#6:4 A5:4"
+    grosse: "@kick*3 | x:4 x:4 x:2 x:2 x:2 x:2"
+    caisse: "@snare*3 | .:8 x:2 x:2 x:1 x:1 x:1 x:1"
+    charley: "@hats*4"
+
+  pont:
+    cloche: "F6:4 D6:4 Bb5:4 D6:4 | A5:4 C6:4 F6:8 | G6:4 F6:2 D6:2 Bb5:4 D6:4 | C#6:4 E6:4 A6:8"
+    arpege: "@arp_bb | @arp_f | @arp_gm | @arp_a"
+    basse: "Bb1:16 | F2:16 | G1:16 | A1:16"
+    charley: "@rest*3 | @hats"
+
+  final:
+    melodie: "A4:4 D5:4 F5:4 E5:4 | D5:16"
+    arpege: "@arp_dm | D4+F4+A4+D5:16"
+    basse: "@bass_dm | D2:16"
+    cloche: "@rest | D6+A6:16"
+    grosse: "@kick | x:16"
+    charley: "@hats | @rest"
+
+order: [intro, theme_a, montee, pont, theme_a2, montee, final]

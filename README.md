@@ -17,6 +17,7 @@ the player's inventory and draw buttons over it. Developed for the Influencraft 
 | **FluxValue** | Engine of the economy: one file of weights; job XP and money, shop prices, offerings and collections derive from it | yes |
 | **FluxStack** | Mob stacking: nearby identical mobs become one entity with a count, a stack dies one mob at a time (jobs, loot, mob levels unchanged) | yes |
 | **FluxDungeons** | Instanced dungeons played in parties: classes with three abilities, a separate dungeon inventory (gear never leaves dungeons), custom monsters and animated bosses (BetterModel), rooms that open once cleared | — |
+| **FluxMusic** | Songs played note by note with the client's note block sounds (nothing in the resource pack): YAML scores or Note Block Studio files, `/musique`, API `fluxmusic.api.Music` | — |
 | **FluxPets** | Collectible cards, boosters and pets | — |
 | **FluxPW** | Player warps (/pw): categories, sponsored places, ratings, favourites, admission fees, password, blocked players (replaces PlayerWarps) | — |
 | **FluxReferral** | Referral system with per-player server addresses | — |

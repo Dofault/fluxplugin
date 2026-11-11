@@ -1,0 +1,18 @@
+name: FluxMusic
+version: 26.2
+main: fr.influencraft.fluxmusic.FluxMusic
+api-version: "26.2"
+description: Songs played note by note with the client's note block sounds (nothing in the resource pack).
+authors: [Influencraft]
+depend: [Flux]
+
+permissions:
+  fluxmusic.play:
+    description: Play a song to yourself (/musique).
+    default: op
+  fluxmusic.others:
+    description: Play or stop a song for another player or everyone.
+    default: op
+  fluxmusic.admin:
+    description: Reload the songs.
+    default: op

@@ -1,0 +1,4 @@
+# Language of the texts (empty = the suite's language).
+language: ""
+# Multiplies the volume of every note (1.0 = as written in the songs).
+volume: 1.0

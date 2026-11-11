@@ -44,5 +44,6 @@
         <module>FluxStack</module>
         <module>FluxDungeons</module>
         <module>FluxPortal</module>
+        <module>FluxMusic</module>
     </modules>
 </project>
