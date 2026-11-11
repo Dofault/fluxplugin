@@ -318,6 +318,8 @@ pick-level:
     &#FF5C5CFull armour and a weapon required.'
 
 rpg:
+  dummy-none: "&#FF5C5CNo dummy within 6 blocks."
+  dummy-removed: "&#B376E5Dummies removed: &f%count%"
   unavailable: "&#FF5C5CThe rpg world is not available right now."
   not-in-rpg: "&#B376E5You are not in the rpg world."
   busy-elsewhere: "&#FF5C5CFinish what you are doing (dungeon) before changing worlds."
@@ -340,7 +342,6 @@ choice:
   changed: "&#2ECF7BYou are now a &#FFD94D%class%&#2ECF7B."
 
 skill:
-  cooldown: "&#FF5C5C&f%seconds% s &#FF5C5Cof cooldown left."
   no-mana: "&#FF5C5CNot enough mana."
   blocked: "&#FF5C5CNo room in front of you."
   healed-by: "&#2ECF7B%player% &#B376E5healed you."
@@ -408,7 +409,6 @@ stats:
   lifesteal: "Lifesteal"
   manasteal: "Mana steal"
   movement_speed: "Movement speed"
-  cooldown_reduction: "Cooldown reduction"
   effect_duration: "Effect duration"
   healing_power: "Healing power"
   proc_chance: "Special effect chance"

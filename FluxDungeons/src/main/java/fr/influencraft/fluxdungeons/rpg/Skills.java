@@ -118,16 +118,13 @@ public final class Skills implements Listener {
 
     // ------------------------------------------------------------------ skills (right click, A, F)
 
-    /** Casts the skill of a slot when ready and paid for; messages when it is not. */
+    /** Casts the skill of a slot when paid for (mana is the only limit, no cooldown). */
     void cast(Player p, RpgPlayer r, String slot) {
         ClassDef.Skill s = r.heroClass().skills().get(slot);
         if (s == null) return;
         long now = CombatEngine.now();
-        long ready = r.readyAt(slot);
-        if (now < ready) {
-            plugin.messages().send(p, "skill.cooldown", "%seconds%", String.valueOf((ready - now) / 20 + 1));
-            return;
-        }
+        // the same key press reported twice in a tick (drop and its echo) casts once
+        if (now - r.lastCast(slot) < 2) return;
         double cost = CombatMath.manaCost(s.mana(), r.stats());
         if (r.mana() < cost) {
             plugin.messages().send(p, "skill.no-mana");
@@ -136,7 +133,7 @@ public final class Skills implements Listener {
         }
         if (!run(p, r, s, r.cast(slot))) return;
         r.mana(r.mana() - cost);
-        r.cooldown(slot, now + Math.round(20 * CombatMath.cooldown(s.cooldown(), r.stats())));
+        r.cast(slot, now);
     }
 
     /** The skill's own work. False when it could not be cast (nothing paid). */

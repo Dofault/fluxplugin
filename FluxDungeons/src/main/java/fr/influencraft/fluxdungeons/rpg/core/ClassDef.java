@@ -17,10 +17,11 @@ import java.util.Map;
  *   per-level: {max_health: 30, physical_attack: 1.6}                    # added per level above 1
  *   basic: {style: melee, damage: physical, coefficient: 1.0, targets: 3, range: 3.5}
  *   skills:
- *     right: {type: charge, kind: damage, damage: physical, coefficient: 2.2, cooldown: 8, mana: 20}
- *     a: {type: war_cry, kind: buff, cooldown: 18, mana: 30, duration: 6}
- *     f: {type: whirlwind, kind: damage, damage: physical, coefficient: 1.2, hits: 3, cooldown: 10, mana: 35}
+ *     right: {type: charge, kind: damage, damage: physical, coefficient: 2.2, mana: 20}
+ *     a: {type: war_cry, kind: buff, mana: 30, duration: 6}
+ *     f: {type: whirlwind, kind: damage, damage: physical, coefficient: 1.2, hits: 3, mana: 35}
  * </pre>
+ * No cooldown: a skill is cast as often as the player pays its mana.
  */
 public record ClassDef(String id, Map<String, Double> stats, Map<String, Double> perLevel, Attack basic,
                        Map<String, Skill> skills) {
@@ -49,7 +50,7 @@ public record ClassDef(String id, Map<String, Double> stats, Map<String, Double>
      * {@code extra}: the type's own numbers (radius, distance, slow...), read by its code.
      */
     public record Skill(String slot, String type, String kind, CombatMath.Type damage, String element, double coefficient,
-                        int hits, double cooldown, double mana, int targets, double duration, Map<String, Double> extra) {
+                        int hits, double mana, int targets, double duration, Map<String, Double> extra) {
 
         public CombatMath.Hit hit() {
             return new CombatMath.Hit(damage, element, coefficient, 0, true, true);
@@ -102,8 +103,7 @@ public record ClassDef(String id, Map<String, Double> stats, Map<String, Double>
             Node ex = s.child("extra");
             for (String k : ex.keys()) extra.put(k, ex.number(k, 0));
             skills.put(slot, new Skill(slot, s.text("type", ""), kind, type(s), element(s, registry),
-                    s.number("coefficient", 0, 0, 100), (int) s.number("hits", 1, 1, 50), s.number("cooldown", 1, 0.1, 600),
-                    s.number("mana", 0, 0, 10000), (int) s.number("targets", 1, 1, 50), s.number("duration", 0, 0, 600), extra));
+                    s.number("coefficient", 0, 0, 100), (int) s.number("hits", 1, 1, 50), s.number("mana", 0, 0, 10000), (int) s.number("targets", 1, 1, 50), s.number("duration", 0, 0, 600), extra));
             if (s.text("type", "").isEmpty()) s.problem("type", "missing");
         }
         return new ClassDef(id, stats, per, basic, skills);

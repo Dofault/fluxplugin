@@ -73,6 +73,12 @@ public final class CombatEngine implements Listener {
     private final Supplier<RpgConfig.Set> config;
     private final Function<Player, RpgPlayer> players;
     private Function<LivingEntity, MobProfile> profiles = e -> MobProfile.DEFAULT;
+    /** Creatures that never die (training dummies): their life comes back full instead. */
+    private java.util.function.Predicate<LivingEntity> immortal = e -> false;
+
+    public void immortal(java.util.function.Predicate<LivingEntity> immortal) {
+        this.immortal = immortal;
+    }
     private final Map<UUID, MobState> mobs = new HashMap<>();
     /** cast id + target -> tick it was hit: a cast hits each target once. */
     private final Map<String, Long> hits = new HashMap<>();
@@ -240,6 +246,7 @@ public final class CombatEngine implements Listener {
             m.hp -= amount;
             target.playHurtAnimation(0);
             if (source instanceof Player p && target instanceof org.bukkit.entity.Mob mob && mob.getTarget() == null) mob.setTarget(p);
+            if (m.hp <= 0 && immortal.test(target)) m.hp = m.stats.get("max_health");
             if (m.hp <= 0) kill(target, source);
             else mirror(target, m.hp, m.stats.get("max_health"));
         }

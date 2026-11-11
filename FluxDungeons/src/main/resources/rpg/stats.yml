@@ -39,7 +39,6 @@ stats:
   manasteal:         {category: resource, kind: percent, base: 0, min: 0, max: 0.1}
   # ---- utility
   movement_speed:    {category: utility, kind: percent, base: 0, min: -0.5, max: 0.6}
-  cooldown_reduction: {category: utility, kind: percent, base: 0, min: 0, max: 0.4, soft-cap: {from: 0.3, rate: 0.5}}
   # lengthens positive effects given and harmful effects inflicted
   effect_duration:   {category: utility, kind: percent, base: 0, min: 0, max: 1}
   healing_power:     {category: utility, kind: percent, base: 0, min: 0, max: 2}

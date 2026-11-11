@@ -23,6 +23,8 @@ import java.util.List;
 public final class RpgModule implements Listener {
 
     private static final String TAG_LEVEL = "fluxrpg_level:", TAG_RANK = "fluxrpg_rank:", TAG_FAMILY = "fluxrpg_family:";
+    /** A training dummy: saved with the world, never dies (its life comes back full), removed by command only. */
+    private static final String TAG_DUMMY = "fluxrpg_dummy";
 
     private final FluxPlugin plugin;
     private final RpgConfig config;
@@ -53,6 +55,7 @@ public final class RpgModule implements Listener {
         players = new RpgPlayers(plugin, config, store, items);
         combat = new CombatEngine(plugin, config::get, players::get);
         combat.profiles(RpgModule::profileFromTags);
+        combat.immortal(e -> e.getScoreboardTags().contains(TAG_DUMMY));
         players.bind(world, combat);
         Skills skills = new Skills(plugin, combat, players);
         controls = new Controls(players, skills, items);
@@ -67,7 +70,7 @@ public final class RpgModule implements Listener {
             return true;
         }).register();
         Commands.create(plugin, "rpgadmin").description("Rpg administration: reload, balance, dummy, xp.")
-                .permission("fluxdungeons.admin").suggest(false).usage("/rpgadmin <reload|balance [level]|mannequin [level] [rank]|xp <player> <amount>|setspawn>")
+                .permission("fluxdungeons.admin").suggest(false).usage("/rpgadmin <reload|balance [level]|mannequin [level] [rank]|mannequin retirer [tous]|xp <player> <amount>|setspawn>")
                 .executor(this::admin).register();
     }
 
@@ -104,6 +107,31 @@ public final class RpgModule implements Listener {
         if (controls != null) controls.forget(e.getPlayer());
     }
 
+    /** The dummy nearest to the player within 6 blocks, or every dummy of his world ({@code all}). */
+    private void removeDummies(Player p, boolean all) {
+        org.bukkit.entity.Entity nearest = null;
+        double best = 36;
+        int removed = 0;
+        for (org.bukkit.entity.Entity e : p.getWorld().getEntities()) {
+            if (!e.getScoreboardTags().contains(TAG_DUMMY)) continue;
+            if (all) {
+                e.remove();
+                removed++;
+                continue;
+            }
+            double d = e.getLocation().distanceSquared(p.getLocation());
+            if (d < best) {
+                best = d;
+                nearest = e;
+            }
+        }
+        if (!all && nearest != null) {
+            nearest.remove();
+            removed = 1;
+        }
+        plugin.messages().send(p, removed == 0 ? "rpg.dummy-none" : "rpg.dummy-removed", "%count%", String.valueOf(removed));
+    }
+
     private boolean admin(CommandSender sender, String label, String[] args) {
         if (args.length == 0) return false;
         switch (args[0].toLowerCase(java.util.Locale.ROOT)) {
@@ -135,6 +163,10 @@ public final class RpgModule implements Listener {
             }
             case "mannequin", "dummy" -> {
                 if (!(sender instanceof Player p)) return true;
+                if (args.length > 1 && (args[1].equalsIgnoreCase("retirer") || args[1].equalsIgnoreCase("remove"))) {
+                    removeDummies(p, args.length > 2);
+                    return true;
+                }
                 int level = args.length > 1 ? Integer.parseInt(args[1]) : 1;
                 String rank = args.length > 2 ? args[2] : "normal";
                 p.getWorld().spawn(p.getLocation(), Husk.class, h -> {
@@ -142,6 +174,9 @@ public final class RpgModule implements Listener {
                     h.setSilent(true);
                     h.setRemoveWhenFarAway(false);
                     h.setPersistent(true);
+                    h.addScoreboardTag(TAG_DUMMY);
+                    h.setInvulnerable(false);
+                    h.setCollidable(false);
                     h.addScoreboardTag(TAG_LEVEL + level);
                     h.addScoreboardTag(TAG_RANK + rank);
                     h.customName(net.kyori.adventure.text.Component.text("Mannequin " + rank + " " + level));

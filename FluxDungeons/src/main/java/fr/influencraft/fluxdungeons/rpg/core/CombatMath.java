@@ -107,10 +107,6 @@ public final class CombatMath {
         return 1 / Math.max(0.01, s.get("attack_speed"));
     }
 
-    public static double cooldown(double seconds, StatSheet s) {
-        return seconds * (1 - s.get("cooldown_reduction"));
-    }
-
     public static double manaCost(double mana, StatSheet s) {
         return mana * (1 - s.get("cost_reduction"));
     }

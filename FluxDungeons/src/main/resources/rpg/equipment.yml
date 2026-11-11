@@ -53,7 +53,7 @@ items:
   roc_boots:      {slot: boots, classes: [warrior], level: 5, rarity: rare, set: roc, stats: {max_health: 30, physical_defense: 5, tenacity: 0.05}, look: {material: IRON_BOOTS, name: "Rock Boots"}}
 
   # ---- Herbalist dungeon (herboriste): every class, level 10
-  herb_helmet:     {slot: helmet, level: 10, rarity: rare, set: herb, stats: {max_health: 45, cooldown_reduction: 0.03}, look: {material: LEATHER_HELMET, name: "Herbalist Hood"}}
+  herb_helmet:     {slot: helmet, level: 10, rarity: rare, set: herb, stats: {max_health: 45, cost_reduction: 0.03}, look: {material: LEATHER_HELMET, name: "Herbalist Hood"}}
   herb_chestplate: {slot: chestplate, level: 10, rarity: rare, set: herb, stats: {max_health: 70, physical_defense: 6, magic_defense: 6}, look: {material: LEATHER_CHESTPLATE, name: "Herbalist Coat"}}
   herb_leggings:   {slot: leggings, level: 10, rarity: rare, set: herb, stats: {max_health: 55, effect_duration: 0.1}, look: {material: LEATHER_LEGGINGS, name: "Herbalist Trousers"}}
   herb_boots:      {slot: boots, level: 10, rarity: rare, set: herb, stats: {max_health: 35, movement_speed: 0.05}, look: {material: LEATHER_BOOTS, name: "Herbalist Boots"}}
@@ -85,7 +85,7 @@ sets:
   herb:
     name: "Herbalist"
     bonuses:
-      2: {cooldown_reduction: 0.05}
+      2: {mana_regen: 1}
       4: {effect_duration: 0.2, health_regen: 3}
   harvest:
     name: "Harvest"

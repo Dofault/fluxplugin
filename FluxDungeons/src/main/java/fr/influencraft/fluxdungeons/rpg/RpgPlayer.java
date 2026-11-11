@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * A player in the rpg universe while he is online: class, level, mana, cooldowns, timed bonuses and his
+ * A player in the rpg universe while he is online: class, level, mana, timed bonuses and his
  * computed stats. Main thread only. His life is the game's own health (scaled to ten hearts on screen), changed only
  * by {@link CombatEngine}.
  */
@@ -28,7 +28,8 @@ public final class RpgPlayer {
     private double xp;
     private double mana;
     private StatSheet stats;
-    private final Map<String, Long> ready = new HashMap<>();
+    /** Tick of the last cast per key: one key press never casts twice (events fired twice), not a cooldown. */
+    private final Map<String, Long> lastCast = new HashMap<>();
     private long nextBasic;
     private long lastHurt = -10_000, lastAttack;
     private final List<Buff> buffs = new ArrayList<>();
@@ -51,7 +52,7 @@ public final class RpgPlayer {
 
     void heroClass(ClassDef c) {
         heroClass = c;
-        ready.clear();
+        lastCast.clear();
     }
 
     public int level() {
@@ -87,12 +88,12 @@ public final class RpgPlayer {
         this.mana = Math.max(0, stats == null ? mana : Math.min(stats.get("max_mana"), mana));
     }
 
-    long readyAt(String slot) {
-        return ready.getOrDefault(slot, 0L);
+    long lastCast(String slot) {
+        return lastCast.getOrDefault(slot, -100L);
     }
 
-    void cooldown(String slot, long until) {
-        ready.put(slot, until);
+    void cast(String slot, long tick) {
+        lastCast.put(slot, tick);
     }
 
     long nextBasic() {

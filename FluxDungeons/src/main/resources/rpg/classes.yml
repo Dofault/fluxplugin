@@ -2,40 +2,41 @@
 # its "type". stats: added at level 1; per-level: added at each level above 1 (on top of stats.yml bases).
 # basic = left click. skills: right = right click (the weapon's spell), a = drop key, f = swap hands key.
 # damage: physical or magic (which power it scales with); coefficient: x that power per hit; hits: hits of one cast;
-# targets: enemies it is made for; cooldown / duration in seconds; mana: cost; extra: the type's own numbers.
+# targets: enemies it is made for; duration in seconds; mana: cost (no cooldown: mana is the only limit);
+# extra: the type's own numbers.
 
 warrior:
   stats: {max_health: 300, physical_attack: 18, physical_defense: 25, magic_defense: 10, attack_speed: -0.15, max_mana: -20, mana_regen: 1}
   per-level: {max_health: 30, physical_attack: 1.6, physical_defense: 2, magic_defense: 1}
   basic: {style: melee, damage: physical, coefficient: 1.0, targets: 3, range: 3.5}
   skills:
-    right: {type: charge, kind: damage, damage: physical, coefficient: 2.2, cooldown: 8, mana: 20, targets: 3, duration: 1, extra: {distance: 8, stun: 1}}
-    a: {type: war_cry, kind: buff, cooldown: 18, mana: 30, duration: 6, extra: {radius: 10, damage_reduction: 0.3, taunt: 1}}
-    f: {type: whirlwind, kind: damage, damage: physical, coefficient: 1.1, hits: 3, cooldown: 10, mana: 35, targets: 5, extra: {radius: 4}}
+    right: {type: charge, kind: damage, damage: physical, coefficient: 2.2, mana: 30, targets: 3, duration: 1, extra: {distance: 8, stun: 1}}
+    a: {type: war_cry, kind: buff, mana: 30, duration: 6, extra: {radius: 10, damage_reduction: 0.3, taunt: 1}}
+    f: {type: whirlwind, kind: damage, damage: physical, coefficient: 1.1, hits: 3, mana: 40, targets: 5, extra: {radius: 4}}
 
 archer:
   stats: {max_health: 200, physical_attack: 18, physical_defense: 10, magic_defense: 8, attack_speed: 0.4, crit_chance: 0.1, dodge: 0.05}
   per-level: {max_health: 20, physical_attack: 1.8, physical_defense: 0.8, magic_defense: 0.6}
   basic: {style: arrow, damage: physical, coefficient: 0.72, targets: 1, range: 30}
   skills:
-    right: {type: leap_back, kind: mobility, cooldown: 7, mana: 15, duration: 3, extra: {strength: 1.4, speed: 0.3}}
-    a: {type: volley, kind: damage, damage: physical, coefficient: 0.9, hits: 3, cooldown: 7, mana: 25, targets: 3, extra: {arrows: 5, spread: 8}}
-    f: {type: arrow_rain, kind: damage, damage: physical, coefficient: 0.6, hits: 8, cooldown: 16, mana: 45, targets: 6, duration: 3, extra: {radius: 4, range: 30}}
+    right: {type: leap_back, kind: mobility, mana: 15, duration: 3, extra: {strength: 1.4, speed: 0.3}}
+    a: {type: volley, kind: damage, damage: physical, coefficient: 0.9, hits: 3, mana: 40, targets: 3, extra: {arrows: 5, spread: 8}}
+    f: {type: arrow_rain, kind: damage, damage: physical, coefficient: 0.6, hits: 8, mana: 70, targets: 6, duration: 3, extra: {radius: 4, range: 30}}
 
 mage:
   stats: {max_health: 180, magic_power: 26, physical_defense: 6, magic_defense: 15, attack_speed: -0.2, max_mana: 60, mana_regen: 4}
-  per-level: {max_health: 18, magic_power: 2.0, physical_defense: 0.5, magic_defense: 1.2, max_mana: 4}
+  per-level: {max_health: 18, magic_power: 2.0, physical_defense: 0.5, magic_defense: 1.2, max_mana: 1}
   basic: {style: arcane, damage: magic, coefficient: 0.9, targets: 1, range: 20}
   skills:
-    right: {type: blink, kind: mobility, cooldown: 9, mana: 20, extra: {distance: 8}}
-    a: {type: fireball, kind: damage, damage: magic, element: fire, coefficient: 2.4, cooldown: 5, mana: 25, targets: 4, extra: {radius: 3, speed: 1.6}}
-    f: {type: frost_nova, kind: damage, damage: magic, element: frost, coefficient: 1.8, cooldown: 14, mana: 40, targets: 6, duration: 3, extra: {radius: 5, slow: 0.4}}
+    right: {type: blink, kind: mobility, mana: 20, extra: {distance: 8}}
+    a: {type: fireball, kind: damage, damage: magic, element: fire, coefficient: 2.4, mana: 60, targets: 4, extra: {radius: 3, speed: 1.6}}
+    f: {type: frost_nova, kind: damage, damage: magic, element: frost, coefficient: 1.8, mana: 75, targets: 6, duration: 3, extra: {radius: 5, slow: 0.4}}
 
 healer:
   stats: {max_health: 220, magic_power: 16, physical_defense: 12, magic_defense: 15, attack_speed: -0.1, max_mana: 40, mana_regen: 3, healing_power: 0.1}
   per-level: {max_health: 22, magic_power: 1.3, physical_defense: 0.8, magic_defense: 1.0, max_mana: 3}
   basic: {style: holy, damage: magic, element: holy, coefficient: 0.6, targets: 1, range: 15}
   skills:
-    right: {type: heal, kind: heal, coefficient: 3.0, cooldown: 4, mana: 20, targets: 1, extra: {range: 20}}
-    a: {type: blessing, kind: buff, cooldown: 18, mana: 35, targets: 4, duration: 8, extra: {radius: 8, damage_bonus: 0.15}}
-    f: {type: sanctuary, kind: heal, coefficient: 0.5, hits: 8, cooldown: 20, mana: 45, targets: 4, duration: 8, extra: {radius: 6}}
+    right: {type: heal, kind: heal, coefficient: 3.0, mana: 30, targets: 1, extra: {range: 20}}
+    a: {type: blessing, kind: buff, mana: 45, targets: 4, duration: 8, extra: {radius: 8, damage_bonus: 0.15}}
+    f: {type: sanctuary, kind: heal, coefficient: 0.5, hits: 8, mana: 60, targets: 4, duration: 8, extra: {radius: 6}}

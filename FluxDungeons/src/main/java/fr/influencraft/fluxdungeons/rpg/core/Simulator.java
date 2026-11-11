@@ -5,14 +5,14 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Fights played in numbers only, to check balance.yml against its targets (tests, and {@code /fluxdungeons balance}
- * in game). A fighter attacks at his attack speed and casts his damage skills as soon as they are ready and paid for,
- * the most damage per mana first; monsters hit at their attack speed. Single target, no movement, no dodging of
+ * Fights played in numbers only, to check balance.yml against its targets (tests, and {@code /rpgadmin balance}
+ * in game). A fighter attacks at his attack speed and casts a damage skill whenever he can pay it (no cooldown: mana
+ * is the only limit), at most one every {@link #CAST_GAP} seconds (his fingers), the most damage per mana first; monsters hit at their attack speed. Single target, no movement, no dodging of
  * telegraphed attacks: it measures raw numbers, the real fight is longer.
  */
 public final class Simulator {
 
-    private static final double STEP = 0.05, LIMIT = 900;
+    private static final double STEP = 0.05, LIMIT = 900, CAST_GAP = 0.5;
 
     private final Balance balance;
     private final StatRegistry stats;
@@ -50,7 +50,7 @@ public final class Simulator {
         int n = party.size();
         StatSheet[] sheets = new StatSheet[n];
         double[] mana = new double[n], nextBasic = new double[n];
-        double[][] ready = new double[n][ClassDef.SLOTS.size()];
+        double[] nextCast = new double[n];
         for (int i = 0; i < n; i++) {
             sheets[i] = player(party.get(i), level);
             mana[i] = sheets[i].get("max_mana");
@@ -68,7 +68,7 @@ public final class Simulator {
                 double bestValue = -1;
                 for (int k = 0; k < ClassDef.SLOTS.size(); k++) {
                     ClassDef.Skill sk = c.skills().get(ClassDef.SLOTS.get(k));
-                    if (sk == null || !sk.kind().equals("damage") || t < ready[i][k]) continue;
+                    if (sk == null || !sk.kind().equals("damage") || t < nextCast[i]) continue;
                     double cost = CombatMath.manaCost(sk.mana(), s);
                     if (cost > mana[i]) continue;
                     double value = sk.coefficient() * sk.hits() / Math.max(1, cost);
@@ -80,7 +80,7 @@ public final class Simulator {
                 if (best >= 0) {
                     ClassDef.Skill sk = c.skills().get(ClassDef.SLOTS.get(best));
                     mana[i] -= CombatMath.manaCost(sk.mana(), s);
-                    ready[i][best] = t + CombatMath.cooldown(sk.cooldown(), s);
+                    nextCast[i] = t + CAST_GAP;
                     for (int h = 0; h < sk.hits(); h++) hp -= CombatMath.hit(balance, s, level, mob, null, sk.hit(), rng::nextDouble).damage();
                 }
             }
