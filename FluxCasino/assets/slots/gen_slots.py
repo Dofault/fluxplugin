@@ -6,7 +6,8 @@
 Tout dans le namespace influcasino, fichier slots.yml à part (comme plinko.yml) :
 - menu_slots (fenêtre entière 176 x 221) : fond générique du casino, bandeau JACKPOT, caisse de la machine
   (liseré d'or, bande d'ampoules éteintes), fenêtre des 3 rouleaux, table des gains.
-- slots_rouleau_p<POS> / slots_rouleau_flou_p<POS> : la fenêtre d'un rouleau (32 x 84 = 3 cases de 28 px),
+- rouleaux (police fluxcasino:rouleaux depuis le 2026-11-11, une planche lue en une fois au lieu de 112 glyphes
+  ItemsAdder) : caractère 0xE000 + 2 x (POS / PAS) + (1 si flou), la fenêtre d'un rouleau (32 x 84 = 3 cases de 28 px),
   prise dans la bande des 8 symboles à la position POS (px, par pas de 4, période 224). Version nette et
   version floue (flou de mouvement vertical, pour la vitesse). L'ombrage « cylindre » est cuit dedans.
 - slots_cadre_a / slots_cadre_b : cadre d'une case gagnante (32 x 28), deux teintes qui clignotent.
@@ -16,6 +17,7 @@ Tout dans le namespace influcasino, fichier slots.yml à part (comme plinko.yml)
 La géométrie (cases, rouleaux, période, ordre des symboles, gains) doit rester identique à
 fr.influencraft.flux.Slots (Java) : CELL_H, REEL_X, WIN_Y, SYMBOLS, PAYS, ONE/TWO.
 """
+import json
 import os
 import sys
 
@@ -253,9 +255,23 @@ fond.save(os.path.join(PACK, "textures", "font", "menu_slots.png"))
 sp = os.path.join(PACK, "textures", "slots")
 os.makedirs(sp, exist_ok=True)
 POSITIONS = list(range(0, PERIODE, PAS))
-for pos in POSITIONS:
-    fenetre(bande, pos).save(os.path.join(sp, f"rouleau_p{pos}.png"))
-    fenetre(bande_floue, pos).save(os.path.join(sp, f"rouleau_flou_p{pos}.png"))
+# rouleaux : une planche (nette, floue, nette, floue... par position) et sa police, dossier de pack brut copié tel quel
+# par ItemsAdder (contents/fluxcasino_fonts) ; Slots.java écrit <font:fluxcasino:rouleaux> + caractère
+COLS = 16
+cadres = [f(b, pos) for pos in POSITIONS for f, b in ((fenetre, bande), (fenetre, bande_floue))]
+lignes = -(-len(cadres) // COLS)
+planche = Image.new("RGBA", (CELL_W * COLS, WIN_H * lignes), (0, 0, 0, 0))
+for k, im in enumerate(cadres):
+    planche.paste(im, ((k % COLS) * CELL_W, (k // COLS) * WIN_H))
+brut = os.path.join(os.path.dirname(os.path.abspath(PACK)), "fluxcasino_fonts", "resourcepack", "assets", "fluxcasino")
+os.makedirs(os.path.join(brut, "textures", "font"), exist_ok=True)
+os.makedirs(os.path.join(brut, "font"), exist_ok=True)
+planche.save(os.path.join(brut, "textures", "font", "rouleaux.png"))
+car = ["".join(chr(0xE000 + l * COLS + c) if l * COLS + c < len(cadres) else "\u0000" for c in range(COLS))
+       for l in range(lignes)]
+json.dump({"providers": [{"type": "bitmap", "file": "fluxcasino:font/rouleaux.png", "ascent": 13 - WIN_Y,
+                          "height": WIN_H, "chars": car}]},
+          open(os.path.join(brut, "font", "rouleaux.json"), "w", encoding="utf-8"), ensure_ascii=False)
 
 for nom, couleur in (("a", rgb("FFFFFF")), ("b", rgb("FFD94D"))):
     cadre = Image.new("RGBA", (CELL_W, CELL_H), (0, 0, 0, 0))
@@ -352,11 +368,8 @@ def glyphe(nom, chemin, h, haut):
               f"    path: {chemin}", f"    scale_ratio: {h}", f"    y_position: {13 - haut}"])
 
 
-for pos in POSITIONS:
-    glyphe(f"slots_rouleau_p{pos}", f"slots/rouleau_p{pos}.png", WIN_H, WIN_Y)
-    glyphe(f"slots_rouleau_flou_p{pos}", f"slots/rouleau_flou_p{pos}.png", WIN_H, WIN_Y)
 for nom in "ab":
     glyphe(f"slots_cadre_{nom}", f"slots/cadre_{nom}.png", CELL_H, WIN_Y + CELL_H)
     glyphe(f"slots_ampoules_{nom}", f"slots/ampoules_{nom}.png", HAUTEUR_C, y0)
 open(os.path.join(PACK, "slots.yml"), "w", encoding="utf-8").write("\n".join(L) + "\n")
-print(len(POSITIONS) * 2 + 4, "glyphes,", len(ring), "ampoules")
+print(4, "glyphes,", len(cadres), "rouleaux en planche,", len(ring), "ampoules")

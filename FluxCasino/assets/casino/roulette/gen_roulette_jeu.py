@@ -9,7 +9,7 @@ dans sa case sans rebondir et s'y pose, puis ne bouge plus (aucune animation de 
 suffit). Fichier roulette_jeu.yml à part (roulette.yml reste celui de gen_roulette.py). Tout dans le namespace
 influcasino :
 - menu_roulette (fenêtre 176 x 221) : fond générique, table de pari sous la roue (cases des boutons, gains).
-- roulette_bille_y<Y> / roulette_traine_y<Y> : la bille (5 x 5, haut à Y) et son ombre de vitesse (même forme, translucide).
+- sprites Flux roulette_bille / roulette_traine (sprites.yml de Flux, posés à toute hauteur par les polices fluxui:y<Y>) : la bille (5 x 5, haut à Y) et son ombre de vitesse (même forme, translucide).
 - objets pari_rouge, pari_noir (jetons de pari) et pari_n0 à pari_n24 (jeton du numéro choisi, couleur de sa case).
 
 La géométrie (centre, rayons, ordre des numéros) doit rester identique à fr.influencraft.flux.Roulette (Java).
@@ -122,8 +122,10 @@ def bille(alpha):
     return im
 
 
-bille(255).save(os.path.join(sp, "bille.png"))
-bille(120).save(os.path.join(sp, "traine.png"))
+# sprites partagés de Flux (Flux/assets/vanilla/sprites.yml, polices fluxui:y<Y>), relancer gen_ui.py ensuite
+SPRITES = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "sprites")
+bille(255).save(os.path.join(SPRITES, "roulette_bille.png"))
+bille(120).save(os.path.join(SPRITES, "roulette_traine.png"))
 
 
 # ------------------------------------------------------------------ jetons de pari (et icône du numéro tombé)
@@ -191,9 +193,6 @@ def glyphe(nom, chemin, h, haut):
               f"    path: {chemin}", f"    scale_ratio: {h}", f"    y_position: {13 - haut}"])
 
 
-for y in BILLE_Y:
-    glyphe(f"roulette_bille_y{y}", "roulette/bille.png", 5, y)
-    glyphe(f"roulette_traine_y{y}", "roulette/traine.png", 5, y)
 open(os.path.join(PACK, "roulette_jeu.yml"), "w", encoding="utf-8").write("\n".join(L) + "\n")
 
-print("glyphes :", len(BILLE_Y) * 2)
+print("bille et traîne écrites dans", SPRITES)

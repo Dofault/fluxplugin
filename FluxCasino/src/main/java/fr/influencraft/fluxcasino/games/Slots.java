@@ -203,7 +203,9 @@ final class Slots extends CasinoGame {
             o.add("slots_ampoules_" + ((t / rhythm) % 2 == 0 ? "a" : "b"), CAISSE_X, CAISSE_W);
         }
         for (int r = 0; r < 3; r++) {
-            o.add((blurry[r] ? "slots_rouleau_flou_p" : "slots_rouleau_p") + frame[r], REEL_X[r], REEL_W);
+            // one sheet in the font fluxcasino:rouleaux (gen_slots.py): sharp then blurry window per position
+            char reel = (char) (0xE000 + 2 * (frame[r] / STEP) + (blurry[r] ? 1 : 0));
+            o.addText("<font:fluxcasino:rouleaux><white>" + reel + "</font>", REEL_X[r], REEL_W, "");
         }
         if (after >= 1 && spin.outcome.mult() > 0) {
             String tint = flashing && (after / 2) % 2 == 1 ? "b" : "a";

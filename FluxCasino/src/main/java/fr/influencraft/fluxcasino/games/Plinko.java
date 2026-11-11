@@ -165,7 +165,7 @@ final class Plinko extends CasinoGame {
         for (int p = 0; p < PEGS.size(); p++) {
             if (board.litUntil[p] > t) {
                 Peg peg = PEGS.get(p);
-                o.add("plinko_clou_y" + ((int) peg.y() - 1), (int) peg.x() - 1, 3);
+                o.addSprite("plinko_clou", (int) peg.x() - 1, (int) peg.y() - 1);
                 lit = true;
             }
         }
@@ -174,7 +174,7 @@ final class Plinko extends CasinoGame {
         }
         for (Ball ball : board.balls) {
             Frame frame = ball.frames.get(ball.index);
-            o.add("plinko_bille_y" + Math.max(BALL_Y_MIN, Math.min(BALL_Y_MAX, frame.y() - 2)), frame.x() - 2, 5);
+            o.addSprite("plinko_bille", frame.x() - 2, Math.max(BALL_Y_MIN, Math.min(BALL_Y_MAX, frame.y() - 2)));
         }
         board.view.showTitle(o.toString());
         if (landed) board.view.refreshButtons(); // last result, number of balls

@@ -234,9 +234,9 @@ final class Roulette extends CasinoGame {
         for (int g = 2; g >= 1; g--) {
             double[] ghost = spin.pose(Math.min(Math.max(t - g / 3.0, 0), landed));
             if (distance(ghost, now) < 4) continue;
-            addBall(o, "roulette_traine_y", ghost);
+            addBall(o, "roulette_traine", ghost);
         }
-        addBall(o, "roulette_bille_y", now);
+        addBall(o, "roulette_bille", now);
         spin.view.showTitle(o.toString());
         if (t >= landed) {
             // the ball is in its pocket: gain, last spin and count, then nothing moves any more
@@ -261,11 +261,12 @@ final class Roulette extends CasinoGame {
         return Math.hypot(p[0] - q[0], p[1] - q[1]);
     }
 
-    private static void addBall(TitleOverlay o, String glyph, double[] pose) {
+    /** sprite: roulette_bille or roulette_traine (Flux sprites.yml, drawn through the fluxui:y fonts). */
+    private static void addBall(TitleOverlay o, String sprite, double[] pose) {
         double[] p = xy(pose);
         int x = (int) Math.round(p[0] - 2.5);
         int y = Math.max(BALL_Y_MIN, Math.min(BALL_Y_MAX, (int) Math.round(p[1] - 2.5)));
-        o.add(glyph + y, x, 5);
+        o.addSprite(sprite, x, y);
     }
 
     /** Sounds: the hum of the track, then a click at each pocket separator crossed. */

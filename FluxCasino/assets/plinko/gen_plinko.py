@@ -6,7 +6,7 @@
 Tout dans le namespace influcasino (comme les autres menus du casino), fichier plinko.yml à part :
 - menu_plinko (fenêtre entière 176 x 221) : fond générique du casino (assets/casino/gen_theme.py), pyramide de
   10 rangées de clous dorés, 11 cases de gains (rouge vif aux bords, ivoire au centre), repère de départ doré.
-- plinko_bille_y<Y> (bille 5 x 5 dont le haut est à Y), plinko_clou_y<Y> (clou allumé 3 x 3, un par rangée),
+- sprites Flux plinko_bille (bille 5 x 5) et plinko_clou (clou allumé 3 x 3), sprites.yml de Flux, posés à toute hauteur,
   plinko_case (contour lumineux 13 x 16 de la case d'arrivée).
 La géométrie doit rester identique à celle de fr.influencraft.flux.Plinko (Java) : ROWS, SX, SY, Y0, CX, cases.
 """
@@ -105,8 +105,9 @@ fond.save(os.path.join(PACK, "textures", "font", "menu_plinko.png"))
 
 # ------------------------------------------------------------------ sprites
 os.makedirs(os.path.join(PACK, "textures", "plinko"), exist_ok=True)
-BILLE.save(os.path.join(PACK, "textures", "plinko", "bille.png"))
-CLOU_ALLUME.save(os.path.join(PACK, "textures", "plinko", "clou.png"))
+# bille et clou : sprites partagés de Flux (Flux/assets/vanilla/sprites.yml, polices fluxui:y<Y>), relancer gen_ui.py
+BILLE.save(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sprites", "plinko_bille.png"))
+CLOU_ALLUME.save(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sprites", "plinko_clou.png"))
 case = Image.new("RGBA", (CASE_L, CASE_H), (0, 0, 0, 0))
 for x in range(CASE_L):
     for y in range(CASE_H):
@@ -129,10 +130,6 @@ def glyphe(nom, chemin, h, haut):
               f"    path: {chemin}", f"    scale_ratio: {h}", f"    y_position: {13 - haut}"])
 
 
-for y in BILLE_Y:
-    glyphe(f"plinko_bille_y{y}", "plinko/bille.png", 5, y)
-for k in range(ROWS):
-    glyphe(f"plinko_clou_y{Y0 + SY * k - 1}", "plinko/clou.png", 3, Y0 + SY * k - 1)
 glyphe("plinko_case", "plinko/case.png", CASE_H, CASE_HAUT)
 open(os.path.join(PACK, "plinko.yml"), "w", encoding="utf-8").write("\n".join(L) + "\n")
-print(len(BILLE_Y) + ROWS + 1, "glyphes")
+print(1, "glyphe (bille et clou : sprites Flux)")
