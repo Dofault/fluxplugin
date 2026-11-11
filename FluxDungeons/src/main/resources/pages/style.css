@@ -1,0 +1,212 @@
+/* Pages of the rpg classes (FluxDungeons rpg.ClassPages), drawn by MC GUI: 1024 x 576 CSS pixels.
+   Server palette: very dark violet background, gold titles, light violet text, one accent colour per class. */
+:root {
+  --bg: #0d0716;
+  --bg2: #1e0a3c;
+  --violet: #5b2d9e;
+  --lilac: #b376e5;
+  --gold: #ffd94d;
+  --gold2: #f0a800;
+  --pink: #e060a0;
+  --green: #2ecf7b;
+  --red: #ff5c5c;
+  --text: #eee6fa;
+  --accent: #b376e5;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  width: 1024px;
+  height: 576px;
+  overflow: hidden;
+  font-family: Inter, sans-serif;
+  font-size: 13px;
+  color: var(--text);
+  background:
+    radial-gradient(ellipse 700px 380px at 50% -60px, rgba(91, 45, 158, 0.55), transparent 70%),
+    radial-gradient(ellipse 520px 300px at 105% 110%, rgba(200, 37, 106, 0.25), transparent 70%),
+    linear-gradient(180deg, var(--bg2) 0%, var(--bg) 70%);
+  padding: 22px 28px 0 28px;
+  display: flex;
+  flex-direction: column;
+}
+
+a { color: inherit; text-decoration: none; }
+
+/* ---------------------------------------------------------------- header */
+header { display: flex; align-items: flex-start; justify-content: space-between; height: 96px; }
+.title .kicker { font-family: Minecraft, monospace; font-size: 11px; letter-spacing: 3px; color: var(--lilac); }
+.title .kicker em { font-style: normal; color: var(--bg); background: var(--gold); padding: 1px 6px; border-radius: 4px; margin-left: 6px; letter-spacing: 1px; }
+.title h1 { font-family: Minecraft, monospace; font-size: 30px; color: var(--gold); text-shadow: 0 3px 0 rgba(0, 0, 0, 0.55); margin-top: 4px; }
+.title p { color: var(--lilac); max-width: 740px; font-size: 12px; margin-top: 4px; line-height: 1.35; }
+
+.badge {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(13, 7, 22, 0.7);
+  border: 1px solid rgba(179, 118, 229, 0.35);
+  border-radius: 12px;
+  padding: 8px 14px 8px 8px;
+}
+.badge img { width: 36px; height: 36px; border-radius: 6px; image-rendering: pixelated; }
+.badge b { display: block; font-size: 14px; }
+.badge span { color: var(--lilac); font-size: 12px; }
+
+/* ---------------------------------------------------------------- footer and buttons */
+footer { margin-top: auto; height: 58px; display: flex; align-items: center; justify-content: space-between; gap: 12px; color: rgba(179, 118, 229, 0.75); font-size: 12px; }
+
+.btn {
+  display: inline-block;
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  transition: transform 0.12s, background 0.12s;
+}
+.btn.primary { background: linear-gradient(180deg, var(--gold), var(--gold2)); color: #2a1300; box-shadow: 0 4px 0 #8a5a00; }
+.btn.primary:hover { transform: translateY(-2px); background: linear-gradient(180deg, #fff0a0, var(--gold)); }
+.btn.primary:active { transform: translateY(2px); box-shadow: 0 1px 0 #8a5a00; }
+.btn.ghost { background: rgba(179, 118, 229, 0.12); border: 1px solid rgba(179, 118, 229, 0.45); color: var(--text); }
+.btn.ghost:hover { background: rgba(179, 118, 229, 0.28); }
+
+.stars { color: var(--gold); letter-spacing: 2px; }
+.stars s { text-decoration: none; color: rgba(255, 255, 255, 0.18); }
+
+.glow {
+  position: absolute; left: 50%; top: 18px; width: 180px; height: 180px; margin-left: -90px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent) 0%, transparent 68%);
+  opacity: 0.35;
+}
+.weapon { position: relative; image-rendering: pixelated; }
+.topline { position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--accent); }
+
+/* ---------------------------------------------------------------- list of the classes */
+.cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; height: 404px; }
+
+.card {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 14px 16px 12px 16px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(30, 10, 60, 0.95), rgba(13, 7, 22, 0.95));
+  border: 1px solid rgba(179, 118, 229, 0.25);
+  overflow: hidden;
+  transition: transform 0.15s, border-color 0.15s;
+}
+.card:hover { transform: translateY(-6px); border-color: var(--accent); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+.card:hover .glow { opacity: 0.6; }
+.card .weapon { width: 112px; height: 112px; margin-top: 6px; }
+.card h2 { font-family: Minecraft, monospace; font-size: 20px; color: var(--accent); margin-top: 6px; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5); }
+.card .role { font-size: 10px; white-space: nowrap; text-transform: uppercase; letter-spacing: 1px; color: var(--gold); margin-top: 2px; }
+.card .desc { color: var(--lilac); text-align: center; line-height: 1.35; margin-top: 8px; height: 52px; font-size: 12px; }
+.axes { width: 100%; margin-top: 8px; }
+.axis { display: flex; align-items: center; gap: 8px; margin-top: 5px; font-size: 11px; color: rgba(238, 230, 250, 0.8); }
+.axis span { width: 64px; }
+.bar { flex: 1; height: 7px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--violet), var(--accent)); }
+.card .foot { width: 100%; margin-top: auto; display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px solid rgba(179, 118, 229, 0.18); }
+.card .more { color: var(--gold); font-weight: 700; font-size: 12px; }
+
+.ribbon {
+  display: none;
+  position: absolute; top: 12px; right: -30px; width: 120px;
+  transform: rotate(35deg);
+  background: var(--gold); color: #2a1300;
+  font-size: 10px; font-weight: 800; text-align: center; padding: 3px 0;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.card.is-yes { border-color: var(--gold); }
+.card.is-yes .ribbon { display: block; }
+
+/* ---------------------------------------------------------------- one class */
+.detail { display: grid; grid-template-columns: 290px 1fr 1.25fr; gap: 16px; height: 404px; }
+.hero, .panel {
+  position: relative;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(30, 10, 60, 0.92), rgba(13, 7, 22, 0.92));
+  border: 1px solid rgba(179, 118, 229, 0.25);
+  padding: 14px 16px;
+  overflow: hidden;
+}
+.hero { display: flex; flex-direction: column; align-items: center; }
+.hero .weapon.big { width: 140px; height: 140px; margin-top: 4px; }
+.hero .desc { color: var(--text); text-align: center; line-height: 1.4; margin: 8px 0 10px 0; }
+.hero .kv { width: 100%; display: flex; justify-content: space-between; padding: 6px 0; border-top: 1px solid rgba(179, 118, 229, 0.18); }
+.hero .kv b, .hero .pro b, .hero .con b { font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; }
+.hero .pro, .hero .con { width: 100%; padding: 6px 0; border-top: 1px solid rgba(179, 118, 229, 0.18); }
+.hero .pro b { color: var(--green); }
+.hero .con b { color: var(--red); }
+.hero .pro p, .hero .con p { color: var(--lilac); margin-top: 2px; line-height: 1.35; font-size: 12px; }
+
+.panel h3 { font-family: Minecraft, monospace; font-size: 15px; color: var(--gold); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: baseline; }
+.panel h3 small { font-family: Inter, sans-serif; font-size: 11px; color: rgba(179, 118, 229, 0.8); font-weight: 400; }
+
+table { width: 100%; border-collapse: collapse; }
+td { padding: 5px 4px; border-bottom: 1px solid rgba(179, 118, 229, 0.12); color: var(--text); }
+td:first-child { color: var(--lilac); }
+td:nth-child(2), td:nth-child(3) { text-align: right; width: 64px; }
+td.hi { color: var(--accent); font-weight: 700; }
+tr.head td { color: rgba(179, 118, 229, 0.75); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+tr:hover td { background: rgba(179, 118, 229, 0.08); }
+
+.skill { display: flex; gap: 10px; padding: 8px 6px; border-radius: 10px; border-bottom: 1px solid rgba(179, 118, 229, 0.12); }
+.skill:hover { background: rgba(179, 118, 229, 0.1); }
+.key {
+  width: 64px; min-width: 64px; height: 38px;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  border-radius: 8px;
+  font-size: 10px; font-weight: 800; line-height: 1.1; text-transform: uppercase;
+  background: rgba(13, 7, 22, 0.9);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.5);
+}
+.key.k-a, .key.k-f { font-family: Minecraft, monospace; font-size: 18px; }
+.skill .txt { flex: 1; }
+.skill .line { display: flex; justify-content: space-between; align-items: baseline; }
+.skill b { color: var(--text); font-size: 13px; }
+.skill .cost { color: #6fa8ff; font-size: 11px; font-weight: 700; }
+.skill p { color: var(--lilac); font-size: 12px; line-height: 1.35; margin-top: 2px; }
+.panel .note { color: rgba(179, 118, 229, 0.7); font-size: 11px; margin-top: 8px; }
+
+.owned { display: none; color: var(--gold); font-weight: 700; font-size: 14px; }
+.detail-page.is-yes .choose { display: none; }
+.detail-page.is-yes .owned { display: inline-block; }
+
+/* ---------------------------------------------------------------- confirmation */
+.confirm { flex: 1; display: flex; align-items: center; justify-content: center; padding-bottom: 40px; }
+.confirm .box {
+  position: relative;
+  width: 480px;
+  padding: 24px 32px;
+  border-radius: 18px;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(30, 10, 60, 0.97), rgba(13, 7, 22, 0.97));
+  border: 1px solid rgba(179, 118, 229, 0.35);
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+}
+.confirm .weapon { width: 120px; height: 120px; }
+.confirm h2 { font-family: Minecraft, monospace; font-size: 24px; color: var(--gold); margin-top: 6px; }
+.confirm p { color: var(--lilac); line-height: 1.45; margin-top: 10px; }
+.confirm .row { display: flex; justify-content: center; gap: 14px; margin-top: 20px; }
+.confirm-page .change { display: none; }
+.confirm-page.has-yes .change { display: block; }
+.confirm-page.has-yes .first { display: none; }
+
+/* ---------------------------------------------------------------- character sheet */
+.gauges { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.gauge { position: relative; height: 26px; border-radius: 8px; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(179, 118, 229, 0.3); overflow: hidden; }
+.gauge .fill { position: absolute; left: 0; top: 0; bottom: 0; }
+.gauge.xp .fill { background: linear-gradient(90deg, var(--gold2), var(--gold)); }
+.gauge.hp .fill { background: linear-gradient(90deg, #a1263a, var(--red)); }
+.gauge.mp .fill { background: linear-gradient(90deg, #2a4fa8, #6fa8ff); }
+.gauge span { position: relative; display: block; text-align: center; line-height: 24px; font-weight: 700; font-size: 12px; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); }
+.sheet { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; height: 330px; }
+.sheet .stat { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(179, 118, 229, 0.12); font-size: 12px; }
+.sheet .stat span { color: var(--lilac); }
+.sheet .stat.zero { display: none; }
+.empty { display: none; color: var(--lilac); font-size: 15px; text-align: center; margin-top: 80px; }
+.sheet-page.has-no .empty { display: block; }
+.sheet-page.has-no .sheet, .sheet-page.has-no .gauges { display: none; }

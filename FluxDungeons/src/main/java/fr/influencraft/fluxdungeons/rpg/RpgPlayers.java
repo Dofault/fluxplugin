@@ -2,6 +2,7 @@ package fr.influencraft.fluxdungeons.rpg;
 
 import fr.influencraft.flux.api.FluxPlugin;
 import fr.influencraft.flux.api.dialog.Dialogs;
+import fr.influencraft.flux.api.screen.Screens;
 import fr.influencraft.flux.api.universe.UniverseEnterEvent;
 import fr.influencraft.flux.api.universe.Universes;
 import fr.influencraft.flux.api.util.Sounds;
@@ -65,6 +66,8 @@ public final class RpgPlayers implements Listener {
     private final RpgItems items;
     private RpgWorld world;
     private CombatEngine combat;
+    /** HTML pages of the classes and the sheet (null: Paper dialogs only). */
+    private ClassPages pages;
     private final Map<UUID, RpgPlayer> online = new HashMap<>();
     /** Players whose data is being read (they can do nothing yet). */
     private final Set<UUID> loading = new HashSet<>();
@@ -230,6 +233,7 @@ public final class RpgPlayers implements Listener {
     private void chooseClass(Player p) {
         RpgConfig.Set set = config.get();
         if (set == null) return;
+        if (pages != null && Screens.open(p, ClassPages.CLASSES)) return;
         Dialogs.Form form = Dialogs.form(p, plugin.messages().raw("choice.title"));
         form.body(plugin.messages().raw("choice.intro"));
         for (String id : set.classes().keySet()) {
@@ -284,6 +288,8 @@ public final class RpgPlayers implements Listener {
     void changeClass(Player p) {
         RpgPlayer r = online.get(p.getUniqueId());
         RpgConfig.Set set = config.get();
+        // the pages show the classes anywhere; choosing still follows the rules (pick)
+        if (set != null && pages != null && Screens.open(p, ClassPages.CLASSES)) return;
         if (r == null || set == null) {
             plugin.messages().send(p, "rpg.not-in-rpg");
             return;
@@ -301,7 +307,37 @@ public final class RpgPlayers implements Listener {
         form.columns(3).onSubmit((pl, answer) -> change(pl, answer.button())).open();
     }
 
-    private long cooldownHours() {
+    /**
+     * {@code /classe choisir <class>} (the buttons of the pages): the first choice in the rpg universe, else a change of
+     * class from the lobby, with the same rules as the menus.
+     */
+    void pick(Player p, String classId) {
+        RpgConfig.Set set = config.get();
+        if (set == null || classId == null || !set.classes().containsKey(classId)) return;
+        RpgPlayer r = online.get(p.getUniqueId());
+        if (r == null) {
+            if (RpgWorld.UNIVERSE.equals(Universes.of(p)) && !loading.contains(p.getUniqueId())) choose(p, classId);
+            else plugin.messages().send(p, "rpg.not-in-rpg");
+            return;
+        }
+        if (classId.equals(r.heroClass().id())) return;
+        if (world == null || p.getWorld() != world.world()) {
+            plugin.messages().send(p, "choice.lobby-only");
+            return;
+        }
+        change(p, classId);
+    }
+
+    /** The pages are used from now on; a class page left by the player while he has no class comes back. */
+    void usePages(ClassPages pages) {
+        this.pages = pages;
+        Screens.onClose(plugin, closed -> {
+            if (!closed.byPlayer() || closed.page() == null || !closed.page().startsWith(ClassPages.FOLDER + "/")) return;
+            Bukkit.getScheduler().runTaskLater(plugin, () -> reopen(closed.player()), 2L);
+        });
+    }
+
+    long cooldownHours() {
         return plugin.getConfig().getLong("rpg.class-change-cooldown-hours", 24);
     }
 
@@ -539,6 +575,7 @@ public final class RpgPlayers implements Listener {
     public void showSheet(Player p) {
         RpgPlayer r = online.get(p.getUniqueId());
         RpgConfig.Set set = config.get();
+        if (r != null && set != null && pages != null && Screens.open(p, ClassPages.SHEET)) return;
         if (r == null || set == null || r.stats() == null) {
             plugin.messages().send(p, "rpg.not-in-rpg");
             return;
@@ -569,7 +606,7 @@ public final class RpgPlayers implements Listener {
     }
 
     /** A stat's total as shown on the sheet: 26, 12.5, 15 %. */
-    private static String total(fr.influencraft.fluxdungeons.rpg.core.StatRegistry.Def d, double v) {
+    static String total(fr.influencraft.fluxdungeons.rpg.core.StatRegistry.Def d, double v) {
         if (d.kind() == fr.influencraft.fluxdungeons.rpg.core.StatRegistry.Kind.PERCENT) {
             double pct = v * 100;
             return (pct == Math.floor(pct) ? String.valueOf((long) pct) : String.format(java.util.Locale.ROOT, "%.1f", pct)) + " %";

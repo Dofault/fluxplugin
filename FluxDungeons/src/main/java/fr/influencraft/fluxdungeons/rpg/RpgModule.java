@@ -33,6 +33,7 @@ public final class RpgModule implements Listener {
     private Controls controls;
     private RpgItems items;
     private RpgWorld world;
+    private ClassPages pages;
 
     public RpgModule(FluxPlugin plugin) {
         this.plugin = plugin;
@@ -65,10 +66,39 @@ public final class RpgModule implements Listener {
         pm.registerEvents(skills, plugin);
         pm.registerEvents(controls, plugin);
         pm.registerEvents(this, plugin);
-        Commands.create(plugin, "classe").description("Rpg: change class (lobby).").executor((s, l, a) -> {
-            if (s instanceof Player p) players.changeClass(p);
+        Commands.create(plugin, "classe").description("Rpg: the classes, change class (lobby).").executor((s, l, a) -> {
+            if (!(s instanceof Player p)) return true;
+            // "choisir <class>": the buttons of the class pages
+            if (a.length >= 2 && a[0].equalsIgnoreCase("choisir")) players.pick(p, a[1].toLowerCase(java.util.Locale.ROOT));
+            else players.changeClass(p);
             return true;
         }).register();
+        if (fr.influencraft.flux.api.screen.Screens.available()) {
+            pages = new ClassPages(new ClassPages.Source() {
+                public String raw(String key, String... vars) {
+                    return plugin.messages().raw(key, vars);
+                }
+
+                public java.io.InputStream resource(String path) {
+                    return plugin.getResource(path);
+                }
+
+                public String color(String classId) {
+                    return plugin.getConfig().getString("rpg.class-colors." + classId);
+                }
+
+                public String statName(String stat) {
+                    return items.statName(stat);
+                }
+
+                public void warn(String message) {
+                    plugin.getLogger().warning(message);
+                }
+            });
+            players.usePages(pages);
+            writePages();
+        }
+        fr.influencraft.flux.api.FluxApi.registerPlaceholders(plugin, "fluxrpg", this::placeholder);
         Commands.create(plugin, "personnage").aliases("perso").description("Rpg: your class, level and stats.").executor((s, l, a) -> {
             if (s instanceof Player p) players.showSheet(p);
             return true;
@@ -76,6 +106,59 @@ public final class RpgModule implements Listener {
         Commands.create(plugin, "rpgadmin").description("Rpg administration: reload, balance, dummy, xp.")
                 .permission("fluxdungeons.admin").suggest(false).usage("/rpgadmin <reload|balance [level]|mannequin [level] [rank]|mannequin retirer [tous]|xp <player> <amount>|setspawn>")
                 .executor(this::admin).register();
+    }
+
+    private void writePages() {
+        if (pages == null) return;
+        RpgConfig.Set set = config.get();
+        long hours = players.cooldownHours();
+        // files only: off the server thread
+        java.nio.file.Path root = fr.influencraft.flux.api.screen.Screens.pagesFolder();
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> pages.write(root, set, hours));
+    }
+
+    /**
+     * {@code %fluxrpg_<params>%}: the player's rpg character, read by the class pages. class, level_text, level, xp_text,
+     * xp_pct, health, health_max, health_pct, mana, mana_max, mana_pct, has_class (yes/no), is_<class> (yes/no),
+     * stat_<stat> (its total), zero_<stat> ("zero" when it is 0).
+     */
+    private String placeholder(Player p, String params) {
+        if (p == null || players == null) return null;
+        RpgPlayer r = players.get(p);
+        RpgConfig.Set set = config.get();
+        var m = plugin.messages();
+        boolean on = r != null && set != null && r.stats() != null;
+        if (params.startsWith("is_")) return on && r.heroClass().id().equals(params.substring(3)) ? "yes" : "no";
+        if (params.startsWith("stat_") || params.startsWith("zero_")) {
+            String stat = params.substring(5);
+            var def = set == null ? null : set.stats().get(stat);
+            double v = on && def != null ? r.stats().get(stat) : 0;
+            if (params.startsWith("zero_")) return Math.abs(v) < 1e-9 ? "zero" : "";
+            return def == null ? "" : RpgPlayers.total(def, v);
+        }
+        double hp = on ? combat.health(p) : 0, hpMax = on ? r.stats().get("max_health") : 0;
+        double mp = on ? r.mana() : 0, mpMax = on ? r.stats().get("max_mana") : 0;
+        double need = on ? set.balance().xpToNext(r.level()) : 0;
+        return switch (params) {
+            case "has_class" -> on ? "yes" : "no";
+            case "class" -> ClassPages.plain(on ? m.raw("classes." + r.heroClass().id() + ".name") : m.raw("class-pages.no-class"));
+            case "level" -> on ? String.valueOf(r.level()) : "0";
+            case "level_text" -> on ? ClassPages.plain(m.raw("class-pages.level", "%level%", String.valueOf(r.level()))) : "";
+            case "xp_text" -> on ? ClassPages.plain(m.raw("class-pages.sheet.xp", "%xp%", String.valueOf(Math.round(r.xp())),
+                    "%need%", String.valueOf(Math.round(need)))) : "";
+            case "xp_pct" -> pct(on ? r.xp() : 0, need);
+            case "health" -> String.valueOf(Math.round(hp));
+            case "health_max" -> String.valueOf(Math.round(hpMax));
+            case "health_pct" -> pct(hp, hpMax);
+            case "mana" -> String.valueOf(Math.round(mp));
+            case "mana_max" -> String.valueOf(Math.round(mpMax));
+            case "mana_pct" -> pct(mp, mpMax);
+            default -> null;
+        };
+    }
+
+    private static String pct(double v, double max) {
+        return max <= 0 ? "0" : String.valueOf(Math.max(0, Math.min(100, Math.round(100 * v / max))));
     }
 
     public void stop() {
@@ -153,6 +236,7 @@ public final class RpgModule implements Listener {
                 if (problems.isEmpty()) {
                     items.load(config.get());
                     for (Player p : Bukkit.getOnlinePlayers()) players.recompute(p);
+                    writePages();
                     sender.sendMessage("§aRpg configs reloaded.");
                 } else {
                     sender.sendMessage("§c" + problems.size() + " problem(s), previous configs kept:");

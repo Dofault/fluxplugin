@@ -448,3 +448,83 @@ sheet:
   resource: "Resources"
   utility: "Utility"
   close: "Close"
+
+# HTML pages of the classes and the character (MC GUI, rpg.ClassPages). Plain text, no colour codes.
+# In skill descriptions: %coef% (share of the power), %power%, %hits%, %targets%, %duration%, %mana%, %range% and every
+# number of the skill's "extra" in classes.yml (%radius%, %distance%...), as a percentage with _pct (%slow_pct%).
+class-pages:
+  title: "Classes"
+  subtitle: "Your class decides your weapon, your stats and your spells. Your progress in every class is kept."
+  beta: "Beta"
+  no-class: "No class"
+  level: "Level %level%"
+  see: "See the class"
+  yours: "Your class"
+  choose: "Choose this class"
+  already: "This is your class"
+  back: "Back"
+  close: "Close"
+  sneak: "Sneak to close"
+  role: "Role"
+  difficulty: "Difficulty"
+  strengths: "Strengths"
+  weaknesses: "Weaknesses"
+  stats: "Stats"
+  stats-note: "Without gear"
+  stats-level: "Lv. %level%"
+  skills: "Spells and attacks"
+  skills-note: "Class weapon in hand. No cooldown: mana is the only limit."
+  mana: "%mana% mana"
+  free: "Free"
+  confirm-title: "Become %class%?"
+  confirm-first: "Your class weapon will be given to you. You can change class later from the lobby, with /classe."
+  confirm-change: "Your progress in every class is kept. You will not be able to change class again for %hours% h."
+  confirm: "Confirm"
+  cancel: "Cancel"
+  keys: {left: "Left click", right: "Right click", a: "Q", f: "F"}
+  powers: {physical: "of physical attack", magic: "of magic power"}
+  axes: {health: "Health", power: "Power", defense: "Defence", mana: "Mana", range: "Range"}
+  sheet:
+    title: "My character"
+    xp: "XP %xp% / %need%"
+    health: "Health"
+    mana: "Mana"
+    change: "Change class"
+    not-in-rpg: "Enter the rpg world to see your character."
+  classes:
+    warrior:
+      role: "Tank, melee"
+      difficulty: 1
+      strengths: "Lots of health and defence, hits several enemies, draws the monsters."
+      weaknesses: "Slow, no ranged attack, little mana."
+      basic: {name: "Arc strike", description: "Hits up to %targets% enemies in front of you (%coef% %power%)."}
+      right: {name: "Charge", description: "Rushes %distance% blocks and hits up to %targets% enemies (%coef% %power%), stunned %stun% s."}
+      a: {name: "War cry", description: "Draws the monsters within %radius% blocks and cuts the damage you take by %damage_reduction_pct% for %duration% s."}
+      f: {name: "Whirlwind", description: "Spins: %hits% hits of %coef% %power% on enemies within %radius% blocks."}
+    archer:
+      role: "Ranged damage"
+      difficulty: 2
+      strengths: "Long range, frequent crits, fast attacks, dodge."
+      weaknesses: "Fragile up close: keep your distance."
+      basic: {name: "Shot", description: "Shoots an arrow (%coef% %power%) up to %range% blocks."}
+      right: {name: "Leap back", description: "Jumps back and runs %speed_pct% faster for %duration% s."}
+      a: {name: "Volley", description: "Shoots a fan of %arrows% arrows, %coef% %power% each."}
+      f: {name: "Arrow rain", description: "Arrows fall where you aim for %duration% s: %hits% waves of %coef% %power% over %radius% blocks."}
+    mage:
+      role: "Area damage, control"
+      difficulty: 3
+      strengths: "The biggest area damage, freezes and slows whole groups."
+      weaknesses: "Very fragile, depends on mana."
+      basic: {name: "Arcane bolt", description: "A bolt of magic (%coef% %power%) up to %range% blocks."}
+      right: {name: "Blink", description: "Teleports you %distance% blocks forward."}
+      a: {name: "Fireball", description: "Explodes on impact: %coef% %power% as fire over %radius% blocks."}
+      f: {name: "Frost nova", description: "%coef% %power% as frost around you (%radius% blocks), enemies slowed by %slow_pct% for %duration% s."}
+    healer:
+      role: "Healing and support"
+      difficulty: 2
+      strengths: "Heals the party, raises the allies' damage, lots of mana."
+      weaknesses: "Low damage: alone, slow progress."
+      basic: {name: "Holy ray", description: "A ray of light (%coef% %power%) up to %range% blocks."}
+      right: {name: "Heal", description: "Heals the ally you aim at, or yourself, for %coef% %power% (up to %range% blocks)."}
+      a: {name: "Blessing", description: "Allies within %radius% blocks deal %damage_bonus_pct% more damage for %duration% s."}
+      f: {name: "Sanctuary", description: "A healing zone of %radius% blocks: %hits% heals of %coef% %power% over %duration% s."}

@@ -448,3 +448,93 @@ sheet:
   resource: "Ressources"
   utility: "Utilitaire"
   close: "Fermer"
+# Pages HTML des classes et du personnage (MC GUI, rpg.ClassPages). Texte brut, sans codes couleur.
+# Dans les descriptions des sorts : %coef% (part de la puissance), %power%, %hits%, %targets%, %duration%, %mana%,
+# %range% et chaque nombre de « extra » de classes.yml (%radius%, %distance%...), en pourcentage avec _pct (%slow_pct%).
+class-pages:
+  title: "Les classes"
+  subtitle: "Ta classe décide de ton arme, de tes statistiques et de tes sorts. Ta progression dans chaque classe est gardée."
+  beta: "Bêta"
+  no-class: "Aucune classe"
+  level: "Niveau %level%"
+  see: "Voir la classe"
+  yours: "Ta classe"
+  choose: "Choisir cette classe"
+  already: "C'est ta classe actuelle"
+  back: "Retour"
+  close: "Fermer"
+  sneak: "Accroupis-toi pour fermer"
+  role: "Rôle"
+  difficulty: "Difficulté"
+  strengths: "Points forts"
+  weaknesses: "Points faibles"
+  stats: "Statistiques"
+  stats-note: "Sans équipement"
+  stats-level: "Niv. %level%"
+  skills: "Sorts et attaques"
+  skills-note: "Arme de classe en main. Aucun temps de recharge : seul le mana limite les sorts."
+  mana: "%mana% mana"
+  free: "Gratuit"
+  confirm-title: "Devenir %class% ?"
+  confirm-first: "Ton arme de classe te sera donnée. Tu pourras changer de classe plus tard depuis le lobby, avec /classe."
+  confirm-change: "Ta progression dans chaque classe est gardée. Tu ne pourras plus changer de classe pendant %hours% h."
+  confirm: "Confirmer"
+  cancel: "Annuler"
+  keys:
+    left: "Clic gauche"
+    right: "Clic droit"
+    a: "A"
+    f: "F"
+  powers:
+    physical: "de l'attaque physique"
+    magic: "de la puissance magique"
+  axes:
+    health: "Santé"
+    power: "Puissance"
+    defense: "Défense"
+    mana: "Mana"
+    range: "Portée"
+  sheet:
+    title: "Mon personnage"
+    xp: "XP %xp% / %need%"
+    health: "Santé"
+    mana: "Mana"
+    change: "Changer de classe"
+    not-in-rpg: "Entre dans le monde RPG pour voir ton personnage."
+  classes:
+    warrior:
+      role: "Tank, corps à corps"
+      difficulty: 1
+      strengths: "Beaucoup de santé et de défense, frappe plusieurs ennemis, attire les monstres sur lui."
+      weaknesses: "Lent, aucune attaque à distance, peu de mana."
+      basic: {name: "Coup en arc", description: "Frappe jusqu'à %targets% ennemis devant toi (%coef% %power%)."}
+      right: {name: "Charge", description: "Fonce sur %distance% blocs et frappe jusqu'à %targets% ennemis (%coef% %power%), étourdis %stun% s."}
+      a: {name: "Cri de guerre", description: "Attire les monstres à %radius% blocs et réduit tes dégâts subis de %damage_reduction_pct% pendant %duration% s."}
+      f: {name: "Tourbillon", description: "Tourne sur toi-même : %hits% coups de %coef% %power% sur les ennemis à %radius% blocs."}
+    archer:
+      role: "Dégâts à distance"
+      difficulty: 2
+      strengths: "Longue portée, critiques fréquents, attaque vite, esquive."
+      weaknesses: "Fragile au contact : il faut garder ses distances."
+      basic: {name: "Tir", description: "Tire une flèche (%coef% %power%) jusqu'à %range% blocs."}
+      right: {name: "Bond arrière", description: "Saute en arrière et court %speed_pct% plus vite pendant %duration% s."}
+      a: {name: "Volée", description: "Tire un éventail de %arrows% flèches, %coef% %power% chacune."}
+      f: {name: "Pluie de flèches", description: "Des flèches tombent là où tu vises pendant %duration% s : %hits% vagues de %coef% %power% sur %radius% blocs."}
+    mage:
+      role: "Dégâts de zone, contrôle"
+      difficulty: 3
+      strengths: "Les plus gros dégâts de zone, gèle et ralentit des groupes entiers."
+      weaknesses: "Très fragile, dépend entièrement de son mana."
+      basic: {name: "Trait arcanique", description: "Un trait de magie (%coef% %power%) jusqu'à %range% blocs."}
+      right: {name: "Transfert", description: "Te téléporte de %distance% blocs devant toi."}
+      a: {name: "Boule de feu", description: "Explose à l'impact : %coef% %power% en feu sur %radius% blocs."}
+      f: {name: "Nova de givre", description: "%coef% %power% en glace autour de toi (%radius% blocs), ennemis ralentis de %slow_pct% pendant %duration% s."}
+    healer:
+      role: "Soin et soutien"
+      difficulty: 2
+      strengths: "Soigne le groupe, renforce les dégâts des alliés, beaucoup de mana."
+      weaknesses: "Dégâts faibles : seul, il avance lentement."
+      basic: {name: "Rayon sacré", description: "Un rayon de lumière (%coef% %power%) jusqu'à %range% blocs."}
+      right: {name: "Soin", description: "Soigne l'allié visé, ou toi, de %coef% %power% (jusqu'à %range% blocs)."}
+      a: {name: "Bénédiction", description: "Les alliés à %radius% blocs font %damage_bonus_pct% de dégâts en plus pendant %duration% s."}
+      f: {name: "Sanctuaire", description: "Une zone de soin de %radius% blocs : %hits% soins de %coef% %power% en %duration% s."}
