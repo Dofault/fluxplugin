@@ -147,8 +147,8 @@ public final class Jukebox {
                     else layer.remove(player.getUniqueId(), this);
                     return;
                 }
-                start += song.length() * song.stepNanos();
-                index = 0;
+                start += (song.length() - song.loopStart()) * song.stepNanos();
+                index = song.loopIndex();
             }
             schedule();
         }

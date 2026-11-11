@@ -44,11 +44,6 @@ import java.util.stream.Stream;
  */
 public final class FluxMusic extends FluxPlugin implements Listener {
 
-    /** Songs shipped in the jar, written to the songs folder when missing. */
-    private static final List<String> SHIPPED = List.of("eveil_de_valdor.yml", "taverne.yml", "foret.yml", "boss.yml",
-            "victoire.yml", "victoire_boss.yml", "defaite.yml", "niveau.yml",
-            "caisses.yml");
-
     private volatile Map<String, Song> songs = Map.of();
     private Jukebox jukebox;
 
@@ -131,11 +126,21 @@ public final class FluxMusic extends FluxPlugin implements Listener {
         return (float) Math.max(0, getConfig().getDouble("volume", 1.0));
     }
 
+    /** Writes every song of the jar ({@code songs/}) missing from the songs folder. */
+    private void shipSongs(File folder) {
+        try (java.util.jar.JarFile jar = new java.util.jar.JarFile(getFile())) {
+            jar.stream().map(java.util.jar.JarEntry::getName)
+                    .filter(n -> n.startsWith("songs/") && !n.endsWith("/"))
+                    .filter(n -> !new File(getDataFolder(), n).exists())
+                    .forEach(n -> saveResource(n, false));
+        } catch (java.io.IOException e) {
+            getLogger().warning("Songs of the jar not copied: " + e.getMessage());
+        }
+    }
+
     private void loadSongs() {
         File folder = new File(getDataFolder(), "songs");
-        for (String name : SHIPPED) {
-            if (!new File(folder, name).exists()) saveResource("songs/" + name, false);
-        }
+        shipSongs(folder);
         Map<String, Song> loaded = new TreeMap<>();
         File[] files = folder.listFiles();
         if (files != null) for (File f : files) {

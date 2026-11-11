@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
  * steps-per-beat: 4     # a step is then a sixteenth note
  * beats-per-bar: 4      # used to check bar lengths
  * loop: false
+ * loop-from: theme      # section a looping song goes back to (the sections before it play once)
  * tracks:
  *   melody: { instrument: flute, volume: 1.0 }
  * patterns:             # reusable pieces, written @name or @name*3
@@ -76,8 +77,15 @@ public final class ScoreReader {
         if (order.isEmpty()) order = new ArrayList<>(sections.getKeys(false));
 
         Song.Builder song = new Song.Builder();
+        String loopFrom = yaml.getString("loop-from", "");
+        int loopStart = 0;
+        boolean loopFound = loopFrom.isBlank();
         int cursor = 0;
         for (String sectionName : order) {
+            if (!loopFound && sectionName.equals(loopFrom)) {
+                loopStart = cursor;
+                loopFound = true;
+            }
             ConfigurationSection section = sections.getConfigurationSection(sectionName);
             if (section == null) throw new IllegalArgumentException("order: unknown section " + sectionName);
             int sectionLength = 0;
@@ -97,8 +105,9 @@ public final class ScoreReader {
             cursor += sectionLength;
         }
         song.length(cursor);
+        if (!loopFound) song.warn("loop-from: section " + loopFrom + " not in order, the whole song loops");
         return song.build(id, yaml.getString("title", id), yaml.getString("author", ""), stepNanos,
-                yaml.getBoolean("loop", false));
+                yaml.getBoolean("loop", false), loopStart);
     }
 
     /** A score line, written as one string or a list of strings (joined as bars). */

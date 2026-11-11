@@ -1,0 +1,59 @@
+# Boss du Cultivateur (Champ du Moissonneur) : la mineur à 12/8, banjo et flûte, faux qui balance.
+# Généré par FluxMusic/assets/gen_songs.py : modifier le script, pas ce fichier.
+title: "Le Moissonneur"
+author: "Influencraft"
+bpm: 120
+steps-per-beat: 3
+beats-per-bar: 4
+loop: true
+loop-from: a
+
+tracks:
+  lead: { instrument: banjo, volume: 0.8 }
+  chant: { instrument: flute, volume: 0.7 }
+  echo: { instrument: chime, volume: 0.3 }
+  arpege: { instrument: harp, volume: 0.32 }
+  guitare: { instrument: guitar, volume: 0.55 }
+  basse: { instrument: bass, volume: 0.85 }
+  grosse: { instrument: basedrum, volume: 0.65 }
+  caisse: { instrument: snare, volume: 0.33 }
+  charley: { instrument: hat, volume: 0.17 }
+  grondement: { instrument: didgeridoo, volume: 0.45 }
+
+sections:
+  intro:
+    arpege: "A3 C4 E4 A4 E4 C4 A3 C4 E4 A4 E4 C4 | A3 C4 E4 A4 E4 C4 A3 C4 E4 A4 E4 C4"
+    basse: "A1:2 A2 A1:2 A2 A1:2 A2 A1:2 A2 | A1:2 A2 A1:2 A2 A1:2 A2 A1:2 A2"
+    grondement: "A1:12 | A1:12"
+    grosse: "x:12 | x:3 x:3 x:2 x x:2 x"
+    caisse: ".:12 | .:6 x x x x x x"
+    charley: ".:3 x:3 .:3 x:3 | .:12"
+  a:
+    lead: "A3:2 C4 E4:2 A4 G4:2 E4 C4:2 E4 | A4:3 B4:2 A4 G4:3 E4:3 | D4:2 G4 B4:2 G4 D4:2 B3 G3:3 | C4:2 E4 A4:2 E4 C4:3 A3:3 | F4:2 A4 C5:2 A4 F4:2 E4 F4:3 | G4:3 D4:3 B3:3 D4:3 | E4:2 G#4 B4:2 G#4 E4:2 D4 C4:3 | B3:3 G#3:3 B3:6"
+    guitare: "A2+C3+E3:2 A2+C3+E3 A2+C3+E3:2 A2+C3+E3 A2+C3+E3:2 A2+C3+E3 A2+C3+E3:2 A2+C3+E3 | A2+C3+E3:2 A2+C3+E3 A2+C3+E3:2 A2+C3+E3 A2+C3+E3:2 A2+C3+E3 A2+C3+E3:2 A2+C3+E3 | G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 | A2+C3+E3:2 A2+C3+E3 A2+C3+E3:2 A2+C3+E3 A2+C3+E3:2 A2+C3+E3 A2+C3+E3:2 A2+C3+E3 | F3+A3+C4:2 F3+A3+C4 F3+A3+C4:2 F3+A3+C4 F3+A3+C4:2 F3+A3+C4 F3+A3+C4:2 F3+A3+C4 | G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 | E3+G#3+B3:2 E3+G#3+B3 E3+G#3+B3:2 E3+G#3+B3 E3+G#3+B3:2 E3+G#3+B3 E3+G#3+B3:2 E3+G#3+B3 | E3+G#3+B3:2 E3+G#3+B3 E3+G#3+B3:2 E3+G#3+B3 E3+G#3+B3:2 E3+G#3+B3 E3+G#3+B3:2 E3+G#3+B3"
+    basse: "A1:2 A2 A1:2 A2 A1:2 A2 A1:2 A2 | A1:2 A2 A1:2 A2 A1:2 A2 A1:2 A2 | G1:2 G2 G1:2 G2 G1:2 G2 G1:2 G2 | A1:2 A2 A1:2 A2 A1:2 A2 A1:2 A2 | F2:2 F3 F2:2 F3 F2:2 F3 F2:2 F3 | G1:2 G2 G1:2 G2 G1:2 G2 G1:2 G2 | E2:2 E3 E2:2 E3 E2:2 E3 E2:2 E3 | E2:2 E3 E2:2 E3 E2:2 E3 E2:2 E3"
+    grondement: "A1:12 | A1:12 | G1:12 | A1:12 | F2:12 | G1:12 | E2:12 | E2:12"
+    grosse: "x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:3 x:3 x:2 x x:2 x"
+    caisse: ".:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:6 x x x x x x"
+    charley: "x:3 x:3 x:3 x:3 | x:3 x:3 x:3 x:3 | x:3 x:3 x:3 x:3 | x:3 x:3 x:3 x:3 | x:3 x:3 x:3 x:3 | x:3 x:3 x:3 x:3 | x:3 x:3 x:3 x:3 | .:12"
+  b:
+    chant: "C6:6 A5:6 | B5:6 G5:6 | A5:2 B5 C6:2 B5 A5:6 | E5:12 | F5:2 A5 D6:2 A5 F5:6 | G#5:6 B5:6 | C6:2 B5 A5:2 G#5 A5:6 | B5:12"
+    arpege: "F4 A4 C5 F5 C5 A4 F4 A4 C5 F5 C5 A4 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 | A3 C4 E4 A4 E4 C4 A3 C4 E4 A4 E4 C4 | A3 C4 E4 A4 E4 C4 A3 C4 E4 A4 E4 C4 | D4 F4 A4 D5 A4 F4 D4 F4 A4 D5 A4 F4 | E4 G#4 B4 E5 B4 G#4 E4 G#4 B4 E5 B4 G#4 | A3 C4 E4 A4 E4 C4 A3 C4 E4 A4 E4 C4 | E4 G#4 B4 E5 B4 G#4 E4 G#4 B4 E5 B4 G#4"
+    guitare: "F3 A3 C4 F4 C4 A3 F3 A3 C4 F4 C4 A3 | G2 B2 D3 G3 D3 B2 G2 B2 D3 G3 D3 B2 | A2 C3 E3 A3 E3 C3 A2 C3 E3 A3 E3 C3 | A2 C3 E3 A3 E3 C3 A2 C3 E3 A3 E3 C3 | D3 F3 A3 D4 A3 F3 D3 F3 A3 D4 A3 F3 | E3 G#3 B3 E4 B3 G#3 E3 G#3 B3 E4 B3 G#3 | A2 C3 E3 A3 E3 C3 A2 C3 E3 A3 E3 C3 | E3 G#3 B3 E4 B3 G#3 E3 G#3 B3 E4 B3 G#3"
+    basse: "F2:6 C3:6 | G1:6 D2:6 | A1:6 E2:6 | A1:6 E2:6 | D2:6 A2:6 | E2:6 B2:6 | A1:6 E2:6 | E2:6 B2:6"
+    grondement: "F2:12 | G1:12 | A1:12 | A1:12 | D2:12 | E2:12 | A1:12 | E2:12"
+    grosse: "x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:3 x:3 x:2 x x:2 x"
+    caisse: ".:6 x:6 | .:6 x:6 | .:6 x:6 | .:6 x:6 | .:6 x:6 | .:6 x:6 | .:6 x:6 | .:6 x x x x x x"
+    charley: "x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | .:12"
+  a2:
+    lead: "A3:2 C4 E4:2 A4 G4:2 E4 C4:2 E4 | A4:3 B4:2 A4 G4:3 E4:3 | D4:2 G4 B4:2 G4 D4:2 B3 G3:3 | C4:2 E4 A4:2 E4 C4:3 A3:3 | F4:2 A4 C5:2 A4 F4:2 E4 F4:3 | G4:3 D4:3 B3:3 D4:3 | E4:2 G#4 B4:2 G#4 E4:2 D4 C4:3 | B3:3 G#3:3 B3:6"
+    echo: "A5:2 C6 E6:2 A6 G6:2 E6 C6:2 E6 | A6:3 B6:2 A6 G6:3 E6:3 | D6:2 G6 B6:2 G6 D6:2 B5 G5:3 | C6:2 E6 A6:2 E6 C6:3 A5:3 | F6:2 A6 C7:2 A6 F6:2 E6 F6:3 | G6:3 D6:3 B5:3 D6:3 | E6:2 G#6 B6:2 G#6 E6:2 D6 C6:3 | B5:3 G#5:3 B5:6"
+    arpege: "A3 C4 E4 A4 E4 C4 A3 C4 E4 A4 E4 C4 | A3 C4 E4 A4 E4 C4 A3 C4 E4 A4 E4 C4 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 | A3 C4 E4 A4 E4 C4 A3 C4 E4 A4 E4 C4 | F4 A4 C5 F5 C5 A4 F4 A4 C5 F5 C5 A4 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 | E4 G#4 B4 E5 B4 G#4 E4 G#4 B4 E5 B4 G#4 | E4 G#4 B4 E5 B4 G#4 E4 G#4 B4 E5 B4 G#4"
+    guitare: "A2+C3+E3:2 A2+C3+E3 A2+C3+E3:2 A2+C3+E3 A2+C3+E3:2 A2+C3+E3 A2+C3+E3:2 A2+C3+E3 | A2+C3+E3:2 A2+C3+E3 A2+C3+E3:2 A2+C3+E3 A2+C3+E3:2 A2+C3+E3 A2+C3+E3:2 A2+C3+E3 | G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 | A2+C3+E3:2 A2+C3+E3 A2+C3+E3:2 A2+C3+E3 A2+C3+E3:2 A2+C3+E3 A2+C3+E3:2 A2+C3+E3 | F3+A3+C4:2 F3+A3+C4 F3+A3+C4:2 F3+A3+C4 F3+A3+C4:2 F3+A3+C4 F3+A3+C4:2 F3+A3+C4 | G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 G3+B3+D4:2 G3+B3+D4 | E3+G#3+B3:2 E3+G#3+B3 E3+G#3+B3:2 E3+G#3+B3 E3+G#3+B3:2 E3+G#3+B3 E3+G#3+B3:2 E3+G#3+B3 | E3+G#3+B3:2 E3+G#3+B3 E3+G#3+B3:2 E3+G#3+B3 E3+G#3+B3:2 E3+G#3+B3 E3+G#3+B3:2 E3+G#3+B3"
+    basse: "A1:2 A2 A1:2 A2 A1:2 A2 A1:2 A2 | A1:2 A2 A1:2 A2 A1:2 A2 A1:2 A2 | G1:2 G2 G1:2 G2 G1:2 G2 G1:2 G2 | A1:2 A2 A1:2 A2 A1:2 A2 A1:2 A2 | F2:2 F3 F2:2 F3 F2:2 F3 F2:2 F3 | G1:2 G2 G1:2 G2 G1:2 G2 G1:2 G2 | E2:2 E3 E2:2 E3 E2:2 E3 E2:2 E3 | E2:2 E3 E2:2 E3 E2:2 E3 E2:2 E3"
+    grondement: "A1:12 | A1:12 | G1:12 | A1:12 | F2:12 | G1:12 | E2:12 | E2:12"
+    grosse: "x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:3 x:3 x:2 x x:2 x"
+    caisse: ".:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:6 x x x x x x"
+    charley: "x:3 x:3 x:3 x:3 | x:3 x:3 x:3 x:3 | x:3 x:3 x:3 x:3 | x:3 x:3 x:3 x:3 | x:3 x:3 x:3 x:3 | x:3 x:3 x:3 x:3 | x:3 x:3 x:3 x:3 | .:12"
+
+order: [intro, a, b, a2]

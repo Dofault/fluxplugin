@@ -40,10 +40,11 @@ public final class NbsReader {
         in.position(in.position() + 4 * 5); // minutes spent, clicks, blocks added/removed
         string(in); // imported file name
         boolean loop = false;
+        int loopStart = 0;
         if (version >= 4) {
             loop = in.get() != 0;
             in.get(); // max loop count
-            in.getShort(); // loop start tick
+            loopStart = in.getShort() & 0xFFFF;
         }
 
         List<RawNote> notes = new ArrayList<>();
@@ -92,7 +93,7 @@ public final class NbsReader {
         if (tempo <= 0) tempo = 1000;
         long stepNanos = Math.round(1_000_000_000d * 100 / tempo);
         String by = !author.isBlank() ? author : original;
-        return song.build(id, title.isBlank() ? id : title, by, stepNanos, loop);
+        return song.build(id, title.isBlank() ? id : title, by, stepNanos, loop, loopStart);
     }
 
     private static String string(ByteBuffer in) {

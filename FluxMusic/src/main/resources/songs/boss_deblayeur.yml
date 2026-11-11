@@ -1,0 +1,54 @@
+# Boss du Déblayeur (Galeries de Taupérion) : sol mineur sautillant, xylophone, 170 BPM.
+# Généré par FluxMusic/assets/gen_songs.py : modifier le script, pas ce fichier.
+title: "La Fureur de Taupérion"
+author: "Influencraft"
+bpm: 170
+steps-per-beat: 4
+beats-per-bar: 4
+loop: true
+loop-from: a
+
+tracks:
+  lead: { instrument: xylophone, volume: 0.8 }
+  chant: { instrument: pling, volume: 0.7 }
+  echo: { instrument: cow_bell, volume: 0.3 }
+  arpege: { instrument: banjo, volume: 0.32 }
+  guitare: { instrument: guitar, volume: 0.55 }
+  basse: { instrument: bass, volume: 0.85 }
+  grosse: { instrument: basedrum, volume: 0.65 }
+  caisse: { instrument: snare, volume: 0.33 }
+  charley: { instrument: hat, volume: 0.17 }
+
+sections:
+  intro:
+    arpege: "G4 Bb4 D5 Bb4 G4 Bb4 D5 Bb4 G4 Bb4 D5 Bb4 G4 Bb4 D5 Bb4 | G4 Bb4 D5 Bb4 G4 Bb4 D5 Bb4 G4 Bb4 D5 Bb4 G4 Bb4 D5 Bb4"
+    basse: "G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 | G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 G1:2"
+    grosse: "x:16 | x:4 x:4 x:2 x:2 x:2 x:2"
+    caisse: ".:16 | .:8 x x x x x x x x"
+    charley: ".:4 x:4 .:4 x:4 | .:16"
+  a:
+    lead: "G5:2 .:2 G5:2 A5:2 Bb5:2 .:2 A5:2 G5:2 | D6:2 .:2 C#6:2 D6:2 Bb5:4 G5:4 | Eb6:2 .:2 D6:2 C6:2 Bb5:2 .:2 G5:4 | A5:2 F#5:2 A5:2 C6:2 D6:8 | G5:2 .:2 G5:2 A5:2 Bb5:2 .:2 C6:2 D6:2 | G6:4 F6:2 D6:2 Bb5:4 D6:4 | C6:2 Bb5:2 G5:2 Bb5:2 A5:4 F#5:4 | F#5:4 A5:4 D6:8"
+    guitare: ".:2 G3+Bb3+D4:2 .:2 G3+Bb3+D4:2 .:2 G3+Bb3+D4:2 .:2 G3+Bb3+D4:2 | .:2 G3+Bb3+D4:2 .:2 G3+Bb3+D4:2 .:2 G3+Bb3+D4:2 .:2 G3+Bb3+D4:2 | .:2 Eb3+G3+Bb3:2 .:2 Eb3+G3+Bb3:2 .:2 Eb3+G3+Bb3:2 .:2 Eb3+G3+Bb3:2 | .:2 D3+Gb3+A3:2 .:2 D3+Gb3+A3:2 .:2 D3+Gb3+A3:2 .:2 D3+Gb3+A3:2 | .:2 G3+Bb3+D4:2 .:2 G3+Bb3+D4:2 .:2 G3+Bb3+D4:2 .:2 G3+Bb3+D4:2 | .:2 G3+Bb3+D4:2 .:2 G3+Bb3+D4:2 .:2 G3+Bb3+D4:2 .:2 G3+Bb3+D4:2 | .:2 Eb3+G3+Bb3:2 .:2 Eb3+G3+Bb3:2 .:2 Eb3+G3+Bb3:2 .:2 Eb3+G3+Bb3:2 | .:2 D3+Gb3+A3:2 .:2 D3+Gb3+A3:2 .:2 D3+Gb3+A3:2 .:2 D3+Gb3+A3:2"
+    basse: "G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 | G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 | Eb2:2 Eb2:2 Eb2:2 Eb2:2 Eb2:2 Eb2:2 Eb2:2 Eb2:2 | D2:2 D2:2 D2:2 D2:2 D2:2 D2:2 D2:2 D2:2 | G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 | G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 | Eb2:2 Eb2:2 Eb2:2 Eb2:2 Eb2:2 Eb2:2 Eb2:2 Eb2:2 | D2:2 D2:2 D2:2 D2:2 D2:2 D2:2 D2:2 D2:2"
+    grosse: "x:6 x:2 x:8 | x:6 x:2 x:8 | x:6 x:2 x:8 | x:6 x:2 x:8 | x:6 x:2 x:8 | x:6 x:2 x:8 | x:6 x:2 x:8 | x:4 x:4 x:2 x:2 x:2 x:2"
+    caisse: ".:4 x:8 x:4 | .:4 x:8 x:4 | .:4 x:8 x:4 | .:4 x:8 x:4 | .:4 x:8 x:4 | .:4 x:8 x:4 | .:4 x:8 x:4 | .:8 x x x x x x x x"
+    charley: "x:2 x:2 x:2 x:2 x:2 x:2 x:2 x:2 | x:2 x:2 x:2 x:2 x:2 x:2 x:2 x:2 | x:2 x:2 x:2 x:2 x:2 x:2 x:2 x:2 | x:2 x:2 x:2 x:2 x:2 x:2 x:2 x:2 | x:2 x:2 x:2 x:2 x:2 x:2 x:2 x:2 | x:2 x:2 x:2 x:2 x:2 x:2 x:2 x:2 | x:2 x:2 x:2 x:2 x:2 x:2 x:2 x:2 | .:16"
+  b:
+    chant: "C4:4 Eb4:4 G4:8 | F#4:4 A4:4 D4:8 | G4:2 F4:2 D4:4 Bb3:8 | G3:16 | C4:4 Eb4:4 G4:4 C5:4 | A4:8 F#4:8 | G4:4 Eb4:4 Bb3:8 | D4:4 F#4:4 A4:8"
+    arpege: "C4 Eb4 G4 C5 G4 Eb4 C4 Eb4 G4 C5 G4 Eb4 C4 Eb4 G4 C5 | D4 Gb4 A4 D5 A4 Gb4 D4 Gb4 A4 D5 A4 Gb4 D4 Gb4 A4 D5 | G4 Bb4 D5 Bb4 G4 Bb4 D5 Bb4 G4 Bb4 D5 Bb4 G4 Bb4 D5 Bb4 | G4 Bb4 D5 Bb4 G4 Bb4 D5 Bb4 G4 Bb4 D5 Bb4 G4 Bb4 D5 Bb4 | C4 Eb4 G4 C5 G4 Eb4 C4 Eb4 G4 C5 G4 Eb4 C4 Eb4 G4 C5 | D4 Gb4 A4 D5 A4 Gb4 D4 Gb4 A4 D5 A4 Gb4 D4 Gb4 A4 D5 | Eb4 G4 Bb4 Eb5 Bb4 G4 Eb4 G4 Bb4 Eb5 Bb4 G4 Eb4 G4 Bb4 Eb5 | D4 Gb4 A4 D5 A4 Gb4 D4 Gb4 A4 D5 A4 Gb4 D4 Gb4 A4 D5"
+    guitare: "C3+Eb3+G3:3 C3+Eb3+G3:3 C3+Eb3+G3:2 .:8 | D3+Gb3+A3:3 D3+Gb3+A3:3 D3+Gb3+A3:2 .:8 | G3+Bb3+D4:3 G3+Bb3+D4:3 G3+Bb3+D4:2 .:8 | G3+Bb3+D4:3 G3+Bb3+D4:3 G3+Bb3+D4:2 .:8 | C3+Eb3+G3:3 C3+Eb3+G3:3 C3+Eb3+G3:2 .:8 | D3+Gb3+A3:3 D3+Gb3+A3:3 D3+Gb3+A3:2 .:8 | Eb3+G3+Bb3:3 Eb3+G3+Bb3:3 Eb3+G3+Bb3:2 .:8 | D3+Gb3+A3:3 D3+Gb3+A3:3 D3+Gb3+A3:2 .:8"
+    basse: "C2:2 C3:2 C2:2 C3:2 C2:2 C3:2 C2:2 C3:2 | D2:2 D3:2 D2:2 D3:2 D2:2 D3:2 D2:2 D3:2 | G1:2 G2:2 G1:2 G2:2 G1:2 G2:2 G1:2 G2:2 | G1:2 G2:2 G1:2 G2:2 G1:2 G2:2 G1:2 G2:2 | C2:2 C3:2 C2:2 C3:2 C2:2 C3:2 C2:2 C3:2 | D2:2 D3:2 D2:2 D3:2 D2:2 D3:2 D2:2 D3:2 | Eb2:2 Eb3:2 Eb2:2 Eb3:2 Eb2:2 Eb3:2 Eb2:2 Eb3:2 | D2:2 D3:2 D2:2 D3:2 D2:2 D3:2 D2:2 D3:2"
+    grosse: "x:6 x:2 .:8 | x:6 x:2 .:8 | x:6 x:2 .:8 | x:6 x:2 .:8 | x:6 x:2 .:8 | x:6 x:2 .:8 | x:6 x:2 .:8 | x:4 x:4 x:2 x:2 x:2 x:2"
+    caisse: ".:8 x:8 | .:8 x:8 | .:8 x:8 | .:8 x:8 | .:8 x:8 | .:8 x:8 | .:8 x:8 | .:8 x x x x x x x x"
+    charley: "x:2 x:2 x:2 x:2 x:2 x:2 x:2 x:2 | x:2 x:2 x:2 x:2 x:2 x:2 x:2 x:2 | x:2 x:2 x:2 x:2 x:2 x:2 x:2 x:2 | x:2 x:2 x:2 x:2 x:2 x:2 x:2 x:2 | x:2 x:2 x:2 x:2 x:2 x:2 x:2 x:2 | x:2 x:2 x:2 x:2 x:2 x:2 x:2 x:2 | x:2 x:2 x:2 x:2 x:2 x:2 x:2 x:2 | .:16"
+  a2:
+    lead: "G5:2 .:2 G5:2 A5:2 Bb5:2 .:2 A5:2 G5:2 | D6:2 .:2 C#6:2 D6:2 Bb5:4 G5:4 | Eb6:2 .:2 D6:2 C6:2 Bb5:2 .:2 G5:4 | A5:2 F#5:2 A5:2 C6:2 D6:8 | G5:2 .:2 G5:2 A5:2 Bb5:2 .:2 C6:2 D6:2 | G6:4 F6:2 D6:2 Bb5:4 D6:4 | C6:2 Bb5:2 G5:2 Bb5:2 A5:4 F#5:4 | F#5:4 A5:4 D6:8"
+    echo: "G4:2 .:2 G4:2 A4:2 Bb4:2 .:2 A4:2 G4:2 | D5:2 .:2 C#5:2 D5:2 Bb4:4 G4:4 | Eb5:2 .:2 D5:2 C5:2 Bb4:2 .:2 G4:4 | A4:2 F#4:2 A4:2 C5:2 D5:8 | G4:2 .:2 G4:2 A4:2 Bb4:2 .:2 C5:2 D5:2 | G5:4 F5:2 D5:2 Bb4:4 D5:4 | C5:2 Bb4:2 G4:2 Bb4:2 A4:4 F#4:4 | F#4:4 A4:4 D5:8"
+    arpege: "G4 Bb4 D5 Bb4 G4 Bb4 D5 Bb4 G4 Bb4 D5 Bb4 G4 Bb4 D5 Bb4 | G4 Bb4 D5 Bb4 G4 Bb4 D5 Bb4 G4 Bb4 D5 Bb4 G4 Bb4 D5 Bb4 | Eb4 G4 Bb4 Eb5 Bb4 G4 Eb4 G4 Bb4 Eb5 Bb4 G4 Eb4 G4 Bb4 Eb5 | D4 Gb4 A4 D5 A4 Gb4 D4 Gb4 A4 D5 A4 Gb4 D4 Gb4 A4 D5 | G4 Bb4 D5 Bb4 G4 Bb4 D5 Bb4 G4 Bb4 D5 Bb4 G4 Bb4 D5 Bb4 | G4 Bb4 D5 Bb4 G4 Bb4 D5 Bb4 G4 Bb4 D5 Bb4 G4 Bb4 D5 Bb4 | Eb4 G4 Bb4 Eb5 Bb4 G4 Eb4 G4 Bb4 Eb5 Bb4 G4 Eb4 G4 Bb4 Eb5 | D4 Gb4 A4 D5 A4 Gb4 D4 Gb4 A4 D5 A4 Gb4 D4 Gb4 A4 D5"
+    guitare: ".:2 G3+Bb3+D4:2 .:2 G3+Bb3+D4:2 .:2 G3+Bb3+D4:2 .:2 G3+Bb3+D4:2 | .:2 G3+Bb3+D4:2 .:2 G3+Bb3+D4:2 .:2 G3+Bb3+D4:2 .:2 G3+Bb3+D4:2 | .:2 Eb3+G3+Bb3:2 .:2 Eb3+G3+Bb3:2 .:2 Eb3+G3+Bb3:2 .:2 Eb3+G3+Bb3:2 | .:2 D3+Gb3+A3:2 .:2 D3+Gb3+A3:2 .:2 D3+Gb3+A3:2 .:2 D3+Gb3+A3:2 | .:2 G3+Bb3+D4:2 .:2 G3+Bb3+D4:2 .:2 G3+Bb3+D4:2 .:2 G3+Bb3+D4:2 | .:2 G3+Bb3+D4:2 .:2 G3+Bb3+D4:2 .:2 G3+Bb3+D4:2 .:2 G3+Bb3+D4:2 | .:2 Eb3+G3+Bb3:2 .:2 Eb3+G3+Bb3:2 .:2 Eb3+G3+Bb3:2 .:2 Eb3+G3+Bb3:2 | .:2 D3+Gb3+A3:2 .:2 D3+Gb3+A3:2 .:2 D3+Gb3+A3:2 .:2 D3+Gb3+A3:2"
+    basse: "G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 | G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 | Eb2:2 Eb2:2 Eb2:2 Eb2:2 Eb2:2 Eb2:2 Eb2:2 Eb2:2 | D2:2 D2:2 D2:2 D2:2 D2:2 D2:2 D2:2 D2:2 | G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 | G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 G1:2 | Eb2:2 Eb2:2 Eb2:2 Eb2:2 Eb2:2 Eb2:2 Eb2:2 Eb2:2 | D2:2 D2:2 D2:2 D2:2 D2:2 D2:2 D2:2 D2:2"
+    grosse: "x:6 x:2 x:8 | x:6 x:2 x:8 | x:6 x:2 x:8 | x:6 x:2 x:8 | x:6 x:2 x:8 | x:6 x:2 x:8 | x:6 x:2 x:8 | x:4 x:4 x:2 x:2 x:2 x:2"
+    caisse: ".:4 x:8 x:4 | .:4 x:8 x:4 | .:4 x:8 x:4 | .:4 x:8 x:4 | .:4 x:8 x:4 | .:4 x:8 x:4 | .:4 x:8 x:4 | .:8 x x x x x x x x"
+    charley: "x:2 x:2 x:2 x:2 x:2 x:2 x:2 x:2 | x:2 x:2 x:2 x:2 x:2 x:2 x:2 x:2 | x:2 x:2 x:2 x:2 x:2 x:2 x:2 x:2 | x:2 x:2 x:2 x:2 x:2 x:2 x:2 x:2 | x:2 x:2 x:2 x:2 x:2 x:2 x:2 x:2 | x:2 x:2 x:2 x:2 x:2 x:2 x:2 x:2 | x:2 x:2 x:2 x:2 x:2 x:2 x:2 x:2 | .:16"
+
+order: [intro, a, b, a2]

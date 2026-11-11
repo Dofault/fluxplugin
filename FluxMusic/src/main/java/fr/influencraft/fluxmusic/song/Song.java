@@ -13,12 +13,19 @@ import java.util.TreeMap;
  *
  * @param stepNanos duration of one step
  * @param length    number of steps of the whole song (silences at the end included)
+ * @param loopStart step a looping song goes back to (0 = the start; an intro is played once before it)
  * @param times     steps holding notes, increasing
  * @param notes     sounds of each of {@link #times}
  * @param warnings  what was fixed while reading the file (notes moved by an octave, bars of a wrong length...)
  */
 public record Song(String id, String title, String author, long stepNanos, int length, boolean loop,
-                   int[] times, Sound[][] notes, List<String> warnings) {
+                   int loopStart, int[] times, Sound[][] notes, List<String> warnings) {
+
+    /** Index in {@link #times} of the first step played again when the song loops. */
+    public int loopIndex() {
+        for (int i = 0; i < times.length; i++) if (times[i] >= loopStart) return i;
+        return 0;
+    }
 
     public long durationMillis() {
         return length * stepNanos / 1_000_000L;
@@ -59,7 +66,7 @@ public record Song(String id, String title, String author, long stepNanos, int l
             warnings.add(message);
         }
 
-        public Song build(String id, String title, String author, long stepNanos, boolean loop) {
+        public Song build(String id, String title, String author, long stepNanos, boolean loop, int loopStart) {
             int[] times = new int[steps.size()];
             Sound[][] notes = new Sound[steps.size()][];
             int i = 0;
@@ -67,7 +74,8 @@ public record Song(String id, String title, String author, long stepNanos, int l
                 times[i] = e.getKey();
                 notes[i++] = e.getValue().toArray(Sound[]::new);
             }
-            return new Song(id, title, author, stepNanos, length, loop, times, notes, List.copyOf(warnings));
+            int from = loopStart < 0 || loopStart >= length ? 0 : loopStart;
+            return new Song(id, title, author, stepNanos, length, loop, from, times, notes, List.copyOf(warnings));
         }
     }
 }
