@@ -28,6 +28,7 @@ dialogs:
   amount-min: "Au moins %min%."
   amount-max: "Au plus %max%."
 rewards:
+  other-universe: "&#FF5C5CTes récompenses se récupèrent dans le monde principal, pas ici."
   help: "&#B376E5Récupère tes récompenses avec &f[/%flux_cmd_flux_rewards%]&#B376E5."
   reminder: "&#B376E5Tu as &f%count% &#B376E5récompense(s) en attente : &f[/%flux_cmd_flux_rewards%]"
   given: "&#B376E5Nouvelle récompense en attente : &f%label%&#B376E5, &f[/%flux_cmd_flux_rewards%]"
@@ -151,3 +152,13 @@ items-given: "&#2ECF7B&f%amount% %id% &#2ECF7Bdonné à &f%player%&#2ECF7B."
 items-list: "&7%count% objets : &f%ids%"
 items-held: "&7Objet en main : &f%id%"
 items-held-none: "&7Cet objet n'a pas d'identifiant."
+
+universe:
+  unavailable: "&#FF5C5CTon profil n'a pas pu être chargé. Réessaie dans un instant, et préviens le staff si cela continue."
+  failed: "&#FF5C5CLe changement d'univers a échoué : tu as gardé ton inventaire et tu as été ramené d'où tu venais."
+  busy: "&#B376E5Changement d'univers en cours, patiente un instant."
+  quarantined: "&#FF5C5CUn objet qui n'appartient pas à cet univers t'a été retiré : il t'attend dans son univers."
+  returned: "&#2ECF7B%count% &#B376E5objet(s) de cet univers t'ont été rendus."
+  waiting: "&#B376E5Encore &f%count% &#B376E5objet(s) à te rendre : libère de la place dans ton inventaire."
+  no-container: "&#FF5C5CLes conteneurs ne s'utilisent pas dans cet univers."
+  no-command: "&#FF5C5CCette commande n'est pas disponible dans cet univers."

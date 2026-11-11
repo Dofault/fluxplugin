@@ -26,6 +26,12 @@ permissions:
   flux.rewards.give:
     description: /rewards give and /rewards list (hand a reward to a player, see what waits for him).
     default: op
+  flux.universe.admin:
+    description: /universes (a player's universe and quarantine, reload universes.yml).
+    default: op
+  flux.universe.bypass:
+    description: Outside vanilla, containers, crafting, portals and every command allowed; in creative, items of another universe are not taken away (builders).
+    default: false
   flux.staff.alerts:
     description: Receives the staff alerts of the suite in the chat (e.g. how a new player found the server).
     default: op

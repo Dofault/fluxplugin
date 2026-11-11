@@ -28,6 +28,7 @@ dialogs:
   amount-min: "At least %min%."
   amount-max: "At most %max%."
 rewards:
+  other-universe: "&#FF5C5CYour rewards are claimed in the main world, not here."
   help: "&#B376E5Claim your rewards with &f[/%flux_cmd_flux_rewards%]&#B376E5."
   reminder: "&#B376E5You have &f%count% &#B376E5reward(s) waiting: &f[/%flux_cmd_flux_rewards%]"
   given: "&#B376E5New reward waiting for you: &f%label%&#B376E5, &f[/%flux_cmd_flux_rewards%]"
@@ -151,3 +152,13 @@ items-given: "&#2ECF7BGave &f%amount% %id% &#2ECF7Bto &f%player%&#2ECF7B."
 items-list: "&7%count% items: &f%ids%"
 items-held: "&7Item in hand: &f%id%"
 items-held-none: "&7This item has no id."
+
+universe:
+  unavailable: "&#FF5C5CYour profile could not be loaded. Try again in a moment, and tell the staff if it goes on."
+  failed: "&#FF5C5CThe universe change failed: you kept your inventory and were sent back where you came from."
+  busy: "&#B376E5Changing universe, wait a moment."
+  quarantined: "&#FF5C5CAn item that does not belong to this universe was taken from you: it waits for you in its universe."
+  returned: "&#2ECF7B%count% &#B376E5item(s) of this universe were given back to you."
+  waiting: "&#B376E5Still &f%count% &#B376E5item(s) to give back: make room in your inventory."
+  no-container: "&#FF5C5CContainers cannot be used in this universe."
+  no-command: "&#FF5C5CThis command is not available in this universe."

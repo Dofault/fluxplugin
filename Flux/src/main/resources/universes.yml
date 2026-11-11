@@ -1,0 +1,17 @@
+# Universes: groups of worlds whose players have their own, fully separate profile (inventory, armour, off hand, ender
+# chest, experience, life, hunger, effects, game mode). Every world not listed here belongs to "vanilla".
+# Plugins add the worlds they create themselves (FluxDungeons: its dungeon worlds). Reload: /universes reload.
+#
+# Items made for a universe carry its mark; an item held in the wrong universe is taken away and given back in its own
+# universe (quarantine, logged, staff told). Outside vanilla: nothing is dropped on the ground, no container, ender
+# chest, crafting or portal, inventory kept on death.
+
+universes:
+  rpg:
+    worlds: [flux_rpg]
+    world-prefixes: []
+    # game mode of a player's first visit (his own afterwards)
+    game-mode: ADVENTURE
+    # commands a player may type there (first word, without "/"); remove the list to allow every command
+    commands: [spawn, lobby, msg, tell, w, r, m, mail, groupe, party, donjon, donjons, dungeon, rpg, classe,
+               aide, help, list, discord, regles, report, signaler, ignore]

@@ -130,6 +130,11 @@ public final class RewardService implements Rewards.Backend, Listener {
 
     @Override
     public ClaimResult claim(Player player, String source, long id, boolean verbose) {
+        // rewards land in the vanilla inventory only: never claimed from another universe (rpg world...)
+        if (!fr.influencraft.flux.api.universe.Universes.isVanilla(player)) {
+            if (verbose) messages.get().send(player, "rewards.other-universe");
+            return ClaimResult.NONE;
+        }
         int room = Inventories.freeSlots(player);
         int delivered = 0, remaining = 0;
         for (StoredReward stored : store.pending(player.getUniqueId())) {
@@ -165,6 +170,10 @@ public final class RewardService implements Rewards.Backend, Listener {
 
     @Override
     public void open(Player player) {
+        if (!fr.influencraft.flux.api.universe.Universes.isVanilla(player)) {
+            messages.get().send(player, "rewards.other-universe");
+            return;
+        }
         Rewards.collect(player);
         Lists.reset(player, LIST);
         if (!FluxApi.hasMenu(MENU) || !FluxApi.open(player, MENU)) claim(player, null, -1, true);
