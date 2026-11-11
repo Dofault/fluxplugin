@@ -18,14 +18,15 @@ import sys
 from PIL import Image
 
 STEPS = 32
-BAR_W, BAR_H = 62, 8
-FILL_X0, FILL_X1, FILL_Y0, FILL_Y1 = 1, 60, 1, 6   # inclusive: a 1 px outline around 6 rows of fill
-BAR_ASCENT = 7
+BAR_W, BAR_H = 62, 7
+FILL_X0, FILL_X1, FILL_Y0, FILL_Y1 = 1, 60, 1, 5   # inclusive: a 1 px outline around 5 rows of fill
+# 6 (not 7): the bar keeps its bottom where the 8 px bar had it, the row it lost is gained at the top
+BAR_ASCENT = 6
 
 OUTLINE = (13, 13, 13, 255)
 EMPTY = (52, 12, 20, 255)
-FILL = [(255, 150, 150, 255), (255, 92, 92, 255), (247, 78, 82, 255), (236, 64, 74, 255), (222, 52, 66, 255),
-        (200, 37, 58, 255)]                                                      # top to bottom, 6 rows
+FILL = [(255, 150, 150, 255), (255, 92, 92, 255), (247, 78, 82, 255), (236, 64, 74, 255),
+        (200, 37, 58, 255)]                                                      # top to bottom, 5 rows
 EDGE = (255, 205, 205, 255)
 DIGIT, DIGIT_SHADOW = (255, 255, 255, 255), (70, 0, 12, 255)
 
@@ -61,14 +62,15 @@ def bar(step):
 def digits():
     font = json.load(open(FONT))
     chars = "0123456789KM"
-    cell_w, cell_h = 5, 6
+    # as tall as the fill (5 rows): the shadow under the last row of a digit would fall on the outline
+    cell_w, cell_h = 5, FILL_Y1 - FILL_Y0 + 1
     im = Image.new("RGBA", (cell_w * len(chars), cell_h), (0, 0, 0, 0))
     px = im.load()
     for i, c in enumerate(chars):
         g = font[c]
         for dy, row in enumerate(g):
             for dx, ch in enumerate(row):
-                if ch == "#":
+                if ch == "#" and dy + 1 < cell_h:
                     px[i * cell_w + dx, dy + 1] = DIGIT_SHADOW
         for dy, row in enumerate(g):
             for dx, ch in enumerate(row):
@@ -94,7 +96,7 @@ def main(pack):
         {"type": "space", "advances": {**back, **fwd}},
         {"type": "bitmap", "file": "fluxdungeons:font/health_bar.png", "ascent": BAR_ASCENT, "height": BAR_H,
          "chars": ["".join(chr(0xE000 + s) for s in range(STEPS + 1))]},
-        {"type": "bitmap", "file": "fluxdungeons:font/health_digits.png", "ascent": BAR_ASCENT - FILL_Y0, "height": 6,
+        {"type": "bitmap", "file": "fluxdungeons:font/health_digits.png", "ascent": BAR_ASCENT - FILL_Y0, "height": FILL_Y1 - FILL_Y0 + 1,
          "chars": [chars]},
     ]}
     with open(os.path.join(root, "font", "health.json"), "w", encoding="utf-8") as f:
