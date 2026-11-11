@@ -113,7 +113,7 @@ public final class FluxPortal extends FluxPlugin implements Listener {
      */
     private Location crossing(Portal portal, Map.Entry<Player, Location> who) {
         Player p = who.getKey();
-        PortalTravelEvent event = new PortalTravelEvent(p, portal, who.getValue().clone());
+        PortalTravelEvent event = new PortalTravelEvent(p, portal, standable(who.getValue().clone()));
         Bukkit.getPluginManager().callEvent(event);
         if (event.isCancelled()) return null;
         lastTravel.put(p.getUniqueId(), Bukkit.getCurrentTick());
@@ -121,6 +121,22 @@ public final class FluxPortal extends FluxPlugin implements Listener {
         visuals.departure(p.getLocation(), from);
         visuals.arrivalSoon(event.to(), portal.other(from));
         return event.to();
+    }
+
+    /**
+     * Feet a hair inside a block (an arrival computed at 64.99999, shown -0.0 on screen) leave the client stuck until
+     * the player jumps: they are put on top of that block, and -0.0 becomes 0.0.
+     */
+    static Location standable(Location l) {
+        double y = l.getY();
+        org.bukkit.block.Block feet = l.getBlock();
+        if (!feet.isPassable()) {
+            double top = feet.getBoundingBox().getMaxY();
+            if (top > y && top - y < 0.6) l.setY(top + 0.001);
+        }
+        if (l.getX() == 0) l.setX(0.0);
+        if (l.getZ() == 0) l.setZ(0.0);
+        return l;
     }
 
     private static PortalEnd nearest(Portal p, Location at) {
@@ -200,7 +216,7 @@ public final class FluxPortal extends FluxPlugin implements Listener {
         World w = Bukkit.getWorld(exit.world());
         if (w == null) return;
         PortalMath.Exit out = PortalMath.travel(entry, exit, point, yaw, move);
-        Location to = new Location(w, out.point().getX(), out.point().getY() - BODY, out.point().getZ(), out.yaw(), pitch);
+        Location to = standable(new Location(w, out.point().getX(), out.point().getY() - BODY, out.point().getZ(), out.yaw(), pitch));
         PortalTravelEvent event = new PortalTravelEvent(p, portal, to);
         Bukkit.getPluginManager().callEvent(event);
         if (event.isCancelled()) return;
