@@ -21,9 +21,19 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import paths  # noqa: F401,E402
-from hamster_moissonneur_anim import Anim, T, _app, _mul, _rot, bump, keys, pose, smooth  # noqa: E402
+from hamster_moissonneur_anim import Anim as _Anim, T, _app, _mul, _rot, bump, keys, pose, smooth  # noqa: E402
+
+
+class Anim(_Anim):
+    """Positions given in pixels of the full-size drawing, scaled to the delivered model (K)."""
+
+    def pos(self, bone, f):
+        return self.set(bone, "position", lambda t: tuple(v * K for v in f(t)))
 
 TAU = 2 * math.pi
+K = 1.0                            # size of the delivered model against the drawing (set by build): every position
+#                                    written below in pixels of the full-size drawing is multiplied by it
+WALK_SPEED = 2.2                   # blocks per second of the walk (walk-speed of the monster's file)
 S, C = math.sin, math.cos
 lin = "linear"
 SIDES = ("right", "left")
@@ -39,10 +49,10 @@ PLATE_AMP = [1.0, 1.0, 0.9, 0.8, 0.65, 0.5, 0.4, 0.35]
 # Key ticks read by the game (BonePowers): keep in step with docs/technique/boss/ossacorne.md.
 EVENTS = {
     "awaken": {"rumble": 0, "jaw_twitch": 18, "skull_rises": 30, "legs_unfold": 60, "roar": 122, "settled": 190},
-    "charge": {"lock": 12, "launch": 20, "run_end": 32, "impact": 32, "vulnerable": 38},
+    "charge": {"lock": 12, "launch": 20, "run_end": 36, "impact": 36, "vulnerable": 42},
     "tail_sweep": {"hips_turn": 16, "sweep_start": 22, "sweep_end": 32, "vulnerable": 40},
-    "bone_volley": {"fragment_1": 12, "fragment_2": 16, "fragment_3": 20, "lock": 24, "throw_1": 32, "throw_2": 37,
-                    "throw_3": 42},
+    "bone_volley": {"fragment_1": 6, "fragment_2": 9, "fragment_3": 12, "lock": 15, "throw_1": 20, "throw_2": 24,
+                    "throw_3": 28},
     "ossuary": {"slam_front": 40, "slam_back": 42, "spikes_1": 44, "spikes_2": 48, "spikes_3": 52, "roar": 62,
                 "wave": 64, "vulnerable": 80},
 }
@@ -144,11 +154,11 @@ def legs(anim, rig, foot=None, splay=None, toe=None):
             L = rig.legs[leg]
             top = rig.carried(anim.tracks, t, L["parent"], L["top"])
             off = foot(leg, t)
-            w = [L["low"][i] + off[i] for i in range(3)]
+            w = [L["low"][i] + off[i] * K for i in range(3)]
             cache[key] = solve_leg(rig, leg, top, w, splay(leg, t), toe(leg, t))
         return cache[key]
     for leg in LEGS:
-        anim.pos(f"Leg_{leg}", lambda t, leg=leg: sol(leg, t)["pos"])
+        anim.set(f"Leg_{leg}", "position", lambda t, leg=leg: sol(leg, t)["pos"])     # world units already
         anim.rot(f"Leg_{leg}", lambda t, leg=leg: sol(leg, t)["leg"])
         anim.rot(f"Shin_{leg}", lambda t, leg=leg: sol(leg, t)["shin"])
         anim.rot(f"Foot_{leg}", lambda t, leg=leg: sol(leg, t)["foot"])
@@ -238,14 +248,16 @@ def animations(rig):
     legs(a, rig, foot=shift_foot, toe=shift_toe)
     A.append(a)
 
-    # ------------------------------------------------------------------ walk: 1.1 s loop, 1.2 block per second
-    # Diagonal pairs (front left with hind right, front right with hind left), the hind foot of each pair a little
-    # later than the front one: shoulders and pelvis never move together. Feet planted 62 % of the cycle, lifted 4
-    # pixels; the body dips 0.05 block at each front impact, rolls 1.5 degrees, the skull dips after the impacts, the
-    # tail swings against the body, plates shake at each impact.
-    L = 1.1
-    a = Anim("walk", 22, loop=True)
-    duty, stride, lift = 0.62, 10.5, 4.0
+    # ------------------------------------------------------------------ walk: 0.8 s loop, WALK_SPEED blocks per second
+    # A predator's lope (faster since the 2026-11-11 play test): diagonal pairs (front left with hind right, front
+    # right with hind left), the hind foot of each pair a little later than the front one: shoulders and pelvis never
+    # move together. Feet planted 60 % of the cycle, lifted 5 pixels, and they slide back exactly as fast as it walks
+    # (stride from WALK_SPEED); the body dips at each front impact, rolls 2 degrees, the skull dips after the impacts,
+    # the tail swings against the body, plates shake at each impact.
+    L = 0.8
+    a = Anim("walk", 16, loop=True)
+    duty, lift = 0.6, 5.0
+    stride = WALK_SPEED * 16 * duty * L / 2 / K          # half stride, in pixels of the drawing
     offs = {"front_left": 0.0, "back_right": 0.06, "front_right": 0.5, "back_left": 0.56}
 
     def phase(leg, t):
@@ -263,9 +275,10 @@ def animations(rig):
         if u < duty:
             return 0.0
         return -16 * S(math.pi * (u - duty) / (1 - duty))
-    a.pos("Body", lambda t: (0, -0.8 * (0.5 + 0.5 * C(TAU * 2 * t / L)), 0))
-    a.rot("Chest", lambda t: (0, 1.2 * S(TAU * t / L), 1.5 * S(TAU * t / L)))
-    a.rot("Hips", lambda t: (0, -1.0 * S(TAU * t / L - 0.7), -1.5 * S(TAU * t / L - 0.7)))
+    a.pos("Body", lambda t: (0, -1.2 * (0.5 + 0.5 * C(TAU * 2 * t / L)), 0))
+    a.rot("Body", lambda t: (-2.5, 0, 0))
+    a.rot("Chest", lambda t: (0, 1.5 * S(TAU * t / L), 2.0 * S(TAU * t / L)))
+    a.rot("Hips", lambda t: (0, -1.2 * S(TAU * t / L - 0.7), -2.0 * S(TAU * t / L - 0.7)))
     a.rot("Neck", lambda t: (-0.8 * (0.5 + 0.5 * C(TAU * 2 * (t - 0.08) / L)), -1.0 * S(TAU * (t - 0.08) / L), 0))
     a.rot("Head", lambda t: (-1.5 * (0.5 + 0.5 * C(TAU * 2 * t / L - 0.5)), -1.0 * S(TAU * t / L), 0))
     a.rot("Jaw", lambda t: (-1.0 * (0.5 + 0.5 * C(TAU * 2 * t / L)), 0, 0))
@@ -275,29 +288,29 @@ def animations(rig):
     legs(a, rig, foot=walk_foot, toe=walk_toe)
     A.append(a)
 
-    # ------------------------------------------------------------------ charge: 2.5 s (Charge funeraire)
+    # ------------------------------------------------------------------ charge: 2.7 s (Charge funeraire)
     # 0-14 the skull drops 22 degrees (horns forward), the jaw parts, the body sinks 3 pixels, the hind feet step 3
     # pixels back, the tail lifts and straightens, plates lean back 6 degrees. 14-20 the hind legs push: the body
-    # lurches forward, the front feet leave the ground. 20-32 the rush (the game moves it 0.4 block a tick): fast
-    # gallop, head kept low, tail swinging, plates shaking. 32-40 stop and impact: the skull jolts (horns shake), the
-    # front feet brace, the tail overshoots. 40-50 back to the guard (vulnerable from 38).
-    a = Anim("charge", 50)
-    hold = lambda t: smooth(0, T(14), t) * (1 - smooth(T(38), T(50), t))                         # noqa: E731
-    run = lambda t: smooth(T(18), T(21), t) * (1 - smooth(T(30), T(33), t))                     # noqa: E731
+    # lurches forward, the front feet leave the ground. 20-36 the rush (the game moves it 0.6 block a tick and steers
+    # it towards its target): fast gallop, head kept low, tail swinging, plates shaking. 36-44 stop and impact: the
+    # skull jolts (horns shake), the front feet brace, the tail overshoots. 44-54 back to the guard (vulnerable from 42).
+    a = Anim("charge", 54)
+    hold = lambda t: smooth(0, T(14), t) * (1 - smooth(T(42), T(54), t))                         # noqa: E731
+    run = lambda t: smooth(T(18), T(21), t) * (1 - smooth(T(34), T(37), t))                     # noqa: E731
     a.pos("Body", lambda t: (0, -3 * hold(t) + 2 * bump(T(14), T(22), t) + 0.8 * abs(S(TAU * t / 0.3)) * run(t)
-                             - 1.2 * bump(T(32), T(40), t), -3 * bump(T(14), T(22), t) + 2 * bump(T(32), T(40), t)))
-    a.rot("Body", lambda t: (-4 * hold(t) + 3 * bump(T(14), T(20), t) - 2 * bump(T(32), T(38), t), 0, 1.5 * S(TAU * t / 0.3) * run(t)))
-    a.rot("Neck", lambda t: (-6 * hold(t) + 2 * bump(T(34), T(42), t), 0, 0))
-    a.rot("Head", lambda t: (-16 * hold(t) + 7 * bump(T(32), T(38), t) - 2 * bump(T(37), T(44), t),
-                             3 * S(TAU * t / 0.12) * bump(T(32), T(40), t), 0))
-    a.rot("Jaw", lambda t: (-6 * hold(t) - 3 * bump(T(32), T(40), t), 0, 0))
-    a.rot("Horn_right", lambda t: (shake(t, 1.2, 17) * bump(T(32), T(40), t), 0, 0))
-    a.rot("Horn_left", lambda t: (shake(t + 0.05, 1.2, 17) * bump(T(32), T(40), t), 0, 0))
+                             - 1.2 * bump(T(36), T(44), t), -3 * bump(T(14), T(22), t) + 2 * bump(T(36), T(44), t)))
+    a.rot("Body", lambda t: (-4 * hold(t) + 3 * bump(T(14), T(20), t) - 2 * bump(T(36), T(42), t), 0, 1.5 * S(TAU * t / 0.3) * run(t)))
+    a.rot("Neck", lambda t: (-6 * hold(t) + 2 * bump(T(38), T(46), t), 0, 0))
+    a.rot("Head", lambda t: (-16 * hold(t) + 7 * bump(T(36), T(42), t) - 2 * bump(T(41), T(48), t),
+                             3 * S(TAU * t / 0.12) * bump(T(36), T(44), t), 0))
+    a.rot("Jaw", lambda t: (-6 * hold(t) - 3 * bump(T(36), T(44), t), 0, 0))
+    a.rot("Horn_right", lambda t: (shake(t, 1.2, 17) * bump(T(36), T(44), t), 0, 0))
+    a.rot("Horn_left", lambda t: (shake(t + 0.05, 1.2, 17) * bump(T(36), T(44), t), 0, 0))
     tail(a, yaw=lambda i, t: 22 * TAIL_W[i] * S(TAU * t / 0.6) * run(t) + idle_tail(i, 0) * (1 - hold(t)),
-         pitch=lambda i, t: (-6 if i == 0 else 3.5 if i >= 5 else 0) * hold(t) + 3 * TAIL_W[i] * 12 * bump(T(34), T(46), t) * 0.25,
+         pitch=lambda i, t: (-6 if i == 0 else 3.5 if i >= 5 else 0) * hold(t) + 3 * TAIL_W[i] * 12 * bump(T(38), T(50), t) * 0.25,
          delay=0.04)
-    plates(a, lambda k, t: (6 * PLATE_AMP[k] * hold(t) + shake(t + k * 0.03, 1.6 * PLATE_AMP[k]) * bump(T(14), T(36), t), 0,
-                            shake(t + k * 0.05, 1.0, 9) * bump(T(14), T(36), t)))
+    plates(a, lambda k, t: (6 * PLATE_AMP[k] * hold(t) + shake(t + k * 0.03, 1.6 * PLATE_AMP[k]) * bump(T(14), T(40), t), 0,
+                            shake(t + k * 0.05, 1.0, 9) * bump(T(14), T(40), t)))
 
     def charge_foot(leg, t):
         if leg.startswith("back"):
@@ -306,7 +319,7 @@ def animations(rig):
             return (0, 2.5 * max(0, S(g)) * run(t), back + 6 * C(g) * run(t))
         lift_off = 2.5 * bump(T(15), T(22), t)
         g = TAU * (t / 0.3 + (0 if leg.endswith("right") else 0.5))
-        brace = -3 * bump(T(32), T(42), t)
+        brace = -3 * bump(T(36), T(46), t)
         return (0, lift_off + 3 * max(0, S(g)) * run(t), -6 * C(g) * run(t) + brace)
     legs(a, rig, foot=charge_foot, toe=lambda leg, t: -12 * bump(T(15), T(22), t) if leg.startswith("front") else 0.0)
     A.append(a)
@@ -348,28 +361,28 @@ def animations(rig):
     legs(a, rig, splay=lambda leg, t: 3 * smooth(0, T(10), t) * (1 - smooth(T(40), T(56), t)) if leg.startswith("front") else 0.0)
     A.append(a)
 
-    # ------------------------------------------------------------------ bone_volley: 3.5 s (Traque des ossements)
-    # 0-10 the skull rises 7 degrees towards the far target, the jaw opens 8, the tail lifts, the last three plates
-    # tremble harder and harder. 12, 16, 20: a fragment tears off plate 8, 7, then 6 (each plate kicks back 7 degrees;
-    # the game shows the fragment). 24-32 lock: jaw at 14 degrees. 32, 37, 42: the three throws (the skull jerks
-    # forward 4 degrees, the jaw snaps). 46-70 back to rest.
-    a = Anim("bone_volley", 70)
-    throws = (T(32), T(37), T(42))
-    jerk = lambda t: sum(bump(x - T(1), x + T(5), t) for x in throws)                            # noqa: E731
-    a.rot("Neck", lambda t: (keys(t, ((0, 0), (T(10), 3), (T(46), 3), (T(64), 0))), 0, 0))
-    a.rot("Head", lambda t: (keys(t, ((0, 0), (T(10), 7), (T(24), 6), (T(30), 4), (T(46), 4), (T(62), 0))) - 4 * jerk(t), 0, 0))
-    a.rot("Jaw", lambda t: (keys(t, ((0, 0), (T(10), -8), (T(24), -8), (T(30), -14), (T(46), -12), (T(58), 0))) + 4 * jerk(t), 0, 0))
-    a.rot("Body", lambda t: (2 * smooth(0, T(10), t) * (1 - smooth(T(46), T(66), t)), 0, 0))
-    tail(a, yaw=lambda i, t: idle_tail(i, 0) * (1 - bump(0, T(70), t)) + 4 * TAIL_W[i] * S(TAU * t / 1.4),
-         pitch=lambda i, t: (-5 if i == 0 else 0) * smooth(0, T(10), t) * (1 - smooth(T(46), T(66), t)))
-    tear = {7: T(12), 6: T(16), 5: T(20)}
+    # ------------------------------------------------------------------ bone_volley: 2.2 s (Traque des ossements)
+    # Quick since the 2026-11-11 play test. 0-6 the skull rises 7 degrees towards the far target, the jaw opens 8,
+    # the tail lifts, the last three plates tremble. 6, 9, 12: a fragment tears off plate 8, 7, then 6 (each plate
+    # kicks back 7 degrees; the game shows the fragment). 15-20 lock: jaw at 14 degrees. 20, 24, 28: the three throws
+    # (the skull jerks forward 4 degrees, the jaw snaps). 32-44 back to rest.
+    a = Anim("bone_volley", 44)
+    throws = (T(20), T(24), T(28))
+    jerk = lambda t: sum(bump(x - T(1), x + T(4), t) for x in throws)                            # noqa: E731
+    a.rot("Neck", lambda t: (keys(t, ((0, 0), (T(6), 3), (T(32), 3), (T(42), 0))), 0, 0))
+    a.rot("Head", lambda t: (keys(t, ((0, 0), (T(6), 7), (T(15), 6), (T(19), 4), (T(32), 4), (T(42), 0))) - 4 * jerk(t), 0, 0))
+    a.rot("Jaw", lambda t: (keys(t, ((0, 0), (T(6), -8), (T(15), -8), (T(19), -14), (T(32), -12), (T(40), 0))) + 4 * jerk(t), 0, 0))
+    a.rot("Body", lambda t: (2 * smooth(0, T(6), t) * (1 - smooth(T(32), T(42), t)), 0, 0))
+    tail(a, yaw=lambda i, t: idle_tail(i, 0) * (1 - bump(0, T(44), t)) + 4 * TAIL_W[i] * S(TAU * t / 1.1),
+         pitch=lambda i, t: (-5 if i == 0 else 0) * smooth(0, T(6), t) * (1 - smooth(T(32), T(42), t)))
+    tear = {7: T(6), 6: T(9), 5: T(12)}
 
     def volley_plate(k, t):
         if k < 5:
-            return (shake(t + k * 0.05, 0.6 * PLATE_AMP[k]) * bump(0, T(46), t), 0, 0)
+            return (shake(t + k * 0.05, 0.6 * PLATE_AMP[k]) * bump(0, T(32), t), 0, 0)
         grow = smooth(0, tear[k], t)
-        return (shake(t + k * 0.07, 3.0 * grow, 14) * (1 - smooth(tear[k], tear[k] + T(4), t)) - 7 * bump(tear[k] - T(1), tear[k] + T(8), t),
-                0, shake(t + k * 0.03, 1.5 * grow, 12) * (1 - smooth(tear[k], tear[k] + T(4), t)))
+        return (shake(t + k * 0.07, 3.0 * grow, 14) * (1 - smooth(tear[k], tear[k] + T(3), t)) - 7 * bump(tear[k] - T(1), tear[k] + T(6), t),
+                0, shake(t + k * 0.03, 1.5 * grow, 12) * (1 - smooth(tear[k], tear[k] + T(3), t)))
     plates(a, volley_plate)
     legs(a, rig)
     A.append(a)
@@ -483,11 +496,13 @@ def head_clear(model, values, ticks, margin=0.3):
             if low >= margin:
                 break
             x, y, z = neck["rotation"][tick]
-            neck["rotation"][tick] = (x + math.degrees((margin - low) / 34.0) * 1.1, y, z)
+            neck["rotation"][tick] = (x + math.degrees((margin - low) / (34.0 * K)) * 1.1, y, z)
 
 
-def build(model, uid):
-    """Blockbench animations of the model, sampled every tick."""
+def build(model, uid, scale=1.0):
+    """Blockbench animations of the model, sampled every tick (`scale`: size of the model against the drawing)."""
+    global K
+    K = scale
     rig = Rig(model)
     out, n = [], [0]
     for a in animations(rig):

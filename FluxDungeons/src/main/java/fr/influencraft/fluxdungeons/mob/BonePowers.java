@@ -42,14 +42,15 @@ import java.util.concurrent.ThreadLocalRandom;
  * <ul>
  *   <li>{@code bone_awaken} (awaken 190, the opening move): lying in the dust, it wakes up, unfolds, roars at 122 and
  *   takes its guard; invulnerable meanwhile;</li>
- *   <li>{@code bone_charge} (charge 50): skull lowered, the line of the rush on the ground (locked at 12), it rushes at
- *   20 for {@code distance} blocks, horns first: whoever the skull meets is hit, thrown and unbalanced; into a wall:
- *   stunned (charge_stun 40) and vulnerable;</li>
+ *   <li>{@code bone_charge} (charge 54): skull lowered, the line of the rush on the ground (locked at 12), it rushes at
+ *   20 for {@code distance} blocks (16 ticks at most), turning towards its target by {@code turn-rate} degrees a
+ *   tick, horns first: whoever the skull meets is hit, thrown and unbalanced; into a wall: stunned (charge_stun 40)
+ *   and vulnerable;</li>
  *   <li>{@code bone_sweep} (tail_sweep 56): the pelvis turns, the tail sweeps an arc behind it and on its sides from
  *   its left to its right between ticks 22 and 32: whoever it passes is hit and thrown sideways, his action cut;</li>
- *   <li>{@code bone_volley} (bone_volley 70): three fragments tear off its hind plates (12, 16, 20), hover behind its
- *   skull, turn to the farthest player (24) and are thrown at 32, 37 and 42: aimed where he is, where he goes, where
- *   he is; never homing; an arrow breaks a fragment;</li>
+ *   <li>{@code bone_volley} (bone_volley 44): three fragments tear off its hind plates (6, 9, 12), hover behind its
+ *   skull, turn to the farthest player (15) and are thrown at 20, 24 and 28, each further ahead of where he goes;
+ *   they bend towards him during their first 8 ticks ({@code homing}), never chase him; an arrow breaks one;</li>
  *   <li>{@code bone_ossuary} (ossuary 120, ultimate): legs spread, it trembles, its four feet strike the ground (40,
  *   42), bone spikes rise in three groups around it (44, 48, 52) and stay a while as obstacles, it roars (62) and a
  *   shockwave leaves at 64: a spike between it and a player shelters him.</li>
@@ -218,6 +219,14 @@ final class BonePowers {
     private static Vector flat(Location from, Location to) {
         Vector v = to.toVector().subtract(from.toVector()).setY(0);
         return v.lengthSquared() < 1e-6 ? from.getDirection().setY(0).normalize() : v.normalize();
+    }
+
+    /** {@code from} turned towards {@code to} by {@code max} radians at most (flat unit vectors). */
+    private static Vector steer(Vector from, Vector to, double max) {
+        double a = Math.atan2(from.getZ(), from.getX()), b = Math.atan2(to.getZ(), to.getX());
+        double d = Math.atan2(Math.sin(b - a), Math.cos(b - a));
+        double n = a + Math.max(-max, Math.min(max, d));
+        return new Vector(Math.cos(n), 0, Math.sin(n));
     }
 
     private static float yawTo(Vector dir) {
@@ -389,19 +398,24 @@ final class BonePowers {
     private void charge(MobTemplate.Ability ab, RockPowers.Caster c, Player target) {
         LivingEntity e = c.entity();
         World w = w(e);
-        double power = ab.number("charge-power", 9), speed = ab.number("speed", 0.4), distance = ab.number("distance", 4.8),
-                width = ab.number("width", 1.6);
-        int launch = 20, lock = 12, runTicks = (int) Math.ceil(distance / speed);
+        double power = ab.number("charge-power", 9), speed = ab.number("speed", 0.6), distance = ab.number("distance", 9.6),
+                width = ab.number("width", 1.5), turn = Math.toRadians(ab.number("turn-rate", 5));
+        int launch = 20, lock = 12, runTicks = Math.min(16, (int) Math.ceil(distance / speed));
         Vector[] dir = {flat(e.getLocation(), target.getLocation())};
         Set<UUID> struck = new HashSet<>();
         boolean[] stopped = {false};
-        c.hold(52);
+        c.hold(56);
         c.animate("charge");
         snd(e.getLocation(), "entity.ravager.ambient", 1.6f, 0.45f);
-        timeline(e, 50, t -> {
+        timeline(e, 54, t -> {
             Location at = e.getLocation();
             if (t <= lock && target.isValid() && Mobs.fighting(target)) {
                 dir[0] = flat(at, target.getLocation());
+                e.setRotation(yawTo(dir[0]), 0);
+            } else if (t >= launch && !stopped[0] && target.isValid() && Mobs.fighting(target) && struck.isEmpty()) {
+                // it corrects its course while it rushes (turn-rate degrees a tick at most): a late side step still
+                // dodges it, standing still never does
+                dir[0] = steer(dir[0], flat(at, target.getLocation()), turn);
                 e.setRotation(yawTo(dir[0]), 0);
             }
             Vector f = dir[0], r = right(f);
@@ -410,7 +424,7 @@ final class BonePowers {
             // the line of the rush (beige while it can still turn, red once locked)
             if (t >= 2 && t < launch && t % 2 == 0) {
                 Color col = t > lock ? RED : WARN;
-                for (double k = 2.8; k <= distance + 3.2; k += 0.7) {
+                for (double k = 2.4; k <= distance + 2.8; k += 0.7) {
                     Location p = at.clone().add(f.clone().multiply(k));
                     p.setY(groundY(w, p.getX(), p.getY(), p.getZ()) + 0.15);
                     w.spawnParticle(Particle.DUST, p, 1, 0, 0, 0, 0, new Particle.DustOptions(col, 1.3f));
@@ -426,7 +440,7 @@ final class BonePowers {
                 snd(at, "entity.breeze.charge", 1.2f, 0.5f);
             }
             if (t < launch || stopped[0]) {
-                if (t == 38 && !stopped[0]) exposed(c, 12);
+                if (t == 42 && !stopped[0]) exposed(c, 12);
                 return;
             }
             if (t >= launch + runTicks) {
@@ -436,7 +450,7 @@ final class BonePowers {
                 return;
             }
             // rushing in a straight line; a wall ends it (stunned)
-            Block wall = wallAhead(e, f, 3.0 + speed);
+            Block wall = wallAhead(e, f, 2.6 + speed);
             if (wall != null) {
                 stopped[0] = true;
                 crash(c, wall);
@@ -448,8 +462,8 @@ final class BonePowers {
                 w.spawnParticle(Particle.BLOCK, now.clone().add(r.clone().multiply(-1.1)), 4, 0.2, 0.05, 0.2, 0, blockUnder(now));
                 snd(now, "block.bone_block.step", 1.4f, 0.6f);
             }
-            // skull and horns: 2.6 blocks in front of its body, a little above the ground
-            Location skull = now.clone().add(f.clone().multiply(2.6));
+            // skull and horns: 2.2 blocks in front of its body, a little above the ground
+            Location skull = now.clone().add(f.clone().multiply(2.2));
             for (Player p : fighters(now, 6)) {
                 if (struck.contains(p.getUniqueId())) continue;
                 Location pl = p.getLocation();
@@ -481,7 +495,7 @@ final class BonePowers {
         shake(hit, 12);
         timeline(e, 40, t -> {
             if (t >= 6 && t <= 30 && t % 4 == 0) {
-                Location head = body(e, 0, 2.2, -2.2);
+                Location head = body(e, 0, 1.9, -1.9);
                 for (int i = 0; i < 3; i++) {
                     double b = t * 0.35 + i * Math.PI * 2 / 3;
                     w.spawnParticle(Particle.DUST, head.clone().add(Math.cos(b) * 0.6, 0, Math.sin(b) * 0.6), 1, 0, 0, 0, 0,
@@ -498,7 +512,7 @@ final class BonePowers {
     private void sweep(MobTemplate.Ability ab, RockPowers.Caster c) {
         LivingEntity e = c.entity();
         World w = w(e);
-        double power = ab.number("sweep-power", 7), radius = ab.number("radius", 4.8), near = ab.number("near", 3.0);
+        double power = ab.number("sweep-power", 7), radius = ab.number("radius", 4.2), near = ab.number("near", 2.6);
         int from = 22, to = 32;
         // angle of the tail from straight behind it (degrees, > 0 to its right), linear over the sweep
         double start = -100, end = 100;
@@ -512,7 +526,7 @@ final class BonePowers {
             if (t == 20) snd(at, "item.trident.throw", 1.8f, 0.45f);
             if (t == 24) snd(at, "entity.player.attack.sweep", 1.8f, 0.5f);
             if (t >= 28 && t <= 34 && t % 2 == 0) {
-                Location back = body(e, 1.5, 0.15, 3.2);
+                Location back = body(e, 1.3, 0.15, 2.7);
                 w.spawnParticle(Particle.BLOCK, back, 14, 1.4, 0.05, 0.8, 0, blockUnder(back));
             }
             if (t == 40) exposed(c, 16);
@@ -522,7 +536,7 @@ final class BonePowers {
             // the tail tip, drawn where the sweep is now
             double rad = Math.toRadians(a1);
             Vector dirNow = back.clone().multiply(Math.cos(rad)).add(r.clone().multiply(Math.sin(rad)));
-            for (double k = 2.4; k <= radius; k += 0.8)
+            for (double k = 2.0; k <= radius; k += 0.8)
                 w.spawnParticle(Particle.SWEEP_ATTACK, at.clone().add(dirNow.clone().multiply(k)).add(0, 0.9, 0), 1, 0, 0, 0, 0);
             for (Player p : fighters(at, radius)) {
                 if (struck.contains(p.getUniqueId())) continue;
@@ -549,21 +563,24 @@ final class BonePowers {
         World w = w(e);
         Player target = farthest(e, ab.number("min-range", 8), ab.number("max-range", 30));
         if (target == null) return;
-        double power = ab.number("shard-power", 4), speed = ab.number("shard-speed", 1.15), range = ab.number("shard-range", 34);
-        int[] tear = {12, 16, 20}, throwAt = {32, 37, 42};
+        double power = ab.number("shard-power", 5), speed = ab.number("shard-speed", 1.7), range = ab.number("shard-range", 40),
+                homing = Math.toRadians(ab.number("homing", 3));
+        int[] tear = {6, 9, 12}, throwAt = {20, 24, 28};
+        // aim of each fragment: how far ahead of a moving target (0 = where he is, 1 = where he will be)
+        double[] lead = {0.6, 1.0, 1.35};
         // where each fragment tears off (plates 8, 7, 6: blocks behind its origin, height of their tips)
-        double[][] plate = {{0, 2.4, 2.3}, {0, 2.5, 1.9}, {0, 2.65, 1.55}};
+        double[][] plate = {{0, 2.05, 1.95}, {0, 2.15, 1.6}, {0, 2.25, 1.3}};
         // fan behind and above its skull (x to its right, up, behind)
-        double[][] fan = {{-1.3, 3.2, 0.1}, {0, 3.7, 0.4}, {1.3, 3.2, 0.1}};
+        double[][] fan = {{-1.1, 2.75, 0.1}, {0, 3.15, 0.35}, {1.1, 2.75, 0.1}};
         BlockDisplay[] shards = new BlockDisplay[3];
-        c.hold(72);
+        c.hold(46);
         c.animate("bone_volley");
         face(e, target.getLocation());
         snd(e.getLocation(), "entity.ravager.ambient", 1.4f, 0.4f);
-        timeline(e, 70, t -> {
+        timeline(e, 44, t -> {
             Location at = e.getLocation();
-            if (t <= 32 && target.isValid()) face(e, target.getLocation());
-            if (t > 0 && t < 12 && t % 3 == 0) snd(at, "block.bone_block.step", 0.9f, 1.2f);
+            if (t <= 28 && target.isValid()) face(e, target.getLocation());
+            if (t > 0 && t < 6 && t % 2 == 0) snd(at, "block.bone_block.step", 0.9f, 1.2f);
             for (int i = 0; i < 3; i++) {
                 if (t == tear[i]) {
                     Location from = body(e, plate[i][0], plate[i][1], plate[i][2]);
@@ -573,42 +590,42 @@ final class BonePowers {
                 }
                 BlockDisplay s = shards[i];
                 if (s == null || !s.isValid() || t >= throwAt[i]) continue;
-                // rising to its place in the fan (8 ticks), turning slowly; pointing at the target from 24
+                // rising to its place in the fan (5 ticks), turning; pointing at the target from 15
                 Location goal = body(e, fan[i][0], fan[i][1], fan[i][2]);
                 Location now = s.getLocation();
-                double k = Math.min(1, (t - tear[i] + 1) / 8.0);
+                double k = Math.min(1, (t - tear[i] + 1) / 5.0);
                 Location pos = now.clone().add(goal.toVector().subtract(now.toVector()).multiply(k * 0.6));
-                Vector look = t >= 24 && target.isValid() ? target.getEyeLocation().toVector().subtract(pos.toVector())
+                Vector look = t >= 15 && target.isValid() ? target.getEyeLocation().toVector().subtract(pos.toVector())
                         : new Vector(Math.cos(t * 0.3 + i), 0.6, Math.sin(t * 0.3 + i));
                 pos.setDirection(look);
                 s.teleport(pos);
-                spin(s, t * (t >= 24 ? 10 : 25));
+                spin(s, t * (t >= 15 ? 10 : 25));
                 if (t % 3 == 0) w.spawnParticle(Particle.FALLING_DUST, pos, 1, 0.05, 0.05, 0.05, 0, BONE);
             }
-            if (t == 24) snd(at, "block.amethyst_block.resonate", 1.4f, 0.5f);
+            if (t == 15) snd(at, "block.amethyst_block.resonate", 1.4f, 0.5f);
             for (int i = 0; i < 3; i++) {
                 if (t != throwAt[i] || shards[i] == null || !shards[i].isValid()) continue;
                 Location from = shards[i].getLocation();
-                Vector aim = i == 1 ? lead(target, from, speed) : target.getEyeLocation().add(0, -0.4, 0).toVector();
+                Vector aim = lead(target, from, speed, lead[i]);
                 Vector dir = aim.subtract(from.toVector());
                 if (dir.lengthSquared() < 1e-4) dir = forward(e);
-                fly(c, shards[i], dir.normalize(), speed, range, power);
+                fly(c, shards[i], dir.normalize(), speed, range, power, target, homing);
                 shards[i] = null;
                 snd(from, "entity.arrow.shoot", 1.4f, 0.5f);
                 snd(from, "block.bone_block.hit", 1.2f, 1.2f);
             }
-            if (t == 46) for (BlockDisplay s : shards) if (s != null) forget(s);
+            if (t == 32) for (BlockDisplay s : shards) if (s != null) forget(s);
         });
     }
 
-    /** Where the target will be when a fragment thrown now reaches him (his last few ticks of movement, 90 %). */
-    private Vector lead(Player p, Location from, double speed) {
+    /** Where the target will be when a fragment thrown now reaches him ({@code k} x his last few ticks of movement). */
+    private Vector lead(Player p, Location from, double speed, double k) {
         Vector now = p.getEyeLocation().add(0, -0.4, 0).toVector();
         Deque<Vector> q = tracks.get(p.getUniqueId());
         if (q == null || q.size() < 2) return now;
         Vector v = q.peekLast().clone().subtract(q.peekFirst()).multiply(1.0 / ((q.size() - 1) * 2)).setY(0);
         double travel = now.distance(from.toVector()) / speed;
-        return now.add(v.multiply(travel * 0.9));
+        return now.add(v.multiply(travel * k));
     }
 
     private BlockDisplay shard(Location at) {
@@ -634,8 +651,13 @@ final class BonePowers {
         d.setTransformation(new Transformation(half, q, size, new Quaternionf()));
     }
 
-    /** A thrown fragment: straight line, fast, spinning, a thin trail; an arrow breaks it, a block stops it. */
-    private void fly(RockPowers.Caster c, BlockDisplay s, Vector dir, double speed, double range, double power) {
+    /**
+     * A thrown fragment: fast, spinning, a thin trail, turning towards its target by {@code homing} radians a tick
+     * during its first 8 ticks only (it bends, it never chases); an arrow breaks it, a block stops it.
+     */
+    private void fly(RockPowers.Caster c, BlockDisplay s, Vector dir0, double speed, double range, double power,
+                     Player target, double homing) {
+        Vector dir = dir0.clone();
         World w = s.getWorld();
         Location[] pos = {s.getLocation().clone()};
         pos[0].setDirection(dir);
@@ -650,8 +672,17 @@ final class BonePowers {
                     return;
                 }
                 t++;
+                if (t <= 8 && homing > 0 && target.isValid() && Mobs.fighting(target)) {
+                    Vector want = target.getLocation().add(0, 1.0, 0).toVector().subtract(pos[0].toVector()).normalize();
+                    double ang = dir.angle(want);
+                    if (ang > 1e-4) {
+                        double k = Math.min(1, homing / ang);
+                        dir.multiply(1 - k).add(want.multiply(k)).normalize();
+                    }
+                }
                 Location prev = pos[0].clone();
                 pos[0].add(dir.clone().multiply(speed));
+                pos[0].setDirection(dir);
                 gone += speed;
                 s.teleport(pos[0]);
                 spin(s, t * 40);

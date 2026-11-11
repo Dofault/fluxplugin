@@ -222,7 +222,7 @@ def claw(tip):
 MATS = {
     "bone": bone(5), "bone_light": bone(6, 0.3), "bone_shade": bone(4, 0.6),
     "skull": bone(5, 1.0, ends=False), "skull_light": bone(6, 0.8, ends=False), "skull_shade": bone(4, 0.7, ends=False),
-    "joint": joint, "cavity": cavity(True), "cavity_flat": cavity(False),
+    "joint": joint, "cavity": cavity(True), "cavity_flat": cavity(False), "hitbox": cavity(False),
     "plate_base": plate(0), "plate_mid": plate(1), "plate_tip": plate(2),
     "horn_base": horn(0), "horn": horn(1), "horn_tip": horn(2),
     "tooth_down": (tooth(True), 2), "tooth_up": (tooth(False), 2),
@@ -301,6 +301,8 @@ SHOULDER = (18.0, 21.5, -21.0)      # right shoulder joint (left: mirrored)
 HIP = (11.5, 22.0, 22.0)            # right hip joint
 TAIL_START = (0, 27.6, 27.2)
 ORIGIN_SHIFT = 15.4                 # entity origin this many units in front of the middle of the legs (chest)
+SCALE = 0.85                        # whole model (85 % of the drawing since the 2026-11-11 play test)
+HITBOX = ("b_skull", "b_chest", "b_hips")
 
 # Ribs: one template per side, every rib a scaled copy (same angles, so one orientation per segment and side).
 # (rx, length) of each segment with ry = +-90: up-out, out-down, down, down-in, in, in to the sternum.
@@ -623,6 +625,17 @@ def parts():
         p = [p[q] + d[q] * L for q in range(3)]
         parent = g
 
+    # ---------------------------------------------------------------- 10. hit boxes (BetterModel tag "b_")
+    # One invisible box per part a player aims at, carried by its bone (it follows the animations): the skull, the
+    # rib cage, the pelvis. Square seen from above, so that they stay right whichever way the boss turns (BetterModel
+    # keeps them axis aligned). Before the 2026-11-11 play test the only box was the polar bear's, under the chest:
+    # a click on the skull or the hips went through.
+    for g, par, c, size in (("b_skull", "Head", on_head((0, 32.5, -53), (0, 0, 0))[0], (22, 17, 22)),
+                            ("b_chest", "Chest", (0, 24, -11), (30, 21, 30)),
+                            ("b_hips", "Hips", (0, 23.5, 20), (22, 15, 20))):
+        add(g, "boite_" + g[2:], c, size, (0, 0, 0), "hitbox")
+        G[g] = (tuple(c), par)
+
     # ---------------------------------------------------------------- each leg set exactly on the ground (y = 0)
     shift = {}
     for bones in legs.values():
@@ -644,6 +657,8 @@ def pieces(P):
     """BetterModel pieces: distinct cube orientations per bone."""
     seen = {}
     for g, n, c, size, r, m, raw in P:
+        if g in HITBOX:
+            continue
         seen.setdefault(g, set()).add(tuple(round(v, 1) for v in euler(matrix(r))))
     return sum(len(v) for v in seen.values()), seen
 
@@ -680,22 +695,24 @@ if __name__ == "__main__":
         del args[i:i + 2]
     out = args[0] if args else HERE
     raw, groups, shifts = parts()
-    P, groups, dims = ground(raw, groups, scale=1.0, center=True)
+    P, groups, dims = ground(raw, groups, scale=SCALE, center=True)
     # the entity stands under the front of the rib cage, not in the middle of the bounding box (tail included): its
     # hit box covers the chest, the skull is 2.8 blocks in front of it, the tail tip 4.6 behind
-    dz = -(groups["Leg_front_right"][0][2] + groups["Leg_back_right"][0][2]) / 2 + ORIGIN_SHIFT
+    dz = -(groups["Leg_front_right"][0][2] + groups["Leg_back_right"][0][2]) / 2 + ORIGIN_SHIFT * SCALE
     P = [(g, n, [c[0], c[1], c[2] + dz], size, r, m, rw) for g, n, c, size, r, m, rw in P]
     groups = {k: ((pv[0], pv[1], pv[2] + dz), par) for k, (pv, par) in groups.items()}
     uv, atlases, sizes = bake(P, MATS, {})
     data = export(IDENT, NS, P, groups, uv, atlases, sizes)
     data["textures"] = data["textures"][:1]          # nothing glows: no emissive texture
     import ossacorne_anim as OA
-    anims = OA.build(data, lambda name: str(uuid.uuid5(NS, f"{IDENT}/{name}")))
+    hidden = {e["uuid"] for e, q in zip(data["elements"], P) if q[0] in HITBOX}
+    seen = dict(data, elements=[e for e in data["elements"] if e["uuid"] not in hidden])   # what players see
+    anims = OA.build(seen, lambda name: str(uuid.uuid5(NS, f"{IDENT}/{name}")), scale=SCALE)
     data["animations"] = anims
     if anims_dir:
-        OA.strips(data, anims, atlases, sizes, anims_dir)
+        OA.strips(seen, anims, atlases, sizes, anims_dir)
     if show:
-        for name, rows in OA.measure(data, anims).items():
+        for name, rows in OA.measure(seen, anims).items():
             print(f"--- {name}: plus bas {min(r['low'] for r in rows):.2f}, corps {min(r['body_low'] for r in rows):.2f}, "
                   f"plus haut {max(r['high'] for r in rows):.2f}")
             for r in rows[::4]:
@@ -705,7 +722,11 @@ if __name__ == "__main__":
     with open(path, "w", encoding="utf-8") as fh:
         json.dump(data, fh, ensure_ascii=False)
     count, _ = pieces(P)
-    print(f"{len(P)} volumes, {len(groups)} os, {count} morceaux BetterModel ; "
+    for g in HITBOX:
+        q = next(q for q in P if q[0] == g)
+        print(f"  {g} : {q[3][0] / 16:.2f} x {q[3][1] / 16:.2f} x {q[3][2] / 16:.2f} blocs, centre "
+              f"{', '.join(f'{v / 16:.2f}' for v in q[2])}")
+    print(f"{len(P) - len(HITBOX)} volumes, {len(groups)} os, {count} morceaux BetterModel ; "
           f"{dims[0]:.2f} x {dims[1]:.2f} x {dims[2]:.2f} blocs (l x h x p) ; texture {sizes[0]}")
     print("pattes posées au sol (décalage en unités) :", shifts)
     print("écrit", path)
@@ -713,6 +734,6 @@ if __name__ == "__main__":
         table(P, cubes)
         print("écrit", cubes)
     if prev:
-        apercu(data, atlases, sizes, prev, set(),
+        apercu(seen, atlases, sizes, prev, set(),
                views=((35, 12), (0, 4), (90, 2), (270, 2), (180, 6), (215, 14)), size=420)
         print("écrit", prev)
