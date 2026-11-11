@@ -103,3 +103,31 @@ items:
       - "placeholder: %offrandes_editing% == true"
     actions:
       left: ["[offering] additem"]
+  # Option du joueur : son offrande affichée ou non dans le scoreboard (/offrande scoreboard, aussi dans /reglages).
+  scoreboard_on:
+    slot: 47
+    material: "itemsadder:influitems:tracking"
+    name: "Offrande dans le scoreboard"
+    glow: true
+    lore:
+      - "@desc Affiche dans le scoreboard les objets qu'il te reste à déposer, en orange quand tu as de quoi les compléter."
+      - "@ok Affichée."
+      - "@left Masquer"
+    view-requirements:
+      - "placeholder: %offrandes_editing% == false"
+      - "placeholder: %offrandes_sidebar_shown% == true"
+    actions:
+      left: ["[player] offrande scoreboard off", "[refresh]"]
+  scoreboard_off:
+    slot: 47
+    material: "itemsadder:influitems:tracking"
+    name: "Offrande dans le scoreboard"
+    lore:
+      - "@desc Affiche dans le scoreboard les objets qu'il te reste à déposer, en orange quand tu as de quoi les compléter."
+      - "@ko Masquée."
+      - "@left Afficher"
+    view-requirements:
+      - "placeholder: %offrandes_editing% == false"
+      - "placeholder: %offrandes_sidebar_shown% == false"
+    actions:
+      left: ["[player] offrande scoreboard on", "[refresh]"]

@@ -23,9 +23,16 @@ import java.util.concurrent.ConcurrentHashMap;
  * when the player carries enough to complete it; a complete requirement disappears. Placeholders
  * {@code %offrandes_sidebar_count%} (requirements left), {@code %offrandes_sidebar_progress%} (done/total) and
  * {@code %offrandes_sidebar_<line>%} (icons of a line, {@link #PER_LINE} per line). Cached one second: the sidebar
- * asks every tick.
+ * asks every tick. Only for players who turned it on ({@link #SETTING}, {@code %offrandes_sidebar_shown%}).
  */
-final class OfferingSidebar {
+public final class OfferingSidebar {
+
+    /** Player setting: the offering shown in the sidebar (off by default, {@code /offrande scoreboard}). */
+    public static final String SETTING = "fluxoffering:sidebar";
+
+    public static boolean shown(Player player) {
+        return fr.influencraft.flux.api.util.PlayerSettings.flag(player, SETTING, false);
+    }
 
     static final int PER_LINE = 16, LINES = 2;
     private static final String READY = "#FFA500";
@@ -47,6 +54,8 @@ final class OfferingSidebar {
     }
 
     String request(Player player, String params) {
+        if (params.equals("shown")) return String.valueOf(shown(player));
+        if (!shown(player)) return params.equals("count") ? "0" : "";
         Cached c = cached(player);
         if (params.equals("count")) return String.valueOf(c.icons().size());
         if (params.equals("progress")) {

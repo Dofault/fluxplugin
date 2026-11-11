@@ -35,6 +35,13 @@ public final class OffrandeTabCompleter implements TabCompleter {
             return List.of();
         }
         String current = deposit ? args[1] : args[0];
+        if (!deposit && OffrandeCommand.SIDEBAR_SUBCOMMAND.startsWith(current.toLowerCase(java.util.Locale.ROOT))) {
+            List<String> withSidebar = new ArrayList<>(List.of(OffrandeCommand.SIDEBAR_SUBCOMMAND));
+            for (CollectionDefinition c : configManager.collections().values()) {
+                if (c.id().startsWith(current.toLowerCase(java.util.Locale.ROOT))) withSidebar.add(c.id());
+            }
+            return withSidebar;
+        }
         boolean admin = sender.hasPermission("offrandes.admin");
         List<String> options = new ArrayList<>();
         for (CollectionDefinition collection : configManager.collections().values()) {

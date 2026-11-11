@@ -9,6 +9,8 @@
 # canal Progression) : "&8[&r#2ECF7BOffrande&8] &7"
 
 general:
+  sidebar-on: "&8[&r#2ECF7BOffrande&8] &7Ton offrande s'affiche maintenant dans le scoreboard."
+  sidebar-off: "&8[&r#2ECF7BOffrande&8] &7Ton offrande ne s'affiche plus dans le scoreboard."
   players-only: "&8[&r#2ECF7BOffrande&8] &7Cette commande n'est accessible qu'aux joueurs."
   no-permission: "&8[&r#2ECF7BOffrande&8] &#FF5C5C✖ &7Tu n'as pas la permission d'utiliser cette commande."
   # {collection}

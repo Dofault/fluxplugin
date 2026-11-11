@@ -33,6 +33,7 @@ import java.util.Map;
 public final class OffrandeCommand implements CommandExecutor {
 
     public static final String DEPOSIT_SUBCOMMAND = "depot";
+    public static final String SIDEBAR_SUBCOMMAND = "scoreboard";
 
     private final ConfigManager configManager;
     private final MessagesManager messages;
@@ -53,10 +54,27 @@ public final class OffrandeCommand implements CommandExecutor {
             openByRank(sender);
         } else if (args.length >= 2 && args[0].equalsIgnoreCase(DEPOSIT_SUBCOMMAND)) {
             depositMoney(sender, args);
+        } else if (args[0].equalsIgnoreCase(SIDEBAR_SUBCOMMAND)) {
+            toggleSidebar(sender, args.length > 1 ? args[1] : "toggle");
         } else {
             openCollection(sender, args[0]);
         }
         return true;
+    }
+
+    /** "/offrande scoreboard [on|off|toggle]": the offering of the rank shown in the sidebar or not (setting). */
+    private void toggleSidebar(CommandSender sender, String mode) {
+        if (!(sender instanceof Player player)) {
+            messages.send(sender, "general.players-only", null);
+            return;
+        }
+        boolean shown = switch (mode.toLowerCase(java.util.Locale.ROOT)) {
+            case "on" -> true;
+            case "off" -> false;
+            default -> !fr.influencraft.fluxoffering.integration.OfferingSidebar.shown(player);
+        };
+        fr.influencraft.flux.api.util.PlayerSettings.set(player, fr.influencraft.fluxoffering.integration.OfferingSidebar.SETTING, shown);
+        messages.send(player, shown ? "general.sidebar-on" : "general.sidebar-off", player);
     }
 
     /**
