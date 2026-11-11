@@ -17,7 +17,8 @@ import java.util.function.Predicate;
 
 /**
  * Ambient music of places: while a player stands in a world listed in {@code ambience} of config.yml, the songs of
- * that place play one after another (shuffled, a pause between two), and stop when he leaves.
+ * that place play one after another (shuffled, a pause between two), and stop when he leaves. A place with a single
+ * song plays it with its own loop (a looping song's intro is heard once, then the loop without any pause).
  *
  * <p>Ambience never covers other music: when another plugin plays something (crate opening, dungeon boss), the
  * ambience waits for it to end, then comes back. Leaving the place only stops a song the ambience started itself.</p>
@@ -104,7 +105,7 @@ public final class Ambience {
             if (now < state.nextAt) continue;
             Song next = next(state);
             if (next == null) continue;
-            jukebox.play(player, next, false);
+            jukebox.play(player, next, place.songs().size() == 1 && next.loop());
             state.started = next.id();
         }
     }

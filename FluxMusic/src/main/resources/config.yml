@@ -12,3 +12,7 @@ ambience:
     worlds: [resaac]
     pause-seconds: 6
     songs: [spawn_matin, spawn_brise, spawn_etoiles, spawn_jardin, spawn_fontaine]
+  rpg-lobby:
+    worlds: [flux_rpg]
+    pause-seconds: 4
+    songs: [camp_veilleurs]
