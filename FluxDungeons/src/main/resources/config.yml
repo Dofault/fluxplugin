@@ -142,3 +142,9 @@ breakable:
   POTATOES: {drops: false}
   WHEAT: {drops: false}
   BEETROOTS: {drops: false}
+
+# Jingles (FluxMusic) at the end of a run, over the boss music which stops. A dungeon gives its boss music in its
+# own file (music.boss, started once a player comes within music.radius blocks of the boss).
+music:
+  victory: victoire_boss
+  defeat: defaite

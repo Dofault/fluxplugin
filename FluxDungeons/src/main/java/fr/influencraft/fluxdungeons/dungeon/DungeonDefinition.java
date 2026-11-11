@@ -56,6 +56,9 @@ public final class DungeonDefinition {
     private final int minPlayers, maxPlayers, recommendedLevel, lives;
     private final long timeLimit;
     private final double rewardMinutes, rewardXp;
+    /** Song (FluxMusic) looping once a player comes near the boss ({@code music.boss}), empty for none. */
+    private final String bossMusic;
+    private final double bossMusicRadius;
     private final List<Loot> loot = new ArrayList<>();
     /** Blocks the players may break in this dungeon, and whether each one drops its item (on top of the global list). */
     private final Map<Material, Boolean> breakable = new java.util.EnumMap<>(Material.class);
@@ -152,6 +155,8 @@ public final class DungeonDefinition {
         timeLimit = Format.parseDuration(c.getString("time-limit", "20m"));
         rewardMinutes = c.getDouble("reward.minutes", 5);
         rewardXp = c.getDouble("reward.xp", 100);
+        bossMusic = c.getString("music.boss", "");
+        bossMusicRadius = Math.max(1, c.getDouble("music.radius", 16));
         ConfigurationSection cmds = c.getConfigurationSection("commands");
         if (cmds != null) for (String k : cmds.getKeys(false)) commands.put(k.toLowerCase(java.util.Locale.ROOT), cmds.getStringList(k));
         for (Map<?, ?> l : c.getMapList("levels")) {
@@ -312,6 +317,14 @@ public final class DungeonDefinition {
 
     public long timeLimit() {
         return timeLimit;
+    }
+
+    public String bossMusic() {
+        return bossMusic;
+    }
+
+    public double bossMusicRadius() {
+        return bossMusicRadius;
     }
 
     public double rewardMinutes() {

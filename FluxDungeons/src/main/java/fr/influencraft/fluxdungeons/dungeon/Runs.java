@@ -1,5 +1,6 @@
 package fr.influencraft.fluxdungeons.dungeon;
 
+import fr.influencraft.flux.api.music.Music;
 import fr.influencraft.flux.api.FluxPlugin;
 import fr.influencraft.flux.api.economy.Economy;
 import fr.influencraft.flux.api.economy.Origin;
@@ -592,6 +593,7 @@ public final class Runs {
         boolean inside = run.players.remove(player.getUniqueId());
         run.watching.remove(player.getUniqueId());
         if (run.bossBar != null) player.hideBossBar(run.bossBar);
+        stopMusic(run, player);
         pets.despawn(player);
         fr.influencraft.flux.api.pets.Companions.suppress(player.getUniqueId(), false);
         fr.influencraft.flux.api.client.HurtShake.clear(player.getUniqueId());
@@ -875,7 +877,42 @@ public final class Runs {
                 if (run.def.burrows() != null) burrows.tick(run);
             }
             if (run.bossBar != null) updateBossBar(run);
+            bossMusic(run);
         }
+    }
+
+    // ---------------------------------------------------------------- music
+
+    /** The boss music of the dungeon starts for everyone once a player comes near the boss (or an objective). */
+    private void bossMusic(Run run) {
+        String song = run.def.bossMusic();
+        if (run.music != null || song.isBlank() || run.state != Run.State.RUNNING) return;
+        double r2 = run.def.bossMusicRadius() * run.def.bossMusicRadius();
+        List<Player> players = online(run);
+        for (UUID id : run.mobs) {
+            if (!(Bukkit.getEntity(id) instanceof LivingEntity boss) || !boss.isValid()) continue;
+            if (!id.equals(run.boss) && !mobs.isObjective(boss)) continue;
+            for (Player p : players) {
+                if (p.getWorld() != boss.getWorld() || p.getLocation().distanceSquared(boss.getLocation()) > r2) continue;
+                run.music = song;
+                for (Player q : players) Music.loop(q, song);
+                return;
+            }
+        }
+    }
+
+    /** Stops the boss music this player hears (only the run's own). */
+    private static void stopMusic(Run run, Player p) {
+        if (run.music != null && run.music.equalsIgnoreCase(Music.playing(p))) Music.stop(p);
+    }
+
+    /** End of the run: the boss music stops, the victory or defeat jingle plays (else the plain sound). */
+    private void endMusic(Run run, Player p, boolean won) {
+        stopMusic(run, p);
+        String jingle = plugin.getConfig().getString(won ? "music.victory" : "music.defeat", won ? "victoire_boss" : "defaite");
+        if (Music.jingle(p, jingle)) return;
+        if (won) p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
+        else p.playSound(p.getLocation(), Sound.ENTITY_WITHER_DEATH, 0.5f, 1.2f);
     }
 
     private void rooms(Run run) {
@@ -1230,7 +1267,7 @@ public final class Runs {
             p.showTitle(Title.title(Texts.parse(plugin.messages().raw("run.victory")),
                     Texts.parse(plugin.messages().raw("run.victory-sub", "%time%", Format.duration(seconds))),
                     Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(4), Duration.ofMillis(800))));
-            p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
+            endMusic(run, p, true);
             hook(run, "victory", p, null);
             if (money > 0) Economy.main().give(p, money, Origin.of(plugin, origin).detail(run.def.name()).notifyPlayer());
             giveXp(p, rpg != null ? rpg.victoryXp(run.world == null ? p.getWorld() : run.world) * run.levelSpec().reward() : run.def.rewardXp());
@@ -1263,7 +1300,7 @@ public final class Runs {
         for (Player p : online(run)) {
             p.showTitle(Title.title(Texts.parse(plugin.messages().raw("run.defeat")), Texts.parse(plugin.messages().raw(reason)),
                     Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(3), Duration.ofMillis(700))));
-            p.playSound(p.getLocation(), Sound.ENTITY_WITHER_DEATH, 0.5f, 1.2f);
+            endMusic(run, p, false);
             hook(run, "defeat", p, null);
         }
         Bukkit.getScheduler().runTaskLater(plugin, () -> stop(run), 100L);

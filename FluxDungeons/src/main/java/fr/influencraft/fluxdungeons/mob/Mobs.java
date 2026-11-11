@@ -419,6 +419,11 @@ public final class Mobs {
         return id == null ? null : templates.get(id);
     }
 
+    /** Whether a monster is an objective of its run (a boss of an imported map, the lair's boss). */
+    public boolean isObjective(org.bukkit.entity.Entity entity) {
+        return entity.getPersistentDataContainer().has(objectiveKey, PersistentDataType.STRING);
+    }
+
     /** Marks a monster as an objective of its run (its last phase dying completes it). */
     public void objective(LivingEntity entity, String objective) {
         entity.getPersistentDataContainer().set(objectiveKey, PersistentDataType.STRING, objective);

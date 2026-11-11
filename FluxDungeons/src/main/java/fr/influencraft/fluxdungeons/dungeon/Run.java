@@ -33,6 +33,8 @@ public final class Run {
     int livesLeft;
     int wave;
     UUID boss;
+    /** Boss music started for the players of the run, null before. */
+    String music;
     BossBar bossBar;
     Location checkpoint;
     long started;
