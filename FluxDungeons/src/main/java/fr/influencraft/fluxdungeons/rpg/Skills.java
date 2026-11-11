@@ -121,7 +121,10 @@ public final class Skills implements Listener {
         // the one swing sound of every weapon (same volume and category as a vanilla sword)
         fr.influencraft.fluxdungeons.combat.AttackCadence.playSwing(at);
         for (LivingEntity t : targets) {
-            if (combat.strike(p, t, a.hit(), cast) != null) t.setVelocity(t.getVelocity().add(look.clone().multiply(0.25).setY(0.15)));
+            // a slight push, never on a boss (its fight is placed: the dungeons anchor bosses where they stand)
+            if (combat.strike(p, t, a.hit(), cast) != null && !t.getScoreboardTags().contains(fr.influencraft.fluxdungeons.mob.Mobs.BOSS_TAG)) {
+                t.setVelocity(t.getVelocity().add(look.clone().multiply(0.25).setY(0.15)));
+            }
         }
     }
 

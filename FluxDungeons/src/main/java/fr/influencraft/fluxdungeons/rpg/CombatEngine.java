@@ -100,6 +100,8 @@ public final class CombatEngine implements Listener {
     private boolean killing;
     /** True while the engine asks the others about a hit (the event it fires is not a hit to turn into one). */
     private boolean asking;
+    /** The asked hit reached the engine's listener uncancelled: the rules let it through. */
+    private boolean askedThrough;
     /** Told after a monster's hit on a player was turned into an engine hit (dungeon on-hit powers, frost arrows). */
     private java.util.function.Consumer<EntityDamageByEntityEvent> afterMonsterHit = e -> { };
     /** The creature an entity stands for (a model's hit box stands for its creature), the entity itself else. */
@@ -287,7 +289,7 @@ public final class CombatEngine implements Listener {
             indicator(target, Component.text("Esquive", TextColor.color(0xB376E5)));
             return o;
         }
-        // told to the others with the real amount (the dungeons may refuse it; CMI shows its damage number from it)
+        // told to the others with the real amount first: the dungeon rules may refuse it (boss phases, pacing)
         if (fromPlayer && !allowed((Player) attacker, target, cast, o.damage())) return null;
         damage(target, o.damage(), attacker, o.crit());
         if (attacker instanceof Player p) {
@@ -314,12 +316,13 @@ public final class CombatEngine implements Listener {
         EntityDamageByEntityEvent ask = new EntityDamageByEntityEvent(attacker, target, melee
                 ? EntityDamageEvent.DamageCause.ENTITY_ATTACK : EntityDamageEvent.DamageCause.MAGIC, source, amount);
         asking = true;
+        askedThrough = false;
         try {
             Bukkit.getPluginManager().callEvent(ask);
         } finally {
             asking = false;
         }
-        return !ask.isCancelled();
+        return askedThrough;
     }
 
     /** Takes life from a creature or a player, with the hurt look and the number. */
@@ -350,9 +353,8 @@ public final class CombatEngine implements Listener {
                 m.mirrored = target.getHealth();
             }
         }
-        // a creature's number is CMI's (shown from the hit told to the others); a player hit gets ours (CMI never
-        // sees it: the game's damage is cancelled)
-        if (target instanceof Player) indicator(target, Component.text(format(amount), TextColor.color(0xFF5C5C)));
+        indicator(target, Component.text((crit ? "✦ " : "") + format(amount),
+                TextColor.color(target instanceof Player ? 0xFF5C5C : crit ? 0xFFD94D : 0xFFFFFF)));
     }
 
     /**
@@ -418,7 +420,14 @@ public final class CombatEngine implements Listener {
      */
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onDamage(EntityDamageEvent e) {
-        if (killing || asking || !(e.getEntity() instanceof LivingEntity target) || !rpg(target)) return;
+        if (asking) {
+            // the rules let the asked hit through; it is then taken back before the listeners that only show or
+            // count damage (CMI's numbers above monsters): the engine shows its own, precise one
+            askedThrough = true;
+            e.setCancelled(true);
+            return;
+        }
+        if (killing || !(e.getEntity() instanceof LivingEntity target) || !rpg(target)) return;
         e.setCancelled(true);
         if (e.getCause() == EntityDamageEvent.DamageCause.VOID || e.getCause() == EntityDamageEvent.DamageCause.KILL) {
             if (e.getCause() == EntityDamageEvent.DamageCause.KILL) kill(target, null);
