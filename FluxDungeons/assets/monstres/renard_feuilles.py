@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Leaf Fox (Renard de feuilles): the Herbalist Fox turned into a living plant, STATIC model (2026-11-11).
 
-Same geometry and bones as renard_herboriste.py (imported, never copied: same 120 boxes, same skeleton, same
-accessories); only the matter changes. Every surface that was fur is painted as overlapping leaves: small angular
+Same geometry and bones as renard_herboriste.py (imported, never copied), without the satchel (bone Bag: bag,
+strap, vial holder and vials dropped); the collar and the leaf by the ear stay. Only the matter changes. Every surface that was fur is painted as overlapping leaves: small angular
 leaves (wide base, pointed tip, discreet midrib, lit half and shaded half) laid like shingles, each casting a dark
 pixel shadow on the leaves below it, drawn from downstream to upstream so the leaf nearer the root covers the next.
 Leaves follow the body: backwards on the back, down and backwards on the flanks, downwards on the legs, backwards
@@ -267,6 +267,8 @@ def parts():
         return on_body(*on_head_raw(c, r))
     out = []
     for g, n, c, size, r, m in raw:
+        if g == "Bag":
+            continue                     # no satchel, strap or vials: a wild creature, not the herbalist
         if n.startswith("oeil_"):
             s = 1 if n.endswith("_d") else -1
             # 18 % less tall, a little wider, lowered by a hair so the brow sits on it
@@ -284,7 +286,9 @@ def parts():
 
 
 def build():
-    return ground(parts(), R.GROUPS, center=False)
+    raw = parts()
+    groups = {k: v for k, v in R.GROUPS.items() if k != "Bag"}
+    return ground(raw, groups, center=False)
 
 
 if __name__ == "__main__":
