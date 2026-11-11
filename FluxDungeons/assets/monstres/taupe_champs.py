@@ -2,15 +2,18 @@
 """Taupe des Champs (Roi Taupérion): farm boss, STATIC Blockbench model (.bbmodel) (2026-11-11).
 
 A real mole body, a boss head: a plump spindle-shaped body low on the ground (the belly is the widest part), two huge
-shovel forepaws turned outwards with four thick ivory claws each, small hind legs half hidden under the belly, a short
+shovel forepaws turned outwards with four thick claws each, small hind legs half hidden under the belly, a short
 stub tail. In place of a head (2026-11-11, second version) a living drill grows out of a fur collar: a faceted cone of
 stone plates, each turned 22.5 degrees further (reads as a spiral), bands of living flesh between them, one cutting
-spiral of ivory blades, a hardened point, four rock fangs on the collar leaning in around its base. No eyes, snout or
+spiral of blades, a hardened point, four rock fangs on the collar leaning in around its base. No eyes, snout or
 ears. Built like the Sea Otter and the Abyss Colossus: a few large boxes per mass, side, top and rear boxes smaller and
 tilted a few degrees to round the silhouette, every small detail painted at 1 texel per unit.
 
-Fantasy stays discreet on the body: ochre mineral marks painted on the shoulders and flanks, four small rock shards
-along the spine (tilted backwards, less than 0.3 block high), a stony shade at the base of the claws. No glow.
+Painting (third version, 2026-11-11): semi-realistic in pixel art. Every painter works on a continuous value blended
+between the palette colours (soft gradients, soft brush blotches, the same light from above on every part), fur drawn
+as short strands along the body, hard edges only on claws and rock outlines. Dark brown fur, warm grey rocks with
+small dark violet crystals (shoulders, flanks, rocks, drill), dark rose bare skin (shovel palms, drill flesh, tail),
+claws from dark brown to warm grey. No black shadow, no white highlight, no glow.
 
 Pose baked in the boxes, bones placed at the joints for a later animation (the `Drill` bone can spin the drill alone);
 no animation.
@@ -38,254 +41,251 @@ def pal(*c):
     return [hx(x) for x in c]
 
 
-# --------------------------------------------------------------------------- brief palette (dark -> light)
-FUR = pal("#4B3026", "#5A392B", "#67432F", "#76513D", "#91674D", "#A77B5D")   # base = index 3
-BELLY = pal("#674735", "#856149", "#A1785A")
-PAW = pal("#3C2A22", "#59402F", "#75543C")
-CLAW = pal("#A18D70", "#C8B99A", "#E0D2B7")
-STONE = pal("#51483F", "#716456", "#968675", "#B3A18A")
-OCHRE = pal("#78502C", "#A36F38", "#C09252")
-
-SIDE = {"up": 0, "north": 0, "east": 0, "west": 0, "south": -1, "down": -2}   # light from above, a bit from the front
-
-# small irregular mineral marks, read as (dx, dy, tone)
-MARKS = (
-    ((0, 0, 1), (1, 0, 1), (1, 1, 0), (2, 1, 1), (2, 2, 0)),
-    ((0, 1, 0), (1, 0, 1), (1, 1, 2), (2, 1, 1), (1, 2, 0), (3, 2, 0)),
-    ((0, 0, 0), (1, 0, 1), (2, 1, 1), (3, 1, 0)),
-)
+# --------------------------------------------------------------------------- palette (2026-11-11, third version)
+# Earthy browns, warm greys, dark violet crystals, dark rose for bare skin. Painters work on a continuous value and
+# blend between these colours (soft gradients), never on flat tones; hard edges only on claws and rock outlines.
+FUR = pal("#382A25", "#594033", "#765642", "#96765A", "#B49A78")   # shadow, main, mid, lit, warm beige highlight
+ROCK = pal("#382A25", "#514D4A", "#77716B")                         # rock shadow (dark brown, never black), plates, relief
+CRYSTAL = pal("#51356F", "#7950A0")
+SKIN = pal("#382A25", "#98605D", "#B49A78")                         # bare skin: shadow, dark rose, light
 
 
-def speckle(px, r, palette, b, density_mid=0.2, density_dark=0.035, density_light=0.025):
-    """Dense short fur: base tone, clusters of 1 to 3 pixels one tone darker or lighter (no single hairs drawn)."""
+def mix(a, b, t):
+    return tuple(round(a[i] + (b[i] - a[i]) * t) for i in range(3))
+
+
+def ramp(colours, v):
+    """Colour at value v along a palette (0 = first colour, len - 1 = last), blended between neighbours."""
+    v = max(0.0, min(len(colours) - 1.0, v))
+    i = min(int(v), len(colours) - 2)
+    return mix(colours[i], colours[i + 1], v - i)
+
+
+def soft_noise(w, h, r, cell=4):
+    """Soft brush: random values on a coarse grid, smoothly interpolated (large blotches, no pixel noise)."""
+    gw, gh = w // cell + 2, h // cell + 2
+    g = [[r.random() - 0.5 for _ in range(gw)] for _ in range(gh)]
+    out = []
+    for y in range(h):
+        fy = y / cell
+        y0 = int(fy)
+        ty = fy - y0
+        ty = ty * ty * (3 - 2 * ty)
+        row = []
+        for x in range(w):
+            fx = x / cell
+            x0 = int(fx)
+            tx = fx - x0
+            tx = tx * tx * (3 - 2 * tx)
+            a = g[y0][x0] + (g[y0][x0 + 1] - g[y0][x0]) * tx
+            b = g[y0 + 1][x0] + (g[y0 + 1][x0 + 1] - g[y0 + 1][x0]) * tx
+            row.append(a + (b - a) * ty)
+        out.append(row)
+    return out
+
+
+def light(face, y, h, top=0.0):
+    """Light from above, coherent on every part: up faces lit, sides lit at the top and shaded towards the ground,
+    the back of a part a little darker, down faces in shadow (but never black)."""
+    if face == "up":
+        return 0.5 + top
+    if face == "down":
+        return -0.75
+    k = 1 - y / max(1, h - 1)                         # 1 at the top row, 0 at the bottom
+    side = {"north": 0.05, "south": -0.12}.get(face, 0.0)
+    return -0.45 + 0.85 * k + side + top * k * 0.5
+
+
+def field(w, h, r, face, base, top=0.0, blotch=0.35, cell=4, k=1.0):
+    """Value of every pixel: base value + light (scaled by k) + soft blotches."""
+    n = soft_noise(w, h, r, cell)
+    return [[base + k * light(face, y, h, top) + blotch * n[y][x] for x in range(w)] for y in range(h)]
+
+
+def strands(v, r, face, count, strength=0.45, light_bias=0.0):
+    """Fur strands drawn along the shape: horizontal on the sides (along the body, towards the rear), falling on the
+    front and back faces, along the length on the top. Short irregular strokes (2 to 4 pixels), half lighter, half
+    darker, so the fur reads dense and directed without being drawn hair by hair."""
+    h, w = len(v), len(v[0])
+    for _ in range(count):
+        x, y = r.randrange(w), r.randrange(h)
+        d = strength if r.random() < 0.5 + light_bias else -strength
+        ln = r.randrange(2, 5)
+        for i in range(ln):
+            if not (0 <= x < w and 0 <= y < h):
+                break
+            v[y][x] += d * (1 - i / (ln + 1))
+            if face in ("east", "west"):
+                x += 1
+                y += 1 if r.random() < 0.25 else 0
+            elif face in ("up", "down"):
+                y += 1
+                x += r.choice((0, 0, 1, -1))
+            else:
+                y += 1
+                x += 1 if r.random() < 0.2 else 0
+    return v
+
+
+def paint(v, colours):
+    return [[ramp(colours, x) for x in row] for row in v]
+
+
+def crystals(px, r, count, size=(2, 4)):
+    """Small violet crystal clusters: dark violet edge, medium violet core, a lighter top pixel (slightly luminous,
+    blended with the medium violet, never white)."""
     h, w = len(px), len(px[0])
-    for kind, dens, d in (("mid", density_mid, -1), ("dark", density_dark, -2), ("light", density_light, 1)):
-        n = int(w * h * dens / 2)
+    glint = mix(CRYSTAL[1], FUR[4], 0.35)
+    for _ in range(count):
+        if w < 4 or h < 4:
+            return px
+        x0, y0 = r.randrange(0, w - 2), r.randrange(0, h - 2)
+        n = r.randrange(*size)
+        cells = [(x0, y0)]
         for _ in range(n):
-            x, y = r.randrange(w), r.randrange(h)
-            c = tone(palette, b + d)
-            px[y][x] = c
-            if r.random() < 0.6 and x + 1 < w:
-                px[y][x + 1] = c
-            if r.random() < 0.3 and y + 1 < h:
-                px[y + 1][x] = c
+            cx, cy = cells[-1]
+            cells.append((cx + r.choice((0, 1)), cy + r.choice((0, 1, -1))))
+        for i, (x, y) in enumerate(cells):
+            if 0 <= x < w and 0 <= y < h:
+                px[y][x] = CRYSTAL[1] if i % 2 else CRYSTAL[0]
+        x, y = cells[len(cells) // 2]
+        if 0 <= x < w and 0 <= y < h:
+            px[y][x] = glint
+    return px
 
 
 # --------------------------------------------------------------------------- painters
-def fur(base=3, marks=0, belly_edge=0, top_light=True):
+def fur(base=1.0, top=0.0, crystal=0, belly_fade=0.0):
     def f(w, h, r, face):
-        """Fur: main brown everywhere, lighter on top faces (back, shoulders, skull), shaded lower rows on the sides,
-        `belly_edge` rows at the bottom fading irregularly into the belly brown, `marks` ochre mineral marks on the
-        side faces (east / west)."""
-        b = base + SIDE[face] if (top_light or face != "up") else base
-        if face == "down":
-            px = [[BELLY[0]] * w for _ in range(h)]
-            speckle(px, r, BELLY, 0, 0.15, 0, 0.05)
-            return px
-        px = [[tone(FUR, b)] * w for _ in range(h)]
-        speckle(px, r, FUR, b, density_light=0.16 if (face == "up" and top_light) else 0.025)
-        if face in ("east", "west", "north", "south") and h >= 4:
-            for x in range(w):                                     # light catching the top edge
-                if r.random() < 0.35:
-                    px[0][x] = tone(FUR, b + 1)
-            px[h - 1] = [tone(FUR, b - 1) if r.random() < 0.8 else tone(FUR, b - 2) for _ in range(w)]
-            for k in range(belly_edge):                            # soft irregular fade into the belly
-                y = h - 1 - k
-                p = 0.85 - 0.25 * k
-                px[y] = [tone(BELLY, 1 if r.random() < 0.7 else 0) if r.random() < p else px[y][x] for x in range(w)]
-        if marks and face in ("east", "west") and w >= 8 and h >= 6:
-            for k in range(marks):
-                m = MARKS[r.randrange(len(MARKS))]
-                x0 = int((k + 0.5) * w / marks) - 2 + r.randrange(-2, 3)
-                y0 = 1 + r.randrange(max(1, h // 2 - 1))
-                for dx, dy, t in m:
-                    x, y = x0 + dx, y0 + dy
-                    if 0 <= x < w and 0 <= y < h:
-                        px[y][x] = OCHRE[t]
-        if marks and face == "up" and w >= 8 and h >= 8:
-            m = MARKS[r.randrange(len(MARKS))]
-            x0, y0 = r.randrange(1, w - 4), r.randrange(1, h - 3)
-            for dx, dy, t in m:
-                px[y0 + dy][x0 + dx] = OCHRE[t]
+        """Fur: dark brown main colour, lit progressively towards warm brown on the top of the back, the shoulders and
+        the head; strands along the body; `belly_fade` softens the lower rows towards the (slightly lighter) belly;
+        `crystal` small violet crystal clusters on the side faces."""
+        v = field(w, h, r, face, base, top)
+        strands(v, r, face, max(2, w * h // 4), light_bias=0.1 if face == "up" else 0.0)
+        if belly_fade and face in ("east", "west", "north", "south"):
+            for y in range(h):
+                k = y / max(1, h - 1)
+                if k > 0.7:
+                    for x in range(w):
+                        v[y][x] += belly_fade * (k - 0.7) / 0.3
+        px = paint(v, FUR)
+        if crystal and face in ("east", "west", "up"):
+            crystals(px, r, crystal)
         return px
     return f
 
 
 def belly(w, h, r, face):
-    """Belly: just a softer, warmer brown than the body (no big beige patch), shaded towards the ground."""
-    b = {"up": 2, "down": 0}.get(face, 1)
-    px = [[BELLY[b]] * w for _ in range(h)]
-    speckle(px, r, BELLY, b, 0.2, 0.0, 0.05)
-    if face in ("east", "west", "north", "south"):
-        for x in range(w):                                         # irregular top edge: fur reaching down
-            for y in range(min(h, 1 + r.randrange(3))):
-                px[y][x] = tone(FUR, 2 if r.random() < 0.6 else 3)
-        if h >= 3:
-            px[h - 1] = [BELLY[0]] * w
-    return px
+    """Belly: the same brown, a touch warmer and softer, fewer strands; no separate beige patch."""
+    v = field(w, h, r, face, 1.15, blotch=0.25, cell=5)
+    strands(v, r, face, max(1, w * h // 9), strength=0.2)
+    return paint(v, FUR)
 
 
-
-
-
-
-
-def paw(base=1):
+def limb(base=0.85):
     def f(w, h, r, face):
-        """Forelimb and hind feet: darker brown than the body (the paws stand out from the belly), knuckle bumps."""
-        b = base + {"up": 1, "down": -1}.get(face, 0)
-        px = [[tone(PAW, b)] * w for _ in range(h)]
-        for _ in range(max(1, w * h // 7)):
-            x, y = r.randrange(w), r.randrange(h)
-            px[y][x] = tone(PAW, b - 1 if r.random() < 0.7 else b + 1)
-        if face in ("east", "west", "north", "south") and h >= 3:
-            px[h - 1] = [PAW[0]] * w
-        return px
+        """Forelimbs, hind legs: the fur a little darker (they stand out from the body), short strands."""
+        v = field(w, h, r, face, base, blotch=0.3, cell=3)
+        strands(v, r, face, max(2, w * h // 5), strength=0.28)
+        return paint(v, FUR)
     return f
 
 
-def shovel(w, h, r, face):
-    """Shovel palm: dark leathery brown, lighter ridges of the fingers running towards the claws on the broad faces."""
-    b = {"up": 2, "down": 0}.get(face, 1)
-    px = [[PAW[b]] * w for _ in range(h)]
-    for _ in range(max(1, w * h // 8)):
-        px[r.randrange(h)][r.randrange(w)] = PAW[max(0, b - 1)]
-    if face in ("up", "down") and w >= 8:
-        for k in range(4):
-            x = round((k + 0.5) * w / 4 - 0.5)
-            for y in range(h):
-                if r.random() < 0.8:
-                    px[y][x] = PAW[min(2, b + 1)] if face == "up" else PAW[0]
-    if face == "north" and w >= 8:
-        for k in range(4):
-            x = round((k + 0.5) * w / 4 - 0.5)
-            px[h - 1][x] = STONE[0]
-    return px
+def skin(base=1.0, wrinkles=True):
+    def f(w, h, r, face):
+        """Bare skin (shovel palms, living flesh of the drill): dark rose, shaded towards dark brown, soft wrinkles
+        across the palm."""
+        v = field(w, h, r, face, base, blotch=0.25, cell=3, k=0.55)
+        if wrinkles:
+            for y in range(1, h, 3):
+                for x in range(w):
+                    if r.random() < 0.7:
+                        v[y][x] -= 0.22
+        return paint(v, SKIN)
+    return f
 
 
 def claw(tip=False):
     def f(w, h, r, face):
-        """Claw: dirty ivory, light along the top, slight lengthwise stripes, mineral grey at the base (the root end
-        is the south face of a claw drawn towards -z)."""
-        b = {"up": 2, "down": 0}.get(face, 1)
-        px = [[CLAW[b]] * w for _ in range(h)]
-        if face in ("east", "west", "up", "down"):
-            for y in range(h):
-                for x in range(w):
-                    if (y if face in ("east", "west") else x) % 2 == 1 and r.random() < 0.5:
-                        px[y][x] = CLAW[max(0, b - 1)]
-            if not tip:
-                # mineral base: the rear columns (east / west) or rows (up / down) towards the paw
-                if face in ("east", "west"):
-                    cols = range(w - 2, w) if face == "east" else range(0, 2)
-                    for y in range(h):
-                        for x in cols:
-                            if 0 <= x < w:
-                                px[y][x] = STONE[1] if r.random() < 0.6 else STONE[0]
-                else:
-                    rows = range(h - 2, h) if face == "up" else range(0, 2)
-                    for y in rows:
-                        if 0 <= y < h:
-                            px[y] = [STONE[1] if r.random() < 0.6 else STONE[0] for _ in range(w)]
-        elif face == "south" and not tip:
-            px = [[STONE[0]] * w for _ in range(h)]
+        """Claw (hard brush): dark brown at the root to warm grey at the point, a crisp light ridge on top, a crisp
+        darker underside; no white, no black."""
+        if face == "down":
+            return [[mix(ROCK[0], ROCK[1], 0.4)] * w for _ in range(h)]
+        if face == "south":
+            return [[ROCK[0]] * w for _ in range(h)]
+        px = []
+        for y in range(h):
+            row = []
+            for x in range(w):
+                # along the claw: east / west run along u, up runs along v (the root is the far end)
+                along = (x / max(1, w - 1)) if face == "west" else (1 - x / max(1, w - 1)) if face == "east" else \
+                    (1 - y / max(1, h - 1)) if face == "up" else 0.5
+                along = 1.0 if tip else along * 0.75
+                v = 0.6 + 1.1 * along
+                if face in ("east", "west", "north"):
+                    v += 0.35 if y == 0 else (-0.35 if y == h - 1 else 0)
+                if face == "up":
+                    v += 0.3
+                row.append(ramp(ROCK, v))
+            px.append(row)
         return px
     return f
 
 
-def stone(w, h, r, face):
-    """Rock shard: contrasted greys and browns of compacted earth and stone, highlight on top."""
-    b = {"up": 2, "down": 0, "south": 1}.get(face, 1)
-    px = [[STONE[b]] * w for _ in range(h)]
-    for _ in range(max(1, w * h // 3)):
-        x, y = r.randrange(w), r.randrange(h)
-        px[y][x] = STONE[max(0, min(3, b + r.choice((-1, -1, 1))))]
-    if face in ("east", "west", "north", "south"):
-        px[0] = [STONE[min(3, b + 1)] if r.random() < 0.6 else px[0][x] for x in range(w)]
-        if h >= 3:
-            px[h - 1] = [FUR[1]] * w                     # where the shard sinks into the fur
-    if face == "up":
-        px[r.randrange(h)][r.randrange(w)] = STONE[3]
-    return px
-
-
-def drill(base=1, seams=True):
+def rock(base=1.0, crystal=1, k=0.55):
     def f(w, h, r, face):
-        """Drill ring: rough stone of compacted earth, contrasted greys, dark organic seams (living matter between the
-        stone plates), a rare ochre vein; the front face of each ring is darker at its rim."""
-        b = base + {"up": 1, "down": -1, "south": -1}.get(face, 0)
-        px = [[tone(STONE, b)] * w for _ in range(h)]
-        for _ in range(max(1, w * h // 3)):
+        """Rock (hard edges): warm greys with subtle gradient for the volume, a crisp outline one tone darker (dark
+        brown-grey, not black), a few cracks, violet crystal clusters."""
+        v = field(w, h, r, face, base, blotch=0.35, cell=3, k=k)
+        px = paint(v, ROCK)
+        for _ in range(max(1, (w + h) // 7)):
             x, y = r.randrange(w), r.randrange(h)
-            px[y][x] = tone(STONE, b + r.choice((-1, -1, 1)))
-        if seams:
-            for _ in range(max(1, (w + h) // 6)):                 # short cracks of dark flesh
-                x, y = r.randrange(w), r.randrange(h)
-                for _ in range(r.randrange(2, 5)):
-                    if 0 <= x < w and 0 <= y < h:
-                        px[y][x] = PAW[0]
-                    x, y = x + r.choice((-1, 0, 1)), y + 1
-        if r.random() < 0.5:
-            x, y = r.randrange(w), r.randrange(h)
-            px[y][x] = OCHRE[1]
-            if x + 1 < w:
-                px[y][x + 1] = OCHRE[0]
-        if face == "north" and w >= 4 and h >= 4:
+            for _ in range(r.randrange(2, 4)):
+                if 0 <= x < w and 0 <= y < h:
+                    px[y][x] = mix(ROCK[0], ROCK[1], 0.5)
+                x, y = x + r.choice((-1, 0, 1)), y + 1
+        if face not in ("down",) and w >= 3 and h >= 3:
+            edge = mix(ROCK[0], ROCK[1], 0.55)
             for i in range(w):
-                px[0][i] = px[h - 1][i] = tone(STONE, b - 1)
+                px[h - 1][i] = mix(edge, px[h - 1][i], 0.3)
             for j in range(h):
-                px[j][0] = px[j][w - 1] = tone(STONE, b - 1)
+                px[j][0] = mix(edge, px[j][0], 0.55)
+                px[j][w - 1] = mix(edge, px[j][w - 1], 0.55)
+            for i in range(1, w - 1):
+                px[0][i] = mix(px[0][i], ROCK[2], 0.35)       # light catching the upper edge
+        if crystal and face != "down":
+            crystals(px, r, crystal if w * h >= 30 else 0)
         return px
     return f
-
-
-def drill_flesh(w, h, r, face):
-    """Living band between two stone rings: dark leathery brown of the paws, stone scales scattered over it."""
-    b = {"up": 2, "down": 0}.get(face, 1)
-    px = [[PAW[b]] * w for _ in range(h)]
-    for _ in range(max(1, w * h // 4)):
-        x, y = r.randrange(w), r.randrange(h)
-        px[y][x] = STONE[0] if r.random() < 0.6 else STONE[1]
-    for _ in range(max(1, w * h // 10)):
-        px[r.randrange(h)][r.randrange(w)] = PAW[0]
-    return px
 
 
 def drill_root(w, h, r, face):
-    """Where the drill grows out of the body: fur on the outer rows turning into stone towards the middle."""
-    px = [[FUR[2]] * w for _ in range(h)]
-    speckle(px, r, FUR, 2)
-    if face in ("north", "south"):
-        cx, cy = (w - 1) / 2, (h - 1) / 2
-        for y in range(h):
-            for x in range(w):
-                d = max(abs(x - cx) / max(cx, 1), abs(y - cy) / max(cy, 1))
-                if d < 0.62 or (d < 0.8 and r.random() < 0.5):
-                    px[y][x] = tone(STONE, 0 if r.random() < 0.6 else 1)
-                elif d < 0.86 and r.random() < 0.5:
-                    px[y][x] = PAW[0]
-    return px
-
-
-def drill_tip(w, h, r, face):
-    """Hardened point: darkest stone, light edges where it is worn sharp."""
-    px = [[STONE[0]] * w for _ in range(h)]
-    for _ in range(max(1, w * h // 4)):
-        px[r.randrange(h)][r.randrange(w)] = STONE[1]
-    if face != "south" and w >= 2:
-        for j in range(h):
-            px[j][0] = STONE[2]
-    return px
+    """Where the drill grows out of the body: fur on the outer ring blending into rock towards the middle."""
+    fur_px = fur(1.0)(w, h, r, face)
+    if face not in ("north", "south"):
+        return fur_px
+    rock_px = rock(0.9, crystal=0)(w, h, r, face)
+    cx, cy = (w - 1) / 2, (h - 1) / 2
+    out = []
+    for y in range(h):
+        row = []
+        for x in range(w):
+            d = max(abs(x - cx) / max(cx, 1), abs(y - cy) / max(cy, 1))
+            t = max(0.0, min(1.0, (0.9 - d) / 0.3 + (r.random() - 0.5) * 0.4))
+            row.append(mix(fur_px[y][x], rock_px[y][x], t))
+        out.append(row)
+    return out
 
 
 MATS = {
-    "body": fur(3, belly_edge=2), "flank": fur(3, marks=1, belly_edge=3), "shoulder": fur(3, marks=1),
-    "back": fur(3, marks=1), "rump": fur(3, belly_edge=2), "head": fur(3), "head_low": fur(2),
-    "chest": fur(2, top_light=False), "belly": belly,
-    "drill": drill(1), "drill_light": drill(2), "drill_flesh": drill_flesh, "drill_root": drill_root,
-    "drill_tip": drill_tip,
-    "arm": paw(1), "forearm": paw(1), "shovel": shovel, "claw": (claw(False), 2), "claw_tip": (claw(True), 2),
-    "foot": paw(1), "tail": fur(2), "stone": stone,
+    "body": fur(0.95, belly_fade=0.2), "flank": fur(0.95, crystal=1, belly_fade=0.25), "shoulder": fur(1.0, 0.2, crystal=1),
+    "back": fur(1.0, 0.3), "rump": fur(0.95, belly_fade=0.2), "head": fur(1.0, 0.25), "head_low": fur(0.8),
+    "chest": fur(0.7), "belly": belly,
+    # drill rings are turned around the drill axis: their faces get an even light (the renderer shades the volume)
+    "drill": rock(1.3, 1, k=0.25), "drill_light": rock(1.45, 2, k=0.25), "drill_flesh": skin(1.0, wrinkles=False),
+    "drill_root": drill_root, "drill_tip": rock(1.15, 0, k=0.25),
+    "arm": limb(0.85), "forearm": limb(0.75), "shovel": skin(0.95), "claw": (claw(False), 2), "claw_tip": (claw(True), 2),
+    "foot": limb(0.75), "tail": skin(0.9, wrinkles=True), "stone": rock(1.2, 2),
 }
 
 
