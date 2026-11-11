@@ -23,6 +23,7 @@ FILL_X0, FILL_X1, FILL_Y0, FILL_Y1 = 1, 60, 1, 5   # inclusive: a 1 px outline a
 # 6 (not 7): the bar keeps its bottom where the 8 px bar had it, the row it lost is gained at the top
 BAR_ASCENT = 6
 
+# "Lame" shape (2026-11-11): a bar slanted like a blade, in the red of the former straight bar
 OUTLINE = (13, 13, 13, 255)
 EMPTY = (52, 12, 20, 255)
 FILL = [(255, 150, 150, 255), (255, 92, 92, 255), (247, 78, 82, 255), (236, 64, 74, 255),
@@ -34,28 +35,39 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 FONT = os.path.join(HERE, "..", "..", "Flux", "assets", "metiers", "quinquefive.json")
 
 
+def left(y):
+    """First column of the blade on row y: the ends lean like a parallelogram (2 rows per pixel)."""
+    return (BAR_H - 1 - y) // 2
+
+
+def right(y):
+    return BAR_W - 1 - y // 2
+
+
+def inside(x, y):
+    return 0 <= y < BAR_H and left(y) <= x <= right(y)
+
+
+def outline(x, y):
+    return any(not inside(x + dx, y + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+
+
 def bar(step):
     im = Image.new("RGBA", (BAR_W, BAR_H), (0, 0, 0, 0))
     px = im.load()
+    filled_to = FILL_X0 + round((FILL_X1 - FILL_X0 + 1) * step / STEPS) - 1
     for x in range(BAR_W):
         for y in range(BAR_H):
-            corner = (x in (0, BAR_W - 1)) and (y in (0, BAR_H - 1))
-            if corner:
+            if not inside(x, y):
                 continue
-            if x in (0, BAR_W - 1) or y in (0, BAR_H - 1):
+            if outline(x, y):
                 px[x, y] = OUTLINE
             else:
-                px[x, y] = EMPTY
-    width = FILL_X1 - FILL_X0 + 1
-    filled = round(width * step / STEPS)
-    for i in range(filled):
-        x = FILL_X0 + i
-        for r, y in enumerate(range(FILL_Y0, FILL_Y1 + 1)):
-            px[x, y] = FILL[r]
-    if 0 < filled < width:
-        x = FILL_X0 + filled - 1
+                px[x, y] = FILL[y - FILL_Y0] if x <= filled_to else EMPTY
+    if 0 < step < STEPS:
         for y in range(FILL_Y0, FILL_Y1 + 1):
-            px[x, y] = EDGE
+            if inside(filled_to, y) and not outline(filled_to, y):
+                px[filled_to, y] = EDGE
     return im
 
 
