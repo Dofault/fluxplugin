@@ -159,6 +159,7 @@ DRUMS = {
     },
     6: {
         'waltz': ('.:6', '.:6', '.:2 x:2 x:2'),
+        'none': ('.:6', '.:6', '.:6'),
         'sparse': ('.:6', '.:6', '.:2 x:4'),
         'fill': ('.:6', '.:2 x x x:2', '.:6'),
     },
@@ -451,10 +452,68 @@ TOWNS = [
 ]
 
 
+# Calm songs for the spawn: slow, no drums, major keys, welcoming.
+CALM = {'guitare': ('guitar', 0.4), 'basse': ('bass', 0.6), 'arpege': ('harp', 0.25), 'echo': ('chime', 0.2)}
+SPAWN = [
+    dict(id='spawn_matin', title='Premier Matin', bpm=72, meter='4/4', drone=False, fills=False,
+         comment='Spawn : premier matin à Utopia, do lydien (ré majeur sur do), harpe et flûte, sans batterie.',
+         lead='harp', b_lead='flute', echo='chime', arp='harp',
+         prog={'a': 'C D C D Am F G G', 'b': 'F G Em Am F G C C'},
+         mel_a='E5:8 G5:4 C6:4 | F#5:8 A5:4 D6:4 | E6:8 D6:4 C6:4 | A5:16 | C6:8 B5:4 A5:4 | A5:8 G5:4 F5:4 '
+               '| G5:4 B5:4 D6:8 | G5:16',
+         mel_b='A5:8 C6:8 | B5:8 D6:8 | G5:8 B5:8 | A5:16 | C6:4 A5:4 F5:8 | D6:4 B5:4 G5:8 | E5:8 G5:8 | C6:16',
+         volumes=CALM,
+         styles={'a': dict(bass='long', guitar='arp', drums='none'),
+                 'b': dict(bass='long', guitar='arp', drums='none')}),
+    dict(id='spawn_brise', title='Brise sur Utopia', bpm=66, meter='12/8', drone=False, fills=False,
+         comment='Spawn : une brise qui balance doucement, sol majeur à 12/8, flûte puis harpe.',
+         lead='flute', b_lead='harp', echo='chime', arp='harp',
+         prog={'a': 'G Em C D G Em C G', 'b': 'C D Bm Em C D G G'},
+         mel_a='D5:3 G5:3 B5:6 | A5:3 G5:3 E5:6 | G5:3 E5:3 C5:6 | D5:3 F#5:3 A5:6 | B5:3 D6:3 B5:6 '
+               '| A5:3 G5:3 E5:6 | E5:3 G5:3 C6:6 | B5:12',
+         mel_b='E5:6 G5:6 | F#5:6 A5:6 | D5:6 F#5:6 | E5:12 | G5:3 E5:3 C5:6 | A5:3 F#5:3 D5:6 | B4:6 D5:6 | G5:12',
+         volumes=CALM,
+         styles={'a': dict(bass='long', guitar='arp', drums='none'),
+                 'b': dict(bass='long', guitar='held', drums='none')}),
+    dict(id='spawn_etoiles', title='Ciel Étoilé', bpm=64, meter='4/4', drone=False, fills=False,
+         comment='Spawn : ciel étoilé, ré majeur, carillon qui scintille sur des arpèges légers.',
+         lead='chime', b_lead='harp', echo='bell', arp='pling', arp_always=True,
+         prog={'a': 'D A Bm G D A G A', 'b': 'G D Em A G D G A'},
+         mel_a='F#6:8 A6:8 | E6:8 C#6:8 | D6:8 F#6:8 | B5:16 | A6:4 F#6:4 D6:8 | C#6:4 E6:4 A6:8 | G6:4 F#6:4 D6:8 '
+               '| E6:16',
+         mel_b='B4:8 D5:8 | A4:8 F#4:8 | G4:8 B4:8 | C#5:16 | D5:4 B4:4 G4:8 | F#4:4 A4:4 D5:8 | B4:8 G4:8 | A4:16',
+         volumes={**CALM, 'lead': ('chime', 0.55), 'echo': ('bell', 0.15), 'arpege': ('pling', 0.2)},
+         styles={'a': dict(bass='long', guitar='held', drums='none'),
+                 'b': dict(bass='long', guitar='arp', drums='none')}),
+    dict(id='spawn_jardin', title='Le Jardin du Sénat', bpm=96, meter='3/4', drone=False, fills=False, flats=True,
+         comment='Spawn : promenade dans les jardins du Sénat, valse lente en fa majeur, flûte et harpe.',
+         lead='flute', b_lead='harp', echo='chime', arp='harp',
+         prog={'a': 'F F Bb Bb F F C C F F Bb Bb F C F F',
+               'b': 'Dm Dm Bb Bb F F C C Dm Dm Bb Bb Gm C F F'},
+         mel_a='A5:4 C6:2 | F5:6 | D6:4 C6:2 | Bb5:6 | A5:2 C6:2 F6:2 | E6:4 C6:2 | G5:4 Bb5:2 | G5:6 | A5:4 C6:2 '
+               '| F6:6 | D6:2 F6:2 D6:2 | Bb5:6 | A5:4 F5:2 | G5:2 E5:2 G5:2 | F5:6 | .:6',
+         mel_b='F5:4 A5:2 | D5:6 | F5:4 D5:2 | Bb4:6 | C5:2 F5:2 A5:2 | A5:6 | G5:4 E5:2 | C5:6 | D5:2 F5:2 A5:2 '
+               '| A5:6 | F5:4 D5:2 | Bb4:6 | G5:4 Bb5:2 | G5:2 E5:2 C5:2 | F5:6 | C5:6',
+         volumes={**CALM, 'charley': ('hat', 0.1)},
+         styles={'a': dict(bass='waltz', guitar='waltz', drums='none'),
+                 'b': dict(bass='waltz', guitar='waltz', drums='none')}),
+    dict(id='spawn_fontaine', title='La Fontaine', bpm=80, meter='4/4', drone=False, fills=False,
+         comment="Spawn : au bord de la fontaine, la majeur, arpèges de harpe comme l'eau qui coule.",
+         lead='pling', b_lead='flute', echo='chime', arp='harp', arp_always=True,
+         prog={'a': 'A F#m D E A F#m D A', 'b': 'D E C#m F#m D E A A'},
+         mel_a='C#5:4 E5:4 A5:8 | F#5:4 E5:4 C#5:8 | D5:4 F#5:4 A5:4 F#5:4 | E5:16 | A5:4 G#5:4 F#5:4 E5:4 '
+               '| C#5:8 E5:8 | F#5:4 E5:4 D5:4 B4:4 | A4:16',
+         mel_b='F#5:8 A5:8 | G#5:8 B5:8 | E5:8 G#5:8 | A5:16 | D6:4 C#6:4 B5:8 | B5:4 A5:4 G#5:8 | A5:8 E5:8 | C#6:16',
+         volumes={**CALM, 'lead': ('pling', 0.6), 'arpege': ('harp', 0.3)},
+         styles={'a': dict(bass='long', guitar='held', drums='none'),
+                 'b': dict(bass='long', guitar='arp', drums='none')}),
+]
+
+
 def main():
     out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                                              '..', 'src', 'main', 'resources', 'songs')
-    for spec in SONGS + [TOWN] + TOWNS:
+    for spec in SONGS + [TOWN] + TOWNS + SPAWN:
         text = yaml(*build(spec))
         with open(os.path.join(out, spec['id'] + '.yml'), 'w', encoding='utf-8') as f:
             f.write(text)

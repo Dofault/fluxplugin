@@ -1,0 +1,39 @@
+# Spawn : une brise qui balance doucement, sol majeur à 12/8, flûte puis harpe.
+# Généré par FluxMusic/assets/gen_songs.py : modifier le script, pas ce fichier.
+title: "Brise sur Utopia"
+author: "Influencraft"
+bpm: 66
+steps-per-beat: 3
+beats-per-bar: 4
+loop: true
+loop-from: a
+
+tracks:
+  lead: { instrument: flute, volume: 0.8 }
+  chant: { instrument: harp, volume: 0.7 }
+  echo: { instrument: chime, volume: 0.2 }
+  arpege: { instrument: harp, volume: 0.25 }
+  guitare: { instrument: guitar, volume: 0.4 }
+  basse: { instrument: bass, volume: 0.6 }
+
+sections:
+  intro:
+    arpege: "G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4"
+    basse: "G1:6 D2:6 | G1:6 D2:6"
+  a:
+    lead: "D5:3 G5:3 B5:6 | A5:3 G5:3 E5:6 | G5:3 E5:3 C5:6 | D5:3 F#5:3 A5:6 | B5:3 D6:3 B5:6 | A5:3 G5:3 E5:6 | E5:3 G5:3 C6:6 | B5:12"
+    guitare: "G2 B2 D3 G3 D3 B2 G2 B2 D3 G3 D3 B2 | E3 G3 B3 E4 B3 G3 E3 G3 B3 E4 B3 G3 | C3 E3 G3 C4 G3 E3 C3 E3 G3 C4 G3 E3 | D3 F#3 A3 D4 A3 F#3 D3 F#3 A3 D4 A3 F#3 | G2 B2 D3 G3 D3 B2 G2 B2 D3 G3 D3 B2 | E3 G3 B3 E4 B3 G3 E3 G3 B3 E4 B3 G3 | C3 E3 G3 C4 G3 E3 C3 E3 G3 C4 G3 E3 | G2 B2 D3 G3 D3 B2 G2 B2 D3 G3 D3 B2"
+    basse: "G1:6 D2:6 | E2:6 B2:6 | C2:6 G2:6 | D2:6 A2:6 | G1:6 D2:6 | E2:6 B2:6 | C2:6 G2:6 | G1:6 D2:6"
+  b:
+    chant: "E4:6 G4:6 | F#4:6 A4:6 | D4:6 F#4:6 | E4:12 | G4:3 E4:3 C4:6 | A4:3 F#4:3 D4:6 | B3:6 D4:6 | G4:12"
+    arpege: "C4 E4 G4 C5 G4 E4 C4 E4 G4 C5 G4 E4 | D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 A4 F#4 | B3 D4 F#4 B4 F#4 D4 B3 D4 F#4 B4 F#4 D4 | E4 G4 B4 E5 B4 G4 E4 G4 B4 E5 B4 G4 | C4 E4 G4 C5 G4 E4 C4 E4 G4 C5 G4 E4 | D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 A4 F#4 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4"
+    guitare: "C3+E3+G3:12 | D3+F#3+A3:12 | B2+D3+F#3:12 | E3+G3+B3:12 | C3+E3+G3:12 | D3+F#3+A3:12 | G3+B3+D4:12 | G3+B3+D4:12"
+    basse: "C2:6 G2:6 | D2:6 A2:6 | B1:6 F#2:6 | E2:6 B2:6 | C2:6 G2:6 | D2:6 A2:6 | G1:6 D2:6 | G1:6 D2:6"
+  a2:
+    lead: "D5:3 G5:3 B5:6 | A5:3 G5:3 E5:6 | G5:3 E5:3 C5:6 | D5:3 F#5:3 A5:6 | B5:3 D6:3 B5:6 | A5:3 G5:3 E5:6 | E5:3 G5:3 C6:6 | B5:12"
+    echo: "D6:3 G6:3 B6:6 | A6:3 G6:3 E6:6 | G6:3 E6:3 C6:6 | D6:3 F#6:3 A6:6 | B6:3 D7:3 B6:6 | A6:3 G6:3 E6:6 | E6:3 G6:3 C7:6 | B6:12"
+    arpege: "G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 | E4 G4 B4 E5 B4 G4 E4 G4 B4 E5 B4 G4 | C4 E4 G4 C5 G4 E4 C4 E4 G4 C5 G4 E4 | D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 A4 F#4 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 | E4 G4 B4 E5 B4 G4 E4 G4 B4 E5 B4 G4 | C4 E4 G4 C5 G4 E4 C4 E4 G4 C5 G4 E4 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4"
+    guitare: "G2 B2 D3 G3 D3 B2 G2 B2 D3 G3 D3 B2 | E3 G3 B3 E4 B3 G3 E3 G3 B3 E4 B3 G3 | C3 E3 G3 C4 G3 E3 C3 E3 G3 C4 G3 E3 | D3 F#3 A3 D4 A3 F#3 D3 F#3 A3 D4 A3 F#3 | G2 B2 D3 G3 D3 B2 G2 B2 D3 G3 D3 B2 | E3 G3 B3 E4 B3 G3 E3 G3 B3 E4 B3 G3 | C3 E3 G3 C4 G3 E3 C3 E3 G3 C4 G3 E3 | G2 B2 D3 G3 D3 B2 G2 B2 D3 G3 D3 B2"
+    basse: "G1:6 D2:6 | E2:6 B2:6 | C2:6 G2:6 | D2:6 A2:6 | G1:6 D2:6 | E2:6 B2:6 | C2:6 G2:6 | G1:6 D2:6"
+
+order: [intro, a, b, a2]

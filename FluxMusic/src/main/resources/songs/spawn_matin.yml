@@ -1,0 +1,39 @@
+# Spawn : premier matin à Utopia, do lydien (ré majeur sur do), harpe et flûte, sans batterie.
+# Généré par FluxMusic/assets/gen_songs.py : modifier le script, pas ce fichier.
+title: "Premier Matin"
+author: "Influencraft"
+bpm: 72
+steps-per-beat: 4
+beats-per-bar: 4
+loop: true
+loop-from: a
+
+tracks:
+  lead: { instrument: harp, volume: 0.8 }
+  chant: { instrument: flute, volume: 0.7 }
+  echo: { instrument: chime, volume: 0.2 }
+  arpege: { instrument: harp, volume: 0.25 }
+  guitare: { instrument: guitar, volume: 0.4 }
+  basse: { instrument: bass, volume: 0.6 }
+
+sections:
+  intro:
+    arpege: "C4 E4 G4 C5 G4 E4 C4 E4 G4 C5 G4 E4 C4 E4 G4 C5 | C4 E4 G4 C5 G4 E4 C4 E4 G4 C5 G4 E4 C4 E4 G4 C5"
+    basse: "C2:8 G2:8 | C2:8 G2:8"
+  a:
+    lead: "E4:8 G4:4 C5:4 | F#4:8 A4:4 D5:4 | E5:8 D5:4 C5:4 | A4:16 | C5:8 B4:4 A4:4 | A4:8 G4:4 F4:4 | G4:4 B4:4 D5:8 | G4:16"
+    guitare: "C3:2 E3:2 G3:2 C4:2 G3:2 E3:2 C3:2 E3:2 | D3:2 F#3:2 A3:2 D4:2 A3:2 F#3:2 D3:2 F#3:2 | C3:2 E3:2 G3:2 C4:2 G3:2 E3:2 C3:2 E3:2 | D3:2 F#3:2 A3:2 D4:2 A3:2 F#3:2 D3:2 F#3:2 | A2:2 C3:2 E3:2 A3:2 E3:2 C3:2 A2:2 C3:2 | F3:2 A3:2 C4:2 F4:2 C4:2 A3:2 F3:2 A3:2 | G2:2 B2:2 D3:2 G3:2 D3:2 B2:2 G2:2 B2:2 | G2:2 B2:2 D3:2 G3:2 D3:2 B2:2 G2:2 B2:2"
+    basse: "C2:8 G2:8 | D2:8 A2:8 | C2:8 G2:8 | D2:8 A2:8 | A1:8 E2:8 | F2:8 C3:8 | G1:8 D2:8 | G1:8 D2:8"
+  b:
+    chant: "A5:8 C6:8 | B5:8 D6:8 | G5:8 B5:8 | A5:16 | C6:4 A5:4 F5:8 | D6:4 B5:4 G5:8 | E5:8 G5:8 | C6:16"
+    arpege: "F4 A4 C5 F5 C5 A4 F4 A4 C5 F5 C5 A4 F4 A4 C5 F5 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 | E4 G4 B4 E5 B4 G4 E4 G4 B4 E5 B4 G4 E4 G4 B4 E5 | A3 C4 E4 A4 E4 C4 A3 C4 E4 A4 E4 C4 A3 C4 E4 A4 | F4 A4 C5 F5 C5 A4 F4 A4 C5 F5 C5 A4 F4 A4 C5 F5 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 | C4 E4 G4 C5 G4 E4 C4 E4 G4 C5 G4 E4 C4 E4 G4 C5 | C4 E4 G4 C5 G4 E4 C4 E4 G4 C5 G4 E4 C4 E4 G4 C5"
+    guitare: "F3:2 A3:2 C4:2 F4:2 C4:2 A3:2 F3:2 A3:2 | G2:2 B2:2 D3:2 G3:2 D3:2 B2:2 G2:2 B2:2 | E3:2 G3:2 B3:2 E4:2 B3:2 G3:2 E3:2 G3:2 | A2:2 C3:2 E3:2 A3:2 E3:2 C3:2 A2:2 C3:2 | F3:2 A3:2 C4:2 F4:2 C4:2 A3:2 F3:2 A3:2 | G2:2 B2:2 D3:2 G3:2 D3:2 B2:2 G2:2 B2:2 | C3:2 E3:2 G3:2 C4:2 G3:2 E3:2 C3:2 E3:2 | C3:2 E3:2 G3:2 C4:2 G3:2 E3:2 C3:2 E3:2"
+    basse: "F2:8 C3:8 | G1:8 D2:8 | E2:8 B2:8 | A1:8 E2:8 | F2:8 C3:8 | G1:8 D2:8 | C2:8 G2:8 | C2:8 G2:8"
+  a2:
+    lead: "E4:8 G4:4 C5:4 | F#4:8 A4:4 D5:4 | E5:8 D5:4 C5:4 | A4:16 | C5:8 B4:4 A4:4 | A4:8 G4:4 F4:4 | G4:4 B4:4 D5:8 | G4:16"
+    echo: "E6:8 G6:4 C7:4 | F#6:8 A6:4 D7:4 | E7:8 D7:4 C7:4 | A6:16 | C7:8 B6:4 A6:4 | A6:8 G6:4 F6:4 | G6:4 B6:4 D7:8 | G6:16"
+    arpege: "C4 E4 G4 C5 G4 E4 C4 E4 G4 C5 G4 E4 C4 E4 G4 C5 | D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 | C4 E4 G4 C5 G4 E4 C4 E4 G4 C5 G4 E4 C4 E4 G4 C5 | D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 | A3 C4 E4 A4 E4 C4 A3 C4 E4 A4 E4 C4 A3 C4 E4 A4 | F4 A4 C5 F5 C5 A4 F4 A4 C5 F5 C5 A4 F4 A4 C5 F5 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4"
+    guitare: "C3:2 E3:2 G3:2 C4:2 G3:2 E3:2 C3:2 E3:2 | D3:2 F#3:2 A3:2 D4:2 A3:2 F#3:2 D3:2 F#3:2 | C3:2 E3:2 G3:2 C4:2 G3:2 E3:2 C3:2 E3:2 | D3:2 F#3:2 A3:2 D4:2 A3:2 F#3:2 D3:2 F#3:2 | A2:2 C3:2 E3:2 A3:2 E3:2 C3:2 A2:2 C3:2 | F3:2 A3:2 C4:2 F4:2 C4:2 A3:2 F3:2 A3:2 | G2:2 B2:2 D3:2 G3:2 D3:2 B2:2 G2:2 B2:2 | G2:2 B2:2 D3:2 G3:2 D3:2 B2:2 G2:2 B2:2"
+    basse: "C2:8 G2:8 | D2:8 A2:8 | C2:8 G2:8 | D2:8 A2:8 | A1:8 E2:8 | F2:8 C3:8 | G1:8 D2:8 | G1:8 D2:8"
+
+order: [intro, a, b, a2]

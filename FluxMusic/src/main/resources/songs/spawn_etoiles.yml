@@ -1,0 +1,40 @@
+# Spawn : ciel étoilé, ré majeur, carillon qui scintille sur des arpèges légers.
+# Généré par FluxMusic/assets/gen_songs.py : modifier le script, pas ce fichier.
+title: "Ciel Étoilé"
+author: "Influencraft"
+bpm: 64
+steps-per-beat: 4
+beats-per-bar: 4
+loop: true
+loop-from: a
+
+tracks:
+  lead: { instrument: chime, volume: 0.55 }
+  chant: { instrument: harp, volume: 0.7 }
+  echo: { instrument: bell, volume: 0.15 }
+  arpege: { instrument: pling, volume: 0.2 }
+  guitare: { instrument: guitar, volume: 0.4 }
+  basse: { instrument: bass, volume: 0.6 }
+
+sections:
+  intro:
+    arpege: "D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 | D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5"
+    basse: "D2:8 A2:8 | D2:8 A2:8"
+  a:
+    lead: "F#6:8 A6:8 | E6:8 C#6:8 | D6:8 F#6:8 | B5:16 | A6:4 F#6:4 D6:8 | C#6:4 E6:4 A6:8 | G6:4 F#6:4 D6:8 | E6:16"
+    arpege: "D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 | A3 C#4 E4 A4 E4 C#4 A3 C#4 E4 A4 E4 C#4 A3 C#4 E4 A4 | B3 D4 F#4 B4 F#4 D4 B3 D4 F#4 B4 F#4 D4 B3 D4 F#4 B4 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 | D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 | A3 C#4 E4 A4 E4 C#4 A3 C#4 E4 A4 E4 C#4 A3 C#4 E4 A4 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 | A3 C#4 E4 A4 E4 C#4 A3 C#4 E4 A4 E4 C#4 A3 C#4 E4 A4"
+    guitare: "D3+F#3+A3:16 | A2+C#3+E3:16 | B2+D3+F#3:16 | G3+B3+D4:16 | D3+F#3+A3:16 | A2+C#3+E3:16 | G3+B3+D4:16 | A2+C#3+E3:16"
+    basse: "D2:8 A2:8 | A1:8 E2:8 | B1:8 F#2:8 | G1:8 D2:8 | D2:8 A2:8 | A1:8 E2:8 | G1:8 D2:8 | A1:8 E2:8"
+  b:
+    chant: "B4:8 D5:8 | A4:8 F#4:8 | G4:8 B4:8 | C#5:16 | D5:4 B4:4 G4:8 | F#4:4 A4:4 D5:8 | B4:8 G4:8 | A4:16"
+    arpege: "G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 | D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 | E4 G4 B4 E5 B4 G4 E4 G4 B4 E5 B4 G4 E4 G4 B4 E5 | A3 C#4 E4 A4 E4 C#4 A3 C#4 E4 A4 E4 C#4 A3 C#4 E4 A4 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 | D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 | A3 C#4 E4 A4 E4 C#4 A3 C#4 E4 A4 E4 C#4 A3 C#4 E4 A4"
+    guitare: "G2:2 B2:2 D3:2 G3:2 D3:2 B2:2 G2:2 B2:2 | D3:2 F#3:2 A3:2 D4:2 A3:2 F#3:2 D3:2 F#3:2 | E3:2 G3:2 B3:2 E4:2 B3:2 G3:2 E3:2 G3:2 | A2:2 C#3:2 E3:2 A3:2 E3:2 C#3:2 A2:2 C#3:2 | G2:2 B2:2 D3:2 G3:2 D3:2 B2:2 G2:2 B2:2 | D3:2 F#3:2 A3:2 D4:2 A3:2 F#3:2 D3:2 F#3:2 | G2:2 B2:2 D3:2 G3:2 D3:2 B2:2 G2:2 B2:2 | A2:2 C#3:2 E3:2 A3:2 E3:2 C#3:2 A2:2 C#3:2"
+    basse: "G1:8 D2:8 | D2:8 A2:8 | E2:8 B2:8 | A1:8 E2:8 | G1:8 D2:8 | D2:8 A2:8 | G1:8 D2:8 | A1:8 E2:8"
+  a2:
+    lead: "F#6:8 A6:8 | E6:8 C#6:8 | D6:8 F#6:8 | B5:16 | A6:4 F#6:4 D6:8 | C#6:4 E6:4 A6:8 | G6:4 F#6:4 D6:8 | E6:16"
+    echo: "F#6:8 A6:8 | E6:8 C#6:8 | D6:8 F#6:8 | B5:16 | A6:4 F#6:4 D6:8 | C#6:4 E6:4 A6:8 | G6:4 F#6:4 D6:8 | E6:16"
+    arpege: "D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 | A3 C#4 E4 A4 E4 C#4 A3 C#4 E4 A4 E4 C#4 A3 C#4 E4 A4 | B3 D4 F#4 B4 F#4 D4 B3 D4 F#4 B4 F#4 D4 B3 D4 F#4 B4 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 | D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 | A3 C#4 E4 A4 E4 C#4 A3 C#4 E4 A4 E4 C#4 A3 C#4 E4 A4 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 | A3 C#4 E4 A4 E4 C#4 A3 C#4 E4 A4 E4 C#4 A3 C#4 E4 A4"
+    guitare: "D3+F#3+A3:16 | A2+C#3+E3:16 | B2+D3+F#3:16 | G3+B3+D4:16 | D3+F#3+A3:16 | A2+C#3+E3:16 | G3+B3+D4:16 | A2+C#3+E3:16"
+    basse: "D2:8 A2:8 | A1:8 E2:8 | B1:8 F#2:8 | G1:8 D2:8 | D2:8 A2:8 | A1:8 E2:8 | G1:8 D2:8 | A1:8 E2:8"
+
+order: [intro, a, b, a2]
