@@ -154,7 +154,8 @@ public final class Runs {
             Run r = runs.get(id);
             if (r == null) return null;
             DungeonDefinition.Level l = r.levelSpec();
-            return new double[]{l.health(), l.damage(), l.spells() ? 1 : 0};
+            // 4th value: the level's rank (1 = easiest), abilities with a higher from-level stay off
+            return new double[]{l.health(), l.damage(), l.spells() ? 1 : 0, r.level + 1};
         });
         Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 10L, 10L);
     }

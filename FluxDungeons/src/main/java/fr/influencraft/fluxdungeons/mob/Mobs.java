@@ -328,6 +328,7 @@ public final class Mobs {
         this.bone = new BonePowers(plugin, fx);
         this.salamander = new SalamanderPowers(plugin, fx, this);
         this.tide = new TidePowers(plugin);
+        this.theme = new ThemePowers(plugin, fx);
     }
 
     /** Loads every monster file (mobs.yml first, then each file of mobs/). */
@@ -1019,6 +1020,7 @@ public final class Mobs {
     private RockPowers rock;
     /** Abilities of the water (geysers, whirlpool, bubbles, tidal breach). */
     private TidePowers tide;
+    private ThemePowers theme;
     private HarvestPowers harvest;
     /** Abilities of the Copper T-Rex (Overcharge, bite, tail sweep, drill charge, resonance, veins). */
     private CopperPowers copper;
@@ -1032,6 +1034,7 @@ public final class Mobs {
     public void removeAll() {
         if (rock != null) rock.clear();
         if (tide != null) tide.clear();
+        if (theme != null) theme.clear();
         if (harvest != null) harvest.clear();
         if (copper != null) copper.clear();
         if (mole != null) mole.clear();
@@ -1077,7 +1080,7 @@ public final class Mobs {
         double dist = shooter.getLocation().distance(a.entity.getLocation());
         for (int i = 0; i < a.abilities.size(); i++) {
             Ability ab = a.abilities.get(i);
-            if (!"counter_shot".equals(ab.type()) || dist < ab.number("min-range", 8)) continue;
+            if (!"counter_shot".equals(ab.type()) || dist < ab.number("min-range", 8) || !unlocked(a, ab)) continue;
             double life = 100 * a.entity.getHealth() / Math.max(1, maxHealth(a.entity));
             if (life > ab.below()) continue;
             Long last = a.lastCast.get(i);
@@ -1309,7 +1312,7 @@ public final class Mobs {
             double reach = target.getLocation().distance(a.entity.getLocation());
             for (int i = 0; i < a.abilities.size(); i++) {
                 Ability ab = a.abilities.get(i);
-                if (life > ab.below() || a.spent.contains(i) || "counter_shot".equals(ab.type())) continue;
+                if (life > ab.below() || a.spent.contains(i) || "counter_shot".equals(ab.type()) || !unlocked(a, ab)) continue;
                 // wait: seconds after its life share is reached before the first cast (an ultimate kept for later)
                 long since = a.allowedSince.computeIfAbsent(i, k -> now);
                 if (now - since < ab.number("wait", 0) * 1000) continue;
@@ -1321,7 +1324,8 @@ public final class Mobs {
                 // ready, and somebody to hit (a ring cast with nobody in it is thrown in the void)
                 if (now - last >= ab.every() * 1000 && RockPowers.worthCasting(ab, a.entity)
                         && harvest.worth(ab, a.entity, a.spawn) && copper.worth(ab, a.entity, a.spawn)
-                        && mole.worth(ab, a.entity) && bone.worth(ab, a.entity) && salamander.worth(ab, a.entity)) ready.add(i);
+                        && mole.worth(ab, a.entity) && bone.worth(ab, a.entity) && salamander.worth(ab, a.entity)
+                        && theme.worth(ab, a.entity)) ready.add(i);
             }
             if (ready.isEmpty()) continue;
             // drawn by weight (1 by default); an opening move goes first
@@ -1702,6 +1706,15 @@ public final class Mobs {
         return v.length < 3 || v[2] > 0;
     }
 
+    /**
+     * Whether an ability is on at the run's difficulty: {@code from-level} = rank of the first level that has it
+     * (1 = the easiest, default). Monsters outside a run (summoned for a test) use all of theirs.
+     */
+    private boolean unlocked(Alive a, Ability ab) {
+        double[] v = scaling.apply(a.run);
+        return v.length < 4 || ab.number("from-level", 1) <= v[3];
+    }
+
     public void scaling(java.util.function.Function<String, double[]> scaling) {
         this.scaling = r -> {
             double[] v = r == null ? null : scaling.apply(r);
@@ -1861,7 +1874,7 @@ public final class Mobs {
         };
         if (copper.cast(ab, caster, target) || mole.cast(ab, caster, target) || bone.cast(ab, caster, target)
                 || salamander.cast(ab, caster, target) || tide.cast(ab, caster, target) || harvest.cast(ab, caster, target)
-                || rock.cast(ab, caster, target)) return;
+                || rock.cast(ab, caster, target) || theme.cast(ab, caster, target)) return;
         World w = e.getWorld();
         Location at = e.getLocation();
         switch (ab.type()) {

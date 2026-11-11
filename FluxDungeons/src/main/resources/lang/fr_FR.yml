@@ -236,8 +236,9 @@ lobby:
   difficulty: 'Difficulté : %level%'
   difficulty-desc: Choisie par le chef du groupe, pour tout le groupe.
   difficulty-gear: Conseillé
-  difficulty-spells: Sorts des monstres
+  difficulty-spells: Attaques spéciales
   spells-on: oui
+  spells-count: '%count% par monstre (plus pour les boss)'
   spells-off: non
   difficulty-loan: Armure et épée en fer prêtées à qui n'en a pas.
   difficulty-required: Armure complète et une arme obligatoires.
@@ -309,8 +310,9 @@ pick-level:
 
     &#B376E5Récompense : &fx%reward%
 
-    &#B376E5Sorts des monstres : &f%spells%%extra%'
+    &#B376E5Attaques spéciales : &f%spells%%extra%'
   spells-on: oui
+  spells-count: '%count% par monstre (plus pour les boss)'
   spells-off: non
   loan: '
 

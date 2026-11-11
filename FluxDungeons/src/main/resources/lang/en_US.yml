@@ -236,8 +236,9 @@ lobby:
   difficulty: 'Difficulty: %level%'
   difficulty-desc: Chosen by the party leader, for the whole party.
   difficulty-gear: Made for
-  difficulty-spells: Monster spells
+  difficulty-spells: Special attacks
   spells-on: "yes"
+  spells-count: '%count% per monster (more for bosses)'
   spells-off: "no"
   difficulty-loan: Iron armour and sword lent to whoever lacks them.
   difficulty-required: Full armour and a weapon required.
@@ -309,8 +310,9 @@ pick-level:
 
     &#B376E5Reward: &fx%reward%
 
-    &#B376E5Monster spells: &f%spells%%extra%'
+    &#B376E5Special attacks: &f%spells%%extra%'
   spells-on: 'yes'
+  spells-count: '%count% per monster (more for bosses)'
   spells-off: 'no'
   loan: '
 

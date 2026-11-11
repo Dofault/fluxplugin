@@ -292,6 +292,13 @@ public final class CombatEngine implements Listener {
             double dmg = CombatMath.round(Math.max(set.balance().minimumDamage(), o.damage() * (1 - targetMob.rangedResistance)));
             o = new CombatMath.Outcome(dmg, o.crit(), false, CombatMath.round(dmg * a.get("lifesteal")), CombatMath.round(dmg * a.get("manasteal")));
         }
+        // a monster's own guard (stone skin, shield: its Resistance effect, 20 % a level as in vanilla); a player's
+        // Resistance never counts (rpg players only have the engine's stats)
+        org.bukkit.potion.PotionEffect guard = targetMob == null ? null : target.getPotionEffect(org.bukkit.potion.PotionEffectType.RESISTANCE);
+        if (guard != null && !o.dodged()) {
+            double dmg = CombatMath.round(Math.max(set.balance().minimumDamage(), o.damage() * Math.max(0.2, 1 - 0.2 * (guard.getAmplifier() + 1))));
+            o = new CombatMath.Outcome(dmg, o.crit(), false, CombatMath.round(dmg * a.get("lifesteal")), CombatMath.round(dmg * a.get("manasteal")));
+        }
         if (o.dodged()) {
             if (numbers != null) numbers.dodge(target);
             return o;

@@ -165,6 +165,7 @@ final class Burrows {
                 run.checkpoint = start;
                 run.origin = start.clone();
                 spawnBoss(run, lair);
+                guards(run, lair, c.getConfigurationSection("guards"), r);
                 plugin.getLogger().info("Lair of " + run.def.id() + " built (seed " + plan.seed + ", " + plan.dug()
                         + " blocks dug, trail of " + plan.trail.size() + " points).");
                 done.run();
@@ -459,6 +460,68 @@ final class Burrows {
         run.mobs.add(boss.getUniqueId());
         run.objectivesLeft.add(l.bossId);
         run.objectivesTotal = run.objectivesLeft.size();
+    }
+
+    /**
+     * Monsters waiting in the galleries ({@code guards:} of the burrows section): {@code mobs} = id: weight, a group of
+     * {@code per-room: [min, max]} in each room and {@code per-junction: [min, max]} at each crossing (never the
+     * entrance nor the nest), {@code extra-per-player} more per player beyond the first (share of a monster, rounded
+     * at random). They do not have to die: the boss is the objective.
+     */
+    private void guards(Run run, Lair l, ConfigurationSection g, Random r) {
+        if (g == null) return;
+        ConfigurationSection weights = g.getConfigurationSection("mobs");
+        if (weights == null) return;
+        List<MobTemplate> pool = new ArrayList<>();
+        List<Double> w = new ArrayList<>();
+        double total = 0;
+        for (String id : weights.getKeys(false)) {
+            MobTemplate t = mobs.template(id);
+            if (t == null) {
+                plugin.getLogger().warning("Unknown guard " + id + " in the lair of " + run.def.id());
+                continue;
+            }
+            pool.add(t);
+            w.add(Math.max(0, weights.getDouble(id)));
+            total += Math.max(0, weights.getDouble(id));
+        }
+        if (pool.isEmpty() || total <= 0) return;
+        List<Integer> room = g.getIntegerList("per-room"), junction = g.getIntegerList("per-junction");
+        double extra = g.getDouble("extra-per-player", 0.5) * Math.max(0, run.players().size() - 1);
+        int placed = 0;
+        for (GalleryPlan.Node n : l.plan.nodes) {
+            List<Integer> range = n.kind() == GalleryPlan.Kind.ROOM ? room : n.kind() == GalleryPlan.Kind.JUNCTION ? junction : null;
+            if (range == null || range.isEmpty()) continue;
+            int min = range.get(0), max = range.size() > 1 ? range.get(1) : min;
+            int count = min + (max > min ? r.nextInt(max - min + 1) : 0);
+            count += (int) Math.floor(extra) + (r.nextDouble() < extra - Math.floor(extra) ? 1 : 0);
+            for (int i = 0; i < count; i++) {
+                double roll = r.nextDouble() * total;
+                MobTemplate t = pool.get(pool.size() - 1);
+                for (int k = 0; k < pool.size(); k++) {
+                    roll -= w.get(k);
+                    if (roll <= 0) {
+                        t = pool.get(k);
+                        break;
+                    }
+                }
+                int x = (int) Math.floor(n.x() + r.nextDouble(-1.5, 1.5)), z = (int) Math.floor(n.z() + r.nextDouble(-1.5, 1.5));
+                int y = l.plan.standY(x, n.floor(), z);
+                if (y == Integer.MIN_VALUE) {
+                    x = (int) Math.floor(n.x());
+                    z = (int) Math.floor(n.z());
+                    y = l.plan.standY(x, n.floor(), z);
+                }
+                if (y == Integer.MIN_VALUE) continue;
+                Location at = l.at(x + 0.5, y, z + 0.5);
+                at.setYaw(r.nextFloat() * 360);
+                LivingEntity mob = mobs.spawn(t, at, run.id);
+                if (mob == null) continue;
+                run.mobs.add(mob.getUniqueId());
+                placed++;
+            }
+        }
+        plugin.getLogger().info("Lair of " + run.def.id() + ": " + placed + " guards in the galleries.");
     }
 
     // ---------------------------------------------------------------- hunt

@@ -603,7 +603,9 @@ public final class FluxDungeons extends FluxPlugin {
             String extra = (l.loan() ? messages().raw("pick-level.loan") : "") + (l.requireGear() ? messages().raw("pick-level.required") : "");
             String tip = messages().raw("pick-level.tooltip", "%level%", color + "&l" + l.name(), "%gear%", l.gear(),
                     "%health%", number(l.health()), "%damage%", number(l.damage()), "%reward%", number(l.reward()),
-                    "%spells%", messages().raw(l.spells() ? "pick-level.spells-on" : "pick-level.spells-off"), "%extra%", extra);
+                    "%spells%", !l.spells() ? messages().raw("pick-level.spells-off") : l.abilities() > 0
+                            ? messages().raw("pick-level.spells-count", "%count%", String.valueOf(l.abilities()))
+                            : messages().raw("pick-level.spells-on"), "%extra%", extra);
             form.action("level:" + i, color + "&l" + l.name(), tip);
         }
         form.onSubmit((player, answer) -> {

@@ -255,7 +255,9 @@ public final class Lobby implements Listener {
         DungeonDefinition.Level l = levels.get(party.level);
         Lore lore = Lore.create().description(plugin.messages().raw("lobby.difficulty-desc"));
         if (!rpgMode && !l.gear().isEmpty()) lore.kv(plugin.messages().raw("lobby.difficulty-gear"), l.gear());
-        lore.kv(plugin.messages().raw("lobby.difficulty-spells"), plugin.messages().raw(l.spells() ? "lobby.spells-on" : "lobby.spells-off"));
+        lore.kv(plugin.messages().raw("lobby.difficulty-spells"), !l.spells() ? plugin.messages().raw("lobby.spells-off")
+                : l.abilities() > 0 ? plugin.messages().raw("lobby.spells-count", "%count%", String.valueOf(l.abilities()))
+                : plugin.messages().raw("lobby.spells-on"));
         if (!rpgMode && l.loan()) lore.ok(plugin.messages().raw("lobby.difficulty-loan"));
         if (!rpgMode && l.requireGear()) lore.info(plugin.messages().raw("lobby.difficulty-required"));
         lore.filter(levels.stream().map(DungeonDefinition.Level::name).toList(), party.level);

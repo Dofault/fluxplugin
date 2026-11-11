@@ -440,9 +440,12 @@ final class MolePowers {
      * Digs in (burrow, 44 ticks: earth bursting around it at 24, under the ground at 40), then travels to a player and
      * surges under him; {@code left} surges in a row (it dives again after each one but the last).
      */
-    private void burrow(MobTemplate.Ability ab, RockPowers.Caster c, State st, Player target, int left) {
+    private void burrow(MobTemplate.Ability ab, RockPowers.Caster c, State st, Player aimed, int left) {
         LivingEntity e = c.entity();
         World w = e.getWorld();
+        // far-min: goes for the player furthest away when somebody keeps that far (archers do not stay safe)
+        Player far = ab.number("far-min", 0) > 0 ? TidePowers.farthest(e, ab.number("far-min", 0)) : null;
+        Player target = far != null ? far : aimed;
         double ringR = ab.number("ring-radius", 3.2), ringPower = ab.number("ring-power", 4);
         c.hold(44 + (int) ab.number("travel-ticks", 50) + (int) ab.number("warn", 26) + 60);
         c.animate("burrow");

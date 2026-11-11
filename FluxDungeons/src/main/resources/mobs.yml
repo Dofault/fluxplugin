@@ -11,6 +11,15 @@
 # Farm abilities (HarvestPowers, Harvest Hamster): harvest (eats the crops of its field, spits them back), rolling_charge
 # (rolls as a ball, stunned by a wall), crush_leap (leap and shockwave), root_eruption (roots under the players),
 # great_feast (ultimate), phase_shift (shakes itself, speed-bonus), entrance (first move), scurry (runs at whoever keeps away).
+# Troop abilities (ThemePowers), for any monster: water: hook_pull (hook on the player furthest away, reeled in;
+# min-range, pull), water_jet (line on the ground then a jet pushing back; range, width, push), ink_cloud (lobbed ink
+# cloud: blinds and slows; radius, duration, tick), net_throw (net: roots; radius, root, message); fields: sweep (arc
+# shown then a wide blow; look: scythe|pickaxe|claw, range, angle, push), seed_volley (seeds in a fan; count, spread,
+# speed, item), pollen_cloud (cloud hurting whoever stays in it; color, radius, duration, tick), crow_swarm (crows
+# circling then diving; count, circle); earth: burrow_ambush (digs in, comes out under a player; delay, radius, launch).
+# far-min: aims at the player furthest away when somebody keeps that far (against archers; mole_burrow too).
+# from-level (any ability): first difficulty level of the dungeon that casts it (1 = the easiest, default 1). Rule: a
+# troop monster has 2 special attacks on the easiest level, 3 on the second, 4 on the third (assets/check_abilities.py).
 # Choosing abilities, for every one: target-min / target-max (distance to the target, blocks), weight (draw weight,
 # 1 by default), once: true (cast once), opening: true (first move of the fight, once), wait (seconds below "below"
 # before the first cast, an ultimate kept for later).

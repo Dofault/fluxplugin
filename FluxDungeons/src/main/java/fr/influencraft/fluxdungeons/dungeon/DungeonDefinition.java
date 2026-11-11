@@ -81,10 +81,11 @@ public final class DungeonDefinition {
      * A difficulty level of the dungeon: {@code health} and {@code damage} multiply every monster's, {@code reward} the
      * money of a victory; {@code gear} says what it is made for (shown to players). {@code spells}: monsters cast their
      * abilities; {@code loan}: a player missing armour or a weapon is lent iron ones for the run; {@code requireGear}:
-     * nobody gets ready without full armour and a weapon.
+     * nobody gets ready without full armour and a weapon. {@code abilities}: special attacks of each monster at this
+     * level, shown to players (0 = not told); the monsters' files decide it with {@code from-level} on their abilities.
      */
     public record Level(String name, String gear, double health, double damage, double reward,
-                        boolean spells, boolean loan, boolean requireGear) {
+                        boolean spells, boolean loan, boolean requireGear, int abilities) {
     }
 
     /**
@@ -158,9 +159,9 @@ public final class DungeonDefinition {
                     l.get("health") instanceof Number n ? n.doubleValue() : 1, l.get("damage") instanceof Number n ? n.doubleValue() : 1,
                     l.get("reward") instanceof Number n ? n.doubleValue() : 1,
                     !(l.get("spells") instanceof Boolean b) || b, l.get("loan") instanceof Boolean b && b,
-                    l.get("require-gear") instanceof Boolean b && b));
+                    l.get("require-gear") instanceof Boolean b && b, l.get("abilities") instanceof Number n ? n.intValue() : 0));
         }
-        if (levels.isEmpty()) levels.add(new Level("Normal", "", 1, 1, 1, true, false, false));
+        if (levels.isEmpty()) levels.add(new Level("Normal", "", 1, 1, 1, true, false, false, 0));
         readBreakable(c, breakable, instant);
         for (Map<?, ?> l : c.getMapList("loot")) {
             Object chance = l.get("chance"), amount = l.get("amount");
