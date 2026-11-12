@@ -476,7 +476,7 @@ def room1():
         g.box(14 * sx, F1 + 7, 41, 14 * sx, F1 + 7, 43, f"iron_bars[north=true,south=true]")
 
     # waterfalls from the walls into the channels
-    for sx, z in ((-1, 37), (1, 47)):
+    for sx, z in ((-1, 33), (1, 47)):
         g.set(14 * sx, F1 + 11, z, "water")
         FALLS.add((14 * sx, F1 + 11, z))
         g.set(13 * sx, F1, z, "water")
@@ -992,8 +992,8 @@ def room3():
     g.set(3, F3 + 2, 143, "dark_prismarine")
     g.box(15, F3, 126, 15, F3 + 3, 130, "air")
     fl = WL3
+    g.box(18, F3 + 6, 127, 20, F3 + 7, 129, "stone")
     g.set(19, F3 + 6, 128, "water")
-    g.set(19, F3 + 7, 128, "stone")
     FALLS.add((19, F3 + 6, 128))
     g.set(22, F3 + 3, 125, "soul_lantern")
     g.set(22, F3 + 2, 125, "stone")
@@ -1287,6 +1287,9 @@ def check():
     for (x, y, z), b in g.over.items():
         if gravity(b) and (passable(g.get(x, y - 1, z)) or attached(g.get(x, y - 1, z))):
             errors.append(f"falling {b} at {x} {y} {z}")
+    for p in FALLS:
+        if g.get(*p) != "water":
+            errors.append(f"waterfall source overwritten at {p}: {g.get(*p)}")
     # 2. water stays put (only the waterfalls flow)
     for (x, y, z), b in g.over.items():
         if not wet(b) or (x, y, z) in FALLS:
@@ -1534,6 +1537,22 @@ arena()
 corridor4()
 skin()
 m.start = [0.5, float(F0 + 1), -6.5, 0.0, 0.0]
+
+# RPG look (plugins/FluxDungeons/rpg_blocs.yml): every full block of the map is swapped for the pack's, except the
+# arena's ice sheet, which must stay vanilla ice and dark prismarine for the otter to break it (flood `from`)
+m.textures = "rpg"
+m.ybox = (Y0, Y1)
+for dz in range(-12, 13):
+    run = []
+    for dx in range(-12, 13):
+        b = g.get(AX + dx, FI, ZA + dz)
+        if octagon(dx, dz) and b in FROM:
+            if run and run[-1][2] == b and run[-1][1] == dx - 1:
+                run[-1][1] = dx
+            else:
+                run.append([dx, dx, b])
+    for a, b2, blk in run:
+        m.after.append(f"fill {AX + a} {FI} {ZA + dz} {AX + b2} {FI} {ZA + dz} {blk} strict")
 
 if __name__ == "__main__":
     args = sys.argv[1:]

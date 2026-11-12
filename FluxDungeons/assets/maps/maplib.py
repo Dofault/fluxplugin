@@ -33,6 +33,9 @@ class Map:
         self.doors = []
         self.objectives = []
         self.box = None  # x0, z0, x1, z1 forceloaded while building
+        self.textures = None   # "rpg": full blocks swapped for the RPG pack's (plugins/FluxDungeons/rpg_blocs.yml)
+        self.ybox = (0, 128)   # heights the swap covers
+        self.after = []        # commands run after the swap (blocks that must stay vanilla), use "strict"
 
     # ------------------------------------------------------------ blocks
     def fill(self, x0, y0, z0, x1, y1, z1, block, mode=""):
@@ -129,6 +132,44 @@ def delete_world(c, world):
     print(c.send(f"mv confirm {code.group(1)}") if code else out)
 
 
+def rpg_blocks(server):
+    """Vanilla id -> note block state of the RPG pack (written by assets/rpg_blocs/gen_rpg_blocs.py states)."""
+    path = os.path.join(ROOT, "serveurs", SERVERS[server], "plugins", "FluxDungeons", "rpg_blocs.yml")
+    out = {}
+    for line in open(path):
+        line = line.strip()
+        if line.startswith("#") or ":" not in line or line == "blocks:":
+            continue
+        k, v = line.split(":", 1)
+        out[k.strip()] = v.strip().strip("'")
+    return out
+
+
+def retexture(m, server):
+    """Commands swapping every mapped vanilla block of the map for its RPG note block, without block updates (a note
+    block changes its state when the block above or under it changes: the swap comes last and is strict)."""
+    import re
+    table = rpg_blocks(server)
+    used = set()
+    for cmd in m.cmds:
+        parts = cmd.split()
+        if parts[0] in ("fill", "setblock"):
+            used.add(parts[7 if parts[0] == "fill" else 4].split("[")[0])
+    x0, z0, x1, z1 = m.box
+    y0, y1 = m.ybox
+    out = []
+    step = 16
+    for vid in sorted(used & set(table)):
+        for xa in range(x0, x1 + 1, step):
+            for za in range(z0, z1 + 1, step):
+                h = max(1, MAX_FILL // (step * step))
+                for ya in range(y0, y1 + 1, h):
+                    out.append(f"fill {xa} {ya} {za} {min(x1, xa + step - 1)} {min(y1, ya + h - 1)} {min(z1, za + step - 1)} "
+                               f"{table[vid]} replace {vid} strict")
+    print(f"RPG look: {len(used & set(table))} kinds of blocks swapped, kept vanilla: {', '.join(sorted(used - set(table)))}")
+    return out
+
+
 def run(m, server, dungeon, world=None, keep_world=False):
     world = world or f"fdbuild_{dungeon}"
     base = os.path.join(ROOT, "serveurs", SERVERS[server])
@@ -151,6 +192,16 @@ def run(m, server, dungeon, world=None, keep_world=False):
             if errors < 40:
                 print(cmd, "->", o)
     print(f"{len(m.cmds)} commands, {errors} errors, {time.time() - t0:.0f} s")
+    if m.textures == "rpg":
+        swap = retexture(m, server) + list(m.after)
+        bad = 0
+        for cmd in swap:
+            o = c.send(f"execute in minecraft:{world} run {cmd}")
+            if o and any(b in o for b in BAD) and "No blocks" not in o and "Could not set" not in o:
+                bad += 1
+                if bad < 20:
+                    print(cmd, "->", o)
+        print(f"{len(swap)} swap commands, {bad} errors")
     print(c.send(f"execute in minecraft:{world} run forceload remove all"))
     print(c.send("save-all flush"))
     time.sleep(4)
