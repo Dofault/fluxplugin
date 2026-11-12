@@ -11,7 +11,8 @@ ambience:
   resaac:
     worlds: [resaac]
     pause-seconds: 6
-    songs: [spawn_matin, spawn_brise, spawn_etoiles, spawn_jardin, spawn_fontaine]
+    first: resaac          # the theme of the town, heard on arrival
+    songs: [resaac, spawn_matin, spawn_brise, spawn_etoiles, spawn_jardin, spawn_fontaine]
   rpg-lobby:
     worlds: [flux_rpg]
     pause-seconds: 4

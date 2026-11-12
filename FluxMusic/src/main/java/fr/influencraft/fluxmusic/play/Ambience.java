@@ -18,21 +18,23 @@ import java.util.function.Predicate;
 /**
  * Ambient music of places: while a player stands in a world listed in {@code ambience} of config.yml, the songs of
  * that place play one after another (shuffled, a pause between two), and stop when he leaves. A place with a single
- * song plays it with its own loop (a looping song's intro is heard once, then the loop without any pause).
+ * song plays it with its own loop (a looping song's intro is heard once, then the loop without any pause). A place may
+ * name a {@code first} song, heard first when arriving there (the theme of a town), the shuffled songs after it.
  *
  * <p>Ambience never covers other music: when another plugin plays something (crate opening, dungeon boss), the
  * ambience waits for it to end, then comes back. Leaving the place only stops a song the ambience started itself.</p>
  */
 public final class Ambience {
 
-    /** One place: its worlds, its songs, the pause between two songs. */
-    private record Place(String id, List<String> worlds, List<String> songs, long pauseMillis) {}
+    /** One place: its worlds, its songs, the song heard first on arrival (null = none), the pause between two. */
+    private record Place(String id, List<String> worlds, List<String> songs, String first, long pauseMillis) {}
 
     /** What the ambience does for one player. */
     private static final class State {
         Place place;
         String started;          // song the ambience started, null when none
         long nextAt;             // no new song before this time (pause between songs)
+        String last;             // last song the ambience played
         final List<String> queue = new ArrayList<>();
     }
 
@@ -60,8 +62,15 @@ public final class Ambience {
                 if (songs.apply(song) == null) log.warning("Ambience " + id + ": unknown song " + song);
                 else list.add(song.toLowerCase(Locale.ROOT));
             }
-            if (worlds.isEmpty() || list.isEmpty()) continue;
-            loaded.add(new Place(id, worlds, List.copyOf(list), Math.max(0, s.getLong("pause-seconds", 6)) * 1000));
+            String first = s.getString("first", "").toLowerCase(Locale.ROOT);
+            if (!first.isEmpty() && songs.apply(first) == null) {
+                log.warning("Ambience " + id + ": unknown first song " + first);
+                first = "";
+            }
+            if (worlds.isEmpty() || (list.isEmpty() && first.isEmpty())) continue;
+            if (list.isEmpty()) list.add(first);
+            loaded.add(new Place(id, worlds, List.copyOf(list), first.isEmpty() ? null : first,
+                    Math.max(0, s.getLong("pause-seconds", 6)) * 1000));
         }
         places = List.copyOf(loaded);
         // songs may have changed: every player starts over with the new lists
@@ -91,6 +100,7 @@ public final class Ambience {
             if (state == null) {
                 state = new State();
                 state.place = place;
+                if (place.first() != null) state.queue.add(place.first());
                 states.put(id, state);
             }
             Song current = jukebox.playing(id);
@@ -107,6 +117,7 @@ public final class Ambience {
             if (next == null) continue;
             jukebox.play(player, next, place.songs().size() == 1 && next.loop());
             state.started = next.id();
+            state.last = next.id();
         }
     }
 
@@ -115,6 +126,7 @@ public final class Ambience {
         if (state.queue.isEmpty()) {
             List<String> shuffled = new ArrayList<>(state.place.songs());
             Collections.shuffle(shuffled);
+            if (shuffled.size() > 1 && shuffled.get(0).equals(state.last)) Collections.swap(shuffled, 0, 1);
             state.queue.addAll(shuffled);
         }
         return songs.apply(state.queue.remove(0));
