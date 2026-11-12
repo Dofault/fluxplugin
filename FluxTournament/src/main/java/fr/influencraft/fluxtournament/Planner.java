@@ -130,7 +130,8 @@ final class Planner {
         List<Group> groups = all.stream().filter(g -> g.sources().stream().anyMatch(src -> !src.targets().isEmpty())).toList();
         return switch (kind) {
             case JOB -> new Plan(kind, job, null, all, 0);
-            case VARIETY -> groups.size() >= s.minGroups() ? new Plan(kind, job, null, groups, 0) : null;
+            // amount = every resource of the job: the first player to gather them all ends the tournament
+            case VARIETY -> groups.size() >= s.minGroups() ? new Plan(kind, job, null, groups, groups.size()) : null;
             case RESOURCE, RACE -> {
                 List<Group> feasible = new ArrayList<>();
                 for (Group g : groups) {

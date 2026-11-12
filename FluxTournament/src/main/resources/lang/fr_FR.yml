@@ -31,7 +31,7 @@ score:
   job: "{n} pts"
   resource: "{n}"
   race: "{n}/{amount}"
-  variety: "{n} ressources"
+  variety: "{n}/{amount} ressources"
 
 announce: "&#DADADAUn tournoi commence dans &f{seconds} s &#DADADA: le tirage au sort désignera le métier et la ressource."
 start:
@@ -72,7 +72,8 @@ end-empty: "&7Le tournoi &f{name} &7est terminé sans participant."
 cancelled: "&#FF5C5CLe tournoi &f{name} &#FF5C5Ca été annulé."
 joined: "&7Tu participes au tournoi &f{name}&7. Suis ton classement dans &f/tournoi&7."
 race-finished: "&#FFD94D{player} &7a terminé la course en &#FFD94D{place}e position &7!"
-variety-new: "&#FFD94DNouvelle ressource : &f{resource} &7({count})"
+variety-new: "&#2BC4E8Nouvelle ressource : &f{resource} &7({count}/{amount})"
+variety-complete: "&#2BC4E8{player} &7a récolté toutes les ressources : &f{name} &7s'arrête, classement figé !"
 your-result: "&7Tu termines &#FFD94D{place}e &7avec &f{score}&7. Points de tournoi gagnés : &#FFD94D{points}"
 
 bossbar: "&#2BC4E8&l{name}   &#A6E4F5Temps &f{time}   &#A6E4F5Place &f{place}e   &#A6E4F5Score &f{score}   &#A6E4F5Joueurs &f{players}"

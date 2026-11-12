@@ -296,7 +296,18 @@ final class TournamentService {
             Sounds.cue(player, "complete");
         }
         if (run.plan.kind() == Kind.VARIETY) {
-            plugin.messages().actionBar(player, "variety-new", "{resource}", group.name(), "{count}", String.valueOf((int) s.value));
+            plugin.messages().actionBar(player, "variety-new", "{resource}", group.name(), "{count}", String.valueOf((int) s.value),
+                    "{amount}", String.valueOf(run.plan.amount()));
+            // everything gathered: the tournament stops now, the ranking as it stands
+            if (run.plan.amount() > 0 && s.value >= run.plan.amount()) {
+                for (Player p : Bukkit.getOnlinePlayers()) {
+                    plugin.messages().send(p, "variety-complete", "{player}", player.getName(), "{name}", shortName(run.plan));
+                }
+                Sounds.cue(player, "complete");
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (current == run) end(false);
+                });
+            }
         }
         Lists.invalidate(LIVE);
     }
