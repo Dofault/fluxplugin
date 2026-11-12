@@ -23,14 +23,19 @@ PASS_WORDS = ("seagrass", "kelp", "coral_fan", "light[", "cobweb", "lichen", "vi
               "white_tulip", "pink_tulip", "lily_of_the_valley", "wheat[", "carrots", "potatoes", "beetroots", "sweet_berry",
               "dead_bush", "brown_mushroom", "red_mushroom", "torch", "rail", "lever", "button", "pressure_plate",
               "sugar_cane", "leaf_litter", "wildflowers", "firefly_bush", "bush", "pumpkin_stem", "melon_stem", "sapling",
-              "lily_pad", "snow[layers=1]", "carpet", "redstone_wire", "tripwire", "pink_petals", "glow_lichen")
+              "lily_pad", "snow[layers=1]", "carpet", "redstone_wire", "tripwire", "pink_petals", "glow_lichen",
+              "hanging_roots", "crimson_roots", "warped_roots", "nether_sprouts", "crimson_fungus", "warped_fungus",
+              "spore_blossom", "torchflower", "pitcher_plant", "lilac", "rose_bush", "peony", "sunflower", "large_fern",
+              "small_dripleaf", "blue_orchid", "cactus_flower")
 GRAVITY = ("sand", "gravel", "suspicious_sand", "red_sand")
 ATTACH = ("pointed_dripstone", "lantern[", "seagrass", "kelp", "coral_fan", "sea_pickle", "iron_chain", "conduit",
           "lightning_rod", "grindstone", "anvil", "cobweb", "wheat[", "carrots", "potatoes", "beetroots", "short_grass",
           "tall_grass", "fern", "dandelion", "poppy", "cornflower", "oxeye_daisy", "azure_bluet", "allium", "_tulip",
           "lily_of_the_valley", "sweet_berry", "bush", "brown_mushroom", "red_mushroom", "torch", "rail", "lily_pad",
           "sugar_cane", "leaf_litter", "wildflowers", "pink_petals", "_stem", "sapling", "carpet", "bell", "flower_pot",
-          "potted_", "ladder", "_door", "trapdoor", "_sign", "banner", "candle")
+          "potted_", "ladder", "_door", "trapdoor", "_sign", "banner", "candle", "hanging_roots", "crimson_roots",
+          "warped_roots", "nether_sprouts", "_fungus", "spore_blossom", "vine", "dripleaf", "cactus", "torchflower",
+          "pitcher_plant", "lilac", "rose_bush", "peony", "sunflower", "large_fern", "blue_orchid", "pink_petals")
 COLORS = {"air": (20, 20, 28), "water": (40, 90, 200), "packed_ice": (150, 180, 230), "blue_ice": (110, 160, 250),
           "dark_prismarine": (40, 90, 80), "prismarine_bricks": (90, 170, 150), "prismarine": (100, 160, 150),
           "spruce_planks": (120, 85, 50), "sea_lantern": (240, 250, 240), "iron_bars": (200, 60, 60), "barrier": (255, 0, 255),
@@ -452,8 +457,8 @@ class Model:
                 m.cmds.append(f"setblock {x0} {y0} {z0} {b}")
             else:
                 m.fill(x0, y0, z0, x1, y1, z1, b)
-        hanging = sorted([s for s in second if "vertical_direction=down" in s[1] or "hanging=true" in s[1] or "chain" in s[1]],
-                         key=lambda s: -s[0][1])
+        down = ("vertical_direction=down", "hanging=true", "chain", "weeping_vines", "cave_vines", "hanging_roots", "spore_blossom")
+        hanging = sorted([s for s in second if any(k in s[1] for k in down)], key=lambda s: -s[0][1])
         rest = sorted([s for s in second if s not in hanging], key=lambda s: s[0][1])
         for (x, y, z), b in hanging + rest:
             m.cmds.append(f"setblock {x} {y} {z} {b}")
