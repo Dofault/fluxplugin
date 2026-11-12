@@ -233,7 +233,7 @@ final class TournamentService {
             java.util.Collections.shuffle(jobs);
             for (String j : jobs) if (pool.size() < drawChoices) pool.add(choice(plan, null, j));
         }
-        Draws.play(plugin, to, pool, winner, plugin.messages().raw("draw-heading." + plan.kind().id()), then);
+        Draws.play(plugin, to, pool, winner, kindIcon(plan.kind()) + " " + plugin.messages().raw("draw-heading." + plan.kind().id()), then);
     }
 
     /** A resource (or, with no group, a job) as a choice of the draw. */
@@ -389,6 +389,11 @@ final class TournamentService {
         return plugin.messages().raw("names." + p.kind().id(), vars(p));
     }
 
+    /** Pixel-art icon of a kind of tournament (FluxTournament/assets/gen_icons.py, blocks atlas). */
+    static String kindIcon(Kind kind) {
+        return kind == null ? "" : "<sprite:block/fluxtournament_" + kind.id() + ">";
+    }
+
     /** Item sprite of the tournament's resource or job, for the chat ("" without one: Bedrock shows nothing). */
     String iconTag(Plan p) {
         return fr.influencraft.flux.api.text.ItemSprites.tag(Material.matchMaterial(icon(p)));
@@ -449,6 +454,7 @@ final class TournamentService {
 
     private void broadcast(String key, Plan plan, String... extra) {
         String[] vars = concat(concat(vars(plan), "{name}", name(plan), "{short}", shortName(plan), "{icon}", iconTag(plan),
+                "{kind}", kindIcon(plan.kind()),
                 "{description}", description(plan)), extra);
         for (Player p : Bukkit.getOnlinePlayers()) plugin.messages().send(p, key, vars);
         Bukkit.getConsoleSender().sendMessage("[FluxTournament] " + key + ": " + Texts.plain(name(plan), null));
@@ -467,7 +473,8 @@ final class TournamentService {
         run.rankingsSent++;
         List<Score> ranking = run.ranking();
         if (ranking.isEmpty()) return;
-        String[] vars = concat(podiumVars(run, ranking), "{name}", shortName(run.plan), "{icon}", iconTag(run.plan), "{time}", clock((run.ends - now) / 1000),
+        String[] vars = concat(podiumVars(run, ranking), "{name}", shortName(run.plan), "{icon}", iconTag(run.plan),
+                "{kind}", kindIcon(run.plan.kind()), "{time}", clock((run.ends - now) / 1000),
                 "{players}", String.valueOf(ranking.size()));
         for (Score s : ranking) {
             Player p = Bukkit.getPlayer(s.uuid);
@@ -484,6 +491,7 @@ final class TournamentService {
         List<Score> ranking = run.ranking();
         String players = String.valueOf(ranking.size());
         String title = shortName(run.plan);
+        String kind = kindIcon(run.plan.kind());
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (!Universes.isVanilla(p)) {
                 hide(p);
@@ -491,8 +499,8 @@ final class TournamentService {
             }
             Score s = run.scores.get(p.getUniqueId());
             String text = s == null || s.value <= 0
-                    ? plugin.messages().raw("bossbar-none", "{name}", title, "{time}", time, "{players}", players)
-                    : plugin.messages().raw("bossbar", "{name}", title, "{time}", time, "{players}", players,
+                    ? plugin.messages().raw("bossbar-none", "{kind}", kind, "{name}", title, "{time}", time, "{players}", players)
+                    : plugin.messages().raw("bossbar", "{kind}", kind, "{name}", title, "{time}", time, "{players}", players,
                     "{place}", String.valueOf(run.rank(p.getUniqueId())), "{score}", score(run.plan, s.value));
             BossBar bar = bars.get(p.getUniqueId());
             if (bar == null) {

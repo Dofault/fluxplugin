@@ -17,10 +17,10 @@ names:
   variety: "Exploration : {job}"
 # Nom court (barre de boss, classement du tchat)
 short-names:
-  job: "Tournoi {job}"
-  resource: "Ruée {target}"
-  race: "Course {target}"
-  variety: "Exploration {job}"
+  job: "Tournoi &f{job}"
+  resource: "Ruée &f{target}"
+  race: "Course &f{target}"
+  variety: "Exploration &f{job}"
 descriptions:
   job: "Chaque action du métier rapporte des points, les plus rares en valent davantage."
   resource: "Récolte le plus de {target} possible."
@@ -37,7 +37,7 @@ announce: "&#DADADAUn tournoi commence dans &f{seconds} s &#DADADA: le tirage au
 start:
   - "!&#8A8A8A&m                        &r&#8A8A8A ᴛᴏᴜʀɴᴏɪ &m                        "
   - "!&r"
-  - "!&r &8『&r {icon} &#2BC4E8&l{short}&r &8』"
+  - "!&r &8『&r {kind} &#2BC4E8&l{short} {icon}&r &8』"
   - "!&r"
   - "!&r   &#DADADA{description}"
   - "!&r  &8• &7Dᴜʀéᴇ :&f {minutes} minutes"
@@ -48,7 +48,7 @@ start:
 end:
   - "!&#8A8A8A&m                        &r&#8A8A8A ᴛᴏᴜʀɴᴏɪ &m                        "
   - "!&r"
-  - "!&r &8『&r {icon} &#2BC4E8&l{short}&r &8』 &7terminé"
+  - "!&r &8『&r {kind} &#2BC4E8&l{short} {icon}&r &8』 &7terminé"
   - "!&r"
   - "!&r   &#F0A800① &f{1_player} &8• &#A6E4F5{1_score}"
   - "!&r   &#C0C0C0② &f{2_player} &8• &#A6E4F5{2_score}"
@@ -61,7 +61,7 @@ end:
 end-too-few:
   - "!&#8A8A8A&m                        &r&#8A8A8A ᴛᴏᴜʀɴᴏɪ &m                        "
   - "!&r"
-  - "!&r &8『&r {icon} &#2BC4E8&l{short}&r &8』 &7terminé"
+  - "!&r &8『&r {kind} &#2BC4E8&l{short} {icon}&r &8』 &7terminé"
   - "!&r"
   - "!&r   &#F0A800① &f{1_player} &8• &#A6E4F5{1_score}"
   - "!&r"
@@ -76,12 +76,12 @@ variety-new: "&#2BC4E8Nouvelle ressource : &f{resource} &7({count}/{amount})"
 variety-complete: "&#2BC4E8{player} &7a récolté toutes les ressources : &f{name} &7s'arrête, classement figé !"
 your-result: "&7Tu termines &#FFD94D{place}e &7avec &f{score}&7. Points de tournoi gagnés : &#FFD94D{points}"
 
-bossbar: "&#2BC4E8&l{name}   &#A6E4F5Temps &f{time}   &#A6E4F5Place &f{place}e   &#A6E4F5Score &f{score}   &#A6E4F5Joueurs &f{players}"
-bossbar-none: "&#2BC4E8&l{name}   &#A6E4F5Temps &f{time}   &#A6E4F5Joueurs &f{players}"
+bossbar: "{kind} &#2BC4E8&l{name}   &#A6E4F5Temps &f{time}   &#A6E4F5Place &f{place}e   &#A6E4F5Score &f{score}   &#A6E4F5Joueurs &f{players}"
+bossbar-none: "{kind} &#2BC4E8&l{name}   &#A6E4F5Temps &f{time}   &#A6E4F5Joueurs &f{players}"
 # Classement envoyé dans le tchat aux participants (ranking-every-minutes)
 ranking:
   - "!&r"
-  - "!&r &8『&r {icon} &#2BC4E8&l{name}&r &8』 &7encore &f{time}"
+  - "!&r &8『&r {kind} &#2BC4E8&l{name} {icon}&r &8』 &7encore &f{time}"
   - "!&r   &#F0A800① &f{1_player} &8• &#A6E4F5{1_score}"
   - "!&r   &#C0C0C0② &f{2_player} &8• &#A6E4F5{2_score}"
   - "!&r   &#CD7F32③ &f{3_player} &8• &#A6E4F5{3_score}"

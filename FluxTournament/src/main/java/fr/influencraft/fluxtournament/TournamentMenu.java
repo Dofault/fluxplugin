@@ -72,7 +72,7 @@ final class TournamentMenu {
             } else {
                 lore.info(m().raw("menu.not-yet"));
             }
-            return glow(Items.of(service.icon(run.plan), m().raw("menu.running", "{name}", service.name(run.plan)), lore.build(), viewer));
+            return glow(Items.of(service.icon(run.plan), TournamentService.kindIcon(run.plan.kind()) + " " + m().raw("menu.running", "{name}", service.name(run.plan)), lore.build(), viewer));
         }
         Lore lore = Lore.create();
         if (!service.scheduled) {
@@ -137,7 +137,8 @@ final class TournamentMenu {
             if (mine != null) lore.ok(m().raw("menu.your-result", "{place}", String.valueOf(mine.rank())));
             if (!r.rewarded()) lore.ko(m().raw("menu.not-rewarded"));
             String icon = r.icon() == null || r.icon().isBlank() ? "PAPER" : r.icon();
-            out.add(ListEntry.of(String.valueOf(r.id())).item(Items.of(icon, r.name(), lore.build(), viewer)));
+            String name = TournamentService.kindIcon(Plan.Kind.of(r.kind())) + " &#FFD94D" + r.name();
+            out.add(ListEntry.of(String.valueOf(r.id())).item(Items.of(icon, name, lore.build(), viewer)));
         }
         return out;
     }
