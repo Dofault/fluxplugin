@@ -1,5 +1,7 @@
 prefix: "&#FFD94DTOURNAMENT &8> "
 no-menu: "&#FF5C5CThe tournament menu is missing."
+rpg-on: "&7You will see tournaments in the rpg world too."
+rpg-off: "&7No more tournaments shown in the rpg world."
 reloaded: "&#2ECF7BFluxTournament reloaded."
 
 draw-heading:

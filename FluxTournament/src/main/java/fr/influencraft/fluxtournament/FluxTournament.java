@@ -5,6 +5,7 @@ import fr.influencraft.flux.api.FluxPlugin;
 import fr.influencraft.flux.api.effects.Effects;
 import fr.influencraft.flux.api.leaderboard.Leaderboards;
 import fr.influencraft.flux.api.util.Format;
+import fr.influencraft.flux.api.util.PlayerSettings;
 import fr.influencraft.flux.api.util.Players;
 import fr.influencraft.flux.api.value.Values;
 import fr.influencraft.fluxtournament.Plan.Group;
@@ -65,7 +66,16 @@ public final class FluxTournament extends FluxPlugin implements Listener {
                 .permission("fluxtournament.use")
                 .executor((sender, label, args) -> {
                     Player p = Players.of(sender);
-                    if (p != null && !FluxApi.open(p, MENU)) messages().send(p, "no-menu");
+                    if (p == null) return true;
+                    // /tournoi rpg on|off: told about tournaments while in the rpg universe (settings window)
+                    if (args.length == 2 && args[0].equalsIgnoreCase("rpg")) {
+                        boolean on = args[1].equalsIgnoreCase("on");
+                        PlayerSettings.set(p, TournamentService.RPG_SETTING, on);
+                        messages().send(p, on ? "rpg-on" : "rpg-off");
+                        if (!on && !fr.influencraft.flux.api.universe.Universes.isVanilla(p)) service.hide(p);
+                        return true;
+                    }
+                    if (!FluxApi.open(p, MENU)) messages().send(p, "no-menu");
                     return true;
                 })
                 .register();
@@ -227,6 +237,7 @@ public final class FluxTournament extends FluxPlugin implements Listener {
         long now = System.currentTimeMillis();
         return switch (params) {
             case "active" -> run != null ? "true" : "false";
+            case "rpg" -> player != null && PlayerSettings.flag(player, TournamentService.RPG_SETTING, service.rpgDefault) ? "true" : "false";
             case "name" -> run != null ? service.name(run.plan) : "";
             case "time" -> run != null ? TournamentService.clock((run.ends - now) / 1000) : "";
             case "leader" -> run == null || run.ranking().isEmpty() ? "" : run.ranking().get(0).name;

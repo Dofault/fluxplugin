@@ -11,6 +11,7 @@ import fr.influencraft.flux.api.reward.Rewards;
 import fr.influencraft.flux.api.text.Texts;
 import fr.influencraft.flux.api.universe.Universes;
 import fr.influencraft.flux.api.util.Format;
+import fr.influencraft.flux.api.util.PlayerSettings;
 import fr.influencraft.flux.api.util.Sounds;
 import fr.influencraft.flux.api.value.Values;
 import fr.influencraft.flux.api.value.Values.JobSource;
@@ -117,6 +118,7 @@ final class TournamentService {
         // YELLOW is drawn transparent by the server's resource pack
         if (barColor == BossBar.Color.YELLOW) barColor = BossBar.Color.BLUE;
         rankingEveryMs = Math.max(0, c.getInt("ranking-every-minutes", 5)) * 60_000L;
+        rpgDefault = c.getBoolean("rpg-notifications", true);
         drawEnabled = c.getBoolean("draw.enabled", true);
         drawChoices = Math.max(2, c.getInt("draw.choices", 8));
         nextStart = 0;
@@ -168,7 +170,10 @@ final class TournamentService {
             Plan p = announced != null ? announced : planner.draw();
             announced = null;
             nextStart = next(now + 1000);
-            if (!enoughOnline()) return;
+            if (!enoughOnline()) {
+                plugin.getLogger().info("Tournament skipped: fewer than " + minOnline + " player(s) to tell");
+                return;
+            }
             if (p == null) {
                 plugin.getLogger().warning("No tournament can be drawn (FluxValue missing, or no job allowed in the config)");
                 return;
@@ -177,9 +182,20 @@ final class TournamentService {
         }
     }
 
+    /**
+     * Players told about tournaments: everybody outside the rpg universe, and in it those who did not turn it off
+     * ({@code /tournoi rpg off}, settings window); they count to start one, only actions outside the rpg score.
+     */
+    boolean notified(Player p) {
+        return Universes.isVanilla(p) || PlayerSettings.flag(p, RPG_SETTING, rpgDefault);
+    }
+
+    static final String RPG_SETTING = "fluxtournament:rpg";
+    boolean rpgDefault = true;
+
     private boolean enoughOnline() {
         int n = 0;
-        for (Player p : Bukkit.getOnlinePlayers()) if (Universes.isVanilla(p)) n++;
+        for (Player p : Bukkit.getOnlinePlayers()) if (notified(p)) n++;
         return n >= minOnline;
     }
 
@@ -248,7 +264,7 @@ final class TournamentService {
     /** Who watches a draw and plays a tournament: players outside the rpg universe. */
     List<Player> viewers() {
         List<Player> out = new ArrayList<>();
-        for (Player p : Bukkit.getOnlinePlayers()) if (Universes.isVanilla(p)) out.add(p);
+        for (Player p : Bukkit.getOnlinePlayers()) if (notified(p)) out.add(p);
         return out;
     }
 
@@ -458,7 +474,7 @@ final class TournamentService {
         String[] vars = concat(concat(vars(plan), "{name}", name(plan), "{short}", shortName(plan), "{icon}", iconTag(plan),
                 "{kind}", kindIcon(plan.kind()),
                 "{description}", description(plan)), extra);
-        for (Player p : Bukkit.getOnlinePlayers()) plugin.messages().send(p, key, vars);
+        for (Player p : Bukkit.getOnlinePlayers()) if (notified(p)) plugin.messages().send(p, key, vars);
         Bukkit.getConsoleSender().sendMessage("[FluxTournament] " + key + ": " + Texts.plain(name(plan), null));
     }
 
@@ -495,7 +511,7 @@ final class TournamentService {
         String title = shortName(run.plan);
         String kind = kindIcon(run.plan.kind());
         for (Player p : Bukkit.getOnlinePlayers()) {
-            if (!Universes.isVanilla(p)) {
+            if (!notified(p)) {
                 hide(p);
                 continue;
             }

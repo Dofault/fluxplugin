@@ -110,6 +110,10 @@ draw:
 # the ranking is sent in the chat of the players taking part every N minutes (0 = never)
 ranking-every-minutes: 5
 
+# players in the rpg universe are told about tournaments (draw, boss bar, chat) unless they turn it off
+# (/tournoi rpg off, settings window): this is the default before they choose. Only actions outside the rpg score.
+rpg-notifications: true
+
 bossbar:
   enabled: true
   # PINK, BLUE, RED, GREEN, PURPLE, WHITE (YELLOW is transparent with the server's resource pack)
