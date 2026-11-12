@@ -2,13 +2,11 @@ name: FluxPortal
 version: 26.2
 main: fr.influencraft.fluxportal.FluxPortal
 api-version: "26.2"
-description: Permanent portals linking two places both ways (/portail), drawn in the server's own resource pack.
+description: Permanent portals showing the other side in depth (/portail). Window shader adapted from RPE-portals (GPL-3.0).
 authors: [Influencraft]
 depend: [Flux]
-# draws the 3D window through the portals (rpe.RpeRenderer); without it, a flat swirl
-softdepend: [RPEPortals]
 
 permissions:
   fluxportal.admin:
-    description: /portail (place the entry or exit of a portal, remove, list).
+    description: /portail (create, link, move, open, close, remove, list, go to portals).
     default: op

@@ -1,13 +1,77 @@
-prefix: "&#B376E5ᴘᴏʀᴛᴀʟ &8▸ "
+# FluxPortal texts. A line starting with "!" has no prefix.
+prefix: "&#B376E5ᴘᴏʀᴛᴀɪʟ &8▸ "
+
+subcommands:
+  create: create
+  link: link
+  move: move
+  open: open
+  close: close
+  remove: remove
+  list: list
+  goto: goto
+  help: help
+
 players-only: "&#FF5C5COnly a player can do that."
 error: "&#FF5C5CThe portal could not be saved (see the console)."
-bad-size: "&#FF5C5CA portal is %min% to %max% blocks across."
-entry-placed: "&#B376E5Entry of &f%name% &#B376E5placed in front of you."
-exit-placed: "&#B376E5Exit of &f%name% &#B376E5placed in front of you."
-missing-exit: "&#B376E5Now place its exit: &f[/portail sortie %name%]"
-missing-entry: "&#B376E5Now place its entry: &f[/portail entree %name%]"
-removed: "&#B376E5Portal &f%name% &#B376E5removed."
-unknown: "&#FF5C5CNo portal named %name%."
-list-empty: "&#B376E5No portal yet."
-list-header: "&#B376E5Portals (&f%count%&#B376E5):"
-list-line: "&7- &f%name% &7(%size%) &#B376E5%entry% &7⇄ &#B376E5%exit%"
+unknown-command: "&#FF5C5CUnknown command.&#8A8A8A Help: [/%cmd% %help%]"
+usage: "&#8A8A8AUsage: &f%usage%"
+bad-name: "&#FF5C5CA portal name is letters, digits, - and _ (32 at most)."
+bad-side: "&#FF5C5CA side is 1 or 2."
+aim-floor: "&#FF5C5CLook at the top of the floor block in the middle of the opening (12 blocks at most)."
+unknown: "&#FF5C5CNo portal named &#FFD94D%name%&#FF5C5C.&#8A8A8A [/%cmd% %list%]"
+already-exists: "&#FF5C5CThe portal &#FFD94D%name% &#FF5C5Calready exists.&#8A8A8A To move one of its sides: [/%cmd% %move% %name%]"
+create-first: "&#FF5C5CNo portal named &#FFD94D%name%&#FF5C5C.&#8A8A8A Create it first: [/%cmd% %create% %name%]"
+already-linked: "&#FF5C5CThe portal &#FFD94D%name% &#FF5C5Chas both its sides.&#8A8A8A To move one: [/%cmd% %move% %name%]"
+which-side: "&#FF5C5CNo side of &#FFD94D%name% &#FF5C5Cin this world.&#8A8A8A Say which: [/%cmd% %move% %name% 1]"
+side-missing: "&#FF5C5CSide %side% of &#FFD94D%name% &#FF5C5Cis not placed."
+side1-placed: "&#2ECF7BSide 1 of &#FFD94D%name% &#2ECF7Bplaced&#8A8A8A (hole of %width% x %height%)."
+side2-placed: "&#2ECF7BSide 2 of &#FFD94D%name% &#2ECF7Bplaced&#8A8A8A (hole of %width% x %height%)."
+blocked: "&#FF5C5C%count% block(s) &#8A8A8Afill the opening: nobody will get through there."
+now-link: "&#8A8A8ANow go to the other end, look at the floor of its opening: [/%cmd% %link% %name%]"
+ready: "&#2ECF7BThe portal &#FFD94D%name% &#2ECF7Bis open both ways."
+opened: "&#2ECF7BPortal &#FFD94D%name% &#2ECF7Bopen."
+closed: "&#8A8A8APortal &#FFD94D%name% &#8A8A8Aclosed: no window, no way through."
+removed: "&#2ECF7BPortal &#FFD94D%name% &#2ECF7Bremoved."
+list-empty: "&#8A8A8ANo portal yet: [/%cmd% %create% <name>]"
+list-header: "&#8A8A8APortals (&f%count%&#8A8A8A):"
+list-line: "!&8 • &#FFD94D%name% &8(%state%&8) &f1 %side1% &8⇄ &f2 %side2%"
+list-side: "&#8A8A8A[%go%]"
+list-missing: "&#FF5C5Cnot placed"
+state-open: "&#2ECF7Bopen"
+state-closed: "&#FF5C5Cclosed"
+state-unlinked: "&#8A8A8Aone side"
+
+help:
+  header: "<#8A8A8A><st>             </st></#8A8A8A> %previous% <#FFD94D>ᴘᴏʀᴛᴀʟꜱ</#FFD94D> <dark_gray>·</dark_gray> <#8A8A8A>Page</#8A8A8A> <white>%page%</white><dark_gray>/</dark_gray><white>%pages%</white> %next% <#8A8A8A><st>             </st></#8A8A8A>"
+  header-admin: "<#8A8A8A><st>             </st></#8A8A8A> %previous% <#FFD94D>ᴘᴏʀᴛᴀʟꜱ</#FFD94D> <dark_gray>·</dark_gray> <#8A8A8A>Page</#8A8A8A> <white>%page%</white><dark_gray>/</dark_gray><white>%pages%</white> %next% <#8A8A8A><st>             </st></#8A8A8A>"
+  line: "<#F0A800>   %command%</#F0A800> <dark_gray>-</dark_gray> <#8A8A8A>%description%"
+  footer: "<#8A8A8A><st>             </st></#8A8A8A> %previous% <dark_gray>|</dark_gray> %next% <#8A8A8A><st>             </st></#8A8A8A>"
+  previous-arrow: "<#FFD94D>«</#FFD94D>"
+  next-arrow: "<#FFD94D>»</#FFD94D>"
+  previous: "<#FFD94D>« Previous</#FFD94D>"
+  next: "<#FFD94D>Next »</#FFD94D>"
+  previous-hover: "<#B376E5>Previous page"
+  next-hover: "<#B376E5>Next page"
+  hover-run: "<#B376E5>Click to run."
+  hover-suggest: "<#B376E5>Click to write the command."
+  args:
+    create: "<name>"
+    link: "<name>"
+    move: "<name> [1|2]"
+    open: "<name>"
+    close: "<name>"
+    remove: "<name>"
+    list: ""
+    goto: "<name> [1|2]"
+    help: "[page]"
+  commands:
+    create: "First side: look at the floor in the middle of the opening"
+    link: "Second side, at the other end: the portal opens"
+    move: "Place a side again where you look (the nearest one by default)"
+    open: "Open the portal (window and way through)"
+    close: "Close the portal for a while"
+    remove: "Remove the portal"
+    list: "Every portal, click a side to go there"
+    goto: "Go in front of a side"
+    help: "This help"

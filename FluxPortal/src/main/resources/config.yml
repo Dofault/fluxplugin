@@ -3,32 +3,37 @@
 # Language of the texts (lang/<language>.yml), empty = the suite's language.
 language: ""
 
-# Diameter of a new portal's rings, in blocks (the hole is 80 % of it), and the sizes allowed by /portail.
-size: 4
-min-size: 2
-max-size: 12
-# How far in front of the player /portail places a ring, in blocks.
-distance: 2.5
+# Size of the hole of a new portal, in blocks. The width is odd (the hole is centred on a block).
+width: 5
+height: 4
 
-look:
-  # The swirl filling the hole, as a share of the hole (a little more hides its edge under the ring).
-  surface-scale: 1.08
-  # Ring colours, from one to the other while it turns.
-  ring-from: "#B376E5"
-  ring-to: "#E060A0"
-  # Motes drawn into the middle, per ring, every 2 ticks.
-  motes: 2
-  # Rings and motes are drawn for players within this distance (blocks).
-  particle-distance: 48
-  # Low hum of a portal, every hum-every ticks, heard within 16 blocks.
-  hum-every: 80
-  hum:
-    sound: minecraft:block.beacon.ambient
-    volume: 0.5
-    pitch: 0.6
-  # Going through: a whoosh and a crystal chime where the traveller comes out.
-  travel:
-    sound: minecraft:entity.illusioner.mirror_move
-    chime: minecraft:block.amethyst_block.resonate
-    volume: 0.9
-    pitch: 1.2
+# The window: the other side seen through the hole, in depth, drawn by the text shader of the resource pack.
+window:
+  # A side shows its window while a Java player is within this distance (blocks); its item frames are taken down
+  # beyond it.
+  view-distance: 64
+  # Item frames hung around the hole, in blocks: the window stays whole when seen from the side.
+  margin: 1
+  # Block layers of the far side read again per tick, for all windows together (a window has 28).
+  layers-per-tick: 2
+  # Layers read per tick by a window that just appeared, until it has them all.
+  first-layers-per-tick: 4
+  # Ticks between two reads of the far land and tree tops (chunks loaded in the background, never generated).
+  horizon-every: 6000
+  # Chunks kept loaded around the far side while its window is up (radius, in chunks).
+  far-chunks-radius: 5
+  # Resource packs to read block textures from, before the vanilla client (paths from the server folder): the
+  # custom blocks of the pack keep their look through a portal.
+  texture-packs:
+    - plugins/ItemsAdder/output/generated.zip
+  # Download the vanilla client from Mojang once (plugins/FluxPortal/cache/) for the vanilla block textures.
+  download-client: true
+
+# Where the window's shader is written (pack folders, from the server folder): the overlay below and pack.mcmeta.
+pack:
+  overlay: fluxportal_v88
+  # Pack formats the shader is written for (88 = Minecraft 26.2).
+  min-format: 88
+  max-format: 88
+  folders:
+    - plugins/FluxPortal/pack

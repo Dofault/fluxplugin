@@ -7,18 +7,21 @@ import java.util.List;
  * Permanent portals of FluxPortal, for other plugins (a quest opening a way, a dungeon's exit...).
  *
  * <pre>
- *   Portals.set("donjon", true, new PortalEnd("flux_rpg", 0.5, 66, 8.5, 180f), 5);   // entry end
- *   Portals.set("donjon", false, new PortalEnd("world", 120.5, 70, -30.5, 90f), 5);  // exit end
+ *   Portals.set("donjon", 1, PortalEnd.standing("resaac", 10, 64, 20, 2, 4));
+ *   Portals.set("donjon", 2, PortalEnd.standing("flux_rpg", 0, 65, 8, 0, 4));
+ *   Portals.open("donjon", false);   // shut for a while: no window, no travel
  *   Portals.remove("donjon");
  * </pre>
- * Saved at once, drawn and crossable as soon as both ends exist, both ways. {@link PortalTravelEvent} tells when
- * someone goes through.
+ * Saved at once, drawn and crossable as soon as both sides exist. {@link PortalTravelEvent} tells when someone goes
+ * through.
  */
 public final class Portals {
 
     /** Implemented by FluxPortal. */
     public interface Service {
-        Portal set(String name, boolean entry, PortalEnd end, double size);
+        Portal set(String name, int side, PortalEnd end);
+
+        boolean open(String name, boolean open);
 
         boolean remove(String name);
 
@@ -40,10 +43,15 @@ public final class Portals {
         return service != null;
     }
 
-    /** Places one end ({@code entry} true = the entry end) of the portal of that name, created when new. */
-    public static Portal set(String name, boolean entry, PortalEnd end, double size) {
+    /** Places side 1 or 2 of the portal of that name (created when new, with the configured size). */
+    public static Portal set(String name, int side, PortalEnd end) {
         Service s = service;
-        return s == null ? null : s.set(name, entry, end, size);
+        return s == null ? null : s.set(name, side, end);
+    }
+
+    public static boolean open(String name, boolean open) {
+        Service s = service;
+        return s != null && s.open(name, open);
     }
 
     public static boolean remove(String name) {

@@ -3,6 +3,7 @@ package fr.influencraft.fluxportal;
 import fr.influencraft.flux.api.client.Clients;
 import fr.influencraft.fluxportal.api.Portal;
 import fr.influencraft.fluxportal.api.PortalEnd;
+import org.bukkit.Axis;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -16,7 +17,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,25 +29,20 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 /**
- * What a Bedrock player sees of a portal: neither the 3D window (a shader) nor the swirl (a display entity) reach him,
- * so the hole is filled, for him alone, with nether portal blocks sent as packets (nothing changes in the world).
- * A nether portal stands on the x or z axis only: a ring turned 45 degrees takes the nearest one. Travel is the
- * server's, the same for everyone.
+ * What a Bedrock player sees of a portal: the window is a Java shader, so the hole is filled, for him alone, with
+ * nether portal blocks sent as packets (nothing changes in the world). They stand in the blocks just behind the
+ * window's plane, from the floor up, exactly where a Java player sees the far side: he walks in without jumping, and
+ * the server carries him through the plane like everyone else. Only open (air, plants...) blocks are filled.
  */
 final class BedrockView implements Listener {
 
-    private static final double RANGE = 48;
+    private static final double RANGE = 64;
 
-    private final JavaPlugin plugin;
     private final Supplier<Collection<Portal>> portals;
+    private final JavaPlugin plugin;
     /** Player -> blocks shown to him (to put the real ones back). */
     private final Map<UUID, Set<Location>> shown = new HashMap<>();
     private int passes;
-    private java.util.function.BiFunction<Portal, Boolean, Location> middle = (p, entry) -> null;
-
-    void middle(java.util.function.BiFunction<Portal, Boolean, Location> middle) {
-        this.middle = middle;
-    }
 
     BedrockView(JavaPlugin plugin, Supplier<Collection<Portal>> portals) {
         this.plugin = plugin;
@@ -67,21 +62,19 @@ final class BedrockView implements Listener {
             Set<Location> want = new HashSet<>();
             Map<Location, BlockData> send = new HashMap<>();
             for (Portal portal : portals.get()) {
-                if (!portal.complete()) continue;
-                for (PortalEnd end : new PortalEnd[]{portal.entry(), portal.exit()}) {
-                    if (!end.world().equals(p.getWorld().getName()) || end.center().distanceSquared(p.getLocation().toVector()) > RANGE * RANGE) continue;
-                    Location real = middle.apply(portal, end == portal.entry());
-                    PortalEnd at = real == null ? end : new PortalEnd(end.world(), real.getX(), real.getY(), real.getZ(), end.yaw());
-                    for (Location l : disc(p.getWorld(), at, portal.holeRadius())) {
+                if (!portal.complete() || !portal.open()) continue;
+                for (int side = 1; side <= 2; side++) {
+                    PortalEnd end = portal.side(side);
+                    if (!end.world().equals(p.getWorld().getName()) || end.middle().distanceSquared(p.getLocation().toVector()) > RANGE * RANGE) continue;
+                    BlockData block = portalBlock(end);
+                    for (Location l : hole(p.getWorld(), new Frame(end, portal.width(), portal.height()))) {
                         want.add(l);
-                        send.put(l, portalBlock(end));
+                        send.put(l, block);
                     }
                 }
             }
             Set<Location> had = shown.getOrDefault(p.getUniqueId(), Set.of());
-            List<Location> restore = new ArrayList<>();
-            for (Location l : had) if (!want.contains(l)) restore.add(l);
-            for (Location l : restore) if (l.getWorld() == p.getWorld()) p.sendBlockChange(l, l.getBlock().getBlockData());
+            for (Location l : had) if (!want.contains(l) && l.getWorld() == p.getWorld()) p.sendBlockChange(l, l.getBlock().getBlockData());
             Map<Location, BlockData> fresh = new HashMap<>();
             send.forEach((l, d) -> {
                 if (all || !had.contains(l)) fresh.put(l, d);
@@ -92,32 +85,28 @@ final class BedrockView implements Listener {
         }
     }
 
-    /** Air blocks of the ring's hole, on the axis nearest to its facing. */
-    private static List<Location> disc(World w, PortalEnd end, double radius) {
+    /** The open blocks of the hole, in the column just behind its plane. */
+    static List<Location> hole(World w, Frame f) {
         List<Location> out = new ArrayList<>();
-        Vector n = end.normal();
-        boolean alongX = Math.abs(n.getZ()) >= Math.abs(n.getX());   // front faces z: the portal spans x
-        int cx = (int) Math.floor(end.x()), cy = (int) Math.floor(end.y()), cz = (int) Math.floor(end.z());
-        int r = (int) Math.ceil(radius);
-        for (int a = -r; a <= r; a++) {
-            for (int dy = -r; dy <= r; dy++) {
-                double ox = a + 0.5 - (alongX ? end.x() - cx : end.z() - cz), oy = dy + 0.5 - (end.y() - cy);
-                if (ox * ox + oy * oy > radius * radius) continue;
-                Block b = alongX ? w.getBlockAt(cx + a, cy + dy, cz) : w.getBlockAt(cx, cy + dy, cz + a);
-                if (b.getType().isAir()) out.add(b.getLocation());
+        int hw = (int) Math.round(f.halfWidth() - 0.5), height = (int) Math.round(f.halfHeight() * 2), by = f.bottomY();
+        for (int i = -hw; i <= hw; i++) {
+            int x = (int) Math.floor(f.worldX(i, -0.5)), z = (int) Math.floor(f.worldZ(i, -0.5));
+            for (int j = 0; j < height; j++) {
+                Block b = w.getBlockAt(x, by + j, z);
+                if (b.isPassable() && !b.isLiquid()) out.add(b.getLocation());
             }
         }
         return out;
     }
 
     private static BlockData portalBlock(PortalEnd end) {
-        Vector n = end.normal();
         Orientable d = (Orientable) Material.NETHER_PORTAL.createBlockData();
-        d.setAxis(Math.abs(n.getZ()) >= Math.abs(n.getX()) ? org.bukkit.Axis.X : org.bukkit.Axis.Z);
+        // facing north or south: the hole runs along x
+        d.setAxis(end.facing() % 2 == 0 ? Axis.X : Axis.Z);
         return d;
     }
 
-    /** A portal moved or removed: what was shown is forgotten (the next pass shows the right blocks). */
+    /** A portal moved or removed: what was shown is put back (the next pass shows the right blocks). */
     void reset() {
         for (Map.Entry<UUID, Set<Location>> e : shown.entrySet()) {
             Player p = Bukkit.getPlayer(e.getKey());

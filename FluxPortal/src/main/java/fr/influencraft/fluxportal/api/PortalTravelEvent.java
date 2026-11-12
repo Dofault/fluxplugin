@@ -11,17 +11,24 @@ public final class PortalTravelEvent extends PlayerEvent implements Cancellable 
 
     private static final HandlerList HANDLERS = new HandlerList();
     private final Portal portal;
+    private final PortalEnd from;
     private final Location to;
     private boolean cancelled;
 
-    public PortalTravelEvent(Player player, Portal portal, Location to) {
+    public PortalTravelEvent(Player player, Portal portal, PortalEnd from, Location to) {
         super(player);
         this.portal = portal;
+        this.from = from;
         this.to = to;
     }
 
     public Portal portal() {
         return portal;
+    }
+
+    /** The side he walks into. */
+    public PortalEnd from() {
+        return from;
     }
 
     /** Where he will come out (may be changed by moving this location). */
