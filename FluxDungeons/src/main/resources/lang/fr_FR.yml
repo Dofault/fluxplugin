@@ -334,7 +334,6 @@ pick-level:
     &#FF5C5CArmure complète et une arme obligatoires.'
 
 rpg:
-  gate-soon: "&#B376E5Le donjon %dungeon% arrive bientôt : son portail est déjà prêt."
   dummy-none: "&#FF5C5CAucun mannequin à moins de 6 blocs."
   dummy-removed: "&#B376E5Mannequin(s) retiré(s) : &f%count%"
   unavailable: "&#FF5C5CLe monde RPG n'est pas disponible pour le moment."
@@ -468,6 +467,15 @@ sheet:
 # Dans les descriptions des sorts : %coef% (part de la puissance), %power%, %hits%, %targets%, %duration%, %mana%,
 # %range% et chaque nombre de « extra » de classes.yml (%radius%, %distance%...), en pourcentage avec _pct (%slow_pct%).
 class-pages:
+  hub:
+    title: Livre du héros
+    kicker: PLACE DES DIX DESTINS
+    traits: Caractéristiques
+    ways: Les quatre voies
+    yours: Ta voie
+    choose: Choisis ta voie pour commencer
+    all: Toute la fiche
+    xp: Expérience
   title: "Les classes"
   subtitle: "Ta classe décide de ton arme, de tes statistiques et de tes sorts. Ta progression dans chaque classe est gardée."
   beta: "Bêta"

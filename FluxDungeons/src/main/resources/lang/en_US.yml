@@ -334,7 +334,6 @@ pick-level:
     &#FF5C5CFull armour and a weapon required.'
 
 rpg:
-  gate-soon: "&#B376E5The %dungeon% dungeon is coming soon: its gate is already here."
   dummy-none: "&#FF5C5CNo dummy within 6 blocks."
   dummy-removed: "&#B376E5Dummies removed: &f%count%"
   unavailable: "&#FF5C5CThe rpg world is not available right now."
@@ -469,6 +468,15 @@ sheet:
 # In skill descriptions: %coef% (share of the power), %power%, %hits%, %targets%, %duration%, %mana%, %range% and every
 # number of the skill's "extra" in classes.yml (%radius%, %distance%...), as a percentage with _pct (%slow_pct%).
 class-pages:
+  hub:
+    title: Hero's book
+    kicker: SQUARE OF THE TEN FATES
+    traits: Attributes
+    ways: The four ways
+    yours: Your way
+    choose: Choose your way to begin
+    all: Full sheet
+    xp: Experience
   title: "Classes"
   subtitle: "Your class decides your weapon, your stats and your spells. Your progress in every class is kept."
   beta: "Beta"

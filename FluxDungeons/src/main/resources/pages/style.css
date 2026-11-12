@@ -1,16 +1,23 @@
-/* Pages of the rpg classes (FluxDungeons rpg.ClassPages), drawn by MC GUI: 1024 x 576 CSS pixels.
-   Server palette: very dark violet background, gold titles, light violet text, one accent colour per class. */
+/* Pages of the rpg (FluxDungeons rpg.ClassPages), drawn by MC GUI: 1024 x 576 CSS pixels.
+   Look "Codex des Destins": a hero's book on a table of dark slate, parchment pages framed in dark oak and iron, pixel
+   font (Minecraft) on an 8 pixel grid, pixel textures and icons of our own (assets/pages/gen_textures.py), wax seals
+   of the class colours. No soft web shadows: hard pixel bevels only. */
 :root {
-  --bg: #0d0716;
-  --bg2: #1e0a3c;
-  --violet: #5b2d9e;
-  --lilac: #b376e5;
+  --ink: #3b2414;
+  --ink2: #6b4a2b;
+  --rubric: #8c2a1c;
+  --paper: #e6d3a8;
+  --paper2: #d4bc88;
+  --wood: #4f321d;
+  --woodlight: #8a5a33;
+  --wooddark: #24160c;
+  --night: #120d18;
   --gold: #ffd94d;
   --gold2: #f0a800;
-  --pink: #e060a0;
-  --green: #2ecf7b;
-  --red: #ff5c5c;
-  --text: #eee6fa;
+  --violet: #b376e5;
+  --hp: #d8383a;
+  --mp: #3fa9f5;
+  --xp: #2ecf7b;
   --accent: #b376e5;
 }
 
@@ -20,193 +27,276 @@ body {
   width: 1024px;
   height: 576px;
   overflow: hidden;
-  font-family: Inter, sans-serif;
-  font-size: 13px;
-  color: var(--text);
-  background:
-    radial-gradient(ellipse 700px 380px at 50% -60px, rgba(91, 45, 158, 0.55), transparent 70%),
-    radial-gradient(ellipse 520px 300px at 105% 110%, rgba(200, 37, 106, 0.25), transparent 70%),
-    linear-gradient(180deg, var(--bg2) 0%, var(--bg) 70%);
-  padding: 22px 28px 0 28px;
-  display: flex;
-  flex-direction: column;
+  position: relative;
+  font-family: Minecraft, Monocraft, monospace;
+  font-size: 16px;
+  color: var(--ink);
+  background-color: #2a2533;
+  background-image: url(img/tex_stone.png);
+  background-repeat: repeat;
+}
+/* a dark vignette over the stone */
+body::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; width: 1024px; height: 576px;
+  background: radial-gradient(ellipse 620px 360px at 50% 46%, rgba(18, 13, 24, 0), rgba(18, 13, 24, 0.82));
 }
 
 a { color: inherit; text-decoration: none; }
 
-/* ---------------------------------------------------------------- header */
-header { display: flex; align-items: flex-start; justify-content: space-between; height: 96px; }
-.title .kicker { font-family: Minecraft, monospace; font-size: 11px; letter-spacing: 3px; color: var(--lilac); }
-.title .kicker em { font-style: normal; color: var(--bg); background: var(--gold); padding: 1px 6px; border-radius: 4px; margin-left: 6px; letter-spacing: 1px; }
-.title h1 { font-family: Minecraft, monospace; font-size: 30px; color: var(--gold); text-shadow: 0 3px 0 rgba(0, 0, 0, 0.55); margin-top: 4px; }
-.title p { color: var(--lilac); max-width: 740px; font-size: 12px; margin-top: 4px; line-height: 1.35; }
+/* ---------------------------------------------------------------- building blocks */
 
-.badge {
-  display: flex; align-items: center; gap: 10px;
-  background: rgba(13, 7, 22, 0.7);
-  border: 1px solid rgba(179, 118, 229, 0.35);
-  border-radius: 12px;
-  padding: 8px 14px 8px 8px;
+/* dark oak frame round a panel, iron corners, a hard bevel */
+.frame {
+  position: absolute;
+  background-color: var(--wood);
+  background-image: url(img/tex_wood.png);
+  padding: 8px;
+  box-shadow: inset 0 0 0 2px var(--wooddark), inset 2px 2px 0 4px var(--woodlight), 0 4px 0 0 rgba(0, 0, 0, 0.55);
 }
-.badge img { width: 36px; height: 36px; border-radius: 6px; image-rendering: pixelated; }
-.badge b { display: block; font-size: 14px; }
-.badge span { color: var(--lilac); font-size: 12px; }
+.frame > .inner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  box-shadow: inset 0 0 0 2px var(--wooddark);
+}
+.parchment {
+  background-color: var(--paper);
+  background-image: url(img/tex_parchment.png);
+  box-shadow: inset 0 0 0 2px var(--wooddark), inset 0 0 0 6px rgba(140, 100, 50, 0.25);
+}
+.night {
+  background-color: var(--night);
+  background-image: linear-gradient(180deg, rgba(91, 45, 158, 0.35), rgba(18, 13, 24, 0) 70%);
+}
+.corner {
+  position: absolute;
+  width: 16px; height: 16px;
+  background-image: url(img/tex_iron.png);
+  background-size: 16px 16px;
+  box-shadow: 0 0 0 2px var(--wooddark);
+}
+.corner.tl { left: -4px; top: -4px; } .corner.tr { right: -4px; top: -4px; }
+.corner.bl { left: -4px; bottom: -4px; } .corner.br { right: -4px; bottom: -4px; }
 
-/* ---------------------------------------------------------------- footer and buttons */
-footer { margin-top: auto; height: 58px; display: flex; align-items: center; justify-content: space-between; gap: 12px; color: rgba(179, 118, 229, 0.75); font-size: 12px; }
+/* the carved plaque of a page title */
+.plaque {
+  position: absolute;
+  left: 312px; top: 12px; width: 400px; height: 64px;
+  text-align: center;
+  background-color: var(--wood);
+  background-image: url(img/tex_wood.png);
+  box-shadow: inset 0 0 0 2px var(--wooddark), inset 2px 2px 0 4px var(--woodlight), 0 4px 0 0 rgba(0, 0, 0, 0.55);
+  padding-top: 8px;
+}
+.plaque .kicker { font-size: 8px; letter-spacing: 2px; color: var(--paper2); }
+.plaque .kicker em { font-style: normal; color: var(--wooddark); background: var(--gold); padding: 0 4px; margin-left: 4px; }
+.plaque h1 { font-size: 24px; color: var(--gold); text-shadow: 2px 2px 0 var(--wooddark); margin-top: 4px; font-weight: normal; }
 
+h2 {
+  font-size: 16px;
+  font-weight: normal;
+  color: var(--rubric);
+  letter-spacing: 1px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+h2::after {
+  content: "";
+  display: block;
+  width: 120px; height: 2px;
+  margin: 6px auto 0 auto;
+  background: linear-gradient(90deg, rgba(140, 42, 28, 0), var(--rubric), rgba(140, 42, 28, 0));
+}
+
+/* pixel bars: a dark frame, a segmented fill, a light line on top */
+.bar {
+  position: relative;
+  height: 16px;
+  background: #1a1018;
+  box-shadow: inset 0 0 0 2px #000000;
+  margin: 4px 0 8px 0;
+}
+.bar .fill {
+  position: absolute;
+  left: 2px; top: 2px; bottom: 2px;
+  background-color: var(--fill);
+  background-image: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10px, rgba(0, 0, 0, 0.35) 10px, rgba(0, 0, 0, 0.35) 12px);
+  box-shadow: inset 0 2px 0 0 rgba(255, 255, 255, 0.35), inset 0 -2px 0 0 rgba(0, 0, 0, 0.3);
+}
+.bar.xp { --fill: var(--xp); } .bar.hp { --fill: var(--hp); } .bar.mp { --fill: var(--mp); }
+.bar .txt { position: absolute; right: 6px; top: 4px; font-size: 8px; color: #ffffff; text-shadow: 1px 1px 0 #000000; }
+.label { font-size: 8px; color: var(--paper2); letter-spacing: 1px; }
+.label img { width: 16px; height: 16px; vertical-align: middle; margin-right: 4px; }
+
+/* buttons: wooden keys that sink when pressed */
 .btn {
   display: inline-block;
-  padding: 10px 22px;
-  border-radius: 10px;
-  font-weight: 700;
-  font-size: 14px;
-  transition: transform 0.12s, background 0.12s;
+  padding: 8px 16px 6px 16px;
+  font-size: 16px;
+  color: var(--paper);
+  background-color: var(--wood);
+  background-image: url(img/tex_wood.png);
+  box-shadow: inset 0 0 0 2px var(--wooddark), inset 2px 2px 0 2px var(--woodlight), 0 4px 0 0 var(--wooddark);
 }
-.btn.primary { background: linear-gradient(180deg, var(--gold), var(--gold2)); color: #2a1300; box-shadow: 0 4px 0 #8a5a00; }
-.btn.primary:hover { transform: translateY(-2px); background: linear-gradient(180deg, #fff0a0, var(--gold)); }
-.btn.primary:active { transform: translateY(2px); box-shadow: 0 1px 0 #8a5a00; }
-.btn.ghost { background: rgba(179, 118, 229, 0.12); border: 1px solid rgba(179, 118, 229, 0.45); color: var(--text); }
-.btn.ghost:hover { background: rgba(179, 118, 229, 0.28); }
+.btn:hover { color: var(--gold); }
+.btn:active { box-shadow: inset 0 0 0 2px var(--wooddark), 0 2px 0 0 var(--wooddark); }
+.btn.primary { color: var(--wooddark); background-color: var(--gold2); background-image: none;
+  box-shadow: inset 0 0 0 2px var(--wooddark), inset 2px 2px 0 2px var(--gold), 0 4px 0 0 #6b3d00; }
+.btn.primary:hover { background-color: var(--gold); }
+.key { font-size: 8px; color: var(--paper2); margin-left: 6px; }
 
-.stars { color: var(--gold); letter-spacing: 2px; }
-.stars s { text-decoration: none; color: rgba(255, 255, 255, 0.18); }
+.hint { position: absolute; left: 0; right: 0; bottom: 8px; text-align: center; font-size: 8px; color: rgba(230, 211, 168, 0.65); letter-spacing: 1px; }
 
-.glow {
-  position: absolute; left: 50%; top: 18px; width: 180px; height: 180px; margin-left: -90px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--accent) 0%, transparent 68%);
-  opacity: 0.35;
-}
-.weapon { position: relative; image-rendering: pixelated; }
-.topline { position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--accent); }
-
-/* ---------------------------------------------------------------- list of the classes */
-.cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; height: 404px; }
-
-.card {
+/* the wax seal of a class: its colour, its weapon */
+.seal {
   position: relative;
-  display: flex; flex-direction: column; align-items: center;
-  padding: 14px 16px 12px 16px;
-  border-radius: 16px;
-  background: linear-gradient(180deg, rgba(30, 10, 60, 0.95), rgba(13, 7, 22, 0.95));
-  border: 1px solid rgba(179, 118, 229, 0.25);
-  overflow: hidden;
-  transition: transform 0.15s, border-color 0.15s;
+  display: block;
+  width: 64px; height: 64px;
+  border-radius: 32px;
+  background: radial-gradient(circle at 40% 35%, var(--accent), #2a1020 140%);
+  box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.45), inset 3px 3px 0 3px rgba(255, 255, 255, 0.18), 0 3px 0 0 rgba(0, 0, 0, 0.5);
 }
-.card:hover { transform: translateY(-6px); border-color: var(--accent); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
-.card:hover .glow { opacity: 0.6; }
-.card .weapon { width: 112px; height: 112px; margin-top: 6px; }
-.card h2 { font-family: Minecraft, monospace; font-size: 20px; color: var(--accent); margin-top: 6px; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5); }
-.card .role { font-size: 10px; white-space: nowrap; text-transform: uppercase; letter-spacing: 1px; color: var(--gold); margin-top: 2px; }
-.card .desc { color: var(--lilac); text-align: center; line-height: 1.35; margin-top: 8px; height: 52px; font-size: 12px; }
-.axes { width: 100%; margin-top: 8px; }
-.axis { display: flex; align-items: center; gap: 8px; margin-top: 5px; font-size: 11px; color: rgba(238, 230, 250, 0.8); }
-.axis span { width: 64px; }
-.bar { flex: 1; height: 7px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
-.bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--violet), var(--accent)); }
-.card .foot { width: 100%; margin-top: auto; display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px solid rgba(179, 118, 229, 0.18); }
-.card .more { color: var(--gold); font-weight: 700; font-size: 12px; }
+.seal img { position: absolute; left: 6px; top: 6px; width: 52px; height: 52px; }
 
-.ribbon {
-  display: none;
-  position: absolute; top: 12px; right: -30px; width: 120px;
-  transform: rotate(35deg);
-  background: var(--gold); color: #2a1300;
-  font-size: 10px; font-weight: 800; text-align: center; padding: 3px 0;
-  text-transform: uppercase; letter-spacing: 1px;
+/* ================================================================ the hero's book (hub) */
+.hub .portrait { left: 24px; top: 92px; width: 300px; height: 440px; }
+.hub .portrait .inner { padding: 20px 20px 0 20px; text-align: center; }
+.hub .head {
+  width: 104px; height: 104px;
+  margin: 0 auto 0 auto;
+  padding: 4px;
+  background: var(--wooddark);
+  box-shadow: inset 0 0 0 2px var(--gold2), 0 0 0 2px var(--wooddark);
 }
-.card.is-yes { border-color: var(--gold); }
-.card.is-yes .ribbon { display: block; }
+.hub .head img { width: 96px; height: 96px; }
+.hub .name { display: block; font-size: 16px; color: var(--gold); margin-top: 12px; text-shadow: 2px 2px 0 #000000; }
+.hub .ribbon {
+  display: inline-block;
+  margin: 8px 0 16px 0;
+  padding: 4px 12px 2px 12px;
+  font-size: 8px;
+  color: var(--paper);
+  background: var(--rubric);
+  box-shadow: inset 0 0 0 2px #4a1209;
+}
+.hub .gauges { text-align: left; }
 
-/* ---------------------------------------------------------------- one class */
-.detail { display: grid; grid-template-columns: 290px 1fr 1.25fr; gap: 16px; height: 404px; }
-.hero, .panel {
+.hub .page { left: 340px; top: 92px; width: 380px; height: 440px; padding: 20px 24px; }
+.hub .traits { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin-top: 8px; }
+.hub .trait {
+  height: 64px;
+  padding: 8px;
+  background: rgba(212, 188, 136, 0.55);
+  box-shadow: inset 0 0 0 2px rgba(107, 74, 43, 0.6);
+}
+.hub .trait img { width: 32px; height: 32px; float: none; vertical-align: middle; }
+.hub .trait span { display: block; font-size: 8px; color: var(--ink2); margin-top: 4px; }
+.hub .trait b { position: absolute; font-size: 16px; font-weight: normal; color: var(--ink); }
+.hub .trait { position: relative; }
+.hub .trait img { position: absolute; left: 8px; top: 8px; }
+.hub .trait b { left: 48px; top: 12px; }
+.hub .trait span { position: absolute; left: 48px; top: 36px; margin: 0; }
+.hub .page .more { position: absolute; left: 24px; right: 24px; bottom: 20px; text-align: center; }
+
+.hub .ways { left: 736px; top: 92px; width: 264px; height: 440px; }
+.hub .ways .inner { padding: 16px 12px; }
+.hub .ways h2 { color: var(--gold); }
+.hub .ways h2::after { background: linear-gradient(90deg, rgba(255, 217, 77, 0), var(--gold), rgba(255, 217, 77, 0)); }
+.way {
   position: relative;
-  border-radius: 16px;
-  background: linear-gradient(180deg, rgba(30, 10, 60, 0.92), rgba(13, 7, 22, 0.92));
-  border: 1px solid rgba(179, 118, 229, 0.25);
-  padding: 14px 16px;
-  overflow: hidden;
+  display: block;
+  height: 80px;
+  margin-bottom: 8px;
+  padding: 8px 8px 8px 84px;
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.6);
 }
-.hero { display: flex; flex-direction: column; align-items: center; }
-.hero .weapon.big { width: 140px; height: 140px; margin-top: 4px; }
-.hero .desc { color: var(--text); text-align: center; line-height: 1.4; margin: 8px 0 10px 0; }
-.hero .kv { width: 100%; display: flex; justify-content: space-between; padding: 6px 0; border-top: 1px solid rgba(179, 118, 229, 0.18); }
-.hero .kv b, .hero .pro b, .hero .con b { font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; }
-.hero .pro, .hero .con { width: 100%; padding: 6px 0; border-top: 1px solid rgba(179, 118, 229, 0.18); }
-.hero .pro b { color: var(--green); }
-.hero .con b { color: var(--red); }
-.hero .pro p, .hero .con p { color: var(--lilac); margin-top: 2px; line-height: 1.35; font-size: 12px; }
+.way .seal { position: absolute; left: 8px; top: 8px; }
+.way b { display: block; font-size: 16px; font-weight: normal; color: var(--accent); margin-top: 8px; text-shadow: 2px 2px 0 #000000; }
+.way span { display: block; font-size: 8px; color: var(--paper2); margin-top: 6px; }
+.way em { display: none; position: absolute; right: 8px; top: 8px; font-style: normal; font-size: 8px; color: var(--wooddark); background: var(--gold); padding: 2px 4px 0 4px; }
+.way.is-yes { box-shadow: inset 0 0 0 2px var(--gold), inset 0 0 0 4px rgba(0, 0, 0, 0.6); background: rgba(240, 168, 0, 0.12); }
+.way.is-yes em { display: block; }
+.way:hover { background: rgba(255, 217, 77, 0.1); }
+.way:hover b { color: var(--gold); }
+.hub .ways .choose { display: none; font-size: 8px; color: var(--gold); text-align: center; margin-top: 4px; }
+.has-no .hub .ways .choose { display: block; }
+.has-no .hub .gauges, .has-no .hub .traits { opacity: 0.45; }
 
-.panel h3 { font-family: Minecraft, monospace; font-size: 15px; color: var(--gold); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: baseline; }
-.panel h3 small { font-family: Inter, sans-serif; font-size: 11px; color: rgba(179, 118, 229, 0.8); font-weight: 400; }
+/* ================================================================ the four ways (classes list) */
+.list .cards { position: absolute; left: 24px; right: 24px; top: 96px; height: 400px; display: flex; gap: 16px; }
+.list .card { position: relative; flex: 1; height: 400px; }
+.list .card .inner { padding: 20px 16px; text-align: center; }
+.list .card .seal { width: 128px; height: 128px; border-radius: 64px; margin: 8px auto 16px auto; }
+.list .card .seal img { left: 12px; top: 12px; width: 104px; height: 104px; }
+.list .card h3 { font-size: 24px; font-weight: normal; color: var(--accent); text-shadow: 2px 2px 0 #000000; }
+.list .card .role { font-size: 8px; color: var(--paper2); margin-top: 8px; letter-spacing: 1px; }
+.list .card .stars { font-size: 16px; color: var(--gold); margin-top: 24px; }
+.list .card .stars s { text-decoration: none; color: rgba(230, 211, 168, 0.25); }
+.list .card .open { position: absolute; left: 16px; right: 16px; bottom: 20px; font-size: 8px; color: var(--paper2); }
+.list .card em { display: none; position: absolute; left: 50%; top: 12px; margin-left: -40px; width: 80px; font-style: normal; font-size: 8px; color: var(--wooddark); background: var(--gold); padding: 2px 0 0 0; }
+.list .card.is-yes em { display: block; }
+.list .card.is-yes .inner { box-shadow: inset 0 0 0 2px var(--gold); }
+.list .card:hover h3 { color: var(--gold); }
 
-table { width: 100%; border-collapse: collapse; }
-td { padding: 5px 4px; border-bottom: 1px solid rgba(179, 118, 229, 0.12); color: var(--text); }
-td:first-child { color: var(--lilac); }
-td:nth-child(2), td:nth-child(3) { text-align: right; width: 64px; }
-td.hi { color: var(--accent); font-weight: 700; }
-tr.head td { color: rgba(179, 118, 229, 0.75); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
-tr:hover td { background: rgba(179, 118, 229, 0.08); }
+/* ================================================================ one way (class page) */
+.detail-page .hero { left: 24px; top: 92px; width: 300px; height: 440px; }
+.detail-page .hero .inner { padding: 20px 16px; text-align: center; }
+.detail-page .hero .seal { width: 128px; height: 128px; border-radius: 64px; margin: 0 auto 12px auto; }
+.detail-page .hero .seal img { left: 12px; top: 12px; width: 104px; height: 104px; }
+.detail-page .hero .role { font-size: 8px; color: var(--paper2); letter-spacing: 1px; }
+.detail-page .hero .desc { font-size: 8px; line-height: 14px; color: var(--paper); margin: 12px 0; text-align: left; }
+.detail-page .hero .axis { display: flex; align-items: center; font-size: 8px; color: var(--paper2); text-align: left; }
+.detail-page .hero .axis span { width: 80px; }
+.detail-page .hero .axis .bar { flex: 1; height: 12px; margin: 3px 0; --fill: var(--accent); }
+.detail-page .hero .stars { color: var(--gold); }
+.detail-page .hero .stars s { text-decoration: none; color: rgba(230, 211, 168, 0.25); }
 
-.skill { display: flex; gap: 10px; padding: 8px 6px; border-radius: 10px; border-bottom: 1px solid rgba(179, 118, 229, 0.12); }
-.skill:hover { background: rgba(179, 118, 229, 0.1); }
-.key {
-  width: 64px; min-width: 64px; height: 38px;
-  display: flex; align-items: center; justify-content: center; text-align: center;
-  border-radius: 8px;
-  font-size: 10px; font-weight: 800; line-height: 1.1; text-transform: uppercase;
-  background: rgba(13, 7, 22, 0.9);
-  border: 1px solid var(--accent);
-  color: var(--accent);
-  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.5);
-}
-.key.k-a, .key.k-f { font-family: Minecraft, monospace; font-size: 18px; }
-.skill .txt { flex: 1; }
-.skill .line { display: flex; justify-content: space-between; align-items: baseline; }
-.skill b { color: var(--text); font-size: 13px; }
-.skill .cost { color: #6fa8ff; font-size: 11px; font-weight: 700; }
-.skill p { color: var(--lilac); font-size: 12px; line-height: 1.35; margin-top: 2px; }
-.panel .note { color: rgba(179, 118, 229, 0.7); font-size: 11px; margin-top: 8px; }
+.detail-page .book { left: 340px; top: 92px; width: 660px; height: 392px; padding: 16px 20px; }
+.detail-page .cols { display: flex; gap: 20px; }
+.detail-page .col { flex: 1; }
+.detail-page .pro, .detail-page .con { font-size: 8px; line-height: 13px; margin-bottom: 10px; }
+.detail-page .pro b { color: #2b6b2f; font-weight: normal; } .detail-page .con b { color: var(--rubric); font-weight: normal; }
+.detail-page .skill { position: relative; padding: 6px 6px 6px 56px; margin-bottom: 6px; min-height: 40px;
+  background: rgba(212, 188, 136, 0.55); box-shadow: inset 0 0 0 2px rgba(107, 74, 43, 0.6); }
+.detail-page .skill .k { position: absolute; left: 6px; top: 6px; width: 44px; padding: 4px 0 2px 0; text-align: center; font-size: 8px;
+  color: var(--paper); background: var(--wooddark); }
+.detail-page .skill .line { font-size: 8px; color: var(--rubric); }
+.detail-page .skill .cost { float: none; color: #2a5f9e; margin-left: 6px; }
+.detail-page .skill p { font-size: 8px; line-height: 12px; color: var(--ink); margin-top: 3px; }
+.detail-page .note { font-size: 8px; color: var(--ink2); }
+.detail-page table { width: 100%; border-collapse: collapse; font-size: 8px; }
+.detail-page td { padding: 3px 4px; border-bottom: 1px solid rgba(107, 74, 43, 0.35); }
+.detail-page td.hi { color: var(--rubric); text-align: right; }
+.detail-page tr.head td { color: var(--ink2); }
+.bottom { position: absolute; left: 340px; width: 660px; top: 496px; display: flex; justify-content: space-between; align-items: center; }
+.bottom .owned { display: none; font-size: 8px; color: var(--gold); }
+.is-yes .bottom .owned { display: block; }
+.is-yes .bottom .choose { display: none; }
 
-.owned { display: none; color: var(--gold); font-weight: 700; font-size: 14px; }
-.detail-page.is-yes .choose { display: none; }
-.detail-page.is-yes .owned { display: inline-block; }
-
-/* ---------------------------------------------------------------- confirmation */
-.confirm { flex: 1; display: flex; align-items: center; justify-content: center; padding-bottom: 40px; }
-.confirm .box {
-  position: relative;
-  width: 480px;
-  padding: 24px 32px;
-  border-radius: 18px;
-  text-align: center;
-  background: linear-gradient(180deg, rgba(30, 10, 60, 0.97), rgba(13, 7, 22, 0.97));
-  border: 1px solid rgba(179, 118, 229, 0.35);
-  overflow: hidden;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
-}
-.confirm .weapon { width: 120px; height: 120px; }
-.confirm h2 { font-family: Minecraft, monospace; font-size: 24px; color: var(--gold); margin-top: 6px; }
-.confirm p { color: var(--lilac); line-height: 1.45; margin-top: 10px; }
-.confirm .row { display: flex; justify-content: center; gap: 14px; margin-top: 20px; }
+/* ================================================================ confirmation */
+.confirm-page .box { left: 262px; top: 120px; width: 500px; height: 320px; }
+.confirm-page .box .inner { padding: 20px 28px; text-align: center; }
+.confirm-page .seal { width: 96px; height: 96px; border-radius: 48px; margin: 0 auto 12px auto; }
+.confirm-page .seal img { left: 10px; top: 10px; width: 76px; height: 76px; }
+.confirm-page h3 { font-size: 16px; font-weight: normal; color: var(--rubric); }
+.confirm-page p { font-size: 8px; line-height: 14px; margin-top: 12px; }
 .confirm-page .change { display: none; }
-.confirm-page.has-yes .change { display: block; }
-.confirm-page.has-yes .first { display: none; }
+.has-yes.confirm-page .first { display: none; }
+.has-yes.confirm-page .change { display: block; }
+.confirm-page .row { position: absolute; left: 28px; right: 28px; bottom: 20px; display: flex; justify-content: space-between; }
 
-/* ---------------------------------------------------------------- character sheet */
-.gauges { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
-.gauge { position: relative; height: 26px; border-radius: 8px; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(179, 118, 229, 0.3); overflow: hidden; }
-.gauge .fill { position: absolute; left: 0; top: 0; bottom: 0; }
-.gauge.xp .fill { background: linear-gradient(90deg, var(--gold2), var(--gold)); }
-.gauge.hp .fill { background: linear-gradient(90deg, #a1263a, var(--red)); }
-.gauge.mp .fill { background: linear-gradient(90deg, #2a4fa8, #6fa8ff); }
-.gauge span { position: relative; display: block; text-align: center; line-height: 24px; font-weight: 700; font-size: 12px; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); }
-.sheet { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; height: 330px; }
-.sheet .stat { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(179, 118, 229, 0.12); font-size: 12px; }
-.sheet .stat span { color: var(--lilac); }
-.sheet .stat.zero { display: none; }
-.empty { display: none; color: var(--lilac); font-size: 15px; text-align: center; margin-top: 80px; }
-.sheet-page.has-no .empty { display: block; }
-.sheet-page.has-no .sheet, .sheet-page.has-no .gauges { display: none; }
+/* ================================================================ the full sheet */
+.sheet-page .gauges { position: absolute; left: 24px; right: 24px; top: 92px; height: 72px; display: flex; gap: 16px; padding: 12px 16px; }
+.sheet-page .gauges > div { flex: 1; }
+.sheet-page .book { left: 24px; top: 176px; width: 976px; height: 312px; padding: 16px 20px; }
+.sheet-page .cols { display: flex; gap: 16px; }
+.sheet-page .col { flex: 1; }
+.sheet-page .stat { display: flex; justify-content: space-between; font-size: 8px; padding: 3px 0; border-bottom: 1px solid rgba(107, 74, 43, 0.3); }
+.sheet-page .stat b { font-weight: normal; color: var(--rubric); }
+.sheet-page .stat.zero { display: none; }
+.sheet-page .bottom { left: 24px; width: 976px; }
+.sheet-page .empty { display: none; }
+.has-no.sheet-page .empty { display: block; position: absolute; left: 0; right: 0; top: 300px; text-align: center; color: var(--gold); }

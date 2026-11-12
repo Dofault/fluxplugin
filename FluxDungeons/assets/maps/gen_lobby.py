@@ -10,7 +10,7 @@ lobby world flux_rpg (no copy: the world is live), modelled in memory first (gri
   - two wings of five gates, one per job with a dungeon or one to come, same architecture (pillars, arch, pediment,
     the job's materials and colour, its name above): west Mineur, Rochiste, Déblayeur, Fondeur, Enchanteur; east
     Cultivateur, Herboriste, Sylviculteur, Pêcheur, Défenseur. Walking into a gate opens the dungeon's launch screen
-    (rpg.DungeonGates, lobby.yml written here); a gate without dungeon says it is coming soon;
+    (their trigger zones, particles and names live in Typewriter: scripts/typewriter/gen_lobby_rpg.py, page lobby_rpg);
   - north of the square: the training yard (place a dummy with /rpgadmin mannequin on its mark), the town hall, the
     bonus court (empty, kept for a future feature);
   - an inn and a watch tower framing the avenue; terraces, trees and hills all round, invisible walls at the edge.
@@ -54,7 +54,7 @@ JOBS_EAST = [
     ("defenseur", "Défenseur", "#C8C8C8", ["polished_blackstone_bricks", "bone_block", "chiseled_stone_bricks"], ["bone_block", "iron_bars", "skeleton_skull[rotation=0]"]),
 ]
 GATE_Z = (25, 32, 39, 46, 53)
-GATES = []                                 # for lobby.yml
+GATES = []                                 # gate openings (checks; Typewriter places their triggers)
 DUMMY = (-13, 71)                          # the training dummy's mark (/rpgadmin mannequin there)
 SPAWN = (0.5, 67, 6.5)                     # rpg.spawn: on the dais, in front of the ring
 
@@ -333,7 +333,6 @@ def wing(jobs, side):
             g.set(face - side, F + 6, zc + dz, f"{bcol}_wall_banner[facing={'east' if side < 0 else 'west'}]") \
                 if g.get(face, F + 6, zc + dz) != "air" else None
             g.set(face - side * 0, F + 4, zc + dz, "lantern") if g.get(face, F + 3, zc + dz) != "air" else None
-        text(face - side * 0.45 + (0.5 if side < 0 else 0.5), F + 9.6, zc + 0.5, name, colour, -90 if side < 0 else 90, 1.5)
         GATES.append({"dungeon": did, "name": name, "from": [min(face + side, face + 3 * side), F + 1, zc - 1],
                       "to": [max(face + side, face + 3 * side), F + 4, zc + 1], "out": [-side, 0, 0], "color": colour})
         light(face - side * 2, F + 5, zc, 12)
@@ -511,18 +510,8 @@ def check():
     return errors
 
 
-def lobby_yml():
-    out = ["# Portes de donjon du lobby RPG, écrites par plugins/fluxplugin/FluxDungeons/assets/maps/gen_lobby.py : y entrer",
-           "# ouvre l'écran de lancement du donjon (rpg.DungeonGates) ; un donjon qui n'existe pas encore dit qu'il arrive.",
-           "# Relancer le script plutôt que de modifier à la main.", "world: flux_rpg", "gates:"]
-    for gt in GATES:
-        out += [f"- dungeon: {gt['dungeon']}", f"  name: '{gt['name']}'", f"  from: {gt['from']}", f"  to: {gt['to']}",
-                f"  out: {gt['out']}", f"  color: '{gt['color']}'"]
-    return "\n".join(out) + "\n"
-
-
 def apply(server):
-    """Clears the former lobby (keeping the portal's entities), builds the new one in flux_rpg, writes lobby.yml."""
+    """Clears the former lobby (keeping the portal's entities), builds the new one in flux_rpg."""
     base = os.path.join(maplib.ROOT, "serveurs", maplib.SERVERS[server])
     wdir = os.path.join(base, "world", "dimensions", "minecraft", "flux_rpg")
     c = maplib.Console(server)
@@ -558,7 +547,7 @@ def apply(server):
             run(tile.cmds)
             # decor entities only: the portal's displays and the training dummies (husks) stay
             for kind in ("item_frame", "glow_item_frame", "painting", "armor_stand", "item"):
-                c.send(W + f"kill @e[type={kind},x={tx},y={oy0},z={tz},dx={x1 - tx},dy={oy1 - oy0},dz={z1 - tz}]")
+                c.send(W + f"minecraft:kill @e[type=minecraft:{kind},x={tx},y={oy0},z={tz},dx={x1 - tx},dy={oy1 - oy0},dz={z1 - tz}]")
             c.send(W + "forceload remove all")
     print("former lobby cleared")
     # 2. the new one
@@ -583,10 +572,6 @@ def apply(server):
         print("rpg.spawn set to", SPAWN)
     else:
         print("rpg.spawn not found in", cfg, ": set it with /rpgadmin setspawn on the dais")
-    path = os.path.join(base, "plugins", "FluxDungeons", "lobby.yml")
-    with open(path, "w") as f:
-        f.write(lobby_yml())
-    print("written", path)
     print(c.send("fluxdungeons reload"))
 
 

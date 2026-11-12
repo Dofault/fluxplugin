@@ -576,7 +576,7 @@ public final class RpgPlayers implements Listener {
     public void showSheet(Player p) {
         RpgPlayer r = online.get(p.getUniqueId());
         RpgConfig.Set set = config.get();
-        if (r != null && set != null && pages != null && Screens.open(p, ClassPages.SHEET)) return;
+        if (r != null && set != null && pages != null && Screens.open(p, ClassPages.HUB)) return;
         if (r == null || set == null || r.stats() == null) {
             plugin.messages().send(p, "rpg.not-in-rpg");
             return;

@@ -28,7 +28,13 @@ import java.util.Map;
 final class ClassPages {
 
     static final String FOLDER = "fluxdungeons";
-    static final String CLASSES = FOLDER + "/classes", SHEET = FOLDER + "/personnage";
+    static final String CLASSES = FOLDER + "/classes", SHEET = FOLDER + "/personnage", HUB = FOLDER + "/heros";
+    /** Pixel textures and icons of the pages (assets/pages/gen_textures.py). */
+    private static final List<String> TEXTURES = List.of("tex_stone", "tex_parchment", "tex_wood", "tex_iron", "ico_xp",
+            "ico_max_health", "ico_physical_attack", "ico_magic_power", "ico_physical_defense", "ico_crit_chance", "ico_attack_speed", "ico_max_mana");
+    /** The stats on the first page, in this order. */
+    private static final List<String> HUB_STATS = List.of("max_health", "physical_attack", "magic_power", "physical_defense",
+            "crit_chance", "attack_speed");
 
     /** The comparison bars of the class cards, from the class stats at the top level. */
     private static final List<String> AXES = List.of("health", "power", "defense", "mana", "range");
@@ -68,6 +74,8 @@ final class ClassPages {
         try {
             Files.createDirectories(dir.resolve("img"));
             save(dir.resolve("style.css"), css(set));
+            for (String tex : TEXTURES) copy(dir.resolve("img/" + tex + ".png"), "pages/img/" + tex + ".png");
+            save(dir.resolve("heros.html"), hub(set));
             save(dir.resolve("classes.html"), classes(set));
             for (ClassDef c : set.classes().values()) {
                 save(dir.resolve("class_" + c.id() + ".html"), classPage(set, c));
@@ -82,48 +90,76 @@ final class ClassPages {
 
     // ------------------------------------------------------------------ pages
 
-    private String classes(RpgConfig.Set set) {
-        int top = set.balance().maxLevel();
-        Map<String, Map<String, Double>> axes = new LinkedHashMap<>();
-        Map<String, Double> best = new LinkedHashMap<>();
-        for (ClassDef c : set.classes().values()) {
-            Map<String, Double> a = axes(set, c, top);
-            axes.put(c.id(), a);
-            a.forEach((k, v) -> best.merge(k, v, Math::max));
+    /** The hero's book, first page of the rpg menu: who the player is, his main stats, then the four ways (classes). */
+    private String hub(RpgConfig.Set set) {
+        StringBuilder traits = new StringBuilder();
+        for (String stat : HUB_STATS) {
+            if (set.stats().get(stat) == null) continue;
+            traits.append("<div class=\"trait\"><img src=\"img/ico_").append(stat).append(".png\"><b>%fluxrpg_stat_").append(stat)
+                    .append("%</b><span>").append(esc(source.statName(stat))).append("</span></div>");
         }
+        StringBuilder ways = new StringBuilder();
+        int key = 1;
+        for (ClassDef c : set.classes().values()) {
+            String id = c.id();
+            ways.append("<a class=\"way c-").append(id).append(" is-%fluxrpg_is_").append(id).append("%\" href=\"class_").append(id)
+                    .append(".html\" data-key=\"").append(key++).append("\">").append(seal(id))
+                    .append("<b>").append(t("classes." + id + ".name")).append("</b><span>").append(t("class-pages.classes." + id + ".role"))
+                    .append("</span><em>").append(t("class-pages.hub.yours")).append("</em></a>");
+        }
+        String body = "<div class=\"hub\">" + plaque(t("class-pages.hub.title"))
+                + frame("portrait", "night",
+                "<div class=\"head\"><img src=\"head:{player}\"></div><b class=\"name\">{player}</b>"
+                        + "<div class=\"ribbon\">%fluxrpg_class% · %fluxrpg_level_text%</div>"
+                        + "<div class=\"gauges\">"
+                        + bar("xp", "<img src=\"img/ico_xp.png\">" + t("class-pages.hub.xp"), "%fluxrpg_xp_text%", "%fluxrpg_xp_pct%")
+                        + bar("hp", "<img src=\"img/ico_max_health.png\">" + t("class-pages.sheet.health"), "%fluxrpg_health% / %fluxrpg_health_max%", "%fluxrpg_health_pct%")
+                        + bar("mp", "<img src=\"img/ico_max_mana.png\">" + t("class-pages.sheet.mana"), "%fluxrpg_mana% / %fluxrpg_mana_max%", "%fluxrpg_mana_pct%")
+                        + "</div>")
+                + "<section class=\"frame page parchment\">" + corners() + "<h2>" + t("class-pages.hub.traits") + "</h2>"
+                + "<div class=\"traits\">" + traits + "</div>"
+                + "<div class=\"more\"><a class=\"btn\" href=\"personnage.html\" data-key=\"f\">" + t("class-pages.hub.all") + "</a></div></section>"
+                + frame("ways", "night", "<h2>" + t("class-pages.hub.ways") + "</h2>" + ways
+                + "<div class=\"choose\">" + t("class-pages.hub.choose") + "</div>")
+                + "<div class=\"hint\">" + t("class-pages.sneak") + "</div></div>";
+        return html(t("class-pages.hub.title"), "hub-page has-%fluxrpg_has_class%", body);
+    }
+
+    private String classes(RpgConfig.Set set) {
         StringBuilder cards = new StringBuilder();
         int key = 1;
         for (ClassDef c : set.classes().values()) {
             String id = c.id();
-            StringBuilder bars = new StringBuilder();
-            for (String axis : AXES) {
-                double max = best.getOrDefault(axis, 0.0);
-                double v = axes.get(id).getOrDefault(axis, 0.0);
-                int pct = max <= 0 ? 0 : (int) Math.round(12 + 88 * v / max);
-                bars.append("<div class=\"axis\"><span>").append(t("class-pages.axes." + axis))
-                        .append("</span><div class=\"bar\"><i style=\"width: ").append(pct).append("%\"></i></div></div>");
-            }
-            cards.append("<a class=\"card c-").append(id).append(" is-%fluxrpg_is_").append(id).append("%\" href=\"class_")
-                    .append(id).append(".html\" data-key=\"").append(key++).append("\">")
-                    .append("<div class=\"topline\"></div><div class=\"ribbon\">").append(t("class-pages.yours")).append("</div>")
-                    .append("<div class=\"glow\"></div><img class=\"weapon\" src=\"img/").append(id).append(".png\">")
-                    .append("<h2>").append(t("classes." + id + ".name")).append("</h2>")
+            cards.append("<a class=\"frame card c-").append(id).append(" is-%fluxrpg_is_").append(id).append("%\" href=\"class_")
+                    .append(id).append(".html\" data-key=\"").append(key++).append("\"><div class=\"inner night\">")
+                    .append("<em>").append(t("class-pages.hub.yours")).append("</em>").append(seal(id))
+                    .append("<h3>").append(t("classes." + id + ".name")).append("</h3>")
                     .append("<div class=\"role\">").append(t("class-pages.classes." + id + ".role")).append("</div>")
-                    .append("<p class=\"desc\">").append(t("classes." + id + ".description")).append("</p>")
-                    .append("<div class=\"axes\">").append(bars).append("</div>")
-                    .append("<div class=\"foot\"><span class=\"stars\">").append(stars(id)).append("</span>")
-                    .append("<span class=\"more\">").append(t("class-pages.see")).append(" ›</span></div></a>");
+                    .append("<div class=\"stars\">").append(stars(id)).append("</div>")
+                    .append("<div class=\"open\">").append(t("class-pages.see")).append(" ›</div></div></a>");
         }
-        String body = "<header>" + titleBlock(t("class-pages.title"), t("class-pages.subtitle")) + badge() + "</header>"
-                + "<main class=\"cards\">" + cards + "</main>"
-                + "<footer><span>" + t("class-pages.sneak") + "</span>"
-                + "<a class=\"btn ghost\" data-action=\"close\">" + t("class-pages.close") + "</a></footer>";
+        String body = plaque(t("class-pages.hub.ways")) + "<main class=\"cards\">" + cards + "</main>"
+                + "<div class=\"hint\">" + t("class-pages.sneak") + "</div>";
         return html(t("class-pages.title"), "list has-%fluxrpg_has_class%", body);
     }
 
     private String classPage(RpgConfig.Set set, ClassDef c) {
         String id = c.id();
         int top = set.balance().maxLevel();
+        Map<String, Map<String, Double>> all = new LinkedHashMap<>();
+        Map<String, Double> best = new LinkedHashMap<>();
+        for (ClassDef o : set.classes().values()) {
+            Map<String, Double> a = axes(set, o, top);
+            all.put(o.id(), a);
+            a.forEach((k, v) -> best.merge(k, v, Math::max));
+        }
+        StringBuilder bars = new StringBuilder();
+        for (String axis : AXES) {
+            double max = best.getOrDefault(axis, 0.0), v = all.get(id).getOrDefault(axis, 0.0);
+            int pct = max <= 0 ? 0 : (int) Math.round(12 + 88 * v / max);
+            bars.append("<div class=\"axis\"><span>").append(t("class-pages.axes." + axis)).append("</span><div class=\"bar\"><div class=\"fill\" style=\"width: ")
+                    .append(pct).append("%\"></div></div></div>");
+        }
         StatSheet low = StatSheet.compute(set.stats(), c.modifiers(1));
         StatSheet high = StatSheet.compute(set.stats(), c.modifiers(top));
         StringBuilder rows = new StringBuilder();
@@ -142,38 +178,33 @@ final class ClassPages {
             if (s == null) continue;
             skills.append(skill(id, slot, t("class-pages.classes." + id + "." + slot + ".name"), skillText(c, s), s.mana()));
         }
-        String body = "<header>" + titleBlock(t("classes." + id + ".name"), t("class-pages.classes." + id + ".role"))
-                + badge() + "</header>"
-                + "<main class=\"detail\">"
-                + "<section class=\"hero\"><div class=\"topline\"></div><div class=\"glow\"></div><img class=\"weapon big\" src=\"img/" + id + ".png\">"
-                + "<p class=\"desc\">" + t("classes." + id + ".description") + "</p>"
-                + "<div class=\"kv\"><b>" + t("class-pages.difficulty") + "</b><span class=\"stars\">" + stars(id) + "</span></div>"
-                + "<div class=\"pro\"><b>" + t("class-pages.strengths") + "</b><p>" + t("class-pages.classes." + id + ".strengths") + "</p></div>"
-                + "<div class=\"con\"><b>" + t("class-pages.weaknesses") + "</b><p>" + t("class-pages.classes." + id + ".weaknesses") + "</p></div>"
-                + "</section>"
-                + "<section class=\"panel stats\"><h3>" + t("class-pages.stats") + "<small>" + t("class-pages.stats-note") + "</small></h3>"
-                + "<table><tr class=\"head\"><td></td><td>" + esc(m("class-pages.stats-level", "%level%", "1")) + "</td><td class=\"hi\">"
-                + esc(m("class-pages.stats-level", "%level%", String.valueOf(top))) + "</td></tr>" + rows + "</table></section>"
-                + "<section class=\"panel skills\"><h3>" + t("class-pages.skills") + "</h3>" + skills
-                + "<p class=\"note\">" + t("class-pages.skills-note") + "</p></section>"
-                + "</main>"
-                + "<footer><a class=\"btn ghost\" data-action=\"back\" data-key=\"q\">‹ " + t("class-pages.back") + "</a>"
+        String body = plaque(t("classes." + id + ".name"))
+                + frame("hero", "night", seal(id) + "<div class=\"role\">" + t("class-pages.classes." + id + ".role") + "</div>"
+                + "<p class=\"desc\">" + t("classes." + id + ".description") + "</p>" + bars
+                + "<div class=\"axis\"><span>" + t("class-pages.difficulty") + "</span><span class=\"stars\">" + stars(id) + "</span></div>")
+                + "<section class=\"frame book parchment\">" + corners() + "<div class=\"cols\">"
+                + "<div class=\"col\"><h2>" + t("class-pages.skills") + "</h2>" + skills + "<p class=\"note\">" + t("class-pages.skills-note") + "</p></div>"
+                + "<div class=\"col\"><div class=\"pro\"><b>" + t("class-pages.strengths") + "</b> " + t("class-pages.classes." + id + ".strengths") + "</div>"
+                + "<div class=\"con\"><b>" + t("class-pages.weaknesses") + "</b> " + t("class-pages.classes." + id + ".weaknesses") + "</div>"
+                + "<h2>" + t("class-pages.stats") + "</h2><table><tr class=\"head\"><td>" + t("class-pages.stats-note") + "</td><td>"
+                + esc(m("class-pages.stats-level", "%level%", "1")) + "</td><td class=\"hi\">" + esc(m("class-pages.stats-level", "%level%", String.valueOf(top)))
+                + "</td></tr>" + rows + "</table></div></div></section>"
+                + "<div class=\"bottom\"><a class=\"btn\" data-action=\"back\" data-key=\"q\">‹ " + t("class-pages.back") + "</a>"
                 + "<span class=\"owned\">" + t("class-pages.already") + "</span>"
-                + "<a class=\"btn primary choose\" href=\"confirm_" + id + ".html\" data-key=\"space\">" + t("class-pages.choose") + "</a></footer>";
+                + "<a class=\"btn primary choose\" href=\"confirm_" + id + ".html\" data-key=\"space\">" + t("class-pages.choose") + "</a></div>";
         return html(t("classes." + id + ".name"), "detail-page c-" + id + " is-%fluxrpg_is_" + id + "%", body);
     }
 
     private String confirm(ClassDef c, long cooldownHours) {
         String id = c.id();
         String name = source.raw("classes." + id + ".name");
-        String body = "<main class=\"confirm\"><div class=\"box\"><div class=\"topline\"></div><div class=\"glow\"></div>"
-                + "<img class=\"weapon\" src=\"img/" + id + ".png\">"
-                + "<h2>" + esc(m("class-pages.confirm-title", "%class%", name)) + "</h2>"
+        String body = "<section class=\"frame box parchment\">" + corners() + "<div class=\"inner\">" + seal(id)
+                + "<h3>" + esc(m("class-pages.confirm-title", "%class%", name)) + "</h3>"
                 + "<p class=\"first\">" + t("class-pages.confirm-first") + "</p>"
                 + "<p class=\"change\">" + esc(m("class-pages.confirm-change", "%hours%", String.valueOf(cooldownHours))) + "</p>"
-                + "<div class=\"row\"><a class=\"btn ghost\" data-action=\"back\" data-key=\"q\">" + t("class-pages.cancel") + "</a>"
+                + "<div class=\"row\"><a class=\"btn\" data-action=\"back\" data-key=\"q\">" + t("class-pages.cancel") + "</a>"
                 + "<a class=\"btn primary\" data-command=\"classe choisir " + id + "\" data-close data-sound=\"none\" data-key=\"space\">"
-                + t("class-pages.confirm") + "</a></div></div></main>";
+                + t("class-pages.confirm") + "</a></div></div></section>";
         return html(m("class-pages.confirm-title", "%class%", name), "confirm-page c-" + id + " has-%fluxrpg_has_class%", body);
     }
 
@@ -186,18 +217,17 @@ final class ClassPages {
                 lines.append("<div class=\"stat %fluxrpg_zero_").append(d.id()).append("%\"><span>").append(esc(source.statName(d.id())))
                         .append("</span><b>%fluxrpg_stat_").append(d.id()).append("%</b></div>");
             }
-            cols.append("<section class=\"panel\"><h3>").append(t("sheet." + category)).append("</h3>").append(lines).append("</section>");
+            cols.append("<div class=\"col\"><h2>").append(t("sheet." + category)).append("</h2>").append(lines).append("</div>");
         }
-        String body = "<header>" + titleBlock(t("class-pages.sheet.title"), "%fluxrpg_class% · %fluxrpg_level_text%") + badge() + "</header>"
-                + "<div class=\"gauges\">"
-                + gauge("xp", "%fluxrpg_xp_text%", "%fluxrpg_xp_pct%")
-                + gauge("hp", t("class-pages.sheet.health") + " %fluxrpg_health% / %fluxrpg_health_max%", "%fluxrpg_health_pct%")
-                + gauge("mp", t("class-pages.sheet.mana") + " %fluxrpg_mana% / %fluxrpg_mana_max%", "%fluxrpg_mana_pct%")
-                + "</div>"
+        String body = plaque(t("class-pages.sheet.title"))
+                + "<section class=\"frame gauges night\">"
+                + "<div>" + bar("xp", t("class-pages.hub.xp"), "%fluxrpg_xp_text%", "%fluxrpg_xp_pct%") + "</div>"
+                + "<div>" + bar("hp", t("class-pages.sheet.health"), "%fluxrpg_health% / %fluxrpg_health_max%", "%fluxrpg_health_pct%") + "</div>"
+                + "<div>" + bar("mp", t("class-pages.sheet.mana"), "%fluxrpg_mana% / %fluxrpg_mana_max%", "%fluxrpg_mana_pct%") + "</div></section>"
+                + "<section class=\"frame book parchment\">" + corners() + "<div class=\"cols\">" + cols + "</div></section>"
                 + "<p class=\"empty\">" + t("class-pages.sheet.not-in-rpg") + "</p>"
-                + "<main class=\"sheet\">" + cols + "</main>"
-                + "<footer><a class=\"btn ghost\" data-action=\"close\">" + t("class-pages.close") + "</a>"
-                + "<a class=\"btn primary\" href=\"classes.html\">" + t("class-pages.sheet.change") + "</a></footer>";
+                + "<div class=\"bottom\"><a class=\"btn\" data-action=\"back\" data-key=\"q\">‹ " + t("class-pages.back") + "</a>"
+                + "<a class=\"btn primary\" href=\"classes.html\">" + t("class-pages.sheet.change") + "</a></div>";
         return html(t("class-pages.sheet.title"), "sheet-page has-%fluxrpg_has_class%", body);
     }
 
@@ -209,25 +239,35 @@ final class ClassPages {
                 + "<link rel=\"stylesheet\" href=\"style.css\"></head>\n<body class=\"" + bodyClass + "\">" + body + "</body></html>\n";
     }
 
-    private String titleBlock(String title, String subtitle) {
-        return "<div class=\"title\"><div class=\"kicker\">✦ RPG <em>" + t("class-pages.beta") + "</em></div><h1>" + title
-                + "</h1><p>" + subtitle + "</p></div>";
+    /** The carved plaque of a page's title. */
+    private String plaque(String title) {
+        return "<header class=\"plaque\"><div class=\"kicker\">" + t("class-pages.hub.kicker") + "<em>" + t("class-pages.beta")
+                + "</em></div><h1>" + title + "</h1></header>";
     }
 
-    /** The player's badge: head, name, class and level (placeholders). */
-    private String badge() {
-        return "<div class=\"badge\"><img src=\"head:{player}\"><div><b>{player}</b><span>%fluxrpg_class% · %fluxrpg_level_text%</span></div></div>";
+    /** A dark oak frame (positioned by its class), iron corners, the content on parchment or night. */
+    private String frame(String cls, String inner, String content) {
+        return "<section class=\"frame " + cls + "\">" + corners() + "<div class=\"inner " + inner + "\">" + content + "</div></section>";
     }
 
-    private String gauge(String kind, String label, String pct) {
-        return "<div class=\"gauge " + kind + "\"><div class=\"fill\" style=\"width: " + pct + "%\"></div><span>" + label + "</span></div>";
+    private static String corners() {
+        return "<i class=\"corner tl\"></i><i class=\"corner tr\"></i><i class=\"corner bl\"></i><i class=\"corner br\"></i>";
+    }
+
+    private static String seal(String classId) {
+        return "<div class=\"seal c-" + classId + "\"><img src=\"img/" + classId + ".png\"></div>";
+    }
+
+    private static String bar(String kind, String label, String value, String pct) {
+        return "<div class=\"label\">" + label + "</div><div class=\"bar " + kind + "\"><div class=\"fill\" style=\"width: " + pct
+                + "%\"></div><span class=\"txt\">" + value + "</span></div>";
     }
 
     private String skill(String classId, String slot, String name, String text, double mana) {
         String cost = mana <= 0 ? t("class-pages.free") : esc(m("class-pages.mana", "%mana%", num(mana)));
-        return "<div class=\"skill\"><div class=\"key k-" + slot + "\">" + t("class-pages.keys." + slot) + "</div>"
-                + "<div class=\"txt\"><div class=\"line\"><b>" + name + "</b><span class=\"cost\">" + cost + "</span></div>"
-                + "<p>" + esc(text) + "</p></div></div>";
+        return "<div class=\"skill\"><div class=\"k\">" + t("class-pages.keys." + slot) + "</div>"
+                + "<div class=\"line\">" + name + "<span class=\"cost\">" + cost + "</span></div>"
+                + "<p>" + esc(text) + "</p></div>";
     }
 
     private String stars(String classId) {
@@ -309,6 +349,16 @@ final class ClassPages {
                 }
             }
             ImageIO.write(out, "png", target.toFile());
+        }
+    }
+
+    /** A file of the jar copied as it is (textures, icons). */
+    private void copy(Path target, String resource) throws IOException {
+        try (InputStream in = source.resource(resource)) {
+            if (in == null) return;
+            byte[] bytes = in.readAllBytes();
+            if (Files.exists(target) && java.util.Arrays.equals(Files.readAllBytes(target), bytes)) return;
+            Files.write(target, bytes);
         }
     }
 
