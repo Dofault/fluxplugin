@@ -9,7 +9,9 @@ import java.util.Map;
 
 /**
  * A class of {@code rpg/classes.yml}: stats at level 1 and per level, basic attack (left click) and three skills
- * (right click, A, F). Numbers only; how a skill looks and moves is coded per skill {@code type}.
+ * (right click, A, F). Numbers only; how a skill looks and moves is coded per skill {@code type}. A class may put its
+ * basic attack on the right click ({@code basic.click: right}, held to keep attacking: the archer's bow); its weapon
+ * skill (slot {@code right}) then goes on the left click, see {@link #key(String)}.
  *
  * <pre>
  * warrior:
@@ -29,11 +31,14 @@ public record ClassDef(String id, Map<String, Double> stats, Map<String, Double>
     public static final List<String> SLOTS = List.of("right", "a", "f");
 
     /**
-     * The basic attack (left click). {@code style}: melee (a swing hitting up to {@code targets} enemies in front,
-     * within {@code range}), arrow (a real arrow), arcane or holy (a bolt of particles).
+     * The basic attack. {@code style}: melee (a swing hitting up to {@code targets} enemies in front, within
+     * {@code range}), arrow (a real arrow), arcane or holy (a bolt of particles). {@code click}: left (default) or
+     * right (held down: attacks again as soon as the attack speed allows).
      */
-    public record Attack(String style, CombatMath.Type type, String element, double coefficient, int targets, double range) {
+    public record Attack(String style, CombatMath.Type type, String element, double coefficient, int targets, double range,
+                         String click) {
         public static final List<String> STYLES = List.of("melee", "arrow", "arcane", "holy");
+        public static final List<String> CLICKS = List.of("left", "right");
 
         public CombatMath.Hit hit() {
             return new CombatMath.Hit(type, element, coefficient, 0, true, true);
@@ -59,6 +64,21 @@ public record ClassDef(String id, Map<String, Double> stats, Map<String, Double>
         public double number(String key, double fallback) {
             return extra.getOrDefault(key, fallback);
         }
+    }
+
+    /** True when the basic attack is on the right click (and the weapon skill on the left click). */
+    public boolean basicOnRight() {
+        return basic.click().equals("right");
+    }
+
+    /**
+     * The key a slot is cast with: "left" or "right" for the basic attack ("basic") and the weapon skill ("right"),
+     * else the slot itself ("a", "f"). For the hud and the class pages.
+     */
+    public String key(String slot) {
+        if (slot.equals("basic")) return basic.click();
+        if (slot.equals("right")) return basicOnRight() ? "left" : "right";
+        return slot;
     }
 
     /** Stats of the class at a level (before gear), as modifiers. */
@@ -87,8 +107,10 @@ public record ClassDef(String id, Map<String, Double> stats, Map<String, Double>
         Node b = n.required("basic");
         String style = b.text("style", "melee");
         if (!Attack.STYLES.contains(style)) b.problem("style", "one of " + Attack.STYLES);
+        String click = b.text("click", "left");
+        if (!Attack.CLICKS.contains(click)) b.problem("click", "left or right");
         Attack basic = new Attack(style, type(b), element(b, registry), b.number("coefficient", 1, 0, 100),
-                (int) b.number("targets", 1, 1, 20), b.number("range", 3, 0.5, 40));
+                (int) b.number("targets", 1, 1, 20), b.number("range", 3, 0.5, 40), Attack.CLICKS.contains(click) ? click : "left");
         Map<String, Skill> skills = new LinkedHashMap<>();
         Node sk = n.required("skills");
         for (String slot : SLOTS) {

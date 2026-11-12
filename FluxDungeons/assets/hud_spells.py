@@ -10,7 +10,7 @@ the item icons of the hotbar next to it (a 32 x 32 icon shrunk into a slot would
 exists twice: ready, and dimmed (not enough mana for it).
 
 Glyphs: U+E400 + index = slot (SPELLS order, then BLANK), U+E400 + DIM + index = the same dimmed, U+E420 key cap A,
-U+E421 key cap F, U+E422 right click. FluxDungeons (rpg/RpgHud.java) writes the same numbers: keep SPELLS, SLOT and
+U+E421 key cap F, U+E422 right click, U+E423 left click. FluxDungeons (rpg/RpgHud.java) writes the same numbers: keep SPELLS, SLOT and
 BADGE_W in line with it.
 """
 import math
@@ -420,6 +420,13 @@ MOUSE = [".WWA.",
          "W...W",
          "W...W",
          ".WWW."]
+# the same, left button lit (the archer's weapon skill, basic attack on the right click)
+MOUSE_LEFT = [".AWW.",
+              "AAW.W",
+              "WWWWW",
+              "W...W",
+              "W...W",
+              ".WWW."]
 
 
 def badge(slot_id):
@@ -432,7 +439,7 @@ def badge(slot_id):
                 px[x, y] = (13, 13, 13, 255)
             else:
                 px[x, y] = rgba("#5b2d9e") if y == 1 else rgba("#2a1650")
-    art = MOUSE if slot_id == "right" else from_font[slot_id.upper()]
+    art = {"right": MOUSE, "left": MOUSE_LEFT}.get(slot_id) or from_font[slot_id.upper()]
     top = 2 if len(art) == 5 else 1
     if top == 1:
         for x in range(1, BADGE_W - 1):
@@ -449,7 +456,7 @@ def badge(slot_id):
 import os
 QUINQUE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "Flux", "assets", "metiers",
                        "quinquefive.json")
-BADGES = ["a", "f", "right"]
+BADGES = ["a", "f", "right", "left"]
 
 
 def slots_sheet():

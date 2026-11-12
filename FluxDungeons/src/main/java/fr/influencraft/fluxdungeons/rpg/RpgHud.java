@@ -17,7 +17,7 @@ import java.util.List;
  * action bar, opaque and one pixel larger than the hearts and food rows they cover (font {@code fluxdungeons:hud},
  * assets/gen_hud.py). The vanilla life, food and saturation stay full in that universe (the real ones are the
  * engine's), so the rows underneath never shake nor blink out of the cover. Beside the hotbar, the class's three
- * skills: A and F on its left (the class level on a plate between the bars), the weapon's skill (right click) on its right, each under a key cap, dimmed while the
+ * skills: A and F on its left (the class level on a plate between the bars), the weapon's skill (its click) on its right, each under a key cap, dimmed while the
  * mana does not cover it (assets/hud_spells.py, hud_level.py). Bedrock players: life and mana written in the action bar
  * ({@link Clients#bedrock}).
  */
@@ -44,7 +44,8 @@ final class RpgHud {
         if (c != null) {
             skill(b, cursor, SLOT_A, c.skills().get("a"), 0, r, mana);
             skill(b, cursor, SLOT_F, c.skills().get("f"), 1, r, mana);
-            skill(b, cursor, SLOT_RIGHT, c.skills().get("right"), 2, r, mana);
+            // the weapon's skill: a mouse with the button it is cast with lit (left for the archer, basic.click: right)
+            skill(b, cursor, SLOT_RIGHT, c.skills().get("right"), c.key("right").equals("left") ? 3 : 2, r, mana);
         }
         moveTo(b, cursor, 0);
         // life bar over the hearts row (one pixel left of the hotbar's left end)
@@ -74,7 +75,7 @@ final class RpgHud {
         cursor[0] += t.length() * DIGIT;
     }
 
-    /** One skill slot at {@code x} with its key cap ({@code key}: 0 = A, 1 = F, 2 = right click). */
+    /** One skill slot at {@code x} with its key cap ({@code key}: 0 = A, 1 = F, 2 = right click, 3 = left click). */
     private static void skill(StringBuilder b, int[] cursor, int x, ClassDef.Skill skill, int key, RpgPlayer r, double mana) {
         if (skill == null) return;
         int icon = SPELLS.indexOf(skill.type());

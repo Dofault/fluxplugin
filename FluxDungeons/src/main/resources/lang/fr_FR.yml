@@ -507,6 +507,7 @@ class-pages:
   keys:
     left: "Clic gauche"
     right: "Clic droit"
+    hold: "Clic droit maintenu"
     a: "A"
     f: "F"
   powers:

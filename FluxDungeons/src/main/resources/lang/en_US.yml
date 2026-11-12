@@ -505,7 +505,7 @@ class-pages:
   confirm-change: "Your progress in every class is kept. You will not be able to change class again for %hours% h."
   confirm: "Confirm"
   cancel: "Cancel"
-  keys: {left: "Left click", right: "Right click", a: "Q", f: "F"}
+  keys: {left: "Left click", right: "Right click", hold: "Hold right click", a: "Q", f: "F"}
   powers: {physical: "of physical attack", magic: "of magic power"}
   axes: {health: "Health", power: "Power", defense: "Defence", mana: "Mana", range: "Range"}
   sheet:

@@ -59,7 +59,7 @@ public final class RpgModule implements Listener {
         combat.immortal(e -> e.getScoreboardTags().contains(TAG_DUMMY));
         players.bind(world, combat);
         Skills skills = new Skills(plugin, combat, players);
-        controls = new Controls(players, skills, items);
+        controls = new Controls(plugin, players, skills, items);
         var pm = Bukkit.getPluginManager();
         pm.registerEvents(players, plugin);
         pm.registerEvents(combat, plugin);

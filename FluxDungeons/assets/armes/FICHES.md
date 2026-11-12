@@ -155,10 +155,10 @@ Affichages (`display` du modèle) :
 
 | Contexte | Rotation | Translation | Échelle |
 |---|---|---|---|
-| `thirdperson_righthand` | -80 260 5 | -0.93 -2.34 2.15 | 0.55 |
-| `thirdperson_lefthand` | -80 -260 -5 | -0.93 -2.34 2.15 | 0.55 |
-| `firstperson_righthand` | 0 -90 25 | -1.87 5.54 0.79 | 0.32 |
-| `firstperson_lefthand` | 0 90 -25 | -1.87 5.54 0.79 | 0.32 |
+| `thirdperson_righthand` | -80 80 -30 | -0.95 -2.23 2.14 | 0.55 |
+| `thirdperson_lefthand` | -80 -80 30 | -0.95 -2.23 2.14 | 0.55 |
+| `firstperson_righthand` | -46.13 90 21.13 | -1.87 5.57 0.85 | 0.32 |
+| `firstperson_lefthand` | -46.13 -90 -21.13 | -1.87 5.57 0.85 | 0.32 |
 | `gui` | 0 0 -45 | 1.71 -1.71 0 | 0.475 |
 | `fixed` | 0 180 45 | -1.6 1.6 0 | 0.446 |
 | `on_shelf` | 0 180 45 | -1.6 1.6 0 | 0.446 |

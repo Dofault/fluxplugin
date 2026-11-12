@@ -8,7 +8,7 @@ rows underneath never shake nor blink out of the cover. Writes a font of its own
     <pack>/resourcepack/assets/fluxdungeons/textures/font/hud_mana.png
     <pack>/resourcepack/assets/fluxdungeons/textures/font/hud_digits.png  (0-9 and /)
     <pack>/resourcepack/assets/fluxdungeons/textures/font/hud_spells.png  (spell slots, hud_spells.py)
-    <pack>/resourcepack/assets/fluxdungeons/textures/font/hud_keys.png    (key caps A, F, right click)
+    <pack>/resourcepack/assets/fluxdungeons/textures/font/hud_keys.png    (key caps A, F, right click, left click)
 
     python3 gen_hud.py <ItemsAdder/contents/fluxdungeons>      (needs Pillow), then /iazip
 

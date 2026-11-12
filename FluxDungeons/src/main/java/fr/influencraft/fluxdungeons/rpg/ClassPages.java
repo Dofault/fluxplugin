@@ -172,11 +172,11 @@ final class ClassPages {
                     .append("</td><td class=\"hi\">").append(RpgPlayers.total(d, b)).append("</td></tr>");
         }
         StringBuilder skills = new StringBuilder();
-        skills.append(skill(id, "left", t("class-pages.classes." + id + ".basic.name"), basicText(c), 0));
+        skills.append(skill(id, c.basicOnRight() ? "hold" : "left", t("class-pages.classes." + id + ".basic.name"), basicText(c), 0));
         for (String slot : ClassDef.SLOTS) {
             ClassDef.Skill s = c.skills().get(slot);
             if (s == null) continue;
-            skills.append(skill(id, slot, t("class-pages.classes." + id + "." + slot + ".name"), skillText(c, s), s.mana()));
+            skills.append(skill(id, c.key(slot), t("class-pages.classes." + id + "." + slot + ".name"), skillText(c, s), s.mana()));
         }
         String body = plaque(t("classes." + id + ".name"))
                 + frame("hero", "night", seal(id) + "<div class=\"role\">" + t("class-pages.classes." + id + ".role") + "</div>"

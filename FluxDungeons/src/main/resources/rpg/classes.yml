@@ -1,6 +1,7 @@
 # Classes of the rpg universe (docs/technique/rpg.md §6). Numbers only: how a skill moves and looks is the code of
 # its "type". stats: added at level 1; per-level: added at each level above 1 (on top of stats.yml bases).
-# basic = left click. skills: right = right click (the weapon's spell), a = drop key, f = swap hands key.
+# basic = left click (click: right = right click held down, the weapon spell then goes on the left click).
+# skills: right = right click (the weapon's spell), a = drop key, f = swap hands key.
 # damage: physical or magic (which power it scales with); coefficient: x that power per hit; hits: hits of one cast;
 # targets: enemies it is made for; duration in seconds; mana: cost (no cooldown: mana is the only limit);
 # extra: the type's own numbers.
@@ -17,7 +18,7 @@ warrior:
 archer:
   stats: {max_health: 200, physical_attack: 18, physical_defense: 10, magic_defense: 8, attack_speed: 0.4, crit_chance: 0.1, dodge: 0.05}
   per-level: {max_health: 20, physical_attack: 1.8, physical_defense: 0.8, magic_defense: 0.6}
-  basic: {style: arrow, damage: physical, coefficient: 0.72, targets: 1, range: 30}
+  basic: {style: arrow, click: right, damage: physical, coefficient: 0.72, targets: 1, range: 30}
   skills:
     right: {type: leap_back, kind: mobility, mana: 15, duration: 3, extra: {strength: 1.4, speed: 0.3}}
     a: {type: volley, kind: damage, damage: physical, coefficient: 0.9, hits: 3, mana: 40, targets: 3, extra: {arrows: 5, spread: 8}}

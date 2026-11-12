@@ -360,10 +360,13 @@ VANILLA = {
 # first person (turn, scale[, shift of the fist on screen: x right, y up, in display units])
 DISPLAYS = {
     "brise_aube": ("handheld", 45, (8, -7, 8), (-32, 0.70), (0, 0.42)),
-    "sylve_celeste": ("bow", 135, (8.1, 8, 8), (0, 0.55), (-45, 0.32, (-3, 2.5, 0))),
+    "sylve_celeste": ("bow", 135, (8.1, 8, 8), (25, 0.55), (-45, 0.32, (-3, 2.5, 0))),
     "sceptre_neant": ("handheld", 45, (8, 2, 8), (-47, 0.66), (10, 0.36)),
     "reliquaire_aube": ("handheld", 45, (8, 2.85, 8), (-47, 0.66), (10, 0.36)),
 }
+# Spin of the weapon around its own axis (degrees) before it is held: the bow was held back to front in game, its
+# back (grip, crystal, +X) towards the player and the string away (2026-11-13). 180 = back forward, string inward.
+SPIN = {"sylve_celeste": 180}
 
 
 def rx(d):
@@ -388,14 +391,25 @@ def rxyz(r):
 C8 = np.array([8.0, 8.0, 8.0])
 
 
-def held(base, axis_angle, grip, turn, scale, ctx, shift=(0, 0, 0)):
-    """Display entry: vanilla rotation + in-plane turn, translation that puts the grip on the vanilla grip."""
+def euler_xyz(m):
+    """Angles (x, y, z) in degrees such that rxyz(angles) == m (the order of a model display rotation)."""
+    b = math.asin(max(-1.0, min(1.0, m[0, 2])))
+    a = math.atan2(-m[1, 2], m[2, 2])
+    c = math.atan2(-m[0, 1], m[0, 0])
+    return [math.degrees(a), math.degrees(b), math.degrees(c)]
+
+
+def held(base, axis_angle, grip, turn, scale, ctx, shift=(0, 0, 0), spin=0):
+    """Display entry: vanilla rotation + in-plane turn (+ spin around the weapon's own axis), translation that puts
+    the grip on the vanilla grip."""
     rot, tr, s = VANILLA[base][ctx]
     g_v = np.array(VANILLA[base]["grip"], float)
     hand = np.array(tr, float) + rxyz(rot) @ (s * (g_v - C8))
     # Our model is drawn along +Y (90 degrees); the vanilla sprite axis is at axis_angle.
     z = rot[2] + (axis_angle - 90) + turn
     new = [rot[0], rot[1], z]
+    if spin:
+        new = euler_xyz(rxyz(new) @ ry(spin))
     t = hand + np.array(shift, float) - rxyz(new) @ (scale * (np.array(grip, float) - C8))
     return {"rotation": [round(v, 2) for v in new], "translation": [round(v, 2) for v in t], "scale": [scale] * 3}
 
@@ -441,8 +455,8 @@ def fit(cubes, rot, room):
 def displays(w):
     base, axis_angle, grip, tp, fp = DISPLAYS[w.id]
     d = {
-        "thirdperson_righthand": held(base, axis_angle, grip, tp[0], tp[1], "tp"),
-        "firstperson_righthand": held(base, axis_angle, grip, fp[0], fp[1], "fp", *fp[2:]),
+        "thirdperson_righthand": held(base, axis_angle, grip, tp[0], tp[1], "tp", spin=SPIN.get(w.id, 0)),
+        "firstperson_righthand": held(base, axis_angle, grip, fp[0], fp[1], "fp", *fp[2:], spin=SPIN.get(w.id, 0)),
     }
     d["thirdperson_lefthand"] = mirror_hand(d["thirdperson_righthand"])
     d["firstperson_lefthand"] = mirror_hand(d["firstperson_righthand"])
