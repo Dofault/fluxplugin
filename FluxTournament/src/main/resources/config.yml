@@ -1,0 +1,97 @@
+# FluxTournament: a short tournament on a job every half hour.
+# What counts and what it is worth come from FluxValue: the paid actions of the job (same filters as the job plugin,
+# placed blocks never count) and their weights. Nothing to write per job: a new job or weight makes new tournaments.
+
+# Language of the texts (empty = the suite's language).
+language: ""
+
+schedule:
+  enabled: true
+  # one tournament every N minutes from midnight (30: at :00 and :30), shifted by offset-minutes
+  every-minutes: 30
+  offset-minutes: 0
+  duration-minutes: 10
+  # the next tournament is drawn and announced this long before it starts (0 = no announcement)
+  announce-seconds: 60
+  # players online (outside the rpg universe) needed to start one
+  min-online: 2
+
+# players with a score needed for the tournament to pay anything (else it is recorded, nobody is paid)
+min-participants: 2
+
+# Kinds of tournament and how often each is drawn (weight). "jobs" limits a kind to some jobs (empty = all).
+kinds:
+  # score = FluxValue points of every paid action of the job: rarer actions are worth more
+  job:
+    weight: 3
+  # one resource of the job drawn at random, score = units gathered; only resources worth at most max-unit-points
+  # (FluxValue points measure effort: above that, too rare for a rush)
+  resource:
+    weight: 4
+    max-unit-points: 300
+  # one resource, the first "podium" players to gather effort-points worth of it win (FluxValue points, as the pass
+  # missions: a daily mission is 600); only resources giving at least min-amount units; ends once the podium is full
+  race:
+    weight: 2
+    effort-points: 900
+    min-amount: 10
+    podium: 3
+  # score = different resources of the job gathered; only jobs with at least min-groups resources
+  variety:
+    weight: 1
+    min-groups: 10
+
+jobs:
+  # jobs drawn (empty = every job of FluxValue)
+  include: []
+  exclude: [batisseur]
+  # "job/source" of FluxValue never drawn as a resource nor counted
+  exclude-sources: []
+  # a job is not drawn again for the next N tournaments
+  no-repeat: 2
+  # icon of a job (and of a resource with no item of its own)
+  icons:
+    mineur: IRON_PICKAXE
+    rochiste: STONE_PICKAXE
+    deblayeur: IRON_SHOVEL
+    sylviculteur: IRON_AXE
+    herboriste: POPPY
+    cultivateur: WHEAT
+    pecheur: FISHING_ROD
+    fondeur: FURNACE
+    chimiste: BREWING_STAND
+    enchanteur: ENCHANTING_TABLE
+    batisseur: BRICKS
+
+rewards:
+  # money = seconds x what a level 100 player earns per second of optimal play (FluxValue); used without FluxValue
+  fallback-money-per-second: 5
+  # by place; "points" = tournament points (leaderboard "tournois"); "rewards" = rewards claimed in /rewards
+  ranks:
+    "1":
+      seconds: 300
+      points: 10
+      rewards:
+        key:
+          label: "&aTendance key"
+          icon: TRIPWIRE_HOOK
+          commands: ["fluxcrate give %player% tendance 1"]
+    "2":
+      seconds: 180
+      points: 6
+    "3":
+      seconds: 120
+      points: 4
+  # everybody else whose score reaches min-share of the winner's (a race: of the amount)
+  participation:
+    seconds: 30
+    points: 1
+    min-share: 0.2
+
+bossbar:
+  enabled: true
+  # PINK, BLUE, RED, GREEN, PURPLE, WHITE (YELLOW is transparent with the server's resource pack)
+  color: PURPLE
+
+# tournaments kept in the menu's history
+history-size: 50

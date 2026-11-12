@@ -67,6 +67,14 @@ public final class FluxValue extends FluxPlugin {
             public double moneyPerSecond() {
                 return model.moneyPer2Minutes / 120.0;
             }
+
+            public List<String> jobs() {
+                return List.copyOf(model.jobs.keySet());
+            }
+
+            public List<Values.JobSource> jobSources(String job) {
+                return model.jobSources(job);
+            }
         });
         meter = new RateMeter(() -> model, key -> messages().raw(key));
         Bukkit.getPluginManager().registerEvents(meter, this);

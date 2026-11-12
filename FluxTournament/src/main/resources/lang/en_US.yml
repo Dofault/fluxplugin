@@ -1,0 +1,81 @@
+prefix: "&#FFD94DTOURNAMENT &8> "
+no-menu: "&#FF5C5CThe tournament menu is missing."
+reloaded: "&#2ECF7BFluxTournament reloaded."
+
+names:
+  job: "{job} tournament"
+  resource: "Rush: {target}"
+  race: "Race: {amount} {target}"
+  variety: "{job} explorer"
+descriptions:
+  job: "Earn the most points as {job}: every action of the job counts, rarer ones are worth more."
+  resource: "Gather as much {target} as you can before the end."
+  race: "The first 3 players to gather {amount} {target} win. The tournament stops once the podium is full."
+  variety: "Gather the most different resources of the {job} job: variety counts, not quantity."
+score:
+  job: "{n} pts"
+  resource: "{n}"
+  race: "{n}/{amount}"
+  variety: "{n} resources"
+
+announce:
+  - "!&#FFD94D{name} &7starts in {seconds} s. &7{description}"
+start:
+  - "!&#FFD94D{name} &7has started ({minutes} minutes). &7{description} Ranking: &f/tournament"
+end:
+  - "!&#FFD94D{name} &7is over."
+  - "!  &#F0A8001. &f{1_player} &7- &#FFD94D{1_score}"
+  - "!  &#C0C0C02. &f{2_player} &7- &#FFD94D{2_score}"
+  - "!  &#CD7F323. &f{3_player} &7- &#FFD94D{3_score}"
+end-too-few:
+  - "!&#FFD94D{name} &7is over: too few players ({participants}/{min}), no reward."
+end-empty: "&7The tournament &f{name} &7ended without any player."
+cancelled: "&#FF5C5CThe tournament &f{name} &#FF5C5Cwas cancelled."
+joined: "&7You take part in &f{name}&7. Ranking: &f/tournament&7."
+race-finished: "&#FFD94D{player} &7finished the race in place &#FFD94D{place}&7!"
+variety-new: "&#FFD94DNew resource: &f{resource} &7({count})"
+your-result: "&7You finish &#FFD94D#{place} &7with &f{score}&7. Tournament points: &#FFD94D{points}"
+
+bossbar: "&#FFD94D{name} &7| &fTime: &#FFD94D{time} &7| &fYou: &#FFD94D#{place} &7({score}) &7| &fLeader: &#FFD94D{leader}"
+bossbar-none: "&#FFD94D{name} &7| &fTime: &#FFD94D{time} &7| &fLeader: &#FFD94D{leader} &7| &fPlay to take part!"
+
+leaderboard-name: "Tournaments"
+leaderboard-value: "{n} pts"
+
+origins:
+  prize: "Tournament prize"
+
+menu:
+  running: "&#FFD94D{name}"
+  next-named: "&#FFD94DNext: {name}"
+  next-title: "&#FFD94DNext tournament"
+  next-secret: "The next tournament is drawn and announced one minute before it starts."
+  none-planned: "No tournament is planned for now."
+  starts-in: "Starts in"
+  time-left: "Time left"
+  participants: "Players"
+  your-place: "Your place"
+  your-score: "Your score"
+  not-yet: "You are not in yet: play the job to enter the ranking."
+  place: "Place"
+  place-n: "#{n}"
+  score: "Score"
+  finished: "Race finished"
+  played: "Played"
+  your-result: "You finished #{place}"
+  not-rewarded: "Too few players: no reward"
+  stats-title: "&#FFD94DMy tournaments"
+  stats-description: "Tournament points are earned on the podium and by really taking part. They make your place in the Tournaments leaderboard."
+  points: "Tournament points"
+  wins: "Wins"
+  podiums: "Podiums"
+  played-count: "Tournaments played"
+  leaderboard-place: "Leaderboard"
+
+admin-usage: "!&#FF5C5C/%flux_cmd_fluxtournament_fluxtournament% <start [kind] [job] [resource]|stop|cancel|next|status|preview [job]|reload>"
+admin-running: "&#FF5C5CA tournament is already running."
+admin-none: "&#FF5C5CNo tournament is running."
+admin-no-plan: "&#FF5C5CNo tournament can be made with these settings (see /fluxtournament preview)."
+admin-not-started: "&#FF5C5CThe tournament could not start (see the console)."
+admin-started: "&#2ECF7BTournament started: &f{name}"
+admin-next: "&7Next tournament in &f{time}&7: &f{name}"

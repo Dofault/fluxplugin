@@ -316,6 +316,28 @@ public final class Model {
         return OptionalDouble.empty();
     }
 
+    /** Paid actions of a job with the filters and conditions JobsWriter gives them (one per source, not grouped). */
+    List<fr.influencraft.flux.api.value.Values.JobSource> jobSources(String jobId) {
+        Job job = jobId == null ? null : jobs.get(jobId.toLowerCase(Locale.ROOT));
+        if (job == null) return List.of();
+        List<fr.influencraft.flux.api.value.Values.JobSource> out = new ArrayList<>();
+        for (Source s : job.sources()) {
+            if (s.weight() <= 0) continue;
+            Map<String, Object> filters = new LinkedHashMap<>();
+            if (!s.blocks().isEmpty()) filters.put("blocks", s.blocks());
+            filters.putAll(s.filters());
+            List<String> targets = new ArrayList<>(s.blocks());
+            if (targets.isEmpty() && s.filters().get("custom_fish_type") instanceof List<?> fish) {
+                for (Object f : fish) targets.add(String.valueOf(f));
+            }
+            String trigger = s.trigger();
+            out.add(new fr.influencraft.flux.api.value.Values.JobSource(job.id(), s.id(), s.label(), trigger, targets,
+                    s.weight(), s.fixedValue(), filters,
+                    s.conditions() != null ? s.conditions() : job.conditions()));
+        }
+        return out;
+    }
+
     OptionalDouble points(String item) {
         ValueGraph.Entry e = market.get(item);
         return e == null ? OptionalDouble.empty() : OptionalDouble.of(e.points());

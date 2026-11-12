@@ -1,0 +1,93 @@
+# Menu des tournois (/tournoi, FluxTournament). Contenu construit par le plugin (listes tournoi_*), ce fichier ne
+# fait que le placer. Thème vanilla : titre « Tournoi » dans theme.menus de la config de Flux.
+#   ligne 0 : retour, icône du menu
+#   13 : tournoi en cours (ou le prochain)       19-25 : classement en direct (du dernier tournoi s'il n'y en a pas)
+#   30 : mes tournois    32 : classement Tournois  37-43, 46-52 : historique
+rows: 6
+player-inventory: hidden
+vanilla-background: false
+update-interval: 20
+
+open-actions:
+  - "[sound] @page"
+
+lists:
+  tournoi_actuel:
+    slots: 13
+    item:
+      material: entry
+  tournoi_direct:
+    slots: 19-25
+    item:
+      material: entry
+  tournoi_stats:
+    slots: 30
+    item:
+      material: entry
+  tournoi_historique:
+    slots: 37-43,46-52
+    item:
+      material: entry
+
+items:
+
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
+    slots: [0]
+    lore:
+      - "@desc Revenir au menu."
+      - "@left Menu principal"
+    actions:
+      left: ["[menu] main"]
+
+  icone:
+    material: TOTEM_OF_UNDYING
+    name: "Tournois"
+    slots: [8]
+    lore:
+      - "@desc Toutes les 30 minutes, un tournoi de 10 minutes sur un métier tiré au sort : tout le métier, une ressource, une course ou la variété. Tout le monde participe en jouant, le podium et les vrais participants sont récompensés."
+
+  direct_prec:
+    material: itemsadder:influitems:btn_prev
+    hide-tooltip: true
+    slots: [18]
+    view-requirements: ["placeholder: %flux_list_tournoi_direct_has_prev% == true"]
+    actions:
+      left: ["[list] tournoi_direct prev"]
+
+  direct_suiv:
+    material: itemsadder:influitems:btn_next
+    hide-tooltip: true
+    slots: [26]
+    view-requirements: ["placeholder: %flux_list_tournoi_direct_has_next% == true"]
+    actions:
+      left: ["[list] tournoi_direct next"]
+
+  classement:
+    material: itemsadder:influitems:leaderboard
+    name: "Classement Tournois"
+    slots: [32]
+    lore:
+      - "@text &#F0A800① &f%flux_top_tournois_1_name% &8· &#B376E5%flux_top_tournois_1_value%"
+      - "@text &#D9D9D9② &f%flux_top_tournois_2_name% &8· &#B376E5%flux_top_tournois_2_value%"
+      - "@text &#C97B3A③ &f%flux_top_tournois_3_name% &8· &#B376E5%flux_top_tournois_3_value%"
+      - "@left Tous les classements"
+    actions:
+      left: ["[menu] classement"]
+
+  historique_prec:
+    material: itemsadder:influitems:btn_prev
+    hide-tooltip: true
+    slots: [45]
+    view-requirements: ["placeholder: %flux_list_tournoi_historique_has_prev% == true"]
+    actions:
+      left: ["[list] tournoi_historique prev"]
+
+  historique_suiv:
+    material: itemsadder:influitems:btn_next
+    hide-tooltip: true
+    slots: [53]
+    view-requirements: ["placeholder: %flux_list_tournoi_historique_has_next% == true"]
+    actions:
+      left: ["[list] tournoi_historique next"]

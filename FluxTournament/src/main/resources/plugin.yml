@@ -1,0 +1,16 @@
+name: FluxTournament
+version: 26.2
+main: fr.influencraft.fluxtournament.FluxTournament
+api-version: "26.2"
+description: Tournaments on every job every half hour, counted and priced by FluxValue, with history and leaderboard.
+authors: [Influencraft]
+depend: [Flux]
+softdepend: [FluxValue]
+
+permissions:
+  fluxtournament.use:
+    description: Open the tournament menu.
+    default: true
+  fluxtournament.admin:
+    description: Start, stop, cancel tournaments, preview what each job can hold, reload.
+    default: op

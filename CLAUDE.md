@@ -118,6 +118,10 @@ The plugins are written **as English plugins, then adapted to French** for our s
   move into Flux the day another plugin needs groups. BetterModel is only touched by `mob.ModelBridge`.
 - FluxPortal owns permanent portals (`fluxportal.api.Portals`: `set(name, entry, end, size)`, `remove`, `get`, `all`; `PortalTravelEvent`): two upright rings linked both ways, crossing geometry in `PortalMath` (tested), the 3D window is RPE-portals' (GPL-3.0), driven through `PortalRenderer` / `rpe.RpeRenderer` only (ring recoloured by `assets/recolor_rpe_ring.py`, rerun after an RPE update); Bedrock players get packet nether portal blocks (`BedrockView`). Never place portals with RPE's own commands.
 - FluxPass owns the season pass (tiers, both tracks, rewards, missions; `fluxpass.api.Pass`: `tier`, `addPoints`). What a mission asks is priced by `Values` (effort / `actionPoints`), never hand-written; counted by `Effects.count`. Placeholders `%fluxpass_*%`, menu `pass` (tiers are lists `pass_free_<page>` / `pass_premium_<page>`).
+- FluxTournament owns tournaments (schedule, scores, rewards, history, leaderboard `tournois`). It counts a job's paid actions
+  exactly as FluxValue writes them (`Values.jobSources(job)`, `JobSource.counter(...)` for `Effects.count`): never list
+  blocks or fish of a job by hand to count it. Kinds `job`, `resource`, `race`, `variety` (`Plan.Kind`); thresholds in
+  FluxValue points, prizes in seconds of the reference income (`Values.moneyPerSecond`).
 - FluxArmor owns armour sets (`sets/<id>.yml`, pieces `fluxarmor:<set>_<piece>`, replaces EcoArmor) and their 3D look.
 - FluxCrate owns crates and keys (`fluxcrate.api.Crates`, used by the migration of EcoCrates); give keys with
   `fluxcrate give <player> <crate> <n>`, never with a third-party crates plugin. A reward is an item id (`item:`), its

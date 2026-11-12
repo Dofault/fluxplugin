@@ -1,7 +1,9 @@
 package fr.influencraft.flux.api.value;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.OptionalDouble;
 
 /**
@@ -15,6 +17,45 @@ import java.util.OptionalDouble;
  * ({@code customfishing:common_carp_fish}) or {@code enchant:<id>} for one level of an enchantment.</p>
  */
 public final class Values {
+
+    /**
+     * One paid action of a job, exactly as FluxValue writes it into the job plugin: the same trigger, filters and
+     * conditions, so counting it with {@code Effects.count} counts what the job pays (tournaments, quests).
+     *
+     * @param job        job id ({@code mineur})
+     * @param id         source id in FluxValue ({@code iron_ore}, {@code poisson_commun})
+     * @param label      label given in FluxValue, or null
+     * @param trigger    libreforge trigger ({@code mine_block}, {@code catch_fish}...)
+     * @param targets    blocks or custom fish ids it is limited to (empty: any)
+     * @param weight     points of one action, or per unit of the trigger's value when not {@code fixedValue}
+     * @param fixedValue true: one action is worth {@code weight}; false: {@code weight} x the trigger's value (health of
+     *                   a mob, bottles brewed...)
+     * @param filters    libreforge filters, targets included
+     * @param conditions libreforge conditions (the job's tool...)
+     */
+    public record JobSource(String job, String id, String label, String trigger, List<String> targets, double weight,
+                            boolean fixedValue, Map<String, Object> filters, List<?> conditions) {
+
+        public JobSource {
+            targets = targets == null ? List.of() : List.copyOf(targets);
+            filters = filters == null ? Map.of() : Map.copyOf(filters);
+            conditions = conditions == null ? List.of() : conditions;
+        }
+
+        /**
+         * Counter config for {@code Effects.count}. {@code perPoint} false: {@code value} per unit counted (one block,
+         * one catch; the trigger's units when the weight is per unit: blocks of a cascade, bottles); true: the points
+         * of the action, times {@code value}.
+         */
+        public Map<String, Object> counter(double value, boolean perPoint) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("trigger", trigger);
+            m.put(fixedValue ? "value" : "multiplier", perPoint ? weight * value : value);
+            if (!filters.isEmpty()) m.put("filters", new LinkedHashMap<>(filters));
+            if (!conditions.isEmpty()) m.put("conditions", conditions);
+            return m;
+        }
+    }
 
     /** What FluxValue provides. */
     public interface Provider {
@@ -48,6 +89,16 @@ public final class Values {
         /** Money earned per second of optimal play by a level 100 player (the reference income of the server). */
         default double moneyPerSecond() {
             return 0;
+        }
+
+        /** Jobs FluxValue knows, in its order. */
+        default List<String> jobs() {
+            return List.of();
+        }
+
+        /** Paid actions of a job, empty when unknown. */
+        default List<JobSource> jobSources(String job) {
+            return List.of();
         }
     }
 
@@ -113,6 +164,21 @@ public final class Values {
     public static double moneyPerSecond() {
         Provider p = provider;
         return p == null ? 0 : p.moneyPerSecond();
+    }
+
+    /** Jobs FluxValue knows (empty without FluxValue). */
+    public static List<String> jobs() {
+        Provider p = provider;
+        return p == null ? List.of() : p.jobs();
+    }
+
+    /**
+     * Paid actions of a job as FluxValue writes them into the job plugin (trigger, filters, conditions, weight): what
+     * a tournament or a quest counts to follow the job exactly. Empty without FluxValue or for an unknown job.
+     */
+    public static List<JobSource> jobSources(String job) {
+        Provider p = provider;
+        return p == null || job == null ? List.of() : p.jobSources(job);
     }
 
     /** Runs {@code listener} each time values change (FluxValue started or reloaded). */
