@@ -75,11 +75,12 @@ public final class Providers {
             fr.influencraft.flux.api.world.PlacedBlocks.use(null);
         }
         if (enabled("eco") && !choice(config, "eco-vault-bridge").equals("false")) {
-            // eco plugins hook Vault once at their start, before CMI joins Vault: bound again once the server is up
+            // eco plugins hook Vault once at their start, before CMI joins Vault: bound again once the server is up, with
+            // the origin of each payment announced to the account history (EcoVaultBridge)
             Bukkit.getPluginManager().registerEvents(new org.bukkit.event.Listener() {
                 @org.bukkit.event.EventHandler
                 public void onServerLoad(org.bukkit.event.server.ServerLoadEvent event) {
-                    fr.influencraft.flux.adapters.eco.EcoVaultBridge.bindIfNeeded();
+                    fr.influencraft.flux.adapters.eco.EcoVaultBridge.bind();
                 }
             }, flux);
         }

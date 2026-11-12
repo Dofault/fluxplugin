@@ -55,6 +55,8 @@ ledger:
   # plugins that only carry money for others: the origin is the outermost other plugin of the call stack
   plumbing: [Flux, Vault, VaultUnlocked, CMI, CMILib, CMIEInjector, eco]
   # class name prefix -> origin ("Plugin:key"), for what the plugin name alone cannot tell
+  # Origins merged by clock hour (one line per hour, shown as "18h"): jobs pay on every action.
+  hourly: [EcoJobs, libreforge]
   classes:
     "com.Zrips.CMI.Modules.PlayTimeRewards": "CMI:salary"
     "com.Zrips.CMI.commands.list.pay": "CMI:transfer"

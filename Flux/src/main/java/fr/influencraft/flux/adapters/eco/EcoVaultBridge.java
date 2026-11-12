@@ -2,6 +2,7 @@ package fr.influencraft.flux.adapters.eco;
 
 import com.willfp.eco.core.integrations.economy.EconomyIntegration;
 import com.willfp.eco.core.integrations.economy.EconomyManager;
+import fr.influencraft.flux.api.economy.Ledger;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -10,46 +11,59 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import java.math.BigDecimal;
 
 /**
- * Contourne un race condition de démarrage confirmé le 2026-08-26 (logs
- * `serveurs/03_semirp/logs/latest.log`) : eco (framework EcoJobs) enregistre
- * son intégration économie Vault une seule fois, de façon synchrone, pendant
- * son propre onEnable() (`EcoSpigotPlugin.loadIntegrationLoaders`, un simple
- * {@code ServicesManager.getRegistration(Economy.class)} sans retry ni écoute
- * de {@code ServiceRegisterEvent}) — décompilation confirmée. Depuis la
- * migration EssentialsX→CMI, CMIEInjector hooke CMIEconomy dans Vault
- * plusieurs secondes après ce moment précis (log : "[eco] Loaded
- * integrations" à 23:32:24, "[CMIEInjector][Economy] CMI Economy hooked."
- * à 23:32:29) : eco démarre donc sans aucune intégration économie
- * enregistrée, et tout {@code give_money} d'EcoJobs (mineur, rochiste, etc.)
- * devient un no-op totalement silencieux — {@code EconomyManager}'s registry
- * vide retombe sur ses valeurs par défaut (false / BigDecimal.ZERO) sans
- * lever d'exception, donc invisible dans les logs. Symptôme observé :
- * l'XP de métier progresse normalement (mécanisme interne, indépendant de
- * l'économie) mais le BitBlock ne bouge jamais.
+ * The money of the eco plugins (EcoJobs, EcoCollections, libreforge {@code give_money}) as seen by Flux, bound once the
+ * server is up ({@code ServerLoadEvent}, after CMI joined Vault).
  *
- * <p>Ce binder réenregistre une intégration économie Vault dès que le
- * serveur a fini de démarrer ({@code ServerLoadEvent}, garanti après le
- * onEnable de tous les plugins, donc après le hook CMIEInjector) — sans
- * condition sur ce qu'a déjà fait eco : redondant si eco a réussi son
- * propre hook (le premier enregistrement gagne dans
- * {@code EconomyManager.REGISTRY}, celui-ci ne sert jamais), mais corrige
- * le cas où il a raté sa fenêtre.</p>
+ * <ul>
+ *   <li>Start-up race (2026-08-26): eco hooks Vault once during its own enable, before CMIEInjector hooks CMI into
+ *   Vault: eco then had no economy and every {@code give_money} did nothing, silently. Binding after start fixes it.</li>
+ *   <li>Origins (2026-11-12): CMI fires its balance events on another thread, so the account history could not tell
+ *   who paid: every job payment was "Autre". Each deposit or withdrawal is announced to the ledger first
+ *   ({@link Ledger#expect}) under the origin of the nearest paying plugin of the call stack (EcoJobs...).</li>
+ * </ul>
+ * The integration is named "Vault": eco's registry is keyed by name, so it replaces eco's own Vault integration.
  */
 public final class EcoVaultBridge {
+
+    /** Plugins that only carry the payment (lower case): the payer is the first other plugin up the call stack. */
+    private static final java.util.Set<String> CARRIERS = java.util.Set.of("eco", "libreforge", "flux", "vault", "vaultunlocked", "cmi", "cmilib");
+
+    private static final ClassValue<String> PLUGIN_OF = new ClassValue<>() {
+        @Override
+        protected String computeValue(Class<?> type) {
+            try {
+                return org.bukkit.plugin.java.JavaPlugin.getProvidingPlugin(type).getName();
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                return "";
+            }
+        }
+    };
 
     private EcoVaultBridge() {
     }
 
-    public static void bindIfNeeded() {
-        if (EconomyManager.hasRegistrations()) {
-            return;
-        }
-        RegisteredServiceProvider<Economy> registration =
-                Bukkit.getServicesManager().getRegistration(Economy.class);
-        if (registration == null) {
-            return;
-        }
+    /**
+     * A payment of an eco plugin, its origin named after the nearest paying plugin (EcoJobs for a job, even when the
+     * kill came from FluxDungeons' combat further up the stack), announced before the change.
+     */
+    private static boolean move(OfflinePlayer player, double delta, java.util.function.BooleanSupplier change) {
+        String payer = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE).walk(frames -> frames
+                .map(f -> PLUGIN_OF.get(f.getDeclaringClass()))
+                .filter(n -> !n.isEmpty() && !CARRIERS.contains(n.toLowerCase(java.util.Locale.ROOT)))
+                .findFirst().orElse(null));
+        java.util.function.BooleanSupplier act = () -> {
+            Runnable cancel = Ledger.expect(player.getUniqueId(), "vault", delta);
+            boolean done = change.getAsBoolean();
+            if (!done) cancel.run();
+            return done;
+        };
+        if (payer == null) return act.getAsBoolean();
+        return Ledger.within(fr.influencraft.flux.api.economy.Origin.parse(payer), act::getAsBoolean);
+    }
 
+    public static void bind() {
+        RegisteredServiceProvider<Economy> registration = Bukkit.getServicesManager().getRegistration(Economy.class);
+        if (registration == null) return;
         Economy economy = registration.getProvider();
         EconomyManager.register(new EconomyIntegration() {
             @Override
@@ -64,12 +78,12 @@ public final class EcoVaultBridge {
 
             @Override
             public boolean giveMoney(OfflinePlayer player, BigDecimal amount) {
-                return economy.depositPlayer(player, amount.doubleValue()).transactionSuccess();
+                return move(player, amount.doubleValue(), () -> economy.depositPlayer(player, amount.doubleValue()).transactionSuccess());
             }
 
             @Override
             public boolean removeMoney(OfflinePlayer player, BigDecimal amount) {
-                return economy.withdrawPlayer(player, amount.doubleValue()).transactionSuccess();
+                return move(player, -amount.doubleValue(), () -> economy.withdrawPlayer(player, amount.doubleValue()).transactionSuccess());
             }
 
             @Override

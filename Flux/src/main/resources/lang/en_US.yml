@@ -105,6 +105,8 @@ money:
     detail: "Detail"
     count: "Operations"
     period: "Period"
+    hour: Hour
+    hour-format: "MM/dd HH':00'"
     date: "Date"
     balance: "Balance after"
 # /fluxmenu database (staff): where the suite keeps its data, move to another engine

@@ -85,9 +85,9 @@ money:
   player-not-found: "&#FF5C5CJoueur inconnu : %player%"
   no-menu: "&#FF5C5CLe menu Compte n'est pas installé."
   button:
-    name: "Compte"
+    name: Historique de compte
     description: "Tes soldes, et tout ce que tu as gagné et dépensé."
-    open: "Historique"
+    open: Voir
   menu:
     title: "Mon compte"
     summary: "Chaque gain et chaque dépense, quelle que soit son origine."
@@ -104,6 +104,8 @@ money:
     detail: "Détail"
     count: "Opérations"
     period: "Période"
+    hour: Heure
+    hour-format: "dd/MM 'à' HH'h'"
     date: "Date"
     balance: "Solde après"
 # /fluxmenu database (staff) : où la suite garde ses données, changement de moteur

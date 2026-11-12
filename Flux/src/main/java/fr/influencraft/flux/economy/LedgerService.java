@@ -96,6 +96,8 @@ public final class LedgerService implements Ledger.Backend, Listener {
     private final Map<UUID, LinkedList<Entry>> recent = new HashMap<>();
     private volatile boolean enabled = true;
     private volatile long mergeMs = 300_000;
+    /** Origins merged by clock hour instead of the merge window (ledger.hourly: jobs paid on every action). */
+    private volatile java.util.Set<String> hourly = java.util.Set.of("ecojobs", "libreforge");
     private volatile int keepDays = 90;
     private volatile int menuLines = 300;
     private volatile ConfigurationSection labels;
@@ -140,6 +142,9 @@ public final class LedgerService implements Ledger.Backend, Listener {
         if (config == null) return;
         enabled = config.getBoolean("enabled", true);
         mergeMs = Math.max(0, config.getLong("merge-seconds", 300)) * 1000L;
+        if (config.isList("hourly")) {
+            hourly = java.util.Set.copyOf(config.getStringList("hourly").stream().map(x -> x.toLowerCase(java.util.Locale.ROOT)).toList());
+        }
         keepDays = Math.max(1, config.getInt("keep-days", 90));
         menuLines = Math.max(20, config.getInt("menu-lines", 300));
         labels = config.getConfigurationSection("origins");
@@ -216,7 +221,9 @@ public final class LedgerService implements Ledger.Backend, Listener {
     synchronized void record(UUID player, String currency, double delta, double balance, Origin origin, long now) {
         Key key = new Key(player, currency, origin.id(), delta >= 0);
         Entry line = open.get(key);
-        if (line != null && origin.detail() == null && line.origin.detail() == null && now - line.last <= mergeMs) {
+        boolean byHour = hourly(origin);
+        if (line != null && origin.detail() == null && line.origin.detail() == null
+                && (byHour ? hour(line.first) == hour(now) : now - line.last <= mergeMs)) {
             line.amount = Math.round((line.amount + delta) * 100) / 100.0;
             line.count++;
             line.balance = balance;
@@ -237,6 +244,17 @@ public final class LedgerService implements Ledger.Backend, Listener {
         }
     }
 
+    /** Whether lines of this origin are merged by clock hour (and shown as "18h" in the menu). */
+    public boolean hourly(Origin origin) {
+        return origin != null && hourly.contains(origin.plugin().toLowerCase(java.util.Locale.ROOT));
+    }
+
+    /** The clock hour of a time, in the server's zone (hours since the epoch). */
+    static long hour(long millis) {
+        int offset = java.time.ZoneId.systemDefault().getRules().getOffset(java.time.Instant.ofEpochMilli(millis)).getTotalSeconds();
+        return Math.floorDiv(millis / 1000 + offset, 3600);
+    }
+
     /** Database thread: writes the pending lines, forgets the open lines past the merge window. */
     private void flush() {
         List<Entry> batch;
@@ -245,7 +263,7 @@ public final class LedgerService implements Ledger.Backend, Listener {
             batch = new ArrayList<>(pending);
             pending.clear();
             for (Entry e : batch) e.dirty = false;
-            open.values().removeIf(e -> now - e.last > mergeMs);
+            open.values().removeIf(e -> hourly(e.origin) ? hour(e.first) != hour(now) : now - e.last > mergeMs);
         }
         if (batch.isEmpty()) return;
         try (Connection c = Database.connection()) {
