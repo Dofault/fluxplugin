@@ -164,8 +164,10 @@ def retexture(m, server):
             for za in range(z0, z1 + 1, step):
                 h = max(1, MAX_FILL // (step * step))
                 for ya in range(y0, y1 + 1, h):
+                    # the RPG block is a plain cube: only upright logs and hay bales look right (axis y)
+                    what = f"{vid}[axis=y]" if vid.endswith("_log") or vid in ("hay_block", "quartz_pillar") else vid
                     out.append(f"fill {xa} {ya} {za} {min(x1, xa + step - 1)} {min(y1, ya + h - 1)} {min(z1, za + step - 1)} "
-                               f"{table[vid]} replace {vid} strict")
+                               f"{table[vid]} replace {what} strict")
     print(f"RPG look: {len(used & set(table))} kinds of blocks swapped, kept vanilla: {', '.join(sorted(used - set(table)))}")
     return out
 
@@ -180,8 +182,14 @@ def run(m, server, dungeon, world=None, keep_world=False):
     time.sleep(2)
     x0, z0, x1, z1 = m.box
     print(c.send(f"execute in minecraft:{world} run forceload add {x0} {z0} {x1} {z1}"))
-    for rule in ("doDaylightCycle false", "doMobSpawning false", "doFireTick false", "randomTickSpeed 0", "doTileDrops false"):
-        c.send(f"execute in minecraft:{world} run gamerule {rule}")
+    # Minecraft 26 names (the camelCase ones are refused): no random ticks above all, or grass, farmland and crops
+    # change while the map is built, and a note block over or under them (RPG look) takes another state
+    for rule in ("advance_time false", "spawn_mobs false", "fire_spread_radius_around_player 0", "random_tick_speed 0",
+                 "block_drops false"):
+        out = c.send(f"execute in minecraft:{world} run gamerule {rule}")
+        if out and any(b in out for b in BAD):
+            sys.exit(f"gamerule {rule} refused: {out!r}")
+    print("random ticks:", c.send(f"execute in minecraft:{world} run gamerule random_tick_speed") or "(no answer)")
     c.send(f"execute in minecraft:{world} run time set 6000")
     errors = 0
     t0 = time.time()
