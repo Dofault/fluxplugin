@@ -62,6 +62,17 @@ jobs:
     chimiste: BREWING_STAND
     enchanteur: ENCHANTING_TABLE
     batisseur: BRICKS
+  # resources with no vanilla item of their own (custom fish): the item shown in menus and toasts, and the pack's
+  # picture (FluxTournament/assets/gen_icons.py) shown in texts
+  resource-icons:
+    pecheur/poisson_commun: {item: COD, sprite: fluxtournament_fish_common}
+    pecheur/poisson_unique: {item: COD, sprite: fluxtournament_fish_unique}
+    pecheur/poisson_epique: {item: TROPICAL_FISH, sprite: fluxtournament_fish_epic}
+    pecheur/poisson_mythique: {item: TROPICAL_FISH, sprite: fluxtournament_fish_mythic}
+    pecheur/poisson_legendaire: {item: SALMON, sprite: fluxtournament_fish_legendary}
+    pecheur/poisson_arc-en-ciel: {item: TROPICAL_FISH, sprite: fluxtournament_fish_fabled}
+    pecheur/poisson_radioactif: {item: PUFFERFISH, sprite: fluxtournament_fish_radioactive}
+    pecheur/prise_vanilla: {item: COD}
 
 rewards:
   # money = seconds x what a level 100 player earns per second of optimal play (FluxValue); used without FluxValue

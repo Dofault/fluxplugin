@@ -241,7 +241,8 @@ final class TournamentService {
         if (g == null) {
             return new Draws.Choice(job, Material.matchMaterial(planner.jobIcon(job)), jobName(job));
         }
-        return new Draws.Choice(g.key(), Material.matchMaterial(g.icon()), g.name());
+        return new Draws.Choice(g.key(), Material.matchMaterial(g.icon()), g.name(),
+                g.sprite() == null ? null : "<sprite:block/" + g.sprite() + ">");
     }
 
     /** Who watches a draw and plays a tournament: players outside the rpg universe. */
@@ -396,6 +397,7 @@ final class TournamentService {
 
     /** Item sprite of the tournament's resource or job, for the chat ("" without one: Bedrock shows nothing). */
     String iconTag(Plan p) {
+        if (p.target() != null && p.target().sprite() != null) return "<sprite:block/" + p.target().sprite() + ">";
         return fr.influencraft.flux.api.text.ItemSprites.tag(Material.matchMaterial(icon(p)));
     }
 

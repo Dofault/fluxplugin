@@ -40,8 +40,9 @@ record Plan(Kind kind, String job, Group target, List<Group> groups, int amount)
      * @param name   text shown (a {@code <lang:...>} tag for a vanilla block, translated by each client)
      * @param icon   material of the icon
      * @param points FluxValue points of one unit (the cheapest source of the group)
+     * @param sprite picture of the pack shown in texts instead of the icon's own sprite (a custom fish), or null
      */
-    record Group(String key, String name, String icon, List<JobSource> sources, double points) {
+    record Group(String key, String name, String icon, List<JobSource> sources, double points, String sprite) {
     }
 
     /** Groups counted: the target alone for resource and race, every group of the job otherwise. */

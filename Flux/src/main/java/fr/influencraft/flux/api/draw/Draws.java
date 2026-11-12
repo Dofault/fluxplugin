@@ -49,11 +49,18 @@ public final class Draws {
      * @param id   stable id
      * @param icon vanilla item whose sprite stands for it (null: none)
      * @param name text shown, any Flux syntax ({@code <lang:block.minecraft.iron_ore>} is translated by each client)
+     * @param look picture shown instead of the icon's sprite ({@code <sprite:block/...>} of the pack), or null; the
+     *             icon still serves where an item is needed (the toast)
      */
-    public record Choice(String id, Material icon, String name) {
+    public record Choice(String id, Material icon, String name, String look) {
+
+        public Choice(String id, Material icon, String name) {
+            this(id, icon, name, null);
+        }
 
         /** Sprite tag of the icon, a grey square when there is none. */
         String sprite() {
+            if (look != null && !look.isBlank()) return look;
             String s = icon == null ? "" : ItemSprites.tag(icon);
             return s.isEmpty() ? "&7■" : s;
         }

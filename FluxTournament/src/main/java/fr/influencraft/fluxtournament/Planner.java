@@ -36,6 +36,8 @@ final class Planner {
     private Set<String> exclude = Set.of();
     private Set<String> excludeSources = Set.of();
     private Map<String, String> icons = Map.of();
+    /** "job/source" -> {item, sprite}: resources with no vanilla item of their own (custom fish). */
+    private Map<String, String[]> resourceIcons = Map.of();
     private int noRepeat = 2;
     private final Deque<String> recentJobs = new ArrayDeque<>();
 
@@ -58,6 +60,15 @@ final class Planner {
         ConfigurationSection is = config.getConfigurationSection("jobs.icons");
         if (is != null) for (String k : is.getKeys(false)) ic.put(k.toLowerCase(Locale.ROOT), is.getString(k));
         icons = ic;
+        Map<String, String[]> ri = new LinkedHashMap<>();
+        ConfigurationSection rs = config.getConfigurationSection("jobs.resource-icons");
+        if (rs != null) {
+            for (String k : rs.getKeys(false)) {
+                ConfigurationSection r = rs.getConfigurationSection(k);
+                if (r != null) ri.put(k.toLowerCase(Locale.ROOT), new String[]{r.getString("item"), r.getString("sprite")});
+            }
+        }
+        resourceIcons = ri;
     }
 
     KindSettings settings(Kind kind) {
@@ -189,7 +200,15 @@ final class Planner {
             else if (first.label() != null && !first.label().isBlank()) name = first.label();
             else name = words(first.id());
             String icon = icon(m);
-            out.add(new Group(job + "/" + base, name, icon != null ? icon : jobIcon(job), List.copyOf(sources), points));
+            String sprite = null;
+            for (JobSource s : sources) {
+                String[] own = resourceIcons.get(job + "/" + s.id().toLowerCase(Locale.ROOT));
+                if (own == null) continue;
+                if (own[0] != null && Material.matchMaterial(own[0]) != null) icon = Material.matchMaterial(own[0]).name();
+                if (own[1] != null && !own[1].isBlank()) sprite = own[1];
+                break;
+            }
+            out.add(new Group(job + "/" + base, name, icon != null ? icon : jobIcon(job), List.copyOf(sources), points, sprite));
         }
         return out;
     }
@@ -200,6 +219,9 @@ final class Planner {
                 || s.targets().get(0).endsWith("jellyfish") ? s.id() : s.targets().get(0);
         t = t.toLowerCase(Locale.ROOT).replace("minecraft:", "");
         if (t.startsWith("deepslate_") && Material.matchMaterial(t.substring(10)) != null) t = t.substring(10);
+        // a wall coral fan is the coral fan, a vine's stem is the vine: one resource for a player
+        if (t.contains("_wall_") && Material.matchMaterial(t.replace("_wall_", "_")) != null) t = t.replace("_wall_", "_");
+        if (t.endsWith("_plant") && Material.matchMaterial(t.substring(0, t.length() - 6)) != null) t = t.substring(0, t.length() - 6);
         return t;
     }
 

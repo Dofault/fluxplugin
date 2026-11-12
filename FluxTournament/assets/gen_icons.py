@@ -3,6 +3,8 @@
 <sprite:block/fluxtournament_<kind>> (no font glyph). Written into an ItemsAdder contents folder:
 
   fluxtournament_icons/resourcepack/assets/minecraft/textures/block/fluxtournament_{job,resource,race,variety}.png
+  ... and fluxtournament_fish_<rarity>.png: the custom fish of the fishing job have no vanilla item, so a resource
+  "poisson commun" shows a fish in the colour of its rarity (tiers of Flux's config) instead of the job's rod.
 
 Usage: gen_icons.py [<ItemsAdder contents folder>] [<preview folder>]   (default: Labs, no preview)
 """
@@ -131,11 +133,64 @@ def variety():
     return ic
 
 
+FISH = {
+    # rarity: body, belly (lighter), fin (darker)
+    "common": ((170, 170, 170), (215, 215, 215), (120, 120, 120)),
+    "unique": ((55, 196, 74), (150, 230, 160), (30, 130, 45)),
+    "epic": ((50, 131, 168), (130, 200, 230), (25, 80, 110)),
+    "mythic": ((179, 118, 229), (215, 180, 245), (110, 60, 160)),
+    "legendary": ((240, 168, 0), (255, 217, 77), (170, 105, 0)),
+    "radioactive": ((124, 230, 30), (200, 255, 140), (60, 150, 10)),
+}
+RAINBOW = [(255, 92, 92), (255, 168, 60), (255, 217, 77), (90, 220, 110), (43, 196, 232), (179, 118, 229)]
+
+
+def fish(rarity):
+    """A fish facing left: oval body, forked tail, fin, eye; rainbow stripes for the fabled one."""
+    ic = Icon()
+    body, belly, fin = FISH.get(rarity, FISH["common"])
+    colours = {}
+    for y in range(N):
+        for x in range(N):
+            # body: ellipse centred at (6.5, 8)
+            if ((x - 6.5) / 5.6) ** 2 + ((y - 8) / 3.6) ** 2 <= 1:
+                if rarity == "fabled":
+                    colours[(x, y)] = RAINBOW[min(5, max(0, (y - 4) * 6 // 8))]
+                else:
+                    colours[(x, y)] = belly if y >= 9 else body
+    # tail
+    for k in range(4):
+        colours[(12 + k, 7 - k)] = fin if rarity != "fabled" else RAINBOW[0]
+        colours[(12 + k, 8 + k)] = fin if rarity != "fabled" else RAINBOW[5]
+        colours[(12 + k, 7 - k + 1)] = body if rarity != "fabled" else RAINBOW[2]
+        colours[(12 + k, 8 + k - 1)] = body if rarity != "fabled" else RAINBOW[3]
+    colours[(12, 7)] = colours[(12, 8)] = body if rarity != "fabled" else RAINBOW[2]
+    # top fin
+    for x in range(5, 9):
+        colours[(x, 4)] = fin if rarity != "fabled" else RAINBOW[0]
+    colours[(6, 3)] = colours[(7, 3)] = fin if rarity != "fabled" else RAINBOW[0]
+    if rarity == "radioactive":
+        for x, y in ((5, 6), (8, 9), (9, 6)):
+            colours[(x, y)] = (235, 255, 200)
+    for (x, y), c in colours.items():
+        key = "c%d_%d_%d" % c
+        PAL[key] = c
+        ic.put(x, y, key)
+    # eye and mouth
+    ic.put(3, 7, "W")
+    ic.put(3, 8, "K")
+    ic.put(1, 9, "K")
+    ic.outline()
+    return ic
+
+
 def main():
     contents = sys.argv[1] if len(sys.argv) > 1 else "/home/influencraft/serveurs/04_labs/plugins/ItemsAdder/contents"
     preview = sys.argv[2] if len(sys.argv) > 2 else None
     out = os.path.join(contents, "fluxtournament_icons/resourcepack/assets/minecraft/textures/block")
     icons = {"job": job(), "resource": resource(), "race": race(), "variety": variety()}
+    for rarity in list(FISH) + ["fabled"]:
+        icons["fish_" + rarity] = fish(rarity)
     for kind, ic in icons.items():
         png(os.path.join(out, "fluxtournament_" + kind + ".png"), N, N, ic.pixels())
     if preview:
