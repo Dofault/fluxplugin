@@ -91,7 +91,8 @@ public final class Draws {
     /** Ticks the result stays. */
     private static final int HOLD = 60;
     static final String SPARK = "<sprite:block/fluxdraw_spark>", SHINE = "<sprite:block/fluxdraw_shine>";
-    private static final Component BANNER = Component.text("").font(Key.key("fluxdraw", "banner"));
+    /** The banner in three glyphs (the client refuses font pictures over 256 px) joined by -1 spaces. */
+    private static final Component BANNER = Component.text("\ue000\uf801\ue001\uf801\ue002").font(Key.key("fluxdraw", "banner"));
 
     private Draws() {
     }

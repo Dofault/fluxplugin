@@ -2,7 +2,7 @@
 """Pictures of the animated draw (Flux api.draw.Draws), written into an ItemsAdder contents folder.
 
   fluxdraw_fonts/resourcepack/assets/
-    fluxdraw/font/banner.json + fluxdraw/textures/font/banner.png   the banner behind the draw (one glyph)
+    fluxdraw/font/banner.json + fluxdraw/textures/font/banner_<n>.png   the banner behind the draw (3 glyphs of 200 px: the client refuses font pictures over 256 px)
     minecraft/textures/block/fluxdraw_spark.png (+ .mcmeta)         twinkling star, animated by the client
     minecraft/textures/block/fluxdraw_shine.png (+ .mcmeta)         glowing frame with a light sweep
 
@@ -78,10 +78,20 @@ def banner(out):
                 if (dx == 0 or dy == 0) and k <= s or k <= 1:
                     i = (sy + dy) * W + sx + dx
                     px[i] = over(px[i], LIGHT, 1 - k / (s + 1))
-    tex = os.path.join(out, "fluxdraw/textures/font/banner.png")
-    png(tex, W, H, px)
-    font = {"providers": [{"type": "bitmap", "file": "fluxdraw:font/banner.png", "ascent": 10, "height": H // S,
-                           "chars": [""]}]}
+    # the client refuses a font picture wider than 256 px: three pieces of 200, joined by a -1 space (a bitmap
+    # glyph advances its width + 1)
+    PIECES = 3
+    pw = W // PIECES
+    providers = [{"type": "space", "advances": {"\uf801": -1}}]
+    for k in range(PIECES):
+        piece = [px[y * W + k * pw + x] for y in range(H) for x in range(pw)]
+        png(os.path.join(out, "fluxdraw/textures/font/banner_%d.png" % k), pw, H, piece)
+        providers.append({"type": "bitmap", "file": "fluxdraw:font/banner_%d.png" % k, "ascent": 10, "height": H // S,
+                          "chars": [chr(0xE000 + k)]})
+    old = os.path.join(out, "fluxdraw/textures/font/banner.png")
+    if os.path.exists(old):
+        os.remove(old)
+    font = {"providers": providers}
     path = os.path.join(out, "fluxdraw/font/banner.json")
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as f:
