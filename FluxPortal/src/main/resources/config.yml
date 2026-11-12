@@ -12,8 +12,9 @@ window:
   # A side shows its window while a Java player is within this distance (blocks); its item frames are taken down
   # beyond it.
   view-distance: 64
-  # Item frames hung around the hole, in blocks: the window stays whole when seen from the side.
-  margin: 1
+  # Extra item frames around the hole, in blocks (0: exactly the hole). Frames outside the hole draw nothing with the
+  # shader, but show as raw maps without it (shaders off, pack not loaded).
+  margin: 0
   # Block layers of the far side read again per tick, for all windows together (a window has 28).
   layers-per-tick: 2
   # Layers read per tick by a window that just appeared, until it has them all.

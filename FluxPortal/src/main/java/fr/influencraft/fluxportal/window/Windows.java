@@ -73,7 +73,7 @@ public final class Windows implements Listener {
     /** Settings ({@code window} section), textures, then the windows run. */
     public void start(ConfigurationSection c) {
         viewDistance = c.getDouble("view-distance", 64);
-        margin = c.getInt("margin", 1);
+        margin = Math.max(0, c.getInt("margin", 0));
         slabsPerTick = Math.max(1, c.getInt("layers-per-tick", 2));
         firstSlabsPerTick = Math.max(1, c.getInt("first-layers-per-tick", 4));
         horizonEvery = Math.max(200, c.getInt("horizon-every", 6000));
