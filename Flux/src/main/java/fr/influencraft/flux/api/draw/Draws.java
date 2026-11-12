@@ -4,6 +4,7 @@ import fr.influencraft.flux.api.client.Clients;
 import fr.influencraft.flux.api.text.ItemSprites;
 import fr.influencraft.flux.api.text.Texts;
 import fr.influencraft.flux.api.util.Sounds;
+import net.kyori.adventure.bossbar.BossBar;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -12,20 +13,19 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * A draw shown to players while they keep playing: no menu, no frozen screen (boss bar, title, a floating item...).
- * The caller gives what can come out and what came out; Flux animates the way there, then runs {@code onDone}.
- * Icons are the client's own item sprites ({@link ItemSprites}): nothing in the resource pack.
+ * A draw shown to players while they keep playing, without any menu: the candidates stand side by side in a boss
+ * bar and are struck out one by one, slower and slower, until the winner is the only one left. Icons are the client's
+ * own item sprites ({@link ItemSprites}): nothing in the resource pack.
  *
- * <p>Bedrock players (no sprites, no display tricks) see no animation: they get the result written out at the
- * moment the others see it revealed.</p>
+ * <p>Bedrock players (no sprites) see nothing of it: the caller tells the result in the chat once {@code onDone}
+ * runs, for everybody.</p>
  *
  * <pre>
- *   Draws.play(plugin, players, pool, winner, Draws.Style.ROULETTE, "Tournament draw", () -> start());
+ *   Draws.play(plugin, players, pool, winner, "Tournament draw", () -> start());
  * </pre>
  */
 public final class Draws {
@@ -33,168 +33,98 @@ public final class Draws {
     /**
      * One thing that can be drawn.
      *
-     * @param id      stable id
-     * @param icon    vanilla item whose sprite stands for it (null: none)
-     * @param name    text shown, any Flux syntax ({@code <lang:block.minecraft.iron_ore>} is translated by each client)
-     * @param letters the name in plain letters (server language), for animations that play with the letters
+     * @param id   stable id
+     * @param icon vanilla item whose sprite stands for it (null: none)
+     * @param name text shown, any Flux syntax ({@code <lang:block.minecraft.iron_ore>} is translated by each client)
      */
-    public record Choice(String id, Material icon, String name, String letters) {
+    public record Choice(String id, Material icon, String name) {
 
-        /** Sprite tag of the icon, "" when there is none. */
-        public String sprite() {
-            return icon == null ? "" : ItemSprites.tag(icon);
-        }
-
-        /** Sprite then name. */
-        public String full() {
-            String s = sprite();
-            return s.isEmpty() ? name : s + " " + name;
+        /** Sprite tag of the icon, a grey square when there is none. */
+        String sprite() {
+            String s = icon == null ? "" : ItemSprites.tag(icon);
+            return s.isEmpty() ? "&7■" : s;
         }
     }
 
-    public enum Style {
-        ROULETTE, ELIMINATION, FLAP, TITLE, HOLOGRAM;
-
-        public String id() {
-            return name().toLowerCase(Locale.ROOT);
-        }
-
-        public static Style of(String id) {
-            for (Style s : values()) if (s.id().equalsIgnoreCase(id)) return s;
-            return null;
-        }
-    }
-
-    /** What every animation is given. */
-    record Show(Plugin owner, List<Player> viewers, List<Choice> pool, Choice winner, String heading) {
-
-        /** Viewers still online. */
-        List<Player> online() {
-            List<Player> out = new ArrayList<>();
-            for (Player p : viewers) if (p.isOnline()) out.add(p);
-            return out;
-        }
-
-        /** {@code n} choices in a random order, never the same twice in a row, ending on the winner. */
-        List<Choice> reel(int n) {
-            List<Choice> out = new ArrayList<>();
-            Choice last = null;
-            for (int i = 0; i < n - 1; i++) {
-                Choice c = pool.get(ThreadLocalRandom.current().nextInt(pool.size()));
-                for (int tries = 0; tries < 12 && pool.size() > 1 && (c.equals(last) || i == n - 2 && c.equals(winner)); tries++) {
-                    c = pool.get(ThreadLocalRandom.current().nextInt(pool.size()));
-                }
-                out.add(c);
-                last = c;
-            }
-            out.add(winner);
-            return out;
-        }
-    }
-
-    /** An animation: steps at its own pace, then the reveal, then the end. */
-    interface Animation {
-        /** Ticks before each step (its length is the number of steps). */
-        int[] delays();
-
-        void step(int index);
-
-        /** The winner is shown. */
-        void reveal();
-
-        /** Ticks the reveal stays before {@link #close}. */
-        default int hold() {
-            return 50;
-        }
-
-        /** Removes what was shown. */
-        void close();
-
-        /** Sound of a step, a named cue (null = none). */
-        default String tick(int index) {
-            return "draw-tick";
-        }
-    }
-
-    private static final List<BukkitTask> RUNNING = new ArrayList<>();
+    /** Candidates shown at most. */
+    private static final int MAX = 8;
+    /** Ticks the full line stays before the first one is struck out, then the slowest step, the result's stay. */
+    private static final int LOOK = 30, SLOWEST = 21, HOLD = 50;
 
     private Draws() {
     }
 
     /**
-     * Plays a draw to {@code viewers}; {@code onDone} runs on the main thread once the result was shown (also when
-     * nobody watches). {@code pool} should hold the winner; one choice alone still animates.
+     * Plays a draw to {@code viewers} (Bedrock players are left out); {@code onDone} runs on the main thread once the
+     * result was shown, also when nobody watches. {@code pool} may hold the winner or not.
      */
-    public static void play(Plugin owner, Collection<? extends Player> viewers, List<Choice> pool, Choice winner, Style style,
+    public static void play(Plugin owner, Collection<? extends Player> viewers, List<Choice> pool, Choice winner,
                             String heading, Runnable onDone) {
-        List<Player> java = new ArrayList<>(), bedrock = new ArrayList<>();
-        for (Player p : viewers) (Clients.bedrock(p) ? bedrock : java).add(p);
-        List<Choice> choices = pool == null || pool.isEmpty() ? List.of(winner) : List.copyOf(pool);
-        Show show = new Show(owner, java, choices, winner, heading == null ? "" : heading);
-        Animation a = switch (style == null ? Style.ROULETTE : style) {
-            case ROULETTE -> new RouletteDraw(show);
-            case ELIMINATION -> new EliminationDraw(show);
-            case FLAP -> new FlapDraw(show);
-            case TITLE -> new TitleDraw(show);
-            case HOLOGRAM -> new HologramDraw(show);
-        };
-        int[] delays = a.delays();
+        List<Player> watching = new ArrayList<>();
+        for (Player p : viewers) if (!Clients.bedrock(p)) watching.add(p);
+        // the winner among up to MAX - 1 others, in a random order
+        List<Choice> others = new ArrayList<>(pool == null ? List.of() : pool);
+        others.remove(winner);
+        Collections.shuffle(others);
+        List<Choice> candidates = new ArrayList<>(others.subList(0, Math.min(MAX - 1, others.size())));
+        candidates.add(winner);
+        Collections.shuffle(candidates);
+        List<Integer> order = new ArrayList<>();
+        for (int i = 0; i < candidates.size(); i++) if (!candidates.get(i).equals(winner)) order.add(i);
+        Collections.shuffle(order);
+
+        String head = "&7『&#FFD94D" + (heading == null ? "" : heading) + "&7』  ";
+        boolean[] out = new boolean[candidates.size()];
+        BossBar bar = BossBar.bossBar(line(head, candidates, out, -1), 1f, BossBar.Color.PURPLE, BossBar.Overlay.PROGRESS);
+        for (Player p : watching) p.showBossBar(bar);
+
         BukkitTask[] task = new BukkitTask[1];
         task[0] = Bukkit.getScheduler().runTaskTimer(owner, new Runnable() {
-            int step = 0, wait = delays.length == 0 ? 0 : delays[0];
-            boolean revealed;
-            int holding;
+            int step = 0, wait = LOOK, holding = -1;
 
             @Override
             public void run() {
-                try {
-                    if (!revealed) {
-                        if (--wait > 0) return;
-                        if (step < delays.length) {
-                            a.step(step);
-                            String cue = a.tick(step);
-                            if (cue != null) for (Player p : show.online()) Sounds.cue(p, cue);
-                            step++;
-                            wait = step < delays.length ? delays[step] : 1;
-                            return;
-                        }
-                        revealed = true;
-                        a.reveal();
-                        for (Player p : show.online()) Sounds.cue(p, "draw-reveal");
-                        for (Player p : bedrock) {
-                            if (p.isOnline()) p.sendActionBar(Texts.parse("&#FFD94D" + show.heading() + " &8» &f" + winner.name(), p));
-                        }
-                        holding = a.hold();
-                        return;
-                    }
-                    if (--holding > 0) return;
-                } catch (RuntimeException e) {
-                    owner.getLogger().warning("Draw animation failed: " + e);
+                if (--wait > 0) return;
+                if (holding < 0 && step < order.size()) {
+                    int struck = order.get(step++);
+                    out[struck] = true;
+                    int left = candidates.size() - step;
+                    bar.name(line(head, candidates, out, struck));
+                    bar.progress(left / (float) candidates.size());
+                    for (Player p : watching) if (p.isOnline()) Sounds.cue(p, "remove");
+                    // slower and slower: the last ones take their time
+                    wait = 7 + (int) Math.round((SLOWEST - 7) * Math.pow(step / (double) Math.max(1, order.size()), 1.6));
+                    return;
                 }
-                finish(task[0], a, onDone, owner);
+                if (holding < 0) {
+                    bar.color(BossBar.Color.GREEN);
+                    bar.progress(1f);
+                    bar.name(Texts.parse(head + "&#FFD94D✦ &f" + winner.sprite() + " " + winner.name() + " &#FFD94D✦"));
+                    for (Player p : watching) if (p.isOnline()) Sounds.cue(p, "draw-reveal");
+                    holding = 1;
+                    wait = HOLD;
+                    return;
+                }
+                task[0].cancel();
+                for (Player p : watching) if (p.isOnline()) p.hideBossBar(bar);
+                if (onDone != null) onDone.run();
             }
         }, 1L, 1L);
-        RUNNING.add(task[0]);
     }
 
-    private static void finish(BukkitTask task, Animation a, Runnable onDone, Plugin owner) {
-        task.cancel();
-        RUNNING.remove(task);
-        try {
-            a.close();
-        } catch (RuntimeException e) {
-            owner.getLogger().warning("Draw animation not closed: " + e);
+    /** The candidates in a row, the ones struck out as crosses (red for the one just struck), and how many are left. */
+    private static net.kyori.adventure.text.Component line(String head, List<Choice> candidates, boolean[] out, int justOut) {
+        StringBuilder sb = new StringBuilder(head);
+        int left = 0;
+        for (int i = 0; i < candidates.size(); i++) {
+            if (out[i]) {
+                sb.append(i == justOut ? "&#FF5C5C✕ " : "&8✕ ");
+            } else {
+                left++;
+                sb.append("&f").append(candidates.get(i).sprite()).append(' ');
+            }
         }
-        if (onDone != null) onDone.run();
-    }
-
-    /** Delays slowing down like a wheel: {@code steps} steps from 1 tick up to {@code slowest}. */
-    static int[] wheel(int steps, int slowest) {
-        int[] d = new int[steps];
-        for (int i = 0; i < steps; i++) {
-            double t = i / (double) Math.max(1, steps - 1);
-            d[i] = 1 + (int) Math.round((slowest - 1) * Math.pow(t, 2.4));
-        }
-        return d;
+        sb.append(" &7").append(left).append(" &8/ &7").append(candidates.size());
+        return Texts.parse(sb.toString());
     }
 }

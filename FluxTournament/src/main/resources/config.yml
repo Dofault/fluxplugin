@@ -88,13 +88,12 @@ rewards:
     points: 1
     min-share: 0.2
 
-# Draw shown when a tournament starts (Flux api.draw.Draws): what the tournament is about is revealed while players
-# keep playing, then it starts. Bedrock players see the result only. Styles: roulette, elimination, flap, title,
-# hologram (try them with /fluxtournament draw <style>).
+# Draw shown when a tournament starts (Flux api.draw.Draws): candidates struck out one by one in a boss bar while
+# players keep playing, then it starts. Bedrock players only get the start message in the chat.
+# /fluxtournament draw shows it to you alone.
 draw:
   enabled: true
-  style: roulette
-  # choices shown in the draw (the winner and others of the same job, or other jobs)
+  # candidates shown (the winner and others of the same job, or other jobs)
   choices: 8
 
 bossbar:

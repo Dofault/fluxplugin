@@ -9,7 +9,6 @@ import fr.influencraft.flux.api.list.Lists;
 import fr.influencraft.flux.api.reward.Reward;
 import fr.influencraft.flux.api.reward.Rewards;
 import fr.influencraft.flux.api.text.Texts;
-import fr.influencraft.flux.api.text.Translations;
 import fr.influencraft.flux.api.universe.Universes;
 import fr.influencraft.flux.api.util.Format;
 import fr.influencraft.flux.api.util.Sounds;
@@ -69,7 +68,6 @@ final class TournamentService {
     private boolean bossbar = true;
     private BossBar.Color barColor = BossBar.Color.PURPLE;
     private boolean drawEnabled = true;
-    Draws.Style drawStyle = Draws.Style.ROULETTE;
     private int drawChoices = 8;
 
     // state
@@ -118,9 +116,6 @@ final class TournamentService {
         // YELLOW is drawn transparent by the server's resource pack
         if (barColor == BossBar.Color.YELLOW) barColor = BossBar.Color.PURPLE;
         drawEnabled = c.getBoolean("draw.enabled", true);
-        Draws.Style style = Draws.Style.of(c.getString("draw.style", "roulette"));
-        if (style == null) plugin.getLogger().warning("draw.style: unknown animation, roulette used");
-        drawStyle = style == null ? Draws.Style.ROULETTE : style;
         drawChoices = Math.max(2, c.getInt("draw.choices", 8));
         nextStart = 0;
     }
@@ -212,7 +207,7 @@ final class TournamentService {
         announced = null;
         if (!drawEnabled) return begin(plan);
         drawing = plan;
-        show(viewers(), plan, drawStyle, () -> {
+        show(viewers(), plan, () -> {
             drawing = null;
             if (!begin(plan)) broadcast("cancelled", plan);
         });
@@ -220,7 +215,7 @@ final class TournamentService {
     }
 
     /** Plays the draw of a plan to some players; {@code then} runs once the result was shown. */
-    void show(List<Player> to, Plan plan, Draws.Style style, Runnable then) {
+    void show(List<Player> to, Plan plan, Runnable then) {
         Draws.Choice winner = choice(plan, plan.target(), plan.job());
         List<Draws.Choice> pool = new ArrayList<>();
         pool.add(winner);
@@ -235,18 +230,15 @@ final class TournamentService {
             java.util.Collections.shuffle(jobs);
             for (String j : jobs) if (pool.size() < drawChoices) pool.add(choice(plan, null, j));
         }
-        Draws.play(plugin, to, pool, winner, style, plugin.messages().raw("draw-heading." + plan.kind().id()), then);
+        Draws.play(plugin, to, pool, winner, plugin.messages().raw("draw-heading." + plan.kind().id()), then);
     }
 
     /** A resource (or, with no group, a job) as a choice of the draw. */
     private Draws.Choice choice(Plan plan, Group g, String job) {
         if (g == null) {
-            String name = jobName(job);
-            return new Draws.Choice(job, Material.matchMaterial(planner.jobIcon(job)), name, name);
+            return new Draws.Choice(job, Material.matchMaterial(planner.jobIcon(job)), jobName(job));
         }
-        String letters = g.name().startsWith("<lang:") && g.name().endsWith(">")
-                ? Translations.server(g.name().substring(6, g.name().length() - 1)) : Texts.plain(g.name(), null);
-        return new Draws.Choice(g.key(), Material.matchMaterial(g.icon()), g.name(), letters);
+        return new Draws.Choice(g.key(), Material.matchMaterial(g.icon()), g.name());
     }
 
     /** Who watches a draw and plays a tournament: players outside the rpg universe. */
