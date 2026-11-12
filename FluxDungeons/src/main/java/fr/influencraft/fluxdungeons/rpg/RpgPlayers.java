@@ -684,9 +684,9 @@ public final class RpgPlayers implements Listener {
         }
     }
 
-    /** Life and mana bars in place of the hearts and the food (text for Bedrock players). */
+    /** Life and mana bars in place of the hearts and the food, skills beside the hotbar (text for Bedrock players). */
     private void hud(Player p, RpgPlayer r, long now) {
-        p.sendActionBar(hud.render(p, combat.health(p), r.stats().get("max_health"), r.mana(), r.stats().get("max_mana")));
+        p.sendActionBar(hud.render(p, r, combat.health(p), r.stats().get("max_health"), r.mana(), r.stats().get("max_mana")));
     }
 
     public void markDirty(Player p) {

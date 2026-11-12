@@ -7,6 +7,8 @@ rows underneath never shake nor blink out of the cover. Writes a font of its own
     <pack>/resourcepack/assets/fluxdungeons/textures/font/hud_life.png    (one picture per step, STEPS + 1)
     <pack>/resourcepack/assets/fluxdungeons/textures/font/hud_mana.png
     <pack>/resourcepack/assets/fluxdungeons/textures/font/hud_digits.png  (0-9 and /)
+    <pack>/resourcepack/assets/fluxdungeons/textures/font/hud_spells.png  (spell slots, hud_spells.py)
+    <pack>/resourcepack/assets/fluxdungeons/textures/font/hud_keys.png    (key caps A, F, right click)
 
     python3 gen_hud.py <ItemsAdder/contents/fluxdungeons>      (needs Pillow), then /iazip
 
@@ -14,7 +16,8 @@ The action bar's text sits 72 px above the bottom of the screen, the hearts row 
 bars down onto that row, one pixel above it (ASCENT, check in game). Hearts span the 81 px left of the centre (minus
 10), food the 81 px right of it: one 83 px bar each from one pixel before, 18 px between them, 184 px in all.
 
-Chars: U+E100 + step = life bar, U+E200 + step = mana bar, U+E300.. = '0'-'9' then '/', U+F001-U+F008 move back 1, 2,
+Chars: U+E100 + step = life bar, U+E200 + step = mana bar, U+E300.. = '0'-'9' then '/', U+E400.. spell slots and
+U+E420.. key caps (hud_spells.py), U+F001-U+F008 move back 1, 2,
 4 ... 128 px, U+F011-U+F018 forward as much. FluxDungeons (rpg/RpgHud.java) writes the same numbers: keep STEPS,
 BAR_W and DIGIT_W in line with it. Every digit is padded to 5 px (an almost transparent pixel in its last column),
 so each one moves the text by exactly 6 px.
@@ -25,9 +28,15 @@ import sys
 
 from PIL import Image
 
+import hud_spells
+
 STEPS = 40
 BAR_W, BAR_H = 83, 11
 FILL_X0, FILL_X1, FILL_Y0, FILL_Y1 = 1, 81, 1, 9
+# the hotbar's top is 22 px above the bottom: a slot's top there is 72 - 22 = 50 px under the top of the line;
+# key caps rise 7 px above the slot (their two last rows lie on its frame)
+SPELL_ASCENT = 7 - 50
+KEY_ASCENT = SPELL_ASCENT + 7
 ASCENT = -25          # top of the hearts row = 72 - 39 = 33 px under the top of the line (ascent 7), minus 1
 DIGIT_W, DIGIT_H = 5, 5
 
@@ -95,6 +104,9 @@ def main(pack):
     sheet(MANA_EMPTY, MANA).save(os.path.join(tex, "hud_mana.png"))
     dig, count = digits()
     dig.save(os.path.join(tex, "hud_digits.png"))
+    spells, spell_count = hud_spells.slots_sheet()
+    spells.save(os.path.join(tex, "hud_spells.png"))
+    hud_spells.badges_sheet().save(os.path.join(tex, "hud_keys.png"))
     back = {chr(0xF001 + i): -(1 << i) for i in range(8)}
     fwd = {chr(0xF011 + i): (1 << i) for i in range(8)}
     font = {"providers": [
@@ -105,6 +117,10 @@ def main(pack):
          "chars": ["".join(chr(0xE200 + s) for s in range(STEPS + 1))]},
         {"type": "bitmap", "file": "fluxdungeons:font/hud_digits.png", "ascent": ASCENT - 3, "height": DIGIT_H,
          "chars": ["".join(chr(0xE300 + i) for i in range(count))]},
+        {"type": "bitmap", "file": "fluxdungeons:font/hud_spells.png", "ascent": SPELL_ASCENT,
+         "height": hud_spells.SLOT, "chars": ["".join(chr(0xE400 + i) for i in range(spell_count))]},
+        {"type": "bitmap", "file": "fluxdungeons:font/hud_keys.png", "ascent": KEY_ASCENT,
+         "height": hud_spells.BADGE_H, "chars": ["".join(chr(0xE420 + i) for i in range(len(hud_spells.BADGES)))]},
     ]}
     with open(os.path.join(root, "font", "hud.json"), "w", encoding="utf-8") as f:
         json.dump(font, f, ensure_ascii=True, indent=1)
