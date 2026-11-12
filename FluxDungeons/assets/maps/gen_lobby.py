@@ -29,7 +29,7 @@ import maplib
 
 F = 64                                     # floor of the square (feet at 65)
 X0, X1, Y0, Y1, Z0, Z1 = -62, 63, 40, 110, -34, 108
-PORTAL = (0.5, 67, 2.5)                    # exit of the FluxPortal ring `rpg` (do not move it)
+PORTAL = (0.5, 69, 2.5)                    # exit of the FluxPortal ring `rpg`: centre (size 4), bottom on the dais (67)
 SQ = (-20, 21, 19, 60)                     # the square (x0, x1, z0, z1)
 CX, CZ = 0.5, 39.5
 OLD = (-86, 291, 50, 200, -20, 316)        # extent of the former lobby (x0, x1, y0, y1, z0, z1)
