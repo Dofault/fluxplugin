@@ -44,7 +44,7 @@ kinds:
 jobs:
   # jobs drawn (empty = every job of FluxValue)
   include: []
-  exclude: [batisseur]
+  exclude: [batisseur, chimiste]
   # "job/source" of FluxValue never drawn as a resource nor counted
   exclude-sources: []
   # a job is not drawn again for the next N tournaments
