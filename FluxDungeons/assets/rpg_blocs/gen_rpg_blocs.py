@@ -9,6 +9,11 @@ The textures are not in this repository (third-party pack, no redistribution): t
   gen_rpg_blocs.py states [server]             after `iazip`: reads the note block states ItemsAdder gave each block
                                                (its generated pack) and writes plugins/FluxDungeons/rpg_blocs.yml,
                                                read by the map scripts (maplib, `Map.textures = "rpg"`).
+  gen_rpg_blocs.py bedrock [server] [--rpg <pack.zip>]
+                                               Bedrock players (Geyser): writes plugins/FluxDungeons/bedrock/, a Geyser
+                                               block mapping (each rpgblocs note block state -> a Bedrock block) and a
+                                               small Bedrock resource pack. By default each block wears Bedrock's own
+                                               vanilla texture (stone looks like stone); --rpg puts the pack's in.
 
 The pack is a 1.8 pack (pack_format 1): TABLE maps today's block ids onto its file names. Only full, opaque cubes can be
 note blocks; blocks that give light, hold items or need their own behaviour (sea lantern, glass, ice that breaks under
@@ -26,6 +31,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, *[".."] * 5))
 SERVERS = {"labs": "04_labs", "semilab": "05_semilab"}
 NS = "rpgblocs"
+# Bedrock kept the 1.8 file names of the block textures (textures/blocks/<name>.png in the vanilla Bedrock pack), the
+# names TABLE already uses: the same table serves both games. Exceptions (renamed on Bedrock) go here.
+BEDROCK_NAMES = {}
 
 # today's id -> (model kind, textures of the 1.8 pack)
 #   all: one texture; column: (side, end); bottom_top: (side, top, bottom)
@@ -194,9 +202,87 @@ def states(server):
         print("without a state (not generated?):", ", ".join(absent))
 
 
+def bedrock(server, rpg_pack=None):
+    """Geyser custom block mapping + Bedrock resource pack, from the states of rpg_blocs.yml.
+
+    Geyser turns a Java block state into a Bedrock block: here every rpgblocs note block state becomes one permutation
+    of a custom block whose faces use a texture short name of our pack (terrain_texture.json). Those short names point
+    to Bedrock's vanilla texture files (no image shipped: stone shows Bedrock's stone), or with --rpg to the RPG pack's
+    images copied into our pack. Requires Geyser with `enable-custom-content: true`; the mapping goes in Geyser's
+    `custom_mappings/` folder, the pack in its `packs/` folder. Untested until Geyser is installed.
+    """
+    import uuid
+    base = server_dir(server)
+    states = {}
+    for line in open(os.path.join(base, "plugins", "FluxDungeons", "rpg_blocs.yml")):
+        m = re.match(r"\s+(\w+): 'note_block\[(.+)\]'", line)
+        if m:
+            states[m.group(1)] = m.group(2)
+    out = os.path.join(base, "plugins", "FluxDungeons", "bedrock")
+    pack = os.path.join(out, "pack")
+    os.makedirs(os.path.join(pack, "textures"), exist_ok=True)
+    z = zipfile.ZipFile(rpg_pack) if rpg_pack else None
+    files = {n.split("textures/blocks/")[-1]: n for n in z.namelist() if "/textures/blocks/" in n} if z else {}
+    terrain, overrides = {}, {}
+
+    def short(tex):
+        key = f"{NS}_{tex}"
+        if z and tex + ".png" in files:
+            os.makedirs(os.path.join(pack, "textures", "blocks", NS), exist_ok=True)
+            with open(os.path.join(pack, "textures", "blocks", NS, tex + ".png"), "wb") as f:
+                f.write(z.read(files[tex + ".png"]))
+            terrain[key] = {"textures": f"textures/blocks/{NS}/{tex}"}
+        else:
+            terrain[key] = {"textures": f"textures/blocks/{BEDROCK_NAMES.get(tex, tex)}"}
+        return key
+
+    for bid, state in sorted(states.items()):
+        if bid not in TABLE:
+            continue
+        kind, *tex = TABLE[bid]
+        opaque = {"render_method": "opaque"}
+        if kind == "all":
+            mats = {"*": {"texture": short(tex[0]), **opaque}}
+        elif kind == "column":
+            end = short(tex[1])
+            mats = {"*": {"texture": short(tex[0]), **opaque}, "up": {"texture": end, **opaque}, "down": {"texture": end, **opaque}}
+        else:
+            mats = {"*": {"texture": short(tex[0]), **opaque}, "up": {"texture": short(tex[1]), **opaque},
+                    "down": {"texture": short(tex[2]), **opaque}}
+        overrides[state] = {"material_instances": mats}
+    mapping = {"format_version": 1, "blocks": {"minecraft:note_block": {
+        "name": NS, "display_name": "Bloc de donjon", "unit_cube": True, "only_override_states": True,
+        "place_air": True, "included_in_creative_inventory": False,
+        "material_instances": {"*": {"texture": short("noteblock"), "render_method": "opaque"}},
+        "state_overrides": overrides}}}
+    with open(os.path.join(out, f"geyser_{NS}.json"), "w") as f:
+        json.dump(mapping, f, indent=1)
+    with open(os.path.join(pack, "textures", "terrain_texture.json"), "w") as f:
+        json.dump({"resource_pack_name": NS, "texture_name": "atlas.terrain", "padding": 8, "num_mip_levels": 4,
+                   "texture_data": terrain}, f, indent=1)
+    ns = uuid.uuid5(uuid.NAMESPACE_URL, "influencraft/rpgblocs")
+    with open(os.path.join(pack, "manifest.json"), "w") as f:
+        json.dump({"format_version": 2, "header": {
+            "name": "Influencraft - blocs de donjon", "description": "Blocs des donjons RPG pour Bedrock (Geyser)",
+            "uuid": str(uuid.uuid5(ns, "header")), "version": [1, 0, 0], "min_engine_version": [1, 20, 80]},
+            "modules": [{"type": "resources", "uuid": str(uuid.uuid5(ns, "resources")), "version": [1, 0, 0]}]}, f, indent=1)
+    zpath = os.path.join(out, f"{NS}.mcpack")
+    with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED) as zz:
+        for d, _, fs in os.walk(pack):
+            for fn in fs:
+                full = os.path.join(d, fn)
+                zz.write(full, os.path.relpath(full, pack))
+    print(f"{len(overrides)} states mapped for Bedrock ({'RPG' if z else 'vanilla'} textures): {out}")
+
+
 if __name__ == "__main__":
     if len(sys.argv) >= 3 and sys.argv[1] == "build":
         build(sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else "labs")
+    elif len(sys.argv) >= 2 and sys.argv[1] == "bedrock":
+        a = sys.argv[2:]
+        rpg = a[a.index("--rpg") + 1] if "--rpg" in a else None
+        srv = next((x for x in a if x in SERVERS), "labs")
+        bedrock(srv, rpg)
     elif len(sys.argv) >= 2 and sys.argv[1] == "states":
         states(sys.argv[2] if len(sys.argv) > 2 else "labs")
     else:
