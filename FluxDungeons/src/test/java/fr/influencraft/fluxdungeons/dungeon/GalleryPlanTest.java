@@ -69,4 +69,41 @@ class GalleryPlanTest {
         System.out.println("upper level\n" + p.map(SETTINGS.upper() + 1) + "lower level\n" + p.map(SETTINGS.lower() + 1)
                 + "dug " + p.dug() + ", trail " + p.trail.size() + " points");
     }
+
+    private static final GalleryPlan.Settings LONG = GalleryPlan.Settings.of(30, 70, 63);
+
+    @Test
+    void approachPlansAreWalkableAndEndUnderTheArena() {
+        for (long seed = 0; seed < 80; seed++) {
+            GalleryPlan p = GalleryPlan.generate(LONG, seed);
+            assertTrue(p.walkable(), "seed " + seed);
+            assertNotNull(p.hole, "a burrow hole");
+            assertTrue(p.hole.z() < LONG.arenaZ0() - 4, "the hole is on the approach ground, seed " + seed);
+            assertFalse(p.underArena(p.entrance.z()), "the entrance is far from the arena, seed " + seed);
+            assertTrue(p.nest.z() >= LONG.arenaZ0(), "the nest is under the arena, seed " + seed);
+            int hx = (int) Math.floor(p.hole.x()), hz = (int) Math.floor(p.hole.z());
+            assertTrue(p.air(hx, LONG.top(), hz) || p.air(hx, LONG.top() - 1, hz), "the hole opens on the surface, seed " + seed);
+        }
+    }
+
+    @Test
+    void approachKeepsThreeSolidBlocksUnderTheArena() {
+        for (long seed = 0; seed < 40; seed++) {
+            GalleryPlan p = GalleryPlan.generate(LONG, seed);
+            for (int y = p.roof() + 1; y <= LONG.top(); y++) {
+                for (int z = LONG.arenaZ0() - 1; z < LONG.depth(); z++) {
+                    for (int x = 0; x < LONG.size(); x++) assertFalse(p.air(x, y, z), "under the arena, seed " + seed);
+                }
+            }
+        }
+    }
+
+    @Test
+    void approachHasMoreRoomsAndDeadEnds() {
+        GalleryPlan p = GalleryPlan.generate(LONG, 42);
+        long rooms = p.nodes.stream().filter(n -> n.kind() == GalleryPlan.Kind.ROOM).count();
+        assertTrue(rooms >= 3, "rooms " + rooms);
+        assertTrue(p.deadEnds.size() >= 5, "dead ends " + p.deadEnds.size());
+        System.out.println("approach, upper level\n" + p.map(LONG.upper() + 1) + "trail " + p.trail.size() + " points");
+    }
 }

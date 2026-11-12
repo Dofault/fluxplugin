@@ -448,6 +448,7 @@ elements:
 burrows:
   hint: "&#B376E5Follow the drill rings and the falling dust: they lead to the nest."
   tremor: "&#B49A78The ground shakes... &#B376E5it comes from deeper in the galleries."
+  near: "&#B49A78The earth rumbles under your feet... &#B376E5something big is digging close by."
   found-title: "&#B49A78&lKING TAUPERION"
   found-subtitle: "&#FF5C5CIt has spotted you!"
   thrown: "&#B376E5Thrown to the surface!"

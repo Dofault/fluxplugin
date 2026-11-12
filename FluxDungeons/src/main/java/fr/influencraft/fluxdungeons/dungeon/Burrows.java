@@ -39,6 +39,9 @@ import java.util.concurrent.ThreadLocalRandom;
  * Lair of a digging boss (2026-11-11, first: the Field Mole, King Taupérion): a dungeon whose file has a
  * {@code burrows:} section. When a run starts, its (empty) world gets a square arena of earth and, under it, a network
  * of galleries different for every run ({@link GalleryPlan}); everything goes with the run's world.
+ * With {@code approach: N} the ground runs N blocks further south of the arena: the players start on a meadow there,
+ * go down a burrow hole into the first galleries and the maze, and only under the arena do they hear the boss (the
+ * sounds below are kept for its own ground; before it, only quiet sounds of earth and water).
  * <ol>
  *   <li><b>Hunt</b>: the players start in the galleries and look for the boss. The way to its nest is marked by drill
  *   rings on the walls; dust drifts along it in front of a player who follows it; tremors now and then come from the
@@ -64,6 +67,9 @@ final class Burrows {
         LivingEntity boss;
         int ticks;
         int nextTremor, nextPassage, nextSnore;
+        /** Somebody has come under the arena (the boss' ground): its sounds start. */
+        boolean near;
+        final Map<java.util.UUID, Integer> nextQuiet = new HashMap<>();
 
         Lair(GalleryPlan plan, World world, int ox, int oz, String bossId) {
             this.plan = plan;
@@ -88,7 +94,12 @@ final class Burrows {
         /** Middle of the arena, on its floor. */
         Location arena() {
             int s = plan.settings.size();
-            return new Location(world, ox + s / 2.0, plan.settings.top() + 1, oz + s / 2.0, 0, 0);
+            return new Location(world, ox + s / 2.0, plan.settings.top() + 1, oz + plan.settings.arenaZ0() + s / 2.0, 0, 0);
+        }
+
+        /** Local z of a place. */
+        double localZ(Location at) {
+            return at.getZ() - oz;
         }
     }
 
@@ -123,17 +134,18 @@ final class Burrows {
     void prepare(Run run, Runnable done) {
         ConfigurationSection c = run.def.burrows();
         int size = Math.max(20, c.getInt("size", 30)), top = c.getInt("floor", 63);
+        int depth = size + Math.max(0, c.getInt("approach", 0));
         long seed = c.contains("seed") ? c.getLong("seed") : ThreadLocalRandom.current().nextLong();
         GalleryPlan plan;
         try {
-            plan = GalleryPlan.generate(GalleryPlan.Settings.of(size, top), seed);
+            plan = GalleryPlan.generate(GalleryPlan.Settings.of(size, depth, top), seed);
         } catch (IllegalStateException e) {
             plugin.getLogger().severe("Lair of " + run.def.id() + ": " + e.getMessage());
             done.run();
             return;
         }
         World w = run.world;
-        Lair lair = new Lair(plan, w, -size / 2, -size / 2, c.getString("boss", ""));
+        Lair lair = new Lair(plan, w, -size / 2, -depth + size / 2, c.getString("boss", ""));
         lairs.put(run.id, lair);
         w.setGameRule(GameRules.ADVANCE_TIME, false);
         w.setTime(c.getLong("time", 6000));
@@ -160,7 +172,9 @@ final class Burrows {
                 dress(lair, r);
                 marks(lair, r);
                 nest(lair, r);
+                chambers(lair, r);
                 arena(lair, r);
+                surface(lair, r);
                 Location start = entrance(lair);
                 run.checkpoint = start;
                 run.origin = start.clone();
@@ -173,26 +187,49 @@ final class Burrows {
         }.runTaskTimer(plugin, 1L, 1L);
     }
 
-    /** One layer of the earth mass: dirt near the surface, stone and granite deeper, a few ores, a solid shell. */
+    /**
+     * One layer of the earth mass: grass on top, then dirt (with coarse and rooted dirt, clay, gravel pockets), a dry
+     * band of sand on sandstone between the two levels, damp dirt and mud lower down, stone, tuff and a little
+     * deepslate at the bottom (rock only as deeper layers), a few ores, a solid shell.
+     */
     private void mass(Lair l, int y, Random r) {
         GalleryPlan.Settings s = l.plan.settings;
         int size = s.size();
+        boolean rich = s.depth() > size;
         for (int x = 0; x < size; x++) {
-            for (int z = 0; z < size; z++) {
+            for (int z = 0; z < s.depth(); z++) {
                 Material m;
                 double n = noise(l.plan.seed, x / 4.0, y / 3.0, z / 4.0);
+                double n2 = noise(l.plan.seed ^ 0x2545F491L, x / 2.5, y / 2.5, z / 2.5);
                 if (y == s.top()) {
-                    m = n < -0.25 ? Material.COARSE_DIRT : n > 0.42 ? Material.ROOTED_DIRT : Material.DIRT;
+                    m = rich ? (n < -0.45 ? Material.COARSE_DIRT : Material.GRASS_BLOCK)
+                            : n < -0.25 ? Material.COARSE_DIRT : n > 0.42 ? Material.ROOTED_DIRT : Material.DIRT;
                 } else if (y >= s.top() - 5) {
                     m = n < -0.3 ? Material.COARSE_DIRT : n > 0.35 ? Material.ROOTED_DIRT : Material.DIRT;
+                } else if (!rich) {
+                    if (y >= s.upper() - 1) {
+                        m = n < -0.2 ? Material.STONE : n > 0.3 ? Material.ROOTED_DIRT : n > 0.1 ? Material.COARSE_DIRT : Material.DIRT;
+                    } else if (y >= s.lower() + 4) {
+                        m = n < -0.35 ? Material.GRANITE : n < 0.05 ? Material.STONE : n < 0.35 ? Material.DIRT : Material.COARSE_DIRT;
+                    } else {
+                        m = n < -0.3 ? Material.GRANITE : n < 0.15 ? Material.STONE : n < 0.4 ? Material.ANDESITE : Material.TUFF;
+                    }
                 } else if (y >= s.upper() - 1) {
-                    m = n < -0.2 ? Material.STONE : n > 0.3 ? Material.ROOTED_DIRT : n > 0.1 ? Material.COARSE_DIRT : Material.DIRT;
-                } else if (y >= s.lower() + 4) {
-                    m = n < -0.35 ? Material.GRANITE : n < 0.05 ? Material.STONE : n < 0.35 ? Material.DIRT : Material.COARSE_DIRT;
+                    // the upper galleries: earth everywhere, roots from the trees above, clay and gravel pockets
+                    m = n2 > 0.55 ? Material.GRAVEL : n2 < -0.6 ? Material.CLAY
+                            : n < -0.3 ? Material.COARSE_DIRT : n > 0.4 ? Material.ROOTED_DIRT : n > 0.3 ? Material.PACKED_MUD : Material.DIRT;
+                } else if (y >= s.lower() + 6) {
+                    // a dry sandy band between the levels, on sandstone
+                    m = y >= s.lower() + 8 ? (n < 0.2 ? Material.SAND : Material.DIRT)
+                            : n < -0.2 ? Material.SANDSTONE : n < 0.3 ? Material.SAND : Material.COARSE_DIRT;
+                } else if (y >= s.lower() - 1) {
+                    // the lower galleries: damp earth, mud, clay
+                    m = n2 > 0.5 ? Material.MUD : n2 < -0.55 ? Material.CLAY
+                            : n < -0.35 ? Material.COARSE_DIRT : n > 0.35 ? Material.ROOTED_DIRT : n > 0.2 ? Material.PACKED_MUD : Material.DIRT;
                 } else {
-                    m = n < -0.3 ? Material.GRANITE : n < 0.15 ? Material.STONE : n < 0.4 ? Material.ANDESITE : Material.TUFF;
+                    m = n < -0.3 ? Material.STONE : n < 0.1 ? Material.TUFF : n < 0.4 ? Material.DIRT : Material.DEEPSLATE;
                 }
-                if (y < s.top() - 3 && r.nextDouble() < 0.012) m = ORES[y < s.lower() + 2 ? 2 : r.nextInt(ORES.length)];
+                if (y < s.top() - 3 && r.nextDouble() < (rich ? 0.004 : 0.012)) m = ORES[y < s.lower() + 2 ? 2 : r.nextInt(ORES.length)];
                 l.world.getBlockAt(l.ox + x, y, l.oz + z).setType(m, false);
             }
         }
@@ -227,7 +264,7 @@ final class Burrows {
     private void carve(Lair l) {
         GalleryPlan.Settings s = l.plan.settings;
         for (int y = s.bottom(); y <= s.top(); y++) {
-            for (int z = 0; z < s.size(); z++) {
+            for (int z = 0; z < s.depth(); z++) {
                 for (int x = 0; x < s.size(); x++) {
                     if (l.plan.air(x, y, z)) l.world.getBlockAt(l.ox + x, y, l.oz + z).setType(Material.AIR, false);
                 }
@@ -243,11 +280,20 @@ final class Burrows {
     private void dress(Lair l, Random r) {
         GalleryPlan.Settings s = l.plan.settings;
         BlockFace[] sides = {BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST};
-        for (int y = s.bottom() + 1; y <= l.plan.roof(); y++) {
-            for (int z = 0; z < s.size(); z++) {
+        boolean rich = s.depth() > s.size();
+        for (int y = s.bottom() + 1; y <= (rich ? s.top() : l.plan.roof()); y++) {
+            for (int z = 0; z < s.depth(); z++) {
                 for (int x = 0; x < s.size(); x++) {
                     if (!l.plan.air(x, y, z)) continue;
                     Block b = l.world.getBlockAt(l.ox + x, y, l.oz + z);
+                    if (rich) {
+                        // nothing loose over a gallery (sand and gravel would fall), roots in the walls and ceilings
+                        Block over = b.getRelative(BlockFace.UP);
+                        if (solid(l, x, y + 1, z) && (over.getType() == Material.SAND || over.getType() == Material.GRAVEL))
+                            over.setType(over.getType() == Material.SAND ? Material.SANDSTONE : Material.COARSE_DIRT, false);
+                        if (solid(l, x, y + 1, z) && y >= s.upper() - 1 && r.nextDouble() < 0.05)
+                            over.setType(Material.MANGROVE_ROOTS, false);
+                    }
                     if (solid(l, x, y - 1, z)) {
                         double k = r.nextDouble();
                         Block under = b.getRelative(BlockFace.DOWN);
@@ -255,6 +301,8 @@ final class Burrows {
                             if (k < 0.16) under.setType(Material.COARSE_DIRT, false);
                             else if (k < 0.22) under.setType(Material.ROOTED_DIRT, false);
                             else if (k < 0.25) under.setType(Material.GRAVEL, false);
+                            else if (rich && k < 0.31) under.setType(y < s.upper() - 3 ? Material.MUD : Material.PACKED_MUD, false);
+                            else if (rich && y < s.upper() - 3 && k < 0.34) under.setType(Material.MOSS_BLOCK, false);
                         }
                     }
                     if (solid(l, x, y + 1, z) && l.plan.air(x, y - 1, z) && r.nextDouble() < 0.07) {
@@ -266,6 +314,7 @@ final class Burrows {
                         if (!solid(l, nx, y, nz)) continue;
                         Block wall = b.getRelative(f);
                         if (y >= s.upper() - 1 && wall.getType() == Material.DIRT && r.nextDouble() < 0.25) wall.setType(Material.ROOTED_DIRT, false);
+                        if (rich && y < s.upper() - 3 && wall.getType() == Material.DIRT && r.nextDouble() < 0.06) wall.setType(Material.MOSS_BLOCK, false);
                         if (b.getType() == Material.AIR && r.nextDouble() < 0.035) {
                             b.setType(Material.GLOW_LICHEN, false);
                             if (b.getBlockData() instanceof MultipleFacing mf) {
@@ -407,18 +456,186 @@ final class Burrows {
         light(l, new GalleryPlan.Point(n.x(), n.z(), n.floor()), 5, 12);
     }
 
+    /**
+     * The rooms (rich lairs only): mushrooms and moss along their edges, a puddle or two in the damp ones; never in the
+     * middle where the guards fight.
+     */
+    private void chambers(Lair l, Random r) {
+        GalleryPlan.Settings s = l.plan.settings;
+        if (s.depth() <= s.size()) return;
+        for (GalleryPlan.Node n : l.plan.nodes) {
+            if (n.kind() != GalleryPlan.Kind.ROOM && n.kind() != GalleryPlan.Kind.JUNCTION) continue;
+            int cx = (int) Math.floor(n.x()), cz = (int) Math.floor(n.z());
+            int puddles = n.kind() == GalleryPlan.Kind.ROOM && n.level() == 1 || n.floor() < s.upper() - 1 ? 2 : r.nextInt(2);
+            for (int x = cx - 5; x <= cx + 5; x++) {
+                for (int z = cz - 5; z <= cz + 5; z++) {
+                    double d = Math.hypot(x + 0.5 - n.x(), z + 0.5 - n.z());
+                    if (d < 2.6) continue;
+                    int y = l.plan.standY(x, n.floor(), z);
+                    if (y == Integer.MIN_VALUE || y > s.top()) continue;
+                    boolean edge = !l.plan.standable(x + 1, y, z) || !l.plan.standable(x - 1, y, z)
+                            || !l.plan.standable(x, y, z + 1) || !l.plan.standable(x, y, z - 1);
+                    if (!edge) continue;
+                    Block b = l.world.getBlockAt(l.ox + x, y, l.oz + z);
+                    if (b.getType() != Material.AIR) continue;
+                    double k = r.nextDouble();
+                    if (k < 0.08) b.setType(r.nextBoolean() ? Material.BROWN_MUSHROOM : Material.RED_MUSHROOM, false);
+                    else if (k < 0.16) b.setType(Material.MOSS_CARPET, false);
+                    else if (k < 0.2 && puddles > 0) {
+                        // a puddle: the floor block turns to water, solid all round it at its level
+                        Block f = b.getRelative(BlockFace.DOWN);
+                        boolean closed = true;
+                        for (BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.DOWN}) {
+                            if (!f.getRelative(face).getType().isSolid()) closed = false;
+                        }
+                        if (closed) {
+                            f.setType(Material.WATER, false);
+                            puddles--;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * The surface around the lair (rich lairs only): the approach meadow (grass, molehills, mole holes, bushes, a few
+     * trees, stones), the burrow hole the players go down, and a ring of wooded hills all round that hides the edges;
+     * invisible walls along the meadow's edge.
+     */
+    private void surface(Lair l, Random r) {
+        GalleryPlan.Settings s = l.plan.settings;
+        if (s.depth() <= s.size()) return;
+        int top = s.top(), size = s.size(), depth = s.depth(), margin = 16;
+        // wooded hills all round
+        for (int x = -margin; x < size + margin; x++) {
+            for (int z = -margin; z < depth + margin; z++) {
+                int out = Math.max(Math.max(-x, x - size + 1), Math.max(-z, z - depth + 1));
+                if (out <= 0) continue;
+                double n = noise(l.plan.seed ^ 0x51ED27L, x / 6.0, 0, z / 6.0);
+                int h = (int) Math.round(Math.min(14, out * (0.7 + 0.35 * n)));
+                for (int y = s.bottom(); y <= top + h; y++) {
+                    Material m = y == top + h ? Material.GRASS_BLOCK : y > top + h - 3 ? Material.DIRT : Material.STONE;
+                    l.world.getBlockAt(l.ox + x, y, l.oz + z).setType(m, false);
+                }
+                if (out > 2 && r.nextDouble() < 0.06) tree(l, x, top + h + 1, z, r);
+                else if (r.nextDouble() < 0.12) l.world.getBlockAt(l.ox + x, top + h + 1, l.oz + z).setType(Material.SHORT_GRASS, false);
+            }
+        }
+        // the approach meadow
+        for (int x = 0; x < size; x++) {
+            for (int z = 0; z < s.arenaZ0() - 1; z++) {
+                Block b = l.world.getBlockAt(l.ox + x, top + 1, l.oz + z);
+                if (b.getType() != Material.AIR || l.plan.air(x, top, z)) continue;
+                double k = r.nextDouble();
+                if (k < 0.18) b.setType(r.nextDouble() < 0.8 ? Material.SHORT_GRASS : Material.FERN, false);
+                else if (k < 0.2) b.setType(r.nextBoolean() ? Material.DANDELION : Material.POPPY, false);
+            }
+        }
+        for (int i = 0; i < 14; i++) {
+            int x = 2 + r.nextInt(size - 4), z = 2 + r.nextInt(Math.max(1, s.arenaZ0() - 6));
+            if (l.plan.air(x, top, z) || l.plan.air(x, top - 1, z) || near(l.plan.hole, x, z, 4)) continue;
+            if (i < 9) molehill(l, x, top, z, r);
+            else {
+                // a mole hole: one block deep, a rim of loose earth
+                l.world.getBlockAt(l.ox + x, top, l.oz + z).setType(Material.AIR, false);
+                for (int[] d : new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}})
+                    l.world.getBlockAt(l.ox + x + d[0], top + 1, l.oz + z + d[1]).setType(Material.AIR, false);
+                l.world.getBlockAt(l.ox + x, top - 1, l.oz + z).setType(Material.COARSE_DIRT, false);
+            }
+        }
+        for (int i = 0; i < 6; i++) {
+            int x = r.nextBoolean() ? 1 + r.nextInt(4) : size - 2 - r.nextInt(4), z = 1 + r.nextInt(Math.max(1, s.arenaZ0() - 3));
+            if (l.plan.air(x, top, z)) continue;
+            if (i < 3) tree(l, x, top + 1, z, r);
+            else {
+                l.world.getBlockAt(l.ox + x, top + 1, l.oz + z).setType(Material.AZALEA_LEAVES, false);
+                l.world.getBlockAt(l.ox + x + 1, top + 1, l.oz + z).setType(Material.FLOWERING_AZALEA_LEAVES, false);
+            }
+        }
+        for (int i = 0; i < 4; i++) {
+            int x = 1 + r.nextInt(size - 2), z = 1 + r.nextInt(Math.max(1, s.arenaZ0() - 3));
+            if (!l.plan.air(x, top, z)) l.world.getBlockAt(l.ox + x, top + 1, l.oz + z).setType(r.nextBoolean() ? Material.MOSSY_COBBLESTONE : Material.ANDESITE, false);
+        }
+        // the burrow hole: loose earth heaped round it, roots hanging in its throat
+        if (l.plan.hole != null) {
+            int hx = (int) Math.floor(l.plan.hole.x()), hz = (int) Math.floor(l.plan.hole.z());
+            for (int x = hx - 4; x <= hx + 4; x++) {
+                for (int z = hz - 4; z <= hz + 4; z++) {
+                    double d = Math.hypot(x - hx, z - hz);
+                    if (d < 2.2 || d > 3.8 || l.plan.air(x, top, z)) continue;
+                    l.world.getBlockAt(l.ox + x, top + 1, l.oz + z).setType(r.nextBoolean() ? Material.COARSE_DIRT : Material.ROOTED_DIRT, false);
+                }
+            }
+            for (int x = hx - 3; x <= hx + 3; x++) {
+                for (int z = hz - 3; z <= hz + 3; z++) {
+                    for (int y = top - 3; y <= top; y++) {
+                        if (l.plan.air(x, y, z) && !l.plan.air(x, y + 1, z) && y + 1 <= top && r.nextDouble() < 0.3)
+                            l.world.getBlockAt(l.ox + x, y, l.oz + z).setType(Material.HANGING_ROOTS, false);
+                    }
+                }
+            }
+        }
+        // invisible walls along the meadow's edge (the arena has its own)
+        for (int x = -1; x <= size; x++) {
+            for (int z = -1; z < s.arenaZ0(); z++) {
+                if (x == -1 || x == size || z == -1) {
+                    for (int y = top + 1; y <= top + 14; y++) l.world.getBlockAt(l.ox + x, y, l.oz + z).setType(Material.BARRIER, false);
+                }
+            }
+        }
+    }
+
+    private static boolean near(GalleryPlan.Point p, int x, int z, double d) {
+        return p != null && Math.hypot(p.x() - x, p.z() - z) < d;
+    }
+
+    private void molehill(Lair l, int x, int top, int z, Random r) {
+        l.world.getBlockAt(l.ox + x, top + 1, l.oz + z).setType(Material.COARSE_DIRT, false);
+        for (int[] d : new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
+            if (r.nextDouble() < 0.7) l.world.getBlockAt(l.ox + x + d[0], top + 1, l.oz + z + d[1]).setType(Material.DIRT, false);
+        }
+        if (r.nextBoolean()) l.world.getBlockAt(l.ox + x, top + 2, l.oz + z).setType(Material.ROOTED_DIRT, false);
+    }
+
+    private void tree(Lair l, int x, int y, int z, Random r) {
+        int h = 4 + r.nextInt(3);
+        boolean birch = r.nextDouble() < 0.3;
+        for (int k = 0; k < h; k++) l.world.getBlockAt(l.ox + x, y + k, l.oz + z).setType(birch ? Material.BIRCH_LOG : Material.OAK_LOG, false);
+        Material leaves = birch ? Material.BIRCH_LEAVES : Material.OAK_LEAVES;
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    if (dx * dx + dz * dz + dy * dy * 2 > 6 || r.nextDouble() < 0.08) continue;
+                    Block b = l.world.getBlockAt(l.ox + x + dx, y + h - 1 + dy, l.oz + z + dz);
+                    if (b.getType() != Material.AIR) continue;
+                    b.setType(leaves, false);
+                    if (b.getBlockData() instanceof org.bukkit.block.data.type.Leaves lv) {
+                        lv.setPersistent(true);
+                        b.setBlockData(lv, false);
+                    }
+                }
+            }
+        }
+    }
+
     /** The arena: its earth floor is the top of the mass; a low bank of earth around, invisible walls above it. */
     private void arena(Lair l, Random r) {
         GalleryPlan.Settings s = l.plan.settings;
-        int size = s.size(), top = s.top();
+        int size = s.size(), top = s.top(), z0 = s.arenaZ0();
+        boolean rich = s.depth() > size;
         for (int x = -1; x <= size; x++) {
             for (int z = -1; z <= size; z++) {
                 boolean ring = x == -1 || z == -1 || x == size || z == size;
                 boolean edge = x == 0 || z == 0 || x == size - 1 || z == size - 1;
                 if (ring) {
-                    for (int y = s.bottom(); y <= top + 12; y++) l.world.getBlockAt(l.ox + x, y, l.oz + z).setType(Material.BARRIER, false);
+                    // with an approach the galleries run under its southern side: the walls only stand above ground
+                    for (int y = rich ? top + 1 : s.bottom(); y <= top + 12; y++) l.world.getBlockAt(l.ox + x, y, l.oz + z0 + z).setType(Material.BARRIER, false);
+                } else if (rich && !edge && r.nextDouble() < 0.06) {
+                    // turned earth on the floor, flat
+                    l.world.getBlockAt(l.ox + x, top, l.oz + z0 + z).setType(r.nextBoolean() ? Material.COARSE_DIRT : Material.ROOTED_DIRT, false);
                 } else if (edge) {
-                    Block b = l.world.getBlockAt(l.ox + x, top + 1, l.oz + z);
+                    Block b = l.world.getBlockAt(l.ox + x, top + 1, l.oz + z0 + z);
                     b.setType(r.nextDouble() < 0.5 ? Material.COARSE_DIRT : Material.ROOTED_DIRT, false);
                     if (r.nextDouble() < 0.3) b.getRelative(BlockFace.UP).setType(Material.DIRT, false);
                 }
@@ -427,6 +644,14 @@ final class Burrows {
     }
 
     private Location entrance(Lair l) {
+        GalleryPlan.Settings s = l.plan.settings;
+        if (l.plan.hole != null) {
+            // on the meadow, at the far end from the arena, facing the burrow hole
+            Location at = l.at(s.size() / 2.0, s.top() + 1, 3.5);
+            at.setDirection(l.at(l.plan.hole.x(), s.top() + 1, l.plan.hole.z()).toVector().subtract(at.toVector()).setY(0));
+            at.setPitch(0);
+            return at;
+        }
         GalleryPlan.Node e = l.plan.entrance;
         int x = (int) Math.floor(e.x()), z = (int) Math.floor(e.z());
         int y = l.plan.standY(x, e.floor(), z);
@@ -489,9 +714,13 @@ final class Burrows {
         List<Integer> room = g.getIntegerList("per-room"), junction = g.getIntegerList("per-junction");
         double extra = g.getDouble("extra-per-player", 0.5) * Math.max(0, run.players().size() - 1);
         int placed = 0;
+        boolean rich = l.plan.settings.depth() > l.plan.settings.size();
         for (GalleryPlan.Node n : l.plan.nodes) {
             List<Integer> range = n.kind() == GalleryPlan.Kind.ROOM ? room : n.kind() == GalleryPlan.Kind.JUNCTION ? junction : null;
             if (range == null || range.isEmpty()) continue;
+            // a calm start (nobody near the entrance), fewer but nearer the boss under the arena
+            if (rich && Math.hypot(n.x() - l.plan.entrance.x(), n.z() - l.plan.entrance.z()) < 10) continue;
+            if (rich && n.kind() == GalleryPlan.Kind.JUNCTION && l.plan.underArena(n.z()) && r.nextBoolean()) continue;
             int min = range.get(0), max = range.size() > 1 ? range.get(1) : min;
             int count = min + (max > min ? r.nextInt(max - min + 1) : 0);
             count += (int) Math.floor(extra) + (r.nextDouble() < extra - Math.floor(extra) ? 1 : 0);
@@ -544,6 +773,29 @@ final class Burrows {
                 return;
             }
         }
+        // with an approach, the boss is only heard once somebody is under the arena; before, quiet earth sounds
+        boolean rich = l.plan.settings.depth() > l.plan.settings.size();
+        if (rich) {
+            boolean nowNear = false;
+            for (Player p : players) {
+                if (p.getLocation().getY() <= l.plan.settings.top() && l.plan.underArena(l.localZ(p.getLocation()))) nowNear = true;
+            }
+            if (nowNear && !l.near) {
+                l.near = true;
+                l.nextTremor = l.ticks + 60;
+                l.nextPassage = Math.max(l.nextPassage, l.ticks + 160);
+                for (Player p : players) {
+                    p.playSound(p.getLocation().add(0, -4, 0), "entity.warden.dig", SoundCategory.HOSTILE, 1.0f, 0.4f);
+                    p.playSound(p.getLocation(), "block.sculk_shrieker.shriek", SoundCategory.AMBIENT, 0.25f, 0.5f);
+                    p.sendActionBar(Texts.parse(plugin.messages().raw("burrows.near")));
+                }
+            }
+            for (Player p : players) quiet(l, p);
+            if (!l.near) {
+                if (l.ticks % 20 == 0) for (Player p : players) guide(l, p);
+                return;
+            }
+        }
         // it snores in its nest
         if (l.ticks >= l.nextSnore) {
             l.nextSnore = l.ticks + 80;
@@ -563,6 +815,32 @@ final class Burrows {
             ThreadLocalRandom r = ThreadLocalRandom.current();
             l.nextPassage = l.ticks + 20 * r.nextInt(28, 42);
             passage(l, players.get(r.nextInt(players.size())));
+        }
+    }
+
+    /**
+     * Quiet sounds of the burrows for a player outside the boss' ground (drips, earth and gravel trickling, roots
+     * creaking), now and then, from a few blocks away; nothing under the arena (the boss' sounds take over there).
+     */
+    private void quiet(Lair l, Player p) {
+        if (l.plan.underArena(l.localZ(p.getLocation())) || p.getLocation().getY() > l.plan.settings.top()) return;
+        ThreadLocalRandom r = ThreadLocalRandom.current();
+        int next = l.nextQuiet.getOrDefault(p.getUniqueId(), l.ticks + 100);
+        if (l.ticks < next) {
+            l.nextQuiet.putIfAbsent(p.getUniqueId(), next);
+            return;
+        }
+        l.nextQuiet.put(p.getUniqueId(), l.ticks + 20 * r.nextInt(7, 15));
+        Location at = p.getLocation().add(r.nextDouble(-5, 5), r.nextDouble(0, 3), r.nextDouble(-5, 5));
+        switch (r.nextInt(5)) {
+            case 0 -> p.playSound(at, "block.pointed_dripstone.drip_water", SoundCategory.AMBIENT, 0.6f, r.nextFloat(0.8f, 1.2f));
+            case 1 -> p.playSound(at, "block.gravel.break", SoundCategory.AMBIENT, 0.2f, 0.6f);
+            case 2 -> p.playSound(at, "block.rooted_dirt.break", SoundCategory.AMBIENT, 0.25f, 0.5f);
+            case 3 -> p.playSound(at, "block.hanging_roots.break", SoundCategory.AMBIENT, 0.3f, 0.7f);
+            default -> {
+                // far away, hard to place: something moving under the ground
+                if (l.ticks > 1200) p.playSound(p.getLocation().add(0, -6, 0), "block.rooted_dirt.step", SoundCategory.AMBIENT, 0.35f, 0.5f);
+            }
         }
     }
 
@@ -616,7 +894,9 @@ final class Burrows {
     /** The boss heard (and its dust seen) going along a tunnel near the player, 6 to 14 blocks away. */
     private void passage(Lair l, Player p) {
         List<List<GalleryPlan.Point>> near = new ArrayList<>();
+        boolean rich = l.plan.settings.depth() > l.plan.settings.size();
         for (List<GalleryPlan.Point> t : l.plan.tunnels) {
+            if (rich && !l.plan.underArena(t.get(t.size() / 2).z())) continue;
             double best = Double.MAX_VALUE;
             for (GalleryPlan.Point q : t) best = Math.min(best, l.at(q).distance(p.getLocation()));
             if (best >= 6 && best <= 14) near.add(t);

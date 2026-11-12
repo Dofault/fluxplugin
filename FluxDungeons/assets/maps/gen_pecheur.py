@@ -44,7 +44,7 @@ import maplib
 F0, F1, F2, F3, FI = 63, 60, 56, 52, 44   # floor blocks: grotto, room 1, room 2, room 3 quay, arena ice
 WL3 = F3 - 1                              # top water block of the port basin
 AX, ZA = -8, 180                          # arena centre
-FROM = ("ice", "packed_ice", "blue_ice", "dark_prismarine")   # what the otter breaks (flood from)
+FROM = ("ice",)                           # what the otter breaks (flood `from` of its sheet, never changed here)
 X0, X1, Y0, Y1, Z0, Z1 = -36, 36, 30, 92, -18, 204
 BANDS = ((30, 41, "deepslate"), (42, 50, "tuff"), (51, 74, "stone"), (75, 92, "andesite"))
 
@@ -873,25 +873,17 @@ def arena():
                 d = math.hypot(dx, dz)
                 a = math.degrees(math.atan2(dz, dx)) % 360
                 ray = min(abs(((a + 22.5) % 45) - 22.5), 45) < 7 and 2 <= d < 9.5
+                g.set(x, FI, z, "ice")
+                # the ritual circle on the floor of the reservoir, seen through the ice (nothing to stand on near it)
                 if d < 1.6 or 6 <= d < 7:
-                    b = "dark_prismarine"
+                    g.set(x, FI - 9, z, "dark_prismarine")
                 elif 9.5 <= d < 10.5 or ray:
-                    b = "blue_ice"
-                else:
-                    b = "packed_ice"
-                g.set(x, FI, z, b)
+                    g.set(x, FI - 9, z, "sea_lantern" if (d < 1.6 or (ray and round(d) % 3 == 0)) else "blue_ice")
             elif rim(dx, dz):
-                if (dx + 3 * dz) % 7 == 0:
-                    g.set(x, FI - 1, z, "sea_lantern")
+                pass
     blob(AX, TOP, ZA, 16, 7, 16, (AX - 15, TOP + 1, ZA - 15, AX + 15, TOP + 10, ZA + 15), seed=51, rough=0.35)
-    # blue-ice veins in the sheet (part of the floor that breaks)
     for _ in range(14):
-        a = r.uniform(0, 2 * math.pi)
-        rr = r.uniform(10.5, 12)
-        for k in range(r.randint(2, 4)):
-            dx, dz = round(math.cos(a) * (rr - k)), round(math.sin(a) * (rr - k))
-            if octagon(dx, dz) and g.get(AX + dx, FI, ZA + dz) == "packed_ice":
-                g.set(AX + dx, FI, ZA + dz, "blue_ice")
+        r.uniform(0, 2 * math.pi), r.uniform(10.5, 12), r.randint(2, 4)     # (former ice veins: keeps the random draws)
 
     # eight monumental pillars at the corners of the octagon
     for vx, vz in PILLARS:
@@ -1137,6 +1129,22 @@ def check():
                 sheet.add((x, FI, z))
             elif b in FROM:
                 errors.append(f"{b} next to the sheet at {x} {FI} {z} (would break with it)")
+    # 4b. ice melts above light 11: no light source near the sheet
+    levels = {"sea_lantern": 15, "lantern": 15, "soul_lantern": 10, "conduit": 15, "oxidized_copper_bulb": 15}
+    emitters = []
+    for (x, y, z), b in g.over.items():
+        base = b.split("[")[0]
+        if base == "light":
+            emitters.append((x, y, z, int(b.split("level=")[1].rstrip("]"))))
+        elif base in levels:
+            emitters.append((x, y, z, levels[base]))
+    for (x, y, z, lv) in emitters:
+        if abs(x - AX) > 30 or abs(z - ZA) > 30:
+            continue
+        for (ix, iy, iz) in sheet:
+            if lv - (abs(x - ix) + abs(y - iy) + abs(z - iz)) > 11:
+                errors.append(f"light {lv} at {x} {y} {z} would melt the ice at {ix} {iy} {iz}")
+                break
     # 5. once broken: nothing to stand on near the water surface
     saved = {p: g.over[p] for p in sheet}
     for p in sheet:

@@ -9,7 +9,10 @@ import java.util.Random;
 
 /**
  * Plan of a network of galleries dug by a huge creature under a square arena (pure code, no Bukkit: tested by
- * {@code GalleryPlanTest}). Coordinates are local: x and z from 0 to {@code size - 1}, y absolute.
+ * {@code GalleryPlanTest}). Coordinates are local: x from 0 to {@code size - 1}, z from 0 to {@code depth - 1}, y
+ * absolute. The arena covers the last {@code size} rows of z; with {@code depth > size} the network also runs under an
+ * approach ground south of it (the first galleries and the maze), entered by a burrow hole dug from the surface, and
+ * the junctions under the arena (the boss' own ground) are the last ones met.
  * <p>
  * Two levels of junctions on a 3 x 3 grid each (jittered), linked by a random spanning tree (dead ends) plus a few
  * extra links (passages that meet again), two long ramps between the levels, short spurs ending in nothing. Every link
@@ -21,10 +24,24 @@ import java.util.Random;
  */
 public final class GalleryPlan {
 
-    /** Settings: footprint side, top of the rock mass (the arena floor), the two gallery floors. */
-    public record Settings(int size, int top, int upper, int lower, int bottom) {
+    /** Settings: arena side, length of the whole ground (arena + approach), top of the mass, the two gallery floors. */
+    public record Settings(int size, int depth, int top, int upper, int lower, int bottom) {
         public static Settings of(int size, int top) {
-            return new Settings(size, top, top - 11, top - 20, top - 27);
+            return of(size, size, top);
+        }
+
+        public static Settings of(int size, int depth, int top) {
+            return new Settings(size, Math.max(size, depth), top, top - 11, top - 20, top - 27);
+        }
+
+        /** First z row of the arena (0 without an approach). */
+        public int arenaZ0() {
+            return depth - size;
+        }
+
+        /** Rows of junctions of the upper level under the approach ground. */
+        int approachRows() {
+            return (int) Math.round((depth - size) / (size / 3.0));
         }
     }
 
@@ -50,6 +67,8 @@ public final class GalleryPlan {
     /** From the entrance to the nest, along the tunnels. */
     public final List<Point> trail = new ArrayList<>();
     public Node entrance, nest;
+    /** The burrow hole on the surface (approach ground only), where the players come down; null without an approach. */
+    public Point hole;
     public static final double NEST_RADIUS = 5.2;
     private final List<int[]> links = new ArrayList<>();
     private final List<List<Point>> linkPaths = new ArrayList<>();
@@ -58,7 +77,7 @@ public final class GalleryPlan {
         this.settings = s;
         this.seed = seed;
         this.height = s.top() - s.bottom() + 1;
-        this.air = new boolean[s.size() * s.size() * height];
+        this.air = new boolean[s.size() * s.depth() * height];
     }
 
     /** A walkable plan, from this seed or the next ones. */
@@ -74,12 +93,18 @@ public final class GalleryPlan {
     // ---------------------------------------------------------------- cells
 
     public boolean air(int x, int y, int z) {
-        if (x < 0 || z < 0 || x >= settings.size() || z >= settings.size() || y < settings.bottom() || y > settings.top()) return false;
+        if (x < 0 || z < 0 || x >= settings.size() || z >= settings.depth() || y < settings.bottom()) return false;
+        if (y > settings.top()) return y <= settings.top() + 3;              // the open air over the ground
         return air[index(x, y, z)];
     }
 
     private int index(int x, int y, int z) {
-        return ((y - settings.bottom()) * settings.size() + z) * settings.size() + x;
+        return ((y - settings.bottom()) * settings.depth() + z) * settings.size() + x;
+    }
+
+    /** True under the arena (and the row just before it): the boss' own ground. */
+    public boolean underArena(double z) {
+        return z >= settings.arenaZ0() - 1;
     }
 
     /** Lowest and highest x / z a tunnel may reach (a solid shell of 2 blocks stays around). */
@@ -91,15 +116,23 @@ public final class GalleryPlan {
         return settings.size() - 3;
     }
 
+    private int hiZ() {
+        return settings.depth() - 3;
+    }
+
     /** Highest y a tunnel may reach: 3 solid blocks stay under the arena floor. */
     public int roof() {
         return settings.top() - 4;
     }
 
     private void set(int x, int y, int z) {
-        if (x < lo() || z < lo() || x > hi() || z > hi() || y <= settings.bottom() || y > roof()) return;
+        if (x < lo() || z < lo() || x > hi() || z > hiZ() || y <= settings.bottom()) return;
+        // 3 solid blocks stay under the arena; under the approach ground only the burrow hole reaches the surface
+        if (y > (surfaceOpen ? settings.top() : roof()) || (y > roof() && underArena(z))) return;
         air[index(x, y, z)] = true;
     }
+
+    private boolean surfaceOpen;
 
     /**
      * Ellipsoid of air above a floor: centre {@code floor + 1 + lift}, horizontal radius {@code rw}, vertical
@@ -128,30 +161,37 @@ public final class GalleryPlan {
         Random r = new Random(seed);
         Settings s = settings;
         double span = hi() - lo() - 2;
-        int grid = 3;
-        int[][] id = new int[2][grid * grid];
+        int grid = 3, extraRows = s.approachRows();
+        // rows of junctions per level: the upper level runs under the approach and the arena, the lower one under the
+        // arena only; the cells of a level are numbered i * rows + j (i across x, j along z)
+        int[] rows = {grid + extraRows, grid};
+        int[][] id = new int[2][];
         for (int level = 0; level < 2; level++) {
+            int n0 = rows[level];
+            id[level] = new int[grid * n0];
+            double z0 = level == 0 ? lo() + 1 : s.arenaZ0() + lo() + 1;
+            double spanZ = level == 0 ? hiZ() - lo() - 2 : span;
             for (int i = 0; i < grid; i++) {
-                for (int j = 0; j < grid; j++) {
+                for (int j = 0; j < n0; j++) {
                     double x = lo() + 1 + (i + 0.5) * span / grid + r.nextDouble(-1.3, 1.3);
-                    double z = lo() + 1 + (j + 0.5) * span / grid + r.nextDouble(-1.3, 1.3);
+                    double z = z0 + (j + 0.5) * spanZ / n0 + r.nextDouble(-1.3, 1.3);
                     // the lower level never rises: the nest's high vault stays under the upper floors
                     int floor = level == 0 ? s.upper() + r.nextInt(3) - 1 : s.lower() - r.nextInt(2);
                     Node n = new Node(nodes.size(), x, z, floor, level, Kind.JUNCTION);
-                    id[level][i * grid + j] = n.id();
+                    id[level][i * n0 + j] = n.id();
                     nodes.add(n);
                 }
             }
             // random spanning tree over the grid (dead ends), then a couple of extra links (loops)
             List<int[]> candidates = new ArrayList<>();
             for (int i = 0; i < grid; i++) {
-                for (int j = 0; j < grid; j++) {
-                    if (i + 1 < grid) candidates.add(new int[]{i * grid + j, (i + 1) * grid + j});
-                    if (j + 1 < grid) candidates.add(new int[]{i * grid + j, i * grid + j + 1});
+                for (int j = 0; j < n0; j++) {
+                    if (i + 1 < grid) candidates.add(new int[]{i * n0 + j, (i + 1) * n0 + j});
+                    if (j + 1 < n0) candidates.add(new int[]{i * n0 + j, i * n0 + j + 1});
                 }
             }
             Collections.shuffle(candidates, r);
-            int[] parent = new int[grid * grid];
+            int[] parent = new int[grid * n0];
             for (int k = 0; k < parent.length; k++) parent[k] = k;
             List<int[]> extra = new ArrayList<>();
             for (int[] c : candidates) {
@@ -163,14 +203,20 @@ public final class GalleryPlan {
                     extra.add(c);
                 }
             }
-            for (int k = 0; k < Math.min(2, extra.size()); k++) links.add(new int[]{id[level][extra.get(k)[0]], id[level][extra.get(k)[1]]});
+            int loops = 2 + (level == 0 ? extraRows / 2 : 0);
+            for (int k = 0; k < Math.min(loops, extra.size()); k++) links.add(new int[]{id[level][extra.get(k)[0]], id[level][extra.get(k)[1]]});
         }
-        // two long ramps between the levels: an upper junction to a lower one two cells away (gentle slope)
+        // two long ramps between the levels: an upper junction over the arena to a lower one two cells away
         List<int[]> ramps = new ArrayList<>();
-        for (int a = 0; a < grid * grid; a++) {
-            for (int b = 0; b < grid * grid; b++) {
-                int di = Math.abs(a / grid - b / grid), dj = Math.abs(a % grid - b % grid);
-                if (di == 2 && dj == 0 || di == 0 && dj == 2) ramps.add(new int[]{id[0][a], id[1][b]});
+        for (int i = 0; i < grid; i++) {
+            for (int j = 0; j < grid; j++) {
+                for (int i2 = 0; i2 < grid; i2++) {
+                    for (int j2 = 0; j2 < grid; j2++) {
+                        int di = Math.abs(i - i2), dj = Math.abs(j - j2);
+                        if (di == 2 && dj == 0 || di == 0 && dj == 2)
+                            ramps.add(new int[]{id[0][i * rows[0] + j + extraRows], id[1][i2 * grid + j2]});
+                    }
+                }
             }
         }
         Collections.shuffle(ramps, r);
@@ -189,8 +235,9 @@ public final class GalleryPlan {
             links.add(rp);
             made++;
         }
-        // entrance: an upper corner junction; the nest: the lower junction farthest from it along the links
-        int entranceId = id[0][r.nextBoolean() ? 0 : grid * grid - 1];
+        // entrance: an upper corner junction (with an approach: the middle one of the first row, the farthest from the
+        // arena); the nest: the lower junction farthest from it along the links
+        int entranceId = extraRows > 0 ? id[0][rows[0]] : id[0][r.nextBoolean() ? 0 : grid * grid - 1];
         List<Point>[] paths = carveLinks(r);
         double[] dist = distances(entranceId);
         int nestId = -1;
@@ -203,14 +250,20 @@ public final class GalleryPlan {
         mark(nestId, Kind.NEST);
         entrance = nodes.get(entranceId);
         nest = nodes.get(nestId);
-        // two rooms: one per level, never the entrance nor the nest
+        // rooms: one per level under the arena, and with an approach one more per row of it (never the entrance)
         for (int level = 0; level < 2; level++) {
             List<Integer> pick = new ArrayList<>();
-            for (int k = 0; k < grid * grid; k++) {
-                int n = id[level][k];
-                if (n != entranceId && n != nestId) pick.add(n);
+            for (int i = 0; i < grid; i++) {
+                for (int j = level == 0 ? extraRows : 0; j < rows[level]; j++) {
+                    int n = id[level][i * rows[level] + j];
+                    if (n != entranceId && n != nestId) pick.add(n);
+                }
             }
             mark(pick.get(r.nextInt(pick.size())), Kind.ROOM);
+        }
+        for (int j = 1; j < extraRows; j++) {
+            int n = id[0][r.nextInt(grid) * rows[0] + j];
+            if (n != entranceId && nodes.get(n).kind() == Kind.JUNCTION) mark(n, Kind.ROOM);
         }
         // junctions, rooms, entrance, nest
         for (Node n : nodes) {
@@ -219,25 +272,42 @@ public final class GalleryPlan {
                     carve(n.x(), n.floor(), n.z(), NEST_RADIUS, 3.3, 2.4);
                     carve(n.x(), n.floor(), n.z(), NEST_RADIUS * 0.75, 3.4, 2.4);
                 }
-                case ROOM -> carve(n.x(), n.floor(), n.z(), 3.4, 2.6, 1.6);
+                case ROOM -> carve(n.x(), n.floor(), n.z(), extraRows > 0 ? 4.2 : 3.4, 2.6, 1.6);
                 case ENTRANCE -> carve(n.x(), n.floor(), n.z(), 2.8, 2.4, 1.4);
                 default -> carve(n.x(), n.floor(), n.z(), 2.1, 2.1, 1.2);
             }
         }
         // short spurs ending in nothing (dead ends with claw marks)
-        int spurs = 3;
+        int spurs = 3 + extraRows;
         for (int tries = 0; spurs > 0 && tries < 60; tries++) {
             Node from = nodes.get(r.nextInt(nodes.size()));
             if (from.kind() == Kind.NEST || from.kind() == Kind.ENTRANCE) continue;
             double a = r.nextDouble(Math.PI * 2), len = r.nextDouble(4.5, 7);
             double ex = from.x() + Math.cos(a) * len, ez = from.z() + Math.sin(a) * len;
-            if (ex < lo() + 1.5 || ez < lo() + 1.5 || ex > hi() - 1.5 || ez > hi() - 1.5) continue;
+            if (ex < lo() + 1.5 || ez < lo() + 1.5 || ex > hi() - 1.5 || ez > hiZ() - 1.5) continue;
             Point end = new Point(ex, ez, from.floor() + (r.nextBoolean() ? 1 : 0));
             List<Point> path = curve(r, new Point(from.x(), from.z(), from.floor()), end, 1.2);
             dig(path, r);
             tunnels.add(path);
             deadEnds.add(end);
             spurs--;
+        }
+        // the burrow hole: on the approach ground, about halfway to the arena; a ramp goes down from it to the entrance
+        if (extraRows > 0) {
+            Node e = nodes.get(entranceId);
+            double hz = Math.min(s.arenaZ0() - 8, e.z() + 2 * (s.top() - e.floor()) + 2);
+            hole = new Point(e.x() + r.nextDouble(-2, 2), hz, s.top());
+            List<Point> ramp = new ArrayList<>(curve(r, hole, new Point(e.x(), e.z(), e.floor()), 1.4));
+            // a straight even slope: the floor goes down one block every two
+            for (int i = 0; i < ramp.size(); i++) {
+                Point q = ramp.get(i);
+                double t = (double) i / Math.max(1, ramp.size() - 1);
+                ramp.set(i, new Point(q.x(), q.z(), (int) Math.round(s.top() - 1 + (e.floor() - s.top() + 1) * t)));
+            }
+            surfaceOpen = true;
+            dig(ramp, r);
+            surfaceOpen = false;
+            tunnels.add(ramp);
         }
         // the trail: shortest way from the entrance to the nest
         List<Integer> route = route(entranceId, nestId);
@@ -320,13 +390,14 @@ public final class GalleryPlan {
         return 0.5 * (2 * p1 + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 + (-p0 + 3 * p1 - 3 * p2 + p3) * t3);
     }
 
-    /** Digs a tunnel along its points: about 3 wide, 4 high, the width wavering a little. */
+    /** Digs a tunnel along its points: about 3 wide, 4 high (3 with an approach: a narrower burrow), wavering a little. */
     private void dig(List<Point> path, Random r) {
         double phase = r.nextDouble(Math.PI * 2);
+        boolean narrow = settings.approachRows() > 0;
         for (int i = 0; i < path.size(); i++) {
             Point p = path.get(i);
-            double rw = 1.75 + 0.2 * Math.sin(phase + i * 0.23);
-            carve(p.x(), p.floor(), p.z(), rw, 2.0, 1.2);
+            double rw = (narrow ? 1.6 : 1.75) + 0.2 * Math.sin(phase + i * 0.23);
+            carve(p.x(), p.floor(), p.z(), rw, narrow ? 1.75 : 2.0, narrow ? 1.0 : 1.2);
         }
     }
 
@@ -391,7 +462,7 @@ public final class GalleryPlan {
 
     /** Stand cells reachable from the entrance by walking (steps of one block, head room to climb one). */
     public boolean[] reachable() {
-        int s = settings.size();
+        int s = settings.size(), depthZ = settings.depth();
         boolean[] seen = new boolean[air.length];
         if (entrance == null) return seen;
         int ex = (int) Math.floor(entrance.x()), ez = (int) Math.floor(entrance.z());
@@ -406,7 +477,8 @@ public final class GalleryPlan {
             for (int[] d : dirs) {
                 for (int dy = -1; dy <= 1; dy++) {
                     int nx = c[0] + d[0], ny = c[1] + dy, nz = c[2] + d[1];
-                    if (nx < 0 || nz < 0 || nx >= s || nz >= s) continue;
+                    if (nx < 0 || nz < 0 || nx >= s || nz >= depthZ) continue;
+                    if (ny > settings.top()) continue;
                     if (!standable(nx, ny, nz)) continue;
                     if (dy == 1 && !air(c[0], c[1] + 2, c[2])) continue;      // head room to jump up
                     if (dy == -1 && !air(nx, ny + 2, nz)) continue;            // head room to step down
@@ -430,7 +502,7 @@ public final class GalleryPlan {
         int stand = 0, reached = 0;
         int s = settings.size();
         for (int y = settings.bottom() + 1; y < settings.top(); y++) {
-            for (int z = 0; z < s; z++) {
+            for (int z = 0; z < settings.depth(); z++) {
                 for (int x = 0; x < s; x++) {
                     if (!standable(x, y, z)) continue;
                     stand++;
@@ -452,7 +524,7 @@ public final class GalleryPlan {
     public String map(int y) {
         StringBuilder sb = new StringBuilder();
         int s = settings.size();
-        for (int z = 0; z < s; z++) {
+        for (int z = 0; z < settings.depth(); z++) {
             for (int x = 0; x < s; x++) {
                 char ch = air(x, y, z) ? '.' : '#';
                 if (entrance != null && (int) entrance.x() == x && (int) entrance.z() == z) ch = 'E';
