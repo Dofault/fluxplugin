@@ -15,7 +15,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.plugin.java.JavaPlugin;
+import fr.influencraft.flux.api.FluxPlugin;
 import org.bukkit.util.Vector;
 
 import java.util.Collection;
@@ -34,13 +34,15 @@ final class Crossings implements Listener {
     /** How far inside the hole's edges the eyes must pass. */
     private static final double MARGIN = 0.15;
 
-    private final JavaPlugin plugin;
+    private final FluxPlugin plugin;
     private final Supplier<Collection<Portal>> portals;
     private final Map<UUID, Integer> last = new HashMap<>();
+    /** When a player was last told to wait (one message a second at most). */
+    private final Map<UUID, Integer> warned = new HashMap<>();
     /** Effects of a crossing (where he left, where he came out). */
     private final java.util.function.BiConsumer<Location, Location> travelled;
 
-    Crossings(JavaPlugin plugin, Supplier<Collection<Portal>> portals, java.util.function.BiConsumer<Location, Location> travelled) {
+    Crossings(FluxPlugin plugin, Supplier<Collection<Portal>> portals, java.util.function.BiConsumer<Location, Location> travelled) {
         this.plugin = plugin;
         this.portals = portals;
         this.travelled = travelled;
@@ -53,9 +55,6 @@ final class Crossings implements Listener {
         Player p = e.getPlayer();
         if (p.isInsideVehicle()) return;
         int now = Bukkit.getCurrentTick();
-        Integer was = last.get(p.getUniqueId());
-        // no going back and forth: a player waits (travel-cooldown, ticks) before taking a portal again
-        if (was != null && now - was < plugin.getConfig().getInt("travel-cooldown", 60)) return;
         String world = to.getWorld().getName();
         double eye = p.getEyeHeight();
         for (Portal portal : portals.get()) {
@@ -65,6 +64,17 @@ final class Crossings implements Listener {
                 if (!end.world().equals(world) || end.middle().distanceSquared(to.toVector()) > 100) continue;
                 Frame here = new Frame(end, portal.width(), portal.height());
                 if (!here.entered(from.getX(), from.getY() + eye, from.getZ(), to.getX(), to.getY() + eye, to.getZ(), MARGIN)) continue;
+                // no going back and forth: a player waits (travel-cooldown, ticks) before taking a portal again
+                Integer was = last.get(p.getUniqueId());
+                int wait = plugin.getConfig().getInt("travel-cooldown", 60);
+                if (was != null && now - was < wait) {
+                    Integer told = warned.get(p.getUniqueId());
+                    if (told == null || now - told >= 20) {
+                        warned.put(p.getUniqueId(), now);
+                        plugin.messages().send(p, "cooldown", "%seconds%", String.valueOf((int) Math.ceil((wait - (now - was)) / 20.0)));
+                    }
+                    return;
+                }
                 last.put(p.getUniqueId(), now);
                 // never teleport inside a move event: next tick
                 Bukkit.getScheduler().runTask(plugin, () -> carry(p, portal, end));
@@ -117,5 +127,6 @@ final class Crossings implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
         last.remove(e.getPlayer().getUniqueId());
+        warned.remove(e.getPlayer().getUniqueId());
     }
 }

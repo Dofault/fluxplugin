@@ -32,6 +32,7 @@ now-link: "&#8A8A8ANow go to the other end, look at the floor of its opening: [/
 ready: "&#2ECF7BThe portal &#FFD94D%name% &#2ECF7Bis open both ways."
 opened: "&#2ECF7BPortal &#FFD94D%name% &#2ECF7Bopen."
 closed: "&#8A8A8APortal &#FFD94D%name% &#8A8A8Aclosed: no window, no way through."
+cooldown: "&#FF5C5CNot so fast!&#8A8A8A You can take a portal again in &f%seconds% s&#8A8A8A."
 removed: "&#2ECF7BPortal &#FFD94D%name% &#2ECF7Bremoved."
 list-empty: "&#8A8A8ANo portal yet: [/%cmd% %create% <name>]"
 list-header: "&#8A8A8APortals (&f%count%&#8A8A8A):"
