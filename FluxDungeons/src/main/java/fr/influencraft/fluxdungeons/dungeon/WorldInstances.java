@@ -117,6 +117,9 @@ final class WorldInstances {
         w.setGameRule(GameRules.KEEP_INVENTORY, true);
         w.setGameRule(GameRules.IMMEDIATE_RESPAWN, true);
         w.setGameRule(GameRules.MOB_GRIEFING, false);
+        // a map is a set: lava never sets the wood near it on fire, nothing grows, decays or spreads
+        w.setGameRule(GameRules.FIRE_SPREAD_RADIUS_AROUND_PLAYER, 0);
+        w.setGameRule(GameRules.RANDOM_TICK_SPEED, 0);
         w.setGameRule(GameRules.MOB_DROPS, false);
         w.setGameRule(GameRules.BLOCK_DROPS, false);
         // monster hits are normalized by FluxDungeons; the difficulty only changes vanilla extras (hunger, fire)
