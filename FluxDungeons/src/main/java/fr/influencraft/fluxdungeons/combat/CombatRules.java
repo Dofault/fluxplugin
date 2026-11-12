@@ -174,8 +174,7 @@ public final class CombatRules implements Listener {
     private static int meleeGap(Entity damager) {
         if (!(damager instanceof Player p)) return MELEE_GAP;
         org.bukkit.inventory.ItemStack hand = p.getInventory().getItemInMainHand();
-        boolean paced = !hand.isEmpty() && hand.isDataOverridden(io.papermc.paper.datacomponent.DataComponentTypes.MINIMUM_ATTACK_CHARGE);
-        return paced ? MELEE_GAP : VANILLA_GAP;
+        return AttackCadence.paced(hand) ? MELEE_GAP : VANILLA_GAP;
     }
 
     private boolean tooSoon(LivingEntity mob, String source, int gap) {

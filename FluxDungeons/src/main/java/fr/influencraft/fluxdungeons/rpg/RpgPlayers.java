@@ -56,8 +56,6 @@ public final class RpgPlayers implements Listener {
      */
     private static final NamespacedKey WEAPON_SPEED = new NamespacedKey("fluxdungeons", "rpg_weapon_speed");
     private static final NamespacedKey REACH = new NamespacedKey("fluxdungeons", "rpg_reach");
-    /** Swing of the weapon as a share of its recharge (the client restarts a swing a little before its end). */
-    private static final double SWING_SHARE = 0.8;
     /** Seconds without hitting nor being hit before the fast out-of-combat regeneration. */
     private static final int CALM_TICKS = 100;
 
@@ -469,22 +467,9 @@ public final class RpgPlayers implements Listener {
         }
         ItemStack hand = p.getInventory().getItemInMainHand();
         if (RpgItems.idOf(hand) == null) return;
-        int swing = (int) Math.max(3, Math.round(20 / Math.max(0.1, attacks) * SWING_SHARE));
         boolean changed = weaponSpeed(hand, attacks);
-        Float charge = hand.isDataOverridden(io.papermc.paper.datacomponent.DataComponentTypes.MINIMUM_ATTACK_CHARGE)
-                ? hand.getData(io.papermc.paper.datacomponent.DataComponentTypes.MINIMUM_ATTACK_CHARGE) : null;
-        if (charge == null || charge < 0.999f) {
-            hand.setData(io.papermc.paper.datacomponent.DataComponentTypes.MINIMUM_ATTACK_CHARGE, 1f);
-            changed = true;
-        }
-        var anim = hand.isDataOverridden(io.papermc.paper.datacomponent.DataComponentTypes.SWING_ANIMATION)
-                ? hand.getData(io.papermc.paper.datacomponent.DataComponentTypes.SWING_ANIMATION) : null;
-        if (anim == null || anim.duration() != swing) {
-            hand.setData(io.papermc.paper.datacomponent.DataComponentTypes.SWING_ANIMATION,
-                    io.papermc.paper.datacomponent.item.SwingAnimation.swingAnimation()
-                            .type(io.papermc.paper.datacomponent.item.SwingAnimation.Animation.WHACK).duration(swing).build());
-            changed = true;
-        }
+        // the server's one cadence (charge needed, slow swing) at the player's own pace
+        changed |= fr.influencraft.fluxdungeons.combat.AttackCadence.pace(hand, attacks);
         if (changed) p.getInventory().setItemInMainHand(hand);
     }
 
