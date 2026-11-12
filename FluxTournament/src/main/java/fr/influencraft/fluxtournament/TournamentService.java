@@ -378,6 +378,11 @@ final class TournamentService {
         return plugin.messages().raw("names." + p.kind().id(), vars(p));
     }
 
+    /** Item sprite of the tournament's resource or job, for the chat ("" without one: Bedrock shows nothing). */
+    String iconTag(Plan p) {
+        return fr.influencraft.flux.api.text.ItemSprites.tag(Material.matchMaterial(icon(p)));
+    }
+
     /** Short name for the boss bar ({@code short-names.<kind>}). */
     String shortName(Plan p) {
         return plugin.messages().raw("short-names." + p.kind().id(), vars(p));
@@ -432,7 +437,8 @@ final class TournamentService {
     }
 
     private void broadcast(String key, Plan plan, String... extra) {
-        String[] vars = concat(concat(vars(plan), "{name}", name(plan), "{description}", description(plan)), extra);
+        String[] vars = concat(concat(vars(plan), "{name}", name(plan), "{short}", shortName(plan), "{icon}", iconTag(plan),
+                "{description}", description(plan)), extra);
         for (Player p : Bukkit.getOnlinePlayers()) plugin.messages().send(p, key, vars);
         Bukkit.getConsoleSender().sendMessage("[FluxTournament] " + key + ": " + Texts.plain(name(plan), null));
     }
@@ -450,7 +456,7 @@ final class TournamentService {
         run.rankingsSent++;
         List<Score> ranking = run.ranking();
         if (ranking.isEmpty()) return;
-        String[] vars = concat(podiumVars(run, ranking), "{name}", shortName(run.plan), "{time}", clock((run.ends - now) / 1000),
+        String[] vars = concat(podiumVars(run, ranking), "{name}", shortName(run.plan), "{icon}", iconTag(run.plan), "{time}", clock((run.ends - now) / 1000),
                 "{players}", String.valueOf(ranking.size()));
         for (Score s : ranking) {
             Player p = Bukkit.getPlayer(s.uuid);
