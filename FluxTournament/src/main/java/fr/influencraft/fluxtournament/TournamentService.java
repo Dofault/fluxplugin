@@ -1,5 +1,6 @@
 package fr.influencraft.fluxtournament;
 
+import fr.influencraft.flux.api.client.Focus;
 import fr.influencraft.flux.api.draw.Draws;
 import fr.influencraft.flux.api.economy.Economy;
 import fr.influencraft.flux.api.economy.Origin;
@@ -264,7 +265,8 @@ final class TournamentService {
     /** Who watches a draw and plays a tournament: players outside the rpg universe. */
     List<Player> viewers() {
         List<Player> out = new ArrayList<>();
-        for (Player p : Bukkit.getOnlinePlayers()) if (notified(p)) out.add(p);
+        // in a dungeon run the screen belongs to the dungeon: the chat still tells them
+        for (Player p : Bukkit.getOnlinePlayers()) if (notified(p) && !Focus.focused(p)) out.add(p);
         return out;
     }
 
@@ -511,7 +513,7 @@ final class TournamentService {
         String title = shortName(run.plan);
         String kind = kindIcon(run.plan.kind());
         for (Player p : Bukkit.getOnlinePlayers()) {
-            if (!notified(p)) {
+            if (!notified(p) || Focus.focused(p)) {
                 hide(p);
                 continue;
             }

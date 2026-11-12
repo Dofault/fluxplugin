@@ -223,6 +223,8 @@ public final class FluxDungeons extends FluxPlugin {
                 return runs.isDungeonWorld(world);
             }
         });
+        // a run has the player's screen: other plugins keep their boss bars and draws off it (tournaments)
+        fr.influencraft.flux.api.client.Focus.register(this, player -> runs.runOf(player) != null);
         placeholders("fluxdungeons", (player, params) -> runs.placeholder(player, params));
         combat = new fr.influencraft.fluxdungeons.combat.CombatRules(this, runs, heroes, mobs);
         combat.hitReaction(getConfig().getConfigurationSection("hit-reaction"));
