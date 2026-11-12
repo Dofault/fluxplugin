@@ -612,14 +612,20 @@ final class Burrows {
         plugin.getLogger().info("Lair: " + swapped + " blocks in the RPG look.");
     }
 
+    /** Biome of the RPG grass and leaves of the lairs (the colour painted in their texture, gen_rpg_blocs.py BIOMES). */
+    private static final String BIOME = "plains";
+
     private Map<Material, BlockData> rpgBlocks() {
         java.io.File f = new java.io.File(plugin.getDataFolder(), "rpg_blocs.yml");
         if (!f.isFile()) return Map.of();
         ConfigurationSection c = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(f).getConfigurationSection("blocks");
         if (c == null) return Map.of();
         Map<Material, BlockData> out = new HashMap<>();
+        // grass and leaves come painted in one biome colour each (<block>__<biome>): the lair takes the plains ones
         for (String id : c.getKeys(false)) {
-            Material m = Material.matchMaterial(id);
+            String[] parts = id.split("__", 2);
+            if (parts.length == 2 && !parts[1].equals(BIOME)) continue;
+            Material m = Material.matchMaterial(parts[0]);
             if (m == null) continue;
             try {
                 out.put(m, Bukkit.createBlockData(c.getString(id, "")));

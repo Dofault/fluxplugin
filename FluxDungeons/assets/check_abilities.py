@@ -10,7 +10,7 @@ import sys
 
 import yaml
 
-NOT_ATTACKS = {"stone_skin", "shield", "heal", "enrage", "phase_shift", "entrance", "mole_phase", "copper_phase",
+NOT_ATTACKS = {"stone_skin", "shield", "heal", "enrage", "leap", "phase_shift", "entrance", "mole_phase", "copper_phase",
                "copper_roar", "sala_frenzy", "sala_awaken"}
 WANTED = {1: 2, 2: 3, 3: 4}
 

@@ -5,7 +5,8 @@ block state), so the dungeons can wear the pack while the same vanilla blocks ke
 The textures are not in this repository (third-party pack, no redistribution): the pack's zip is read where it lies.
 
   gen_rpg_blocs.py build <pack.zip> [server]   writes plugins/ItemsAdder/contents/rpgblocs/ (configs, models,
-                                               textures) on the server, then `iazip` has to run;
+                                               textures) on the server, then `iazip` has to run; paints the grass and
+                                               leaves with their biome colour (BIOMES): needs Pillow (a venv);
   gen_rpg_blocs.py states [server]             after `iazip`: reads the note block states ItemsAdder gave each block
                                                (its generated pack) and writes plugins/FluxDungeons/rpg_blocs.yml,
                                                read by the map scripts (maplib, `Map.textures = "rpg"`).
@@ -95,6 +96,65 @@ for c, old in COLORS.items():
 
 NAMES = {"stone": "Pierre", "cobblestone": "Pierre taillée", "prismarine": "Prismarine", "spruce_planks": "Planches de sapin"}
 
+# Tinted blocks. The game paints grass and leaves with the biome's colour, which it never does for a note block: the
+# colour is painted into the texture here instead, one block per biome a map needs (case by case, not every biome).
+# A map picks its biome (`Map.biome`, plains by default); maplib swaps `<block>` for `<block>__<biome>` and sets that
+# biome on the map, so the vanilla plants left (short grass, ferns, vines) wear the same green.
+# Colours: the game's own for those biomes (grass, foliage).
+BIOMES = {
+    "plains": ("91BD59", "77AB2F", ["grass_block", "oak_leaves", "dark_oak_leaves"]),          # lobby, moisson, caves
+    "forest": ("79C05A", "59AE30", ["grass_block", "oak_leaves", "dark_oak_leaves", "jungle_leaves"]),   # herboriste
+    "dark_forest": ("507A32", "59AE30", ["grass_block", "oak_leaves", "dark_oak_leaves"]),      # sylviculteur
+}
+BIOME_NAMES = {"plains": "plaine", "forest": "forêt", "dark_forest": "forêt sombre"}
+# leaves: the pack's opaque texture (a note block is a solid cube: the "fast graphics" look of the leaves)
+LEAVES = {"oak_leaves": "leaves_oak_opaque", "dark_oak_leaves": "leaves_big_oak_opaque",
+          "jungle_leaves": "leaves_jungle_opaque", "acacia_leaves": "leaves_acacia_opaque"}
+# leaves the game paints with one colour whatever the biome: one block each
+FIXED = {"birch_leaves": ("leaves_birch_opaque", "80A755"), "spruce_leaves": ("leaves_spruce_opaque", "619961")}
+
+
+def tinted_table():
+    """id -> (kind, textures) of every tinted block, as TABLE (textures are the painted files of our namespace)."""
+    out = {}
+    for biome, (grass, foliage, blocks) in BIOMES.items():
+        for b in blocks:
+            bid = f"{b}__{biome}"
+            out[bid] = ("bottom_top", f"{bid}_side", f"{bid}_top", "dirt") if b == "grass_block" else ("all", bid)
+    for b in FIXED:
+        out[b] = ("all", b)
+    return out
+
+
+def paint(z, files, rp):
+    """Writes the tinted textures (Pillow needed: run `build` with a python that has it) and returns their ids."""
+    import io
+    from PIL import Image, ImageChops
+
+    def img(name):
+        return Image.open(io.BytesIO(z.read(files[name + ".png"]))).convert("RGBA")
+
+    def tint(im, hexa):
+        rgb = tuple(int(hexa[i:i + 2], 16) for i in (0, 2, 4)) + (255,)
+        return ImageChops.multiply(im, Image.new("RGBA", im.size, rgb))
+
+    def save(im, name):
+        im.save(os.path.join(rp, "textures", "block", name + ".png"))
+
+    for biome, (grass, foliage, blocks) in BIOMES.items():
+        for b in blocks:
+            bid = f"{b}__{biome}"
+            if b == "grass_block":
+                save(tint(img("grass_top"), grass), f"{bid}_top")
+                side = img("grass_side")
+                side.alpha_composite(tint(img("grass_side_overlay"), grass))
+                save(side, f"{bid}_side")
+            else:
+                save(tint(img(LEAVES[b]), foliage), bid)
+    for b, (tex, colour) in FIXED.items():
+        save(tint(img(tex), colour), b)
+    return tinted_table()
+
 
 def server_dir(server):
     return os.path.join(ROOT, "serveurs", SERVERS[server])
@@ -129,12 +189,23 @@ def build(pack, server):
         with open(os.path.join(rp, "models", "block", bid + ".json"), "w") as f:
             json.dump(model, f, indent=1)
         made.append(bid)
+    for bid, (kind, *tex) in sorted(paint(z, files, rp).items()):
+        if "dirt" in tex:
+            with open(os.path.join(rp, "textures", "block", "dirt.png"), "wb") as f:
+                f.write(z.read(files["dirt.png"]))
+        ref = [f"{NS}:block/{t}" for t in tex]
+        model = ({"parent": "minecraft:block/cube_all", "textures": {"all": ref[0]}} if kind == "all" else
+                 {"parent": "minecraft:block/cube_bottom_top", "textures": {"side": ref[0], "top": ref[1], "bottom": ref[2]}})
+        with open(os.path.join(rp, "models", "block", bid + ".json"), "w") as f:
+            json.dump(model, f, indent=1)
+        made.append(bid)
     lines = ["# Generated by plugins/fluxplugin/FluxDungeons/assets/rpg_blocs/gen_rpg_blocs.py: do not edit, rerun it.",
              "# Blocks of the RPG texture pack, placed only in dungeon maps (FluxDungeons, rpg_blocs.yml); the vanilla",
              "# block of the same name keeps its usual look everywhere else.",
              "info:", f"  namespace: {NS}", "items:"]
     for bid in made:
-        name = NAMES.get(bid, bid.replace("_", " ").capitalize())
+        base, _, biome = bid.partition("__")
+        name = NAMES.get(base, base.replace("_", " ").capitalize()) + (f" ({BIOME_NAMES[biome]})" if biome else "")
         lines += [f"  {bid}:",
                   f"    display_name: '&f{name} &7(donjon RPG)'",
                   "    permission: rpgblocs.admin",
@@ -197,7 +268,7 @@ def states(server):
     with open(path, "w") as f:
         f.write("\n".join(lines) + "\n")
     print(f"{len(found)} states written to {path}")
-    absent = sorted(set(TABLE) - set(found))
+    absent = sorted((set(TABLE) | set(tinted_table())) - set(found))
     if absent:
         print("without a state (not generated?):", ", ".join(absent))
 
@@ -225,9 +296,19 @@ def bedrock(server, rpg_pack=None):
     files = {n.split("textures/blocks/")[-1]: n for n in z.namelist() if "/textures/blocks/" in n} if z else {}
     terrain, overrides = {}, {}
 
+    painted = os.path.join(base, "plugins", "ItemsAdder", "contents", NS, "resourcepack", "assets", NS, "textures", "block")
+    tinted = tinted_table()
+    painted_names = {t for _, *ts in tinted.values() for t in ts if t != "dirt"}
+
     def short(tex):
         key = f"{NS}_{tex}"
-        if z and tex + ".png" in files:
+        if tex in painted_names:          # painted here (biome colour): no Bedrock texture of that name
+            os.makedirs(os.path.join(pack, "textures", "blocks", NS), exist_ok=True)
+            with open(os.path.join(painted, tex + ".png"), "rb") as src, \
+                    open(os.path.join(pack, "textures", "blocks", NS, tex + ".png"), "wb") as f:
+                f.write(src.read())
+            terrain[key] = {"textures": f"textures/blocks/{NS}/{tex}"}
+        elif z and tex + ".png" in files:
             os.makedirs(os.path.join(pack, "textures", "blocks", NS), exist_ok=True)
             with open(os.path.join(pack, "textures", "blocks", NS, tex + ".png"), "wb") as f:
                 f.write(z.read(files[tex + ".png"]))
@@ -237,9 +318,9 @@ def bedrock(server, rpg_pack=None):
         return key
 
     for bid, state in sorted(states.items()):
-        if bid not in TABLE:
+        if bid not in TABLE and bid not in tinted:
             continue
-        kind, *tex = TABLE[bid]
+        kind, *tex = TABLE.get(bid) or tinted[bid]
         opaque = {"render_method": "opaque"}
         if kind == "all":
             mats = {"*": {"texture": short(tex[0]), **opaque}}

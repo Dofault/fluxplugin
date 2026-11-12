@@ -36,6 +36,8 @@ class Map:
         self.textures = None   # "rpg": full blocks swapped for the RPG pack's (plugins/FluxDungeons/rpg_blocs.yml)
         self.ybox = (0, 128)   # heights the swap covers
         self.after = []        # commands run after the swap (blocks that must stay vanilla), use "strict"
+        self.biome = None      # biome set on the whole map (fillbiome) and colour of its RPG grass and leaves
+        self.ambience = []     # sounds and particles placed in the map (FluxDungeons dungeon.Ambience)
 
     # ------------------------------------------------------------ blocks
     def fill(self, x0, y0, z0, x1, y1, z1, block, mode=""):
@@ -82,6 +84,12 @@ class Map:
         self.doors.append({"id": id, "type": type, "from": list(frm), "to": list(to), "room": str(room),
                            "kills": kills, "radius": float(radius)})
 
+    def sound(self, x, y, z, sounds, radius=14, every=(100, 220), particle=None):
+        """An ambience emitter: sounds is a list of (sound id, volume, pitch); particle a dict (type, count, spread,
+        speed, every). Heard only near it, placed at it (dungeon.Ambience)."""
+        self.ambience.append({"at": [x + 0.5, float(y), z + 0.5], "radius": radius, "every": list(every),
+                              "sounds": [{"sound": s, "volume": v, "pitch": p} for s, v, p in sounds], "particle": particle})
+
     # ------------------------------------------------------------ output
     def edits_yaml(self, dungeon):
         out = [f"# Points of the dungeon written by assets/maps/gen_{dungeon}.py (map, monsters, rooms, doors): they",
@@ -104,6 +112,18 @@ class Map:
             out.append(f"    room: '{d['room']}'")
             out.append(f"    kills: {d['kills']}")
             out.append(f"    radius: {d['radius']}")
+        if self.ambience:
+            out.append("  ambience:")
+            for a in self.ambience:
+                out.append("  - at: [" + ", ".join(str(v) for v in a["at"]) + "]")
+                out.append(f"    radius: {a['radius']}")
+                out.append(f"    every: [{a['every'][0]}, {a['every'][1]}]")
+                out.append("    sounds:" + ("" if a["sounds"] else " []"))
+                for s in a["sounds"]:
+                    out.append(f"    - {{sound: {s['sound']}, volume: {s['volume']}, pitch: {s['pitch']}}}")
+                if a["particle"]:
+                    p = a["particle"]
+                    out.append("    particle: {" + ", ".join(f"{k}: {list(v) if isinstance(v, tuple) else v}" for k, v in p.items()) + "}")
         return "\n".join(out) + "\n"
 
 
@@ -156,6 +176,10 @@ def retexture(m, server, used=None):
             parts = cmd.split()
             if parts[0] in ("fill", "setblock"):
                 used.add(parts[7 if parts[0] == "fill" else 4].split("[")[0])
+    # grass and leaves: the block painted in the map's biome colour (gen_rpg_blocs.py BIOMES)
+    biome = m.biome or "plains"
+    table = {vid: table.get(f"{vid}__{biome}", table.get(vid)) for vid in set(table) | {k.split("__")[0] for k in table}}
+    table = {k: v for k, v in table.items() if v and "__" not in k}
     x0, z0, x1, z1 = m.box
     y0, y1 = m.ybox
     out = []
@@ -169,8 +193,19 @@ def retexture(m, server, used=None):
                     what = f"{vid}[axis=y]" if vid.endswith("_log") or vid in ("hay_block", "quartz_pillar") else vid
                     out.append(f"fill {xa} {ya} {za} {min(x1, xa + step - 1)} {min(y1, ya + h - 1)} {min(z1, za + step - 1)} "
                                f"{table[vid]} replace {what} strict")
-    print(f"RPG look: {len(used & set(table))} kinds of blocks swapped, kept vanilla: {', '.join(sorted(used - set(table)))}")
+    print(f"RPG look ({biome}): {len(used & set(table))} kinds of blocks swapped, kept vanilla: {', '.join(sorted(used - set(table)))}")
     return out
+
+
+def biome_cmds(m):
+    """fillbiome commands painting the map's box with its biome (Map.biome), nothing without one."""
+    if not m.biome:
+        return []
+    x0, z0, x1, z1 = m.box
+    y0, y1 = m.ybox
+    b = Map()
+    b.fill(x0, y0, z0, x1, y1, z1, "X")
+    return [c.replace("fill ", "fillbiome ", 1).replace(" X", f" minecraft:{m.biome}") for c in b.cmds]
 
 
 def run(m, server, dungeon, world=None, keep_world=False):
@@ -211,6 +246,10 @@ def run(m, server, dungeon, world=None, keep_world=False):
                 if bad < 20:
                     print(cmd, "->", o)
         print(f"{len(swap)} swap commands, {bad} errors")
+    for cmd in biome_cmds(m):
+        o = c.send(f"execute in minecraft:{world} run {cmd}")
+        if o and any(b in o for b in BAD):
+            print(cmd, "->", o)
     print(c.send(f"execute in minecraft:{world} run forceload remove all"))
     print(c.send("save-all flush"))
     time.sleep(4)

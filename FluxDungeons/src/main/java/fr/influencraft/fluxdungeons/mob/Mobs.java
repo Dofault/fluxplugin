@@ -456,6 +456,9 @@ public final class Mobs {
             le.setCustomNameVisible(!t.boss() && (bars == null || !bars.enabled()));
             le.setRemoveWhenFarAway(false);
             le.setPersistent(true);
+            // hoglins and piglins turn into zombies out of the Nether after 15 s: not a dungeon's boars
+            if (le instanceof org.bukkit.entity.Hoglin h) h.setImmuneToZombification(true);
+            if (le instanceof org.bukkit.entity.PiglinAbstract pa) pa.setImmuneToZombification(true);
             le.setCanPickupItems(false);
             // no vanilla invulnerability after a hit: every source lands (limits per source in DungeonListener)
             le.setMaximumNoDamageTicks(0);

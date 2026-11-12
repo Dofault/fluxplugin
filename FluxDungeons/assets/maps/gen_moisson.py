@@ -843,6 +843,7 @@ room3()
 room4()
 room5()
 m.textures = "rpg"
+m.biome = "plains"           # RPG grass and leaves painted in that colour, biome set on the map
 m.ybox = (Y0, Y1)
 
 if __name__ == "__main__":

@@ -33,6 +33,8 @@ public final class Run {
     int livesLeft;
     int wave;
     UUID boss;
+    /** Server tick of the next sound of each ambience emitter of the map (Ambience), null before the first step. */
+    long[] ambience;
     /** Boss music started for the players of the run, null before. */
     String music;
     BossBar bossBar;

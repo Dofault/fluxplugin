@@ -348,7 +348,7 @@ public final class FluxDungeons extends FluxPlugin {
                     File edits = new File(getDataFolder(), "edits/" + id + ".yml");
                     if (edits.isFile() && y.isConfigurationSection("map")) {
                         YamlConfiguration e = YamlConfiguration.loadConfiguration(edits);
-                        for (String k : List.of("start", "spawns", "objectives", "doors")) if (e.contains("map." + k)) y.set("map." + k, e.get("map." + k));
+                        for (String k : List.of("start", "spawns", "objectives", "doors", "ambience")) if (e.contains("map." + k)) y.set("map." + k, e.get("map." + k));
                     }
                     defs.put(id, new DungeonDefinition(id, y));
                 } catch (RuntimeException e) {

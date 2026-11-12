@@ -961,10 +961,21 @@ public final class Runs {
                 spawnNear(run);
                 doors(run);
                 if (run.def.burrows() != null) burrows.tick(run);
+                ambience(run);
             }
             if (run.bossBar != null) updateBossBar(run);
             bossMusic(run);
         }
+    }
+
+    // ---------------------------------------------------------------- ambience
+
+    /** Sounds and particles placed in the map, near the players only (every 10 ticks, see Ambience). */
+    private void ambience(Run run) {
+        List<Ambience.Emitter> emitters = run.def.map().ambience();
+        if (emitters.isEmpty() || run.world == null) return;
+        if (run.ambience == null) run.ambience = new long[emitters.size()];
+        Ambience.tick(run.world, emitters, run.ambience, online(run), Bukkit.getCurrentTick(), 10);
     }
 
     // ---------------------------------------------------------------- music

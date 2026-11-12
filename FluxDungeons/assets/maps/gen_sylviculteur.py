@@ -523,6 +523,7 @@ deep_forest()
 ancient_forest()
 final_clearing()
 m.textures = "rpg"
+m.biome = "dark_forest"      # RPG grass and leaves painted in that colour, biome set on the map
 m.ybox = (Y0, Y1)
 
 if __name__ == "__main__":

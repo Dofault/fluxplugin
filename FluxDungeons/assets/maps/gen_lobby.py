@@ -565,7 +565,7 @@ def apply(server):
     c.send(W + f"forceload add {X0} {Z0} {X1} {Z1}")
     g.commands(m)
     bad = run(m.cmds)
-    swap = maplib.retexture(m, server) + list(m.after)
+    swap = maplib.retexture(m, server) + list(m.after) + maplib.biome_cmds(m)
     bad += run(swap)
     print(f"{len(m.cmds)} commands, {len(swap)} swap commands, {bad} errors")
     # the training dummies already placed go to their mark in the yard
@@ -598,6 +598,7 @@ wing(JOBS_EAST, 1)
 north()
 framing_buildings()
 m.textures = "rpg"
+m.biome = "plains"           # RPG grass and leaves painted in that colour, biome set on the map
 m.ybox = (Y0, Y1)
 
 if __name__ == "__main__":

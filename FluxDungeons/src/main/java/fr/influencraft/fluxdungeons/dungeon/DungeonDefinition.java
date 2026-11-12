@@ -139,7 +139,8 @@ public final class DungeonDefinition {
      * An imported map: {@code folder} (world folder, relative to the plugin folder), {@code start} place, monsters at
      * their spawn points, objectives (monsters whose death, last phase included, ends the dungeon), doors.
      */
-    public record MapSpec(String folder, double[] start, List<Spawn> spawns, List<String> objectives, List<Door> doors) {
+    public record MapSpec(String folder, double[] start, List<Spawn> spawns, List<String> objectives, List<Door> doors,
+                          List<Ambience.Emitter> ambience) {
         /** Monsters placed in a room. */
         public int roomSize(String room) {
             int n = 0;
@@ -223,7 +224,7 @@ public final class DungeonDefinition {
                     (int) d(b.get(0)), (int) d(b.get(1)), (int) d(b.get(2)), dm.get("room") == null ? "" : String.valueOf(dm.get("room")),
                     dm.get("kills") instanceof Number n ? n.intValue() : 0, dm.get("radius") instanceof Number n ? n.doubleValue() : 4, offering));
         }
-        return new MapSpec(m.getString("folder", ""), start, spawns, m.getStringList("objectives"), doors);
+        return new MapSpec(m.getString("folder", ""), start, spawns, m.getStringList("objectives"), doors, Ambience.read(m.getMapList("ambience")));
     }
 
     private static double d(Object o) {
