@@ -4,6 +4,7 @@ import fr.influencraft.flux.api.FluxPlugin;
 import fr.influencraft.flux.api.dialog.Dialogs;
 import fr.influencraft.flux.api.screen.Screens;
 import fr.influencraft.flux.api.universe.UniverseEnterEvent;
+import fr.influencraft.flux.api.client.Clients;
 import fr.influencraft.flux.api.universe.Universes;
 import fr.influencraft.flux.api.util.Sounds;
 import fr.influencraft.fluxdungeons.rpg.core.ClassDef;
@@ -645,7 +646,8 @@ public final class RpgPlayers implements Listener {
 
     private void showLevel(Player p, RpgPlayer r) {
         RpgConfig.Set set = config.get();
-        p.setLevel(r.level());
+        // Java players read the level in the hud's gem: level 0 hides the vanilla number (drawn only above 0) under it
+        p.setLevel(Clients.bedrock(p) ? r.level() : 0);
         double need = set == null ? 1 : set.balance().xpToNext(r.level());
         p.setExp((float) Math.max(0, Math.min(0.999, r.xp() / Math.max(1, need))));
     }

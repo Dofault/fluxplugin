@@ -17,8 +17,8 @@ import java.util.List;
  * action bar, opaque and one pixel larger than the hearts and food rows they cover (font {@code fluxdungeons:hud},
  * assets/gen_hud.py). The vanilla life, food and saturation stay full in that universe (the real ones are the
  * engine's), so the rows underneath never shake nor blink out of the cover. Beside the hotbar, the class's three
- * skills: A and F on its left, the weapon's skill (right click) on its right, each under a key cap, dimmed while the
- * mana does not cover it (assets/hud_spells.py). Bedrock players: life and mana written in the action bar
+ * skills: A and F on its left (all of it over an arcane ring, the class level in a gem above the bars), the weapon's skill (right click) on its right, each under a key cap, dimmed while the
+ * mana does not cover it (assets/hud_spells.py, hud_frame.py). Bedrock players: life and mana written in the action bar
  * ({@link Clients#bedrock}).
  */
 final class RpgHud {
@@ -32,19 +32,25 @@ final class RpgHud {
     private static final int BLANK = SPELLS.size(), DIM = BLANK + 1, SLOT = 22, KEY = 9;
     /** Left edge of each skill slot on the line (x 0 = one pixel left of the hotbar, which spans 1 to 183). */
     private static final int SLOT_A = -50, SLOT_F = -25, SLOT_RIGHT = 187;
+    /** In line with assets/hud_frame.py (gen_hud.py prints them): the frame's left edge and width, the gem's left edge. */
+    private static final int FRAME_X = -54, FRAME_W = 273, GEM_X = 83, GEM = 19;
 
     /** What the action bar shows now. */
     Component render(Player p, RpgPlayer r, double hp, double maxHp, double mana, double maxMana) {
         if (Clients.bedrock(p)) return text(hp, maxHp, mana, maxMana);
         StringBuilder b = new StringBuilder();
         int[] cursor = {0};
+        // the arcane ring first: everything else is drawn over it
+        moveTo(b, cursor, FRAME_X);
+        b.append('\uE430');
+        cursor[0] += FRAME_W + 1;
         ClassDef c = r.heroClass();
         if (c != null) {
             skill(b, cursor, SLOT_A, c.skills().get("a"), 0, r, mana);
             skill(b, cursor, SLOT_F, c.skills().get("f"), 1, r, mana);
             skill(b, cursor, SLOT_RIGHT, c.skills().get("right"), 2, r, mana);
-            moveTo(b, cursor, 0);
         }
+        moveTo(b, cursor, 0);
         // life bar over the hearts row (one pixel left of the hotbar's left end)
         b.append((char) (0xE100 + step(hp, maxHp)));
         cursor[0] += BAR + 1;
@@ -53,9 +59,22 @@ final class RpgHud {
         b.append((char) (0xE200 + step(mana, maxMana)));
         cursor[0] += BAR + 1;
         numbers(b, cursor, BAR + GAP, mana, maxMana);
-        // the line is centred (its width is where the pen ends, whatever was drawn left or right of it): 184 px, the hotbar's 182 plus one pixel on each side, both bars land on their rows
+        level(b, cursor, r.level());
+        // the line is centred (its width is where the pen ends, whatever was drawn left or right of it): 184 px,
+        // the hotbar's 182 plus one pixel on each side, both bars land on their rows
         moveTo(b, cursor, 2 * BAR + GAP);
         return Component.text(b.toString()).font(FONT).color(NamedTextColor.WHITE);
+    }
+
+    /** The class level in the gem over the middle of the bars (the vanilla level number is hidden, see RpgPlayers). */
+    private static void level(StringBuilder b, int[] cursor, int level) {
+        moveTo(b, cursor, GEM_X);
+        b.append('\uE431');
+        cursor[0] += GEM + 1;
+        String t = String.valueOf(Math.max(0, level));
+        moveTo(b, cursor, 92 + 1 - (t.length() * DIGIT - 1) / 2);
+        for (char ch : t.toCharArray()) b.append((char) (0xE440 + ch - '0'));
+        cursor[0] += t.length() * DIGIT;
     }
 
     /** One skill slot at {@code x} with its key cap ({@code key}: 0 = A, 1 = F, 2 = right click). */
