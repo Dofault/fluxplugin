@@ -1,0 +1,23 @@
+# Tirage au sort (api.draw.Draws de Flux, tournois) : environ 6 secondes de tension pendant que les candidats sont
+# barrés. Roulement de caisse claire qui se resserre, grosse caisse à chaque temps, montée qui grimpe d'une note par
+# temps. Le résultat a son propre son (repère draw-reveal) : le jingle s'arrête avant.
+title: "Tirage au sort"
+author: "Influencraft"
+bpm: 120
+steps-per-beat: 4
+beats-per-bar: 4
+
+tracks:
+  roulement: { instrument: snare, volume: 0.25 }
+  serre:     { instrument: snare, volume: 0.35 }
+  grosse:    { instrument: basedrum, volume: 0.55 }
+  montee:    { instrument: pling, volume: 0.35 }
+  cloche:    { instrument: bell, volume: 0.25 }
+
+sections:
+  jingle:
+    roulement: "x . x . x . x . x . x . x . x . x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x"
+    serre: ".:16 .:8 x x x x x x x x x x x x x x x x x x x x x x x x"
+    grosse: "x:4 x:4 x:4 x:4 x:4 x:4 x:4 x:4 x:4 x:4 x:4 x:4"
+    montee: "C4:4 D4:4 E4:4 F4:4 G4:4 A4:4 B4:4 C5:4 D5:4 E5:4 F5:4 G5:4"
+    cloche: ".:40 G5:2 B5:2 D6:4"
