@@ -3,10 +3,10 @@ no-menu: "&#FF5C5CThe tournament menu is missing."
 reloaded: "&#2ECF7BFluxTournament reloaded."
 
 draw-heading:
-  job: "Draw · Tournament"
-  resource: "Draw · Rush"
-  race: "Draw · Race"
-  variety: "Draw · Explorer"
+  job: "Tournament draw · Job"
+  resource: "Tournament draw · Rush"
+  race: "Tournament draw · Race"
+  variety: "Tournament draw · Explorer"
 
 names:
   job: "{job} tournament"
