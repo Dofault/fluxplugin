@@ -630,7 +630,8 @@ def parts():
     # rib cage, the pelvis. Square seen from above, so that they stay right whichever way the boss turns (BetterModel
     # keeps them axis aligned). Before the 2026-11-11 play test the only box was the polar bear's, under the chest:
     # a click on the skull or the hips went through.
-    for g, par, c, size in (("b_skull", "Head", on_head((0, 32.5, -53), (0, 0, 0))[0], (22, 17, 22)),
+    # the skull box reaches 3 units past the snout (a hit on the tip of the muzzle lands)
+    for g, par, c, size in (("b_skull", "Head", on_head((0, 31.5, -56), (0, 0, 0))[0], (26, 19, 26)),
                             ("b_chest", "Chest", (0, 24, -11), (30, 21, 30)),
                             ("b_hips", "Hips", (0, 23.5, 20), (22, 15, 20))):
         add(g, "boite_" + g[2:], c, size, (0, 0, 0), "hitbox")
@@ -704,6 +705,10 @@ if __name__ == "__main__":
     uv, atlases, sizes = bake(P, MATS, {})
     data = export(IDENT, NS, P, groups, uv, atlases, sizes)
     data["textures"] = data["textures"][:1]          # nothing glows: no emissive texture
+    # hit boxes have no texture on any face: BetterModel draws nothing for them (as the familiars' "hitbox" bone)
+    for e, q in zip(data["elements"], P):
+        if q[0] in HITBOX:
+            e["faces"] = {d: {"uv": [0, 0, 0, 0], "texture": None} for d in ("north", "east", "south", "west", "up", "down")}
     import ossacorne_anim as OA
     hidden = {e["uuid"] for e, q in zip(data["elements"], P) if q[0] in HITBOX}
     seen = dict(data, elements=[e for e in data["elements"] if e["uuid"] not in hidden])   # what players see
