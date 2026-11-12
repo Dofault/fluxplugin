@@ -26,7 +26,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Permanent portals (docs/technique/fluxportal.md): a rectangular hole on each side, anywhere, in any worlds. Each
  * side shows the other one in depth, block by block (the window: {@link Windows}, a text shader of the server's pack),
- * and walking into either one leads out of the other ({@link Crossings}). Bedrock players get nether portal blocks
+ * and walking into either one leads out of the other ({@link Crossings}); a flowing border, motes and sounds make it
+ * feel like a portal ({@link PortalLook}). Bedrock players get nether portal blocks
  * instead of the window ({@link BedrockView}). Saved in Flux's database, open to other plugins through
  * {@link Portals}, placed with {@code /portail} ({@link PortalCommand}).
  */
@@ -36,6 +37,7 @@ public final class FluxPortal extends FluxPlugin {
     private final Map<String, Portal> portals = new ConcurrentHashMap<>();
     private Windows windows;
     private BedrockView bedrock;
+    private PortalLook look;
     private int width, height;
 
     @Override
@@ -60,7 +62,9 @@ public final class FluxPortal extends FluxPlugin {
         getServer().getPluginManager().registerEvents(windows, this);
         // once every world is up
         Bukkit.getScheduler().runTask(this, () -> windows.start(section("window")));
-        getServer().getPluginManager().registerEvents(new Crossings(this, portals::values), this);
+        look = new PortalLook(this, portals::values);
+        look.start();
+        getServer().getPluginManager().registerEvents(new Crossings(this, portals::values, look::travelled), this);
         bedrock = new BedrockView(this, portals::values);
         bedrock.start();
         getServer().getPluginManager().registerEvents(bedrock, this);
@@ -96,6 +100,7 @@ public final class FluxPortal extends FluxPlugin {
     protected void disable() {
         Portals.register(null);
         if (windows != null) windows.stop();
+        if (look != null) look.stop();
         if (bedrock != null) bedrock.reset();
     }
 

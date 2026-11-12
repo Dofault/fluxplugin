@@ -7,6 +7,33 @@ language: ""
 width: 5
 height: 4
 
+# Around the window: dust flowing along the sides and top of the hole (not its bottom), motes drawn into it, a hum,
+# and a whoosh, a chime and a burst when someone goes through. Particles reach Bedrock players too.
+look:
+  enabled: true
+  # Border colours, from one to the other along it and in time.
+  from: "#B376E5"
+  to: "#E060A0"
+  # Distance between two border points (blocks) and size of the dust.
+  border-step: 0.25
+  border-size: 1.1
+  # Motes drawn into the hole, per side, every 2 ticks.
+  motes: 2
+  # Particles are drawn for players within this distance (blocks).
+  particle-distance: 48
+  # Low hum of a portal, every hum-every ticks, heard within 16 blocks.
+  hum-every: 80
+  hum:
+    sound: minecraft:block.beacon.ambient
+    volume: 0.5
+    pitch: 0.6
+  # Going through: a whoosh and a crystal chime where the traveller comes out.
+  travel:
+    sound: minecraft:entity.illusioner.mirror_move
+    chime: minecraft:block.amethyst_block.resonate
+    volume: 0.9
+    pitch: 1.2
+
 # The window: the other side seen through the hole, in depth, drawn by the text shader of the resource pack.
 window:
   # A side shows its window while a Java player is within this distance (blocks); its item frames are taken down

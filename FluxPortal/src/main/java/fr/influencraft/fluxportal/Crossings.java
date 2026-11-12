@@ -39,10 +39,13 @@ final class Crossings implements Listener {
     private final JavaPlugin plugin;
     private final Supplier<Collection<Portal>> portals;
     private final Map<UUID, Integer> last = new HashMap<>();
+    /** Effects of a crossing (where he left, where he came out). */
+    private final java.util.function.BiConsumer<Location, Location> travelled;
 
-    Crossings(JavaPlugin plugin, Supplier<Collection<Portal>> portals) {
+    Crossings(JavaPlugin plugin, Supplier<Collection<Portal>> portals, java.util.function.BiConsumer<Location, Location> travelled) {
         this.plugin = plugin;
         this.portals = portals;
+        this.travelled = travelled;
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -77,7 +80,7 @@ final class Crossings implements Listener {
         World w = Bukkit.getWorld(toEnd.world());
         if (w == null) return;
         Frame here = new Frame(from, portal.width(), portal.height()), there = new Frame(toEnd, portal.width(), portal.height());
-        Location at = p.getLocation();
+        Location at = p.getLocation(), left = at.clone();
         Vector out = here.carry(there, at.getX(), at.getY(), at.getZ());
         Location to = standable(new Location(w, out.getX(), out.getY(), out.getZ(), at.getYaw() + here.turnTo(there), at.getPitch()));
         PortalTravelEvent event = new PortalTravelEvent(p, portal, from, to);
@@ -85,13 +88,16 @@ final class Crossings implements Listener {
         if (event.isCancelled()) return;
         Vector velocity = here.carryDirection(there, p.getVelocity());
         last.put(p.getUniqueId(), Bukkit.getCurrentTick());
+        boolean done;
         if (event.to().getWorld() == p.getWorld()) {
             // the client keeps its own speed, turned like the player
-            p.teleport(event.to(), PlayerTeleportEvent.TeleportCause.PLUGIN, TeleportFlag.Relative.VELOCITY_X, TeleportFlag.Relative.VELOCITY_Y,
+            done = p.teleport(event.to(), PlayerTeleportEvent.TeleportCause.PLUGIN, TeleportFlag.Relative.VELOCITY_X, TeleportFlag.Relative.VELOCITY_Y,
                     TeleportFlag.Relative.VELOCITY_Z, TeleportFlag.Relative.VELOCITY_ROTATION);
-        } else if (p.teleport(event.to(), PlayerTeleportEvent.TeleportCause.PLUGIN) && velocity.lengthSquared() > 0.0025) {
-            p.setVelocity(velocity);
+        } else {
+            done = p.teleport(event.to(), PlayerTeleportEvent.TeleportCause.PLUGIN);
+            if (done && velocity.lengthSquared() > 0.0025) p.setVelocity(velocity);
         }
+        if (done) travelled.accept(left, event.to());
     }
 
     /**
