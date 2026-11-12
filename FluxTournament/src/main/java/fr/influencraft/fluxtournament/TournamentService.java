@@ -219,11 +219,6 @@ final class TournamentService {
 
     /** Plays the draw of a plan to some players; {@code then} runs once the result was shown. */
     void show(List<Player> to, Plan plan, Runnable then) {
-        show(to, plan, false, then);
-    }
-
-    /** {@code screen}: TRIAL of the draw as an MC GUI page over the top of the screen. */
-    void show(List<Player> to, Plan plan, boolean screen, Runnable then) {
         Draws.Choice winner = choice(plan, plan.target(), plan.job());
         List<Draws.Choice> pool = new ArrayList<>();
         pool.add(winner);
@@ -238,9 +233,7 @@ final class TournamentService {
             java.util.Collections.shuffle(jobs);
             for (String j : jobs) if (pool.size() < drawChoices) pool.add(choice(plan, null, j));
         }
-        String heading = plugin.messages().raw("draw-heading." + plan.kind().id());
-        if (screen) Draws.playScreen(plugin, to, pool, winner, heading, then);
-        else Draws.play(plugin, to, pool, winner, heading, then);
+        Draws.play(plugin, to, pool, winner, plugin.messages().raw("draw-heading." + plan.kind().id()), then);
     }
 
     /** A resource (or, with no group, a job) as a choice of the draw. */

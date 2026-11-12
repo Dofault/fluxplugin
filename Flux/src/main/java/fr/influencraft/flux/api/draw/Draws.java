@@ -111,16 +111,6 @@ public final class Draws {
         }, 1L, 1L);
     }
 
-    /**
-     * TRIAL: the same draw as a page of MC GUI over the top of the screen ({@link ScreenDraw}); players who cannot be
-     * shown a page get the boss bar draw. The page seats the player while it is open (about 8 seconds).
-     */
-    public static void playScreen(Plugin owner, Collection<? extends Player> viewers, List<Choice> pool, Choice winner,
-                                  String heading, Runnable onDone) {
-        List<Choice> choices = pool == null || pool.isEmpty() ? List.of(winner) : List.copyOf(pool);
-        ScreenDraw.play(owner, new ArrayList<>(viewers), choices, winner, heading, onDone);
-    }
-
     /** The candidates in a row, the ones struck out as crosses (red for the one just struck), and how many are left. */
     private static net.kyori.adventure.text.Component line(String head, List<Choice> candidates, boolean[] out, int justOut) {
         StringBuilder sb = new StringBuilder(head);

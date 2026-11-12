@@ -167,9 +167,7 @@ public final class FluxTournament extends FluxPlugin implements Listener {
                     return true;
                 }
                 messages().send(p, "admin-draw");
-                // "screen": TRIAL of the draw as an MC GUI page
-                boolean screen = args.length > 1 && args[1].equalsIgnoreCase("screen");
-                service.show(List.of(p), plan, screen, () -> messages().send(p, "admin-draw-done", "{name}", service.name(plan)));
+                service.show(List.of(p), plan, () -> messages().send(p, "admin-draw-done", "{name}", service.name(plan)));
             }
             default -> messages().send(sender, "admin-usage");
         }
@@ -210,7 +208,6 @@ public final class FluxTournament extends FluxPlugin implements Listener {
         String last = args[args.length - 1].toLowerCase(Locale.ROOT);
         List<String> options = List.of();
         if (args.length == 1) options = List.of("start", "stop", "cancel", "next", "preview", "status", "draw", "reload");
-        else if (args.length == 2 && args[0].equalsIgnoreCase("draw")) options = List.of("screen");
         else if (args.length == 2 && args[0].equalsIgnoreCase("start")) options = Arrays.stream(Kind.values()).map(Kind::id).toList();
         else if (args.length == 2 && args[0].equalsIgnoreCase("preview")) options = Values.jobs();
         else if (args.length == 3 && args[0].equalsIgnoreCase("start")) {
