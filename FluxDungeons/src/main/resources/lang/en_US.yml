@@ -357,6 +357,10 @@ choice:
   changed-elsewhere: "&#FF5C5CYour class already changed meanwhile."
   changed: "&#2ECF7BYou are now a &#FFD94D%class%&#2ECF7B."
 
+weapon:
+  other-class: "&#FF5C5CThis weapon belongs to the &f%classes% &#FF5C5Cclass, you are a &f%class%&#FF5C5C. Change class in the lobby with &f[/classe]&#FF5C5C."
+  level: "&#FF5C5CYou need level &f%level% &#FF5C5Cto use this weapon."
+
 skill:
   no-mana: "&#FF5C5CNot enough mana."
   blocked: "&#FF5C5CNo room in front of you."

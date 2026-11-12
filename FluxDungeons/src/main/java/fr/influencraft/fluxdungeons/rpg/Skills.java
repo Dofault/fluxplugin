@@ -62,33 +62,17 @@ public final class Skills implements Listener {
         return combat.body(e);
     }
 
-    /** Room around a point searched for creatures: a big creature's body reaches the point from this far. */
-    private static final double BODY_MARGIN = 4;
-
-    /**
-     * Creatures of the rpg a player may hurt (never players, displays, armour stands) whose body (its box, or a model's
-     * hit box) lies within {@code radius} of a point: a big monster is reached by its flank, not only its centre.
-     */
+    /** Creatures of the rpg around a point a player may hurt (never players, displays, armour stands). */
     List<LivingEntity> enemies(Location at, double radius) {
         List<LivingEntity> out = new ArrayList<>();
-        double search = radius + BODY_MARGIN;
-        Vector point = at.toVector();
-        for (Entity e : at.getWorld().getNearbyEntities(at, search, search, search)) {
+        for (Entity e : at.getWorld().getNearbyEntities(at, radius, radius, radius)) {
             // a model's hit box counts as its creature (once), wherever the box stands
             LivingEntity le = e instanceof Player ? null : combat.body(e);
             if (le == null || le instanceof Player || le instanceof org.bukkit.entity.ArmorStand || le.isDead() || out.contains(le)) continue;
             if (combat.ally(le)) continue;   // the players' pets
-            if (distanceSquared(e.getBoundingBox(), point) <= radius * radius && combat.rpg(le)) out.add(le);
+            if (e.getLocation().distanceSquared(at) <= radius * radius && combat.rpg(le)) out.add(le);
         }
         return out;
-    }
-
-    /** Squared distance from a point to the closest point of a box (0 inside). */
-    private static double distanceSquared(org.bukkit.util.BoundingBox box, Vector p) {
-        double dx = Math.max(0, Math.max(box.getMinX() - p.getX(), p.getX() - box.getMaxX()));
-        double dy = Math.max(0, Math.max(box.getMinY() - p.getY(), p.getY() - box.getMaxY()));
-        double dz = Math.max(0, Math.max(box.getMinZ() - p.getZ(), p.getZ() - box.getMaxZ()));
-        return dx * dx + dy * dy + dz * dz;
     }
 
     /** Players of the rpg around a point (the caster included): allies, as everyone fights monsters there. */
@@ -127,14 +111,11 @@ public final class Skills implements Listener {
         Location eye = p.getEyeLocation();
         Vector look = eye.getDirection().setY(0).normalize();
         List<LivingEntity> targets = new ArrayList<>();
-        // the creature clicked, else the one the player looks at within reach (the click may come as a swing only)
-        LivingEntity aimed = clicked != null ? clicked : aimedEnemy(p, a.range());
-        if (aimed != null && combat.rpg(aimed)) targets.add(aimed);
-        for (LivingEntity e : enemies(eye, a.range())) {
+        if (clicked != null && combat.rpg(clicked)) targets.add(clicked);
+        for (LivingEntity e : enemies(p.getLocation(), a.range())) {
             if (targets.size() >= a.targets()) break;
             if (targets.contains(e)) continue;
-            // in front of the player: towards the centre of its body
-            Vector to = e.getBoundingBox().getCenter().subtract(p.getLocation().toVector()).setY(0);
+            Vector to = e.getLocation().toVector().subtract(p.getLocation().toVector()).setY(0);
             if (to.lengthSquared() < 0.01 || to.normalize().dot(look) > 0.5) targets.add(e);
         }
         // the swing is seen where it reaches: the first creature or wall within range, else the end of the range
@@ -398,16 +379,6 @@ public final class Skills implements Listener {
             if (hit.getHitBlock() != null) d = Math.max(0.8, d - 0.3);
         }
         return eye.add(dir.multiply(d)).subtract(0, 0.3, 0);
-    }
-
-    /** The creature the player looks at within range (a model's hit box: its creature), no wall between. */
-    private LivingEntity aimedEnemy(Player p, double range) {
-        Location eye = p.getEyeLocation();
-        RayTraceResult hit = p.getWorld().rayTrace(eye, eye.getDirection(), range, FluidCollisionMode.NEVER, true, 0.2,
-                e -> e != p && !(e instanceof Player) && !(e instanceof org.bukkit.entity.ArmorStand) && combat.body(e) != null);
-        if (hit == null || hit.getHitEntity() == null) return null;
-        LivingEntity le = combat.body(hit.getHitEntity());
-        return le == null || le.isDead() || combat.ally(le) ? null : le;
     }
 
     /** Where the player aims (block or max range). */

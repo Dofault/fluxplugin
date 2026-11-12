@@ -357,6 +357,10 @@ choice:
   changed-elsewhere: "&#FF5C5CTa classe a déjà changé entre-temps."
   changed: "&#2ECF7BTu es maintenant &#FFD94D%class%&#2ECF7B."
 
+weapon:
+  other-class: "&#FF5C5CCette arme est réservée à la classe &f%classes%&#FF5C5C, tu es &f%class%&#FF5C5C. Change de classe au lobby avec &f[/classe]&#FF5C5C."
+  level: "&#FF5C5CIl te faut le niveau &f%level% &#FF5C5Cpour te servir de cette arme."
+
 skill:
   no-mana: "&#FF5C5CPas assez de mana."
   blocked: "&#FF5C5CPas de place devant toi."

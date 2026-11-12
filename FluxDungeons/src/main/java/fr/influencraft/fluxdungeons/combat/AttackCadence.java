@@ -83,10 +83,7 @@ public final class AttackCadence implements Listener {
                 pitch * (0.9f + java.util.concurrent.ThreadLocalRandom.current().nextFloat() * 0.2f));
     }
 
-    private final Plugin plugin;
-
     public AttackCadence(Plugin plugin) {
-        this.plugin = plugin;
         current = this;
         // items of the rpg universe get the same cadence from the rpg layer (rpg.RpgPlayers#cadence: the pace depends
         // on each player's attack speed stat, not on the item): left untouched here
@@ -251,8 +248,6 @@ public final class AttackCadence implements Listener {
     private final java.util.Map<java.util.UUID, Integer> lastSwing = new java.util.HashMap<>();
     /** Tick of each player's last action that also swings the arm but is no attack (drop, right click). */
     private final java.util.Map<java.util.UUID, Integer> otherAction = new java.util.HashMap<>();
-    /** Tick of each player's swing waiting for the end of its tick: a click on a creature may still come with it. */
-    private final java.util.Map<java.util.UUID, Integer> pending = new java.util.HashMap<>();
     /** Tick at which each player started digging a block (survival), while he holds the button on it. */
     private final java.util.Map<java.util.UUID, Integer> digging = new java.util.HashMap<>();
 
@@ -269,9 +264,8 @@ public final class AttackCadence implements Listener {
     }
 
     /**
-     * A click on a creature, sent along with the swing of the same click (before or after it, whatever the order): the
-     * swing is played from here, with its target, and the swing packet is then the same swing. Too early (modified
-     * client): no hit.
+     * A click on a creature. The client sends it just before the swing of the same click: the swing is played from
+     * here, with its target; the swing packet that follows is then the same swing. Too early (modified client): no hit.
      */
     @EventHandler(priority = EventPriority.LOWEST)
     public void onAttack(PrePlayerAttackEntityEvent e) {
@@ -280,10 +274,8 @@ public final class AttackCadence implements Listener {
         ItemStack hand = p.getInventory().getItemInMainHand();
         if (!paced(hand)) return;
         int now = org.bukkit.Bukkit.getCurrentTick();
-        // the swing packet came first: this hit is that swing
-        pending.remove(p.getUniqueId());
         Integer last = lastSwing.get(p.getUniqueId());
-        // a hit made by the swing of this tick (aim assist, a model's hit box handing the hit to its creature)
+        // our own swing of this tick (aim assist: Player#attack)
         if (last != null && last == now) return;
         if (!ready(p, now)) {
             e.setCancelled(true);
@@ -321,20 +313,7 @@ public final class AttackCadence implements Listener {
         // case the end of the digging never came)
         if (dig != null && now - dig > 1 && now - dig <= DIG_MEMORY) return;
         if (!ready(p, now)) return;
-        // played at the end of the tick: a click on a creature sent with it (after it) makes it a hit instead
-        pending.put(id, now);
-        org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
-            Integer at = pending.get(id);
-            if (at == null || at != now) return;
-            pending.remove(id);
-            if (p.isOnline() && !p.isDead() && paced(p.getInventory().getItemInMainHand())) swingInAir(p);
-        });
-    }
-
-    /** A swing that hit no creature: drawn where it reaches; in a dungeon, the aim assist may still find one. */
-    private void swingInAir(Player p) {
-        ItemStack hand = p.getInventory().getItemInMainHand();
-        lastSwing.put(p.getUniqueId(), org.bukkit.Bukkit.getCurrentTick());
+        lastSwing.put(id, now);
         if (melee.swing(p, null)) return;
         org.bukkit.Location at = reachPoint(p, hand);
         // a swing in the air in a dungeon: aim assist hits the monster the player was aiming at
@@ -488,7 +467,6 @@ public final class AttackCadence implements Listener {
     public void onQuit(org.bukkit.event.player.PlayerQuitEvent e) {
         java.util.UUID id = e.getPlayer().getUniqueId();
         lastSwing.remove(id);
-        pending.remove(id);
         otherAction.remove(id);
         digging.remove(id);
     }

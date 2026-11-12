@@ -25,7 +25,8 @@ import java.util.UUID;
 /**
  * Keys of the rpg, with the class weapon in hand: left click = basic attack, right click = the weapon's skill,
  * A (drop) = second skill, F (swap hands) = third skill. Only a weapon of the player's own class at his level works:
- * holding another class's weapon casts nothing, whatever the inventory tricks.
+ * holding another class's weapon casts nothing, whatever the inventory tricks, and tells the player why (another
+ * class's weapon, or a level too low).
  *
  * <p>A class with {@code basic.click: right} (the archer) swaps the two clicks: the basic attack goes on the right
  * click, <b>held down</b> (a shot each time the attack speed allows), the weapon's skill on the left click. Holding is
@@ -38,6 +39,7 @@ import java.util.UUID;
  */
 final class Controls implements Listener {
 
+    private final fr.influencraft.flux.api.FluxPlugin plugin;
     private final RpgPlayers players;
     private final Skills skills;
     private final RpgItems items;
@@ -48,7 +50,12 @@ final class Controls implements Listener {
     /** Ticks without a new right click after which the button is taken as released (the client repeats every 4). */
     private static final int HOLD_GAP = 5;
 
-    Controls(org.bukkit.plugin.Plugin plugin, RpgPlayers players, Skills skills, RpgItems items) {
+    /** Tick of the last warning about a weapon the player cannot use (one every {@link #WARN_GAP} ticks). */
+    private final Map<UUID, Long> warned = new HashMap<>();
+    private static final int WARN_GAP = 40;
+
+    Controls(fr.influencraft.flux.api.FluxPlugin plugin, RpgPlayers players, Skills skills, RpgItems items) {
+        this.plugin = plugin;
         this.players = players;
         this.skills = skills;
         this.items = items;
@@ -82,6 +89,33 @@ final class Controls implements Listener {
         return r;
     }
 
+    /**
+     * {@link #armed}, for an action of the player himself: holding a class weapon he cannot use (another class's, or
+     * above his level) tells him why, instead of a swing that does nothing.
+     */
+    private RpgPlayer use(Player p, ItemStack hand) {
+        RpgPlayer r = armed(p, hand);
+        if (r != null) return r;
+        RpgPlayer me = players.get(p);
+        Equipment eq = items.equipment();
+        Equipment.Item weapon = eq == null ? null : eq.item(RpgItems.idOf(hand));
+        if (me == null || me.stats() == null || weapon == null || !weapon.slot().equals("weapon") || Universes.transitioning(p)) return null;
+        long now = CombatEngine.now();
+        Long last = warned.get(p.getUniqueId());
+        if (last != null && now - last < WARN_GAP) return null;
+        warned.put(p.getUniqueId(), now);
+        if (!weapon.usableBy(me.heroClass().id())) {
+            java.util.List<String> names = new java.util.ArrayList<>();
+            for (String c : weapon.classes()) names.add(plugin.messages().raw("classes." + c + ".name"));
+            plugin.messages().send(p, "weapon.other-class", "%classes%", String.join(", ", names),
+                    "%class%", plugin.messages().raw("classes." + me.heroClass().id() + ".name"));
+        } else {
+            plugin.messages().send(p, "weapon.level", "%level%", String.valueOf(weapon.level()));
+        }
+        fr.influencraft.flux.api.util.Sounds.cue(p, "error");
+        return null;
+    }
+
     @EventHandler(priority = EventPriority.LOWEST)
     public void onAttack(PrePlayerAttackEntityEvent e) {
         Player p = e.getPlayer();
@@ -91,7 +125,7 @@ final class Controls implements Listener {
         ItemStack hand = p.getInventory().getItemInMainHand();
         // swords and axes swing through the server's one swing (combat.AttackCadence, then #melee)
         if (AttackCadence.paced(hand)) return;
-        RpgPlayer r = armed(p, hand);
+        RpgPlayer r = use(p, hand);
         if (r == null) return;
         // the weapon's skill when the basic attack is on the right click
         if (r.heroClass().basicOnRight()) skills.cast(p, r, "right");
@@ -105,7 +139,7 @@ final class Controls implements Listener {
      */
     boolean melee(Player p, org.bukkit.entity.Entity clicked) {
         if (players.get(p) == null) return false;
-        RpgPlayer r = armed(p, p.getInventory().getItemInMainHand());
+        RpgPlayer r = use(p, p.getInventory().getItemInMainHand());
         if (r == null) return false;
         skills.basic(p, r, clicked == null ? null : skills.body(clicked), true);
         return true;
@@ -116,7 +150,7 @@ final class Controls implements Listener {
         if (e.getHand() != EquipmentSlot.HAND || e.getAction() == Action.PHYSICAL) return;
         Player p = e.getPlayer();
         if (players.get(p) == null) return;
-        RpgPlayer r = armed(p, e.getItem());
+        RpgPlayer r = use(p, e.getItem());
         if (r == null) return;
         boolean left = e.getAction() == Action.LEFT_CLICK_AIR || e.getAction() == Action.LEFT_CLICK_BLOCK;
         if (r.heroClass().basicOnRight()) {
@@ -157,7 +191,7 @@ final class Controls implements Listener {
         e.setCancelled(true);
         Long w = windowDrop.remove(p.getUniqueId());
         if (w != null && CombatEngine.now() - w <= 1) return;
-        RpgPlayer r = armed(p, e.getItemDrop().getItemStack());
+        RpgPlayer r = use(p, e.getItemDrop().getItemStack());
         if (r != null) skills.cast(p, r, "a");
     }
 
@@ -167,7 +201,7 @@ final class Controls implements Listener {
         if (players.get(p) == null) return;
         // no off hand in the rpg universe: F is a skill
         e.setCancelled(true);
-        RpgPlayer r = armed(p, p.getInventory().getItemInMainHand());
+        RpgPlayer r = use(p, p.getInventory().getItemInMainHand());
         if (r != null) skills.cast(p, r, "f");
     }
 
@@ -183,5 +217,6 @@ final class Controls implements Listener {
     void forget(Player p) {
         windowDrop.remove(p.getUniqueId());
         holding.remove(p.getUniqueId());
+        warned.remove(p.getUniqueId());
     }
 }
