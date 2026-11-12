@@ -13,6 +13,11 @@ names:
   resource: "Rush: {target}"
   race: "Race: {amount} {target}"
   variety: "{job} explorer"
+short-names:
+  job: "{job} tournament"
+  resource: "Rush {target}"
+  race: "Race {target}"
+  variety: "{job} explorer"
 descriptions:
   job: "Earn the most points as {job}: every action of the job counts, rarer ones are worth more."
   resource: "Gather as much {target} as you can before the end."
@@ -41,8 +46,14 @@ race-finished: "&#FFD94D{player} &7finished the race in place &#FFD94D{place}&7!
 variety-new: "&#FFD94DNew resource: &f{resource} &7({count})"
 your-result: "&7You finish &#FFD94D#{place} &7with &f{score}&7. Tournament points: &#FFD94D{points}"
 
-bossbar: "&#FFD94D{name} &7| &fTime: &#FFD94D{time} &7| &fYou: &#FFD94D#{place} &7({score}) &7| &fLeader: &#FFD94D{leader}"
-bossbar-none: "&#FFD94D{name} &7| &fTime: &#FFD94D{time} &7| &fLeader: &#FFD94D{leader} &7| &fPlay to take part!"
+bossbar: "&#2BC4E8&l{name}   &#A6E4F5Time &f{time}   &#A6E4F5Place &f#{place}   &#A6E4F5Score &f{score}   &#A6E4F5Players &f{players}"
+bossbar-none: "&#2BC4E8&l{name}   &#A6E4F5Time &f{time}   &#A6E4F5Players &f{players}"
+ranking:
+  - "!&#2BC4E8{name} &7- ranking, &f{time} &7left"
+  - "!  &#F0A8001. &f{1_player} &7- &#A6E4F5{1_score}"
+  - "!  &#C0C0C02. &f{2_player} &7- &#A6E4F5{2_score}"
+  - "!  &#CD7F323. &f{3_player} &7- &#A6E4F5{3_score}"
+  - "!  &7You: &f#{place} &7of {players} - &#A6E4F5{score}"
 
 leaderboard-name: "Tournaments"
 leaderboard-value: "{n} pts"

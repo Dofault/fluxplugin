@@ -73,9 +73,9 @@ public final class Draws {
         for (int i = 0; i < candidates.size(); i++) if (!candidates.get(i).equals(winner)) order.add(i);
         Collections.shuffle(order);
 
-        String head = "&7『&#FFD94D" + (heading == null ? "" : heading) + "&7』  ";
+        String head = "&#2BC4E8&l" + (heading == null ? "" : heading) + "   ";
         boolean[] out = new boolean[candidates.size()];
-        BossBar bar = BossBar.bossBar(line(head, candidates, out, -1), 1f, BossBar.Color.PURPLE, BossBar.Overlay.PROGRESS);
+        BossBar bar = BossBar.bossBar(line(head, candidates, out, -1), 1f, BossBar.Color.BLUE, BossBar.Overlay.PROGRESS);
         for (Player p : watching) p.showBossBar(bar);
 
         BukkitTask[] task = new BukkitTask[1];
@@ -97,9 +97,8 @@ public final class Draws {
                     return;
                 }
                 if (holding < 0) {
-                    bar.color(BossBar.Color.GREEN);
                     bar.progress(1f);
-                    bar.name(Texts.parse(head + "&#FFD94D✦ &f" + winner.sprite() + " " + winner.name() + " &#FFD94D✦"));
+                    bar.name(Texts.parse(head + "&f" + winner.sprite() + " &f" + winner.name()));
                     for (Player p : watching) if (p.isOnline()) Sounds.cue(p, "draw-reveal");
                     holding = 1;
                     wait = HOLD;
@@ -124,7 +123,7 @@ public final class Draws {
                 sb.append("&f").append(candidates.get(i).sprite()).append(' ');
             }
         }
-        sb.append(" &7").append(left).append(" &8/ &7").append(candidates.size());
+        sb.append("  &#A6E4F5").append(left).append(" / ").append(candidates.size());
         return Texts.parse(sb.toString());
     }
 }

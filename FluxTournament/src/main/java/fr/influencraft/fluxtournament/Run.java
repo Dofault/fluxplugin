@@ -39,6 +39,8 @@ final class Run {
     final long started;
     final long ends;
     final int podium;
+    /** Rankings already sent in the chat. */
+    int rankingsSent;
     final Map<UUID, Score> scores = new ConcurrentHashMap<>();
     final List<Effects.Counter> counters = new ArrayList<>();
     private List<Score> ranking = List.of();

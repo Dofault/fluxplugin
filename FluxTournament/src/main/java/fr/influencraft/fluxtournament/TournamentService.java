@@ -66,7 +66,8 @@ final class TournamentService {
     private double participationShare = 0.2;
     private double fallbackMoneyPerSecond = 5;
     private boolean bossbar = true;
-    private BossBar.Color barColor = BossBar.Color.PURPLE;
+    private BossBar.Color barColor = BossBar.Color.BLUE;
+    private long rankingEveryMs = 300_000;
     private boolean drawEnabled = true;
     private int drawChoices = 8;
 
@@ -109,12 +110,13 @@ final class TournamentService {
         fallbackMoneyPerSecond = c.getDouble("rewards.fallback-money-per-second", 5);
         bossbar = c.getBoolean("bossbar.enabled", true);
         try {
-            barColor = BossBar.Color.valueOf(c.getString("bossbar.color", "PURPLE").toUpperCase(Locale.ROOT));
+            barColor = BossBar.Color.valueOf(c.getString("bossbar.color", "BLUE").toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
-            barColor = BossBar.Color.PURPLE;
+            barColor = BossBar.Color.BLUE;
         }
         // YELLOW is drawn transparent by the server's resource pack
-        if (barColor == BossBar.Color.YELLOW) barColor = BossBar.Color.PURPLE;
+        if (barColor == BossBar.Color.YELLOW) barColor = BossBar.Color.BLUE;
+        rankingEveryMs = Math.max(0, c.getInt("ranking-every-minutes", 5)) * 60_000L;
         drawEnabled = c.getBoolean("draw.enabled", true);
         drawChoices = Math.max(2, c.getInt("draw.choices", 8));
         nextStart = 0;
@@ -149,6 +151,7 @@ final class TournamentService {
                 end(false);
             } else {
                 updateBars(now);
+                rankingInChat(current, now);
             }
             return;
         }
@@ -375,6 +378,11 @@ final class TournamentService {
         return plugin.messages().raw("names." + p.kind().id(), vars(p));
     }
 
+    /** Short name for the boss bar ({@code short-names.<kind>}). */
+    String shortName(Plan p) {
+        return plugin.messages().raw("short-names." + p.kind().id(), vars(p));
+    }
+
     String description(Plan p) {
         return plugin.messages().raw("descriptions." + p.kind().id(), vars(p));
     }
@@ -431,13 +439,34 @@ final class TournamentService {
 
     // ---------------------------------------------------------------- boss bar
 
+    /**
+     * Every {@code ranking-every-minutes}, the ranking in the chat of the players taking part (podium and their own
+     * place), never in the last minute (the end tells it).
+     */
+    private void rankingInChat(Run run, long now) {
+        if (rankingEveryMs <= 0 || run.ends - now < 60_000) return;
+        long due = run.started + rankingEveryMs * (run.rankingsSent + 1);
+        if (now < due) return;
+        run.rankingsSent++;
+        List<Score> ranking = run.ranking();
+        if (ranking.isEmpty()) return;
+        String[] vars = concat(podiumVars(run, ranking), "{name}", shortName(run.plan), "{time}", clock((run.ends - now) / 1000),
+                "{players}", String.valueOf(ranking.size()));
+        for (Score s : ranking) {
+            Player p = Bukkit.getPlayer(s.uuid);
+            if (p == null) continue;
+            plugin.messages().send(p, "ranking", concat(vars, "{place}", String.valueOf(run.rank(s.uuid)), "{score}", score(run.plan, s.value)));
+        }
+    }
+
     private void updateBars(long now) {
         Run run = current;
         if (!bossbar || run == null) return;
         float progress = Math.max(0f, Math.min(1f, (run.ends - now) / (float) (run.ends - run.started)));
         String time = clock((run.ends - now) / 1000);
         List<Score> ranking = run.ranking();
-        String leader = ranking.isEmpty() ? "-" : ranking.get(0).name;
+        String players = String.valueOf(ranking.size());
+        String title = shortName(run.plan);
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (!Universes.isVanilla(p)) {
                 hide(p);
@@ -445,9 +474,9 @@ final class TournamentService {
             }
             Score s = run.scores.get(p.getUniqueId());
             String text = s == null || s.value <= 0
-                    ? plugin.messages().raw("bossbar-none", concat(vars(run.plan), "{name}", name(run.plan), "{time}", time, "{leader}", leader))
-                    : plugin.messages().raw("bossbar", concat(vars(run.plan), "{name}", name(run.plan), "{time}", time, "{leader}", leader,
-                    "{place}", String.valueOf(run.rank(p.getUniqueId())), "{score}", score(run.plan, s.value)));
+                    ? plugin.messages().raw("bossbar-none", "{name}", title, "{time}", time, "{players}", players)
+                    : plugin.messages().raw("bossbar", "{name}", title, "{time}", time, "{players}", players,
+                    "{place}", String.valueOf(run.rank(p.getUniqueId())), "{score}", score(run.plan, s.value));
             BossBar bar = bars.get(p.getUniqueId());
             if (bar == null) {
                 bar = BossBar.bossBar(Texts.parse(text, p), progress, barColor, BossBar.Overlay.PROGRESS);

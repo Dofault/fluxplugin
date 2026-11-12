@@ -96,10 +96,13 @@ draw:
   # candidates shown (the winner and others of the same job, or other jobs)
   choices: 8
 
+# the ranking is sent in the chat of the players taking part every N minutes (0 = never)
+ranking-every-minutes: 5
+
 bossbar:
   enabled: true
   # PINK, BLUE, RED, GREEN, PURPLE, WHITE (YELLOW is transparent with the server's resource pack)
-  color: PURPLE
+  color: BLUE
 
 # tournaments kept in the menu's history
 history-size: 50
