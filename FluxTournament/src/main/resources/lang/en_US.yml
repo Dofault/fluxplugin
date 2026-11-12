@@ -6,18 +6,18 @@ reloaded: "&#2ECF7BFluxTournament reloaded."
 
 draw-heading:
   job: "Tournament draw · Job"
-  resource: "Tournament draw · Rush"
+  resource: "Tournament draw · Farm"
   race: "Tournament draw · Race"
   variety: "Tournament draw · Explorer"
 
 names:
   job: "{job} tournament"
-  resource: "Rush: {target}"
+  resource: "Farm: {target}"
   race: "Race: {amount} {target}"
   variety: "{job} explorer"
 short-names:
   job: "&f{job} &#2BC4E8tournament"
-  resource: "Rush &f{target}"
+  resource: "Farm &f{target}"
   race: "Race &f{target}"
   variety: "&f{job} &#2BC4E8explorer"
 descriptions:

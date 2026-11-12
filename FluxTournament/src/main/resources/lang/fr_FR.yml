@@ -7,20 +7,20 @@ reloaded: "&#2ECF7BFluxTournament rechargé."
 # Titre du tirage au sort animé, par sorte de tournoi
 draw-heading:
   job: "Tirage tournoi · Métier"
-  resource: "Tirage tournoi · Ruée"
+  resource: "Tirage tournoi · Farm"
   race: "Tirage tournoi · Course"
   variety: "Tirage tournoi · Exploration"
 
 # Nom et description de chaque sorte de tournoi. {job} = métier, {target} = ressource, {amount} = objectif.
 names:
   job: "Tournoi : {job}"
-  resource: "Ruée : {target}"
+  resource: "Farm : {target}"
   race: "Course : {amount} {target}"
   variety: "Exploration : {job}"
 # Nom court (barre de boss, classement du tchat)
 short-names:
   job: "Tournoi &f{job}"
-  resource: "Ruée &f{target}"
+  resource: "Farm &f{target}"
   race: "Course &f{target}"
   variety: "Exploration &f{job}"
 descriptions:
