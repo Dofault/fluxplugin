@@ -1,5 +1,6 @@
 package fr.influencraft.fluxtournament;
 
+import fr.influencraft.flux.api.draw.Draws;
 import fr.influencraft.flux.api.economy.Economy;
 import fr.influencraft.flux.api.economy.Origin;
 import fr.influencraft.flux.api.effects.Effects;
@@ -8,6 +9,7 @@ import fr.influencraft.flux.api.list.Lists;
 import fr.influencraft.flux.api.reward.Reward;
 import fr.influencraft.flux.api.reward.Rewards;
 import fr.influencraft.flux.api.text.Texts;
+import fr.influencraft.flux.api.text.Translations;
 import fr.influencraft.flux.api.universe.Universes;
 import fr.influencraft.flux.api.util.Format;
 import fr.influencraft.flux.api.util.Sounds;
@@ -21,6 +23,7 @@ import fr.influencraft.fluxtournament.TournamentStore.Result;
 import net.kyori.adventure.bossbar.BossBar;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -65,10 +68,15 @@ final class TournamentService {
     private double fallbackMoneyPerSecond = 5;
     private boolean bossbar = true;
     private BossBar.Color barColor = BossBar.Color.PURPLE;
+    private boolean drawEnabled = true;
+    Draws.Style drawStyle = Draws.Style.ROULETTE;
+    private int drawChoices = 8;
 
     // state
     Run current;
     Plan announced;
+    /** Being drawn (animation playing): starts when it ends. */
+    Plan drawing;
     long nextStart;
     private final Map<UUID, BossBar> bars = new ConcurrentHashMap<>();
 
@@ -109,6 +117,11 @@ final class TournamentService {
         }
         // YELLOW is drawn transparent by the server's resource pack
         if (barColor == BossBar.Color.YELLOW) barColor = BossBar.Color.PURPLE;
+        drawEnabled = c.getBoolean("draw.enabled", true);
+        Draws.Style style = Draws.Style.of(c.getString("draw.style", "roulette"));
+        if (style == null) plugin.getLogger().warning("draw.style: unknown animation, roulette used");
+        drawStyle = style == null ? Draws.Style.ROULETTE : style;
+        drawChoices = Math.max(2, c.getInt("draw.choices", 8));
         nextStart = 0;
     }
 
@@ -135,6 +148,7 @@ final class TournamentService {
     /** Called every second. */
     void tick() {
         long now = System.currentTimeMillis();
+        if (drawing != null) return;
         if (current != null) {
             if (now >= current.ends || current.plan.kind() == Kind.RACE && current.finishers() >= current.podium) {
                 end(false);
@@ -147,7 +161,10 @@ final class TournamentService {
         if (nextStart == 0 || nextStart < now - 5000) nextStart = next(now);
         if (announced == null && announceMs > 0 && now >= nextStart - announceMs && now < nextStart && enoughOnline()) {
             announced = planner.draw();
-            if (announced != null) broadcast("announce", announced, "{seconds}", String.valueOf(Math.round((nextStart - now) / 1000.0)));
+            if (announced != null) {
+                String seconds = String.valueOf(Math.round((nextStart - now) / 1000.0));
+                for (Player p : Bukkit.getOnlinePlayers()) plugin.messages().send(p, "announce", "{seconds}", seconds);
+            }
         }
         if (now >= nextStart) {
             Plan p = announced != null ? announced : planner.draw();
@@ -182,13 +199,65 @@ final class TournamentService {
 
     // ---------------------------------------------------------------- start
 
-    /** Starts a tournament now; false when one runs or the effect engine is missing. */
+    /**
+     * Starts a tournament: the draw animation first (what is drawn revealed to everybody while they keep playing),
+     * then the tournament. False when one runs or is being drawn, or the effect engine is missing.
+     */
     boolean start(Plan plan) {
-        if (current != null) return false;
+        if (current != null || drawing != null) return false;
         if (!Effects.available()) {
             plugin.getLogger().warning("No effect engine (libreforge): tournaments cannot count actions");
             return false;
         }
+        announced = null;
+        if (!drawEnabled) return begin(plan);
+        drawing = plan;
+        show(viewers(), plan, drawStyle, () -> {
+            drawing = null;
+            if (!begin(plan)) broadcast("cancelled", plan);
+        });
+        return true;
+    }
+
+    /** Plays the draw of a plan to some players; {@code then} runs once the result was shown. */
+    void show(List<Player> to, Plan plan, Draws.Style style, Runnable then) {
+        Draws.Choice winner = choice(plan, plan.target(), plan.job());
+        List<Draws.Choice> pool = new ArrayList<>();
+        pool.add(winner);
+        if (plan.target() != null) {
+            List<Group> others = new ArrayList<>(plan.groups());
+            others.remove(plan.target());
+            java.util.Collections.shuffle(others);
+            for (Group g : others) if (pool.size() < drawChoices) pool.add(choice(plan, g, plan.job()));
+        } else {
+            List<String> jobs = new ArrayList<>(planner.jobs(plan.kind()));
+            jobs.remove(plan.job());
+            java.util.Collections.shuffle(jobs);
+            for (String j : jobs) if (pool.size() < drawChoices) pool.add(choice(plan, null, j));
+        }
+        Draws.play(plugin, to, pool, winner, style, plugin.messages().raw("draw-heading." + plan.kind().id()), then);
+    }
+
+    /** A resource (or, with no group, a job) as a choice of the draw. */
+    private Draws.Choice choice(Plan plan, Group g, String job) {
+        if (g == null) {
+            String name = jobName(job);
+            return new Draws.Choice(job, Material.matchMaterial(planner.jobIcon(job)), name, name);
+        }
+        String letters = g.name().startsWith("<lang:") && g.name().endsWith(">")
+                ? Translations.server(g.name().substring(6, g.name().length() - 1)) : Texts.plain(g.name(), null);
+        return new Draws.Choice(g.key(), Material.matchMaterial(g.icon()), g.name(), letters);
+    }
+
+    /** Who watches a draw and plays a tournament: players outside the rpg universe. */
+    List<Player> viewers() {
+        List<Player> out = new ArrayList<>();
+        for (Player p : Bukkit.getOnlinePlayers()) if (Universes.isVanilla(p)) out.add(p);
+        return out;
+    }
+
+    private boolean begin(Plan plan) {
+        if (current != null) return false;
         long now = System.currentTimeMillis();
         Run run = new Run(now, plan, now, now + durationMs, podium());
         int i = 0;
@@ -205,10 +274,8 @@ final class TournamentService {
             return false;
         }
         current = run;
-        announced = null;
         planner.started(plan);
         broadcast("start", plan, "{minutes}", String.valueOf(durationMs / 60_000));
-        for (Player p : Bukkit.getOnlinePlayers()) Sounds.cue(p, "alert");
         updateBars(now);
         refreshMenus();
         return true;

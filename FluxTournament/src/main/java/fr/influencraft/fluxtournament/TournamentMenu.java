@@ -80,10 +80,10 @@ final class TournamentMenu {
             return Items.of("CLOCK", m().raw("menu.next-title"), lore.build(), viewer);
         }
         long in = Math.max(0, (service.nextStart - now) / 1000);
-        if (service.announced != null) {
-            lore.description(service.description(service.announced)).kv(m().raw("menu.starts-in"), TournamentService.clock(in));
-            return Items.of(service.icon(service.announced), m().raw("menu.next-named", "{name}", service.name(service.announced)),
-                    lore.build(), viewer);
+        // what comes next stays secret until the draw
+        if (service.drawing != null) {
+            lore.description(m().raw("menu.drawing"));
+            return glow(Items.of("CLOCK", m().raw("menu.next-title"), lore.build(), viewer));
         }
         lore.description(m().raw("menu.next-secret")).kv(m().raw("menu.starts-in"), Format.duration(Math.max(60, in)));
         return Items.of("CLOCK", m().raw("menu.next-title"), lore.build(), viewer);

@@ -112,7 +112,7 @@ public final class FluxTournament extends FluxPlugin implements Listener {
         String sub = args.length > 0 ? args[0].toLowerCase(Locale.ROOT) : "";
         switch (sub) {
             case "start" -> {
-                if (service.current != null) {
+                if (service.current != null || service.drawing != null) {
                     messages().send(sender, "admin-running");
                     return true;
                 }
@@ -158,6 +158,18 @@ public final class FluxTournament extends FluxPlugin implements Listener {
                 messages().send(sender, "reloaded");
             }
             case "status" -> status(sender);
+            case "draw" -> {
+                // a demo of a draw animation, shown to the sender alone: no tournament starts
+                Player p = Players.of(sender);
+                fr.influencraft.flux.api.draw.Draws.Style style = args.length > 1 ? fr.influencraft.flux.api.draw.Draws.Style.of(args[1]) : service.drawStyle;
+                Plan plan = service.planner.draw();
+                if (p == null || style == null || plan == null) {
+                    messages().send(sender, "admin-usage");
+                    return true;
+                }
+                messages().send(p, "admin-draw", "{style}", style.id());
+                service.show(List.of(p), plan, style, () -> messages().send(p, "admin-draw-done", "{name}", service.name(plan)));
+            }
             default -> messages().send(sender, "admin-usage");
         }
         return true;
@@ -196,7 +208,8 @@ public final class FluxTournament extends FluxPlugin implements Listener {
     private List<String> complete(CommandSender sender, String[] args) {
         String last = args[args.length - 1].toLowerCase(Locale.ROOT);
         List<String> options = List.of();
-        if (args.length == 1) options = List.of("start", "stop", "cancel", "next", "preview", "status", "reload");
+        if (args.length == 1) options = List.of("start", "stop", "cancel", "next", "preview", "status", "draw", "reload");
+        else if (args.length == 2 && args[0].equalsIgnoreCase("draw")) options = Arrays.stream(fr.influencraft.flux.api.draw.Draws.Style.values()).map(fr.influencraft.flux.api.draw.Draws.Style::id).toList();
         else if (args.length == 2 && args[0].equalsIgnoreCase("start")) options = Arrays.stream(Kind.values()).map(Kind::id).toList();
         else if (args.length == 2 && args[0].equalsIgnoreCase("preview")) options = Values.jobs();
         else if (args.length == 3 && args[0].equalsIgnoreCase("start")) {

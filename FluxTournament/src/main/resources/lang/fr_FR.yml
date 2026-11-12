@@ -2,6 +2,13 @@ prefix: "&#FFD94Dᴛᴏᴜʀɴᴏɪ &8▸ "
 no-menu: "&#FF5C5CLe menu des tournois est introuvable."
 reloaded: "&#2ECF7BFluxTournament rechargé."
 
+# Titre du tirage au sort animé, par sorte de tournoi
+draw-heading:
+  job: "Tirage · Tournoi"
+  resource: "Tirage · Ruée"
+  race: "Tirage · Course"
+  variety: "Tirage · Exploration"
+
 # Nom et description de chaque sorte de tournoi. {job} = métier, {target} = ressource, {amount} = objectif.
 names:
   job: "Tournoi : {job}"
@@ -20,12 +27,7 @@ score:
   race: "{n}/{amount}"
   variety: "{n} ressources"
 
-announce:
-  - "!"
-  - "!&#8A8A8A&m                       &r &#FFD94Dᴛᴏᴜʀɴᴏɪ &#8A8A8A&m                        "
-  - "!  &#FFD94D{name} &7· dans {seconds} s &#FFD94D✦"
-  - "!  &7{description}"
-  - "!&#8A8A8A&m                                                            "
+announce: "&7Un tournoi commence dans &f{seconds} s &7! Le tirage au sort désignera le métier et la ressource."
 start:
   - "!"
   - "!&#8A8A8A&m                       &r &#FFD94Dᴛᴏᴜʀɴᴏɪ &#8A8A8A&m                        "
@@ -76,9 +78,9 @@ origins:
 
 menu:
   running: "&#FFD94D{name}"
-  next-named: "&#FFD94DProchain : {name}"
+  drawing: "Tirage au sort en cours..."
   next-title: "&#FFD94DProchain tournoi"
-  next-secret: "Le prochain tournoi est tiré au sort et annoncé une minute avant son début."
+  next-secret: "Le métier et la ressource du prochain tournoi sont tirés au sort à son début."
   none-planned: "Aucun tournoi n'est prévu pour le moment."
   starts-in: "Début dans"
   time-left: "Temps restant"
@@ -101,10 +103,12 @@ menu:
   played-count: "Tournois joués"
   leaderboard-place: "Classement"
 
-admin-usage: "!&#FF5C5C/%flux_cmd_fluxtournament_fluxtournament% <start [sorte] [métier] [ressource]|stop|cancel|next|status|preview [métier]|reload>"
+admin-usage: "!&#FF5C5C/%flux_cmd_fluxtournament_fluxtournament% <start [sorte] [métier] [ressource]|stop|cancel|next|status|preview [métier]|draw [animation]|reload>"
 admin-running: "&#FF5C5CUn tournoi est déjà en cours."
 admin-none: "&#FF5C5CAucun tournoi en cours."
 admin-no-plan: "&#FF5C5CAucun tournoi possible avec ces paramètres (voir /fluxtournament preview)."
 admin-not-started: "&#FF5C5CLe tournoi n'a pas pu démarrer (voir la console)."
 admin-started: "&#2ECF7BTournoi lancé : &f{name}"
 admin-next: "&7Prochain tournoi dans &f{time}&7 : &f{name}"
+admin-draw: "&7Démo de l'animation &f{style}&7 (toi seul, aucun tournoi ne démarre)."
+admin-draw-done: "&7Fin de la démo. Ce tirage aurait lancé : &f{name}"

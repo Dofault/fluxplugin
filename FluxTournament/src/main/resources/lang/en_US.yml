@@ -2,6 +2,12 @@ prefix: "&#FFD94DTOURNAMENT &8> "
 no-menu: "&#FF5C5CThe tournament menu is missing."
 reloaded: "&#2ECF7BFluxTournament reloaded."
 
+draw-heading:
+  job: "Draw · Tournament"
+  resource: "Draw · Rush"
+  race: "Draw · Race"
+  variety: "Draw · Explorer"
+
 names:
   job: "{job} tournament"
   resource: "Rush: {target}"
@@ -18,8 +24,7 @@ score:
   race: "{n}/{amount}"
   variety: "{n} resources"
 
-announce:
-  - "!&#FFD94D{name} &7starts in {seconds} s. &7{description}"
+announce: "&7A tournament starts in &f{seconds} s&7! The draw will pick the job and the resource."
 start:
   - "!&#FFD94D{name} &7has started ({minutes} minutes). &7{description} Ranking: &f/tournament"
 end:
@@ -47,9 +52,9 @@ origins:
 
 menu:
   running: "&#FFD94D{name}"
-  next-named: "&#FFD94DNext: {name}"
+  drawing: "Drawing..."
   next-title: "&#FFD94DNext tournament"
-  next-secret: "The next tournament is drawn and announced one minute before it starts."
+  next-secret: "The job and resource of the next tournament are drawn when it starts."
   none-planned: "No tournament is planned for now."
   starts-in: "Starts in"
   time-left: "Time left"
@@ -72,10 +77,12 @@ menu:
   played-count: "Tournaments played"
   leaderboard-place: "Leaderboard"
 
-admin-usage: "!&#FF5C5C/%flux_cmd_fluxtournament_fluxtournament% <start [kind] [job] [resource]|stop|cancel|next|status|preview [job]|reload>"
+admin-usage: "!&#FF5C5C/%flux_cmd_fluxtournament_fluxtournament% <start [kind] [job] [resource]|stop|cancel|next|status|preview [job]|draw [animation]|reload>"
 admin-running: "&#FF5C5CA tournament is already running."
 admin-none: "&#FF5C5CNo tournament is running."
 admin-no-plan: "&#FF5C5CNo tournament can be made with these settings (see /fluxtournament preview)."
 admin-not-started: "&#FF5C5CThe tournament could not start (see the console)."
 admin-started: "&#2ECF7BTournament started: &f{name}"
 admin-next: "&7Next tournament in &f{time}&7: &f{name}"
+admin-draw: "&7Demo of the &f{style}&7 animation (you alone, no tournament starts)."
+admin-draw-done: "&7End of the demo. This draw would have started: &f{name}"
