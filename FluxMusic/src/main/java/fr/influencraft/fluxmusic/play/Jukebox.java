@@ -24,6 +24,10 @@ import java.util.concurrent.TimeUnit;
  * its time but sends nothing, so it comes back in rhythm after the jingle.</p>
  *
  * <p>When the clock is held back (pause of the JVM), the rest of the song is shifted rather than played in a rush.</p>
+ *
+ * <p>Background music never stops dead: {@link #stop} and a new music fade the former one out (its volume goes down
+ * to nothing over {@link #fadeOut(double)} seconds, the new music starting meanwhile). Only a player leaving the server
+ * or the plugin shutting down cuts it at once.</p>
  */
 public final class Jukebox {
 
@@ -40,6 +44,14 @@ public final class Jukebox {
     });
     private final Map<UUID, Playback> music = new ConcurrentHashMap<>();
     private final Map<UUID, Playback> jingles = new ConcurrentHashMap<>();
+    /** Music fading out, no longer the player's music but still heard; cut at once when he leaves. */
+    private final Map<UUID, Playback> fading = new ConcurrentHashMap<>();
+    private volatile long fadeNanos = 2_500_000_000L;
+
+    /** Length of the fade out of a stopped music, in seconds (0 = cut at once). */
+    public void fadeOut(double seconds) {
+        fadeNanos = (long) (Math.max(0, seconds) * 1_000_000_000L);
+    }
 
     /** Background music (replaces the former one). */
     public void play(Player player, Song song, boolean loop) {
@@ -53,7 +65,10 @@ public final class Jukebox {
 
     private void start(Map<UUID, Playback> layer, Player player, Song song, boolean loop) {
         Playback former = layer.remove(player.getUniqueId());
-        if (former != null) former.cancel();
+        if (former != null) {
+            if (layer == music) fade(former);
+            else former.cancel();
+        }
         if (song.times().length == 0) return;
         Playback p = new Playback(layer, player, song, loop);
         layer.put(player.getUniqueId(), p);
@@ -64,8 +79,21 @@ public final class Jukebox {
     public boolean stop(UUID player) {
         Playback p = music.remove(player);
         if (p == null) return false;
-        p.cancel();
+        fade(p);
         return true;
+    }
+
+    /** Lets the music die out instead of cutting it (a music still fading for this player is cut). */
+    private void fade(Playback p) {
+        UUID id = p.player.getUniqueId();
+        Playback older = fading.put(id, p);
+        if (older != null && older != p) older.cancel();
+        if (fadeNanos <= 0) {
+            fading.remove(id, p);
+            p.cancel();
+            return;
+        }
+        p.fadeFrom = System.nanoTime();
     }
 
     /** Stops everything the player hears (he left). */
@@ -73,6 +101,8 @@ public final class Jukebox {
         stop(player);
         Playback j = jingles.remove(player);
         if (j != null) j.cancel();
+        Playback f = fading.remove(player);
+        if (f != null) f.cancel();
     }
 
     public Song playing(UUID player) {
@@ -83,8 +113,10 @@ public final class Jukebox {
     public void shutdown() {
         music.values().forEach(Playback::cancel);
         jingles.values().forEach(Playback::cancel);
+        fading.values().forEach(Playback::cancel);
         music.clear();
         jingles.clear();
+        fading.clear();
         clock.shutdownNow();
     }
 
@@ -96,6 +128,8 @@ public final class Jukebox {
         private long start = System.nanoTime() + LEAD_NANOS;
         private int index;
         private volatile boolean cancelled;
+        /** When the fade out began (System.nanoTime), 0 while the music plays normally. */
+        private volatile long fadeFrom;
         private volatile ScheduledFuture<?> next;
 
         Playback(Map<UUID, Playback> layer, Player player, Song song, boolean loop) {
@@ -125,14 +159,28 @@ public final class Jukebox {
             if (cancelled) return;
             if (!player.isOnline()) {
                 layer.remove(player.getUniqueId(), this);
+                fading.remove(player.getUniqueId(), this);
                 return;
             }
-            long late = System.nanoTime() - due();
+            long now = System.nanoTime();
+            float gain = 1f;
+            if (fadeFrom != 0) {
+                long fade = fadeNanos;
+                gain = fade <= 0 ? 0f : 1f - (float) (now - fadeFrom) / fade;
+                if (gain <= 0f) {
+                    cancelled = true;
+                    fading.remove(player.getUniqueId(), this);
+                    return;
+                }
+                gain *= gain; // the ear hears loudness, not volume: a squared curve sounds like an even decline
+            }
+            long late = now - due();
             if (late > LATE_NANOS) start += late;
             boolean silent = layer == music && jingles.containsKey(player.getUniqueId());
             if (!silent) {
                 try {
-                    for (Sound s : song.notes()[index]) player.playSound(s, Sound.Emitter.self());
+                    for (Sound s : song.notes()[index]) player.playSound(gain >= 1f ? s : quieter(s, gain),
+                            Sound.Emitter.self());
                 } catch (RuntimeException e) {
                     // the connection closed between the check and the send: the quit listener stops the song
                 }
@@ -145,6 +193,7 @@ public final class Jukebox {
                             Math.max(0, (song.length() - song.times()[song.times().length - 1]) * song.stepNanos()),
                             TimeUnit.NANOSECONDS);
                     else layer.remove(player.getUniqueId(), this);
+                    fading.remove(player.getUniqueId(), this);
                     return;
                 }
                 start += (song.length() - song.loopStart()) * song.stepNanos();
@@ -152,5 +201,10 @@ public final class Jukebox {
             }
             schedule();
         }
+    }
+
+    private static Sound quieter(Sound s, float gain) {
+        return Sound.sound().type(s.name()).source(s.source()).volume(s.volume() * gain).pitch(s.pitch())
+                .seed(0L).build();
     }
 }

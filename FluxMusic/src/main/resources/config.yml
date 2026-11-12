@@ -2,6 +2,9 @@
 language: ""
 # Multiplies the volume of every note (1.0 = as written in the songs).
 volume: 1.0
+# Quand une musique s'arrête (sortie d'un lieu, fin de donjon, autre musique), son volume baisse peu à peu
+# pendant ce nombre de secondes au lieu de couper net. 0 = coupure immédiate.
+fade-out-seconds: 2.5
 # Song played (as a jingle, over the music) at moments of the game. Empty = nothing.
 moments:
   job-level-up: niveau

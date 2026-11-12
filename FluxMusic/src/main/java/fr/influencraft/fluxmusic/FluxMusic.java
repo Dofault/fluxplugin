@@ -56,6 +56,7 @@ public final class FluxMusic extends FluxPlugin implements Listener {
         jukebox = new Jukebox();
         ambience = new Ambience(jukebox, this::song, FluxMusic::wants);
         loadSongs();
+        jukebox.fadeOut(getConfig().getDouble("fade-out-seconds", 2.5));
         ambience.load(getConfig().getConfigurationSection("ambience"), getLogger());
         Bukkit.getScheduler().runTaskTimer(this, ambience::tick, 40L, 20L);
         Music.provide(new Music.Provider() {
@@ -106,6 +107,7 @@ public final class FluxMusic extends FluxPlugin implements Listener {
     public void reload() {
         super.reload();
         loadSongs();
+        if (jukebox != null) jukebox.fadeOut(getConfig().getDouble("fade-out-seconds", 2.5));
         if (ambience != null) ambience.load(getConfig().getConfigurationSection("ambience"), getLogger());
     }
 
