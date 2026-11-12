@@ -34,6 +34,8 @@ final class RpgHud {
     private static final int SLOT_A = -50, SLOT_F = -25, SLOT_RIGHT = 187;
     /** In line with assets/hud_frame.py (gen_hud.py prints them): the frame's left edge and width, the gem's left edge. */
     private static final int FRAME_X = -54, FRAME_W = 273, GEM_X = 83, GEM = 19;
+    /** The frame is cut in glyphs this wide: the client drops any glyph over 256 px (its font sheets' size). */
+    private static final int FRAME_PIECE = 128;
 
     /** What the action bar shows now. */
     Component render(Player p, RpgPlayer r, double hp, double maxHp, double mana, double maxMana) {
@@ -41,9 +43,11 @@ final class RpgHud {
         StringBuilder b = new StringBuilder();
         int[] cursor = {0};
         // the arcane ring first: everything else is drawn over it
-        moveTo(b, cursor, FRAME_X);
-        b.append('\uE430');
-        cursor[0] += FRAME_W + 1;
+        for (int i = 0, x = 0; x < FRAME_W; i++, x += FRAME_PIECE) {
+            moveTo(b, cursor, FRAME_X + x);
+            b.append((char) (0xE450 + i));
+            cursor[0] += Math.min(FRAME_PIECE, FRAME_W - x) + 1;
+        }
         ClassDef c = r.heroClass();
         if (c != null) {
             skill(b, cursor, SLOT_A, c.skills().get("a"), 0, r, mana);

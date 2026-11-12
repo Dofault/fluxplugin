@@ -7,7 +7,11 @@ Coordinates: a canvas of W x H gui pixels whose bottom row is the bottom of the 
 the centre of the screen. The action bar line starts 92 px left of the centre (RpgHud.java), so a canvas column x is
 line column x - (CX - 92).
 
-Glyphs: U+E430 frame, U+E431 level gem, U+E440.. '0'-'9' at the level's height. FluxDungeons (rpg/RpgHud.java)
+The client puts font glyphs in 256 x 256 sheets: a wider glyph is dropped without a word (and the whole line slides by
+its missing advance). The frame is cut in PIECE wide glyphs, each with a nearly transparent pixel in its last column
+so the client measures it at exactly its width.
+
+Glyphs: U+E450 + i frame pieces, U+E431 level gem, U+E440.. '0'-'9' at the level's height. FluxDungeons (rpg/RpgHud.java)
 keeps FRAME_X / GEM_X in line with frame_box() / GEM: rerun and compare after a change.
 """
 import math
@@ -82,6 +86,23 @@ def frame_box():
     l, t, r, b = im.getbbox()
     # keep the bottom row on the bottom of the screen so heights stay simple
     return im.crop((l, t, r, H)), l - LINE0, H - t
+
+
+PIECE = 128
+
+
+def frame_pieces():
+    """The frame cut in glyphs no wider than PIECE: (pieces, line x of the first, top above the bottom, width)."""
+    im, x, top = frame_box()
+    pieces = []
+    for i in range(0, im.width, PIECE):
+        p = im.crop((i, 0, min(im.width, i + PIECE), im.height))
+        px = p.load()
+        last = p.width - 1
+        if all(px[last, y][3] == 0 for y in range(p.height)):
+            px[last, 0] = (0, 0, 0, 1)
+        pieces.append(p)
+    return pieces, x, top, im.width
 
 
 VIOLET = ("#3d2270", "#6c43b0", "#a077dd", "#d6bbf2")
