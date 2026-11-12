@@ -3,6 +3,7 @@
     {
       "type": "space",
       "advances": {
+        " ": 3,
         "\ue010": -1,
         "\ue020": 1,
         "\ue011": -2,
@@ -32,6 +33,17 @@
       "ascent": 7,
       "chars": [
         "\ue000"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "flux:font/hud_text.png",
+      "height": 7,
+      "ascent": 7,
+      "chars": [
+        "!%'()+,-./012345",
+        "6789:?ABCDEFGHIJ",
+        "KLMNOPQRSTUVWXYZ"
       ]
     }
   ]

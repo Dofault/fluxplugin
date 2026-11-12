@@ -17,7 +17,8 @@ bar-colour: YELLOW
 # from that point (negative x from the right edge). Parts, at [x, y] inside the element:
 #   image: sprite of the gui atlas (assets/<ns>/textures/gui/sprites/<path>.png -> <ns>:<path>), size [w, h]
 #   head: true, the player's own head (hat layer included), size [w, h]
-#   text: <#RRGGBB> colours and pieces, scale (1 = the game's font), shadow (#RRGGBB, #AARRGGBB or none)
+#   text: <#RRGGBB> colours and pieces, font (small: QuinqueFive capitals, 5 px; else the game's font),
+#         scale (1 = natural size), shadow (#RRGGBB, #AARRGGBB or none)
 #   layer: back for backgrounds (drawn first, under everything else)
 # setting: option of settings.yml that hides the element when off; requires: piece that must not be empty.
 elements:
@@ -29,9 +30,9 @@ elements:
       - {image: "flux:hud/card", at: [0, 0], size: [112, 32], layer: back}
       - {head: true, at: [4, 4], size: [24, 24]}
       - {image: "flux:hud/bitblock", at: [36, 5], size: [10, 10]}
-      - {text: "{balance}", at: [49, 6]}
-      - {image: "flux:hud/influence", at: [36, 17], size: [10, 10]}
-      - {text: "{influence}", at: [49, 18]}
+      - {text: "{balance}", at: [49, 8], font: small}
+      - {image: "flux:hud/influence", at: [36, 16], size: [10, 10]}
+      - {text: "{influence}", at: [49, 19], font: small}
   position:
     setting: hud_position
     anchor: top-right
@@ -39,7 +40,7 @@ elements:
     parts:
       - {image: "flux:hud/bar", at: [0, 0], size: [112, 12], layer: back}
       - {image: "flux:hud/compass_{compass}", at: [2, 1], size: [10, 10]}
-      - {text: "{x}, {y}, {z}", at: [15, 2]}
+      - {text: "{x}, {y}, {z}", at: [15, 4], font: small}
   voteparty:
     setting: hud_voteparty
     requires: voteparty
@@ -48,7 +49,7 @@ elements:
     parts:
       - {image: "flux:hud/bar", at: [0, 0], size: [112, 12], layer: back}
       - {image: "flux:hud/voteparty", at: [2, 1], size: [10, 10]}
-      - {text: "<#FFFFFF>VoteParty: <#FFEB00>{voteparty}<#FFFFFF>/<#FADA5E>{voteparty_required}", at: [15, 2]}
+      - {text: "<#FFFFFF>VoteParty: <#FFEB00>{voteparty}<#FFFFFF>/<#FADA5E>{voteparty_required}", at: [15, 4], font: small}
 
 # Bedrock players (no pack, so no picture): one boss bar, MiniMessage or & colours. progress: "a/b" or 0 to 1.
 bedrock:

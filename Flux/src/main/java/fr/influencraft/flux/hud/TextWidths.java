@@ -18,11 +18,18 @@ final class TextWidths {
 
     private static final int FALLBACK = 6;
     private final Map<Integer, Integer> widths = new HashMap<>();
+    /** The HUD font's QuinqueFive sheet (hud_font_widths.json, Flux/assets/hud/gen_hud_font.py). */
+    private final Map<Integer, Integer> small = new HashMap<>();
 
     TextWidths(Plugin flux) {
-        try (InputStream in = flux.getResource("font_widths.json")) {
+        read(flux, "font_widths.json", widths);
+        read(flux, "hud_font_widths.json", small);
+    }
+
+    private static void read(Plugin flux, String name, Map<Integer, Integer> widths) {
+        try (InputStream in = flux.getResource(name)) {
             if (in == null) {
-                flux.getLogger().warning("font_widths.json missing: HUD texts measured roughly");
+                flux.getLogger().warning(name + " missing: HUD texts measured roughly");
                 return;
             }
             Map<String, Integer> read = new Gson().fromJson(new InputStreamReader(in, StandardCharsets.UTF_8),
@@ -30,11 +37,12 @@ final class TextWidths {
                     }.getType());
             if (read != null) read.forEach((k, v) -> widths.put(Integer.parseInt(k), v));
         } catch (Exception e) {
-            flux.getLogger().warning("font_widths.json not readable: " + e.getMessage());
+            flux.getLogger().warning(name + " not readable: " + e.getMessage());
         }
     }
 
-    int width(String text) {
+    int width(String text, boolean inSmall) {
+        Map<Integer, Integer> widths = inSmall ? small : this.widths;
         int w = 0;
         for (int i = 0; i < text.length(); ) {
             int cp = text.codePointAt(i);

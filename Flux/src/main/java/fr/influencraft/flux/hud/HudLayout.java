@@ -44,14 +44,15 @@ final class HudLayout {
     record Head(int slot, Layer layer, int colour) implements Part {
     }
 
-    record Text(int slot, Layer layer, List<Run> runs) implements Part {
+    /** {@code small}: the HUD font's QuinqueFive capitals (5 px) instead of the game's font. */
+    record Text(int slot, Layer layer, List<Run> runs, boolean small) implements Part {
     }
 
     record Element(String id, String setting, String requires, List<Part> parts) {
     }
 
     /** One place of the screen: anchor (0..1 of the screen), offset in px, scale. */
-    private record Slot(double anchorX, double anchorY, int x, int y, double scaleX, double scaleY) {
+    private record Slot(double anchorX, double anchorY, double x, double y, double scaleX, double scaleY) {
     }
 
     /** Main and shadow colours, ARGB. */
@@ -96,14 +97,17 @@ final class HudLayout {
     private Part part(Map<?, ?> raw, double[] anchor, int[] base) {
         int[] at = pair(raw.get("at"), 0, 0);
         Layer layer = "back".equalsIgnoreCase(String.valueOf(raw.get("layer"))) ? Layer.BACK : Layer.FRONT;
+        // An object (sprite, head) is drawn from 1 px above the line, where a letter starts on it (8 px tall from
+        // the baseline, 7 px below the line's top): scaled, that pixel becomes size / 8. Set back so that "at" is the
+        // picture's real top.
         if (raw.containsKey("image")) {
             int[] size = pair(raw.get("size"), 8, 8);
-            int slot = slot(anchor, base[0] + at[0], base[1] + at[1], size[0] / 8.0, size[1] / 8.0);
+            int slot = slot(anchor, base[0] + at[0], base[1] + at[1] + size[1] / 8.0, size[0] / 8.0, size[1] / 8.0);
             return new Image(slot, layer, String.valueOf(raw.get("image")), colour(0xFFFFFFFF, 0));
         }
         if (raw.containsKey("head")) {
             int[] size = pair(raw.get("size"), 8, 8);
-            int slot = slot(anchor, base[0] + at[0], base[1] + at[1], size[0] / 8.0, size[1] / 8.0);
+            int slot = slot(anchor, base[0] + at[0], base[1] + at[1] + size[1] / 8.0, size[0] / 8.0, size[1] / 8.0);
             return new Head(slot, layer, colour(0xFFFFFFFF, 0));
         }
         if (raw.containsKey("text")) {
@@ -111,7 +115,7 @@ final class HudLayout {
             int slot = slot(anchor, base[0] + at[0], base[1] + at[1], scale, scale);
             Object s = raw.get("shadow");
             int shadow = s == null ? 0xFF000000 : "none".equalsIgnoreCase(String.valueOf(s)) ? 0 : argb(String.valueOf(s));
-            return new Text(slot, layer, runs(String.valueOf(raw.get("text")), shadow));
+            return new Text(slot, layer, runs(String.valueOf(raw.get("text")), shadow), "small".equalsIgnoreCase(String.valueOf(raw.get("font"))));
         }
         throw new IllegalArgumentException("image, head or text expected");
     }
@@ -130,7 +134,7 @@ final class HudLayout {
         return runs;
     }
 
-    private int slot(double[] anchor, int x, int y, double sx, double sy) {
+    private int slot(double[] anchor, double x, double y, double sx, double sy) {
         if (slots.size() >= 254) throw new IllegalStateException("more than 254 parts");
         slots.add(new Slot(anchor[0], anchor[1], x, y, sx, sy));
         return slots.size();

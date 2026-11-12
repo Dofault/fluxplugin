@@ -33,8 +33,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -94,6 +92,8 @@ public final class HudService implements Hud.Backend, Listener {
         final Map<String, String> values = new HashMap<>();
         long valuesAt = Long.MIN_VALUE;
         Component head;
+        long reorderMinute;
+        int reorders;
     }
 
     public HudService(JavaPlugin flux) {
@@ -112,7 +112,6 @@ public final class HudService implements Hud.Backend, Listener {
         HandlerList.unregisterAll(this);
         if (task != null) task.cancel();
         for (Player p : Bukkit.getOnlinePlayers()) hide(p);
-        views.values().forEach(HudService::forget);
         views.clear();
     }
 
@@ -135,7 +134,6 @@ public final class HudService implements Hud.Backend, Listener {
         String glsl = enabled ? layout.glsl() : null;
         TextShader.part(flux, "flux_hud", glsl, glsl == null ? null : "flux_hud_vertex();");
         for (Player p : Bukkit.getOnlinePlayers()) hide(p);
-        views.values().forEach(HudService::forget);
         views.clear();
         if (task != null) task.cancel();
         task = enabled ? Bukkit.getScheduler().runTaskTimer(flux, this::tick, 20L, refreshTicks) : null;
@@ -165,14 +163,9 @@ public final class HudService implements Hud.Backend, Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
-        forget(views.remove(e.getPlayer().getUniqueId()));
+        views.remove(e.getPlayer().getUniqueId());
     }
 
-    private static void forget(View v) {
-        if (v == null) return;
-        BarIds.forget(v.back);
-        BarIds.forget(v.front);
-    }
 
     private void tick() {
         tick += refreshTicks;
@@ -228,8 +221,9 @@ public final class HudService implements Hud.Backend, Listener {
                         int x = 0;
                         for (HudLayout.Run run : t.runs()) {
                             String text = clean(fill(run.text(), p, v));
+                            if (t.small()) text = text.toUpperCase(Locale.ROOT);
                             if (text.isEmpty()) continue;
-                            x += to.addText(text, t.slot(), run.colour(), widths.width(text));
+                            x += to.addText(text, t.small(), t.slot(), run.colour(), widths.width(text, t.small()));
                         }
                         to.close(x);
                     }
@@ -254,8 +248,6 @@ public final class HudService implements Hud.Backend, Listener {
             v.shown = true;
             p.showBossBar(v.back);
             p.showBossBar(v.front);
-            BarIds.remember(v.back);
-            BarIds.remember(v.front);
         }
     }
 
@@ -320,6 +312,15 @@ public final class HudService implements Hud.Backend, Listener {
     public void putLast(Player p) {
         View v = views.get(p.getUniqueId());
         if (v == null || !v.shown || !p.isOnline()) return;
+        long minute = System.currentTimeMillis() / 60_000;
+        if (v.reorderMinute != minute) {
+            v.reorderMinute = minute;
+            v.reorders = 0;
+        }
+        if (++v.reorders == 20) {
+            flux.getLogger().warning("HUD of " + p.getName() + " put back below other boss bars 20 times this minute: a plugin keeps"
+                    + " showing a boss bar again (each time the HUD may blink).");
+        }
         p.hideBossBar(v.back);
         p.hideBossBar(v.front);
         p.showBossBar(v.back);
@@ -447,8 +448,9 @@ public final class HudService implements Hud.Backend, Listener {
         }
 
         /** A run of text; the slot is closed by {@link #close} with the runs' total width. */
-        int addText(String text, int slot, int colour, int width) {
-            parts.add(mark(Component.text(text), slot, colour));
+        int addText(String text, boolean small, int slot, int colour, int width) {
+            Component c = Component.text(text);
+            parts.add(mark(small ? c.font(FONT) : c, slot, colour));
             return width;
         }
 
@@ -484,53 +486,6 @@ public final class HudService implements Hud.Backend, Listener {
                 }
             }
             return Component.text(s.toString()).font(FONT);
-        }
-    }
-
-    // ------------------------------------------------------------------------------------------------ bar ids
-
-    /**
-     * Network ids of the HUD's bars, for the packet listener that keeps them last: Paper keeps the vanilla boss
-     * event of an Adventure bar in its implementation ({@code BossBarImplementationImpl.vanilla}). Read by
-     * reflection; without it the bars are simply not reordered.
-     */
-    public static final class BarIds {
-        private static final Set<UUID> IDS = ConcurrentHashMap.newKeySet();
-        private static final Map<BossBar, UUID> OF = new ConcurrentHashMap<>();
-        private static volatile boolean broken;
-
-        private BarIds() {
-        }
-
-        public static boolean ours(UUID id) {
-            return IDS.contains(id);
-        }
-
-        static void forget(BossBar bar) {
-            if (bar == null) return;
-            UUID id = OF.remove(bar);
-            if (id != null) IDS.remove(id);
-        }
-
-        static void remember(BossBar bar) {
-            if (broken || OF.containsKey(bar)) return;
-            try {
-                Class<?> type = Class.forName("io.papermc.paper.adventure.BossBarImplementationImpl");
-                Method get = net.kyori.adventure.bossbar.BossBarImplementation.class.getMethod("get", BossBar.class, Class.class);
-                Object impl = get.invoke(null, bar, type);
-                Field f = type.getDeclaredField("vanilla");
-                f.setAccessible(true);
-                Object vanilla = f.get(impl);
-                if (vanilla == null) return;
-                Object id = vanilla.getClass().getMethod("getId").invoke(vanilla);
-                if (id instanceof UUID u) {
-                    IDS.add(u);
-                    OF.put(bar, u);
-                }
-            } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
-                broken = true;
-                Bukkit.getLogger().warning("[Flux] HUD bars cannot be kept below the other boss bars: " + e);
-            }
         }
     }
 }
