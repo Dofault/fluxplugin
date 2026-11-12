@@ -334,6 +334,7 @@ pick-level:
     &#FF5C5CArmure complète et une arme obligatoires.'
 
 rpg:
+  gate-soon: "&#B376E5Le donjon %dungeon% arrive bientôt : son portail est déjà prêt."
   dummy-none: "&#FF5C5CAucun mannequin à moins de 6 blocs."
   dummy-removed: "&#B376E5Mannequin(s) retiré(s) : &f%count%"
   unavailable: "&#FF5C5CLe monde RPG n'est pas disponible pour le moment."

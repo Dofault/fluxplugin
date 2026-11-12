@@ -60,6 +60,7 @@ public final class FluxDungeons extends FluxPlugin {
     private Arena arena;
     private Diagnostics diagnostics;
     private Runs runs;
+    private fr.influencraft.fluxdungeons.rpg.DungeonGates gates;
     private Loadouts loadouts;
     private ItemCatalog items;
     private fr.influencraft.fluxdungeons.combat.AttackCadence attackCadence;
@@ -172,6 +173,9 @@ public final class FluxDungeons extends FluxPlugin {
         // rpg universe (docs/technique/rpg.md): lobby world, classes, stats, combat engine, skills, /rpg, /classe
         rpg = new fr.influencraft.fluxdungeons.rpg.RpgModule(this);
         rpg.start();
+        // the dungeon gates of the rpg lobby (lobby.yml, written by assets/maps/gen_lobby.py)
+        gates = new fr.influencraft.fluxdungeons.rpg.DungeonGates(this, id -> runs.dungeon(id) != null);
+        gates.start();
         // damage numbers of the whole server, in place of CMI's
         damageNumbers = new fr.influencraft.fluxdungeons.combat.DamageNumbers(this);
         damageNumbers.load(getConfig().getConfigurationSection("damage-numbers"));
@@ -291,6 +295,7 @@ public final class FluxDungeons extends FluxPlugin {
 
     @Override
     public void reload() {
+        if (gates != null) gates.load();
         super.reload();
         settings();
         if (listener != null) listener.reloadBreakable();
