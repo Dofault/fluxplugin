@@ -175,6 +175,7 @@ final class Burrows {
                 chambers(lair, r);
                 arena(lair, r);
                 surface(lair, r);
+                if (c.getBoolean("rpg", true)) rpgLook(lair);
                 Location start = entrance(lair);
                 run.checkpoint = start;
                 run.origin = start.clone();
@@ -584,6 +585,49 @@ final class Burrows {
                 }
             }
         }
+    }
+
+    /**
+     * The RPG look of the dungeons (plugins/FluxDungeons/rpg_blocs.yml, written by assets/rpg_blocs/gen_rpg_blocs.py):
+     * every block of the lair that has an RPG version (an ItemsAdder note block) takes it, upright logs only. Done last,
+     * without block updates, like the map scripts do.
+     */
+    private void rpgLook(Lair l) {
+        Map<Material, BlockData> look = rpgBlocks();
+        if (look.isEmpty()) return;
+        GalleryPlan.Settings s = l.plan.settings;
+        int margin = s.depth() > s.size() ? 16 : 1, swapped = 0;
+        for (int x = -margin; x < s.size() + margin; x++) {
+            for (int z = -margin; z < s.depth() + margin; z++) {
+                for (int y = s.bottom(); y <= s.top() + 16; y++) {
+                    Block b = l.world.getBlockAt(l.ox + x, y, l.oz + z);
+                    BlockData to = look.get(b.getType());
+                    if (to == null) continue;
+                    if (b.getBlockData() instanceof org.bukkit.block.data.Orientable o && o.getAxis() != org.bukkit.Axis.Y) continue;
+                    b.setBlockData(to, false);
+                    swapped++;
+                }
+            }
+        }
+        plugin.getLogger().info("Lair: " + swapped + " blocks in the RPG look.");
+    }
+
+    private Map<Material, BlockData> rpgBlocks() {
+        java.io.File f = new java.io.File(plugin.getDataFolder(), "rpg_blocs.yml");
+        if (!f.isFile()) return Map.of();
+        ConfigurationSection c = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(f).getConfigurationSection("blocks");
+        if (c == null) return Map.of();
+        Map<Material, BlockData> out = new HashMap<>();
+        for (String id : c.getKeys(false)) {
+            Material m = Material.matchMaterial(id);
+            if (m == null) continue;
+            try {
+                out.put(m, Bukkit.createBlockData(c.getString(id, "")));
+            } catch (IllegalArgumentException e) {
+                plugin.getLogger().warning("rpg_blocs.yml: bad state for " + id);
+            }
+        }
+        return out;
     }
 
     private static boolean near(GalleryPlan.Point p, int x, int z, double d) {

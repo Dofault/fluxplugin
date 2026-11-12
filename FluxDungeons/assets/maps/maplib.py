@@ -145,16 +145,17 @@ def rpg_blocks(server):
     return out
 
 
-def retexture(m, server):
+def retexture(m, server, used=None):
     """Commands swapping every mapped vanilla block of the map for its RPG note block, without block updates (a note
     block changes its state when the block above or under it changes: the swap comes last and is strict)."""
     import re
     table = rpg_blocks(server)
-    used = set()
-    for cmd in m.cmds:
-        parts = cmd.split()
-        if parts[0] in ("fill", "setblock"):
-            used.add(parts[7 if parts[0] == "fill" else 4].split("[")[0])
+    if used is None:
+        used = set()
+        for cmd in m.cmds:
+            parts = cmd.split()
+            if parts[0] in ("fill", "setblock"):
+                used.add(parts[7 if parts[0] == "fill" else 4].split("[")[0])
     x0, z0, x1, z1 = m.box
     y0, y1 = m.ybox
     out = []
