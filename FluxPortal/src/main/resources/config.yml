@@ -7,6 +7,9 @@ language: ""
 width: 5
 height: 4
 
+# Ticks a player waits after going through before he can take a portal again (60 = 3 s): no back and forth.
+travel-cooldown: 60
+
 # Around the window: dust flowing along the sides and top of the hole (not its bottom), motes drawn into it, a hum,
 # and a whoosh, a chime and a burst when someone goes through. Particles reach Bedrock players too.
 look:

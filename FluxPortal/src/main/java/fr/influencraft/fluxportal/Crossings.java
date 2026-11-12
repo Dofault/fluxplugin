@@ -31,8 +31,6 @@ import java.util.function.Supplier;
  */
 final class Crossings implements Listener {
 
-    /** Ticks before the same player can go through again. */
-    private static final int COOLDOWN = 4;
     /** How far inside the hole's edges the eyes must pass. */
     private static final double MARGIN = 0.15;
 
@@ -56,7 +54,8 @@ final class Crossings implements Listener {
         if (p.isInsideVehicle()) return;
         int now = Bukkit.getCurrentTick();
         Integer was = last.get(p.getUniqueId());
-        if (was != null && now - was < COOLDOWN) return;
+        // no going back and forth: a player waits (travel-cooldown, ticks) before taking a portal again
+        if (was != null && now - was < plugin.getConfig().getInt("travel-cooldown", 60)) return;
         String world = to.getWorld().getName();
         double eye = p.getEyeHeight();
         for (Portal portal : portals.get()) {
