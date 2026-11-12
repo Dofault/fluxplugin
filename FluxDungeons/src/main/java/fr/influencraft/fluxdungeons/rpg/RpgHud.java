@@ -17,8 +17,8 @@ import java.util.List;
  * action bar, opaque and one pixel larger than the hearts and food rows they cover (font {@code fluxdungeons:hud},
  * assets/gen_hud.py). The vanilla life, food and saturation stay full in that universe (the real ones are the
  * engine's), so the rows underneath never shake nor blink out of the cover. Beside the hotbar, the class's three
- * skills: A and F on its left (all of it over an arcane ring, the class level in a gem above the bars), the weapon's skill (right click) on its right, each under a key cap, dimmed while the
- * mana does not cover it (assets/hud_spells.py, hud_frame.py). Bedrock players: life and mana written in the action bar
+ * skills: A and F on its left (the class level in a gem over the middle of the bars), the weapon's skill (right click) on its right, each under a key cap, dimmed while the
+ * mana does not cover it (assets/hud_spells.py, hud_level.py). Bedrock players: life and mana written in the action bar
  * ({@link Clients#bedrock}).
  */
 final class RpgHud {
@@ -32,22 +32,14 @@ final class RpgHud {
     private static final int BLANK = SPELLS.size(), DIM = BLANK + 1, SLOT = 22, KEY = 9;
     /** Left edge of each skill slot on the line (x 0 = one pixel left of the hotbar, which spans 1 to 183). */
     private static final int SLOT_A = -50, SLOT_F = -25, SLOT_RIGHT = 187;
-    /** In line with assets/hud_frame.py (gen_hud.py prints them): the frame's left edge and width, the gem's left edge. */
-    private static final int FRAME_X = -54, FRAME_W = 273, GEM_X = 83, GEM = 19;
-    /** The frame is cut in glyphs this wide: the client drops any glyph over 256 px (its font sheets' size). */
-    private static final int FRAME_PIECE = 128;
+    /** In line with assets/hud_level.py: the level gem's size and left edge (centred on the screen, x 92). */
+    private static final int GEM = 29, GEM_X = 92 - GEM / 2;
 
     /** What the action bar shows now. */
     Component render(Player p, RpgPlayer r, double hp, double maxHp, double mana, double maxMana) {
         if (Clients.bedrock(p)) return text(hp, maxHp, mana, maxMana);
         StringBuilder b = new StringBuilder();
         int[] cursor = {0};
-        // the arcane ring first: everything else is drawn over it
-        for (int i = 0, x = 0; x < FRAME_W; i++, x += FRAME_PIECE) {
-            moveTo(b, cursor, FRAME_X + x);
-            b.append((char) (0xE450 + i));
-            cursor[0] += Math.min(FRAME_PIECE, FRAME_W - x) + 1;
-        }
         ClassDef c = r.heroClass();
         if (c != null) {
             skill(b, cursor, SLOT_A, c.skills().get("a"), 0, r, mana);
@@ -76,7 +68,8 @@ final class RpgHud {
         b.append('\uE431');
         cursor[0] += GEM + 1;
         String t = String.valueOf(Math.max(0, level));
-        moveTo(b, cursor, 92 + 1 - (t.length() * DIGIT - 1) / 2);
+        // centred on the gem's middle column (x 92): every number is an odd number of pixels wide
+        moveTo(b, cursor, 92 - (t.length() * DIGIT - 1) / 2);
         for (char ch : t.toCharArray()) b.append((char) (0xE440 + ch - '0'));
         cursor[0] += t.length() * DIGIT;
     }

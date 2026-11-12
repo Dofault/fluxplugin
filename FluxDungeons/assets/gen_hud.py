@@ -17,7 +17,7 @@ bars down onto that row, one pixel above it (ASCENT, check in game). Hearts span
 10), food the 81 px right of it: one 83 px bar each from one pixel before, 18 px between them, 184 px in all.
 
 Chars: U+E100 + step = life bar, U+E200 + step = mana bar, U+E300.. = '0'-'9' then '/', U+E400.. spell slots,
-U+E420.. key caps (hud_spells.py), U+E450.. frame pieces, U+E431 level gem, U+E440.. level digits (hud_frame.py), U+F001-U+F008 move back 1, 2,
+U+E420.. key caps (hud_spells.py), U+E431 level gem, U+E440.. level digits (hud_level.py), U+F001-U+F008 move back 1, 2,
 4 ... 128 px, U+F011-U+F018 forward as much. FluxDungeons (rpg/RpgHud.java) writes the same numbers: keep STEPS,
 BAR_W and DIGIT_W in line with it. Every digit is padded to 5 px (an almost transparent pixel in its last column),
 so each one moves the text by exactly 6 px.
@@ -28,7 +28,7 @@ import sys
 
 from PIL import Image
 
-import hud_frame
+import hud_level
 import hud_spells
 
 STEPS = 40
@@ -108,14 +108,10 @@ def main(pack):
     spells, spell_count = hud_spells.slots_sheet()
     spells.save(os.path.join(tex, "hud_spells.png"))
     hud_spells.badges_sheet().save(os.path.join(tex, "hud_keys.png"))
-    pieces, fr_x, fr_top, fr_w = hud_frame.frame_pieces()
-    for i, piece in enumerate(pieces):
-        piece.save(os.path.join(tex, f"hud_frame_{i}.png"))
-    old = os.path.join(tex, "hud_frame.png")
-    if os.path.exists(old):
-        os.remove(old)
-    hud_frame.gem().save(os.path.join(tex, "hud_gem.png"))
-    print("frame line x", fr_x, "width", fr_w, "(RpgHud FRAME_X, FRAME_W; pieces of", hud_frame.PIECE, ")")
+    for old in os.listdir(tex):
+        if old.startswith("hud_frame"):
+            os.remove(os.path.join(tex, old))
+    hud_level.gem().save(os.path.join(tex, "hud_gem.png"))
     back = {chr(0xF001 + i): -(1 << i) for i in range(8)}
     fwd = {chr(0xF011 + i): (1 << i) for i in range(8)}
     font = {"providers": [
@@ -130,12 +126,10 @@ def main(pack):
          "height": hud_spells.SLOT, "chars": ["".join(chr(0xE400 + i) for i in range(spell_count))]},
         {"type": "bitmap", "file": "fluxdungeons:font/hud_keys.png", "ascent": KEY_ASCENT,
          "height": hud_spells.BADGE_H, "chars": ["".join(chr(0xE420 + i) for i in range(len(hud_spells.BADGES)))]},
-        # frame and level gem (hud_frame.py): top of a glyph = 65 + ascent px above the bottom of the screen
-        *({"type": "bitmap", "file": f"fluxdungeons:font/hud_frame_{i}.png", "ascent": fr_top - 65,
-           "height": p.height, "chars": [chr(0xE450 + i)]} for i, p in enumerate(pieces)),
-        {"type": "bitmap", "file": "fluxdungeons:font/hud_gem.png", "ascent": hud_frame.GEM_TOP - 65,
-         "height": hud_frame.GEM, "chars": [chr(0xE431)]},
-        {"type": "bitmap", "file": "fluxdungeons:font/hud_digits.png", "ascent": hud_frame.LEVEL_TOP - 65,
+        # level gem (hud_level.py): top of a glyph = 65 + ascent px above the bottom of the screen
+        {"type": "bitmap", "file": "fluxdungeons:font/hud_gem.png", "ascent": hud_level.GEM_TOP - 65,
+         "height": hud_level.GEM, "chars": [chr(0xE431)]},
+        {"type": "bitmap", "file": "fluxdungeons:font/hud_digits.png", "ascent": hud_level.LEVEL_TOP - 65,
          "height": DIGIT_H, "chars": ["".join(chr(0xE440 + i) for i in range(count))]},
     ]}
     with open(os.path.join(root, "font", "hud.json"), "w", encoding="utf-8") as f:
