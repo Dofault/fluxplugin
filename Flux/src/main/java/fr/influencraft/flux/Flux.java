@@ -111,6 +111,8 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         fr.influencraft.flux.welcome.JoinScreenService joinScreens = new fr.influencraft.flux.welcome.JoinScreenService(this);
         getServer().getPluginManager().registerEvents(joinScreens, this);
         fr.influencraft.flux.api.welcome.JoinScreens.bind(joinScreens);
+        // middle click on a custom block picks its item (the vanilla block it is drawn with otherwise)
+        getServer().getPluginManager().registerEvents(new fr.influencraft.flux.items.CustomBlockPick(), this);
         if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) papiBridge = new PapiBridge(this);
         fr.influencraft.flux.api.FluxApi.bind(this);
         fr.influencraft.flux.api.FluxApi.registerPlaceholders(this, "flux", this::ownPlaceholder);
