@@ -64,11 +64,4 @@ window:
   # Download the vanilla client from Mojang once (plugins/FluxPortal/cache/) for the vanilla block textures.
   download-client: true
 
-# Where the window's shader is written (pack folders, from the server folder): the overlay below and pack.mcmeta.
-pack:
-  overlay: fluxportal_v88
-  # Pack formats the shader is written for (88 = Minecraft 26.2).
-  min-format: 88
-  max-format: 88
-  folders:
-    - plugins/FluxPortal/pack
+# The window's shader is written by Flux (its config, client-pack), with the other parts of the pack's text shader.

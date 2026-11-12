@@ -128,6 +128,15 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         tab = new fr.influencraft.flux.tab.TabService(this, getServer().getPluginManager().isPluginEnabled("packetevents")
                 ? new fr.influencraft.flux.adapters.packetevents.PacketEventsNametags() : null);
         tab.start();
+        // HUD (plugins/Flux/hud.yml) in place of MythicHUD, drawn by the text shader of Flux's client pack
+        hud = new fr.influencraft.flux.hud.HudService(this);
+        hud.start();
+        bossBarListener = PacketEvents.getAPI().getEventManager()
+                .registerListener(new fr.influencraft.flux.adapters.packetevents.BossBarOrder(this, hud));
+        // Flux's part of the resource pack: the one text shader of the suite (api.client.TextShader), HUD pictures
+        clientPack = new fr.influencraft.flux.pack.ClientPack(this, getFile());
+        clientPack.configure(getConfig().getConfigurationSection("client-pack"));
+        clientPack.start();
         // once every plugin is enabled: PlayerPoints may load after us
         getServer().getScheduler().runTask(this, () -> fr.influencraft.flux.compat.PlayerPointsCompat.start(this, currencies));
         // every plugin has opened its tables: record them (what /fluxmenu database migrate moves)
@@ -143,6 +152,9 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         if (leaderboards != null) leaderboards.stop();
         if (currencies != null) currencies.stop();
         if (tab != null) tab.stop();
+        if (hud != null) hud.stop();
+        if (clientPack != null) clientPack.stop();
+        if (bossBarListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(bossBarListener);
         fr.influencraft.flux.api.util.PlayerSettings.close();
         fr.influencraft.flux.api.data.Database.stop();
         if (papiBridge != null) papiBridge.shutdown();
@@ -159,6 +171,9 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     private fr.influencraft.flux.trade.TradeService trades;
     private fr.influencraft.flux.economy.CurrencyService currencies;
     private fr.influencraft.flux.tab.TabService tab;
+    private fr.influencraft.flux.hud.HudService hud;
+    private fr.influencraft.flux.pack.ClientPack clientPack;
+    private com.github.retrooper.packetevents.event.PacketListenerCommon bossBarListener;
     private fr.influencraft.flux.leaderboard.LeaderboardService leaderboards;
     private fr.influencraft.flux.profile.ProfileService profile;
     private fr.influencraft.flux.help.HelpService help;
@@ -323,6 +338,8 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         if (universes != null) universes.unclaimAll(event.getPlugin());
         fr.influencraft.flux.api.economy.Economy.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.tab.TabList.unregisterAll(event.getPlugin());
+        fr.influencraft.flux.api.hud.Hud.unregisterAll(event.getPlugin());
+        fr.influencraft.flux.api.client.TextShader.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.reward.Rewards.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.items.CustomItems.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.effects.Effects.unregisterAll(event.getPlugin());
@@ -395,6 +412,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
                 backgrounds.reset();
                 PathRenderer.reset();
                 if (tab != null) tab.load();
+                if (hud != null) hud.load();
                 int warnings = registry.load();
                 msg(sender, "&#2ECF7B" + registry.all().size() + " menu(s) rechargé(s)"
                         + (warnings > 0 ? " &#FF5C5C(" + warnings + " avertissement(s), voir la console)" : "") + ".");

@@ -71,6 +71,9 @@ int spw_near(int v, int camera) {
     return int(mod(float(v) - c + 20000.0, 40000.0)) - 20000;
 }
 
+// Hooks filled by Flux (api.client.TextShader): other text drawn by the suite, as the HUD.
+// @FLUX_DECLARATIONS
+
 void main() {
     gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
     spwPos = Position;
@@ -151,4 +154,8 @@ void main() {
     vertexColor = Color;
 #endif
     texCoord0 = UV0;
+
+#ifdef IS_GUI
+    // @FLUX_GUI_VERTEX
+#endif
 }

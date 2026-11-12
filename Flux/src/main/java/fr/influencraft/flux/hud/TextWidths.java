@@ -1,0 +1,46 @@
+package fr.influencraft.flux.hud;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import org.bukkit.plugin.Plugin;
+
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * How far the client moves after each character of its default font, from {@code font_widths.json} (generated from
+ * the client jar by {@code Flux/assets/vanilla/gen_font_widths.py}). Characters it lacks (unifont) count 6 px.
+ */
+final class TextWidths {
+
+    private static final int FALLBACK = 6;
+    private final Map<Integer, Integer> widths = new HashMap<>();
+
+    TextWidths(Plugin flux) {
+        try (InputStream in = flux.getResource("font_widths.json")) {
+            if (in == null) {
+                flux.getLogger().warning("font_widths.json missing: HUD texts measured roughly");
+                return;
+            }
+            Map<String, Integer> read = new Gson().fromJson(new InputStreamReader(in, StandardCharsets.UTF_8),
+                    new TypeToken<Map<String, Integer>>() {
+                    }.getType());
+            if (read != null) read.forEach((k, v) -> widths.put(Integer.parseInt(k), v));
+        } catch (Exception e) {
+            flux.getLogger().warning("font_widths.json not readable: " + e.getMessage());
+        }
+    }
+
+    int width(String text) {
+        int w = 0;
+        for (int i = 0; i < text.length(); ) {
+            int cp = text.codePointAt(i);
+            w += widths.getOrDefault(cp, FALLBACK);
+            i += Character.charCount(cp);
+        }
+        return w;
+    }
+}

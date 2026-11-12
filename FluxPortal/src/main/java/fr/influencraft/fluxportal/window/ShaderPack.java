@@ -1,45 +1,28 @@
 package fr.influencraft.fluxportal.window;
 
+import fr.influencraft.flux.api.client.TextShader;
+import org.bukkit.plugin.Plugin;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Map;
 
 /**
- * Writes the window's text shader (the templates in {@code resources/window/}, filled with the map colours) as an
- * overlay of a pack folder: {@code <folder>/pack.mcmeta} and {@code <folder>/<overlay>/assets/minecraft/shaders/core/}.
- * The server's pack takes it from there (a folder its pack plugin merges), and other plugins replacing the text shader
- * (MC GUI) find it in the folder and merge theirs with it.
+ * The window's text shader (the templates in {@code resources/window/}, filled with the map colours), handed to Flux
+ * as the base of the pack's text shader ({@link TextShader}): Flux writes it into its client pack with the other
+ * parts of the suite (the HUD), where MC GUI finds it to merge its own.
  */
 public final class ShaderPack {
 
     private ShaderPack() {
     }
 
-    /** True when a file changed (the pack must be rebuilt). */
-    public static boolean write(Path folder, String overlay, int minFormat, int maxFormat, MapColours colours) throws IOException {
+    public static void register(Plugin plugin, MapColours colours) throws IOException {
         String common = fill(read("window/common.glsl"), colours.glsl());
-        boolean changed = writeIfChanged(folder.resolve("pack.mcmeta"), mcmeta(overlay, minFormat, maxFormat));
-        for (String name : new String[]{"text.vsh", "text.fsh"}) {
-            String text = read("window/" + name).replace("@COMMON@", common);
-            changed |= writeIfChanged(folder.resolve(overlay + "/assets/minecraft/shaders/core/" + name), text);
-        }
-        return changed;
-    }
-
-    private static String mcmeta(String overlay, int min, int max) {
-        return "{\"pack\": {\"pack_format\": " + min + ", \"min_format\": " + min + ", \"max_format\": 9999, \"supported_formats\": [" + min
-                + ", 9999], \"description\": \"FluxPortal\"}, \"overlays\": {\"entries\": [{\"min_format\": " + min + ", \"max_format\": " + max
-                + ", \"directory\": \"" + overlay + "\", \"formats\": [" + min + ", " + max + "]}]}}\n";
-    }
-
-    private static boolean writeIfChanged(Path file, String text) throws IOException {
-        if (Files.isRegularFile(file) && Files.readString(file, StandardCharsets.UTF_8).equals(text)) return false;
-        Files.createDirectories(file.getParent());
-        Files.writeString(file, text, StandardCharsets.UTF_8);
-        return true;
+        String vertex = read("window/text.vsh").replace("@COMMON@", common);
+        String fragment = read("window/text.fsh").replace("@COMMON@", common);
+        TextShader.base(plugin, vertex, fragment);
     }
 
     private static String fill(String text, Map<String, String> values) {

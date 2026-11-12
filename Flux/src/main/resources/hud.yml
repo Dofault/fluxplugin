@@ -1,0 +1,58 @@
+# The HUD drawn by Flux on the corners of the screen (fr.influencraft.flux.hud, api.hud.Hud), in place of MythicHUD.
+# /fluxmenu reload reads this file again; a change of places, sizes or colours changes the text shader: /iazip after.
+#
+# Java players with the pack: every part is moved by the text shader. Bedrock players: one boss bar (section bedrock).
+# Pieces {id}: player, balance (main currency), influence, balance_<currency>, x, y, z, compass (00 to 31, compass
+# pointing north), and those of plugins (FluxWebsite: voteparty, voteparty_required). %placeholders% are read too.
+enabled: true
+# Ticks between two redraws (only what changed is sent); money and plugin pieces are read every value-ticks.
+refresh-ticks: 2
+value-ticks: 20
+# Hidden while an activity wants the screen (api.client.Focus: a dungeon run).
+hide-when-focused: true
+# Colour of the two boss bars carrying the HUD: YELLOW is drawn empty by the server's pack.
+bar-colour: YELLOW
+
+# anchor: top-left, top, top-right, left, centre, right, bottom-left, bottom, bottom-right; at: [x, y] in GUI pixels
+# from that point (negative x from the right edge). Parts, at [x, y] inside the element:
+#   image: sprite of the gui atlas (assets/<ns>/textures/gui/sprites/<path>.png -> <ns>:<path>), size [w, h]
+#   head: true, the player's own head (hat layer included), size [w, h]
+#   text: <#RRGGBB> colours and pieces, scale (1 = the game's font), shadow (#RRGGBB, #AARRGGBB or none)
+#   layer: back for backgrounds (drawn first, under everything else)
+# setting: option of settings.yml that hides the element when off; requires: piece that must not be empty.
+elements:
+  profile:
+    setting: hud_avatar
+    anchor: top-left
+    at: [15, 10]
+    parts:
+      - {image: "flux:hud/card", at: [0, 0], size: [112, 32], layer: back}
+      - {head: true, at: [4, 4], size: [24, 24]}
+      - {image: "flux:hud/bitblock", at: [36, 5], size: [10, 10]}
+      - {text: "{balance}", at: [49, 6]}
+      - {image: "flux:hud/influence", at: [36, 17], size: [10, 10]}
+      - {text: "{influence}", at: [49, 18]}
+  position:
+    setting: hud_position
+    anchor: top-right
+    at: [-127, 10]
+    parts:
+      - {image: "flux:hud/bar", at: [0, 0], size: [112, 12], layer: back}
+      - {image: "flux:hud/compass_{compass}", at: [2, 1], size: [10, 10]}
+      - {text: "{x}, {y}, {z}", at: [15, 2]}
+  voteparty:
+    setting: hud_voteparty
+    requires: voteparty
+    anchor: top-right
+    at: [-127, 26]
+    parts:
+      - {image: "flux:hud/bar", at: [0, 0], size: [112, 12], layer: back}
+      - {image: "flux:hud/voteparty", at: [2, 1], size: [10, 10]}
+      - {text: "<#FFFFFF>VoteParty: <#FFEB00>{voteparty}<#FFFFFF>/<#FADA5E>{voteparty_required}", at: [15, 2]}
+
+# Bedrock players (no pack, so no picture): one boss bar, MiniMessage or & colours. progress: "a/b" or 0 to 1.
+bedrock:
+  enabled: true
+  colour: PURPLE
+  text: "<#FFD94D>{balance} <#B376E5>BitBlock <dark_gray>| <#FFD94D>{influence} <#B376E5>Influence <dark_gray>| <#B376E5>VoteParty <#FFD94D>{voteparty}/{voteparty_required}"
+  progress: "{voteparty}/{voteparty_required}"

@@ -13,7 +13,6 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -109,19 +108,12 @@ public final class FluxPortal extends FluxPlugin {
         return s == null ? new YamlConfiguration() : s;
     }
 
-    /** The window's shader, written into each pack folder of the config; says when the pack must be rebuilt. */
+    /** The window's shader, handed to Flux which writes the pack's text shader (Flux's config, client-pack). */
     private void writeShader() {
-        ConfigurationSection pack = section("pack");
-        String overlay = pack.getString("overlay", "fluxportal_v88");
-        int min = pack.getInt("min-format", 88), max = pack.getInt("max-format", 88);
-        for (String folder : pack.getStringList("folders")) {
-            try {
-                if (ShaderPack.write(Path.of(folder), overlay, min, max, windows.colours())) {
-                    getLogger().warning("Window shader written in " + folder + ": rebuild the resource pack (/iazip) for players to see the portals.");
-                }
-            } catch (IOException | RuntimeException e) {
-                getLogger().severe("Window shader not written in " + folder + ": " + e.getMessage());
-            }
+        try {
+            ShaderPack.register(this, windows.colours());
+        } catch (IOException | RuntimeException e) {
+            getLogger().severe("Window shader not given to Flux: " + e.getMessage());
         }
     }
 

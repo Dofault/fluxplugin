@@ -55,6 +55,9 @@ public final class FluxWebsite extends FluxPlugin {
         // website rewards are moved into Flux's reward manager on join and before every claim
         Rewards.collector(this, p -> votes.collect(p, null));
         placeholders("influbridge", this::placeholder);
+        // Vote Party box of Flux's HUD (hud.yml)
+        fr.influencraft.flux.api.hud.Hud.piece(this, "voteparty", p -> String.valueOf(party.current()));
+        fr.influencraft.flux.api.hud.Hud.piece(this, "voteparty_required", p -> String.valueOf(party.votesRequired()));
         registerCommands();
     }
 

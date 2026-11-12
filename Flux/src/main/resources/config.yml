@@ -402,3 +402,15 @@ theme:
         paliers: {type: bar, frame: true, x: 25, y: 159, width: 126, colour: green,
                   progress: "%fluxcoll_selected_tier%", max: "%fluxcoll_selected_max_tier%",
                   text: "Palier %fluxcoll_selected_tier%/%fluxcoll_selected_max_tier%"}
+
+# Flux's part of the server's resource pack (pack.ClientPack): the HUD's pictures and the one text shader of the suite
+# (api.client.TextShader: FluxPortal's windows, the HUD), written into each folder below at start-up. Rebuild the pack
+# (/iazip) when the console says a file changed. plugins/Flux/pack is where MC GUI finds the text shader to merge.
+client-pack:
+  overlay: flux_text_v88
+  # Pack formats the shader is written for (88 = Minecraft 26.2).
+  min-format: 88
+  max-format: 88
+  folders:
+    - plugins/Flux/pack
+    - plugins/ItemsAdder/contents/flux/resourcepack
