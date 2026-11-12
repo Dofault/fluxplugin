@@ -32,13 +32,22 @@ import java.util.zip.ZipFile;
  * custom blocks of ItemsAdder and the like: a note block state drawn as a rock of the rpg world is seen as that rock
  * through a portal), then the vanilla client, downloaded once from Mojang. A pack may rename its textures through its
  * block atlas ({@code "sprite": "ia:129"} for {@code rpgblocs:block/stone_andesite}): those names are followed.
+ * Some packs are "protected" (ItemsAdder's zip): their pictures are damaged on purpose, the game reads them but Java
+ * does not. Folders holding the same pictures unharmed (ItemsAdder's {@code contents/<x>/resourcepack}) are read after
+ * the packs: a picture that cannot be decoded is looked for in the next source.
  * Read only from the main thread or one worker at a time (the zip files are shared).
  */
 public final class Assets {
 
     private static final String MANIFEST = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
 
-    private final List<ZipFile> sources = new ArrayList<>();
+    /** A place files are read from, by their path in a pack ("assets/minecraft/..."). */
+    private interface Source {
+        InputStream open(String path) throws IOException;
+    }
+
+    private final List<Source> sources = new ArrayList<>();
+    private final List<ZipFile> zips = new ArrayList<>();
     /** Texture names a pack's atlas gives ("ia:129") -> the real one ("rpgblocs:block/stone_andesite"). */
     private final Map<String, String> sprites = new HashMap<>();
     private volatile boolean ready;
@@ -47,7 +56,7 @@ public final class Assets {
      * Opens the packs (paths from the server folder, missing ones skipped) and the client jar, downloading it in the
      * background the first time; {@code whenReady} runs on the main thread once textures can be read.
      */
-    public void load(Plugin plugin, List<String> packs, boolean download, Runnable whenReady) {
+    public void load(Plugin plugin, List<String> packs, List<String> folders, boolean download, Runnable whenReady) {
         close();
         for (String path : packs) {
             File f = new File(path);
@@ -56,16 +65,25 @@ public final class Assets {
                 continue;
             }
             open(plugin, f).ifPresent(z -> {
-                sources.add(z);
+                add(z);
                 readAtlases(z);
             });
+        }
+        for (String pattern : folders) {
+            for (File dir : expand(pattern)) {
+                java.nio.file.Path root = dir.toPath();
+                sources.add(path -> {
+                    java.nio.file.Path file = root.resolve(path);
+                    return Files.isRegularFile(file) ? Files.newInputStream(file) : null;
+                });
+            }
         }
         Matcher m = Pattern.compile("^\\d+(?:\\.\\d+)*").matcher(Bukkit.getBukkitVersion());
         String version = m.find() ? m.group() : Bukkit.getBukkitVersion();
         File jar = new File(plugin.getDataFolder(), "cache/client-" + version + ".jar");
         Optional<ZipFile> client = jar.isFile() ? open(plugin, jar) : Optional.empty();
         if (client.isPresent()) {
-            sources.add(client.get());
+            add(client.get());
             ready = true;
             whenReady.run();
             return;
@@ -81,7 +99,7 @@ public final class Assets {
                 plugin.getLogger().info("Downloading the Minecraft " + version + " client from Mojang for its block textures (once)...");
                 fetch(version, jar);
                 Bukkit.getScheduler().runTask(plugin, () -> {
-                    open(plugin, jar).ifPresent(sources::add);
+                    open(plugin, jar).ifPresent(this::add);
                     ready = true;
                     whenReady.run();
                 });
@@ -95,14 +113,42 @@ public final class Assets {
         });
     }
 
+    private void add(ZipFile z) {
+        zips.add(z);
+        sources.add(path -> {
+            ZipEntry e = z.getEntry(path);
+            return e == null ? null : z.getInputStream(e);
+        });
+    }
+
+    /** "a/STAR/b" (a star between two slashes): every folder b under a folder of a; a plain path: itself. */
+    private static List<File> expand(String pattern) {
+        List<File> out = new ArrayList<>();
+        int star = pattern.indexOf("/*/");
+        if (star < 0) {
+            File f = new File(pattern);
+            if (f.isDirectory()) out.add(f);
+            return out;
+        }
+        File[] children = new File(pattern.substring(0, star)).listFiles(File::isDirectory);
+        if (children == null) return out;
+        java.util.Arrays.sort(children);
+        for (File c : children) {
+            File f = new File(c, pattern.substring(star + 3));
+            if (f.isDirectory()) out.add(f);
+        }
+        return out;
+    }
+
     public void close() {
-        for (ZipFile z : sources) {
+        for (ZipFile z : zips) {
             try {
                 z.close();
             } catch (IOException ignored) {
                 // closing anyway
             }
         }
+        zips.clear();
         sources.clear();
         sprites.clear();
         ready = false;
@@ -149,25 +195,18 @@ public final class Assets {
         return "assets/" + id.substring(0, colon) + "/" + folder + "/" + id.substring(colon + 1) + extension;
     }
 
-    private Optional<InputStream> find(String path) throws IOException {
-        for (ZipFile z : sources) {
-            ZipEntry e = z.getEntry(path);
-            if (e != null) return Optional.of(z.getInputStream(e));
-        }
-        return Optional.empty();
-    }
-
     /** A json under assets/<namespace>/ of the first source that has it ({@code blockstates}, {@code models}). */
     public Optional<JsonObject> json(String id, String folder) {
-        try {
-            Optional<InputStream> in = find(path(id(id), folder, ".json"));
-            if (in.isEmpty()) return Optional.empty();
-            try (InputStream s = in.get()) {
-                return Optional.of(JsonParser.parseReader(new InputStreamReader(s, StandardCharsets.UTF_8)).getAsJsonObject());
+        String path = path(id(id), folder, ".json");
+        for (Source src : sources) {
+            try (InputStream in = src.open(path)) {
+                if (in == null) continue;
+                return Optional.of(JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject());
+            } catch (IOException | RuntimeException e) {
+                // unreadable here: the next source
             }
-        } catch (IOException | RuntimeException e) {
-            return Optional.empty();
         }
+        return Optional.empty();
     }
 
     /** A texture by its name in a model ("block/stone", "rpgblocs:block/x", "ia:129"). */
@@ -177,17 +216,18 @@ public final class Assets {
         return image(path(id, "textures", ".png"));
     }
 
-    /** Any picture of the packs, by its full path in them ("assets/minecraft/textures/environment/clouds.png"). */
+    /** Any picture of the sources, by its full path in them, from the first one that can decode it. */
     public Optional<BufferedImage> image(String path) {
-        try {
-            Optional<InputStream> in = find(path);
-            if (in.isEmpty()) return Optional.empty();
-            try (InputStream s = in.get()) {
-                return Optional.ofNullable(ImageIO.read(s));
+        for (Source src : sources) {
+            try (InputStream in = src.open(path)) {
+                if (in == null) continue;
+                BufferedImage img = ImageIO.read(in);
+                if (img != null) return Optional.of(img);
+            } catch (IOException | RuntimeException e) {
+                // a damaged copy: the next source
             }
-        } catch (IOException | RuntimeException e) {
-            return Optional.empty();
         }
+        return Optional.empty();
     }
 
     private static void fetch(String version, File to) throws IOException {

@@ -27,6 +27,10 @@ window:
   # custom blocks of the pack keep their look through a portal.
   texture-packs:
     - plugins/ItemsAdder/output/generated.zip
+  # Folders holding the packs' pictures unharmed, read after the packs: a "protected" pack (ItemsAdder's zip) damages
+  # its pictures on purpose, Java cannot decode them. "a/*/b" = every b folder under a folder of a.
+  texture-folders:
+    - plugins/ItemsAdder/contents/*/resourcepack
   # Download the vanilla client from Mojang once (plugins/FluxPortal/cache/) for the vanilla block textures.
   download-client: true
 

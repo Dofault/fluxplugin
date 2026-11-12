@@ -80,7 +80,7 @@ public final class Windows implements Listener {
         ticketRadius = Math.max(0, c.getInt("far-chunks-radius", 5));
         List<String> packs = c.getStringList("texture-packs");
         sweep();
-        assets.load(plugin, packs, c.getBoolean("download-client", true), () -> {
+        assets.load(plugin, packs, c.getStringList("texture-folders"), c.getBoolean("download-client", true), () -> {
             looks.reset();
             Window.forgetClouds();
             for (Window w : windows.values()) w.sampled = 0;
