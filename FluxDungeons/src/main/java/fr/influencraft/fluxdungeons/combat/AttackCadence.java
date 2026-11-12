@@ -20,24 +20,27 @@ import org.bukkit.plugin.Plugin;
 import java.util.Map;
 
 /**
- * Attack cadence of the whole server (as Wynncraft): a weapon attacks at its own pace whatever the player clicks.
- * Carried by FluxDungeons because it serves the dungeons first, but it applies everywhere ({@code attack-cadence} of
- * FluxDungeons' config). In a dungeon it adds the aim assist ({@link Assist}).
+ * Attack cadence of the whole server (as Wynncraft), the one swing of swords and axes, vanilla and rpg alike: a
+ * weapon attacks at its own pace whatever the player clicks. Carried by FluxDungeons because it serves the dungeons
+ * first, but it applies everywhere ({@code attack-cadence} of FluxDungeons' config). Fists and every other item stay
+ * vanilla.
  * <ul>
- *   <li>Swords and axes (nothing else since 2026-11-11: bows, tridents, maces, tools stay vanilla) get the vanilla item
- *   components {@code minimum_attack_charge} (the client refuses to attack before the weapon is recharged, so spam
- *   clicks do nothing) and {@code swing_animation} lasting the whole recharge (the weapon comes back slowly, slower
- *   for a slow weapon). Given through {@link ItemLooks#registerAny}, so vanilla items get it too.</li>
- *   <li>The server refuses an attack sent before the recharge (modified clients).</li>
+ *   <li>Swords and axes get the vanilla item components {@code minimum_attack_charge} (the client neither swings nor
+ *   attacks before the weapon is recharged: a double click is one swing) and {@code swing_animation} lasting most of
+ *   the recharge (the weapon comes back slowly, slower for a slow weapon). Given through {@link ItemLooks#registerAny};
+ *   rpg weapons get them from the rpg (its attack speed is the player's stat, rpg.RpgPlayers#cadence).</li>
+ *   <li>A swing is the arm swing the client sends (on a creature, a block or in the air: one signal for all), checked
+ *   against the server's own recharge of the player (modified clients, Bedrock players: no spam).</li>
+ *   <li>Every real swing shows a particle and plays one sound ({@code swing-particle}, {@code swing-sound}, same
+ *   volume for every weapon) where the swing reaches: the player's reach (its attribute, so bonuses of pets or effects
+ *   count; the weapon's own attack range when it has one), stopped by the first block or creature on the way.</li>
+ *   <li>In the rpg the swing is the class's basic attack ({@link Melee}, set by FluxDungeons); in a dungeon a swing in
+ *   the air hits the monster aimed at ({@link Assist}).</li>
  *   <li>The vanilla recharge indicator is hidden by the resource pack (empty sprites over those of the pack
  *   {@code influstatique}, {@code Flux/assets/gen_attack_indicator.py}).</li>
- *   <li>Every real swing (weapon recharged), on a target or in the air, shows a particle and plays a sound
- *   ({@code swing-particle}, {@code swing-sound}) where the swing reaches: the player's reach (its attribute, so
- *   bonuses of pets or effects count; the weapon's own attack range when it has one), stopped by the first block or
- *   creature on the way. The attack is seen and heard even when it hits nobody.</li>
  * </ul>
- * Hits always land at full charge: the damage is the vanilla one of a charged hit. Spears keep their own components.
- * Turned off ({@code combat.attack-cadence.enabled: false}), items lose the components at their next refresh.
+ * Vanilla hits always land at full charge. Spears keep their own components. Turned off
+ * ({@code attack-cadence.enabled: false}), items lose the components at their next refresh.
  */
 public final class AttackCadence implements Listener {
 
@@ -52,10 +55,6 @@ public final class AttackCadence implements Listener {
     private org.bukkit.Particle swingParticle = org.bukkit.Particle.SWEEP_ATTACK;
     private String swingSound = "minecraft:entity.player.attack.sweep";
     private float soundVolume = 0.7f, soundPitch = 1f;
-    /** Tick of each player's last attack let through (its swing packet comes after, recharge already reset). */
-    private final java.util.Map<java.util.UUID, Integer> attacked = new java.util.HashMap<>();
-    /** Tick of each player's last swing shown (one particle per swing). */
-    private final java.util.Map<java.util.UUID, Integer> shown = new java.util.HashMap<>();
 
     /** What the dungeons tell: who is fighting in one, and what he may hit. */
     public interface Assist {
@@ -206,48 +205,184 @@ public final class AttackCadence implements Listener {
         return changed;
     }
 
-    /** A hit sent before the weapon is recharged is refused (the vanilla client never sends one). */
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-    public void onAttack(PrePlayerAttackEntityEvent e) {
-        if (!enabled || !e.willAttack()) return;
-        Player p = e.getPlayer();
-        ItemStack hand = p.getInventory().getItemInMainHand();
-        if (hand.isEmpty() || !hand.isDataOverridden(DataComponentTypes.MINIMUM_ATTACK_CHARGE)) return;
-        if (p.getAttackCooldown() + 0.1f < minimumCharge) e.setCancelled(true);
-        else attacked.put(p.getUniqueId(), org.bukkit.Bukkit.getCurrentTick());
+    // ------------------------------------------------------------------ the swing
+
+    /** Ticks a swing may come early (the client's own recharge, network jitter): never a lost swing. */
+    private static final int TOLERANCE = 3;
+    /** Ticks a dig is remembered when its end never came. */
+    private static final int DIG_MEMORY = 100;
+
+    /** True when this item is paced: a sword or an axe carrying the minimum attack charge (vanilla or rpg). */
+    public static boolean paced(ItemStack item) {
+        return item != null && !item.isEmpty() && !excluded(item) && item.isDataOverridden(DataComponentTypes.MINIMUM_ATTACK_CHARGE);
+    }
+
+    /** What the rpg does with a swing of its players (the class's basic attack). */
+    public interface Melee {
+        /**
+         * A real swing of {@code player} with a paced weapon, on {@code clicked} or in the air (null). True when the
+         * swing was the rpg's (it drew the swing and dealt the hits); false lets the vanilla swing happen.
+         */
+        boolean swing(Player player, org.bukkit.entity.Entity clicked);
+    }
+
+    private Melee melee = (p, clicked) -> false;
+
+    public void melee(Melee melee) {
+        this.melee = melee;
+    }
+
+    /** Tick of each player's last real swing: the recharge counts from it. */
+    private final java.util.Map<java.util.UUID, Integer> lastSwing = new java.util.HashMap<>();
+    /** Tick of each player's last action that also swings the arm but is no attack (drop, right click). */
+    private final java.util.Map<java.util.UUID, Integer> otherAction = new java.util.HashMap<>();
+    /** Tick at which each player started digging a block (survival), while he holds the button on it. */
+    private final java.util.Map<java.util.UUID, Integer> digging = new java.util.HashMap<>();
+
+    /** Ticks the weapon in hand takes to recharge, from the player's attack speed (the weapon's modifier included). */
+    private static int recharge(Player p) {
+        org.bukkit.attribute.AttributeInstance a = p.getAttribute(Attribute.ATTACK_SPEED);
+        double speed = a == null ? 4 : a.getValue();
+        return (int) Math.round(20 / Math.max(0.1, speed));
+    }
+
+    private boolean ready(Player p, int now) {
+        Integer last = lastSwing.get(p.getUniqueId());
+        return last == null || now - last >= recharge(p) - TOLERANCE;
     }
 
     /**
-     * A swing with a recharged weapon (or the swing of an attack just let through): a particle in front of the
-     * player, seen by everyone, even when the swing hits nobody.
+     * A click on a creature. The client sends it just before the swing of the same click: the swing is played from
+     * here, with its target; the swing packet that follows is then the same swing. Too early (modified client): no hit.
      */
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onSwing(io.papermc.paper.event.player.PlayerArmSwingEvent e) {
-        if (!enabled || swingParticle == null && swingSound == null || e.getHand() != EquipmentSlot.HAND) return;
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onAttack(PrePlayerAttackEntityEvent e) {
+        if (!enabled) return;
         Player p = e.getPlayer();
         ItemStack hand = p.getInventory().getItemInMainHand();
-        if (hand.isEmpty() || !hand.isDataOverridden(DataComponentTypes.MINIMUM_ATTACK_CHARGE)) return;
-        if (rpg(hand)) return;   // the rpg skills draw their own swing (rpg.Skills#cleave)
+        if (!paced(hand)) return;
         int now = org.bukkit.Bukkit.getCurrentTick();
-        Integer hit = attacked.get(p.getUniqueId());
-        boolean real = hit != null && now - hit <= 1 || p.getAttackCooldown() + 0.1f >= minimumCharge;
-        Integer last = shown.get(p.getUniqueId());
-        if (!real || last != null && now - last < 4) return;
-        shown.put(p.getUniqueId(), now);
+        Integer last = lastSwing.get(p.getUniqueId());
+        // our own swing of this tick (aim assist: Player#attack)
+        if (last != null && last == now) return;
+        if (!ready(p, now)) {
+            e.setCancelled(true);
+            return;
+        }
+        lastSwing.put(p.getUniqueId(), now);
+        if (melee.swing(p, e.getAttacked())) {
+            e.setCancelled(true);
+            return;
+        }
+        // a vanilla hit always lands at full charge (the server's recharge may lag the client's by a tick or two)
+        if (!e.isCancelled() && e.willAttack()) fullCharge(p);
+        draw(p, hand, reachPoint(p, hand));
+    }
+
+    /**
+     * Every swing of the arm the client sends. With a paced weapon the client only swings when the weapon is
+     * recharged (spam clicks are neither shown nor sent), on a creature, a block or in the air: each one is a real
+     * swing, drawn and heard where it reaches. Swings that are no attack are left out: an item dropped (A), a right
+     * click that swung (door, villager), the swings of a block being dug.
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onSwing(io.papermc.paper.event.player.PlayerArmSwingEvent e) {
+        if (!enabled || e.getHand() != EquipmentSlot.HAND) return;
+        Player p = e.getPlayer();
+        ItemStack hand = p.getInventory().getItemInMainHand();
+        if (!paced(hand)) return;
+        java.util.UUID id = p.getUniqueId();
+        int now = org.bukkit.Bukkit.getCurrentTick();
+        Integer last = lastSwing.get(id), other = otherAction.get(id), dig = digging.get(id);
+        // the swing of a hit already played (the hit comes first, same tick or the next)
+        if (last != null && now - last <= 1) return;
+        if (other != null && now - other <= 1) return;
+        // the first swing on a block is a swing; the next ones, button held, are digging (forgotten after 5 s in
+        // case the end of the digging never came)
+        if (dig != null && now - dig > 1 && now - dig <= DIG_MEMORY) return;
+        if (!ready(p, now)) return;
+        lastSwing.put(id, now);
+        if (melee.swing(p, null)) return;
         org.bukkit.Location at = reachPoint(p, hand);
         // a swing in the air in a dungeon: aim assist hits the monster the player was aiming at
-        boolean missed = hit == null || now - hit > 1;
-        if (missed && assistOn) {
+        if (assistOn) {
             org.bukkit.entity.LivingEntity target = assisted(p, hand);
             if (target != null) {
+                fullCharge(p);
                 p.attack(target);
                 at = target.getLocation().add(0, target.getHeight() * 0.6, 0);
             }
         }
+        draw(p, hand, at);
+    }
+
+    /** The particle and the sound of a swing, where it reaches. */
+    private void draw(Player p, ItemStack hand, org.bukkit.Location at) {
         if (swingParticle != null) p.getWorld().spawnParticle(swingParticle, at, 1, 0, 0, 0, 0);
-        if (swingSound != null) {
-            float pitch = soundPitch * (0.9f + java.util.concurrent.ThreadLocalRandom.current().nextFloat() * 0.2f);
-            p.getWorld().playSound(at, swingSound, org.bukkit.SoundCategory.PLAYERS, soundVolume, pitch);
+        playSwing(at);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onDrop(org.bukkit.event.player.PlayerDropItemEvent e) {
+        otherAction.put(e.getPlayer().getUniqueId(), org.bukkit.Bukkit.getCurrentTick());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onRightClick(org.bukkit.event.player.PlayerInteractEvent e) {
+        org.bukkit.event.block.Action a = e.getAction();
+        if (a == org.bukkit.event.block.Action.RIGHT_CLICK_AIR || a == org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) {
+            otherAction.put(e.getPlayer().getUniqueId(), org.bukkit.Bukkit.getCurrentTick());
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onRightClickEntity(org.bukkit.event.player.PlayerInteractEntityEvent e) {
+        otherAction.put(e.getPlayer().getUniqueId(), org.bukkit.Bukkit.getCurrentTick());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onDigStart(org.bukkit.event.block.BlockDamageEvent e) {
+        if (!e.getInstaBreak()) digging.put(e.getPlayer().getUniqueId(), org.bukkit.Bukkit.getCurrentTick());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onDigStop(org.bukkit.event.block.BlockDamageAbortEvent e) {
+        digging.remove(e.getPlayer().getUniqueId());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onHeld(org.bukkit.event.player.PlayerItemHeldEvent e) {
+        digging.remove(e.getPlayer().getUniqueId());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onDigEnd(org.bukkit.event.block.BlockBreakEvent e) {
+        digging.remove(e.getPlayer().getUniqueId());
+    }
+
+    /** The server's own recharge set full: the vanilla damage of the hit is the one of a charged hit. */
+    private static java.lang.reflect.Field ticker;
+    private static boolean tickerMissing;
+
+    private static void fullCharge(Player p) {
+        if (tickerMissing) return;
+        try {
+            Object handle = p.getClass().getMethod("getHandle").invoke(p);
+            if (ticker == null) {
+                for (Class<?> c = handle.getClass(); c != null && ticker == null; c = c.getSuperclass()) {
+                    try {
+                        ticker = c.getDeclaredField("attackStrengthTicker");
+                        ticker.setAccessible(true);
+                    } catch (NoSuchFieldException ignored) {
+                        // higher up
+                    }
+                }
+                if (ticker == null) throw new NoSuchFieldException("attackStrengthTicker");
+            }
+            ticker.setInt(handle, 100_000);
+        } catch (ReflectiveOperationException | RuntimeException ex) {
+            tickerMissing = true;
+            org.bukkit.Bukkit.getLogger().warning("[FluxDungeons] Attack charge not reachable, hits keep the server's own charge: " + ex);
         }
     }
 
@@ -318,7 +453,9 @@ public final class AttackCadence implements Listener {
 
     @EventHandler
     public void onQuit(org.bukkit.event.player.PlayerQuitEvent e) {
-        attacked.remove(e.getPlayer().getUniqueId());
-        shown.remove(e.getPlayer().getUniqueId());
+        java.util.UUID id = e.getPlayer().getUniqueId();
+        lastSwing.remove(id);
+        otherAction.remove(id);
+        digging.remove(id);
     }
 }

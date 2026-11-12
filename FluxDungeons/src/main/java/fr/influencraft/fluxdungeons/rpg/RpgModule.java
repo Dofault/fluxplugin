@@ -165,6 +165,11 @@ public final class RpgModule implements Listener {
         if (players != null) players.stopAll();
     }
 
+    /** A real swing of a sword or an axe (combat.AttackCadence): true when it was the rpg's basic attack. */
+    public boolean melee(org.bukkit.entity.Player p, org.bukkit.entity.Entity clicked) {
+        return controls != null && controls.melee(p, clicked);
+    }
+
     public CombatEngine combat() {
         return combat;
     }

@@ -1,6 +1,7 @@
 package fr.influencraft.fluxdungeons.rpg;
 
 import fr.influencraft.flux.api.universe.Universes;
+import fr.influencraft.fluxdungeons.combat.AttackCadence;
 import fr.influencraft.fluxdungeons.rpg.core.Equipment;
 import io.papermc.paper.event.player.PrePlayerAttackEntityEvent;
 import org.bukkit.entity.LivingEntity;
@@ -60,9 +61,24 @@ final class Controls implements Listener {
         if (players.get(p) == null) return;
         // vanilla melee never hurts in the rpg universe: the basic attack does
         e.setCancelled(true);
-        RpgPlayer r = armed(p, p.getInventory().getItemInMainHand());
+        ItemStack hand = p.getInventory().getItemInMainHand();
+        // swords and axes swing through the server's one swing (combat.AttackCadence, then #melee)
+        if (AttackCadence.paced(hand)) return;
+        RpgPlayer r = armed(p, hand);
         // the clicked creature (a model's hit box stands for the creature under it)
-        if (r != null) skills.basic(p, r, skills.body(e.getAttacked()));
+        if (r != null) skills.basic(p, r, skills.body(e.getAttacked()), false);
+    }
+
+    /**
+     * A real swing of a sword or an axe (combat.AttackCadence): the class's basic attack when the player holds his own
+     * class weapon. False otherwise (outside the universe, or not his weapon: a plain swing, no hit).
+     */
+    boolean melee(Player p, org.bukkit.entity.Entity clicked) {
+        if (players.get(p) == null) return false;
+        RpgPlayer r = armed(p, p.getInventory().getItemInMainHand());
+        if (r == null) return false;
+        skills.basic(p, r, clicked == null ? null : skills.body(clicked), true);
+        return true;
     }
 
     @EventHandler(priority = EventPriority.LOW)
@@ -74,7 +90,11 @@ final class Controls implements Listener {
         if (r == null) return;
         // the weapon's own vanilla use (drawing a bow, tilling with a hoe) never happens
         e.setCancelled(true);
-        if (e.getAction() == Action.LEFT_CLICK_AIR || e.getAction() == Action.LEFT_CLICK_BLOCK) skills.basic(p, r, null);
+        if (e.getAction() == Action.LEFT_CLICK_AIR || e.getAction() == Action.LEFT_CLICK_BLOCK) {
+            // a sword or an axe swings through the arm swing (combat.AttackCadence): this event is not sent for every
+            // swing (a pickable entity in reach, a block outside adventure mode)
+            if (!AttackCadence.paced(e.getItem())) skills.basic(p, r, null, false);
+        }
         else skills.cast(p, r, "right");
     }
 

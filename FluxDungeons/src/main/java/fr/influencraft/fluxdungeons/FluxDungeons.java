@@ -92,6 +92,8 @@ public final class FluxDungeons extends FluxPlugin {
             return;
         }
         fr.influencraft.flux.api.universe.Universes.claim(this, fr.influencraft.fluxdungeons.rpg.RpgWorld.UNIVERSE, runs::isDungeonWorld);
+        // a sword or an axe swung in the rpg universe is the class's basic attack
+        attackCadence.melee(rpg::melee);
         var players = rpg.players();
         runs.rpg(new fr.influencraft.fluxdungeons.dungeon.RpgBridge() {
             public boolean mayPlay(Player p) {

@@ -86,10 +86,13 @@ public final class Skills implements Listener {
 
     // ------------------------------------------------------------------ basic attack (left click)
 
-    /** The class's basic attack, when ready. {@code clicked}: the creature hit by the click, if any. */
-    void basic(Player p, RpgPlayer r, LivingEntity clicked) {
+    /**
+     * The class's basic attack, when ready. {@code clicked}: the creature hit by the click, if any. {@code paced}: the
+     * swing was already checked against the weapon's recharge (swords and axes, combat.AttackCadence), it always goes.
+     */
+    void basic(Player p, RpgPlayer r, LivingEntity clicked, boolean paced) {
         long now = CombatEngine.now();
-        if (now < r.nextBasic()) return;
+        if (!paced && now < r.nextBasic()) return;
         // the client already waits for the full recharge (minimum attack charge): 2 ticks of slack so a click it lets
         // through is never lost to a rounding
         r.nextBasic(now + Math.max(2, Math.round(20 * CombatMath.attackInterval(r.stats())) - 2));
