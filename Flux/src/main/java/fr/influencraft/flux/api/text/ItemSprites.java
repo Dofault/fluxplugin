@@ -47,6 +47,19 @@ public final class ItemSprites {
         return sprite == null ? "" : "<lang:'%s':'<sprite:" + sprite + ">'>";
     }
 
+    /**
+     * Path of the item's texture in the client jar, under {@code assets/minecraft/textures/} without {@code .png}
+     * ({@code item/diamond}, {@code block/iron_ore}), or null when it has none. For pictures drawn outside the game
+     * (HTML pages).
+     */
+    public static String texture(String item) {
+        if (item == null) return null;
+        String sprite = sprites.get(item.toLowerCase(Locale.ROOT).replace("minecraft:", "").strip());
+        if (sprite == null) return null;
+        int colon = sprite.indexOf(':');
+        return colon < 0 ? sprite : sprite.substring(colon + 1);
+    }
+
     public static String tag(Material material) {
         return material == null ? "" : tag(material.getKey().getKey());
     }
