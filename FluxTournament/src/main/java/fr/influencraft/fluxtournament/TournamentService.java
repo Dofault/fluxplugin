@@ -70,6 +70,7 @@ final class TournamentService {
     private long rankingEveryMs = 300_000;
     private boolean drawEnabled = true;
     private int drawChoices = 8;
+    Draws.Style drawStyle = Draws.Style.ELIMINATION;
 
     // state
     Run current;
@@ -119,6 +120,8 @@ final class TournamentService {
         rankingEveryMs = Math.max(0, c.getInt("ranking-every-minutes", 5)) * 60_000L;
         drawEnabled = c.getBoolean("draw.enabled", true);
         drawChoices = Math.max(2, c.getInt("draw.choices", 8));
+        Draws.Style style = Draws.Style.of(c.getString("draw.style", "elimination"));
+        drawStyle = style == null ? Draws.Style.ELIMINATION : style;
         nextStart = 0;
     }
 
@@ -219,6 +222,11 @@ final class TournamentService {
 
     /** Plays the draw of a plan to some players; {@code then} runs once the result was shown. */
     void show(List<Player> to, Plan plan, Runnable then) {
+        show(to, plan, drawStyle, then);
+    }
+
+    /** The draw with a given animation (trial of the styles). */
+    void show(List<Player> to, Plan plan, Draws.Style style, Runnable then) {
         Draws.Choice winner = choice(plan, plan.target(), plan.job());
         List<Draws.Choice> pool = new ArrayList<>();
         pool.add(winner);
@@ -233,7 +241,7 @@ final class TournamentService {
             java.util.Collections.shuffle(jobs);
             for (String j : jobs) if (pool.size() < drawChoices) pool.add(choice(plan, null, j));
         }
-        Draws.play(plugin, to, pool, winner, plugin.messages().raw("draw-heading." + plan.kind().id()), then);
+        Draws.play(plugin, to, pool, winner, plugin.messages().raw("draw-heading." + plan.kind().id()), style, then);
     }
 
     /** A resource (or, with no group, a job) as a choice of the draw. */

@@ -19,7 +19,6 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -60,11 +59,46 @@ public final class Draws {
         }
     }
 
-    /** Candidates shown at most. */
-    private static final int MAX = 8;
-    /** Ticks the full line stays before the first one is struck out, then the slowest step, the result's stay. */
-    private static final int LOOK = 30, SLOWEST = 21, HOLD = 60;
-    private static final String SPARK = "<sprite:block/fluxdraw_spark>", SHINE = "<sprite:block/fluxdraw_shine>";
+    /** The animations on trial (2026-11-12): keep one, delete the others' classes. */
+    public enum Style {
+        ELIMINATION, ROULETTE, SLOTS, HOP, FLAP;
+
+        public String id() {
+            return name().toLowerCase(java.util.Locale.ROOT);
+        }
+
+        public static Style of(String id) {
+            for (Style s : values()) if (s.id().equalsIgnoreCase(id)) return s;
+            return null;
+        }
+    }
+
+    /** What an animation does in the blue bar: its steps, at its pace; the shell does the rest. */
+    interface Animation {
+        /** Line shown before the first step. */
+        Component start();
+
+        /** Ticks before each step (its length is the number of steps). */
+        int[] delays();
+
+        /** Line after the step {@code index}. */
+        Component step(int index);
+
+        /** Progress of the bar after a step (0 to 1). */
+        default float progress(int index) {
+            return (index + 1) / (float) delays().length;
+        }
+
+        /** Named sound of a step (null: none). */
+        default String sound(int index) {
+            return "draw-tick";
+        }
+    }
+
+    /** Ticks the result stays. */
+    private static final int HOLD = 60;
+    static final String SPARK = "<sprite:block/fluxdraw_spark>", SHINE = "<sprite:block/fluxdraw_shine>",
+            REEL = "<sprite:block/fluxdraw_reel>", BLANK = "<sprite:block/fluxdraw_blank>";
     private static final Component BANNER = Component.text("").font(Key.key("fluxdraw", "banner"));
 
     private Draws() {
@@ -76,25 +110,29 @@ public final class Draws {
      */
     public static void play(Plugin owner, Collection<? extends Player> viewers, List<Choice> pool, Choice winner,
                             String heading, Runnable onDone) {
+        play(owner, viewers, pool, winner, heading, Style.ELIMINATION, onDone);
+    }
+
+    /** Same with a given animation (trial). */
+    public static void play(Plugin owner, Collection<? extends Player> viewers, List<Choice> pool, Choice winner,
+                            String heading, Style style, Runnable onDone) {
         List<Player> watching = new ArrayList<>();
         for (Player p : viewers) if (!Clients.bedrock(p)) watching.add(p);
-        // the winner among up to MAX - 1 others, in a random order
-        List<Choice> others = new ArrayList<>(pool == null ? List.of() : pool);
-        others.remove(winner);
-        Collections.shuffle(others);
-        List<Choice> candidates = new ArrayList<>(others.subList(0, Math.min(MAX - 1, others.size())));
-        candidates.add(winner);
-        Collections.shuffle(candidates);
-        List<Integer> order = new ArrayList<>();
-        for (int i = 0; i < candidates.size(); i++) if (!candidates.get(i).equals(winner)) order.add(i);
-        Collections.shuffle(order);
-
+        List<Choice> choices = new ArrayList<>(pool == null ? List.of() : pool);
+        if (!choices.contains(winner)) choices.add(winner);
+        Animation a = switch (style == null ? Style.ELIMINATION : style) {
+            case ELIMINATION -> new EliminationDraw(choices, winner);
+            case ROULETTE -> new RouletteDraw(choices, winner);
+            case SLOTS -> new SlotsDraw(choices, winner);
+            case HOP -> new HopDraw(choices, winner);
+            case FLAP -> new FlapDraw(choices, winner);
+        };
+        int[] delays = a.delays();
         String title = heading == null ? "" : heading;
-        boolean[] out = new boolean[candidates.size()];
         BossBar banner = BossBar.bossBar(BANNER, 0f, BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS);
         BossBar head = BossBar.bossBar(Texts.parse(SPARK + "  <shadow:#0B2A44>&#2BC4E8&l" + title + "</shadow>  " + SPARK),
                 0f, BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS);
-        BossBar bar = BossBar.bossBar(line(candidates, out, -1), 1f, BossBar.Color.BLUE, BossBar.Overlay.PROGRESS);
+        BossBar bar = BossBar.bossBar(a.start(), 0f, BossBar.Color.BLUE, BossBar.Overlay.PROGRESS);
         for (Player p : watching) {
             // in this order: the banner is drawn first, under the two others
             p.showBossBar(banner);
@@ -105,20 +143,19 @@ public final class Draws {
 
         BukkitTask[] task = new BukkitTask[1];
         task[0] = Bukkit.getScheduler().runTaskTimer(owner, new Runnable() {
-            int step = 0, wait = LOOK;
+            int step = 0, wait = delays.length == 0 ? 1 : delays[0];
             boolean revealed;
 
             @Override
             public void run() {
                 if (--wait > 0) return;
-                if (!revealed && step < order.size()) {
-                    int struck = order.get(step++);
-                    out[struck] = true;
-                    bar.name(line(candidates, out, struck));
-                    bar.progress((candidates.size() - step) / (float) candidates.size());
-                    for (Player p : watching) if (p.isOnline()) Sounds.cue(p, "remove");
-                    // slower and slower: the last ones take their time
-                    wait = 7 + (int) Math.round((SLOWEST - 7) * Math.pow(step / (double) Math.max(1, order.size()), 1.6));
+                if (!revealed && step < delays.length) {
+                    bar.name(a.step(step));
+                    bar.progress(Math.max(0f, Math.min(1f, a.progress(step))));
+                    String cue = a.sound(step);
+                    if (cue != null) for (Player p : watching) if (p.isOnline()) Sounds.cue(p, cue);
+                    step++;
+                    wait = step < delays.length ? delays[step] : 12;
                     return;
                 }
                 if (!revealed) {
@@ -155,19 +192,29 @@ public final class Draws {
         p.spawnParticle(Particle.FIREWORK, at, 18, 0.6, 0.4, 0.6, 0.06);
     }
 
-    /** The candidates in a row, the ones struck out as crosses (red for the one just struck), and how many are left. */
-    private static Component line(List<Choice> candidates, boolean[] out, int justOut) {
-        StringBuilder sb = new StringBuilder();
-        int left = 0;
-        for (int i = 0; i < candidates.size(); i++) {
-            if (out[i]) {
-                sb.append(i == justOut ? "&#FF5C5C✕ " : "&8✕ ");
-            } else {
-                left++;
-                sb.append("&f").append(candidates.get(i).sprite()).append(' ');
+    /** A list of {@code n} choices in a random order, never the same twice in a row, ending on the winner. */
+    static List<Choice> reel(List<Choice> pool, Choice winner, int n) {
+        List<Choice> out = new ArrayList<>();
+        Choice last = null;
+        for (int i = 0; i < n - 1; i++) {
+            Choice c = pool.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(pool.size()));
+            for (int t = 0; t < 12 && pool.size() > 2 && (c.equals(last) || i == n - 2 && c.equals(winner)); t++) {
+                c = pool.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(pool.size()));
             }
+            out.add(c);
+            last = c;
         }
-        sb.append(" &#A6E4F5").append(left).append(" / ").append(candidates.size());
-        return Texts.parse(sb.toString());
+        out.add(winner);
+        return out;
+    }
+
+    /** Delays slowing down like a wheel: {@code steps} steps from 1 tick up to {@code slowest}. */
+    static int[] wheel(int steps, int slowest) {
+        int[] d = new int[steps];
+        for (int i = 0; i < steps; i++) {
+            double t = i / (double) Math.max(1, steps - 1);
+            d[i] = 1 + (int) Math.round((slowest - 1) * Math.pow(t, 2.4));
+        }
+        return d;
     }
 }

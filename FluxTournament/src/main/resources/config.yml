@@ -93,6 +93,8 @@ rewards:
 # /fluxtournament draw shows it to you alone.
 draw:
   enabled: true
+  # animation (trial): elimination, roulette, slots, hop, flap
+  style: elimination
   # candidates shown (the winner and others of the same job, or other jobs)
   choices: 8
 

@@ -120,7 +120,7 @@ menu:
   played-count: "Tournois joués"
   leaderboard-place: "Classement"
 
-admin-usage: "!&#FF5C5C/%flux_cmd_fluxtournament_fluxtournament% <start [sorte] [métier] [ressource]|stop|cancel|next|status|preview [métier]|draw|reload>"
+admin-usage: "!&#FF5C5C/%flux_cmd_fluxtournament_fluxtournament% <start [sorte] [métier] [ressource]|stop|cancel|next|status|preview [métier]|draw [animation]|reload>"
 admin-running: "&#FF5C5CUn tournoi est déjà en cours."
 admin-none: "&#FF5C5CAucun tournoi en cours."
 admin-no-plan: "&#FF5C5CAucun tournoi possible avec ces paramètres (voir /fluxtournament preview)."

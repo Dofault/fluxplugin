@@ -5,6 +5,8 @@
     fluxdraw/font/banner.json + fluxdraw/textures/font/banner.png   the banner behind the draw (one glyph)
     minecraft/textures/block/fluxdraw_spark.png (+ .mcmeta)         twinkling star, animated by the client
     minecraft/textures/block/fluxdraw_shine.png (+ .mcmeta)         glowing frame with a light sweep
+    minecraft/textures/block/fluxdraw_reel.png (+ .mcmeta)          a slot reel spinning (blurred bands running down)
+    minecraft/textures/block/fluxdraw_blank.png                     an empty square, the width of an icon
 
 The two small ones sit in the blocks atlas: a text shows them with <sprite:block/fluxdraw_spark> and the client
 animates them itself (no packet). One banner glyph only: never one glyph per frame (docs/technique/pack-ressources.md).
@@ -131,12 +133,25 @@ def shine(frame, t, N):
             frame[y * N + x] = over((0, 0, 0, 0), col, 0.75 + 0.25 * light if ring == 0 else 0.35 + 0.4 * light)
 
 
+def reel(frame, t, N):
+    # blurred bands running down, as a slot reel turning fast
+    for y in range(N):
+        for x in range(1, N - 1):
+            v = (y / N + t) % 1.0
+            band = 0.5 + 0.5 * math.cos(v * 2 * math.pi * 2)
+            col = tuple(round(NAVY[i] + (LIGHT[i] - NAVY[i]) * band) for i in range(3))
+            side = 1 - 0.55 * (abs(x - (N - 1) / 2) / ((N - 1) / 2)) ** 2
+            frame[y * N + x] = over((0, 0, 0, 0), col, 0.92 * side)
+
+
 def main():
     contents = sys.argv[1] if len(sys.argv) > 1 else "/home/influencraft/serveurs/04_labs/plugins/ItemsAdder/contents"
     out = os.path.join(contents, "fluxdraw_fonts/resourcepack/assets")
     banner(out)
     strip(out, "fluxdraw_spark", 16, 2, spark)
     strip(out, "fluxdraw_shine", 20, 2, shine)
+    strip(out, "fluxdraw_reel", 8, 1, reel)
+    png(os.path.join(out, "minecraft/textures/block/fluxdraw_blank.png"), 16, 16, [(0, 0, 0, 0)] * 256)
     print("written in", out)
 
 
