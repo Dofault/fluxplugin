@@ -17,7 +17,7 @@ bars down onto that row, one pixel above it (ASCENT, check in game). Hearts span
 10), food the 81 px right of it: one 83 px bar each from one pixel before, 18 px between them, 184 px in all.
 
 Chars: U+E100 + step = life bar, U+E200 + step = mana bar, U+E300.. = '0'-'9' then '/', U+E400.. spell slots,
-U+E420.. key caps (hud_spells.py), U+E431 level gem, U+E440.. level digits (hud_level.py), U+F001-U+F008 move back 1, 2,
+U+E420.. key caps (hud_spells.py), U+E431 level plate (hud_level.py), U+F001-U+F008 move back 1, 2,
 4 ... 128 px, U+F011-U+F018 forward as much. FluxDungeons (rpg/RpgHud.java) writes the same numbers: keep STEPS,
 BAR_W and DIGIT_W in line with it. Every digit is padded to 5 px (an almost transparent pixel in its last column),
 so each one moves the text by exactly 6 px.
@@ -111,7 +111,10 @@ def main(pack):
     for old in os.listdir(tex):
         if old.startswith("hud_frame"):
             os.remove(os.path.join(tex, old))
-    hud_level.gem().save(os.path.join(tex, "hud_gem.png"))
+    for old in ("hud_gem.png",):
+        if os.path.exists(os.path.join(tex, old)):
+            os.remove(os.path.join(tex, old))
+    hud_level.plate().save(os.path.join(tex, "hud_level.png"))
     back = {chr(0xF001 + i): -(1 << i) for i in range(8)}
     fwd = {chr(0xF011 + i): (1 << i) for i in range(8)}
     font = {"providers": [
@@ -126,11 +129,9 @@ def main(pack):
          "height": hud_spells.SLOT, "chars": ["".join(chr(0xE400 + i) for i in range(spell_count))]},
         {"type": "bitmap", "file": "fluxdungeons:font/hud_keys.png", "ascent": KEY_ASCENT,
          "height": hud_spells.BADGE_H, "chars": ["".join(chr(0xE420 + i) for i in range(len(hud_spells.BADGES)))]},
-        # level gem (hud_level.py): top of a glyph = 65 + ascent px above the bottom of the screen
-        {"type": "bitmap", "file": "fluxdungeons:font/hud_gem.png", "ascent": hud_level.GEM_TOP - 65,
-         "height": hud_level.GEM, "chars": [chr(0xE431)]},
-        {"type": "bitmap", "file": "fluxdungeons:font/hud_digits.png", "ascent": hud_level.LEVEL_TOP - 65,
-         "height": DIGIT_H, "chars": ["".join(chr(0xE440 + i) for i in range(count))]},
+        # level plate (hud_level.py): top of a glyph = 65 + ascent px above the bottom of the screen
+        {"type": "bitmap", "file": "fluxdungeons:font/hud_level.png", "ascent": hud_level.PLATE_TOP - 65,
+         "height": hud_level.PLATE_H, "chars": [chr(0xE431)]},
     ]}
     with open(os.path.join(root, "font", "hud.json"), "w", encoding="utf-8") as f:
         json.dump(font, f, ensure_ascii=True, indent=1)

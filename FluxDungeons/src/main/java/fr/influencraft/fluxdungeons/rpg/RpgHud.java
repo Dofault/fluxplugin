@@ -17,7 +17,7 @@ import java.util.List;
  * action bar, opaque and one pixel larger than the hearts and food rows they cover (font {@code fluxdungeons:hud},
  * assets/gen_hud.py). The vanilla life, food and saturation stay full in that universe (the real ones are the
  * engine's), so the rows underneath never shake nor blink out of the cover. Beside the hotbar, the class's three
- * skills: A and F on its left (the class level in a gem over the middle of the bars), the weapon's skill (right click) on its right, each under a key cap, dimmed while the
+ * skills: A and F on its left (the class level on a plate between the bars), the weapon's skill (right click) on its right, each under a key cap, dimmed while the
  * mana does not cover it (assets/hud_spells.py, hud_level.py). Bedrock players: life and mana written in the action bar
  * ({@link Clients#bedrock}).
  */
@@ -32,8 +32,8 @@ final class RpgHud {
     private static final int BLANK = SPELLS.size(), DIM = BLANK + 1, SLOT = 22, KEY = 9;
     /** Left edge of each skill slot on the line (x 0 = one pixel left of the hotbar, which spans 1 to 183). */
     private static final int SLOT_A = -50, SLOT_F = -25, SLOT_RIGHT = 187;
-    /** In line with assets/hud_level.py: the level gem's size and left edge (centred on the screen, x 92). */
-    private static final int GEM = 29, GEM_X = 92 - GEM / 2;
+    /** In line with assets/hud_level.py: the level plate between the bars (x 83 to 100, centre 92). */
+    private static final int PLATE = 18, PLATE_X = 83;
 
     /** What the action bar shows now. */
     Component render(Player p, RpgPlayer r, double hp, double maxHp, double mana, double maxMana) {
@@ -62,15 +62,15 @@ final class RpgHud {
         return Component.text(b.toString()).font(FONT).color(NamedTextColor.WHITE);
     }
 
-    /** The class level in the gem over the middle of the bars (the vanilla level number is hidden, see RpgPlayers). */
+    /** The class level on its plate between the bars, with the bars' digits (vanilla level number hidden, see RpgPlayers). */
     private static void level(StringBuilder b, int[] cursor, int level) {
-        moveTo(b, cursor, GEM_X);
+        moveTo(b, cursor, PLATE_X);
         b.append('\uE431');
-        cursor[0] += GEM + 1;
+        cursor[0] += PLATE + 1;
         String t = String.valueOf(Math.max(0, level));
-        // centred on the gem's middle column (x 92): every number is an odd number of pixels wide
+        // centred on the screen's centre column (x 92): every number is an odd number of pixels wide
         moveTo(b, cursor, 92 - (t.length() * DIGIT - 1) / 2);
-        for (char ch : t.toCharArray()) b.append((char) (0xE440 + ch - '0'));
+        for (char ch : t.toCharArray()) b.append((char) (0xE300 + ch - '0'));
         cursor[0] += t.length() * DIGIT;
     }
 

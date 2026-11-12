@@ -646,7 +646,7 @@ public final class RpgPlayers implements Listener {
 
     private void showLevel(Player p, RpgPlayer r) {
         RpgConfig.Set set = config.get();
-        // Java players read the level in the hud's gem: level 0 hides the vanilla number (drawn only above 0) under it
+        // Java players read the level on the hud's plate: level 0 hides the vanilla number (drawn only above 0)
         p.setLevel(Clients.bedrock(p) ? r.level() : 0);
         double need = set == null ? 1 : set.balance().xpToNext(r.level());
         p.setExp((float) Math.max(0, Math.min(0.999, r.xp() / Math.max(1, need))));
