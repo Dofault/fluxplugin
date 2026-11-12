@@ -59,21 +59,7 @@ public final class Draws {
         }
     }
 
-    /** The animations on trial (2026-11-12): keep one, delete the others' classes. */
-    public enum Style {
-        ELIMINATION, ROULETTE, SLOTS, HOP, FLAP;
-
-        public String id() {
-            return name().toLowerCase(java.util.Locale.ROOT);
-        }
-
-        public static Style of(String id) {
-            for (Style s : values()) if (s.id().equalsIgnoreCase(id)) return s;
-            return null;
-        }
-    }
-
-    /** What an animation does in the blue bar: its steps, at its pace; the shell does the rest. */
+    /** What the animation does in the blue bar: its steps, at its pace; the shell does the rest. */
     interface Animation {
         /** Line shown before the first step. */
         Component start();
@@ -97,8 +83,7 @@ public final class Draws {
 
     /** Ticks the result stays. */
     private static final int HOLD = 60;
-    static final String SPARK = "<sprite:block/fluxdraw_spark>", SHINE = "<sprite:block/fluxdraw_shine>",
-            REEL = "<sprite:block/fluxdraw_reel>", BLANK = "<sprite:block/fluxdraw_blank>";
+    static final String SPARK = "<sprite:block/fluxdraw_spark>", SHINE = "<sprite:block/fluxdraw_shine>";
     private static final Component BANNER = Component.text("").font(Key.key("fluxdraw", "banner"));
 
     private Draws() {
@@ -110,23 +95,11 @@ public final class Draws {
      */
     public static void play(Plugin owner, Collection<? extends Player> viewers, List<Choice> pool, Choice winner,
                             String heading, Runnable onDone) {
-        play(owner, viewers, pool, winner, heading, Style.ELIMINATION, onDone);
-    }
-
-    /** Same with a given animation (trial). */
-    public static void play(Plugin owner, Collection<? extends Player> viewers, List<Choice> pool, Choice winner,
-                            String heading, Style style, Runnable onDone) {
         List<Player> watching = new ArrayList<>();
         for (Player p : viewers) if (!Clients.bedrock(p)) watching.add(p);
         List<Choice> choices = new ArrayList<>(pool == null ? List.of() : pool);
         if (!choices.contains(winner)) choices.add(winner);
-        Animation a = switch (style == null ? Style.ELIMINATION : style) {
-            case ELIMINATION -> new EliminationDraw(choices, winner);
-            case ROULETTE -> new RouletteDraw(choices, winner);
-            case SLOTS -> new SlotsDraw(choices, winner);
-            case HOP -> new HopDraw(choices, winner);
-            case FLAP -> new FlapDraw(choices, winner);
-        };
+        Animation a = new EliminationDraw(choices, winner);
         int[] delays = a.delays();
         String title = heading == null ? "" : heading;
         BossBar banner = BossBar.bossBar(BANNER, 0f, BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS);
@@ -190,31 +163,5 @@ public final class Draws {
         Location at = p.getEyeLocation().add(p.getEyeLocation().getDirection().multiply(1.5)).add(0, 0.6, 0);
         p.spawnParticle(Particle.END_ROD, at, 24, 0.9, 0.5, 0.9, 0.03);
         p.spawnParticle(Particle.FIREWORK, at, 18, 0.6, 0.4, 0.6, 0.06);
-    }
-
-    /** A list of {@code n} choices in a random order, never the same twice in a row, ending on the winner. */
-    static List<Choice> reel(List<Choice> pool, Choice winner, int n) {
-        List<Choice> out = new ArrayList<>();
-        Choice last = null;
-        for (int i = 0; i < n - 1; i++) {
-            Choice c = pool.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(pool.size()));
-            for (int t = 0; t < 12 && pool.size() > 2 && (c.equals(last) || i == n - 2 && c.equals(winner)); t++) {
-                c = pool.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(pool.size()));
-            }
-            out.add(c);
-            last = c;
-        }
-        out.add(winner);
-        return out;
-    }
-
-    /** Delays slowing down like a wheel: {@code steps} steps from 1 tick up to {@code slowest}. */
-    static int[] wheel(int steps, int slowest) {
-        int[] d = new int[steps];
-        for (int i = 0; i < steps; i++) {
-            double t = i / (double) Math.max(1, steps - 1);
-            d[i] = 1 + (int) Math.round((slowest - 1) * Math.pow(t, 2.4));
-        }
-        return d;
     }
 }

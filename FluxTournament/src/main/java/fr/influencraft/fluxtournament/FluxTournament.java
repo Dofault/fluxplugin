@@ -167,14 +167,7 @@ public final class FluxTournament extends FluxPlugin implements Listener {
                     return true;
                 }
                 messages().send(p, "admin-draw");
-                // TRIAL: an animation to compare (elimination, roulette, slots, hop, flap)
-                fr.influencraft.flux.api.draw.Draws.Style style = args.length > 1
-                        ? fr.influencraft.flux.api.draw.Draws.Style.of(args[1]) : service.drawStyle;
-                if (style == null) {
-                    messages().send(sender, "admin-usage");
-                    return true;
-                }
-                service.show(List.of(p), plan, style, () -> messages().send(p, "admin-draw-done", "{name}", service.name(plan)));
+                service.show(List.of(p), plan, () -> messages().send(p, "admin-draw-done", "{name}", service.name(plan)));
             }
             default -> messages().send(sender, "admin-usage");
         }
@@ -215,7 +208,6 @@ public final class FluxTournament extends FluxPlugin implements Listener {
         String last = args[args.length - 1].toLowerCase(Locale.ROOT);
         List<String> options = List.of();
         if (args.length == 1) options = List.of("start", "stop", "cancel", "next", "preview", "status", "draw", "reload");
-        else if (args.length == 2 && args[0].equalsIgnoreCase("draw")) options = Arrays.stream(fr.influencraft.flux.api.draw.Draws.Style.values()).map(fr.influencraft.flux.api.draw.Draws.Style::id).toList();
         else if (args.length == 2 && args[0].equalsIgnoreCase("start")) options = Arrays.stream(Kind.values()).map(Kind::id).toList();
         else if (args.length == 2 && args[0].equalsIgnoreCase("preview")) options = Values.jobs();
         else if (args.length == 3 && args[0].equalsIgnoreCase("start")) {

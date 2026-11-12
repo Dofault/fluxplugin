@@ -88,7 +88,7 @@ menu:
   played-count: "Tournaments played"
   leaderboard-place: "Leaderboard"
 
-admin-usage: "!&#FF5C5C/%flux_cmd_fluxtournament_fluxtournament% <start [kind] [job] [resource]|stop|cancel|next|status|preview [job]|draw [animation]|reload>"
+admin-usage: "!&#FF5C5C/%flux_cmd_fluxtournament_fluxtournament% <start [kind] [job] [resource]|stop|cancel|next|status|preview [job]|draw|reload>"
 admin-running: "&#FF5C5CA tournament is already running."
 admin-none: "&#FF5C5CNo tournament is running."
 admin-no-plan: "&#FF5C5CNo tournament can be made with these settings (see /fluxtournament preview)."

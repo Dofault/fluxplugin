@@ -58,15 +58,11 @@ final class EliminationDraw implements Draws.Animation {
 
     private Component line(int justOut) {
         StringBuilder sb = new StringBuilder();
-        int left = 0;
         for (int i = 0; i < candidates.size(); i++) {
-            if (out[i]) sb.append(i == justOut ? "&#FF5C5C✕ " : "&8✕ ");
-            else {
-                left++;
-                sb.append("&f").append(candidates.get(i).sprite()).append(' ');
-            }
+            if (i > 0) sb.append(' ');
+            if (out[i]) sb.append(i == justOut ? "&#FF5C5C✕" : "&8✕");
+            else sb.append("&f").append(candidates.get(i).sprite());
         }
-        sb.append(" &#A6E4F5").append(left).append(" / ").append(candidates.size());
         return Texts.parse(sb.toString());
     }
 }
