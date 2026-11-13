@@ -22,7 +22,8 @@ import java.util.logging.Logger;
  *   <li>{@code flux_dungeons_heroes}: level and experience of a player in each class he tried, and whether its
  *   starting kit was handed out.</li>
  *   <li>{@code flux_dungeons_lost}: gear lost by players who died in a dungeon. Locked until someone wins that
- *   dungeon, then handed back through Flux's rewards ({@code fluxdungeons claimlost}), deleted once claimed.</li>
+ *   dungeon, then moved as they are into Flux's rewards ({@code Rewards.store}) and deleted here. Rows released
+ *   before 2026-11-13 are still claimed by {@code fluxdungeons claimlost}.</li>
  *   <li>{@code flux_dungeons_vault}: what a player had on him before entering a dungeon (inventory, experience,
  *   health, place...). Written before he enters, deleted once he got it back: a player who disconnects, or a server
  *   that crashes, during a run gets his things back on his next join.</li>

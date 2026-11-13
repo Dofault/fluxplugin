@@ -134,8 +134,7 @@ public final class Runs {
         lobby.launcher(this::launch);
         this.pets = new PetFighters(plugin, mobs);
         loadouts.onOverflow((p, items) -> {
-            String id = store.addLost(p.getUniqueId(), "overflow", items.toArray(new ItemStack[0]), true);
-            if (id != null) handBack(p.getUniqueId(), id, items.size(), plugin.messages().raw("lost.overflow-label"));
+            fr.influencraft.flux.api.reward.Rewards.store(p, "dungeons", plugin.messages().raw("lost.overflow-label"), items);
             plugin.messages().send(p, "lost.overflow");
         });
         this.instances = new WorldInstances(plugin);
@@ -1271,12 +1270,12 @@ public final class Runs {
      * Hands kept items to their owner through Flux's rewards ({@code /recompenses}), claimed in the universe they
      * belong to (the owner's own when he is online, else vanilla).
      */
+    /** Moves released gear from the dungeon's store to the owner's rewards (items kept as they are, each in its universe). */
     private void handBack(UUID owner, String id, int stacks, String label) {
-        Player online = Bukkit.getPlayer(owner);
-        String universe = online == null ? fr.influencraft.flux.api.universe.Universes.VANILLA : fr.influencraft.flux.api.universe.Universes.of(online);
-        fr.influencraft.flux.api.reward.Rewards.give(Bukkit.getOfflinePlayer(owner),
-                fr.influencraft.flux.api.reward.Reward.of("dungeons", label).icon("CHEST").slots(stacks)
-                        .key("fluxdungeons_lost:" + id).commands("fluxdungeons claimlost %player% " + id).universe(universe));
+        ItemStack[] items = store.takeLost(id, owner);
+        if (items == null || items.length == 0) return;
+        fr.influencraft.flux.api.reward.Rewards.store(Bukkit.getOfflinePlayer(owner), "dungeons", label,
+                java.util.Arrays.stream(items).filter(java.util.Objects::nonNull).toList());
     }
 
     /**
@@ -1284,16 +1283,9 @@ public final class Runs {
      * {@code /recompenses} (never dropped: nothing lies on the ground in a dungeon world, it would be lost).
      */
     private void deliver(Player p, List<ItemStack> items) {
-        List<ItemStack> left = new ArrayList<>();
-        for (ItemStack item : items) left.addAll(p.getInventory().addItem(item).values());
-        if (left.isEmpty()) return;
-        String id = store.addLost(p.getUniqueId(), "overflow", left.toArray(new ItemStack[0]), true);
-        if (id == null) {
-            plugin.getLogger().severe("Overflow of " + p.getName() + " not kept: " + left);
-            return;
+        if (!fr.influencraft.flux.api.reward.Rewards.deliver(p, "dungeons", plugin.messages().raw("lost.overflow-label"), items).isEmpty()) {
+            plugin.messages().send(p, "lost.overflow");
         }
-        handBack(p.getUniqueId(), id, left.size(), plugin.messages().raw("lost.overflow-label"));
-        plugin.messages().send(p, "lost.overflow");
     }
 
     /** Someone won this dungeon: every gear locked in it goes back to its owner. */

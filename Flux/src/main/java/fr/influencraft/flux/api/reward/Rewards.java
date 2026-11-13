@@ -98,14 +98,14 @@ public final class Rewards {
         return out;
     }
 
-    /** Same as {@link #deliver}, but always kept in the rewards (a plugin that wants the player to claim it). */
+    /** Same as {@link #deliver}, but always kept in the rewards, without expiry (the player claims it himself). */
     public static void store(OfflinePlayer player, String source, String label, java.util.Collection<org.bukkit.inventory.ItemStack> items) {
         java.util.Map<String, List<org.bukkit.inventory.ItemStack>> byUniverse = new java.util.LinkedHashMap<>();
         for (org.bukkit.inventory.ItemStack item : items) {
             if (item == null || item.isEmpty()) continue;
             byUniverse.computeIfAbsent(fr.influencraft.flux.api.universe.Universes.universeOf(item), u -> new java.util.ArrayList<>()).add(item);
         }
-        byUniverse.forEach((universe, list) -> give(player, Reward.of(source, label).items(list).universe(universe)));
+        byUniverse.forEach((universe, list) -> give(player, Reward.of(source, label).items(list).universe(universe).keep()));
     }
 
     /** Whether a reward with this key was already given to the player (claimed or not). */
