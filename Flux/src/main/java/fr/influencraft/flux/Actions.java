@@ -63,6 +63,8 @@ public final class Actions {
 
     private void runOne(Player player, MenuSession session, String line) {
         String trimmed = line.trim();
+        // an action built from a list entry may be empty for that entry (e.g. a locked slot): nothing to run
+        if (trimmed.isEmpty()) return;
         String type = "player";
         String arg = trimmed;
         if (trimmed.startsWith("[")) {

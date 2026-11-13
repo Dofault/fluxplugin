@@ -430,3 +430,21 @@ editor:
         - "&#B376E5It is also removed from boosters."
         - "&#B376E5Cards already given stay in game but are no longer recognized."
         - ""
+
+# Menus of the pets (lists built by FluxPets, PetMenuLists)
+menu:
+  level-suffix: "&#FFD94DLv. %level%"
+  progress: "Progress"
+  see-progress: "See its progress"
+  put-away: "Put away"
+  activate: "Activate"
+  active: "Active pet"
+  slot-locked: "&#FF5C5CLocked slot"
+  slot-locked-description: "You cannot use this slot yet."
+  rank-needed: "Rank needed"
+  slot-free: "Free slot"
+  slot-free-description: "Click a pet below to activate it."
+  unlocked: "Unlocked"
+  locked: "Locked"
+  cards: "Cards"
+  level-name: "Level %level%"

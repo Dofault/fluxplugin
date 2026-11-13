@@ -66,6 +66,7 @@ public final class PetView {
 
     /** Retour à la première page, sans filtre (ouverture du menu). */
     public static void reset(Player player) {
+        fr.influencraft.flux.api.list.Lists.reset(player, PetMenuLists.VIEW);
         State s = state(player);
         s.filter = null;
         s.page = 1;
@@ -117,6 +118,7 @@ public final class PetView {
 
     public static void select(Player player, Pet pet) {
         state(player).selected = pet.id();
+        PetMenuLists.invalidate(player);
     }
 
     public static Pet selected(Player player) {
@@ -185,6 +187,8 @@ public final class PetView {
 
     /** Filtre suivant (step 1) ou précédent (-1), en boucle : tout, puis les filtres du joueur. Page 1. */
     public static void stepFilter(Player player, int step) {
+        PetMenuLists.invalidate(player);
+        fr.influencraft.flux.api.list.Lists.reset(player, PetMenuLists.VIEW);
         List<String> keys = new ArrayList<>();
         keys.add(null);
         keys.addAll(filters(player).keySet());

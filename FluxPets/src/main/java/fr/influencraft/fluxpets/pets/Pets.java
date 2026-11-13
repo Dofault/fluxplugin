@@ -260,6 +260,7 @@ public final class Pets {
 
     /** Effets du familier recalculés tout de suite pour ce joueur. */
     static void refresh(Player player) {
+        PetMenuLists.invalidate(player);
         if (enabled && player.isOnline()) {
             HolderProviderKt.refreshHolders(DispatcherKt.toDispatcher(player));
         }

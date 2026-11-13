@@ -66,6 +66,7 @@ public final class FluxPets extends fr.influencraft.flux.api.FluxPlugin implemen
         boosterKey = new NamespacedKey(LEGACY_NAMESPACE, "booster");
         versionKey = new NamespacedKey(LEGACY_NAMESPACE, "version");
         Pets.registerPlaceholders(this);
+        new fr.influencraft.fluxpets.pets.PetMenuLists(this).register();
         // familiers avant les cartes : le registre des cartes liste les familiers chargés
         boolean petsStarted = startPets();
         registry = new CardRegistry(this);

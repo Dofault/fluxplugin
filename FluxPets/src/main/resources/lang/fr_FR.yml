@@ -430,3 +430,21 @@ editor:
         - "&#B376E5Elle est aussi retirée des boosters."
         - "&#B376E5Les cartes déjà distribuées restent en jeu mais ne sont plus reconnues."
         - ""
+
+# Menus of the pets (lists built by FluxPets, PetMenuLists)
+menu:
+  level-suffix: "&#FFD94DNiv. %level%"
+  progress: "Progression"
+  see-progress: "Voir la progression"
+  put-away: "Ranger"
+  activate: "Activer"
+  active: "Familier actif"
+  slot-locked: "&#FF5C5CEmplacement verrouillé"
+  slot-locked-description: "Tu n'as pas encore accès à cet emplacement."
+  rank-needed: "Grade requis"
+  slot-free: "Emplacement libre"
+  slot-free-description: "Clique sur un familier ci-dessous pour l'activer."
+  unlocked: "Débloqué"
+  locked: "Verrouillé"
+  cards: "Cartes"
+  level-name: "Niveau %level%"
