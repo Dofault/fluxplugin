@@ -1,0 +1,202 @@
+# FluxReferral (parrainage) : textes en français pour tous les joueurs.
+# Une ligne qui commence par « ! » n'a pas le préfixe. Variables entre accolades : {joueur}, {parrain}, {compteur}...
+# {code} et {adresse} deviennent cliquables (copie dans le presse-papier).
+# Charte des messages : celle de CMI (docs/notifications/cmi.md, comme FluxCommerce et FluxPW) : préfixe en petites
+# capitales, texte gris #8A8A8A (jamais &7 ni &8), pseudos et durées en or (même dans une erreur), chiffres en blanc,
+# erreur en rouge puis explication en gris, issue positive en vert, info système en bleu, commandes entre crochets
+# (cliquables). Les codes & et les balises MiniMessage se mélangent librement.
+prefix: "&#B376E5ᴘᴀʀʀᴀɪɴᴀɢᴇ&8 ▸ "
+
+# Mot affiché par les placeholders quand il n'y a rien (pas de parrain, pas de filleul)
+aucun: "Aucun"
+
+# Libellés des récompenses en attente dans le menu des récompenses de Flux (/recompenses)
+recompense-libelle-accueil: "&fRécompense d'accueil (parrainage)"
+recompense-libelle-palier: "&fBonus de parrainage : {seuil} filleuls"
+recompense-libelle-filleul: "&fRécompense de filleul"
+
+# --- Adresse personnelle (/parrainage adresse, bouton du menu) ---
+adresse-affichage:
+  - "&#8A8A8ATon adresse perso : &#2BC4E8<u>{adresse}</u>"
+  - "!&#8A8A8ADonne-la à tes amis : ils l'ajoutent dans &fMultijoueur&#8A8A8A, &fAjouter un serveur&#8A8A8A. Après &#FFD94D{temps} &#8A8A8Ade jeu, vous recevez tous les deux une récompense."
+  - "!&#8A8A8AClique sur l'adresse pour la copier. Code de secours : &#FFD94D{code}"
+adresse-survol-copier: "&#8A8A8AClique pour copier ton adresse"
+code-survol-copier: "&#8A8A8AClique pour copier ton code"
+chargement: "&#8A8A8AChargement de tes données, réessaie dans un instant."
+
+# --- Arrivée par adresse et validation automatique ---
+arrivee-filleul: "&#8A8A8ABienvenue ! Tu as rejoint le serveur grâce à &#FFD94D{parrain}&#8A8A8A. Joue &#FFD94D{temps} &#8A8A8Apour valider ton parrainage : vous aurez tous les deux une récompense à récupérer."
+arrivee-notif-parrain: "&#FFD94D{joueur} &#8A8A8Avient d'arriver avec ton adresse ! Son parrainage sera validé après &#FFD94D{temps} &#8A8A8Ade jeu."
+validation-filleul: "&#2ECF7BParrainage validé !&#8A8A8A Merci d'avoir rejoint le serveur avec &#FFD94D{parrain}&#8A8A8A, ta récompense d'accueil t'attend : [/parrainage recuperer]"
+validation-refus-meme-ip: "&#FF5C5CParrainage refusé.&#8A8A8A Toi et &#FFD94D{parrain} &#8A8A8Ajouez depuis la même connexion. Contacte le staff si vous vivez sous le même toit."
+validation-refus-meme-ip-parrain: "&#FF5C5CParrainage refusé.&#8A8A8A Toi et &#FFD94D{joueur} &#8A8A8Ajouez depuis la même connexion."
+
+# --- /parrainage code ---
+code-affichage: "&#8A8A8ATon code de parrainage : &#FFD94D{code}"
+code-genere: "&#2ECF7BTon code a été généré : &#FFD94D{code}"
+
+# --- /parrainage utiliser <code> ---
+utilisation-succes: "&#2ECF7BTu as utilisé le code de &#FFD94D{parrain}&#2ECF7B !&#8A8A8A Ta récompense d'accueil t'attend : [/parrainage recuperer]"
+utilisation-notif-parrain: "&#FFD94D{joueur} &#2ECF7Best maintenant ton filleul !&#8A8A8A Tu en as &f{compteur}&#8A8A8A, récupère ta récompense : [/parrainage recuperer]"
+utilisation-deja-parraine: "&#FF5C5CTu as déjà été parrainé.&#8A8A8A Un joueur n'a qu'un seul parrain."
+utilisation-en-attente: "&#8A8A8ATu as rejoint le serveur grâce à &#FFD94D{parrain}&#8A8A8A : ton parrainage sera validé tout seul après le temps de jeu requis."
+utilisation-propre-code: "&#FF5C5CCode refusé.&#8A8A8A Tu ne peux pas utiliser ton propre code."
+utilisation-code-invalide: "&#FF5C5CCode inconnu.&#8A8A8A Vérifie le code que ton ami t'a donné."
+utilisation-circulaire: "&#FF5C5CCode refusé.&#8A8A8A Tu ne peux pas utiliser le code de ton propre filleul."
+utilisation-meme-ip: "&#FF5C5CCode refusé.&#8A8A8A Tu joues depuis la même connexion que ce parrain."
+utilisation-temps-jeu-insuffisant: "&#FF5C5CPas encore.&#8A8A8A Tu dois avoir joué au moins &#FFD94D{temps} &#8A8A8Aavant d'utiliser un code."
+
+# --- /parrainage recuperer ---
+recuperation-rien: "&#8A8A8ARien à récupérer pour l'instant."
+recuperation-en-cours: "&#8A8A8ARécupération déjà en cours, réessaie dans un instant."
+recuperation-succes: "&f{compteur} &#2ECF7Brécompense(s) récupérée(s) !"
+recuperation-partielle: "&f{compteur} &#2ECF7Brécompense(s) récupérée(s)."
+recuperation-inventaire-plein: "&#FF5C5CInventaire plein.&#8A8A8A Fais de la place puis retape [/parrainage recuperer] pour le reste."
+
+# --- /parrainage filleuls [joueur] (aussi %parrainage_filleuls_liste%) ---
+filleuls-entete: "&#8A8A8ATes filleuls : &f{compteur}"
+filleuls-entete-autre: "&#8A8A8AFilleuls de &#FFD94D{joueur}&#8A8A8A : &f{compteur}"
+filleuls-liste: "!&#8A8A8A • {liste}"
+# Chaque pseudo de la liste, puis ce qui les sépare
+filleuls-nom: "&#FFD94D{joueur}"
+filleuls-separateur: "&#8A8A8A, "
+filleuls-aucun: "&#8A8A8ATu n'as encore aucun filleul. Donne ton adresse perso à tes amis : [/parrainage adresse]"
+filleuls-aucun-autre: "&#FFD94D{joueur} &#8A8A8An'a encore aucun filleul."
+filleuls-attente-entete: "!&#8A8A8AEn attente de validation : &f{compteur}"
+filleuls-attente-ligne: "!&#8A8A8A • &#FFD94D{joueur} &#8A8A8A(&f{progression} &#8A8A8Ade jeu)"
+
+# --- /parrainage top ---
+classement-entete: "&#8A8A8AClassement des parrains"
+classement-ligne: "!&#8A8A8A • &f#{rang} &#FFD94D{joueur} &#8A8A8A: &f{compteur} &#8A8A8Afilleul(s)"
+classement-vide: "&#8A8A8AAucun parrainage enregistré pour l'instant."
+
+# --- /parrainage info [joueur] ---
+info-entete: "&#8A8A8AParrainage de &#FFD94D{joueur}"
+info-parrain: "!&#8A8A8A • Parrain : &#FFD94D{parrain}"
+info-parrain-aucun: "!&#8A8A8A • Parrain : aucun"
+info-nb-filleuls: "!&#8A8A8A • Filleuls : &f{compteur} &#8A8A8A[/parrainage filleuls]"
+info-code: "!&#8A8A8A • Code : &#FFD94D{code}"
+info-prochain-palier: "!&#8A8A8A • Prochain palier : &f{palier} &#8A8A8Afilleul(s)"
+info-palier-max: "!&#8A8A8A • Prochain palier : &#2ECF7Bpalier maximum atteint !"
+info-joueur-introuvable: "&#FF5C5CJoueur introuvable.&#8A8A8A Aucun joueur connu du parrainage ne porte ce nom."
+
+# --- Paliers ---
+palier-atteint-joueur: "&#2ECF7BPalier atteint !&#8A8A8A Tu as parrainé &f{compteur} &#8A8A8Ajoueur(s). Récompense disponible : [/parrainage recuperer]"
+palier-atteint-annonce: "&#FFD94D{joueur} &#8A8A8Avient d'atteindre le palier de &f{compteur} &#8A8A8Afilleul(s) !"
+
+# --- Commandes d'administration ---
+admin-rechargement-succes: "&#2BC4E8FluxReferral rechargé."
+admin-reinitialisation-succes:
+  - "&#2ECF7BDonnées de parrainage de &#FFD94D{joueur} &#2ECF7Bréinitialisées."
+  - "!&#8A8A8ATout a été effacé (filleuls, paliers, code). Pour ne retirer qu'un lien : &#FFD94D/parrainage admin supprimerparrain <filleul>"
+admin-definir-parrain-succes: "&#2ECF7BParrain de &#FFD94D{joueur} &#2ECF7Bdéfini sur &#FFD94D{parrain}&#2ECF7B."
+admin-supprimer-parrain-succes: "&#2ECF7BLien de parrainage de &#FFD94D{joueur} &#2ECF7Bsupprimé."
+admin-joueur-pas-parraine: "&#FF5C5CAucun parrain.&#8A8A8A Ce joueur n'a pas de parrain enregistré."
+admin-forcer-palier-succes: "&#2ECF7BPalier &f{palier} &#2ECF7Bdéclenché pour &#FFD94D{joueur}&#2ECF7B."
+admin-forcerpalier-recompense-donnee: "&#2ECF7BPalier &f{compteur} &#2ECF7Bforcé par un admin :&#8A8A8A récompense donnée tout de suite, hors file d'attente."
+admin-simuler-succes: "&#FFD94D{joueur} &#2ECF7Ba été inscrit sur l'adresse de &#FFD94D{parrain} &#8A8A8A(invitation en attente)."
+admin-simuler-echec: "&#FF5C5CAucune invitation créée pour &#FFD94D{joueur}&#FF5C5C.&#8A8A8A Adresse &f{adresse} &#8A8A8Ainconnue, joueur déjà filleul ou déjà en attente, ou sa propre adresse."
+admin-valider-succes: "&#2ECF7BParrainage de &#FFD94D{joueur} &#2ECF7Bpar &#FFD94D{parrain} &#2ECF7Bvalidé."
+admin-valider-echec: "&#FF5C5CValidation impossible pour &#FFD94D{joueur}&#FF5C5C.&#8A8A8A Raison : &f{raison}"
+admin-usage-decouverte: "&#FF5C5CUtilisation :&#FFD94D /parrainage admin decouverte <joueur>"
+
+# --- Messages génériques ---
+permission-refusee: "&#FF5C5CTu n'as pas la permission de faire ça."
+joueur-seulement: "&#FF5C5CCommande réservée aux joueurs.&#8A8A8A La console n'a accès qu'à [/parrainage admin aide]"
+usage-invalide: "&#FF5C5CUtilisation :&#FFD94D {usage}"
+erreur-bdd: "&#FF5C5CErreur de base de données.&#8A8A8A Préviens un administrateur."
+joueur-non-connecte: "&#FF5C5CJoueur introuvable.&#8A8A8A Ce joueur n'est pas connecté."
+origine-usage: "&#FF5C5CUtilisation :&#FFD94D /origine <joueur>"
+
+# --- Questionnaire de première connexion (fenêtre de dialogue, charte des menus : titre or, texte violet) ---
+decouverte-titre: "<color:#FFD94D><bold>Bienvenue sur Influencraft !</bold></color>"
+decouverte-question: "<color:#B376E5>Comment as-tu découvert le serveur ?"
+decouverte-champ: "<color:#FFD94D><bold>Soutiens le joueur qui t'a invité</bold></color>"
+decouverte-champ-libelle: "Son pseudo"
+decouverte-bouton-valider: "Valider"
+decouverte-bouton-retour: "Retour"
+decouverte-bouton-joueur: "Par un joueur"
+decouverte-bouton-autre: "Autre"
+decouverte-autre: "<color:#FFD94D><bold>Comment nous as-tu trouvés ?</bold></color>"
+decouverte-autre-libelle: "Ta réponse"
+decouverte-erreur-vide: "<color:#FF5C5C>Écris le pseudo du joueur qui t'a invité."
+decouverte-erreur-inconnu: "<color:#FF5C5C>Aucun joueur nommé {joueur} n'est encore venu sur le serveur."
+decouverte-erreur-soi: "<color:#FF5C5C>Tu ne peux pas te choisir toi-même."
+decouverte-erreur-autre: "<color:#FF5C5C>Écris comment tu as trouvé le serveur."
+# Réponses envoyées dans le tchat après le questionnaire
+decouverte-merci: "&#2ECF7BMerci pour ta réponse,&#8A8A8A bon jeu sur Influencraft !"
+decouverte-merci-joueur: "&#2ECF7BMerci !&#8A8A8A On note que tu es venu grâce à &#FFD94D{joueur}&#8A8A8A."
+# /origine et /parrainage admin decouverte(s) (staff)
+decouverte-info: "&#FFD94D{joueur} &#8A8A8Aa découvert le serveur par &f{source} &#8A8A8A({detail}, {date})"
+decouverte-info-aucune: "&#8A8A8AAucune réponse connue pour &#FFD94D{joueur}&#8A8A8A."
+decouverte-stats-entete: "&#8A8A8ADécouverte du serveur &#8A8A8A(&f{total} &#8A8A8Ajoueurs)"
+decouverte-stats-ligne: "!&#8A8A8A • &f{source} &#8A8A8A: &f{nombre} &#8A8A8A({pourcent} %)"
+decouverte-source-adresse: "l'adresse perso de {joueur}"
+decouverte-source-joueur: "le joueur {joueur}"
+decouverte-source-joueurs: "un joueur"
+# Alerte au staff connecté (alertes staff de Flux)
+alerte-staff-titre: "Origine d'un joueur"
+alerte-staff: "&#FFD94D{joueur} &#8A8A8Aa découvert le serveur par &f{origine}"
+alerte-staff-autre: "&#FFD94D{joueur} &#8A8A8Aa découvert le serveur autrement : &f« {texte} »"
+
+# Aide paginée /parrainage aide et /parrainage admin aide, au format de l'aide de Lands et de FluxCommerce (Flux : ChatHelp).
+help:
+  header: "<#8A8A8A><st>               </st></#8A8A8A> %previous% <#FFD94D>ᴀɪᴅᴇ</#FFD94D> <dark_gray>·</dark_gray> <#8A8A8A>Page</#8A8A8A> <white>%page%</white><dark_gray>/</dark_gray><white>%pages%</white> %next% <#8A8A8A><st>               </st></#8A8A8A>"
+  header-admin: "<#8A8A8A><st>             </st></#8A8A8A> %previous% <#FFD94D>ᴀɪᴅᴇ ꜱᴛᴀꜰꜰ</#FFD94D> <dark_gray>·</dark_gray> <#8A8A8A>Page</#8A8A8A> <white>%page%</white><dark_gray>/</dark_gray><white>%pages%</white> %next% <#8A8A8A><st>             </st></#8A8A8A>"
+  line: "<#F0A800>   %command%</#F0A800> <dark_gray>-</dark_gray> <#8A8A8A>%description%"
+  footer: "<#8A8A8A><st>             </st></#8A8A8A> %previous% <dark_gray>|</dark_gray> %next% <#8A8A8A><st>             </st></#8A8A8A>"
+  previous-arrow: "<#FFD94D>«</#FFD94D>"
+  next-arrow: "<#FFD94D>»</#FFD94D>"
+  previous: "<#FFD94D>« Précédente</#FFD94D>"
+  next: "<#FFD94D>Suivante »</#FFD94D>"
+  previous-hover: "<#B376E5>Aller à la page précédente"
+  next-hover: "<#B376E5>Aller à la page suivante"
+  hover-run: "<#B376E5>Clique pour exécuter."
+  hover-suggest: "<#B376E5>Clique pour copier la commande."
+  # Arguments écrits après chaque sous-commande
+  args:
+    adresse: ""
+    code: ""
+    utiliser: "<code>"
+    filleuls: ""
+    info: ""
+    info-autres: "<joueur>"
+    top: ""
+    recuperer: ""
+    aide: "[page]"
+    admin: ""
+    admin-recharger: ""
+    admin-reinitialiser: "<joueur>"
+    admin-definirparrain: "<joueur> <parrain>"
+    admin-supprimerparrain: "<joueur>"
+    admin-forcerpalier: "<joueur> <n>"
+    admin-info: "<joueur>"
+    admin-simuler: "<joueur> <adresse>"
+    admin-valider: "<joueur>"
+    admin-decouverte: "<joueur>"
+    admin-decouvertes: ""
+    admin-questionnaire: "[joueur]"
+    admin-aide: "[page]"
+  commands:
+    adresse: "Ton adresse perso à donner à tes amis"
+    code: "Ton code de parrainage"
+    utiliser: "Utiliser le code d'un ami"
+    filleuls: "La liste de tes filleuls"
+    info: "Tes informations de parrainage"
+    info-autres: "Les informations d'un autre joueur"
+    top: "Le classement des parrains"
+    recuperer: "Récupérer tes récompenses en attente"
+    aide: "Cette aide"
+    admin: "Commandes du staff"
+    admin-recharger: "Recharger la configuration et les textes"
+    admin-reinitialiser: "Effacer toutes les données d'un joueur"
+    admin-definirparrain: "Définir le parrain d'un joueur"
+    admin-supprimerparrain: "Retirer le lien de parrainage d'un joueur"
+    admin-forcerpalier: "Déclencher un palier"
+    admin-info: "Les informations d'un joueur"
+    admin-simuler: "Simuler une arrivée par adresse (test sans DNS)"
+    admin-valider: "Valider un parrainage en attente sans attendre"
+    admin-decouverte: "Comment un joueur a découvert le serveur"
+    admin-decouvertes: "Statistiques de découverte du serveur"
+    admin-questionnaire: "Aperçu du questionnaire, ou le reposer à un joueur"
+    admin-aide: "Cette aide"

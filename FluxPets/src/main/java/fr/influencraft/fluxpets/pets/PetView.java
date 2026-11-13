@@ -218,7 +218,7 @@ public final class PetView {
 
     /** A filter option in the suite's filter format (style.yml of Flux), with the owned / total count. */
     private static String line(Config c, boolean selected, String label, int[] count) {
-        String counted = label + " &7(" + (count == null ? 0 : count[0]) + "/" + (count == null ? 0 : count[1]) + ")";
+        String counted = label + " &7<smallcaps>(" + (count == null ? 0 : count[0]) + "/" + (count == null ? 0 : count[1]) + ")</smallcaps>";
         return fr.influencraft.flux.api.text.Style.get().filterOption(counted, selected);
     }
 }
