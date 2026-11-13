@@ -90,7 +90,9 @@ public final class HudService implements Hud.Backend, Listener {
         boolean shown;
         boolean bedrockShown;
         final Map<String, String> values = new HashMap<>();
-        long valuesAt = Long.MIN_VALUE;
+        long valuesAt;
+        /** Values to read again at the next draw (new view, Hud.refresh). Never a "very old" valuesAt: tick - Long.MIN_VALUE overflows. */
+        boolean stale = true;
         Component head;
         long reorderMinute;
         int reorders;
@@ -185,7 +187,7 @@ public final class HudService implements Hud.Backend, Listener {
     @Override
     public void refresh(Player player) {
         View v = views.get(player.getUniqueId());
-        if (v != null) v.valuesAt = Long.MIN_VALUE;
+        if (v != null) v.stale = true;
         if (enabled) draw(player);
     }
 
@@ -238,7 +240,8 @@ public final class HudService implements Hud.Backend, Listener {
             hide(p);
             return;
         }
-        if (tick - v.valuesAt >= valueTicks) {
+        if (v.stale || tick - v.valuesAt >= valueTicks) {
+            v.stale = false;
             v.values.clear();
             v.valuesAt = tick;
         }
@@ -433,7 +436,8 @@ public final class HudService implements Hud.Backend, Listener {
             hideBedrock(p, v);
             return;
         }
-        if (tick - v.valuesAt >= valueTicks) {
+        if (v.stale || tick - v.valuesAt >= valueTicks) {
+            v.stale = false;
             v.values.clear();
             v.valuesAt = tick;
         }
