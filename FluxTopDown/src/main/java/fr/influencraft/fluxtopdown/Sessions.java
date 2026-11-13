@@ -194,7 +194,19 @@ final class Sessions implements Listener {
             s.moveFeet(to);
             return;
         }
-        if (tick >= s.busyUntil && !s.path.isEmpty()) {
+        // keys first (forward = up the screen): they take over from a click's path
+        org.bukkit.Input in = p.getCurrentInput();
+        int side = (in.isRight() ? 1 : 0) - (in.isLeft() ? 1 : 0), ahead = (in.isForward() ? 1 : 0) - (in.isBackward() ? 1 : 0);
+        if (tick >= s.busyUntil && (side != 0 || ahead != 0)) {
+            s.stop();
+            Vector[] ax = Session.axes(plugin.settings());
+            Vector dir = ax[0].clone().setY(0).normalize().multiply(ahead).add(ax[1].clone().setY(0).normalize().multiply(side)).normalize();
+            Vector moved = step(floors, pos, dir.multiply(plugin.settings().moveSpeed()));
+            if (moved != null) {
+                next = moved;
+                floor = moved.getY();
+            }
+        } else if (tick >= s.busyUntil && !s.path.isEmpty()) {
             while (s.pathIndex < s.path.size()) {
                 Vector w = s.path.get(s.pathIndex);
                 double dx = w.getX() - pos.getX(), dz = w.getZ() - pos.getZ();
@@ -206,15 +218,12 @@ final class Sessions implements Listener {
                 Vector w = s.path.get(s.pathIndex);
                 Vector flat = w.clone().subtract(pos).setY(0);
                 double len = flat.length();
-                Vector step = flat.multiply(Math.min(plugin.settings().moveSpeed(), len) / len);
-                Vector to = pos.clone().add(step);
-                double f = floors.floorNear(to.getBlockX(), (int) Math.floor(pos.getY() + 0.01), to.getBlockZ());
-                if (Double.isNaN(f) || f - pos.getY() > 1.25) {
-                    // blocked (a door closed, a monster's wall): he stops there
-                    s.stop();
-                } else {
-                    next = to;
-                    floor = f;
+                Vector moved = step(floors, pos, flat.multiply(Math.min(plugin.settings().moveSpeed(), len) / len));
+                // blocked (a door closed, a monster's wall): he stops there
+                if (moved == null) s.stop();
+                else {
+                    next = moved;
+                    floor = moved.getY();
                 }
             }
         }
@@ -232,6 +241,32 @@ final class Sessions implements Listener {
             next.setY(y);
         }
         if (next.distanceSquared(pos) > 1e-6) s.moveFeet(next);
+    }
+
+    /**
+     * One step of {@code delta} from {@code pos}: the new feet position with the floor height there as y, sliding
+     * along a wall on the free axis; null when he cannot move at all. Keeps 0.3 blocks (his half width) from walls.
+     */
+    private static Vector step(Paths floors, Vector pos, Vector delta) {
+        for (Vector d : new Vector[]{delta, new Vector(delta.getX(), 0, 0), new Vector(0, 0, delta.getZ())}) {
+            if (d.lengthSquared() < 1e-6) continue;
+            Vector to = pos.clone().add(d);
+            double f = floorAt(floors, to, pos.getY());
+            if (Double.isNaN(f)) continue;
+            // his edges, in the direction he goes
+            Vector edge = d.clone().normalize().multiply(0.3);
+            double fe = floorAt(floors, to.clone().add(edge), pos.getY());
+            if (Double.isNaN(fe) || fe - pos.getY() > 0.6 && f - pos.getY() <= 0.6) continue;
+            to.setY(f);
+            return to;
+        }
+        return null;
+    }
+
+    /** Floor under a point, NaN when it cannot be stood on or is more than a step (1.25) above {@code from}. */
+    private static double floorAt(Paths floors, Vector at, double from) {
+        double f = floors.floorNear(at.getBlockX(), (int) Math.floor(from + 0.01), at.getBlockZ());
+        return Double.isNaN(f) || f - from > 1.25 ? Double.NaN : f;
     }
 
     /** The basic attack: walks to the chased monster, strikes it at his class's attack speed. */

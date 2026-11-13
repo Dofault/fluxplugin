@@ -125,7 +125,7 @@ final class Session {
             d.setShadowed(false);
             d.setSeeThrough(true);
             d.setBrightness(new Display.Brightness(15, 15));
-            d.setTeleportDuration(2);
+            d.setTeleportDuration(1);
         });
         target = w.spawn(eye.clone().subtract(0, 1.5, 0), Interaction.class, i -> {
             i.setPersistent(false);
