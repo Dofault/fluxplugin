@@ -106,7 +106,8 @@ def bake(P, mats, glow_mats, seed=4417):
             img = painter(m)[0](w, h, random.Random(rnd.random()), d)
             for j in range(h):
                 for k in range(w):
-                    atlas[y + j][x + k] = tuple(img[j][k]) + (255,)
+                    px = tuple(img[j][k])
+                    atlas[y + j][x + k] = px if len(px) == 4 else px + (255,)   # RGBA kept: cut-out pixels
             uv[(i, d)] = {"uv": [x, y, round(x + fw, 3), round(y + fh, 3)], "texture": t}
         atlases[t], sizes[t] = atlas, size
     return uv, atlases, sizes
