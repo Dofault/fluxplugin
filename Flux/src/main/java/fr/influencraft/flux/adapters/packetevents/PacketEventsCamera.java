@@ -96,6 +96,14 @@ public final class PacketEventsCamera extends PacketListenerAbstract implements 
     }
 
     @Override
+    public void ownSlot(Player player, int slot, org.bukkit.inventory.ItemStack item) {
+        var stack = io.github.retrooper.packetevents.util.SpigotConversionUtil.fromBukkitItemStack(
+                item == null ? org.bukkit.inventory.ItemStack.empty() : item);
+        PacketEvents.getAPI().getPlayerManager().sendPacket(player,
+                new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetSlot(0, 0, slot, stack));
+    }
+
+    @Override
     public void place(Player viewer, Entity entity, double x, double y, double z) {
         var data = new com.github.retrooper.packetevents.protocol.entity.EntityPositionData(
                 new com.github.retrooper.packetevents.util.Vector3d(x, y, z), new com.github.retrooper.packetevents.util.Vector3d(0, 0, 0),

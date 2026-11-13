@@ -21,7 +21,6 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mannequin;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
-import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.RayTraceResult;
@@ -30,7 +29,6 @@ import org.bukkit.util.Vector;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -200,17 +198,16 @@ final class Session {
         for (Entity e : List.of(cursor, target, camera, avatar, seat)) if (e.isValid()) e.remove();
     }
 
-    /** His invisible body still shows its armour and held items to himself: send him empty ones (look only). */
+    /**
+     * His invisible body still shows what he wears to himself: his client is told (him only) that his armour slots
+     * are empty, but for the head pointer his client draws as the mouse pointer. His client knows his own gear from
+     * his inventory window, not from equipment packets.
+     */
     void hideOwnGear() {
-        Map<EquipmentSlot, ItemStack> empty = new EnumMap<>(EquipmentSlot.class);
-        for (EquipmentSlot slot : List.of(EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET,
-                EquipmentSlot.HAND, EquipmentSlot.OFF_HAND)) empty.put(slot, ItemStack.empty());
-        // on his head, the item his client draws as the pointer
-        if (plugin.settings().clientPointer()) empty.put(EquipmentSlot.HEAD, Camera.pointerItem());
-        try {
-            player.sendEquipmentChange(player, empty);
-        } catch (RuntimeException e) {
-            plugin.getLogger().fine("Own gear not hidden: " + e.getMessage());
+        boolean pointer = plugin.settings().clientPointer();
+        Camera.ownSlot(player, Camera.SLOT_HEAD, pointer ? Camera.pointerItem() : ItemStack.empty());
+        for (int slot : new int[]{Camera.SLOT_CHEST, Camera.SLOT_LEGS, Camera.SLOT_FEET, Camera.SLOT_OFF_HAND}) {
+            Camera.ownSlot(player, slot, ItemStack.empty());
         }
     }
 

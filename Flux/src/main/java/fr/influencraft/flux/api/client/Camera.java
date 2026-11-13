@@ -29,6 +29,12 @@ public final class Camera {
 
         void hideSelf(Player player, boolean hidden);
 
+        /**
+         * Shows {@code item} in a slot of his own inventory window on his side only (0 crafting result, 5 to 8 helmet to
+         * boots, 9 to 35 storage, 36 to 44 hotbar, 45 off hand); the server's inventory is untouched.
+         */
+        void ownSlot(Player player, int slot, org.bukkit.inventory.ItemStack item);
+
         /** Moves an entity on this player's screen only, at once (the server's own entity is not moved). */
         void place(Player viewer, Entity entity, double x, double y, double z);
     }
@@ -102,6 +108,15 @@ public final class Camera {
     public static void hideSelf(Player player, boolean hidden) {
         Service s = service;
         if (s != null) s.hideSelf(player, hidden);
+    }
+
+    /** Window slots of the worn items, for {@link #ownSlot}. */
+    public static final int SLOT_HEAD = 5, SLOT_CHEST = 6, SLOT_LEGS = 7, SLOT_FEET = 8, SLOT_OFF_HAND = 45;
+
+    /** {@code item} in a slot of his inventory window, seen by him only (his client draws what he wears from it). */
+    public static void ownSlot(Player player, int slot, org.bukkit.inventory.ItemStack item) {
+        Service s = service;
+        if (s != null) s.ownSlot(player, slot, item);
     }
 
     /** His mouse goes to {@code turn} as soon as it moves, before the server's tick (null stops). */
