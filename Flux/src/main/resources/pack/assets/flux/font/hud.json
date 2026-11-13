@@ -66,6 +66,15 @@
     },
     {
       "type": "bitmap",
+      "file": "influhologrammes:font/hologrammes/monde_rpg_icone.png",
+      "height": 13,
+      "ascent": 13,
+      "chars": [
+        "\ue150"
+      ]
+    },
+    {
+      "type": "bitmap",
       "file": "flux:font/hud_panel.png",
       "height": 13,
       "ascent": 13,

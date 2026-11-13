@@ -96,8 +96,13 @@ final class HudLayout {
         }
     }
 
-    /** A segment of a box: an icon of the HUD font ({@code hud_icons.json} id, pieces allowed) and a text. */
-    record Segment(String icon, List<Run> runs, String setting, String requires) {
+    /**
+     * A segment of a box: an icon of the HUD font ({@code hud_icons.json} id, pieces allowed) and a text.
+     * {@code universes}: shown only in those universes (api.universe.Universes, empty = everywhere);
+     * {@code exceptUniverses}: never in those (the biome means nothing in the rpg worlds and dungeons).
+     */
+    record Segment(String icon, List<Run> runs, String setting, String requires, List<String> universes,
+                   List<String> exceptUniverses) {
     }
 
     /** {@code rows}: each row holds one element, or several boxes side by side. */
@@ -230,7 +235,8 @@ final class HudLayout {
                 Object rq = raw.get("requires");
                 segments.add(new Segment(raw.get("icon") == null ? null : String.valueOf(raw.get("icon")),
                         runs(raw.get("text") == null ? "" : String.valueOf(raw.get("text")), shadow),
-                        st == null ? null : String.valueOf(st), rq == null ? null : String.valueOf(rq).toLowerCase(Locale.ROOT)));
+                        st == null ? null : String.valueOf(st), rq == null ? null : String.valueOf(rq).toLowerCase(Locale.ROOT),
+                        names(raw.get("universes")), names(raw.get("except-universes"))));
             }
             if (segments.isEmpty()) {
                 log.warning("hud.yml " + id + ": empty box, element ignored");
@@ -534,6 +540,11 @@ final class HudLayout {
             case "centre", "center" -> new double[]{0.5, 0.5};
             default -> new double[]{0, 0};
         };
+    }
+
+    private static List<String> names(Object o) {
+        if (o instanceof List<?> l) return l.stream().map(x -> String.valueOf(x).toLowerCase(Locale.ROOT)).toList();
+        return o == null ? List.of() : List.of(String.valueOf(o).toLowerCase(Locale.ROOT));
     }
 
     private static int[] pair(Object o, int a, int b) {

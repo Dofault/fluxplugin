@@ -361,6 +361,11 @@ public final class HudService implements Hud.Backend, Listener {
         int width = 0;
         for (HudLayout.Segment s : e.box()) {
             if (s.setting() != null && !PlayerSettings.flag(p, "flux:" + s.setting(), true)) continue;
+            if (!s.universes().isEmpty() || !s.exceptUniverses().isEmpty()) {
+                String universe = fr.influencraft.flux.api.universe.Universes.of(p).toLowerCase(Locale.ROOT);
+                if (!s.universes().isEmpty() && !s.universes().contains(universe)) continue;
+                if (s.exceptUniverses().contains(universe)) continue;
+            }
             if (s.requires() != null) {
                 String r = value(p, v, s.requires());
                 if (r == null || r.isBlank()) continue;

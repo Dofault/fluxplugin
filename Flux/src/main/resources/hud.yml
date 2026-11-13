@@ -55,7 +55,8 @@ elements:
       - {image: "currency:influence", at: [33, 18], size: [9, 9]}
       - {text: "{influence}", at: [45, 20], font: small, shadow: "#000000"}
   # boxes: as wide as their text, segments of an icon and a text (icons: hud_icons.json; setting and requires per
-  # segment too), texts always in QuinqueFive
+  # segment too, as universes / except-universes: Flux's universes, rpg = RPG world and dungeons), texts always in
+  # QuinqueFive
   position:
     setting: hud_position
     box:
@@ -67,7 +68,8 @@ elements:
       - {icon: voteparty, text: "<#FFEB00>{voteparty}<#FFFFFF>/<#FADA5E>{voteparty_required}", shadow: "#000000"}
   place:
     box:
-      - {setting: hud_biome, icon: biome, text: "{biome}", shadow: "#000000"}
+      - {setting: hud_biome, except-universes: [rpg], icon: biome, text: "{biome}", shadow: "#000000"}
+      - {setting: hud_biome, universes: [rpg], icon: rpg, text: "RPG", shadow: "#000000"}
       - {setting: hud_ville, requires: city, icon: ville, text: "{city}", shadow: "#000000"}
 
 # Bedrock players (no pack, so no picture): one boss bar, MiniMessage or & colours. progress: "a/b" or 0 to 1.

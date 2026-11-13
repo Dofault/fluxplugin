@@ -34,6 +34,13 @@ SPACE = 3  # advance of a space in that font
 CELL_W, CELL_H, COLS = 5, 7, 16
 # panels drawn by hud.yml (width, height): the card, the position box, the Vote Party box
 PANELS = [(102, 32)]
+# icons of other plugins' packs, drawn from their own picture: id -> (texture in the pack, source file, character)
+EXTERNAL_ICONS = {
+    # the RPG world's icon (hologram of the world's portal), shown instead of the biome in the rpg universe
+    "rpg": ("influhologrammes:font/hologrammes/monde_rpg_icone.png",
+            "/home/influencraft/serveurs/04_labs/plugins/ItemsAdder/contents/influhologrammes/textures/font/hologrammes/monde_rpg_icone.png",
+            "\ue150"),
+}
 # height of the boxes (position, Vote Party, place) and of their icons
 BOX_H = 13
 
@@ -148,6 +155,12 @@ def main():
             icons[n.split("/")[-1]] = ch
             widths[ch] = int(0.5 + ink_width(cell) * scale) + 1
         providers.append({"type": "bitmap", "file": "flux:font/%s.png" % sheet, "height": BOX_H, "ascent": BOX_H, "chars": [chars]})
+    # icons that are another plugin's picture, used where it is (never copied): id -> (texture, file on Labs)
+    for n, (texture, path, ch) in EXTERNAL_ICONS.items():
+        picture = read_png(path)[2]
+        widths[ch] = int(0.5 + ink_width(picture) * BOX_H / len(picture)) + 1
+        icons[n] = ch
+        providers.append({"type": "bitmap", "file": texture, "height": BOX_H, "ascent": BOX_H, "chars": [ch]})
     panel_cols = {"\ue030": [2, 1], "\ue031": [0] * 8, "\ue032": [0], "\ue033": [1, 2]}  # rows cut at top and bottom
     pixels = [[(0, 0, 0, 0)] * (8 * len(panel_cols)) for _ in range(BOX_H)]
     for k, (ch, cuts) in enumerate(panel_cols.items()):
