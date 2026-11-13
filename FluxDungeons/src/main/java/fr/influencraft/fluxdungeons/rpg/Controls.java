@@ -47,6 +47,12 @@ final class Controls implements Listener {
     private final Map<UUID, Long> windowDrop = new HashMap<>();
     /** Tick of the last right click of players attacking on the right click, while they hold it down. */
     private final Map<UUID, Long> holding = new HashMap<>();
+    /**
+     * Tick of each player's last right click (block, air or creature). Right clicking a block or a creature also swings
+     * the arm, which the server reports as a left click (adventure mode): a left click this close is that swing, not a
+     * left click (same filter as combat.AttackCadence).
+     */
+    private final Map<UUID, Long> lastRight = new HashMap<>();
     /** Ticks without a new right click after which the button is taken as released (the client repeats every 4). */
     private static final int HOLD_GAP = 5;
 
@@ -153,15 +159,19 @@ final class Controls implements Listener {
         RpgPlayer r = use(p, e.getItem());
         if (r == null) return;
         boolean left = e.getAction() == Action.LEFT_CLICK_AIR || e.getAction() == Action.LEFT_CLICK_BLOCK;
+        long now = CombatEngine.now();
+        if (!left) lastRight.put(p.getUniqueId(), now);
         if (r.heroClass().basicOnRight()) {
             if (left) {
                 e.setCancelled(true);
-                skills.cast(p, r, "right");
+                // the arm swing of a right click on a block is no left click
+                Long right = lastRight.get(p.getUniqueId());
+                if (right == null || now - right > 1) skills.cast(p, r, "right");
                 return;
             }
             // the bow may draw (posture of the arms, keeps the hold seen while drawing); never on a block's use
             if (e.getAction() == Action.RIGHT_CLICK_BLOCK) e.setUseInteractedBlock(org.bukkit.event.Event.Result.DENY);
-            holding.put(p.getUniqueId(), (long) CombatEngine.now());
+            holding.put(p.getUniqueId(), now);
             skills.basic(p, r, null, false);
             return;
         }
@@ -173,6 +183,12 @@ final class Controls implements Listener {
             if (!AttackCadence.paced(e.getItem())) skills.basic(p, r, null, false);
         }
         else skills.cast(p, r, "right");
+    }
+
+    /** A right click on a creature swings the arm too (see {@link #lastRight}). */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onInteractEntity(org.bukkit.event.player.PlayerInteractEntityEvent e) {
+        if (players.get(e.getPlayer()) != null) lastRight.put(e.getPlayer().getUniqueId(), (long) CombatEngine.now());
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
