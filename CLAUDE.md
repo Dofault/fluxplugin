@@ -246,6 +246,7 @@ systemd-run --user --scope -q -p MemoryMax=2.5G nice -n 10 mvn -q -o -pl <Module
   them (CustomFishing, EcoJobs, libreforge, CMI...), so it closes a loop and Paper refuses to start the server
   (FluxFly with `loadbefore: [CMI]`, 2026-10-28). A command taken from another plugin is freed in that plugin's config.
 
+- Never list a permission among its own `children` in plugin.yml (a rename script turned an alias into one, 2026-11-13): Paper recurses forever and the server crashes at start with a StackOverflowError in `calculateChildPermissions`. Check after any bulk rename of permissions.
 - Bukkit config defaults shadow former key names: `getConfigurationSection("new")` returns the jar's default section
   even when the server file still uses the former name. Check `contains(key, true)` first. The other way round, a
   section missing from the server file reads as an **empty** section, without any error: log a warning when a list
