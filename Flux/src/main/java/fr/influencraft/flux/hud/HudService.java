@@ -131,6 +131,7 @@ public final class HudService implements Hud.Backend, Listener {
         bedrockText = b == null ? "" : b.getString("text", "");
         bedrockProgress = b == null ? "" : b.getString("progress", "");
         bedrockColour = colour(b == null ? null : b.getString("colour"), BossBar.Color.PURPLE);
+        currencyIcons();
         String glsl = enabled ? layout.glsl() : null;
         TextShader.part(flux, "flux_hud", glsl, glsl == null ? null : "flux_hud_vertex();");
         for (Player p : Bukkit.getOnlinePlayers()) hide(p);
@@ -138,6 +139,36 @@ public final class HudService implements Hud.Backend, Listener {
         if (task != null) task.cancel();
         task = enabled ? Bukkit.getScheduler().runTaskTimer(flux, this::tick, 20L, refreshTicks) : null;
         flux.getLogger().info("HUD: " + layout.elements.size() + " element(s)" + (enabled ? "" : " (disabled)"));
+    }
+
+    /**
+     * {@code image: "currency:<id>"} shows the currency's own icon ({@code currencies.<id>.icon} of Flux's config, as
+     * the menus and the chat do): its ItemsAdder texture is added to the gui atlas as {@code flux:hud/currency_<id>},
+     * never copied.
+     */
+    private void currencyIcons() {
+        Map<String, String> sprites = new HashMap<>();
+        File contents = new File(flux.getDataFolder().getParentFile(), "ItemsAdder/contents");
+        for (HudLayout.Element e : layout.elements) {
+            for (HudLayout.Part part : e.parts()) {
+                if (!(part instanceof HudLayout.Image i) || !i.sprite().startsWith("currency:")) continue;
+                String id = i.sprite().substring("currency:".length());
+                String icon = Economy.icon(id);
+                String[] spec = icon == null ? new String[0] : icon.split(":");
+                String texture = spec.length == 3 && spec[0].equalsIgnoreCase("itemsadder")
+                        ? fr.influencraft.flux.adapters.itemsadder.ItemsAdderTextures.texture(contents, spec[1], spec[2]) : null;
+                if (texture == null) {
+                    flux.getLogger().warning("hud.yml " + e.id() + ": no picture for the icon of currency " + id + " (" + icon + ")");
+                    continue;
+                }
+                sprites.put(currencySprite(id), texture);
+            }
+        }
+        fr.influencraft.flux.pack.GuiAtlas.set("hud", sprites);
+    }
+
+    private static String currencySprite(String currency) {
+        return "flux:hud/currency_" + currency.toLowerCase(Locale.ROOT);
     }
 
     @Override
@@ -212,7 +243,8 @@ public final class HudService implements Hud.Backend, Listener {
                 TitleBuilder to = part.layer() == HudLayout.Layer.BACK ? back : front;
                 switch (part) {
                     case HudLayout.Image i -> {
-                        String sprite = fill(i.sprite(), p, v);
+                        String sprite = i.sprite().startsWith("currency:")
+                                ? currencySprite(i.sprite().substring("currency:".length())) : fill(i.sprite(), p, v);
                         if (sprite.isBlank()) continue;
                         to.add(Component.object(ObjectContents.sprite(GUI_ATLAS, Key.key(sprite))), i.slot(), i.colour(), 8);
                     }

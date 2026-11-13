@@ -15,7 +15,8 @@ bar-colour: YELLOW
 
 # anchor: top-left, top, top-right, left, centre, right, bottom-left, bottom, bottom-right; at: [x, y] in GUI pixels
 # from that point (negative x from the right edge). Parts, at [x, y] inside the element:
-#   image: sprite of the gui atlas (assets/<ns>/textures/gui/sprites/<path>.png -> <ns>:<path>), size [w, h]
+#   image: sprite of the gui atlas (assets/<ns>/textures/gui/sprites/<path>.png -> <ns>:<path>), or currency:<id>
+#          (that currency's icon, currencies.<id>.icon of Flux's config: the same picture as the menus), size [w, h]
 #   head: true, the player's own head (hat layer included), size [w, h]
 #   text: <#RRGGBB> colours and pieces, font (small: QuinqueFive capitals, 5 px; else the game's font),
 #         scale (1 = natural size), shadow (#RRGGBB, #AARRGGBB or none)
@@ -29,9 +30,9 @@ elements:
     parts:
       - {image: "flux:hud/card", at: [0, 0], size: [112, 32], layer: back}
       - {head: true, at: [4, 4], size: [24, 24]}
-      - {image: "flux:hud/bitblock", at: [36, 5], size: [10, 10]}
+      - {image: "currency:vault", at: [36, 5], size: [10, 10]}
       - {text: "{balance}", at: [49, 8], font: small}
-      - {image: "flux:hud/influence", at: [36, 16], size: [10, 10]}
+      - {image: "currency:influence", at: [36, 16], size: [10, 10]}
       - {text: "{influence}", at: [49, 19], font: small}
   position:
     setting: hud_position

@@ -19,7 +19,7 @@ import java.util.jar.JarFile;
 /**
  * Flux's part of the server's resource pack, written into each folder of {@code client-pack.folders} (the pack plugin
  * merges them: ItemsAdder's {@code contents/<name>/resourcepack}; {@code plugins/Flux/pack} is read by MC GUI):
- * the files under {@code pack/assets/} of Flux's jar (HUD pictures, its font) and the text shader
+ * the files under {@code pack/assets/} of Flux's jar (HUD pictures, its font), the sprites of {@link GuiAtlas} and the text shader
  * ({@link TextShader}) in an overlay for the pack formats it is written for. Written once every plugin has started,
  * then whenever the shader changes; the console asks for a pack rebuild when a file changed.
  */
@@ -53,6 +53,7 @@ public final class ClientPack {
     /** First write, on the first tick: every plugin has given its part by then. */
     public void start() {
         TextShader.bind(this::changed);
+        GuiAtlas.bind(this::changed);
         flux.getServer().getScheduler().runTask(flux, () -> {
             started = true;
             write();
@@ -61,6 +62,7 @@ public final class ClientPack {
 
     public void stop() {
         TextShader.bind(null);
+        GuiAtlas.bind(null);
     }
 
     private void changed() {
@@ -98,6 +100,9 @@ public final class ClientPack {
             try {
                 boolean changed = copyAssets(folder);
                 changed |= writeIfChanged(folder.resolve("pack.mcmeta"), mcmeta());
+                String atlas = GuiAtlas.json();
+                Path atlasFile = folder.resolve("assets/minecraft/atlases/gui.json");
+                changed |= atlas == null ? Files.deleteIfExists(atlasFile) : writeIfChanged(atlasFile, atlas);
                 Path core = folder.resolve(overlay + "/assets/minecraft/shaders/core");
                 if (shader) {
                     changed |= writeIfChanged(core.resolve("text.vsh"), vertex);
