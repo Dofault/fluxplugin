@@ -408,15 +408,16 @@ theme:
 
 # Flux's part of the server's resource pack (pack.ClientPack): the HUD's pictures and the one text shader of the suite
 # (api.client.TextShader: FluxPortal's windows, the HUD), written into each folder below at start-up. Rebuild the pack
-# (/iazip) when the console says a file changed. plugins/Flux/pack is where MC GUI finds the text shader to merge.
+# (/iazip) when the console says a file changed. MC GUI finds the text shader to merge in plugins/Flux/pack.
 client-pack:
   overlay: flux_text_v88
   # Pack formats the shader is written for (88 = Minecraft 26.2).
   min-format: 88
   max-format: 88
+  # One folder: the pack plugin merges it (ItemsAdder: Flux/pack in merge_other_plugins_resourcepacks_folders). A
+  # copy in another plugin's folder makes MC GUI find the text shader twice, and it merges nothing.
   folders:
     - plugins/Flux/pack
-    - plugins/ItemsAdder/contents/flux/resourcepack
 
 # The advancements key (L) opens this command instead of the vanilla screen (blank or enabled: false = vanilla).
 advancement-redirect:
