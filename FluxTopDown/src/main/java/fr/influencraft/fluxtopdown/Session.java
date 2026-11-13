@@ -132,7 +132,12 @@ final class Session {
             i.setInteractionHeight(3f);
             i.setResponsive(false);
         });
-        seat = w.spawn(at, org.bukkit.entity.ArmorStand.class, a -> {
+        // the seat looks where the camera looks: a seated player's head turns at most 85 degrees from his mount's body,
+        // and the head pointer needs it free around the camera's direction
+        Location seatAt = at.clone();
+        seatAt.setYaw((float) s.cameraYaw());
+        seatAt.setPitch(0);
+        seat = w.spawn(seatAt, org.bukkit.entity.ArmorStand.class, a -> {
             a.setPersistent(false);
             a.setVisibleByDefault(false);
             a.setMarker(true);
@@ -140,6 +145,7 @@ final class Session {
             a.setGravity(false);
             a.setInvulnerable(true);
             a.setSilent(true);
+            a.setBodyYaw((float) s.cameraYaw());
         });
         avatar = w.spawn(at, Mannequin.class, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.CUSTOM, m -> {
             m.setPersistent(false);
@@ -380,7 +386,10 @@ final class Session {
     /** Keeps him seated (a teleport by another plugin takes him off): back on the seat where he now stands. */
     void ride() {
         if (player.getVehicle() != seat) {
-            seat.teleport(player.getLocation());
+            Location l = player.getLocation();
+            l.setYaw((float) plugin.settings().cameraYaw());
+            l.setPitch(0);
+            seat.teleport(l);
             seat.addPassenger(player);
             seatOffset = Double.NaN;
         } else if (Double.isNaN(seatOffset)) {
@@ -391,7 +400,8 @@ final class Session {
     /** Puts his feet at {@code feet}: the server walks him by moving his seat. */
     void moveFeet(Vector feet) {
         double off = Double.isNaN(seatOffset) ? 0 : seatOffset;
-        Location l = new Location(player.getWorld(), feet.getX(), feet.getY() - off, feet.getZ());
+        Location l = new Location(player.getWorld(), feet.getX(), feet.getY() - off, feet.getZ(),
+                (float) plugin.settings().cameraYaw(), 0f);
         seat.teleport(l, io.papermc.paper.entity.TeleportFlag.EntityState.RETAIN_PASSENGERS);
     }
 
