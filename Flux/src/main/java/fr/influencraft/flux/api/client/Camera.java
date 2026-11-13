@@ -14,11 +14,12 @@ import java.util.concurrent.ConcurrentHashMap;
  *   his own body, position and keys. Null puts the camera back on himself.</li>
  *   <li>The mouse still turns the player's own head, which nobody sees: read its rotation as a pointer and bring it
  *   back with {@link #turn} (relative or absolute, no teleport).</li>
- *   <li>{@link #hideSelf}: he does not see his own body (the server and the others still do).</li>
+
  *   <li>{@link #clicks}: left and right clicks on an entity (an {@code Interaction} in front of the camera) reach the
  *   handler, on the server thread, however far the player stands from it; the server never handles them.</li>
  * </ul>
- * Java clients only: Bedrock players have no camera packet (check {@link Clients#bedrock} first).
+ * His client never draws his own body while it looks through another entity (Minecraft 26.2, LevelExtractor): nothing
+ * he wears can be seen by him then. Java clients only: Bedrock players have no camera packet ({@link Clients#bedrock}).
  */
 public final class Camera {
 
@@ -27,13 +28,6 @@ public final class Camera {
 
         void turn(Player player, float yaw, boolean relativeYaw, float pitch, boolean relativePitch);
 
-        void hideSelf(Player player, boolean hidden);
-
-        /**
-         * Shows {@code item} in a slot of his own inventory window on his side only (0 crafting result, 5 to 8 helmet to
-         * boots, 9 to 35 storage, 36 to 44 hotbar, 45 off hand); the server's inventory is untouched.
-         */
-        void ownSlot(Player player, int slot, org.bukkit.inventory.ItemStack item);
 
         /** Moves an entity on this player's screen only, at once (the server's own entity is not moved). */
         void place(Player viewer, Entity entity, double x, double y, double z);
@@ -49,33 +43,6 @@ public final class Camera {
     @FunctionalInterface
     public interface Click {
         void clicked(Player player, boolean left);
-    }
-
-    /**
-     * Head pointer (pack: assets/minecraft/shaders/core/item.vsh, item flux:pointer): screen units per degree of head
-     * turn and the area the pointer stays in. The shader holds the same numbers.
-     */
-    public static final double POINTER_SPEED = 0.025, POINTER_WIDTH = 1.15, POINTER_HEIGHT = 0.62;
-
-    /**
-     * The item that, worn by a player who looks through another entity (sent to him only, on his head), is drawn by
-     * his client as a mouse pointer following his head every frame: no wait for the server.
-     */
-    public static org.bukkit.inventory.ItemStack pointerItem() {
-        org.bukkit.inventory.ItemStack item = org.bukkit.inventory.ItemStack.of(org.bukkit.Material.PAPER);
-        item.setData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL, net.kyori.adventure.key.Key.key("flux", "pointer"));
-        return item;
-    }
-
-    /**
-     * Where the head pointer is for this head turn, as the shader draws it before it stops at the edges:
-     * {x right, y up} in screen units. {@code cameraYaw}: the yaw the camera looks to.
-     */
-    public static double[] pointer(float yaw, float pitch, double cameraYaw) {
-        double turn = (yaw - cameraYaw) % 360;
-        if (turn >= 180) turn -= 360;
-        if (turn < -180) turn += 360;
-        return new double[]{turn * POINTER_SPEED, -pitch * POINTER_SPEED};
     }
 
     private static volatile Service service;
@@ -103,20 +70,6 @@ public final class Camera {
     public static void turn(Player player, float yaw, boolean relativeYaw, float pitch, boolean relativePitch) {
         Service s = service;
         if (s != null) s.turn(player, yaw, relativeYaw, pitch, relativePitch);
-    }
-
-    public static void hideSelf(Player player, boolean hidden) {
-        Service s = service;
-        if (s != null) s.hideSelf(player, hidden);
-    }
-
-    /** Window slots of the worn items, for {@link #ownSlot}. */
-    public static final int SLOT_HEAD = 5, SLOT_CHEST = 6, SLOT_LEGS = 7, SLOT_FEET = 8, SLOT_OFF_HAND = 45;
-
-    /** {@code item} in a slot of his inventory window, seen by him only (his client draws what he wears from it). */
-    public static void ownSlot(Player player, int slot, org.bukkit.inventory.ItemStack item) {
-        Service s = service;
-        if (s != null) s.ownSlot(player, slot, item);
     }
 
     /** His mouse goes to {@code turn} as soon as it moves, before the server's tick (null stops). */

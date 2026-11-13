@@ -152,7 +152,6 @@ final class Sessions implements Listener {
         if (s.chase != null && tick % 4 == 0) kit.marked(p, s.chase);
         if (tick % 5 == 0) bar(s, set, tick);
         if (tick % 20 == 0) {
-            s.hideOwnGear();
             s.dressAvatar();
             // the camera packet is lost on respawn or world reload; sending it again costs nothing
             fr.influencraft.flux.api.client.Camera.view(p, s.camera);

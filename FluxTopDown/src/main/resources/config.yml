@@ -19,10 +19,6 @@ camera:
   min-distance: 3
 
 cursor:
-  # true: the pointer is drawn by the player's client from his head's turn (Flux's head pointer, shader of the pack):
-  # no wait for the server, as smooth as the mouse. false: the server's mark on the pointed spot (any client, but it
-  # lags by the ping). The settings below, but width and height, are for the server's mark only.
-  client: true
   # Pointer move per degree of mouse turn (screen units, 1 = the screen's half height at a 90 degree field of view).
   speed: 0.03
   # Area the pointer moves in, from the screen's centre (same units).

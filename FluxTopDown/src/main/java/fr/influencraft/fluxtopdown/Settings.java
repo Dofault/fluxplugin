@@ -11,7 +11,7 @@ import java.util.Locale;
 /** config.yml, read once per reload. */
 record Settings(String dungeon,
                 double cameraDistance, double cameraPitch, double cameraYaw, double cameraMinDistance,
-                boolean clientPointer, double cursorSpeed, double cursorWidth, double cursorHeight, String cursorText, float cursorScale,
+                double cursorSpeed, double cursorWidth, double cursorHeight, String cursorText, float cursorScale,
                 double hotspotX, double hotspotY,
                 double moveSpeed, int maxPath, int restSlot, Material weapon,
                 double basicRange, double basicCoefficient, List<Spell> spells) {
@@ -42,7 +42,7 @@ record Settings(String dungeon,
         return new Settings(c.getString("dungeon", "moisson"),
                 c.getDouble("camera.distance", 13), c.getDouble("camera.pitch", 55), c.getDouble("camera.yaw", 180),
                 c.getDouble("camera.min-distance", 3),
-                c.getBoolean("cursor.client", true), c.getDouble("cursor.speed", 0.03), c.getDouble("cursor.width", 1.15), c.getDouble("cursor.height", 0.62),
+                c.getDouble("cursor.speed", 0.03), c.getDouble("cursor.width", 1.15), c.getDouble("cursor.height", 0.62),
                 c.getString("cursor.text", "+"), (float) c.getDouble("cursor.scale", 3),
                 hotspot.size() > 0 ? hotspot.get(0) : 0, hotspot.size() > 1 ? hotspot.get(1) : 0,
                 c.getDouble("move.speed", 0.24), c.getInt("move.max-distance", 48),
