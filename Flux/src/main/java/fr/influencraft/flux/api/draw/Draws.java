@@ -8,6 +8,7 @@ import fr.influencraft.flux.api.util.Sounds;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.ShadowColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -90,8 +91,10 @@ public final class Draws {
     /** Ticks the result stays. */
     private static final int HOLD = 60;
     static final String SPARK = "<sprite:block/fluxdraw_spark>", SHINE = "<sprite:block/fluxdraw_shine>";
-    /** The banner in three glyphs (the client refuses font pictures over 256 px) joined by -1 spaces. */
-    private static final Component BANNER = Component.text("\ue000\uf801\ue001\uf801\ue002").font(Key.key("fluxdraw", "banner"));
+    /** The banner in three glyphs (the client refuses font pictures over 256 px) joined by -1 spaces; no shadow (the
+     *  game would draw a darkened copy of the picture behind it). */
+    private static final Component BANNER = Component.text("\ue000\uf801\ue001\uf801\ue002").font(Key.key("fluxdraw", "banner"))
+            .shadowColor(ShadowColor.none());
 
     private Draws() {
     }

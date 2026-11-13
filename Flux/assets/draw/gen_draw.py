@@ -15,7 +15,7 @@ import json, math, os, struct, sys, zlib
 
 BLUE = (43, 196, 232)
 LIGHT = (166, 228, 245)
-NAVY = (8, 18, 34)
+NAVY = (16, 58, 104)
 
 
 def png(path, w, h, px):
