@@ -4,14 +4,7 @@ import fr.influencraft.fluxoffering.text.TextUtil;
 import net.kyori.adventure.text.Component;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -20,56 +13,26 @@ import java.util.Map;
  * Loads and exposes messages.yml. All player-facing text lives here so the plugin
  * can be re-worded without touching a single line of Java.
  */
+/**
+ * FluxOffering's texts: the plugin's lang file ({@code lang/<language>.yml}, loaded by {@code FluxPlugin}), with
+ * {@code {key}} variables replaced here before the colours.
+ */
 public final class MessagesManager {
 
-    private final JavaPlugin plugin;
-    private final File file;
-    private YamlConfiguration config;
+    private final fr.influencraft.flux.api.FluxPlugin plugin;
 
-    public MessagesManager(JavaPlugin plugin) {
+    public MessagesManager(fr.influencraft.flux.api.FluxPlugin plugin) {
         this.plugin = plugin;
-        this.file = new File(plugin.getDataFolder(), "messages.yml");
     }
 
+    /** Texts are (re)read by FluxPlugin. */
     public void load() {
-        if (!file.exists()) {
-            plugin.saveResource("messages.yml", false);
-        }
-        config = YamlConfiguration.loadConfiguration(file);
-        mergeDefaults();
-    }
-
-    /**
-     * Adds any message key present in the bundled default messages.yml but missing from
-     * the on-disk file, so plugin updates never leave a path unresolved after a reload.
-     */
-    private void mergeDefaults() {
-        try (InputStream in = plugin.getResource("messages.yml")) {
-            if (in == null) {
-                return;
-            }
-            YamlConfiguration defaults = YamlConfiguration.loadConfiguration(new InputStreamReader(in, StandardCharsets.UTF_8));
-            boolean changed = false;
-            for (String key : defaults.getKeys(true)) {
-                if (defaults.isConfigurationSection(key)) {
-                    continue;
-                }
-                if (!config.isSet(key)) {
-                    config.set(key, defaults.get(key));
-                    changed = true;
-                }
-            }
-            if (changed) {
-                config.save(file);
-            }
-        } catch (IOException ex) {
-            plugin.getLogger().warning("Could not merge default messages.yml keys: " + ex.getMessage());
-        }
+        if (plugin.messages() != null) plugin.messages().reload();
     }
 
     public String raw(String path) {
-        String value = config.getString(path);
-        if (value == null) {
+        String value = plugin.messages() == null ? "" : plugin.messages().raw(path);
+        if (value.isEmpty()) {
             plugin.getLogger().warning("Missing message key: " + path);
             return "&c[missing message: " + path + "]";
         }
@@ -85,8 +48,8 @@ public final class MessagesManager {
     }
 
     public List<String> rawList(String path) {
-        List<String> value = config.getStringList(path);
-        return value != null ? value : Collections.emptyList();
+        if (plugin.messages() == null || !plugin.messages().has(path)) return Collections.emptyList();
+        return plugin.messages().rawList(path);
     }
 
     public List<String> rawList(String path, Map<String, String> placeholders) {

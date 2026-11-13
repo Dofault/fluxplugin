@@ -1,4 +1,5 @@
-# FluxOffering — messages.yml
+# FluxOffering texts. NOT TRANSLATED YET (2026-11-13): copy of fr_FR.yml.
+# FluxOffering : textes (fr_FR). Ex-messages.yml (2026-11-13).
 #
 # Toutes les chaines supportent : legacy (&7, &#RRGGBB), MiniMessage (<gradient>, <hover>...),
 # et les placeholders PlaceholderAPI (%joueur_x%, %img_x%...) — tout est resolu avant affichage.
@@ -6,64 +7,64 @@
 # propres a chaque message : voir le commentaire au-dessus de chaque section.
 #
 # Prefixe utilise devant les messages de tchat (calque sur la charte graphique du serveur,
-# canal Progression) : "&8[&r#2ECF7BOffrande&8] &7"
+# canal Progression) : "&8[&r&#2ECF7BOffrande&8] &7"
 
 general:
-  sidebar-on: "&8[&r#2ECF7BOffrande&8] &7Ton offrande s'affiche maintenant dans le scoreboard."
-  sidebar-off: "&8[&r#2ECF7BOffrande&8] &7Ton offrande ne s'affiche plus dans le scoreboard."
-  players-only: "&8[&r#2ECF7BOffrande&8] &7Cette commande n'est accessible qu'aux joueurs."
-  no-permission: "&8[&r#2ECF7BOffrande&8] &#FF5C5C✖ &7Tu n'as pas la permission d'utiliser cette commande."
+  sidebar-on: "&8[&r&#2ECF7BOffrande&8] &7Ton offrande s'affiche maintenant dans le scoreboard."
+  sidebar-off: "&8[&r&#2ECF7BOffrande&8] &7Ton offrande ne s'affiche plus dans le scoreboard."
+  players-only: "&8[&r&#2ECF7BOffrande&8] &7Cette commande n'est accessible qu'aux joueurs."
+  no-permission: "&8[&r&#2ECF7BOffrande&8] &#FF5C5C✖ &7Tu n'as pas la permission d'utiliser cette commande."
   # {collection}
-  unknown-collection: "&8[&r#2ECF7BOffrande&8] &#FF5C5C✖ &7Offrande inconnue : &f{collection}"
+  unknown-collection: "&8[&r&#2ECF7BOffrande&8] &#FF5C5C✖ &7Offrande inconnue : &f{collection}"
   # {collection}
-  no-access-collection: "&8[&r#2ECF7BOffrande&8] &#FF5C5C✖ &7Tu n'as pas acces a l'offrande &f{collection}&7."
+  no-access-collection: "&8[&r&#2ECF7BOffrande&8] &#FF5C5C✖ &7Tu n'as pas acces a l'offrande &f{collection}&7."
   # /offrande sans argument n'a pas pu determiner le grade du joueur (LuckPerms/PlaceholderAPI absent)
-  rank-unresolved: "&8[&r#2ECF7BOffrande&8] &#FF5C5C✖ &7Impossible de determiner ton grade actuel."
+  rank-unresolved: "&8[&r&#2ECF7BOffrande&8] &#FF5C5C✖ &7Impossible de determiner ton grade actuel."
 
 admin:
-  usage-root: "&8[&r#2ECF7BOffrande&8] &7Usage : &#F0A800/influoffrande <create|remove|rename|permission|reset|set|money|check|reload> ..."
-  reload-success: "&8[&r#2ECF7BOffrande&8] &#2ECF7B✔ &7Configuration rechargee."
-  usage-reset: "&8[&r#2ECF7BOffrande&8] &7Usage : &#F0A800/influoffrande reset <joueur> <collection|all>"
+  usage-root: "&8[&r&#2ECF7BOffrande&8] &7Usage : &#F0A800/influoffrande <create|remove|rename|permission|reset|set|money|check|reload> ..."
+  reload-success: "&8[&r&#2ECF7BOffrande&8] &#2ECF7B✔ &7Configuration rechargee."
+  usage-reset: "&8[&r&#2ECF7BOffrande&8] &7Usage : &#F0A800/influoffrande reset <joueur> <collection|all>"
   # {item} accepte aussi "money" pour forcer le depot d'argent d'un joueur
-  usage-set: "&8[&r#2ECF7BOffrande&8] &7Usage : &#F0A800/influoffrande set <joueur> <collection> <item|money> <quantite>"
-  usage-money: "&8[&r#2ECF7BOffrande&8] &7Usage : &#F0A800/influoffrande money <collection> <montant>"
+  usage-set: "&8[&r&#2ECF7BOffrande&8] &7Usage : &#F0A800/influoffrande set <joueur> <collection> <item|money> <quantite>"
+  usage-money: "&8[&r&#2ECF7BOffrande&8] &7Usage : &#F0A800/influoffrande money <collection> <montant>"
   # {collection} {amount}
-  money-set: "&8[&r#2ECF7BOffrande&8] &#2ECF7B✔ &7Offrande &f{collection} &7: argent demande mis a &f{amount} %img_bitblock%"
-  usage-check: "&8[&r#2ECF7BOffrande&8] &7Usage : &#F0A800/influoffrande check <joueur> [collection]"
-  usage-create: "&8[&r#2ECF7BOffrande&8] &7Usage : &#F0A800/influoffrande create <id> [nom affiche]"
-  usage-permission: "&8[&r#2ECF7BOffrande&8] &7Usage : &#F0A800/influoffrande permission <collection> <permission|clear>"
-  usage-rename: "&8[&r#2ECF7BOffrande&8] &7Usage : &#F0A800/influoffrande rename <collection> <nouveau nom>"
+  money-set: "&8[&r&#2ECF7BOffrande&8] &#2ECF7B✔ &7Offrande &f{collection} &7: argent demande mis a &f{amount} %img_bitblock%"
+  usage-check: "&8[&r&#2ECF7BOffrande&8] &7Usage : &#F0A800/influoffrande check <joueur> [collection]"
+  usage-create: "&8[&r&#2ECF7BOffrande&8] &7Usage : &#F0A800/influoffrande create <id> [nom affiche]"
+  usage-permission: "&8[&r&#2ECF7BOffrande&8] &7Usage : &#F0A800/influoffrande permission <collection> <permission|clear>"
+  usage-rename: "&8[&r&#2ECF7BOffrande&8] &7Usage : &#F0A800/influoffrande rename <collection> <nouveau nom>"
   # {collection} {name}
-  rename-success: "&8[&r#2ECF7BOffrande&8] &#2ECF7B✔ &7Offrande &f{collection} &7renommee : &f{name}"
-  usage-remove: "&8[&r#2ECF7BOffrande&8] &7Usage : &#F0A800/influoffrande remove <collection>"
+  rename-success: "&8[&r&#2ECF7BOffrande&8] &#2ECF7B✔ &7Offrande &f{collection} &7renommee : &f{name}"
+  usage-remove: "&8[&r&#2ECF7BOffrande&8] &7Usage : &#F0A800/influoffrande remove <collection>"
   # {collection}
-  remove-success: "&8[&r#2ECF7BOffrande&8] &#2ECF7B✔ &7Offrande &f{collection} &7supprimee (la progression deja sauvegardee des joueurs n'est pas effacee)."
+  remove-success: "&8[&r&#2ECF7BOffrande&8] &#2ECF7B✔ &7Offrande &f{collection} &7supprimee (la progression deja sauvegardee des joueurs n'est pas effacee)."
   # {collection} {permission}
-  permission-set: "&8[&r#2ECF7BOffrande&8] &#2ECF7B✔ &7Offrande &f{collection} &7desormais restreinte a la permission &f{permission}"
+  permission-set: "&8[&r&#2ECF7BOffrande&8] &#2ECF7B✔ &7Offrande &f{collection} &7desormais restreinte a la permission &f{permission}"
   # {collection}
-  permission-cleared: "&8[&r#2ECF7BOffrande&8] &#2ECF7B✔ &7Offrande &f{collection} &7desormais ouverte a tous (permission retiree)."
+  permission-cleared: "&8[&r&#2ECF7BOffrande&8] &#2ECF7B✔ &7Offrande &f{collection} &7desormais ouverte a tous (permission retiree)."
   # {collection}
-  invalid-collection-id: "&8[&r#2ECF7BOffrande&8] &#FF5C5C✖ &7Id invalide : &f{collection}&7. Lettres, chiffres, &f_&7 et &f-&7 uniquement (pas de point, pas d'espace)."
+  invalid-collection-id: "&8[&r&#2ECF7BOffrande&8] &#FF5C5C✖ &7Id invalide : &f{collection}&7. Lettres, chiffres, &f_&7 et &f-&7 uniquement (pas de point, pas d'espace)."
   # {collection}
-  collection-already-exists: "&8[&r#2ECF7BOffrande&8] &#FF5C5C✖ &7Une offrande &f{collection} &7existe deja."
+  collection-already-exists: "&8[&r&#2ECF7BOffrande&8] &#FF5C5C✖ &7Une offrande &f{collection} &7existe deja."
   # {collection}
-  create-success: "&8[&r#2ECF7BOffrande&8] &#2ECF7B✔ &7Offrande &f{collection} &7creee, vide. Ouvre-la en jeu (&#F0A800/offrande {collection}&7) et utilise l'editeur pour y ajouter des items."
-  unknown-player: "&8[&r#2ECF7BOffrande&8] &#FF5C5C✖ &7Joueur inconnu : &f{player}"
-  unknown-item: "&8[&r#2ECF7BOffrande&8] &#FF5C5C✖ &7Item inconnu : &f{item}"
-  invalid-number: "&8[&r#2ECF7BOffrande&8] &#FF5C5C✖ &7Quantite invalide."
+  create-success: "&8[&r&#2ECF7BOffrande&8] &#2ECF7B✔ &7Offrande &f{collection} &7creee, vide. Ouvre-la en jeu (&#F0A800/offrande {collection}&7) et utilise l'editeur pour y ajouter des items."
+  unknown-player: "&8[&r&#2ECF7BOffrande&8] &#FF5C5C✖ &7Joueur inconnu : &f{player}"
+  unknown-item: "&8[&r&#2ECF7BOffrande&8] &#FF5C5C✖ &7Item inconnu : &f{item}"
+  invalid-number: "&8[&r&#2ECF7BOffrande&8] &#FF5C5C✖ &7Quantite invalide."
   # {item} {collection}
-  item-not-in-collection: "&8[&r#2ECF7BOffrande&8] &#FF5C5C✖ &7&f{item} &7ne fait pas partie de l'offrande &f{collection}&7. Ajoute-le d'abord via l'editeur en jeu."
+  item-not-in-collection: "&8[&r&#2ECF7BOffrande&8] &#FF5C5C✖ &7&f{item} &7ne fait pas partie de l'offrande &f{collection}&7. Ajoute-le d'abord via l'editeur en jeu."
   # {player} {collection}
-  reset-all-success: "&8[&r#2ECF7BOffrande&8] &#2ECF7B✔ &7Toutes les offrandes de &f{player} &7ont ete reinitialisees."
-  reset-success: "&8[&r#2ECF7BOffrande&8] &#2ECF7B✔ &7Offrande &f{collection} &7reinitialisee pour &f{player}&7."
+  reset-all-success: "&8[&r&#2ECF7BOffrande&8] &#2ECF7B✔ &7Toutes les offrandes de &f{player} &7ont ete reinitialisees."
+  reset-success: "&8[&r&#2ECF7BOffrande&8] &#2ECF7B✔ &7Offrande &f{collection} &7reinitialisee pour &f{player}&7."
   # {player} {collection} {item} {amount} {required}
-  set-success: "&8[&r#2ECF7BOffrande&8] &#2ECF7B✔ &7&f{item} &7force a &f{amount}/{required} &7pour &f{player} &7(&f{collection}&7)."
+  set-success: "&8[&r&#2ECF7BOffrande&8] &#2ECF7B✔ &7&f{item} &7force a &f{amount}/{required} &7pour &f{player} &7(&f{collection}&7)."
   # {player} {collection}
-  check-header: "&8[&r#2ECF7BOffrande&8] &#B376E5Progression de &f{player} &#B376E5sur &f{collection}&#B376E5 :"
+  check-header: "&8[&r&#2ECF7BOffrande&8] &#B376E5Progression de &f{player} &#B376E5sur &f{collection}&#B376E5 :"
   # {item} {deposited} {required}
   check-line: "&8 » &7{item} &8: &f{deposited}&7/&f{required}"
   # {player}
-  check-header-all: "&8[&r#2ECF7BOffrande&8] &#B376E5Progression de &f{player} &#B376E5:"
+  check-header-all: "&8[&r&#2ECF7BOffrande&8] &#B376E5Progression de &f{player} &#B376E5:"
   # {collection} {percent} {progress}
   check-collection-line: "&8 » &7{collection} &8: &f{percent}% &8(&f{progress}&8)"
 
@@ -73,23 +74,23 @@ editor:
   dialog-quantity: "Quantité demandée de {name} :"
   dialog-quantity-label: "Quantité"
   dialog-money: "Montant demandé par cette offrande :"
-  hold-item: "&8[&r#2ECF7BOffrande&8] &#FF5C5C✖ &7Tiens en main l'objet à demander."
+  hold-item: "&8[&r&#2ECF7BOffrande&8] &#FF5C5C✖ &7Tiens en main l'objet à demander."
   # {name}
-  prompt-quantity: "&8[&r#2ECF7BOffrande&8] &7Ecris la quantite voulue pour &f{name} &7dans le tchat (ou &fannuler&7) :"
-  cancelled: "&8[&r#2ECF7BOffrande&8] &7Modification annulee."
-  invalid-number: "&8[&r#2ECF7BOffrande&8] &#FF5C5C✖ &7Nombre invalide, reessaie (ou &fannuler&7)."
+  prompt-quantity: "&8[&r&#2ECF7BOffrande&8] &7Ecris la quantite voulue pour &f{name} &7dans le tchat (ou &fannuler&7) :"
+  cancelled: "&8[&r&#2ECF7BOffrande&8] &7Modification annulee."
+  invalid-number: "&8[&r&#2ECF7BOffrande&8] &#FF5C5C✖ &7Nombre invalide, reessaie (ou &fannuler&7)."
   # {name} {amount}
-  item-added: "&8[&r#2ECF7BOffrande&8] &#2ECF7B✔ &7&f{name} &7ajoute, quantite requise : &f{amount}"
+  item-added: "&8[&r&#2ECF7BOffrande&8] &#2ECF7B✔ &7&f{name} &7ajoute, quantite requise : &f{amount}"
   # {name} {amount}
-  item-quantity-set: "&8[&r#2ECF7BOffrande&8] &#2ECF7B✔ &7Quantite de &f{name} &7mise a jour : &f{amount}"
+  item-quantity-set: "&8[&r&#2ECF7BOffrande&8] &#2ECF7B✔ &7Quantite de &f{name} &7mise a jour : &f{amount}"
   # {name}
-  item-removed: "&8[&r#2ECF7BOffrande&8] &#FF5C5C✖ &7&f{name} &7retire de l'offrande."
+  item-removed: "&8[&r&#2ECF7BOffrande&8] &#FF5C5C✖ &7&f{name} &7retire de l'offrande."
   # {name}
-  item-already-present: "&8[&r#2ECF7BOffrande&8] &7&f{name} &7fait deja partie de cette offrande — clic gauche dessus pour changer sa quantite."
-  prompt-money: "&8[&r#2ECF7BOffrande&8] &7Ecris le montant de %img_bitblock% demande dans le tchat (ou &fannuler&7) :"
+  item-already-present: "&8[&r&#2ECF7BOffrande&8] &7&f{name} &7fait deja partie de cette offrande — clic gauche dessus pour changer sa quantite."
+  prompt-money: "&8[&r&#2ECF7BOffrande&8] &7Ecris le montant de %img_bitblock% demande dans le tchat (ou &fannuler&7) :"
   # {amount}
-  money-set: "&8[&r#2ECF7BOffrande&8] &#2ECF7B✔ &7Argent demande mis a jour : &f{amount} %img_bitblock%"
-  money-removed: "&8[&r#2ECF7BOffrande&8] &#FF5C5C✖ &7Argent demande retire de cette offrande."
+  money-set: "&8[&r&#2ECF7BOffrande&8] &#2ECF7B✔ &7Argent demande mis a jour : &f{amount} %img_bitblock%"
+  money-removed: "&8[&r&#2ECF7BOffrande&8] &#FF5C5C✖ &7Argent demande retire de cette offrande."
 
 gui:
   # Libellés du filtre de la liste (bouton Affichage)
@@ -100,33 +101,33 @@ gui:
   money-dialog-body: "Il te reste {remaining} %img_bitblock% à déposer. Combien veux-tu déposer ?"
   money-dialog-label: "Montant (10000, 10k, 2,5k...)"
   # {name}
-  deposit-item-already-complete: "&8[&r#2ECF7BOffrande&8] &7&f{name} &7est deja complet."
+  deposit-item-already-complete: "&8[&r&#2ECF7BOffrande&8] &7&f{name} &7est deja complet."
   # {name}
-  deposit-item-missing: "&8[&r#2ECF7BOffrande&8] &#FF5C5C✖ &7Tu n'as pas de &f{name} &7sur toi."
+  deposit-item-missing: "&8[&r&#2ECF7BOffrande&8] &#FF5C5C✖ &7Tu n'as pas de &f{name} &7sur toi."
   # {amount} {name} {deposited} {required} {percent}
-  deposit-success: "&8[&r#2ECF7BOffrande&8] &#2ECF7B✔ &7+{amount} &f{name} &8(&f{deposited}&7/&f{required}&8) &7— offrande a &f{percent}%"
+  deposit-success: "&8[&r&#2ECF7BOffrande&8] &#2ECF7B✔ &7+{amount} &f{name} &8(&f{deposited}&7/&f{required}&8) &7— offrande a &f{percent}%"
   # Offrande de livres enchantes : {name} = nom de l'enchantement (ex : Tranchant)
-  deposit-enchant-missing: "&8[&r#2ECF7BOffrande&8] &#FF5C5C✖ &7Tu n'as aucun livre &f{name} &7sur toi."
+  deposit-enchant-missing: "&8[&r&#2ECF7BOffrande&8] &#FF5C5C✖ &7Tu n'as aucun livre &f{name} &7sur toi."
   # {amount} = niveaux ajoutes, {name} {deposited} {required} {percent}
-  deposit-enchant-success: "&8[&r#2ECF7BOffrande&8] &#2ECF7B✔ &7+{amount} niveaux de &f{name} &8(&f{deposited}&7/&f{required}&8)&7, offrande a &f{percent}%"
+  deposit-enchant-success: "&8[&r&#2ECF7BOffrande&8] &#2ECF7B✔ &7+{amount} niveaux de &f{name} &8(&f{deposited}&7/&f{required}&8)&7, offrande a &f{percent}%"
   # {collection}
-  collection-completed: "&8[&r#2ECF7BOffrande&8] &#2ECF7B✔ &7Offrande &f{collection} &7terminee !"
+  collection-completed: "&8[&r&#2ECF7BOffrande&8] &#2ECF7B✔ &7Offrande &f{collection} &7terminee !"
 
   # Clic gauche sur la case argent : on n'attend plus un montant tape dans le tchat (il
   # s'affichait publiquement), on envoie la commande de depot toute prete, cliquable.
   # Un clic dessus l'ecrit dans la barre de tchat, le joueur n'a plus qu'a taper le montant.
   # {collection} = id de l'offrande, {name} = son nom affiche, {remaining} = ce qu'il reste a deposer
   money-command-prompt:
-    - "&8[&r#2ECF7BOffrande&8] &7Il te reste &f{remaining} %img_bitblock% &7a deposer."
-    - "&8[&r#2ECF7BOffrande&8] &7Clique sur <click:suggest_command:'/offrande depot {collection} '><hover:show_text:'&#B376E5Clique pour preparer la commande,&#B376E5 puis tape ton montant.'>&#FFD94D[/offrande depot {collection} montant]</hover></click>&7."
+    - "&8[&r&#2ECF7BOffrande&8] &7Il te reste &f{remaining} %img_bitblock% &7a deposer."
+    - "&8[&r&#2ECF7BOffrande&8] &7Clique sur <click:suggest_command:'/offrande depot {collection} '><hover:show_text:'&#B376E5Clique pour preparer la commande,&#B376E5 puis tape ton montant.'>&#FFD94D[/offrande depot {collection} montant]</hover></click>&7."
   # {collection}
-  money-usage: "&8[&r#2ECF7BOffrande&8] &7Usage : <click:suggest_command:'/offrande depot {collection} '>&#F0A800/offrande depot {collection} montant</click>"
-  money-not-required: "&8[&r#2ECF7BOffrande&8] &7Cette offrande ne demande pas de %img_bitblock%."
-  money-invalid: "&8[&r#2ECF7BOffrande&8] &#FF5C5C✖ &7Montant invalide, depot annule."
-  money-already-complete: "&8[&r#2ECF7BOffrande&8] &7Le montant demande est deja entierement depose."
-  money-deposit-missing: "&8[&r#2ECF7BOffrande&8] &#FF5C5C✖ &7Tu n'as pas assez de %img_bitblock% sur toi."
+  money-usage: "&8[&r&#2ECF7BOffrande&8] &7Usage : <click:suggest_command:'/offrande depot {collection} '>&#F0A800/offrande depot {collection} montant</click>"
+  money-not-required: "&8[&r&#2ECF7BOffrande&8] &7Cette offrande ne demande pas de %img_bitblock%."
+  money-invalid: "&8[&r&#2ECF7BOffrande&8] &#FF5C5C✖ &7Montant invalide, depot annule."
+  money-already-complete: "&8[&r&#2ECF7BOffrande&8] &7Le montant demande est deja entierement depose."
+  money-deposit-missing: "&8[&r&#2ECF7BOffrande&8] &#FF5C5C✖ &7Tu n'as pas assez de %img_bitblock% sur toi."
   # {amount} {deposited} {required} {percent}
-  money-deposit-success: "&8[&r#2ECF7BOffrande&8] &#2ECF7B✔ &7+{amount} %img_bitblock% &8(&f{deposited}&7/&f{required}&8) &7— offrande a &f{percent}%"
+  money-deposit-success: "&8[&r&#2ECF7BOffrande&8] &#2ECF7B✔ &7+{amount} %img_bitblock% &8(&f{deposited}&7/&f{required}&8) &7— offrande a &f{percent}%"
 
   # {deposited} {required} {percent}
   money-name: "&r&7%img_bitblock% &#FFD94DArgent demande"
@@ -195,8 +196,8 @@ gui:
   deposit-all-lore:
     - "&#B376E5Depose d'un coup tout ce que tu peux, sur tous les items de cette offrande."
   # {amount} {types} {percent}
-  deposit-all-success: "&8[&r#2ECF7BOffrande&8] &#2ECF7B✔ &7{amount} items deposes sur &f{types} &7type(s) — offrande a &f{percent}%"
-  deposit-all-nothing: "&8[&r#2ECF7BOffrande&8] &7Tu n'as rien a deposer dans cette offrande pour le moment."
+  deposit-all-success: "&8[&r&#2ECF7BOffrande&8] &#2ECF7B✔ &7{amount} items deposes sur &f{types} &7type(s) — offrande a &f{percent}%"
+  deposit-all-nothing: "&8[&r&#2ECF7BOffrande&8] &7Tu n'as rien a deposer dans cette offrande pour le moment."
 
   # {name} {amount_formatted} : quantite demandee affichee juste apres le nom, parentheses
   # comprises (cf. section format), ex : "Lingot de fer (2 x64)"

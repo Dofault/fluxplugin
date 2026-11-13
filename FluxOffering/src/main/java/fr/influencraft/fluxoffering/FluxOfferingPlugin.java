@@ -13,21 +13,20 @@ import fr.influencraft.flux.api.FluxApi;
 import fr.influencraft.flux.api.command.Commands;
 import fr.influencraft.fluxoffering.integration.OffrandePlaceholderExpansion;
 import fr.influencraft.fluxoffering.service.DepositService;
-import org.bukkit.plugin.java.JavaPlugin;
 
-public final class FluxOfferingPlugin extends JavaPlugin {
+public final class FluxOfferingPlugin extends fr.influencraft.flux.api.FluxPlugin {
 
     private ConfigManager configManager;
     private MessagesManager messagesManager;
     private DataManager dataManager;
 
     @Override
-    public void onLoad() {
-        fr.influencraft.flux.api.util.DataFolders.migrate(this, "InfluOffrande");
+    protected java.util.List<String> formerNames() {
+        return java.util.List.of("InfluOffrande");
     }
 
     @Override
-    public void onEnable() {
+    protected void enable() {
         configManager = new ConfigManager(this);
         configManager.load();
 
@@ -49,8 +48,6 @@ public final class FluxOfferingPlugin extends JavaPlugin {
             }
         }, this);
 
-        // the offering menu is a Flux menu shipped in the jar (menus/offering.yml, French in i18n/fr_FR)
-        fr.influencraft.flux.api.util.Resources.shipMenus(this, FluxApi.language());
         FluxApi.registerAction(this, "offering", offeringMenu);
         fr.influencraft.flux.api.list.Lists.register(this, OfferingMenu.LIST, offeringMenu);
 
@@ -89,7 +86,7 @@ public final class FluxOfferingPlugin extends JavaPlugin {
     }
 
     @Override
-    public void onDisable() {
+    protected void disable() {
         if (dataManager != null) {
             dataManager.saveAllDirty();
         }
