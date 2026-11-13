@@ -42,9 +42,9 @@
         <dependency>
             <groupId>me.angeschossen</groupId>
             <artifactId>lands</artifactId>
-            <version>9.2.0</version>
+            <version>9.2.1</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/libs/Lands-9.2.0.jar</systemPath>
+            <systemPath>${project.basedir}/libs/Lands-9.2.1.jar</systemPath>
         </dependency>
         <!-- FluxPW (player warps of the suite), through its API fr.influencraft.fluxpw.api. Chest shops go through Flux. -->
         <dependency>
