@@ -9,14 +9,14 @@ An old forge complex dug into a huge volcano, played from south to north (+z), f
   - room 1, the Threshold of Ashes: a hall with floors at several heights, blackstone flagstones, glowing cracks of
     magma under copper grates, two statues of smiths, broken pillars, carved inscriptions, lanterns on chains,
     braziers, shroomlight behind bars; first fight. Door: an iron grille in a built wall;
-  - room 2, the Fusion Galleries: a deep cavity crossed by a metal walkway on blackstone piers (railed), an upper
-    walkway reached by stairs, lava lakes far below, lava conduits crossing the cavity in barred troughs, lava falls,
-    monumental chains, an old crane, rails along the way;
+  - room 2, the Fusion Galleries: a deep cavity crossed by a straight bridge 9 wide on blackstone piers (railed),
+    lava lakes far below, lava conduits crossing the cavity in barred troughs, lava falls,
+    monumental chains, an old crane;
   - room 3, the Abandoned Foundry: a vaulted hall of deepslate bricks with four works: fusion (blast furnaces, crucible
     cauldrons of lava, a chimney), forge (anvils, smithing tables, unfinished blades), cooling (water basins, steam),
-    storage (barrels, chests, iron and copper stock); side catwalks, overhead cranes; the cast-iron colossus (elite);
-  - room 4, the Heart of the Volcano: a gigantic cavity over a gulf of lava; a viewpoint balcony over it, a ledge round
-    the west side and a suspended bridge on chains, basalt columns rising from the lava, falls, a sunk old arch; the
+    storage (barrels, chests, iron and copper stock); side catwalks out of reach, overhead cranes; the cast-iron colossus (elite);
+  - room 4, the Heart of the Volcano: a gigantic cavity over a gulf of lava; a viewpoint balcony over it, then a straight suspended
+    bridge 9 wide on chains to the last door, basalt columns rising from the lava, falls, a sunk old arch; the
     rumble of what waits behind the last door;
   - room 5, the Fondeur's Arena: a round, irregular arena (floor about 34 across) under a dome, four pillars of their
     own identity at 8 blocks from the middle (its ultimate: a pillar between it and a player shelters him), a ring of
@@ -36,6 +36,7 @@ F = 63
 X0, X1, Y0, Y1, Z0, Z1 = -46, 46, 40, 140, -52, 304
 BANDS = ((40, 140, "deepslate"),)
 DOORS_Z = (37, 113, 177, 245)
+BW = 4                                    # half width of the bridges over the lava (9 blocks: room to fight)
 CZ, AR = 274, 17                          # arena middle and radius of its floor
 PILLARS = [(8, CZ + 8), (-8, CZ + 8), (8, CZ - 8), (-8, CZ - 8)]
 g = gridlib.Model((X0, X1, Y0, Y1, Z0, Z1), BANDS, seed=3131)
@@ -437,21 +438,20 @@ def galleries():
             g.set(x, F - 12, z, LAVA)
     # the end walls stand up to head height but at the way in and the landing
     for x in range(-21, 22):
-        for (z, keep) in ((z0, 1), (z1, 7)):
+        for (z, keep) in ((z0, BW), (z1, 7)):
             if abs(x) > keep:
                 for y in range(F, F + 5):
                     g.set(x, y, z, ROCK)
-    # the walkway: 3 wide on piers, winding; railings; rails along it
-    path = []
+    # the bridge: straight to the door, 2 * BW + 1 wide (room to fight), on piers every 9, iron bands, an iron stripe
     for z in range(z0, z1 + 1):
-        c = round(6 * math.sin((z - z0) * 0.07))
-        path.append((c, z))
-        for x in range(c - 1, c + 2):
-            g.set(x, F, z, "iron_block" if x == c else "polished_blackstone_bricks")
-            g.set(x, F + 1, z, "air") if g.get(x, F + 1, z) not in ("air",) else None
+        for x in range(-BW, BW + 1):
+            g.set(x, F, z, "iron_block" if x == 0 or (z - z0) % 9 == 0 else g.pick(BRICKS))
+            for y in range(F + 1, F + 5):
+                if g.get(x, y, z) != "air":
+                    g.set(x, y, z, "air")
         if (z - z0) % 9 == 0:
             for y in range(F - 12, F):
-                for x in range(c - 1, c + 2):
+                for x in range(-BW, BW + 1):
                     g.set(x, y, z, "polished_blackstone_bricks" if (y - F) % 4 else "iron_block")
     for x in range(-7, 8):
         for z in range(z1 - 4, z1 + 1):
@@ -461,22 +461,6 @@ def galleries():
                     g.set(x, y, z, "air")
             for y in range(F - 12, F):
                 g.set(x, y, z, "polished_blackstone_bricks" if (y - F) % 4 else "iron_block")
-    for (c, z) in path:
-        if g.get(c + 1, F + 1, z) == "air":
-            g.set(c + 1, F + 1, z, "rail[shape=north_south]")
-    # the upper walkway (east wall, F+7), stairs up from the main one, its own rail
-    for z in range(z0 + 18, z0 + 60):
-        for x in range(14, 20):
-            g.set(x, F + 6, z, "polished_blackstone_bricks" if x != 15 else "iron_block")
-            for y in range(F + 7, F + 10):
-                if g.get(x, y, z) not in ("air",):
-                    g.set(x, y, z, "air")
-        if z % 6 == 0:
-            for y in range(F - 12, F + 6):
-                g.set(15, y, z, "iron_block" if y % 5 == 0 else "polished_blackstone_wall")
-    for k in range(7):
-        g.box(7 + k, F + k, z0 + 13 + k, 7 + k, F + k, z0 + 15 + k, "polished_blackstone_bricks")
-        g.box(7 + k, F + k + 1, z0 + 13 + k, 7 + k, F + k + 3, z0 + 15 + k, "air")
     # lava conduits across the cavity, under and over the walkway
     for (z, y) in ((z0 + 14, F + 10), (z0 + 38, F - 4), (z0 + 62, F + 12)):
         conduit(-20, 20, z, y)
@@ -487,25 +471,22 @@ def galleries():
     for (x, z) in ((-10, z0 + 10), (12, z0 + 30), (-8, z0 + 50), (10, z0 + 68)):
         ceiling_chain(x, F + 2, z, 14, "iron_block")
     g.box(-14, F - 12, z0 + 44, -13, F + 16, z0 + 45, lambda x, y, z: "iron_block" if y % 4 == 0 else "polished_blackstone_bricks")
-    g.box(-14, F + 16, z0 + 44, -3, F + 16, z0 + 45, "iron_block")
-    chain(-4, F + 15, z0 + 44, 6, "anvil[facing=north]")
+    g.box(-14, F + 16, z0 + 44, -8, F + 16, z0 + 45, "iron_block")
+    chain(-9, F + 15, z0 + 44, 6, "anvil[facing=north]")
     guard_edges(-20, z0, 20, z1, F)
-    for y in range(F + 1, F + 7):
-        guard_edges(7, z0 + 10, 20, z0 + 62, y)
     m.sound(0, F - 4, z0 + 20, [("block.lava.ambient", 0.7, 0.7), ("ambient.basalt_deltas.loop", 0.3, 0.6)], radius=20, every=(60, 140),
             particle={"type": "LAVA", "count": 2, "spread": (12, 0.2, 8), "speed": 0, "every": 20})
     m.sound(0, F + 4, z0 + 44, [("block.chain.step", 0.6, 0.5), ("block.piston.extend", 0.3, 0.5), ("block.anvil.place", 0.2, 0.5)],
             radius=18, every=(100, 220))
     m.sound(0, F + 2, z0 + 62, [("ambient.basalt_deltas.mood", 0.4, 0.6), ("block.fire.ambient", 0.5, 0.7)], radius=18, every=(120, 240),
             particle={"type": "SMOKE", "count": 4, "spread": (6, 2, 4), "speed": 0.01, "every": 10})
-    for (mob, dz, dx, y) in (("fond_calcine", 10, 0, F + 1), ("fond_porteur", 24, 0, F + 1), ("fond_escarbille", 30, -6, F + 5),
-                             ("fond_calcine", 44, 0, F + 1), ("fond_escarbille", 52, 6, F + 5), ("fond_porteur", 64, 0, F + 1),
-                             ("fond_calcine", 40, 17, F + 7)):
-        z = z0 + dz
-        c = round(6 * math.sin((z - z0) * 0.07)) + dx if dx in (-6, 0, 6) else dx
-        m.mob(mob, c, z, y=y, yaw=180, room="2")
+    # every monster stands on the bridge (the blazes too: never over the lava, out of reach)
+    for (mob, dz, x) in (("fond_calcine", 10, -2), ("fond_porteur", 24, 2), ("fond_escarbille", 30, -3),
+                         ("fond_calcine", 40, 3), ("fond_calcine", 44, -1), ("fond_escarbille", 52, 3), ("fond_porteur", 64, 0)):
+        m.mob(mob, x, z0 + dz, y=F + 1, yaw=180, room="2")
     for z in range(z0 + 6, z1, 12):
-        light(round(6 * math.sin((z - z0) * 0.07)), F + 5, z, 10)
+        for x in (-BW + 1, BW - 1):
+            light(x, F + 5, z, 10)
     gate(DOORS_Z[1], F, "polished_blackstone_bricks", "2", "galeries")
 
 
@@ -527,73 +508,12 @@ def foundry():
         if z % 6 == 0:
             for x in (-20, 20):
                 g.box(x, F + 1, z, x, F + 15, z, lambda a, b, c: "polished_deepslate" if b % 5 else "iron_block")
-    # side catwalks at F+6 with railings, stairs up
+    # side catwalks at F+6 with railings, out of reach (decor: no stairs, a single way through the hall)
     for z in range(z0 + 4, z1 - 3):
         for x in (-19, -18, 18, 19):
             g.set(x, F + 6, z, "iron_block" if x in (-18, 18) else "polished_blackstone_bricks")
         for x in (-17, 17):
             g.set(x, F + 7, z, "iron_bars[north=true,south=true]")
-    for k in range(6):
-        for x in (-19, -18):
-            g.set(x, F + k, z0 + 4 + k, "deepslate_brick_stairs[facing=south]")
-            g.set(x, F + k - 1, z0 + 4 + k, "deepslate_bricks") if k else None
-        for x in (18, 19):
-            g.set(x, F + k, z1 - 4 - k, "deepslate_brick_stairs[facing=north]")
-            g.set(x, F + k - 1, z1 - 4 - k, "deepslate_bricks") if k else None
-    # 1. fusion (south-west): a stack of blast furnaces under a chimney, crucibles of lava, a pouring trough under grates
-    g.box(-16, F + 1, z0 + 4, -12, F + 4, z0 + 8, lambda x, y, z: "blast_furnace[facing=east,lit=true]" if x == -12 and y < F + 4 else "bricks")
-    g.box(-15, F + 5, z0 + 5, -13, F + 18, z0 + 7, lambda x, y, z: "bricks" if (x, z) != (-14, z0 + 6) else "air")
-    for (x, z) in ((-9, z0 + 4), (-9, z0 + 9), (-6, z0 + 6)):
-        g.set(x, F + 1, z, "lava_cauldron")
-    for x in range(-11, -3):
-        g.set(x, F, z0 + 12, "waxed_copper_grate")
-        g.set(x, F - 1, z0 + 12, LAVA)
-        g.set(x, F - 2, z0 + 12, "magma_block")
-        for s in (-1, 1):
-            g.set(x, F - 1, z0 + 12 + s, "polished_blackstone")
-    g.set(-12, F - 1, z0 + 12, "polished_blackstone")
-    g.set(-3, F - 1, z0 + 12, "polished_blackstone")
-    m.sound(-12, F + 2, z0 + 6, [("block.blastfurnace.fire_crackle", 0.9, 0.8), ("block.fire.ambient", 0.6, 0.7)], radius=12, every=(40, 90),
-            particle={"type": "FLAME", "count": 2, "spread": (0.4, 1, 0.4), "speed": 0.01, "every": 10})
-    # 2. forge (south-east): anvils on stone blocks, smithing tables, grindstones, blades on racks, a power hammer
-    for (x, z) in ((8, z0 + 5), (12, z0 + 5), (8, z0 + 10), (12, z0 + 10)):
-        g.set(x, F + 1, z, "polished_blackstone")
-        g.set(x, F + 2, z, r.choice(["anvil[facing=north]", "chipped_anvil[facing=east]", "damaged_anvil[facing=north]"]))
-    g.set(15, F + 1, z0 + 7, "smithing_table")
-    g.set(15, F + 1, z0 + 8, "grindstone[face=floor,facing=north]")
-    for (x, z, item) in ((8.5, z0 + 5.5, "iron_sword"), (12.5, z0 + 10.5, "iron_axe"), (16.5, z0 + 3.5, "iron_ingot")):
-        g.item_display(x, F + 3.05, z, item, yaw=r.uniform(0, 360), roll=90, scale=0.8)
-    g.box(16, F + 1, z0 + 12, 16, F + 7, z0 + 12, "iron_block")
-    g.box(13, F + 7, z0 + 12, 16, F + 7, z0 + 12, "iron_block")
-    chain(13, F + 6, z0 + 12, 2, "iron_block")
-    g.set(13, F + 1, z0 + 12, "anvil[facing=north]")
-    m.sound(11, F + 2, z0 + 8, [("block.anvil.use", 0.3, 0.6), ("block.anvil.land", 0.2, 0.5), ("block.smithing_table.use", 0.4, 0.6)],
-            radius=12, every=(80, 180))
-    # 3. cooling (north-west): water basins under iron trapdoors, steam
-    for z in range(z1 - 14, z1 - 4):
-        for x in range(-16, -9):
-            edge = x in (-16, -10) or z in (z1 - 14, z1 - 5)
-            g.set(x, F, z, "polished_deepslate" if edge else "water")
-            if not edge:
-                g.set(x, F - 1, z, "polished_deepslate")
-                if (x + z) % 3 == 0:
-                    g.set(x, F + 1, z, "iron_trapdoor[facing=north,half=bottom,open=false]")
-    for x in range(-17, -8):
-        for z in range(z1 - 15, z1 - 3):
-            if g.get(x, F, z) == "water":
-                for dx, dz in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-                    if g.get(x + dx, F, z + dz) == "air":
-                        g.set(x + dx, F, z + dz, "polished_deepslate")
-    m.sound(-13, F + 2, z1 - 9, [("block.fire.extinguish", 0.4, 1.2), ("block.lava.extinguish", 0.3, 1.0)], radius=12, every=(60, 140),
-            particle={"type": "CLOUD", "count": 4, "spread": (2, 0.5, 3), "speed": 0.02, "every": 10})
-    # 4. storage (north-east): barrels, chests, iron and copper stock, a rail line with its stops
-    for x in range(10, 18):
-        for z in range(z1 - 14, z1 - 5):
-            if (x + z) % 4 == 0:
-                h = r.randint(1, 3)
-                for y in range(F + 1, F + 1 + h):
-                    g.set(x, y, z, r.choice(["barrel[facing=up]", "iron_block", "raw_iron_block", "copper_block", "exposed_copper", "chest[facing=west]" if y == F + 1 else "barrel[facing=up]"]))
-    rail_line(8, z1 - 15, 8, z1 - 4, F + 1)
     # overhead cranes: beams across the hall, chains with hooks
     for z in (z0 + 20, z0 + 40):
         g.box(-20, F + 15, z, 20, F + 15, z, "iron_block")
@@ -630,36 +550,31 @@ def heart():
                 for dx, dz in ((1, 0), (-1, 0), (0, 1), (0, -1)):
                     if g.get(x + dx, F - 13, z + dz) == "air":
                         g.set(x + dx, F - 13, z + dz, ROCK)
-    # the viewpoint balcony at the entrance, over the gulf, then the west ledge and the suspended bridge
+    # the viewpoint balcony at the entrance, over the gulf, then the bridge
     for x in range(-6, 7):
         for z in range(z0, z0 + 12):
             g.set(x, F, z, g.pick(BRICKS))
             for y in range(F - 4, F):
                 g.set(x, y, z, ROCK if z < z0 + 8 or abs(x) > 3 else "polished_blackstone_bricks")
-    for x in range(-24, -5):
-        for z in range(z0 + 6, z1 + 1):
-            if x < -18 or z < z0 + 12 or z > z1 - 10:
-                g.set(x, F, z, paint(x, F, z) if r.random() < 0.6 else "blackstone")
-                for y in range(F - 13, F):
-                    g.set(x, y, z, ROCK)
     for x in range(-6, 7):
         for z in range(z1 - 10, z1 + 1):
             g.set(x, F, z, g.pick(BRICKS))
             for y in range(F - 13, F):
                 g.set(x, y, z, ROCK)
-    for x in range(-24, 7):
+    for x in range(-7, 8):
         for z in range(z0, z1 + 1):
-            if g.get(x, F, z) != "air" and not gridlib.passable(g.get(x, F, z)) and (x < -18 or z < z0 + 12 or z > z1 - 11 or abs(x) <= 1):
+            if g.get(x, F, z) != "air" and not gridlib.passable(g.get(x, F, z)) and (z < z0 + 12 or z > z1 - 11 or abs(x) <= BW):
                 for y in range(F + 1, F + 5):
                     if g.get(x, y, z) != LAVA:
                         g.set(x, y, z, "air")
-    # suspended bridge from the balcony to the north landing, chains to the vault
+    # suspended bridge, straight from the balcony to the north landing, chains to the vault along its sides
     for z in range(z0 + 12, z1 - 10):
-        for x in (-1, 0, 1):
-            g.set(x, F, z, "polished_blackstone_bricks" if x else "iron_block")
+        for x in range(-BW, BW + 1):
+            g.set(x, F, z, "iron_block" if x == 0 else g.pick(BRICKS))
+            g.set(x, F - 1, z, "polished_blackstone_bricks")
         if z % 6 == 0:
-            for x in (-2, 2):
-                ceiling_chain(x, F + 1, z, 40)
+            for x in (-BW - 1, BW + 1):
+                ceiling_chain(x, F + 4, z, 40)
     # basalt columns rising from the lava, falls, a sunk old arch
     for k, (x, z) in enumerate(((12, 200), (16, 222), (-12, 230), (9, 236), (14, 188))):
         pillar(x, z, F - 13, F + 30, lambda y: "basalt[axis=y]" if y % 7 else "magma_block", rad=1)
@@ -669,10 +584,10 @@ def heart():
                 if g.get(xx, yy, z) == "air" and xx > x:
                     g.set(xx, yy, z, ROCK)
         lavafall(x, z, F + 20, F - 13, (-1, 0), with_pool=False)
-    g.box(4, F - 13, 214, 4, F - 2, 214, "polished_blackstone_bricks")
-    g.box(10, F - 13, 214, 10, F - 6, 214, "polished_blackstone_bricks")
-    g.box(4, F - 2, 214, 8, F - 2, 214, "cracked_polished_blackstone_bricks")
-    guard_edges(-24, z0, 7, z1, F)
+    g.box(7, F - 13, 214, 7, F - 3, 214, "polished_blackstone_bricks")
+    g.box(13, F - 13, 214, 13, F - 6, 214, "polished_blackstone_bricks")
+    g.box(7, F - 3, 214, 11, F - 3, 214, "cracked_polished_blackstone_bricks")
+    guard_edges(-8, z0, 8, z1, F)
     m.sound(0, F + 2, z0 + 6, [("ambient.basalt_deltas.mood", 0.6, 0.5), ("block.lava.ambient", 0.8, 0.6)], radius=22, every=(80, 180),
             particle={"type": "LAVA", "count": 3, "spread": (14, 0.2, 14), "speed": 0, "every": 20})
     m.sound(0, F - 8, 212, [("block.lava.pop", 0.8, 0.6), ("ambient.nether_wastes.mood", 0.4, 0.6)], radius=26, every=(60, 140),
@@ -680,11 +595,12 @@ def heart():
     # what waits behind the last door: hammer blows, a furnace breathing, conduits glowing
     m.sound(0, F + 3, z1 - 3, [("block.anvil.land", 0.3, 0.4), ("entity.iron_golem.step", 0.6, 0.4), ("block.blastfurnace.fire_crackle", 0.5, 0.5)],
             radius=14, every=(60, 140), particle={"type": "FLAME", "count": 3, "spread": (3, 2, 0.3), "speed": 0.01, "every": 10})
-    for (mob, x, z, y) in (("fond_escarbille", 0, 200, F + 4), ("fond_calcine", -20, 214, F + 1), ("fond_porteur", -20, 232, F + 1),
-                           ("fond_escarbille", 0, 226, F + 4), ("fond_calcine", 0, 240, F + 1)):
+    for (mob, x, z, y) in (("fond_escarbille", -2, 200, F + 1), ("fond_calcine", 3, 214, F + 1), ("fond_porteur", -3, 232, F + 1),
+                           ("fond_escarbille", 2, 226, F + 1), ("fond_calcine", 0, 240, F + 1)):
         m.mob(mob, x, z, y=y, yaw=180, room="4")
     for z in range(z0 + 6, z1, 12):
-        light(0, F + 4, z, 10)
+        for x in (-BW + 1, BW - 1):
+            light(x, F + 4, z, 10)
     gate(DOORS_Z[3], F, "polished_blackstone_bricks", "4", "coeur", width=3)
 
 
