@@ -10,7 +10,6 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
 import java.io.File;
-import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -32,7 +31,7 @@ import java.util.logging.Level;
  * <p>A claim runs at once: the reward goes through Flux ({@link Rewards}) and is claimed in the same click, so it
  * only stays in {@code /rewards} when it does not fit in the inventory.</p>
  *
- * <p>Main thread only; files are written asynchronously ({@code joueurs/<uuid>.yml}). The config also accepts the
+ * <p>Main thread only; rows of {@code flux_calendar_players} are written asynchronously (files {@code joueurs/<uuid>.yml} before 2026-11-13, read once by {@code compat.CalendarFiles}). The config also accepts the
  * former French keys ({@code quotidien}, {@code jours-semaine} with lundi..dimanche, {@code jours},
  * {@code mois-complet}, {@code nom}, {@code description}, {@code commandes}, {@code grosse}).</p>
  */
@@ -144,29 +143,54 @@ public final class LoginCalendar {
         return players.get(uuid);
     }
 
-    public PlayerData load(UUID uuid) {
-        File f = file(uuid);
-        PlayerData d = new PlayerData();
-        if (f.exists()) {
-            YamlConfiguration y = YamlConfiguration.loadConfiguration(f);
-            d.days = y.getInt("jours", 0);
-            d.lastDay = date(y.getString("dernier-jour"));
-            d.since = date(y.getString("debut"));
-            String month = y.getString("mois");
-            if (month != null) {
-                try {
-                    d.month = YearMonth.parse(month);
-                    d.claimed.addAll(y.getIntegerList("jours-recuperes"));
-                } catch (RuntimeException ignored) {
-                    // unreadable month: nothing claimed this month
-                }
-            }
-            // files of the former 28-day cycle have no month: their claimed days are not dates, dropped
+    private static String table() {
+        return fr.influencraft.flux.api.data.Database.table("flux_calendar_players");
+    }
+
+    /** Table of the players' calendars (Flux's database). */
+    public void open() throws java.sql.SQLException {
+        try (java.sql.Connection c = fr.influencraft.flux.api.data.Database.connection(); java.sql.Statement st = c.createStatement()) {
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS " + table() + " (uuid " + fr.influencraft.flux.api.data.Database.dialect().key(36)
+                    + " NOT NULL PRIMARY KEY, days INTEGER NOT NULL, last_day VARCHAR(10), month VARCHAR(7), since VARCHAR(10),"
+                    + " claimed TEXT NOT NULL)");
         }
+    }
+
+    public PlayerData load(UUID uuid) {
+        PlayerData d = read(uuid);
+        if (d == null) d = fr.influencraft.fluxcalendar.compat.CalendarFiles.read(plugin, uuid);
+        if (d == null) d = new PlayerData();
         if (d.since == null) d.since = today();
         d.roll(today());
         players.put(uuid, d);
         return d;
+    }
+
+    private PlayerData read(UUID uuid) {
+        try (java.sql.Connection c = fr.influencraft.flux.api.data.Database.connection();
+             java.sql.PreparedStatement ps = c.prepareStatement("SELECT days, last_day, month, since, claimed FROM " + table() + " WHERE uuid = ?")) {
+            ps.setString(1, uuid.toString());
+            try (java.sql.ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) return null;
+                PlayerData d = new PlayerData();
+                d.days = rs.getInt(1);
+                d.lastDay = date(rs.getString(2));
+                d.since = date(rs.getString(4));
+                String month = rs.getString(3);
+                if (month != null) {
+                    try {
+                        d.month = YearMonth.parse(month);
+                        for (String n : rs.getString(5).split(",")) if (!n.isBlank()) d.claimed.add(Integer.parseInt(n.trim()));
+                    } catch (RuntimeException ignored) {
+                        // unreadable month: nothing claimed this month
+                    }
+                }
+                return d;
+            }
+        } catch (java.sql.SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Could not read the calendar of " + uuid, e);
+            return null;
+        }
     }
 
     public void unload(UUID uuid) {
@@ -179,28 +203,32 @@ public final class LoginCalendar {
     }
 
     private void save(UUID uuid, PlayerData d, boolean now) {
-        YamlConfiguration y = new YamlConfiguration();
-        y.set("jours", d.days);
-        y.set("dernier-jour", d.lastDay != null ? d.lastDay.toString() : null);
-        y.set("mois", d.month != null ? d.month.toString() : null);
-        y.set("debut", d.since != null ? d.since.toString() : null);
-        y.set("jours-recuperes", new ArrayList<>(d.claimed));
-        String content = y.saveToString();
+        String lastDay = d.lastDay != null ? d.lastDay.toString() : null, month = d.month != null ? d.month.toString() : null,
+                since = d.since != null ? d.since.toString() : null;
+        String claimed = d.claimed.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(","));
+        int days = d.days;
         Runnable write = () -> {
-            try {
-                File f = file(uuid);
-                f.getParentFile().mkdirs();
-                java.nio.file.Files.writeString(f.toPath(), content);
-            } catch (IOException e) {
+            try (java.sql.Connection c = fr.influencraft.flux.api.data.Database.connection()) {
+                try (java.sql.PreparedStatement del = c.prepareStatement("DELETE FROM " + table() + " WHERE uuid = ?")) {
+                    del.setString(1, uuid.toString());
+                    del.executeUpdate();
+                }
+                try (java.sql.PreparedStatement ps = c.prepareStatement("INSERT INTO " + table()
+                        + " (uuid, days, last_day, month, since, claimed) VALUES (?, ?, ?, ?, ?, ?)")) {
+                    ps.setString(1, uuid.toString());
+                    ps.setInt(2, days);
+                    ps.setString(3, lastDay);
+                    ps.setString(4, month);
+                    ps.setString(5, since);
+                    ps.setString(6, claimed);
+                    ps.executeUpdate();
+                }
+            } catch (java.sql.SQLException e) {
                 plugin.getLogger().log(Level.SEVERE, "Could not save the calendar of " + uuid, e);
             }
         };
         if (now || !plugin.isEnabled()) write.run();
         else Bukkit.getScheduler().runTaskAsynchronously(plugin, write);
-    }
-
-    private File file(UUID uuid) {
-        return new File(new File(plugin.getDataFolder(), "joueurs"), uuid + ".yml");
     }
 
     // ================================================================ days

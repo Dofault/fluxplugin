@@ -19,6 +19,31 @@ public final class PlayerData {
     /** First day the calendar knew the player: earlier dates are never « missed » (the calendar did not exist yet). */
     LocalDate since;
 
+    /** A calendar from stored values (dates as ISO text, null when unset); unreadable parts are left empty. */
+    public static PlayerData of(int days, String lastDay, String month, String since, java.util.List<Integer> claimed) {
+        PlayerData d = new PlayerData();
+        d.days = days;
+        d.lastDay = parse(lastDay);
+        d.since = parse(since);
+        try {
+            if (month != null) {
+                d.month = YearMonth.parse(month);
+                d.claimed.addAll(claimed);
+            }
+        } catch (RuntimeException ignored) {
+            // unreadable month: nothing claimed this month
+        }
+        return d;
+    }
+
+    private static LocalDate parse(String text) {
+        try {
+            return text == null ? null : LocalDate.parse(text);
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
     /** Starts the month of {@code today} when the stored one is older. */
     void roll(LocalDate today) {
         YearMonth now = YearMonth.from(today);

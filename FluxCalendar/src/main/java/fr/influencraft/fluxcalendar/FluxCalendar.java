@@ -43,6 +43,11 @@ public final class FluxCalendar extends FluxPlugin implements Listener {
     @Override
     protected void enable() {
         calendar = new LoginCalendar(this);
+        try {
+            calendar.open();
+        } catch (java.sql.SQLException e) {
+            getLogger().severe("Calendar table unavailable: " + e.getMessage());
+        }
         calendar.load();
         menu = new CalendarMenu(this, calendar);
         menu.enable();
