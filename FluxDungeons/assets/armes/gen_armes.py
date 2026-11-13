@@ -364,8 +364,8 @@ VANILLA = {
 DISPLAYS = {
     "brise_aube": ("handheld", 45, (8, -7, 8), (-32, 0.70), (0, 0.42)),
     # first person: turn -90 = the vanilla sprite's own axis (string from lower left to upper right, back of the bow
-    # towards the upper left, 2026-11-13), at the size of the vanilla bow
-    "sylve_celeste": ("bow", 135, (8.1, 8, 8), (25, 0.55), (-90, 0.30)),
+    # towards the upper left, 2026-11-13), 120 % of the size of the vanilla bow
+    "sylve_celeste": ("bow", 135, (8.1, 8, 8), (25, 0.55), (-90, 0.36)),
     "sceptre_neant": ("handheld", 45, (8, 2, 8), (-47, 0.66), (10, 0.36)),
     "reliquaire_aube": ("handheld", 45, (8, 2.85, 8), (-47, 0.66), (10, 0.36)),
 }
