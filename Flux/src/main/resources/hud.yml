@@ -64,7 +64,7 @@ elements:
     setting: hud_voteparty
     requires: voteparty
     box:
-      - {icon: voteparty, text: "<#FFEB00>{voteparty}<#FFFFFF>/<#FADA5E>{voteparty_required}"}
+      - {icon: voteparty, text: "<#FFEB00>{voteparty}<#FFFFFF>/<#FADA5E>{voteparty_required}", shadow: "#000000"}
   place:
     box:
       - {setting: hud_biome, icon: biome, text: "{biome}", shadow: "#000000"}
