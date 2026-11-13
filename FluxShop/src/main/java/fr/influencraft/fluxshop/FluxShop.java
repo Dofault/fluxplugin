@@ -72,6 +72,12 @@ public class FluxShop extends fr.influencraft.flux.api.FluxPlugin {
         AutoSellFilter autoSellFilter = new AutoSellFilter(this);
         AutoSellExceptionManager autoSellExceptions = new AutoSellExceptionManager(this, autoSellFilter);
         autoSellFilter.setExceptionManager(autoSellExceptions);
+        try {
+            autoSellExceptions.open();
+        } catch (java.sql.SQLException e) {
+            getLogger().severe("Auto-sell exceptions table unavailable (default lists used): " + e.getMessage());
+        }
+        fr.influencraft.fluxshop.api.AutoSellExceptions.bind(autoSellExceptions);
         AutoSellMenu autoSellMenu = new AutoSellMenu(this, lang, priceManager, autoSellItemManager, autoSellExceptions);
         SellManager sellManager = new SellManager(this, lang, priceManager, activity, autoSellItemManager);
 

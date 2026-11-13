@@ -6,8 +6,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,22 +25,20 @@ import java.util.concurrent.ConcurrentHashMap;
  * « Réinitialiser » dans le menu efface ce fichier pour revenir au défaut.
  * <p>
  * Stockées par joueur et non sur l'objet (contrairement à l'état actif/inactif, qui reste sur
- * l'ItemStack) : un joueur qui perd ou rachète son objet garde ses réglages. Un fichier par
- * joueur dans {@code autosell/<uuid>.yml}, chargé à la demande et gardé en cache jusqu'à la
- * déconnexion (le filtre le consulte à chaque ramassage).
+ * l'ItemStack) : un joueur qui perd ou rachète son objet garde ses réglages. Table
+ * {@code flux_shop_autosell} de la base Flux (2026-11-13, avant : un fichier par joueur dans {@code autosell/},
+ * repris par FluxMigration), lue à la demande et gardée en cache jusqu'à la déconnexion.
  */
 public class AutoSellExceptionManager implements Listener {
 
     private final JavaPlugin plugin;
     private final AutoSellFilter filter;
-    private final File folder;
     // Optional.empty() = le joueur utilise le défaut
     private final Map<UUID, Optional<Set<String>>> cache = new ConcurrentHashMap<>();
 
     public AutoSellExceptionManager(JavaPlugin plugin, AutoSellFilter filter) {
         this.plugin = plugin;
         this.filter = filter;
-        this.folder = new File(plugin.getDataFolder(), "autosell");
     }
 
     /** @return une vue non modifiable des exceptions du joueur. */
@@ -68,43 +64,72 @@ public class AutoSellExceptionManager implements Listener {
 
     public void resetToDefault(UUID uuid) {
         cache.put(uuid, Optional.empty());
-        File file = file(uuid);
-        if (file.exists() && !file.delete()) {
-            plugin.getLogger().warning("Impossible de supprimer " + file.getName() + " (réinitialisation de la vente auto).");
+        try (java.sql.Connection c = fr.influencraft.flux.api.data.Database.connection()) {
+            delete(c, uuid);
+        } catch (java.sql.SQLException e) {
+            plugin.getLogger().severe("Auto-sell exceptions of " + uuid + " not reset: " + e.getMessage());
         }
     }
 
     private Optional<Set<String>> load(UUID uuid) {
-        return cache.computeIfAbsent(uuid, this::readFile);
+        return cache.computeIfAbsent(uuid, this::read);
     }
 
-    private File file(UUID uuid) {
-        return new File(folder, uuid + ".yml");
+    private String table() {
+        return fr.influencraft.flux.api.data.Database.table("flux_shop_autosell");
     }
 
-    private Optional<Set<String>> readFile(UUID uuid) {
-        File file = file(uuid);
-        if (!file.exists()) {
+    /** Table of the players' own lists (no row = the server's default). */
+    public void open() throws java.sql.SQLException {
+        try (java.sql.Connection c = fr.influencraft.flux.api.data.Database.connection(); java.sql.Statement st = c.createStatement()) {
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS " + table() + " (uuid " + fr.influencraft.flux.api.data.Database.dialect().key(36)
+                    + " NOT NULL PRIMARY KEY, exceptions TEXT NOT NULL, updated BIGINT NOT NULL)");
+        }
+    }
+
+    private Optional<Set<String>> read(UUID uuid) {
+        try (java.sql.Connection c = fr.influencraft.flux.api.data.Database.connection();
+             java.sql.PreparedStatement ps = c.prepareStatement("SELECT exceptions FROM " + table() + " WHERE uuid = ?")) {
+            ps.setString(1, uuid.toString());
+            try (java.sql.ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) return Optional.empty();
+                String raw = rs.getString(1);
+                Set<String> set = new LinkedHashSet<>();
+                for (String k : raw.split("\n")) if (!k.isBlank()) set.add(k);
+                return Optional.of(set);
+            }
+        } catch (java.sql.SQLException e) {
+            plugin.getLogger().warning("Auto-sell exceptions of " + uuid + " not read, default used: " + e.getMessage());
             return Optional.empty();
         }
-        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
-        if (!yaml.isList("exceptions")) {
-            return Optional.empty();
-        }
-        return Optional.of(new LinkedHashSet<>(yaml.getStringList("exceptions")));
     }
 
     private void save(UUID uuid, Set<String> set) {
-        YamlConfiguration yaml = new YamlConfiguration();
-        yaml.set("exceptions", new ArrayList<>(set));
-        try {
-            if (!folder.exists()) {
-                folder.mkdirs();
+        try (java.sql.Connection c = fr.influencraft.flux.api.data.Database.connection()) {
+            delete(c, uuid);
+            try (java.sql.PreparedStatement ps = c.prepareStatement("INSERT INTO " + table() + " (uuid, exceptions, updated) VALUES (?, ?, ?)")) {
+                ps.setString(1, uuid.toString());
+                ps.setString(2, String.join("\n", set));
+                ps.setLong(3, System.currentTimeMillis());
+                ps.executeUpdate();
             }
-            yaml.save(file(uuid));
-        } catch (IOException e) {
-            plugin.getLogger().severe("Impossible de sauvegarder les exceptions de vente auto de " + uuid + " : " + e.getMessage());
+        } catch (java.sql.SQLException e) {
+            plugin.getLogger().severe("Auto-sell exceptions of " + uuid + " not saved: " + e.getMessage());
         }
+    }
+
+    private void delete(java.sql.Connection c, UUID uuid) throws java.sql.SQLException {
+        try (java.sql.PreparedStatement ps = c.prepareStatement("DELETE FROM " + table() + " WHERE uuid = ?")) {
+            ps.setString(1, uuid.toString());
+            ps.executeUpdate();
+        }
+    }
+
+    /** A whole list at once (imports, FluxMigration through {@code fluxshop.api.AutoSellExceptions}). */
+    public void replace(UUID uuid, Collection<String> keys) {
+        Set<String> set = new LinkedHashSet<>(keys);
+        cache.put(uuid, Optional.of(set));
+        save(uuid, set);
     }
 
     @EventHandler

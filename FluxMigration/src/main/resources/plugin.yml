@@ -5,7 +5,7 @@ api-version: "26.2"
 description: One-time data migrations of the Flux suite (former plugins to Flux). Remove once every migration is done.
 authors: [Influencraft]
 depend: [Flux]
-softdepend: [FluxFly, FluxCrate, FluxFamily, FluxPW, FluxCommerce]
+softdepend: [FluxFly, FluxCrate, FluxFamily, FluxPW, FluxCommerce, FluxShop]
 
 permissions:
   fluxmigration.admin:
