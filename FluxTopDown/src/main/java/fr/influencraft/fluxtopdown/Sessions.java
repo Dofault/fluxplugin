@@ -53,7 +53,14 @@ final class Sessions implements Listener {
         return sessions.containsKey(p.getUniqueId());
     }
 
+    /** "/hackslash off": no view now, nor later in the run he waits for. */
+    void cancel(Player p) {
+        waiting.remove(p.getUniqueId());
+        stop(p, true);
+    }
+
     void start(Player p) {
+        waiting.remove(p.getUniqueId());
         if (active(p)) return;
         Session s = new Session(plugin, p);
         sessions.put(p.getUniqueId(), s);
@@ -62,8 +69,8 @@ final class Sessions implements Listener {
         plugin.messages().send(p, "on");
     }
 
+    /** Stops his view; the wait for a dungeon run is kept (entering the run's world must not cancel it). */
     void stop(Player p, boolean tell) {
-        waiting.remove(p.getUniqueId());
         Session s = sessions.remove(p.getUniqueId());
         if (s == null) return;
         s.close();
@@ -324,6 +331,7 @@ final class Sessions implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
+        waiting.remove(e.getPlayer().getUniqueId());
         stop(e.getPlayer(), false);
     }
 

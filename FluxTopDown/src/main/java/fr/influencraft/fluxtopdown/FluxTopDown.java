@@ -74,13 +74,13 @@ public final class FluxTopDown extends FluxPlugin {
         boolean on = sessions.active(p);
         switch (sub) {
             case "" -> {
-                if (on) sessions.stop(p, true);
+                if (on) sessions.cancel(p);
                 else if (allowed(p)) sessions.start(p);
             }
             case "on" -> {
                 if (!on && allowed(p)) sessions.start(p);
             }
-            case "off" -> sessions.stop(p, true);
+            case "off" -> sessions.cancel(p);
             case "jouer", "play" -> {
                 if (allowed(p)) sessions.play(p, args.length > 1 ? args[1] : settings.dungeon());
             }
