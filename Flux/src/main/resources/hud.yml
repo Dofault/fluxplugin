@@ -26,11 +26,11 @@ box: {height: 13, padding: 3, icon-gap: 3, segment-gap: 6}
 groups:
   profile:
     setting: hud_profile_place
-    default: top-left
+    default: top-right
     elements: [profile]
   info:
     setting: hud_info_place
-    default: top-right
+    default: top-left
     # one row per entry; [a, b] = boxes side by side on the same row
     elements: [position, [voteparty, place]]
 
