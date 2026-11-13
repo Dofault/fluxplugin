@@ -90,9 +90,9 @@ The plugins are written **as English plugins, then adapted to French** for our s
 
 - FluxFamily owns couples and family trees (`fluxfamily.api.Family`: status, partner, `lineage(...)` for parent links
   kept by another plugin, as FluxReferral's sponsors). FluxTags takes tags from other plugins (`fluxtags.api.Tags`).
-- FluxReferral is a plain `JavaPlugin` (not `FluxPlugin`): its texts still go through Flux's `Messages`
-  (`lang/fr_FR.yml`, wrapped by `GestionnaireLangue`: `{var}` variables, `{code}`/`{adresse}` click-to-copy, `!` = no
-  prefix). Chat messages follow the CMI palette, like FluxCommerce.
+- FluxReferral (a Maven module of the reactor since 2026-11-13, Gradle before) extends `FluxPlugin`; its texts go
+  through Flux's `Messages` (`lang/fr_FR.yml`, wrapped by `GestionnaireLangue`: `{var}` variables, `{code}`/`{adresse}`
+  click-to-copy, `!` = no prefix; no `en_US.yml` yet). Chat messages follow the CMI palette, like FluxCommerce.
 - FluxAFK owns the AFK state (`fluxafk.api.Afk`: `afk(player)`, `progress(player)`; tab piece `{away}`); CMI's AFK module is
   off, never read `%cmi_user_afk%` again.
 - FluxPW owns player warps (`fluxpw.api.PlayerWarps`: list, visit and create with every check of `/pw`, imports);
@@ -228,9 +228,7 @@ systemd-run --user --scope -q -p MemoryMax=2.5G nice -n 10 mvn -q -o -pl <Module
 
 - Offline (`-o`), `-am` so Flux is built with the module. Third-party jars go in `<module>/libs/` (see `LIBS.md`),
   **never commit them** (`.gitignore`).
-- FluxReferral uses Gradle (JDK 21 for Gradle, see `docs/technique/flux-suite.md`): `./gradlew -q --offline shadowJar` inside the same
-  capped scope, jar `build/libs/FluxReferral-26.2.jar` deployed as `FluxReferral.jar`. FluxProxy (Velocity) is compiled with `javac`
-  on JDK 25 (see its README).
+- FluxProxy (Velocity) is compiled with `javac` on JDK 25 (see its README); every other module is in the Maven reactor.
 
 ## Deploying to Labs
 

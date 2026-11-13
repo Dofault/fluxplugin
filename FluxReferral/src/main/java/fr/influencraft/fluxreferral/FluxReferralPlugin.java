@@ -18,7 +18,6 @@ import fr.influencraft.fluxreferral.service.ServiceParrainage;
 import fr.influencraft.fluxreferral.service.ServiceProfil;
 import fr.influencraft.fluxreferral.service.ServiceRecuperation;
 import org.bukkit.Bukkit;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.SQLException;
 import java.util.logging.Level;
@@ -29,7 +28,7 @@ import java.util.logging.Level;
  *
  * @author Entr0pik
  */
-public class FluxReferralPlugin extends JavaPlugin {
+public class FluxReferralPlugin extends fr.influencraft.flux.api.FluxPlugin {
 
     /** {@code /origine <player>}: given to the whole staff (moderators included). */
     public static final String PERMISSION_ORIGINE = "fluxreferral.staff.origine";
@@ -47,12 +46,12 @@ public class FluxReferralPlugin extends JavaPlugin {
     private int idTacheRafraichissement = -1;
 
     @Override
-    public void onLoad() {
-        fr.influencraft.flux.api.util.DataFolders.migrate(this, "InfluParrainage");
+    protected java.util.List<String> formerNames() {
+        return java.util.List.of("InfluParrainage");
     }
 
     @Override
-    public void onEnable() {
+    protected void enable() {
         // --- Configuration ---
         gestionnaireConfig = new GestionnaireConfig(this);
         gestionnaireLangue = new GestionnaireLangue(this);
@@ -171,7 +170,7 @@ public class FluxReferralPlugin extends JavaPlugin {
     }
 
     @Override
-    public void onDisable() {
+    protected void disable() {
         // Annuler la tâche périodique puis toutes les tâches restantes
         if (idTacheRafraichissement != -1) {
             Bukkit.getScheduler().cancelTask(idTacheRafraichissement);
