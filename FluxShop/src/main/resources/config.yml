@@ -42,7 +42,7 @@ shop-menu:
 # ---------------------------------------------------------------------------
 # Point d'arrivée posé en jeu par /supermarket settpshop (section tpshop).
 #
-# Cooldown (en secondes) pour un joueur sans la permission supermarket.admin.
+# Cooldown (en secondes) pour un joueur sans la permission fluxshop.admin.
 # Pour donner un cooldown différent par grade, mets une meta LuckPerms
 # "supermarket-tpshop-cooldown" sur le groupe (ex: /lp group vip meta set
 # supermarket-tpshop-cooldown 300) : elle prend le dessus sur cette valeur.

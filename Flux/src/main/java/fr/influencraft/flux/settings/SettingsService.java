@@ -27,11 +27,19 @@ import java.util.Map;
  * <p>The state of an option comes from its {@code state} placeholder when the plugin behind it gives one
  * ({@code true}/{@code yes}/{@code oui}/{@code 1} = on), else from the last choice saved by Flux
  * ({@link PlayerSettings}, key {@code flux:<option>}), else from its {@code default}.</p>
+ *
+ * <p>An option with {@code choices} (key: label) is a drop-down list instead of a check box: the key chosen is saved
+ * (read by Flux, e.g. the HUD's corners), {@code default} is a key, and {@code change} lines run when it changes
+ * ({@code %value%} = the key).</p>
  */
 public final class SettingsService {
 
     private record Option(String id, String label, String description, boolean byDefault, String state,
-                          List<String> on, List<String> off) {
+                          List<String> on, List<String> off, Map<String, String> choices, String defaultChoice,
+                          List<String> change) {
+        boolean choice() {
+            return !choices.isEmpty();
+        }
     }
 
     private final JavaPlugin flux;
@@ -64,18 +72,31 @@ public final class SettingsService {
         for (String id : s.getKeys(false)) {
             ConfigurationSection o = s.getConfigurationSection(id);
             if (o == null) continue;
+            Map<String, String> choices = new java.util.LinkedHashMap<>();
+            ConfigurationSection cs = o.getConfigurationSection("choices");
+            if (cs != null) for (String k : cs.getKeys(false)) choices.put(k, cs.getString(k, k));
+            String defaultChoice = choices.isEmpty() ? "" : o.getString("default", choices.keySet().iterator().next());
             options.add(new Option(id, o.getString("label", id), o.getString("description", ""), o.getBoolean("default", true),
-                    o.getString("state", ""), o.getStringList("on"), o.getStringList("off")));
+                    o.getString("state", ""), o.getStringList("on"), o.getStringList("off"), choices, defaultChoice,
+                    o.getStringList("change")));
         }
     }
 
     public void open(Player player) {
         Map<String, Boolean> saved = saved(player);
         Map<String, Boolean> before = new HashMap<>();
+        Map<String, String> chosenBefore = new HashMap<>();
         Dialogs.Form form = Dialogs.form(player, config.getString("title", "Settings"))
                 .buttons(config.getString("save", "Save"), config.getString("close", "Close"));
         for (String line : config.getStringList("text")) form.body(line);
         for (Option o : options) {
+            if (o.choice()) {
+                String current = PlayerSettings.get(player, key(o.id()), o.defaultChoice());
+                if (!o.choices().containsKey(current)) current = o.defaultChoice();
+                chosenBefore.put(o.id(), current);
+                form.choice(o.id(), o.label(), List.copyOf(o.choices().values()), o.choices().get(current));
+                continue;
+            }
             boolean on = current(player, o, saved);
             before.put(o.id(), on);
             form.toggle(o.id(), o.label(), on, o.description());
@@ -83,6 +104,16 @@ public final class SettingsService {
         form.onSubmit((p, answer) -> {
             int changed = 0;
             for (Option o : options) {
+                if (o.choice()) {
+                    String picked = answer.text(o.id());
+                    String chosen = o.choices().entrySet().stream().filter(e -> e.getValue().equals(picked)).map(Map.Entry::getKey)
+                            .findFirst().orElse(chosenBefore.get(o.id()));
+                    if (chosen.equals(chosenBefore.get(o.id()))) continue;
+                    PlayerSettings.set(p, key(o.id()), chosen);
+                    run(p, o.change().stream().map(l -> l.replace("%value%", chosen)).toList());
+                    changed++;
+                    continue;
+                }
                 boolean on = answer.toggle(o.id());
                 if (on == before.get(o.id())) continue;
                 run(p, on ? o.on() : o.off());
@@ -125,6 +156,7 @@ public final class SettingsService {
     private Map<String, Boolean> saved(Player player) {
         Map<String, Boolean> out = new HashMap<>();
         for (Option o : options) {
+            if (o.choice()) continue;
             if (PlayerSettings.has(player, key(o.id()))) out.put(o.id(), PlayerSettings.flag(player, key(o.id()), o.byDefault()));
         }
         return out;

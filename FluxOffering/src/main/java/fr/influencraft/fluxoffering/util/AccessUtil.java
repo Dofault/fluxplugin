@@ -17,7 +17,7 @@ public final class AccessUtil {
     }
 
     public static boolean hasAccess(Player player, CollectionDefinition collection, DataManager dataManager) {
-        if (player.hasPermission("offrandes.admin")) {
+        if (player.hasPermission("fluxoffering.admin")) {
             return true;
         }
         if (!collection.hasPermissionRequirement()) {

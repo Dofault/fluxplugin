@@ -108,14 +108,14 @@ public final class FluxWebsite extends FluxPlugin {
                 .description("Vote Party counter (website: add; admins: add|remove <amount>).")
                 .aliases("influvoteparty")
                 .usage("/<command> <add [amount]|remove <amount>>")
-                .permission("influbridge.voteparty.admin")
+                .permission("fluxwebsite.voteparty.admin")
                 .executor(this::voteParty)
                 .register();
         command("website")
                 .description("FluxWebsite admin.")
                 .aliases("influbridge")
                 .usage("/<command> reload")
-                .permission("influbridge.admin")
+                .permission("fluxwebsite.admin")
                 .executor((sender, label, args) -> {
                     if (args.length != 1 || !args[0].equalsIgnoreCase("reload")) return false;
                     reload();

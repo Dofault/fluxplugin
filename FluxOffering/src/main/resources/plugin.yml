@@ -9,9 +9,9 @@ depend: [Flux]
 softdepend: [FluxValue]
 
 permissions:
-  offrandes.use:
+  fluxoffering.use:
     description: "Permet d'utiliser /offrande (voir la liste et deposer des items)"
     default: true
-  offrandes.admin:
+  fluxoffering.admin:
     description: "Permet les sous-commandes admin (reset/set/check/reload) et l'editeur de collection en jeu, en plus de contourner toute permission de collection"
     default: op

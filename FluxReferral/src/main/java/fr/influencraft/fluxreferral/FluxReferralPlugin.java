@@ -32,7 +32,7 @@ import java.util.logging.Level;
 public class FluxReferralPlugin extends JavaPlugin {
 
     /** {@code /origine <player>}: given to the whole staff (moderators included). */
-    public static final String PERMISSION_ORIGINE = "parrainage.staff.origine";
+    public static final String PERMISSION_ORIGINE = "fluxreferral.staff.origine";
 
     private GestionnaireConfig gestionnaireConfig;
     private GestionnaireLangue gestionnaireLangue;

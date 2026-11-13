@@ -45,6 +45,33 @@
         "6789:?ABCDEFGHIJ",
         "KLMNOPQRSTUVWXYZ"
       ]
+    },
+    {
+      "type": "bitmap",
+      "file": "flux:font/hud_compass.png",
+      "height": 13,
+      "ascent": 13,
+      "chars": [
+        "\ue100\ue101\ue102\ue103\ue104\ue105\ue106\ue107\ue108\ue109\ue10a\ue10b\ue10c\ue10d\ue10e\ue10f\ue110\ue111\ue112\ue113\ue114\ue115\ue116\ue117\ue118\ue119\ue11a\ue11b\ue11c\ue11d\ue11e\ue11f"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "flux:font/hud_icons.png",
+      "height": 13,
+      "ascent": 13,
+      "chars": [
+        "\ue140\ue141\ue142"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "flux:font/hud_panel.png",
+      "height": 13,
+      "ascent": 13,
+      "chars": [
+        "\ue030\ue031\ue032\ue033"
+      ]
     }
   ]
 }

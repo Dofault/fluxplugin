@@ -8,7 +8,7 @@
 #   <id>:                     # used in /offrande <id>, and in %offrandes_<id>_*% placeholders
 #     displayname: "..."      # supports &legacy, &#RRGGBB / #RRGGBB hex, MiniMessage <tags>, %papi_placeholders%
 #     permission: "..."       # LuckPerms/Bukkit permission required to access it; blank = open to
-#                              # anyone with offrandes.use. Ops and offrandes.admin always bypass this.
+#                              # anyone with fluxoffering.use. Ops and fluxoffering.admin always bypass this.
 #     items:
 #       <item key>: <amount>  # a plain Bukkit material (DIAMOND) or an ItemsAdder namespaced id
 #                              # ("namespace:id", quoted because of the colon). Amount can be far
@@ -40,8 +40,8 @@ collections:
   collection2:
     displayname: "&5Offrande du Nether"
     # Exemple : reserve aux joueurs ayant cette permission (a accorder par grade via LuckPerms,
-    # ex: /lp group repute permission set offrandes.collection.collection2 true).
-    permission: "offrandes.collection.collection2"
+    # ex: /lp group repute permission set fluxoffering.collection.collection2 true).
+    permission: "fluxoffering.collection.collection2"
     items:
       NETHERITE_INGOT: 4
       BLAZE_ROD: 32

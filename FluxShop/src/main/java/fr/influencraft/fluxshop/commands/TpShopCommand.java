@@ -79,8 +79,8 @@ public class TpShopCommand implements SupermarketCommand {
     }
 
     private void selfTeleport(Player player) {
-        boolean isAdmin = player.hasPermission("supermarket.admin");
-        if (!isAdmin && !player.hasPermission("supermarket.tpshop")) {
+        boolean isAdmin = player.hasPermission("fluxshop.admin");
+        if (!isAdmin && !player.hasPermission("fluxshop.tpshop")) {
             player.sendMessage(lang.get("shop-no-permission"));
             return;
         }
@@ -168,7 +168,7 @@ public class TpShopCommand implements SupermarketCommand {
     }
 
     private void adminTeleportOther(Player player, String targetName) {
-        if (!player.hasPermission("supermarket.admin")) {
+        if (!player.hasPermission("fluxshop.admin")) {
             player.sendMessage(lang.get("shop-no-permission"));
             return;
         }

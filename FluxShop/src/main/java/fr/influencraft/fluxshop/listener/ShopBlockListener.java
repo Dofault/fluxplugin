@@ -73,7 +73,7 @@ public class ShopBlockListener implements Listener {
                 event.setCancelled(true);
                 // Bloc remplacé depuis l'enregistrement (ex. coffre cassé au WorldEdit puis
                 // reposé autrement) : on n'ouvre rien, l'admin doit le réenregistrer.
-                if (player.isSneaking() && player.hasPermission("supermarket.admin")) {
+                if (player.isSneaking() && player.hasPermission("fluxshop.admin")) {
                     shopEditor.open(player, shop); // accroupi + clic droit : éditeur admin
                 } else if (registry.isAllowedBlock(block)) {
                     shopMenu.open(player, shop);
@@ -101,7 +101,7 @@ public class ShopBlockListener implements Listener {
     public void onBreak(BlockBreakEvent event) {
         if (registry.isAssigned(event.getBlock())) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage(lang.get(event.getPlayer().hasPermission("supermarket.admin")
+            event.getPlayer().sendMessage(lang.get(event.getPlayer().hasPermission("fluxshop.admin")
                     ? "shop-block-protected-admin"
                     : "shop-block-protected"));
         }

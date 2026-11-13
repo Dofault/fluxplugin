@@ -337,10 +337,15 @@ public final class Dialogs {
 
         /** Drop-down list (at most 100 options, the first one selected); the answer is the chosen option. */
         public Form choice(String id, String label, List<String> options) {
+            return choice(id, label, options, null);
+        }
+
+        /** Drop-down list with {@code initial} selected (the first option when null or not in the list). */
+        public Form choice(String id, String label, List<String> options, String initial) {
             if (options.isEmpty()) return this;
             List<String> kept = List.copyOf(options.subList(0, Math.min(100, options.size())));
             inputs.add(t -> {
-                int picked = t != null ? Math.max(0, kept.indexOf(t.text(id))) : 0;
+                int picked = Math.max(0, kept.indexOf(t != null ? t.text(id) : initial));
                 List<SingleOptionDialogInput.OptionEntry> entries = new ArrayList<>();
                 for (int i = 0; i < kept.size(); i++) {
                     entries.add(SingleOptionDialogInput.OptionEntry.create("o" + i, Texts.parse(style("option") + kept.get(i), player), i == picked));

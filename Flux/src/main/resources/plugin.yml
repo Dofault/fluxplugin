@@ -20,7 +20,7 @@ permissions:
   flux.items.admin:
     description: /fluxitems (give, list, id).
     default: op
-  fluxmenu.admin:
+  flux.admin:
     description: /fluxmenu (open, reload, list).
     default: op
   flux.rewards.give:

@@ -49,6 +49,9 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
 
     @Override
     public void onEnable() {
+        // every class read from the jar now: a jar replaced while the server runs would otherwise make the first use
+        // of a class fail (NoClassDefFoundError, e.g. HurtShake on the first hurt packet) and kick the player
+        preloadClasses();
         saveDefaultConfig();
         File menusDir = new File(getDataFolder(), "menus");
         if (!menusDir.isDirectory()) saveResource("menus/main.yml", false);
@@ -402,7 +405,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("fluxmenu.admin")) {
+        if (!sender.hasPermission("flux.admin")) {
             msg(sender, "&#FF5C5CPermission manquante.");
             return true;
         }
@@ -501,7 +504,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> out = new ArrayList<>();
-        if (!sender.hasPermission("fluxmenu.admin")) return out;
+        if (!sender.hasPermission("flux.admin")) return out;
         if (args.length == 1) {
             for (String s : List.of("open", "reload", "list", "database")) if (s.startsWith(args[0].toLowerCase(Locale.ROOT))) out.add(s);
         } else if (args.length == 2 && args[0].equalsIgnoreCase("database")) {
@@ -516,5 +519,26 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
             return null; // noms des joueurs
         }
         return out;
+    }
+
+    /** Loads every class of Flux's jar (see onEnable; plugins/fluxplugin/CLAUDE.md, known pitfalls). */
+    private void preloadClasses() {
+        int count = 0;
+        try (java.util.jar.JarFile jar = new java.util.jar.JarFile(getFile())) {
+            var entries = jar.entries();
+            while (entries.hasMoreElements()) {
+                String name = entries.nextElement().getName();
+                if (!name.startsWith("fr/influencraft/flux/") || !name.endsWith(".class")) continue;
+                try {
+                    Class.forName(name.substring(0, name.length() - 6).replace('/', '.'), false, getClassLoader());
+                    count++;
+                } catch (ClassNotFoundException | LinkageError ignored) {
+                    // a class that cannot load now (an adapter of an absent plugin) would not load later either
+                }
+            }
+        } catch (java.io.IOException e) {
+            getLogger().warning("Could not preload the classes of Flux: " + e.getMessage());
+        }
+        getLogger().info(count + " classes preloaded.");
     }
 }

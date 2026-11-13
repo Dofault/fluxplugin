@@ -25,7 +25,7 @@ modules:
     enabled: true
 
   # /repair: repair menu at a single price (cost, in the main currency), durability and anvil cost reset.
-  # Permission influbridge.repair. Items tagged "Irréparable" are refused.
+  # Permission fluxtools.repair. Items tagged "Irréparable" are refused.
   repair:
     enabled: true
     cost: 500

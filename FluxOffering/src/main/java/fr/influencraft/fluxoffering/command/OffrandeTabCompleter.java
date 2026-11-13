@@ -42,7 +42,7 @@ public final class OffrandeTabCompleter implements TabCompleter {
             }
             return withSidebar;
         }
-        boolean admin = sender.hasPermission("offrandes.admin");
+        boolean admin = sender.hasPermission("fluxoffering.admin");
         List<String> options = new ArrayList<>();
         for (CollectionDefinition collection : configManager.collections().values()) {
             if (admin || !(sender instanceof Player player) || AccessUtil.hasAccess(player, collection, dataManager)) {

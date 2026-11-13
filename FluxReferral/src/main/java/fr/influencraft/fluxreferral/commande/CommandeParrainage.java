@@ -41,8 +41,8 @@ import java.util.logging.Level;
 public class CommandeParrainage implements CommandExecutor, TabCompleter {
 
     /** Permission of the « admin » line of the player help: any admin permission of the referral system. */
-    private static final String ANY_ADMIN = "parrainage.admin";
-    private static final String OTHERS = "parrainage.commande.info.autres";
+    private static final String ANY_ADMIN = "fluxreferral.admin";
+    private static final String OTHERS = "fluxreferral.commande.info.autres";
 
     private static final List<String> ADMIN_SUBCOMMANDS = List.of("aide", "recharger", "reinitialiser",
         "definirparrain", "supprimerparrain", "forcerpalier", "info", "simuler", "valider", "decouverte", "decouvertes",
@@ -51,14 +51,14 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
     /** Player help (Flux's ChatHelp, as FluxCommerce): sub-command, lang key, permission (null = everybody). */
     private List<ChatHelp.Entry> help() {
         return List.of(
-            entry("adresse", "adresse", "parrainage.commande.code"),
-            entry("code", "code", "parrainage.commande.code"),
-            entry("utiliser", "utiliser", "parrainage.commande.utiliser"),
-            entry("filleuls", "filleuls", "parrainage.commande.filleuls"),
-            entry("info", "info", "parrainage.commande.info.soi"),
+            entry("adresse", "adresse", "fluxreferral.commande.code"),
+            entry("code", "code", "fluxreferral.commande.code"),
+            entry("utiliser", "utiliser", "fluxreferral.commande.utiliser"),
+            entry("filleuls", "filleuls", "fluxreferral.commande.filleuls"),
+            entry("info", "info", "fluxreferral.commande.info.soi"),
             entry("info", "info-autres", OTHERS),
-            entry("top", "top", "parrainage.commande.top"),
-            entry("recuperer", "recuperer", "parrainage.commande.recuperer"),
+            entry("top", "top", "fluxreferral.commande.top"),
+            entry("recuperer", "recuperer", "fluxreferral.commande.recuperer"),
             entry("aide", "aide", null),
             entry("admin aide", "admin", ANY_ADMIN));
     }
@@ -66,7 +66,7 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
     private List<ChatHelp.Entry> adminHelp() {
         List<ChatHelp.Entry> out = new ArrayList<>();
         for (String sub : ADMIN_SUBCOMMANDS) {
-            if (!sub.equals("aide")) out.add(entry("admin " + sub, "admin-" + sub, "parrainage.admin." + sub));
+            if (!sub.equals("aide")) out.add(entry("admin " + sub, "admin-" + sub, "fluxreferral.admin." + sub));
         }
         out.add(entry("admin aide", "admin-aide", ANY_ADMIN));
         return out;
@@ -131,25 +131,25 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
 
         switch (sous) {
             case "adresse", "lien", "ip" -> {
-                if (!joueur.hasPermission("parrainage.commande.code")) {
+                if (!joueur.hasPermission("fluxreferral.commande.code")) {
                     joueur.sendMessage(langue.getMessage("permission-refusee")); return true;
                 }
                 traiterAdresse(joueur);
             }
             case "recuperer" -> {
-                if (!joueur.hasPermission("parrainage.commande.recuperer")) {
+                if (!joueur.hasPermission("fluxreferral.commande.recuperer")) {
                     joueur.sendMessage(langue.getMessage("permission-refusee")); return true;
                 }
                 traiterRecuperer(joueur, args);
             }
             case "code" -> {
-                if (!joueur.hasPermission("parrainage.commande.code")) {
+                if (!joueur.hasPermission("fluxreferral.commande.code")) {
                     joueur.sendMessage(langue.getMessage("permission-refusee")); return true;
                 }
                 traiterCode(joueur);
             }
             case "utiliser" -> {
-                if (!joueur.hasPermission("parrainage.commande.utiliser")) {
+                if (!joueur.hasPermission("fluxreferral.commande.utiliser")) {
                     joueur.sendMessage(langue.getMessage("permission-refusee")); return true;
                 }
                 if (args.length < 2) {
@@ -160,19 +160,19 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
                 traiterUtiliser(joueur, args[1]);
             }
             case "info" -> {
-                if (!joueur.hasPermission("parrainage.commande.info.soi")) {
+                if (!joueur.hasPermission("fluxreferral.commande.info.soi")) {
                     joueur.sendMessage(langue.getMessage("permission-refusee")); return true;
                 }
                 traiterInfo(joueur, args.length > 1 ? args[1] : null);
             }
             case "top" -> {
-                if (!joueur.hasPermission("parrainage.commande.top")) {
+                if (!joueur.hasPermission("fluxreferral.commande.top")) {
                     joueur.sendMessage(langue.getMessage("permission-refusee")); return true;
                 }
                 traiterTop(joueur);
             }
             case "filleuls" -> {
-                if (!joueur.hasPermission("parrainage.commande.filleuls")) {
+                if (!joueur.hasPermission("fluxreferral.commande.filleuls")) {
                     joueur.sendMessage(langue.getMessage("permission-refusee")); return true;
                 }
                 traiterFilleuls(joueur, args.length > 1 ? args[1] : null);
@@ -387,7 +387,7 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
 
     private void traiterInfo(Player joueur, String cibleNom) {
         if (cibleNom != null && !cibleNom.equalsIgnoreCase(joueur.getName())
-                && !joueur.hasPermission("parrainage.commande.info.autres")) {
+                && !joueur.hasPermission("fluxreferral.commande.info.autres")) {
             joueur.sendMessage(langue.getMessage("permission-refusee"));
             return;
         }
@@ -722,15 +722,15 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
     /** Vérifie si le sender a la permission pour une sous-commande admin. Console : toujours autorisée. */
     private boolean aPermissionAdmin(CommandSender sender, String sousCommande) {
         if (sender instanceof ConsoleCommandSender) return true;
-        return sender.hasPermission("parrainage.admin." + sousCommande)
-            || sender.hasPermission("parrainage.admin.*");
+        return sender.hasPermission("fluxreferral.admin." + sousCommande)
+            || sender.hasPermission("fluxreferral.admin.*");
     }
 
     /** Vérifie si le sender a au moins une permission admin (pour le pied de page d'aide). */
     private boolean aPermissionAdminQuelconque(CommandSender sender) {
         if (sender instanceof ConsoleCommandSender) return true;
-        return sender.hasPermission("parrainage.admin.*")
-            || ADMIN_SUBCOMMANDS.stream().anyMatch(sub -> sender.hasPermission("parrainage.admin." + sub));
+        return sender.hasPermission("fluxreferral.admin.*")
+            || ADMIN_SUBCOMMANDS.stream().anyMatch(sub -> sender.hasPermission("fluxreferral.admin." + sub));
     }
 
     private void usageAdmin(CommandSender sender, String sousUsage) {

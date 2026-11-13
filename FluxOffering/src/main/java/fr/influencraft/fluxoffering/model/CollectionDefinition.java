@@ -34,7 +34,7 @@ public final class CollectionDefinition {
 
     /**
      * @return the LuckPerms/Bukkit permission node required to access this collection,
-     * or null/blank if it is open to anyone with offrandes.use.
+     * or null/blank if it is open to anyone with fluxoffering.use.
      */
     public String permission() {
         return permission;

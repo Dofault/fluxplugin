@@ -7,9 +7,9 @@ authors: [Influencraft]
 depend: [Flux]
 
 permissions:
-  influcasino.use:
+  fluxcasino.use:
     description: Use the chips command (balance, bet, exchange).
     default: true
-  influcasino.admin:
+  fluxcasino.admin:
     description: Chips admin (give, take, set, history).
     default: op

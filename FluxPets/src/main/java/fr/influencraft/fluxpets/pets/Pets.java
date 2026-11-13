@@ -100,7 +100,7 @@ public final class Pets {
         Bukkit.getPluginManager().registerEvents(new PetListener(), plugin);
         PetCommands commands = new PetCommands();
         fr.influencraft.flux.api.command.Commands.create(plugin, "pets").aliases("pet", "familiers", "familier")
-                .description("Pets menu.").permission("influpet.command.pets").bukkit(commands, commands).register();
+                .description("Pets menu.").permission("fluxpets.command.pets").bukkit(commands, commands).register();
         if (Bukkit.getPluginManager().isPluginEnabled("BetterModel")) {
             try {
                 display = new PetDisplay();

@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 
 /**
  * Familiers d'un joueur : niveau et XP de chaque familier, familiers actifs (plusieurs selon la permission
- * influpet.pets.max.<n>), familiers cachés. Tout est lu et écrit
+ * fluxpets.pets.max.<n>), familiers cachés. Tout est lu et écrit
  * dans le profil eco du joueur (PersistentDataKey), exactement comme EcoPets (com.willfp.ecopets.pets.PetKt) :
  * niveau 0 = pas adopté. C'est une collection : un familier adopté ne se retire pas (pas d'œuf, pas d'échange).
  */
@@ -123,7 +123,7 @@ public final class PetData {
         refresh(player);
     }
 
-    /** Multiplicateur d'XP par permission, mis en cache 10 s (comme EcoPets, permissions influpet.xpmultiplier.*). */
+    /** Multiplicateur d'XP par permission, mis en cache 10 s (comme EcoPets, permissions fluxpets.xpmultiplier.*). */
     public static double multiplier(Player player) {
         long now = System.currentTimeMillis();
         double[] cached = multiplierCache.get(player.getUniqueId());
@@ -131,18 +131,18 @@ public final class PetData {
             return cached[0];
         }
         double value = 1;
-        if (player.hasPermission("influpet.xpmultiplier.quadruple")) {
+        if (player.hasPermission("fluxpets.xpmultiplier.quadruple")) {
             value = 4;
-        } else if (player.hasPermission("influpet.xpmultiplier.triple")) {
+        } else if (player.hasPermission("fluxpets.xpmultiplier.triple")) {
             value = 3;
-        } else if (player.hasPermission("influpet.xpmultiplier.double")) {
+        } else if (player.hasPermission("fluxpets.xpmultiplier.double")) {
             value = 2;
-        } else if (player.hasPermission("influpet.xpmultiplier.50percent")) {
+        } else if (player.hasPermission("fluxpets.xpmultiplier.50percent")) {
             value = 1.5;
         } else {
             for (PermissionAttachmentInfo info : player.getEffectivePermissions()) {
                 String perm = info.getPermission();
-                if (info.getValue() && perm.startsWith("influpet.xpmultiplier.")) {
+                if (info.getValue() && perm.startsWith("fluxpets.xpmultiplier.")) {
                     try {
                         value = Double.parseDouble(perm.substring(perm.lastIndexOf('.') + 1)) / 100 + 1;
                     } catch (NumberFormatException ignored) {
@@ -235,7 +235,7 @@ public final class PetData {
     }
 
     /**
-     * Nombre de familiers actifs autorisés : permission influpet.pets.max.<n> (la plus haute), sinon
+     * Nombre de familiers actifs autorisés : permission fluxpets.pets.max.<n> (la plus haute), sinon
      * pet-settings.active-pets.default, jamais plus que pet-settings.active-pets.maximum. Mis en cache 10 s.
      */
     public static int maxActive(Player player) {
@@ -248,9 +248,9 @@ public final class PetData {
         int value = Math.max(1, Pets.settings().getInt("active-pets.default"));
         for (PermissionAttachmentInfo info : player.getEffectivePermissions()) {
             String perm = info.getPermission().toLowerCase(java.util.Locale.ROOT);
-            if (info.getValue() && perm.startsWith("influpet.pets.max.")) {
+            if (info.getValue() && perm.startsWith("fluxpets.pets.max.")) {
                 try {
-                    value = Math.max(value, Integer.parseInt(perm.substring("influpet.pets.max.".length())));
+                    value = Math.max(value, Integer.parseInt(perm.substring("fluxpets.pets.max.".length())));
                 } catch (NumberFormatException ignored) {
                     // permission mal écrite : ignorée
                 }

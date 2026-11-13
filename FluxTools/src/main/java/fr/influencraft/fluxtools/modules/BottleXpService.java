@@ -53,8 +53,8 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
 
     /** XP totale pour passer du niveau 0 au niveau 30 (formule vanilla). */
     static final int XP_PER_BOTTLE = 1395;
-    static final String PERMISSION = "influbridge.bottlexp";
-    static final String ADMIN_PERMISSION = "influbridge.bottlexp.admin";
+    static final String PERMISSION = "fluxtools.bottlexp";
+    static final String ADMIN_PERMISSION = "fluxtools.bottlexp.admin";
 
     private final NamespacedKey bottledXpKey;
     /** Tick du dernier clic consommé par joueur : un clic peut déclencher main + offhand. */

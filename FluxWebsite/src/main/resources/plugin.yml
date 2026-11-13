@@ -7,9 +7,9 @@ description: "Bridge between the website and the server: shop deliveries, vote r
 depend: [Flux]
 
 permissions:
-  influbridge.admin:
+  fluxwebsite.admin:
     description: "Reload the config (/website reload)."
     default: op
-  influbridge.voteparty.admin:
+  fluxwebsite.voteparty.admin:
     description: "Change the Vote Party counter by hand (/voteparty add|remove <amount>)."
     default: op

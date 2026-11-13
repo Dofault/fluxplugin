@@ -125,7 +125,7 @@ public final class HudService implements Hud.Backend, Listener {
         valueTicks = Math.max(refreshTicks, c.getInt("value-ticks", 20));
         hideWhenFocused = c.getBoolean("hide-when-focused", true);
         javaColour = colour(c.getString("bar-colour", "YELLOW"), BossBar.Color.YELLOW);
-        layout = HudLayout.read(c.getConfigurationSection("elements"), flux.getLogger());
+        layout = HudLayout.read(c, flux.getLogger());
         ConfigurationSection b = c.getConfigurationSection("bedrock");
         bedrockEnabled = b != null && b.getBoolean("enabled", true);
         bedrockText = b == null ? "" : b.getString("text", "");
@@ -138,7 +138,8 @@ public final class HudService implements Hud.Backend, Listener {
         views.clear();
         if (task != null) task.cancel();
         task = enabled ? Bukkit.getScheduler().runTaskTimer(flux, this::tick, 20L, refreshTicks) : null;
-        flux.getLogger().info("HUD: " + layout.elements.size() + " element(s)" + (enabled ? "" : " (disabled)"));
+        flux.getLogger().info("HUD: " + layout.elements.size() + " element(s), " + layout.groups.size() + " group(s), "
+                + layout.slotCount() + " place(s) in the shader" + (enabled ? "" : " (disabled)"));
     }
 
     /**
@@ -233,29 +234,32 @@ public final class HudService implements Hud.Backend, Listener {
         }
         TitleBuilder back = new TitleBuilder();
         TitleBuilder front = new TitleBuilder();
-        for (HudLayout.Element e : layout.elements) {
-            if (e.setting() != null && !PlayerSettings.flag(p, "flux:" + e.setting(), true)) continue;
-            if (e.requires() != null) {
-                String r = value(p, v, e.requires());
-                if (r == null || r.isBlank()) continue;
-            }
-            for (HudLayout.Part part : e.parts()) {
+        // each group in the corner the player chose in the settings (group "setting", a choice option)
+        Map<HudLayout.Group, HudLayout.Corner> corners = new HashMap<>();
+        for (HudLayout.Group g : layout.groups) {
+            if (g.setting() != null) corners.put(g, HudLayout.Corner.of(PlayerSettings.get(p, "flux:" + g.setting(), null), g.byDefault()));
+        }
+        List<HudLayout.Placed> placed = layout.arrange(corners, e -> shown(p, v, e));
+        for (HudLayout.Placed at : placed) {
+            for (HudLayout.Part part : at.element().parts()) {
+                int slot = layout.slot(part, at.place());
+                if (slot == 0) continue;
                 TitleBuilder to = part.layer() == HudLayout.Layer.BACK ? back : front;
                 switch (part) {
                     case HudLayout.Image i -> {
                         String sprite = i.sprite().startsWith("currency:")
                                 ? currencySprite(i.sprite().substring("currency:".length())) : fill(i.sprite(), p, v);
                         if (sprite.isBlank()) continue;
-                        to.add(Component.object(ObjectContents.sprite(GUI_ATLAS, Key.key(sprite))), i.slot(), i.colour(), 8);
+                        to.add(Component.object(ObjectContents.sprite(GUI_ATLAS, Key.key(sprite))), slot, i.colour(), 8);
                     }
-                    case HudLayout.Head h -> to.add(head(p, v), h.slot(), h.colour(), 8);
+                    case HudLayout.Head h -> to.add(head(p, v), slot, h.colour(), 8);
                     case HudLayout.Text t -> {
                         int x = 0;
                         for (HudLayout.Run run : t.runs()) {
                             String text = clean(fill(run.text(), p, v));
                             if (t.small()) text = text.toUpperCase(Locale.ROOT);
                             if (text.isEmpty()) continue;
-                            x += to.addText(text, t.small(), t.slot(), run.colour(), widths.width(text, t.small()));
+                            x += to.addText(text, t.small(), slot, run.colour(), widths.width(text, t.small()));
                         }
                         to.close(x);
                     }
@@ -281,6 +285,14 @@ public final class HudService implements Hud.Backend, Listener {
             p.showBossBar(v.back);
             p.showBossBar(v.front);
         }
+    }
+
+    /** An element is shown unless its setting is off or a piece it requires is empty. */
+    private boolean shown(Player p, View v, HudLayout.Element e) {
+        if (e.setting() != null && !PlayerSettings.flag(p, "flux:" + e.setting(), true)) return false;
+        if (e.requires() == null) return true;
+        String r = value(p, v, e.requires());
+        return r != null && !r.isBlank();
     }
 
     private void drawBedrock(Player p, View v) {
@@ -501,9 +513,9 @@ public final class HudService implements Hud.Backend, Listener {
         }
 
         private static Component mark(Component c, int slot, int colour) {
-            int blue = HudLayout.blue(colour, false);
-            return c.color(TextColor.color(HudLayout.MARKER, slot, blue))
-                    .shadowColor(ShadowColor.shadowColor(0xFF000000 | HudLayout.MARKER << 16 | slot << 8 | HudLayout.blue(colour, true)));
+            int green = HudLayout.green(slot);
+            return c.color(TextColor.color(HudLayout.MARKER, green, HudLayout.blue(slot, colour, false)))
+                    .shadowColor(ShadowColor.shadowColor(0xFF000000 | HudLayout.MARKER << 16 | green << 8 | HudLayout.blue(slot, colour, true)));
         }
 
         /** Negative (or positive) space of the HUD font, in powers of two. */

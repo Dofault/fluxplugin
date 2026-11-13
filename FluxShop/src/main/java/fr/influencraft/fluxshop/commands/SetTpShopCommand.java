@@ -22,7 +22,7 @@ public class SetTpShopCommand implements SupermarketCommand {
 
     @Override
     public boolean execute(Player player, String[] args) {
-        if (!player.hasPermission("supermarket.admin")) {
+        if (!player.hasPermission("fluxshop.admin")) {
             player.sendMessage(lang.get("shop-no-permission"));
             return true;
         }

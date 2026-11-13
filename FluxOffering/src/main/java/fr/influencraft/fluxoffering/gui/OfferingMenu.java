@@ -243,13 +243,13 @@ public final class OfferingMenu implements ListProvider, FluxAction {
                 if (!editing(player)) depositAll(player, collection);
             }
             case "editor" -> {
-                if (player.hasPermission("offrandes.admin")) {
+                if (player.hasPermission("fluxoffering.admin")) {
                     open(player, collection, !editing(player));
                     return;
                 }
             }
             case "additem" -> {
-                if (editing(player) && player.hasPermission("offrandes.admin")) addHeldItem(player, collection);
+                if (editing(player) && player.hasPermission("fluxoffering.admin")) addHeldItem(player, collection);
                 return;
             }
             default -> plugin.getLogger().warning("[offering] unknown action « " + argument + " »");
@@ -263,7 +263,7 @@ public final class OfferingMenu implements ListProvider, FluxAction {
     }
 
     private void click(Player player, CollectionDefinition collection, String id, boolean right) {
-        boolean editor = editing(player) && player.hasPermission("offrandes.admin");
+        boolean editor = editing(player) && player.hasPermission("fluxoffering.admin");
         if (id.equals(MONEY)) {
             if (editor) {
                 if (right) {

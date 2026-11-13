@@ -8,15 +8,15 @@ depend: [Flux]
 # EcoEnchants before us: its enchantments (Filon, Tranchee...) must be registered when the tools are read.
 softdepend: [EcoEnchants]
 permissions:
-  influbridge.bottlexp:
+  fluxtools.bottlexp:
     description: "Permet d'utiliser /bottlexp (remplir des fioles d'expérience). Utiliser une fiole ne demande aucune permission."
     default: op
-  influbridge.bottlexp.admin:
+  fluxtools.bottlexp.admin:
     description: "Permet /bottlexp give <joueur> <xp> [quantité] : donne des fioles d'un montant d'XP libre."
     default: op
-  influbridge.repair:
+  fluxtools.repair:
     description: "Permet d'ouvrir le menu de réparation /repair. Accordé au groupe eminent (rang 5)."
     default: op
-  fluxitems.admin:
+  fluxtools.admin:
     description: /tools
     default: op

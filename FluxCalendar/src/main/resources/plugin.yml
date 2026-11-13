@@ -7,6 +7,6 @@ authors: [Influencraft]
 depend: [Flux]
 
 permissions:
-  influrecompenses.admin:
+  fluxcalendar.admin:
     description: Login calendar admin (reset, reload).
     default: op

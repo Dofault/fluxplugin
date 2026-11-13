@@ -104,7 +104,7 @@ public final class OffrandeCommand implements CommandExecutor {
             messages.send(sender, "general.players-only", null);
             return;
         }
-        if (!player.hasPermission("offrandes.use")) {
+        if (!player.hasPermission("fluxoffering.use")) {
             messages.send(player, "general.no-permission", player);
             return;
         }
@@ -147,7 +147,7 @@ public final class OffrandeCommand implements CommandExecutor {
             messages.send(sender, "general.players-only", null);
             return;
         }
-        if (!player.hasPermission("offrandes.use")) {
+        if (!player.hasPermission("fluxoffering.use")) {
             messages.send(player, "general.no-permission", player);
             return;
         }

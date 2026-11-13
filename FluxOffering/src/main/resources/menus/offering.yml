@@ -77,7 +77,7 @@ items:
     name: "Modifier cette offrande"
     lore: ["@desc Réservé aux administrateurs.", "@left Modifier"]
     view-requirements:
-      - "permission: offrandes.admin"
+      - "permission: fluxoffering.admin"
       - "placeholder: %offrandes_editing% == false"
     actions:
       left: ["[offering] editor"]
@@ -87,7 +87,7 @@ items:
     name: "Quitter l'édition"
     lore: ["@desc Retour à la vue normale.", "@left Quitter"]
     view-requirements:
-      - "permission: offrandes.admin"
+      - "permission: fluxoffering.admin"
       - "placeholder: %offrandes_editing% == true"
     actions:
       left: ["[offering] editor"]
@@ -99,7 +99,7 @@ items:
       - "@desc Tiens l'objet (ou un livre enchanté) puis clique pour fixer sa quantité."
       - "@left Ajouter"
     view-requirements:
-      - "permission: offrandes.admin"
+      - "permission: fluxoffering.admin"
       - "placeholder: %offrandes_editing% == true"
     actions:
       left: ["[offering] additem"]

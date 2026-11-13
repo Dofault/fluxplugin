@@ -23,7 +23,7 @@ pet-area:
     column: 8
 # Active pet slots (top row), in filling order: an activated pet takes the first free slot, slot 1 is the one
 # following the player (the others walk behind it). The player has as many slots as their maximum (permission
-# influpet.pets.max.<n>, see config.yml pet-settings.active-pets), the next ones are shown locked.
+# fluxpets.pets.max.<n>, see config.yml pet-settings.active-pets), the next ones are shown locked.
 pet-slots:
   locations:
   - row: 1

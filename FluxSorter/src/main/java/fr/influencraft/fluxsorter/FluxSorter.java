@@ -62,7 +62,7 @@ public final class FluxSorter extends JavaPlugin {
     @Override
     public void onEnable() {
         fr.influencraft.flux.api.command.Commands.create(this, "sorter").aliases("sortingchest", "schest", "tri")
-                .description("Sorting chest administration.").permission("sortingchest.admin").bukkit(this, this).register();
+                .description("Sorting chest administration.").permission("fluxsorter.admin").bukkit(this, this).register();
         saveDefaultConfig();
         conf = Settings.of(getConfig());
         if (!fr.influencraft.flux.api.claims.Claims.available()) {

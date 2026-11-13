@@ -146,7 +146,7 @@ public final class FluxOfferingAdminCommand implements CommandExecutor {
     }
 
     private boolean requireAdmin(CommandSender sender) {
-        if (sender.hasPermission("offrandes.admin")) {
+        if (sender.hasPermission("fluxoffering.admin")) {
             return true;
         }
         messages.send(sender, "general.no-permission", sender instanceof Player p ? p : null);

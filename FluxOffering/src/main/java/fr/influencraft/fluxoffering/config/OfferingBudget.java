@@ -71,7 +71,7 @@ final class OfferingBudget {
                 continue;
             }
             def.displayName(c.getString("names." + rank, "Offrande " + rank) + suffix);
-            def.permission("offrandes.collection." + id);
+            def.permission("fluxoffering.collection." + id);
             double hours = hours(c, g, offerings);
             def.money(comp.contains("money") ? comp.getLong("money") : money(c, g, offerings));
             Map<String, Long> quantities = quantities(log, c, comp, g, hours);

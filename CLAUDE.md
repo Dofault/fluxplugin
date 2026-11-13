@@ -97,7 +97,8 @@ The plugins are written **as English plugins, then adapted to French** for our s
   off, never read `%cmi_user_afk%` again.
 - FluxPW owns player warps (`fluxpw.api.PlayerWarps`: list, visit and create with every check of `/pw`, imports);
   FluxLands shows them with their town. Its permissions are the former `playerwarps.*` nodes renamed `fluxpw.*` (same suffixes); rank groups are moved
-  with `FluxPW/assets/lp_playerwarps_to_fluxpw.py` (Labs done, production at go-live).
+  with `Flux/assets/lp_rename_permissions.py`, the one table of every permission renamed in the suite (add a line there
+  when you rename a node).
 - FluxCommerce owns commerce between players (merged from FluxTrade, FluxAuctionHouse and FluxChestShop on 2026-11-01):
   one plugin made of **parts** (`trade`, `auctionhouse`, `chestshop`), each a `fluxcommerce.Module` with its own package,
   folder (`<part>/config.yml`, `<part>/lang/`, `<part>/menus/`, through `Messages.load(plugin, language, folder)` and

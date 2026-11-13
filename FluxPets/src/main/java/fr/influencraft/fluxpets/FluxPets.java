@@ -132,7 +132,7 @@ public final class FluxPets extends JavaPlugin implements TabCompleter {
             }
         });
         fr.influencraft.flux.api.command.Commands.create(this, "fluxpets").aliases("influpet")
-                .description("Pets, cards and boosters administration.").permission("influpet.admin")
+                .description("Pets, cards and boosters administration.").permission("fluxpets.admin")
                 .bukkit(this, this).register();
         // boosters en attente (/boosters) et rattrapage unique des boosters de carrière, cf. CareerCatchUp
         boosterStash = fr.influencraft.fluxpets.careers.CareerCatchUp.enable(this);
@@ -341,8 +341,8 @@ public final class FluxPets extends JavaPlugin implements TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
-        // double sécurité : plugin.yml réserve déjà la commande à influpet.admin (op par défaut)
-        if (!sender.hasPermission("influpet.admin")) {
+        // double sécurité : plugin.yml réserve déjà la commande à fluxpets.admin (op par défaut)
+        if (!sender.hasPermission("fluxpets.admin")) {
             send(sender, "no-permission");
             return true;
         }
@@ -590,7 +590,7 @@ public final class FluxPets extends JavaPlugin implements TabCompleter {
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
                                       @NotNull String alias, @NotNull String[] args) {
-        if (!sender.hasPermission("influpet.admin")) {
+        if (!sender.hasPermission("fluxpets.admin")) {
             return List.of();
         }
         List<String> players = Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();

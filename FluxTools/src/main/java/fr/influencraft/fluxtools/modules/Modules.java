@@ -33,11 +33,11 @@ public final class Modules {
             pm.registerEvents(new AnvilRestrictionListener(), plugin);
         }
         if (on("repair")) {
-            command("repair", "influbridge.repair", new RepairMenu(plugin), null);
+            command("repair", "fluxtools.repair", new RepairMenu(plugin), null);
         }
         if (on("bottlexp")) {
             BottleXpService bottles = new BottleXpService(plugin);
-            command("bottlexp", "influbridge.bottlexp", bottles, bottles);
+            command("bottlexp", "fluxtools.bottlexp", bottles, bottles);
             pm.registerEvents(bottles, plugin);
         }
     }

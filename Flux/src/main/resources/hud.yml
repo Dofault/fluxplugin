@@ -13,46 +13,60 @@ hide-when-focused: true
 # Colour of the two boss bars carrying the HUD: YELLOW is drawn empty by the server's pack.
 bar-colour: YELLOW
 
-# anchor: top-left, top, top-right, left, centre, right, bottom-left, bottom, bottom-right; at: [x, y] in GUI pixels
-# from that point (negative x from the right edge). Parts, at [x, y] inside the element:
+# Places: the elements of a group go to the corner each player picks in /settings (the group's setting, a choice
+# option of settings.yml: top-left, top-right, bottom-left, bottom-right; default otherwise). In a corner, elements
+# stack from the edge (groups in their order), without a hole when one is hidden; two groups may share a corner.
+# margin: distance to the screen's edges [x, y], gap: between two elements of a corner.
+# An element of no group places itself: anchor (top-left, top, top-right, left, centre, right, bottom-left, bottom,
+# bottom-right) and at [x, y] from that point.
+margin: [15, 10]
+gap: 3
+groups:
+  profile:
+    setting: hud_profile_place
+    default: top-left
+    elements: [profile]
+  info:
+    setting: hud_info_place
+    default: top-right
+    elements: [position, voteparty]
+
+# Elements: size [w, h] (its room in the stack), setting (option of settings.yml that hides it when off), requires
+# (piece that must not be empty). Parts, at [x, y] from the element's top left corner:
 #   image: sprite of the gui atlas (assets/<ns>/textures/gui/sprites/<path>.png -> <ns>:<path>), or currency:<id>
 #          (that currency's icon, currencies.<id>.icon of Flux's config: the same picture as the menus), size [w, h]
 #   head: true, the player's own head (hat layer included), size [w, h]
 #   text: <#RRGGBB> colours and pieces, font (small: QuinqueFive capitals, 5 px; else the game's font),
 #         scale (1 = natural size), shadow (#RRGGBB or #AARRGGBB; none by default)
 #   layer: back for backgrounds (drawn first, under everything else)
-# setting: option of settings.yml that hides the element when off; requires: piece that must not be empty.
 elements:
   # card: 102 x 32 panel, 24 px head (4 px margin), two rows of a 9 px icon and 5 px text centred on each other
   profile:
     setting: hud_avatar
-    anchor: top-left
-    at: [15, 10]
+    size: [102, 32]
     parts:
       - {image: "flux:hud/panel_102x32", at: [0, 0], size: [102, 32], layer: back}
       - {head: true, at: [4, 4], size: [24, 24]}
       - {image: "currency:vault", at: [33, 5], size: [9, 9]}
-      - {text: "{balance}", at: [45, 7], font: small}
+      - {text: "{balance}", at: [45, 7], font: small, shadow: "#000000"}
       - {image: "currency:influence", at: [33, 18], size: [9, 9]}
-      - {text: "{influence}", at: [45, 20], font: small}
-  # boxes on the right, 13 px tall: 9 px icon and 5 px text centred, 15 px from the right edge
+      - {text: "{influence}", at: [45, 20], font: small, shadow: "#000000"}
+  # 13 px boxes: 13 px icon over the whole height, 5 px text centred
   position:
     setting: hud_position
-    anchor: top-right
-    at: [-163, 10]
+    size: [150, 13]
     parts:
-      - {image: "flux:hud/panel_148x13", at: [0, 0], size: [148, 13], layer: back}
-      - {image: "flux:hud/compass_{compass}", at: [3, 2], size: [9, 9]}
-      - {text: "X: {x}, Y: {y}, Z: {z}", at: [15, 4], font: small}
+      - {image: "flux:hud/panel_150x13", at: [0, 0], size: [150, 13], layer: back}
+      - {image: "flux:hud/compass_{compass}", at: [2, 0], size: [13, 13]}
+      - {text: "X: {x}, Y: {y}, Z: {z}", at: [18, 4], font: small, shadow: "#000000"}
   voteparty:
     setting: hud_voteparty
     requires: voteparty
-    anchor: top-right
-    at: [-79, 26]
+    size: [62, 13]
     parts:
-      - {image: "flux:hud/panel_64x13", at: [0, 0], size: [64, 13], layer: back}
-      - {image: "flux:hud/voteparty", at: [3, 2], size: [9, 9]}
-      - {text: "<#FFEB00>{voteparty}<#FFFFFF>/<#FADA5E>{voteparty_required}", at: [15, 4], font: small}
+      - {image: "flux:hud/panel_62x13", at: [0, 0], size: [62, 13], layer: back}
+      - {image: "flux:hud/voteparty", at: [2, 0], size: [13, 13]}
+      - {text: "<#FFEB00>{voteparty}<#FFFFFF>/<#FADA5E>{voteparty_required}", at: [18, 4], font: small}
 
 # Bedrock players (no pack, so no picture): one boss bar, MiniMessage or & colours. progress: "a/b" or 0 to 1.
 bedrock:

@@ -55,7 +55,7 @@ public final class RepairMenu implements CommandExecutor {
             sender.sendMessage("Players only.");
             return true;
         }
-        if (!player.hasPermission("influbridge.repair")) {
+        if (!player.hasPermission("fluxtools.repair")) {
             say(player, "repair.refused.permission");
             return true;
         }

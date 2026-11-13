@@ -59,7 +59,7 @@ identifiers, so menus, ranks and items already handed out keep working.
 | FluxLands | InfluLands |
 | FluxOffering | InfluOffrande |
 | FluxPets | InfluPet, InfluCard |
-| FluxPW | PlayerWarps, InfluPW (rewritten; warps and favourites copied by FluxMigration, permissions `playerwarps.*` renamed `fluxpw.*`, groups moved by `FluxPW/assets/lp_playerwarps_to_fluxpw.py`) |
+| FluxPW | PlayerWarps, InfluPW (rewritten; warps and favourites copied by FluxMigration, permissions `playerwarps.*` renamed `fluxpw.*`, groups moved by `Flux/assets/lp_rename_permissions.py`) |
 | FluxReferral | InfluParrainage |
 | FluxCalendar (FluxRewards) | InfluRecompenses |
 | FluxSorter | SortingChest, InfluTri |
