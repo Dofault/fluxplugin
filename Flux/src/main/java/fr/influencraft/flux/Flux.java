@@ -258,7 +258,8 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     /**
      * {@code %flux_cmd_<plugin>_<id>%}: configured label of a command of the suite;
      * {@code %flux_list_<id>_<field>%}: state of a list (see {@link fr.influencraft.flux.api.list.Lists});
-     * {@code %flux_top_<board>_...%}: leaderboards (see {@link fr.influencraft.flux.api.leaderboard.Leaderboards}).
+     * {@code %flux_top_<board>_...%}: leaderboards (see {@link fr.influencraft.flux.api.leaderboard.Leaderboards});
+     * {@code %flux_smallcaps_<text>%}: the text in small caps, {@code {placeholders}} inside resolved first.
      */
     private String ownPlaceholder(Player player, String params) {
         if (params.startsWith("balance_") && currencies != null) return currencies.placeholder(player, params.substring(8));
@@ -266,6 +267,13 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         if (params.equals("trade_title") && trades != null) return trades.title(player);
         if (params.startsWith("top_") && leaderboards != null) return leaderboards.placeholder(player, params.substring(4));
         if (params.startsWith("profile_") && profile != null) return profile.placeholder(player, params.substring(8));
+        if (params.startsWith("smallcaps_")) {
+            // %flux_smallcaps_({fluxpass_tier}/{fluxpass_max_tiers})%: small caps for plugins outside Flux (Typewriter)
+            String text = params.substring(10);
+            if (text.indexOf('{') >= 0 && getServer().getPluginManager().isPluginEnabled("PlaceholderAPI"))
+                text = me.clip.placeholderapi.PlaceholderAPI.setBracketPlaceholders(player, text);
+            return fr.influencraft.flux.api.text.Style.smallCaps(text);
+        }
         if (params.startsWith("cmd_")) {
             String rest = params.substring(4);
             int sep = rest.indexOf('_');

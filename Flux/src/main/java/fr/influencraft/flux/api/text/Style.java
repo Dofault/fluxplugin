@@ -282,6 +282,9 @@ public final class Style {
 
     private static final Pattern SMALL_CAPS = Pattern.compile("<smallcaps>(.*?)</smallcaps>");
     private static final String SMALL = "ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘǫʀꜱᴛᴜᴠᴡxʏᴢ";
+    /** No small caps digits in Unicode: 5 px glyphs of the pack (Flux/assets/smallcaps/gen_smallcaps.py, same order). */
+    private static final String SMALL_DIGIT_CHARS = "0123456789/()";
+    private static final String SMALL_DIGITS = "";
 
     /** {@code <smallcaps>...</smallcaps>} anywhere: the inside in small caps. Applied by Flux on every shown line. */
     public static String applyTags(String text) {
@@ -307,7 +310,9 @@ public final class Style {
                 i = end - 1;
                 continue;
             }
+            int digit = SMALL_DIGIT_CHARS.indexOf(ch);
             if (!placeholder && !glyph && ch >= 'a' && ch <= 'z') out.append(SMALL.charAt(ch - 'a'));
+            else if (!placeholder && !glyph && digit >= 0) out.append(SMALL_DIGITS.charAt(digit));
             else out.append(ch);
         }
         return out.toString();
