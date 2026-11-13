@@ -7,6 +7,8 @@
 # (secondary), teal #5FB3B3 (info), brick #D9534F (errors).
 
 messages:
+  prompt-title: "Pets"
+  prompt-label: "Answer"
   prefix: "&#FFD94Dᴄᴀʀᴅꜱ &7▸ "
   opened: "&#B376E5Opening a %booster%&#B376E5..."
   finished: "&#B376E5Booster done: &f%count% &#B376E5cards obtained."
@@ -29,11 +31,6 @@ messages:
   already-exists: "&#FF5C5C\"%id%\" already exists."
   created: "&#B376E5\"&f%id%&#B376E5\" created."
   deleted: "&#B376E5\"&f%id%&#B376E5\" deleted."
-  prompt-hint: "&7Type your answer in chat, or \"cancel\"."
-  # word that cancels a chat prompt ("cancel" always works too)
-  prompt-cancel-word: "cancel"
-  prompt-cancelled: "&7Input cancelled."
-  prompt-timeout: "&7Input timed out."
   pet-broadcast: "&f%player% &#B376E5just adopted &r%pet%&#B376E5!"
   pet-unlocked: "&#2ECF7BNew pet adopted: &r%pet%&#2ECF7B!"
   career-catch-up-received: "&#B376E5Career catch-up: &f%count% &#B376E5booster(s) for the levels you already passed:"

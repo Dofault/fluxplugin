@@ -7,6 +7,8 @@
 # crème #FFF4E0 (noms), ardoise #6B7A8F (secondaire), sarcelle #5FB3B3 (infos), brique #D9534F (erreurs).
 
 messages:
+  prompt-title: "Familiers"
+  prompt-label: "Réponse"
   prefix: "&#FFD94Dᴄᴀʀᴛᴇꜱ &7▸ "
   opened: "&#B376E5Ouverture d'un %booster%&#B376E5..."
   finished: "&#B376E5Booster terminé : &f%count% &#B376E5cartes obtenues."
@@ -29,11 +31,6 @@ messages:
   already-exists: "&#FF5C5C« %id% » existe déjà."
   created: "&#B376E5« &f%id%&#B376E5 » créé."
   deleted: "&#B376E5« &f%id%&#B376E5 » supprimé."
-  prompt-hint: "&7Écris ta réponse dans le tchat, ou « annuler »."
-  # mot qui annule une saisie dans le tchat (« cancel » marche toujours aussi)
-  prompt-cancel-word: "annuler"
-  prompt-cancelled: "&7Saisie annulée."
-  prompt-timeout: "&7Saisie expirée."
   pet-broadcast: "&f%player% &#B376E5vient d'adopter &r%pet%&#B376E5 !"
   pet-unlocked: "&#2ECF7BNouveau familier adopté : &r%pet%&#2ECF7B !"
   career-catch-up-received: "&#B376E5Rattrapage de carrière : &f%count% &#B376E5booster(s) pour tes niveaux déjà passés :"

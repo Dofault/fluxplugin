@@ -178,12 +178,18 @@ public abstract class Menu implements InventoryHolder {
         fr.influencraft.flux.api.util.Sounds.cue(player, "click");
     }
 
-    /** Demande une saisie dans le tchat puis rouvre ce menu. */
+    /** Asks a text in a Flux window (escape = cancel), then opens this menu again. */
     protected void ask(Player player, String question, java.util.function.Consumer<String> onAnswer) {
         player.closeInventory();
-        plugin.prompts().ask(player, question, answer -> {
-            onAnswer.accept(answer);
-            refresh(player);
-        }, () -> refresh(player));
+        fr.influencraft.flux.api.dialog.Dialogs.form(player, plugin.text("messages.prompt-title"))
+                .body(question)
+                .input("answer", plugin.text("messages.prompt-label"), "", 256)
+                .onSubmit((p, answer) -> {
+                    String text = answer.text("answer");
+                    if (text != null && !text.isBlank()) onAnswer.accept(text.trim());
+                    refresh(p);
+                })
+                .onCancel(this::refresh)
+                .open();
     }
 }

@@ -6,7 +6,6 @@ import fr.influencraft.fluxpets.CardRegistry.Reward;
 import fr.influencraft.fluxpets.effects.PetEffects;
 import fr.influencraft.fluxpets.pets.PetCommands;
 import fr.influencraft.fluxpets.pets.Pets;
-import fr.influencraft.fluxpets.gui.ChatPrompt;
 import fr.influencraft.fluxpets.gui.MainMenu;
 import fr.influencraft.fluxpets.gui.MenuListener;
 import org.bukkit.Bukkit;
@@ -16,7 +15,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -30,7 +28,7 @@ import java.util.stream.Collectors;
  * (stockage, effets, menu /familiers, modèles qui suivent le joueur) sont gérés par le paquet pets, qui
  * remplace EcoPets.
  */
-public final class FluxPets extends JavaPlugin implements TabCompleter {
+public final class FluxPets extends fr.influencraft.flux.api.FluxPlugin implements TabCompleter {
 
     /**
      * Espace de noms des marqueurs posés sur les cartes, boosters et objets (PDC) : celui de l'ancien nom du
@@ -45,28 +43,29 @@ public final class FluxPets extends JavaPlugin implements TabCompleter {
     private fr.influencraft.fluxpets.careers.CareerCatchUp boosterStash;
     private CardRegistry registry;
     private RevealManager reveals;
-    private ChatPrompt prompts;
     private PetEffects petEffects;
     private ConfigFiles configFiles;
     private org.bukkit.configuration.file.YamlConfiguration config;
 
     @Override
-    public void onLoad() {
-        fr.influencraft.flux.api.util.DataFolders.migrate(this, "InfluPet", "InfluCard");
+    protected List<String> formerNames() {
+        return List.of("InfluPet", "InfluCard");
+    }
+
+    /** Former file layouts converted before FluxPlugin writes the default config. */
+    @Override
+    protected void load() {
+        configFiles = new ConfigFiles(this);
+        configFiles.migrate();
     }
 
     @Override
-    public void onEnable() {
-        configFiles = new ConfigFiles(this);
-        configFiles.migrate();
-        saveDefaultConfig();
+    protected void enable() {
         reloadConfig();
         cardKey = new NamespacedKey(LEGACY_NAMESPACE, "card");
         boosterKey = new NamespacedKey(LEGACY_NAMESPACE, "booster");
         versionKey = new NamespacedKey(LEGACY_NAMESPACE, "version");
         Pets.registerPlaceholders(this);
-        // the Flux menus of the pets (familiers, familier) live in plugins/FluxPets/menus/
-        fr.influencraft.flux.api.util.Resources.shipMenus(this, fr.influencraft.flux.api.FluxApi.language());
         // familiers avant les cartes : le registre des cartes liste les familiers chargés
         boolean petsStarted = startPets();
         registry = new CardRegistry(this);
@@ -104,12 +103,10 @@ public final class FluxPets extends JavaPlugin implements TabCompleter {
             }
         });
         reveals = new RevealManager(this);
-        prompts = new ChatPrompt(this);
         getServer().getPluginManager().registerEvents(new BoosterListener(this), this);
         getServer().getPluginManager().registerEvents(new MenuListener(), this);
         updater = new ItemUpdater(this);
         getServer().getPluginManager().registerEvents(updater, this);
-        getServer().getPluginManager().registerEvents(prompts, this);
         // section « Familiers » of the profile (/profil): works for an offline player too
         fr.influencraft.flux.api.profile.Profiles.register(this, "pets", 50, new fr.influencraft.flux.api.profile.Profiles.Section() {
             public org.bukkit.inventory.ItemStack item(org.bukkit.entity.Player viewer, org.bukkit.OfflinePlayer subject, int page) {
@@ -204,7 +201,7 @@ public final class FluxPets extends JavaPlugin implements TabCompleter {
     }
 
     @Override
-    public void onDisable() {
+    protected void disable() {
         if (reveals != null) {
             reveals.skipAll();
         }
@@ -257,10 +254,6 @@ public final class FluxPets extends JavaPlugin implements TabCompleter {
 
     public RevealManager reveals() {
         return reveals;
-    }
-
-    public ChatPrompt prompts() {
-        return prompts;
     }
 
     /** Texte de la langue au chemin donné (le chemin lui-même s'il manque). */
