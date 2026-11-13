@@ -6,7 +6,11 @@ One table for the whole suite (RENAMES below, most precise prefix first): player
 Same suffix, same value, same context (server=...), then the former node is removed. Run once per server, the day
 the new jars run there (Labs: as soon as they are deployed; production: docs/technique/flux-mise-en-prod.md).
 
-    python3 lp_rename_permissions.py <semirp|labs|semilab> [--dry-run]
+    python3 lp_rename_permissions.py <semirp|labs|semilab> [--dry-run] [--keep-old]
+
+--keep-old: the new nodes are added next to the former ones, nothing removed (run on production before go-live:
+the jars running there ignore the flux* nodes, so the switch needs nothing that day); run again without it once
+production runs the Flux jars, to remove the former nodes.
 
 Exports the LuckPerms data first (plugins/LuckPerms/audit-perms-avant-<date>.json.gz, the backup to restore with
 "lp import" if needed), sends the commands through serveurs/00_scripts/rcon.py, exports again
@@ -83,18 +87,19 @@ def group_nodes(data):
 def main():
     if len(sys.argv) < 2 or sys.argv[1] not in FOLDERS:
         sys.exit(__doc__)
-    server, dry = sys.argv[1], "--dry-run" in sys.argv
+    server, dry, keep = sys.argv[1], "--dry-run" in sys.argv, "--keep-old" in sys.argv
     before = export(server, "audit-perms-avant")
     commands = []
     for group, key, context, value in sorted(group_nodes(before)):
         ctx = " ".join(f"{k}={v}" for k, v in json.loads(context).items())
         commands.append(f"lp group {group} permission set {renamed(key)} {'true' if value else 'false'} {ctx}".strip())
-        commands.append(f"lp group {group} permission unset {key} {ctx}".strip())
+        if not keep:
+            commands.append(f"lp group {group} permission unset {key} {ctx}".strip())
     for user, obj in before.get("users", {}).items():
         for n in obj.get("nodes", []):
             if renamed(n["key"]) is not None:
                 print("user node, to move by hand:", obj.get("username", user), n["key"], "->", renamed(n["key"]), n.get("context"))
-    print(len(commands) // 2, "group node(s) to move")
+    print(len(group_nodes(before)), "group node(s) to " + ("copy" if keep else "move"))
     if dry or not commands:
         for c in commands:
             print("  " + c)
@@ -103,7 +108,7 @@ def main():
         rcon(server, c)
         time.sleep(0.15)
     after = export(server, "audit-perms-apres")
-    left = group_nodes(after)
+    left = set() if keep else group_nodes(after)
     expected = {(g, renamed(k), c, v) for g, k, c, v in group_nodes(before)}
     present = set()
     for group, obj in after.get("groups", {}).items():
