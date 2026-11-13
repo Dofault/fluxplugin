@@ -1,253 +1,402 @@
 #!/usr/bin/env python3
-"""Oracle: voxel wizard, guide and quest giver, STATIC Blockbench model (.bbmodel).
+"""The Oracle: an old human mage, wise and calm, STATIC Blockbench model (.bbmodel), 2026-11-14.
 
-Built on 2026-11-10 from the voxel specification "Cahier des charges, PNJ L'Oracle (modèle 3D voxel)": every block of
-its §13.3 inventory is laid on a voxel grid in the listed order (a later block repaints what it covers), then the
-voxels are merged into a few axis-aligned boxes per bone, each face textured one texel per voxel. No rotation
-anywhere: slopes (hat tip, raised forearm) are stair steps, as the specification requires.
+Same collection as the Oversized Evoker (evocateur_demesure.py): same robe family (long robe, darker open coat,
+lighter tabard with gold edges, belt, wide cuffs, soft shoulders), same painters, same pixel size. Everything that
+makes a person is his own: a human head (warm skin, grey blue eyes, thin grey brows, straight nose), a long silver
+beard in three volumes with a moustache, silver hair showing under a real wizard's hat (wide brim, cone in four
+volumes, tip bent backwards and to one side), a low collar. Warmer, lighter violet than the Evoker's. No glow.
 
-Specification axes: X negative = viewer's left = the character's RIGHT hand (staff side), Y up, Z negative = front.
-Blockbench axes (all our models): front faces north (-z), the character's right is +x. So x = -X, y = Y, z = Z.
+Few cubes: strands of beard and hair, folds, the hat's mark are painted, not built.
+This script replaces the voxel version of 2026-11-10.
 
-Usage: oracle.py [output folder] [--apercu <sheet.png>]
+Usage: oracle.py [output folder] [--apercu <sheet.png>] [--cubes <table.md>]
+Front faces north (-z), his right is +x, ground at y = 0, origin between the feet.
 """
 import json
 import os
-import random
 import sys
 import uuid
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from bbkit import apercu, bake, export, ground, hx  # noqa: E402
+from bbkit import apercu, attach, bake, export, ground, hx, matrix, tone  # noqa: E402
+from golem_fonderie import app, euler, rot  # noqa: E402
+import evocateur_demesure as E  # noqa: E402  (shared painters: cloth, metal, mount)
 
 IDENT = "oracle"
 NS = uuid.UUID("5b2d9e00-0000-4000-8000-00000000a7c1")
-HEIGHT = 3.2          # blocks in game for the 32 voxels (1 voxel = 0.1 block)
-Z_SHIFT = -2.5        # puts the middle of the robe (Z -1..5) on the origin
-
-# --------------------------------------------------------------------------- palette (§2)
-VP, VM, VF, CH = hx("#5B2D8E"), hx("#4E2780"), hx("#2E1A47"), hx("#24162F")
-OR = hx("#E0A82E")
-GB, GC, GM = hx("#E6E6EA"), hx("#C9C9CF"), hx("#A7A7AF")
-PE, PO, YE = hx("#F5C9A0"), hx("#EBA27E"), hx("#2A1A16")
-BF, BC, VC = hx("#5A3A2E"), hx("#6E4A3A"), hx("#C77DFF")
-VM_SHARE, VM_SEED = 0.20, 1717      # §10: about 20 % of the purple voxels in the darker variation, fixed seed
-
-# --------------------------------------------------------------------------- inventory (§13.3), specification coordinates
-# (id, bone, min corner (X, Y, Z), size (L, H, P), colour or None = face rule only, down faces in VF)
-BLOCKS = [
-    ("P01", "Right_Leg", (-3, 0, -2), (3, 2, 6), CH, False),
-    ("P02", "Left_Leg", (1, 0, -2), (3, 2, 6), CH, False),
-    ("P03", "Body", (-5, 2, -1), (11, 5, 7), VP, False),
-    ("P04", "Body", (-5, 2, -1), (11, 1, 7), OR, False),
-    ("P05", "Body", (-4, 7, 0), (9, 6, 6), VP, False),
-    ("P06", "Body", (-5, 13, 0), (11, 2, 6), VP, False),
-    ("P06d", "Body", (-5, 13, 0), (1, 1, 6), None, True),      # §5.5 under the shoulders, X -5
-    ("P06e", "Body", (5, 13, 0), (1, 1, 6), None, True),       # §5.5 under the shoulders, X +5
-    ("P07", "Body", (-3, 3, -1), (1, 4, 1), VF, False),
-    ("P08", "Body", (3, 3, -1), (1, 4, 1), VF, False),
-    ("P09", "Body", (-2, 3, 5), (1, 10, 1), VF, False),
-    ("P10", "Body", (2, 3, 5), (1, 10, 1), VF, False),
-    ("P11", "Body", (0, 3, -1), (1, 4, 1), OR, False),
-    ("P12", "Body", (0, 7, 0), (1, 6, 1), OR, False),
-    ("P13", "Body", (-4, 8, 0), (9, 1, 6), BF, False),
-    ("P14", "Body", (-1, 7, -1), (3, 3, 1), OR, False),
-    ("P15", "Body", (0, 8, -1), (1, 1, 1), BF, False),
-    ("P16", "Head", (-3, 15, 0), (7, 6, 6), PE, False),
-    ("P17", "Head", (-3, 15, 0), (1, 6, 6), GC, False),
-    ("P18", "Head", (3, 15, 0), (1, 6, 6), GC, False),
-    ("P19", "Head", (-3, 15, 5), (7, 6, 1), GM, False),
-    ("P20", "Head", (-3, 14, 0), (1, 1, 3), GC, False),
-    ("P21", "Head", (3, 14, 0), (1, 1, 3), GC, False),
-    ("P22", "Head", (-2, 20, 0), (1, 1, 1), GC, False),
-    ("P23", "Head", (2, 20, 0), (1, 1, 1), GC, False),
-    ("P24", "Head", (-2, 18, 0), (1, 2, 1), YE, False),
-    ("P25", "Head", (2, 18, 0), (1, 2, 1), YE, False),
-    ("P26", "Head", (-2, 17, 0), (1, 1, 1), PO, False),
-    ("P27", "Head", (2, 17, 0), (1, 1, 1), PO, False),
-    ("F16", "Head", (-2, 16, 0), (5, 1, 1), GB, False),        # §6.2 face row Y16
-    ("F15", "Head", (-2, 15, 0), (5, 1, 1), GC, False),        # §6.2 face row Y15, ends repainted below
-    ("F15a", "Head", (-2, 15, 0), (1, 1, 1), GB, False),
-    ("F15b", "Head", (2, 15, 0), (1, 1, 1), GB, False),
-    ("P28", "Head", (0, 17, -1), (1, 1, 1), PO, False),
-    ("P29", "Beard", (-2, 16, -1), (5, 1, 1), GB, False),
-    ("B1", "Beard", (-2, 15, -1), (5, 1, 1), GC, False),
-    ("B2", "Beard", (-2, 14, -1), (5, 1, 1), GC, False),
-    ("B3", "Beard", (-2, 13, -1), (5, 1, 1), GC, False),
-    ("B1a", "Beard", (-2, 13, -1), (1, 3, 1), GB, False),      # GB ends of B1 to B3
-    ("B1b", "Beard", (2, 13, -1), (1, 3, 1), GB, False),
-    ("B4", "Beard", (-1, 12, -1), (3, 1, 1), GC, False),
-    ("B4c", "Beard", (0, 12, -1), (1, 1, 1), GM, False),
-    ("B5", "Beard", (0, 11, -1), (1, 1, 1), GM, False),
-    ("P30", "Right_Arm", (-7, 12, 0), (2, 3, 4), VP, False),
-    ("P31", "Right_Arm", (-7, 11, -1), (2, 1, 5), VP, True),
-    ("P32", "Right_Arm", (-7, 11, -2), (2, 1, 1), OR, True),
-    ("P33", "Right_Arm", (-7, 9, -2), (2, 2, 2), PE, False),
-    ("P34", "Right_Arm", (-8, 9, -2), (1, 2, 1), PE, False),
-    ("P35", "Left_Arm", (6, 10, 0), (2, 5, 4), VP, False),
-    ("P36", "Left_Arm", (6, 9, -1), (2, 1, 5), OR, True),
-    ("P37", "Left_Arm", (6, 7, 0), (2, 2, 2), PE, False),
-    ("S1", "Staff", (-8, 0, -1), (1, 16, 1), BF, False),
-    ("S2", "Staff", (-8, 16, -1), (1, 1, 1), BF, False),
-    ("S3", "Staff", (-9, 16, -1), (1, 1, 1), BF, False),
-    ("S4", "Staff", (-7, 16, -1), (1, 1, 1), BF, False),
-    ("S5", "Staff", (-8, 16, -2), (1, 1, 1), BF, False),
-    ("S6", "Staff", (-8, 16, 0), (1, 1, 1), BF, False),
-    ("S7", "glow_orb", (-8, 17, -1), (1, 1, 1), VC, False),
-    ("S8", "Staff", (-9, 17, -1), (1, 1, 1), BC, False),
-    ("S9", "Staff", (-7, 17, -1), (1, 1, 1), BC, False),
-    ("S10", "Staff", (-8, 17, 0), (1, 1, 1), BC, False),
-    ("S11", "Staff", (-9, 18, -1), (1, 1, 1), BF, False),
-    ("S12", "Staff", (-7, 18, -1), (1, 1, 1), BF, False),
-    ("S13", "Staff", (-8, 18, -1), (1, 1, 1), BF, False),
-    ("S14", "Staff", (-8, 19, -1), (1, 1, 1), BF, False),
-    ("P38", "Hat", (-7, 21, -4), (15, 1, 13), VP, True),
-    ("P39", "Hat", (-3, 22, -1), (7, 3, 7), VP, False),
-    ("P40", "Hat", (-3, 22, -1), (7, 2, 7), OR, False),
-    ("P41", "Hat", (-1, 22, -2), (3, 3, 1), OR, False),
-    ("P42", "Hat", (0, 23, -2), (1, 1, 1), VF, False),
-    ("P43", "Hat", (-2, 25, 0), (5, 2, 5), VP, False),
-    ("P44", "Hat", (-1, 27, 1), (4, 2, 4), VP, False),
-    ("P45", "Hat", (0, 29, 2), (3, 1, 3), VP, False),
-    ("P46", "Hat", (1, 30, 3), (2, 1, 2), VP, False),
-    ("P47a", "Hat", (2, 31, 4), (2, 1, 1), VP, False),
-    ("P47b", "Hat", (4, 30, 4), (1, 2, 1), VP, False),
-]
-REMOVED = [(-7, 21, -4), (7, 21, -4), (-7, 21, 8), (7, 21, 8)]     # rounded brim corners (§9.1)
-NOT_VARIED = {"Staff", "glow_orb", "Right_Leg", "Left_Leg"}
-
-# bone pivots, specification coordinates (X, Y, Z)
-BONES = {
-    "Root": ((0, 0, 2), None),
-    "Body": ((0, 2, 2), "Root"),
-    "Head": ((0, 15, 2.5), "Body"),
-    "Beard": ((0, 15, -1), "Head"),
-    "Hat": ((0, 21, 2.5), "Head"),
-    "Right_Arm": ((-6, 14, 2), "Body"),
-    "Left_Arm": ((6, 14, 2), "Body"),
-    "Staff": ((-7.5, 10, -0.5), "Right_Arm"),
-    "glow_orb": ((-7.5, 17.5, -0.5), "Staff"),
-    "Right_Leg": ((-2, 2, 1), "Root"),
-    "Left_Leg": ((2, 2, 1), "Root"),
-}
-LABEL = {"Body": "robe", "Head": "tete", "Beard": "barbe", "Hat": "chapeau", "Right_Arm": "bras_droit",
-         "Left_Arm": "bras_gauche", "Staff": "baton", "glow_orb": "orbe", "Right_Leg": "pied_droit",
-         "Left_Leg": "pied_gauche"}
+SCALE = 1.4           # 56 drawing units tall with the hat -> about 4.9 blocks (body alone: 4.0)
 
 
-# --------------------------------------------------------------------------- voxels
-def voxels():
-    """{(x, y, z) Blockbench voxel index: [colour, bone, down face colour or None]}."""
-    grid = {}
-    for _, bone, (X, Y, Z), (L, H, D), col, down_vf in BLOCKS:
-        for i in range(X, X + L):
-            for j in range(Y, Y + H):
-                for k in range(Z, Z + D):
-                    key = (-i, j, k)
-                    if col is None:                                 # face rule only (under the shoulders)
-                        grid[key][2] = VF
-                        continue
-                    grid[key] = [col, bone, VF if down_vf else None]
-    for X, Y, Z in REMOVED:
-        grid.pop((-X, Y, Z), None)
-    rnd = random.Random(VM_SEED)
-    for key in sorted(grid):
-        v = grid[key]
-        if v[0] == VP and v[1] not in NOT_VARIED and rnd.random() < VM_SHARE:
-            v[0] = VM
-    return grid
+def pal(*c):
+    return [hx(x) for x in c]
 
 
-def boxes(grid):
-    """Greedy merge of the voxels of each bone into boxes: [(bone, min index, size)]."""
-    used, out = set(), []
-    for key in sorted(grid, key=lambda k: (k[1], k[2], k[0])):
-        if key in used:
-            continue
-        bone = grid[key][1]
-
-        def free(p):
-            return p in grid and p not in used and grid[p][1] == bone
-        x, y, z = key
-        sx = 1
-        while free((x + sx, y, z)):
-            sx += 1
-        sz = 1
-        while all(free((x + i, y, z + sz)) for i in range(sx)):
-            sz += 1
-        sy = 1
-        while all(free((x + i, y + sy, z + k)) for i in range(sx) for k in range(sz)):
-            sy += 1
-        for i in range(sx):
-            for j in range(sy):
-                for k in range(sz):
-                    used.add((x + i, y + j, z + k))
-        out.append((bone, (x, y, z), (sx, sy, sz)))
-    return out
+# --------------------------------------------------------------------------- palettes (one per material)
+ROBE = pal("#1F182E", "#2A203C", "#3B2B52", "#554071", "#674F83", "#79618F")     # contact .. glint, main = index 3
+HAT = pal("#161B29", "#20283C", "#29334E", "#354361", "#465775", "#64738E")      # night blue, main = index 2
+SKIN = pal("#705140", "#916B56", "#B68C70", "#CBA68A", "#DFC0A3")                # deep shadow, shadow, main, light, glint
+BEARD = pal("#50545D", "#6C7077", "#85878A", "#ADB0B4", "#D0D1D0")               # shadow, secondary, main, light, silver
+HAIR = pal("#565B63", "#777D84", "#A7ADB2", "#C4C8CA")                           # dark, main, light, glint
+EYE_WHITE, EYE_SHADE, IRIS, IRIS_DARK, PUPIL, EYE_LINE = (hx(c) for c in ("#E5E0D3", "#C4BDAF", "#7186A5", "#465A78",
+                                                                           "#252B35", "#51483F"))
+BROW = pal("#493F39", "#62564C")
+GOLD = E.GOLD
+MARK = hx("#B8C8FF")
+SIDES = E.SIDES
 
 
-def face_painter(grid, lo, size):
-    """Texture of each face of a box, one texel per voxel, in Blockbench's face orientation."""
-    (x0, y0, z0), (sx, sy, sz) = lo, size
-    x1, y1, z1 = x0 + sx - 1, y0 + sy - 1, z0 + sz - 1
+def robe(level=3, **kw):
+    return E.cloth(level, shades=ROBE, **kw)
 
-    def paint(w, h, r, face):
-        def at(u, v):
-            if face == "north":
-                p = (x1 - u, y1 - v, z0)
-            elif face == "south":
-                p = (x0 + u, y1 - v, z1)
-            elif face == "east":
-                p = (x1, y1 - v, z1 - u)
-            elif face == "west":
-                p = (x0, y1 - v, z0 + u)
-            elif face == "up":
-                p = (x0 + u, y1, z0 + v)
+
+# --------------------------------------------------------------------------- painters
+def face(w, h, r, f):
+    """Human face, warm and matt: lit forehead and nose bridge, sides one tone darker, one soft line on the
+    forehead, a small shadow under each eye, lit cheekbones, shadow beside the nose. The lower rows are under the
+    beard."""
+    if f == "up":
+        return [[SKIN[3]] * w for _ in range(h)]
+    if f == "down":
+        return [[SKIN[0]] * w for _ in range(h)]
+    if f != "north" or w < 9 or h < 10:
+        px = [[SKIN[1]] * w for _ in range(h)]
+        px[h - 1] = [SKIN[0]] * w
+        return px
+    px = [[SKIN[2]] * w for _ in range(h)]
+    for y in range(h):
+        px[y][0] = px[y][w - 1] = SKIN[1]
+    for x in (3, 4, 5):
+        px[1][x] = SKIN[3]
+        px[2][x] = SKIN[1]                                   # one line across the forehead
+        px[3][x] = SKIN[3]
+    px[3][4] = px[4][4] = SKIN[4]                            # bridge of the nose
+    for x in (1, 2, 6, 7):
+        px[6][x] = SKIN[1]                                   # under the eyes
+    px[7][1] = px[7][7] = SKIN[3]                            # cheekbones
+    px[6][3] = px[6][5] = px[7][3] = px[7][5] = SKIN[1]      # beside the nose
+    px[8] = [SKIN[1]] * w
+    px[9] = [SKIN[0]] * w
+    return px
+
+
+def flesh(w, h, r, f):
+    if f == "down":
+        return [[SKIN[0]] * w for _ in range(h)]
+    return [[SKIN[3 if f == "up" else 2 if f == "north" else 1]] * w for _ in range(h)]
+
+
+def nose(w, h, r, f):
+    if f == "down":
+        return [[SKIN[0]] * w for _ in range(h)]
+    px = [[SKIN[3 if f in ("north", "up") else 1]] * w for _ in range(h)]
+    if f == "north":
+        px[h - 1] = [SKIN[2]] * w
+    return px
+
+
+def eye(inner_last):
+    def f(w, h, r, face_):
+        """Calm eye, density 2 (6 x 3): a thin lid line, the white, a blue grey iris looking straight ahead with a
+        darker side and the pupil in its middle. `inner_last`: the nose side is the last column."""
+        if face_ != "north" or w < 6 or h < 3:
+            return [[EYE_LINE] * w for _ in range(h)]
+        rows = [[SKIN[1], EYE_LINE, EYE_LINE, EYE_LINE, EYE_LINE, SKIN[1]],
+                [EYE_SHADE, EYE_WHITE, IRIS, PUPIL, IRIS_DARK, EYE_WHITE],
+                [SKIN[1], EYE_SHADE, IRIS_DARK, IRIS_DARK, EYE_SHADE, SKIN[1]]]
+        return [row if inner_last else row[::-1] for row in rows]
+    return f
+
+
+def brow(w, h, r, f):
+    return [[BROW[1 if f == "up" else 0]] * w for _ in range(h)]
+
+
+def strands(shades, base, tip=False, part=False, mouth=False):
+    """Hair in locks: vertical clusters. Every third column a shadow line from the second row down, the column
+    before it lit on its upper half; `part`: a darker line down the middle (the beard's parting); `tip`: the last
+    two rows lighter; `mouth`: a dark notch in the middle of the top row (the mouth, under the moustache)."""
+    def f(w, h, r, face_):
+        if face_ == "up":
+            return [[tone(shades, base + 1)] * w for _ in range(h)]
+        if face_ == "down":
+            return [[shades[0]] * w for _ in range(h)]
+        b = base if face_ == "north" else base - 1
+        px = [[tone(shades, b)] * w for _ in range(h)]
+        if h >= 3:
+            for x in range(1, w, 3):
+                for y in range(1, h):
+                    px[y][x] = tone(shades, b - 1)
+                if x >= 1 and face_ == "north":
+                    for y in range(0, max(1, h // 2)):
+                        px[y][x - 1] = tone(shades, b + 1)
+            if part and face_ == "north" and w >= 3:
+                for y in range(max(1, h // 3), h):
+                    px[y][w // 2] = shades[0]
+            if tip:
+                for y in (h - 2, h - 1):
+                    px[y] = [tone(shades, b + 1) if c != shades[0] else c for c in px[y]]
             else:
-                p = (x0 + u, y0, z1 - v)
-            col, _, down = grid[p]
-            return down if face == "down" and down else col
-        return [[at(u, v) for u in range(w)] for v in range(h)]
-    return paint
+                px[h - 1] = [tone(shades, b - 1)] * w
+        if mouth and face_ == "north":
+            for x in range(w // 2 - 1, w // 2 + 2):
+                px[0][x] = SKIN[0]
+        return px
+    return f
 
 
-def parts(grid):
-    """bbkit pieces: (bone, name, centre, size, rotation, material), in voxel units."""
-    P, mats, glow, count = [], {}, {}, {}
-    for bone, (x, y, z), (sx, sy, sz) in boxes(grid):
-        count[bone] = count.get(bone, 0) + 1
-        mat = f"m{len(P)}"
-        (glow if bone.startswith("glow_") else mats)[mat] = face_painter(grid, (x, y, z), (sx, sy, sz))
-        centre = (x - 0.5 + sx / 2, y + sy / 2, z + Z_SHIFT + sz / 2)
-        P.append((bone, f"{LABEL[bone]}_{count[bone]}", centre, (sx, sy, sz), (0, 0, 0), mat))
-    return P, mats, glow
+def brim(w, h, r, f):
+    """Hat brim: lit cloth on top, dark underneath, one gold line around its edge."""
+    if f == "up":
+        return [[HAT[3]] * w for _ in range(h)]
+    if f == "down":
+        return [[HAT[0]] * w for _ in range(h)]
+    px = [[GOLD[1]] * w for _ in range(h)]
+    if h >= 2:
+        px[h - 1] = [GOLD[0]] * w
+    return px
 
 
-def bones():
-    return {name: ((-X, Y, Z + Z_SHIFT), parent) for name, ((X, Y, Z), parent) in BONES.items()}
+def hat_base(w, h, r, f):
+    """Bottom of the cone: night blue cloth, its only mark on the front: a pale blue lozenge between two gold pixels."""
+    px = E.cloth(2, shades=HAT)(w, h, r, f)
+    if f == "north" and w >= 7 and h >= 3:
+        c, y = w // 2, h // 2
+        for dx, dy in ((0, -1), (-1, 0), (1, 0), (0, 1), (0, 0)):
+            if 0 <= y + dy < h:
+                px[y + dy][c + dx] = MARK
+        px[y][c - 3] = px[y][c + 3] = GOLD[1]
+    return px
+
+
+def cuff(w, h, r, f):
+    if f == "down":
+        return [[ROBE[2] if x in (0, w - 1) or y in (0, h - 1) else ROBE[0] for x in range(w)] for y in range(h)]
+    px = robe(4)(w, h, r, f)
+    if f in SIDES:
+        px[h - 1] = [GOLD[1]] * w
+    return px
+
+
+def shoulder(w, h, r, f):
+    px = robe(3)(w, h, r, f)
+    if f in SIDES:
+        px[h - 1] = [GOLD[1]] * w
+    return px
+
+
+def collar(w, h, r, f):
+    """Low mage collar: dark cloth, one gold line along its top."""
+    px = robe(2)(w, h, r, f if f in ("up", "down") else "north")
+    if f in SIDES:
+        px[0] = [GOLD[1]] * w
+    return px
+
+
+def belt(w, h, r, f):
+    px = [[ROBE[2 if f == "up" else 1]] * w for _ in range(h)]
+    if f in SIDES:
+        px[h - 1] = [ROBE[0]] * w
+    return px
+
+
+def boot(w, h, r, f):
+    px = [[ROBE[0]] * w for _ in range(h)]
+    if f == "up":
+        px = [[ROBE[1]] * w for _ in range(h)]
+    return px
+
+
+def tabard_up(px, w, h):
+    """Chest: one vertical gold line, a small lozenge on the chest, a smaller mark near the belt."""
+    cx = w // 2
+    for y in range(1, h - 1):
+        px[y][cx] = GOLD[1]
+    px[4][cx] = px[1][1]
+    E.diamond(px, cx, 4, 1, GOLD[2])
+    px[9][cx] = GOLD[2]
+
+
+MATS = {
+    "robe": robe(3, folds=((0.3, 0.5), (0.75, 0.35))), "robe_hem": robe(3, hem=True),
+    "skirt_back": robe(3, folds=((0.2, 0.3), (0.5, 0.15), (0.8, 0.4))),
+    "coat_side": robe(2, folds=((0.3, 0.3), (0.7, 0.5))), "lapel": robe(2),
+    "tabard_up": robe(4, edges=("first", "last"), art=tabard_up), "tabard": robe(4, edges=("first", "last")),
+    "tabard_tip": robe(4, hem=True), "belt": belt, "mount": E.mount, "mantle": robe(3), "shoulder": shoulder,
+    "collar": collar, "sleeve": robe(3, folds=((0.6, 0.3),)), "sleeve_low": robe(3, folds=((0.35, 0.2),)), "cuff": cuff,
+    "hand": flesh, "finger": flesh, "neck": flesh, "face": face, "nose": nose, "brow": brow,
+    "eye_right": (eye(True), 2), "eye_left": (eye(False), 2),
+    "beard_top": strands(BEARD, 2, mouth=True), "beard_mid": strands(BEARD, 2, part=True),
+    "beard_tip": strands(BEARD, 2, part=True, tip=True), "moustache": strands(BEARD, 3),
+    "hair": strands(HAIR, 2),
+    "brim": brim, "hat_base": hat_base, "hat": E.cloth(2, shades=HAT, folds=((0.35, 0.2),)),
+    "hat_tip": E.cloth(2, shades=HAT), "trouser": robe(1), "boot": boot,
+}
+
+# --------------------------------------------------------------------------- skeleton and pose (drawing units)
+HIPS = (0, 21, 0)
+NECK = (0, 35.5, 0)
+HEAD_R = rot(-2, 4, 0)              # level, turned a touch to his left: he listens
+SHOULDER = {1: (7.4, 33, 0), -1: (-7.4, 33, 0)}
+# arm: (shoulder rotation, extra elbow bend, finger curl, finger fan)
+ARMS = {
+    1: (rot(12, 0, 8), rot(46, 0, 0), 20, 5),       # right: forearm lifted, open hand, as if explaining
+    -1: (rot(-4, 0, -9), rot(14, 0, -3), 15, 6),    # left: hanging, relaxed
+}
+
+
+def parts():
+    P, G = [], {"Root": ((0, 0, 0), None), "Body": (HIPS, "Root"), "Skirt": (HIPS, "Body"), "Torso": (HIPS, "Body"),
+                "Head": (NECK, "Torso")}
+
+    def add(g, name, c, size, r, mat):
+        P.append((g, name, list(c), tuple(size), r, mat))
+
+    def panel(g, name, top, size, r, mat, tabs=(), tab_mat=None, axis=0):
+        M = rot(*r)
+
+        def at(off):
+            q = app(M, off)
+            return [top[i] + q[i] for i in range(3)]
+        add(g, name, at((0, -size[1] / 2, 0)), size, M, mat)
+        for k, (d, w, h) in enumerate(tabs):
+            off, sz = [0, -size[1] - h / 2, 0], list(size)
+            off[axis], sz[axis], sz[1] = d, w, h
+            add(g, f"{name}_tab_{k + 1}", at(off), sz, M, tab_mat or mat)
+
+    # ---------------------------------------------------------------- legs
+    for s, side, yaw, z in ((1, "right", -6, -0.6), (-1, "left", 8, -1.2)):
+        G[f"Leg_{side}"] = ((2.5 * s, 14, 0.3), "Root")
+        add(f"Leg_{side}", "leg", (2.5 * s, 8, 0.3), (4, 12, 4), (0, 0, 0), "trouser")
+        add(f"Leg_{side}", "boot", (2.7 * s, 1.25, z), (4.6, 2.5, 7.2), (0, yaw, 0), "boot")
+
+    # ---------------------------------------------------------------- robe: the Evoker's cut, fewer panels
+    add("Skirt", "skirt_core", (0, 12.2, 0.4), (10.6, 18, 7.4), (0, 0, 0), "robe")
+    panel("Skirt", "skirt_front", (0, 21, -3.6), (10, 17, 1.4), (4, 0, 0), "robe_hem")
+    G["Skirt_back"] = ((0, 21, 3.8), "Skirt")
+    panel("Skirt_back", "skirt_back", (0, 21, 3.8), (11, 17.5, 1.5), (-8, 0, 0), "skirt_back",
+          tabs=((0, 3.4, 1.6),), tab_mat="robe_hem")
+    G["Coat_right"] = ((5.7, 21.5, 0.2), "Skirt")
+    panel("Coat_right", "coat_right", (5.7, 21.5, 0.2), (1.6, 17, 9), (0, 0, 7), "coat_side")
+    G["Coat_left"] = ((-5.7, 21.5, 0.2), "Skirt")
+    panel("Coat_left", "coat_left", (-5.7, 21.5, 0.2), (1.6, 17, 9), (0, 0, -7), "coat_side")
+    G["Tabard"] = ((0, 20.5, -4.6), "Skirt")
+    panel("Tabard", "tabard_low", (0, 20.5, -4.6), (7, 15, 0.9), (7, 0, 0), "tabard", tabs=((0, 5, 1.2),), tab_mat="tabard_tip")
+    panel("Tabard", "tabard_point", (0, 20.5, -4.6), (3, 17.4, 0.88), (7, 0, 0), "tabard_tip")
+
+    # ---------------------------------------------------------------- torso
+    add("Torso", "torso", (0, 28, 0), (11, 14.5, 7), (0, 0, 0), "robe")
+    add("Torso", "belt", (0, 20.9, 0), (12.2, 2.4, 8.4), (0, 0, 0), "belt")
+    add("Torso", "buckle", (0, 20.9, -4.4), (2.6, 2.6, 0.9), (0, 0, 45), "mount")
+    add("Torso", "tabard_up", (0, 27.5, -3.85), (7, 12, 0.8), (0, 0, 0), "tabard_up")
+    add("Torso", "lapel_right", (4.55, 27.6, -3.8), (2.6, 12, 0.9), (0, 0, -4), "lapel")
+    add("Torso", "lapel_left", (-4.55, 27.6, -3.8), (2.6, 12, 0.9), (0, 0, 4), "lapel")
+    add("Torso", "neck", (0, 35.6, 0.2), (5, 1.8, 5), (0, 0, 0), "neck")
+    add("Torso", "mantle", (0, 34.0, 0.3), (16, 2.6, 9), (0, 0, 0), "mantle")
+    for s, side in ((1, "right"), (-1, "left")):                 # soft shoulders: one tilted layer, one gold line
+        add("Torso", f"shoulder_{side}", (8.6 * s, 34.3, 0.3), (6.2, 2.2, 9.6), (0, 0, -20 * s), "shoulder")
+        add("Torso", f"collar_{side}", (4.3 * s, 36.3, 1.0), (1, 2.6, 6), (0, 0, -8 * s), "collar")
+    add("Torso", "collar_back", (0, 36.6, 4.0), (9, 3.2, 1), (-8, 0, 0), "collar")
+
+    # ---------------------------------------------------------------- head: human
+    on_head = attach(NECK, HEAD_R)
+
+    def hd(g, name, c, size, r, mat):
+        cc, M = on_head(c, r)
+        add(g, name, cc, size, M, mat)
+
+    hd("Head", "head", (0, 40.75, -0.3), (9, 9.5, 9), (0, 0, 0), "face")
+    hd("Head", "nose", (0, 40.3, -5.2), (1.6, 3.0, 1.4), (-8, 0, 0), "nose")
+    # thin brows, outer ends a little lower: thoughtful, not angry
+    hd("Head", "brow_right", (2.5, 42.6, -4.95), (2.8, 0.7, 0.7), (0, 0, -7), "brow")
+    hd("Head", "brow_left", (-2.5, 42.6, -4.95), (2.8, 0.7, 0.7), (0, 0, 7), "brow")
+    hd("Head", "eye_right", (2.5, 41.2, -4.85), (3, 1.5, 0.2), (0, 0, 0), "eye_right")
+    hd("Head", "eye_left", (-2.5, 41.2, -4.85), (3, 1.5, 0.2), (0, 0, 0), "eye_left")
+    # hair: two side volumes and the back, down to the collar
+    hd("Head", "hair_back", (0, 40.6, 4.7), (9.8, 8.2, 1.2), (0, 0, 0), "hair")
+    for s, side in ((1, "right"), (-1, "left")):
+        hd("Head", f"hair_{side}", (4.9 * s, 41.0, 1.2), (1.1, 7.4, 6.2), (0, 0, 0), "hair")
+    # beard: three volumes narrowing downwards, each a little further forward, and the moustache over them
+    G["Beard"] = (on_head((0, 37.5, -4.0), (0, 0, 0))[0], "Head")
+    hd("Beard", "beard_top", (0, 37.6, -3.5), (9.6, 3.6, 3.4), (0, 0, 0), "beard_top")
+    hd("Beard", "beard_mid", (0, 34.6, -4.2), (6.6, 3.4, 2.6), (6, 0, 0), "beard_mid")
+    hd("Beard", "beard_tip", (0, 31.9, -4.6), (3.6, 3.0, 1.9), (12, 0, 0), "beard_tip")
+    hd("Beard", "moustache_right", (1.6, 38.9, -5.5), (2.8, 1.0, 0.9), (0, 0, -12), "moustache")
+    hd("Beard", "moustache_left", (-1.6, 38.9, -5.5), (2.8, 1.0, 0.9), (0, 0, 12), "moustache")
+    # the hat: brim, then a cone in four volumes, each tilted a little more: the tip bends back and to his right
+    G["Hat"] = (on_head((0, 44.6, -0.2), (0, 0, 0))[0], "Head")
+    hd("Hat", "brim", (0, 44.7, -0.2), (13.6, 1.2, 13.6), (-4, 0, 3), "brim")
+    hd("Hat", "hat_base", (0, 46.3, -0.1), (9.8, 2.4, 9.8), (-4, 0, 3), "hat_base")
+    hd("Hat", "hat_mid", (0.2, 49.0, 0.4), (7.0, 3.6, 7.0), (-9, 0, 5), "hat")
+    hd("Hat", "hat_top", (0.6, 51.9, 1.4), (4.4, 3.4, 4.4), (-22, 0, 10), "hat")
+    hd("Hat", "hat_tip", (1.3, 54.0, 3.0), (2.2, 2.8, 2.2), (-46, 0, 16), "hat_tip")
+
+    # ---------------------------------------------------------------- arms: the Evoker's, relaxed
+    for s, side in ((1, "right"), (-1, "left")):
+        R_sh, R_el, curl, fan = ARMS[s]
+        sh, el, wr = SHOULDER[s], (8.0 * s, 24.8, 0), (8.0 * s, 15.6, 0)
+        upper = attach(sh, R_sh)
+        bend = attach(el, R_el)
+
+        def lower(c, r, upper=upper, bend=bend):
+            return upper(*bend(c, r))
+        ag, fg, hg = f"Arm_{side}", f"Forearm_{side}", f"Hand_{side}"
+        G[ag] = (sh, "Torso")
+        G[fg] = (upper(el, (0, 0, 0))[0], ag)
+        G[hg] = (lower(wr, (0, 0, 0))[0], fg)
+        for g, name, c, size, mat, place in (
+            (ag, "sleeve_upper", (8.0 * s, 29.0, 0), (4.2, 9, 4.6), "sleeve", upper),
+            (fg, "sleeve_lower", (8.0 * s, 21.8, 0), (5, 6.4, 5.4), "sleeve_low", lower),
+            (fg, "cuff", (8.0 * s, 17.3, 0), (6.6, 4, 7), "cuff", lower),
+            (hg, "hand", (8.0 * s, 14.1, 0), (3.0, 3.2, 3.4), "hand", lower),
+        ):
+            cc, M = place(c, (0, 0, 0))
+            add(g, name, cc, size, M, mat)
+        fb, tb = f"Fingers_{side}", f"Thumb_{side}"
+        G[fb] = (lower((8.0 * s, 12.6, 0.6), (0, 0, 0))[0], hg)
+        for k, dx in enumerate((-1.0, 0, 1.0)):
+            knuckle = (8.0 * s + dx, 12.6, 0.6)
+            c, M = attach(knuckle, rot(curl, 0, fan * dx))((knuckle[0], knuckle[1] - 1.0, knuckle[2]), (0, 0, 0))
+            cc, M = lower(c, M)
+            add(fb, f"finger_{k + 1}", cc, (0.9, 2.2, 0.9), M, "finger")
+        knuckle = (8.0 * s - 1.2 * s, 13.4, -1.6)
+        G[tb] = (lower(knuckle, (0, 0, 0))[0], hg)
+        c, M = attach(knuckle, rot(curl + 30, 0, -20 * s))((knuckle[0], knuckle[1] - 0.8, knuckle[2]), (0, 0, 0))
+        cc, M = lower(c, M)
+        add(tb, "thumb", cc, (0.9, 1.8, 0.9), M, "finger")
+
+    order, done = [], set()
+    while len(order) < len(G):
+        for k, (pv, par) in G.items():
+            if k not in done and (par is None or par in done):
+                order.append(k)
+                done.add(k)
+    return P, {k: G[k] for k in order}
 
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    prev = None
-    if "--apercu" in args:
-        i = args.index("--apercu")
-        prev = args[i + 1]
-        del args[i:i + 2]
+    opts = {}
+    for flag in ("--apercu", "--cubes"):
+        if flag in args:
+            i = args.index(flag)
+            opts[flag] = args[i + 1]
+            del args[i:i + 2]
     out = args[0] if args else HERE
-    grid = voxels()
-    P0, mats, glow = parts(grid)
-    _, _, raw = ground(P0, bones(), center=False)
-    P, groups, dims = ground(P0, bones(), scale=HEIGHT / raw[1], center=False)   # origin between the feet
-    uv, atlases, sizes = bake(P, mats, glow)
+    P, groups, dims = ground(*parts(), scale=SCALE, center=False)
+    uv, atlases, sizes = bake(P, MATS, {})
     data = export(IDENT, NS, P, groups, uv, atlases, sizes)
-    print(f"{len(grid)} voxels in {len(P)} boxes ; {raw[0] * 16:.0f} x {raw[1] * 16:.0f} x {raw[2] * 16:.0f} voxels ; "
-          f"{dims[0]:.2f} x {dims[1]:.2f} x {dims[2]:.2f} blocks ; textures {sizes[0]}, {sizes[1]}")
+    data["textures"] = data["textures"][:1]          # nothing glows
+    print(f"{len(P)} cubes ; {dims[0]:.2f} x {dims[1]:.2f} x {dims[2]:.2f} blocs (l x h x p) ; texture {sizes[0]}")
     path = os.path.join(out, IDENT + ".bbmodel")
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False)
-    print("written", path)
-    if prev:
-        # face, right profile (seen from the character's right), back, left profile, 3/4 as in §13.1
-        apercu(data, atlases, sizes, prev, {VC}, views=((0, 4), (90, 4), (180, 4), (-90, 4), (-30, 10)), size=400)
+    print("écrit", path)
+    if "--apercu" in opts:
+        apercu(data, atlases, sizes, opts["--apercu"], set(), views=((0, 4), (35, 12), (90, 3), (180, 6), (-40, 10)), size=440)
+    if "--cubes" in opts:
+        E.IDENT = IDENT
+        with open(opts["--cubes"], "w", encoding="utf-8") as f:
+            f.write(E.cube_table(P, groups, dims))
+        print("écrit", opts["--cubes"])
