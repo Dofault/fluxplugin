@@ -239,8 +239,9 @@ public final class HudService implements Hud.Backend, Listener {
         for (HudLayout.Group g : layout.groups) {
             if (g.setting() != null) corners.put(g, HudLayout.Corner.of(PlayerSettings.get(p, "flux:" + g.setting(), null), g.byDefault()));
         }
-        List<HudLayout.Placed> placed = layout.arrange(corners, e -> shown(p, v, e));
-        for (HudLayout.Placed at : placed) {
+        HudLayout.Arrangement arrangement = layout.arrange(corners, e -> shown(p, v, e));
+        for (HudLayout.Row row : arrangement.rows()) drawRow(p, v, row, back, front);
+        for (HudLayout.Placed at : arrangement.placed()) {
             for (HudLayout.Part part : at.element().parts()) {
                 int slot = layout.slot(part, at.place());
                 if (slot == 0) continue;
@@ -257,7 +258,7 @@ public final class HudService implements Hud.Backend, Listener {
                         int x = 0;
                         for (HudLayout.Run run : t.runs()) {
                             String text = clean(fill(run.text(), p, v));
-                            if (t.small()) text = text.toUpperCase(Locale.ROOT);
+                            if (t.small()) text = small(text);
                             if (text.isEmpty()) continue;
                             x += to.addText(text, t.small(), slot, run.colour(), widths.width(text, t.small()));
                         }
@@ -285,6 +286,127 @@ public final class HudService implements Hud.Backend, Listener {
             p.showBossBar(v.back);
             p.showBossBar(v.front);
         }
+    }
+
+    // ------------------------------------------------------------------------------------------------ boxes
+
+    /** What a box shows: its segments with their icon character and text, and its width. */
+    private record BoxContent(List<String> icons, List<List<String>> texts, List<List<Integer>> colours, int width) {
+    }
+
+    /**
+     * A row of boxes, side by side from the corner's edge: each box is its background (pieces of the HUD font
+     * repeated to its width), then for each segment an icon and a text. Everything is drawn at its natural size,
+     * so the boxes are laid out here by the advances of the font.
+     */
+    private void drawRow(Player p, View v, HudLayout.Row row, TitleBuilder back, TitleBuilder front) {
+        List<BoxContent> boxes = new ArrayList<>();
+        int total = 0;
+        for (HudLayout.Element e : row.boxes()) {
+            BoxContent b = box(p, v, e);
+            if (b == null) continue;
+            if (!boxes.isEmpty()) total += layout.gapBetweenBoxes();
+            boxes.add(b);
+            total += b.width();
+        }
+        if (boxes.isEmpty()) return;
+        int panel = layout.boxSlot(HudLayout.BoxKind.PANEL, row.corner(), row.y());
+        int icon = layout.boxSlot(HudLayout.BoxKind.ICON, row.corner(), row.y());
+        int text = layout.boxSlot(HudLayout.BoxKind.TEXT, row.corner(), row.y());
+        if (panel == 0 || icon == 0 || text == 0) return;
+        int x = row.corner().anchorX == 0 ? 0 : -total;
+        int white = layout.white();
+        for (BoxContent b : boxes) {
+            back.place(Component.text(panel(b.width())).font(FONT), panel, white, x, b.width());
+            int at = x + layout.boxPadding;
+            for (int i = 0; i < b.icons().size(); i++) {
+                if (i > 0) at += layout.segmentGap;
+                String ic = b.icons().get(i);
+                if (ic != null) {
+                    int w = widths.width(ic, true) - 1;
+                    front.place(Component.text(ic).font(FONT), icon, white, at, w + 1);
+                    at += w + (b.texts().get(i).isEmpty() ? 0 : layout.iconGap);
+                }
+                List<String> runs = b.texts().get(i);
+                for (int r = 0; r < runs.size(); r++) {
+                    String t = runs.get(r);
+                    int w = widths.width(t, true);
+                    front.place(Component.text(t).font(FONT), text, b.colours().get(i).get(r), at, w);
+                    at += w;
+                }
+                if (!runs.isEmpty()) at -= 1; // the last letter's spacing
+            }
+            x += b.width() + layout.gapBetweenBoxes();
+        }
+    }
+
+    /** A box's segments for this player, or null when none is shown. */
+    private BoxContent box(Player p, View v, HudLayout.Element e) {
+        List<String> icons = new ArrayList<>();
+        List<List<String>> texts = new ArrayList<>();
+        List<List<Integer>> colours = new ArrayList<>();
+        int width = 0;
+        for (HudLayout.Segment s : e.box()) {
+            if (s.setting() != null && !PlayerSettings.flag(p, "flux:" + s.setting(), true)) continue;
+            if (s.requires() != null) {
+                String r = value(p, v, s.requires());
+                if (r == null || r.isBlank()) continue;
+            }
+            String ic = s.icon() == null ? null : icons().get(fill(s.icon(), p, v));
+            List<String> runs = new ArrayList<>();
+            List<Integer> cs = new ArrayList<>();
+            int w = 0;
+            for (HudLayout.Run run : s.runs()) {
+                String t = small(clean(fill(run.text(), p, v)));
+                if (t.isEmpty()) continue;
+                runs.add(t);
+                cs.add(run.colour());
+                w += widths.width(t, true);
+            }
+            if (ic == null && runs.isEmpty()) continue;
+            if (!icons.isEmpty()) width += layout.segmentGap;
+            if (ic != null) width += widths.width(ic, true) - 1 + (runs.isEmpty() ? 0 : layout.iconGap);
+            if (!runs.isEmpty()) width += w - 1;
+            icons.add(ic);
+            texts.add(runs);
+            colours.add(cs);
+        }
+        if (icons.isEmpty()) return null;
+        return new BoxContent(icons, texts, colours, width + 2 * layout.boxPadding);
+    }
+
+    /** Background of a box {@code width} px wide: left edge, 8 px and 1 px middles, right edge (each then -1 px). */
+    private static String panel(int width) {
+        int inner = Math.max(0, width - 4);
+        StringBuilder b = new StringBuilder("\uE030\uE010");
+        for (int i = 0; i < inner / 8; i++) b.append("\uE031\uE010");
+        for (int i = 0; i < inner % 8; i++) b.append("\uE032\uE010");
+        return b.append("\uE033\uE010").toString();
+    }
+
+    private Map<String, String> icons;
+
+    /** Icon id -> character of the HUD font (hud_icons.json, Flux/assets/hud/gen_hud.py). */
+    private Map<String, String> icons() {
+        if (icons != null) return icons;
+        Map<String, String> read = Map.of();
+        try (java.io.InputStream in = flux.getResource("hud_icons.json")) {
+            if (in != null) read = new com.google.gson.Gson().fromJson(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8),
+                    new com.google.gson.reflect.TypeToken<Map<String, String>>() {
+                    }.getType());
+        } catch (Exception e) {
+            flux.getLogger().warning("hud_icons.json not readable: " + e.getMessage());
+        }
+        icons = read == null ? Map.of() : read;
+        return icons;
+    }
+
+    /** A text in the HUD font: capitals without accents, characters it lacks left out. */
+    private String small(String text) {
+        String plain = java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFD).replaceAll("\\p{M}", "").toUpperCase(Locale.ROOT);
+        StringBuilder b = new StringBuilder(plain.length());
+        plain.codePoints().filter(widths::small).forEach(b::appendCodePoint);
+        return b.toString();
     }
 
     /** An element is shown unless its setting is off or a piece it requires is empty. */
@@ -428,10 +550,26 @@ public final class HudService implements Hud.Backend, Listener {
                 return amount(Economy.main(), p);
             case "influence":
                 return amount(Economy.get("influence"), p);
+            case "biome":
+                return biome(p);
+            case "city": {
+                String name = fr.influencraft.flux.api.claims.Claims.claimName(p.getLocation());
+                return name == null ? "" : name;
+            }
             default:
                 if (id.startsWith("balance_")) return amount(Economy.get(id.substring("balance_".length())), p);
                 return Hud.value(id, p);
         }
+    }
+
+    /** The biome where the player stands, in the server's language (its id, readable, for a biome of a datapack). */
+    @SuppressWarnings("deprecation")
+    private static String biome(Player p) {
+        org.bukkit.NamespacedKey key = p.getLocation().getBlock().getBiome().getKey();
+        String name = fr.influencraft.flux.api.text.Translations.server("biome." + key.getNamespace() + "." + key.getKey());
+        if (name != null) return name;
+        String path = key.getKey();
+        return path.substring(path.lastIndexOf('/') + 1).replace('_', ' ');
     }
 
     /** Whole amount, thousands grouped with a plain space; short form from ten million on (fits the card). */
@@ -500,6 +638,13 @@ public final class HudService implements Hud.Backend, Listener {
 
         void close(int width) {
             if (width != 0) parts.add(space(-width));
+        }
+
+        /** Content of a slot {@code offset} px from the centre, {@code advance} px wide, then back to the centre. */
+        void place(Component content, int slot, int colour, int offset, int advance) {
+            if (offset != 0) parts.add(space(offset));
+            parts.add(mark(content, slot, colour));
+            parts.add(space(-(offset + advance)));
         }
 
         /** The tall invisible glyph, first: makes the client draw the next bar's title above this one. */

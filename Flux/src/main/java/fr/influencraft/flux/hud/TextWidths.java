@@ -41,6 +41,11 @@ final class TextWidths {
         }
     }
 
+    /** The HUD font has this character (QuinqueFive sheet, icons, spaces). */
+    boolean small(int codePoint) {
+        return small.containsKey(codePoint);
+    }
+
     int width(String text, boolean inSmall) {
         Map<Integer, Integer> widths = inSmall ? small : this.widths;
         int w = 0;

@@ -3,7 +3,7 @@
 #
 # Java players with the pack: every part is moved by the text shader. Bedrock players: one boss bar (section bedrock).
 # Pieces {id}: player, balance (main currency), influence, balance_<currency>, x, y, z, compass (00 to 31, compass
-# pointing north), and those of plugins (FluxWebsite: voteparty, voteparty_required). %placeholders% are read too.
+# pointing north), biome (the biome's name), city (the town the player stands in), and those of plugins (FluxWebsite: voteparty, voteparty_required). %placeholders% are read too.
 enabled: true
 # Ticks between two redraws (only what changed is sent); money and plugin pieces are read every value-ticks.
 refresh-ticks: 2
@@ -21,6 +21,8 @@ bar-colour: YELLOW
 # bottom-right) and at [x, y] from that point.
 margin: [15, 10]
 gap: 3
+# boxes: height (that of the HUD font's icons, 13 px), padding at both ends, icon to text gap, gap between segments
+box: {height: 13, padding: 3, icon-gap: 3, segment-gap: 6}
 groups:
   profile:
     setting: hud_profile_place
@@ -29,7 +31,8 @@ groups:
   info:
     setting: hud_info_place
     default: top-right
-    elements: [position, voteparty]
+    # one row per entry; [a, b] = boxes side by side on the same row
+    elements: [position, [voteparty, place]]
 
 # Elements: size [w, h] (its room in the stack), setting (option of settings.yml that hides it when off), requires
 # (piece that must not be empty). Parts, at [x, y] from the element's top left corner:
@@ -51,22 +54,21 @@ elements:
       - {text: "{balance}", at: [45, 7], font: small, shadow: "#000000"}
       - {image: "currency:influence", at: [33, 18], size: [9, 9]}
       - {text: "{influence}", at: [45, 20], font: small, shadow: "#000000"}
-  # 13 px boxes: 13 px icon over the whole height, 5 px text centred
+  # boxes: as wide as their text, segments of an icon and a text (icons: hud_icons.json; setting and requires per
+  # segment too), texts always in QuinqueFive
   position:
     setting: hud_position
-    size: [150, 13]
-    parts:
-      - {image: "flux:hud/panel_150x13", at: [0, 0], size: [150, 13], layer: back}
-      - {image: "flux:hud/compass_{compass}", at: [2, 0], size: [13, 13]}
-      - {text: "X: {x}, Y: {y}, Z: {z}", at: [18, 4], font: small, shadow: "#000000"}
+    box:
+      - {icon: "compass_{compass}", text: "X: {x}, Y: {y}, Z: {z}", shadow: "#000000"}
   voteparty:
     setting: hud_voteparty
     requires: voteparty
-    size: [62, 13]
-    parts:
-      - {image: "flux:hud/panel_62x13", at: [0, 0], size: [62, 13], layer: back}
-      - {image: "flux:hud/voteparty", at: [2, 0], size: [13, 13]}
-      - {text: "<#FFEB00>{voteparty}<#FFFFFF>/<#FADA5E>{voteparty_required}", at: [18, 4], font: small}
+    box:
+      - {icon: voteparty, text: "<#FFEB00>{voteparty}<#FFFFFF>/<#FADA5E>{voteparty_required}"}
+  place:
+    box:
+      - {setting: hud_biome, icon: biome, text: "{biome}", shadow: "#000000"}
+      - {setting: hud_ville, requires: city, icon: ville, text: "{city}", shadow: "#000000"}
 
 # Bedrock players (no pack, so no picture): one boss bar, MiniMessage or & colours. progress: "a/b" or 0 to 1.
 bedrock:

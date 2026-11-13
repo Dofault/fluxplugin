@@ -85,14 +85,39 @@ final class HudLayout {
     record Text(int index, Layer layer, List<Run> runs, boolean small, int x, int y, double scale) implements Part {
     }
 
-    /** {@code fixed}: its place when it belongs to no group, else null. */
-    record Element(String id, String setting, String requires, int width, int height, Place fixed, List<Part> parts) {
+    /**
+     * {@code fixed}: its place when it belongs to no group, else null. {@code box}: a box as wide as its text (icon +
+     * text segments, drawn at their natural size by the HUD font), instead of {@code parts} drawn at a fixed size.
+     */
+    record Element(String id, String setting, String requires, int width, int height, Place fixed, List<Part> parts,
+                   List<Segment> box) {
+        boolean isBox() {
+            return box != null;
+        }
     }
 
-    record Group(String id, String setting, Corner byDefault, List<Element> elements) {
+    /** A segment of a box: an icon of the HUD font ({@code hud_icons.json} id, pieces allowed) and a text. */
+    record Segment(String icon, List<Run> runs, String setting, String requires) {
+    }
+
+    /** {@code rows}: each row holds one element, or several boxes side by side. */
+    record Group(String id, String setting, Corner byDefault, List<List<Element>> rows) {
     }
 
     record Placed(Element element, Place place) {
+    }
+
+    /** Boxes of one row, shown side by side from the corner's edge, their top at {@code y}. */
+    record Row(Corner corner, double y, List<Element> boxes) {
+    }
+
+    record Arrangement(List<Placed> placed, List<Row> rows) {
+    }
+
+    /** What a box slot draws: its background pieces, its icons, its texts. */
+    enum BoxKind {PANEL, ICON, TEXT}
+
+    private record BoxKey(BoxKind kind, Corner corner, double y) {
     }
 
     private record Slot(double anchorX, double anchorY, double x, double y, double scaleX, double scaleY, double height) {
@@ -112,6 +137,12 @@ final class HudLayout {
     private int marginX = 15;
     private int marginY = 10;
     private int gap = 3;
+    /** Boxes: height, padding at both ends, gap between an icon and its text, between two segments, between boxes. */
+    int boxHeight = 13;
+    int boxPadding = 3;
+    int iconGap = 3;
+    int segmentGap = 6;
+    private final Map<BoxKey, Integer> boxSlots = new HashMap<>();
     private int partCount;
     private final List<Slot> slots = new ArrayList<>();
     private final Map<SlotKey, Integer> slotIndex = new HashMap<>();
@@ -120,6 +151,7 @@ final class HudLayout {
 
     static HudLayout read(ConfigurationSection root, Logger log) {
         HudLayout layout = new HudLayout();
+        layout.colour(0xFFFFFFFF, 0);
         if (root == null) return layout;
         List<Integer> margin = root.getIntegerList("margin");
         if (margin.size() >= 2) {
@@ -127,6 +159,13 @@ final class HudLayout {
             layout.marginY = margin.get(1);
         }
         layout.gap = root.getInt("gap", 3);
+        ConfigurationSection box = root.getConfigurationSection("box");
+        if (box != null) {
+            layout.boxHeight = box.getInt("height", 13);
+            layout.boxPadding = box.getInt("padding", 3);
+            layout.iconGap = box.getInt("icon-gap", 3);
+            layout.segmentGap = box.getInt("segment-gap", 6);
+        }
         ConfigurationSection section = root.getConfigurationSection("elements");
         Map<String, Element> byId = new LinkedHashMap<>();
         if (section != null) {
@@ -143,12 +182,19 @@ final class HudLayout {
             for (String id : gs.getKeys(false)) {
                 ConfigurationSection g = gs.getConfigurationSection(id);
                 if (g == null) continue;
-                List<Element> members = new ArrayList<>();
-                for (String e : g.getStringList("elements")) {
-                    Element el = byId.get(e);
-                    if (el == null) log.warning("hud.yml group " + id + ": unknown element " + e);
-                    else if (el.fixed() != null) log.warning("hud.yml group " + id + ": element " + e + " has its own anchor, left out");
-                    else members.add(el);
+                List<List<Element>> members = new ArrayList<>();
+                List<?> raw = g.getList("elements");
+                for (Object entry : raw == null ? List.of() : raw) {
+                    List<?> names = entry instanceof List<?> l ? l : List.of(entry);
+                    List<Element> row = new ArrayList<>();
+                    for (Object n : names) {
+                        Element el = byId.get(String.valueOf(n));
+                        if (el == null) log.warning("hud.yml group " + id + ": unknown element " + n);
+                        else if (el.fixed() != null) log.warning("hud.yml group " + id + ": element " + n + " has its own anchor, left out");
+                        else if (names.size() > 1 && !el.isBox()) log.warning("hud.yml group " + id + ": only boxes share a row, " + n + " left out");
+                        else row.add(el);
+                    }
+                    if (!row.isEmpty()) members.add(row);
                 }
                 String setting = g.getString("setting", "");
                 layout.groups.add(new Group(id, setting.isBlank() ? null : setting,
@@ -173,6 +219,26 @@ final class HudLayout {
             int[] at = pair(e.getList("at"), 0, 0);
             fixed = new Place(anchor[0], anchor[1], at[0], at[1]);
         }
+        String setting = e.getString("setting", "");
+        String requires = e.getString("requires", "");
+        if (e.contains("box")) {
+            List<Segment> segments = new ArrayList<>();
+            for (Map<?, ?> raw : e.getMapList("box")) {
+                Object s = raw.get("shadow");
+                int shadow = s == null || "none".equalsIgnoreCase(String.valueOf(s)) ? 0 : argb(String.valueOf(s));
+                Object st = raw.get("setting");
+                Object rq = raw.get("requires");
+                segments.add(new Segment(raw.get("icon") == null ? null : String.valueOf(raw.get("icon")),
+                        runs(raw.get("text") == null ? "" : String.valueOf(raw.get("text")), shadow),
+                        st == null ? null : String.valueOf(st), rq == null ? null : String.valueOf(rq).toLowerCase(Locale.ROOT)));
+            }
+            if (segments.isEmpty()) {
+                log.warning("hud.yml " + id + ": empty box, element ignored");
+                return null;
+            }
+            return new Element(id, setting.isBlank() ? null : setting, requires.isBlank() ? null : requires.toLowerCase(Locale.ROOT),
+                    0, boxHeight, fixed, List.of(), segments);
+        }
         List<Part> parts = new ArrayList<>();
         for (Map<?, ?> raw : e.getMapList("parts")) {
             try {
@@ -185,10 +251,8 @@ final class HudLayout {
             log.warning("hud.yml " + id + ": no part, element ignored");
             return null;
         }
-        String setting = e.getString("setting", "");
-        String requires = e.getString("requires", "");
         return new Element(id, setting.isBlank() ? null : setting, requires.isBlank() ? null : requires.toLowerCase(Locale.ROOT),
-                size[0], size[1], fixed, parts);
+                size[0], size[1], fixed, parts, null);
     }
 
     private Part part(Map<?, ?> raw) {
@@ -238,60 +302,121 @@ final class HudLayout {
 
     // ------------------------------------------------------------------------------------------------ places
 
-    /** Grouped elements in stacking order (groups in their order, elements in theirs). */
-    private List<Element> stackOrder() {
-        List<Element> out = new ArrayList<>();
-        for (Group g : groups) out.addAll(g.elements());
+    /** Rows of the groups in stacking order (groups in their order, rows in theirs). */
+    private List<List<Element>> stackOrder() {
+        List<List<Element>> out = new ArrayList<>();
+        for (Group g : groups) out.addAll(g.rows());
         return out;
     }
 
     /**
      * Where the shown elements go: fixed ones at their place, grouped ones stacked in their group's corner
-     * ({@code corners}: corner of each group).
+     * ({@code corners}: corner of each group). A row is shown when one of its elements is.
      */
-    List<Placed> arrange(Map<Group, Corner> corners, Predicate<Element> shown) {
-        List<Placed> out = new ArrayList<>();
-        for (Element e : elements) if (e.fixed() != null && shown.test(e)) out.add(new Placed(e, e.fixed()));
-        Map<Corner, List<Element>> stacks = new LinkedHashMap<>();
+    Arrangement arrange(Map<Group, Corner> corners, Predicate<Element> shown) {
+        List<Placed> placed = new ArrayList<>();
+        List<Row> rows = new ArrayList<>();
+        for (Element e : elements) if (e.fixed() != null && !e.isBox() && shown.test(e)) placed.add(new Placed(e, e.fixed()));
+        Map<Corner, List<List<Element>>> stacks = new LinkedHashMap<>();
         for (Group g : groups) {
             Corner c = corners.getOrDefault(g, g.byDefault());
-            for (Element e : g.elements()) if (shown.test(e)) stacks.computeIfAbsent(c, k -> new ArrayList<>()).add(e);
+            for (List<Element> row : g.rows()) {
+                List<Element> visible = row.stream().filter(shown).toList();
+                if (!visible.isEmpty()) stacks.computeIfAbsent(c, k -> new ArrayList<>()).add(visible);
+            }
         }
-        for (Map.Entry<Corner, List<Element>> s : stacks.entrySet()) out.addAll(stack(s.getKey(), s.getValue()));
-        return out;
+        for (Map.Entry<Corner, List<List<Element>>> s : stacks.entrySet()) {
+            Corner c = s.getKey();
+            List<List<Element>> list = s.getValue();
+            double[] ys = stackTops(c, list);
+            for (int i = 0; i < list.size(); i++) {
+                List<Element> row = list.get(i);
+                if (row.getFirst().isBox()) rows.add(new Row(c, ys[i], row));
+                else placed.add(new Placed(row.getFirst(), place(c, row.getFirst(), ys[i])));
+            }
+        }
+        return new Arrangement(placed, rows);
     }
 
-    /** The elements of one corner, in order, from its edge (top corners downwards, bottom ones upwards). */
-    private List<Placed> stack(Corner corner, List<Element> list) {
-        List<Placed> out = new ArrayList<>();
+    private int height(List<Element> row) {
+        int h = 0;
+        for (Element e : row) h = Math.max(h, e.height());
+        return h;
+    }
+
+    /** Top of each row of a corner, stacked from its edge (top corners downwards, bottom ones upwards). */
+    private double[] stackTops(Corner corner, List<List<Element>> list) {
+        double[] out = new double[list.size()];
         double y;
         if (corner.anchorY == 0) {
             y = marginY;
         } else {
             double total = -gap;
-            for (Element e : list) total += e.height() + gap;
+            for (List<Element> row : list) total += height(row) + gap;
             y = -marginY - total;
         }
-        for (Element e : list) {
-            double x = corner.anchorX == 0 ? marginX : -marginX - e.width();
-            out.add(new Placed(e, new Place(corner.anchorX, corner.anchorY, x, y)));
-            y += e.height() + gap;
+        for (int i = 0; i < list.size(); i++) {
+            out[i] = y;
+            y += height(list.get(i)) + gap;
         }
         return out;
     }
 
-    /** Every place an element can take, with the slots of its parts. */
+    private Place place(Corner corner, Element e, double y) {
+        double x = corner.anchorX == 0 ? marginX : -marginX - e.width();
+        return new Place(corner.anchorX, corner.anchorY, x, y);
+    }
+
+    /** Every place an element or a row of boxes can take, with its slots. */
     private void registerSlots() {
-        for (Element e : elements) if (e.fixed() != null) register(e, e.fixed());
-        List<Element> grouped = stackOrder();
-        if (grouped.size() > 10) throw new IllegalStateException("more than 10 grouped elements");
+        for (Element e : elements) if (e.fixed() != null && !e.isBox()) register(e, e.fixed());
+        List<List<Element>> rows = stackOrder();
+        if (rows.size() > 10) throw new IllegalStateException("more than 10 grouped rows");
         for (Corner c : Corner.values()) {
-            for (int mask = 1; mask < (1 << grouped.size()); mask++) {
-                List<Element> subset = new ArrayList<>();
-                for (int i = 0; i < grouped.size(); i++) if ((mask & (1 << i)) != 0) subset.add(grouped.get(i));
-                for (Placed p : stack(c, subset)) register(p.element(), p.place());
+            for (int mask = 1; mask < (1 << rows.size()); mask++) {
+                List<List<Element>> subset = new ArrayList<>();
+                for (int i = 0; i < rows.size(); i++) if ((mask & (1 << i)) != 0) subset.add(rows.get(i));
+                double[] ys = stackTops(c, subset);
+                for (int i = 0; i < subset.size(); i++) {
+                    List<Element> row = subset.get(i);
+                    if (row.getFirst().isBox()) registerBox(c, ys[i]);
+                    else register(row.getFirst(), place(c, row.getFirst(), ys[i]));
+                }
             }
         }
+    }
+
+    /**
+     * The three slots of a row of boxes: scale 1 (natural size), so the server lays the boxes out freely by text
+     * advances; their origin is the corner's edge (the server starts a right corner's row at minus its width).
+     * Background and icons are as tall as the box, texts (QuinqueFive, 7 px cells) centred in it.
+     */
+    private void registerBox(Corner c, double y) {
+        double x = c.anchorX == 0 ? marginX : -marginX;
+        for (BoxKind kind : BoxKind.values()) {
+            BoxKey key = new BoxKey(kind, c, y);
+            if (boxSlots.containsKey(key)) continue;
+            if (slots.size() >= MAX_SLOTS) throw new IllegalStateException("more than " + MAX_SLOTS + " places");
+            double top = kind == BoxKind.TEXT ? y + Math.floor((boxHeight - 5) / 2.0) : y;
+            slots.add(new Slot(c.anchorX, c.anchorY, x, top, 1, 1, kind == BoxKind.TEXT ? 7 : boxHeight));
+            boxSlots.put(key, slots.size());
+        }
+    }
+
+    /** Space between two boxes of a row (the gap between the elements of a corner). */
+    int gapBetweenBoxes() {
+        return gap;
+    }
+
+    /** Slot of a row of boxes, 0 when unknown. */
+    int boxSlot(BoxKind kind, Corner corner, double y) {
+        Integer i = boxSlots.get(new BoxKey(kind, corner, y));
+        return i == null ? 0 : i;
+    }
+
+    /** Colour index of plain white (backgrounds and icons of boxes). */
+    int white() {
+        return colourIndex.getOrDefault(new Colour(0xFFFFFFFF, 0), 0);
     }
 
     private void register(Element e, Place place) {
