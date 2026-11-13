@@ -53,13 +53,10 @@ def banner(out):
     px = [(0, 0, 0, 0)] * (W * H)
     for y in range(H):
         for x in range(W):
-            # rounded panel, faded towards both ends
-            r = 18
-            cx = min(max(x, r), W - 1 - r)
-            cy = min(max(y, r), H - 1 - r)
-            if (x - cx) ** 2 + (y - cy) ** 2 > r * r:
-                continue
-            edge = smooth(0, 130, min(x, W - 1 - x))
+            # no hard border anywhere: long fade to nothing at both ends (eased twice, so the panel melts in
+            # without a visible start), short fade at the top and the bottom
+            ends = smooth(0, 240, min(x, W - 1 - x))
+            edge = ends * ends * smooth(0, 16, min(y, H - 1 - y))
             a = (0.90 - 0.10 * y / H) * edge
             p = over((0, 0, 0, 0), NAVY, a)
             # blue glow in the middle
