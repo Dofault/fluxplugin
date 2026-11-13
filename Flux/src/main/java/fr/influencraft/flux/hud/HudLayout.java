@@ -52,7 +52,8 @@ final class HudLayout {
     }
 
     /** One place of the screen: anchor (0..1 of the screen), offset in px, scale. */
-    private record Slot(double anchorX, double anchorY, double x, double y, double scaleX, double scaleY) {
+    /** {@code height}: how tall the part's quads are drawn, in GUI pixels (8 x scale for objects, a font's cell for text). */
+    private record Slot(double anchorX, double anchorY, double x, double y, double scaleX, double scaleY, double height) {
     }
 
     /** Main and shadow colours, ARGB. */
@@ -97,25 +98,26 @@ final class HudLayout {
     private Part part(Map<?, ?> raw, double[] anchor, int[] base) {
         int[] at = pair(raw.get("at"), 0, 0);
         Layer layer = "back".equalsIgnoreCase(String.valueOf(raw.get("layer"))) ? Layer.BACK : Layer.FRONT;
-        // An object (sprite, head) is drawn from 1 px above the line, where a letter starts on it (8 px tall from
-        // the baseline, 7 px below the line's top): scaled, that pixel becomes size / 8. Set back so that "at" is the
-        // picture's real top.
+        // Heights are not taken from where the game drew the quad (a boss bar line, which differs between fonts and
+        // objects by a pixel or two): the shader puts a quad's top corners at "at" and its bottom ones "height" lower.
         if (raw.containsKey("image")) {
             int[] size = pair(raw.get("size"), 8, 8);
-            int slot = slot(anchor, base[0] + at[0], base[1] + at[1] + size[1] / 8.0, size[0] / 8.0, size[1] / 8.0);
+            int slot = slot(anchor, base[0] + at[0], base[1] + at[1], size[0] / 8.0, size[1] / 8.0, size[1]);
             return new Image(slot, layer, String.valueOf(raw.get("image")), colour(0xFFFFFFFF, 0));
         }
         if (raw.containsKey("head")) {
             int[] size = pair(raw.get("size"), 8, 8);
-            int slot = slot(anchor, base[0] + at[0], base[1] + at[1] + size[1] / 8.0, size[0] / 8.0, size[1] / 8.0);
+            int slot = slot(anchor, base[0] + at[0], base[1] + at[1], size[0] / 8.0, size[1] / 8.0, size[1]);
             return new Head(slot, layer, colour(0xFFFFFFFF, 0));
         }
         if (raw.containsKey("text")) {
             double scale = raw.get("scale") instanceof Number n ? n.doubleValue() : 1.0;
-            int slot = slot(anchor, base[0] + at[0], base[1] + at[1], scale, scale);
+            boolean small = "small".equalsIgnoreCase(String.valueOf(raw.get("font")));
+            // cells: 7 px in the HUD font's QuinqueFive sheet, 8 px in the game's font
+            int slot = slot(anchor, base[0] + at[0], base[1] + at[1], scale, scale, (small ? 7 : 8) * scale);
             Object s = raw.get("shadow");
-            int shadow = s == null ? 0xFF000000 : "none".equalsIgnoreCase(String.valueOf(s)) ? 0 : argb(String.valueOf(s));
-            return new Text(slot, layer, runs(String.valueOf(raw.get("text")), shadow), "small".equalsIgnoreCase(String.valueOf(raw.get("font"))));
+            int shadow = s == null || "none".equalsIgnoreCase(String.valueOf(s)) ? 0 : argb(String.valueOf(s));
+            return new Text(slot, layer, runs(String.valueOf(raw.get("text")), shadow), small);
         }
         throw new IllegalArgumentException("image, head or text expected");
     }
@@ -134,9 +136,9 @@ final class HudLayout {
         return runs;
     }
 
-    private int slot(double[] anchor, double x, double y, double sx, double sy) {
+    private int slot(double[] anchor, double x, double y, double sx, double sy, double height) {
         if (slots.size() >= 254) throw new IllegalStateException("more than 254 parts");
-        slots.add(new Slot(anchor[0], anchor[1], x, y, sx, sy));
+        slots.add(new Slot(anchor[0], anchor[1], x, y, sx, sy, height));
         return slots.size();
     }
 
@@ -163,11 +165,11 @@ final class HudLayout {
     String glsl() {
         if (slots.isEmpty()) return null;
         StringBuilder place = new StringBuilder("vec4(0.0)");
-        StringBuilder scale = new StringBuilder("vec2(1.0)");
+        StringBuilder scale = new StringBuilder("vec3(1.0)");
         for (Slot s : slots) {
             place.append(", vec4(").append(f(s.anchorX())).append(", ").append(f(s.anchorY())).append(", ")
                     .append(f(s.x())).append(", ").append(f(s.y())).append(')');
-            scale.append(", vec2(").append(f(s.scaleX())).append(", ").append(f(s.scaleY())).append(')');
+            scale.append(", vec3(").append(f(s.scaleX())).append(", ").append(f(s.scaleY())).append(", ").append(f(s.height())).append(')');
         }
         StringBuilder colour = new StringBuilder();
         for (Colour c : colours) {
@@ -177,11 +179,13 @@ final class HudLayout {
         int n = slots.size();
         return """
                 // The HUD of plugins/Flux/hud.yml (Flux, hud.HudLayout): boss bar text marked by its colour (red 249,
-                // green = slot, blue = colour * 2 + shadow) goes from the top centre of its boss bar line to its slot's
-                // place on the screen (anchor in fractions of the screen, offset in pixels), scaled, in its real colour.
+                // green = slot, blue = colour * 2 + shadow) goes to its slot's place on the screen (anchor in fractions
+                // of the screen, offset in pixels), in its real colour. Across: its distance from the screen's centre
+                // (where every part starts), scaled. Down: a quad's top corners (vertices 0 and 3) on the slot's top,
+                // its bottom ones (1 and 2) the slot's height lower, a shadow one scaled pixel lower still.
                 const int FLUX_HUD_SLOTS = %d;
                 const vec4 FLUX_HUD_PLACE[%d] = vec4[](%s);
-                const vec2 FLUX_HUD_SCALE[%d] = vec2[](%s);
+                const vec3 FLUX_HUD_SCALE[%d] = vec3[](%s);
                 const int FLUX_HUD_COLOURS = %d;
                 const vec4 FLUX_HUD_COLOUR[%d] = vec4[](%s);
 
@@ -190,11 +194,15 @@ final class HudLayout {
                     if (mark.r != 249 || mark.g < 1 || mark.g > FLUX_HUD_SLOTS || mark.b >= FLUX_HUD_COLOURS) return;
                     vec2 gui = 2.0 / vec2(ProjMat[0][0], -ProjMat[1][1]);
                     vec4 p = ModelViewMat * vec4(Position, 1.0);
-                    // Boss bar titles: x = width / 2 - textWidth / 2 (0 wide here), y = 3 + 19 per bar above.
+                    // Boss bar titles: x = width / 2 - textWidth / 2, and the title is 0 wide.
                     float centre = floor(ceil(gui.x - 0.01) / 2.0);
-                    float top = 3.0 + 19.0 * floor((p.y + 2.0) / 19.0);
                     vec4 place = FLUX_HUD_PLACE[mark.g];
-                    p.xy = place.xy * gui + place.zw + vec2(p.x - centre, p.y - top) * FLUX_HUD_SCALE[mark.g];
+                    vec3 scale = FLUX_HUD_SCALE[mark.g];
+                    int corner = gl_VertexID %% 4;
+                    float down = (corner == 1 || corner == 2) ? scale.z : 0.0;
+                    if ((mark.b & 1) == 1) down += scale.y;
+                    p.x = place.x * gui.x + place.z + (p.x - centre) * scale.x;
+                    p.y = place.y * gui.y + place.w + down;
                     gl_Position = ProjMat * p;
                     vertexColor = FLUX_HUD_COLOUR[mark.b];
                 }

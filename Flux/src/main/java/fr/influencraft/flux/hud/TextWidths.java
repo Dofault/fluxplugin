@@ -18,7 +18,7 @@ final class TextWidths {
 
     private static final int FALLBACK = 6;
     private final Map<Integer, Integer> widths = new HashMap<>();
-    /** The HUD font's QuinqueFive sheet (hud_font_widths.json, Flux/assets/hud/gen_hud_font.py). */
+    /** The HUD font's QuinqueFive sheet (hud_font_widths.json, Flux/assets/hud/gen_hud.py). */
     private final Map<Integer, Integer> small = new HashMap<>();
 
     TextWidths(Plugin flux) {

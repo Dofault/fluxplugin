@@ -19,38 +19,40 @@ bar-colour: YELLOW
 #          (that currency's icon, currencies.<id>.icon of Flux's config: the same picture as the menus), size [w, h]
 #   head: true, the player's own head (hat layer included), size [w, h]
 #   text: <#RRGGBB> colours and pieces, font (small: QuinqueFive capitals, 5 px; else the game's font),
-#         scale (1 = natural size), shadow (#RRGGBB, #AARRGGBB or none)
+#         scale (1 = natural size), shadow (#RRGGBB or #AARRGGBB; none by default)
 #   layer: back for backgrounds (drawn first, under everything else)
 # setting: option of settings.yml that hides the element when off; requires: piece that must not be empty.
 elements:
+  # card: 102 x 32 panel, 24 px head (4 px margin), two rows of a 9 px icon and 5 px text centred on each other
   profile:
     setting: hud_avatar
     anchor: top-left
     at: [15, 10]
     parts:
-      - {image: "flux:hud/card", at: [0, 0], size: [112, 32], layer: back}
+      - {image: "flux:hud/panel_102x32", at: [0, 0], size: [102, 32], layer: back}
       - {head: true, at: [4, 4], size: [24, 24]}
-      - {image: "currency:vault", at: [36, 5], size: [10, 10]}
-      - {text: "{balance}", at: [49, 8], font: small}
-      - {image: "currency:influence", at: [36, 16], size: [10, 10]}
-      - {text: "{influence}", at: [49, 19], font: small}
+      - {image: "currency:vault", at: [33, 5], size: [9, 9]}
+      - {text: "{balance}", at: [45, 7], font: small}
+      - {image: "currency:influence", at: [33, 18], size: [9, 9]}
+      - {text: "{influence}", at: [45, 20], font: small}
+  # boxes on the right, 13 px tall: 9 px icon and 5 px text centred, 15 px from the right edge
   position:
     setting: hud_position
     anchor: top-right
-    at: [-127, 10]
+    at: [-163, 10]
     parts:
-      - {image: "flux:hud/bar", at: [0, 0], size: [112, 12], layer: back}
-      - {image: "flux:hud/compass_{compass}", at: [2, 1], size: [10, 10]}
-      - {text: "{x}, {y}, {z}", at: [15, 4], font: small}
+      - {image: "flux:hud/panel_148x13", at: [0, 0], size: [148, 13], layer: back}
+      - {image: "flux:hud/compass_{compass}", at: [3, 2], size: [9, 9]}
+      - {text: "X: {x}, Y: {y}, Z: {z}", at: [15, 4], font: small}
   voteparty:
     setting: hud_voteparty
     requires: voteparty
     anchor: top-right
-    at: [-127, 26]
+    at: [-79, 26]
     parts:
-      - {image: "flux:hud/bar", at: [0, 0], size: [112, 12], layer: back}
-      - {image: "flux:hud/voteparty", at: [2, 1], size: [10, 10]}
-      - {text: "<#FFFFFF>VoteParty: <#FFEB00>{voteparty}<#FFFFFF>/<#FADA5E>{voteparty_required}", at: [15, 4], font: small}
+      - {image: "flux:hud/panel_64x13", at: [0, 0], size: [64, 13], layer: back}
+      - {image: "flux:hud/voteparty", at: [3, 2], size: [9, 9]}
+      - {text: "<#FFEB00>{voteparty}<#FFFFFF>/<#FADA5E>{voteparty_required}", at: [15, 4], font: small}
 
 # Bedrock players (no pack, so no picture): one boss bar, MiniMessage or & colours. progress: "a/b" or 0 to 1.
 bedrock:

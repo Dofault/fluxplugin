@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The HUD's font (flux:hud), shipped in Flux's client pack (resources/pack/), 2026-11-13.
+"""The HUD's font (flux:hud) and its panels, shipped in Flux's client pack (resources/pack/), 2026-11-13.
 
 - space provider: negative (U+E010 + n = -2^n px) and positive (U+E020 + n = +2^n px) spaces, n = 0..9;
 - U+E000: a tall invisible glyph (2 x 2 picture at alpha 1, height 40) that makes the client draw the HUD's front
@@ -9,7 +9,7 @@
   ascent 7 a glyph's top sits on the line's top, like the game's own letters.
 
 Also writes hud_font_widths.json (advance of each character of that sheet) for the server to measure texts.
-No dependency (PNG written with zlib). Usage: gen_hud_font.py
+No dependency (PNG written with zlib). Usage: gen_hud.py
 """
 import json
 import os
@@ -29,6 +29,8 @@ EXTRA = {
 }
 SPACE = 3  # advance of a space in that font
 CELL_W, CELL_H, COLS = 5, 7, 16
+# panels drawn by hud.yml (width, height): the card, the position box, the Vote Party box
+PANELS = [(102, 32), (148, 13), (64, 13)]
 
 
 def png(w, h, pixels):
@@ -78,6 +80,17 @@ def main():
         {"type": "bitmap", "file": "flux:font/hud_spacer.png", "height": 40, "ascent": 7, "chars": [""]},
         {"type": "bitmap", "file": "flux:font/hud_text.png", "height": CELL_H, "ascent": CELL_H, "chars": ["".join(l) for l in rows]},
     ]}
+    # backgrounds: the translucent rounded panels of the production HUD (black at alpha 39, corners cut by 2 and 1
+    # px), at the exact size hud.yml draws them (a sprite is scaled to its size: same size = crisp)
+    sprites = os.path.join(RES, "pack", "assets", "flux", "textures", "gui", "sprites", "hud")
+    os.makedirs(sprites, exist_ok=True)
+    for pw, ph in PANELS:
+        rows = []
+        for y in range(ph):
+            cut = 2 if y in (0, ph - 1) else 1 if y in (1, ph - 2) else 0
+            rows.append([(0, 0, 0, 39) if cut <= x < pw - cut else (0, 0, 0, 0) for x in range(pw)])
+        with open(os.path.join(sprites, "panel_%dx%d.png" % (pw, ph)), "wb") as f:
+            f.write(png(pw, ph, rows))
     os.makedirs(os.path.join(RES, "pack", "assets", "flux", "font"), exist_ok=True)
     with open(os.path.join(RES, "pack", "assets", "flux", "font", "hud.json"), "w", encoding="utf-8") as f:
         json.dump(font, f, indent=2)
