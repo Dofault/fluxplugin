@@ -353,14 +353,19 @@ WEAPONS = [brise_aube, sylve_celeste, sceptre_neant, reliquaire_aube]
 
 VANILLA = {
     "handheld": {"tp": ([0, -90, 55], [0, 4, 0.5], 0.85), "fp": ([0, -90, 25], [1.13, 3.2, 1.13], 0.68), "grip": (3.5, 3.5, 8)},
-    "bow": {"tp": ([-80, 260, -40], [-1, -2, 2.5], 0.9), "fp": ([0, -90, 25], [1.13, 3.2, 1.13], 0.68), "grip": (7.5, 8, 8)},
+    "bow": {"tp": ([-80, 260, -40], [-1, -2, 2.5], 0.9), "fp": ([0, -90, 25], [1.13, 3.2, 1.13], 0.68), "grip": (7.5, 8, 8),
+            # first person: the real handle of the sprite (wood arc in the upper left, string from the upper right to
+            # the lower left corner), so the bow sits where the vanilla one does
+            "grip_fp": (5.5, 10.5, 8)},
 }
 
 # weapon: base, weapon axis in the sprite of the base (degrees), grip, third person (turn, scale),
 # first person (turn, scale[, shift of the fist on screen: x right, y up, in display units])
 DISPLAYS = {
     "brise_aube": ("handheld", 45, (8, -7, 8), (-32, 0.70), (0, 0.42)),
-    "sylve_celeste": ("bow", 135, (8.1, 8, 8), (25, 0.55), (-45, 0.32, (-3, 2.5, 0))),
+    # first person: turn -90 = the vanilla sprite's own axis (string from lower left to upper right, back of the bow
+    # towards the upper left, 2026-11-13), at the size of the vanilla bow
+    "sylve_celeste": ("bow", 135, (8.1, 8, 8), (25, 0.55), (-90, 0.30)),
     "sceptre_neant": ("handheld", 45, (8, 2, 8), (-47, 0.66), (10, 0.36)),
     "reliquaire_aube": ("handheld", 45, (8, 2.85, 8), (-47, 0.66), (10, 0.36)),
 }
@@ -403,7 +408,7 @@ def held(base, axis_angle, grip, turn, scale, ctx, shift=(0, 0, 0), spin=0):
     """Display entry: vanilla rotation + in-plane turn (+ spin around the weapon's own axis), translation that puts
     the grip on the vanilla grip."""
     rot, tr, s = VANILLA[base][ctx]
-    g_v = np.array(VANILLA[base]["grip"], float)
+    g_v = np.array(VANILLA[base].get("grip_" + ctx, VANILLA[base]["grip"]), float)
     hand = np.array(tr, float) + rxyz(rot) @ (s * (g_v - C8))
     # Our model is drawn along +Y (90 degrees); the vanilla sprite axis is at axis_angle.
     z = rot[2] + (axis_angle - 90) + turn

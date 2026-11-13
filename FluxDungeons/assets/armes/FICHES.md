@@ -157,8 +157,8 @@ Affichages (`display` du modèle) :
 |---|---|---|---|
 | `thirdperson_righthand` | -80 80 -30 | -0.95 -2.23 2.14 | 0.55 |
 | `thirdperson_lefthand` | -80 -80 30 | -0.95 -2.23 2.14 | 0.55 |
-| `firstperson_righthand` | -46.13 90 21.13 | -1.87 5.57 0.85 | 0.32 |
-| `firstperson_lefthand` | -46.13 -90 -21.13 | -1.87 5.57 0.85 | 0.32 |
+| `firstperson_righthand` | 37.88 90 -17.88 | 1.13 4.01 -1.1 | 0.3 |
+| `firstperson_lefthand` | 37.88 -90 17.88 | 1.13 4.01 -1.1 | 0.3 |
 | `gui` | 0 0 -45 | 1.71 -1.71 0 | 0.475 |
 | `fixed` | 0 180 45 | -1.6 1.6 0 | 0.446 |
 | `on_shelf` | 0 180 45 | -1.6 1.6 0 | 0.446 |
