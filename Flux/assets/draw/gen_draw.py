@@ -60,11 +60,11 @@ def banner(out):
             if (x - cx) ** 2 + (y - cy) ** 2 > r * r:
                 continue
             edge = smooth(0, 130, min(x, W - 1 - x))
-            a = (0.62 - 0.10 * y / H) * edge
+            a = (0.30 - 0.05 * y / H) * edge
             p = over((0, 0, 0, 0), NAVY, a)
             # blue glow in the middle
             d = ((x - W / 2) / (W * 0.32)) ** 2 + ((y - H * 0.55) / (H * 0.55)) ** 2
-            p = over(p, BLUE, 0.26 * math.exp(-d * 2.2) * edge)
+            p = over(p, BLUE, 0.18 * math.exp(-d * 2.2) * edge)
             # thin lines at the top and the bottom, brightest in the middle
             for ly in (7, H - 8):
                 if abs(y - ly) <= 1:
