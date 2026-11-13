@@ -157,6 +157,10 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
                                 ? getConfig().getString("advancement-redirect.command", "menu") : null));
         bossBarListener = PacketEvents.getAPI().getEventManager()
                 .registerListener(new fr.influencraft.flux.adapters.packetevents.BossBarOrder(this, hud));
+        // a view through another entity, the mouse as a pointer (api.client.Camera, FluxTopDown)
+        var camera = new fr.influencraft.flux.adapters.packetevents.PacketEventsCamera(this);
+        cameraListener = PacketEvents.getAPI().getEventManager().registerListener(camera);
+        fr.influencraft.flux.api.client.Camera.bind(camera);
         // Flux's part of the resource pack: the one text shader of the suite (api.client.TextShader), HUD pictures
         if (clientPack == null) clientPack = new fr.influencraft.flux.pack.ClientPack(this, getFile());
         clientPack.configure(getConfig().getConfigurationSection("client-pack"));
@@ -179,6 +183,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         if (hud != null) hud.stop();
         if (clientPack != null) clientPack.stop();
         if (bossBarListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(bossBarListener);
+        if (cameraListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(cameraListener);
         fr.influencraft.flux.api.util.PlayerSettings.close();
         fr.influencraft.flux.api.data.Database.stop();
         if (papiBridge != null) papiBridge.shutdown();
@@ -199,6 +204,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     private fr.influencraft.flux.hud.HudService hud;
     private fr.influencraft.flux.pack.ClientPack clientPack;
     private com.github.retrooper.packetevents.event.PacketListenerCommon bossBarListener;
+    private com.github.retrooper.packetevents.event.PacketListenerCommon cameraListener;
     private fr.influencraft.flux.leaderboard.LeaderboardService leaderboards;
     private fr.influencraft.flux.profile.ProfileService profile;
     private fr.influencraft.flux.help.HelpService help;
