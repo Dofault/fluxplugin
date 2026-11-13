@@ -1,0 +1,12 @@
+name: FluxTopDown
+version: 0.1.0
+main: fr.influencraft.fluxtopdown.FluxTopDown
+api-version: "26.2"
+description: Hack and slash view from above (experiment) - camera over the player, click to move, aimed spells.
+authors: [Influencraft]
+depend: [Flux, FluxDungeons]
+
+permissions:
+  fluxtopdown.use:
+    description: Play with the view from above (/hackslash).
+    default: op

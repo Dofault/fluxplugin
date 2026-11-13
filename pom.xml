@@ -49,5 +49,6 @@
         <module>FluxMusic</module>
         <module>FluxPass</module>
         <module>FluxTournament</module>
+        <module>FluxTopDown</module>
     </modules>
 </project>

@@ -65,6 +65,7 @@ The plugins are written **as English plugins, then adapted to French** for our s
 | `util.Experience` | A player's experience in points (vanilla formulas; `getTotalExperience()` is wrong after enchanting): `total`, `set`, `take`, `give`, `pointsOfLevels`, `levelOf`. Used by the trades of FluxCommerce and `/bottlexp`. |
 | `util.Sounds` | Named cues only: `page`, `click`, `confirm` (first click of a double confirmation), `success`, `complete` (something earned), `error`, `remove`, `toggle-on/off`, `alert` (needs attention, 3 s cooldown). **One sound per click**: the action lines of a click run as a batch, a `[sound]` line wins over sounds played by code (`[list]` page sound, menu opening), else the first one plays. Do not add a `[sound]` that only repeats the automatic one. |
 | `music.Music` | Music with note block sounds (FluxMusic provides it, songs in `plugins/FluxMusic/songs/`): `play(player, song)` / `loop` / `stop` for the background music (one per player), `jingle(player, song)` for a short piece over it (the music goes silent meanwhile, keeps its rhythm). Returns false without FluxMusic: fall back to a plain sound. Never play a tune note by note yourself. |
+| `client.Camera` | A view through another entity, the mouse as a pointer (FluxTopDown): `view(player, entity)` (camera packet, null = back), `turn(player, yaw, rel, pitch, rel)` (rotation packet, no teleport), `hideSelf(player, on)` (invisible flag in the metadata sent to himself only), `clicks(entity, (player, left) -> ...)` (clicks on that entity read before the server's distance check, on the server thread). Java only. |
 | `client.HurtShake` | `HurtShake.limit(player, ms)`: a player's screen shakes at most that often when hurt (Flux drops the extra hurt packets sent to him, his hurt sound still plays). Used by FluxDungeons. |
 | `staff.Staff` | `Staff.alert(topic, title, message)` to online staff. |
 | `screen.Screens` | Full screen HTML/CSS pages (MC GUI adapter, `docs/technique/mcgui.md`): `canShow(player)`, `open(player, page)` (false = open your own menu instead: no adapter, Bedrock, shaders), `pagesFolder()` (write generated pages in `<folder>/<plugin>/`), `onClose(plugin, closed -> ...)`. Buttons run commands (`data-command`), player values come from placeholders. A page is never the only way to a feature. First user: FluxDungeons `rpg.ClassPages`. |
@@ -117,6 +118,8 @@ The plugins are written **as English plugins, then adapted to French** for our s
   dungeon worlds belong to the rpg universe (`dungeon.RpgBridge`, set by `FluxDungeons#wireRpg`): a run uses the
   rpg profile, class, experience and lobby; the rpg `CombatEngine` fights dungeon monsters after the dungeon rules
   (`combat.CombatRules`, which may refuse or react to a hit; a player's hit reaches them as a synthetic Bukkit hit).
+  Other plugins fight there through `fluxdungeons.api.Combat` (`enemies`, `strike`, `heal`, `cast`,
+  `takeControls`: the class's clicks and keys stop reacting for that player) and start runs with `Dungeons.start`.
   Without the rpg module, the former vanilla-gear play (launch screen gear, `flux_dungeons_vault`, gear locked in
   `flux_dungeons_lost` on death) still runs. Never give, take or check items
   of a player in a run from another plugin; stay out of runs with `Dungeons.playing`. Pets come in through Flux's
