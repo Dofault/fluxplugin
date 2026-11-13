@@ -258,10 +258,25 @@ final class Sessions implements Listener {
 
     // ---------------------------------------------------------------- input
 
-    /** A click of the player (on the box around his camera). */
+    /** Tick of each player's last right click: one click may come by several ways (packet, use event, arm swing). */
+    private final Map<UUID, Long> lastRight = new HashMap<>();
+
+    /**
+     * A click of the player. Right clicks come from the box around his camera (Flux reads them) or, when his client
+     * missed the box, from the use event; left clicks from his arm swing, which the client always sends.
+     */
     void clicked(Session s, boolean left) {
         if (!sessions.containsValue(s)) return;
         long tick = Bukkit.getCurrentTick();
+        Long right = lastRight.get(s.player.getUniqueId());
+        if (left && right != null && tick - right <= 1) return;     // the swing of a right click
+        if (!left) {
+            if (right != null && right == tick) return;
+            lastRight.put(s.player.getUniqueId(), tick);
+        }
+        if (debug.contains(s.player.getUniqueId())) {
+            plugin.messages().send(s.player, "debug-received", "%button%", plugin.messages().raw(left ? "debug-left" : "debug-right"));
+        }
         Location aim = s.pointed();
         if (s.aiming != null) {
             if (left) {
@@ -334,10 +349,26 @@ final class Sessions implements Listener {
         if (active(e.getPlayer())) e.setCancelled(true);
     }
 
-    /** His own swings and uses (the server's view of his clicks) do nothing: the box around the camera has them. */
+    /** His own uses do nothing in the world; a right click the box missed still counts. */
     @EventHandler(priority = EventPriority.LOWEST)
     public void onInteract(PlayerInteractEvent e) {
-        if (active(e.getPlayer())) e.setCancelled(true);
+        Session s = sessions.get(e.getPlayer().getUniqueId());
+        if (s == null) return;
+        e.setCancelled(true);
+        if (e.getHand() == org.bukkit.inventory.EquipmentSlot.HAND
+                && (e.getAction() == org.bukkit.event.block.Action.RIGHT_CLICK_AIR || e.getAction() == org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK)) {
+            clicked(s, false);
+        }
+    }
+
+    /** A left click: the client sends the arm swing whatever it hit. */
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onSwing(io.papermc.paper.event.player.PlayerArmSwingEvent e) {
+        Session s = sessions.get(e.getPlayer().getUniqueId());
+        if (s == null || e.getHand() != org.bukkit.inventory.EquipmentSlot.HAND) return;
+        e.setCancelled(true);
+        // a tick later: the right click this swing may belong to reaches us from the network a tick late
+        Bukkit.getScheduler().runTask(plugin, () -> clicked(s, true));
     }
 
     @EventHandler
@@ -353,6 +384,7 @@ final class Sessions implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
         waiting.remove(e.getPlayer().getUniqueId());
+        lastRight.remove(e.getPlayer().getUniqueId());
         stop(e.getPlayer(), false);
     }
 

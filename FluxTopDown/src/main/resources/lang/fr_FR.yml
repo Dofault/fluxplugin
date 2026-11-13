@@ -18,6 +18,7 @@ debug-left: "clic gauche"
 debug-right: "clic droit"
 debug-yes: "oui"
 debug-no: "non"
+debug-received: "&8[débogage] &7%button% reçu"
 reloaded: "&#2ECF7BFluxTopDown rechargé."
 cooldown: "&#FF5C5C%spell% &7: encore &f%time% s&7."
 # barre de boss pendant la vue aérienne : les quatre sorts

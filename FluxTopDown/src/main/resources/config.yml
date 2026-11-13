@@ -24,13 +24,11 @@ cursor:
   # Area the pointer moves in, from the screen's centre (same units).
   width: 1.15
   height: 0.62
-  # Picture of the pointer (MiniMessage) and its size; the default is the arrow of MC GUI's pack.
-  text: "<font:uiengine:pointer></font>"
-  scale: 0.35
-  # How far in front of the camera it is drawn.
-  distance: 2.0
-  # From the picture's anchor (bottom middle of the text) to the tip of the arrow, in pixels of the picture.
-  hotspot: [-5.5, 9.0]
+  # The mark standing on the pointed spot (MiniMessage, seen through blocks) and its size.
+  text: "<bold><#FFD94D>+</#FFD94D></bold>"
+  scale: 3
+  # From the mark's anchor (bottom middle of the text) to its centre, in pixels of the font.
+  hotspot: [0, 4.5]
 
 move:
   # Blocks per tick (a walking player does about 0.22, sprinting 0.28).

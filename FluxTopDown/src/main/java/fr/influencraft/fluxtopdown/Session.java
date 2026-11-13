@@ -39,8 +39,7 @@ import java.util.Map;
  * One player in the view from above. Four entities, all non persistent:
  * <ul>
  *   <li>{@code camera}: an invisible mannequin hung over the hero, the player's view ({@link Camera#view});</li>
- *   <li>{@code cursor}: a text display riding the camera, drawn along the pointer's ray just in front of it, so it
- *   moves with the camera without lagging behind;</li>
+ *   <li>{@code cursor}: a text display standing on the pointed spot, seen through blocks;</li>
  *   <li>{@code target}: an interaction box around the camera's eyes, what every click of the player lands on;</li>
  *   <li>{@code avatar}: a mannequin with the player's skin standing where he stands, facing where he walks or casts:
  *   the player's own body is hidden (to himself and to the others) since his head follows the mouse.</li>
@@ -51,7 +50,7 @@ import java.util.Map;
 final class Session {
 
     private static final NamespacedKey MODIFIER = new NamespacedKey("fluxtopdown", "view");
-    private static final double EYE = 1.62, ATTACH = 1.8;
+    private static final double EYE = 1.62;
 
     final Player player;
     private final FluxTopDown plugin;
@@ -110,7 +109,7 @@ final class Session {
             AttributeInstance a = distanceAttr == null ? null : m.getAttribute(distanceAttr);
             if (a != null) a.addTransientModifier(new AttributeModifier(MODIFIER, -1, AttributeModifier.Operation.MULTIPLY_SCALAR_1, EquipmentSlotGroup.ANY));
         });
-        cursor = w.spawn(camera.getLocation(), TextDisplay.class, d -> {
+        cursor = w.spawn(at, TextDisplay.class, d -> {
             d.setPersistent(false);
             d.setVisibleByDefault(false);
             d.text(MiniMessage.miniMessage().deserialize(s.cursorText()));
@@ -119,10 +118,8 @@ final class Session {
             d.setShadowed(false);
             d.setSeeThrough(true);
             d.setBrightness(new Display.Brightness(15, 15));
-            d.setInterpolationDuration(1);
-            d.setTeleportDuration(0);
+            d.setTeleportDuration(2);
         });
-        camera.addPassenger(cursor);
         target = w.spawn(eye.clone().subtract(0, 1.5, 0), Interaction.class, i -> {
             i.setPersistent(false);
             i.setVisibleByDefault(false);
@@ -159,7 +156,10 @@ final class Session {
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             if (player.isOnline() && camera.isValid()) Camera.view(player, camera);
         }, 3L);
-        Camera.clicks(target, (p, left) -> plugin.sessions().clicked(this, left));
+        // right clicks only: left clicks are read from the arm swing (Sessions#onSwing), sent even when the box is missed
+        Camera.clicks(target, (p, left) -> {
+            if (!left) plugin.sessions().clicked(this, false);
+        });
         hideOwnGear();
         player.showBossBar(bar);
     }
@@ -269,7 +269,7 @@ final class Session {
         Settings s = plugin.settings();
         Location feet = player.getLocation();
         Vector[] ax = axes(s);
-        Vector f = ax[0], r = ax[1], u = ax[2];
+        Vector f = ax[0];
         // never through a roof: closer under it (at once), back out slowly
         Location focus = feet.clone().add(0, 1, 0);
         double want = s.cameraDistance();
@@ -278,23 +278,18 @@ final class Session {
         distance = want < distance ? want : Math.min(want, distance + 0.35);
         Location eye = eye(s, feet, distance);
         Location camAt = eye.clone().subtract(0, EYE, 0);
-        // a passenger cannot be teleported with its vehicle: the cursor is left on and follows
-        camera.teleport(camAt, io.papermc.paper.entity.TeleportFlag.EntityState.RETAIN_PASSENGERS);
+        camera.teleport(camAt);
         camera.setRotation((float) s.cameraYaw(), (float) s.cameraPitch());
         target.teleport(eye.clone().subtract(0, 1.5, 0));
-        // the pointer, in the camera's own frame (x right, y up, z back), from the rider's anchor above the camera
-        Vector eyeFromAnchor = new Vector(0, EYE - ATTACH, 0);
-        double d = s.cursorDistance(), px = 0.025 * s.cursorScale();
-        float tx = (float) (eyeFromAnchor.dot(r) + sx * d - s.hotspotX() * px);
-        float ty = (float) (eyeFromAnchor.dot(u) + sy * d - s.hotspotY() * px);
-        float tz = (float) (-eyeFromAnchor.dot(f) - d);
+        // the pointer: a mark standing on the pointed spot, drawn over the blocks, its centre on the spot
+        Location spot = pointed().add(0, 0.05, 0);
+        cursor.teleport(spot);
+        double px = 0.025 * s.cursorScale();
+        Vector3f t = new Vector3f((float) (-s.hotspotX() * px), (float) (-s.hotspotY() * px), 0);
         Transformation now = cursor.getTransformation();
-        Vector3f t = new Vector3f(tx, ty, tz);
         if (now.getTranslation().distance(t) > 1e-4 || now.getScale().x() != s.cursorScale()) {
-            cursor.setInterpolationDelay(0);
             cursor.setTransformation(new Transformation(t, new Quaternionf(), new Vector3f(s.cursorScale()), new Quaternionf()));
         }
-        if (!camera.getPassengers().contains(cursor)) camera.addPassenger(cursor);
     }
 
     /** Where the pointer's ray meets the world (blocks you can walk through ignored), else the hero's floor level. */
