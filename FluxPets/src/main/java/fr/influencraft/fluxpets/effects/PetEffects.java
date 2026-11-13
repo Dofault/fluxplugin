@@ -20,17 +20,14 @@ public final class PetEffects {
 
     private final FluxPets plugin;
     private final List<PetEffect> effects = new ArrayList<>();
-    private final PlacedBlocks placed;
     private final MoneyBonus moneyBonus;
     private int maxLevel = 10;
 
     public PetEffects(FluxPets plugin) {
         this.plugin = plugin;
-        placed = new PlacedBlocks(plugin);
-        Bukkit.getPluginManager().registerEvents(placed, plugin);
         FurnaceOwners owners = new FurnaceOwners();
         Bukkit.getPluginManager().registerEvents(owners, plugin);
-        add(new StoneXp(this, placed));
+        add(new StoneXp(this));
         add(new NoBlockUpdate(this));
         add(new CocoaReplant(this));
         add(new InstantBoneMeal(this));
@@ -38,7 +35,7 @@ public final class PetEffects {
         add(new InstantConcrete(this));
         add(new FastSmelting(this, owners));
         add(new FurnaceDelivery(this, owners));
-        add(new EnchantMastery(this, placed));
+        add(new EnchantMastery(this));
         add(new LapisSaver(this));
         add(new LevelSaver(this));
         add(new AllyResistance(this));

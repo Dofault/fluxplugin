@@ -17,13 +17,11 @@ import java.util.Set;
  */
 final class StoneXp extends PetEffect {
 
-    private final PlacedBlocks placed;
     private final Set<Material> blocks = EnumSet.noneOf(Material.class);
     private int xp = 1;
 
-    StoneXp(PetEffects manager, PlacedBlocks placed) {
+    StoneXp(PetEffects manager) {
         super(manager, "stone-xp");
-        this.placed = placed;
     }
 
     @Override
@@ -42,7 +40,7 @@ final class StoneXp extends PetEffect {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBreak(BlockBreakEvent event) {
-        if (!blocks.contains(event.getBlock().getType()) || placed.wasPlaced(event)) {
+        if (!blocks.contains(event.getBlock().getType()) || fr.influencraft.flux.api.world.PlacedBlocks.playerPlaced(event.getBlock())) {
             return;
         }
         Player player = event.getPlayer();

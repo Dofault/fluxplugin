@@ -28,19 +28,17 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 final class EnchantMastery extends PetEffect {
 
-    private final PlacedBlocks placed;
     private final NamespacedKey counterKey;
 
-    EnchantMastery(PetEffects manager, PlacedBlocks placed) {
+    EnchantMastery(PetEffects manager) {
         super(manager, "enchant-mastery");
-        this.placed = placed;
         this.counterKey = new NamespacedKey(fr.influencraft.fluxpets.FluxPets.LEGACY_NAMESPACE, "usure");
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBreak(BlockBreakEvent event) {
         ItemStack tool = event.getPlayer().getInventory().getItemInMainHand();
-        if (tool.getEnchantments().isEmpty() || !event.getBlock().isPreferredTool(tool) || placed.wasPlaced(event)) {
+        if (tool.getEnchantments().isEmpty() || !event.getBlock().isPreferredTool(tool) || fr.influencraft.flux.api.world.PlacedBlocks.playerPlaced(event.getBlock())) {
             return;
         }
         use(event.getPlayer(), tool);
