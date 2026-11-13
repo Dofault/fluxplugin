@@ -10,10 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Loads and exposes messages.yml. All player-facing text lives here so the plugin
- * can be re-worded without touching a single line of Java.
- */
-/**
  * FluxOffering's texts: the plugin's lang file ({@code lang/<language>.yml}, loaded by {@code FluxPlugin}), with
  * {@code {key}} variables replaced here before the colours.
  */
