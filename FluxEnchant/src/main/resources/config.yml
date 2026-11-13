@@ -37,10 +37,10 @@ mystery-books:
 # Folder of the EcoEnchants enchantment files (rarity, display name), relative to plugins/
 ecoenchants-folder: EcoEnchants/enchants
 
-# Mending never lands on an item: removed from anvil results, generated loot and fishing. Books still circulate,
-# they just become useless. log: one console line per removal.
+# Mending lock, OFF on the server (Mending works as in vanilla). When on: Mending never lands on an item (anvil,
+# loot, fishing), books still circulate but become useless. log: one console line per removal.
 mending-lock:
-  enabled: true
+  enabled: false
   log: false
 
 # Splits an enchanted book into one book per enchantment: /enchantsplit (aliases /split, /separer) or a right click on
