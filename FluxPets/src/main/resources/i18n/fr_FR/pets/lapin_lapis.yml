@@ -2,7 +2,7 @@
 # Modèle : BetterModel/models/familier_lapin_lapis.bbmodel, carte et peluche : pack ItemsAdder "influpet".
 
 name: '&#AAAAAALapis-Lapin'
-description: '&#EADBC8Grandit uniquement avec ses cartes'
+description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_lapin_lapis
 flying: false
 icon: itemsadder:influpet__carte_lapin_lapis
@@ -28,17 +28,17 @@ level-placeholders:
   value: round((10 + (%level% - 1) * 90 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Lapis économe'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de ne &#EADBC8pas consommer le lapis'
+  - '&fLapis économe'
+  - '  &#B376E5&f%bonus%%&#B376E5 de chance de ne &#B376E5pas consommer le lapis'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Lapis économe'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de ne &#EADBC8pas consommer le lapis'
+  - '&fLapis économe'
+  - '  &#B376E5&f%bonus%%&#B376E5 de chance de ne &#B376E5pas consommer le lapis'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Lapis économe'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de ne'
-  - '  &#EADBC8pas consommer le lapis'
+  - '&fLapis économe'
+  - '  &#B376E5&f%bonus%%&#B376E5 de chance de ne'
+  - '  &#B376E5pas consommer le lapis'
 level-up-effects: []
 effects: []
 conditions: []

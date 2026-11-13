@@ -446,7 +446,7 @@ public final class CardRegistry {
                         var m = ADOPTED.matcher(l.replace("%cards%", String.valueOf(booster.cards())));
                         StringBuilder out = new StringBuilder();
                         while (m.find()) {
-                            String mark = viewer == null ? "&#6B7A8F»"
+                            String mark = viewer == null ? "&7•"
                                     : PetHook.has(viewer, m.group(1)) ? "&#2ECF7B✔" : "&#FF5C5C✘";
                             m.appendReplacement(out, java.util.regex.Matcher.quoteReplacement(mark));
                         }
@@ -725,7 +725,7 @@ public final class CardRegistry {
         String base = "boosters." + key(id);
         var cfg = plugin.getConfig();
         cfg.set(base + ".item", "influpet:booster_ordinaire");
-        cfg.set(base + ".name", "&#FF7A59&l" + id);
+        cfg.set(base + ".name", "&#FFD94D&l" + id);
         cfg.set(base + ".lore", plugin.texts("editor.new-booster-lore"));
         cfg.set(base + ".cards", 5);
         for (Rarity r : rarities.values()) {

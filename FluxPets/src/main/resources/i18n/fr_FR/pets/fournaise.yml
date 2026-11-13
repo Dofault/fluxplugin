@@ -2,7 +2,7 @@
 # Modèle : BetterModel/models/familier_fournaise.bbmodel, carte et peluche : pack ItemsAdder "influpet".
 
 name: '&#3283A8Fournaise'
-description: '&#EADBC8Grandit uniquement avec ses cartes'
+description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_fournaise
 flying: false
 icon: itemsadder:influpet__carte_fournaise
@@ -28,21 +28,21 @@ level-placeholders:
   value: round((10 + (%level% - 1) * 90 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Livraison'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance qu''un objet &#EADBC8cuit arrive directement &#EADBC8dans ton inventaire'
-  - '  &#EADBC8Fours que tu remplis, à 16 blocs au plus'
+  - '&fLivraison'
+  - '  &#B376E5&f%bonus%%&#B376E5 de chance qu''un objet &#B376E5cuit arrive directement &#B376E5dans ton inventaire'
+  - '  &#B376E5Fours que tu remplis, à 16 blocs au plus'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Livraison'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance qu''un objet &#EADBC8cuit arrive directement &#EADBC8dans ton inventaire'
-  - '  &#EADBC8Fours que tu remplis, à 16 blocs au plus'
+  - '&fLivraison'
+  - '  &#B376E5&f%bonus%%&#B376E5 de chance qu''un objet &#B376E5cuit arrive directement &#B376E5dans ton inventaire'
+  - '  &#B376E5Fours que tu remplis, à 16 blocs au plus'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Livraison'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance qu''un objet'
-  - '  &#EADBC8cuit arrive directement'
-  - '  &#EADBC8dans ton inventaire'
-  - '  &#EADBC8Fours que tu remplis, à 16 blocs au plus'
+  - '&fLivraison'
+  - '  &#B376E5&f%bonus%%&#B376E5 de chance qu''un objet'
+  - '  &#B376E5cuit arrive directement'
+  - '  &#B376E5dans ton inventaire'
+  - '  &#B376E5Fours que tu remplis, à 16 blocs au plus'
 level-up-effects: []
 effects: []
 conditions: []

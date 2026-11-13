@@ -2,7 +2,7 @@
 # Modèle : BetterModel/models/familier_champinou.bbmodel, carte et peluche : pack ItemsAdder "influpet".
 
 name: '&#37C44AChampinou'
-description: '&#EADBC8Grandit uniquement avec ses cartes'
+description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_champinou
 flying: false
 icon: itemsadder:influpet__carte_champinou
@@ -28,17 +28,17 @@ level-placeholders:
   value: round((1 + (%level% - 1) * 9 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Mycélium'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de doubler &#EADBC8les champignons récoltés'
+  - '&fMycélium'
+  - '  &#B376E5&f%bonus%%&#B376E5 de chance de doubler &#B376E5les champignons récoltés'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Mycélium'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de doubler &#EADBC8les champignons récoltés'
+  - '&fMycélium'
+  - '  &#B376E5&f%bonus%%&#B376E5 de chance de doubler &#B376E5les champignons récoltés'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Mycélium'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de doubler'
-  - '  &#EADBC8les champignons récoltés'
+  - '&fMycélium'
+  - '  &#B376E5&f%bonus%%&#B376E5 de chance de doubler'
+  - '  &#B376E5les champignons récoltés'
 level-up-effects: []
 effects:
 - effects:

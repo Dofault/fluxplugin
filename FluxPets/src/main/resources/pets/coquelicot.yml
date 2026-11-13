@@ -2,7 +2,7 @@
 # Model: BetterModel/models/familier_coquelicot.bbmodel, card and plush: ItemsAdder pack "influpet".
 
 name: '&#AAAAAAPoppy'
-description: '&#EADBC8Only grows with its cards'
+description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_coquelicot
 flying: false
 icon: itemsadder:influpet__carte_coquelicot
@@ -28,17 +28,17 @@ level-placeholders:
   value: round((10 + (%level% - 1) * 90 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Pollen'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance of an experience &#EADBC8point per flower picked'
+  - '&fPollen'
+  - '  &#B376E5&f%bonus%%&#B376E5 chance of an experience &#B376E5point per flower picked'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Pollen'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance of an experience &#EADBC8point per flower picked'
+  - '&fPollen'
+  - '  &#B376E5&f%bonus%%&#B376E5 chance of an experience &#B376E5point per flower picked'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Pollen'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance of an experience'
-  - '  &#EADBC8point per flower picked'
+  - '&fPollen'
+  - '  &#B376E5&f%bonus%%&#B376E5 chance of an experience'
+  - '  &#B376E5point per flower picked'
 level-up-effects: []
 effects:
 - effects:

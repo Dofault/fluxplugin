@@ -2,7 +2,7 @@
 # Modèle : BetterModel/models/familier_ouistiti.bbmodel, carte et peluche : pack ItemsAdder "influpet".
 
 name: '&#3283A8Ouistiti'
-description: '&#EADBC8Grandit uniquement avec ses cartes'
+description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_ouistiti
 flying: false
 icon: itemsadder:influpet__carte_ouistiti
@@ -28,21 +28,21 @@ level-placeholders:
   value: round((10 + (%level% - 1) * 90 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Cacaoyer'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de replanter &#EADBC8la cabosse de cacao récoltée'
-  - '  &#EADBC8Les cabosses tout juste plantées ne se cassent pas'
+  - '&fCacaoyer'
+  - '  &#B376E5&f%bonus%%&#B376E5 de chance de replanter &#B376E5la cabosse de cacao récoltée'
+  - '  &#B376E5Les cabosses tout juste plantées ne se cassent pas'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Cacaoyer'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de replanter &#EADBC8la cabosse de cacao récoltée'
-  - '  &#EADBC8Les cabosses tout juste plantées ne se cassent pas'
+  - '&fCacaoyer'
+  - '  &#B376E5&f%bonus%%&#B376E5 de chance de replanter &#B376E5la cabosse de cacao récoltée'
+  - '  &#B376E5Les cabosses tout juste plantées ne se cassent pas'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Cacaoyer'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance de replanter'
-  - '  &#EADBC8la cabosse de cacao récoltée'
-  - '  &#EADBC8Les cabosses tout juste plantées'
-  - '  &#EADBC8ne se cassent pas'
+  - '&fCacaoyer'
+  - '  &#B376E5&f%bonus%%&#B376E5 de chance de replanter'
+  - '  &#B376E5la cabosse de cacao récoltée'
+  - '  &#B376E5Les cabosses tout juste plantées'
+  - '  &#B376E5ne se cassent pas'
 level-up-effects: []
 effects: []
 conditions: []

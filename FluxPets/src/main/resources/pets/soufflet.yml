@@ -2,7 +2,7 @@
 # Model: BetterModel/models/familier_soufflet.bbmodel, card and plush: ItemsAdder pack "influpet".
 
 name: '&#AAAAAABellows'
-description: '&#EADBC8Only grows with its cards'
+description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_soufflet
 flying: false
 icon: itemsadder:influpet__carte_soufflet
@@ -28,17 +28,17 @@ level-placeholders:
   value: round((10 + (%level% - 1) * 90 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Strong Fire'
-  - '  &#EADBC8Smelting +&#FFF4E0%bonus%%&#EADBC8 faster in the furnaces you fill'
+  - '&fStrong Fire'
+  - '  &#B376E5Smelting +&f%bonus%%&#B376E5 faster in the furnaces you fill'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Strong Fire'
-  - '  &#EADBC8Smelting +&#FFF4E0%bonus%%&#EADBC8 faster in the furnaces you fill'
+  - '&fStrong Fire'
+  - '  &#B376E5Smelting +&f%bonus%%&#B376E5 faster in the furnaces you fill'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Strong Fire'
-  - '  &#EADBC8Smelting +&#FFF4E0%bonus%%&#EADBC8 faster'
-  - '  &#EADBC8in the furnaces you fill'
+  - '&fStrong Fire'
+  - '  &#B376E5Smelting +&f%bonus%%&#B376E5 faster'
+  - '  &#B376E5in the furnaces you fill'
 level-up-effects: []
 effects: []
 conditions: []

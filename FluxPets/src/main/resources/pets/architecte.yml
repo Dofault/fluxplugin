@@ -2,7 +2,7 @@
 # Model: BetterModel/models/familier_architecte.bbmodel, card and plush: ItemsAdder pack "influpet".
 
 name: '&#B376E5Architect'
-description: '&#EADBC8Only grows with its cards'
+description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_architecte
 flying: false
 icon: itemsadder:influpet__carte_architecte
@@ -28,13 +28,13 @@ level-placeholders:
   value: round((3 + (%level% - 1) * 27 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Builder XP&#EADBC8: +&#FFF4E0%bonus%%&#EADBC8'
+  - '&fBuilder XP&#B376E5: +&f%bonus%%&#B376E5'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Builder XP&#EADBC8: +&#FFF4E0%bonus%%&#EADBC8'
+  - '&fBuilder XP&#B376E5: +&f%bonus%%&#B376E5'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Builder XP&#EADBC8: +&#FFF4E0%bonus%%&#EADBC8'
+  - '&fBuilder XP&#B376E5: +&f%bonus%%&#B376E5'
 level-up-effects: []
 effects:
 - id: job_xp_multiplier

@@ -2,7 +2,7 @@
 # Modèle : BetterModel/models/familier_soufflet.bbmodel, carte et peluche : pack ItemsAdder "influpet".
 
 name: '&#AAAAAASoufflet'
-description: '&#EADBC8Grandit uniquement avec ses cartes'
+description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_soufflet
 flying: false
 icon: itemsadder:influpet__carte_soufflet
@@ -28,17 +28,17 @@ level-placeholders:
   value: round((10 + (%level% - 1) * 90 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Feu vif'
-  - '  &#EADBC8Cuisson +&#FFF4E0%bonus%%&#EADBC8 plus rapide dans les fours que tu remplis'
+  - '&fFeu vif'
+  - '  &#B376E5Cuisson +&f%bonus%%&#B376E5 plus rapide dans les fours que tu remplis'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Feu vif'
-  - '  &#EADBC8Cuisson +&#FFF4E0%bonus%%&#EADBC8 plus rapide dans les fours que tu remplis'
+  - '&fFeu vif'
+  - '  &#B376E5Cuisson +&f%bonus%%&#B376E5 plus rapide dans les fours que tu remplis'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Feu vif'
-  - '  &#EADBC8Cuisson +&#FFF4E0%bonus%%&#EADBC8 plus rapide'
-  - '  &#EADBC8dans les fours que tu remplis'
+  - '&fFeu vif'
+  - '  &#B376E5Cuisson +&f%bonus%%&#B376E5 plus rapide'
+  - '  &#B376E5dans les fours que tu remplis'
 level-up-effects: []
 effects: []
 conditions: []

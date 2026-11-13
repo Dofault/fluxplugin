@@ -2,7 +2,7 @@
 # Modèle : BetterModel/models/familier_lanterne.bbmodel, carte et peluche : pack ItemsAdder "influpet".
 
 name: '&#37C44ALanterne'
-description: '&#EADBC8Grandit uniquement avec ses cartes'
+description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_lanterne
 flying: true
 icon: itemsadder:influpet__carte_lanterne
@@ -28,21 +28,21 @@ level-placeholders:
   value: round((1 + (%level% - 1) * 4 / 9) * 10) / 10
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Prospection'
-  - '  &#EADBC8Maj + clic droit, pioche en main : les minerais à 8 blocs brillent pendant &#FFF4E0%bonus% s&#EADBC8'
-  - '  &#EADBC8Une fois par minute'
+  - '&fProspection'
+  - '  &#B376E5Maj + clic droit, pioche en main : les minerais à 8 blocs brillent pendant &f%bonus% s&#B376E5'
+  - '  &#B376E5Une fois par minute'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Prospection'
-  - '  &#EADBC8Maj + clic droit, pioche en main : les minerais à 8 blocs brillent pendant &#FFF4E0%bonus% s&#EADBC8'
-  - '  &#EADBC8Une fois par minute'
+  - '&fProspection'
+  - '  &#B376E5Maj + clic droit, pioche en main : les minerais à 8 blocs brillent pendant &f%bonus% s&#B376E5'
+  - '  &#B376E5Une fois par minute'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Prospection'
-  - '  &#EADBC8Maj + clic droit, pioche en'
-  - '  &#EADBC8main : les minerais à 8 blocs'
-  - '  &#EADBC8brillent pendant &#FFF4E0%bonus% s&#EADBC8'
-  - '  &#EADBC8Une fois par minute'
+  - '&fProspection'
+  - '  &#B376E5Maj + clic droit, pioche en'
+  - '  &#B376E5main : les minerais à 8 blocs'
+  - '  &#B376E5brillent pendant &f%bonus% s&#B376E5'
+  - '  &#B376E5Une fois par minute'
 level-up-effects: []
 effects:
 - effects:

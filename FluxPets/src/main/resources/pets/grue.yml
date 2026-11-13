@@ -2,7 +2,7 @@
 # Model: BetterModel/models/familier_grue.bbmodel, card and plush: ItemsAdder pack "influpet".
 
 name: '&#3283A8Crane'
-description: '&#EADBC8Only grows with its cards'
+description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_grue
 flying: false
 icon: itemsadder:influpet__carte_grue
@@ -28,13 +28,13 @@ level-placeholders:
   value: round((2 + (%level% - 1) * 18 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Site Rush&#EADBC8: speed +&#FFF4E0%bonus%%&#EADBC8'
+  - '&fSite Rush&#B376E5: speed +&f%bonus%%&#B376E5'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Site Rush&#EADBC8: speed +&#FFF4E0%bonus%%&#EADBC8'
+  - '&fSite Rush&#B376E5: speed +&f%bonus%%&#B376E5'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Site Rush&#EADBC8: speed +&#FFF4E0%bonus%%&#EADBC8'
+  - '&fSite Rush&#B376E5: speed +&f%bonus%%&#B376E5'
 level-up-effects: []
 effects:
 - id: movement_speed_multiplier

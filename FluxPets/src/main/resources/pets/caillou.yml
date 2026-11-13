@@ -2,7 +2,7 @@
 # Model: BetterModel/models/familier_caillou.bbmodel, card and plush: ItemsAdder pack "influpet".
 
 name: '&#AAAAAAPebble'
-description: '&#EADBC8Only grows with its cards'
+description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_caillou
 flying: false
 icon: itemsadder:influpet__carte_caillou
@@ -28,20 +28,20 @@ level-placeholders:
   value: round((1 + (%level% - 1) * 9 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Shards'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance of an experience &#EADBC8point per stone block mined'
-  - '  &#EADBC8Area mining included'
+  - '&fShards'
+  - '  &#B376E5&f%bonus%%&#B376E5 chance of an experience &#B376E5point per stone block mined'
+  - '  &#B376E5Area mining included'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Shards'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance of an experience &#EADBC8point per stone block mined'
-  - '  &#EADBC8Area mining included'
+  - '&fShards'
+  - '  &#B376E5&f%bonus%%&#B376E5 chance of an experience &#B376E5point per stone block mined'
+  - '  &#B376E5Area mining included'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Shards'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance of an experience'
-  - '  &#EADBC8point per stone block mined'
-  - '  &#EADBC8Area mining included'
+  - '&fShards'
+  - '  &#B376E5&f%bonus%%&#B376E5 chance of an experience'
+  - '  &#B376E5point per stone block mined'
+  - '  &#B376E5Area mining included'
 level-up-effects: []
 effects: []
 conditions: []

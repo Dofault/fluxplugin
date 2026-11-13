@@ -2,7 +2,7 @@
 # Modèle : BetterModel/models/familier_ver_sables.bbmodel, carte et peluche : pack ItemsAdder "influpet".
 
 name: '&#B376E5Ver des Sables'
-description: '&#EADBC8Grandit uniquement avec ses cartes'
+description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_ver_sables
 icon: itemsadder:influpet__carte_ver_sables
 flying: false
@@ -28,13 +28,13 @@ level-placeholders:
   value: round((3 + (%level% - 1) * 27 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0XP Mineur&#EADBC8 : +&#FFF4E0%bonus%%&#EADBC8'
+  - '&fXP Mineur&#B376E5 : +&f%bonus%%&#B376E5'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0XP Mineur&#EADBC8 : +&#FFF4E0%bonus%%&#EADBC8'
+  - '&fXP Mineur&#B376E5 : +&f%bonus%%&#B376E5'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0XP Mineur&#EADBC8 : +&#FFF4E0%bonus%%&#EADBC8'
+  - '&fXP Mineur&#B376E5 : +&f%bonus%%&#B376E5'
 level-up-effects: []
 effects:
 - id: job_xp_multiplier

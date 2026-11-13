@@ -34,10 +34,10 @@ pet-slots:
   active:
     name: '%pet% &#FFD94DNiv. %level%'
     lore:
-    - '&#6B7A8F[Clic droit] &#FFD94DRanger'
+    - '&7[Clic droit] &#FFD94DRanger'
     - ''
     - '%description%'
-    - '&#6B7A8F(clic droit sur une de ses cartes)'
+    - '&7(clic droit sur une de ses cartes)'
     - ''
     - '&#FFD94DEffets :'
     - '%effects%'
@@ -46,19 +46,19 @@ pet-slots:
     - '&8» &#B376E5%percentage_progress% %'
     - '&8» &#B376E5%current_xp%&8/&7%required_xp% &#B376E5XP'
     - ''
-    - '&#6B7A8F[Clic gauche] &#FFD94DVoir la progression'
+    - '&7[Clic gauche] &#FFD94DVoir la progression'
     max-level-lore:
-    - '&#6B7A8F[Clic droit] &#FFD94DRanger'
+    - '&7[Clic droit] &#FFD94DRanger'
     - ''
     - '%description%'
-    - '&#6B7A8F(clic droit sur une de ses cartes)'
+    - '&7(clic droit sur une de ses cartes)'
     - ''
     - '&#FFD94DEffets :'
     - '%effects%'
     - ''
     - '&#2ECF7BNiveau maximum atteint'
     - ''
-    - '&#6B7A8F[Clic gauche] &#FFD94DVoir la progression'
+    - '&7[Clic gauche] &#FFD94DVoir la progression'
   empty:
     name: '&#FFD94DEmplacement libre'
     lore:
@@ -79,7 +79,7 @@ pet-icon:
   name: '%pet% &#FFD94DNiv. %level%'
   lore:
   - '%description%'
-  - '&#6B7A8F(clic droit sur une de ses cartes)'
+  - '&7(clic droit sur une de ses cartes)'
   - ''
   - '&#FFD94DEffets :'
   - '%effects%'
@@ -89,7 +89,7 @@ pet-icon:
   - '&8» &#B376E5%current_xp%&8/&7%required_xp% &#B376E5XP'
   max-level-lore:
   - '%description%'
-  - '&#6B7A8F(clic droit sur une de ses cartes)'
+  - '&7(clic droit sur une de ses cartes)'
   - ''
   - '&#FFD94DEffets :'
   - '%effects%'
@@ -98,10 +98,10 @@ pet-icon:
   active-lore:
   - ''
   - '&#2ECF7BFamilier actif'
-  - '&#6B7A8F[Clic gauche] &#FFD94DRanger'
+  - '&7[Clic gauche] &#FFD94DRanger'
   not-active-lore:
   - ''
-  - '&#6B7A8F[Clic gauche] &#FFD94DActiver'
+  - '&7[Clic gauche] &#FFD94DActiver'
   click:
     enabled: true
     sound: ui_button_click
@@ -140,9 +140,9 @@ close:
 # (selected / unselected formats: %filter%, %owned% and %total% = pets owned / existing in that filter).
 filter:
   item: hopper
-  name: '&#6B7A8F[Clic gauche] &#FFD94DFiltrer par série'
+  name: '&7[Clic gauche] &#FFD94DFiltrer par série'
   lore:
-  - '&#6B7A8F[Clic droit] &#FFD94DFiltre précédent'
+  - '&7[Clic droit] &#FFD94DFiltre précédent'
   - ''
   - '%filters%'
   all: Tous les familiers
@@ -170,13 +170,13 @@ toggle:
     - ''
     - '&#B376E5Il reste actif, ses effets aussi.'
     - ''
-    - '&#6B7A8F[Clic gauche] &#FFD94DCacher'
+    - '&7[Clic gauche] &#FFD94DCacher'
   show-pet:
     item: player_head texture:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNjNmNzliMjA3ZDYxZTEyMjUyM2I4M2Q2MTUwOGQ5OWNmYTA3OWQ0NWJmMjNkZjJhOWE1MTI3ZjkwNzFkNGIwMCJ9fX0=
     name: '&#FFD94DMontrer le familier'
     lore:
     - ''
-    - '&#6B7A8F[Clic gauche] &#FFD94DMontrer'
+    - '&7[Clic gauche] &#FFD94DMontrer'
   location:
     row: 6
     column: 8

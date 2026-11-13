@@ -2,7 +2,7 @@
 # Modèle : BetterModel/models/familier_dauphin.bbmodel, carte et peluche : pack ItemsAdder "influpet".
 
 name: '&#3283A8Dauphin'
-description: '&#EADBC8Grandit uniquement avec ses cartes'
+description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_dauphin
 flying: true
 icon: itemsadder:influpet__carte_dauphin
@@ -28,22 +28,22 @@ level-placeholders:
   value: round((0.5 + (%level% - 1) * 4.5 / 9) * 10) / 10
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Nage du dauphin'
-  - '  &#EADBC8Grâce du dauphin pendant'
-  - '  &#EADBC8&#FFF4E0%bonus% s&#EADBC8 en commençant à nager'
-  - '  &#EADBC8Une fois toutes les 30 s'
+  - '&fNage du dauphin'
+  - '  &#B376E5Grâce du dauphin pendant'
+  - '  &#B376E5&f%bonus% s&#B376E5 en commençant à nager'
+  - '  &#B376E5Une fois toutes les 30 s'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Nage du dauphin'
-  - '  &#EADBC8Grâce du dauphin pendant'
-  - '  &#EADBC8&#FFF4E0%bonus% s&#EADBC8 en commençant à nager'
-  - '  &#EADBC8Une fois toutes les 30 s'
+  - '&fNage du dauphin'
+  - '  &#B376E5Grâce du dauphin pendant'
+  - '  &#B376E5&f%bonus% s&#B376E5 en commençant à nager'
+  - '  &#B376E5Une fois toutes les 30 s'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Nage du dauphin'
-  - '  &#EADBC8Grâce du dauphin pendant'
-  - '  &#EADBC8&#FFF4E0%bonus% s&#EADBC8 en commençant à nager'
-  - '  &#EADBC8Une fois toutes les 30 s'
+  - '&fNage du dauphin'
+  - '  &#B376E5Grâce du dauphin pendant'
+  - '  &#B376E5&f%bonus% s&#B376E5 en commençant à nager'
+  - '  &#B376E5Une fois toutes les 30 s'
 level-up-effects: []
 effects:
 - effects:

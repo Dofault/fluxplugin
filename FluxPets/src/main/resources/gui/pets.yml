@@ -40,10 +40,10 @@ pet-slots:
   active:
     name: '%pet% &#FFD94DLvl. %level%'
     lore:
-    - '&#6B7A8F[Right-click] &#FFD94DPut away'
+    - '&7[Right-click] &#FFD94DPut away'
     - ''
     - '%description%'
-    - '&#6B7A8F(right-click one of its cards)'
+    - '&7(right-click one of its cards)'
     - ''
     - '&#FFD94DEffects:'
     - '%effects%'
@@ -52,19 +52,19 @@ pet-slots:
     - '&8» &#B376E5%percentage_progress% %'
     - '&8» &#B376E5%current_xp%&8/&7%required_xp% &#B376E5XP'
     - ''
-    - '&#6B7A8F[Left-click] &#FFD94DView progress'
+    - '&7[Left-click] &#FFD94DView progress'
     max-level-lore:
-    - '&#6B7A8F[Right-click] &#FFD94DPut away'
+    - '&7[Right-click] &#FFD94DPut away'
     - ''
     - '%description%'
-    - '&#6B7A8F(right-click one of its cards)'
+    - '&7(right-click one of its cards)'
     - ''
     - '&#FFD94DEffects:'
     - '%effects%'
     - ''
     - '&#2ECF7BMaximum level reached'
     - ''
-    - '&#6B7A8F[Left-click] &#FFD94DView progress'
+    - '&7[Left-click] &#FFD94DView progress'
   # free slot (%slot%: slot number)
   empty:
     name: '&#FFD94DFree slot'
@@ -90,7 +90,7 @@ pet-icon:
   name: '%pet% &#FFD94DLvl. %level%'
   lore:
   - '%description%'
-  - '&#6B7A8F(right-click one of its cards)'
+  - '&7(right-click one of its cards)'
   - ''
   - '&#FFD94DEffects:'
   - '%effects%'
@@ -100,7 +100,7 @@ pet-icon:
   - '&8» &#B376E5%current_xp%&8/&7%required_xp% &#B376E5XP'
   max-level-lore:
   - '%description%'
-  - '&#6B7A8F(right-click one of its cards)'
+  - '&7(right-click one of its cards)'
   - ''
   - '&#FFD94DEffects:'
   - '%effects%'
@@ -109,10 +109,10 @@ pet-icon:
   active-lore:
   - ''
   - '&#2ECF7BActive pet'
-  - '&#6B7A8F[Left-click] &#FFD94DPut away'
+  - '&7[Left-click] &#FFD94DPut away'
   not-active-lore:
   - ''
-  - '&#6B7A8F[Left-click] &#FFD94DActivate'
+  - '&7[Left-click] &#FFD94DActivate'
   click:
     enabled: true
     sound: ui_button_click
@@ -151,9 +151,9 @@ close:
 # (selected / unselected formats: %filter%, %owned% and %total% = pets owned / existing in that filter).
 filter:
   item: hopper
-  name: '&#6B7A8F[Left-click] &#FFD94DFilter by series'
+  name: '&7[Left-click] &#FFD94DFilter by series'
   lore:
-  - '&#6B7A8F[Right-click] &#FFD94DPrevious filter'
+  - '&7[Right-click] &#FFD94DPrevious filter'
   - ''
   - '%filters%'
   all: All pets
@@ -181,13 +181,13 @@ toggle:
     - ''
     - '&#B376E5They stay active, effects too.'
     - ''
-    - '&#6B7A8F[Left-click] &#FFD94DHide'
+    - '&7[Left-click] &#FFD94DHide'
   show-pet:
     item: player_head texture:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNjNmNzliMjA3ZDYxZTEyMjUyM2I4M2Q2MTUwOGQ5OWNmYTA3OWQ0NWJmMjNkZjJhOWE1MTI3ZjkwNzFkNGIwMCJ9fX0=
     name: '&#FFD94DShow pets'
     lore:
     - ''
-    - '&#6B7A8F[Left-click] &#FFD94DShow'
+    - '&7[Left-click] &#FFD94DShow'
   location:
     row: 6
     column: 8

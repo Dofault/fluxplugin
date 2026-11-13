@@ -2,7 +2,7 @@
 # Model: BetterModel/models/familier_ecuyer.bbmodel, card and plush: ItemsAdder pack "influpet".
 
 name: '&#AAAAAASquire'
-description: '&#EADBC8Only grows with its cards'
+description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_ecuyer
 flying: false
 icon: itemsadder:influpet__carte_ecuyer
@@ -28,13 +28,13 @@ level-placeholders:
   value: round((0.25 + (%level% - 1) * 0.75 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Reach&#EADBC8: attack reach +&#FFF4E0%bonus%&#EADBC8 block'
+  - '&fReach&#B376E5: attack reach +&f%bonus%&#B376E5 block'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Reach&#EADBC8: attack reach +&#FFF4E0%bonus%&#EADBC8 block'
+  - '&fReach&#B376E5: attack reach +&f%bonus%&#B376E5 block'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Reach&#EADBC8: attack reach +&#FFF4E0%bonus%&#EADBC8 block'
+  - '&fReach&#B376E5: attack reach +&f%bonus%&#B376E5 block'
 level-up-effects: []
 effects:
 - id: entity_reach

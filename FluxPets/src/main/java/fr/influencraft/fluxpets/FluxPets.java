@@ -557,21 +557,21 @@ public final class FluxPets extends JavaPlugin implements TabCompleter {
                 if (rc <= 0) {
                     continue;
                 }
-                raw(sender, "&r" + rarity.tag() + " &#EADBC8" + percent(rc * share) + " &#6B7A8F: "
+                raw(sender, "&r" + rarity.tag() + " &#B376E5" + percent(rc * share) + " &7: "
                         + contents.stream()
                         .filter(r -> (r instanceof PetReward) == pets && r.rarity().equals(rarity))
-                        .map(r -> "&r" + nameOnly(r) + " &#EADBC8" + percent(registry.chance(booster, r)))
-                        .collect(Collectors.joining("&#6B7A8F, ")));
+                        .map(r -> "&r" + nameOnly(r) + " &#B376E5" + percent(registry.chance(booster, r)))
+                        .collect(Collectors.joining("&7, ")));
             }
         }
     }
 
     private String nameOnly(Reward r) {
         return switch (r) {
-            case CardReward c -> "&#FFF4E0" + c.card().name();
+            case CardReward c -> "&f" + c.card().name();
             case PetReward p -> {
                 var info = PetHook.pet(p.pet().id());
-                yield "&#5FB3B3" + (info == null ? p.pet().id() : info.name());
+                yield "&#2ECF7B" + (info == null ? p.pet().id() : info.name());
             }
         };
     }

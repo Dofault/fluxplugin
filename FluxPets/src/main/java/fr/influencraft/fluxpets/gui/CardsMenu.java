@@ -33,7 +33,7 @@ public final class CardsMenu extends Menu {
                 List<net.kyori.adventure.text.Component> lore = new ArrayList<>(
                         meta.lore() == null ? List.of() : meta.lore());
                 lore.add(fr.influencraft.fluxpets.Texts.of(""));
-                lore.add(fr.influencraft.fluxpets.Texts.of("&#6B7A8F" + card.id()));
+                lore.add(fr.influencraft.fluxpets.Texts.of("&7" + card.id()));
                 lore.add(fr.influencraft.fluxpets.Texts.of(left(t("action.edit"))));
                 lore.add(fr.influencraft.fluxpets.Texts.of(right(t("action.receive-one"))));
                 lore.add(fr.influencraft.fluxpets.Texts.of(shift(t("action.receive-stack"))));

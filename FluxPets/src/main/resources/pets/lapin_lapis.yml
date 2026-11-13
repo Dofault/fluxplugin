@@ -2,7 +2,7 @@
 # Model: BetterModel/models/familier_lapin_lapis.bbmodel, card and plush: ItemsAdder pack "influpet".
 
 name: '&#AAAAAALapis Bunny'
-description: '&#EADBC8Only grows with its cards'
+description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_lapin_lapis
 flying: false
 icon: itemsadder:influpet__carte_lapin_lapis
@@ -28,17 +28,17 @@ level-placeholders:
   value: round((10 + (%level% - 1) * 90 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Lapis Saver'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance not &#EADBC8to consume lapis'
+  - '&fLapis Saver'
+  - '  &#B376E5&f%bonus%%&#B376E5 chance not &#B376E5to consume lapis'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Lapis Saver'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance not &#EADBC8to consume lapis'
+  - '&fLapis Saver'
+  - '  &#B376E5&f%bonus%%&#B376E5 chance not &#B376E5to consume lapis'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Lapis Saver'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance not'
-  - '  &#EADBC8to consume lapis'
+  - '&fLapis Saver'
+  - '  &#B376E5&f%bonus%%&#B376E5 chance not'
+  - '  &#B376E5to consume lapis'
 level-up-effects: []
 effects: []
 conditions: []

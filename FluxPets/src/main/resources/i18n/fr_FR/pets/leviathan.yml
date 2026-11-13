@@ -2,7 +2,7 @@
 # Modèle : BetterModel/models/familier_leviathan.bbmodel, carte et peluche : pack ItemsAdder "influpet".
 
 name: '&#C8256ALéviathan'
-description: '&#EADBC8Grandit uniquement avec ses cartes'
+description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_leviathan
 flying: true
 icon: itemsadder:influpet__carte_leviathan
@@ -28,13 +28,13 @@ level-placeholders:
   value: round((1.0 + (%level% - 1) * 9.0 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#EADBC8XP de métier &#FFF4E0+%bonus%%'
+  - '&#B376E5XP de métier &f+%bonus%%'
 rewards-description:
   1:
-  - '&#6B7A8F» &#EADBC8XP de métier &#FFF4E0+%bonus%%'
+  - '&#B376E5XP de métier &f+%bonus%%'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#EADBC8XP de métier &#FFF4E0+%bonus%%'
+  - '&#B376E5XP de métier &f+%bonus%%'
 level-up-effects: []
 effects:
 - id: job_xp_multiplier

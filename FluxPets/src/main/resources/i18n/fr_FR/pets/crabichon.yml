@@ -2,7 +2,7 @@
 # Modèle : BetterModel/models/familier_crabichon.bbmodel, carte et peluche : pack ItemsAdder "influpet".
 
 name: '&#37C44ACrabichon'
-description: '&#EADBC8Grandit uniquement avec ses cartes'
+description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_crabichon
 flying: false
 icon: itemsadder:influpet__carte_crabichon
@@ -28,18 +28,18 @@ level-placeholders:
   value: round((0.2 + (%level% - 1) * 1.8 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Trésors des fonds'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance d''un &#EADBC8trésor marin en pêchant &#EADBC8avec une canne vanilla'
+  - '&fTrésors des fonds'
+  - '  &#B376E5&f%bonus%%&#B376E5 de chance d''un &#B376E5trésor marin en pêchant &#B376E5avec une canne vanilla'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Trésors des fonds'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance d''un &#EADBC8trésor marin en pêchant &#EADBC8avec une canne vanilla'
+  - '&fTrésors des fonds'
+  - '  &#B376E5&f%bonus%%&#B376E5 de chance d''un &#B376E5trésor marin en pêchant &#B376E5avec une canne vanilla'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Trésors des fonds'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance d''un'
-  - '  &#EADBC8trésor marin en pêchant'
-  - '  &#EADBC8avec une canne vanilla'
+  - '&fTrésors des fonds'
+  - '  &#B376E5&f%bonus%%&#B376E5 de chance d''un'
+  - '  &#B376E5trésor marin en pêchant'
+  - '  &#B376E5avec une canne vanilla'
 level-up-effects: []
 effects:
 - effects:

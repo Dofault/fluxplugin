@@ -2,7 +2,7 @@
 # Model: BetterModel/models/familier_chien_garde.bbmodel, card and plush: ItemsAdder pack "influpet".
 
 name: '&#3283A8Guard Dog'
-description: '&#EADBC8Only grows with its cards'
+description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_chien_garde
 flying: false
 icon: itemsadder:influpet__carte_chien_garde
@@ -28,18 +28,18 @@ level-placeholders:
   value: round((10 + (%level% - 1) * 90 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Rage'
-  - '  &#EADBC8The lower your health, the harder you hit: up to +&#FFF4E0%bonus%%&#EADBC8 damage at 1 health point'
+  - '&fRage'
+  - '  &#B376E5The lower your health, the harder you hit: up to +&f%bonus%%&#B376E5 damage at 1 health point'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Rage'
-  - '  &#EADBC8The lower your health, the harder you hit: up to +&#FFF4E0%bonus%%&#EADBC8 damage at 1 health point'
+  - '&fRage'
+  - '  &#B376E5The lower your health, the harder you hit: up to +&f%bonus%%&#B376E5 damage at 1 health point'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Rage'
-  - '  &#EADBC8The lower your health, the'
-  - '  &#EADBC8harder you hit: up to +&#FFF4E0%bonus%%&#EADBC8'
-  - '  &#EADBC8damage at 1 health point'
+  - '&fRage'
+  - '  &#B376E5The lower your health, the'
+  - '  &#B376E5harder you hit: up to +&f%bonus%%&#B376E5'
+  - '  &#B376E5damage at 1 health point'
 level-up-effects: []
 effects: []
 conditions: []

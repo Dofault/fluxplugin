@@ -2,7 +2,7 @@
 # Modèle : BetterModel/models/familier_mimique.bbmodel, carte et peluche : pack ItemsAdder "influpet".
 
 name: '&#37C44AMimique'
-description: '&#EADBC8Grandit uniquement avec ses cartes'
+description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_mimique
 flying: false
 icon: itemsadder:influpet__carte_mimique
@@ -28,18 +28,18 @@ level-placeholders:
   value: round((0.001 + (%level% - 1) * 0.009 / 9) * 1000) / 1000
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Filon oublié'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance que la &#EADBC8roche minée laisse place &#EADBC8à un coffre d''aventure'
+  - '&fFilon oublié'
+  - '  &#B376E5&f%bonus%%&#B376E5 de chance que la &#B376E5roche minée laisse place &#B376E5à un coffre d''aventure'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Filon oublié'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance que la &#EADBC8roche minée laisse place &#EADBC8à un coffre d''aventure'
+  - '&fFilon oublié'
+  - '  &#B376E5&f%bonus%%&#B376E5 de chance que la &#B376E5roche minée laisse place &#B376E5à un coffre d''aventure'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Filon oublié'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance que la'
-  - '  &#EADBC8roche minée laisse place'
-  - '  &#EADBC8à un coffre d''aventure'
+  - '&fFilon oublié'
+  - '  &#B376E5&f%bonus%%&#B376E5 de chance que la'
+  - '  &#B376E5roche minée laisse place'
+  - '  &#B376E5à un coffre d''aventure'
 level-up-effects: []
 effects:
 - effects:

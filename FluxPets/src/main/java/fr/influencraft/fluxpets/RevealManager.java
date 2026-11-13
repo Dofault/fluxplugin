@@ -309,7 +309,7 @@ public final class RevealManager {
         String name = plugin.registry().displayName(reward.pet());
         player.showTitle(net.kyori.adventure.title.Title.title(
                 Texts.of(cfg.getString("pet-reveal.title", "%pet%").replace("%pet%", name)),
-                Texts.of(cfg.getString("pet-reveal.subtitle", "&#FF7A59Nᴏᴜᴠᴇᴀᴜ Fᴀᴍɪʟɪᴇʀ").replace("%pet%", name)),
+                Texts.of(cfg.getString("pet-reveal.subtitle", "&#FFD94DNᴏᴜᴠᴇᴀᴜ Fᴀᴍɪʟɪᴇʀ").replace("%pet%", name)),
                 net.kyori.adventure.title.Title.Times.times(java.time.Duration.ofMillis(250),
                         java.time.Duration.ofMillis(Math.min(duration, cfg.getLong("pet-reveal.title-ticks", 50)) * 50),
                         java.time.Duration.ofMillis(500))));
@@ -479,7 +479,7 @@ public final class RevealManager {
         player.sendActionBar(Texts.of(fill(cfg.getString(key, "%card%"), entry)));
         if (entry.reward() instanceof CardReward) {
             String sub = entry.count() >= cfg.getInt("reveal.subtitle-min-count", 1)
-                    ? fill(cfg.getString("reveal.subtitle", "&#FF7A59&lx%count%"), entry) : "";
+                    ? fill(cfg.getString("reveal.subtitle", "&#FFD94D&lx%count%"), entry) : "";
             long stay = cfg.getLong("reveal.stay", 22);
             long fadeOut = cfg.getLong("reveal.fade-out", 6);
             // le verso, déjà affiché (showBack), reste encore « overlap » ticks : seul le sous-titre change,

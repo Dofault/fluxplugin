@@ -2,7 +2,7 @@
 # Model: BetterModel/models/familier_chouette_arcane.bbmodel, card and plush: ItemsAdder pack "influpet".
 
 name: '&#3283A8Arcane Owl'
-description: '&#EADBC8Only grows with its cards'
+description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_chouette_arcane
 flying: true
 icon: itemsadder:influpet__carte_chouette_arcane
@@ -28,22 +28,22 @@ level-placeholders:
   value: round((1500 + (%level% - 1) * -1000 / 9) * 1) / 1
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Wise Wear'
-  - '  &#EADBC8An item gains a vanilla enchantment level every &#FFF4E0%bonus%&#EADBC8 blocks mined or hits dealt'
-  - '  &#EADBC8Vanilla Minecraft enchantments, never above their maximum'
+  - '&fWise Wear'
+  - '  &#B376E5An item gains a vanilla enchantment level every &f%bonus%&#B376E5 blocks mined or hits dealt'
+  - '  &#B376E5Vanilla Minecraft enchantments, never above their maximum'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Wise Wear'
-  - '  &#EADBC8An item gains a vanilla enchantment level every &#FFF4E0%bonus%&#EADBC8 blocks mined or hits dealt'
-  - '  &#EADBC8Vanilla Minecraft enchantments, never above their maximum'
+  - '&fWise Wear'
+  - '  &#B376E5An item gains a vanilla enchantment level every &f%bonus%&#B376E5 blocks mined or hits dealt'
+  - '  &#B376E5Vanilla Minecraft enchantments, never above their maximum'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Wise Wear'
-  - '  &#EADBC8An item gains a vanilla'
-  - '  &#EADBC8enchantment level every &#FFF4E0%bonus%&#EADBC8'
-  - '  &#EADBC8blocks mined or hits dealt'
-  - '  &#EADBC8Vanilla Minecraft enchantments,'
-  - '  &#EADBC8never above their maximum'
+  - '&fWise Wear'
+  - '  &#B376E5An item gains a vanilla'
+  - '  &#B376E5enchantment level every &f%bonus%&#B376E5'
+  - '  &#B376E5blocks mined or hits dealt'
+  - '  &#B376E5Vanilla Minecraft enchantments,'
+  - '  &#B376E5never above their maximum'
 level-up-effects: []
 effects: []
 conditions: []

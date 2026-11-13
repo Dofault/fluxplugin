@@ -10,16 +10,16 @@ boosters:
     item: influpet:booster_metier_mineur
     name: '&#4FD6E8&lBooster Mineur'
     lore:
-    - '&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de la série &#4FD6E8Mineur&#EADBC8.'
+    - '&#B376E5Contient &f%cards% &#B376E5cartes de la série &#4FD6E8Mineur&#B376E5.'
     - ''
-    - '&#EADBC8Familiers à adopter :'
+    - '&#B376E5Familiers à adopter :'
     - '%adopted:pepite% &#AAAAAAPépite'
     - '%adopted:lanterne% &#37C44ALanterne'
     - '%adopted:wagonnet% &#3283A8Wagonnet'
     - '%adopted:dragon_gemmes% &#B376E5Dragon de Gemmes'
     - ''
-    - '&#6B7A8F[Clic droit] &#FF7A59Ouvrir'
-    - '&#6B7A8FMaj + clic droit : ouvrir toute la pile'
+    - '&7[Clic droit] &#FFD94DOuvrir'
+    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -49,16 +49,16 @@ boosters:
     item: influpet:booster_metier_rochiste
     name: '&#A8AEB8&lBooster Rochiste'
     lore:
-    - '&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de la série &#A8AEB8Rochiste&#EADBC8.'
+    - '&#B376E5Contient &f%cards% &#B376E5cartes de la série &#A8AEB8Rochiste&#B376E5.'
     - ''
-    - '&#EADBC8Familiers à adopter :'
+    - '&#B376E5Familiers à adopter :'
     - '%adopted:caillou% &#AAAAAACaillou'
     - '%adopted:mimique% &#37C44AMimique'
     - '%adopted:colosse% &#3283A8Colosse de Basalte'
     - '%adopted:titan% &#B376E5Titan de Cristal'
     - ''
-    - '&#6B7A8F[Clic droit] &#FF7A59Ouvrir'
-    - '&#6B7A8FMaj + clic droit : ouvrir toute la pile'
+    - '&7[Clic droit] &#FFD94DOuvrir'
+    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -88,16 +88,16 @@ boosters:
     item: influpet:booster_metier_deblayeur
     name: '&#D9C27A&lBooster Déblayeur'
     lore:
-    - '&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de la série &#D9C27ADéblayeur&#EADBC8.'
+    - '&#B376E5Contient &f%cards% &#B376E5cartes de la série &#D9C27ADéblayeur&#B376E5.'
     - ''
-    - '&#EADBC8Familiers à adopter :'
+    - '&#B376E5Familiers à adopter :'
     - '%adopted:fourmi% &#AAAAAAFourmi'
     - '%adopted:cabri% &#37C44ACabri'
     - '%adopted:lievre_neiges% &#3283A8Lièvre des Neiges'
     - '%adopted:ver_sables% &#B376E5Ver des Sables'
     - ''
-    - '&#6B7A8F[Clic droit] &#FF7A59Ouvrir'
-    - '&#6B7A8FMaj + clic droit : ouvrir toute la pile'
+    - '&7[Clic droit] &#FFD94DOuvrir'
+    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -127,16 +127,16 @@ boosters:
     item: influpet:booster_metier_cultivateur
     name: '&#E8C547&lBooster Cultivateur'
     lore:
-    - '&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de la série &#E8C547Cultivateur&#EADBC8.'
+    - '&#B376E5Contient &f%cards% &#B376E5cartes de la série &#E8C547Cultivateur&#B376E5.'
     - ''
-    - '&#EADBC8Familiers à adopter :'
+    - '&#B376E5Familiers à adopter :'
     - '%adopted:abeille% &#AAAAAAAbeille'
     - '%adopted:carottin% &#37C44ACarottin'
     - '%adopted:ouistiti% &#3283A8Ouistiti'
     - '%adopted:epouvantail% &#B376E5Épouvantail'
     - ''
-    - '&#6B7A8F[Clic droit] &#FF7A59Ouvrir'
-    - '&#6B7A8FMaj + clic droit : ouvrir toute la pile'
+    - '&7[Clic droit] &#FFD94DOuvrir'
+    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -166,16 +166,16 @@ boosters:
     item: influpet:booster_metier_herboriste
     name: '&#6CD46C&lBooster Herboriste'
     lore:
-    - '&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de la série &#6CD46CHerboriste&#EADBC8.'
+    - '&#B376E5Contient &f%cards% &#B376E5cartes de la série &#6CD46CHerboriste&#B376E5.'
     - ''
-    - '&#EADBC8Familiers à adopter :'
+    - '&#B376E5Familiers à adopter :'
     - '%adopted:coquelicot% &#AAAAAACoquelicot'
     - '%adopted:champinou% &#37C44AChampinou'
     - '%adopted:papillon% &#3283A8Papillon'
     - '%adopted:dryade% &#B376E5Dryade'
     - ''
-    - '&#6B7A8F[Clic droit] &#FF7A59Ouvrir'
-    - '&#6B7A8FMaj + clic droit : ouvrir toute la pile'
+    - '&7[Clic droit] &#FFD94DOuvrir'
+    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -205,16 +205,16 @@ boosters:
     item: influpet:booster_metier_sylviculteur
     name: '&#B07A45&lBooster Sylviculteur'
     lore:
-    - '&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de la série &#B07A45Sylviculteur&#EADBC8.'
+    - '&#B376E5Contient &f%cards% &#B376E5cartes de la série &#B07A45Sylviculteur&#B376E5.'
     - ''
-    - '&#EADBC8Familiers à adopter :'
+    - '&#B376E5Familiers à adopter :'
     - '%adopted:souche% &#AAAAAASouche'
     - '%adopted:castor% &#37C44ACastor'
     - '%adopted:gland% &#3283A8Gland'
     - '%adopted:sylvain% &#B376E5Sylvain'
     - ''
-    - '&#6B7A8F[Clic droit] &#FF7A59Ouvrir'
-    - '&#6B7A8FMaj + clic droit : ouvrir toute la pile'
+    - '&7[Clic droit] &#FFD94DOuvrir'
+    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -244,16 +244,16 @@ boosters:
     item: influpet:booster_metier_fondeur
     name: '&#FF8A3D&lBooster Fondeur'
     lore:
-    - '&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de la série &#FF8A3DFondeur&#EADBC8.'
+    - '&#B376E5Contient &f%cards% &#B376E5cartes de la série &#FF8A3DFondeur&#B376E5.'
     - ''
-    - '&#EADBC8Familiers à adopter :'
+    - '&#B376E5Familiers à adopter :'
     - '%adopted:soufflet% &#AAAAAASoufflet'
     - '%adopted:salamandre% &#37C44ASalamandre Ardente'
     - '%adopted:fournaise% &#3283A8Fournaise'
     - '%adopted:flammeche% &#B376E5Flammèche'
     - ''
-    - '&#6B7A8F[Clic droit] &#FF7A59Ouvrir'
-    - '&#6B7A8FMaj + clic droit : ouvrir toute la pile'
+    - '&7[Clic droit] &#FFD94DOuvrir'
+    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -283,16 +283,16 @@ boosters:
     item: influpet:booster_metier_enchanteur
     name: '&#8C7BFF&lBooster Enchanteur'
     lore:
-    - '&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de la série &#8C7BFFEnchanteur&#EADBC8.'
+    - '&#B376E5Contient &f%cards% &#B376E5cartes de la série &#8C7BFFEnchanteur&#B376E5.'
     - ''
-    - '&#EADBC8Familiers à adopter :'
+    - '&#B376E5Familiers à adopter :'
     - '%adopted:lapin_lapis% &#AAAAAALapis-Lapin'
     - '%adopted:orbe_xp% &#37C44AOrbe d''Expérience'
     - '%adopted:chouette_arcane% &#3283A8Chouette Arcane'
     - '%adopted:table_vivante% &#B376E5Table Vivante'
     - ''
-    - '&#6B7A8F[Clic droit] &#FF7A59Ouvrir'
-    - '&#6B7A8FMaj + clic droit : ouvrir toute la pile'
+    - '&7[Clic droit] &#FFD94DOuvrir'
+    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -322,16 +322,16 @@ boosters:
     item: influpet:booster_metier_pecheur
     name: '&#4FA8FF&lBooster Pêcheur'
     lore:
-    - '&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de la série &#4FA8FFPêcheur&#EADBC8.'
+    - '&#B376E5Contient &f%cards% &#B376E5cartes de la série &#4FA8FFPêcheur&#B376E5.'
     - ''
-    - '&#EADBC8Familiers à adopter :'
+    - '&#B376E5Familiers à adopter :'
     - '%adopted:poissonnet% &#AAAAAAPoissonnet'
     - '%adopted:crabichon% &#37C44ACrabichon'
     - '%adopted:dauphin% &#3283A8Dauphin'
     - '%adopted:kraken% &#B376E5Kraken'
     - ''
-    - '&#6B7A8F[Clic droit] &#FF7A59Ouvrir'
-    - '&#6B7A8FMaj + clic droit : ouvrir toute la pile'
+    - '&7[Clic droit] &#FFD94DOuvrir'
+    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -361,16 +361,16 @@ boosters:
     item: influpet:booster_metier_defenseur
     name: '&#E04848&lBooster Défenseur'
     lore:
-    - '&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de la série &#E04848Défenseur&#EADBC8.'
+    - '&#B376E5Contient &f%cards% &#B376E5cartes de la série &#E04848Défenseur&#B376E5.'
     - ''
-    - '&#EADBC8Familiers à adopter :'
+    - '&#B376E5Familiers à adopter :'
     - '%adopted:ecuyer% &#AAAAAAÉcuyer'
     - '%adopted:pavois% &#37C44APavois'
     - '%adopted:chien_garde% &#3283A8Chien de Garde'
     - '%adopted:chevalier_spectral% &#B376E5Chevalier Spectral'
     - ''
-    - '&#6B7A8F[Clic droit] &#FF7A59Ouvrir'
-    - '&#6B7A8FMaj + clic droit : ouvrir toute la pile'
+    - '&7[Clic droit] &#FFD94DOuvrir'
+    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -400,16 +400,16 @@ boosters:
     item: influpet:booster_metier_batisseur
     name: '&#F2A33A&lBooster Bâtisseur'
     lore:
-    - '&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de la série &#F2A33ABâtisseur&#EADBC8.'
+    - '&#B376E5Contient &f%cards% &#B376E5cartes de la série &#F2A33ABâtisseur&#B376E5.'
     - ''
-    - '&#EADBC8Familiers à adopter :'
+    - '&#B376E5Familiers à adopter :'
     - '%adopted:marteau_piqueur% &#AAAAAAMarteau-Piqueur'
     - '%adopted:betonniere% &#37C44ABétonnière'
     - '%adopted:grue% &#3283A8Grue'
     - '%adopted:architecte% &#B376E5Architecte'
     - ''
-    - '&#6B7A8F[Clic droit] &#FF7A59Ouvrir'
-    - '&#6B7A8FMaj + clic droit : ouvrir toute la pile'
+    - '&7[Clic droit] &#FFD94DOuvrir'
+    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -439,9 +439,9 @@ boosters:
     item: influpet:booster_prestige
     name: '&#F0A800&lBooster Prestige'
     lore:
-    - '&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de la série &#F0A800Prestige&#EADBC8.'
+    - '&#B376E5Contient &f%cards% &#B376E5cartes de la série &#F0A800Prestige&#B376E5.'
     - ''
-    - '&#EADBC8Familiers à adopter :'
+    - '&#B376E5Familiers à adopter :'
     - '%adopted:phenix% &#F0A800Phénix'
     - '%adopted:astrolabe% &#F0A800Astrolabe Céleste'
     - '%adopted:kitsune% &#F0A800Kitsune des Neiges'
@@ -450,8 +450,8 @@ boosters:
     - '%adopted:leviathan% &#C8256ALéviathan'
     - '%adopted:faucheur% &#C8256AFaucheur du Néant'
     - ''
-    - '&#6B7A8F[Clic droit] &#FF7A59Ouvrir'
-    - '&#6B7A8FMaj + clic droit : ouvrir toute la pile'
+    - '&7[Clic droit] &#FFD94DOuvrir'
+    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 5
     rarity-weights:
       simple: 400
@@ -487,14 +487,14 @@ boosters:
     item: influpet:booster_ordinaire
     name: '&f&lBooster Ordinaire'
     lore:
-    - '&#EADBC8Palier : &#FFF4E0★&#6B7A8F☆☆☆'
-    - '&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de toutes les séries.'
+    - '&#B376E5Palier : &f★&7☆☆☆'
+    - '&#B376E5Contient &f%cards% &#B376E5cartes de toutes les séries.'
     - ''
-    - '&#EADBC8Familiers à adopter :'
-    - '&#6B7A8F» &#FFF4E0Tous les familiers'
+    - '&#B376E5Familiers à adopter :'
+    - '&fTous les familiers'
     - ''
-    - '&#6B7A8F[Clic droit] &#FF7A59Ouvrir'
-    - '&#6B7A8FMaj + clic droit : ouvrir toute la pile'
+    - '&7[Clic droit] &#FFD94DOuvrir'
+    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 8
     rarity-weights:
       simple: 400
@@ -620,14 +620,14 @@ boosters:
     item: influpet:booster_tendance
     name: '&#55FF55&lBooster Tendance'
     lore:
-    - '&#EADBC8Palier : &#FFF4E0★★&#6B7A8F☆☆'
-    - '&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de toutes les séries.'
+    - '&#B376E5Palier : &f★★&7☆☆'
+    - '&#B376E5Contient &f%cards% &#B376E5cartes de toutes les séries.'
     - ''
-    - '&#EADBC8Familiers à adopter :'
-    - '&#6B7A8F» &#FFF4E0Tous les familiers'
+    - '&#B376E5Familiers à adopter :'
+    - '&fTous les familiers'
     - ''
-    - '&#6B7A8F[Clic droit] &#FF7A59Ouvrir'
-    - '&#6B7A8FMaj + clic droit : ouvrir toute la pile'
+    - '&7[Clic droit] &#FFD94DOuvrir'
+    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 12
     rarity-weights:
       simple: 300
@@ -753,14 +753,14 @@ boosters:
     item: influpet:booster_virale
     name: '&#5A85EA&lBooster Viral'
     lore:
-    - '&#EADBC8Palier : &#FFF4E0★★★&#6B7A8F☆'
-    - '&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de toutes les séries.'
+    - '&#B376E5Palier : &f★★★&7☆'
+    - '&#B376E5Contient &f%cards% &#B376E5cartes de toutes les séries.'
     - ''
-    - '&#EADBC8Familiers à adopter :'
-    - '&#6B7A8F» &#FFF4E0Tous les familiers'
+    - '&#B376E5Familiers à adopter :'
+    - '&fTous les familiers'
     - ''
-    - '&#6B7A8F[Clic droit] &#FF7A59Ouvrir'
-    - '&#6B7A8FMaj + clic droit : ouvrir toute la pile'
+    - '&7[Clic droit] &#FFD94DOuvrir'
+    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 16
     rarity-weights:
       simple: 180
@@ -886,14 +886,14 @@ boosters:
     item: influpet:booster_phenomene
     name: '&#F0A800&lBooster Phénomène'
     lore:
-    - '&#EADBC8Palier : &#FFF4E0★★★★&#6B7A8F'
-    - '&#EADBC8Contient &#FFF4E0%cards% &#EADBC8cartes de toutes les séries.'
+    - '&#B376E5Palier : &f★★★★&7'
+    - '&#B376E5Contient &f%cards% &#B376E5cartes de toutes les séries.'
     - ''
-    - '&#EADBC8Familiers à adopter :'
-    - '&#6B7A8F» &#FFF4E0Tous les familiers'
+    - '&#B376E5Familiers à adopter :'
+    - '&fTous les familiers'
     - ''
-    - '&#6B7A8F[Clic droit] &#FF7A59Ouvrir'
-    - '&#6B7A8FMaj + clic droit : ouvrir toute la pile'
+    - '&7[Clic droit] &#FFD94DOuvrir'
+    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 20
     rarity-weights:
       simple: 100

@@ -2,7 +2,7 @@
 # Model: BetterModel/models/familier_marteau_piqueur.bbmodel, card and plush: ItemsAdder pack "influpet".
 
 name: '&#AAAAAAJackhammer'
-description: '&#EADBC8Only grows with its cards'
+description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_marteau_piqueur
 flying: false
 icon: itemsadder:influpet__carte_marteau_piqueur
@@ -28,17 +28,17 @@ level-placeholders:
   value: round((0.1 + (%level% - 1) * 0.9 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Archaeologist'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to find a &#EADBC8rare item while digging'
+  - '&fArchaeologist'
+  - '  &#B376E5&f%bonus%%&#B376E5 chance to find a &#B376E5rare item while digging'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Archaeologist'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to find a &#EADBC8rare item while digging'
+  - '&fArchaeologist'
+  - '  &#B376E5&f%bonus%%&#B376E5 chance to find a &#B376E5rare item while digging'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Archaeologist'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to find a'
-  - '  &#EADBC8rare item while digging'
+  - '&fArchaeologist'
+  - '  &#B376E5&f%bonus%%&#B376E5 chance to find a'
+  - '  &#B376E5rare item while digging'
 level-up-effects: []
 effects:
 - effects:

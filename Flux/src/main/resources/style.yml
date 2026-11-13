@@ -54,7 +54,7 @@ icons:
 # A menu button picks one with a lore line « @style <variant> ».
 # variants:
 #   pets:
-#     name: "&#FF7A59{text}"
+#     name: "&#4FA8FF{text}"
 variants:
   # FluxTools (« rubis » palette): garnet frame, pale pink text, mint / greyish pink states
 # Gain / loss messages of every currency (the words live in the lang file: money.message, money.verbs, money.names).

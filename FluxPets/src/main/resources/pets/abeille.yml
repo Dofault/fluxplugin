@@ -2,7 +2,7 @@
 # Model: BetterModel/models/familier_abeille.bbmodel, card and plush: ItemsAdder pack "influpet".
 
 name: '&#AAAAAABee'
-description: '&#EADBC8Only grows with its cards'
+description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_abeille
 flying: true
 icon: itemsadder:influpet__carte_abeille
@@ -28,17 +28,17 @@ level-placeholders:
   value: round((10 + (%level% - 1) * 90 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Express Growth'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a planted &#EADBC8seed starts half-grown'
+  - '&fExpress Growth'
+  - '  &#B376E5&f%bonus%%&#B376E5 chance that a planted &#B376E5seed starts half-grown'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Express Growth'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a planted &#EADBC8seed starts half-grown'
+  - '&fExpress Growth'
+  - '  &#B376E5&f%bonus%%&#B376E5 chance that a planted &#B376E5seed starts half-grown'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Express Growth'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a planted'
-  - '  &#EADBC8seed starts half-grown'
+  - '&fExpress Growth'
+  - '  &#B376E5&f%bonus%%&#B376E5 chance that a planted'
+  - '  &#B376E5seed starts half-grown'
 level-up-effects: []
 effects:
 - effects:

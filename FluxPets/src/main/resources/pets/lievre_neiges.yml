@@ -2,7 +2,7 @@
 # Model: BetterModel/models/familier_lievre_neiges.bbmodel, card and plush: ItemsAdder pack "influpet".
 
 name: '&#3283A8Snow Hare'
-description: '&#EADBC8Only grows with its cards'
+description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_lievre_neiges
 flying: false
 icon: itemsadder:influpet__carte_lievre_neiges
@@ -28,19 +28,19 @@ level-placeholders:
   value: round((0.5 + (%level% - 1) * 4.5 / 9) * 10) / 10
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Snow Steps'
-  - '  &#EADBC8Walk on powder snow for &#FFF4E0%bonus% s&#EADBC8'
-  - '  &#EADBC8Then 30 s cooldown'
+  - '&fSnow Steps'
+  - '  &#B376E5Walk on powder snow for &f%bonus% s&#B376E5'
+  - '  &#B376E5Then 30 s cooldown'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Snow Steps'
-  - '  &#EADBC8Walk on powder snow for &#FFF4E0%bonus% s&#EADBC8'
-  - '  &#EADBC8Then 30 s cooldown'
+  - '&fSnow Steps'
+  - '  &#B376E5Walk on powder snow for &f%bonus% s&#B376E5'
+  - '  &#B376E5Then 30 s cooldown'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Snow Steps'
-  - '  &#EADBC8Walk on powder snow for &#FFF4E0%bonus% s&#EADBC8'
-  - '  &#EADBC8Then 30 s cooldown'
+  - '&fSnow Steps'
+  - '  &#B376E5Walk on powder snow for &f%bonus% s&#B376E5'
+  - '  &#B376E5Then 30 s cooldown'
 level-up-effects: []
 effects: []
 conditions: []

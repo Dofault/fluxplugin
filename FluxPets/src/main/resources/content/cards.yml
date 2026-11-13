@@ -16,9 +16,9 @@ cards:
     rarity: simple
     pet: pepite
     lore:
-    - '&#EADBC8A shard of gold ore that decided to walk.'
+    - '&#B376E5A shard of gold ore that decided to walk.'
     - ''
-    - '&#5FB3B3Miner &#FFF4E0series'
+    - '&#2ECF7BMiner &fseries'
   lanterne:
     item: influpet:carte_lanterne
     name: '&#37C44ALantern'
@@ -26,9 +26,9 @@ cards:
     rarity: unique
     pet: lanterne
     lore:
-    - '&#EADBC8It lights up the tunnels and never goes out.'
+    - '&#B376E5It lights up the tunnels and never goes out.'
     - ''
-    - '&#5FB3B3Miner &#FFF4E0series'
+    - '&#2ECF7BMiner &fseries'
   wagonnet:
     item: influpet:carte_wagonnet
     name: '&#3283A8Minecart'
@@ -36,9 +36,9 @@ cards:
     rarity: elite
     pet: wagonnet
     lore:
-    - '&#EADBC8It rolls along the rails, its bucket full of treasure.'
+    - '&#B376E5It rolls along the rails, its bucket full of treasure.'
     - ''
-    - '&#5FB3B3Miner &#FFF4E0series'
+    - '&#2ECF7BMiner &fseries'
   dragon_gemmes:
     item: influpet:carte_dragon_gemmes
     name: '&#B376E5Gem Dragon'
@@ -46,9 +46,9 @@ cards:
     rarity: ultimate
     pet: dragon_gemmes
     lore:
-    - '&#EADBC8Its scales are diamonds, its hoard, the whole mountain.'
+    - '&#B376E5Its scales are diamonds, its hoard, the whole mountain.'
     - ''
-    - '&#5FB3B3Miner &#FFF4E0series'
+    - '&#2ECF7BMiner &fseries'
   caillou:
     item: influpet:carte_caillou
     name: '&#AAAAAAPebble'
@@ -56,9 +56,9 @@ cards:
     rarity: simple
     pet: caillou
     lore:
-    - '&#EADBC8It does not move much, but it knows every stone.'
+    - '&#B376E5It does not move much, but it knows every stone.'
     - ''
-    - '&#5FB3B3Quarrier &#FFF4E0series'
+    - '&#2ECF7BQuarrier &fseries'
   mimique:
     item: influpet:carte_mimique
     name: '&#37C44AMimic'
@@ -66,10 +66,10 @@ cards:
     rarity: unique
     pet: mimique
     lore:
-    - '&#EADBC8A chest deep in the tunnel?'
-    - '&#EADBC8Careful, it has teeth.'
+    - '&#B376E5A chest deep in the tunnel?'
+    - '&#B376E5Careful, it has teeth.'
     - ''
-    - '&#5FB3B3Quarrier &#FFF4E0series'
+    - '&#2ECF7BQuarrier &fseries'
   colosse:
     item: influpet:carte_colosse
     name: '&#3283A8Basalt Colossus'
@@ -77,9 +77,9 @@ cards:
     rarity: elite
     pet: colosse
     lore:
-    - '&#EADBC8Born from cooled lava, slow but unshakable.'
+    - '&#B376E5Born from cooled lava, slow but unshakable.'
     - ''
-    - '&#5FB3B3Quarrier &#FFF4E0series'
+    - '&#2ECF7BQuarrier &fseries'
   titan:
     item: influpet:carte_titan
     name: '&#B376E5Crystal Titan'
@@ -87,9 +87,9 @@ cards:
     rarity: ultimate
     pet: titan
     lore:
-    - '&#EADBC8Each crystal on its back tells a thousand years.'
+    - '&#B376E5Each crystal on its back tells a thousand years.'
     - ''
-    - '&#5FB3B3Quarrier &#FFF4E0series'
+    - '&#2ECF7BQuarrier &fseries'
   fourmi:
     item: influpet:carte_fourmi
     name: '&#AAAAAAAnt'
@@ -97,9 +97,9 @@ cards:
     rarity: simple
     pet: fourmi
     lore:
-    - '&#EADBC8It digs tunnels that never collapse.'
+    - '&#B376E5It digs tunnels that never collapse.'
     - ''
-    - '&#5FB3B3Digger &#FFF4E0series'
+    - '&#2ECF7BDigger &fseries'
   cabri:
     item: influpet:carte_cabri
     name: '&#37C44AKid Goat'
@@ -107,9 +107,9 @@ cards:
     rarity: unique
     pet: cabri
     lore:
-    - '&#EADBC8It leaps from rock to rock without ever tripping.'
+    - '&#B376E5It leaps from rock to rock without ever tripping.'
     - ''
-    - '&#5FB3B3Digger &#FFF4E0series'
+    - '&#2ECF7BDigger &fseries'
   lievre_neiges:
     item: influpet:carte_lievre_neiges
     name: '&#3283A8Snow Hare'
@@ -117,9 +117,9 @@ cards:
     rarity: elite
     pet: lievre_neiges
     lore:
-    - '&#EADBC8It runs on powder snow without leaving a print.'
+    - '&#B376E5It runs on powder snow without leaving a print.'
     - ''
-    - '&#5FB3B3Digger &#FFF4E0series'
+    - '&#2ECF7BDigger &fseries'
   ver_sables:
     item: influpet:carte_ver_sables
     name: '&#B376E5Sandworm'
@@ -127,9 +127,9 @@ cards:
     rarity: ultimate
     pet: ver_sables
     lore:
-    - '&#EADBC8It swims under the dunes like a fish under water.'
+    - '&#B376E5It swims under the dunes like a fish under water.'
     - ''
-    - '&#5FB3B3Digger &#FFF4E0series'
+    - '&#2ECF7BDigger &fseries'
   abeille:
     item: influpet:carte_abeille
     name: '&#AAAAAABee'
@@ -137,9 +137,9 @@ cards:
     rarity: simple
     pet: abeille
     lore:
-    - '&#EADBC8It buzzes around the garden, and everything grows in its wake.'
+    - '&#B376E5It buzzes around the garden, and everything grows in its wake.'
     - ''
-    - '&#5FB3B3Farmer &#FFF4E0series'
+    - '&#2ECF7BFarmer &fseries'
   carottin:
     item: influpet:carte_carottin
     name: '&#37C44ACarroty'
@@ -147,9 +147,9 @@ cards:
     rarity: unique
     pet: carottin
     lore:
-    - '&#EADBC8Pulled from the garden, it goes back every night.'
+    - '&#B376E5Pulled from the garden, it goes back every night.'
     - ''
-    - '&#5FB3B3Farmer &#FFF4E0series'
+    - '&#2ECF7BFarmer &fseries'
   ouistiti:
     item: influpet:carte_ouistiti
     name: '&#3283A8Marmoset'
@@ -157,9 +157,9 @@ cards:
     rarity: elite
     pet: ouistiti
     lore:
-    - '&#EADBC8Every cocoa pod it pinches, it secretly replants.'
+    - '&#B376E5Every cocoa pod it pinches, it secretly replants.'
     - ''
-    - '&#5FB3B3Farmer &#FFF4E0series'
+    - '&#2ECF7BFarmer &fseries'
   epouvantail:
     item: influpet:carte_epouvantail
     name: '&#B376E5Scarecrow'
@@ -167,9 +167,9 @@ cards:
     rarity: ultimate
     pet: epouvantail
     lore:
-    - '&#EADBC8Crows flee from it, all but one, its best friend.'
+    - '&#B376E5Crows flee from it, all but one, its best friend.'
     - ''
-    - '&#5FB3B3Farmer &#FFF4E0series'
+    - '&#2ECF7BFarmer &fseries'
   coquelicot:
     item: influpet:carte_coquelicot
     name: '&#AAAAAAPoppy'
@@ -177,9 +177,9 @@ cards:
     rarity: simple
     pet: coquelicot
     lore:
-    - '&#EADBC8The chattiest flower in the whole meadow.'
+    - '&#B376E5The chattiest flower in the whole meadow.'
     - ''
-    - '&#5FB3B3Herbalist &#FFF4E0series'
+    - '&#2ECF7BHerbalist &fseries'
   champinou:
     item: influpet:carte_champinou
     name: '&#37C44AShroomy'
@@ -187,9 +187,9 @@ cards:
     rarity: unique
     pet: champinou
     lore:
-    - '&#EADBC8It grows where no one thinks to look.'
+    - '&#B376E5It grows where no one thinks to look.'
     - ''
-    - '&#5FB3B3Herbalist &#FFF4E0series'
+    - '&#2ECF7BHerbalist &fseries'
   papillon:
     item: influpet:carte_papillon
     name: '&#3283A8Butterfly'
@@ -197,9 +197,9 @@ cards:
     rarity: elite
     pet: papillon
     lore:
-    - '&#EADBC8It never lands twice on the same flower.'
+    - '&#B376E5It never lands twice on the same flower.'
     - ''
-    - '&#5FB3B3Herbalist &#FFF4E0series'
+    - '&#2ECF7BHerbalist &fseries'
   dryade:
     item: influpet:carte_dryade
     name: '&#B376E5Dryad'
@@ -207,9 +207,9 @@ cards:
     rarity: ultimate
     pet: dryade
     lore:
-    - '&#EADBC8Spirit of the glade, flowers bloom as it passes.'
+    - '&#B376E5Spirit of the glade, flowers bloom as it passes.'
     - ''
-    - '&#5FB3B3Herbalist &#FFF4E0series'
+    - '&#2ECF7BHerbalist &fseries'
   souche:
     item: influpet:carte_souche
     name: '&#AAAAAAStump'
@@ -217,9 +217,9 @@ cards:
     rarity: simple
     pet: souche
     lore:
-    - '&#EADBC8Cut down a hundred years ago, it kept the axe as a souvenir.'
+    - '&#B376E5Cut down a hundred years ago, it kept the axe as a souvenir.'
     - ''
-    - '&#5FB3B3Forester &#FFF4E0series'
+    - '&#2ECF7BForester &fseries'
   castor:
     item: influpet:carte_castor
     name: '&#37C44ABeaver'
@@ -227,9 +227,9 @@ cards:
     rarity: unique
     pet: castor
     lore:
-    - '&#EADBC8A tree? Three bites and it is done.'
+    - '&#B376E5A tree? Three bites and it is done.'
     - ''
-    - '&#5FB3B3Forester &#FFF4E0series'
+    - '&#2ECF7BForester &fseries'
   gland:
     item: influpet:carte_gland
     name: '&#3283A8Acorn'
@@ -237,10 +237,10 @@ cards:
     rarity: elite
     pet: gland
     lore:
-    - '&#EADBC8One day it will be an oak.'
-    - '&#EADBC8For now, it rolls.'
+    - '&#B376E5One day it will be an oak.'
+    - '&#B376E5For now, it rolls.'
     - ''
-    - '&#5FB3B3Forester &#FFF4E0series'
+    - '&#2ECF7BForester &fseries'
   sylvain:
     item: influpet:carte_sylvain
     name: '&#B376E5Sylvan'
@@ -248,9 +248,9 @@ cards:
     rarity: ultimate
     pet: sylvain
     lore:
-    - '&#EADBC8Guardian of the old forests, patient as an oak.'
+    - '&#B376E5Guardian of the old forests, patient as an oak.'
     - ''
-    - '&#5FB3B3Forester &#FFF4E0series'
+    - '&#2ECF7BForester &fseries'
   flammeche:
     item: influpet:carte_flammeche
     name: '&#B376E5Flicker'
@@ -258,9 +258,9 @@ cards:
     rarity: ultimate
     pet: flammeche
     lore:
-    - '&#EADBC8A little flame spirit that never leaves the furnace.'
+    - '&#B376E5A little flame spirit that never leaves the furnace.'
     - ''
-    - '&#5FB3B3Smelter &#FFF4E0series'
+    - '&#2ECF7BSmelter &fseries'
   soufflet:
     item: influpet:carte_soufflet
     name: '&#AAAAAABellows'
@@ -268,9 +268,9 @@ cards:
     rarity: simple
     pet: soufflet
     lore:
-    - '&#EADBC8One puff, and the embers roar back to life.'
+    - '&#B376E5One puff, and the embers roar back to life.'
     - ''
-    - '&#5FB3B3Smelter &#FFF4E0series'
+    - '&#2ECF7BSmelter &fseries'
   salamandre:
     item: influpet:carte_salamandre
     name: '&#37C44ABlazing Salamander'
@@ -278,9 +278,9 @@ cards:
     rarity: unique
     pet: salamandre
     lore:
-    - '&#EADBC8It sleeps in the embers of the blast furnace.'
+    - '&#B376E5It sleeps in the embers of the blast furnace.'
     - ''
-    - '&#5FB3B3Smelter &#FFF4E0series'
+    - '&#2ECF7BSmelter &fseries'
   fournaise:
     item: influpet:carte_fournaise
     name: '&#3283A8Furnace'
@@ -288,9 +288,9 @@ cards:
     rarity: elite
     pet: fournaise
     lore:
-    - '&#EADBC8A furnace that came to life, and is always hungry.'
+    - '&#B376E5A furnace that came to life, and is always hungry.'
     - ''
-    - '&#5FB3B3Smelter &#FFF4E0series'
+    - '&#2ECF7BSmelter &fseries'
   lapin_lapis:
     item: influpet:carte_lapin_lapis
     name: '&#AAAAAALapis Bunny'
@@ -298,9 +298,9 @@ cards:
     rarity: simple
     pet: lapin_lapis
     lore:
-    - '&#EADBC8It dug so deep it came out all blue.'
+    - '&#B376E5It dug so deep it came out all blue.'
     - ''
-    - '&#5FB3B3Enchanter &#FFF4E0series'
+    - '&#2ECF7BEnchanter &fseries'
   orbe_xp:
     item: influpet:carte_orbe_xp
     name: '&#37C44AExperience Orb'
@@ -308,9 +308,9 @@ cards:
     rarity: unique
     pet: orbe_xp
     lore:
-    - '&#EADBC8It has the color of your levels and always flies straight to you.'
+    - '&#B376E5It has the color of your levels and always flies straight to you.'
     - ''
-    - '&#5FB3B3Enchanter &#FFF4E0series'
+    - '&#2ECF7BEnchanter &fseries'
   chouette_arcane:
     item: influpet:carte_chouette_arcane
     name: '&#3283A8Arcane Owl'
@@ -318,9 +318,9 @@ cards:
     rarity: elite
     pet: chouette_arcane
     lore:
-    - '&#EADBC8It reads forbidden grimoires in the dark.'
+    - '&#B376E5It reads forbidden grimoires in the dark.'
     - ''
-    - '&#5FB3B3Enchanter &#FFF4E0series'
+    - '&#2ECF7BEnchanter &fseries'
   table_vivante:
     item: influpet:carte_table_vivante
     name: '&#B376E5Living Table'
@@ -328,9 +328,9 @@ cards:
     rarity: ultimate
     pet: table_vivante
     lore:
-    - '&#EADBC8The enchanting table that picks its own spells.'
+    - '&#B376E5The enchanting table that picks its own spells.'
     - ''
-    - '&#5FB3B3Enchanter &#FFF4E0series'
+    - '&#2ECF7BEnchanter &fseries'
   poissonnet:
     item: influpet:carte_poissonnet
     name: '&#AAAAAAFishlet'
@@ -338,9 +338,9 @@ cards:
     rarity: simple
     pet: poissonnet
     lore:
-    - '&#EADBC8It knows where its cousins bite.'
+    - '&#B376E5It knows where its cousins bite.'
     - ''
-    - '&#5FB3B3Fisher &#FFF4E0series'
+    - '&#2ECF7BFisher &fseries'
   crabichon:
     item: influpet:carte_crabichon
     name: '&#37C44ACrabby'
@@ -348,9 +348,9 @@ cards:
     rarity: unique
     pet: crabichon
     lore:
-    - '&#EADBC8It walks sideways but fishes straight.'
+    - '&#B376E5It walks sideways but fishes straight.'
     - ''
-    - '&#5FB3B3Fisher &#FFF4E0series'
+    - '&#2ECF7BFisher &fseries'
   dauphin:
     item: influpet:carte_dauphin
     name: '&#3283A8Dolphin'
@@ -358,9 +358,9 @@ cards:
     rarity: elite
     pet: dauphin
     lore:
-    - '&#EADBC8It swims faster than its shadow and pulls you in its wake.'
+    - '&#B376E5It swims faster than its shadow and pulls you in its wake.'
     - ''
-    - '&#5FB3B3Fisher &#FFF4E0series'
+    - '&#2ECF7BFisher &fseries'
   kraken:
     item: influpet:carte_kraken
     name: '&#B376E5Kraken'
@@ -368,9 +368,9 @@ cards:
     rarity: ultimate
     pet: kraken
     lore:
-    - '&#EADBC8Captain of the abyss, the fish follow it.'
+    - '&#B376E5Captain of the abyss, the fish follow it.'
     - ''
-    - '&#5FB3B3Fisher &#FFF4E0series'
+    - '&#2ECF7BFisher &fseries'
   ecuyer:
     item: influpet:carte_ecuyer
     name: '&#AAAAAASquire'
@@ -378,9 +378,9 @@ cards:
     rarity: simple
     pet: ecuyer
     lore:
-    - '&#EADBC8Small, but its spear keeps zombies at bay.'
+    - '&#B376E5Small, but its spear keeps zombies at bay.'
     - ''
-    - '&#5FB3B3Defender &#FFF4E0series'
+    - '&#2ECF7BDefender &fseries'
   pavois:
     item: influpet:carte_pavois
     name: '&#37C44ABulwark'
@@ -388,9 +388,9 @@ cards:
     rarity: unique
     pet: pavois
     lore:
-    - '&#EADBC8A great living shield that stands before its friends.'
+    - '&#B376E5A great living shield that stands before its friends.'
     - ''
-    - '&#5FB3B3Defender &#FFF4E0series'
+    - '&#2ECF7BDefender &fseries'
   chien_garde:
     item: influpet:carte_chien_garde
     name: '&#3283A8Guard Dog'
@@ -398,9 +398,9 @@ cards:
     rarity: elite
     pet: chien_garde
     lore:
-    - '&#EADBC8Its armor shines, its nose never lies.'
+    - '&#B376E5Its armor shines, its nose never lies.'
     - ''
-    - '&#5FB3B3Defender &#FFF4E0series'
+    - '&#2ECF7BDefender &fseries'
   chevalier_spectral:
     item: influpet:carte_chevalier_spectral
     name: '&#B376E5Spectral Knight'
@@ -408,9 +408,9 @@ cards:
     rarity: ultimate
     pet: chevalier_spectral
     lore:
-    - '&#EADBC8It swore to protect even after death.'
+    - '&#B376E5It swore to protect even after death.'
     - ''
-    - '&#5FB3B3Defender &#FFF4E0series'
+    - '&#2ECF7BDefender &fseries'
   marteau_piqueur:
     item: influpet:carte_marteau_piqueur
     name: '&#AAAAAAJackhammer'
@@ -418,9 +418,9 @@ cards:
     rarity: simple
     pet: marteau_piqueur
     lore:
-    - '&#EADBC8It shakes the roads and digs up what they hid.'
+    - '&#B376E5It shakes the roads and digs up what they hid.'
     - ''
-    - '&#5FB3B3Builder &#FFF4E0series'
+    - '&#2ECF7BBuilder &fseries'
   betonniere:
     item: influpet:carte_betonniere
     name: '&#37C44ACement Mixer'
@@ -428,9 +428,9 @@ cards:
     rarity: unique
     pet: betonniere
     lore:
-    - '&#EADBC8It turns, turns, turns, and the concrete sets at once.'
+    - '&#B376E5It turns, turns, turns, and the concrete sets at once.'
     - ''
-    - '&#5FB3B3Builder &#FFF4E0series'
+    - '&#2ECF7BBuilder &fseries'
   grue:
     item: influpet:carte_grue
     name: '&#3283A8Crane'
@@ -438,9 +438,9 @@ cards:
     rarity: elite
     pet: grue
     lore:
-    - '&#EADBC8It lifts the heaviest blocks on the site.'
+    - '&#B376E5It lifts the heaviest blocks on the site.'
     - ''
-    - '&#5FB3B3Builder &#FFF4E0series'
+    - '&#2ECF7BBuilder &fseries'
   architecte:
     item: influpet:carte_architecte
     name: '&#B376E5Architect'
@@ -448,9 +448,9 @@ cards:
     rarity: ultimate
     pet: architecte
     lore:
-    - '&#EADBC8It already sees the cathedral where you see a vacant lot.'
+    - '&#B376E5It already sees the cathedral where you see a vacant lot.'
     - ''
-    - '&#5FB3B3Builder &#FFF4E0series'
+    - '&#2ECF7BBuilder &fseries'
   phenix:
     item: influpet:carte_phenix
     name: '&#F0A800Phoenix'
@@ -458,9 +458,9 @@ cards:
     rarity: legendary
     pet: phenix
     lore:
-    - '&#EADBC8It always rises from its ashes.'
+    - '&#B376E5It always rises from its ashes.'
     - ''
-    - '&#5FB3B3Prestige &#FFF4E0series'
+    - '&#2ECF7BPrestige &fseries'
   astrolabe:
     item: influpet:carte_astrolabe
     name: '&#F0A800Celestial Astrolabe'
@@ -468,9 +468,9 @@ cards:
     rarity: legendary
     pet: astrolabe
     lore:
-    - '&#EADBC8It spins the planets so it never gets bored.'
+    - '&#B376E5It spins the planets so it never gets bored.'
     - ''
-    - '&#5FB3B3Prestige &#FFF4E0series'
+    - '&#2ECF7BPrestige &fseries'
   kitsune:
     item: influpet:carte_kitsune
     name: '&#F0A800Snow Kitsune'
@@ -478,10 +478,10 @@ cards:
     rarity: legendary
     pet: kitsune
     lore:
-    - '&#EADBC8One tail per century lived.'
-    - '&#EADBC8It has nine.'
+    - '&#B376E5One tail per century lived.'
+    - '&#B376E5It has nine.'
     - ''
-    - '&#5FB3B3Prestige &#FFF4E0series'
+    - '&#2ECF7BPrestige &fseries'
   licorne:
     item: influpet:carte_licorne
     name: '&#F0A800Astral Unicorn'
@@ -489,9 +489,9 @@ cards:
     rarity: legendary
     pet: licorne
     lore:
-    - '&#EADBC8It leaves stars wherever it goes.'
+    - '&#B376E5It leaves stars wherever it goes.'
     - ''
-    - '&#5FB3B3Prestige &#FFF4E0series'
+    - '&#2ECF7BPrestige &fseries'
   nida:
     item: influpet:carte_nida
     name: '&#F0A800Nida'
@@ -499,9 +499,9 @@ cards:
     rarity: legendary
     pet: nida
     lore:
-    - '&#EADBC8It lost its left arm holding the Void''s door shut.'
+    - '&#B376E5It lost its left arm holding the Void''s door shut.'
     - ''
-    - '&#5FB3B3Prestige &#FFF4E0series'
+    - '&#2ECF7BPrestige &fseries'
   leviathan:
     item: influpet:carte_leviathan
     name: '&#C8256ALeviathan'
@@ -509,9 +509,9 @@ cards:
     rarity: fabled
     pet: leviathan
     lore:
-    - '&#EADBC8Sailors never speak its name.'
+    - '&#B376E5Sailors never speak its name.'
     - ''
-    - '&#5FB3B3Prestige &#FFF4E0series'
+    - '&#2ECF7BPrestige &fseries'
   faucheur:
     item: influpet:carte_faucheur
     name: '&#C8256AVoid Reaper'
@@ -519,6 +519,6 @@ cards:
     rarity: fabled
     pet: faucheur
     lore:
-    - '&#EADBC8It comes from the void and always returns to it.'
+    - '&#B376E5It comes from the void and always returns to it.'
     - ''
-    - '&#5FB3B3Prestige &#FFF4E0series'
+    - '&#2ECF7BPrestige &fseries'

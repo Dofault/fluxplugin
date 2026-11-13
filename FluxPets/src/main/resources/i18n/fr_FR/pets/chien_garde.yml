@@ -2,7 +2,7 @@
 # Modèle : BetterModel/models/familier_chien_garde.bbmodel, carte et peluche : pack ItemsAdder "influpet".
 
 name: '&#3283A8Chien de Garde'
-description: '&#EADBC8Grandit uniquement avec ses cartes'
+description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_chien_garde
 flying: false
 icon: itemsadder:influpet__carte_chien_garde
@@ -28,18 +28,18 @@ level-placeholders:
   value: round((10 + (%level% - 1) * 90 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Rage'
-  - '  &#EADBC8Plus ta vie est basse, plus tu frappes fort : jusqu''à +&#FFF4E0%bonus%%&#EADBC8 de dégâts à 1 point de vie'
+  - '&fRage'
+  - '  &#B376E5Plus ta vie est basse, plus tu frappes fort : jusqu''à +&f%bonus%%&#B376E5 de dégâts à 1 point de vie'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Rage'
-  - '  &#EADBC8Plus ta vie est basse, plus tu frappes fort : jusqu''à +&#FFF4E0%bonus%%&#EADBC8 de dégâts à 1 point de vie'
+  - '&fRage'
+  - '  &#B376E5Plus ta vie est basse, plus tu frappes fort : jusqu''à +&f%bonus%%&#B376E5 de dégâts à 1 point de vie'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Rage'
-  - '  &#EADBC8Plus ta vie est basse, plus tu'
-  - '  &#EADBC8frappes fort : jusqu''à +&#FFF4E0%bonus%%&#EADBC8'
-  - '  &#EADBC8de dégâts à 1 point de vie'
+  - '&fRage'
+  - '  &#B376E5Plus ta vie est basse, plus tu'
+  - '  &#B376E5frappes fort : jusqu''à +&f%bonus%%&#B376E5'
+  - '  &#B376E5de dégâts à 1 point de vie'
 level-up-effects: []
 effects: []
 conditions: []

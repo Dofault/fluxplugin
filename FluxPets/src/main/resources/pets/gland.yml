@@ -2,7 +2,7 @@
 # Model: BetterModel/models/familier_gland.bbmodel, card and plush: ItemsAdder pack "influpet".
 
 name: '&#3283A8Acorn'
-description: '&#EADBC8Only grows with its cards'
+description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_gland
 flying: false
 icon: itemsadder:influpet__carte_gland
@@ -28,18 +28,18 @@ level-placeholders:
   value: round((10 + (%level% - 1) * 90 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Sudden Growth'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a &#EADBC8sapling becomes a tree &#EADBC8with a single bone meal'
+  - '&fSudden Growth'
+  - '  &#B376E5&f%bonus%%&#B376E5 chance that a &#B376E5sapling becomes a tree &#B376E5with a single bone meal'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Sudden Growth'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a &#EADBC8sapling becomes a tree &#EADBC8with a single bone meal'
+  - '&fSudden Growth'
+  - '  &#B376E5&f%bonus%%&#B376E5 chance that a &#B376E5sapling becomes a tree &#B376E5with a single bone meal'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Sudden Growth'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance that a'
-  - '  &#EADBC8sapling becomes a tree'
-  - '  &#EADBC8with a single bone meal'
+  - '&fSudden Growth'
+  - '  &#B376E5&f%bonus%%&#B376E5 chance that a'
+  - '  &#B376E5sapling becomes a tree'
+  - '  &#B376E5with a single bone meal'
 level-up-effects: []
 effects: []
 conditions: []

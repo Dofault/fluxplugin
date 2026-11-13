@@ -2,7 +2,7 @@
 # Model: BetterModel/models/familier_dauphin.bbmodel, card and plush: ItemsAdder pack "influpet".
 
 name: '&#3283A8Dolphin'
-description: '&#EADBC8Only grows with its cards'
+description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_dauphin
 flying: true
 icon: itemsadder:influpet__carte_dauphin
@@ -28,20 +28,20 @@ level-placeholders:
   value: round((0.5 + (%level% - 1) * 4.5 / 9) * 10) / 10
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Dolphin Swim'
-  - '  &#EADBC8Dolphin''s Grace for &#FFF4E0%bonus% &#FFF4E0s&#EADBC8 when you start swimming'
-  - '  &#EADBC8Once every 30 s'
+  - '&fDolphin Swim'
+  - '  &#B376E5Dolphin''s Grace for &f%bonus% &fs&#B376E5 when you start swimming'
+  - '  &#B376E5Once every 30 s'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Dolphin Swim'
-  - '  &#EADBC8Dolphin''s Grace for &#FFF4E0%bonus% &#FFF4E0s&#EADBC8 when you start swimming'
-  - '  &#EADBC8Once every 30 s'
+  - '&fDolphin Swim'
+  - '  &#B376E5Dolphin''s Grace for &f%bonus% &fs&#B376E5 when you start swimming'
+  - '  &#B376E5Once every 30 s'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Dolphin Swim'
-  - '  &#EADBC8Dolphin''s Grace for &#FFF4E0%bonus%'
-  - '  &#FFF4E0s&#EADBC8 when you start swimming'
-  - '  &#EADBC8Once every 30 s'
+  - '&fDolphin Swim'
+  - '  &#B376E5Dolphin''s Grace for &f%bonus%'
+  - '  &fs&#B376E5 when you start swimming'
+  - '  &#B376E5Once every 30 s'
 level-up-effects: []
 effects:
 - effects:

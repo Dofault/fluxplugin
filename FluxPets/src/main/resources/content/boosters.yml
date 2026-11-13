@@ -10,16 +10,16 @@ boosters:
     item: influpet:booster_metier_mineur
     name: '&#4FD6E8&lMiner Booster'
     lore:
-    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the &#4FD6E8Miner&#EADBC8 series.'
+    - '&#B376E5Contains &f%cards% &#B376E5cards from the &#4FD6E8Miner&#B376E5 series.'
     - ''
-    - '&#EADBC8Pets to adopt:'
+    - '&#B376E5Pets to adopt:'
     - '%adopted:pepite% &#AAAAAANugget'
     - '%adopted:lanterne% &#37C44ALantern'
     - '%adopted:wagonnet% &#3283A8Minecart'
     - '%adopted:dragon_gemmes% &#B376E5Gem Dragon'
     - ''
-    - '&#6B7A8F[Right-click] &#FF7A59Open'
-    - '&#6B7A8FShift + right-click: open the whole stack'
+    - '&7[Right-click] &#FFD94DOpen'
+    - '&7Shift + right-click: open the whole stack'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -49,16 +49,16 @@ boosters:
     item: influpet:booster_metier_rochiste
     name: '&#A8AEB8&lQuarrier Booster'
     lore:
-    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the &#A8AEB8Quarrier&#EADBC8 series.'
+    - '&#B376E5Contains &f%cards% &#B376E5cards from the &#A8AEB8Quarrier&#B376E5 series.'
     - ''
-    - '&#EADBC8Pets to adopt:'
+    - '&#B376E5Pets to adopt:'
     - '%adopted:caillou% &#AAAAAAPebble'
     - '%adopted:mimique% &#37C44AMimic'
     - '%adopted:colosse% &#3283A8Basalt Colossus'
     - '%adopted:titan% &#B376E5Crystal Titan'
     - ''
-    - '&#6B7A8F[Right-click] &#FF7A59Open'
-    - '&#6B7A8FShift + right-click: open the whole stack'
+    - '&7[Right-click] &#FFD94DOpen'
+    - '&7Shift + right-click: open the whole stack'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -88,16 +88,16 @@ boosters:
     item: influpet:booster_metier_deblayeur
     name: '&#D9C27A&lDigger Booster'
     lore:
-    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the &#D9C27ADigger&#EADBC8 series.'
+    - '&#B376E5Contains &f%cards% &#B376E5cards from the &#D9C27ADigger&#B376E5 series.'
     - ''
-    - '&#EADBC8Pets to adopt:'
+    - '&#B376E5Pets to adopt:'
     - '%adopted:fourmi% &#AAAAAAAnt'
     - '%adopted:cabri% &#37C44AKid Goat'
     - '%adopted:lievre_neiges% &#3283A8Snow Hare'
     - '%adopted:ver_sables% &#B376E5Sandworm'
     - ''
-    - '&#6B7A8F[Right-click] &#FF7A59Open'
-    - '&#6B7A8FShift + right-click: open the whole stack'
+    - '&7[Right-click] &#FFD94DOpen'
+    - '&7Shift + right-click: open the whole stack'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -127,16 +127,16 @@ boosters:
     item: influpet:booster_metier_cultivateur
     name: '&#E8C547&lFarmer Booster'
     lore:
-    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the &#E8C547Farmer&#EADBC8 series.'
+    - '&#B376E5Contains &f%cards% &#B376E5cards from the &#E8C547Farmer&#B376E5 series.'
     - ''
-    - '&#EADBC8Pets to adopt:'
+    - '&#B376E5Pets to adopt:'
     - '%adopted:abeille% &#AAAAAABee'
     - '%adopted:carottin% &#37C44ACarroty'
     - '%adopted:ouistiti% &#3283A8Marmoset'
     - '%adopted:epouvantail% &#B376E5Scarecrow'
     - ''
-    - '&#6B7A8F[Right-click] &#FF7A59Open'
-    - '&#6B7A8FShift + right-click: open the whole stack'
+    - '&7[Right-click] &#FFD94DOpen'
+    - '&7Shift + right-click: open the whole stack'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -166,16 +166,16 @@ boosters:
     item: influpet:booster_metier_herboriste
     name: '&#6CD46C&lHerbalist Booster'
     lore:
-    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the &#6CD46CHerbalist&#EADBC8 series.'
+    - '&#B376E5Contains &f%cards% &#B376E5cards from the &#6CD46CHerbalist&#B376E5 series.'
     - ''
-    - '&#EADBC8Pets to adopt:'
+    - '&#B376E5Pets to adopt:'
     - '%adopted:coquelicot% &#AAAAAAPoppy'
     - '%adopted:champinou% &#37C44AShroomy'
     - '%adopted:papillon% &#3283A8Butterfly'
     - '%adopted:dryade% &#B376E5Dryad'
     - ''
-    - '&#6B7A8F[Right-click] &#FF7A59Open'
-    - '&#6B7A8FShift + right-click: open the whole stack'
+    - '&7[Right-click] &#FFD94DOpen'
+    - '&7Shift + right-click: open the whole stack'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -205,16 +205,16 @@ boosters:
     item: influpet:booster_metier_sylviculteur
     name: '&#B07A45&lForester Booster'
     lore:
-    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the &#B07A45Forester&#EADBC8 series.'
+    - '&#B376E5Contains &f%cards% &#B376E5cards from the &#B07A45Forester&#B376E5 series.'
     - ''
-    - '&#EADBC8Pets to adopt:'
+    - '&#B376E5Pets to adopt:'
     - '%adopted:souche% &#AAAAAAStump'
     - '%adopted:castor% &#37C44ABeaver'
     - '%adopted:gland% &#3283A8Acorn'
     - '%adopted:sylvain% &#B376E5Sylvan'
     - ''
-    - '&#6B7A8F[Right-click] &#FF7A59Open'
-    - '&#6B7A8FShift + right-click: open the whole stack'
+    - '&7[Right-click] &#FFD94DOpen'
+    - '&7Shift + right-click: open the whole stack'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -244,16 +244,16 @@ boosters:
     item: influpet:booster_metier_fondeur
     name: '&#FF8A3D&lSmelter Booster'
     lore:
-    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the &#FF8A3DSmelter&#EADBC8 series.'
+    - '&#B376E5Contains &f%cards% &#B376E5cards from the &#FF8A3DSmelter&#B376E5 series.'
     - ''
-    - '&#EADBC8Pets to adopt:'
+    - '&#B376E5Pets to adopt:'
     - '%adopted:soufflet% &#AAAAAABellows'
     - '%adopted:salamandre% &#37C44ABlazing Salamander'
     - '%adopted:fournaise% &#3283A8Furnace'
     - '%adopted:flammeche% &#B376E5Flicker'
     - ''
-    - '&#6B7A8F[Right-click] &#FF7A59Open'
-    - '&#6B7A8FShift + right-click: open the whole stack'
+    - '&7[Right-click] &#FFD94DOpen'
+    - '&7Shift + right-click: open the whole stack'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -283,16 +283,16 @@ boosters:
     item: influpet:booster_metier_enchanteur
     name: '&#8C7BFF&lEnchanter Booster'
     lore:
-    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the &#8C7BFFEnchanter&#EADBC8 series.'
+    - '&#B376E5Contains &f%cards% &#B376E5cards from the &#8C7BFFEnchanter&#B376E5 series.'
     - ''
-    - '&#EADBC8Pets to adopt:'
+    - '&#B376E5Pets to adopt:'
     - '%adopted:lapin_lapis% &#AAAAAALapis Bunny'
     - '%adopted:orbe_xp% &#37C44AExperience Orb'
     - '%adopted:chouette_arcane% &#3283A8Arcane Owl'
     - '%adopted:table_vivante% &#B376E5Living Table'
     - ''
-    - '&#6B7A8F[Right-click] &#FF7A59Open'
-    - '&#6B7A8FShift + right-click: open the whole stack'
+    - '&7[Right-click] &#FFD94DOpen'
+    - '&7Shift + right-click: open the whole stack'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -322,16 +322,16 @@ boosters:
     item: influpet:booster_metier_pecheur
     name: '&#4FA8FF&lFisher Booster'
     lore:
-    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the &#4FA8FFFisher&#EADBC8 series.'
+    - '&#B376E5Contains &f%cards% &#B376E5cards from the &#4FA8FFFisher&#B376E5 series.'
     - ''
-    - '&#EADBC8Pets to adopt:'
+    - '&#B376E5Pets to adopt:'
     - '%adopted:poissonnet% &#AAAAAAFishlet'
     - '%adopted:crabichon% &#37C44ACrabby'
     - '%adopted:dauphin% &#3283A8Dolphin'
     - '%adopted:kraken% &#B376E5Kraken'
     - ''
-    - '&#6B7A8F[Right-click] &#FF7A59Open'
-    - '&#6B7A8FShift + right-click: open the whole stack'
+    - '&7[Right-click] &#FFD94DOpen'
+    - '&7Shift + right-click: open the whole stack'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -361,16 +361,16 @@ boosters:
     item: influpet:booster_metier_defenseur
     name: '&#E04848&lDefender Booster'
     lore:
-    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the &#E04848Defender&#EADBC8 series.'
+    - '&#B376E5Contains &f%cards% &#B376E5cards from the &#E04848Defender&#B376E5 series.'
     - ''
-    - '&#EADBC8Pets to adopt:'
+    - '&#B376E5Pets to adopt:'
     - '%adopted:ecuyer% &#AAAAAASquire'
     - '%adopted:pavois% &#37C44ABulwark'
     - '%adopted:chien_garde% &#3283A8Guard Dog'
     - '%adopted:chevalier_spectral% &#B376E5Spectral Knight'
     - ''
-    - '&#6B7A8F[Right-click] &#FF7A59Open'
-    - '&#6B7A8FShift + right-click: open the whole stack'
+    - '&7[Right-click] &#FFD94DOpen'
+    - '&7Shift + right-click: open the whole stack'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -400,16 +400,16 @@ boosters:
     item: influpet:booster_metier_batisseur
     name: '&#F2A33A&lBuilder Booster'
     lore:
-    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the &#F2A33ABuilder&#EADBC8 series.'
+    - '&#B376E5Contains &f%cards% &#B376E5cards from the &#F2A33ABuilder&#B376E5 series.'
     - ''
-    - '&#EADBC8Pets to adopt:'
+    - '&#B376E5Pets to adopt:'
     - '%adopted:marteau_piqueur% &#AAAAAAJackhammer'
     - '%adopted:betonniere% &#37C44ACement Mixer'
     - '%adopted:grue% &#3283A8Crane'
     - '%adopted:architecte% &#B376E5Architect'
     - ''
-    - '&#6B7A8F[Right-click] &#FF7A59Open'
-    - '&#6B7A8FShift + right-click: open the whole stack'
+    - '&7[Right-click] &#FFD94DOpen'
+    - '&7Shift + right-click: open the whole stack'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -439,9 +439,9 @@ boosters:
     item: influpet:booster_prestige
     name: '&#F0A800&lPrestige Booster'
     lore:
-    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from the &#F0A800Prestige&#EADBC8 series.'
+    - '&#B376E5Contains &f%cards% &#B376E5cards from the &#F0A800Prestige&#B376E5 series.'
     - ''
-    - '&#EADBC8Pets to adopt:'
+    - '&#B376E5Pets to adopt:'
     - '%adopted:phenix% &#F0A800Phoenix'
     - '%adopted:astrolabe% &#F0A800Celestial Astrolabe'
     - '%adopted:kitsune% &#F0A800Snow Kitsune'
@@ -450,8 +450,8 @@ boosters:
     - '%adopted:leviathan% &#C8256ALeviathan'
     - '%adopted:faucheur% &#C8256AVoid Reaper'
     - ''
-    - '&#6B7A8F[Right-click] &#FF7A59Open'
-    - '&#6B7A8FShift + right-click: open the whole stack'
+    - '&7[Right-click] &#FFD94DOpen'
+    - '&7Shift + right-click: open the whole stack'
     cards: 5
     rarity-weights:
       simple: 400
@@ -487,14 +487,14 @@ boosters:
     item: influpet:booster_ordinaire
     name: '&f&lOrdinary Booster'
     lore:
-    - '&#EADBC8Tier: &#FFF4E0★&#6B7A8F☆☆☆'
-    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from every series.'
+    - '&#B376E5Tier: &f★&7☆☆☆'
+    - '&#B376E5Contains &f%cards% &#B376E5cards from every series.'
     - ''
-    - '&#EADBC8Pets to adopt:'
-    - '&#6B7A8F» &#FFF4E0Every pet'
+    - '&#B376E5Pets to adopt:'
+    - '&fEvery pet'
     - ''
-    - '&#6B7A8F[Right-click] &#FF7A59Open'
-    - '&#6B7A8FShift + right-click: open the whole stack'
+    - '&7[Right-click] &#FFD94DOpen'
+    - '&7Shift + right-click: open the whole stack'
     cards: 8
     rarity-weights:
       simple: 400
@@ -620,14 +620,14 @@ boosters:
     item: influpet:booster_tendance
     name: '&#55FF55&lTrending Booster'
     lore:
-    - '&#EADBC8Tier: &#FFF4E0★★&#6B7A8F☆☆'
-    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from every series.'
+    - '&#B376E5Tier: &f★★&7☆☆'
+    - '&#B376E5Contains &f%cards% &#B376E5cards from every series.'
     - ''
-    - '&#EADBC8Pets to adopt:'
-    - '&#6B7A8F» &#FFF4E0Every pet'
+    - '&#B376E5Pets to adopt:'
+    - '&fEvery pet'
     - ''
-    - '&#6B7A8F[Right-click] &#FF7A59Open'
-    - '&#6B7A8FShift + right-click: open the whole stack'
+    - '&7[Right-click] &#FFD94DOpen'
+    - '&7Shift + right-click: open the whole stack'
     cards: 12
     rarity-weights:
       simple: 300
@@ -753,14 +753,14 @@ boosters:
     item: influpet:booster_virale
     name: '&#5A85EA&lViral Booster'
     lore:
-    - '&#EADBC8Tier: &#FFF4E0★★★&#6B7A8F☆'
-    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from every series.'
+    - '&#B376E5Tier: &f★★★&7☆'
+    - '&#B376E5Contains &f%cards% &#B376E5cards from every series.'
     - ''
-    - '&#EADBC8Pets to adopt:'
-    - '&#6B7A8F» &#FFF4E0Every pet'
+    - '&#B376E5Pets to adopt:'
+    - '&fEvery pet'
     - ''
-    - '&#6B7A8F[Right-click] &#FF7A59Open'
-    - '&#6B7A8FShift + right-click: open the whole stack'
+    - '&7[Right-click] &#FFD94DOpen'
+    - '&7Shift + right-click: open the whole stack'
     cards: 16
     rarity-weights:
       simple: 180
@@ -886,14 +886,14 @@ boosters:
     item: influpet:booster_phenomene
     name: '&#F0A800&lPhenomenal Booster'
     lore:
-    - '&#EADBC8Tier: &#FFF4E0★★★★&#6B7A8F'
-    - '&#EADBC8Contains &#FFF4E0%cards% &#EADBC8cards from every series.'
+    - '&#B376E5Tier: &f★★★★&7'
+    - '&#B376E5Contains &f%cards% &#B376E5cards from every series.'
     - ''
-    - '&#EADBC8Pets to adopt:'
-    - '&#6B7A8F» &#FFF4E0Every pet'
+    - '&#B376E5Pets to adopt:'
+    - '&fEvery pet'
     - ''
-    - '&#6B7A8F[Right-click] &#FF7A59Open'
-    - '&#6B7A8FShift + right-click: open the whole stack'
+    - '&7[Right-click] &#FFD94DOpen'
+    - '&7Shift + right-click: open the whole stack'
     cards: 20
     rarity-weights:
       simple: 100

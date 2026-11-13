@@ -2,7 +2,7 @@
 # Modèle : BetterModel/models/familier_gland.bbmodel, carte et peluche : pack ItemsAdder "influpet".
 
 name: '&#3283A8Gland'
-description: '&#EADBC8Grandit uniquement avec ses cartes'
+description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_gland
 flying: false
 icon: itemsadder:influpet__carte_gland
@@ -28,18 +28,18 @@ level-placeholders:
   value: round((10 + (%level% - 1) * 90 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Croissance éclair'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance qu''une pousse &#EADBC8devienne un arbre d''un seul &#EADBC8coup de poudre d''os'
+  - '&fCroissance éclair'
+  - '  &#B376E5&f%bonus%%&#B376E5 de chance qu''une pousse &#B376E5devienne un arbre d''un seul &#B376E5coup de poudre d''os'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Croissance éclair'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance qu''une pousse &#EADBC8devienne un arbre d''un seul &#EADBC8coup de poudre d''os'
+  - '&fCroissance éclair'
+  - '  &#B376E5&f%bonus%%&#B376E5 de chance qu''une pousse &#B376E5devienne un arbre d''un seul &#B376E5coup de poudre d''os'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Croissance éclair'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance qu''une pousse'
-  - '  &#EADBC8devienne un arbre d''un seul'
-  - '  &#EADBC8coup de poudre d''os'
+  - '&fCroissance éclair'
+  - '  &#B376E5&f%bonus%%&#B376E5 de chance qu''une pousse'
+  - '  &#B376E5devienne un arbre d''un seul'
+  - '  &#B376E5coup de poudre d''os'
 level-up-effects: []
 effects: []
 conditions: []

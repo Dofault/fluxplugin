@@ -2,7 +2,7 @@
 # Model: BetterModel/models/familier_cabri.bbmodel, card and plush: ItemsAdder pack "influpet".
 
 name: '&#37C44AKid Goat'
-description: '&#EADBC8Only grows with its cards'
+description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_cabri
 flying: false
 icon: itemsadder:influpet__carte_cabri
@@ -28,13 +28,13 @@ level-placeholders:
   value: round((0.2 + (%level% - 1) * 0.4 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Sure-footed&#EADBC8: steps up +&#FFF4E0%bonus%&#EADBC8 block'
+  - '&fSure-footed&#B376E5: steps up +&f%bonus%&#B376E5 block'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Sure-footed&#EADBC8: steps up +&#FFF4E0%bonus%&#EADBC8 block'
+  - '&fSure-footed&#B376E5: steps up +&f%bonus%&#B376E5 block'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Sure-footed&#EADBC8: steps up +&#FFF4E0%bonus%&#EADBC8 block'
+  - '&fSure-footed&#B376E5: steps up +&f%bonus%&#B376E5 block'
 level-up-effects: []
 effects:
 - id: increase_step_height

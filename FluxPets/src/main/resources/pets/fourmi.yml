@@ -2,7 +2,7 @@
 # Model: BetterModel/models/familier_fourmi.bbmodel, card and plush: ItemsAdder pack "influpet".
 
 name: '&#AAAAAAAnt'
-description: '&#EADBC8Only grows with its cards'
+description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_fourmi
 flying: false
 icon: itemsadder:influpet__carte_fourmi
@@ -28,22 +28,22 @@ level-placeholders:
   value: round((10 + (%level% - 1) * 90 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0No Cave-in'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to dig &#EADBC8without waking the blocks &#EADBC8around: sand does not &#EADBC8fall, water does not flow'
-  - '  &#EADBC8Area mining included'
+  - '&fNo Cave-in'
+  - '  &#B376E5&f%bonus%%&#B376E5 chance to dig &#B376E5without waking the blocks &#B376E5around: sand does not &#B376E5fall, water does not flow'
+  - '  &#B376E5Area mining included'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0No Cave-in'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to dig &#EADBC8without waking the blocks &#EADBC8around: sand does not &#EADBC8fall, water does not flow'
-  - '  &#EADBC8Area mining included'
+  - '&fNo Cave-in'
+  - '  &#B376E5&f%bonus%%&#B376E5 chance to dig &#B376E5without waking the blocks &#B376E5around: sand does not &#B376E5fall, water does not flow'
+  - '  &#B376E5Area mining included'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0No Cave-in'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 chance to dig'
-  - '  &#EADBC8without waking the blocks'
-  - '  &#EADBC8around: sand does not'
-  - '  &#EADBC8fall, water does not flow'
-  - '  &#EADBC8Area mining included'
+  - '&fNo Cave-in'
+  - '  &#B376E5&f%bonus%%&#B376E5 chance to dig'
+  - '  &#B376E5without waking the blocks'
+  - '  &#B376E5around: sand does not'
+  - '  &#B376E5fall, water does not flow'
+  - '  &#B376E5Area mining included'
 level-up-effects: []
 effects: []
 conditions: []

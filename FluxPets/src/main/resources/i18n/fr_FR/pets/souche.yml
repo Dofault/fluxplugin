@@ -2,7 +2,7 @@
 # Modèle : BetterModel/models/familier_souche.bbmodel, carte et peluche : pack ItemsAdder "influpet".
 
 name: '&#AAAAAASouche'
-description: '&#EADBC8Grandit uniquement avec ses cartes'
+description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_souche
 flying: false
 icon: itemsadder:influpet__carte_souche
@@ -28,16 +28,16 @@ level-placeholders:
   value: round((0.25 + (%level% - 1) * 0.75 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Portée de hache&#EADBC8 : +&#FFF4E0%bonus%&#EADBC8 bloc'
-  - '  &#EADBC8Hache en main'
+  - '&fPortée de hache&#B376E5 : +&f%bonus%&#B376E5 bloc'
+  - '  &#B376E5Hache en main'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Portée de hache&#EADBC8 : +&#FFF4E0%bonus%&#EADBC8 bloc'
-  - '  &#EADBC8Hache en main'
+  - '&fPortée de hache&#B376E5 : +&f%bonus%&#B376E5 bloc'
+  - '  &#B376E5Hache en main'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Portée de hache&#EADBC8 : +&#FFF4E0%bonus%&#EADBC8 bloc'
-  - '  &#EADBC8Hache en main'
+  - '&fPortée de hache&#B376E5 : +&f%bonus%&#B376E5 bloc'
+  - '  &#B376E5Hache en main'
 level-up-effects: []
 effects:
 - id: block_reach

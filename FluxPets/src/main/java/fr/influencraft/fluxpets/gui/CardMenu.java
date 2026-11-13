@@ -72,7 +72,7 @@ public final class CardMenu extends Menu {
         set(24, icon("book", t("description.name"),
                 BoosterMenu.withHeader(this, card.lore(), lines("card.description-hint"), left(t("action.edit")))), (p, c) ->
                 ask(p, t("description.prompt"), answer -> reg.setCard(id, "lore", Arrays.stream(answer.split("\\|"))
-                        .map(String::trim).map(l -> l.startsWith("&") ? l : "&#EADBC8" + l).toList())));
+                        .map(String::trim).map(l -> l.startsWith("&") ? l : "&#B376E5" + l).toList())));
 
         back(new CardsMenu(plugin, 0));
         set(44, icon("barrier", t("card.delete.name"),

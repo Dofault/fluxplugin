@@ -2,7 +2,7 @@
 # Modèle : BetterModel/models/familier_caillou.bbmodel, carte et peluche : pack ItemsAdder "influpet".
 
 name: '&#AAAAAACaillou'
-description: '&#EADBC8Grandit uniquement avec ses cartes'
+description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_caillou
 flying: false
 icon: itemsadder:influpet__carte_caillou
@@ -28,21 +28,21 @@ level-placeholders:
   value: round((1 + (%level% - 1) * 9 / 9) * 100) / 100
 effects-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Éclats'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance d''un &#EADBC8point d''expérience par &#EADBC8bloc de pierre miné'
-  - '  &#EADBC8Minage de zone compris'
+  - '&fÉclats'
+  - '  &#B376E5&f%bonus%%&#B376E5 de chance d''un &#B376E5point d''expérience par &#B376E5bloc de pierre miné'
+  - '  &#B376E5Minage de zone compris'
 rewards-description:
   1:
-  - '&#6B7A8F» &#FFF4E0Éclats'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance d''un &#EADBC8point d''expérience par &#EADBC8bloc de pierre miné'
-  - '  &#EADBC8Minage de zone compris'
+  - '&fÉclats'
+  - '  &#B376E5&f%bonus%%&#B376E5 de chance d''un &#B376E5point d''expérience par &#B376E5bloc de pierre miné'
+  - '  &#B376E5Minage de zone compris'
 level-up-messages:
   1:
-  - '&#6B7A8F» &#FFF4E0Éclats'
-  - '  &#EADBC8&#FFF4E0%bonus%%&#EADBC8 de chance d''un'
-  - '  &#EADBC8point d''expérience par'
-  - '  &#EADBC8bloc de pierre miné'
-  - '  &#EADBC8Minage de zone compris'
+  - '&fÉclats'
+  - '  &#B376E5&f%bonus%%&#B376E5 de chance d''un'
+  - '  &#B376E5point d''expérience par'
+  - '  &#B376E5bloc de pierre miné'
+  - '  &#B376E5Minage de zone compris'
 level-up-effects: []
 effects: []
 conditions: []
