@@ -34,15 +34,3 @@ particles:
   player-distance: 24
 
 # "Sorting chest" item (MiniMessage). <radius> = radius of the item's level.
-item:
-  name: "<!italic><#FFD94D>Sorting chest"
-  lore:
-    - "<!italic><#B376E5>Close it and its content is sent to the copper chests of the area that already hold the same item."
-    - ""
-    - "<!italic><#B376E5>Range: its sub-area, or the land outside sub-areas, within <#FFD94D><radius></#FFD94D> blocks."
-
-messages:
-  outside-land: "<#FF5C5C>This sorting chest only works inside a land."
-  give-ok: "<#2ECF7B>Gave <amount> sorting chest(s) to <player>."
-  player-not-found: "<#FF5C5C>Player not found."
-  reload-ok: "<#2ECF7B>Sorting Chest configuration reloaded."

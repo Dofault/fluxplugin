@@ -1,0 +1,11 @@
+# Textes de FluxSorter (MiniMessage). <radius> = portée en blocs, <amount>, <player>.
+item:
+  name: "<!italic><#FFD94D>Coffre de tri"
+  lore:
+    - "<!italic><#B376E5>Referme-le et son contenu part vers les coffres en cuivre de la zone qui contiennent déjà le même objet."
+    - ""
+    - "<!italic><#B376E5>Portée : sa parcelle, ou la ville hors parcelles, dans un rayon de <#FFD94D><radius></#FFD94D> blocs."
+outside-land: "<#FF5C5C>Ce coffre de tri ne fonctionne que dans une ville."
+give-ok: "<#2ECF7B><amount> coffre(s) de tri donné(s) à <player>."
+player-not-found: "<#FF5C5C>Joueur introuvable."
+reload-ok: "<#2ECF7B>FluxSorter rechargé."

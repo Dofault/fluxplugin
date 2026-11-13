@@ -10,20 +10,14 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.stream.Stream;
 
 /**
  * Coffre de tri : un coffre en cuivre oxydé ciré marqué par le plugin, qui envoie
  * son contenu vers les coffres en cuivre de sa zone Lands contenant déjà le même objet.
  */
-public final class FluxSorter extends JavaPlugin {
+public final class FluxSorter extends fr.influencraft.flux.api.FluxPlugin implements org.bukkit.command.CommandExecutor, org.bukkit.command.TabCompleter {
 
     private static final MiniMessage MM = MiniMessage.miniMessage();
 
@@ -42,28 +36,15 @@ public final class FluxSorter extends JavaPlugin {
         return NamespacedKey.fromString("influtri:" + key);
     }
 
-    /** Reprend une seule fois le dossier plugins/FluxSorter (nom d'avant Sorting Chest), sans le supprimer. */
     @Override
-    public void onLoad() {
-        fr.influencraft.flux.api.util.DataFolders.migrate(this, "SortingChest", "InfluTri");
-        Path old = getDataFolder().toPath().resolveSibling("FluxSorter");
-        Path target = getDataFolder().toPath();
-        if (!Files.isDirectory(old) || Files.exists(target)) return;
-        try (Stream<Path> files = Files.walk(old)) {
-            for (Path from : (Iterable<Path>) files::iterator) {
-                Files.copy(from, target.resolve(old.relativize(from).toString()), StandardCopyOption.COPY_ATTRIBUTES);
-            }
-            getLogger().info("Copied configuration from plugins/FluxSorter.");
-        } catch (IOException e) {
-            getLogger().severe("Could not copy plugins/FluxSorter: " + e.getMessage());
-        }
+    protected List<String> formerNames() {
+        return List.of("SortingChest", "InfluTri");
     }
 
     @Override
-    public void onEnable() {
+    protected void enable() {
         fr.influencraft.flux.api.command.Commands.create(this, "sorter").aliases("sortingchest", "schest", "tri")
                 .description("Sorting chest administration.").permission("fluxsorter.admin").bukkit(this, this).register();
-        saveDefaultConfig();
         conf = Settings.of(getConfig());
         if (!fr.influencraft.flux.api.claims.Claims.available()) {
             getLogger().warning("No claim plugin in Flux (providers.claims): sorting chests cannot work.");
@@ -101,7 +82,7 @@ public final class FluxSorter extends JavaPlugin {
     }
 
     @Override
-    public void onDisable() {
+    protected void disable() {
         if (sortManager != null) sortManager.stopAll();
         if (registry != null) registry.stop();
     }
@@ -114,7 +95,8 @@ public final class FluxSorter extends JavaPlugin {
     public ConfigurationSection conf() { return conf; }
 
     public Component message(String key, TagResolver... resolvers) {
-        return MM.deserialize(conf.getString("messages." + key, key), resolvers);
+        String raw = messages().raw(key);
+        return MM.deserialize(raw.isEmpty() ? key : raw, resolvers);
     }
 
     public static Component mm(String raw, TagResolver... resolvers) {
@@ -125,7 +107,7 @@ public final class FluxSorter extends JavaPlugin {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length >= 1 && args[0].equalsIgnoreCase("reload")) {
             sortManager.stopAll();
-            reloadConfig();
+            reload();
             conf = Settings.of(getConfig());
             registry.restartParticles();
             sender.sendMessage(message("reload-ok"));

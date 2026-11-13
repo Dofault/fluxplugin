@@ -45,9 +45,9 @@ public final class SorterItem {
         ItemStack item = new ItemStack(MATERIAL, amount);
         ItemMeta meta = item.getItemMeta();
         String rayon = String.valueOf(plugin.levels().radius(level));
-        meta.displayName(FluxSorter.mm(plugin.conf().getString("item.name", "Sorting chest")));
+        meta.displayName(FluxSorter.mm(plugin.messages().raw("item.name")));
         List<Component> lore = new ArrayList<>();
-        for (String line : plugin.conf().getStringList("item.lore")) {
+        for (String line : plugin.messages().rawList("item.lore")) {
             lore.add(FluxSorter.mm(line, Placeholder.unparsed("radius", rayon), Placeholder.unparsed("rayon", rayon)));
         }
         meta.lore(fr.influencraft.flux.api.text.Texts.wrapLore(lore));
@@ -79,7 +79,7 @@ public final class SorterItem {
     /** Nom réservé à l'objet, comparé sans couleurs, casse ni espaces. */
     public boolean isReservedName(String name) {
         String plain = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
-                .serialize(FluxSorter.mm(plugin.conf().getString("item.name", "Sorting chest")));
+                .serialize(FluxSorter.mm(plugin.messages().raw("item.name")));
         return normalize(name).equals(normalize(plain));
     }
 
@@ -107,8 +107,10 @@ public final class SorterItem {
 
     private boolean hasSorterName(ItemMeta meta) {
         if (!meta.hasDisplayName()) return false;
-        Component expected = FluxSorter.mm(plugin.conf().getString("item.name", "Sorting chest")).compact();
-        return expected.equals(meta.displayName().compact());
+        Component expected = FluxSorter.mm(plugin.messages().raw("item.name")).compact();
+        // chests handed out by InfluTri carry its French name (production)
+        return expected.equals(meta.displayName().compact())
+                || FluxSorter.mm("<!italic><#FFD94D>Coffre de tri").compact().equals(meta.displayName().compact());
     }
 
     public boolean isSorterBlock(Block block) {
