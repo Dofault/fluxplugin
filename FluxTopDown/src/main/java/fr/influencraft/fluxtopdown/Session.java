@@ -94,7 +94,7 @@ final class Session {
         facing = at.getYaw();
         distance = s.cameraDistance();
         Location eye = eye(s, at, distance);
-        camera = w.spawn(eye.clone().subtract(0, EYE, 0), Mannequin.class, m -> {
+        camera = w.spawn(eye.clone().subtract(0, EYE, 0), Mannequin.class, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.CUSTOM, m -> {
             m.setPersistent(false);
             m.setVisibleByDefault(false);
             m.setInvisible(true);
@@ -130,7 +130,7 @@ final class Session {
             i.setInteractionHeight(3f);
             i.setResponsive(false);
         });
-        avatar = w.spawn(at, Mannequin.class, m -> {
+        avatar = w.spawn(at, Mannequin.class, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.CUSTOM, m -> {
             m.setPersistent(false);
             m.setInvulnerable(true);
             m.setCollidable(false);

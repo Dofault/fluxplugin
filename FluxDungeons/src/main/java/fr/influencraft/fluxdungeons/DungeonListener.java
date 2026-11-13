@@ -178,8 +178,8 @@ final class DungeonListener implements Listener {
     }
 
     /**
-     * In a run world only dungeon monsters and pets appear: creatures summoned by something else (enchantments that
-     * call golems or blazes...) would fight the bosses for the players.
+     * In a run world only dungeon monsters and pets appear among fighting creatures: creatures summoned by something
+     * else (enchantments that call golems or blazes...) would fight the bosses for the players.
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onCreatureSpawn(org.bukkit.event.entity.CreatureSpawnEvent e) {
@@ -189,6 +189,8 @@ final class DungeonListener implements Listener {
                 && r != org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.BUILD_SNOWMAN) return;
         if (!runs.isDungeonWorld(e.getLocation().getWorld())) return;
         LivingEntity le = e.getEntity();
+        // only creatures that fight: mannequins and armour stands (cameras, avatars, decor) are never refused
+        if (!(le instanceof org.bukkit.entity.Mob)) return;
         if (le.getScoreboardTags().contains(Mobs.TAG) || runs.isPet(le)) return;
         e.setCancelled(true);
     }

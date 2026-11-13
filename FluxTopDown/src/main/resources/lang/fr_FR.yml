@@ -7,6 +7,7 @@ on:
 off: "&7Vue aérienne désactivée."
 bedrock: "&#FF5C5CLa vue aérienne n'existe pas encore sur Bedrock."
 unavailable: "&#FF5C5CLa vue aérienne n'est pas disponible : il manque PacketEvents à Flux."
+refused: "&#FF5C5CLa vue aérienne n'a pas pu s'ouvrir ici (entité refusée par le monde, voir la console)."
 waiting: "&7Le donjon se prépare : la vue aérienne s'activera à ton entrée."
 waiting-over: "&7Le donjon n'a pas commencé : la vue aérienne attendue est annulée."
 usage: "!&#FF5C5C/%flux_cmd_fluxtopdown_hackslash% [jouer [donjon] | on | off]"

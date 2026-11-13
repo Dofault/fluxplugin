@@ -7,6 +7,7 @@ on:
 off: "&7View from above off."
 bedrock: "&#FF5C5CThe view from above does not exist on Bedrock yet."
 unavailable: "&#FF5C5CThe view from above is unavailable: Flux runs without PacketEvents."
+refused: "&#FF5C5CThe view from above could not open here (an entity was refused by the world, see the console)."
 waiting: "&7The dungeon is getting ready: the view from above starts when you enter."
 waiting-over: "&7The dungeon did not start: the view from above is cancelled."
 usage: "!&#FF5C5C/%flux_cmd_fluxtopdown_hackslash% [play [dungeon] | on | off]"

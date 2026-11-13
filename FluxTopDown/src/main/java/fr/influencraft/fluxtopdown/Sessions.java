@@ -63,6 +63,13 @@ final class Sessions implements Listener {
         waiting.remove(p.getUniqueId());
         if (active(p)) return;
         Session s = new Session(plugin, p);
+        if (!s.camera.isValid() || !s.avatar.isValid() || !s.cursor.isValid() || !s.target.isValid()) {
+            // another plugin refused one of the entities (a spawn rule of the world)
+            plugin.getLogger().warning("View of " + p.getName() + " not opened: an entity was refused in " + p.getWorld().getName());
+            s.close();
+            plugin.messages().send(p, "refused");
+            return;
+        }
         sessions.put(p.getUniqueId(), s);
         s.open();
         Combat.takeControls(p, true);
