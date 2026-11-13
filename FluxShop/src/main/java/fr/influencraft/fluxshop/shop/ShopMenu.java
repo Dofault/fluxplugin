@@ -92,7 +92,7 @@ public class ShopMenu {
                     "balance", money == null ? "?" : fr.influencraft.flux.api.util.Format.decimal(money.balance(player)))));
             return false;
         }
-        if (!money.take(player, total, fr.influencraft.fluxshop.managers.Money.origin("buy").detail(quantity + " " + MenuItems.describe(entry)))) {
+        if (!money.take(player, total, fr.influencraft.fluxshop.managers.Money.origin("buy").detail(quantity + " " + MenuItems.describe(entry)).verb("bought").notifyPlayer())) {
             plugin.getLogger().warning("[Shop] Payment refused for " + player.getName() + " (" + total + ")");
             fail(player, lang.get("shop-transaction-failed"));
             return false;
@@ -110,7 +110,6 @@ public class ShopMenu {
         activity.markBought(player.getUniqueId());
         plugin.getLogger().info("[Shop] " + player.getName() + " bought " + quantity + " " + MenuItems.describe(entry)
                 + " for " + total + " (" + shop.getId() + ")");
-        MenuItems.send(player, lang.get("shop-buy-success", Map.of("amount", String.valueOf(quantity), "price", fr.influencraft.flux.api.util.Format.decimal(total))), model);
         fr.influencraft.flux.api.util.Sounds.cue(player, "success");
         return true;
     }

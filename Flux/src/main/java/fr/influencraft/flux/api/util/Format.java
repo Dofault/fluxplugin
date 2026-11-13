@@ -102,6 +102,29 @@ public final class Format {
         }
     }
 
+    /**
+     * A price typed as players write it ("12,5", "1 200.75", "2,5k"), rounded to the cent; -1 when unreadable or not
+     * above zero.
+     */
+    public static double parseDecimal(String text) {
+        if (text == null) return -1;
+        String t = text.toLowerCase(Locale.ROOT).replace(" ", "").replace("\u00a0", "").replace("\u202f", "").replace(",", ".");
+        double multiplier = 1;
+        if (t.endsWith("k")) {
+            multiplier = 1_000;
+            t = t.substring(0, t.length() - 1);
+        } else if (t.endsWith("m")) {
+            multiplier = 1_000_000;
+            t = t.substring(0, t.length() - 1);
+        }
+        try {
+            double v = Math.round(Double.parseDouble(t) * multiplier * 100) / 100.0;
+            return v > 0 && !Double.isInfinite(v) ? v : -1;
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
     public static String roman(int n) {
         return n > 0 && n < ROMAN.length ? ROMAN[n] : String.valueOf(n);
     }

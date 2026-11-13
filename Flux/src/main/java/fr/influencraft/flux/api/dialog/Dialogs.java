@@ -199,6 +199,11 @@ public final class Dialogs {
             return Format.parseAmount(text(id));
         }
 
+        /** Value of a {@link Form#decimal} field ("12,5", "2,5k"), rounded to the cent: always within its bounds in onSubmit. */
+        public double decimal(String id) {
+            return Format.parseDecimal(text(id));
+        }
+
         /** Value of a {@link Form#slider}, or null when the form has none of that id. */
         public Float number(String id) {
             return numbers.get(id);
@@ -223,6 +228,7 @@ public final class Dialogs {
         private final List<String> required = new ArrayList<>();
         /** Amount fields: id, label, min, max. */
         private final List<Object[]> amounts = new ArrayList<>();
+        private final List<Object[]> decimals = new ArrayList<>();
         private final List<Function<Answer, String>> checks = new ArrayList<>();
         private String confirm = style("confirm-label"), cancel = style("cancel-label");
         private final List<String[]> actions = new ArrayList<>();
@@ -304,6 +310,16 @@ public final class Dialogs {
         public Form amount(String id, String label, long initial, long min, long max) {
             amounts.add(new Object[]{id, label, min, max});
             return text(id, label, initial > 0 ? String.valueOf(initial) : "", 16, 220);
+        }
+
+        /**
+         * A price with cents, typed as players write it ("12,5", "1 200.75", "2,5k"). Refused by the form itself like
+         * {@link #amount} when unreadable or outside {@code min..max}; {@link Answer#decimal} is then always valid.
+         * {@code initial} &lt;= 0 leaves the field empty.
+         */
+        public Form decimal(String id, String label, double initial, double min, double max) {
+            decimals.add(new Object[]{id, label, min, max});
+            return text(id, label, initial > 0 ? Format.decimal(initial) : "", 16, 220);
         }
 
         /**
@@ -518,6 +534,15 @@ public final class Dialogs {
                         : v > max ? style("amount-max").replace("%max%", Format.number(max))
                         : null;
                 if (wrong != null) return amounts.size() > 1 ? a[1] + " : " + wrong : wrong;
+            }
+            for (Object[] a : decimals) {
+                double min = (double) a[2], max = (double) a[3];
+                double v = answer.decimal((String) a[0]);
+                String wrong = v < 0 ? style("amount-invalid")
+                        : v < min ? style("amount-min").replace("%min%", Format.decimal(min))
+                        : v > max ? style("amount-max").replace("%max%", Format.decimal(max))
+                        : null;
+                if (wrong != null) return amounts.size() + decimals.size() > 1 ? a[1] + " : " + wrong : wrong;
             }
             for (Function<Answer, String> rule : checks) {
                 String wrong = rule.apply(answer);

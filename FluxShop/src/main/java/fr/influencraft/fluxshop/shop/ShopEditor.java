@@ -230,25 +230,15 @@ public class ShopEditor {
 
     private void ask(Player player, Shop shop, ShopEntry entry, boolean isNew) {
         boolean canDefault = entry.isPlain() && priceManager.isBuyable(entry.getItem().getType().name());
+        double initial = entry.getPrice() != null ? entry.getPrice()
+                : canDefault ? priceManager.getBuyPrice(entry.getItem().getType().name()) : 0;
         Dialogs.Form form = Dialogs.form(player, lang.get("shop-editor-title"))
-                .body(lang.get(canDefault && !isNew ? "shop-editor-price-dialog-default" : "shop-editor-price-dialog"))
-                .input("price", lang.get("shop-editor-price-dialog-label"), entry.getPrice() == null ? "" : String.valueOf(entry.getPrice()), 16);
+                .body(lang.get(canDefault ? "shop-editor-price-dialog-default" : "shop-editor-price-dialog",
+                        Map.of("item", MenuItems.describe(entry))))
+                .decimal("price", lang.get("shop-editor-price-dialog-label"), initial, 0.01, 1_000_000_000);
         if (canDefault) form.toggle("default", lang.get("shop-editor-price-dialog-use-default"), entry.getPrice() == null && !isNew);
         form.onSubmit((p, answer) -> {
-            Double price;
-            if (canDefault && answer.toggle("default")) {
-                price = null;
-            } else {
-                try {
-                    double value = Double.parseDouble(answer.text("price").replace(',', '.').replace(" ", ""));
-                    if (!(value > 0) || Double.isInfinite(value)) throw new NumberFormatException();
-                    price = PriceManager.roundMoney(value);
-                } catch (NumberFormatException e) {
-                    p.sendMessage(lang.get(canDefault ? "shop-editor-price-no-default" : "shop-editor-price-invalid"));
-                    open(p, shop);
-                    return;
-                }
-            }
+            Double price = canDefault && answer.toggle("default") ? null : PriceManager.roundMoney(answer.decimal("price"));
             save(p, shop, entry, isNew, price);
         }).onCancel(p -> {
             p.sendMessage(lang.get("shop-editor-price-cancelled"));

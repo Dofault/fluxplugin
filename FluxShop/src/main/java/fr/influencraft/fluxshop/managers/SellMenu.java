@@ -198,8 +198,7 @@ public class SellMenu {
             else giveBack.add(item);
         }
         total = PriceManager.roundMoney(total);
-        if (total > 0 && money.give(player, total, Money.origin("sell"))) {
-            player.sendMessage(lang.get("shop-sell-success", Map.of("amount", fr.influencraft.flux.api.util.Format.decimal(total))));
+        if (total > 0 && money.give(player, total, Money.origin("sell").verb("sold").notifyPlayer())) {
             fr.influencraft.flux.api.util.Sounds.cue(player, "complete");
             activity.markSold(player.getUniqueId());
             plugin.getLogger().info("[Sell] " + player.getName() + " sold " + (taken.size() - giveBack.size()) + " stack(s) for " + total);

@@ -3,14 +3,12 @@ shop-menu-title: '&#FFD94DShop'
 shop-menu-empty: '&#B376E5ꜱʜᴏᴘ &8▸ &#FF5C5CThis chest has nothing to offer for now.'
 shop-menu-price: '&f%price% &r&f'
 shop-menu-unavailable: '&#FF5C5CNot available'
-shop-buy-success: '&7:bitblock: &#B376E5Bought &fx%amount% %item%&#B376E5 for &f%price% &#FF5C5C▼&7 [ꜱʜᴏᴘ]'
 shop-buy-unavailable: '&#B376E5ꜱʜᴏᴘ &8▸ &#FF5C5CThis item is no longer for sale.'
 shop-buy-no-space: '&#B376E5ꜱʜᴏᴘ &8▸ &#FF5C5CNot enough room in your inventory for &f%amount%&#FF5C5C item(s) (room for &f%space%&#FF5C5C).'
 shop-buy-not-enough-money: '&#B376E5ꜱʜᴏᴘ &8▸ &#FF5C5CYou need &f%price% &r&f&#FF5C5C, you only have &f%balance% &r&f&#FF5C5C.'
 shop-transaction-failed: '&#B376E5ꜱʜᴏᴘ &8▸ &#FF5C5CThe transaction failed, nothing was charged.'
 shop-block-protected: '&#B376E5ꜱʜᴏᴘ &8▸ &#FF5C5CThis block belongs to the shop, it cannot be broken.'
 shop-block-protected-admin: '&#B376E5ꜱʜᴏᴘ &8▸ &#FF5C5CAssigned block: &f/supermarket removechest&#FF5C5C or &fremovesellblock&#FF5C5C first.'
-shop-sell-success: '&7:bitblock: &#B376E5You received &f%amount% &#B376E5Bitblock &#2ECF7B▲&7 [ꜱʜᴏᴘ]'
 shop-editor-title: '&#FFD94DShop editor'
 shop-editor-add-name: '&#FFD94DAdd an item'
 shop-editor-add-lore:
@@ -30,7 +28,7 @@ shop-editor-item-lore-custom:
 shop-editor-price-name: '&r&7&#FFD94D Change the price'
 shop-editor-price-lore:
 - ''
-- '&#B376E5Type the price in the chat.'
+- '&#B376E5The price is typed in a window.'
 - ''
 shop-editor-remove-name: '&r&7&#FFD94D Remove'
 shop-editor-remove-lore:
@@ -44,10 +42,6 @@ shop-editor-added-default: '&#B376E5ꜱʜᴏᴘ &8▸ &f%item%&#2ECF7B added, at
 shop-editor-removed: '&#B376E5ꜱʜᴏᴘ &8▸ &f%item%&#2ECF7B removed from the chest.'
 shop-editor-already: '&#B376E5ꜱʜᴏᴘ &8▸ &#FF5C5CThis item is already in this chest.'
 shop-editor-full: '&#B376E5ꜱʜᴏᴘ &8▸ &#FF5C5CA shop chest offers at most &f%max%&#FF5C5C items.'
-shop-editor-price-prompt: '&#B376E5ꜱʜᴏᴘ &8▸ &#FFD94DType in the chat the buying price of &f%item%&#FFD94D, or &fcancel&#FFD94D.'
-shop-editor-price-prompt-default: '&#B376E5ꜱʜᴏᴘ &8▸ &#FFD94DType in the chat the buying price of &f%item%&#FFD94D, &fdefault&#FFD94D for the one of prices.yml, or &fcancel&#FFD94D.'
-shop-editor-price-invalid: '&#B376E5ꜱʜᴏᴘ &8▸ &#FF5C5CInvalid price, type a positive number (e.g. 12.5) or &fcancel&#FF5C5C.'
-shop-editor-price-no-default: '&#B376E5ꜱʜᴏᴘ &8▸ &#FF5C5CThis item has no price in prices.yml, type a number or &fcancel&#FF5C5C.'
 shop-editor-price-cancelled: '&#B376E5ꜱʜᴏᴘ &8▸ &#B376E5Cancelled.'
 shop-editor-price-set: '&#B376E5ꜱʜᴏᴘ &8▸ &f%item%&#2ECF7B: buying price %price%&#2ECF7B.'
 shop-admin-no-target: '&#FF5C5CLook at the block (6 blocks at most).'
@@ -234,5 +228,13 @@ influence:
   failed: "&#FF5C5CThe payment failed, nothing was taken."
   reloaded: "&#2ECF7BInfluence shop reloaded."
 # name of the money origin in Flux's account history
+shop-editor-price-dialog: "Buying price of %item% in this chest."
+shop-editor-price-dialog-default: "Buying price of %item% in this chest, or the one of prices.yml."
+shop-editor-price-dialog-label: "Price"
+shop-editor-price-dialog-use-default: "Price of prices.yml"
 origins:
+  buy: "Shop"
+  sell: "Sale"
+  autosell: "Auto-sell"
+  refund: "Refund"
   influence: "Influence shop"

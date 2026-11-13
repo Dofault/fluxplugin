@@ -9,7 +9,6 @@ shop-menu-price: "&f%price% &r&f"
 shop-menu-unavailable: "&#FF5C5CNon disponible"
 
 # %item% = nom de l'objet, traduit dans la langue du joueur.
-shop-buy-success: "&7:bitblock: &#B376E5Acheté &fx%amount% %item%&#B376E5 pour &f%price% &#FF5C5C▼&7 [ᴍᴀɢᴀꜱɪɴ]"
 shop-buy-unavailable: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FF5C5CCet objet n'est plus en vente."
 shop-buy-no-space: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FF5C5CPas assez de place dans ton inventaire pour &f%amount%&#FF5C5C objet(s) (place pour &f%space%&#FF5C5C)."
 shop-buy-not-enough-money: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FF5C5CIl te faut &f%price% &r&f&#FF5C5C, tu n'as que &f%balance% &r&f&#FF5C5C."
@@ -21,7 +20,6 @@ shop-block-protected-admin: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FF5C5CBloc assig
 ###################################
 # BLOC DE VENTE (menu de dépôt)
 ###################################
-shop-sell-success: "&7:bitblock: &#B376E5Tu as reçu &f%amount% &#B376E5Bitblock &#2ECF7B▲&7 [ᴍᴀɢᴀꜱɪɴ]"
 
 ###################################
 # ÉDITEUR D'UN COFFRE MAGASIN (admin accroupi + clic droit)
@@ -45,7 +43,7 @@ shop-editor-item-lore-custom:
 shop-editor-price-name: "&r&7&#FFD94D Changer le prix"
 shop-editor-price-lore:
   - ""
-  - "&#B376E5Le prix se tape dans le tchat."
+  - "&#B376E5Le prix se saisit dans une fenêtre."
   - ""
 shop-editor-remove-name: "&r&7&#FFD94D Retirer"
 shop-editor-remove-lore:
@@ -59,10 +57,6 @@ shop-editor-added-default: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &f%item%&#2ECF7B aj
 shop-editor-removed: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &f%item%&#2ECF7B retiré du coffre."
 shop-editor-already: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FF5C5CCet objet est déjà dans ce coffre."
 shop-editor-full: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FF5C5CUn coffre magasin propose au plus &f%max%&#FF5C5C objets."
-shop-editor-price-prompt: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FFD94DTape dans le tchat le prix d'achat de &f%item%&#FFD94D, ou &fannuler&#FFD94D."
-shop-editor-price-prompt-default: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FFD94DTape dans le tchat le prix d'achat de &f%item%&#FFD94D, &fdéfaut&#FFD94D pour celui de prices.yml, ou &fannuler&#FFD94D."
-shop-editor-price-invalid: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FF5C5CPrix invalide, tape un nombre positif (ex : 12.5) ou &fannuler&#FF5C5C."
-shop-editor-price-no-default: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#FF5C5CCet objet n'a pas de prix dans prices.yml, tape un nombre ou &fannuler&#FF5C5C."
 shop-editor-price-cancelled: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#B376E5Saisie annulée."
 shop-editor-price-set: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &f%item%&#2ECF7B : prix d'achat %price%&#2ECF7B."
 
@@ -277,5 +271,13 @@ influence:
   failed: "&#FF5C5CLe paiement a échoué, rien n'a été pris."
   reloaded: "&#2ECF7BBoutique Influence rechargée."
 # name of the money origin in Flux's account history
+shop-editor-price-dialog: "Prix d'achat de %item% dans ce coffre."
+shop-editor-price-dialog-default: "Prix d'achat de %item% dans ce coffre, ou celui de prices.yml."
+shop-editor-price-dialog-label: "Prix"
+shop-editor-price-dialog-use-default: "Prix de prices.yml"
 origins:
+  buy: "Magasin"
+  sell: "Vente"
+  autosell: "Vente auto"
+  refund: "Remboursement"
   influence: "Boutique Influence"
