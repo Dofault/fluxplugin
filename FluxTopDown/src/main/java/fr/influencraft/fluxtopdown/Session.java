@@ -156,7 +156,9 @@ final class Session {
             m.setCustomNameVisible(true);
         });
         dressAvatar();
-        for (Entity e : List.of(camera, cursor, target, seat)) player.showEntity(plugin, e);
+        for (Entity e : List.of(camera, target, seat)) player.showEntity(plugin, e);
+        // the server's pointer mark, when the client does not draw its own
+        if (!s.clientPointer()) player.showEntity(plugin, cursor);
         bar = BossBar.bossBar(Component.empty(), 1f, BossBar.Color.PURPLE, BossBar.Overlay.PROGRESS);
     }
 
@@ -172,6 +174,8 @@ final class Session {
             if (player.isOnline() && camera.isValid()) Camera.view(player, camera);
         }, 3L);
         // right clicks only: left clicks are read from the arm swing (Sessions#onSwing), sent even when the box is missed
+        // the pointer starts in the middle of the screen
+        if (s.clientPointer()) Camera.turn(player, (float) s.cameraYaw(), false, 0f, false);
         Camera.turns(player, (p, yaw, pitch) -> turned(yaw, pitch));
         Camera.clicks(target, (p, left) -> {
             if (!left) plugin.sessions().clicked(this, false);
@@ -201,6 +205,8 @@ final class Session {
         Map<EquipmentSlot, ItemStack> empty = new EnumMap<>(EquipmentSlot.class);
         for (EquipmentSlot slot : List.of(EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET,
                 EquipmentSlot.HAND, EquipmentSlot.OFF_HAND)) empty.put(slot, ItemStack.empty());
+        // on his head, the item his client draws as the pointer
+        if (plugin.settings().clientPointer()) empty.put(EquipmentSlot.HEAD, Camera.pointerItem());
         try {
             player.sendEquipmentChange(player, empty);
         } catch (RuntimeException e) {
@@ -246,6 +252,10 @@ final class Session {
      */
     synchronized void turned(float yaw, float pitch) {
         Settings s = plugin.settings();
+        if (s.clientPointer()) {
+            pointerTurned(s, yaw, pitch);
+            return;
+        }
         if (!primed) {
             lastYaw = yaw;
             lastPitch = pitch;
@@ -276,6 +286,31 @@ final class Session {
         if (dir.getY() > -1e-3) return;
         double t = (spotY - e[1]) / dir.getY();
         Camera.place(player, cursor, e[0] + dir.getX() * t, spotY + 0.05, e[2] + dir.getZ() * t);
+    }
+
+    /** Packets of head turn left before a correction sent at the screen's edge is taken for lost. */
+    private int correcting;
+
+    /**
+     * Client pointer: his client draws the pointer from his head's turn (Camera#pointerItem); the server reads the
+     * same turn the same way, and turns his head back when it goes past the screen's edges.
+     */
+    private void pointerTurned(Settings s, float yaw, float pitch) {
+        double[] raw = Camera.pointer(yaw, pitch, s.cameraYaw());
+        double x = clamp(raw[0], Camera.POINTER_WIDTH), y = clamp(raw[1], Camera.POINTER_HEIGHT);
+        sx = x;
+        sy = y;
+        boolean out = Math.abs(x - raw[0]) > 0.01 || Math.abs(y - raw[1]) > 0.01;
+        if (correcting > 0) {
+            correcting = out ? correcting - 1 : 0;
+            return;
+        }
+        if (out) {
+            correcting = 20;
+            float backYaw = (float) ((x - raw[0]) / Camera.POINTER_SPEED);
+            float backPitch = (float) (-(y - raw[1]) / Camera.POINTER_SPEED);
+            Camera.turn(player, backYaw, true, backPitch, true);
+        }
     }
 
     /** Eyes of the camera at the last tick (x, y, z) and the height of the last pointed spot: for {@link #turned}. */

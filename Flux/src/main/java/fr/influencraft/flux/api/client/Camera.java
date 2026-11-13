@@ -45,6 +45,33 @@ public final class Camera {
         void clicked(Player player, boolean left);
     }
 
+    /**
+     * Head pointer (pack: assets/minecraft/shaders/core/item.vsh, item flux:pointer): screen units per degree of head
+     * turn and the area the pointer stays in. The shader holds the same numbers.
+     */
+    public static final double POINTER_SPEED = 0.025, POINTER_WIDTH = 1.15, POINTER_HEIGHT = 0.62;
+
+    /**
+     * The item that, worn by a player who looks through another entity (sent to him only, on his head), is drawn by
+     * his client as a mouse pointer following his head every frame: no wait for the server.
+     */
+    public static org.bukkit.inventory.ItemStack pointerItem() {
+        org.bukkit.inventory.ItemStack item = org.bukkit.inventory.ItemStack.of(org.bukkit.Material.PAPER);
+        item.setData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL, net.kyori.adventure.key.Key.key("flux", "pointer"));
+        return item;
+    }
+
+    /**
+     * Where the head pointer is for this head turn, as the shader draws it before it stops at the edges:
+     * {x right, y up} in screen units. {@code cameraYaw}: the yaw the camera looks to.
+     */
+    public static double[] pointer(float yaw, float pitch, double cameraYaw) {
+        double turn = (yaw - cameraYaw) % 360;
+        if (turn >= 180) turn -= 360;
+        if (turn < -180) turn += 360;
+        return new double[]{turn * POINTER_SPEED, -pitch * POINTER_SPEED};
+    }
+
     private static volatile Service service;
     private static final Map<Integer, Click> TARGETS = new ConcurrentHashMap<>();
     private static final Map<java.util.UUID, Turn> TURNS = new ConcurrentHashMap<>();
