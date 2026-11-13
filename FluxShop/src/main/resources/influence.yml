@@ -1,0 +1,20 @@
+# Influence shop (/shop): what is sold, paid in the currency below. Each entry names an item of the suite by its id
+# (/fluxitems list): the shop shows the real item, its name and description always up to date. An entry may instead
+# run console commands (%player%) with an icon, a name and a description of its own. /shop reload after a change.
+currency: influence
+entries:
+  magical_rod: {item: "customfishing:magical_rod", price: 1000}
+  bone_rod: {item: "customfishing:bone_rod", price: 1000}
+  common_rod: {item: "customfishing:common_rod", price: 10}
+  fishfinder: {item: "customfishing:fishfinder", price: 50}
+  key_ordinaire: {item: "fluxcrate:key_ordinaire", price: 100}
+  key_tendance: {item: "fluxcrate:key_tendance", price: 400}
+  key_virale: {item: "fluxcrate:key_virale", price: 1500}
+  key_phenomene: {item: "fluxcrate:key_phenomene", price: 3000}
+  sorter: {item: "fluxsorter:sorter", price: 6000}
+  autosell:
+    icon: LIGHT_BLUE_DYE
+    name: "Auto-sell"
+    description: ["Sells what you pick up, at once.", "Bound to you."]
+    commands: ["supermarket autosell %player%"]
+    price: 1000

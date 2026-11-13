@@ -81,6 +81,19 @@ public class FluxShop extends fr.influencraft.flux.api.FluxPlugin {
         autoSellMenu.register();
         FluxApi.registerAction(this, "shop", (player, view, argument) ->
                 click(player, view, argument, shopEditor, sellManager.sellMenu(), autoSellMenu));
+        // Influence shop (ex-InfluShop): /shop, menu boutique, [boutique] <id> on the confirmed click
+        fr.influencraft.fluxshop.influence.InfluenceShop influence = new fr.influencraft.fluxshop.influence.InfluenceShop(this);
+        influence.register();
+        FluxApi.registerAction(this, "boutique", (player, view, argument) -> influence.buy(player, view, argument.trim()));
+        command("shop").description("Influence shop.").executor((sender, label, args) -> {
+            if (args.length == 1 && args[0].equalsIgnoreCase("reload") && sender.hasPermission("fluxshop.admin")) {
+                influence.load();
+                messages().send(sender, "influence.reloaded");
+                return true;
+            }
+            if (sender instanceof Player p) influence.open(p);
+            return true;
+        }).register();
 
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvents(new Listener() {

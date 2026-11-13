@@ -1,0 +1,43 @@
+# Influence shop (/shop): entries built by FluxShop (list boutique, influence.yml), real items with their price.
+# Second click buys (confirm). Theme: theme.menus.boutique of Flux's config.
+rows: 6
+player-inventory: hidden
+vanilla-background: false
+
+open-actions:
+  - "[sound] @page"
+
+lists:
+  boutique:
+    slots: 10-16, 19-25, 28-34
+    item:
+      material: entry
+      confirm: "%entry_confirm%"
+      actions:
+        left: ["[boutique] %entry_id%"]
+
+widgets:
+  pages:
+    type: pager
+    list: boutique
+    prev: 45
+    next: 53
+
+items:
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
+    slots: [0]
+    lore:
+      - "@desc Revenir au menu."
+      - "@left Menu principal"
+    actions:
+      left: ["[menu] main"]
+
+  icone:
+    material: "itemsadder:influitems:influence"
+    name: "Boutique Influence"
+    slots: [8]
+    lore:
+      - "@desc Des objets à acheter avec ton Influence. Clique une première fois sur un objet, puis une seconde pour confirmer."
+      - "@kv Solde | %flux_balance_influence%"

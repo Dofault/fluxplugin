@@ -41,6 +41,7 @@ RENAMES = [
     ("offrandes.", "fluxoffering."),
     ("sortingchest.", "fluxsorter."),
     ("influtri.", "fluxsorter."),
+    ("influshop.", "fluxshop."),
 ]
 
 

@@ -222,3 +222,17 @@ autosell-menu-reset-already-default:
 - '&#2ECF7B✔ You already use the server''s.'
 - ''
 autosell-menu-reset-done: '&#B376E5ᴀᴜᴛᴏ-ꜱᴇʟʟ &8▸ &#2ECF7BYour exceptions are back to the ones suggested by the server.'
+
+# Influence shop (/shop, ex-InfluShop)
+influence:
+  price: "Price"
+  buy: "Buy"
+  too-poor: "Not enough Influence."
+  confirm: "&#FFD94DClick again to buy (%price%)."
+  not-enough: "&#FF5C5CYou need &f%price%&#FF5C5C."
+  unavailable: "&#FF5C5CThis item is no longer available."
+  failed: "&#FF5C5CThe payment failed, nothing was taken."
+  reloaded: "&#2ECF7BInfluence shop reloaded."
+# name of the money origin in Flux's account history
+origins:
+  influence: "Influence shop"
