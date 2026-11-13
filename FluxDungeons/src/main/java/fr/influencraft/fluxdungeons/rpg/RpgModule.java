@@ -60,6 +60,7 @@ public final class RpgModule implements Listener {
         players.bind(world, combat);
         Skills skills = new Skills(plugin, combat, players);
         controls = new Controls(plugin, players, skills, items);
+        registerCombatApi(skills);
         var pm = Bukkit.getPluginManager();
         pm.registerEvents(players, plugin);
         pm.registerEvents(combat, plugin);
@@ -106,6 +107,47 @@ public final class RpgModule implements Listener {
         Commands.create(plugin, "rpgadmin").description("Rpg administration: reload, balance, dummy, xp.")
                 .permission("fluxdungeons.admin").suggest(false).usage("/rpgadmin <reload|balance [level]|mannequin [level] [rank]|mannequin retirer [tous]|xp <player> <amount>|setspawn>")
                 .executor(this::admin).register();
+    }
+
+    /** fluxdungeons.api.Combat: other plugins fight through this engine (FluxTopDown's spells). */
+    private void registerCombatApi(Skills skills) {
+        fr.influencraft.fluxdungeons.api.Combat.register(new fr.influencraft.fluxdungeons.api.Combat.Service() {
+            public boolean fighter(Player p) {
+                RpgPlayer r = players.get(p);
+                return r != null && r.stats() != null && combat.rpg(p);
+            }
+
+            public List<LivingEntity> enemies(org.bukkit.Location at, double radius) {
+                return skills.enemies(at, radius);
+            }
+
+            public String cast(Player p, String slot) {
+                RpgPlayer r = players.get(p);
+                return r == null ? null : r.cast(slot);
+            }
+
+            public double strike(Player attacker, LivingEntity target, boolean magic, double coefficient, String element, String cast) {
+                var hit = magic ? fr.influencraft.fluxdungeons.rpg.core.CombatMath.Hit.magic(coefficient, element)
+                        : fr.influencraft.fluxdungeons.rpg.core.CombatMath.Hit.physical(coefficient);
+                var o = combat.strike(attacker, target, hit, cast);
+                return o == null ? -1 : o.dodged() ? 0 : o.damage();
+            }
+
+            public void heal(Player p, double coefficient) {
+                RpgPlayer r = players.get(p);
+                if (r == null || r.stats() == null) return;
+                combat.heal(p, fr.influencraft.fluxdungeons.rpg.core.CombatMath.heal(r.stats(), coefficient, 0), true);
+            }
+
+            public void takeControls(Player p, boolean taken) {
+                controls.take(p, taken);
+            }
+
+            public double attackInterval(Player p) {
+                RpgPlayer r = players.get(p);
+                return r == null || r.stats() == null ? 1 : fr.influencraft.fluxdungeons.rpg.core.CombatMath.attackInterval(r.stats());
+            }
+        });
     }
 
     private void writePages() {

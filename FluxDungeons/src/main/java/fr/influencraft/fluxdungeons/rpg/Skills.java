@@ -68,7 +68,7 @@ public final class Skills implements Listener {
         for (Entity e : at.getWorld().getNearbyEntities(at, radius, radius, radius)) {
             // a model's hit box counts as its creature (once), wherever the box stands
             LivingEntity le = e instanceof Player ? null : combat.body(e);
-            if (le == null || le instanceof Player || le instanceof org.bukkit.entity.ArmorStand || le.isDead() || out.contains(le)) continue;
+            if (le == null || le instanceof Player || le instanceof org.bukkit.entity.ArmorStand || le instanceof org.bukkit.entity.Mannequin || le.isDead() || out.contains(le)) continue;
             if (combat.ally(le)) continue;   // the players' pets
             if (e.getLocation().distanceSquared(at) <= radius * radius && combat.rpg(le)) out.add(le);
         }

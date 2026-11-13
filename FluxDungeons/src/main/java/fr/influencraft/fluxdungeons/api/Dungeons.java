@@ -14,6 +14,9 @@ public final class Dungeons {
         boolean playing(Player player);
 
         boolean dungeonWorld(World world);
+
+        /** Starts a dungeon for him and his party, as {@code /fluxdungeons start}; refusals are told to him. */
+        boolean start(Player player, String dungeon);
     }
 
     private static volatile Service service;
@@ -28,6 +31,11 @@ public final class Dungeons {
     public static boolean playing(Player player) {
         Service s = service;
         return s != null && s.playing(player);
+    }
+
+    public static boolean start(Player player, String dungeon) {
+        Service s = service;
+        return s != null && s.start(player, dungeon);
     }
 
     public static boolean dungeonWorld(World world) {

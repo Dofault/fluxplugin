@@ -220,6 +220,17 @@ public final class FluxDungeons extends FluxPlugin {
             public boolean dungeonWorld(org.bukkit.World world) {
                 return runs.isDungeonWorld(world);
             }
+
+            public boolean start(Player player, String dungeon) {
+                DungeonDefinition def = runs.dungeon(dungeon);
+                if (def == null) {
+                    messages().send(player, "unknown-dungeon");
+                    return false;
+                }
+                Party party = parties.of(player);
+                FluxDungeons.this.start(player, def, party == null ? List.of(player) : party.online(), -1);
+                return true;
+            }
         });
         // a run has the player's screen: other plugins keep their boss bars and draws off it (tournaments)
         fr.influencraft.flux.api.client.Focus.register(this, player -> runs.runOf(player) != null);

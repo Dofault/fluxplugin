@@ -45,6 +45,13 @@ final class Controls implements Listener {
     private final RpgItems items;
     /** Tick of the last drop made from an inventory window, per player: the drop event that follows is not a cast. */
     private final Map<UUID, Long> windowDrop = new HashMap<>();
+    /** Players whose clicks and keys belong to another plugin: no class attack nor skill from them. */
+    private final java.util.Set<UUID> taken = new java.util.HashSet<>();
+
+    void take(Player p, boolean taken) {
+        if (taken) this.taken.add(p.getUniqueId());
+        else this.taken.remove(p.getUniqueId());
+    }
     /** Tick of the last right click of players attacking on the right click, while they hold it down. */
     private final Map<UUID, Long> holding = new HashMap<>();
     /**
@@ -100,6 +107,8 @@ final class Controls implements Listener {
      * above his level) tells him why, instead of a swing that does nothing.
      */
     private RpgPlayer use(Player p, ItemStack hand) {
+        // another plugin drives his clicks and keys (api.Combat#takeControls: FluxTopDown)
+        if (taken.contains(p.getUniqueId())) return null;
         RpgPlayer r = armed(p, hand);
         if (r != null) return r;
         RpgPlayer me = players.get(p);
