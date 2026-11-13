@@ -164,3 +164,7 @@ universe:
   waiting: "&#B376E5Encore &f%count% &#B376E5objet(s) à te rendre : libère de la place dans ton inventaire."
   no-container: "&#FF5C5CLes conteneurs ne s'utilisent pas dans cet univers."
   no-command: "&#FF5C5CCette commande n'est pas disponible dans cet univers."
+
+money-actionbar:
+  on: "!&#FFD94D&lRéglages &8► &#B376E5Gains d'argent dans la barre d'action &#2ECF7Bactivés."
+  off: "!&#FFD94D&lRéglages &8► &#B376E5Gains d'argent dans la barre d'action &#FF5C5Cdésactivés."

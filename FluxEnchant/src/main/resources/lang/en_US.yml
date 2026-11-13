@@ -15,3 +15,13 @@ mastered: "&#2ECF7B%enchant% is mastered! You can add another enchantment at the
 line: "&#B376E5✦ &f%enchant% %level%&7/&f%max% &8(mastery %percent% %)"
 line-mastered: "&#B376E5✦ &f%enchant% %level%"
 line-weight: "&8Weight &7%weight%&8/&7%capacity%"
+
+players-only: "&#FF5C5CIn game only."
+split:
+  no-permission: "&#FF5C5CSplitting enchanted books is reserved to VIP players."
+  not-enchanted-book: "&#FF5C5CHold the enchanted book to split."
+  single: "&#FF5C5CThis book has a single enchantment, there is nothing to split."
+  no-books: "&#FF5C5CYou need &f%books%&#FF5C5C blank books in your inventory."
+  no-xp: "&#FF5C5CYou need &f%cost%&#FF5C5C experience points to split this book."
+  no-room: "&#FF5C5CYou are missing &f%missing%&#FF5C5C free slots for the books."
+  done: "&#2ECF7BBook split into &f%books%&#2ECF7B books, for &f%cost%&#2ECF7B experience points."

@@ -1,0 +1,8 @@
+name: FluxJobs
+version: '0.1.0'
+main: fr.influencraft.fluxjobs.FluxJobs
+api-version: '1.21'
+description: Jobs as players see them (Careers menu, paid actions, XP boss bar, coefficient line) and the collections menu data.
+authors: [Influencraft]
+depend: [Flux]
+softdepend: [EcoCollections]

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Génère le menu Carrières de Flux (Labs) : menus/metiers.yml et menus/_pages/metiers.yml.
 
-    python3 gen_metiers.py <plugins/FluxTools/menus> <FluxPets/content/cards.yml>
+    python3 gen_metiers.py <plugins/FluxJobs/menus> <FluxPets/content/cards.yml>
 
 Thème vanilla (2026-10-29) : fond fluxui:bg_metiers (Flux/assets/vanilla/gen_ui.py), le reste en widgets de Flux.
   rangée 0                   : retour (0), nom du métier dans le champ sombre (widget text), rejoindre /
@@ -13,7 +13,7 @@ Thème vanilla (2026-10-29) : fond fluxui:bg_metiers (Flux/assets/vanilla/gen_ui
   inventaire 54-80           : actions rémunérées (27 par page)
   barre d'action 81 / 89     : pagination des actions (widget pager : rien quand tout tient sur une page)
 Une page par métier (metiers_<id>) : familiers et widgets du métier. Grille, actions et rejoindre / quitter sont
-des listes de Flux construites par FluxTools (JobMenu). À relancer après un changement de cartes ou de métiers
+des listes de Flux construites par FluxJobs (JobMenu). À relancer après un changement de cartes ou de métiers
 (liste METIERS), puis /fluxmenu reload.
 """
 import os
@@ -108,7 +108,7 @@ def widgets(jid, nom, case):
 
 
 def liste(lid, slots, actions=None, extra=()):
-    """Liste de Flux remplie par FluxTools (JobMenu) : objets construits en Java, posés sur ces cases."""
+    """Liste de Flux remplie par FluxJobs (JobMenu) : objets construits en Java, posés sur ces cases."""
     y = [f"  {lid}:", f"    slots: {', '.join(map(str, slots))}", "    item:", "      material: entry"]
     y += [f"      {l}" for l in extra]
     if actions:
@@ -135,10 +135,10 @@ def main():
     ]
     corps = "\n\n".join("\n".join(l[4:] for l in b.split("\n")) for b in base)
     with open(os.path.join(menus, "metiers.yml"), "w", encoding="utf-8") as f:
-        f.write(f"""# Généré par plugins/fluxplugin/FluxTools/assets/gen_metiers.py : ne pas modifier à la main.
+        f.write(f"""# Généré par plugins/fluxplugin/FluxJobs/assets/gen_metiers.py : ne pas modifier à la main.
 # Menu Carrières (EcoJobs), remplace /metiers, /carrieres (DeluxeMenus) et /job, /jobs (EcoJobs) sur Labs.
-# Les métiers, niveaux, actions et le bouton rejoindre / quitter sont construits par FluxTools (JobMenu, listes
-# metiers_*) ; ordre, icônes et descriptions des métiers : modules.jobs.menu de plugins/FluxTools/config.yml.
+# Les métiers, niveaux, actions et le bouton rejoindre / quitter sont construits par FluxJobs (JobMenu, listes
+# metiers_*) ; ordre, icônes et descriptions des métiers : jobs.menu de plugins/FluxJobs/config.yml.
 
 title: "{FOND}"
 rows: 6
@@ -179,7 +179,7 @@ items:
         pages.append(bloc.rstrip("\n") + "\n" + widgets(jid, nom, METIER_CASES[k]) + "\n")
     os.makedirs(os.path.join(menus, "_pages"), exist_ok=True)
     with open(os.path.join(menus, "_pages", "metiers.yml"), "w", encoding="utf-8") as f:
-        f.write("# Généré par plugins/fluxplugin/FluxTools/assets/gen_metiers.py : ne pas modifier à la main.\n"
+        f.write("# Généré par plugins/fluxplugin/FluxJobs/assets/gen_metiers.py : ne pas modifier à la main.\n"
                 "# Pages du menu Carrières, une par métier : familiers, nom, illustration, case éclairée, barre d'XP.\n\npages:\n\n"
                 + "\n".join(pages) + "\n")
     print(len(pages), "pages")

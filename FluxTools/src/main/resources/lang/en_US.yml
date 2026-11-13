@@ -24,4 +24,37 @@ info: "&#FFD6DE%tool% &7uid &f%uid% &7level &f%level% &7xp &f%xp% &7blocks &f%bl
 origins:
   default: "Tool"
   repair: "Repair"
-job-coefficient: "!&8» &7Earning coefficient &8► &f×%before% &8→ &#2ECF7B×%after%"
+
+repair:
+  cost: "Cost"
+  balance: "Balance"
+  action: "Repair"
+  empty: {name: "Nothing deposited", description: "Put the item to repair in the left slot."}
+  not-repairable: {name: "&#FF5C5CCannot be repaired", description: "Only items that wear out (weapons, tools, armour, rods) can be repaired here."}
+  already-new: {name: "&#2ECF7BAlready as new", description: "Full durability and no anvil cost: nothing to charge."}
+  too-poor: {name: "&#FF5C5CNot enough money", description: "You cannot afford this repair."}
+  ready: {name: "Repair", description: "Restores the durability and resets the anvil cost."}
+  refused:
+    permission: "&#FF5C5CYou cannot use the repair."
+    empty: "&#FF5C5CPut an item in the left slot first."
+    not-repairable: "&#FF5C5CThis item cannot be repaired."
+    already-new: "&#FF5C5CThis item is already as new."
+    too-poor: "&#FF5C5CYou need &f%cost%&#FF5C5C to repair this item."
+    payment: "&#FF5C5CThe payment failed, your item was not touched."
+bottle:
+  name: "Bottle of experience"
+  contains: "Holds"
+  use: "Absorb the experience"
+  no-permission: "&#FF5C5CYou cannot use experience bottles."
+  not-enough: "&#FF5C5CYou need at least level 30 to fill a bottle."
+  full: "&#FF5C5CYour inventory is full, free a slot."
+  filled: "&#2ECF7BBottles filled: &f%count%&#2ECF7B."
+  filled-partly: "&#2ECF7BBottles filled: &f%count%&#2ECF7B. &#FF5C5CInventory full: &f%left%&#FF5C5C not made, their experience is kept."
+  give-usage: "&#FF5C5CUsage: /bottlexp give <player> <xp> [amount]"
+  give-offline: "&#FF5C5CPlayer not found or offline: &f%player%"
+  give-numbers: "&#FF5C5CThe XP and the amount must be whole numbers."
+  give-range: "&#FF5C5CThe XP must be positive and the amount between 1 and 2304."
+  given: "&#2ECF7B%count% bottle(s) of &f%xp% xp&#2ECF7B given to &f%player%&#2ECF7B."
+  given-dropped: "&#2ECF7B%count% bottle(s) of &f%xp% xp&#2ECF7B given to &f%player%&#2ECF7B. &#FF5C5CInventory full: &f%dropped%&#FF5C5C on the ground."
+  received: "&#2ECF7BYou got %count% bottle(s) of &f%xp% xp&#2ECF7B."
+  received-dropped: "&#2ECF7BYou got %count% bottle(s) of &f%xp% xp&#2ECF7B. &#FF5C5CInventory full: &f%dropped%&#FF5C5C on the ground."

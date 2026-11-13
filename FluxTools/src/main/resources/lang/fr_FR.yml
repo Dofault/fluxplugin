@@ -24,4 +24,37 @@ info: "&#FFD6DE%tool% &7uid &f%uid% &7niveau &f%level% &7xp &f%xp% &7blocs &f%bl
 origins:
   default: "Outil"
   repair: "Réparation"
-job-coefficient: "!&8» &7Coefficient de gain &8► &f×%before% &8→ &#2ECF7B×%after%"
+
+repair:
+  cost: "Coût"
+  balance: "Solde"
+  action: "Réparer"
+  empty: {name: "Aucun objet déposé", description: "Place l'objet à réparer dans la case de gauche."}
+  not-repairable: {name: "&#FF5C5CObjet non réparable", description: "Seuls les objets qui s'usent (armes, outils, armures, cannes) peuvent être réparés ici."}
+  already-new: {name: "&#2ECF7BObjet déjà comme neuf", description: "Durabilité pleine et coût d'enclume déjà à zéro : rien à te facturer."}
+  too-poor: {name: "&#FF5C5CFonds insuffisants", description: "Il te manque de l'argent pour cette réparation."}
+  ready: {name: "Réparer", description: "Restaure la durabilité et remet le coût d'enclume à zéro."}
+  refused:
+    permission: "&#FF5C5CTu n'as pas accès à la réparation."
+    empty: "&#FF5C5CDépose d'abord un objet dans la case de gauche."
+    not-repairable: "&#FF5C5CCet objet ne peut pas être réparé."
+    already-new: "&#FF5C5CCet objet est déjà comme neuf."
+    too-poor: "&#FF5C5CIl te faut &f%cost%&#FF5C5C pour réparer cet objet."
+    payment: "&#FF5C5CLe paiement a échoué, ton objet n'a pas été touché."
+bottle:
+  name: "Fiole d'expérience"
+  contains: "Contient"
+  use: "Absorber l'expérience"
+  no-permission: "&#FF5C5CTu n'as pas accès aux fioles d'expérience."
+  not-enough: "&#FF5C5CIl faut être au moins niveau 30 pour remplir une fiole."
+  full: "&#FF5C5CTon inventaire est plein, libère un emplacement."
+  filled: "&#2ECF7BFioles d'expérience remplies : &f%count%&#2ECF7B."
+  filled-partly: "&#2ECF7BFioles d'expérience remplies : &f%count%&#2ECF7B. &#FF5C5CInventaire plein : &f%left%&#FF5C5C fiole(s) non créée(s), l'expérience correspondante est gardée."
+  give-usage: "&#FF5C5CUtilisation : /bottlexp give <joueur> <xp> [quantité]"
+  give-offline: "&#FF5C5CJoueur introuvable ou hors ligne : &f%player%"
+  give-numbers: "&#FF5C5CL'XP et la quantité doivent être des nombres entiers."
+  give-range: "&#FF5C5CL'XP doit être positive et la quantité entre 1 et 2304."
+  given: "&#2ECF7B%count% fiole(s) de &f%xp% xp&#2ECF7B données à &f%player%&#2ECF7B."
+  given-dropped: "&#2ECF7B%count% fiole(s) de &f%xp% xp&#2ECF7B données à &f%player%&#2ECF7B. &#FF5C5CInventaire plein : &f%dropped%&#FF5C5C au sol."
+  received: "&#2ECF7BTu as reçu %count% fiole(s) de &f%xp% xp&#2ECF7B."
+  received-dropped: "&#2ECF7BTu as reçu %count% fiole(s) de &f%xp% xp&#2ECF7B. &#FF5C5CInventaire plein : &f%dropped%&#FF5C5C au sol."

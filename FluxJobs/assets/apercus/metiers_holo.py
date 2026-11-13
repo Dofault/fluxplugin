@@ -1,4 +1,4 @@
-"""Visual of the job menu (FluxTools metiers.yml) in the holographic direction of the calendar, next to the current
+"""Visual of the job menu (FluxJobs metiers.yml) in the holographic direction of the calendar, next to the current
 vanilla look, with sample content (Mineur selected). Preview only."""
 import os, sys, colorsys
 V = "/home/influencraft/plugins/fluxplugin/Flux/assets/vanilla"

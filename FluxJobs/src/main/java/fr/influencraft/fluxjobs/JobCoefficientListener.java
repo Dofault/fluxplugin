@@ -1,4 +1,4 @@
-package fr.influencraft.fluxtools.modules;
+package fr.influencraft.fluxjobs;
 
 import fr.influencraft.flux.api.jobs.JobLevelUpEvent;
 import fr.influencraft.flux.api.FluxPlugin;

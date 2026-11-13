@@ -56,7 +56,7 @@ public final class RepairMenu implements CommandExecutor {
             return true;
         }
         if (!player.hasPermission("influbridge.repair")) {
-            Texts.send(player, "&#FF5C5CTu n'as pas accès à la réparation.");
+            say(player, "repair.refused.permission");
             return true;
         }
         Lists.invalidate(player, BUTTON);
@@ -78,19 +78,30 @@ public final class RepairMenu implements CommandExecutor {
     private ItemStack button(Player player) {
         ItemStack item = deposited(FluxApi.view(player));
         double cost = cost();
-        String costLine = "&#B376E5Coût &8► &f" + money(player, cost);
-        return switch (evaluate(player, item, cost)) {
-            case EMPTY -> icon(Material.PAPER, "&#FFD94DAucun objet déposé",
-                    List.of("&#B376E5Place l'objet à réparer dans la case de gauche.", "", costLine));
-            case NOT_REPAIRABLE -> icon(Material.BARRIER, "&#FF5C5CObjet non réparable",
-                    List.of("&#B376E5Seuls les objets qui s'usent (armes, outils, armures, cannes) peuvent être réparés ici."));
-            case ALREADY_NEW -> icon(Material.LIME_DYE, "&#2ECF7BObjet déjà comme neuf",
-                    List.of("&#B376E5Durabilité pleine et coût d'enclume déjà à zéro.", "", "&#B376E5Rien à te facturer."));
-            case TOO_POOR -> icon(Material.GOLD_NUGGET, "&#FF5C5CFonds insuffisants",
-                    List.of(costLine, "&#B376E5Solde &8► &f" + money(player, Economy.main().balance(player))));
-            case READY -> icon(Material.ANVIL, "&r&7%img_left_click%&#FFD94D Réparer",
-                    List.of(costLine, "", "&#B376E5Restaure la durabilité et remet le coût d'enclume à zéro."));
+        String price = money(player, cost);
+        fr.influencraft.flux.api.inventory.Lore lore = fr.influencraft.flux.api.inventory.Lore.create();
+        State state = evaluate(player, item, cost);
+        String material = switch (state) {
+            case EMPTY -> "PAPER";
+            case NOT_REPAIRABLE -> "BARRIER";
+            case ALREADY_NEW -> "LIME_DYE";
+            case TOO_POOR -> "GOLD_NUGGET";
+            case READY -> "ANVIL";
         };
+        String key = "repair." + state.name().toLowerCase(java.util.Locale.ROOT).replace('_', '-');
+        lore.description(text(key + ".description"));
+        if (state != State.NOT_REPAIRABLE && state != State.ALREADY_NEW) lore.kv(text("repair.cost"), price);
+        if (state == State.TOO_POOR) lore.kv(text("repair.balance"), money(player, Economy.main().balance(player)));
+        if (state == State.READY) lore.left(text("repair.action"));
+        return fr.influencraft.flux.api.inventory.Items.of(material, text(key + ".name"), lore.build(), player);
+    }
+
+    private String text(String key, String... vars) {
+        return ((fr.influencraft.flux.api.FluxPlugin) plugin).messages().raw(key, vars);
+    }
+
+    private void say(Player player, String key, String... vars) {
+        ((fr.influencraft.flux.api.FluxPlugin) plugin).messages().send(player, key, vars);
     }
 
     private double cost() {
@@ -117,17 +128,18 @@ public final class RepairMenu implements CommandExecutor {
         double cost = cost();
         State state = evaluate(player, item, cost);
         if (state != State.READY) {
-            Texts.send(player, switch (state) {
-                case EMPTY -> "&#FF5C5CDépose d'abord un objet dans la case de gauche.";
-                case NOT_REPAIRABLE -> "&#FF5C5CCet objet ne peut pas être réparé.";
-                case ALREADY_NEW -> "&#FF5C5CCet objet est déjà comme neuf.";
-                default -> "&#FF5C5CIl te faut &f" + money(player, cost) + "&#FF5C5C pour réparer cet objet.";
-            });
+            say(player, switch (state) {
+                case EMPTY -> "repair.refused.empty";
+                case NOT_REPAIRABLE -> "repair.refused.not-repairable";
+                case ALREADY_NEW -> "repair.refused.already-new";
+                default -> "repair.refused.too-poor";
+            }, "%cost%", money(player, cost));
             Sounds.cue(player, "error");
             return;
         }
-        if (!Economy.main().take(player, cost, fr.influencraft.flux.api.economy.Origin.of("FluxTools", "repair").detail(item.getType().name().toLowerCase(java.util.Locale.ROOT)))) {
-            Texts.send(player, "&#FF5C5CLe paiement a échoué, ton objet n'a pas été touché.");
+        if (!Economy.main().take(player, cost, fr.influencraft.flux.api.economy.Origin.of(plugin, "repair")
+                .detail(item.getType().name().toLowerCase(java.util.Locale.ROOT)).notifyPlayer())) {
+            say(player, "repair.refused.payment");
             Sounds.cue(player, "error");
             return;
         }
@@ -147,9 +159,7 @@ public final class RepairMenu implements CommandExecutor {
         }
         Inventories.giveOrDrop(player, back);
         refresh(player, view);
-        // money loss notification convention (docs/notifications/bitblock.md)
-        Texts.send(player, "&r&7%img_bitblock% &#B376E5Tu as perdu &f" + fr.influencraft.flux.api.util.Format.decimal(cost)
-                + " &#B376E5Bitblock &#FF5C5C▼&7 [ʀᴇᴘᴀʀᴀᴛɪᴏɴ]");
+        // the loss message is Flux's (notifyPlayer above); the anvil sound is the repair's own feedback
         player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_USE, 1f, 1.2f);
     }
 
@@ -158,14 +168,4 @@ public final class RepairMenu implements CommandExecutor {
         return Texts.placeholders(c == null ? fr.influencraft.flux.api.util.Format.decimal(amount) : c.format(amount), player);
     }
 
-    private static ItemStack icon(Material material, String name, List<String> lore) {
-        ItemStack icon = new ItemStack(material);
-        ItemMeta meta = icon.getItemMeta();
-        if (meta != null) {
-            meta.displayName(Texts.parse(name));
-            meta.lore(Texts.lore(lore, null));
-            icon.setItemMeta(meta);
-        }
-        return icon;
-    }
 }

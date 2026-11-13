@@ -164,3 +164,7 @@ universe:
   waiting: "&#B376E5Still &f%count% &#B376E5item(s) to give back: make room in your inventory."
   no-container: "&#FF5C5CContainers cannot be used in this universe."
   no-command: "&#FF5C5CThis command is not available in this universe."
+
+money-actionbar:
+  on: "!&#FFD94D&lSettings &8► &#B376E5Money gains in the action bar &#2ECF7Bon."
+  off: "!&#FFD94D&lSettings &8► &#B376E5Money gains in the action bar &#FF5C5Coff."

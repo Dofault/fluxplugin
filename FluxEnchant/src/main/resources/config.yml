@@ -36,3 +36,16 @@ mystery-books:
 
 # Folder of the EcoEnchants enchantment files (rarity, display name), relative to plugins/
 ecoenchants-folder: EcoEnchants/enchants
+
+# Mending never lands on an item: removed from anvil results, generated loot and fishing. Books still circulate,
+# they just become useless. log: one console line per removal.
+mending-lock:
+  enabled: true
+  log: false
+
+# Splits an enchanted book into one book per enchantment: /enchantsplit (aliases /split, /separer) or a right click on
+# an enchanting table, book in hand. Each book costs a blank book and experience-cost experience points (not levels,
+# never in creative; 100 points ~ 6 levels from 0). Permissions fluxenchant.split and fluxenchant.split.table.
+splitter:
+  experience-cost: 100
+  enchanting-table: true

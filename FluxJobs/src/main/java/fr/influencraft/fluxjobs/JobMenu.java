@@ -1,4 +1,4 @@
-package fr.influencraft.fluxtools.modules;
+package fr.influencraft.fluxjobs;
 
 import fr.influencraft.flux.api.FluxApi;
 import fr.influencraft.flux.api.inventory.Items;
@@ -151,9 +151,9 @@ final class JobMenu implements Listener {
             boolean active = jobs.active(player, s.id());
             boolean chosen = s.id().equals(shown);
             Lore lore = levelLore(player, s.id()).description(s.description());
-            if (active) lore.ok("Métier actif.");
-            else lore.ko("Métier inactif.");
-            if (!chosen) lore.left("Voir le métier");
+            if (active) lore.ok(Lang.t("menu.active"));
+            else lore.ko(Lang.t("menu.inactive"));
+            if (!chosen) lore.left(Lang.t("menu.view"));
             ItemStack item = item(s.icon(), plainName(s.id()), lore.build(), player);
             decorate(item, jobs.level(player, s.id()), active || chosen);
             out.add(ListEntry.of(s.id()).item(item));
@@ -163,8 +163,8 @@ final class JobMenu implements Listener {
 
     private Lore levelLore(Player player, String job) {
         return Lore.create()
-                .kv("Niveau", Jobs.get().level(player, job))
-                .kv("Progression", Format.decimal(Jobs.progress(player, job) * 100) + "%");
+                .kv(Lang.t("menu.level"), Jobs.get().level(player, job))
+                .kv(Lang.t("menu.progress"), Format.decimal(Jobs.progress(player, job) * 100) + "%");
     }
 
     private List<ListEntry> levels(Player player) {
@@ -180,17 +180,17 @@ final class JobMenu implements Listener {
             String icon;
             if (level < current) {
                 icon = "itemsadder:influitems:chest_checkmark";
-                lore.ok("Atteint.");
+                lore.ok(Lang.t("menu.reached"));
             } else if (level == current) {
                 icon = "itemsadder:influitems:stairs";
-                lore.kv("XP", Format.decimal(jobs.xp(player, job)) + "&7/&f" + Format.decimal(jobs.xpForLevel(job, level + 1)));
-                lore.kv("Progression", Format.decimal(Jobs.progress(player, job) * 100) + "%");
-                lore.ok("Ton niveau actuel.");
+                lore.kv(Lang.t("menu.xp"), Format.decimal(jobs.xp(player, job)) + "&7/&f" + Format.decimal(jobs.xpForLevel(job, level + 1)));
+                lore.kv(Lang.t("menu.progress"), Format.decimal(Jobs.progress(player, job) * 100) + "%");
+                lore.ok(Lang.t("menu.current"));
             } else {
                 icon = "itemsadder:influitems:lock";
-                lore.ko("Pas encore atteint.");
+                lore.ko(Lang.t("menu.not-reached"));
             }
-            ItemStack item = item(icon, "Niveau " + level, lore.build(), player);
+            ItemStack item = item(icon, Lang.t("menu.level-name", "%level%", String.valueOf(level)), lore.build(), player);
             decorate(item, level, level == current);
             out.add(ListEntry.of(String.valueOf(level)).item(item));
         }
@@ -205,7 +205,7 @@ final class JobMenu implements Listener {
         boolean shown = next ? start + WINDOW - 1 < Jobs.get().maxLevel(job) : start > 1;
         if (!shown) return List.of();
         ItemStack item = item(next ? "itemsadder:influitems:btn_next" : "itemsadder:influitems:btn_prev",
-                next ? "Niveaux suivants" : "Niveaux précédents", List.of(), player);
+                Lang.t(next ? "menu.next-levels" : "menu.previous-levels"), List.of(), player);
         return List.of(ListEntry.of(job).item(item));
     }
 
@@ -215,7 +215,7 @@ final class JobMenu implements Listener {
         if (job == null || !Jobs.available()) return out;
         int i = 0;
         for (JobAction a : Jobs.get().actions(player, job)) {
-            Lore lore = Lore.create().kv("XP", Format.decimal(a.xp()) + (a.perHealth() ? " par point de vie" : "")).kv("Gain", money(player, a));
+            Lore lore = Lore.create().kv(Lang.t("menu.xp"), Format.decimal(a.xp()) + (a.perHealth() ? Lang.t("actions.per-health") : "")).kv(Lang.t("menu.gain"), money(player, a));
             JobActionLook.Look look = JobActionLook.of(player, a);
             out.add(ListEntry.of(String.valueOf(i++)).item(Items.dress(look.icon(), look.name(), lore.build(), player)));
         }
@@ -229,15 +229,15 @@ final class JobMenu implements Listener {
         ItemStack item;
         String confirm = "";
         if (jobs.active(player, job)) {
-            item = item("itemsadder:fluxui:btn_close_red", "Quitter le métier", Lore.create().description("Ta progression est gardée.")
-                    .kv("Coût", jobs.leavePrice(player, job)).left("Double clic pour quitter").build(), player);
-            confirm = "&#f0716fClique encore pour quitter le métier.";
+            item = item("itemsadder:fluxui:btn_close_red", Lang.t("menu.leave"), Lore.create().description(Lang.t("menu.leave-description"))
+                    .kv(Lang.t("menu.cost"), jobs.leavePrice(player, job)).left(Lang.t("menu.leave-action")).build(), player);
+            confirm = Lang.t("menu.leave-confirm");
         } else if (jobs.canJoin(player, job)) {
-            item = item("itemsadder:fluxui:btn_add_green", "Rejoindre ce métier", Lore.create().description("Commence à gagner des BitBlock avec ce métier.")
-                    .kv("Coût", jobs.joinPrice(player, job)).left("Rejoindre").build(), player);
+            item = item("itemsadder:fluxui:btn_add_green", Lang.t("menu.join"), Lore.create().description(Lang.t("menu.join-description"))
+                    .kv(Lang.t("menu.cost"), jobs.joinPrice(player, job)).left(Lang.t("menu.join-action")).build(), player);
         } else {
-            item = item("itemsadder:fluxui:btn_lock_grey", "Plus de place", Lore.create().description("Tu exerces déjà le maximum de métiers pour ton rang.")
-                    .ko("Monte en rang pour en exercer plus.").build(), player);
+            item = item("itemsadder:fluxui:btn_lock_grey", Lang.t("menu.full"), Lore.create().description(Lang.t("menu.full-description"))
+                    .ko(Lang.t("menu.full-hint")).build(), player);
         }
         return List.of(ListEntry.of(job).item(item).set("confirm", confirm));
     }
@@ -276,12 +276,12 @@ final class JobMenu implements Listener {
         Jobs.Provider jobs = Jobs.get();
         List<String> out = new ArrayList<>();
         double money = jobs.levelUpMoney(job, level);
-        if (!Double.isNaN(money)) out.add(Lore.GREEN + "+" + amount(money) + Lore.PURPLE + " en atteignant ce niveau");
+        if (!Double.isNaN(money)) out.add(Lang.t("menu.reward-money", "%amount%", amount(money)));
         for (String command : jobs.levelUpCommands(job, level)) {
-            if (command.contains(" stash ")) out.add(Lore.GREEN + "+1 " + Lore.PURPLE + "Booster " + plainName(job) + " &8(/boosters)");
+            if (command.contains(" stash ")) out.add(Lang.t("menu.reward-booster", "%job%", plainName(job)));
         }
-        if (jobs.moneyGrowsWithLevel(job)) out.add("Gains par action plus élevés");
-        if (out.isEmpty()) out.add("Aucune récompense");
+        if (jobs.moneyGrowsWithLevel(job)) out.add(Lang.t("menu.reward-rates"));
+        if (out.isEmpty()) out.add(Lang.t("menu.reward-none"));
         return out;
     }
 
@@ -306,10 +306,7 @@ final class JobMenu implements Listener {
 
     /** Money line at the player's level, with the currency of the suite (glyph, never the ₿ character). */
     private static String money(Player player, JobAction a) {
-        if (a.money() == null) return "&7Aucun gain d'argent";
-        String text = "&7Gagne " + Lore.GREEN + amount(a.money());
-        if (a.perHealth()) return text + "&7 par point de vie";
-        return a.every() <= 1 ? text + "&7 par action" : text + "&7 toutes les " + Lore.GREEN + Format.decimal(a.every()) + " &7actions";
+        return Lang.money(a, amount(a.money() == null ? 0 : a.money()));
     }
 
     private static String amount(double value) {

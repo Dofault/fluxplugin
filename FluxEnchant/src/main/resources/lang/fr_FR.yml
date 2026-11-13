@@ -18,3 +18,13 @@ mastered: "&#2ECF7B%enchant% est maîtrisé ! Tu peux ajouter un autre enchantem
 line: "&#B376E5✦ &f%enchant% %level%&7/&f%max% &8(maîtrise %percent% %)"
 line-mastered: "&#B376E5✦ &f%enchant% %level%"
 line-weight: "&8Poids &7%weight%&8/&7%capacity%"
+
+players-only: "&#FF5C5CEn jeu seulement."
+split:
+  no-permission: "&#FF5C5CSéparer les livres enchantés est réservé aux joueurs VIP."
+  not-enchanted-book: "&#FF5C5CTiens en main le livre enchanté à séparer."
+  single: "&#FF5C5CCe livre n'a qu'un enchantement, rien à séparer."
+  no-books: "&#FF5C5CIl te faut &f%books%&#FF5C5C livres vierges dans ton inventaire."
+  no-xp: "&#FF5C5CIl te faut &f%cost%&#FF5C5C points d'expérience pour séparer ce livre."
+  no-room: "&#FF5C5CIl te manque &f%missing%&#FF5C5C cases libres pour recevoir les livres."
+  done: "&#2ECF7BLivre séparé en &f%books%&#2ECF7B livres, pour &f%cost%&#2ECF7B points d'expérience."

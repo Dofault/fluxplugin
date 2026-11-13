@@ -1,4 +1,4 @@
-package fr.influencraft.fluxtools.modules;
+package fr.influencraft.fluxenchant;
 
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Item;
@@ -25,7 +25,7 @@ import java.util.logging.Logger;
  * <p>
  * Géré en Java, à {@code HIGHEST}, pour passer après les plugins qui recalculent
  * le résultat d'enclume et voir le résultat final — même mécanisme que
- * {@link AnvilRestrictionListener}.
+ * the anvil lock of FluxTools.
  * <p>
  * <b>Règle transverse :</b> un <b>livre</b> n'est jamais modifié, où qu'il soit.
  * On agit uniquement quand Raccommodage est (ou serait) appliqué à un objet qui
@@ -36,7 +36,7 @@ import java.util.logging.Logger;
  * {@code type: mending} de CustomFishing (réparation de canne à pêche, pas
  * l'enchant).
  */
-public final class MendingRestrictionListener implements Listener {
+final class MendingLock implements Listener {
 
     private final Logger logger;
     private final boolean log;
@@ -47,7 +47,7 @@ public final class MendingRestrictionListener implements Listener {
      *               écrit une ligne console à chaque retrait de Raccommodage
      *               (audit / debug), {@code false} = silencieux.
      */
-    public MendingRestrictionListener(Logger logger, boolean log) {
+    MendingLock(Logger logger, boolean log) {
         this.logger = logger;
         this.log = log;
     }

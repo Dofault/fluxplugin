@@ -33,6 +33,15 @@ public final class FluxEnchant extends FluxPlugin {
         Bukkit.getPluginManager().registerEvents(new Weight(this), this);
         Bukkit.getPluginManager().registerEvents(books, this);
         Bukkit.getPluginManager().registerEvents(new Shears(), this);
+        // Mending never lands on an item (anvil, loot, fishing); books still circulate
+        if (getConfig().getBoolean("mending-lock.enabled", true)) {
+            Bukkit.getPluginManager().registerEvents(new MendingLock(getLogger(), getConfig().getBoolean("mending-lock.log", false)), this);
+        }
+        // one book per enchantment: /enchantsplit or a right click on an enchanting table
+        Splitter splitter = new Splitter(this);
+        Bukkit.getPluginManager().registerEvents(splitter, this);
+        command("enchantsplit").aliases("split", "separer").description("Split an enchanted book into one book per enchantment.")
+                .permission(Splitter.PERMISSION).executor(splitter::command).register();
         if (Bukkit.getPluginManager().getPlugin("FluxTools") != null) {
             mastery = new Mastery(this);
             Bukkit.getServicesManager().register(EnchantMastery.class, mastery, this, ServicePriority.Normal);

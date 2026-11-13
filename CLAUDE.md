@@ -131,7 +131,8 @@ The plugins are written **as English plugins, then adapted to French** for our s
 - FluxCrate owns crates and keys (`fluxcrate.api.Crates`, used by the migration of EcoCrates); give keys with
   `fluxcrate give <player> <crate> <n>`, never with a third-party crates plugin. A reward is an item id (`item:`), its
   name and description come from where the item is defined.
-- FluxTools exposes `fr.influencraft.fluxtools.api` (`Tools.info/refresh`, `EnchantMastery` service) used by
+- FluxTools owns the crate tools and the workshop (repair, experience bottles); FluxJobs owns what players see of jobs
+  (Careers menu, `/metier`, XP boss bar, collections menu data). FluxTools exposes `fr.influencraft.fluxtools.api` (`Tools.info/refresh`, `EnchantMastery` service) used by
   FluxEnchant: FluxTools owns its tools and their rendering, FluxEnchant owns enchantment weight and mastery levels.
 - Generated files: menus and tool configs come from scripts in `<module>/assets/*.py` (`gen_pages.py`,
   `gen_tools.py`, `gen_metiers.py`...). Change the script and regenerate, never hand-edit generated YAML.

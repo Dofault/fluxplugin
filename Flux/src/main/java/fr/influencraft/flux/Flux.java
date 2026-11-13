@@ -33,6 +33,8 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     private PacketListenerCommon packetListener;
     private PacketListenerCommon backgroundListener;
     private com.github.retrooper.packetevents.event.PacketListenerCommon hurtShakeListener;
+    private PacketListenerCommon advancementListener;
+    private fr.influencraft.flux.economy.MoneyActionBar moneyBar;
     private ChestBackgrounds backgrounds;
     private PapiBridge papiBridge;
     private int clickCooldown;
@@ -71,6 +73,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         actions = new Actions(this);
         menus = new MenuService(this, items);
         registry = new MenuRegistry(this);
+        moneyBar = new fr.influencraft.flux.economy.MoneyActionBar(this, () -> messages);
         readSettings();
         currencies.start();
         rewards = fr.influencraft.flux.rewards.RewardService.start(this, () -> messages);
@@ -102,6 +105,10 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
                 .permission("flux.items.admin").suggest(false).executor(itemsCommand::run).completer(itemsCommand::complete).register();
         fr.influencraft.flux.api.command.Commands.create(this, "commands").aliases("commandes")
                 .description("Liste des commandes").executor(commandManager::help).register();
+        // running total of money gained in the action bar (money-actionbar), /moneynotif on|off
+        getServer().getPluginManager().registerEvents(moneyBar, this);
+        fr.influencraft.flux.api.command.Commands.create(this, "moneynotif").aliases("bitblocknotif")
+                .description("Money gained in the action bar: on, off.").executor(moneyBar::command).register();
         // help window (/aide and the pause menu) and settings window (/parametres): plugins/Flux/help.yml, settings.yml
         help = new fr.influencraft.flux.help.HelpService(this);
         help.start();
@@ -131,6 +138,11 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         // HUD (plugins/Flux/hud.yml) in place of MythicHUD, drawn by the text shader of Flux's client pack
         hud = new fr.influencraft.flux.hud.HudService(this);
         hud.start();
+        // the advancements key opens our menu (advancement-redirect.command)
+        advancementListener = PacketEvents.getAPI().getEventManager()
+                .registerListener(new fr.influencraft.flux.adapters.packetevents.AdvancementRedirect(this,
+                        () -> getConfig().getBoolean("advancement-redirect.enabled", true)
+                                ? getConfig().getString("advancement-redirect.command", "menu") : null));
         bossBarListener = PacketEvents.getAPI().getEventManager()
                 .registerListener(new fr.influencraft.flux.adapters.packetevents.BossBarOrder(this, hud));
         // Flux's part of the resource pack: the one text shader of the suite (api.client.TextShader), HUD pictures
@@ -162,6 +174,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         if (packetListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(packetListener);
         if (backgroundListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(backgroundListener);
         if (hurtShakeListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(hurtShakeListener);
+        if (advancementListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(advancementListener);
         if (registry != null) registry.unregisterCommands();
     }
 
@@ -222,6 +235,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
                 id -> getConfig().getString("currencies." + id + ".format", "%amount%"));
         fr.influencraft.flux.api.economy.Economy.configureIcons(id -> getConfig().getString("currencies." + id + ".icon", "GOLD_NUGGET"));
         if (currencies != null) currencies.configure(getConfig(), style.getConfigurationSection("money"));
+        if (moneyBar != null) moneyBar.configure(getConfig().getConfigurationSection("money-actionbar"), style.getConfigurationSection("money"));
         java.util.Map<String, String> dialog = new java.util.HashMap<>();
         var colors = getConfig().getConfigurationSection("dialogs");
         if (colors != null) for (String k : colors.getKeys(false)) dialog.put(k, colors.getString(k, ""));
@@ -259,7 +273,8 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
      * {@code %flux_cmd_<plugin>_<id>%}: configured label of a command of the suite;
      * {@code %flux_list_<id>_<field>%}: state of a list (see {@link fr.influencraft.flux.api.list.Lists});
      * {@code %flux_top_<board>_...%}: leaderboards (see {@link fr.influencraft.flux.api.leaderboard.Leaderboards});
-     * {@code %flux_smallcaps_<text>%}: the text in small caps, {@code {placeholders}} inside resolved first.
+     * {@code %flux_smallcaps_<text>%}: the text in small caps, {@code {placeholders}} inside resolved first;
+     * {@code %flux_empty_slots%}: empty slots among the 36 storage slots (PlaceholderAPI's own counts armour too).
      */
     private String ownPlaceholder(Player player, String params) {
         if (params.startsWith("balance_") && currencies != null) return currencies.placeholder(player, params.substring(8));
@@ -267,6 +282,12 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         if (params.equals("trade_title") && trades != null) return trades.title(player);
         if (params.startsWith("top_") && leaderboards != null) return leaderboards.placeholder(player, params.substring(4));
         if (params.startsWith("profile_") && profile != null) return profile.placeholder(player, params.substring(8));
+        if (params.equals("empty_slots")) {
+            if (player == null) return "";
+            int empty = 0;
+            for (org.bukkit.inventory.ItemStack i : player.getInventory().getStorageContents()) if (i == null || i.isEmpty()) empty++;
+            return String.valueOf(empty);
+        }
         if (params.startsWith("smallcaps_")) {
             // %flux_smallcaps_({fluxpass_tier}/{fluxpass_max_tiers})%: small caps for plugins outside Flux (Typewriter)
             String text = params.substring(10);

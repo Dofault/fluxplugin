@@ -1,4 +1,4 @@
-package fr.influencraft.fluxtools.modules;
+package fr.influencraft.fluxjobs;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -81,12 +81,6 @@ public final class CollectionInfo {
 
 
 
-    private static final Map<String, String> GROUP_NAMES = Map.ofEntries(Map.entry("botanique", "Botanique"),
-            Map.entry("geologie", "Géologie"), Map.entry("traque", "Traque"), Map.entry("peche", "Pêche"),
-            Map.entry("terre", "Terre"), Map.entry("navigation", "Navigation"), Map.entry("boiserie", "Boiserie"),
-            Map.entry("metallurgie", "Métallurgie"), Map.entry("gastronomie", "Gastronomie"), Map.entry("social", "Social"),
-            Map.entry("enchantement", "Enchantement"));
-
     /** Section « Collection » of the profile: completed collections, in total and per category (offline too). */
     private fr.influencraft.flux.api.profile.Profiles.Section profileSection() {
         return new fr.influencraft.flux.api.profile.Profiles.Section() {
@@ -107,12 +101,12 @@ public final class CollectionInfo {
                     return null;
                 }
                 var lore = fr.influencraft.flux.api.inventory.Lore.create();
-                lore.kv("Terminées", done + "&7/&f" + total + " &8(&7" + (total == 0 ? 0 : done * 100 / total) + " %&8)");
+                lore.kv(Lang.t("collections.done"), done + "&7/&f" + total + " &8(&7" + (total == 0 ? 0 : done * 100 / total) + " %&8)");
                 for (Map.Entry<String, int[]> g : groups.entrySet()) {
-                    lore.item(GROUP_NAMES.getOrDefault(g.getKey(), g.getKey()) + " &8· &f" + g.getValue()[0] + "&7/&f" + g.getValue()[1]);
+                    lore.item(Lang.t("collections.groups." + g.getKey()) + " &8· &f" + g.getValue()[0] + "&7/&f" + g.getValue()[1]);
                 }
-                if (fr.influencraft.flux.api.profile.Profiles.own(viewer)) lore.left("Mes collections");
-                return fr.influencraft.flux.api.inventory.Items.of("itemsadder:influitems:reward", "Collection", lore.build(), viewer);
+                if (fr.influencraft.flux.api.profile.Profiles.own(viewer)) lore.left(Lang.t("collections.open"));
+                return fr.influencraft.flux.api.inventory.Items.of("itemsadder:influitems:reward", Lang.t("collections.name"), lore.build(), viewer);
             }
 
             public boolean click(Player viewer, OfflinePlayer subject, boolean right) {

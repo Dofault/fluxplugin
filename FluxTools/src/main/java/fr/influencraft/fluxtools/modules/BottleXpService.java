@@ -56,13 +56,14 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
     static final String PERMISSION = "influbridge.bottlexp";
     static final String ADMIN_PERMISSION = "influbridge.bottlexp.admin";
 
-    private static final String PREFIX = "&#FFD94D&lFiole d'XP &8► ";
-
     private final NamespacedKey bottledXpKey;
     /** Tick du dernier clic consommé par joueur : un clic peut déclencher main + offhand. */
     private final Map<UUID, Integer> lastRedeemTick = new HashMap<>();
 
+    private final fr.influencraft.flux.api.FluxPlugin plugin;
+
     public BottleXpService(JavaPlugin plugin) {
+        this.plugin = (fr.influencraft.flux.api.FluxPlugin) plugin;
         // namespace of the former plugin (InfluBridge): data already written stays readable
         this.bottledXpKey = new NamespacedKey("influbridge", "bottled_xp");
     }
@@ -75,18 +76,18 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
             return handleGive(sender, args);
         }
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Cette commande est réservée aux joueurs.");
+            say(sender, "players-only");
             return true;
         }
         if (!player.hasPermission(PERMISSION)) {
-            send(player, PREFIX + "&#FF5C5CTu n'as pas la permission d'effectuer cette action.");
+            say(player, "bottle.no-permission");
             return true;
         }
 
         int totalXp = (int) Math.min(Integer.MAX_VALUE, fr.influencraft.flux.api.util.Experience.total(player));
         int requested = totalXp / XP_PER_BOTTLE;
         if (requested == 0) {
-            send(player, PREFIX + "&#FF5C5CIl faut être au moins niveau 30 pour remplir une fiole.");
+            say(player, "bottle.not-enough");
             return true;
         }
 
@@ -99,21 +100,15 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
         int given = requested - notGiven;
 
         if (given == 0) {
-            send(player, PREFIX + "&#FF5C5CTon inventaire est plein, libère un emplacement.");
+            say(player, "bottle.full");
             return true;
         }
 
         fr.influencraft.flux.api.util.Experience.set(player, totalXp - (long) given * XP_PER_BOTTLE);
         player.playSound(player.getLocation(), Sound.ITEM_BOTTLE_FILL, 1f, 1f);
 
-        String fioles = given > 1 ? given + " fioles" : "1 fiole";
-        if (notGiven > 0) {
-            send(player, PREFIX + "&#2ECF7BTu as rempli " + fioles + " d'expérience. &#FF5C5CInventaire plein : "
-                    + notGiven + (notGiven > 1 ? " fioles n'ont" : " fiole n'a")
-                    + " pas pu être créée" + (notGiven > 1 ? "s" : "") + ", l'XP correspondante est conservée.");
-        } else {
-            send(player, PREFIX + "&#2ECF7BTu as rempli " + fioles + " d'expérience.");
-        }
+        say(player, notGiven > 0 ? "bottle.filled-partly" : "bottle.filled", "%count%", String.valueOf(given),
+                "%left%", String.valueOf(notGiven));
         return true;
     }
 
@@ -124,12 +119,12 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
      */
     private boolean handleGive(CommandSender sender, String[] args) {
         if (args.length < 3 || args.length > 4) {
-            sendTo(sender, PREFIX + "&#FF5C5CUsage : /bottlexp give <joueur> <xp> [quantité]");
+            say(sender, "bottle.give-usage");
             return true;
         }
         Player target = Bukkit.getPlayerExact(args[1]);
         if (target == null) {
-            sendTo(sender, PREFIX + "&#FF5C5CJoueur introuvable ou hors ligne : " + args[1]);
+            say(sender, "bottle.give-offline", "%player%", args[1]);
             return true;
         }
         int xp;
@@ -138,11 +133,11 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
             xp = Integer.parseInt(args[2]);
             quantity = args.length == 4 ? Integer.parseInt(args[3]) : 1;
         } catch (NumberFormatException e) {
-            sendTo(sender, PREFIX + "&#FF5C5CL'XP et la quantité doivent être des nombres entiers.");
+            say(sender, "bottle.give-numbers");
             return true;
         }
         if (xp <= 0 || quantity <= 0 || quantity > 2304) {
-            sendTo(sender, PREFIX + "&#FF5C5CL'XP doit être positive et la quantité entre 1 et 2304.");
+            say(sender, "bottle.give-range");
             return true;
         }
 
@@ -153,14 +148,10 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
             target.getWorld().dropItemNaturally(target.getLocation(), stack);
         }
 
-        String fioles = quantity > 1 ? quantity + " fioles" : "1 fiole";
-        sendTo(sender, PREFIX + "&#2ECF7B" + fioles + " de &f" + xp + " xp &#2ECF7Bdonnée"
-                + (quantity > 1 ? "s" : "") + " à &f" + target.getName() + "&#2ECF7B."
-                + (dropped > 0 ? " &#FF5C5CInventaire plein : " + dropped + " au sol." : ""));
-        if (sender != target) {
-            send(target, PREFIX + "&#2ECF7BTu as reçu " + fioles + " de &f" + xp + " xp&#2ECF7B."
-                    + (dropped > 0 ? " &#FF5C5CInventaire plein : " + dropped + " au sol." : ""));
-        }
+        String[] vars = {"%count%", String.valueOf(quantity), "%xp%", String.valueOf(xp), "%player%", target.getName(),
+                "%dropped%", String.valueOf(dropped)};
+        say(sender, dropped > 0 ? "bottle.given-dropped" : "bottle.given", vars);
+        if (sender != target) say(target, dropped > 0 ? "bottle.received-dropped" : "bottle.received", vars);
         return true;
     }
 
@@ -252,12 +243,11 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
     private ItemStack createBottle(Player player, int amount, int xp) {
         ItemStack item = new ItemStack(Material.EXPERIENCE_BOTTLE, amount);
         ItemMeta meta = item.getItemMeta();
-        meta.displayName(text(player, "&#FFD94DFiole d'expérience"));
-        // Points et non niveaux : "30 niveaux" n'est exact qu'en partant de zéro.
-        meta.lore(fr.influencraft.flux.api.text.Texts.wrapLore(List.of(
-                text(player, "&#B376E5Contient &f" + xp + " &#B376E5xp"),
-                Component.empty(),
-                text(player, "&r&7%img_right_click%&#FFD94D Absorber l'expérience"))));
+        // points, not levels: "30 levels" is only true from zero
+        ItemStack dressed = fr.influencraft.flux.api.inventory.Items.dress(item, plugin.messages().raw("bottle.name"),
+                fr.influencraft.flux.api.inventory.Lore.create().kv(plugin.messages().raw("bottle.contains"), xp + " xp")
+                        .right(plugin.messages().raw("bottle.use")).build(), player);
+        meta = dressed.getItemMeta();
         meta.setEnchantmentGlintOverride(true);
         meta.getPersistentDataContainer().set(bottledXpKey, PersistentDataType.INTEGER, xp);
         item.setItemMeta(meta);
@@ -273,20 +263,7 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
         return value != null && value > 0 ? value : null;
     }
 
-    private Component text(Player player, String legacy) {
-        String resolved = fr.influencraft.flux.api.text.Texts.placeholders(legacy, player);
-        return fr.influencraft.flux.api.text.Texts.colors(resolved).decoration(TextDecoration.ITALIC, false);
-    }
-
-    private void send(Player player, String message) {
-        player.sendMessage(text(player, message));
-    }
-
-    private void sendTo(CommandSender sender, String message) {
-        if (sender instanceof Player player) {
-            send(player, message);
-        } else {
-            sender.sendMessage(fr.influencraft.flux.api.text.Texts.colors(message));
-        }
+    private void say(CommandSender to, String key, String... vars) {
+        plugin.messages().send(to, key, vars);
     }
 }

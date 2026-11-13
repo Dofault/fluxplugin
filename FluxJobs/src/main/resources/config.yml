@@ -1,0 +1,36 @@
+# FluxJobs: what players see of their jobs (served by Flux, providers.jobs).
+
+# Careers menu (/metiers, built with Flux lists), /metier commands, the job plugin's own menu opens ours.
+jobs:
+  # Careers menu: order of the jobs in the grid (3 per row), icon and short description.
+  menu:
+    mineur: {icon: DIAMOND_PICKAXE, description: ["Mine les minerais,", "du charbon au diamant."]}
+    rochiste: {icon: COBBLESTONE, description: ["Casse la roche : pierre,", "andésite, basalte..."]}
+    deblayeur: {icon: IRON_SHOVEL, description: ["Dégage terre, sable,", "gravier et neige."]}
+    cultivateur: {icon: WHEAT, description: ["Récolte blé, carottes,", "melons et canne à sucre."]}
+    herboriste: {icon: POPPY, description: ["Cueille fleurs, bambou,", "champignons et algues."]}
+    sylviculteur: {icon: IRON_AXE, description: ["Abat les arbres,", "toutes essences confondues."]}
+    fondeur: {icon: FURNACE, description: ["Fond minerais et", "aliments au four."]}
+    chimiste: {icon: BREWING_STAND, description: ["Brasse des potions", "à l'alambic."]}
+    enchanteur: {icon: ENCHANTING_TABLE, description: ["Enchante à la table", "ou à l'enclume."]}
+    pecheur: {icon: FISHING_ROD, description: ["Pêche poissons,", "trésors et objets rares."]}
+    defenseur: {icon: IRON_SWORD, description: ["Élimine les créatures", "hostiles."]}
+    batisseur: {icon: BRICKS, description: ["Pose des blocs", "de construction."]}
+
+# Line in the chat at each job level: the money coefficient, before and after.
+job-coefficient:
+  enabled: true
+
+# Boss bar on every job XP gain, hidden after hide-after-seconds without gain (look: bossbar.* of the lang file).
+# One bar per player, following the last action. Players toggle it with /jobxpbar on|off.
+job-xp-bossbar:
+  enabled: true
+  hide-after-seconds: 4
+  # PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
+  color: "GREEN"
+  # PROGRESS, NOTCHED_6, NOTCHED_10, NOTCHED_12, NOTCHED_20
+  overlay: "NOTCHED_20"
+
+# Data of the collections menu (EcoCollections): placeholders %fluxcoll_*%, action [fluxcoll], profile section.
+collections-menu:
+  enabled: true

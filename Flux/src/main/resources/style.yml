@@ -61,6 +61,8 @@ variants:
 #   {icon} {color}: of the currency (currencies.<id>), {amount}: the amount template below, {arrow}: arrow-gain or
 #   arrow-loss, {origin}: the origin template below (empty when the origin is unknown).
 money:
+  # running total in the action bar ({color} = colour of the main currency below)
+  actionbar: "{color}+{amount}"
   color: "&#B376E5"
   amount: "&f{amount}"
   arrow-gain: "&#2ECF7B▲"

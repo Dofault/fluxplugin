@@ -1,4 +1,4 @@
-package fr.influencraft.fluxtools.modules;
+package fr.influencraft.fluxjobs;
 
 import fr.influencraft.flux.api.jobs.JobLevelUpEvent;
 import fr.influencraft.flux.api.jobs.JobXpGainEvent;
@@ -155,19 +155,15 @@ public final class JobXpBossBarListener implements Listener {
         }, hideAfterTicks));
     }
 
-    // Format MiniMessage fourni par l'utilisateur. Le nom du job est injecté via un placeholder
-    // "unparsed" (pas de concaténation directe dans le template) : sinon, n'importe quel caractère
-    // résiduel dans le nom du job pourrait casser le parsing MiniMessage (déjà arrivé une fois,
-    // ParsingException plantant l'event listener). Renvoie null si le rendu échoue (déjà loggé).
+    // MiniMessage templates bossbar.* of the lang file. The job name goes in as an unparsed placeholder, never
+    // concatenated: a stray character in it once broke the parsing and the listener. Null when rendering fails.
     private Component buildTitle(String plainJobName, int level, String currentXpFormatted,
                                  String requiredXpFormatted, Double gained, double bonusPercent) {
-        String gainSegment = gained != null ? "<#4DA954>(<#aafb93>+<gained></#aafb93>)" : "";
-        String bonusSegment = Math.abs(bonusPercent) > 0.1 ? " <#4DA954>(<#C8256A>+<bonus>%</#C8256A>)" : "";
+        String gainSegment = gained != null ? Lang.t("bossbar.gain") : "";
+        String bonusSegment = Math.abs(bonusPercent) > 0.1 ? Lang.t("bossbar.bonus") : "";
         try {
             return MiniMessage.miniMessage().deserialize(
-                    "<#4DA954>『<job> <#aafb93>Niv.<level></#aafb93>』  "
-                            + "<gray><white><current><gray>/<required> <gray>"
-                            + gainSegment + bonusSegment,
+                    Lang.t("bossbar.title") + gainSegment + bonusSegment,
                     Placeholder.unparsed("job", plainJobName),
                     Placeholder.unparsed("level", String.valueOf(level)),
                     Placeholder.unparsed("current", currentXpFormatted),
@@ -175,7 +171,7 @@ public final class JobXpBossBarListener implements Listener {
                     Placeholder.unparsed("gained", gained != null ? fr.influencraft.flux.api.util.Format.decimal(gained) : ""),
                     Placeholder.unparsed("bonus", fr.influencraft.flux.api.util.Format.decimal(bonusPercent)));
         } catch (Exception e) {
-            plugin.getLogger().warning("job-xp-bossbar: échec de rendu du titre — " + e.getMessage());
+            plugin.getLogger().warning("Job XP boss bar: title not rendered, " + e.getMessage());
             return null;
         }
     }

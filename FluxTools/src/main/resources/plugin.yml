@@ -2,22 +2,12 @@ name: FluxTools
 version: '0.1.0'
 main: fr.influencraft.fluxtools.FluxTools
 api-version: '1.21'
-description: Levelled crate tools with quests, and utility modules (jobs, repair, XP bottles, book splitter, notifications).
+description: Levelled crate tools, repair menu and experience bottles.
 authors: [Influencraft]
 depend: [Flux]
-# EcoEnchants avant nous : ses enchantements (Filon, Tranchée...) doivent être inscrits quand on lit les outils.
-softdepend: [ProtocolLib, EcoEnchants, EcoBattlepass, EcoCollections]
+# EcoEnchants before us: its enchantments (Filon, Tranchee...) must be registered when the tools are read.
+softdepend: [EcoEnchants]
 permissions:
-  # Séparation de livres (module enchant-splitter, ex-InfluEnchantSplitter) : réservée aux VIP, accordée au groupe vip
-  influenchantsplitter.command:
-    description: "Séparer un livre enchanté avec /enchantsplit."
-    default: op
-  influenchantsplitter.table:
-    description: "Séparer un livre enchanté par clic droit sur une table d'enchantement."
-    default: op
-  influenchantsplitter.reload:
-    description: "/enchantsplit reload (relit config.yml)."
-    default: op
   influbridge.bottlexp:
     description: "Permet d'utiliser /bottlexp (remplir des fioles d'expérience). Utiliser une fiole ne demande aucune permission."
     default: op

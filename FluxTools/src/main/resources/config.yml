@@ -20,52 +20,6 @@ level-bar:
 # Each one is switched with enabled. A module whose required plugin is missing (EcoJobs, CMI, ProtocolLib...)
 # turns itself off with a console warning.
 modules:
-  # Jobs menu (/metiers, built by FluxTools with Flux lists), /metier commands, redirect of the native EcoJobs menu.
-  # Needs EcoJobs.
-  jobs:
-    enabled: true
-    # Careers menu: order of the jobs in the grid (3 per row), icon and short description.
-    menu:
-      mineur: {icon: DIAMOND_PICKAXE, description: ["Mine les minerais,", "du charbon au diamant."]}
-      rochiste: {icon: COBBLESTONE, description: ["Casse la roche : pierre,", "andésite, basalte..."]}
-      deblayeur: {icon: IRON_SHOVEL, description: ["Dégage terre, sable,", "gravier et neige."]}
-      cultivateur: {icon: WHEAT, description: ["Récolte blé, carottes,", "melons et canne à sucre."]}
-      herboriste: {icon: POPPY, description: ["Cueille fleurs, bambou,", "champignons et algues."]}
-      sylviculteur: {icon: IRON_AXE, description: ["Abat les arbres,", "toutes essences confondues."]}
-      fondeur: {icon: FURNACE, description: ["Fond minerais et", "aliments au four."]}
-      chimiste: {icon: BREWING_STAND, description: ["Brasse des potions", "à l'alambic."]}
-      enchanteur: {icon: ENCHANTING_TABLE, description: ["Enchante à la table", "ou à l'enclume."]}
-      pecheur: {icon: FISHING_ROD, description: ["Pêche poissons,", "trésors et objets rares."]}
-      defenseur: {icon: IRON_SWORD, description: ["Élimine les créatures", "hostiles."]}
-      batisseur: {icon: BRICKS, description: ["Pose des blocs", "de construction."]}
-
-  # Boss bar on every job XP gain, hidden after hide-after-seconds without gain. Needs EcoJobs.
-  # One bar per player, following the last action. Players toggle it with /jobxpbar on|off.
-  # Line in the chat at each job level: the money coefficient, before and after.
-  job-coefficient:
-    enabled: true
-  job-xp-bossbar:
-    enabled: true
-    hide-after-seconds: 4
-    # PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
-    color: "GREEN"
-    # PROGRESS, NOTCHED_6, NOTCHED_10, NOTCHED_12, NOTCHED_20
-    overlay: "NOTCHED_20"
-
-  # Cumulative action bar of money gains (every CMI economy deposit, real amount received), cleared after
-  # hide-after-seconds without gain. Needs CMI. Players toggle it with /moneynotif on|off.
-  money-gain-actionbar:
-    enabled: true
-    hide-after-seconds: 1.5
-    # colour of the amount (shown in the main currency format of Flux)
-    color: "&#B376E5"
-
-  # Locks Mending: removed from anvil results, generated loot and fishing. Books still circulate, they just
-  # become useless. log: one console line per removal.
-  mending:
-    enabled: true
-    log: false
-
   # Refuses at the anvil the items whose lore has the "Irréparable" tag (crate tools).
   anvil-restrictions:
     enabled: true
@@ -79,32 +33,3 @@ modules:
   # /bottlexp: stores XP in bottles of 1395 points (levels 0 to 30), given back on right click.
   bottlexp:
     enabled: true
-
-  # Vanilla advancements key (L): runs this command instead (as the player). Needs ProtocolLib.
-  advancement-redirect:
-    enabled: true
-    command: "menu"
-
-
-  # Splits an enchanted book into one book per enchantment: /enchantsplit (aliases /split, /separer) or a right click
-  # on an enchanting table, book in hand. Each enchantment costs a blank book and experience-cost XP points (not
-  # levels, never in creative; 100 points ~ 6 levels from 0). Nothing is taken when books, XP or room are missing.
-  # Permissions influenchantsplitter.command / .table / .reload.
-  enchant-splitter:
-    enabled: true
-    experience-cost: 100
-    # false = command only
-    enchanting-table: true
-    # MiniMessage texts ("" = not sent). Variables: <cost> (XP points), <books> (blank books), <enchants> (enchantments
-    # of the book), <missing> (missing slots).
-    messages:
-      no-permission: "<#FF5C5C>Splitting enchanted books is reserved to VIP players."
-      player-only: "<#FF5C5C>Only a player can use this command."
-      not-enchanted-book: "<#FF5C5C>Hold the enchanted book to split."
-      not-enough-enchants: "<#FF5C5C>This book has a single enchantment, there is nothing to split."
-      not-enough-books: "<#FF5C5C>You need <books> blank books in your inventory."
-      not-enough-xp: "<#FF5C5C>You need <cost> XP points to split this book."
-      not-enough-space: "<#FF5C5C>You are missing <missing> free slots to get the split books."
-      success: "<#2ECF7B>Book split into <enchants> books, for <cost> XP points."
-      reloaded: "<#2BC4E8>Configuration reloaded."
-      reload-no-permission: "<#FF5C5C>You are not allowed to reload the plugin."

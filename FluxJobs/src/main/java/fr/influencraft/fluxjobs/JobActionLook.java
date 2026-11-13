@@ -1,4 +1,4 @@
-package fr.influencraft.fluxtools.modules;
+package fr.influencraft.fluxjobs;
 
 import fr.influencraft.flux.api.fishing.Fishing;
 import fr.influencraft.flux.api.jobs.JobAction;
@@ -24,12 +24,6 @@ final class JobActionLook {
     record Look(ItemStack icon, String name) {
     }
 
-    private static final Map<String, String> TRIGGER_LABELS = Map.ofEntries(
-            Map.entry("mine_block", "Miner un bloc"), Map.entry("mine_block_cascade", "Miner en cascade"),
-            Map.entry("catch_fish", "Pêcher un poisson"), Map.entry("kill", "Éliminer une créature"),
-            Map.entry("place_block", "Poser un bloc"), Map.entry("smelt", "Fondre un objet"),
-            Map.entry("brew", "Brasser une potion"), Map.entry("enchant_item", "Enchanter un objet"));
-
     private static final Map<String, Material> TRIGGER_ICONS = Map.ofEntries(
             Map.entry("mine_block", Material.STONE_PICKAXE), Map.entry("mine_block_cascade", Material.STONE_PICKAXE),
             Map.entry("catch_fish", Material.FISHING_ROD), Map.entry("kill", Material.IRON_SWORD),
@@ -44,7 +38,7 @@ final class JobActionLook {
     }
 
     static Look of(Player player, JobAction a) {
-        String label = a.label() != null ? a.label() : TRIGGER_LABELS.getOrDefault(a.trigger(), a.trigger());
+        String label = a.label() != null ? a.label() : Lang.triggerLabel(a.trigger());
         if (a.targets().isEmpty()) return new Look(new ItemStack(TRIGGER_ICONS.getOrDefault(a.trigger(), Material.PAPER)), label);
         if (a.trigger().equals("catch_fish")) return new Look(fish(player, a.targets()), label);
         if (a.trigger().equals("kill") && a.targets().size() == 1) {

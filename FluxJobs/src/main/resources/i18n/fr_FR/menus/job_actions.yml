@@ -1,4 +1,4 @@
-# FluxTools : ce qui rapporte de l'XP et de l'argent dans un métier (/metier blocs <métier>), relu à chaque ouverture.
+# FluxJobs : ce qui rapporte de l'XP et de l'argent dans un métier (/metier blocs <métier>), relu à chaque ouverture.
 title: "&8%jobactions_name%"
 rows: 6
 player-inventory: hidden

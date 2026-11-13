@@ -2,12 +2,18 @@ name: FluxEnchant
 version: 26.2
 main: fr.influencraft.fluxenchant.FluxEnchant
 api-version: "26.2"
-description: Enchantment weight per item and mastery enchantments on the crate tools (EcoEnchants enchantments).
+description: Enchantment weight per item, mastery enchantments of the crate tools, Mending lock and book splitter.
 authors: [Influencraft]
 depend: [Flux]
 softdepend: [FluxTools, EcoEnchants]
 
 permissions:
+  fluxenchant.split:
+    description: "/enchantsplit: split an enchanted book (VIP)."
+    default: op
+  fluxenchant.split.table:
+    description: "Split an enchanted book with a right click on an enchanting table (VIP)."
+    default: op
   fluxenchant.admin:
     description: /fluxenchant reload and info.
     default: op

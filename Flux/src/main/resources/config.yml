@@ -414,3 +414,13 @@ client-pack:
   folders:
     - plugins/Flux/pack
     - plugins/ItemsAdder/contents/flux/resourcepack
+
+# The advancements key (L) opens this command instead of the vanilla screen (blank or enabled: false = vanilla).
+advancement-redirect:
+  enabled: true
+  command: "menu"
+
+# Running total of the main currency gained, in the action bar (players switch it with /moneynotif on|off).
+money-actionbar:
+  enabled: true
+  hide-after-seconds: 1.5
