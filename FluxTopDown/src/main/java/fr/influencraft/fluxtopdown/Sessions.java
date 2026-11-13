@@ -144,7 +144,6 @@ final class Sessions implements Listener {
     private void tick(Session s, long tick) {
         Player p = s.player;
         Settings set = plugin.settings();
-        s.readMouse();
         walk(s, tick);
         fight(s, tick);
         s.moveAvatar(tick);

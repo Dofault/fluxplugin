@@ -96,7 +96,27 @@ public final class PacketEventsCamera extends PacketListenerAbstract implements 
     }
 
     @Override
+    public void place(Player viewer, Entity entity, double x, double y, double z) {
+        var data = new com.github.retrooper.packetevents.protocol.entity.EntityPositionData(
+                new com.github.retrooper.packetevents.util.Vector3d(x, y, z), new com.github.retrooper.packetevents.util.Vector3d(0, 0, 0),
+                entity.getYaw(), entity.getPitch());
+        PacketEvents.getAPI().getPlayerManager().sendPacket(viewer,
+                new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityPositionSync(entity.getEntityId(), data, false));
+    }
+
+    @Override
     public void onPacketReceive(PacketReceiveEvent event) {
+        var type = event.getPacketType();
+        if (type == PacketType.Play.Client.PLAYER_ROTATION || type == PacketType.Play.Client.PLAYER_POSITION_AND_ROTATION) {
+            if (event.getPlayer() instanceof Player p) {
+                Camera.Turn turn = Camera.turn(p.getUniqueId());
+                if (turn != null) {
+                    var w = new com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying(event);
+                    if (w.hasRotationChanged()) turn.turned(p, w.getLocation().getYaw(), w.getLocation().getPitch());
+                }
+            }
+            return;
+        }
         // since 26.1 an attack is a packet of its own; before, an action of the interact packet
         boolean attack = event.getPacketType() == PacketType.Play.Client.ATTACK;
         if (!attack && event.getPacketType() != PacketType.Play.Client.INTERACT_ENTITY) return;

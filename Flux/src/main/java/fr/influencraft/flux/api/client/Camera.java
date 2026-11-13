@@ -28,6 +28,15 @@ public final class Camera {
         void turn(Player player, float yaw, boolean relativeYaw, float pitch, boolean relativePitch);
 
         void hideSelf(Player player, boolean hidden);
+
+        /** Moves an entity on this player's screen only, at once (the server's own entity is not moved). */
+        void place(Player viewer, Entity entity, double x, double y, double z);
+    }
+
+    /** The player turned his head (his mouse moved). Called on a network thread, as soon as his client says it. */
+    @FunctionalInterface
+    public interface Turn {
+        void turned(Player player, float yaw, float pitch);
     }
 
     /** A click on a watched entity: {@code left} = attack key, else use key (repeated while held). */
@@ -38,6 +47,7 @@ public final class Camera {
 
     private static volatile Service service;
     private static final Map<Integer, Click> TARGETS = new ConcurrentHashMap<>();
+    private static final Map<java.util.UUID, Turn> TURNS = new ConcurrentHashMap<>();
 
     private Camera() {
     }
@@ -65,6 +75,23 @@ public final class Camera {
     public static void hideSelf(Player player, boolean hidden) {
         Service s = service;
         if (s != null) s.hideSelf(player, hidden);
+    }
+
+    /** His mouse goes to {@code turn} as soon as it moves, before the server's tick (null stops). */
+    public static void turns(Player player, Turn turn) {
+        if (turn == null) TURNS.remove(player.getUniqueId());
+        else TURNS.put(player.getUniqueId(), turn);
+    }
+
+    /** The listener of this player's mouse, null when none (read from the network threads). */
+    public static Turn turn(java.util.UUID player) {
+        return TURNS.get(player);
+    }
+
+    /** Moves {@code entity} on {@code viewer}'s screen at once (a pointer following his mouse); thread-safe. */
+    public static void place(Player viewer, Entity entity, double x, double y, double z) {
+        Service s = service;
+        if (s != null) s.place(viewer, entity, x, y, z);
     }
 
     /** Clicks on this entity go to {@code click} (null stops). */

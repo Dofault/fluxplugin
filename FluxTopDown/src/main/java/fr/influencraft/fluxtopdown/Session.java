@@ -70,9 +70,9 @@ final class Session {
     final int previousSlot;
 
     // pointer, in screen units from the centre (x right, y up)
-    double sx, sy;
+    volatile double sx, sy;
     private float lastYaw, lastPitch;
-    private boolean primed, pitchReset;
+    private volatile boolean primed, pitchReset;
     private double distance;
 
     // walking
@@ -172,6 +172,7 @@ final class Session {
             if (player.isOnline() && camera.isValid()) Camera.view(player, camera);
         }, 3L);
         // right clicks only: left clicks are read from the arm swing (Sessions#onSwing), sent even when the box is missed
+        Camera.turns(player, (p, yaw, pitch) -> turned(yaw, pitch));
         Camera.clicks(target, (p, left) -> {
             if (!left) plugin.sessions().clicked(this, false);
         });
@@ -182,6 +183,7 @@ final class Session {
     void close() {
         closing = true;
         Camera.clicks(target, null);
+        Camera.turns(player, null);
         if (player.getVehicle() == seat) player.leaveVehicle();
         if (player.isOnline()) {
             Camera.view(player, null);
@@ -237,11 +239,13 @@ final class Session {
         return eye;
     }
 
-    /** The mouse turned his (unseen) head: the pointer moves, stopped at the screen's edges. */
-    void readMouse() {
+    /**
+     * The mouse turned his (unseen) head: the pointer moves, stopped at the screen's edges, and is shown to him at once
+     * (network thread, before the server's tick). The spot is first found on the floor level of the last pointed spot;
+     * the tick then puts the pointer on the real spot (blocks), usually the same.
+     */
+    synchronized void turned(float yaw, float pitch) {
         Settings s = plugin.settings();
-        Location l = player.getLocation();
-        float yaw = l.getYaw(), pitch = l.getPitch();
         if (!primed) {
             lastYaw = yaw;
             lastPitch = pitch;
@@ -265,7 +269,18 @@ final class Session {
             pitchReset = true;
             Camera.turn(player, 0f, true, 0f, false);
         }
+        double[] e = eyeAt;
+        if (e == null) return;
+        Vector[] ax = axes(s);
+        Vector dir = ax[0].clone().add(ax[1].clone().multiply(sx)).add(ax[2].clone().multiply(sy)).normalize();
+        if (dir.getY() > -1e-3) return;
+        double t = (spotY - e[1]) / dir.getY();
+        Camera.place(player, cursor, e[0] + dir.getX() * t, spotY + 0.05, e[2] + dir.getZ() * t);
     }
+
+    /** Eyes of the camera at the last tick (x, y, z) and the height of the last pointed spot: for {@link #turned}. */
+    private volatile double[] eyeAt;
+    private volatile double spotY;
 
     /** Camera, click box and pointer follow the hero. */
     void place() {
@@ -285,8 +300,10 @@ final class Session {
         camera.setRotation((float) s.cameraYaw(), (float) s.cameraPitch());
         target.teleport(eye.clone().subtract(0, 1.5, 0));
         // the pointer: a mark standing on the pointed spot, drawn over the blocks, its centre on the spot
-        Location spot = pointed().add(0, 0.05, 0);
-        cursor.teleport(spot);
+        eyeAt = new double[]{eye.getX(), eye.getY(), eye.getZ()};
+        Location spot = pointed();
+        spotY = spot.getY();
+        cursor.teleport(spot.add(0, 0.05, 0));
         double px = 0.025 * s.cursorScale();
         Vector3f t = new Vector3f((float) (-s.hotspotX() * px), (float) (-s.hotspotY() * px), 0);
         Transformation now = cursor.getTransformation();
