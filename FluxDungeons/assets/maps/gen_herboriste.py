@@ -8,22 +8,25 @@ A sanctuary of plants, nothing made by herbalists (no shop, no laboratory, no ca
   - room 1, the Wild Path: an old path taken by the woods (oak, birch, dark oak, azaleas), fallen logs, ponds, mossy
     stones, flowers at the feet of the trees; brambles and vine weavers. Door: a gate of roots;
   - room 2, the Wild Garden: beds of colours (white and pink, yellow and orange, blue and violet with its pools of blue
-    orchids), a giant tree, a mossy stump (the Herbarium altar), a waterfall, an arch of branches and vines; the
-    Herbarium asks for blue orchids, lilies of the valley and alliums (cornflowers to mislead): a hedge sinks;
+    orchids), a giant tree, a mossy stump (old altar, now decor), a waterfall, an arch of branches and vines; a hedge
+    sinks once the room is cleared;
   - the Natural Greenhouse: a hollow in the hill open to the sky through a roof of leaves, jungle trees, vines,
     large ferns, spore blossoms;
   - the Passage of Roots: down into the hill (63 to 50) under giant roots, darker, glow lichen, cave vines (glow
     berries); vine weavers;
   - the Coral Basin: a damp cave, shallow pools of corals and seagrass on both sides, small falls, the way dry;
   - room 3 ends in the Mushroom Grotto: giant red and brown mushrooms, crimson and warped fungi, moss, hanging roots,
-    mould archers; at its end the Old Bush (flowering azalea, altar) takes, in order, the ingredients of the Sylvan Sap
-    (grant fdgrant_tisane_sylve, read by the boss fight: unchanged): a door of mushroom flesh sinks;
+    mould archers; at its end the Old Bush (flowering azalea, decor) and a door of mushroom flesh that sinks once the
+    room is cleared;
   - room 4, the Arid Flora: a sunken basin open to the sky, dunes of sand and red sand, cactus away from the way,
     dead bushes, strata of sandstone and terracotta; thorny husks; then the Threshold: giant trees, monumental roots,
-    rare plants (torchflowers, pitcher plants), the Seal of Roots (rooted dirt on a pedestal): a door of roots;
+    rare plants (torchflowers, pitcher plants), the Seal of Roots (rooted dirt on a pedestal, decor): a door of roots;
   - the Sanctuary: the fox's square of the first version kept exactly (30 x 30, flat, nothing on it, the fox hidden
     in its middle), at the bottom of a sinkhole open to the sky, crowned by giant trees, roots, vines and flowers all
     round it, out of reach behind invisible walls.
+
+Every door opens once the monsters of its room are dead (2026-11-13: the altars asking for plants were dropped,
+the dungeon is in adventure mode and asking for items made it heavier for little gain; the altars stay as decor).
 
 Usage: gen_herboriste.py [server] [--check] [--preview DIR]     (labs by default)
 """
@@ -508,13 +511,7 @@ def garden():
               lambda *a: LEAVES["azalea"] if r.random() < 0.6 else LEAVES["flowering_azalea"])
         curtain(-22 if sx < 0 else 4, 91, -4 if sx < 0 else 22, 92, F + 7)
     g.box(-3, F + 1, 91, 3, F + 5, 92, lambda *a: LEAVES["flowering_azalea"] if r.random() < 0.5 else LEAVES["azalea"])
-    door("herbier", (-3, F + 1, 91), (3, F + 5, 92), room="2", offering={
-        "altar": [0, F + 1, 88], "ordered": False, "title": "Herbier du sanctuaire",
-        "items": [
-            {"item": "blue_orchid", "amount": 2, "hint": "La fleur bleue née au bord de l'eau, qui calme les fièvres"},
-            {"item": "lily_of_the_valley", "amount": 2, "hint": "Les clochettes blanches qui empoisonnent les imprudents"},
-            {"item": "allium", "amount": 2, "hint": "Le globe pourpre au parfum d'ail"},
-        ]})
+    door("herbier", (-3, F + 1, 91), (3, F + 5, 92), room="2")
     curtain(-3, 91, 3, 92, F + 6)
 
 
@@ -676,16 +673,7 @@ def mushroom_grotto():
     g.box(-4, C, 201, 4, C, 202, "moss_block")
     g.box(-19, C + 1, 203, 19, C + 10, 204, "dirt", where=lambda b: b == "air")
     g.box(-2, C + 1, 203, 2, C + 4, 203, lambda x, y, z: "mushroom_stem" if abs(x) == 2 or y == C + 4 else "brown_mushroom_block")
-    door("alambic", (-2, C + 1, 203), (2, C + 4, 203), room="3", offering={
-        "altar": [0, C + 1, 200], "ordered": True, "title": "Le Vieux Buisson : la sève des anciens",
-        "grant": "fdgrant_tisane_sylve",
-        "grant-message": "&#2ECF7BLa sève de sylve coule du Vieux Buisson : vous la goûtez tous. &#B376E5Les racines du gardien vous retiendront moins longtemps.",
-        "items": [
-            {"item": "brown_mushroom", "amount": 1, "hint": "1. La chair brune du sous-bois"},
-            {"item": "red_mushroom", "amount": 1, "hint": "2. Le chapeau rouge tacheté de blanc"},
-            {"item": "glow_berries", "amount": 2, "hint": "3. Les baies qui luisent sous la voûte"},
-            {"item": "blue_orchid", "amount": 1, "hint": "4. La fleur qui calme les fièvres"},
-        ]})
+    door("alambic", (-2, C + 1, 203), (2, C + 4, 203), room="3")
     g.box(-2, C + 1, 204, 2, C + 4, 204, "air")
 
 
@@ -772,14 +760,7 @@ def arid_and_threshold():
     g.set(0, A + 2, 247, "rooted_dirt")
     g.box(-22, A + 1, 250, 22, F + 14, 250, "dirt", where=lambda b: b == "air" or gridlib.passable(b))
     g.box(-2, A + 1, 250, 2, A + 5, 250, lambda x, y, z: "mangrove_roots" if (x + y) % 2 else "rooted_dirt")
-    door("sceau", (-2, A + 1, 250), (2, A + 5, 250), room="4", offering={
-        "altar": [0, A + 2, 247], "ordered": False, "title": "Le Sceau des racines",
-        "items": [
-            {"item": "spore_blossom", "amount": 1, "hint": "La fleur qui pleut de la voûte"},
-            {"item": "glow_berries", "amount": 2, "hint": "Les baies qui luisent dans le noir"},
-            {"item": "blue_orchid", "amount": 1, "hint": "La fleur qui calme les fièvres"},
-            {"item": "red_mushroom", "amount": 1, "hint": "Le chapeau rouge tacheté de blanc"},
-        ]})
+    door("sceau", (-2, A + 1, 250), (2, A + 5, 250), room="4")
 
 
 # ======================================================================== the sanctuary (the fox's square)
