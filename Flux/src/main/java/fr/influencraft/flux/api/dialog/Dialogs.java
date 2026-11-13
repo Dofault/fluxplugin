@@ -65,6 +65,11 @@ public final class Dialogs {
         style = Map.copyOf(merged);
     }
 
+    /** A heading inside a window's body, in the windows' title colour ({@code dialogs.title} of Flux's config). */
+    public static String heading(String text) {
+        return style("title") + text;
+    }
+
     static String style(String key) {
         return style.getOrDefault(key, "");
     }

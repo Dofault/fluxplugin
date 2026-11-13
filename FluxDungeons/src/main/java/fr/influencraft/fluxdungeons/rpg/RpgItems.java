@@ -51,31 +51,28 @@ public final class RpgItems {
         }
     }
 
+    /** Description in the suite's style (Flux Lore): description, stats, classes, level, rarity, set bonuses. */
     private List<String> lore(Equipment.Item item) {
-        List<String> out = new ArrayList<>();
-        for (String d : item.description()) out.add("&#B376E5" + d);
-        if (!item.description().isEmpty()) out.add("");
-        item.stats().forEach((stat, value) -> out.add("&7" + statName(stat) + " &f" + statValue(stat, value)));
-        out.add("");
+        fr.influencraft.flux.api.inventory.Lore lore = fr.influencraft.flux.api.inventory.Lore.create();
+        if (!item.description().isEmpty()) lore.description(item.description());
+        item.stats().forEach((stat, value) -> lore.kv(statName(stat), statValue(stat, value)));
         if (!item.classes().isEmpty()) {
             List<String> names = new ArrayList<>();
             for (String c : item.classes()) names.add(plugin.messages().raw("classes." + c + ".name"));
-            out.add("&7" + plugin.messages().raw("item.classes") + " &f" + String.join(", ", names));
+            lore.kv(plugin.messages().raw("item.classes"), String.join(", ", names));
         }
-        out.add("&7" + plugin.messages().raw("item.level") + " &f" + item.level());
-        out.add("&7" + plugin.messages().raw("item.rarity") + " &" + item.rarity().color()
-                + plugin.messages().raw("rarities." + item.rarity().id()));
+        lore.kv(plugin.messages().raw("item.level"), item.level());
+        lore.kv(plugin.messages().raw("item.rarity"), "&" + item.rarity().color() + plugin.messages().raw("rarities." + item.rarity().id()));
         if (item.set() != null) {
             Equipment.ItemSet set = equipment.set(item.set());
-            out.add("");
-            out.add("&#FFD94D" + plugin.messages().raw("item.set", "%set%", plugin.messages().raw("sets." + set.id())));
+            lore.info(plugin.messages().raw("item.set", "%set%", plugin.messages().raw("sets." + set.id())));
             set.bonuses().forEach((pieces, bonus) -> {
                 List<String> parts = new ArrayList<>();
                 bonus.forEach((stat, v) -> parts.add(statValue(stat, v) + " " + statName(stat)));
-                out.add("&7" + plugin.messages().raw("item.set-bonus", "%pieces%", String.valueOf(pieces)) + " &f" + String.join(", ", parts));
+                lore.item(plugin.messages().raw("item.set-bonus", "%pieces%", String.valueOf(pieces)) + " &f" + String.join(", ", parts));
             });
         }
-        return out;
+        return lore.build();
     }
 
     /** Name of a stat in the server's language (templated ones: "damage against" + family). */

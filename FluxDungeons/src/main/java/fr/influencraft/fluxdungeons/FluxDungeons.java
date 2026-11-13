@@ -492,7 +492,7 @@ public final class FluxDungeons extends FluxPlugin {
             // dungeons are played with the rpg class (docs/technique/rpg.md)
             String[] c = rpgClass(p);
             if (c == null) form.body(messages().raw("main.no-class"));
-            else form.body(messages().raw("main.class", "%class%", "&#FFD94D" + c[0], "%level%", c[1]));
+            else form.body(messages().raw("main.class", "%class%", Dialogs.heading(c[0]), "%level%", c[1]));
         } else {
             HeroClass mine = heroes.classOf(p.getUniqueId());
             if (mine == null) form.body(messages().raw("main.no-class"));
@@ -511,7 +511,7 @@ public final class FluxDungeons extends FluxPlugin {
                 List<String> tip = new ArrayList<>();
                 tip.add(messages().raw("main.tooltip", "%dungeon%", def.name(), "%min%", String.valueOf(def.minPlayers()),
                         "%max%", String.valueOf(def.maxPlayers()), "%level%", String.valueOf(def.recommendedLevel())));
-                for (String d : def.description()) tip.add("&#B376E5" + d);
+                tip.addAll(def.description());
                 form.action("play:" + def.id(), def.name(), String.join("\n", tip));
             }
             form.action("class", messages().raw("main.choose-class"));
@@ -544,7 +544,7 @@ public final class FluxDungeons extends FluxPlugin {
             List<String> lines = new ArrayList<>();
             lines.add(c.colored() + " &7" + messages().raw("class.level", "%level%", String.valueOf(level))
                     + (mine != null && mine.id().equals(c.id()) ? " " + messages().raw("class.current") : ""));
-            for (String d : c.description()) lines.add("&#B376E5" + d);
+            lines.addAll(c.description());
             List<String> abilities = new ArrayList<>();
             for (HeroClass.AbilitySpec a : c.abilities()) abilities.add(a.name());
             lines.add("&7" + messages().raw("class.abilities") + " &f" + String.join("&7, &f", abilities));
@@ -603,7 +603,7 @@ public final class FluxDungeons extends FluxPlugin {
         // easiest in green, hardest in red, the ones between in gold
         for (int i = 0; i < levels.size(); i++) {
             DungeonDefinition.Level l = levels.get(i);
-            String color = i == 0 ? "&#2ECF7B" : i == levels.size() - 1 ? "&#FF5C5C" : "&#FFD94D";
+            String color = messages().raw(i == 0 ? "pick-level.color-easy" : i == levels.size() - 1 ? "pick-level.color-hard" : "pick-level.color-middle");
             String extra = (l.loan() ? messages().raw("pick-level.loan") : "") + (l.requireGear() ? messages().raw("pick-level.required") : "");
             String tip = messages().raw("pick-level.tooltip", "%level%", color + "&l" + l.name(), "%gear%", l.gear(),
                     "%health%", number(l.health()), "%damage%", number(l.damage()), "%reward%", number(l.reward()),
@@ -726,7 +726,8 @@ public final class FluxDungeons extends FluxPlugin {
         for (UUID m : party.members()) {
             String n = name(m);
             HeroClass c = heroes.classOf(m);
-            names.add((party.isLeader(m) ? "&#FFD94D★ " : "&f") + n + (c == null ? "" : " &7(" + c.colored() + "&7)"));
+            names.add(messages().raw(party.isLeader(m) ? "party.leader" : "party.member", "%name%", n)
+                    + (c == null ? "" : messages().raw("party.class", "%class%", c.colored())));
         }
         messages().send(p, "party.info", "%count%", String.valueOf(party.size()), "%max%", String.valueOf(parties.maxSize()),
                 "%members%", String.join("&7, ", names));
@@ -963,7 +964,7 @@ public final class FluxDungeons extends FluxPlugin {
         boolean fromHere = source != null && source.equals(p.getWorld());
         YamlConfiguration y = new YamlConfiguration();
         y.options().setHeader(List.of("Dungeon made in game (/fluxdungeons create). Points: /fluxdungeons edit " + id + "."));
-        y.set("name", "&#FFD94D" + id);
+        y.set("name", id);
         y.set("icon", "IRON_SWORD");
         y.set("description", List.of());
         y.set("players.min", 1);

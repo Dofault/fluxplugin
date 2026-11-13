@@ -237,7 +237,7 @@ public final class RpgPlayers implements Listener {
         form.body(plugin.messages().raw("choice.intro"));
         for (String id : set.classes().keySet()) {
             ItemStack weapon = items.make("class_" + id + "_weapon");
-            String text = "&#FFD94D" + plugin.messages().raw("classes." + id + ".name") + "\n&#B376E5" + plugin.messages().raw("classes." + id + ".description");
+            String text = Dialogs.heading(plugin.messages().raw("classes." + id + ".name")) + "\n&f" + plugin.messages().raw("classes." + id + ".description");
             if (weapon != null) form.item(weapon, text);
             else form.body(text);
         }
@@ -581,7 +581,7 @@ public final class RpgPlayers implements Listener {
                 lines.append("&7").append(items.statName(d.id())).append(" &f").append(total(d, v));
             }
             if (lines.length() == 0) continue;
-            form.body("&#FFD94D" + m.raw("sheet." + category));
+            form.body(Dialogs.heading(m.raw("sheet." + category)));
             form.body(lines.toString());
         }
         PlayerInventory inv = p.getInventory();

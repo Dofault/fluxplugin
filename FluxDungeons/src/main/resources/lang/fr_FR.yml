@@ -41,6 +41,9 @@ start:
   no-slot: '&#FF5C5CTous les donjons sont occupés, réessaie dans quelques minutes.'
   failed: '&#FF5C5CLe donjon n''a pas pu démarrer.'
 party:
+  class: " &7(%class%&7)"
+  member: "&f%name%"
+  leader: "&#FFD94D★ %name%"
   invited: '&#2ECF7BInvitation envoyée à &f%player%&#2ECF7B.'
   invitation: '&#FFD94D%player% &#B376E5t''invite dans son groupe : &f[/%flux_cmd_fluxdungeons_party% accepter %player%]'
   joined: '&#2ECF7B%player% a rejoint le groupe.'
@@ -310,6 +313,9 @@ offering:
   enough: '&#B376E5L''autel en a déjà assez de celle-ci.'
   given: '&#A5C96B%player% &7dépose &f%count% × %item%&7.'
 pick-level:
+  color-hard: "&#FF5C5C"
+  color-middle: "&#FFD94D"
+  color-easy: "&#2ECF7B"
   title: '%dungeon%'
   intro: '&#B376E5Choisis la difficulté pour tout le groupe. &7(Tu pourras encore la changer sur l''écran de lancement.)'
   tooltip: '%level%

@@ -181,7 +181,8 @@ final class PassMenu {
                 icon = v.icon();
                 lore.info(texts().raw("menu.mission-running"));
             }
-            String name = "&#FFD94D" + (v.name().isEmpty() ? m.name() : v.name());
+            // no colour: Items.of gives the name style
+            String name = v.name().isEmpty() ? m.name() : v.name();
             missions.add(ListEntry.of(m.id()).item(Items.of(icon, name, lore.build(), player)));
         }
         return centred(missions);

@@ -65,6 +65,12 @@ origins:
   prize: "Tournament prize"
 
 menu:
+  podium: "{medal} &f{player} &8· &#B376E5{score}"
+  run-name: "&#FFD94D{name}"
+  medals:
+    1: "&#F0A800①"
+    2: "&#D9D9D9②"
+    3: "&#C97B3A③"
   running: "&#FFD94D{name}"
   drawing: "Drawing..."
   next-title: "&#FFD94DNext tournament"

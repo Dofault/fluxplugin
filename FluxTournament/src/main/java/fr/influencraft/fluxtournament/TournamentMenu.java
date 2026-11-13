@@ -33,7 +33,6 @@ import java.util.UUID;
 final class TournamentMenu {
 
     static final String BOARD = "tournois";
-    private static final String[] MEDALS = {"&#F0A800①", "&#D9D9D9②", "&#C97B3A③"};
 
     private final FluxTournament plugin;
     private final TournamentService service;
@@ -130,14 +129,15 @@ final class TournamentMenu {
             List<String> podium = new ArrayList<>();
             for (int i = 0; i < Math.min(3, r.results().size()); i++) {
                 Result res = r.results().get(i);
-                podium.add(MEDALS[i] + " &f" + res.name() + " &8· &#B376E5" + service.scoreOf(r.kind(), res.score(), r.amount()));
+                podium.add(m().raw("menu.podium", "{medal}", m().raw("menu.medals." + (i + 1)), "{player}", res.name(),
+                        "{score}", String.valueOf(service.scoreOf(r.kind(), res.score(), r.amount()))));
             }
             if (!podium.isEmpty()) lore.items(podium);
             Result mine = r.of(viewer.getUniqueId());
             if (mine != null) lore.ok(m().raw("menu.your-result", "{place}", String.valueOf(mine.rank())));
             if (!r.rewarded()) lore.ko(m().raw("menu.not-rewarded"));
             String icon = r.icon() == null || r.icon().isBlank() ? "PAPER" : r.icon();
-            String name = TournamentService.kindIcon(Plan.Kind.of(r.kind())) + " &#FFD94D" + r.name();
+            String name = TournamentService.kindIcon(Plan.Kind.of(r.kind())) + " " + m().raw("menu.run-name", "{name}", r.name());
             out.add(ListEntry.of(String.valueOf(r.id())).item(Items.of(icon, name, lore.build(), viewer)));
         }
         return out;
@@ -160,7 +160,7 @@ final class TournamentMenu {
     // ---------------------------------------------------------------- helpers
 
     private String medal(int place) {
-        return place <= 3 ? MEDALS[place - 1] : "&f" + m().raw("menu.place-n", "{n}", String.valueOf(place));
+        return place <= 3 ? m().raw("menu.medals." + place) : "&f" + m().raw("menu.place-n", "{n}", String.valueOf(place));
     }
 
     private static ItemStack head(UUID uuid, String name, List<String> lore, Player viewer) {

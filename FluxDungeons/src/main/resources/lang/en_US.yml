@@ -41,6 +41,9 @@ start:
   no-slot: '&#FF5C5CEvery dungeon is taken, try again in a few minutes.'
   failed: '&#FF5C5CThe dungeon could not start.'
 party:
+  class: " &7(%class%&7)"
+  member: "&f%name%"
+  leader: "&#FFD94D★ %name%"
   invited: '&#2ECF7BInvitation sent to &f%player%&#2ECF7B.'
   invitation: '&#FFD94D%player% &#B376E5invites you to his party: &f[/%flux_cmd_fluxdungeons_party% accept %player%]'
   joined: '&#2ECF7B%player% joined the party.'
@@ -310,6 +313,9 @@ offering:
   enough: '&#B376E5The altar already has enough of this one.'
   given: '&#A5C96B%player% &7puts &f%count% × %item%&7.'
 pick-level:
+  color-hard: "&#FF5C5C"
+  color-middle: "&#FFD94D"
+  color-easy: "&#2ECF7B"
   title: '%dungeon%'
   intro: '&#B376E5Pick the difficulty for the whole party. &7(It can still be changed on the launch screen.)'
   tooltip: '%level%
