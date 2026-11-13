@@ -1,1 +1,1 @@
-{"model": {"type": "minecraft:model", "model": "flux:item/pointer"}}
+{"model": {"type": "minecraft:model", "model": "flux:item/pointer", "tints": [{"type": "minecraft:constant", "value": 16646603}]}}

@@ -57,12 +57,13 @@ void main() {
     texCoord0 = UV0;
 
     // ---- Flux head pointer ------------------------------------------------------------------------------------
-    // Its texture marks each corner with an almost transparent texel (254, 1, 200 + corner, 5): 0 top left,
-    // 1 top right, 2 bottom left, 3 bottom right. Only in the world (perspective), never in a menu.
-    ivec2 fluxSize = textureSize(Sampler0, 0);
-    ivec4 fluxMark = ivec4(texelFetch(Sampler0, clamp(ivec2(UV0 * vec2(fluxSize)), ivec2(0), fluxSize - 1), 0) * 255.0 + 0.5);
-    if (fluxMark.r == 254 && fluxMark.g == 1 && fluxMark.a == 5 && fluxMark.b >= 200 && fluxMark.b <= 203 && ProjMat[2][3] != 0.0) {
-        int corner = fluxMark.b - 200;
+    // The item flux:pointer is tinted (254, 1, 203) by its item definition: that exact vertex colour marks it. A
+    // vertex's corner comes from its place in its 16 x 16 sprite (the face shows texels 1 to 15, sprites sit on a
+    // 16 texel grid in the atlas). Only in the world (perspective), never in a menu.
+    ivec3 fluxTint = ivec3(Color.rgb * 255.0 + 0.5);
+    if (fluxTint == ivec3(254, 1, 203) && ProjMat[2][3] != 0.0) {
+        vec2 fluxTexel = UV0 * vec2(textureSize(Sampler0, 0));
+        int corner = (mod(floor(fluxTexel.x + 0.5), 16.0) >= 8.0 ? 1 : 0) + (mod(floor(fluxTexel.y + 0.5), 16.0) >= 8.0 ? 2 : 0);
         // the face's normal is where the head looks (world axes), the view matrix gives the camera's direction
         vec3 look = normalize(Normal) * FLUX_POINTER_FACING;
         vec3 camera = transpose(mat3(ModelViewMat)) * vec3(0.0, 0.0, -1.0);
