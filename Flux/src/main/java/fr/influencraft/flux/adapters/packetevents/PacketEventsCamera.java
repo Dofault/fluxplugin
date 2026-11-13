@@ -8,6 +8,7 @@ import com.github.retrooper.packetevents.event.PacketSendEvent;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientAttack;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerCamera;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata;
@@ -96,12 +97,22 @@ public final class PacketEventsCamera extends PacketListenerAbstract implements 
 
     @Override
     public void onPacketReceive(PacketReceiveEvent event) {
-        if (event.getPacketType() != PacketType.Play.Client.INTERACT_ENTITY) return;
-        WrapperPlayClientInteractEntity w = new WrapperPlayClientInteractEntity(event);
-        Camera.Click click = Camera.target(w.getEntityId());
+        // since 26.1 an attack is a packet of its own; before, an action of the interact packet
+        boolean attack = event.getPacketType() == PacketType.Play.Client.ATTACK;
+        if (!attack && event.getPacketType() != PacketType.Play.Client.INTERACT_ENTITY) return;
+        int entity;
+        boolean left;
+        if (attack) {
+            entity = new WrapperPlayClientAttack(event).getEntityId();
+            left = true;
+        } else {
+            WrapperPlayClientInteractEntity w = new WrapperPlayClientInteractEntity(event);
+            entity = w.getEntityId();
+            left = w.getAction() == WrapperPlayClientInteractEntity.InteractAction.ATTACK;
+        }
+        Camera.Click click = Camera.target(entity);
         if (click == null || !(event.getPlayer() instanceof Player p)) return;
         event.setCancelled(true);
-        boolean left = w.getAction() == WrapperPlayClientInteractEntity.InteractAction.ATTACK;
         Bukkit.getScheduler().runTask(flux, () -> {
             if (!p.isOnline()) return;
             if (!left) {

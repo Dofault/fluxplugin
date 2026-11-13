@@ -11,6 +11,13 @@ refused: "&#FF5C5CLa vue aérienne n'a pas pu s'ouvrir ici (entité refusée par
 waiting: "&7Le donjon se prépare : la vue aérienne s'activera à ton entrée."
 waiting-over: "&7Le donjon n'a pas commencé : la vue aérienne attendue est annulée."
 usage: "!&#FF5C5C/%flux_cmd_fluxtopdown_hackslash% [jouer [donjon] | on | off]"
+debug-on: "&7Débogage activé : chaque clic dit ce qu'il a fait."
+debug-off: "&7Débogage désactivé."
+debug-click: "&8[débogage] &7%button% → &f%x% %y% %z%&7, chemin : &f%points%&7 points, au sol : &f%ground%"
+debug-left: "clic gauche"
+debug-right: "clic droit"
+debug-yes: "oui"
+debug-no: "non"
 reloaded: "&#2ECF7BFluxTopDown rechargé."
 cooldown: "&#FF5C5C%spell% &7: encore &f%time% s&7."
 # barre de boss pendant la vue aérienne : les quatre sorts

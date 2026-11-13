@@ -42,6 +42,14 @@ final class Sessions implements Listener {
     /** Players who asked for the view in their next dungeon run, with the tick the wait ends. */
     private final Map<UUID, Long> waiting = new HashMap<>();
     private final Map<UUID, Long> told = new HashMap<>();
+    /** Players who see what each click did (testing). */
+    private final java.util.Set<UUID> debug = new java.util.HashSet<>();
+
+    boolean toggleDebug(Player p) {
+        if (debug.remove(p.getUniqueId())) return false;
+        debug.add(p.getUniqueId());
+        return true;
+    }
 
     Sessions(FluxTopDown plugin) {
         this.plugin = plugin;
@@ -272,6 +280,12 @@ final class Sessions implements Listener {
         s.chase = null;
         goTo(s, aim);
         kit.marker(s.player, aim);
+        if (debug.contains(s.player.getUniqueId())) {
+            plugin.messages().send(s.player, "debug-click", "%button%", plugin.messages().raw(left ? "debug-left" : "debug-right"),
+                    "%x%", String.format(java.util.Locale.ROOT, "%.1f", aim.getX()), "%y%", String.format(java.util.Locale.ROOT, "%.1f", aim.getY()),
+                    "%z%", String.format(java.util.Locale.ROOT, "%.1f", aim.getZ()), "%points%", String.valueOf(s.path.size()),
+                    "%ground%", plugin.messages().raw(s.player.isOnGround() ? "debug-yes" : "debug-no"));
+        }
     }
 
     private void cast(Session s, Settings.Spell spell, Location aim, long tick) {

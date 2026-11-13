@@ -37,7 +37,7 @@ public final class FluxTopDown extends FluxPlugin {
                 .description("Hack and slash view from above (experiment): on, off, or play a dungeon with it.")
                 .permission("fluxtopdown.use")
                 .executor(this::onCommand)
-                .completer((sender, args) -> args.length == 1 ? List.of("jouer", "on", "off", "reload") : List.of())
+                .completer((sender, args) -> args.length == 1 ? List.of("jouer", "on", "off", "debug", "reload") : List.of())
                 .register();
     }
 
@@ -81,6 +81,7 @@ public final class FluxTopDown extends FluxPlugin {
                 if (!on && allowed(p)) sessions.start(p);
             }
             case "off" -> sessions.cancel(p);
+            case "debug" -> messages().send(p, sessions.toggleDebug(p) ? "debug-on" : "debug-off");
             case "jouer", "play" -> {
                 if (allowed(p)) sessions.play(p, args.length > 1 ? args[1] : settings.dungeon());
             }
