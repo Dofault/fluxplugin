@@ -128,7 +128,7 @@ final class Sessions implements Listener {
         }
         for (Session s : new ArrayList<>(sessions.values())) {
             Player p = s.player;
-            if (!p.isOnline() || p.isDead() || p.getGameMode() == GameMode.SPECTATOR || !s.avatar.isValid() || !s.camera.isValid()) {
+            if (!p.isOnline() || p.isDead() || p.getGameMode() == GameMode.SPECTATOR || !s.avatar.isValid() || !s.camera.isValid() || !s.seat.isValid()) {
                 stop(p, p.isOnline());
                 continue;
             }
@@ -161,48 +161,77 @@ final class Sessions implements Listener {
         }
     }
 
-    /** Pushes him along his path by velocity, the game's physics doing the rest (walls, steps, falls). */
+    /**
+     * Walks him one tick: along his path, or through his leap, with the server's own gravity and steps (he sits on
+     * his seat, the game's physics do not move him).
+     */
     private void walk(Session s, long tick) {
         Player p = s.player;
-        if (s.leapUntil > 0) {
-            if (tick >= s.leapStart + 3 && p.isOnGround() || tick >= s.leapUntil) {
+        s.ride();
+        Vector pos = p.getLocation().toVector();
+        Paths floors = new Paths(p.getWorld());
+        double floor = floors.floorNear(pos.getBlockX(), (int) Math.floor(pos.getY() + 0.01), pos.getBlockZ());
+        Vector next = pos.clone();
+        if (s.leapVel != null) {
+            Vector v = s.leapVel;
+            Vector to = pos.clone().add(v);
+            double f = floors.floorNear(to.getBlockX(), (int) Math.floor(to.getY() + 0.01), to.getBlockZ());
+            // a wall in the way stops the forward part of the jump
+            if (Double.isNaN(f) || f > to.getY() + 0.01 && v.getY() > 0) to = pos.clone().add(new Vector(0, v.getY(), 0));
+            v.setX(v.getX() * 0.91).setZ(v.getZ() * 0.91).setY((v.getY() - 0.08) * 0.98);
+            double under = floors.floorNear(to.getBlockX(), (int) Math.floor(to.getY() + 0.5), to.getBlockZ());
+            boolean landed = tick >= s.leapStart + 3 && v.getY() < 0 && !Double.isNaN(under) && to.getY() <= under;
+            if (landed || tick >= s.leapUntil) {
+                if (!Double.isNaN(under)) to.setY(Math.max(to.getY(), under));
+                s.leapVel = null;
                 s.leapUntil = 0;
+                s.moveFeet(to);
                 Runnable land = s.onLand;
                 s.onLand = null;
                 if (land != null) land.run();
+                return;
             }
+            s.moveFeet(to);
             return;
         }
-        if (tick < s.busyUntil || s.path.isEmpty()) return;
-        Location at = p.getLocation();
-        Vector pos = at.toVector();
-        boolean ground = p.isOnGround();
-        while (s.pathIndex < s.path.size()) {
-            Vector w = s.path.get(s.pathIndex);
-            double dx = w.getX() - pos.getX(), dz = w.getZ() - pos.getZ();
-            boolean last = s.pathIndex == s.path.size() - 1;
-            if (dx * dx + dz * dz < (last ? 0.04 : 0.16) && Math.abs(w.getY() - pos.getY()) < 0.7) s.pathIndex++;
-            else break;
+        if (tick >= s.busyUntil && !s.path.isEmpty()) {
+            while (s.pathIndex < s.path.size()) {
+                Vector w = s.path.get(s.pathIndex);
+                double dx = w.getX() - pos.getX(), dz = w.getZ() - pos.getZ();
+                if (dx * dx + dz * dz < 0.01) s.pathIndex++;
+                else break;
+            }
+            if (s.pathIndex >= s.path.size()) s.path = List.of();
+            else {
+                Vector w = s.path.get(s.pathIndex);
+                Vector flat = w.clone().subtract(pos).setY(0);
+                double len = flat.length();
+                Vector step = flat.multiply(Math.min(plugin.settings().moveSpeed(), len) / len);
+                Vector to = pos.clone().add(step);
+                double f = floors.floorNear(to.getBlockX(), (int) Math.floor(pos.getY() + 0.01), to.getBlockZ());
+                if (Double.isNaN(f) || f - pos.getY() > 1.25) {
+                    // blocked (a door closed, a monster's wall): he stops there
+                    s.stop();
+                } else {
+                    next = to;
+                    floor = f;
+                }
+            }
         }
-        if (s.pathIndex >= s.path.size()) {
-            s.path = List.of();
-            if (ground) p.setVelocity(new Vector(0, 0, 0));
-            return;
+        // steps up at once, falls with gravity
+        if (!Double.isNaN(floor) && floor >= next.getY() - 0.01) {
+            next.setY(floor);
+            s.vy = 0;
+        } else {
+            s.vy = (s.vy - 0.08) * 0.98;
+            double y = next.getY() + s.vy;
+            if (!Double.isNaN(floor) && y <= floor) {
+                y = floor;
+                s.vy = 0;
+            }
+            next.setY(y);
         }
-        if (!ground) return;
-        Vector w = s.path.get(s.pathIndex);
-        Vector flat = w.clone().subtract(pos).setY(0);
-        double len = flat.length();
-        double speed = Math.min(plugin.settings().moveSpeed(), s.pathIndex == s.path.size() - 1 ? len : 99);
-        Vector v = len < 1e-4 ? new Vector() : flat.multiply(speed / len);
-        double rise = w.getY() - pos.getY();
-        int stuck = s.stuck(pos, true);
-        if (rise > 0.6 && len < 1.8 || stuck == 8) v.setY(0.42);
-        if (stuck > 30) {
-            s.stop();
-            return;
-        }
-        p.setVelocity(v);
+        if (next.distanceSquared(pos) > 1e-6) s.moveFeet(next);
     }
 
     /** The basic attack: walks to the chased monster, strikes it at his class's attack speed. */
@@ -213,15 +242,12 @@ final class Sessions implements Listener {
             s.chase = null;
             return;
         }
-        if (tick < s.busyUntil || s.leapUntil > 0) return;
+        if (tick < s.busyUntil || s.leapVel != null) return;
         Location at = s.player.getLocation(), there = e.getLocation();
         double dx = there.getX() - at.getX(), dz = there.getZ() - at.getZ();
         double reach = plugin.settings().basicRange() + e.getWidth() / 2;
         if (dx * dx + dz * dz <= reach * reach && Math.abs(there.getY() - at.getY()) < 2.5) {
-            if (!s.path.isEmpty()) {
-                s.path = List.of();
-                if (s.player.isOnGround()) s.player.setVelocity(new Vector());
-            }
+            if (!s.path.isEmpty()) s.path = List.of();
             if (tick >= s.nextBasic) {
                 kit.basic(s, e, tick);
                 s.nextBasic = tick + Math.max(4, Math.round(20 * Combat.attackInterval(s.player)));
@@ -235,7 +261,6 @@ final class Sessions implements Listener {
     private void goTo(Session s, Location to) {
         s.path = new Paths(to.getWorld()).find(s.player.getLocation(), to, plugin.settings().maxPath());
         s.pathIndex = 0;
-        s.stuck(s.player.getLocation().toVector(), false);
     }
 
     private void bar(Session s, Settings set, long tick) {
@@ -285,7 +310,7 @@ final class Sessions implements Listener {
             }
             s.aiming = null;
         }
-        if (tick < s.busyUntil || s.leapUntil > 0) return;
+        if (tick < s.busyUntil || s.leapVel != null) return;
         LivingEntity enemy = Kit.enemyAt(aim, 1.6);
         if (enemy != null) {
             if (s.chase != enemy) s.nextRepath = 0;
@@ -304,7 +329,7 @@ final class Sessions implements Listener {
     }
 
     private void cast(Session s, Settings.Spell spell, Location aim, long tick) {
-        if (tick < s.busyUntil || s.leapUntil > 0) return;
+        if (tick < s.busyUntil || s.leapVel != null) return;
         kit.cast(s, spell, aim, tick);
     }
 
@@ -369,6 +394,15 @@ final class Sessions implements Listener {
         e.setCancelled(true);
         // a tick later: the right click this swing may belong to reaches us from the network a tick late
         Bukkit.getScheduler().runTask(plugin, () -> clicked(s, true));
+    }
+
+    /** Sneaking does not get him off his seat (a teleport by another plugin does: he is seated again next tick). */
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onDismount(org.bukkit.event.entity.EntityDismountEvent e) {
+        if (!(e.getEntity() instanceof Player p)) return;
+        Session s = sessions.get(p.getUniqueId());
+        if (s == null || s.closing || e.getDismounted() != s.seat) return;
+        if (p.getCurrentInput().isSneak()) e.setCancelled(true);
     }
 
     @EventHandler

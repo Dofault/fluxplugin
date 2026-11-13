@@ -44,8 +44,9 @@ import java.util.Map;
  *   <li>{@code avatar}: a mannequin with the player's skin standing where he stands, facing where he walks or casts:
  *   the player's own body is hidden (to himself and to the others) since his head follows the mouse.</li>
  * </ul>
- * The player himself still walks with the game's physics: the session pushes him along a path ({@link Paths}) by
- * velocity, his own keys moving him nowhere (movement speed and jump strength at 0).
+ * The player sits on an invisible seat (as MC GUI does): a client whose camera is another entity sends its position
+ * and rotation only while riding. The server walks him by moving the seat along a path ({@link Paths}), with its own
+ * gravity and steps; his keys move nothing (sneaking does not get him off).
  */
 final class Session {
 
@@ -58,6 +59,13 @@ final class Session {
     final Mannequin avatar;
     final TextDisplay cursor;
     final Interaction target;
+    /** What he sits on: a seated player's client keeps sending its rotation (the mouse) while the camera is elsewhere. */
+    final org.bukkit.entity.ArmorStand seat;
+    /** His feet height minus the seat's, measured once he sits (NaN before). */
+    private double seatOffset = Double.NaN;
+    boolean closing;
+    /** Velocity of a leap in progress (null when none), moved by the server. */
+    Vector leapVel;
     final BossBar bar;
     final int previousSlot;
 
@@ -74,7 +82,6 @@ final class Session {
     long nextRepath;
     double vy;
     private Vector lastPos;
-    private int stuck;
 
     // fighting
     Settings.Spell aiming;
@@ -127,6 +134,15 @@ final class Session {
             i.setInteractionHeight(3f);
             i.setResponsive(false);
         });
+        seat = w.spawn(at, org.bukkit.entity.ArmorStand.class, a -> {
+            a.setPersistent(false);
+            a.setVisibleByDefault(false);
+            a.setMarker(true);
+            a.setInvisible(true);
+            a.setGravity(false);
+            a.setInvulnerable(true);
+            a.setSilent(true);
+        });
         avatar = w.spawn(at, Mannequin.class, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.CUSTOM, m -> {
             m.setPersistent(false);
             m.setInvulnerable(true);
@@ -140,15 +156,14 @@ final class Session {
             m.setCustomNameVisible(true);
         });
         dressAvatar();
-        for (Entity e : List.of(camera, cursor, target)) player.showEntity(plugin, e);
+        for (Entity e : List.of(camera, cursor, target, seat)) player.showEntity(plugin, e);
         bar = BossBar.bossBar(Component.empty(), 1f, BossBar.Color.PURPLE, BossBar.Overlay.PROGRESS);
     }
 
     void open() {
         Settings s = plugin.settings();
-        hold(Attribute.MOVEMENT_SPEED);
-        hold(Attribute.JUMP_STRENGTH);
         player.getInventory().setHeldItemSlot(s.restSlot());
+        seat.addPassenger(player);
         for (Player other : plugin.getServer().getOnlinePlayers()) if (other != player) other.hidePlayer(plugin, player);
         Camera.hideSelf(player, true);
         Camera.view(player, camera);
@@ -165,7 +180,9 @@ final class Session {
     }
 
     void close() {
+        closing = true;
         Camera.clicks(target, null);
+        if (player.getVehicle() == seat) player.leaveVehicle();
         if (player.isOnline()) {
             Camera.view(player, null);
             Camera.hideSelf(player, false);
@@ -174,21 +191,7 @@ final class Session {
             player.getInventory().setHeldItemSlot(previousSlot);
             player.updateInventory();
         }
-        release(Attribute.MOVEMENT_SPEED);
-        release(Attribute.JUMP_STRENGTH);
-        for (Entity e : List.of(cursor, target, camera, avatar)) if (e.isValid()) e.remove();
-    }
-
-    private void hold(Attribute attribute) {
-        AttributeInstance a = player.getAttribute(attribute);
-        if (a == null) return;
-        a.removeModifier(MODIFIER);
-        a.addTransientModifier(new AttributeModifier(MODIFIER, -1, AttributeModifier.Operation.MULTIPLY_SCALAR_1, EquipmentSlotGroup.ANY));
-    }
-
-    private void release(Attribute attribute) {
-        AttributeInstance a = player.getAttribute(attribute);
-        if (a != null) a.removeModifier(MODIFIER);
+        for (Entity e : List.of(cursor, target, camera, avatar, seat)) if (e.isValid()) e.remove();
     }
 
     /** His invisible body still shows its armour and held items to himself: send him empty ones (look only). */
@@ -325,6 +328,24 @@ final class Session {
         lastPos = at.toVector();
     }
 
+    /** Keeps him seated (a teleport by another plugin takes him off): back on the seat where he now stands. */
+    void ride() {
+        if (player.getVehicle() != seat) {
+            seat.teleport(player.getLocation());
+            seat.addPassenger(player);
+            seatOffset = Double.NaN;
+        } else if (Double.isNaN(seatOffset)) {
+            seatOffset = player.getLocation().getY() - seat.getLocation().getY();
+        }
+    }
+
+    /** Puts his feet at {@code feet}: the server walks him by moving his seat. */
+    void moveFeet(Vector feet) {
+        double off = Double.isNaN(seatOffset) ? 0 : seatOffset;
+        Location l = new Location(player.getWorld(), feet.getX(), feet.getY() - off, feet.getZ());
+        seat.teleport(l, io.papermc.paper.entity.TeleportFlag.EntityState.RETAIN_PASSENGERS);
+    }
+
     /** Stops walking and chasing. */
     void stop() {
         path = List.of();
@@ -338,14 +359,6 @@ final class Session {
         if (dx * dx + dz * dz < 1e-4) return;
         facing = yawOf(dx, dz);
         faceUntil = tick + ticks;
-    }
-
-    /** Ticks without real progress along the path (a wall, a monster in the way). */
-    int stuck(Vector now, boolean walking) {
-        if (!walking) stuck = 0;
-        else if (lastPos != null && now.clone().setY(0).distanceSquared(lastPos.clone().setY(0)) < 0.0025) stuck++;
-        else stuck = 0;
-        return stuck;
     }
 
     /** Blocks the camera and the pointer see: invisible walls (barriers above the rooms' fences) are looked through. */

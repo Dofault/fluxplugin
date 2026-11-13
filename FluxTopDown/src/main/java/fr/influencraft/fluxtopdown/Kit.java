@@ -157,7 +157,7 @@ final class Kit {
             if (v < 0 && y <= rise) break;
         }
         double speed = dist * 0.09 / (1 - Math.pow(0.91, ticks));
-        p.setVelocity(dir.clone().multiply(speed).setY(0.6));
+        s.leapVel = dir.clone().multiply(speed).setY(0.6);
         s.leapStart = tick;
         s.leapUntil = tick + ticks + 20;
         World w = from.getWorld();
