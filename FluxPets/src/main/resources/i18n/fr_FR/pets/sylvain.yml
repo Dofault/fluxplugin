@@ -5,7 +5,7 @@ name: '&#B376E5Sylvain'
 description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_sylvain
 flying: false
-icon: itemsadder:influpet__carte_sylvain
+icon: itemsadder:fluxpet__carte_sylvain
 trail:
   enabled: false
   particle: flame

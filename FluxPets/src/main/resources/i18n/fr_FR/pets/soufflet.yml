@@ -5,7 +5,7 @@ name: '&#AAAAAASoufflet'
 description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_soufflet
 flying: false
-icon: itemsadder:influpet__carte_soufflet
+icon: itemsadder:fluxpet__carte_soufflet
 trail:
   enabled: false
   particle: flame

@@ -5,7 +5,7 @@ name: '&#AAAAAAÉcuyer'
 description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_ecuyer
 flying: false
-icon: itemsadder:influpet__carte_ecuyer
+icon: itemsadder:fluxpet__carte_ecuyer
 trail:
   enabled: false
   particle: flame

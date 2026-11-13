@@ -5,7 +5,7 @@ name: '&#3283A8Basalt Colossus'
 description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_colosse
 flying: false
-icon: itemsadder:influpet__carte_colosse
+icon: itemsadder:fluxpet__carte_colosse
 trail:
   enabled: false
   particle: flame

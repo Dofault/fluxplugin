@@ -5,7 +5,7 @@ name: '&#AAAAAAStump'
 description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_souche
 flying: false
-icon: itemsadder:influpet__carte_souche
+icon: itemsadder:fluxpet__carte_souche
 trail:
   enabled: false
   particle: flame

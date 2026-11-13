@@ -76,7 +76,7 @@ L = entete("menu_familiers", "Menu des familiers (FluxPets), ouvert par /pets.")
 L += ["open-actions:", '  - "[player] pets view reset"', '  - "[sound] @page"', "",
       "items:", ""]
 # Carte d'un familier (Phénix) : rappel que les familiers montent de niveau avec leurs cartes.
-bouton(L, "infos", "itemsadder:influcards:carte_phenix", OR + "Familiers", [8],
+bouton(L, "infos", "itemsadder:fluxpet:carte_phenix", OR + "Familiers", [8],
        ["@desc Tes familiers montent de niveau grâce à leurs cartes : fais un clic droit sur une carte pour la donner à son familier.",
         f"@kv Débloqué | %influpet_total_pets%{VIOLET}/&f%influpet_pets_count%",
         f"@kv Actifs | %influpet_active_pets%{VIOLET}/&f%influpet_max_active_pets%"])
@@ -132,7 +132,7 @@ p = "influpet_selected"
 L = entete("menu_familier", "Progression d'un familier (choisi par /pets select), ouverte depuis le menu des familiers.")
 L += ["items:", ""]
 # Exception : ici, la carte du familier plutôt que son portrait (demande du 2026-10-15).
-bouton(L, "portrait", f"itemsadder:influcards:carte_%{p}%", f"%{p}_name% {OR}Niv. %{p}_level%", [4],
+bouton(L, "portrait", f"itemsadder:fluxpet:carte_%{p}%", f"%{p}_name% {OR}Niv. %{p}_level%", [4],
        [f"@desc %{p}_description%",
         f"@kv Niveau | %{p}_level%{VIOLET}/&f%{p}_max_level%",
         f"@kv Progression | %{p}_progress% %"])

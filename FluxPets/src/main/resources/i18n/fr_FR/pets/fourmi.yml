@@ -5,7 +5,7 @@ name: '&#AAAAAAFourmi'
 description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_fourmi
 flying: false
-icon: itemsadder:influpet__carte_fourmi
+icon: itemsadder:fluxpet__carte_fourmi
 trail:
   enabled: false
   particle: flame

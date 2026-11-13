@@ -5,7 +5,7 @@ name: '&#AAAAAAAnt'
 description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_fourmi
 flying: false
-icon: itemsadder:influpet__carte_fourmi
+icon: itemsadder:fluxpet__carte_fourmi
 trail:
   enabled: false
   particle: flame

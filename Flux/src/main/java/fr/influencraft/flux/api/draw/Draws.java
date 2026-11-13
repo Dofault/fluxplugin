@@ -1,7 +1,6 @@
 package fr.influencraft.flux.api.draw;
 
 import fr.influencraft.flux.api.client.Clients;
-import fr.influencraft.flux.api.client.Toasts;
 import fr.influencraft.flux.api.music.Music;
 import fr.influencraft.flux.api.text.ItemSprites;
 import fr.influencraft.flux.api.text.Texts;
@@ -24,7 +23,7 @@ import java.util.List;
 /**
  * A draw shown to players while they keep playing, without any menu. At the top of the screen, over a drawn banner,
  * the candidates stand side by side and are struck out one by one, slower and slower, until the winner is the only
- * one left; then a toast slides in at the top right and a few sparks fly round the player. A short drum roll plays
+ * one left; then a soft chime plays and a few sparks fly round the player. A short drum roll plays
  * meanwhile ({@code tirage} of FluxMusic).
  *
  * <p>How the banner stays behind the text without measuring it: three boss bars, drawn in the order they were shown.
@@ -50,7 +49,7 @@ public final class Draws {
      * @param icon vanilla item whose sprite stands for it (null: none)
      * @param name text shown, any Flux syntax ({@code <lang:block.minecraft.iron_ore>} is translated by each client)
      * @param look picture shown instead of the icon's sprite ({@code <sprite:block/...>} of the pack), or null; the
-     *             icon still serves where an item is needed (the toast)
+     *             icon still serves where an item is needed
      */
     public record Choice(String id, Material icon, String name, String look) {
 
@@ -150,7 +149,6 @@ public final class Draws {
                         Sounds.cue(p, "draw-reveal");
                         sparks(p);
                     }
-                    Toasts.show(owner, online, winner.icon(), Texts.parse("&#2BC4E8" + title + " &7: &f" + winner.name()), Toasts.Frame.GOAL);
                     wait = HOLD;
                     return;
                 }

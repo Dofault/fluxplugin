@@ -5,7 +5,7 @@ name: '&#B376E5Scarecrow'
 description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_epouvantail
 flying: false
-icon: itemsadder:influpet__carte_epouvantail
+icon: itemsadder:fluxpet__carte_epouvantail
 trail:
   enabled: false
   particle: flame

@@ -5,7 +5,7 @@ name: '&#B376E5Flammèche'
 description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_flammeche
 flying: true
-icon: itemsadder:influpet__carte_flammeche
+icon: itemsadder:fluxpet__carte_flammeche
 trail:
   enabled: false
   particle: flame

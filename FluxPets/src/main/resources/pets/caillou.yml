@@ -5,7 +5,7 @@ name: '&#AAAAAAPebble'
 description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_caillou
 flying: false
-icon: itemsadder:influpet__carte_caillou
+icon: itemsadder:fluxpet__carte_caillou
 trail:
   enabled: false
   particle: flame

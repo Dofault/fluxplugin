@@ -5,7 +5,7 @@ name: '&#F0A800Astrolabe Céleste'
 description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_astrolabe
 flying: true
-icon: itemsadder:influpet__carte_astrolabe
+icon: itemsadder:fluxpet__carte_astrolabe
 trail:
   enabled: true
   particle: end_rod

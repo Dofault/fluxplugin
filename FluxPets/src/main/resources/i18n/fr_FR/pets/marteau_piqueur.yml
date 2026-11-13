@@ -5,7 +5,7 @@ name: '&#AAAAAAMarteau-Piqueur'
 description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_marteau_piqueur
 flying: false
-icon: itemsadder:influpet__carte_marteau_piqueur
+icon: itemsadder:fluxpet__carte_marteau_piqueur
 trail:
   enabled: false
   particle: flame

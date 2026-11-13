@@ -5,7 +5,7 @@ name: '&#C8256ALeviathan'
 description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_leviathan
 flying: true
-icon: itemsadder:influpet__carte_leviathan
+icon: itemsadder:fluxpet__carte_leviathan
 trail:
   enabled: false
   particle: flame

@@ -326,7 +326,7 @@ public final class CardRegistry {
 
     /**
      * Peluche du familier (meuble ItemsAdder) : pets.list.<id>.plush, sinon peluche_<id> du pack livré
-     * (influpet) ou de l'ancien (influcards) ; vide = pas de peluche. Null si l'objet n'existe pas.
+     * (namespace ItemsAdder fluxpet, ex-influcards) ; vide = pas de peluche. Null si l'objet n'existe pas.
      */
     public ItemStack plushItem(PetEntry pet) {
         String id = plugin.getConfig().getString("pets.list." + pet.id() + ".plush");
@@ -334,7 +334,7 @@ public final class CardRegistry {
             return null;
         }
         ItemStack stack = id != null ? fr.influencraft.flux.api.items.CustomItems.item(id) : null;
-        for (String ns : List.of("influpet", "influcards")) {
+        for (String ns : List.of("fluxpet")) {
             if (stack == null && id == null) {
                 stack = fr.influencraft.flux.api.items.CustomItems.item(ns + ":peluche_" + pet.id());
             }

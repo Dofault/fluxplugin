@@ -5,7 +5,7 @@ name: '&#3283A8Chouette Arcane'
 description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_chouette_arcane
 flying: true
-icon: itemsadder:influpet__carte_chouette_arcane
+icon: itemsadder:fluxpet__carte_chouette_arcane
 trail:
   enabled: false
   particle: flame

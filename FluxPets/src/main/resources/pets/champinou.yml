@@ -5,7 +5,7 @@ name: '&#37C44AShroomy'
 description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_champinou
 flying: false
-icon: itemsadder:influpet__carte_champinou
+icon: itemsadder:fluxpet__carte_champinou
 trail:
   enabled: false
   particle: flame

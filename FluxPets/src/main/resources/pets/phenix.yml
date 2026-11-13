@@ -5,7 +5,7 @@ name: '&#F0A800Phoenix'
 description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_phenix
 flying: true
-icon: itemsadder:influpet__carte_phenix
+icon: itemsadder:fluxpet__carte_phenix
 trail:
   enabled: true
   particle: flame

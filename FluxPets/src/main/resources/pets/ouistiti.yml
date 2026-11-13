@@ -5,7 +5,7 @@ name: '&#3283A8Marmoset'
 description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_ouistiti
 flying: false
-icon: itemsadder:influpet__carte_ouistiti
+icon: itemsadder:fluxpet__carte_ouistiti
 trail:
   enabled: false
   particle: flame

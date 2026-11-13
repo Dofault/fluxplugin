@@ -5,7 +5,7 @@ name: '&#AAAAAALapis Bunny'
 description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_lapin_lapis
 flying: false
-icon: itemsadder:influpet__carte_lapin_lapis
+icon: itemsadder:fluxpet__carte_lapin_lapis
 trail:
   enabled: false
   particle: flame

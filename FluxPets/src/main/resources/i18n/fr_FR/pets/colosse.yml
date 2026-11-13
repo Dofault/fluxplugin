@@ -5,7 +5,7 @@ name: '&#3283A8Colosse de Basalte'
 description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_colosse
 flying: false
-icon: itemsadder:influpet__carte_colosse
+icon: itemsadder:fluxpet__carte_colosse
 trail:
   enabled: false
   particle: flame

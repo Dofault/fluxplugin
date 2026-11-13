@@ -4,7 +4,7 @@
 name: '&#B376E5Sandworm'
 description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_ver_sables
-icon: itemsadder:influpet__carte_ver_sables
+icon: itemsadder:fluxpet__carte_ver_sables
 flying: false
 trail:
   enabled: false

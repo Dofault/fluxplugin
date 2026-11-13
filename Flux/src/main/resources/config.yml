@@ -230,7 +230,7 @@ command-suggestions:
 # Vanilla theme (docs/technique/flux-ui.md)
 theme:
   # pictures that are content, framed like items (all other ItemsAdder pictures are buttons, without a frame)
-  content-namespaces: [influportraits, influcards]
+  content-namespaces: [influportraits, fluxpet]
   # former material -> new one; plugins/Flux/theme-buttons.yml (generated: every former-theme icon restyled) is read
   # first, these win over it
   buttons:

@@ -5,7 +5,7 @@ name: '&#F0A800Licorne Astrale'
 description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_licorne
 flying: false
-icon: itemsadder:influpet__carte_licorne
+icon: itemsadder:fluxpet__carte_licorne
 trail:
   enabled: true
   particle: firework

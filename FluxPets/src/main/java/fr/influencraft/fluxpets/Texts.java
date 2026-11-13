@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 public final class Texts {
 
     private static final Pattern GLYPH = Pattern.compile("%img_([a-z0-9_]+(?::[a-z0-9_]+)?)%");
-    private static final List<String> GLYPH_NAMESPACES = List.of("influpet", "fluxtags", "influemoji", "influitems", "influcards");
+    private static final List<String> GLYPH_NAMESPACES = List.of("fluxpet", "fluxtags", "influemoji", "influitems");
     private static final Map<String, String> GLYPH_CACHE = new HashMap<>();
 
     private Texts() {
@@ -48,7 +48,10 @@ public final class Texts {
         for (String ns : id.contains(":") ? List.of("") : GLYPH_NAMESPACES) {
             String full = ns.isEmpty() ? id : ns + ":" + id;
             if (fr.influencraft.flux.api.items.CustomItems.glyphExists(full)) {
-                return fr.influencraft.flux.api.items.CustomItems.glyphs(":" + full + ":");
+                // the glyph's own character: ItemsAdder's :ns:id: replacement left some of them as text (booster
+                // pictures of the opening animation showed "fluxpet:booster_..._grand" on screen)
+                String glyph = fr.influencraft.flux.api.items.CustomItems.glyph(full);
+                return glyph == null ? "" : glyph;
             }
         }
         return "";

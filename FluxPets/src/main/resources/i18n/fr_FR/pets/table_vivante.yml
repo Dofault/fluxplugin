@@ -5,7 +5,7 @@ name: '&#B376E5Table Vivante'
 description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_table_vivante
 flying: false
-icon: itemsadder:influpet__carte_table_vivante
+icon: itemsadder:fluxpet__carte_table_vivante
 trail:
   enabled: false
   particle: flame

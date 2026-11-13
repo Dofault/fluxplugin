@@ -5,7 +5,7 @@ name: '&#AAAAAAAbeille'
 description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_abeille
 flying: true
-icon: itemsadder:influpet__carte_abeille
+icon: itemsadder:fluxpet__carte_abeille
 trail:
   enabled: false
   particle: flame

@@ -5,7 +5,7 @@ name: '&#37C44AKid Goat'
 description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_cabri
 flying: false
-icon: itemsadder:influpet__carte_cabri
+icon: itemsadder:fluxpet__carte_cabri
 trail:
   enabled: false
   particle: flame

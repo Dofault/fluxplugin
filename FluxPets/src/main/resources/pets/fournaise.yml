@@ -5,7 +5,7 @@ name: '&#3283A8Furnace'
 description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_fournaise
 flying: false
-icon: itemsadder:influpet__carte_fournaise
+icon: itemsadder:fluxpet__carte_fournaise
 trail:
   enabled: false
   particle: flame

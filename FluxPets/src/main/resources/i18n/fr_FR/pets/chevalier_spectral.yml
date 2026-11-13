@@ -5,7 +5,7 @@ name: '&#B376E5Chevalier Spectral'
 description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_chevalier_spectral
 flying: true
-icon: itemsadder:influpet__carte_chevalier_spectral
+icon: itemsadder:fluxpet__carte_chevalier_spectral
 trail:
   enabled: false
   particle: flame

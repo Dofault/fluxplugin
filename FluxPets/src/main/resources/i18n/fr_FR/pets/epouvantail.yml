@@ -5,7 +5,7 @@ name: '&#B376E5Épouvantail'
 description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_epouvantail
 flying: false
-icon: itemsadder:influpet__carte_epouvantail
+icon: itemsadder:fluxpet__carte_epouvantail
 trail:
   enabled: false
   particle: flame

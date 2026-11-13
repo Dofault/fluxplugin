@@ -5,7 +5,7 @@ name: '&#3283A8Grue'
 description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_grue
 flying: false
-icon: itemsadder:influpet__carte_grue
+icon: itemsadder:fluxpet__carte_grue
 trail:
   enabled: false
   particle: flame

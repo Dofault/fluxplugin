@@ -4,7 +4,7 @@
 name: '&#AAAAAAFishlet'
 description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_poissonnet
-icon: itemsadder:influpet__carte_poissonnet
+icon: itemsadder:fluxpet__carte_poissonnet
 flying: true
 trail:
   enabled: false

@@ -5,7 +5,7 @@ name: '&#3283A8Butterfly'
 description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_papillon
 flying: true
-icon: itemsadder:influpet__carte_papillon
+icon: itemsadder:fluxpet__carte_papillon
 trail:
   enabled: false
   particle: flame

@@ -7,7 +7,7 @@
 
 boosters:
   metier_mineur:
-    item: influpet:booster_metier_mineur
+    item: fluxpet:booster_metier_mineur
     name: '&#4FD6E8&lMiner Booster'
     lore:
     - '&#B376E5Contains &f%cards% &#B376E5cards from the &#4FD6E8Miner&#B376E5 series.'
@@ -46,7 +46,7 @@ boosters:
       legendary: 0
       fabled: 0
   metier_rochiste:
-    item: influpet:booster_metier_rochiste
+    item: fluxpet:booster_metier_rochiste
     name: '&#A8AEB8&lQuarrier Booster'
     lore:
     - '&#B376E5Contains &f%cards% &#B376E5cards from the &#A8AEB8Quarrier&#B376E5 series.'
@@ -85,7 +85,7 @@ boosters:
       legendary: 0
       fabled: 0
   metier_deblayeur:
-    item: influpet:booster_metier_deblayeur
+    item: fluxpet:booster_metier_deblayeur
     name: '&#D9C27A&lDigger Booster'
     lore:
     - '&#B376E5Contains &f%cards% &#B376E5cards from the &#D9C27ADigger&#B376E5 series.'
@@ -124,7 +124,7 @@ boosters:
       legendary: 0
       fabled: 0
   metier_cultivateur:
-    item: influpet:booster_metier_cultivateur
+    item: fluxpet:booster_metier_cultivateur
     name: '&#E8C547&lFarmer Booster'
     lore:
     - '&#B376E5Contains &f%cards% &#B376E5cards from the &#E8C547Farmer&#B376E5 series.'
@@ -163,7 +163,7 @@ boosters:
       legendary: 0
       fabled: 0
   metier_herboriste:
-    item: influpet:booster_metier_herboriste
+    item: fluxpet:booster_metier_herboriste
     name: '&#6CD46C&lHerbalist Booster'
     lore:
     - '&#B376E5Contains &f%cards% &#B376E5cards from the &#6CD46CHerbalist&#B376E5 series.'
@@ -202,7 +202,7 @@ boosters:
       legendary: 0
       fabled: 0
   metier_sylviculteur:
-    item: influpet:booster_metier_sylviculteur
+    item: fluxpet:booster_metier_sylviculteur
     name: '&#B07A45&lForester Booster'
     lore:
     - '&#B376E5Contains &f%cards% &#B376E5cards from the &#B07A45Forester&#B376E5 series.'
@@ -241,7 +241,7 @@ boosters:
       legendary: 0
       fabled: 0
   metier_fondeur:
-    item: influpet:booster_metier_fondeur
+    item: fluxpet:booster_metier_fondeur
     name: '&#FF8A3D&lSmelter Booster'
     lore:
     - '&#B376E5Contains &f%cards% &#B376E5cards from the &#FF8A3DSmelter&#B376E5 series.'
@@ -280,7 +280,7 @@ boosters:
       legendary: 0
       fabled: 0
   metier_enchanteur:
-    item: influpet:booster_metier_enchanteur
+    item: fluxpet:booster_metier_enchanteur
     name: '&#8C7BFF&lEnchanter Booster'
     lore:
     - '&#B376E5Contains &f%cards% &#B376E5cards from the &#8C7BFFEnchanter&#B376E5 series.'
@@ -319,7 +319,7 @@ boosters:
       legendary: 0
       fabled: 0
   metier_pecheur:
-    item: influpet:booster_metier_pecheur
+    item: fluxpet:booster_metier_pecheur
     name: '&#4FA8FF&lFisher Booster'
     lore:
     - '&#B376E5Contains &f%cards% &#B376E5cards from the &#4FA8FFFisher&#B376E5 series.'
@@ -358,7 +358,7 @@ boosters:
       legendary: 0
       fabled: 0
   metier_defenseur:
-    item: influpet:booster_metier_defenseur
+    item: fluxpet:booster_metier_defenseur
     name: '&#E04848&lDefender Booster'
     lore:
     - '&#B376E5Contains &f%cards% &#B376E5cards from the &#E04848Defender&#B376E5 series.'
@@ -397,7 +397,7 @@ boosters:
       legendary: 0
       fabled: 0
   metier_batisseur:
-    item: influpet:booster_metier_batisseur
+    item: fluxpet:booster_metier_batisseur
     name: '&#F2A33A&lBuilder Booster'
     lore:
     - '&#B376E5Contains &f%cards% &#B376E5cards from the &#F2A33ABuilder&#B376E5 series.'
@@ -436,7 +436,7 @@ boosters:
       legendary: 0
       fabled: 0
   prestige:
-    item: influpet:booster_prestige
+    item: fluxpet:booster_prestige
     name: '&#F0A800&lPrestige Booster'
     lore:
     - '&#B376E5Contains &f%cards% &#B376E5cards from the &#F0A800Prestige&#B376E5 series.'
@@ -484,7 +484,7 @@ boosters:
       legendary: 12500
       fabled: 2000
   ordinaire:
-    item: influpet:booster_ordinaire
+    item: fluxpet:booster_ordinaire
     name: '&f&lOrdinary Booster'
     lore:
     - '&#B376E5Tier: &f★&7☆☆☆'
@@ -617,7 +617,7 @@ boosters:
       legendary: 830
       fabled: 330
   tendance:
-    item: influpet:booster_tendance
+    item: fluxpet:booster_tendance
     name: '&#55FF55&lTrending Booster'
     lore:
     - '&#B376E5Tier: &f★★&7☆☆'
@@ -750,7 +750,7 @@ boosters:
       legendary: 1000
       fabled: 400
   virale:
-    item: influpet:booster_virale
+    item: fluxpet:booster_virale
     name: '&#5A85EA&lViral Booster'
     lore:
     - '&#B376E5Tier: &f★★★&7☆'
@@ -883,7 +883,7 @@ boosters:
       legendary: 10000
       fabled: 2000
   phenomene:
-    item: influpet:booster_phenomene
+    item: fluxpet:booster_phenomene
     name: '&#F0A800&lPhenomenal Booster'
     lore:
     - '&#B376E5Tier: &f★★★★&7'

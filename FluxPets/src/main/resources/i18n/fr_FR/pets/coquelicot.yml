@@ -5,7 +5,7 @@ name: '&#AAAAAACoquelicot'
 description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_coquelicot
 flying: false
-icon: itemsadder:influpet__carte_coquelicot
+icon: itemsadder:fluxpet__carte_coquelicot
 trail:
   enabled: false
   particle: flame

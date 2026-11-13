@@ -5,7 +5,7 @@ name: '&#F0A800Nida'
 description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_nida
 flying: true
-icon: itemsadder:influpet__carte_nida
+icon: itemsadder:fluxpet__carte_nida
 trail:
   enabled: true
   particle: reverse_portal

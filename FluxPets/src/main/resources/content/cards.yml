@@ -10,7 +10,7 @@ card-xp:
   fabled: 1
 cards:
   pepite:
-    item: influpet:carte_pepite
+    item: fluxpet:carte_pepite
     name: '&#AAAAAANugget'
     series: Miner
     rarity: simple
@@ -20,7 +20,7 @@ cards:
     - ''
     - '&#2ECF7BMiner &fseries'
   lanterne:
-    item: influpet:carte_lanterne
+    item: fluxpet:carte_lanterne
     name: '&#37C44ALantern'
     series: Miner
     rarity: unique
@@ -30,7 +30,7 @@ cards:
     - ''
     - '&#2ECF7BMiner &fseries'
   wagonnet:
-    item: influpet:carte_wagonnet
+    item: fluxpet:carte_wagonnet
     name: '&#3283A8Minecart'
     series: Miner
     rarity: elite
@@ -40,7 +40,7 @@ cards:
     - ''
     - '&#2ECF7BMiner &fseries'
   dragon_gemmes:
-    item: influpet:carte_dragon_gemmes
+    item: fluxpet:carte_dragon_gemmes
     name: '&#B376E5Gem Dragon'
     series: Miner
     rarity: ultimate
@@ -50,7 +50,7 @@ cards:
     - ''
     - '&#2ECF7BMiner &fseries'
   caillou:
-    item: influpet:carte_caillou
+    item: fluxpet:carte_caillou
     name: '&#AAAAAAPebble'
     series: Quarrier
     rarity: simple
@@ -60,7 +60,7 @@ cards:
     - ''
     - '&#2ECF7BQuarrier &fseries'
   mimique:
-    item: influpet:carte_mimique
+    item: fluxpet:carte_mimique
     name: '&#37C44AMimic'
     series: Quarrier
     rarity: unique
@@ -71,7 +71,7 @@ cards:
     - ''
     - '&#2ECF7BQuarrier &fseries'
   colosse:
-    item: influpet:carte_colosse
+    item: fluxpet:carte_colosse
     name: '&#3283A8Basalt Colossus'
     series: Quarrier
     rarity: elite
@@ -81,7 +81,7 @@ cards:
     - ''
     - '&#2ECF7BQuarrier &fseries'
   titan:
-    item: influpet:carte_titan
+    item: fluxpet:carte_titan
     name: '&#B376E5Crystal Titan'
     series: Quarrier
     rarity: ultimate
@@ -91,7 +91,7 @@ cards:
     - ''
     - '&#2ECF7BQuarrier &fseries'
   fourmi:
-    item: influpet:carte_fourmi
+    item: fluxpet:carte_fourmi
     name: '&#AAAAAAAnt'
     series: Digger
     rarity: simple
@@ -101,7 +101,7 @@ cards:
     - ''
     - '&#2ECF7BDigger &fseries'
   cabri:
-    item: influpet:carte_cabri
+    item: fluxpet:carte_cabri
     name: '&#37C44AKid Goat'
     series: Digger
     rarity: unique
@@ -111,7 +111,7 @@ cards:
     - ''
     - '&#2ECF7BDigger &fseries'
   lievre_neiges:
-    item: influpet:carte_lievre_neiges
+    item: fluxpet:carte_lievre_neiges
     name: '&#3283A8Snow Hare'
     series: Digger
     rarity: elite
@@ -121,7 +121,7 @@ cards:
     - ''
     - '&#2ECF7BDigger &fseries'
   ver_sables:
-    item: influpet:carte_ver_sables
+    item: fluxpet:carte_ver_sables
     name: '&#B376E5Sandworm'
     series: Digger
     rarity: ultimate
@@ -131,7 +131,7 @@ cards:
     - ''
     - '&#2ECF7BDigger &fseries'
   abeille:
-    item: influpet:carte_abeille
+    item: fluxpet:carte_abeille
     name: '&#AAAAAABee'
     series: Farmer
     rarity: simple
@@ -141,7 +141,7 @@ cards:
     - ''
     - '&#2ECF7BFarmer &fseries'
   carottin:
-    item: influpet:carte_carottin
+    item: fluxpet:carte_carottin
     name: '&#37C44ACarroty'
     series: Farmer
     rarity: unique
@@ -151,7 +151,7 @@ cards:
     - ''
     - '&#2ECF7BFarmer &fseries'
   ouistiti:
-    item: influpet:carte_ouistiti
+    item: fluxpet:carte_ouistiti
     name: '&#3283A8Marmoset'
     series: Farmer
     rarity: elite
@@ -161,7 +161,7 @@ cards:
     - ''
     - '&#2ECF7BFarmer &fseries'
   epouvantail:
-    item: influpet:carte_epouvantail
+    item: fluxpet:carte_epouvantail
     name: '&#B376E5Scarecrow'
     series: Farmer
     rarity: ultimate
@@ -171,7 +171,7 @@ cards:
     - ''
     - '&#2ECF7BFarmer &fseries'
   coquelicot:
-    item: influpet:carte_coquelicot
+    item: fluxpet:carte_coquelicot
     name: '&#AAAAAAPoppy'
     series: Herbalist
     rarity: simple
@@ -181,7 +181,7 @@ cards:
     - ''
     - '&#2ECF7BHerbalist &fseries'
   champinou:
-    item: influpet:carte_champinou
+    item: fluxpet:carte_champinou
     name: '&#37C44AShroomy'
     series: Herbalist
     rarity: unique
@@ -191,7 +191,7 @@ cards:
     - ''
     - '&#2ECF7BHerbalist &fseries'
   papillon:
-    item: influpet:carte_papillon
+    item: fluxpet:carte_papillon
     name: '&#3283A8Butterfly'
     series: Herbalist
     rarity: elite
@@ -201,7 +201,7 @@ cards:
     - ''
     - '&#2ECF7BHerbalist &fseries'
   dryade:
-    item: influpet:carte_dryade
+    item: fluxpet:carte_dryade
     name: '&#B376E5Dryad'
     series: Herbalist
     rarity: ultimate
@@ -211,7 +211,7 @@ cards:
     - ''
     - '&#2ECF7BHerbalist &fseries'
   souche:
-    item: influpet:carte_souche
+    item: fluxpet:carte_souche
     name: '&#AAAAAAStump'
     series: Forester
     rarity: simple
@@ -221,7 +221,7 @@ cards:
     - ''
     - '&#2ECF7BForester &fseries'
   castor:
-    item: influpet:carte_castor
+    item: fluxpet:carte_castor
     name: '&#37C44ABeaver'
     series: Forester
     rarity: unique
@@ -231,7 +231,7 @@ cards:
     - ''
     - '&#2ECF7BForester &fseries'
   gland:
-    item: influpet:carte_gland
+    item: fluxpet:carte_gland
     name: '&#3283A8Acorn'
     series: Forester
     rarity: elite
@@ -242,7 +242,7 @@ cards:
     - ''
     - '&#2ECF7BForester &fseries'
   sylvain:
-    item: influpet:carte_sylvain
+    item: fluxpet:carte_sylvain
     name: '&#B376E5Sylvan'
     series: Forester
     rarity: ultimate
@@ -252,7 +252,7 @@ cards:
     - ''
     - '&#2ECF7BForester &fseries'
   flammeche:
-    item: influpet:carte_flammeche
+    item: fluxpet:carte_flammeche
     name: '&#B376E5Flicker'
     series: Smelter
     rarity: ultimate
@@ -262,7 +262,7 @@ cards:
     - ''
     - '&#2ECF7BSmelter &fseries'
   soufflet:
-    item: influpet:carte_soufflet
+    item: fluxpet:carte_soufflet
     name: '&#AAAAAABellows'
     series: Smelter
     rarity: simple
@@ -272,7 +272,7 @@ cards:
     - ''
     - '&#2ECF7BSmelter &fseries'
   salamandre:
-    item: influpet:carte_salamandre
+    item: fluxpet:carte_salamandre
     name: '&#37C44ABlazing Salamander'
     series: Smelter
     rarity: unique
@@ -282,7 +282,7 @@ cards:
     - ''
     - '&#2ECF7BSmelter &fseries'
   fournaise:
-    item: influpet:carte_fournaise
+    item: fluxpet:carte_fournaise
     name: '&#3283A8Furnace'
     series: Smelter
     rarity: elite
@@ -292,7 +292,7 @@ cards:
     - ''
     - '&#2ECF7BSmelter &fseries'
   lapin_lapis:
-    item: influpet:carte_lapin_lapis
+    item: fluxpet:carte_lapin_lapis
     name: '&#AAAAAALapis Bunny'
     series: Enchanter
     rarity: simple
@@ -302,7 +302,7 @@ cards:
     - ''
     - '&#2ECF7BEnchanter &fseries'
   orbe_xp:
-    item: influpet:carte_orbe_xp
+    item: fluxpet:carte_orbe_xp
     name: '&#37C44AExperience Orb'
     series: Enchanter
     rarity: unique
@@ -312,7 +312,7 @@ cards:
     - ''
     - '&#2ECF7BEnchanter &fseries'
   chouette_arcane:
-    item: influpet:carte_chouette_arcane
+    item: fluxpet:carte_chouette_arcane
     name: '&#3283A8Arcane Owl'
     series: Enchanter
     rarity: elite
@@ -322,7 +322,7 @@ cards:
     - ''
     - '&#2ECF7BEnchanter &fseries'
   table_vivante:
-    item: influpet:carte_table_vivante
+    item: fluxpet:carte_table_vivante
     name: '&#B376E5Living Table'
     series: Enchanter
     rarity: ultimate
@@ -332,7 +332,7 @@ cards:
     - ''
     - '&#2ECF7BEnchanter &fseries'
   poissonnet:
-    item: influpet:carte_poissonnet
+    item: fluxpet:carte_poissonnet
     name: '&#AAAAAAFishlet'
     series: Fisher
     rarity: simple
@@ -342,7 +342,7 @@ cards:
     - ''
     - '&#2ECF7BFisher &fseries'
   crabichon:
-    item: influpet:carte_crabichon
+    item: fluxpet:carte_crabichon
     name: '&#37C44ACrabby'
     series: Fisher
     rarity: unique
@@ -352,7 +352,7 @@ cards:
     - ''
     - '&#2ECF7BFisher &fseries'
   dauphin:
-    item: influpet:carte_dauphin
+    item: fluxpet:carte_dauphin
     name: '&#3283A8Dolphin'
     series: Fisher
     rarity: elite
@@ -362,7 +362,7 @@ cards:
     - ''
     - '&#2ECF7BFisher &fseries'
   kraken:
-    item: influpet:carte_kraken
+    item: fluxpet:carte_kraken
     name: '&#B376E5Kraken'
     series: Fisher
     rarity: ultimate
@@ -372,7 +372,7 @@ cards:
     - ''
     - '&#2ECF7BFisher &fseries'
   ecuyer:
-    item: influpet:carte_ecuyer
+    item: fluxpet:carte_ecuyer
     name: '&#AAAAAASquire'
     series: Defender
     rarity: simple
@@ -382,7 +382,7 @@ cards:
     - ''
     - '&#2ECF7BDefender &fseries'
   pavois:
-    item: influpet:carte_pavois
+    item: fluxpet:carte_pavois
     name: '&#37C44ABulwark'
     series: Defender
     rarity: unique
@@ -392,7 +392,7 @@ cards:
     - ''
     - '&#2ECF7BDefender &fseries'
   chien_garde:
-    item: influpet:carte_chien_garde
+    item: fluxpet:carte_chien_garde
     name: '&#3283A8Guard Dog'
     series: Defender
     rarity: elite
@@ -402,7 +402,7 @@ cards:
     - ''
     - '&#2ECF7BDefender &fseries'
   chevalier_spectral:
-    item: influpet:carte_chevalier_spectral
+    item: fluxpet:carte_chevalier_spectral
     name: '&#B376E5Spectral Knight'
     series: Defender
     rarity: ultimate
@@ -412,7 +412,7 @@ cards:
     - ''
     - '&#2ECF7BDefender &fseries'
   marteau_piqueur:
-    item: influpet:carte_marteau_piqueur
+    item: fluxpet:carte_marteau_piqueur
     name: '&#AAAAAAJackhammer'
     series: Builder
     rarity: simple
@@ -422,7 +422,7 @@ cards:
     - ''
     - '&#2ECF7BBuilder &fseries'
   betonniere:
-    item: influpet:carte_betonniere
+    item: fluxpet:carte_betonniere
     name: '&#37C44ACement Mixer'
     series: Builder
     rarity: unique
@@ -432,7 +432,7 @@ cards:
     - ''
     - '&#2ECF7BBuilder &fseries'
   grue:
-    item: influpet:carte_grue
+    item: fluxpet:carte_grue
     name: '&#3283A8Crane'
     series: Builder
     rarity: elite
@@ -442,7 +442,7 @@ cards:
     - ''
     - '&#2ECF7BBuilder &fseries'
   architecte:
-    item: influpet:carte_architecte
+    item: fluxpet:carte_architecte
     name: '&#B376E5Architect'
     series: Builder
     rarity: ultimate
@@ -452,7 +452,7 @@ cards:
     - ''
     - '&#2ECF7BBuilder &fseries'
   phenix:
-    item: influpet:carte_phenix
+    item: fluxpet:carte_phenix
     name: '&#F0A800Phoenix'
     series: Prestige
     rarity: legendary
@@ -462,7 +462,7 @@ cards:
     - ''
     - '&#2ECF7BPrestige &fseries'
   astrolabe:
-    item: influpet:carte_astrolabe
+    item: fluxpet:carte_astrolabe
     name: '&#F0A800Celestial Astrolabe'
     series: Prestige
     rarity: legendary
@@ -472,7 +472,7 @@ cards:
     - ''
     - '&#2ECF7BPrestige &fseries'
   kitsune:
-    item: influpet:carte_kitsune
+    item: fluxpet:carte_kitsune
     name: '&#F0A800Snow Kitsune'
     series: Prestige
     rarity: legendary
@@ -483,7 +483,7 @@ cards:
     - ''
     - '&#2ECF7BPrestige &fseries'
   licorne:
-    item: influpet:carte_licorne
+    item: fluxpet:carte_licorne
     name: '&#F0A800Astral Unicorn'
     series: Prestige
     rarity: legendary
@@ -493,7 +493,7 @@ cards:
     - ''
     - '&#2ECF7BPrestige &fseries'
   nida:
-    item: influpet:carte_nida
+    item: fluxpet:carte_nida
     name: '&#F0A800Nida'
     series: Prestige
     rarity: legendary
@@ -503,7 +503,7 @@ cards:
     - ''
     - '&#2ECF7BPrestige &fseries'
   leviathan:
-    item: influpet:carte_leviathan
+    item: fluxpet:carte_leviathan
     name: '&#C8256ALeviathan'
     series: Prestige
     rarity: fabled
@@ -513,7 +513,7 @@ cards:
     - ''
     - '&#2ECF7BPrestige &fseries'
   faucheur:
-    item: influpet:carte_faucheur
+    item: fluxpet:carte_faucheur
     name: '&#C8256AVoid Reaper'
     series: Prestige
     rarity: fabled

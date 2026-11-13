@@ -5,7 +5,7 @@ name: '&#B376E5Kraken'
 description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_kraken
 flying: true
-icon: itemsadder:influpet__carte_kraken
+icon: itemsadder:fluxpet__carte_kraken
 trail:
   enabled: false
   particle: flame

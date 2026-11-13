@@ -33,7 +33,7 @@ public final class Sounds {
             java.util.Map.entry("remove", "minecraft:entity.item.break 0.6 1"),
             java.util.Map.entry("alert", "minecraft:block.note_block.pling 0.7 1.6"),
             java.util.Map.entry("draw-tick", "minecraft:block.note_block.hat 0.5 1.7"),
-            java.util.Map.entry("draw-reveal", "minecraft:ui.toast.challenge_complete 0.6 1.2")));
+            java.util.Map.entry("draw-reveal", "minecraft:block.note_block.chime 0.6 1.2")));
 
     /** Cues merged into another one (menus and configs written before keep working). */
     private static final java.util.Map<String, String> MERGED = java.util.Map.of("open", "page", "reward", "complete", "close", "");

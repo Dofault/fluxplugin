@@ -5,7 +5,7 @@ name: '&#B376E5Dragon de Gemmes'
 description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_dragon_gemmes
 flying: true
-icon: itemsadder:influpet__carte_dragon_gemmes
+icon: itemsadder:fluxpet__carte_dragon_gemmes
 trail:
   enabled: false
   particle: flame

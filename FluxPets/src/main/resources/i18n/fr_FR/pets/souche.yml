@@ -5,7 +5,7 @@ name: '&#AAAAAASouche'
 description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_souche
 flying: false
-icon: itemsadder:influpet__carte_souche
+icon: itemsadder:fluxpet__carte_souche
 trail:
   enabled: false
   particle: flame

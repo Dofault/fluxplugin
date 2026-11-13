@@ -5,7 +5,7 @@ name: '&#37C44ACrabby'
 description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_crabichon
 flying: false
-icon: itemsadder:influpet__carte_crabichon
+icon: itemsadder:fluxpet__carte_crabichon
 trail:
   enabled: false
   particle: flame

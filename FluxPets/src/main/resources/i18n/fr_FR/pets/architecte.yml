@@ -5,7 +5,7 @@ name: '&#B376E5Architecte'
 description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_architecte
 flying: false
-icon: itemsadder:influpet__carte_architecte
+icon: itemsadder:fluxpet__carte_architecte
 trail:
   enabled: false
   particle: flame

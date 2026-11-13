@@ -5,7 +5,7 @@ name: '&#AAAAAASquire'
 description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_ecuyer
 flying: false
-icon: itemsadder:influpet__carte_ecuyer
+icon: itemsadder:fluxpet__carte_ecuyer
 trail:
   enabled: false
   particle: flame

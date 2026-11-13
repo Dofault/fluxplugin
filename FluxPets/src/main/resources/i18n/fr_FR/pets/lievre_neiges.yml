@@ -5,7 +5,7 @@ name: '&#3283A8Lièvre des Neiges'
 description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_lievre_neiges
 flying: false
-icon: itemsadder:influpet__carte_lievre_neiges
+icon: itemsadder:fluxpet__carte_lievre_neiges
 trail:
   enabled: false
   particle: flame

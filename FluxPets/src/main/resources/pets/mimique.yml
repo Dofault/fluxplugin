@@ -5,7 +5,7 @@ name: '&#37C44AMimic'
 description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_mimique
 flying: false
-icon: itemsadder:influpet__carte_mimique
+icon: itemsadder:fluxpet__carte_mimique
 trail:
   enabled: false
   particle: flame

@@ -5,7 +5,7 @@ name: '&#37C44ACarroty'
 description: '&#B376E5Only grows with its cards'
 entity-texture: bettermodel:familier_carottin
 flying: false
-icon: itemsadder:influpet__carte_carottin
+icon: itemsadder:fluxpet__carte_carottin
 trail:
   enabled: false
   particle: flame

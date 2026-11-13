@@ -5,7 +5,7 @@ name: '&#AAAAAALapis-Lapin'
 description: '&#B376E5Grandit uniquement avec ses cartes'
 entity-texture: bettermodel:familier_lapin_lapis
 flying: false
-icon: itemsadder:influpet__carte_lapin_lapis
+icon: itemsadder:fluxpet__carte_lapin_lapis
 trail:
   enabled: false
   particle: flame
