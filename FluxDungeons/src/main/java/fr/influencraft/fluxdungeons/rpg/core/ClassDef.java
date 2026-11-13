@@ -24,20 +24,24 @@ import java.util.Map;
  *     f: {type: whirlwind, kind: damage, damage: physical, coefficient: 1.2, hits: 3, mana: 35}
  * </pre>
  * No cooldown: a skill is cast as often as the player pays its mana.
+ * <p>
+ * {@code hidden: true}: a class being tried out, left out of the menus and pages, chosen only by the staff with
+ * {@code /classe choisir <id>}. {@code passive}: numbers of the class's own mechanic, read by its code (the
+ * cryomancer's frost: stacks, freeze, shatter).
  */
 public record ClassDef(String id, Map<String, Double> stats, Map<String, Double> perLevel, Attack basic,
-                       Map<String, Skill> skills) {
+                       Map<String, Skill> skills, boolean hidden, Map<String, Double> passive) {
 
     public static final List<String> SLOTS = List.of("right", "a", "f");
 
     /**
      * The basic attack. {@code style}: melee (a swing hitting up to {@code targets} enemies in front, within
-     * {@code range}), arrow (a real arrow), arcane or holy (a bolt of particles). {@code click}: left (default) or
+     * {@code range}), arrow (a real arrow), arcane or holy (a bolt of particles), shard (a flying ice shard). {@code click}: left (default) or
      * right (held down: attacks again as soon as the attack speed allows).
      */
     public record Attack(String style, CombatMath.Type type, String element, double coefficient, int targets, double range,
                          String click) {
-        public static final List<String> STYLES = List.of("melee", "arrow", "arcane", "holy");
+        public static final List<String> STYLES = List.of("melee", "arrow", "arcane", "holy", "shard");
         public static final List<String> CLICKS = List.of("left", "right");
 
         public CombatMath.Hit hit() {
@@ -64,6 +68,11 @@ public record ClassDef(String id, Map<String, Double> stats, Map<String, Double>
         public double number(String key, double fallback) {
             return extra.getOrDefault(key, fallback);
         }
+    }
+
+    /** A number of the class's passive mechanic. */
+    public double passive(String key, double fallback) {
+        return passive.getOrDefault(key, fallback);
     }
 
     /** True when the basic attack is on the right click (and the weapon skill on the left click). */
@@ -128,7 +137,10 @@ public record ClassDef(String id, Map<String, Double> stats, Map<String, Double>
                     s.number("coefficient", 0, 0, 100), (int) s.number("hits", 1, 1, 50), s.number("mana", 0, 0, 10000), (int) s.number("targets", 1, 1, 50), s.number("duration", 0, 0, 600), extra));
             if (s.text("type", "").isEmpty()) s.problem("type", "missing");
         }
-        return new ClassDef(id, stats, per, basic, skills);
+        Map<String, Double> passive = new LinkedHashMap<>();
+        Node pa = n.child("passive");
+        for (String k : pa.keys()) passive.put(k, pa.number(k, 0));
+        return new ClassDef(id, stats, per, basic, skills, n.flag("hidden", false), Collections.unmodifiableMap(passive));
     }
 
     private static CombatMath.Type type(Node n) {

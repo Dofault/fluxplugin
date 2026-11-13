@@ -41,3 +41,21 @@ healer:
     right: {type: heal, kind: heal, coefficient: 3.0, mana: 30, targets: 1, extra: {range: 20}}
     a: {type: blessing, kind: buff, mana: 45, targets: 4, duration: 8, extra: {radius: 8, damage_bonus: 0.15}}
     f: {type: sanctuary, kind: heal, coefficient: 0.5, hits: 8, mana: 60, targets: 4, duration: 8, extra: {radius: 6}}
+
+# The cryomancer (2026-11-13, hidden while tried out: /classe choisir cryomancer, staff only). Everything he does leaves
+# frost on monsters (passive): chill-max stacks freeze a monster in ice (freeze s; a boss is only slowed, half as long),
+# and the next hit of another cast shatters it: shatter x magic power on it, shatter-splash of that on the monsters within
+# shatter-radius, which are chilled and shatter in turn if frozen. chill: stacks a hit leaves.
+# Skills: frost_glide (surf ahead on ice for "ticks" ticks), glacial_rift (spikes along the ground, lift: how high the
+# monsters fly, end-radius: the crown at its end), winter_comet (aimed; delay s before the impact, which freezes
+# everyone inside; frozen ground for "duration" s that chills again).
+cryomancer:
+  hidden: true
+  stats: {max_health: 200, magic_power: 24, physical_defense: 9, magic_defense: 14, attack_speed: -0.1, max_mana: 50, mana_regen: 3.5}
+  per-level: {max_health: 20, magic_power: 1.9, physical_defense: 0.7, magic_defense: 1.1, max_mana: 1}
+  passive: {chill-max: 3, chill-seconds: 4, freeze: 1.6, shatter: 1.4, shatter-splash: 0.35, shatter-radius: 3}
+  basic: {style: shard, damage: magic, element: frost, coefficient: 0.85, targets: 1, range: 22}
+  skills:
+    right: {type: frost_glide, kind: mobility, damage: magic, element: frost, coefficient: 0.6, mana: 25, targets: 5, extra: {distance: 9, ticks: 8, chill: 1}}
+    a: {type: glacial_rift, kind: damage, damage: magic, element: frost, coefficient: 2.0, mana: 55, targets: 6, extra: {range: 14, width: 1.6, lift: 0.55, chill: 2, end-radius: 2.5}}
+    f: {type: winter_comet, kind: damage, damage: magic, element: frost, coefficient: 3.0, mana: 95, targets: 8, duration: 3, extra: {radius: 5, range: 24, delay: 0.9, size: 2.4}}

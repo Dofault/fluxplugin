@@ -48,11 +48,24 @@ public final class Skills implements Listener {
     private final FluxPlugin plugin;
     private final CombatEngine combat;
     private final RpgPlayers players;
+    /** The cryomancer's frost (frost stacks, freeze, shatter) and his skills. */
+    private final Frost frost;
 
     Skills(FluxPlugin plugin, CombatEngine combat, RpgPlayers players) {
         this.plugin = plugin;
         this.combat = combat;
         this.players = players;
+        this.frost = new Frost(plugin, combat, this);
+    }
+
+    /** The rpg state of an online player, null outside the universe. */
+    RpgPlayer player(Player p) {
+        return players.get(p);
+    }
+
+    /** Removes what the skills left in the world (plugin stopping). */
+    void stop() {
+        frost.clear();
     }
 
     // ------------------------------------------------------------------ targets
@@ -102,6 +115,7 @@ public final class Skills implements Listener {
             case "arrow" -> shoot(p, cast, a.hit(), p.getEyeLocation().getDirection(), 3.0);
             case "arcane" -> bolt(p, cast, a.hit(), a.range(), Particle.WITCH, null, 1.4);
             case "holy" -> bolt(p, cast, a.hit(), a.range(), Particle.END_ROD, null, 1.2);
+            case "shard" -> frost.shard(p, r, a.hit(), cast, a.range());
             default -> cleave(p, cast, a, clicked);
         }
     }
@@ -276,6 +290,15 @@ public final class Skills implements Listener {
                     ring(at, radius, Particle.HAPPY_VILLAGER);
                     for (Player ally : allies(at, radius)) combat.heal(ally, each, true);
                 });
+            }
+            case "frost_glide" -> {
+                return frost.glide(p, r, s, cast);
+            }
+            case "glacial_rift" -> {
+                return frost.rift(p, r, s, cast);
+            }
+            case "winter_comet" -> {
+                return frost.comet(p, r, s, cast);
             }
             default -> {
                 plugin.getLogger().warning("Skill type " + s.type() + " has no code: nothing cast");

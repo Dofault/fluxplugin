@@ -22,7 +22,8 @@ from PIL import Image
 SPELLS = ["charge", "war_cry", "whirlwind",          # warrior
           "leap_back", "volley", "arrow_rain",       # archer
           "blink", "fireball", "frost_nova",         # mage
-          "heal", "blessing", "sanctuary"]           # healer
+          "heal", "blessing", "sanctuary",           # healer
+          "frost_glide", "glacial_rift", "winter_comet"]  # cryomancer
 BLANK = len(SPELLS)          # a slot with no icon (a type with no picture yet)
 DIM = BLANK + 1              # offset of the dimmed slots
 SLOT = 22
@@ -50,8 +51,9 @@ PALETTE = {
 }
 
 # frame accent per class (the inner bevel of the slot): the class reads at a glance, the frames stay one family
-CLASS_ACCENT = {"warrior": "#9a3340", "archer": "#427a48", "mage": "#6c43b0", "healer": "#a87826"}
-SPELL_CLASS = {s: c for c, ss in zip(CLASS_ACCENT, [SPELLS[i:i + 3] for i in range(0, 12, 3)]) for s in ss}
+CLASS_ACCENT = {"warrior": "#9a3340", "archer": "#427a48", "mage": "#6c43b0", "healer": "#a87826",
+                "cryomancer": "#3d7bab"}
+SPELL_CLASS = {s: c for c, ss in zip(CLASS_ACCENT, [SPELLS[i:i + 3] for i in range(0, len(SPELLS), 3)]) for s in ss}
 
 
 def grid():
@@ -360,7 +362,72 @@ def sanctuary():
         "................")
 
 
-ART = {"charge": charge, "war_cry": war_cry, "whirlwind": whirlwind, "leap_back": leap_back, "volley": volley,
+# ---------------------------------------------------------------- cryomancer
+
+def frost_glide():
+    # a sheet of ice running to the right, crystals bursting out behind, speed lines
+    return rows(
+        "................",
+        "................",
+        "................",
+        "...........C....",
+        "..........cCc...",
+        "......c...cCc...",
+        "..33.cCc..cCI...",
+        "....3cCI.icCIi..",
+        ".333.cCI.icCIi..",
+        ".....iCI.iCcIi..",
+        "..3iiIcIiIcIIi..",
+        ".iIcccCCCCCCCCCc",
+        "iIIIIIIIIIIIIIc.",
+        ".iiiiiiiiiiiii..",
+        "................",
+        "................")
+
+
+def glacial_rift():
+    # spikes rising from the ground, taller and taller to the right
+    return rows(
+        "...............C",
+        "..............cC",
+        "..........C..cCI",
+        ".........cC..cCI",
+        ".........cCI.cCI",
+        ".....C...cCI.cCI",
+        "....cC...cCIicCI",
+        "....cCI.icCIicCI",
+        ".C..cCI.icCIicCI",
+        "cC.icCI.icCIicCI",
+        "cCIicCIIicCIicCI",
+        "iiiiiiiiiiiiiiii",
+        "..i..ii...i..i..",
+        "................",
+        "................",
+        "................")
+
+
+def winter_comet():
+    # a block of ice falling to the bottom right, a trail of frost behind it
+    return rows(
+        "C...............",
+        ".c..............",
+        "..c.C...........",
+        "...cc.c.........",
+        ".C..ccc.........",
+        "..c..cccC.......",
+        "...c.cIcc.......",
+        "....ccIIcc......",
+        ".......cCCCI....",
+        "......cCCCCCI...",
+        "......CCCCCCIi..",
+        "......cCCcCIIi..",
+        ".......CcIIIii..",
+        "........IIiii...",
+        ".........iii....",
+        "................")
+
+
+ART = {"frost_glide": frost_glide, "glacial_rift": glacial_rift, "winter_comet": winter_comet, "charge": charge, "war_cry": war_cry, "whirlwind": whirlwind, "leap_back": leap_back, "volley": volley,
        "arrow_rain": arrow_rain, "blink": blink, "fireball": fireball, "frost_nova": frost_nova, "heal": heal,
        "blessing": blessing, "sanctuary": sanctuary}
 
@@ -479,7 +546,7 @@ def badges_sheet():
 def preview(out):
     """Every class's slots placed around a drawn hotbar, scale 4, plus the dimmed ones."""
     scale, w = 4, 320
-    classes = [SPELLS[i:i + 3] for i in range(0, 12, 3)]
+    classes = [SPELLS[i:i + 3] for i in range(0, len(SPELLS), 3)]
     im = Image.new("RGBA", (w, 46 * len(classes) + 30), (92, 120, 150, 255))
     for k, (right, a, f) in enumerate(classes):
         base = 46 * k + 40
@@ -498,7 +565,7 @@ def preview(out):
     im = im.resize((im.width * scale, im.height * scale), Image.NEAREST)
     im.save(out)
     # all icons alone, bigger
-    sheet = Image.new("RGBA", (SLOT * 12 + 11 * 4, SLOT * 2 + 4), (60, 60, 70, 255))
+    sheet = Image.new("RGBA", (SLOT * len(SPELLS) + (len(SPELLS) - 1) * 4, SLOT * 2 + 4), (60, 60, 70, 255))
     for i, s in enumerate(SPELLS):
         sheet.alpha_composite(slot(s), (i * (SLOT + 4), 0))
         sheet.alpha_composite(slot(s, True), (i * (SLOT + 4), SLOT + 4))

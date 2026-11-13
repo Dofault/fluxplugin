@@ -45,6 +45,14 @@ items:
     stats: {magic_power: 8, healing_power: 0.05}
     description: ["Its light hurts monsters", "and mends allies."]
     look: {material: GOLDEN_HOE, name: "Dawn Reliquary", model: "fluxdungeons:reliquaire_aube"}
+  class_cryomancer_weapon:
+    slot: weapon
+    classes: [cryomancer]
+    level: 1
+    rarity: common
+    stats: {magic_power: 9, max_mana: 10}
+    description: ["Throws a shard of ice with a left click.", "Every hit leaves frost."]
+    look: {material: BREEZE_ROD, name: "Frostheart"}
 
   # ---- Stonecutter dungeon (roche): warrior, level 5
   roc_helmet:     {slot: helmet, classes: [warrior], level: 5, rarity: rare, set: roc, stats: {max_health: 40, physical_defense: 6}, look: {material: IRON_HELMET, name: "Rock Helm"}}

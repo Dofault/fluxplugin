@@ -68,6 +68,11 @@ class ClassPagesTest {
         assertTrue(Files.exists(dir.resolve("personnage.html")));
         assertTrue(Files.exists(dir.resolve("style.css")));
         for (String id : classes.keySet()) {
+            if (classes.get(id).hidden()) {
+                // a class being tried out has no page: chosen by command only
+                assertFalse(Files.exists(dir.resolve("class_" + id + ".html")), id);
+                continue;
+            }
             for (String page : new String[]{"class_" + id + ".html", "confirm_" + id + ".html", "img/" + id + ".png"}) {
                 assertTrue(Files.exists(dir.resolve(page)), page);
             }
@@ -77,7 +82,7 @@ class ClassPagesTest {
             assertFalse(html.contains("class-pages."), id + ": missing text in the lang file");
             assertTrue(html.contains("classe choisir") || Files.readString(dir.resolve("confirm_" + id + ".html")).contains("classe choisir " + id));
         }
-        assertEquals(4, classes.size());
+        assertEquals(4, classes.values().stream().filter(c -> !c.hidden()).count());
     }
 
     private static Node node(String path) {

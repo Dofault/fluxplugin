@@ -78,6 +78,7 @@ final class ClassPages {
             save(dir.resolve("heros.html"), hub(set));
             save(dir.resolve("classes.html"), classes(set));
             for (ClassDef c : set.classes().values()) {
+                if (c.hidden()) continue;   // a class being tried out: chosen by command only
                 save(dir.resolve("class_" + c.id() + ".html"), classPage(set, c));
                 save(dir.resolve("confirm_" + c.id() + ".html"), confirm(c, cooldownHours));
                 image(dir.resolve("img/" + c.id() + ".png"), "pages/img/" + c.id() + ".png");
@@ -101,6 +102,7 @@ final class ClassPages {
         StringBuilder ways = new StringBuilder();
         int key = 1;
         for (ClassDef c : set.classes().values()) {
+            if (c.hidden()) continue;   // a class being tried out: chosen by command only
             String id = c.id();
             ways.append("<a class=\"way c-").append(id).append(" is-%fluxrpg_is_").append(id).append("%\" href=\"class_").append(id)
                     .append(".html\" data-key=\"").append(key++).append("\">").append(seal(id))
@@ -129,6 +131,7 @@ final class ClassPages {
         StringBuilder cards = new StringBuilder();
         int key = 1;
         for (ClassDef c : set.classes().values()) {
+            if (c.hidden()) continue;   // a class being tried out: chosen by command only
             String id = c.id();
             cards.append("<a class=\"frame card c-").append(id).append(" is-%fluxrpg_is_").append(id).append("%\" href=\"class_")
                     .append(id).append(".html\" data-key=\"").append(key++).append("\"><div class=\"inner night\">")
@@ -149,6 +152,7 @@ final class ClassPages {
         Map<String, Map<String, Double>> all = new LinkedHashMap<>();
         Map<String, Double> best = new LinkedHashMap<>();
         for (ClassDef o : set.classes().values()) {
+            if (o.hidden()) continue;   // a class being tried out: chosen by command only
             Map<String, Double> a = axes(set, o, top);
             all.put(o.id(), a);
             a.forEach((k, v) -> best.merge(k, v, Math::max));

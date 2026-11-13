@@ -235,16 +235,16 @@ public final class RpgPlayers implements Listener {
         if (pages != null && Screens.open(p, ClassPages.CLASSES)) return;
         Dialogs.Form form = Dialogs.form(p, plugin.messages().raw("choice.title"));
         form.body(plugin.messages().raw("choice.intro"));
-        for (String id : set.classes().keySet()) {
+        for (String id : visible(set)) {
             ItemStack weapon = items.make("class_" + id + "_weapon");
             String text = Dialogs.heading(plugin.messages().raw("classes." + id + ".name")) + "\n&f" + plugin.messages().raw("classes." + id + ".description");
             if (weapon != null) form.item(weapon, text);
             else form.body(text);
         }
-        for (String id : set.classes().keySet()) {
+        for (String id : visible(set)) {
             form.action(id, plugin.messages().raw("classes." + id + ".name"), plugin.messages().raw("classes." + id + ".description"));
         }
-        form.columns(Math.min(4, set.classes().size())).closable(false).width(320)
+        form.columns(Math.min(4, visible(set).size())).closable(false).width(320)
                 .onSubmit((pl, answer) -> confirmClass(pl, answer.button()))
                 .onCancel(pl -> Bukkit.getScheduler().runTaskLater(plugin, () -> reopen(pl), 2L))
                 .open();
@@ -293,13 +293,13 @@ public final class RpgPlayers implements Listener {
             plugin.messages().send(p, "rpg.not-in-rpg");
             return;
         }
-        if (world == null || p.getWorld() != world.world()) {
+        if (!free(p) && (world == null || p.getWorld() != world.world())) {
             plugin.messages().send(p, "choice.lobby-only");
             return;
         }
         Dialogs.Form form = Dialogs.form(p, plugin.messages().raw("choice.change-title"));
         form.body(plugin.messages().raw("choice.change-intro", "%hours%", String.valueOf(cooldownHours())));
-        for (String id : set.classes().keySet()) {
+        for (String id : free(p) ? set.classes().keySet() : visible(set)) {
             if (id.equals(r.heroClass().id())) continue;
             form.action(id, plugin.messages().raw("classes." + id + ".name"), plugin.messages().raw("classes." + id + ".description"));
         }
@@ -312,7 +312,15 @@ public final class RpgPlayers implements Listener {
      */
     void pick(Player p, String classId) {
         RpgConfig.Set set = config.get();
-        if (set == null || classId == null || !set.classes().containsKey(classId)) return;
+        if (set == null || classId == null || !set.classes().containsKey(classId)) {
+            plugin.messages().send(p, "choice.unknown", "%classes%", String.join(", ", free(p) ? set == null ? List.of() : set.classes().keySet() : visible(set)));
+            return;
+        }
+        // a class being tried out is for the staff only
+        if (set.classes().get(classId).hidden() && !free(p)) {
+            plugin.messages().send(p, "choice.unknown", "%classes%", String.join(", ", visible(set)));
+            return;
+        }
         RpgPlayer r = online.get(p.getUniqueId());
         if (r == null) {
             if (RpgWorld.UNIVERSE.equals(Universes.of(p)) && !loading.contains(p.getUniqueId())) choose(p, classId);
@@ -320,7 +328,7 @@ public final class RpgPlayers implements Listener {
             return;
         }
         if (classId.equals(r.heroClass().id())) return;
-        if (world == null || p.getWorld() != world.world()) {
+        if (!free(p) && (world == null || p.getWorld() != world.world())) {
             plugin.messages().send(p, "choice.lobby-only");
             return;
         }
@@ -336,6 +344,18 @@ public final class RpgPlayers implements Listener {
         });
     }
 
+    /** The staff changes class anywhere, without waiting, and may take a class being tried out (hidden). */
+    static boolean free(Player p) {
+        return p.hasPermission("fluxdungeons.admin");
+    }
+
+    /** The classes shown to players (not the hidden ones being tried out). */
+    static List<String> visible(RpgConfig.Set set) {
+        List<String> out = new ArrayList<>();
+        if (set != null) for (ClassDef c : set.classes().values()) if (!c.hidden()) out.add(c.id());
+        return out;
+    }
+
     long cooldownHours() {
         return plugin.getConfig().getLong("rpg.class-change-cooldown-hours", 24);
     }
@@ -348,6 +368,7 @@ public final class RpgPlayers implements Listener {
         String from = r.heroClass().id();
         int level = r.level();
         double xp = r.xp();
+        boolean free = free(p);
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             String refused = null;
             RpgStore.Progress progress = null;
@@ -355,7 +376,7 @@ public final class RpgPlayers implements Listener {
                 RpgStore.Hero hero = store.hero(id);
                 long wait = hero == null ? 0 : hero.changed() + cooldownHours() * 3_600_000L - System.currentTimeMillis();
                 if (hero == null || !hero.heroClass().equals(from)) refused = "choice.changed-elsewhere";
-                else if (wait > 0) refused = "choice.cooldown:" + (wait / 60_000 + 1);
+                else if (wait > 0 && !free) refused = "choice.cooldown:" + (wait / 60_000 + 1);
                 else {
                     store.save(id, from, level, xp);
                     if (!store.change(id, from, to)) refused = "choice.changed-elsewhere";

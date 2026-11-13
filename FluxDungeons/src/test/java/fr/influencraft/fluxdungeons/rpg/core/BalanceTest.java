@@ -16,7 +16,7 @@ class BalanceTest {
 
     private final Rpg rpg = Rpg.shipped();
     private final Simulator sim = new Simulator(rpg.balance, rpg.stats);
-    private static final List<String> DAMAGE = List.of("warrior", "archer", "mage");
+    private static final List<String> DAMAGE = List.of("warrior", "archer", "mage", "cryomancer");
     private static final int FIGHTS = 40;
 
     @Test

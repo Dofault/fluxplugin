@@ -362,6 +362,7 @@ choice:
   cooldown: "&#FF5C5CTu pourras changer de classe dans &f%minutes% min&#FF5C5C."
   changed-elsewhere: "&#FF5C5CTa classe a déjà changé entre-temps."
   changed: "&#2ECF7BTu es maintenant &#FFD94D%class%&#2ECF7B."
+  unknown: "&#FF5C5CClasse inconnue. Classes : &f%classes%"
 
 weapon:
   other-class: "&#FF5C5CCette arme est réservée à la classe &f%classes%&#FF5C5C, tu es &f%class%&#FF5C5C. Change de classe au lobby avec &f[/classe]&#FF5C5C."
@@ -390,6 +391,9 @@ classes:
   healer:
     name: "Soigneur"
     description: "Soigne et renforce le groupe, frappe peu mais n'est jamais sans défense."
+  cryomancer:
+    name: "Cryomancien"
+    description: "Fige les monstres dans la glace puis les fait voler en éclats : pics, glissade et comète de givre."
 
 item:
   classes: "Classe :"
@@ -573,3 +577,12 @@ class-pages:
       right: {name: "Soin", description: "Soigne l'allié visé, ou toi, de %coef% %power% (jusqu'à %range% blocs)."}
       a: {name: "Bénédiction", description: "Les alliés à %radius% blocs font %damage_bonus_pct% de dégâts en plus pendant %duration% s."}
       f: {name: "Sanctuaire", description: "Une zone de soin de %radius% blocs : %hits% soins de %coef% %power% en %duration% s."}
+    cryomancer:
+      role: "Contrôle de zone, réactions en chaîne"
+      difficulty: 3
+      strengths: "Chaque coup laisse du givre : au bout de quelques coups le monstre est pris dans la glace, et le coup suivant le fait éclater sur ses voisins."
+      weaknesses: "Fragile au contact, ses gros dégâts demandent de préparer le gel."
+      basic: {name: "Éclat de glace", description: "Lance un éclat de glace (%coef% %power%) jusqu'à %range% blocs. Laisse du givre."}
+      right: {name: "Glissade boréale", description: "Glisse sur %distance% blocs sur un sillage de glace : les monstres traversés prennent %coef% %power% et du givre."}
+      a: {name: "Faille glaciaire", description: "Des pics de glace jaillissent du sol sur %range% blocs : %coef% %power%, les monstres sont projetés en l'air et couverts de givre."}
+      f: {name: "Comète de l'hiver", description: "Une comète de glace s'écrase là où tu vises : %coef% %power% sur %radius% blocs, tous les monstres touchés sont gelés, le sol reste gelé %duration% s."}

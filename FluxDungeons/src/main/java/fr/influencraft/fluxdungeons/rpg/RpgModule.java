@@ -31,6 +31,7 @@ public final class RpgModule implements Listener {
     private RpgPlayers players;
     private CombatEngine combat;
     private Controls controls;
+    private Skills skills;
     private RpgItems items;
     private RpgWorld world;
     private ClassPages pages;
@@ -58,7 +59,7 @@ public final class RpgModule implements Listener {
         combat.profiles(RpgModule::profileFromTags);
         combat.immortal(e -> e.getScoreboardTags().contains(TAG_DUMMY));
         players.bind(world, combat);
-        Skills skills = new Skills(plugin, combat, players);
+        skills = new Skills(plugin, combat, players);
         controls = new Controls(plugin, players, skills, items);
         registerCombatApi(skills);
         var pm = Bukkit.getPluginManager();
@@ -205,6 +206,7 @@ public final class RpgModule implements Listener {
 
     public void stop() {
         if (players != null) players.stopAll();
+        if (skills != null) skills.stop();
     }
 
     /** A real swing of a sword or an axe (combat.AttackCadence): true when it was the rpg's basic attack. */

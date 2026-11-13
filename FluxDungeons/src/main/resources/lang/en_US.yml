@@ -362,6 +362,7 @@ choice:
   cooldown: "&#FF5C5CYou can change class again in &f%minutes% min&#FF5C5C."
   changed-elsewhere: "&#FF5C5CYour class already changed meanwhile."
   changed: "&#2ECF7BYou are now a &#FFD94D%class%&#2ECF7B."
+  unknown: "&#FF5C5CUnknown class. Classes: &f%classes%"
 
 weapon:
   other-class: "&#FF5C5CThis weapon belongs to the &f%classes% &#FF5C5Cclass, you are a &f%class%&#FF5C5C. Change class in the lobby with &f[/classe]&#FF5C5C."
@@ -390,6 +391,9 @@ classes:
   healer:
     name: "Healer"
     description: "Heals and strengthens the party, hits little but is never defenceless."
+  cryomancer:
+    name: "Cryomancer"
+    description: "Locks monsters in ice, then shatters them: spikes, ice glide and a winter comet."
 
 item:
   classes: "Class:"
@@ -562,3 +566,12 @@ class-pages:
       right: {name: "Heal", description: "Heals the ally you aim at, or yourself, for %coef% %power% (up to %range% blocks)."}
       a: {name: "Blessing", description: "Allies within %radius% blocks deal %damage_bonus_pct% more damage for %duration% s."}
       f: {name: "Sanctuary", description: "A healing zone of %radius% blocks: %hits% heals of %coef% %power% over %duration% s."}
+    cryomancer:
+      role: "Area control, chain reactions"
+      difficulty: 3
+      strengths: "Every hit leaves frost: after a few hits the monster is locked in ice, and the next hit shatters it onto its neighbours."
+      weaknesses: "Fragile up close, his big damage needs the freeze set up first."
+      basic: {name: "Ice shard", description: "Throws a shard of ice (%coef% %power%) up to %range% blocks. Leaves frost."}
+      right: {name: "Boreal glide", description: "Glides %distance% blocks on a trail of ice: monsters on the way take %coef% %power% and frost."}
+      a: {name: "Glacial rift", description: "Ice spikes burst out of the ground over %range% blocks: %coef% %power%, monsters are thrown up and covered in frost."}
+      f: {name: "Winter comet", description: "A comet of ice crashes where you aim: %coef% %power% within %radius% blocks, every monster hit is frozen, the ground stays frozen %duration% s."}

@@ -28,7 +28,8 @@ final class RpgHud {
     private static final int STEPS = 40, BAR = 83, GAP = 18, DIGIT = 6;
     /** In line with assets/hud_spells.py: icons by skill type, slot and key cap widths. */
     private static final List<String> SPELLS = List.of("charge", "war_cry", "whirlwind", "leap_back", "volley",
-            "arrow_rain", "blink", "fireball", "frost_nova", "heal", "blessing", "sanctuary");
+            "arrow_rain", "blink", "fireball", "frost_nova", "heal", "blessing", "sanctuary", "frost_glide", "glacial_rift",
+            "winter_comet");
     private static final int BLANK = SPELLS.size(), DIM = BLANK + 1, SLOT = 22, KEY = 9;
     /** Left edge of each skill slot on the line (x 0 = one pixel left of the hotbar, which spans 1 to 183). */
     private static final int SLOT_A = -50, SLOT_F = -25, SLOT_RIGHT = 187;

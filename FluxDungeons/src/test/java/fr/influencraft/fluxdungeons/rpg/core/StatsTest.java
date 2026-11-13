@@ -15,7 +15,9 @@ class StatsTest {
 
     @Test
     void shippedConfigsLoad() {
-        assertEquals(List.of("warrior", "archer", "mage", "healer"), List.copyOf(rpg.classes.keySet()));
+        assertEquals(List.of("warrior", "archer", "mage", "healer", "cryomancer"), List.copyOf(rpg.classes.keySet()));
+        assertTrue(rpg.classes.get("cryomancer").hidden() && !rpg.classes.get("mage").hidden(), "hidden flag read");
+        assertEquals(3, rpg.classes.get("cryomancer").passive("chill-max", 0), "passive numbers read");
         assertTrue(rpg.stats.has("damage_vs.undead") && rpg.stats.has("resist.fire"), "templates expanded");
     }
 
