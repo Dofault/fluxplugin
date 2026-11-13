@@ -3,18 +3,14 @@ package fr.influencraft.fluxshop.managers;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import net.luckperms.api.LuckPerms;
-import net.luckperms.api.LuckPermsProvider;
-import net.luckperms.api.model.user.User;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * Gère le cooldown du téléport vers le shop (/supermarket tpshop), avec une
- * durée configurable par grade via la meta LuckPerms "supermarket-tpshop-cooldown"
- * (en secondes), sinon la valeur par défaut de config.yml.
+ * Cooldown of the teleport to the shop (/supermarket tpshop): the meta "supermarket-tpshop-cooldown" of the player's
+ * rank (seconds, read through Flux), else the default of config.yml.
  */
 public class TpShopCooldownManager {
 
@@ -29,31 +25,11 @@ public class TpShopCooldownManager {
         this.defaultCooldownSeconds = plugin.getConfig().getLong("tpshop-cooldown-seconds", 1800);
     }
 
-    private boolean isLuckPermsAvailable() {
-        return plugin.getServer().getPluginManager().getPlugin("LuckPerms") != null;
-    }
-
+    /** The rank's meta "supermarket-tpshop-cooldown" (seconds, through Flux's PlayerMeta), else the config default. */
     public long getCooldownSeconds(UUID uuid) {
-        if (isLuckPermsAvailable()) {
-            try {
-                LuckPerms api = LuckPermsProvider.get();
-                User user = api.getUserManager().getUser(uuid);
-                if (user != null) {
-                    String value = user.getCachedData().getMetaData().getMetaValue(META_KEY);
-                    if (value != null) {
-                        try {
-                            return Long.parseLong(value.trim());
-                        } catch (NumberFormatException e) {
-                            plugin.getLogger().warning("Meta LuckPerms '" + META_KEY + "' invalide pour "
-                                    + uuid + " : " + value);
-                        }
-                    }
-                }
-            } catch (IllegalStateException e) {
-                // LuckPerms pas encore initialisé, on retombe sur la valeur par défaut.
-            }
-        }
-        return defaultCooldownSeconds;
+        Player player = plugin.getServer().getPlayer(uuid);
+        if (player == null) return defaultCooldownSeconds;
+        return fr.influencraft.flux.api.permission.PlayerMeta.metaInt(player, META_KEY, (int) defaultCooldownSeconds);
     }
 
     public long getCooldownSeconds(Player player) {

@@ -3,7 +3,6 @@ package fr.influencraft.fluxshop;
 import fr.influencraft.flux.api.FluxApi;
 import fr.influencraft.flux.api.MenuView;
 import fr.influencraft.flux.api.command.Commands;
-import fr.influencraft.flux.api.util.Resources;
 import fr.influencraft.fluxshop.autosell.AutoSellExceptionManager;
 import fr.influencraft.fluxshop.autosell.AutoSellFilter;
 import fr.influencraft.fluxshop.autosell.AutoSellItemManager;
@@ -31,7 +30,6 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
 import java.util.UUID;
@@ -41,7 +39,7 @@ import java.util.UUID;
  * auto-sell item. Every menu is a Flux menu ({@code plugins/FluxShop/menus/}), payments go through the main Flux
  * currency.
  */
-public class FluxShop extends JavaPlugin {
+public class FluxShop extends fr.influencraft.flux.api.FluxPlugin {
 
     private static final List<String> HELP_KEYS = List.of(
             "shop-command-chest",
@@ -55,15 +53,13 @@ public class FluxShop extends JavaPlugin {
             "shop-command-reload");
 
     @Override
-    public void onLoad() {
-        fr.influencraft.flux.api.util.DataFolders.migrate(this, "VaultSupermarket");
+    protected java.util.List<String> formerNames() {
+        return java.util.List.of("VaultSupermarket");
     }
 
     @Override
-    public void onEnable() {
-        saveDefaultConfig();
-
-        LangManager lang = new LangManager(this, "fr");
+    protected void enable() {
+        LangManager lang = new LangManager(this);
         PriceManager priceManager = new PriceManager(this);
         priceManager.logInvalidItems();
 
@@ -85,7 +81,6 @@ public class FluxShop extends JavaPlugin {
         autoSellMenu.register();
         FluxApi.registerAction(this, "shop", (player, view, argument) ->
                 click(player, view, argument, shopEditor, sellManager.sellMenu(), autoSellMenu));
-        Resources.shipMenus(this, FluxApi.language());
 
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvents(new Listener() {

@@ -113,9 +113,9 @@ shop-tpshop-already-teleporting: "&#FF5C5CTu es déjà en train de te téléport
 # AIDE
 ###################################
 shop-commands-header: |-
-  §7§m                                                    §f
+  &7&m                                                    &f
   &#FFD94D✦ Aide : commandes du Supermarket
-  §7§m                                                    §f
+  &7&m                                                    &f
 shop-command-chest: "   &#F0A800/supermarket addchest|removechest &8- &7Assigner / désassigner le coffre magasin regardé."
 shop-command-editor: "   &#F0A800Accroupi + clic droit &8- &7Sur un coffre magasin : éditeur (ajouter, retirer, changer un prix)."
 shop-command-sellblock: "   &#F0A800/supermarket addsellblock|removesellblock &8- &7Assigner / désassigner le bloc de vente regardé."
@@ -130,20 +130,20 @@ shop-command-reload: "   &#F0A800/supermarket reload &8- &7Recharger prices.yml,
 # INVENTAIRE / PRIX
 ###################################
 shop-all-items-label: "Tous les items"
-shop-all-items-button: "§x§F§F§D§9§4§DTous les items"
-shop-category-item-name: "§x§F§F§D§9§4§D%category%"
+shop-all-items-button: "&#FFD94DTous les items"
+shop-category-item-name: "&#FFD94D%category%"
 shop-category-item-lore: "&7%count% items"
-shop-prices-inventory-title: "§x§F§F§D§9§4§D%category% &7(%page%/%totalPages%)"
-shop-item-name: "§x§F§F§D§9§4§D%item%"
-shop-item-lore-sell-price: "&7Vente : §x§2§E§C§F§7§B%price%"
-shop-inventory-previous-page: "§x§2§E§C§F§7§BPage précédente"
-shop-inventory-next-page: "§x§2§E§C§F§7§BPage suivante"
+shop-prices-inventory-title: "&#FFD94D%category% &7(%page%/%totalPages%)"
+shop-item-name: "&#FFD94D%item%"
+shop-item-lore-sell-price: "&7Vente : &#2ECF7B%price%"
+shop-inventory-previous-page: "&#2ECF7BPage précédente"
+shop-inventory-next-page: "&#2ECF7BPage suivante"
 
 ###################################
 # VENTE AUTOMATIQUE (item colorant)
 ###################################
-autosell-item-name-off: "§x§F§F§5§C§5§C&lVente Automatique Désactivée"
-autosell-item-name-on: "§x§2§E§C§F§7§B&lVente Automatique Activée"
+autosell-item-name-off: "&#FF5C5C&lVente Automatique Désactivée"
+autosell-item-name-on: "&#2ECF7B&lVente Automatique Activée"
 autosell-item-lore-off:
   - "&#B376E5Vend automatiquement ce que tu ramasses."
   - ""
@@ -159,13 +159,13 @@ autosell-item-lore-on:
   - "&r&7&#FFD94D Gérer les exceptions"
   - "&#B376E5Accroupi + &r&7&#FFD94D Activer / Désactiver"
 
-shop-autosell-given: "§x§B§3§7§6§E§5ᴍᴀɢᴀꜱɪɴ &8▸ §x§2§E§C§F§7§BTu as reçu ton item de vente automatique !"
-shop-autosell-inventory-full: "§x§F§F§5§C§5§CTon inventaire est plein, impossible de te donner l'item !"
-shop-autosell-given-to: "§x§2§E§C§F§7§BTu as donné l'item de vente automatique à %player% !"
-shop-autosell-target-inventory-full: "§x§F§F§5§C§5§CL'inventaire de %player% est plein, impossible de lui donner l'item !"
-shop-autosell-toggled-on: "§x§2§E§C§F§7§B✔ Vente automatique activée !"
-shop-autosell-toggled-off: "§x§F§F§5§C§5§C✘ Vente automatique désactivée !"
-shop-autosell-toggle-cooldown: "§x§F§F§5§C§5§CAttends un peu avant de rebasculer ton item !"
+shop-autosell-given: "&#B376E5ᴍᴀɢᴀꜱɪɴ &8▸ &#2ECF7BTu as reçu ton item de vente automatique !"
+shop-autosell-inventory-full: "&#FF5C5CTon inventaire est plein, impossible de te donner l'item !"
+shop-autosell-given-to: "&#2ECF7BTu as donné l'item de vente automatique à %player% !"
+shop-autosell-target-inventory-full: "&#FF5C5CL'inventaire de %player% est plein, impossible de lui donner l'item !"
+shop-autosell-toggled-on: "&#2ECF7B✔ Vente automatique activée !"
+shop-autosell-toggled-off: "&#FF5C5C✘ Vente automatique désactivée !"
+shop-autosell-toggle-cooldown: "&#FF5C5CAttends un peu avant de rebasculer ton item !"
 
 # --- Menu de vente manuelle (double confirmation) ---
 shop-sell-inventory-title: "&#FFD94DVendre tes items"

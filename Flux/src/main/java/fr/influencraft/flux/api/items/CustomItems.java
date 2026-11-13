@@ -195,21 +195,22 @@ public final class CustomItems {
     }
 
     /**
-     * Gives {@code amount} of an item to a player, what does not fit falls at his feet. Unstackable items are made one
+     * Gives {@code amount} of an item to a player, what does not fit is kept in his rewards. Unstackable items are made one
      * by one (a tool carries its own unique id). False when the item is unknown.
      */
     public static boolean give(org.bukkit.entity.Player player, String id, int amount) {
-        ItemStack first = item(id);
+        ItemStack first = item(id, player);
         if (first == null) return false;
+        java.util.List<ItemStack> stacks = new java.util.ArrayList<>();
         int left = amount;
-        for (ItemStack stack = first; left > 0 && stack != null; stack = left > 0 ? item(id) : null) {
+        for (ItemStack stack = first; left > 0 && stack != null; stack = left > 0 ? item(id, player) : null) {
             int size = Math.min(left, stack.getMaxStackSize());
             stack.setAmount(size);
             left -= size;
-            for (ItemStack rest : player.getInventory().addItem(stack).values()) {
-                player.getWorld().dropItemNaturally(player.getLocation(), rest);
-            }
+            stacks.add(stack);
         }
+        // what does not fit is kept in /recompenses (Flux), never dropped
+        fr.influencraft.flux.api.inventory.Inventories.giveOrDrop(player, stacks);
         return true;
     }
 
@@ -257,6 +258,10 @@ public final class CustomItems {
     /** A custom item for this viewer: its vanilla equivalent ({@code bedrock.items}) when he plays on Bedrock. */
     public static ItemStack item(String id, org.bukkit.entity.Player viewer) {
         ItemStack custom = item(id);
+        // fishing items are made for a player (CustomFishing): customfishing:<id>
+        if (custom == null && id != null && id.startsWith("customfishing:") && viewer != null && fr.influencraft.flux.api.fishing.Fishing.available()) {
+            custom = fr.influencraft.flux.api.fishing.Fishing.item(viewer, id.substring("customfishing:".length()));
+        }
         if (custom == null || viewer == null || !fr.influencraft.flux.api.client.Clients.bedrock(viewer)) return custom;
         ItemStack vanilla = new ItemStack(fr.influencraft.flux.api.client.Clients.bedrockItem(id));
         org.bukkit.inventory.meta.ItemMeta from = custom.getItemMeta(), to = vanilla.getItemMeta();

@@ -70,6 +70,26 @@ public final class FluxSorter extends JavaPlugin {
         }
         levels = new Levels(this);
         sorterItem = new SorterItem(this);
+        // the sorting chest known to the suite as fluxsorter:sorter (level 1), fluxsorter:sorter_<level>
+        fr.influencraft.flux.api.items.CustomItems.register(this, "fluxsorter", new fr.influencraft.flux.api.items.CustomItems.Source() {
+            public String id(org.bukkit.inventory.ItemStack item) {
+                return sorterItem.isSorterItem(item) ? "sorter" : null;
+            }
+
+            public org.bukkit.inventory.ItemStack item(String id) {
+                if (id.equals("sorter")) return sorterItem.create(1, 1);
+                if (!id.startsWith("sorter_")) return null;
+                try {
+                    return sorterItem.create(1, levels.normalize(Integer.parseInt(id.substring(7))));
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            }
+
+            public java.util.Collection<String> ids() {
+                return java.util.List.of("sorter");
+            }
+        });
         registry = new SorterRegistry(this);
         sorterGolem = new SorterGolem(this);
         sortManager = new SortManager(this);
@@ -129,8 +149,7 @@ public final class FluxSorter extends JavaPlugin {
             while (left > 0) {
                 int stack = Math.min(64, left);
                 left -= stack;
-                target.getInventory().addItem(sorterItem.create(stack, level)).values()
-                        .forEach(rest -> target.getWorld().dropItem(target.getLocation(), rest));
+                fr.influencraft.flux.api.inventory.Inventories.giveOrDrop(target, java.util.List.of(sorterItem.create(stack, level)));
             }
             sender.sendMessage(message("give-ok",
                     Placeholder.unparsed("amount", String.valueOf(amount)),
