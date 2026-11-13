@@ -301,9 +301,10 @@ final class Frost {
     // ================================================================== basic attack: ice shard
 
     /** A shard of ice flying where the player looks; one stack of frost on the creature it hits. */
-    void shard(Player p, RpgPlayer r, CombatMath.Hit hit, String cast, double range) {
+    void shard(Player p, RpgPlayer r, CombatMath.Hit hit, String cast, double range, LivingEntity aimed) {
         Location eye = p.getEyeLocation();
-        Vector dir = eye.getDirection().normalize();
+        // aim assist: towards the enemy he aimed beside (from his eyes, the hand is only a few centimetres off)
+        Vector dir = aimed == null ? eye.getDirection().normalize() : AimAssist.toward(eye, aimed);
         // from the weapon's hand, a little to the right and below the eyes
         Vector right = dir.clone().crossProduct(new Vector(0, 1, 0));
         if (right.lengthSquared() < 1e-4) right = new Vector(1, 0, 0);

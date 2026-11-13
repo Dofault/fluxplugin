@@ -1,10 +1,9 @@
 prefix: '&#B376E5ᴅᴏɴᴊᴏɴ &8▸ '
+dungeon-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_dungeon% [jouer <donjon> | quitter | classe | liste]'
 players-only: '&#FF5C5CCommande réservée aux joueurs.'
 unknown-dungeon: '&#FF5C5CDonjon inconnu.'
-unknown-class: '&#FF5C5CClasse inconnue.'
 unknown-player: '&#FF5C5CJoueur introuvable.'
 not-in-run: '&#FF5C5CTu n''es pas dans un donjon.'
-dungeon-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_dungeon% [jouer <donjon> | quitter | classe [classe] | liste]'
 party-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_party% [inviter | accepter | quitter | expulser | chef] [joueur]'
 admin-usage: '!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% create <id> [map|monde] | voir [donjon|map] | edit <donjon> | build <donjon|all> | template <donjon> | start <donjon> <joueur> | stop <joueur|all> | summon <monstre> [n]|clear | god |
   give <joueur> <objet> [n] | runs | reload'
@@ -23,14 +22,6 @@ main:
     &#B376E5Niveau conseillé : &f%level%
 
     &#B376E5Joueurs : &f%min% à %max%'
-class:
-  title: Classes
-  intro: '&#B376E5Ta classe décide de ta vie, de tes dégâts et de tes trois compétences en donjon. Chaque classe garde son propre niveau : tu peux en changer à tout moment hors d''un donjon.'
-  level: niveau %level%
-  current: '&#2ECF7B(actuelle)'
-  abilities: 'Compétences :'
-  in-run: '&#FF5C5CTu ne peux pas changer de classe dans un donjon.'
-  chosen: '&#2ECF7BTu joues maintenant %class% &#2ECF7B(niveau &f%level%&#2ECF7B).'
 start:
   editing: '&#FF5C5CCe donjon est en cours d''édition, réessaie plus tard.'
   not-leader: '&#FF5C5CSeul le chef du groupe peut lancer un donjon.'
@@ -65,10 +56,7 @@ party:
     not-in-party: '&#FF5C5CTu n''es dans aucun groupe.'
     not-member: '&#FF5C5C%player% n''est pas dans ton groupe.'
 run:
-  loaned: '&#B376E5Équipement en fer prêté pour ce donjon : il reste dans le donjon quand tu en sors.'
-  loan-lore: '&7Prêté pour le donjon'
   preparing: '&#B376E5Préparation de &f%dungeon%&#B376E5...'
-  save-failed: '&#FF5C5CTes affaires n''ont pas pu être mises de côté : entrée annulée, rien n''a bougé.'
   title: '&#FFD94D%dungeon%'
   subtitle: '&#B376E5Si tu tombes, ton équipement reste ici'
   left: '&#B376E5Tu as quitté le donjon, tes affaires te sont rendues.'
@@ -83,20 +71,13 @@ run:
   loot-none: '&#B376E5Pas de butin cette fois.'
   leaving: '&#B376E5Retour dans &f%seconds% s&#B376E5.'
   defeat: '&#FF5C5CDéfaite'
+  loot-overflow-label: '&fButin d''un donjon'
+  loot-overflow: '&#B376E5Ton inventaire était plein : le reste t''attend dans &f[/%flux_cmd_flux_rewards%]&#B376E5.'
 room:
   fight: '&#B376E5Les monstres se réveillent'
   boss: '&#FF5C5CLe gardien se réveille'
   wave: '&#FFD94DVague %wave%/%waves%'
   cleared: '&#2ECF7BSalle nettoyée, la grille s''ouvre.'
-level-up: '&#2ECF7BNiveau supérieur ! &#B376E5%class% &#B376E5passe niveau &f%level%&#B376E5.'
-ability:
-  mana: Mana
-  how: '%key%, ton arme reste en main.'
-  key-key: Touche %key%
-  no-mana: '&#FF5C5CPas assez de mana pour %ability%'
-  no-target: '&#FF5C5C%ability% &7: aucune cible'
-hud:
-  bar: '&#6FA8FF✦ Mana %mana%&7/&#6FA8FF%max%'
 admin:
   god-on: '&#2ECF7BInvincible, vie et faim au maximum.'
   god-off: '&#B376E5Tu n''es plus invincible (vie et faim au maximum).'
@@ -238,64 +219,35 @@ lobby:
   rpg-gear-desc: "Tu joues avec ton équipement RPG : ton arme de classe, ton armure et tes sorts (clic droit, A, F). Rien n'est mis de côté et rien ne se perd."
   difficulty: 'Difficulté : %level%'
   difficulty-desc: Choisie par le chef du groupe, pour tout le groupe.
-  difficulty-gear: Conseillé
   difficulty-spells: Attaques spéciales
   spells-on: oui
   spells-count: '%count% par monstre (plus pour les boss)'
   spells-off: non
-  difficulty-loan: Armure et épée en fer prêtées à qui n'en a pas.
-  difficulty-required: Armure complète et une arme obligatoires.
   difficulty-next: Plus difficile
   difficulty-prev: Plus facile
   difficulty-leader: '%player% choisit la difficulté.'
-  need-armor: '&#FF5C5CLe mode %level% demande une armure complète : porte et emporte tes quatre pièces.'
-  need-weapon: '&#FF5C5CLe mode %level% demande une arme : emporte une épée, une hache, un arc ou une arbalète.'
   title: 'Préparation : %dungeon%'
   leave: Quitter
   leave-desc: Annule le lancement pour tout le groupe.
   leave-action: Quitter
   players: Joueurs
   level: Niveau conseillé
-  locked-gear: '%count% équipement(s) perdu(s) ici, rendus à leurs propriétaires si vous gagnez'
   class: Classe
   class-change: Changer de classe
   head-ready: '&#2ECF7BPrêt'
-  head-waiting: '&7En train de choisir'
   head-view: Voir son équipement
   armor-empty: Aucune armure
-  armor-leave: Ne pas l'emporter
-  armor-left: Pas emportée
-  armor-take: L'emporter
-  pet-empty: Emplacement de familier
-  pet-choose: Choisir un familier
-  pet-none: Tu n'as pas encore de familier.
-  pet-remove: Retirer
-  pet-level: Niveau
-  pet-title: Choisis un familier
-  pet-taken: '&7Déjà emmené'
-  pet-take: Emmener
-  back: Retour
-  item-empty: Emplacement libre
-  item-how: Clique sur un objet de ton inventaire pour l'emporter.
-  item-remove: Retirer
-  items-full: '&#FF5C5CTu emportes déjà %max% objets, retires-en un d''abord.'
   ready: Prêt
   not-ready: Pas prêt
-  ready-desc: '%ready%/%total% joueurs prêts. Le donjon démarre quand tout le monde est prêt. Si tu meurs, ce que tu emportes reste dans le donjon.'
   ready-action: Je suis prêt
   unready-action: Je ne suis plus prêt
   cancelled: '&#FF5C5CLancement de %dungeon% annulé par %player%.'
   expired: '&#FF5C5CLancement de %dungeon% annulé.'
   refused: '&#FF5C5CLe donjon n''a pas pu démarrer, relance-le avec &f[/%flux_cmd_fluxdungeons_dungeon%]&#FF5C5C.'
-lost:
-  locked: '&#FF5C5CTon équipement est resté dans &f%dungeon%&#FF5C5C. Il te sera rendu dès qu''un joueur aura gagné ce donjon.'
-  released: '&#2ECF7BTu as libéré l''équipement de &f%players%&#2ECF7B !'
-  released-owner: '&#2ECF7B%players% a gagné &f%dungeon%&#2ECF7B : ton équipement t''attend dans &f[/%flux_cmd_flux_rewards%]&#2ECF7B.'
-  reward-label: '&fÉquipement perdu (%dungeon%)'
-  overflow-label: '&fAffaires rapportées du donjon'
-  overflow: '&#B376E5Ton inventaire était plein : le reste t''attend dans &f[/%flux_cmd_flux_rewards%]&#B376E5.'
-pet:
-  down: '&#FF5C5C%pet%&#FF5C5C est à terre.'
+  ready-desc: '%ready%/%total% joueurs prêts. Le donjon démarre quand tout le monde est prêt. Si tu meurs, tu regardes les autres finir : rien ne se perd.'
+  head-waiting: '&7Pas encore prêt'
+  no-class: '&#FF5C5CAucune classe'
+  class-desc: 'Ta classe RPG : ton arme, tes sorts et tes statistiques dans le donjon.'
 door:
   kills: '&#FF5C5C☠ &f%done%&7/&f%needed% &7monstres'
   opened: '&#B376E5Une porte s''ouvre...'
@@ -318,9 +270,10 @@ pick-level:
   color-easy: "&#2ECF7B"
   title: '%dungeon%'
   intro: '&#B376E5Choisis la difficulté pour tout le groupe. &7(Tu pourras encore la changer sur l''écran de lancement.)'
+  spells-on: oui
+  spells-count: '%count% par monstre (plus pour les boss)'
+  spells-off: non
   tooltip: '%level%
-
-    &#B376E5Équipement conseillé : &f%gear%
 
     &#B376E5Vie des monstres : &fx%health%
 
@@ -328,16 +281,7 @@ pick-level:
 
     &#B376E5Récompense : &fx%reward%
 
-    &#B376E5Attaques spéciales : &f%spells%%extra%'
-  spells-on: oui
-  spells-count: '%count% par monstre (plus pour les boss)'
-  spells-off: non
-  loan: '
-
-    &#2ECF7BArmure et épée en fer prêtées à qui n''en a pas.'
-  required: '
-
-    &#FF5C5CArmure complète et une arme obligatoires.'
+    &#B376E5Attaques spéciales : &f%spells%'
 
 rpg:
   dummy-none: "&#FF5C5CAucun mannequin à moins de 6 blocs."

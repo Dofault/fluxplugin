@@ -66,8 +66,6 @@ public final class Run {
     final java.util.Set<String> grants = new java.util.HashSet<>();
     /** Counter shown on each door that opens with kills. */
     final java.util.Map<String, org.bukkit.entity.TextDisplay> doorLabels = new java.util.HashMap<>();
-    /** What each expected player chose on the launch screen, used when he enters. */
-    final java.util.Map<UUID, fr.influencraft.fluxdungeons.Loadouts.Selection> selections = new java.util.HashMap<>();
     /** Monsters of an imported map not spawned yet: they appear when a player comes near (memory stays low). */
     final java.util.List<DungeonDefinition.Spawn> pending = new java.util.ArrayList<>();
 

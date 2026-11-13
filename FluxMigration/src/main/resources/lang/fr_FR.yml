@@ -7,3 +7,5 @@ unknown: "&#FF5C5CMigration inconnue."
 state-done: "&#2ECF7Bfaite"
 state-pending: "&#FFD94Dà faire"
 state-waiting: "&8en attente"
+dungeon-lost:
+  label: "&fÉquipement rendu d'un donjon (%dungeon%)"

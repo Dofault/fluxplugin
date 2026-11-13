@@ -5,8 +5,8 @@ import org.bukkit.entity.Player;
 
 /**
  * What the dungeons ask the rpg universe (docs/technique/rpg.md): dungeons are played with the rpg profile (class,
- * stats, rpg items), not with the vanilla gear. Set by FluxDungeons once its rpg module runs; without it, the former
- * vanilla-gear dungeons (launch screen gear, vault, gear locked on death) are kept.
+ * stats, rpg items), never with things of the semi-rp world. Set by FluxDungeons once its rpg module runs; without it
+ * no dungeon can be started.
  */
 public interface RpgBridge {
 

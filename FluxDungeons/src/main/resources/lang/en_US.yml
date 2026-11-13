@@ -1,10 +1,9 @@
 prefix: '&#B376E5ᴅᴜɴɢᴇᴏɴ &8▸ '
+dungeon-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_dungeon% [play <dungeon> | leave | class | list]'
 players-only: '&#FF5C5CPlayers only.'
 unknown-dungeon: '&#FF5C5CUnknown dungeon.'
-unknown-class: '&#FF5C5CUnknown class.'
 unknown-player: '&#FF5C5CPlayer not found.'
 not-in-run: '&#FF5C5CYou are not in a dungeon.'
-dungeon-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_dungeon% [play <dungeon> | leave | class [class] | list]'
 party-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_party% [invite | accept | leave | kick | leader] [player]'
 admin-usage: '!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% create <id> [map|world] | visit [dungeon|map] | edit <dungeon> | build <dungeon|all> | template <dungeon> | start <dungeon> <player> | stop <player|all>
   | give <player> <item> [n] | runs | reload'
@@ -23,14 +22,6 @@ main:
     &#B376E5Recommended level: &f%level%
 
     &#B376E5Players: &f%min% to %max%'
-class:
-  title: Classes
-  intro: '&#B376E5Your class sets your life, your damage and your three abilities in dungeons. Each class keeps its own level: change it any time outside a dungeon.'
-  level: level %level%
-  current: '&#2ECF7B(current)'
-  abilities: 'Abilities:'
-  in-run: '&#FF5C5CYou cannot change your class in a dungeon.'
-  chosen: '&#2ECF7BYou now play %class% &#2ECF7B(level &f%level%&#2ECF7B).'
 start:
   editing: '&#FF5C5CThis dungeon is being edited, try again later.'
   not-leader: '&#FF5C5COnly the party leader can start a dungeon.'
@@ -65,10 +56,7 @@ party:
     not-in-party: '&#FF5C5CYou are in no party.'
     not-member: '&#FF5C5C%player% is not in your party.'
 run:
-  loaned: '&#B376E5Iron gear lent for this run: it stays in the dungeon when you leave.'
-  loan-lore: '&7Lent for the dungeon'
   preparing: '&#B376E5Preparing &f%dungeon%&#B376E5...'
-  save-failed: '&#FF5C5CYour things could not be put aside: entry cancelled, nothing moved.'
   title: '&#FFD94D%dungeon%'
   subtitle: '&#B376E5If you fall, your gear stays here'
   left: '&#B376E5You left the dungeon, your things are back.'
@@ -83,20 +71,13 @@ run:
   loot-none: '&#B376E5No loot this time.'
   leaving: '&#B376E5Back in &f%seconds% s&#B376E5.'
   defeat: '&#FF5C5CDefeat'
+  loot-overflow-label: '&fLoot of a dungeon'
+  loot-overflow: '&#B376E5Your inventory was full: the rest waits for you in &f[/%flux_cmd_flux_rewards%]&#B376E5.'
 room:
   fight: '&#B376E5The monsters wake up'
   boss: '&#FF5C5CThe guardian wakes up'
   wave: '&#FFD94DWave %wave%/%waves%'
   cleared: '&#2ECF7BRoom cleared, the gate opens.'
-level-up: '&#2ECF7BLevel up! &#B376E5%class% &#B376E5reaches level &f%level%&#B376E5.'
-ability:
-  mana: Mana
-  how: '%key%, your weapon stays in hand.'
-  key-key: Key %key%
-  no-mana: '&#FF5C5CNot enough mana for %ability%'
-  no-target: '&#FF5C5C%ability%&7: no target'
-hud:
-  bar: '&#6FA8FF✦ Mana %mana%&7/&#6FA8FF%max%'
 admin:
   god-on: '&#2ECF7BInvulnerable, full life and hunger.'
   god-off: '&#B376E5No longer invulnerable (full life and hunger).'
@@ -238,64 +219,35 @@ lobby:
   rpg-gear-desc: "You play with your rpg gear: your class weapon, armour and spells (right click, A, F). Nothing is set aside and nothing is lost."
   difficulty: 'Difficulty: %level%'
   difficulty-desc: Chosen by the party leader, for the whole party.
-  difficulty-gear: Made for
   difficulty-spells: Special attacks
   spells-on: "yes"
   spells-count: '%count% per monster (more for bosses)'
   spells-off: "no"
-  difficulty-loan: Iron armour and sword lent to whoever lacks them.
-  difficulty-required: Full armour and a weapon required.
   difficulty-next: Harder
   difficulty-prev: Easier
   difficulty-leader: '%player% chooses the difficulty.'
-  need-armor: '&#FF5C5C%level% needs full armour: wear and take your four pieces.'
-  need-weapon: '&#FF5C5C%level% needs a weapon: take a sword, an axe, a bow or a crossbow.'
   title: 'Getting ready: %dungeon%'
   leave: Leave
   leave-desc: Cancels the launch for the whole party.
   leave-action: Leave
   players: Players
   level: Recommended level
-  locked-gear: '%count% gear set(s) lost here, given back to their owners if you win'
   class: Class
   class-change: Change class
   head-ready: '&#2ECF7BReady'
-  head-waiting: '&7Choosing'
   head-view: See their gear
   armor-empty: No armour
-  armor-leave: Leave it behind
-  armor-left: Left behind
-  armor-take: Take it
-  pet-empty: Pet slot
-  pet-choose: Choose a pet
-  pet-none: You have no pet yet.
-  pet-remove: Remove
-  pet-level: Level
-  pet-title: Choose a pet
-  pet-taken: '&7Already taken'
-  pet-take: Take
-  back: Back
-  item-empty: Free slot
-  item-how: Click an item of your inventory to take it.
-  item-remove: Remove
-  items-full: '&#FF5C5CYou already take %max% items, remove one first.'
   ready: Ready
   not-ready: Not ready
-  ready-desc: '%ready%/%total% players ready. The dungeon starts once everybody is ready. If you die, what you take stays in the dungeon.'
   ready-action: I am ready
   unready-action: I am not ready
   cancelled: '&#FF5C5CLaunch of %dungeon% cancelled by %player%.'
   expired: '&#FF5C5CLaunch of %dungeon% cancelled.'
   refused: '&#FF5C5CThe dungeon could not start, launch it again with &f[/%flux_cmd_fluxdungeons_dungeon%]&#FF5C5C.'
-lost:
-  locked: '&#FF5C5CYour gear stayed in &f%dungeon%&#FF5C5C. You get it back as soon as a player wins this dungeon.'
-  released: '&#2ECF7BYou freed the gear of &f%players%&#2ECF7B!'
-  released-owner: '&#2ECF7B%players% won &f%dungeon%&#2ECF7B: your gear waits in &f[/%flux_cmd_flux_rewards%]&#2ECF7B.'
-  reward-label: '&fLost gear (%dungeon%)'
-  overflow-label: '&fThings brought back from the dungeon'
-  overflow: '&#B376E5Your inventory was full: the rest waits in &f[/%flux_cmd_flux_rewards%]&#B376E5.'
-pet:
-  down: '&#FF5C5C%pet%&#FF5C5C is down.'
+  ready-desc: '%ready%/%total% players ready. The dungeon starts once everybody is ready. If you die, you watch the others finish: nothing is lost.'
+  head-waiting: '&7Not ready yet'
+  no-class: '&#FF5C5CNo class'
+  class-desc: 'Your rpg class: your weapon, your skills and your stats in the dungeon.'
 door:
   kills: '&#FF5C5C☠ &f%done%&7/&f%needed% &7monsters'
   opened: '&#B376E5A door opens...'
@@ -318,9 +270,10 @@ pick-level:
   color-easy: "&#2ECF7B"
   title: '%dungeon%'
   intro: '&#B376E5Pick the difficulty for the whole party. &7(It can still be changed on the launch screen.)'
+  spells-on: 'yes'
+  spells-count: '%count% per monster (more for bosses)'
+  spells-off: 'no'
   tooltip: '%level%
-
-    &#B376E5Advised gear: &f%gear%
 
     &#B376E5Monster life: &fx%health%
 
@@ -328,16 +281,7 @@ pick-level:
 
     &#B376E5Reward: &fx%reward%
 
-    &#B376E5Special attacks: &f%spells%%extra%'
-  spells-on: 'yes'
-  spells-count: '%count% per monster (more for bosses)'
-  spells-off: 'no'
-  loan: '
-
-    &#2ECF7BIron armour and sword lent to whoever has none.'
-  required: '
-
-    &#FF5C5CFull armour and a weapon required.'
+    &#B376E5Special attacks: &f%spells%'
 
 rpg:
   dummy-none: "&#FF5C5CNo dummy within 6 blocks."

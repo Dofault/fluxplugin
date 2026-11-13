@@ -2,42 +2,34 @@ package fr.influencraft.fluxdungeons;
 
 import fr.influencraft.fluxdungeons.dungeon.Arena;
 import fr.influencraft.fluxdungeons.dungeon.Runs;
-import fr.influencraft.fluxdungeons.hero.Heroes;
 import fr.influencraft.fluxdungeons.mob.Mobs;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
 import org.bukkit.Material;
+import org.bukkit.Location;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityCombustEvent;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityKnockbackEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
-import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.EquipmentSlot;
 
@@ -47,21 +39,16 @@ final class DungeonListener implements Listener {
     private final FluxDungeons plugin;
     private final Arena arena;
     private final Runs runs;
-    private final Heroes heroes;
     private final Mobs mobs;
-    private final Loadouts loadouts;
     private final fr.influencraft.fluxdungeons.combat.CombatRules combat;
     private static final int OUT_OF_COMBAT_TICKS = 100;
 
-    DungeonListener(FluxDungeons plugin, Arena arena, Runs runs, Heroes heroes, Mobs mobs, Loadouts loadouts,
-                    fr.influencraft.fluxdungeons.combat.CombatRules combat) {
+    DungeonListener(FluxDungeons plugin, Arena arena, Runs runs, Mobs mobs, fr.influencraft.fluxdungeons.combat.CombatRules combat) {
         this.plugin = plugin;
         this.combat = combat;
         this.arena = arena;
         this.runs = runs;
-        this.heroes = heroes;
         this.mobs = mobs;
-        this.loadouts = loadouts;
         Bukkit.getScheduler().runTaskTimer(plugin, this::regenerate, 20L, 20L);
     }
 
@@ -74,17 +61,9 @@ final class DungeonListener implements Listener {
         for (String tag : java.util.List.copyOf(p.getScoreboardTags())) if (tag.startsWith("fdgrant_")) p.removeScoreboardTag(tag);
         // a run ended without him (crash): vanilla invulnerability back
         if (p.getMaximumNoDamageTicks() == 0) p.setMaximumNoDamageTicks(20);
-        boolean inArena = arena.isArena(p.getWorld());
-        if (!loadouts.hasVault(p) && !inArena) {
-            heroes.cleanLeftovers(p);
-            return;
-        }
-        // left a dungeon without getting his things back (disconnect during a crash): give them now
-        heroes.cleanLeftovers(p);
-        Location back = loadouts.recover(p);
-        Location to = back != null ? back : Bukkit.getWorlds().get(0).getSpawnLocation();
-        if (inArena || back != null) Bukkit.getScheduler().runTask(plugin, () -> {
-            if (p.isOnline()) p.teleport(to, PlayerTeleportEvent.TeleportCause.PLUGIN);
+        // came back in a dungeon world after a crash: the run is gone, back to the rpg lobby
+        if (arena.isArena(p.getWorld()) || runs.isDungeonWorld(p.getWorld())) Bukkit.getScheduler().runTask(plugin, () -> {
+            if (p.isOnline() && runs.runOf(p) == null) p.teleport(runs.lobbyLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
         });
     }
 
@@ -106,34 +85,19 @@ final class DungeonListener implements Listener {
         plugin.messages().send(p, "run.no-teleport");
     }
 
-    /** Safety net: a player of a run found outside the dungeon world leaves his run (and gets his things back). */
+    /** Safety net: a player of a run found outside the dungeon world leaves his run. */
     @EventHandler
     public void onWorldChange(PlayerChangedWorldEvent e) {
         Player p = e.getPlayer();
         if (runs.runOf(p) != null && !arena.isArena(p.getWorld()) && !runs.teleporting(p)) runs.leave(p);
     }
 
-    // ---------------------------------------------------------------- abilities
-
-    /** Selecting an ability slot casts it; the weapon stays in hand. */
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void onHeld(PlayerItemHeldEvent e) {
-        Player p = e.getPlayer();
-        if (heroes.hero(p) == null) return;
-        if (heroes.castSlot(p, e.getNewSlot(), runs.context(p))) e.setCancelled(true);
-    }
+    // ---------------------------------------------------------------- interactions
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onInteract(PlayerInteractEvent e) {
         if (e.getHand() != EquipmentSlot.HAND) return;
         Player p = e.getPlayer();
-        if (heroes.isAbilityItem(e.getItem())) {
-            e.setCancelled(true);
-            if (heroes.hero(p) != null && (e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK)) {
-                heroes.castSlot(p, p.getInventory().getHeldItemSlot(), runs.context(p));
-            }
-            return;
-        }
         // the altar of an offering door takes what the player holds (never the vanilla use of the block)
         if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock() != null && runs.offer(p, e.getClickedBlock(), e.getItem())) {
             e.setCancelled(true);
@@ -147,13 +111,8 @@ final class DungeonListener implements Listener {
     }
 
     @EventHandler(ignoreCancelled = true)
-    public void onSwap(PlayerSwapHandItemsEvent e) {
-        if (heroes.isAbilityItem(e.getMainHandItem()) || heroes.isAbilityItem(e.getOffHandItem())) e.setCancelled(true);
-    }
-
-    @EventHandler(ignoreCancelled = true)
     public void onDrop(PlayerDropItemEvent e) {
-        if (heroes.isAbilityItem(e.getItemDrop().getItemStack()) || runs.runOf(e.getPlayer()) != null) e.setCancelled(true);
+        if (runs.runOf(e.getPlayer()) != null) e.setCancelled(true);
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -163,22 +122,8 @@ final class DungeonListener implements Listener {
         if (t != InventoryType.PLAYER && t != InventoryType.CRAFTING && t != InventoryType.CREATIVE) e.setCancelled(true);
     }
 
-    @EventHandler
-    public void onProjectileHit(ProjectileHitEvent e) {
-        Projectile projectile = e.getEntity();
-        if (projectile.getShooter() instanceof Player p && runs.runOf(p) != null) {
-            heroes.abilities().onProjectileHit(projectile, runs.context(p));
-        }
-    }
-
-    /** Players do not order their dungeon pets around (sitting...). */
-    @EventHandler(ignoreCancelled = true)
-    public void onPetClick(org.bukkit.event.player.PlayerInteractEntityEvent e) {
-        if (runs.isPet(e.getRightClicked())) e.setCancelled(true);
-    }
-
     /**
-     * In a run world only dungeon monsters and pets appear among fighting creatures: creatures summoned by something
+     * In a run world only dungeon monsters appear among fighting creatures: creatures summoned by something
      * else (enchantments that call golems or blazes...) would fight the bosses for the players.
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -191,7 +136,7 @@ final class DungeonListener implements Listener {
         LivingEntity le = e.getEntity();
         // only creatures that fight: mannequins and armour stands (cameras, avatars, decor) are never refused
         if (!(le instanceof org.bukkit.entity.Mob)) return;
-        if (le.getScoreboardTags().contains(Mobs.TAG) || runs.isPet(le)) return;
+        if (le.getScoreboardTags().contains(Mobs.TAG)) return;
         e.setCancelled(true);
     }
 

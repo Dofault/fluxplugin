@@ -7,15 +7,12 @@ import fr.influencraft.fluxdungeons.rpg.core.StatSheet;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
-import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
-import org.bukkit.entity.TextDisplay;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -117,11 +114,6 @@ public final class CombatEngine implements Listener {
         return b instanceof LivingEntity le ? le : e instanceof LivingEntity le2 ? le2 : null;
     }
 
-    /** Whether a creature fights for a player (a pet): never a target of players. */
-    public boolean ally(Entity e) {
-        return e != null && petOwner.apply(e) != null;
-    }
-
     /** The server's damage numbers (combat.DamageNumbers): the engine's hits are shown there, as vanilla ones. */
     private fr.influencraft.fluxdungeons.combat.DamageNumbers numbers;
 
@@ -129,15 +121,8 @@ public final class CombatEngine implements Listener {
         this.numbers = numbers;
     }
 
-    /** Owner of a creature fighting for a player (dungeon pets), null for any other. */
-    private Function<Entity, Player> petOwner = e -> null;
-
     public void afterMonsterHit(java.util.function.Consumer<EntityDamageByEntityEvent> hook) {
         this.afterMonsterHit = hook;
-    }
-
-    public void petOwner(Function<Entity, Player> owner) {
-        this.petOwner = owner;
     }
 
     CombatEngine(JavaPlugin plugin, Supplier<RpgConfig.Set> config, Function<Player, RpgPlayer> players) {
@@ -275,7 +260,6 @@ public final class CombatEngine implements Listener {
         if (!rpg(attacker) || !rpg(target)) return null;
         boolean fromPlayer = attacker instanceof Player, toPlayer = target instanceof Player;
         if (fromPlayer == toPlayer) return null;          // no player versus player, no monster versus monster
-        if (fromPlayer && ally(target)) return null;     // a player's pet is on his side
         if (target instanceof Player tp && tp.getGameMode() != org.bukkit.GameMode.SURVIVAL && tp.getGameMode() != org.bukkit.GameMode.ADVENTURE) return null;
         if (cast != null) {
             String key = cast + "|" + target.getUniqueId();
@@ -319,7 +303,7 @@ public final class CombatEngine implements Listener {
 
     /**
      * A player's hit on a creature, told to the other plugins as a Bukkit hit first: the dungeons may refuse it (a
-     * boss between two phases, a melee too soon) and react to it (aggro, scripts, boss reactions, pets). Only the
+     * boss between two phases, a melee too soon) and react to it (aggro, scripts, boss reactions). Only the
      * engine decides how much it takes.
      */
     private boolean allowed(Player attacker, LivingEntity target, String cast, double amount) {
@@ -436,12 +420,6 @@ public final class CombatEngine implements Listener {
                     : damager instanceof LivingEntity le ? le : null;
             // a player's hits come through his controls (basic attack, skills), never through vanilla melee
             if (source == null || source instanceof Player) return;
-            Player owner = petOwner.apply(source);
-            if (owner != null) {
-                // a pet fighting for its owner: a light hit of the owner
-                if (!(target instanceof Player)) strike(owner, target, CombatMath.Hit.physical(0.6), null);
-                return;
-            }
             if (!(target instanceof Player)) return;
             MobState m = mob(source);
             double unit = m == null ? 0 : m.unit;

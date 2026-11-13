@@ -26,12 +26,6 @@ rpg:
 party:
   max-size: 4
 
-classes:
-  max-level: 30
-  # Experience to go from level n to n+1: xp-base × n ^ xp-exponent.
-  xp-base: 60
-  xp-exponent: 1.5
-
 scaling:
   # Each extra player adds this share of the monsters of every wave (0.5: 4 monsters become 6 for two players).
   extra-mobs-per-player: 0.5
@@ -80,25 +74,6 @@ hit-reaction:
   frost-per-hit: 30
   screen-shake-ms: 1000
 
-# Pets taken into a dungeon (chosen on the launch screen): how many at most, and their numbers, the same for every
-# pet for now. Each one is an invisible, silent mob wearing the pet's model, with the plugin's own behaviour (follow,
-# attack what the owner fights).
-pets:
-  # false: no pet in dungeons (slots greyed out on the launch screen).
-  enabled: true
-  max: 5
-  health: 40
-  # Damage of a hit (the monster's vanilla armour applies) and ticks between two hits (20 = one second).
-  attack: 6
-  attack-ticks: 20
-  # Moving speed (multiplier of the body's) and reach of a hit, in blocks.
-  speed: 1.2
-  reach: 1.2
-  # Bodies of the pets: a walking mob, and a flying one for "flying" pets.
-  body:
-    ground: WOLF
-    flying: BEE
-
 # Attack cadence of weapons: a rule of the WHOLE server (PvP included), carried by FluxDungeons as it serves PvE first.
 # Attack cadence (as Wynncraft): a weapon attacks at its own pace, spam clicks do nothing until it is recharged,
 # the weapon visibly comes back slowly (slower for a slow weapon), the vanilla recharge indicator is hidden (empty
@@ -121,13 +96,16 @@ attack-cadence:
     volume: 0.7
     pitch: 1.0
 
-# In a dungeon: the player's reach grows by this many blocks (4.5 instead of 3), and the melee reach of the monsters by
-# as much. Aim assist: a swing in the air hits the monster closest to the aimed direction, within the player's reach,
-# if it lies within angle degrees of where he looks (35: a monster 35 degrees aside still counts, 36 no longer does).
+# Melee reach of the monsters: this many blocks beyond the vanilla reach (players hit at their class's range).
 dungeon-reach-bonus: 1.5
+# Aim assist of the rpg, the same for every class (basic attack: melee, arrow, bolt, shard): a monster counts as
+# aimed at when the line of aim passes within margin blocks of its body (a near miss, at any distance: a baby
+# zombie far away is as easy as a big monster), or when it lies within angle degrees of where the player looks
+# (close up). The one closest to the aim wins, never through a wall. Shots fly at it (an arrow a little higher).
 aim-assist:
   enabled: true
-  angle: 35
+  angle: 12
+  margin: 1.2
 
 # Pack alert: a monster that spots a player (or is hit by one) brings in the calm monsters of the run within this many
 # blocks that see it (no chain). 0: each on its own.

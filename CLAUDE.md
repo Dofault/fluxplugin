@@ -120,11 +120,11 @@ The plugins are written **as English plugins, then adapted to French** for our s
   (`combat.CombatRules`, which may refuse or react to a hit; a player's hit reaches them as a synthetic Bukkit hit).
   Other plugins fight there through `fluxdungeons.api.Combat` (`enemies`, `strike`, `heal`, `cast`,
   `takeControls`: the class's clicks and keys stop reacting for that player) and start runs with `Dungeons.start`.
-  Without the rpg module, the former vanilla-gear play (launch screen gear, `flux_dungeons_vault`, gear locked in
-  `flux_dungeons_lost` on death) still runs. Never give, take or check items
-  of a player in a run from another plugin; stay out of runs with `Dungeons.playing`. Pets come in through Flux's
-  `pets.Companions` (provided by FluxPets), never through FluxPets itself. Parties (`party.Parties`) know nothing of dungeons, to
-  move into Flux the day another plugin needs groups. BetterModel is only touched by `mob.ModelBridge`.
+  Dungeons are played in the rpg universe only (2026-11-14: the former vanilla-gear play, its vault, lost gear and
+  dungeon pets are gone; without the rpg module no dungeon starts). Aim assist of every class: `rpg.AimAssist`.
+  Never give, take or check items of a player in a run from another plugin; stay out of runs with `Dungeons.playing`.
+  The semi-rp pets are hidden during a run through Flux's `pets.Companions`, never through FluxPets itself.
+  Parties (`party.Parties`) know nothing of dungeons, to move into Flux the day another plugin needs groups. BetterModel is only touched by `mob.ModelBridge`.
 - FluxPortal owns permanent portals (`fluxportal.api.Portals`: `set(name, side, end)`, `open`, `remove`, `get`, `all`; `PortalTravelEvent`): a rectangular hole on each side (5x4, odd widths), seen and crossed from the front only, geometry in `Frame` (tested). The 3D window is our own (`window` package: block layers in maps hung in item frames, read by the text shader in `resources/window/`, handed to Flux as the base of `TextShader`), adapted from RPE-portals: **the module is GPL-3.0**, keep the notices. Textures come from the server's pack first (custom blocks keep their look), then the vanilla client. Bedrock players get packet nether portal blocks (`BedrockView`) and never see the frames.
 - FluxPass owns the season pass (tiers, both tracks, rewards, missions; `fluxpass.api.Pass`: `tier`, `addPoints`). What a mission asks is priced by `Values` (effort / `actionPoints`), never hand-written; counted by `Effects.count`. Placeholders `%fluxpass_*%`, menu `pass` (tiers are lists `pass_free_<page>` / `pass_premium_<page>`).
 - FluxTournament owns tournaments (schedule, scores, rewards, history, leaderboard `tournois`). It counts a job's paid actions

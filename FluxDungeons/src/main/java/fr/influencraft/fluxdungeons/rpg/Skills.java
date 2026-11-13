@@ -50,6 +50,19 @@ public final class Skills implements Listener {
     private final RpgPlayers players;
     /** The cryomancer's frost (frost stacks, freeze, shatter) and his skills. */
     private final Frost frost;
+    /** Aim assist of every class's basic attack (aim-assist of the config). */
+    private final AimAssist aim = new AimAssist();
+    /** Farthest enemy an archer's basic arrow is helped towards (blocks). */
+    private static final double ARROW_RANGE = 40;
+
+    void aimAssist(org.bukkit.configuration.ConfigurationSection c) {
+        aim.load(c);
+    }
+
+    /** The enemy the player aims at within range (aim assist), null when none. */
+    LivingEntity aimedEnemy(Player p, double range) {
+        return aim.target(p, range, this::enemies);
+    }
 
     Skills(FluxPlugin plugin, CombatEngine combat, RpgPlayers players) {
         this.plugin = plugin;
@@ -82,7 +95,6 @@ public final class Skills implements Listener {
             // a model's hit box counts as its creature (once), wherever the box stands
             LivingEntity le = e instanceof Player ? null : combat.body(e);
             if (le == null || le instanceof Player || le instanceof org.bukkit.entity.ArmorStand || le instanceof org.bukkit.entity.Mannequin || le.isDead() || out.contains(le)) continue;
-            if (combat.ally(le)) continue;   // the players' pets
             if (e.getLocation().distanceSquared(at) <= radius * radius && combat.rpg(le)) out.add(le);
         }
         return out;
@@ -128,12 +140,16 @@ public final class Skills implements Listener {
         r.nextBasic(now + Math.max(2, Math.round(20 * CombatMath.attackInterval(r.stats())) - 2));
         ClassDef.Attack a = r.heroClass().basic();
         String cast = r.cast("basic");
+        // aim assist, the same for every class: a click or a shot passing beside an enemy goes for it
         switch (a.style()) {
-            case "arrow" -> shoot(p, cast, a.hit(), p.getEyeLocation().getDirection(), 3.0);
+            case "arrow" -> {
+                LivingEntity t = aimedEnemy(p, ARROW_RANGE);
+                shoot(p, cast, a.hit(), t == null ? p.getEyeLocation().getDirection() : AimAssist.arrowToward(p.getEyeLocation(), t, 3.0), 3.0);
+            }
             case "arcane" -> bolt(p, cast, a.hit(), a.range(), Particle.WITCH, null, 1.4);
             case "holy" -> bolt(p, cast, a.hit(), a.range(), Particle.END_ROD, null, 1.2);
-            case "shard" -> frost.shard(p, r, a.hit(), cast, a.range());
-            default -> cleave(p, cast, a, clicked);
+            case "shard" -> frost.shard(p, r, a.hit(), cast, a.range(), aimedEnemy(p, a.range()));
+            default -> cleave(p, cast, a, clicked != null ? clicked : aimedEnemy(p, a.range()));
         }
     }
 
@@ -372,7 +388,8 @@ public final class Skills implements Listener {
 
     /** A bolt of particles: hits the first creature on its way. */
     private void bolt(Player p, String cast, CombatMath.Hit hit, double range, Particle trail, Particle.DustOptions dust, double speed) {
-        travel(p, range, speed, trail, (at, direct) -> {
+        LivingEntity t = aimedEnemy(p, range);
+        travel(p, t == null ? null : AimAssist.toward(p.getEyeLocation(), t), range, speed, trail, (at, direct) -> {
             if (direct != null) combat.strike(p, direct, hit, cast);
         });
         p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ILLUSIONER_CAST_SPELL, org.bukkit.SoundCategory.PLAYERS, 0.5f, 1.6f);
@@ -380,8 +397,13 @@ public final class Skills implements Listener {
 
     /** Something flying from the eyes: calls {@code impact} at the first creature (given) or block (null) hit. */
     private void travel(Player p, double range, double speed, Particle trail, java.util.function.BiConsumer<Location, LivingEntity> impact) {
+        travel(p, null, range, speed, trail, impact);
+    }
+
+    /** The same, towards {@code dir} (null: where he looks). */
+    private void travel(Player p, Vector dir, double range, double speed, Particle trail, java.util.function.BiConsumer<Location, LivingEntity> impact) {
         Location start = p.getEyeLocation();
-        Vector step = start.getDirection().normalize().multiply(speed);
+        Vector step = (dir == null ? start.getDirection() : dir.clone()).normalize().multiply(speed);
         new BukkitRunnable() {
             final Location at = start.clone();
             double gone;

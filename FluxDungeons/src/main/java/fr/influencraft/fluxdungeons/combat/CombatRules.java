@@ -3,8 +3,6 @@ package fr.influencraft.fluxdungeons.combat;
 import fr.influencraft.fluxdungeons.FluxDungeons;
 
 import fr.influencraft.fluxdungeons.dungeon.Runs;
-import fr.influencraft.fluxdungeons.dungeon.Arena;
-import fr.influencraft.fluxdungeons.hero.Heroes;
 import fr.influencraft.fluxdungeons.mob.Mobs;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -15,32 +13,9 @@ import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityKnockbackEvent;
-import org.bukkit.event.entity.FoodLevelChangeEvent;
-import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.entity.EntityExplodeEvent;
-import org.bukkit.event.entity.EntityTargetEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.entity.ProjectileHitEvent;
-import org.bukkit.event.inventory.InventoryOpenEvent;
-import org.bukkit.event.inventory.InventoryType;
-import org.bukkit.event.player.PlayerChangedWorldEvent;
-import org.bukkit.event.player.PlayerDropItemEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerItemHeldEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
-import org.bukkit.event.player.PlayerSwapHandItemsEvent;
-import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.inventory.EquipmentSlot;
 
 /**
  * Every combat rule of the dungeons in one place: no friendly fire, no vanilla invulnerability (limits per source),
@@ -52,15 +27,13 @@ public final class CombatRules implements Listener {
 
     private final FluxDungeons plugin;
     private final Runs runs;
-    private final Heroes heroes;
     private final Mobs mobs;
     /** Tick of the last monster hit taken by each player (healing out of combat waits for it). */
     private final java.util.Map<java.util.UUID, Integer> lastHit = new java.util.HashMap<>();
 
-    public CombatRules(FluxDungeons plugin, Runs runs, Heroes heroes, Mobs mobs) {
+    public CombatRules(FluxDungeons plugin, Runs runs, Mobs mobs) {
         this.plugin = plugin;
         this.runs = runs;
-        this.heroes = heroes;
         this.mobs = mobs;
         Bukkit.getScheduler().runTaskTimer(plugin, this::cleanup, 20L, 20L);
     }
@@ -85,35 +58,22 @@ public final class CombatRules implements Listener {
     // ---------------------------------------------------------------- combat
 
     /**
-     * Combat is vanilla: players fight with their own gear, so armour, enchantments and libreforge effects apply as
-     * anywhere else. Here only: no friendly fire (players and their pets), class abilities, monster scripts.
+     * Hits between players and dungeon monsters before the rpg engine turns them into its own: no friendly fire, the
+     * pace of melee, the monsters' own reactions (scripts, phases, ranged resistance).
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onDamageByEntity(EntityDamageByEntityEvent e) {
         Player attacker = attacker(e.getDamager());
         Entity victim = e.getEntity();
-        // no friendly fire inside a run, pets included
-        if (attacker != null && (victim instanceof Player || runs.isPet(victim))) {
-            java.util.UUID petOwner = runs.petOwner(victim);
-            Player hurt = victim instanceof Player vp ? vp : petOwner == null ? null : Bukkit.getPlayer(petOwner);
-            if (hurt == null || runs.runOf(hurt) != null && (runs.sameRun(attacker, hurt) || attacker.equals(hurt))) {
-                e.setCancelled(true);
-                return;
-            }
-        }
-        if (e.getDamager() instanceof Projectile projectile) {
-            double power = heroes.abilities().projectilePower(projectile);
-            if (power >= 0) {
-                if (attacker == null || !runs.context(attacker).enemy(victim)) {
-                    e.setCancelled(true);
-                    return;
-                }
-                e.setDamage(power);
-            }
+        // no friendly fire inside a run
+        if (attacker != null && victim instanceof Player hurt
+                && (runs.runOf(hurt) != null && runs.sameRun(attacker, hurt) || attacker.equals(hurt))) {
+            e.setCancelled(true);
+            return;
         }
         if (victim instanceof LivingEntity mob && mobs.templateOf(mob) != null) {
-            // melee: one hit of the same attacker (player, pet) every MELEE_GAP ticks at most
-            if (e.getCause() == EntityDamageEvent.DamageCause.ENTITY_ATTACK && heroes.abilities().striking() < 0
+            // melee: one hit of the same attacker every MELEE_GAP ticks at most
+            if (e.getCause() == EntityDamageEvent.DamageCause.ENTITY_ATTACK
                     && tooSoon(mob, e.getDamager().getUniqueId().toString(), meleeGap(e.getDamager()))) {
                 e.setCancelled(true);
                 return;
@@ -127,10 +87,7 @@ public final class CombatRules implements Listener {
                 var t = mobs.template(mobs.templateOf(mob));
                 if (t != null && t.extra().rangedResistance() > 0) e.setDamage(e.getDamage() * (1 - t.extra().rangedResistance()));
             }
-            if (attacker != null) {
-                mobs.damagedByPlayer(mob, attacker, e);
-                if (!runs.isPet(e.getDamager())) runs.petFocus(attacker, mob);
-            }
+            if (attacker != null) mobs.damagedByPlayer(mob, attacker, e);
             return;
         }
         // a dungeon monster (or its projectile) hit a player
@@ -150,15 +107,14 @@ public final class CombatRules implements Listener {
                 }
                 lastHit.put(hurt.getUniqueId(), Bukkit.getCurrentTick());
                 mobs.hitPlayer(mob, hurt, e);
-                runs.petFocus(hurt, mob);
             }
         }
     }
 
     /**
      * No vanilla invulnerability after a hit, neither for dungeon monsters nor for players in a run (it swallowed the
-     * hits of a party, its pets, its abilities and enchantments landing together). Monsters: melee of the same attacker
-     * (player, pet) {@link #MELEE_GAP} ticks apart at least. Players: limited only by each monster's own pace
+     * hits of a party, its abilities and enchantments landing together). Monsters: melee of the same attacker
+     * {@link #MELEE_GAP} ticks apart at least. Players: limited only by each monster's own pace
      * ({@link Mobs#meleeReady}). Both: each environmental cause (lava, cactus...) {@link #ENVIRONMENT_GAP} ticks apart,
      * else lava would hit every tick. Projectiles, abilities, enchantment effects and explosions always land.
      */
@@ -381,11 +337,9 @@ public final class CombatRules implements Listener {
         }
     }
 
-    /** The player behind a hit: himself, his projectile or his dungeon pet. */
-    private Player attacker(Entity damager) {
+    /** The player behind a hit: himself or his projectile. */
+    private static Player attacker(Entity damager) {
         if (damager instanceof Player p) return p;
-        if (damager instanceof Projectile pr && pr.getShooter() instanceof Player p) return p;
-        java.util.UUID owner = runs.petOwner(damager);
-        return owner == null ? null : Bukkit.getPlayer(owner);
+        return damager instanceof Projectile pr && pr.getShooter() instanceof Player p ? p : null;
     }
 }

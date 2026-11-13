@@ -21,7 +21,7 @@ import java.util.Map;
  * time-limit: 20m
  * lives: 3                       # deaths the party can afford, together
  * reward: {minutes: 6, xp: 150}  # money: as much as N minutes of play (FluxValue); class experience
- * loot: [{item: fluxdungeons:foundry_blade, chance: 0.3}]
+ * loot: [{item: fluxrpg:roc_helmet, chance: 0.25}]
  * theme: {floor: [...], wall: [...], ceiling: [...], pillar: ..., gate: IRON_BARS, light: LANTERN, decor: [...]}
  * rooms:
  *   - {id: entrance, size: [9, 6, 9]}                         # width (x), height, length (z), inside
@@ -55,7 +55,7 @@ public final class DungeonDefinition {
     private final List<String> description;
     private final int minPlayers, maxPlayers, recommendedLevel, lives;
     private final long timeLimit;
-    private final double rewardMinutes, rewardXp;
+    private final double rewardMinutes;
     /** Song (FluxMusic) looping once a player comes near the boss ({@code music.boss}), empty for none. */
     private final String bossMusic;
     private final double bossMusicRadius;
@@ -82,13 +82,11 @@ public final class DungeonDefinition {
 
     /**
      * A difficulty level of the dungeon: {@code health} and {@code damage} multiply every monster's, {@code reward} the
-     * money of a victory; {@code gear} says what it is made for (shown to players). {@code spells}: monsters cast their
-     * abilities; {@code loan}: a player missing armour or a weapon is lent iron ones for the run; {@code requireGear}:
-     * nobody gets ready without full armour and a weapon. {@code abilities}: special attacks of each monster at this
-     * level, shown to players (0 = not told); the monsters' files decide it with {@code from-level} on their abilities.
+     * money and experience of a victory. {@code spells}: monsters cast their abilities. {@code abilities}: special
+     * attacks of each monster at this level, shown to players (0 = not told); the monsters' files decide it with
+     * {@code from-level} on their abilities.
      */
-    public record Level(String name, String gear, double health, double damage, double reward,
-                        boolean spells, boolean loan, boolean requireGear, int abilities) {
+    public record Level(String name, double health, double damage, double reward, boolean spells, int abilities) {
     }
 
     /**
@@ -161,19 +159,17 @@ public final class DungeonDefinition {
         lives = Math.max(0, c.getInt("lives", 3));
         timeLimit = Format.parseDuration(c.getString("time-limit", "20m"));
         rewardMinutes = c.getDouble("reward.minutes", 5);
-        rewardXp = c.getDouble("reward.xp", 100);
         bossMusic = c.getString("music.boss", "");
         bossMusicRadius = Math.max(1, c.getDouble("music.radius", 16));
         ConfigurationSection cmds = c.getConfigurationSection("commands");
         if (cmds != null) for (String k : cmds.getKeys(false)) commands.put(k.toLowerCase(java.util.Locale.ROOT), cmds.getStringList(k));
         for (Map<?, ?> l : c.getMapList("levels")) {
-            levels.add(new Level(String.valueOf(l.get("name") == null ? "Normal" : l.get("name")), l.get("gear") == null ? "" : String.valueOf(l.get("gear")),
+            levels.add(new Level(String.valueOf(l.get("name") == null ? "Normal" : l.get("name")),
                     l.get("health") instanceof Number n ? n.doubleValue() : 1, l.get("damage") instanceof Number n ? n.doubleValue() : 1,
                     l.get("reward") instanceof Number n ? n.doubleValue() : 1,
-                    !(l.get("spells") instanceof Boolean b) || b, l.get("loan") instanceof Boolean b && b,
-                    l.get("require-gear") instanceof Boolean b && b, l.get("abilities") instanceof Number n ? n.intValue() : 0));
+                    !(l.get("spells") instanceof Boolean b) || b, l.get("abilities") instanceof Number n ? n.intValue() : 0));
         }
-        if (levels.isEmpty()) levels.add(new Level("Normal", "", 1, 1, 1, true, false, false, 0));
+        if (levels.isEmpty()) levels.add(new Level("Normal", 1, 1, 1, true, 0));
         readBreakable(c, breakable, instant);
         for (Map<?, ?> l : c.getMapList("loot")) {
             Object chance = l.get("chance"), amount = l.get("amount");
@@ -338,10 +334,6 @@ public final class DungeonDefinition {
 
     public double rewardMinutes() {
         return rewardMinutes;
-    }
-
-    public double rewardXp() {
-        return rewardXp;
     }
 
     /**

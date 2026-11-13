@@ -7,3 +7,5 @@ unknown: "&#FF5C5CUnknown migration."
 state-done: "&#2ECF7Bdone"
 state-pending: "&#FFD94Dpending"
 state-waiting: "&8waiting"
+dungeon-lost:
+  label: "&fGear given back from a dungeon (%dungeon%)"

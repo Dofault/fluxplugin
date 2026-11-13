@@ -17,7 +17,7 @@ public final class Combat {
         /** He fights with an rpg class here (stats known). */
         boolean fighter(Player player);
 
-        /** Creatures a player may hurt around a point (no players, no pets, a model's hit box counted as its creature). */
+        /** Creatures a player may hurt around a point (no players, a model's hit box counted as its creature). */
         List<LivingEntity> enemies(Location at, double radius);
 
         /** A new cast id: one cast hits each target once. */

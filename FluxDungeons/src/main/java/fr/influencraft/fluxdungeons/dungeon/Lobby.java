@@ -3,12 +3,8 @@ package fr.influencraft.fluxdungeons.dungeon;
 import fr.influencraft.flux.api.FluxPlugin;
 import fr.influencraft.flux.api.inventory.Items;
 import fr.influencraft.flux.api.inventory.Lore;
-import fr.influencraft.flux.api.pets.Companions;
 import fr.influencraft.flux.api.text.Texts;
 import fr.influencraft.flux.api.util.Sounds;
-import fr.influencraft.fluxdungeons.Loadouts;
-import fr.influencraft.fluxdungeons.hero.HeroClass;
-import fr.influencraft.fluxdungeons.hero.Heroes;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -20,33 +16,29 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.SkullMeta;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 /**
- * The launch screen of a dungeon: every player of the party picks what he takes in, and the run starts once they
- * are all ready. Each player is shown on two rows: his armour (boots to helmet) and up to five pets, then his three
- * abilities and the six items he takes. Worn armour is taken by default; an item is added by clicking it in his own
- * inventory (it is not moved: only its place is remembered, and checked again when he enters).
+ * The launch screen of a dungeon: the party sees who comes, with which rpg class and armour, the leader picks the
+ * difficulty, and the run starts once everybody is ready. Nothing is chosen: a dungeon is played with the rpg profile
+ * as it is (class weapon, armour, skills), never with things of the semi-rp world.
  * <p>
  * Rows of the window: party and dungeon (top), the viewer's own panel, the panel of a team mate chosen by clicking
- * his head, the ready button.
+ * his head, the class, difficulty and ready buttons.
  */
 public final class Lobby implements Listener {
 
     private static final int SIZE = 54;
     private static final int BACK = 0, INFO = 8, CLASS = 45, LEVEL = 47, READY = 49;
     private static final int OWN = 9, MATE = 27;
-    private static final int PETS = 5;
     /** A lobby nobody launches is dropped after this long. */
     private static final long TIMEOUT_MS = 5 * 60_000;
 
@@ -54,7 +46,6 @@ public final class Lobby implements Listener {
     private static final class Party {
         final DungeonDefinition def;
         final List<UUID> members;
-        final Map<UUID, Loadouts.Selection> selections = new HashMap<>();
         final Set<UUID> ready = new HashSet<>();
         final Map<UUID, UUID> viewing = new HashMap<>();
         final long created = System.currentTimeMillis();
@@ -84,28 +75,9 @@ public final class Lobby implements Listener {
         }
     }
 
-    private static final class PetPicker implements InventoryHolder {
-        final Party party;
-        final UUID viewer;
-        final int slot;
-        final List<String> shown = new ArrayList<>();
-        Inventory inventory;
-
-        PetPicker(Party party, UUID viewer, int slot) {
-            this.party = party;
-            this.viewer = viewer;
-            this.slot = slot;
-        }
-
-        @Override
-        public Inventory getInventory() {
-            return inventory;
-        }
-    }
-
     /** Starts the run once everybody is ready (checks again, the players may have changed meanwhile). */
     public interface Launcher {
-        void launch(DungeonDefinition def, List<Player> players, Map<UUID, Loadouts.Selection> selections, int level);
+        void launch(DungeonDefinition def, List<Player> players, int level);
     }
 
     /** The level offered first: the one named Normal, else the first. */
@@ -115,48 +87,23 @@ public final class Lobby implements Listener {
     }
 
     private final FluxPlugin plugin;
-    private final Heroes heroes;
-    private final java.util.function.ToIntFunction<String> lockedGear;
     private Launcher launcher;
     private final Map<UUID, Party> byPlayer = new HashMap<>();
-    /** Last choice of each player, offered again at his next launch (if those items are still there). */
-    private final Map<UUID, Loadouts.Selection> last = new HashMap<>();
-    private int maxPets = PETS;
-
-    /** Where the last choice of each player is kept between runs and restarts. */
-    interface Presets {
-        String load(UUID player);
-
-        void save(UUID player, String data);
-    }
-
-    private final Presets presets;
-
-    /** Dungeons played with the rpg profile (Runs#rpg). */
-    private boolean rpgMode;
 
     /** Class and level of a player in the rpg ("Guerrier 5"), null when he has none yet. */
     private java.util.function.Function<UUID, String> rpgClass = u -> null;
 
-    void rpgMode(boolean on, java.util.function.Function<UUID, String> classLine) {
-        this.rpgMode = on;
+    void classLine(java.util.function.Function<UUID, String> classLine) {
         this.rpgClass = classLine == null ? u -> null : classLine;
     }
 
-    Lobby(FluxPlugin plugin, Heroes heroes, java.util.function.ToIntFunction<String> lockedGear, Presets presets) {
+    Lobby(FluxPlugin plugin) {
         this.plugin = plugin;
-        this.heroes = heroes;
-        this.lockedGear = lockedGear;
-        this.presets = presets;
         Bukkit.getScheduler().runTaskTimer(plugin, this::expire, 200L, 200L);
     }
 
     void launcher(Launcher launcher) {
         this.launcher = launcher;
-    }
-
-    void maxPets(int n) {
-        maxPets = Math.max(0, Math.min(PETS, n));
     }
 
     public boolean waiting(Player p) {
@@ -175,10 +122,7 @@ public final class Lobby implements Listener {
         for (Player p : players) ids.add(p.getUniqueId());
         Party party = new Party(def, ids);
         if (level >= 0 && level < def.levels().size()) party.level = level;
-        for (Player p : players) {
-            byPlayer.put(p.getUniqueId(), party);
-            party.selections.put(p.getUniqueId(), initial(p));
-        }
+        for (Player p : players) byPlayer.put(p.getUniqueId(), party);
         for (Player p : players) show(p);
     }
 
@@ -225,8 +169,6 @@ public final class Lobby implements Listener {
         Lore infoLore = Lore.create().description(info)
                 .kv(plugin.messages().raw("lobby.players"), party.def.minPlayers() + "-" + party.def.maxPlayers())
                 .kv(plugin.messages().raw("lobby.level"), party.def.recommendedLevel());
-        int locked = lockedGear.applyAsInt(party.def.id());
-        if (locked > 0) infoLore.info(plugin.messages().raw("lobby.locked-gear", "%count%", String.valueOf(locked)));
         inv.setItem(INFO, Items.of("NETHER_STAR", party.def.name(), infoLore.build(), viewer));
         UUID mate = mate(party, screen.viewer);
         int head = 1;
@@ -234,13 +176,11 @@ public final class Lobby implements Listener {
             if (head > 7) break;
             inv.setItem(head++, head(party, u, mate, viewer));
         }
-        panel(inv, OWN, party, screen.viewer, viewer, true);
-        if (mate != null) panel(inv, MATE, party, mate, viewer, false);
-        HeroClass c = heroes.classOf(screen.viewer);
-        if (c != null) {
-            inv.setItem(CLASS, Items.dress(new ItemStack(c.icon()), c.colored(),
-                    Lore.create().description(c.description()).left(plugin.messages().raw("lobby.class-change")).build(), viewer));
-        }
+        panel(inv, OWN, screen.viewer, viewer);
+        if (mate != null) panel(inv, MATE, mate, viewer);
+        String line = rpgClass.apply(screen.viewer);
+        inv.setItem(CLASS, Items.of("BOOK", line == null ? plugin.messages().raw("lobby.no-class") : line,
+                Lore.create().description(plugin.messages().raw("lobby.class-desc")).left(plugin.messages().raw("lobby.class-change")).build(), viewer));
         if (party.def.levels().size() > 1) inv.setItem(LEVEL, levelButton(party, viewer));
         boolean ready = party.ready.contains(screen.viewer);
         inv.setItem(READY, Items.of(ready ? "LIME_DYE" : "GRAY_DYE",
@@ -254,12 +194,9 @@ public final class Lobby implements Listener {
         List<DungeonDefinition.Level> levels = party.def.levels();
         DungeonDefinition.Level l = levels.get(party.level);
         Lore lore = Lore.create().description(plugin.messages().raw("lobby.difficulty-desc"));
-        if (!rpgMode && !l.gear().isEmpty()) lore.kv(plugin.messages().raw("lobby.difficulty-gear"), l.gear());
         lore.kv(plugin.messages().raw("lobby.difficulty-spells"), !l.spells() ? plugin.messages().raw("lobby.spells-off")
                 : l.abilities() > 0 ? plugin.messages().raw("lobby.spells-count", "%count%", String.valueOf(l.abilities()))
                 : plugin.messages().raw("lobby.spells-on"));
-        if (!rpgMode && l.loan()) lore.ok(plugin.messages().raw("lobby.difficulty-loan"));
-        if (!rpgMode && l.requireGear()) lore.info(plugin.messages().raw("lobby.difficulty-required"));
         lore.filter(levels.stream().map(DungeonDefinition.Level::name).toList(), party.level);
         if (leader(party, viewer.getUniqueId())) {
             lore.left(plugin.messages().raw("lobby.difficulty-next")).right(plugin.messages().raw("lobby.difficulty-prev"));
@@ -280,90 +217,18 @@ public final class Lobby implements Listener {
         return p == null ? "?" : p.getName();
     }
 
-    /**
-     * Why this player may not take this level, null when he may: levels with {@code require-gear} want his four armour
-     * pieces taken and a weapon among his chosen items.
-     */
-    private String missingGear(Party party, Player p) {
-        DungeonDefinition.Level l = party.def.levels().get(party.level);
-        // rpg dungeons are played with the rpg profile: no gear to choose nor to require
-        if (rpgMode || !l.requireGear()) return null;
-        Loadouts.Selection sel = party.selections.get(p.getUniqueId());
-        for (int a = 0; a < Loadouts.ARMOR.length; a++) {
-            ItemStack worn = p.getInventory().getItem(Loadouts.ARMOR[a]);
-            if (worn == null || worn.isEmpty() || !sel.armor()[a]) return "lobby.need-armor";
-        }
-        for (int k = 0; k < Loadouts.ITEMS; k++) if (Loadouts.isWeapon(chosen(p, sel, k))) return null;
-        return "lobby.need-weapon";
-    }
-
-    /** Two rows: armour then pets, abilities then items. */
-    private void panel(Inventory inv, int at, Party party, UUID who, Player viewer, boolean own) {
+    /** His rpg armour (boots to helmet), shown as it is, and what he fights with: nothing to choose. */
+    private void panel(Inventory inv, int at, UUID who, Player viewer) {
         Player owner = Bukkit.getPlayer(who);
-        Loadouts.Selection sel = party.selections.get(who);
-        if (owner == null || sel == null) return;
-        PlayerInventory pi = owner.getInventory();
-        for (int a = 0; a < Loadouts.ARMOR.length; a++) {
-            ItemStack worn = pi.getItem(Loadouts.ARMOR[a]);
-            if (rpgMode) {
-                // rpg: his rpg armour, shown as it is (nothing to choose, nothing set aside)
-                inv.setItem(at + a, worn == null || worn.isEmpty()
-                        ? Items.of("LIGHT_GRAY_STAINED_GLASS_PANE", plugin.messages().raw("lobby.armor-empty"), List.of(), viewer) : worn.clone());
-                continue;
-            }
-            if (worn == null || worn.isEmpty()) {
-                inv.setItem(at + a, Items.of("LIGHT_GRAY_STAINED_GLASS_PANE", plugin.messages().raw("lobby.armor-empty"), List.of(), viewer));
-            } else if (sel.armor()[a]) {
-                inv.setItem(at + a, own ? withLine(worn, Lore.create().left(plugin.messages().raw("lobby.armor-leave")).build()) : worn.clone());
-            } else {
-                inv.setItem(at + a, Items.of("GRAY_STAINED_GLASS_PANE", plugin.messages().raw("lobby.armor-left"),
-                        own ? Lore.create().left(plugin.messages().raw("lobby.armor-take")).build() : List.of(), viewer));
-            }
+        if (owner == null) return;
+        ItemStack[] armor = owner.getInventory().getArmorContents();
+        for (int a = 0; a < 4; a++) {
+            ItemStack worn = a < armor.length ? armor[a] : null;
+            inv.setItem(at + a, worn == null || worn.isEmpty()
+                    ? Items.of("LIGHT_GRAY_STAINED_GLASS_PANE", plugin.messages().raw("lobby.armor-empty"), List.of(), viewer) : worn.clone());
         }
-        Map<String, Companions.Companion> owned = new LinkedHashMap<>();
-        for (Companions.Companion c : Companions.owned(owner)) owned.put(c.id(), c);
-        for (int k = 0; k < PETS; k++) {
-            int slot = at + 4 + k;
-            if (k >= maxPets) {
-                inv.setItem(slot, Items.of("BLACK_STAINED_GLASS_PANE", " ", List.of(), viewer));
-                continue;
-            }
-            Companions.Companion c = k < sel.pets().size() ? owned.get(sel.pets().get(k)) : null;
-            if (c != null) {
-                ItemStack icon = c.icon().clone();
-                Lore lore0 = Lore.create().kv(plugin.messages().raw("lobby.pet-level"), c.level());
-                if (own) lore0.left(plugin.messages().raw("lobby.pet-remove"));
-                List<String> lore = lore0.build();
-                inv.setItem(slot, Items.dress(icon, c.name(), lore, viewer));
-            } else {
-                inv.setItem(slot, Items.of("LIGHT_GRAY_STAINED_GLASS_PANE", plugin.messages().raw("lobby.pet-empty"),
-                        own && !owned.isEmpty() ? Lore.create().left(plugin.messages().raw("lobby.pet-choose")).build()
-                                : own ? Lore.create().description(plugin.messages().raw("lobby.pet-none")).build() : List.of(), viewer));
-            }
-        }
-        if (rpgMode) {
-            // rpg: he fights with his rpg profile (class weapon, skills on right click, A and F)
-            inv.setItem(at + 9, Items.of("BOOK", plugin.messages().raw("lobby.rpg-gear"),
-                    Lore.create().description(plugin.messages().raw("lobby.rpg-gear-desc")).build(), viewer));
-            for (int k = 1; k < 9; k++) inv.setItem(at + 9 + k, Items.of("BLACK_STAINED_GLASS_PANE", " ", List.of(), viewer));
-            return;
-        }
-        HeroClass c = heroes.classOf(who);
-        List<ItemStack> abilities = c == null ? List.of() : heroes.abilityIcons(viewer, c);
-        for (int k = 0; k < Loadouts.FIRST_ITEM_SLOT; k++) {
-            inv.setItem(at + 9 + k, k < abilities.size() ? abilities.get(k)
-                    : Items.of("BLACK_STAINED_GLASS_PANE", " ", List.of(), viewer));
-        }
-        for (int k = 0; k < Loadouts.ITEMS; k++) {
-            int slot = at + 9 + Loadouts.FIRST_ITEM_SLOT + k;
-            ItemStack chosen = chosen(owner, sel, k);
-            if (chosen != null) {
-                inv.setItem(slot, own ? withLine(chosen, Lore.create().left(plugin.messages().raw("lobby.item-remove")).build()) : chosen.clone());
-            } else {
-                inv.setItem(slot, Items.of("LIGHT_GRAY_STAINED_GLASS_PANE", plugin.messages().raw("lobby.item-empty"),
-                        own ? Lore.create().description(plugin.messages().raw("lobby.item-how")).build() : List.of(), viewer));
-            }
-        }
+        inv.setItem(at + 9, Items.of("BOOK", plugin.messages().raw("lobby.rpg-gear"),
+                Lore.create().description(plugin.messages().raw("lobby.rpg-gear-desc")).build(), viewer));
     }
 
     private ItemStack head(Party party, UUID u, UUID mate, Player viewer) {
@@ -374,38 +239,11 @@ public final class Lobby implements Listener {
         Player p = Bukkit.getPlayer(u);
         String name = p == null ? "?" : p.getName();
         Lore lore = Lore.create();
-        if (rpgMode) {
-            String line = rpgClass.apply(u);
-            if (line != null) lore.kv(plugin.messages().raw("lobby.class"), line);
-        } else {
-            HeroClass c = heroes.classOf(u);
-            if (c != null) lore.kv(plugin.messages().raw("lobby.class"), c.colored() + " " + heroes.level(u, c.id()));
-        }
+        String line = rpgClass.apply(u);
+        if (line != null) lore.kv(plugin.messages().raw("lobby.class"), line);
         lore.line(plugin.messages().raw(party.ready.contains(u) ? "lobby.head-ready" : "lobby.head-waiting"));
         if (!u.equals(viewer.getUniqueId()) && !u.equals(mate)) lore.left(plugin.messages().raw("lobby.head-view"));
         return Items.dress(skull, name, lore.build(), viewer);
-    }
-
-    private static ItemStack withLine(ItemStack item, List<String> extra) {
-        ItemStack copy = item.clone();
-        copy.editMeta(m -> {
-            List<net.kyori.adventure.text.Component> lore = m.lore() == null ? new ArrayList<>() : new ArrayList<>(m.lore());
-            lore.add(net.kyori.adventure.text.Component.empty());
-            for (String line : extra) lore.add(Texts.parse(line).decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false));
-            m.lore(lore);
-        });
-        return copy;
-    }
-
-    /** The item a player chose in a place, null when empty or no longer there. */
-    private static ItemStack chosen(Player owner, Loadouts.Selection sel, int k) {
-        int index = sel.items()[k];
-        if (index < 0 || index >= 36) return null;
-        ItemStack item = owner.getInventory().getItem(index);
-        if (item == null || item.isEmpty()) return null;
-        ItemStack seen = sel.snapshots()[k];
-        if (seen != null && !(seen.isSimilar(item) && seen.getAmount() == item.getAmount())) return null;
-        return item;
     }
 
     private UUID mate(Party party, UUID viewer) {
@@ -415,57 +253,17 @@ public final class Lobby implements Listener {
         return null;
     }
 
-    // ---------------------------------------------------------------- choices
-
-    private Loadouts.Selection initial(Player p) {
-        Loadouts.Selection sel = Loadouts.Selection.empty();
-        Loadouts.Selection before = last.computeIfAbsent(p.getUniqueId(), u -> decode(presets.load(u)));
-        if (before != null) {
-            java.util.Set<Integer> taken = new java.util.HashSet<>();
-            for (int k = 0; k < Loadouts.ITEMS; k++) {
-                if (chosen(p, before, k) != null && taken.add(before.items()[k])) {
-                    sel.items()[k] = before.items()[k];
-                    sel.snapshots()[k] = before.snapshots()[k];
-                }
-            }
-            // an item that moved (things come back in other slots after a run) or was partly used (arrows, food) is
-            // found again anywhere in the inventory
-            for (int k = 0; k < Loadouts.ITEMS; k++) {
-                ItemStack seen = before.snapshots()[k];
-                if (sel.items()[k] >= 0 || seen == null) continue;
-                for (int i = 0; i < 36; i++) {
-                    ItemStack item = p.getInventory().getItem(i);
-                    if (item == null || item.isEmpty() || taken.contains(i) || !item.isSimilar(seen)) continue;
-                    taken.add(i);
-                    sel.items()[k] = i;
-                    sel.snapshots()[k] = item.clone();
-                    break;
-                }
-            }
-            System.arraycopy(before.armor(), 0, sel.armor(), 0, sel.armor().length);
-        }
-        List<String> owned = Companions.owned(p).stream().map(Companions.Companion::id).toList();
-        // no pet unless the player chose some himself last time (an empty choice stays empty: never filled with the
-        // pets he has out)
-        List<String> pets = before != null ? before.pets() : List.of();
-        for (String id : pets) if (owned.contains(id) && sel.pets().size() < maxPets) sel.pets().add(id);
-        return sel;
-    }
+    // ---------------------------------------------------------------- clicks
 
     @EventHandler(ignoreCancelled = true)
     public void onDrag(InventoryDragEvent e) {
         InventoryHolder h = e.getView().getTopInventory().getHolder();
-        if (h instanceof Screen || h instanceof PetPicker) e.setCancelled(true);
+        if (h instanceof Screen) e.setCancelled(true);
     }
 
     @EventHandler
     public void onClick(InventoryClickEvent e) {
         InventoryHolder h = e.getView().getTopInventory().getHolder();
-        if (h instanceof PetPicker picker) {
-            e.setCancelled(true);
-            pickPet(picker, e);
-            return;
-        }
         if (!(h instanceof Screen screen)) return;
         e.setCancelled(true);
         if (!(e.getWhoClicked() instanceof Player p) || !e.getClick().isLeftClick() && !e.getClick().isRightClick()) return;
@@ -474,22 +272,14 @@ public final class Lobby implements Listener {
             p.closeInventory();
             return;
         }
-        Loadouts.Selection sel = party.selections.get(p.getUniqueId());
         int raw = e.getRawSlot();
-        if (raw >= SIZE) {
-            // his own inventory: add the clicked item (never in rpg: he plays with all his rpg things)
-            if (rpgMode || !(e.getClickedInventory() instanceof PlayerInventory) || e.getSlot() >= 36) return;
-            ItemStack item = e.getCurrentItem();
-            if (item == null || item.isEmpty()) return;
-            addItem(p, party, sel, e.getSlot(), item);
-            return;
-        }
+        if (raw >= SIZE) return;
         if (raw == BACK) {
             cancel(p);
             return;
         }
         if (raw == CLASS) {
-            Bukkit.getScheduler().runTask(plugin, () -> p.performCommand("dungeon class"));
+            Bukkit.getScheduler().runTask(plugin, () -> p.performCommand("classe"));
             return;
         }
         if (raw == READY) {
@@ -503,7 +293,7 @@ public final class Lobby implements Listener {
             }
             int n = party.def.levels().size();
             party.level = (party.level + (e.getClick().isRightClick() ? n - 1 : 1)) % n;
-            // another level: everybody checks his gear again
+            // another level: everybody agrees again
             party.ready.clear();
             Sounds.cue(p, "click");
             redraw(party);
@@ -518,115 +308,9 @@ public final class Lobby implements Listener {
             }
             return;
         }
-        int rel = raw - OWN;
-        if (rel < 0 || rel >= 18) return;
-        if (rpgMode && (rel < 4 || rel >= 9)) return;   // rpg: armour shown, items not chosen
-        if (rel < 4) {
-            ItemStack worn = p.getInventory().getItem(Loadouts.ARMOR[rel]);
-            if (worn == null || worn.isEmpty()) return;
-            sel.armor()[rel] = !sel.armor()[rel];
-            changed(p, party);
-            Sounds.cue(p, sel.armor()[rel] ? "toggle-on" : "toggle-off");
-        } else if (rel < 9) {
-            int k = rel - 4;
-            if (k >= maxPets) return;
-            if (k < sel.pets().size()) {
-                sel.pets().remove(k);
-                changed(p, party);
-                Sounds.cue(p, "remove");
-            } else if (!Companions.owned(p).isEmpty()) {
-                openPicker(p, party, k);
-            }
-        } else if (rel >= 9 + Loadouts.FIRST_ITEM_SLOT) {
-            int k = rel - 9 - Loadouts.FIRST_ITEM_SLOT;
-            if (sel.items()[k] < 0) return;
-            sel.items()[k] = -1;
-            sel.snapshots()[k] = null;
-            changed(p, party);
-            Sounds.cue(p, "remove");
-        }
-    }
-
-    private void addItem(Player p, Party party, Loadouts.Selection sel, int index, ItemStack item) {
-        int free = -1;
-        for (int k = 0; k < Loadouts.ITEMS; k++) {
-            if (sel.items()[k] == index && chosen(p, sel, k) != null) {
-                // clicked again: taken back out
-                sel.items()[k] = -1;
-                sel.snapshots()[k] = null;
-                changed(p, party);
-                Sounds.cue(p, "remove");
-                return;
-            }
-            if (free < 0 && chosen(p, sel, k) == null) free = k;
-        }
-        if (free < 0) {
-            plugin.messages().send(p, "lobby.items-full", "%max%", String.valueOf(Loadouts.ITEMS));
-            Sounds.cue(p, "error");
-            return;
-        }
-        sel.items()[free] = index;
-        sel.snapshots()[free] = item.clone();
-        changed(p, party);
-        Sounds.cue(p, "click");
-    }
-
-    /** A choice changed: the player is no longer ready, every screen of the party is redrawn. */
-    private void changed(Player p, Party party) {
-        party.ready.remove(p.getUniqueId());
-        remember(p, party);
-        redraw(party);
-    }
-
-    /** Keeps the player's current choice for next time (memory now, the database a moment later). */
-    private void remember(Player p, Party party) {
-        Loadouts.Selection sel = copy(party.selections.get(p.getUniqueId()));
-        last.put(p.getUniqueId(), sel);
-        String data = encode(sel);
-        UUID id = p.getUniqueId();
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> presets.save(id, data));
-    }
-
-    /** A choice as text: items seen (base64), their slots, armour taken, pets. */
-    private static String encode(Loadouts.Selection s) {
-        StringBuilder slots = new StringBuilder(), armor = new StringBuilder();
-        for (int i : s.items()) slots.append(slots.length() == 0 ? "" : ",").append(i);
-        for (boolean b : s.armor()) armor.append(b ? '1' : '0');
-        return fr.influencraft.fluxdungeons.Store.encode(s.snapshots()) + "|" + slots + "|" + armor + "|" + String.join(",", s.pets());
-    }
-
-    private static Loadouts.Selection decode(String data) {
-        if (data == null || data.isBlank()) return null;
-        try {
-            String[] p = data.split("\\|", -1);
-            Loadouts.Selection sel = Loadouts.Selection.empty();
-            ItemStack[] seen = fr.influencraft.fluxdungeons.Store.decode(p[0]);
-            String[] slots = p[1].split(",");
-            for (int k = 0; k < Loadouts.ITEMS && k < slots.length && k < seen.length; k++) {
-                sel.items()[k] = Integer.parseInt(slots[k].trim());
-                sel.snapshots()[k] = seen[k];
-            }
-            for (int k = 0; k < sel.armor().length && k < p[2].length(); k++) sel.armor()[k] = p[2].charAt(k) == '1';
-            if (p.length > 3 && !p[3].isBlank()) sel.pets().addAll(List.of(p[3].split(",")));
-            return sel;
-        } catch (RuntimeException e) {
-            return null;
-        }
-    }
-
-    private static Loadouts.Selection copy(Loadouts.Selection s) {
-        return new Loadouts.Selection(s.items().clone(), s.snapshots().clone(), s.armor().clone(), new ArrayList<>(s.pets()));
     }
 
     private void toggleReady(Player p, Party party) {
-        if (!party.ready.contains(p.getUniqueId())) {
-            String missing = missingGear(party, p);
-            if (missing != null) {
-                plugin.messages().send(p, missing, "%level%", party.def.levels().get(party.level).name());
-                Sounds.cue(p, "error");
-                return;
-            }
-        }
         if (!party.ready.add(p.getUniqueId())) {
             party.ready.remove(p.getUniqueId());
             Sounds.cue(p, "toggle-off");
@@ -634,7 +318,6 @@ public final class Lobby implements Listener {
             return;
         }
         Sounds.cue(p, "confirm");
-        remember(p, party);
         if (!party.ready.containsAll(party.members)) {
             redraw(party);
             return;
@@ -646,63 +329,13 @@ public final class Lobby implements Listener {
                 close(party, "lobby.cancelled", "?");
                 return;
             }
-            String missing = missingGear(party, m);
-            if (missing != null) {
-                // his gear changed since he got ready
-                party.ready.remove(u);
-                plugin.messages().send(m, missing, "%level%", party.def.levels().get(party.level).name());
-                redraw(party);
-                return;
-            }
             players.add(m);
         }
         for (UUID u : party.members) byPlayer.remove(u);
         for (Player m : players) {
             if (m.getOpenInventory().getTopInventory().getHolder() instanceof Screen s && s.party == party) m.closeInventory();
         }
-        launcher.launch(party.def, players, party.selections, party.level);
-    }
-
-    private void openPicker(Player p, Party party, int slot) {
-        PetPicker picker = new PetPicker(party, p.getUniqueId(), slot);
-        picker.inventory = Bukkit.createInventory(picker, SIZE, Texts.parse(plugin.messages().raw("lobby.pet-title")));
-        Loadouts.Selection sel = party.selections.get(p.getUniqueId());
-        int i = 0;
-        for (Companions.Companion c : Companions.owned(p)) {
-            if (i >= SIZE - 1) break;
-            boolean taken = sel.pets().contains(c.id());
-            Lore lore0 = Lore.create().kv(plugin.messages().raw("lobby.pet-level"), c.level());
-            if (taken) lore0.line(plugin.messages().raw("lobby.pet-taken"));
-            else lore0.left(plugin.messages().raw("lobby.pet-take"));
-            List<String> lore = lore0.build();
-            picker.inventory.setItem(i++, Items.dress(c.icon().clone(), c.name(), lore, p));
-            picker.shown.add(c.id());
-        }
-        picker.inventory.setItem(SIZE - 1, Items.of("itemsadder:influitems:btn_back", plugin.messages().raw("lobby.back"), List.of(), p));
-        p.openInventory(picker.inventory);
-        Sounds.cue(p, "page");
-    }
-
-    private void pickPet(PetPicker picker, InventoryClickEvent e) {
-        if (!(e.getWhoClicked() instanceof Player p)) return;
-        Party party = picker.party;
-        if (byPlayer.get(p.getUniqueId()) != party) {
-            p.closeInventory();
-            return;
-        }
-        int raw = e.getRawSlot();
-        if (raw == SIZE - 1) {
-            show(p);
-            return;
-        }
-        if (raw < 0 || raw >= picker.shown.size()) return;
-        Loadouts.Selection sel = party.selections.get(p.getUniqueId());
-        String id = picker.shown.get(raw);
-        if (sel.pets().contains(id) || sel.pets().size() >= maxPets) return;
-        sel.pets().add(id);
-        changed(p, party);
-        Sounds.cue(p, "click");
-        show(p);
+        launcher.launch(party.def, players, party.level);
     }
 
     // ---------------------------------------------------------------- end of a lobby
@@ -713,7 +346,7 @@ public final class Lobby implements Listener {
             Player p = Bukkit.getPlayer(u);
             if (p == null) continue;
             InventoryHolder h = p.getOpenInventory().getTopInventory().getHolder();
-            if (h instanceof Screen s && s.party == party || h instanceof PetPicker pk && pk.party == party) p.closeInventory();
+            if (h instanceof Screen s && s.party == party) p.closeInventory();
             plugin.messages().send(p, key, "%player%", who, "%dungeon%", party.def.name());
         }
     }

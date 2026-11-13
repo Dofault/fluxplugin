@@ -8,9 +8,6 @@ import fr.influencraft.flux.api.items.CustomItems;
 import fr.influencraft.flux.api.text.Texts;
 import fr.influencraft.flux.api.util.Format;
 import fr.influencraft.flux.api.value.Values;
-import fr.influencraft.fluxdungeons.Loadouts;
-import fr.influencraft.fluxdungeons.hero.Abilities;
-import fr.influencraft.fluxdungeons.hero.Heroes;
 import fr.influencraft.fluxdungeons.mob.MobTemplate;
 import fr.influencraft.fluxdungeons.mob.Mobs;
 import net.kyori.adventure.bossbar.BossBar;
@@ -46,11 +43,10 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Every run of every dungeon: the launch screen ({@link Lobby}: what each player takes in), starting (copy of the
- * map, players keep only what they chose, pets come along), rooms (a room wakes up when a player enters it, its gate
- * opens once its waves are dead), deaths (the player's gear stays locked in the dungeon, he watches), victory
- * (money, class experience, loot, every gear locked in this dungeon handed back to its owner), defeat, leaving, and
- * the wiping of the copy.
+ * Every run of every dungeon, played in the rpg universe with the rpg profile: the launch screen ({@link Lobby}),
+ * starting (copy of the map), rooms (a room wakes up when a player enters it, its gate opens once its waves are dead),
+ * deaths (nothing is lost, he watches the others), victory (money, rpg experience, loot), defeat, leaving (back to
+ * the rpg lobby), and the wiping of the copy.
  */
 public final class Runs {
 
@@ -62,12 +58,8 @@ public final class Runs {
     private final Mobs mobs;
     /** Lairs of digging bosses (dungeons with a burrows section). */
     private final Burrows burrows;
-    private final Heroes heroes;
-    private final Loadouts loadouts;
-    private final fr.influencraft.fluxdungeons.Store store;
     private final WorldInstances instances;
     private final Lobby lobby;
-    private final PetFighters pets;
     private final Editor editor;
     private final Map<String, DungeonDefinition> dungeons = new LinkedHashMap<>();
     private final Map<String, Run> runs = new HashMap<>();
@@ -82,7 +74,7 @@ public final class Runs {
     private String origin = "victory";
     private int ticks;
 
-    /** The rpg universe the dungeons are played in (null: the former vanilla-gear dungeons). */
+    /** The rpg universe the dungeons are played in (null only when the rpg module failed: nobody may play). */
     private RpgBridge rpg;
 
     /** Players of a running run (fighting or watching, not those still arriving), 0 when unknown. */
@@ -99,44 +91,27 @@ public final class Runs {
 
     public void rpg(RpgBridge bridge) {
         this.rpg = bridge;
-        lobby.rpgMode(bridge != null, bridge == null ? null : u -> {
+        lobby.classLine(bridge == null ? null : u -> {
             Player p = Bukkit.getPlayer(u);
             return p == null ? null : bridge.classLine(p);
         });
     }
 
     private boolean noClass(Player p) {
-        return rpg != null ? !rpg.mayPlay(p) : heroes.classOf(p.getUniqueId()) == null;
+        return rpg == null || !rpg.mayPlay(p);
     }
 
     private void giveXp(Player p, double xp) {
         if (rpg != null) rpg.giveXp(p, xp);
-        else heroes.giveXp(p, xp);
     }
 
-    public Runs(FluxPlugin plugin, Arena arena, Mobs mobs, Heroes heroes, Loadouts loadouts, fr.influencraft.fluxdungeons.Store store) {
+    public Runs(FluxPlugin plugin, Arena arena, Mobs mobs) {
         this.plugin = plugin;
         this.arena = arena;
         this.mobs = mobs;
         this.burrows = new Burrows(plugin, this, mobs);
-        this.heroes = heroes;
-        this.loadouts = loadouts;
-        this.store = store;
-        this.lobby = new Lobby(plugin, heroes, store::lockedCount, new Lobby.Presets() {
-            public String load(UUID player) {
-                return store.preset(player);
-            }
-
-            public void save(UUID player, String data) {
-                store.savePreset(player, data);
-            }
-        });
+        this.lobby = new Lobby(plugin);
         lobby.launcher(this::launch);
-        this.pets = new PetFighters(plugin, mobs);
-        loadouts.onOverflow((p, items) -> {
-            fr.influencraft.flux.api.reward.Rewards.store(p, "dungeons", plugin.messages().raw("lost.overflow-label"), items);
-            plugin.messages().send(p, "lost.overflow");
-        });
         this.instances = new WorldInstances(plugin);
         instances.sweep();
         this.editor = new Editor(plugin, instances, this::dungeon, mobs);
@@ -168,9 +143,6 @@ public final class Runs {
         fallbackMoneyPerMinute = c.getDouble("reward.money-per-minute-without-fluxvalue", 50);
         spawnDistance = Math.max(8, c.getDouble("spawn-distance", 40));
         WorldInstances.viewDistance = Math.max(2, c.getInt("view-distance", 8));
-        // pets.enabled false: no pet slot on the launch screen, so none comes into a run
-        lobby.maxPets(c.getBoolean("pets.enabled", true) ? c.getInt("pets.max", 5) : 0);
-        pets.settings(c);
     }
 
     private long shakeGap = 1000;
@@ -184,19 +156,9 @@ public final class Runs {
         return lobby;
     }
 
-    /** True for a pet fighting in a run. */
-    public boolean isPet(Entity e) {
-        return pets.isPet(e);
-    }
-
-    /** The player fights this monster (hit it, or was hit by it): his pets go for it. */
-    public void petFocus(Player player, LivingEntity monster) {
-        pets.focus(player, monster);
-    }
-
-    /** Owner of a pet fighting in a run, null for anything else. */
-    public UUID petOwner(Entity e) {
-        return pets.owner(e);
+    /** Where a player out of a run goes: the rpg lobby (the main world's spawn if the rpg module is off). */
+    public Location lobbyLocation() {
+        return rpg != null ? rpg.lobby() : Bukkit.getWorlds().get(0).getSpawnLocation();
     }
 
     public void load(Map<String, DungeonDefinition> definitions) {
@@ -279,7 +241,7 @@ public final class Runs {
     }
 
     /** Everybody is ready on the launch screen: checked again, then started. */
-    private void launch(DungeonDefinition def, List<Player> players, Map<UUID, Loadouts.Selection> selections, int level) {
+    private void launch(DungeonDefinition def, List<Player> players, int level) {
         // the file as it is now: a launch screen opened before /fluxdungeons reload still held the former one
         DungeonDefinition current = dungeons.get(def.id());
         if (current != null) def = current;
@@ -288,17 +250,16 @@ public final class Runs {
             for (Player p : players) plugin.messages().send(p, "lobby.refused");
             return;
         }
-        start(def, players, selections, level);
+        start(def, players, level);
     }
 
     /** Starts a run for these players (checked before). The copy is made, then they are taken in. */
-    private Run start(DungeonDefinition def, List<Player> players, Map<UUID, Loadouts.Selection> selections, int level) {
-        if (def.map() != null) return startMap(def, players, selections, level);
+    private Run start(DungeonDefinition def, List<Player> players, int level) {
+        if (def.map() != null) return startMap(def, players, level);
         int slot = freeSlot();
         if (slot < 0) return null;
         Run run = new Run(UUID.randomUUID().toString().substring(0, 8), def, slot, arena.slotOrigin(slot));
         run.level = level;
-        run.selections.putAll(selections);
         runs.put(run.id, run);
         for (Player p : players) {
             run.expected.add(p.getUniqueId());
@@ -312,10 +273,9 @@ public final class Runs {
     }
 
     /** An imported map: its world is copied for this run, its monsters placed, then the players come in. */
-    private Run startMap(DungeonDefinition def, List<Player> players, Map<UUID, Loadouts.Selection> selections, int level) {
+    private Run startMap(DungeonDefinition def, List<Player> players, int level) {
         Run run = new Run(UUID.randomUUID().toString().substring(0, 8), def, -1, null);
         run.level = level;
-        run.selections.putAll(selections);
         runs.put(run.id, run);
         for (Player p : players) {
             run.expected.add(p.getUniqueId());
@@ -632,27 +592,15 @@ public final class Runs {
                 byPlayer.remove(uuid);
                 continue;
             }
-            // rpg: he plays with his rpg profile (the universe swap brings it as he arrives), nothing is set aside
-            if (rpg == null) {
-                if (!loadouts.enter(p, run.selections.getOrDefault(uuid, Loadouts.Selection.empty()))) {
-                    byPlayer.remove(uuid);
-                    plugin.messages().send(p, "run.save-failed");
-                    continue;
-                }
-                // easy level: whoever lacks armour or a weapon is lent iron ones, taken back when he leaves or dies
-                if (run.levelSpec().loan() && loadouts.lend(p, plugin.messages().raw("run.loan-lore"))) plugin.messages().send(p, "run.loaned");
-            }
+            // he plays with his rpg profile (the universe swap brings it as he arrives), nothing is set aside
             run.players.add(uuid);
             // no vanilla invulnerability in a run: hits are limited per source (DungeonListener), as for monsters
             p.setMaximumNoDamageTicks(0);
-            if (rpg == null) heroes.activate(p);
             teleport(p, run.checkpoint);
-            // the pets that follow him outside never come into a dungeon: only those taken as fighters do
+            // the pets of the semi-rp world never come into a dungeon
             fr.influencraft.flux.api.pets.Companions.suppress(uuid, true);
             // many small hits: his screen shakes at most once a second (hit-reaction.screen-shake-ms)
             fr.influencraft.flux.api.client.HurtShake.limit(uuid, shakeGap);
-            Loadouts.Selection chosen = run.selections.get(uuid);
-            if (chosen != null) pets.spawn(p, chosen.pets(), run.checkpoint, context(p)::enemy);
             p.showTitle(Title.title(Texts.parse(plugin.messages().raw("run.title", "%dungeon%", run.def.name())),
                     Texts.parse(plugin.messages().raw("run.subtitle")),
                     Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(3), Duration.ofMillis(700))));
@@ -663,13 +611,12 @@ public final class Runs {
             }, 20L);
         }
         run.expected.clear();
-        run.selections.clear();
         if (run.players.isEmpty()) cleanup(run);
     }
 
     // ---------------------------------------------------------------- leaving
 
-    /** The player leaves his run (command, disconnect, end): his things given back, sent where he was. */
+    /** The player leaves his run (command, disconnect, end): back to the rpg lobby. */
     public void leave(Player player) {
         Run run = byPlayer.remove(player.getUniqueId());
         if (run == null) return;
@@ -679,22 +626,15 @@ public final class Runs {
         for (String tag : run.grants) player.removeScoreboardTag(tag);
         if (run.bossBar != null) player.hideBossBar(run.bossBar);
         stopMusic(run, player);
-        pets.despawn(player);
         fr.influencraft.flux.api.pets.Companions.suppress(player.getUniqueId(), false);
         fr.influencraft.flux.api.client.HurtShake.clear(player.getUniqueId());
         if (inside) {
             hook(run, "leave", player, null);
             player.setMaximumNoDamageTicks(20);
-            if (rpg != null) {
-                // back to the rpg lobby, his rpg things never left him
-                if (player.isDead()) player.spigot().respawn();
-                player.setGameMode(GameMode.ADVENTURE);
-                teleport(player, rpg.lobby());
-            } else {
-                heroes.deactivate(player);
-                Location back = loadouts.leave(player);
-                teleport(player, back != null ? back : Bukkit.getWorlds().get(0).getSpawnLocation());
-            }
+            // back to the rpg lobby, his rpg things never left him
+            if (player.isDead()) player.spigot().respawn();
+            player.setGameMode(GameMode.ADVENTURE);
+            teleport(player, lobbyLocation());
         }
         if (run.players.isEmpty() && run.expected.isEmpty() && run.state != Run.State.PREPARING) cleanup(run);
     }
@@ -703,7 +643,6 @@ public final class Runs {
     public void stopAll() {
         lobby.closeAll();
         for (Run run : List.copyOf(runs.values())) stop(run);
-        pets.despawnAll();
         editor.closeAll();
         for (UUID u : List.copyOf(visitReturn.keySet())) {
             Player p = Bukkit.getPlayer(u);
@@ -948,8 +887,6 @@ public final class Runs {
                     teleport(p, run.checkpoint);
                     p.setFallDistance(0);
                 }
-                if (rpg == null && ticks % 2 == 0 && !run.watching.contains(p.getUniqueId())) heroes.tick(p);
-                pets.tick(p);
             }
             if (!run.imported()) rooms(run);
             else {
@@ -1190,22 +1127,6 @@ public final class Runs {
 
     // ---------------------------------------------------------------- monsters and players
 
-    /** Can this entity be hurt by the abilities of this player? */
-    public Abilities.Context context(Player player) {
-        return new Abilities.Context() {
-            public boolean enemy(Entity entity) {
-                Run run = byPlayer.get(player.getUniqueId());
-                return run != null && entity instanceof LivingEntity && !(entity instanceof Player)
-                        && run.id.equals(mobs.runOf(entity));
-            }
-
-            public Collection<Player> allies(Player caster) {
-                Run run = byPlayer.get(caster.getUniqueId());
-                return run == null ? List.of(caster) : fighters(run);
-            }
-        };
-    }
-
     /**
      * A dungeon monster is gone for good (vanilla death, end of its death animation, not a phase change): experience
      * for the party, its loot rolled for each player, its objective done.
@@ -1220,7 +1141,7 @@ public final class Runs {
             doors(run);
         }
         List<Player> party = fighters(run);
-        double xp = rpg != null ? (t == null ? 0 : rpg.killXp(mob, t)) : t != null ? t.xp() : 0;
+        double xp = rpg == null || t == null ? 0 : rpg.killXp(mob, t);
         if (xp > 0) for (Player p : party) giveXp(p, xp);
         if (objective != null && run.objectivesLeft.remove(objective)) {
             for (Player p : online(run)) hook(run, "objective", p, objective);
@@ -1233,89 +1154,23 @@ public final class Runs {
         }
     }
 
-    /**
-     * A player died in his run: everything he carried stays locked in this dungeon (handed back to him once someone
-     * wins it), his pets go, he watches the others.
-     */
+    /** A player died in his run: nothing is lost (his rpg profile keeps everything), he watches the others. */
     public void died(Player player) {
         Run run = byPlayer.get(player.getUniqueId());
         if (run == null || run.state != Run.State.RUNNING) return;
-        if (rpg != null) {
-            // rpg: nothing is lost on death (the universe keeps the inventory), he watches the others
-            pets.despawn(player);
-            run.watching.add(player.getUniqueId());
-            broadcast(run, "run.out", "%player%", player.getName());
-            if (fighters(run).isEmpty()) Bukkit.getScheduler().runTask(plugin, () -> fail(run, "run.wiped"));
-            return;
-        }
-        ItemStack[] carried = loadouts.strip(player);
-        String id = store.addLost(player.getUniqueId(), run.def.id(), carried, false);
-        if (id == null && hasAny(carried)) {
-            // could not lock it: never lose a player's things because of a database error
-            player.getInventory().setContents(carried);
-        }
-        pets.despawn(player);
         run.watching.add(player.getUniqueId());
         broadcast(run, "run.out", "%player%", player.getName());
-        if (id != null) plugin.messages().send(player, "lost.locked", "%dungeon%", run.def.name());
         if (fighters(run).isEmpty()) Bukkit.getScheduler().runTask(plugin, () -> fail(run, "run.wiped"));
     }
 
-    private static boolean hasAny(ItemStack[] items) {
-        for (ItemStack i : items) if (i != null && !i.isEmpty()) return true;
-        return false;
-    }
-
     /**
-     * Hands kept items to their owner through Flux's rewards ({@code /recompenses}), claimed in the universe they
-     * belong to (the owner's own when he is online, else vanilla).
-     */
-    /** Moves released gear from the dungeon's store to the owner's rewards (items kept as they are, each in its universe). */
-    private void handBack(UUID owner, String id, int stacks, String label) {
-        ItemStack[] items = store.takeLost(id, owner);
-        if (items == null || items.length == 0) return;
-        fr.influencraft.flux.api.reward.Rewards.store(Bukkit.getOfflinePlayer(owner), "dungeons", label,
-                java.util.Arrays.stream(items).filter(java.util.Objects::nonNull).toList());
-    }
-
-    /**
-     * Gives items straight into the inventory; what does not fit is kept in the database and handed back through
-     * {@code /recompenses} (never dropped: nothing lies on the ground in a dungeon world, it would be lost).
+     * Gives items straight into the inventory; what does not fit is kept in {@code /recompenses} (never dropped:
+     * nothing lies on the ground in a dungeon world, it would be lost).
      */
     private void deliver(Player p, List<ItemStack> items) {
-        if (!fr.influencraft.flux.api.reward.Rewards.deliver(p, "dungeons", plugin.messages().raw("lost.overflow-label"), items).isEmpty()) {
-            plugin.messages().send(p, "lost.overflow");
+        if (!fr.influencraft.flux.api.reward.Rewards.deliver(p, "dungeons", plugin.messages().raw("run.loot-overflow-label"), items).isEmpty()) {
+            plugin.messages().send(p, "run.loot-overflow");
         }
-    }
-
-    /** Someone won this dungeon: every gear locked in it goes back to its owner. */
-    private void releaseLost(Run run, List<Player> winners) {
-        List<fr.influencraft.fluxdungeons.Store.Lost> released = store.release(run.def.id());
-        if (released.isEmpty()) return;
-        Set<String> names = new java.util.LinkedHashSet<>();
-        for (fr.influencraft.fluxdungeons.Store.Lost l : released) {
-            handBack(l.owner(), l.id(), l.stacks(), plugin.messages().raw("lost.reward-label", "%dungeon%", run.def.name()));
-            String name = Bukkit.getOfflinePlayer(l.owner()).getName();
-            names.add(name == null ? "?" : name);
-            Player owner = Bukkit.getPlayer(l.owner());
-            if (owner != null && !winners.contains(owner)) {
-                plugin.messages().send(owner, "lost.released-owner", "%dungeon%", run.def.name(),
-                        "%players%", String.join(", ", winners.stream().map(Player::getName).toList()));
-            }
-        }
-        for (Player p : winners) {
-            plugin.messages().send(p, "lost.released", "%count%", String.valueOf(released.size()), "%players%", String.join(", ", names));
-        }
-    }
-
-    /** Gives a released gear (command run by Flux's rewards when the player claims it). */
-    public boolean claimLost(Player p, String id) {
-        ItemStack[] items = store.takeLost(id, p.getUniqueId());
-        if (items == null) return false;
-        List<ItemStack> list = new ArrayList<>();
-        for (ItemStack item : items) if (item != null && !item.isEmpty()) list.add(item);
-        deliver(p, list);
-        return true;
     }
 
     /** Where a player of a run comes back after dying; watching players come back as spectators. */
@@ -1359,7 +1214,7 @@ public final class Runs {
             endMusic(run, p, true);
             hook(run, "victory", p, null);
             if (money > 0) Economy.main().give(p, money, Origin.of(plugin, origin).detail(run.def.name()).notifyPlayer());
-            giveXp(p, rpg != null ? rpg.victoryXp(run.world == null ? p.getWorld() : run.world) * run.levelSpec().reward() : run.def.rewardXp());
+            if (rpg != null) giveXp(p, rpg.victoryXp(run.world == null ? p.getWorld() : run.world) * run.levelSpec().reward());
             List<String> found = new ArrayList<>();
             for (DungeonDefinition.Loot loot : run.def.loot()) {
                 if (ThreadLocalRandom.current().nextDouble() >= loot.chance()) continue;
@@ -1378,7 +1233,6 @@ public final class Runs {
             plugin.messages().send(p, found.isEmpty() ? "run.loot-none" : "run.loot", "%items%", String.join("&7, ", found));
             plugin.messages().send(p, "run.leaving", "%seconds%", String.valueOf(returnDelay));
         }
-        releaseLost(run, online(run));
         Bukkit.getScheduler().runTaskLater(plugin, () -> stop(run), returnDelay * 20L);
     }
 
@@ -1416,20 +1270,12 @@ public final class Runs {
                 return String.valueOf(run != null && run.state != Run.State.PREPARING);
             }
             case "class" -> {
-                if (rpg != null) {
-                    String line = rpg.classLine(p);
-                    return line == null ? "" : line.substring(0, line.lastIndexOf(' '));
-                }
-                var c = heroes.classOf(p.getUniqueId());
-                return c == null ? "" : c.name();
+                String line = rpg == null ? null : rpg.classLine(p);
+                return line == null ? "" : line.substring(0, line.lastIndexOf(' '));
             }
             case "level" -> {
-                if (rpg != null) {
-                    String line = rpg.classLine(p);
-                    return line == null ? "" : line.substring(line.lastIndexOf(' ') + 1);
-                }
-                var c = heroes.classOf(p.getUniqueId());
-                return c == null ? "" : String.valueOf(heroes.level(p.getUniqueId(), c.id()));
+                String line = rpg == null ? null : rpg.classLine(p);
+                return line == null ? "" : line.substring(line.lastIndexOf(' ') + 1);
             }
             default -> {
             }

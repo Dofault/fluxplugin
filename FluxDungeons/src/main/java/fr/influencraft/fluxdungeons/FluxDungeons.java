@@ -2,8 +2,6 @@ package fr.influencraft.fluxdungeons;
 
 import fr.influencraft.flux.api.FluxPlugin;
 import fr.influencraft.flux.api.dialog.Dialogs;
-import fr.influencraft.flux.api.inventory.Items;
-import fr.influencraft.flux.api.inventory.Lore;
 import fr.influencraft.flux.api.items.CustomItems;
 import fr.influencraft.flux.api.items.ItemCatalog;
 import fr.influencraft.flux.api.util.Sounds;
@@ -12,8 +10,6 @@ import fr.influencraft.fluxdungeons.dungeon.Arena;
 import fr.influencraft.fluxdungeons.dungeon.DungeonDefinition;
 import fr.influencraft.fluxdungeons.dungeon.Run;
 import fr.influencraft.fluxdungeons.dungeon.Runs;
-import fr.influencraft.fluxdungeons.hero.HeroClass;
-import fr.influencraft.fluxdungeons.hero.Heroes;
 import fr.influencraft.fluxdungeons.mob.Mobs;
 import fr.influencraft.fluxdungeons.party.Parties;
 import fr.influencraft.fluxdungeons.party.Party;
@@ -24,7 +20,6 @@ import org.bukkit.Location;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.inventory.ItemStack;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,14 +33,13 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * FluxDungeons: instanced dungeons played in parties, apart from the semi-RP world. A player picks a class
- * ({@code classes.yml}), forms a party, and starts a dungeon ({@code dungeons/<id>.yml}): a copy of it is made for
- * his party alone, he enters with his dungeon inventory (his own things wait for him in the database), fights room
- * after room with his three abilities, and leaves with money, class experience and dungeon gear (kept in his dungeon
- * inventory, useless outside).
+ * FluxDungeons: the rpg universe (classes, stats, combat engine, skills, {@code rpg} package) and its instanced
+ * dungeons played in parties. A player picks his rpg class ({@code /classe}), forms a party, and starts a dungeon
+ * ({@code dungeons/<id>.yml}): a copy of it is made for his party alone, he plays it with his rpg profile as it is
+ * (never with things of the semi-rp world), fights room after room, and leaves with money, rpg experience and loot.
  *
  * <pre>
- *   /dungeon [play &lt;id&gt; | leave | class [id] | list]
+ *   /dungeon [play &lt;id&gt; | leave | class | list]
  *   /party [invite|accept|leave|kick|leader] [player]
  *   /fluxdungeons build &lt;id|all&gt; | template &lt;id&gt; | start &lt;id&gt; &lt;player&gt; | stop &lt;player|all&gt;
  *                 | give &lt;player&gt; &lt;item&gt; [n] | runs | reload            (admin)
@@ -53,14 +47,11 @@ import java.util.UUID;
  */
 public final class FluxDungeons extends FluxPlugin {
 
-    private Store store;
     private Parties parties;
-    private Heroes heroes;
     private Mobs mobs;
     private Arena arena;
     private Diagnostics diagnostics;
     private Runs runs;
-    private Loadouts loadouts;
     private ItemCatalog items;
     private fr.influencraft.fluxdungeons.combat.AttackCadence attackCadence;
     private DungeonListener listener;
@@ -88,7 +79,8 @@ public final class FluxDungeons extends FluxPlugin {
 
     private void wireRpg() {
         if (rpg == null || rpg.combat() == null) {
-            getLogger().warning("Rpg module off: dungeons keep the former vanilla-gear play");
+            // dungeons are played in the rpg universe only: without it nobody may start one (NO_CLASS)
+            getLogger().severe("Rpg module off (see the errors above): no dungeon can be played");
             return;
         }
         fr.influencraft.flux.api.universe.Universes.claim(this, fr.influencraft.fluxdungeons.rpg.RpgWorld.UNIVERSE, runs::isDungeonWorld);
@@ -156,28 +148,20 @@ public final class FluxDungeons extends FluxPlugin {
         damageNumbers.handledElsewhere(engine::rpg);
         // players hit a model's hit box: the creature under it takes the hit
         engine.body(fr.influencraft.fluxdungeons.mob.Mobs::body);
-        engine.petOwner(e -> {
-            java.util.UUID owner = runs.petOwner(e);
-            return owner == null ? null : getServer().getPlayer(owner);
-        });
         healthBars.life(e -> engine.rpg(e) && !(e instanceof Player) ? new double[]{engine.health(e), engine.maxHealth(e)} : null);
     }
 
     @Override
     protected void enable() {
         preloadClasses();
-        store = new Store(getLogger());
-        store.open();
         parties = new Parties();
-        heroes = new Heroes(this, store);
         mobs = new Mobs(this);
         items = ItemCatalog.create(this, "fluxdungeons");
         diagnostics = new Diagnostics(this);
         getServer().getPluginManager().registerEvents(diagnostics, this);
-        loadouts = new Loadouts(store, getLogger(), heroes::isAbilityItem);
         arena = new Arena(this, getConfig().getString("world", "flux_dungeons"), getConfig().getInt("slot-spacing", 512),
                 getConfig().getInt("blocks-per-tick", 20000));
-        runs = new Runs(this, arena, mobs, heroes, loadouts, store);
+        runs = new Runs(this, arena, mobs);
         // rpg universe (docs/technique/rpg.md): lobby world, classes, stats, combat engine, skills, /rpg, /classe
         rpg = new fr.influencraft.fluxdungeons.rpg.RpgModule(this);
         rpg.start();
@@ -188,11 +172,10 @@ public final class FluxDungeons extends FluxPlugin {
         // weapons' attack cadence: a rule of the whole server, carried here because it serves the dungeons first
         // life bars above creatures: dungeon monsters, and every other one with health-bar.all-mobs
         healthBars = new fr.influencraft.fluxdungeons.combat.HealthBars(this);
-        healthBars.skip(e -> mobs.templateOf(e) != null || runs.isPet(e) || runs.isDungeonWorld(e.getWorld()));
+        healthBars.skip(e -> mobs.templateOf(e) != null || runs.isDungeonWorld(e.getWorld()));
         mobs.bars(healthBars);
         getServer().getPluginManager().registerEvents(healthBars, this);
         attackCadence = new fr.influencraft.fluxdungeons.combat.AttackCadence(this);
-        attackCadence.assist(p -> runs.runOf(p) == null ? null : runs.context(p)::enemy);
         getServer().getPluginManager().registerEvents(attackCadence, this);
         getServer().getPluginManager().registerEvents(runs.lobby(), this);
         runs.editor().onSaved(this::reload);
@@ -242,11 +225,11 @@ public final class FluxDungeons extends FluxPlugin {
         // a run has the player's screen: other plugins keep their boss bars and draws off it (tournaments)
         fr.influencraft.flux.api.client.Focus.register(this, player -> runs.runOf(player) != null);
         placeholders("fluxdungeons", (player, params) -> runs.placeholder(player, params));
-        combat = new fr.influencraft.fluxdungeons.combat.CombatRules(this, runs, heroes, mobs);
+        combat = new fr.influencraft.fluxdungeons.combat.CombatRules(this, runs, mobs);
         combat.hitReaction(getConfig().getConfigurationSection("hit-reaction"));
         wireRpg();
         Bukkit.getPluginManager().registerEvents(combat, this);
-        listener = new DungeonListener(this, arena, runs, heroes, mobs, loadouts, combat);
+        listener = new DungeonListener(this, arena, runs, mobs, combat);
         Bukkit.getPluginManager().registerEvents(listener, this);
         command("dungeon")
                 .description("Dungeons: play, leave, choose your class.")
@@ -267,13 +250,6 @@ public final class FluxDungeons extends FluxPlugin {
                 .executor(this::onAdmin)
                 .completer(this::completeAdmin)
                 .register();
-        // players already online (reload): give back what a crash may have left
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            if (loadouts.hasVault(p)) {
-                var back = loadouts.recover(p);
-                if (back != null) p.teleport(back, PlayerTeleportEvent.TeleportCause.PLUGIN);
-            }
-        }
         Bukkit.getScheduler().runTaskLater(this, runs::buildChanged, 40L);
     }
 
@@ -325,15 +301,12 @@ public final class FluxDungeons extends FluxPlugin {
     private void settings() {
         if (damageNumbers != null) damageNumbers.load(getConfig().getConfigurationSection("damage-numbers"));
         parties.maxSize(getConfig().getInt("party.max-size", 4));
-        heroes.load(file("classes.yml"), getConfig().getConfigurationSection("classes"));
-        // the players' reach bonus in a run, and the same for the monsters' melee
-        heroes.reachBonus(getConfig().getDouble("dungeon-reach-bonus", 1.5));
+        // the monsters' melee reaches this much further than vanilla (players' attacks have their class range)
         mobs.reachBonus(getConfig().getDouble("dungeon-reach-bonus", 1.5));
         mobs.alertRadius(getConfig().getDouble("aggro.alert-radius", 10));
-        if (attackCadence != null) {
-            attackCadence.load(getConfig().getConfigurationSection("attack-cadence"));
-            attackCadence.loadAssist(getConfig().getConfigurationSection("aim-assist"));
-        }
+        if (attackCadence != null) attackCadence.load(getConfig().getConfigurationSection("attack-cadence"));
+        // one aim assist for every class of the rpg
+        if (rpg != null) rpg.aimAssist(getConfig().getConfigurationSection("aim-assist"));
         if (healthBars != null) healthBars.load(getConfig().getConfigurationSection("health-bar"));
         if (combat != null) combat.hitReaction(getConfig().getConfigurationSection("hit-reaction"));
         // spells first: monsters take them by id
@@ -465,18 +438,8 @@ public final class FluxDungeons extends FluxPlugin {
                     messages().send(p, "run.left");
                 }
             }
-            case "class", "classe" -> {
-                if (rpg != null && rpg.combat() != null) {
-                    // the rpg class (/classe), not the former dungeon classes
-                    p.performCommand("classe");
-                } else if (args.length >= 2) {
-                    HeroClass c = classByName(args[1]);
-                    if (c == null) messages().send(p, "unknown-class");
-                    else choose(p, c);
-                } else {
-                    openClasses(p);
-                }
-            }
+            // the class is the rpg one
+            case "class", "classe" -> p.performCommand("classe");
             case "list", "liste" -> {
                 for (DungeonDefinition def : runs.dungeons()) {
                     messages().send(p, "list-line", "%dungeon%", def.name(), "%id%", def.id(),
@@ -492,11 +455,9 @@ public final class FluxDungeons extends FluxPlugin {
     private List<String> completeDungeon(CommandSender sender, String[] args) {
         if (args.length == 1) return filter(List.of("play", "leave", "class", "list"), args[0]);
         if (args.length == 2 && args[0].equalsIgnoreCase("play")) return filter(runs.dungeons().stream().map(DungeonDefinition::id).toList(), args[1]);
-        if (args.length == 2 && args[0].equalsIgnoreCase("class")) return filter(heroes.classes().stream().map(HeroClass::id).toList(), args[1]);
         return List.of();
     }
 
-    /** Main window: class, party, dungeons to play. */
     /** The rpg class line of a player ("Guerrier", level), null without the rpg module or a class. */
     private String[] rpgClass(Player p) {
         if (rpg == null || rpg.players() == null) return null;
@@ -504,18 +465,12 @@ public final class FluxDungeons extends FluxPlugin {
         return r == null ? null : new String[]{messages().raw("classes." + r.heroClass().id() + ".name"), String.valueOf(r.level())};
     }
 
+    /** Main window: class, party, dungeons to play. */
     private void openMain(Player p) {
         Dialogs.Form form = Dialogs.form(p, messages().raw("main.title")).width(300).columns(1);
-        if (rpg != null && rpg.combat() != null) {
-            // dungeons are played with the rpg class (docs/technique/rpg.md)
-            String[] c = rpgClass(p);
-            if (c == null) form.body(messages().raw("main.no-class"));
-            else form.body(messages().raw("main.class", "%class%", Dialogs.heading(c[0]), "%level%", c[1]));
-        } else {
-            HeroClass mine = heroes.classOf(p.getUniqueId());
-            if (mine == null) form.body(messages().raw("main.no-class"));
-            else form.body(messages().raw("main.class", "%class%", mine.colored(), "%level%", String.valueOf(heroes.level(p.getUniqueId(), mine.id()))));
-        }
+        String[] c = rpgClass(p);
+        if (c == null) form.body(messages().raw("main.no-class"));
+        else form.body(messages().raw("main.class", "%class%", Dialogs.heading(c[0]), "%level%", c[1]));
         Party party = parties.of(p);
         form.body(party == null ? messages().raw("main.solo")
                 : messages().raw("main.party", "%count%", String.valueOf(party.size()), "%leader%", name(party.leader())));
@@ -538,53 +493,12 @@ public final class FluxDungeons extends FluxPlugin {
             String b = answer.button();
             if (b == null) return;
             if (b.equals("leave")) player.performCommand("dungeon leave");
-            else if (b.equals("class")) {
-                if (rpg != null && rpg.combat() != null) player.performCommand("classe");
-                else openClasses(player);
-            }
+            else if (b.equals("class")) player.performCommand("classe");
             else if (b.startsWith("play:")) {
                 DungeonDefinition def = runs.dungeon(b.substring(5));
                 if (def != null) play(player, def);
             }
         }).open();
-    }
-
-    private void openClasses(Player p) {
-        if (runs.runOf(p) != null) {
-            messages().send(p, "class.in-run");
-            return;
-        }
-        HeroClass mine = heroes.classOf(p.getUniqueId());
-        Dialogs.Form form = Dialogs.form(p, messages().raw("class.title")).width(320).columns(2);
-        form.body(messages().raw("class.intro"));
-        for (HeroClass c : heroes.classes()) {
-            int level = heroes.level(p.getUniqueId(), c.id());
-            List<String> lines = new ArrayList<>();
-            lines.add(c.colored() + " &7" + messages().raw("class.level", "%level%", String.valueOf(level))
-                    + (mine != null && mine.id().equals(c.id()) ? " " + messages().raw("class.current") : ""));
-            lines.addAll(c.description());
-            List<String> abilities = new ArrayList<>();
-            for (HeroClass.AbilitySpec a : c.abilities()) abilities.add(a.name());
-            lines.add("&7" + messages().raw("class.abilities") + " &f" + String.join("&7, &f", abilities));
-            ItemStack icon = Items.dress(new ItemStack(c.icon()), c.colored(), Lore.create().description(c.description()).build(), p);
-            form.item(icon, String.join("\n", lines));
-        }
-        for (HeroClass c : heroes.classes()) form.action(c.id(), c.colored());
-        form.onSubmit((player, answer) -> {
-            HeroClass c = heroes.get(answer.button());
-            if (c != null) choose(player, c);
-        }).open();
-    }
-
-    private void choose(Player p, HeroClass c) {
-        if (runs.runOf(p) != null) {
-            messages().send(p, "class.in-run");
-            return;
-        }
-        heroes.choose(p, c);
-        messages().send(p, "class.chosen", "%class%", c.colored(), "%level%", String.valueOf(heroes.level(p.getUniqueId(), c.id())));
-        Sounds.cue(p, "success");
-        runs.lobby().reopen(p);
     }
 
     /** Starts a dungeon for the player's party (he must lead it), or for him alone. */
@@ -622,12 +536,11 @@ public final class FluxDungeons extends FluxPlugin {
         for (int i = 0; i < levels.size(); i++) {
             DungeonDefinition.Level l = levels.get(i);
             String color = messages().raw(i == 0 ? "pick-level.color-easy" : i == levels.size() - 1 ? "pick-level.color-hard" : "pick-level.color-middle");
-            String extra = (l.loan() ? messages().raw("pick-level.loan") : "") + (l.requireGear() ? messages().raw("pick-level.required") : "");
-            String tip = messages().raw("pick-level.tooltip", "%level%", color + "&l" + l.name(), "%gear%", l.gear(),
+            String tip = messages().raw("pick-level.tooltip", "%level%", color + "&l" + l.name(),
                     "%health%", number(l.health()), "%damage%", number(l.damage()), "%reward%", number(l.reward()),
                     "%spells%", !l.spells() ? messages().raw("pick-level.spells-off") : l.abilities() > 0
                             ? messages().raw("pick-level.spells-count", "%count%", String.valueOf(l.abilities()))
-                            : messages().raw("pick-level.spells-on"), "%extra%", extra);
+                            : messages().raw("pick-level.spells-on"));
             form.action("level:" + i, color + "&l" + l.name(), tip);
         }
         form.onSubmit((player, answer) -> {
@@ -743,9 +656,10 @@ public final class FluxDungeons extends FluxPlugin {
         List<String> names = new ArrayList<>();
         for (UUID m : party.members()) {
             String n = name(m);
-            HeroClass c = heroes.classOf(m);
+            Player online = Bukkit.getPlayer(m);
+            String[] c = online == null ? null : rpgClass(online);
             names.add(messages().raw(party.isLeader(m) ? "party.leader" : "party.member", "%name%", n)
-                    + (c == null ? "" : messages().raw("party.class", "%class%", c.colored())));
+                    + (c == null ? "" : messages().raw("party.class", "%class%", c[0])));
         }
         messages().send(p, "party.info", "%count%", String.valueOf(party.size()), "%max%", String.valueOf(parties.maxSize()),
                 "%members%", String.join("&7, ", names));
@@ -893,14 +807,6 @@ public final class FluxDungeons extends FluxPlugin {
                 else if (!CustomItems.give(target, id, n)) messages().send(sender, "admin.unknown-item", "%item%", id);
                 else messages().send(sender, "admin.given", "%item%", id, "%player%", target.getName());
             }
-            case "claimlost" -> {
-                // run by Flux's rewards when a player claims gear handed back to him
-                if (sender instanceof Player) return usage(sender);
-                if (args.length < 3) return usage(sender);
-                Player target = Bukkit.getPlayerExact(args[1]);
-                if (target == null) messages().send(sender, "unknown-player");
-                else if (!runs.claimLost(target, args[2])) getLogger().warning("Lost gear " + args[2] + " of " + args[1] + " not found (already claimed?)");
-            }
             case "runs" -> {
                 if (runs.all().isEmpty()) messages().send(sender, "admin.no-runs");
                 for (Run r : runs.all()) {
@@ -990,7 +896,6 @@ public final class FluxDungeons extends FluxPlugin {
         y.set("recommended-level", 1);
         y.set("time-limit", "30m");
         y.set("reward.minutes", 10);
-        y.set("reward.xp", 200);
         y.set("loot", List.of());
         y.set("map.folder", "maps/custom/" + id);
         if (fromMap != null) {
@@ -1076,13 +981,6 @@ public final class FluxDungeons extends FluxPlugin {
         DungeonDefinition def = runs.dungeon(idOrName.toLowerCase(Locale.ROOT));
         if (def != null) return def;
         for (DungeonDefinition d : runs.dungeons()) if (d.name().equalsIgnoreCase(idOrName)) return d;
-        return null;
-    }
-
-    private HeroClass classByName(String idOrName) {
-        HeroClass c = heroes.get(idOrName.toLowerCase(Locale.ROOT));
-        if (c != null) return c;
-        for (HeroClass h : heroes.classes()) if (h.name().equalsIgnoreCase(idOrName)) return h;
         return null;
     }
 

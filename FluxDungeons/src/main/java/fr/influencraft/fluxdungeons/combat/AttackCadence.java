@@ -34,8 +34,8 @@ import java.util.Map;
  *   <li>Every real swing shows a particle and plays one sound ({@code swing-particle}, {@code swing-sound}, same
  *   volume for every weapon) where the swing reaches: the player's reach (its attribute, so bonuses of pets or effects
  *   count; the weapon's own attack range when it has one), stopped by the first block or creature on the way.</li>
- *   <li>In the rpg the swing is the class's basic attack ({@link Melee}, set by FluxDungeons); in a dungeon a swing in
- *   the air hits the monster aimed at ({@link Assist}).</li>
+ *   <li>In the rpg the swing is the class's basic attack ({@link Melee}, set by FluxDungeons); its aim assist is the
+ *   rpg's ({@code rpg.AimAssist}).</li>
  *   <li>The vanilla recharge indicator is hidden by the resource pack (empty sprites over those of the pack
  *   {@code influstatique}, {@code Flux/assets/gen_attack_indicator.py}).</li>
  * </ul>
@@ -56,16 +56,6 @@ public final class AttackCadence implements Listener {
     private String swingSound = "minecraft:entity.player.attack.sweep";
     private float soundVolume = 0.7f, soundPitch = 1f;
 
-    /** What the dungeons tell: who is fighting in one, and what he may hit. */
-    public interface Assist {
-        /** Monsters this player may hit, null when he is not in a dungeon (no assist). */
-        java.util.function.Predicate<org.bukkit.entity.Entity> enemies(Player player);
-    }
-
-    private Assist assist = p -> null;
-    private boolean assistOn = true;
-    /** Largest angle between where the player looks and a monster that still counts as aiming at it (degrees). */
-    private double assistAngle = 35;
 
     /** The cadence in use: its swing sound is the one sound of every weapon swing (rpg skills included). */
     private static volatile AttackCadence current;
@@ -92,16 +82,6 @@ public final class AttackCadence implements Listener {
 
     private static boolean rpg(ItemStack item) {
         return !fr.influencraft.flux.api.universe.Universes.VANILLA.equals(fr.influencraft.flux.api.universe.Universes.universeOf(item));
-    }
-
-    public void assist(Assist assist) {
-        this.assist = assist;
-    }
-
-    /** Aim assist of the dungeons ({@code aim-assist} of the config). */
-    public void loadAssist(ConfigurationSection c) {
-        assistOn = c == null || c.getBoolean("enabled", true);
-        assistAngle = c == null ? 35 : Math.max(1, Math.min(90, c.getDouble("angle", 35)));
     }
 
     public void load(ConfigurationSection c) {
@@ -275,7 +255,6 @@ public final class AttackCadence implements Listener {
         if (!paced(hand)) return;
         int now = org.bukkit.Bukkit.getCurrentTick();
         Integer last = lastSwing.get(p.getUniqueId());
-        // our own swing of this tick (aim assist: Player#attack)
         if (last != null && last == now) return;
         if (!ready(p, now)) {
             e.setCancelled(true);
@@ -315,17 +294,7 @@ public final class AttackCadence implements Listener {
         if (!ready(p, now)) return;
         lastSwing.put(id, now);
         if (melee.swing(p, null)) return;
-        org.bukkit.Location at = reachPoint(p, hand);
-        // a swing in the air in a dungeon: aim assist hits the monster the player was aiming at
-        if (assistOn) {
-            org.bukkit.entity.LivingEntity target = assisted(p, hand);
-            if (target != null) {
-                fullCharge(p);
-                p.attack(target);
-                at = target.getLocation().add(0, target.getHeight() * 0.6, 0);
-            }
-        }
-        draw(p, hand, at);
+        draw(p, hand, reachPoint(p, hand));
     }
 
     /** The particle and the sound of a swing, where it reaches. */
@@ -396,42 +365,6 @@ public final class AttackCadence implements Listener {
             tickerMissing = true;
             org.bukkit.Bukkit.getLogger().warning("[FluxDungeons] Attack charge not reachable, hits keep the server's own charge: " + ex);
         }
-    }
-
-    /**
-     * The monster the player was aiming at: a swing in the air counts as a click on the monster closest to where he
-     * looks, if it lies within {@code aim-assist.angle} degrees of his view (35: a monster 35 degrees aside still
-     * counts, 36 no longer does) and within his reach, with no wall between. Nothing is enlarged: only the aim of a
-     * swing that hit nothing is read.
-     */
-    private org.bukkit.entity.LivingEntity assisted(Player p, ItemStack hand) {
-        java.util.function.Predicate<org.bukkit.entity.Entity> enemy = assist.enemies(p);
-        if (enemy == null) return null;
-        org.bukkit.Location eye = p.getEyeLocation();
-        org.bukkit.util.Vector origin = eye.toVector(), look = eye.getDirection().normalize();
-        double reach = reach(p, hand);
-        double maxAngle = Math.toRadians(assistAngle);
-        org.bukkit.entity.LivingEntity best = null;
-        double bestAngle = Double.MAX_VALUE;
-        for (org.bukkit.entity.Entity e : p.getNearbyEntities(reach + 2, reach + 2, reach + 2)) {
-            if (!(e instanceof org.bukkit.entity.LivingEntity le) || le.isDead() || !enemy.test(le)) continue;
-            org.bukkit.util.BoundingBox box = le.getBoundingBox();
-            // the point of its body closest to the player's eyes: reach and angle are measured to it
-            org.bukkit.util.Vector near = new org.bukkit.util.Vector(clamp(origin.getX(), box.getMinX(), box.getMaxX()),
-                    clamp(origin.getY(), box.getMinY(), box.getMaxY()), clamp(origin.getZ(), box.getMinZ(), box.getMaxZ()));
-            if (near.distanceSquared(origin) > reach * reach) continue;
-            org.bukkit.util.Vector to = box.getCenter().subtract(origin);
-            if (to.lengthSquared() < 1.0E-6) return le;
-            double angle = look.angle(to);
-            if (angle > maxAngle || angle >= bestAngle || !p.hasLineOfSight(le)) continue;
-            bestAngle = angle;
-            best = le;
-        }
-        return best;
-    }
-
-    private static double clamp(double v, double min, double max) {
-        return Math.max(min, Math.min(max, v));
     }
 
     /** How far the player hits with this item: the weapon's attack range when it has one, else his reach attribute. */
