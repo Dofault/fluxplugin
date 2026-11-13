@@ -193,6 +193,9 @@ fishing:
 # Bedrock players (Geyser + Floodgate) get no resource pack: custom items and glyphs are replaced for them. Flux applies
 # it in every menu and text of the suite; the inventory of a "hidden" menu stays visible on Bedrock.
 bedrock:
+  # Menus that hide the player's inventory (player-inventory: hidden) and place buttons there: Bedrock players
+  # (Geyser on the proxy) get the same rewritten packets. false = they see their real inventory instead (to test).
+  hidden-inventory: true
   # text written instead of a glyph (:id: or %img_id%), by glyph id; the others become default-glyph
   glyphs:
     left_click: "[L]"

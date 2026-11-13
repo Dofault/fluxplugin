@@ -90,9 +90,15 @@ public final class MenuSession {
         return inventory;
     }
 
+    /** Set from Flux's config ({@code bedrock.hidden-inventory}): Bedrock players get the hidden inventory too. */
+    public static volatile boolean bedrockHidden = true;
+
     public boolean hidesInventory() {
-        // Bedrock clients (Geyser) do not take the rewritten inventory packets: their inventory stays visible
-        return menu.inventoryMode() == InventoryMode.HIDDEN && !fr.influencraft.flux.api.client.Clients.bedrock(playerId);
+        // Geyser runs on the proxy: it receives the packets once Flux rewrote them, as a Java client does, and clicks
+        // in that area are menu clicks on the server whatever the client. bedrock.hidden-inventory: false shows a
+        // Bedrock player his real inventory instead (buttons placed there are then out of his sight).
+        return menu.inventoryMode() == InventoryMode.HIDDEN
+                && (bedrockHidden || !fr.influencraft.flux.api.client.Clients.bedrock(playerId));
     }
 
     public boolean isOpen() {

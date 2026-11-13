@@ -232,6 +232,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         org.bukkit.configuration.file.YamlConfiguration style = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(styleFile);
         fr.influencraft.flux.api.text.Style.configure(style);
         fr.influencraft.flux.api.staff.Staff.configure(getConfig().getConfigurationSection("staff"));
+        fr.influencraft.flux.session.MenuSession.bedrockHidden = getConfig().getBoolean("bedrock.hidden-inventory", true);
         if (leaderboards != null) leaderboards.configure(getConfig().getConfigurationSection("leaderboards"));
         commandManager.configure(getConfig().getConfigurationSection("command-suggestions"));
         // suite-wide settings: language, currencies, dialogs
