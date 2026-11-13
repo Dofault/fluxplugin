@@ -57,6 +57,9 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
     static final String ADMIN_PERMISSION = "fluxtools.bottlexp.admin";
 
     private final NamespacedKey bottledXpKey;
+    /** Version of the bottles' look: a bottle with another one is written again (ItemLooks). */
+    private static final int LOOK = 1;
+    private final NamespacedKey lookKey = new NamespacedKey("fluxtools", "bottle_look");
     /** Tick du dernier clic consommé par joueur : un clic peut déclencher main + offhand. */
     private final Map<UUID, Integer> lastRedeemTick = new HashMap<>();
 
@@ -66,6 +69,15 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
         this.plugin = (fr.influencraft.flux.api.FluxPlugin) plugin;
         // namespace of the former plugin (InfluBridge): data already written stays readable
         this.bottledXpKey = new NamespacedKey("influbridge", "bottled_xp");
+        // bottles made before the suite style (2026-11-13) get the current look, so they stack with the new ones
+        fr.influencraft.flux.api.items.ItemLooks.registerAny(plugin, (id, item) -> {
+            Integer xp = getStoredXp(item);
+            if (xp == null || item.getItemMeta().getPersistentDataContainer().getOrDefault(lookKey, PersistentDataType.INTEGER, 0) == LOOK) {
+                return false;
+            }
+            item.setItemMeta(createBottle(null, item.getAmount(), xp).getItemMeta());
+            return true;
+        });
     }
 
     // ─── Commande ──────────────────────────────────────────────────────────
@@ -95,7 +107,7 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
         // (items identiques = empilables) ; ce qui ne rentre pas revient en leftover.
         // L'XP n'est retirée que pour les fioles réellement ajoutées : rien n'est jeté au sol.
         Map<Integer, ItemStack> leftover =
-                player.getInventory().addItem(createBottle(player, requested, XP_PER_BOTTLE));
+                player.getInventory().addItem(createBottle(null, requested, XP_PER_BOTTLE));
         int notGiven = leftover.values().stream().mapToInt(ItemStack::getAmount).sum();
         int given = requested - notGiven;
 
@@ -141,7 +153,7 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
             return true;
         }
 
-        Map<Integer, ItemStack> leftover = target.getInventory().addItem(createBottle(target, quantity, xp));
+        Map<Integer, ItemStack> leftover = target.getInventory().addItem(createBottle(null, quantity, xp));
         int dropped = 0;
         for (ItemStack stack : leftover.values()) {
             dropped += stack.getAmount();
@@ -240,6 +252,7 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
 
     // ─── Objet ────────────────────────────────────────────────────────────
 
+    /** {@code player} may be null: the bottle looks the same for everybody (bottles stack). */
     private ItemStack createBottle(Player player, int amount, int xp) {
         ItemStack item = new ItemStack(Material.EXPERIENCE_BOTTLE, amount);
         ItemMeta meta = item.getItemMeta();
@@ -250,6 +263,7 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
         meta = dressed.getItemMeta();
         meta.setEnchantmentGlintOverride(true);
         meta.getPersistentDataContainer().set(bottledXpKey, PersistentDataType.INTEGER, xp);
+        meta.getPersistentDataContainer().set(lookKey, PersistentDataType.INTEGER, LOOK);
         item.setItemMeta(meta);
         return item;
     }
