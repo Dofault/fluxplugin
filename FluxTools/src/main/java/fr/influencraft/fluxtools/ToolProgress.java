@@ -72,12 +72,21 @@ final class ToolProgress implements Listener {
         boolean placed = fr.influencraft.flux.api.world.PlacedBlocks.playerPlaced(block);
         ToolState state = ToolState.read(item);
         if (!placed) state.blocks++;
-        boolean useful = "houe".equals(tool.family) ? ripe(block) && !(placed && !(block.getBlockData() instanceof Ageable)) : !placed;
-        reward(player, item, tool, state, useful, tool.points.getOrDefault(block.getType().getKey().getKey(), 0.0));
+        boolean useful = "houe".equals(tool.family) ? harvested(block, placed) : !placed;
+        reward(player, item, tool, state, useful, xp(tool, "mine_block", block.getType().getKey().getKey()));
     }
 
-    /** Ripe crop (maximum age); a block without age (melon, pumpkin) always counts. */
-    private static boolean ripe(Block block) {
+    /**
+     * Crops harvested at their maximum age (planted by players, so a placed one counts once ripe). Any other block,
+     * sugar cane, cactus, melon or pumpkin included, counts when it was not placed by a player.
+     */
+    private static final java.util.Set<org.bukkit.Material> CROPS = java.util.EnumSet.of(org.bukkit.Material.WHEAT,
+            org.bukkit.Material.CARROTS, org.bukkit.Material.POTATOES, org.bukkit.Material.BEETROOTS,
+            org.bukkit.Material.NETHER_WART, org.bukkit.Material.COCOA, org.bukkit.Material.TORCHFLOWER_CROP,
+            org.bukkit.Material.PITCHER_CROP, org.bukkit.Material.SWEET_BERRY_BUSH);
+
+    private static boolean harvested(Block block, boolean placed) {
+        if (!CROPS.contains(block.getType())) return !placed;
         return !(block.getBlockData() instanceof Ageable a) || a.getAge() >= a.getMaximumAge();
     }
 
@@ -102,7 +111,19 @@ final class ToolProgress implements Listener {
         ToolState state = ToolState.read(item);
         state.kills++;
         boolean useful = "arc".equals(tool.family) ? shot : melee;
-        reward(player, item, tool, state, useful, tool.points.getOrDefault(dead.getType().getKey().getKey(), 0.0));
+        reward(player, item, tool, state, useful, xp(tool, "kill", dead.getType().getKey().getKey()));
+    }
+
+    /**
+     * Tool XP of one action: seconds of optimal play it is worth in FluxValue ({@code actionPoints / pointsPerSecond}),
+     * so the level thresholds read as play time. The {@code points} of a tool file, when given, win.
+     */
+    static double xp(Tool tool, String trigger, String target) {
+        Double forced = tool.points.get(target);
+        if (forced != null) return forced;
+        double perSecond = fr.influencraft.flux.api.value.Values.pointsPerSecond();
+        if (perSecond <= 0) return 0;
+        return fr.influencraft.flux.api.value.Values.actionPoints(trigger, target).orElse(0) / perSecond;
     }
 
     @EventHandler

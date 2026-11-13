@@ -112,12 +112,6 @@ public final class FluxTools extends fr.influencraft.flux.api.FluxPlugin {
                 if (tool != null) read.put(tool.id, tool);
             }
         }
-        // XP per block of the levelled tools: EcoJobs jobs of the server, the points of the tool's file come first
-        Map<String, Map<String, Double>> byFamily = JobPoints.compute(getConfig().getConfigurationSection("xp-metiers"),
-                getDataFolder().getParentFile(), getLogger());
-        for (Tool tool : read.values()) {
-            if (tool.hasLevels()) byFamily.getOrDefault(tool.family, Map.of()).forEach(tool.points::putIfAbsent);
-        }
         tools = read;
         ToolRenderer.version = version(folder);
         getLogger().info(tools.size() + " tools loaded.");

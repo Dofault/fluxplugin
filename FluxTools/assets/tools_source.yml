@@ -1,4 +1,4 @@
-# Name, description, material of each crate tool, and the forced tool XP (rare ores, monsters of the weapons) per family.
+# Name, description and material of each crate tool. Tool XP comes from FluxValue (see gen_tools.py).
 # Read by gen_tools.py.
 tools:
   arc_tendance:
@@ -247,64 +247,3 @@ tools:
     material: diamond_pickaxe
     durability: 0
     model: influoutils:pioche_virale
-forced-points:
-  epee:
-    blaze: 40.0
-    bogged: 30.0
-    cave_spider: 30.0
-    creeper: 40.0
-    drowned: 30.0
-    enderman: 100.0
-    guardian: 40.0
-    husk: 30.0
-    magma_cube: 40.0
-    skeleton: 30.0
-    slime: 40.0
-    spider: 30.0
-    stray: 30.0
-    witch: 200.0
-    wither_skeleton: 100.0
-    zombie: 30.0
-    zombie_villager: 30.0
-  hache:
-    cherry_log: 4.0
-    crimson_stem: 10.0
-    dark_oak_log: 3.0
-    pale_oak_log: 3.0
-    spruce_log: 3.33
-    warped_stem: 10.0
-  houe:
-    cocoa: 7.5
-  masse:
-    blaze: 40.0
-    bogged: 30.0
-    cave_spider: 30.0
-    creeper: 40.0
-    drowned: 30.0
-    enderman: 100.0
-    guardian: 40.0
-    husk: 30.0
-    magma_cube: 40.0
-    skeleton: 30.0
-    slime: 40.0
-    spider: 30.0
-    stray: 30.0
-    witch: 200.0
-    wither_skeleton: 100.0
-    zombie: 30.0
-    zombie_villager: 30.0
-  pioche:
-    ancient_debris: 240.0
-    basalt: 1.2
-    blackstone: 1.2
-    deepslate_diamond_ore: 120.0
-    deepslate_gold_ore: 40.0
-    deepslate_iron_ore: 15.0
-    deepslate_lapis_ore: 30.0
-    diamond_ore: 120.0
-    gold_ore: 40.0
-    iron_ore: 15.0
-    lapis_ore: 30.0
-    nether_gold_ore: 40.0
-    netherrack: 1.2
-    smooth_basalt: 1.2

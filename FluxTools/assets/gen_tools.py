@@ -4,7 +4,7 @@
     python3 plugins/fluxplugin/FluxTools/assets/gen_tools.py [--plugins <plugins folder>]
 
 Then /tools reload. Levelled tools (Virale, Phenomene): 20 levels, the tool XP comes from use (1 XP = 1 second of
-farming the resource, see xp-metiers in FluxTools' config; forced-points of the source come first). Other tools: fixed
+optimal play, from FluxValue's weights; a tool file may still force `points` by hand, none does). Other tools: fixed
 enchantments, unrepairable.
 """
 import argparse
@@ -58,7 +58,7 @@ def thresholds(tier):
     return out
 
 
-def tool(tool_id, source, forced):
+def tool(tool_id, source):
     family, tier = source["family"], source["tier"]
     levelled = tier in HOURS_TO_MAX
     out = {k: source[k] for k in ("name", "description", "tier", "family", "material") if k in source}
@@ -77,7 +77,6 @@ def tool(tool_id, source, forced):
             enchants[e] = {ABILITY_LEVELS[min(i, len(ABILITY_LEVELS) - 1)]: v}
         out["enchantments"] = enchants
         out["level"] = {"thresholds": thresholds(tier)}
-        out["points"] = forced.get(family, {})
     else:
         out["enchantments"] = dict(FIXED[family])
     return out
@@ -91,7 +90,7 @@ def main():
     folder = os.path.join(args.plugins, "FluxTools", "tools")
     os.makedirs(folder, exist_ok=True)
     for tool_id, s in source["tools"].items():
-        text = HEADER + yaml.safe_dump(tool(tool_id, s, source["forced-points"]), allow_unicode=True, sort_keys=False, width=200)
+        text = HEADER + yaml.safe_dump(tool(tool_id, s), allow_unicode=True, sort_keys=False, width=200)
         open(os.path.join(folder, tool_id + ".yml"), "w", encoding="utf-8").write(text)
     print(len(source["tools"]), "tools written in", folder)
 
