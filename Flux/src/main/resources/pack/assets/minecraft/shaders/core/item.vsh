@@ -70,7 +70,14 @@ void main() {
         float headYaw = degrees(atan(-look.x, look.z));
         float headPitch = degrees(asin(clamp(-look.y, -1.0, 1.0)));
         float cameraYaw = degrees(atan(-camera.x, camera.z));
-        float x = clamp(fluxWrap(headYaw - cameraYaw) * FLUX_POINTER_SPEED, -FLUX_POINTER_WIDTH, FLUX_POINTER_WIDTH);
+        float turn = fluxWrap(headYaw - cameraYaw);
+        // the server keeps the head within FLUX_POINTER_WIDTH / FLUX_POINTER_SPEED (46 degrees) of the camera: more
+        // than 90 means the marked face shows the back of the head (the item drawn turned round): turn it back
+        if (abs(turn) > 90.0) {
+            turn = fluxWrap(turn + 180.0);
+            headPitch = -headPitch;
+        }
+        float x = clamp(turn * FLUX_POINTER_SPEED, -FLUX_POINTER_WIDTH, FLUX_POINTER_WIDTH);
         float y = clamp(-headPitch * FLUX_POINTER_SPEED, -FLUX_POINTER_HEIGHT, FLUX_POINTER_HEIGHT);
         // view space: x right, y up, the camera looks along -z; the tip (top left corner) on the pointed ray
         vec2 at = vec2(x, y) + vec2((corner == 1 || corner == 3) ? FLUX_POINTER_SIZE : 0.0,
