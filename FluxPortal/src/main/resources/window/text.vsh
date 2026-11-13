@@ -49,6 +49,9 @@ flat out vec3 spwFog;
 flat out ivec2 spwFarBlock;
 flat out float spwFarFacing;
 
+// The window's tables and functions only in the world's text: the game compiles this shader once per kind of
+// text (eight of them), the interface's and see-through ones never draw a window.
+#if !defined(IS_GUI) && !defined(IS_SEE_THROUGH)
 @COMMON@
 
 // The eye, from the matrix that takes camera-relative world space to the
@@ -70,6 +73,7 @@ int spw_near(int v, int camera) {
     float c = mod(float(camera), 40000.0);
     return int(mod(float(v) - c + 20000.0, 40000.0)) - 20000;
 }
+#endif
 
 // Hooks filled by Flux (api.client.TextShader): other text drawn by the suite, as the HUD.
 // @FLUX_DECLARATIONS

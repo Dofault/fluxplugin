@@ -72,8 +72,8 @@ public final class TextShader {
     }
 
     /**
-     * Code of a plugin added to the shader: {@code declarations} (constants, functions) before {@code main},
-     * {@code guiVertex} (statements) at the end of {@code main} for the interface's text. Same id again: replaced;
+     * Code of a plugin added to the shader: {@code declarations} (constants, functions) before {@code main}, compiled
+     * for the interface's text only, {@code guiVertex} (statements) at the end of {@code main} for the interface's text. Same id again: replaced;
      * null code: removed. Names should start with the plugin's own prefix ({@code flux_hud_...}).
      */
     public static void part(Plugin owner, String id, String declarations, String guiVertex) {
@@ -111,7 +111,10 @@ public final class TextShader {
                     .append(")\n").append(p.declarations().strip()).append("\n\n");
             if (!p.guiVertex().isBlank()) gui.append(p.guiVertex().strip()).append('\n');
         }
-        return text.replace(DECLARATIONS, declarations.toString().strip()).replace(GUI_VERTEX, gui.toString().strip());
+        // only the interface's text runs the parts: the game compiles this shader once per kind of text (eight of
+        // them), the world's and see-through ones skip the parts' tables
+        String decl = declarations.isEmpty() ? "" : "#ifdef IS_GUI\n" + declarations.toString().strip() + "\n#endif";
+        return text.replace(DECLARATIONS, decl).replace(GUI_VERTEX, gui.toString().strip());
     }
 
     /** The base's vertex shader without any part. */

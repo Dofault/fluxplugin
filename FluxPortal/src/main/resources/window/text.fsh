@@ -39,9 +39,9 @@ flat in float spwFarFacing;
 
 out vec4 fragColor;
 
-@COMMON@
-
+// The window's tables only in the world's text (see text.vsh).
 #if !defined(IS_GUI) && !defined(IS_SEE_THROUGH)
+@COMMON@
 
 // Shapes, as the plugin's BlockLooks numbers them.
 const int SH_CUBE = 0;
