@@ -13,12 +13,13 @@ emblem (two frames closing on a crystal).
 
 Pose baked in the cubes: right arm forward, palm up under the three cubes; left arm low and apart, fingers spread
 towards the ground (the shrinking gesture); head bent down a little and turned to the raised hand (he looks down on
-shrunken players). Bones sit on the joints for later animations; no animation here.
+shrunken players). Bones sit on the joints; animations in evocateur_demesure_anim.py.
 
 The model is drawn at 1 texel per drawing unit then enlarged by SCALE: chunky pixels that stay readable when the
 game enlarges the entity for the last phase (entity scale, nothing to change in the model).
 
 Usage: evocateur_demesure.py [output folder] [--apercu <sheet.png>] [--cubes <table.md>]
+       [--anims <folder> [--only a,b] [--count n]] (one strip of frames per animation, cf. evocateur_demesure_anim.py)
 Front faces north (-z), the boss's right is +x, ground at y = 0, origin between the feet.
 """
 import json
@@ -451,20 +452,26 @@ def parts():
         ):
             cc, M = place(c, r)
             add(g, name, cc, size, M, mat)
-        for k, dx in enumerate((-1.1, 0, 1.1)):               # three fingers hinged on the knuckles
+        # three fingers hinged on the knuckles, in a bone of their own (they close together), and the thumb in
+        # another: the pinch, the closing fist
+        fb, tb = f"Fingers_{side}", f"Thumb_{side}"
+        G[fb] = (lower((8.0 * s, 12.6, 0.6), (0, 0, 0))[0], hg)
+        for k, dx in enumerate((-1.1, 0, 1.1)):
             knuckle = (8.0 * s + dx, 12.6, 0.6)
             c, M = attach(knuckle, rot(curl, 0, fan * dx / 1.1))((knuckle[0], knuckle[1] - 1.0, knuckle[2]), (0, 0, 0))
             cc, M = lower(c, M)
-            add(hg, f"finger_{k + 1}", cc, (0.9, 2.2, 0.9), M, "finger")
+            add(fb, f"finger_{k + 1}", cc, (0.9, 2.2, 0.9), M, "finger")
         knuckle = (8.0 * s - 1.2 * s, 13.4, -1.7)             # thumb on the inner side, pointing forward
+        G[tb] = (lower(knuckle, (0, 0, 0))[0], hg)
         c, M = attach(knuckle, rot(curl + 30, 0, -20 * s))((knuckle[0], knuckle[1] - 0.8, knuckle[2]), (0, 0, 0))
         cc, M = lower(c, M)
-        add(hg, "thumb", cc, (0.9, 1.8, 0.9), M, "finger")
+        add(tb, "thumb", cc, (0.9, 1.8, 0.9), M, "finger")
         if s == 1:                                            # the same cube at three sizes, above the palm
             palm = lower((8.0, 14.1, 0), (0, 0, 0))[0]
-            G["glow_focus"] = ((palm[0], palm[1] + 5.2, palm[2]), hg)
-            for k, (size, up) in enumerate(FOCUS):
-                add("glow_focus", f"focus_{k + 1}", (palm[0], palm[1] + up, palm[2]), (size,) * 3, CORNER, "focus")
+            for k, (size, up) in enumerate(FOCUS):            # one bone each, pivot in its centre: spin, hide
+                c = (palm[0], palm[1] + up, palm[2])
+                G[f"glow_focus_{k + 1}"] = (c, hg)
+                add(f"glow_focus_{k + 1}", f"focus_{k + 1}", c, (size,) * 3, CORNER, "focus")
 
     order, done = [], set()                                   # every parent before its children
     while len(order) < len(G):
@@ -495,7 +502,7 @@ def cube_table(P, groups, dims):
 if __name__ == "__main__":
     args = sys.argv[1:]
     opts = {}
-    for flag in ("--apercu", "--cubes"):
+    for flag in ("--apercu", "--cubes", "--anims", "--only", "--count"):
         if flag in args:
             i = args.index(flag)
             opts[flag] = args[i + 1]
@@ -504,8 +511,14 @@ if __name__ == "__main__":
     P, groups, dims = ground(*parts(), scale=SCALE, center=False)
     uv, atlases, sizes = bake(P, MATS, GLOW_MATS)
     data = export(IDENT, NS, P, groups, uv, atlases, sizes)
+    import evocateur_demesure_anim as EA
+    anims = EA.build(data, EA.uid_for(NS, IDENT))
     print(f"{len(P)} cubes ; {dims[0]:.2f} x {dims[1]:.2f} x {dims[2]:.2f} blocs (l x h x p) ; "
-          f"textures {sizes[0]} et {sizes[1]}")
+          f"textures {sizes[0]} et {sizes[1]} ; {len(anims)} animations")
+    if "--anims" in opts:
+        EA.strips(data, anims, atlases, sizes, opts["--anims"], count=int(opts.get("--count", 10)),
+                  only=opts["--only"].split(",") if "--only" in opts else None)
+    data["animations"] = EA.finish(anims)
     path = os.path.join(out, IDENT + ".bbmodel")
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False)

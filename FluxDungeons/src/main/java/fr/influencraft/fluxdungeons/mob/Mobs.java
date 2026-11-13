@@ -333,6 +333,7 @@ public final class Mobs {
         this.forge = new ForgePowers(plugin, fx);
         this.salamander = new SalamanderPowers(plugin, fx, this);
         this.fox = new FoxPowers(plugin, fx, this);
+        this.evoker = new EvokerPowers(plugin, this);
         this.tide = new TidePowers(plugin);
         this.theme = new ThemePowers(plugin, fx);
         this.troop = new TroopPowers(plugin, fx);
@@ -1052,6 +1053,24 @@ public final class Mobs {
         return true;
     }
 
+    /** A monster summoned by another one (counted as its own, cf. {@link #summonsOf}); null for an unknown template. */
+    LivingEntity summonFor(LivingEntity by, String template, Location at) {
+        MobTemplate t = templates.get(template);
+        Alive parent = alive.get(by.getUniqueId());
+        if (t == null || parent == null) return null;
+        LivingEntity child = spawn(t, at, parent.run);
+        if (child == null) return null;
+        Alive ca = alive.get(child.getUniqueId());
+        if (ca != null) ca.summoner = by.getUniqueId();
+        onSummon.accept(by, child);
+        return child;
+    }
+
+    /** How many of its summons are still alive. */
+    int summonsOf(LivingEntity by) {
+        return (int) alive.values().stream().filter(x -> by.getUniqueId().equals(x.summoner) && x.entity.isValid()).count();
+    }
+
     /** Plays an animation of a monster's model in a loop, or stops it. */
     public void loop(LivingEntity e, String animation, boolean on) {
         Alive a = alive.get(e.getUniqueId());
@@ -1099,6 +1118,7 @@ public final class Mobs {
     /** The Emerald Salamander: its prowl (it moves itself, its file says stationary) and abilities. */
     private SalamanderPowers salamander;
     private FoxPowers fox;
+    private EvokerPowers evoker;
     private Fx fx;
 
     public void removeAll() {
@@ -1113,6 +1133,7 @@ public final class Mobs {
         if (forge != null) forge.clear();
         if (salamander != null) salamander.clear();
         if (fox != null) fox.clear();
+        if (evoker != null) evoker.clear();
         if (fx != null) fx.clear();
         for (Alive a : alive.values()) {
             close(a);
@@ -1425,7 +1446,7 @@ public final class Mobs {
                 // ready, and somebody to hit (a ring cast with nobody in it is thrown in the void)
                 if (now - last >= ab.every() * 1000 && RockPowers.worthCasting(ab, a.entity)
                         && harvest.worth(ab, a.entity, a.spawn) && copper.worth(ab, a.entity, a.spawn)
-                        && mole.worth(ab, a.entity) && bone.worth(ab, a.entity) && forge.worth(ab, a.entity) && salamander.worth(ab, a.entity) && fox.worth(ab, a.entity)
+                        && mole.worth(ab, a.entity) && bone.worth(ab, a.entity) && forge.worth(ab, a.entity) && salamander.worth(ab, a.entity) && fox.worth(ab, a.entity) && evoker.worth(ab, a.entity)
                         && theme.worth(ab, a.entity) && troop.worth(ab, a.entity)) ready.add(i);
             }
             if (ready.isEmpty()) continue;
@@ -1974,7 +1995,7 @@ public final class Mobs {
             }
         };
         if (copper.cast(ab, caster, target) || mole.cast(ab, caster, target) || bone.cast(ab, caster, target) || forge.cast(ab, caster, target)
-                || salamander.cast(ab, caster, target) || fox.cast(ab, caster, target) || tide.cast(ab, caster, target) || harvest.cast(ab, caster, target)
+                || salamander.cast(ab, caster, target) || fox.cast(ab, caster, target) || evoker.cast(ab, caster, target) || tide.cast(ab, caster, target) || harvest.cast(ab, caster, target)
                 || rock.cast(ab, caster, target) || theme.cast(ab, caster, target) || troop.cast(ab, caster, target)) return;
         World w = e.getWorld();
         Location at = e.getLocation();
