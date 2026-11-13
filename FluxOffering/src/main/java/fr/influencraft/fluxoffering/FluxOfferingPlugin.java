@@ -36,6 +36,7 @@ public final class FluxOfferingPlugin extends JavaPlugin {
 
         dataManager = new DataManager(this);
         dataManager.init();
+        fr.influencraft.fluxoffering.api.Offerings.bind(dataManager);
 
         DepositService depositService = new DepositService(configManager, dataManager);
         OfferingMenu offeringMenu = new OfferingMenu(this, configManager, messagesManager, dataManager, depositService);

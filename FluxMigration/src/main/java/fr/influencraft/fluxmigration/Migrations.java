@@ -1,6 +1,7 @@
 package fr.influencraft.fluxmigration;
 
 import fr.influencraft.fluxmigration.migrations.AutoSellFilesToDatabase;
+import fr.influencraft.fluxmigration.migrations.OfferingFilesToDatabase;
 import fr.influencraft.fluxmigration.migrations.AuctionHouseToFluxAuctionHouse;
 import fr.influencraft.fluxmigration.migrations.CasinoChipsToFlux;
 import fr.influencraft.fluxmigration.migrations.EcoCratesToFluxCrate;
@@ -21,6 +22,7 @@ final class Migrations {
     static List<Migration> all(FluxMigration plugin) {
         return List.of(
                 new AutoSellFilesToDatabase(plugin),
+                new OfferingFilesToDatabase(plugin),
                 new PowerFlyToFluxFly(plugin),
                 new EcoCratesToFluxCrate(plugin),
                 new PlayerPointsToInfluence(plugin),
