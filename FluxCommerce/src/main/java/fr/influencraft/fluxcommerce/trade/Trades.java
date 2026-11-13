@@ -47,6 +47,8 @@ final class Trades {
     /** Pending requests by receiver, then by sender (oldest first). */
     private final Map<UUID, LinkedHashMap<UUID, Request>> requests = new HashMap<>();
     private BukkitTask watcher;
+    /** Offered items copied in the database while a trade runs (null: database refused, trades still work). */
+    private TradeEscrow escrow;
 
     Trades(TradeModule plugin) {
         this.plugin = plugin;
@@ -54,6 +56,14 @@ final class Trades {
 
     /** Checks both players of every trade once a second (online, game mode, world, distance). */
     void start() {
+        try {
+            TradeEscrow e = new TradeEscrow(plugin.getLogger());
+            e.open();
+            e.recover(plugin.messages().raw("escrow-label"));
+            escrow = e;
+        } catch (java.sql.SQLException e) {
+            plugin.getLogger().severe("Trade escrow unavailable, a crash during a trade would lose its items: " + e);
+        }
         watcher = Bukkit.getScheduler().runTaskTimer(plugin.host(), this::watch, 20L, 20L);
     }
 
@@ -245,6 +255,7 @@ final class Trades {
         else there.setAmount(there.getAmount() - moving.getAmount());
         s.items.clear();
         for (ItemStack stack : after) s.items.add(new Trade.Offered(t.nextId(), stack));
+        if (escrow != null) escrow.save(s);
         Sounds.cue(p, "click");
         changed(t, s);
     }
@@ -265,6 +276,7 @@ final class Trades {
         if (back.getAmount() >= o.item().getAmount()) s.items.remove(o);
         else o.item().setAmount(o.item().getAmount() - back.getAmount());
         Inventories.giveOrDrop(p, List.of(back));
+        if (escrow != null) escrow.save(s);
         Sounds.cue(p, "remove");
         changed(t, s);
     }
@@ -436,6 +448,10 @@ final class Trades {
         t.b.items.clear();
         Inventories.giveOrDrop(pa, toA);
         Inventories.giveOrDrop(pb, toB);
+        if (escrow != null) {
+            escrow.clear(t.a.id);
+            escrow.clear(t.b.id);
+        }
         if (t.a.xp > 0) Experience.give(pb, t.a.xp);
         if (t.b.xp > 0) Experience.give(pa, t.b.xp);
         if (t.a.money > 0) money.give(pb, t.a.money, origin.verb("received").detail(t.a.name));
@@ -511,14 +527,20 @@ final class Trades {
             s.items.clear();
             if (left && drops != null) {
                 drops.addAll(back);
+                if (escrow != null) escrow.clear(s.id);
                 continue;
             }
             if (p == null) {
-                // cannot happen (a leaving player is handed in): logged so the staff can give them back
-                if (!back.isEmpty()) plugin.getLogger().severe("Items of " + s.name + " not given back: " + TradeHistory.describe(back, s));
+                // should not happen (a leaving player is handed in): kept for him in /recompenses
+                if (!back.isEmpty()) {
+                    fr.influencraft.flux.api.reward.Rewards.store(Bukkit.getOfflinePlayer(s.id), "trade", plugin.messages().raw("escrow-label"), back);
+                    plugin.getLogger().warning("Items of " + s.name + " kept in /recompenses: " + TradeHistory.describe(back, s));
+                }
+                if (escrow != null) escrow.clear(s.id);
                 continue;
             }
             Inventories.giveOrDrop(p, back);
+            if (escrow != null) escrow.clear(s.id);
             if (left) continue;
             closeWindow(p);
             boolean caused = s.id.equals(cause);

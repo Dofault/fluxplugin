@@ -189,4 +189,5 @@ form:
   money-too-much: "You only have %balance%."
   save: "Validate"
   cancel: "Cancel"
-
+# label in /recompenses of items given back after a stop during a trade
+escrow-label: "&fItems of an interrupted trade"

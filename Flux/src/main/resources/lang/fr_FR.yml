@@ -54,6 +54,7 @@ rewards:
   list-header: "&#B376E5%count% récompense(s) en attente pour &f%player%&#B376E5 :"
   list-line: "!&7#%id% &f%label% &7(%source%, %slots% case(s))"
   sources:
+    trade: "Échanges"
     items: "Objets"
     mailbox: "Boîte aux lettres"
     daily: "Récompense de connexion"

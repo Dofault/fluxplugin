@@ -54,6 +54,7 @@ rewards:
   list-header: "&#B376E5%count% reward(s) waiting for &f%player%&#B376E5:"
   list-line: "!&7#%id% &f%label% &7(%source%, %slots% slot(s))"
   sources:
+    trade: "Trades"
     items: "Items"
     mailbox: "Mailbox"
     daily: "Daily reward"

@@ -106,7 +106,8 @@ The plugins are written **as English plugins, then adapted to French** for our s
   forbidden items (`ItemRules`, `blacklist` of the main config) and bans (`Bans`, `/commerce`, `fluxcommerce.staff`),
   checked by every part. Chest shops register as the provider of Flux's `shops.ChestShops` (FluxLands: town, market
   fee, town shops; the auction house: market). Imports through `fluxcommerce.api.Shops` and `.Listings`. Trades hold
-  offered items until the end, experience always moves in points. FluxCommerce loads after FluxLands (the market reads
+  offered items until the end, copied in `flux_commerce_trade_escrow` meanwhile (given back through `/recompenses` after a
+  crash), experience always moves in points. FluxCommerce loads after FluxLands (the market reads
   towns); FluxLands links the chest shops on the first tick. A new part is a new `Module`, not a new plugin.
 - FluxLands owns every town and country screen: never send a player to one of Lands' own menus (levels, members,
   relations...), build ours on Lands' API (`Levels`, roles through `Area#setRole`). Shops of towns are listed by the

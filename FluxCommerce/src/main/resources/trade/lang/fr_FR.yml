@@ -194,4 +194,5 @@ form:
   money-too-much: "Tu n'as que %balance%."
   save: "Valider"
   cancel: "Annuler"
-
+# label in /recompenses of items given back after a stop during a trade
+escrow-label: "&fObjets d'un échange interrompu"
