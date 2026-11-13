@@ -1,0 +1,3 @@
+# Servers open to Bedrock players (Geyser + Floodgate), one name per line as in velocity.toml.
+# The first one is where they arrive. The others refuse them until they are ready for Bedrock.
+labs
