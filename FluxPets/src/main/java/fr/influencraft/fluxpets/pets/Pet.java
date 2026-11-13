@@ -1,8 +1,6 @@
 package fr.influencraft.fluxpets.pets;
 
 import com.willfp.eco.core.config.interfaces.Config;
-import com.willfp.eco.core.data.keys.PersistentDataKey;
-import com.willfp.eco.core.data.keys.PersistentDataKeyType;
 import com.willfp.eco.core.items.Items;
 import com.willfp.eco.core.placeholder.PlayerStaticPlaceholder;
 import com.willfp.eco.util.NumberUtils;
@@ -34,8 +32,8 @@ import java.util.regex.Pattern;
  * Clés propres à FluxPets : vol (le familier flotte, sinon il se pose au sol, défaut : true) et montable
  * (réservé aux montures, défaut : false, cf. Pets#mountsEnabled).
  *
- * Calqué sur com.willfp.ecopets.pets.Pet : niveau et XP du joueur dans deux clés eco (PersistentDataKey, donc
- * stockage yaml / sqlite / mysql d'eco), effets libreforge compilés une fois, le niveau étant fourni à leurs
+ * Calqué sur com.willfp.ecopets.pets.Pet : niveau et XP du joueur dans la base de Flux ({@link PetStore}),
+ * effets libreforge compilés une fois, le niveau étant fourni à leurs
  * expressions par un placeholder « level » injecté dans la config (lu pour chaque joueur à l'évaluation).
  */
 public final class Pet {
@@ -56,8 +54,6 @@ public final class Pet {
     private final Config config;
     private final String name;
     private final String description;
-    private final PersistentDataKey<Integer> levelKey;
-    private final PersistentDataKey<Double> xpKey;
     private final List<LevelPlaceholder> levelPlaceholders = new ArrayList<>();
     private final String entityTexture;
     private final Trail trail;
@@ -83,8 +79,6 @@ public final class Pet {
         this.config = config;
         this.name = config.getString("name");
         this.description = config.getString("description");
-        this.levelKey = new PersistentDataKey<>(Pets.key(id + "_level"), PersistentDataKeyType.INT, 0);
-        this.xpKey = new PersistentDataKey<>(Pets.key(id + "_xp"), PersistentDataKeyType.DOUBLE, 0.0);
         for (Config sub : config.getSubsections("level-placeholders")) {
             levelPlaceholders.add(new LevelPlaceholder(sub.getString("id"), sub.getString("value")));
         }
@@ -146,14 +140,6 @@ public final class Pet {
 
     public String description() {
         return description;
-    }
-
-    PersistentDataKey<Integer> levelKey() {
-        return levelKey;
-    }
-
-    PersistentDataKey<Double> xpKey() {
-        return xpKey;
     }
 
     /** Modèle BetterModel (entity-texture « bettermodel:<modèle> »), ou la valeur brute. */

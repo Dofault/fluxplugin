@@ -74,8 +74,14 @@ public final class Pets {
         }
         libreforge = eco;
         settings = readSettings();
-        PetData.registerKeys(settings.getBool("local-storage"));
-        EcoPetsMigration.copyPetFiles(plugin);
+        if (PetStore.get() == null) {
+            try {
+                PetStore.start(plugin);
+            } catch (java.sql.SQLException e) {
+                plugin.getLogger().severe("Pet tables unavailable, pets are off: " + e.getMessage());
+                return false;
+            }
+        }
         saveDefaultPets();
         fr.influencraft.fluxpets.ConfigFiles.migratePetFiles(new java.io.File(plugin.getDataFolder(), "pets"),
                 plugin.getLogger());
@@ -96,7 +102,6 @@ public final class Pets {
         }
         enabled = true;
         load();
-        EcoPetsMigration.registerPlayerDataMigration(plugin);
         Bukkit.getPluginManager().registerEvents(new PetListener(), plugin);
         PetCommands commands = new PetCommands();
         fr.influencraft.flux.api.command.Commands.create(plugin, "pets").aliases("pet", "familiers", "familier")
@@ -116,6 +121,8 @@ public final class Pets {
         if (display != null) {
             display.shutdown();
         }
+        // pets' progress written now (the server stops)
+        if (PetStore.get() != null) PetStore.get().stop();
         enabled = false;
     }
 

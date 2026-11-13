@@ -1,8 +1,5 @@
 package fr.influencraft.fluxpets.pets;
 
-import com.willfp.eco.core.data.PlayerProfile;
-import com.willfp.eco.core.data.keys.PersistentDataKey;
-import com.willfp.eco.core.data.keys.PersistentDataKeyType;
 import fr.influencraft.fluxpets.pets.event.PetActivateEvent;
 import fr.influencraft.fluxpets.pets.event.PetAdoptEvent;
 import fr.influencraft.fluxpets.pets.event.PetDeactivateEvent;
@@ -24,41 +21,35 @@ import java.util.regex.Pattern;
 /**
  * Familiers d'un joueur : niveau et XP de chaque familier, familiers actifs (plusieurs selon la permission
  * fluxpets.pets.max.<n>), familiers cachés. Tout est lu et écrit
- * dans le profil eco du joueur (PersistentDataKey), exactement comme EcoPets (com.willfp.ecopets.pets.PetKt) :
+ * dans la base de Flux ({@link PetStore}, depuis le 2026-11-13 ; avant : le profil eco du joueur) :
  * niveau 0 = pas adopté. C'est une collection : un familier adopté ne se retire pas (pas d'œuf, pas d'échange).
  */
 public final class PetData {
 
-    private static PersistentDataKey<String> activeKey;
-    private static PersistentDataKey<java.util.List<String>> activeListKey;
     private static final Map<UUID, double[]> maxCache = new HashMap<>();
-    private static PersistentDataKey<Boolean> hiddenKey;
     private static final Map<UUID, double[]> multiplierCache = new HashMap<>();
     private static final Pattern LEVEL_OFFSET = Pattern.compile("%level_(-?\\d+)(_numeral)?%");
 
     private PetData() {
     }
 
-    static void registerKeys(boolean local) {
-        activeKey = new PersistentDataKey<>(Pets.key("active_pet"), PersistentDataKeyType.STRING, "", local);
-        activeListKey = new PersistentDataKey<>(Pets.key("active_pets"), PersistentDataKeyType.STRING_LIST,
-                java.util.List.of(), local);
-        hiddenKey = new PersistentDataKey<>(Pets.key("hide_pet"), PersistentDataKeyType.BOOLEAN, false, local);
+     private static PetStore.Profile profile(OfflinePlayer player) {
+        return PetStore.get().of(player.getUniqueId());
     }
 
-    private static PlayerProfile profile(OfflinePlayer player) {
-        return PlayerProfile.load(player);
+    private static void changed(OfflinePlayer player) {
+        PetStore.get().changed(player.getUniqueId());
     }
 
     // ------------------------------------------------------------------ niveau et XP
 
     public static int level(OfflinePlayer player, Pet pet) {
-        Integer level = profile(player).read(pet.levelKey());
-        return level == null ? 0 : level;
+        return profile(player).levels.getOrDefault(pet.id(), 0);
     }
 
     public static void setLevel(OfflinePlayer player, Pet pet, int level) {
-        profile(player).write(pet.levelKey(), Math.max(0, Math.min(level, pet.maxLevel())));
+        profile(player).levels.put(pet.id(), Math.max(0, Math.min(level, pet.maxLevel())));
+        changed(player);
         if (player instanceof Player online) {
             refresh(online);
         }
@@ -69,12 +60,12 @@ public final class PetData {
     }
 
     public static double xp(OfflinePlayer player, Pet pet) {
-        Double xp = profile(player).read(pet.xpKey());
-        return xp == null ? 0 : xp;
+        return profile(player).xp.getOrDefault(pet.id(), 0.0);
     }
 
     public static void setXp(OfflinePlayer player, Pet pet, double xp) {
-        profile(player).write(pet.xpKey(), Math.max(0, xp));
+        profile(player).xp.put(pet.id(), Math.max(0, xp));
+        changed(player);
     }
 
     /** Progression vers le niveau suivant (0 à 1 ; 0 au niveau max). */
@@ -115,7 +106,7 @@ public final class PetData {
         while (level + 1 <= pet.maxLevel() && progress >= pet.xpForLevel(level + 1)) {
             progress -= pet.xpForLevel(level + 1);
             level++;
-            profile(player).write(pet.levelKey(), level);
+            profile(player).levels.put(pet.id(), level);
             Bukkit.getPluginManager().callEvent(new PetLevelUpEvent(player, pet, level));
         }
         // au niveau max, l'XP continue de s'accumuler (comme EcoPets)
@@ -193,12 +184,7 @@ public final class PetData {
      * Ancienne donnée à un seul familier (active_pet) reprise si la liste est vide.
      */
     public static List<Pet> actives(OfflinePlayer player) {
-        PlayerProfile profile = profile(player);
-        List<String> ids = profile.read(activeListKey);
-        if (ids == null || ids.isEmpty()) {
-            String single = profile.read(activeKey);
-            ids = single == null || single.isEmpty() ? List.of() : List.of(single);
-        }
+        List<String> ids = List.copyOf(profile(player).active);
         int max = player instanceof Player online ? maxActive(online) : Integer.MAX_VALUE;
         List<Pet> pets = new ArrayList<>();
         for (String id : ids) {
@@ -328,20 +314,20 @@ public final class PetData {
     }
 
     private static void write(Player player, List<Pet> pets) {
-        PlayerProfile profile = profile(player);
-        profile.write(activeListKey, pets.stream().map(Pet::id).toList());
-        // premier familier aussi dans l'ancienne clé (placeholders, retour en arrière)
-        profile.write(activeKey, pets.isEmpty() ? "" : pets.get(0).id());
+        PetStore.Profile profile = profile(player);
+        profile.active.clear();
+        profile.active.addAll(pets.stream().map(Pet::id).toList());
+        changed(player);
         refresh(player);
     }
 
     public static boolean hidden(OfflinePlayer player) {
-        Boolean hidden = profile(player).read(hiddenKey);
-        return hidden != null && hidden;
+        return profile(player).hidden;
     }
 
     public static void setHidden(OfflinePlayer player, boolean hidden) {
-        profile(player).write(hiddenKey, hidden);
+        profile(player).hidden = hidden;
+        changed(player);
     }
 
     /** Effets libreforge recalculés tout de suite (sinon au prochain passage de libreforge). */

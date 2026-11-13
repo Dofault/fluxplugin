@@ -65,6 +65,19 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>com.willfp</groupId>
+            <artifactId>eco</artifactId>
+            <version>2026.44</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../Flux/libs/eco-2026.44.1-modrinth.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>fr.influencraft</groupId>
+            <artifactId>FluxPets</artifactId>
+            <version>26.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>fr.influencraft</groupId>
             <artifactId>FluxOffering</artifactId>
             <version>26.2</version>

@@ -80,8 +80,6 @@ pet-settings:
   menu-command: ""
   # pets per page of %influpet_view_<n>% (the menu's grid)
   view-page-size: 21
-  # save locally even if eco uses a database (no sync between servers); only change with the server stopped
-  local-storage: false
   # put away an active pet whose activate-conditions are no longer met
   deactivate-on-failed-conditions: true
   # mounts: nothing can be ridden while false, even a "mountable: true" pet
