@@ -6,8 +6,6 @@ import fr.influencraft.fluxpets.CardRegistry.Reward;
 import fr.influencraft.fluxpets.effects.PetEffects;
 import fr.influencraft.fluxpets.pets.PetCommands;
 import fr.influencraft.fluxpets.pets.Pets;
-import fr.influencraft.fluxpets.gui.MainMenu;
-import fr.influencraft.fluxpets.gui.MenuListener;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.Command;
@@ -105,7 +103,6 @@ public final class FluxPets extends fr.influencraft.flux.api.FluxPlugin implemen
         });
         reveals = new RevealManager(this);
         getServer().getPluginManager().registerEvents(new BoosterListener(this), this);
-        getServer().getPluginManager().registerEvents(new MenuListener(), this);
         updater = new ItemUpdater(this);
         getServer().getPluginManager().registerEvents(updater, this);
         // section « Familiers » of the profile (/profil): works for an offline player too
@@ -345,13 +342,6 @@ public final class FluxPets extends fr.influencraft.flux.api.FluxPlugin implemen
             return true;
         }
         switch (args[0].toLowerCase(Locale.ROOT)) {
-            case "menu" -> {
-                if (sender instanceof Player p) {
-                    new MainMenu(this).open(p);
-                } else {
-                    send(sender, "player-only");
-                }
-            }
             case "reload" -> {
                 reloadConfig();
                 Pets.load();
@@ -598,7 +588,7 @@ public final class FluxPets extends fr.influencraft.flux.api.FluxPlugin implemen
                     .filter(o -> o.toLowerCase(Locale.ROOT).startsWith(lastArg)).toList();
         }
         List<String> options = switch (args.length) {
-            case 1 -> List.of("menu", "give", "stash", "open", "list", "info", "pet", "reload");
+            case 1 -> List.of("give", "stash", "open", "list", "info", "pet", "reload");
             case 2 -> switch (sub) {
                 case "give", "stash", "open" -> players;
                 case "list", "info" -> List.of("cards", "pets", "boosters");

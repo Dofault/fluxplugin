@@ -33,7 +33,7 @@ import java.util.Map;
 public final class ConfigFiles {
 
     /** Chemins rangés dans le fichier de langue (préfixes). */
-    static final List<String> LANG = List.of("messages", "menu", "editor", "reveal.actionbar", "reveal.subtitle",
+    static final List<String> LANG = List.of("messages", "menu", "reveal.actionbar", "reveal.subtitle",
             "reveal.back-title", "reveal.actionbar-pet", "reveal.actionbar-pet-duplicate",
             "reveal.actionbar-pet-duplicate-incomplete", "pet-reveal.title", "pet-reveal.subtitle", "card-format",
             "pets.name-format", "pet-settings.pet-entity.name", "pet-settings.level-up.message.message",

@@ -65,9 +65,6 @@ public final class ItemUpdater implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onOpen(InventoryOpenEvent event) {
-        if (event.getInventory().getHolder(false) instanceof fr.influencraft.fluxpets.gui.Menu) {
-            return;
-        }
         Player viewer = event.getPlayer() instanceof Player p ? p : null;
         refresh(event.getInventory(), viewer);
         if (viewer != null) {
