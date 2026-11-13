@@ -691,10 +691,8 @@ public final class RevealManager {
         return free;
     }
 
-    /** Donne l'objet, le surplus tombe aux pieds du joueur. Renvoie true si quelque chose est tombé. */
+    /** Gives the item through Flux (what does not fit is kept in /recompenses). True when something was kept there. */
     public static boolean giveOrDrop(Player player, ItemStack item) {
-        var leftover = player.getInventory().addItem(item);
-        leftover.values().forEach(rest -> player.getWorld().dropItemNaturally(player.getLocation(), rest));
-        return !leftover.isEmpty();
+        return !fr.influencraft.flux.api.reward.Rewards.deliver(player, "pets", "", java.util.List.of(item)).isEmpty();
     }
 }

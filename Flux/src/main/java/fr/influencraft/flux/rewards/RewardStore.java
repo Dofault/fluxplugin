@@ -48,6 +48,9 @@ final class RewardStore {
             addColumn(st, "warned INTEGER NOT NULL DEFAULT 0");
             // 2026-11-11: universe a reward is claimed in (rows made before are vanilla)
             addColumn(st, "universe " + d.key(32) + " NOT NULL DEFAULT 'vanilla'");
+            // 2026-11-13: the items themselves (Base64 of Paper's item bytes) and rewards that never expire
+            addColumn(st, "items TEXT");
+            addColumn(st, "permanent INTEGER NOT NULL DEFAULT 0");
             st.execute("CREATE TABLE IF NOT EXISTS " + optOut + " (uuid " + d.key(36) + " NOT NULL PRIMARY KEY, since BIGINT NOT NULL)");
         }
         // former file of the first version
@@ -71,7 +74,8 @@ final class RewardStore {
     boolean add(UUID uuid, Reward r) {
         recent.remove(uuid);
         try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement(Database.dialect().insertIgnore() + " " + table
-                + " (uuid, source, reward_key, label, icon, amount, slots, commands, created, universe) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                + " (uuid, source, reward_key, label, icon, amount, slots, commands, created, universe, items, permanent)"
+                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
             ps.setString(1, uuid.toString());
             ps.setString(2, r.source());
             ps.setString(3, r.key());
@@ -82,10 +86,32 @@ final class RewardStore {
             ps.setString(8, String.join(SEPARATOR, r.commands()));
             ps.setLong(9, System.currentTimeMillis());
             ps.setString(10, r.universe());
+            ps.setString(11, r.items().isEmpty() ? null
+                    : java.util.Base64.getEncoder().encodeToString(org.bukkit.inventory.ItemStack.serializeItemsAsBytes(r.items())));
+            ps.setInt(12, r.permanent() ? 1 : 0);
             return ps.executeUpdate() == 1;
         } catch (SQLException e) {
             log.severe("Reward NOT kept for " + uuid + " (" + r + "): " + e);
             return false;
+        }
+    }
+
+    /** Rewards whose items could not be read: never marked claimed, so nothing is lost. */
+    private final java.util.Set<Long> broken = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    boolean broken(long id) {
+        return broken.contains(id);
+    }
+
+    /** Items of a stored reward; unreadable bytes are logged and the reward keeps its commands only. */
+    private List<org.bukkit.inventory.ItemStack> items(String base64, long id) {
+        if (base64 == null || base64.isEmpty()) return List.of();
+        try {
+            return Arrays.asList(org.bukkit.inventory.ItemStack.deserializeItemsFromBytes(java.util.Base64.getDecoder().decode(base64)));
+        } catch (RuntimeException e) {
+            log.severe("Items of reward #" + id + " unreadable (kept in the database, never claimed): " + e);
+            broken.add(id);
+            return List.of();
         }
     }
 
@@ -119,14 +145,15 @@ final class RewardStore {
     List<StoredReward> pending(UUID uuid) {
         List<StoredReward> out = new ArrayList<>();
         try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement("SELECT id, created, source, reward_key, label, icon, amount, slots,"
-                + " commands, universe FROM " + table + " WHERE uuid = ? AND claimed IS NULL AND expired IS NULL ORDER BY id")) {
+                + " commands, universe, items, permanent FROM " + table + " WHERE uuid = ? AND claimed IS NULL AND expired IS NULL ORDER BY id")) {
             ps.setString(1, uuid.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     String cmds = rs.getString(9);
                     out.add(new StoredReward(rs.getLong(1), rs.getLong(2), new Reward(rs.getString(3), rs.getString(4),
                             rs.getString(5), rs.getString(6), rs.getInt(7), rs.getInt(8),
-                            cmds.isEmpty() ? List.of() : Arrays.asList(cmds.split(SEPARATOR)), rs.getString(10))));
+                            cmds.isEmpty() ? List.of() : Arrays.asList(cmds.split(SEPARATOR)), rs.getString(10),
+                            items(rs.getString(11), rs.getLong(1)), rs.getInt(12) != 0)));
                 }
             }
         } catch (SQLException e) {
@@ -152,7 +179,7 @@ final class RewardStore {
     java.util.Map<UUID, Integer> due(long createdBefore, int warned) {
         java.util.Map<UUID, Integer> out = new java.util.LinkedHashMap<>();
         try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement("SELECT uuid, COUNT(*) FROM " + table
-                + " WHERE claimed IS NULL AND expired IS NULL AND created < ? AND warned < ? GROUP BY uuid")) {
+                + " WHERE claimed IS NULL AND expired IS NULL AND permanent = 0 AND created < ? AND warned < ? GROUP BY uuid")) {
             ps.setLong(1, createdBefore);
             ps.setInt(2, warned);
             try (ResultSet rs = ps.executeQuery()) {
@@ -167,7 +194,7 @@ final class RewardStore {
     /** Sets the reminder count of the rewards {@link #due} found. */
     void markWarned(long createdBefore, int warned) {
         try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement("UPDATE " + table
-                + " SET warned = ? WHERE claimed IS NULL AND expired IS NULL AND created < ? AND warned < ?")) {
+                + " SET warned = ? WHERE claimed IS NULL AND expired IS NULL AND permanent = 0 AND created < ? AND warned < ?")) {
             ps.setInt(1, warned);
             ps.setLong(2, createdBefore);
             ps.setInt(3, warned);
@@ -183,7 +210,7 @@ final class RewardStore {
         if (lost.isEmpty()) return lost;
         recent.clear();
         try (Connection c = Database.connection(); PreparedStatement ps = c.prepareStatement("UPDATE " + table
-                + " SET expired = ? WHERE claimed IS NULL AND expired IS NULL AND created < ?")) {
+                + " SET expired = ? WHERE claimed IS NULL AND expired IS NULL AND permanent = 0 AND created < ?")) {
             ps.setLong(1, System.currentTimeMillis());
             ps.setLong(2, createdBefore);
             ps.executeUpdate();

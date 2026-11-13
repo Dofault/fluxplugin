@@ -64,6 +64,50 @@ public final class Rewards {
         return b != null && player != null && reward != null && b.give(player, reward);
     }
 
+    /**
+     * Hands items to a player, the default way of giving anything: straight into his inventory when he is online, in
+     * the items' universe and not swapping profiles; what cannot go there now (offline, another universe, inventory
+     * full) is kept in his rewards ({@code /recompenses}) without expiry. Never drops anything on the ground.
+     *
+     * @param source feature it comes from (rewards menu filter, {@code rewards.sources.<source>} label)
+     * @param label  coloured text shown in the rewards menu for what had to be kept
+     * @return the items kept in the rewards instead of the inventory (empty: all given now)
+     */
+    public static List<org.bukkit.inventory.ItemStack> deliver(OfflinePlayer player, String source, String label,
+                                                                java.util.Collection<org.bukkit.inventory.ItemStack> items) {
+        java.util.Map<String, List<org.bukkit.inventory.ItemStack>> kept = new java.util.LinkedHashMap<>();
+        Player online = player.getPlayer();
+        boolean ready = online != null && online.isOnline() && !fr.influencraft.flux.api.universe.Universes.transitioning(online);
+        String here = ready ? fr.influencraft.flux.api.universe.Universes.of(online) : null;
+        for (org.bukkit.inventory.ItemStack item : items) {
+            if (item == null || item.isEmpty()) continue;
+            String universe = fr.influencraft.flux.api.universe.Universes.universeOf(item);
+            List<org.bukkit.inventory.ItemStack> left = universe.equals(here)
+                    ? fr.influencraft.flux.api.inventory.Inventories.give(online, List.of(item)) : List.of(item);
+            if (!left.isEmpty()) kept.computeIfAbsent(universe, u -> new java.util.ArrayList<>()).addAll(left);
+        }
+        List<org.bukkit.inventory.ItemStack> out = new java.util.ArrayList<>();
+        kept.forEach((universe, list) -> {
+            if (give(player, Reward.of(source, label).items(list).universe(universe).keep())) {
+                out.addAll(list);
+            } else if (online != null && online.isOnline()) {
+                // Flux could not keep them (no database): the ground beats losing them
+                for (org.bukkit.inventory.ItemStack i : list) online.getWorld().dropItemNaturally(online.getLocation(), i, d -> d.setPickupDelay(0));
+            }
+        });
+        return out;
+    }
+
+    /** Same as {@link #deliver}, but always kept in the rewards (a plugin that wants the player to claim it). */
+    public static void store(OfflinePlayer player, String source, String label, java.util.Collection<org.bukkit.inventory.ItemStack> items) {
+        java.util.Map<String, List<org.bukkit.inventory.ItemStack>> byUniverse = new java.util.LinkedHashMap<>();
+        for (org.bukkit.inventory.ItemStack item : items) {
+            if (item == null || item.isEmpty()) continue;
+            byUniverse.computeIfAbsent(fr.influencraft.flux.api.universe.Universes.universeOf(item), u -> new java.util.ArrayList<>()).add(item);
+        }
+        byUniverse.forEach((universe, list) -> give(player, Reward.of(source, label).items(list).universe(universe)));
+    }
+
     /** Whether a reward with this key was already given to the player (claimed or not). */
     public static boolean given(UUID player, String key) {
         Backend b = backend;

@@ -92,12 +92,15 @@ public final class RewardService implements Rewards.Backend, Listener {
 
     @Override
     public boolean give(OfflinePlayer player, Reward reward) {
+        // items kept without a label (inventory full, other universe): the standard one of the lang file
+        if (reward.label().isEmpty() && !reward.items().isEmpty()) reward = reward.label(messages.get().raw("rewards.kept-label"));
         if (!store.add(player.getUniqueId(), reward)) return false;
+        Reward given = reward;
         sync(() -> {
             Player online = player.getPlayer();
             if (online == null) return;
             changed(online);
-            if (flux.getConfig().getBoolean("rewards.notify-on-give", true)) notifyLater(online, reward.label());
+            if (flux.getConfig().getBoolean("rewards.notify-on-give", true)) notifyLater(online, given.label());
         });
         return true;
     }
@@ -143,7 +146,7 @@ public final class RewardService implements Rewards.Backend, Listener {
             }
             if (id >= 0 && stored.id() != id) continue;
             if (source != null && !source.equalsIgnoreCase(r.source())) continue;
-            if (r.slots() > room) {
+            if (r.slots() > room || store.broken(stored.id())) {
                 remaining++;
                 continue;
             }
@@ -152,6 +155,9 @@ public final class RewardService implements Rewards.Backend, Listener {
             // money given by the commands is recorded under the reward (Flux:reward_<source>, its label as detail)
             fr.influencraft.flux.api.economy.Ledger.run(fr.influencraft.flux.api.economy.Origin.of(flux, "reward_" + r.source())
                     .detail(fr.influencraft.flux.api.text.Texts.plain(r.label(), null)), () -> run(player, r.commands()));
+            // the items themselves; what no longer fits (the commands filled the inventory) is kept again, never dropped
+            List<ItemStack> left = Inventories.give(player, r.items());
+            if (!left.isEmpty()) give(player, Reward.of(r.source(), r.label()).items(left).universe(r.universe()).keep());
             delivered++;
             // the commands may have filled more (or fewer) slots than announced
             room = Math.min(room, Inventories.freeSlots(player));
@@ -319,8 +325,8 @@ public final class RewardService implements Rewards.Backend, Listener {
         for (StoredReward stored : store.pending(viewer.getUniqueId())) {
             Reward r = stored.reward();
             if (!here.equals(r.universe())) continue;   // claimed in its own universe only
-            ItemStack icon = Items.of(r.icon(), viewer);
-            if (icon != null) icon.setAmount(Math.max(1, Math.min(99, r.amount())));
+            ItemStack icon = r.items().isEmpty() ? Items.of(r.icon(), viewer) : r.items().get(0).clone();
+            if (icon != null && r.items().isEmpty()) icon.setAmount(Math.max(1, Math.min(99, r.amount())));
             String source = m.raw("rewards.sources." + r.source());
             out.add(ListEntry.of(String.valueOf(stored.id())).item(icon)
                     .set("label", r.label())
@@ -328,7 +334,7 @@ public final class RewardService implements Rewards.Backend, Listener {
                     .set("slots", r.slots())
                     .set("source", source.isEmpty() ? r.source() : source)
                     .set("date", fr.influencraft.flux.api.util.Format.date(stored.created()))
-                    .set("expire", expiryMs() <= 0 ? "" : fr.influencraft.flux.api.util.Format.duration(
+                    .set("expire", expiryMs() <= 0 || r.permanent() ? "" : fr.influencraft.flux.api.util.Format.duration(
                             Math.max(0, Math.max(stored.created(), expiryStart()) + expiryMs() - System.currentTimeMillis()) / 1000L)));
         }
         return out;

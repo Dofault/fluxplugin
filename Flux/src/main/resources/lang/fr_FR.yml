@@ -28,6 +28,7 @@ dialogs:
   amount-min: "Au moins %min%."
   amount-max: "Au plus %max%."
 rewards:
+  kept-label: "&fObjets mis de côté"
   other-universe: "&#B376E5Tes récompenses en attente se récupèrent dans leur univers (monde principal ou monde RPG), pas ici."
   help: "&#B376E5Récupère tes récompenses avec &f[/%flux_cmd_flux_rewards%]&#B376E5."
   reminder: "&#B376E5Tu as &f%count% &#B376E5récompense(s) en attente : &f[/%flux_cmd_flux_rewards%]"
@@ -53,6 +54,7 @@ rewards:
   list-header: "&#B376E5%count% récompense(s) en attente pour &f%player%&#B376E5 :"
   list-line: "!&7#%id% &f%label% &7(%source%, %slots% case(s))"
   sources:
+    items: "Objets"
     mailbox: "Boîte aux lettres"
     daily: "Récompense de connexion"
     playtime: "Temps de jeu"

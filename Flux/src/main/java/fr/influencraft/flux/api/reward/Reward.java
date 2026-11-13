@@ -26,9 +26,12 @@ import java.util.List;
  *                 {@code %uuid%} = his UUID
  * @param universe universe it is claimed in ({@code api.universe.Universes}, vanilla by default): an item made for
  *                 the rpg universe is only ever delivered there
+ * @param items    the items themselves, kept as they are (a tool with its progress, an item given back), given on
+ *                 claim after the commands; the first one is the menu icon
+ * @param permanent never expires: items that already belong to the player (given back, inventory full)
  */
 public record Reward(String source, String key, String label, String icon, int amount, int slots, List<String> commands,
-                     String universe) {
+                     String universe, List<org.bukkit.inventory.ItemStack> items, boolean permanent) {
 
     public Reward {
         universe = universe == null || universe.isBlank() ? fr.influencraft.flux.api.universe.Universes.VANILLA : universe;
@@ -38,6 +41,15 @@ public record Reward(String source, String key, String label, String icon, int a
         amount = Math.max(1, amount);
         slots = Math.max(0, slots);
         commands = commands == null ? List.of() : List.copyOf(commands);
+        List<org.bukkit.inventory.ItemStack> copies = new ArrayList<>();
+        if (items != null) for (org.bukkit.inventory.ItemStack i : items) if (i != null && !i.isEmpty()) copies.add(i.clone());
+        items = List.copyOf(copies);
+    }
+
+    /** A reward of commands only, in a universe. */
+    public Reward(String source, String key, String label, String icon, int amount, int slots, List<String> commands,
+                  String universe) {
+        this(source, key, label, icon, amount, slots, commands, universe, List.of(), false);
     }
 
     /** A vanilla reward (the form used before universes). */
@@ -51,7 +63,18 @@ public record Reward(String source, String key, String label, String icon, int a
 
     /** Claimed only in this universe. */
     public Reward universe(String universe) {
-        return new Reward(source, key, label, icon, amount, slots, commands, universe);
+        return new Reward(source, key, label, icon, amount, slots, commands, universe, items, permanent);
+    }
+
+    /** The items themselves (copied): one free slot needed per stack. */
+    public Reward items(java.util.Collection<org.bukkit.inventory.ItemStack> items) {
+        List<org.bukkit.inventory.ItemStack> list = items == null ? List.of() : new ArrayList<>(items);
+        return new Reward(source, key, label, icon, amount, (commands.isEmpty() ? 0 : slots) + list.size(), commands, universe, list, permanent);
+    }
+
+    /** Never expires (items that belong to the player). */
+    public Reward keep() {
+        return new Reward(source, key, label, icon, amount, slots, commands, universe, items, true);
     }
 
     /**
@@ -73,27 +96,27 @@ public record Reward(String source, String key, String label, String icon, int a
     }
 
     public Reward key(String key) {
-        return new Reward(source, key, label, icon, amount, slots, commands, universe);
+        return new Reward(source, key, label, icon, amount, slots, commands, universe, items, permanent);
     }
 
     public Reward label(String label) {
-        return new Reward(source, key, label, icon, amount, slots, commands, universe);
+        return new Reward(source, key, label, icon, amount, slots, commands, universe, items, permanent);
     }
 
     public Reward icon(String icon) {
-        return new Reward(source, key, label, icon, amount, slots, commands, universe);
+        return new Reward(source, key, label, icon, amount, slots, commands, universe, items, permanent);
     }
 
     public Reward amount(int amount) {
-        return new Reward(source, key, label, icon, amount, slots, commands, universe);
+        return new Reward(source, key, label, icon, amount, slots, commands, universe, items, permanent);
     }
 
     public Reward slots(int slots) {
-        return new Reward(source, key, label, icon, amount, slots, commands, universe);
+        return new Reward(source, key, label, icon, amount, slots, commands, universe, items, permanent);
     }
 
     public Reward commands(List<String> commands) {
-        return new Reward(source, key, label, icon, amount, slots, commands, universe);
+        return new Reward(source, key, label, icon, amount, slots, commands, universe, items, permanent);
     }
 
     public Reward commands(String... commands) {

@@ -66,14 +66,13 @@ final class Keys {
         return left - used;
     }
 
-    /** Gives keys (stacks as big as the item allows); what does not fit falls at the player's feet. */
+    /** Gives keys (stacks as big as the item allows); what does not fit is kept in /recompenses by Flux. */
     static void give(Player p, Crate crate, int amount) {
         int left = amount;
         while (left > 0) {
             ItemStack stack = create(crate, left);
             left -= stack.getAmount();
-            Map<Integer, ItemStack> rest = p.getInventory().addItem(stack);
-            for (ItemStack r : rest.values()) p.getWorld().dropItemNaturally(p.getLocation(), r);
+            fr.influencraft.flux.api.inventory.Inventories.giveOrDrop(p, java.util.List.of(stack));
         }
     }
 }

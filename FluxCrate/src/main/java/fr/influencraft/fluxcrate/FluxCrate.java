@@ -185,9 +185,7 @@ public final class FluxCrate extends FluxPlugin implements Listener {
             ItemStack item = Items.of(material, player);
             if (item == null) continue;
             item.setAmount(Math.max(1, amount));
-            for (ItemStack rest : player.getInventory().addItem(item).values()) {
-                player.getWorld().dropItemNaturally(player.getLocation(), rest);
-            }
+            fr.influencraft.flux.api.inventory.Inventories.giveOrDrop(player, java.util.List.of(item));
         }
         for (String cmd : reward.commands()) {
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("%player%", player.getName()));

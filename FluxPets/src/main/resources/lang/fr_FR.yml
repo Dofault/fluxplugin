@@ -12,7 +12,7 @@ messages:
   finished: "&#EADBC8Booster terminé : &#FFF4E0%count% &#EADBC8cartes obtenues."
   opened-all: "&#FFF4E0%boosters% &#EADBC8boosters ouverts : &#FFF4E0%count% &#EADBC8cartes obtenues."
   skipped: "&#6B7A8FRévélation passée, cartes ajoutées à ton inventaire."
-  inventory-full: "&#D9534FInventaire plein : des cartes sont tombées à tes pieds."
+  inventory-full: "&#FF5C5CInventaire plein : le reste t'attend dans &f/recompenses&#FF5C5C."
   inventory-needed: "&#D9534FPas assez de place : libère &#FFF4E0%slots% &#D9534Femplacement(s) pour ouvrir ce booster."
   empty-booster: "&#D9534FCe booster ne contient aucune carte (configuration à vérifier)."
   unknown-booster: "&#D9534FBooster inconnu : &#FFF4E0%id%"

@@ -124,7 +124,7 @@ public final class FluxArmor extends FluxPlugin implements Listener {
         for (String id : ids) {
             ItemStack item = CustomItems.item(id);
             if (item == null) continue;
-            to.getInventory().addItem(item).values().forEach(left -> to.getWorld().dropItem(to.getLocation(), left));
+            fr.influencraft.flux.api.inventory.Inventories.giveOrDrop(to, java.util.List.of(item));
             given++;
         }
         messages().send(sender, "set.given", "%set%", set.id, "%count%", String.valueOf(given), "%player%", to.getName());

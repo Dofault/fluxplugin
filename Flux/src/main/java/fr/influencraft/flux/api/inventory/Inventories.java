@@ -66,11 +66,12 @@ public final class Inventories {
         return left;
     }
 
-    /** Gives and drops at the player's feet what does not fit (instant pick-up): last resort only. */
+    /**
+     * Gives the items; what cannot go in the inventory now (full, another universe, swapping profiles) is kept in the
+     * player's rewards without expiry ({@link fr.influencraft.flux.api.reward.Rewards#deliver}), never on the ground.
+     */
     public static void giveOrDrop(Player player, Collection<ItemStack> items) {
-        for (ItemStack left : give(player, items)) {
-            player.getWorld().dropItemNaturally(player.getLocation(), left, drop -> drop.setPickupDelay(0));
-        }
+        fr.influencraft.flux.api.reward.Rewards.deliver(player, "items", "", items);
     }
 
     /** Number of items matching in the storage slots. */

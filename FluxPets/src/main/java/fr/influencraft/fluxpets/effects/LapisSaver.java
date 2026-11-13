@@ -43,8 +43,7 @@ final class LapisSaver extends PetEffect {
                 ItemStack stack = new ItemStack(Material.LAPIS_LAZULI, Math.min(64, after + consumed));
                 inv.setSecondary(stack);
             } else {
-                player.getInventory().addItem(new ItemStack(Material.LAPIS_LAZULI, consumed)).values()
-                        .forEach(rest -> player.getWorld().dropItemNaturally(player.getLocation(), rest));
+                fr.influencraft.flux.api.inventory.Inventories.giveOrDrop(player, java.util.List.of(new ItemStack(Material.LAPIS_LAZULI, consumed)));
             }
         });
     }
