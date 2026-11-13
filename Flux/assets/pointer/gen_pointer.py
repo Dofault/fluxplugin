@@ -1,6 +1,6 @@
 """Texture of Flux's head pointer (api.client.Camera#pointerItem): a mouse arrow whose tip is the top left corner of
 the face the model shows (texels 1 to 15). The item shader (pack/assets/minecraft/shaders/core/item.vsh) finds the
-item by its tint, not by this picture. No dependency: python3 gen_pointer.py writes the png in the jar's pack
+item and each vertex's corner by the 2x2 marks in the corners (254, 1, 200 + corner, alpha 5). No dependency: python3 gen_pointer.py writes the png in the jar's pack
 resources."""
 import os
 import struct
@@ -39,13 +39,18 @@ def png(path, pixels, w, h):
 def main():
     w = h = 16
     px = [(0, 0, 0, 0)] * (w * h)
-    # the arrow from texel (1, 1): the model's face shows texels 1 to 14, its top left corner is the tip
+    # the arrow from texel (2, 2): the model's face shows texels 1 to 14, its top left corner is the tip
     for y, row in enumerate(ARROW):
         for x, c in enumerate(row):
             if c == "X":
-                px[(y + 1) * w + x + 1] = OUTLINE
+                px[(y + 2) * w + x + 2] = OUTLINE
             elif c == "o":
-                px[(y + 1) * w + x + 1] = FILL
+                px[(y + 2) * w + x + 2] = FILL
+    # corner marks read by the shader: 2x2 texels, almost transparent (never drawn), 254, 1, 200 + corner
+    for corner, (cx, cy) in enumerate([(0, 0), (14, 0), (0, 14), (14, 14)]):
+        for dy in range(2):
+            for dx in range(2):
+                px[(cy + dy) * w + cx + dx] = (254, 1, 200 + corner, 5)
     here = os.path.dirname(os.path.abspath(__file__))
     out = os.path.join(here, "..", "..", "src", "main", "resources", "pack", "assets", "flux", "textures", "item", "pointer.png")
     png(os.path.normpath(out), px, w, h)
