@@ -328,7 +328,8 @@ final class Frost {
                 for (int sub = 0; sub < 3; sub++) {
                     at.add(dir.clone().multiply(speed / 3));
                     gone += speed / 3;
-                    for (LivingEntity e : skills.enemies(at, 0.9)) {
+                    LivingEntity e = skills.struck(at, 0.3);
+                    if (e != null) {
                         impact(e);
                         return;
                     }
@@ -467,7 +468,7 @@ final class Frost {
                 last = l;
                 double k = d / range;
                 // the spine: one big spike leaning forward, taller as the rift goes
-                float h = (float) (0.9 + 1.9 * k);
+                float h = (float) ((0.9 + 1.9 * k) * 0.7);
                 crystal(l, ICE[1 + ThreadLocalRandom.current().nextInt(2)].createBlockData(), 0.45f + (float) (0.4 * k), h,
                         yaw + rnd(0.5f) - 0.25f, 0.18f + rnd(0.2f), 30);
                 // flanks: smaller spikes leaning out
@@ -630,7 +631,7 @@ final class Frost {
                     double a = off + Math.PI * 2 * k / n;
                     Location l = Frost.ground(at.clone().add(Math.cos(a) * rr, 0, Math.sin(a) * rr));
                     if (l == null) continue;
-                    float h = rim ? 2.2f + rnd(1.2f) : 0.8f + rnd(0.6f);
+                    float h = rim ? 1.1f + rnd(0.6f) : 0.4f + rnd(0.3f);
                     crystal(l, ICE[ThreadLocalRandom.current().nextInt(3)].createBlockData(), rim ? 0.55f + rnd(0.2f) : 0.35f + rnd(0.15f), h,
                             lean(Math.cos(a), Math.sin(a)), rim ? 0.35f + rnd(0.2f) : 0.7f + rnd(0.2f), rim ? 70 : 30);
                 }

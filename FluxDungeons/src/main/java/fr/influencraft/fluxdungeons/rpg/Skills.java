@@ -88,6 +88,23 @@ public final class Skills implements Listener {
         return out;
     }
 
+    /**
+     * The enemy a flying projectile at {@code at} is inside of: its hit box (a model's hit box counts for its creature)
+     * grown by {@code margin}, null when none. Never by the distance to the feet: a bolt at chest height would fly
+     * through every creature it was aimed at.
+     */
+    LivingEntity struck(Location at, double margin) {
+        List<LivingEntity> near = enemies(at, 4);
+        if (near.isEmpty()) return null;
+        org.bukkit.util.Vector point = at.toVector();
+        for (Entity e : at.getWorld().getNearbyEntities(at, 4, 4, 4)) {
+            if (e instanceof Player) continue;
+            LivingEntity body = combat.body(e);
+            if (body != null && near.contains(body) && e.getBoundingBox().clone().expand(margin).contains(point)) return body;
+        }
+        return null;
+    }
+
     /** Players of the rpg around a point (the caster included): allies, as everyone fights monsters there. */
     List<Player> allies(Location at, double radius) {
         List<Player> out = new ArrayList<>();
@@ -375,7 +392,8 @@ public final class Skills implements Listener {
                     at.add(step.clone().multiply(0.5));
                     gone += speed * 0.5;
                     at.getWorld().spawnParticle(trail, at, 2, 0.05, 0.05, 0.05, 0);
-                    for (LivingEntity e : enemies(at, 0.9)) {
+                    LivingEntity e = struck(at, 0.3);
+                    if (e != null) {
                         impact.accept(at.clone(), e);
                         cancel();
                         return;
