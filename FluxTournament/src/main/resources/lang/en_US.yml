@@ -49,8 +49,8 @@ variety-new: "&#2BC4E8New resource: &f{resource} &7({count}/{amount})"
 variety-complete: "&#2BC4E8{player} &7gathered every resource: &f{name} &7ends now, ranking frozen!"
 your-result: "&7You finish &#FFD94D#{place} &7with &f{score}&7. Tournament points: &#FFD94D{points}"
 
-bossbar: "{kind} &#2BC4E8&l{name}   <sprite:block/fluxtournament_time> &f{time}   &#A6E4F5Place &f#{place}   &#A6E4F5Score &f{score}   <sprite:block/fluxtournament_players> &f{players}"
-bossbar-none: "{kind} &#2BC4E8&l{name}   <sprite:block/fluxtournament_time> &f{time}   <sprite:block/fluxtournament_players> &f{players}"
+bossbar: "{kind} &#2BC4E8&l{name}   <sprite:items:item/clock_00> &f{time}   &#A6E4F5Place &f#{place}   &#A6E4F5Score &f{score}   <head:entity/player/wide/steve> &f{players}"
+bossbar-none: "{kind} &#2BC4E8&l{name}   <sprite:items:item/clock_00> &f{time}   <head:entity/player/wide/steve> &f{players}"
 ranking:
   - "!&#2BC4E8{name} &7- ranking, &f{time} &7left"
   - "!  &#F0A8001. &f{1_player} &7- &#A6E4F5{1_score}"

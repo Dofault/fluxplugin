@@ -2,7 +2,7 @@
 """Pixel-art icons of the tournament kinds (16 x 16), one picture each in the blocks atlas: a text shows them with
 <sprite:block/fluxtournament_<kind>> (no font glyph). Written into an ItemsAdder contents folder:
 
-  fluxtournament_icons/resourcepack/assets/minecraft/textures/block/fluxtournament_{job,resource,race,variety,time,players}.png
+  fluxtournament_icons/resourcepack/assets/minecraft/textures/block/fluxtournament_{job,resource,race,variety}.png
   ... and fluxtournament_fish_<rarity>.png: the custom fish of the fishing job have no vanilla item, so a resource
   "poisson commun" shows a fish in the colour of its rarity (tiers of Flux's config) instead of the job's rod.
 
@@ -133,43 +133,6 @@ def variety():
     return ic
 
 
-def hourglass():
-    # an hourglass (boss bar: time left): gold frame, light-blue sand falling to the bottom
-    ic = Icon()
-    ic.rect(3, 1, 12, 2, "O")
-    ic.rect(3, 13, 12, 14, "O")
-    for y in range(3, 13):
-        half = abs(y - 7.5)
-        w = max(1, round(half * 0.85))
-        for x in range(8 - w, 8 + w):
-            ic.put(x, y, "W")
-        ic.put(8 - w - 1, y, "L")
-        ic.put(8 + w, y, "L")
-    # sand: a little left on top, a heap at the bottom, a thread between
-    for y in (5, 6):
-        for x in range(6, 10):
-            ic.put(x, y, "Y")
-    ic.put(7, 8, "Y"); ic.put(8, 9, "Y")
-    for y in range(10, 13):
-        for x in range(8 - (y - 9), 8 + (y - 9)):
-            ic.put(x, y, "Y")
-    ic.outline()
-    return ic
-
-
-def players():
-    # a person (boss bar: number of players): round head, shoulders
-    ic = Icon()
-    for y in range(N):
-        for x in range(N):
-            if ((x - 7.5) ** 2 + (y - 4.5) ** 2) ** 0.5 <= 3.2:
-                ic.put(x, y, "W")
-            elif y >= 9 and ((x - 7.5) / 6) ** 2 + ((y - 15) / 6) ** 2 <= 1:
-                ic.put(x, y, "L" if y < 12 else "B")
-    ic.outline()
-    return ic
-
-
 FISH = {
     # rarity: body, belly (lighter), fin (darker)
     "common": ((170, 170, 170), (215, 215, 215), (120, 120, 120)),
@@ -225,8 +188,7 @@ def main():
     contents = sys.argv[1] if len(sys.argv) > 1 else "/home/influencraft/serveurs/04_labs/plugins/ItemsAdder/contents"
     preview = sys.argv[2] if len(sys.argv) > 2 else None
     out = os.path.join(contents, "fluxtournament_icons/resourcepack/assets/minecraft/textures/block")
-    icons = {"job": job(), "resource": resource(), "race": race(), "variety": variety(),
-             "time": hourglass(), "players": players()}
+    icons = {"job": job(), "resource": resource(), "race": race(), "variety": variety()}
     for rarity in list(FISH) + ["fabled"]:
         icons["fish_" + rarity] = fish(rarity)
     for kind, ic in icons.items():

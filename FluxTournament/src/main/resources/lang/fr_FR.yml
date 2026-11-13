@@ -77,8 +77,8 @@ variety-new: "&#2BC4E8Nouvelle ressource : &f{resource} &7({count}/{amount})"
 variety-complete: "&#2BC4E8{player} &7a récolté toutes les ressources : &f{name} &7s'arrête, classement figé !"
 your-result: "&7Tu termines &#FFD94D{place}e &7avec &f{score}&7. Points de tournoi gagnés : &#FFD94D{points}"
 
-bossbar: "{kind} &#2BC4E8&l{name}   <sprite:block/fluxtournament_time> &f{time}   &#A6E4F5Place &f{place}e   &#A6E4F5Score &f{score}   <sprite:block/fluxtournament_players> &f{players}"
-bossbar-none: "{kind} &#2BC4E8&l{name}   <sprite:block/fluxtournament_time> &f{time}   <sprite:block/fluxtournament_players> &f{players}"
+bossbar: "{kind} &#2BC4E8&l{name}   <sprite:items:item/clock_00> &f{time}   &#A6E4F5Place &f{place}e   &#A6E4F5Score &f{score}   <head:entity/player/wide/steve> &f{players}"
+bossbar-none: "{kind} &#2BC4E8&l{name}   <sprite:items:item/clock_00> &f{time}   <head:entity/player/wide/steve> &f{players}"
 # Classement envoyé dans le tchat aux participants (ranking-every-minutes)
 ranking:
   - "!&r"
