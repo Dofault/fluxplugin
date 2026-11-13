@@ -1251,8 +1251,20 @@ m.textures = "rpg"
 m.biome = "forest"           # RPG grass and leaves painted in that colour, biome set on the map
 m.ybox = (Y0, Y1)
 
+
+# Troop roles (2026-11-13): about twice the monsters of the first version, half of them with a role (gelées that
+# leap and split, fast pests, brutes, spitters, snipers, kamikazes, supports), placed next to those above.
+REINFORCE = {
+    "1": ['def_louveteau', 'def_louveteau', 'def_braconnier'],
+    "2": ['def_gelee', 'def_gelee', 'def_louveteau', 'def_louveteau', 'def_louveteau', 'def_braconnier', 'def_braconnier', 'def_chamane'],
+    "3": ['def_braconnier', 'def_braconnier', 'def_gelee', 'def_gelee', 'def_gelee', 'def_louveteau', 'def_louveteau', 'def_louveteau', 'def_chamane'],
+    "4": ['def_louveteau', 'def_louveteau', 'def_braconnier', 'def_chamane'],
+}
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
+    maplib.reinforce(m, g, REINFORCE, seed=105)
     errs = check()
     for e in errs[:50]:
         print("CHECK:", e)
@@ -1266,6 +1278,9 @@ if __name__ == "__main__":
         sys.exit(1 if errs else 0)
     if errs:
         sys.exit("checks failed: nothing sent")
+    if "--edits" in args:
+        maplib.write_edits(m, args[0] if args and not args[0].startswith("--") else "labs", "defenseur")
+        sys.exit(0)
     g.commands(m)
     print(f"{len(m.cmds)} commands")
     maplib.run(m, args[0] if args and not args[0].startswith("--") else "labs", "defenseur")

@@ -252,6 +252,12 @@ final class DungeonListener implements Listener {
         if (runs.isDungeonWorld(e.getEntity().getWorld())) e.setCancelled(true);
     }
 
+    /** Dungeon slimes never split the vanilla way: those meant to split say so in their file ({@code split}). */
+    @EventHandler(ignoreCancelled = true)
+    public void onSlimeSplit(org.bukkit.event.entity.SlimeSplitEvent e) {
+        if (mobs.templateOf(e.getEntity()) != null) e.setCancelled(true);
+    }
+
     @EventHandler
     public void onMobDeath(EntityDeathEvent e) {
         if (e instanceof PlayerDeathEvent) return;

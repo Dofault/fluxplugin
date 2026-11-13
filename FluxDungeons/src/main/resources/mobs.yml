@@ -32,6 +32,19 @@
 # pitch, particle, count, height, spread}; cues.steps: {sound, stride, volume, pitch} (a step every stride blocks);
 # cues.ambient: {every (ticks), chance, animations, sounds} (standing still, nobody within 8 blocks).
 # Bones of a model whose name ends with _empty: a second look of a part, hidden when the model is put on (empty cheeks).
+# Troop roles (TroopPowers), shared spells in spells/troupes/: pounce (squashes down, a ring follows the player, leaps
+# onto him or behind his back; behind, bounces, rebound, radius, knock, burn: {radius, duration, tick, share} for a
+# burning patch), bolt (visible projectile: count, spread, volleys, gap, speed, homing, predict, lob: true + pool:
+# {radius, duration, tick, share} for a pool, item, trail, sound), windup (slow blow announced by a zone filling up on
+# the ground: shape circle|cone, radius, angle, impact, knock, launch, daze), aimed_shot (sniper: a line follows then
+# locks, aim, lock, width; goes through everybody), blink (smoke, comes out behind a player, strike), fuse (swells,
+# flashes, blows up and dies: trigger, fuse, radius), rally (support: heals heal % and hardens shield / haste the hurt
+# monsters around it, below). On any ability: effect (potion effect id: poison, slowness...), effect-ticks,
+# effect-level. power: in units of the monster's "damage".
+# stats: {health, damage}: life and attack of its rank (rpg engine) multiplied (0.3 = fragile, 2.2 = brute).
+# keep-distance: [min, max] (controlled monster): backs off under min blocks, comes closer beyond max, side-steps between.
+# split: {mob, count}: when it dies these appear in its place (summoned: never counted by a door).
+# attack-speed up to 10 hits a second (a pest). summon: max = never more than N of its summons alive at once.
 
 # ─── Stonecutter dungeon ─────────────────────────────────────────────────────
 

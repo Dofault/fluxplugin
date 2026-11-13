@@ -104,6 +104,10 @@ public final class Mobs {
          * every decision of the monster, abilities and melee, reads this one).
          */
         UUID target;
+        /** The monster that summoned it ({@code summon} ability), null for one placed in the map. */
+        UUID summoner;
+        /** Next tick a kiting monster ({@code keep-distance}) may pick a new place to stand. */
+        int nextKiteMove;
 
         Alive(LivingEntity entity, MobTemplate template, String run, Location spawn, ModelBridge.Handle model) {
             this.entity = entity;
@@ -331,6 +335,7 @@ public final class Mobs {
         this.fox = new FoxPowers(plugin, fx, this);
         this.tide = new TidePowers(plugin);
         this.theme = new ThemePowers(plugin, fx);
+        this.troop = new TroopPowers(plugin, fx);
     }
 
     /** Loads every monster file (mobs.yml first, then each file of mobs/). */
@@ -443,6 +448,11 @@ public final class Mobs {
         boolean imported = x.level() > 0;
         Entity spawned = at.getWorld().spawn(at, type, CreatureSpawnEvent.SpawnReason.CUSTOM, e -> {
             LivingEntity le = (LivingEntity) e;
+            // first: a slime's size rewrites its life, speed and attack. Size 2, the smallest that hurts on contact;
+            // its look comes from scale
+            if (le instanceof org.bukkit.entity.Slime slime) slime.setSize(2);
+            // a creature without an attack of its own (cow, chicken, fox...) gets one: its melee hits never landed
+            if (le.getAttribute(Attribute.ATTACK_DAMAGE) == null) le.registerAttribute(Attribute.ATTACK_DAMAGE);
             le.getPersistentDataContainer().set(mobKey, PersistentDataType.STRING, t.id());
             le.getPersistentDataContainer().set(runKey, PersistentDataType.STRING, run);
             le.getPersistentDataContainer().set(spawnKey, PersistentDataType.STRING, at.getX() + "," + at.getY() + "," + at.getZ());
@@ -769,12 +779,54 @@ public final class Mobs {
                 m.getPathfinder().stopPathfinding();
                 return;
             }
+            if (a.template.extra().troop().kites()) {
+                kite(m, target);
+                return;
+            }
             org.bukkit.util.BoundingBox reach = m.getBoundingBox().expand(VANILLA_REACH + reachBonus - 0.4, 0, VANILLA_REACH + reachBonus - 0.4);
             if (reach.overlaps(target.getBoundingBox())) {
                 m.getPathfinder().stopPathfinding();
             } else if (ticks % 10 == 0 || !m.getPathfinder().hasPath()) {
                 m.getPathfinder().moveTo(target, 1.0);
             }
+        }
+
+        /**
+         * A monster that fights from afar ({@code keep-distance: [min, max]}): backs off when its target comes under
+         * {@code min} blocks, comes closer beyond {@code max} or without a line of sight, and in between side-steps now
+         * and then, so that it is never a still target.
+         */
+        private void kite(Mob m, Player target) {
+            MobTemplate.Troop troop = a.template.extra().troop();
+            Location at = m.getLocation();
+            Vector away = at.toVector().subtract(target.getLocation().toVector()).setY(0);
+            double d = away.length();
+            if (d > troop.keepMax() || !m.hasLineOfSight(target)) {
+                if (ticks % 10 == 0 || !m.getPathfinder().hasPath()) m.getPathfinder().moveTo(target, 1.0);
+                return;
+            }
+            int now = Bukkit.getCurrentTick();
+            if (now < a.nextKiteMove && m.getPathfinder().hasPath()) return;
+            if (away.lengthSquared() < 1e-4) away = new Vector(1, 0, 0);
+            away.normalize();
+            Vector step;
+            if (d < troop.keepMin()) {
+                // backs off, a little to one side so that it does not run into the wall behind it
+                step = away.clone().multiply(troop.keepMin() - d + 3).add(away.clone().rotateAroundY(Math.PI / 2)
+                        .multiply(ThreadLocalRandom.current().nextDouble(-2, 2)));
+            } else if (ThreadLocalRandom.current().nextFloat() < 0.5f) {
+                step = away.clone().rotateAroundY(ThreadLocalRandom.current().nextBoolean() ? Math.PI / 2 : -Math.PI / 2).multiply(3);
+            } else {
+                m.getPathfinder().stopPathfinding();
+                a.nextKiteMove = now + 20;
+                return;
+            }
+            Location spot = at.clone().add(step);
+            if (!m.getPathfinder().moveTo(spot, 1.0)) {
+                // nowhere to go that way: the other side
+                m.getPathfinder().moveTo(at.clone().add(step.multiply(-1).setY(0)), 1.0);
+            }
+            a.nextKiteMove = now + 25 + ThreadLocalRandom.current().nextInt(20);
         }
 
         @Override
@@ -1035,6 +1087,8 @@ public final class Mobs {
     /** Abilities of the water (geysers, whirlpool, bubbles, tidal breach). */
     private TidePowers tide;
     private ThemePowers theme;
+    /** Abilities that give a troop its role: pounce, bolt, windup, aimed shot, blink, fuse, rally. */
+    private TroopPowers troop;
     private HarvestPowers harvest;
     /** Abilities of the Copper T-Rex (Overcharge, bite, tail sweep, drill charge, resonance, veins). */
     private CopperPowers copper;
@@ -1051,6 +1105,7 @@ public final class Mobs {
         if (rock != null) rock.clear();
         if (tide != null) tide.clear();
         if (theme != null) theme.clear();
+        if (troop != null) troop.clear();
         if (harvest != null) harvest.clear();
         if (copper != null) copper.clear();
         if (mole != null) mole.clear();
@@ -1280,6 +1335,34 @@ public final class Mobs {
         alive.remove(a.entity.getUniqueId());
         close(a);
         onDeath.dead(a.entity, killer, a.template, a.objective, contributors);
+        split(a);
+    }
+
+    /**
+     * A monster that splits ({@code split: {mob, count}}) leaves smaller ones where it died, thrown a little apart.
+     * They are summoned: a door never waits for them.
+     */
+    private void split(Alive a) {
+        MobTemplate.Troop troop = a.template.extra().troop();
+        MobTemplate child = troop.splitMob() == null ? null : templates.get(troop.splitMob());
+        if (child == null) return;
+        Location at = a.entity.getLocation();
+        World w = at.getWorld();
+        w.playSound(at, Sound.ENTITY_SLIME_SQUISH, 1.4f, 0.6f);
+        w.spawnParticle(Particle.ITEM_SLIME, at.clone().add(0, 0.5, 0), 30, 0.5, 0.4, 0.5, 0.1);
+        for (int i = 0; i < troop.splitCount(); i++) {
+            double angle = 2 * Math.PI * i / troop.splitCount() + ThreadLocalRandom.current().nextDouble(0.6);
+            LivingEntity c = spawn(child, at.clone().add(0, 0.2, 0), a.run);
+            if (c == null) continue;
+            c.setVelocity(new Vector(Math.cos(angle) * 0.35, 0.45, Math.sin(angle) * 0.35));
+            Alive ca = alive.get(c.getUniqueId());
+            if (ca != null) {
+                ca.summoner = a.entity.getUniqueId();
+                Player target = fightingTarget(a);
+                if (target != null) engage(ca, target);
+            }
+            onSummon.accept(a.entity, c);
+        }
     }
 
     private void say(Alive a, List<String> lines) {
@@ -1343,7 +1426,7 @@ public final class Mobs {
                 if (now - last >= ab.every() * 1000 && RockPowers.worthCasting(ab, a.entity)
                         && harvest.worth(ab, a.entity, a.spawn) && copper.worth(ab, a.entity, a.spawn)
                         && mole.worth(ab, a.entity) && bone.worth(ab, a.entity) && forge.worth(ab, a.entity) && salamander.worth(ab, a.entity) && fox.worth(ab, a.entity)
-                        && theme.worth(ab, a.entity)) ready.add(i);
+                        && theme.worth(ab, a.entity) && troop.worth(ab, a.entity)) ready.add(i);
             }
             if (ready.isEmpty()) continue;
             // drawn by weight (1 by default); an opening move goes first
@@ -1892,7 +1975,7 @@ public final class Mobs {
         };
         if (copper.cast(ab, caster, target) || mole.cast(ab, caster, target) || bone.cast(ab, caster, target) || forge.cast(ab, caster, target)
                 || salamander.cast(ab, caster, target) || fox.cast(ab, caster, target) || tide.cast(ab, caster, target) || harvest.cast(ab, caster, target)
-                || rock.cast(ab, caster, target) || theme.cast(ab, caster, target)) return;
+                || rock.cast(ab, caster, target) || theme.cast(ab, caster, target) || troop.cast(ab, caster, target)) return;
         World w = e.getWorld();
         Location at = e.getLocation();
         switch (ab.type()) {
@@ -1981,6 +2064,13 @@ public final class Mobs {
                 MobTemplate child = templates.get(ab.text("mob", ""));
                 if (child == null) return;
                 int count = (int) ab.number("count", 2);
+                // max: never more than this many of its summons alive at once (a nest does not flood the room)
+                int max = (int) ab.number("max", 0);
+                if (max > 0) {
+                    long out = alive.values().stream().filter(x -> e.getUniqueId().equals(x.summoner) && x.entity.isValid()).count();
+                    count = (int) Math.min(count, max - out);
+                    if (count <= 0) return;
+                }
                 w.playSound(at, Sound.ENTITY_EVOKER_PREPARE_SUMMON, 1f, 0.9f);
                 for (int i = 0; i < count; i++) {
                     double angle = 2 * Math.PI * i / count;
@@ -1988,7 +2078,13 @@ public final class Mobs {
                     if (!l.getBlock().isPassable()) l = at.clone();
                     w.spawnParticle(Particle.LARGE_SMOKE, l, 10, 0.3, 0.5, 0.3, 0.02);
                     LivingEntity spawned = spawn(child, l, a.run);
-                    if (spawned != null) onSummon.accept(e, spawned);
+                    if (spawned == null) continue;
+                    Alive sa = alive.get(spawned.getUniqueId());
+                    if (sa != null) {
+                        sa.summoner = e.getUniqueId();
+                        engage(sa, target);
+                    }
+                    onSummon.accept(e, spawned);
                 }
             }
             case "summon_vanilla" -> {
@@ -1997,7 +2093,8 @@ public final class Mobs {
                     MobTemplate copy = new MobTemplate(a.template.id() + "_summon", type, "&7" + type.name().toLowerCase(), false, null,
                             maxHealth(e) * 0.15, a.baseDamage() * 0.6, 0.25, 0, 1, 0, Map.of(), List.of(),
                             new MobTemplate.Extra(1, 0.15, 0.6, false, false, 32, 0, List.of(), List.of(), null, List.of(), List.of(), List.of(),
-                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of(), 0, 1, false, false, false, 0, 0, 0, false, Map.of(), Map.of()));
+                                    List.of(), List.of(), List.of(), Map.of(), "TRASH", 1, java.util.Map.of(), 0, 1, false, false, false, 0, 0, 0, false, Map.of(), Map.of(),
+                                    MobTemplate.Troop.PLAIN));
                     for (int i = 0; i < (int) ab.number("count", 2); i++) {
                         LivingEntity s = spawn(copy, at.clone().add(ThreadLocalRandom.current().nextDouble(-2, 2), 0, ThreadLocalRandom.current().nextDouble(-2, 2)), a.run);
                         if (s != null) onSummon.accept(e, s);

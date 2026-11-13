@@ -11,7 +11,7 @@ import sys
 import yaml
 
 NOT_ATTACKS = {"stone_skin", "shield", "heal", "enrage", "leap", "forge_overheat", "phase_shift", "entrance", "mole_phase", "copper_phase",
-               "copper_roar", "sala_frenzy", "sala_awaken"}
+               "copper_roar", "sala_frenzy", "sala_awaken", "rally"}
 WANTED = {1: 2, 2: 3, 3: 4}
 
 

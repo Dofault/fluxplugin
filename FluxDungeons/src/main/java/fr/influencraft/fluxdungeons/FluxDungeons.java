@@ -133,6 +133,13 @@ public final class FluxDungeons extends FluxPlugin {
                 extra.add(fr.influencraft.fluxdungeons.rpg.core.Modifier.multiply("max_health", level.health() - 1, "difficulty"));
                 extra.add(fr.influencraft.fluxdungeons.rpg.core.Modifier.multiply("physical_attack", level.damage() - 1, "difficulty"));
             }
+            // a troop's own shape (stats: of its file): a fragile pest, a slow brute that hits hard
+            var troop = t.extra().troop();
+            if (troop.health() != 1) extra.add(fr.influencraft.fluxdungeons.rpg.core.Modifier.multiply("max_health", troop.health() - 1, "troop"));
+            if (troop.damage() != 1) {
+                extra.add(fr.influencraft.fluxdungeons.rpg.core.Modifier.multiply("physical_attack", troop.damage() - 1, "troop"));
+                extra.add(fr.influencraft.fluxdungeons.rpg.core.Modifier.multiply("magic_power", troop.damage() - 1, "troop"));
+            }
             String rank = rpgRank(t);
             if (rank.equals("boss")) {
                 // a boss's life in balance.yml is for a party of four: each player present brings a quarter of it

@@ -127,6 +127,83 @@ class Map:
         return "\n".join(out) + "\n"
 
 
+def reinforce(m, g, rooms, seed=0, near=(2, 5), water=(), through_water=False):
+    """Adds monsters to rooms next to those already placed there. rooms = {room: [mob ids]}: each new one stands 2 to
+    5 blocks from a monster of its room (taken in turn, bosses aside), on dry solid ground with room for its head,
+    with nothing solid in between (same open area: never behind a wall, a door or a barrier), never on a spot already
+    taken or right next to one. Mobs listed in `water` stand in water instead; through_water: the way from the
+    monster it stands next to may cross water (a pool and its walkway). Exits when a room has no free spot."""
+    import math
+    import random
+    from gridlib import passable
+    rnd = random.Random(seed)
+    taken = {(math.floor(s["at"][0]), int(s["at"][1]), math.floor(s["at"][2])) for s in m.spawns}
+    bad_floor = ("lava", "magma_block", "water", "fire", "campfire", "cactus", "sweet_berry", "powder_snow")
+
+    def free(b, wet_ok):
+        return (b == "air" or (passable(b) and "water" not in b and "cobweb" not in b)) or (wet_ok and b == "water")
+
+    def stand(x, y, z, wet_ok):
+        feet, head, below = g.get(x, y, z), g.get(x, y + 1, z), g.get(x, y - 1, z)
+        if wet_ok:
+            return feet == "water" and free(head, True)
+        # three blocks of room: brutes are tall
+        return (free(feet, False) and free(head, False) and free(g.get(x, y + 2, z), False) and not passable(below)
+                and not any(w in below for w in bad_floor))
+
+    def clear(a, b, wet_ok):
+        (ax, ay, az), (bx, by, bz) = a, b
+        # across a pool: only the height of the walkway counts (the anchor swims below the rim)
+        heights = {by} if through_water else {ay, by}
+        n = max(abs(bx - ax), abs(bz - az)) * 3 + 1
+        for i in range(n + 1):
+            k = i / n
+            x, z = math.floor(ax + 0.5 + (bx - ax) * k), math.floor(az + 0.5 + (bz - az) * k)
+            for y in heights:
+                if not (free(g.get(x, y, z), wet_ok) and free(g.get(x, y + 1, z), wet_ok)):
+                    return False
+        return True
+
+    for room, mobs in rooms.items():
+        anchors = [s for s in m.spawns if s["room"] == str(room) and s["mob"] not in m.objectives]
+        if not anchors:
+            sys.exit(f"reinforce: room {room} has no monster to stand next to")
+        placed = 0
+        for i, mob in enumerate(mobs):
+            wet_ok = mob in water
+            done = False
+            for attempt in range(400):
+                a = anchors[(i + attempt) % len(anchors)]
+                ax, ay, az = math.floor(a["at"][0]), int(a["at"][1]), math.floor(a["at"][2])
+                ang, r = rnd.uniform(0, 2 * math.pi), rnd.uniform(*near)
+                x, z = ax + round(math.cos(ang) * r), az + round(math.sin(ang) * r)
+                # out of a pool, the walkway stands a few blocks higher than the swimmers
+                for y in ((ay, ay + 1, ay - 1) if not through_water else range(ay - 1, ay + 6)):
+                    if any((x + dx, y, z + dz) in taken for dx in (-1, 0, 1) for dz in (-1, 0, 1)):
+                        continue
+                    if stand(x, y, z, wet_ok) and clear((ax, ay, az), (x, y, z), wet_ok or through_water):
+                        taken.add((x, y, z))
+                        m.spawns.append({"mob": mob, "at": [x + 0.5, float(y), z + 0.5, float(a["at"][3])], "room": str(room)})
+                        done = True
+                        break
+                if done:
+                    break
+            if not done:
+                sys.exit(f"reinforce: no free spot for {mob} in room {room}")
+            placed += 1
+        print(f"room {room}: +{placed} monsters ({len(anchors) + placed} in all)")
+
+
+def write_edits(m, server, dungeon):
+    """Writes only edits/<dungeon>.yml (monsters, doors, start...), without building the map: for a change of the
+    monsters of a map already built from the same script."""
+    base = os.path.join(ROOT, "serveurs", SERVERS[server])
+    edits = os.path.join(base, "plugins", "FluxDungeons", "edits", f"{dungeon}.yml")
+    with open(edits, "w") as f:
+        f.write(m.edits_yaml(dungeon))
+    print("written", edits, f"({len(m.spawns)} monsters)")
+
+
 class Console:
     def __init__(self, server):
         p = rcon.props(server)

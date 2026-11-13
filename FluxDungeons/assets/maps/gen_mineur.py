@@ -708,8 +708,19 @@ paint_all()
 m.textures = "rpg"
 m.ybox = (Y0, Y1)
 
+
+# Troop roles (2026-11-13): about twice the monsters of the first version, half of them with a role (gelées that
+# leap and split, fast pests, brutes, spitters, snipers, kamikazes, supports), placed next to those above.
+REINFORCE = {
+    "1": ['mineur_gelee', 'mineur_gelee', 'mineur_gelee', 'mineur_galopin', 'mineur_galopin', 'mineur_galopin', 'mineur_dynamiteur', 'mineur_dynamiteur', 'mineur_dynamiteur', 'mineur_artificier', 'mineur_artificier'],
+    "2": ['mineur_dynamiteur', 'mineur_dynamiteur', 'mineur_dynamiteur', 'mineur_artificier', 'mineur_artificier', 'mineur_galopin', 'mineur_galopin', 'mineur_gelee'],
+    "3": ['mineur_gelee', 'mineur_gelee', 'mineur_gelee', 'mineur_galopin', 'mineur_galopin', 'mineur_galopin', 'mineur_dynamiteur', 'mineur_dynamiteur', 'mineur_artificier', 'mineur_artificier'],
+}
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
+    maplib.reinforce(m, g, REINFORCE, seed=104)
     errs = check()
     for e in errs[:50]:
         print("CHECK:", e)
@@ -723,6 +734,9 @@ if __name__ == "__main__":
         sys.exit(1 if errs else 0)
     if errs:
         sys.exit("checks failed: nothing sent")
+    if "--edits" in args:
+        maplib.write_edits(m, args[0] if args and not args[0].startswith("--") else "labs", "mineur")
+        sys.exit(0)
     g.commands(m)
     print(f"{len(m.cmds)} commands")
     maplib.run(m, args[0] if args and not args[0].startswith("--") else "labs", "mineur")

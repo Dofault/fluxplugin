@@ -58,6 +58,9 @@ import java.util.Map;
  *   silent: true                   # no vanilla sounds (a model with its own look)
  *   cast-gap: 2.5                  # seconds between two abilities at least (the next one is drawn among those ready)
  *   bar-offset: 1.5                # life bar this many blocks higher (or lower) than the top of its body
+ *   stats: {health: 0.4, damage: 0.3}   # life and attack of its rank (rpg balance) times these: a fragile pest, a brute
+ *   keep-distance: [7, 13]         # controlled: backs off under 7 blocks, comes closer over 13 (casters, archers)
+ *   split: {mob: slime_small, count: 2}  # on death, these appear in its place (summoned: never counted by a door)
  *   walk-speed: 1.0                # blocks per second on flat ground (instead of the raw speed attribute)
  *   abilities: [{spell: colossus_bite, every: 6}]   # a spell of spells/, values here win
  *   mount: forge_horse
@@ -136,10 +139,33 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                         double attackSpeed, Map<String, org.bukkit.Color> dyes, double rangedResistance, double rangedRate,
                         boolean frostArrows, boolean controlled, boolean silent, double castGap, double barOffset,
                         double walkSpeed, boolean stationary, Map<String, Object> swim,
-                        Map<String, Object> cues) {
+                        Map<String, Object> cues, Troop troop) {
         /** Ticks between two melee hits of this monster ({@code attack-speed}: hits per second, vanilla 1). */
         public int attackTicks() {
-            return (int) Math.max(4, Math.round(20 / Math.max(0.05, attackSpeed)));
+            // down to 2 ticks: a pest may bite ten times a second (melee is checked every 2 ticks)
+            return (int) Math.max(2, Math.round(20 / Math.max(0.05, attackSpeed)));
+        }
+    }
+
+    /**
+     * What makes a troop monster play its own way, beyond its abilities: {@code health} and {@code damage} multiply
+     * the life and attack its rank gets from the rpg balance (1 = as any monster of its rank), {@code keepMin} /
+     * {@code keepMax} the distance a controlled monster keeps from its target (0 = walks into melee), {@code splitMob}
+     * and {@code splitCount} the monsters it turns into when it dies.
+     */
+    public record Troop(double health, double damage, double keepMin, double keepMax, String splitMob, int splitCount) {
+        public static final Troop PLAIN = new Troop(1, 1, 0, 0, null, 0);
+
+        public boolean kites() {
+            return keepMax > 0;
+        }
+
+        static Troop read(ConfigurationSection c) {
+            double health = Math.max(0.05, c.getDouble("stats.health", 1)), damage = Math.max(0, c.getDouble("stats.damage", 1));
+            List<Double> keep = c.getDoubleList("keep-distance");
+            double min = keep.size() > 0 ? Math.max(0, keep.get(0)) : 0, max = keep.size() > 1 ? Math.max(min + 1, keep.get(1)) : 0;
+            String split = c.getString("split.mob");
+            return new Troop(health, damage, min, max, split, split == null ? 0 : Math.max(1, c.getInt("split.count", 2)));
         }
     }
 
@@ -204,7 +230,7 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
                 c.getDouble("bar-offset", 0), c.getDouble("walk-speed", 0),
                 c.getBoolean("stationary", false),
                 c.isConfigurationSection("swim") ? toMap(c.getConfigurationSection("swim")) : Map.of(),
-                c.isConfigurationSection("cues") ? toMap(c.getConfigurationSection("cues")) : Map.of());
+                c.isConfigurationSection("cues") ? toMap(c.getConfigurationSection("cues")) : Map.of(), Troop.read(c));
         return new MobTemplate(id, type, c.getString("name", id), c.getBoolean("boss"), c.getString("model"),
                 c.getDouble("health", 20), c.getDouble("damage", 3), c.getDouble("speed", -1), c.getDouble("armor", 0),
                 c.getDouble("scale", 1), c.getDouble("xp", 10), equipment, abilities, extra);

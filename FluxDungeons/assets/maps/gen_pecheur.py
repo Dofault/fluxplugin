@@ -1172,6 +1172,9 @@ def check():
 # ======================================================================== output
 
 def commands():
+    if "--edits" in args:
+        maplib.write_edits(m, args[0] if args and not args[0].startswith("--") else "labs", "pecheur")
+        sys.exit(0)
     g.commands(m)
 
 
@@ -1241,8 +1244,23 @@ for dz in range(-12, 13):
     for a, b2, blk in run:
         m.after.append(f"fill {AX + a} {FI} {ZA + dz} {AX + b2} {FI} {ZA + dz} {blk} strict")
 
+
+# Troop roles (2026-11-13): about twice the monsters of the first version, half of them with a role (gelées that
+# leap and split, fast pests, brutes, spitters, snipers, kamikazes, supports), placed next to those above.
+REINFORCE = {
+    "1": ['pecheur_meduse', 'pecheur_meduse', 'pecheur_meduse', 'pecheur_mousse', 'pecheur_mousse', 'pecheur_mousse', 'pecheur_harponneur', 'pecheur_pretresse'],
+    "3": ['pecheur_mousse', 'pecheur_mousse', 'pecheur_meduse', 'pecheur_meduse', 'pecheur_harponneur', 'pecheur_pretresse'],
+}
+# the pool room: on the walkway, reached across the water from the guardians
+REINFORCE_POOL = {
+    "2": ['pecheur_harponneur', 'pecheur_harponneur', 'pecheur_meduse', 'pecheur_meduse', 'pecheur_mousse'],
+}
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
+    maplib.reinforce(m, g, REINFORCE, seed=102)
+    maplib.reinforce(m, g, REINFORCE_POOL, seed=202, near=(3, 11), through_water=True)
     errs = check()
     for e in errs[:60]:
         print("CHECK:", e)
