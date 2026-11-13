@@ -115,6 +115,16 @@ public final class HudService implements Hud.Backend, Listener {
         views.clear();
     }
 
+    /** While plugins load: the HUD's part of the text shader, from hud.yml as it is on disk (ClientPack#early). */
+    public static void earlyShaderPart(JavaPlugin flux) {
+        File file = new File(flux.getDataFolder(), "hud.yml");
+        if (!file.isFile()) return;
+        YamlConfiguration c = YamlConfiguration.loadConfiguration(file);
+        if (!c.getBoolean("enabled", true)) return;
+        String glsl = HudLayout.read(c, flux.getLogger()).glsl();
+        if (glsl != null) TextShader.part(flux, "flux_hud", glsl, "flux_hud_vertex();");
+    }
+
     /** (Re)reads hud.yml. */
     public void load() {
         File file = new File(flux.getDataFolder(), "hud.yml");

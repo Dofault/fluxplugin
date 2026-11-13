@@ -45,6 +45,15 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     @Override
     public void onLoad() {
         LegacyDataFolder.migrate(this, "FluxMenu");
+        // the pack's text shader written before MC GUI merges it (see pack.ClientPack#early)
+        try {
+            clientPack = new fr.influencraft.flux.pack.ClientPack(this, getFile());
+            clientPack.configure(getConfig().getConfigurationSection("client-pack"));
+            fr.influencraft.flux.hud.HudService.earlyShaderPart(this);
+            clientPack.early();
+        } catch (RuntimeException | LinkageError e) {
+            getLogger().warning("Client pack not written early: " + e);
+        }
     }
 
     @Override
@@ -149,7 +158,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         bossBarListener = PacketEvents.getAPI().getEventManager()
                 .registerListener(new fr.influencraft.flux.adapters.packetevents.BossBarOrder(this, hud));
         // Flux's part of the resource pack: the one text shader of the suite (api.client.TextShader), HUD pictures
-        clientPack = new fr.influencraft.flux.pack.ClientPack(this, getFile());
+        if (clientPack == null) clientPack = new fr.influencraft.flux.pack.ClientPack(this, getFile());
         clientPack.configure(getConfig().getConfigurationSection("client-pack"));
         clientPack.start();
         // once every plugin is enabled: PlayerPoints may load after us

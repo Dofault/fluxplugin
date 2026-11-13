@@ -74,8 +74,37 @@ public final class ClientPack {
         }, 2L);
     }
 
+    private Path cache() {
+        return flux.getDataFolder().toPath().resolve("pack-cache");
+    }
+
+    /**
+     * While plugins load, before any is enabled: writes the text shader from the base remembered at the last start
+     * and the parts given so far (the HUD's, read from hud.yml by Flux). MC GUI merges the shader it finds when it
+     * starts, which is before Flux: without this, a change of the HUD needed two restarts.
+     */
+    public void early() {
+        try {
+            Path c = cache();
+            // no base remembered yet (first start): writing now could leave out a plugin's base (the portals); the
+            // shader of the last start stays on disk, the first full write remembers the base for next time
+            if (!Files.isRegularFile(c.resolve("text.vsh")) || !Files.isRegularFile(c.resolve("text.fsh"))) return;
+            {
+                TextShader.remembered(Files.readString(c.resolve("name.txt"), StandardCharsets.UTF_8).strip(),
+                        Files.readString(c.resolve("text.vsh"), StandardCharsets.UTF_8), Files.readString(c.resolve("text.fsh"), StandardCharsets.UTF_8));
+            }
+        } catch (IOException | RuntimeException e) {
+            flux.getLogger().warning("Remembered text shader not read: " + e.getMessage());
+        }
+        writeShader(false);
+    }
+
     /** Writes every folder now (main thread: small files). */
     public void write() {
+        writeShader(true);
+    }
+
+    private void writeShader(boolean full) {
         if (folders.isEmpty()) return;
         String vertex;
         String fragment;
@@ -95,14 +124,18 @@ public final class ClientPack {
                 return;
             }
         }
+        if (full) rememberBase();
         boolean shader = !TextShader.vanilla();
         for (Path folder : folders) {
             try {
-                boolean changed = copyAssets(folder);
-                changed |= writeIfChanged(folder.resolve("pack.mcmeta"), mcmeta());
-                String atlas = GuiAtlas.json();
-                Path atlasFile = folder.resolve("assets/minecraft/atlases/gui.json");
-                changed |= atlas == null ? Files.deleteIfExists(atlasFile) : writeIfChanged(atlasFile, atlas);
+                boolean changed = false;
+                if (full) {
+                    changed = copyAssets(folder);
+                    changed |= writeIfChanged(folder.resolve("pack.mcmeta"), mcmeta());
+                    String atlas = GuiAtlas.json();
+                    Path atlasFile = folder.resolve("assets/minecraft/atlases/gui.json");
+                    changed |= atlas == null ? Files.deleteIfExists(atlasFile) : writeIfChanged(atlasFile, atlas);
+                }
                 Path core = folder.resolve(overlay + "/assets/minecraft/shaders/core");
                 if (shader) {
                     changed |= writeIfChanged(core.resolve("text.vsh"), vertex);
@@ -111,10 +144,24 @@ public final class ClientPack {
                     changed |= Files.deleteIfExists(core.resolve("text.vsh")) | Files.deleteIfExists(core.resolve("text.fsh"));
                 }
                 if (changed) flux.getLogger().warning("Client pack written in " + folder + " (text shader: " + TextShader.baseName()
-                        + "): rebuild the resource pack (/iazip).");
+                        + "): rebuild the resource pack (/iazip)" + (full ? "; restart first if MC GUI merged the former shader." : ", before MC GUI merges it."));
             } catch (IOException | RuntimeException e) {
                 flux.getLogger().severe("Client pack not written in " + folder + ": " + e.getMessage());
             }
+        }
+    }
+
+    /** Keeps the base for the next start (see early). */
+    private void rememberBase() {
+        if (TextShader.baseName().equals("minecraft")) return;
+        try {
+            Path c = cache();
+            Files.createDirectories(c);
+            writeIfChanged(c.resolve("name.txt"), TextShader.baseName());
+            writeIfChanged(c.resolve("text.vsh"), TextShader.rawVertex());
+            writeIfChanged(c.resolve("text.fsh"), TextShader.fragment());
+        } catch (IOException | RuntimeException e) {
+            flux.getLogger().warning("Text shader not remembered: " + e.getMessage());
         }
     }
 

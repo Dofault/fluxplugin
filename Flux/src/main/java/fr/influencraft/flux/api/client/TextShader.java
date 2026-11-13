@@ -29,7 +29,8 @@ public final class TextShader {
     public static final String DECLARATIONS = "// @FLUX_DECLARATIONS";
     public static final String GUI_VERTEX = "// @FLUX_GUI_VERTEX";
 
-    private record Base(Plugin owner, String vertex, String fragment) {
+    /** {@code owner} null: the base remembered from the last start, until its plugin gives it again. */
+    private record Base(Plugin owner, String name, String vertex, String fragment) {
     }
 
     private record Part(Plugin owner, String declarations, String guiVertex) {
@@ -55,11 +56,19 @@ public final class TextShader {
      */
     public static void base(Plugin owner, String vertex, String fragment) {
         Base before = base;
-        if (before != null && before.owner() != owner && vertex != null) {
+        if (before != null && before.owner() != null && before.owner() != owner && vertex != null) {
             owner.getLogger().warning("The text shader of " + before.owner().getName() + " is replaced by this plugin's.");
         }
-        base = vertex == null ? null : new Base(owner, vertex, fragment);
+        base = vertex == null ? null : new Base(owner, owner.getName(), vertex, fragment);
         onChange.run();
+    }
+
+    /**
+     * The base written at the last start (Flux's pack cache), used while plugins load: Flux writes the shader before
+     * MC GUI merges it, which MC GUI does once, when it starts (pack mode external). Its plugin gives it again later.
+     */
+    public static void remembered(String name, String vertex, String fragment) {
+        if (base == null && vertex != null && fragment != null) base = new Base(null, name, vertex, fragment);
     }
 
     /**
@@ -76,7 +85,7 @@ public final class TextShader {
     public static void unregisterAll(Plugin owner) {
         boolean changed = PARTS.values().removeIf(p -> p.owner() == owner);
         Base b = base;
-        if (b != null && b.owner() == owner) {
+        if (b != null && b.owner() != null && b.owner() == owner) {
             base = null;
             changed = true;
         }
@@ -86,7 +95,7 @@ public final class TextShader {
     /** Owner of the base, "minecraft" for the game's own. */
     public static String baseName() {
         Base b = base;
-        return b == null ? "minecraft" : b.owner().getName();
+        return b == null ? "minecraft" : b.name();
     }
 
     /** The vertex shader as it is written in the pack, or null when the base lacks the hooks. */
