@@ -138,6 +138,36 @@ The plugins are written **as English plugins, then adapted to French** for our s
   `gen_tools.py`, `gen_metiers.py`...). Change the script and regenerate, never hand-edit generated YAML.
   Exception: `Flux/assets/menu_recompenses.png` is hand-retouched by the owner, do not regenerate it.
 
+## Suite rules (from the full review of 2026-11-13: each one was broken somewhere)
+
+Check a change against this list before committing; the review found every one of these mistakes in the code.
+
+- **One plugin, one theme.** A feature goes to the plugin that owns its theme, or to a new module, never to whichever
+  plugin is open (FluxTools had grown jobs, enchantment rules, a money bar and a packet hack: split into FluxJobs,
+  FluxEnchant and Flux). Generic needs (money display, client packets, placeholders about the player) go to Flux.
+- **Every plugin extends `FluxPlugin`** and uses `messages()`, `command(id)`: no own `MessagesManager`,
+  `ConfigManager`, `TextUtil`, `SoundUtil`, GUI engine or chat prompt (`Dialogs.Form` for typed values).
+- **No text and no colour a player sees in Java**: words in `lang/<language>.yml` (French and English), looks in
+  `style.yml` (variants for a plugin colour), boss bar or action bar templates in the lang file too. Test: `grep` the
+  module for `"&#` and accented literals, only log messages may remain (in English).
+- **Money messages come from Flux** (`Origin...notifyPlayer()`), never a hand-written "Tu as perdu ..." line.
+- **Values come from `Values` only.** Never read another plugin's files to compute an XP, a price or a quantity
+  (FluxTools' `JobPoints` read EcoJobs files with its own scale), never a hand-written table of points per block or
+  per mob in a generator: if FluxValue lacks a weight, add it there.
+- **Player data in Flux's database** (`Database`, tables `flux_<module>_<category>`), never a YAML file or a folder
+  of files per player, never a third-party plugin's storage (eco's profile for pets). A move is a FluxMigration.
+- **Items reach players through Flux** (rewards and give helpers that know universes and full inventories), never
+  `getInventory().addItem` scattered in plugins.
+- **Identifiers start with `flux`**: permissions `flux<module>.*`, commands of new features, money origins. A former
+  `influ*` node is renamed with a LuckPerms script at go-live (FluxPW did it), never kept for comfort.
+- **PacketEvents only** for packets (adapters in `Flux/adapters/packetevents`), never ProtocolLib.
+- **Bedrock is a target, not an afterthought**: a feature needs its Bedrock path (`Clients.bedrock`): no button only
+  in the hidden inventory area, no information only in a picture, a shader, a title image or a boss bar sprite.
+- **Moving a command or a setting between plugins** moves its entry in `plugins/Flux/commands.yml`, its config
+  section (jar and Labs) and its docs, and gets a line in `flux-mise-en-prod.md`.
+- **Nothing dead is committed**: mockups, rollback folders, `.legacy` or `.avant-*` copies, prompts, unused
+  placeholders. Git keeps history; delete what no generator, menu or class reads.
+
 ## Menu layout rules
 
 - **First row of every menu: back button in its first slot, the icon of the current menu (what this page is, with its
