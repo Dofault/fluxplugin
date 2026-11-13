@@ -5,9 +5,32 @@ key:
   item: "TRIPWIRE_HOOK"
   name: "&f&lExample key"
   lore: ["&7Opens the example crate."]
-# Text above the placed crate, and the colour of its ring of particles.
+# Text above the placed crate, and the colour of its ring of particles (one, or a list taken in turn).
 hologram: ["&f&lExample crate", "&7Left click: rewards  Right click: open"]
 particle: "#FFFFFF"
+# Optional effects of the placed crate (crates/noel.yml on the server uses them all).
+# « particle: [] » (no colour) removes the ring of particles.
+#effects:
+#  model: "itemsadder:influcrates:caisse_noel_corps" # item shown on the crate's block (put a barrier there): it
+#                                            # floats, turns slowly and hops when a key is used (unless « chest »)
+#  scale: 1.0
+#  ambient: "SNOWFLAKE"                     # particle drifting around the crate (no data: SNOWFLAKE, END_ROD...)
+#  burst: "SNOWFLAKE"                       # particle bursting out of it when a key is used
+#  burst-sound: "minecraft:block.amethyst_block.chime 1 1.2"
+#  tune-sound: "minecraft:block.note_block.bell" # tune played to the winner instead of the usual sound
+#  tune: "E4- E4- E4--- E4- E4- E4--- E4- G4- C4-- D4 E4" # F#3 to F#5, « - » holds a beat (2 ticks), « _ » rests
+#  chest:                                   # the model is a chest that opens: it sits still, facing whoever placed
+#                                           # it, and a key opens it in the world instead of the roll menu (lock
+#                                           # lights up, ornament spins, lid opens, the reward rises out and is given)
+#    lid: "itemsadder:influcrates:caisse_noel_couvercle" # parts: item models drawn in the same space as the model
+#    hinge: [9.5, 13]                       # y, z of the lid's hinge, in pixels of the model (front to the north)
+#    open-angle: 105
+#    ornament: "itemsadder:influcrates:caisse_noel_medaillon" # turns on the vertical axis through the model's centre
+#    keyhole: "itemsadder:influcrates:caisse_noel_serrure"
+#    light: "itemsadder:influcrates:caisse_noel_lueur"
+#    beam: "itemsadder:influcrates:caisse_noel_rayon"    # stretched up from 8 pixels high
+#    sounds:                                # « <key> [volume] [pitch] » lists: activate, awaken, rattle, open, reveal, close
+#      open: ["minecraft:block.chest.open 0.8 0.9"]
 # Rewards, drawn by weight (chance = weight / sum of weights).
 # « item » is the id of the item it gives (« amount » of them): its name and description come from where the item is
 # defined, nothing to copy here. Otherwise « display » is shown in the menus (item, lore, optional « model-data » for a

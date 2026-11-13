@@ -140,6 +140,7 @@ final class CrateMenus {
         Lists.reset(player, ROLL);
         FluxApi.open(player, ROLL_MENU);
         step(player.getUniqueId());
+        plugin.music().opened(player);
         return true;
     }
 
@@ -173,12 +174,17 @@ final class CrateMenus {
             roll.position = DELAYS.length;
             if (p != null) {
                 plugin.give(p, roll.crate, roll.won);
-                Sounds.cue(p, "complete");
+                plugin.celebrate(p, roll.crate);
                 refresh(p);
             }
         }
         MenuView v = p == null ? null : FluxApi.view(p);
         if (v == null || !v.isOpen() || !ROLL_MENU.equals(v.menuId())) rolls.remove(id);
+    }
+
+    /** The item of a reward as shown when a chest crate reveals it. */
+    static ItemStack icon(Crate.Reward r, Player player) {
+        return display(r, Lore.create(), player, false);
     }
 
     /** The item shown for a reward: its display item, name, lore, model data and shine. */

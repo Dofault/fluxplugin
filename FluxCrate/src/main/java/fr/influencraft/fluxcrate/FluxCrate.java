@@ -11,6 +11,7 @@ import fr.influencraft.fluxcrate.api.Crates;
 import fr.influencraft.fluxcrate.compat.EcoCratesCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
@@ -22,6 +23,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
@@ -40,7 +42,7 @@ import java.util.Map;
  * every key at once (sneak + right click). Opening and preview are Flux menus ({@link CrateMenus}).
  *
  * <pre>
- *   /fluxcrate give &lt;player|*&gt; &lt;crate&gt; [amount] | place &lt;crate&gt; | remove | preview &lt;crate&gt; | list | reload
+ *   /fluxcrate give &lt;player|*&gt; &lt;crate&gt; [amount] | place &lt;crate&gt; | remove | preview &lt;crate&gt; | demo [world x y z] | list | reload
  * </pre>
  * Keys of EcoCrates still open their crate, and {@code ecocrates give ...} still works once EcoCrates is removed
  * ({@code compat}).
@@ -50,11 +52,13 @@ public final class FluxCrate extends FluxPlugin implements Listener {
     private final Map<String, Crate> crates = new LinkedHashMap<>();
     private PlacedCrates placed;
     private CrateMenus menus;
+    private CrateMusic music;
 
     @Override
     protected void enable() {
         placed = new PlacedCrates(this);
         menus = new CrateMenus(this);
+        music = new CrateMusic(this);
         loadCrates();
         placed.load();
         menus.enable();
@@ -70,7 +74,7 @@ public final class FluxCrate extends FluxPlugin implements Listener {
             }
 
             public void place(Location location, String crate) {
-                placed.place(location, crate);
+                placed.place(location, crate, 0f);
             }
 
             public void reload() {
@@ -118,11 +122,13 @@ public final class FluxCrate extends FluxPlugin implements Listener {
         });
         Bukkit.getPluginManager().registerEvents(this, this);
         Bukkit.getScheduler().runTaskTimer(this, placed::tick, 40L, 20L);
+        Bukkit.getScheduler().runTaskTimer(this, music::tick, 20L, 20L);
     }
 
     @Override
     protected void disable() {
-        if (placed != null) placed.removeHolograms();
+        if (placed != null) placed.removeEntities();
+        if (music != null) music.stopAll();
         Crates.bind(null);
     }
 
@@ -142,7 +148,7 @@ public final class FluxCrate extends FluxPlugin implements Listener {
             java.util.Arrays.sort(files);
             for (File f : files) {
                 String id = f.getName().substring(0, f.getName().length() - 4).toLowerCase(Locale.ROOT);
-                crates.put(id, Crate.read(id, YamlConfiguration.loadConfiguration(f)));
+                crates.put(id, Crate.read(id, YamlConfiguration.loadConfiguration(f), getLogger()));
             }
         }
         getLogger().info(crates.size() + " crate(s): " + String.join(", ", crates.keySet()));
@@ -200,6 +206,11 @@ public final class FluxCrate extends FluxPlugin implements Listener {
         e.setCancelled(true);
         Player p = e.getPlayer();
         if (e.getAction() == Action.LEFT_CLICK_BLOCK) {
+            // staff: sneak + left click takes the crate away (with its barrier)
+            if (p.isSneaking() && p.hasPermission("fluxcrate.admin")) {
+                messages().send(p, placed.removeWithBlock(b) ? "removed" : "not-a-crate");
+                return;
+            }
             menus.preview(p, crate);
             return;
         }
@@ -212,18 +223,71 @@ public final class FluxCrate extends FluxPlugin implements Listener {
             if (away.lengthSquared() > 0) p.setVelocity(away.normalize().multiply(0.8).setY(0.3));
             return;
         }
-        if (p.isSneaking() && keys > 1) openAll(p, crate, keys);
-        else menus.open(p, crate);
+        ChestScene chest = placed.chest(b);
+        if (chest != null) {
+            openChest(p, crate, chest, keys);
+            return;
+        }
+        boolean opened = p.isSneaking() && keys > 1 ? openAll(p, crate, keys) : menus.open(p, crate);
+        if (opened) placed.opened(b);
+    }
+
+    /**
+     * A chest crate: the opening plays in the world (one at a time per crate; its opener may chain his next key while
+     * the last reward hovers). Sneak + right click still opens every key at once, with a flash of the chest.
+     */
+    private void openChest(Player p, Crate crate, ChestScene chest, int keys) {
+        if (p.isSneaking() && keys > 1) {
+            if (chest.busy()) {
+                messages().send(p, "busy");
+                return;
+            }
+            if (openAll(p, crate, keys)) chest.flash();
+            return;
+        }
+        boolean chain = chest.canChain(p);
+        if (chest.busy() && !chain) {
+            if (!p.getUniqueId().equals(chest.opener())) messages().send(p, "busy");
+            return;
+        }
+        Crate.Reward won = crate.draw();
+        if (won == null || !(Keys.take(p, crate.id(), 1) || free(p))) {
+            messages().send(p, "no-key", "%key%", crate.keyName());
+            Sounds.cue(p, "error");
+            return;
+        }
+        if (chain) chest.chain(won);
+        else chest.start(p, won);
+        music.opened(p);
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent e) {
+        placed.quit(e.getPlayer().getUniqueId());
+        music.quit(e.getPlayer().getUniqueId());
     }
 
     /** Sneak + right click: every key opened at once, no roll. */
-    private void openAll(Player p, Crate crate, int keys) {
-        if (!Keys.take(p, crate.id(), keys)) return;
+    private boolean openAll(Player p, Crate crate, int keys) {
+        if (!Keys.take(p, crate.id(), keys)) return false;
         for (int i = 0; i < keys; i++) {
             Crate.Reward r = crate.draw();
             if (r != null) give(p, crate, r);
         }
-        Sounds.cue(p, "complete");
+        celebrate(p, crate);
+        return true;
+    }
+
+    /** Background music of the crates for this player (an opening started). */
+    CrateMusic music() {
+        return music;
+    }
+
+    /** The sound of a win: the crate's tune, else the usual « complete » cue. */
+    void celebrate(Player p, Crate crate) {
+        Tune tune = crate.effects().tune();
+        if (tune != null) tune.play(this, p);
+        else Sounds.cue(p, "complete");
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -250,18 +314,30 @@ public final class FluxCrate extends FluxPlugin implements Listener {
                 else give(sender, args[1], args[2], args.length > 3 ? parse(args[3]) : 1);
             }
             case "place" -> {
-                Block target = p == null ? null : p.getTargetBlockExact(6);
                 Crate crate = args.length > 1 ? crate(args[1]) : null;
+                Block target = p == null || crate == null ? null : placeTarget(p, crate);
                 if (target == null || crate == null) {
                     messages().send(sender, "admin-usage");
                     return true;
                 }
-                placed.place(target.getLocation(), crate.id());
+                placed.place(target.getLocation(), crate.id(), PlacedCrates.facingToward(target.getLocation(), p.getLocation()));
                 messages().send(sender, "placed", "%crate%", crate.id());
+            }
+            case "demo" -> {
+                // the opening of a chest crate, without key nor reward: player looking at it, or console with a place
+                Block target = p != null ? p.getTargetBlockExact(6) : block(args);
+                ChestScene chest = target == null ? null : placed.chest(target);
+                Crate crate = target == null ? null : crate(placed.at(target));
+                if (chest == null || crate == null) messages().send(sender, "not-a-crate");
+                else if (chest.busy()) messages().send(sender, "busy");
+                else {
+                    chest.start(null, crate.draw());
+                    messages().send(sender, "demo", "%crate%", crate.id());
+                }
             }
             case "remove" -> {
                 Block target = p == null ? null : p.getTargetBlockExact(6);
-                messages().send(sender, target != null && placed.remove(target.getLocation()) ? "removed" : "not-a-crate");
+                messages().send(sender, target != null && placed.removeWithBlock(target) ? "removed" : "not-a-crate");
             }
             case "preview" -> {
                 Crate crate = args.length > 1 ? crate(args[1]) : null;
@@ -300,8 +376,29 @@ public final class FluxCrate extends FluxPlugin implements Listener {
         }
     }
 
+    /**
+     * Block a crate placed by this player goes on. A crate shown by a model goes on the barrier he looks at, else
+     * against the face he looks at (like placing a block: the floor puts it on top); others on the block he looks at.
+     */
+    private static Block placeTarget(Player p, Crate crate) {
+        org.bukkit.util.RayTraceResult hit = p.rayTraceBlocks(6);
+        Block b = hit == null ? null : hit.getHitBlock();
+        if (b == null || crate.effects().model() == null || b.getType() == Material.BARRIER || b.isPassable()) return b;
+        if (hit.getHitBlockFace() == null) return null;
+        Block next = b.getRelative(hit.getHitBlockFace());
+        return next.isEmpty() || next.isPassable() ? next : null;
+    }
+
+    /** A block given as « world x y z » (console). */
+    private static Block block(String[] args) {
+        if (args.length < 5) return null;
+        org.bukkit.World w = Bukkit.getWorld(args[1]);
+        int x = parse(args[2]), y = parse(args[3]), z = parse(args[4]);
+        return w == null ? null : w.getBlockAt(x, y, z);
+    }
+
     private List<String> complete(CommandSender sender, String[] args) {
-        if (args.length == 1) return List.of("give", "place", "remove", "preview", "list", "reload");
+        if (args.length == 1) return List.of("give", "place", "remove", "preview", "demo", "list", "reload");
         String sub = args[0].toLowerCase(Locale.ROOT);
         if (args.length == 2 && sub.equals("give")) return Players.complete(args[1]);
         if ((args.length == 2 && (sub.equals("place") || sub.equals("preview"))) || (args.length == 3 && sub.equals("give"))) {

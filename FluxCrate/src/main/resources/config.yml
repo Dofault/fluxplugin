@@ -1,2 +1,9 @@
 # FluxCrate: the crates of the server. One file per crate in crates/<id>.yml (see crates/_example.yml);
 # crates placed in the worlds are in placed.yml (/fluxcrate place <crate> while looking at a block).
+
+# Background music while a player opens crates (FluxMusic song, played in a loop). It stops after idle-seconds
+# without an opening or once the player is radius blocks away. song: "" = no music.
+music:
+  song: caisses
+  idle-seconds: 20
+  radius: 12
