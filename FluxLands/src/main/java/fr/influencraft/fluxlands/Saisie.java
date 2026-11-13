@@ -63,7 +63,7 @@ final class Saisie {
 
     /** What follows the creation of a plot: nothing (its menu opens), or the Agency window to rent or sell it. */
     enum Ensuite {
-        RIEN("Ouvrir la parcelle"), LOCATION("La mettre en location"), VENTE("La mettre en vente");
+        RIEN(Lang.t("saisie.ouvrir-la-parcelle")), LOCATION(Lang.t("saisie.la-mettre-en-location")), VENTE(Lang.t("saisie.la-mettre-en-vente"));
 
         final String libelle;
 
@@ -86,12 +86,12 @@ final class Saisie {
     void ouvrirParcelle(Player p, String titre, String explication, String nomInitial, boolean solAuCiel,
                         String yMinInitial, String yMaxInitial, String menuRetour, ReponseParcelle apres) {
         Dialogs.form(p, titre).body(explication)
-                .requiredInput("valeur", "Nom de la parcelle", nomInitial, 24)
-                .toggle("case", "Du sol au ciel (toute la hauteur)", solAuCiel)
-                .smallInput("ymin", "Y min (vide = sélection)", yMinInitial, 5)
-                .smallInput("ymax", "Y max (vide = sélection)", yMaxInitial, 5)
+                .requiredInput("valeur", Lang.t("saisie.nom-de-la-parcelle"), nomInitial, 24)
+                .toggle("case", Lang.t("saisie.du-sol-au-ciel-toute"), solAuCiel)
+                .smallInput("ymin", Lang.t("saisie.y-min-vide-selection"), yMinInitial, 5)
+                .smallInput("ymax", Lang.t("saisie.y-max-vide-selection"), yMaxInitial, 5)
                 .choice("ensuite", "Ensuite", java.util.Arrays.stream(Ensuite.values()).map(e -> e.libelle).toList())
-                .buttons(nomInitial.isEmpty() ? "Créer la parcelle" : "Délimiter", "Annuler")
+                .buttons(nomInitial.isEmpty() ? Lang.t("saisie.creer-la-parcelle") : Lang.t("saisie.delimiter"), "Annuler")
                 .onSubmit((pl, a) -> apres.accepter(pl, a.text("valeur").replace(' ', '_'), a.toggle("case"),
                         a.integer("ymin"), a.integer("ymax"), Ensuite.de(a.text("ensuite"))))
                 .onCancel(pl -> plugin.ouvrirMenu(pl, menuRetour))

@@ -75,7 +75,7 @@ final class Expansion {
         if (s.startsWith("warpville_") || s.startsWith("adresseville_")) {
             String nom = params.substring(params.indexOf('_') + 1);
             Fiches.Adresse a = plugin.aAdresses() ? adresseParNom(nom) : null;
-            return a == null || a.villeNom().isEmpty() ? "Hors ville" : a.villeNom();
+            return a == null || a.villeNom().isEmpty() ? Lang.t("expansion.hors-ville") : a.villeNom();
         }
         if (s.startsWith("parcelle_")) return parcelle(p, s.substring(9));
         if (s.startsWith("role_")) return role(p, s.substring(5));
@@ -121,14 +121,14 @@ final class Expansion {
             case "tri": return Vues.TRIS.get(e.type).get(Math.min(e.tri, Vues.TRIS.get(e.type).size() - 1));
             case "recherche": return e.recherche;
             case "type": return e.type.name().toLowerCase(Locale.ROOT);
-            case "budget": return Vues.BUDGETS_NOMS[e.budget];
-            case "taille": return Vues.TAILLES_NOMS[e.taille];
+            case "budget": return Vues.budgetsNoms()[e.budget];
+            case "taille": return Vues.taillesNoms()[e.taille];
             default: break;
         }
         if (s.startsWith("filtre_")) return choix(Vues.FILTRES.get(e.type), e.filtre, s.substring(7), e, p);
         if (s.startsWith("tri_")) return choix(Vues.TRIS.get(e.type), e.tri, s.substring(4), e, p);
-        if (s.startsWith("budget_")) return choix(List.of(Vues.BUDGETS_NOMS), e.budget, s.substring(7), e, p);
-        if (s.startsWith("taille_")) return choix(List.of(Vues.TAILLES_NOMS), e.taille, s.substring(7), e, p);
+        if (s.startsWith("budget_")) return choix(List.of(Vues.budgetsNoms()), e.budget, s.substring(7), e, p);
+        if (s.startsWith("taille_")) return choix(List.of(Vues.taillesNoms()), e.taille, s.substring(7), e, p);
         Object[] ic = indexEtChamp(s);
         if (ic == null) return "";
         Map<String, String> l = vues.ligne(p, (Integer) ic[0]);
@@ -146,10 +146,10 @@ final class Expansion {
         }
         if (i < 0 || i >= options.size()) return "";
         String nom = options.get(i);
-        if (nom.equals("Ville consultée")) {
+        if (nom.equals(Lang.t("vues.ville-consultee"))) {
             Land f = plugin.villes().parId(e.fiche);
             if (f == null) return ""; // rien à consulter : choix masqué
-            nom = "À " + f.getName();
+            nom = Lang.t("expansion.a-ville") + f.getName();
         }
         if (nom.equals("Mon pays") && plugin.villes().maVille(p) == null) return "";
         return fr.influencraft.flux.api.text.Style.get().filterOption(nom, i == actif);

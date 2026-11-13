@@ -8,7 +8,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -21,7 +20,7 @@ import java.util.Map;
  * placeholders and the {@code /fluxlands} command read and run by the menus. FluxPW and the chest shops of FluxCommerce
  * are optional: without them, their lists are empty.
  */
-public final class FluxLands extends JavaPlugin implements Listener {
+public final class FluxLands extends fr.influencraft.flux.api.FluxPlugin implements Listener {
 
     private Villes villes;
     private Registre registre;
@@ -41,21 +40,30 @@ public final class FluxLands extends JavaPlugin implements Listener {
     private volatile Map<String, int[]> comptes = Map.of();
 
     @Override
-    public void onLoad() {
-        // COMPAT 2026-10-26: data folder of the former InfluLands jar - remove once Flux runs in production
-        fr.influencraft.flux.api.util.DataFolders.migrate(this, "InfluLands");
+    protected java.util.List<String> formerNames() {
+        // data folder of the former InfluLands jar
+        return java.util.List.of("InfluLands");
+    }
+
+    @Override
+    protected void load() {
         // level requirement "residents" (town and plot residents): Lands reads levels.yml when it enables
         Residents.register(this);
     }
 
     @Override
-    public void onEnable() {
-        saveDefaultConfig();
+    protected void enable() {
+        Lang.bind(this);
         villes = new Villes(this);
         villes.recharger();
         Couleurs.charger(Bukkit.getPluginManager().getPlugin("Lands"));
         FlagTexts.charger(Bukkit.getPluginManager().getPlugin("Lands"));
         registre = new Registre(this);
+        try {
+            registre.ouvrirBase();
+        } catch (java.sql.SQLException e) {
+            getLogger().severe("FluxLands tables unavailable: " + e.getMessage());
+        }
         registre.charger();
         vues = new Vues(this);
         tetes = new Tetes();
@@ -89,18 +97,18 @@ public final class FluxLands extends JavaPlugin implements Listener {
                 me.angeschossen.lands.api.land.Land land = villes.villeDe(subject);
                 var lore = fr.influencraft.flux.api.inventory.Lore.create();
                 if (land == null) {
-                    lore.description("N'habite dans aucune ville.");
+                    lore.description(Lang.t("fluxlands.n-habite-dans-aucune-ville"));
                     return fr.influencraft.flux.api.inventory.Items.of("itemsadder:influville:ville", "Ville", lore.build(), viewer);
                 }
                 Map<String, String> f = champsVille(land, viewer);
                 lore.kv("Ville", f.get("nom_couleur"));
-                lore.kv("Rôle", Villes.role(land, subject.getUniqueId()));
+                lore.kv(Lang.t("fluxlands.role"), Villes.role(land, subject.getUniqueId()));
                 lore.kv("Niveau", f.get("niveau"));
                 lore.kv("Habitants", f.get("habitants"));
                 lore.kv("Chunks", f.get("chunks") + "&7/&f" + f.get("chunks_max"));
                 if (!f.getOrDefault("solde", "").isEmpty()) lore.kv("Banque", f.get("solde"));
                 lore.kv("Pays", f.get("nation"));
-                if (fr.influencraft.flux.api.profile.Profiles.own(viewer)) lore.left("Ma ville");
+                if (fr.influencraft.flux.api.profile.Profiles.own(viewer)) lore.left(Lang.t("fluxlands.ma-ville"));
                 return fr.influencraft.flux.api.inventory.Items.of(f.getOrDefault("icone", "itemsadder:influville:ville"), "Ville", lore.build(), viewer);
             }
 
@@ -155,14 +163,14 @@ public final class FluxLands extends JavaPlugin implements Listener {
     }
 
     @Override
-    public void onDisable() {
+    protected void disable() {
         if (echoppes != null) echoppes.envoyerResumes();
         if (countryEffects != null) countryEffects.stop();
         if (registre != null) registre.sauvegarder(true);
     }
 
     void recharger() {
-        reloadConfig();
+        reload();
         villes.recharger();
         Couleurs.charger(Bukkit.getPluginManager().getPlugin("Lands"));
         FlagTexts.charger(Bukkit.getPluginManager().getPlugin("Lands"));

@@ -132,7 +132,7 @@ final class Gestion {
         RentalType type = offre != null ? offre.getType() : null;
         String etat = "Libre", code = "libre", icone = "itemsadder:influville:parcelle";
         if (!delimitee(a)) {
-            etat = "À délimiter";
+            etat = Lang.t("gestion.a-delimiter");
             icone = "itemsadder:influitems:unknown";
         }
         if (type == RentalType.RENT) {
@@ -144,7 +144,7 @@ final class Gestion {
             code = "annonce";
             icone = "itemsadder:influville:vente";
         } else if (type == RentalType.RENTED) {
-            etat = "Louée";
+            etat = Lang.t("gestion.louee");
             code = "occupee";
             icone = "itemsadder:influitems:lock";
         } else if (type == RentalType.SOLD) {
@@ -171,15 +171,15 @@ final class Gestion {
         m.put("annonce_ligne", offre == null ? "&7Aucune annonce"
                 : "&f" + etat + "&#B376E5 : &f" + Fmt.argent(offre.getCost()) + " &r&f\uE023"
                 + (offre instanceof RentOffer r2 ? "&#B376E5 par &f" + duree(r2.getMinutes()) : ""));
-        m.put("locataire_ligne", locataire != null ? (type == RentalType.SOLD ? "&#B376E5Propriétaire : &f" : "&#B376E5Locataire : &f")
-                + Villes.nomJoueur(locataire) : "&7Personne n'occupe la parcelle");
+        m.put("locataire_ligne", locataire != null ? (type == RentalType.SOLD ? Lang.t("gestion.proprietaire") : "&#B376E5Locataire : &f")
+                + Villes.nomJoueur(locataire) : Lang.t("gestion.personne-n-occupe-la-parcelle"));
         Location c = centre(a);
         m.put("coord", Fiches.coord(c));
         return m;
     }
 
     static String duree(int minutes) {
-        if (minutes <= 0) return "illimitée";
+        if (minutes <= 0) return Lang.t("gestion.illimitee");
         if (minutes % 1440 == 0) return (minutes / 1440) + " j";
         if (minutes % 60 == 0) return (minutes / 60) + " h";
         return minutes + " min";
@@ -268,8 +268,8 @@ final class Gestion {
             case ENTRY -> "Nouveaux habitants";
             case TENANT -> "Locataires";
             case NATION -> "Compatriote";
-            case ALLY -> "Alliés";
-            default -> "Rôle d'habitant";
+            case ALLY -> Lang.t("gestion.allies");
+            default -> Lang.t("gestion.role-d-habitant");
         };
     }
 
@@ -321,7 +321,7 @@ final class Gestion {
         m.put("periode", a.location() ? duree(a.minutes()) : "");
         m.put("max", a.location() ? duree(a.maxMinutes()) : "");
         // Ligne de lore complète pour une location (masquée pour une vente).
-        m.put("periode_ligne", a.location() ? "&#B376E5Par période de &f" + duree(a.minutes()) + "&#B376E5, au plus &f" + duree(a.maxMinutes()) : "");
+        m.put("periode_ligne", a.location() ? Lang.t("gestion.par-periode-de") + duree(a.minutes()) + Lang.t("gestion.au-plus") + duree(a.maxMinutes()) : "");
         m.put("taille", Fmt.argent(a.taille()));
         m.put("maire", a.maire());
         m.put("icone", a.location() ? "itemsadder:influville:location" : "itemsadder:influville:vente");
@@ -340,7 +340,7 @@ final class Gestion {
     String publier(Player p, Area zone, Listings.Draft d) {
         RentalBase offre = zone.getRentalOffer();
         if (offre != null && offre.getType() != RentalType.RENT && offre.getType() != RentalType.SELL) {
-            return "<t:erreur>La parcelle</t> " + Fmt.v(zone.getName()) + " <t:erreur>est occupée.</t> Mets d'abord fin à l'occupation.";
+            return Lang.t("gestion.la-parcelle") + Fmt.v(zone.getName()) + Lang.t("gestion.est-occupee-mets-d-abord");
         }
         Block b = p.getLocation().getBlock();
         // Lands' sign format: "<period> [max]" in days, max left out = no limit (its upper bound)
@@ -359,7 +359,7 @@ final class Gestion {
         Bukkit.getPluginManager().callEvent(ev);
         if (ev.isCancelled()) {
             if (b.getType() == Material.OAK_SIGN) b.setType(Material.AIR, false);
-            return "<t:erreur>Lands a refusé l'annonce ici.</t> Essaie un autre endroit de ta ville, hors de toute parcelle louée ou vendue (voir le message de Lands au-dessus s'il y en a un).";
+            return Lang.t("gestion.lands-a-refuse-l-annonce");
         }
         if (b.getState() instanceof Sign sign) {
             List<Component> finales = ev.lines();

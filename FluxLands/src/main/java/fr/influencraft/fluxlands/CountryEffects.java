@@ -96,10 +96,10 @@ final class CountryEffects {
      */
     String toggle(Nation n, PotionEffectType type) {
         Unlocks u = unlocks(n);
-        if (!u.pool().contains(type)) return "Cet effet n'est pas encore débloqué par le niveau du pays.";
+        if (!u.pool().contains(type)) return Lang.t("countryeffects.cet-effet-n-est-pas");
         List<PotionEffectType> current = new ArrayList<>(active(n));
         if (!current.remove(type)) {
-            if (u.active() <= 0) return "Le niveau du pays ne permet encore aucun effet actif.";
+            if (u.active() <= 0) return Lang.t("countryeffects.le-niveau-du-pays-ne");
             while (current.size() >= u.active()) current.remove(0);
             current.add(type);
         }

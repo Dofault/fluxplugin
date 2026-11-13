@@ -67,7 +67,7 @@ final class Fmt {
                 "<t:deco>➤</t> <t:texte>" + libelle + "</t> <t:bouton>[CLIQUER]</t>"), p)
                 .clickEvent(net.kyori.adventure.text.event.ClickEvent.runCommand(commande))
                 .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(
-                        fr.influencraft.flux.api.text.Texts.parse(Couleurs.legacy("<t:survol>Clique pour " + libelle.toLowerCase(Locale.ROOT) + "."), p)));
+                        fr.influencraft.flux.api.text.Texts.parse(Couleurs.legacy(Lang.t("fmt.clique-pour") + libelle.toLowerCase(Locale.ROOT) + "."), p)));
         p.sendMessage(message(p, texte).append(Component.newline()).append(Component.text("  ")).append(ligne));
     }
 

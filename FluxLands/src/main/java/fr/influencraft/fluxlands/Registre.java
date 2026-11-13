@@ -17,9 +17,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Données propres à FluxLands, rangées par identifiant de ville Lands (ULID) dans
- * {@code data.yml} : taux du droit de place, vitrine d'adresses, recettes, ville choisie
- * par chaque joueur. Tout se lit et s'écrit sur le fil principal ; la sauvegarde
- * sérialise sur le fil principal puis écrit le fichier en tâche de fond.
+ * Rate of the market fee, showcase of addresses, income, town chosen by each player, effects of each country: in
+ * Flux's database since 2026-11-13 (former {@code data.yml} read once). Read and changed on the main thread; a save
+ * copies the data on the main thread then writes it in the background.
  */
 final class Registre {
 
@@ -64,8 +64,13 @@ final class Registre {
         vitrines.clear();
         recettes.clear();
         villeChoisie.clear();
-        if (!fichier.exists()) return;
-        YamlConfiguration y = YamlConfiguration.loadConfiguration(fichier);
+        YamlConfiguration y = lireBase();
+        if (y == null && fichier.exists()) {
+            // COMPAT 2026-11-13: data.yml of the Labs before the database - remove once Labs saved once (at go-live)
+            y = YamlConfiguration.loadConfiguration(fichier);
+            modifie = true;
+        }
+        if (y == null) return;
         ConfigurationSection villes = y.getConfigurationSection("villes");
         if (villes != null) {
             for (String id : villes.getKeys(false)) {
@@ -111,11 +116,9 @@ final class Registre {
 
     /** Sérialise sur le fil appelant, écrit en tâche de fond (ou tout de suite si {@code sync}). */
     void sauvegarder(boolean sync) {
-        if (!modifie && fichier.exists()) return;
+        if (!modifie) return;
         modifie = false;
         YamlConfiguration y = new YamlConfiguration();
-        y.options().setHeader(List.of("Données FluxLands (taux, vitrines, recettes du droit de place).",
-                "Clé = identifiant ULID de la ville Lands. Ne pas modifier serveur allumé."));
         java.util.Set<String> ids = new java.util.HashSet<>();
         ids.addAll(taux.keySet());
         ids.addAll(vitrines.keySet());
@@ -137,20 +140,115 @@ final class Registre {
         }
         for (Map.Entry<UUID, String> e : villeChoisie.entrySet()) y.set("joueurs." + e.getKey() + ".ville", e.getValue());
         for (Map.Entry<String, List<String>> e : effetsPays.entrySet()) y.set("pays." + e.getKey() + ".effets", e.getValue());
-        String contenu = y.saveToString();
-        Runnable ecrire = () -> {
-            try {
-                plugin.getDataFolder().mkdirs();
-                File tmp = new File(fichier.getParentFile(), "data.yml.tmp");
-                java.nio.file.Files.writeString(tmp.toPath(), contenu);
-                java.nio.file.Files.move(tmp.toPath(), fichier.toPath(),
-                        java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
-            } catch (IOException ex) {
-                plugin.getLogger().warning("Sauvegarde de data.yml impossible : " + ex);
-            }
-        };
+        Runnable ecrire = () -> ecrireBase(y);
         if (sync) ecrire.run();
         else Bukkit.getScheduler().runTaskAsynchronously(plugin, ecrire);
+    }
+
+    // ── Database (Flux) ─────────────────────────────────────────────────────
+    // flux_lands_towns (town -> its section as YAML), flux_lands_players (player -> chosen town),
+    // flux_lands_countries (country -> active effects, one per line). Small data, rewritten whole in one transaction.
+
+    private static String table(String name) {
+        return fr.influencraft.flux.api.data.Database.table("flux_lands_" + name);
+    }
+
+    void ouvrirBase() throws java.sql.SQLException {
+        var d = fr.influencraft.flux.api.data.Database.dialect();
+        try (java.sql.Connection c = fr.influencraft.flux.api.data.Database.connection(); java.sql.Statement st = c.createStatement()) {
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS " + table("towns") + " (town " + d.key(64) + " NOT NULL PRIMARY KEY, data TEXT NOT NULL)");
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS " + table("players") + " (uuid " + d.key(36) + " NOT NULL PRIMARY KEY, town " + d.key(64) + " NOT NULL)");
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS " + table("countries") + " (country " + d.key(64) + " NOT NULL PRIMARY KEY, effects TEXT NOT NULL)");
+        }
+    }
+
+    /** Everything as the former file's structure, null when the database holds nothing yet. */
+    private YamlConfiguration lireBase() {
+        YamlConfiguration y = new YamlConfiguration();
+        boolean any = false;
+        try (java.sql.Connection c = fr.influencraft.flux.api.data.Database.connection(); java.sql.Statement st = c.createStatement()) {
+            try (java.sql.ResultSet rs = st.executeQuery("SELECT town, data FROM " + table("towns"))) {
+                while (rs.next()) {
+                    any = true;
+                    YamlConfiguration v = new YamlConfiguration();
+                    try {
+                        v.loadFromString(rs.getString(2));
+                    } catch (org.bukkit.configuration.InvalidConfigurationException e) {
+                        plugin.getLogger().warning("Town " + rs.getString(1) + " unreadable in the database: " + e.getMessage());
+                        continue;
+                    }
+                    for (String k : v.getKeys(true)) if (!v.isConfigurationSection(k)) y.set("villes." + rs.getString(1) + "." + k, v.get(k));
+                }
+            }
+            try (java.sql.ResultSet rs = st.executeQuery("SELECT uuid, town FROM " + table("players"))) {
+                while (rs.next()) {
+                    any = true;
+                    y.set("joueurs." + rs.getString(1) + ".ville", rs.getString(2));
+                }
+            }
+            try (java.sql.ResultSet rs = st.executeQuery("SELECT country, effects FROM " + table("countries"))) {
+                while (rs.next()) {
+                    any = true;
+                    y.set("pays." + rs.getString(1) + ".effets", java.util.Arrays.asList(rs.getString(2).split("\n")));
+                }
+            }
+        } catch (java.sql.SQLException e) {
+            plugin.getLogger().severe("FluxLands data not read from the database: " + e.getMessage());
+            return null;
+        }
+        return any ? y : null;
+    }
+
+    private void ecrireBase(YamlConfiguration y) {
+        try (java.sql.Connection c = fr.influencraft.flux.api.data.Database.connection()) {
+            boolean auto = c.getAutoCommit();
+            c.setAutoCommit(false);
+            try (java.sql.Statement st = c.createStatement()) {
+                st.executeUpdate("DELETE FROM " + table("towns"));
+                st.executeUpdate("DELETE FROM " + table("players"));
+                st.executeUpdate("DELETE FROM " + table("countries"));
+                ConfigurationSection villes = y.getConfigurationSection("villes");
+                if (villes != null) try (java.sql.PreparedStatement ps = c.prepareStatement("INSERT INTO " + table("towns") + " (town, data) VALUES (?, ?)")) {
+                    for (String id : villes.getKeys(false)) {
+                        YamlConfiguration v = new YamlConfiguration();
+                        ConfigurationSection s = villes.getConfigurationSection(id);
+                        if (s == null) continue;
+                        for (String k : s.getKeys(true)) if (!s.isConfigurationSection(k)) v.set(k, s.get(k));
+                        ps.setString(1, id);
+                        ps.setString(2, v.saveToString());
+                        ps.addBatch();
+                    }
+                    ps.executeBatch();
+                }
+                ConfigurationSection joueurs = y.getConfigurationSection("joueurs");
+                if (joueurs != null) try (java.sql.PreparedStatement ps = c.prepareStatement("INSERT INTO " + table("players") + " (uuid, town) VALUES (?, ?)")) {
+                    for (String u : joueurs.getKeys(false)) {
+                        ps.setString(1, u);
+                        ps.setString(2, joueurs.getString(u + ".ville", ""));
+                        ps.addBatch();
+                    }
+                    ps.executeBatch();
+                }
+                ConfigurationSection pays = y.getConfigurationSection("pays");
+                if (pays != null) try (java.sql.PreparedStatement ps = c.prepareStatement("INSERT INTO " + table("countries") + " (country, effects) VALUES (?, ?)")) {
+                    for (String id : pays.getKeys(false)) {
+                        ps.setString(1, id);
+                        ps.setString(2, String.join("\n", pays.getStringList(id + ".effets")));
+                        ps.addBatch();
+                    }
+                    ps.executeBatch();
+                }
+                c.commit();
+            } catch (java.sql.SQLException e) {
+                c.rollback();
+                throw e;
+            } finally {
+                c.setAutoCommit(auto);
+            }
+        } catch (java.sql.SQLException e) {
+            modifie = true; // written again at the next save
+            plugin.getLogger().severe("FluxLands data not saved: " + e.getMessage());
+        }
     }
 
     // ── Droit de place ──────────────────────────────────────────────────────

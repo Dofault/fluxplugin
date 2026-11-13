@@ -32,34 +32,40 @@ final class Vues {
     enum Type { VILLES, WARPS, HABITANTS, AGENCE, PARCELLES, ROLES, DROITS, PARAMETRES, PAYS, PAYS_VILLES }
 
     static final Map<Type, List<String>> FILTRES = Map.ofEntries(
-            Map.entry(Type.VILLES, List.of("Toutes", "Avec échoppes", "Avec warps", "Mon pays")),
-            Map.entry(Type.WARPS, List.of("Tous", "Ma ville", "Ville consultée", "Mes warps")),
-            Map.entry(Type.HABITANTS, List.of("Tous", "En ligne")),
-            Map.entry(Type.AGENCE, List.of("Toutes les annonces", "Locations", "Ventes", "Ma ville")),
-            Map.entry(Type.PARCELLES, List.of("Toutes", "Libres", "En annonce", "Occupées")),
-            Map.entry(Type.ROLES, List.of("Tous")),
-            Map.entry(Type.DROITS, List.of("Actions", "Gestion")),
-            Map.entry(Type.PARAMETRES, List.of("Tous", "Activés", "Désactivés")),
-            Map.entry(Type.PAYS, List.of("Tous")),
-            Map.entry(Type.PAYS_VILLES, List.of("Toutes", "En ligne")));
+            Map.entry(Type.VILLES, List.of(Lang.t("vues.label-toutes"), Lang.t("vues.avec-echoppes"), Lang.t("vues.label-avec-warps"), Lang.t("vues.mon-pays"))),
+            Map.entry(Type.WARPS, List.of(Lang.t("vues.label-tous"), Lang.t("vues.ma-ville"), Lang.t("vues.ville-consultee"), Lang.t("vues.label-mes-warps"))),
+            Map.entry(Type.HABITANTS, List.of(Lang.t("vues.label-tous"), Lang.t("vues.label-en-ligne"))),
+            Map.entry(Type.AGENCE, List.of(Lang.t("vues.label-toutes-les-annonces"), Lang.t("vues.label-locations"), Lang.t("vues.label-ventes"), Lang.t("vues.ma-ville"))),
+            Map.entry(Type.PARCELLES, List.of(Lang.t("vues.label-toutes"), Lang.t("vues.label-libres"), Lang.t("vues.label-en-annonce"), Lang.t("vues.occupees"))),
+            Map.entry(Type.ROLES, List.of(Lang.t("vues.label-tous"))),
+            Map.entry(Type.DROITS, List.of(Lang.t("vues.label-actions"), Lang.t("vues.label-gestion"))),
+            Map.entry(Type.PARAMETRES, List.of(Lang.t("vues.label-tous"), Lang.t("vues.actives"), Lang.t("vues.desactives"))),
+            Map.entry(Type.PAYS, List.of(Lang.t("vues.label-tous"))),
+            Map.entry(Type.PAYS_VILLES, List.of(Lang.t("vues.label-toutes"), Lang.t("vues.label-en-ligne"))));
 
     static final Map<Type, List<String>> TRIS = Map.ofEntries(
-            Map.entry(Type.VILLES, List.of("Niveau", "Habitants", "Commerce", "Nom")),
-            Map.entry(Type.WARPS, List.of("Visites", "Note", "Récents", "Nom")),
-            Map.entry(Type.HABITANTS, List.of("Rôle", "Nom")),
-            Map.entry(Type.AGENCE, List.of("Prix croissant", "Prix décroissant", "Taille croissante", "Taille décroissante")),
-            Map.entry(Type.PARCELLES, List.of("Nom", "Taille")),
-            Map.entry(Type.ROLES, List.of("Priorité")),
-            Map.entry(Type.DROITS, List.of("Nom")),
-            Map.entry(Type.PARAMETRES, List.of("Nom")),
-            Map.entry(Type.PAYS, List.of("Niveau", "Villes", "Habitants", "Nom")),
-            Map.entry(Type.PAYS_VILLES, List.of("Niveau", "Habitants", "Nom")));
+            Map.entry(Type.VILLES, List.of(Lang.t("vues.label-niveau"), Lang.t("vues.label-habitants"), Lang.t("vues.label-commerce"), Lang.t("vues.label-nom"))),
+            Map.entry(Type.WARPS, List.of(Lang.t("vues.label-visites"), Lang.t("vues.label-note"), Lang.t("vues.recents"), Lang.t("vues.label-nom"))),
+            Map.entry(Type.HABITANTS, List.of(Lang.t("vues.label-role"), Lang.t("vues.label-nom"))),
+            Map.entry(Type.AGENCE, List.of(Lang.t("vues.label-prix-croissant"), Lang.t("vues.prix-decroissant"), Lang.t("vues.label-taille-croissante"), Lang.t("vues.taille-decroissante"))),
+            Map.entry(Type.PARCELLES, List.of(Lang.t("vues.label-nom"), Lang.t("vues.label-taille"))),
+            Map.entry(Type.ROLES, List.of(Lang.t("vues.label-priorite"))),
+            Map.entry(Type.DROITS, List.of(Lang.t("vues.label-nom"))),
+            Map.entry(Type.PARAMETRES, List.of(Lang.t("vues.label-nom"))),
+            Map.entry(Type.PAYS, List.of(Lang.t("vues.label-niveau"), Lang.t("vues.label-villes"), Lang.t("vues.label-habitants"), Lang.t("vues.label-nom"))),
+            Map.entry(Type.PAYS_VILLES, List.of(Lang.t("vues.label-niveau"), Lang.t("vues.label-habitants"), Lang.t("vues.label-nom"))));
 
     /** Budget maximum de l'Agence (0 = tous). */
     static final double[] BUDGETS = {0, 10_000, 50_000, 200_000, -200_000};
-    static final String[] BUDGETS_NOMS = {"Tous les prix", "Jusqu'à 10 000", "Jusqu'à 50 000", "Jusqu'à 200 000", "Plus de 200 000"};
+    static String[] budgetsNoms() {
+        return new String[]{Lang.t("vues.budget-0"), Lang.t("vues.budget-1"), Lang.t("vues.budget-2"), Lang.t("vues.budget-3"), Lang.t("vues.budget-4")};
+    }
     /** Tailles de l'Agence, en blocs. */
-    static final String[] TAILLES_NOMS = {"Toutes les tailles", "Petites (moins de 500 blocs)", "Moyennes (500 à 5 000 blocs)", "Grandes (plus de 5 000 blocs)"};
+    static final int TAILLES = 4;
+
+    static String[] taillesNoms() {
+        return new String[]{Lang.t("vues.taille-0"), Lang.t("vues.taille-1"), Lang.t("vues.taille-2"), Lang.t("vues.taille-3")};
+    }
 
     static final class Etat {
         Type type = Type.VILLES;
@@ -229,7 +235,7 @@ final class Vues {
         m.put("nom", a.nom());
         m.put("titre", a.titre());
         m.put("proprio", a.proprioNom() != null ? a.proprioNom() : Villes.nomJoueur(a.proprio()));
-        m.put("ville", a.villeNom().isEmpty() ? "Hors ville" : a.villeNom());
+        m.put("ville", a.villeNom().isEmpty() ? Lang.t("vues.hors-ville") : a.villeNom());
         m.put("en_ville", Fmt.oui(!a.villeId().isEmpty()));
         m.put("ville_id", a.villeId());
         m.put("visites", Fmt.argent(a.visites()));
@@ -238,7 +244,7 @@ final class Vues {
         m.put("payante", Fmt.oui(a.prix() > 0));
         // Ligne de lore complète (masquée par Flux si vide) : glyphe BitBlock brut U+E023, le
         // résultat d'un placeholder n'étant pas relu par PlaceholderAPI.
-        m.put("prix_ligne", a.prix() > 0 ? "&#B376E5Entrée : &f" + Fmt.argent(a.prix()) + " &r&f" : "");
+        m.put("prix_ligne", a.prix() > 0 ? Lang.t("vues.entree") + Fmt.argent(a.prix()) + " &r&f" : "");
         m.put("icone", a.icone());
         m.put("categorie", a.categorie() == null ? "" : a.categorie());
         m.put("mot_de_passe", Fmt.oui(a.motDePasse()));
@@ -269,12 +275,12 @@ final class Vues {
         m.put("prix_unite", Fmt.argent(s.quantite() > 0 ? s.prix() / s.quantite() : s.prix()));
         m.put("type", s.rachat() ? "Achat" : "Vente");
         m.put("rachat", Fmt.oui(s.rachat()));
-        m.put("stock", s.stock() == Integer.MAX_VALUE ? "illimité" : s.stock() < 0 ? "?" : String.valueOf(s.stock()));
+        m.put("stock", s.stock() == Integer.MAX_VALUE ? Lang.t("vues.illimite") : s.stock() < 0 ? "?" : String.valueOf(s.stock()));
         m.put("vide", Fmt.oui(s.stock() == 0));
         // Ligne masquée (vide) tant que l'échoppe est active ; visible du propriétaire dans « mes échoppes ».
-        m.put("statut", s.active() ? "" : "&#FF5C5C" + (s.rachat() ? "Pleine" : "Vide") + " : cachée du public");
+        m.put("statut", s.active() ? "" : "&#FF5C5C" + (s.rachat() ? "Pleine" : "Vide") + Lang.t("vues.cachee-du-public"));
         m.put("proprio", s.proprioNom() == null ? "?" : s.proprioNom());
-        m.put("ville", s.villeId().isEmpty() ? "Hors ville" : s.villeNom());
+        m.put("ville", s.villeId().isEmpty() ? Lang.t("vues.hors-ville") : s.villeNom());
         m.put("en_ville", Fmt.oui(!s.villeId().isEmpty()));
         m.put("ville_id", s.villeId());
         m.put("taux", s.villeId().isEmpty() ? "0" : Fmt.taux(plugin.registre().taux(s.villeId())));
@@ -452,7 +458,7 @@ final class Vues {
         m.put("nom", FlagTexts.name(f.getName(), Gestion.nu(f.getDisplayName())));
         m.put("icone", Fiches.materiau(f.getIcon()));
         m.put("actif", Fmt.oui(actif));
-        m.put("etat", actif ? "&#2ECF7B✔ Autorisé" : "&#FF5C5C✖ Interdit");
+        m.put("etat", actif ? Lang.t("vues.autorise") : "&#FF5C5C✖ Interdit");
         // one paragraph, wrapped by Flux to the lore width
         m.put("desc", String.join(" ", FlagTexts.description(f.getName())));
         return m;

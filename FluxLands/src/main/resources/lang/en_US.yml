@@ -1,0 +1,376 @@
+# FluxLands texts. NOT TRANSLATED YET (2026-11-13): copy of fr_FR.yml, keys extracted from the Java code; translate here.
+commande:
+  ouvrir-page-filtre-tri-clic: ' ouvrir|page|filtre|tri|clic|banque|parcelle|annonce... (docs/technique/fluxlands.md)'
+  commande-de-menu-joueur-uniquement: 'Commande de menu : joueur uniquement.'
+  tu-n-es-habitant-d: Tu n'es habitant d'aucune ville.
+  aucune-ville-a-afficher: Aucune ville à afficher.
+  aucun-pays-a-afficher: Aucun pays à afficher.
+  ta-ville-ne-fait-partie: Ta ville ne fait partie d'aucun pays.
+  ouvrir-ville-annuaire-commerce-reglages: ouvrir ville|annuaire|commerce|reglages|parcelles|roles|parametres|agence|warps|echoppes|habitants|fiche|pays|pays_annuaire|pays_fiche|pays_villes
+  annonce-de-la-parcelle: 'Annonce de la parcelle '
+  a: ' à '
+  clique-sur-l-hologramme-pour: ' : clique sur l''hologramme pour '
+  la-louer: la louer.
+  seul-le-chef-du-pays: Seul le chef du pays peut retirer une ville.
+  cet-endroit-n-est-dans: Cet endroit n'est dans aucune ville.
+  ce-warp-n-existe-plus: Ce warp n'existe plus.
+  l-echoppe-de: 'L''échoppe de '
+  est-a: ' est à '
+  warp-le-plus-proche: '. Warp le plus proche : '
+  aucun-warp-pres-de-l: 'Aucun warp près de l''échoppe de '
+  direction-le-spawn-de: ' : direction le spawn de '
+  l-echoppe-est-a: '. L''échoppe est à '
+  impossible-de-rejoindre-cette-echoppe: Impossible de rejoindre cette échoppe.
+  aucun-warp-ni-spawn-de: 'Aucun warp ni spawn de ville à proximité. Elle est à '
+  seul-le-maire-peut-epingler: Seul le maire peut épingler un warp de sa ville.
+  la-vitrine-est-pleine: La vitrine est pleine (
+  retires-en-un-d-abord: Retires-en un d'abord.
+  seul-le-maire-de: 'Seul le maire de '
+  peut-faire-ca: ' peut faire ça.'
+  droit-de-place: Droit de place
+  part-de-chaque-vente-des: 'Part de chaque vente des échoppes de '
+  versee-a-la-banque-de: ' versée à la banque de la ville.'
+  un-taux-trop-haut-fait: Un taux trop haut fait fuir les marchands vers d'autres villes.
+  le-role-de-maire-a: Le rôle de maire a toujours tous les droits.
+  role-de: 'Rôle de '
+  ce-que: 'Ce que '
+  a-le-droit-de-faire: ' a le droit de faire dans '
+  role: Rôle
+  est-maintenant: ' <t:texte>est maintenant</t> '
+  nouveau-role: Nouveau rôle
+  nom-du-role-a-creer: 'Nom du rôle à créer dans '
+  regle-ensuite-ses-permissions: . Règle ensuite ses permissions.
+  nom-du-role: Nom du rôle
+  role-cree: '<t:succes>Rôle créé :</t> '
+  il-est-place-en-bas: <t:texte>. Il est placé en bas de la liste.</t>
+  le-role-n-a-pas: Le rôle n'a pas pu être créé.
+  le-nom-est-peut-etre: Le nom est peut-être déjà pris, ou la ville a atteint son nombre de rôles.
+  ce-role-est-gere-par: 'Ce rôle est géré par Lands : il ne se renomme pas et ne se supprime pas.'
+  role-2: 'Rôle '
+  renomme-ce-role-ou-supprime: 'Renomme ce rôle, ou supprime-le : ses habitants prennent alors le rôle juste en dessous.'
+  supprimer-le-role: '&#FF5C5CSupprimer le rôle'
+  le-role: 'Le rôle '
+  disparait-de: ' disparaît de '
+  le-role-n-a-pas-2: Le rôle n'a pas pu être supprimé.
+  role-supprime: '<t:texte>Rôle supprimé :</t> '
+  role-renomme: '<t:texte>Rôle renommé :</t> '
+  ce-role-est-deja-le: Ce rôle est déjà le plus haut des rôles d'habitants.
+  ce-role-est-deja-le-2: Ce rôle est déjà le plus bas des rôles d'habitants.
+  la-ville: 'La ville '
+  n-a-pas-encore-de: ' n''a pas encore de spawn.'
+  le-maire-le-pose-avec: Le maire le pose avec le clic droit du bouton Spawn de la ville.
+  le-marche-n-est-pas: Le marché n'est pas disponible pour le moment.
+  tu-n-as-aucun-bitblock: Tu n'as aucun BitBlock à déposer.
+  la-banque-de: 'La banque de '
+  est-vide: ' est vide.'
+  deposer-a-la-banque: Déposer à la banque
+  retirer-de-la-banque: Retirer de la banque
+  banque-de: 'Banque de '
+  ton-solde: 'Ton solde : '
+  elle-paie-les-frais-d: Elle paie les frais d'entretien de la ville.
+  retirer-demande-le-droit-de: Retirer demande le droit de banque de ton rôle.
+  montant-a-deposer: Montant à déposer
+  montant-a-retirer: Montant à retirer
+  deposer: Déposer
+  tu-n-es-dans-aucune: 'Tu n''es dans aucune parcelle de '
+  cette-parcelle-n-existe-plus: Cette parcelle n'existe plus.
+  la-parcelle: 'La parcelle '
+  a-une-annonce-ou-un: ' a une annonce ou un occupant.'
+  retire-d-abord-l-annonce: Retire d'abord l'annonce ou mets fin à l'occupation.
+  dans-la-liste-et-appuie: ' dans la liste et appuie sur ta touche '
+  q-par-defaut-pour-la: ' <t:deco>(Q par défaut)</t> pour la supprimer.'
+  tu-n-es-pas-dans: 'Tu n''es pas dans la parcelle '
+  place-toi-la-ou-les: Place-toi là où les visiteurs doivent arriver.
+  point-d-arrivee-de-la: 'Point d''arrivée de la parcelle '
+  defini-ici: ' défini ici.'
+  nom-refuse-par-lands: 'Nom refusé par Lands : '
+  retiree-de-l-agence: ' retirée de l''Agence.'
+  aucune-annonce-a-retirer-sur: Aucune annonce à retirer sur cette parcelle.
+  location-ou-vente-de: 'Location ou vente de '
+  terminee: ' terminée.'
+  personne-n-occupe-cette-parcelle: Personne n'occupe cette parcelle.
+  parcelle-ici-aller-spawn-renommer: parcelle ici|aller|spawn|renommer|location|vente|modifier|retirer|terminer|habitants|nouvelle|delimiter|supprimer
+  nouvelle-parcelle: Nouvelle parcelle
+  comment-veux-tu-delimiter-la: Comment veux-tu délimiter la parcelle ?
+  deux-coins-l-outil-de: '&#FFD94DDeux coins : &fl''outil de sélection de Lands, un clic sur chaque coin opposé.'
+  le-chunk-ou-je-suis: '&#FFD94DLe chunk où je suis : &fle carré de 16 x 16 blocs sous tes pieds, en un clic.'
+  ma-selection-actuelle: Ma sélection actuelle (
+  selectionner-deux-coins: Sélectionner deux coins
+  le-chunk-ou-je-suis-2: Le chunk où je suis
+  clique-sur-deux-coins-opposes: 'Clique sur deux coins opposés de '
+  ta-parcelle: ta parcelle
+  avec-l-outil-la-fenetre: ' avec l''outil : la fenêtre s''ouvrira toute seule.'
+  le-chunk-ou-tu-te: 'Le chunk où tu te tiens n''appartient pas à '
+  selection-prete: 'Sélection prête : '
+  fenetre-fermee-par-erreur: . Fenêtre fermée par erreur ?
+  nommer-la-parcelle: Nommer la parcelle
+  parcelle-nouvelle: ' parcelle nouvelle'
+  delimiter: 'Délimiter '
+  selection: 'Sélection : '
+  coche-du-sol-au-ciel: ' Coche « Du sol au ciel » ou indique un Y min et/ou un Y max pour l''étendre en profondeur ou en hauteur.'
+  ta-selection-n-est-plus: Ta sélection n'est plus complète.
+  reselectionne-les-deux-coins-de: Resélectionne les deux coins de la parcelle.
+  hauteur-de-la-selection: 'Hauteur de la sélection : '
+  parcelle-creee: '<t:succes>Parcelle créée :</t> '
+  n-a-pas-recu-ta: ' n''a pas reçu ta sélection.'
+  elle-existe-voir-le-message: 'Elle existe : voir le message de Lands au-dessus.'
+  lands-n-a-pas-cree: 'Lands n''a pas créé la parcelle '
+  voir-son-message-au-dessus: Voir son message au-dessus.
+  aucune-parcelle-de: 'Aucune parcelle de '
+  a-moins-de: ' à moins de '
+  place-toi-juste-a-cote: 'Place-toi juste à côté, ou donne son nom : '
+  aucune-parcelle: 'Aucune parcelle '
+  nom-de-la-ville: Nom de la ville
+  message-d-accueil-de: 'Message d''accueil de '
+  mis-a-jour: ' mis à jour.'
+  tu-n-es-pas-dans-2: 'Tu n''es pas dans '
+  place-toi-la-ou-le: Place-toi là où le spawn de la ville doit être.
+  choisis-le-nom-de-ta: Choisis le nom de ta ville. Tu dois te tenir à l'endroit de ton premier chunk.
+  un-warp-est-un-point: Un warp est un point de téléportation public, créé là où tu te tiens.
+  nom-du-warp: Nom du warp
+  inviter-un-habitant: Inviter un habitant
+  le-joueur-recevra-une-invitation: 'Le joueur recevra une invitation à rejoindre '
+  joueur-connecte: Joueur connecté
+  ou-tape-un-pseudo: Ou tape un pseudo
+  fluxlands-recharge: FluxLands rechargé.
+  echoppes: ' échoppes, '
+  taux: ' taux <ville> <taux en %>'
+  droit-de-place-de: 'Droit de place de '
+  il-faut-etre-maire-d: Il faut être maire d'une ville pour fonder un pays.
+  ta-ville-en-sera-la: Ta ville en sera la capitale.
+  fonder-un-pays: Fonder un pays
+  deviendra-la-capitale-du-pays: ' deviendra la capitale du pays. Choisis son nom (sans espace).'
+  nom-du-pays: Nom du pays
+  seul-le-maire-peut-faire: Seul le maire peut faire quitter le pays à sa ville.
+  seul-le-maire-peut-faire-2: Seul le maire peut faire rejoindre un pays à sa ville.
+  ta-ville: 'Ta ville '
+  n-a-recu-aucune-invitation: ' n''a reçu aucune invitation.'
+  le-chef-d-un-pays: Le chef d'un pays doit d'abord l'inviter, depuis son menu Mon pays.
+  rejoindre-un-pays: Rejoindre un pays
+  un-pays-invite-ta-ville: 'Un pays invite ta ville '
+  a-le-rejoindre: ' à le rejoindre.'
+  pays-invitent-ta-ville: ' pays invitent ta ville '
+  a-les-rejoindre: ' à les rejoindre.'
+  ta-ville-en-deviendra-membre: 'Ta ville en deviendra membre : le pays gère ses taxes et ses effets.'
+  cette-invitation-n-est-plus: Cette invitation n'est plus valable.
+  demande-au-chef-du-pays: Demande au chef du pays de t'inviter à nouveau.
+  seul-le-chef-du-pays-2: Seul le chef du pays peut faire ça.
+  inviter-une-ville: Inviter une ville
+  la-ville-recevra-une-invitation: 'La ville recevra une invitation à rejoindre '
+  ville-sans-pays: Ville sans pays
+  ou-tape-un-nom-de: Ou tape un nom de ville
+  aucune-autre-ville-du-pays: Aucune autre ville du pays ne peut devenir capitale.
+  changer-de-capitale: Changer de capitale
+  la-capitale-paie-les-frais: La capitale paie les frais d'entretien du pays.
+  pays-spawn-inviter-capitale-renommer: pays spawn|inviter|capitale|renommer|creer|quitter|chat|accepter
+  accueil-titre: Message d'accueil
+  accueil-texte: 'Titre affiché aux joueurs qui entrent dans '
+  accueil-champ: Message
+  creer-un-warp: Créer un warp
+countryeffects:
+  cet-effet-n-est-pas: Cet effet n'est pas encore débloqué par le niveau du pays.
+  le-niveau-du-pays-ne: Le niveau du pays ne permet encore aucun effet actif.
+countrymenus:
+  actif-dans-les-villes-du: Actif dans les villes du pays
+  debloque-au-niveau: 'Débloqué au niveau '
+  du-pays: ' du pays'
+  desactiver: Désactiver
+  les-habitants-du-pays-ont: 'Les habitants du pays ont ces effets tant qu''ils se trouvent dans une de ses villes. '
+  le-niveau-du-pays-debloque: Le niveau du pays débloque de nouveaux effets.
+  effets-debloques: Effets débloqués
+  seul-le-chef-du-pays: Seul le chef du pays choisit les effets.
+  effets-de: 'Effets de '
+  seul-le-chef-du-pays-2: Seul le chef du pays choisit ses effets.
+  tous-les: 'tous les '
+  chaque-ville-membre-verse-au: 'Chaque ville membre verse au pays, '
+  ce-montant-par-chunk-qu: ', ce montant par chunk qu''elle '
+  revendique-l-argent-va-a: revendique. L'argent va à la banque de la capitale.
+  recette-estimee: Recette estimée
+  a: ' à '
+  changer-la-taxe: Changer la taxe
+  seul-le-chef-du-pays-3: Seul le chef du pays fixe la taxe.
+  taxes-de: 'Taxes de '
+  capitale-elle-recoit-les-taxes: 'Capitale : elle reçoit les taxes'
+  les-taxes-de-ce-pays: Les taxes de ce pays ne peuvent pas être changées.
+  taxe-du-pays: Taxe du pays
+  montant-verse-par-chaque-ville: 'Montant versé par chaque ville membre, '
+  pour-chaque-chunk-qu-elle: ', pour chaque chunk qu''elle revendique.'
+  une-taxe-trop-haute-pousse: Une taxe trop haute pousse les villes à quitter le pays.
+  taxe-de: '<t:texte>Taxe de</t> '
+expansion:
+  hors-ville: Hors ville
+  a-ville: 'À '
+fluxlands:
+  n-habite-dans-aucune-ville: N'habite dans aucune ville.
+  role: Rôle
+  ma-ville: Ma ville
+fmt:
+  clique-pour: '<t:survol>Clique pour '
+gestion:
+  a-delimiter: À délimiter
+  louee: Louée
+  proprietaire: '&#B376E5Propriétaire : &f'
+  personne-n-occupe-la-parcelle: '&7Personne n''occupe la parcelle'
+  illimitee: illimitée
+  allies: Alliés
+  role-d-habitant: Rôle d'habitant
+  par-periode-de: '&#B376E5Par période de &f'
+  au-plus: '&#B376E5, au plus &f'
+  la-parcelle: '<t:erreur>La parcelle</t> '
+  est-occupee-mets-d-abord: ' <t:erreur>est occupée.</t> Mets d''abord fin à l''occupation.'
+  lands-a-refuse-l-annonce: <t:erreur>Lands a refusé l'annonce ici.</t> Essaie un autre endroit de ta ville, hors de toute parcelle louée ou vendue (voir le message de Lands au-dessus s'il y en a un).
+levels:
+  ta-ville-ne-fait-partie: Ta ville ne fait partie d'aucun pays.
+  tu-n-es-habitant-d: Tu n'es habitant d'aucune ville.
+  remplis-les-objectifs-du-pays: 'Remplis les objectifs du pays pour passer au niveau suivant : il débloque des chunks et des effets pour toutes ses villes.'
+  remplis-les-objectifs-de-la: 'Remplis les objectifs de la ville pour passer au niveau suivant : il augmente ses limites (chunks, habitants).'
+  aucun-niveau-maximum: aucun, niveau maximum
+  niveau-de: 'Niveau de '
+  il-n-y-a-pas: Il n'y a pas de niveau au-dessus.
+  cout: Coût
+  effet-s-actif-s-de: ' effet(s) actif(s) de plus'
+  debloque: 'Débloque :'
+  tous-les-objectifs-sont-remplis: Tous les objectifs sont remplis
+  passer-au-niveau-suivant: Passer au niveau suivant
+  seul-le-chef-du-pays: Seul le chef du pays peut le faire.
+  seul-le-maire-peut-le: Seul le maire peut le faire.
+  passer-au-niveau: 'Passer au niveau '
+  seul-le-chef-du-pays-2: Seul le chef du pays peut le faire passer au niveau suivant.
+  seul-le-maire-peut-faire: Seul le maire peut faire passer la ville au niveau suivant.
+  le-passage-de-niveau-n: Le passage de niveau n'a pas pu se faire.
+  reessaie-dans-un-instant: Réessaie dans un instant.
+  est-maintenant: '<t:texte>est maintenant</t> '
+  tous-les-objectifs-ne-sont: Tous les objectifs ne sont pas encore remplis.
+  ils-sont-listes-dans-ce: Ils sont listés dans ce menu.
+  pas-assez-d-argent-pour: 'Pas assez d''argent pour payer le passage au niveau '
+  tu-n-as-pas-le: Tu n'as pas le droit de faire passer ce niveau.
+  le-passage-au-niveau: 'Le passage au niveau '
+  n-a-pas-pu-se: ' n''a pas pu se faire.'
+listings:
+  la-parcelle: 'La parcelle '
+  est-occupee: ' est occupée.'
+  mets-d-abord-fin-a: Mets d'abord fin à l'occupation.
+  n-est-pas-delimitee: ' n''est pas délimitée.'
+  delimite-la-d-abord-avec: Délimite-la d'abord avec ta sélection.
+  le-locataire-paie-le-loyer: Le locataire paie le loyer à chaque période et peut renouveler jusqu'à la durée maximale du bail.
+  le-loyer-t-est-verse: Le loyer t'est versé à chaque paiement.
+  l-acheteur-devient-proprietaire-de: L'acheteur devient propriétaire de la parcelle, qui reste dans ta ville.
+  le-prix-t-est-verse: Le prix t'est versé à l'achat.
+  tu-es-bien-place-l: '&#2ECF7BTu es bien placé : l''hologramme de l''annonce apparaîtra ici.'
+  l-hologramme-apparaitra-la-ou: '&#FFD94DL''hologramme apparaîtra là où tu te tiendras : dans ta ville, juste à côté de la parcelle'
+  dans-la-rue-devant-par: ' (dans la rue devant, par exemple). Tu pourras le poser après avoir validé.'
+  loyer-par-periode-bitblock-ex: 'Loyer par période (BitBlock, ex : 5000, 10k)'
+  prix-de-vente-bitblock-ex: 'Prix de vente (BitBlock, ex : 50000, 1,5M)'
+  periode-de-paiement: Période de paiement
+  duree-maximale-du-bail: Durée maximale du bail
+  la-duree-maximale-du-bail: La durée maximale du bail doit être au moins égale à la période de paiement.
+  aucune-annonce-en-attente: Aucune annonce en attente.
+  prepare-la-depuis-le-menu: Prépare-la depuis le menu de la parcelle.
+  n-existe-plus: ' n''existe plus.'
+  annonce-publiee: '<t:succes>Annonce publiée :</t> '
+  a-louer: ' à louer '
+  a-vendre: ' à vendre '
+  elle-apparait-dans-l-agence: ' Elle apparaît dans l''Agence '
+  annonce-en-attente-abandonnee: Annonce en attente abandonnée.
+  tu-n-es-pas-dans: '<t:erreur>Tu n''es pas dans</t> '
+  rends-toi-juste-a-cote: '<t:erreur>.</t> Rends-toi juste à côté de la parcelle '
+  l-hologramme-se-pose-la: ' : l''hologramme se pose là où tu te tiens.'
+  sors-de-la-parcelle: '<t:erreur>Sors de la parcelle</t> '
+  lands-place-l-annonce-juste: <t:erreur>.</t> Lands place l'annonce juste à côté (dans la rue devant, par exemple), pas dedans.
+  il-faut-un-sol-plein: <t:erreur>Il faut un sol plein, sans bloc à tes pieds.</t> L'hologramme s'affichera là où tu te tiens.
+  ton-annonce-pour: 'Ton annonce pour '
+  est-prete-une-fois-au: ' est prête. Une fois au bon endroit, clique ou tape '
+moduleechoppes:
+  a: ' à '
+  tu-as-retire-l-echoppe: 'Tu as retiré l''échoppe de '
+  son-contenu-est-tombe-au: ). Son contenu est tombé au sol.
+  ton-echoppe-de: '<t:attention>Ton échoppe de</t> '
+  a-2: ' <t:attention>à</t> '
+  a-ete-retiree-par: ' <t:attention>a été retirée par</t> '
+  echoppe-de-la-ville: '&#FFD94DÉchoppe de la ville'
+  100-des-ventes-versees-a: '&#B376E5100 % des ventes versées à la banque de &f'
+  echoppe-de-vente-uniquement: ' &7(échoppe de vente uniquement)'
+  le-proprietaire-de-cette-echoppe: '<t:erreur>Le propriétaire de cette échoppe ne peut pas payer cet achat</t> et le droit de place de '
+  echoppe: ' (échoppe '
+  ville: ', ville '
+  tu-as-reverse: '&7%img_bitblock% &#B376E5Tu as reversé &f'
+  bitblock-a-la-banque-de: ' &#B376E5Bitblock &#FF5C5C▼&7 à la banque de &f'
+  de-tes-echoppes-de-la: ' de tes échoppes de la ville) [ᴇᴄʜᴏᴘᴘᴇ ᴅᴇ ᴠɪʟʟᴇ]'
+  bitblock-en-droit-de-place: ' &#B376E5Bitblock &#FF5C5C▼&7 en droit de place à &f'
+  ta-ville: '&7%img_bitblock% &#B376E5Ta ville &f'
+  a-gagne: ' &#B376E5a gagné &f'
+  bitblock-grace-a-ses-echoppes: ' &#B376E5Bitblock &#2ECF7B▲&7 grâce à ses échoppes de la ville ('
+  bitblock-en-droit-de-place-2: ' &#B376E5Bitblock &#2ECF7B▲&7 en droit de place ('
+registre:
+  cle-identifiant-ulid-de-la: Clé = identifiant ULID de la ville Lands. Ne pas modifier serveur allumé.
+saisie:
+  ouvrir-la-parcelle: Ouvrir la parcelle
+  la-mettre-en-location: La mettre en location
+  la-mettre-en-vente: La mettre en vente
+  nom-de-la-parcelle: Nom de la parcelle
+  du-sol-au-ciel-toute: Du sol au ciel (toute la hauteur)
+  y-min-vide-selection: Y min (vide = sélection)
+  y-max-vide-selection: Y max (vide = sélection)
+  creer-la-parcelle: Créer la parcelle
+  delimiter: Délimiter
+vues:
+  avec-echoppes: Avec échoppes
+  mon-pays: Mon pays
+  ma-ville: Ma ville
+  ville-consultee: Ville consultée
+  occupees: Occupées
+  actives: Activés
+  desactives: Désactivés
+  recents: Récents
+  prix-decroissant: Prix décroissant
+  taille-decroissante: Taille décroissante
+  hors-ville: Hors ville
+  entree: '&#B376E5Entrée : &f'
+  illimite: illimité
+  cachee-du-public: ' : cachée du public'
+  autorise: '&#2ECF7B✔ Autorisé'
+  label-toutes: Toutes
+  label-: ', '
+  label-lang-t: ', Lang.t('
+  label-map-entry-type-warps-list-of: ")),\n            Map.entry(Type.WARPS, List.of("
+  label-map-entry-type-habitants-list-of: ")),\n            Map.entry(Type.HABITANTS, List.of("
+  label-map-entry-type-agence-list-of: ")),\n            Map.entry(Type.AGENCE, List.of("
+  label-map-entry-type-parcelles-list-of: "))),\n            Map.entry(Type.PARCELLES, List.of("
+  label-map-entry-type-roles-list-of: ")),\n            Map.entry(Type.ROLES, List.of("
+  label-map-entry-type-droits-list-of: ")),\n            Map.entry(Type.DROITS, List.of("
+  label-map-entry-type-parametres-list-of: ")),\n            Map.entry(Type.PARAMETRES, List.of("
+  label-map-entry-type-pays-list-of: ")),\n            Map.entry(Type.PAYS, List.of("
+  label-map-entry-type-pays-villes-list-of: ")),\n            Map.entry(Type.PAYS_VILLES, List.of("
+  label-static-final-map-type-list-string-tris-map-ofentries-map-entry-type-villes-list-of: ")));\n\n    static final Map<Type, List<String>> TRIS = Map.ofEntries(\n            Map.entry(Type.VILLES, List.of("
+  budget-0: Tous les prix
+  budget-1: Jusqu'à 10 000
+  budget-2: Jusqu'à 50 000
+  budget-3: Jusqu'à 200 000
+  budget-4: Plus de 200 000
+  taille-0: Toutes les tailles
+  taille-1: Petites (moins de 500 blocs)
+  taille-2: Moyennes (500 à 5 000 blocs)
+  taille-3: Grandes (plus de 5 000 blocs)
+  label-avec-warps: Avec warps
+  label-tous: Tous
+  label-mes-warps: Mes warps
+  label-en-ligne: En ligne
+  label-toutes-les-annonces: Toutes les annonces
+  label-locations: Locations
+  label-ventes: Ventes
+  label-libres: Libres
+  label-en-annonce: En annonce
+  label-actions: Actions
+  label-gestion: Gestion
+  label-niveau: Niveau
+  label-habitants: Habitants
+  label-commerce: Commerce
+  label-nom: Nom
+  label-visites: Visites
+  label-note: Note
+  label-role: Rôle
+  label-prix-croissant: Prix croissant
+  label-taille-croissante: Taille croissante
+  label-taille: Taille
+  label-priorite: Priorité
+  label-villes: Villes

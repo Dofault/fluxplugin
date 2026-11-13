@@ -64,10 +64,10 @@ final class CountryMenus {
         for (PotionEffectType t : all) {
             Lore lore = Lore.create();
             boolean on = active.contains(t);
-            if (on) lore.ok("Actif dans les villes du pays");
+            if (on) lore.ok(Lang.t("countrymenus.actif-dans-les-villes-du"));
             else if (now.pool().contains(t)) lore.info("Disponible");
-            else lore.ko("Débloqué au niveau " + firstLevel(ce, t) + " du pays");
-            if (head && now.pool().contains(t)) lore.left(on ? "Désactiver" : "Activer");
+            else lore.ko(Lang.t("countrymenus.debloque-au-niveau") + firstLevel(ce, t) + Lang.t("countrymenus.du-pays"));
+            if (head && now.pool().contains(t)) lore.left(on ? Lang.t("countrymenus.desactiver") : "Activer");
             ItemStack item = potion(t, on);
             out.add(ListEntry.of(t.getKey().getKey()).item(Items.dress(item, CountryEffects.name(t), lore.build(), p)).set("effect", t.getKey().getKey()));
         }
@@ -79,12 +79,12 @@ final class CountryMenus {
         if (n == null) return null;
         CountryEffects ce = plugin.countryEffects();
         CountryEffects.Unlocks u = ce.unlocks(n);
-        Lore lore = Lore.create().description("Les habitants du pays ont ces effets tant qu'ils se trouvent dans une de ses villes. "
-                + "Le niveau du pays débloque de nouveaux effets.");
+        Lore lore = Lore.create().description(Lang.t("countrymenus.les-habitants-du-pays-ont")
+                + Lang.t("countrymenus.le-niveau-du-pays-debloque"));
         lore.kv("Effets actifs", ce.active(n).size() + " / " + u.active());
-        lore.kv("Effets débloqués", String.valueOf(u.pool().size()));
-        if (!Pays.estChef(n, p)) lore.info("Seul le chef du pays choisit les effets.");
-        return Items.of("itemsadder:influville:effets", "Effets de " + Couleurs.legacy(n.getColorName()), lore.build(), p);
+        lore.kv(Lang.t("countrymenus.effets-debloques"), String.valueOf(u.pool().size()));
+        if (!Pays.estChef(n, p)) lore.info(Lang.t("countrymenus.seul-le-chef-du-pays"));
+        return Items.of("itemsadder:influville:effets", Lang.t("countrymenus.effets-de") + Couleurs.legacy(n.getColorName()), lore.build(), p);
     }
 
     /** First level whose unlocks contain the effect (2 to 4), for the locked ones. */
@@ -108,7 +108,7 @@ final class CountryMenus {
         Nation n = plugin.pays().monPays(p);
         if (n == null) return;
         if (!Pays.estChef(n, p) && !p.hasPermission("fluxlands.admin")) {
-            Fmt.erreur(p, "Seul le chef du pays choisit ses effets.");
+            Fmt.erreur(p, Lang.t("countrymenus.seul-le-chef-du-pays-2"));
             return;
         }
         PotionEffectType t = CountryEffects.type(key);
@@ -134,7 +134,7 @@ final class CountryMenus {
     }
 
     private static String every(double days) {
-        return days == 7 ? "chaque semaine" : days == 1 ? "chaque jour" : "tous les " + (int) days + " jours";
+        return days == 7 ? "chaque semaine" : days == 1 ? "chaque jour" : Lang.t("countrymenus.tous-les") + (int) days + " jours";
     }
 
     private ItemStack taxInfo(Player p) {
@@ -144,14 +144,14 @@ final class CountryMenus {
         double t = tax(n);
         double total = 0;
         for (Land l : Pays.villes(n)) if (!isCapital(n, l)) total += l.getChunksAmount() * t;
-        Lore lore = Lore.create().description("Chaque ville membre verse au pays, " + every(b[2]) + ", ce montant par chunk qu'elle "
-                + "revendique. L'argent va à la banque de la capitale.");
+        Lore lore = Lore.create().description(Lang.t("countrymenus.chaque-ville-membre-verse-au") + every(b[2]) + Lang.t("countrymenus.ce-montant-par-chunk-qu")
+                + Lang.t("countrymenus.revendique-l-argent-va-a"));
         lore.kv("Taxe", Fmt.argent(t) + " &r&f &7par chunk");
-        lore.kv("Recette estimée", Fmt.argent(total) + " &r&f");
-        lore.kv("Bornes", Fmt.argent(b[0]) + " à " + Fmt.argent(b[1]));
-        if (Pays.estChef(n, p) || p.hasPermission("fluxlands.admin")) lore.left("Changer la taxe");
-        else lore.info("Seul le chef du pays fixe la taxe.");
-        return Items.of("itemsadder:influville:taxes", "Taxes de " + Couleurs.legacy(n.getColorName()), lore.build(), p);
+        lore.kv(Lang.t("countrymenus.recette-estimee"), Fmt.argent(total) + " &r&f");
+        lore.kv("Bornes", Fmt.argent(b[0]) + Lang.t("countrymenus.a") + Fmt.argent(b[1]));
+        if (Pays.estChef(n, p) || p.hasPermission("fluxlands.admin")) lore.left(Lang.t("countrymenus.changer-la-taxe"));
+        else lore.info(Lang.t("countrymenus.seul-le-chef-du-pays-3"));
+        return Items.of("itemsadder:influville:taxes", Lang.t("countrymenus.taxes-de") + Couleurs.legacy(n.getColorName()), lore.build(), p);
     }
 
     private List<ListEntry> taxTowns(Player p) {
@@ -164,7 +164,7 @@ final class CountryMenus {
         for (Land l : towns) {
             boolean capital = isCapital(n, l);
             Lore lore = Lore.create().kv("Chunks", String.valueOf(l.getChunksAmount()));
-            if (capital) lore.info("Capitale : elle reçoit les taxes");
+            if (capital) lore.info(Lang.t("countrymenus.capitale-elle-recoit-les-taxes"));
             else lore.kv("Taxe", Fmt.argent(l.getChunksAmount() * t) + " &r&f");
             out.add(ListEntry.of(Villes.id(l)).item(Items.of("itemsadder:influville:niveau_" + Villes.niveau(l),
                     Couleurs.legacy(l.getColorName()), lore.build(), p)));
@@ -182,23 +182,23 @@ final class CountryMenus {
         Nation n = plugin.pays().monPays(p);
         if (n == null) return;
         if (!Pays.estChef(n, p) && !p.hasPermission("fluxlands.admin")) {
-            Fmt.erreur(p, "Seul le chef du pays fixe la taxe.");
+            Fmt.erreur(p, Lang.t("countrymenus.seul-le-chef-du-pays-3"));
             return;
         }
         if (!(n instanceof TaxHolder th)) {
-            Fmt.erreur(p, "Les taxes de ce pays ne peuvent pas être changées.");
+            Fmt.erreur(p, Lang.t("countrymenus.les-taxes-de-ce-pays"));
             return;
         }
         double[] b = bounds();
-        Dialogs.form(p, "Taxe du pays")
-                .body("Montant versé par chaque ville membre, " + every(b[2]) + ", pour chaque chunk qu'elle revendique.")
-                .body("Une taxe trop haute pousse les villes à quitter le pays.")
+        Dialogs.form(p, Lang.t("countrymenus.taxe-du-pays"))
+                .body(Lang.t("countrymenus.montant-verse-par-chaque-ville") + every(b[2]) + Lang.t("countrymenus.pour-chaque-chunk-qu-elle"))
+                .body(Lang.t("countrymenus.une-taxe-trop-haute-pousse"))
                 .slider("taxe", "Taxe par chunk", (float) b[0], (float) Math.max(b[0], b[1]), 0.5f, (float) th.getTax(), "%s : %s")
                 .onSubmit((pl, a) -> {
                     Float v = a.number("taxe");
                     if (v != null) {
                         th.setTax(Math.max(b[0], Math.min(b[1], v)));
-                        Fmt.envoyer(pl, "<t:texte>Taxe de</t> " + Fmt.ville(n.getName()) + " <t:texte>:</t> "
+                        Fmt.envoyer(pl, Lang.t("countrymenus.taxe-de") + Fmt.ville(n.getName()) + " <t:texte>:</t> "
                                 + Fmt.bitblock(th.getTax()) + " <t:texte>par chunk.</t>");
                     }
                     refresh(pl);

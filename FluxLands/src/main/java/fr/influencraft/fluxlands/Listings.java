@@ -44,11 +44,11 @@ final class Listings {
     void open(Player p, Land land, Area zone, boolean rent) {
         RentalBase offer = zone.getRentalOffer();
         if (offer != null && (offer.getType() == RentalType.RENTED || offer.getType() == RentalType.SOLD)) {
-            Fmt.erreur(p, "La parcelle " + Fmt.v(zone.getName()) + " est occupée.", "Mets d'abord fin à l'occupation.");
+            Fmt.erreur(p, Lang.t("listings.la-parcelle") + Fmt.v(zone.getName()) + Lang.t("listings.est-occupee"), Lang.t("listings.mets-d-abord-fin-a"));
             return;
         }
         if (!Gestion.delimitee(zone)) {
-            Fmt.erreur(p, "La parcelle " + Fmt.v(zone.getName()) + " n'est pas délimitée.", "Délimite-la d'abord avec ta sélection.");
+            Fmt.erreur(p, Lang.t("listings.la-parcelle") + Fmt.v(zone.getName()) + Lang.t("listings.n-est-pas-delimitee"), Lang.t("listings.delimite-la-d-abord-avec"));
             return;
         }
         Draft pending = plugin.vues().etat(p).brouillon;
@@ -70,25 +70,25 @@ final class Listings {
         boolean here = spotProblem(p, land, zone) == null;
         Dialogs.Form form = Dialogs.form(p, (d.rent() ? "Louer " : "Vendre ") + zone.getName());
         if (d.rent()) {
-            form.body("Le locataire paie le loyer à chaque période et peut renouveler jusqu'à la durée maximale du bail.")
-                    .body("Le loyer t'est versé à chaque paiement.");
+            form.body(Lang.t("listings.le-locataire-paie-le-loyer"))
+                    .body(Lang.t("listings.le-loyer-t-est-verse"));
         } else {
-            form.body("L'acheteur devient propriétaire de la parcelle, qui reste dans ta ville.")
-                    .body("Le prix t'est versé à l'achat.");
+            form.body(Lang.t("listings.l-acheteur-devient-proprietaire-de"))
+                    .body(Lang.t("listings.le-prix-t-est-verse"));
         }
-        form.body(here ? "&#2ECF7BTu es bien placé : l'hologramme de l'annonce apparaîtra ici."
-                : "&#FFD94DL'hologramme apparaîtra là où tu te tiendras : dans ta ville, juste à côté de la parcelle"
-                + " (dans la rue devant, par exemple). Tu pourras le poser après avoir validé.");
+        form.body(here ? Lang.t("listings.tu-es-bien-place-l")
+                : Lang.t("listings.l-hologramme-apparaitra-la-ou")
+                + Lang.t("listings.dans-la-rue-devant-par"));
         // wrong price or lease: Flux opens the window again with the error and what was typed
-        form.amount("prix", d.rent() ? "Loyer par période (BitBlock, ex : 5000, 10k)" : "Prix de vente (BitBlock, ex : 50000, 1,5M)",
+        form.amount("prix", d.rent() ? Lang.t("listings.loyer-par-periode-bitblock-ex") : Lang.t("listings.prix-de-vente-bitblock-ex"),
                 d.price(), 1, 1_000_000_000L);
         if (d.rent()) {
-            form.choice("periode", "Période de paiement", options(PERIODS, d.periodDays()))
-                    .choice("bail", "Durée maximale du bail", options(LEASES, d.maxDays()))
+            form.choice("periode", Lang.t("listings.periode-de-paiement"), options(PERIODS, d.periodDays()))
+                    .choice("bail", Lang.t("listings.duree-maximale-du-bail"), options(LEASES, d.maxDays()))
                     .check(a -> {
                         int lease = days(a.text("bail"), d.maxDays());
                         return lease > 0 && lease < days(a.text("periode"), d.periodDays())
-                                ? "La durée maximale du bail doit être au moins égale à la période de paiement." : null;
+                                ? Lang.t("listings.la-duree-maximale-du-bail") : null;
                     });
         }
         form.buttons(here ? "Publier ici" : "Valider", "Annuler")
@@ -111,13 +111,13 @@ final class Listings {
         Vues.Etat e = plugin.vues().etat(p);
         Draft d = e.brouillon;
         if (d == null) {
-            Fmt.erreur(p, "Aucune annonce en attente.", "Prépare-la depuis le menu de la parcelle.");
+            Fmt.erreur(p, Lang.t("listings.aucune-annonce-en-attente"), Lang.t("listings.prepare-la-depuis-le-menu"));
             return;
         }
         Area zone = plugin.gestion().parcelle(land, d.plot());
         if (zone == null) {
             e.brouillon = null;
-            Fmt.erreur(p, "La parcelle " + Fmt.v(d.plot()) + " n'existe plus.");
+            Fmt.erreur(p, Lang.t("listings.la-parcelle") + Fmt.v(d.plot()) + Lang.t("listings.n-existe-plus"));
             return;
         }
         String problem = spotProblem(p, land, zone);
@@ -137,16 +137,16 @@ final class Listings {
             RentalBase o = zone.getRentalOffer();
             if (o == null || o.getType() != (d.rent() ? RentalType.RENT : RentalType.SELL)) return;
             if (e.brouillon == d) e.brouillon = null;
-            Fmt.envoyer(p, "<t:succes>Annonce publiée :</t> " + Fmt.v(zone.getName()) + (d.rent() ? " à louer "
-                    + Fmt.bitblock(d.price()) + " par " + Fmt.v(Gestion.duree(d.periodDays() * 1440)) + "." : " à vendre "
-                    + Fmt.bitblock(d.price()) + ".") + " Elle apparaît dans l'Agence " + Fmt.cmd("/agence") + ".");
+            Fmt.envoyer(p, Lang.t("listings.annonce-publiee") + Fmt.v(zone.getName()) + (d.rent() ? Lang.t("listings.a-louer")
+                    + Fmt.bitblock(d.price()) + " par " + Fmt.v(Gestion.duree(d.periodDays() * 1440)) + "." : Lang.t("listings.a-vendre")
+                    + Fmt.bitblock(d.price()) + ".") + Lang.t("listings.elle-apparait-dans-l-agence") + Fmt.cmd("/agence") + ".");
         }, 10L);
     }
 
     /** Drops the pending draft. */
     void abandon(Player p) {
         plugin.vues().etat(p).brouillon = null;
-        Fmt.envoyer(p, "Annonce en attente abandonnée.");
+        Fmt.envoyer(p, Lang.t("listings.annonce-en-attente-abandonnee"));
     }
 
     /**
@@ -156,21 +156,21 @@ final class Listings {
     String spotProblem(Player p, Land land, Area zone) {
         Land here = plugin.villes().a(p.getLocation());
         if (here == null || !Villes.id(here).equals(Villes.id(land))) {
-            return "<t:erreur>Tu n'es pas dans</t> " + Fmt.ville(Gestion.nu(land.getName())) + "<t:erreur>.</t> Rends-toi juste à côté de la parcelle " + Fmt.v(zone.getName()) + " : l'hologramme se pose là où tu te tiens.";
+            return Lang.t("listings.tu-n-es-pas-dans") + Fmt.ville(Gestion.nu(land.getName())) + Lang.t("listings.rends-toi-juste-a-cote") + Fmt.v(zone.getName()) + Lang.t("listings.l-hologramme-se-pose-la");
         }
         Area area = land.getArea(p.getLocation());
         if (area != null && !area.isDefault() && area.getName().equalsIgnoreCase(zone.getName())) {
-            return "<t:erreur>Sors de la parcelle</t> " + Fmt.v(zone.getName()) + "<t:erreur>.</t> Lands place l'annonce juste à côté (dans la rue devant, par exemple), pas dedans.";
+            return Lang.t("listings.sors-de-la-parcelle") + Fmt.v(zone.getName()) + Lang.t("listings.lands-place-l-annonce-juste");
         }
         Block b = p.getLocation().getBlock();
         if (!b.getType().isAir() || !b.getRelative(BlockFace.DOWN).getType().isSolid()) {
-            return "<t:erreur>Il faut un sol plein, sans bloc à tes pieds.</t> L'hologramme s'affichera là où tu te tiens.";
+            return Lang.t("listings.il-faut-un-sol-plein");
         }
         return null;
     }
 
     private void link(Player p, Area zone) {
-        Fmt.action(p, "Ton annonce pour " + Fmt.v(zone.getName()) + " est prête. Une fois au bon endroit, clique ou tape "
+        Fmt.action(p, Lang.t("listings.ton-annonce-pour") + Fmt.v(zone.getName()) + Lang.t("listings.est-prete-une-fois-au")
                         + Fmt.cmd("/v annonce") + " :",
                 "Poser l'annonce ici", plugin.commande().label() + " annonce publier");
     }

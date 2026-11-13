@@ -54,7 +54,7 @@ final class Levels {
     void open(Player p, boolean country) {
         MemberHolder holder = country ? plugin.pays().monPays(p) : plugin.villes().maVille(p);
         if (holder == null) {
-            Fmt.erreur(p, country ? "Ta ville ne fait partie d'aucun pays." : "Tu n'es habitant d'aucune ville.");
+            Fmt.erreur(p, country ? Lang.t("levels.ta-ville-ne-fait-partie") : Lang.t("levels.tu-n-es-habitant-d"));
             return;
         }
         View view = new View(country, holder.getULID().toString(), new ConcurrentHashMap<>());
@@ -146,13 +146,13 @@ final class Levels {
         Level current = holder.getLevel();
         Level next = next(holder);
         Lore lore = Lore.create().description(v.country()
-                ? "Remplis les objectifs du pays pour passer au niveau suivant : il débloque des chunks et des effets pour toutes ses villes."
-                : "Remplis les objectifs de la ville pour passer au niveau suivant : il augmente ses limites (chunks, habitants).");
+                ? Lang.t("levels.remplis-les-objectifs-du-pays")
+                : Lang.t("levels.remplis-les-objectifs-de-la"));
         lore.kv("Niveau actuel", current == null ? "?" : Couleurs.legacy(current.getName()));
-        lore.kv("Niveau suivant", next == null ? "aucun, niveau maximum" : Couleurs.legacy(next.getName()));
+        lore.kv("Niveau suivant", next == null ? Lang.t("levels.aucun-niveau-maximum") : Couleurs.legacy(next.getName()));
         String icon = holder instanceof Nation n ? "itemsadder:influville:pays_niveau_" + Pays.niveau(n)
                 : "itemsadder:influville:niveau_" + Villes.niveau((Land) holder);
-        return Items.of(icon, "Niveau de " + Couleurs.legacy(holder.getColorName()), lore.build(), p);
+        return Items.of(icon, Lang.t("levels.niveau-de") + Couleurs.legacy(holder.getColorName()), lore.build(), p);
     }
 
     private ItemStack upButton(Player p) {
@@ -161,7 +161,7 @@ final class Levels {
         Level next = next(holder);
         if (next == null) {
             return Items.of("itemsadder:influitems:checkmark", "Niveau maximum",
-                    Lore.create().description("Il n'y a pas de niveau au-dessus.").build(), p);
+                    Lore.create().description(Lang.t("levels.il-n-y-a-pas")).build(), p);
         }
         Map<String, Double> values = views.get(p.getUniqueId()).values();
         List<Requirement> reqs = requirements(holder, next);
@@ -171,7 +171,7 @@ final class Levels {
         }).count();
         Lore lore = Lore.create();
         var money = fr.influencraft.flux.api.economy.Economy.main();
-        if (next.getCost() > 0) lore.kv("Coût", money != null ? money.format(next.getCost()) : Fmt.argent(next.getCost()));
+        if (next.getCost() > 0) lore.kv(Lang.t("levels.cout"), money != null ? money.format(next.getCost()) : Fmt.argent(next.getCost()));
         List<String> rewards = new ArrayList<>();
         for (Object o : next.getRewards()) if (o instanceof Reward r && r.getDescription() != null) rewards.add(Couleurs.nu(r.getDescription()));
         rewards.removeIf(String::isBlank);
@@ -183,14 +183,14 @@ final class Levels {
             for (var t : plugin.countryEffects().unlocks(to).pool()) if (!before.contains(t)) added.add(CountryEffects.name(t));
             if (!added.isEmpty()) rewards.add("Effets : " + String.join(", ", added));
             int more = plugin.countryEffects().unlocks(to).active() - plugin.countryEffects().unlocks(to - 1).active();
-            if (more > 0) rewards.add(more + " effet(s) actif(s) de plus");
+            if (more > 0) rewards.add(more + Lang.t("levels.effet-s-actif-s-de"));
         }
-        if (!rewards.isEmpty()) lore.description("Débloque :").items(rewards);
-        if (missing == 0) lore.ok("Tous les objectifs sont remplis");
+        if (!rewards.isEmpty()) lore.description(Lang.t("levels.debloque")).items(rewards);
+        if (missing == 0) lore.ok(Lang.t("levels.tous-les-objectifs-sont-remplis"));
         else lore.ko(missing == 1 ? "Il reste 1 objectif" : "Il reste " + missing + " objectifs");
-        if (canLevelUp(p, holder)) lore.left("Passer au niveau suivant");
-        else lore.info(views.get(p.getUniqueId()).country() ? "Seul le chef du pays peut le faire." : "Seul le maire peut le faire.");
-        ItemStack item = Items.of("itemsadder:influitems:stairs", "Passer au niveau " + Couleurs.legacy(next.getName()), lore.build(), p);
+        if (canLevelUp(p, holder)) lore.left(Lang.t("levels.passer-au-niveau-suivant"));
+        else lore.info(views.get(p.getUniqueId()).country() ? Lang.t("levels.seul-le-chef-du-pays") : Lang.t("levels.seul-le-maire-peut-le"));
+        ItemStack item = Items.of("itemsadder:influitems:stairs", Lang.t("levels.passer-au-niveau") + Couleurs.legacy(next.getName()), lore.build(), p);
         if (missing == 0) glow(item);
         return item;
     }
@@ -201,20 +201,20 @@ final class Levels {
         MemberHolder holder = holder(p);
         if (holder == null) return;
         if (!canLevelUp(p, holder)) {
-            Fmt.erreur(p, holder instanceof Nation ? "Seul le chef du pays peut le faire passer au niveau suivant."
-                    : "Seul le maire peut faire passer la ville au niveau suivant.");
+            Fmt.erreur(p, holder instanceof Nation ? Lang.t("levels.seul-le-chef-du-pays-2")
+                    : Lang.t("levels.seul-le-maire-peut-faire"));
             return;
         }
         Level next = next(holder);
         if (next == null) {
-            Fmt.erreur(p, "Il n'y a pas de niveau au-dessus.");
+            Fmt.erreur(p, Lang.t("levels.il-n-y-a-pas"));
             return;
         }
         LandPlayer lp = plugin.villes().api().getLandPlayer(p.getUniqueId());
         if (lp == null) return;
         holder.levelUp(lp).whenComplete((res, err) -> Bukkit.getScheduler().runTask(plugin, () -> {
             if (res instanceof LevelUpResult r) answer(p, holder, next, r);
-            else Fmt.erreur(p, "Le passage de niveau n'a pas pu se faire.", "Réessaie dans un instant.");
+            else Fmt.erreur(p, Lang.t("levels.le-passage-de-niveau-n"), Lang.t("levels.reessaie-dans-un-instant"));
             open(p, holder instanceof Nation);
         }));
     }
@@ -223,12 +223,12 @@ final class Levels {
         String name = Couleurs.legacy(next.getName());
         switch (r) {
             case SUCCESS -> Fmt.envoyer(p, "<t:succes>Niveau suivant atteint :</t> " + Fmt.ville(Couleurs.nu(holder.getName()))
-                    + " " + "<t:texte>est maintenant</t> " + Fmt.v(Couleurs.nu(next.getName())) + "<t:texte>.</t>");
-            case REQUIREMENTS_NOT_MET -> Fmt.erreur(p, "Tous les objectifs ne sont pas encore remplis.", "Ils sont listés dans ce menu.");
-            case NOT_ENOUGH_MONEY -> Fmt.erreur(p, "Pas assez d'argent pour payer le passage au niveau " + Fmt.v(Couleurs.nu(next.getName())) + ".");
-            case HIGHEST_LEVEL -> Fmt.erreur(p, "Il n'y a pas de niveau au-dessus.");
-            case NO_PERMISSION -> Fmt.erreur(p, "Tu n'as pas le droit de faire passer ce niveau.");
-            default -> Fmt.erreur(p, "Le passage au niveau " + Fmt.v(Couleurs.nu(next.getName())) + " n'a pas pu se faire.", "Réessaie dans un instant.");
+                    + " " + Lang.t("levels.est-maintenant") + Fmt.v(Couleurs.nu(next.getName())) + "<t:texte>.</t>");
+            case REQUIREMENTS_NOT_MET -> Fmt.erreur(p, Lang.t("levels.tous-les-objectifs-ne-sont"), Lang.t("levels.ils-sont-listes-dans-ce"));
+            case NOT_ENOUGH_MONEY -> Fmt.erreur(p, Lang.t("levels.pas-assez-d-argent-pour") + Fmt.v(Couleurs.nu(next.getName())) + ".");
+            case HIGHEST_LEVEL -> Fmt.erreur(p, Lang.t("levels.il-n-y-a-pas"));
+            case NO_PERMISSION -> Fmt.erreur(p, Lang.t("levels.tu-n-as-pas-le"));
+            default -> Fmt.erreur(p, Lang.t("levels.le-passage-au-niveau") + Fmt.v(Couleurs.nu(next.getName())) + Lang.t("levels.n-a-pas-pu-se"), Lang.t("levels.reessaie-dans-un-instant"));
         }
     }
 

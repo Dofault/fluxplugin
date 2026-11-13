@@ -149,11 +149,11 @@ final class ModuleEchoppes implements Listener {
         String objet = Fiches.nomObjetTexte(shop.item());
         String ville = land != null ? land.getName() : "?";
         plugin.getLogger().info(p.getName() + " a retiré l'échoppe " + shop.id() + " (" + shop.item().getType().getKey() + ") de "
-                + Villes.nomJoueur(proprio) + " à " + ville);
-        Fmt.envoyer(p, "Tu as retiré l'échoppe de " + Fmt.v(Villes.nomJoueur(proprio)) + " (" + Fmt.v(objet)
-                + "). Son contenu est tombé au sol.");
-        Fmt.envoyer(Bukkit.getPlayer(proprio), "<t:attention>Ton échoppe de</t> " + Fmt.v(objet) + " <t:attention>à</t> "
-                + Fmt.ville(ville) + " <t:attention>a été retirée par</t> " + Fmt.v(p.getName()) + "<t:attention>.</t>");
+                + Villes.nomJoueur(proprio) + Lang.t("moduleechoppes.a") + ville);
+        Fmt.envoyer(p, Lang.t("moduleechoppes.tu-as-retire-l-echoppe") + Fmt.v(Villes.nomJoueur(proprio)) + " (" + Fmt.v(objet)
+                + Lang.t("moduleechoppes.son-contenu-est-tombe-au"));
+        Fmt.envoyer(Bukkit.getPlayer(proprio), Lang.t("moduleechoppes.ton-echoppe-de") + Fmt.v(objet) + Lang.t("moduleechoppes.a-2")
+                + Fmt.ville(ville) + Lang.t("moduleechoppes.a-ete-retiree-par") + Fmt.v(p.getName()) + "<t:attention>.</t>");
     }
 
     // ── Échoppe de la ville ─────────────────────────────────────────────────
@@ -169,9 +169,9 @@ final class ModuleEchoppes implements Listener {
             if (shop != null && (shop.buying() || shop.unlimited())) return null;
             Land land = plugin.villes().a(loc);
             if (!plugin.villes().percoit(land)) return null;
-            return new ChestShops.Offer(Fmt.ligne(joueur, "&#FFD94DÉchoppe de la ville"),
-                    Fmt.ligne(joueur, "&#B376E5100 % des ventes versées à la banque de &f" + land.getName()
-                            + (shop == null ? " &7(échoppe de vente uniquement)" : "")));
+            return new ChestShops.Offer(Fmt.ligne(joueur, Lang.t("moduleechoppes.echoppe-de-la-ville")),
+                    Fmt.ligne(joueur, Lang.t("moduleechoppes.100-des-ventes-versees-a") + land.getName()
+                            + (shop == null ? Lang.t("moduleechoppes.echoppe-de-vente-uniquement") : "")));
         });
     }
 
@@ -235,7 +235,7 @@ final class ModuleEchoppes implements Listener {
         if (droit <= 0) return;
         OfflinePlayer owner = Bukkit.getOfflinePlayer(shop.owner());
         if (eco.balance(owner) < e.total() + droit) {
-            e.refuse(Fmt.message(null, "<t:erreur>Le propriétaire de cette échoppe ne peut pas payer cet achat</t> et le droit de place de "
+            e.refuse(Fmt.message(null, Lang.t("moduleechoppes.le-proprietaire-de-cette-echoppe")
                     + Fmt.ville(land.getName()) + "."));
         }
     }
@@ -254,7 +254,7 @@ final class ModuleEchoppes implements Listener {
         var origine = fr.influencraft.flux.api.economy.Origin.of("FluxLands", versement ? "town_shop" : "stall_fee");
         if (!eco.take(owner, droit, origine)) {
             plugin.getLogger().warning("Droit de place non prélevé : " + Villes.nomJoueur(proprio) + " n'a pas " + droit
-                    + " (échoppe " + shop.id() + ", ville " + land.getName() + ")");
+                    + Lang.t("moduleechoppes.echoppe") + shop.id() + Lang.t("moduleechoppes.ville") + land.getName() + ")");
             return;
         }
         if (!land.modifyBalance(droit)) {
@@ -288,10 +288,10 @@ final class ModuleEchoppes implements Listener {
                 String nom = land != null ? land.getName() : "?";
                 long n = (long) v.getValue()[1];
                 if (versement) {
-                    Fmt.notification(p, "&7%img_bitblock% &#B376E5Tu as reversé &f" + Fmt.argent(v.getValue()[0]) + " &#B376E5Bitblock &#FF5C5C▼&7 à la banque de &f"
-                            + nom + " &7(" + n + " vente" + (n > 1 ? "s" : "") + " de tes échoppes de la ville) [ᴇᴄʜᴏᴘᴘᴇ ᴅᴇ ᴠɪʟʟᴇ]");
+                    Fmt.notification(p, Lang.t("moduleechoppes.tu-as-reverse") + Fmt.argent(v.getValue()[0]) + Lang.t("moduleechoppes.bitblock-a-la-banque-de")
+                            + nom + " &7(" + n + " vente" + (n > 1 ? "s" : "") + Lang.t("moduleechoppes.de-tes-echoppes-de-la"));
                 } else {
-                    Fmt.notification(p, "&7%img_bitblock% &#B376E5Tu as perdu &f" + Fmt.argent(v.getValue()[0]) + " &#B376E5Bitblock &#FF5C5C▼&7 en droit de place à &f"
+                    Fmt.notification(p, "&7%img_bitblock% &#B376E5Tu as perdu &f" + Fmt.argent(v.getValue()[0]) + Lang.t("moduleechoppes.bitblock-en-droit-de-place")
                             + nom + " &7(" + n + " transaction" + (n > 1 ? "s" : "") + ") [ᴅʀᴏɪᴛ ᴅᴇ ᴘʟᴀᴄᴇ]");
                 }
             }
@@ -305,12 +305,12 @@ final class ModuleEchoppes implements Listener {
             if (maire == null) continue;
             long n = (long) v.getValue()[1];
             if (versement) {
-                Fmt.notification(maire, "&7%img_bitblock% &#B376E5Ta ville &f" + land.getName() + " &#B376E5a gagné &f" + Fmt.argent(v.getValue()[0])
-                        + " &#B376E5Bitblock &#2ECF7B▲&7 grâce à ses échoppes de la ville (" + n + " vente" + (n > 1 ? "s" : "")
+                Fmt.notification(maire, Lang.t("moduleechoppes.ta-ville") + land.getName() + Lang.t("moduleechoppes.a-gagne") + Fmt.argent(v.getValue()[0])
+                        + Lang.t("moduleechoppes.bitblock-grace-a-ses-echoppes") + n + " vente" + (n > 1 ? "s" : "")
                         + ") [ᴇᴄʜᴏᴘᴘᴇ ᴅᴇ ᴠɪʟʟᴇ]");
             } else {
-                Fmt.notification(maire, "&7%img_bitblock% &#B376E5Ta ville &f" + land.getName() + " &#B376E5a gagné &f" + Fmt.argent(v.getValue()[0])
-                        + " &#B376E5Bitblock &#2ECF7B▲&7 en droit de place (" + n + " transaction" + (n > 1 ? "s" : "")
+                Fmt.notification(maire, Lang.t("moduleechoppes.ta-ville") + land.getName() + Lang.t("moduleechoppes.a-gagne") + Fmt.argent(v.getValue()[0])
+                        + Lang.t("moduleechoppes.bitblock-en-droit-de-place-2") + n + " transaction" + (n > 1 ? "s" : "")
                         + ") [ᴅʀᴏɪᴛ ᴅᴇ ᴘʟᴀᴄᴇ]");
             }
         }
