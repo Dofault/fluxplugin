@@ -5,9 +5,11 @@ An evoker reworked as an ancient enchanter whose magic changes sizes: he shrinks
 then look huge) and grows giant himself in his last phase. Recognisable illager (cube head, long nose, heavy brow,
 grey skin, narrow eyes) in a layered enchanter's robe.
 
-Signature motif, repeated everywhere: THE SAME SHAPE AT SHRINKING SIZES. Painted as a column of three diamonds
-(5 px, 3 px, 1 px: `scale_glyph`), as concentric diamonds (chest, back, cap), and built once in the volume: three
-cubes standing on a corner above the raised palm, large, medium, small.
+Few cubes, careful painting (art pass of 2026-11-13): one palette per material, nothing random, every pixel placed.
+Cloth is matt with vertical fold shadows, gold is plain and rare (tabard edges, hems, cuffs, shoulders, crown),
+skin is natural, crystal is the only emissive material (crown, chest, back, palm). His power shows in one place in
+the volume, three crystal cubes standing on a corner above the raised palm (large, medium, small), and in the back
+emblem (two frames closing on a crystal).
 
 Pose baked in the cubes: right arm forward, palm up under the three cubes; left arm low and apart, fingers spread
 towards the ground (the shrinking gesture); head bent down a little and turned to the raised hand (he looks down on
@@ -38,330 +40,266 @@ def pal(*c):
     return [hx(x) for x in c]
 
 
-# --------------------------------------------------------------------------- palette (dark -> light)
-ROBE = pal("#22153A", "#2B1A44", "#34204F", "#40295F")      # deep violet: main robe
-ROYAL = pal("#3F2659", "#4A2C68", "#563477", "#69418D")     # royal violet: tabard, mantle, cuffs
-INDIGO = pal("#181A33", "#1E203C", "#252747", "#30335A")    # dark indigo: outer coat
-BLUE = pal("#3C4FA0", "#536CCB", "#7F93E0")                 # magic blue: painted runes (not emissive)
-GOLD = pal("#7E6534", "#B9954F", "#E5C56D", "#F4E3A1")      # shadow, ancient gold, bright gold, glint
-GREY = pal("#463D52", "#544A61", "#62566F", "#766A84")      # grey violet secondary cloth: sashes, collar base
-SKIN = pal("#6B6F6C", "#83877F", "#999C92", "#AEB0A4")      # illager grey beige
-EYE_RING, MOUTH = hx("#544B60"), hx("#4A4648")
-BROW = pal("#241C2C", "#352A40")
-BOOT = pal("#15121F", "#1E1A2B", "#2A2439")
-# Emissive colours, used by glowing pieces only (the preview recognises them by colour).
-GLOW = pal("#5E7BE8", "#8FA6FF", "#D6E0FF")
-GLOW_VIOLET = hx("#A678F0")
-GLOW_LID = hx("#1B1524")
+# --------------------------------------------------------------------------- palettes (one per material)
+# Cloth: one violet ramp for every garment; a garment picks its level on it (coat darker, tabard lighter), so all
+# layers belong to the same fabric family. Index: 0 contact, 1 deep shadow, 2 shadow, 3 main, 4 lit, 5 glint.
+CLOTH = pal("#1D172A", "#261B36", "#352447", "#493064", "#5B3D79", "#72538C")
+SASH = pal("#3C3446", "#4E4459", "#62566F", "#766A84")      # grey violet secondary cloth: deep, shadow, main, lit
+GOLD = pal("#725329", "#B18B43", "#D2B66D", "#E4CD8A")      # old gold: dark, main, light, glint (crown and trims)
+SKIN = pal("#4B4E49", "#666960", "#85877F", "#A3A398", "#B6B5A8")   # deep shadow, shadow, main, light, brightest
+EYE_WHITE, EYE_SHADE, IRIS, PUPIL, EYE_LINE = (hx(c) for c in ("#E3E0D0", "#BDBBAF", "#536D9A", "#252735", "#41443F"))
+BROW = pal("#302A2D", "#463A3A")
+BOOT, BOOT_TRIM = hx("#1D172A"), hx("#9D793D")
+# Crystal: the only emissive material (the preview recognises it by colour).
+CRYSTAL = pal("#5264A6", "#8198E8", "#B8C8FF", "#E1E7FF")
 
-LIGHT = {"up": 1, "north": 0, "east": 0, "west": 0, "south": -1, "down": -1}   # light from above, a little from the front
 SIDES = ("north", "south", "east", "west")
 
 
-# --------------------------------------------------------------------------- rune stamps
 def put(px, x, y, c):
     if 0 <= y < len(px) and 0 <= x < len(px[0]):
         px[y][x] = c
 
 
 def diamond(px, cx, cy, rad, colour):
-    """Outline of a pixel diamond (|dx| + |dy| = rad); rad 0 is one pixel."""
+    """Outline of a pixel diamond (|dx| + |dy| = rad)."""
     for dy in range(-rad, rad + 1):
         dx = rad - abs(dy)
         put(px, cx - dx, cy + dy, colour)
         put(px, cx + dx, cy + dy, colour)
 
 
-def scale_glyph(px, cx, y0, sizes=(2, 1, 0)):
-    """The signature rune: the same diamond three times, each smaller, read from top to bottom."""
-    y = y0
-    for rad in sizes:
-        diamond(px, cx, y + rad, rad, GOLD[2])
-        if rad >= 2:
-            put(px, cx, y + rad, BLUE[1])
-        y += 2 * rad + 2
-
-
-def concentric(px, cx, cy, rings):
-    """Concentric diamonds, (radius, colour) from the outside in: space folding on itself."""
-    for rad, colour in rings:
-        diamond(px, cx, cy, rad, colour)
-
-
-def frieze(px, y, colour=GOLD[1]):
-    """Row of tiny diamonds above a hem."""
-    w = len(px[0])
-    for cx in range(2, w - 1, 4):
-        diamond(px, cx, y, 1, colour)
-
-
-# --------------------------------------------------------------------------- painters
-def cloth(shades, base=2, hem=False, folds=True, edges=(), rune=None, rune_faces=SIDES):
-    """Fabric in flat tones: a few darker stitches, vertical fold lines on the lower part with a lit pixel beside
-    them, top edge caught by the light, bottom row in shadow or a two-row gold hem. `edges`: gold border on these
-    columns of the north face ("first", "last"). `rune(px, w, h)` paints the motif on `rune_faces`."""
+# --------------------------------------------------------------------------- painters (nothing random: every pixel is placed)
+def cloth(level=3, folds=(), edges=(), hem=False, art=None, art_face="north", shades=CLOTH):
+    """Thick matt fabric. Top face one tone lighter, front in the main tone, the other sides one tone darker,
+    underside deepest. `folds`: (x as a share of the width, start as a share of the height): a one-pixel shadow
+    line running down to the hem, two pixels wide on its last third, a lit line on its left on the front.
+    Bottom row in shadow (contact) or one row of gold (`hem`). `edges`: gold column on the front ("first", "last")."""
     def f(w, h, r, face):
-        b = base + LIGHT[face]
+        if face == "up":
+            return [[tone(shades, level + 1)] * w for _ in range(h)]
+        if face == "down":
+            return [[tone(shades, level - 2)] * w for _ in range(h)]
+        b = level if face in ("north", "south") else level - 1
         px = [[tone(shades, b)] * w for _ in range(h)]
-        if face in ("up", "down"):
-            for _ in range(max(1, w * h // 20)):
-                px[r.randrange(h)][r.randrange(w)] = tone(shades, b - 1)
-            return px
-        for _ in range(max(1, w * h // 28)):
-            px[r.randrange(h)][r.randrange(w)] = tone(shades, b - 1)
-        if folds and h >= 8 and w >= 4:
-            x = 1 + r.randrange(2)
-            while x < w - 1:
-                y0 = int(h * (0.35 + 0.3 * r.random()))
+        if h >= 6 and w >= 4:
+            for fx, fy in folds:
+                x, y0 = round(fx * (w - 1)), round(fy * h)
+                y1 = y0 + (h - y0) * 2 // 3
                 for y in range(y0, h):
                     px[y][x] = tone(shades, b - 1)
-                    if x + 1 < w and y > y0 and y % 3 == 0:
-                        px[y][x + 1] = tone(shades, b + 1)
-                x += 3 + r.randrange(3)
-        for x in range(w):
-            if r.random() < 0.3:
-                px[0][x] = tone(shades, b + 1)
-        if hem and h >= 3:
-            px[h - 1] = [GOLD[0]] * w
-            px[h - 2] = [GOLD[2] if x % 3 == 1 else GOLD[1] for x in range(w)]
-        else:
-            px[h - 1] = [tone(shades, b - 1)] * w
+                    if y >= y1 and x + 1 < w:
+                        px[y][x + 1] = tone(shades, b - 1)
+                    if face == "north" and y0 < y < y1 and x >= 1:
+                        px[y][x - 1] = tone(shades, b + 1)
+        if h >= 3:
+            px[h - 1] = [GOLD[1] if hem else tone(shades, b - 1)] * w
         if face == "north":
             for e in edges:
-                x = 0 if e == "first" else w - 1
                 for y in range(h):
-                    px[y][x] = GOLD[2] if y % 4 == 1 else GOLD[1]
-        if rune and face in rune_faces:
-            rune(px, w, h)
+                    px[y][0 if e == "first" else w - 1] = GOLD[1]
+        if art and face == art_face:
+            art(px, w, h)
         return px
     return f
 
 
-def metal(base=1):
-    """Old gold: flat tone, lit top row, shadowed bottom row, a rivet every third pixel on long faces."""
-    def f(w, h, r, face):
-        b = base + (1 if face == "up" else -1 if face in ("down", "south") else 0)
-        px = [[tone(GOLD, b)] * w for _ in range(h)]
-        if face in SIDES and h >= 2:
-            px[0] = [tone(GOLD, b + 1)] * w
-            px[h - 1] = [tone(GOLD, b - 1)] * w
-            if h >= 3 and w >= 6:
-                for x in range(1, w, 3):
-                    px[h // 2][x] = tone(GOLD, b + 1)
-        return px
-    return f
+def metal(w, h, r, face):
+    """Old gold, plain: lit top face and top row, main tone on the front, darker sides and bottom row."""
+    if face == "up":
+        return [[GOLD[2]] * w for _ in range(h)]
+    if face == "down":
+        return [[GOLD[0]] * w for _ in range(h)]
+    px = [[GOLD[1]] * w for _ in range(h)]
+    if h >= 2:
+        px[h - 1] = [GOLD[0]] * w
+    if face == "north" and h >= 3:
+        px[0] = [GOLD[2]] * w
+    return px
 
 
-def boss(w, h, r, face):
-    """Gold diamond plate (buckle, circlet jewel mount): bright centre, darker rim."""
-    px = [[GOLD[2]] * w for _ in range(h)]
-    for y in range(h):
-        for x in range(w):
-            if x in (0, w - 1) or y in (0, h - 1):
-                px[y][x] = GOLD[1]
+def mount(w, h, r, face):
+    """Gold plate turned 45 degrees (crown jewel mount, belt buckle): main tone, lit upper edges, dark lower edges."""
+    px = [[GOLD[1]] * w for _ in range(h)]
+    if face == "north":
+        for i in range(w):
+            px[0][i] = GOLD[2]
+            px[h - 1][i] = GOLD[0]
+        for j in range(h):
+            px[j][0] = GOLD[2] if j < h - 1 else GOLD[0]
+            px[j][w - 1] = GOLD[0] if j else GOLD[2]
+    return px
+
+
+def crystal(w, h, r, face):
+    """Blue violet crystal: main tone, deep lower right edge, light upper left edge, one glint pixel."""
+    px = [[CRYSTAL[1]] * w for _ in range(h)]
+    if w >= 2 and h >= 2:
+        for i in range(w):
+            px[h - 1][i] = CRYSTAL[0]
+            px[0][i] = CRYSTAL[2]
+        for j in range(h):
+            px[j][w - 1] = CRYSTAL[0]
+            px[j][0] = CRYSTAL[2]
+        px[h - 1][0] = px[0][w - 1] = CRYSTAL[1]
+        px[0][0] = CRYSTAL[3]
+        if w >= 4 and h >= 4:
+            px[1][1] = CRYSTAL[3]
     return px
 
 
 def skull(w, h, r, face):
-    """Illager head. Front: forehead mark, brow shadow, darker pigment around the eyes, a lit pixel at each outer
-    eye corner, hollow under the eyes, thin frowning mouth. Sides: a small scale glyph on each temple."""
-    b = 2 + LIGHT[face]
-    px = [[tone(SKIN, b)] * w for _ in range(h)]
-    if face == "north" and w >= 10 and h >= 11:
-        px[3][4] = px[3][5] = BLUE[0]                       # forehead mark, just under the circlet jewel
-        for x in range(1, w - 1):
-            px[4][x] = SKIN[0]                              # shadow cast by the brow
-        for x in (1, 2, 3, 6, 7, 8):
-            px[5][x] = px[6][x] = EYE_RING                  # darker pigment around the eyes
-            px[7][x] = SKIN[1]                              # hollow under the eyes
-        px[6][0] = px[6][w - 1] = BLUE[2]                   # light escaping at the outer corners
-        for x in range(2, 8):
-            px[9][x] = MOUTH
-        px[10][1] = px[10][8] = MOUTH                       # corners pulled down: contempt
-        px[10][0] = px[10][9] = SKIN[1]
-    elif face in ("east", "west"):
-        cx = w // 2
-        diamond(px, cx, 5, 1, BLUE[1])
-        put(px, cx, 8, BLUE[1])
-        put(px, cx, 10, BLUE[0])
-        px[h - 1] = [SKIN[1] if x != cx else BLUE[0] for x in range(w)]
-    else:
-        for _ in range(max(1, w * h // 14)):
-            px[r.randrange(h)][r.randrange(w)] = tone(SKIN, b - 1)
+    """Illager head, matt skin. Front: lit centre (forehead, bridge of the nose), sides of the face one tone
+    darker, shadow under the brows, cheekbones, thin straight mouth, shadowed chin. No magic colour on the skin."""
+    if face == "up":
+        return [[SKIN[3]] * w for _ in range(h)]
+    if face == "down":
+        return [[SKIN[0]] * w for _ in range(h)]
+    if face != "north" or w < 10 or h < 11:
+        px = [[SKIN[1]] * w for _ in range(h)]
+        px[h - 1] = [SKIN[0]] * w
+        return px
+    px = [[SKIN[2]] * w for _ in range(h)]
+    for y in range(h):
+        px[y][0] = px[y][w - 1] = SKIN[1]                  # the face turns away on both sides
+    for y in (3, 4):
+        for x in (3, 4, 5, 6):
+            px[y][x] = SKIN[3]                              # forehead
+    px[3][4] = px[3][5] = SKIN[4]
+    for x in (1, 2, 3, 6, 7, 8):
+        px[5][x] = SKIN[1]                                  # shadow between brow and eye: keeps them apart
+    for y in (5, 6):
+        px[y][4] = px[y][5] = SKIN[3]                       # bridge of the nose
+    for x in (1, 2, 7, 8):
+        px[7][x] = SKIN[3]                                  # cheekbones, right under the eyes
+    for x in range(1, 9):
+        px[9][x] = SKIN[0]                                  # mouth: one thin straight line, closed
+    px[10] = [SKIN[1]] * w                                  # chin
     return px
 
 
-def flesh(base=2, knuckles=False):
-    def f(w, h, r, face):
-        b = base + LIGHT[face]
-        px = [[tone(SKIN, b)] * w for _ in range(h)]
-        if face in SIDES and h >= 2:
-            px[h - 1] = [tone(SKIN, b - 1)] * w
-            if knuckles:
-                for x in range(0, w, 2):
-                    px[h - 1][x] = tone(SKIN, b - 2)
-        return px
-    return f
+def nose(w, h, r, face):
+    if face == "down":
+        return [[SKIN[0]] * w for _ in range(h)]
+    px = [[SKIN[3 if face in ("north", "up") else 1]] * w for _ in range(h)]
+    if face == "north":
+        px[0] = [SKIN[4]] * w
+        px[h - 1] = [SKIN[2]] * w
+    else:
+        px[h - 1] = [SKIN[0]] * w
+    return px
+
+
+def flesh(w, h, r, face):
+    if face == "down":
+        return [[SKIN[0]] * w for _ in range(h)]
+    px = [[SKIN[3 if face == "up" else 2 if face == "north" else 1]] * w for _ in range(h)]
+    return px
 
 
 def brow(w, h, r, face):
-    px = [[BROW[1 if face == "up" else 0]] * w for _ in range(h)]
-    if face == "north":
-        px[0] = [BROW[1]] * w
-    return px
-
-
-def cuff(w, h, r, face):
-    """Wide sleeve end: gold top and bottom rows, a blue zigzag between them; dark opening underneath."""
-    if face == "down":                                       # lining, darker towards the arm
-        return [[ROYAL[0] if x in (0, w - 1) or y in (0, h - 1) else INDIGO[0] for x in range(w)] for y in range(h)]
-    b = 2 + LIGHT[face]
-    px = [[tone(ROYAL, b)] * w for _ in range(h)]
-    if face in SIDES and h >= 4:
-        px[0] = [GOLD[1]] * w
-        px[h - 1] = [GOLD[2] if x % 3 == 1 else GOLD[1] for x in range(w)]
-        for x in range(w):
-            px[1 + (x % 2)][x] = BLUE[1] if x % 4 < 2 else BLUE[0]
-    return px
-
-
-def plate_top(shades, base, jewel):
-    """Shoulder plate: gold outline on the top face, gold bottom row on the sides, optional blue diamond."""
-    def f(w, h, r, face):
-        b = base + LIGHT[face]
-        px = [[tone(shades, b)] * w for _ in range(h)]
-        if face == "up":
-            for y in range(h):
-                for x in range(w):
-                    if x in (0, w - 1) or y in (0, h - 1):
-                        px[y][x] = GOLD[1]
-            if jewel and w >= 5 and h >= 5:
-                diamond(px, w // 2, h // 2, 1, BLUE[1])
-                put(px, w // 2, h // 2, GOLD[2])
-        elif face in SIDES:
-            px[h - 1] = [GOLD[1]] * w
-        return px
-    return f
-
-
-def collar(w, h, r, face):
-    """High collar: indigo outside, royal violet lining, gold top row."""
-    shades = ROYAL if face == "north" else INDIGO
-    px = [[tone(shades, 2 + LIGHT[face])] * w for _ in range(h)]
-    if face in SIDES:
-        px[0] = [GOLD[2] if x % 3 == 1 else GOLD[1] for x in range(w)]
-        if face == "south" and w >= 5 and h >= 7:
-            scale_glyph(px, w // 2, 2, sizes=(1, 0))
-    return px
-
-
-def cap(w, h, r, face):
-    px = [[tone(ROYAL, 2 + LIGHT[face])] * w for _ in range(h)]
-    if face == "up" and w >= 7 and h >= 7:
-        concentric(px, w // 2, h // 2, ((3, GOLD[1]), (1, BLUE[1])))
-    return px
-
-
-def sash(w, h, r, face):
-    """Grey violet sash: gold band near the end, a blue line above it, small glyph on the broad faces."""
-    px = cloth(GREY, 2, folds=False)(w, h, r, face)
-    if face in SIDES and h >= 8:
-        px[h - 3] = [GOLD[1]] * w
-        px[h - 5] = [BLUE[0] if x % 2 else BLUE[1] for x in range(w)]
-        if face in ("east", "west") and w >= 4:
-            scale_glyph(px, w // 2, 1, sizes=(1, 0))
-    return px
-
-
-def boot(w, h, r, face):
-    px = [[BOOT[2 if face == "up" else 1]] * w for _ in range(h)]
-    if face == "north":
-        px[0] = [GOLD[1]] * w                                # gold toe cap
-    elif face == "up":
-        px[0] = [GOLD[1]] * w
-    elif face in SIDES:
-        px[h - 1] = [BOOT[0]] * w
-    return px
+    return [[BROW[1 if face == "up" else 0]] * w for _ in range(h)]
 
 
 def eye(inner_last):
     def f(w, h, r, face):
-        """Narrow glowing eye (density 2, 6 x 3): heavy upper lid that drops towards the nose, pale glow, blue iris
-        looking down. `inner_last`: the inner corner (nose side) is the last column of the texture."""
-        if face != "north":
-            return [[GLOW_LID] * w for _ in range(h)]
-        px = [[GLOW[2]] * w for _ in range(h)]
-        for x in range(w):
-            t = x / (w - 1) if inner_last else 1 - x / (w - 1)
-            if t > 0.35:
-                px[0][x] = GLOW_LID
-            if t > 0.85:
-                px[1][x] = GLOW_LID
-        mid = w // 2 - (0 if inner_last else 1)
-        for x in (mid, mid + 1):
-            px[1][x] = GLOW[0]
-            px[h - 1][x] = GLOW[0]
-        px[h - 1][0 if inner_last else w - 1] = GLOW[1]
-        return px
+        """Eye, density 2 (6 x 3). Top row: the lid, a clean dark line. Then the white, shaded at the outer end,
+        a 2 x 2 blue grey iris set a little towards the nose, its pupil low on the inner side: a focused look,
+        from above. `inner_last`: the nose side is the last column."""
+        if face != "north" or w < 6 or h < 3:
+            return [[EYE_LINE] * w for _ in range(h)]
+        rows = [[EYE_LINE] * 6,
+                [EYE_SHADE, EYE_WHITE, EYE_WHITE, IRIS, IRIS, EYE_WHITE],
+                [EYE_SHADE, EYE_WHITE, EYE_WHITE, IRIS, PUPIL, EYE_SHADE]]
+        return [row if inner_last else row[::-1] for row in rows]
     return f
 
 
-def jewel(w, h, r, face):
-    px = [[GLOW[1]] * w for _ in range(h)]
-    if w >= 2 and h >= 2:
-        px[h // 2][w // 2] = GLOW[2]
-        px[0][0] = GLOW[0]
+def cuff(w, h, r, face):
+    """Wide sleeve end: lit violet band closed by one gold row; dark lining underneath."""
+    if face == "down":
+        return [[CLOTH[2] if x in (0, w - 1) or y in (0, h - 1) else CLOTH[0] for x in range(w)] for y in range(h)]
+    px = cloth(4)(w, h, r, face)
+    if face in SIDES:
+        px[h - 1] = [GOLD[1]] * w
     return px
 
 
-def focus(w, h, r, face):
-    """Cube of the palm: pale edges, blue faces, a violet heart; the same painting at the three sizes."""
-    px = [[GLOW[0]] * w for _ in range(h)]
-    for y in range(h):
-        for x in range(w):
-            if x in (0, w - 1) or y in (0, h - 1):
-                px[y][x] = GLOW[2] if (x in (0, w - 1) and y in (0, h - 1)) else GLOW[1]
-    if w >= 3 and h >= 3:
-        px[h // 2][w // 2] = GLOW_VIOLET
+def pauldron(w, h, r, face):
+    """Reinforced cloth shoulder: lit top, one fine gold row along the bottom of its sides."""
+    px = cloth(3)(w, h, r, face)
+    if face in SIDES:
+        px[h - 1] = [GOLD[1]] * w
+    return px
+
+
+def collar(w, h, r, face):
+    """High collar: dark coat cloth outside, lit lining inside."""
+    return cloth(4 if face == "north" else 3)(w, h, r, "north" if face in ("north", "south") else face)
+
+
+def sash(w, h, r, face):
+    px = cloth(2, shades=SASH)(w, h, r, "north" if face in ("east", "west") else "east" if face in SIDES else face)
+    if face in SIDES and h >= 8:
+        px[h - 3] = [GOLD[1]] * w
+    return px
+
+
+def belt(w, h, r, face):
+    """Dark violet band between torso and skirt."""
+    px = [[CLOTH[2 if face == "up" else 1]] * w for _ in range(h)]
+    if face in SIDES:
+        px[h - 1] = [CLOTH[0]] * w
+    return px
+
+
+def boot(w, h, r, face):
+    px = [[BOOT] * w for _ in range(h)]
+    if face == "up":
+        px = [[CLOTH[1]] * w for _ in range(h)]
+        px[0] = [BOOT_TRIM] * w
+    elif face == "north":
+        px[0] = [BOOT_TRIM] * w                              # one gold line on the toe
     return px
 
 
 def tabard_up(px, w, h):
-    concentric(px, w // 2, 4, ((2, GOLD[2]),))               # ring around the glowing chest stone
-    for y in range(8, h - 1):
-        if y % 2 == 0:
-            put(px, w // 2, y, BLUE[1])                       # vertical dashed line down to the belt
+    """Chest motif: one vertical gold line carrying two small diamonds, the upper one around the crystal."""
+    cx = w // 2
+    for y in range(1, h - 1):
+        px[y][cx] = GOLD[1]
+    for cy in (4, 9):
+        px[cy][cx] = px[1][1]                                 # open centre: cloth, or the crystal on the upper one
+        diamond(px, cx, cy, 1, GOLD[2])
 
 
-def back_rune(px, w, h):
-    concentric(px, w // 2, 7, ((5, GOLD[1]), (3, BLUE[1]), (1, GOLD[2])))
+def emblem(px, w, h):
+    """Back emblem: two square frames around the central diamond crystal, space closing on one point."""
+    cx, cy = w // 2, 7
+    for rad in (2, 4):                                        # plain square frames: straight lines, no stair steps
+        for d in range(-rad, rad + 1):
+            for x, y in ((cx + d, cy - rad), (cx + d, cy + rad), (cx - rad, cy + d), (cx + rad, cy + d)):
+                put(px, x, y, GOLD[1])
 
 
 MATS = {
-    "robe": cloth(ROBE, 2), "robe_hem": cloth(ROBE, 2, hem=True),
-    "skirt_back": cloth(ROBE, 2, rune=lambda px, w, h: frieze(px, h - 3), rune_faces=("south",)),
-    "coat": cloth(INDIGO, 2, folds=False), "coat_hem": cloth(INDIGO, 2, hem=True, folds=False),
-    "coat_side": cloth(INDIGO, 2, rune=lambda px, w, h: scale_glyph(px, w // 2, 3), rune_faces=("east", "west")),
-    "coat_back": cloth(INDIGO, 2, folds=False, rune=back_rune, rune_faces=("south",)),
-    "flap_right": cloth(INDIGO, 2, edges=("last",), folds=False,
-                        rune=lambda px, w, h: diamond(px, 1, h - 4, 1, GOLD[1]), rune_faces=("north",)),
-    "flap_left": cloth(INDIGO, 2, edges=("first",), folds=False,
-                       rune=lambda px, w, h: diamond(px, w - 2, h - 4, 1, GOLD[1]), rune_faces=("north",)),
-    "lapel_right": cloth(INDIGO, 3, folds=False),
-    "lapel_left": cloth(INDIGO, 3, folds=False),
-    "tabard_up": cloth(ROYAL, 2, edges=("first", "last"), folds=False, rune=tabard_up, rune_faces=("north",)),
-    "tabard": cloth(ROYAL, 2, edges=("first", "last"), folds=False,
-                    rune=lambda px, w, h: scale_glyph(px, w // 2, 2), rune_faces=("north",)),
-    "tabard_tip": cloth(ROYAL, 2, hem=True, folds=False),
-    "sash": sash, "belt": metal(1), "boss": boss, "gold": metal(1), "gold_bright": metal(2),
-    "mantle": plate_top(ROYAL, 2, False), "pauldron": plate_top(ROYAL, 3, False),
-    "pauldron_top": plate_top(INDIGO, 2, True), "collar": collar, "collar_base": cloth(GREY, 2, folds=False),
-    "sleeve": cloth(ROBE, 3, folds=False), "sleeve_low": cloth(ROBE, 2, folds=False), "cuff": cuff,
-    "hand": flesh(2, knuckles=True), "finger": flesh(1), "skull": skull, "nose": flesh(1), "neck": flesh(0),
-    "brow": brow, "cap": cap, "trouser": cloth(INDIGO, 1, folds=False), "boot": boot,
+    "robe": cloth(3, folds=((0.3, 0.5), (0.75, 0.35))), "robe_hem": cloth(3, hem=True),
+    "skirt_back": cloth(3, folds=((0.2, 0.3), (0.5, 0.15), (0.8, 0.4))),
+    "coat": cloth(2), "coat_hem": cloth(2, hem=True),
+    "coat_side": cloth(2, folds=((0.3, 0.3), (0.7, 0.5))),
+    "coat_back": cloth(2, art=emblem, art_face="south"),
+    "flap": cloth(2, folds=((0.5, 0.45),)), "lapel": cloth(2),
+    "tabard_up": cloth(4, edges=("first", "last"), art=tabard_up),
+    "tabard": cloth(4, edges=("first", "last")), "tabard_tip": cloth(4, hem=True),
+    "sash": sash, "belt": belt, "mount": mount, "gold": metal,
+    "mantle": cloth(3), "pauldron": pauldron, "pauldron_top": cloth(4), "collar": collar, "collar_base": cloth(2),
+    "sleeve": cloth(3, folds=((0.6, 0.3),)), "sleeve_low": cloth(3, folds=((0.35, 0.2),)), "cuff": cuff,
+    "hand": flesh, "finger": flesh, "skull": skull, "nose": nose, "neck": flesh, "brow": brow,
+    "eye_right": (eye(True), 2), "eye_left": (eye(False), 2),
+    "cap": cloth(3), "trouser": cloth(1), "boot": boot,
 }
-GLOW_MATS = {"eye_right": (eye(True), 2), "eye_left": (eye(False), 2), "jewel": (jewel, 2), "focus": focus}
-GLOW_COLOURS = set(GLOW) | {GLOW_VIOLET, GLOW_LID}
+GLOW_MATS = {"crystal": (crystal, 2), "focus": crystal}
+GLOW_COLOURS = set(CRYSTAL)
 
 # --------------------------------------------------------------------------- skeleton and pose (drawing units)
 HIPS = (0, 21, 0)
@@ -420,10 +358,10 @@ def parts():
     panel("Coat_left", "coat_left", (-5.7, 21.5, 0.8), (1.6, 16.5, 9), (-3, 0, -11), "coat_side",
           tabs=((-2.4, 4.0, 1.4), (2.6, 3.4, 2.8)), tab_mat="coat_hem", axis=2)
     G["Flap_right"] = ((4.4, 21.5, -4.3), "Skirt")
-    panel("Flap_right", "flap_right", (4.4, 21.5, -4.3), (3.4, 14.5, 1.3), (8, -7, 5), "flap_right",
+    panel("Flap_right", "flap_right", (4.4, 21.5, -4.3), (3.4, 14.5, 1.3), (8, -7, 5), "flap",
           tabs=((0.6, 2.2, 2.2),), tab_mat="coat_hem")
     G["Flap_left"] = ((-4.4, 21.5, -4.4), "Skirt")
-    panel("Flap_left", "flap_left", (-4.4, 21.5, -4.4), (3.4, 16, 1.3), (6, 8, -7), "flap_left",
+    panel("Flap_left", "flap_left", (-4.4, 21.5, -4.4), (3.4, 16, 1.3), (6, 8, -7), "flap",
           tabs=((-0.6, 2.2, 1.6),), tab_mat="coat_hem")
 
     # ---------------------------------------------------------------- tabard: royal violet strip, the rune column
@@ -443,33 +381,29 @@ def parts():
     # ---------------------------------------------------------------- torso
     add("Torso", "torso", (0, 28, 0), (11, 14.5, 7), (0, 0, 0), "robe")
     add("Torso", "belt", (0, 20.9, 0), (12.2, 2.4, 8.4), (0, 0, 0), "belt")
-    add("Torso", "buckle", (0, 20.9, -4.4), (3.4, 3.4, 0.9), (0, 0, 45), "boss")
+    add("Torso", "buckle", (0, 20.9, -4.4), (2.6, 2.6, 0.9), (0, 0, 45), "mount")
     add("Torso", "tabard_up", (0, 27.5, -3.85), (7, 12, 0.8), (0, 0, 0), "tabard_up")
-    add("Torso", "lapel_right", (4.55, 27.6, -3.8), (2.6, 12, 0.9), (0, 0, -4), "lapel_right")
-    add("Torso", "lapel_left", (-4.55, 27.6, -3.8), (2.6, 12, 0.9), (0, 0, 4), "lapel_left")
+    add("Torso", "lapel_right", (4.55, 27.6, -3.8), (2.6, 12, 0.9), (0, 0, -4), "lapel")
+    add("Torso", "lapel_left", (-4.55, 27.6, -3.8), (2.6, 12, 0.9), (0, 0, 4), "lapel")
     add("Torso", "coat_back", (0, 28, 3.9), (11, 14, 1), (0, 0, 0), "coat_back")
     for s, side in ((1, "right"), (-1, "left")):
         add("Torso", f"coat_flank_{side}", (5.75 * s, 28, 0.4), (0.9, 14, 8.1), (0, 0, 0), "coat")
     add("Torso", "neck", (0, 35.6, 0.2), (5, 1.8, 5), (0, 0, 0), "neck")
     add("Torso", "collar_base", (0, 35.6, 0.4), (8.6, 1.4, 8), (0, 0, 0), "collar_base")
-    # mantle and shoulders: wider than a vanilla evoker, two tilted layers and a gold fin (taller on the left, to
-    # balance the raised right arm)
+    # mantle and shoulders: wider than a vanilla evoker, reinforced cloth in two tilted layers, one gold line
     add("Torso", "mantle", (0, 34.0, 0.3), (16, 2.6, 9), (0, 0, 0), "mantle")
-    for s, side, fin in ((1, "right", (0.8, 3.2, 4.6)), (-1, "left", (0.8, 5.0, 5.6))):
+    for s, side in ((1, "right"), (-1, "left")):
         add("Torso", f"pauldron_{side}", (8.7 * s, 34.6, 0.3), (6.6, 2.4, 9.8), (0, 0, -16 * s), "pauldron")
         add("Torso", f"pauldron_top_{side}", (8.0 * s, 36.2, 0.3), (4.6, 1.6, 7.6), (0, 0, -24 * s), "pauldron_top")
-        add("Torso", f"fin_{side}", (10.6 * s, 36.4 + fin[1] / 2 - 1.2, 0.3), fin, (0, 0, -28 * s), "gold")
     # high collar behind the head: three panels opening towards the front
     add("Torso", "collar_back", (0, 39.6, 5.6), (5, 8.5, 1), (-10, 0, 0), "collar")
     for s, side in ((1, "right"), (-1, "left")):
         add("Torso", f"collar_{side}", (4.3 * s, 39.2, 4.2), (5, 7.6, 1), (-10, 32 * s, -8 * s), "collar")
-    # glowing stones set in the robe, each in its own full-bright bone
-    G["glow_chest"] = ((0, 29.5, -4.3), "Torso")
-    add("glow_chest", "chest_stone", (0, 29.5, -4.35), (1.5, 1.5, 0.4), (0, 0, 45), "jewel")
-    G["glow_buckle"] = ((0, 20.9, -4.9), "Torso")
-    add("glow_buckle", "buckle_stone", (0, 20.9, -4.95), (1.4, 1.4, 0.4), (0, 0, 45), "jewel")
+    # crystals set in the robe, each in its own full-bright bone
+    G["glow_chest"] = ((0, 29.0, -4.3), "Torso")
+    add("glow_chest", "chest_crystal", (0, 29.0, -4.35), (1.0, 1.0, 0.4), (0, 0, 45), "crystal")
     G["glow_back"] = ((0, 27.5, 4.4), "Torso")
-    add("glow_back", "back_stone", (0, 27.5, 4.5), (1.5, 1.5, 0.4), (0, 0, 45), "jewel")
+    add("glow_back", "back_crystal", (0, 27.5, 4.5), (1.5, 1.5, 0.4), (0, 0, 45), "crystal")
 
     # ---------------------------------------------------------------- head
     on_head = attach(NECK, HEAD_R)
@@ -480,21 +414,21 @@ def parts():
 
     hd("Head", "skull", (0, 41.5, -0.3), (10, 11, 9), (0, 0, 0), "skull")
     hd("Head", "nose", (0, 38.5, -5.6), (2, 4.6, 2), (-6, 0, 0), "nose")
-    hd("Head", "brow_right", (2.5, 42.7, -5.0), (4.8, 1.5, 1.3), (-10, 0, 13), "brow")
-    hd("Head", "brow_left", (-2.5, 42.7, -5.0), (4.8, 1.5, 1.3), (-10, 0, -13), "brow")
-    hd("Head", "cap", (0, 47.3, -0.3), (9, 0.9, 8), (0, 0, 0), "cap")
-    hd("Head", "circlet_front", (0, 45.3, -4.95), (10.8, 1.4, 0.7), (0, 0, 0), "gold")
-    hd("Head", "circlet_back", (0, 45.3, 4.35), (10.8, 1.4, 0.7), (0, 0, 0), "gold")
+    # brows: two separate thin bars sloping to the nose, one clear row of skin above the eyes
+    hd("Head", "brow_right", (2.7, 42.75, -5.0), (3.4, 1.0, 1.0), (0, 0, 10), "brow")
+    hd("Head", "brow_left", (-2.7, 42.75, -5.0), (3.4, 1.0, 1.0), (0, 0, -10), "brow")
+    hd("Head", "eye_right", (2.6, 40.75, -4.85), (3, 1.5, 0.2), (0, 0, 0), "eye_right")
+    hd("Head", "eye_left", (-2.6, 40.75, -4.85), (3, 1.5, 0.2), (0, 0, 0), "eye_left")
+    hd("Head", "cap", (0, 47.2, -0.3), (8.6, 0.5, 7.6), (0, 0, 0), "cap")
+    # crown: a low band fitted to the skull, two short rises over the temples, one jewel mount on the forehead
+    hd("Head", "crown_front", (0, 45.6, -4.95), (10.8, 1.8, 0.7), (0, 0, 0), "gold")
+    hd("Head", "crown_back", (0, 45.6, 4.35), (10.8, 1.8, 0.7), (0, 0, 0), "gold")
     for s, side in ((1, "right"), (-1, "left")):
-        hd("Head", f"circlet_{side}", (5.15 * s, 45.3, -0.3), (0.7, 1.4, 9.4), (0, 0, 0), "gold")
-        hd("Head", f"prong_{side}", (4.7 * s, 47.4, -4.7), (0.9, 3.4, 0.9), (0, 0, -14 * s), "gold_bright")
-    hd("Head", "crest_large", (0, 46.4, -5.3), (2.8, 2.8, 0.8), (0, 0, 45), "boss")
-    hd("Head", "crest_small", (0, 48.9, -5.3), (1.3, 1.3, 0.7), (0, 0, 45), "gold_bright")
-    G["glow_eyes"] = (on_head((0, 40.9, -4.8), (0, 0, 0))[0], "Head")
-    hd("glow_eyes", "eye_right", (2.5, 40.9, -4.9), (2.6, 1.4, 0.3), (0, 0, 0), "eye_right")
-    hd("glow_eyes", "eye_left", (-2.5, 40.9, -4.9), (2.6, 1.4, 0.3), (0, 0, 0), "eye_left")
-    G["glow_circlet"] = (on_head((0, 46.4, -5.7), (0, 0, 0))[0], "Head")
-    hd("glow_circlet", "circlet_stone", (0, 46.4, -5.8), (1.2, 1.2, 0.4), (0, 0, 45), "jewel")
+        hd("Head", f"crown_{side}", (5.05 * s, 45.6, -0.3), (0.7, 1.8, 8.6), (0, 0, 0), "gold")
+        hd("Head", f"crown_rise_{side}", (5.05 * s, 46.9, -1.3), (0.7, 0.9, 4.2), (0, 0, 0), "gold")
+    hd("Head", "crown_mount", (0, 46.0, -5.3), (2.4, 2.4, 0.7), (0, 0, 45), "mount")
+    G["glow_crown"] = (on_head((0, 46.0, -5.6), (0, 0, 0))[0], "Head")
+    hd("glow_crown", "crown_crystal", (0, 46.0, -5.7), (1.0, 1.0, 0.4), (0, 0, 45), "crystal")
 
     # ---------------------------------------------------------------- arms: thin, wide cuffs, free hands
     for s, side in ((1, "right"), (-1, "left")):
