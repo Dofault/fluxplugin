@@ -86,7 +86,7 @@ final class ShowcaseSession {
     private final World world;
     private Location back;
     private boolean closing, moving;
-    private int ticks;
+    private volatile int ticks;
     private long lastClick;
 
     // camera and pointer
@@ -98,7 +98,9 @@ final class ShowcaseSession {
     private final double depth;
     private volatile double sx = PANEL_X, sy = 0.1;
     private float lastYaw, lastPitch;
-    private boolean primed, recentring;
+    private boolean primed, turningBack;
+    private float backYaw, backPitch;
+    private int backAt;
 
     // panel
     private final List<Entity> ui = new ArrayList<>();
@@ -214,6 +216,7 @@ final class ShowcaseSession {
             d.setTransformation(new Transformation(new Vector3f(0, -4.5f * PX * s, 0), new Quaternionf(), new Vector3f(s), new Quaternionf()));
         });
         seat.addPassenger(player);
+        fr.influencraft.flux.api.client.Sidebar.hide(player, true);
         player.setPlayerTime(settings.time(), false);
         Camera.view(player, camera);
         Camera.turns(player, (p, yaw, pitch) -> turned(yaw, pitch));
@@ -230,6 +233,7 @@ final class ShowcaseSession {
         clearPanel();
         if (player.getVehicle() == seat) player.leaveVehicle();
         for (Entity e : new Entity[]{pointer, camera, seat}) if (e != null && e.isValid()) e.remove();
+        fr.influencraft.flux.api.client.Sidebar.hide(player, false);
         if (!player.isOnline()) return;
         Camera.view(player, null);
         player.resetPlayerTime();
@@ -265,7 +269,9 @@ final class ShowcaseSession {
         // the camera only reaches his client once the arena's chunks and entities did (he was just taken far away, how
         // long that takes depends on his connection): said again all along, a camera already set changes nothing
         if (ticks == 3 || ticks % 10 == 0) Camera.view(player, camera);
-        if (pointer.isValid()) pointer.teleport(pointerAt());
+        // the pointer is moved on his screen as his mouse moves (turned); the server's own entity only follows from
+        // time to time, a move every tick would fight with those
+        if (ticks % 40 == 0 && pointer.isValid()) pointer.teleport(pointerAt());
         hover();
         scene();
     }
@@ -279,16 +285,13 @@ final class ShowcaseSession {
     }
 
     /**
-     * His mouse turned his (unseen) head: the pointer follows, at once (network thread). The head is brought back to
-     * the middle before it reaches the end of its travel (a seated player turns at most 85 degrees from his seat).
+     * His mouse turned his (unseen) head: the pointer follows, at once (network thread). A seated player's head turns
+     * at most 85 degrees from his seat and 90 up or down: before it gets there it is turned back to the middle by a
+     * relative rotation, and the jump that rotation makes in what his client then reports is taken out, so the
+     * pointer never stops nor jumps.
      */
     private synchronized void turned(float yaw, float pitch) {
         if (closing) return;
-        if (recentring) {
-            if (Math.abs(pitch) > 20 || Math.abs(wrap(yaw)) > 20) return;
-            recentring = false;
-            primed = false;
-        }
         if (!primed) {
             lastYaw = yaw;
             lastPitch = pitch;
@@ -298,12 +301,24 @@ final class ShowcaseSession {
         float dyaw = wrap(yaw - lastYaw), dpitch = pitch - lastPitch;
         lastYaw = yaw;
         lastPitch = pitch;
+        if (turningBack) {
+            // the report that carries the turn back is the one whose jump looks like it (far larger than a mouse move)
+            float restYaw = wrap(dyaw - backYaw), restPitch = dpitch - backPitch;
+            if (Math.abs(restYaw) + Math.abs(restPitch) < Math.abs(dyaw) + Math.abs(dpitch)) {
+                dyaw = restYaw;
+                dpitch = restPitch;
+                turningBack = false;
+            } else if (ticks - backAt > 40) turningBack = false;
+        }
         double speed = settings.pointerSpeed();
         sx = clamp(sx + dyaw * speed, 1.22);
         sy = clamp(sy - dpitch * speed, 0.68);
-        if (Math.abs(pitch) > 50 || Math.abs(wrap(yaw)) > 55) {
-            recentring = true;
-            Camera.turn(player, 0f, false, 0f, false);
+        if (!turningBack && (Math.abs(pitch) > 35 || Math.abs(wrap(yaw)) > 40)) {
+            backYaw = -wrap(yaw);
+            backPitch = -pitch;
+            backAt = ticks;
+            turningBack = true;
+            Camera.turn(player, backYaw, true, backPitch, true);
         }
         Location at = pointerAt();
         Camera.place(player, pointer, at.getX(), at.getY(), at.getZ());

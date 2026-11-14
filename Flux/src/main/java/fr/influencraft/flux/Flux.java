@@ -33,6 +33,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     private PacketListenerCommon packetListener;
     private PacketListenerCommon backgroundListener;
     private com.github.retrooper.packetevents.event.PacketListenerCommon hurtShakeListener;
+    private com.github.retrooper.packetevents.event.PacketListenerCommon sidebarListener;
     private PacketListenerCommon advancementListener;
     private fr.influencraft.flux.economy.MoneyActionBar moneyBar;
     private ChestBackgrounds backgrounds;
@@ -147,6 +148,16 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         // players' screens shake at most as often as a plugin allows (api.client.HurtShake)
         hurtShakeListener = PacketEvents.getAPI().getEventManager()
                 .registerListener(new fr.influencraft.flux.adapters.packetevents.HurtShakeFilter(this));
+        // a player's sidebar taken off his screen while a plugin needs it (api.client.Sidebar)
+        var sidebar = new fr.influencraft.flux.adapters.packetevents.SidebarFilter();
+        sidebarListener = PacketEvents.getAPI().getEventManager().registerListener(sidebar);
+        fr.influencraft.flux.api.client.Sidebar.bind(sidebar);
+        getServer().getPluginManager().registerEvents(new org.bukkit.event.Listener() {
+            @org.bukkit.event.EventHandler
+            public void onQuit(org.bukkit.event.player.PlayerQuitEvent e) {
+                fr.influencraft.flux.api.client.Sidebar.forget(e.getPlayer().getUniqueId());
+            }
+        }, this);
         backgrounds = new ChestBackgrounds(menus, getLogger());
         backgroundListener = PacketEvents.getAPI().getEventManager()
                 .registerListener(backgrounds, PacketListenerPriority.HIGH);
@@ -199,6 +210,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         if (packetListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(packetListener);
         if (backgroundListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(backgroundListener);
         if (hurtShakeListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(hurtShakeListener);
+        if (sidebarListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(sidebarListener);
         if (advancementListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(advancementListener);
         if (registry != null) registry.unregisterCommands();
     }

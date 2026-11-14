@@ -65,7 +65,7 @@ final class Showcase implements Listener {
                     c.getInt("origin.x", 4000), c.getInt("origin.y", 100), c.getInt("origin.z", 4000),
                     c.getDouble("camera.x", 3.75), c.getDouble("camera.y", 4.2), c.getDouble("camera.z", -9.5), (float) c.getDouble("camera.pitch", 20),
                     c.getDouble("actor.x", 4.5), c.getDouble("actor.z", 0), spots, c.getString("monster", "HUSK"),
-                    Math.max(1, c.getInt("level", 1)), c.getLong("time", 14000), c.getDouble("pointer.speed", 0.012),
+                    Math.max(1, c.getInt("level", 1)), c.getLong("time", 14000), c.getDouble("pointer.speed", 0.02),
                     Math.max(0, c.getInt("hover-ticks", 5)), c.getConfigurationSection("panel"), c.getConfigurationSection("scripts"));
         }
     }

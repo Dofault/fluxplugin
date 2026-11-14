@@ -43,7 +43,7 @@ rpg:
     hover-ticks: 5
     pointer:
       # Screen units per degree of mouse turn (the screen is about 2.5 units wide).
-      speed: 0.012
+      speed: 0.02
     panel:
       # Blocks between the camera and the panel. Everything is drawn for a field of view of 70 on a 16:9 screen.
       distance: 1.0
