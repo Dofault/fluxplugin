@@ -4,10 +4,10 @@
 Same collection as the Oversized Evoker (evocateur_demesure.py): same robe family (long robe, darker open coat,
 lighter tabard with gold edges, belt, wide cuffs, soft shoulders), same painters, same pixel size. Everything that
 makes a person is his own: a human head (warm skin, grey blue eyes, thin grey brows, straight nose), a long silver
-beard in three volumes with a moustache, silver hair showing under a real wizard's hat (wide brim, cone in four
-volumes, tip bent backwards and to one side), a low collar. Warmer, lighter violet than the Evoker's. No glow.
+beard in three volumes with a moustache, silver hair showing under the server's own witch hat (the ItemsAdder NPC pack's,
+read from the pack: cf. pack_hat), a low collar. Warmer, lighter violet than the Evoker's. No glow.
 
-Few cubes: strands of beard and hair, folds, the hat's mark are painted, not built.
+Few cubes: strands of beard and hair and folds are painted, not built.
 This script replaces the voxel version of 2026-11-10.
 
 Usage: oracle.py [output folder] [--apercu <sheet.png>] [--cubes <table.md>]
@@ -26,7 +26,7 @@ import evocateur_demesure as E  # noqa: E402  (shared painters: cloth, metal, mo
 
 IDENT = "oracle"
 NS = uuid.UUID("5b2d9e00-0000-4000-8000-00000000a7c1")
-SCALE = 1.4           # 56 drawing units tall with the hat -> about 4.9 blocks (body alone: 4.0)
+SCALE = 1.4           # body alone: 4.0 blocks, the hat adds about one
 
 
 def pal(*c):
@@ -35,7 +35,6 @@ def pal(*c):
 
 # --------------------------------------------------------------------------- palettes (one per material)
 ROBE = pal("#1F182E", "#2A203C", "#3B2B52", "#554071", "#674F83", "#79618F")     # contact .. glint, main = index 3
-HAT = pal("#161B29", "#20283C", "#29334E", "#354361", "#465775", "#64738E")      # night blue, main = index 2
 SKIN = pal("#705140", "#916B56", "#B68C70", "#CBA68A", "#DFC0A3")                # deep shadow, shadow, main, light, glint
 BEARD = pal("#50545D", "#6C7077", "#85878A", "#ADB0B4", "#D0D1D0")               # shadow, secondary, main, light, silver
 HAIR = pal("#565B63", "#777D84", "#A7ADB2", "#C4C8CA")                           # dark, main, light, glint
@@ -43,7 +42,6 @@ EYE_WHITE, EYE_SHADE, IRIS, IRIS_DARK, PUPIL, EYE_LINE = (hx(c) for c in ("#E5E0
                                                                            "#252B35", "#51483F"))
 BROW = pal("#493F39", "#62564C")
 GOLD = E.GOLD
-MARK = hx("#B8C8FF")
 SIDES = E.SIDES
 
 
@@ -146,28 +144,65 @@ def strands(shades, base, tip=False, part=False, mouth=False):
     return f
 
 
-def brim(w, h, r, f):
-    """Hat brim: lit cloth on top, dark underneath, one gold line around its edge."""
-    if f == "up":
-        return [[HAT[3]] * w for _ in range(h)]
-    if f == "down":
-        return [[HAT[0]] * w for _ in range(h)]
-    px = [[GOLD[1]] * w for _ in range(h)]
-    if h >= 2:
-        px[h - 1] = [GOLD[0]] * w
-    return px
+# --------------------------------------------------------------------------- the hat: the server's own witch hat
+# The hat is not drawn here: it is the `fantasy_npc:witch_hat` of the ItemsAdder NPC pack (violet felt, gold band,
+# slouching cone), read cube by cube from the pack on Labs with its own pixels, so the Oracle wears the very same
+# hat as the NPCs. Nothing of the pack is copied into this repository: the model is read when the script runs.
+PACK = os.path.normpath(os.path.join(HERE, *[".."] * 5, "serveurs", "04_labs", "plugins", "ItemsAdder", "contents",
+                                     "npc", "resourcepack", "assets", "fantasy_npc"))
+HAT_SCALE = 1.1                 # the pack's hat is made for a head of 8, ours is 9 wide plus the hair
+HAT_AT = (0, 43.7, 0.2)         # where the middle of the brim's underside sits, on the straight head
+# The pack's colours, moved onto the Oracle's own: its three violets onto the robe's ramp (the hat one tone under
+# the robe, like the coat), its pink and yellow band onto the old gold of the trims, its green gem onto the blue
+# grey of his eyes. Same pixels, same shading, only the colours change.
+HAT_COLOURS = {hx(a): hx(b) if isinstance(b, str) else b for a, b in {
+    "#494264": ROBE[2], "#5C4475": ROBE[3], "#734B73": ROBE[4],
+    "#DB958C": GOLD[0], "#F1B88D": GOLD[1], "#F0E698": GOLD[2],
+    "#8DADC8": IRIS_DARK, "#85E1C3": IRIS, "#9CFFA8": "#A9B8CC", "#F7FFD7": "#D5DEE8"}.items()}
 
 
-def hat_base(w, h, r, f):
-    """Bottom of the cone: night blue cloth, its only mark on the front: a pale blue lozenge between two gold pixels."""
-    px = E.cloth(2, shades=HAT)(w, h, r, f)
-    if f == "north" and w >= 7 and h >= 3:
-        c, y = w // 2, h // 2
-        for dx, dy in ((0, -1), (-1, 0), (1, 0), (0, 1), (0, 0)):
-            if 0 <= y + dy < h:
-                px[y + dy][c + dx] = MARK
-        px[y][c - 3] = px[y][c + 3] = GOLD[1]
-    return px
+def recolour(p):
+    p = tuple(p)
+    return p if p[3] == 0 else HAT_COLOURS.get(p[:3], p[:3])
+
+
+def pack_hat():
+    """[(centre, size, rotation, {face: pixel grid})] of the pack's hat, in its own units, centred on its axis."""
+    from png_util import read
+    with open(os.path.join(PACK, "models", "witch_hat.json"), encoding="utf-8") as f:
+        model = json.load(f)
+    w, h, tex = read(os.path.join(PACK, "textures", "witch.png"))
+    out = []
+    for e in model["elements"]:
+        size = [e["to"][i] - e["from"][i] for i in range(3)]
+        c = [(e["to"][i] + e["from"][i]) / 2 for i in range(3)]
+        r = [0, 0, 0]
+        if e.get("rotation") and e["rotation"]["angle"]:
+            o = e["rotation"]["origin"]
+            r["xyz".index(e["rotation"]["axis"])] = e["rotation"]["angle"]
+            q = app(rot(*r), [c[i] - o[i] for i in range(3)])
+            c = [q[i] + o[i] for i in range(3)]
+        grids = {}
+        for face, d in e["faces"].items():
+            u1, v1, u2, v2 = (v * w / 16 for v in d["uv"])
+            nx, ny = max(1, round(abs(u2 - u1))), max(1, round(abs(v2 - v1)))
+            g = [[recolour(tex[int(v1 + (y + 0.5) / ny * (v2 - v1))][int(u1 + (x + 0.5) / nx * (u2 - u1))]) for x in range(nx)]
+                 for y in range(ny)]
+            for _ in range(d.get("rotation", 0) // 90 % 4):          # texture turned clockwise on the face
+                g = [list(row) for row in zip(*g[::-1])]
+            grids[face] = g
+        out.append(([c[0] - 8, c[1], c[2] - 8], size, tuple(r), grids))
+    return out
+
+
+def hat_painter(grids):
+    def f(w, h, r, face_):
+        g = grids.get(face_)
+        if g is None:
+            return [[(0, 0, 0, 0)] * w for _ in range(h)]            # face absent from the pack's model: cut out
+        return [[g[min(len(g) - 1, y * len(g) // h)][min(len(g[0]) - 1, x * len(g[0]) // w)] for x in range(w)]
+                for y in range(h)]
+    return f
 
 
 def cuff(w, h, r, f):
@@ -230,8 +265,7 @@ MATS = {
     "beard_top": strands(BEARD, 2, mouth=True), "beard_mid": strands(BEARD, 2, part=True),
     "beard_tip": strands(BEARD, 2, part=True, tip=True), "moustache": strands(BEARD, 3),
     "hair": strands(HAIR, 2),
-    "brim": brim, "hat_base": hat_base, "hat": E.cloth(2, shades=HAT, folds=((0.35, 0.2),)),
-    "hat_tip": E.cloth(2, shades=HAT), "trouser": robe(1), "boot": boot,
+    "trouser": robe(1), "boot": boot,
 }
 
 # --------------------------------------------------------------------------- skeleton and pose (drawing units)
@@ -324,13 +358,12 @@ def parts():
     hd("Beard", "beard_tip", (0, 31.9, -4.6), (3.6, 3.0, 1.9), (12, 0, 0), "beard_tip")
     hd("Beard", "moustache_right", (1.6, 38.9, -5.5), (2.8, 1.0, 0.9), (0, 0, -12), "moustache")
     hd("Beard", "moustache_left", (-1.6, 38.9, -5.5), (2.8, 1.0, 0.9), (0, 0, 12), "moustache")
-    # the hat: brim, then a cone in four volumes, each tilted a little more: the tip bends back and to his right
-    G["Hat"] = (on_head((0, 44.6, -0.2), (0, 0, 0))[0], "Head")
-    hd("Hat", "brim", (0, 44.7, -0.2), (13.6, 1.2, 13.6), (-4, 0, 3), "brim")
-    hd("Hat", "hat_base", (0, 46.3, -0.1), (9.8, 2.4, 9.8), (-4, 0, 3), "hat_base")
-    hd("Hat", "hat_mid", (0.2, 49.0, 0.4), (7.0, 3.6, 7.0), (-9, 0, 5), "hat")
-    hd("Hat", "hat_top", (0.6, 51.9, 1.4), (4.4, 3.4, 4.4), (-22, 0, 10), "hat")
-    hd("Hat", "hat_tip", (1.3, 54.0, 3.0), (2.2, 2.8, 2.2), (-46, 0, 16), "hat_tip")
+    # the hat: the pack's witch hat (cf. pack_hat), scaled to his head and set on it
+    G["Hat"] = (on_head(HAT_AT, (0, 0, 0))[0], "Head")
+    for k, (c, size, r, grids) in enumerate(pack_hat()):
+        MATS[f"hat_{k + 1}"] = (hat_painter(grids), 1 / HAT_SCALE)
+        hd("Hat", f"hat_{k + 1}", [HAT_AT[i] + c[i] * HAT_SCALE for i in range(3)], [v * HAT_SCALE for v in size], r,
+           f"hat_{k + 1}")
 
     # ---------------------------------------------------------------- arms: the Evoker's, relaxed
     for s, side in ((1, "right"), (-1, "left")):
