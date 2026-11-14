@@ -56,7 +56,9 @@ import java.util.Map;
  *   <li>the <b>scene</b>: an actor with his skin (a mannequin made a stand-in of the class by
  *   {@link CombatEngine#standIn}) playing the script of the class on monsters, the spell being cast named under it.</li>
  * </ul>
- * Everything is removed when the show ends; nothing is saved with the world.
+ * Everything is removed when the show ends; nothing is saved with the world. Nothing is hidden from the other players
+ * either: an arena has one viewer and stands far from everything (entities hidden by default and shown to him alone
+ * never reached his client when they were spawned in the tick he was taken there, 2026-11-14).
  */
 final class ShowcaseSession {
 
@@ -174,7 +176,6 @@ final class ShowcaseSession {
         camera = world.spawn(feet, Mannequin.class, CreatureSpawnEvent.SpawnReason.CUSTOM, m -> {
             m.addScoreboardTag(Showcase.TAG);
             m.setPersistent(false);
-            m.setVisibleByDefault(false);
             m.setInvisible(true);
             m.setInvulnerable(true);
             m.setSilent(true);
@@ -193,7 +194,6 @@ final class ShowcaseSession {
         seat = world.spawn(seatAt, ArmorStand.class, a -> {
             a.addScoreboardTag(Showcase.TAG);
             a.setPersistent(false);
-            a.setVisibleByDefault(false);
             a.setMarker(true);
             a.setInvisible(true);
             a.setGravity(false);
@@ -203,7 +203,6 @@ final class ShowcaseSession {
         });
         pointer = world.spawn(pointerAt(), TextDisplay.class, d -> {
             d.setPersistent(false);
-            d.setVisibleByDefault(false);
             d.text(text("showcase.pointer"));
             d.setBillboard(Display.Billboard.CENTER);
             d.setBackgroundColor(Color.fromARGB(0));
@@ -214,7 +213,6 @@ final class ShowcaseSession {
             // a text stands on its place: lowered by half a glyph, the pointer's middle is the pointed spot
             d.setTransformation(new Transformation(new Vector3f(0, -4.5f * PX * s, 0), new Quaternionf(), new Vector3f(s), new Quaternionf()));
         });
-        for (Entity e : List.of(camera, seat, pointer)) player.showEntity(showcase.plugin(), e);
         seat.addPassenger(player);
         player.setPlayerTime(settings.time(), false);
         Camera.view(player, camera);
@@ -515,12 +513,10 @@ final class ShowcaseSession {
     private <T extends Display> T display(Class<T> type, java.util.function.Consumer<T> setup) {
         T d = world.spawn(anchor, type, e -> {
             e.setPersistent(false);
-            e.setVisibleByDefault(false);
             e.setBillboard(Display.Billboard.CENTER);
             e.setBrightness(new Display.Brightness(15, 15));
             setup.accept(e);
         });
-        player.showEntity(showcase.plugin(), d);
         ui.add(d);
         return d;
     }
