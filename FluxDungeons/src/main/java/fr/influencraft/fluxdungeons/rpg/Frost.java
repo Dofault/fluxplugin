@@ -766,8 +766,14 @@ final class Frost {
         }
     }
 
-    /** Where the player aims: the floor under the block or creature looked at, within range. */
-    private static Location aimed(Player p, double range) {
+    /** Where the player aims: the floor under the creature looked at, else under the block looked at, within range. */
+    private Location aimed(Player p, double range) {
+        LivingEntity looked = skills.lookedAt(p, range);
+        if (looked != null) {
+            // a flying creature: the floor under it when there is one near, else where it is
+            Location under = ground(looked.getLocation().add(0, 0.1, 0));
+            return under != null ? under : looked.getLocation();
+        }
         Location eye = p.getEyeLocation();
         RayTraceResult hit = p.getWorld().rayTraceBlocks(eye, eye.getDirection(), range, FluidCollisionMode.NEVER, true);
         Location at = hit != null ? hit.getHitPosition().toLocation(p.getWorld()).subtract(eye.getDirection().multiply(0.2))

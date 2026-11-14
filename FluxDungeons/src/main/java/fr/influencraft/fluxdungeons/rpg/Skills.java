@@ -444,8 +444,26 @@ public final class Skills implements Listener {
         return eye.add(dir.multiply(d)).subtract(0, 0.3, 0);
     }
 
-    /** Where the player aims (block or max range). */
+    /**
+     * The enemy right under the player's crosshair within range, before any block: null when he looks at the ground
+     * or a wall (even next to a creature). Spells placed on the ground land on it instead of on the block seen behind
+     * it; no aim assist here, a place beside a creature must stay a choice.
+     */
+    LivingEntity lookedAt(Player p, double range) {
+        Location eye = p.getEyeLocation();
+        RayTraceResult hit = p.getWorld().rayTrace(eye, eye.getDirection(), range, FluidCollisionMode.NEVER, true, 0.3, e -> {
+            if (e == p || e instanceof Player) return false;
+            LivingEntity le = combat.body(e);
+            return le != null && !(le instanceof Player) && !(le instanceof org.bukkit.entity.ArmorStand)
+                    && !(le instanceof org.bukkit.entity.Mannequin) && !le.isDead() && combat.rpg(le);
+        });
+        return hit == null || hit.getHitEntity() == null ? null : combat.body(hit.getHitEntity());
+    }
+
+    /** Where the player aims: the creature under his crosshair, else the block looked at, else the end of the range. */
     private Location aimed(Player p, double range) {
+        LivingEntity looked = lookedAt(p, range);
+        if (looked != null) return looked.getLocation();
         RayTraceResult hit = p.getWorld().rayTraceBlocks(p.getEyeLocation(), p.getEyeLocation().getDirection(), range, FluidCollisionMode.NEVER, true);
         return hit != null ? hit.getHitPosition().toLocation(p.getWorld()) : p.getEyeLocation().add(p.getEyeLocation().getDirection().multiply(range));
     }
