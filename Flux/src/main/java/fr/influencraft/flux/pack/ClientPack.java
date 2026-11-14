@@ -171,18 +171,12 @@ public final class ClientPack {
             Enumeration<JarEntry> entries = in.entries();
             while (entries.hasMoreElements()) {
                 JarEntry e = entries.nextElement();
-                if (e.isDirectory()) continue;
-                // pack/assets/ applies to every version; pack/overlay/assets/ only to the formats of the overlay (shaders
-                // copied from one Minecraft version, like gui.fsh)
-                String name;
-                if (e.getName().startsWith("pack/assets/")) name = e.getName().substring("pack/".length());
-                else if (e.getName().startsWith("pack/overlay/assets/")) name = overlay + "/" + e.getName().substring("pack/overlay/".length());
-                else continue;
+                if (e.isDirectory() || !e.getName().startsWith("pack/assets/")) continue;
                 byte[] bytes;
                 try (InputStream s = in.getInputStream(e)) {
                     bytes = s.readAllBytes();
                 }
-                Path target = folder.resolve(name);
+                Path target = folder.resolve(e.getName().substring("pack/".length()));
                 if (Files.isRegularFile(target) && Arrays.equals(Files.readAllBytes(target), bytes)) continue;
                 Files.createDirectories(target.getParent());
                 Files.write(target, bytes);
