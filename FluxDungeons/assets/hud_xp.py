@@ -1,6 +1,6 @@
 """The xp bar of the rpg hud (2026-11-14): drawn over the vanilla one, in the line of the life and mana bars and as
-wide as both (184 x 6, rows 29 to 24 above the bottom of the screen). Black outline, fill going from the logo's violet
-to its fuchsia by steps as it grows, lighter top row. Imported by gen_hud.py (font fluxdungeons:hud).
+wide as both (184 x 6, rows 29 to 24 above the bottom of the screen). Black outline, fill in the vanilla bar's green, from deep to
+bright by steps as it grows, lighter top row. Imported by gen_hud.py (font fluxdungeons:hud).
 
 No picture per step: one glyph is the full bar, and the empty part is laid over it from the right with dark pieces
 1, 2, 4 ... 128 px wide, so the bar is exact to the pixel with 9 glyphs.
@@ -16,8 +16,8 @@ PIECES = 8                     # 1 to 128 px
 PIECE_CELL = 1 << (PIECES - 1)
 
 OUTLINE = (13, 13, 13, 255)
-EMPTY = (26, 11, 48, 255)
-STEPS = ["#5b2d9e", "#6a2c96", "#7a2a8c", "#8f2982", "#a62878", "#c8256a", "#e060a0"]
+EMPTY = (14, 34, 10, 255)
+STEPS = ["#3e9a14", "#48a916", "#52b818", "#5dc81a", "#68d81c", "#74e81e", "#80ff20"]
 
 
 def rgba(h):
