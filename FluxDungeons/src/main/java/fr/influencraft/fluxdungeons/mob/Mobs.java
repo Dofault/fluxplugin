@@ -106,6 +106,8 @@ public final class Mobs {
         UUID target;
         /** The monster that summoned it ({@code summon} ability), null for one placed in the map. */
         UUID summoner;
+        /** No cry for help before this time (aggro.call-cooldown). */
+        long nextCall;
         /** Next tick a kiting monster ({@code keep-distance}) may pick a new place to stand. */
         int nextKiteMove;
 
@@ -978,35 +980,104 @@ public final class Mobs {
         return (feet.getType().isSolid() && !feet.isPassable()) || (head.getType().isSolid() && !head.isPassable());
     }
 
-    // ---------------------------------------------------------------- pack alert
+    // ---------------------------------------------------------------- aggro: threat and pack
 
-    /** Monsters this close to one that spots a player join the fight (aggro.alert-radius). */
+    /** Calm monsters this close to one that spots a player, and that it sees, join the fight (aggro.alert-radius). */
     private double alertRadius = 10;
-    /** True while a pack is being alerted: the monsters it wakes do not alert their own neighbours (no chain). */
+    /** A monster hit by a player cries for help this far (aggro.call-radius), heard without being seen within hearRadius. */
+    private double callRadius = 12, hearRadius = 4;
+    /** Calm monsters one cry brings at most (the nearest), and the time before the same monster cries again. */
+    private int callMax = 3;
+    private long callCooldownMs = 4000;
+    /** A monster leaves its target for a player who dealt it this many times the damage of its target. */
+    private double switchRatio = 1.3;
+    /** True while a monster joins a fight it was called to: it does not alert its own neighbours (no chain). */
     private boolean alerting;
 
-    public void alertRadius(double blocks) {
-        alertRadius = Math.max(0, blocks);
+    /** Reads the {@code aggro} section of the config (missing keys keep their defaults). */
+    public void aggro(org.bukkit.configuration.ConfigurationSection c) {
+        if (c == null) return;
+        alertRadius = Math.max(0, c.getDouble("alert-radius", 10));
+        callRadius = Math.max(0, c.getDouble("call-radius", 12));
+        hearRadius = Math.max(0, c.getDouble("hear-radius", 4));
+        callMax = Math.max(0, c.getInt("call-max", 3));
+        callCooldownMs = Math.round(1000 * Math.max(0.5, c.getDouble("call-cooldown", 4)));
+        switchRatio = Math.max(1, c.getDouble("switch-ratio", 1.3));
     }
 
     /**
-     * A monster just spotted (or was hit by) a player: the calm monsters of its run around it that see it turn on that
-     * player too, as a pack (a skeleton that sees you warns those behind it). Only its direct neighbours, never further
-     * in a chain, so one pull never wakes the whole map.
+     * A player hurt the monster, by any means (weapon, spell, zone, summoned plant: the hit is his). Threat: it turns
+     * on him when it fights nobody, or when he dealt it {@code switch-ratio} times what its target did (a monster
+     * that only saw its target leaves it at the first hit), so it does not swing between players at every hit. Then
+     * it cries for help.
+     */
+    private void provoked(Alive a, Player player) {
+        if (!fighting(player)) return;
+        Player current = fightingTarget(a);
+        if (current == null || current == player || a.damagers.getOrDefault(player.getUniqueId(), 0.0)
+                >= switchRatio * a.damagers.getOrDefault(current.getUniqueId(), 0.0)) {
+            engage(a, player);
+        } else {
+            a.lastEngaged = System.currentTimeMillis();
+        }
+        call(a, player);
+    }
+
+    /**
+     * A monster just spotted a player: the calm monsters of its run around it that it sees turn on that player too,
+     * as a pack (a skeleton that sees you warns those behind it). Only its direct neighbours, never further in a
+     * chain, so one pull never wakes the whole map.
      */
     private void alert(Alive a, Player player) {
-        if (alerting || alertRadius <= 0 || !fighting(player)) return;
+        if (alerting || alertRadius <= 0) return;
+        rally(a, player, alertRadius, 0, Integer.MAX_VALUE);
+    }
+
+    /**
+     * A monster hit by a player cries for help, as vanilla wolves or zombified piglins do: the nearest calm monsters
+     * of its run that it sees within {@code call-radius} (or right next to it, seen or not: they hear it) come for
+     * that player, {@code call-max} a cry, again every {@code call-cooldown} seconds while it is being hit. Those who
+     * come do not cry themselves until they are hit: a fight grows by waves, never the whole room at once.
+     */
+    private void call(Alive a, Player player) {
+        long now = System.currentTimeMillis();
+        if (callRadius <= 0 || callMax <= 0 || now < a.nextCall) return;
+        a.nextCall = now + callCooldownMs;
+        rally(a, player, callRadius, hearRadius, callMax);
+    }
+
+    /** The calm monsters around one, nearest first, join its fight one after the other (the farther, the later). */
+    private void rally(Alive a, Player player, double radius, double heard, int max) {
+        if (!fighting(player)) return;
+        Location at = a.entity.getLocation();
+        List<Alive> pack = new ArrayList<>();
+        for (Alive o : alive.values()) {
+            if (o == a || !callable(o) || !o.run.equals(a.run) || o.entity.getWorld() != at.getWorld()) continue;
+            double d2 = o.entity.getLocation().distanceSquared(at);
+            if (d2 > radius * radius || (d2 > heard * heard && !a.entity.hasLineOfSight(o.entity))) continue;
+            pack.add(o);
+        }
+        pack.sort(java.util.Comparator.comparingDouble(o -> o.entity.getLocation().distanceSquared(at)));
+        for (Alive o : pack.subList(0, Math.min(max, pack.size()))) {
+            // word spreads at about 13 blocks a second: the pack turns one after the other, not as one creature
+            long delay = 2 + Math.round(o.entity.getLocation().distance(at) * 1.5);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> join(o, player), delay);
+        }
+    }
+
+    private static boolean callable(Alive o) {
+        return !o.inCombat && !o.dormant && !o.switching && o.entity instanceof Mob m && m.isValid() && m.hasAI();
+    }
+
+    /** A called monster turns on the player, without alerting anyone itself. */
+    private void join(Alive o, Player player) {
+        if (alive.get(o.entity.getUniqueId()) != o || !callable(o) || !fighting(player)
+                || player.getWorld() != o.entity.getWorld()) return;
         alerting = true;
         try {
-            double r2 = alertRadius * alertRadius;
-            for (Alive o : List.copyOf(alive.values())) {
-                if (o == a || o.inCombat || !o.run.equals(a.run) || !(o.entity instanceof Mob m) || !m.hasAI()) continue;
-                if (o.entity.getWorld() != a.entity.getWorld() || o.entity.getLocation().distanceSquared(a.entity.getLocation()) > r2) continue;
-                if (!a.entity.hasLineOfSight(o.entity)) continue;
-                o.target = player.getUniqueId();
-                m.setTarget(player);
-                enterCombat(o, player, true);
-            }
+            o.target = player.getUniqueId();
+            ((Mob) o.entity).setTarget(player);
+            enterCombat(o, player, true);
         } finally {
             alerting = false;
         }
@@ -1155,8 +1226,8 @@ public final class Mobs {
     public void damagedByPlayer(LivingEntity entity, Player player, EntityDamageEvent event) {
         Alive a = alive.get(entity.getUniqueId());
         if (a == null) return;
-        engage(a, player);
         a.damagers.merge(player.getUniqueId(), Math.min(event.getFinalDamage(), entity.getHealth()), Double::sum);
+        provoked(a, player);
         engine.fire(a, "EliteMobDamagedByPlayerEvent", player, event);
         counter(a, player, event);
         if (!a.template.extra().hurtMessages().isEmpty() && ThreadLocalRandom.current().nextDouble() < 0.15) say(a, a.template.extra().hurtMessages());
@@ -1235,12 +1306,18 @@ public final class Mobs {
         if (!a.template.extra().hitMessages().isEmpty() && ThreadLocalRandom.current().nextDouble() < 0.2) say(a, a.template.extra().hitMessages());
     }
 
-    /** A dungeon monster chose a player as target. */
-    public void targeted(LivingEntity entity, Player player) {
+    /**
+     * A dungeon monster chose a player as target (vanilla sight, or our own choice told to the game). False when it
+     * must keep the one it fights: vanilla would turn to the nearest player every few ticks, whoever hurts it most.
+     */
+    public boolean targeted(LivingEntity entity, Player player) {
         Alive a = alive.get(entity.getUniqueId());
-        if (a == null) return;
+        if (a == null) return true;
+        Player current = fightingTarget(a);
+        if (current != null && current != player) return false;
         engage(a, player);
         engine.fire(a, "EliteMobTargetPlayerEvent", player, null);
+        return true;
     }
 
     private void hurt(Alive a) {

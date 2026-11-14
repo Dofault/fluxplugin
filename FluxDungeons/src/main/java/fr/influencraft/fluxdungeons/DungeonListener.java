@@ -221,7 +221,7 @@ final class DungeonListener implements Listener {
             e.setCancelled(true);
             return;
         }
-        if (e.getEntity() instanceof LivingEntity mob) mobs.targeted(mob, p);
+        if (e.getEntity() instanceof LivingEntity mob && !mobs.targeted(mob, p)) e.setCancelled(true);
     }
 
     /** A chunk of a dungeon loaded back: its monsters are tracked again (or removed when their run is over). */

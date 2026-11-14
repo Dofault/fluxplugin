@@ -314,7 +314,7 @@ public final class FluxDungeons extends FluxPlugin {
         parties.maxSize(getConfig().getInt("party.max-size", 4));
         // the monsters' melee reaches this much further than vanilla (players' attacks have their class range)
         mobs.reachBonus(getConfig().getDouble("dungeon-reach-bonus", 1.5));
-        mobs.alertRadius(getConfig().getDouble("aggro.alert-radius", 10));
+        mobs.aggro(getConfig().getConfigurationSection("aggro"));
         if (attackCadence != null) attackCadence.load(getConfig().getConfigurationSection("attack-cadence"));
         // one aim assist for every class of the rpg
         if (rpg != null) rpg.aimAssist(getConfig().getConfigurationSection("aim-assist"));

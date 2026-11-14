@@ -148,10 +148,18 @@ aim-assist:
   angle: 12
   margin: 1.2
 
-# Pack alert: a monster that spots a player (or is hit by one) brings in the calm monsters of the run within this many
-# blocks that see it (no chain). 0: each on its own.
+# Aggro. alert-radius: a monster that spots a player brings in the calm monsters of the run it sees within this many
+# blocks (no chain; 0: off). A monster hit by a player (weapon, spell, zone, summoned plant) cries for help: the
+# call-max nearest calm monsters it sees within call-radius (or within hear-radius, seen or not) come for that player,
+# again every call-cooldown seconds while it is being hit (call-radius 0: off). switch-ratio: a monster leaves its
+# target for a player who dealt it that many times the damage of its target.
 aggro:
   alert-radius: 10
+  call-radius: 12
+  hear-radius: 4
+  call-max: 3
+  call-cooldown: 4
+  switch-ratio: 1.3
 
 # Blocks players may break in dungeons (every other block stays), plus the "breakable" list of each dungeon.
 # drops: false = the block goes without dropping anything (crops uprooted before the Harvest Hamster eats them);
