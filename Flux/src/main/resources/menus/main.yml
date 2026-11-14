@@ -8,7 +8,7 @@
 # Disposition (centrée) :
 #   Thème vanilla (2026-10-30, theme.menus.main de la config de Flux) : rangée 1 = tableau de bord (tête = profil
 #   en 9, pseudo : widget, bouton Compte en 17 : soldes et historique), fonctionnalités dans un bloc de 2 x 5 (2026-11-10, fond bg_main de gen_ui.py) :
-#   20-24 Rangs, Carrières, Quêtes, Collections, Tags ; 29-33 Marché, Mondes, Villes et Pays, Familiers, Casino
+#   20-24 Rangs, Carrières, Quêtes, Collections, Tags ; 29-33 Marché, Mondes, Villes et Pays, Familiers, Donjons
 #   coffre rangée 6 : Vote 45, Parrainage 46, Classement 47, Récompenses 51 (calendrier au clic droit),
 #   Pass 52, Autre 53
 #   (Autre = fenêtre des paramètres au clic gauche, fenêtre d'aide au clic droit : Flux, settings.yml et help.yml)
@@ -150,15 +150,17 @@ items:
       right: ["[hdv] open listings"]
       shift-left: ["[hdv] open sell"]
 
-  casino:
-    material: "itemsadder:influcasino:jeton"
-    name: "&#FFD94DCasino"
+  # Donjons (2026-11-14) à la place du Casino, qui reste sur Labs et n'ira pas en prod : menus de FluxDungeons.
+  donjons:
+    material: "itemsadder:fluxdonjon:cle_donjon"
+    name: "&#FFD94DDonjons"
     slots: [33]
     lore:
-      - "@desc Plinko et bientôt d'autres jeux, avec des jetons échangeables contre des Bitblock."
-      - "@left Ouvrir le casino"
+      - "@desc Un donjon par métier dans le monde RPG : bats son boss pour en faire ton familier légendaire."
+      - "@kv Clé | une par lancement, elle tombe en faisant le métier"
+      - "@left Voir les donjons"
     actions:
-      left: ["[menu] casino"]
+      left: ["[player] donjon"]
 
   # ── Boutons utilitaires : rangée 6 du coffre ────────────────────────────
   # Vote 45, Parrainage 46, Classement 47, Récompenses 51, Aide 52, Paramètres 53.

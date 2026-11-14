@@ -561,7 +561,7 @@ def bg_profil(generic):
 
 # Main menu (/menu2, Flux menus/main.yml, 2026-11-10): profile row (9, 17, name and balance written by Flux), then the
 # main features in one box of 2 rows x 5 (20-24: ranks, jobs, quests, collections, tags; 29-33: market, worlds,
-# towns, pets, casino), the shortcut row on chest row 5 (45-53), drawn by the menu's own buttons.
+# towns, pets, dungeons), the shortcut row on chest row 5 (45-53), drawn by the menu's own buttons.
 MAIN_GRID = [20, 21, 22, 23, 24, 29, 30, 31, 32, 33]
 
 
