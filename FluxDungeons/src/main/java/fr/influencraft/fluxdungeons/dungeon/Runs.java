@@ -67,7 +67,6 @@ public final class Runs {
     /** Players this plugin is teleporting (the guard against leaving the dungeon world lets them through). */
     private final Set<UUID> teleporting = new HashSet<>();
     private int maxRuns = 8;
-    private int returnDelay = 10;
     private double extraMobsPerPlayer = 0.5, bossHealthPerPlayer = 0.6;
     private double fallbackMoneyPerMinute = 50;
     private double spawnDistance = 40;
@@ -151,7 +150,6 @@ public final class Runs {
 
     public void settings(org.bukkit.configuration.ConfigurationSection c) {
         maxRuns = Math.max(1, c.getInt("max-runs", 8));
-        returnDelay = Math.max(1, c.getInt("return-delay", 10));
         extraMobsPerPlayer = c.getDouble("scaling.extra-mobs-per-player", 0.5);
         bossHealthPerPlayer = c.getDouble("scaling.boss-health-per-player", 0.6);
         fallbackMoneyPerMinute = c.getDouble("reward.money-per-minute-without-fluxvalue", 50);

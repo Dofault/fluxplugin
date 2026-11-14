@@ -12,8 +12,6 @@ slot-spacing: 512
 blocks-per-tick: 20000
 # Runs played at the same time, at most.
 max-runs: 8
-# Seconds between the victory and the return of the players.
-return-delay: 10
 
 # Rpg universe (docs/technique/rpg.md): lobby world, created empty with a stone platform when missing. It must be
 # listed in the "rpg" universe of plugins/Flux/universes.yml.
