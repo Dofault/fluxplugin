@@ -297,7 +297,13 @@ def run(m, server, dungeon, world=None, keep_world=False):
     print(out.splitlines()[-1] if out else "(created)")
     time.sleep(2)
     x0, z0, x1, z1 = m.box
-    print(c.send(f"execute in minecraft:{world} run forceload add {x0} {z0} {x1} {z1}"))
+    # the game refuses a forceload of more than 256 chunks at once (and then nothing of the map is built): by strips
+    strip = max(16, (200 // ((x1 >> 4) - (x0 >> 4) + 1)) * 16)
+    for za in range(z0 - z0 % 16, z1 + 1, strip):
+        out = c.send(f"execute in minecraft:{world} run forceload add {x0} {max(z0, za)} {x1} {min(z1, za + strip - 1)}")
+        if not out or any(w in out for w in BAD) or "Marked" not in out:
+            sys.exit(f"forceload refused: {out!r}")
+    print(f"chunks {x0} {z0} .. {x1} {z1} loaded")
     # Minecraft 26 names (the camelCase ones are refused): no random ticks above all, or grass, farmland and crops
     # change while the map is built, and a note block over or under them (RPG look) takes another state
     for rule in ("advance_time false", "spawn_mobs false", "fire_spread_radius_around_player 0", "random_tick_speed 0",
