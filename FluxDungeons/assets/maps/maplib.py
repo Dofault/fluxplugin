@@ -255,7 +255,10 @@ def retexture(m, server, used=None):
                 used.add(parts[7 if parts[0] == "fill" else 4].split("[")[0])
     # grass and leaves: the block painted in the map's biome colour (gen_rpg_blocs.py BIOMES)
     biome = m.biome or "plains"
-    table = {vid: table.get(f"{vid}__{biome}", table.get(vid)) for vid in set(table) | {k.split("__")[0] for k in table}}
+    # (a kind painted for another biome only, as jungle leaves, takes that one rather than staying vanilla)
+    any_biome = {k.split("__")[0]: v for k, v in sorted(table.items(), reverse=True) if "__" in k}
+    table = {vid: table.get(f"{vid}__{biome}", table.get(vid, any_biome.get(vid)))
+             for vid in set(table) | set(any_biome)}
     table = {k: v for k, v in table.items() if v and "__" not in k}
     x0, z0, x1, z1 = m.box
     y0, y1 = m.ybox
@@ -280,9 +283,9 @@ def biome_cmds(m):
         return []
     x0, z0, x1, z1 = m.box
     y0, y1 = m.ybox
-    b = Map()
-    b.fill(x0, y0, z0, x1, y1, z1, "X")
-    return [c.replace("fill ", "fillbiome ", 1).replace(" X", f" minecraft:{m.biome}") for c in b.cmds]
+    # the game counts a fillbiome volume in its own (larger) way: pieces well under the limit of a fill
+    return [f"fillbiome {xa} {ya} {za} {min(x1, xa + 31)} {min(y1, ya + 15)} {min(z1, za + 31)} minecraft:{m.biome}"
+            for xa in range(x0, x1 + 1, 32) for ya in range(y0, y1 + 1, 16) for za in range(z0, z1 + 1, 32)]
 
 
 def run(m, server, dungeon, world=None, keep_world=False):
