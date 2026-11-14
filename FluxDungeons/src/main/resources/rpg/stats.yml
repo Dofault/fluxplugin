@@ -6,7 +6,7 @@
 # A stat unknown here, used anywhere else, makes the config refused at load with the list of problems.
 
 families: [undead, beast, construct, elemental]
-elements: [fire, frost, lightning, holy, shadow]
+elements: [fire, frost, nature, lightning, holy, shadow]
 
 stats:
   # ---- offense

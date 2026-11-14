@@ -48,8 +48,14 @@ public final class Skills implements Listener {
     private final FluxPlugin plugin;
     private final CombatEngine combat;
     private final RpgPlayers players;
+    /** Block displays of the elemental classes' spells. */
+    private final SpellFx fx;
     /** The cryomancer's frost (frost stacks, freeze, shatter) and his skills. */
     private final Frost frost;
+    /** The pyromancer's fire (burn, wildfire, heat and blaze) and his skills. */
+    private final Fire fire;
+    /** The druid's plants (seeds, bloom and its healing pollen) and his skills. */
+    private final Flora flora;
     /** Aim assist of every class's basic attack (aim-assist of the config). */
     private final AimAssist aim = new AimAssist();
     /** Farthest enemy an archer's basic arrow is helped towards (blocks). */
@@ -68,7 +74,10 @@ public final class Skills implements Listener {
         this.plugin = plugin;
         this.combat = combat;
         this.players = players;
-        this.frost = new Frost(plugin, combat, this);
+        this.fx = new SpellFx(plugin);
+        this.frost = new Frost(plugin, combat, this, fx);
+        this.fire = new Fire(plugin, combat, this, players, fx);
+        this.flora = new Flora(plugin, combat, this, fx);
     }
 
     /** The rpg state of an online player, null outside the universe. */
@@ -79,6 +88,15 @@ public final class Skills implements Listener {
     /** Removes what the skills left in the world (plugin stopping). */
     void stop() {
         frost.clear();
+        fire.clear();
+        flora.clear();
+        fx.clear();
+    }
+
+    /** A creature died: a burning one spreads its fire (the pyromancer's wildfire). */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onDeath(org.bukkit.event.entity.EntityDeathEvent e) {
+        if (!(e.getEntity() instanceof Player)) fire.died(e.getEntity());
     }
 
     // ------------------------------------------------------------------ targets
@@ -149,6 +167,8 @@ public final class Skills implements Listener {
             case "arcane" -> bolt(p, cast, a.hit(), a.range(), Particle.WITCH, null, 1.4);
             case "holy" -> bolt(p, cast, a.hit(), a.range(), Particle.END_ROD, null, 1.2);
             case "shard" -> frost.shard(p, r, a.hit(), cast, a.range(), aimedEnemy(p, a.range()));
+            case "ember" -> fire.ember(p, r, a.hit(), cast, a.range(), aimedEnemy(p, a.range()));
+            case "thorn" -> flora.thorn(p, r, a.hit(), cast, a.range(), aimedEnemy(p, a.range()));
             default -> cleave(p, cast, a, clicked != null ? clicked : aimedEnemy(p, a.range()));
         }
     }
@@ -332,6 +352,24 @@ public final class Skills implements Listener {
             }
             case "winter_comet" -> {
                 return frost.comet(p, r, s, cast);
+            }
+            case "phoenix_flight" -> {
+                return fire.flight(p, r, s, cast);
+            }
+            case "fire_wave" -> {
+                return fire.wave(p, r, s, cast);
+            }
+            case "little_sun" -> {
+                return fire.sun(p, r, s, cast);
+            }
+            case "vine" -> {
+                return flora.vine(p, r, s, cast);
+            }
+            case "brambles" -> {
+                return flora.brambles(p, r, s, cast);
+            }
+            case "maneater" -> {
+                return flora.maneater(p, r, s, cast);
             }
             default -> {
                 plugin.getLogger().warning("Skill type " + s.type() + " has no code: nothing cast");

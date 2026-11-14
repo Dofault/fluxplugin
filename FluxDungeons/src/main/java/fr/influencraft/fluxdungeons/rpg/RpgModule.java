@@ -311,12 +311,14 @@ public final class RpgModule implements Listener {
                 List<Integer> levels = args.length > 1 ? List.of(Integer.parseInt(args[1])) : set.balance().checkedLevels();
                 for (int level : levels) {
                     sender.sendMessage("§eLevel " + level + " §7(seconds to kill: normal / elite / miniboss; seconds to die vs normal)");
-                    for (ClassDef c : set.classes().values()) {
-                        sender.sendMessage(String.format("§f%-8s §7%5.1f / %5.1f / %6.1f  §8| §7%5.1f", c.id(),
+                    // the classes players choose from (hidden ones are retired or being tried out)
+                    List<ClassDef> playable = set.classes().values().stream().filter(c -> !c.hidden()).toList();
+                    for (ClassDef c : playable) {
+                        sender.sendMessage(String.format("§f%-10s §7%5.1f / %5.1f / %6.1f  §8| §7%5.1f", c.id(),
                                 sim.averageTimeToKill(List.of(c), level, "normal", 20), sim.averageTimeToKill(List.of(c), level, "elite", 20),
                                 sim.averageTimeToKill(List.of(c), level, "miniboss", 5), sim.averageTimeToDie(c, level, "normal", 20)));
                     }
-                    sender.sendMessage(String.format("§fparty vs boss §7%.1f s", sim.averageTimeToKill(List.copyOf(set.classes().values()), level, "boss", 5)));
+                    sender.sendMessage(String.format("§fparty of %d vs boss §7%.1f s", playable.size(), sim.averageBossTime(playable, level, 5)));
                 }
             }
             case "mannequin", "dummy" -> {

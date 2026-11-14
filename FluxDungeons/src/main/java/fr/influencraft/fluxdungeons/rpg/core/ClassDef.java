@@ -36,12 +36,13 @@ public record ClassDef(String id, Map<String, Double> stats, Map<String, Double>
 
     /**
      * The basic attack. {@code style}: melee (a swing hitting up to {@code targets} enemies in front, within
-     * {@code range}), arrow (a real arrow), arcane or holy (a bolt of particles), shard (a flying ice shard). {@code click}: left (default) or
+     * {@code range}), arrow (a real arrow), arcane or holy (a bolt of particles), shard (a flying ice shard), ember (a
+     * bolt of fire), thorn (a flying thorn). {@code click}: left (default) or
      * right (held down: attacks again as soon as the attack speed allows).
      */
     public record Attack(String style, CombatMath.Type type, String element, double coefficient, int targets, double range,
                          String click) {
-        public static final List<String> STYLES = List.of("melee", "arrow", "arcane", "holy", "shard");
+        public static final List<String> STYLES = List.of("melee", "arrow", "arcane", "holy", "shard", "ember", "thorn");
         public static final List<String> CLICKS = List.of("left", "right");
 
         public CombatMath.Hit hit() {

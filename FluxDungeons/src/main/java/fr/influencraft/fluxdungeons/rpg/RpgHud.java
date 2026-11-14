@@ -29,8 +29,8 @@ final class RpgHud {
     /** In line with assets/hud_spells.py: icons by skill type, slot and key cap widths. */
     private static final List<String> SPELLS = List.of("charge", "war_cry", "whirlwind", "leap_back", "volley",
             "arrow_rain", "blink", "fireball", "frost_nova", "heal", "blessing", "sanctuary", "frost_glide", "glacial_rift",
-            "winter_comet");
-    private static final int BLANK = SPELLS.size(), DIM = BLANK + 1, SLOT = 22, KEY = 9;
+            "winter_comet", "phoenix_flight", "fire_wave", "little_sun", "vine", "brambles", "maneater");
+    private static final int BLANK = SPELLS.size(), DIM = BLANK + 1, SLOT = 22, KEY = 9, KEYS = 0xE480;
     /** Left edge of each skill slot on the line (x 0 = one pixel left of the hotbar, which spans 1 to 183). */
     private static final int SLOT_A = -50, SLOT_F = -25, SLOT_RIGHT = 187;
     /** In line with assets/hud_level.py: the level plate between the bars (x 83 to 100, centre 92). */
@@ -87,7 +87,7 @@ final class RpgHud {
         b.append((char) (0xE400 + icon));
         cursor[0] += SLOT + 1;
         moveTo(b, cursor, x + (SLOT - KEY + 1) / 2);
-        b.append((char) (0xE420 + key));
+        b.append((char) (KEYS + key));
         cursor[0] += KEY + 1;
     }
 

@@ -314,8 +314,15 @@ weapon:
 
 skill:
   no-mana: "&#FF5C5CPas assez de mana."
+  no-anchor: "&#FF5C5CRien à quoi accrocher ta liane : vise un mur, le sol ou un monstre, pas trop près."
   blocked: "&#FF5C5CPas de place devant toi."
   healed-by: "&#2ECF7B%player% &#B376E5t'a soigné."
+
+# Jauge de chaleur du Pyromancien (barre en haut de l'écran) et annonce de l'Embrasement.
+fire:
+  bar-heat: "&#FF9A2E&lChaleur &f%heat%"
+  bar-blaze: "&#FFD94D&lEMBRASEMENT"
+  blaze: "&#FFD94D&lEmbrasement ! &#B376E5Ton trait part en éventail."
 
 rpg-hud:
   key-right: "Clic droit"
@@ -338,6 +345,12 @@ classes:
   cryomancer:
     name: "Cryomancien"
     description: "Fige les monstres dans la glace puis les fait voler en éclats : pics, glissade et comète de givre."
+  pyromancer:
+    name: "Pyromancien"
+    description: "Embrase tout ce qu'il touche : le feu saute de monstre en monstre, et sa propre chaleur le rend de plus en plus dangereux."
+  druid:
+    name: "Druide"
+    description: "Sème des graines dans les monstres : elles éclosent en fleurs qui les enracinent et soignent tout le groupe."
 
 item:
   classes: "Classe :"
@@ -398,6 +411,7 @@ families:
 elements:
   fire: "au feu"
   frost: "à la glace"
+  nature: "à la nature"
   lightning: "à la foudre"
   holy: "au sacré"
   shadow: "à l'ombre"
@@ -466,6 +480,7 @@ class-pages:
     left: "Clic gauche"
     right: "Clic droit"
     hold: "Clic droit maintenu"
+    passive: "Passif"
     a: "A"
     f: "F"
   powers:
@@ -530,6 +545,27 @@ class-pages:
       right: {name: "Glissade boréale", description: "Glisse sur %distance% blocs sur un sillage de glace : les monstres traversés prennent %coef% %power% et du givre."}
       a: {name: "Faille glaciaire", description: "Des pics de glace jaillissent du sol sur %range% blocs : %coef% %power%, les monstres sont projetés en l'air et couverts de givre."}
       f: {name: "Comète de l'hiver", description: "Une comète de glace s'écrase là où tu vises : %coef% %power% sur %radius% blocs, tous les monstres touchés sont gelés, le sol reste gelé %duration% s."}
+      passive: {name: "Givre et Éclatement", description: "Chaque coup laisse du givre qui ralentit. À %chill-max% givres le monstre est pris dans la glace %freeze% s (un boss est seulement ralenti). Le coup suivant d'un autre sort le fait éclater : %shatter_pct% %power%, et les éclats blessent et givrent les monstres à %shatter-radius% blocs."}
+    pyromancer:
+      role: "Dégâts de zone, feu qui se propage"
+      difficulty: 3
+      strengths: "Les plus gros dégâts des trois classes. Le feu passe d'un monstre à l'autre, et plus il frappe, plus il chauffe."
+      weaknesses: "La plus petite santé. Sa chaleur retombe dès qu'il arrête de frapper."
+      passive: {name: "Brûlure et Chaleur", description: "Chaque coup embrase le monstre : %burn_pct% %power% par seconde et par brûlure, jusqu'à %burn-max% brûlures. Un monstre qui meurt en feu explose (%wildfire_pct% %power% sur %wildfire-radius% blocs) et embrase ses voisins. Chaque coup te réchauffe : jusqu'à %heat-damage_pct% de dégâts en plus, puis à 100 de chaleur l'Embrasement : pendant %blaze-seconds% s ton trait part en éventail de %blaze-bolts% braises et tu attaques plus vite."}
+      basic: {name: "Trait de braise", description: "Lance une braise (%coef% %power%) jusqu'à %range% blocs. Embrase le monstre touché."}
+      right: {name: "Envol du phénix", description: "Décolle dans une gerbe de flammes et vole là où tu regardes : %coef% %power% sur %radius% blocs au décollage puis à l'atterrissage, monstres repoussés et embrasés."}
+      a: {name: "Vague ardente", description: "Un éventail de flammes déferle devant toi sur %range% blocs : %coef% %power%, monstres repoussés, %burn% brûlures chacun."}
+      f: {name: "Petit soleil", description: "Un soleil se lève là où tu vises : %hits% vagues de %coef% %power% sur %radius% blocs en %duration% s, puis il explose (%final_pct% %power%)."}
+    druid:
+      role: "Soutien offensif, contrôle"
+      difficulty: 2
+      strengths: "Soigne tout le groupe en se battant, immobilise les monstres, la plus grosse santé des trois classes."
+      weaknesses: "Les dégâts les plus faibles des trois classes : il gagne sur la durée."
+      passive: {name: "Graines et Floraison", description: "Chaque coup plante une graine. À %seed-max% graines le monstre fleurit : enraciné %root% s, il prend %bloom_pct% %power%, et le pollen te soigne ainsi que les alliés à %bloom-heal-radius% blocs de la fleur (%bloom-heal_pct% %power%) et sème une graine dans les monstres voisins."}
+      basic: {name: "Épine", description: "Lance une épine (%coef% %power%) jusqu'à %range% blocs. Plante une graine."}
+      right: {name: "Liane", description: "Une liane s'accroche à ce que tu vises (mur, sol ou monstre, jusqu'à %range% blocs) et te tire jusque-là. Les monstres traversés prennent %coef% %power% et une graine ; un monstre attrapé est enraciné %root% s."}
+      a: {name: "Jardin de ronces", description: "Des ronces poussent là où tu vises (%radius% blocs) pendant %duration% s : %hits% coups de %coef% %power%, monstres ralentis et semés de graines."}
+      f: {name: "Fleur dévorante", description: "Une plante carnivore géante pousse là où tu vises et se bat pendant %duration% s : %hits% morsures de %coef% %power% sur les monstres à %radius% blocs. En fanant, son pollen soigne les alliés à %heal-radius% blocs de %heal_pct% %power%."}
 # Page du sélecteur de donjons (MC GUI, pages.DungeonPages). Texte brut, sans code couleur.
 dungeon-pages:
   title: Donjons

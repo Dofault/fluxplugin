@@ -53,12 +53,28 @@ items:
     stats: {magic_power: 9, max_mana: 10}
     description: ["Throws a shard of ice with a left click.", "Every hit leaves frost."]
     look: {material: BREEZE_ROD, name: "Frostheart"}
+  class_pyromancer_weapon:
+    slot: weapon
+    classes: [pyromancer]
+    level: 1
+    rarity: common
+    stats: {magic_power: 10, max_mana: 10}
+    description: ["Throws an ember on a left click.", "Every hit sets the monster alight."]
+    look: {material: BLAZE_ROD, name: "Tison-Soleil"}
+  class_druid_weapon:
+    slot: weapon
+    classes: [druid]
+    level: 1
+    rarity: common
+    stats: {magic_power: 8, max_health: 20}
+    description: ["Throws a thorn on a left click.", "Every hit plants a seed."]
+    look: {material: GOLDEN_HOE, name: "Serpe du Bosquet"}
 
-  # ---- Stonecutter dungeon (roche): warrior, level 5
-  roc_helmet:     {slot: helmet, classes: [warrior], level: 5, rarity: rare, set: roc, stats: {max_health: 40, physical_defense: 6}, look: {material: IRON_HELMET, name: "Rock Helm"}}
-  roc_chestplate: {slot: chestplate, classes: [warrior], level: 5, rarity: rare, set: roc, stats: {max_health: 60, physical_defense: 9, magic_defense: 3}, look: {material: IRON_CHESTPLATE, name: "Rock Breastplate"}}
-  roc_leggings:   {slot: leggings, classes: [warrior], level: 5, rarity: rare, set: roc, stats: {max_health: 50, physical_defense: 7, magic_defense: 2}, look: {material: IRON_LEGGINGS, name: "Rock Greaves"}}
-  roc_boots:      {slot: boots, classes: [warrior], level: 5, rarity: rare, set: roc, stats: {max_health: 30, physical_defense: 5, tenacity: 0.05}, look: {material: IRON_BOOTS, name: "Rock Boots"}}
+  # ---- Stonecutter dungeon (roche): every class, level 5 (life and defense)
+  roc_helmet:     {slot: helmet, level: 5, rarity: rare, set: roc, stats: {max_health: 40, physical_defense: 6}, look: {material: IRON_HELMET, name: "Rock Helm"}}
+  roc_chestplate: {slot: chestplate, level: 5, rarity: rare, set: roc, stats: {max_health: 60, physical_defense: 9, magic_defense: 3}, look: {material: IRON_CHESTPLATE, name: "Rock Breastplate"}}
+  roc_leggings:   {slot: leggings, level: 5, rarity: rare, set: roc, stats: {max_health: 50, physical_defense: 7, magic_defense: 2}, look: {material: IRON_LEGGINGS, name: "Rock Greaves"}}
+  roc_boots:      {slot: boots, level: 5, rarity: rare, set: roc, stats: {max_health: 30, physical_defense: 5, tenacity: 0.05}, look: {material: IRON_BOOTS, name: "Rock Boots"}}
 
   # ---- Herbalist dungeon (herboriste): every class, level 10
   herb_helmet:     {slot: helmet, level: 10, rarity: rare, set: herb, stats: {max_health: 45, cost_reduction: 0.03}, look: {material: LEATHER_HELMET, name: "Herbalist Hood"}}
@@ -66,23 +82,23 @@ items:
   herb_leggings:   {slot: leggings, level: 10, rarity: rare, set: herb, stats: {max_health: 55, effect_duration: 0.1}, look: {material: LEATHER_LEGGINGS, name: "Herbalist Trousers"}}
   herb_boots:      {slot: boots, level: 10, rarity: rare, set: herb, stats: {max_health: 35, movement_speed: 0.05}, look: {material: LEATHER_BOOTS, name: "Herbalist Boots"}}
 
-  # ---- Harvest dungeon (moisson): healer, level 15
-  harvest_helmet:     {slot: helmet, classes: [healer], level: 15, rarity: epic, set: harvest, stats: {max_health: 50, healing_power: 0.06, max_mana: 15}, look: {material: GOLDEN_HELMET, name: "Harvest Crown"}}
-  harvest_chestplate: {slot: chestplate, classes: [healer], level: 15, rarity: epic, set: harvest, stats: {max_health: 80, magic_defense: 10, effect_duration: 0.1}, look: {material: GOLDEN_CHESTPLATE, name: "Harvest Mantle"}}
-  harvest_leggings:   {slot: leggings, classes: [healer], level: 15, rarity: epic, set: harvest, stats: {max_health: 65, physical_defense: 8, health_regen: 2}, look: {material: GOLDEN_LEGGINGS, name: "Harvest Skirt"}}
-  harvest_boots:      {slot: boots, classes: [healer], level: 15, rarity: epic, set: harvest, stats: {max_health: 40, mana_regen: 1.5}, look: {material: GOLDEN_BOOTS, name: "Harvest Sandals"}}
+  # ---- Harvest dungeon (moisson): druid, level 15
+  harvest_helmet:     {slot: helmet, classes: [druid], level: 15, rarity: epic, set: harvest, stats: {max_health: 50, healing_power: 0.06, max_mana: 15}, look: {material: GOLDEN_HELMET, name: "Harvest Crown"}}
+  harvest_chestplate: {slot: chestplate, classes: [druid], level: 15, rarity: epic, set: harvest, stats: {max_health: 80, magic_defense: 10, effect_duration: 0.1}, look: {material: GOLDEN_CHESTPLATE, name: "Harvest Mantle"}}
+  harvest_leggings:   {slot: leggings, classes: [druid], level: 15, rarity: epic, set: harvest, stats: {max_health: 65, physical_defense: 8, health_regen: 2}, look: {material: GOLDEN_LEGGINGS, name: "Harvest Skirt"}}
+  harvest_boots:      {slot: boots, classes: [druid], level: 15, rarity: epic, set: harvest, stats: {max_health: 40, mana_regen: 1.5}, look: {material: GOLDEN_BOOTS, name: "Harvest Sandals"}}
 
-  # ---- Fisher dungeon (pecheur): mage, level 20
-  tide_helmet:     {slot: helmet, classes: [mage], level: 20, rarity: epic, set: tide, stats: {max_health: 55, magic_power: 6, max_mana: 20}, look: {material: DIAMOND_HELMET, name: "Tide Circlet"}}
-  tide_chestplate: {slot: chestplate, classes: [mage], level: 20, rarity: epic, set: tide, stats: {max_health: 85, magic_defense: 14, mana_regen: 1.5}, look: {material: DIAMOND_CHESTPLATE, name: "Tide Robe"}}
-  tide_leggings:   {slot: leggings, classes: [mage], level: 20, rarity: epic, set: tide, stats: {max_health: 70, physical_defense: 10, magic_power: 5}, look: {material: DIAMOND_LEGGINGS, name: "Tide Leggings"}}
-  tide_boots:      {slot: boots, classes: [mage], level: 20, rarity: epic, set: tide, stats: {max_health: 45, cost_reduction: 0.05, resist.frost: 0.1}, look: {material: DIAMOND_BOOTS, name: "Tide Slippers"}}
+  # ---- Fisher dungeon (pecheur): cryomancer, level 20
+  tide_helmet:     {slot: helmet, classes: [cryomancer], level: 20, rarity: epic, set: tide, stats: {max_health: 55, magic_power: 6, max_mana: 20}, look: {material: DIAMOND_HELMET, name: "Tide Circlet"}}
+  tide_chestplate: {slot: chestplate, classes: [cryomancer], level: 20, rarity: epic, set: tide, stats: {max_health: 85, magic_defense: 14, mana_regen: 1.5}, look: {material: DIAMOND_CHESTPLATE, name: "Tide Robe"}}
+  tide_leggings:   {slot: leggings, classes: [cryomancer], level: 20, rarity: epic, set: tide, stats: {max_health: 70, physical_defense: 10, magic_power: 5}, look: {material: DIAMOND_LEGGINGS, name: "Tide Leggings"}}
+  tide_boots:      {slot: boots, classes: [cryomancer], level: 20, rarity: epic, set: tide, stats: {max_health: 45, cost_reduction: 0.05, resist.frost: 0.1}, look: {material: DIAMOND_BOOTS, name: "Tide Slippers"}}
 
-  # ---- Copper mine dungeon (mineur): archer, level 25
-  copper_helmet:     {slot: helmet, classes: [archer], level: 25, rarity: epic, set: copper, stats: {max_health: 60, crit_chance: 0.04}, look: {material: CHAINMAIL_HELMET, name: "Copper Visor"}}
-  copper_chestplate: {slot: chestplate, classes: [archer], level: 25, rarity: epic, set: copper, stats: {max_health: 90, physical_defense: 12, physical_attack: 6}, look: {material: CHAINMAIL_CHESTPLATE, name: "Copper Jerkin"}}
-  copper_leggings:   {slot: leggings, classes: [archer], level: 25, rarity: epic, set: copper, stats: {max_health: 75, armor_penetration: 0.06, attack_speed: 0.08}, look: {material: CHAINMAIL_LEGGINGS, name: "Copper Chaps"}}
-  copper_boots:      {slot: boots, classes: [archer], level: 25, rarity: epic, set: copper, stats: {max_health: 50, crit_damage: 0.15, movement_speed: 0.05}, look: {material: CHAINMAIL_BOOTS, name: "Copper Treads"}}
+  # ---- Copper mine dungeon (mineur): pyromancer, level 25
+  copper_helmet:     {slot: helmet, classes: [pyromancer], level: 25, rarity: epic, set: copper, stats: {max_health: 60, crit_chance: 0.04}, look: {material: CHAINMAIL_HELMET, name: "Copper Visor"}}
+  copper_chestplate: {slot: chestplate, classes: [pyromancer], level: 25, rarity: epic, set: copper, stats: {max_health: 90, physical_defense: 12, magic_power: 6}, look: {material: CHAINMAIL_CHESTPLATE, name: "Copper Jerkin"}}
+  copper_leggings:   {slot: leggings, classes: [pyromancer], level: 25, rarity: epic, set: copper, stats: {max_health: 75, magic_penetration: 0.06, attack_speed: 0.08}, look: {material: CHAINMAIL_LEGGINGS, name: "Copper Chaps"}}
+  copper_boots:      {slot: boots, classes: [pyromancer], level: 25, rarity: epic, set: copper, stats: {max_health: 50, crit_damage: 0.15, movement_speed: 0.05}, look: {material: CHAINMAIL_BOOTS, name: "Copper Treads"}}
 
 sets:
   roc:
@@ -109,4 +125,4 @@ sets:
     name: "Copper"
     bonuses:
       2: {crit_chance: 0.05}
-      4: {crit_damage: 0.3, armor_penetration: 0.08}
+      4: {crit_damage: 0.3, magic_penetration: 0.08}

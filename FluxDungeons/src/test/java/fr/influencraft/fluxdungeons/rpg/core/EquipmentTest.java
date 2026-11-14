@@ -34,7 +34,7 @@ class EquipmentTest {
 
     @Test
     void wrongClassLevelOrSlotGivesNothing() {
-        assertTrue(rpg.equipment.modifiers(Map.of("helmet", "roc_helmet"), "mage", 50).isEmpty(), "class");
+        assertTrue(rpg.equipment.modifiers(Map.of("helmet", "tide_helmet"), "druid", 50).isEmpty(), "class");
         assertTrue(rpg.equipment.modifiers(Map.of("helmet", "roc_helmet"), "warrior", 4).isEmpty(), "level");
         assertTrue(rpg.equipment.modifiers(Map.of("boots", "roc_helmet"), "warrior", 50).isEmpty(), "slot");
     }

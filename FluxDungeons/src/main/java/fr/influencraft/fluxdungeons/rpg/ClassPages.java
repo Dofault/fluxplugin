@@ -47,7 +47,7 @@ final class ClassPages {
             "magic_defense", "max_mana", "mana_regen", "attack_speed", "crit_chance", "crit_damage", "dodge", "healing_power",
             "movement_speed");
     private static final Map<String, String> DEFAULT_COLORS = Map.of("warrior", "#FF5C5C", "archer", "#2ECF7B",
-            "mage", "#6FA8FF", "healer", "#FFD27A");
+            "mage", "#6FA8FF", "healer", "#FFD27A", "cryomancer", "#74B6DC", "pyromancer", "#FF8A3C", "druid", "#73C25C");
 
     /** Where the pages take their texts, pictures and colours (the plugin; a stub in tests). */
     interface Source extends PageKit.Source {
@@ -175,6 +175,11 @@ final class ClassPages {
             if (s == null) continue;
             skills.append(skill(id, c.key(slot), t("class-pages.classes." + id + "." + slot + ".name"), skillText(c, s), s.mana()));
         }
+        // the class's own mechanic (elemental classes), with its numbers
+        if (!c.passive().isEmpty()) {
+            skills.append(skill(id, "passive", t("class-pages.classes." + id + ".passive.name"), m("class-pages.classes." + id + ".passive.description",
+                    vars(c.basic().type(), 0, 1, 1, 0, 0, c.basic().range(), c.passive())), -1));
+        }
         String body = bar(t("classes." + id + ".name"))
                 + "<section class=\"well hero\">" + weapon(id, "large") + "<div class=\"role\">" + t("class-pages.classes." + id + ".role") + "</div>"
                 + "<p class=\"desc\">" + t("classes." + id + ".description") + "</p>" + bars
@@ -258,7 +263,7 @@ final class ClassPages {
     }
 
     private String skill(String classId, String slot, String name, String text, double mana) {
-        String cost = mana <= 0 ? t("class-pages.free") : esc(m("class-pages.mana", "%mana%", num(mana)));
+        String cost = mana < 0 ? "" : mana == 0 ? t("class-pages.free") : esc(m("class-pages.mana", "%mana%", num(mana)));
         return "<div class=\"skill\"><div class=\"k\">" + t("class-pages.keys." + slot) + "</div>"
                 + "<div class=\"line\">" + name + "<span class=\"cost\">" + cost + "</span></div>"
                 + "<p>" + esc(text) + "</p></div>";

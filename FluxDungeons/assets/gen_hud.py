@@ -17,7 +17,7 @@ bars down onto that row, one pixel above it (ASCENT, check in game). Hearts span
 10), food the 81 px right of it: one 83 px bar each from one pixel before, 18 px between them, 184 px in all.
 
 Chars: U+E100 + step = life bar, U+E200 + step = mana bar, U+E300.. = '0'-'9' then '/', U+E400.. spell slots,
-U+E420.. key caps (hud_spells.py), U+E431 level plate (hud_level.py), U+F001-U+F008 move back 1, 2,
+U+E480.. key caps (hud_spells.py), U+E431 level plate (hud_level.py), U+F001-U+F008 move back 1, 2,
 4 ... 128 px, U+F011-U+F018 forward as much. FluxDungeons (rpg/RpgHud.java) writes the same numbers: keep STEPS,
 BAR_W and DIGIT_W in line with it. Every digit is padded to 5 px (an almost transparent pixel in its last column),
 so each one moves the text by exactly 6 px.
@@ -128,7 +128,7 @@ def main(pack):
         {"type": "bitmap", "file": "fluxdungeons:font/hud_spells.png", "ascent": SPELL_ASCENT,
          "height": hud_spells.SLOT, "chars": ["".join(chr(0xE400 + i) for i in range(spell_count))]},
         {"type": "bitmap", "file": "fluxdungeons:font/hud_keys.png", "ascent": KEY_ASCENT,
-         "height": hud_spells.BADGE_H, "chars": ["".join(chr(0xE420 + i) for i in range(len(hud_spells.BADGES)))]},
+         "height": hud_spells.BADGE_H, "chars": ["".join(chr(hud_spells.KEYS + i) for i in range(len(hud_spells.BADGES)))]},
         # level plate (hud_level.py): top of a glyph = 65 + ascent px above the bottom of the screen
         {"type": "bitmap", "file": "fluxdungeons:font/hud_level.png", "ascent": hud_level.PLATE_TOP - 65,
          "height": hud_level.PLATE_H, "chars": [chr(0xE431)]},

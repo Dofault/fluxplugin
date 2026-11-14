@@ -37,6 +37,12 @@ class ClassPagesTest {
         Map<String, Object> lang = yaml("lang/fr_FR.yml");
 
         Path root = Path.of("target", "class-pages");
+        // pages of an earlier run (a class hidden since) must not be found again
+        if (Files.exists(root)) {
+            try (var old = Files.walk(root)) {
+                old.sorted(java.util.Comparator.reverseOrder()).forEach(f -> f.toFile().delete());
+            }
+        }
         new ClassPages(new ClassPages.Source() {
             public String raw(String key, String... vars) {
                 Object v = lang;
@@ -82,7 +88,7 @@ class ClassPagesTest {
             assertFalse(html.contains("class-pages."), id + ": missing text in the lang file");
             assertTrue(html.contains("classe choisir") || Files.readString(dir.resolve("confirm_" + id + ".html")).contains("classe choisir " + id));
         }
-        assertEquals(4, classes.values().stream().filter(c -> !c.hidden()).count());
+        assertEquals(3, classes.values().stream().filter(c -> !c.hidden()).count());
     }
 
     private static Node node(String path) {

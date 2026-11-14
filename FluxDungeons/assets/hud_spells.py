@@ -9,8 +9,8 @@ shade is a step of a ramp). An icon sits in a 22 x 22 slot, the size of a hotbar
 the item icons of the hotbar next to it (a 32 x 32 icon shrunk into a slot would mix two pixel sizes). Each slot
 exists twice: ready, and dimmed (not enough mana for it).
 
-Glyphs: U+E400 + index = slot (SPELLS order, then BLANK), U+E400 + DIM + index = the same dimmed, U+E420 key cap A,
-U+E421 key cap F, U+E422 right click, U+E423 left click. FluxDungeons (rpg/RpgHud.java) writes the same numbers: keep SPELLS, SLOT and
+Glyphs: U+E400 + index = slot (SPELLS order, then BLANK), U+E400 + DIM + index = the same dimmed, U+E480 key cap A,
+U+E481 key cap F, U+E482 right click, U+E483 left click (KEYS: clear of the slots, however many spells there are). FluxDungeons (rpg/RpgHud.java) writes the same numbers: keep SPELLS, SLOT and
 BADGE_W in line with it.
 """
 import math
@@ -23,7 +23,9 @@ SPELLS = ["charge", "war_cry", "whirlwind",          # warrior
           "leap_back", "volley", "arrow_rain",       # archer
           "blink", "fireball", "frost_nova",         # mage
           "heal", "blessing", "sanctuary",           # healer
-          "frost_glide", "glacial_rift", "winter_comet"]  # cryomancer
+          "frost_glide", "glacial_rift", "winter_comet",  # cryomancer
+          "phoenix_flight", "fire_wave", "little_sun",    # pyromancer
+          "vine", "brambles", "maneater"]                 # druid
 BLANK = len(SPELLS)          # a slot with no icon (a type with no picture yet)
 DIM = BLANK + 1              # offset of the dimmed slots
 SLOT = 22
@@ -52,7 +54,7 @@ PALETTE = {
 
 # frame accent per class (the inner bevel of the slot): the class reads at a glance, the frames stay one family
 CLASS_ACCENT = {"warrior": "#9a3340", "archer": "#427a48", "mage": "#6c43b0", "healer": "#a87826",
-                "cryomancer": "#3d7bab"}
+                "cryomancer": "#3d7bab", "pyromancer": "#c2552c", "druid": "#427a48"}
 SPELL_CLASS = {s: c for c, ss in zip(CLASS_ACCENT, [SPELLS[i:i + 3] for i in range(0, len(SPELLS), 3)]) for s in ss}
 
 
@@ -427,7 +429,138 @@ def winter_comet():
         "................")
 
 
-ART = {"frost_glide": frost_glide, "glacial_rift": glacial_rift, "winter_comet": winter_comet, "charge": charge, "war_cry": war_cry, "whirlwind": whirlwind, "leap_back": leap_back, "volley": volley,
+# ---------------------------------------------------------------- pyromancer
+
+def phoenix_flight():
+    # two wings of flame swept up, a tail of embers below
+    return rows(
+        "y..............y",
+        "oy............yo",
+        "Foy..........yoF",
+        ".Foy........yoF.",
+        ".Fooy..yy..yooF.",
+        "..Fooy.yy.yooF..",
+        "..FFooyyyyooFF..",
+        "...FFoyyyyoFF...",
+        "....FFoyyoFF....",
+        ".....FoyyoF.....",
+        "......oyyo......",
+        "......FooF......",
+        ".....F.oo.F.....",
+        "....f..Fo..f....",
+        ".......fF.......",
+        "........f.......")
+
+
+def fire_wave():
+    # a wave of flames rolling to the right, taller as it goes
+    return rows(
+        "..............y.",
+        ".............yo.",
+        "..........y..yoy",
+        ".........yo.yooy",
+        ".........yoyoooF",
+        ".....y...ooyooFF",
+        "....yo..yooooFF.",
+        "....yoy.yoooFFo.",
+        ".y..ooyyoooFFoo.",
+        ".yo.oooooFFooFF.",
+        "yoo.ooFFFFooFFf.",
+        "yooooFFooooFFff.",
+        "oFFooFFooFFFfff.",
+        "FFFFFFFFFFFFffff",
+        ".ffffffffffffff.",
+        "................")
+
+
+def little_sun():
+    # a sun and its rays
+    return rows(
+        ".......yy.......",
+        ".......oo.......",
+        "..y..........y..",
+        "...o..yyyy..o...",
+        ".....yyUUyy.....",
+        "....yyUUyyyo....",
+        "...yyUUyyyyoo...",
+        "yo.yyUyyyyyoo.oy",
+        "yo.yyyyyyyooo.oy",
+        "...yyyyyyoooF...",
+        "....yyyoooFF....",
+        ".....oooFFF.....",
+        "...o..FFFF..o...",
+        "..y..........y..",
+        ".......oo.......",
+        ".......yy.......")
+
+
+# ---------------------------------------------------------------- druid
+
+def vine():
+    # a vine twisting up to the right, leaves along it, a wooden hook at its side
+    return rows(
+        "............LL..",
+        "...........LlG..",
+        "..........GlG...",
+        ".........GG.....",
+        "....ll...GG.....",
+        "...LllG.GG......",
+        "...lGGGGG.......",
+        "....GGG.........",
+        "....GG......b...",
+        "....GG.....bW...",
+        ".....GG...bW....",
+        ".....GGG..W.....",
+        "..LL..GGGGW.....",
+        ".LllG..GGG......",
+        ".lGG............",
+        "................")
+
+
+def brambles():
+    # a thorny bush with berries
+    return rows(
+        "................",
+        "....x.....x.....",
+        ".....g...g......",
+        "..x..gG.Gg..x...",
+        "...g.GGlGG.g....",
+        "....gGlRlGg.....",
+        ".xggGGlllGGggx..",
+        "...GGlGGGlGG....",
+        "..gGRlGgGlRGg...",
+        ".xgGGGggGGGGgx..",
+        "...gGGgggGGg....",
+        "..g.gGGgGGg.g...",
+        ".x...gggg....x..",
+        "....g.gg.g......",
+        "...x......x.....",
+        "................")
+
+
+def maneater():
+    # a carnivorous plant: open jaws full of teeth on a stem
+    return rows(
+        "................",
+        "....GGGGGG......",
+        "..GGllllllGG....",
+        ".GllGGGGGGllG...",
+        ".GlGxRxRxRxGlG..",
+        "GlGRRrrrrrRRGlG.",
+        "GGxRrrrrrrrRxGG.",
+        ".gRRrrrrrrRRg...",
+        ".gGxRxRxRxRGg...",
+        "..gGGGGGGGGg....",
+        "...ggGGGGgg.....",
+        "......GG........",
+        ".....GG...LL....",
+        ".....GG..LlG....",
+        "..LL.GGG.lG.....",
+        ".LllGGGGGG......")
+
+
+ART = {"phoenix_flight": phoenix_flight, "fire_wave": fire_wave, "little_sun": little_sun, "vine": vine, "brambles": brambles,
+       "maneater": maneater, "frost_glide": frost_glide, "glacial_rift": glacial_rift, "winter_comet": winter_comet, "charge": charge, "war_cry": war_cry, "whirlwind": whirlwind, "leap_back": leap_back, "volley": volley,
        "arrow_rain": arrow_rain, "blink": blink, "fireball": fireball, "frost_nova": frost_nova, "heal": heal,
        "blessing": blessing, "sanctuary": sanctuary}
 
@@ -524,6 +657,7 @@ import os
 QUINQUE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "Flux", "assets", "metiers",
                        "quinquefive.json")
 BADGES = ["a", "f", "right", "left"]
+KEYS = 0xE480               # first glyph of the key caps
 
 
 def slots_sheet():

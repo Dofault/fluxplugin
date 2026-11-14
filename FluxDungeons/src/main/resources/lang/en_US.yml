@@ -314,8 +314,15 @@ weapon:
 
 skill:
   no-mana: "&#FF5C5CNot enough mana."
+  no-anchor: "&#FF5C5CNothing to hook your vine to: aim at a wall, the ground or a monster, not too close."
   blocked: "&#FF5C5CNo room in front of you."
   healed-by: "&#2ECF7B%player% &#B376E5healed you."
+
+# The pyromancer's heat gauge (a bar at the top of the screen) and the blaze.
+fire:
+  bar-heat: "&#FF9A2E&lHeat &f%heat%"
+  bar-blaze: "&#FFD94D&lBLAZE"
+  blaze: "&#FFD94D&lBlaze! &#B376E5Your bolt fans out."
 
 rpg-hud:
   key-right: "Right click"
@@ -338,6 +345,12 @@ classes:
   cryomancer:
     name: "Cryomancer"
     description: "Locks monsters in ice, then shatters them: spikes, ice glide and a winter comet."
+  pyromancer:
+    name: "Pyromancer"
+    description: "Sets everything he touches alight: fire jumps from monster to monster, and his own heat makes him deadlier and deadlier."
+  druid:
+    name: "Druid"
+    description: "Plants seeds in monsters: they bloom into flowers that root them and heal the whole party."
 
 item:
   classes: "Class:"
@@ -398,6 +411,7 @@ families:
 elements:
   fire: "Fire"
   frost: "Frost"
+  nature: "Nature"
   lightning: "Lightning"
   holy: "Holy"
   shadow: "Shadow"
@@ -463,7 +477,7 @@ class-pages:
   confirm-change: "Your progress in every class is kept. You will not be able to change class again for %hours% h."
   confirm: "Confirm"
   cancel: "Cancel"
-  keys: {left: "Left click", right: "Right click", hold: "Hold right click", a: "Q", f: "F"}
+  keys: {left: "Left click", right: "Right click", hold: "Hold right click", a: "Q", f: "F", passive: "Passive"}
   powers: {physical: "of physical attack", magic: "of magic power"}
   axes: {health: "Health", power: "Power", defense: "Defence", mana: "Mana", range: "Range"}
   sheet:
@@ -519,6 +533,27 @@ class-pages:
       right: {name: "Boreal glide", description: "Glides %distance% blocks on a trail of ice: monsters on the way take %coef% %power% and frost."}
       a: {name: "Glacial rift", description: "Ice spikes burst out of the ground over %range% blocks: %coef% %power%, monsters are thrown up and covered in frost."}
       f: {name: "Winter comet", description: "A comet of ice crashes where you aim: %coef% %power% within %radius% blocks, every monster hit is frozen, the ground stays frozen %duration% s."}
+      passive: {name: "Frost and Shatter", description: "Every hit leaves frost that slows. At %chill-max% frost the monster is locked in ice for %freeze% s (a boss is only slowed). The next hit of another spell shatters it: %shatter_pct% %power%, and the shards hurt and chill the monsters within %shatter-radius% blocks."}
+    pyromancer:
+      role: "Area damage, spreading fire"
+      difficulty: 3
+      strengths: "The highest damage of the three classes. Fire jumps from one monster to the next, and the more he hits, the hotter he gets."
+      weaknesses: "The lowest health. His heat drops as soon as he stops hitting."
+      passive: {name: "Burn and Heat", description: "Every hit sets the monster alight: %burn_pct% %power% per second and per burn, up to %burn-max% burns. A monster dying on fire bursts (%wildfire_pct% %power% within %wildfire-radius% blocks) and sets its neighbours alight. Every hit heats you: up to %heat-damage_pct% more damage, then at 100 heat the Blaze: for %blaze-seconds% s your bolt fans out into %blaze-bolts% embers and you attack faster."}
+      basic: {name: "Ember bolt", description: "Throws an ember (%coef% %power%) up to %range% blocks. Sets the monster alight."}
+      right: {name: "Phoenix flight", description: "Take off in a burst of flames and fly where you look: %coef% %power% within %radius% blocks at take-off and again at landing, monsters pushed back and set alight."}
+      a: {name: "Fire wave", description: "A fan of flames rolls out in front of you over %range% blocks: %coef% %power%, monsters pushed back, %burn% burns each."}
+      f: {name: "Little sun", description: "A sun rises where you aim: %hits% pulses of %coef% %power% within %radius% blocks over %duration% s, then it bursts (%final_pct% %power%)."}
+    druid:
+      role: "Fighting support, control"
+      difficulty: 2
+      strengths: "Heals the whole party by fighting, roots monsters, the highest health of the three classes."
+      weaknesses: "The lowest damage of the three classes: he wins over time."
+      passive: {name: "Seeds and Bloom", description: "Every hit plants a seed. At %seed-max% seeds the monster blooms: rooted for %root% s, it takes %bloom_pct% %power%, and the pollen heals you and the allies within %bloom-heal-radius% blocks of the flower (%bloom-heal_pct% %power%) and seeds the monsters around."}
+      basic: {name: "Thorn", description: "Throws a thorn (%coef% %power%) up to %range% blocks. Plants a seed."}
+      right: {name: "Vine", description: "A vine hooks what you aim at (wall, ground or monster, up to %range% blocks) and hauls you there. Monsters you fly through take %coef% %power% and a seed; a monster caught is rooted for %root% s."}
+      a: {name: "Bramble garden", description: "Brambles grow where you aim (%radius% blocks) for %duration% s: %hits% hits of %coef% %power%, monsters slowed and seeded."}
+      f: {name: "Maneater", description: "A giant carnivorous plant grows where you aim and fights for %duration% s: %hits% bites of %coef% %power% on the monsters within %radius% blocks. As it withers, its pollen heals the allies within %heal-radius% blocks for %heal_pct% %power%."}
 # Page of the dungeon selector (MC GUI, pages.DungeonPages). Plain text, no colour codes.
 dungeon-pages:
   title: Dungeons
