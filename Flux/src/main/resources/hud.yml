@@ -3,7 +3,7 @@
 #
 # Java players with the pack: every part is moved by the text shader. Bedrock players: one boss bar (section bedrock).
 # Pieces {id}: player, balance (main currency), influence, balance_<currency>, x, y, z, compass (00 to 31, compass
-# pointing north), biome (the biome's name), city (the town the player stands in), and those of plugins (FluxWebsite: voteparty, voteparty_required). %placeholders% are read too.
+# pointing north), biome (the biome's name), city (the town the player stands in), and those of plugins (FluxWebsite: voteparty, voteparty_required; FluxDungeons: rpg_class, rpg_class_id). %placeholders% are read too.
 enabled: true
 # Ticks between two redraws (only what changed is sent); money and plugin pieces are read every value-ticks.
 refresh-ticks: 2
@@ -60,7 +60,10 @@ elements:
   position:
     setting: hud_position
     box:
-      - {icon: "compass_{compass}", text: "X: {x}, Y: {y}, Z: {z}", shadow: "#000000"}
+      - {except-universes: [rpg], icon: "compass_{compass}", text: "X: {x}, Y: {y}, Z: {z}", shadow: "#000000"}
+      # rpg universe: the player's class instead of the position (pieces of FluxDungeons; emblems class_<id> of
+      # gen_hud.py, an icon id that does not exist falls back to what comes before its last "_")
+      - {universes: [rpg], requires: rpg_class, icon: "class_{rpg_class_id}", text: "{rpg_class}", shadow: "#000000"}
   voteparty:
     setting: hud_voteparty
     requires: voteparty

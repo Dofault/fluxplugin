@@ -5,7 +5,7 @@
 - U+E000: a tall invisible glyph (2 x 2 picture at alpha 1, height 40) that makes the client draw the HUD's front
   boss bar above its back one (fr.influencraft.flux.hud.HudService);
 - the boxes of hud.yml (width following their text): icons 13 px tall in one sheet per family (U+E100 compass
-  frames, U+E140 Vote Party, biome, town; ids -> characters in hud_icons.json) and the pieces of their background
+  frames, U+E140 Vote Party, biome, town, U+E160 class emblems of the rpg universe; ids -> characters in hud_icons.json) and the pieces of their background
   (U+E030 left edge, U+E031 8 px of middle, U+E032 1 px of middle, U+E033 right edge), sources in assets/hud/icons/;
 - QuinqueFive (5 px capitals, the font of the vanilla menu theme) for the HUD's small texts, in ONE sheet
   (never one glyph per picture: docs/technique/pack-ressources.md). Cells 7 px tall, ink in the top 5 rows: with
@@ -40,6 +40,21 @@ EXTERNAL_ICONS = {
     "rpg": ("influhologrammes:font/hologrammes/monde_rpg_icone.png",
             "/home/influencraft/serveurs/04_labs/plugins/ItemsAdder/contents/influhologrammes/textures/font/hologrammes/monde_rpg_icone.png",
             "\ue150"),
+}
+# Class emblems of the rpg universe (shown in place of the position there), in the look of the RPG world's icon: its
+# grass block and stars are read from that picture, the sword is replaced by the emblem (rows 0-11, columns 5-11).
+# "a" is the picture's own outline colour.
+CLASS_FIRST = 0xE160
+CLASS_EMBLEMS = {
+    "cryomancer": ({"W": (220, 245, 255), "C": (120, 205, 245), "D": (60, 140, 210)}, [
+        "...a...", "..aWa..", ".aWCDa.", ".aWCDa.", "aWWCDDa", "aWCCDDa",
+        "aWCCDDa", "aWCCDDa", ".aCCDa.", ".aCDDa.", "..aDa..", "...a..."]),
+    "pyromancer": ({"R": (230, 70, 40), "O": (255, 150, 30), "Y": (255, 225, 90)}, [
+        "...a...", "..aRa..", "..aRa..", ".aRRa..", ".aROaa.", "aRROaRa",
+        "aROORRa", "aROYORa", "aROYORa", "aRYYORa", ".aOYOa.", "..aaa.."]),
+    "druid": ({"L": (150, 230, 90), "G": (70, 180, 70), "g": (35, 120, 60)}, [
+        "....aa.", "...aLLa", "..aLLGa", ".aLLGGa", "aLLGLGa", "aLGLGGa",
+        "aLLGGga", "aGGGGga", ".aGGga.", "..aaga.", "...aga.", "...aga."]),
 }
 # height of the boxes (position, Vote Party, place) and of their icons
 BOX_H = 13
@@ -161,6 +176,32 @@ def main():
         widths[ch] = int(0.5 + ink_width(picture) * BOX_H / len(picture)) + 1
         icons[n] = ch
         providers.append({"type": "bitmap", "file": texture, "height": BOX_H, "ascent": BOX_H, "chars": [ch]})
+    # class emblems: one sheet, each the RPG icon with its sword (the blade's tip in the grass included)
+    # replaced by the emblem; an unknown class keeps the RPG icon itself ("class")
+    base = read_png(EXTERNAL_ICONS["rpg"][1])[2]
+    outline, grass = base[21][0], base[13][2]
+    cells, chars = [], ""
+    for k, (name, (palette, art)) in enumerate(CLASS_EMBLEMS.items()):
+        cell = [list(row) for row in base]
+        for y in range(12):
+            # the sword: its column, and its guard on rows 6 to 8 (the right star's tip is at row 8, column 13)
+            for x in range(16) if y in (6, 7) else range(13) if y == 8 else range(5, 11):
+                cell[y][x] = (0, 0, 0, 0)
+        for x in range(6, 10):
+            cell[12][x], cell[13][x] = outline, grass
+        for y, line in enumerate(art):
+            for x, c in enumerate(line):
+                if c != ".":
+                    cell[y][5 + x] = outline if c == "a" else palette[c] + (255,)
+        ch = chr(CLASS_FIRST + k)
+        chars += ch
+        icons["class_" + name] = ch
+        widths[ch] = int(0.5 + ink_width(cell) * BOX_H / len(cell)) + 1
+        cells.append(cell)
+    icons["class"] = icons["rpg"]
+    with open(os.path.join(tex, "hud_classes.png"), "wb") as f:
+        f.write(png(sum(len(c[0]) for c in cells), len(base), [[p for c in cells for p in c[y]] for y in range(len(base))]))
+    providers.append({"type": "bitmap", "file": "flux:font/hud_classes.png", "height": BOX_H, "ascent": BOX_H, "chars": [chars]})
     panel_cols = {"\ue030": [2, 1], "\ue031": [0] * 8, "\ue032": [0], "\ue033": [1, 2]}  # rows cut at top and bottom
     pixels = [[(0, 0, 0, 0)] * (8 * len(panel_cols)) for _ in range(BOX_H)]
     for k, (ch, cuts) in enumerate(panel_cols.items()):

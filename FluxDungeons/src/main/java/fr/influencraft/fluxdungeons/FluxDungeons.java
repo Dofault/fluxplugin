@@ -86,6 +86,15 @@ public final class FluxDungeons extends FluxPlugin {
             return;
         }
         fr.influencraft.flux.api.universe.Universes.claim(this, fr.influencraft.fluxdungeons.rpg.RpgWorld.UNIVERSE, runs::isDungeonWorld);
+        // the HUD shows the class instead of the position in the rpg universe (hud.yml of Flux)
+        fr.influencraft.flux.api.hud.Hud.piece(this, "rpg_class", p -> {
+            String[] c = rpgClass(p);
+            return c == null ? "" : c[0];
+        });
+        fr.influencraft.flux.api.hud.Hud.piece(this, "rpg_class_id", p -> {
+            var r = rpg.players().get(p);
+            return r == null ? "" : r.heroClass().id();
+        });
         // a sword or an axe swung in the rpg universe is the class's basic attack
         attackCadence.melee(rpg::melee);
         var players = rpg.players();

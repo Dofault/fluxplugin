@@ -75,6 +75,15 @@
     },
     {
       "type": "bitmap",
+      "file": "flux:font/hud_classes.png",
+      "height": 13,
+      "ascent": 13,
+      "chars": [
+        "\ue160\ue161\ue162"
+      ]
+    },
+    {
+      "type": "bitmap",
       "file": "flux:font/hud_panel.png",
       "height": 13,
       "ascent": 13,

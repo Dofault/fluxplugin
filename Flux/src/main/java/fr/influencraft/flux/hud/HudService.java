@@ -370,7 +370,7 @@ public final class HudService implements Hud.Backend, Listener {
                 String r = value(p, v, s.requires());
                 if (r == null || r.isBlank()) continue;
             }
-            String ic = s.icon() == null ? null : icons().get(fill(s.icon(), p, v));
+            String ic = s.icon() == null ? null : icon(fill(s.icon(), p, v));
             List<String> runs = new ArrayList<>();
             List<Integer> cs = new ArrayList<>();
             int w = 0;
@@ -400,6 +400,13 @@ public final class HudService implements Hud.Backend, Listener {
         for (int i = 0; i < inner / 8; i++) b.append("\uE031\uE010");
         for (int i = 0; i < inner % 8; i++) b.append("\uE032\uE010");
         return b.append("\uE033\uE010").toString();
+    }
+
+    /** Character of an icon; an id that does not exist falls back to what comes before its last "_" (class_x -> class). */
+    private String icon(String id) {
+        String ch = icons().get(id);
+        int cut = id.lastIndexOf('_');
+        return ch != null || cut <= 0 ? ch : icons().get(id.substring(0, cut));
     }
 
     private Map<String, String> icons;
