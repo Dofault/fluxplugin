@@ -81,9 +81,9 @@ cryomancer:
 # Skills: phoenix_flight (takes off and lands in a burst of radius, strength / lift: the jump), fire_wave (a fan of
 # flames, angle: half its opening in degrees), little_sun (aimed; hits pulses over duration, then a nova: final).
 pyromancer:
-  stats: {max_health: 175, magic_power: 24, physical_defense: 7, magic_defense: 12, attack_speed: -0.05, max_mana: 40, mana_regen: 3.5}
-  per-level: {max_health: 17.5, magic_power: 1.9, physical_defense: 0.6, magic_defense: 1.0, max_mana: 1}
-  passive: {burn-max: 5, burn-seconds: 5, burn: 0.07, wildfire: 0.7, wildfire-radius: 3.5, wildfire-stacks: 2, heat-basic: 6, heat-spell: 1, heat-decay-after: 4, heat-decay: 12, heat-damage: 0.2, blaze-seconds: 7, blaze-speed: 0.3, blaze-bolts: 3, blaze-heal: 0.2}
+  stats: {max_health: 190, magic_power: 24, physical_defense: 8, magic_defense: 12, attack_speed: -0.05, max_mana: 40, mana_regen: 3.5}
+  per-level: {max_health: 19, magic_power: 1.9, physical_defense: 0.7, magic_defense: 1.0, max_mana: 1}
+  passive: {burn-max: 5, burn-seconds: 5, burn: 0.07, wildfire: 0.7, wildfire-radius: 3.5, wildfire-stacks: 2, heat-basic: 6, heat-spell: 1, heat-decay-after: 4, heat-decay: 12, heat-damage: 0.2, blaze-seconds: 7, blaze-speed: 0.3, blaze-bolts: 3, blaze-heal: 0.25}
   basic: {style: ember, damage: magic, element: fire, coefficient: 0.75, targets: 1, range: 22}
   skills:
     right: {type: phoenix_flight, kind: mobility, damage: magic, element: fire, coefficient: 0.6, mana: 25, targets: 4, extra: {radius: 3, strength: 1.15, lift: 0.72, burn: 1}}
