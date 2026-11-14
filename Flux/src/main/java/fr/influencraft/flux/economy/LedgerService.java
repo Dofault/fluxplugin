@@ -183,6 +183,23 @@ public final class LedgerService implements Ledger.Backend, Listener {
     }
 
     @Override
+    public int renameCurrency(String from, String to) throws SQLException {
+        int moved;
+        try (Connection c = Database.connection();
+             PreparedStatement ps = c.prepareStatement("UPDATE " + TABLE + " SET currency = ? WHERE currency = ?")) {
+            ps.setString(1, to);
+            ps.setString(2, from);
+            moved = ps.executeUpdate();
+        }
+        // histories already in memory were read under the former id: read again on the next look
+        synchronized (this) {
+            recent.clear();
+        }
+        for (var p : Bukkit.getOnlinePlayers()) history(p.getUniqueId());
+        return moved;
+    }
+
+    @Override
     public Runnable expect(UUID player, String currency, double delta) {
         Origin origin = Ledger.current();
         if (origin == null) origin = resolver.resolve();

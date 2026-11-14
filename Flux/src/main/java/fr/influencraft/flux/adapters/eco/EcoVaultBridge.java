@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 
 /**
  * The money of the eco plugins (EcoJobs, EcoCollections, libreforge {@code give_money}) as seen by Flux, bound once the
- * server is up ({@code ServerLoadEvent}, after CMI joined Vault).
+ * server is up ({@code ServerLoadEvent}): whatever economy Vault serves by then, Flux's own or one that joined late.
  *
  * <ul>
  *   <li>Start-up race (2026-08-26): eco hooks Vault once during its own enable, before CMIEInjector hooks CMI into
@@ -52,6 +52,8 @@ public final class EcoVaultBridge {
                 .filter(n -> !n.isEmpty() && !CARRIERS.contains(n.toLowerCase(java.util.Locale.ROOT)))
                 .findFirst().orElse(null));
         java.util.function.BooleanSupplier act = () -> {
+            // an economy whose balance events come later on another thread (CMI) is told the origin beforehand
+            if (!fr.influencraft.flux.api.economy.Economy.vaultObserved()) return change.getAsBoolean();
             Runnable cancel = Ledger.expect(player.getUniqueId(), "vault", delta);
             boolean done = change.getAsBoolean();
             if (!done) cancel.run();

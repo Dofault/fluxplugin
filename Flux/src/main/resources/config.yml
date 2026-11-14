@@ -20,14 +20,27 @@ language: en_US
 # %amount% = montant mis en forme (« 1 200 »). vault = toute économie Vault, playerpoints = PlayerPoints ;
 # d'autres plugins ajoutent les leurs (ex : chips, les jetons de FluxCasino).
 currencies:
-  main: vault
-  # type: vault = the Vault economy (kept by CMI or another plugin), flux = kept by Flux in its database.
+  main: money
+  # type: flux = kept by Flux in its database, vault = the economy another plugin gives to Vault.
   # format: how an amount is written; icon: item shown for it in menus (Flux material syntax).
   # flux currencies: decimals (0 = whole units), command: true = /<id> (balance; give|take|set|look for
-  # flux.currency.<id>.admin). Names: money.names.<id> in the lang file; message look: money in style.yml.
-  vault:
-    type: vault
+  # flux.currency.<id>.admin), start-balance (a new player's), max-balance (0 = none),
+  # save: immediate (each movement written at once) or batched (written every second: money paid on every action).
+  # Names: money.names.<id> in the lang file; message look: money in style.yml.
+  #
+  # vault: true (one currency): the server's money. Flux is then the Vault economy of the server (no economy plugin
+  # needed: Lands, jobs and every Vault plugin pay in it) and gives /money, /pay and /baltop. The id "vault" stays
+  # accepted everywhere as its alias. vault-format: how other plugins write an amount of it (plain text).
+  # To use another plugin's economy instead: replace this entry with  vault: {type: vault, format: ..., icon: ...}
+  # and set main: vault.
+  money:
+    type: flux
+    vault: true
+    decimals: 2
+    save: batched
+    start-balance: 0
     format: "%amount% $"
+    vault-format: "%amount% $"
     icon: GOLD_INGOT
   influence:
     type: flux
@@ -41,6 +54,14 @@ currencies:
     command: false   # FluxCasino's /chips
     format: "%amount% chips"
     icon: GOLD_NUGGET
+
+# Commands of the server's money (the currency marked vault: true above): /money, /pay, /baltop.
+money:
+  pay:
+    # smallest amount a player may send
+    minimum: 1
+    # false: only to players who are online
+    offline: true
 
 # Account history (/account, menu "compte"): every balance change of every currency, with its origin.
 ledger:
@@ -73,6 +94,8 @@ ledger:
     "CMI:salary": "Salary"
     "CMI:transfer": "Transfer"
     "CMI:command": "Command"
+    "Flux:transfer": "Transfer"
+    "Flux:command": "Staff"
   # origins never recorded ("Plugin:key" or "Plugin")
   ignored: []
   # true: log where a movement without origin comes from (thread and stack), to give it a name

@@ -87,6 +87,21 @@ money:
   admin-failed: "&#FF5C5COpération refusée (solde insuffisant ou base indisponible)."
   player-not-found: "&#FF5C5CJoueur inconnu : %player%"
   no-menu: "&#FF5C5CLe menu Compte n'est pas installé."
+  message-with: '{icon} {color}Tu as {verb} {amount} {color}{name} {arrow}&7 {link} &f{player}{origin}'
+  links:
+    to: à
+    from: de
+  pay:
+    players-only: '&#FF5C5CSeul un joueur peut faire un virement.'
+    self: '&#FF5C5CTu ne peux pas te payer toi-même.'
+    minimum: '&#FF5C5CLe montant minimum d''un virement est de &f%amount%&#FF5C5C.'
+    not-enough: '&#FF5C5CTu n''as pas assez pour envoyer &f%amount%&#FF5C5C. &7Solde : &f%balance%'
+    refused: '&#FF5C5CLe virement vers %player% a été refusé, rien n''a été débité.'
+  top:
+    header: '!&#FFD94DClassement des fortunes &7(page %page%/%pages%) &8- &7Total : &f%total%'
+    line: '!&7%place%. &f%player%&7 : &f%amount%'
+    own: '!&#2ECF7B%place%. %player% : &f%amount%'
+    empty: '!&7Personne ici.'
   button:
     name: Historique de compte
     description: "Tes soldes, et tout ce que tu as gagné et dépensé."

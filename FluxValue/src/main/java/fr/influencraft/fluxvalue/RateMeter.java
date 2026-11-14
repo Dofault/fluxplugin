@@ -94,7 +94,7 @@ final class RateMeter implements Listener {
 
     @EventHandler
     public void onBalance(BalanceChangeEvent event) {
-        if (!event.deposit() || !event.currency().equals("vault") || event.delta() <= 0) return;
+        if (!event.deposit() || !isMainCurrency(event.currency()) || event.delta() <= 0) return;
         Meter meter = meters.get(event.player());
         if (meter == null) return;
         synchronized (meter.gains) {
@@ -113,5 +113,11 @@ final class RateMeter implements Listener {
             if (player != null) player.hideBossBar(e.getValue().bar);
         }
         meters.clear();
+    }
+
+    /** The server's money, whatever its id ({@code vault} when another plugin keeps it). */
+    private static boolean isMainCurrency(String id) {
+        var main = fr.influencraft.flux.api.economy.Economy.main();
+        return main != null && main.id().equalsIgnoreCase(id);
     }
 }

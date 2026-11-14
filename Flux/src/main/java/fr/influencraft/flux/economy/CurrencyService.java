@@ -35,11 +35,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
  * The money of the suite, owned by Flux: the currencies kept by Flux ({@code currencies.<id>.type: flux}, their
- * admin command), the account history ({@link LedgerService}), the standard gain / loss message
+ * admin command; the one marked {@code vault: true} is the server's Vault economy, see {@link VaultProvider} and
+ * {@link MoneyCommands}), the account history ({@link LedgerService}), the standard gain / loss message
  * ({@link MoneyNotifier}), the account menu ({@code /compte}, menu {@code compte}, lists {@code ledger},
  * {@code ledger_summary} and the main-menu button {@code account_button}) and placeholders
  * {@code %flux_balance_<currency>%} (formatted) / {@code %flux_balance_<currency>_raw%}.
@@ -58,6 +62,14 @@ public final class CurrencyService implements Listener {
     /** Whose history a viewer looks at (staff looking at another player), else the viewer himself. */
     private final Map<UUID, UUID> subjects = new HashMap<>();
     private List<String> shown = List.of("vault", "influence", "chips");
+    /** The Flux currency served to Vault (the server's money), or null. */
+    private StoredCurrency vault;
+    private MoneyCommands money;
+    private final ScheduledExecutorService writer = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r, "Flux-balances");
+        t.setDaemon(true);
+        return t;
+    });
 
     public CurrencyService(JavaPlugin flux, Supplier<Messages> messages) {
         this.flux = flux;
@@ -73,16 +85,32 @@ public final class CurrencyService implements Listener {
             flux.getLogger().severe("Currencies kept by Flux unavailable (table flux_balances): " + e.getMessage());
         }
         ConfigurationSection currencies = flux.getConfig().getConfigurationSection("currencies");
+        String vaultId = vaultCurrencyId(flux);
         if (currencies != null) {
             for (String id : currencies.getKeys(false)) {
                 ConfigurationSection c = currencies.getConfigurationSection(id);
                 if (c == null || !"flux".equalsIgnoreCase(c.getString("type", ""))) continue;
-                StoredCurrency currency = new StoredCurrency(id.toLowerCase(Locale.ROOT), c.getInt("decimals", 0));
+                StoredCurrency currency = new StoredCurrency(id.toLowerCase(Locale.ROOT), c.getInt("decimals", 0),
+                        "batched".equalsIgnoreCase(c.getString("save", "immediate")), c.getDouble("start-balance", 0), c.getDouble("max-balance", 0));
                 stored.put(currency.id(), currency);
                 Economy.register(flux, currency);
-                if (c.getBoolean("command", true)) registerCommand(currency);
+                if (currency.id().equals(vaultId)) {
+                    // the server's money: served to Vault, its commands are /money, /pay and /baltop
+                    if (vaultInstalled()) VaultProvider.register(flux);
+                    Economy.alias("vault", currency.id());
+                    vault = currency;
+                    money = new MoneyCommands(flux, messages, this, currency);
+                    money.register();
+                } else if (c.getBoolean("command", true)) {
+                    registerCommand(currency);
+                }
             }
         }
+        // no money of our own: whatever economy another plugin gives to Vault is the "vault" currency
+        if (vault == null && vaultInstalled()) Economy.registerBuiltIns(flux);
+        bindVault();
+        if (money != null) money.configure(flux.getConfig().getConfigurationSection("money"));
+        writer.scheduleWithFixedDelay(this::flush, 1, 1, TimeUnit.SECONDS);
         Economy.configureDisplay(notifier::name, notifier);
         ledger.start();
         Bukkit.getPluginManager().registerEvents(this, flux);
@@ -97,15 +125,87 @@ public final class CurrencyService implements Listener {
         for (Player p : Bukkit.getOnlinePlayers()) preload(p.getUniqueId());
     }
 
+    /**
+     * Id of the Flux currency that is the server's money ({@code currencies.<id>.vault: true}, type flux): served to
+     * Vault when Vault is installed, with the commands /money, /pay and /baltop. Null when the money is another
+     * plugin's. Read from the config, usable before Flux starts.
+     */
+    public static String vaultCurrencyId(JavaPlugin flux) {
+        ConfigurationSection currencies = flux.getConfig().getConfigurationSection("currencies");
+        if (currencies == null) return null;
+        for (String id : currencies.getKeys(false)) {
+            ConfigurationSection c = currencies.getConfigurationSection(id);
+            if (c != null && "flux".equalsIgnoreCase(c.getString("type", "")) && c.getBoolean("vault", false)) return id.toLowerCase(Locale.ROOT);
+        }
+        return null;
+    }
+
+    /** The Vault plugin is there: only then may {@link VaultProvider} (which implements its interface) be loaded. */
+    public static boolean vaultInstalled() {
+        return Bukkit.getPluginManager().getPlugin("Vault") != null;
+    }
+
+    /** How Vault presents our money to other plugins (re-read on reload). */
+    private void bindVault() {
+        if (vault == null || !vaultInstalled()) return;
+        ConfigurationSection c = flux.getConfig().getConfigurationSection("currencies." + vault.id());
+        String name = notifier.name(vault.id());
+        VaultProvider.bind(vault, c == null ? null : c.getString("vault-format"), name, name);
+    }
+
+    /** Once every plugin is enabled: says so loudly when another plugin took Vault's economy over ours. */
+    public void checkVault() {
+        if (vault == null || !vaultInstalled()) return;
+        if (VaultProvider.active()) {
+            flux.getLogger().info("Vault economy: Flux (currency " + vault.id() + ")");
+        } else {
+            flux.getLogger().severe("Vault's economy is served by " + VaultProvider.activeProviderName() + ", not by Flux: third-party plugins pay into "
+                    + "another money than /money shows. Turn that plugin's economy off (CMI: Economy.Enabled: false in its config.yml).");
+        }
+    }
+
+    /** Database thread: batched balances written (every second). */
+    private void flush() {
+        for (StoredCurrency c : stored.values()) {
+            try {
+                c.flush();
+            } catch (RuntimeException e) {
+                flux.getLogger().warning("Balances of " + c.id() + " not written: " + e);
+            }
+        }
+    }
+
+    /** Writes the batched balances now (before reading the table: leaderboard, migration check). Blocks. */
+    public void flushNow() {
+        try {
+            writer.submit(this::flush).get(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (java.util.concurrent.ExecutionException | java.util.concurrent.TimeoutException | java.util.concurrent.RejectedExecutionException e) {
+            flux.getLogger().warning("Balances not written on request: " + e);
+        }
+    }
+
     public void configure(ConfigurationSection config, ConfigurationSection style) {
         ConfigurationSection l = config.getConfigurationSection("ledger");
         ledger.configure(l);
         commandOrigins.configure(l);
         if (l != null && l.isList("currencies")) shown = List.copyOf(l.getStringList("currencies"));
         notifier.configure(style);
+        bindVault();
+        if (money != null) money.configure(config.getConfigurationSection("money"));
     }
 
     public void stop() {
+        // last balances written before the database closes; the writer thread first, so nothing runs beside it
+        writer.shutdown();
+        try {
+            if (!writer.awaitTermination(10, TimeUnit.SECONDS)) flux.getLogger().warning("Balances: the writer did not stop in time");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        flush();
+        if (vaultInstalled()) VaultProvider.unbind();
         ledger.stop();
     }
 
@@ -200,7 +300,7 @@ public final class CurrencyService implements Listener {
         return true;
     }
 
-    private static double parse(String text) {
+    static double parse(String text) {
         try {
             double v = Double.parseDouble(text.replace(',', '.'));
             return v < 0 || Double.isNaN(v) ? -1 : v;

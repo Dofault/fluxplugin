@@ -1,6 +1,8 @@
 package fr.influencraft.fluxmigration;
 
 import fr.influencraft.fluxmigration.migrations.AutoSellFilesToDatabase;
+import fr.influencraft.fluxmigration.migrations.CmiBalancesToFlux;
+import fr.influencraft.fluxmigration.migrations.LedgerVaultToMoney;
 import fr.influencraft.fluxmigration.migrations.DungeonLostGearToRewards;
 import fr.influencraft.fluxmigration.migrations.OfferingFilesToDatabase;
 import fr.influencraft.fluxmigration.migrations.PetsEcoToDatabase;
@@ -34,7 +36,9 @@ final class Migrations {
                 new PlayerWarpsToFluxPW(plugin),
                 new QuickShopToFluxChestShop(plugin),
                 new AuctionHouseToFluxAuctionHouse(plugin),
-                new DungeonLostGearToRewards(plugin)
+                new DungeonLostGearToRewards(plugin),
+                new CmiBalancesToFlux(plugin),
+                new LedgerVaultToMoney()
         );
     }
 }

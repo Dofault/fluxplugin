@@ -48,6 +48,11 @@ public final class Ledger {
         /** Label of an origin as players read it. */
         String label(Origin origin);
 
+        /** See {@link Ledger#renameCurrency}. */
+        default int renameCurrency(String from, String to) throws java.sql.SQLException {
+            return 0;
+        }
+
         /** See {@link Ledger#expect}. */
         default Runnable expect(UUID player, String currency, double delta) {
             return () -> { };
@@ -106,6 +111,15 @@ public final class Ledger {
     public static Runnable expect(UUID player, String currency, double delta) {
         Backend b = backend;
         return b == null ? () -> { } : b.expect(player, currency, delta);
+    }
+
+    /**
+     * Moves every recorded line of a currency under another id (a currency that changed id, e.g. {@code vault} once
+     * Flux keeps the server's money itself). For migrations, before players join. Returns the number of lines moved.
+     */
+    public static int renameCurrency(String from, String to) throws java.sql.SQLException {
+        Backend b = backend;
+        return b == null ? 0 : b.renameCurrency(from, to);
     }
 
     /** History of a player, most recent first. Completes off the main thread. */

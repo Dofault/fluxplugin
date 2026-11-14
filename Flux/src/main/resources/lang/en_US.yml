@@ -88,6 +88,21 @@ money:
   admin-failed: "&#FF5C5COperation refused (balance too low or database unavailable)."
   player-not-found: "&#FF5C5CUnknown player: %player%"
   no-menu: "&#FF5C5CThe account menu is not installed."
+  message-with: "{icon} {color}You {verb} {amount} {color}{name} {arrow}&7 {link} &f{player}{origin}"
+  links:
+    to: "to"
+    from: "from"
+  pay:
+    players-only: "&#FF5C5COnly a player can send money."
+    self: "&#FF5C5CYou cannot pay yourself."
+    minimum: "&#FF5C5CThe smallest transfer is &f%amount%&#FF5C5C."
+    not-enough: "&#FF5C5CYou do not have enough to send &f%amount%&#FF5C5C. &7Balance: &f%balance%"
+    refused: "&#FF5C5CThe transfer to %player% was refused, nothing was taken."
+  top:
+    header: "!&#FFD94DRichest players &7(page %page%/%pages%) &8- &7Total: &f%total%"
+    line: "!&7%place%. &f%player%&7: &f%amount%"
+    own: "!&#2ECF7B%place%. %player%: &f%amount%"
+    empty: "!&7Nobody here."
   button:
     name: "Account"
     description: "Your balances, and everything you gained and spent."

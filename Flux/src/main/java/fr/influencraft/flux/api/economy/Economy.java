@@ -12,9 +12,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 /**
- * Currencies of the suite. Declared in Flux's config ({@code currencies.<id>}): {@code type: vault} is the Vault
- * economy (BitBlock, kept by CMI), {@code type: flux} a currency Flux keeps in its own database (Influence, casino
- * chips). Adding a currency is a config entry; a plugin may still add one in code with {@link #register}. The
+ * Currencies of the suite. Declared in Flux's config ({@code currencies.<id>}): {@code type: flux} is a currency Flux
+ * keeps in its own database (BitBlock, Influence, casino chips), {@code type: vault} whatever economy another plugin
+ * gives to Vault. One Flux currency may be marked {@code vault: true}: Flux is then the server's Vault economy and
+ * third-party plugins pay in that currency; the id {@code vault} stays accepted as its alias. Adding a currency is a
+ * config entry; a plugin may still add one in code with {@link #register}. The
  * display format of each currency is {@code currencies.<id>.format} ({@code %amount%} = formatted number), its name
  * {@code money.names.<id>} in Flux's lang, the look of its gain / loss messages {@code money} in style.yml.
  * {@link #main()} = the {@code currencies.main} one.
@@ -72,6 +74,17 @@ public final class Economy {
         vaultObserved = observed;
     }
 
+    /** True when an adapter reports Vault's balance changes later, on another thread (see {@link Ledger#expect}). */
+    public static boolean vaultObserved() {
+        return vaultObserved;
+    }
+
+    /** Former identifiers of a currency (its old keys in lang and style files are still read). */
+    public static List<String> aliasesOf(String id) {
+        String low = id.toLowerCase(Locale.ROOT);
+        return ALIASES.entrySet().stream().filter(e -> e.getValue().equals(low)).map(Map.Entry::getKey).sorted().toList();
+    }
+
     /** A former identifier of a currency, still accepted by {@link #get}. */
     public static void alias(String former, String id) {
         ALIASES.put(former.toLowerCase(Locale.ROOT), id.toLowerCase(Locale.ROOT));
@@ -106,7 +119,7 @@ public final class Economy {
         return o == null ? null : o.currency();
     }
 
-    /** The server's main currency ({@code currencies.main}, Vault by default). Never null. */
+    /** The server's main currency ({@code currencies.main}, Vault by default). Null only without any economy. */
     public static Currency main() {
         Currency c = get(main);
         return c != null ? c : get("vault");
@@ -160,7 +173,8 @@ public final class Economy {
     // ---------------------------------------------------------------- built-in currencies
 
     /**
-     * Any Vault economy, looked up on every call (the provider can register late, e.g. CMI). When no adapter reports
+     * Any Vault economy kept by another plugin, looked up on every call (the provider can register late, e.g. CMI).
+     * Not used when a Flux currency is the Vault economy ({@code vault: true}). When no adapter reports
      * Vault's balance changes ({@link #vaultObserved}), it fires the {@link BalanceChangeEvent} itself, so the
      * movements made through the suite are still recorded. When one does (CMI, events fired later on another thread),
      * each change is announced to the ledger first ({@link Ledger#expect}), so it keeps the origin of the caller.
@@ -223,8 +237,8 @@ public final class Economy {
         }
     }
 
-    /** Called by Flux at start-up. The Vault one is only created when Vault is installed. */
+    /** Called by Flux at start-up when no currency of its own is the Vault economy, and Vault is installed. */
     public static void registerBuiltIns(Plugin flux) {
-        if (org.bukkit.Bukkit.getPluginManager().getPlugin("Vault") != null) register(flux, new VaultCurrency());
+        register(flux, new VaultCurrency());
     }
 }

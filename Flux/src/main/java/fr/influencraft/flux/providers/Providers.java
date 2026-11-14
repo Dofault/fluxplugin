@@ -61,7 +61,9 @@ public final class Providers {
         // packets to one client (Flux depends on packetevents)
         fr.influencraft.flux.api.client.ClientTags.use(enabled("packetevents") ? new fr.influencraft.flux.adapters.packetevents.PacketEventsTags() : null);
         String money = choice(config, "money-events");
-        boolean moneyEvents = (money.equals("auto") || money.equals("cmi")) && enabled("CMI");
+        // Flux's own money is Vault's economy: its movements are recorded where they are made, no adapter needed
+        boolean ownMoney = fr.influencraft.flux.economy.CurrencyService.vaultCurrencyId(flux) != null;
+        boolean moneyEvents = !ownMoney && (money.equals("auto") || money.equals("cmi")) && enabled("CMI");
         if (moneyEvents) {
             Bukkit.getPluginManager().registerEvents(new fr.influencraft.flux.adapters.cmi.CmiMoneyEvents(), flux);
         }
@@ -75,8 +77,8 @@ public final class Providers {
             fr.influencraft.flux.api.world.PlacedBlocks.use(null);
         }
         if (enabled("eco") && !choice(config, "eco-vault-bridge").equals("false")) {
-            // eco plugins hook Vault once at their start, before CMI joins Vault: bound again once the server is up, with
-            // the origin of each payment announced to the account history (EcoVaultBridge)
+            // eco plugins' payments named after the plugin that pays (EcoJobs, not the plugin whose combat made the
+            // kill), and bound once the server is up: an economy joining Vault late (CMI) is found too (EcoVaultBridge)
             Bukkit.getPluginManager().registerEvents(new org.bukkit.event.Listener() {
                 @org.bukkit.event.EventHandler
                 public void onServerLoad(org.bukkit.event.server.ServerLoadEvent event) {
@@ -84,7 +86,7 @@ public final class Providers {
                 }
             }, flux);
         }
-        flux.getLogger().info("Providers: money events = " + (money.equals("none") || !enabled("CMI") ? "none" : "CMI") + ", items = " + CustomItems.providerName() + ", jobs = " + fr.influencraft.flux.api.jobs.Jobs.providerName()
+        flux.getLogger().info("Providers: money events = " + (ownMoney ? "Flux" : moneyEvents ? "CMI" : "none") + ", items = " + CustomItems.providerName() + ", jobs = " + fr.influencraft.flux.api.jobs.Jobs.providerName()
                 + ", fishing = " + fr.influencraft.flux.api.fishing.Fishing.providerName()
                 + ", claims = " + fr.influencraft.flux.api.claims.Claims.providerName()
                 + ", chest shops = " + fr.influencraft.flux.api.shops.ChestShops.providerName()

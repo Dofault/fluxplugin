@@ -17,6 +17,15 @@ commands:
     aliases: [fmenu]
 
 permissions:
+  flux.money.pay:
+    description: /pay (send money to a player).
+    default: true
+  flux.money.top:
+    description: /baltop (richest players).
+    default: true
+  flux.money.others:
+    description: /money <player> (another player's balance).
+    default: op
   flux.items.admin:
     description: /fluxitems (give, list, id).
     default: op

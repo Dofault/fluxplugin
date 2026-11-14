@@ -43,11 +43,22 @@ public final class MoneyNotifier implements Economy.Notifier {
 
     /** Colour and icon of a currency ({@code money.currencies.<id>}). */
     public String color(String currency) {
-        return look("currencies." + currency + ".color", look("color", "&#B376E5"));
+        return ofCurrency(currency, "color", look("color", "&#B376E5"));
     }
 
     public String icon(String currency) {
-        return look("currencies." + currency + ".icon", "");
+        return ofCurrency(currency, "icon", "");
+    }
+
+    /** A look of a currency, read under its id, else under a former id of it ({@code vault} for the Vault one). */
+    private String ofCurrency(String currency, String key, String fallback) {
+        String found = look("currencies." + currency + "." + key, null);
+        if (found != null) return found;
+        for (String former : Economy.aliasesOf(currency)) {
+            found = look("currencies." + former + "." + key, null);
+            if (found != null) return found;
+        }
+        return fallback;
     }
 
     /** Amount alone (no icon): whole numbers without decimals. */
@@ -59,7 +70,12 @@ public final class MoneyNotifier implements Economy.Notifier {
     /** Name of a currency ({@code money.names.<id>}). */
     public String name(String currency) {
         Messages m = messages.get();
-        String n = m == null ? "" : m.raw("money.names." + currency);
+        if (m == null) return currency;
+        String n = m.raw("money.names." + currency);
+        for (String former : Economy.aliasesOf(currency)) {
+            if (!n.isEmpty()) break;
+            n = m.raw("money.names." + former);
+        }
         return n.isEmpty() ? currency : n;
     }
 
@@ -77,6 +93,10 @@ public final class MoneyNotifier implements Economy.Notifier {
         Messages m = messages.get();
         String template = m == null ? "" : m.raw("money.message");
         if (template.isEmpty()) template = "{icon} {color}{verb} {amount} {color}{name} {arrow}{origin}";
+        return line(template, currency, signedAmount, origin);
+    }
+
+    private String line(String template, Currency currency, double signedAmount, Origin origin) {
         boolean gain = signedAmount >= 0;
         String color = color(currency.id());
         String originPart = origin == null || origin.unknown() ? ""
@@ -90,6 +110,24 @@ public final class MoneyNotifier implements Economy.Notifier {
                 .replace("{origin}", originPart)
                 .replace("{color}", color);
         return Style.applyTags(text);
+    }
+
+    /**
+     * A transfer between players: the standard line with the other player named ({@code money.message-with},
+     * {@code {link}} = {@code money.links.to} or {@code .from}), sent when the player is online.
+     */
+    void notifyTransfer(OfflinePlayer player, Currency currency, double signedAmount, Origin origin, String other) {
+        Player online = player.getPlayer();
+        Messages m = messages.get();
+        if (online == null || m == null) return;
+        String template = m.raw("money.message-with");
+        if (template.isEmpty()) {
+            notify(player, currency, signedAmount, origin);
+            return;
+        }
+        String line = line(template, currency, signedAmount, origin)
+                .replace("{link}", m.raw(signedAmount >= 0 ? "money.links.from" : "money.links.to")).replace("{player}", other);
+        online.sendMessage(Texts.parse(line, online));
     }
 
     @Override

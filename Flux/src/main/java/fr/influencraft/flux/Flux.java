@@ -45,6 +45,14 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     @Override
     public void onLoad() {
         LegacyDataFolder.migrate(this, "FluxMenu");
+        // our money as Vault's economy before any plugin starts: a plugin looking Vault up in its own enable finds it
+        try {
+            if (fr.influencraft.flux.economy.CurrencyService.vaultInstalled() && fr.influencraft.flux.economy.CurrencyService.vaultCurrencyId(this) != null) {
+                fr.influencraft.flux.economy.VaultProvider.register(this);
+            }
+        } catch (RuntimeException | LinkageError e) {
+            getLogger().warning("Vault economy not registered early: " + e);
+        }
         // the pack's text shader written before MC GUI merges it (see pack.ClientPack#early)
         try {
             clientPack = new fr.influencraft.flux.pack.ClientPack(this, getFile());
@@ -78,7 +86,6 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         fr.influencraft.flux.api.data.Database.start(this, fr.influencraft.flux.api.data.Database.loadSettings(this));
         fr.influencraft.flux.providers.Providers.start(this, getConfig().getConfigurationSection("providers"));
         fr.influencraft.flux.api.util.PlayerSettings.open(this);
-        fr.influencraft.flux.api.economy.Economy.registerBuiltIns(this);
         // money of the suite: Flux's own currencies, account history, gain / loss messages (configured by readSettings)
         currencies = new fr.influencraft.flux.economy.CurrencyService(this, () -> messages);
         items = new ItemFactory(this);
@@ -167,6 +174,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         clientPack.start();
         // once every plugin is enabled: PlayerPoints may load after us
         getServer().getScheduler().runTask(this, () -> fr.influencraft.flux.compat.PlayerPointsCompat.start(this, currencies));
+        getServer().getScheduler().runTask(this, currencies::checkVault);
         // every plugin has opened its tables: record them (what /fluxmenu database migrate moves)
         getServer().getScheduler().runTaskAsynchronously(this, fr.influencraft.flux.api.data.Database::rememberTables);
     }
