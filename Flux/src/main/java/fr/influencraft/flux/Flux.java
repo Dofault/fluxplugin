@@ -150,12 +150,14 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
                 .registerListener(new fr.influencraft.flux.adapters.packetevents.HurtShakeFilter(this));
         // a player's sidebar taken off his screen while a plugin needs it (api.client.Sidebar)
         var sidebar = new fr.influencraft.flux.adapters.packetevents.SidebarFilter();
+        sidebar.shadow(fr.influencraft.flux.adapters.packetevents.SidebarFilter.parseShadow(getConfig().getString("sidebar-shadow", "#000000")));
         sidebarListener = PacketEvents.getAPI().getEventManager().registerListener(sidebar);
         fr.influencraft.flux.api.client.Sidebar.bind(sidebar);
         getServer().getPluginManager().registerEvents(new org.bukkit.event.Listener() {
             @org.bukkit.event.EventHandler
             public void onQuit(org.bukkit.event.player.PlayerQuitEvent e) {
                 fr.influencraft.flux.api.client.Sidebar.forget(e.getPlayer().getUniqueId());
+                sidebar.forget(e.getPlayer().getUniqueId());
                 fr.influencraft.flux.api.client.ChatHold.forget(e.getPlayer().getUniqueId());
             }
         }, this);
