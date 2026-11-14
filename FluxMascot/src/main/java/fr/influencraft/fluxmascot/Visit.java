@@ -84,7 +84,8 @@ final class Visit {
 
     private static Visit create(FluxMascot plugin, Player player, Location spot, boolean speech) {
         float yaw = facing(spot, player.getLocation(), 0);
-        ModelBridge.Handle model = ModelBridge.show(player, plugin.settings().model(), plugin.settings().scale(), spot, yaw);
+        ModelBridge.Handle model = ModelBridge.show(player, plugin.settings().model(), plugin.settings().scale(),
+                plugin.settings().yawOffset(), spot, yaw);
         return model == null ? null : new Visit(plugin, player, model, spot, yaw, speech);
     }
 

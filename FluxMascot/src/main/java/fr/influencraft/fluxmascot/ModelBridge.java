@@ -35,11 +35,14 @@ final class ModelBridge {
     private ModelBridge() {
     }
 
-    /** Shows the model to the viewer at this scale, null when no model has this name. */
-    static Handle show(Player viewer, String model, float scale, Location at, float yaw) {
+    /**
+     * Shows the model to the viewer at this scale, null when no model has this name. yawOffset turns the model so its
+     * drawn front is the way it faces (BetterModel shows our models back to front without it).
+     */
+    static Handle show(Player viewer, String model, float scale, float yawOffset, Location at, float yaw) {
         var renderer = BetterModel.modelOrNull(model);
         if (renderer == null) return null;
-        float[] facing = {yaw};
+        float[] facing = {yaw + yawOffset};
         DummyTracker tracker = renderer.create(BukkitAdapter.adapt(at.clone()));
         tracker.scaler(ModelScaler.value(scale));
         tracker.rotation(() -> new ModelRotation(0, facing[0]));
@@ -60,7 +63,7 @@ final class ModelBridge {
 
             public void move(Location to, float yaw) {
                 if (tracker.isClosed()) return;
-                facing[0] = yaw;
+                facing[0] = yaw + yawOffset;
                 // a copy: BetterModel keeps the location it is given and skips a move to an "equal" one, so handing
                 // it the caller's own (mutated) Location would never move the model
                 tracker.location(BukkitAdapter.adapt(to.clone()));
