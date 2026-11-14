@@ -27,11 +27,16 @@ monsters:
 
 # 2026-11-11: boss 140 -> 80, mini-boss 20 -> 10, elite 5 -> 4 (a lone level 1 warrior took about 2 minutes of
 # non-stop hits on an easy boss, 3 to 4 in a real fight; a dungeon has several mini-bosses now).
+# 2026-11-14, with the three elemental classes: normal monsters tougher and softer (life 120 + 13 a level -> 165 + 18,
+# attack 10 + 2.2 -> 8.5 + 1.9), so that a monster lives long enough for a class's mechanic to play on it (three
+# frosts, five burns, three seeds) and a pack hurts less by its number; elite 4 -> 3.5, mini-boss 10 -> 9, boss
+# 80 -> 70 of that longer life; mini-boss damage 2.2 -> 2.0 and boss 3 -> 2.7 (nobody heals a party from a key any
+# more: each class mends itself a little by fighting, the druid the others too).
 ranks:
   normal:   {health: 1, damage: 1, defense: 1, xp: 1}
   elite:    {health: 3.5, damage: 1.6, defense: 1.3, xp: 4}
-  miniboss: {health: 9, damage: 2.2, defense: 1.5, xp: 15}
-  boss:     {health: 70, damage: 3, defense: 1.8, xp: 60}
+  miniboss: {health: 9, damage: 2.0, defense: 1.5, xp: 15}
+  boss:     {health: 70, damage: 2.7, defense: 1.8, xp: 60}
 
 # What a full set of rare gear of a level gives each class: base + per-level x (level - 1).
 # Items are made against this budget (an item of level n gives its share of it).

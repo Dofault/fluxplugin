@@ -10,6 +10,7 @@ the start, the monsters by room and the doors. `run(map, server, folder, dungeon
      points of dungeons/<dungeon>.yml.
 Never on production: the scripts are run against Labs (`labs`).
 """
+import math
 import os
 import shutil
 import socket
@@ -192,6 +193,99 @@ def reinforce(m, g, rooms, seed=0, near=(2, 5), water=(), through_water=False):
                 sys.exit(f"reinforce: no free spot for {mob} in room {room}")
             placed += 1
         print(f"room {room}: +{placed} monsters ({len(anchors) + placed} in all)")
+
+
+def spread(g, m, rooms):
+    """Moves the monsters of a room apart: rooms = {room: factor}, each monster (objectives and swimmers aside) goes
+    `factor` times as far from the middle of its room's monsters, when it can stand there with a clear straight way
+    from where it stood (never through a wall, a door or water), else as far as it can on that way."""
+    from gridlib import passable
+
+    def free(b):
+        return b == "air" or (passable(b) and "water" not in b and "cobweb" not in b)
+
+    def stand(x, y, z):
+        below = g.get(x, y - 1, z)
+        return free(g.get(x, y, z)) and free(g.get(x, y + 1, z)) and not passable(below) and not any(
+            w in below for w in ("lava", "magma_block", "fire", "campfire", "cactus", "sweet_berry", "powder_snow"))
+
+    taken = {(math.floor(sp["at"][0]), math.floor(sp["at"][2])) for sp in m.spawns}
+    for room, factor in rooms.items():
+        mine = [sp for sp in m.spawns if sp["room"] == str(room) and sp["mob"] not in m.objectives]
+        if len(mine) < 2:
+            continue
+        cx = sum(sp["at"][0] for sp in mine) / len(mine)
+        cz = sum(sp["at"][2] for sp in mine) / len(mine)
+        for sp in mine:
+            x0, y, z0 = math.floor(sp["at"][0]), int(sp["at"][1]), math.floor(sp["at"][2])
+            if not stand(x0, y, z0):
+                continue    # a swimmer, or someone placed on purpose
+            tx, tz = cx + (sp["at"][0] - cx) * factor, cz + (sp["at"][2] - cz) * factor
+            steps = int(max(abs(tx - sp["at"][0]), abs(tz - sp["at"][2])) * 2) + 1
+            best = None
+            for i in range(1, steps + 1):
+                x = math.floor(sp["at"][0] + (tx - sp["at"][0]) * i / steps)
+                z = math.floor(sp["at"][2] + (tz - sp["at"][2]) * i / steps)
+                if not stand(x, y, z):
+                    break
+                if (x, z) not in taken or (x, z) == (x0, z0):
+                    best = (x, z)
+            if best and best != (x0, z0):
+                taken.discard((x0, z0))
+                taken.add(best)
+                sp["at"][0], sp["at"][2] = best[0] + 0.5, best[1] + 0.5
+
+
+def widen(g, m, ops, name, png=None, apart=None):
+    """Makes the rooms of a finished model larger (gridlib.stretch, ops as the script wrote its coordinates), then
+    checks what the stretch could have broken and prints the room every monster has (room_space.py): every monster
+    still stands on the ground, and with every door closed nobody walks from the start to a monster beyond the first
+    door. apart: {room: factor} moves the monsters of these rooms apart first (spread), so that a larger room is not
+    one single pull. Exits when a check fails or a room is still tight."""
+    import gridlib
+    import room_space
+    if ops:
+        gridlib.stretch(g, m, ops)
+    if apart:
+        spread(g, m, apart)
+    errs = []
+
+    def stands(x, y, z):
+        feet, head, below = g.get(x, y, z), g.get(x, y + 1, z), g.get(x, y - 1, z)
+        return gridlib.passable(feet) and gridlib.passable(head) and (not gridlib.passable(below) or below == "water" or feet == "water")
+
+    for sp in m.spawns:
+        x, y, z = math.floor(sp["at"][0]), int(sp["at"][1]), math.floor(sp["at"][2])
+        if stands(x, y, z):
+            continue
+        # a flyer placed in the air above a floor (a blaze)
+        if gridlib.passable(g.get(x, y, z)) and any(stands(x, y - d, z) for d in range(1, 6)):
+            continue
+        # a monster written into the rock or above a hole (the game would push it out, or drop it): onto the nearest
+        # floor at its height
+        near = sorted(((dx * dx + dz * dz, dx, dz) for dx in range(-4, 5) for dz in range(-4, 5)))
+        spot = next(((x + dx, z + dz) for _, dx, dz in near if stands(x + dx, y, z + dz) and g.get(x + dx, y, z + dz) != "water"), None)
+        if spot is None:
+            errs.append(f"{sp['mob']} at {x} {y} {z} does not stand and has no floor within 4 blocks")
+        else:
+            print(f"widen: {sp['mob']} moved from {x} {y} {z} (in a block) to {spot[0]} {y} {spot[1]}")
+            sp["at"][0], sp["at"][2] = spot[0] + 0.5, spot[1] + 0.5
+    if ops and m.doors:
+        g.doors[:] = [(tuple(min(a, b) for a, b in zip(d["from"], d["to"])), tuple(max(a, b) for a, b in zip(d["from"], d["to"]))) for d in m.doors]
+        first = m.doors[0]["room"]
+        start = (math.floor(m.start[0]), int(m.start[1]), math.floor(m.start[2]))
+        seen = g.walk(start, set())   # on foot (jumps, drops, swimming): the scripts' own rule for their doors
+        for sp in m.spawns:
+            cell = (math.floor(sp["at"][0]), int(sp["at"][1]), math.floor(sp["at"][2]))
+            if sp["room"] != first and any((cell[0], cell[1] + d, cell[2]) in seen for d in (0, 1, -1)):
+                errs.append(f"{sp['mob']} of room {sp['room']} is reached from the start with every door closed")
+                break
+    for e in errs[:20]:
+        print("WIDEN:", e)
+    print(f"-- room for the monsters ({name})")
+    tight = room_space.report(room_space.measure_model(g, m, png, name))
+    if errs or tight:
+        sys.exit(f"widen: {len(errs)} problem(s), {tight} tight room(s): nothing sent")
 
 
 def write_edits(m, server, dungeon):

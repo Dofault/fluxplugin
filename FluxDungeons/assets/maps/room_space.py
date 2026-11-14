@@ -8,8 +8,10 @@ region files of maps/custom/<dungeon>: feet and head free, solid ground, one blo
 water, fences nor closed doors), and its "open" part: the cells with a free 5 x 5 around them, where a fight can
 really move (a 3-wide gallery has none). Per monster of the room, against the targets below.
 
-Targets come from the two dungeons the owner called right (Cultivateurs, Enchanteurs): a room needs at least
-OPEN_PER_MOB blocks of open floor per monster and a free square of MIN_SQUARE blocks somewhere. A room under them
+Targets come from the two dungeons the owner called right (Cultivateurs: 76 to 177 blocks of open floor per monster,
+free squares of 27 to 39; Enchanteurs: 99 to 138, squares of 19 to 27): a room needs at least OPEN_PER_MOB blocks of
+open floor per monster and a free square of MIN_SQUARE blocks somewhere. A map script widens a tight room with
+gridlib.stretch and checks it with measure_model before building. A room under them
 is printed with "TIGHT". Exit code 1 when any room is tight (a check to run after a map script).
 """
 import math
@@ -24,8 +26,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from gridlib import passable, tall  # noqa: E402
 from maplib import _nbt  # noqa: E402
 
-OPEN_PER_MOB = 30
-MIN_SQUARE = 15
+OPEN_PER_MOB = 70
+MIN_SQUARE = 13
 REACH = 16          # blocks beyond the box of a room's spawn points the flood may run
 AIR, SOLID, WATER, FENCE, HARM = 0, 1, 2, 3, 4
 HARMFUL = ("lava", "magma_block", "fire", "campfire", "cactus", "sweet_berry", "powder_snow", "cobweb")
@@ -92,13 +94,43 @@ def read(region_dir, y0, y1):
 
 def measure(plugin, dungeon, png=None):
     edits = yaml.safe_load(open(os.path.join(plugin, "edits", dungeon + ".yml")))["map"]
-    spawns, objectives = edits.get("spawns", []), set(edits.get("objectives", []))
+    spawns = edits.get("spawns", [])
     if not spawns:
         return []
     ys = [s["at"][1] for s in spawns]
     blocks = read(os.path.join(plugin, "maps", "custom", dungeon, "region"), int(min(ys)) - 6, int(max(ys)) + 8)
+    return rooms_of(lambda x, y, z: blocks.get((x, y, z), AIR), spawns, edits.get("doors", []), edits.get("objectives", []),
+                    png, dungeon)
+
+
+def measure_model(g, m, png=None, name="model"):
+    """The same on a map still in memory (gridlib.Model and maplib.Map): a script checks its rooms before building."""
+    cache = {}
+
+    def at(x, y, z):
+        b = g.get(x, y, z)
+        k = cache.get(b)
+        if k is None:
+            k = cache[b] = AIR if b in ("air", "cave_air", "void_air") else kind(b)
+        return k
+    return rooms_of(at, m.spawns, m.doors, m.objectives, png, name)
+
+
+def report(rows):
+    """Prints the rooms; the number of tight ones."""
+    bad = 0
+    for room, n, floor, open5, per, best, boss, tight in rows:
+        note = "boss" if boss else ("TIGHT" if tight else "")
+        print(f"  room {room}: {n:2d} monsters, floor {floor:5d}, open {open5:5d} ({per:5.0f} per monster), "
+              f"largest free square {best:2d}  {note}")
+        bad += tight
+    return bad
+
+
+def rooms_of(block, spawns, doors, objectives, png=None, dungeon="map"):
+    objectives = set(objectives)
     closed = set()
-    for d in edits.get("doors", []):
+    for d in doors:
         (x0, ya, z0), (x1, yb, z1) = d["from"], d["to"]
         for x in range(min(x0, x1), max(x0, x1) + 1):
             for y in range(min(ya, yb), max(ya, yb) + 1):
@@ -106,7 +138,7 @@ def measure(plugin, dungeon, png=None):
                     closed.add((x, y, z))
 
     def at(x, y, z):
-        return SOLID if (x, y, z) in closed else blocks.get((x, y, z), AIR)
+        return SOLID if (x, y, z) in closed else block(x, y, z)
 
     def stand(x, y, z):
         return at(x, y, z) == AIR and at(x, y + 1, z) == AIR and at(x, y - 1, z) == SOLID
@@ -146,7 +178,6 @@ def measure(plugin, dungeon, png=None):
         open5 = {(x, z) for x, z in floor if all((x + dx, z + dz) in floor for dx in range(-2, 3) for dz in range(-2, 3))}
         # the largest free square: grow around every open cell (cheap enough at these sizes)
         best = 0
-        clear = {c: 2 for c in open5}
         frontier = set(open5)
         k = 2
         while frontier:
@@ -162,7 +193,7 @@ def measure(plugin, dungeon, png=None):
         per = len(open5) / n
         tight = not boss and (per < OPEN_PER_MOB or best < MIN_SQUARE)
         out.append((room, n, len(floor), len(open5), per, best, boss, tight))
-        if png:
+        if png and floor:
             from gridlib import png as write_png
             xs, zs = [c[0] for c in floor], [c[1] for c in floor]
             x0, z0, w, h = min(xs), min(zs), max(xs) - min(xs) + 1, max(zs) - min(zs) + 1
@@ -190,11 +221,7 @@ def main():
     bad = 0
     for d in dungeons:
         print(f"== {d}")
-        for room, n, floor, open5, per, best, boss, tight in measure(plugin, d, png):
-            note = "boss" if boss else ("TIGHT" if tight else "")
-            print(f"  room {room}: {n:2d} monsters, floor {floor:5d}, open {open5:5d} ({per:5.0f} per monster), "
-                  f"largest free square {best:2d}  {note}")
-            bad += tight
+        bad += report(measure(plugin, d, png))
     sys.exit(1 if bad else 0)
 
 

@@ -36,7 +36,7 @@ F = 63
 X0, X1, Y0, Y1, Z0, Z1 = -46, 46, 40, 140, -52, 304
 BANDS = ((40, 140, "deepslate"),)
 DOORS_Z = (37, 113, 177, 245)
-BW = 4                                    # half width of the bridges over the lava (9 blocks: room to fight)
+BW = 9                                    # half width of the bridges over the lava (9 blocks: room to fight)
 CZ, AR = 274, 17                          # arena middle and radius of its floor
 PILLARS = [(8, CZ + 8), (-8, CZ + 8), (8, CZ - 8), (-8, CZ - 8)]
 g = gridlib.Model((X0, X1, Y0, Y1, Z0, Z1), BANDS, seed=3131)
@@ -799,6 +799,14 @@ REINFORCE = {
 }
 
 
+# Room for the monsters (2026-11-14: twice the monsters of the first version on the same bridges). The bridges are
+# 19 wide instead of 9 (BW), and gridlib.stretch makes the Threshold larger (coordinates as written above).
+STRETCH = [
+    {"axis": "z", "at": 26, "n": 6, "mode": "mirror"},      # Threshold of Ashes: 12 blocks longer
+]
+APART = {"1": 1.4, "2": 1.5, "4": 1.5}
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     maplib.reinforce(m, g, REINFORCE, seed=106)
@@ -807,6 +815,8 @@ if __name__ == "__main__":
         print("CHECK:", e)
     print(f"{len(errs)} problem(s), {len(g.over)} blocks changed, {len(g.entities)} entities, {len(m.spawns)} monsters, "
           f"{len(m.ambience)} ambience emitters")
+    if not errs:
+        maplib.widen(g, m, STRETCH, "fondeur", args[args.index("--preview") + 1] if "--preview" in args else None, apart=APART)
     if "--preview" in args:
         out = args[args.index("--preview") + 1]
         g.png_slice(os.path.join(out, "fond_y64.png"), y=F + 1, k=2)

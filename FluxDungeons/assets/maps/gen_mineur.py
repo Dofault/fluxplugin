@@ -718,6 +718,21 @@ REINFORCE = {
 }
 
 
+# Room for the monsters (2026-11-14: twice the monsters of the first version in the same mine). Rooms are made larger
+# by mirroring a slice of them (gridlib.stretch; coordinates as written above): the extraction gallery becomes a hall
+# 31 wide instead of 11 and 10 longer (its side galleries move out with its walls), the wagon hall gets 6 blocks longer, the
+# forgotten depths 20 wider and 10 longer. Corridors, doors and the arena of the T-Rex are untouched.
+STRETCH = [
+    {"axis": "z", "at": 16, "n": 5, "mode": "mirror"},                                       # extraction gallery
+    {"axis": "z", "at": 86, "n": 3, "mode": "mirror"},                                       # wagon hall
+    {"axis": "z", "at": 131, "n": 5, "mode": "mirror"},                                      # forgotten depths
+    {"axis": "x", "at": 5, "n": 5, "mode": "mirror", "span": (1, 61), "ragged": 3},                       # extraction gallery
+    {"axis": "x", "at": -5, "n": 5, "dir": -1, "mode": "mirror", "span": (1, 61), "ragged": 3},
+    {"axis": "x", "at": 5, "n": 5, "mode": "mirror", "span": (116, 146)},                    # forgotten depths
+    {"axis": "x", "at": -5, "n": 5, "dir": -1, "mode": "mirror", "span": (116, 146)},
+]
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     maplib.reinforce(m, g, REINFORCE, seed=104)
@@ -725,6 +740,8 @@ if __name__ == "__main__":
     for e in errs[:50]:
         print("CHECK:", e)
     print(f"{len(errs)} problem(s), {len(g.over)} blocks changed, {len(g.entities)} entities")
+    if not errs:
+        maplib.widen(g, m, STRETCH, "mineur", args[args.index("--preview") + 1] if "--preview" in args else None, apart={"1": 1.8, "3": 1.5})
     if "--preview" in args:
         out = args[args.index("--preview") + 1]
         for y in (F + 1, F2 + 1, F3 + 1, FA + 1, FA + 5):

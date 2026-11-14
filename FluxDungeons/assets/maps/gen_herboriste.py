@@ -914,6 +914,13 @@ REINFORCE = {
 }
 
 
+# Room for the monsters (2026-11-14): the arid basin gets longer by mirroring a slice of it (gridlib.stretch;
+# coordinates as written above). The sanctuary of the fox is untouched (everything north of the cut moves with it).
+STRETCH = [
+    {"axis": "z", "at": 230, "n": 5, "mode": "mirror"},
+]
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     maplib.reinforce(m, g, REINFORCE, seed=107)
@@ -921,6 +928,8 @@ if __name__ == "__main__":
     for e in errs[:50]:
         print("CHECK:", e)
     print(f"{len(errs)} problem(s), {len(g.over)} blocks changed, {len(g.entities)} entities")
+    if not errs:
+        maplib.widen(g, m, STRETCH, "herboriste", args[args.index("--preview") + 1] if "--preview" in args else None, apart={"4": 1.4})
     if "--preview" in args:
         out = args[args.index("--preview") + 1]
         g.png_slice(os.path.join(out, "herbo_ciel.png"), top_down=True, k=2)

@@ -40,7 +40,8 @@ import java.util.UUID;
  *   <li><b>Heat</b>: each hit that lands heats the pyromancer himself (0 to 100, shown on a boss bar; lost after
  *   {@code heat-decay-after} seconds without hitting). Heat is damage (up to {@code heat-damage} at 100); at 100 he
  *   enters the <b>blaze</b> for {@code blaze-seconds}: his basic attack becomes a fan of {@code blaze-bolts} bolts,
- *   faster ({@code blaze-speed}), then the heat is spent.</li>
+ *   faster ({@code blaze-speed}), then the heat is spent. Entering the blaze gives him {@code blaze-heal} of his life
+ *   back.</li>
  * </ul>
  * Drawn with block displays (never real blocks), every hit through {@link CombatEngine#strike}. Numbers come from
  * classes.yml ({@code passive} of the class, {@code extra} of each skill).
@@ -227,6 +228,9 @@ final class Fire {
         w.spawnParticle(Particle.FLAME, at.clone().add(0, 1, 0), 80, 0.3, 0.6, 0.3, 0.12);
         w.spawnParticle(Particle.LAVA, at.clone().add(0, 1, 0), 16, 0.4, 0.5, 0.4);
         flameRing(at, 1.6, 10, 0.6f, 1.6f, 16);
+        // reborn from his own flames: his only way to mend in a long fight
+        double mend = cls.passive("blaze-heal", 0);
+        if (mend > 0) combat.heal(p, mend * combat.maxHealth(p), true);
         plugin.messages().actionBar(p, "fire.blaze");
     }
 

@@ -15,6 +15,7 @@ import math
 import os
 import random
 import struct
+import sys
 import zlib
 from collections import deque
 
@@ -507,3 +508,185 @@ def png(path, w, h, pix, k=4):
     with open(path, "wb") as f:
         f.write(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0))
                 + chunk(b"IDAT", zlib.compress(raw, 9)) + chunk(b"IEND", b""))
+
+
+# ---------------------------------------------------------------- stretching a built model
+
+def _mirror_block(b, axis):
+    """A block state seen in a mirror across the axis (east and west, or north and south, change places)."""
+    if "[" not in b:
+        return b
+    name, props = b.split("[", 1)
+    a, c = ("east", "west") if axis == "x" else ("north", "south")
+    import re
+
+    def swap(text, one, two):
+        return re.sub(rf"(?<![a-z])({one}|{two})(?![a-z])", lambda mo: two if mo.group(1) == one else one, text)
+
+    props = swap(props, a, c)
+    props = swap(props, "left", "right")
+    mo = re.search(r"rotation=(\d+)", props)
+    if mo:
+        k = int(mo.group(1))
+        props = props.replace(mo.group(0), f"rotation={(16 - k) % 16 if axis == 'x' else (8 - k) % 16}")
+    return name + "[" + props
+
+
+def stretch(g, m, ops):
+    """Makes rooms of a finished model larger without redrawing them: slices of the map are inserted, copied from
+    the slices next to them. Run it after the script's own checks, before Model.commands.
+
+    ops: a list of dicts, every coordinate as the script wrote it (before any stretch; this function follows what
+    the earlier ops moved):
+      axis: "x" (the room gets wider) or "z" (longer);
+      at:   the plane: with dir +1, every block at or beyond it moves away (towards +); with dir -1, every block at or
+            before it moves towards -;
+      n:    size of the window copied, the n slices just inside the plane;
+      mode: "repeat" (the window again, `times` times: n x times slices; seamless when n is the period of the
+            architecture, and with n 1 the slice is simply drawn out: a wall, a quay, a plain floor) or
+            "mirror" (the window mirrored, then once more: 2n slices, seamless on anything, natural caves included);
+      span: (lo, hi) on the other horizontal axis: only that band of the map is cut (an x stretch kept to the z range
+            of one room: the corridors before and after keep their place as long as they are narrower than the plane).
+            None: the whole map (a z stretch moves everything north of the plane).
+    Monsters, doors, the start, ambience emitters, entities, waterfalls and the commands of m.after follow (those in a
+    copied window stay in its first copy). The model's bounds grow by what was inserted.
+    """
+    done = []
+
+    def forward(o, c, other):
+        """Where a block index goes (its first copy)."""
+        if o["span"] and not (o["span"][0] <= other <= o["span"][1]):
+            return c
+        s = o["dir"]
+        return s * (s * c + o["ins"]) if s * c >= o["P"] else c
+
+    def point(x, z):
+        for o in done:
+            if o["axis"] == "x":
+                x = forward(o, x, z)
+            else:
+                z = forward(o, z, x)
+        return x, z
+
+    def fpoint(x, z):
+        """The same for a position with decimals (the block it is in moves, the decimals stay)."""
+        bx, bz = math.floor(x), math.floor(z)
+        nx, nz = point(bx, bz)
+        return nx + (x - bx), nz + (z - bz)
+
+    for raw in ops:
+        axis, n, s, mode = raw["axis"], raw["n"], raw.get("dir", 1), raw.get("mode", "mirror")
+        span = raw.get("span")
+        # the op in today's coordinates
+        if axis == "x":
+            mid = (span[0] + span[1]) // 2 if span else 0
+            p = point(raw["at"], mid)[0]
+            if span:
+                span = (point(0, span[0])[1], point(0, span[1])[1])
+        else:
+            mid = (span[0] + span[1]) // 2 if span else 0
+            p = point(mid, raw["at"])[1]
+            if span:
+                span = (point(span[0], 0)[0], point(span[1], 0)[0])
+        times = raw.get("times", 1) if mode == "repeat" else 1
+        o = {"axis": axis, "P": s * p, "n": n, "dir": s, "mode": mode, "span": span, "ins": n * times if mode == "repeat" else 2 * n}
+        P, ins = o["P"], o["ins"]
+
+        def images(c, other):
+            if span and not (span[0] <= other <= span[1]):
+                return ((c, False),)
+            u = s * c
+            if u >= P:
+                return ((s * (u + ins), False),)
+            if u >= P - n:
+                if mode == "repeat":
+                    return ((c, False),) + tuple((s * (u + n * k), False) for k in range(1, times + 1))
+                return ((c, False), (s * (P + (P - 1 - u)), True), (s * (u + 2 * n), False))
+            return ((c, False),)
+
+        old = g.over
+        over = {}
+        for (x, y, z), b in g.over.items():
+            if axis == "x":
+                for c, mir in images(x, z):
+                    over[(c, y, z)] = _mirror_block(b, "x") if mir else b
+            else:
+                for c, mir in images(z, x):
+                    over[(x, y, c)] = _mirror_block(b, "z") if mir else b
+        g.over = over
+        falls = set()
+        for (x, y, z) in g.falls:
+            if axis == "x":
+                falls.update((c, y, z) for c, _ in images(x, z))
+            else:
+                falls.update((x, y, c) for c, _ in images(z, x))
+        g.falls.clear()
+        g.falls.update(falls)
+        if axis == "x":
+            if s > 0:
+                g.X1 += ins
+            else:
+                g.X0 -= ins
+        else:
+            if s > 0:
+                g.Z1 += ins
+            else:
+                g.Z0 -= ins
+        # a cut kept to a band of the map: at both ends of the band, what moved must not open a way that was not
+        # there (a walkway now beside a chasm, a cave now into a room). "seam": True on the op accepts it (open-air
+        # ground, where the cut only leaves a step in the landscape); "ragged": N accepts up to N cells (the ragged
+        # wall of a tunnel that goes on past the band: looked at, they open onto that same tunnel).
+        if span and not raw.get("seam"):
+            leaks = []
+            for inside, outside in ((span[0], span[0] - 1), (span[1], span[1] + 1)):
+                lo, hi = (g.X0, g.X1) if axis == "x" else (g.Z0, g.Z1)
+                for c in range(lo, hi + 1):
+                    if s * c < P:
+                        continue
+                    for y in range(g.Y0, g.Y1 + 1):
+                        a, b = ((c, y, inside), (c, y, outside)) if axis == "x" else ((inside, y, c), (outside, y, c))
+                        # the open sky above the model's rock (untouched cells on both sides) is no way; nor two
+                        # cells that were already open to each other before the cut (a tunnel going on)
+                        if (a in g.over or b in g.over) and passable(g.get(*a)) and passable(g.get(*b)) \
+                                and not passable(old.get(a) or g.base(y)):
+                            leaks.append(a)
+            if len(leaks) > raw.get("ragged", 0):
+                sys.exit(f"stretch: the cut {raw} opens {len(leaks)} cell(s) across the ends of its band, e.g. {leaks[:4]}")
+        done.append(o)
+
+    # everything that holds a place follows, through all the ops at once
+    import re
+    num = r"(-?\d+(?:\.\d+)?)"
+
+    def move_xyz(text, count=1):
+        """Moves the first `count` x y z triples of a command."""
+        def one(mo):
+            x, y, z = mo.group(1), mo.group(2), mo.group(3)
+            if "." in x or "." in z:
+                nx, nz = fpoint(float(x), float(z))
+                return f"{round(nx, 3)} {y} {round(nz, 3)}"
+            nx, nz = point(int(x), int(z))
+            return f"{nx} {y} {nz}"
+        return re.sub(rf"(?<![\w.\[:,-]){num} {num} {num}(?![\w.])", one, text, count=count)
+
+    g.entities[:] = [move_xyz(e) for e in g.entities]
+    doors = []
+    for a, b in g.doors:
+        (ax, az), (bx, bz) = point(a[0], a[2]), point(b[0], b[2])
+        if bx - ax != b[0] - a[0] or bz - az != b[2] - a[2]:
+            sys.exit(f"stretch: a plane cuts the door {a} {b}")
+        doors.append(((ax, a[1], az), (bx, b[1], bz)))
+    g.doors[:] = doors
+    for sp in m.spawns:
+        sp["at"][0], sp["at"][2] = fpoint(sp["at"][0], sp["at"][2])
+    for d in m.doors:
+        (ax, az), (bx, bz) = point(d["from"][0], d["from"][2]), point(d["to"][0], d["to"][2])
+        if bx - ax != d["to"][0] - d["from"][0] or bz - az != d["to"][2] - d["from"][2]:
+            sys.exit(f"stretch: a plane cuts the door {d['id']}")
+        d["from"][0], d["from"][2], d["to"][0], d["to"][2] = ax, az, bx, bz
+    m.start[0], m.start[2] = fpoint(m.start[0], m.start[2])
+    for a in m.ambience:
+        a["at"][0], a["at"][2] = fpoint(a["at"][0], a["at"][2])
+    m.after[:] = [move_xyz(c, 2 if c.startswith("fill") else 1) for c in m.after]
+    m.box = (g.X0, g.Z0, g.X1, g.Z1)
+    return point

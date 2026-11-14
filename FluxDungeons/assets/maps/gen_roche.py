@@ -643,6 +643,19 @@ REINFORCE = {
 }
 
 
+# Room for the monsters (2026-11-14: twice the monsters of the first version in the same caves). The caves are made
+# larger by mirroring a slice of them (gridlib.stretch; coordinates as written above): every cave south of the arena
+# gets 16 blocks wider (the cut runs the whole way down to the corridor before the arena, so no edge of the chasm is
+# left open), the Cavern of Pillars and the plateau of the Chasm 10 blocks longer, the Frozen Cavern 18. The arena of the Colosse is untouched.
+STRETCH = [
+    {"axis": "z", "at": 52, "n": 5, "mode": "mirror"},                                # cavern of pillars
+    {"axis": "z", "at": 96, "n": 9, "mode": "mirror"},                                # frozen cavern
+    {"axis": "z", "at": 160, "n": 5, "mode": "mirror"},                               # plateau of the chasm
+    {"axis": "x", "at": 10, "n": 4, "mode": "mirror", "span": (Z0, 192)},
+    {"axis": "x", "at": -10, "n": 4, "dir": -1, "mode": "mirror", "span": (Z0, 192)},
+]
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     maplib.reinforce(m, g, REINFORCE, seed=101)
@@ -650,6 +663,8 @@ if __name__ == "__main__":
     for e in errs[:50]:
         print("CHECK:", e)
     print(f"{len(errs)} problem(s), {len(g.over)} blocks changed, {len(g.entities)} entities")
+    if not errs:
+        maplib.widen(g, m, STRETCH, "roche", args[args.index("--preview") + 1] if "--preview" in args else None, apart={"1": 1.4, "2": 1.6, "3": 1.5})
     if "--preview" in args:
         out = args[args.index("--preview") + 1]
         for y in (F + 1, F2 + 1, F3 + 1, FA + 1, F3 - 18):

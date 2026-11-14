@@ -533,13 +533,13 @@ class-pages:
       right: {name: "Boreal glide", description: "Glides %distance% blocks on a trail of ice: monsters on the way take %coef% %power% and frost."}
       a: {name: "Glacial rift", description: "Ice spikes burst out of the ground over %range% blocks: %coef% %power%, monsters are thrown up and covered in frost."}
       f: {name: "Winter comet", description: "A comet of ice crashes where you aim: %coef% %power% within %radius% blocks, every monster hit is frozen, the ground stays frozen %duration% s."}
-      passive: {name: "Frost and Shatter", description: "Every hit leaves frost that slows. At %chill-max% frost the monster is locked in ice for %freeze% s (a boss is only slowed). The next hit of another spell shatters it: %shatter_pct% %power%, and the shards hurt and chill the monsters within %shatter-radius% blocks."}
+      passive: {name: "Frost and Shatter", description: "Every hit leaves frost that slows. At %chill-max% frost the monster is locked in ice for %freeze% s (a boss is only slowed). The next hit of another spell shatters it: %shatter_pct% %power%, and the shards hurt and chill the monsters within %shatter-radius% blocks. Each shatter gives you back %shatter-heal_pct% of your health."}
     pyromancer:
       role: "Area damage, spreading fire"
       difficulty: 3
       strengths: "The highest damage of the three classes. Fire jumps from one monster to the next, and the more he hits, the hotter he gets."
       weaknesses: "The lowest health. His heat drops as soon as he stops hitting."
-      passive: {name: "Burn and Heat", description: "Every hit sets the monster alight: %burn_pct% %power% per second and per burn, up to %burn-max% burns. A monster dying on fire bursts (%wildfire_pct% %power% within %wildfire-radius% blocks) and sets its neighbours alight. Every hit heats you: up to %heat-damage_pct% more damage, then at 100 heat the Blaze: for %blaze-seconds% s your bolt fans out into %blaze-bolts% embers and you attack faster."}
+      passive: {name: "Burn and Heat", description: "Every hit sets the monster alight: %burn_pct% %power% per second and per burn, up to %burn-max% burns. A monster dying on fire bursts (%wildfire_pct% %power% within %wildfire-radius% blocks) and sets its neighbours alight. Every hit heats you: up to %heat-damage_pct% more damage, then at 100 heat the Blaze: for %blaze-seconds% s your bolt fans out into %blaze-bolts% embers and you attack faster. The Blaze gives you back %blaze-heal_pct% of your health."}
       basic: {name: "Ember bolt", description: "Throws an ember (%coef% %power%) up to %range% blocks. Sets the monster alight."}
       right: {name: "Phoenix flight", description: "Take off in a burst of flames and fly where you look: %coef% %power% within %radius% blocks at take-off and again at landing, monsters pushed back and set alight."}
       a: {name: "Fire wave", description: "A fan of flames rolls out in front of you over %range% blocks: %coef% %power%, monsters pushed back, %burn% burns each."}

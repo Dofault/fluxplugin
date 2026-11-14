@@ -42,7 +42,8 @@ import java.util.concurrent.ThreadLocalRandom;
  *   <li><b>Shatter</b>: a frozen creature hit again (by another cast than the one that froze it) bursts: a heavy hit
  *   ({@code shatter} x magic power) and shards flying out that hit and chill the creatures around
  *   ({@code shatter-splash} of it, {@code shatter-radius} blocks). A shard reaching another frozen creature shatters it
- *   too: a frozen group goes up in a chain.</li>
+ *   too: a frozen group goes up in a chain. A shatter gives the cryomancer {@code shatter-heal} of his life back
+ *   (once a second at most): his only way to mend in a long fight.</li>
  * </ul>
  * Everything is drawn with block displays (never real blocks: nothing stays in the map), every hit goes through
  * {@link CombatEngine#strike}. Numbers come from classes.yml ({@code passive} of the class, {@code extra} of each skill).
@@ -77,6 +78,8 @@ final class Frost {
     private final Skills skills;
     private final Map<UUID, Chill> chills = new HashMap<>();
     private final SpellFx fx;
+    /** Tick of each cryomancer's last mend (life given back by a shatter). */
+    private final Map<UUID, Long> mends = new HashMap<>();
     private BukkitTask ticker;
 
     Frost(FluxPlugin plugin, CombatEngine combat, Skills skills, SpellFx fx) {
@@ -201,6 +204,15 @@ final class Frost {
         w.spawnParticle(Particle.SNOWFLAKE, center, 50, 0.2, 0.2, 0.2, 0.35);
         w.spawnParticle(Particle.END_ROD, center, 16, 0.1, 0.1, 0.1, 0.25);
         shards(center, 12);
+        // the cold he breaks free comes back to him as life, once a second at most (a chain is one mend)
+        long tick = CombatEngine.now();
+        Long mended = mends.get(p.getUniqueId());
+        double mend = cls.passive("shatter-heal", 0);
+        if (mend > 0 && (mended == null || tick - mended >= 20)) {
+            mends.put(p.getUniqueId(), tick);
+            combat.heal(p, mend * combat.maxHealth(p), true);
+            w.spawnParticle(Particle.SNOWFLAKE, p.getLocation().add(0, 1, 0), 12, 0.3, 0.5, 0.3, 0.02);
+        }
         String burst = castRoot(cast) + "#shatter" + e.getEntityId();
         combat.strike(p, e, CombatMath.Hit.magic(cls.passive("shatter", 1.4), "frost"), burst);
         double radius = cls.passive("shatter-radius", 3);

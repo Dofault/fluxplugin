@@ -14,9 +14,10 @@ import java.util.Random;
  * <p>Monsters may stand together (a <b>pack</b>): a skill then hits as many of them as its {@code targets}, and the
  * mechanic of each elemental class plays as in game, from the {@code passive} numbers of the class:</p>
  * <ul>
- *   <li>frost ({@code chill-max}): stacks, freeze, shatter on the next cast, shards on the neighbours (chain);</li>
+ *   <li>frost ({@code chill-max}): stacks, freeze, shatter on the next cast, shards on the neighbours (chain), life
+ *   back on a shatter;</li>
  *   <li>fire ({@code burn-max}): burn stacks ticking every second, wildfire when a burning monster dies, heat as
- *   bonus damage, the blaze (faster basic attack hitting several monsters);</li>
+ *   bonus damage, the blaze (faster basic attack hitting several monsters, life back when it starts);</li>
  *   <li>plants ({@code seed-max}): seeds, bloom (hit, heal counted for the fighter's survival).</li>
  * </ul>
  * A skill lasting {@code duration} seconds spreads its {@code hits} over it; {@code extra.final} is one last hit.
@@ -71,7 +72,7 @@ public final class Simulator {
         final ClassDef cls;
         final StatSheet sheet;
         double mana, nextBasic, nextCast;
-        double heat, lastHeat = -100, blazeUntil = -1;
+        double heat, lastHeat = -100, blazeUntil = -1, lastMend = -100;
         double healed;
         int casts;
 
@@ -258,6 +259,10 @@ public final class Simulator {
 
         void shatter(int id, Fighter f, Mob m, int root, int depth) {
             m.frozenUntil = -1;
+            if (depth == 0 && t - f.lastMend >= 1) {
+                f.lastMend = t;
+                f.healed += f.cls.passive("shatter-heal", 0) * f.sheet.get("max_health");
+            }
             double coefficient = f.cls.passive("shatter", 1.4);
             strike(f, m, CombatMath.Hit.magic(coefficient, "frost"));
             CombatMath.Hit splash = CombatMath.Hit.magic(coefficient * f.cls.passive("shatter-splash", 0.35), "frost");
@@ -315,6 +320,7 @@ public final class Simulator {
             if (f.heat >= 100) {
                 f.blazeUntil = t + f.cls.passive("blaze-seconds", 7);
                 f.heat = 0;
+                f.healed += f.cls.passive("blaze-heal", 0) * f.sheet.get("max_health");
             }
         }
 

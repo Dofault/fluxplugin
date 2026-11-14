@@ -1257,6 +1257,22 @@ REINFORCE_POOL = {
 }
 
 
+# Room for the monsters (2026-11-14: twice the monsters of the first version in the same rooms). Each room is made
+# larger by drawing out a plain slice of it (gridlib.stretch; coordinates as written above): the Gallery gets two more
+# bays of pillars and a wider nave, the Pool a walkway of 13 instead of 5, the Port a deeper west quay and south quay.
+STRETCH = [
+    {"axis": "z", "at": 48, "n": 7, "mode": "repeat", "times": 2},              # gallery: two more bays (period 7)
+    {"axis": "z", "at": 73, "n": 1, "mode": "repeat", "times": 8},              # pool: south walkway
+    {"axis": "z", "at": 99, "n": 1, "mode": "repeat", "times": 8},              # pool: north walkway
+    {"axis": "z", "at": 120, "n": 1, "mode": "repeat", "times": 10},            # port: south quay
+    {"axis": "x", "at": 8, "n": 1, "mode": "repeat", "times": 9, "span": (29, 55)},              # gallery: nave
+    {"axis": "x", "at": -8, "n": 1, "dir": -1, "mode": "repeat", "times": 9, "span": (29, 55)},
+    {"axis": "x", "at": 14, "n": 1, "mode": "repeat", "times": 8, "span": (70, 100)},            # pool: east walkway
+    {"axis": "x", "at": -14, "n": 1, "dir": -1, "mode": "repeat", "times": 8, "span": (70, 100)},
+    {"axis": "x", "at": -12, "n": 1, "dir": -1, "mode": "repeat", "times": 16, "span": (116, 143)},  # port: west quay
+]
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     maplib.reinforce(m, g, REINFORCE, seed=102)
@@ -1265,6 +1281,9 @@ if __name__ == "__main__":
     for e in errs[:60]:
         print("CHECK:", e)
     print(f"{len(errs)} problem(s), {len(g.over)} blocks changed, {len(ENTITIES)} entities")
+    if not errs:
+        maplib.widen(g, m, STRETCH, "pecheur", args[args.index("--preview") + 1] if "--preview" in args else None,
+                     apart={"1": 1.8, "3": 1.6})
     if "--preview" in args:
         preview(args[args.index("--preview") + 1])
     if "--check" in args or "--preview" in args:
