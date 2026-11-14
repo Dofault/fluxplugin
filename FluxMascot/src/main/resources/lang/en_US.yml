@@ -1,0 +1,11 @@
+prefix: "&#B376E5ᴍᴀsᴄᴏᴛ &8▸ "
+usage: "!&#FF5C5C/%flux_cmd_fluxmascot_fluxmascot% greet <player> | stop <player> | reload"
+unknown-player: "&#FF5C5CThis player is not online."
+no-model: "&#FF5C5CThe robot cannot appear: BetterModel is missing or has no model named %model%."
+started: "&#2ECF7BThe robot greets %player%."
+stopped: "&7The robot left %player%."
+reloaded: "&#2ECF7BFluxMascot reloaded."
+# Sent instead of the robot to Bedrock players (they see neither the model nor hear the voice).
+bedrock:
+  - "!&#35D9C6[Robot] &fWelcome to Influencraft! The server is in beta."
+  - "!&#35D9C6[Robot] &fPick a job, gather resources and climb the ranks. Type &#FFD94D/aide&f if you are lost."

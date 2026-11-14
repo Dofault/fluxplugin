@@ -1,0 +1,45 @@
+# FluxMascot: the welcome robot. It appears in front of one player (nobody else sees it), waves, speaks and walks away.
+# WHO gets it and WHEN is not decided here: something else (a Typewriter page, a command block, the console) runs
+#   /fluxmascot greet <player>
+# Durations are in ticks (20 = 1 second), distances in blocks.
+
+language: ""
+
+# BetterModel model (plugins/BetterModel/models/<model>.bbmodel).
+model: robot_accueil
+
+# Where the robot appears: this far in front of the player (where he looks, on the ground). When something is in the
+# way, it comes closer, down to min-distance.
+distance: 5.0
+min-distance: 2.0
+
+# The speech: a sound of the resource pack, played at the robot's head so the voice comes from it.
+voice:
+  sound: "influmascotte:accueil"
+  # Ticks after the robot appeared before it speaks (it waves first).
+  delay: 30
+  # Length of the speech: the robot talks that long, then says goodbye.
+  duration: 365
+  # 1.0 is heard up to 16 blocks away; above 1 it carries further (16 x volume).
+  volume: 1.5
+
+# After the speech the robot waves, turns around and walks this far before vanishing.
+leave:
+  distance: 4.0
+  # Blocks per second: the walk animation is drawn for 1.2.
+  speed: 1.2
+
+# The robot leaves at once when the player is further than this.
+max-distance: 40.0
+
+animations:
+  idle: idle
+  appear: appear
+  greet: greet
+  talk: talk
+  walk: walk
+  vanish: vanish
+  # Length of the one-shot animations.
+  appear-ticks: 10
+  greet-ticks: 40
+  vanish-ticks: 8

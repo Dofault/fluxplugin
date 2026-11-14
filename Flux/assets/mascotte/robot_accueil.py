@@ -7,7 +7,7 @@ arms and two short legs on wide feet. 30 cubes, every one with a visual job.
 
 Pose baked in the cubes (head 3 degrees forward, body 2 degrees forward, antenna 8 degrees back, arms 12 degrees
 outwards, feet 5 degrees outwards); bones placed at the joints for the later animations (walk, run, wave, head turn,
-idle). No animation yet.
+idle).
 
 Hierarchy: Root > Body > Head > Antenna ; Body > RightArm > RightForearm ; Body > LeftArm > LeftForearm ;
 Root > RightLeg ; Root > LeftLeg.
@@ -15,7 +15,9 @@ Root > RightLeg ; Root > LeftLeg.
 Textures: 1 texel per unit (16 texels per block), the eye and the screen at 2 texels per unit so the lens glint and
 the heart stay readable. Lens, antenna tip and energy belt are on the emissive texture.
 
-Usage: robot_accueil.py [output folder] [--apercu <sheet.png>]
+Animations (idle, walk, talk, greet) come from robot_accueil_anim.py.
+
+Usage: robot_accueil.py [output folder] [--apercu <sheet.png>] [--anims <folder of animation strips>]
 Front towards north (-z), the robot's right towards +x, ground at y = 0, 16 units = 1 block.
 """
 import json
@@ -429,7 +431,11 @@ def parts():
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    prev = None
+    prev = anims_dir = None
+    if "--anims" in args:
+        i = args.index("--anims")
+        anims_dir = args[i + 1]
+        del args[i:i + 2]
     if "--apercu" in args:
         i = args.index("--apercu")
         prev = args[i + 1]
@@ -443,6 +449,12 @@ if __name__ == "__main__":
     if prev:
         glow = {c for c in (ENERGY, ENERGY_DARK, YELLOW, YELLOW_DARK, WHITE)}
         apercu(data, atlases, sizes, prev, glow, views=((30, 10), (0, 4), (90, 2), (210, 12)), size=420)
+    import robot_accueil_anim as RA
+    from taupe_champs_anim import strips
+    anims = RA.build(RA.uid_for(NS, IDENT))
+    if anims_dir:
+        strips(data, anims, atlases, sizes, anims_dir, count=8)
+    data["animations"] = RA.finish(anims)
     path = os.path.join(out, IDENT + ".bbmodel")
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False)

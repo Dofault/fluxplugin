@@ -50,5 +50,6 @@
         <module>FluxPass</module>
         <module>FluxTournament</module>
         <module>FluxTopDown</module>
+        <module>FluxMascot</module>
     </modules>
 </project>

@@ -1,0 +1,13 @@
+name: FluxMascot
+version: 0.1.0
+main: fr.influencraft.fluxmascot.FluxMascot
+api-version: "26.2"
+description: The welcome robot - appears in front of a player, waves, speaks (voice coming from the robot) and walks away.
+authors: [Influencraft]
+depend: [Flux]
+softdepend: [BetterModel]
+
+permissions:
+  fluxmascot.admin:
+    description: Start or stop the robot for a player, reload (/fluxmascot).
+    default: op

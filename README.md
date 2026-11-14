@@ -21,6 +21,7 @@ the player's inventory and draw buttons over it. Developed for the Influencraft 
 | **FluxPass** | Season pass: tiers, free and premium tracks, rewards, daily and weekly missions priced by FluxValue (`/pass`, `/fluxpass`) | EcoBattlepass |
 | **FluxTournament** | Tournaments every half hour on any job (whole job, one resource, race, variety), counted and priced by FluxValue, boss bar, rewards, history, `tournois` leaderboard (`/tournoi`); replaces CustomFishing competitions | yes |
 | **FluxTopDown** | Experiment: hack and slash view from above (camera over the player, mouse pointer, click to move or attack, aimed spells on keys 1 to 4), fights through FluxDungeons' rpg engine (`/hackslash`) | no |
+| **FluxMascot** | The welcome robot: appears in front of one player, waves, speaks (voice played from where it stands) and walks away; started by `/fluxmascot greet <player>` (a Typewriter page decides who and when) | no |
 | **FluxPets** | Collectible cards, boosters and pets | — |
 | **FluxPW** | Player warps (/pw): categories, sponsored places, ratings, favourites, admission fees, password, blocked players (replaces PlayerWarps) | — |
 | **FluxReferral** | Referral system with per-player server addresses | — |
