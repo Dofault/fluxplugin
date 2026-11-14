@@ -216,7 +216,7 @@ create:
   created: '&#2ECF7BDungeon %dungeon% created. Set its name and reward in dungeons/%dungeon%.yml.'
 lobby:
   rpg-gear: "&#FFD94DRpg gear"
-  rpg-gear-desc: "You play with your rpg gear: your class weapon, armour and spells (right click, A, F). Nothing is set aside and nothing is lost."
+  rpg-gear-desc: "You play with your rpg gear: your class weapon, armour and spells (clicks, A, F). Nothing is set aside and nothing is lost."
   difficulty: 'Difficulty: %level%'
   difficulty-desc: Chosen by the party leader, for the whole party.
   difficulty-spells: Special attacks
@@ -298,7 +298,7 @@ choice:
   intro: "&#B376E5Your class decides your weapon, stats and spells. You can change it later from the lobby with &f[/classe]&#B376E5."
   confirm-title: "Confirm"
   confirm: "&#B376E5Become a &#FFD94D%class%&#B376E5?"
-  done: "&#2ECF7BYou are now a &#FFD94D%class%&#2ECF7B. &#B376E5Weapon in hand: left click to attack, right click, &fA &#B376E5and &fF &#B376E5for your spells."
+  done: "&#2ECF7BYou are now a &#FFD94D%class%&#2ECF7B. &#B376E5Weapon in hand: %attack% to attack, %spell%, &fA &#B376E5and &fF &#B376E5for your spells."
   weapon: "&#B376E5Your class weapon was given to you."
   lobby-only: "&#FF5C5CYou can only change class in the rpg lobby."
   change-title: "Change class"

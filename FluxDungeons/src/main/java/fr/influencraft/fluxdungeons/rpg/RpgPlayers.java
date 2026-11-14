@@ -277,7 +277,11 @@ public final class RpgPlayers implements Listener {
                 }
                 if (!RpgWorld.UNIVERSE.equals(Universes.of(p))) return;
                 setup(p, set.classes().get(classId), 1, 0, true);
-                plugin.messages().send(p, "choice.done", "%class%", plugin.messages().raw("classes." + classId + ".name"));
+                ClassDef chosen = set.classes().get(classId);
+                String attack = chosen.basicOnRight() ? "hold" : "left", spell = chosen.basicOnRight() ? "left" : "right";
+                plugin.messages().send(p, "choice.done", "%class%", plugin.messages().raw("classes." + classId + ".name"),
+                        "%attack%", plugin.messages().raw("class-pages.keys." + attack).toLowerCase(java.util.Locale.ROOT),
+                        "%spell%", plugin.messages().raw("class-pages.keys." + spell).toLowerCase(java.util.Locale.ROOT));
                 Sounds.cue(p, "complete");
             });
         });

@@ -28,7 +28,7 @@ import java.util.UUID;
  * holding another class's weapon casts nothing, whatever the inventory tricks, and tells the player why (another
  * class's weapon, or a level too low).
  *
- * <p>A class with {@code basic.click: right} (the archer) swaps the two clicks: the basic attack goes on the right
+ * <p>A class with {@code basic.click: right} (every ranged class: archer, mage, healer, the elemental ones) swaps the two clicks: the basic attack goes on the right
  * click, <b>held down</b> (a shot each time the attack speed allows), the weapon's skill on the left click. Holding is
  * seen two ways: the client sends the use again every 4 ticks while the button is down when the item cannot be used
  * (a bow without arrows), and {@link Player#isHandRaised()} while it draws (creative, arrows in the inventory). The
@@ -180,6 +180,9 @@ final class Controls implements Listener {
             }
             // the bow may draw (posture of the arms, keeps the hold seen while drawing); never on a block's use
             if (e.getAction() == Action.RIGHT_CLICK_BLOCK) e.setUseInteractedBlock(org.bukkit.event.Event.Result.DENY);
+            // a staff or a hoe has no use of its own (tilling): only a bow draws
+            org.bukkit.Material m = e.getItem() == null ? null : e.getItem().getType();
+            if (m != org.bukkit.Material.BOW && m != org.bukkit.Material.CROSSBOW) e.setUseItemInHand(org.bukkit.event.Event.Result.DENY);
             holding.put(p.getUniqueId(), now);
             skills.basic(p, r, null, false);
             return;
