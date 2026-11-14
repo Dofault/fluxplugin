@@ -301,6 +301,12 @@ MATS = {
 }
 GLOW_MATS = {"crystal": (crystal, 2), "focus": crystal}
 GLOW_COLOURS = set(CRYSTAL)
+# The outfit is the first model's ornate dress (evocateur_tenue.py), kept on 2026-11-14; the head, the hands and
+# the crown crystal stay the art pass's, painted above. The plain cloth painters above still dress the Oracle.
+import evocateur_tenue as TENUE  # noqa: E402
+MATS.update(TENUE.MATS)
+GLOW_MATS.update(TENUE.GLOW_MATS)
+GLOW_COLOURS |= TENUE.GLOW_COLOURS
 
 # --------------------------------------------------------------------------- skeleton and pose (drawing units)
 HIPS = (0, 21, 0)
@@ -359,10 +365,10 @@ def parts():
     panel("Coat_left", "coat_left", (-5.7, 21.5, 0.8), (1.6, 16.5, 9), (-3, 0, -11), "coat_side",
           tabs=((-2.4, 4.0, 1.4), (2.6, 3.4, 2.8)), tab_mat="coat_hem", axis=2)
     G["Flap_right"] = ((4.4, 21.5, -4.3), "Skirt")
-    panel("Flap_right", "flap_right", (4.4, 21.5, -4.3), (3.4, 14.5, 1.3), (8, -7, 5), "flap",
+    panel("Flap_right", "flap_right", (4.4, 21.5, -4.3), (3.4, 14.5, 1.3), (8, -7, 5), "flap_right",
           tabs=((0.6, 2.2, 2.2),), tab_mat="coat_hem")
     G["Flap_left"] = ((-4.4, 21.5, -4.4), "Skirt")
-    panel("Flap_left", "flap_left", (-4.4, 21.5, -4.4), (3.4, 16, 1.3), (6, 8, -7), "flap",
+    panel("Flap_left", "flap_left", (-4.4, 21.5, -4.4), (3.4, 16, 1.3), (6, 8, -7), "flap_left",
           tabs=((-0.6, 2.2, 1.6),), tab_mat="coat_hem")
 
     # ---------------------------------------------------------------- tabard: royal violet strip, the rune column
@@ -382,29 +388,33 @@ def parts():
     # ---------------------------------------------------------------- torso
     add("Torso", "torso", (0, 28, 0), (11, 14.5, 7), (0, 0, 0), "robe")
     add("Torso", "belt", (0, 20.9, 0), (12.2, 2.4, 8.4), (0, 0, 0), "belt")
-    add("Torso", "buckle", (0, 20.9, -4.4), (2.6, 2.6, 0.9), (0, 0, 45), "mount")
+    add("Torso", "buckle", (0, 20.9, -4.4), (3.4, 3.4, 0.9), (0, 0, 45), "boss")
     add("Torso", "tabard_up", (0, 27.5, -3.85), (7, 12, 0.8), (0, 0, 0), "tabard_up")
-    add("Torso", "lapel_right", (4.55, 27.6, -3.8), (2.6, 12, 0.9), (0, 0, -4), "lapel")
-    add("Torso", "lapel_left", (-4.55, 27.6, -3.8), (2.6, 12, 0.9), (0, 0, 4), "lapel")
+    add("Torso", "lapel_right", (4.55, 27.6, -3.8), (2.6, 12, 0.9), (0, 0, -4), "lapel_right")
+    add("Torso", "lapel_left", (-4.55, 27.6, -3.8), (2.6, 12, 0.9), (0, 0, 4), "lapel_left")
     add("Torso", "coat_back", (0, 28, 3.9), (11, 14, 1), (0, 0, 0), "coat_back")
     for s, side in ((1, "right"), (-1, "left")):
         add("Torso", f"coat_flank_{side}", (5.75 * s, 28, 0.4), (0.9, 14, 8.1), (0, 0, 0), "coat")
     add("Torso", "neck", (0, 35.6, 0.2), (5, 1.8, 5), (0, 0, 0), "neck")
     add("Torso", "collar_base", (0, 35.6, 0.4), (8.6, 1.4, 8), (0, 0, 0), "collar_base")
-    # mantle and shoulders: wider than a vanilla evoker, reinforced cloth in two tilted layers, one gold line
+    # mantle and shoulders: wider than a vanilla evoker, two tilted layers and a gold fin (taller on the left, to
+    # balance the raised right arm)
     add("Torso", "mantle", (0, 34.0, 0.3), (16, 2.6, 9), (0, 0, 0), "mantle")
-    for s, side in ((1, "right"), (-1, "left")):
+    for s, side, fin in ((1, "right", (0.8, 3.2, 4.6)), (-1, "left", (0.8, 5.0, 5.6))):
         add("Torso", f"pauldron_{side}", (8.7 * s, 34.6, 0.3), (6.6, 2.4, 9.8), (0, 0, -16 * s), "pauldron")
         add("Torso", f"pauldron_top_{side}", (8.0 * s, 36.2, 0.3), (4.6, 1.6, 7.6), (0, 0, -24 * s), "pauldron_top")
+        add("Torso", f"fin_{side}", (10.6 * s, 36.4 + fin[1] / 2 - 1.2, 0.3), fin, (0, 0, -28 * s), "fin")
     # high collar behind the head: three panels opening towards the front
     add("Torso", "collar_back", (0, 39.6, 5.6), (5, 8.5, 1), (-10, 0, 0), "collar")
     for s, side in ((1, "right"), (-1, "left")):
         add("Torso", f"collar_{side}", (4.3 * s, 39.2, 4.2), (5, 7.6, 1), (-10, 32 * s, -8 * s), "collar")
-    # crystals set in the robe, each in its own full-bright bone
-    G["glow_chest"] = ((0, 29.0, -4.3), "Torso")
-    add("glow_chest", "chest_crystal", (0, 29.0, -4.35), (1.0, 1.0, 0.4), (0, 0, 45), "crystal")
+    # glowing stones set in the robe, each in its own full-bright bone
+    G["glow_chest"] = ((0, 29.5, -4.3), "Torso")
+    add("glow_chest", "chest_stone", (0, 29.5, -4.35), (1.5, 1.5, 0.4), (0, 0, 45), "jewel")
+    G["glow_buckle"] = ((0, 20.9, -4.9), "Torso")
+    add("glow_buckle", "buckle_stone", (0, 20.9, -4.95), (1.4, 1.4, 0.4), (0, 0, 45), "jewel")
     G["glow_back"] = ((0, 27.5, 4.4), "Torso")
-    add("glow_back", "back_crystal", (0, 27.5, 4.5), (1.5, 1.5, 0.4), (0, 0, 45), "crystal")
+    add("glow_back", "back_stone", (0, 27.5, 4.5), (1.5, 1.5, 0.4), (0, 0, 45), "jewel")
 
     # ---------------------------------------------------------------- head
     on_head = attach(NECK, HEAD_R)
