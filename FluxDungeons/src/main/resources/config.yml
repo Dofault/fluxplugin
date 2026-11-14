@@ -56,11 +56,13 @@ rpg:
       choose: "D02A9D5F"
       choose-hover: "FF2ECF7B"
       caption: "99000000"
-    # What the actor does, in a loop. monsters <n>, wait <ticks>, basic <times> <ticks between>, cast <right|a|f>, home.
+    # What the actor does, in a loop. monsters <n> (new ones, the former go), wait <ticks>, basic <times> <ticks between>,
+    # cast <right|a|f>, home (the actor back to his place). Each big spell starts on a fresh scene, the spell that
+    # moves the actor comes last: it pushes the monsters about.
     scripts:
-      default: ["monsters 3", "wait 15", "basic 4 10", "wait 14", "cast a", "wait 45", "cast right", "wait 40", "cast f", "wait 110"]
-      pyromancer: ["monsters 3", "wait 15", "basic 4 10", "wait 14", "cast a", "wait 40", "cast right", "wait 50", "cast f", "wait 130"]
-      druid: ["monsters 3", "wait 15", "basic 4 10", "wait 14", "cast a", "wait 60", "cast right", "wait 40", "cast f", "wait 180"]
+      default: ["monsters 3", "wait 15", "basic 4 10", "wait 14", "cast a", "wait 50", "home", "monsters 3", "wait 20", "cast f", "wait 110", "home", "monsters 3", "wait 20", "cast right", "wait 45"]
+      pyromancer: ["monsters 3", "wait 15", "basic 4 10", "wait 14", "cast a", "wait 45", "home", "monsters 3", "wait 20", "cast f", "wait 130", "home", "monsters 3", "wait 20", "cast right", "wait 55"]
+      druid: ["monsters 3", "wait 15", "basic 4 10", "wait 14", "cast a", "wait 115", "home", "monsters 3", "wait 20", "cast f", "wait 180", "home", "monsters 3", "wait 20", "cast right", "wait 45"]
 
 party:
   max-size: 4

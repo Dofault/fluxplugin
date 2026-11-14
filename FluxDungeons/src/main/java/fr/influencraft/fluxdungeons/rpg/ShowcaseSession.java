@@ -220,6 +220,7 @@ final class ShowcaseSession {
         seat.addPassenger(player);
         hideHand();
         fr.influencraft.flux.api.client.Sidebar.hide(player, true);
+        fr.influencraft.flux.api.client.ChatHold.hold(player, true);
         player.setPlayerTime(settings.time(), false);
         Camera.view(player, camera);
         Camera.turns(player, (p, yaw, pitch) -> turned(yaw, pitch));
@@ -237,6 +238,7 @@ final class ShowcaseSession {
         if (player.getVehicle() == seat) player.leaveVehicle();
         for (Entity e : new Entity[]{pointer, camera, seat}) if (e != null && e.isValid()) e.remove();
         fr.influencraft.flux.api.client.Sidebar.hide(player, false);
+        fr.influencraft.flux.api.client.ChatHold.hold(player, false);
         showHand();
         if (!player.isOnline()) return;
         Camera.view(player, null);
@@ -422,8 +424,8 @@ final class ShowcaseSession {
         rect(PANEL_X, 0, PANEL_W, 1.7, color("background", 0xD9120826), 0);
         rect(PANEL_X + PANEL_W / 2, 0, 0.008, 1.7, color("edge", 0xFFF0A800), 0.0005);
         int shade = color("caption", 0x99000000);
-        captionTitle = label(Component.empty(), 0.42, -0.52, 0.002, 0.17f, 400, shade);
-        captionText = label(Component.empty(), 0.42, -0.60, 0.002, 0.095f, 280, shade);
+        captionTitle = label(Component.empty(), 0.42, -0.38, 0.002, 0.17f, 400, shade);
+        captionText = label(Component.empty(), 0.42, -0.46, 0.002, 0.095f, 280, shade);
         caption(activeSlot);
     }
 

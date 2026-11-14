@@ -156,6 +156,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
             @org.bukkit.event.EventHandler
             public void onQuit(org.bukkit.event.player.PlayerQuitEvent e) {
                 fr.influencraft.flux.api.client.Sidebar.forget(e.getPlayer().getUniqueId());
+                fr.influencraft.flux.api.client.ChatHold.forget(e.getPlayer().getUniqueId());
             }
         }, this);
         backgrounds = new ChestBackgrounds(menus, getLogger());
