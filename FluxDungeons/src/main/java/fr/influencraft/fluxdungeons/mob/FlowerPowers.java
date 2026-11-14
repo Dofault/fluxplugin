@@ -69,6 +69,8 @@ final class FlowerPowers {
     static final float HEAD_RANGE = 40f;
     /** Degrees a tick the plant turns towards its prey at most. */
     static final float TURN = 7f;
+    /** Rest after each move: its animations are long, without it the moves would follow one another without a gap. */
+    private static final long REST_MS = 1500;
     private static final String TAG = "fluxdungeons_fx";
     /** Scoreboard tag of a flower whose entrance is over. */
     private static final String AWAKE = "fluxdungeons_flower_awake";
@@ -445,7 +447,7 @@ final class FlowerPowers {
             if (t == 24) before[0] = target.getLocation().toVector();
             // 26, 34, 42: where he stands, ahead of his run, aimed again
             if (t == 26 || t == 34 || t == 42) {
-                double speed = ab.number("thorn-speed", 0.8);
+                double speed = ab.number("thorn-speed", 0.7);
                 Vector now = target.getLocation().toVector();
                 Vector to = now.clone().add(new Vector(0, 0.9, 0));
                 if (t == 34) {
@@ -494,13 +496,15 @@ final class FlowerPowers {
 
     /**
      * A thorn: flies at {@code speed} blocks a tick towards {@code to}, bends a little towards its prey for its first
-     * ten ticks ({@code thorn-turn} degrees a tick at most), then straight; stopped by a block; hits the first player
+     * {@code thorn-bend} ticks ({@code thorn-turn} degrees a tick at most), then straight; stopped by a block; hits the first player
      * on its way: small hit, brief slowness.
      */
     private void shoot(RockPowers.Caster c, MobTemplate.Ability ab, Location from, Vector to, Player prey, double speed) {
         World w = from.getWorld();
-        double power = ab.number("thorn-power", 3.5), turn = Math.toRadians(ab.number("thorn-turn", 2.5));
-        int slow = (int) ab.number("slow-ticks", 20), life = (int) ab.number("thorn-life", 50);
+        double power = ab.number("thorn-power", 1.6), turn = Math.toRadians(ab.number("thorn-turn", 1.2)),
+                width = ab.number("thorn-width", 0.6);
+        int bend = (int) ab.number("thorn-bend", 6);
+        int slow = (int) ab.number("slow-ticks", 10), life = (int) ab.number("thorn-life", 50);
         ItemDisplay thorn = seedDisplay(from);
         Vector start = to.clone().subtract(from.toVector());
         if (start.lengthSquared() < 1e-6) start = new Vector(0, 0, 1);
@@ -516,7 +520,7 @@ final class FlowerPowers {
                     cancel();
                     return;
                 }
-                if (t <= 10 && prey.isValid() && prey.getWorld() == w) {
+                if (t <= bend && prey.isValid() && prey.getWorld() == w) {
                     Vector want = prey.getLocation().toVector().add(new Vector(0, 0.9, 0)).subtract(at.toVector());
                     if (want.lengthSquared() > 1e-6) {
                         want.normalize();
@@ -533,7 +537,7 @@ final class FlowerPowers {
                 if (t % 2 == 0) w.spawnParticle(Particle.BLOCK, next, 1, 0.05, 0.05, 0.05, 0, LEAF);
                 Player met = null;
                 for (Player p : fighters(next, 2.5)) {
-                    if (distToSegment(p.getLocation().toVector().add(new Vector(0, 0.9, 0)), at.toVector(), next.toVector()) < 0.85) met = p;
+                    if (distToSegment(p.getLocation().toVector().add(new Vector(0, 0.9, 0)), at.toVector(), next.toVector()) < width) met = p;
                 }
                 boolean wall = !next.getBlock().isPassable();
                 if (met != null || wall) {
@@ -542,7 +546,7 @@ final class FlowerPowers {
                     w.spawnParticle(Particle.BLOCK, next, 12, 0.25, 0.25, 0.25, 0, LEAF);
                     if (met != null) {
                         c.hit(met, power);
-                        met.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, slow, 0, false, true));
+                        if (slow > 0) met.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, slow, 0, false, true));
                     }
                     forget(thorn);
                     cancel();
@@ -802,8 +806,9 @@ final class FlowerPowers {
         if (b.e instanceof Mob m) m.setAI(false);
     }
 
+    /** Ends a move; it then gets its breath back for {@link #REST_MS} before the next one (it still turns and watches). */
     private void end(RockPowers.Caster c, Brain b) {
-        b.busyUntil = 0;
+        b.busyUntil = System.currentTimeMillis() + REST_MS;
         b.locked = false;
         b.focus = null;
         c.release();
