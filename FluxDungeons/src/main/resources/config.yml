@@ -22,6 +22,45 @@ rpg:
   # Where players arrive in the lobby (/rpg, respawn, the void): set it standing there with /rpgadmin setspawn.
   # Missing: the middle of the platform.
   # spawn: {x: 0.5, y: 65, z: 0.5, yaw: 180, pitch: 0}
+  # The class showcase (/classe in the lobby, Java clients): the player watches each class cast its real spells in a
+  # small arena, through a fixed camera, a panel on the left third of his screen (docs/technique/rpg.md).
+  showcase:
+    enabled: true
+    # One arena per viewer: how many, where the first one is (the lobby world, far from the lobby) and how far apart.
+    stages: 6
+    origin: {x: 4000, y: 100, z: 4000}
+    spacing: 320
+    # From the middle of the arena (x: west is negative and on the right of the screen, z: away from the camera).
+    camera: {x: 3.75, y: 4.2, z: -9.5, pitch: 20}
+    actor: {x: 4.5, z: 0}
+    monsters: [[-2.5, 0], [-4.2, 1.9], [-4.2, -1.9]]
+    monster: HUSK
+    # Level of the actor (the monsters are level 1 normal ones).
+    level: 1
+    # Time of day the viewer sees (the arena is lit from above).
+    time: 14000
+    # Ticks the pointer rests on a class before its show starts.
+    hover-ticks: 5
+    pointer:
+      # Screen units per degree of mouse turn (the screen is about 2.5 units wide).
+      speed: 0.012
+    panel:
+      # Blocks between the camera and the panel. Everything is drawn for a field of view of 70 on a 16:9 screen.
+      distance: 1.0
+      pointer-scale: 0.16
+      # Colours: opacity then colour, eight hex digits.
+      background: "D9120826"
+      edge: "FFF0A800"
+      card: "B00D0D0D"
+      card-hover: "D05B2D9E"
+      choose: "D02A9D5F"
+      choose-hover: "FF2ECF7B"
+      caption: "99000000"
+    # What the actor does, in a loop. monsters <n>, wait <ticks>, basic <times> <ticks between>, cast <right|a|f>, home.
+    scripts:
+      default: ["monsters 3", "wait 15", "basic 4 10", "wait 14", "cast a", "wait 45", "cast right", "wait 40", "cast f", "wait 110"]
+      pyromancer: ["monsters 3", "wait 15", "basic 4 10", "wait 14", "cast a", "wait 40", "cast right", "wait 50", "cast f", "wait 130"]
+      druid: ["monsters 3", "wait 15", "basic 4 10", "wait 14", "cast a", "wait 60", "cast right", "wait 40", "cast f", "wait 180"]
 
 party:
   max-size: 4

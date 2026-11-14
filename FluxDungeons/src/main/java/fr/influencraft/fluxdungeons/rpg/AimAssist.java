@@ -34,7 +34,7 @@ final class AimAssist {
      * The enemy the player aims at within {@code range} blocks, null when none (or the assist is off).
      * {@code enemies}: the enemies around a place within a radius (Skills#enemies).
      */
-    LivingEntity target(Player p, double range, BiFunction<Location, Double, List<LivingEntity>> enemies) {
+    LivingEntity target(LivingEntity p, double range, BiFunction<Location, Double, List<LivingEntity>> enemies) {
         if (!enabled) return null;
         Location eye = p.getEyeLocation();
         Vector origin = eye.toVector(), look = eye.getDirection().normalize();

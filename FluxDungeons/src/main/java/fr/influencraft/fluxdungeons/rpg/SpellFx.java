@@ -181,7 +181,7 @@ final class SpellFx {
      * Where the player aims a spell put on the ground: the floor under the creature under his crosshair, else under
      * the block looked at, else under the end of the range; null when there is no floor there.
      */
-    static Location aimedGround(Player p, double range, Skills skills) {
+    static Location aimedGround(LivingEntity p, double range, Skills skills) {
         LivingEntity looked = skills.lookedAt(p, range);
         if (looked != null) {
             // a flying creature: the floor under it when there is one near, else where it is

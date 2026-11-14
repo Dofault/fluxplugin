@@ -35,6 +35,7 @@ public final class RpgModule implements Listener {
     private RpgItems items;
     private RpgWorld world;
     private ClassPages pages;
+    private Showcase showcase;
 
     public RpgModule(FluxPlugin plugin) {
         this.plugin = plugin;
@@ -69,6 +70,8 @@ public final class RpgModule implements Listener {
             kit.open(p);
             return false;
         });
+        showcase = new Showcase(plugin, config::get, players, combat, skills, controls, items, world);
+        players.useShowcase(showcase);
         registerCombatApi(skills);
         var pm = Bukkit.getPluginManager();
         pm.registerEvents(players, plugin);
@@ -216,6 +219,7 @@ public final class RpgModule implements Listener {
     }
 
     public void stop() {
+        if (showcase != null) showcase.stop();
         if (players != null) players.stopAll();
         if (skills != null) skills.stop();
     }

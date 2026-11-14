@@ -588,3 +588,41 @@ dungeon-pages:
   next: Next page
   prev: Previous page
   none: No dungeon is open for now.
+
+# The class showcase (/classe in the lobby): panel on the left, the spell being cast named under the scene.
+showcase:
+  pointer: "&f●"
+  title: "&#FFD94DChoose your class"
+  title-change: "&#FFD94DThe classes"
+  hint: "&#B376E5Move your mouse over a class to watch it play"
+  card-name: "%color%%name%"
+  card-role: "&f%role%"
+  yours: "&#FFD94D★ Your class"
+  footer: "&7Click: open the class · Sneak: leave"
+  footer-first: "&7Click: open the class"
+  back: "&f‹ Back to the classes"
+  description: "&#B376E5%text%"
+  spell: "&#FFD94D%key% &8· &f%name%"
+  choose: "&fChoose %name%"
+  owned: "&#FFD94D★ This is your class"
+  note-first: "&7You can change class later, from the lobby."
+  note-change: "&7One change every %hours% h. The progress of each class is kept."
+  caption: "&#FFD94D%key% &8· &f%name%"
+  caption-text: "&f%text%"
+  must-choose: "&#FFD94DChoose your class first: click a class, then the green button."
+  lines:
+    cryomancer:
+      basic: "Each shard leaves frost. At 3 frosts the monster is shut in ice."
+      a: "Spikes burst out of the ground: a frozen monster shatters over its neighbours."
+      right: "Glides through the monsters on a trail of ice."
+      f: "A comet freezes everything it hits."
+    pyromancer:
+      basic: "Each ember sets the monster on fire. A monster dying in flames explodes."
+      a: "A fan of flames pushes back and ignites everything in front."
+      right: "Takes off, then lands in a burst of flames."
+      f: "A sun burns the area in waves, then explodes."
+    druid:
+      basic: "Each thorn sows a seed. At 3 seeds the monster blooms and the pollen heals."
+      a: "Brambles tear, slow and seed whatever crosses them."
+      right: "The vine grabs the monster and pulls the druid to it."
+      f: "A man-eating plant bites whatever comes near, then heals as it withers."

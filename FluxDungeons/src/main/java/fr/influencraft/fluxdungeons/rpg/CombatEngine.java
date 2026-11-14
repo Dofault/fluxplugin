@@ -80,6 +80,40 @@ public final class CombatEngine implements Listener {
     private final JavaPlugin plugin;
     private final Supplier<RpgConfig.Set> config;
     private final Function<Player, RpgPlayer> players;
+    /**
+     * Stand-ins: creatures playing a class in a player's place (the class showcase's actor). They cast and hit as a
+     * player of that class and level would, are never hit, and nothing they do is told to the dungeons.
+     */
+    private final Map<UUID, RpgPlayer> standIns = new HashMap<>();
+    private final Map<UUID, LivingEntity> standInBodies = new HashMap<>();
+
+    /** Makes {@code e} cast and hit as {@code r} (his stats computed by the caller); its life is full. */
+    void standIn(LivingEntity e, RpgPlayer r) {
+        standIns.put(e.getUniqueId(), r);
+        standInBodies.put(e.getUniqueId(), e);
+        life.put(e.getUniqueId(), r.stats() == null ? 20 : r.stats().get("max_health"));
+    }
+
+    void dismiss(LivingEntity e) {
+        standIns.remove(e.getUniqueId());
+        standInBodies.remove(e.getUniqueId());
+        life.remove(e.getUniqueId());
+    }
+
+    java.util.Collection<LivingEntity> standIns() {
+        return standInBodies.values();
+    }
+
+    /** The rpg state of whoever fights on the players' side: an online player of the universe, a stand-in; else null. */
+    RpgPlayer hero(LivingEntity e) {
+        if (e instanceof Player p) return players.apply(p);
+        return e == null ? null : standIns.get(e.getUniqueId());
+    }
+
+    /** True for the players' side: a player or a stand-in. */
+    private boolean heroic(Entity e) {
+        return e instanceof Player || (e != null && standIns.containsKey(e.getUniqueId()));
+    }
     private Function<LivingEntity, MobProfile> profiles = e -> MobProfile.DEFAULT;
     /** Creatures that never die (training dummies): their life comes back full instead. */
     private java.util.function.Predicate<LivingEntity> immortal = e -> false;
@@ -149,8 +183,8 @@ public final class CombatEngine implements Listener {
     // ------------------------------------------------------------------ stats and life of anyone
 
     public StatSheet stats(LivingEntity e) {
-        if (e instanceof Player p) {
-            RpgPlayer r = players.apply(p);
+        if (heroic(e)) {
+            RpgPlayer r = hero(e);
             return r == null ? null : r.stats();
         }
         MobState m = mob(e);
@@ -158,8 +192,8 @@ public final class CombatEngine implements Listener {
     }
 
     public int level(LivingEntity e) {
-        if (e instanceof Player p) {
-            RpgPlayer r = players.apply(p);
+        if (heroic(e)) {
+            RpgPlayer r = hero(e);
             return r == null ? 1 : r.level();
         }
         MobState m = mob(e);
@@ -167,7 +201,7 @@ public final class CombatEngine implements Listener {
     }
 
     private MobState mob(LivingEntity e) {
-        if (e instanceof Player || e.isDead()) return null;
+        if (heroic(e) || e.isDead()) return null;
         MobState m = mobs.get(e.getUniqueId());
         if (m != null) {
             // the game's health changed behind the engine (a monster healing itself, a script): its share is taken
@@ -199,7 +233,7 @@ public final class CombatEngine implements Listener {
     }
 
     public double health(LivingEntity e) {
-        if (e instanceof Player p) return life.getOrDefault(p.getUniqueId(), 0.0);
+        if (heroic(e)) return life.getOrDefault(e.getUniqueId(), 0.0);
         MobState m = mob(e);
         return m == null ? e.getHealth() : m.hp;
     }
@@ -258,7 +292,7 @@ public final class CombatEngine implements Listener {
         // the game's invulnerability counts (a burrowed or sleeping boss, a script, the staff's god tool)
         if (target.isInvulnerable()) return null;
         if (!rpg(attacker) || !rpg(target)) return null;
-        boolean fromPlayer = attacker instanceof Player, toPlayer = target instanceof Player;
+        boolean fromPlayer = heroic(attacker), toPlayer = heroic(target);
         if (fromPlayer == toPlayer) return null;          // no player versus player, no monster versus monster
         if (target instanceof Player tp && tp.getGameMode() != org.bukkit.GameMode.SURVIVAL && tp.getGameMode() != org.bukkit.GameMode.ADVENTURE) return null;
         if (cast != null) {
@@ -288,13 +322,13 @@ public final class CombatEngine implements Listener {
             return o;
         }
         // told to the others with the real amount first: the dungeon rules may refuse it (boss phases, pacing)
-        if (fromPlayer && !allowed((Player) attacker, target, cast, o.damage())) return null;
+        if (attacker instanceof Player asker && !allowed(asker, target, cast, o.damage())) return null;
         damage(target, o.damage(), attacker, o.crit());
-        if (attacker instanceof Player p) {
-            RpgPlayer r = players.apply(p);
+        if (fromPlayer) {
+            RpgPlayer r = hero(attacker);
             if (r != null) {
                 r.attacked(now());
-                if (o.lifesteal() > 0) heal(p, o.lifesteal(), false);
+                if (o.lifesteal() > 0) heal(attacker, o.lifesteal(), false);
                 if (o.manasteal() > 0) r.mana(r.mana() + o.manasteal());
             }
         }
@@ -327,6 +361,7 @@ public final class CombatEngine implements Listener {
     public void damage(LivingEntity target, double amount, LivingEntity source, boolean crit) {
         if (amount <= 0 || target.isDead()) return;
         double left = amount;
+        if (!(target instanceof Player) && heroic(target)) return;
         if (target instanceof Player p) {
             RpgPlayer r = players.apply(p);
             if (r == null) return;
@@ -353,7 +388,7 @@ public final class CombatEngine implements Listener {
         }
         // the server's damage numbers (CMI's look): what a player deals (crits in gold), and in the rpg what a player
         // takes from a monster
-        if (numbers != null && (source instanceof Player || target instanceof Player)) numbers.show(target, amount, crit);
+        if (numbers != null && (heroic(source) || target instanceof Player)) numbers.show(target, amount, crit);
     }
 
     /**
@@ -379,8 +414,8 @@ public final class CombatEngine implements Listener {
         }
     }
 
-    /** Gives life back to a player ({@code show}: a green number above him). */
-    public void heal(Player p, double amount, boolean show) {
+    /** Gives life back to a player or a stand-in ({@code show}: a green number above him). */
+    public void heal(LivingEntity p, double amount, boolean show) {
         if (amount <= 0 || p.isDead() || !life.containsKey(p.getUniqueId())) return;
         double max = maxHealth(p);
         double hp = Math.min(max, life.get(p.getUniqueId()) + amount);

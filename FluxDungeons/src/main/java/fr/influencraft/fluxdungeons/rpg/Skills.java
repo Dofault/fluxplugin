@@ -42,7 +42,7 @@ public final class Skills implements Listener {
     private static final String ARROW = "fluxrpg_arrow";
 
     /** What an arrow of the rpg carries: whose, which cast, which hit. */
-    private record Shot(Player owner, String cast, CombatMath.Hit hit) {
+    private record Shot(LivingEntity owner, String cast, CombatMath.Hit hit) {
     }
 
     private final FluxPlugin plugin;
@@ -66,7 +66,7 @@ public final class Skills implements Listener {
     }
 
     /** The enemy the player aims at within range (aim assist), null when none. */
-    LivingEntity aimedEnemy(Player p, double range) {
+    LivingEntity aimedEnemy(LivingEntity p, double range) {
         return aim.target(p, range, this::enemies);
     }
 
@@ -80,9 +80,44 @@ public final class Skills implements Listener {
         this.flora = new Flora(plugin, combat, this, fx);
     }
 
-    /** The rpg state of an online player, null outside the universe. */
-    RpgPlayer player(Player p) {
-        return players.get(p);
+    /** The rpg state of whoever casts: an online player of the universe or a stand-in ({@link CombatEngine#standIn}), else null. */
+    RpgPlayer player(LivingEntity p) {
+        return combat.hero(p);
+    }
+
+    /** The caster with this id still there: an online player, or a stand-in still standing; null otherwise. */
+    LivingEntity caster(java.util.UUID id) {
+        Player p = Bukkit.getPlayer(id);
+        if (p != null) return p;
+        return Bukkit.getEntity(id) instanceof LivingEntity e && combat.hero(e) != null ? e : null;
+    }
+
+    /** True while a caster can still act (an online player, a stand-in not removed). */
+    static boolean here(LivingEntity p) {
+        return p instanceof Player pl ? pl.isOnline() : p.isValid() && !p.isDead();
+    }
+
+    /** A message of the lang file to a caster who can read (a stand-in hears nothing). */
+    void tell(LivingEntity p, String key, String... vars) {
+        if (p instanceof Player pl) plugin.messages().send(pl, key, vars);
+    }
+
+    /** Stats again after a timed bonus (players only: a stand-in keeps the sheet it was given). */
+    private void recompute(LivingEntity p) {
+        if (p instanceof Player pl) players.recompute(pl);
+    }
+
+    /**
+     * Casts the skill of a slot ("basic" for the basic attack) without mana nor pace: the class showcase's actor.
+     * False when it could not be cast.
+     */
+    boolean demo(LivingEntity p, RpgPlayer r, String slot) {
+        if ("basic".equals(slot)) {
+            basic(p, r, null, true);
+            return true;
+        }
+        ClassDef.Skill s = r.heroClass().skills().get(slot);
+        return s != null && run(p, r, s, r.cast(slot));
     }
 
     /** Removes what the skills left in the world (plugin stopping). */
@@ -136,10 +171,13 @@ public final class Skills implements Listener {
     }
 
     /** Players of the rpg around a point (the caster included): allies, as everyone fights monsters there. */
-    List<Player> allies(Location at, double radius) {
-        List<Player> out = new ArrayList<>();
-        for (Player p : at.getWorld().getPlayers()) {
-            if (!p.isDead() && p.getLocation().distanceSquared(at) <= radius * radius && players.get(p) != null) out.add(p);
+    List<LivingEntity> allies(Location at, double radius) {
+        List<LivingEntity> out = new ArrayList<>();
+        for (Player ally : at.getWorld().getPlayers()) {
+            if (!ally.isDead() && ally.getLocation().distanceSquared(at) <= radius * radius && players.get(ally) != null) out.add(ally);
+        }
+        for (LivingEntity e : combat.standIns()) {
+            if (e.getWorld() == at.getWorld() && here(e) && e.getLocation().distanceSquared(at) <= radius * radius) out.add(e);
         }
         return out;
     }
@@ -150,7 +188,7 @@ public final class Skills implements Listener {
      * The class's basic attack, when ready. {@code clicked}: the creature hit by the click, if any. {@code paced}: the
      * swing was already checked against the weapon's recharge (swords and axes, combat.AttackCadence), it always goes.
      */
-    void basic(Player p, RpgPlayer r, LivingEntity clicked, boolean paced) {
+    void basic(LivingEntity p, RpgPlayer r, LivingEntity clicked, boolean paced) {
         long now = CombatEngine.now();
         if (!paced && now < r.nextBasic()) return;
         // the client already waits for the full recharge (minimum attack charge): 2 ticks of slack so a click it lets
@@ -174,7 +212,7 @@ public final class Skills implements Listener {
     }
 
     /** Melee: the clicked creature and others in front of the player within reach, up to the attack's targets. */
-    private void cleave(Player p, String cast, ClassDef.Attack a, LivingEntity clicked) {
+    private void cleave(LivingEntity p, String cast, ClassDef.Attack a, LivingEntity clicked) {
         Location eye = p.getEyeLocation();
         Vector look = eye.getDirection().setY(0).normalize();
         List<LivingEntity> targets = new ArrayList<>();
@@ -201,7 +239,7 @@ public final class Skills implements Listener {
     // ------------------------------------------------------------------ skills (right click, A, F)
 
     /** Casts the skill of a slot when paid for (mana is the only limit, no cooldown). */
-    void cast(Player p, RpgPlayer r, String slot) {
+    void cast(LivingEntity p, RpgPlayer r, String slot) {
         ClassDef.Skill s = r.heroClass().skills().get(slot);
         if (s == null) return;
         long now = CombatEngine.now();
@@ -209,8 +247,8 @@ public final class Skills implements Listener {
         if (now - r.lastCast(slot) < 2) return;
         double cost = CombatMath.manaCost(s.mana(), r.stats());
         if (r.mana() < cost) {
-            plugin.messages().send(p, "skill.no-mana");
-            p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, org.bukkit.SoundCategory.PLAYERS, 0.6f, 0.6f);
+            tell(p, "skill.no-mana");
+            if (p instanceof Player pl) pl.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, org.bukkit.SoundCategory.PLAYERS, 0.6f, 0.6f);
             return;
         }
         if (!run(p, r, s, r.cast(slot))) return;
@@ -219,7 +257,7 @@ public final class Skills implements Listener {
     }
 
     /** The skill's own work. False when it could not be cast (nothing paid). */
-    private boolean run(Player p, RpgPlayer r, ClassDef.Skill s, String cast) {
+    private boolean run(LivingEntity p, RpgPlayer r, ClassDef.Skill s, String cast) {
         World w = p.getWorld();
         switch (s.type()) {
             case "charge" -> {
@@ -240,7 +278,7 @@ public final class Skills implements Listener {
                 for (LivingEntity e : enemies(p.getLocation(), radius)) if (e instanceof Mob m) m.setTarget(p);
                 long until = CombatEngine.now() + Math.round(20 * CombatMath.duration(s.duration(), r.stats(), null, false));
                 r.buff("war_cry", List.of(Modifier.add("damage_reduction", s.number("damage_reduction", 0.3), "war_cry")), until);
-                players.recompute(p);
+                recompute(p);
             }
             case "whirlwind" -> {
                 double radius = s.number("radius", 4);
@@ -259,7 +297,7 @@ public final class Skills implements Listener {
                 w.playSound(p.getLocation(), Sound.ENTITY_RABBIT_JUMP, org.bukkit.SoundCategory.PLAYERS, 1f, 1f);
                 long until = CombatEngine.now() + Math.round(20 * CombatMath.duration(s.duration(), r.stats(), null, false));
                 r.buff("leap_back", List.of(Modifier.add("movement_speed", s.number("speed", 0.3), "leap_back")), until);
-                players.recompute(p);
+                recompute(p);
             }
             case "volley" -> {
                 int arrows = (int) s.number("arrows", 5);
@@ -287,7 +325,7 @@ public final class Skills implements Listener {
                 Location from = p.getLocation();
                 Location to = safeAhead(p, s.number("distance", 8));
                 if (to == null) {
-                    plugin.messages().send(p, "skill.blocked");
+                    tell(p, "skill.blocked");
                     return false;
                 }
                 w.spawnParticle(Particle.PORTAL, from.clone().add(0, 1, 0), 30, 0.3, 0.6, 0.3, 0.2);
@@ -313,22 +351,22 @@ public final class Skills implements Listener {
                 }
             }
             case "heal" -> {
-                Player target = allyAimed(p, s.number("range", 20));
+                LivingEntity target = allyAimed(p, s.number("range", 20));
                 double amount = CombatMath.heal(r.stats(), s.coefficient(), 0);
                 combat.heal(target, amount, true);
                 w.spawnParticle(Particle.HEART, target.getLocation().add(0, 2, 0), 5, 0.3, 0.3, 0.3);
                 w.playSound(target.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, org.bukkit.SoundCategory.PLAYERS, 1f, 1.4f);
-                if (target != p) plugin.messages().send(target, "skill.healed-by", "%player%", p.getName());
+                if (target != p) tell(target, "skill.healed-by", "%player%", p.getName());
             }
             case "blessing" -> {
                 double radius = s.number("radius", 8);
                 long until = CombatEngine.now() + Math.round(20 * CombatMath.duration(s.duration(), r.stats(), null, false));
                 w.playSound(p.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, org.bukkit.SoundCategory.PLAYERS, 0.8f, 1.5f);
-                for (Player ally : allies(p.getLocation(), radius)) {
-                    RpgPlayer ar = players.get(ally);
+                for (LivingEntity ally : allies(p.getLocation(), radius)) {
+                    RpgPlayer ar = player(ally);
                     if (ar == null) continue;
                     ar.buff("blessing", List.of(Modifier.add("damage_bonus", s.number("damage_bonus", 0.15), "blessing")), until);
-                    players.recompute(ally);
+                    recompute(ally);
                     ally.getWorld().spawnParticle(Particle.GLOW, ally.getLocation().add(0, 1, 0), 15, 0.4, 0.6, 0.4);
                 }
             }
@@ -341,7 +379,7 @@ public final class Skills implements Listener {
                 w.playSound(at, Sound.BLOCK_BEACON_ACTIVATE, org.bukkit.SoundCategory.PLAYERS, 0.8f, 1.4f);
                 repeat(hits, period, tick -> {
                     ring(at, radius, Particle.HAPPY_VILLAGER);
-                    for (Player ally : allies(at, radius)) combat.heal(ally, each, true);
+                    for (LivingEntity ally : allies(at, radius)) combat.heal(ally, each, true);
                 });
             }
             case "frost_glide" -> {
@@ -398,7 +436,7 @@ public final class Skills implements Listener {
     }
 
     /** A real arrow (looks and flies right); its vanilla damage never counts, the engine hits on impact. */
-    private void shoot(Player p, String cast, CombatMath.Hit hit, Vector dir, double speed) {
+    private void shoot(LivingEntity p, String cast, CombatMath.Hit hit, Vector dir, double speed) {
         Arrow arrow = p.launchProjectile(Arrow.class, dir.clone().normalize().multiply(speed));
         arrow.setPickupStatus(AbstractArrow.PickupStatus.DISALLOWED);
         arrow.setPersistent(false);
@@ -425,7 +463,7 @@ public final class Skills implements Listener {
     }
 
     /** A bolt of particles: hits the first creature on its way. */
-    private void bolt(Player p, String cast, CombatMath.Hit hit, double range, Particle trail, Particle.DustOptions dust, double speed) {
+    private void bolt(LivingEntity p, String cast, CombatMath.Hit hit, double range, Particle trail, Particle.DustOptions dust, double speed) {
         LivingEntity t = aimedEnemy(p, range);
         travel(p, t == null ? null : AimAssist.toward(p.getEyeLocation(), t), range, speed, trail, (at, direct) -> {
             if (direct != null) combat.strike(p, direct, hit, cast);
@@ -434,12 +472,12 @@ public final class Skills implements Listener {
     }
 
     /** Something flying from the eyes: calls {@code impact} at the first creature (given) or block (null) hit. */
-    private void travel(Player p, double range, double speed, Particle trail, java.util.function.BiConsumer<Location, LivingEntity> impact) {
+    private void travel(LivingEntity p, double range, double speed, Particle trail, java.util.function.BiConsumer<Location, LivingEntity> impact) {
         travel(p, null, range, speed, trail, impact);
     }
 
     /** The same, towards {@code dir} (null: where he looks). */
-    private void travel(Player p, Vector dir, double range, double speed, Particle trail, java.util.function.BiConsumer<Location, LivingEntity> impact) {
+    private void travel(LivingEntity p, Vector dir, double range, double speed, Particle trail, java.util.function.BiConsumer<Location, LivingEntity> impact) {
         Location start = p.getEyeLocation();
         Vector step = (dir == null ? start.getDirection() : dir.clone()).normalize().multiply(speed);
         new BukkitRunnable() {
@@ -469,7 +507,7 @@ public final class Skills implements Listener {
     }
 
     /** Where a swing of this range reaches, a little below the eyes (where the weapon passes). */
-    private Location reachPoint(Player p, double range) {
+    private Location reachPoint(LivingEntity p, double range) {
         Location eye = p.getEyeLocation();
         Vector dir = eye.getDirection();
         RayTraceResult hit = p.getWorld().rayTrace(eye, dir, range, FluidCollisionMode.NEVER, true, 0.2,
@@ -487,7 +525,7 @@ public final class Skills implements Listener {
      * or a wall (even next to a creature). Spells placed on the ground land on it instead of on the block seen behind
      * it; no aim assist here, a place beside a creature must stay a choice.
      */
-    LivingEntity lookedAt(Player p, double range) {
+    LivingEntity lookedAt(LivingEntity p, double range) {
         Location eye = p.getEyeLocation();
         RayTraceResult hit = p.getWorld().rayTrace(eye, eye.getDirection(), range, FluidCollisionMode.NEVER, true, 0.3, e -> {
             if (e == p || e instanceof Player) return false;
@@ -499,7 +537,7 @@ public final class Skills implements Listener {
     }
 
     /** Where the player aims: the creature under his crosshair, else the block looked at, else the end of the range. */
-    private Location aimed(Player p, double range) {
+    private Location aimed(LivingEntity p, double range) {
         LivingEntity looked = lookedAt(p, range);
         if (looked != null) return looked.getLocation();
         RayTraceResult hit = p.getWorld().rayTraceBlocks(p.getEyeLocation(), p.getEyeLocation().getDirection(), range, FluidCollisionMode.NEVER, true);
@@ -507,14 +545,14 @@ public final class Skills implements Listener {
     }
 
     /** The ally the player looks at within range, himself otherwise. */
-    private Player allyAimed(Player p, double range) {
+    private LivingEntity allyAimed(LivingEntity p, double range) {
         RayTraceResult hit = p.getWorld().rayTraceEntities(p.getEyeLocation(), p.getEyeLocation().getDirection(), range, 0.6,
                 e -> e instanceof Player other && other != p && players.get(other) != null);
         return hit != null && hit.getHitEntity() instanceof Player ally ? ally : p;
     }
 
     /** The farthest place ahead (up to {@code distance}) where the player fits, null when blocked right away. */
-    private Location safeAhead(Player p, double distance) {
+    private Location safeAhead(LivingEntity p, double distance) {
         Location eye = p.getEyeLocation();
         Vector dir = eye.getDirection().setY(0).normalize();
         Location best = null;

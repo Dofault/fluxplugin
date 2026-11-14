@@ -130,6 +130,10 @@ The plugins are written **as English plugins, then adapted to French** for our s
   The classes players choose from are the three elemental ones (cryomancer, pyromancer, druid: one file each,
   `rpg/Frost`, `Fire`, `Flora`, their mechanic's numbers in `passive` of classes.yml, shared displays in `rpg/SpellFx`);
   a new class follows that shape and is played by `rpg.core.Simulator` (BalanceTest keeps the classes close).
+  A spell's caster is a `LivingEntity`, not always a player: the class showcase (`rpg/Showcase`, `/classe` in the lobby:
+  fixed camera, panel of text displays, mouse pointer) has an actor cast the real spells as a stand-in
+  (`CombatEngine.standIn`, `Skills.demo`). In spell code use `Skills.here(p)`, `skills.tell(p, ...)`, `skills.player(p)`,
+  never `Player`-only calls on the caster.
   Map scripts check the room each monster has (`assets/maps/room_space.py`) and widen rooms with `gridlib.stretch`
   through `maplib.widen`: never redraw a room by hand to make it larger, never touch a boss arena.
   Parties (`party.Parties`) know nothing of dungeons, to move into Flux the day another plugin needs groups. BetterModel is only touched by `mob.ModelBridge`.

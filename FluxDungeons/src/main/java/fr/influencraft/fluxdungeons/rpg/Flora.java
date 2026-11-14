@@ -92,7 +92,7 @@ final class Flora {
     // ================================================================== the shared mechanic
 
     /** A hit of the druid: through the engine, then seeds ({@code stacks}). Null when it did not land. */
-    CombatMath.Outcome hit(Player p, RpgPlayer r, LivingEntity target, CombatMath.Hit hit, String cast, int stacks) {
+    CombatMath.Outcome hit(LivingEntity p, RpgPlayer r, LivingEntity target, CombatMath.Hit hit, String cast, int stacks) {
         LivingEntity body = skills.body(target);
         if (body == null) return null;
         CombatMath.Outcome o = combat.strike(p, body, hit, cast);
@@ -102,7 +102,7 @@ final class Flora {
     }
 
     /** Plants seeds in a creature; full of them (and not just bloomed), it blooms. */
-    void seed(Player p, RpgPlayer r, LivingEntity e, int stacks) {
+    void seed(LivingEntity p, RpgPlayer r, LivingEntity e, int stacks) {
         if (stacks <= 0 || e.isDead()) return;
         ClassDef cls = r.heroClass();
         int max = (int) Math.max(1, cls.passive("seed-max", 3));
@@ -119,7 +119,7 @@ final class Flora {
             w.playSound(e.getLocation(), Sound.BLOCK_BIG_DRIPLEAF_TILT_UP, SoundCategory.PLAYERS, 1.2f, 1.4f);
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 RpgPlayer now2 = skills.player(p);
-                if (p.isOnline() && now2 != null && e.isValid() && !e.isDead()) bloom(p, now2, e);
+                if (Skills.here(p) && now2 != null && e.isValid() && !e.isDead()) bloom(p, now2, e);
             }, 4L);
         } else {
             w.playSound(e.getLocation(), Sound.BLOCK_MOSS_PLACE, SoundCategory.PLAYERS, 0.7f, 1.2f + 0.25f * c.stacks);
@@ -128,7 +128,7 @@ final class Flora {
     }
 
     /** The creature blooms: rooted, hit, and its pollen heals the party and seeds its neighbours. */
-    private void bloom(Player p, RpgPlayer r, LivingEntity e) {
+    private void bloom(LivingEntity p, RpgPlayer r, LivingEntity e) {
         ClassDef cls = r.heroClass();
         boolean boss = boss(e);
         World w = e.getWorld();
@@ -166,9 +166,9 @@ final class Flora {
         // pollen: life for the party near the flower (and for the druid wherever he shoots from)
         double amount = CombatMath.heal(r.stats(), cls.passive("bloom-heal", 0.35), 0);
         double healRadius = cls.passive("bloom-heal-radius", 10);
-        List<Player> healed = new ArrayList<>(skills.allies(top, healRadius));
+        List<LivingEntity> healed = new ArrayList<>(skills.allies(top, healRadius));
         if (!healed.contains(p)) healed.add(p);
-        for (Player ally : healed) {
+        for (LivingEntity ally : healed) {
             combat.heal(ally, amount, true);
             trail(top, ally.getLocation().add(0, 1.2, 0));
             ally.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, ally.getLocation().add(0, 1.1, 0), 6, 0.3, 0.4, 0.3, 0);
@@ -223,7 +223,7 @@ final class Flora {
     // ================================================================== basic attack: thorn
 
     /** A thorn flying where the player looks; one seed in the creature it hits. */
-    void thorn(Player p, RpgPlayer r, CombatMath.Hit hit, String cast, double range, LivingEntity aimed) {
+    void thorn(LivingEntity p, RpgPlayer r, CombatMath.Hit hit, String cast, double range, LivingEntity aimed) {
         Location eye = p.getEyeLocation();
         Vector dir = aimed == null ? eye.getDirection().normalize() : AimAssist.toward(eye, aimed);
         Vector right = dir.clone().crossProduct(new Vector(0, 1, 0));
@@ -285,7 +285,7 @@ final class Flora {
      * A vine shoots to what the player looks at (a wall, the ground, a creature) and hauls him there; the creatures
      * he flies through are hit and seeded. Caught at the end of the vine, a creature is hit and held by roots.
      */
-    boolean vine(Player p, RpgPlayer r, ClassDef.Skill s, String cast) {
+    boolean vine(LivingEntity p, RpgPlayer r, ClassDef.Skill s, String cast) {
         double range = s.number("range", 16);
         Location eye = p.getEyeLocation();
         LivingEntity caught = skills.lookedAt(p, range);
@@ -295,13 +295,13 @@ final class Flora {
         } else {
             RayTraceResult hit = p.getWorld().rayTraceBlocks(eye, eye.getDirection(), range, FluidCollisionMode.NEVER, true);
             if (hit == null) {
-                plugin.messages().send(p, "skill.no-anchor");
+                skills.tell(p, "skill.no-anchor");
                 return false;
             }
             anchor = hit.getHitPosition().toLocation(p.getWorld());
         }
         if (anchor.distanceSquared(p.getLocation()) < 9) {
-            plugin.messages().send(p, "skill.no-anchor");
+            skills.tell(p, "skill.no-anchor");
             return false;
         }
         World w = p.getWorld();
@@ -342,7 +342,7 @@ final class Flora {
 
             @Override
             public void run() {
-                if (!p.isOnline() || p.isDead() || p.getWorld() != anchor.getWorld()) {
+                if (!Skills.here(p) || p.isDead() || p.getWorld() != anchor.getWorld()) {
                     cancel();
                     return;
                 }
@@ -377,10 +377,10 @@ final class Flora {
      * Brambles grow where the player aims and stay a while: the creatures inside are torn again and again, slowed,
      * and seeded: they bloom in the middle of the thorns.
      */
-    boolean brambles(Player p, RpgPlayer r, ClassDef.Skill s, String cast) {
+    boolean brambles(LivingEntity p, RpgPlayer r, ClassDef.Skill s, String cast) {
         Location target = SpellFx.aimedGround(p, s.number("range", 18), skills);
         if (target == null) {
-            plugin.messages().send(p, "skill.blocked");
+            skills.tell(p, "skill.blocked");
             return false;
         }
         double radius = s.number("radius", 4);
@@ -412,7 +412,7 @@ final class Flora {
             @Override
             public void run() {
                 t++;
-                if (!p.isOnline() || t > life) {
+                if (!Skills.here(p) || t > life) {
                     cancel();
                     w.spawnParticle(Particle.BLOCK, target.clone().add(0, 0.4, 0), 50, radius / 2, 0.2, radius / 2, 0, Material.AZALEA_LEAVES.createBlockData());
                     w.playSound(target, Sound.BLOCK_SWEET_BERRY_BUSH_BREAK, SoundCategory.PLAYERS, 1.2f, 0.7f);
@@ -461,10 +461,10 @@ final class Flora {
      * A giant carnivorous plant grows where the player aims and fights beside him: its head follows the nearest
      * creature, rears back, lunges and bites, again and again; when it withers, its pollen heals the party around it.
      */
-    boolean maneater(Player p, RpgPlayer r, ClassDef.Skill s, String cast) {
+    boolean maneater(LivingEntity p, RpgPlayer r, ClassDef.Skill s, String cast) {
         Location base = SpellFx.aimedGround(p, s.number("range", 16), skills);
         if (base == null) {
-            plugin.messages().send(p, "skill.blocked");
+            skills.tell(p, "skill.blocked");
             return false;
         }
         base.setYaw(0);
@@ -502,10 +502,10 @@ final class Flora {
             @Override
             public void run() {
                 t++;
-                if (!p.isOnline() || t > life + 8) {
+                if (!Skills.here(p) || t > life + 8) {
                     cancel();
                     for (BlockDisplay d : all) fx.forget(d);
-                    if (p.isOnline()) wither(p, base, s);
+                    if (Skills.here(p)) wither(p, base, s);
                     return;
                 }
                 float grow = t <= growth ? t / (float) growth : t > life ? Math.max(0.05f, 1 - (t - life) / 8f) : 1;
@@ -602,7 +602,7 @@ final class Flora {
     }
 
     /** The maneater withers: a cloud of pollen that heals the party around it. */
-    private void wither(Player p, Location base, ClassDef.Skill s) {
+    private void wither(LivingEntity p, Location base, ClassDef.Skill s) {
         World w = base.getWorld();
         Location mid = base.clone().add(0, 1.4, 0);
         double radius = s.number("heal-radius", 8);
@@ -615,7 +615,7 @@ final class Flora {
         RpgPlayer r = skills.player(p);
         if (r == null) return;
         double amount = CombatMath.heal(r.stats(), s.number("heal", 1.5), 0);
-        for (Player ally : skills.allies(base, radius)) {
+        for (LivingEntity ally : skills.allies(base, radius)) {
             combat.heal(ally, amount, true);
             trail(mid, ally.getLocation().add(0, 1.2, 0));
             ally.getWorld().spawnParticle(Particle.HEART, ally.getLocation().add(0, 2, 0), 3, 0.3, 0.2, 0.3);

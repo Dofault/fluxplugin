@@ -102,7 +102,7 @@ final class Frost {
      * A frost hit of the cryomancer: through the engine, then chill ({@code stacks}) or, on a frozen creature, a
      * shatter. Null when it did not land.
      */
-    CombatMath.Outcome hit(Player p, RpgPlayer r, LivingEntity target, CombatMath.Hit hit, String cast, int stacks) {
+    CombatMath.Outcome hit(LivingEntity p, RpgPlayer r, LivingEntity target, CombatMath.Hit hit, String cast, int stacks) {
         LivingEntity body = skills.body(target);
         if (body == null) return null;
         CombatMath.Outcome o = combat.strike(p, body, hit, cast);
@@ -115,7 +115,7 @@ final class Frost {
     }
 
     /** Adds frost stacks; at the class's maximum the creature freezes. */
-    void chill(Player p, RpgPlayer r, LivingEntity e, int stacks, String cast) {
+    void chill(LivingEntity p, RpgPlayer r, LivingEntity e, int stacks, String cast) {
         if (stacks <= 0 || e.isDead()) return;
         ClassDef cls = r.heroClass();
         int max = (int) Math.max(1, cls.passive("chill-max", 3));
@@ -187,7 +187,7 @@ final class Frost {
     }
 
     /** A frozen creature bursts: heavy hit, then shards that hit, chill and shatter in turn what is around. */
-    private void shatter(Player p, RpgPlayer r, Chill c, String cast) {
+    private void shatter(LivingEntity p, RpgPlayer r, Chill c, String cast) {
         LivingEntity e = c.entity;
         ClassDef cls = r.heroClass();
         c.frozenUntil = 0;
@@ -219,7 +219,7 @@ final class Frost {
         CombatMath.Hit splash = CombatMath.Hit.magic(cls.passive("shatter", 1.4) * cls.passive("shatter-splash", 0.5), "frost");
         // the shards reach their neighbours a moment later: the chain is seen running from one to the next
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (!p.isOnline()) return;
+            if (!Skills.here(p)) return;
             RpgPlayer now = rpg(p);
             if (now == null) return;
             for (LivingEntity other : skills.enemies(center, radius)) {
@@ -306,7 +306,7 @@ final class Frost {
     // ================================================================== basic attack: ice shard
 
     /** A shard of ice flying where the player looks; one stack of frost on the creature it hits. */
-    void shard(Player p, RpgPlayer r, CombatMath.Hit hit, String cast, double range, LivingEntity aimed) {
+    void shard(LivingEntity p, RpgPlayer r, CombatMath.Hit hit, String cast, double range, LivingEntity aimed) {
         Location eye = p.getEyeLocation();
         // aim assist: towards the enemy he aimed beside (from his eyes, the hand is only a few centimetres off)
         Vector dir = aimed == null ? eye.getDirection().normalize() : AimAssist.toward(eye, aimed);
@@ -373,7 +373,7 @@ final class Frost {
      * The player surfs ahead on a trail of ice bursting out of the ground behind him; the creatures he passes through
      * are hit and chilled.
      */
-    boolean glide(Player p, RpgPlayer r, ClassDef.Skill s, String cast) {
+    boolean glide(LivingEntity p, RpgPlayer r, ClassDef.Skill s, String cast) {
         Vector dir = p.getLocation().getDirection().setY(0);
         if (dir.lengthSquared() < 1e-4) return false;
         dir.normalize();
@@ -389,9 +389,9 @@ final class Frost {
 
             @Override
             public void run() {
-                if (t++ >= ticks || !p.isOnline() || p.isDead()) {
+                if (t++ >= ticks || !Skills.here(p) || p.isDead()) {
                     cancel();
-                    if (p.isOnline()) {
+                    if (Skills.here(p)) {
                         p.setVelocity(dir.clone().multiply(speed * 0.4).setY(0.1));
                         w.spawnParticle(Particle.SNOWFLAKE, p.getLocation().add(0, 0.3, 0), 30, 0.6, 0.2, 0.6, 0.1);
                         w.playSound(p.getLocation(), Sound.BLOCK_GLASS_PLACE, SoundCategory.PLAYERS, 0.9f, 1.4f);
@@ -429,7 +429,7 @@ final class Frost {
         return true;
     }
 
-    private static double sideOf(Player p, LivingEntity e, Vector side) {
+    private static double sideOf(LivingEntity p, LivingEntity e, Vector side) {
         return e.getLocation().toVector().subtract(p.getLocation().toVector()).dot(side) >= 0 ? 1 : -1;
     }
 
@@ -440,7 +440,7 @@ final class Frost {
      * smaller ones leaning out on each side; creatures on its path are thrown up and chilled; at its end, a crown of
      * huge spikes.
      */
-    boolean rift(Player p, RpgPlayer r, ClassDef.Skill s, String cast) {
+    boolean rift(LivingEntity p, RpgPlayer r, ClassDef.Skill s, String cast) {
         Vector dir = p.getLocation().getDirection().setY(0);
         if (dir.lengthSquared() < 1e-4) return false;
         dir.normalize();
@@ -460,7 +460,7 @@ final class Frost {
 
             @Override
             public void run() {
-                if (d > range || !p.isOnline()) {
+                if (d > range || !Skills.here(p)) {
                     cancel();
                     crown(p, last, s, cast, yaw);
                     return;
@@ -505,7 +505,7 @@ final class Frost {
     }
 
     /** The end of the rift: a big spike and a ring of others leaning out, a burst that hits around. */
-    private void crown(Player p, Location at, ClassDef.Skill s, String cast, float yaw) {
+    private void crown(LivingEntity p, Location at, ClassDef.Skill s, String cast, float yaw) {
         World w = at.getWorld();
         double radius = s.number("end-radius", 2.5);
         crystal(at, Material.PACKED_ICE.createBlockData(), 1.1f, 3.6f, yaw, 0.05f, 40);
@@ -533,10 +533,10 @@ final class Frost {
      * creature inside is hit and frozen at once, a ring of spikes runs outwards and a frozen ground keeps chilling
      * whoever stays on it.
      */
-    boolean comet(Player p, RpgPlayer r, ClassDef.Skill s, String cast) {
+    boolean comet(LivingEntity p, RpgPlayer r, ClassDef.Skill s, String cast) {
         Location target = aimed(p, s.number("range", 24));
         if (target == null) {
-            plugin.messages().send(p, "skill.blocked");
+            skills.tell(p, "skill.blocked");
             return false;
         }
         double radius = s.number("radius", 5);
@@ -599,7 +599,7 @@ final class Frost {
         return true;
     }
 
-    private void impact(Player p, Location at, ClassDef.Skill s, String cast, double radius) {
+    private void impact(LivingEntity p, Location at, ClassDef.Skill s, String cast, double radius) {
         World w = at.getWorld();
         w.playSound(at, Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, 1.4f, 0.6f);
         w.playSound(at, Sound.BLOCK_GLASS_BREAK, SoundCategory.PLAYERS, 2f, 0.5f);
@@ -655,7 +655,7 @@ final class Frost {
 
             @Override
             public void run() {
-                if (t++ >= pulses * 4 || !p.isOnline()) {
+                if (t++ >= pulses * 4 || !Skills.here(p)) {
                     cancel();
                     forget(floor);
                     w.spawnParticle(Particle.BLOCK, at.clone().add(0, 0.2, 0), 30, radius / 2, 0.1, radius / 2, 0, Material.ICE.createBlockData());
@@ -707,7 +707,7 @@ final class Frost {
         SpellFx.ring(at, radius, points, particle, dust);
     }
 
-    private Location aimed(Player p, double range) {
+    private Location aimed(LivingEntity p, double range) {
         return SpellFx.aimedGround(p, range, skills);
     }
 
@@ -719,7 +719,7 @@ final class Frost {
         return e.getScoreboardTags().contains(Mobs.BOSS_TAG);
     }
 
-    private RpgPlayer rpg(Player p) {
+    private RpgPlayer rpg(LivingEntity p) {
         return skills.player(p);
     }
 

@@ -98,7 +98,7 @@ final class Fire {
         for (Burn b : burns.values()) if (b.entity.isValid()) b.entity.setVisualFire(false);
         burns.clear();
         for (Map.Entry<UUID, Heat> e : heats.entrySet()) {
-            Player p = Bukkit.getPlayer(e.getKey());
+            LivingEntity p = skills.caster(e.getKey());
             if (p != null && e.getValue().bar != null) p.hideBossBar(e.getValue().bar);
         }
         heats.clear();
@@ -110,7 +110,7 @@ final class Fire {
      * A fire hit of the pyromancer: through the engine, then burn ({@code stacks}) and heat for himself. Null when
      * it did not land.
      */
-    CombatMath.Outcome hit(Player p, RpgPlayer r, LivingEntity target, CombatMath.Hit hit, String cast, int stacks, boolean basic) {
+    CombatMath.Outcome hit(LivingEntity p, RpgPlayer r, LivingEntity target, CombatMath.Hit hit, String cast, int stacks, boolean basic) {
         LivingEntity body = skills.body(target);
         if (body == null) return null;
         CombatMath.Outcome o = combat.strike(p, body, hit, cast);
@@ -122,7 +122,7 @@ final class Fire {
     }
 
     /** Sets a creature alight, or feeds its fire. */
-    void ignite(Player p, RpgPlayer r, LivingEntity e, int stacks) {
+    void ignite(LivingEntity p, RpgPlayer r, LivingEntity e, int stacks) {
         if (stacks <= 0 || e.isDead()) return;
         ClassDef cls = r.heroClass();
         int max = (int) Math.max(1, cls.passive("burn-max", 5));
@@ -153,7 +153,7 @@ final class Fire {
     void died(LivingEntity e) {
         Burn b = burns.remove(e.getUniqueId());
         if (b == null || b.stacks <= 0) return;
-        Player p = b.owner == null ? null : Bukkit.getPlayer(b.owner);
+        LivingEntity p = b.owner == null ? null : skills.caster(b.owner);
         RpgPlayer r = p == null ? null : skills.player(p);
         if (r == null) return;
         ClassDef cls = r.heroClass();
@@ -175,7 +175,7 @@ final class Fire {
         CombatMath.Hit hit = new CombatMath.Hit(CombatMath.Type.MAGIC, "fire", coefficient, 0, false, true);
         // the flames reach the neighbours a moment later: the chain is seen running through the pack
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (!p.isOnline()) return;
+            if (!Skills.here(p)) return;
             RpgPlayer now = skills.player(p);
             if (now == null) return;
             for (LivingEntity other : skills.enemies(center, radius)) {
@@ -188,7 +188,7 @@ final class Fire {
     }
 
     /** Heats the pyromancer; at 100 the blaze starts. */
-    private void heat(Player p, RpgPlayer r, double amount) {
+    private void heat(LivingEntity p, RpgPlayer r, double amount) {
         if (amount <= 0) return;
         long now = CombatEngine.now();
         Heat h = heats.computeIfAbsent(p.getUniqueId(), k -> new Heat());
@@ -201,16 +201,16 @@ final class Fire {
     }
 
     /** The heat's bonus damage, by tenths of the gauge (the stats are only computed again when a tenth is crossed). */
-    private void level(Player p, RpgPlayer r, Heat h) {
+    private void level(LivingEntity p, RpgPlayer r, Heat h) {
         int step = (int) Math.floor(h.value / 10);
         if (step == h.step) return;
         h.step = step;
         double bonus = r.heroClass().passive("heat-damage", 0.25) * step / 10.0;
         r.buff("heat", List.of(Modifier.add("damage_bonus", bonus, "heat")), step == 0 ? 0 : Long.MAX_VALUE);
-        players.recompute(p);
+        if (p instanceof Player pl) players.recompute(pl);
     }
 
-    private void blaze(Player p, RpgPlayer r, Heat h) {
+    private void blaze(LivingEntity p, RpgPlayer r, Heat h) {
         ClassDef cls = r.heroClass();
         long now = CombatEngine.now();
         h.blazeFrom = now;
@@ -219,7 +219,7 @@ final class Fire {
         h.step = 10;
         r.buff("heat", List.of(Modifier.add("damage_bonus", cls.passive("heat-damage", 0.25), "heat"),
                 Modifier.add("attack_speed", cls.passive("blaze-speed", 0.35), "heat")), h.blazeUntil);
-        players.recompute(p);
+        if (p instanceof Player pl) players.recompute(pl);
         World w = p.getWorld();
         Location at = p.getLocation();
         w.playSound(at, Sound.ENTITY_BLAZE_AMBIENT, SoundCategory.PLAYERS, 1.2f, 0.6f);
@@ -231,11 +231,11 @@ final class Fire {
         // reborn from his own flames: his only way to mend in a long fight
         double mend = cls.passive("blaze-heal", 0);
         if (mend > 0) combat.heal(p, mend * combat.maxHealth(p), true);
-        plugin.messages().actionBar(p, "fire.blaze");
+        if (p instanceof Player pl) plugin.messages().actionBar(pl, "fire.blaze");
     }
 
     /** True while the pyromancer burns at full heat. */
-    private boolean blazing(Player p) {
+    private boolean blazing(LivingEntity p) {
         Heat h = heats.get(p.getUniqueId());
         return h != null && h.blazeUntil > CombatEngine.now();
     }
@@ -270,7 +270,7 @@ final class Fire {
                     }
                     if (now < b.nextTick) continue;
                     b.nextTick = now + 20;
-                    Player p = Bukkit.getPlayer(b.owner);
+                    LivingEntity p = skills.caster(b.owner);
                     RpgPlayer r = p == null ? null : skills.player(p);
                     if (r == null) continue;
                     // a burn never crits nor is dodged: steady, readable damage
@@ -280,7 +280,7 @@ final class Fire {
                 for (Iterator<Map.Entry<UUID, Heat>> it = heats.entrySet().iterator(); it.hasNext(); ) {
                     Map.Entry<UUID, Heat> en = it.next();
                     Heat h = en.getValue();
-                    Player p = Bukkit.getPlayer(en.getKey());
+                    LivingEntity p = skills.caster(en.getKey());
                     RpgPlayer r = p == null ? null : skills.player(p);
                     if (r == null || !r.heroClass().passive().containsKey("burn-max")) {
                         if (p != null && h.bar != null) p.hideBossBar(h.bar);
@@ -323,7 +323,9 @@ final class Fire {
         }.runTaskTimer(plugin, 1L, 1L);
     }
 
-    private void bar(Player p, Heat h) {
+    private void bar(LivingEntity caster, Heat h) {
+        // a stand-in (the class showcase's actor) has no screen to show the gauge on
+        if (!(caster instanceof Player p)) return;
         boolean blaze = h.blazeUntil > 0;
         net.kyori.adventure.text.Component title = plugin.messages().get(blaze ? "fire.bar-blaze" : "fire.bar-heat", p,
                 "%heat%", String.valueOf((int) Math.round(h.value)));
@@ -342,7 +344,7 @@ final class Fire {
     // ================================================================== basic attack: ember bolt
 
     /** A bolt of embers where the player looks; in the blaze, a fan of them. One burn stack on what it hits. */
-    void ember(Player p, RpgPlayer r, CombatMath.Hit hit, String cast, double range, LivingEntity aimed) {
+    void ember(LivingEntity p, RpgPlayer r, CombatMath.Hit hit, String cast, double range, LivingEntity aimed) {
         Location eye = p.getEyeLocation();
         Vector dir = aimed == null ? eye.getDirection().normalize() : AimAssist.toward(eye, aimed);
         World w = p.getWorld();
@@ -357,7 +359,7 @@ final class Fire {
         }
     }
 
-    private void bolt(Player p, CombatMath.Hit hit, String cast, double range, Vector dir, boolean blazing) {
+    private void bolt(LivingEntity p, CombatMath.Hit hit, String cast, double range, Vector dir, boolean blazing) {
         Location eye = p.getEyeLocation();
         Vector right = dir.clone().crossProduct(new Vector(0, 1, 0));
         if (right.lengthSquared() < 1e-4) right = new Vector(1, 0, 0);
@@ -413,7 +415,7 @@ final class Fire {
      * The player takes off in a burst of flames (creatures around him are burnt and thrown back), flies where he
      * looks on wings of fire and lands in a second burst.
      */
-    boolean flight(Player p, RpgPlayer r, ClassDef.Skill s, String cast) {
+    boolean flight(LivingEntity p, RpgPlayer r, ClassDef.Skill s, String cast) {
         Vector dir = p.getLocation().getDirection().setY(0);
         if (dir.lengthSquared() < 1e-4) return false;
         dir.normalize();
@@ -432,7 +434,7 @@ final class Fire {
             @Override
             public void run() {
                 t++;
-                if (!p.isOnline() || p.isDead()) {
+                if (!Skills.here(p) || p.isDead()) {
                     cancel();
                     return;
                 }
@@ -459,7 +461,7 @@ final class Fire {
     }
 
     /** The burst of a take-off or a landing: a ring of flames, creatures around hit, set alight and pushed away. */
-    private void burst(Player p, Location at, ClassDef.Skill s, String cast, double radius, boolean takeOff) {
+    private void burst(LivingEntity p, Location at, ClassDef.Skill s, String cast, double radius, boolean takeOff) {
         World w = at.getWorld();
         Location floor = SpellFx.ground(at.clone().add(0, 0.3, 0));
         if (floor != null) {
@@ -488,7 +490,7 @@ final class Fire {
      * A wave of flames rolling out in a fan in front of the player: rows of fire bursting from the ground, taller and
      * wider as it goes; every creature it passes is hit, set alight and pushed back.
      */
-    boolean wave(Player p, RpgPlayer r, ClassDef.Skill s, String cast) {
+    boolean wave(LivingEntity p, RpgPlayer r, ClassDef.Skill s, String cast) {
         Vector dir = p.getLocation().getDirection().setY(0);
         if (dir.lengthSquared() < 1e-4) return false;
         dir.normalize();
@@ -504,7 +506,7 @@ final class Fire {
 
             @Override
             public void run() {
-                if (d > range || !p.isOnline()) {
+                if (d > range || !Skills.here(p)) {
                     cancel();
                     return;
                 }
@@ -549,10 +551,10 @@ final class Fire {
      * A sun rises where the player aims: it turns above the ground and scorches every creature under it, pulse after
      * pulse (beams of fire, burn), then collapses and bursts: one last heavy hit and a ring of flames running out.
      */
-    boolean sun(Player p, RpgPlayer r, ClassDef.Skill s, String cast) {
+    boolean sun(LivingEntity p, RpgPlayer r, ClassDef.Skill s, String cast) {
         Location target = SpellFx.aimedGround(p, s.number("range", 22), skills);
         if (target == null) {
-            plugin.messages().send(p, "skill.blocked");
+            skills.tell(p, "skill.blocked");
             return false;
         }
         double radius = s.number("radius", 5.5);
@@ -581,7 +583,7 @@ final class Fire {
             @Override
             public void run() {
                 t++;
-                if (!p.isOnline()) {
+                if (!Skills.here(p)) {
                     end(false);
                     return;
                 }
@@ -640,7 +642,7 @@ final class Fire {
         return true;
     }
 
-    private void nova(Player p, Location target, Location sun, ClassDef.Skill s, String cast, double radius) {
+    private void nova(LivingEntity p, Location target, Location sun, ClassDef.Skill s, String cast, double radius) {
         World w = target.getWorld();
         w.playSound(target, Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, 1.6f, 0.6f);
         w.playSound(target, Sound.ENTITY_DRAGON_FIREBALL_EXPLODE, SoundCategory.PLAYERS, 1.2f, 0.8f);

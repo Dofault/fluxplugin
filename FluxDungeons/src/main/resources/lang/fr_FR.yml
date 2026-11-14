@@ -600,3 +600,41 @@ dungeon-pages:
   next: Page suivante
   prev: Page précédente
   none: Aucun donjon n'est ouvert pour le moment.
+
+# The class showcase (/classe in the lobby): panel on the left, the spell being cast named under the scene.
+showcase:
+  pointer: "&f●"
+  title: "&#FFD94DChoisis ta classe"
+  title-change: "&#FFD94DLes classes"
+  hint: "&#B376E5Passe ta souris sur une classe pour la voir jouer"
+  card-name: "%color%%name%"
+  card-role: "&f%role%"
+  yours: "&#FFD94D★ Ta classe"
+  footer: "&7Clic : ouvrir la classe · Accroupi : quitter"
+  footer-first: "&7Clic : ouvrir la classe"
+  back: "&f‹ Retour aux classes"
+  description: "&#B376E5%text%"
+  spell: "&#FFD94D%key% &8· &f%name%"
+  choose: "&fChoisir %name%"
+  owned: "&#FFD94D★ C'est ta classe"
+  note-first: "&7Tu pourras changer de classe plus tard, depuis le lobby."
+  note-change: "&7Un changement toutes les %hours% h. La progression de chaque classe est gardée."
+  caption: "&#FFD94D%key% &8· &f%name%"
+  caption-text: "&f%text%"
+  must-choose: "&#FFD94DChoisis d'abord ta classe : clique sur une classe, puis sur le bouton vert."
+  lines:
+    cryomancer:
+      basic: "Chaque éclat laisse du givre. À 3 givres, le monstre est pris dans la glace."
+      a: "Des pics jaillissent du sol : un monstre gelé vole en éclats sur ses voisins."
+      right: "Glisse à travers les monstres sur un sillage de glace."
+      f: "Une comète gèle tout ce qu'elle touche."
+    pyromancer:
+      basic: "Chaque braise embrase le monstre. Un monstre qui meurt en feu explose."
+      a: "Un éventail de flammes repousse et embrase tout ce qui est devant."
+      right: "Décolle, puis atterrit dans une gerbe de flammes."
+      f: "Un soleil brûle la zone par vagues, puis explose."
+    druid:
+      basic: "Chaque épine sème une graine. À 3 graines, le monstre fleurit et le pollen soigne."
+      a: "Des ronces déchirent, ralentissent et sèment tout ce qui les traverse."
+      right: "La liane s'accroche au monstre et tire le druide jusqu'à lui."
+      f: "Une plante carnivore mord tout ce qui approche, puis soigne en fanant."

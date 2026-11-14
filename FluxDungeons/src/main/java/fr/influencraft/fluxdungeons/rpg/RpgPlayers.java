@@ -67,6 +67,7 @@ public final class RpgPlayers implements Listener {
     private CombatEngine combat;
     /** HTML pages of the classes and the sheet (null: Paper dialogs only). */
     private ClassPages pages;
+    private Showcase showcase;
     /** The apprentice weapon and the menu compass every character carries. */
     private RpgKit kit;
     private final Map<UUID, RpgPlayer> online = new HashMap<>();
@@ -239,6 +240,7 @@ public final class RpgPlayers implements Listener {
     private void chooseClass(Player p) {
         RpgConfig.Set set = config.get();
         if (set == null) return;
+        if (showcase != null && showcase.open(p)) return;
         if (pages != null && Screens.open(p, ClassPages.CLASSES)) return;
         Dialogs.Form form = Dialogs.form(p, plugin.messages().raw("choice.title"));
         form.body(plugin.messages().raw("choice.intro"));
@@ -298,6 +300,8 @@ public final class RpgPlayers implements Listener {
     void changeClass(Player p) {
         RpgPlayer r = online.get(p.getUniqueId());
         RpgConfig.Set set = config.get();
+        // in the lobby: the classes played in front of him (the showcase)
+        if (set != null && showcase != null && showcase.open(p)) return;
         // the pages show the classes anywhere; choosing still follows the rules (pick)
         if (set != null && pages != null && Screens.open(p, ClassPages.CLASSES)) return;
         if (r == null || set == null) {
@@ -344,6 +348,11 @@ public final class RpgPlayers implements Listener {
             return;
         }
         change(p, classId);
+    }
+
+    /** The class showcase (lobby, Java clients): tried first wherever the classes are shown. */
+    void useShowcase(Showcase showcase) {
+        this.showcase = showcase;
     }
 
     /** The pages are used from now on; a class page left by the player while he has no class comes back. */
@@ -699,7 +708,8 @@ public final class RpgPlayers implements Listener {
                 continue;
             }
             // drawn on the death screen too: never a fade-out showing the hearts underneath
-            if (r != null && r.stats() != null) hud(p, r, now);
+            // not during the class showcase: its camera shows no hotbar for the bars to sit on
+            if (r != null && r.stats() != null && (showcase == null || !showcase.watching(p))) hud(p, r, now);
         }
     }
 
