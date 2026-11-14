@@ -55,11 +55,14 @@ final class Controls implements Listener {
     /** Tick of the last right click of players attacking on the right click, while they hold it down. */
     private final Map<UUID, Long> holding = new HashMap<>();
     /**
-     * Tick of each player's last right click (block, air or creature). Right clicking a block or a creature also swings
+     * Tick of each player's last right click (block, air or creature) or dropped item (the A key). Both also swing
      * the arm, which the server reports as a left click (adventure mode): a left click this close is that swing, not a
-     * left click (same filter as combat.AttackCadence).
+     * left click (same filter as combat.AttackCadence). Without it the A key cast the left click's attack too, seen
+     * as soon as the A skill itself was refused (no mana).
      */
     private final Map<UUID, Long> lastRight = new HashMap<>();
+    /** How long after such an action its arm swing may still arrive (ticks: the two packets may fall on two ticks). */
+    private static final int SWING_TICKS = 2;
     /** Ticks without a new right click after which the button is taken as released (the client repeats every 4). */
     private static final int HOLD_GAP = 5;
 
@@ -170,12 +173,18 @@ final class Controls implements Listener {
         boolean left = e.getAction() == Action.LEFT_CLICK_AIR || e.getAction() == Action.LEFT_CLICK_BLOCK;
         long now = CombatEngine.now();
         if (!left) lastRight.put(p.getUniqueId(), now);
+        else {
+            // the arm swing of a right click or of a dropped item is no left click
+            Long other = lastRight.get(p.getUniqueId());
+            if (other != null && now - other <= SWING_TICKS) {
+                e.setCancelled(true);
+                return;
+            }
+        }
         if (r.heroClass().basicOnRight()) {
             if (left) {
                 e.setCancelled(true);
-                // the arm swing of a right click on a block is no left click
-                Long right = lastRight.get(p.getUniqueId());
-                if (right == null || now - right > 1) skills.cast(p, r, "right");
+                skills.cast(p, r, "right");
                 return;
             }
             // the bow may draw (posture of the arms, keeps the hold seen while drawing); never on a block's use
@@ -217,6 +226,7 @@ final class Controls implements Listener {
         Player p = e.getPlayer();
         if (players.get(p) == null) return;
         e.setCancelled(true);
+        lastRight.put(p.getUniqueId(), (long) CombatEngine.now());
         Long w = windowDrop.remove(p.getUniqueId());
         if (w != null && CombatEngine.now() - w <= 1) return;
         RpgPlayer r = use(p, e.getItemDrop().getItemStack());
@@ -244,6 +254,7 @@ final class Controls implements Listener {
 
     void forget(Player p) {
         windowDrop.remove(p.getUniqueId());
+        lastRight.remove(p.getUniqueId());
         holding.remove(p.getUniqueId());
         warned.remove(p.getUniqueId());
     }

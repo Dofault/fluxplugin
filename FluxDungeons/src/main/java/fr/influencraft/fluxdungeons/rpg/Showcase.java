@@ -224,13 +224,24 @@ final class Showcase implements Listener {
 
     // ------------------------------------------------------------------ what the viewer does
 
+    /** Tick of each viewer's last dropped item: the A key swings the arm too, and is no click on the panel. */
+    private final Map<UUID, Integer> dropped = new HashMap<>();
+
     /** A left click (his arm swings, wherever the camera is): a click on the panel. */
     @EventHandler
     public void onSwing(PlayerAnimationEvent e) {
         ShowcaseSession s = sessions.get(e.getPlayer().getUniqueId());
         if (s == null) return;
         e.setCancelled(true);
+        Integer drop = dropped.get(e.getPlayer().getUniqueId());
+        if (drop != null && Bukkit.getCurrentTick() - drop <= 2) return;
         s.click();
+    }
+
+    @EventHandler(priority = org.bukkit.event.EventPriority.MONITOR)
+    public void onDrop(org.bukkit.event.player.PlayerDropItemEvent e) {
+        if (sessions.containsKey(e.getPlayer().getUniqueId())) dropped.put(e.getPlayer().getUniqueId(), Bukkit.getCurrentTick());
+        else dropped.remove(e.getPlayer().getUniqueId());
     }
 
     /** Sneaking never takes him off his seat: it asks to leave the show. */
