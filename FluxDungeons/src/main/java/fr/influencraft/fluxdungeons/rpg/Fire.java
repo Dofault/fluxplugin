@@ -517,10 +517,10 @@ final class Fire {
                     double a = n == 0 ? 0 : -half + 2 * half * i / n;
                     Location l = SpellFx.ground(from.clone().add(dir.clone().rotateAroundY(a).multiply(d)).add(0, 0.5, 0));
                     if (l == null) continue;
-                    float h = (float) (1.0 + 1.5 * k) + SpellFx.rnd(0.5f);
+                    float h = (float) (0.6 + 0.9 * k) + SpellFx.rnd(0.3f);
                     fx.spike(l, FLAMES, 0.9f + (float) (0.5 * k), h, 0, 0, 12, 15);
                     if (i % 2 == 0) fx.spike(l, Material.MAGMA_BLOCK.createBlockData(), 0.3f, 0.25f + SpellFx.rnd(0.2f), SpellFx.rnd(6f), 0.5f, 18, 15);
-                    w.spawnParticle(Particle.FLAME, l.clone().add(0, 0.8, 0), 4, 0.3, 0.5, 0.3, 0.03);
+                    w.spawnParticle(Particle.FLAME, l.clone().add(0, 0.5, 0), 4, 0.3, 0.3, 0.3, 0.03);
                 }
                 Location mid = from.clone().add(dir.clone().multiply(d));
                 w.spawnParticle(Particle.LAVA, mid.clone().add(0, 0.5, 0), 3, arc / 2, 0.2, arc / 2);
