@@ -91,19 +91,30 @@ public final class FluxCalendar extends FluxPlugin implements Listener {
         menu.reload();
     }
 
-    /** Loads the player; true when this login starts a new day. */
-    private boolean arrive(Player p) {
+    /** Loads the player and counts the day of this login. */
+    private void arrive(Player p) {
         calendar.load(p.getUniqueId());
-        return calendar.countDay(p);
+        calendar.countDay(p);
     }
+
+    /**
+     * Day the calendar last opened by itself, per player. Kept apart from the day count on purpose: a player online
+     * at midnight has his new day counted by the timer, and his next login must still open the calendar (it did not
+     * before 2026-11-14). In memory: after a restart, a reward still unclaimed opens it once more.
+     */
+    private final java.util.Map<java.util.UUID, java.time.LocalDate> autoOpened = new java.util.concurrent.ConcurrentHashMap<>();
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onJoin(PlayerJoinEvent e) {
         Player p = e.getPlayer();
-        if (!arrive(p) || !calendar.claimable(p)) return;
+        arrive(p);
+        if (!calendar.claimable(p) || calendar.today().equals(autoOpened.get(p.getUniqueId()))) return;
         // after the screens shown before it (the questionnaire of a new player), once the resource pack is there
         JoinScreens.request(p, 100, (player, done) -> {
-            if (calendar.claimable(player)) FluxApi.open(player, MENU);
+            if (calendar.claimable(player)) {
+                autoOpened.put(player.getUniqueId(), calendar.today());
+                FluxApi.open(player, MENU);
+            }
             done.run();
         });
     }
