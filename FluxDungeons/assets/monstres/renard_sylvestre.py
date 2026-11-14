@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
-"""Sylvan Fox (Renard sylvestre), full redesign of the herbalist dungeon boss: STATIC Blockbench model (2026-11-14).
+"""Sylvan Fox (Renard sylvestre), full redesign of the herbalist dungeon boss (2026-11-14): Blockbench model, animated
+by renard_sylvestre_anim.py.
 
 A fox whose anatomy is made of leaves: every volume of the body is a mass of leaves lying like fur (tips towards the
 tail on the trunk, towards the tip on the tail, down the legs), with wood showing at the lower legs, the tail root and
 one branch along the spine. Stalking quadruped pose: long trunk, deeper chest, narrow loins, head carried low and
 forward, long narrow muzzle, big triangular ears, a huge comma shaped tail turning from forest green to autumn copper.
 
-Brief constraints: 20 to 40 boxes (39 here, asserted), palette of the brief only, amber eyes with a slit pupil under
+Brief constraints: 20 to 40 boxes for the look (39 here, asserted; the jaw and the lit eyes of the rig come on top), palette of the brief only, amber eyes with a slit pupil under
 heavy leaf brows, leaves painted as leaves (shape, midrib, light side, clusters of one tone), never noise.
 Leaf tips and the ear outline are cut-out (transparent) pixels, not extra boxes.
 
-Bone names follow the rig of the current boss model (renard_feuilles) so its animations can be ported later.
+Bones read by the game (mob/FoxPowers.java): h_Head turns with the gaze, Jaw is the lower jaw (hidden inside the
+snout while closed), Eyes_lit_empty holds brighter copies of the eyes on the emissive texture, hidden until the
+ultimate shows them (bones ending in _empty are hidden when the model is put on).
 
-Usage: renard_sylvestre.py [output folder] [--apercu <sheet.png>] [--visage <face.png>]
+Usage: renard_sylvestre.py [output folder] [--apercu <sheet.png>] [--visage <face.png>] [--anims <folder>] [--mesures]
 Front towards north (-z), the fox's right towards +x, 16 units = 1 block, 2 texels per unit (32 per block).
 """
 import json
@@ -359,6 +362,45 @@ EYE = ("RRR....",
        ".RRRRR.")
 EYE_ROW = 6
 EYE_TONE = {"R": EYE_RIM, "I": IRIS, "L": IRIS_L, "P": PUPIL, "G": GLINT}
+IRIS_LIT, IRIS_LIT_L, GLINT_LIT = hx("#FFC84A"), hx("#FFE27A"), hx("#FFF3C4")
+EYE_LIT = {"I": IRIS_LIT, "L": IRIS_LIT_L, "G": GLINT_LIT, "P": PUPIL}
+GLOW_COLOURS = {IRIS_LIT, IRIS_LIT_L, GLINT_LIT}
+MOUTH, MOUTH_2, TOOTH = hx("#2A1512"), hx("#4A211B"), hx("#E9DFC3")
+
+
+def eye_lit(right):
+    """The eye alone (iris, pupil, glint) in a brighter amber, on the emissive texture: a plate laid on the painted
+    eye, shown during the ultimate."""
+    def f(w, h, r, face):
+        g = [[CLEAR] * w for _ in range(h)]
+        if face == "north":
+            assert (w, h) == (7, 5), (w, h)
+            for y, line in enumerate(EYE):
+                for i, ch in enumerate(line):
+                    if ch in EYE_LIT:
+                        g[y][i if right else 6 - i] = EYE_LIT[ch]
+        return g
+    return f
+
+
+def jaw(w, h, r, face):
+    """Lower jaw: dark mouth on top with a row of small teeth along the edge, leaves underneath."""
+    if face == "up":
+        g = [[MOUTH] * w for _ in range(h)]
+        for y in range(h):
+            for x in range(w):
+                if 2 <= x < w - 2 and y > 2:
+                    g[y][x] = MOUTH_2                       # tongue
+        for y in range(0, h - 3, 2):
+            g[y][0] = g[y][w - 1] = TOOTH
+        for x in range(1, w - 1, 2):
+            g[0][x] = TOOTH
+        return g
+    g = [[G_FOREST if (x + y) % 3 else G_DEEP for x in range(w)] for y in range(h)]
+    if face in ("east", "west", "north"):
+        for x in range(0, w, 2):
+            g[0][x] = TOOTH
+    return g
 
 
 def skull(w, h, r, face):
@@ -617,8 +659,9 @@ MATS = {name: (p, D) for name, p in {
     "tail_4": leafy(BACK, c_tail(4), cut=rear_cut(), **BIG),
     "tail_5": leafy(BACK, c_tail(5), cut=rear_cut(), L=9.0, W=2.8),
     "tail_top": leafy(BACK, c_tail_top, cut=plate_cut, **BIG),
+    "jaw": jaw,
 }.items()}
-GLOW = {}
+GLOW = {"eye_lit_r": (eye_lit(True), D), "eye_lit_l": (eye_lit(False), D)}
 
 # ---------------------------------------------------------------- geometry
 NECK = (0.0, 24.0, -16.5)
@@ -633,7 +676,7 @@ TAIL_OVERLAP = (1.8, 3.0, 4.0, 3.0)
 TAIL_BONES = ("Tail_base", "Tail_mid", "Tail_mid", "Tail_tip", "Tail_tip")
 
 GROUPS = {"Root": ((0, 0, 0), None), "Body": ((0, 19, 0), "Root"), "Neck": ((0, 22.5, -11.5), "Body"),
-          "h_Head": (NECK, "Neck"),
+          "h_Head": (NECK, "Neck"), "Jaw": (None, "h_Head"), "Eyes_lit_empty": (None, "h_Head"),
           "Ear_right": ((3.3, 29.5, -18.6), "h_Head"), "Ear_left": ((-3.3, 29.5, -18.6), "h_Head"),
           "Leg_front_right": ((4.4, 13.5, -8.6), "Body"), "Leg_front_left": ((-4.4, 13.5, -8.6), "Body"),
           "Paw_front_right": ((4.4, 2.4, -8.6), "Leg_front_right"),
@@ -642,7 +685,8 @@ GROUPS = {"Root": ((0, 0, 0), None), "Body": ((0, 19, 0), "Root"), "Neck": ((0, 
           "Paw_back_right": ((4.9, 10.2, 5.6), "Leg_back_right"), "Paw_back_left": ((-4.9, 10.2, 5.6), "Leg_back_left"),
           "Tail_base": (TAIL_ROOT, "Body"), "Tail_mid": (None, "Tail_base"), "Tail_tip": (None, "Tail_mid")}
 
-BUDGET = {"head": 12, "neck": 4, "trunk": 5, "legs": 10, "tail": 6, "wood": 2}
+BUDGET = {"head": 12, "neck": 4, "trunk": 5, "legs": 10, "tail": 6, "wood": 2, "rig": 3}
+JAW_PIVOT = (0.0, 21.75, -26.5)        # rear top edge of the lower jaw, before the muzzle and head lean
 
 
 def parts():
@@ -690,6 +734,16 @@ def parts():
     hadd("h_Head", "museau", (0, 22.5, -28.1), (6.0, 4.5, 4.5), (0, 0, 0), "muzzle", True)
     hadd("h_Head", "museau_bout", (0, 22.2, -31.7), (4.5, 3.5, 3.5), (0, 0, 0), "muzzle_tip", True)
     hadd("h_Head", "nez", (0, 23.3, -33.7), (2.5, 2.0, 1.0), (0, 0, 0), "nose", True)
+    # rig only: the lower jaw, inside the muzzle while closed (pivot at its rear top edge), and the lit eyes, thin
+    # plates right on the painted eyes
+    count["head"] -= 3
+    count["rig"] += 3
+    hadd("Jaw", "machoire", (0, 21.15, -29.85), (3.9, 1.2, 6.7), (0, 0, 0), "jaw", True)
+    GROUPS["Jaw"] = (head(snout(JAW_PIVOT, (0, 0, 0))[0], (0, 0, 0))[0], "h_Head")
+    for s, sd in ((1, "d"), (-1, "g")):
+        hadd("Eyes_lit_empty", f"oeil_lumiere_{sd}", (3.25 * s, 26.0, -26.3), (3.5, 2.5, 0.1), (0, 0, 0),
+             "eye_lit_r" if s == 1 else "eye_lit_l")
+    GROUPS["Eyes_lit_empty"] = (head((0, 26.0, -26.3), (0, 0, 0))[0], "h_Head")
     # ears: a thick base, then the leaf blade; right 8 degrees outwards, left 12 (brief: slight asymmetry)
     hadd("Ear_right", "oreille_base_d", (3.6, 30.4, -18.6), (5.0, 2.5, 3.0), (0, -32, -6), "ear_base")
     hadd("Ear_left", "oreille_base_g", (-3.6, 30.4, -18.6), (5.0, 2.5, 3.0), (0, 32, 9), "ear_base")
@@ -729,7 +783,7 @@ def parts():
             p = [end[k] - d[k] * TAIL_OVERLAP[i - 1] for k in range(3)]
 
     assert count == BUDGET, count
-    assert 20 <= len(P) <= 40, len(P)
+    assert 20 <= len(P) - count["rig"] <= 40, len(P)
     return P
 
 
@@ -758,18 +812,35 @@ if __name__ == "__main__":
             i = args.index(flag)
             opts[flag] = args[i + 1]
             del args[i:i + 2]
+    anims_dir = None
+    if "--anims" in args:
+        i = args.index("--anims")
+        anims_dir = args[i + 1]
+        del args[i:i + 2]
+    show = "--mesures" in args
+    if show:
+        args.remove("--mesures")
     out = args[0] if args else HERE
     P, groups, dims = build()
     uv, atlases, sizes = bake(P, MATS, GLOW)
     data = export(IDENT, NS, P, groups, uv, atlases, sizes)
-    if "--mesures" in args:
+    import renard_sylvestre_anim as RA
+    anims = RA.build(data, lambda name: str(uuid.uuid5(NS, f"{IDENT}/{name}")))
+    if anims_dir:
+        RA.strips(data, anims, atlases, sizes, anims_dir)
+    if show:
         for name, (pv, parent) in groups.items():
             print(f"{name:16} {parent or '-':16} {[round(v, 1) for v in pv]}")
-    print(f"{len(P)} cubes ; {dims[0]:.2f} x {dims[1]:.2f} x {dims[2]:.2f} blocs (large x haut x long) ; "
-          f"texture {sizes[0]}")
+        for name, rows in RA.measure(data, anims).items():
+            print(f"--- {name}: lowest {min(r['low'] for r in rows):.2f}, body {min(r['body_low'] for r in rows):.2f}")
+            for r in rows[::2 if len(rows) < 20 else 4]:
+                print(f"  tick {r['tick']:3d}  low {r['low']:5.2f}  body {r['body_low']:5.2f}  feet {r['feet']}")
+    data["animations"] = RA.finish(anims)
+    print(f"{len(P)} cubes, {len(groups)} bones, {len(anims)} animations ; {dims[0]:.2f} x {dims[1]:.2f} x {dims[2]:.2f} "
+          f"blocs (large x haut x long) ; textures {sizes[0]} + {sizes[1]}")
     if "--apercu" in opts:
         # brief: front, profile, back, three quarters (plus rear three quarters), then the silhouette
-        apercu(data, atlases, sizes, opts["--apercu"], set(),
+        apercu(data, atlases, sizes, opts["--apercu"], GLOW_COLOURS,
                views=((35, 14), (0, 4), (90, 2), (180, 6), (215, 16)), size=440)
     if "--visage" in opts:
         face_closeup(data, atlases, sizes, opts["--visage"])

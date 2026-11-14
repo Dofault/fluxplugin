@@ -53,7 +53,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * Abilities of the Sylvan Fox (Renard sylvestre), boss of the herbalist dungeon: a fox made of leaves, the guardian of
  * an old herbalists' sanctuary. It fights as an animal: its claws, its jaw, its tail, its paws on the ground; the
  * plants of its sanctuary answer them. Every timing follows its model's animations tick for tick
- * (docs/technique/boss/renard-sylvestre.md, assets/monstres/renard_feuilles_anim.py):
+ * (docs/technique/boss/renard-sylvestre.md, assets/monstres/renard_sylvestre_anim.py):
  * <ul>
  *   <li>{@code sylve_awaken} (awaken 85, opening): the arena is empty, leaves gather, roots come out, the fox rises out
  *   of the soil (30-50), sets its feet, turns its head to the players and growls (76); invisible and harmless before,
@@ -76,10 +76,12 @@ import java.util.concurrent.ThreadLocalRandom;
 final class FoxPowers implements Listener {
 
     static final Set<String> TYPES = Set.of("sylve_awaken", "sylve_claws", "sylve_seed", "sylve_roots", "sylve_realm");
-    static final String MODEL = "renard_feuilles";
+    static final String MODEL = "renard_sylvestre";
     /** Scoreboard tag given by the herbalist preparation of the dungeon (offering door): softer roots and seeds. */
     static final String TISANE = "fdgrant_tisane_sylve";
     private static final String TAG = "fluxdungeons_fx";
+    /** Scoreboard tag of a fox whose entrance is over. */
+    private static final String AWAKE = "fluxdungeons_fox_awake";
     /** Every bone shown once it has awoken (the lit eyes stay hidden until the ultimate). */
     private static final List<String> BONES = List.of("Root", "Body", "Neck", "h_Head", "Jaw", "Ear_right", "Ear_left",
             "Tail_base", "Tail_mid", "Tail_tip", "Leg_front_right", "Leg_front_left", "Leg_back_right", "Leg_back_left",
@@ -104,7 +106,7 @@ final class FoxPowers implements Listener {
     /** A fox and what it is doing. */
     private static final class Brain {
         final LivingEntity e;
-        boolean awakened, hidden, sprinting, enraged;
+        boolean awakened, waking, hidden, sprinting, enraged;
         int realmEnd = -1;
         RockPowers.Caster caster;
         double strength = 1;
@@ -114,6 +116,8 @@ final class FoxPowers implements Listener {
 
         Brain(LivingEntity e) {
             this.e = e;
+            // a fox found again (its chunk came back) has already made its entrance: never hidden a second time
+            this.awakened = e.getScoreboardTags().contains(AWAKE);
         }
     }
 
@@ -224,7 +228,8 @@ final class FoxPowers implements Listener {
                 continue;
             }
             if (!b.awakened) {
-                waitHidden(b);
+                // during its entrance it is shown and free again: hiding it here froze it for the whole fight
+                if (!b.waking) waitHidden(b);
                 continue;
             }
             locomotion(b);
@@ -499,6 +504,7 @@ final class FoxPowers implements Listener {
         LivingEntity e = c.entity();
         World w = e.getWorld();
         int length = 85;
+        b.waking = true;
         c.hold(length + 2);
         e.setInvulnerable(true);
         if (target != null) face(e, target.getLocation());
@@ -565,6 +571,9 @@ final class FoxPowers implements Listener {
             if (t == length) {
                 e.setInvulnerable(false);
                 b.awakened = true;
+                b.waking = false;
+                e.addScoreboardTag(AWAKE);
+                speed(e, hold, -1, false);
                 c.release();
             }
         });
@@ -653,7 +662,7 @@ final class FoxPowers implements Listener {
         timeline(e, 33, t -> {
             Location at = e.getLocation();
             if (t <= 20 && target.isValid()) face(e, target.getLocation());
-            Location snout = body(e, 0, 1.05, 1.75);
+            Location snout = body(e, 0, 1.3, 2.25);
             // 0-8 a few green motes at its snout, a very soft plant sound
             if (t == 0) snd(at, "block.azalea_leaves.hit", 0.6f, 1.6f);
             if (t < 8 && t % 2 == 0)
