@@ -264,8 +264,9 @@ final class ShowcaseSession {
         }
         ticks++;
         if (player.getVehicle() != seat) seat.addPassenger(player);
-        // the camera reaches his client with the next entity update: said again once it is there
-        if (ticks == 3 || ticks == 20) Camera.view(player, camera);
+        // the camera only reaches his client once the arena's chunks and entities did (he was just taken far away, how
+        // long that takes depends on his connection): said again all along, a camera already set changes nothing
+        if (ticks == 3 || ticks % 10 == 0) Camera.view(player, camera);
         if (pointer.isValid()) pointer.teleport(pointerAt());
         hover();
         scene();
