@@ -40,7 +40,7 @@ final class ModelBridge {
         var renderer = BetterModel.modelOrNull(model);
         if (renderer == null) return null;
         float[] facing = {yaw};
-        DummyTracker tracker = renderer.create(BukkitAdapter.adapt(at));
+        DummyTracker tracker = renderer.create(BukkitAdapter.adapt(at.clone()));
         tracker.scaler(ModelScaler.value(scale));
         tracker.rotation(() -> new ModelRotation(0, facing[0]));
         tracker.spawn(BukkitAdapter.adapt(viewer));
@@ -61,7 +61,9 @@ final class ModelBridge {
             public void move(Location to, float yaw) {
                 if (tracker.isClosed()) return;
                 facing[0] = yaw;
-                tracker.location(BukkitAdapter.adapt(to));
+                // a copy: BetterModel keeps the location it is given and skips a move to an "equal" one, so handing
+                // it the caller's own (mutated) Location would never move the model
+                tracker.location(BukkitAdapter.adapt(to.clone()));
             }
 
             public void close() {
