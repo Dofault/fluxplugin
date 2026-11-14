@@ -48,6 +48,8 @@ public final class Run {
     int objectivesTotal;
     /** Difficulty level played (index in the dungeon's levels), chosen on the launch screen. */
     int level;
+    /** Dungeon tokens each player got from the monsters of this run (told at the end). */
+    final java.util.Map<UUID, Integer> tokens = new java.util.HashMap<>();
 
     public DungeonDefinition.Level levelSpec() {
         List<DungeonDefinition.Level> all = def.levels();

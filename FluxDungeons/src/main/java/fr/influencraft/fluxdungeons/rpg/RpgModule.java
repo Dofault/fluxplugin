@@ -33,6 +33,7 @@ public final class RpgModule implements Listener {
     private Controls controls;
     private Skills skills;
     private RpgItems items;
+    private Potions potions;
     private RpgWorld world;
     private ClassPages pages;
     private Showcase showcase;
@@ -60,6 +61,10 @@ public final class RpgModule implements Listener {
         combat.profiles(RpgModule::profileFromTags);
         combat.immortal(e -> e.getScoreboardTags().contains(TAG_DUMMY));
         players.bind(world, combat);
+        potions = new Potions(plugin, players, combat, () -> plugin.getConfig().getString("tokens.currency", "dungeon_tokens"));
+        potions.load();
+        items.extras(potions::addTo);
+        if (config.get() != null) items.load(config.get());
         skills = new Skills(plugin, combat, players);
         controls = new Controls(plugin, players, skills, items);
         RpgKit kit = new RpgKit(plugin, items, players);
@@ -238,6 +243,11 @@ public final class RpgModule implements Listener {
         return combat;
     }
 
+    /** Potions of the rpg and their merchant, null before the module starts. */
+    public Potions potions() {
+        return potions;
+    }
+
     public RpgPlayers players() {
         return players;
     }
@@ -310,6 +320,7 @@ public final class RpgModule implements Listener {
             case "reload" -> {
                 List<String> problems = config.load();
                 if (problems.isEmpty()) {
+                    potions.load();
                     items.load(config.get());
                     for (Player p : Bukkit.getOnlinePlayers()) players.recompute(p);
                     writePages();

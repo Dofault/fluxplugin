@@ -175,3 +175,29 @@ breakable:
 music:
   victory: victoire_boss
   defeat: defaite
+
+# Clés de donjon (2026-11-14) : le chef du groupe dépense une clé du métier du donjon (job: du donjon) pour le lancer.
+# Elles tombent en faisant les actions payées de ce métier en Semi-RP : chaque action tente sa chance avec ses points
+# FluxValue, pour une clé toutes les « minutes » minutes de jeu optimal en moyenne. Le staff (bypass-permission) et
+# /fluxdungeons start (Typewriter) n'en dépensent pas. Affichées dans le menu Carrières (première action rémunérée).
+keys:
+  required: true
+  minutes: 20
+  bypass-permission: fluxdungeons.admin
+
+# Jetons de donjon (monnaie Flux « currency ») : chaque monstre vaincu en donne à chaque joueur du groupe selon son rang,
+# multipliés par la récompense du niveau de difficulté. Ils jaillissent du monstre (au plus max-coins-shown pièces).
+tokens:
+  currency: dungeon_tokens
+  per-rank:
+    TRASH: 1
+    ELITE: 2
+    MINIBOSS: 5
+    BOSS: 20
+  max-coins-shown: 6
+
+# Fin d'un donjon gagné : retour immédiat au lobby RPG, feux d'artifice (sans dégâts), puis le familier du boss
+# (adopté à la première victoire, sa carte ensuite) après pet-delay-ticks.
+victory:
+  fireworks: 8
+  pet-delay-ticks: 70

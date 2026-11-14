@@ -1,8 +1,12 @@
 package fr.influencraft.fluxdungeons.dungeon;
 
+import fr.influencraft.flux.api.FluxApi;
 import fr.influencraft.flux.api.FluxPlugin;
+import fr.influencraft.flux.api.MenuView;
 import fr.influencraft.flux.api.inventory.Items;
 import fr.influencraft.flux.api.inventory.Lore;
+import fr.influencraft.flux.api.list.ListEntry;
+import fr.influencraft.flux.api.list.Lists;
 import fr.influencraft.flux.api.text.Texts;
 import fr.influencraft.flux.api.util.Sounds;
 import org.bukkit.Bukkit;
@@ -10,11 +14,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 
@@ -27,57 +27,53 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * The launch screen of a dungeon: the party sees who comes, with which rpg class and armour, the leader picks the
- * difficulty, and the run starts once everybody is ready. Nothing is chosen: a dungeon is played with the rpg profile
- * as it is (class weapon, armour, skills), never with things of the semi-rp world.
+ * The launch screen of a dungeon (menu {@code donjon_sas}, drawn by {@code assets/menus/gen_menus.py}, 2026-11-14):
+ * a card per member (head, ready or waiting), the difficulty the leader picks (three coloured buttons, the chosen one
+ * lit), the ready button. The run starts once everybody is ready; the leader then spends a key of the dungeon's job
+ * (checked by the launcher). Nothing is chosen besides: a dungeon is played with the rpg profile as it is.
  * <p>
- * Rows of the window: party and dungeon (top), the viewer's own panel, the panel of a team mate chosen by clicking
- * his head, the class, difficulty and ready buttons.
+ * Lists: {@code donjon_sas_boutons} (leave, info, class, key), {@code donjon_sas_membres}, {@code donjon_sas_etats},
+ * {@code donjon_sas_niveaux}, {@code donjon_sas_pret}; placeholders {@code sas_title}, {@code sas_level},
+ * {@code sas_ready} (FluxDungeons' placeholders); actions {@code [fluxdungeon] sas level <n> | ready | leave}.
  */
 public final class Lobby implements Listener {
 
-    private static final int SIZE = 54;
-    private static final int BACK = 0, INFO = 8, CLASS = 45, LEVEL = 47, READY = 49;
-    private static final int OWN = 9, MATE = 27;
+    public static final String MENU = "donjon_sas";
+    private static final List<String> LISTS = List.of("donjon_sas_boutons", "donjon_sas_membres", "donjon_sas_etats",
+            "donjon_sas_niveaux", "donjon_sas_pret");
+    private static final int SEATS = 5;
     /** A lobby nobody launches is dropped after this long. */
     private static final long TIMEOUT_MS = 5 * 60_000;
+    private static final String[] LEVEL_ICONS = {"itemsadder:fluxui:btn_right_green", "itemsadder:fluxui:btn_right_gold",
+            "itemsadder:fluxui:btn_right_red"};
 
     /** A party getting ready for a dungeon. */
     private static final class Party {
         final DungeonDefinition def;
         final List<UUID> members;
         final Set<UUID> ready = new HashSet<>();
-        final Map<UUID, UUID> viewing = new HashMap<>();
         final long created = System.currentTimeMillis();
+        /** Started by the staff or Typewriter: no key spent. */
+        final boolean free;
         /** Difficulty level chosen by the leader (first member), index in the dungeon's levels. */
         int level;
 
-        Party(DungeonDefinition def, List<UUID> members) {
+        Party(DungeonDefinition def, List<UUID> members, boolean free) {
             this.def = def;
             this.members = members;
+            this.free = free;
             this.level = defaultLevel(def);
-        }
-    }
-
-    private static final class Screen implements InventoryHolder {
-        final Party party;
-        final UUID viewer;
-        Inventory inventory;
-
-        Screen(Party party, UUID viewer) {
-            this.party = party;
-            this.viewer = viewer;
-        }
-
-        @Override
-        public Inventory getInventory() {
-            return inventory;
         }
     }
 
     /** Starts the run once everybody is ready (checks again, the players may have changed meanwhile). */
     public interface Launcher {
-        void launch(DungeonDefinition def, List<Player> players, int level);
+        void launch(DungeonDefinition def, List<Player> players, int level, boolean free);
+    }
+
+    /** What the key button says: keys of the leader for this dungeon, -1 when no key is needed. */
+    public interface KeyInfo {
+        int keys(Player leader, DungeonDefinition def);
     }
 
     /** The level offered first: the one named Normal, else the first. */
@@ -88,6 +84,7 @@ public final class Lobby implements Listener {
 
     private final FluxPlugin plugin;
     private Launcher launcher;
+    private KeyInfo keyInfo = (p, d) -> -1;
     private final Map<UUID, Party> byPlayer = new HashMap<>();
 
     /** Class and level of a player in the rpg ("Guerrier 5"), null when he has none yet. */
@@ -100,10 +97,19 @@ public final class Lobby implements Listener {
     Lobby(FluxPlugin plugin) {
         this.plugin = plugin;
         Bukkit.getScheduler().runTaskTimer(plugin, this::expire, 200L, 200L);
+        Lists.register(plugin, "donjon_sas_boutons", q -> buttons(q.viewer()));
+        Lists.register(plugin, "donjon_sas_membres", q -> members(q.viewer()));
+        Lists.register(plugin, "donjon_sas_etats", q -> states(q.viewer()));
+        Lists.register(plugin, "donjon_sas_niveaux", q -> levels(q.viewer()));
+        Lists.register(plugin, "donjon_sas_pret", q -> readyButton(q.viewer()));
     }
 
     void launcher(Launcher launcher) {
         this.launcher = launcher;
+    }
+
+    public void keyInfo(KeyInfo info) {
+        this.keyInfo = info == null ? (p, d) -> -1 : info;
     }
 
     public boolean waiting(Player p) {
@@ -117,10 +123,10 @@ public final class Lobby implements Listener {
     }
 
     /** Opens the launch screen for these players (already checked), at the difficulty level chosen (-1: default). */
-    public void open(DungeonDefinition def, List<Player> players, int level) {
+    public void open(DungeonDefinition def, List<Player> players, int level, boolean free) {
         List<UUID> ids = new ArrayList<>();
         for (Player p : players) ids.add(p.getUniqueId());
-        Party party = new Party(def, ids);
+        Party party = new Party(def, ids, free);
         if (level >= 0 && level < def.levels().size()) party.level = level;
         for (Player p : players) byPlayer.put(p.getUniqueId(), party);
         for (Player p : players) show(p);
@@ -139,73 +145,173 @@ public final class Lobby implements Listener {
         if (party != null) close(party, "lobby.cancelled", p.getName());
     }
 
-    // ---------------------------------------------------------------- drawing
+    // ---------------------------------------------------------------- menu actions ([fluxdungeon] sas ...)
 
-    private void show(Player p) {
+    /** {@code level <n>}, {@code ready}, {@code leave}. */
+    public void act(Player p, String[] args) {
         Party party = byPlayer.get(p.getUniqueId());
-        if (party == null) return;
-        Screen screen = new Screen(party, p.getUniqueId());
-        screen.inventory = Bukkit.createInventory(screen, SIZE, Texts.parse(plugin.messages().raw("lobby.title", "%dungeon%", party.def.name())));
-        draw(screen, p);
-        p.openInventory(screen.inventory);
-    }
-
-    private void redraw(Party party) {
-        for (UUID u : party.members) {
-            Player p = Bukkit.getPlayer(u);
-            if (p != null && p.getOpenInventory().getTopInventory().getHolder() instanceof Screen s && s.party == party) {
-                draw(s, p);
+        if (party == null) {
+            close(p);
+            return;
+        }
+        switch (args.length == 0 ? "" : args[0]) {
+            case "level" -> {
+                int n;
+                try {
+                    n = Integer.parseInt(args.length > 1 ? args[1] : "");
+                } catch (NumberFormatException e) {
+                    return;
+                }
+                if (!leader(party, p.getUniqueId()) || n < 0 || n >= party.def.levels().size() || n == party.level) {
+                    if (!leader(party, p.getUniqueId())) Sounds.cue(p, "error");
+                    return;
+                }
+                party.level = n;
+                // another level: everybody agrees again
+                party.ready.clear();
+                Sounds.cue(p, "click");
+                redraw(party);
+            }
+            case "ready" -> toggleReady(p, party);
+            case "leave" -> cancel(p);
+            default -> {
             }
         }
     }
 
-    private void draw(Screen screen, Player viewer) {
-        Inventory inv = screen.inventory;
-        inv.clear();
-        Party party = screen.party;
-        inv.setItem(BACK, Items.of("itemsadder:influitems:btn_back", plugin.messages().raw("lobby.leave"),
-                Lore.create().description(plugin.messages().raw("lobby.leave-desc")).left(plugin.messages().raw("lobby.leave-action")).build(), viewer));
-        List<String> info = new ArrayList<>(party.def.description());
-        Lore infoLore = Lore.create().description(info)
-                .kv(plugin.messages().raw("lobby.players"), party.def.minPlayers() + "-" + party.def.maxPlayers())
-                .kv(plugin.messages().raw("lobby.level"), party.def.recommendedLevel());
-        inv.setItem(INFO, Items.of("NETHER_STAR", party.def.name(), infoLore.build(), viewer));
-        UUID mate = mate(party, screen.viewer);
-        int head = 1;
-        for (UUID u : party.members) {
-            if (head > 7) break;
-            inv.setItem(head++, head(party, u, mate, viewer));
-        }
-        panel(inv, OWN, screen.viewer, viewer);
-        if (mate != null) panel(inv, MATE, mate, viewer);
-        String line = rpgClass.apply(screen.viewer);
-        inv.setItem(CLASS, Items.of("BOOK", line == null ? plugin.messages().raw("lobby.no-class") : line,
-                Lore.create().description(plugin.messages().raw("lobby.class-desc")).left(plugin.messages().raw("lobby.class-change")).build(), viewer));
-        if (party.def.levels().size() > 1) inv.setItem(LEVEL, levelButton(party, viewer));
-        boolean ready = party.ready.contains(screen.viewer);
-        inv.setItem(READY, Items.of(ready ? "LIME_DYE" : "GRAY_DYE",
-                plugin.messages().raw(ready ? "lobby.ready" : "lobby.not-ready"),
-                Lore.create().description(plugin.messages().raw("lobby.ready-desc",
-                                "%ready%", String.valueOf(party.ready.size()), "%total%", String.valueOf(party.members.size())))
-                        .left(plugin.messages().raw(ready ? "lobby.unready-action" : "lobby.ready-action")).build(), viewer));
+    // ---------------------------------------------------------------- placeholders
+
+    /** {@code sas_title}, {@code sas_level}, {@code sas_ready}; null for another one. */
+    public String placeholder(Player p, String params) {
+        Party party = byPlayer.get(p.getUniqueId());
+        return switch (params) {
+            case "sas_title" -> party == null ? "" : Texts.plain(Texts.colors(plugin.messages().raw("lobby.field",
+                    "%dungeon%", shortName(party.def), "%level%", party.def.levels().get(party.level).name())));
+            case "sas_level" -> party == null ? "-1" : String.valueOf(party.level);
+            case "sas_ready" -> party == null ? "" : Texts.plain(Texts.colors(plugin.messages().raw("lobby.ready-count",
+                    "%ready%", String.valueOf(party.ready.size()), "%total%", String.valueOf(party.members.size()))));
+            default -> null;
+        };
     }
 
-    private ItemStack levelButton(Party party, Player viewer) {
-        List<DungeonDefinition.Level> levels = party.def.levels();
-        DungeonDefinition.Level l = levels.get(party.level);
-        Lore lore = Lore.create().description(plugin.messages().raw("lobby.difficulty-desc"));
-        lore.kv(plugin.messages().raw("lobby.difficulty-spells"), !l.spells() ? plugin.messages().raw("lobby.spells-off")
-                : l.abilities() > 0 ? plugin.messages().raw("lobby.spells-count", "%count%", String.valueOf(l.abilities()))
-                : plugin.messages().raw("lobby.spells-on"));
-        lore.filter(levels.stream().map(DungeonDefinition.Level::name).toList(), party.level);
-        if (leader(party, viewer.getUniqueId())) {
-            lore.left(plugin.messages().raw("lobby.difficulty-next")).right(plugin.messages().raw("lobby.difficulty-prev"));
-        } else {
-            lore.line(plugin.messages().raw("lobby.difficulty-leader", "%player%", name(party.members.get(0))));
+    /** Short name shown in the field: the dungeon's job when it has one. */
+    private String shortName(DungeonDefinition def) {
+        String job = def.job();
+        if (job.isEmpty()) return Texts.plain(Texts.colors(def.name()));
+        String name = fr.influencraft.flux.api.jobs.Jobs.available() ? fr.influencraft.flux.api.jobs.Jobs.get().displayName(job) : job;
+        return plugin.messages().raw("lobby.field-job", "%job%", Texts.plain(Texts.colors(name == null ? job : name)));
+    }
+
+    // ---------------------------------------------------------------- lists
+
+    private List<ListEntry> buttons(Player viewer) {
+        Party party = byPlayer.get(viewer.getUniqueId());
+        List<ListEntry> out = new ArrayList<>();
+        if (party == null) return out;
+        String m = "lobby.";
+        out.add(button("leave", Items.of("itemsadder:fluxui:btn_close_red", raw(m + "leave"),
+                Lore.create().description(raw(m + "leave-desc")).left(raw(m + "leave-action")).build(), viewer),
+                "[fluxdungeon] sas leave", ""));
+        Lore info = Lore.create().description(party.def.description())
+                .kv(raw(m + "players"), party.def.minPlayers() + "-" + party.def.maxPlayers())
+                .kv(raw(m + "level"), party.def.recommendedLevel());
+        out.add(button("info", Items.of("itemsadder:fluxui:btn_info_blue", party.def.name(), info.build(), viewer), "", ""));
+        String line = rpgClass.apply(viewer.getUniqueId());
+        out.add(button("class", Items.of("BOOK", line == null ? raw(m + "no-class") : line,
+                Lore.create().description(raw(m + "class-desc")).left(raw(m + "class-change")).build(), viewer),
+                "[close]", "[player] classe"));
+        Player leader = Bukkit.getPlayer(party.members.get(0));
+        int keys = party.free || leader == null ? -1 : keyInfo.keys(leader, party.def);
+        Lore key = Lore.create();
+        if (keys < 0) key.description(raw(m + "key-free"));
+        else {
+            key.description(raw(m + "key-desc", "%player%", leader.getName()))
+                    .kv(raw(m + "key-owned"), String.valueOf(keys));
+            if (keys > 0) key.ok(raw(m + "key-ok"));
+            else key.ko(raw(m + "key-missing"));
         }
-        String[] icons = {"WOODEN_SWORD", "IRON_SWORD", "DIAMOND_SWORD", "NETHERITE_SWORD"};
-        int icon = levels.size() <= 1 ? 1 : Math.round((float) party.level * (icons.length - 1) / (levels.size() - 1));
-        return Items.of(icons[icon], plugin.messages().raw("lobby.difficulty", "%level%", l.name()), lore.build(), viewer);
+        ItemStack keyItem = Items.of("itemsadder:fluxdonjon:cle_donjon", raw(m + "key"), key.build(), viewer);
+        out.add(button("key", keyItem, "", ""));
+        return out;
+    }
+
+    private static ListEntry button(String id, ItemStack item, String left, String left2) {
+        return ListEntry.of(id).item(item == null ? new ItemStack(Material.BARRIER) : item).set("left", left).set("left2", left2);
+    }
+
+    private List<ListEntry> members(Player viewer) {
+        Party party = byPlayer.get(viewer.getUniqueId());
+        List<ListEntry> out = new ArrayList<>();
+        if (party == null) return out;
+        int n = 0;
+        for (UUID u : party.members) {
+            if (n++ >= SEATS) break;
+            ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
+            skull.editMeta(meta -> {
+                if (meta instanceof SkullMeta sm) sm.setOwningPlayer(Bukkit.getOfflinePlayer(u));
+            });
+            Lore lore = Lore.create();
+            String line = rpgClass.apply(u);
+            if (line != null) lore.kv(raw("lobby.class"), line);
+            if (leader(party, u)) lore.info(raw("lobby.leader"));
+            Player p = Bukkit.getPlayer(u);
+            out.add(ListEntry.of(u.toString()).item(Items.dress(skull, p == null ? "?" : p.getName(), lore.build(), viewer)));
+        }
+        return out;
+    }
+
+    private List<ListEntry> states(Player viewer) {
+        Party party = byPlayer.get(viewer.getUniqueId());
+        List<ListEntry> out = new ArrayList<>();
+        if (party == null) return out;
+        int n = 0;
+        for (UUID u : party.members) {
+            if (n++ >= SEATS) break;
+            boolean ready = party.ready.contains(u);
+            ItemStack item = Items.of(ready ? "itemsadder:fluxui:btn_check_green" : "itemsadder:fluxui:btn_lock_grey",
+                    raw(ready ? "lobby.head-ready" : "lobby.head-waiting"), List.of(), viewer);
+            out.add(ListEntry.of(u.toString()).item(item));
+        }
+        return out;
+    }
+
+    private List<ListEntry> levels(Player viewer) {
+        Party party = byPlayer.get(viewer.getUniqueId());
+        List<ListEntry> out = new ArrayList<>();
+        if (party == null) return out;
+        boolean lead = leader(party, viewer.getUniqueId());
+        List<DungeonDefinition.Level> levels = party.def.levels();
+        for (int i = 0; i < Math.min(3, levels.size()); i++) {
+            DungeonDefinition.Level l = levels.get(i);
+            Lore lore = Lore.create().description(raw("lobby.difficulty-desc"));
+            lore.kv(raw("lobby.difficulty-spells"), !l.spells() ? raw("lobby.spells-off")
+                    : l.abilities() > 0 ? raw("lobby.spells-count", "%count%", String.valueOf(l.abilities())) : raw("lobby.spells-on"));
+            lore.kv(raw("lobby.difficulty-boosters"), String.valueOf(party.def.boosters(i)));
+            if (i == party.level) lore.ok(raw("lobby.difficulty-chosen"));
+            else if (lead) lore.left(raw("lobby.difficulty-choose"));
+            else lore.line(raw("lobby.difficulty-leader", "%player%", name(party.members.get(0))));
+            ItemStack item = Items.of(LEVEL_ICONS[Math.min(i, LEVEL_ICONS.length - 1)],
+                    raw("lobby.difficulty", "%level%", l.name()), lore.build(), viewer);
+            if (item != null && i == party.level) item.editMeta(m -> m.setEnchantmentGlintOverride(true));
+            out.add(ListEntry.of(String.valueOf(i)).item(item));
+        }
+        return out;
+    }
+
+    private List<ListEntry> readyButton(Player viewer) {
+        Party party = byPlayer.get(viewer.getUniqueId());
+        if (party == null) return List.of();
+        boolean ready = party.ready.contains(viewer.getUniqueId());
+        ItemStack item = Items.of(ready ? "itemsadder:fluxui:btn_check_green" : "itemsadder:fluxui:btn_check_grey",
+                raw(ready ? "lobby.ready" : "lobby.not-ready"),
+                Lore.create().description(raw("lobby.ready-desc", "%ready%", String.valueOf(party.ready.size()),
+                                "%total%", String.valueOf(party.members.size())))
+                        .left(raw(ready ? "lobby.unready-action" : "lobby.ready-action")).build(), viewer);
+        return List.of(ListEntry.of("ready").item(item));
+    }
+
+    private String raw(String key, String... vars) {
+        return plugin.messages().raw(key, vars);
     }
 
     private static boolean leader(Party party, UUID u) {
@@ -217,97 +323,27 @@ public final class Lobby implements Listener {
         return p == null ? "?" : p.getName();
     }
 
-    /** His rpg armour (boots to helmet), shown as it is, and what he fights with: nothing to choose. */
-    private void panel(Inventory inv, int at, UUID who, Player viewer) {
-        Player owner = Bukkit.getPlayer(who);
-        if (owner == null) return;
-        ItemStack[] armor = owner.getInventory().getArmorContents();
-        for (int a = 0; a < 4; a++) {
-            ItemStack worn = a < armor.length ? armor[a] : null;
-            inv.setItem(at + a, worn == null || worn.isEmpty()
-                    ? Items.of("LIGHT_GRAY_STAINED_GLASS_PANE", plugin.messages().raw("lobby.armor-empty"), List.of(), viewer) : worn.clone());
-        }
-        inv.setItem(at + 9, Items.of("BOOK", plugin.messages().raw("lobby.rpg-gear"),
-                Lore.create().description(plugin.messages().raw("lobby.rpg-gear-desc")).build(), viewer));
+    // ---------------------------------------------------------------- showing
+
+    private void show(Player p) {
+        for (String list : LISTS) Lists.invalidate(p, list);
+        if (!FluxApi.open(p, MENU)) plugin.getLogger().warning("Menu " + MENU + " missing: run assets/menus/gen_menus.py");
     }
 
-    private ItemStack head(Party party, UUID u, UUID mate, Player viewer) {
-        ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
-        skull.editMeta(m -> {
-            if (m instanceof SkullMeta sm) sm.setOwningPlayer(Bukkit.getOfflinePlayer(u));
-        });
-        Player p = Bukkit.getPlayer(u);
-        String name = p == null ? "?" : p.getName();
-        Lore lore = Lore.create();
-        String line = rpgClass.apply(u);
-        if (line != null) lore.kv(plugin.messages().raw("lobby.class"), line);
-        lore.line(plugin.messages().raw(party.ready.contains(u) ? "lobby.head-ready" : "lobby.head-waiting"));
-        if (!u.equals(viewer.getUniqueId()) && !u.equals(mate)) lore.left(plugin.messages().raw("lobby.head-view"));
-        return Items.dress(skull, name, lore.build(), viewer);
+    /** Draws the screen again for every member who has it open. */
+    private void redraw(Party party) {
+        for (UUID u : party.members) {
+            Player p = Bukkit.getPlayer(u);
+            if (p == null) continue;
+            for (String list : LISTS) Lists.invalidate(p, list);
+            MenuView view = FluxApi.view(p);
+            if (view != null && view.isOpen() && MENU.equals(view.menuId())) view.refresh();
+        }
     }
 
-    private UUID mate(Party party, UUID viewer) {
-        UUID chosen = party.viewing.get(viewer);
-        if (chosen != null && party.members.contains(chosen)) return chosen;
-        for (UUID u : party.members) if (!u.equals(viewer)) return u;
-        return null;
-    }
-
-    // ---------------------------------------------------------------- clicks
-
-    @EventHandler(ignoreCancelled = true)
-    public void onDrag(InventoryDragEvent e) {
-        InventoryHolder h = e.getView().getTopInventory().getHolder();
-        if (h instanceof Screen) e.setCancelled(true);
-    }
-
-    @EventHandler
-    public void onClick(InventoryClickEvent e) {
-        InventoryHolder h = e.getView().getTopInventory().getHolder();
-        if (!(h instanceof Screen screen)) return;
-        e.setCancelled(true);
-        if (!(e.getWhoClicked() instanceof Player p) || !e.getClick().isLeftClick() && !e.getClick().isRightClick()) return;
-        Party party = screen.party;
-        if (byPlayer.get(p.getUniqueId()) != party) {
-            p.closeInventory();
-            return;
-        }
-        int raw = e.getRawSlot();
-        if (raw >= SIZE) return;
-        if (raw == BACK) {
-            cancel(p);
-            return;
-        }
-        if (raw == CLASS) {
-            Bukkit.getScheduler().runTask(plugin, () -> p.performCommand("classe"));
-            return;
-        }
-        if (raw == READY) {
-            toggleReady(p, party);
-            return;
-        }
-        if (raw == LEVEL && party.def.levels().size() > 1) {
-            if (!leader(party, p.getUniqueId())) {
-                Sounds.cue(p, "error");
-                return;
-            }
-            int n = party.def.levels().size();
-            party.level = (party.level + (e.getClick().isRightClick() ? n - 1 : 1)) % n;
-            // another level: everybody agrees again
-            party.ready.clear();
-            Sounds.cue(p, "click");
-            redraw(party);
-            return;
-        }
-        if (raw >= 1 && raw <= 7) {
-            int index = raw - 1;
-            if (index < party.members.size() && !party.members.get(index).equals(p.getUniqueId())) {
-                party.viewing.put(p.getUniqueId(), party.members.get(index));
-                Sounds.cue(p, "page");
-                draw(screen, p);
-            }
-            return;
-        }
+    private static void close(Player p) {
+        MenuView view = FluxApi.view(p);
+        if (view != null && view.isOpen() && MENU.equals(view.menuId())) view.close();
     }
 
     private void toggleReady(Player p, Party party) {
@@ -332,10 +368,8 @@ public final class Lobby implements Listener {
             players.add(m);
         }
         for (UUID u : party.members) byPlayer.remove(u);
-        for (Player m : players) {
-            if (m.getOpenInventory().getTopInventory().getHolder() instanceof Screen s && s.party == party) m.closeInventory();
-        }
-        launcher.launch(party.def, players, party.level);
+        for (Player m : players) close(m);
+        launcher.launch(party.def, players, party.level, party.free);
     }
 
     // ---------------------------------------------------------------- end of a lobby
@@ -345,8 +379,7 @@ public final class Lobby implements Listener {
             if (byPlayer.get(u) == party) byPlayer.remove(u);
             Player p = Bukkit.getPlayer(u);
             if (p == null) continue;
-            InventoryHolder h = p.getOpenInventory().getTopInventory().getHolder();
-            if (h instanceof Screen s && s.party == party) p.closeInventory();
+            close(p);
             plugin.messages().send(p, key, "%player%", who, "%dungeon%", party.def.name());
         }
     }

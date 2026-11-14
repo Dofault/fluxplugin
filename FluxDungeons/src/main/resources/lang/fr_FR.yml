@@ -31,6 +31,7 @@ start:
   busy: '&#FF5C5C%player% est déjà dans un donjon.'
   no-slot: '&#FF5C5CTous les donjons sont occupés, réessaie dans quelques minutes.'
   failed: '&#FF5C5CLe donjon n''a pas pu démarrer.'
+  no-key: '&#FF5C5CIl te faut une clé du donjon %job% : elle tombe en faisant ce métier en Semi-RP (menu Carrières).'
 party:
   class: " &7(%class%&7)"
   member: "&f%name%"
@@ -69,10 +70,14 @@ run:
   victory-sub: '&#B376E5Donjon terminé en &f%time%'
   loot: '&#FFD94DButin : %items%'
   loot-none: '&#B376E5Pas de butin cette fois.'
-  leaving: '&#B376E5Retour dans &f%seconds% s&#B376E5.'
   defeat: '&#FF5C5CDéfaite'
   loot-overflow-label: '&fButin d''un donjon'
   loot-overflow: '&#B376E5Ton inventaire était plein : le reste t''attend dans &f[/%flux_cmd_flux_rewards%]&#B376E5.'
+  tokens: '&#FFD94DJetons de donjon gagnés : %amount%'
+  boosters: '&#FFD94D%amount% × %booster% &#B376E5t''attendent dans &f[/%flux_cmd_flux_rewards%]&#B376E5 en Semi-RP.'
+  boosters-label: '&fRécompense du donjon %dungeon%'
+  pet-adopted: '&#FFD94DLe boss vaincu devient ton familier : %pet%&#FFD94D ! &#B376E5Il t''attend dans &f[/pets]&#B376E5 en Semi-RP.'
+  pet-card: '&#B376E5Tu as déjà %pet%&#B376E5 : sa carte t''attend dans &f[/%flux_cmd_flux_rewards%]&#B376E5.'
 room:
   fight: '&#B376E5Les monstres se réveillent'
   boss: '&#FF5C5CLe gardien se réveille'
@@ -99,8 +104,11 @@ admin:
   no-runs: '&#B376E5Aucune partie en cours.'
   run-line: '&#FFD94D%id% &f%dungeon% &7%state% &#B376E5%players%'
   reloaded: '&#2ECF7BFluxDungeons rechargé.'
+  keys: '&#2ECF7B%player% a maintenant &f%amount%&#2ECF7B clé(s) du donjon %job%.'
 origins:
   victory: Victoire en donjon
+  dungeon_kill: 'Monstre de donjon'
+  potion: 'Potion'
 objective:
   preparing: '&#B376E5Préparation du donjon...'
   ending: '&#2ECF7BDonjon terminé'
@@ -215,39 +223,46 @@ create:
   copying: '&#B376E5Copie du monde &f%world%&#B376E5...'
   created: '&#2ECF7BDonjon %dungeon% créé. Règle son nom, ses vies et sa récompense dans dungeons/%dungeon%.yml.'
 lobby:
-  rpg-gear: "&#FFD94DÉquipement RPG"
-  rpg-gear-desc: "Tu joues avec ton équipement RPG : ton arme de classe, ton armure et tes sorts (clics, A, F). Rien n'est mis de côté et rien ne se perd."
   difficulty: 'Difficulté : %level%'
-  difficulty-desc: Choisie par le chef du groupe, pour tout le groupe.
-  difficulty-spells: Attaques spéciales
-  spells-on: oui
-  spells-count: '%count% par monstre (plus pour les boss)'
-  spells-off: non
-  difficulty-next: Plus difficile
-  difficulty-prev: Plus facile
+  difficulty-desc: 'Choisie par le chef du groupe, pour tout le groupe.'
+  difficulty-spells: 'Attaques spéciales'
+  difficulty-boosters: 'Boosters gagnés'
+  difficulty-chosen: 'Difficulté choisie'
+  difficulty-choose: 'Choisir'
   difficulty-leader: '%player% choisit la difficulté.'
-  title: 'Préparation : %dungeon%'
-  leave: Quitter
-  leave-desc: Annule le lancement pour tout le groupe.
-  leave-action: Quitter
-  players: Joueurs
-  level: Niveau conseillé
-  class: Classe
-  class-change: Changer de classe
+  spells-on: 'oui'
+  spells-count: '%count% par monstre (plus pour les boss)'
+  spells-off: 'non'
+  field: '%dungeon% · %level%'
+  field-job: 'Donjon %job%'
+  ready-count: 'Prêts : %ready%/%total%'
+  leave: 'Quitter'
+  leave-desc: 'Annule le lancement pour tout le groupe.'
+  leave-action: 'Quitter'
+  players: 'Joueurs'
+  level: 'Niveau conseillé'
+  class: 'Classe'
+  class-change: 'Changer de classe'
+  class-desc: 'Ta classe RPG : ton arme, tes sorts et tes statistiques dans le donjon.'
+  no-class: '&#FF5C5CAucune classe'
+  leader: 'Chef du groupe'
   head-ready: '&#2ECF7BPrêt'
-  head-view: Voir son équipement
-  armor-empty: Aucune armure
-  ready: Prêt
-  not-ready: Pas prêt
-  ready-action: Je suis prêt
-  unready-action: Je ne suis plus prêt
+  head-waiting: '&7Pas encore prêt'
+  ready: 'Prêt'
+  not-ready: 'Pas prêt'
+  ready-action: 'Je suis prêt'
+  unready-action: 'Je ne suis plus prêt'
+  ready-desc: '%ready%/%total% joueurs prêts. Le donjon démarre quand tout le monde est prêt. Si tu meurs, tu regardes les autres finir : rien ne se perd.'
+  key: 'Clé du donjon'
+  key-desc: '%player% (chef du groupe) dépense une clé du donjon quand tout le monde est prêt. Elle tombe en faisant le métier du donjon en Semi-RP.'
+  key-owned: 'Clés du chef'
+  key-ok: 'Le chef a une clé'
+  key-missing: 'Le chef n''a pas de clé'
+  key-free: 'Aucune clé à dépenser pour ce lancement.'
   cancelled: '&#FF5C5CLancement de %dungeon% annulé par %player%.'
   expired: '&#FF5C5CLancement de %dungeon% annulé.'
   refused: '&#FF5C5CLe donjon n''a pas pu démarrer, relance-le avec &f[/%flux_cmd_fluxdungeons_dungeon%]&#FF5C5C.'
-  ready-desc: '%ready%/%total% joueurs prêts. Le donjon démarre quand tout le monde est prêt. Si tu meurs, tu regardes les autres finir : rien ne se perd.'
-  head-waiting: '&7Pas encore prêt'
-  no-class: '&#FF5C5CAucune classe'
-  class-desc: 'Ta classe RPG : ton arme, tes sorts et tes statistiques dans le donjon.'
+  refused-key: '&#FF5C5CLe chef du groupe n''a plus de clé du donjon %job% : le donjon ne démarre pas.'
 door:
   kills: '&#FF5C5C☠ &f%done%&7/&f%needed% &7monstres'
   opened: '&#B376E5Une porte s''ouvre...'
@@ -638,3 +653,87 @@ showcase:
       a: "Des ronces déchirent, ralentissent et sèment tout ce qui les traverse."
       right: "La liane s'accroche au monstre et tire le druide jusqu'à lui."
       f: "Une plante carnivore mord tout ce qui approche, puis soigne en fanant."
+keys:
+  found: '&#FFD94D+%amount% clé du donjon %job% &#B376E5(tu en as &f%total%&#B376E5). Elle lance le donjon %job% dans le monde RPG &f[/rpg]&#B376E5.'
+  spent: '&#B376E5%player% dépense une clé du donjon %job%.'
+  button-name: 'Clé du donjon %job%'
+  button-description: 'Chaque action payée de ce métier peut faire tomber la clé de son donjon. Plus l''action rapporte, plus la chance est grande.'
+  button-use: 'Elle lance %dungeon% dans le monde RPG : le chef du groupe en dépense une.'
+  button-average: 'En moyenne'
+  button-every: '1 clé toutes les %minutes% min de travail'
+  button-owned: 'Tes clés'
+  line: 'Clé du donjon'
+  line-always: 'à chaque fois'
+  line-one-in: '1 chance sur %n%'
+menu:
+  close: 'Fermer'
+  close-action: 'Fermer'
+  back: 'Retour'
+  back-action: 'Tous les donjons'
+  info: 'Donjons'
+  info-desc: 'Chaque métier a son donjon et son boss. Clique sur un boss pour voir son donjon et ce qu''il rapporte.'
+  info-keys: 'Pour lancer un donjon, le chef du groupe dépense une clé de son métier : elle tombe en faisant ce métier en Semi-RP.'
+  info-rewards: 'Le boss vaincu devient ton familier légendaire. Les monstres lâchent des jetons de donjon, échangés contre des potions.'
+  job: 'Métier'
+  players: 'Joueurs'
+  level: 'Niveau conseillé'
+  keys: 'Tes clés'
+  pet-owned: 'Son boss est déjà ton familier'
+  see: 'Voir le donjon'
+  no-class: '&#FF5C5CAucune classe'
+  class-desc: 'Ta classe RPG, son niveau et ses sorts.'
+  class-action: 'Changer de classe'
+  party: 'Groupe'
+  party-desc: 'Le chef lance le donjon pour tout le groupe.'
+  party-action: 'Gérer le groupe'
+  party-solo: 'Tu joues seul.'
+  party-of: 'Groupe de %count% joueurs, chef : %leader%.'
+  tokens: 'Jetons de donjon'
+  tokens-desc: 'Ils jaillissent des monstres vaincus en donjon. Le marchand de potions du lobby RPG les échange contre des potions.'
+  tokens-owned: 'Tes jetons'
+  potions-action: 'Acheter des potions'
+  key: 'Clé du donjon %job%'
+  key-desc: 'Le chef du groupe en dépense une pour lancer ce donjon. Elle tombe en faisant le métier %job% en Semi-RP.'
+  key-ok: 'Tu peux lancer ce donjon'
+  key-missing: 'Il te manque une clé'
+  key-free: 'Tu n''as pas besoin de clé.'
+  level-name: 'Jouer en %level%'
+  level-desc: 'Lance le donjon pour ton groupe à cette difficulté.'
+  level-health: 'Vie des monstres'
+  level-damage: 'Dégâts des monstres'
+  level-spells: 'Attaques spéciales'
+  level-boosters: 'Boosters gagnés'
+  level-key: 'Dépense une clé du donjon %job%'
+  level-play: 'Jouer'
+loot:
+  pet-desc: 'Le boss vaincu devient ton familier, en Semi-RP : adopté à ta première victoire, sa carte ensuite.'
+  pet-mount: 'Monture dès le niveau 5, prend 3 emplacements.'
+  pet-owned: 'Déjà adopté : tu gagnes sa carte'
+  rarity: 'Rareté'
+  boosters: 'Boosters du métier'
+  boosters-desc: 'Boosters du métier du donjon, selon la difficulté. Ils t''attendent dans /recompenses en Semi-RP.'
+  tokens-desc: 'Chaque monstre vaincu en lâche pour chaque joueur du groupe :'
+  tokens-levels: 'Plus en Normal et en Difficile.'
+  rank:
+    trash: 'Monstre'
+    elite: 'Élite'
+    miniboss: 'Mini-boss'
+    boss: 'Boss'
+  money: 'BitBlock'
+  money-desc: 'Donnés à chaque joueur à la victoire, selon la difficulté :'
+  chance: 'Chance'
+potions:
+  title: 'Marchand de potions'
+  gives-health: 'Rend %share% % de ta vie d''un coup.'
+  gives-mana: 'Rend %share% % de ton mana d''un coup.'
+  level: 'Niveau requis'
+  cooldown: 'Recharge'
+  drink: 'Boire'
+  wait: '&#FF5C5CEncore %seconds% s avant une autre potion de ce type.'
+  full-health: '&#B376E5Ta vie est déjà pleine.'
+  full-mana: '&#B376E5Ton mana est déjà plein.'
+  not-rpg: '&#FF5C5CLes potions se trouvent chez le marchand du monde RPG &f[/rpg]&#FF5C5C.'
+  closed: '&#FF5C5CLe marchand est fermé pour l''instant.'
+  level-ok: 'Tu peux l''acheter'
+  level-needed: '&#FF5C5CNiveau %level% requis'
+  no-tokens: '&#FF5C5CTu n''as pas assez de jetons de donjon.'

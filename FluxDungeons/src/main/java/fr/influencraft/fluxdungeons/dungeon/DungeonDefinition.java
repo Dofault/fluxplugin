@@ -56,6 +56,12 @@ public final class DungeonDefinition {
     private final int minPlayers, maxPlayers, recommendedLevel, lives;
     private final long timeLimit;
     private final double rewardMinutes;
+    /** Job of the dungeon (its key drops in that job, its boosters are given), "" when none. */
+    private final String job;
+    /** Pet of its boss (FluxPets), adopted on a victory; "" when none. */
+    private final String pet;
+    /** Boosters of its job given on a victory, by difficulty level (index), the last one for higher levels. */
+    private final List<Integer> boosters;
     /** Song (FluxMusic) looping once a player comes near the boss ({@code music.boss}), empty for none. */
     private final String bossMusic;
     private final double bossMusicRadius;
@@ -159,6 +165,9 @@ public final class DungeonDefinition {
         lives = Math.max(0, c.getInt("lives", 3));
         timeLimit = Format.parseDuration(c.getString("time-limit", "20m"));
         rewardMinutes = c.getDouble("reward.minutes", 5);
+        job = c.getString("job", "");
+        pet = c.getString("pet", "");
+        boosters = c.isList("reward.boosters") ? c.getIntegerList("reward.boosters") : List.of(1, 2, 3);
         bossMusic = c.getString("music.boss", "");
         bossMusicRadius = Math.max(1, c.getDouble("music.radius", 16));
         ConfigurationSection cmds = c.getConfigurationSection("commands");
@@ -330,6 +339,22 @@ public final class DungeonDefinition {
 
     public double bossMusicRadius() {
         return bossMusicRadius;
+    }
+
+    /** Job of the dungeon, "" when none. */
+    public String job() {
+        return job;
+    }
+
+    /** Pet of its boss, "" when none. */
+    public String pet() {
+        return pet;
+    }
+
+    /** Boosters of its job given on a victory at this difficulty level (index). */
+    public int boosters(int level) {
+        if (boosters.isEmpty()) return 0;
+        return Math.max(0, boosters.get(Math.max(0, Math.min(level, boosters.size() - 1))));
     }
 
     public double rewardMinutes() {

@@ -51,7 +51,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class Runs {
 
     /** Why a run could not start. */
-    public enum Refusal { NONE, NO_CLASS, TOO_FEW, TOO_MANY, BUSY_PLAYER, NO_SLOT, NOT_LEADER, EDITING, UNKNOWN }
+    public enum Refusal { NONE, NO_CLASS, TOO_FEW, TOO_MANY, BUSY_PLAYER, NO_SLOT, NOT_LEADER, EDITING, NO_KEY, UNKNOWN }
 
     private final FluxPlugin plugin;
     private final Arena arena;
@@ -103,6 +103,20 @@ public final class Runs {
 
     private void giveXp(Player p, double xp) {
         if (rpg != null) rpg.giveXp(p, xp);
+    }
+
+    /** Keys spent to launch, tokens given by monsters (reward package), null until wired. */
+    private fr.influencraft.fluxdungeons.reward.DungeonKeys keys;
+    private fr.influencraft.fluxdungeons.reward.DungeonTokens tokens;
+    private fr.influencraft.fluxdungeons.reward.Victory victories;
+
+    /** Keys, tokens and the end of a won run (reward package). */
+    public void rewards(fr.influencraft.fluxdungeons.reward.DungeonKeys keys, fr.influencraft.fluxdungeons.reward.DungeonTokens tokens,
+                        fr.influencraft.fluxdungeons.reward.Victory victories) {
+        this.keys = keys;
+        this.tokens = tokens;
+        this.victories = victories;
+        lobby.keyInfo((leader, def) -> keys == null || !keys.needs(leader, def) ? -1 : keys.count(leader, def.job()));
     }
 
     public Runs(FluxPlugin plugin, Arena arena, Mobs mobs) {
@@ -215,6 +229,20 @@ public final class Runs {
 
     /** Checks that these players can play this dungeon together. */
     public Refusal check(DungeonDefinition def, List<Player> players) {
+        return check(def, players, false);
+    }
+
+    /** {@code free}: launched by the staff or Typewriter, no key needed. */
+    public Refusal check(DungeonDefinition def, List<Player> players, boolean free) {
+        Refusal refusal = checkPlayers(def, players);
+        if (refusal == Refusal.NONE && !free && keys != null && !players.isEmpty()) {
+            Player leader = players.get(0);
+            if (keys.needs(leader, def) && keys.count(leader, def.job()) <= 0) return Refusal.NO_KEY;
+        }
+        return refusal;
+    }
+
+    private Refusal checkPlayers(DungeonDefinition def, List<Player> players) {
         if (editor.locked(def.id())) return Refusal.EDITING;
         if (players.size() < def.minPlayers()) return Refusal.TOO_FEW;
         if (players.size() > def.maxPlayers()) return Refusal.TOO_MANY;
@@ -236,19 +264,31 @@ public final class Runs {
 
     /** Opens the launch screen for these players (checked before): the run starts once they are all ready. */
     /** Opens the launch screen at this difficulty level (-1: the default one). */
-    public void prepare(DungeonDefinition def, List<Player> players, int level) {
-        lobby.open(def, players, level);
+    public void prepare(DungeonDefinition def, List<Player> players, int level, boolean free) {
+        lobby.open(def, players, level, free);
     }
 
-    /** Everybody is ready on the launch screen: checked again, then started. */
-    private void launch(DungeonDefinition def, List<Player> players, int level) {
+    /** Everybody is ready on the launch screen: checked again, the leader's key spent, then started. */
+    private void launch(DungeonDefinition def, List<Player> players, int level, boolean free) {
         // the file as it is now: a launch screen opened before /fluxdungeons reload still held the former one
         DungeonDefinition current = dungeons.get(def.id());
         if (current != null) def = current;
-        Refusal refusal = check(def, players);
+        Refusal refusal = check(def, players, free);
         if (refusal != Refusal.NONE) {
-            for (Player p : players) plugin.messages().send(p, "lobby.refused");
+            for (Player p : players) {
+                plugin.messages().send(p, refusal == Refusal.NO_KEY ? "lobby.refused-key" : "lobby.refused",
+                        "%job%", keys == null ? def.job() : keys.jobName(def.job()));
+            }
             return;
+        }
+        if (!free && keys != null && !players.isEmpty() && !keys.spend(players.get(0), def)) {
+            for (Player p : players) plugin.messages().send(p, "lobby.refused-key", "%job%", keys.jobName(def.job()));
+            return;
+        }
+        if (!free && keys != null && !players.isEmpty() && keys.needs(players.get(0), def)) {
+            for (Player p : players) {
+                plugin.messages().send(p, "keys.spent", "%player%", players.get(0).getName(), "%job%", keys.jobName(def.job()));
+            }
         }
         start(def, players, level);
     }
@@ -1143,6 +1183,10 @@ public final class Runs {
         List<Player> party = fighters(run);
         double xp = rpg == null || t == null ? 0 : rpg.killXp(mob, t);
         if (xp > 0) for (Player p : party) giveXp(p, xp);
+        // dungeon tokens spring out of it, for every fighter of the party
+        if (tokens != null && t != null) {
+            tokens.award(mob.getLocation(), party, tokens.amount(t.boss() ? "BOSS" : t.extra() == null ? "TRASH" : t.extra().rank(), run.levelSpec().reward()), run.tokens);
+        }
         if (objective != null && run.objectivesLeft.remove(objective)) {
             for (Player p : online(run)) hook(run, "objective", p, objective);
             broadcast(run, "objective.done", "%done%", String.valueOf(run.objectivesDone()), "%total%", String.valueOf(run.objectivesTotal));
@@ -1198,42 +1242,54 @@ public final class Runs {
 
     // ---------------------------------------------------------------- end
 
+    /**
+     * The boss is dead: money, rpg experience, loot, boosters of the dungeon's job, then everybody is taken back to
+     * the rpg lobby at once (next tick: the monster's death is still being handled), where {@link
+     * fr.influencraft.fluxdungeons.reward.Victory} congratulates them (title, fireworks, summary, boss pet).
+     */
+    /** Money of a victory of this dungeon at this difficulty level (index). */
+    public double victoryMoney(DungeonDefinition def, int level) {
+        double perSecond = Values.moneyPerSecond();
+        List<DungeonDefinition.Level> levels = def.levels();
+        double reward = levels.get(Math.max(0, Math.min(level, levels.size() - 1))).reward();
+        return Economy.round(def.rewardMinutes() * 60 * (perSecond > 0 ? perSecond : fallbackMoneyPerMinute / 60) * reward);
+    }
+
     private void victory(Run run) {
         if (run.state != Run.State.RUNNING) return;
         run.state = Run.State.ENDING;
         hideBossBar(run);
         long seconds = (System.currentTimeMillis() - run.started) / 1000;
-        double perSecond = Values.moneyPerSecond();
-        double money = Economy.round(run.def.rewardMinutes() * 60 * (perSecond > 0 ? perSecond : fallbackMoneyPerMinute / 60)
-                * run.levelSpec().reward());
-        for (Player p : online(run)) {
-            p.setGameMode(GameMode.ADVENTURE);
-            p.showTitle(Title.title(Texts.parse(plugin.messages().raw("run.victory")),
-                    Texts.parse(plugin.messages().raw("run.victory-sub", "%time%", Format.duration(seconds))),
-                    Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(4), Duration.ofMillis(800))));
+        double money = victoryMoney(run.def, run.level);
+        List<Player> winners = online(run);
+        Map<UUID, List<String>> loot = new HashMap<>();
+        for (Player p : winners) {
             endMusic(run, p, true);
             hook(run, "victory", p, null);
             if (money > 0) Economy.main().give(p, money, Origin.of(plugin, origin).detail(run.def.name()).notifyPlayer());
             if (rpg != null) giveXp(p, rpg.victoryXp(run.world == null ? p.getWorld() : run.world) * run.levelSpec().reward());
             List<String> found = new ArrayList<>();
-            for (DungeonDefinition.Loot loot : run.def.loot()) {
-                if (ThreadLocalRandom.current().nextDouble() >= loot.chance()) continue;
-                ItemStack item = CustomItems.item(loot.item(), p);
+            for (DungeonDefinition.Loot drop : run.def.loot()) {
+                if (ThreadLocalRandom.current().nextDouble() >= drop.chance()) continue;
+                ItemStack item = CustomItems.item(drop.item(), p);
                 if (item == null) {
-                    plugin.getLogger().warning("Unknown loot item " + loot.item() + " in dungeon " + run.def.id());
+                    plugin.getLogger().warning("Unknown loot item " + drop.item() + " in dungeon " + run.def.id());
                     continue;
                 }
-                item.setAmount(Math.max(1, loot.amount()));
+                item.setAmount(Math.max(1, drop.amount()));
                 deliver(p, List.of(item));
                 found.add("<lang:" + item.translationKey() + ">");
                 if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
                     found.set(found.size() - 1, Texts.ampersand(item.getItemMeta().displayName()));
                 }
             }
-            plugin.messages().send(p, found.isEmpty() ? "run.loot-none" : "run.loot", "%items%", String.join("&7, ", found));
-            plugin.messages().send(p, "run.leaving", "%seconds%", String.valueOf(returnDelay));
+            loot.put(p.getUniqueId(), found);
         }
-        Bukkit.getScheduler().runTaskLater(plugin, () -> stop(run), returnDelay * 20L);
+        Map<UUID, Integer> earned = new HashMap<>(run.tokens);
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            stop(run);
+            if (victories != null) victories.celebrate(run.def, run.level, seconds, winners, loot, earned);
+        });
     }
 
     private void fail(Run run, String reason) {

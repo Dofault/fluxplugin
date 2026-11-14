@@ -63,6 +63,11 @@ public final class FluxDungeons extends FluxPlugin {
     private fr.influencraft.fluxdungeons.combat.HealthBars healthBars;
 
     private fr.influencraft.fluxdungeons.rpg.RpgModule rpg;
+    /** Keys, tokens, end of a won run and the dungeon menus (2026-11-14). */
+    private fr.influencraft.fluxdungeons.reward.DungeonKeys keys;
+    private fr.influencraft.fluxdungeons.reward.DungeonTokens tokens;
+    private fr.influencraft.fluxdungeons.reward.Victory victory;
+    private fr.influencraft.fluxdungeons.menu.DungeonMenus menus;
     private fr.influencraft.fluxdungeons.combat.DamageNumbers damageNumbers;
 
     /**
@@ -77,6 +82,53 @@ public final class FluxDungeons extends FluxPlugin {
         if ("MINIBOSS".equals(r) || "MINI_BOSS".equals(r)) return "miniboss";
         if ("ELITE".equals(r)) return "elite";
         return "normal";
+    }
+
+    /** Dungeon keys, tokens, the end of a won run and the dungeon menus (reward and menu packages). */
+    private void wireRewards() {
+        tokens = new fr.influencraft.fluxdungeons.reward.DungeonTokens(this);
+        tokens.reload(getConfig().getConfigurationSection("tokens"));
+        victory = new fr.influencraft.fluxdungeons.reward.Victory(this, tokens);
+        victory.reload(getConfig().getConfigurationSection("victory"));
+        getServer().getPluginManager().registerEvents(victory, this);
+        try {
+            keys = new fr.influencraft.fluxdungeons.reward.DungeonKeys(this, () -> runs.dungeons());
+            getServer().getPluginManager().registerEvents(keys, this);
+        } catch (java.sql.SQLException e) {
+            getLogger().severe("Dungeon keys unavailable (no key needed to play): " + e.getMessage());
+        }
+        runs.rewards(keys, tokens, victory);
+        if (keys == null) return;
+        menus = new fr.influencraft.fluxdungeons.menu.DungeonMenus(this, new fr.influencraft.fluxdungeons.menu.DungeonMenus.Host() {
+            public java.util.Collection<DungeonDefinition> dungeons() {
+                return runs.dungeons();
+            }
+
+            public DungeonDefinition dungeon(String id) {
+                return runs.dungeon(id);
+            }
+
+            public String classLine(Player player) {
+                String[] c = rpgClass(player);
+                return c == null ? null : c[0] + " " + c[1];
+            }
+
+            public String partyLine(Player player) {
+                Party party = parties.of(player);
+                return party == null ? messages().raw("menu.party-solo")
+                        : messages().raw("menu.party-of", "%count%", String.valueOf(party.size()), "%leader%", name(party.leader()));
+            }
+
+            public double victoryMoney(DungeonDefinition def, int level) {
+                return runs.victoryMoney(def, level);
+            }
+
+            public void play(Player player, DungeonDefinition def, int level) {
+                FluxDungeons.this.play(player, def, level);
+            }
+        }, keys, tokens);
+        menus.potions(p -> rpg != null && rpg.potions() != null
+                && fr.influencraft.fluxdungeons.rpg.RpgWorld.UNIVERSE.equals(fr.influencraft.flux.api.universe.Universes.of(p)));
     }
 
     private void wireRpg() {
@@ -176,6 +228,7 @@ public final class FluxDungeons extends FluxPlugin {
         // rpg universe (docs/technique/rpg.md): lobby world, classes, stats, combat engine, skills, /rpg, /classe
         rpg = new fr.influencraft.fluxdungeons.rpg.RpgModule(this);
         rpg.start();
+        wireRewards();
         // damage numbers of the whole server, in place of CMI's
         damageNumbers = new fr.influencraft.fluxdungeons.combat.DamageNumbers(this);
         damageNumbers.load(getConfig().getConfigurationSection("damage-numbers"));
@@ -235,7 +288,18 @@ public final class FluxDungeons extends FluxPlugin {
         });
         // a run has the player's screen: other plugins keep their boss bars and draws off it (tournaments)
         fr.influencraft.flux.api.client.Focus.register(this, player -> runs.runOf(player) != null);
-        placeholders("fluxdungeons", (player, params) -> runs.placeholder(player, params));
+        placeholders("fluxdungeons", (player, params) -> {
+            String v = player == null ? null : runs.lobby().placeholder(player, params);
+            if (v == null && player != null && menus != null) v = menus.placeholder(player, params);
+            return v != null ? v : runs.placeholder(player, params);
+        });
+        // buttons of the dungeon menus (menu.DungeonMenus, dungeon.Lobby)
+        fr.influencraft.flux.api.FluxApi.registerAction(this, "fluxdungeon", (player, view, argument) -> {
+            String[] a = argument.trim().split("\\s+");
+            if (a.length == 0) return;
+            if (a[0].equals("sas")) runs.lobby().act(player, java.util.Arrays.copyOfRange(a, 1, a.length));
+            else if (menus != null) menus.act(player, a);
+        });
         combat = new fr.influencraft.fluxdungeons.combat.CombatRules(this, runs, mobs);
         combat.hitReaction(getConfig().getConfigurationSection("hit-reaction"));
         wireRpg();
@@ -261,11 +325,25 @@ public final class FluxDungeons extends FluxPlugin {
                 .executor(this::onAdmin)
                 .completer(this::completeAdmin)
                 .register();
+        command("potions")
+                .description("Rpg: buy potions with dungeon tokens.")
+                .permission("fluxdungeons.play")
+                .executor((sender, label, args) -> {
+                    if (!(sender instanceof Player p)) {
+                        messages().send(sender, "players-only");
+                    } else if (rpg != null && rpg.potions() != null) {
+                        rpg.potions().shop(p);
+                    }
+                    return true;
+                })
+                .register();
         Bukkit.getScheduler().runTaskLater(this, runs::buildChanged, 40L);
     }
 
     @Override
     protected void disable() {
+        if (keys != null) keys.shutdown();
+        if (tokens != null) tokens.shutdown();
         if (rpg != null) rpg.stop();
         if (runs != null) runs.stopAll();
         if (mobs != null) mobs.removeAll();
@@ -320,6 +398,8 @@ public final class FluxDungeons extends FluxPlugin {
         if (rpg != null) rpg.aimAssist(getConfig().getConfigurationSection("aim-assist"));
         if (healthBars != null) healthBars.load(getConfig().getConfigurationSection("health-bar"));
         if (combat != null) combat.hitReaction(getConfig().getConfigurationSection("hit-reaction"));
+        if (tokens != null) tokens.reload(getConfig().getConfigurationSection("tokens"));
+        if (victory != null) victory.reload(getConfig().getConfigurationSection("victory"));
         // spells first: monsters take them by id
         fr.influencraft.fluxdungeons.mob.Spells.load(new File(getDataFolder(), "spells"), getLogger());
         List<org.bukkit.configuration.ConfigurationSection> mobFiles = new ArrayList<>();
@@ -361,6 +441,7 @@ public final class FluxDungeons extends FluxPlugin {
         defs.values().stream().sorted(java.util.Comparator.comparingInt(DungeonDefinition::recommendedLevel))
                 .forEach(d -> sorted.put(d.id(), d));
         runs.load(sorted);
+        if (keys != null) keys.reload(getConfig().getConfigurationSection("keys"));
         writePages(sorted.values());
     }
 
@@ -459,8 +540,9 @@ public final class FluxDungeons extends FluxPlugin {
         switch (sub) {
             case "" -> {
                 if (runs.lobby().reopen(p)) return true;
-                // the full screen selector; the window for a player in a run (leave button) or who cannot see pages
-                if (runs.runOf(p) != null || !fr.influencraft.flux.api.screen.Screens.open(p, DungeonPages.LIST)) openMain(p);
+                // the dungeon menus; the window for a player in a run (leave button)
+                if (runs.runOf(p) != null || menus == null) openMain(p);
+                else menus.open(p);
             }
             case "play", "jouer" -> {
                 if (args.length < 2) {
@@ -610,10 +692,16 @@ public final class FluxDungeons extends FluxPlugin {
     }
 
     private void start(CommandSender by, DungeonDefinition def, List<Player> players, int level) {
-        Runs.Refusal refusal = runs.check(def, players);
+        start(by, def, players, level, false);
+    }
+
+    /** {@code free}: started by the staff or Typewriter ({@code /fluxdungeons start}), no key spent. */
+    private void start(CommandSender by, DungeonDefinition def, List<Player> players, int level, boolean free) {
+        Runs.Refusal refusal = runs.check(def, players, free);
         switch (refusal) {
+            case NO_KEY -> messages().send(by, "start.no-key", "%job%", keys == null ? def.job() : keys.jobName(def.job()));
             case NONE -> {
-                runs.prepare(def, players, level);
+                runs.prepare(def, players, level, free);
                 if (!(by instanceof Player bp && players.contains(bp))) messages().send(by, "admin.started", "%dungeon%", def.name());
             }
             case TOO_FEW -> messages().send(by, "start.too-few", "%min%", String.valueOf(def.minPlayers()));
@@ -806,7 +894,21 @@ public final class FluxDungeons extends FluxPlugin {
                     return true;
                 }
                 Party party = parties.of(target);
-                start(sender, def, party == null ? List.of(target) : party.online(), -1);
+                start(sender, def, party == null ? List.of(target) : party.online(), -1, true);
+            }
+            case "keys", "cles" -> {
+                // /fluxdungeons keys <player> <job> <amount>: gives (or takes, negative) dungeon keys
+                if (args.length < 4 || keys == null) return usage(sender);
+                org.bukkit.OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
+                int n;
+                try {
+                    n = Integer.parseInt(args[3]);
+                } catch (NumberFormatException e) {
+                    return usage(sender);
+                }
+                int now = keys.add(target.getUniqueId(), args[2].toLowerCase(Locale.ROOT), n);
+                messages().send(sender, "admin.keys", "%player%", String.valueOf(target.getName()), "%job%", keys.jobName(args[2]),
+                        "%amount%", String.valueOf(now));
             }
             case "stop" -> {
                 if (args.length < 2) return usage(sender);

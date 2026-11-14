@@ -31,6 +31,7 @@ start:
   busy: '&#FF5C5C%player% is already in a dungeon.'
   no-slot: '&#FF5C5CEvery dungeon is taken, try again in a few minutes.'
   failed: '&#FF5C5CThe dungeon could not start.'
+  no-key: '&#FF5C5CYou need a %job% dungeon key: it drops while doing that job (Careers menu).'
 party:
   class: " &7(%class%&7)"
   member: "&f%name%"
@@ -69,10 +70,14 @@ run:
   victory-sub: '&#B376E5Dungeon cleared in &f%time%'
   loot: '&#FFD94DLoot: %items%'
   loot-none: '&#B376E5No loot this time.'
-  leaving: '&#B376E5Back in &f%seconds% s&#B376E5.'
   defeat: '&#FF5C5CDefeat'
   loot-overflow-label: '&fLoot of a dungeon'
   loot-overflow: '&#B376E5Your inventory was full: the rest waits for you in &f[/%flux_cmd_flux_rewards%]&#B376E5.'
+  tokens: '&#FFD94DDungeon tokens won: %amount%'
+  boosters: '&#FFD94D%amount% × %booster% &#B376E5wait in &f[/%flux_cmd_flux_rewards%]&#B376E5.'
+  boosters-label: '&fReward of the %dungeon% dungeon'
+  pet-adopted: '&#FFD94DThe beaten boss becomes your pet: %pet%&#FFD94D! &#B376E5It waits in &f[/pets]&#B376E5.'
+  pet-card: '&#B376E5You already have %pet%&#B376E5: its card waits in &f[/%flux_cmd_flux_rewards%]&#B376E5.'
 room:
   fight: '&#B376E5The monsters wake up'
   boss: '&#FF5C5CThe guardian wakes up'
@@ -99,8 +104,11 @@ admin:
   no-runs: '&#B376E5No run in progress.'
   run-line: '&#FFD94D%id% &f%dungeon% &7%state% &#B376E5%players%'
   reloaded: '&#2ECF7BFluxDungeons reloaded.'
+  keys: '&#2ECF7B%player% now has &f%amount%&#2ECF7B %job% dungeon key(s).'
 origins:
   victory: Dungeon victory
+  dungeon_kill: 'Dungeon monster'
+  potion: 'Potion'
 objective:
   preparing: '&#B376E5Preparing the dungeon...'
   ending: '&#2ECF7BDungeon cleared'
@@ -215,39 +223,46 @@ create:
   copying: '&#B376E5Copying the world &f%world%&#B376E5...'
   created: '&#2ECF7BDungeon %dungeon% created. Set its name and reward in dungeons/%dungeon%.yml.'
 lobby:
-  rpg-gear: "&#FFD94DRpg gear"
-  rpg-gear-desc: "You play with your rpg gear: your class weapon, armour and spells (clicks, A, F). Nothing is set aside and nothing is lost."
   difficulty: 'Difficulty: %level%'
-  difficulty-desc: Chosen by the party leader, for the whole party.
-  difficulty-spells: Special attacks
-  spells-on: "yes"
-  spells-count: '%count% per monster (more for bosses)'
-  spells-off: "no"
-  difficulty-next: Harder
-  difficulty-prev: Easier
+  difficulty-desc: 'Chosen by the party leader, for the whole party.'
+  difficulty-spells: 'Special attacks'
+  difficulty-boosters: 'Boosters won'
+  difficulty-chosen: 'Chosen difficulty'
+  difficulty-choose: 'Choose'
   difficulty-leader: '%player% chooses the difficulty.'
-  title: 'Getting ready: %dungeon%'
-  leave: Leave
-  leave-desc: Cancels the launch for the whole party.
-  leave-action: Leave
-  players: Players
-  level: Recommended level
-  class: Class
-  class-change: Change class
+  spells-on: 'yes'
+  spells-count: '%count% per monster (more for bosses)'
+  spells-off: 'no'
+  field: '%dungeon% · %level%'
+  field-job: '%job% dungeon'
+  ready-count: 'Ready: %ready%/%total%'
+  leave: 'Leave'
+  leave-desc: 'Cancels the launch for the whole party.'
+  leave-action: 'Leave'
+  players: 'Players'
+  level: 'Advised level'
+  class: 'Class'
+  class-change: 'Change class'
+  class-desc: 'Your rpg class: your weapon, spells and stats in the dungeon.'
+  no-class: '&#FF5C5CNo class'
+  leader: 'Party leader'
   head-ready: '&#2ECF7BReady'
-  head-view: See their gear
-  armor-empty: No armour
-  ready: Ready
-  not-ready: Not ready
-  ready-action: I am ready
-  unready-action: I am not ready
+  head-waiting: '&7Not ready yet'
+  ready: 'Ready'
+  not-ready: 'Not ready'
+  ready-action: 'I am ready'
+  unready-action: 'I am not ready any more'
+  ready-desc: '%ready%/%total% players ready. The dungeon starts once everybody is. If you die, you watch the others finish: nothing is lost.'
+  key: 'Dungeon key'
+  key-desc: '%player% (party leader) spends a key of the dungeon once everybody is ready. It drops while doing the dungeon''s job.'
+  key-owned: 'Leader''s keys'
+  key-ok: 'The leader has a key'
+  key-missing: 'The leader has no key'
+  key-free: 'No key to spend for this launch.'
   cancelled: '&#FF5C5CLaunch of %dungeon% cancelled by %player%.'
   expired: '&#FF5C5CLaunch of %dungeon% cancelled.'
   refused: '&#FF5C5CThe dungeon could not start, launch it again with &f[/%flux_cmd_fluxdungeons_dungeon%]&#FF5C5C.'
-  ready-desc: '%ready%/%total% players ready. The dungeon starts once everybody is ready. If you die, you watch the others finish: nothing is lost.'
-  head-waiting: '&7Not ready yet'
-  no-class: '&#FF5C5CNo class'
-  class-desc: 'Your rpg class: your weapon, your skills and your stats in the dungeon.'
+  refused-key: '&#FF5C5CThe party leader has no %job% dungeon key left: the dungeon does not start.'
 door:
   kills: '&#FF5C5C☠ &f%done%&7/&f%needed% &7monsters'
   opened: '&#B376E5A door opens...'
@@ -626,3 +641,87 @@ showcase:
       a: "Brambles tear, slow and seed whatever crosses them."
       right: "The vine grabs the monster and pulls the druid to it."
       f: "A man-eating plant bites whatever comes near, then heals as it withers."
+keys:
+  found: '&#FFD94D+%amount% %job% dungeon key &#B376E5(you have &f%total%&#B376E5). It launches the %job% dungeon in the rpg world &f[/rpg]&#B376E5.'
+  spent: '&#B376E5%player% spends a %job% dungeon key.'
+  button-name: '%job% dungeon key'
+  button-description: 'Every paid action of this job may drop the key of its dungeon. The more the action pays, the higher the chance.'
+  button-use: 'It launches %dungeon% in the rpg world: the party leader spends one.'
+  button-average: 'On average'
+  button-every: '1 key every %minutes% min of work'
+  button-owned: 'Your keys'
+  line: 'Dungeon key'
+  line-always: 'every time'
+  line-one-in: '1 chance in %n%'
+menu:
+  close: 'Close'
+  close-action: 'Close'
+  back: 'Back'
+  back-action: 'Every dungeon'
+  info: 'Dungeons'
+  info-desc: 'Every job has its dungeon and its boss. Click a boss to see its dungeon and what it gives.'
+  info-keys: 'To launch a dungeon the party leader spends a key of its job: it drops while doing that job.'
+  info-rewards: 'The beaten boss becomes your legendary pet. Monsters drop dungeon tokens, traded for potions.'
+  job: 'Job'
+  players: 'Players'
+  level: 'Advised level'
+  keys: 'Your keys'
+  pet-owned: 'Its boss is already your pet'
+  see: 'See the dungeon'
+  no-class: '&#FF5C5CNo class'
+  class-desc: 'Your rpg class, its level and spells.'
+  class-action: 'Change class'
+  party: 'Party'
+  party-desc: 'The leader launches the dungeon for the whole party.'
+  party-action: 'Manage the party'
+  party-solo: 'You play alone.'
+  party-of: 'Party of %count% players, leader: %leader%.'
+  tokens: 'Dungeon tokens'
+  tokens-desc: 'They spring out of beaten monsters. The potion merchant of the rpg lobby trades them for potions.'
+  tokens-owned: 'Your tokens'
+  potions-action: 'Buy potions'
+  key: '%job% dungeon key'
+  key-desc: 'The party leader spends one to launch this dungeon. It drops while doing the %job% job.'
+  key-ok: 'You can launch this dungeon'
+  key-missing: 'You need a key'
+  key-free: 'You need no key.'
+  level-name: 'Play in %level%'
+  level-desc: 'Launches the dungeon for your party at this difficulty.'
+  level-health: 'Monsters'' life'
+  level-damage: 'Monsters'' damage'
+  level-spells: 'Special attacks'
+  level-boosters: 'Boosters won'
+  level-key: 'Spends a %job% dungeon key'
+  level-play: 'Play'
+loot:
+  pet-desc: 'The beaten boss becomes your pet: adopted on your first victory, its card afterwards.'
+  pet-mount: 'Mount from level 5, takes 3 slots.'
+  pet-owned: 'Already adopted: you win its card'
+  rarity: 'Rarity'
+  boosters: 'Job boosters'
+  boosters-desc: 'Boosters of the dungeon''s job, by difficulty. They wait in /rewards.'
+  tokens-desc: 'Every beaten monster drops for each player of the party:'
+  tokens-levels: 'More in Normal and Hard.'
+  rank:
+    trash: 'Monster'
+    elite: 'Elite'
+    miniboss: 'Mini-boss'
+    boss: 'Boss'
+  money: 'Money'
+  money-desc: 'Given to each player on a victory, by difficulty:'
+  chance: 'Chance'
+potions:
+  title: 'Potion merchant'
+  gives-health: 'Gives back %share% % of your life at once.'
+  gives-mana: 'Gives back %share% % of your mana at once.'
+  level: 'Level needed'
+  cooldown: 'Cooldown'
+  drink: 'Drink'
+  wait: '&#FF5C5C%seconds% s more before another potion of this kind.'
+  full-health: '&#B376E5Your life is full.'
+  full-mana: '&#B376E5Your mana is full.'
+  not-rpg: '&#FF5C5CPotions are sold by the merchant of the rpg world &f[/rpg]&#FF5C5C.'
+  closed: '&#FF5C5CThe merchant is closed for now.'
+  level-ok: 'You can buy it'
+  level-needed: '&#FF5C5CLevel %level% needed'
+  no-tokens: '&#FF5C5CYou do not have enough dungeon tokens.'

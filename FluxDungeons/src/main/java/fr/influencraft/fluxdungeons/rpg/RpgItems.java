@@ -28,6 +28,9 @@ public final class RpgItems {
     private final ItemCatalog catalog;
     private Equipment equipment;
     private StatRegistry stats;
+    /** Other rpg items made with the equipment each time it loads (potions). */
+    private java.util.function.Consumer<ItemCatalog> extras = c -> {
+    };
 
     RpgItems(FluxPlugin plugin) {
         this.plugin = plugin;
@@ -58,9 +61,16 @@ public final class RpgItems {
                 .right(plugin.messages().raw("kit.menu.open")).build());
         menu.set("universe", RpgWorld.UNIVERSE);
         catalog.add(MENU, menu);
+        extras.accept(catalog);
     }
 
     /** Id of the apprentice weapon of a class: the one weapon its characters always carry ({@link RpgKit}). */
+    /** Other rpg items to make with the equipment (potions), made again on each load. */
+    void extras(java.util.function.Consumer<ItemCatalog> extras) {
+        this.extras = extras == null ? c -> {
+        } : extras;
+    }
+
     public static String starterId(String classId) {
         return "class_" + classId + "_weapon";
     }

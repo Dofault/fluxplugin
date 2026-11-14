@@ -1,0 +1,14 @@
+# Potions du RPG (2026-11-14) : objets fluxrpg:potion_<id>, clic droit pour boire. Vendues en jetons de donjon par le
+# marchand de potions du lobby RPG (/potions, PNJ Typewriter), chacune à partir de son niveau RPG.
+# type : health (vie) ou mana ; share : part de la vie ou du mana max rendue d'un coup ; price : en jetons de donjon.
+# cooldown : secondes entre deux potions du même type.
+cooldown: 8
+potions:
+  soin_1: {type: health, share: 0.25, level: 1, price: 4, name: "&#FF5C5CPetite potion de soin", icon: "itemsadder:fluxdonjon:potion_soin_1"}
+  soin_2: {type: health, share: 0.35, level: 12, price: 8, name: "&#FF5C5CPotion de soin", icon: "itemsadder:fluxdonjon:potion_soin_2"}
+  soin_3: {type: health, share: 0.45, level: 25, price: 14, name: "&#FF5C5CGrande potion de soin", icon: "itemsadder:fluxdonjon:potion_soin_3"}
+  soin_4: {type: health, share: 0.6, level: 40, price: 22, name: "&#FF5C5CPotion de soin suprême", icon: "itemsadder:fluxdonjon:potion_soin_4"}
+  mana_1: {type: mana, share: 0.25, level: 1, price: 4, name: "&#2BC4E8Petite potion de mana", icon: "itemsadder:fluxdonjon:potion_mana_1"}
+  mana_2: {type: mana, share: 0.35, level: 12, price: 8, name: "&#2BC4E8Potion de mana", icon: "itemsadder:fluxdonjon:potion_mana_2"}
+  mana_3: {type: mana, share: 0.45, level: 25, price: 14, name: "&#2BC4E8Grande potion de mana", icon: "itemsadder:fluxdonjon:potion_mana_3"}
+  mana_4: {type: mana, share: 0.6, level: 40, price: 22, name: "&#2BC4E8Potion de mana suprême", icon: "itemsadder:fluxdonjon:potion_mana_4"}
