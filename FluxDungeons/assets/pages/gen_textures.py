@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
-"""Pixel textures and icons of the rpg pages (Codex des Destins look), drawn here, never taken from a texture pack.
+"""Pixel icons of the stats on the rpg pages, drawn here, never taken from a texture pack.
 
-Writes FluxDungeons/src/main/resources/pages/img/ : tex_stone, tex_parchment, tex_wood, tex_iron (16 x 16 tiles scaled
-4 times, nearest neighbour: the page engine draws them as they are) and the stat icons ico_<stat> (16 x 16 scaled 2
-times). ClassPages copies them next to the pages. Needs Pillow (a venv): <venv>/python3 gen_textures.py
+Writes FluxDungeons/src/main/resources/pages/img/ico_<stat>.png (16 x 16 scaled 2 times, nearest neighbour: the page
+engine draws them as they are). ClassPages copies them next to the pages. Needs Pillow (a venv):
+<venv>/python3 gen_textures.py
 """
 import os
-import random
 
 from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.normpath(os.path.join(HERE, "..", "..", "src", "main", "resources", "pages", "img"))
-r = random.Random(1616)
 
 
 def hexc(h, a=255):
@@ -22,81 +20,6 @@ def hexc(h, a=255):
 def save(img, name, k):
     os.makedirs(OUT, exist_ok=True)
     img.resize((img.width * k, img.height * k), Image.NEAREST).save(os.path.join(OUT, name + ".png"))
-
-
-def jitter(c, d):
-    return tuple(max(0, min(255, v + r.randint(-d, d))) for v in c[:3]) + (c[3],)
-
-
-def stone():
-    """Dark slate bricks with a violet hint: two rows of 8 x 4 bricks, offset, mortar lines, chipped corners."""
-    im = Image.new("RGBA", (16, 16))
-    mortar, bases = hexc("#18141f"), [hexc("#3a3448"), hexc("#332e40"), hexc("#403a50"), hexc("#2e2a3a")]
-    for y in range(16):
-        for x in range(16):
-            row = y // 4
-            off = 4 if row % 2 else 0
-            bx = (x + off) % 8
-            if y % 4 == 3 or bx == 7:
-                im.putpixel((x, y), mortar)
-                continue
-            base = bases[((x + off) // 8 + row * 3) % 4]
-            c = jitter(base, 5)
-            if y % 4 == 0 and bx < 6:
-                c = tuple(min(255, v + 14) for v in c[:3]) + (255,)        # light from above
-            if bx == 6 or y % 4 == 2:
-                c = tuple(max(0, v - 10) for v in c[:3]) + (255,)
-            im.putpixel((x, y), c)
-    return im
-
-
-def parchment():
-    im = Image.new("RGBA", (16, 16))
-    for y in range(16):
-        for x in range(16):
-            c = jitter(hexc("#e6d3a8"), 6)
-            if r.random() < 0.08:
-                c = jitter(hexc("#d4bc88"), 5)
-            if r.random() < 0.015:
-                c = hexc("#b89a64")
-            im.putpixel((x, y), c)
-    return im
-
-
-def wood():
-    """Dark oak planks: four boards of 4 pixels, grain lines, a nail head."""
-    im = Image.new("RGBA", (16, 16))
-    tones = [hexc("#5c3b22"), hexc("#53351f"), hexc("#61402a"), hexc("#4f321d")]
-    for y in range(16):
-        for x in range(16):
-            board = y // 4
-            c = jitter(tones[board], 4)
-            if y % 4 == 3:
-                c = hexc("#2c1b0f")
-            elif y % 4 == 0:
-                c = tuple(min(255, v + 12) for v in c[:3]) + (255,)
-            elif (x * 7 + board * 5) % 11 == 0:
-                c = tuple(max(0, v - 16) for v in c[:3]) + (255,)
-            im.putpixel((x, y), c)
-    for (x, y) in ((2, 1), (13, 9)):
-        im.putpixel((x, y), hexc("#9a8f80"))
-    return im
-
-
-def iron():
-    im = Image.new("RGBA", (16, 16))
-    for y in range(16):
-        for x in range(16):
-            c = jitter(hexc("#5e5a66"), 6)
-            if x in (0, 15) or y in (0, 15):
-                c = hexc("#2a2730")
-            elif x == 1 or y == 1:
-                c = hexc("#8a8594")
-            im.putpixel((x, y), c)
-    for (x, y) in ((3, 3), (12, 3), (3, 12), (12, 12)):
-        im.putpixel((x, y), hexc("#c8c2d0"))
-        im.putpixel((x + 1, y + 1), hexc("#3a3640"))
-    return im
 
 
 # 16 x 16 icons: '.' empty, letters from the palette
@@ -149,10 +72,6 @@ def icon(rows):
 
 
 if __name__ == "__main__":
-    save(stone(), "tex_stone", 4)
-    save(parchment(), "tex_parchment", 4)
-    save(wood(), "tex_wood", 4)
-    save(iron(), "tex_iron", 4)
     for name, rows in ICONS.items():
         assert len(rows) == 16 and all(len(x) == 16 for x in rows), name
         save(icon(rows), "ico_" + name, 2)

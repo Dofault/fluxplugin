@@ -1,24 +1,26 @@
-/* Pages of the rpg (FluxDungeons rpg.ClassPages), drawn by MC GUI: 1024 x 576 CSS pixels.
-   Look "Codex des Destins": a hero's book on a table of dark slate, parchment pages framed in dark oak and iron, pixel
-   font (Minecraft) on an 8 pixel grid, pixel textures and icons of our own (assets/pages/gen_textures.py), wax seals
-   of the class colours. No soft web shadows: hard pixel bevels only. */
+/* Pages of FluxDungeons (pages.DungeonPages, rpg.ClassPages), drawn by MC GUI: 1024 x 576 CSS pixels.
+   Look: the plain Minecraft interface. A light grey title bar, dark grey windows with hard bevels, inventory slots,
+   stone buttons (green for the main action), the Minecraft font on a 2 pixel grid (8 px small, 16 px large) in white
+   with its drop shadow. Nothing of our own art direction here: no texture, no soft shadow, no rounded corner.
+   The page is an overlay (ui:overlay): nothing is painted round the windows, the blurred world shows there. */
 :root {
-  --ink: #3b2414;
-  --ink2: #6b4a2b;
-  --rubric: #8c2a1c;
-  --paper: #e6d3a8;
-  --paper2: #d4bc88;
-  --wood: #4f321d;
-  --woodlight: #8a5a33;
-  --wooddark: #24160c;
-  --night: #120d18;
+  --white: #ffffff;
+  --grey: #aaaaaa;
+  --dim: #7e7e86;
+  --shadow: #3f3f3f;
   --gold: #ffd94d;
-  --gold2: #f0a800;
-  --violet: #b376e5;
+  --green: #55ff55;
+  --red: #ff5555;
+  --aqua: #55ffff;
+  --light: #c6c6c6;
+  --window: #4b4c53;
+  --well: #3a3b42;
+  --card: #1f212b;
+  --line: #b9b9c2;
   --hp: #d8383a;
   --mp: #3fa9f5;
-  --xp: #2ecf7b;
-  --accent: #b376e5;
+  --xp: #7ed321;
+  --accent: #ffd94d;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -29,274 +31,254 @@ body {
   overflow: hidden;
   position: relative;
   font-family: Minecraft, Monocraft, monospace;
-  font-size: 16px;
-  color: var(--ink);
-  background-color: #2a2533;
-  background-image: url(img/tex_stone.png);
-  background-repeat: repeat;
-}
-/* a dark vignette over the stone */
-body::before {
-  content: "";
-  position: absolute;
-  left: 0; top: 0; width: 1024px; height: 576px;
-  background: radial-gradient(ellipse 620px 360px at 50% 46%, rgba(18, 13, 24, 0), rgba(18, 13, 24, 0.82));
+  font-size: 8px;
+  line-height: 12px;
+  color: var(--white);
+  text-shadow: 1px 1px 0 var(--shadow);
 }
 
 a { color: inherit; text-decoration: none; }
+b { font-weight: normal; }
+em { font-style: normal; }
+
+/* large text: twice the small one, its shadow too */
+h1, h2, h3, .btn, .big { font-size: 16px; line-height: 20px; font-weight: normal; text-shadow: 2px 2px 0 var(--shadow); }
 
 /* ---------------------------------------------------------------- building blocks */
 
-/* dark oak frame round a panel, iron corners, a hard bevel */
-.frame {
+/* the light title bar of every page: its name on the left, the player on the right */
+.titlebar {
   position: absolute;
-  background-color: var(--wood);
-  background-image: url(img/tex_wood.png);
-  padding: 8px;
-  box-shadow: inset 0 0 0 2px var(--wooddark), inset 2px 2px 0 4px var(--woodlight), 0 4px 0 0 rgba(0, 0, 0, 0.55);
+  left: 24px; top: 16px; width: 976px; height: 44px;
+  background: var(--light);
+  box-shadow: inset 0 0 0 2px #000000, inset 4px 4px 0 0 #ffffff, inset -4px -4px 0 0 #555555;
+  color: #3f3f3f;
+  text-shadow: none;
 }
-.frame > .inner {
-  width: 100%;
-  height: 100%;
+.titlebar h1 { position: absolute; left: 16px; top: 13px; color: #3f3f3f; text-shadow: none; }
+.titlebar h1 em { font-size: 8px; color: #ffffff; background: #3f3f3f; padding: 3px 4px 1px 4px; margin-left: 10px; vertical-align: middle; }
+.titlebar .who { position: absolute; right: 16px; top: 10px; height: 24px; font-size: 16px; line-height: 26px; color: #555555; }
+.titlebar .who img { width: 24px; height: 24px; vertical-align: top; margin-left: 8px; }
+
+/* a dark grey window */
+.panel {
+  position: absolute;
+  left: 24px; top: 72px; width: 976px; height: 440px;
+  background: var(--window);
+  box-shadow: inset 0 0 0 2px #17171b, inset 4px 4px 0 0 #7b7b84, inset -4px -4px 0 0 #2c2c32;
+}
+/* an area inside a window */
+.well {
+  position: absolute;
+  background: var(--well);
+  box-shadow: inset 0 0 0 2px #77777f;
+  padding: 12px;
+}
+
+h2 { color: var(--gold); margin-bottom: 8px; }
+h4 { font-size: 8px; line-height: 12px; font-weight: normal; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; margin: 0 0 6px 0; }
+.rule { height: 2px; background: #5c5d66; margin: 10px 0; }
+
+/* an inventory slot, a picture inside */
+.slot {
   position: relative;
-  box-shadow: inset 0 0 0 2px var(--wooddark);
-}
-.parchment {
-  background-color: var(--paper);
-  background-image: url(img/tex_parchment.png);
-  box-shadow: inset 0 0 0 2px var(--wooddark), inset 0 0 0 6px rgba(140, 100, 50, 0.25);
-}
-.night {
-  background-color: var(--night);
-  background-image: linear-gradient(180deg, rgba(91, 45, 158, 0.35), rgba(18, 13, 24, 0) 70%);
-}
-.corner {
-  position: absolute;
-  width: 16px; height: 16px;
-  background-image: url(img/tex_iron.png);
-  background-size: 16px 16px;
-  box-shadow: 0 0 0 2px var(--wooddark);
-}
-.corner.tl { left: -4px; top: -4px; } .corner.tr { right: -4px; top: -4px; }
-.corner.bl { left: -4px; bottom: -4px; } .corner.br { right: -4px; bottom: -4px; }
-
-/* the carved plaque of a page title */
-.plaque {
-  position: absolute;
-  left: 312px; top: 12px; width: 400px; height: 64px;
-  text-align: center;
-  background-color: var(--wood);
-  background-image: url(img/tex_wood.png);
-  box-shadow: inset 0 0 0 2px var(--wooddark), inset 2px 2px 0 4px var(--woodlight), 0 4px 0 0 rgba(0, 0, 0, 0.55);
-  padding-top: 8px;
-}
-.plaque .kicker { font-size: 8px; letter-spacing: 2px; color: var(--paper2); }
-.plaque .kicker em { font-style: normal; color: var(--wooddark); background: var(--gold); padding: 0 4px; margin-left: 4px; }
-.plaque h1 { font-size: 24px; color: var(--gold); text-shadow: 2px 2px 0 var(--wooddark); margin-top: 4px; font-weight: normal; }
-
-h2 {
-  font-size: 16px;
-  font-weight: normal;
-  color: var(--rubric);
-  letter-spacing: 1px;
-  text-align: center;
-  margin-bottom: 8px;
-}
-h2::after {
-  content: "";
   display: block;
-  width: 120px; height: 2px;
-  margin: 6px auto 0 auto;
-  background: linear-gradient(90deg, rgba(140, 42, 28, 0), var(--rubric), rgba(140, 42, 28, 0));
+  width: 40px; height: 40px;
+  background: #8b8b8b;
+  box-shadow: inset 2px 2px 0 0 #373737, inset -2px -2px 0 0 #ffffff;
 }
+.slot img { position: absolute; left: 4px; top: 4px; width: 32px; height: 32px; }
+.slot.large { width: 104px; height: 104px; }
+.slot.large img { left: 4px; top: 4px; width: 96px; height: 96px; }
+.slot.medium { width: 72px; height: 72px; }
+.slot.medium img { left: 4px; top: 4px; width: 64px; height: 64px; }
 
-/* pixel bars: a dark frame, a segmented fill, a light line on top */
+/* buttons: stone, a white outline under the pointer; green for the main action */
+.btn {
+  display: inline-block;
+  height: 36px;
+  padding: 9px 16px 0 16px;
+  text-align: center;
+  color: var(--white);
+  background: #6f6f6f;
+  box-shadow: inset 0 0 0 2px #000000, inset 4px 4px 0 0 #a8a8a8, inset -4px -6px 0 0 #545454;
+}
+.btn:hover { color: #ffffa0; box-shadow: inset 0 0 0 2px #ffffff, inset 4px 4px 0 0 #bcc4e8, inset -4px -6px 0 0 #5a6090; background: #7c86be; }
+.btn:active { padding-top: 11px; box-shadow: inset 0 0 0 2px #ffffff, inset 4px 6px 0 0 #545454; }
+.btn.go { background: #3c8527; box-shadow: inset 0 0 0 2px #000000, inset 4px 4px 0 0 #63b548, inset -4px -6px 0 0 #1d4d13; }
+.btn.go:hover { color: #ffffff; background: #4a9c31; box-shadow: inset 0 0 0 2px #ffffff, inset 4px 4px 0 0 #7ccc60, inset -4px -6px 0 0 #1d4d13; }
+.btn.mid { background: #a8791c; box-shadow: inset 0 0 0 2px #000000, inset 4px 4px 0 0 #d9a93e, inset -4px -6px 0 0 #6b4a0c; }
+.btn.mid:hover { color: #ffffff; background: #bd8a22; box-shadow: inset 0 0 0 2px #ffffff, inset 4px 4px 0 0 #e8bc58, inset -4px -6px 0 0 #6b4a0c; }
+.btn.hard { background: #9c2b2b; box-shadow: inset 0 0 0 2px #000000, inset 4px 4px 0 0 #cf5252, inset -4px -6px 0 0 #5e1414; }
+.btn.hard:hover { color: #ffffff; background: #b13434; box-shadow: inset 0 0 0 2px #ffffff, inset 4px 4px 0 0 #e06a6a, inset -4px -6px 0 0 #5e1414; }
+/* the flat dark buttons of the bottom line */
+.btn.nav { background: #2b2c33; box-shadow: inset 0 0 0 2px var(--line); }
+.btn.nav:hover { color: #ffffa0; background: #3a3c48; box-shadow: inset 0 0 0 2px #ffffff; }
+
+/* the bottom line: where we are on the left, how to leave in the middle, buttons on the right */
+.footer { position: absolute; left: 24px; top: 524px; width: 976px; height: 36px; }
+.footer .where { position: absolute; left: 0; top: 9px; }
+.footer .hint { position: absolute; left: 0; right: 0; top: 13px; text-align: center; color: var(--grey); }
+.footer .left { position: absolute; left: 0; top: 0; }
+.footer .right { position: absolute; right: 0; top: 0; }
+.footer .right .btn { margin-left: 8px; }
+
+/* bars: a black frame, a flat fill with a light line on top */
 .bar {
   position: relative;
   height: 16px;
-  background: #1a1018;
+  background: #1b1b1f;
   box-shadow: inset 0 0 0 2px #000000;
-  margin: 4px 0 8px 0;
+  margin: 2px 0 8px 0;
 }
 .bar .fill {
   position: absolute;
   left: 2px; top: 2px; bottom: 2px;
   background-color: var(--fill);
-  background-image: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10px, rgba(0, 0, 0, 0.35) 10px, rgba(0, 0, 0, 0.35) 12px);
   box-shadow: inset 0 2px 0 0 rgba(255, 255, 255, 0.35), inset 0 -2px 0 0 rgba(0, 0, 0, 0.3);
 }
 .bar.xp { --fill: var(--xp); } .bar.hp { --fill: var(--hp); } .bar.mp { --fill: var(--mp); }
-.bar .txt { position: absolute; right: 6px; top: 4px; font-size: 8px; color: #ffffff; text-shadow: 1px 1px 0 #000000; }
-.label { font-size: 8px; color: var(--paper2); letter-spacing: 1px; }
+.bar .txt { position: absolute; right: 6px; top: 2px; color: #ffffff; text-shadow: 1px 1px 0 #000000; }
+.label { color: var(--grey); letter-spacing: 1px; }
 .label img { width: 16px; height: 16px; vertical-align: middle; margin-right: 4px; }
 
-/* buttons: wooden keys that sink when pressed */
-.btn {
-  display: inline-block;
-  padding: 8px 16px 6px 16px;
-  font-size: 16px;
-  color: var(--paper);
-  background-color: var(--wood);
-  background-image: url(img/tex_wood.png);
-  box-shadow: inset 0 0 0 2px var(--wooddark), inset 2px 2px 0 2px var(--woodlight), 0 4px 0 0 var(--wooddark);
-}
-.btn:hover { color: var(--gold); }
-.btn:active { box-shadow: inset 0 0 0 2px var(--wooddark), 0 2px 0 0 var(--wooddark); }
-.btn.primary { color: var(--wooddark); background-color: var(--gold2); background-image: none;
-  box-shadow: inset 0 0 0 2px var(--wooddark), inset 2px 2px 0 2px var(--gold), 0 4px 0 0 #6b3d00; }
-.btn.primary:hover { background-color: var(--gold); }
-.key { font-size: 8px; color: var(--paper2); margin-left: 6px; }
+.stars { color: var(--gold); }
+.stars s { text-decoration: none; color: #6a6b74; }
 
-.hint { position: absolute; left: 0; right: 0; bottom: 8px; text-align: center; font-size: 8px; color: rgba(230, 211, 168, 0.65); letter-spacing: 1px; }
-
-/* the wax seal of a class: its colour, its weapon */
-.seal {
+/* ================================================================ the dungeons */
+.dungeons .entries { position: absolute; left: 36px; top: 84px; width: 316px; height: 416px; }
+.entry {
   position: relative;
   display: block;
-  width: 64px; height: 64px;
-  border-radius: 32px;
-  background: radial-gradient(circle at 40% 35%, var(--accent), #2a1020 140%);
-  box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.45), inset 3px 3px 0 3px rgba(255, 255, 255, 0.18), 0 3px 0 0 rgba(0, 0, 0, 0.5);
+  height: 76px;
+  margin-bottom: 9px;
+  padding: 10px 28px 0 68px;
+  background: var(--card);
+  box-shadow: inset 0 0 0 2px var(--line);
 }
-.seal img { position: absolute; left: 6px; top: 6px; width: 52px; height: 52px; }
+.entry img { position: absolute; left: 10px; top: 14px; width: 48px; height: 48px; }
+.entry b { display: block; max-height: 40px; overflow: hidden; color: var(--accent); }
+.entry span { display: block; color: var(--grey); margin-top: 3px; }
+.entry i { position: absolute; right: 10px; top: 28px; font-style: normal; font-size: 16px; line-height: 20px; color: var(--line); text-shadow: 2px 2px 0 var(--shadow); }
+.entry:hover { background: #2a2d3b; box-shadow: inset 0 0 0 2px #ffffff; }
+.entry:hover i { color: #ffffff; }
+.entry.on { background: #37384a; box-shadow: inset 0 0 0 2px #f2d675; }
+.entry.on i { color: #f2d675; }
 
-/* ================================================================ the hero's book (hub) */
-.hub .portrait { left: 24px; top: 92px; width: 300px; height: 440px; }
-.hub .portrait .inner { padding: 20px 20px 0 20px; text-align: center; }
-.hub .head {
-  width: 104px; height: 104px;
-  margin: 0 auto 0 auto;
-  padding: 4px;
-  background: var(--wooddark);
-  box-shadow: inset 0 0 0 2px var(--gold2), 0 0 0 2px var(--wooddark);
-}
-.hub .head img { width: 96px; height: 96px; }
-.hub .name { display: block; font-size: 16px; color: var(--gold); margin-top: 12px; text-shadow: 2px 2px 0 #000000; }
-.hub .ribbon {
-  display: inline-block;
-  margin: 8px 0 16px 0;
-  padding: 4px 12px 2px 12px;
-  font-size: 8px;
-  color: var(--paper);
-  background: var(--rubric);
-  box-shadow: inset 0 0 0 2px #4a1209;
-}
+.dungeons .view { position: absolute; left: 364px; top: 84px; width: 320px; height: 256px; box-shadow: 0 0 0 2px #17171b; }
+.dungeons .view img { position: absolute; left: 0; top: 0; width: 320px; height: 256px; }
+.dungeons .view h2 { position: absolute; left: 12px; right: 12px; top: 10px; color: var(--accent); text-shadow: 2px 2px 0 #000000; margin: 0; }
+.dungeons .caption { left: 364px; top: 350px; width: 320px; height: 150px; background: var(--card); }
+.dungeons .caption p { color: var(--white); }
+.dungeons .caption .party { position: absolute; left: 12px; right: 12px; bottom: 10px; color: var(--grey); }
+
+.dungeons .details { left: 696px; top: 84px; width: 292px; height: 416px; }
+.dungeons .details h3 { color: var(--gold); text-transform: uppercase; }
+.dungeons .details .kind { color: var(--grey); letter-spacing: 1px; text-transform: uppercase; margin: 4px 0 10px 0; }
+.kv { display: flex; justify-content: space-between; padding: 2px 0; }
+.kv span { color: var(--grey); }
+.dungeons .hero { color: var(--white); margin-bottom: 6px; }
+.dungeons .slots { display: flex; gap: 6px; }
+.dungeons .slots .slot { opacity: 0.45; }
+.dungeons .slots .slot.is-yes { opacity: 1; box-shadow: inset 2px 2px 0 0 #373737, inset -2px -2px 0 0 #ffffff, 0 0 0 2px var(--gold); }
+.dungeons .slots .slot:hover { opacity: 1; background: #c5c5c5; }
+.dungeons .noclass { display: none; color: var(--red); margin-top: 6px; }
+.has-no.dungeons .noclass { display: block; }
+.has-no.dungeons .hero { display: none; }
+.dungeons .levels { position: absolute; left: 12px; right: 12px; bottom: 12px; }
+.dungeons .levels .btn { display: block; margin-top: 6px; }
+
+/* ================================================================ the hero (first page of the rpg menu) */
+.hub .portrait { left: 36px; top: 84px; width: 292px; height: 416px; padding: 20px 20px 0 20px; text-align: center; }
+.hub .portrait .slot { margin: 0 auto; }
+.hub .name { display: block; color: var(--gold); margin-top: 12px; }
+.hub .ribbon { display: inline-block; margin: 6px 0 18px 0; color: var(--grey); letter-spacing: 1px; text-transform: uppercase; }
 .hub .gauges { text-align: left; }
 
-.hub .page { left: 340px; top: 92px; width: 380px; height: 440px; padding: 20px 24px; }
+.hub .traits-box { left: 340px; top: 84px; width: 372px; height: 416px; padding: 16px 20px; }
 .hub .traits { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin-top: 8px; }
-.hub .trait {
-  height: 64px;
-  padding: 8px;
-  background: rgba(212, 188, 136, 0.55);
-  box-shadow: inset 0 0 0 2px rgba(107, 74, 43, 0.6);
-}
-.hub .trait img { width: 32px; height: 32px; float: none; vertical-align: middle; }
-.hub .trait span { display: block; font-size: 8px; color: var(--ink2); margin-top: 4px; }
-.hub .trait b { position: absolute; font-size: 16px; font-weight: normal; color: var(--ink); }
-.hub .trait { position: relative; }
-.hub .trait img { position: absolute; left: 8px; top: 8px; }
-.hub .trait b { left: 48px; top: 12px; }
-.hub .trait span { position: absolute; left: 48px; top: 36px; margin: 0; }
-.hub .page .more { position: absolute; left: 24px; right: 24px; bottom: 20px; text-align: center; }
+.hub .trait { position: relative; height: 64px; background: var(--card); box-shadow: inset 0 0 0 2px #5c5d66; }
+.hub .trait img { position: absolute; left: 12px; top: 16px; width: 32px; height: 32px; }
+.hub .trait b { position: absolute; left: 56px; top: 14px; font-size: 16px; line-height: 20px; text-shadow: 2px 2px 0 var(--shadow); }
+.hub .trait span { position: absolute; left: 56px; top: 38px; color: var(--grey); }
+.hub .more { position: absolute; left: 20px; right: 20px; bottom: 16px; text-align: center; }
 
-.hub .ways { left: 736px; top: 92px; width: 264px; height: 440px; }
-.hub .ways .inner { padding: 16px 12px; }
-.hub .ways h2 { color: var(--gold); }
-.hub .ways h2::after { background: linear-gradient(90deg, rgba(255, 217, 77, 0), var(--gold), rgba(255, 217, 77, 0)); }
-.way {
-  position: relative;
-  display: block;
-  height: 80px;
-  margin-bottom: 8px;
-  padding: 8px 8px 8px 84px;
-  background: rgba(0, 0, 0, 0.35);
-  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.6);
-}
-.way .seal { position: absolute; left: 8px; top: 8px; }
-.way b { display: block; font-size: 16px; font-weight: normal; color: var(--accent); margin-top: 8px; text-shadow: 2px 2px 0 #000000; }
-.way span { display: block; font-size: 8px; color: var(--paper2); margin-top: 6px; }
-.way em { display: none; position: absolute; right: 8px; top: 8px; font-style: normal; font-size: 8px; color: var(--wooddark); background: var(--gold); padding: 2px 4px 0 4px; }
-.way.is-yes { box-shadow: inset 0 0 0 2px var(--gold), inset 0 0 0 4px rgba(0, 0, 0, 0.6); background: rgba(240, 168, 0, 0.12); }
+.hub .ways { left: 724px; top: 84px; width: 264px; height: 416px; padding: 16px 12px 0 12px; }
+.way { position: relative; display: block; height: 76px; margin-bottom: 8px; padding: 14px 8px 0 92px; background: var(--card); box-shadow: inset 0 0 0 2px var(--line); }
+.way .slot { position: absolute; left: 10px; top: 2px; margin-top: 0; }
+.way b { display: block; font-size: 16px; line-height: 20px; color: var(--accent); text-shadow: 2px 2px 0 var(--shadow); }
+.way span { display: block; color: var(--grey); margin-top: 4px; }
+.way em { display: none; position: absolute; right: 8px; top: 8px; color: #3f3f3f; text-shadow: none; background: var(--gold); padding: 1px 4px 0 4px; }
+.way.is-yes { background: #37384a; box-shadow: inset 0 0 0 2px #f2d675; }
 .way.is-yes em { display: block; }
-.way:hover { background: rgba(255, 217, 77, 0.1); }
-.way:hover b { color: var(--gold); }
-.hub .ways .choose { display: none; font-size: 8px; color: var(--gold); text-align: center; margin-top: 4px; }
-.has-no .hub .ways .choose { display: block; }
-.has-no .hub .gauges, .has-no .hub .traits { opacity: 0.45; }
+.way:hover { background: #2a2d3b; box-shadow: inset 0 0 0 2px #ffffff; }
+.hub .ways .choose { display: none; color: var(--gold); text-align: center; }
+.has-no.hub .ways .choose { display: block; }
+.has-no.hub .gauges, .has-no.hub .traits { opacity: 0.45; }
 
-/* ================================================================ the four ways (classes list) */
-.list .cards { position: absolute; left: 24px; right: 24px; top: 96px; height: 400px; display: flex; gap: 16px; }
-.list .card { position: relative; flex: 1; height: 400px; }
-.list .card .inner { padding: 20px 16px; text-align: center; }
-.list .card .seal { width: 128px; height: 128px; border-radius: 64px; margin: 8px auto 16px auto; }
-.list .card .seal img { left: 12px; top: 12px; width: 104px; height: 104px; }
-.list .card h3 { font-size: 24px; font-weight: normal; color: var(--accent); text-shadow: 2px 2px 0 #000000; }
-.list .card .role { font-size: 8px; color: var(--paper2); margin-top: 8px; letter-spacing: 1px; }
-.list .card .stars { font-size: 16px; color: var(--gold); margin-top: 24px; }
-.list .card .stars s { text-decoration: none; color: rgba(230, 211, 168, 0.25); }
-.list .card .open { position: absolute; left: 16px; right: 16px; bottom: 20px; font-size: 8px; color: var(--paper2); }
-.list .card em { display: none; position: absolute; left: 50%; top: 12px; margin-left: -40px; width: 80px; font-style: normal; font-size: 8px; color: var(--wooddark); background: var(--gold); padding: 2px 0 0 0; }
+/* ================================================================ the classes */
+.list .cards { position: absolute; left: 36px; top: 84px; width: 952px; height: 416px; display: flex; gap: 12px; }
+.list .card { position: relative; display: block; flex: 1; height: 416px; padding: 44px 16px 0 16px; text-align: center; background: var(--well); box-shadow: inset 0 0 0 2px #77777f; }
+.list .card .slot { margin: 0 auto 20px auto; }
+.list .card h3 { color: var(--accent); }
+.list .card .role { color: var(--grey); margin-top: 8px; letter-spacing: 1px; }
+.list .card .stars { font-size: 16px; line-height: 20px; margin-top: 24px; text-shadow: 2px 2px 0 var(--shadow); }
+.list .card .open { position: absolute; left: 16px; right: 16px; bottom: 20px; color: var(--grey); }
+.list .card em { display: none; position: absolute; left: 50%; top: 14px; margin-left: -44px; width: 88px; color: #3f3f3f; text-shadow: none; background: var(--gold); padding: 1px 0 0 0; }
 .list .card.is-yes em { display: block; }
-.list .card.is-yes .inner { box-shadow: inset 0 0 0 2px var(--gold); }
-.list .card:hover h3 { color: var(--gold); }
+.list .card.is-yes { box-shadow: inset 0 0 0 2px #f2d675; }
+.list .card:hover { background: #45464f; box-shadow: inset 0 0 0 2px #ffffff; }
+.list .card:hover .open { color: #ffffa0; }
 
-/* ================================================================ one way (class page) */
-.detail-page .hero { left: 24px; top: 92px; width: 300px; height: 440px; }
-.detail-page .hero .inner { padding: 20px 16px; text-align: center; }
-.detail-page .hero .seal { width: 128px; height: 128px; border-radius: 64px; margin: 0 auto 12px auto; }
-.detail-page .hero .seal img { left: 12px; top: 12px; width: 104px; height: 104px; }
-.detail-page .hero .role { font-size: 8px; color: var(--paper2); letter-spacing: 1px; }
-.detail-page .hero .desc { font-size: 8px; line-height: 14px; color: var(--paper); margin: 12px 0; text-align: left; }
-.detail-page .hero .axis { display: flex; align-items: center; font-size: 8px; color: var(--paper2); text-align: left; }
-.detail-page .hero .axis span { width: 80px; }
-.detail-page .hero .axis .bar { flex: 1; height: 12px; margin: 3px 0; --fill: var(--accent); }
-.detail-page .hero .stars { color: var(--gold); }
-.detail-page .hero .stars s { text-decoration: none; color: rgba(230, 211, 168, 0.25); }
+/* ================================================================ one class */
+.detail .hero { left: 36px; top: 84px; width: 292px; height: 416px; padding: 16px; text-align: center; }
+.detail .hero .slot { margin: 0 auto 10px auto; }
+.detail .hero .role { color: var(--accent); letter-spacing: 1px; text-transform: uppercase; }
+.detail .hero .desc { color: var(--white); margin: 10px 0; text-align: left; }
+.detail .hero .axis { display: flex; align-items: center; color: var(--grey); text-align: left; }
+.detail .hero .axis span { width: 80px; }
+.detail .hero .axis .bar { flex: 1; height: 12px; margin: 3px 0; --fill: var(--accent); }
+.detail .hero .axis .stars { color: var(--gold); }
 
-.detail-page .book { left: 340px; top: 92px; width: 660px; height: 392px; padding: 16px 20px; }
-.detail-page .cols { display: flex; gap: 20px; }
-.detail-page .col { flex: 1; }
-.detail-page .pro, .detail-page .con { font-size: 8px; line-height: 13px; margin-bottom: 10px; }
-.detail-page .pro b { color: #2b6b2f; font-weight: normal; } .detail-page .con b { color: var(--rubric); font-weight: normal; }
-.detail-page .skill { position: relative; padding: 6px 6px 6px 56px; margin-bottom: 6px; min-height: 40px;
-  background: rgba(212, 188, 136, 0.55); box-shadow: inset 0 0 0 2px rgba(107, 74, 43, 0.6); }
-.detail-page .skill .k { position: absolute; left: 6px; top: 6px; width: 44px; padding: 4px 0 2px 0; text-align: center; font-size: 8px;
-  color: var(--paper); background: var(--wooddark); }
-.detail-page .skill .line { font-size: 8px; color: var(--rubric); }
-.detail-page .skill .cost { float: none; color: #2a5f9e; margin-left: 6px; }
-.detail-page .skill p { font-size: 8px; line-height: 12px; color: var(--ink); margin-top: 3px; }
-.detail-page .note { font-size: 8px; color: var(--ink2); }
-.detail-page table { width: 100%; border-collapse: collapse; font-size: 8px; }
-.detail-page td { padding: 3px 4px; border-bottom: 1px solid rgba(107, 74, 43, 0.35); }
-.detail-page td.hi { color: var(--rubric); text-align: right; }
-.detail-page tr.head td { color: var(--ink2); }
-.bottom { position: absolute; left: 340px; width: 660px; top: 496px; display: flex; justify-content: space-between; align-items: center; }
-.bottom .owned { display: none; font-size: 8px; color: var(--gold); }
-.is-yes .bottom .owned { display: block; }
-.is-yes .bottom .choose { display: none; }
+.detail .book { left: 340px; top: 84px; width: 648px; height: 416px; padding: 14px 16px; }
+.detail .cols { display: flex; gap: 16px; }
+.detail .col { flex: 1; }
+.detail .pro, .detail .con { margin-bottom: 8px; }
+.detail .pro b { color: var(--green); } .detail .con b { color: var(--red); }
+.detail .skill { position: relative; padding: 6px 6px 5px 70px; margin-bottom: 5px; min-height: 40px; background: var(--card); box-shadow: inset 0 0 0 2px #5c5d66; }
+.detail .skill .k { position: absolute; left: 6px; top: 6px; width: 58px; padding: 3px 0 1px 0; text-align: center; color: #3f3f3f; text-shadow: none; background: var(--light); box-shadow: inset -2px -2px 0 0 #555555, inset 2px 2px 0 0 #ffffff; }
+.detail .skill .line { color: var(--gold); }
+.detail .skill .cost { color: var(--aqua); margin-left: 6px; }
+.detail .skill p { color: var(--white); margin-top: 2px; }
+.detail .note { color: var(--grey); }
+.detail table { width: 100%; border-collapse: collapse; }
+.detail td { padding: 2px 4px; border-bottom: 1px solid #5c5d66; }
+.detail td.hi { color: var(--gold); text-align: right; }
+.detail tr.head td { color: var(--grey); }
+.footer .owned { display: none; width: 400px; text-align: right; padding-top: 13px; color: var(--gold); }
+.is-yes .footer .owned { display: block; }
+.is-yes .footer .choose { display: none; }
 
 /* ================================================================ confirmation */
-.confirm-page .box { left: 262px; top: 120px; width: 500px; height: 320px; }
-.confirm-page .box .inner { padding: 20px 28px; text-align: center; }
-.confirm-page .seal { width: 96px; height: 96px; border-radius: 48px; margin: 0 auto 12px auto; }
-.confirm-page .seal img { left: 10px; top: 10px; width: 76px; height: 76px; }
-.confirm-page h3 { font-size: 16px; font-weight: normal; color: var(--rubric); }
-.confirm-page p { font-size: 8px; line-height: 14px; margin-top: 12px; }
-.confirm-page .change { display: none; }
-.has-yes.confirm-page .first { display: none; }
-.has-yes.confirm-page .change { display: block; }
-.confirm-page .row { position: absolute; left: 28px; right: 28px; bottom: 20px; display: flex; justify-content: space-between; }
+.confirm .box { left: 262px; top: 128px; width: 500px; height: 320px; padding: 24px 32px; text-align: center; }
+.confirm .slot { margin: 0 auto 14px auto; }
+.confirm h3 { color: var(--gold); }
+.confirm p { margin-top: 12px; }
+.confirm .change { display: none; }
+.has-yes.confirm .first { display: none; }
+.has-yes.confirm .change { display: block; }
+.confirm .row { position: absolute; left: 32px; right: 32px; bottom: 24px; display: flex; justify-content: space-between; }
 
 /* ================================================================ the full sheet */
-.sheet-page .gauges { position: absolute; left: 24px; right: 24px; top: 92px; height: 72px; display: flex; gap: 16px; padding: 12px 16px; }
-.sheet-page .gauges > div { flex: 1; }
-.sheet-page .book { left: 24px; top: 176px; width: 976px; height: 312px; padding: 16px 20px; }
-.sheet-page .cols { display: flex; gap: 16px; }
-.sheet-page .col { flex: 1; }
-.sheet-page .stat { display: flex; justify-content: space-between; font-size: 8px; padding: 3px 0; border-bottom: 1px solid rgba(107, 74, 43, 0.3); }
-.sheet-page .stat b { font-weight: normal; color: var(--rubric); }
-.sheet-page .stat.zero { display: none; }
-.sheet-page .bottom { left: 24px; width: 976px; }
-.sheet-page .empty { display: none; }
-.has-no.sheet-page .empty { display: block; position: absolute; left: 0; right: 0; top: 300px; text-align: center; color: var(--gold); }
+.sheet .gauges { left: 36px; top: 84px; width: 952px; height: 64px; display: flex; gap: 16px; padding: 12px 16px; }
+.sheet .gauges > div { flex: 1; }
+.sheet .book { left: 36px; top: 160px; width: 952px; height: 340px; padding: 16px 20px; }
+.sheet .cols { display: flex; gap: 20px; }
+.sheet .col { flex: 1; }
+.sheet .col h4 { margin-bottom: 8px; }
+.sheet .stat { display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px solid #5c5d66; }
+.sheet .stat span { color: var(--grey); }
+.sheet .stat b { color: var(--white); }
+.sheet .stat.zero { display: none; }
+.sheet .empty { display: none; }
+.has-no.sheet .empty { display: block; position: absolute; left: 0; right: 0; top: 300px; text-align: center; color: var(--gold); font-size: 16px; text-shadow: 2px 2px 0 var(--shadow); }

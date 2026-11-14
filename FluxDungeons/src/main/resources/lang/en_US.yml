@@ -428,7 +428,7 @@ sheet:
 class-pages:
   hub:
     title: Hero's book
-    kicker: SQUARE OF THE TEN FATES
+    dungeons: Dungeons
     traits: Attributes
     ways: The four ways
     yours: Your way
@@ -519,3 +519,22 @@ class-pages:
       right: {name: "Boreal glide", description: "Glides %distance% blocks on a trail of ice: monsters on the way take %coef% %power% and frost."}
       a: {name: "Glacial rift", description: "Ice spikes burst out of the ground over %range% blocks: %coef% %power%, monsters are thrown up and covered in frost."}
       f: {name: "Winter comet", description: "A comet of ice crashes where you aim: %coef% %power% within %radius% blocks, every monster hit is frozen, the ground stays frozen %duration% s."}
+# Page of the dungeon selector (MC GUI, pages.DungeonPages). Plain text, no colour codes.
+dungeon-pages:
+  title: Dungeons
+  entry: "Level %level% · %min% to %max% players"
+  kind: "Dungeon · %min% to %max% players"
+  level: Recommended level
+  time: Time limit
+  time-value: "%minutes% min"
+  lives: Party lives
+  class: Your class
+  no-class: Choose a class before you enter.
+  difficulty: Difficulty
+  start: Start the dungeon
+  enter: Enter
+  party: "Alone or with a party: /%flux_cmd_fluxdungeons_party% invite <player>. The party leader starts the dungeon."
+  page: "Page %page%/%pages%"
+  next: Next page
+  prev: Previous page
+  none: No dungeon is open for now.

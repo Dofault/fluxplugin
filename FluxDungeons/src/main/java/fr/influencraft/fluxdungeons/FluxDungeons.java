@@ -11,6 +11,8 @@ import fr.influencraft.fluxdungeons.dungeon.DungeonDefinition;
 import fr.influencraft.fluxdungeons.dungeon.Run;
 import fr.influencraft.fluxdungeons.dungeon.Runs;
 import fr.influencraft.fluxdungeons.mob.Mobs;
+import fr.influencraft.fluxdungeons.pages.DungeonPages;
+import fr.influencraft.fluxdungeons.pages.PageKit;
 import fr.influencraft.fluxdungeons.party.Parties;
 import fr.influencraft.fluxdungeons.party.Party;
 import org.bukkit.Bukkit;
@@ -350,6 +352,34 @@ public final class FluxDungeons extends FluxPlugin {
         defs.values().stream().sorted(java.util.Comparator.comparingInt(DungeonDefinition::recommendedLevel))
                 .forEach(d -> sorted.put(d.id(), d));
         runs.load(sorted);
+        writePages(sorted.values());
+    }
+
+    /** The dungeon selector page (Flux's Screens), written again each time the dungeons load; nothing without pages. */
+    private void writePages(java.util.Collection<DungeonDefinition> dungeons) {
+        java.nio.file.Path root = fr.influencraft.flux.api.screen.Screens.pagesFolder();
+        if (root == null) return;
+        List<DungeonPages.Entry> entries = new ArrayList<>();
+        for (DungeonDefinition d : dungeons) {
+            entries.add(new DungeonPages.Entry(d.id(), d.name(), d.description(), d.minPlayers(), d.maxPlayers(), d.recommendedLevel(),
+                    Math.max(0, d.timeLimit()) / 60, d.lives(), d.levels().stream().map(DungeonDefinition.Level::name).toList()));
+        }
+        List<String> classes = rpg == null ? List.of() : rpg.classIds();
+        DungeonPages pages = new DungeonPages(new PageKit.Source() {
+            public String raw(String key, String... vars) {
+                return messages().raw(key, vars);
+            }
+
+            public java.io.InputStream resource(String path) {
+                return getResource(path);
+            }
+
+            public void warn(String message) {
+                getLogger().warning(message);
+            }
+        });
+        // files only: off the server thread
+        Bukkit.getScheduler().runTaskAsynchronously(this, () -> pages.write(root, entries, classes));
     }
 
     /** Every .yml of a folder of the plugin, sorted by name. */
@@ -419,7 +449,9 @@ public final class FluxDungeons extends FluxPlugin {
         String sub = args.length == 0 ? "" : args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
             case "" -> {
-                if (!runs.lobby().reopen(p)) openMain(p);
+                if (runs.lobby().reopen(p)) return true;
+                // the full screen selector; the window for a player in a run (leave button) or who cannot see pages
+                if (runs.runOf(p) != null || !fr.influencraft.flux.api.screen.Screens.open(p, DungeonPages.LIST)) openMain(p);
             }
             case "play", "jouer" -> {
                 if (args.length < 2) {
@@ -428,7 +460,7 @@ public final class FluxDungeons extends FluxPlugin {
                 }
                 DungeonDefinition def = dungeon(args[1]);
                 if (def == null) messages().send(p, "unknown-dungeon");
-                else play(p, def);
+                else play(p, def, args.length >= 3 ? level(args[2]) : -1);
             }
             case "leave", "quitter" -> {
                 if (runs.lobby().waiting(p)) runs.lobby().cancel(p);
@@ -496,13 +528,25 @@ public final class FluxDungeons extends FluxPlugin {
             else if (b.equals("class")) player.performCommand("classe");
             else if (b.startsWith("play:")) {
                 DungeonDefinition def = runs.dungeon(b.substring(5));
-                if (def != null) play(player, def);
+                if (def != null) play(player, def, -1);
             }
         }).open();
     }
 
-    /** Starts a dungeon for the player's party (he must lead it), or for him alone. */
-    private void play(Player p, DungeonDefinition def) {
+    /** A difficulty level typed as its rank (1 = easiest), as an index; -1 when it is not a number. */
+    private static int level(String text) {
+        try {
+            return Integer.parseInt(text) - 1;
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    /**
+     * Starts a dungeon for the player's party (he must lead it), or for him alone. {@code level}: the difficulty
+     * already chosen (the buttons of the selector page), else a dungeon with several levels asks.
+     */
+    private void play(Player p, DungeonDefinition def, int level) {
         // a launch screen closed with Escape keeps him waiting: the same dungeon opens it again, another one replaces it
         DungeonDefinition waiting = runs.lobby().dungeonOf(p);
         if (waiting != null) {
@@ -517,11 +561,11 @@ public final class FluxDungeons extends FluxPlugin {
             messages().send(p, "start.not-leader");
             return;
         }
-        if (def.levels().size() > 1) {
+        if (def.levels().size() > 1 && (level < 0 || level >= def.levels().size())) {
             pickLevel(p, def);
             return;
         }
-        start(p, def, party == null ? List.of(p) : party.online(), -1);
+        start(p, def, party == null ? List.of(p) : party.online(), def.levels().size() > 1 ? level : -1);
     }
 
     /**

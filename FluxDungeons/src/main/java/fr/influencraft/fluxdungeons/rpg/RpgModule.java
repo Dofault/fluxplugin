@@ -184,10 +184,10 @@ public final class RpgModule implements Listener {
         double need = on ? set.balance().xpToNext(r.level()) : 0;
         return switch (params) {
             case "has_class" -> on ? "yes" : "no";
-            case "class" -> ClassPages.plain(on ? m.raw("classes." + r.heroClass().id() + ".name") : m.raw("class-pages.no-class"));
+            case "class" -> fr.influencraft.fluxdungeons.pages.PageKit.plain(on ? m.raw("classes." + r.heroClass().id() + ".name") : m.raw("class-pages.no-class"));
             case "level" -> on ? String.valueOf(r.level()) : "0";
-            case "level_text" -> on ? ClassPages.plain(m.raw("class-pages.level", "%level%", String.valueOf(r.level()))) : "";
-            case "xp_text" -> on ? ClassPages.plain(m.raw("class-pages.sheet.xp", "%xp%", String.valueOf(Math.round(r.xp())),
+            case "level_text" -> on ? fr.influencraft.fluxdungeons.pages.PageKit.plain(m.raw("class-pages.level", "%level%", String.valueOf(r.level()))) : "";
+            case "xp_text" -> on ? fr.influencraft.fluxdungeons.pages.PageKit.plain(m.raw("class-pages.sheet.xp", "%xp%", String.valueOf(Math.round(r.xp())),
                     "%need%", String.valueOf(Math.round(need)))) : "";
             case "xp_pct" -> pct(on ? r.xp() : 0, need);
             case "health" -> String.valueOf(Math.round(hp));
@@ -225,6 +225,13 @@ public final class RpgModule implements Listener {
 
     public RpgPlayers players() {
         return players;
+    }
+
+    /** Ids of the classes a player may choose, in the order of the config (none while the configs are wrong). */
+    public java.util.List<String> classIds() {
+        RpgConfig.Set set = config.get();
+        if (set == null) return java.util.List.of();
+        return set.classes().values().stream().filter(c -> !c.hidden()).map(fr.influencraft.fluxdungeons.rpg.core.ClassDef::id).toList();
     }
 
     public RpgWorld world() {

@@ -427,7 +427,7 @@ sheet:
 class-pages:
   hub:
     title: Livre du héros
-    kicker: PLACE DES DIX DESTINS
+    dungeons: Donjons
     traits: Caractéristiques
     ways: Les quatre voies
     yours: Ta voie
@@ -530,3 +530,22 @@ class-pages:
       right: {name: "Glissade boréale", description: "Glisse sur %distance% blocs sur un sillage de glace : les monstres traversés prennent %coef% %power% et du givre."}
       a: {name: "Faille glaciaire", description: "Des pics de glace jaillissent du sol sur %range% blocs : %coef% %power%, les monstres sont projetés en l'air et couverts de givre."}
       f: {name: "Comète de l'hiver", description: "Une comète de glace s'écrase là où tu vises : %coef% %power% sur %radius% blocs, tous les monstres touchés sont gelés, le sol reste gelé %duration% s."}
+# Page du sélecteur de donjons (MC GUI, pages.DungeonPages). Texte brut, sans code couleur.
+dungeon-pages:
+  title: Donjons
+  entry: "Niveau %level% · %min% à %max% joueurs"
+  kind: "Donjon · %min% à %max% joueurs"
+  level: Niveau conseillé
+  time: Temps limite
+  time-value: "%minutes% min"
+  lives: Vies du groupe
+  class: Ta classe
+  no-class: Choisis une classe avant d'entrer.
+  difficulty: Difficulté
+  start: Lancer le donjon
+  enter: Entrer
+  party: "Seul ou en groupe : /%flux_cmd_fluxdungeons_party% inviter <joueur>. Le chef du groupe lance le donjon."
+  page: "Page %page%/%pages%"
+  next: Page suivante
+  prev: Page précédente
+  none: Aucun donjon n'est ouvert pour le moment.
