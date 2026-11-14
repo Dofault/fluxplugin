@@ -45,7 +45,7 @@ GOLD = E.GOLD
 SIDES = E.SIDES
 
 
-# The outfit is shaded the way the hat is (kept after the trial of 2026-11-14). `--plain`: the Evoker's flat cloth.
+# Light pass in the hat's manner (rims, two-tone gold), used by the "hat" style; cf. set_style.
 HAT_STYLE = True
 
 
@@ -317,6 +317,186 @@ MATS = {
     "trouser": robe(1), "boot": boot,
 }
 
+# --------------------------------------------------------------------------- "rich" style: the hat's finish everywhere
+# Rework of 2026-11-14: the whole outfit painted the way the pack's hat is, on one shared palette. Three garment
+# tiers (dark: coat, lapels, collar, belt; main: robe, sleeves, shoulders; light: tabard), each with its own tones
+# for the front, the sides (darker), the top (lit frame) and the underside. Wide vertical bands of lighter violet
+# with tapered ends and narrow fold lines follow the fall of each piece; nothing is random.
+R = pal("#261A36", "#38244F", "#403052", "#49315F", "#594071")       # very dark, deep, secondary, mid, lit
+RICH_GOLD = pal("#80602F", "#B58B3F", "#D0AD61", "#D0AD61")          # dark, main, light (twice: no glint tone)
+# per tier: front and side = (base, band, fold, soft edge of a fold, lit rim, bottom shadow); up = (frame, inside, inner line)
+TIERS = {
+    "dark": {"front": (1, 2, 0, 1, 2, 0), "side": (1, 2, 0, 1, 2, 0), "up": (2, 1, 0)},
+    "main": {"front": (3, 4, 1, 2, 4, 2), "side": (2, 3, 1, 1, 3, 1), "up": (4, 3, 2)},
+    "light": {"front": (4, 4, 3, 4, 4, 3), "side": (3, 3, 2, 3, 4, 2), "up": (4, 4, 4)},
+}
+
+
+def rich(tier, bands=(), folds=(), hem=False, edges=(), art=None, shade=None):
+    """Worked cloth. `bands`: (column as a share of the width, width in pixels, start and end as shares of the
+    height): a lighter band running down the piece, its second column shorter at both ends. `folds`: (column share,
+    start share): a narrow shadow line down to the hem, with a soft edge on its last third. Lit rim along the top
+    (corners in the base tone), shadow row along the bottom, `shade`: row darkened by what hangs over the piece.
+    `hem`: the hat's gold band (light row over dark row). `edges`: gold column on the front with a shadow column
+    beside it. Top faces: lit frame, then an inner line when there is room."""
+    t = TIERS[tier]
+
+    def f(w, h, r, face_):
+        if face_ == "down":
+            return [[R[0]] * w for _ in range(h)]
+        if face_ == "up":
+            fr, ins, line = t["up"]
+            px = [[R[ins]] * w for _ in range(h)]
+            if w >= 4 and h >= 4:
+                for y in range(h):
+                    for x in range(w):
+                        if x in (0, w - 1) or y in (0, h - 1):
+                            px[y][x] = R[fr if not (x in (0, w - 1) and y in (0, h - 1)) else ins]
+                        elif w >= 7 and h >= 7 and (x in (2, w - 3) or y in (2, h - 3)) and 2 <= x <= w - 3 and 2 <= y <= h - 3:
+                            px[y][x] = R[line]
+            return px
+        base, band, fold, soft_, rim, low = t["front" if face_ in ("north", "south") else "side"]
+        px = [[R[base]] * w for _ in range(h)]
+        if h >= 6 and w >= 4:
+            for share, wide, a, b in bands:
+                x0, y0, y1 = round(share * (w - 1)), round(a * h), round(b * h)
+                for k in range(wide):
+                    if 0 <= x0 + k < w:
+                        for y in range(y0 + k, y1 - 2 * k):
+                            px[y][x0 + k] = R[band]
+            for share, a in folds:
+                x, y0 = round(share * (w - 1)), max(1, round(a * h))
+                for y in range(y0, h):
+                    px[y][x] = R[fold]
+                    if y >= y0 + (h - y0) * 2 // 3 and x + 1 < w:
+                        px[y][x + 1] = R[soft_]
+        if h >= 3:
+            px[0] = [R[rim] if (0 < x < w - 1 or w < 4) and px[0][x] == R[base] else px[0][x] if w >= 4 and 0 < x < w - 1 else R[base]
+                     for x in range(w)]
+            px[h - 1] = [R[low]] * w
+        if shade is not None and shade < h - 1:
+            px[shade] = [R[low]] * w
+        if hem:
+            if h >= 4:
+                gold_row(px, h - 2)
+                px[h - 1] = [GOLD[0]] * w
+            else:
+                gold_row(px, h - 1)
+        if face_ == "north":
+            for e in edges:
+                x, n = (0, 1) if e == "first" else (w - 1, w - 2)
+                for y in range(h):
+                    px[y][x] = GOLD[2 if y == 0 else 0 if y == h - 1 else 1]
+                    if px[y][n] in R:
+                        px[y][n] = R[t["front"][5]]
+        if art and face_ == "north":
+            art(px, w, h)
+        return px
+    return f
+
+
+def rich_tabard_up(px, w, h):
+    """Chest: the vertical gold line, the lozenge in light gold, a mark near the belt."""
+    cx = w // 2
+    for y in range(1, h - 1):
+        px[y][cx] = GOLD[1]
+    px[4][cx] = px[2][2]
+    E.diamond(px, cx, 4, 1, GOLD[2])
+    px[9][cx] = GOLD[2]
+
+
+def rich_cuff(w, h, r, f):
+    if f == "down":
+        return [[R[2] if x in (0, w - 1) or y in (0, h - 1) else R[0] for x in range(w)] for y in range(h)]
+    return rich("main", hem=True)(w, h, r, f)
+
+
+def rich_shoulder(w, h, r, f):
+    px = rich("main")(w, h, r, f)
+    if f in SIDES:
+        gold_row(px, h - 1)
+    return px
+
+
+def rich_collar(w, h, r, f):
+    px = rich("dark")(w, h, r, f if f in ("up", "down") else "north")
+    if f in SIDES:
+        gold_row(px, 0)
+    return px
+
+
+def rich_belt(w, h, r, f):
+    if f == "up":
+        return [[R[2]] * w for _ in range(h)]
+    px = [[R[0 if f == "down" else 1]] * w for _ in range(h)]
+    if f in SIDES and h >= 2:
+        px[0] = [R[2]] * w
+        px[h - 1] = [R[0]] * w
+    return px
+
+
+def rich_boot(w, h, r, f):
+    if f == "up":
+        return [[R[1]] * w for _ in range(h)]
+    px = [[R[1 if f in ("north", "south") else 0]] * w for _ in range(h)]
+    if f in ("east", "west"):
+        px[0] = [R[1]] * w
+    elif f in ("north", "south") and h >= 2:
+        px[h - 1] = [R[0]] * w
+    return px
+
+
+def rich_mount(w, h, r, f):
+    """Gold lozenge of the belt: main gold, lit upper edges, dark lower edges, like the hat's buckle."""
+    px = [[GOLD[1]] * w for _ in range(h)]
+    if f == "north":
+        for i in range(w):
+            px[0][i], px[h - 1][i] = GOLD[2], GOLD[0]
+        for j in range(h):
+            px[j][0] = GOLD[2] if j < h - 1 else GOLD[0]
+            px[j][w - 1] = GOLD[0] if j else GOLD[2]
+    elif f == "down":
+        px = [[GOLD[0]] * w for _ in range(h)]
+    return px
+
+
+RICH_MATS = {
+    "robe": rich("main", bands=((0.12, 2, 0.15, 0.8), (0.75, 1, 0.2, 0.7)), folds=((0.5, 0.12),)),
+    "robe_hem": rich("main", bands=((0.1, 1, 0.2, 0.85), (0.9, 1, 0.3, 0.9)), hem=True, shade=2),
+    "skirt_back": rich("main", bands=((0.1, 2, 0.14, 0.75), (0.5, 2, 0.22, 0.9), (0.9, 1, 0.12, 0.7)),
+                       folds=((0.3, 0.25), (0.7, 0.15)), shade=2),
+    "coat_side": rich("dark", bands=((0.12, 1, 0.1, 0.8), (0.5, 2, 0.15, 0.7), (0.88, 1, 0.4, 0.95)),
+                      folds=((0.36, 0.3), (0.75, 0.5))),
+    "lapel": rich("dark", bands=((0.5, 1, 0.15, 0.85),)),
+    "tabard_up": rich("light", edges=("first", "last"), art=rich_tabard_up),
+    "tabard": rich("light", edges=("first", "last"), shade=1), "tabard_tip": rich("light", hem=True),
+    "belt": rich_belt, "mount": rich_mount, "mantle": rich("main"), "shoulder": rich_shoulder, "collar": rich_collar,
+    "sleeve": rich("main", bands=((0.3, 1, 0.25, 0.8),), folds=((1.0, 0.45),)),
+    "sleeve_low": rich("main", bands=((0.3, 1, 0.3, 0.75),)),
+    "cuff": rich_cuff, "trouser": rich("dark"), "boot": rich_boot,
+}
+BASE_GOLD, BASE_HAT = GOLD, dict(HAT_COLOURS)
+STYLE = "rich"        # "rich": the rework above; "hat": the lighter pass kept before it; "plain": the Evoker's flat cloth
+
+
+def set_style(name):
+    """Chooses the outfit's finish; the hat follows on the same palette in "rich"."""
+    global STYLE, HAT_STYLE, GOLD, MATS
+    STYLE, HAT_STYLE = name, name != "plain"
+    GOLD = RICH_GOLD if name == "rich" else BASE_GOLD
+    HAT_COLOURS.clear()
+    HAT_COLOURS.update(BASE_HAT)
+    MATS.clear()
+    MATS.update(BASE_MATS)
+    if name == "rich":
+        MATS.update(RICH_MATS)
+        HAT_COLOURS.update({hx("#494264"): R[1], hx("#5C4475"): R[3], hx("#734B73"): R[4],
+                            hx("#DB958C"): GOLD[0], hx("#F1B88D"): GOLD[1], hx("#F0E698"): GOLD[2]})
+
+
+BASE_MATS = dict(MATS)
+set_style(STYLE)
+
 # --------------------------------------------------------------------------- skeleton and pose (drawing units)
 HIPS = (0, 21, 0)
 NECK = (0, 35.5, 0)
@@ -461,15 +641,13 @@ def parts():
 if __name__ == "__main__":
     args = sys.argv[1:]
     opts = {}
-    if "--plain" in args:
-        args.remove("--plain")
-        HAT_STYLE = False
-    for flag in ("--apercu", "--cubes"):
+    for flag in ("--apercu", "--cubes", "--style"):
         if flag in args:
             i = args.index(flag)
             opts[flag] = args[i + 1]
             del args[i:i + 2]
     out = args[0] if args else HERE
+    set_style(opts.get("--style", STYLE))
     P, groups, dims = ground(*parts(), scale=SCALE, center=False)
     uv, atlases, sizes = bake(P, MATS, {})
     data = export(IDENT, NS, P, groups, uv, atlases, sizes)
