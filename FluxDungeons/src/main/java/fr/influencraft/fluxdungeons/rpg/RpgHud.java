@@ -18,7 +18,8 @@ import java.util.List;
  * assets/gen_hud.py). The vanilla life, food and saturation stay full in that universe (the real ones are the
  * engine's), so the rows underneath never shake nor blink out of the cover. Beside the hotbar, the class's three
  * skills: A and F on its left (the class level on a plate between the bars), the weapon's skill (its click) on its right, each under a key cap, dimmed while the
- * mana does not cover it (assets/hud_spells.py, hud_level.py). Bedrock players: life and mana written in the action bar
+ * mana does not cover it (assets/hud_spells.py, hud_level.py). Under both bars, the xp bar redrawn over the vanilla one
+ * (assets/hud_xp.py). Bedrock players: life and mana written in the action bar
  * ({@link Clients#bedrock}).
  */
 final class RpgHud {
@@ -35,6 +36,8 @@ final class RpgHud {
     private static final int SLOT_A = -50, SLOT_F = -25, SLOT_RIGHT = 187;
     /** In line with assets/hud_level.py: the level plate between the bars (x 83 to 100, centre 92). */
     private static final int PLATE = 18, PLATE_X = 83;
+    /** In line with assets/hud_xp.py: the xp bar under both bars, as wide as them, and its empty pieces (1 to 128 px). */
+    private static final int XP = 184, XP_PIECES = 8;
 
     /** What the action bar shows now. */
     Component render(Player p, RpgPlayer r, double hp, double maxHp, double mana, double maxMana) {
@@ -58,6 +61,8 @@ final class RpgHud {
         cursor[0] += BAR + 1;
         numbers(b, cursor, BAR + GAP, mana, maxMana);
         level(b, cursor, r.level());
+        // the vanilla bar's own progress (RpgPlayers.showLevel), redrawn over it
+        xp(b, cursor, p.getExp());
         // the line is centred (its width is where the pen ends, whatever was drawn left or right of it): 184 px,
         // the hotbar's 182 plus one pixel on each side, both bars land on their rows
         moveTo(b, cursor, 2 * BAR + GAP);
@@ -74,6 +79,26 @@ final class RpgHud {
         moveTo(b, cursor, 92 - (t.length() * DIGIT - 1) / 2);
         for (char ch : t.toCharArray()) b.append((char) (0xE300 + ch - '0'));
         cursor[0] += t.length() * DIGIT;
+    }
+
+    /** The xp bar over the vanilla one: the full bar, then its empty part laid over it from the fill's end. */
+    private static void xp(StringBuilder b, int[] cursor, float progress) {
+        moveTo(b, cursor, 0);
+        b.append('\uE440');
+        cursor[0] += XP + 1;
+        int inside = XP - 2;
+        int filled = Math.round(inside * Math.max(0, Math.min(1, progress)));
+        if (progress > 0) filled = Math.max(1, filled);
+        int x = 1 + filled, empty = inside - filled;
+        for (int i = XP_PIECES - 1; i >= 0; i--) {
+            int w = 1 << i;
+            if (empty < w) continue;
+            moveTo(b, cursor, x);
+            b.append((char) (0xE441 + i));
+            cursor[0] += w + 1;
+            x += w;
+            empty -= w;
+        }
     }
 
     /** One skill slot at {@code x} with its key cap ({@code key}: 0 = A, 1 = F, 2 = right click, 3 = left click). */

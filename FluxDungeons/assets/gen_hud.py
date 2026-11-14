@@ -9,6 +9,8 @@ rows underneath never shake nor blink out of the cover. Writes a font of its own
     <pack>/resourcepack/assets/fluxdungeons/textures/font/hud_digits.png  (0-9 and /)
     <pack>/resourcepack/assets/fluxdungeons/textures/font/hud_spells.png  (spell slots, hud_spells.py)
     <pack>/resourcepack/assets/fluxdungeons/textures/font/hud_keys.png    (key caps A, F, right click, left click)
+    <pack>/resourcepack/assets/fluxdungeons/textures/font/hud_xp.png      (xp bar, full: hud_xp.py)
+    <pack>/resourcepack/assets/fluxdungeons/textures/font/hud_xp_empty.png (its empty pieces, 1 to 128 px)
 
     python3 gen_hud.py <ItemsAdder/contents/fluxdungeons>      (needs Pillow), then /iazip
 
@@ -17,7 +19,8 @@ bars down onto that row, one pixel above it (ASCENT, check in game). Hearts span
 10), food the 81 px right of it: one 83 px bar each from one pixel before, 18 px between them, 184 px in all.
 
 Chars: U+E100 + step = life bar, U+E200 + step = mana bar, U+E300.. = '0'-'9' then '/', U+E400.. spell slots,
-U+E480.. key caps (hud_spells.py), U+E431 level plate (hud_level.py), U+F001-U+F008 move back 1, 2,
+U+E480.. key caps (hud_spells.py), U+E431 level plate (hud_level.py), U+E440 xp bar and U+E441.. its empty
+pieces (hud_xp.py), U+F001-U+F008 move back 1, 2,
 4 ... 128 px, U+F011-U+F018 forward as much. FluxDungeons (rpg/RpgHud.java) writes the same numbers: keep STEPS,
 BAR_W and DIGIT_W in line with it. Every digit is padded to 5 px (an almost transparent pixel in its last column),
 so each one moves the text by exactly 6 px.
@@ -30,6 +33,7 @@ from PIL import Image
 
 import hud_level
 import hud_spells
+import hud_xp
 
 STEPS = 40
 BAR_W, BAR_H = 83, 11
@@ -115,6 +119,8 @@ def main(pack):
         if os.path.exists(os.path.join(tex, old)):
             os.remove(os.path.join(tex, old))
     hud_level.plate().save(os.path.join(tex, "hud_level.png"))
+    hud_xp.full().save(os.path.join(tex, "hud_xp.png"))
+    hud_xp.pieces().save(os.path.join(tex, "hud_xp_empty.png"))
     back = {chr(0xF001 + i): -(1 << i) for i in range(8)}
     fwd = {chr(0xF011 + i): (1 << i) for i in range(8)}
     font = {"providers": [
@@ -132,6 +138,11 @@ def main(pack):
         # level plate (hud_level.py): top of a glyph = 65 + ascent px above the bottom of the screen
         {"type": "bitmap", "file": "fluxdungeons:font/hud_level.png", "ascent": hud_level.PLATE_TOP - 65,
          "height": hud_level.PLATE_H, "chars": [chr(0xE431)]},
+        # xp bar (hud_xp.py): the full bar, then its empty pieces, one per row, on the fill's rows
+        {"type": "bitmap", "file": "fluxdungeons:font/hud_xp.png", "ascent": hud_xp.XP_TOP - 65,
+         "height": hud_xp.XP_H, "chars": [chr(0xE440)]},
+        {"type": "bitmap", "file": "fluxdungeons:font/hud_xp_empty.png", "ascent": hud_xp.XP_TOP - 66,
+         "height": hud_xp.FILL_H, "chars": [chr(0xE441 + i) for i in range(hud_xp.PIECES)]},
     ]}
     with open(os.path.join(root, "font", "hud.json"), "w", encoding="utf-8") as f:
         json.dump(font, f, ensure_ascii=True, indent=1)
