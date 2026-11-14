@@ -8,8 +8,10 @@ language: ""
 # BetterModel model (plugins/BetterModel/models/<model>.bbmodel) and its size (1.0 = as drawn, 2.8 blocks tall).
 model: robot_accueil
 scale: 0.7
-# Degrees added to the way the model faces: 180 when it walks backwards, 0 otherwise.
-yaw-offset: 180
+# How the model is turned. yaw-mirror: BetterModel turns a model without entity the other way round, so the yaw is
+# negated. yaw-offset: degrees added after (180 if it does everything back to front).
+yaw-mirror: true
+yaw-offset: 0
 
 # Where the robot appears: this far in front of the player (where he looks, on the ground). When something is in the
 # way, it comes closer, down to min-distance.

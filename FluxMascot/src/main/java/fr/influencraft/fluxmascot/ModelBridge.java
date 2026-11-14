@@ -36,13 +36,15 @@ final class ModelBridge {
     }
 
     /**
-     * Shows the model to the viewer at this scale, null when no model has this name. yawOffset turns the model so its
-     * drawn front is the way it faces (BetterModel shows our models back to front without it).
+     * Shows the model to the viewer at this scale, null when no model has this name. A model without entity turns the other way round from
+     * Minecraft's yaw (seen in game 2026-11-14: right when facing south or north, back to front facing east or west):
+     * yawMirror negates the yaw; yawOffset is added after.
      */
-    static Handle show(Player viewer, String model, float scale, float yawOffset, Location at, float yaw) {
+    static Handle show(Player viewer, String model, float scale, float yawOffset, boolean yawMirror, Location at,
+                       float yaw) {
         var renderer = BetterModel.modelOrNull(model);
         if (renderer == null) return null;
-        float[] facing = {yaw + yawOffset};
+        float[] facing = {(yawMirror ? -yaw : yaw) + yawOffset};
         DummyTracker tracker = renderer.create(BukkitAdapter.adapt(at.clone()));
         tracker.scaler(ModelScaler.value(scale));
         tracker.rotation(() -> new ModelRotation(0, facing[0]));
@@ -63,7 +65,7 @@ final class ModelBridge {
 
             public void move(Location to, float yaw) {
                 if (tracker.isClosed()) return;
-                facing[0] = yaw + yawOffset;
+                facing[0] = (yawMirror ? -yaw : yaw) + yawOffset;
                 // a copy: BetterModel keeps the location it is given and skips a move to an "equal" one, so handing
                 // it the caller's own (mutated) Location would never move the model
                 tracker.location(BukkitAdapter.adapt(to.clone()));
