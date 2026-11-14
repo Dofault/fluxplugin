@@ -88,6 +88,8 @@ final class ShowcaseSession {
     private boolean closing, moving;
     private volatile int ticks;
     private long lastClick;
+    private int heldBefore = -1;
+    private boolean madeInvisible;
 
     // camera and pointer
     private Mannequin camera;
@@ -216,6 +218,7 @@ final class ShowcaseSession {
             d.setTransformation(new Transformation(new Vector3f(0, -4.5f * PX * s, 0), new Quaternionf(), new Vector3f(s), new Quaternionf()));
         });
         seat.addPassenger(player);
+        hideHand();
         fr.influencraft.flux.api.client.Sidebar.hide(player, true);
         player.setPlayerTime(settings.time(), false);
         Camera.view(player, camera);
@@ -234,6 +237,7 @@ final class ShowcaseSession {
         if (player.getVehicle() == seat) player.leaveVehicle();
         for (Entity e : new Entity[]{pointer, camera, seat}) if (e != null && e.isValid()) e.remove();
         fr.influencraft.flux.api.client.Sidebar.hide(player, false);
+        showHand();
         if (!player.isOnline()) return;
         Camera.view(player, null);
         player.resetPlayerTime();
@@ -245,6 +249,33 @@ final class ShowcaseSession {
                 moving = false;
             }
         }
+    }
+
+    /**
+     * His client still draws his own arm and what it holds over the camera's view: an invisible player's arm is not
+     * drawn, and he holds an empty slot of his hotbar meanwhile (when he has one).
+     */
+    private void hideHand() {
+        heldBefore = player.getInventory().getHeldItemSlot();
+        for (int slot = 0; slot < 9; slot++) {
+            ItemStack item = player.getInventory().getItem(slot);
+            if (item == null || item.getType().isAir()) {
+                player.getInventory().setHeldItemSlot(slot);
+                break;
+            }
+        }
+        if (!player.hasPotionEffect(org.bukkit.potion.PotionEffectType.INVISIBILITY)) {
+            madeInvisible = true;
+            player.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.INVISIBILITY,
+                    org.bukkit.potion.PotionEffect.INFINITE_DURATION, 0, false, false, false));
+        }
+    }
+
+    private void showHand() {
+        if (madeInvisible) player.removePotionEffect(org.bukkit.potion.PotionEffectType.INVISIBILITY);
+        madeInvisible = false;
+        if (heldBefore >= 0 && player.isOnline()) player.getInventory().setHeldItemSlot(heldBefore);
+        heldBefore = -1;
     }
 
     /** He asked to leave (sneak). Without a class the choice comes first. */
@@ -413,9 +444,9 @@ final class ShowcaseSession {
             TextDisplay r = rect(PANEL_X, cy, ROW_W, h, card, 0.001);
             zones.add(new Zone("class:" + id, PANEL_X - ROW_W / 2, cy - h / 2, PANEL_X + ROW_W / 2, cy + h / 2, r, card, color("card-hover", 0xD05B2D9E)));
             icon(weapon(id), PANEL_X - 0.265, cy, 0.003, 0.15f);
-            label(text("showcase.card-name", "%color%", "&" + accent, "%name%", raw("classes." + id + ".name")), PANEL_X + 0.07, cy + 0.005, 0.002, 0.23f, 400, 0);
-            label(text("showcase.card-role", "%role%", raw("class-pages.classes." + id + ".role")), PANEL_X + 0.07, cy - 0.075, 0.002, 0.095f, 170, 0);
-            if (own != null && own.heroClass().id().equals(id)) label(text("showcase.yours"), PANEL_X + 0.07, cy - 0.11, 0.002, 0.08f, 300, 0);
+            label(text("showcase.card-name", "%color%", "&" + accent, "%name%", raw("classes." + id + ".name")), PANEL_X + 0.07, cy + 0.02, 0.002, 0.23f, 400, 0);
+            label(text("showcase.card-role", "%role%", raw("class-pages.classes." + id + ".role")), PANEL_X + 0.07, cy - 0.06, 0.002, 0.095f, 170, 0);
+            if (own != null && own.heroClass().id().equals(id)) label(text("showcase.yours"), PANEL_X + 0.07, cy - 0.097, 0.002, 0.08f, 300, 0);
         }
         label(text(own == null ? "showcase.footer-first" : "showcase.footer"), PANEL_X, -0.645, 0.002, 0.085f, 320, 0);
     }
@@ -430,7 +461,7 @@ final class ShowcaseSession {
         int card = color("card", 0xB00D0D0D);
         TextDisplay backRect = rect(PANEL_X, 0.585, ROW_W, 0.085, card, 0.001);
         zones.add(new Zone("back", PANEL_X - ROW_W / 2, 0.5425, PANEL_X + ROW_W / 2, 0.6275, backRect, card, color("card-hover", 0xD05B2D9E)));
-        label(text("showcase.back"), PANEL_X, 0.563, 0.002, 0.095f, 300, 0);
+        label(text("showcase.back"), PANEL_X, 0.574, 0.002, 0.095f, 300, 0);
         icon(weapon(id), PANEL_X, 0.445, 0.003, 0.14f);
         label(text("showcase.card-name", "%color%", "&" + accent, "%name%", raw("classes." + id + ".name")), PANEL_X, 0.29, 0.002, 0.25f, 400, 0);
         label(text("showcase.card-role", "%role%", raw("class-pages.classes." + id + ".role")), PANEL_X, 0.235, 0.002, 0.09f, 230, 0);
@@ -442,13 +473,13 @@ final class ShowcaseSession {
             double cy = -0.03 - j * 0.105;
             spellRows.put(slot, rect(PANEL_X, cy, ROW_W, 0.09, card, 0.001));
             label(text("showcase.spell", "%key%", keyName(c, slot), "%name%", raw("class-pages.classes." + id + "." + slot + ".name")),
-                    PANEL_X, cy - 0.02, 0.002, 0.105f, 400, 0);
+                    PANEL_X, cy - 0.008, 0.002, 0.105f, 400, 0);
         }
         boolean mine = own != null && own.heroClass().id().equals(id);
         int idle = mine ? card : color("choose", 0xD02A9D5F), hover = mine ? card : color("choose-hover", 0xFF2ECF7B);
         TextDisplay choose = rect(PANEL_X, -0.49, ROW_W, 0.11, idle, 0.001);
         zones.add(new Zone("choose", PANEL_X - ROW_W / 2, -0.545, PANEL_X + ROW_W / 2, -0.435, choose, idle, hover));
-        label(text(mine ? "showcase.owned" : "showcase.choose", "%name%", raw("classes." + id + ".name")), PANEL_X, -0.517, 0.002, 0.11f, 400, 0);
+        label(text(mine ? "showcase.owned" : "showcase.choose", "%name%", raw("classes." + id + ".name")), PANEL_X, -0.503, 0.002, 0.11f, 400, 0);
         if (!mine) {
             label(text(own == null ? "showcase.note-first" : "showcase.note-change", "%hours%", String.valueOf(showcase.players().cooldownHours())),
                     PANEL_X, -0.65, 0.002, 0.075f, 230, 0);
