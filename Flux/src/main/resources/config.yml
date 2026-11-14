@@ -72,7 +72,7 @@ ledger:
   # lines kept in memory per online player, shown by the menu
   menu-lines: 300
   # currencies of the menu filter and of the main-menu button, in order
-  currencies: [vault, influence, chips]
+  currencies: [vault, influence, chips, dungeon_tokens]
   # plugins that only carry money for others: the origin is the outermost other plugin of the call stack
   plumbing: [Flux, Vault, VaultUnlocked, CMI, CMILib, CMIEInjector, eco]
   # class name prefix -> origin ("Plugin:key"), for what the plugin name alone cannot tell
