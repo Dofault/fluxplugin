@@ -1,5 +1,5 @@
 prefix: "&#B376E5ᴍᴀsᴄᴏᴛ &8▸ "
-usage: "!&#FF5C5C/%flux_cmd_fluxmascot_fluxmascot% greet <player> | stop <player> | reload"
+usage: "!&#FF5C5C/%flux_cmd_fluxmascot_fluxmascot% greet <player> | roam <player> | stop <player> | reload"
 unknown-player: "&#FF5C5CThis player is not online."
 no-model: "&#FF5C5CThe robot cannot appear: BetterModel is missing or has no model named %model%."
 started: "&#2ECF7BThe robot greets %player%."

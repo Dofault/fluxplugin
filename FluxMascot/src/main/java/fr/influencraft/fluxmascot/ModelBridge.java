@@ -6,6 +6,7 @@ import kr.toxicity.model.api.animation.AnimationModifier;
 import kr.toxicity.model.api.bukkit.platform.BukkitAdapter;
 import kr.toxicity.model.api.tracker.DummyTracker;
 import kr.toxicity.model.api.tracker.ModelRotation;
+import kr.toxicity.model.api.tracker.ModelScaler;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
@@ -34,12 +35,13 @@ final class ModelBridge {
     private ModelBridge() {
     }
 
-    /** Shows the model to the viewer, null when no model has this name. */
-    static Handle show(Player viewer, String model, Location at, float yaw) {
+    /** Shows the model to the viewer at this scale, null when no model has this name. */
+    static Handle show(Player viewer, String model, float scale, Location at, float yaw) {
         var renderer = BetterModel.modelOrNull(model);
         if (renderer == null) return null;
         float[] facing = {yaw};
         DummyTracker tracker = renderer.create(BukkitAdapter.adapt(at));
+        tracker.scaler(ModelScaler.value(scale));
         tracker.rotation(() -> new ModelRotation(0, facing[0]));
         tracker.spawn(BukkitAdapter.adapt(viewer));
         return new Handle() {

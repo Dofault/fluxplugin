@@ -5,8 +5,9 @@
 
 language: ""
 
-# BetterModel model (plugins/BetterModel/models/<model>.bbmodel).
+# BetterModel model (plugins/BetterModel/models/<model>.bbmodel) and its size (1.0 = as drawn, 2.8 blocks tall).
 model: robot_accueil
+scale: 0.7
 
 # Where the robot appears: this far in front of the player (where he looks, on the ground). When something is in the
 # way, it comes closer, down to min-distance.
@@ -22,15 +23,38 @@ voice:
   duration: 365
   # 1.0 is heard up to 16 blocks away; above 1 it carries further (16 x volume).
   volume: 1.5
+  # Height of the robot's head above its feet: where the voice comes from.
+  height: 1.35
 
-# After the speech the robot waves, turns around and walks this far before vanishing.
+# Walking speed in blocks per second: the walk animation is drawn for 1.2 at full size, so 1.2 x scale.
+speed: 0.84
+
+# The speech is cut when the player is further than this from the robot.
+max-distance: 40.0
+
+# After the speech the robot stays and strolls on the streets, like the town's inhabitants.
+roam:
+  enabled: true
+  # Streets (nodes and links) in the plugin folder, written by scripts/typewriter/gen_pnj_ville.py.
+  network: network.json
+  # When the player is further than this, the robot is moved to a street between relocate-min and relocate-max
+  # blocks from him.
+  max-distance: 60.0
+  relocate-min: 12.0
+  relocate-max: 35.0
+  # At each crossing: chance to stop for a while (pause-min to pause-max ticks).
+  pause-chance: 0.3
+  pause-min: 40
+  pause-max: 120
+
+# Without streets where it stands (roam off, another world), the robot walks this far and vanishes after the speech.
 leave:
   distance: 4.0
-  # Blocks per second: the walk animation is drawn for 1.2.
-  speed: 1.2
 
-# The robot leaves at once when the player is further than this.
-max-distance: 40.0
+# The invisible box the player right clicks to hear the speech again.
+click:
+  width: 1.2
+  height: 2.0
 
 animations:
   idle: idle
