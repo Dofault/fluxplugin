@@ -31,7 +31,7 @@ rpg:
     origin: {x: 4000, y: 100, z: 4000}
     spacing: 320
     # From the middle of the arena (x: west is negative and on the right of the screen, z: away from the camera).
-    camera: {x: 3.75, y: 4.2, z: -9.5, pitch: 20}
+    camera: {x: 2.25, y: 4.2, z: -9.5, pitch: 20}
     actor: {x: 4.5, z: 0}
     monsters: [[-2.5, 0], [-4.2, 1.9], [-4.2, -1.9]]
     monster: HUSK
