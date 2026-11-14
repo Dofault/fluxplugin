@@ -45,8 +45,57 @@ GOLD = E.GOLD
 SIDES = E.SIDES
 
 
+# Trial of 2026-11-14 (`--essai`): the outfit shaded the way the hat is. Off: the delivered model.
+HAT_STYLE = False
+
+
+def gold_row(px, y):
+    """One horizontal gold line. Hat style: light gold with old gold ends, like the hat's band."""
+    w = len(px[0])
+    px[y] = [GOLD[1]] * w if not HAT_STYLE else [GOLD[1 if x in (0, w - 1) and w >= 4 else 2] for x in range(w)]
+
+
+def soft(level, folds=(), edges=(), hem=False, art=None):
+    """Cloth shaded like the hat: every face carries a lit rim along its top (corners left in the base tone) and a
+    shadow row along its bottom, top faces are framed in the lit tone, folds are shadow lines only. Gold hems are
+    the hat's band: a light row over a dark one."""
+    def f(w, h, r, face_):
+        if face_ == "down":
+            return [[tone(ROBE, level - 2)] * w for _ in range(h)]
+        if face_ == "up":
+            rim = w >= 4 and h >= 4
+            return [[tone(ROBE, level + 1 if not rim or x in (0, w - 1) or y in (0, h - 1) else level)
+                     for x in range(w)] for y in range(h)]
+        b = level if face_ in ("north", "south") else level - 1
+        px = [[tone(ROBE, b)] * w for _ in range(h)]
+        if h >= 6 and w >= 4:
+            for fx, fy in folds:
+                x = round(fx * (w - 1))
+                for y in range(max(1, round(fy * h)), h):
+                    px[y][x] = tone(ROBE, b - 1)
+        if h >= 4:
+            px[0] = [tone(ROBE, b + 1 if 0 < x < w - 1 or w < 4 else b) for x in range(w)]
+            px[h - 1] = [tone(ROBE, b - 1)] * w
+        if hem:
+            if h >= 5:
+                gold_row(px, h - 2)
+                px[h - 1] = [GOLD[0]] * w
+            else:
+                gold_row(px, h - 1)
+        if face_ == "north":
+            for e in edges:
+                x = 0 if e == "first" else w - 1
+                for y in range(h):
+                    px[y][x] = GOLD[2 if y == 0 else 0 if y == h - 1 else 1]
+        if art and face_ == "north":
+            art(px, w, h)
+        return px
+    return f
+
+
 def robe(level=3, **kw):
-    return E.cloth(level, shades=ROBE, **kw)
+    plain, hat = E.cloth(level, shades=ROBE, **kw), soft(level, **kw)
+    return lambda w, h, r, f: (hat if HAT_STYLE else plain)(w, h, r, f)
 
 
 # --------------------------------------------------------------------------- painters
@@ -210,14 +259,14 @@ def cuff(w, h, r, f):
         return [[ROBE[2] if x in (0, w - 1) or y in (0, h - 1) else ROBE[0] for x in range(w)] for y in range(h)]
     px = robe(4)(w, h, r, f)
     if f in SIDES:
-        px[h - 1] = [GOLD[1]] * w
+        gold_row(px, h - 1)
     return px
 
 
 def shoulder(w, h, r, f):
     px = robe(3)(w, h, r, f)
     if f in SIDES:
-        px[h - 1] = [GOLD[1]] * w
+        gold_row(px, h - 1)
     return px
 
 
@@ -225,7 +274,7 @@ def collar(w, h, r, f):
     """Low mage collar: dark cloth, one gold line along its top."""
     px = robe(2)(w, h, r, f if f in ("up", "down") else "north")
     if f in SIDES:
-        px[0] = [GOLD[1]] * w
+        gold_row(px, 0)
     return px
 
 
@@ -411,6 +460,9 @@ def parts():
 if __name__ == "__main__":
     args = sys.argv[1:]
     opts = {}
+    if "--essai" in args:
+        args.remove("--essai")
+        HAT_STYLE = True
     for flag in ("--apercu", "--cubes"):
         if flag in args:
             i = args.index(flag)
