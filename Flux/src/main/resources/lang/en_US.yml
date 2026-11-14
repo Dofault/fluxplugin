@@ -81,6 +81,7 @@ money:
     vault: "money"
     influence: "Influence"
     chips: "chips"
+    dungeon_tokens: "dungeon tokens"
   balance: "&fYou have %amount%."
   balance-other: "&f%player% has %amount%."
   usage: "&f/%command% &7[give|take|set|look] [player] [amount]"

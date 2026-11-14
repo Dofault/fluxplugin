@@ -80,6 +80,7 @@ money:
     vault: "BitBlock"
     influence: "Influence"
     chips: "Jetons"
+    dungeon_tokens: "Jetons de donjon"
   balance: "&#B376E5Tu as &f%amount%&#B376E5."
   balance-other: "&f%player% &#B376E5a &f%amount%&#B376E5."
   usage: "&f/%command% &7[give|take|set|look] [joueur] [montant]"

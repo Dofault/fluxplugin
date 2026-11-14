@@ -8,7 +8,8 @@ import java.util.UUID;
 
 /**
  * Pets of the players, kept by the plugin of the suite that owns them (FluxPets), used by the others (FluxDungeons
- * takes them into a run as fighting companions). Nothing is known without a provider: {@link #owned} is empty.
+ * hides them during a run, adopts a dungeon boss's pet on victory). Nothing is known without a provider: {@link #owned}
+ * is empty.
  */
 public final class Companions {
 
@@ -26,6 +27,31 @@ public final class Companions {
 
         /** Hides (true) or shows again the player's pets that follow him (a plugin shows its own instead). */
         void suppress(UUID player, boolean hidden);
+
+        /** The player adopts this pet (level 1, with its reveal); false when he already has it or it is unknown. */
+        default boolean adopt(Player player, String pet) {
+            return false;
+        }
+
+        /** The player owns this pet. */
+        default boolean owns(Player player, String pet) {
+            return false;
+        }
+
+        /** The card of this pet (what a duplicate gives), null when unknown. */
+        default ItemStack card(String pet) {
+            return null;
+        }
+
+        /** Picture of the pet for menus (its portrait), null when unknown. */
+        default ItemStack portrait(String pet) {
+            return null;
+        }
+
+        /** Display name of the pet (& colours), null when unknown. */
+        default String name(String pet) {
+            return null;
+        }
     }
 
     private static volatile Provider provider;
@@ -54,5 +80,30 @@ public final class Companions {
     public static void suppress(UUID player, boolean hidden) {
         Provider p = provider;
         if (p != null) p.suppress(player, hidden);
+    }
+
+    public static boolean adopt(Player player, String pet) {
+        Provider p = provider;
+        return p != null && p.adopt(player, pet);
+    }
+
+    public static boolean owns(Player player, String pet) {
+        Provider p = provider;
+        return p != null && p.owns(player, pet);
+    }
+
+    public static ItemStack card(String pet) {
+        Provider p = provider;
+        return p == null ? null : p.card(pet);
+    }
+
+    public static ItemStack portrait(String pet) {
+        Provider p = provider;
+        return p == null ? null : p.portrait(pet);
+    }
+
+    public static String name(String pet) {
+        Provider p = provider;
+        return p == null ? null : p.name(pet);
     }
 }

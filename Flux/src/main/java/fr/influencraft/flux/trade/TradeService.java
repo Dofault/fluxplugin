@@ -161,7 +161,7 @@ public final class TradeService implements TradeWindow.Backend, Listener {
 
     private ItemStack offerItem(Player viewer, TradeWindow.Offer offer) {
         int bundle = Math.max(1, offer.bundle());
-        Lore lore = Lore.create().kv(text("price"), price(offer.price()) + (bundle > 1 ? " " + text("per-bundle", "%bundle%", String.valueOf(bundle)) : ""));
+        Lore lore = Lore.create().kv(text("price"), price(offer.price(), offer.currency()) + (bundle > 1 ? " " + text("per-bundle", "%bundle%", String.valueOf(bundle)) : ""));
         int available = offer.available();
         lore.kv(text("stock"), available == Integer.MAX_VALUE ? text("unlimited") : available < 0 ? "?"
                 : available == 0 ? text("out-of-stock") : String.valueOf((long) available * bundle));
@@ -180,7 +180,7 @@ public final class TradeService implements TradeWindow.Backend, Listener {
         ItemStack stack = Items.of(flux.getConfig().getString(armed ? "trade.buy-button-armed" : "trade.buy-button",
                 armed ? "ORANGE_STAINED_GLASS_PANE" : "LIME_STAINED_GLASS_PANE"), viewer);
         stack.setAmount(Math.max(1, Math.min(64, items)));
-        Lore lore = Lore.create().kv(text("total"), price(offer.price() * bundles));
+        Lore lore = Lore.create().kv(text("total"), price(offer.price() * bundles, offer.currency()));
         if (armed) lore.left(text("click-confirm"));
         else lore.left(text("click-buy"));
         return Items.dress(stack, text(armed ? "buy-armed-name" : "buy-name", "%amount%", String.valueOf(items)), lore.build(), viewer);
@@ -338,6 +338,11 @@ public final class TradeService implements TradeWindow.Backend, Listener {
 
     private String text(String key, String... vars) {
         return messages.get().raw("trade." + key, vars);
+    }
+
+    private static String price(double amount, String currency) {
+        Currency money = currency == null ? null : Economy.get(currency);
+        return money != null ? money.format(amount) : price(amount);
     }
 
     private static String price(double amount) {

@@ -42,6 +42,11 @@ public final class TradeWindow {
         /** Price of one bundle; 0 or less hides the row. */
         double price();
 
+        /** Flux currency the price is in ({@code economy.Economy.get}), null for the server's money. */
+        default String currency() {
+            return null;
+        }
+
         /** Bundles that can be bought right now: -1 unknown, {@link Integer#MAX_VALUE} unlimited. */
         default int available() {
             return Integer.MAX_VALUE;

@@ -468,13 +468,14 @@ def bar_frame(d, x0, y0, x1):
 
 
 def bg_metiers(generic):
-    """Job menu (FluxTools metiers.yml): title "Métier", job name field (Flux text), pets, portrait frame, 12 jobs,
-    level bar (row 5), paid actions in the inventory, pager on the hotbar (drawn by Flux only when needed)."""
+    """Job menu (FluxJobs metiers.yml): title "Métier", job name field (Flux text), pets (the 4 of the job and its
+    legendary boss pet under them, 2026-11-14), portrait frame, 12 jobs, level bar (row 5, after the legendary), paid
+    actions in the inventory, pager on the hotbar (drawn by Flux only when needed)."""
     im = ui.window(generic)
     d = ImageDraw.Draw(im, "RGBA")
     label(im, "Métier", 88, 5, centre=True)
     ui.field(im, d, (26, 19, 128, 32))     # as high as the buttons beside it (14 px)
-    pets = [9, 18, 27, 36]
+    pets = [9, 18, 27, 36, 45]
     grid = [15, 16, 17, 24, 25, 26, 33, 34, 35, 42, 43, 44]
     ui.container(im, d, span(pets), "ardoise")
     for c in pets:
@@ -485,7 +486,7 @@ def bg_metiers(generic):
     ui.container(im, d, span(grid), "ardoise")
     for c in grid:
         ui.slot(d, c, "dark")
-    bar_frame(d, 6, 109, 169)
+    bar_frame(d, 27, 109, 169)
     label(im, "Actions rémunérées", 8, 130)
     for i in range(27):
         ui.slot(d, 54 + i)
