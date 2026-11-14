@@ -52,12 +52,6 @@ public final class Sidebar {
         return HIDDEN.contains(player);
     }
 
-    /** The objective this player's sidebar shows (even while hidden), {@code null} if Flux saw none. */
-    public static String shown(UUID player) {
-        String last = LAST.get(player);
-        return last == null || last.isEmpty() ? null : last;
-    }
-
     /** Called by the adapter: the sidebar of this player was told to show this objective. */
     public static void told(UUID player, String objective) {
         LAST.put(player, objective == null ? "" : objective);

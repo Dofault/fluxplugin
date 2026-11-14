@@ -442,10 +442,6 @@ client-pack:
   folders:
     - plugins/Flux/pack
 
-# Shadow under the sidebar texts (title and lines), whichever plugin draws it (Typewriter): #RRGGBB or #AARRGGBB,
-# blank = the vanilla look without shadow. Black, as the texts of the HUD.
-sidebar-shadow: "#000000"
-
 # The advancements key (L) opens this command instead of the vanilla screen (blank or enabled: false = vanilla).
 advancement-redirect:
   enabled: true
