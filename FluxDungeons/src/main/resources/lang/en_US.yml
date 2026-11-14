@@ -233,8 +233,6 @@ lobby:
   spells-on: 'yes'
   spells-count: '%count% per monster (more for bosses)'
   spells-off: 'no'
-  field: '%dungeon% · %level%'
-  field-job: '%job% dungeon'
   ready-count: 'Ready: %ready%/%total%'
   leave: 'Leave'
   leave-desc: 'Cancels the launch for the whole party.'
@@ -263,6 +261,8 @@ lobby:
   expired: '&#FF5C5CLaunch of %dungeon% cancelled.'
   refused: '&#FF5C5CThe dungeon could not start, launch it again with &f[/%flux_cmd_fluxdungeons_dungeon%]&#FF5C5C.'
   refused-key: '&#FF5C5CThe party leader has no %job% dungeon key left: the dungeon does not start.'
+  closed: '&#FFD94DYou closed the launch screen of %dungeon%&#FFD94D: open it again with &f[/%flux_cmd_fluxdungeons_dungeon%]&#FFD94D to get ready.'
+  closed-ready: '&#B376E5You are ready for %dungeon%&#B376E5. Open the screen again with &f[/%flux_cmd_fluxdungeons_dungeon%]&#B376E5 to follow the party.'
 door:
   kills: '&#FF5C5C☠ &f%done%&7/&f%needed% &7monsters'
   opened: '&#B376E5A door opens...'
@@ -279,25 +279,6 @@ offering:
   not-yet: '&#B376E5Not yet: the preparation follows a precise order.'
   enough: '&#B376E5The altar already has enough of this one.'
   given: '&#A5C96B%player% &7puts &f%count% × %item%&7.'
-pick-level:
-  color-hard: "&#FF5C5C"
-  color-middle: "&#FFD94D"
-  color-easy: "&#2ECF7B"
-  title: '%dungeon%'
-  intro: '&#B376E5Pick the difficulty for the whole party. &7(It can still be changed on the launch screen.)'
-  spells-on: 'yes'
-  spells-count: '%count% per monster (more for bosses)'
-  spells-off: 'no'
-  tooltip: '%level%
-
-    &#B376E5Monster life: &fx%health%
-
-    &#B376E5Monster damage: &fx%damage%
-
-    &#B376E5Reward: &fx%reward%
-
-    &#B376E5Special attacks: &f%spells%'
-
 rpg:
   dummy-none: "&#FF5C5CNo dummy within 6 blocks."
   dummy-removed: "&#B376E5Dummies removed: &f%count%"
@@ -685,14 +666,7 @@ menu:
   key-ok: 'You can launch this dungeon'
   key-missing: 'You need a key'
   key-free: 'You need no key.'
-  level-name: 'Play in %level%'
-  level-desc: 'Launches the dungeon for your party at this difficulty.'
-  level-health: 'Monsters'' life'
-  level-damage: 'Monsters'' damage'
-  level-spells: 'Special attacks'
-  level-boosters: 'Boosters won'
-  level-key: 'Spends a %job% dungeon key'
-  level-play: 'Play'
+  key-action: 'Prepare the dungeon'
 loot:
   pet-desc: 'The beaten boss becomes your pet: adopted on your first victory, its card afterwards.'
   pet-mount: 'Mount from level 5, takes 3 slots.'

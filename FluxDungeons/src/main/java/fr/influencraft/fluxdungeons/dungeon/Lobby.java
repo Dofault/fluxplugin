@@ -33,7 +33,7 @@ import java.util.UUID;
  * (checked by the launcher). Nothing is chosen besides: a dungeon is played with the rpg profile as it is.
  * <p>
  * Lists: {@code donjon_sas_boutons} (leave, info, class, key), {@code donjon_sas_membres}, {@code donjon_sas_etats},
- * {@code donjon_sas_niveaux}, {@code donjon_sas_pret}; placeholders {@code sas_title}, {@code sas_level},
+ * {@code donjon_sas_niveaux}, {@code donjon_sas_pret}; placeholders {@code sas_level},
  * {@code sas_ready} (FluxDungeons' placeholders); actions {@code [fluxdungeon] sas level <n> | ready | leave}.
  */
 public final class Lobby implements Listener {
@@ -76,9 +76,8 @@ public final class Lobby implements Listener {
         int keys(Player leader, DungeonDefinition def);
     }
 
-    /** The level offered first: the one named Normal, else the first. */
+    /** The level offered first: the easiest (owner's feedback, 2026-11-14). */
     private static int defaultLevel(DungeonDefinition def) {
-        for (int i = 0; i < def.levels().size(); i++) if (def.levels().get(i).name().equalsIgnoreCase("normal")) return i;
         return 0;
     }
 
@@ -181,25 +180,15 @@ public final class Lobby implements Listener {
 
     // ---------------------------------------------------------------- placeholders
 
-    /** {@code sas_title}, {@code sas_level}, {@code sas_ready}; null for another one. */
+    /** {@code sas_level}, {@code sas_ready}; null for another one. */
     public String placeholder(Player p, String params) {
         Party party = byPlayer.get(p.getUniqueId());
         return switch (params) {
-            case "sas_title" -> party == null ? "" : Texts.plain(Texts.colors(plugin.messages().raw("lobby.field",
-                    "%dungeon%", shortName(party.def), "%level%", party.def.levels().get(party.level).name())));
             case "sas_level" -> party == null ? "-1" : String.valueOf(party.level);
             case "sas_ready" -> party == null ? "" : Texts.plain(Texts.colors(plugin.messages().raw("lobby.ready-count",
                     "%ready%", String.valueOf(party.ready.size()), "%total%", String.valueOf(party.members.size()))));
             default -> null;
         };
-    }
-
-    /** Short name shown in the field: the dungeon's job when it has one. */
-    private String shortName(DungeonDefinition def) {
-        String job = def.job();
-        if (job.isEmpty()) return Texts.plain(Texts.colors(def.name()));
-        String name = fr.influencraft.flux.api.jobs.Jobs.available() ? fr.influencraft.flux.api.jobs.Jobs.get().displayName(job) : job;
-        return plugin.messages().raw("lobby.field-job", "%job%", Texts.plain(Texts.colors(name == null ? job : name)));
     }
 
     // ---------------------------------------------------------------- lists
@@ -389,6 +378,25 @@ public final class Lobby implements Listener {
         for (Party party : new HashSet<>(byPlayer.values())) {
             if (now - party.created > TIMEOUT_MS) close(party, "lobby.expired", "");
         }
+    }
+
+    /**
+     * The screen closed while the run waits for him (Escape, another menu): he is told how to open it again to get
+     * ready, once the close is over (a launch or a cancel closes it too, then he is no longer waiting).
+     */
+    @EventHandler
+    public void onClose(org.bukkit.event.inventory.InventoryCloseEvent e) {
+        if (!(e.getPlayer() instanceof Player p)) return;
+        MenuView before = FluxApi.view(p);
+        if (before == null || !MENU.equals(before.menuId())) return;
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            Party party = byPlayer.get(p.getUniqueId());
+            if (party == null || !p.isOnline()) return;
+            MenuView now = FluxApi.view(p);
+            if (now != null && now.isOpen() && MENU.equals(now.menuId())) return;
+            plugin.messages().send(p, party.ready.contains(p.getUniqueId()) ? "lobby.closed-ready" : "lobby.closed",
+                    "%dungeon%", party.def.name());
+        });
     }
 
     @EventHandler

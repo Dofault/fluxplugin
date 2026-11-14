@@ -233,8 +233,6 @@ lobby:
   spells-on: 'oui'
   spells-count: '%count% par monstre (plus pour les boss)'
   spells-off: 'non'
-  field: '%dungeon% · %level%'
-  field-job: 'Donjon %job%'
   ready-count: 'Prêts : %ready%/%total%'
   leave: 'Quitter'
   leave-desc: 'Annule le lancement pour tout le groupe.'
@@ -263,6 +261,8 @@ lobby:
   expired: '&#FF5C5CLancement de %dungeon% annulé.'
   refused: '&#FF5C5CLe donjon n''a pas pu démarrer, relance-le avec &f[/%flux_cmd_fluxdungeons_dungeon%]&#FF5C5C.'
   refused-key: '&#FF5C5CLe chef du groupe n''a plus de clé du donjon %job% : le donjon ne démarre pas.'
+  closed: '&#FFD94DTu as fermé l''écran de préparation de %dungeon%&#FFD94D : rouvre-le avec &f[/%flux_cmd_fluxdungeons_dungeon%]&#FFD94D pour te mettre prêt.'
+  closed-ready: '&#B376E5Tu es prêt pour %dungeon%&#B376E5. Rouvre l''écran avec &f[/%flux_cmd_fluxdungeons_dungeon%]&#B376E5 pour suivre le groupe.'
 door:
   kills: '&#FF5C5C☠ &f%done%&7/&f%needed% &7monstres'
   opened: '&#B376E5Une porte s''ouvre...'
@@ -279,25 +279,6 @@ offering:
   not-yet: '&#B376E5Pas encore : la préparation suit un ordre précis.'
   enough: '&#B376E5L''autel en a déjà assez de celle-ci.'
   given: '&#A5C96B%player% &7dépose &f%count% × %item%&7.'
-pick-level:
-  color-hard: "&#FF5C5C"
-  color-middle: "&#FFD94D"
-  color-easy: "&#2ECF7B"
-  title: '%dungeon%'
-  intro: '&#B376E5Choisis la difficulté pour tout le groupe. &7(Tu pourras encore la changer sur l''écran de lancement.)'
-  spells-on: oui
-  spells-count: '%count% par monstre (plus pour les boss)'
-  spells-off: non
-  tooltip: '%level%
-
-    &#B376E5Vie des monstres : &fx%health%
-
-    &#B376E5Dégâts des monstres : &fx%damage%
-
-    &#B376E5Récompense : &fx%reward%
-
-    &#B376E5Attaques spéciales : &f%spells%'
-
 rpg:
   dummy-none: "&#FF5C5CAucun mannequin à moins de 6 blocs."
   dummy-removed: "&#B376E5Mannequin(s) retiré(s) : &f%count%"
@@ -697,14 +678,7 @@ menu:
   key-ok: 'Tu peux lancer ce donjon'
   key-missing: 'Il te manque une clé'
   key-free: 'Tu n''as pas besoin de clé.'
-  level-name: 'Jouer en %level%'
-  level-desc: 'Lance le donjon pour ton groupe à cette difficulté.'
-  level-health: 'Vie des monstres'
-  level-damage: 'Dégâts des monstres'
-  level-spells: 'Attaques spéciales'
-  level-boosters: 'Boosters gagnés'
-  level-key: 'Dépense une clé du donjon %job%'
-  level-play: 'Jouer'
+  key-action: 'Préparer le donjon'
 loot:
   pet-desc: 'Le boss vaincu devient ton familier, en Semi-RP : adopté à ta première victoire, sa carte ensuite.'
   pet-mount: 'Monture dès le niveau 5, prend 3 emplacements.'

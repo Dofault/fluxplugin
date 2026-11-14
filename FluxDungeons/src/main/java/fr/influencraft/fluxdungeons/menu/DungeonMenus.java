@@ -41,8 +41,6 @@ public final class DungeonMenus {
 
     public static final String LIST = "donjons", DETAIL = "donjon";
     private static final String PORTRAIT = "itemsadder:influportraits:portrait_";
-    private static final String[] LEVEL_ICONS = {"itemsadder:fluxui:btn_right_green", "itemsadder:fluxui:btn_right_gold",
-            "itemsadder:fluxui:btn_right_red"};
 
     /** What the menus need from the plugin. */
     public interface Host {
@@ -79,7 +77,6 @@ public final class DungeonMenus {
         Lists.register(plugin, "donjons_boutons", q -> listButtons(q.viewer()));
         Lists.register(plugin, "donjon_boutons", q -> detailButtons(q.viewer()));
         Lists.register(plugin, "donjon_butin", q -> loot(q.viewer()));
-        Lists.register(plugin, "donjon_niveaux", q -> levels(q.viewer()));
     }
 
     public void open(Player p) {
@@ -95,7 +92,7 @@ public final class DungeonMenus {
             case "view" -> {
                 if (host.dungeon(args[1]) == null) return;
                 selected.put(p.getUniqueId(), args[1]);
-                for (String l : List.of("donjon_boutons", "donjon_butin", "donjon_niveaux")) Lists.invalidate(p, l);
+                for (String l : List.of("donjon_boutons", "donjon_butin")) Lists.invalidate(p, l);
             }
             case "play" -> {
                 DungeonDefinition def = host.dungeon(selected.getOrDefault(p.getUniqueId(), ""));
@@ -195,10 +192,12 @@ public final class DungeonMenus {
             if (n > 0) key.ok(raw("menu.key-ok"));
             else key.ko(raw("menu.key-missing"));
         } else key.info(raw("menu.key-free"));
+        key.left(raw("menu.key-action"));
         ItemStack keyItem = Items.of("itemsadder:fluxdonjon:cle_donjon", raw("menu.key", "%job%", keys.jobName(def.job())),
                 key.build(), viewer);
         if (keyItem != null) keyItem.setAmount(Math.max(1, Math.min(64, keys.count(viewer, def.job()))));
-        out.add(button("key", keyItem, "", ""));
+        // the launch screen, at the easiest level: the difficulty is chosen there
+        out.add(button("key", keyItem, "[fluxdungeon] play 0", ""));
         Currency money = tokens.currency();
         out.add(button("tokens", Items.of("itemsadder:fluxdonjon:jeton_donjon", raw("menu.tokens"),
                 Lore.create().description(raw("menu.tokens-desc"))
@@ -256,32 +255,6 @@ public final class DungeonMenus {
             String name = shown.hasItemMeta() && shown.getItemMeta().hasDisplayName()
                     ? Texts.ampersand(shown.getItemMeta().displayName()) : null;
             out.add(ListEntry.of("loot_" + out.size()).item(Items.dress(shown, name, lore, viewer)));
-        }
-        return out;
-    }
-
-    private List<ListEntry> levels(Player viewer) {
-        DungeonDefinition def = shown(viewer);
-        List<ListEntry> out = new ArrayList<>();
-        if (def == null) return out;
-        List<DungeonDefinition.Level> levels = def.levels();
-        boolean needsKey = keys.needs(viewer, def);
-        int owned = keys.count(viewer, def.job());
-        for (int i = 0; i < Math.min(3, levels.size()); i++) {
-            DungeonDefinition.Level l = levels.get(i);
-            Lore lore = Lore.create().description(raw("menu.level-desc"))
-                    .kv(raw("menu.level-health"), "x" + Format.decimal(l.health()))
-                    .kv(raw("menu.level-damage"), "x" + Format.decimal(l.damage()))
-                    .kv(raw("menu.level-spells"), String.valueOf(l.abilities()))
-                    .kv(raw("menu.level-boosters"), "x" + def.boosters(i));
-            if (needsKey) {
-                if (owned > 0) lore.info(raw("menu.level-key", "%job%", keys.jobName(def.job())));
-                else lore.ko(raw("menu.key-missing"));
-            }
-            lore.left(raw("menu.level-play"));
-            ItemStack item = Items.of(LEVEL_ICONS[Math.min(i, LEVEL_ICONS.length - 1)],
-                    raw("menu.level-name", "%level%", l.name()), lore.build(), viewer);
-            out.add(ListEntry.of(String.valueOf(i)).item(item));
         }
         return out;
     }

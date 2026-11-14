@@ -634,8 +634,8 @@ public final class FluxDungeons extends FluxPlugin {
     }
 
     /**
-     * Starts a dungeon for the player's party (he must lead it), or for him alone. {@code level}: the difficulty
-     * already chosen (the buttons of the selector page), else a dungeon with several levels asks.
+     * Starts a dungeon for the player's party (he must lead it), or for him alone: its launch screen opens at
+     * {@code level} (index), the easiest when none is given.
      */
     private void play(Player p, DungeonDefinition def, int level) {
         // a launch screen closed with Escape keeps him waiting: the same dungeon opens it again, another one replaces it
@@ -652,43 +652,9 @@ public final class FluxDungeons extends FluxPlugin {
             messages().send(p, "start.not-leader");
             return;
         }
-        if (def.levels().size() > 1 && (level < 0 || level >= def.levels().size())) {
-            pickLevel(p, def);
-            return;
-        }
+        // the difficulty is chosen on the launch screen; it opens at the asked one, else the easiest
+        if (level < 0 || level >= def.levels().size()) level = 0;
         start(p, def, party == null ? List.of(p) : party.online(), def.levels().size() > 1 ? level : -1);
-    }
-
-    /**
-     * A dungeon with several difficulty levels asks first, in a window: one button per level, its gear, multipliers
-     * and rules on mouse over. The launch screen then opens at that level (the leader may still change it there).
-     */
-    private void pickLevel(Player p, DungeonDefinition def) {
-        Dialogs.Form form = Dialogs.form(p, messages().raw("pick-level.title", "%dungeon%", def.name())).width(260).columns(1);
-        form.body(messages().raw("pick-level.intro"));
-        List<DungeonDefinition.Level> levels = def.levels();
-        // easiest in green, hardest in red, the ones between in gold
-        for (int i = 0; i < levels.size(); i++) {
-            DungeonDefinition.Level l = levels.get(i);
-            String color = messages().raw(i == 0 ? "pick-level.color-easy" : i == levels.size() - 1 ? "pick-level.color-hard" : "pick-level.color-middle");
-            String tip = messages().raw("pick-level.tooltip", "%level%", color + "&l" + l.name(),
-                    "%health%", number(l.health()), "%damage%", number(l.damage()), "%reward%", number(l.reward()),
-                    "%spells%", !l.spells() ? messages().raw("pick-level.spells-off") : l.abilities() > 0
-                            ? messages().raw("pick-level.spells-count", "%count%", String.valueOf(l.abilities()))
-                            : messages().raw("pick-level.spells-on"));
-            form.action("level:" + i, color + "&l" + l.name(), tip);
-        }
-        form.onSubmit((player, answer) -> {
-            String b = answer.button();
-            if (b == null || !b.startsWith("level:")) return;
-            Party party = parties.of(player);
-            if (party != null && !party.isLeader(player.getUniqueId())) return;
-            start(player, def, party == null ? List.of(player) : party.online(), Integer.parseInt(b.substring(6)));
-        }).open();
-    }
-
-    private static String number(double v) {
-        return v == Math.rint(v) ? String.valueOf((long) v) : String.valueOf(v).replace('.', ',');
     }
 
     private void start(CommandSender by, DungeonDefinition def, List<Player> players, int level) {

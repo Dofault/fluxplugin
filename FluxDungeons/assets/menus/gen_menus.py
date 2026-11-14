@@ -13,14 +13,14 @@ Writes:
 Lists, actions and placeholders are FluxDungeons' (menu.DungeonMenus, dungeon.Lobby). Then /iazip and /fluxmenu reload.
 
 Layouts (window px 176 wide, item of a slot at fond_lib.objet):
-  donjons   row 0: close (0), info (8); rows 1-2: the dungeons, columns 2 to 6, in a dark box headed « Choisis ton
-            donjon »; row 4: class (38), party (40), tokens and potions (42)
+  donjons   row 0: back to the main menu (0), info (8); rows 1-2: the dungeons, columns 2 to 6, plain vanilla slots
+            (as the pets menu, 2026-11-14 feedback: no box); row 4: class (38), party (40), tokens and potions (42)
   donjon    row 0: back (0), job of the dungeon in a dark field, info (8); rows 1-4 left: the boss picture in a gold
-            frame; rows 2-4 right: possible loot (12 slots, header « Butin »); row 5: key (45), Easy / Normal / Hard
-            (47, 49, 51, coloured cells, names under them), tokens (53)
-  donjon_sas row 0: leave (0), dungeon and difficulty in a dark field, info (8); rows 1-2: one card per member (head,
-            ready or waiting under it); row 3: Easy / Normal / Hard (29, 31, 33), the chosen one lit; row 4: players
-            ready; row 5: class (45), ready (49), key (53)
+            frame; rows 2-4 right: possible loot (12 slots, header « Butin »); row 5: the key (49, on a green plate:
+            click = launch screen), tokens (53). The difficulty is chosen on the launch screen only.
+  donjon_sas row 0: leave (0), info (8); rows 1-2: one card per member (head, ready or waiting under it); row 3:
+            Easy / Normal / Hard (28, 31, 34, coloured cells, no words: the buttons' names say it), the chosen one lit;
+            row 4: players ready; row 5: class (45), ready (49), key (53)
 """
 import json
 import math
@@ -47,7 +47,6 @@ BLACK, WHITE = (0, 0, 0, 255), (255, 255, 255, 255)
 GOLD, GOLD_LIGHT, GOLD_DARK = ui.rgb("#F0A800"), ui.rgb("#FFD94D"), ui.rgb("#8A5A14")
 VIOLET, VIOLET_DARK = ui.rgb("#5B2D9E"), ui.rgb("#1E0A3C")
 LEVEL_COLOURS = [ui.rgb("#3E8E2E"), ui.rgb("#C9930E"), ui.rgb("#C0392B")]
-LEVEL_NAMES = ["Facile", "Normal", "Difficile"]
 IMAGE_X, IMAGE_TOP = 9, 38           # boss picture of the dungeon page (64 x 64)
 
 # dungeon id -> (job id, job name, boss model) ; the boss pets and their jobs are in scripts/influcard/familiers_boss.py
@@ -60,7 +59,8 @@ JOB_NAMES = {"mineur": "Mineur", "rochiste": "Rochiste", "deblayeur": "Déblayeu
 LIST_SLOTS = [11, 12, 13, 14, 15, 20, 21, 22, 23, 24]
 LOOT_SLOTS = [23, 24, 25, 26, 32, 33, 34, 35, 41, 42, 43, 44]
 MEMBER_SLOTS, STATE_SLOTS = [11, 12, 13, 14, 15], [20, 21, 22, 23, 24]
-DETAIL_LEVELS, SAS_LEVELS = [46, 49, 52], [28, 31, 34]
+SAS_LEVELS = [28, 31, 34]
+DETAIL_KEY = 49
 
 
 # --------------------------------------------------------------------------------------------------- backgrounds
@@ -71,28 +71,24 @@ def field(im, d, box, txt=None):
         label(im, txt, (box[0] + box[2]) // 2, box[1] + 4, centre=True, dark_ground=True)
 
 
-def level_cells(im, d, slots, rows, label_y):
-    for slot, colour, name in zip(slots, LEVEL_COLOURS, LEVEL_NAMES):
+def level_cells(d, slots, rows):
+    for slot, colour in zip(slots, LEVEL_COLOURS):
         ui.slot(d, slot, "colour", colour, rows=rows)
-        x, _ = ui.objet(slot, rows)
-        label(im, name, x + 8, label_y, centre=True)
 
 
 def bg_list():
     im = bg_window(GENERIC, 0, 4, rows=5)
     d = ImageDraw.Draw(im, "RGBA")
     label(im, "Donjons", 88, 5, centre=True)
-    _, y0, _, y1 = span(LIST_SLOTS)
-    ui.container(im, d, (24, y0 - 11, 151, y1), "ardoise", head="Choisis ton donjon", accent=VIOLET)
     for c in LIST_SLOTS:
-        ui.slot(d, c, "dark")
+        ui.slot(d, c, "vanilla", rows=5)
     for c in (38, 40, 42):
         ui.slot(d, c, "vanilla", rows=5)
     return im
 
 
 def bg_detail():
-    im = bg_window(GENERIC, 0, 5, extra=10)
+    im = bg_window(GENERIC, 0, 5)
     d = ImageDraw.Draw(im, "RGBA")
     label(im, "Donjon", 88, 5, centre=True)
     field(im, d, (26, 19, 150, 32))
@@ -109,9 +105,10 @@ def bg_detail():
     ui.container(im, d, (bx0, by0 - 11, bx1, by1), "ardoise", head="Butin", accent=GOLD_DARK)
     for c in LOOT_SLOTS:
         ui.slot(d, c, "dark")
-    ui.slot(d, 45, "vanilla")
     ui.slot(d, 53, "vanilla")
-    level_cells(im, d, DETAIL_LEVELS, 6, 128)
+    # the key: launch screen of the dungeon, on a green plate
+    x, y = ui.objet(DETAIL_KEY)
+    ui.button(d, (x - 3, y - 3, x + 18, y + 17), ui.rgb("#3E8E2E"))
     return im
 
 
@@ -119,14 +116,13 @@ def bg_sas():
     im = bg_window(GENERIC, 0, 5, extra=4)
     d = ImageDraw.Draw(im, "RGBA")
     label(im, "Préparation", 88, 5, centre=True)
-    field(im, d, (26, 19, 150, 32))
     # one card per member: head on top, ready / waiting under it
     for head, state in zip(MEMBER_SLOTS, STATE_SLOTS):
         x0, y0, x1, y1 = span([head, state], pad=2)
         ui.container(im, d, (x0, y0, x1, y1), "carte")
         ui.slot(d, head, "vanilla")
         ui.slot(d, state, "dark")
-    level_cells(im, d, SAS_LEVELS, 6, 90)
+    level_cells(d, SAS_LEVELS, 6)
     field(im, d, (58, 97, 118, 104))      # players ready (Flux text widget)
     ui.slot(d, 45, "vanilla")
     ui.slot(d, 53, "vanilla")
@@ -314,7 +310,7 @@ lists:
 {entries("donjons_boutons", [0, 8, 38, 40, 42], left=["%entry_left%", "%entry_left2%"])}
 {entries("donjons_liste", LIST_SLOTS, left=["[fluxdungeon] view %entry_id%", "[menu] donjon"])}
 """)
-    open(os.path.join(MENUS, "donjon.yml"), "w", encoding="utf-8").write(head + f"""# A dungeon (opened from donjons): its boss, the possible loot, a button per difficulty to play it.
+    open(os.path.join(MENUS, "donjon.yml"), "w", encoding="utf-8").write(head + f"""# A dungeon (opened from donjons): its boss, the possible loot, its key (click: launch screen).
 # One page per dungeon (_pages/donjon.yml): its job in the field and its boss picture.
 
 title: ":offset_-8::fd_menu_donjon:"
@@ -329,9 +325,8 @@ page-files:
 
 lists:
 
-{entries("donjon_boutons", [0, 8, 45, 53], left=["%entry_left%", "%entry_left2%"])}
+{entries("donjon_boutons", [0, 8, DETAIL_KEY, 53], left=["%entry_left%", "%entry_left2%"])}
 {entries("donjon_butin", LOOT_SLOTS)}
-{entries("donjon_niveaux", DETAIL_LEVELS, left=["[fluxdungeon] play %entry_id%"])}
 """)
     pages = [head, "# Pages of the dungeon menu, one per dungeon: its job and its boss.\n\npages:\n"]
     for dungeon, job, model, pet in DUNGEONS:
@@ -373,12 +368,6 @@ lists:
 {entries("donjon_sas_pret", [49], left=["[fluxdungeon] sas ready"])}
 
 widgets:
-  donjon:
-    type: text
-    x: 88
-    y: 23
-    align: center
-    text: "%fluxdungeons_sas_title%"
   prets:
     type: text
     x: 88
