@@ -818,9 +818,12 @@ def sanctuary():
                 for y in range(A + 1, A + 30):
                     if g.get(x, y, z) == "air" or gridlib.passable(g.get(x, y, z)):
                         g.set(x, y, z, "barrier")
-    m.mob("renard_sylvestre", 0, cz, y=A + 1, yaw=180, room="5")
-    m.spawns[-1]["at"] = [0.0, float(A + 1), float(cz), 180.0]          # the middle of the square, as in the first version
-    m.objectives = ["renard_sylvestre"]
+    # boss since 2026-11-14: the Devouring Flower, rooted near the far side of the square, facing the entrance (it
+    # never turns: players fight it from the front). The Sylvan Fox ("renard_sylvestre", middle of the square) keeps
+    # its files: swap the two lines below to bring it back.
+    m.mob("fleur_devoreuse", 0, cz + 12, y=A + 1, yaw=180, room="5")
+    m.spawns[-1]["at"] = [0.0, float(A + 1), float(cz + 12), 180.0]
+    m.objectives = ["fleur_devoreuse"]
 
 
 # ======================================================================== checks, output

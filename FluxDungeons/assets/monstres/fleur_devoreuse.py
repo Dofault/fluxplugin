@@ -5,11 +5,18 @@ A giant carnivorous flower, entirely botanical (no eyes, no arms): five big cora
 throat lined with ivory thorns, a pistil tongue hanging on one side, a collar of five spotted inner petals, five green
 sepals behind, an S shaped stem leaning towards the player, two unequal leaves, a scaly bulb and five creeping roots.
 
-Brief: 48 boxes (base 10, stem 3, leaves 4, head 31), about 3.5 x 4.4 x 3.9 blocks. Every outline of a flat piece
+Brief: 51 boxes (base 10, stem 3, leaves 4, head 34), about 3.9 x 4.5 x 4.1 blocks. The first model had 48: the
+rig split each side wall of the throat between the two jaws and gave the tongue a third segment. Two more boxes
+without any texture are the hit boxes players aim at (`b_tete`, `b_bulbe`). Every outline of a flat piece
 (petal, leaf, sepal) comes from cut-out pixels; veins, spots, throat folds, scales and stem thorns are painted.
 Painted at 2 texels per model unit (32 per block) everywhere.
 
+Rig: every moving part has its bone, pivot on its attachment. `Gueule` (throat, jaws, teeth, tongue, inner petals)
+can be scaled: the mouth grows without the corolla. `Machoire_haut` and `Machoire_bas` hinge at the back of the throat.
+FRAMES gives the rest orientation of each bone, so that fleur_devoreuse_anim.py turns a part about its own axes.
+
 Usage: fleur_devoreuse.py [output folder] [--apercu <sheet.png>] [--gueule <mouth.png>]
+       [--anims <folder> [--only a,b] [--count n]] (one strip of frames per animation)
 Front towards north (-z), the flower's right towards +x, 16 units = 1 block.
 """
 import json
@@ -470,7 +477,8 @@ MATS = {name: (p, D) for name, p in {
     "wall_right": throat_wall("west", spines=True), "wall_left": throat_wall("east", spines=True),
     "throat_back": throat_back,
     "tooth_down": tooth("down"), "tooth_up": tooth("up"), "tooth_broken": tooth("up", broken=True),
-    "tongue_a": tongue(0.0, 0.62), "tongue_b": tongue(0.62, 1.0, pollen=True),
+    "tongue_a": tongue(0.0, 0.31), "tongue_m": tongue(0.31, 0.62), "tongue_b": tongue(0.62, 1.0, pollen=True),
+    "hitbox": throat_back,
     "stem_low": stem(STEM_LOW, 3), "stem_high": stem(STEM_HIGH, 2), "stem_neck": stem(STEM_NECK, 1),
     "bulb_low": bulb(2, moss=True), "bulb_high": bulb(1, top=OLIVE),
     "root_a": root(ROOT_A), "root_b": root(ROOT_B, tip=True), "root_one": root(ROOT_AB, tip=True),
@@ -528,7 +536,9 @@ ROOTS = (  # name, azimuth, (length, section) per segment, tip elevation, mossy
     ("4", -115, ((16.0, 5.1),), 0, True),
     ("5", 105, ((12.8, 4.8),), 35, False),
 )
-BUDGET = {"base": 10, "stem": 3, "leaves": 4, "head": 31}
+BUDGET = {"base": 10, "stem": 3, "leaves": 4, "head": 34, "hitbox": 2}
+HITBOX = ("b_tete", "b_bulbe")
+FRAMES = {}                             # bone -> its rest orientation (matrix), filled by parts()
 
 
 def parts():
@@ -543,6 +553,7 @@ def parts():
         d = [q[i] - p[i] for i in range(3)]
         length = math.sqrt(sum(c * c for c in d))
         R = frame(d, normal, twist)
+        FRAMES[group] = R
         add(zone, group, name, vadd(p, app(R, [0, (length + overlap) / 2 - overlap / 2, 0])),
             (section, length + overlap, section), R, mat)
 
@@ -551,6 +562,7 @@ def parts():
 
     def blade_box(zone, group, name, origin, R, width, length, thick, mat, world=False):
         c = vadd(origin, app(R, [0, length / 2, 0]))
+        FRAMES[group] = R if world else mul(HEAD_R, R)
         add(zone, group, name, c if world else head(c), (width, length, thick), R if world else mul(HEAD_R, R), mat)
 
     # ---- bulb and roots
@@ -572,10 +584,10 @@ def parts():
         else:
             (l1, s1), = segs
             t = polar(az, lift)
-            mid = [p0[0] + h[0] * 5, s1 / 2 + 0.4, p0[2] + h[2] * 5]
+            mid = [p0[0] + h[0] * 5, s1 / 2 + (2.2 if lift else 0.2), p0[2] + h[2] * 5]
             G[f"Racine_{name}"] = (mid, "Bulbe")
-            segment("base", f"Racine_{name}", f"racine_{name}", mid, vadd(mid, [c * l1 * 0.7 for c in t]), s1,
-                    "root_one", up, overlap=9.0)
+            segment("base", f"Racine_{name}", f"racine_{name}", mid, vadd(mid, [c * l1 * 0.75 for c in t]), s1,
+                    "root_one", up, overlap=5.0)
 
     # ---- stem: S curve, each segment turned on its own axis so the edges never line up
     front = [0, 0, -1]
@@ -607,26 +619,34 @@ def parts():
         blade_box("head", f"Sepale_{i}", f"sepale_{i}", app(Rz, [0, 5, 1.5]), mul(Rz, rot(40, 0, 0)), 7.2, 12.8, 2.0,
                   "sepal")
     # throat: a really hollow box, entrance wider than the bottom, lower lip sticking out
-    add("head", "h_Tete", "fond_gorge", head([0, 0, -1.2]), (20.8, 17.6, 2.4), HEAD_R, "throat_back")
-    G["Levre_haute"] = (head([0, 10.4, 0]), "h_Tete")
-    G["Levre_basse"] = (head([0, -10.4, 0]), "h_Tete")
-    add("head", "Levre_haute", "levre_haute", head([0, 10.4, -8]), (27.2, 3.2, 16), HEAD_R, "lip_top")
-    add("head", "Levre_basse", "levre_basse", head([0, -10.4, -9.2]), (27.2, 3.2, 18.4), HEAD_R, "lip_bottom")
+    G["Gueule"] = (head([0, 0, 0]), "h_Tete")
+    G["Machoire_haut"] = (head([0, 0, 0]), "Gueule")
+    G["Machoire_bas"] = (head([0, 0, 0]), "Gueule")
+    for bone in ("Gueule", "Machoire_haut", "Machoire_bas", "Langue", "Langue_milieu", "Langue_pointe"):
+        FRAMES[bone] = HEAD_R
+    add("head", "Gueule", "fond_gorge", head([0, 0, -1.2]), (20.8, 17.6, 2.4), HEAD_R, "throat_back")
+    add("head", "Machoire_haut", "levre_haute", head([0, 10.4, -8]), (27.2, 3.2, 16), HEAD_R, "lip_top")
+    add("head", "Machoire_bas", "levre_basse", head([0, -10.4, -9.2]), (27.2, 3.2, 18.4), HEAD_R, "lip_bottom")
+    # each side wall is split between the two jaws: closed they make the box, open they part like cheeks
     for s, n, m in ((1, "d", "wall_right"), (-1, "g", "wall_left")):
-        add("head", "h_Tete", f"paroi_{n}", head([s * 13.1, 0, -8]), (3.2, 17.6, 16), mul(HEAD_R, rot(0, -8 * s, 0)), m)
+        for v, jaw, hn in ((1, "Machoire_haut", "haut"), (-1, "Machoire_bas", "bas")):
+            add("head", jaw, f"paroi_{n}_{hn}", head([s * 13.1, v * 4.4, -8]), (3.2, 8.8, 16),
+                mul(HEAD_R, rot(0, -8 * s, 0)), m)
     # thorns: tips leaning 15 degrees into the throat, upper and lower rows staggered
     for i, (x, length) in enumerate(((-6.7, 8.0), (1.6, 11.0), (6.7, 8.0)), 1):
         R = mul(rot(-15, 0, 0), rot(0, 45, 0))
-        add("head", "Levre_haute", f"dent_haut_{i}", head(vadd([x, 9.3, -14.6], app(R, [0, -length / 2, 0]))),
+        add("head", "Machoire_haut", f"dent_haut_{i}", head(vadd([x, 9.3, -14.6], app(R, [0, -length / 2, 0]))),
             (2.6, length, 2.6), mul(HEAD_R, R), "tooth_down")
     for i, (x, length, m) in enumerate(((6.6, 7.0, "tooth_up"), (-2.6, 9.0, "tooth_up"), (-8.2, 4.6, "tooth_broken")), 1):
         R = mul(rot(15, 0, 0), rot(0, 45, 0))
-        add("head", "Levre_basse", f"dent_bas_{i}", head(vadd([x, -9.3, -17.0], app(R, [0, length / 2, 0]))),
+        add("head", "Machoire_bas", f"dent_bas_{i}", head(vadd([x, -9.3, -17.0], app(R, [0, length / 2, 0]))),
             (2.6, length, 2.6), mul(HEAD_R, R), m)
-    # pistil tongue: lying on the lower lip on the +x side, then bent down past the edge
-    G["Langue"] = (head([3.6, -7.3, -4.0]), "Levre_basse")
-    G["Langue_pointe"] = (head([3.6, -7.3, -18.4]), "Langue")
-    add("head", "Langue", "langue_a", head([3.6, -7.35, -11.2]), (4.8, 2.9, 14.4), HEAD_R, "tongue_a")
+    # pistil tongue in three segments: two lying on the lower lip on the +x side, the last bent down past the edge
+    G["Langue"] = (head([3.6, -7.3, -4.0]), "Machoire_bas")
+    G["Langue_milieu"] = (head([3.6, -7.3, -11.2]), "Langue")
+    G["Langue_pointe"] = (head([3.6, -7.3, -18.4]), "Langue_milieu")
+    add("head", "Langue", "langue_a", head([3.6, -7.35, -7.8]), (4.8, 2.9, 7.6), HEAD_R, "tongue_a")
+    add("head", "Langue_milieu", "langue_m", head([3.6, -7.35, -14.8]), (4.7, 2.8, 7.6), HEAD_R, "tongue_m")
     Rt = rot(-50, -10, 0)
     add("head", "Langue_pointe", "langue_b", head(vadd([3.6, -7.35, -18.0], app(Rt, [0, 0, -4.4]))), (4.8, 2.9, 8.8),
         mul(HEAD_R, Rt), "tongue_b")
@@ -634,7 +654,7 @@ def parts():
     for i, phi in enumerate(INNER, 1):
         Rz = rot(0, 0, phi)
         o = app(Rz, [0, INNER_R0[phi], -12.5])
-        G[f"Petale_int_{i}"] = (head(o), "h_Tete")
+        G[f"Petale_int_{i}"] = (head(o), "Machoire_haut" if phi in (36, 324) else "Machoire_bas")
         blade_box("head", f"Petale_int_{i}", f"petale_int_{i}", o, mul(Rz, rot(-38 + (18 if phi == 180 else 0), 0, 0)),
                   14.4, 14.4 if phi == 180 else 12.0, 1.5, "petal_inner")
     # outer petals: cupped base, recurved tip for the three upper ones; the two lower ones hang in one piece
@@ -654,8 +674,15 @@ def parts():
         blade_box("head", f"Petale_ext_{i}_pointe", f"petale_ext_{i}_b", end, mul(Rb, rot(45, 0, 0)), 16.0, 8.8, 1.5,
                   "petal_tip")
 
+    # hit boxes (no texture, never drawn): the head players aim at, and the bulb with the stem
+    FRAMES["h_Tete"] = FRAMES["Bulbe"] = I3
+    G["b_tete"] = (head([0, 0, -7]), "h_Tete")
+    G["b_bulbe"] = ((0, 14, 6), "Bulbe")
+    add("hitbox", "b_tete", "boite_tete", head([0, 0, -7]), (30, 26, 22), I3, "hitbox")
+    add("hitbox", "b_bulbe", "boite_bulbe", (0, 14, 6), (22, 28, 22), I3, "hitbox")
+
     assert count == BUDGET, count
-    assert len(P) == 48
+    assert len(P) == 53
     return P, G
 
 
@@ -677,10 +704,17 @@ def closeup(data, atlases, sizes, path, size=460):
     write(path, size * 2, size, [imgs[0][y] + imgs[1][y] for y in range(size)])
 
 
+def frames():
+    """Rest orientation of every bone (model axes), for the animations."""
+    if not FRAMES:
+        parts()
+    return FRAMES
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     opts = {}
-    for flag in ("--apercu", "--gueule"):
+    for flag in ("--apercu", "--gueule", "--anims", "--only", "--count"):
         if flag in args:
             i = args.index(flag)
             opts[flag] = args[i + 1]
@@ -689,13 +723,27 @@ if __name__ == "__main__":
     P, groups, dims = build()
     uv, atlases, sizes = bake(P, MATS, GLOW)
     data = export(IDENT, NS, P, groups, uv, atlases, sizes)
-    print(f"{len(P)} cubes ; {dims[0]:.2f} x {dims[1]:.2f} x {dims[2]:.2f} blocs (large x haut x long) ; "
-          f"texture {sizes[0]}")
+    data["textures"] = data["textures"][:1]          # nothing glows: no emissive texture
+    # hit boxes have no texture on any face: BetterModel draws nothing for them
+    hidden = set()
+    for e, q in zip(data["elements"], P):
+        if q[0] in HITBOX:
+            e["faces"] = {d: {"uv": [0, 0, 0, 0], "texture": None} for d in ("north", "east", "south", "west", "up", "down")}
+            hidden.add(e["uuid"])
+    seen = dict(data, elements=[e for e in data["elements"] if e["uuid"] not in hidden])   # what players see
+    import fleur_devoreuse_anim as FA
+    anims = FA.build(seen, FA.uid_for(NS, IDENT))
+    print(f"{len(P) - len(HITBOX)} cubes ; {dims[0]:.2f} x {dims[1]:.2f} x {dims[2]:.2f} blocs (large x haut x long) ; "
+          f"texture {sizes[0]} ; {len(anims)} animations")
+    if "--anims" in opts:
+        FA.strips(seen, anims, atlases, sizes, opts["--anims"], count=int(opts.get("--count", 10)),
+                  only=set(opts["--only"].split(",")) if "--only" in opts else None)
+    data["animations"] = FA.finish(anims)
     if "--apercu" in opts:
         # front, three quarters, profile, back, then the silhouette of the front view
-        apercu(data, atlases, sizes, opts["--apercu"], set(), views=((0, 2), (35, 10), (90, 2), (180, 6)), size=440)
+        apercu(seen, atlases, sizes, opts["--apercu"], set(), views=((0, 2), (35, 10), (90, 2), (180, 6)), size=440)
     if "--gueule" in opts:
-        closeup(data, atlases, sizes, opts["--gueule"])
+        closeup(seen, atlases, sizes, opts["--gueule"])
     path = os.path.join(out, IDENT + ".bbmodel")
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False)

@@ -336,6 +336,7 @@ public final class Mobs {
         this.salamander = new SalamanderPowers(plugin, fx, this);
         this.fox = new FoxPowers(plugin, fx, this);
         this.evoker = new EvokerPowers(plugin, this);
+        this.flower = new FlowerPowers(plugin, this);
         this.tide = new TidePowers(plugin);
         this.theme = new ThemePowers(plugin, fx);
         this.troop = new TroopPowers(plugin, fx);
@@ -543,6 +544,7 @@ public final class Mobs {
         alive.put(le.getUniqueId(), a);
         // the Sylvan Fox is never seen before its entrance
         if (fox != null && FoxPowers.MODEL.equals(t.model())) fox.spawned(le);
+        if (flower != null && FlowerPowers.MODEL.equals(t.model())) flower.spawned(le);
         control(a);
         swim(a);
         bar(a);
@@ -590,6 +592,7 @@ public final class Mobs {
         alive.put(le.getUniqueId(), a);
         // the Sylvan Fox is never seen before its entrance
         if (fox != null && FoxPowers.MODEL.equals(t.model())) fox.spawned(le);
+        if (flower != null && FlowerPowers.MODEL.equals(t.model())) flower.spawned(le);
         control(a);
         swim(a);
         bar(a);
@@ -1156,6 +1159,12 @@ public final class Mobs {
         if (a != null && a.model != null) a.model.parts(visible, bones);
     }
 
+    /** How far the head of a monster's model turns to follow its look, each side (degrees; the body keeps its own way). */
+    public void headRange(LivingEntity e, float degrees) {
+        Alive a = alive.get(e.getUniqueId());
+        if (a != null && a.model != null) a.model.headRange(degrees);
+    }
+
     /** Effects shared by every boss (cracks, eruptions, collapses...), for dungeon features. */
     public Fx fx() {
         return fx;
@@ -1190,6 +1199,8 @@ public final class Mobs {
     private SalamanderPowers salamander;
     private FoxPowers fox;
     private EvokerPowers evoker;
+    /** The Devouring Flower: rooted, asleep until its entrance, its head alone follows its prey. */
+    private FlowerPowers flower;
     private Fx fx;
 
     public void removeAll() {
@@ -1205,6 +1216,7 @@ public final class Mobs {
         if (salamander != null) salamander.clear();
         if (fox != null) fox.clear();
         if (evoker != null) evoker.clear();
+        if (flower != null) flower.clear();
         if (fx != null) fx.clear();
         for (Alive a : alive.values()) {
             close(a);
@@ -1523,7 +1535,7 @@ public final class Mobs {
                 // ready, and somebody to hit (a ring cast with nobody in it is thrown in the void)
                 if (now - last >= ab.every() * 1000 && RockPowers.worthCasting(ab, a.entity)
                         && harvest.worth(ab, a.entity, a.spawn) && copper.worth(ab, a.entity, a.spawn)
-                        && mole.worth(ab, a.entity) && bone.worth(ab, a.entity) && forge.worth(ab, a.entity) && salamander.worth(ab, a.entity) && fox.worth(ab, a.entity) && evoker.worth(ab, a.entity)
+                        && mole.worth(ab, a.entity) && bone.worth(ab, a.entity) && forge.worth(ab, a.entity) && salamander.worth(ab, a.entity) && fox.worth(ab, a.entity) && evoker.worth(ab, a.entity) && flower.worth(ab, a.entity)
                         && theme.worth(ab, a.entity) && troop.worth(ab, a.entity)) ready.add(i);
             }
             if (ready.isEmpty()) continue;
@@ -2072,7 +2084,7 @@ public final class Mobs {
             }
         };
         if (copper.cast(ab, caster, target) || mole.cast(ab, caster, target) || bone.cast(ab, caster, target) || forge.cast(ab, caster, target)
-                || salamander.cast(ab, caster, target) || fox.cast(ab, caster, target) || evoker.cast(ab, caster, target) || tide.cast(ab, caster, target) || harvest.cast(ab, caster, target)
+                || salamander.cast(ab, caster, target) || fox.cast(ab, caster, target) || evoker.cast(ab, caster, target) || flower.cast(ab, caster, target) || tide.cast(ab, caster, target) || harvest.cast(ab, caster, target)
                 || rock.cast(ab, caster, target) || theme.cast(ab, caster, target) || troop.cast(ab, caster, target)) return;
         World w = e.getWorld();
         Location at = e.getLocation();

@@ -37,6 +37,10 @@ final class ModelBridge {
         default void parts(boolean visible, Collection<String> bones) {
         }
 
+        /** How far the head bones ({@code h_}) turn to follow the creature's look, each side (degrees). */
+        default void headRange(float degrees) {
+        }
+
         /** Outline glow of the whole model in this colour (0xRRGGBB), off with a negative colour. */
         default void glow(int rgb) {
         }
@@ -70,6 +74,14 @@ final class ModelBridge {
             public void parts(boolean visible, Collection<String> bones) {
                 if (tracker.isClosed()) return;
                 tracker.update(TrackerUpdateAction.togglePart(visible), BonePredicate.from(b -> bones.contains(b.name().rawName())));
+            }
+
+            public void headRange(float degrees) {
+                if (tracker.isClosed()) return;
+                tracker.bodyRotator().setValue(d -> {
+                    d.setHeadUneven(false);
+                    d.setMaxHead(degrees);
+                });
             }
 
             public void glow(int rgb) {
