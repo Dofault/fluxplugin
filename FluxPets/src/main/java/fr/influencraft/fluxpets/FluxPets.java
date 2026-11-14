@@ -44,6 +44,12 @@ public final class FluxPets extends fr.influencraft.flux.api.FluxPlugin implemen
     private PetEffects petEffects;
     private ConfigFiles configFiles;
     private org.bukkit.configuration.file.YamlConfiguration config;
+    private static FluxPets instance;
+
+    /** The running plugin (null before it starts and after it stops). */
+    public static FluxPets get() {
+        return instance;
+    }
 
     @Override
     protected List<String> formerNames() {
@@ -59,6 +65,7 @@ public final class FluxPets extends fr.influencraft.flux.api.FluxPlugin implemen
 
     @Override
     protected void enable() {
+        instance = this;
         reloadConfig();
         cardKey = new NamespacedKey(LEGACY_NAMESPACE, "card");
         boosterKey = new NamespacedKey(LEGACY_NAMESPACE, "booster");
@@ -207,6 +214,7 @@ public final class FluxPets extends fr.influencraft.flux.api.FluxPlugin implemen
             petEffects.shutdown();
         }
         fr.influencraft.flux.api.pets.Companions.provide(null);
+        instance = null;
         Pets.disable();
     }
 

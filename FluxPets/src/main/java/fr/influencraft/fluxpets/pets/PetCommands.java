@@ -122,6 +122,8 @@ public final class PetCommands implements TabExecutor {
             case ALREADY -> PetMessages.send(player, "pet-already-active");
             case FULL -> PetMessages.send(player, "max-pets-reached", "%max%",
                     String.valueOf(PetData.maxActive(player)));
+            case TOO_BIG -> PetMessages.send(player, "pet-too-big", "%slots%", String.valueOf(pet.slots()),
+                    "%max%", String.valueOf(PetData.maxActive(player)));
             case CANCELLED -> PetMessages.send(player, "cancelled-swap");
         }
     }

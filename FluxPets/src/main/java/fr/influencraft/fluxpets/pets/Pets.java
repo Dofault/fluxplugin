@@ -109,6 +109,7 @@ public final class Pets {
         if (Bukkit.getPluginManager().isPluginEnabled("BetterModel")) {
             try {
                 display = new PetDisplay();
+                Bukkit.getPluginManager().registerEvents(display, plugin);
             } catch (Throwable t) {
                 plugin.getLogger().warning("Pet models unavailable: " + t);
             }

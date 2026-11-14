@@ -42,6 +42,7 @@ public final class PetEffects {
         moneyBonus = new MoneyBonus(this);
         add(moneyBonus);
         add(new StructureCompass(this));
+        add(new Dig(this));
         if (Bukkit.getPluginManager().isPluginEnabled("packetevents")) {
             try {
                 add(new PowderSnow(this));

@@ -175,8 +175,15 @@ public final class PetData {
 
     // ------------------------------------------------------------------ familiers actifs
 
-    /** Résultat d'une activation. */
-    public enum Activation { OK, ALREADY, FULL, CANCELLED }
+    /** Résultat d'une activation (TOO_BIG : le familier prend plus d'emplacements que le joueur n'en a). */
+    public enum Activation { OK, ALREADY, FULL, TOO_BIG, CANCELLED }
+
+    /** Active pet slots taken by these pets. */
+    public static int usedSlots(List<Pet> pets) {
+        int used = 0;
+        for (Pet pet : pets) used += pet.slots();
+        return used;
+    }
 
     /**
      * Familiers actifs, dans l'ordre d'activation (le premier suit le joueur, les suivants marchent derrière lui).
@@ -187,10 +194,13 @@ public final class PetData {
         List<String> ids = List.copyOf(profile(player).active);
         int max = player instanceof Player online ? maxActive(online) : Integer.MAX_VALUE;
         List<Pet> pets = new ArrayList<>();
+        int used = 0;
         for (String id : ids) {
             Pet pet = Pets.get(id);
-            if (pet != null && !pets.contains(pet) && has(player, pet) && pets.size() < max) {
+            // a pet counts its slots (legendary boss pets take several): those beyond the player's slots stay off
+            if (pet != null && !pets.contains(pet) && has(player, pet) && used + pet.slots() <= max) {
                 pets.add(pet);
+                used += pet.slots();
             }
         }
         return pets;
@@ -257,12 +267,16 @@ public final class PetData {
             return Activation.ALREADY;
         }
         int max = maxActive(player);
+        if (pet.slots() > max) {
+            return Activation.TOO_BIG;
+        }
         Pet replaced = null;
-        if (pets.size() >= max) {
-            if (max > 1) {
+        if (usedSlots(pets) + pet.slots() > max) {
+            // a single active pet is replaced (one slot, or a big pet taking the place of a small one)
+            if (pets.size() != 1) {
                 return Activation.FULL;
             }
-            replaced = pets.isEmpty() ? null : pets.get(0);
+            replaced = pets.get(0);
         }
         PetActivateEvent event = new PetActivateEvent(player, pet, replaced);
         Bukkit.getPluginManager().callEvent(event);

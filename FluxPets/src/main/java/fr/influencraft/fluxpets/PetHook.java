@@ -90,6 +90,37 @@ public final class PetHook {
                 if (hidden) fr.influencraft.fluxpets.pets.PetDisplay.SUPPRESSED.add(player);
                 else fr.influencraft.fluxpets.pets.PetDisplay.SUPPRESSED.remove(player);
             }
+
+            public boolean adopt(Player player, String id) {
+                FluxPets plugin = FluxPets.get();
+                CardRegistry.PetEntry entry = plugin == null ? null : plugin.registry().pet(id);
+                if (entry == null || has(player, id)) return false;
+                unlock(player, id);
+                if (!has(player, id)) return false;
+                plugin.reveals().adopted(player, entry);
+                return true;
+            }
+
+            public boolean owns(Player player, String id) {
+                return has(player, id);
+            }
+
+            public ItemStack card(String id) {
+                FluxPets plugin = FluxPets.get();
+                CardRegistry.Card card = plugin == null ? null : plugin.registry().card(id);
+                return card == null ? null : plugin.registry().cardItem(card);
+            }
+
+            public ItemStack portrait(String id) {
+                Pet pet = available() ? Pets.get(id) : null;
+                return pet == null ? null : fr.influencraft.flux.api.inventory.Items.of(
+                        "itemsadder:influportraits:portrait_" + id, pet.name(), List.of(), null);
+            }
+
+            public String name(String id) {
+                Pet pet = available() ? Pets.get(id) : null;
+                return pet == null ? null : pet.name();
+            }
         });
     }
 

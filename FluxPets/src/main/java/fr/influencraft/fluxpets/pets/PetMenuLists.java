@@ -26,6 +26,8 @@ public final class PetMenuLists {
     public static final String SLOTS = "familiers_slots", VIEW = "familiers_view", LEVELS = "familier_levels";
     private static final String PORTRAIT = "itemsadder:influportraits:portrait_";
     private static final int SLOT_COUNT = 5;
+    /** Clasps joining the slots of a pet that takes several (pack fluxpetboss, scripts/influcard/gen_familiers_boss.py). */
+    private static final String CLASP = "itemsadder:fluxpetboss:slot_";
 
     private final FluxPets plugin;
 
@@ -60,36 +62,48 @@ public final class PetMenuLists {
         Lore lore = Lore.create().description(pet.description());
         for (String line : pet.effectsDescription(level)) lore.line(line);
         String progress = level >= pet.maxLevel() ? "100" : Pet.nice(Math.round(PetData.progress(player, pet) * 10000) / 100.0);
+        if (pet.slots() > 1) lore.info(t("slots-taken", "%slots%", String.valueOf(pet.slots())));
+        if (pet.mountable() && Pets.mountsEnabled()) {
+            lore.info(t("mount-from", "%level%", String.valueOf(pet.mount().level())));
+        }
         return lore.kv(t("progress"), progress + " %");
     }
 
+    /**
+     * The 5 slots of active pets. A pet taking several slots (legendary boss pets) fills them all: its portrait in the
+     * middle one, golden clasps on the others (same tooltip and clicks), so its card is never stretched.
+     */
     private List<ListEntry> slots(Player player) {
         List<ListEntry> out = new ArrayList<>();
-        List<Pet> actives = PetData.actives(player);
         int max = PetData.maxActive(player);
-        for (int n = 1; n <= SLOT_COUNT; n++) {
-            Pet pet = n <= actives.size() ? actives.get(n - 1) : null;
-            ItemStack item;
-            ListEntry entry = ListEntry.of(String.valueOf(n));
-            if (pet != null) {
-                int level = PetData.level(player, pet);
-                item = Items.of(PORTRAIT + pet.id(), name(pet, level),
+        int n = 1;
+        for (Pet pet : PetData.actives(player)) {
+            int level = PetData.level(player, pet);
+            int width = Math.min(pet.slots(), SLOT_COUNT - n + 1);
+            int middle = (width - 1) / 2;
+            for (int k = 0; k < width; k++, n++) {
+                String icon = k == middle ? PORTRAIT + pet.id()
+                        : k < middle ? CLASP + "left" : k == width - 1 ? CLASP + "right" : CLASP + "middle";
+                ItemStack item = Items.of(icon, name(pet, level),
                         sheet(player, pet).left(t("see-progress")).right(t("put-away")).build(), player);
-                entry.set("left", "[player] pets select " + pet.id()).set("left2", "[menu] familier")
-                        .set("right", "[player] pets toggle " + pet.id()).set("right2", "[refresh]");
-            } else if (n > max) {
+                out.add(ListEntry.of(String.valueOf(n)).item(item)
+                        .set("left", "[player] pets select " + pet.id()).set("left2", "[menu] familier")
+                        .set("right", "[player] pets toggle " + pet.id()).set("right2", "[refresh]"));
+            }
+        }
+        for (; n <= SLOT_COUNT; n++) {
+            ItemStack item;
+            if (n > max) {
                 String path = "gui.pet-slots.locked.grades." + n;
                 String grade = Pets.settings().has(path) ? Pets.settings().getString(path) : "";
                 item = Items.of("itemsadder:influitems:lock", t("slot-locked"),
                         Lore.create().description(t("slot-locked-description"))
                                 .kv(t("rank-needed"), fr.influencraft.flux.api.text.Texts.placeholders(grade, player)).build(), player);
-                entry.set("left", "").set("left2", "").set("right", "").set("right2", "");
             } else {
                 item = Items.of("itemsadder:influitems:add", t("slot-free"),
                         Lore.create().description(t("slot-free-description")).build(), player);
-                entry.set("left", "").set("left2", "").set("right", "").set("right2", "");
             }
-            out.add(entry.item(item));
+            out.add(ListEntry.of(String.valueOf(n)).item(item).set("left", "").set("left2", "").set("right", "").set("right2", ""));
         }
         return out;
     }

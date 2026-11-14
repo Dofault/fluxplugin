@@ -258,7 +258,8 @@ public final class RevealManager {
         if (plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")) {
             try {
                 Runnable close = BetterModelPets.showcase(player, model, spot,
-                        cfg.getString("pet-reveal.animation", "happy"));
+                        definition != null && definition.revealAnimation() != null ? definition.revealAnimation()
+                                : cfg.getString("pet-reveal.animation", "happy"));
                 if (close != null) {
                     holder.cleanups.add(close);
                     holder.tasks.add(plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
@@ -332,6 +333,11 @@ public final class RevealManager {
             }
         }
         return pets;
+    }
+
+    /** A pet adopted outside a booster (a dungeon boss beaten): chat message, title, its model in front of him. */
+    public void adopted(Player player, CardRegistry.PetEntry pet) {
+        announceSkipped(player, List.of(new PetReward(pet, false)));
     }
 
     /** Annonce les familiers adoptés sans leur mise en scène : message dans le tchat, titre du dernier. */

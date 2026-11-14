@@ -29,8 +29,10 @@ import java.util.regex.Pattern;
  * Un familier, lu depuis plugins/FluxPets/pets/<id>.yml (même format qu'un fichier EcoPets : name, description,
  * entity-texture, icon, trail, level-xp-requirements ou xp-formula, level-placeholders, effects-description,
  * rewards-description, level-up-messages, level-up-effects, effects, conditions, activate-conditions).
- * Clés propres à FluxPets : vol (le familier flotte, sinon il se pose au sol, défaut : true) et montable
- * (réservé aux montures, défaut : false, cf. Pets#mountsEnabled).
+ * Keys of FluxPets: flying (the pet floats, else it walks on the ground, default true), slots (active pet slots it
+ * takes, default 1), walk-animation / reveal-animation (animations of its model, default walk / happy) and mount
+ * (level from which its owner can ride it, seat height in blocks, speed in blocks per tick, jump height; a pet
+ * without that section cannot be ridden). The former key mountable is still read: a mount from level 1.
  *
  * Calqué sur com.willfp.ecopets.pets.Pet : niveau et XP du joueur dans la base de Flux ({@link PetStore}),
  * effets libreforge compilés une fois, le niveau étant fourni à leurs
@@ -48,6 +50,10 @@ public final class Pet {
     public record Trail(Particle particle, int gap, int amount, double yOffset) {
     }
 
+    /** Riding settings: from which level, seat height and speed (blocks per tick), jump height in blocks. */
+    public record Mount(int level, double seat, double speed, double jump) {
+    }
+
     private static final Pattern LEVEL_OFFSET = Pattern.compile("%level_(-?\\d+)(_numeral)?%");
 
     private final String id;
@@ -62,7 +68,10 @@ public final class Pet {
     private final List<Integer> xpRequirements = new ArrayList<>();
     private final int maxLevel;
     private final boolean flying;
-    private final boolean mountable;
+    private final Mount mount;
+    private final int slots;
+    private final String walkAnimation;
+    private final String revealAnimation;
     private final String iconLookup;
     private ItemStack baseItem;
     private final EffectList effects;
@@ -93,7 +102,10 @@ public final class Pet {
             throw new IllegalArgumentException("Pet " + id + ": neither level-xp-requirements nor xp-formula");
         }
         this.flying = !config.has("flying") || config.getBool("flying");
-        this.mountable = config.has("mountable") && config.getBool("mountable");
+        this.mount = mount(config);
+        this.slots = Math.max(1, config.has("slots") ? config.getInt("slots") : 1);
+        this.walkAnimation = config.has("walk-animation") ? config.getString("walk-animation") : "walk";
+        this.revealAnimation = config.has("reveal-animation") ? config.getString("reveal-animation") : null;
         this.iconLookup = config.getString("icon");
 
         // %level% des effets : le niveau de CE familier chez le joueur évalué (comme EcoPets)
@@ -107,6 +119,17 @@ public final class Pet {
         this.levelUpEffects = Effects.INSTANCE.compileChain(config.getSubsections("level-up-effects"),
                 NormalExecutorFactory.INSTANCE.create(),
                 new ViolationContext(libreforge, "Pet " + id + " level-up-effects"));
+    }
+
+    private static Mount mount(Config config) {
+        Config c = config.getSubsectionOrNull("mount");
+        if (c == null) {
+            return config.has("mountable") && config.getBool("mountable") ? new Mount(1, 1.0, 0.3, 1.0) : null;
+        }
+        return new Mount(Math.max(1, c.getIntOrNull("level") == null ? 1 : c.getInt("level")),
+                c.getDoubleOrNull("seat") == null ? 1.0 : c.getDouble("seat"),
+                c.getDoubleOrNull("speed") == null ? 0.3 : c.getDouble("speed"),
+                c.getDoubleOrNull("jump") == null ? 1.0 : c.getDouble("jump"));
     }
 
     private static Trail trail(Config c) {
@@ -160,9 +183,29 @@ public final class Pet {
         return flying;
     }
 
-    /** Monture (pas encore utilisée : aucune n'est montable pour l'instant). */
+    /** Can be ridden by its owner (from {@link Mount#level()}), when mounts are enabled (pet-settings). */
     public boolean mountable() {
-        return mountable;
+        return mount != null;
+    }
+
+    /** Riding settings, null when the pet cannot be ridden. */
+    public Mount mount() {
+        return mount;
+    }
+
+    /** Active pet slots this pet takes (legendary boss pets take several). */
+    public int slots() {
+        return slots;
+    }
+
+    /** Animation of its model while it moves. */
+    public String walkAnimation() {
+        return walkAnimation;
+    }
+
+    /** Animation played when it is adopted (null: the reveal's default). */
+    public String revealAnimation() {
+        return revealAnimation;
     }
 
     /**

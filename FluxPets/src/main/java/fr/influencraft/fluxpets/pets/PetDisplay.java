@@ -45,8 +45,14 @@ import java.util.UUID;
  * Pas de modèle pour un familier caché (menu), un joueur mort, invisible ou spectateur. Nom au-dessus du modèle
  * (TextDisplay passager), traînée du familier (trail). Porte-armure marker : aucune hitbox, jamais sauvegardé.
  * Réglages : section pet-follow de config.yml. Chargée seulement si BetterModel est actif.
+ * <p>
+ * Mounts (2026-11-14): a pet with a {@code mount} section carries an invisible seat (an Interaction entity as high as
+ * its back) that its owner right clicks to ride it, from the pet's mount level. While ridden the pet goes where the
+ * rider's keys say ({@link Player#getCurrentInput()}): forward, back, sides, sprint, jump; steps up one block,
+ * falls, walks on water and lava. Sneaking gets off (vanilla dismount). {@link PetMountMoveEvent} lets an effect
+ * clear the way first (the mole digs).
  */
-public final class PetDisplay {
+public final class PetDisplay implements org.bukkit.event.Listener {
 
     private static final class Follower {
         final Player owner;
@@ -55,6 +61,10 @@ public final class PetDisplay {
         final EntityTracker tracker;
         final boolean hasWalk;
         TextDisplay label;
+        /** Seat of a mountable pet (its owner rides it), null otherwise. */
+        org.bukkit.entity.Interaction seat;
+        /** Vertical speed of a ridden pet (blocks per tick). */
+        double vy;
         double x, y, z;
         float yaw;
         double lastPX, lastPZ;
@@ -156,7 +166,9 @@ public final class PetDisplay {
             Location p = player.getLocation();
             for (int i = 0; i < list.size(); i++) {
                 Follower f = list.get(i);
-                if (i == 0) {
+                if (ridden(f)) {
+                    ride(f);
+                } else if (i == 0) {
                     // le premier suit le joueur, dans la zone de confort distance-min / distance-max
                     move(f, p.getX(), p.getZ(), minDistance, maxDistance, null);
                 } else {
@@ -189,7 +201,7 @@ public final class PetDisplay {
         start.setYaw(p.getYaw());
         ArmorStand carrier = stand(start);
         EntityTracker tracker = renderer.getOrCreate(BukkitAdapter.adapt(carrier));
-        Follower f = new Follower(owner, pet, carrier, tracker, renderer.animation("walk").isPresent());
+        Follower f = new Follower(owner, pet, carrier, tracker, renderer.animation(pet.walkAnimation()).isPresent());
         f.x = start.getX();
         f.y = start.getY();
         f.z = start.getZ();
@@ -197,6 +209,7 @@ public final class PetDisplay {
         f.lastPX = bx;
         f.lastPZ = bz;
         updateLabel(f);
+        updateSeat(f);
         return f;
     }
 
@@ -308,14 +321,7 @@ public final class PetDisplay {
                 : (float) Math.toDegrees(Math.atan2(-(p.getX() - f.x), p.getZ() - f.z));
         float delta = ((targetYaw - f.yaw) % 360 + 540) % 360 - 180;
         f.yaw += snap ? delta : delta * 0.2f;
-        if (walking != f.walking && f.hasWalk) {
-            if (walking) {
-                f.tracker.animate("walk");
-            } else {
-                f.tracker.stopAnimation("walk");
-            }
-        }
-        f.walking = walking;
+        animateWalk(f, walking);
         double bob = f.pet.flying() ? Math.sin(tick * 0.1) * bobAmplitude : 0;
         Location to = new Location(world, f.x, f.y + bob, f.z, f.yaw, 0);
         if (f.carrier.getWorld() != world) {
@@ -324,13 +330,19 @@ public final class PetDisplay {
                 f.label.remove();
             }
             f.label = null;
+            if (f.seat != null && f.seat.isValid()) {
+                f.seat.remove();
+            }
+            f.seat = null;
             f.carrier.teleport(to);
             updateLabel(f);
+            updateSeat(f);
         } else {
             f.carrier.teleport(to, io.papermc.paper.entity.TeleportFlag.EntityState.RETAIN_PASSENGERS);
         }
         if (tick % 20 == 0) {
             updateLabel(f);
+            updateSeat(f);
         }
         if (tick % 5 == 0) {
             updateLight(f, world);
@@ -339,6 +351,175 @@ public final class PetDisplay {
         if (trail != null && tick % trail.gap() == 0) {
             world.spawnParticle(trail.particle(), f.x, f.y + trail.yOffset(), f.z, trail.amount(), 0.1, 0.1, 0.1, 0);
         }
+    }
+
+    private void animateWalk(Follower f, boolean walking) {
+        if (walking != f.walking && f.hasWalk) {
+            if (walking) {
+                f.tracker.animate(f.pet.walkAnimation());
+            } else {
+                f.tracker.stopAnimation(f.pet.walkAnimation());
+            }
+        }
+        f.walking = walking;
+    }
+
+    // ------------------------------------------------------------------ mounts
+
+    /** Seat of a mountable pet: an Interaction as high as its back, riding the carrier (removed when not wanted). */
+    private void updateSeat(Follower f) {
+        Pet.Mount mount = f.pet.mount();
+        boolean wanted = mount != null && Pets.mountsEnabled();
+        if (!wanted) {
+            if (f.seat != null && f.seat.isValid()) {
+                f.seat.eject();
+                f.seat.remove();
+            }
+            f.seat = null;
+            return;
+        }
+        if (f.seat != null && f.seat.isValid()) return;
+        f.seat = f.carrier.getWorld().spawn(f.carrier.getLocation(), org.bukkit.entity.Interaction.class, i -> {
+            i.setPersistent(false);
+            i.setInteractionWidth(1.2f);
+            i.setInteractionHeight((float) Math.max(0.3, mount.seat()));
+            i.setResponsive(true);
+        });
+        f.carrier.addPassenger(f.seat);
+    }
+
+    private static boolean ridden(Follower f) {
+        return f.seat != null && f.seat.isValid() && f.seat.getPassengers().contains(f.owner);
+    }
+
+    /** Right click on a pet's seat: its owner rides it from the pet's mount level. */
+    @org.bukkit.event.EventHandler(ignoreCancelled = true)
+    public void onSeat(org.bukkit.event.player.PlayerInteractEntityEvent event) {
+        if (!(event.getRightClicked() instanceof org.bukkit.entity.Interaction seat)) return;
+        Follower f = bySeat(seat);
+        if (f == null) return;
+        event.setCancelled(true);
+        Player player = event.getPlayer();
+        if (!player.equals(f.owner)) {
+            PetMessages.send(player, "mount-other");
+            return;
+        }
+        if (player.isInsideVehicle() || !seat.getPassengers().isEmpty()) return;
+        int level = PetData.level(player, f.pet);
+        if (level < f.pet.mount().level()) {
+            PetMessages.send(player, "mount-level", "%pet%", f.pet.name(), "%level%", String.valueOf(f.pet.mount().level()));
+            return;
+        }
+        if (seat.addPassenger(player)) {
+            f.vy = 0;
+            PetMessages.send(player, "mounted", "%pet%", f.pet.name());
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_HORSE_SADDLE, 0.8f, 1.2f);
+        }
+    }
+
+    private Follower bySeat(org.bukkit.entity.Interaction seat) {
+        for (List<Follower> list : followers.values()) {
+            for (Follower f : list) if (seat.equals(f.seat)) return f;
+        }
+        return null;
+    }
+
+    /**
+     * The rider's keys move the pet: forward / back / sides along where he looks, sprint, jump; one block steps,
+     * gravity, water and lava walked on. Flying mounts go where the rider looks, jump to climb.
+     */
+    private void ride(Follower f) {
+        Player rider = f.owner;
+        Pet.Mount mount = f.pet.mount();
+        World world = f.carrier.getWorld();
+        org.bukkit.Input input = rider.getCurrentInput();
+        double forward = (input.isForward() ? 1 : 0) - (input.isBackward() ? 1 : 0);
+        double side = (input.isLeft() ? 1 : 0) - (input.isRight() ? 1 : 0);
+        double yawRad = Math.toRadians(rider.getYaw());
+        double fx = -Math.sin(yawRad), fz = Math.cos(yawRad);
+        double dx = fx * forward + fz * side, dz = fz * forward - fx * side;
+        double len = Math.hypot(dx, dz);
+        double ox = f.x, oz = f.z;
+        boolean onGround = !f.pet.flying() && f.y <= ground(world, f.x, f.y, f.z) + 1.0E-3;
+        if (len > 1.0E-3) {
+            dx /= len;
+            dz /= len;
+            double speed = mount.speed() * (input.isSprint() ? 1.3 : 1) * (forward < 0 ? 0.5 : 1);
+            fr.influencraft.fluxpets.pets.event.PetMountMoveEvent event = new fr.influencraft.fluxpets.pets.event.PetMountMoveEvent(rider, f.pet, new Location(world, f.x, f.y, f.z),
+                    new org.bukkit.util.Vector(dx, 0, dz));
+            Bukkit.getPluginManager().callEvent(event);
+            speed *= event.getSpeedFactor();
+            // one axis at a time: the pet slides along a wall instead of stopping
+            if (free(world, f.x + dx * speed, f.y, f.z)) f.x += dx * speed;
+            if (free(world, f.x, f.y, f.z + dz * speed)) f.z += dz * speed;
+        }
+        if (f.pet.flying()) {
+            double climb = input.isJump() ? mount.speed() * 0.8
+                    : -Math.sin(Math.toRadians(rider.getPitch())) * mount.speed() * forward;
+            double ny = f.y + climb;
+            if (!world.getBlockAt((int) Math.floor(f.x), (int) Math.floor(ny + 0.1), (int) Math.floor(f.z)).isSolid()
+                    && !world.getBlockAt((int) Math.floor(f.x), (int) Math.floor(ny + mount.seat()), (int) Math.floor(f.z)).isSolid()) {
+                f.y = ny;
+            }
+        } else {
+            double floor = ground(world, f.x, f.y, f.z);
+            if (onGround && input.isJump()) f.vy = Math.sqrt(2 * 0.08 * Math.max(0.5, mount.jump())) + 0.02;
+            if (floor > f.y && floor - f.y <= 1.05) {
+                // step up (smoothly)
+                f.y = Math.min(floor, f.y + 0.5);
+                f.vy = Math.max(0, f.vy);
+            } else {
+                f.vy = (f.vy - 0.08) * 0.98;
+                f.y += f.vy;
+                if (f.y <= floor) {
+                    f.y = floor;
+                    f.vy = 0;
+                }
+            }
+        }
+        double moved = Math.hypot(f.x - ox, f.z - oz);
+        boolean walking = moved > 0.02;
+        if (walking) {
+            float target = (float) Math.toDegrees(Math.atan2(-(f.x - ox), f.z - oz));
+            float delta = ((target - f.yaw) % 360 + 540) % 360 - 180;
+            f.yaw += delta * 0.35f;
+        }
+        animateWalk(f, walking);
+        f.lastPX = f.x;
+        f.lastPZ = f.z;
+        f.carrier.teleport(new Location(world, f.x, f.y, f.z, f.yaw, 0),
+                io.papermc.paper.entity.TeleportFlag.EntityState.RETAIN_PASSENGERS);
+        if (tick % 5 == 0) updateLight(f, world);
+    }
+
+    /** Top of the ground under this point (blocks up to one above, liquids count as ground), y - 8 when none. */
+    private static double ground(World world, double x, double y, double z) {
+        int bx = (int) Math.floor(x), bz = (int) Math.floor(z);
+        if (!world.isChunkLoaded(bx >> 4, bz >> 4)) return y;
+        int top = (int) Math.floor(y + 1.05);
+        for (int by = top; by >= top - 9; by--) {
+            Block block = world.getBlockAt(bx, by, bz);
+            if (block.isLiquid()) return by + 0.9;
+            if (!block.isPassable()) {
+                double max = block.getBoundingBox().getMaxY();
+                return max > by ? max : by + 1;
+            }
+        }
+        return y - 8;
+    }
+
+    /** The pet may stand there: at most one block higher than now, room for its body above. */
+    private static boolean free(World world, double x, double y, double z) {
+        int bx = (int) Math.floor(x), bz = (int) Math.floor(z);
+        if (!world.isChunkLoaded(bx >> 4, bz >> 4)) return false;
+        double floor = ground(world, x, y, z);
+        if (floor - y > 1.05) return false;
+        double base = Math.max(y, floor);
+        for (double h = 0.1; h < 1.6; h += 0.75) {
+            Block block = world.getBlockAt(bx, (int) Math.floor(base + h), bz);
+            if (!block.isPassable() && !block.isLiquid()) return false;
+        }
+        return true;
     }
 
     /**
@@ -390,6 +571,10 @@ public final class PetDisplay {
         }
         if (f.label != null && f.label.isValid()) {
             f.label.remove();
+        }
+        if (f.seat != null && f.seat.isValid()) {
+            f.seat.eject();
+            f.seat.remove();
         }
         if (f.carrier.isValid()) {
             f.carrier.remove();
