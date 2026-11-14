@@ -666,8 +666,8 @@ keys:
   line-always: 'à chaque fois'
   line-one-in: '1 chance sur %n%'
 menu:
-  close: 'Fermer'
-  close-action: 'Fermer'
+  close: 'Retour'
+  close-action: 'Menu principal'
   back: 'Retour'
   back-action: 'Tous les donjons'
   info: 'Donjons'

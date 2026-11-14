@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * The dungeon menus of /donjon (2026-11-14, files written by {@code assets/menus/gen_menus.py}):
  * <ul>
  *   <li>{@code donjons}: the boss of each dungeon (its pet's portrait), click to see it. Lists
- *   {@code donjons_liste}, {@code donjons_boutons} (close, info, class, party, tokens);</li>
+ *   {@code donjons_liste}, {@code donjons_boutons} (back to the main menu, info, class, party, tokens);</li>
  *   <li>{@code donjon}: the dungeon chosen with {@code [fluxdungeon] view <id>}: its boss (picture of its page), what
  *   can be won ({@code donjon_butin}), a button per difficulty to play it ({@code donjon_niveaux},
  *   {@code [fluxdungeon] play <level>}), the key ({@code donjon_boutons}).</li>
@@ -151,7 +151,7 @@ public final class DungeonMenus {
     private List<ListEntry> listButtons(Player viewer) {
         List<ListEntry> out = new ArrayList<>();
         out.add(button("close", Items.of("itemsadder:fluxui:btn_back_orange", raw("menu.close"),
-                Lore.create().left(raw("menu.close-action")).build(), viewer), "[close]", ""));
+                Lore.create().left(raw("menu.close-action")).build(), viewer), "[menu] main", ""));
         out.add(button("info", Items.of("itemsadder:fluxui:btn_info_blue", raw("menu.info"),
                 Lore.create().description(raw("menu.info-desc")).description(raw("menu.info-keys"))
                         .description(raw("menu.info-rewards")).build(), viewer), "", ""));

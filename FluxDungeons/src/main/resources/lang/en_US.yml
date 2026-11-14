@@ -654,8 +654,8 @@ keys:
   line-always: 'every time'
   line-one-in: '1 chance in %n%'
 menu:
-  close: 'Close'
-  close-action: 'Close'
+  close: 'Back'
+  close-action: 'Main menu'
   back: 'Back'
   back-action: 'Every dungeon'
   info: 'Dungeons'
