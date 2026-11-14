@@ -289,10 +289,28 @@ public final class UniverseService implements Universes.Backend, Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent e) {
         UUID id = e.getPlayer().getUniqueId();
+        // a swap in progress already took them with the outgoing profile
+        if (!locked.contains(id)) stashLoose(e.getPlayer());
         locked.remove(id);
         before.remove(id);
         toScan.remove(id);
         store.forget(id);
+    }
+
+    /**
+     * A player leaving with an item on his cursor or in his crafting grid: the server throws them on the ground once
+     * he is gone (after this event). Outside vanilla that throw is refused like any other, and the item was lost when
+     * the inventory had no room; in vanilla it lay there for anybody. They go back into his inventory instead, and
+     * what does not fit is kept for him (given back when he next enters this universe).
+     */
+    private void stashLoose(Player p) {
+        String universe = of(p);
+        for (ItemStack item : PlayerLive.takeLoose(p)) {
+            for (ItemStack left : p.getInventory().addItem(item).values()) {
+                // not kept (database down): the ground, as the server would have done
+                if (!quarantine(p, universe, left, "quit", false)) p.getWorld().dropItemNaturally(p.getLocation(), left);
+            }
+        }
     }
 
     /** Swaps the player into the universe of the world he stands in. A swap in progress is never started twice. */
@@ -518,6 +536,39 @@ public final class UniverseService implements Universes.Backend, Listener {
         if (lockedOut(p, e)) return;
         // nothing is ever thrown on the ground outside vanilla (A, the drop key, is a skill there)
         if (isolated(of(p)) && !exempt(p)) e.setCancelled(true);
+    }
+
+    /**
+     * A refused throw is put back by the server with a plain {@code addItem}: what does not fit simply vanishes (an
+     * item on the cursor when the window closes over a full inventory, filled meanwhile by loot). That part is kept
+     * for the player instead, given back when he next enters the universe.
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onDropRefused(PlayerDropItemEvent e) {
+        Player p = e.getPlayer();
+        if (!e.isCancelled() || !isolated(of(p)) || locked.contains(p.getUniqueId())) return;
+        ItemStack stack = e.getItemDrop().getItemStack();
+        int room = room(p, stack);
+        if (room >= stack.getAmount()) return;
+        ItemStack lost = stack.clone();
+        lost.setAmount(stack.getAmount() - room);
+        if (!quarantine(p, of(p), lost, "full", false)) return;
+        // the server puts back what is left in the entity: only the part that fits (nothing fits when room is 0)
+        if (room > 0) {
+            stack.setAmount(room);
+            e.getItemDrop().setItemStack(stack);
+        }
+        messages.get().send(p, "universe.kept");
+    }
+
+    /** How many of this item the player's inventory can still take (hotbar and storage). */
+    private static int room(Player p, ItemStack stack) {
+        int room = 0;
+        for (ItemStack slot : p.getInventory().getStorageContents()) {
+            if (slot == null || slot.isEmpty()) room += stack.getMaxStackSize();
+            else if (slot.isSimilar(stack)) room += Math.max(0, slot.getMaxStackSize() - slot.getAmount());
+        }
+        return room;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

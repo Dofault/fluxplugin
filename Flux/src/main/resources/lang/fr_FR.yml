@@ -179,6 +179,7 @@ universe:
   busy: "&#B376E5Changement d'univers en cours, patiente un instant."
   quarantined: "&#FF5C5CUn objet qui n'appartient pas à cet univers t'a été retiré : il t'attend dans son univers."
   returned: "&#2ECF7B%count% &#B376E5objet(s) de cet univers t'ont été rendus."
+  kept: "&#B376E5Ton inventaire est plein : un objet a été mis de côté, il te sera rendu à ton retour dans ce monde."
   waiting: "&#B376E5Encore &f%count% &#B376E5objet(s) à te rendre : libère de la place dans ton inventaire."
   no-container: "&#FF5C5CLes conteneurs ne s'utilisent pas dans cet univers."
   no-command: "&#FF5C5CCette commande n'est pas disponible dans cet univers."

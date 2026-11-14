@@ -66,7 +66,7 @@ final class PlayerLive implements Transition.Live<String> {
      * grid. Closing the inventory would put them back or, when it is full, drop them where the player stands (in the
      * world of the other universe during a swap).
      */
-    private List<ItemStack> takeLoose() {
+    static List<ItemStack> takeLoose(Player player) {
         List<ItemStack> loose = new ArrayList<>();
         ItemStack cursor = player.getItemOnCursor();
         if (!cursor.isEmpty()) loose.add(cursor.clone());
@@ -104,7 +104,7 @@ final class PlayerLive implements Transition.Live<String> {
 
     @Override
     public String capture() {
-        List<ItemStack> loose = takeLoose();
+        List<ItemStack> loose = takeLoose(player);
         player.closeInventory();
         YamlConfiguration y = new YamlConfiguration();
         y.set("items", encode(player.getInventory().getContents()));
@@ -140,7 +140,7 @@ final class PlayerLive implements Transition.Live<String> {
     @Override
     public void apply(String profile, String universe, long version) {
         // what the outgoing profile had loose was captured with it; anything still loose belongs to the current marker
-        List<ItemStack> stray = takeLoose();
+        List<ItemStack> stray = takeLoose(player);
         if (!stray.isEmpty()) overflow.accept(universe(), stray);
         player.closeInventory();
         YamlConfiguration y = new YamlConfiguration();

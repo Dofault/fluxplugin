@@ -179,6 +179,7 @@ universe:
   busy: "&#B376E5Changing universe, wait a moment."
   quarantined: "&#FF5C5CAn item that does not belong to this universe was taken from you: it waits for you in its universe."
   returned: "&#2ECF7B%count% &#B376E5item(s) of this universe were given back to you."
+  kept: "&#B376E5Your inventory is full: an item was put aside, it will be given back when you return to this world."
   waiting: "&#B376E5Still &f%count% &#B376E5item(s) to give back: make room in your inventory."
   no-container: "&#FF5C5CContainers cannot be used in this universe."
   no-command: "&#FF5C5CThis command is not available in this universe."
