@@ -45,8 +45,8 @@ GOLD = E.GOLD
 SIDES = E.SIDES
 
 
-# Trial of 2026-11-14 (`--essai`): the outfit shaded the way the hat is. Off: the delivered model.
-HAT_STYLE = False
+# The outfit is shaded the way the hat is (kept after the trial of 2026-11-14). `--plain`: the Evoker's flat cloth.
+HAT_STYLE = True
 
 
 def gold_row(px, y):
@@ -371,7 +371,8 @@ def parts():
     # ---------------------------------------------------------------- torso
     add("Torso", "torso", (0, 28, 0), (11, 14.5, 7), (0, 0, 0), "robe")
     add("Torso", "belt", (0, 20.9, 0), (12.2, 2.4, 8.4), (0, 0, 0), "belt")
-    add("Torso", "buckle", (0, 20.9, -4.4), (2.6, 2.6, 0.9), (0, 0, 45), "mount")
+    # the buckle sits in front of the tabard, so its lower point is not swallowed by the skirt
+    add("Torso", "buckle", (0, 21.0, -5.1), (2.3, 2.3, 0.9), (0, 0, 45), "mount")
     add("Torso", "tabard_up", (0, 27.5, -3.85), (7, 12, 0.8), (0, 0, 0), "tabard_up")
     add("Torso", "lapel_right", (4.55, 27.6, -3.8), (2.6, 12, 0.9), (0, 0, -4), "lapel")
     add("Torso", "lapel_left", (-4.55, 27.6, -3.8), (2.6, 12, 0.9), (0, 0, 4), "lapel")
@@ -460,9 +461,9 @@ def parts():
 if __name__ == "__main__":
     args = sys.argv[1:]
     opts = {}
-    if "--essai" in args:
-        args.remove("--essai")
-        HAT_STYLE = True
+    if "--plain" in args:
+        args.remove("--plain")
+        HAT_STYLE = False
     for flag in ("--apercu", "--cubes"):
         if flag in args:
             i = args.index(flag)
