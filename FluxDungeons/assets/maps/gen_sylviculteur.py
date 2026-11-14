@@ -15,8 +15,8 @@ everywhere (oak and birch at the start, spruce and dark oak in the depths, pale 
     Graveyard of Giants (monumental fallen trunks, dead trees, giant hollow stumps);
   - room 5, the Sanctuary of Roots (arches of giant roots over the way) and the Ancient Forest (colossal trees, a hollow
     stump, a circular clearing, a cherry pocket);
-  - the final clearing: 38 x 38 flat and open, ringed by colossal trees, roots, stumps and fallen trunks; the boss is
-    not chosen yet: the Stump Guardian (mini-boss) holds it meanwhile.
+  - the final clearing: 38 x 38 flat and open, ringed by colossal trees, roots, stumps and fallen trunks; its boss is
+    the Sylvan Spider (araignee_sylvestre), a heap of dead wood in its middle until a player comes near.
 
 Usage: gen_sylviculteur.py [server] [--check] [--preview DIR]     (labs by default)
 """
@@ -480,8 +480,9 @@ def final_clearing():
     for x in range(x0, x1 + 1, 6):
         for z in (z0, z1):
             light(x, F + 6, z, 12)
-    m.mob("sylvi_gardien", round(cx), round(cz), y=F + 1, yaw=180, room="6")
-    m.objectives = ["sylvi_gardien"]
+    # the Sylvan Spider (SpiderPowers): a heap of dead wood in the middle of the clearing until a player comes near
+    m.mob("araignee_sylvestre", round(cx), round(cz), y=F + 1, yaw=180, room="6")
+    m.objectives = ["araignee_sylvestre"]
 
 
 # ======================================================================== checks, main

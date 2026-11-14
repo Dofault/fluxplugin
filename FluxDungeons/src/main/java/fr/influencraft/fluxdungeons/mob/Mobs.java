@@ -335,6 +335,7 @@ public final class Mobs {
         this.forge = new ForgePowers(plugin, fx);
         this.salamander = new SalamanderPowers(plugin, fx, this);
         this.fox = new FoxPowers(plugin, fx, this);
+        this.spider = new SpiderPowers(plugin, fx, this);
         this.evoker = new EvokerPowers(plugin, this);
         this.flower = new FlowerPowers(plugin, this);
         this.tide = new TidePowers(plugin);
@@ -544,6 +545,7 @@ public final class Mobs {
         alive.put(le.getUniqueId(), a);
         // the Sylvan Fox is never seen before its entrance
         if (fox != null && FoxPowers.MODEL.equals(t.model())) fox.spawned(le);
+        if (spider != null && SpiderPowers.MODEL.equals(t.model())) spider.spawned(le);
         if (flower != null && FlowerPowers.MODEL.equals(t.model())) flower.spawned(le);
         control(a);
         swim(a);
@@ -592,6 +594,7 @@ public final class Mobs {
         alive.put(le.getUniqueId(), a);
         // the Sylvan Fox is never seen before its entrance
         if (fox != null && FoxPowers.MODEL.equals(t.model())) fox.spawned(le);
+        if (spider != null && SpiderPowers.MODEL.equals(t.model())) spider.spawned(le);
         if (flower != null && FlowerPowers.MODEL.equals(t.model())) flower.spawned(le);
         control(a);
         swim(a);
@@ -777,6 +780,11 @@ public final class Mobs {
                 if (target != null) engage(a, target);
             }
             if (target == null) {
+                m.getPathfinder().stopPathfinding();
+                return;
+            }
+            // a monster that steers itself keeps its own heading (the Sylvan Spider turns at its own pace)
+            if (spider != null && spider.steers(m)) {
                 m.getPathfinder().stopPathfinding();
                 return;
             }
@@ -1198,6 +1206,8 @@ public final class Mobs {
     /** The Emerald Salamander: its prowl (it moves itself, its file says stationary) and abilities. */
     private SalamanderPowers salamander;
     private FoxPowers fox;
+    /** The Sylvan Spider: dead wood until its entrance, then it steers itself (its file says stationary). */
+    private SpiderPowers spider;
     private EvokerPowers evoker;
     /** The Devouring Flower: rooted, asleep until its entrance, its head alone follows its prey. */
     private FlowerPowers flower;
@@ -1215,6 +1225,7 @@ public final class Mobs {
         if (forge != null) forge.clear();
         if (salamander != null) salamander.clear();
         if (fox != null) fox.clear();
+        if (spider != null) spider.clear();
         if (evoker != null) evoker.clear();
         if (flower != null) flower.clear();
         if (fx != null) fx.clear();
@@ -1444,6 +1455,8 @@ public final class Mobs {
         Set<UUID> contributors = contributors(a.entity);
         alive.remove(a.entity.getUniqueId());
         close(a);
+        // the Sylvan Spider collapses on a stand-in of its model: the victory does not wait for it
+        if (spider != null && SpiderPowers.MODEL.equals(a.template.model())) spider.died(a.entity);
         onDeath.dead(a.entity, killer, a.template, a.objective, contributors);
         split(a);
     }
@@ -1535,7 +1548,7 @@ public final class Mobs {
                 // ready, and somebody to hit (a ring cast with nobody in it is thrown in the void)
                 if (now - last >= ab.every() * 1000 && RockPowers.worthCasting(ab, a.entity)
                         && harvest.worth(ab, a.entity, a.spawn) && copper.worth(ab, a.entity, a.spawn)
-                        && mole.worth(ab, a.entity) && bone.worth(ab, a.entity) && forge.worth(ab, a.entity) && salamander.worth(ab, a.entity) && fox.worth(ab, a.entity) && evoker.worth(ab, a.entity) && flower.worth(ab, a.entity)
+                        && mole.worth(ab, a.entity) && bone.worth(ab, a.entity) && forge.worth(ab, a.entity) && salamander.worth(ab, a.entity) && fox.worth(ab, a.entity) && spider.worth(ab, a.entity) && evoker.worth(ab, a.entity) && flower.worth(ab, a.entity)
                         && theme.worth(ab, a.entity) && troop.worth(ab, a.entity)) ready.add(i);
             }
             if (ready.isEmpty()) continue;
@@ -1715,6 +1728,8 @@ public final class Mobs {
             if (m instanceof com.destroystokyo.paper.entity.RangedEntity) continue;
             Player target = fightingTarget(a);
             if (target == null) continue;
+            // attack-speed 0: no melee hit of its own (its bite is an ability)
+            if (a.template.extra().attackSpeed() <= 0) continue;
             if (now - a.lastMelee < a.template.extra().attackTicks()) continue;
             AttributeInstance attack = m.getAttribute(Attribute.ATTACK_DAMAGE);
             if (attack == null || attack.getValue() <= 0) continue;
@@ -2084,7 +2099,7 @@ public final class Mobs {
             }
         };
         if (copper.cast(ab, caster, target) || mole.cast(ab, caster, target) || bone.cast(ab, caster, target) || forge.cast(ab, caster, target)
-                || salamander.cast(ab, caster, target) || fox.cast(ab, caster, target) || evoker.cast(ab, caster, target) || flower.cast(ab, caster, target) || tide.cast(ab, caster, target) || harvest.cast(ab, caster, target)
+                || salamander.cast(ab, caster, target) || fox.cast(ab, caster, target) || spider.cast(ab, caster, target) || evoker.cast(ab, caster, target) || flower.cast(ab, caster, target) || tide.cast(ab, caster, target) || harvest.cast(ab, caster, target)
                 || rock.cast(ab, caster, target) || theme.cast(ab, caster, target) || troop.cast(ab, caster, target)) return;
         World w = e.getWorld();
         Location at = e.getLocation();

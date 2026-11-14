@@ -4,6 +4,7 @@ import kr.toxicity.model.api.BetterModel;
 import kr.toxicity.model.api.animation.AnimationIterator;
 import kr.toxicity.model.api.animation.AnimationModifier;
 import kr.toxicity.model.api.bukkit.platform.BukkitAdapter;
+import kr.toxicity.model.api.tracker.DummyTracker;
 import kr.toxicity.model.api.tracker.EntityTracker;
 import kr.toxicity.model.api.tracker.TrackerUpdateAction;
 import kr.toxicity.model.api.util.function.BonePredicate;
@@ -88,6 +89,32 @@ final class ModelBridge {
                 if (tracker.isClosed()) return;
                 tracker.update(rgb < 0 ? TrackerUpdateAction.glow(false)
                         : TrackerUpdateAction.composite(TrackerUpdateAction.glow(true), TrackerUpdateAction.glowColor(rgb)), BonePredicate.TRUE);
+            }
+
+            public void close() {
+                if (!tracker.isClosed()) tracker.close();
+            }
+        };
+    }
+
+    /**
+     * A model standing on its own at a place, turned as the place is (no creature under it: the collapse of a boss
+     * that is already dead), shown to these players; null when the model does not exist. To be closed by the caller.
+     */
+    static Handle stand(org.bukkit.Location at, String model, Collection<org.bukkit.entity.Player> viewers) {
+        var renderer = BetterModel.modelOrNull(model);
+        if (renderer == null) return null;
+        DummyTracker tracker = renderer.create(BukkitAdapter.adapt(at));
+        tracker.update(TrackerUpdateAction.togglePart(false), BonePredicate.from(b -> b.name().rawName().endsWith("_empty")));
+        for (org.bukkit.entity.Player p : viewers) tracker.spawn(BukkitAdapter.adapt(p));
+        return new Handle() {
+            public boolean play(String animation) {
+                return !tracker.isClosed() && tracker.animate(animation, AnimationModifier.DEFAULT_WITH_PLAY_ONCE);
+            }
+
+            public void parts(boolean visible, Collection<String> bones) {
+                if (tracker.isClosed()) return;
+                tracker.update(TrackerUpdateAction.togglePart(visible), BonePredicate.from(b -> bones.contains(b.name().rawName())));
             }
 
             public void close() {

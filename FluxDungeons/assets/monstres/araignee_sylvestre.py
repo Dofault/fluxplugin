@@ -7,11 +7,13 @@ overlapping bark plates for abdomen, eight legs that are living branches (thick 
 thinner lower segment sinking into the dark, standing on a corner so the tip reads as a root point), six amber eyes
 set in the bark, two hooked chelicerae, two pedipalps, moss, two mushrooms, two twigs.
 
-Brief constraints: 30 to 45 boxes (45 here, asserted), Minecraft pixel art at 16 texels per block (1 texel per model
+Brief constraints: 30 to 45 boxes (46 here, asserted: the 46th is the plate of lit eyes, hidden until it wakes), Minecraft pixel art at 16 texels per block (1 texel per model
 unit, every material), fully opaque, nothing emissive. Moss, cracks, fibres, scales of the flanks and eyes are
 painted, never modelled.
 
-Usage: araignee_sylvestre.py [output folder] [--apercu <sheet.png>] [--visage <face.png>]
+Animated by araignee_sylvestre_anim.py (legs solved by inverse kinematics: a planted foot never slides).
+
+Usage: araignee_sylvestre.py [output folder] [--apercu <sheet.png>] [--visage <face.png>] [--anims <folder>] [--mesures]
 Front towards north (-z), the spider's right towards +x, 16 units = 1 block.
 """
 import json
@@ -23,7 +25,7 @@ import uuid
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from bbkit import apercu, attach, bake, combined, corners, export, flat_elements, ground, hx  # noqa: E402
-from golem_fonderie import mul, rot  # noqa: E402
+from golem_fonderie import app, mul, rot  # noqa: E402
 
 IDENT = "araignee_sylvestre"
 NS = uuid.UUID("5b2d9e00-0000-4000-8000-00000a4a1601")
@@ -34,6 +36,9 @@ ABDO = [hx(c) for c in ("#60432F", "#795239", "#99704A", "#B0926A")]
 LEG = [hx(c) for c in ("#473329", "#62452F", "#896344", "#A0805B")]
 MOSS = [hx(c) for c in ("#425B3C", "#617A4B", "#84936A", "#A1A77A")]
 ORBIT, IRIS, GLINT = hx("#382B25"), hx("#C18A35"), hx("#E2B75D")
+# eyes "asleep" (painted on the bark): a dull amber; the lit eyes are a separate emissive plate in front of them
+IRIS_DIM, GLINT_DIM = hx("#7E5A2A"), hx("#9C7A3E")
+CLEAR = (0, 0, 0, 0)
 CAP, CAP_D, STEM = hx("#C6AC82"), hx("#927454"), hx("#D8C8A5")
 
 # light from above and slightly from the front
@@ -135,14 +140,33 @@ def head(w, h, r, face):
                     g[y + j][x + i] = ORBIT
         for j in (0, 1):
             for i in (0, 1):
-                g[y + j][x + i] = IRIS
-    g[EYES_MAIN[0][1]][EYES_MAIN[0][0]] = GLINT
-    g[EYES_MAIN[1][1]][EYES_MAIN[1][0]] = GLINT
+                g[y + j][x + i] = IRIS_DIM
+    g[EYES_MAIN[0][1]][EYES_MAIN[0][0]] = GLINT_DIM
+    g[EYES_MAIN[1][1]][EYES_MAIN[1][0]] = GLINT_DIM
     for x, y in EYES_SIDE:
         out = -1 if x < w // 2 else 1
         for i, j in ((out, 0), (0, -1), (out, -1)):          # orbit as a brow over the outer side
             g[y + j][x + i] = ORBIT
+        g[y][x] = IRIS_DIM
+    return g
+
+
+def eyes_lit(w, h, r, face):
+    """The six eyes lit (emissive plate laid on the front of the head, hidden until the spider wakes up): the same
+    pixels as the painted eyes, in bright amber with their golden glints, everything else see-through."""
+    g = [[CLEAR] * w for _ in range(h)]
+    if face != "north":
+        return g
+    assert (w, h) == (15, 9), (w, h)
+    for x, y in EYES_MAIN:
+        for j in (0, 1):
+            for i in (0, 1):
+                g[y + j][x + i] = IRIS
+        g[y][x] = GLINT
+    for x, y in EYES_SIDE:
         g[y][x] = IRIS
+    g[EYES_SIDE[0][1]][EYES_SIDE[0][0]] = GLINT
+    g[EYES_SIDE[1][1]][EYES_SIDE[1][0]] = GLINT
     return g
 
 
@@ -255,7 +279,7 @@ MATS = {
     "twig": wood(LEG, 1.2, cracks=0.0),
     "cap": cap, "stem": stem,
 }
-GLOW = {}
+GLOW = {"eyes_lit": eyes_lit}
 
 # ---------------------------------------------------------------- geometry
 BODY_R = rot(-5, 0, 0)                      # stump leaning forward
@@ -281,9 +305,11 @@ MOSSY_LEGS = {(1, 1), (3, -1)}
 GROUPS = {"Root": ((0, 0, 0), None), "Body": (BODY_PIVOT, "Root"), "Head": (HEAD_PIVOT, "Body"),
           "Chelicera_right": ((2.5, 11.5, -20.0), "Head"), "Chelicera_left": ((-2.5, 11.5, -20.0), "Head"),
           "Pedipalp_right": ((6.0, 12.0, -18.5), "Head"), "Pedipalp_left": ((-6.0, 12.0, -18.5), "Head"),
-          "Abdomen": (WAIST, "Body")}
+          "Abdomen": (WAIST, "Body"), "glow_Eyes_empty": (HEAD_PIVOT, "Head")}
+# bone of each plant growing on the plates (it lifts with its plate)
+ON_PLATE = {"champignon_1": "Plate_3", "champignon_2": "Plate_4", "branche_1": "Plate_4", "branche_2": "Plate_5"}
 
-BUDGET = {"cephalothorax": 3, "abdomen": 8, "legs": 24, "mouth": 4, "mushrooms": 4, "twigs": 2}
+BUDGET = {"cephalothorax": 3, "eyes": 1, "abdomen": 8, "legs": 24, "mouth": 4, "mushrooms": 4, "twigs": 2}
 
 
 def along(a, b, thick, over=(0.0, 0.0), twist=0.0):
@@ -322,6 +348,9 @@ def parts():
         add("cephalothorax", "Body", name, c, size, M, mat)
     c, M = head_at((0, 14.5, -18.0), (0, 0, 0))
     add("cephalothorax", "Head", "tete", c, (15, 9, 7), M, "head")
+    # the lit eyes: a plate a hair in front of the face, hidden (bone ending in _empty) until the eyes light up
+    c, M = head_at((0, 14.5, -21.58), (0, 0, 0))
+    add("eyes", "glow_Eyes_empty", "yeux_allumes", c, (15, 9, 0.1), M, "eyes_lit")
 
     # ------------------------------------------------ mouth: chelicerae hooked inwards, pedipalps at their sides
     for s, sd, side in ((1, "d", "right"), (-1, "g", "left")):
@@ -335,6 +364,9 @@ def parts():
         c, M = abdo(c, r)
         add(part, g, name, c, size, M, mat)
 
+    def plant(part, name, c, size, r, mat):
+        aadd(part, name, c, size, r, mat, ON_PLATE["_".join(name.split("_")[:2])])
+
     aadd("abdomen", "cone", (0, 21.5, 7.5), (19, 14, 20), (0, 0, 0), "cone")
     aadd("abdomen", "cone_pointe", (0, 21.0, 19.0), (13, 10, 5), (0, 0, 0), "cone_tip")
     for name, c, size, r, mat in (
@@ -344,15 +376,19 @@ def parts():
             ("plaque_4", (0.2, 30.6, 13.2), (18, 3, 8), (-19, 2, 0), "plate_f"),
             ("plaque_5", (4.3, 28.6, 18.6), (9, 3, 7), (-27, -6, -13), "plate_e"),
             ("plaque_6", (-4.3, 28.7, 18.9), (9, 3, 7), (-26, 7, 14), "plate_d")):
-        aadd("abdomen", name, c, size, r, mat)
+        # each plate is its own bone hinged on its front lower edge: it lifts its rear edge to open (thorns, ultimate)
+        bone = "Plate_" + name[-1]
+        hinge = [c[i] + v for i, v in enumerate(app(rot(*r), [0, -size[1] / 2, -size[2] / 2]))]
+        GROUPS[bone] = (abdo(hinge, (0, 0, 0))[0], "Abdomen")
+        aadd("abdomen", name, c, size, r, mat, bone)
 
     # ------------------------------------------------ vegetation on the plates: two mushrooms, two twigs
-    aadd("mushrooms", "champignon_1_pied", (-6.0, 32.4, 6.6), (2, 3, 2), (0, 0, 12), "stem")
-    aadd("mushrooms", "champignon_1_chapeau", (-6.4, 34.4, 6.6), (4, 2, 4), (0, 0, 12), "cap")
-    aadd("mushrooms", "champignon_2_pied", (5.6, 33.4, 14.0), (1, 3, 1), (-12, 0, -10), "stem")
-    aadd("mushrooms", "champignon_2_chapeau", (5.9, 35.2, 14.4), (3, 2, 3), (-12, 0, -10), "cap")
-    aadd("twigs", "branche_1", (1.5, 35.4, 12.0), (2, 6, 2), (-22, 0, -12), "twig")
-    aadd("twigs", "branche_2", (3.0, 31.5, 21.5), (1, 5, 1), (-50, 0, -14), "twig")
+    plant("mushrooms", "champignon_1_pied", (-6.0, 32.4, 6.6), (2, 3, 2), (0, 0, 12), "stem")
+    plant("mushrooms", "champignon_1_chapeau", (-6.4, 34.4, 6.6), (4, 2, 4), (0, 0, 12), "cap")
+    plant("mushrooms", "champignon_2_pied", (5.6, 33.4, 14.0), (1, 3, 1), (-12, 0, -10), "stem")
+    plant("mushrooms", "champignon_2_chapeau", (5.9, 35.2, 14.4), (3, 2, 3), (-12, 0, -10), "cap")
+    plant("twigs", "branche_1", (1.5, 35.4, 12.0), (2, 6, 2), (-22, 0, -12), "twig")
+    plant("twigs", "branche_2", (3.0, 31.5, 21.5), (1, 5, 1), (-50, 0, -14), "twig")
 
     # ------------------------------------------------ legs: upper branch, knot, lower branch standing on a corner
     for n, hz, heading, reach, knee_y, frac, bend, t_up, t_low, knot in LEGS:
@@ -377,7 +413,7 @@ def parts():
             add("legs", low, f"patte_{n}_{sd}_bas", c, size, M, "leg_low")
 
     assert count == BUDGET, count
-    assert len(P) == 45
+    assert len(P) == 46
     return P
 
 
@@ -404,6 +440,14 @@ def face_closeup(data, atlases, sizes, path, size=420):
 if __name__ == "__main__":
     args = sys.argv[1:]
     opts = {}
+    anims_dir = None
+    if "--anims" in args:
+        i = args.index("--anims")
+        anims_dir = args[i + 1]
+        del args[i:i + 2]
+    show = "--mesures" in args
+    if show:
+        args.remove("--mesures")
     for flag in ("--apercu", "--visage"):
         if flag in args:
             i = args.index(flag)
@@ -413,8 +457,14 @@ if __name__ == "__main__":
     P, groups, dims = build()
     uv, atlases, sizes = bake(P, MATS, GLOW)
     data = export(IDENT, NS, P, groups, uv, atlases, sizes)
-    print(f"{len(P)} cubes ; {dims[0]:.2f} x {dims[1]:.2f} x {dims[2]:.2f} blocs (large x haut x long) ; "
-          f"texture {sizes[0]}")
+    import araignee_sylvestre_anim as SA
+    anims = SA.build(data, lambda name: str(uuid.uuid5(NS, f"{IDENT}/{name}")))
+    if anims_dir:
+        SA.strips(data, anims, atlases, sizes, anims_dir)
+    SA.report(data, anims, show)
+    data["animations"] = SA.finish(anims)
+    print(f"{len(P)} cubes, {len(groups)} os, {len(anims)} animations ; {dims[0]:.2f} x {dims[1]:.2f} x {dims[2]:.2f} "
+          f"blocs (large x haut x long) ; texture {sizes[0]}")
     if "--apercu" in opts:
         # face, three quarters (presentation view), profile, top, then the silhouette
         apercu(data, atlases, sizes, opts["--apercu"], set(), views=((0, 4), (35, 16), (90, 2), (20, 75)), size=420)
