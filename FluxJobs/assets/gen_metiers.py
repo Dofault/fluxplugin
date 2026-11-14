@@ -7,9 +7,10 @@ Thème vanilla (2026-10-29) : fond fluxui:bg_metiers (Flux/assets/vanilla/gen_ui
   rangée 0                   : retour (0), nom du métier dans le champ sombre (widget text), rejoindre /
                                quitter (7, quitter = double clic), info (8)
   cases 9 / 18 / 27 / 36     : les 4 familiers FluxPets du métier, en portrait
+  case 45                    : son légendaire de boss (familier du boss de son donjon, 2026-11-14)
   cadre                      : illustration du métier choisi (influmetier:metier_<id>, widget image)
   cases 15-17 ... 42-44      : les 12 métiers (case du métier affiché éclairée, widget lit)
-  rangée 5                   : barre d'XP vers le niveau suivant, « Niv. N » dessus, XP au survol (widget bar)
+  rangée 5 (46-53)           : barre d'XP vers le niveau suivant, « Niv. N » dessus, XP au survol (widget bar)
   inventaire 54-80           : actions rémunérées (27 par page)
   barre d'action 81 / 89     : pagination des actions (widget pager : rien quand tout tient sur une page)
 Une page par métier (metiers_<id>) : familiers et widgets du métier. Grille, actions et rejoindre / quitter sont
@@ -27,15 +28,16 @@ from gen_pages import item, page, q, CLIC_G, OR, VIOLET, ROUGE  # noqa: E402
 
 FOND = ":offset_-8::bg_metiers:"
 VERT = "&#2ECF7B"
-CARTES = [9, 18, 27, 36]
+CARTES = [9, 18, 27, 36, 45]
 METIER_CASES = [15, 16, 17, 24, 25, 26, 33, 34, 35, 42, 43, 44]
 RETOUR, ADHESION, INFO = 0, 7, 8
 ACTIONS = list(range(54, 81))       # les 3 rangées de l'inventaire
 PREV, NEXT = 81, 89                 # pagination, sur la barre d'action
-BARRE = {"x": 6, "y": 109, "width": 164, "survol": "45-53"}     # cadre dessiné dans le fond
+BARRE = {"x": 27, "y": 109, "width": 143, "survol": "46-53"}    # cadre dessiné dans le fond (après le légendaire)
 NOM = {"x": 77, "y": 23}            # centre du champ sombre de la rangée 0
 PHOTO_X = 34
-RARETES = [("simple", "Commune"), ("unique", "Rare"), ("elite", "Élite"), ("ultimate", "Ultime")]
+RARETES = [("simple", "Commune"), ("unique", "Rare"), ("elite", "Élite"), ("ultimate", "Ultime"),
+           ("legendary", "Légendaire")]
 
 # (id EcoJobs, nom, objet, série FluxPets, description courte) ; une rangée par famille.
 METIERS = [
@@ -55,7 +57,7 @@ METIERS = [
 
 
 def cartes(serie, toutes):
-    """Les 4 cartes du métier (cases 0, 9, 18, 27), de commune à ultime."""
+    """Les 5 familiers du métier (cases 9, 18, 27, 36, 45), de commune à ultime puis son légendaire de boss."""
     its = []
     if serie is None:
         for k, slot in enumerate(CARTES):
@@ -67,7 +69,9 @@ def cartes(serie, toutes):
         if rarete not in par_rarete:
             continue
         cid, c = par_rarete[rarete]
-        desc = [l for l in c.get("lore") or [] if l and "Série" not in l]
+        desc = [l for l in c.get("lore") or [] if l and "Série" not in l and "Légendaire de boss" not in l]
+        if rarete == "legendary":
+            desc = desc + ["", VERT + "Battu dans le donjon du métier :", VERT + "il devient ton familier."]
         pet = c.get("pet") or cid
         nom = c.get("name", cid)
         # Portrait du familier (influportraits, scripts/influcard/portraits.py) plutôt que sa carte (2026-10-15).

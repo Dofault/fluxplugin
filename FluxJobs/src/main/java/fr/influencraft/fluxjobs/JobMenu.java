@@ -214,8 +214,13 @@ final class JobMenu implements Listener {
         String job = job(player);
         if (job == null || !Jobs.available()) return out;
         int i = 0;
+        // what the job's actions can drop besides the pay (the key of its dungeon, FluxDungeons), first
+        for (ItemStack header : fr.influencraft.flux.api.jobs.JobDrops.headers(player, job)) {
+            out.add(ListEntry.of("drop" + i++).item(header));
+        }
         for (JobAction a : Jobs.get().actions(player, job)) {
             Lore lore = Lore.create().kv(Lang.t("menu.xp"), Format.decimal(a.xp()) + (a.perHealth() ? Lang.t("actions.per-health") : "")).kv(Lang.t("menu.gain"), money(player, a));
+            for (var line : fr.influencraft.flux.api.jobs.JobDrops.lines(player, job, a)) lore.kv(line.key(), line.value());
             JobActionLook.Look look = JobActionLook.of(player, a);
             out.add(ListEntry.of(String.valueOf(i++)).item(Items.dress(look.icon(), look.name(), lore.build(), player)));
         }
