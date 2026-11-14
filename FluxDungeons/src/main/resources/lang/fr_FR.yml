@@ -299,7 +299,6 @@ choice:
   confirm-title: "Confirmer"
   confirm: "&#B376E5Devenir &#FFD94D%class% &#B376E5?"
   done: "&#2ECF7BTu es maintenant &#FFD94D%class%&#2ECF7B. &#B376E5Arme en main : %attack% pour attaquer, %spell%, &fA &#B376E5et &fF &#B376E5pour tes sorts."
-  weapon: "&#B376E5Ton arme de classe t'a été donnée."
   lobby-only: "&#FF5C5CTu ne peux changer de classe que dans le lobby RPG."
   change-title: "Changer de classe"
   change-intro: "&#B376E5Ta progression dans chaque classe est gardée. Un changement toutes les &f%hours% h &#B376E5au plus."
@@ -307,6 +306,18 @@ choice:
   changed-elsewhere: "&#FF5C5CTa classe a déjà changé entre-temps."
   changed: "&#2ECF7BTu es maintenant &#FFD94D%class%&#2ECF7B."
   unknown: "&#FF5C5CClasse inconnue. Classes : &f%classes%"
+
+# Ce que chaque personnage porte toujours (rpg.RpgKit) : l'arme d'apprentissage de sa classe et la boussole du menu.
+kit:
+  weapon: "&#B376E5Ton arme d'apprentissage t'a été donnée : &#FFD94D%weapon%&#B376E5. Tu ne peux pas la perdre."
+  replaced: "&#B376E5Ton arme d'apprentissage est devenue &#FFD94D%weapon%&#B376E5."
+  moved: "&#B376E5Ton inventaire était plein : un objet déplacé t'attend dans &f[/%flux_cmd_flux_rewards%]&#B376E5."
+  moved-label: "&fObjet déplacé de ton inventaire RPG"
+  menu:
+    name: "&#FFD94DMenu RPG"
+    description: "Ton personnage, tes statistiques, les classes et les donjons."
+    open: "Ouvrir le menu"
+    given: "&#B376E5La boussole du dernier emplacement de ta barre ouvre le &#FFD94Dmenu RPG&#B376E5."
 
 weapon:
   other-class: "&#FF5C5CCette arme est réservée à la classe &f%classes%&#FF5C5C, tu es &f%class%&#FF5C5C. Change de classe au lobby avec &f[/classe]&#FF5C5C."
@@ -353,6 +364,7 @@ classes:
     description: "Sème des graines dans les monstres : elles éclosent en fleurs qui les enracinent et soignent tout le groupe."
 
 item:
+  starter: "Arme d'apprentissage : liée à ton personnage, elle suit ta classe."
   classes: "Classe :"
   level: "Niveau requis :"
   rarity: "Rareté :"
@@ -448,6 +460,9 @@ class-pages:
     choose: Choisis ta voie pour commencer
     all: Toute la fiche
     xp: Expérience
+    weapon-title: Arme d'apprentissage
+    weapon-short: Impossible à perdre, suit ta classe
+    weapon-text: "Liée à ton personnage : tu ne peux ni la jeter ni la perdre, et elle devient l'arme de ta nouvelle classe quand tu en changes."
   title: "Les classes"
   subtitle: "Ta classe décide de ton arme, de tes statistiques et de tes sorts. Ta progression dans chaque classe est gardée."
   beta: "Bêta"

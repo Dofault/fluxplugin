@@ -61,6 +61,14 @@ public final class RpgModule implements Listener {
         players.bind(world, combat);
         skills = new Skills(plugin, combat, players);
         controls = new Controls(plugin, players, skills, items);
+        RpgKit kit = new RpgKit(plugin, items, players);
+        players.useKit(kit);
+        Bukkit.getPluginManager().registerEvents(kit, plugin);
+        // the menu compass: a right click opens the rpg menu
+        fr.influencraft.flux.api.items.ItemUses.register(plugin, RpgItems.NAMESPACE + ":" + RpgItems.MENU, (p, item, id) -> {
+            kit.open(p);
+            return false;
+        });
         registerCombatApi(skills);
         var pm = Bukkit.getPluginManager();
         pm.registerEvents(players, plugin);
@@ -163,6 +171,7 @@ public final class RpgModule implements Listener {
     /**
      * {@code %fluxrpg_<params>%}: the player's rpg character, read by the class pages. class, level_text, level, xp_text,
      * xp_pct, health, health_max, health_pct, mana, mana_max, mana_pct, has_class (yes/no), is_<class> (yes/no),
+     * class_id, weapon (name of the class's apprentice weapon),
      * stat_<stat> (its total), zero_<stat> ("zero" when it is 0).
      */
     private String placeholder(Player p, String params) {
@@ -184,6 +193,8 @@ public final class RpgModule implements Listener {
         double need = on ? set.balance().xpToNext(r.level()) : 0;
         return switch (params) {
             case "has_class" -> on ? "yes" : "no";
+            case "class_id" -> on ? r.heroClass().id() : "";
+            case "weapon" -> on ? fr.influencraft.fluxdungeons.pages.PageKit.plain(items.name(RpgItems.starterId(r.heroClass().id()))) : "";
             case "class" -> fr.influencraft.fluxdungeons.pages.PageKit.plain(on ? m.raw("classes." + r.heroClass().id() + ".name") : m.raw("class-pages.no-class"));
             case "level" -> on ? String.valueOf(r.level()) : "0";
             case "level_text" -> on ? fr.influencraft.fluxdungeons.pages.PageKit.plain(m.raw("class-pages.level", "%level%", String.valueOf(r.level()))) : "";

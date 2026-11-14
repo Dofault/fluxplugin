@@ -21,6 +21,8 @@ import java.util.Map;
 public final class RpgItems {
 
     public static final String NAMESPACE = "fluxrpg";
+    /** The menu compass every character carries in his last hotbar slot ({@link RpgKit}); not a piece of equipment. */
+    public static final String MENU = "menu";
 
     private final FluxPlugin plugin;
     private final ItemCatalog catalog;
@@ -49,12 +51,36 @@ public final class RpgItems {
             y.set("flags", List.of("HIDE_UNBREAKABLE", "HIDE_ATTRIBUTES", "HIDE_ADDITIONAL_TOOLTIP", "HIDE_DYE"));
             catalog.add(item.id(), y);
         }
+        YamlConfiguration menu = new YamlConfiguration();
+        menu.set("material", "COMPASS");
+        menu.set("name", plugin.messages().raw("kit.menu.name"));
+        menu.set("lore", fr.influencraft.flux.api.inventory.Lore.create().description(plugin.messages().raw("kit.menu.description"))
+                .right(plugin.messages().raw("kit.menu.open")).build());
+        menu.set("universe", RpgWorld.UNIVERSE);
+        catalog.add(MENU, menu);
+    }
+
+    /** Id of the apprentice weapon of a class: the one weapon its characters always carry ({@link RpgKit}). */
+    public static String starterId(String classId) {
+        return "class_" + classId + "_weapon";
+    }
+
+    /** Whether this item id is the apprentice weapon of a class, whichever. */
+    public boolean starter(String id) {
+        return id != null && id.startsWith("class_") && id.endsWith("_weapon") && equipment != null && equipment.item(id) != null;
+    }
+
+    /** An item's name as written in equipment.yml, without colour (its id when unknown). */
+    public String name(String id) {
+        Equipment.Item item = equipment == null ? null : equipment.item(id);
+        return item == null ? id : String.valueOf(item.look().getOrDefault("name", id));
     }
 
     /** Description in the suite's style (Flux Lore): description, stats, classes, level, rarity, set bonuses. */
     private List<String> lore(Equipment.Item item) {
         fr.influencraft.flux.api.inventory.Lore lore = fr.influencraft.flux.api.inventory.Lore.create();
         if (!item.description().isEmpty()) lore.description(item.description());
+        if (starter(item.id())) lore.info(plugin.messages().raw("item.starter"));
         item.stats().forEach((stat, value) -> lore.kv(statName(stat), statValue(stat, value)));
         if (!item.classes().isEmpty()) {
             List<String> names = new ArrayList<>();

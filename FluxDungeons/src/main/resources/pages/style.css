@@ -201,6 +201,12 @@ h4 { font-size: 8px; line-height: 12px; font-weight: normal; color: var(--gold);
 .hub .trait img { position: absolute; left: 12px; top: 16px; width: 32px; height: 32px; }
 .hub .trait b { position: absolute; left: 56px; top: 14px; font-size: 16px; line-height: 20px; text-shadow: 2px 2px 0 var(--shadow); }
 .hub .trait span { position: absolute; left: 56px; top: 38px; color: var(--grey); }
+/* the apprentice weapon, under the stats */
+.hub .starter { position: relative; height: 76px; margin-top: 12px; padding: 10px 8px 0 92px; background: var(--card); box-shadow: inset 0 0 0 2px var(--line); }
+.hub .starter .slot { position: absolute; left: 10px; top: 2px; margin-top: 0; }
+.hub .starter b { display: block; font-size: 16px; line-height: 20px; color: var(--accent); text-shadow: 2px 2px 0 var(--shadow); }
+.hub .starter span { display: block; color: var(--grey); margin-top: 2px; }
+.has-no.hub .starter { display: none; }
 .hub .more { position: absolute; left: 20px; right: 20px; bottom: 16px; text-align: center; }
 
 .hub .ways { left: 724px; top: 84px; width: 264px; height: 416px; padding: 16px 12px 0 12px; }

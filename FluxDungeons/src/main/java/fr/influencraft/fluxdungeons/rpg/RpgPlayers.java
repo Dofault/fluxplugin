@@ -67,6 +67,8 @@ public final class RpgPlayers implements Listener {
     private CombatEngine combat;
     /** HTML pages of the classes and the sheet (null: Paper dialogs only). */
     private ClassPages pages;
+    /** The apprentice weapon and the menu compass every character carries. */
+    private RpgKit kit;
     private final Map<UUID, RpgPlayer> online = new HashMap<>();
     /** Players whose data is being read (they can do nothing yet). */
     private final Set<UUID> loading = new HashSet<>();
@@ -88,6 +90,10 @@ public final class RpgPlayers implements Listener {
         // the bars cover the hearts and the food: refreshed often, so another plugin's action bar uncovers them briefly
         Bukkit.getScheduler().runTaskTimer(plugin, this::drawHud, 5L, 4L);
         Bukkit.getScheduler().runTaskTimer(plugin, this::saveAll, 1200L, 1200L);
+    }
+
+    void useKit(RpgKit kit) {
+        this.kit = kit;
     }
 
     public RpgPlayer get(Player p) {
@@ -176,11 +182,12 @@ public final class RpgPlayers implements Listener {
     private void setup(Player p, ClassDef c, int level, double xp, boolean fresh) {
         RpgPlayer r = new RpgPlayer(p.getUniqueId(), c, Math.max(1, level), xp);
         online.put(p.getUniqueId(), r);
+        // his kit first (apprentice weapon, menu compass): the weapon in hand counts in the stats
+        if (kit != null) kit.ensure(p, r, true);
         // entering the universe: full life and mana (the game's own life stays full there, the engine's is the real one)
         recompute(p);
         r.mana(r.stats().get("max_mana"));
         combat.life(p, r.stats().get("max_health"));
-        giveWeaponIfMissing(p, r);
         // full food and saturation: the food row never shakes out from under the mana bar
         p.setFoodLevel(20);
         p.setSaturation(20);
@@ -236,7 +243,7 @@ public final class RpgPlayers implements Listener {
         Dialogs.Form form = Dialogs.form(p, plugin.messages().raw("choice.title"));
         form.body(plugin.messages().raw("choice.intro"));
         for (String id : visible(set)) {
-            ItemStack weapon = items.make("class_" + id + "_weapon");
+            ItemStack weapon = items.make(RpgItems.starterId(id));
             String text = Dialogs.heading(plugin.messages().raw("classes." + id + ".name")) + "\n&f" + plugin.messages().raw("classes." + id + ".description");
             if (weapon != null) form.item(weapon, text);
             else form.body(text);
@@ -404,30 +411,16 @@ public final class RpgPlayers implements Listener {
                 now.heroClass(set.classes().get(to));
                 now.level(pr.level());
                 now.xp(pr.xp());
+                // the apprentice weapon becomes the new class's, where it lies
+                if (kit != null) kit.ensure(p, now, true);
                 recompute(p);
                 combat.life(p, now.stats().get("max_health"));
                 now.mana(now.stats().get("max_mana"));
-                giveWeaponIfMissing(p, now);
                 showLevel(p, now);
                 plugin.messages().send(p, "choice.changed", "%class%", plugin.messages().raw("classes." + to + ".name"));
                 Sounds.cue(p, "success");
             });
         });
-    }
-
-    private void giveWeaponIfMissing(Player p, RpgPlayer r) {
-        Equipment eq = items.equipment();
-        if (eq == null) return;
-        for (ItemStack i : p.getInventory().getContents()) {
-            Equipment.Item it = eq.item(RpgItems.idOf(i));
-            if (it != null && it.slot().equals("weapon") && it.usableBy(r.heroClass().id())) return;
-        }
-        ItemStack weapon = items.make("class_" + r.heroClass().id() + "_weapon");
-        if (weapon == null) return;
-        PlayerInventory inv = p.getInventory();
-        if (inv.getItem(0) == null || inv.getItem(0).isEmpty()) inv.setItem(0, weapon);
-        else inv.addItem(weapon);
-        plugin.messages().send(p, "choice.weapon");
     }
 
     // ------------------------------------------------------------------ stats
@@ -537,8 +530,16 @@ public final class RpgPlayers implements Listener {
 
     private void recomputeSoon(Player p) {
         if (online.containsKey(p.getUniqueId())) Bukkit.getScheduler().runTask(plugin, () -> {
-            if (p.isOnline()) recompute(p);
+            if (!p.isOnline()) return;
+            // an inventory move may have broken the kit (a second weapon back from the cursor, the compass moved)
+            if (kit != null) kit.ensure(p, online.get(p.getUniqueId()), false);
+            recompute(p);
         });
+    }
+
+    /** The kit is checked at the next tick (an inventory window closed). */
+    void kitSoon(Player p) {
+        recomputeSoon(p);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -596,6 +597,9 @@ public final class RpgPlayers implements Listener {
         double need = set.balance().xpToNext(r.level());
         form.body(m.raw("sheet.head", "%class%", m.raw("classes." + r.heroClass().id() + ".name"), "%level%", String.valueOf(r.level()),
                 "%xp%", String.valueOf(Math.round(r.xp())), "%need%", String.valueOf(Math.round(need))));
+        // the apprentice weapon: what it is, shown with the item itself
+        ItemStack starter = items.make(RpgItems.starterId(r.heroClass().id()));
+        if (starter != null) form.item(starter, Dialogs.heading(m.raw("class-pages.hub.weapon-title")) + "\n&f" + m.raw("class-pages.hub.weapon-text"));
         for (String category : java.util.List.of("offense", "defense", "resource", "utility")) {
             StringBuilder lines = new StringBuilder();
             for (fr.influencraft.fluxdungeons.rpg.core.StatRegistry.Def d : set.stats().all()) {
@@ -666,9 +670,12 @@ public final class RpgPlayers implements Listener {
 
     private void tick() {
         long now = CombatEngine.now();
+        // every 2 seconds: the kit, whatever took it away (creative, a command, a respawn)
+        boolean checkKit = kit != null && now % 40 < 10;
         for (Player p : Bukkit.getOnlinePlayers()) {
             RpgPlayer r = online.get(p.getUniqueId());
             if (r == null || p.isDead()) continue;
+            if (checkKit && kit.ensure(p, r, false)) recompute(p);
             boolean[] ended = {false};
             r.buffModifiers(now, ended);
             if (ended[0]) recompute(p);

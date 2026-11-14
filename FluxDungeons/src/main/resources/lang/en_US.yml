@@ -299,7 +299,6 @@ choice:
   confirm-title: "Confirm"
   confirm: "&#B376E5Become a &#FFD94D%class%&#B376E5?"
   done: "&#2ECF7BYou are now a &#FFD94D%class%&#2ECF7B. &#B376E5Weapon in hand: %attack% to attack, %spell%, &fA &#B376E5and &fF &#B376E5for your spells."
-  weapon: "&#B376E5Your class weapon was given to you."
   lobby-only: "&#FF5C5CYou can only change class in the rpg lobby."
   change-title: "Change class"
   change-intro: "&#B376E5Your progress in every class is kept. One change every &f%hours% h &#B376E5at most."
@@ -307,6 +306,18 @@ choice:
   changed-elsewhere: "&#FF5C5CYour class already changed meanwhile."
   changed: "&#2ECF7BYou are now a &#FFD94D%class%&#2ECF7B."
   unknown: "&#FF5C5CUnknown class. Classes: &f%classes%"
+
+# What every character always carries (rpg.RpgKit): the apprentice weapon of his class and the menu compass.
+kit:
+  weapon: "&#B376E5Your apprentice weapon was given to you: &#FFD94D%weapon%&#B376E5. You cannot lose it."
+  replaced: "&#B376E5Your apprentice weapon became &#FFD94D%weapon%&#B376E5."
+  moved: "&#B376E5Your inventory was full: an item that was moved waits for you in &f[/%flux_cmd_flux_rewards%]&#B376E5."
+  moved-label: "&fItem moved out of your rpg inventory"
+  menu:
+    name: "&#FFD94DRpg menu"
+    description: "Your character, your stats, the classes and the dungeons."
+    open: "Open the menu"
+    given: "&#B376E5The compass in the last slot of your hotbar opens the &#FFD94Drpg menu&#B376E5."
 
 weapon:
   other-class: "&#FF5C5CThis weapon belongs to the &f%classes% &#FF5C5Cclass, you are a &f%class%&#FF5C5C. Change class in the lobby with &f[/classe]&#FF5C5C."
@@ -353,6 +364,7 @@ classes:
     description: "Plants seeds in monsters: they bloom into flowers that root them and heal the whole party."
 
 item:
+  starter: "Apprentice weapon: bound to your character, it follows your class."
   classes: "Class:"
   level: "Required level:"
   rarity: "Rarity:"
@@ -449,6 +461,9 @@ class-pages:
     choose: Choose your way to begin
     all: Full sheet
     xp: Experience
+    weapon-title: Apprentice weapon
+    weapon-short: Cannot be lost, follows your class
+    weapon-text: "Bound to your character: you can neither drop nor lose it, and it becomes the weapon of your new class when you change."
   title: "Classes"
   subtitle: "Your class decides your weapon, your stats and your spells. Your progress in every class is kept."
   beta: "Beta"

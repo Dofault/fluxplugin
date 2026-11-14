@@ -123,6 +123,9 @@ The plugins are written **as English plugins, then adapted to French** for our s
   Dungeons are played in the rpg universe only (2026-11-14: the former vanilla-gear play, its vault, lost gear and
   dungeon pets are gone; without the rpg module no dungeon starts). Aim assist of every class: `rpg.AimAssist`.
   Never give, take or check items of a player in a run from another plugin; stay out of runs with `Dungeons.playing`.
+  Every character carries a kit kept by `rpg.RpgKit`: one apprentice weapon (`RpgItems.starterId(class)`, any slot,
+  turned into the new class's on a class change) and the menu compass `fluxrpg:menu` fixed in hotbar slot 9; `ensure`
+  repairs it from what the player really holds, so never give a class weapon yourself nor use that slot.
   The semi-rp pets are hidden during a run through Flux's `pets.Companions`, never through FluxPets itself.
   The classes players choose from are the three elemental ones (cryomancer, pyromancer, druid: one file each,
   `rpg/Frost`, `Fire`, `Flora`, their mechanic's numbers in `passive` of classes.yml, shared displays in `rpg/SpellFx`);

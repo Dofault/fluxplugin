@@ -113,6 +113,9 @@ final class ClassPages {
                 + gauge("mp", "<img src=\"img/ico_max_mana.png\">" + t("class-pages.sheet.mana"), "%fluxrpg_mana% / %fluxrpg_mana_max%", "%fluxrpg_mana_pct%")
                 + "</div></section>"
                 + "<section class=\"well traits-box\"><h2>" + t("class-pages.hub.traits") + "</h2><div class=\"traits\">" + traits + "</div>"
+                // the apprentice weapon of his class (RpgKit): always carried, follows the class
+                + "<div class=\"starter c-%fluxrpg_class_id%\"><div class=\"slot medium\"><img src=\"img/%fluxrpg_class_id%.png\"></div>"
+                + "<b>%fluxrpg_weapon%</b><span>" + t("class-pages.hub.weapon-title") + "</span><span>" + t("class-pages.hub.weapon-short") + "</span></div>"
                 + "<div class=\"more\"><a class=\"btn\" href=\"personnage.html\" data-key=\"f\">" + t("class-pages.hub.all") + "</a></div></section>"
                 + "<section class=\"well ways\"><h2>" + t("class-pages.hub.ways") + "</h2>" + ways
                 + "<div class=\"choose\">" + t("class-pages.hub.choose") + "</div></section>"
