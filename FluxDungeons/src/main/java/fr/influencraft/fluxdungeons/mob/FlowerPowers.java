@@ -40,14 +40,14 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Abilities of the Devouring Flower, a carnivorous plant rooted in its bulb: it never walks and never turns, only its
- * head follows its prey (bone {@code h_Tete}, {@value #HEAD_RANGE} degrees each side). Asleep and closed until its
- * entrance. Every timing follows its model's animations tick for tick (docs/technique/boss/fleur-devoreuse.md,
+ * Abilities of the Devouring Flower, a carnivorous plant rooted in its bulb: it never walks, but the whole plant
+ * turns on the spot to face its prey ({@value #TURN} degrees a tick at most; its head leads, bone {@code h_Tete}),
+ * except while a strike is locked. Asleep and closed until its entrance. Every timing follows its model's animations tick for tick (docs/technique/boss/fleur-devoreuse.md,
  * assets/monstres/fleur_devoreuse_anim.py):
  * <ul>
  *   <li>{@code fleur_awaken} (awaken 100, opening): it stirs (24), opens (44-72), roars (76); cannot be hurt until 96;</li>
- *   <li>{@code fleur_bite} (bite 46): the head leans back, the aim is locked at 14, the jaws slam at 23 on a cone in
- *   front of the head: step aside or back off in time;</li>
+ *   <li>{@code fleur_bite} (bite 46): the head leans back, it stops turning at 14, the jaws slam at 23 on a cone in
+ *   front of it: step aside or back off in time;</li>
  *   <li>{@code fleur_thorns} (thorns 60): against whoever keeps away: three thorns at 26, 34 and 42, the first at
  *   where the player stands, the second ahead of his run, the third aimed again; they bend a little towards him for
  *   half a second, then fly straight; a block stops them;</li>
@@ -57,16 +57,18 @@ import java.util.concurrent.ThreadLocalRandom;
  *   of spores runs out to {@code radius} (52-66), hurting and poisoning whoever it reaches; marked spore pods pop at
  *   76; then it is spent until 108 (glowing, unable to act): the players' reward.</li>
  * </ul>
- * It picks its move from what the players do: the bite for whoever stands in front of it, thorns for whoever stays
- * away, roots for players who stand still, bunch up or hide behind it. Nothing ever changes in the map: seeds, thorns
+ * It picks its move from what the players do: the bite for whoever comes close, thorns for whoever stays away,
+ * roots for players who stand still or bunch up (and now and then all the same). Nothing ever changes in the map: seeds, thorns
  * and roots are displays, removed with the fight.
  */
 final class FlowerPowers {
 
     static final Set<String> TYPES = Set.of("fleur_awaken", "fleur_bite", "fleur_thorns", "fleur_roots", "fleur_bloom");
     static final String MODEL = "fleur_devoreuse";
-    /** How far its head turns to follow a player, each side of where the plant faces. */
-    static final float HEAD_RANGE = 55f;
+    /** How far its head turns ahead of its body to follow a player, each side. */
+    static final float HEAD_RANGE = 40f;
+    /** Degrees a tick the plant turns towards its prey at most. */
+    static final float TURN = 7f;
     private static final String TAG = "fluxdungeons_fx";
     /** Scoreboard tag of a flower whose entrance is over. */
     private static final String AWAKE = "fluxdungeons_flower_awake";
@@ -80,7 +82,10 @@ final class FlowerPowers {
     private static final class Brain {
         final LivingEntity e;
         Location home;
-        boolean awakened, waking, sleeping;
+        /** The way it faces now, and the player it turns to (the nearest one when null). */
+        float yaw;
+        Player focus;
+        boolean awakened, waking, sleeping, locked;
         long busyUntil;
 
         Brain(LivingEntity e) {
@@ -122,9 +127,9 @@ final class FlowerPowers {
     }
 
     /**
-     * Whether casting now makes sense: nothing before its entrance nor during another move. The bite wants someone in
-     * front of its head within reach; the thorns someone keeping away in sight; the roots someone standing still,
-     * players bunched up, someone behind it, or nobody its bite and thorns can reach; the bloom someone around it.
+     * Whether casting now makes sense: nothing before its entrance nor during another move. The bite wants someone
+     * within reach; the thorns someone keeping away in sight; the roots someone standing still or players bunched up
+     * (one time in three otherwise); the bloom someone around it.
      */
     boolean worth(MobTemplate.Ability ab, LivingEntity e) {
         if (!TYPES.contains(ab.type())) return true;
@@ -161,7 +166,7 @@ final class FlowerPowers {
     private Brain brain(LivingEntity e) {
         return brains.computeIfAbsent(e.getUniqueId(), k -> {
             Brain b = new Brain(e);
-            // its place and the way it faces, kept on the entity: it must never drift nor turn
+            // its place, kept on the entity: it must never drift
             String saved = e.getPersistentDataContainer().get(homeKey, PersistentDataType.STRING);
             if (saved != null) {
                 String[] v = saved.split(";");
@@ -173,6 +178,7 @@ final class FlowerPowers {
                 e.getPersistentDataContainer().set(homeKey, PersistentDataType.STRING,
                         b.home.getX() + ";" + b.home.getY() + ";" + b.home.getZ() + ";" + b.home.getYaw());
             }
+            b.yaw = b.home.getYaw();
             return b;
         });
     }
@@ -196,7 +202,13 @@ final class FlowerPowers {
                 continue;
             }
             // rooted: whatever pushed it, it is back in its bulb
-            if (ticks % 10 == 0 && (e.getWorld() != b.home.getWorld() || e.getLocation().distanceSquared(b.home) > 0.04)) e.teleport(b.home);
+            if (ticks % 10 == 0 && (e.getWorld() != b.home.getWorld() || e.getLocation().distanceSquared(b.home) > 0.04)) {
+                Location back = b.home.clone();
+                back.setYaw(b.yaw);
+                e.teleport(back);
+            }
+            if (b.sleeping) continue;
+            if (!b.locked) turn(b);
             if (!b.awakened) continue;
             // it drools when a prey is near
             if (ticks % 36 == 0 && System.currentTimeMillis() >= b.busyUntil && !fighters(b.home, 9).isEmpty()) {
@@ -220,6 +232,31 @@ final class FlowerPowers {
         }
     }
 
+    /** Turns the whole plant a step towards the player it follows (its prey of the moment, else the nearest one). */
+    private void turn(Brain b) {
+        Player to = b.focus != null && b.focus.isValid() && b.focus.getWorld() == b.home.getWorld() && Mobs.fighting(b.focus) ? b.focus : null;
+        if (to == null) {
+            double best = 30 * 30;
+            for (Player p : fighters(b.home, 30)) {
+                double d = p.getLocation().distanceSquared(b.home);
+                if (d < best) {
+                    best = d;
+                    to = p;
+                }
+            }
+        }
+        if (to == null) return;
+        Vector v = to.getLocation().toVector().subtract(b.home.toVector()).setY(0);
+        if (v.lengthSquared() < 0.25) return;
+        double d = (Math.toDegrees(Math.atan2(-v.getX(), v.getZ())) - b.yaw) % 360;
+        if (d > 180) d -= 360;
+        if (d < -180) d += 360;
+        if (Math.abs(d) < 0.5) return;
+        // the task runs every 2 ticks
+        b.yaw += (float) Math.max(-2 * TURN, Math.min(2 * TURN, d));
+        b.e.setRotation(b.yaw, 0);
+    }
+
     /** Whether the player has hardly moved for three seconds. */
     private boolean still(Player p) {
         Vector[] t = trail.get(p.getUniqueId());
@@ -228,14 +265,14 @@ final class FlowerPowers {
 
     // ---------------------------------------------------------------- who to hit
 
-    /** The player its bite would catch: in front of its head, within reach. */
+    /** The player its bite goes for: the nearest one within reach. */
     private Player biteTarget(Brain b, MobTemplate.Ability ab) {
         double reach = ab.number("reach", 5.2);
         Player best = null;
         double bestD = Double.MAX_VALUE;
         for (Player p : fighters(b.home, reach)) {
             double d = flatDistance(p.getLocation(), b.home);
-            if (Math.abs(side(b, p.getLocation())) <= HEAD_RANGE + 20 && d < bestD && Math.abs(p.getLocation().getY() - b.home.getY()) < 3) {
+            if (d < bestD && Math.abs(p.getLocation().getY() - b.home.getY()) < 3) {
                 best = p;
                 bestD = d;
             }
@@ -260,18 +297,15 @@ final class FlowerPowers {
     private boolean rootsWanted(Brain b, MobTemplate.Ability ab) {
         List<Player> around = fighters(b.home, ab.number("reach", 16));
         if (around.isEmpty()) return false;
-        boolean reachable = false;
         for (int i = 0; i < around.size(); i++) {
             Player p = around.get(i);
-            double front = Math.abs(side(b, p.getLocation()));
-            if (still(p) || front > HEAD_RANGE + 20) return true;
-            if (front <= HEAD_RANGE + 20) reachable = true;
+            if (still(p)) return true;
             for (int j = i + 1; j < around.size(); j++) {
                 if (around.get(j).getLocation().distanceSquared(p.getLocation()) < 12.25) return true;
             }
         }
         // nobody stands still: now and then all the same, so that the ground is never safe
-        return !reachable || ThreadLocalRandom.current().nextInt(3) == 0;
+        return ThreadLocalRandom.current().nextInt(3) == 0;
     }
 
     // ---------------------------------------------------------------- entrance (awaken 100)
@@ -336,18 +370,19 @@ final class FlowerPowers {
         double reach = ab.number("reach", 5.2), angle = ab.number("angle", 80), power = ab.number("bite-power", 8);
         Player near = biteTarget(b, ab);
         Player target = near != null ? near : wanted;
-        Vector[] aim = {aim(b, target)};
+        b.focus = target;
+        Vector[] aim = {front(b)};
         begin(c, b, 46, true);
         c.animate("bite");
         snd(b.home, "block.honey_block.break", 1.4f, 0.6f);
         snd(b.home, "block.mangrove_roots.step", 1.4f, 0.5f);
         timeline(e, 46, t -> {
             Location at = b.home;
-            // 0-14 the head leans back and still follows its prey; the cone on the ground shows where it will snap
-            if (t < 14 && target != null && target.isValid() && target.getWorld() == w) aim[0] = aim(b, target);
+            // 0-14 the head leans back and the plant still turns to its prey; the cone on the ground shows where it will snap
+            if (t < 14) aim[0] = front(b);
             if (t == 14) {
-                // locked: from now on stepping aside or back gets out of it
-                lock(e);
+                // locked: it stops turning, from now on stepping aside or back gets out of it
+                lock(b);
                 snd(at, "block.big_dripleaf.tilt_down", 1.6f, 0.5f);
             }
             if (t >= 4 && t < 23 && t % 2 == 0) Fx.cone(at.clone().add(0, 0.05, 0), aim[0], angle, reach, t >= 14 ? RED : OLIVE, t >= 14 ? RED : POLLEN);
@@ -383,6 +418,7 @@ final class FlowerPowers {
         if (target == null) return;
         ItemDisplay[] seed = {null};
         Vector[] before = {target.getLocation().toVector()};
+        b.focus = target;
         begin(c, b, 60, true);
         c.animate("thorns");
         snd(b.home, "entity.cat.hiss", 1.6f, 0.5f);
@@ -390,7 +426,7 @@ final class FlowerPowers {
         if (!warning.isBlank()) target.sendActionBar(Texts.parse(warning));
         timeline(e, 60, t -> {
             if (!target.isValid() || target.getWorld() != w) return;
-            Vector f = aim(b, target);
+            Vector f = front(b);
             Location mouth = mouth(b, f, 1.3, 2.9);
             // 0-24 the charge: green motes turning round its head, a seed glowing in its throat, the prey marked
             if (t <= 24 && t % 2 == 0) {
@@ -526,6 +562,7 @@ final class FlowerPowers {
         int slow = (int) ab.number("slow-ticks", 30), extra = (int) ab.number("extra-zones", 3);
         List<Location> first = new ArrayList<>(), second = new ArrayList<>();
         begin(c, b, 70, false);
+        b.locked = true;
         c.animate("roots");
         snd(b.home, "block.rooted_dirt.break", 1.6f, 0.5f);
         snd(b.home, "block.hanging_roots.step", 1.4f, 0.5f);
@@ -652,6 +689,7 @@ final class FlowerPowers {
         List<Location> spots = new ArrayList<>();
         List<BlockDisplay> podLooks = new ArrayList<>();
         begin(c, b, 130, false);
+        b.locked = true;
         c.animate("bloom");
         title(b.home, ab, 60);
         snd(b.home, "entity.warden.heartbeat", 2.0f, 0.6f);
@@ -702,7 +740,7 @@ final class FlowerPowers {
                 for (Player p : fighters(at, rr + 0.4)) {
                     if (Math.abs(p.getLocation().getY() - at.getY()) > 4 || !caught.add(p.getUniqueId())) continue;
                     c.hit(p, power);
-                    p.addPotionEffect(new PotionEffect(PotionEffectType.POISON, poison, 1, false, true));
+                    p.addPotionEffect(new PotionEffect(PotionEffectType.POISON, poison, 0, false, true));
                     snd(p.getLocation(), "entity.puffer_fish.sting", 1.2f, 0.7f);
                 }
             }
@@ -758,37 +796,22 @@ final class FlowerPowers {
         if (track && c.entity() instanceof Mob m) m.setAI(true);
     }
 
-    /** Its head stops following: the aim of a strike is set. */
-    private static void lock(LivingEntity e) {
-        if (e instanceof Mob m) m.setAI(false);
+    /** It stops turning, its head stops following: the aim of a strike is set. */
+    private static void lock(Brain b) {
+        b.locked = true;
+        if (b.e instanceof Mob m) m.setAI(false);
     }
 
     private void end(RockPowers.Caster c, Brain b) {
         b.busyUntil = 0;
+        b.locked = false;
+        b.focus = null;
         c.release();
     }
 
-    /** The way the plant faces (its bulb never turns). */
+    /** The way the plant faces now. */
     private static Vector front(Brain b) {
-        return fromYaw(b.home.getYaw());
-    }
-
-    /** The way its head looks at a player: towards him, within its head range. */
-    private static Vector aim(Brain b, Player target) {
-        if (target == null || !target.isValid() || target.getWorld() != b.home.getWorld()) return front(b);
-        double off = Math.max(-HEAD_RANGE, Math.min(HEAD_RANGE, side(b, target.getLocation())));
-        return fromYaw((float) (b.home.getYaw() + off));
-    }
-
-    /** Degrees between the way the plant faces and a place (0 = straight ahead, 180 = behind it). */
-    private static double side(Brain b, Location at) {
-        Vector v = at.toVector().subtract(b.home.toVector()).setY(0);
-        if (v.lengthSquared() < 1e-4) return 0;
-        double yaw = Math.toDegrees(Math.atan2(-v.getX(), v.getZ()));
-        double d = (yaw - b.home.getYaw()) % 360;
-        if (d > 180) d -= 360;
-        if (d < -180) d += 360;
-        return d;
+        return fromYaw(b.yaw);
     }
 
     private static Vector fromYaw(float yaw) {
