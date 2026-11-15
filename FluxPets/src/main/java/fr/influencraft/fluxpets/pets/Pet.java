@@ -34,9 +34,7 @@ import java.util.regex.Pattern;
  * (level from which its owner can ride it, seat height in blocks, speed in blocks per tick, jump height; a pet
  * without that section cannot be ridden). The former key mountable is still read: a mount from level 1.
  * size: horizontal reach of its model in blocks (default 1); a bigger pet keeps further from its owner and from the
- * pet before it, and its seat is as wide (boss pets are their boss's model at full size). walk-speed: blocks a second
- * at which its walk animation matches the ground; the animation then plays faster or slower with the pet's real speed
- * (0 or missing: always at its own pace).
+ * pet before it, and its seat is as wide (boss pets are their boss's model at full size).
  *
  * Calqué sur com.willfp.ecopets.pets.Pet : niveau et XP du joueur dans la base de Flux ({@link PetStore}),
  * effets libreforge compilés une fois, le niveau étant fourni à leurs
@@ -74,7 +72,6 @@ public final class Pet {
     private final boolean flying;
     private final Mount mount;
     private final double size;
-    private final double walkSpeed;
     private final int slots;
     private final String walkAnimation;
     private final String revealAnimation;
@@ -110,7 +107,6 @@ public final class Pet {
         this.flying = !config.has("flying") || config.getBool("flying");
         this.mount = mount(config);
         this.size = config.getDoubleOrNull("size") == null ? 1.0 : Math.max(0.5, config.getDouble("size"));
-        this.walkSpeed = config.getDoubleOrNull("walk-speed") == null ? 0 : Math.max(0, config.getDouble("walk-speed"));
         this.slots = Math.max(1, config.has("slots") ? config.getInt("slots") : 1);
         this.walkAnimation = config.has("walk-animation") ? config.getString("walk-animation") : "walk";
         this.revealAnimation = config.has("reveal-animation") ? config.getString("reveal-animation") : null;
@@ -199,11 +195,6 @@ public final class Pet {
     /** Riding settings, null when the pet cannot be ridden. */
     public Mount mount() {
         return mount;
-    }
-
-    /** Blocks a second at which its walk animation matches the ground, 0 when the animation keeps its own pace. */
-    public double walkSpeed() {
-        return walkSpeed;
     }
 
     /** Horizontal reach of its model in blocks (1 for a pet-sized model). */

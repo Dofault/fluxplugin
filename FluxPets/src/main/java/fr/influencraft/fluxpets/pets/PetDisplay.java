@@ -76,8 +76,6 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         double hx = Double.NaN, hy, hz;
         /** How far the model is lowered while its carrier rides the horse (blocks), NaN when not set. */
         double modelDrop = Double.NaN;
-        /** Pace of the walk animation (1 = its own), from the pet's real speed (Pet#walkSpeed). */
-        volatile float animSpeed = 1;
         /** The model's displays ride the horse on the clients (Drivers.carry). */
         boolean carried;
         /** Display riding the horse: its height on the horse is the one of the carried displays. */
@@ -353,7 +351,7 @@ public final class PetDisplay implements org.bukkit.event.Listener {
                 : (float) Math.toDegrees(Math.atan2(-(p.getX() - f.x), p.getZ() - f.z));
         float delta = ((targetYaw - f.yaw) % 360 + 540) % 360 - 180;
         f.yaw += snap ? delta : delta * 0.2f;
-        animateWalk(f, walking, moved);
+        animateWalk(f, walking);
         double bob = f.pet.flying() ? Math.sin(tick * 0.1) * bobAmplitude : 0;
         Location to = new Location(world, f.x, f.y + bob, f.z, f.yaw, 0);
         if (f.carrier.getWorld() != world) {
@@ -385,21 +383,10 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         }
     }
 
-    /**
-     * Walk animation on or off; its pace follows the pet's speed ({@code moved}: blocks this tick), stride matched on
-     * Pet#walkSpeed, smoothed, between half and 5 times its own pace.
-     */
-    private void animateWalk(Follower f, boolean walking, double moved) {
-        double ref = f.pet.walkSpeed();
-        if (ref > 0 && walking) {
-            float target = (float) Math.max(0.5, Math.min(5, moved * 20 / ref));
-            f.animSpeed += (target - f.animSpeed) * 0.3f;
-        }
+    private void animateWalk(Follower f, boolean walking) {
         if (walking != f.walking && f.hasWalk) {
             if (walking) {
-                f.tracker.animate(f.pet.walkAnimation(), ref > 0
-                        ? kr.toxicity.model.api.animation.AnimationModifier.DEFAULT.toBuilder().speed(() -> f.animSpeed).build()
-                        : kr.toxicity.model.api.animation.AnimationModifier.DEFAULT);
+                f.tracker.animate(f.pet.walkAnimation());
             } else {
                 f.tracker.stopAnimation(f.pet.walkAnimation());
             }
@@ -591,8 +578,7 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         f.y = at.getY();
         f.z = at.getZ();
         f.yaw = horse.getBodyYaw();
-        double step = Math.hypot(f.x - ox, f.z - oz);
-        animateWalk(f, step > 0.02, step);
+        animateWalk(f, Math.hypot(f.x - ox, f.z - oz) > 0.02);
         f.lastPX = f.x;
         f.lastPZ = f.z;
         if (f.carried) {
@@ -738,8 +724,7 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         }
         // like a horse: the body faces where the rider looks, at once, moving or not
         f.yaw = rider.getYaw();
-        double step = Math.hypot(f.x - ox, f.z - oz);
-        animateWalk(f, step > 0.02, step);
+        animateWalk(f, Math.hypot(f.x - ox, f.z - oz) > 0.02);
         f.lastPX = f.x;
         f.lastPZ = f.z;
         f.carrier.teleport(new Location(world, f.x, f.y, f.z, f.yaw, 0),
