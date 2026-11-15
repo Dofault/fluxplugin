@@ -64,7 +64,7 @@ import java.util.UUID;
  */
 public final class PetDisplay implements org.bukkit.event.Listener {
 
-    private static final class Follower {
+    static final class Follower {
         final Player owner;
         final Pet pet;
         final ArmorStand carrier;
@@ -87,6 +87,29 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         boolean running;
         /** Smoothed speed in blocks a second (walk or run). */
         double pace;
+        /** The model has the mount's swim animations. */
+        boolean hasSwim;
+        /** Animation of the gait that plays (walk, run, swim...), null when none; ticks since it started. */
+        String gait;
+        int gaitTicks;
+        /** Tick its attack started at (-1: none) and tick it may attack again from. */
+        long attackStart = -1, attackReady;
+        /** Sounds of a ridden pet: footfalls played so far, ticks off the ground, height last tick, next voice. */
+        int stepCount, airTicks;
+        double lastSoundY;
+        long voiceAt;
+
+        /** The gait animation to play from now (null: none): the former one stops. */
+        void gaitWanted(String animation) {
+            if (java.util.Objects.equals(animation, gait)) {
+                gaitTicks++;
+                return;
+            }
+            if (gait != null) tracker.stopAnimation(gait);
+            if (animation != null) tracker.animate(animation);
+            gait = animation;
+            gaitTicks = 0;
+        }
         TextDisplay label;
         /** Seat of a mountable pet (its owner rides it), null otherwise. */
         org.bukkit.entity.Interaction seat;
@@ -235,6 +258,8 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         EntityTracker tracker = renderer.getOrCreate(BukkitAdapter.adapt(carrier));
         Follower f = new Follower(owner, pet, carrier, tracker, renderer.animation(pet.walkAnimation()).isPresent());
         f.hasRun = pet.runAnimation() != null && renderer.animation(pet.runAnimation()).isPresent();
+        f.hasSwim = pet.mount() != null && pet.mount().swim() != null
+                && renderer.animation(pet.mount().swim().animation()).isPresent();
         // The model's yaw is ours, given as it is: BetterModel's own smoothing of the carrier's rotation went the long
         // way round when the yaw crossed the +180 / -180 seam (looking north on a mount: the model swung east, south,
         // west). Sent packed to the clients, where a yaw has no seam.
@@ -401,19 +426,9 @@ public final class PetDisplay implements org.bukkit.event.Listener {
      */
     private void animateWalk(Follower f, boolean walking, double moved) {
         f.pace += (moved * 20 - f.pace) * 0.3;
-        boolean running = walking && f.hasRun
-                && f.pace >= f.pet.runSpeed() * (f.running ? 0.75 : 1.0);
-        if (walking == f.walking && running == f.running) return;
-        if (f.walking) {
-            String playing = f.running ? f.pet.runAnimation() : f.pet.walkAnimation();
-            if (f.running || f.hasWalk) f.tracker.stopAnimation(playing);
-        }
-        if (walking) {
-            if (running) f.tracker.animate(f.pet.runAnimation());
-            else if (f.hasWalk) f.tracker.animate(f.pet.walkAnimation());
-        }
+        f.running = walking && f.hasRun && f.pace >= f.pet.runSpeed() * (f.running ? 0.75 : 1.0);
         f.walking = walking;
-        f.running = running;
+        f.gaitWanted(!walking ? null : f.running ? f.pet.runAnimation() : f.hasWalk ? f.pet.walkAnimation() : null);
     }
 
     // ------------------------------------------------------------------ mounts
@@ -488,7 +503,9 @@ public final class PetDisplay implements org.bukkit.event.Listener {
             h.setRemoveWhenFarAway(false);
             h.getInventory().setSaddle(invisibleSaddle());
             attribute(h, org.bukkit.attribute.Attribute.SCALE, scale);
-            attribute(h, org.bukkit.attribute.Attribute.MOVEMENT_SPEED, mount.speed() / HORSE_SPEED);
+            attribute(h, org.bukkit.attribute.Attribute.MOVEMENT_SPEED, speed(f) / HORSE_SPEED);
+            // a swimming mount keeps its speed in water (the others wade, as any horse)
+            if (f.hasSwim) attribute(h, org.bukkit.attribute.Attribute.WATER_MOVEMENT_EFFICIENCY, 1.0);
             attribute(h, org.bukkit.attribute.Attribute.JUMP_STRENGTH, jumpStrength(Math.max(1.2, mount.jump())));
             attribute(h, org.bukkit.attribute.Attribute.STEP_HEIGHT, 1.0);
         });
@@ -510,7 +527,66 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         horse.addPassenger(f.probe);
         int[] ids = displayIds(f);
         f.carried = ids.length > 0 && fr.influencraft.flux.api.client.Drivers.carry(horse, f.carrier, ids);
+        // its attack: the drop key (A on an AZERTY keyboard) as well as the left click
+        f.attackStart = -1;
+        f.airTicks = 0;
+        f.voiceAt = 0;
+        if (mount.attack() != null) {
+            fr.influencraft.flux.api.client.DropKey.claim(Pets.plugin(), f.owner, () -> attackKey(f.owner));
+        }
         return true;
+    }
+
+    /** Mount speed of this pet at its owner's level of it (blocks per tick). */
+    private static double speed(Follower f) {
+        return f.pet.mount().speedAt(PetData.level(f.owner, f.pet), f.pet.maxLevel());
+    }
+
+    /** The rider of a pet presses an attack key (left click, drop key). */
+    private void attackKey(Player player) {
+        List<Follower> list = followers.get(player.getUniqueId());
+        if (list == null) return;
+        for (Follower f : list) {
+            if (f.horse != null && ridden(f)) {
+                MountKit.attack(f, tick);
+                return;
+            }
+        }
+    }
+
+    /** Left click while riding a pet: its attack (a hit on a mob still lands as usual). */
+    @org.bukkit.event.EventHandler
+    public void onMountClick(org.bukkit.event.player.PlayerInteractEvent event) {
+        if (event.getHand() != EquipmentSlot.HAND) return;
+        var action = event.getAction();
+        if (action != org.bukkit.event.block.Action.LEFT_CLICK_AIR && action != org.bukkit.event.block.Action.LEFT_CLICK_BLOCK) return;
+        org.bukkit.entity.Entity vehicle = event.getPlayer().getVehicle();
+        if (vehicle != null && horses.contains(vehicle.getUniqueId())) attackKey(event.getPlayer());
+    }
+
+    @org.bukkit.event.EventHandler(ignoreCancelled = true)
+    public void onMountHit(org.bukkit.event.entity.EntityDamageByEntityEvent event) {
+        if (!(event.getDamager() instanceof Player player) || event.getCause() != org.bukkit.event.entity.EntityDamageEvent.DamageCause.ENTITY_ATTACK) return;
+        org.bukkit.entity.Entity vehicle = player.getVehicle();
+        if (vehicle == null || !horses.contains(vehicle.getUniqueId())) return;
+        // not from the attack's own damage (it hurts through the rider): only when no attack is playing
+        List<Follower> list = followers.get(player.getUniqueId());
+        if (list != null && list.stream().noneMatch(f -> f.horse != null && MountKit.attacking(f, tick))) attackKey(player);
+    }
+
+    /** A swimming mount keeps its rider in water (a horse throws him off when his head goes under); sneaking gets off. */
+    @org.bukkit.event.EventHandler(ignoreCancelled = true)
+    public void onMountDismount(org.bukkit.event.entity.EntityDismountEvent event) {
+        if (!(event.getEntity() instanceof Player player) || player.isSneaking()) return;
+        if (!(event.getDismounted() instanceof org.bukkit.entity.AbstractHorse horse) || !horses.contains(horse.getUniqueId())) return;
+        List<Follower> list = followers.get(player.getUniqueId());
+        if (list == null) return;
+        for (Follower f : list) {
+            if (f.horse == horse && f.hasSwim && horse.isValid() && horse.isInWater() && !player.isDead()) {
+                event.setCancelled(true);
+                return;
+            }
+        }
     }
 
     /** The horse goes, the model back on the carrier where the horse stood. */
@@ -518,6 +594,9 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         org.bukkit.entity.AbstractHorse horse = f.horse;
         f.horse = null;
         if (horse == null) return;
+        fr.influencraft.flux.api.client.DropKey.release(f.owner);
+        if (f.attackStart >= 0 && f.pet.mount().attack() != null) f.tracker.stopAnimation(f.pet.mount().attack().animation());
+        f.attackStart = -1;
         horses.remove(horse.getUniqueId());
         fr.influencraft.flux.api.client.Drivers.release(horse);
         if (horse.isValid()) {
@@ -594,14 +673,32 @@ public final class PetDisplay implements org.bukkit.event.Listener {
             factor = event.getSpeedFactor();
         }
         var speed = horse.getAttribute(org.bukkit.attribute.Attribute.MOVEMENT_SPEED);
-        double wanted = f.pet.mount().speed() / HORSE_SPEED * factor;
+        boolean attacking = MountKit.attacking(f, tick);
+        boolean inWater = f.hasSwim ? MountKit.buoyancy(f, horse) : horse.isInWater();
+        Pet.Attack attack = f.pet.mount().attack();
+        double wanted = speed(f) / HORSE_SPEED * factor * (attacking && attack != null ? attack.slow() : 1);
         if (speed != null && Math.abs(speed.getBaseValue() - wanted) > 1.0E-6) speed.setBaseValue(wanted);
         f.x = at.getX();
         f.y = at.getY();
         f.z = at.getZ();
         f.yaw = horse.getBodyYaw();
         double step = Math.hypot(f.x - ox, f.z - oz);
-        animateWalk(f, step > 0.02, step);
+        boolean moving = step > 0.02;
+        String kind;                                      // what its feet do: sounds follow it
+        if (attacking) {
+            kind = null;                                  // the attack plays alone
+        } else if (inWater && f.hasSwim) {
+            Pet.Swim swim = f.pet.mount().swim();
+            f.walking = f.running = false;
+            f.gaitWanted(moving || swim.idle() == null ? swim.animation() : swim.idle());
+            kind = moving ? "swim" : null;
+        } else {
+            animateWalk(f, moving, step);
+            kind = !moving ? null : f.running ? "run" : "walk";
+        }
+        MountKit.tickAttack(f, at, f.yaw, tick);
+        boolean grounded = inWater || f.y - ground(at.getWorld(), f.x, f.y, f.z) < 0.3;
+        MountKit.tickSounds(f, at, kind, moving, grounded, tick);
         f.lastPX = f.x;
         f.lastPZ = f.z;
         if (f.carried) {
@@ -673,6 +770,7 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         if (f.pet.flying() ? seat.addPassenger(player) : mountHorse(f)) {
             f.vy = 0;
             PetMessages.send(player, "mounted", "%pet%", f.pet.name());
+            if (f.horse != null) MountKit.hint(f);
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_HORSE_SADDLE, 0.8f, 1.2f);
         }
     }
@@ -833,6 +931,7 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         if (f.horse != null) {
             horses.remove(f.horse.getUniqueId());
             fr.influencraft.flux.api.client.Drivers.release(f.horse);
+            fr.influencraft.flux.api.client.DropKey.release(f.owner);
             if (f.probe != null && f.probe.isValid()) f.probe.remove();
             if (f.horse.isValid()) {
                 f.horse.eject();

@@ -35,6 +35,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     private com.github.retrooper.packetevents.event.PacketListenerCommon hurtShakeListener;
     private com.github.retrooper.packetevents.event.PacketListenerCommon sidebarListener;
     private com.github.retrooper.packetevents.event.PacketListenerCommon driverListener;
+    private com.github.retrooper.packetevents.event.PacketListenerCommon dropKeyListener;
     private PacketListenerCommon advancementListener;
     private fr.influencraft.flux.economy.MoneyActionBar moneyBar;
     private ChestBackgrounds backgrounds;
@@ -157,6 +158,9 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         var drivers = new fr.influencraft.flux.adapters.packetevents.DriverFirst();
         driverListener = PacketEvents.getAPI().getEventManager().registerListener(drivers);
         fr.influencraft.flux.api.client.Drivers.bind(drivers);
+        // a player's drop key as an action key while a plugin claims it (api.client.DropKey)
+        dropKeyListener = PacketEvents.getAPI().getEventManager()
+                .registerListener(new fr.influencraft.flux.adapters.packetevents.DropKeyFilter(this));
         getServer().getPluginManager().registerEvents(new org.bukkit.event.Listener() {
             @org.bukkit.event.EventHandler
             public void onQuit(org.bukkit.event.player.PlayerQuitEvent e) {
@@ -218,6 +222,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         if (hurtShakeListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(hurtShakeListener);
         if (sidebarListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(sidebarListener);
         if (driverListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(driverListener);
+        if (dropKeyListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(dropKeyListener);
         if (advancementListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(advancementListener);
         if (registry != null) registry.unregisterCommands();
     }
@@ -419,6 +424,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         fr.influencraft.flux.api.items.CustomItems.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.effects.Effects.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.shops.ChestShops.unregisterAll(event.getPlugin());
+        fr.influencraft.flux.api.client.DropKey.unregisterAll(event.getPlugin());
         placeholdersChanged();
         if (hadMenus) menuFoldersChanged();
     }

@@ -31,7 +31,8 @@ import java.util.regex.Pattern;
  * rewards-description, level-up-messages, level-up-effects, effects, conditions, activate-conditions).
  * Keys of FluxPets: flying (the pet floats, else it walks on the ground, default true), slots (active pet slots it
  * takes, default 1), walk-animation / reveal-animation (animations of its model, default walk / happy) and mount
- * (level from which its owner can ride it, seat height in blocks, speed in blocks per tick, jump height; a pet
+ * (level from which its owner can ride it, seat height in blocks, speed in blocks per tick at the top level and
+ * speed-start at level 1, jump height, and the optional sections attack, sounds and swim, see {@link Mount}; a pet
  * without that section cannot be ridden). The former key mountable is still read: a mount from level 1.
  * size: horizontal reach of its model in blocks (default 1); a bigger pet keeps further from its owner and from the
  * pet before it, and its seat is as wide (boss pets are their boss's model at full size). run-animation: animation
@@ -54,8 +55,67 @@ public final class Pet {
     public record Trail(Particle particle, int gap, int amount, double yOffset) {
     }
 
-    /** Riding settings: from which level, seat height and speed (blocks per tick), jump height in blocks. */
-    public record Mount(int level, double seat, double speed, double jump) {
+    /**
+     * A sound of the game: its key, volume and pitch, written « key|volume|pitch » in a pet file; several played
+     * together are joined by « + » ({@code also}: the next one).
+     */
+    public record Snd(String key, float volume, float pitch, Snd also) {
+        static Snd parse(String text) {
+            if (text == null || text.isBlank()) return null;
+            int plus = text.indexOf('+');
+            Snd also = plus < 0 ? null : parse(text.substring(plus + 1));
+            String[] p = (plus < 0 ? text : text.substring(0, plus)).trim().split("\\|");
+            try {
+                return new Snd(p[0].trim(), p.length > 1 ? Float.parseFloat(p[1].trim()) : 1f,
+                        p.length > 2 ? Float.parseFloat(p[2].trim()) : 1f, also);
+            } catch (NumberFormatException e) {
+                return new Snd(p[0].trim(), 1f, 1f, also);
+            }
+        }
+    }
+
+    /** Footfalls of a gait: length of its animation's cycle in ticks, ticks of the cycle a foot lands at. */
+    public record Steps(int cycle, List<Integer> at) {
+    }
+
+    /**
+     * Sounds of a mount: {@code step} played in turn at each footfall of the walk or the run (in step with the
+     * animation), {@code swimStep} at each stroke in water, {@code voice} now and then while it moves (every voiceMin to
+     * voiceMax ticks), {@code jump} when it leaves the ground and {@code land} when it comes back.
+     */
+    public record Sounds(List<Snd> step, Steps walk, Steps run, List<Snd> swimStep, Steps swim, List<Snd> voice,
+                         int voiceMin, int voiceMax, Snd jump, Snd land) {
+    }
+
+    /**
+     * Attack of a ridden pet (from {@code level}): its animation (ticks long), the ticks it hits at, who it hits (the
+     * hostile mobs within range blocks and angle degrees of where it faces; 180 = all around), damage at the unlock
+     * level and more per level above, cooldown in ticks, share of its speed kept while it attacks.
+     */
+    public record Attack(int level, String name, String animation, int ticks, List<Integer> impacts, double range,
+                         double angle, double damage, double damagePerLevel, int cooldown, double slow, Snd sound,
+                         Snd hitSound, String particle) {
+        public double damageAt(int petLevel) {
+            return damage + damagePerLevel * Math.max(0, petLevel - level);
+        }
+    }
+
+    /** A mount that swims: animations played in water, moving and still. */
+    public record Swim(String animation, String idle) {
+    }
+
+    /**
+     * Riding settings: from which level, seat height, speed in blocks per tick at the pet's top level (speedStart at
+     * level 1, in between along the levels), jump height in blocks, its attack, sounds and swimming (null: none).
+     */
+    public record Mount(int level, double seat, double speed, double speedStart, double jump, Attack attack,
+                        Sounds sounds, Swim swim) {
+        /** Speed at that level of a pet whose top level is {@code maxLevel}. */
+        public double speedAt(int petLevel, int maxLevel) {
+            if (maxLevel <= 1) return speed;
+            double t = Math.max(0, Math.min(1, (petLevel - 1) / (double) (maxLevel - 1)));
+            return speedStart + (speed - speedStart) * t;
+        }
     }
 
     private static final Pattern LEVEL_OFFSET = Pattern.compile("%level_(-?\\d+)(_numeral)?%");
@@ -134,12 +194,58 @@ public final class Pet {
     private static Mount mount(Config config) {
         Config c = config.getSubsectionOrNull("mount");
         if (c == null) {
-            return config.has("mountable") && config.getBool("mountable") ? new Mount(1, 1.0, 0.3, 1.0) : null;
+            return config.has("mountable") && config.getBool("mountable")
+                    ? new Mount(1, 1.0, 0.3, 0.3, 1.0, null, null, null) : null;
         }
-        return new Mount(Math.max(1, c.getIntOrNull("level") == null ? 1 : c.getInt("level")),
-                c.getDoubleOrNull("seat") == null ? 1.0 : c.getDouble("seat"),
-                c.getDoubleOrNull("speed") == null ? 0.3 : c.getDouble("speed"),
-                c.getDoubleOrNull("jump") == null ? 1.0 : c.getDouble("jump"));
+        double speed = num(c, "speed", 0.3);
+        return new Mount(Math.max(1, (int) num(c, "level", 1)), num(c, "seat", 1.0), speed,
+                num(c, "speed-start", speed), num(c, "jump", 1.0), attack(c.getSubsectionOrNull("attack")),
+                sounds(c.getSubsectionOrNull("sounds")), swim(c.getSubsectionOrNull("swim")));
+    }
+
+    private static double num(Config c, String key, double def) {
+        return c.getDoubleOrNull(key) == null ? def : c.getDouble(key);
+    }
+
+    private static String text(Config c, String key) {
+        return c.has(key) ? c.getString(key) : null;
+    }
+
+    private static Attack attack(Config c) {
+        if (c == null || text(c, "animation") == null) return null;
+        List<Integer> impacts = c.getInts("impacts");
+        return new Attack(Math.max(1, (int) num(c, "level", 1)), text(c, "name") == null ? "" : text(c, "name"),
+                text(c, "animation"), Math.max(1, (int) num(c, "ticks", 20)), impacts.isEmpty() ? List.of(0) : impacts,
+                num(c, "range", 4), num(c, "angle", 60), num(c, "damage", 6), num(c, "damage-per-level", 1),
+                (int) Math.round(num(c, "cooldown", 6) * 20), Math.max(0, Math.min(1, num(c, "slow", 0.4))),
+                Snd.parse(text(c, "sound")), Snd.parse(text(c, "hit-sound")), text(c, "particle"));
+    }
+
+    private static List<Snd> snds(Config c, String key) {
+        List<Snd> out = new ArrayList<>();
+        for (String line : c.getStrings(key)) {
+            Snd s = Snd.parse(line);
+            if (s != null) out.add(s);
+        }
+        return out;
+    }
+
+    private static Steps steps(Config c) {
+        if (c == null) return null;
+        List<Integer> at = c.getInts("at");
+        return new Steps(Math.max(1, (int) num(c, "cycle", 10)), at.isEmpty() ? List.of(0) : at);
+    }
+
+    private static Sounds sounds(Config c) {
+        if (c == null) return null;
+        return new Sounds(snds(c, "step"), steps(c.getSubsectionOrNull("walk")), steps(c.getSubsectionOrNull("run")),
+                snds(c, "swim-step"), steps(c.getSubsectionOrNull("swim")), snds(c, "voice"),
+                (int) Math.round(num(c, "voice-min", 6) * 20), (int) Math.round(num(c, "voice-max", 14) * 20),
+                Snd.parse(text(c, "jump")), Snd.parse(text(c, "land")));
+    }
+
+    private static Swim swim(Config c) {
+        return c == null || text(c, "animation") == null ? null : new Swim(text(c, "animation"), text(c, "idle"));
     }
 
     private static Trail trail(Config c) {
