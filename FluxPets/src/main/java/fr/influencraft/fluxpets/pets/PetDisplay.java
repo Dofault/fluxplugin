@@ -47,11 +47,13 @@ import java.util.UUID;
  * Réglages : section pet-follow de config.yml. Chargée seulement si BetterModel est actif.
  * <p>
  * Mounts (2026-11-14): a pet with a {@code mount} section carries an invisible seat (an Interaction entity as high as
- * its back) that its owner right clicks to ride it, from the pet's mount level. While ridden the pet goes where the
- * rider's keys say ({@link Player#getCurrentInput()}), like a horse: it always faces where the rider looks (turned
- * at once, even standing still), forward along that, sides and back slower, sprint, jump; steps up one block,
- * falls, walks on water and lava, never goes where the rider's head would hit a block. Sneaking gets off
- * (vanilla dismount). A big pet ({@link Pet#size()}) keeps its edge, not its centre, at the follow distances. {@link PetMountMoveEvent} lets an effect
+ * its back) that its owner right clicks to ride it, from the pet's mount level. A walking pet is then a real horse
+ * (2026-11-15): an invisible, tamed, invulnerable horse with an invisible saddle, its speed, jump and size from the
+ * mount section, ridden by the owner, the pet's model moved onto it. The rider's own game drives it, so it handles
+ * exactly like a horse (turns with the camera, charged jump, steps, no lag); it is removed when he gets off and the
+ * model goes back to following him. A flying mount is still moved by the server along the rider's keys
+ * ({@link Player#getCurrentInput()}). A big pet ({@link Pet#size()}) keeps its edge, not its centre, at the follow
+ * distances. {@link PetMountMoveEvent} lets an effect
  * clear the way first (the mole digs).
  */
 public final class PetDisplay implements org.bukkit.event.Listener {
@@ -60,7 +62,10 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         final Player owner;
         final Pet pet;
         final ArmorStand carrier;
-        final EntityTracker tracker;
+        /** Model of the pet: on the carrier, or on the horse while ridden. */
+        EntityTracker tracker;
+        /** The horse its owner rides (walking mounts), null when not ridden. */
+        org.bukkit.entity.AbstractHorse horse;
         final boolean hasWalk;
         TextDisplay label;
         /** Seat of a mountable pet (its owner rides it), null otherwise. */
@@ -168,8 +173,9 @@ public final class PetDisplay implements org.bukkit.event.Listener {
             Location p = player.getLocation();
             for (int i = 0; i < list.size(); i++) {
                 Follower f = list.get(i);
+                if (f.horse != null && !ridden(f)) dismountHorse(f);
                 if (ridden(f)) {
-                    ride(f);
+                    if (f.horse != null) rideHorse(f); else ride(f);
                 } else if (i == 0) {
                     // le premier suit le joueur, dans la zone de confort distance-min / distance-max
                     double e = reach(f.pet);
@@ -399,7 +405,172 @@ public final class PetDisplay implements org.bukkit.event.Listener {
     }
 
     private static boolean ridden(Follower f) {
+        if (f.horse != null) return f.horse.isValid() && f.horse.getPassengers().contains(f.owner);
         return f.seat != null && f.seat.isValid() && f.seat.getPassengers().contains(f.owner);
+    }
+
+    // ------------------------------------------------------------------ horse
+
+    /** Back of a horse at scale 1 (where its rider sits), in blocks. */
+    private static final double HORSE_SEAT = 1.32;
+    /** Horse speed attribute to blocks per tick (an attribute of 0.225 makes about 9.7 blocks a second). */
+    private static final double HORSE_SPEED = 43.17 / 20;
+
+    /** Vanilla horse jump height (blocks) for a jump strength. */
+    private static double jumpHeight(double s) {
+        return -0.1817584952 * s * s * s + 3.689713992 * s * s + 2.128599134 * s - 0.343930367;
+    }
+
+    /** Jump strength that clears that height (bisection on the vanilla curve). */
+    private static double jumpStrength(double height) {
+        double lo = 0.1, hi = 2.0;
+        for (int i = 0; i < 30; i++) {
+            double mid = (lo + hi) / 2;
+            if (jumpHeight(mid) < height) lo = mid; else hi = mid;
+        }
+        return hi;
+    }
+
+    /** Horses of ridden pets (their inventory, leash, clicks refused). */
+    private final Set<UUID> horses = new HashSet<>();
+
+    /** The owner gets on a real horse carrying the pet's model. */
+    private boolean mountHorse(Follower f) {
+        Pet.Mount mount = f.pet.mount();
+        Location at = new Location(f.carrier.getWorld(), f.x, f.y, f.z, f.yaw, 0);
+        double scale = Math.max(0.5, Math.min(4.0, mount.seat() / HORSE_SEAT));
+        org.bukkit.entity.Horse horse = at.getWorld().spawn(at, org.bukkit.entity.Horse.class, h -> {
+            h.setPersistent(false);
+            h.setInvisible(true);
+            h.setSilent(true);
+            h.setInvulnerable(true);
+            h.setCollidable(false);
+            h.setAdult();
+            h.setAgeLock(true);
+            h.setTamed(true);
+            h.setOwner(f.owner);
+            h.setRemoveWhenFarAway(false);
+            h.getInventory().setSaddle(invisibleSaddle());
+            attribute(h, org.bukkit.attribute.Attribute.SCALE, scale);
+            attribute(h, org.bukkit.attribute.Attribute.MOVEMENT_SPEED, mount.speed() / HORSE_SPEED);
+            attribute(h, org.bukkit.attribute.Attribute.JUMP_STRENGTH, jumpStrength(Math.max(1.2, mount.jump())));
+            attribute(h, org.bukkit.attribute.Attribute.STEP_HEIGHT, 1.0);
+        });
+        if (!horse.addPassenger(f.owner)) {
+            horse.remove();
+            return false;
+        }
+        horses.add(horse.getUniqueId());
+        f.horse = horse;
+        // the seat would catch the rider's own clicks: back when he gets off
+        if (f.seat != null && f.seat.isValid()) f.seat.remove();
+        f.seat = null;
+        moveModel(f, horse);
+        return true;
+    }
+
+    /** The pet's model onto that entity (the horse, or back on the carrier), at its own size. */
+    private void moveModel(Follower f, org.bukkit.entity.Entity onto) {
+        var renderer = BetterModel.modelOrNull(f.pet.model());
+        if (renderer == null) return;
+        if (!f.tracker.isClosed()) f.tracker.close();
+        f.tracker = renderer.getOrCreate(BukkitAdapter.adapt(onto));
+        // a scaled horse must not scale the model: the boss's own size
+        f.tracker.scaler(kr.toxicity.model.api.tracker.ModelScaler.value(1));
+        f.walking = false;
+        f.blockLight = -1;
+        f.skyLight = -1;
+    }
+
+    /** The horse goes, the model back on the carrier where the horse stood. */
+    private void dismountHorse(Follower f) {
+        org.bukkit.entity.AbstractHorse horse = f.horse;
+        f.horse = null;
+        if (horse == null) return;
+        horses.remove(horse.getUniqueId());
+        if (horse.isValid()) {
+            Location at = horse.getLocation();
+            f.x = at.getX();
+            f.y = at.getY();
+            f.z = at.getZ();
+            f.yaw = horse.getBodyYaw();
+            f.vy = 0;
+            horse.eject();
+            horse.remove();
+        }
+        if (f.carrier.isValid()) {
+            f.carrier.teleport(new Location(f.carrier.getWorld(), f.x, f.y, f.z, f.yaw, 0),
+                    io.papermc.paper.entity.TeleportFlag.EntityState.RETAIN_PASSENGERS);
+            moveModel(f, f.carrier);
+            updateSeat(f);
+        }
+    }
+
+    private static void attribute(org.bukkit.entity.LivingEntity e, org.bukkit.attribute.Attribute a, double value) {
+        var instance = e.getAttribute(a);
+        if (instance != null) instance.setBaseValue(value);
+    }
+
+    /** A saddle drawn with an equipment asset that does not exist: nothing shows on the invisible horse. */
+    private static org.bukkit.inventory.ItemStack invisibleSaddle() {
+        org.bukkit.inventory.ItemStack saddle = new org.bukkit.inventory.ItemStack(org.bukkit.Material.SADDLE);
+        saddle.setData(io.papermc.paper.datacomponent.DataComponentTypes.EQUIPPABLE,
+                io.papermc.paper.datacomponent.item.Equippable.equippable(EquipmentSlot.SADDLE)
+                        .assetId(net.kyori.adventure.key.Key.key("fluxpets", "none")).build());
+        return saddle;
+    }
+
+    /** Each tick of a ridden horse: the carrier (name, state) where the horse is, walk animation, the mole's dig. */
+    private void rideHorse(Follower f) {
+        org.bukkit.entity.AbstractHorse horse = f.horse;
+        Player rider = f.owner;
+        Location at = horse.getLocation();
+        double ox = f.x, oz = f.z;
+        org.bukkit.Input input = rider.getCurrentInput();
+        double forward = (input.isForward() ? 1 : 0) - (input.isBackward() ? 1 : 0);
+        double side = (input.isLeft() ? 1 : 0) - (input.isRight() ? 1 : 0);
+        double factor = 1;
+        if (forward != 0 || side != 0) {
+            double yawRad = Math.toRadians(rider.getYaw());
+            double fx = -Math.sin(yawRad), fz = Math.cos(yawRad);
+            org.bukkit.util.Vector dir = new org.bukkit.util.Vector(fx * forward + fz * side, 0, fz * forward - fx * side);
+            fr.influencraft.fluxpets.pets.event.PetMountMoveEvent event =
+                    new fr.influencraft.fluxpets.pets.event.PetMountMoveEvent(rider, f.pet, at, dir.normalize());
+            Bukkit.getPluginManager().callEvent(event);
+            factor = event.getSpeedFactor();
+        }
+        var speed = horse.getAttribute(org.bukkit.attribute.Attribute.MOVEMENT_SPEED);
+        double wanted = f.pet.mount().speed() / HORSE_SPEED * factor;
+        if (speed != null && Math.abs(speed.getBaseValue() - wanted) > 1.0E-6) speed.setBaseValue(wanted);
+        f.x = at.getX();
+        f.y = at.getY();
+        f.z = at.getZ();
+        f.yaw = horse.getBodyYaw();
+        animateWalk(f, Math.hypot(f.x - ox, f.z - oz) > 0.02);
+        f.lastPX = f.x;
+        f.lastPZ = f.z;
+        if (f.carrier.getWorld() == at.getWorld()) {
+            f.carrier.teleport(new Location(at.getWorld(), f.x, f.y, f.z, f.yaw, 0),
+                    io.papermc.paper.entity.TeleportFlag.EntityState.RETAIN_PASSENGERS);
+        }
+        if (tick % 5 == 0) updateLight(f, at.getWorld());
+    }
+
+    @org.bukkit.event.EventHandler
+    public void onHorseInventory(org.bukkit.event.inventory.InventoryOpenEvent event) {
+        if (event.getInventory().getHolder() instanceof org.bukkit.entity.AbstractHorse h && horses.contains(h.getUniqueId())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @org.bukkit.event.EventHandler(ignoreCancelled = true)
+    public void onHorseClick(org.bukkit.event.player.PlayerInteractEntityEvent event) {
+        if (horses.contains(event.getRightClicked().getUniqueId())) event.setCancelled(true);
+    }
+
+    @org.bukkit.event.EventHandler(ignoreCancelled = true)
+    public void onHorseLeash(org.bukkit.event.entity.PlayerLeashEntityEvent event) {
+        if (horses.contains(event.getEntity().getUniqueId())) event.setCancelled(true);
     }
 
     /** Right click on a pet's seat: its owner rides it from the pet's mount level. */
@@ -420,7 +591,7 @@ public final class PetDisplay implements org.bukkit.event.Listener {
             PetMessages.send(player, "mount-level", "%pet%", f.pet.name(), "%level%", String.valueOf(f.pet.mount().level()));
             return;
         }
-        if (seat.addPassenger(player)) {
+        if (f.pet.flying() ? seat.addPassenger(player) : mountHorse(f)) {
             f.vy = 0;
             PetMessages.send(player, "mounted", "%pet%", f.pet.name());
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_HORSE_SADDLE, 0.8f, 1.2f);
@@ -579,6 +750,14 @@ public final class PetDisplay implements org.bukkit.event.Listener {
     }
 
     private void remove(Follower f) {
+        if (f.horse != null) {
+            horses.remove(f.horse.getUniqueId());
+            if (f.horse.isValid()) {
+                f.horse.eject();
+                f.horse.remove();
+            }
+            f.horse = null;
+        }
         if (!f.tracker.isClosed()) {
             f.tracker.close();
         }
