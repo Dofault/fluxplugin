@@ -479,6 +479,11 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         f.tracker = renderer.getOrCreate(BukkitAdapter.adapt(onto));
         // a scaled horse must not scale the model: the boss's own size
         f.tracker.scaler(kr.toxicity.model.api.tracker.ModelScaler.value(1));
+        // BetterModel hides the carrying entity's equipment by default: the rider's client would then see a horse
+        // without a saddle, which it does not let him drive (the saddle stays unseen: its equipment asset is empty)
+        if (onto instanceof org.bukkit.entity.AbstractHorse) {
+            f.tracker.hideOption(new kr.toxicity.model.api.tracker.EntityHideOption(false, true, true, true));
+        }
         f.walking = false;
         f.blockLight = -1;
         f.skyLight = -1;
