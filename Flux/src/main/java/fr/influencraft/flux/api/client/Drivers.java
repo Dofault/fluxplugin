@@ -82,7 +82,9 @@ public final class Drivers {
     public static void refresh(Entity vehicle, int[] ids) {
         Carry c = CARRY_BY_VEHICLE.get(vehicle.getEntityId());
         if (c == null) return;
-        boolean changed = !java.util.Arrays.equals(c.ids, ids);
+        // the same displays given in another order are no change
+        boolean changed = !java.util.Arrays.equals(java.util.Arrays.stream(c.ids).sorted().toArray(),
+                java.util.Arrays.stream(ids).sorted().toArray());
         if (changed) {
             c.ids = ids.clone();
             c.told.clear();
