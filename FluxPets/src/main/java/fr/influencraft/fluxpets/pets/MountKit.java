@@ -320,19 +320,20 @@ final class MountKit {
 
     /**
      * A swimming mount in water floats with the water line at its rider's seat (the pet's body in the water, its rider
-     * out of it): the horse rises while the water covers the seat, hangs where it is while the water is within 0.3
-     * block under it, sinks as usual otherwise. Its gravity is an attribute, so the rider's own game applies it.
-     * Returns whether it is in water. (Until 2026-11-15 it floated half out of the water: the otter looked set on it.)
+     * out of it). The game itself makes a ridden horse float (LivingEntity#floatInWaterWhileRidden: 0.04 block per
+     * tick upwards as soon as it is 0.4 block deep, which sets it on the water); gravity in water weighs a sixteenth
+     * of itself, so 0.64 balances that push exactly. The horse's gravity attribute (applied by the rider's own game):
+     * 1.0 while the water is more than 0.3 block under the seat (it sinks to its place), 0.64 within that band (it
+     * hangs there), the game's 0.08 when the water covers the seat (the game's push brings it up). Returns whether
+     * it is in water. (A first version turned the gravity down: the game's push was far stronger, nothing changed.)
      */
     static boolean buoyancy(PetDisplay.Follower f, AbstractHorse horse) {
         var gravity = horse.getAttribute(Attribute.GRAVITY);
         boolean in = horse.isInWater();
         if (gravity == null || !in) return in;            // out of water its gravity is stick()'s
-        double wanted = 0.08;
         double seat = f.pet.mount().seat();
         Location at = horse.getLocation();
-        if (water(at, seat + 0.05)) wanted = -0.035;
-        else if (water(at, seat - 0.3)) wanted = 0.0;
+        double wanted = water(at, seat + 0.05) ? 0.08 : water(at, seat - 0.3) ? 0.64 : 1.0;
         if (Math.abs(gravity.getBaseValue() - wanted) > 1.0E-6) gravity.setBaseValue(wanted);
         return true;
     }
