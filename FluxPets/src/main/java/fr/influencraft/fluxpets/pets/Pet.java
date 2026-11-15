@@ -34,7 +34,9 @@ import java.util.regex.Pattern;
  * (level from which its owner can ride it, seat height in blocks, speed in blocks per tick, jump height; a pet
  * without that section cannot be ridden). The former key mountable is still read: a mount from level 1.
  * size: horizontal reach of its model in blocks (default 1); a bigger pet keeps further from its owner and from the
- * pet before it, and its seat is as wide (boss pets are their boss's model at full size).
+ * pet before it, and its seat is as wide (boss pets are their boss's model at full size). run-animation: animation
+ * played in place of the walk above run-speed blocks a second (default 5: faster than a walking player), when the
+ * model has it; a run plays at its own pace, so it stays smooth (speeding the walk up did not).
  *
  * Calqué sur com.willfp.ecopets.pets.Pet : niveau et XP du joueur dans la base de Flux ({@link PetStore}),
  * effets libreforge compilés une fois, le niveau étant fourni à leurs
@@ -74,6 +76,8 @@ public final class Pet {
     private final double size;
     private final int slots;
     private final String walkAnimation;
+    private final String runAnimation;
+    private final double runSpeed;
     private final String revealAnimation;
     private final String iconLookup;
     private ItemStack baseItem;
@@ -109,6 +113,8 @@ public final class Pet {
         this.size = config.getDoubleOrNull("size") == null ? 1.0 : Math.max(0.5, config.getDouble("size"));
         this.slots = Math.max(1, config.has("slots") ? config.getInt("slots") : 1);
         this.walkAnimation = config.has("walk-animation") ? config.getString("walk-animation") : "walk";
+        this.runAnimation = config.has("run-animation") ? config.getString("run-animation") : null;
+        this.runSpeed = config.getDoubleOrNull("run-speed") == null ? 5.0 : Math.max(0.5, config.getDouble("run-speed"));
         this.revealAnimation = config.has("reveal-animation") ? config.getString("reveal-animation") : null;
         this.iconLookup = config.getString("icon");
 
@@ -210,6 +216,16 @@ public final class Pet {
     /** Animation of its model while it moves. */
     public String walkAnimation() {
         return walkAnimation;
+    }
+
+    /** Animation of the model played in place of the walk when the pet goes fast, null when it has none. */
+    public String runAnimation() {
+        return runAnimation;
+    }
+
+    /** Blocks a second from which the run animation plays. */
+    public double runSpeed() {
+        return runSpeed;
     }
 
     /** Animation played when it is adopted (null: the reveal's default). */

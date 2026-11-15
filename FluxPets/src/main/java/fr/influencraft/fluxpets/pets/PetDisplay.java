@@ -81,6 +81,12 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         /** Display riding the horse: its height on the horse is the one of the carried displays. */
         org.bukkit.entity.TextDisplay probe;
         final boolean hasWalk;
+        /** The model has the pet's run animation. */
+        boolean hasRun;
+        /** The run animation is the one playing (the walk otherwise, while moving). */
+        boolean running;
+        /** Smoothed speed in blocks a second (walk or run). */
+        double pace;
         TextDisplay label;
         /** Seat of a mountable pet (its owner rides it), null otherwise. */
         org.bukkit.entity.Interaction seat;
@@ -227,6 +233,7 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         ArmorStand carrier = stand(start);
         EntityTracker tracker = renderer.getOrCreate(BukkitAdapter.adapt(carrier));
         Follower f = new Follower(owner, pet, carrier, tracker, renderer.animation(pet.walkAnimation()).isPresent());
+        f.hasRun = pet.runAnimation() != null && renderer.animation(pet.runAnimation()).isPresent();
         f.x = start.getX();
         f.y = start.getY();
         f.z = start.getZ();
@@ -351,7 +358,7 @@ public final class PetDisplay implements org.bukkit.event.Listener {
                 : (float) Math.toDegrees(Math.atan2(-(p.getX() - f.x), p.getZ() - f.z));
         float delta = ((targetYaw - f.yaw) % 360 + 540) % 360 - 180;
         f.yaw += snap ? delta : delta * 0.2f;
-        animateWalk(f, walking);
+        animateWalk(f, walking, moved);
         double bob = f.pet.flying() ? Math.sin(tick * 0.1) * bobAmplitude : 0;
         Location to = new Location(world, f.x, f.y + bob, f.z, f.yaw, 0);
         if (f.carrier.getWorld() != world) {
@@ -383,15 +390,25 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         }
     }
 
-    private void animateWalk(Follower f, boolean walking) {
-        if (walking != f.walking && f.hasWalk) {
-            if (walking) {
-                f.tracker.animate(f.pet.walkAnimation());
-            } else {
-                f.tracker.stopAnimation(f.pet.walkAnimation());
-            }
+    /**
+     * Walk animation while the pet moves ({@code moved}: blocks this tick), its run animation in place of it above the
+     * pet's run speed (smoothed, and kept until the pet is clearly slower: no flicker between the two).
+     */
+    private void animateWalk(Follower f, boolean walking, double moved) {
+        f.pace += (moved * 20 - f.pace) * 0.3;
+        boolean running = walking && f.hasRun
+                && f.pace >= f.pet.runSpeed() * (f.running ? 0.75 : 1.0);
+        if (walking == f.walking && running == f.running) return;
+        if (f.walking) {
+            String playing = f.running ? f.pet.runAnimation() : f.pet.walkAnimation();
+            if (f.running || f.hasWalk) f.tracker.stopAnimation(playing);
+        }
+        if (walking) {
+            if (running) f.tracker.animate(f.pet.runAnimation());
+            else if (f.hasWalk) f.tracker.animate(f.pet.walkAnimation());
         }
         f.walking = walking;
+        f.running = running;
     }
 
     // ------------------------------------------------------------------ mounts
@@ -516,8 +533,8 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         if (f.carrier.isValid()) {
             f.carrier.teleport(new Location(f.carrier.getWorld(), f.x, f.y, f.z, f.yaw, 0),
                     io.papermc.paper.entity.TeleportFlag.EntityState.RETAIN_PASSENGERS);
-            f.walking = false;
-            f.tracker.stopAnimation(f.pet.walkAnimation());
+            animateWalk(f, false, 0);
+            f.pace = 0;
             updateSeat(f);
         }
     }
@@ -578,7 +595,8 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         f.y = at.getY();
         f.z = at.getZ();
         f.yaw = horse.getBodyYaw();
-        animateWalk(f, Math.hypot(f.x - ox, f.z - oz) > 0.02);
+        double step = Math.hypot(f.x - ox, f.z - oz);
+        animateWalk(f, step > 0.02, step);
         f.lastPX = f.x;
         f.lastPZ = f.z;
         if (f.carried) {
@@ -724,7 +742,8 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         }
         // like a horse: the body faces where the rider looks, at once, moving or not
         f.yaw = rider.getYaw();
-        animateWalk(f, Math.hypot(f.x - ox, f.z - oz) > 0.02);
+        double step = Math.hypot(f.x - ox, f.z - oz);
+        animateWalk(f, step > 0.02, step);
         f.lastPX = f.x;
         f.lastPZ = f.z;
         f.carrier.teleport(new Location(world, f.x, f.y, f.z, f.yaw, 0),

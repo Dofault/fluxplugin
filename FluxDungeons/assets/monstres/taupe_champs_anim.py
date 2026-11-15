@@ -167,6 +167,48 @@ def animations():
     drill(a, angle=lambda t: 720 * t / 0.5)
     A.append(a)
 
+    # ------------------------------------------------------------------ run: 0.4 s loop (8 ticks)
+    # A mole does not gallop, it scurries (the pet as a mount, 9.6 blocks a second): belly low, leaning forwards, the
+    # two shovels paddle in turn (right at 0, left at 4): each one is thrown forwards claws up, slaps down, digs and
+    # rakes the ground backwards for 45 % of the cycle; the small hind legs scamper in the opposite diagonal. The
+    # body bounces at each stroke and waddles from one shoulder to the other (yaw and roll), the head gives the
+    # waddle back so the drill keeps pointing straight ahead, turning one turn a cycle; the tail whips behind.
+    RL = 0.4                    # its own name: the functions read their period when they are sampled
+    a = Anim("run", 8, loop=True)
+    r_duty, r_stride = 0.45, 9.5
+
+    def run_z(t, off):
+        u = (t / RL + off) % 1.0
+        if u < r_duty:
+            return -r_stride + 2 * r_stride * u / r_duty
+        v = (u - r_duty) / (1 - r_duty)
+        return r_stride - 2 * r_stride * smooth(0, 1, v)
+
+    def run_lift(t, off):
+        u = (t / RL + off) % 1.0
+        return 0.0 if u < r_duty else 5.0 * S(math.pi * (u - r_duty) / (1 - r_duty))
+
+    def run_claws(t, off):
+        u = (t / RL + off) % 1.0
+        if u < r_duty:                     # digs in, then rakes
+            return -14 + 22 * u / r_duty
+        v = (u - r_duty) / (1 - r_duty)    # thrown forwards, claws up
+        return 8 + 16 * S(math.pi * v) - 22 * smooth(0.6, 1.0, v)
+
+    for bone, off in (("Arm_front_right", 0.0), ("Arm_front_left", 0.5), ("Leg_back_right", 0.5), ("Leg_back_left", 0.0)):
+        big = bone.startswith("Arm")
+        a.pos(bone, lambda t, off=off, big=big: (0, run_lift(t, off) * (1 if big else 0.5),
+                                                 run_z(t, off) * (1 if big else 0.6)))
+    for paw, off in (("Paw_front_right", 0.0), ("Paw_front_left", 0.5)):
+        a.rot(paw, lambda t, off=off: (run_claws(t, off), 0, 0))
+    waddle = lambda t: S(TAU * (t / RL + 0.06))                                               # noqa: E731
+    a.pos("Body", lambda t: (0, -1.6 + 1.3 * abs(S(TAU * t / RL)), 0))
+    a.rot("Body", lambda t: (-6 + 1.2 * C(2 * TAU * t / RL), 4.5 * waddle(t), 4 * waddle(t)))
+    a.rot("Head", lambda t: (-3 - 1.5 * C(2 * TAU * t / RL + 0.8), -3.6 * waddle(t), -2.6 * waddle(t)))
+    drill(a, angle=lambda t: 360 * t / RL)
+    a.rot("Tail", lambda t: (7, 15 * S(TAU * (t / RL - 0.18)), 0))
+    A.append(a)
+
     # ------------------------------------------------------------------ charge_stop: 1.2 s (brakes, drill winds down)
     a = Anim("charge_stop", 24)
     a.pos("Body", lambda t: (0, -3 * (1 - smooth(T(6), T(20), t)), 0))

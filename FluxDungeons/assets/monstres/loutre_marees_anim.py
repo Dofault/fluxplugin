@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Animations de la Loutre des Marées (2026-11-10).
 
-Phase terrestre : idle, walk, attack_claw, attack_tail, attack_slide.
+Phase terrestre : idle, walk, run (course du familier monté, pas jouée par le donjon), attack_claw, attack_tail,
+attack_slide.
 Transition (mi-vie) : transition_dive (casse le sol et plonge sur place).
 Phase aquatique : swim, swim_idle (flotte sur le dos), attack_wave, attack_spin, attack_spit, ultimate_breach.
 
@@ -50,6 +51,24 @@ def bump(a, b, t):
     if t <= a or t >= b:
         return 0.0
     return math.sin(math.pi * (t - a) / (b - a)) ** 2
+
+
+def cyc(keys):
+    """Courbe périodique passant par les clés [(u, valeur)] (u de 0 à 1, croissants) : cubique de Catmull-Rom, donc
+    sans arrêt aux clés (une patte en appui file à vitesse régulière)."""
+    ext = [(u + d, v) for d in (-1, 0, 1) for u, v in keys]     # les clés sur trois périodes : voisins toujours là
+
+    def f(u):
+        u %= 1.0
+        i = max(j for j in range(len(ext) - 2) if ext[j][0] <= u)
+        (up, vp), (u0, v0), (u1, v1), (un, vn) = ext[i - 1], ext[i], ext[i + 1], ext[i + 2]
+        m0 = (v1 - vp) / (u1 - up)
+        m1 = (vn - v0) / (un - u0)
+        h = u1 - u0
+        x = (u - u0) / h
+        return ((2 * x ** 3 - 3 * x ** 2 + 1) * v0 + (x ** 3 - 2 * x ** 2 + x) * h * m0
+                + (-2 * x ** 3 + 3 * x ** 2) * v1 + (x ** 3 - x ** 2) * h * m1)
+    return f
 
 
 def build(uid):
@@ -172,6 +191,47 @@ def build(uid):
         tr[b] = track(L, rotation=lambda t, i=i: ((5 + 2 * i) * S(TAU * (t / L - 0.12 * (i + 1))), 0, 0))
     tr.update(whiskers(L, base=-6, amp=2, freq=1))
     out.append(anim("walk", L, "loop", tr))
+
+    # ------------------------------------------------------------------ run : 0,5 s en boucle (10 ticks)
+    # Galop bondissant de loutre lancée (monture du familier, 9,6 blocs par seconde : un bond de 4,8 blocs, une
+    # longueur de corps). u = t / L :
+    #   0,00  les pattes avant se posent, tendues vers l'avant (la gauche un rien après la droite) ; corps allongé
+    #   0,00-0,22  appui avant : elles filent sous le poitrail ; le dos se voûte, le bassin passe sous le corps
+    #   0,28  dos au plus haut, les pattes arrière se posent loin en avant, presque dans les traces des avant
+    #   0,28-0,52  appui arrière : détente, la colonne se déplie, le poitrail se relève, les avant se replient
+    #   0,52-1,00  vol : corps étiré, avant tendues devant, arrière traînant derrière ; le point le plus bas suit
+    #              une parabole de 5 px (GROUND_ARC), puis le nez pique vers la réception
+    # La tête compense le poitrail (regard à l'horizontale), la queue compense le bassin et fouette en vague, les
+    # moustaches sont couchées par la vitesse, la gueule entrouverte.
+    L = 0.5
+    front_leg = cyc([(0.00, 36), (0.20, -30), (0.30, -40), (0.42, -22), (0.58, 6), (0.80, 40)])
+    front_paw = cyc([(0.00, -26), (0.10, -4), (0.20, -8), (0.31, -72), (0.56, -52), (0.80, -34)])
+    back_leg = cyc([(0.00, -52), (0.12, -8), (0.24, 42), (0.50, -44), (0.72, -68), (0.90, -62)])
+    back_foot = cyc([(0.00, -66), (0.11, -70), (0.24, -32), (0.36, 0), (0.50, 6), (0.62, -60), (0.80, -78)])
+    chest = cyc([(0.00, -5), (0.12, -12), (0.24, -20), (0.36, -12), (0.52, 4), (0.72, 10)])
+    hips = cyc([(0.00, -9), (0.10, 4), (0.24, 28), (0.36, 20), (0.52, -4), (0.72, -11)])
+    pitch = cyc([(0.00, -5), (0.20, -1), (0.32, 6), (0.50, 9), (0.72, 2), (0.92, -4)])
+    tr = {}
+    for side, off in (("right", 0.0), ("left", -0.05)):
+        tr[f"Leg_front_{side}"] = track(L, rotation=lambda t, off=off: (front_leg(t / L + off), 0, 0))
+        tr[f"Paw_front_{side}"] = track(L, rotation=lambda t, off=off: (front_paw(t / L + off), 0, 0))
+        tr[f"Leg_back_{side}"] = track(L, rotation=lambda t, off=off: (back_leg(t / L + off), 0, 0))
+        tr[f"Foot_back_{side}"] = track(L, rotation=lambda t, off=off: (back_foot(t / L + off), 0, 0))
+    tr.update({
+        "Body": track(L, rotation=lambda t: (pitch(t / L), 0, 0), position=lambda t: Z),
+        "Chest": track(L, rotation=lambda t: (chest(t / L), 0, 0)),
+        "Hips": track(L, rotation=lambda t: (hips(t / L), 0, 0)),
+        # regard à l'horizontale : la tête rend au poitrail et au corps ce qu'ils piquent
+        "Head": track(L, rotation=lambda t: (-0.85 * chest(t / L) - 0.7 * pitch(t / L) - 4, 0, 0)),
+        "Jaw": track(L, rotation=lambda t: (-7 - 3 * S(TAU * t / L), 0, 0)),
+    })
+    for i, b in enumerate(TAIL):
+        # la base rend au bassin sa bascule (queue à peu près à plat), puis la vague court vers le bout
+        tr[b] = track(L, rotation=lambda t, i=i: (
+            (-1.0 * hips(t / L) - 0.6 * pitch(t / L) + 6 if i == 0 else 0)
+            + (4 + 2.5 * i) * S(TAU * (t / L - 0.30 - 0.13 * i)), 0, 0))
+    tr.update(whiskers(L, base=-14, amp=2, freq=2))
+    out.append(anim("run", L, "loop", tr))
 
     # ------------------------------------------------------------------ attack_claw : combo de griffes, 1,6 s (32 ticks)
     # Se dresse (avant du corps relevé, pattes avant levées), patte droite armée haut et dehors ; coup de droite qui
@@ -686,9 +746,12 @@ def mesures(data, only=None):
 # Animations terrestres dont le point le plus bas doit toucher le sol à chaque tick (pieds posés, ventre ou flanc au
 # sol), avec les fenêtres (en secondes) où le corps a le droit de quitter le sol ou d'y entrer.
 GROUND_LOCK = {
-    "idle": (), "walk": (), "attack_claw": (), "attack_tail": ((0.95, 1.5),), "attack_slide": (),
-    "transition_dive": ((2.25, 99),),
+    "idle": (), "walk": (), "run": ((0.26, 0.5),), "attack_claw": (), "attack_tail": ((0.95, 1.5),),
+    "attack_slide": (), "transition_dive": ((2.25, 99),),
 }
+# Vol d'un bond : dans la fenêtre libre de ces animations, le point le plus bas suit une parabole de cette hauteur
+# (pixels) au lieu d'être laissé à la pose dessinée.
+GROUND_ARC = {"run": 5.0}
 
 
 def ground_lock(data):
@@ -719,10 +782,15 @@ def ground_lock(data):
         kf = body["keyframes"]
         rows = lows[a["name"]]
         corr = []
+        arc = GROUND_ARC.get(a["name"])
         for r in rows:
             t = r["tick"] / 20
-            inside = any(f0 <= t <= f1 for f0, f1 in free)
-            corr.append(None if inside else -r["low"] * 16)
+            win = next(((f0, f1) for f0, f1 in free if f0 <= t <= f1), None)
+            if win and arc:
+                u = (t - win[0]) / (win[1] - win[0])
+                corr.append(-r["low"] * 16 + arc * 4 * u * (1 - u))
+            else:
+                corr.append(None if win else -r["low"] * 16)
         # bords des fenêtres libres : la correction rejoint 0 en douceur sur 3 ticks
         filled = []
         for i, c in enumerate(corr):

@@ -20,6 +20,8 @@ LEG_LIFT = {"front": 1.3, "back": 0.6}
 # hauteur de la tête en fin de mort : la mâchoire repose sur le sol (réglée sur le rendu, cf. strips)
 HEAD_REST = 3.50
 LEGS = ("Leg_front_right", "Leg_front_left", "Leg_back_right", "Leg_back_left")
+# course : remontée d'une patte à son débattement maximal pour que son pied reste au ras du sol (réglée sur la mesure)
+RUN_FOOT = 2.6
 
 
 def build(uid, k):
@@ -110,6 +112,49 @@ def build(uid, k):
         "Tail_tip": {"rotation": wave(L, lambda t: (0, -4.0 * S(TAU * t / L - 1.5), 0))},
     })
     out.append(anim("walk", L, "loop", tracks))
+
+    # ------------------------------------------------------------------ run : trot de tortue lancée, 0,8 s (16 ticks)
+    # Une tortue ne galope pas : elle détale au trot (monture du familier, 9,6 blocs par seconde). Mêmes paires en
+    # diagonale que la marche (avant gauche et arrière droit, puis avant droit et arrière gauche), 3,5 fois plus
+    # vite : chaque patte reste posée la moitié du cycle (de +16 à -16 degrés), puis se lève de 4,5 px, s'écarte et
+    # revient devant. Aucun temps de vol : la masse retombe sur chaque paire (le corps s'enfonce de 1,4 px deux fois
+    # par cycle), la carapace roule de 3,5 degrés vers les appuis et tangue, avec un temps de retard sur le corps ;
+    # le cou tendu pompe à chaque foulée (la tête part en avant quand les pattes avant passent), gueule entrouverte ;
+    # la queue bat large, son bout en retard.
+    RL = 0.8
+    RSW = 16.0
+
+    def run_leg(bone):
+        def stage(t):
+            u = (t / RL + phase[bone]) % 1.0
+            if u < 0.5:                           # appui
+                return u / 0.5, 0.0, None
+            v = (u - 0.5) / 0.5                   # levé
+            return v, math.sin(math.pi * v), v * v * (3 - 2 * v)
+
+        def swing(t):
+            a, lift, e = stage(t)
+            return RSW - 2 * RSW * a if e is None else -RSW + 2 * RSW * e
+
+        def rotation(t):
+            return (swing(t), 0, 5.0 * stage(t)[1] * side[bone])
+
+        def position(t):
+            return (0, 4.5 * stage(t)[1] + RUN_FOOT * abs(swing(t)) / RSW, 0)
+        return {"rotation": wave(RL, rotation, 0.05), "position": wave(RL, position, 0.05)}
+
+    tracks = {b: run_leg(b) for b in LEGS}
+    tracks.update({
+        "Body": {"position": wave(RL, lambda t: (0, 0.4 - 1.4 * (1 + math.cos(TAU * 2 * (t / RL - 0.06))) / 2, 0), 0.05),
+                 "rotation": wave(RL, lambda t: (1.5 * S(TAU * 2 * t / RL + 0.5), 0, 3.5 * S(TAU * t / RL)), 0.05)},
+        "Shell": {"rotation": wave(RL, lambda t: (1.2 * S(TAU * 2 * t / RL - 0.4), 0, 1.6 * S(TAU * t / RL - 0.7)), 0.05)},
+        "Head": {"position": wave(RL, lambda t: (0, 0, -1.2 - 1.6 * (1 + math.cos(TAU * 2 * (t / RL - 0.82))) / 2), 0.05),
+                 "rotation": wave(RL, lambda t: (3 + 2.0 * S(TAU * 2 * t / RL + 1.0), 3.0 * S(TAU * t / RL + 0.3), 0), 0.05)},
+        "Jaw": {"rotation": wave(RL, lambda t: (-5 - 2.5 * S(TAU * 2 * t / RL), 0, 0), 0.05)},
+        "Tail": {"rotation": wave(RL, lambda t: (0, -11.0 * S(TAU * t / RL - 0.8), 0), 0.05)},
+        "Tail_tip": {"rotation": wave(RL, lambda t: (0, -9.0 * S(TAU * t / RL - 1.5), 0), 0.05)},
+    })
+    out.append(anim("run", RL, "loop", tracks))
 
     # ------------------------------------------------------------------ attack_bite : morsure, 1,4 s (coup à 0,62 s)
     lin = "linear"

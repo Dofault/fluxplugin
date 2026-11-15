@@ -63,6 +63,23 @@ def shake(t, amp, freq=11.0):
     return amp * (S(TAU * freq * t) * 0.6 + S(TAU * freq * 1.7 * t + 1.3) * 0.4)
 
 
+def cyc(pts):
+    """Periodic curve through the keys [(u, value)] (u from 0 to 1, rising): Catmull-Rom cubic, no stop at a key."""
+    ext = [(u + d, v) for d in (-1, 0, 1) for u, v in pts]
+
+    def f(u):
+        u %= 1.0
+        i = max(j for j in range(len(ext) - 2) if ext[j][0] <= u)
+        (up, vp), (u0, v0), (u1, v1), (un, vn) = ext[i - 1], ext[i], ext[i + 1], ext[i + 2]
+        m0 = (v1 - vp) / (u1 - up)
+        m1 = (vn - v0) / (un - u0)
+        h = u1 - u0
+        x = (u - u0) / h
+        return ((2 * x ** 3 - 3 * x ** 2 + 1) * v0 + (x ** 3 - 2 * x ** 2 + x) * h * m0
+                + (-2 * x ** 3 + 3 * x ** 2) * v1 + (x ** 3 - x ** 2) * h * m1)
+    return f
+
+
 def pulse(u, amp, rate=9.0, freq=9.0):
     """Damped vibration started at u = 0 (u in seconds since the impact)."""
     return 0.0 if u < 0 else amp * math.exp(-rate * u) * S(TAU * freq * u)
@@ -286,6 +303,58 @@ def animations(rig):
     plates(a, lambda k, t: (pulse((t % (L / 2)) - 0.02 * k, 2.0 * PLATE_AMP[k]), 0,
                             pulse((t % (L / 2)) - 0.02 * k, 1.0 * PLATE_AMP[k], freq=7)))
     legs(a, rig, foot=walk_foot, toe=walk_toe)
+    A.append(a)
+
+    # ------------------------------------------------------------------ run: 0.6 s loop (12 ticks)
+    # Gallop of a heavy beast (the pet as a mount, 9.6 blocks a second). Four beats then a leap, u = t / RL:
+    #   0.00 hind left lands, 0.10 hind right: the pelvis tucks under, the hind legs take the weight and push
+    #   0.30 front left lands, 0.40 front right: the rib cage comes down on them, the skull dips after the impact
+    #   0.65-1.00 every foot is off the ground: the body rises 3.2 pixels, legs gathered under it, then the hind
+    #   feet reach forwards for the next stride
+    # Each foot is planted for a quarter of the cycle and slides back 18 pixels while it is (the legs are nearly
+    # straight at rest: no longer stride is in their reach). The body rocks like a rocking horse (front up on the
+    # hind legs, down on the front ones) and sinks at each landing; neck and skull give half of the rocking back
+    # (horns ahead, level); the jaw clacks at the front impact; the tail swings wide against the body, its wave
+    # running to the tip; the plates rattle at each landing, the big ones more.
+    RL = 0.6                    # its own name: the functions read their period when they are sampled
+    a = Anim("run", 12, loop=True)
+    r_duty, r_stride = 0.25, 9.0 / K
+    r_land = {"back_left": 0.00, "back_right": 0.10, "front_left": 0.30, "front_right": 0.40}
+    r_lift = {"back": 7.5 / K, "front": 9.0 / K}
+
+    def run_phase(leg, t):
+        return (t / RL - r_land[leg]) % 1.0
+
+    def run_foot(leg, t):
+        u = run_phase(leg, t)
+        if u < r_duty:
+            return (0, 0, -r_stride + 2 * r_stride * u / r_duty)
+        v = (u - r_duty) / (1 - r_duty)
+        # lifted and gathered under the body, then thrown forwards for the landing
+        return (0, r_lift[leg.split("_")[0]] * S(math.pi * v) ** 0.8, r_stride - 2 * r_stride * smooth(0.1, 0.95, v))
+
+    def run_toe(leg, t):
+        u = run_phase(leg, t)
+        if u < r_duty:
+            return 0.0
+        return -26 * S(math.pi * (u - r_duty) / (1 - r_duty))
+
+    ru = lambda t: (t / RL) % 1.0                                                              # noqa: E731
+    r_bob = cyc([(0.00, -0.6), (0.12, -1.8), (0.27, -0.8), (0.42, -2.0), (0.60, 0.6), (0.80, 3.2)])
+    r_rock = cyc([(0.05, 4.0), (0.25, 0.5), (0.42, -4.5), (0.65, -1.0), (0.85, 2.5)])
+    a.pos("Body", lambda t: (0, r_bob(ru(t)) / K, 0))
+    a.rot("Body", lambda t: (r_rock(ru(t)), 0, 1.2 * S(TAU * ru(t))))
+    a.rot("Hips", lambda t: (6 * C(TAU * (ru(t) - 0.05)), -1.5 * S(TAU * ru(t)), 0))
+    a.rot("Chest", lambda t: (-4 * C(TAU * (ru(t) - 0.38)), 1.5 * S(TAU * ru(t)), 0))
+    a.rot("Neck", lambda t: (1 - 0.5 * r_rock(ru(t)), 0, 0))
+    a.rot("Head", lambda t: (-1 - 0.45 * r_rock(ru(t)) - 2.5 * bump(0.42, 0.62, ru(t)), 0, 0))
+    a.rot("Jaw", lambda t: (-3 - 4 * bump(0.38, 0.55, ru(t)), 0, 0))
+    tail(a, yaw=lambda i, t: -20 * TAIL_W[i] * S(TAU * t / RL), pitch=lambda i, t: -0.35 * r_rock((t / RL) % 1.0) * (1 if i < 3 else 0.3),
+         delay=0.035)
+    plates(a, lambda k, t: (pulse(((t / RL - 0.05) % 1.0) * RL - 0.015 * k, 3.0 * PLATE_AMP[k])
+                            + pulse(((t / RL - 0.35) % 1.0) * RL - 0.015 * k, 3.0 * PLATE_AMP[k]), 0,
+                            pulse(((t / RL - 0.35) % 1.0) * RL - 0.015 * k, 1.4 * PLATE_AMP[k], freq=7)))
+    legs(a, rig, foot=run_foot, toe=run_toe)
     A.append(a)
 
     # ------------------------------------------------------------------ charge: 2.7 s (Charge funeraire)

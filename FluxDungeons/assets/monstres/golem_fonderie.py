@@ -556,6 +556,29 @@ ATK_ARM = -50        # bras du marteau à l'impact
 ATK_HAMMER = 28       # marteau à l'impact (tête au ras du sol)
 
 
+# Hauteur du bassin pendant la course (pixels), par appui : pose, écrasement, poussée, sommet du vol. Calée sur la
+# mesure des pieds (cf. run).
+RUN_HIP = [(0.00, 0.3), (0.30, 0.0), (0.60, 0.6), (0.80, 3.0)]
+
+
+def cyc(pts):
+    """Courbe périodique passant par les clés [(u, valeur)] (u de 0 à 1, croissants) : cubique de Catmull-Rom, sans
+    arrêt aux clés."""
+    ext = [(u + d, v) for d in (-1, 0, 1) for u, v in pts]
+
+    def f(u):
+        u %= 1.0
+        i = max(j for j in range(len(ext) - 2) if ext[j][0] <= u)
+        (up, vp), (u0, v0), (u1, v1), (un, vn) = ext[i - 1], ext[i], ext[i + 1], ext[i + 2]
+        m0 = (v1 - vp) / (u1 - up)
+        m1 = (vn - v0) / (un - u0)
+        h = u1 - u0
+        x = (u - u0) / h
+        return ((2 * x ** 3 - 3 * x ** 2 + 1) * v0 + (x ** 3 - 2 * x ** 2 + x) * h * m0
+                + (-2 * x ** 3 + 3 * x ** 2) * v1 + (x ** 3 - x ** 2) * h * m1)
+    return f
+
+
 def animations(data):
     known = set()
 
@@ -633,6 +656,39 @@ def animations(data):
     t["bras_g"] = {"rotation": wave(L, 16, lambda p: (-10 * S(p, 0.5), 0, 0))}
     t["avant_bras_g"] = {"rotation": wave(L, 16, lambda p: (-6 * S(p, 0.38) - 4, 0, 0))}
     out.append(anim("walk", L, "loop", t))
+
+    # ------------------------------------------------------------------ run : course lourde, 0,9 s (18 ticks)
+    # Course d'un colosse de fonte (monture du familier, 9,6 blocs par seconde) : buste penché, grandes enjambées,
+    # un court temps de vol entre deux appuis. Le pied droit se pose à 0, le gauche à 9. Chaque jambe : posée tendue
+    # devant (cuisse à -30), elle encaisse (genou qui plie à 24), pousse jusqu'à 35 % du cycle (cuisse à +28), puis
+    # se replie derrière (genou à 78) et revient devant. Le bassin descend à chaque appui et monte pendant le vol
+    # (RUN_HIP, calé sur la mesure des pieds : ils touchent le sol en appui, le quittent de 2,5 px en vol) ; le
+    # torse se tord contre les jambes et bascule à chaque appui ; le bras gauche, libre, pompe en grand, coude plié ;
+    # le droit porte le marteau : il balance peu et le marteau traîne derrière lui ; la tête rend au buste son
+    # inclinaison (regard droit devant).
+    RL = 0.9
+    thigh = cyc([(0.00, -30), (0.175, 0), (0.35, 28), (0.47, 34), (0.68, -10), (0.88, -36)])
+    knee = cyc([(0.00, 8), (0.14, 24), (0.35, 6), (0.50, 60), (0.68, 78), (0.88, 22)])
+    toes = cyc([(0.00, -6), (0.20, 0), (0.35, 14), (0.50, 26), (0.75, 10), (0.90, -8)])     # pointe basse en vol
+    hip = cyc(RUN_HIP)
+    t = {}
+    for side, ph in (("d", 0.0), ("g", 0.5)):
+        t[f"cuisse_{side}"] = {"rotation": wave(RL, 18, lambda p, ph=ph: (thigh(p + ph), 0, 0))}
+        t[f"tibia_{side}"] = {"rotation": wave(RL, 18, lambda p, ph=ph: (knee(p + ph), 0, 0))}
+        t[f"pied_{side}"] = {"rotation": wave(RL, 18, lambda p, ph=ph: (-(thigh(p + ph) + knee(p + ph)) + toes(p + ph), 0, 0))}
+    t["bassin"] = {"position": wave(RL, 18, lambda p: (0, hip(2 * p), 0)),
+                   "rotation": wave(RL, 18, lambda p: (0, -5 * S(p, 0.04), 2 * S(p, 0.04)))}
+    t["torse"] = {"rotation": wave(RL, 18, lambda p: (11 + 2.5 * math.cos(4 * math.pi * (p - 0.12)), 9 * S(p, 0.04), -3 * S(p, 0.04)))}
+    t["tete"] = {"rotation": wave(RL, 18, lambda p: (-8 - 1.5 * math.cos(4 * math.pi * (p - 0.2)), -4 * S(p, 0.04), 1.5 * S(p, 0.04)))}
+    t["epaule_d"] = {"rotation": wave(RL, 18, lambda p: (0, 0, 2.5 * S(2 * p, 0.1)))}
+    t["epaule_g"] = {"rotation": wave(RL, 18, lambda p: (0, 0, 2.5 * S(2 * p, 0.1)))}
+    # bras opposés aux jambes : le gauche avance avec la jambe droite
+    t["bras_g"] = {"rotation": wave(RL, 18, lambda p: (-30 * S(p, 0.27) + 4, 0, 0))}
+    t["avant_bras_g"] = {"rotation": wave(RL, 18, lambda p: (-38 - 14 * S(p, 0.20), 0, 0))}
+    t["bras_d"] = {"rotation": wave(RL, 18, lambda p: (13 * S(p, 0.27) + 6, 0, 0))}
+    t["avant_bras_d"] = {"rotation": wave(RL, 18, lambda p: (-16 + 5 * S(p, 0.18), 0, 0))}
+    t["marteau"] = {"rotation": wave(RL, 18, lambda p: (7 * S(p, 0.12), 0, 3 * S(2 * p, 0.3)))}
+    out.append(anim("run", RL, "loop", t))
 
     # ------------------------------------------------------------------ attack : préparation, frappe, impact, 1,4 s
     # 0 → 0,5 s préparation lente ; 0,55 s sommet ; 0,8 s impact (frappe en 0,25 s) ; retour jusqu'à 1,4 s

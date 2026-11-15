@@ -32,6 +32,24 @@ ARMS = ("Arm_right", "Arm_left")
 FLEX = (-18.0, 60.0)        # bend of a leg (thigh +f, shin -2f) allowed to reach the ground
 
 
+def cyc(pts):
+    """Periodic curve through the keys [(u, value)] (u from 0 to 1, rising): Catmull-Rom cubic, so no stop at a key
+    (a planted leg sweeps at a steady speed)."""
+    ext = [(u + d, v) for d in (-1, 0, 1) for u, v in pts]
+
+    def f(u):
+        u %= 1.0
+        i = max(j for j in range(len(ext) - 2) if ext[j][0] <= u)
+        (up, vp), (u0, v0), (u1, v1), (un, vn) = ext[i - 1], ext[i], ext[i + 1], ext[i + 2]
+        m0 = (v1 - vp) / (u1 - up)
+        m1 = (vn - v0) / (un - u0)
+        h = u1 - u0
+        x = (u - u0) / h
+        return ((2 * x ** 3 - 3 * x ** 2 + 1) * v0 + (x ** 3 - 2 * x ** 2 + x) * h * m0
+                + (-2 * x ** 3 + 3 * x ** 2) * v1 + (x ** 3 - x ** 2) * h * m1)
+    return f
+
+
 def K(*pts):
     """keys() over (tick, value) points."""
     pp = [(T(a), b) for a, b in pts]
@@ -100,7 +118,9 @@ def animations():
     L = 1.4
     a = Anim("walk", 28, loop=True)
     gait(a, L, 16, 30, 10, "walk")
-    u = lambda t: t / L                                                                      # noqa: E731
+    # L bound here: the functions are sampled after the whole file ran, when L is another animation's (the body
+    # used to bob every 5 ticks instead of 14 and to jump at the loop, fixed 2026-11-15)
+    u = lambda t, L=L: t / L                                                                 # noqa: E731
     a.pos("Body", lambda t: (0, -0.6 * (1 + C(4 * math.pi * u(t))) / 2, 0))
     a.rot("Body", lambda t: (1.0 * C(4 * math.pi * u(t)), 2.5 * S(TAU * u(t)), 2 * S(TAU * u(t))))
     a.rot("Neck", lambda t: (-1.5 * C(4 * math.pi * u(t) + 0.5), -2 * S(TAU * u(t)), -1 * S(TAU * u(t))))
@@ -108,6 +128,40 @@ def animations():
     a.rot("Jaw", lambda t: (-1.5 - 1.5 * bump(0.6, 1.0, t), 0, 0))
     tail(a, lambda t, i: (1.5 * C(4 * math.pi * u(t) - 0.6 - 0.3 * i), -(2 + i) * S(TAU * u(t) - 0.5 - 0.35 * i), 0))
     arms(a, lambda t, s: (8 * S(4 * math.pi * u(t) + 0.3), 0, 0))
+    A.append(a)
+
+    # ------------------------------------------------------------------ run: 0.7 s loop (14 ticks)
+    # Theropod run (the pet as a mount, 9.6 blocks a second: 3.4 blocks a step). Right foot lands at 0, left at 7.
+    # Each foot is planted for 30 % of the cycle (ticks 0-4 right, 7-11 left), the thigh sweeping from +34 to -34
+    # degrees; then both feet are off the ground (ticks 4-7 and 11-14): the trailing leg folds up behind (knee to
+    # -85), swings through and reaches forward for the next landing. The body leans forward and rides low: it sinks
+    # at mid stance, rises through the flight (cyc curve, twice a cycle), twists towards the planted leg; the neck
+    # and head give the lean back so the head stays level and steady; the tail is held stiff behind as a
+    # counterweight and whips sideways against the hips, its wave running to the tip; the little arms are tucked;
+    # jaws parted, snapping a little at each landing.
+    RL = 0.7                    # its own name: the walk's functions read L when they are sampled
+    a = Anim("run", 14, loop=True)
+    thigh_c = cyc([(0.00, 34), (0.15, 0), (0.30, -34), (0.42, -44), (0.64, 6), (0.86, 42)])
+    shin_c = cyc([(0.00, -6), (0.15, -2), (0.30, -10), (0.46, -72), (0.64, -86), (0.86, -24)])
+    air = {}
+    for leg, off in (("Leg_right", 0.0), ("Leg_left", 0.5)):
+        a.rot(leg, lambda t, off=off: (thigh_c(t / RL + off), 0, 0))
+        a.rot(SHIN[leg], lambda t, off=off: (shin_c(t / RL + off), 0, 0))
+        start = ((0.30 - off) % 1.0) * RL                       # toe-off of this leg
+        wins = [(start + k * RL + 0.02, start + k * RL + 0.70 * RL - 0.02) for k in (-1, 0)]
+        air[leg] = [(max(0.0, x), min(RL, y)) for x, y in wins if y > 0 and x < RL]
+    AIR["run"] = air
+    ru = lambda t: t / RL                                                                     # noqa: E731
+    bob = cyc([(0.00, -2.6), (0.30, -4.4), (0.60, -2.4), (0.80, -0.4)])      # per step: landing, low, toe-off, apex
+    sway = lambda t: S(TAU * (ru(t) + 0.10))                                                  # noqa: E731
+    a.pos("Body", lambda t: (0, bob(2 * ru(t)), 0))
+    a.rot("Body", lambda t: (-7 + 1.5 * C(4 * math.pi * (ru(t) - 0.15)), 4 * sway(t), 2.5 * sway(t)))
+    a.rot("Neck", lambda t: (5 - 2 * C(4 * math.pi * (ru(t) - 0.15) + 0.5), -2.4 * sway(t), -1.2 * sway(t)))
+    a.rot("Head", lambda t: (3 + 1.5 * C(4 * math.pi * (ru(t) - 0.15) + 1.2), -1.4 * sway(t), 0))
+    a.rot("Jaw", lambda t: (-7 - 4 * bump(0, 0.15, (2 * ru(t)) % 1.0), 0, 0))
+    tail(a, lambda t, i: (2 + 1.5 * C(4 * math.pi * ru(t) - 0.6 - 0.35 * i),
+                          -(3 + 1.6 * i) * S(TAU * ru(t) + 0.6 - 0.45 * i), 0))
+    arms(a, lambda t, s: (-10 + 7 * S(4 * math.pi * ru(t) + 0.3), 0, 0))
     A.append(a)
 
     # ------------------------------------------------------------------ detect: 0.6 s (12 ticks)
