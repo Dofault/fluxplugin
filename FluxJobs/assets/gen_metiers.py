@@ -9,7 +9,7 @@ Thème vanilla (2026-10-29) : fond fluxui:bg_metiers (Flux/assets/vanilla/gen_ui
   cases 9 / 18 / 27 / 36     : les 4 familiers FluxPets du métier, en portrait
   case 45                    : son légendaire de boss (familier du boss de son donjon, 2026-11-14)
   cadre                      : illustration du métier choisi (influmetier:metier_<id>, widget image)
-  cases 15-17 ... 42-44      : les 12 métiers (case du métier affiché éclairée, widget lit)
+  cases 15-17 ... 42-44      : les 12 métiers (plus de case éclairée depuis le 2026-11-15)
   rangée 5 (46-53)           : barre d'XP vers le niveau suivant, « Niv. N » dessus, XP au survol (widget bar)
   inventaire 54-80           : actions rémunérées (27 par page)
   barre d'action 81 / 89     : pagination des actions (widget pager : rien quand tout tient sur une page)
@@ -87,7 +87,8 @@ def cartes(serie, toutes):
 
 
 def widgets(jid, nom, case):
-    """Widgets de la page d'un métier : nom, illustration, case éclairée, barre d'XP (8 espaces : dans une page)."""
+    """Widgets de la page d'un métier : nom, illustration, barre d'XP (8 espaces : dans une page). Plus de case
+    éclairée sur le métier affiché (2026-11-15, demande du propriétaire)."""
     b = BARRE
     return "\n".join([
         "    widgets:",
@@ -96,8 +97,6 @@ def widgets(jid, nom, case):
         f"        text: {q(nom)}",
         "      illustration:",
         "        type: image", f"        glyph: {q('metier_' + jid)}", f"        x: {PHOTO_X}", "        width: 64",
-        "      selection:",
-        "        type: lit", f"        slot: {case}",
         "      niveau:",
         "        type: bar", f"        x: {b['x']}", f"        y: {b['y']}", f"        width: {b['width']}",
         f"        progress: {q(f'%ecojobs_{jid}_percentage_progress%')}", "        max: 100", "        colour: green",
