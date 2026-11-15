@@ -173,14 +173,15 @@ public final class ItemFactory {
 
     /**
      * Nom du bouton. Un nom (après placeholders) contenant « lang:<clé> » affiche le nom traduit
-     * de Minecraft dans la langue du joueur (ex : « Minerai de fer »), en or comme les titres.
+     * de Minecraft dans la langue du joueur (ex : « Minerai de fer »), dans la couleur des noms (style.yml).
      */
     private static Component name(Player viewer, String raw) {
         String resolved = Text.placeholders(viewer, raw);
         int at = resolved.indexOf("lang:");
         if (at < 0) return Text.line(viewer, raw);
         String key = resolved.substring(at + 5).trim().split("\\s")[0];
-        return Component.translatable(key).color(net.kyori.adventure.text.format.TextColor.color(0xFFD94D))
+        return Component.translatable(key).color(net.kyori.adventure.text.format.TextColor.color(
+                        fr.influencraft.flux.api.text.Style.get().nameColour()))
                 .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false);
     }
 

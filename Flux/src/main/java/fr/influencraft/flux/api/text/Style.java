@@ -99,6 +99,14 @@ public final class Style {
         return sb.toString();
     }
 
+    /**
+     * Colours a button name may start with that still count as « no colour of its own » (style.yml
+     * {@code name-default-colours}): the former default name colour, written into hundreds of menu and language
+     * names, so that the {@code name} template applies to them.
+     */
+    private static List<String> defaultNameColours = List.of("&#FFD94D");
+    private static final Pattern HEX = Pattern.compile("&#([0-9A-Fa-f]{6})");
+
     private static Look base = defaults();
     private static final Map<String, Look> VARIANTS = new HashMap<>();
     private static final Style DEFAULT = new Style(null);
@@ -151,6 +159,15 @@ public final class Style {
     /** Called by Flux with style.yml. */
     public static void configure(ConfigurationSection file) {
         base = read(file, defaults());
+        List<String> colours = file == null || !file.contains("name-default-colours") ? List.of("&#FFD94D")
+                : file.getStringList("name-default-colours");
+        List<String> forms = new ArrayList<>();
+        for (String c : colours) {
+            forms.add(c.toLowerCase(Locale.ROOT));
+            Matcher hex = HEX.matcher(c);
+            if (hex.matches()) forms.add("<#" + hex.group(1).toLowerCase(Locale.ROOT) + ">");
+        }
+        defaultNameColours = List.copyOf(forms);
         VARIANTS.clear();
         ConfigurationSection v = file == null ? null : file.getConfigurationSection("variants");
         if (v != null) for (String name : v.getKeys(false)) VARIANTS.put(name.toLowerCase(Locale.ROOT), read(v.getConfigurationSection(name), base));
@@ -166,7 +183,22 @@ public final class Style {
     /** Button name through the name template (a colour in the name itself wins). */
     public String name(String text) {
         Frame f = look().frame();
+        for (boolean again = true; again; ) {
+            again = false;
+            for (String c : defaultNameColours) {
+                if (text.regionMatches(true, 0, c, 0, c.length())) {
+                    text = text.substring(c.length());
+                    again = true;
+                }
+            }
+        }
         return (f.enabled() ? f.name() : "") + look().name().replace("{text}", text);
+    }
+
+    /** The colour of the name template (its first {@code &#rrggbb}), 0xFFD94D when it has none. */
+    public int nameColour() {
+        Matcher m = HEX.matcher(look().name());
+        return m.find() ? Integer.parseInt(m.group(1), 16) : 0xFFD94D;
     }
 
     public String icon(Click click) {

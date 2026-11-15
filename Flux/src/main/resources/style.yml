@@ -43,6 +43,10 @@ separator: ""
 
 # button name ({text}: the name, a colour in the name itself wins)
 name: "&#FFD94D{text}"
+# colours a name may start with that still count as « no colour of its own »: the name template applies
+# (the former default name colour, still written in many menus and language files)
+name-default-colours:
+  - "&#FFD94D"
 
 icons:
   left: "&r&7%img_left_click%"
