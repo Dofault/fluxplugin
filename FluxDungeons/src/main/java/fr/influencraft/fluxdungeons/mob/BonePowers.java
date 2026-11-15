@@ -422,7 +422,7 @@ final class BonePowers {
             if (t == 6 || t == 10) snd(at, "block.bone_block.break", 1.4f, 0.5f);
             if (t >= 4 && t < 14 && t % 3 == 0) w.spawnParticle(Particle.BLOCK, body(e, 0, 0.1, 2.0), 6, 0.6, 0.05, 0.4, 0, blockUnder(at));
             // the line of the rush (beige while it can still turn, red once locked)
-            if (t >= 2 && t < launch && t % 2 == 0) {
+            if (t >= 2 && t < launch && t % 2 == 0 && Fx.telegraphs()) {
                 Color col = t > lock ? RED : WARN;
                 for (double k = 2.4; k <= distance + 2.8; k += 0.7) {
                     Location p = at.clone().add(f.clone().multiply(k));

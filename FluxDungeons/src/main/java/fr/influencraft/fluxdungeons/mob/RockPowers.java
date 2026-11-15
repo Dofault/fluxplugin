@@ -67,6 +67,11 @@ final class RockPowers {
 
         void animate(String animation);
 
+        /** Whether it wears a model whose animation sets when its blows land (their timing then stays as written). */
+        default boolean animated() {
+            return false;
+        }
+
         /** The monster stops moving (and casting) for this long. */
         void hold(int ticks);
 
@@ -151,6 +156,9 @@ final class RockPowers {
         if (!TYPES.contains(ab.type())) return false;
         String animation = ab.text("animation", "");
         long impact = (long) ab.number("impact", 0);
+        // a plain monster strikes almost at once (owner's rule: no wind-up); a model keeps its animation's timing,
+        // and the ultimate (cataclysm) its announced charge
+        if (!c.animated() && !ab.type().equals("cataclysm") && impact > 0) impact = Fx.windup(impact, 4);
         // a bite needs someone in front; a shard someone keeping away: otherwise nothing is played
         if (ab.type().equals("bite") && closest(c.entity(), ab.number("range", 4.5) + 1) == null) return true;
         if (ab.type().equals("rock_shard")) {
@@ -337,7 +345,7 @@ final class RockPowers {
                         drop(spot, data, c);
                         return;
                     }
-                    for (int k = 0; k < 10; k++) {
+                    for (int k = 0; k < 10 && Fx.telegraphs(); k++) {
                         double a = Math.PI * 2 * k / 10 + t * 0.2;
                         w.spawnParticle(Particle.DUST, spot.clone().add(Math.cos(a) * 1.4, 0.1, Math.sin(a) * 1.4), 1, 0, 0, 0, 0,
                                 new Particle.DustOptions(org.bukkit.Color.fromRGB(150, 140, 130), 1.2f));

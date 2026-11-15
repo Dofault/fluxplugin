@@ -135,6 +135,14 @@ attack-cadence:
     volume: 0.7
     pitch: 1.0
 
+# Attack warnings: monsters and bosses strike without warning (no ring, cone or line on the ground, no long
+# wind-up); only boss ultimates stay announced. enabled: true brings every warning back. windup-share: share of a
+# spell's written wind-up kept for monsters without a model (0.25: a 24-tick wind-up lasts 6, never less than a short
+# gesture). Monsters with a model keep the timing of their animation.
+telegraphs:
+  enabled: false
+  windup-share: 0.25
+
 # Melee reach of the monsters: this many blocks beyond the vanilla reach (players hit at their class's range).
 dungeon-reach-bonus: 1.5
 # Aim assist of the rpg, the same for every class (basic attack: melee, arrow, bolt, shard): a monster counts as
@@ -187,11 +195,12 @@ keys:
 # multipliés par la récompense du niveau de difficulté. Ils jaillissent du monstre (au plus max-coins-shown pièces).
 tokens:
   currency: dungeon_tokens
+  # per rank: a random amount from [min, max], or a fixed number
   per-rank:
-    TRASH: 1
-    ELITE: 2
-    MINIBOSS: 5
-    BOSS: 20
+    TRASH: [1, 3]
+    ELITE: [3, 5]
+    MINIBOSS: [8, 12]
+    BOSS: [35, 45]
   max-coins-shown: 6
 
 # Fin d'un donjon gagné : retour immédiat au lobby RPG, feux d'artifice (sans dégâts), puis le familier du boss

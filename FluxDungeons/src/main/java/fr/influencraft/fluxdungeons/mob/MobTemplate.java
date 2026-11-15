@@ -151,10 +151,11 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
      * What makes a troop monster play its own way, beyond its abilities: {@code health} and {@code damage} multiply
      * the life and attack its rank gets from the rpg balance (1 = as any monster of its rank), {@code keepMin} /
      * {@code keepMax} the distance a controlled monster keeps from its target (0 = walks into melee), {@code splitMob}
-     * and {@code splitCount} the monsters it turns into when it dies.
+     * and {@code splitCount} the monsters it turns into when it dies, {@code sprint} its bursts of speed.
      */
-    public record Troop(double health, double damage, double keepMin, double keepMax, String splitMob, int splitCount) {
-        public static final Troop PLAIN = new Troop(1, 1, 0, 0, null, 0);
+    public record Troop(double health, double damage, double keepMin, double keepMax, String splitMob, int splitCount,
+                        Sprint sprint) {
+        public static final Troop PLAIN = new Troop(1, 1, 0, 0, null, 0, Sprint.NONE);
 
         public boolean kites() {
             return keepMax > 0;
@@ -165,7 +166,28 @@ public record MobTemplate(String id, EntityType type, String name, boolean boss,
             List<Double> keep = c.getDoubleList("keep-distance");
             double min = keep.size() > 0 ? Math.max(0, keep.get(0)) : 0, max = keep.size() > 1 ? Math.max(min + 1, keep.get(1)) : 0;
             String split = c.getString("split.mob");
-            return new Troop(health, damage, min, max, split, split == null ? 0 : Math.max(1, c.getInt("split.count", 2)));
+            return new Troop(health, damage, min, max, split, split == null ? 0 : Math.max(1, c.getInt("split.count", 2)),
+                    Sprint.read(c.getConfigurationSection("sprint")));
+        }
+    }
+
+    /**
+     * Bursts of speed while it hunts ({@code sprint: {speed, ticks, every, min-range}}): every {@code every} seconds or
+     * so (a random half more or less), when its target stands {@code min-range} blocks away or more, it runs at
+     * {@code speed} times its walk for {@code ticks} ticks, then walks again. Gives monsters different ways to move:
+     * a spider that darts, a bull that charges, a slow brute that never runs.
+     */
+    public record Sprint(double speed, int ticks, double every, double minRange) {
+        public static final Sprint NONE = new Sprint(1, 0, 0, 0);
+
+        public boolean on() {
+            return speed > 1 && ticks > 0;
+        }
+
+        static Sprint read(ConfigurationSection s) {
+            if (s == null) return NONE;
+            return new Sprint(Math.max(1, Math.min(3, s.getDouble("speed", 1.6))), Math.max(0, s.getInt("ticks", 30)),
+                    Math.max(1, s.getDouble("every", 6)), Math.max(0, s.getDouble("min-range", 4)));
         }
     }
 

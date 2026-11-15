@@ -224,7 +224,7 @@ final class ThemePowers {
         LivingEntity e = c.entity();
         World w = e.getWorld();
         double range = ab.number("range", 9), width = ab.number("width", 1.2), push = ab.number("push", 1.1);
-        int impact = (int) ab.number("impact", 16);
+        int impact = Fx.windup(ab.number("impact", 16), 4);
         Location from = e.getLocation().add(0, 0.2, 0);
         Vector dir = target.getLocation().toVector().subtract(from.toVector()).setY(0).normalize();
         Color warn = color(ab, 0x43B7B0);
@@ -233,7 +233,7 @@ final class ThemePowers {
         every(impact + 10, t -> {
             if (!e.isValid()) return false;
             if (t < impact) {
-                if (t % 3 == 0) {
+                if (t % 3 == 0 && Fx.telegraphs()) {
                     for (double s = 1; s <= range; s += 0.7) {
                         Location l = from.clone().add(dir.clone().multiply(s));
                         w.spawnParticle(Particle.DUST, l, 1, width / 3, 0, width / 3, 0, new Particle.DustOptions(warn, 1.2f));
@@ -279,7 +279,7 @@ final class ThemePowers {
                 double k = (double) t / flight;
                 Location l = start.clone().add(spot.toVector().subtract(start.toVector()).multiply(k)).add(0, Math.sin(Math.PI * k) * 3, 0);
                 ball.teleport(l);
-                if (t % 2 == 0) Fx.ring(spot, radius, warn, 1.1f, t * 0.1);
+                if (t % 2 == 0) Fx.warnRing(spot, radius, warn, 1.1f, t * 0.1);
                 return true;
             }
             if (t == flight) {
@@ -321,7 +321,7 @@ final class ThemePowers {
         every(flight, t -> {
             double k = (double) t / flight;
             net.teleport(start.clone().add(spot.toVector().subtract(start.toVector()).multiply(k)).add(0, Math.sin(Math.PI * k) * 2.5, 0));
-            if (t % 2 == 0) Fx.ring(spot, radius, Color.fromRGB(0xE8E8E8), 1.2f, t * 0.15);
+            if (t % 2 == 0) Fx.warnRing(spot, radius, Color.fromRGB(0xE8E8E8), 1.2f, t * 0.15);
             return t < flight;
         }, () -> {
             drop(net);
@@ -344,7 +344,7 @@ final class ThemePowers {
         LivingEntity e = c.entity();
         World w = e.getWorld();
         double range = ab.number("range", 3.5), angle = ab.number("angle", 150), push = ab.number("push", 0.7);
-        int impact = (int) ab.number("impact", 12);
+        int impact = Fx.windup(ab.number("impact", 12), 5);
         String look = ab.text("look", "scythe");
         Location from = e.getLocation();
         Vector dir = target.getLocation().toVector().subtract(from.toVector()).setY(0);
@@ -357,7 +357,7 @@ final class ThemePowers {
         every(impact + 4, t -> {
             if (!e.isValid()) return false;
             if (t < impact) {
-                if (t % 3 == 0) Fx.cone(from, d, angle, range, edge, Color.fromRGB(0x5A3A1A));
+                if (t % 3 == 0) Fx.warnCone(from, d, angle, range, edge, Color.fromRGB(0x5A3A1A));
                 return true;
             }
             if (t == impact) {
@@ -483,7 +483,7 @@ final class ThemePowers {
             Location under = from.clone().add(spot.toVector().subtract(from.toVector()).multiply(Math.min(1, k * 1.3)));
             if (t > 8) Mobs.move(e, under.clone().add(0, -2.6, 0));
             if (t % 3 == 0) fx.trail(under);
-            if (t % 2 == 0) Fx.ring(spot, radius, Color.fromRGB(k > 0.7 ? 0xFF5C5C : 0x96765A), 1.2f, t * 0.2);
+            if (t % 2 == 0) Fx.warnRing(spot, radius, Color.fromRGB(k > 0.7 ? 0xFF5C5C : 0x96765A), 1.2f, t * 0.2);
             if (t % 6 == 0) w.playSound(spot, Sound.BLOCK_GRAVEL_STEP, 1.2f, 0.6f);
             return true;
         }, () -> {

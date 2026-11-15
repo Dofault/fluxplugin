@@ -53,6 +53,50 @@ public final class Fx {
     private final Plugin plugin;
     private final Set<Entity> alive = new HashSet<>();
 
+    /**
+     * Whether attacks show where and when they will hit (rings, cones, aiming lines, a long wind-up). Off by default
+     * (owner's rule of 2026-11-15: monsters and bosses strike at once, only a boss's ultimate is announced). Boss
+     * ultimates draw their marks with {@link #ring} / {@link #cone} directly and ignore this switch; every other
+     * attack draws through {@link #warnRing}, {@link #warnCone}, {@link #warnRumble} or checks {@link #telegraphs()}.
+     */
+    private static boolean telegraphs;
+    /** Share of a troop's configured wind-up kept while telegraphs are off (0.25 = a 24-tick wind-up lasts 6). */
+    private static double windup = 0.25;
+
+    /** Reads the {@code telegraphs} section of the config. */
+    public static void settings(boolean on, double windupShare) {
+        telegraphs = on;
+        windup = Math.max(0, Math.min(1, windupShare));
+    }
+
+    public static boolean telegraphs() {
+        return telegraphs;
+    }
+
+    /**
+     * A wind-up of {@code ticks} as configured, shortened while telegraphs are off (never under {@code min} ticks:
+     * the time of a short gesture so the hit is not before the body moves).
+     */
+    public static int windup(double ticks, int min) {
+        if (telegraphs) return (int) ticks;
+        return (int) Math.max(Math.min(ticks, min), Math.round(ticks * windup));
+    }
+
+    /** {@link #ring} drawn only while telegraphs are on (the mark of a coming attack). */
+    public static void warnRing(Location center, double radius, Color color, float size, double turn) {
+        if (telegraphs) ring(center, radius, color, size, turn);
+    }
+
+    /** {@link #cone} drawn only while telegraphs are on. */
+    public static void warnCone(Location from, Vector dir, double angle, double length, Color edge, Color fill) {
+        if (telegraphs) cone(from, dir, angle, length, edge, fill);
+    }
+
+    /** {@link #rumble} drawn only while telegraphs are on. */
+    public static void warnRumble(Location center, double radius, double k, Color edge) {
+        if (telegraphs) rumble(center, radius, k, edge);
+    }
+
     Fx(Plugin plugin) {
         this.plugin = plugin;
     }

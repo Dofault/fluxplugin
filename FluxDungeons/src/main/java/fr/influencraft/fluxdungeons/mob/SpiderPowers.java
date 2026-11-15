@@ -76,7 +76,11 @@ final class SpiderPowers {
     private static final String AWAKE = "fluxdungeons_spider_awake";
     private static final List<String> EYES = List.of("glow_Eyes_empty");
     /** Blocks a second its walk and its run are drawn for (araignee_sylvestre_anim.py: WALK_SPEED, RUN_SPEED). */
-    private static final double WALK = 1.4, RUN = 3.05;
+    /**
+     * Blocks per second walking and running. Its run animation was made for {@link #RUN_DRAWN}: it plays faster at
+     * {@link #RUN} so the feet keep up (2026-11-15: the run was too slow, it now runs as fast as a sprinting player).
+     */
+    private static final double WALK = 1.4, RUN = 5.6, RUN_DRAWN = 3.05;
     /** Blocks between two plants of a group of feet, in both gaits. */
     private static final double STRIDE = 0.84;
     /** Its feet at rest: blocks to its right, blocks ahead of its origin (front pair first). */
@@ -426,7 +430,10 @@ final class SpiderPowers {
         if (d > 10) {
             setMode(b, Mode.CHASE, 40);
         } else if (d > 4.5) {
-            if (roll < 0.40) {
+            if (roll < 0.22) {
+                // a short burst: it bolts at its prey and stops dead once on it (CHASE ends under 5 blocks)
+                setMode(b, Mode.CHASE, 16 + r.nextInt(10));
+            } else if (roll < 0.50) {
                 setMode(b, Mode.CIRCLE, 26 + r.nextInt(24));
                 b.orbit = Math.max(4.5, Math.min(8, d));
                 if (r.nextDouble() < 0.4) b.side = -b.side;
@@ -514,7 +521,7 @@ final class SpiderPowers {
         b.gait = gait;
         switch (gait) {
             case WALK -> mobs.loop(b.e, "walk", true);
-            case RUN -> mobs.loop(b.e, "run", true);
+            case RUN -> mobs.loop(b.e, "run", true, (float) (RUN / RUN_DRAWN));
             case SHUFFLE -> mobs.loop(b.e, "shuffle", true);
             default -> {
             }
@@ -989,7 +996,7 @@ final class SpiderPowers {
             if (t == 8) snd(at, "entity.spider.step", 1.4f, 0.5f);
             // the cone it is about to snap in, drawn on the ground while the chelicerae open
             if (t >= 4 && t < 16 && t % 3 == 0) {
-                Fx.cone(at.clone().add(0, 0.1, 0), forward(b), half * 2, reach, t >= 10 ? RED : OLIVE, t >= 10 ? RED : OLIVE);
+                Fx.warnCone(at.clone().add(0, 0.1, 0), forward(b), half * 2, reach, t >= 10 ? RED : OLIVE, t >= 10 ? RED : OLIVE);
                 mote(body(b, 0, 0.7, 1.3), BARK, 0.7f, 2, 0.15);
             }
             if (t == 15) {
@@ -1240,8 +1247,8 @@ final class SpiderPowers {
             }
             if (t >= 6 && t < 32 && t % 2 == 0) {
                 for (Location z : zones) {
-                    Fx.ring(z.clone().add(0, 0.08, 0), radius, t >= 20 ? RED : OLIVE, 1.2f, t * 0.05);
-                    Fx.ring(z.clone().add(0, 0.08, 0), knot, t >= 20 ? RED : OLIVE, 0.9f, -t * 0.08);
+                    Fx.warnRing(z.clone().add(0, 0.08, 0), radius, t >= 20 ? RED : OLIVE, 1.2f, t * 0.05);
+                    Fx.warnRing(z.clone().add(0, 0.08, 0), knot, t >= 20 ? RED : OLIVE, 0.9f, -t * 0.08);
                     if (t % 4 == 0) {
                         w.spawnParticle(Particle.BLOCK, z.clone().add(0, 0.1, 0), 5, radius * 0.4, 0.02, radius * 0.4, 0, DIRT);
                         leaves(z.clone().add(0, 0.3, 0), 1, radius * 0.4);

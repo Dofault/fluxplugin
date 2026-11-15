@@ -233,7 +233,7 @@ public final class DungeonMenus {
         }
         Lore tokenLore = Lore.create().description(raw("loot.tokens-desc"));
         for (String rank : List.of("TRASH", "ELITE", "MINIBOSS", "BOSS")) {
-            tokenLore.kv(raw("loot.rank." + rank.toLowerCase(java.util.Locale.ROOT)), String.valueOf(tokens.base(rank)));
+            tokenLore.kv(raw("loot.rank." + rank.toLowerCase(java.util.Locale.ROOT)), tokens.base(rank));
         }
         tokenLore.info(raw("loot.tokens-levels"));
         out.add(ListEntry.of("tokens").item(Items.of("itemsadder:fluxdonjon:jeton_donjon", raw("menu.tokens"), tokenLore.build(), viewer)));

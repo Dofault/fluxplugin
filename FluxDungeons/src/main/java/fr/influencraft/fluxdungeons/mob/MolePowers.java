@@ -330,7 +330,7 @@ final class MolePowers {
             if (t >= 4 && t < windup && t % 3 == 0) snd(at, "block.grindstone.use", 1.2f, 0.5f + 0.5f * t / windup);
             if (t >= 4 && t < windup && t % 2 == 0) Fx.drillSpin(tip(e, 3.0, 1.0), f, 0.5, t, earth);
             // the line of the rush (earth while it can still turn, red once locked)
-            if (t >= 4 && t < windup && t % 2 == 0) {
+            if (t >= 4 && t < windup && t % 2 == 0 && Fx.telegraphs()) {
                 Color col = t > lock ? RED : WARN;
                 for (double k = 2; k <= distance + 2; k += 0.8) {
                     Location p = at.clone().add(f.clone().multiply(k));
@@ -505,7 +505,7 @@ final class MolePowers {
             if (d < 1.2 || t >= maxTicks) {
                 done[0] = true;
                 surge(ab, c, st, onGround(dest), ab.number("surge-power", 8), ab.number("surge-radius", 3.5),
-                        (int) ab.number("warn", 26), 1.4, left);
+                        Fx.windup(ab.number("warn", 26), 8), 1.4, left, false);
                 return;
             }
             Vector dir = flat(at, dest);
@@ -524,14 +524,17 @@ final class MolePowers {
      * is above 1.
      */
     private void surge(MobTemplate.Ability ab, RockPowers.Caster c, State st, Location spot, double power, double radius,
-                       int warn, double launch, int left) {
+                       int warn, double launch, int left, boolean ultimate) {
         LivingEntity e = c.entity();
         World w = e.getWorld();
-        fx.crater(spot, radius, warn + 30, 0.4, Fx.BROKEN_EARTH);
+        if (ultimate || Fx.telegraphs()) fx.crater(spot, radius, warn + 30, 0.4, Fx.BROKEN_EARTH);
         timeline(e, warn + 40, t -> {
             if (t < warn) {
                 double k = t / (double) warn;
-                if (t % 2 == 0) Fx.rumble(spot, radius, k, k > 0.6 ? RED : WARN);
+                if (t % 2 == 0) {
+                    if (ultimate) Fx.rumble(spot, radius, k, k > 0.6 ? RED : WARN);
+                    else Fx.warnRumble(spot, radius, k, k > 0.6 ? RED : WARN);
+                }
                 if (t % 5 == 0) {
                     snd(spot, "entity.warden.dig", 1.4f, 0.5f + 0.4f * (float) k);
                     snd(spot, "block.gravel.break", 1.2f, 0.6f);
@@ -610,7 +613,7 @@ final class MolePowers {
             BlockData earth = blockUnder(at);
             if (t < 22 && t % 2 == 0) {
                 // the swept arc, announced (earth, then red)
-                Fx.cone(at, f, 128, radius, t >= 14 ? RED : WARN, EARTH);
+                Fx.warnCone(at, f, 128, radius, t >= 14 ? RED : WARN, EARTH);
                 if (t >= 8) Fx.drillSpin(drillAt(at, f, -62, radius * 0.55), aim(f, -62), 0.5, t, earth);
             }
             if (t >= 6 && t <= 12 && t % 3 == 0) {
@@ -769,7 +772,7 @@ final class MolePowers {
                 hide(c, st);
                 Location spot = crowded(e, home, area + 4);
                 surge(ab, c, st, spot == null ? onGround(home) : spot, ab.number("final-power", 11), ab.number("final-radius", 4.5),
-                        (int) ab.number("final-warn", 34), 2.0, 1);
+                        (int) ab.number("final-warn", 34), 2.0, 1, true);
             }
         });
     }

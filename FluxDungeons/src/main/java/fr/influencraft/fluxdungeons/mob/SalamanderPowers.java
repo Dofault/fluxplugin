@@ -723,7 +723,7 @@ final class SalamanderPowers implements Listener {
             }
             Vector f = dir[0];
             // the way of the rush on the ground: jade while it can still turn, red once locked
-            if (t >= 2 && t < launch && t % 2 == 0) {
+            if (t >= 2 && t < launch && t % 2 == 0 && Fx.telegraphs()) {
                 Color col = t > lock ? WARN : JADE;
                 for (double s = 2.4; s <= length[0] + 2.4; s += 0.8) {
                     Location p = at.clone().add(f.clone().multiply(s));

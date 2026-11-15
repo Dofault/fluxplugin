@@ -28,6 +28,11 @@ final class ModelBridge {
 
         /** Plays an animation in a loop until {@link #stop(String)} (running while an ability moves the monster). */
         default boolean loop(String animation) {
+            return loop(animation, 1f);
+        }
+
+        /** {@link #loop(String)} played faster or slower ({@code speed} 1 = as written). */
+        default boolean loop(String animation, float speed) {
             return false;
         }
 
@@ -63,9 +68,9 @@ final class ModelBridge {
                 return !tracker.isClosed() && tracker.animate(animation, AnimationModifier.DEFAULT_WITH_PLAY_ONCE);
             }
 
-            public boolean loop(String animation) {
+            public boolean loop(String animation, float speed) {
                 return !tracker.isClosed() && tracker.animate(animation,
-                        AnimationModifier.builder().type(AnimationIterator.Type.LOOP).build());
+                        AnimationModifier.builder().type(AnimationIterator.Type.LOOP).speed(speed).build());
             }
 
             public void stop(String animation) {

@@ -90,6 +90,8 @@ public final class Mobs {
         int lastMelee = -1000;
         /** No ability before this time (cast-gap after the last one). */
         long nextCast;
+        /** Ticks (server clock) when its burst of speed ends, and when the next may start. */
+        int sprintUntil, nextSprint;
         /** Server tick until which an ability keeps it still (hold), extended by later holds. */
         int holdUntil;
         /** Abilities cast once and done ({@code once: true}), and when each one became allowed by its life share. */
@@ -725,6 +727,33 @@ public final class Mobs {
         if (a.swimmer == null) plugin.getLogger().warning("Monster " + a.template.id() + " should swim but has no water around it.");
     }
 
+    // ---------------------------------------------------------------- sprints
+
+    private static final NamespacedKey SPRINT_KEY = new NamespacedKey("fluxdungeons", "sprint");
+
+    /**
+     * Every 10 ticks while it hunts: starts or ends a burst of speed ({@link MobTemplate.Sprint}), a modifier of its
+     * speed attribute. Its walk grows with the square of that attribute, hence the square root of the wanted factor.
+     */
+    private void sprint(Alive a, Player target) {
+        MobTemplate.Sprint s = a.template.extra().troop().sprint();
+        if (!s.on()) return;
+        AttributeInstance speed = a.entity.getAttribute(Attribute.MOVEMENT_SPEED);
+        if (speed == null) return;
+        int now = Bukkit.getCurrentTick();
+        boolean running = speed.getModifier(SPRINT_KEY) != null;
+        if (running && now >= a.sprintUntil) {
+            speed.removeModifier(SPRINT_KEY);
+            a.nextSprint = now + (int) (s.every() * 20 * ThreadLocalRandom.current().nextDouble(0.5, 1.5));
+        } else if (!running && now >= a.nextSprint
+                && target.getLocation().distanceSquared(a.entity.getLocation()) >= s.minRange() * s.minRange()) {
+            speed.addModifier(new org.bukkit.attribute.AttributeModifier(SPRINT_KEY, Math.sqrt(s.speed()) - 1,
+                    org.bukkit.attribute.AttributeModifier.Operation.MULTIPLY_SCALAR_1));
+            a.sprintUntil = now + s.ticks();
+            a.entity.getWorld().spawnParticle(Particle.CLOUD, a.entity.getLocation().add(0, 0.2, 0), 6, 0.3, 0.05, 0.3, 0.02);
+        }
+    }
+
     // ---------------------------------------------------------------- controlled monsters
 
     private final com.destroystokyo.paper.entity.ai.GoalKey<Mob> pilotKey;
@@ -885,7 +914,7 @@ public final class Mobs {
     private void charge(Alive a, Ability ab, Player target) {
         LivingEntity e = a.entity;
         World w = e.getWorld();
-        int windup = (int) Math.max(1, ab.number("impact", 10));
+        int windup = Fx.windup(Math.max(1, ab.number("impact", 10)), 6);
         int dash = (int) Math.max(1, ab.number("duration", 12));
         double distance = ab.number("distance", 8), width = ab.number("width", 2.5), knock = ab.number("knockback", 1);
         boolean back = ab.flag("return", false);
@@ -913,7 +942,7 @@ public final class Mobs {
                 if (t <= windup) {
                     // the way it will rush, drawn on the ground towards the target, brighter as it comes
                     Vector to = target.getLocation().toVector().subtract(e.getLocation().toVector()).setY(0);
-                    if (to.lengthSquared() > 0.01 && t % 2 == 0) {
+                    if (to.lengthSquared() > 0.01 && t % 2 == 0 && Fx.telegraphs()) {
                         double len = Math.min(distance, to.length() + 1.5);
                         Vector step = to.normalize();
                         for (double d = 1; d <= len; d += 0.6) {
@@ -1155,9 +1184,14 @@ public final class Mobs {
 
     /** Plays an animation of a monster's model in a loop, or stops it. */
     public void loop(LivingEntity e, String animation, boolean on) {
+        loop(e, animation, on, 1f);
+    }
+
+    /** {@link #loop(LivingEntity, String, boolean)} at a speed of the animation (1 = as written). */
+    public void loop(LivingEntity e, String animation, boolean on, float speed) {
         Alive a = alive.get(e.getUniqueId());
         if (a == null || a.model == null) return;
-        if (on) a.model.loop(animation);
+        if (on) a.model.loop(animation, speed);
         else a.model.stop(animation);
     }
 
@@ -1529,6 +1563,7 @@ public final class Mobs {
                 continue;
             }
             a.lastEngaged = now;
+            sprint(a, target);
             double life = 100 * a.entity.getHealth() / Math.max(1, maxHealth(a.entity));
             // one ability at a time, drawn among those ready (the first of the list would always win), cast-gap apart
             if (now < a.nextCast || !castsAbilities(a) || (a.swimmer != null && !a.swimmer.mayCast())) continue;
@@ -2052,6 +2087,10 @@ public final class Mobs {
                 a.animate(animation);
             }
 
+            public boolean animated() {
+                return a.model != null;
+            }
+
             public void hold(int ticks) {
                 // still during its attack (no walk over the animation, no other ability meanwhile); a later hold
                 // extends it (a rolling charge ending in a wall); AI off for another reason is left alone
@@ -2231,9 +2270,11 @@ public final class Mobs {
             case "slam" -> {
                 String animation = ab.text("animation", "attack");
                 long impact = (long) ab.number("impact", a.model == null ? 12 : 16);
+                // a model hits on its animation's tick; a plain monster strikes almost at once
+                if (a.model == null) impact = Fx.windup(impact, 4);
                 if (a.model != null) a.model.play(animation);
                 double radius = ab.number("radius", 4);
-                w.spawnParticle(Particle.DUST, at, 30, radius / 2, 0.1, radius / 2, 0, new Particle.DustOptions(org.bukkit.Color.RED, 1.5f));
+                if (Fx.telegraphs()) w.spawnParticle(Particle.DUST, at, 30, radius / 2, 0.1, radius / 2, 0, new Particle.DustOptions(org.bukkit.Color.RED, 1.5f));
                 if (e instanceof Mob m) m.setAI(false);
                 w.playSound(at, Sound.ENTITY_IRON_GOLEM_ATTACK, 1f, 0.6f);
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {

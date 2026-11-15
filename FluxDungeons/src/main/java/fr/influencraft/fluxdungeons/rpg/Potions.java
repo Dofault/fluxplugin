@@ -31,7 +31,8 @@ import java.util.function.Supplier;
 
 /**
  * Potions of the rpg (2026-11-14): items {@code fluxrpg:potion_<id>} of {@code rpg/potions.yml}, a right click gives back
- * a share of the drinker's life or mana (one potion of a kind every {@code cooldown} seconds). Bought with dungeon
+ * a share of the drinker's life or mana, no cooldown; a potion that would give nothing (life or mana full) is not
+ * drunk and says nothing (owner's rule of 2026-11-15). Bought with dungeon
  * tokens at the potion merchant of the rpg lobby ({@code /potions}, a Typewriter NPC runs it), each one from its rpg
  * level: the bigger ones open as the character grows.
  */
@@ -45,8 +46,6 @@ public final class Potions {
     private final CombatEngine combat;
     private final Supplier<String> currency;
     private final Map<String, Potion> potions = new LinkedHashMap<>();
-    private final Map<UUID, Map<String, Long>> used = new HashMap<>();
-    private int cooldown = 8;
 
     Potions(FluxPlugin plugin, RpgPlayers players, CombatEngine combat, Supplier<String> currency) {
         this.plugin = plugin;
@@ -61,7 +60,6 @@ public final class Potions {
         File file = new File(plugin.getDataFolder(), "rpg/potions.yml");
         if (!file.exists() && plugin.getResource("rpg/potions.yml") != null) plugin.saveResource("rpg/potions.yml", false);
         YamlConfiguration c = YamlConfiguration.loadConfiguration(file);
-        cooldown = Math.max(0, c.getInt("cooldown", 8));
         potions.clear();
         ConfigurationSection all = c.getConfigurationSection("potions");
         if (all == null) return;
@@ -84,7 +82,6 @@ public final class Potions {
                     "%share%", Format.decimal(p.share() * 100));
             y.set("lore", Lore.create().description(what)
                     .kv(plugin.messages().raw("potions.level"), p.level())
-                    .kv(plugin.messages().raw("potions.cooldown"), cooldown + " s")
                     .right(plugin.messages().raw("potions.drink")).build());
             y.set("universe", RpgWorld.UNIVERSE);
             catalog.add("potion_" + p.id(), y);
@@ -97,32 +94,17 @@ public final class Potions {
         Potion potion = potions.get(itemId.substring(itemId.indexOf(':') + 1).replaceFirst("^potion_", ""));
         RpgPlayer r = players.get(player);
         if (potion == null || r == null || r.stats() == null) return false;
-        long now = System.currentTimeMillis();
-        Map<String, Long> mine = used.computeIfAbsent(player.getUniqueId(), k -> new HashMap<>());
-        long ready = mine.getOrDefault(potion.kind(), 0L) + cooldown * 1000L;
-        if (now < ready) {
-            plugin.messages().send(player, "potions.wait", "%seconds%", String.valueOf((ready - now + 999) / 1000));
-            Sounds.cue(player, "error");
-            return false;
-        }
         if (potion.kind().equals("mana")) {
             double max = r.stats().get("max_mana");
-            if (r.mana() >= max) {
-                plugin.messages().send(player, "potions.full-mana");
-                return false;
-            }
+            if (r.mana() >= max) return false;
             r.mana(r.mana() + max * potion.share());
             player.getWorld().spawnParticle(Particle.WITCH, player.getLocation().add(0, 1, 0), 18, 0.3, 0.5, 0.3, 0);
         } else {
             double max = combat.maxHealth(player);
-            if (combat.health(player) >= max) {
-                plugin.messages().send(player, "potions.full-health");
-                return false;
-            }
+            if (combat.health(player) >= max) return false;
             combat.heal(player, max * potion.share(), true);
             player.getWorld().spawnParticle(Particle.HEART, player.getLocation().add(0, 1.8, 0), 4, 0.3, 0.2, 0.3, 0);
         }
-        mine.put(potion.kind(), now);
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_GENERIC_DRINK, 0.8f, 1.2f);
         return true;
     }
@@ -183,9 +165,5 @@ public final class Potions {
                 return true;
             }
         };
-    }
-
-    void forget(UUID player) {
-        used.remove(player);
     }
 }

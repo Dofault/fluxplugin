@@ -58,7 +58,19 @@ public final class DungeonTokens {
     private final List<Coin> coins = new ArrayList<>();
     private BukkitTask task;
     private String currency = "dungeon_tokens";
-    private final Map<String, Integer> perRank = new HashMap<>();
+    /** Tokens of a monster of a rank: a random amount from min to max (both included). */
+    private record Range(int min, int max) {
+        int roll() {
+            return min >= max ? min : ThreadLocalRandom.current().nextInt(min, max + 1);
+        }
+
+        @Override
+        public String toString() {
+            return min >= max ? String.valueOf(min) : min + "-" + max;
+        }
+    }
+
+    private final Map<String, Range> perRank = new HashMap<>();
     private int maxCoins = 6;
 
     public DungeonTokens(FluxPlugin plugin) {
@@ -68,9 +80,16 @@ public final class DungeonTokens {
     public void reload(ConfigurationSection c) {
         currency = c == null ? "dungeon_tokens" : c.getString("currency", "dungeon_tokens");
         perRank.clear();
-        perRank.putAll(Map.of("TRASH", 1, "ELITE", 2, "MINIBOSS", 5, "BOSS", 20));
+        perRank.putAll(Map.of("TRASH", new Range(1, 3), "ELITE", new Range(3, 5), "MINIBOSS", new Range(8, 12),
+                "BOSS", new Range(35, 45)));
         ConfigurationSection ranks = c == null ? null : c.getConfigurationSection("per-rank");
-        if (ranks != null) for (String k : ranks.getKeys(false)) perRank.put(k.toUpperCase(Locale.ROOT), ranks.getInt(k));
+        // a rank is a number (always that many) or [min, max]
+        if (ranks != null) for (String k : ranks.getKeys(false)) {
+            List<Integer> pair = ranks.getIntegerList(k);
+            Range r = pair.size() >= 2 ? new Range(Math.max(0, pair.get(0)), Math.max(pair.get(0), pair.get(1)))
+                    : new Range(Math.max(0, ranks.getInt(k)), Math.max(0, ranks.getInt(k)));
+            perRank.put(k.toUpperCase(Locale.ROOT), r);
+        }
         maxCoins = c == null ? 6 : Math.max(1, c.getInt("max-coins-shown", 6));
     }
 
@@ -82,17 +101,24 @@ public final class DungeonTokens {
         return currency;
     }
 
-    /** Tokens of a monster of this rank at this difficulty reward (random rounding: 1.5 is 1 or 2). */
+    /**
+     * Tokens of a monster of this rank at this difficulty reward: a roll in the rank's range, times the reward (random
+     * rounding: 1.5 is 1 or 2).
+     */
     public int amount(String rank, double reward) {
-        double base = perRank.getOrDefault(rank == null ? "TRASH" : rank.toUpperCase(Locale.ROOT), 1) * Math.max(0, reward);
+        double base = range(rank == null ? "TRASH" : rank).roll() * Math.max(0, reward);
         int n = (int) base;
         if (ThreadLocalRandom.current().nextDouble() < base - n) n++;
         return n;
     }
 
-    /** The base amount of a rank (menus: what a monster gives). */
-    public int base(String rank) {
-        return perRank.getOrDefault(rank.toUpperCase(Locale.ROOT), 1);
+    /** The base amount of a rank as shown in menus ("1-3", or "5" when fixed). */
+    public String base(String rank) {
+        return range(rank).toString();
+    }
+
+    private Range range(String rank) {
+        return perRank.getOrDefault(rank.toUpperCase(Locale.ROOT), new Range(1, 1));
     }
 
     /** Gives {@code amount} to each player of the party and throws the coins out of the monster. */

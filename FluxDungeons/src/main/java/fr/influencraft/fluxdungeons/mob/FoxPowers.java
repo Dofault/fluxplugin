@@ -867,7 +867,7 @@ final class FoxPowers implements Listener {
             // 24-36 the zones are marked: a ring that turns red, root tips poking out, a ticking
             if (t >= 24 && t < 36 && t % 2 == 0) {
                 for (Location z : zones) {
-                    Fx.ring(z.clone().add(0, 0.08, 0), zone, t >= 31 ? RED : OLIVE, 1.2f, t * 0.06);
+                    Fx.warnRing(z.clone().add(0, 0.08, 0), zone, t >= 31 ? RED : OLIVE, 1.2f, t * 0.06);
                     if (t % 4 == 0) w.spawnParticle(Particle.BLOCK, z.clone().add(0, 0.1, 0), 4, zone * 0.4, 0.02, zone * 0.4, 0, DIRT);
                 }
                 if (t % 4 == 0) snd(at, "block.big_dripleaf.tilt_down", 0.9f, 0.6f + (t - 24) * 0.03f);

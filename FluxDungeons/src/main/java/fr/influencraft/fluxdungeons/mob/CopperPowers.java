@@ -545,7 +545,7 @@ final class CopperPowers {
                 w.spawnParticle(Particle.BLOCK, at.clone().add(0, 0.2, 0), 10, 0.6, 0.1, 0.6, 0, blockUnder(at));
             }
             // the line of the charge on the ground (copper while it can still turn, red once locked)
-            if (t >= 8 && t < windup && t % 2 == 0) {
+            if (t >= 8 && t < windup && t % 2 == 0 && Fx.telegraphs()) {
                 Color col = t > lock ? RED : COPPER;
                 for (double k = 2; k <= distance + 2; k += 0.8) {
                     Location p = at.clone().add(dir[0].clone().multiply(k));

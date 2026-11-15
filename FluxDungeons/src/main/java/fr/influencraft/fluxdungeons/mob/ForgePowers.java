@@ -409,8 +409,8 @@ final class ForgePowers {
             Location at = e.getLocation();
             // the reach on the ground, orange then red, cracks of light, a rising rumble
             if (t >= 4 && t <= 30 && t % 3 == 0) {
-                Fx.ring(at, radius, t >= 18 ? RED : WARN, 1.5f, t * 0.04);
-                if (second) Fx.ring(at, outer, t >= 18 ? RED : WARN, 1.0f, -t * 0.03);
+                Fx.warnRing(at, radius, t >= 18 ? RED : WARN, 1.5f, t * 0.04);
+                if (second) Fx.warnRing(at, outer, t >= 18 ? RED : WARN, 1.0f, -t * 0.03);
             }
             if (t >= 10 && t < 30 && t % 5 == 0) snd(at, "entity.warden.heartbeat", 0.9f, 0.5f);
             if (t == 12) fx.crater(at, radius * 0.7, 40, 0.15, CRACKED);
@@ -484,7 +484,7 @@ final class ForgePowers {
                 }
                 e.getWorld().spawnParticle(Particle.DUST, f, 5, 0.2, 0.2, 0.1, 0, new Particle.DustOptions(heat(t / 22.0), 1.4f));
             }
-            if (t >= 4 && t <= 22 && t % 3 == 0) cone(at, dir[0], range, half, t >= 14 ? RED : WARN);
+            if (t >= 4 && t <= 22 && t % 3 == 0 && Fx.telegraphs()) cone(at, dir[0], range, half, t >= 14 ? RED : WARN);
             if (t == 8) snd(f, "block.piston.contract", 1.2f, 0.5f);
             if (t == 16) snd(f, "block.respawn_anchor.charge", 1.4f, 0.6f);
             // 24-40: the breath pours out
@@ -559,7 +559,7 @@ final class ForgePowers {
             Location f = furnace(e);
             // marked: a red glow over each target, quick pulses of the furnace
             if (t < 16 && t % 2 == 0) {
-                for (Player p : targets) {
+                for (Player p : Fx.telegraphs() ? targets : List.<Player>of()) {
                     if (p.isValid()) e.getWorld().spawnParticle(Particle.DUST, p.getLocation().add(0, 2.4, 0), 3, 0.2, 0.1, 0.2, 0, new Particle.DustOptions(RED, 1.2f));
                 }
                 if (t % 4 == 0) {
@@ -598,7 +598,7 @@ final class ForgePowers {
         double peak = Math.min(6, 2 + dist * 0.18);
         timelineFree(flight + 1, t -> {
             // the landing spot, shown from the throw: a side step dodges it
-            if (t % 2 == 0) Fx.ring(land, 1.8, t >= flight - 6 ? RED : WARN, 1.2f, t * 0.1);
+            if (t % 2 == 0) Fx.warnRing(land, 1.8, t >= flight - 6 ? RED : WARN, 1.2f, t * 0.1);
             double k = t / (double) flight;
             Location p = from.clone().add(land.toVector().subtract(from.toVector()).multiply(k)).add(0, 4 * peak * k * (1 - k), 0);
             if (mass.isValid()) mass.teleport(p);

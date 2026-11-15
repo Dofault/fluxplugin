@@ -245,16 +245,16 @@ final class EvokerPowers {
         c.animate("attack_pinch");
         snd(e.getLocation(), "entity.evoker.prepare_attack", 1.4f, 1.3f);
         timeline(e, 30, t -> {
-            if (t <= 6 && target != null && target.isValid() && target.getWorld() == e.getWorld()) {
-                // follows the target until the place is locked
+            if ((t <= 6 || !Fx.telegraphs() && t < 13) && target != null && target.isValid() && target.getWorld() == e.getWorld()) {
+                // follows the target until the place is locked (until the hit itself without telegraphs)
                 face(e, target.getLocation());
                 zone[0] = within(e.getLocation(), target.getLocation(), reach);
             }
             if (zone[0] != null && t >= 2 && t <= 13) {
                 // the ring closes on the place: space contracting
                 double r = radius + 1.6 * (1 - Math.min(1, (t - 2) / 11.0));
-                Fx.ring(zone[0].clone().add(0, 0.15, 0), radius, t > 6 ? VIOLET : DEEP, 1.1f, t * 0.2);
-                inward(zone[0].clone().add(0, 0.9, 0), r, t);
+                Fx.warnRing(zone[0].clone().add(0, 0.15, 0), radius, t > 6 ? VIOLET : DEEP, 1.1f, t * 0.2);
+                if (Fx.telegraphs()) inward(zone[0].clone().add(0, 0.9, 0), r, t);
             }
             if (t == 13 && zone[0] != null) {
                 snd(zone[0], "block.amethyst_block.break", 1.8f, 0.6f);
@@ -283,7 +283,7 @@ final class EvokerPowers {
         c.animate("attack_expand");
         snd(e.getLocation(), "entity.evoker.prepare_summon", 1.4f, 1.2f);
         timeline(e, 46, t -> {
-            if (t <= 20 && target != null && target.isValid() && target.getWorld() == e.getWorld()) {
+            if ((t <= 20 || !Fx.telegraphs() && t < 26) && target != null && target.isValid() && target.getWorld() == e.getWorld()) {
                 face(e, target.getLocation());
                 zone[0] = within(e.getLocation(), target.getLocation(), reach);
             }
@@ -297,8 +297,8 @@ final class EvokerPowers {
             }
             if (zone[0] != null && t >= 9 && t < 26) {
                 // the place, its edge fixed, lines running outwards from its centre
-                Fx.ring(zone[0].clone().add(0, 0.15, 0), radius, t > 20 ? VIOLET : DEEP, 1.1f, t * 0.2);
-                Fx.ring(zone[0].clone().add(0, 0.2, 0), radius * ((t % 8) + 1) / 8.0, BLUE, 0.7f, t * 0.4);
+                Fx.warnRing(zone[0].clone().add(0, 0.15, 0), radius, t > 20 ? VIOLET : DEEP, 1.1f, t * 0.2);
+                Fx.warnRing(zone[0].clone().add(0, 0.2, 0), radius * ((t % 8) + 1) / 8.0, BLUE, 0.7f, t * 0.4);
             }
             if (t == 26 && zone[0] != null) {
                 snd(zone[0], "entity.illusioner.cast_spell", 1.8f, 0.6f);

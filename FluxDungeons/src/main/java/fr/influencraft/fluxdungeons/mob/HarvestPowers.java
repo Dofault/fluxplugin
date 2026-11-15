@@ -792,9 +792,9 @@ final class HarvestPowers {
             Location sp = spot[0];
             if (t <= land && t % 2 == 0) {
                 double k = t / (double) land;
-                Fx.ring(sp, radius, HARVEST, 1.6f, t * 0.05);
-                Fx.ring(sp, radius * (1 - k), Color.fromRGB(0xFF5C5C), 1.1f, -t * 0.08);
-                Fx.ring(sp, radius * 0.5, Color.fromRGB(0xFF5C5C), 1.2f, 0);
+                Fx.warnRing(sp, radius, HARVEST, 1.6f, t * 0.05);
+                Fx.warnRing(sp, radius * (1 - k), Color.fromRGB(0xFF5C5C), 1.1f, -t * 0.08);
+                Fx.warnRing(sp, radius * 0.5, Color.fromRGB(0xFF5C5C), 1.2f, 0);
                 if (t % 6 == 0) w.playSound(sp, Sound.BLOCK_NOTE_BLOCK_BASEDRUM, 1.5f, 0.6f + (float) k);
             }
             if (t == launch) {
@@ -946,8 +946,8 @@ final class HarvestPowers {
                 t++;
                 if (t <= warn) {
                     if (t % 2 == 0) {
-                        Fx.ring(center, radius, Color.fromRGB(0xFF5C5C), 1.4f, t * 0.1);
-                        Fx.ring(center, radius * (1 - t / (double) warn), GOLD, 1.0f, 0);
+                        Fx.warnRing(center, radius, Color.fromRGB(0xFF5C5C), 1.4f, t * 0.1);
+                        Fx.warnRing(center, radius * (1 - t / (double) warn), GOLD, 1.0f, 0);
                         w.spawnParticle(Particle.BLOCK, center.clone().add(0, 0.1, 0), 10, radius * 0.4, 0.02, radius * 0.4, 0,
                                 Material.ROOTED_DIRT.createBlockData());
                     }

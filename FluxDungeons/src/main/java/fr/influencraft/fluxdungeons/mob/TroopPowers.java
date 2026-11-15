@@ -99,7 +99,7 @@ final class TroopPowers {
         String animation = ab.text("animation", "");
         if (!animation.isBlank()) c.animate(animation);
         switch (ab.type()) {
-            case "pounce" -> pounce(ab, c, aim, (int) ab.number("bounces", 1), (int) ab.number("impact", 14));
+            case "pounce" -> pounce(ab, c, aim, (int) ab.number("bounces", 1), Fx.windup(ab.number("impact", 14), 4));
             case "bolt" -> bolt(ab, c, aim);
             case "windup" -> windup(ab, c, aim);
             case "aimed_shot" -> aimedShot(ab, c, aim);
@@ -248,21 +248,22 @@ final class TroopPowers {
         LivingEntity e = c.entity();
         World w = e.getWorld();
         double radius = ab.number("radius", 2.2), knock = ab.number("knock", 0.8), behindChance = ab.number("behind", 0.4);
-        Material look = material(ab, "item", Material.SLIME_BLOCK);
+        Voice voice = Voice.of(ab, e);
+        Material look = material(ab, "item", voice.look != null ? voice.look : Voice.ground(e.getLocation()));
         Color warn = color(ab, "color", 0x7BD05A);
         boolean behind = ThreadLocalRandom.current().nextDouble() < behindChance;
-        c.hold(crouch + 30);
-        w.playSound(e.getLocation(), Sound.ENTITY_SLIME_SQUISH, 1.4f, 0.6f);
+        c.hold(crouch + 40);
+        if (voice.crouch != null) voice.play(w, e.getLocation(), voice.crouch, 1.4f, 0.6f);
         Location[] dest = new Location[1];
         every(crouch, t -> {
             if (!e.isValid() || !target.isOnline() || target.getWorld() != w) return false;
             dest[0] = landing(target, behind, ab.number("behind-distance", 2.6));
             // squashing down: particles pressed out at its feet, a pitch that rises
             if (t % 2 == 0) {
-                Fx.ring(dest[0], radius, behind ? Color.fromRGB(0xFF5C5C) : warn, 1.2f, t * 0.2);
+                Fx.warnRing(dest[0], radius, behind ? Color.fromRGB(0xFF5C5C) : warn, 1.2f, t * 0.2);
                 w.spawnParticle(Particle.BLOCK, e.getLocation().add(0, 0.1, 0), 4, 0.4, 0.05, 0.4, 0, look.createBlockData());
             }
-            if (t % 4 == 0) w.playSound(e.getLocation(), Sound.BLOCK_SLIME_BLOCK_STEP, 1f, 0.6f + (float) t / crouch);
+            if (t % 4 == 0) voice.play(w, e.getLocation(), voice.step, 1f, 0.6f + (float) t / Math.max(1, crouch));
             return true;
         }, () -> {
             if (!e.isValid() || dest[0] == null) {
@@ -275,10 +276,61 @@ final class TroopPowers {
                 if (next == null) return;
                 // the next bounce comes quicker: hard to read when two in a row
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    if (e.isValid()) pounce(ab, c, next, bounces - 1, (int) ab.number("rebound", 8));
+                    if (e.isValid()) pounce(ab, c, next, bounces - 1, Fx.windup(ab.number("rebound", 8), 3));
                 }, 4L);
             });
         });
+    }
+
+    /**
+     * The sounds and look of a leap. A slime or a magma cube squelches; any other monster (a fox, a zombie...) makes
+     * the sounds of the ground it pushes off and lands on. {@code crouch-sound}, {@code jump-sound},
+     * {@code land-sound} (sound ids, {@code none} = silent) override them.
+     */
+    private record Voice(Sound crouch, Sound step, Sound jump, Sound land, Sound thud, Particle trail, Material look) {
+
+        static Voice of(MobTemplate.Ability ab, LivingEntity e) {
+            Voice v = switch (e.getType()) {
+                case SLIME -> new Voice(Sound.ENTITY_SLIME_SQUISH, Sound.BLOCK_SLIME_BLOCK_STEP, Sound.ENTITY_SLIME_JUMP,
+                        Sound.ENTITY_SLIME_ATTACK, Sound.BLOCK_SLIME_BLOCK_FALL, Particle.ITEM_SLIME, Material.SLIME_BLOCK);
+                case MAGMA_CUBE -> new Voice(Sound.ENTITY_MAGMA_CUBE_SQUISH, Sound.ENTITY_MAGMA_CUBE_SQUISH_SMALL,
+                        Sound.ENTITY_MAGMA_CUBE_JUMP, Sound.ENTITY_MAGMA_CUBE_SQUISH, Sound.BLOCK_SLIME_BLOCK_FALL,
+                        Particle.FLAME, Material.MAGMA_BLOCK);
+                // null: the sound of the ground under it, picked when played
+                default -> new Voice(null, null, null, Sound.ENTITY_GENERIC_BIG_FALL, null, null, null);
+            };
+            return new Voice(sound(ab, "crouch-sound", v.crouch), v.step, sound(ab, "jump-sound", v.jump),
+                    sound(ab, "land-sound", v.land), v.thud, v.trail, v.look);
+        }
+
+        private static final Sound SILENT = Sound.INTENTIONALLY_EMPTY;
+
+        private static Sound sound(MobTemplate.Ability ab, String key, Sound fallback) {
+            String id = ab.text(key, "");
+            if (id.isBlank()) return fallback;
+            if (id.equalsIgnoreCase("none")) return SILENT;
+            NamespacedKey k = NamespacedKey.fromString(id.toLowerCase(Locale.ROOT));
+            Sound found = k == null ? null : Registry.SOUNDS.get(k);
+            return found == null ? fallback : found;
+        }
+
+        /** The block a body stands on (dirt when there is none). */
+        static Material ground(Location at) {
+            Block under = at.getBlock().getRelative(BlockFace.DOWN);
+            if (!under.getType().isSolid()) under = under.getRelative(BlockFace.DOWN);
+            return under.getType().isSolid() ? under.getType() : Material.DIRT;
+        }
+
+        /** Plays that sound, or the ground's step sound when it is null. */
+        void play(World w, Location at, Sound sound, float volume, float pitch) {
+            if (sound == SILENT) return;
+            if (sound == null) {
+                Block under = at.getBlock().getRelative(BlockFace.DOWN);
+                if (!under.getType().isSolid()) under = under.getRelative(BlockFace.DOWN);
+                sound = under.getBlockData().getSoundGroup().getStepSound();
+            }
+            w.playSound(at, sound, volume, pitch);
+        }
     }
 
     /** Where a pounce lands: on the player, or just behind his back (where he does not look), on solid ground. */
@@ -297,13 +349,17 @@ final class TroopPowers {
         World w = e.getWorld();
         Location from = e.getLocation();
         double dist = from.distance(dest);
-        int flight = (int) Math.max(8, Math.min(20, dist * 1.1));
-        double height = Math.min(5.5, 1.6 + dist * 0.3);
+        // slow enough to be followed with the eyes (about 8 blocks a second, {@code leap-speed}), a low arc: the
+        // player sees it coming and can step aside, there is no mark on the ground
+        double speed = Math.max(0.2, ab.number("leap-speed", 0.4));
+        int flight = (int) Math.max(10, Math.min(36, dist / speed));
+        double height = Math.min(ab.number("leap-height", 3), 1.0 + dist * 0.18);
         Vector face = flat(dest.toVector().subtract(from.toVector()));
         c.hold(flight + 12);
         e.setGravity(false);
-        w.playSound(from, Sound.ENTITY_SLIME_JUMP, 1.6f, 0.7f);
-        Particle trail = particle(ab, "trail", Particle.ITEM_SLIME);
+        Voice voice = Voice.of(ab, e);
+        voice.play(w, from, voice.jump, 1.6f, 0.7f);
+        Particle trail = particle(ab, "trail", voice.trail);
         Location[] at = {from};
         every(flight, t -> {
             if (!e.isValid()) return false;
@@ -313,15 +369,16 @@ final class TroopPowers {
             if (blocked(next)) return false;
             Mobs.move(e, next);
             at[0] = next;
-            w.spawnParticle(trail, next.clone().add(0, 0.4, 0), 3, 0.2, 0.2, 0.2, 0.01);
+            if (trail != null) w.spawnParticle(trail, next.clone().add(0, 0.4, 0), 3, 0.2, 0.2, 0.2, 0.01);
             return k < 1;
         }, () -> {
             if (!e.isValid()) return;
             e.setGravity(true);
             Location land = at[0];
-            w.playSound(land, Sound.ENTITY_SLIME_ATTACK, 1.6f, 0.5f);
-            w.playSound(land, Sound.BLOCK_SLIME_BLOCK_FALL, 1.6f, 0.6f);
-            w.spawnParticle(Particle.BLOCK, land.clone().add(0, 0.2, 0), 40, radius / 2, 0.2, radius / 2, 0.1, look.createBlockData());
+            voice.play(w, land, voice.land, 1.6f, 0.5f);
+            voice.play(w, land, voice.thud, 1.6f, 0.6f);
+            Material dust = voice.look != null ? look : Voice.ground(land);
+            w.spawnParticle(Particle.BLOCK, land.clone().add(0, 0.2, 0), 40, radius / 2, 0.2, radius / 2, 0.1, dust.createBlockData());
             fx.shockwave(land, radius, 6, 0.35);
             for (Player p : within(land, radius, 2.2)) {
                 c.hit(p, 1);
@@ -361,7 +418,7 @@ final class TroopPowers {
     private void bolt(MobTemplate.Ability ab, RockPowers.Caster c, Player target) {
         LivingEntity e = c.entity();
         World w = e.getWorld();
-        int charge = (int) ab.number("charge", 8), volleys = (int) Math.max(1, ab.number("volleys", 1)), gap = (int) Math.max(2, ab.number("gap", 6));
+        int charge = Fx.windup(ab.number("charge", 8), 3), volleys = (int) Math.max(1, ab.number("volleys", 1)), gap = (int) Math.max(2, ab.number("gap", 6));
         Color tint = color(ab, "color", 0x8BD346);
         c.hold(charge + gap * (volleys - 1) + 4);
         // gathering in front of it: the shot is coming
@@ -469,7 +526,7 @@ final class TroopPowers {
             double k = (double) t / flight;
             ball.teleport(from.clone().add(land.toVector().subtract(from.toVector()).multiply(k)).add(0, Math.sin(Math.PI * k) * 3.2, 0));
             if (trail != null) w.spawnParticle(trail, ball.getLocation(), 1, 0, 0, 0, 0);
-            if (t % 2 == 0) Fx.ring(land, radius, warn, 1.1f, t * 0.15);
+            if (t % 2 == 0) Fx.warnRing(land, radius, warn, 1.1f, t * 0.15);
             return t < flight;
         }, () -> {
             drop(ball);
@@ -516,7 +573,7 @@ final class TroopPowers {
     private void windup(MobTemplate.Ability ab, RockPowers.Caster c, Player target) {
         LivingEntity e = c.entity();
         World w = e.getWorld();
-        int impact = (int) ab.number("impact", 26);
+        int impact = Fx.windup(ab.number("impact", 26), 8);
         double radius = ab.number("radius", 3.5), angle = ab.number("angle", 110);
         boolean cone = "cone".equalsIgnoreCase(ab.text("shape", "circle"));
         Color edge = color(ab, "color", 0xFF5C5C);
@@ -532,11 +589,11 @@ final class TroopPowers {
                 double k = (double) t / impact;
                 if (t % 2 == 0) {
                     if (cone) {
-                        Fx.cone(from, dir, angle, radius, edge, Color.fromRGB(0x5A1A1A));
+                        Fx.warnCone(from, dir, angle, radius, edge, Color.fromRGB(0x5A1A1A));
                     } else {
-                        Fx.ring(from, radius, edge, 1.2f, 0);
+                        Fx.warnRing(from, radius, edge, 1.2f, 0);
                         // the filling: a second ring grows from the middle to the edge
-                        Fx.ring(from, Math.max(0.3, radius * k), Color.fromRGB(0xFFB02E), 1.4f, t * 0.1);
+                        Fx.warnRing(from, Math.max(0.3, radius * k), Color.fromRGB(0xFFB02E), 1.4f, t * 0.1);
                     }
                 }
                 if (t % 5 == 0) w.playSound(from, Sound.BLOCK_ANVIL_LAND, 0.25f + (float) k * 0.4f, 0.5f + (float) k * 0.6f);
@@ -570,7 +627,7 @@ final class TroopPowers {
     private void aimedShot(MobTemplate.Ability ab, RockPowers.Caster c, Player target) {
         LivingEntity e = c.entity();
         World w = e.getWorld();
-        int aim = (int) ab.number("aim", 30), lock = (int) ab.number("lock", 10);
+        int aim = Fx.windup(ab.number("aim", 30), 6), lock = Fx.telegraphs() ? (int) ab.number("lock", 10) : 0;
         double range = ab.number("range", 26), width = ab.number("width", 0.7);
         Color line = color(ab, "color", 0xFFD94D);
         Material m = material(ab, "item", Material.ARROW);
@@ -591,7 +648,7 @@ final class TroopPowers {
             }
             RayTraceResult wall = w.rayTraceBlocks(eye, dir[0], range, org.bukkit.FluidCollisionMode.NEVER, true);
             length[0] = wall == null ? range : wall.getHitPosition().distance(eye.toVector());
-            if (t % 2 == 0) {
+            if (t % 2 == 0 && Fx.telegraphs()) {
                 Color now = t < aim ? line : Color.fromRGB(0xFF2020);
                 float thick = t < aim ? 0.5f : 0.9f;
                 for (double s = 1; s < length[0]; s += 0.5) {
@@ -639,7 +696,7 @@ final class TroopPowers {
     private void blink(MobTemplate.Ability ab, RockPowers.Caster c, Player target) {
         LivingEntity e = c.entity();
         World w = e.getWorld();
-        int impact = (int) ab.number("impact", 12), strike = (int) ab.number("strike", 7);
+        int impact = Fx.windup(ab.number("impact", 12), 4), strike = Fx.windup(ab.number("strike", 7), 3);
         Color tint = color(ab, "color", 0x5B2D9E);
         c.hold(impact + strike + 6);
         w.playSound(e.getLocation(), Sound.ENTITY_ENDERMAN_STARE, 0.6f, 1.6f);
@@ -697,7 +754,7 @@ final class TroopPowers {
     private void fuse(MobTemplate.Ability ab, RockPowers.Caster c) {
         LivingEntity e = c.entity();
         World w = e.getWorld();
-        int fuse = (int) ab.number("fuse", 24);
+        int fuse = Fx.windup(ab.number("fuse", 24), 10);
         double radius = ab.number("radius", 3.5);
         Color warn = color(ab, "color", 0xFF5C5C);
         c.hold(fuse + 10);
@@ -711,7 +768,7 @@ final class TroopPowers {
             // swells and flashes faster and faster
             if (scale != null) scale.setBaseValue(size * (1 + 0.35 * k + 0.05 * Math.sin(t * (0.6 + k))));
             e.setGlowing((t / Math.max(1, (int) (6 - 4 * k))) % 2 == 0);
-            if (t % 2 == 0) Fx.ring(at, radius, warn, 1.3f, t * 0.25);
+            if (t % 2 == 0) Fx.warnRing(at, radius, warn, 1.3f, t * 0.25);
             w.spawnParticle(Particle.SMOKE, at.clone().add(0, e.getHeight(), 0), 2, 0.1, 0.1, 0.1, 0.02);
             if (t % 3 == 0) w.spawnParticle(Particle.ELECTRIC_SPARK, at.clone().add(0, e.getHeight() / 2, 0), 4, 0.3, 0.3, 0.3, 0.05);
             return true;
