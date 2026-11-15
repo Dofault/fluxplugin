@@ -120,58 +120,49 @@ def bar_frame_chunk(w, edge=False):
     im = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
     if edge:
-        d.line((0, 0, 0, BAR_H + 1), fill=BLACK)
+        d.line((0, 0, 0, BAR_H + 1), fill=ui.OUTLINE)
         return im
-    d.line((0, 0, w - 1, 0), fill=BLACK)
-    d.rectangle((0, 1, w - 1, BAR_H), fill=rgb("#2B2B30"))
-    d.line((0, BAR_H + 1, w - 1, BAR_H + 1), fill=BLACK)
-    d.line((0, BAR_H + 2, w - 1, BAR_H + 2), fill=WHITE)
+    d.line((0, 0, w - 1, 0), fill=ui.OUTLINE)
+    d.rectangle((0, 1, w - 1, BAR_H), fill=ui.WELL)
+    d.line((0, BAR_H + 1, w - 1, BAR_H + 1), fill=ui.OUTLINE)
+    d.line((0, BAR_H + 2, w - 1, BAR_H + 2), fill=ui.SHADE_LINE)
     return im
 
 
 def sprite_pager():
+    """Pager field ("page/pages", text by Flux): a well."""
     im = Image.new("RGBA", (PAGER_W, PAGER_H), (0, 0, 0, 0))
-    ui.field(im, ImageDraw.Draw(im), (0, 0, PAGER_W - 1, PAGER_H - 2))
-    ImageDraw.Draw(im).line((1, PAGER_H - 1, PAGER_W - 2, PAGER_H - 1), fill=WHITE)
+    d = ImageDraw.Draw(im)
+    d.rounded_rectangle((0, 0, PAGER_W - 1, PAGER_H - 2), radius=3, fill=ui.WELL, outline=ui.OUTLINE)
+    d.line((3, PAGER_H - 1, PAGER_W - 4, PAGER_H - 1), fill=ui.SHADE_LINE)
     return im
 
 
 def sprite_pager_button(direction, on):
-    """Light pager button of the shop reference, 2 slots wide; greyed arrow when there is no page that way."""
+    """Pager button, 2 slots wide: raised like an inventory slot; dark arrow when there is no page that way."""
     im = Image.new("RGBA", (PAGER_BTN_W, PAGER_H), (0, 0, 0, 0))
-    d = ImageDraw.Draw(im)
-    ui.flat_button(d, (0, 0, PAGER_BTN_W - 1, PAGER_H - 2), direction)
-    d.line((1, PAGER_H - 1, PAGER_BTN_W - 2, PAGER_H - 1), fill=WHITE)
-    if not on:
-        px = im.load()
-        for y in range(PAGER_H):
-            for x in range(PAGER_BTN_W):
-                if px[x, y] == rgb("#6B6B6B"):
-                    px[x, y] = rgb("#B4B4B4")
+    ui.flat_button(ImageDraw.Draw(im), (0, 0, PAGER_BTN_W - 1, PAGER_H - 2), direction, on)
     return im
 
 
 def sprite_slot(kind):
-    """A slot of the theme, 18 x 18 from (slot x - 1, slot y - 1): vanilla (light window) or dark (containers)."""
+    """A slot drawn by Flux (frames in titles, off since 2026-10-30), 18 x 18 from (slot x - 1, slot y - 1): the
+    inventory's own slot (vanilla) or a small well (dark)."""
+    if kind == "vanilla":
+        return ui.inventory().crop((7, 83, 25, 101))
     im = Image.new("RGBA", (18, 18), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
-    saved = ui.objet
-    ui.objet = lambda case, rows=6: (1, 1)
-    ui.slot(d, 0, kind)
-    ui.objet = saved
+    d.rounded_rectangle((0, 0, 17, 16), radius=3, fill=ui.WELL, outline=ui.OUTLINE)
+    d.line((3, 17, 14, 17), fill=ui.SHADE_LINE)
     return im
 
 
 def sprite_lit():
-    """Selected slot: light raised cell with a white outline, 20 x 20 from (slot x - 2, slot y - 2)."""
+    """Selected slot: light raised cell, 20 x 20 from (slot x - 2, slot y - 2)."""
     im = Image.new("RGBA", (20, 20), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
-    d.rectangle((0, 0, 19, 19), outline=WHITE)
-    d.rectangle((1, 1, 18, 18), fill=rgb("#D9D9D9"))
-    d.line((1, 1, 17, 1), fill=WHITE)
-    d.line((1, 1, 1, 17), fill=WHITE)
-    d.line((2, 18, 18, 18), fill=rgb("#6E6E6E"))
-    d.line((18, 2, 18, 18), fill=rgb("#6E6E6E"))
+    d.rounded_rectangle((0, 0, 19, 19), radius=3, fill=ui.CELL, outline=ui.OUTLINE)
+    d.rounded_rectangle((1, 1, 18, 18), radius=2, outline=ui.EDGE)
     return im
 
 
@@ -454,42 +445,41 @@ INK = rgb("#404040")
 
 
 def label(im, txt, x, y, centre=False, dark_ground=False):
-    """Static menu text in the menu font: engraved dark grey without shadow on the light window (as vanilla
-    titles), white with its 1 px shadow on dark grounds (fields, bars)."""
-    colour, shadow = (WHITE, TEXT_SHADOW) if dark_ground else (INK, None)
-    ui.write(im, txt, x if centre else 0, y, colour, shadow, left=None if centre else x)
+    """Static menu text in the menu font: white with its 1 px shadow, on the window as on dark grounds (inventory
+    style, 2026-11-15: no engraved dark text any more)."""
+    ui.write(im, txt, x if centre else 0, y, WHITE, ui.OUTLINE, left=None if centre else x)
 
 
 def bar_frame(d, x0, y0, x1):
-    """Empty progress bar: black outline, dark inside, white line under (fill drawn by Flux at x0 + 1, y0 + 1)."""
-    d.rectangle((x0, y0, x1, y0 + BAR_H + 1), fill=BLACK)
-    d.rectangle((x0 + 1, y0 + 1, x1 - 1, y0 + BAR_H), fill=rgb("#2B2B30"))
-    d.line((x0 + 1, y0 + BAR_H + 2, x1 - 1, y0 + BAR_H + 2), fill=WHITE)
+    """Empty progress bar: a well (fill drawn by Flux at x0 + 1, y0 + 1)."""
+    d.rounded_rectangle((x0, y0, x1, y0 + BAR_H + 1), radius=2, fill=ui.WELL, outline=ui.OUTLINE)
+    d.line((x0 + 2, y0 + BAR_H + 2, x1 - 2, y0 + BAR_H + 2), fill=ui.SHADE_LINE)
+
+
+def well_around(d, cases, pad=2, left=0, right=0, top=0, bottom=0):
+    """A well around slots, ``pad`` px beyond their frame, each side pulled in by its own count of px (1 where a
+    button stands right next to it: owner's rule of 2026-11-15)."""
+    x0, y0, x1, y1 = span(cases, pad)
+    box = (x0 + left, y0 + top, x1 - right, y1 - bottom)
+    ui.well(d, box)
+    return box
 
 
 def bg_metiers(generic):
     """Job menu (FluxJobs metiers.yml): title "Métier", job name field (Flux text), pets (the 4 of the job and its
-    legendary boss pet under them, 2026-11-14), portrait frame, 12 jobs, level bar (row 5, after the legendary), paid
-    actions in the inventory, pager on the hotbar (drawn by Flux only when needed)."""
-    im = ui.window(generic)
+    legendary boss pet under them), illustration, 12 jobs, level bar (row 5, centred on it, from the illustration to
+    the jobs' right edge), paid actions in the inventory, pager on the hotbar (drawn by Flux). Inventory style,
+    owner's corrections of 2026-11-15 (wells 1 px off what is next to them, illustration at x 33)."""
+    im = bg_window(generic, 0, 9, title="Métier")
     d = ImageDraw.Draw(im, "RGBA")
-    label(im, "Métier", 88, 5, centre=True)
-    ui.field(im, d, (26, 19, 128, 32))     # as high as the buttons beside it (14 px)
-    pets = [9, 18, 27, 36, 45]
-    grid = [15, 16, 17, 24, 25, 26, 33, 34, 35, 42, 43, 44]
-    ui.container(im, d, span(pets), "ardoise")
-    for c in pets:
-        ui.slot(d, c, "dark")
-    d.rectangle((33, 38, 98, 103), fill=rgb("#373737"))     # 1 px around the 64 x 64 illustration at (34, 39)
-    d.line((34, 104, 99, 104), fill=WHITE)
-    d.line((99, 39, 99, 104), fill=WHITE)
-    ui.container(im, d, span(grid), "ardoise")
-    for c in grid:
-        ui.slot(d, c, "dark")
-    bar_frame(d, 27, 109, 169)
-    label(im, "Actions rémunérées", 8, 130)
-    for i in range(27):
-        ui.slot(d, 54 + i)
+    ui.well(d, (26, 19, 128, 31))                                     # job name (Flux text, white)
+    well_around(d, [9, 18, 27, 36, 45], top=1, bottom=1)              # pets
+    well_around(d, [15, 16, 17, 24, 25, 26, 33, 34, 35, 42, 43, 44], top=1, bottom=1)   # jobs
+    d.rectangle((32, 38, 97, 103), fill=ui.WELL, outline=ui.OUTLINE)  # 1 px around the 64 x 64 illustration at (33, 39)
+    d.line((33, 104, 97, 104), fill=ui.SHADE_LINE)
+    bar_frame(d, 33, 110, 170)
+    label(im, "Actions rémunérées", 8, 129)
+    well_around(d, list(range(54, 81)), top=1)                        # paid actions
     return im
 
 
@@ -509,48 +499,36 @@ PASS_TABS, PASS_MISSIONS = list(range(65, 70)), list(range(73, 80))   # inventor
 
 
 def bg_pass(generic):
-    """Pass menu (Flux pass.yml, validated mockup of 2026-10-30): season card (rows 1-2: big icon fluxui:pass_carte,
-    name, time left and bar drawn by Flux), free rewards (row 4, frames by the theme, numbers and locks by Flux
-    above them), premium rewards in a green box (row 5), then the missions in a dark box as wide as the premium one
-    one row lower with grey space above: header, 5 categories, 7 missions (inventory rows 1-2)."""
-    im = bg_window(generic, 0, 8, extra=5)   # grey margin under the missions box
+    """Pass menu (Flux pass.yml): season card (rows 1-2: big icon fluxui:pass_carte, name, time left and bar drawn by
+    Flux), free rewards (row 4, numbers and locks by Flux above them) in a well, premium rewards in a green well
+    (row 5), then the missions in a well with a header strip (inventory rows 1-2)."""
+    im = bg_window(generic, 0, 8, extra=5)
     d = ImageDraw.Draw(im, "RGBA")
-    ui.container(im, d, (6, 35, 169, 70), "ardoise")
-    px0, py0, px1, py1 = span(PASS_PREMIUM)
-    # premium track: black edge on top and bottom only (no left / right edge)
-    d.rectangle((px0, py0, px1, py1), fill=PASS_GREEN_DARK)
-    d.line((px0, py0, px1, py0), fill=BLACK)
-    d.line((px0, py1, px1, py1), fill=BLACK)
-    d.line((px0, py0 + 1, px1, py0 + 1), fill=tone(PASS_GREEN_DARK, -0.3))
-    for c in PASS_PREMIUM:
-        ui.slot(d, c, "colour", PASS_GREEN)
-    for c in PASS_FREE:
-        ui.slot(d, c, "vanilla")
-    # missions one row lower than the tracks, grey space between: header strip right above the categories
+    ui.well(d, (6, 35, 169, 70))
+    well_around(d, PASS_FREE, pad=1)
+    px0, py0, px1, py1 = span(PASS_PREMIUM, 1)
+    d.rounded_rectangle((px0, py0, px1, py1), radius=3, fill=PASS_GREEN_DARK, outline=ui.OUTLINE)
+    d.line((px0 + 3, py0 + 1, px1 - 3, py0 + 1), fill=PASS_GREEN)
+    d.line((px0 + 3, py1 + 1, px1 - 3, py1 + 1), fill=ui.SHADE_LINE)
     _, ty0, _, _ = span(PASS_TABS, 1)
     _, _, _, my1 = span(PASS_MISSIONS, 3)
     ui.container(im, d, (px0, ty0 - 13, px1, my1), "ardoise", head="Missions", head_kind="strip", head_h=11)
-    for c in PASS_TABS + PASS_MISSIONS:
-        ui.slot(d, c, "dark")
     return im
 
 
 def bg_profil(generic):
-    """Player card of /profil (2026-10-30): back (18) and menu icon (26), the shown player's name between them (text
-    widget of the menu), above a light identity card. No header band since 2026-11-10 (the menu already says it is
-    the profile): dark photo frame of 3 x 3 slots (columns 0-2, rows 3-5) behind the bust (36-38, 46), the rank tag
-    centred over the sections on row 3 (FluxTags, centre x 112, y 74), the 8 sections in slots (40-43, 49-52), a
-    signature under the photo and a gold chip."""
+    """Player card of /profil: back (18) and menu icon (26), the shown player's name between them (text widget of
+    the menu), above a raised identity card: photo well of 3 x 3 slots behind the bust (36-38, 46), the rank tag
+    over the sections (FluxTags, centre x 112, y 74), the 8 sections (40-43, 49-52) in a well, a signature under the
+    photo and a gold chip."""
     im = bg_window(generic, 2, 5, extra=22)
     d = ImageDraw.Draw(im, "RGBA")
     ui.container(im, d, (5, 71, 170, 141), "carte")
-    d.rectangle((6, 72, 61, 126), fill=BLACK)                     # photo, behind the bust (slots 27-29 to 45-47)
-    d.rectangle((7, 72, 60, 125), fill=rgb("#4A4B50"))
-    for c in (40, 41, 42, 43, 49, 50, 51, 52):
-        ui.slot(d, c, "vanilla")
+    d.rounded_rectangle((7, 73, 60, 125), radius=3, fill=ui.WELL, outline=ui.OUTLINE)   # photo, behind the bust
+    well_around(d, [40, 41, 42, 43, 49, 50, 51, 52], pad=1)
     sig = [(10 + i, 133 + 2 * math.sin(i / 2.2) * (1 - i / 50) + (1 if 18 < i < 26 else 0)) for i in range(0, 44)]
-    d.line(sig, fill=rgb("#3D3D6B"), width=1)
-    d.line((8, 137, 58, 137), fill=rgb("#9A9A9A"))
+    d.line(sig, fill=rgb("#D8C8F0"), width=1)
+    d.line((8, 137, 58, 137), fill=ui.EDGE)
     x, y = 150, 127                                               # gold chip
     d.rounded_rectangle((x, y, x + 13, y + 10), radius=2, fill=rgb("#F0A800"), outline=rgb("#8A5A14"))
     for yy in (y + 3, y + 7):
@@ -566,13 +544,14 @@ MAIN_GRID = [20, 21, 22, 23, 24, 29, 30, 31, 32, 33]
 
 
 def bg_main(generic):
+    """Main menu: the 10 features in a well (as validated in game, 1b of 2026-11-15), the shortcut row under the
+    inventory's separator line; the profile head, the account button and every button on the ground."""
     im = bg_window(generic, 1, 5)
     d = ImageDraw.Draw(im, "RGBA")
-    ui.container(im, d, span(MAIN_GRID), "ardoise")
-    for c in MAIN_GRID:
-        ui.slot(d, c, "dark")
-    for c in (9, 17):                     # profile head and account button
-        ui.slot(d, c, "vanilla")
+    x0, y0 = ui.objet(20)
+    x1, y1 = ui.objet(33)
+    ui.well(d, (x0 - 4, y0 - 4, x1 + 19, y1 + 19))
+    ui.separator(im, ui.objet(45)[1] - 8)
     return im
 
 
@@ -623,26 +602,24 @@ TRADE_GREEN = rgb("#3E8E2E")
 
 
 def bg_echange(generic):
-    im = ui.window(generic)
+    im = bg_window(generic, 0, 9)
     d = ImageDraw.Draw(im, "RGBA")
     for box in TRADE_NAMES.values():
         ui.field(im, d, box)
-    for grid, icons in ((TRADE_MINE, (36, 45)), (TRADE_THEIRS, (44, 53))):
+    for grid in (TRADE_MINE, TRADE_THEIRS):
         x0, y0, x1, _ = span(grid)
-        ui.container(im, d, (x0, y0, x1, ui.objet(45)[1] + 17), "ardoise")
-        for c in grid + list(icons):
-            ui.slot(d, c, "dark")
+        ui.well(d, (x0, y0, x1, ui.objet(45)[1] + 17))
     for box in TRADE_FIELDS:
         ui.field(im, d, box)
-    # arrows between the offers, engraved in the middle column (x 80-95): mine to him above, his to me below
+    # arrows between the offers, in the middle column (x 80-95): mine to him above, his to me below
     for y, way in ((52, 1), (66, -1)):
-        tip, tail = (93, 82) if way > 0 else (82, 93)
-        d.line((82, y, 93, y), fill=INK)
-        d.line((tip - 2 * way, y - 2, tip - 2 * way, y + 2), fill=INK)
-        d.line((tip - way, y - 1, tip - way, y + 1), fill=INK)
-    label(im, "Inventaire", 8, 130)
-    for i in range(36):
-        ui.slot(d, 54 + i)
+        tip = 93 if way > 0 else 82
+        d.line((82, y, 93, y), fill=ui.EDGE)
+        d.line((tip - 2 * way, y - 2, tip - 2 * way, y + 2), fill=ui.EDGE)
+        d.line((tip - way, y - 1, tip - way, y + 1), fill=ui.EDGE)
+    label(im, "Inventaire", 8, 129)
+    well_around(d, list(range(54, 81)), top=1)
+    well_around(d, list(range(81, 90)))
     return im
 
 
@@ -651,10 +628,8 @@ def echange_ready(side):
     im = Image.new("RGBA", (ui.W, ui.H), (0, 0, 0, 0))
     d = ImageDraw.Draw(im, "RGBA")
     x0, y0, x1, y1 = TRADE_NAMES[side]
-    d.rectangle((x0, y0, x1, y1), fill=BLACK)
-    d.rectangle((x0 + 1, y0 + 1, x1 - 1, y1 - 1), fill=TRADE_GREEN)
-    d.line((x0 + 1, y0 + 1, x1 - 1, y0 + 1), fill=tone(TRADE_GREEN, -0.4))
-    d.line((x0 + 1, y1 - 1, x1 - 1, y1 - 1), fill=tone(TRADE_GREEN, 0.25))
+    d.rounded_rectangle((x0, y0, x1, y1), radius=3, fill=TRADE_GREEN, outline=ui.OUTLINE)
+    d.line((x0 + 3, y0 + 1, x1 - 3, y0 + 1), fill=tone(TRADE_GREEN, 0.25))
     # a glyph advances up to its last non-transparent column: without this the picture of the left field advanced
     # ~80 px instead of the window's 176 and every widget drawn after it slid left. Alpha 8 is discarded by the
     # text shader (< 0.1), so the pixel never shows but still counts in the width.
@@ -662,23 +637,19 @@ def echange_ready(side):
     return im
 
 
-def bg_window(generic, first=0, last=9, extra=0, rows=6):
-    """The bare window of the theme, fitted to the rows a menu uses (theme of Flux): it starts ``first`` rows lower
-    than a full window (the plate moves with it) and ends 6 px under row ``last`` (0-5 chest, 6-8 inventory,
-    9 hotbar), so a menu of few rows is no taller than it needs and stays centred on the screen. ``rows``: chest rows
-    of the menu, the inventory of a smaller chest is higher in game (18 px a row)."""
-    full = ui.window(generic)
-    if first == 0 and last == 9 and not extra and rows == 6:
-        return full
-    dy = 18 * first
+def window_bounds(first=0, last=9, extra=0, rows=6):
+    """(top, bottom) of a window from chest row ``first`` to row ``last`` (0-5 chest, 6-8 inventory, 9 hotbar), 6 px
+    under its last row (``extra`` more); ``rows``: chest rows of the menu, the inventory of a smaller chest is higher
+    in game (18 px a row)."""
     lift = 18 * (6 - rows) if last >= 6 else 0
-    # last row of pixels of the window; extra: more grey under the last row (a box drawn down there keeps a margin)
-    bottom = min(full.height - 1, ROW_TOPS[last] - lift + 16 + 6 + extra)
-    im = Image.new("RGBA", full.size, (0, 0, 0, 0))
-    body = bottom + 1 - dy - 3                # rows of the full window kept above its 3 bottom rows
-    im.paste(full.crop((0, 0, full.width, body)), (0, dy))
-    im.paste(full.crop((0, full.height - 3, full.width, full.height)), (0, bottom - 2))
-    return im
+    return 7 + 18 * first, min(ui.H - 1, ROW_TOPS[last] - lift + 16 + 6 + extra)
+
+
+def bg_window(generic, first=0, last=9, extra=0, rows=6, title=None):
+    """The bare window of the theme fitted to the rows a menu uses, its plate (title written on it when given), so a
+    menu of few rows is no taller than it needs and stays centred on the screen."""
+    top, bottom = window_bounds(first, last, extra, rows)
+    return ui.styled_window(top, bottom, title)
 
 
 BACKGROUNDS = {"metiers": bg_metiers, "main": bg_main, "window": bg_window, "pass": bg_pass, "profil": bg_profil,
@@ -918,7 +889,10 @@ def main(plugins, resources=None):
         out += [f"  {json.dumps(c, ensure_ascii=False)}: {w}" for c, w in widths.items()]
         out += ["chunks: [" + ", ".join(map(str, CHUNKS)) + "]",
                 "bar-colours: [" + ", ".join(BAR_COLOURS) + "]",
-                f"bar-height: {BAR_H}", f"pager-width: {PAGER_W}", f"pager-button-width: {PAGER_BTN_W}"]
+                f"bar-height: {BAR_H}", f"pager-width: {PAGER_W}", f"pager-button-width: {PAGER_BTN_W}",
+                "# inventory style (2026-11-15): no engraved dark text; title y on the plate per first chest row",
+                "engraved-text: false",
+                "plate-text-y: [" + ", ".join(str(ui.plate_text_y(window_bounds(f)[0])) for f in range(6)) + "]"]
         open(os.path.join(resources, "ui", "glyphs.yml"), "w", encoding="utf-8").write("\n".join(out) + "\n")
         sprites = ["# Generated by Flux/assets/vanilla/gen_ui.py from sprites.yml: id: [character, width in px]."]
         sprites += [f"{sid}: [{SHARED_BASE + k}, {visible_width(im)}]" for k, (sid, im) in enumerate(registered_sprites())]

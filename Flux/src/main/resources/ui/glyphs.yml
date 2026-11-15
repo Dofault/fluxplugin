@@ -64,3 +64,6 @@ bar-colours: [green, gold, blue, red, purple]
 bar-height: 10
 pager-width: 70
 pager-button-width: 36
+# inventory style (2026-11-15): no engraved dark text; title y on the plate per first chest row
+engraved-text: false
+plate-text-y: [4, 18, 36, 54, 72, 90]

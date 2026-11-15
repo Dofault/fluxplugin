@@ -81,7 +81,7 @@ public final class MenuLoader {
         int[] span = rowSpan(m.buttons(), m.lists(), List.of(), List.of(), m);
         String background = theme.getString("background", "bg_window_*");
         String title = window(background, span);
-        int plateY = 5 + 18 * span[0];
+        int plateY = UiTitle.plateTextY(span[0]);
         // picture made for this menu by gen_ui.py (auto_bg.py): window, slot frames and name already in it
         String auto = "bg_auto_" + m.id().toLowerCase(Locale.ROOT);
         boolean pictured = !theme.isSet("background") && glyph(auto);

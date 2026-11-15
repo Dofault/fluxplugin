@@ -27,6 +27,10 @@ public final class UiTitle {
     private static int[] chunks = {1, 2, 4, 8, 16, 32, 64, 128};
     private static List<String> barColours = List.of("green", "gold", "blue", "red", "purple");
     private static int barHeight = 10, pagerWidth = 70, pagerButtonWidth = 36;
+    /** Engraved text (ink widgets, theme title) as dark grey: false since the dark inventory style (2026-11-15). */
+    private static boolean engraved = true;
+    /** Title y on the plate for a window starting at chest row index 0..5 (gen_ui.py), null: 5 + 18 × row. */
+    private static int[] plateTextY;
 
     static {
         try (InputStream in = UiTitle.class.getResourceAsStream("/ui/glyphs.yml")) {
@@ -40,6 +44,9 @@ public final class UiTitle {
                 barHeight = yml.getInt("bar-height", barHeight);
                 pagerWidth = yml.getInt("pager-width", pagerWidth);
                 pagerButtonWidth = yml.getInt("pager-button-width", pagerButtonWidth);
+                engraved = yml.getBoolean("engraved-text", engraved);
+                List<Integer> plate = yml.getIntegerList("plate-text-y");
+                if (!plate.isEmpty()) plateTextY = plate.stream().mapToInt(Integer::intValue).toArray();
             }
         } catch (Exception ignored) {
             // no glyph table: text widgets draw nothing
@@ -47,6 +54,12 @@ public final class UiTitle {
     }
 
     private UiTitle() {
+    }
+
+    /** Y of the title written on the plate of a window whose first drawn row is {@code firstRow}. */
+    static int plateTextY(int firstRow) {
+        if (plateTextY != null && firstRow >= 0 && firstRow < plateTextY.length) return plateTextY[firstRow];
+        return 5 + 18 * firstRow;
     }
 
     /** Title text of the widgets, from {@code cursor} (window x of the title cursor) back to it. */
@@ -89,6 +102,7 @@ public final class UiTitle {
     static void text(StringBuilder out, int cursor, int x, int y, Widget.Align align, String raw, String colour, boolean ink) {
         String s = clean(raw);
         if (s.isEmpty()) return;
+        ink = ink && engraved;      // the theme has no engraved text: white with its shadow, as every text
         int width = width(s);
         int left = switch (align) {
             case LEFT -> x;
