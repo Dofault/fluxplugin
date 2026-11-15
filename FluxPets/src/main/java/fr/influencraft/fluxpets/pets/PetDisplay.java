@@ -96,6 +96,9 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         long attackStart = -1, attackReady;
         /** Ticks since the ridden horse last moved (its moves reach the server in bursts). */
         int stillTicks;
+        /** Stepping down: its height last tick, and whether it rose since it left the ground (a jump: no sticking). */
+        double stickY;
+        boolean rose;
         /** Sounds of a ridden pet: footfalls played so far, ticks off the ground, height last tick, next voice. */
         int stepCount, airTicks;
         double lastSoundY;
@@ -702,7 +705,9 @@ public final class PetDisplay implements org.bukkit.event.Listener {
             kind = !moving ? null : f.running ? "run" : "walk";
         }
         MountKit.tickAttack(f, at, f.yaw, tick);
-        boolean grounded = inWater || f.y - ground(at.getWorld(), f.x, f.y, f.z) < 0.3;
+        double gap = f.y - ground(at.getWorld(), f.x, f.y, f.z);
+        boolean grounded = inWater || gap < 0.3;
+        if (!inWater) MountKit.stick(f, horse, gap, f.y);
         MountKit.tickSounds(f, at, kind, moving, grounded, tick);
         f.lastPX = f.x;
         f.lastPZ = f.z;

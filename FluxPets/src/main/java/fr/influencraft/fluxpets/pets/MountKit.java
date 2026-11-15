@@ -23,6 +23,7 @@ import java.util.concurrent.ThreadLocalRandom;
  *   (volley), then it recharges; the mount is slowed meanwhile;</li>
  *   <li>its sounds: one footfall sound at each landing of the gait that plays (in step with the animation), a voice
  *   now and then, a jump and a landing sound;</li>
+ *   <li>its grip: a mount stepping down a block sticks to the ground instead of gliding off the ledge;</li>
  *   <li>its swimming: a mount that swims floats at the surface (the horse's gravity is turned down, then up, around
  *   the water line) and keeps its speed in water; the others behave as any horse (slow, the rider thrown off in deep
  *   water).</li>
@@ -326,16 +327,39 @@ final class MountKit {
     static boolean buoyancy(PetDisplay.Follower f, AbstractHorse horse) {
         var gravity = horse.getAttribute(Attribute.GRAVITY);
         boolean in = horse.isInWater();
-        if (gravity == null) return in;
+        if (gravity == null || !in) return in;            // out of water its gravity is stick()'s
         double wanted = 0.08;
-        if (in) {
-            double seat = f.pet.mount().seat();
-            Location at = horse.getLocation();
-            if (water(at, seat + 0.05)) wanted = -0.035;
-            else if (water(at, seat - 0.3)) wanted = 0.0;
-        }
+        double seat = f.pet.mount().seat();
+        Location at = horse.getLocation();
+        if (water(at, seat + 0.05)) wanted = -0.035;
+        else if (water(at, seat - 0.3)) wanted = 0.0;
         if (Math.abs(gravity.getBaseValue() - wanted) > 1.0E-6) gravity.setBaseValue(wanted);
-        return in;
+        return true;
+    }
+
+    // ------------------------------------------------------------------ sticking to the ground
+
+    /** Gravity of a mount stepping down (blocks per tick squared; 0.08 is the game's). */
+    private static final double STICK_GRAVITY = 0.45;
+    /** Deepest step it is pulled down (blocks): one block and its margin. */
+    private static final double STICK_DROP = 1.3;
+
+    /**
+     * A mount walking off a ledge of one block sticks to the ground instead of gliding off it (owner's idea,
+     * 2026-11-15; the game has a step height to climb, nothing to step down): while it is off the ground without having
+     * risen (no jump) and the ground is at most {@link #STICK_DROP} under it, its gravity is {@link #STICK_GRAVITY}
+     * (an attribute: the rider's own game applies it), back to the game's as soon as it lands, rises or the drop is
+     * deeper. {@code gap}: blocks between its feet and the ground under them. Not in water.
+     */
+    static void stick(PetDisplay.Follower f, AbstractHorse horse, double gap, double y) {
+        var gravity = horse.getAttribute(Attribute.GRAVITY);
+        if (gravity == null) return;
+        boolean grounded = gap < 0.05;
+        if (grounded) f.rose = false;
+        else if (y - f.stickY > 0.02) f.rose = true;
+        f.stickY = y;
+        double wanted = !grounded && !f.rose && gap <= STICK_DROP ? STICK_GRAVITY : 0.08;
+        if (Math.abs(gravity.getBaseValue() - wanted) > 1.0E-6) gravity.setBaseValue(wanted);
     }
 
     private static boolean water(Location feet, double up) {
