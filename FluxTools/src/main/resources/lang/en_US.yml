@@ -43,10 +43,8 @@ repair:
     payment: "&#FF5C5CThe payment failed, your item was not touched."
 worn-out:
   broken: "&#FF5C5CYour item is worn out: it does nothing until it is repaired (anvil or &f[/repair]&#FF5C5C)."
-  broken-unrepairable: "&#FF5C5CYour item is worn out and cannot be repaired: it does nothing any more."
   armour: "&#FF5C5CYour worn-out armour no longer protects you: it was taken off and handed back. Repair it before wearing it again."
   reminder: "&#FF5C5CWorn-out item &7· &frepair it"
-  reminder-unrepairable: "&#FF5C5CWorn-out item &7· &fcannot be repaired"
 bottle:
   name: "Bottle of experience"
   contains: "Holds"

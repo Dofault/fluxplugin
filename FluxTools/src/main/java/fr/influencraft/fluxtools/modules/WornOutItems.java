@@ -27,6 +27,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemDamageEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerShearEntityEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -51,7 +52,8 @@ import java.util.UUID;
  *
  * <p>The state is read from the item itself (durability left), nothing is stored: any repair (anvil, mending,
  * {@code /repair}) makes it work again. Rods with their own durability counter follow the same rule through the
- * fishing service of Flux. Creative players are left alone.</p>
+ * fishing service of Flux. Creative players are left alone, and so are the items tagged unrepairable
+ * ({@link AnvilRestrictionListener}): those are meant to be used up and break as in vanilla.</p>
  */
 public final class WornOutItems implements Listener {
 
@@ -82,9 +84,10 @@ public final class WornOutItems implements Listener {
         return max - (damage == null ? 0 : damage);
     }
 
+    /** Read last: only an item at its last point pays for the lore check. */
     static boolean wornOut(ItemStack item) {
         int left = left(item);
-        return left >= 0 && left <= 1;
+        return left >= 0 && left <= 1 && !AnvilRestrictionListener.isMarkedUnrepairable(item);
     }
 
     // ─── Wear: the last point is never taken ───────────────────────────────────
@@ -95,11 +98,13 @@ public final class WornOutItems implements Listener {
         int left = left(item);
         if (left < 0) return;
         int room = left - 1;
+        if (event.getDamage() < room) return;
+        // an item nobody can repair is meant to be used up: it breaks as in vanilla, without a word
+        if (AnvilRestrictionListener.isMarkedUnrepairable(item)) return;
         if (room <= 0) {
             event.setCancelled(true);
             return;
         }
-        if (event.getDamage() < room) return;
         if (event.getDamage() > room) {
             // a rod with its own counter is worn by its plugin, which may not read the amount back from the event
             if (item.getType() == Material.FISHING_ROD && Fishing.hasCustomDurability(item)) {
@@ -110,11 +115,10 @@ public final class WornOutItems implements Listener {
         }
         // this use was its last one
         Player player = event.getPlayer();
-        boolean unrepairable = AnvilRestrictionListener.isMarkedUnrepairable(item);
         Bukkit.getScheduler().runTask(plugin, () -> {
             if (!player.isOnline()) return;
             Sounds.play(player, sound);
-            plugin.messages().send(player, unrepairable ? "worn-out.broken-unrepairable" : "worn-out.broken");
+            plugin.messages().send(player, "worn-out.broken");
             takeOffArmour(player);
         });
     }
@@ -153,7 +157,7 @@ public final class WornOutItems implements Listener {
         Block clicked = event.getClickedBlock();
         boolean noUse = Tag.ITEMS_PICKAXES.isTagged(type) || Tag.ITEMS_SWORDS.isTagged(type) || type == Material.MACE;
         boolean opensBlock = clicked != null && clicked.getType().isInteractable() && !player.isSneaking();
-        if (!noUse && !opensBlock) remind(player, item);
+        if (!noUse && !opensBlock) remind(player);
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
@@ -170,17 +174,16 @@ public final class WornOutItems implements Listener {
 
     private boolean refuse(Player player, ItemStack item, boolean remind) {
         if (player.getGameMode() == GameMode.CREATIVE || !wornOut(item)) return false;
-        if (remind) remind(player, item);
+        if (remind) remind(player);
         return true;
     }
 
-    private void remind(Player player, ItemStack item) {
+    private void remind(Player player) {
         long now = System.currentTimeMillis();
         Long last = reminded.put(player.getUniqueId(), now);
         if (last != null && now - last < REMINDER_GAP_MS) return;
         Sounds.play(player, sound);
-        plugin.messages().actionBar(player,
-                AnvilRestrictionListener.isMarkedUnrepairable(item) ? "worn-out.reminder-unrepairable" : "worn-out.reminder");
+        plugin.messages().actionBar(player, "worn-out.reminder");
     }
 
     // ─── Armour: taken off ─────────────────────────────────────────────────────
@@ -196,6 +199,13 @@ public final class WornOutItems implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         Bukkit.getScheduler().runTaskLater(plugin, () -> takeOffArmour(player), 20L);
+    }
+
+    /** Armour worn out by the hit that killed him is still on after a death that keeps the inventory. */
+    @EventHandler
+    public void onRespawn(PlayerRespawnEvent event) {
+        Player player = event.getPlayer();
+        Bukkit.getScheduler().runTask(plugin, () -> takeOffArmour(player));
     }
 
     @EventHandler

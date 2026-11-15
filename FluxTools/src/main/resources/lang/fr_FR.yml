@@ -43,10 +43,8 @@ repair:
     payment: "&#FF5C5CLe paiement a échoué, ton objet n'a pas été touché."
 worn-out:
   broken: "&#FF5C5CTon objet est cassé : il n'a plus aucun effet tant qu'il n'est pas réparé (enclume ou &f[/repair]&#FF5C5C)."
-  broken-unrepairable: "&#FF5C5CTon objet est cassé et ne peut pas être réparé : il n'a plus aucun effet."
   armour: "&#FF5C5CTon armure cassée ne te protège plus : elle a été retirée et rendue. Répare-la avant de la remettre."
   reminder: "&#FF5C5CObjet cassé &7· &fà réparer"
-  reminder-unrepairable: "&#FF5C5CObjet cassé &7· &firréparable"
 bottle:
   name: "Fiole d'expérience"
   contains: "Contient"
