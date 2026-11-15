@@ -154,8 +154,9 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         sidebarListener = PacketEvents.getAPI().getEventManager().registerListener(sidebar);
         fr.influencraft.flux.api.client.Sidebar.bind(sidebar);
         // the driver of a vehicle first among its passengers on every client (api.client.Drivers)
-        driverListener = PacketEvents.getAPI().getEventManager()
-                .registerListener(new fr.influencraft.flux.adapters.packetevents.DriverFirst());
+        var drivers = new fr.influencraft.flux.adapters.packetevents.DriverFirst();
+        driverListener = PacketEvents.getAPI().getEventManager().registerListener(drivers);
+        fr.influencraft.flux.api.client.Drivers.bind(drivers);
         getServer().getPluginManager().registerEvents(new org.bukkit.event.Listener() {
             @org.bukkit.event.EventHandler
             public void onQuit(org.bukkit.event.player.PlayerQuitEvent e) {

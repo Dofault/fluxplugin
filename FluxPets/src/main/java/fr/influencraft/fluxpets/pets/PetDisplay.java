@@ -50,12 +50,14 @@ import java.util.UUID;
  * its back) that its owner right clicks to ride it, from the pet's mount level. A walking pet is then a real horse
  * (2026-11-15): an invisible, tamed, invulnerable horse with an invisible saddle, its speed, jump and size from the
  * mount section, ridden by the owner. The rider's own game drives the horse, so it handles exactly like a horse
- * (turns with the camera, charged jump, steps). The model stays on its carrier, which rides the horse behind him
- * (second passenger: his game moves it with the horse, no lag), lowered by its height on the horse so it stands on the
- * ground. Never on the horse itself (BetterModel sends its displays first among the horse's passengers: the client
- * then does not let the rider drive). When the carrier cannot ride (refused mount, logged), it is put where the
- * horse is every tick instead, a little ahead along its speed. The horse is removed when he gets off and the model
- * goes back to following him. A flying mount is still moved by the server along the rider's keys
+ * (turns with the camera, charged jump, steps). The model's displays ride the horse behind him on every client
+ * (Flux {@code Drivers.carry} rewrites the passengers packets): his game moves them with the horse, no lag. They are
+ * lowered by their height on the horse (measured on a probe display riding it) so the model stands on the ground.
+ * BetterModel cannot do it itself: on the horse it sends its displays first (the client then does not let the rider
+ * drive) and hides the saddle; on a carrier riding the horse its displays stay behind (both tried 2026-11-15). The
+ * carrier is still put where the horse is every tick (BetterModel's rotation and light come from it); without Flux's
+ * packets the model follows it from the server, a little ahead along the horse's speed. The horse is removed when he
+ * gets off and the model goes back to following him. A flying mount is still moved by the server along the rider's keys
  * ({@link Player#getCurrentInput()}). A big pet ({@link Pet#size()}) keeps its edge, not its centre, at the follow
  * distances. {@link PetMountMoveEvent} lets an effect
  * clear the way first (the mole digs).
@@ -74,8 +76,10 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         double hx = Double.NaN, hy, hz;
         /** How far the model is lowered while its carrier rides the horse (blocks), NaN when not set. */
         double modelDrop = Double.NaN;
-        /** Ticks since the mount (the carrier's ride is checked once, after the first ticks). */
-        int rideTicks;
+        /** The model's displays ride the horse on the clients (Drivers.carry). */
+        boolean carried;
+        /** Display riding the horse: its height on the horse is the one of the carried displays. */
+        org.bukkit.entity.TextDisplay probe;
         final boolean hasWalk;
         TextDisplay label;
         /** Seat of a mountable pet (its owner rides it), null otherwise. */
@@ -478,12 +482,12 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         f.seat = null;
         f.hx = Double.NaN;
         f.modelDrop = Double.NaN;
-        f.rideTicks = 0;
-        // second passenger, behind the rider: off (RIDING_CARRIER), BetterModel leaves its displays behind then
-        if (RIDING_CARRIER && !horse.addPassenger(f.carrier)) {
-            Pets.plugin().getLogger().warning("Mount of " + f.owner.getName() + ": the model's carrier could not ride the"
-                    + " horse, the model follows it from the server instead.");
-        }
+        // the model's displays ride the horse behind the rider on every client; a probe display riding it gives their
+        // height on the horse
+        f.probe = horse.getWorld().spawn(horse.getLocation(), org.bukkit.entity.TextDisplay.class, d -> d.setPersistent(false));
+        horse.addPassenger(f.probe);
+        int[] ids = displayIds(f);
+        f.carried = ids.length > 0 && fr.influencraft.flux.api.client.Drivers.carry(horse, f.carrier, ids);
         return true;
     }
 
@@ -504,7 +508,9 @@ public final class PetDisplay implements org.bukkit.event.Listener {
             horse.eject();
             horse.remove();
         }
-        f.carrier.leaveVehicle();
+        if (f.probe != null && f.probe.isValid()) f.probe.remove();
+        f.probe = null;
+        f.carried = false;
         lowerModel(f, 0);
         f.modelDrop = Double.NaN;
         if (f.carrier.isValid()) {
@@ -527,12 +533,12 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         f.tracker.getPipeline().defaultPosition(d == 0 ? v -> v : v -> new Vector3f(v).sub(0, d, 0));
     }
 
-    /**
-     * The model's carrier rides the horse as second passenger. Off since 2026-11-15: the server sees it riding, but
-     * BetterModel's displays stay where they were on the rider's screen (tested in game); the carrier is put where the
-     * horse is every tick instead.
-     */
-    private static final boolean RIDING_CARRIER = false;
+    /** Entity ids of the displays of the pet's model (client-side entities of BetterModel). */
+    private static int[] displayIds(Follower f) {
+        var registry = kr.toxicity.model.api.tracker.EntityTrackerRegistry.registry(f.carrier.getUniqueId());
+        if (registry == null) return new int[0];
+        return registry.displays().mapToInt(kr.toxicity.model.api.nms.ModelDisplay::id).toArray();
+    }
 
     /** Ticks of the horse's speed the model is put ahead by, so it keeps up with the horse on the rider's screen. */
     private static final double MODEL_LEAD = 2;
@@ -575,23 +581,23 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         animateWalk(f, Math.hypot(f.x - ox, f.z - oz) > 0.02);
         f.lastPX = f.x;
         f.lastPZ = f.z;
-        if (f.carrier.getVehicle() == horse) {
-            // the carrier sits on the horse's back: the model goes down by that height to stand on the ground
-            double drop = f.carrier.getLocation().getY() - at.getY();
-            if (Double.isNaN(f.modelDrop) || Math.abs(drop - f.modelDrop) > 1.0E-3) {
-                f.modelDrop = drop;
-                lowerModel(f, drop);
+        if (f.carried) {
+            // the displays ride the horse on the clients: down by their height on it, to stand on the ground
+            if (f.probe != null && f.probe.isValid() && f.probe.getVehicle() == horse) {
+                double drop = f.probe.getLocation().getY() - at.getY();
+                if (drop > 1.0E-3 && (Double.isNaN(f.modelDrop) || Math.abs(drop - f.modelDrop) > 1.0E-3)) {
+                    f.modelDrop = drop;
+                    lowerModel(f, drop);
+                }
+            }
+            // displays respawned (new viewer, model refreshed): carried again
+            if (tick % 20 == 0) fr.influencraft.flux.api.client.Drivers.refresh(horse, displayIds(f));
+            if (f.carrier.getWorld() == at.getWorld()) {
+                f.carrier.teleport(new Location(at.getWorld(), f.x, f.y, f.z, f.yaw, 0),
+                        io.papermc.paper.entity.TeleportFlag.EntityState.RETAIN_PASSENGERS);
             }
             if (tick % 5 == 0) updateLight(f, at.getWorld());
             return;
-        }
-        if (++f.rideTicks == 5) {
-            Pets.plugin().getLogger().warning("Mount of " + f.owner.getName() + ": the model's carrier is not on the"
-                    + " horse (vehicle: " + f.carrier.getVehicle() + "), the model follows it from the server instead.");
-        }
-        if (!Double.isNaN(f.modelDrop)) {
-            lowerModel(f, 0);
-            f.modelDrop = Double.NaN;
         }
         // the model where the horse is, ahead by its speed (the server hears of the horse a little late)
         double lead = Double.isNaN(f.hx) ? 0 : MODEL_LEAD;
@@ -803,6 +809,7 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         if (f.horse != null) {
             horses.remove(f.horse.getUniqueId());
             fr.influencraft.flux.api.client.Drivers.release(f.horse);
+            if (f.probe != null && f.probe.isValid()) f.probe.remove();
             if (f.horse.isValid()) {
                 f.horse.eject();
                 f.horse.remove();
