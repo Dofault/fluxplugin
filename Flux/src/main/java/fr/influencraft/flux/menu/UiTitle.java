@@ -161,7 +161,8 @@ public final class UiTitle {
         int page = Math.max(1, Math.min(pages, number(Text.placeholders(player, p.page()))));
         int[] a = fr.influencraft.flux.PathRenderer.slotPosition(p.prev(), rows);
         int[] b = fr.influencraft.flux.PathRenderer.slotPosition(p.next(), rows);
-        int top = a[1] - 1;
+        // 15 px high on a 16 px slot: from the slot's top + 1 it sits centred on the slot row (owner, 2026-11-15)
+        int top = a[1] + 1;
         int leftEdge = a[0] - 1, rightEdge = b[0] + 16;
         sprite(out, cursor, leftEdge, top, SPRITE_BASE + (page > 1 ? 2 : 3), pagerButtonWidth);
         sprite(out, cursor, rightEdge - pagerButtonWidth + 1, top, SPRITE_BASE + (page < pages ? 4 : 5), pagerButtonWidth);
