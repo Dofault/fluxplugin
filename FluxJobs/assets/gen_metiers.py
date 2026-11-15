@@ -33,7 +33,9 @@ METIER_CASES = [15, 16, 17, 24, 25, 26, 33, 34, 35, 42, 43, 44]
 RETOUR, ADHESION, INFO = 0, 7, 8
 ACTIONS = list(range(54, 81))       # les 3 rangées de l'inventaire
 PREV, NEXT = 81, 89                 # pagination, sur la barre d'action
-BARRE = {"x": 27, "y": 109, "width": 143, "survol": "46-53"}    # cadre dessiné dans le fond (après le légendaire)
+# cadre dessiné dans le fond : centré sur la rangée 5 (cases y 108-123, cadre de 12 px), de l'illustration (x 33) au
+# bord droit de la grille des métiers (x 170) ; remplissage violet, couleur du thème (2026-11-15)
+BARRE = {"x": 33, "y": 110, "width": 138, "survol": "46-53", "couleur": "purple"}
 NOM = {"x": 77, "y": 23}            # centre du champ sombre de la rangée 0
 PHOTO_X = 34
 RARETES = [("simple", "Commune"), ("unique", "Rare"), ("elite", "Élite"), ("ultimate", "Ultime"),
@@ -99,7 +101,7 @@ def widgets(jid, nom, case):
         "        type: image", f"        glyph: {q('metier_' + jid)}", f"        x: {PHOTO_X}", "        width: 64",
         "      niveau:",
         "        type: bar", f"        x: {b['x']}", f"        y: {b['y']}", f"        width: {b['width']}",
-        f"        progress: {q(f'%ecojobs_{jid}_percentage_progress%')}", "        max: 100", "        colour: green",
+        f"        progress: {q(f'%ecojobs_{jid}_percentage_progress%')}", "        max: 100", f"        colour: {b['couleur']}",
         f"        text: {q(f'Niv. %ecojobs_{jid}_level%')}",
         "        tooltip:",
         f"          slots: {q(b['survol'])}",
