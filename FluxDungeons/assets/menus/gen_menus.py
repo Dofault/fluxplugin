@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Dungeon menus of FluxDungeons (2026-11-14), on the vanilla theme of Flux: backgrounds, icons, menu files.
+"""Dungeon menus of FluxDungeons (2026-11-14), on the theme of Flux (inventory style since 2026-11-15): backgrounds, icons, menu files.
 
     <venv with Pillow>/python3 gen_menus.py <plugins dir of the server> [preview dir]
 
@@ -77,9 +77,8 @@ def level_cells(d, slots, rows):
 
 
 def bg_list():
-    im = bg_window(GENERIC, 0, 4, rows=5)
+    im = bg_window(GENERIC, 0, 4, rows=5, title="Donjons")
     d = ImageDraw.Draw(im, "RGBA")
-    label(im, "Donjons", 88, 5, centre=True)
     for c in LIST_SLOTS:
         ui.slot(d, c, "vanilla", rows=5)
     for c in (38, 40, 42):
@@ -88,9 +87,8 @@ def bg_list():
 
 
 def bg_detail():
-    im = bg_window(GENERIC, 0, 5)
+    im = bg_window(GENERIC, 0, 5, title="Donjon")
     d = ImageDraw.Draw(im, "RGBA")
-    label(im, "Donjon", 88, 5, centre=True)
     field(im, d, (26, 19, 150, 32))
     # gold frame of the boss picture (rows 1 to 4, left)
     x0, y0, x1, y1 = IMAGE_X - 2, IMAGE_TOP - 2, IMAGE_X + 65, IMAGE_TOP + 65
@@ -99,7 +97,7 @@ def bg_detail():
     d.line((x0 + 1, y0 + 1, x1 - 1, y0 + 1), fill=GOLD_LIGHT)
     d.line((x0 + 1, y0 + 1, x0 + 1, y1 - 1), fill=GOLD_LIGHT)
     d.rectangle((x0 + 2, y0 + 2, x1 - 2, y1 - 2), fill=VIOLET_DARK)
-    d.line((x0, y1 + 1, x1, y1 + 1), fill=WHITE)
+    d.line((x0 + 1, y1 + 1, x1 - 1, y1 + 1), fill=ui.SHADE_LINE)
     # possible loot
     bx0, by0, bx1, by1 = span(LOOT_SLOTS)
     ui.container(im, d, (bx0, by0 - 11, bx1, by1), "ardoise", head="Butin", accent=GOLD_DARK)
@@ -113,9 +111,8 @@ def bg_detail():
 
 
 def bg_sas():
-    im = bg_window(GENERIC, 0, 5, extra=4)
+    im = bg_window(GENERIC, 0, 5, extra=4, title="Préparation")
     d = ImageDraw.Draw(im, "RGBA")
-    label(im, "Préparation", 88, 5, centre=True)
     # one card per member: head on top, ready / waiting under it
     for head, state in zip(MEMBER_SLOTS, STATE_SLOTS):
         x0, y0, x1, y1 = span([head, state], pad=2)

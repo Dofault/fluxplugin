@@ -1,5 +1,5 @@
 # FluxTools : réparation (/repair). Dépose l'objet dans la case de gauche, le bouton d'à côté le répare.
-title: "&8Réparation"
+title: "Réparation"
 rows: 3
 player-inventory: interactive
 vanilla-background: true

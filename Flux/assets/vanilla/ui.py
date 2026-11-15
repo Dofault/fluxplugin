@@ -245,9 +245,7 @@ def button(d, box, colour, icon=None, label=None, im=None):
     d.rectangle((x0 + 1, y0 + 1, x1 - 1, y1 - 1), fill=tone(colour, 0.45))
     d.rectangle((x0 + 2, y0 + 2, x1 - 1, y1 - 1), fill=tone(colour, -0.25))
     d.rectangle((x0 + 2, y0 + 2, x1 - 2, y1 - 3), fill=colour)
-    d.line((x0 + 1, y1 + 1, x1 - 1, y1 + 1), fill=WHITE)
-    d.point((x0, y1 + 1), fill=tone(BODY, 0.4))
-    d.point((x1, y1 + 1), fill=tone(BODY, 0.4))
+    d.line((x0 + 1, y1 + 1, x1 - 1, y1 + 1), fill=SHADE_LINE)     # shade under it on the dark window
     cx, cy = (x0 + x1) // 2, (y0 + y1) // 2 - 1
     if icon:
         ICONS[icon](d, cx, cy)

@@ -460,7 +460,7 @@ def well_around(d, cases, pad=2, left=0, right=0, top=0, bottom=0):
     """A well around slots, ``pad`` px beyond their frame, each side pulled in by its own count of px (1 where a
     button stands right next to it: owner's rule of 2026-11-15)."""
     x0, y0, x1, y1 = span(cases, pad)
-    box = (x0 + left, y0 + top, x1 - right, y1 - bottom)
+    box = (max(6, x0 + left), y0 + top, min(ui.W - 7, x1 - right), y1 - bottom)   # never against the frame
     ui.well(d, box)
     return box
 
@@ -619,7 +619,7 @@ def bg_echange(generic):
         d.line((tip - way, y - 1, tip - way, y + 1), fill=ui.EDGE)
     label(im, "Inventaire", 8, 129)
     well_around(d, list(range(54, 81)), top=1)
-    well_around(d, list(range(81, 90)))
+    well_around(d, list(range(81, 90)), pad=1)
     return im
 
 

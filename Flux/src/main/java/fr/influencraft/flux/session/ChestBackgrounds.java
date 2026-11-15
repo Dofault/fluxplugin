@@ -76,7 +76,9 @@ public final class ChestBackgrounds implements PacketListener {
         String prefix = prefix(type - FIRST_GENERIC + 1);
         if (prefix == null) return;
         Component title = packet.getTitle();
-        packet.setTitle(Component.text()
+        // white by default: the vanilla dark grey title does not read on the dark header of our chest (2026-11-15);
+        // a title with its own colour keeps it
+        packet.setTitle(Component.text().color(NamedTextColor.WHITE)
                 .append(Component.text(prefix, NamedTextColor.WHITE))
                 .append(title == null ? Component.empty() : title)
                 .build());
