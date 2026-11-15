@@ -956,6 +956,7 @@ public final class PetDisplay implements org.bukkit.event.Listener {
 
     /** Arrêt du plugin ou rechargement : retire tous les modèles. */
     public void shutdown() {
+        MountKit.clear();
         followers.values().forEach(list -> list.forEach(this::remove));
         followers.clear();
     }

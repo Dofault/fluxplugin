@@ -90,11 +90,15 @@ public final class Pet {
     /**
      * Attack of a ridden pet (from {@code level}): its animation (ticks long), the ticks it hits at, who it hits (the
      * hostile mobs within range blocks and angle degrees of where it faces; 180 = all around), damage at the unlock
-     * level and more per level above, cooldown in ticks, share of its speed kept while it attacks.
+     * level and more per level above, cooldown in ticks, share of its speed kept while it attacks. {@code effect}:
+     * {@code melee} (a blow in front), {@code wave} (a ring spreading from a point {@code forward} blocks ahead:
+     * all within range, debris of the block {@code item}) or {@code volley} ({@code count} projectiles shown as
+     * {@code item}, {@code spread} degrees apart, flying {@code range} blocks: each hurts the first mob it meets).
      */
     public record Attack(int level, String name, String animation, int ticks, List<Integer> impacts, double range,
                          double angle, double damage, double damagePerLevel, int cooldown, double slow, Snd sound,
-                         Snd hitSound, String particle) {
+                         Snd hitSound, String particle, String effect, String item, int count, double spread,
+                         double forward) {
         public double damageAt(int petLevel) {
             return damage + damagePerLevel * Math.max(0, petLevel - level);
         }
@@ -218,7 +222,9 @@ public final class Pet {
                 text(c, "animation"), Math.max(1, (int) num(c, "ticks", 20)), impacts.isEmpty() ? List.of(0) : impacts,
                 num(c, "range", 4), num(c, "angle", 60), num(c, "damage", 6), num(c, "damage-per-level", 1),
                 (int) Math.round(num(c, "cooldown", 6) * 20), Math.max(0, Math.min(1, num(c, "slow", 0.4))),
-                Snd.parse(text(c, "sound")), Snd.parse(text(c, "hit-sound")), text(c, "particle"));
+                Snd.parse(text(c, "sound")), Snd.parse(text(c, "hit-sound")), text(c, "particle"),
+                text(c, "effect") == null ? "melee" : text(c, "effect").toLowerCase(Locale.ROOT), text(c, "item"),
+                Math.max(1, (int) num(c, "count", 1)), num(c, "spread", 10), num(c, "forward", 0));
     }
 
     private static List<Snd> snds(Config c, String key) {
