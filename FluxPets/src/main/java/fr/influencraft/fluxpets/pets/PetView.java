@@ -226,7 +226,9 @@ public final class PetView {
         Map<String, int[]> counts = new HashMap<>();
         for (Pet pet : Pets.values()) {
             boolean owned = PetData.has(player, pet);
-            for (String key : new String[]{null, filterKey(pet)}) {
+            List<String> keys = new ArrayList<>(filterKeys(pet));
+            keys.add(null);                           // « all »
+            for (String key : keys) {
                 int[] count = counts.computeIfAbsent(key, k -> new int[2]);
                 count[0] += owned ? 1 : 0;
                 count[1]++;
