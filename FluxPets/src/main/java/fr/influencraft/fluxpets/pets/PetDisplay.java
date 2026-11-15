@@ -94,6 +94,8 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         int gaitTicks;
         /** Tick its attack started at (-1: none) and tick it may attack again from. */
         long attackStart = -1, attackReady;
+        /** Tick its owner got on it at. */
+        long mountedAt;
         /** Ticks since the ridden horse last moved (its moves reach the server in bursts). */
         int stillTicks;
         /** Stepping down: its height last tick, and whether it rose since it left the ground (a jump: no sticking). */
@@ -534,6 +536,7 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         f.carried = ids.length > 0 && fr.influencraft.flux.api.client.Drivers.carry(horse, f.carrier, ids);
         // its attack: the drop key (A on an AZERTY keyboard) as well as the left click
         f.attackStart = -1;
+        f.mountedAt = tick;
         f.airTicks = 0;
         f.voiceAt = 0;
         if (mount.attack() != null) {
@@ -553,7 +556,9 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         if (list == null) return;
         for (Follower f : list) {
             if (f.horse != null && ridden(f)) {
-                MountKit.attack(f, tick);
+                // the right click that mounts swings the arm: the server reads it as a left click in the air, half a
+                // second of grace after getting on
+                if (tick - f.mountedAt >= 10) MountKit.attack(f, tick);
                 return;
             }
         }
