@@ -95,7 +95,7 @@ public final class OfferingMenu implements ListProvider, FluxAction {
         if (editorMode) editors.add(player.getUniqueId());
         else editors.remove(player.getUniqueId());
         // another collection: back to page 1; the filter is kept while the player stays online
-        if (changed) Lists.act(player, LIST, "first", 21);
+        if (changed) Lists.act(player, LIST, "first", 27);
         Lists.invalidate(player, LIST);
         if (FluxApi.open(player, MENU)) fr.influencraft.flux.api.util.Sounds.cue(player, "page");
     }

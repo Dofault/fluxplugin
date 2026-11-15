@@ -1,8 +1,9 @@
 # FluxOffering : l'offrande ouverte par le joueur (/offrande [collection], ou un clic sur un rang de /grade).
-# Fond menu_offrande_<rang> (Flux/assets/offrande/gen_fonds.py) : la couleur et les étoiles de palier du rang ; ton
-# inventaire reste visible pour voir ce que tu peux déposer. Ligne 0 : retour (0) et icône de l'offrande (8). Objets
-# demandés : liste « offering » (10-16, 19-25, 28-34), pages en 18 et 26, Tout déposer en 40, filtre en 49,
-# boutons d'administration en 45 et 53. Les clics passent par [offering].
+# Fond menu_offrande_<rang> (Flux/assets/offrande/gen_fonds.py, style inventaire du thème) ; ton inventaire reste
+# visible pour voir ce que tu peux déposer. Même principe que le métier et le marché (2026-11-15) : ligne 0 retour (0)
+# et icône de l'offrande (8) ; objets demandés sur toute la largeur, liste « offering » (9-35) ; ligne 4 réservée à la
+# pagination du thème (widget pages) ; ligne du bas centrée : scoreboard (47), Tout déposer (49), filtre (51), boutons
+# d'administration aux bouts (45, 53). Les clics passent par [offering].
 title: ":offset_-8::menu_offrande_%offrandes_current_id%:"
 rows: 6
 player-inventory: visible
@@ -10,12 +11,19 @@ vanilla-background: false
 
 lists:
   offering:
-    slots: 10-16,19-25,28-34
+    slots: 9-35
     item:
       material: entry
       actions:
         left: ["[offering] click %entry_id% left"]
         right: ["[offering] click %entry_id% right"]
+
+widgets:
+  pages:
+    type: pager
+    list: offering
+    prev: 36
+    next: 44
 
 items:
   icone:
@@ -34,22 +42,8 @@ items:
       - "@left Rangs"
     actions:
       left: ["[menu] grades"]
-  precedente:
-    slot: 18
-    material: "itemsadder:influitems:btn_prev"
-    hide-tooltip: true
-    view-requirements: ["placeholder: %flux_list_offering_has_prev% == true"]
-    actions:
-      left: ["[list] offering prev"]
-  suivante:
-    slot: 26
-    material: "itemsadder:influitems:btn_next"
-    hide-tooltip: true
-    view-requirements: ["placeholder: %flux_list_offering_has_next% == true"]
-    actions:
-      left: ["[list] offering next"]
   filtre:
-    slot: 49
+    slot: 51
     material: "itemsadder:influitems:filter"
     name: "Filtrer"
     lore:
@@ -59,7 +53,7 @@ items:
       left: ["[list] offering filter"]
       right: ["[list] offering filter-prev"]
   tout_deposer:
-    slot: 40
+    slot: 49
     material: CHEST
     name: "Tout déposer"
     lore:
