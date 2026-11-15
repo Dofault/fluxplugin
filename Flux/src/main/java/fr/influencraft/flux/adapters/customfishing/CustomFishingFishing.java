@@ -58,6 +58,14 @@ public final class CustomFishingFishing implements Fishing.Provider {
     }
 
     @Override
+    public int durabilityLeft(ItemStack item) {
+        ItemManager m = items();
+        if (m == null || !m.hasCustomMaxDamage(item)) return -1;
+        // no counter yet: the rod is new
+        return m.wrap(item).getTag("CustomFishing", "cur_dur").orElse(null) instanceof Number n ? n.intValue() : m.getMaxDamage(item);
+    }
+
+    @Override
     public boolean repair(Player player, ItemStack item) {
         ItemManager m = items();
         if (m == null) return false;

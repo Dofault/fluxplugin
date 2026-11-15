@@ -34,6 +34,9 @@ public final class Fishing {
 
         boolean damaged(ItemStack item);
 
+        /** Uses left on an item with its own durability, -1 when it has none. */
+        int durabilityLeft(ItemStack item);
+
         boolean repair(Player player, ItemStack item);
     }
 
@@ -163,6 +166,16 @@ public final class Fishing {
             return p != null && item != null && p.hasCustomDurability(item);
         } catch (RuntimeException | LinkageError e) {
             return false;
+        }
+    }
+
+    /** Uses left on an item with its own durability ({@link #hasCustomDurability}), -1 when it has none. */
+    public static int durabilityLeft(ItemStack item) {
+        Provider p = provider;
+        try {
+            return p != null && item != null ? p.durabilityLeft(item) : -1;
+        } catch (RuntimeException | LinkageError e) {
+            return -1;
         }
     }
 

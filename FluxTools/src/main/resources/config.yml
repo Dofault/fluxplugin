@@ -24,6 +24,13 @@ modules:
   anvil-restrictions:
     enabled: true
 
+  # Nothing a player uses breaks any more: at its last point of durability an item is worn out and does nothing
+  # (no block broken, no hit, no right click; armour is taken off and handed back) until it is repaired.
+  # sound: played on every try with a worn-out item ("<key> [volume] [pitch]").
+  worn-out:
+    enabled: true
+    sound: "minecraft:entity.item.break 0.8 1"
+
   # /repair: repair menu at a single price (cost, in the main currency), durability and anvil cost reset.
   # Permission fluxtools.repair. Items tagged "Irréparable" are refused.
   repair:

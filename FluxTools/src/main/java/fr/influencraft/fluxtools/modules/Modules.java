@@ -15,7 +15,7 @@ import java.util.function.BiConsumer;
 
 /**
  * Workshop modules of FluxTools (taken over from InfluBridge): repair menu, experience bottles, anvil lock of the
- * items tagged unrepairable. Each one is switched on or off under {@code modules.<id>.enabled} in config.yml. Jobs
+ * items tagged unrepairable, items that wear out instead of breaking. Each one is switched on or off under {@code modules.<id>.enabled} in config.yml. Jobs
  * moved to FluxJobs, enchantment rules to FluxEnchant, the money action bar and the advancements key to Flux
  * (2026-11-13).
  */
@@ -31,6 +31,10 @@ public final class Modules {
     public void enable() {
         if (on("anvil-restrictions")) {
             pm.registerEvents(new AnvilRestrictionListener(), plugin);
+        }
+        if (on("worn-out")) {
+            pm.registerEvents(new WornOutItems((fr.influencraft.flux.api.FluxPlugin) plugin,
+                    section("worn-out").getString("sound", "minecraft:entity.item.break 0.8 1")), plugin);
         }
         if (on("repair")) {
             command("repair", "fluxtools.repair", new RepairMenu(plugin), null);
