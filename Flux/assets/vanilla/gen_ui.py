@@ -158,7 +158,8 @@ def sprite_slot(kind):
 
 
 def sprite_lit():
-    """Selected slot: light raised cell, 20 x 20 from (slot x - 2, slot y - 2)."""
+    """Selected slot: light raised cell, 20 x 20, drawn by Flux from (slot x - 3, slot y - 2): at x - 2 it showed 1 px
+    to the right in game (2026-11-15)."""
     im = Image.new("RGBA", (20, 20), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
     d.rounded_rectangle((0, 0, 19, 19), radius=3, fill=ui.CELL, outline=ui.OUTLINE)

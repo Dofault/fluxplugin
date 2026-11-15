@@ -85,7 +85,9 @@ public final class UiTitle {
                 }
                 case Widget.Lit l -> {
                     int[] at = fr.influencraft.flux.PathRenderer.slotPosition(l.slot(), rows);
-                    sprite(out, cursor, at[0] - 2, at[1] - 2, SPRITE_BASE + 1, 20);
+                    // 1 px further left than the slot geometry says: drawn at x - 2 it showed 1 px to the right in
+                    // game (dungeon launch screen, owner's report 2026-11-15)
+                    sprite(out, cursor, at[0] - 3, at[1] - 2, SPRITE_BASE + 1, 20);
                 }
             }
         }
