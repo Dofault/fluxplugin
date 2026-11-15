@@ -34,6 +34,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     private PacketListenerCommon backgroundListener;
     private com.github.retrooper.packetevents.event.PacketListenerCommon hurtShakeListener;
     private com.github.retrooper.packetevents.event.PacketListenerCommon sidebarListener;
+    private com.github.retrooper.packetevents.event.PacketListenerCommon driverListener;
     private PacketListenerCommon advancementListener;
     private fr.influencraft.flux.economy.MoneyActionBar moneyBar;
     private ChestBackgrounds backgrounds;
@@ -152,6 +153,9 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         var sidebar = new fr.influencraft.flux.adapters.packetevents.SidebarFilter();
         sidebarListener = PacketEvents.getAPI().getEventManager().registerListener(sidebar);
         fr.influencraft.flux.api.client.Sidebar.bind(sidebar);
+        // the driver of a vehicle first among its passengers on every client (api.client.Drivers)
+        driverListener = PacketEvents.getAPI().getEventManager()
+                .registerListener(new fr.influencraft.flux.adapters.packetevents.DriverFirst());
         getServer().getPluginManager().registerEvents(new org.bukkit.event.Listener() {
             @org.bukkit.event.EventHandler
             public void onQuit(org.bukkit.event.player.PlayerQuitEvent e) {
@@ -212,6 +216,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         if (backgroundListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(backgroundListener);
         if (hurtShakeListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(hurtShakeListener);
         if (sidebarListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(sidebarListener);
+        if (driverListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(driverListener);
         if (advancementListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(advancementListener);
         if (registry != null) registry.unregisterCommands();
     }

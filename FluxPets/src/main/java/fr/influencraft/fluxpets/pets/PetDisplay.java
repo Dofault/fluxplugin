@@ -461,6 +461,8 @@ public final class PetDisplay implements org.bukkit.event.Listener {
             return false;
         }
         horses.add(horse.getUniqueId());
+        // the model's displays ride the horse too (BetterModel sends them first): the rider must stay first to drive
+        fr.influencraft.flux.api.client.Drivers.drive(horse, f.owner);
         f.horse = horse;
         // the seat would catch the rider's own clicks: back when he gets off
         if (f.seat != null && f.seat.isValid()) f.seat.remove();
@@ -488,6 +490,7 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         f.horse = null;
         if (horse == null) return;
         horses.remove(horse.getUniqueId());
+        fr.influencraft.flux.api.client.Drivers.release(horse);
         if (horse.isValid()) {
             Location at = horse.getLocation();
             f.x = at.getX();
@@ -752,6 +755,7 @@ public final class PetDisplay implements org.bukkit.event.Listener {
     private void remove(Follower f) {
         if (f.horse != null) {
             horses.remove(f.horse.getUniqueId());
+            fr.influencraft.flux.api.client.Drivers.release(f.horse);
             if (f.horse.isValid()) {
                 f.horse.eject();
                 f.horse.remove();
