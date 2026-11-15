@@ -49,11 +49,12 @@ import java.util.UUID;
  * Mounts (2026-11-14): a pet with a {@code mount} section carries an invisible seat (an Interaction entity as high as
  * its back) that its owner right clicks to ride it, from the pet's mount level. A walking pet is then a real horse
  * (2026-11-15): an invisible, tamed, invulnerable horse with an invisible saddle, its speed, jump and size from the
- * mount section, ridden by the owner. The model stays on its carrier, which rides the horse behind him (he stays
- * the first passenger, the one a client lets drive; BetterModel on the horse itself sent its displays first and hid
- * the saddle), lowered by the carrier's height on the horse so it stands on the ground. The rider's own game drives
- * the horse and moves the carrier with it, so it handles exactly like a horse (turns with the camera, charged jump,
- * steps, no lag); the horse is removed when he gets off and the model goes back to following him. A flying mount is still moved by the server along the rider's keys
+ * mount section, ridden by the owner. The rider's own game drives the horse, so it handles exactly like a horse
+ * (turns with the camera, charged jump, steps). The model stays on its carrier, put where the horse is every tick, a
+ * little ahead along its speed so it keeps up on the rider's screen. Never on the horse itself (BetterModel sends its
+ * displays first among the horse's passengers: the client then does not let the rider drive), nor on a carrier
+ * riding the horse (BetterModel's displays do not follow a carrier that is a passenger). The horse is removed when
+ * he gets off and the model goes back to following him. A flying mount is still moved by the server along the rider's keys
  * ({@link Player#getCurrentInput()}). A big pet ({@link Pet#size()}) keeps its edge, not its centre, at the follow
  * distances. {@link PetMountMoveEvent} lets an effect
  * clear the way first (the mole digs).
@@ -68,8 +69,8 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         EntityTracker tracker;
         /** The horse its owner rides (walking mounts), null when not ridden. */
         org.bukkit.entity.AbstractHorse horse;
-        /** How far the model is lowered while its carrier rides the horse (blocks), NaN when not set. */
-        double modelDrop = Double.NaN;
+        /** Where the horse was last tick (its speed puts the model a little ahead). */
+        double hx = Double.NaN, hy, hz;
         final boolean hasWalk;
         TextDisplay label;
         /** Seat of a mountable pet (its owner rides it), null otherwise. */
@@ -470,9 +471,7 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         // the seat would catch the rider's own clicks: back when he gets off
         if (f.seat != null && f.seat.isValid()) f.seat.remove();
         f.seat = null;
-        // the model's carrier rides behind the rider: his game moves it with the horse (lowered in rideHorse)
-        horse.addPassenger(f.carrier);
-        f.modelDrop = Double.NaN;
+        f.hx = Double.NaN;
         return true;
     }
 
@@ -493,9 +492,6 @@ public final class PetDisplay implements org.bukkit.event.Listener {
             horse.eject();
             horse.remove();
         }
-        f.carrier.leaveVehicle();
-        lowerModel(f, 0);
-        f.modelDrop = Double.NaN;
         if (f.carrier.isValid()) {
             f.carrier.teleport(new Location(f.carrier.getWorld(), f.x, f.y, f.z, f.yaw, 0),
                     io.papermc.paper.entity.TeleportFlag.EntityState.RETAIN_PASSENGERS);
@@ -510,11 +506,8 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         if (instance != null) instance.setBaseValue(value);
     }
 
-    /** Every bone of the pet's model moved down by {@code drop} blocks (0: back in place). */
-    private static void lowerModel(Follower f, double drop) {
-        float d = (float) drop;
-        f.tracker.getPipeline().defaultPosition(d == 0 ? v -> v : v -> new Vector3f(v).sub(0, d, 0));
-    }
+    /** Ticks of the horse's speed the model is put ahead by, so it keeps up with the horse on the rider's screen. */
+    private static final double MODEL_LEAD = 2;
 
     /** A saddle drawn with an equipment asset that does not exist: nothing shows on the invisible horse. */
     private static org.bukkit.inventory.ItemStack invisibleSaddle() {
@@ -554,13 +547,15 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         animateWalk(f, Math.hypot(f.x - ox, f.z - oz) > 0.02);
         f.lastPX = f.x;
         f.lastPZ = f.z;
-        // the carrier sits on the horse's back: the model goes down by that height to stand on the ground
-        if (f.carrier.getVehicle() == horse) {
-            double drop = f.carrier.getLocation().getY() - at.getY();
-            if (Double.isNaN(f.modelDrop) || Math.abs(drop - f.modelDrop) > 1.0E-3) {
-                f.modelDrop = drop;
-                lowerModel(f, drop);
-            }
+        // the model where the horse is, ahead by its speed (the server hears of the horse a little late)
+        double lead = Double.isNaN(f.hx) ? 0 : MODEL_LEAD;
+        double vx = lead == 0 ? 0 : at.getX() - f.hx, vy = lead == 0 ? 0 : at.getY() - f.hy, vz = lead == 0 ? 0 : at.getZ() - f.hz;
+        f.hx = at.getX();
+        f.hy = at.getY();
+        f.hz = at.getZ();
+        if (f.carrier.getWorld() == at.getWorld()) {
+            f.carrier.teleport(new Location(at.getWorld(), f.x + vx * lead, f.y + Math.max(0, vy) * lead, f.z + vz * lead,
+                    f.yaw, 0), io.papermc.paper.entity.TeleportFlag.EntityState.RETAIN_PASSENGERS);
         }
         if (tick % 5 == 0) updateLight(f, at.getWorld());
     }
