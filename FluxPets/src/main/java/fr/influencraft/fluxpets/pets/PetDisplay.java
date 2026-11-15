@@ -93,7 +93,8 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         /** Vertical speed of a ridden pet (blocks per tick). */
         double vy;
         double x, y, z;
-        float yaw;
+        /** Read by BetterModel's own thread (rotation supplier). */
+        volatile float yaw;
         double lastPX, lastPZ;
         boolean walking;
         /** en route vers sa distance but (sorti de la zone de confort) */
@@ -234,6 +235,10 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         EntityTracker tracker = renderer.getOrCreate(BukkitAdapter.adapt(carrier));
         Follower f = new Follower(owner, pet, carrier, tracker, renderer.animation(pet.walkAnimation()).isPresent());
         f.hasRun = pet.runAnimation() != null && renderer.animation(pet.runAnimation()).isPresent();
+        // The model's yaw is ours, given as it is: BetterModel's own smoothing of the carrier's rotation went the long
+        // way round when the yaw crossed the +180 / -180 seam (looking north on a mount: the model swung east, south,
+        // west). Sent packed to the clients, where a yaw has no seam.
+        tracker.rotation(() -> new kr.toxicity.model.api.tracker.ModelRotation(0f, f.yaw));
         f.x = start.getX();
         f.y = start.getY();
         f.z = start.getZ();
