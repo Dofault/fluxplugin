@@ -48,8 +48,10 @@ import java.util.UUID;
  * <p>
  * Mounts (2026-11-14): a pet with a {@code mount} section carries an invisible seat (an Interaction entity as high as
  * its back) that its owner right clicks to ride it, from the pet's mount level. While ridden the pet goes where the
- * rider's keys say ({@link Player#getCurrentInput()}): forward, back, sides, sprint, jump; steps up one block,
- * falls, walks on water and lava. Sneaking gets off (vanilla dismount). {@link PetMountMoveEvent} lets an effect
+ * rider's keys say ({@link Player#getCurrentInput()}), like a horse: it always faces where the rider looks (turned
+ * at once, even standing still), forward along that, sides and back slower, sprint, jump; steps up one block,
+ * falls, walks on water and lava, never goes where the rider's head would hit a block. Sneaking gets off
+ * (vanilla dismount). A big pet ({@link Pet#size()}) keeps its edge, not its centre, at the follow distances. {@link PetMountMoveEvent} lets an effect
  * clear the way first (the mole digs).
  */
 public final class PetDisplay implements org.bukkit.event.Listener {
@@ -170,11 +172,13 @@ public final class PetDisplay implements org.bukkit.event.Listener {
                     ride(f);
                 } else if (i == 0) {
                     // le premier suit le joueur, dans la zone de confort distance-min / distance-max
-                    move(f, p.getX(), p.getZ(), minDistance, maxDistance, null);
+                    double e = reach(f.pet);
+                    move(f, p.getX(), p.getZ(), minDistance + e, maxDistance + e, null);
                 } else {
                     // les suivants marchent en file : chacun suit le précédent, entre ecart-file-min et -max
                     Follower lead = list.get(i - 1);
-                    move(f, lead.x, lead.z, gapMin, gapMax, lead);
+                    double e = reach(f.pet) + reach(lead.pet);
+                    move(f, lead.x, lead.z, gapMin + e, gapMax + e, lead);
                 }
             }
         }
@@ -195,7 +199,8 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         Follower last = before.isEmpty() ? null : before.get(before.size() - 1);
         double bx = last == null ? p.getX() : last.x;
         double bz = last == null ? p.getZ() : last.z;
-        double radius = last == null ? (minDistance + maxDistance) / 2 : (gapMin + gapMax) / 2;
+        double radius = last == null ? (minDistance + maxDistance) / 2 + reach(pet)
+                : (gapMin + gapMax) / 2 + reach(pet) + reach(last.pet);
         Location start = new Location(p.getWorld(), bx + Math.sin(yaw) * radius, p.getY(), bz - Math.cos(yaw) * radius);
         start.setY(targetY(pet, p, start.getX(), start.getZ()));
         start.setYaw(p.getYaw());
@@ -211,6 +216,11 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         updateLabel(f);
         updateSeat(f);
         return f;
+    }
+
+    /** How much further than a pet-sized one this pet keeps: from its centre to its edge, past half a block. */
+    private static double reach(Pet pet) {
+        return Math.max(0, pet.size() / 2 - 0.5);
     }
 
     /** Porte-armure invisible, sans hitbox (marker), jamais sauvegardé. */
@@ -381,7 +391,7 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         if (f.seat != null && f.seat.isValid()) return;
         f.seat = f.carrier.getWorld().spawn(f.carrier.getLocation(), org.bukkit.entity.Interaction.class, i -> {
             i.setPersistent(false);
-            i.setInteractionWidth(1.2f);
+            i.setInteractionWidth((float) Math.max(1.2, Math.min(4.0, f.pet.size() * 0.6)));
             i.setInteractionHeight((float) Math.max(0.3, mount.seat()));
             i.setResponsive(true);
         });
@@ -425,8 +435,9 @@ public final class PetDisplay implements org.bukkit.event.Listener {
     }
 
     /**
-     * The rider's keys move the pet: forward / back / sides along where he looks, sprint, jump; one block steps,
-     * gravity, water and lava walked on. Flying mounts go where the rider looks, jump to climb.
+     * The rider's keys move the pet like a horse: it faces where he looks at once, forward along that, sides at half
+     * speed, back at a quarter, sprint, jump; one block steps, gravity, water and lava walked on, room kept for the
+     * rider's head. Flying mounts go where the rider looks, jump to climb.
      */
     private void ride(Follower f) {
         Player rider = f.owner;
@@ -437,21 +448,28 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         double side = (input.isLeft() ? 1 : 0) - (input.isRight() ? 1 : 0);
         double yawRad = Math.toRadians(rider.getYaw());
         double fx = -Math.sin(yawRad), fz = Math.cos(yawRad);
-        double dx = fx * forward + fz * side, dz = fz * forward - fx * side;
+        // horse handling: sides at half speed, back at a quarter
+        double fwd = forward < 0 ? forward * 0.25 : forward, sd = side * 0.5;
+        double dx = fx * fwd + fz * sd, dz = fz * fwd - fx * sd;
         double len = Math.hypot(dx, dz);
         double ox = f.x, oz = f.z;
         boolean onGround = !f.pet.flying() && f.y <= ground(world, f.x, f.y, f.z) + 1.0E-3;
+        // room above the floor: the pet's body, and the rider's head on top of its seat
+        double room = Math.max(1.6, mount.seat() + 1.8);
         if (len > 1.0E-3) {
-            dx /= len;
-            dz /= len;
-            double speed = mount.speed() * (input.isSprint() ? 1.3 : 1) * (forward < 0 ? 0.5 : 1);
+            // the slower directions stay slower: only a diagonal (length > 1) is brought back to 1
+            if (len > 1) {
+                dx /= len;
+                dz /= len;
+            }
+            double speed = mount.speed() * (input.isSprint() ? 1.3 : 1);
             fr.influencraft.fluxpets.pets.event.PetMountMoveEvent event = new fr.influencraft.fluxpets.pets.event.PetMountMoveEvent(rider, f.pet, new Location(world, f.x, f.y, f.z),
-                    new org.bukkit.util.Vector(dx, 0, dz));
+                    new org.bukkit.util.Vector(dx, 0, dz).normalize());
             Bukkit.getPluginManager().callEvent(event);
             speed *= event.getSpeedFactor();
             // one axis at a time: the pet slides along a wall instead of stopping
-            if (free(world, f.x + dx * speed, f.y, f.z)) f.x += dx * speed;
-            if (free(world, f.x, f.y, f.z + dz * speed)) f.z += dz * speed;
+            if (free(world, f.x + dx * speed, f.y, f.z, room)) f.x += dx * speed;
+            if (free(world, f.x, f.y, f.z + dz * speed, room)) f.z += dz * speed;
         }
         if (f.pet.flying()) {
             double climb = input.isJump() ? mount.speed() * 0.8
@@ -477,14 +495,9 @@ public final class PetDisplay implements org.bukkit.event.Listener {
                 }
             }
         }
-        double moved = Math.hypot(f.x - ox, f.z - oz);
-        boolean walking = moved > 0.02;
-        if (walking) {
-            float target = (float) Math.toDegrees(Math.atan2(-(f.x - ox), f.z - oz));
-            float delta = ((target - f.yaw) % 360 + 540) % 360 - 180;
-            f.yaw += delta * 0.35f;
-        }
-        animateWalk(f, walking);
+        // like a horse: the body faces where the rider looks, at once, moving or not
+        f.yaw = rider.getYaw();
+        animateWalk(f, Math.hypot(f.x - ox, f.z - oz) > 0.02);
         f.lastPX = f.x;
         f.lastPZ = f.z;
         f.carrier.teleport(new Location(world, f.x, f.y, f.z, f.yaw, 0),
@@ -508,14 +521,14 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         return y - 8;
     }
 
-    /** The pet may stand there: at most one block higher than now, room for its body above. */
-    private static boolean free(World world, double x, double y, double z) {
+    /** The pet may stand there: at most one block higher than now, that much room above the floor. */
+    private static boolean free(World world, double x, double y, double z, double room) {
         int bx = (int) Math.floor(x), bz = (int) Math.floor(z);
         if (!world.isChunkLoaded(bx >> 4, bz >> 4)) return false;
         double floor = ground(world, x, y, z);
         if (floor - y > 1.05) return false;
         double base = Math.max(y, floor);
-        for (double h = 0.1; h < 1.6; h += 0.75) {
+        for (double h = 0.1; h < room; h += 0.75) {
             Block block = world.getBlockAt(bx, (int) Math.floor(base + h), bz);
             if (!block.isPassable() && !block.isLiquid()) return false;
         }

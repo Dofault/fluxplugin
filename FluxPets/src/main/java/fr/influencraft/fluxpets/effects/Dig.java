@@ -67,7 +67,8 @@ final class Dig extends PetEffect {
                 }
             }
         } else {
-            double reach = getDouble("reach", 1.6);
+            // from the pet's centre: a big model (boss pet) digs in front of its head, not inside it
+            double reach = getDouble("reach", 1.6) + Math.max(0, event.getPet().size() / 2 - 0.5);
             Vector right = new Vector(-dir.getZ(), 0, dir.getX());
             Location front = at.clone().add(dir.clone().multiply(reach));
             int base = (int) Math.floor(at.getY() + 0.01);
