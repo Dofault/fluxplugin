@@ -84,7 +84,7 @@ public final class PetView {
         }
         List<Pet> pets = new ArrayList<>();
         for (Pet pet : Pets.values()) {
-            if (PetData.has(player, pet) && (filter == null || filter.equals(filterKey(pet)))) {
+            if (PetData.has(player, pet) && (filter == null || filterKeys(pet).contains(filter))) {
                 pets.add(pet);
             }
         }
@@ -147,6 +147,23 @@ public final class PetView {
         return card.series();
     }
 
+    /**
+     * Every filter a pet shows under: its series (or its rarity for a series filtered by rarity), and its rarity when
+     * that rarity has a named filter (gui.filter.rarity-names): a job's legendary boss pet is found under « Légendaire »
+     * as well as under its job (2026-11-15: it was under its job only).
+     */
+    static java.util.Set<String> filterKeys(Pet pet) {
+        java.util.Set<String> keys = new java.util.LinkedHashSet<>();
+        String key = filterKey(pet);
+        if (key == null) return keys;
+        keys.add(key);
+        CardRegistry.PetEntry entry = Pets.plugin().registry().pet(pet.id());
+        if (entry != null && Pets.settings().has("gui.filter.rarity-names." + entry.rarity().id())) {
+            keys.add("rarity:" + entry.rarity().id());
+        }
+        return keys;
+    }
+
     /** Filtres proposés au joueur (clé -> libellé) : ceux de ses familiers, raretés puis séries (ordre des cartes). */
     static Map<String, String> filters(Player player) {
         Config c = Pets.settings();
@@ -155,16 +172,17 @@ public final class PetView {
         Map<Integer, String[]> rarities = new TreeMap<>();
         for (CardRegistry.Card card : registry.cards()) {
             Pet pet = Pets.get(card.pet());
-            String key = pet == null || !PetData.has(player, pet) ? null : filterKey(pet);
-            if (key == null) {
+            if (pet == null || !PetData.has(player, pet)) {
                 continue;
             }
-            if (key.startsWith("rarity:")) {
-                CardRegistry.Rarity rarity = registry.pet(pet.id()).rarity();
-                String path = "gui.filter.rarity-names." + rarity.id();
-                rarities.put(rarity.order(), new String[]{key, c.has(path) ? c.getString(path) : rarity.tag()});
-            } else {
-                series.putIfAbsent(key, key);
+            for (String key : filterKeys(pet)) {
+                if (key.startsWith("rarity:")) {
+                    CardRegistry.Rarity rarity = registry.pet(pet.id()).rarity();
+                    String path = "gui.filter.rarity-names." + rarity.id();
+                    rarities.put(rarity.order(), new String[]{key, c.has(path) ? c.getString(path) : rarity.tag()});
+                } else {
+                    series.putIfAbsent(key, key);
+                }
             }
         }
         Map<String, String> filters = new LinkedHashMap<>();
