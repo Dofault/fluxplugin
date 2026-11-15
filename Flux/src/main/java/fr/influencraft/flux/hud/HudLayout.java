@@ -100,9 +100,11 @@ final class HudLayout {
      * A segment of a box: an icon of the HUD font ({@code hud_icons.json} id, pieces allowed) and a text.
      * {@code universes}: shown only in those universes (api.universe.Universes, empty = everywhere);
      * {@code exceptUniverses}: never in those (the biome means nothing in the rpg worlds and dungeons).
+     * {@code id}/{@code unless}: hidden while the segment of the same box named {@code unless} is shown
+     * (the biome gives way to the city).
      */
     record Segment(String icon, List<Run> runs, String setting, String requires, List<String> universes,
-                   List<String> exceptUniverses) {
+                   List<String> exceptUniverses, String id, String unless) {
     }
 
     /** {@code rows}: each row holds one element, or several boxes side by side. */
@@ -236,7 +238,9 @@ final class HudLayout {
                 segments.add(new Segment(raw.get("icon") == null ? null : String.valueOf(raw.get("icon")),
                         runs(raw.get("text") == null ? "" : String.valueOf(raw.get("text")), shadow),
                         st == null ? null : String.valueOf(st), rq == null ? null : String.valueOf(rq).toLowerCase(Locale.ROOT),
-                        names(raw.get("universes")), names(raw.get("except-universes"))));
+                        names(raw.get("universes")), names(raw.get("except-universes")),
+                        raw.get("id") == null ? null : String.valueOf(raw.get("id")),
+                        raw.get("unless") == null ? null : String.valueOf(raw.get("unless"))));
             }
             if (segments.isEmpty()) {
                 log.warning("hud.yml " + id + ": empty box, element ignored");

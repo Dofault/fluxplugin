@@ -70,10 +70,11 @@ elements:
     box:
       - {icon: voteparty, text: "<#FFEB00>{voteparty}<#FFFFFF>/<#FADA5E>{voteparty_required}", shadow: "#000000"}
   place:
+    # unless: <id> cache le segment tant que celui de la même boîte qui porte cet id est affiché (biome masqué en ville)
     box:
-      - {setting: hud_biome, except-universes: [rpg], icon: biome, text: "{biome}", shadow: "#000000"}
+      - {setting: hud_biome, except-universes: [rpg], unless: city, icon: biome, text: "{biome}", shadow: "#000000"}
       - {setting: hud_biome, universes: [rpg], icon: rpg, text: "RPG", shadow: "#000000"}
-      - {setting: hud_ville, requires: city, icon: ville, text: "{city}", shadow: "#000000"}
+      - {id: city, setting: hud_ville, requires: city, icon: ville, text: "{city}", shadow: "#000000"}
 
 # Bedrock players (no pack, so no picture): one boss bar, MiniMessage or & colours. progress: "a/b" or 0 to 1.
 bedrock:

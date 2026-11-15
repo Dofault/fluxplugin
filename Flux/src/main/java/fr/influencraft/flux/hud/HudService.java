@@ -353,6 +353,21 @@ public final class HudService implements Hud.Backend, Listener {
         }
     }
 
+    /** Whether a segment passes its setting, universe and required-piece checks for this player. */
+    private boolean shown(Player p, View v, HudLayout.Segment s) {
+        if (s.setting() != null && !PlayerSettings.flag(p, "flux:" + s.setting(), true)) return false;
+        if (!s.universes().isEmpty() || !s.exceptUniverses().isEmpty()) {
+            String universe = fr.influencraft.flux.api.universe.Universes.of(p).toLowerCase(Locale.ROOT);
+            if (!s.universes().isEmpty() && !s.universes().contains(universe)) return false;
+            if (s.exceptUniverses().contains(universe)) return false;
+        }
+        if (s.requires() != null) {
+            String r = value(p, v, s.requires());
+            return r != null && !r.isBlank();
+        }
+        return true;
+    }
+
     /** A box's segments for this player, or null when none is shown. */
     private BoxContent box(Player p, View v, HudLayout.Element e) {
         List<String> icons = new ArrayList<>();
@@ -360,16 +375,9 @@ public final class HudService implements Hud.Backend, Listener {
         List<List<Integer>> colours = new ArrayList<>();
         int width = 0;
         for (HudLayout.Segment s : e.box()) {
-            if (s.setting() != null && !PlayerSettings.flag(p, "flux:" + s.setting(), true)) continue;
-            if (!s.universes().isEmpty() || !s.exceptUniverses().isEmpty()) {
-                String universe = fr.influencraft.flux.api.universe.Universes.of(p).toLowerCase(Locale.ROOT);
-                if (!s.universes().isEmpty() && !s.universes().contains(universe)) continue;
-                if (s.exceptUniverses().contains(universe)) continue;
-            }
-            if (s.requires() != null) {
-                String r = value(p, v, s.requires());
-                if (r == null || r.isBlank()) continue;
-            }
+            if (!shown(p, v, s)) continue;
+            if (s.unless() != null && e.box().stream()
+                    .anyMatch(o -> o != s && s.unless().equals(o.id()) && shown(p, v, o))) continue;
             String ic = s.icon() == null ? null : icon(fill(s.icon(), p, v));
             List<String> runs = new ArrayList<>();
             List<Integer> cs = new ArrayList<>();
