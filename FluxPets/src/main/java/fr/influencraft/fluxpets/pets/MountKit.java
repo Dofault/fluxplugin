@@ -318,9 +318,10 @@ final class MountKit {
     // ------------------------------------------------------------------ swimming
 
     /**
-     * A swimming mount in water floats: the horse rises while the water covers three quarters of the rider's seat,
-     * hangs where it is while it covers a third, sinks as usual otherwise. Its gravity is an attribute, so the
-     * rider's own game applies it. Returns whether it is in water.
+     * A swimming mount in water floats with the water line at its rider's seat (the pet's body in the water, its rider
+     * out of it): the horse rises while the water covers the seat, hangs where it is while the water is within 0.3
+     * block under it, sinks as usual otherwise. Its gravity is an attribute, so the rider's own game applies it.
+     * Returns whether it is in water. (Until 2026-11-15 it floated half out of the water: the otter looked set on it.)
      */
     static boolean buoyancy(PetDisplay.Follower f, AbstractHorse horse) {
         var gravity = horse.getAttribute(Attribute.GRAVITY);
@@ -330,8 +331,8 @@ final class MountKit {
         if (in) {
             double seat = f.pet.mount().seat();
             Location at = horse.getLocation();
-            if (water(at, seat * 0.75)) wanted = -0.035;
-            else if (water(at, seat * 0.35)) wanted = 0.0;
+            if (water(at, seat + 0.05)) wanted = -0.035;
+            else if (water(at, seat - 0.3)) wanted = 0.0;
         }
         if (Math.abs(gravity.getBaseValue() - wanted) > 1.0E-6) gravity.setBaseValue(wanted);
         return in;
