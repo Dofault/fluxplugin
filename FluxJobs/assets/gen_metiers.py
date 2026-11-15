@@ -37,7 +37,7 @@ PREV, NEXT = 81, 89                 # pagination, sur la barre d'action
 # bord droit de la grille des métiers (x 170) ; remplissage violet, couleur du thème (2026-11-15)
 BARRE = {"x": 33, "y": 110, "width": 138, "survol": "46-53", "couleur": "purple"}
 NOM = {"x": 77, "y": 23}            # centre du champ sombre de la rangée 0
-PHOTO_X = 34
+PHOTO_X = 33
 RARETES = [("simple", "Commune"), ("unique", "Rare"), ("elite", "Élite"), ("ultimate", "Ultime"),
            ("legendary", "Légendaire")]
 

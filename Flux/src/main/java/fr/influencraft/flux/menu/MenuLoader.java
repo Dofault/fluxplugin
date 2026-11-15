@@ -384,7 +384,7 @@ public final class MenuLoader {
                                 w.getString("page", pre + "page%"), w.getString("pages", pre + "pages%"),
                                 w.isList("prev-actions") ? w.getStringList("prev-actions") : List.of("[list] " + list + " prev"),
                                 w.isList("next-actions") ? w.getStringList("next-actions") : List.of("[list] " + list + " next"),
-                                req);
+                                w.getBoolean("always", true), req);
                     }
                     case "lit" -> new Widget.Lit(key, shifted(w.getInt("slot")), req);
                     case "raw" -> new Widget.Raw(key, w.getInt("x", 0), w.getString("text", ""), req);

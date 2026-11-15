@@ -10,7 +10,7 @@ import java.util.List;
  *   <li>{@link Text}: menu font (white, 1 px shadow), placeholders resolved, aligned on {@code x}</li>
  *   <li>{@link Image}: an ItemsAdder font image placed at {@code x} (its y is the image's own)</li>
  *   <li>{@link Bar}: fill of a progress bar whose empty frame is in the background, optional text and tooltip</li>
- *   <li>{@link Pager}: page buttons and "page/pages" field of a list, shown only when the list has several pages</li>
+ *   <li>{@link Pager}: page buttons and "page/pages" field of a list ("1/1" on one page, {@code always: false} hides it then)</li>
  *   <li>{@link Lit}: selected-slot highlight under a slot, when its conditions hold</li>
  *   <li>{@link Slots}: slot frames (added by the {@code theme:} section for every slot the menu uses)</li>
  * </ul>
@@ -47,7 +47,7 @@ public sealed interface Widget {
      * buttons run. All default to the Flux list {@code list}; set them to page another plugin's list (marché).
      */
     record Pager(String id, String list, int prev, int next, String page, String pages, List<String> prevActions,
-                 List<String> nextActions, List<Requirement> requirements) implements Widget {
+                 List<String> nextActions, boolean always, List<Requirement> requirements) implements Widget {
     }
 
     record Lit(String id, int slot, List<Requirement> requirements) implements Widget {

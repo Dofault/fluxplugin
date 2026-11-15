@@ -135,7 +135,8 @@ public final class UiTitle {
     /**
      * Pager of the shop reference on one row: light button 2 slots wide on {@code prev} and the slot after it, field
      * "page/pages" in the middle, button on the slot before {@code next} and {@code next}. Buttons greyed when there is
-     * no page that way; nothing at all when the list fits on one page. The clicks are invisible items (MenuLoader).
+     * no page that way. A list on one page (or empty) shows "1/1" with both buttons greyed (owner's rule of
+     * 2026-11-15), unless the widget says {@code always: false}. The clicks are invisible items (MenuLoader).
      */
     /** Empty frame of a bar: black edge, body chunks (as the fill), black edge; each glyph pulled back 1 px. */
     private static void barFrame(StringBuilder out, Widget.Bar b, int cursor) {
@@ -155,8 +156,9 @@ public final class UiTitle {
 
     private static void pager(StringBuilder out, Player player, Widget.Pager p, int cursor, int rows) {
         int pages = number(Text.placeholders(player, p.pages()));
-        if (pages <= 1) return;
-        int page = number(Text.placeholders(player, p.page()));
+        if (pages <= 1 && !p.always()) return;
+        pages = Math.max(1, pages);
+        int page = Math.max(1, Math.min(pages, number(Text.placeholders(player, p.page()))));
         int[] a = fr.influencraft.flux.PathRenderer.slotPosition(p.prev(), rows);
         int[] b = fr.influencraft.flux.PathRenderer.slotPosition(p.next(), rows);
         int top = a[1] - 1;
