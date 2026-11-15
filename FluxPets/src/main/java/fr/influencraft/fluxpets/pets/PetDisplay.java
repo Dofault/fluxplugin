@@ -479,8 +479,8 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         f.hx = Double.NaN;
         f.modelDrop = Double.NaN;
         f.rideTicks = 0;
-        // second passenger, behind the rider: his game moves the model with the horse
-        if (!horse.addPassenger(f.carrier)) {
+        // second passenger, behind the rider: off (RIDING_CARRIER), BetterModel leaves its displays behind then
+        if (RIDING_CARRIER && !horse.addPassenger(f.carrier)) {
             Pets.plugin().getLogger().warning("Mount of " + f.owner.getName() + ": the model's carrier could not ride the"
                     + " horse, the model follows it from the server instead.");
         }
@@ -526,6 +526,13 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         float d = (float) drop;
         f.tracker.getPipeline().defaultPosition(d == 0 ? v -> v : v -> new Vector3f(v).sub(0, d, 0));
     }
+
+    /**
+     * The model's carrier rides the horse as second passenger. Off since 2026-11-15: the server sees it riding, but
+     * BetterModel's displays stay where they were on the rider's screen (tested in game); the carrier is put where the
+     * horse is every tick instead.
+     */
+    private static final boolean RIDING_CARRIER = false;
 
     /** Ticks of the horse's speed the model is put ahead by, so it keeps up with the horse on the rider's screen. */
     private static final double MODEL_LEAD = 2;
