@@ -20,8 +20,13 @@ import java.util.jar.JarFile;
  * Flux's part of the server's resource pack, written into each folder of {@code client-pack.folders} (the pack plugin
  * merges them: ItemsAdder's {@code contents/<name>/resourcepack}; {@code plugins/Flux/pack} is read by MC GUI):
  * the files under {@code pack/assets/} of Flux's jar (HUD pictures, its font), the sprites of {@link GuiAtlas} and the text shader
- * ({@link TextShader}) in an overlay for the pack formats it is written for. Written once every plugin has started,
- * then whenever the shader changes; the console asks for a pack rebuild when a file changed.
+ * ({@link TextShader}) and the loading screen in an overlay for the pack formats they are written for. Written once every
+ * plugin has started, then whenever the shader changes; the console asks for a pack rebuild when a file changed.
+ *
+ * <p>Loading screen: the screen of the pack loading (Mojang's red one) drawn by Flux's {@code core/gui} shaders, built by
+ * {@code Flux/assets/loading/gen_loading.py} into {@code pack/loading/} of the jar. The Mojang logo is drawn with
+ * {@code core/position_tex_color}, MC GUI's shader: Flux puts a few lines at the top of its {@code main()} in the file
+ * {@code loading-screen.logo-shader} names (MC GUI's unpacked pack, written again at each of its starts, before Flux's).
  */
 public final class ClientPack {
 
@@ -31,6 +36,8 @@ public final class ClientPack {
     private String overlay = "flux_text_v88";
     private int minFormat = 88;
     private int maxFormat = 88;
+    private boolean loading = true;
+    private Path logoShader;
     private boolean started;
     private boolean pending;
 
@@ -48,6 +55,9 @@ public final class ClientPack {
         overlay = section.getString("overlay", overlay);
         minFormat = section.getInt("min-format", minFormat);
         maxFormat = section.getInt("max-format", maxFormat);
+        loading = section.getBoolean("loading-screen.enabled", true);
+        String logo = section.getString("loading-screen.logo-shader", "");
+        logoShader = logo == null || logo.isBlank() ? null : Path.of(logo);
     }
 
     /** First write, on the first tick: every plugin has given its part by then. */
@@ -143,11 +153,65 @@ public final class ClientPack {
                 } else {
                     changed |= Files.deleteIfExists(core.resolve("text.vsh")) | Files.deleteIfExists(core.resolve("text.fsh"));
                 }
+                if (full) changed |= writeLoadingScreen(core);
+                if (full && folder.equals(folders.get(0))) changed |= patchLogoShader();
                 if (changed) flux.getLogger().warning("Client pack written in " + folder + " (text shader: " + TextShader.baseName()
                         + "): rebuild the resource pack (/iazip)" + (full ? "; restart first if MC GUI merged the former shader." : ", before MC GUI merges it."));
             } catch (IOException | RuntimeException e) {
                 flux.getLogger().severe("Client pack not written in " + folder + ": " + e.getMessage());
             }
+        }
+    }
+
+    /** The loading screen's shaders in the overlay, or none when it is turned off. */
+    private boolean writeLoadingScreen(Path core) throws IOException {
+        boolean changed = false;
+        for (String name : List.of("gui.vsh", "gui.fsh")) {
+            String text = loading ? resource("pack/loading/" + name) : null;
+            changed |= text == null ? Files.deleteIfExists(core.resolve(name)) : writeIfChanged(core.resolve(name), text);
+        }
+        return changed;
+    }
+
+    private static final String HOOK_START = "    // Flux loading screen:";
+    private static final String HOOK_END = "discard;\n";
+
+    /**
+     * Hides the Mojang logo in the shader of {@code loading-screen.logo-shader}: the lines of {@code logo_hook.glsl}
+     * at the top of its {@code main()}, written again when they changed, taken out when the screen is turned off.
+     */
+    private boolean patchLogoShader() {
+        if (logoShader == null) return false;
+        try {
+            if (!Files.isRegularFile(logoShader)) {
+                flux.getLogger().warning("Loading screen: " + logoShader + " not found, the Mojang logo stays on it.");
+                return false;
+            }
+            String text = Files.readString(logoShader, StandardCharsets.UTF_8);
+            int old = text.indexOf(HOOK_START);
+            if (old >= 0) {
+                int end = text.indexOf(HOOK_END, old);
+                if (end < 0) throw new IOException("Flux's lines are cut");
+                text = text.substring(0, old) + text.substring(end + HOOK_END.length());
+            }
+            if (loading) {
+                String hook = resource("pack/loading/logo_hook.glsl");
+                int main = text.indexOf("void main()");
+                int brace = main < 0 ? -1 : text.indexOf('{', main);
+                if (brace < 0 || hook == null) throw new IOException("no main() to put Flux's lines in");
+                int line = text.indexOf('\n', brace) + 1;
+                text = text.substring(0, line) + hook + text.substring(line);
+            }
+            return writeIfChanged(logoShader, text);
+        } catch (IOException | RuntimeException e) {
+            flux.getLogger().warning("Loading screen: the Mojang logo is not hidden in " + logoShader + ": " + e.getMessage());
+            return false;
+        }
+    }
+
+    private String resource(String path) throws IOException {
+        try (InputStream in = flux.getResource(path)) {
+            return in == null ? null : new String(in.readAllBytes(), StandardCharsets.UTF_8);
         }
     }
 
