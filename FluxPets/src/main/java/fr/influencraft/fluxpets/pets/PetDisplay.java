@@ -94,6 +94,8 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         int gaitTicks;
         /** Tick its attack started at (-1: none) and tick it may attack again from. */
         long attackStart = -1, attackReady;
+        /** Ticks since the ridden horse last moved (its moves reach the server in bursts). */
+        int stillTicks;
         /** Sounds of a ridden pet: footfalls played so far, ticks off the ground, height last tick, next voice. */
         int stepCount, airTicks;
         double lastSoundY;
@@ -683,7 +685,10 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         f.z = at.getZ();
         f.yaw = horse.getBodyYaw();
         double step = Math.hypot(f.x - ox, f.z - oz);
-        boolean moving = step > 0.02;
+        // The rider's game sends the horse's moves in bursts (none on a tick, two on the next): it stands still only
+        // after 5 ticks without moving, else its gait animation was cut and started again all the time (it froze).
+        f.stillTicks = step > 0.02 ? 0 : f.stillTicks + 1;
+        boolean moving = f.stillTicks < 5;
         String kind;                                      // what its feet do: sounds follow it
         if (attacking) {
             kind = null;                                  // the attack plays alone

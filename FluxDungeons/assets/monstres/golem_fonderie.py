@@ -556,9 +556,11 @@ ATK_ARM = -50        # bras du marteau à l'impact
 ATK_HAMMER = 28       # marteau à l'impact (tête au ras du sol)
 
 
-# Hauteur du bassin pendant la course (pixels), par appui : pose, écrasement, poussée, sommet du vol. Calée sur la
-# mesure des pieds (cf. run).
-RUN_HIP = [(0.00, 0.3), (0.30, 0.0), (0.60, 0.6), (0.80, 3.0)]
+# Hauteur du bassin pendant la course (pixels) le long du cycle : calée sur la mesure des pieds, tick par tick, pour
+# qu'ils touchent le sol en appui et le quittent d'un quart de bloc en vol (les deux jambes n'ont pas la même
+# longueur : la courbe n'est pas la même pour l'appui droit, 0 à 0,35, et le gauche, 0,5 à 0,85).
+RUN_HIP = [(0.00, -0.5), (0.11, 0.6), (0.19, 1.5), (0.30, -1.0), (0.42, 2.3), (0.50, -2.5), (0.61, -1.0), (0.75, -1.6),
+           (0.92, 2.3)]
 
 
 def cyc(pts):
@@ -667,27 +669,33 @@ def animations(data):
     # le droit porte le marteau : il balance peu et le marteau traîne derrière lui ; la tête rend au buste son
     # inclinaison (regard droit devant).
     RL = 0.9
-    thigh = cyc([(0.00, -30), (0.175, 0), (0.35, 28), (0.47, 34), (0.68, -10), (0.88, -36)])
-    knee = cyc([(0.00, 8), (0.14, 24), (0.35, 6), (0.50, 60), (0.68, 78), (0.88, 22)])
-    toes = cyc([(0.00, -6), (0.20, 0), (0.35, 14), (0.50, 26), (0.75, 10), (0.90, -8)])     # pointe basse en vol
+    thigh = cyc([(0.00, -40), (0.175, -2), (0.35, 34), (0.47, 42), (0.68, -14), (0.88, -46)])
+    knee = cyc([(0.00, 10), (0.14, 28), (0.35, 8), (0.50, 72), (0.68, 96), (0.88, 30)])
+    toes = cyc([(0.00, -8), (0.20, 0), (0.35, 18), (0.50, 32), (0.75, 12), (0.90, -10)])     # pointe basse en vol
     hip = cyc(RUN_HIP)
+    beat = lambda p, ph=0.0: math.cos(4 * math.pi * (p - ph))      # deux fois par cycle : un battement par appui  # noqa: E731
     t = {}
     for side, ph in (("d", 0.0), ("g", 0.5)):
         t[f"cuisse_{side}"] = {"rotation": wave(RL, 18, lambda p, ph=ph: (thigh(p + ph), 0, 0))}
         t[f"tibia_{side}"] = {"rotation": wave(RL, 18, lambda p, ph=ph: (knee(p + ph), 0, 0))}
         t[f"pied_{side}"] = {"rotation": wave(RL, 18, lambda p, ph=ph: (-(thigh(p + ph) + knee(p + ph)) + toes(p + ph), 0, 0))}
-    t["bassin"] = {"position": wave(RL, 18, lambda p: (0, hip(2 * p), 0)),
-                   "rotation": wave(RL, 18, lambda p: (0, -5 * S(p, 0.04), 2 * S(p, 0.04)))}
-    t["torse"] = {"rotation": wave(RL, 18, lambda p: (11 + 2.5 * math.cos(4 * math.pi * (p - 0.12)), 9 * S(p, 0.04), -3 * S(p, 0.04)))}
-    t["tete"] = {"rotation": wave(RL, 18, lambda p: (-8 - 1.5 * math.cos(4 * math.pi * (p - 0.2)), -4 * S(p, 0.04), 1.5 * S(p, 0.04)))}
-    t["epaule_d"] = {"rotation": wave(RL, 18, lambda p: (0, 0, 2.5 * S(2 * p, 0.1)))}
-    t["epaule_g"] = {"rotation": wave(RL, 18, lambda p: (0, 0, 2.5 * S(2 * p, 0.1)))}
-    # bras opposés aux jambes : le gauche avance avec la jambe droite
-    t["bras_g"] = {"rotation": wave(RL, 18, lambda p: (-30 * S(p, 0.27) + 4, 0, 0))}
-    t["avant_bras_g"] = {"rotation": wave(RL, 18, lambda p: (-38 - 14 * S(p, 0.20), 0, 0))}
-    t["bras_d"] = {"rotation": wave(RL, 18, lambda p: (13 * S(p, 0.27) + 6, 0, 0))}
-    t["avant_bras_d"] = {"rotation": wave(RL, 18, lambda p: (-16 + 5 * S(p, 0.18), 0, 0))}
-    t["marteau"] = {"rotation": wave(RL, 18, lambda p: (7 * S(p, 0.12), 0, 3 * S(2 * p, 0.3)))}
+    # le bassin roule d'une hanche sur l'autre et se déporte vers la jambe d'appui
+    t["bassin"] = {"position": wave(RL, 18, lambda p: (1.2 * S(p, 0.04), hip(p), 0)),
+                   "rotation": wave(RL, 18, lambda p: (0, -7 * S(p, 0.04), 3.5 * S(p, 0.04)))}
+    # le buste plonge à chaque appui, se redresse en vol, et se tord contre les jambes
+    t["torse"] = {"position": wave(RL, 18, lambda p: (0, -0.8 * beat(p, 0.12), 0)),
+                  "rotation": wave(RL, 18, lambda p: (14 + 4.5 * beat(p, 0.12), 13 * S(p, 0.04), -4.5 * S(p, 0.04)))}
+    t["tete"] = {"rotation": wave(RL, 18, lambda p: (-11 - 4 * beat(p, 0.20), -7 * S(p, 0.04), 2.5 * S(p, 0.04)))}
+    # les épaules encaissent : elles tombent après chaque appui, l'une après l'autre
+    t["epaule_d"] = {"rotation": wave(RL, 18, lambda p: (3 * beat(p, 0.20), 0, 4 * beat(p, 0.17)))}
+    t["epaule_g"] = {"rotation": wave(RL, 18, lambda p: (3 * beat(p, 0.24), 0, -4 * beat(p, 0.21)))}
+    # bras opposés aux jambes. Le gauche, libre, pompe en grand, coude plié qui se referme quand il monte
+    t["bras_g"] = {"rotation": wave(RL, 18, lambda p: (-44 * S(p, 0.27) + 6, 0, -4))}
+    t["avant_bras_g"] = {"rotation": wave(RL, 18, lambda p: (-52 - 24 * S(p, 0.20), 0, 0))}
+    # le droit porte le marteau : il balance moins, en retard, et le marteau continue sur sa lancée
+    t["bras_d"] = {"rotation": wave(RL, 18, lambda p: (24 * S(p, 0.22) + 10, 0, 5))}
+    t["avant_bras_d"] = {"rotation": wave(RL, 18, lambda p: (-22 + 12 * S(p, 0.14), 0, 0))}
+    t["marteau"] = {"rotation": wave(RL, 18, lambda p: (16 * S(p, 0.06), 0, 5 * beat(p, 0.3)))}
     out.append(anim("run", RL, "loop", t))
 
     # ------------------------------------------------------------------ attack : préparation, frappe, impact, 1,4 s
