@@ -310,12 +310,12 @@ theme:
     pays_taxes: {title: "Taxes"}
     pays_effets: {title: "Effets"}
     territoires: {title: "Villes et Pays", background: bg_territoires, frames: none}   # two cards (gen_ui.py), texts by widgets of the menu
-    ville: {title: "Ville"}
+    ville: {title: "Ville", frame: "20-24"}   # level, public card and country in one dark well
     ville_accueil: {title: "Ville"}
     ville_commerce: {title: "Commerce", frame: "37-43"}   # the 7 days of takings: a slot under each, in the picture
     ville_niveau: {title: "Niveau", frames: none}   # icon, objectives and level-up button are pictures: no slot under them
     ville_droits: {title: "Droits"}
-    ville_fiche: {title: "Ville"}
+    ville_fiche: {title: "Ville", frame: "19-25"}   # the 7 figures of the town in one dark well
     ville_habitants: {title: "Habitants"}
     ville_parametres: {title: "Paramètres"}
     ville_parcelle: {title: "Parcelle"}
