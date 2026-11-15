@@ -49,9 +49,11 @@ import java.util.UUID;
  * Mounts (2026-11-14): a pet with a {@code mount} section carries an invisible seat (an Interaction entity as high as
  * its back) that its owner right clicks to ride it, from the pet's mount level. A walking pet is then a real horse
  * (2026-11-15): an invisible, tamed, invulnerable horse with an invisible saddle, its speed, jump and size from the
- * mount section, ridden by the owner, the pet's model moved onto it. The rider's own game drives it, so it handles
- * exactly like a horse (turns with the camera, charged jump, steps, no lag); it is removed when he gets off and the
- * model goes back to following him. A flying mount is still moved by the server along the rider's keys
+ * mount section, ridden by the owner. The model stays on its carrier, which rides the horse behind him (he stays
+ * the first passenger, the one a client lets drive; BetterModel on the horse itself sent its displays first and hid
+ * the saddle), lowered by the carrier's height on the horse so it stands on the ground. The rider's own game drives
+ * the horse and moves the carrier with it, so it handles exactly like a horse (turns with the camera, charged jump,
+ * steps, no lag); the horse is removed when he gets off and the model goes back to following him. A flying mount is still moved by the server along the rider's keys
  * ({@link Player#getCurrentInput()}). A big pet ({@link Pet#size()}) keeps its edge, not its centre, at the follow
  * distances. {@link PetMountMoveEvent} lets an effect
  * clear the way first (the mole digs).
@@ -66,6 +68,8 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         EntityTracker tracker;
         /** The horse its owner rides (walking mounts), null when not ridden. */
         org.bukkit.entity.AbstractHorse horse;
+        /** How far the model is lowered while its carrier rides the horse (blocks), NaN when not set. */
+        double modelDrop = Double.NaN;
         final boolean hasWalk;
         TextDisplay label;
         /** Seat of a mountable pet (its owner rides it), null otherwise. */
@@ -461,32 +465,15 @@ public final class PetDisplay implements org.bukkit.event.Listener {
             return false;
         }
         horses.add(horse.getUniqueId());
-        // the model's displays ride the horse too (BetterModel sends them first): the rider must stay first to drive
         fr.influencraft.flux.api.client.Drivers.drive(horse, f.owner);
         f.horse = horse;
         // the seat would catch the rider's own clicks: back when he gets off
         if (f.seat != null && f.seat.isValid()) f.seat.remove();
         f.seat = null;
-        moveModel(f, horse);
+        // the model's carrier rides behind the rider: his game moves it with the horse (lowered in rideHorse)
+        horse.addPassenger(f.carrier);
+        f.modelDrop = Double.NaN;
         return true;
-    }
-
-    /** The pet's model onto that entity (the horse, or back on the carrier), at its own size. */
-    private void moveModel(Follower f, org.bukkit.entity.Entity onto) {
-        var renderer = BetterModel.modelOrNull(f.pet.model());
-        if (renderer == null) return;
-        if (!f.tracker.isClosed()) f.tracker.close();
-        f.tracker = renderer.getOrCreate(BukkitAdapter.adapt(onto));
-        // a scaled horse must not scale the model: the boss's own size
-        f.tracker.scaler(kr.toxicity.model.api.tracker.ModelScaler.value(1));
-        // BetterModel hides the carrying entity's equipment by default: the rider's client would then see a horse
-        // without a saddle, which it does not let him drive (the saddle stays unseen: its equipment asset is empty)
-        if (onto instanceof org.bukkit.entity.AbstractHorse) {
-            f.tracker.hideOption(new kr.toxicity.model.api.tracker.EntityHideOption(false, true, true, true));
-        }
-        f.walking = false;
-        f.blockLight = -1;
-        f.skyLight = -1;
     }
 
     /** The horse goes, the model back on the carrier where the horse stood. */
@@ -506,10 +493,14 @@ public final class PetDisplay implements org.bukkit.event.Listener {
             horse.eject();
             horse.remove();
         }
+        f.carrier.leaveVehicle();
+        lowerModel(f, 0);
+        f.modelDrop = Double.NaN;
         if (f.carrier.isValid()) {
             f.carrier.teleport(new Location(f.carrier.getWorld(), f.x, f.y, f.z, f.yaw, 0),
                     io.papermc.paper.entity.TeleportFlag.EntityState.RETAIN_PASSENGERS);
-            moveModel(f, f.carrier);
+            f.walking = false;
+            f.tracker.stopAnimation(f.pet.walkAnimation());
             updateSeat(f);
         }
     }
@@ -517,6 +508,12 @@ public final class PetDisplay implements org.bukkit.event.Listener {
     private static void attribute(org.bukkit.entity.LivingEntity e, org.bukkit.attribute.Attribute a, double value) {
         var instance = e.getAttribute(a);
         if (instance != null) instance.setBaseValue(value);
+    }
+
+    /** Every bone of the pet's model moved down by {@code drop} blocks (0: back in place). */
+    private static void lowerModel(Follower f, double drop) {
+        float d = (float) drop;
+        f.tracker.getPipeline().defaultPosition(d == 0 ? v -> v : v -> new Vector3f(v).sub(0, d, 0));
     }
 
     /** A saddle drawn with an equipment asset that does not exist: nothing shows on the invisible horse. */
@@ -557,9 +554,13 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         animateWalk(f, Math.hypot(f.x - ox, f.z - oz) > 0.02);
         f.lastPX = f.x;
         f.lastPZ = f.z;
-        if (f.carrier.getWorld() == at.getWorld()) {
-            f.carrier.teleport(new Location(at.getWorld(), f.x, f.y, f.z, f.yaw, 0),
-                    io.papermc.paper.entity.TeleportFlag.EntityState.RETAIN_PASSENGERS);
+        // the carrier sits on the horse's back: the model goes down by that height to stand on the ground
+        if (f.carrier.getVehicle() == horse) {
+            double drop = f.carrier.getLocation().getY() - at.getY();
+            if (Double.isNaN(f.modelDrop) || Math.abs(drop - f.modelDrop) > 1.0E-3) {
+                f.modelDrop = drop;
+                lowerModel(f, drop);
+            }
         }
         if (tick % 5 == 0) updateLight(f, at.getWorld());
     }
