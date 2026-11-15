@@ -33,6 +33,9 @@ public final class Drivers {
     private static final class Carry {
         final Entity source;
         volatile int[] ids;
+        /** Viewers who already got the vehicle's passengers as they must be: never sent again (a passengers packet
+         * makes the rider's client mount him again, his view jumps). */
+        final Set<java.util.UUID> told = ConcurrentHashMap.newKeySet();
 
         Carry(Entity source, int[] ids) {
             this.source = source;
@@ -67,18 +70,42 @@ public final class Drivers {
         Carry c = new Carry(source, ids.clone());
         CARRY_BY_VEHICLE.put(vehicle.getEntityId(), c);
         CARRY_BY_SOURCE.put(source.getEntityId(), c);
-        send(vehicle, passengersOf(vehicle, c));
-        send(source, passengersOf(source, null));
+        tell(vehicle, c, false);
         return true;
     }
 
-    /** The carried entities again (their ids may change: a model re-rendered), sent to every client. */
+    /**
+     * Keeps the carrying up to date, to call now and then: when the carried ids changed (a model re-rendered) every
+     * client gets the passengers again, else only the clients that started seeing the vehicle since (never the
+     * others: a passengers packet makes the rider's client mount him again and his view jumps).
+     */
     public static void refresh(Entity vehicle, int[] ids) {
         Carry c = CARRY_BY_VEHICLE.get(vehicle.getEntityId());
         if (c == null) return;
-        c.ids = ids.clone();
-        send(vehicle, passengersOf(vehicle, c));
-        send(c.source, passengersOf(c.source, null));
+        boolean changed = !java.util.Arrays.equals(c.ids, ids);
+        if (changed) {
+            c.ids = ids.clone();
+            c.told.clear();
+        }
+        tell(vehicle, c, true);
+    }
+
+    /** The vehicle's and the source's passengers to the viewers not told yet (all of them when {@code onlyNew} is off). */
+    private static void tell(Entity vehicle, Carry c, boolean onlyNew) {
+        Set<Player> viewers = viewers(vehicle);
+        c.told.retainAll(viewers.stream().map(Player::getUniqueId).collect(java.util.stream.Collectors.toSet()));
+        List<Player> fresh = new ArrayList<>();
+        for (Player p : viewers) if (!onlyNew || !c.told.contains(p.getUniqueId())) fresh.add(p);
+        if (fresh.isEmpty()) return;
+        int[] onVehicle = passengersOf(vehicle, c);
+        int[] onSource = c.source.isValid() ? passengersOf(c.source, null) : null;
+        Sender s = sender;
+        if (s == null) return;
+        for (Player p : fresh) {
+            s.send(p, vehicle.getEntityId(), onVehicle);
+            if (onSource != null) s.send(p, c.source.getEntityId(), onSource);
+            c.told.add(p.getUniqueId());
+        }
     }
 
     /** Ends {@link #drive} and {@link #carry}: the carried entities ride their source again. */
@@ -132,9 +159,13 @@ public final class Drivers {
     private static void send(Entity vehicle, int[] passengers) {
         Sender s = sender;
         if (s == null || !vehicle.isValid()) return;
+        for (Player viewer : viewers(vehicle)) s.send(viewer, vehicle.getEntityId(), passengers);
+    }
+
+    private static Set<Player> viewers(Entity vehicle) {
         Set<Player> viewers = new LinkedHashSet<>(vehicle.getTrackedBy());
         for (Entity p : vehicle.getPassengers()) if (p instanceof Player player) viewers.add(player);
-        for (Player viewer : viewers) s.send(viewer, vehicle.getEntityId(), passengers);
+        return viewers;
     }
 
     private static Set<Integer> set(int[] ids) {
