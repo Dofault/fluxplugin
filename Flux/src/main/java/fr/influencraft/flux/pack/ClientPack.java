@@ -24,7 +24,8 @@ import java.util.jar.JarFile;
  * plugin has started, then whenever the shader changes; the console asks for a pack rebuild when a file changed.
  *
  * <p>Loading screen: the screen of the pack loading (Mojang's red one) drawn by Flux's {@code core/gui} shaders, built by
- * {@code Flux/assets/loading/gen_loading.py} into {@code pack/loading/} of the jar. The Mojang logo is drawn with
+ * {@code Flux/assets/loading/gen_loading.py} into {@code pack/loading/} of the jar. When it is off, the same {@code core/gui}
+ * shaders draw the scoreboard's background like the HUD's panels instead ({@code client-pack.sidebar}). The Mojang logo is drawn with
  * {@code core/position_tex_color}, MC GUI's shader: Flux puts a few lines at the top of its {@code main()} in the file
  * {@code loading-screen.logo-shader} names (MC GUI's unpacked pack, written again at each of its starts, before Flux's).
  */
@@ -37,6 +38,9 @@ public final class ClientPack {
     private int minFormat = 88;
     private int maxFormat = 88;
     private boolean loading = true;
+    private boolean sidebar = true;
+    private int sidebarTitleAlpha = 39;
+    private int sidebarLinesAlpha = 39;
     private Path logoShader;
     private boolean started;
     private boolean pending;
@@ -58,6 +62,9 @@ public final class ClientPack {
         loading = section.getBoolean("loading-screen.enabled", true);
         String logo = section.getString("loading-screen.logo-shader", "");
         logoShader = logo == null || logo.isBlank() ? null : Path.of(logo);
+        sidebar = section.getBoolean("sidebar.enabled", true);
+        sidebarTitleAlpha = Math.max(0, Math.min(255, section.getInt("sidebar.title-alpha", 39)));
+        sidebarLinesAlpha = Math.max(0, Math.min(255, section.getInt("sidebar.lines-alpha", 39)));
     }
 
     /** First write, on the first tick: every plugin has given its part by then. */
@@ -153,7 +160,7 @@ public final class ClientPack {
                 } else {
                     changed |= Files.deleteIfExists(core.resolve("text.vsh")) | Files.deleteIfExists(core.resolve("text.fsh"));
                 }
-                if (full) changed |= writeLoadingScreen(core);
+                if (full) changed |= writeGuiShader(core);
                 if (full && folder.equals(folders.get(0))) changed |= patchLogoShader();
                 if (changed) flux.getLogger().warning("Client pack written in " + folder + " (text shader: " + TextShader.baseName()
                         + "): rebuild the resource pack (/iazip)" + (full ? "; restart first if MC GUI merged the former shader." : ", before MC GUI merges it."));
@@ -163,14 +170,30 @@ public final class ClientPack {
         }
     }
 
-    /** The loading screen's shaders in the overlay, or none when it is turned off. */
-    private boolean writeLoadingScreen(Path core) throws IOException {
+    /**
+     * The {@code core/gui} shaders in the overlay: the loading screen's, else the sidebar's (the scoreboard's background
+     * drawn like the HUD's panels, {@code pack/sidebar/}), else none. A pack has one of each shader: the two cannot be
+     * on together, the loading screen wins.
+     */
+    private boolean writeGuiShader(Path core) throws IOException {
+        if (loading && sidebar) flux.getLogger().warning("client-pack: the loading screen and the sidebar both draw with core/gui;"
+                + " the sidebar keeps the game's background.");
         boolean changed = false;
         for (String name : List.of("gui.vsh", "gui.fsh")) {
-            String text = loading ? resource("pack/loading/" + name) : null;
+            String text = loading ? resource("pack/loading/" + name) : sidebar ? sidebarShader(name) : null;
             changed |= text == null ? Files.deleteIfExists(core.resolve(name)) : writeIfChanged(core.resolve(name), text);
         }
         return changed;
+    }
+
+    private String sidebarShader(String name) throws IOException {
+        String text = resource("pack/sidebar/" + name);
+        if (text == null) return null;
+        return text.replace("%TITLE_ALPHA%", alpha(sidebarTitleAlpha)).replace("%LINES_ALPHA%", alpha(sidebarLinesAlpha));
+    }
+
+    private static String alpha(int value) {
+        return String.format(java.util.Locale.ROOT, "%.6f", value / 255.0);
     }
 
     private static final String HOOK_START = "    // Flux loading screen:";
