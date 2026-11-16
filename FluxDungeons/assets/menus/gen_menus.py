@@ -63,10 +63,11 @@ def line_pages():
 
 
 def line_cells(page_index, pages):
-    """Cells of a page's path in DungeonMenus.route's order: the way in from the page before, each place and the way
-    to the next, the way out to the next page."""
+    """Cells of a page's path in DungeonMenus.route's order: the way in (from the page before, or on the first page the
+    start of the road, red while the player has beaten nothing: owner, 2026-11-16), each place and the way to the
+    next, the way out to the next page."""
     n = len(pages[page_index])
-    cells = [LINE_ARROWS[0]] if page_index > 0 else []
+    cells = [LINE_ARROWS[0]]
     for i in range(n):
         cells.append(LINE_SLOTS[i])
         if i < n - 1:
@@ -354,7 +355,7 @@ def menus():
         progress: "{len(cells)}"
         states: "%fluxdungeons_tl_route_{n}%"
         color: vert
-        start: false
+        start: {"true" if n == 1 else "false"}
         end: false
     items:
 """ + "\n".join(arrows))
