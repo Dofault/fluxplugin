@@ -373,7 +373,9 @@ public final class DungeonMenus {
             if (known) lore.kv(raw("gear.potions-count"), String.valueOf(count[k]));
             if (potionsHere.test(viewer)) lore.left(raw("menu.potions-action"));
             ListEntry e = slot("potion_" + key, shown, "GLASS_BOTTLE", raw("gear.potions-" + key), lore, viewer);
-            out.add(potionsHere.test(viewer) ? e.set("left", "[close]").set("right", "[player] potions") : e);
+            // left click (the one its lore shows) opens the potion merchant; the list places only %entry_left% /
+            // %entry_right% (no second left line: "[close]" there was all a left click did)
+            out.add(potionsHere.test(viewer) ? e.set("left", "[player] potions") : e);
         }
         out.add(petSlot(viewer));
         return out;
