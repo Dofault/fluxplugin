@@ -532,6 +532,7 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         // height on the horse
         f.probe = horse.getWorld().spawn(horse.getLocation(), org.bukkit.entity.TextDisplay.class, d -> d.setPersistent(false));
         horse.addPassenger(f.probe);
+        syncTracker(f);
         int[] ids = displayIds(f);
         f.carried = ids.length > 0 && fr.influencraft.flux.api.client.Drivers.carry(horse, f.carrier, ids);
         // its attack: the drop key (A on an AZERTY keyboard) as well as the left click
@@ -639,6 +640,19 @@ public final class PetDisplay implements org.bukkit.event.Listener {
     }
 
     /** Every bone of the pet's model moved down by {@code drop} blocks (0: back in place). */
+    /**
+     * The model BetterModel shows now on the carrier: it makes the model again when the carrier changes world (a /back,
+     * a portal), and the former tracker kept here was then lowered while the shown one stayed at the horse's height:
+     * the rider sat inside the mole (owner's report, 2026-11-16). True when it changed (to lower it again).
+     */
+    private static boolean syncTracker(Follower f) {
+        var registry = kr.toxicity.model.api.tracker.EntityTrackerRegistry.registry(f.carrier.getUniqueId());
+        EntityTracker live = registry == null ? null : registry.first();
+        if (live == null || live == f.tracker) return false;
+        f.tracker = live;
+        return true;
+    }
+
     private static void lowerModel(Follower f, double drop) {
         float d = (float) drop;
         f.tracker.getPipeline().defaultPosition(d == 0 ? v -> v : v -> new Vector3f(v).sub(0, d, 0));
@@ -717,6 +731,8 @@ public final class PetDisplay implements org.bukkit.event.Listener {
         f.lastPX = f.x;
         f.lastPZ = f.z;
         if (f.carried) {
+            // the model made again by BetterModel (world changed): lowered again
+            if (syncTracker(f)) f.modelDrop = Double.NaN;
             // the displays ride the horse on the clients: down by their height on it, to stand on the ground
             if (f.probe != null && f.probe.isValid() && f.probe.getVehicle() == horse) {
                 double drop = f.probe.getLocation().getY() - at.getY();
