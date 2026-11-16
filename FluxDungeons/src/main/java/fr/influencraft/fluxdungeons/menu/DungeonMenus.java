@@ -162,18 +162,18 @@ public final class DungeonMenus {
 
     /**
      * Colours of the path of a page, one per cell in the order gen_menus.py writes them: the way in from the page
-     * before (on the first page, the start of the road: always green), then each place and the way to the next, the way out to the next page (when there
+     * before (on the first page, the way to the first dungeon: always green), then each place and the way to the next, the way out to the next page (when there
      * is one). A way takes the colour of the place it leads to.
      */
     private String route(Player p, int pageNumber) {
         int dungeons = line().size(), total = places(), k = climbed(p);
         int first = (pageNumber - 1) * PER_PAGE, last = Math.min(total, first + PER_PAGE) - 1;
         List<String> out = new ArrayList<>();
-        // the way in: from the page before; on the first page the start of the road, always green (the player has
-        // set out), the way from it to the first dungeon takes that dungeon's colour (orange while it is to play)
+        // the way in: from the page before; on the first page the way to the first dungeon, green (owner, 2026-11-16:
+        // the road starts there, no stub before it): its cell and the first dungeon's are green, so the link is
         out.add(first > 0 ? state(first, k, dungeons) : "vert");
         for (int i = first; i <= last; i++) {
-            out.add(state(i, k, dungeons));
+            out.add(i == 0 ? "vert" : state(i, k, dungeons));
             if (i < last) out.add(state(i + 1, k, dungeons));
         }
         if (last + 1 < total) out.add(state(last + 1, k, dungeons));
