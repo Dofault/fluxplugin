@@ -148,7 +148,7 @@ def bg_shop():
     d = ImageDraw.Draw(im, "RGBA")
     field(im, d, (26, 19, 150, 32))
     x0, y0, x1, y1 = span(SHOP_ARTICLES, 2)
-    ui.well(d, (x0, y0 + 2, x1, y1))           # 1 px of air under the name field
+    ui.well(d, (x0, y0 + 2, x1, y1 - 2))       # 1 px of air under the name field, 2 px up from Flux's pager
     fx0, fy0, fx1, fy1 = span(SHOP_FLOORS, 2)
     ui.well(d, (fx0, fy0, fx1, fy1))
     label(im, "BOUTIQUES", (fx0 + fx1) // 2, fy0 - 9, centre=True)
