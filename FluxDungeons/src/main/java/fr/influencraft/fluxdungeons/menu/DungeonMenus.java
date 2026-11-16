@@ -406,11 +406,14 @@ public final class DungeonMenus {
      * spell, the basic attack and the passive, each with its icon, key and mana; read only. Without a class: a book that
      * opens the classes.
      */
+    /** Colour of the numbers in a spell's text. */
+    private static final String SPELL_VALUE = "&#4FC3C9";
+
     private List<ListEntry> spells(Player viewer) {
         List<ListEntry> out = new ArrayList<>();
-        // the sentence in the theme's violet, its values in white (owner, 2026-11-16)
-        for (var sp : host.spells(viewer, "&f", Lore.PURPLE)) {
-            Lore lore = Lore.create().description(Lore.PURPLE + sp.text())
+        // the sentence in white, its numbers in teal (owner, 2026-11-16)
+        for (var sp : host.spells(viewer, SPELL_VALUE, "&f")) {
+            Lore lore = Lore.create().description("&f" + sp.text())
                     .kv(raw("menu.spell-key"), raw("class-pages.keys." + sp.key()));
             if (sp.mana() >= 0) lore.kv(raw("menu.spell-cost"), sp.mana() == 0 ? raw("class-pages.free")
                     : raw("class-pages.mana", "%mana%", fr.influencraft.flux.api.util.Format.decimal(sp.mana())));
