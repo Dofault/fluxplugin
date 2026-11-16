@@ -35,8 +35,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 /**
@@ -47,8 +45,10 @@ import java.util.function.Supplier;
  * <p>
  * One Flux list ({@code boutique_articles}): its filter is the job (« Tous » first), its second filter ({@code kind})
  * the kind of item: mounts, boosters, sets, or a tool / armour piece (an enchanted book shows under every item its
- * enchantment goes on); Flux pages it and searches it. The jobs are a row of buttons in the inventory, scrolled by an
- * arrow at each end ({@code boutique_metiers}, {@code boutique_defile}); a job clicked again goes back to « Tous ».
+ * enchantment goes on); Flux pages it and searches it. The jobs are a row of buttons in the inventory, another Flux
+ * list ({@code boutique_metiers}: « Tous » then the jobs, {@link #JOB_SLOTS} a page) turned by an arrow at each end
+ * ({@code boutique_defile}: {@code [list] boutique_metiers prev / next}, the page sound of every menu); a job clicked
+ * again goes back to « Tous ».
  * A click on an article opens Flux's buying window ({@link TradeWindow}). Articles are shown with their own
  * description ({@code CustomItems.preview}: the booster's text of FluxPets, without its « right click » lines).
  * Semi-rp things (boosters, books) are vanilla items: bought from the rpg lobby they wait in {@code /recompenses}.
@@ -57,8 +57,9 @@ public final class DungeonShop {
 
     public static final String MENU = "donjon_boutique";
     public static final String LIST = "boutique_articles";
-    /** Job buttons shown at once in the inventory row (« Tous » takes one more, the arrows two). */
-    private static final int JOBS_SHOWN = 6;
+    public static final String JOBS = "boutique_metiers";
+    /** Buttons of the row of jobs on a page (« Tous » and the jobs), between the two arrows. */
+    private static final int JOB_SLOTS = 7;
 
     record Article(String kind, String id, int level, double price) {
     }
@@ -93,8 +94,6 @@ public final class DungeonShop {
     private final DungeonVictories victories;
     private final java.util.function.Function<String, String> jobName;
     private final Map<String, Page> pages = new LinkedHashMap<>();
-    /** First job shown in each player's row of jobs. */
-    private final Map<UUID, Integer> scroll = new ConcurrentHashMap<>();
 
     public DungeonShop(FluxPlugin plugin, Supplier<Collection<DungeonDefinition>> dungeons, DungeonTokens tokens,
                        DungeonVictories victories, java.util.function.Function<String, String> jobName) {
@@ -119,7 +118,7 @@ public final class DungeonShop {
             }
         });
         Lists.register(plugin, "boutique_boutons", q -> buttons(q.viewer()));
-        Lists.register(plugin, "boutique_metiers", q -> jobs(q.viewer()));
+        Lists.register(plugin, JOBS, q -> jobs(q.viewer()));
         Lists.register(plugin, "boutique_defile", q -> arrows(q.viewer()));
     }
 
@@ -156,37 +155,21 @@ public final class DungeonShop {
     /** Opens the shop on every job, or on a dungeon's job (its button shown in the row). */
     public void open(Player p, String dungeon) {
         Lists.reset(p, LIST);
+        Lists.reset(p, JOBS);
         int index = dungeon == null ? -1 : indexOf(dungeon);
         if (index >= 0) {
             Lists.act(p, LIST, "filter " + (index + 1), 28);
-            scroll.put(p.getUniqueId(), Math.max(0, Math.min(index, ordered().size() - JOBS_SHOWN)));
-        } else scroll.put(p.getUniqueId(), 0);
+            // the page of the row that shows its job (« Tous » is the first button)
+            Lists.act(p, JOBS, "page " + ((index + 1) / JOB_SLOTS + 1), JOB_SLOTS);
+        }
         invalidate(p);
         FluxApi.open(p, MENU);
     }
 
-    /** {@code job <n>} (0 = all), {@code scroll <-1|1>}, {@code buy <dungeon>:<n>}. */
+    /** {@code buy <dungeon>:<n>}. */
     public void act(Player p, String[] args) {
         if (args.length < 2) return;
         switch (args[0]) {
-            case "job" -> {
-                int n;
-                try {
-                    n = Integer.parseInt(args[1]);
-                } catch (NumberFormatException e) {
-                    return;
-                }
-                // the job shown, clicked again: back to every job
-                int current = Lists.state(p, LIST).filter();
-                Lists.act(p, LIST, "filter " + (n == current ? 0 : n), 28);
-                invalidate(p);
-            }
-            case "scroll" -> {
-                int max = Math.max(0, ordered().size() - JOBS_SHOWN);
-                int step = args[1].startsWith("-") ? -1 : 1;
-                scroll.put(p.getUniqueId(), Math.max(0, Math.min(max, scroll.getOrDefault(p.getUniqueId(), 0) + step)));
-                invalidate(p);
-            }
             case "buy" -> {
                 // <dungeon>:<n>: the article n of that dungeon's shop
                 int colon = args[1].indexOf(':');
@@ -209,7 +192,7 @@ public final class DungeonShop {
     }
 
     private void invalidate(Player p) {
-        for (String l : List.of(LIST, "boutique_boutons", "boutique_metiers", "boutique_defile")) Lists.invalidate(p, l);
+        for (String l : List.of(LIST, "boutique_boutons", JOBS, "boutique_defile")) Lists.invalidate(p, l);
     }
 
     /** The shops in the order of the dungeons. */
@@ -264,7 +247,7 @@ public final class DungeonShop {
         return ListEntry.of(id).item(item == null ? new ItemStack(Material.BARRIER) : item).set("left", left).set("right", right);
     }
 
-    /** « Tous » then the jobs from the scroll position, the one chosen glowing. */
+    /** « Tous » then every job (Flux shows a page of them), the one chosen glowing. */
     private List<ListEntry> jobs(Player viewer) {
         List<Page> all = ordered();
         int chosen = Lists.state(viewer, LIST).filter();
@@ -274,9 +257,8 @@ public final class DungeonShop {
         else every.left(raw("shop.job-action"));
         ItemStack allItem = Items.of("itemsadder:fluxdonjon:boutique", raw("shop.all"), every.build(), viewer);
         if (allItem != null && chosen == 0) allItem.editMeta(m -> m.setEnchantmentGlintOverride(true));
-        out.add(ListEntry.of("all").item(allItem == null ? new ItemStack(Material.CHEST) : allItem).set("left", "[fluxdungeon] shop job 0"));
-        int from = Math.max(0, Math.min(scroll.getOrDefault(viewer.getUniqueId(), 0), Math.max(0, all.size() - JOBS_SHOWN)));
-        for (int i = from; i < Math.min(all.size(), from + JOBS_SHOWN); i++) {
+        out.add(ListEntry.of("all").item(allItem == null ? new ItemStack(Material.CHEST) : allItem).set("left", "[list] " + LIST + " filter 0"));
+        for (int i = 0; i < all.size(); i++) {
             Page page = all.get(i);
             DungeonDefinition d = definition(page.dungeon());
             boolean on = chosen == i + 1;
@@ -289,20 +271,20 @@ public final class DungeonShop {
             ItemStack item = icon == null ? null : Items.of(icon, name, lore.build(), viewer);
             if (item == null) item = Items.dress(new ItemStack(d == null ? Material.CHEST : d.icon()), name, lore.build(), viewer);
             if (on) item.editMeta(m -> m.setEnchantmentGlintOverride(true));
-            out.add(ListEntry.of(page.dungeon()).item(item).set("left", "[fluxdungeon] shop job " + (i + 1)));
+            // Flux's filter of the articles (its click sound); the job shown, clicked again, goes back to « Tous »
+            out.add(ListEntry.of(page.dungeon()).item(item).set("left", "[list] " + LIST + " filter " + (on ? 0 : i + 1)));
         }
         return out;
     }
 
-    /** The arrows at each end of the row of jobs: shown only when there is something that way. */
+    /** The arrows at each end of the row of jobs (Flux's pages of that list): shown only when there is a page that way. */
     private List<ListEntry> arrows(Player viewer) {
-        int from = scroll.getOrDefault(viewer.getUniqueId(), 0);
-        int max = Math.max(0, ordered().size() - JOBS_SHOWN);
-        ItemStack left = from > 0 ? Items.of("itemsadder:fluxui:btn_left_purple", "", List.of(), viewer) : null;
-        ItemStack right = from < max ? Items.of("itemsadder:fluxui:btn_right_purple", "", List.of(), viewer) : null;
+        int page = Lists.state(viewer, JOBS).page(), pages = Lists.pages(viewer, JOBS, JOB_SLOTS);
+        ItemStack left = page > 0 ? Items.of("itemsadder:fluxui:btn_left_purple", "", List.of(), viewer) : null;
+        ItemStack right = page + 1 < pages ? Items.of("itemsadder:fluxui:btn_right_purple", "", List.of(), viewer) : null;
         List<ListEntry> out = new ArrayList<>();
-        out.add(left == null ? ListEntry.gap() : ListEntry.of("prev").item(hide(left)).set("left", "[fluxdungeon] shop scroll -1"));
-        out.add(right == null ? ListEntry.gap() : ListEntry.of("next").item(hide(right)).set("left", "[fluxdungeon] shop scroll 1"));
+        out.add(left == null ? ListEntry.gap() : ListEntry.of("prev").item(hide(left)).set("left", "[list] " + JOBS + " prev"));
+        out.add(right == null ? ListEntry.gap() : ListEntry.of("next").item(hide(right)).set("left", "[list] " + JOBS + " next"));
         return out;
     }
 
