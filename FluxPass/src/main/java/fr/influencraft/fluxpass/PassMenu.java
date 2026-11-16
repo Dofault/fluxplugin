@@ -31,7 +31,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *   <li>{@code pass_categories}: the mission categories, the one shown glows, a closed one shows when it opens</li>
  *   <li>{@code pass_missions}: missions of the category shown, centred on the row</li>
  *   <li>placeholders {@code %fluxpass_...%}: tier, points, season end, page of the player's tier, step colours of the
- *   path, and the missions still to do (todo_*) for the sidebar of Typewriter</li>
+ *   path, and the missions still to do ({@code todo_count}, {@code todo_<n>_name / _progress / _icon / _branch_<shown>}) for the
+ *   sidebar of Typewriter</li>
  * </ul>
  */
 final class PassMenu {
@@ -290,6 +291,8 @@ final class PassMenu {
             int n = number(a[0], 0);
             if (a.length != 2 || n < 1 || n > todos.size()) return "";
             Todo todo = todos.get(n - 1);
+            // frame of the line in the sidebar: "└" on the last one shown (branch_<lines shown at most>), else "├"
+            if (a[1].startsWith("branch")) return n == Math.min(todos.size(), number(a[1].substring("branch".length()).replace("_", ""), todos.size())) ? "└" : "├";
             return switch (a[1]) {
                 case "name" -> todo.name();
                 case "progress" -> todo.progress();
