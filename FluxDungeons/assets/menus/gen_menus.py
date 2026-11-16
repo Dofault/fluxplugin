@@ -143,7 +143,7 @@ def bg_line(page):
     # his spells under the word « SORTS », in a well as the gear
     sx = [ui.objet(c, LINE_ROWS)[0] for c in SPELL_SLOTS]
     sy = ui.objet(SPELL_SLOTS[0], LINE_ROWS)[1]
-    label(im, "SORTS", 88, sy - 11, centre=True)
+    label(im, "SORTS", 88, sy - 10, centre=True)
     ui.well(d, (min(sx) - 2, sy - 2, max(sx) + 17, sy + 17))
     # the line of dungeons, its levels over it (no word: owner, 2026-11-16)
     for place, slot in zip(page, LINE_SLOTS):
