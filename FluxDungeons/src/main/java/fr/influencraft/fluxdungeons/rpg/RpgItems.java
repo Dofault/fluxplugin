@@ -47,6 +47,9 @@ public final class RpgItems {
             y.set("material", look.get("material"));
             Object model = look.get("model");
             if (model != null && !String.valueOf(model).isBlank()) y.set("model", model);
+            // leather pieces dyed in the colour of their dungeon's job (look.color, written by assets/balance/gear.py)
+            Object color = look.get("color");
+            if (color != null && !String.valueOf(color).isBlank()) y.set("color", color);
             y.set("name", "&" + item.rarity().color() + look.getOrDefault("name", item.id()));
             y.set("lore", lore(item));
             y.set("universe", RpgWorld.UNIVERSE);

@@ -61,6 +61,8 @@ public final class ItemDefinition {
     private final Map<String, Double> attributes = new LinkedHashMap<>();
     private final List<ItemFlag> flags = new ArrayList<>();
     private final int durability;
+    /** Dye of a leather piece ({@code color: "#RRGGBB"}), null for none. */
+    private final Integer color;
     private final boolean unbreakable;
     private final Boolean glow;
     /** Universe the item belongs to (null = vanilla). */
@@ -88,11 +90,15 @@ public final class ItemDefinition {
             }
         }
         durability = c.getInt("durability", 0);
+        Integer dye = null;
+        String hex = c.getString("color");
+        if (hex != null && hex.matches("#?[0-9A-Fa-f]{6}")) dye = Integer.parseInt(hex.replace("#", ""), 16);
+        color = dye;
         unbreakable = c.getBoolean("unbreakable", false);
         glow = c.contains("glow") ? c.getBoolean("glow") : null;
         String u = c.getString("universe");
         universe = u == null || u.isBlank() || u.equalsIgnoreCase(fr.influencraft.flux.api.universe.Universes.VANILLA) ? null : u.toLowerCase(Locale.ROOT);
-        revision = Objects.hash(material, model, equip, equipment, name, lore, attributes, flags, durability, unbreakable, glow, universe);
+        revision = Objects.hash(material, model, equip, equipment, name, lore, attributes, flags, durability, unbreakable, glow, universe, color);
     }
 
     public static ItemDefinition read(ConfigurationSection section) {
@@ -116,6 +122,8 @@ public final class ItemDefinition {
     void applyTo(ItemStack item) {
         item.editMeta(this::meta);
         if (model != null) item.setData(DataComponentTypes.ITEM_MODEL, model);
+        if (color != null) item.setData(DataComponentTypes.DYED_COLOR,
+                io.papermc.paper.datacomponent.item.DyedItemColor.dyedItemColor(org.bukkit.Color.fromRGB(color)));
         Equippable eq = item.getData(DataComponentTypes.EQUIPPABLE);
         if (equip && eq != null) item.setData(DataComponentTypes.EQUIPPABLE, eq.toBuilder().assetId(equipment));
         if (!attributes.isEmpty()) writeAttributes(item, eq);

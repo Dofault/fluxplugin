@@ -102,9 +102,8 @@ def field(im, d, box, txt=None):
 # floors of the tower: (dungeon id, level, colour of the job) in floor order, read from tower.py (one source)
 sys.path.insert(0, os.path.join(HERE, "..", "balance"))
 from tower import TOWER  # noqa: E402
-JOB_COLOURS = {"mineur": "#E3826C", "rochiste": "#B8B2AA", "deblayeur": "#A0855B", "fondeur": "#FF7A3D",
-               "enchanteur": "#B376E5", "cultivateur": "#F0A800", "herboriste": "#83A85A", "sylviculteur": "#8C6A3E",
-               "pecheur": "#43B7B0", "defenseur": "#C8C8C8"}
+from tower import DYES as _DYES  # noqa: E402
+JOB_COLOURS = _DYES                 # one colour per job: the dye of its leather set (tower.py)
 
 
 def bg_list():

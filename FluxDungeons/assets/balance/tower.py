@@ -39,7 +39,7 @@ SHOP. One shop, a page per floor, everything priced in runs of that floor (RUN_T
     - the enchanted books of the job (JOB_ENCHANTS: every custom enchantment belongs to one job, the enchanter takes
       those that fit anything), at their highest level, priced by rarity (BOOK_RUNS); books only drawn from mystery
       books (fabled, not enchantable) are not sold (EXCLUSIVE);
-    - the rpg set of the dungeon, when it has one, a run a piece.
+    - the dungeon's leather set (gear.py: dyed in its job's colour, its floor's orientation), a run a piece.
 """
 import math
 import os
@@ -67,6 +67,12 @@ TOWER = {
     10: ("enchanteur", "enchanteur", 100, 4, 1.35, 3),
 }
 MAX_LEVEL = 50          # balance.yml levels.max: the monsters' curves stop there
+
+# colour of each job (2026-11-16): dye of its dungeon's leather set (gear.py), frame of its floor in the tower menu
+# (gen_menus.py); one colour per job, none too close to another
+DYES = {"rochiste": "#9A9AA3", "cultivateur": "#F0A800", "sylviculteur": "#7A5230", "deblayeur": "#C9A66B",
+        "mineur": "#E3826C", "herboriste": "#6FA34A", "fondeur": "#D9441C", "defenseur": "#A8323A",
+        "pecheur": "#3FB7C9", "enchanteur": "#9B59D9"}
 
 
 def run_tokens(f):
@@ -99,8 +105,7 @@ JOB_ENCHANTS = {
     "enchanteur": ["telepathie", "enclume_de_poche", "curieux", "sauvegarde", "coeur_brillant", "angelique", "trapu",
                    "usain_volt", "gardiens", "esprits", "onde_de_choc"],
 }
-SETS = {"roche": "roc", "herboriste": "herb", "moisson": "harvest", "pecheur": "tide", "mineur": "copper"}
-PIECES = ("helmet", "chestplate", "leggings", "boots")
+PIECES = ("helmet", "chestplate", "leggings", "boots")   # every floor has its leather set fluxrpg:<dungeon>_<piece> (gear.py)
 
 
 def pressure(r, median_boss):
@@ -216,9 +221,8 @@ def shop(plugin, rows, rarities):
         for e in JOB_ENCHANTS[job]:
             rarity, top = rarities[e]
             out.append(f"    - {{kind: book, enchant: {e}, level: {top}, price: {price(rt * BOOK_RUNS[rarity])}}}")
-        if dungeon in SETS:
-            for piece in PIECES:
-                out.append(f"    - {{kind: item, item: 'fluxrpg:{SETS[dungeon]}_{piece}', price: {price(rt * SET_PIECE_RUNS)}}}")
+        for piece in PIECES:
+            out.append(f"    - {{kind: item, item: 'fluxrpg:{dungeon}_{piece}', price: {price(rt * SET_PIECE_RUNS)}}}")
     open(os.path.join(plugin, "shop.yml"), "w", encoding="utf-8").write("\n".join(out) + "\n")
 
 

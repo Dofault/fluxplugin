@@ -1,128 +1,456 @@
-# Items of the rpg universe (docs/technique/rpg.md §7), made as Flux items "fluxrpg:<id>" marked for the rpg universe
-# (no vanilla enchantment nor attribute). Their description is written from these numbers: never write stats by hand.
+# Items of the rpg universe (docs/technique/rpg.md §7). Dungeon armour written by
+# FluxDungeons/assets/balance/gear.py (the dungeon tower, 2026-11-16): run it again rather than editing it here.
+# Class weapons are kept as they are by the script.
 # slot: weapon, helmet, chestplate, leggings, boots. classes: who may use it (empty = everyone). level: required.
-# Stats are added as they are (stats.yml ids). Budget of a full set of a level: reference-gear in balance.yml.
-# look: material, name, model (item_model of a future texture, empty = the material's own look).
+# Stats are added as they are (stats.yml ids). look: material, name, model, color (dye of a leather piece).
 
 rarities:
-  common:    {color: "#FFFFFF", order: 1}
-  uncommon:  {color: "#55FF55", order: 2}
-  rare:      {color: "#5A85EA", order: 3}
-  epic:      {color: "#B376E5", order: 4}
-  legendary: {color: "#F0A800", order: 5}
-
+  common: {color: '#FFFFFF', order: 1}
+  uncommon: {color: '#55FF55', order: 2}
+  rare: {color: '#5A85EA', order: 3}
+  epic: {color: '#B376E5', order: 4}
+  legendary: {color: '#F0A800', order: 5}
 items:
-  # ---- class weapons (given when the class is chosen)
   class_warrior_weapon:
     slot: weapon
     classes: [warrior]
     level: 1
     rarity: common
     stats: {physical_attack: 8}
-    description: ["A plain, heavy blade.", "Hits everything in front of you."]
-    look: {material: IRON_SWORD, name: "Dawnbreaker", model: "fluxdungeons:brise_aube"}
+    description: ['A plain, heavy blade.', Hits everything in front of you.]
+    look: {material: IRON_SWORD, name: Dawnbreaker, model: 'fluxdungeons:brise_aube'}
   class_archer_weapon:
     slot: weapon
     classes: [archer]
     level: 1
     rarity: common
     stats: {physical_attack: 10}
-    description: ["Shoots with a left click."]
-    look: {material: BOW, name: "Skyglade", model: "fluxdungeons:sylve_celeste"}
+    description: [Shoots with a left click.]
+    look: {material: BOW, name: Skyglade, model: 'fluxdungeons:sylve_celeste'}
   class_mage_weapon:
     slot: weapon
     classes: [mage]
     level: 1
     rarity: common
     stats: {magic_power: 10, max_mana: 10}
-    description: ["Throws an arcane bolt with a left click."]
-    look: {material: BLAZE_ROD, name: "Void Sceptre", model: "fluxdungeons:sceptre_neant"}
+    description: [Throws an arcane bolt with a left click.]
+    look: {material: BLAZE_ROD, name: Void Sceptre, model: 'fluxdungeons:sceptre_neant'}
   class_healer_weapon:
     slot: weapon
     classes: [healer]
     level: 1
     rarity: common
     stats: {magic_power: 8, healing_power: 0.05}
-    description: ["Its light hurts monsters", "and mends allies."]
-    look: {material: GOLDEN_HOE, name: "Dawn Reliquary", model: "fluxdungeons:reliquaire_aube"}
+    description: [Its light hurts monsters, and mends allies.]
+    look: {material: GOLDEN_HOE, name: Dawn Reliquary, model: 'fluxdungeons:reliquaire_aube'}
   class_cryomancer_weapon:
     slot: weapon
     classes: [cryomancer]
     level: 1
     rarity: common
     stats: {magic_power: 9, max_mana: 10}
-    description: ["Throws a shard of ice with a left click.", "Every hit leaves frost."]
-    look: {material: BREEZE_ROD, name: "Frostheart"}
+    description: [Throws a shard of ice with a left click., Every hit leaves frost.]
+    look: {material: BREEZE_ROD, name: Frostheart}
   class_pyromancer_weapon:
     slot: weapon
     classes: [pyromancer]
     level: 1
     rarity: common
     stats: {magic_power: 10, max_mana: 10}
-    description: ["Throws an ember on a left click.", "Every hit sets the monster alight."]
-    look: {material: BLAZE_ROD, name: "Tison-Soleil"}
+    description: [Throws an ember on a left click., Every hit sets the monster alight.]
+    look: {material: BLAZE_ROD, name: Tison-Soleil}
   class_druid_weapon:
     slot: weapon
     classes: [druid]
     level: 1
     rarity: common
     stats: {magic_power: 8, max_health: 20}
-    description: ["Throws a thorn on a left click.", "Every hit plants a seed."]
-    look: {material: DIAMOND_HOE, name: "Serpe du Bosquet"}
-
-  # ---- Stonecutter dungeon (roche): every class, level 5 (life and defense)
-  roc_helmet:     {slot: helmet, level: 5, rarity: rare, set: roc, stats: {max_health: 40, physical_defense: 6}, look: {material: IRON_HELMET, name: "Rock Helm"}}
-  roc_chestplate: {slot: chestplate, level: 5, rarity: rare, set: roc, stats: {max_health: 60, physical_defense: 9, magic_defense: 3}, look: {material: IRON_CHESTPLATE, name: "Rock Breastplate"}}
-  roc_leggings:   {slot: leggings, level: 5, rarity: rare, set: roc, stats: {max_health: 50, physical_defense: 7, magic_defense: 2}, look: {material: IRON_LEGGINGS, name: "Rock Greaves"}}
-  roc_boots:      {slot: boots, level: 5, rarity: rare, set: roc, stats: {max_health: 30, physical_defense: 5, tenacity: 0.05}, look: {material: IRON_BOOTS, name: "Rock Boots"}}
-
-  # ---- Herbalist dungeon (herboriste): every class, level 10
-  herb_helmet:     {slot: helmet, level: 10, rarity: rare, set: herb, stats: {max_health: 45, cost_reduction: 0.03}, look: {material: LEATHER_HELMET, name: "Herbalist Hood"}}
-  herb_chestplate: {slot: chestplate, level: 10, rarity: rare, set: herb, stats: {max_health: 70, physical_defense: 6, magic_defense: 6}, look: {material: LEATHER_CHESTPLATE, name: "Herbalist Coat"}}
-  herb_leggings:   {slot: leggings, level: 10, rarity: rare, set: herb, stats: {max_health: 55, effect_duration: 0.1}, look: {material: LEATHER_LEGGINGS, name: "Herbalist Trousers"}}
-  herb_boots:      {slot: boots, level: 10, rarity: rare, set: herb, stats: {max_health: 35, movement_speed: 0.05}, look: {material: LEATHER_BOOTS, name: "Herbalist Boots"}}
-
-  # ---- Harvest dungeon (moisson): druid, level 15
-  harvest_helmet:     {slot: helmet, classes: [druid], level: 15, rarity: epic, set: harvest, stats: {max_health: 50, healing_power: 0.06, max_mana: 15}, look: {material: GOLDEN_HELMET, name: "Harvest Crown"}}
-  harvest_chestplate: {slot: chestplate, classes: [druid], level: 15, rarity: epic, set: harvest, stats: {max_health: 80, magic_defense: 10, effect_duration: 0.1}, look: {material: GOLDEN_CHESTPLATE, name: "Harvest Mantle"}}
-  harvest_leggings:   {slot: leggings, classes: [druid], level: 15, rarity: epic, set: harvest, stats: {max_health: 65, physical_defense: 8, health_regen: 2}, look: {material: GOLDEN_LEGGINGS, name: "Harvest Skirt"}}
-  harvest_boots:      {slot: boots, classes: [druid], level: 15, rarity: epic, set: harvest, stats: {max_health: 40, mana_regen: 1.5}, look: {material: GOLDEN_BOOTS, name: "Harvest Sandals"}}
-
-  # ---- Fisher dungeon (pecheur): cryomancer, level 20
-  tide_helmet:     {slot: helmet, classes: [cryomancer], level: 20, rarity: epic, set: tide, stats: {max_health: 55, magic_power: 6, max_mana: 20}, look: {material: DIAMOND_HELMET, name: "Tide Circlet"}}
-  tide_chestplate: {slot: chestplate, classes: [cryomancer], level: 20, rarity: epic, set: tide, stats: {max_health: 85, magic_defense: 14, mana_regen: 1.5}, look: {material: DIAMOND_CHESTPLATE, name: "Tide Robe"}}
-  tide_leggings:   {slot: leggings, classes: [cryomancer], level: 20, rarity: epic, set: tide, stats: {max_health: 70, physical_defense: 10, magic_power: 5}, look: {material: DIAMOND_LEGGINGS, name: "Tide Leggings"}}
-  tide_boots:      {slot: boots, classes: [cryomancer], level: 20, rarity: epic, set: tide, stats: {max_health: 45, cost_reduction: 0.05, resist.frost: 0.1}, look: {material: DIAMOND_BOOTS, name: "Tide Slippers"}}
-
-  # ---- Copper mine dungeon (mineur): pyromancer, level 25
-  copper_helmet:     {slot: helmet, classes: [pyromancer], level: 25, rarity: epic, set: copper, stats: {max_health: 60, crit_chance: 0.04}, look: {material: CHAINMAIL_HELMET, name: "Copper Visor"}}
-  copper_chestplate: {slot: chestplate, classes: [pyromancer], level: 25, rarity: epic, set: copper, stats: {max_health: 90, physical_defense: 12, magic_power: 6}, look: {material: CHAINMAIL_CHESTPLATE, name: "Copper Jerkin"}}
-  copper_leggings:   {slot: leggings, classes: [pyromancer], level: 25, rarity: epic, set: copper, stats: {max_health: 75, magic_penetration: 0.06, attack_speed: 0.08}, look: {material: CHAINMAIL_LEGGINGS, name: "Copper Chaps"}}
-  copper_boots:      {slot: boots, classes: [pyromancer], level: 25, rarity: epic, set: copper, stats: {max_health: 50, crit_damage: 0.15, movement_speed: 0.05}, look: {material: CHAINMAIL_BOOTS, name: "Copper Treads"}}
-
+    description: [Throws a thorn on a left click., Every hit plants a seed.]
+    look: {material: DIAMOND_HOE, name: Serpe du Bosquet}
+  roche_helmet:
+    slot: helmet
+    level: 10
+    rarity: rare
+    set: roche
+    stats: {magic_power: 3, max_health: 42, physical_defense: 5, magic_defense: 5, max_mana: 2, tenacity: 0.025, damage_reduction: 0.005}
+    description: [Defenses first.]
+    look: {material: LEATHER_HELMET, name: Helmet of the Rochiste, color: '#9A9AA3'}
+  roche_chestplate:
+    slot: chestplate
+    level: 10
+    rarity: rare
+    set: roche
+    stats: {magic_power: 4, max_health: 73, physical_defense: 10, magic_defense: 9, max_mana: 3, tenacity: 0.04, damage_reduction: 0.01}
+    description: [Defenses first.]
+    look: {material: LEATHER_CHESTPLATE, name: Chestplate of the Rochiste, color: '#9A9AA3'}
+  roche_leggings:
+    slot: leggings
+    level: 10
+    rarity: rare
+    set: roche
+    stats: {magic_power: 4, max_health: 59, physical_defense: 8, magic_defense: 7, max_mana: 2, tenacity: 0.035, damage_reduction: 0.01}
+    description: [Defenses first.]
+    look: {material: LEATHER_LEGGINGS, name: Leggings of the Rochiste, color: '#9A9AA3'}
+  roche_boots:
+    slot: boots
+    level: 10
+    rarity: rare
+    set: roche
+    stats: {magic_power: 2, max_health: 36, physical_defense: 5, magic_defense: 4, max_mana: 1, tenacity: 0.02, damage_reduction: 0.005}
+    description: [Defenses first.]
+    look: {material: LEATHER_BOOTS, name: Boots of the Rochiste, color: '#9A9AA3'}
+  moisson_helmet:
+    slot: helmet
+    level: 20
+    rarity: rare
+    set: moisson
+    stats: {magic_power: 5, max_health: 112, physical_defense: 6, magic_defense: 6, max_mana: 3, healing_power: 0.015}
+    description: ['Plenty of life, quick to come back.']
+    look: {material: LEATHER_HELMET, name: Helmet of the Cultivateur, color: '#F0A800'}
+  moisson_chestplate:
+    slot: chestplate
+    level: 20
+    rarity: rare
+    set: moisson
+    stats: {magic_power: 9, max_health: 196, physical_defense: 11, magic_defense: 10, max_mana: 6, health_regen: 1, healing_power: 0.03}
+    description: ['Plenty of life, quick to come back.']
+    look: {material: LEATHER_CHESTPLATE, name: Chestplate of the Cultivateur, color: '#F0A800'}
+  moisson_leggings:
+    slot: leggings
+    level: 20
+    rarity: rare
+    set: moisson
+    stats: {magic_power: 7, max_health: 157, physical_defense: 9, magic_defense: 8, max_mana: 5, health_regen: 1, healing_power: 0.02}
+    description: ['Plenty of life, quick to come back.']
+    look: {material: LEATHER_LEGGINGS, name: Leggings of the Cultivateur, color: '#F0A800'}
+  moisson_boots:
+    slot: boots
+    level: 20
+    rarity: rare
+    set: moisson
+    stats: {magic_power: 4, max_health: 95, physical_defense: 5, magic_defense: 5, max_mana: 3, healing_power: 0.015}
+    description: ['Plenty of life, quick to come back.']
+    look: {material: LEATHER_BOOTS, name: Boots of the Cultivateur, color: '#F0A800'}
+  sylviculteur_helmet:
+    slot: helmet
+    level: 30
+    rarity: rare
+    set: sylviculteur
+    stats: {magic_power: 9, max_health: 92, physical_defense: 7, magic_defense: 6, max_mana: 9, cost_reduction: 0.01}
+    description: ['Mana, and cheaper spells.']
+    look: {material: LEATHER_HELMET, name: Helmet of the Bûcheron, color: '#7A5230'}
+  sylviculteur_chestplate:
+    slot: chestplate
+    level: 30
+    rarity: rare
+    set: sylviculteur
+    stats: {magic_power: 15, max_health: 161, physical_defense: 13, magic_defense: 11, max_mana: 17, mana_regen: 1, cost_reduction: 0.02}
+    description: ['Mana, and cheaper spells.']
+    look: {material: LEATHER_CHESTPLATE, name: Chestplate of the Bûcheron, color: '#7A5230'}
+  sylviculteur_leggings:
+    slot: leggings
+    level: 30
+    rarity: rare
+    set: sylviculteur
+    stats: {magic_power: 12, max_health: 129, physical_defense: 10, magic_defense: 9, max_mana: 13, cost_reduction: 0.015}
+    description: ['Mana, and cheaper spells.']
+    look: {material: LEATHER_LEGGINGS, name: Leggings of the Bûcheron, color: '#7A5230'}
+  sylviculteur_boots:
+    slot: boots
+    level: 30
+    rarity: rare
+    set: sylviculteur
+    stats: {magic_power: 7, max_health: 78, physical_defense: 6, magic_defense: 5, max_mana: 8, cost_reduction: 0.01}
+    description: ['Mana, and cheaper spells.']
+    look: {material: LEATHER_BOOTS, name: Boots of the Bûcheron, color: '#7A5230'}
+  taupe_helmet:
+    slot: helmet
+    level: 40
+    rarity: rare
+    set: taupe
+    stats: {magic_power: 20, max_health: 121, physical_defense: 10, magic_defense: 8, max_mana: 6, magic_penetration: 0.015,
+      crit_chance: 0.01}
+    description: [Spells that hit harder.]
+    look: {material: LEATHER_HELMET, name: Helmet of the Déblayeur, color: '#C9A66B'}
+  taupe_chestplate:
+    slot: chestplate
+    level: 40
+    rarity: rare
+    set: taupe
+    stats: {magic_power: 35, max_health: 211, physical_defense: 17, magic_defense: 14, max_mana: 11, magic_penetration: 0.03,
+      crit_chance: 0.015}
+    description: [Spells that hit harder.]
+    look: {material: LEATHER_CHESTPLATE, name: Chestplate of the Déblayeur, color: '#C9A66B'}
+  taupe_leggings:
+    slot: leggings
+    level: 40
+    rarity: rare
+    set: taupe
+    stats: {magic_power: 28, max_health: 169, physical_defense: 13, magic_defense: 12, max_mana: 9, magic_penetration: 0.02,
+      crit_chance: 0.01}
+    description: [Spells that hit harder.]
+    look: {material: LEATHER_LEGGINGS, name: Leggings of the Déblayeur, color: '#C9A66B'}
+  taupe_boots:
+    slot: boots
+    level: 40
+    rarity: rare
+    set: taupe
+    stats: {magic_power: 17, max_health: 103, physical_defense: 8, magic_defense: 7, max_mana: 5, magic_penetration: 0.015,
+      crit_chance: 0.005}
+    description: [Spells that hit harder.]
+    look: {material: LEATHER_BOOTS, name: Boots of the Déblayeur, color: '#C9A66B'}
+  mineur_helmet:
+    slot: helmet
+    level: 50
+    rarity: rare
+    set: mineur
+    stats: {magic_power: 18, max_health: 166, physical_defense: 13, magic_defense: 11, max_mana: 8, movement_speed: 0.02,
+      attack_speed: 0.015, dodge: 0.005}
+    description: ['Faster: running, hitting, dodging.']
+    look: {material: LEATHER_HELMET, name: Helmet of the Mineur, color: '#E3826C'}
+  mineur_chestplate:
+    slot: chestplate
+    level: 50
+    rarity: rare
+    set: mineur
+    stats: {magic_power: 32, max_health: 291, physical_defense: 23, magic_defense: 20, max_mana: 14, movement_speed: 0.035,
+      attack_speed: 0.03, dodge: 0.01}
+    description: ['Faster: running, hitting, dodging.']
+    look: {material: LEATHER_CHESTPLATE, name: Chestplate of the Mineur, color: '#E3826C'}
+  mineur_leggings:
+    slot: leggings
+    level: 50
+    rarity: rare
+    set: mineur
+    stats: {magic_power: 26, max_health: 233, physical_defense: 19, magic_defense: 16, max_mana: 11, movement_speed: 0.03,
+      attack_speed: 0.02, dodge: 0.01}
+    description: ['Faster: running, hitting, dodging.']
+    look: {material: LEATHER_LEGGINGS, name: Leggings of the Mineur, color: '#E3826C'}
+  mineur_boots:
+    slot: boots
+    level: 50
+    rarity: rare
+    set: mineur
+    stats: {magic_power: 15, max_health: 141, physical_defense: 11, magic_defense: 10, max_mana: 7, movement_speed: 0.015,
+      attack_speed: 0.015, dodge: 0.005}
+    description: ['Faster: running, hitting, dodging.']
+    look: {material: LEATHER_BOOTS, name: Boots of the Mineur, color: '#E3826C'}
+  herboriste_helmet:
+    slot: helmet
+    level: 50
+    rarity: epic
+    set: herboriste
+    stats: {magic_power: 10, max_health: 201, physical_defense: 25, magic_defense: 19, max_mana: 3, tenacity: 0.035, damage_reduction: 0.01}
+    description: [Defenses first., 'Upper version, beyond level 50.']
+    look: {material: LEATHER_HELMET, name: Helmet of the Herboriste, color: '#6FA34A'}
+  herboriste_chestplate:
+    slot: chestplate
+    level: 50
+    rarity: epic
+    set: herboriste
+    stats: {magic_power: 18, max_health: 352, physical_defense: 43, magic_defense: 34, max_mana: 6, tenacity: 0.065, damage_reduction: 0.015}
+    description: [Defenses first., 'Upper version, beyond level 50.']
+    look: {material: LEATHER_CHESTPLATE, name: Chestplate of the Herboriste, color: '#6FA34A'}
+  herboriste_leggings:
+    slot: leggings
+    level: 50
+    rarity: epic
+    set: herboriste
+    stats: {magic_power: 14, max_health: 281, physical_defense: 34, magic_defense: 27, max_mana: 5, tenacity: 0.05, damage_reduction: 0.015}
+    description: [Defenses first., 'Upper version, beyond level 50.']
+    look: {material: LEATHER_LEGGINGS, name: Leggings of the Herboriste, color: '#6FA34A'}
+  herboriste_boots:
+    slot: boots
+    level: 50
+    rarity: epic
+    set: herboriste
+    stats: {magic_power: 9, max_health: 171, physical_defense: 21, magic_defense: 16, max_mana: 3, tenacity: 0.03, damage_reduction: 0.01}
+    description: [Defenses first., 'Upper version, beyond level 50.']
+    look: {material: LEATHER_BOOTS, name: Boots of the Herboriste, color: '#6FA34A'}
+  fondeur_helmet:
+    slot: helmet
+    level: 50
+    rarity: epic
+    set: fondeur
+    stats: {magic_power: 12, max_health: 306, physical_defense: 17, magic_defense: 14, max_mana: 6, health_regen: 1, healing_power: 0.025}
+    description: ['Plenty of life, quick to come back.', 'Upper version, beyond level 50.']
+    look: {material: LEATHER_HELMET, name: Helmet of the Fondeur, color: '#D9441C'}
+  fondeur_chestplate:
+    slot: chestplate
+    level: 50
+    rarity: epic
+    set: fondeur
+    stats: {magic_power: 21, max_health: 535, physical_defense: 30, magic_defense: 25, max_mana: 11, health_regen: 3, healing_power: 0.045}
+    description: ['Plenty of life, quick to come back.', 'Upper version, beyond level 50.']
+    look: {material: LEATHER_CHESTPLATE, name: Chestplate of the Fondeur, color: '#D9441C'}
+  fondeur_leggings:
+    slot: leggings
+    level: 50
+    rarity: epic
+    set: fondeur
+    stats: {magic_power: 17, max_health: 428, physical_defense: 24, magic_defense: 20, max_mana: 9, health_regen: 2, healing_power: 0.035}
+    description: ['Plenty of life, quick to come back.', 'Upper version, beyond level 50.']
+    look: {material: LEATHER_LEGGINGS, name: Leggings of the Fondeur, color: '#D9441C'}
+  fondeur_boots:
+    slot: boots
+    level: 50
+    rarity: epic
+    set: fondeur
+    stats: {magic_power: 10, max_health: 260, physical_defense: 15, magic_defense: 12, max_mana: 5, health_regen: 1, healing_power: 0.02}
+    description: ['Plenty of life, quick to come back.', 'Upper version, beyond level 50.']
+    look: {material: LEATHER_BOOTS, name: Boots of the Fondeur, color: '#D9441C'}
+  defenseur_helmet:
+    slot: helmet
+    level: 50
+    rarity: legendary
+    set: defenseur
+    stats: {magic_power: 16, max_health: 179, physical_defense: 14, magic_defense: 12, max_mana: 15, mana_regen: 1, cost_reduction: 0.02}
+    description: ['Mana, and cheaper spells.', 'Upper version, beyond level 50.']
+    look: {material: LEATHER_HELMET, name: Helmet of the Défenseur, color: '#A8323A'}
+  defenseur_chestplate:
+    slot: chestplate
+    level: 50
+    rarity: legendary
+    set: defenseur
+    stats: {magic_power: 29, max_health: 314, physical_defense: 25, magic_defense: 21, max_mana: 27, mana_regen: 1, cost_reduction: 0.035}
+    description: ['Mana, and cheaper spells.', 'Upper version, beyond level 50.']
+    look: {material: LEATHER_CHESTPLATE, name: Chestplate of the Défenseur, color: '#A8323A'}
+  defenseur_leggings:
+    slot: leggings
+    level: 50
+    rarity: legendary
+    set: defenseur
+    stats: {magic_power: 23, max_health: 251, physical_defense: 20, magic_defense: 17, max_mana: 21, mana_regen: 1, cost_reduction: 0.03}
+    description: ['Mana, and cheaper spells.', 'Upper version, beyond level 50.']
+    look: {material: LEATHER_LEGGINGS, name: Leggings of the Défenseur, color: '#A8323A'}
+  defenseur_boots:
+    slot: boots
+    level: 50
+    rarity: legendary
+    set: defenseur
+    stats: {magic_power: 14, max_health: 153, physical_defense: 12, magic_defense: 10, max_mana: 13, mana_regen: 1, cost_reduction: 0.015}
+    description: ['Mana, and cheaper spells.', 'Upper version, beyond level 50.']
+    look: {material: LEATHER_BOOTS, name: Boots of the Défenseur, color: '#A8323A'}
+  pecheur_helmet:
+    slot: helmet
+    level: 50
+    rarity: legendary
+    set: pecheur
+    stats: {magic_power: 30, max_health: 187, physical_defense: 15, magic_defense: 13, max_mana: 9, magic_penetration: 0.03,
+      crit_chance: 0.015}
+    description: [Spells that hit harder., 'Upper version, beyond level 50.']
+    look: {material: LEATHER_HELMET, name: Helmet of the Pêcheur, color: '#3FB7C9'}
+  pecheur_chestplate:
+    slot: chestplate
+    level: 50
+    rarity: legendary
+    set: pecheur
+    stats: {magic_power: 53, max_health: 327, physical_defense: 26, magic_defense: 22, max_mana: 16, magic_penetration: 0.05,
+      crit_chance: 0.025}
+    description: [Spells that hit harder., 'Upper version, beyond level 50.']
+    look: {material: LEATHER_CHESTPLATE, name: Chestplate of the Pêcheur, color: '#3FB7C9'}
+  pecheur_leggings:
+    slot: leggings
+    level: 50
+    rarity: legendary
+    set: pecheur
+    stats: {magic_power: 43, max_health: 262, physical_defense: 21, magic_defense: 18, max_mana: 12, magic_penetration: 0.04,
+      crit_chance: 0.02}
+    description: [Spells that hit harder., 'Upper version, beyond level 50.']
+    look: {material: LEATHER_LEGGINGS, name: Leggings of the Pêcheur, color: '#3FB7C9'}
+  pecheur_boots:
+    slot: boots
+    level: 50
+    rarity: legendary
+    set: pecheur
+    stats: {magic_power: 26, max_health: 159, physical_defense: 13, magic_defense: 11, max_mana: 8, magic_penetration: 0.025,
+      crit_chance: 0.01}
+    description: [Spells that hit harder., 'Upper version, beyond level 50.']
+    look: {material: LEATHER_BOOTS, name: Boots of the Pêcheur, color: '#3FB7C9'}
+  enchanteur_helmet:
+    slot: helmet
+    level: 50
+    rarity: legendary
+    set: enchanteur
+    stats: {magic_power: 24, max_health: 216, physical_defense: 17, magic_defense: 15, max_mana: 10, movement_speed: 0.035,
+      attack_speed: 0.03, dodge: 0.01}
+    description: ['Faster: running, hitting, dodging.', 'Upper version, beyond level 50.']
+    look: {material: LEATHER_HELMET, name: Helmet of the Enchanteur, color: '#9B59D9'}
+  enchanteur_chestplate:
+    slot: chestplate
+    level: 50
+    rarity: legendary
+    set: enchanteur
+    stats: {magic_power: 41, max_health: 378, physical_defense: 30, magic_defense: 26, max_mana: 18, movement_speed: 0.065,
+      attack_speed: 0.05, dodge: 0.02}
+    description: ['Faster: running, hitting, dodging.', 'Upper version, beyond level 50.']
+    look: {material: LEATHER_CHESTPLATE, name: Chestplate of the Enchanteur, color: '#9B59D9'}
+  enchanteur_leggings:
+    slot: leggings
+    level: 50
+    rarity: legendary
+    set: enchanteur
+    stats: {magic_power: 33, max_health: 302, physical_defense: 24, magic_defense: 21, max_mana: 14, movement_speed: 0.05,
+      attack_speed: 0.04, dodge: 0.015}
+    description: ['Faster: running, hitting, dodging.', 'Upper version, beyond level 50.']
+    look: {material: LEATHER_LEGGINGS, name: Leggings of the Enchanteur, color: '#9B59D9'}
+  enchanteur_boots:
+    slot: boots
+    level: 50
+    rarity: legendary
+    set: enchanteur
+    stats: {magic_power: 20, max_health: 184, physical_defense: 15, magic_defense: 13, max_mana: 9, movement_speed: 0.03,
+      attack_speed: 0.025, dodge: 0.01}
+    description: ['Faster: running, hitting, dodging.', 'Upper version, beyond level 50.']
+    look: {material: LEATHER_BOOTS, name: Boots of the Enchanteur, color: '#9B59D9'}
 sets:
-  roc:
-    name: "Rock"
+  roche:
+    name: Rampart of the Rochiste
     bonuses:
-      2: {physical_defense: 10}
-      4: {damage_reduction: 0.06, tenacity: 0.15}
-  herb:
-    name: "Herbalist"
+      2: {physical_defense: 5, magic_defense: 4}
+      4: {damage_reduction: 0.04, tenacity: 0.1}
+  moisson:
+    name: Vitality of the Cultivateur
     bonuses:
-      2: {mana_regen: 1}
-      4: {effect_duration: 0.2, health_regen: 3}
-  harvest:
-    name: "Harvest"
+      2: {max_health: 53}
+      4: {health_regen: 1, lifesteal: 0.03}
+  sylviculteur:
+    name: Arcana of the Bûcheron
     bonuses:
-      2: {healing_power: 0.1}
-      4: {healing_power: 0.15, mana_regen: 2}
-  tide:
-    name: "Tide"
+      2: {max_mana: 15, mana_regen: 1}
+      4: {cost_reduction: 0.06, manasteal: 0.02}
+  taupe:
+    name: Power of the Déblayeur
     bonuses:
       2: {magic_power: 12}
-      4: {magic_penetration: 0.12, cost_reduction: 0.08}
-  copper:
-    name: "Copper"
+      4: {crit_damage: 0.2, magic_penetration: 0.06}
+  mineur:
+    name: Swiftness of the Mineur
     bonuses:
-      2: {crit_chance: 0.05}
-      4: {crit_damage: 0.3, magic_penetration: 0.08}
+      2: {movement_speed: 0.04}
+      4: {attack_speed: 0.06, dodge: 0.03}
+  herboriste:
+    name: Rampart of the Herboriste
+    bonuses:
+      2: {physical_defense: 25, magic_defense: 14}
+      4: {damage_reduction: 0.06, tenacity: 0.155}
+  fondeur:
+    name: Vitality of the Fondeur
+    bonuses:
+      2: {max_health: 143}
+      4: {health_regen: 5, lifesteal: 0.05}
+  defenseur:
+    name: Arcana of the Défenseur
+    bonuses:
+      2: {max_mana: 24, mana_regen: 2}
+      4: {cost_reduction: 0.1, manasteal: 0.035}
+  pecheur:
+    name: Power of the Pêcheur
+    bonuses:
+      2: {magic_power: 19}
+      4: {crit_damage: 0.35, magic_penetration: 0.105}
+  enchanteur:
+    name: Swiftness of the Enchanteur
+    bonuses:
+      2: {movement_speed: 0.075}
+      4: {attack_speed: 0.11, dodge: 0.055}
