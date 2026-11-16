@@ -20,9 +20,10 @@ Layouts (window px 176 wide, item of a slot at fond_lib.objet):
             floor beaten, orange to the floor to play, off above; the path ends on the "?" (slot 6, above floor 10:
             the tower goes on), lit once the tower is beaten. Row 0: back (0), "?" (6), info (8); beside the floors: class (36), party (44), tokens (72),
             shop (80, on a green plate). A floor beaten is lit by Flux (won_<floor>).
-  donjon_boutique  the dungeon shop (2026-11-16, rows 0 to 8): back (0), the page's name in a field, info (8);
-            articles in a well (rows 1-4, columns 1-7: 28, the largest page has 25); tokens (49); the ten floors as
-            tabs in the inventory, floors 1-5 on the lower row, 6-10 above (the tower again), the page shown lit.
+  donjon_boutique  the dungeon shop (2026-11-16, rows 0 to 7): back (0), the shop shown in a field, info (8);
+            articles in a well (rows 1-4, columns 1-7, 28 a page), Flux's pager on row 5 (every shop at once by
+            default: more than one page); the ten shops as tabs with their job's icon in the inventory's two first
+            rows (the five first dungeons below, the five next above), the one shown lit; tokens beside them (62).
   donjon    row 0: back (0), job of the dungeon in a dark field, info (8); rows 1-4 left: the boss picture in a gold
             frame; rows 2-4 right: possible loot (12 slots, header « Butin »); row 5: the key (49, on a green plate:
             click = launch screen), tokens (53). The difficulty is chosen on the launch screen only.
@@ -83,8 +84,9 @@ def tower_route():
     # the "?" is the path's last cell, above floor 10: off until the tower is beaten
     return cells + [UNKNOWN], [cells.index(s) for s in TOWER_SLOTS]
 SHOP_ARTICLES = [r * 9 + c for r in range(1, 5) for c in range(1, 8)]
-SHOP_FLOORS = [74, 75, 76, 77, 78, 65, 66, 67, 68, 69]   # floors 1-5 on the lower row, 6-10 above
-SHOP_BUTTONS = [0, 8, 49]
+SHOP_FLOORS = [65, 66, 67, 68, 69, 56, 57, 58, 59, 60]   # the five first dungeons on the lower row, the five next above
+SHOP_BUTTONS = [0, 8, 62]                 # back, info, tokens (beside the tabs)
+SHOP_PAGER = (45, 53)                     # Flux's pager under the articles
 LOOT_SLOTS = [23, 24, 25, 26, 32, 33, 34, 35, 41, 42, 43, 44]
 MEMBER_SLOTS, STATE_SLOTS = [11, 12, 13, 14, 15], [20, 21, 22, 23, 24]
 SAS_LEVELS = [31]                     # one level per dungeon since 2026-11-16: its floor card
@@ -134,16 +136,16 @@ def bg_list():
 
 
 def bg_shop():
-    """The dungeon shop: the page's name in a field, articles in a well, tokens, the floors as tabs in the
-    inventory (a little tower: floors 1-5 below, 6-10 above) in a well headed « Étages »."""
-    im = bg_window(GENERIC, 0, 8, title="Boutique")
+    """The dungeon shop: the shop shown in a field, articles in a well (Flux draws the pager under it), the shops as
+    tabs in the inventory's two first rows, in a well headed « Boutiques »."""
+    im = bg_window(GENERIC, 0, 7, title="Boutique")
     d = ImageDraw.Draw(im, "RGBA")
     field(im, d, (26, 19, 150, 32))
     x0, y0, x1, y1 = span(SHOP_ARTICLES, 2)
     ui.well(d, (x0, y0 + 2, x1, y1))           # 1 px of air under the name field
     fx0, fy0, fx1, fy1 = span(SHOP_FLOORS, 2)
     ui.well(d, (fx0, fy0, fx1, fy1))
-    label(im, "DONJONS", (fx0 + fx1) // 2, fy0 - 9, centre=True)
+    label(im, "BOUTIQUES", (fx0 + fx1) // 2, fy0 - 9, centre=True)
     return im
 
 
@@ -434,6 +436,11 @@ lists:
 {entries("boutique_etages", SHOP_FLOORS, left=["%entry_left%", "[refresh]"])}
 
 widgets:
+  pages:
+    type: pager
+    list: boutique_articles
+    prev: {SHOP_PAGER[0]}
+    next: {SHOP_PAGER[1]}
   page:
     type: text
     x: 88

@@ -105,10 +105,10 @@ public final class DungeonShop {
         }
     }
 
-    /** Opens the shop on a dungeon's page (null: the one shown last, else the first floor). */
+    /** Opens the shop on a dungeon's page, or on every shop at once (null: « all », the default). */
     public void open(Player p, String dungeon) {
         if (dungeon != null && pages.containsKey(dungeon)) shown.put(p.getUniqueId(), dungeon);
-        else shown.putIfAbsent(p.getUniqueId(), first());
+        else shown.remove(p.getUniqueId());
         invalidate(p);
         FluxApi.open(p, MENU);
     }
@@ -119,14 +119,18 @@ public final class DungeonShop {
         switch (args[0]) {
             case "page" -> {
                 if (!pages.containsKey(args[1])) return;
-                shown.put(p.getUniqueId(), args[1]);
+                // the tab shown, clicked again: back to every shop
+                if (args[1].equals(shown.get(p.getUniqueId()))) shown.remove(p.getUniqueId());
+                else shown.put(p.getUniqueId(), args[1]);
                 invalidate(p);
             }
             case "buy" -> {
-                Page page = page(p);
+                // <dungeon>:<n>: the article n of that dungeon's shop (every shop is listed at once by default)
+                int colon = args[1].indexOf(':');
+                Page page = colon < 0 ? null : pages.get(args[1].substring(0, colon));
                 int n;
                 try {
-                    n = Integer.parseInt(args[1]);
+                    n = Integer.parseInt(args[1].substring(colon + 1));
                 } catch (NumberFormatException e) {
                     return;
                 }
@@ -146,7 +150,8 @@ public final class DungeonShop {
         Page page = page(p);
         return switch (params) {
             case "shop_floor" -> page == null ? "0" : String.valueOf(floorOf(page.dungeon()));
-            case "shop_title" -> page == null ? "" : Texts.plain(Texts.colors(raw("shop.page", "%job%", jobName.apply(page.job()))));
+            case "shop_title" -> Texts.plain(Texts.colors(page == null ? raw("shop.all")
+                    : raw("shop.page", "%job%", jobName.apply(page.job()))));
             default -> null;
         };
     }
@@ -155,16 +160,20 @@ public final class DungeonShop {
         for (String l : List.of("boutique_boutons", "boutique_etages", "boutique_articles")) Lists.invalidate(p, l);
     }
 
-    private String first() {
-        DungeonDefinition best = null;
-        for (DungeonDefinition d : dungeons.get()) {
-            if (d.floor() > 0 && pages.containsKey(d.id()) && (best == null || d.floor() < best.floor())) best = d;
-        }
-        return best != null ? best.id() : pages.isEmpty() ? "" : pages.keySet().iterator().next();
+    /** The shop shown to the player, null for « all » (every shop at once, the default). */
+    private Page page(Player p) {
+        String id = shown.get(p.getUniqueId());
+        return id == null ? null : pages.get(id);
     }
 
-    private Page page(Player p) {
-        return pages.get(shown.getOrDefault(p.getUniqueId(), first()));
+    /** The shops in the order of the dungeons (level). */
+    private List<Page> ordered() {
+        List<DungeonDefinition> sorted = new ArrayList<>();
+        for (DungeonDefinition d : dungeons.get()) if (pages.containsKey(d.id())) sorted.add(d);
+        sorted.sort(java.util.Comparator.comparingInt(DungeonDefinition::floor));
+        List<Page> out = new ArrayList<>();
+        for (DungeonDefinition d : sorted) out.add(pages.get(d.id()));
+        return out;
     }
 
     private DungeonDefinition definition(String dungeon) {
@@ -204,7 +213,7 @@ public final class DungeonShop {
             Lore lore = Lore.create().kv(raw("menu.level"), d.recommendedLevel())
                     .kv(raw("shop.articles"), page.articles().size());
             boolean on = current != null && current.dungeon().equals(d.id());
-            if (on) lore.ok(raw("shop.floor-shown"));
+            if (on) lore.ok(raw("shop.floor-shown")).left(raw("shop.floor-all"));
             else lore.left(raw("shop.floor-action"));
             // the job's own icon (its tool: the Careers menu's, through Flux), else the dungeon's
             String icon = fr.influencraft.flux.api.jobs.JobIcons.icon(page.job());
@@ -218,25 +227,29 @@ public final class DungeonShop {
     }
 
     private List<ListEntry> articles(Player viewer) {
-        Page page = page(viewer);
+        Page shownPage = page(viewer);
         List<ListEntry> out = new ArrayList<>();
-        if (page == null) return out;
         Currency money = tokens.currency();
+        for (Page page : shownPage == null ? ordered() : List.of(shownPage)) articles(viewer, page, shownPage == null, money, out);
+        return out;
+    }
+
+    private void articles(Player viewer, Page page, boolean all, Currency money, List<ListEntry> out) {
         for (int i = 0; i < page.articles().size(); i++) {
             Article a = page.articles().get(i);
             ItemStack item = item(a, viewer);
             if (item == null) continue;
             Lore lore = Lore.create().kv(raw("shop.price"), money == null ? String.valueOf((long) a.price()) : money.format(a.price()));
+            if (all) lore.kv(raw("shop.from"), jobName.apply(page.job()));
             describe(page, a, viewer, lore);
             lore.left(raw("shop.buy-action"));
             List<String> lines = new ArrayList<>(item.hasItemMeta() && item.getItemMeta().hasLore()
                     ? item.getItemMeta().lore().stream().map(Texts::ampersand).toList() : List.of());
             lines.addAll(lore.build());
             String name = item.hasItemMeta() && item.getItemMeta().hasDisplayName() ? Texts.ampersand(item.getItemMeta().displayName()) : null;
-            out.add(ListEntry.of(String.valueOf(i)).item(Items.dress(item.clone(), name, lines, viewer))
-                    .set("left", "[fluxdungeon] shop buy " + i));
+            out.add(ListEntry.of(page.dungeon() + ":" + i).item(Items.dress(item.clone(), name, lines, viewer))
+                    .set("left", "[fluxdungeon] shop buy " + page.dungeon() + ":" + i));
         }
-        return out;
     }
 
     /** Why an article can or cannot be bought, under its price. */
