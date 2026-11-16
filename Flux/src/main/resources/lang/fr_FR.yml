@@ -84,6 +84,8 @@ money:
   balance: "&#B376E5Tu as &f%amount%&#B376E5."
   balance-other: "&f%player% &#B376E5a &f%amount%&#B376E5."
   usage: "&f/%command% &7[give|take|set|look] [joueur] [montant]"
+  admin-usage: "&f/%label% &7give|take|set <joueur> <montant> [monnaie] &8| &7look <joueur> [monnaie] &8(&7%currencies%&8)"
+  unknown-currency: "&#FF5C5CMonnaie inconnue : %currency% &7(%currencies%)"
   admin-done: "&#2ECF7BFait : %player% a maintenant %amount%."
   admin-failed: "&#FF5C5COpération refusée (solde insuffisant ou base indisponible)."
   player-not-found: "&#FF5C5CJoueur inconnu : %player%"

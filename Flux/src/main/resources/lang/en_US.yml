@@ -85,6 +85,8 @@ money:
   balance: "&fYou have %amount%."
   balance-other: "&f%player% has %amount%."
   usage: "&f/%command% &7[give|take|set|look] [player] [amount]"
+  admin-usage: "&f/%label% &7give|take|set <player> <amount> [currency] &8| &7look <player> [currency] &8(&7%currencies%&8)"
+  unknown-currency: "&#FF5C5CUnknown currency: %currency% &7(%currencies%)"
   admin-done: "&#2ECF7BDone: %player% now has %amount%."
   admin-failed: "&#FF5C5COperation refused (balance too low or database unavailable)."
   player-not-found: "&#FF5C5CUnknown player: %player%"

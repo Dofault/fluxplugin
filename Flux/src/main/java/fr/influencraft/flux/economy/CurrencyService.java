@@ -122,6 +122,7 @@ public final class CurrencyService implements Listener {
                 .usage("/account [player]").executor(this::accountCommand)
                 .completer((s, a) -> a.length == 1 && s.hasPermission("flux.account.others") ? Players.complete(a[0]) : List.of())
                 .register();
+        registerAdminCommand();
         for (Player p : Bukkit.getOnlinePlayers()) preload(p.getUniqueId());
     }
 
@@ -275,29 +276,110 @@ public final class CurrencyService implements Listener {
             return true;
         }
         double amount = args.length >= 3 ? parse(args[2]) : -1;
-        if (amount < 0) {
+        if (amount < 0 || !List.of("give", "take", "set").contains(sub)) {
             m.send(sender, "money.usage", "%command%", currency.id());
             return true;
         }
+        change(currency, sender, sub, target, name, amount);
+        return true;
+    }
+
+    /** give / take / set on any currency, in the ledger under the plugin that dispatched it, else the staff command. */
+    private void change(Currency currency, CommandSender sender, String sub, OfflinePlayer target, String name, double amount) {
         // the plugin that dispatched the command (a pass reward, a crate) is the origin, else the staff command
         Origin origin = Ledger.current() != null ? Ledger.current() : commandOrigins.resolve();
         if (origin.unknown()) origin = Origin.of(flux, "command").detail(sender.getName());
+        double before = currency.balance(target);
         boolean done = Ledger.within(origin, () -> switch (sub) {
             case "give" -> currency.give(target, amount);
             case "take" -> currency.take(target, Math.min(amount, currency.balance(target)));
-            case "set" -> currency.set(target, amount);
+            case "set" -> currency instanceof StoredCurrency s ? s.set(target, amount)
+                    : amount >= before ? currency.give(target, amount - before) : currency.take(target, before - amount);
             default -> false;
         });
-        if (!done && !List.of("give", "take", "set").contains(sub)) {
-            m.send(sender, "money.usage", "%command%", currency.id());
-            return true;
-        }
         if (done && !sub.equals("set") && origin.plugin().equals(flux.getName()) && origin.key().equals("command")) {
             // typed by a staff member: the player sees what happened (a reward announces itself)
             Economy.notify(target, currency, sub.equals("give") ? amount : -amount, origin);
         }
-        m.send(sender, done ? "money.admin-done" : "money.admin-failed", "%player%", name, "%amount%", currency.format(currency.balance(target)));
+        messages.get().send(sender, done ? "money.admin-done" : "money.admin-failed", "%player%", name, "%amount%", currency.format(currency.balance(target)));
+    }
+
+    // ------------------------------------------------------------------ /fluxmoney: every currency, one staff command
+
+    /**
+     * {@code /fluxmoney give|take|set <player> <amount> [currency]} (the server's money when left out) and
+     * {@code look <player> [currency]} (every currency when left out), for every currency of {@link Economy}: kept by
+     * Flux or given by another plugin. Each currency asks for its {@code flux.currency.<id>.admin}. The commands of
+     * each currency ({@code /points give}, {@code /money give}) stay: rewards in configs dispatch them.
+     */
+    private void registerAdminCommand() {
+        Commands.create(flux, "fluxmoney").description("Give, take, set or look at a player's currencies.")
+                .usage("/fluxmoney give|take|set <player> <amount> [currency] | look <player> [currency]")
+                .executor(this::adminCommand)
+                .completer(this::adminComplete)
+                .register();
+    }
+
+    private boolean adminCommand(CommandSender sender, String label, String[] args) {
+        Messages m = messages.get();
+        String sub = args.length == 0 ? "" : args[0].toLowerCase(Locale.ROOT);
+        boolean look = sub.equals("look");
+        if ((!look && !List.of("give", "take", "set").contains(sub)) || args.length < (look ? 2 : 3)) {
+            m.send(sender, "money.admin-usage", "%label%", label, "%currencies%", String.join(", ", adminCurrencies(sender)));
+            return true;
+        }
+        OfflinePlayer target = Players.find(args[1]);
+        if (target == null) {
+            m.send(sender, "money.player-not-found", "%player%", args[1]);
+            return true;
+        }
+        String name = Players.name(target, args[1]);
+        String currencyArg = look ? (args.length >= 3 ? args[2] : null) : (args.length >= 4 ? args[3] : null);
+        if (look && currencyArg == null) {
+            for (String id : adminCurrencies(sender)) {
+                Currency c = Economy.get(id);
+                m.send(sender, "money.balance-other", "%player%", name, "%amount%", c.format(c.balance(target)));
+            }
+            return true;
+        }
+        Currency currency = currencyArg == null ? Economy.main() : Economy.get(currencyArg.toLowerCase(Locale.ROOT));
+        if (currency == null || !currency.available() || !sender.hasPermission("flux.currency." + currency.id() + ".admin")) {
+            m.send(sender, "money.unknown-currency", "%currency%", currencyArg == null ? "?" : currencyArg,
+                    "%currencies%", String.join(", ", adminCurrencies(sender)));
+            return true;
+        }
+        if (look) {
+            m.send(sender, "money.balance-other", "%player%", name, "%amount%", currency.format(currency.balance(target)));
+            return true;
+        }
+        double amount = parse(args[2]);
+        if (amount < 0) {
+            m.send(sender, "money.admin-usage", "%label%", label, "%currencies%", String.join(", ", adminCurrencies(sender)));
+            return true;
+        }
+        change(currency, sender, sub, target, name, amount);
         return true;
+    }
+
+    /** Ids of the currencies this sender may change, the server's money first. */
+    private List<String> adminCurrencies(CommandSender sender) {
+        List<String> out = new ArrayList<>();
+        Currency main = Economy.main();
+        for (Currency c : Economy.all()) {
+            if (!c.available() || !sender.hasPermission("flux.currency." + c.id() + ".admin")) continue;
+            if (main != null && c.id().equals(main.id())) out.add(0, c.id());
+            else out.add(c.id());
+        }
+        return out;
+    }
+
+    private List<String> adminComplete(CommandSender sender, String[] args) {
+        if (args.length == 1) return filter(List.of("give", "take", "set", "look"), args[0]);
+        if (args.length == 2) return Players.complete(args[1]);
+        boolean look = args[0].equalsIgnoreCase("look");
+        if (args.length == 3 && !look) return filter(List.of("1", "10", "100", "1000"), args[2]);
+        if (args.length == (look ? 3 : 4)) return filter(adminCurrencies(sender), args[args.length - 1]);
+        return List.of();
     }
 
     static double parse(String text) {
