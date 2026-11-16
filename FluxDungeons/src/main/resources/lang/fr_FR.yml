@@ -780,7 +780,6 @@ gear:
   pet-none: 'Aucun familier'
   unknown: 'Ton équipement RPG s''affichera après ton premier passage dans le monde RPG.'
   armour-choose: 'Choisir une pièce de ton inventaire'
-  armour-rpg-only: '&#FF5C5CPour changer d''armure, va dans le monde RPG &f[/rpg]&#FF5C5C.'
   no-armour: '&#FF5C5CTu n''as aucune autre pièce de ce type (%piece%) dans ton inventaire RPG.'
   armour-title: 'Changer d''armure'
   armour-info: 'Les pièces de ce type dans ton inventaire RPG : clique pour l''enfiler, celle que tu portes reprend sa place.'
@@ -790,6 +789,7 @@ gear:
   inventory-desc: 'Ton inventaire RPG, à regarder.'
   inventory-open: 'Ouvrir'
   inventory-info: 'Ton inventaire RPG tel qu''il est. Rien ne se prend ici.'
+  armour-unknown: '&#FF5C5CTon inventaire RPG n''est pas encore connu : passe d''abord dans le monde RPG &f[/rpg]&#FF5C5C.'
 pets:
   back: 'Retour'
   back-action: 'Revenir aux donjons'

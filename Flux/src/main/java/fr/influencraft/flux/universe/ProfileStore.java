@@ -104,6 +104,12 @@ final class ProfileStore {
         };
     }
 
+    /** Stored profile of a universe with its version, from the cache only (null when unknown). */
+    Transition.Stored<String> cachedStored(UUID uuid, String universe) {
+        Map<String, Transition.Stored<String>> rows = cache.get(uuid);
+        return rows == null ? null : rows.get(universe);
+    }
+
     /** Stored profile of a universe from the cache only (null when unknown). */
     String cached(UUID uuid, String universe) {
         Map<String, Transition.Stored<String>> rows = cache.get(uuid);

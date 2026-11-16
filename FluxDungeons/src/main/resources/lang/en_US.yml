@@ -768,7 +768,6 @@ gear:
   pet-none: 'No pet'
   unknown: 'Your rpg gear shows after your first visit to the rpg world.'
   armour-choose: 'Choose a piece from your inventory'
-  armour-rpg-only: '&#FF5C5CTo change armour, go to the rpg world &f[/rpg]&#FF5C5C.'
   no-armour: '&#FF5C5CYou have no other piece of that kind (%piece%) in your rpg inventory.'
   armour-title: 'Change armour'
   armour-info: 'The pieces of that kind in your rpg inventory: click to put one on, the worn one takes its place.'
@@ -778,6 +777,7 @@ gear:
   inventory-desc: 'Your rpg inventory, to look at.'
   inventory-open: 'Open'
   inventory-info: 'Your rpg inventory as it is. Nothing can be taken here.'
+  armour-unknown: '&#FF5C5CYour rpg inventory is not known yet: go to the rpg world first &f[/rpg]&#FF5C5C.'
 pets:
   back: 'Back'
   back-action: 'Back to the dungeons'

@@ -45,6 +45,9 @@ public final class Universes {
 
         /** Copies of his inventory in that universe (live or stored), null when unknown. */
         ItemStack[] contents(Player player, String universe);
+
+        /** Changes his inventory in that universe at once (live or stored); false when refused or nothing changed. */
+        boolean editContents(Player player, String universe, java.util.function.UnaryOperator<ItemStack[]> edit);
     }
 
     private static volatile Backend backend;
@@ -106,6 +109,18 @@ public final class Universes {
     public static ItemStack[] contents(Player player, String universe) {
         Backend b = backend;
         return b == null ? null : b.contents(player, universe);
+    }
+
+    /**
+     * Changes what the player carries in a universe, at once, on the main thread: {@code edit} receives copies of the
+     * contents (index as {@link #contents}) and returns the new contents, or null to change nothing. Live when he is
+     * in that universe; else his profile kept aside is rewritten in one go (a later transition reads it), refused
+     * during a transition. Keep an edit to moving what is there (a swap): it must never create an item. False when
+     * refused, unknown or nothing was changed.
+     */
+    public static boolean editContents(Player player, String universe, java.util.function.UnaryOperator<ItemStack[]> edit) {
+        Backend b = backend;
+        return b != null && b.editContents(player, universe, edit);
     }
 
     public static Location returnLocation(Player player, String universe) {

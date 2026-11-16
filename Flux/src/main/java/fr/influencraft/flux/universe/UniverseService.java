@@ -181,6 +181,34 @@ public final class UniverseService implements Universes.Backend, Listener {
     }
 
     @Override
+    public boolean editContents(Player player, String universe, java.util.function.UnaryOperator<ItemStack[]> edit) {
+        if (universe == null || transitioning(player)) return false;
+        if (universe.equals(of(player))) {
+            ItemStack[] now = player.getInventory().getContents();
+            ItemStack[] copy = new ItemStack[now.length];
+            for (int i = 0; i < now.length; i++) copy[i] = now[i] == null ? null : now[i].clone();
+            ItemStack[] result = edit.apply(copy);
+            if (result == null) return false;
+            player.getInventory().setContents(result);
+            return true;
+        }
+        // the profile kept aside: read, changed and written back at once, on the main thread, one version up (a later
+        // transition reads this very profile from the cache); nothing else writes it while he is elsewhere
+        Transition.Stored<String> stored = store == null ? null : store.cachedStored(player.getUniqueId(), universe);
+        if (stored == null) return false;
+        org.bukkit.configuration.file.YamlConfiguration y = new org.bukkit.configuration.file.YamlConfiguration();
+        try {
+            y.loadFromString(stored.profile());
+        } catch (org.bukkit.configuration.InvalidConfigurationException e) {
+            return false;
+        }
+        ItemStack[] result = edit.apply(PlayerLive.decode(y.getString("items", "")));
+        if (result == null) return false;
+        y.set("items", PlayerLive.encode(result));
+        return store.repository(player.getUniqueId()).save(universe, stored.version() + 1, y.saveToString());
+    }
+
+    @Override
     public ItemStack[] contents(Player player, String universe) {
         if (universe == null) return null;
         ItemStack[] items;
