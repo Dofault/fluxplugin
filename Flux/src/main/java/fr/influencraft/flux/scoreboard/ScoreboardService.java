@@ -10,6 +10,7 @@ import fr.influencraft.flux.api.util.PlayerSettings;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.ShadowColor;
 import net.kyori.adventure.text.format.Style;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -109,6 +110,8 @@ public final class ScoreboardService implements Listener, Scoreboard.Backend {
     private String branch = "├";
     private String corner = "└";
     private String carryBranch = "│";
+    /** "auto": the game's shadow (text colour at a quarter), "none", or a fixed #AARRGGBB / #RRGGBB. */
+    private String shadow = "auto";
     private Map<String, String> colours = Map.of();
     private String title = "";
     private final List<Section> sections = new ArrayList<>();
@@ -152,6 +155,7 @@ public final class ScoreboardService implements Listener, Scoreboard.Backend {
         branch = b.size() > 0 ? b.get(0) : "├";
         corner = b.size() > 1 ? b.get(1) : "└";
         carryBranch = b.size() > 2 ? b.get(2) : "│";
+        shadow = c.getString("text-shadow", "auto").trim();
         Map<String, String> cs = new LinkedHashMap<>();
         ConfigurationSection colourSection = c.getConfigurationSection("colours");
         if (colourSection != null) {
@@ -256,7 +260,32 @@ public final class ScoreboardService implements Listener, Scoreboard.Backend {
             int left = (width - width(lines.get(i))) / 2;
             if (left > 0) lines.set(i, Component.empty().append(space(left, bedrock)).append(lines.get(i)));
         }
+        if (!bedrock && !shadow.equalsIgnoreCase("none")) {
+            titleShown = shadowed(titleShown);
+            lines.replaceAll(this::shadowed);
+        }
         send(p, titleShown, lines);
+    }
+
+    /**
+     * The game draws the sidebar without text shadow; a text with a shadow colour gets one anyway (client 26.2,
+     * {@code Font#getShadowColor}): every piece gets the shadow the game would give it (its colour at a quarter, as
+     * in chat) or the fixed {@code text-shadow} colour.
+     */
+    private Component shadowed(Component line) {
+        List<Run> runs = new ArrayList<>();
+        flatten(line, Style.empty(), runs);
+        ShadowColor fixed = shadow.startsWith("#") ? ShadowColor.fromHexString(shadow.length() == 7 ? "#FF" + shadow.substring(1) : shadow) : null;
+        Component out = Component.empty();
+        for (Run r : runs) {
+            ShadowColor s = fixed;
+            if (s == null) {
+                int rgb = r.style().color() == null ? 0xFFFFFF : r.style().color().value();
+                s = ShadowColor.shadowColor(((rgb >> 16 & 0xFF) / 4) << 16 | ((rgb >> 8 & 0xFF) / 4) << 8 | (rgb & 0xFF) / 4 | 0xFF000000);
+            }
+            out = out.append(Component.text(r.text(), r.style().shadowColor(s)));
+        }
+        return out;
     }
 
     /** The sections shown to this player, {branch} resolved, not yet wrapped. */

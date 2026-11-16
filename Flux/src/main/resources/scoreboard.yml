@@ -16,6 +16,9 @@ wrap-indent: " <frame>{carry}</frame>     "
 # {branch} in a line: the first character on every line of the section that has it, the second on the last one;
 # the third continues a branch on wrapped lines.
 branch: ["├", "└", "│"]
+# Shadow under the letters (the game draws none in the sidebar): auto = as in the chat (text colour at a quarter),
+# none, or a fixed colour #RRGGBB / #AARRGGBB.
+text-shadow: auto
 
 # Colours by name: <name>...</name> in any line.
 colours:
