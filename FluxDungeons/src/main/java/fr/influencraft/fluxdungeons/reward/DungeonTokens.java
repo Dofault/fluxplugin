@@ -243,7 +243,8 @@ public final class DungeonTokens {
         Player best = null;
         double bestD = 48 * 48;
         for (Player p : c.party) {
-            if (!p.isValid() || p.getWorld() != c.display.getWorld()) continue;
+            if (!p.isValid() || p.isDead() || p.getGameMode() == org.bukkit.GameMode.SPECTATOR
+                    || p.getWorld() != c.display.getWorld()) continue;
             double d = p.getLocation().distanceSquared(c.display.getLocation());
             if (d < bestD) {
                 bestD = d;
