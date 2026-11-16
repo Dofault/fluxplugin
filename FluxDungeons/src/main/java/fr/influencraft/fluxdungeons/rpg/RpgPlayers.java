@@ -301,7 +301,7 @@ public final class RpgPlayers implements Listener {
         });
     }
 
-    /** /classe: change class from the lobby, at most once per cooldown; progress of every class is kept. */
+    /** /classe: change class (anywhere but in a dungeon run), at most once per cooldown; progress of every class is kept. */
     void changeClass(Player p) {
         RpgPlayer r = online.get(p.getUniqueId());
         RpgConfig.Set set = config.get();
@@ -314,8 +314,8 @@ public final class RpgPlayers implements Listener {
             plugin.messages().send(p, "rpg.not-in-rpg");
             return;
         }
-        if (!free(p) && (world == null || p.getWorld() != world.world())) {
-            plugin.messages().send(p, "choice.lobby-only");
+        if (!free(p) && fr.influencraft.fluxdungeons.api.Dungeons.playing(p)) {
+            plugin.messages().send(p, "choice.not-in-run");
             return;
         }
         Dialogs.Form form = Dialogs.form(p, plugin.messages().raw("choice.change-title"));
@@ -343,17 +343,63 @@ public final class RpgPlayers implements Listener {
             return;
         }
         RpgPlayer r = online.get(p.getUniqueId());
+        if (Universes.transitioning(p) || loading.contains(p.getUniqueId())) return;
         if (r == null) {
-            if (RpgWorld.UNIVERSE.equals(Universes.of(p)) && !loading.contains(p.getUniqueId())) choose(p, classId);
-            else plugin.messages().send(p, "rpg.not-in-rpg");
+            // in the rpg universe without a class yet: the first choice; elsewhere: a change kept in the database
+            if (RpgWorld.UNIVERSE.equals(Universes.of(p))) choose(p, classId);
+            else changeAway(p, classId);
             return;
         }
         if (classId.equals(r.heroClass().id())) return;
-        if (!free(p) && (world == null || p.getWorld() != world.world())) {
-            plugin.messages().send(p, "choice.lobby-only");
+        // anywhere (owner, 2026-11-16: no longer the lobby only), never in the middle of a dungeon run
+        if (!free(p) && fr.influencraft.fluxdungeons.api.Dungeons.playing(p)) {
+            plugin.messages().send(p, "choice.not-in-run");
             return;
         }
         change(p, classId);
+    }
+
+    /**
+     * A change of class while the player is outside the rpg universe (owner, 2026-11-16): his character is not loaded,
+     * so only the database changes, with the same rules (the cooldown, a class he had, a conditional update that two
+     * changes can never both pass). His progress of every class is already saved (he left the rpg universe); his
+     * apprentice weapon becomes the new class's when he comes back ({@code RpgKit.ensure} at his entry). Should he enter
+     * the rpg universe while it is written, his character is read again.
+     */
+    private void changeAway(Player p, String to) {
+        UUID id = p.getUniqueId();
+        if (!loading.add(id)) return;
+        boolean free = free(p);
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            String refused = null;
+            try {
+                RpgStore.Hero hero = store.hero(id);
+                long wait = hero == null ? 0 : hero.changed() + cooldownHours() * 3_600_000L - System.currentTimeMillis();
+                if (hero == null) refused = "choice.first-in-rpg";
+                else if (hero.heroClass().equals(to)) refused = "";
+                else if (wait > 0 && !free) refused = "choice.cooldown:" + (wait / 60_000 + 1);
+                else if (!store.change(id, hero.heroClass(), to)) refused = "choice.changed-elsewhere";
+            } catch (SQLException ex) {
+                refused = "rpg.unavailable";
+            }
+            String why = refused;
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                loading.remove(id);
+                if (!p.isOnline() || "".equals(why)) return;
+                if (why != null) {
+                    String[] parts = why.split(":");
+                    plugin.messages().send(p, parts[0], "%minutes%", parts.length > 1 ? parts[1] : "");
+                    return;
+                }
+                // he came into the rpg universe meanwhile: his character is read again, with the new class
+                if (online.containsKey(id)) {
+                    online.remove(id);
+                    start(p);
+                }
+                plugin.messages().send(p, "choice.changed", "%class%", plugin.messages().raw("classes." + to + ".name"));
+                Sounds.cue(p, "success");
+            });
+        });
     }
 
     /** The class showcase (lobby, Java clients): tried first wherever the classes are shown. */

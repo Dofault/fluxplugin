@@ -17,7 +17,9 @@ Layouts (window px 176 wide, item of a slot at fond_lib.objet):
             dungeons a page (28, 30, 32, 34), Flux's path through them and on to the arrows (27, 35) that turn the page,
             each dungeon in a frame of its job's colour with its level written above it; the « ? » after the last one
             (the adventure goes on). One picture and one path per page (pages donjons_p<n> of the menu). Under the
-            inventory's separator, the player's gear: weapon (36: his class), armour (37-40), potions (42-43), pet (44).
+            words « Inventaire RPG », the player's rpg gear as he really has it: weapon (36: his class), armour (37-40: a
+            click chooses a piece of his rpg inventory, menu rpg_armure), his rpg inventory to look at (41, menu
+            rpg_inventaire, read only), potions (42-43), pet (44).
   donjon_familier  the pet taken into dungeons (one, never a boss's): « none » then his pets, 28 a page, Flux's pager.
   rpg_classes  the classes outside the lobby (a plain menu instead of the MC GUI pages): back (0), his class (8), the
             three classes (11, 13, 15) with his level in each; a click chooses one (the lobby's rules).
@@ -61,8 +63,10 @@ LINE_ARROWS = (27, 35)
 LINE_BUTTONS = [0, 8, 11, 13, 15]       # back, info, class, party, shop (DungeonMenus order)
 SHOP_BUTTON = 15
 # the player's rpg gear, in the inventory's first row under the line (the menu has 4 chest rows): weapon (his class),
-# helmet, chestplate, leggings, boots, then health and mana potions and the pet he takes into dungeons
-GEAR_SLOTS = [36, 37, 38, 39, 40, 42, 43, 44]
+# helmet, chestplate, leggings, boots, his rpg inventory to look at, health and mana potions, the pet for dungeons
+GEAR_SLOTS = [36, 37, 38, 39, 40, 41, 42, 43, 44]
+# his rpg inventory, read only (menu rpg_inventaire): 27 slots then the hotbar, as his own inventory
+INV_SLOTS = list(range(9, 36)) + list(range(36, 45))
 LINE_ROWS = 4
 # pet chosen for the dungeons (menu donjon_familier) and the classes outside the lobby (menu rpg_classes)
 PET_SLOTS = [r * 9 + c for r in range(1, 5) for c in range(1, 8)]
@@ -120,13 +124,12 @@ def bg_line(page):
     drawn over this picture."""
     im = bg_window(GENERIC, 0, 6, rows=LINE_ROWS, title="Donjons")
     d = ImageDraw.Draw(im, "RGBA")
-    # the inventory's separator, then the gear in two wells (armour and weapon, potions and pet)
-    sep = ui.objet(GEAR_SLOTS[0], LINE_ROWS)[1] - 9
-    ui.separator(im, sep)
-    for group in (GEAR_SLOTS[:5], GEAR_SLOTS[5:]):
-        xs = [ui.objet(c, LINE_ROWS)[0] for c in group]
-        y = ui.objet(group[0], LINE_ROWS)[1]
-        ui.well(d, (max(6, min(xs) - 2), y - 2, min(ui.W - 7, max(xs) + 17), y + 17))   # never against the frame
+    # « Inventaire RPG » over the gear (owner, 2026-11-16: in place of the separator line), as the game titles its
+    # inventory, then the gear in one well
+    label(im, "INVENTAIRE RPG", 8, ui.objet(GEAR_SLOTS[0], LINE_ROWS)[1] - 10)
+    xs = [ui.objet(c, LINE_ROWS)[0] for c in GEAR_SLOTS]
+    y = ui.objet(GEAR_SLOTS[0], LINE_ROWS)[1]
+    ui.well(d, (max(6, min(xs) - 2), y - 2, min(ui.W - 7, max(xs) + 17), y + 17))   # never against the frame
     for place, slot in zip(page, LINE_SLOTS):
         colour = VIOLET if place is None else ui.rgb(JOB_COLOURS[place[1]])
         x, y = ui.objet(slot)
@@ -155,6 +158,25 @@ def bg_pets():
     d = ImageDraw.Draw(im, "RGBA")
     x0, y0, x1, y1 = span(PET_SLOTS, 2)
     ui.well(d, (x0, y0, x1, y1 - 2))
+    return im
+
+
+def bg_armour():
+    """Choosing a piece of armour: the pieces in a well (Flux draws the pager under it)."""
+    im = bg_window(GENERIC, 0, 5, title="Armure")
+    d = ImageDraw.Draw(im, "RGBA")
+    x0, y0, x1, y1 = span(PET_SLOTS, 2)
+    ui.well(d, (x0, y0, x1, y1 - 2))
+    return im
+
+
+def bg_inventory():
+    """His rpg inventory, read only: its 27 slots in a well, the hotbar in another one under it."""
+    im = bg_window(GENERIC, 0, 4, title="Inventaire RPG")
+    d = ImageDraw.Draw(im, "RGBA")
+    for group in (INV_SLOTS[:27], INV_SLOTS[27:]):
+        x0, y0, x1, y1 = span(group, 0)
+        ui.well(d, (max(6, x0 + 1), y0 + 1, min(ui.W - 7, x1 - 1), y1))
     return im
 
 
@@ -316,7 +338,8 @@ def pack():
 
     backgrounds = {f"fd_menu_liste_p{n}": bg_line(page) for n, page in enumerate(line_pages(), start=1)}
     backgrounds.update({"fd_menu_sas": bg_sas(), "fd_menu_boutique": bg_shop(), "fd_menu_boutique_type": bg_kinds(),
-                        "fd_menu_familier": bg_pets(), "fd_menu_classes": bg_classes()})
+                        "fd_menu_familier": bg_pets(), "fd_menu_classes": bg_classes(),
+                        "fd_menu_armure": bg_armour(), "fd_menu_inventaire": bg_inventory()})
     # pictures of the former menus (the tower, the dungeon page and its boss pictures): gone
     import shutil
     shutil.rmtree(os.path.join(PACK, "textures", "boss"), ignore_errors=True)
@@ -493,6 +516,41 @@ widgets:
     list: donjon_familiers
     prev: 45
     next: 53
+""")
+    open(os.path.join(MENUS, "rpg_armure.yml"), "w", encoding="utf-8").write(head + f"""# Choosing a piece of armour among the player's rpg inventory (menu.DungeonMenus): the worn piece, then the others
+# of that slot; a click puts one on (rpg universe only, his real inventory).
+
+title: ":offset_-8::fd_menu_armure:"
+rows: 6
+{common}update-interval: 20
+
+lists:
+
+{entries("rpg_armure_boutons", [0, 8], left=["%entry_left%"])}
+  rpg_armures:
+    slots: "{", ".join(map(str, PET_SLOTS))}"
+    item:
+      material: entry
+      actions:
+        left: ["%entry_left%"]
+
+widgets:
+  pages:
+    type: pager
+    list: rpg_armures
+    prev: 45
+    next: 53
+""")
+    open(os.path.join(MENUS, "rpg_inventaire.yml"), "w", encoding="utf-8").write(head + f"""# The player's rpg inventory, read only (menu.DungeonMenus, Flux's Universes.contents: copies). Nothing can be taken.
+
+title: ":offset_-8::fd_menu_inventaire:"
+rows: 5
+{common}update-interval: 20
+
+lists:
+
+{entries("rpg_inventaire_boutons", [0, 8], left=["%entry_left%"])}
+{entries("rpg_inventaire_objets", INV_SLOTS)}
 """)
     open(os.path.join(MENUS, "rpg_classes.yml"), "w", encoding="utf-8").write(head + f"""# The classes outside the rpg lobby (rpg.ClassMenu): a plain menu (the lobby keeps its showcase). His level in each
 # class; a click chooses it, with the rules of /classe (a change from the lobby only).

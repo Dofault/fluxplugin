@@ -46,6 +46,8 @@ public final class Potions {
     private final CombatEngine combat;
     private final Supplier<String> currency;
     private final Map<String, Potion> potions = new LinkedHashMap<>();
+    /** Potions a player may carry at once, every kind together (limit of potions.yml, 3 since 2026-11-16). */
+    private int limit = 3;
 
     Potions(FluxPlugin plugin, RpgPlayers players, CombatEngine combat, Supplier<String> currency) {
         this.plugin = plugin;
@@ -61,6 +63,7 @@ public final class Potions {
         if (!file.exists() && plugin.getResource("rpg/potions.yml") != null) plugin.saveResource("rpg/potions.yml", false);
         YamlConfiguration c = YamlConfiguration.loadConfiguration(file);
         potions.clear();
+        limit = Math.max(1, c.getInt("limit", 3));
         ConfigurationSection all = c.getConfigurationSection("potions");
         if (all == null) return;
         for (String id : all.getKeys(false)) {
@@ -124,6 +127,19 @@ public final class Potions {
         }
     }
 
+    /** Rpg potions he carries now (inventory, off hand, cursor). */
+    private static int carried(Player player) {
+        int n = 0;
+        java.util.List<ItemStack> all = new ArrayList<>(java.util.Arrays.asList(player.getInventory().getContents()));
+        all.add(player.getItemOnCursor());
+        for (ItemStack it : all) {
+            if (it == null || it.getType().isAir()) continue;
+            String id = CustomItems.id(it);
+            if (id != null && id.startsWith(RpgItems.NAMESPACE + ":potion_")) n += it.getAmount();
+        }
+        return n;
+    }
+
     private TradeWindow.Offer offer(Potion potion) {
         return new TradeWindow.Offer() {
             public ItemStack item() {
@@ -144,12 +160,19 @@ public final class Potions {
                 int level = r == null ? 0 : r.level();
                 if (level >= potion.level()) lore.ok(plugin.messages().raw("potions.level-ok"));
                 else lore.ko(plugin.messages().raw("potions.level-needed", "%level%", String.valueOf(potion.level())));
+                lore.kv(plugin.messages().raw("potions.carried"), carried(viewer) + " / " + limit);
             }
 
             public boolean buy(Player player, int bundles) {
                 RpgPlayer r = players.get(player);
                 if (r == null || r.level() < potion.level()) {
                     plugin.messages().send(player, "potions.level-needed", "%level%", String.valueOf(potion.level()));
+                    return false;
+                }
+                // never more than the limit carried at once, every kind together
+                int carried = carried(player);
+                if (carried + bundles > limit) {
+                    plugin.messages().send(player, "potions.limit", "%limit%", String.valueOf(limit), "%carried%", String.valueOf(carried));
                     return false;
                 }
                 Currency money = Economy.get(currency.get());

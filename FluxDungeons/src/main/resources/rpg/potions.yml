@@ -1,6 +1,8 @@
 # Potions du RPG (2026-11-14) : objets fluxrpg:potion_<id>, clic droit pour boire. Vendues en jetons de donjon par le
 # marchand de potions du lobby RPG (/potions, PNJ Typewriter), chacune à partir de son niveau RPG.
 # type : health (vie) ou mana ; share : part de la vie ou du mana max rendue d'un coup ; price : en jetons de donjon (doublés le 2026-11-15 avec les jetons à 1-3 par monstre).
+# Potions a player may carry at once, every kind together (2026-11-16): the merchant sells no more than that.
+limit: 3
 potions:
   soin_1: {type: health, share: 0.25, level: 1, price: 8, name: "&#FF5C5CPetite potion de soin", icon: "itemsadder:fluxdonjon:potion_soin_1"}
   soin_2: {type: health, share: 0.35, level: 12, price: 16, name: "&#FF5C5CPotion de soin", icon: "itemsadder:fluxdonjon:potion_soin_2"}

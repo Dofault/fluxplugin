@@ -181,6 +181,29 @@ public final class UniverseService implements Universes.Backend, Listener {
     }
 
     @Override
+    public ItemStack[] contents(Player player, String universe) {
+        if (universe == null) return null;
+        ItemStack[] items;
+        if (universe.equals(of(player))) {
+            items = player.getInventory().getContents();
+        } else {
+            String profile = store == null ? null : store.cached(player.getUniqueId(), universe);
+            if (profile == null) return null;
+            org.bukkit.configuration.file.YamlConfiguration y = new org.bukkit.configuration.file.YamlConfiguration();
+            try {
+                y.loadFromString(profile);
+            } catch (org.bukkit.configuration.InvalidConfigurationException e) {
+                return null;
+            }
+            items = PlayerLive.decode(y.getString("items", ""));
+        }
+        // copies only: nothing read here can change a player's things
+        ItemStack[] out = new ItemStack[items.length];
+        for (int i = 0; i < items.length; i++) out[i] = items[i] == null || items[i].isEmpty() ? null : items[i].clone();
+        return out;
+    }
+
+    @Override
     public String ofWorld(World world) {
         for (Claim c : claims) if (c.worlds().test(world)) return c.universe();
         String name = world.getName();

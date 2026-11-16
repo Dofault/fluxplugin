@@ -17,6 +17,9 @@ import org.bukkit.inventory.ItemStack;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The dungeon menu of /donjon (2026-11-16, file written by {@code assets/menus/gen_menus.py}): the dungeons in a line,
@@ -67,9 +70,17 @@ public final class DungeonMenus {
 
         /** True for a boss's pet (never taken into a dungeon). */
         boolean bossPet(String pet);
+
+        /** His stats computed again (his armour changed). */
+        void refreshGear(Player player);
     }
 
     public static final String PET_MENU = "donjon_familier";
+    public static final String ARMOUR_MENU = "rpg_armure";
+    public static final String INVENTORY_MENU = "rpg_inventaire";
+    private static final String RPG = fr.influencraft.fluxdungeons.rpg.RpgWorld.UNIVERSE;
+    /** Armour slot each player is choosing a piece for (menu rpg_armure). */
+    private final Map<UUID, Integer> choosing = new ConcurrentHashMap<>();
 
     private final FluxPlugin plugin;
     private final Host host;
@@ -87,6 +98,10 @@ public final class DungeonMenus {
         Lists.register(plugin, "donjons_equipement", q -> gear(q.viewer()));
         Lists.register(plugin, "donjon_familier_boutons", q -> petButtons(q.viewer()));
         Lists.register(plugin, "donjon_familiers", q -> pets(q.viewer()));
+        Lists.register(plugin, "rpg_armure_boutons", q -> armourButtons(q.viewer()));
+        Lists.register(plugin, "rpg_armures", q -> armours(q.viewer()));
+        Lists.register(plugin, "rpg_inventaire_boutons", q -> inventoryButtons(q.viewer()));
+        Lists.register(plugin, "rpg_inventaire_objets", q -> inventory(q.viewer()));
     }
 
     /**
@@ -100,12 +115,13 @@ public final class DungeonMenus {
     }
 
     private void invalidate(Player p) {
-        for (String l : List.of("donjons_liste", "donjons_boutons", "donjons_equipement", "donjon_familiers", "donjon_familier_boutons")) {
+        for (String l : List.of("donjons_liste", "donjons_boutons", "donjons_equipement", "donjon_familiers", "donjon_familier_boutons",
+                "rpg_armures", "rpg_armure_boutons", "rpg_inventaire_objets")) {
             Lists.invalidate(p, l);
         }
     }
 
-    /** {@code play <id>}, {@code pet <id|none>}. */
+    /** {@code play <id>}, {@code pet <id|none>}, {@code armour <36-39>} (choose a piece), {@code wear <index>}. */
     public void act(Player p, String[] args) {
         if (args.length < 2) return;
         switch (args[0]) {
@@ -115,6 +131,8 @@ public final class DungeonMenus {
                 p.closeInventory();
                 host.play(p, def, 0);
             }
+            case "armour" -> chooseArmour(p, args[1]);
+            case "wear" -> wear(p, args[1]);
             case "pet" -> {
                 var choice = host.pets();
                 if (choice == null) return;
@@ -272,57 +290,192 @@ public final class DungeonMenus {
     // ---------------------------------------------------------------- his gear
 
     private static final String[] ARMOUR = {"helmet", "chestplate", "leggings", "boots"};
+    /** Index of each armour piece in an inventory's contents (PlayerInventory#getContents): helmet 39 ... boots 36. */
+    private static final int[] ARMOUR_INDEX = {39, 38, 37, 36};
 
     /**
-     * His rpg gear, read from what he wears and carries in the rpg universe (elsewhere his rpg inventory is put away:
-     * the slots only say so): weapon (a click: his class), armour, health and mana potions (the best he has, with how
-     * many he has of that kind), then his pet for dungeons.
+     * His rpg gear, as he really has it in the rpg universe, wherever he is (Flux's {@code Universes.contents}: live in
+     * the rpg universe, else his rpg profile kept aside; read-only copies): weapon (a click: his class), armour (a click:
+     * choose a piece among his rpg inventory), health and mana potions (the best he carries, with how many of that
+     * kind), his rpg inventory to look at, his pet for dungeons.
      */
     private List<ListEntry> gear(Player viewer) {
-        boolean rpg = fr.influencraft.fluxdungeons.rpg.RpgWorld.UNIVERSE.equals(fr.influencraft.flux.api.universe.Universes.of(viewer));
+        ItemStack[] contents = fr.influencraft.flux.api.universe.Universes.contents(viewer, RPG);
+        boolean known = contents != null;
         List<ListEntry> out = new ArrayList<>();
         ItemStack weapon = null;
         int[] count = new int[2];
         ItemStack[] best = new ItemStack[2];
         String[] bestId = new String[2];
-        if (rpg) {
-            for (ItemStack it : viewer.getInventory().getContents()) {
+        if (known) {
+            for (int i = 0; i < Math.min(36, contents.length); i++) {
+                ItemStack it = contents[i];
                 if (it == null || it.getType().isAir()) continue;
                 String id = fr.influencraft.flux.api.items.CustomItems.id(it);
                 if (id == null) continue;
-                if (weapon == null && id.startsWith("fluxrpg:class_")) weapon = it.clone();
+                if (weapon == null && id.startsWith("fluxrpg:class_")) weapon = it;
                 int kind = id.startsWith("fluxrpg:potion_soin_") ? 0 : id.startsWith("fluxrpg:potion_mana_") ? 1 : -1;
                 if (kind < 0) continue;
                 count[kind] += it.getAmount();
                 if (bestId[kind] == null || id.compareTo(bestId[kind]) > 0) {
                     bestId[kind] = id;
-                    best[kind] = it.clone();
+                    best[kind] = it;
                 }
             }
         }
+        String unknown = "gear.unknown";
         // the weapon: his class
         String line = host.classLine(viewer);
-        Lore wl = Lore.create().description(raw(rpg ? "gear.weapon-desc" : "gear.rpg-only"))
+        Lore wl = Lore.create().description(raw(known ? "gear.weapon-desc" : unknown))
                 .kv(raw("menu.class"), line == null ? raw("menu.no-class") : line).left(raw("menu.class-action"));
         out.add(slot("weapon", weapon, "BLAZE_ROD", raw("gear.weapon"), wl, viewer).set("left", "[player] classe"));
-        ItemStack[] worn = rpg ? viewer.getInventory().getArmorContents() : new ItemStack[4];
         for (int i = 0; i < ARMOUR.length; i++) {
-            // getArmorContents is boots first
-            ItemStack piece = worn[3 - i];
-            ItemStack shown = piece == null || piece.getType().isAir() ? null : piece.clone();
-            Lore lore = Lore.create().description(raw(rpg ? (shown == null ? "gear.empty-desc" : "gear.armour-desc") : "gear.rpg-only"));
-            out.add(slot(ARMOUR[i], shown, "LIGHT_GRAY_STAINED_GLASS_PANE", raw("gear." + ARMOUR[i]), lore, viewer));
+            ItemStack piece = known && contents.length > ARMOUR_INDEX[i] ? contents[ARMOUR_INDEX[i]] : null;
+            Lore lore = Lore.create().description(raw(known ? (piece == null ? "gear.empty-desc" : "gear.armour-desc") : unknown))
+                    .left(raw("gear.armour-choose"));
+            out.add(slot(ARMOUR[i], piece, "LIGHT_GRAY_STAINED_GLASS_PANE", raw("gear." + ARMOUR[i]), lore, viewer)
+                    .set("left", "[fluxdungeon] armour " + ARMOUR_INDEX[i]));
         }
+        Lore bag = Lore.create().description(raw("gear.inventory-desc")).left(raw("gear.inventory-open"));
+        out.add(ListEntry.of("inventory").item(orBarrier(Items.of("BUNDLE", raw("gear.inventory"), bag.build(), viewer)))
+                .set("left", known ? "[menu] " + INVENTORY_MENU : "").set("right", ""));
         for (int k = 0; k < 2; k++) {
             String key = k == 0 ? "health" : "mana";
             ItemStack shown = best[k];
             if (shown != null) shown.setAmount(Math.max(1, Math.min(64, count[k])));
-            Lore lore = Lore.create().description(raw(rpg ? "gear.potions-desc" : "gear.rpg-only"));
-            if (rpg) lore.kv(raw("gear.potions-count"), String.valueOf(count[k])).left(raw("menu.potions-action"));
+            Lore lore = Lore.create().description(raw(known ? "gear.potions-desc" : unknown));
+            if (known) lore.kv(raw("gear.potions-count"), String.valueOf(count[k]));
+            if (potionsHere.test(viewer)) lore.left(raw("menu.potions-action"));
             ListEntry e = slot("potion_" + key, shown, "GLASS_BOTTLE", raw("gear.potions-" + key), lore, viewer);
             out.add(potionsHere.test(viewer) ? e.set("left", "[close]").set("right", "[player] potions") : e);
         }
         out.add(petSlot(viewer));
+        return out;
+    }
+
+    // ---------------------------------------------------------------- choosing a piece of armour
+
+    /** Opens the pieces of that slot he carries (rpg universe only: his real inventory is changed). */
+    private void chooseArmour(Player p, String index) {
+        int slot;
+        try {
+            slot = Integer.parseInt(index);
+        } catch (NumberFormatException e) {
+            return;
+        }
+        if (slot < 36 || slot > 39) return;
+        if (!RPG.equals(fr.influencraft.flux.api.universe.Universes.of(p))) {
+            plugin.messages().send(p, "gear.armour-rpg-only");
+            fr.influencraft.flux.api.util.Sounds.cue(p, "error");
+            return;
+        }
+        if (candidates(p, slot).isEmpty()) {
+            plugin.messages().send(p, "gear.no-armour", "%piece%", raw("gear." + ARMOUR[39 - slot]));
+            fr.influencraft.flux.api.util.Sounds.cue(p, "error");
+            return;
+        }
+        choosing.put(p.getUniqueId(), slot);
+        invalidate(p);
+        FluxApi.open(p, ARMOUR_MENU);
+    }
+
+    /** Indexes (0-35) of the rpg pieces of that armour slot in his live inventory. */
+    private static List<Integer> candidates(Player p, int slot) {
+        org.bukkit.inventory.EquipmentSlot wanted = switch (slot) {
+            case 39 -> org.bukkit.inventory.EquipmentSlot.HEAD;
+            case 38 -> org.bukkit.inventory.EquipmentSlot.CHEST;
+            case 37 -> org.bukkit.inventory.EquipmentSlot.LEGS;
+            default -> org.bukkit.inventory.EquipmentSlot.FEET;
+        };
+        List<Integer> out = new ArrayList<>();
+        ItemStack[] inv = p.getInventory().getStorageContents();
+        for (int i = 0; i < inv.length; i++) {
+            ItemStack it = inv[i];
+            if (it == null || it.getType().isAir() || it.getType().getEquipmentSlot() != wanted) continue;
+            String id = fr.influencraft.flux.api.items.CustomItems.id(it);
+            if (id != null && id.startsWith("fluxrpg:")) out.add(i);
+        }
+        return out;
+    }
+
+    /**
+     * Puts on the piece at that index of his inventory, the worn one going to its place: one swap of his live
+     * inventory on the main thread, checked again at the click (rpg universe, not changing universe, the piece still
+     * there and still of that slot): nothing can be doubled or lost.
+     */
+    private void wear(Player p, String index) {
+        Integer slot = choosing.get(p.getUniqueId());
+        int i;
+        try {
+            i = Integer.parseInt(index);
+        } catch (NumberFormatException e) {
+            return;
+        }
+        if (slot == null || !RPG.equals(fr.influencraft.flux.api.universe.Universes.of(p))
+                || fr.influencraft.flux.api.universe.Universes.transitioning(p) || !candidates(p, slot).contains(i)) {
+            fr.influencraft.flux.api.util.Sounds.cue(p, "error");
+            return;
+        }
+        org.bukkit.inventory.PlayerInventory inv = p.getInventory();
+        ItemStack piece = inv.getItem(i), worn = inv.getItem(slot);
+        inv.setItem(slot, piece);
+        inv.setItem(i, worn == null || worn.getType().isAir() ? null : worn);
+        host.refreshGear(p);
+        choosing.remove(p.getUniqueId());
+        fr.influencraft.flux.api.util.Sounds.cue(p, "success");
+        invalidate(p);
+        FluxApi.open(p, LIST);
+    }
+
+    private List<ListEntry> armourButtons(Player viewer) {
+        return List.of(
+                button("back", Items.of("itemsadder:fluxui:btn_back_orange", raw("pets.back"),
+                        Lore.create().left(raw("pets.back-action")).build(), viewer), "[menu] " + LIST, ""),
+                button("info", Items.of("itemsadder:fluxui:btn_info_blue", raw("gear.armour-title"),
+                        Lore.create().description(raw("gear.armour-info")).build(), viewer), "", ""));
+    }
+
+    /** The piece he wears first (no click), then the pieces of that slot in his inventory. */
+    private List<ListEntry> armours(Player viewer) {
+        Integer slot = choosing.get(viewer.getUniqueId());
+        List<ListEntry> out = new ArrayList<>();
+        if (slot == null || !RPG.equals(fr.influencraft.flux.api.universe.Universes.of(viewer))) return out;
+        ItemStack worn = viewer.getInventory().getItem(slot);
+        if (worn != null && !worn.getType().isAir()) {
+            ListEntry e = slot("worn", worn.clone(), "BARRIER", raw("gear." + ARMOUR[39 - slot]),
+                    Lore.create().ok(raw("gear.worn")), viewer);
+            e.item().editMeta(m -> m.setEnchantmentGlintOverride(true));
+            out.add(e);
+        }
+        for (int i : candidates(viewer, slot)) {
+            ItemStack it = viewer.getInventory().getItem(i);
+            if (it == null) continue;
+            out.add(slot("piece_" + i, it.clone(), "BARRIER", raw("gear." + ARMOUR[39 - slot]),
+                    Lore.create().left(raw("gear.wear")), viewer).set("left", "[fluxdungeon] wear " + i));
+        }
+        return out;
+    }
+
+    // ---------------------------------------------------------------- his rpg inventory, to look at
+
+    private List<ListEntry> inventoryButtons(Player viewer) {
+        return List.of(
+                button("back", Items.of("itemsadder:fluxui:btn_back_orange", raw("pets.back"),
+                        Lore.create().left(raw("pets.back-action")).build(), viewer), "[menu] " + LIST, ""),
+                button("info", Items.of("itemsadder:fluxui:btn_info_blue", raw("gear.inventory"),
+                        Lore.create().description(raw("gear.inventory-info")).build(), viewer), "", ""));
+    }
+
+    /** His rpg inventory as it is (copies, read only): the 27 slots, then the hotbar. */
+    private List<ListEntry> inventory(Player viewer) {
+        ItemStack[] contents = fr.influencraft.flux.api.universe.Universes.contents(viewer, RPG);
+        List<ListEntry> out = new ArrayList<>();
+        if (contents == null) return out;
+        for (int k = 0; k < 36; k++) {
+            int i = k < 27 ? k + 9 : k - 27;
+            ItemStack it = i < contents.length ? contents[i] : null;
+            out.add(it == null || it.getType().isAir() ? ListEntry.gap() : ListEntry.of("slot_" + i).item(it));
+        }
         return out;
     }
 

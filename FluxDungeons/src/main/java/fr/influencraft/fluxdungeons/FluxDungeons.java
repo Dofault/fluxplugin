@@ -167,6 +167,10 @@ public final class FluxDungeons extends FluxPlugin {
                 return runs.isBossPet(pet);
             }
 
+            public void refreshGear(Player player) {
+                if (rpg != null && rpg.players() != null) rpg.players().recompute(player);
+            }
+
             public void play(Player player, DungeonDefinition def, int level) {
                 FluxDungeons.this.play(player, def, level);
             }

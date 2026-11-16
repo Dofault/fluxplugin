@@ -42,6 +42,9 @@ public final class Universes {
         void claim(Plugin plugin, String universe, Predicate<World> worlds);
 
         Location returnLocation(Player player, String universe);
+
+        /** Copies of his inventory in that universe (live or stored), null when unknown. */
+        ItemStack[] contents(Player player, String universe);
     }
 
     private static volatile Backend backend;
@@ -93,6 +96,18 @@ public final class Universes {
      * Where the player stood when he last left that universe (null when unknown). A plugin sending a player back
      * home from another universe uses it.
      */
+    /**
+     * What the player carries in a universe, read only: copies of his inventory contents (index as
+     * {@code PlayerInventory#getContents}: 0-35 inventory, 36 boots, 37 leggings, 38 chestplate, 39 helmet, 40 off hand),
+     * live when he is in that universe, else as last stored (the profile kept by Flux while he is elsewhere). Null when
+     * unknown (no profile yet, universes off). Changing the copies changes nothing: a profile kept aside is only ever
+     * written by Flux's transitions.
+     */
+    public static ItemStack[] contents(Player player, String universe) {
+        Backend b = backend;
+        return b == null ? null : b.contents(player, universe);
+    }
+
     public static Location returnLocation(Player player, String universe) {
         Backend b = backend;
         return b == null ? null : b.returnLocation(player, universe);

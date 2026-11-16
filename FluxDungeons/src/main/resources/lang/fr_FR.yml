@@ -295,17 +295,18 @@ rpg:
 
 choice:
   title: "Choisis ta classe"
-  intro: "&#B376E5Ta classe décide de ton arme, de tes statistiques et de tes sorts. Tu pourras en changer plus tard depuis le lobby, avec &f[/classe]&#B376E5."
+  intro: '&#B376E5Ta classe décide de ton arme, de tes statistiques et de tes sorts. Tu pourras en changer plus tard avec &f[/classe]&#B376E5.'
   confirm-title: "Confirmer"
   confirm: "&#B376E5Devenir &#FFD94D%class% &#B376E5?"
   done: "&#2ECF7BTu es maintenant &#FFD94D%class%&#2ECF7B. &#B376E5Arme en main : %attack% pour attaquer, %spell%, &fA &#B376E5et &fF &#B376E5pour tes sorts."
-  lobby-only: "&#FF5C5CTu ne peux changer de classe que dans le lobby RPG."
   change-title: "Changer de classe"
   change-intro: "&#B376E5Ta progression dans chaque classe est gardée. Un changement toutes les &f%hours% h &#B376E5au plus."
   cooldown: "&#FF5C5CTu pourras changer de classe dans &f%minutes% min&#FF5C5C."
   changed-elsewhere: "&#FF5C5CTa classe a déjà changé entre-temps."
   changed: "&#2ECF7BTu es maintenant &#FFD94D%class%&#2ECF7B."
   unknown: "&#FF5C5CClasse inconnue. Classes : &f%classes%"
+  not-in-run: '&#FF5C5CTu ne peux pas changer de classe pendant un donjon.'
+  first-in-rpg: '&#FF5C5CChoisis d''abord ta première classe dans le monde RPG &f[/rpg]&#FF5C5C.'
 
 # Ce que chaque personnage porte toujours (rpg.RpgKit) : l'arme d'apprentissage de sa classe et la boussole du menu.
 kit:
@@ -320,7 +321,7 @@ kit:
     given: "&#B376E5La boussole du dernier emplacement de ta barre ouvre le &#FFD94Dmenu RPG&#B376E5."
 
 weapon:
-  other-class: "&#FF5C5CCette arme est réservée à la classe &f%classes%&#FF5C5C, tu es &f%class%&#FF5C5C. Change de classe au lobby avec &f[/classe]&#FF5C5C."
+  other-class: "&#FF5C5CCette arme est réservée à la classe &f%classes%&#FF5C5C, tu es &f%class%&#FF5C5C. Change de classe avec &f[/classe]&#FF5C5C."
   level: "&#FF5C5CIl te faut le niveau &f%level% &#FF5C5Cpour te servir de cette arme."
 
 skill:
@@ -487,7 +488,7 @@ class-pages:
   mana: "%mana% mana"
   free: "Gratuit"
   confirm-title: "Devenir %class% ?"
-  confirm-first: "Ton arme de classe te sera donnée. Tu pourras changer de classe plus tard depuis le lobby, avec /classe."
+  confirm-first: "Ton arme de classe te sera donnée. Tu pourras changer de classe plus tard avec /classe."
   confirm-change: "Ta progression dans chaque classe est gardée. Tu ne pourras plus changer de classe pendant %hours% h."
   confirm: "Confirmer"
   cancel: "Annuler"
@@ -617,7 +618,7 @@ showcase:
   spell: "&#FFD94D%key% &8· &f%name%"
   choose: "&fChoisir %name%"
   owned: "&#FFD94D★ C'est ta classe"
-  note-first: "&7Tu pourras changer de classe plus tard, depuis le lobby."
+  note-first: "&7Tu pourras changer de classe plus tard avec /classe."
   note-change: "&7Un changement toutes les %hours% h. La progression de chaque classe est gardée."
   caption: "&#FFD94D%key% &8· &f%name%"
   caption-text: "&f%text%"
@@ -695,6 +696,8 @@ potions:
   level-ok: 'Tu peux l''acheter'
   level-needed: '&#FF5C5CNiveau %level% requis'
   no-tokens: '&#FF5C5CTu n''as pas assez de jetons de donjon.'
+  limit: '&#FF5C5CTu ne peux porter que &f%limit% &#FF5C5Cpotions à la fois (tu en as &f%carried%&#FF5C5C).'
+  carried: 'Sur toi'
 shop:
   title: 'Boutique %job%'
   closed: '&#FF5C5CLa boutique de donjon est fermée pour l''instant.'
@@ -771,12 +774,23 @@ gear:
   weapon-desc: 'L''arme de ta classe.'
   armour-desc: 'Ton armure RPG.'
   empty-desc: 'Rien de porté : les panoplies s''achètent à la boutique.'
-  rpg-only: 'Ton équipement RPG se voit dans le monde RPG.'
   potions-desc: 'Les potions que tu portes.'
   potions-count: 'Tu en as'
   pet-desc: 'Le familier qui t''accompagne en donjon et attaque avec toi. Un seul, jamais un familier de boss.'
   pet-choose: 'Choisir'
   pet-none: 'Aucun familier'
+  unknown: 'Ton équipement RPG s''affichera après ton premier passage dans le monde RPG.'
+  armour-choose: 'Choisir une pièce de ton inventaire'
+  armour-rpg-only: '&#FF5C5CPour changer d''armure, va dans le monde RPG &f[/rpg]&#FF5C5C.'
+  no-armour: '&#FF5C5CTu n''as aucune autre pièce de ce type (%piece%) dans ton inventaire RPG.'
+  armour-title: 'Changer d''armure'
+  armour-info: 'Les pièces de ce type dans ton inventaire RPG : clique pour l''enfiler, celle que tu portes reprend sa place.'
+  worn: 'Portée'
+  wear: 'L''enfiler'
+  inventory: 'Voir l''inventaire'
+  inventory-desc: 'Ton inventaire RPG, à regarder.'
+  inventory-open: 'Ouvrir'
+  inventory-info: 'Ton inventaire RPG tel qu''il est. Rien ne se prend ici.'
 pets:
   back: 'Retour'
   back-action: 'Revenir aux donjons'
@@ -788,7 +802,7 @@ pets:
   level: 'Niveau'
 class-menu:
   title: 'Classes'
-  info-desc: 'Ta classe et ton niveau dans chacune. Changer de classe se fait au lobby RPG.'
+  info-desc: 'Ta classe et ton niveau dans chacune. Tu peux en changer partout, sauf pendant un donjon.'
   current: 'Ta classe'
   level: 'Niveau'
   none: 'aucune'

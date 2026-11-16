@@ -295,17 +295,18 @@ rpg:
 
 choice:
   title: "Choose your class"
-  intro: "&#B376E5Your class decides your weapon, stats and spells. You can change it later from the lobby with &f[/classe]&#B376E5."
+  intro: '&#B376E5Your class decides your weapon, your stats and your spells. You can change it later with &f[/classe]&#B376E5.'
   confirm-title: "Confirm"
   confirm: "&#B376E5Become a &#FFD94D%class%&#B376E5?"
   done: "&#2ECF7BYou are now a &#FFD94D%class%&#2ECF7B. &#B376E5Weapon in hand: %attack% to attack, %spell%, &fA &#B376E5and &fF &#B376E5for your spells."
-  lobby-only: "&#FF5C5CYou can only change class in the rpg lobby."
   change-title: "Change class"
   change-intro: "&#B376E5Your progress in every class is kept. One change every &f%hours% h &#B376E5at most."
   cooldown: "&#FF5C5CYou can change class again in &f%minutes% min&#FF5C5C."
   changed-elsewhere: "&#FF5C5CYour class already changed meanwhile."
   changed: "&#2ECF7BYou are now a &#FFD94D%class%&#2ECF7B."
   unknown: "&#FF5C5CUnknown class. Classes: &f%classes%"
+  not-in-run: '&#FF5C5CYou cannot change class during a dungeon.'
+  first-in-rpg: '&#FF5C5CChoose your first class in the rpg world first &f[/rpg]&#FF5C5C.'
 
 # What every character always carries (rpg.RpgKit): the apprentice weapon of his class and the menu compass.
 kit:
@@ -320,7 +321,7 @@ kit:
     given: "&#B376E5The compass in the last slot of your hotbar opens the &#FFD94Drpg menu&#B376E5."
 
 weapon:
-  other-class: "&#FF5C5CThis weapon belongs to the &f%classes% &#FF5C5Cclass, you are a &f%class%&#FF5C5C. Change class in the lobby with &f[/classe]&#FF5C5C."
+  other-class: "&#FF5C5CThis weapon belongs to the &f%classes% &#FF5C5Cclass, you are a &f%class%&#FF5C5C. Change class with &f[/classe]&#FF5C5C."
   level: "&#FF5C5CYou need level &f%level% &#FF5C5Cto use this weapon."
 
 skill:
@@ -488,7 +489,7 @@ class-pages:
   mana: "%mana% mana"
   free: "Free"
   confirm-title: "Become %class%?"
-  confirm-first: "Your class weapon will be given to you. You can change class later from the lobby, with /classe."
+  confirm-first: "Your class weapon will be given to you. You can change class later with /classe."
   confirm-change: "Your progress in every class is kept. You will not be able to change class again for %hours% h."
   confirm: "Confirm"
   cancel: "Cancel"
@@ -605,7 +606,7 @@ showcase:
   spell: "&#FFD94D%key% &8· &f%name%"
   choose: "&fChoose %name%"
   owned: "&#FFD94D★ This is your class"
-  note-first: "&7You can change class later, from the lobby."
+  note-first: "&7You can change class later with /classe."
   note-change: "&7One change every %hours% h. The progress of each class is kept."
   caption: "&#FFD94D%key% &8· &f%name%"
   caption-text: "&f%text%"
@@ -683,6 +684,8 @@ potions:
   level-ok: 'You can buy it'
   level-needed: '&#FF5C5CLevel %level% needed'
   no-tokens: '&#FF5C5CYou do not have enough dungeon tokens.'
+  limit: '&#FF5C5CYou can only carry &f%limit% &#FF5C5Cpotions at once (you have &f%carried%&#FF5C5C).'
+  carried: 'On you'
 shop:
   title: '%job% shop'
   closed: '&#FF5C5CThe dungeon shop is closed for now.'
@@ -759,12 +762,23 @@ gear:
   weapon-desc: 'Your class''s weapon.'
   armour-desc: 'Your rpg armour.'
   empty-desc: 'Nothing worn: sets are bought in the shop.'
-  rpg-only: 'Your rpg gear is shown in the rpg world.'
   potions-desc: 'The potions you carry.'
   potions-count: 'You have'
   pet-desc: 'The pet that comes with you into dungeons and fights at your side. One, never a boss''s.'
   pet-choose: 'Choose'
   pet-none: 'No pet'
+  unknown: 'Your rpg gear shows after your first visit to the rpg world.'
+  armour-choose: 'Choose a piece from your inventory'
+  armour-rpg-only: '&#FF5C5CTo change armour, go to the rpg world &f[/rpg]&#FF5C5C.'
+  no-armour: '&#FF5C5CYou have no other piece of that kind (%piece%) in your rpg inventory.'
+  armour-title: 'Change armour'
+  armour-info: 'The pieces of that kind in your rpg inventory: click to put one on, the worn one takes its place.'
+  worn: 'Worn'
+  wear: 'Put it on'
+  inventory: 'See the inventory'
+  inventory-desc: 'Your rpg inventory, to look at.'
+  inventory-open: 'Open'
+  inventory-info: 'Your rpg inventory as it is. Nothing can be taken here.'
 pets:
   back: 'Back'
   back-action: 'Back to the dungeons'
@@ -776,7 +790,7 @@ pets:
   level: 'Level'
 class-menu:
   title: 'Classes'
-  info-desc: 'Your class and your level in each. Changing class is done in the rpg lobby.'
+  info-desc: 'Your class and your level in each. You can change it anywhere, but not during a dungeon.'
   current: 'Your class'
   level: 'Level'
   none: 'none'
