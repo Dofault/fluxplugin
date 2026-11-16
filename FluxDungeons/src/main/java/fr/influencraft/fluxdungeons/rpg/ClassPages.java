@@ -172,8 +172,11 @@ final class ClassPages {
                     .append("</td><td class=\"hi\">").append(RpgPlayers.total(d, b)).append("</td></tr>");
         }
         StringBuilder skills = new StringBuilder();
-        skills.append(skill(id, c.basicOnRight() ? "hold" : "left", t("class-pages.classes." + id + ".basic.name"), basicText(c), 0));
-        for (String slot : ClassDef.SLOTS) {
+        for (String slot : ClassDef.SHOWN) {
+            if (slot.equals("basic")) {
+                skills.append(skill(id, c.basicOnRight() ? "hold" : "left", t("class-pages.classes." + id + ".basic.name"), basicText(c), 0));
+                continue;
+            }
             ClassDef.Skill s = c.skills().get(slot);
             if (s == null) continue;
             skills.append(skill(id, c.key(slot), t("class-pages.classes." + id + "." + slot + ".name"), skillText(c, s), s.mana()));

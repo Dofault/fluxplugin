@@ -33,6 +33,11 @@ public record ClassDef(String id, Map<String, Double> stats, Map<String, Double>
                        Map<String, Skill> skills, boolean hidden, Map<String, Double> passive) {
 
     public static final List<String> SLOTS = List.of("right", "a", "f");
+    /**
+     * Order a class's attacks are shown in (showcase, pages): the signature spell of the A key first, the basic attack
+     * ("basic") last, since basic attacks look alike from a class to the other.
+     */
+    public static final List<String> SHOWN = List.of("a", "f", "right", "basic");
 
     /**
      * The basic attack. {@code style}: melee (a swing hitting up to {@code targets} enemies in front, within

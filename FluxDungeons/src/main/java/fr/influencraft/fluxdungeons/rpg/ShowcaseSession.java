@@ -468,8 +468,8 @@ final class ShowcaseSession {
         label(text("showcase.card-name", "%color%", "&" + accent, "%name%", raw("classes." + id + ".name")), PANEL_X, 0.29, 0.002, 0.25f, 400, 0);
         label(text("showcase.card-role", "%role%", raw("class-pages.classes." + id + ".role")), PANEL_X, 0.235, 0.002, 0.09f, 230, 0);
         label(text("showcase.description", "%text%", raw("classes." + id + ".description")), PANEL_X, 0.065, 0.002, 0.09f, 190, 0);
-        List<String> slots = new ArrayList<>(List.of("basic"));
-        for (String slot : ClassDef.SLOTS) if (c.skills().get(slot) != null) slots.add(slot);
+        List<String> slots = new ArrayList<>();
+        for (String slot : ClassDef.SHOWN) if (slot.equals("basic") || c.skills().get(slot) != null) slots.add(slot);
         for (int j = 0; j < slots.size(); j++) {
             String slot = slots.get(j);
             double cy = -0.03 - j * 0.105;
