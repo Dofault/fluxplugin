@@ -30,7 +30,7 @@ import java.util.List;
  * whole line: Flux pages it, {@code [list] donjons_liste prev / next / page <n>}, with the page sound of every menu);
  * each page of the menu ({@code donjons_p<n>}) only adds its picture (frames in each job's colour, levels) and its
  * path, coloured by {@code %fluxdungeons_tl_route_<n>%}, and follows the list's page ({@code [page-swap]
- * donjons_p%flux_list_donjons_liste_page%}). {@code %fluxdungeons_tl_current%}: the page of the dungeon to play.
+ * donjons_p%flux_list_donjons_liste_page%}). {@link #open} sets the list's page to the dungeon to play.
  */
 public final class DungeonMenus {
 
@@ -76,7 +76,12 @@ public final class DungeonMenus {
         Lists.register(plugin, "donjons_boutons", q -> buttons(q.viewer()));
     }
 
+    /**
+     * Opens the line on the page of the dungeon to play. The page is set here, silently: done by a [list] action in
+     * the menu's open-actions it played the filters' click sound at every opening.
+     */
     public void open(Player p) {
+        Lists.act(p, "donjons_liste", "page " + currentPage(p), PER_PAGE);
         invalidate(p);
         FluxApi.open(p, LIST);
     }
@@ -101,9 +106,8 @@ public final class DungeonMenus {
         }
     }
 
-    /** {@code tl_current} (page of the dungeon to play), {@code tl_route_<page>} (colours of its path); null for another one. */
+    /** {@code tl_route_<page>} (colours of a page's path); null for another one. */
     public String placeholder(Player p, String params) {
-        if (params.equals("tl_current")) return String.valueOf(currentPage(p));
         if (params.startsWith("tl_route_")) {
             try {
                 return route(p, Integer.parseInt(params.substring(9)));

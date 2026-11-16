@@ -378,9 +378,9 @@ title: ":offset_-8::fd_menu_liste_p1:"
 rows: 4
 {common}update-interval: 20
 
-# Flux pages the line (the page sound of every menu); the page of the menu (its picture and path) follows it
+# Flux pages the line (the page sound of every menu; /donjon sets it on the dungeon to play, silently, before
+# opening); the page of the menu (its picture and path) follows it
 open-actions:
-  - "[list] donjons_liste page %fluxdungeons_tl_current%"
   - "[page-swap] donjons_p%flux_list_donjons_liste_page%"
 
 lists:
