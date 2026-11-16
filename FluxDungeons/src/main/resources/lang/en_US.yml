@@ -6,7 +6,7 @@ unknown-player: '&#FF5C5CPlayer not found.'
 not-in-run: '&#FF5C5CYou are not in a dungeon.'
 party-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_party% [invite | accept | leave | kick | leader] [player]'
 admin-usage: '!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% create <id> [map|world] | visit [dungeon|map] | edit <dungeon> | build <dungeon|all> | template <dungeon> | start <dungeon> <player> | stop <player|all>
-  | give <player> <item> [n] | runs | reload'
+  | give <player> <item|set:<set>> [n] | runs | reload'
 list-line: '&#FFD94D%dungeon% &8(&7%id%&8) &#B376E5%min% to %max% players, recommended level &f%level%'
 main:
   title: Dungeons

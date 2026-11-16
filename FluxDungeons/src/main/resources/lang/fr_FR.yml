@@ -6,7 +6,7 @@ unknown-player: '&#FF5C5CJoueur introuvable.'
 not-in-run: '&#FF5C5CTu n''es pas dans un donjon.'
 party-usage: '&#FF5C5C/%flux_cmd_fluxdungeons_party% [inviter | accepter | quitter | expulser | chef] [joueur]'
 admin-usage: '!&#FF5C5C/%flux_cmd_fluxdungeons_fluxdungeons% create <id> [map|monde] | voir [donjon|map] | edit <donjon> | build <donjon|all> | template <donjon> | start <donjon> <joueur> | stop <joueur|all> | summon <monstre> [n]|clear | god |
-  give <joueur> <objet> [n] | runs | reload'
+  give <joueur> <objet|set:<set>> [n] | runs | reload'
 list-line: '&#FFD94D%dungeon% &8(&7%id%&8) &#B376E5%min% à %max% joueurs, niveau conseillé &f%level%'
 main:
   title: Donjons

@@ -1010,6 +1010,15 @@ public final class FluxDungeons extends FluxPlugin {
             case "give" -> {
                 if (args.length < 3) return usage(sender);
                 Player target = Bukkit.getPlayerExact(args[1]);
+                if (target != null && args[2].toLowerCase(Locale.ROOT).startsWith("set:")) {
+                    // a whole rpg set: every piece that belongs to it (all classes)
+                    String set = args[2].substring("set:".length()).toLowerCase(Locale.ROOT);
+                    int given = 0;
+                    for (String piece : setPieces(set)) if (CustomItems.give(target, piece, 1)) given++;
+                    if (given == 0) messages().send(sender, "admin.unknown-item", "%item%", args[2]);
+                    else messages().send(sender, "admin.given", "%item%", args[2] + " (" + given + ")", "%player%", target.getName());
+                    return true;
+                }
                 String id = args[2].contains(":") ? args[2] : "fluxdungeons:" + args[2];
                 int n = args.length >= 4 ? Math.max(1, parse(args[3])) : 1;
                 if (target == null) messages().send(sender, "unknown-player");
@@ -1179,12 +1188,30 @@ public final class FluxDungeons extends FluxPlugin {
             return typed.stream().distinct().limit(80).toList();
         }
         if (args.length == 3 && sub.equals("give")) {
-            return filter(CustomItems.ids().stream().filter(i -> i.startsWith("fluxdungeons:")).toList(), args[2]);
+            // dungeon items, rpg gear (fluxrpg:) and whole rpg sets (set:<id>)
+            List<String> options = new ArrayList<>(rpgSets().stream().map(set -> "set:" + set).toList());
+            CustomItems.ids().stream().filter(i -> i.startsWith("fluxdungeons:") || i.startsWith(fr.influencraft.fluxdungeons.rpg.RpgItems.NAMESPACE + ":")).sorted().forEach(options::add);
+            return filter(options, args[2]).stream().limit(200).toList();
         }
         return List.of();
     }
 
     // ---------------------------------------------------------------- helpers
+
+    /** Ids of the rpg sets (the {@code set} of equipment.yml items), sorted. */
+    private List<String> rpgSets() {
+        var eq = rpg == null ? null : rpg.equipment();
+        if (eq == null) return List.of();
+        return eq.items().stream().map(fr.influencraft.fluxdungeons.rpg.core.Equipment.Item::set)
+                .filter(java.util.Objects::nonNull).distinct().sorted().toList();
+    }
+
+    /** Item ids ({@code fluxrpg:<id>}) of every piece of an rpg set. */
+    private List<String> setPieces(String set) {
+        var eq = rpg == null ? null : rpg.equipment();
+        if (eq == null) return List.of();
+        return eq.items().stream().filter(i -> set.equals(i.set())).map(i -> fr.influencraft.fluxdungeons.rpg.RpgItems.NAMESPACE + ":" + i.id()).toList();
+    }
 
     private DungeonDefinition dungeon(String idOrName) {
         DungeonDefinition def = runs.dungeon(idOrName.toLowerCase(Locale.ROOT));

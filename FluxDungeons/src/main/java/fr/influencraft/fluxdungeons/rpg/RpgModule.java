@@ -249,6 +249,11 @@ public final class RpgModule implements Listener {
         return potions;
     }
 
+    /** The rpg equipment (items, sets), null before the rpg config is read. */
+    public fr.influencraft.fluxdungeons.rpg.core.Equipment equipment() {
+        return items == null ? null : items.equipment();
+    }
+
     public RpgPlayers players() {
         return players;
     }
