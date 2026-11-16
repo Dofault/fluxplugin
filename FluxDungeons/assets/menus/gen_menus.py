@@ -13,13 +13,14 @@ Lists, actions and placeholders are FluxDungeons' (menu.DungeonMenus, dungeon.Lo
 
 Layouts (window px 176 wide, item of a slot at fond_lib.objet):
   donjons   the dungeons in a line (2026-11-16, owner's layout), rows 0 to 3 and the inventory's first row: back (0),
-            info (8: tokens, class level); class, party, shop (11, 13, 15; the shop on a green plate); the line on row 3: four
-            dungeons a page (28, 30, 32, 34), Flux's path through them and on to the arrows (27, 35) that turn the page,
+            info (8: tokens, class level); party and shop centred (12, 14; the shop on a green plate); the « stuff RPG »
+            on row 3 (below); the line in the inventory's first row: four dungeons a page (37, 39, 41, 43), Flux's path
+            through them and on to the arrows (36, 44) that turn the page,
             each dungeon in a frame of its job's colour with its level written above it; the « ? » after the last one
             (the adventure goes on). One picture and one path per page (pages donjons_p<n> of the menu). Under the
-            words « Inventaire RPG », the player's rpg gear as he really has it: weapon (36: his class), armour (37-40: a
-            click chooses a piece of his rpg inventory, menu rpg_armure), his rpg inventory to look at (41, menu
-            rpg_inventaire, read only), potions (42-43), pet (44).
+            words « Stuff RPG » (row 3), the player's rpg gear as he really has it: weapon (27: his class, a book
+            without one), armour (28-31: a click chooses a piece of his rpg inventory, menu rpg_armure), his rpg
+            inventory to look at (32, menu rpg_inventaire, read only), potions (33-34), pet (35).
   donjon_familier  the pet taken into dungeons (one, never a boss's): « none » then his pets, 28 a page, Flux's pager.
   rpg_classes  the classes outside the lobby (a plain menu instead of the MC GUI pages): back (0), his class (8), the
             three classes (11, 13, 15) with his level in each; a click chooses one (the lobby's rules).
@@ -58,13 +59,15 @@ GOLD, GOLD_LIGHT, GOLD_DARK = ui.rgb("#F0A800"), ui.rgb("#FFD94D"), ui.rgb("#8A5
 VIOLET, VIOLET_DARK = ui.rgb("#5B2D9E"), ui.rgb("#1E0A3C")
 
 # the line of dungeons (row 3): PER_PAGE places a page (one column out of two), an arrow at each end, the buttons above
-LINE_SLOTS = [28, 30, 32, 34]           # same as DungeonMenus.PER_PAGE
-LINE_ARROWS = (27, 35)
-LINE_BUTTONS = [0, 8, 11, 13, 15]       # back, info, class, party, shop (DungeonMenus order)
-SHOP_BUTTON = 15
+# 2026-11-16, owner's layout: party and shop centred on row 1, the « stuff RPG » on row 3 under its words, the line
+# of dungeons in the inventory's first row (its levels written in the gap above it)
+LINE_SLOTS = [37, 39, 41, 43]           # same as DungeonMenus.PER_PAGE
+LINE_ARROWS = (36, 44)
+LINE_BUTTONS = [0, 8, 12, 14]           # back, info, party, shop (DungeonMenus order)
+SHOP_BUTTON = 14
 # the player's rpg gear, in the inventory's first row under the line (the menu has 4 chest rows): weapon (his class),
 # helmet, chestplate, leggings, boots, his rpg inventory to look at, health and mana potions, the pet for dungeons
-GEAR_SLOTS = [36, 37, 38, 39, 40, 41, 42, 43, 44]
+GEAR_SLOTS = [27, 28, 29, 30, 31, 32, 33, 34, 35]
 # his rpg inventory, read only (menu rpg_inventaire): 27 slots then the hotbar, as his own inventory
 INV_SLOTS = list(range(9, 36)) + list(range(36, 45))
 LINE_ROWS = 4
@@ -119,27 +122,26 @@ JOB_COLOURS = _DYES                 # one colour per job: the dye of its leather
 
 
 def bg_line(page):
-    """A page of the line: the plain window (rows 0 to 3), a frame per dungeon in its job's colour (the « ? » in the
-    theme's violet) with its level written above it, the shop on a green plate. The path between them is Flux's,
-    drawn over this picture."""
-    im = bg_window(GENERIC, 0, 6, rows=LINE_ROWS, title="Donjons")
+    """A page of the dungeon menu: the plain window (rows 0 to 3 and the inventory's first row), the shop on a green
+    plate, the words « STUFF RPG » centred over the gear in its well, then the line of dungeons in the inventory's
+    first row: a frame per dungeon in its job's colour (the « ? » in the theme's violet), its level written above it in
+    the gap over the inventory. The path between them is Flux's, drawn over this picture."""
+    im = bg_window(GENERIC, 0, 6, extra=3, rows=LINE_ROWS, title="Donjons")
     d = ImageDraw.Draw(im, "RGBA")
-    # « Inventaire RPG » over the gear (owner, 2026-11-16: in place of the separator line), as the game titles its
-    # inventory, then the gear in one well
-    label(im, "INVENTAIRE RPG", 8, ui.objet(GEAR_SLOTS[0], LINE_ROWS)[1] - 10)
-    xs = [ui.objet(c, LINE_ROWS)[0] for c in GEAR_SLOTS]
-    y = ui.objet(GEAR_SLOTS[0], LINE_ROWS)[1]
-    ui.well(d, (max(6, min(xs) - 2), y - 2, min(ui.W - 7, max(xs) + 17), y + 17))   # never against the frame
+    x, y = ui.objet(SHOP_BUTTON)
+    ui.button(d, (x - 3, y - 3, x + 18, y + 17), ui.rgb("#3E8E2E"))
+    xs = [ui.objet(c)[0] for c in GEAR_SLOTS]
+    gy = ui.objet(GEAR_SLOTS[0])[1]
+    label(im, "STUFF RPG", 88, gy - 11, centre=True)
+    ui.well(d, (max(6, min(xs) - 2), gy - 2, min(ui.W - 7, max(xs) + 17), gy + 17))   # never against the frame
     for place, slot in zip(page, LINE_SLOTS):
         colour = VIOLET if place is None else ui.rgb(JOB_COLOURS[place[1]])
-        x, y = ui.objet(slot)
+        x, y = ui.objet(slot, LINE_ROWS)
         # one rounded frame, its well rounded too (a square well darkened the frame's corners)
         d.rounded_rectangle((x - 3, y - 3, x + 18, y + 18), radius=3, fill=ui.OUTLINE)
         d.rounded_rectangle((x - 2, y - 2, x + 17, y + 17), radius=3, fill=colour)
         d.rounded_rectangle((x - 1, y - 1, x + 16, y + 16), radius=2, fill=ui.WELL)
-        label(im, "?" if place is None else str(place[2]), x + 8, y - 11, centre=True)
-    x, y = ui.objet(SHOP_BUTTON)
-    ui.button(d, (x - 3, y - 3, x + 18, y + 17), ui.rgb("#3E8E2E"))
+        label(im, "?" if place is None else str(place[2]), x + 8, y - 10, centre=True)
     return im
 
 
@@ -508,7 +510,7 @@ lists:
     item:
       material: entry
       actions:
-        left: ["%entry_left%", "[refresh]"]
+        left: ["%entry_left%", "[menu] donjons"]
 
 widgets:
   pages:

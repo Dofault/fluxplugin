@@ -26,10 +26,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * from the first one (level 10) to the last (level 100) and a « ? » after it (the adventure goes on), joined by Flux's
  * path (green up to the last dungeon climbed, orange to the one to play, off beyond), turned a page at a time
  * ({@link #PER_PAGE} dungeons a page, an arrow at each end); it opens on the page of the dungeon to play, which glows.
- * Left click on a dungeon: its launch screen; right click: its page of the dungeon shop. Above the line: class,
- * party, shop (tokens in the shop's and the info's tooltips, with his class level). Under it, in the inventory's first
- * row ({@code donjons_equipement}), his rpg gear: weapon (a click: his class), armour, potions, and the pet he takes
- * into dungeons (a click: menu {@code donjon_familier}, one pet, never a boss's).
+ * Left click on a dungeon: its launch screen; right click: its page of the dungeon shop. The line is in the inventory's
+ * first row; above it, party and shop (tokens in the shop's and the info's tooltips, with his class level), then his
+ * « stuff RPG » ({@code donjons_equipement}): weapon (a click: his class), armour, his inventory, potions, and the pet
+ * he takes into dungeons (a click: menu {@code donjon_familier}, one pet, never a boss's).
  * <p>
  * Lists {@code donjons_boutons} (back, info, class, party, tokens, shop) and {@code donjons_liste} (the dungeons of the
  * whole line: Flux pages it, {@code [list] donjons_liste prev / next / page <n>}, with the page sound of every menu);
@@ -263,7 +263,7 @@ public final class DungeonMenus {
         return out;
     }
 
-    /** Back, info (tokens, class level), then class, party and shop above the line. */
+    /** Back, info (tokens, class level), then party and shop (his class is the weapon of his stuff). */
     private List<ListEntry> buttons(Player viewer) {
         List<ListEntry> out = new ArrayList<>();
         Currency money = tokens.currency();
@@ -275,9 +275,6 @@ public final class DungeonMenus {
                 Lore.create().description(raw("menu.info-desc"))
                         .kv(raw("menu.class"), line == null ? raw("menu.no-class") : line)
                         .kv(raw("menu.tokens-owned"), owned).build(), viewer), "", ""));
-        out.add(button("class", Items.of("BOOK", line == null ? raw("menu.no-class") : line,
-                Lore.create().description(raw("menu.class-desc")).left(raw("menu.class-action")).build(), viewer),
-                "[close]", "[player] classe"));
         out.add(button("party", Items.of("PLAYER_HEAD", raw("menu.party"),
                 Lore.create().description(host.partyLine(viewer)).description(raw("menu.party-desc"))
                         .left(raw("menu.party-action")).build(), viewer), "[close]", "[player] groupe"));
@@ -328,7 +325,9 @@ public final class DungeonMenus {
         String line = host.classLine(viewer);
         Lore wl = Lore.create().description(raw(known ? "gear.weapon-desc" : unknown))
                 .kv(raw("menu.class"), line == null ? raw("menu.no-class") : line).left(raw("menu.class-action"));
-        out.add(slot("weapon", weapon, "BLAZE_ROD", raw("gear.weapon"), wl, viewer).set("left", "[player] classe"));
+        // no class yet: a book (choosing one)
+        out.add(slot("weapon", weapon, line == null ? "BOOK" : "BLAZE_ROD", line == null ? raw("menu.no-class") : raw("gear.weapon"), wl, viewer)
+                .set("left", "[player] classe"));
         for (int i = 0; i < ARMOUR.length; i++) {
             ItemStack piece = known && contents.length > ARMOUR_INDEX[i] ? contents[ARMOUR_INDEX[i]] : null;
             Lore lore = Lore.create().description(raw(known ? (piece == null ? "gear.empty-desc" : "gear.armour-desc") : unknown))

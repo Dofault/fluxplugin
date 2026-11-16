@@ -646,7 +646,6 @@ menu:
   level: 'Level'
   keys: 'Your keys'
   no-class: '&#FF5C5CNo class'
-  class-desc: 'Your rpg class, its level and spells.'
   class-action: 'Change class'
   party: 'Party'
   party-desc: 'The leader launches the dungeon for the whole party.'
