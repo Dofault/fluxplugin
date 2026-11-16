@@ -58,9 +58,10 @@ public final class JobBlockBreakdownMenu {
         int i = 0;
         for (JobAction a : Jobs.get().actions(player, job)) {
             JobActionLook.Look look = JobActionLook.of(player, a);
-            List<String> lore = new ArrayList<>();
-            lore.add(Lang.t("actions.xp", "%xp%", Format.decimal(a.xp())) + (a.perHealth() ? Lang.t("actions.per-health") : ""));
-            lore.add(money(player, a));
+            // as the job menu: key : value in the suite's style
+            List<String> lore = fr.influencraft.flux.api.inventory.Lore.create()
+                    .kv(Lang.t("menu.xp"), Format.decimal(a.xp()) + (a.perHealth() ? Lang.t("actions.per-health") : ""))
+                    .kv(Lang.t("menu.gain"), money(player, a)).build();
             out.add(ListEntry.of(String.valueOf(i++)).set("name", look.name())
                     .item(fr.influencraft.flux.api.inventory.Items.dress(look.icon(), look.name(), lore, player)));
         }

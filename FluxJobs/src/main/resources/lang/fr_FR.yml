@@ -45,11 +45,11 @@ menu:
   reward-none: "Aucune récompense"
 actions:
   xp: "&7XP &8► &#2ECF7B%xp%"
-  per-health: "&7 par point de vie"
-  money-none: "&7Aucun gain d'argent"
-  money-per-health: "&7Gagne &#2ECF7B%amount%&7 par point de vie"
-  money-per-action: "&7Gagne &#2ECF7B%amount%&7 par action"
-  money-every: "&7Gagne &#2ECF7B%amount%&7 toutes les &#2ECF7B%every% &7actions"
+  per-health: '/point de vie'
+  money-none: 'Aucun'
+  money-per-health: '%amount%/point de vie'
+  money-per-action: '%amount%/action'
+  money-every: '%amount%/%every% actions'
   header:
     none: "Aucune action rémunérée détectée."
     per-health: "Payé par point de vie de la créature tuée : un mob de haut niveau rapporte plus."

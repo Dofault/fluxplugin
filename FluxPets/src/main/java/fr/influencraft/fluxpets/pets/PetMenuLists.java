@@ -97,7 +97,7 @@ public final class PetMenuLists {
     /** Description, effects at the player's level and progress of a pet. */
     private Lore sheet(Player player, Pet pet) {
         int level = PetData.level(player, pet);
-        Lore lore = Lore.create().description(pet.description());
+        Lore lore = Lore.create().description(COLOURS.matcher(pet.description()).replaceAll(""));   // style.yml colours it
         effects(lore, pet.effectsDescription(level));
         String progress = level >= pet.maxLevel() ? "100" : Pet.nice(Math.round(PetData.progress(player, pet) * 10000) / 100.0);
         if (pet.slots() > 1) lore.info(t("slots-taken", "%slots%", String.valueOf(pet.slots())));

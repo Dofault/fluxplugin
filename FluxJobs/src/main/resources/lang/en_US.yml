@@ -45,11 +45,11 @@ menu:
   reward-none: "No reward"
 actions:
   xp: "&7XP &8► &#2ECF7B%xp%"
-  per-health: "&7 per health point"
-  money-none: "&7No money"
-  money-per-health: "&7Earns &#2ECF7B%amount%&7 per health point"
-  money-per-action: "&7Earns &#2ECF7B%amount%&7 per action"
-  money-every: "&7Earns &#2ECF7B%amount%&7 every &#2ECF7B%every% &7actions"
+  per-health: '/health point'
+  money-none: 'None'
+  money-per-health: '%amount%/health point'
+  money-per-action: '%amount%/action'
+  money-every: '%amount%/%every% actions'
   header:
     none: "No paid action found."
     per-health: "Paid per health point of the creature killed: a high level mob pays more."

@@ -55,7 +55,7 @@ items:
     slots: [21]
     lore:
       - "@desc Choisis tes métiers et suis ta progression."
-      - "@left Ouvrir"
+      - "@left Voir"
     actions:
       left: ["[menu] metiers"]
 
@@ -81,7 +81,7 @@ items:
     slots: [23]
     lore:
       - "@desc Complète des collections et gagne des &f%img_impact% <base>Couronnes."
-      - "@left Voir mes collections"
+      - "@left Voir"
     actions:
       left: ["[menu] collection"]
 
@@ -92,7 +92,7 @@ items:
     lore:
       - "@kv Rang | %luckperms_primary_group_name%"
       - "@desc Tes monnaies, tes classements et ton activité."
-      - "@left Voir mon profil"
+      - "@left Voir"
     actions:
       left: ["[player] profil"]
 
@@ -102,7 +102,7 @@ items:
     slots: [30]
     lore:
       - "@desc Voyage entre les différents mondes."
-      - "@left Explorer"
+      - "@left Voir"
     actions:
       left: ["[menu] mondes"]
 
@@ -131,7 +131,7 @@ items:
     slots: [32]
     lore:
       - "@desc Consulte et choisis tes compagnons."
-      - "@left Mes familiers"
+      - "@left Voir"
     actions:
       left: ["[menu] familiers"]
 
@@ -158,7 +158,7 @@ items:
     lore:
       - "@desc Un donjon par métier dans le monde RPG : bats son boss pour en faire ton familier légendaire."
       - "@kv Clé | une par lancement, elle tombe en faisant le métier"
-      - "@left Voir les donjons"
+      - "@left Voir"
     actions:
       left: ["[player] donjon"]
 
@@ -172,7 +172,7 @@ items:
     lore:
       - "@desc Les 12 rangs, leurs avantages et les coffres de palier."
       - "@kv Ton rang | %grades_rank%"
-      - "@left Ouvrir"
+      - "@left Voir"
     actions:
       left: ["[menu] grades"]
 
@@ -183,7 +183,7 @@ items:
     slots: [24]
     lore:
       - "@desc Choisis le tag affiché à côté de ton pseudo."
-      - "@left Ouvrir"
+      - "@left Voir"
     actions:
       left: ["[menu] tags"]
   # >>> gen_pages (boutons générés par assets/gen_pages.py)
@@ -196,7 +196,7 @@ items:
       - "@desc Invite tes amis avec ton adresse perso."
       - "@kv Filleuls | %parrainage_filleuls%"
       - "@kv À récupérer | %parrainage_a_recuperer%"
-      - "@left Ouvrir"
+      - "@left Voir"
     actions:
       left: ["[menu] parrainage"]
 
@@ -206,7 +206,7 @@ items:
     slots: [52]
     lore:
       - "@desc Palier &f%ecobattlepass_tier_pass%<base>, récompenses Standard et Prestige."
-      - "@left Ouvrir"
+      - "@left Voir"
     actions:
       left: ["[menu] pass"]
 
@@ -242,7 +242,7 @@ items:
     slots: [47]
     lore:
       - "@desc Les meilleurs joueurs de chaque carrière."
-      - "@left Voir le podium"
+      - "@left Voir"
     actions:
       left: ["[menu] classement"]
 
