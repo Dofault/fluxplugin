@@ -339,14 +339,14 @@ def menus():
         slots: [{LINE_ARROWS[0]}]
         hide-tooltip: true
         actions:
-          left: ["[fluxdungeon] tl {n - 1}", "[page-swap] donjons_p{n - 1}"]""")
+          left: ["[list] donjons_liste prev", "[page-swap] donjons_p%flux_list_donjons_liste_page%"]""")
         if n < len(pages):
             arrows.append(f"""      suivant:
         material: "itemsadder:fluxui:btn_right_purple"
         slots: [{LINE_ARROWS[1]}]
         hide-tooltip: true
         actions:
-          left: ["[fluxdungeon] tl {n + 1}", "[page-swap] donjons_p{n + 1}"]""")
+          left: ["[list] donjons_liste next", "[page-swap] donjons_p%flux_list_donjons_liste_page%"]""")
         page_blocks.append(f"""  donjons_p{n}:
     title: ":offset_-8::fd_menu_liste_p{n}:"
     paths:
@@ -367,9 +367,10 @@ title: ":offset_-8::fd_menu_liste_p1:"
 rows: 4
 {common}update-interval: 20
 
+# Flux pages the line (the page sound of every menu); the page of the menu (its picture and path) follows it
 open-actions:
-  - "[fluxdungeon] tl current"
-  - "[page-swap] donjons_p%fluxdungeons_tl_page%"
+  - "[list] donjons_liste page %fluxdungeons_tl_current%"
+  - "[page-swap] donjons_p%flux_list_donjons_liste_page%"
 
 lists:
 

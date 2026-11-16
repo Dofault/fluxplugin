@@ -17,9 +17,6 @@ import org.bukkit.inventory.ItemStack;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The dungeon menu of /donjon (2026-11-16, file written by {@code assets/menus/gen_menus.py}): the dungeons in a line,
@@ -30,8 +27,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * party, tokens, shop.
  * <p>
  * Lists {@code donjons_boutons} (back, info, class, party, tokens, shop) and {@code donjons_liste} (the dungeons of the
- * page shown); each page of the menu ({@code donjons_p<n>}) has its own picture (frames in each job's colour, levels)
- * and path, coloured by {@code %fluxdungeons_tl_route_<n>%}. {@code [fluxdungeon] tl <n|current>} turns the page.
+ * whole line: Flux pages it, {@code [list] donjons_liste prev / next / page <n>}, with the page sound of every menu);
+ * each page of the menu ({@code donjons_p<n>}) only adds its picture (frames in each job's colour, levels) and its
+ * path, coloured by {@code %fluxdungeons_tl_route_<n>%}, and follows the list's page ({@code [page-swap]
+ * donjons_p%flux_list_donjons_liste_page%}). {@code %fluxdungeons_tl_current%}: the page of the dungeon to play.
  */
 public final class DungeonMenus {
 
@@ -66,8 +65,6 @@ public final class DungeonMenus {
     private final Host host;
     private final DungeonKeys keys;
     private final DungeonTokens tokens;
-    /** Page of the line each player looks at (1 = the first dungeons). */
-    private final Map<UUID, Integer> page = new ConcurrentHashMap<>();
     private java.util.function.Predicate<Player> potionsHere = p -> false;
 
     public DungeonMenus(FluxPlugin plugin, Host host, DungeonKeys keys, DungeonTokens tokens) {
@@ -80,7 +77,6 @@ public final class DungeonMenus {
     }
 
     public void open(Player p) {
-        page.put(p.getUniqueId(), currentPage(p));
         invalidate(p);
         FluxApi.open(p, LIST);
     }
@@ -90,7 +86,7 @@ public final class DungeonMenus {
         Lists.invalidate(p, "donjons_boutons");
     }
 
-    /** {@code play <id>}, {@code tl <n|current>}. */
+    /** {@code play <id>}. */
     public void act(Player p, String[] args) {
         if (args.length < 2) return;
         switch (args[0]) {
@@ -100,27 +96,14 @@ public final class DungeonMenus {
                 p.closeInventory();
                 host.play(p, def, 0);
             }
-            case "tl" -> {
-                int n;
-                if (args[1].equals("current")) n = currentPage(p);
-                else {
-                    try {
-                        n = Integer.parseInt(args[1]);
-                    } catch (NumberFormatException e) {
-                        return;
-                    }
-                }
-                page.put(p.getUniqueId(), Math.max(1, Math.min(pages(), n)));
-                invalidate(p);
-            }
             default -> {
             }
         }
     }
 
-    /** {@code tl_page} (page shown), {@code tl_route_<page>} (colours of its path); null for another one. */
+    /** {@code tl_current} (page of the dungeon to play), {@code tl_route_<page>} (colours of its path); null for another one. */
     public String placeholder(Player p, String params) {
-        if (params.equals("tl_page")) return String.valueOf(page.getOrDefault(p.getUniqueId(), currentPage(p)));
+        if (params.equals("tl_current")) return String.valueOf(currentPage(p));
         if (params.startsWith("tl_route_")) {
             try {
                 return route(p, Integer.parseInt(params.substring(9)));
@@ -149,10 +132,6 @@ public final class DungeonMenus {
     /** Places on the line: the dungeons then the « ? ». */
     private int places() {
         return line().size() + 1;
-    }
-
-    private int pages() {
-        return Math.max(1, (places() + PER_PAGE - 1) / PER_PAGE);
     }
 
     /**
@@ -202,12 +181,12 @@ public final class DungeonMenus {
 
     private List<ListEntry> list(Player viewer) {
         List<DungeonDefinition> all = line();
-        int shown = page.getOrDefault(viewer.getUniqueId(), currentPage(viewer));
         int k = climbed(viewer);
         int level = levelOf(viewer);
         var victories = host.victories();
         List<ListEntry> out = new ArrayList<>();
-        for (int i = (shown - 1) * PER_PAGE; i < Math.min(places(), shown * PER_PAGE); i++) {
+        // every place of the line: Flux shows PER_PAGE of them a page
+        for (int i = 0; i < places(); i++) {
             if (i >= all.size()) {
                 out.add(ListEntry.of("unknown").item(orBarrier(Items.of("itemsadder:fluxdonjon:etage_inconnu", raw("menu.unknown"),
                         Lore.create().description(raw("menu.unknown-desc")).build(), viewer))));
