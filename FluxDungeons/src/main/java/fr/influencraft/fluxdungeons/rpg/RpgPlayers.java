@@ -67,6 +67,11 @@ public final class RpgPlayers implements Listener {
     private CombatEngine combat;
     /** HTML pages of the classes and the sheet (null: Paper dialogs only). */
     private ClassPages pages;
+    private ClassMenu classMenu;
+
+    void classMenu(ClassMenu menu) {
+        this.classMenu = menu;
+    }
     private Showcase showcase;
     /** The apprentice weapon and the menu compass every character carries. */
     private RpgKit kit;
@@ -302,7 +307,8 @@ public final class RpgPlayers implements Listener {
         RpgConfig.Set set = config.get();
         // in the lobby: the classes played in front of him (the showcase)
         if (set != null && showcase != null && showcase.open(p)) return;
-        // the pages show the classes anywhere; choosing still follows the rules (pick)
+        // elsewhere: the classes in a plain Flux menu (owner, 2026-11-16: no MC GUI pages); choosing follows the rules
+        if (set != null && classMenu != null && classMenu.open(p)) return;
         if (set != null && pages != null && Screens.open(p, ClassPages.CLASSES)) return;
         if (r == null || set == null) {
             plugin.messages().send(p, "rpg.not-in-rpg");

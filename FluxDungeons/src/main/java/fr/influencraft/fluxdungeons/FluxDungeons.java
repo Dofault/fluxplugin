@@ -71,6 +71,7 @@ public final class FluxDungeons extends FluxPlugin {
     /** Victories per player and dungeon, and the dungeon shop (2026-11-16, the tower). */
     private fr.influencraft.fluxdungeons.reward.DungeonVictories records;
     private fr.influencraft.fluxdungeons.reward.DungeonShop shop;
+    private fr.influencraft.fluxdungeons.dungeon.PetChoice petChoice;
     private fr.influencraft.fluxdungeons.combat.DamageNumbers damageNumbers;
 
     /**
@@ -120,6 +121,13 @@ public final class FluxDungeons extends FluxPlugin {
         } catch (java.sql.SQLException e) {
             getLogger().severe("Dungeon victories unavailable (no mount for sale): " + e.getMessage());
         }
+        try {
+            petChoice = new fr.influencraft.fluxdungeons.dungeon.PetChoice(this);
+            getServer().getPluginManager().registerEvents(petChoice, this);
+            runs.petChoice(petChoice);
+        } catch (java.sql.SQLException e) {
+            getLogger().severe("Dungeon pets unavailable: " + e.getMessage());
+        }
         if (keys == null) return;
         shop = new fr.influencraft.fluxdungeons.reward.DungeonShop(this, () -> runs.dungeons(), tokens, records, keys::jobName);
         shop.reload();
@@ -149,6 +157,14 @@ public final class FluxDungeons extends FluxPlugin {
 
             public void shop(Player player, String dungeon) {
                 if (shop != null) shop.open(player, dungeon);
+            }
+
+            public fr.influencraft.fluxdungeons.dungeon.PetChoice pets() {
+                return petChoice;
+            }
+
+            public boolean bossPet(String pet) {
+                return runs.isBossPet(pet);
             }
 
             public void play(Player player, DungeonDefinition def, int level) {

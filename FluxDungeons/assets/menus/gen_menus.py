@@ -12,11 +12,15 @@ Writes:
 Lists, actions and placeholders are FluxDungeons' (menu.DungeonMenus, dungeon.Lobby). Then /iazip and /fluxmenu reload.
 
 Layouts (window px 176 wide, item of a slot at fond_lib.objet):
-  donjons   the dungeons in a line (2026-11-16, owner's layout), rows 0 to 3: back (0), info (8); class, party, tokens,
-            shop (10, 12, 14, 16: above the line, on its columns; the shop on a green plate); the line on row 3: four
+  donjons   the dungeons in a line (2026-11-16, owner's layout), rows 0 to 3 and the inventory's first row: back (0),
+            info (8: tokens, class level); class, party, shop (11, 13, 15; the shop on a green plate); the line on row 3: four
             dungeons a page (28, 30, 32, 34), Flux's path through them and on to the arrows (27, 35) that turn the page,
             each dungeon in a frame of its job's colour with its level written above it; the « ? » after the last one
-            (the adventure goes on). One picture and one path per page (pages donjons_p<n> of the menu).
+            (the adventure goes on). One picture and one path per page (pages donjons_p<n> of the menu). Under the
+            inventory's separator, the player's gear: weapon (36: his class), armour (37-40), potions (42-43), pet (44).
+  donjon_familier  the pet taken into dungeons (one, never a boss's): « none » then his pets, 28 a page, Flux's pager.
+  rpg_classes  the classes outside the lobby (a plain menu instead of the MC GUI pages): back (0), his class (8), the
+            three classes (11, 13, 15) with his level in each; a click chooses one (the lobby's rules).
   donjon_boutique  the dungeon shop (2026-11-16, laid out as the market, rows 0 to 5, no inventory part): back (0),
             info (8); articles in a well (rows 1-4, columns 1-7); left column the job filter (18) and the kind filter
             (27), right column tokens (26) and the search (35); Flux's pager on row 5.
@@ -54,8 +58,15 @@ VIOLET, VIOLET_DARK = ui.rgb("#5B2D9E"), ui.rgb("#1E0A3C")
 # the line of dungeons (row 3): PER_PAGE places a page (one column out of two), an arrow at each end, the buttons above
 LINE_SLOTS = [28, 30, 32, 34]           # same as DungeonMenus.PER_PAGE
 LINE_ARROWS = (27, 35)
-LINE_BUTTONS = [0, 8, 10, 12, 14, 16]   # back, info, class, party, tokens, shop (DungeonMenus order)
-SHOP_BUTTON = 16
+LINE_BUTTONS = [0, 8, 11, 13, 15]       # back, info, class, party, shop (DungeonMenus order)
+SHOP_BUTTON = 15
+# the player's rpg gear, in the inventory's first row under the line (the menu has 4 chest rows): weapon (his class),
+# helmet, chestplate, leggings, boots, then health and mana potions and the pet he takes into dungeons
+GEAR_SLOTS = [36, 37, 38, 39, 40, 42, 43, 44]
+LINE_ROWS = 4
+# pet chosen for the dungeons (menu donjon_familier) and the classes outside the lobby (menu rpg_classes)
+PET_SLOTS = [r * 9 + c for r in range(1, 5) for c in range(1, 8)]
+CLASS_SLOTS = [11, 13, 15]
 
 
 def line_pages():
@@ -107,8 +118,15 @@ def bg_line(page):
     """A page of the line: the plain window (rows 0 to 3), a frame per dungeon in its job's colour (the « ? » in the
     theme's violet) with its level written above it, the shop on a green plate. The path between them is Flux's,
     drawn over this picture."""
-    im = bg_window(GENERIC, 0, 3, title="Donjons")
+    im = bg_window(GENERIC, 0, 6, rows=LINE_ROWS, title="Donjons")
     d = ImageDraw.Draw(im, "RGBA")
+    # the inventory's separator, then the gear in two wells (armour and weapon, potions and pet)
+    sep = ui.objet(GEAR_SLOTS[0], LINE_ROWS)[1] - 9
+    ui.separator(im, sep)
+    for group in (GEAR_SLOTS[:5], GEAR_SLOTS[5:]):
+        xs = [ui.objet(c, LINE_ROWS)[0] for c in group]
+        y = ui.objet(group[0], LINE_ROWS)[1]
+        ui.well(d, (max(6, min(xs) - 2), y - 2, min(ui.W - 7, max(xs) + 17), y + 17))   # never against the frame
     for place, slot in zip(page, LINE_SLOTS):
         colour = VIOLET if place is None else ui.rgb(JOB_COLOURS[place[1]])
         x, y = ui.objet(slot)
@@ -128,6 +146,25 @@ def bg_shop():
     d = ImageDraw.Draw(im, "RGBA")
     x0, y0, x1, y1 = span(SHOP_ARTICLES, 2)
     ui.well(d, (x0, y0, x1, y1 - 2))           # 2 px up from Flux's pager
+    return im
+
+
+def bg_pets():
+    """The pet menu: pets in a well (Flux draws the pager under it)."""
+    im = bg_window(GENERIC, 0, 5, title="Familier")
+    d = ImageDraw.Draw(im, "RGBA")
+    x0, y0, x1, y1 = span(PET_SLOTS, 2)
+    ui.well(d, (x0, y0, x1, y1 - 2))
+    return im
+
+
+def bg_classes():
+    """The classes outside the lobby: each class in a well of its own."""
+    im = bg_window(GENERIC, 0, 2, title="Classes")
+    d = ImageDraw.Draw(im, "RGBA")
+    for c in CLASS_SLOTS:
+        x, y = ui.objet(c)
+        ui.well(d, (x - 3, y - 3, x + 18, y + 18))
     return im
 
 
@@ -278,7 +315,8 @@ def pack():
                 f"    scale_ratio: {h}", f"    y_position: {y}"]
 
     backgrounds = {f"fd_menu_liste_p{n}": bg_line(page) for n, page in enumerate(line_pages(), start=1)}
-    backgrounds.update({"fd_menu_sas": bg_sas(), "fd_menu_boutique": bg_shop(), "fd_menu_boutique_type": bg_kinds()})
+    backgrounds.update({"fd_menu_sas": bg_sas(), "fd_menu_boutique": bg_shop(), "fd_menu_boutique_type": bg_kinds(),
+                        "fd_menu_familier": bg_pets(), "fd_menu_classes": bg_classes()})
     # pictures of the former menus (the tower, the dungeon page and its boss pictures): gone
     import shutil
     shutil.rmtree(os.path.join(PACK, "textures", "boss"), ignore_errors=True)
@@ -387,6 +425,7 @@ lists:
 
 {entries("donjons_boutons", LINE_BUTTONS, left=["%entry_left%", "%entry_left2%"])}
 {entries("donjons_liste", LINE_SLOTS, left=["%entry_left%"], right=["%entry_right%"])}
+{entries("donjons_equipement", GEAR_SLOTS, left=["%entry_left%"], right=["%entry_right%"])}
 
 pages:
 """ + "\n".join(page_blocks) + "\n")
@@ -431,6 +470,41 @@ lists:
 
 {entries("boutique_type_boutons", [0, 8], left=["%entry_left%"])}
 {entries("boutique_types", [KIND_ALL] + KIND_SLOTS, left=["%entry_left%", "[menu] donjon_boutique"])}
+""")
+    open(os.path.join(MENUS, "donjon_familier.yml"), "w", encoding="utf-8").write(head + f"""# The pet a player takes into the dungeons (menu.DungeonMenus): one, never a boss's; « none » first.
+
+title: ":offset_-8::fd_menu_familier:"
+rows: 6
+{common}update-interval: 20
+
+lists:
+
+{entries("donjon_familier_boutons", [0, 8], left=["%entry_left%"])}
+  donjon_familiers:
+    slots: "{", ".join(map(str, PET_SLOTS))}"
+    item:
+      material: entry
+      actions:
+        left: ["%entry_left%", "[refresh]"]
+
+widgets:
+  pages:
+    type: pager
+    list: donjon_familiers
+    prev: 45
+    next: 53
+""")
+    open(os.path.join(MENUS, "rpg_classes.yml"), "w", encoding="utf-8").write(head + f"""# The classes outside the rpg lobby (rpg.ClassMenu): a plain menu (the lobby keeps its showcase). His level in each
+# class; a click chooses it, with the rules of /classe (a change from the lobby only).
+
+title: ":offset_-8::fd_menu_classes:"
+rows: 3
+{common}update-interval: 20
+
+lists:
+
+{entries("rpg_classes_boutons", [0, 8], left=["%entry_left%"])}
+{entries("rpg_classes_liste", CLASS_SLOTS, left=["%entry_left%"])}
 """)
     lit = ""
     open(os.path.join(MENUS, "donjon_sas.yml"), "w", encoding="utf-8").write(head + f"""# Launch screen of a dungeon (dungeon.Lobby): who comes, the difficulty chosen by the leader, everybody ready.

@@ -128,10 +128,19 @@ public final class Runs {
         lobby.keyInfo((leader, def) -> keys == null || !keys.needs(leader, def) ? -1 : keys.count(leader, def.job()));
     }
 
+    /** The pet each player takes into a run (chosen in the dungeon menu), its body and fight. */
+    private final PetFighters pets;
+    private PetChoice petChoice;
+
+    public void petChoice(PetChoice choice) {
+        this.petChoice = choice;
+    }
+
     public Runs(FluxPlugin plugin, Arena arena, Mobs mobs) {
         this.plugin = plugin;
         this.arena = arena;
         this.mobs = mobs;
+        this.pets = new PetFighters(plugin, mobs);
         this.burrows = new Burrows(plugin, this, mobs);
         this.lobby = new Lobby(plugin);
         lobby.launcher(this::launch);
@@ -163,6 +172,7 @@ public final class Runs {
         extraMobsPerPlayer = c.getDouble("scaling.extra-mobs-per-player", 0.5);
         bossHealthPerPlayer = c.getDouble("scaling.boss-health-per-player", 0.6);
         spawnDistance = Math.max(8, c.getDouble("spawn-distance", 40));
+        pets.settings(c);
         WorldInstances.viewDistance = Math.max(2, c.getInt("view-distance", 8));
     }
 
@@ -644,8 +654,9 @@ public final class Runs {
             // no vanilla invulnerability in a run: hits are limited per source (DungeonListener), as for monsters
             p.setMaximumNoDamageTicks(0);
             teleport(p, run.checkpoint);
-            // the pets of the semi-rp world never come into a dungeon
+            // the pets of the semi-rp world never come into a dungeon: only the one he chose for them, as a fighter
             fr.influencraft.flux.api.pets.Companions.suppress(uuid, true);
+            bringPet(p, run);
             // many small hits: his screen shakes at most once a second (hit-reaction.screen-shake-ms)
             fr.influencraft.flux.api.client.HurtShake.limit(uuid, shakeGap);
             p.showTitle(Title.title(Texts.parse(plugin.messages().raw("run.title", "%dungeon%", run.def.name())),
@@ -661,6 +672,19 @@ public final class Runs {
         if (run.players.isEmpty()) cleanup(run);
     }
 
+    /** His chosen pet comes into the run with him, if he still owns it and it is not a boss's (never in a dungeon). */
+    private void bringPet(Player p, Run run) {
+        String pet = petChoice == null ? null : petChoice.get(p);
+        if (pet == null || isBossPet(pet) || !fr.influencraft.flux.api.pets.Companions.owns(p, pet)) return;
+        pets.spawn(p, List.of(pet), run.checkpoint, e -> run.id.equals(mobs.runOf(e)));
+    }
+
+    /** True for the pet of a dungeon's boss: those never come into a dungeon. */
+    public boolean isBossPet(String pet) {
+        for (DungeonDefinition d : dungeons.values()) if (pet.equals(d.pet())) return true;
+        return false;
+    }
+
     // ---------------------------------------------------------------- leaving
 
     /** The player leaves his run (command, disconnect, end): back to the rpg lobby. */
@@ -673,6 +697,7 @@ public final class Runs {
         for (String tag : run.grants) player.removeScoreboardTag(tag);
         if (run.bossBar != null) player.hideBossBar(run.bossBar);
         stopMusic(run, player);
+        pets.despawn(player);
         fr.influencraft.flux.api.pets.Companions.suppress(player.getUniqueId(), false);
         fr.influencraft.flux.api.client.HurtShake.clear(player.getUniqueId());
         if (inside) {
@@ -690,6 +715,7 @@ public final class Runs {
     public void stopAll() {
         lobby.closeAll();
         for (Run run : List.copyOf(runs.values())) stop(run);
+        pets.despawnAll();
         editor.closeAll();
         for (UUID u : List.copyOf(visitReturn.keySet())) {
             Player p = Bukkit.getPlayer(u);
@@ -929,6 +955,7 @@ public final class Runs {
                 }
             }
             for (Player p : online(run)) {
+                pets.tick(p);
                 double floor = run.imported() ? run.world.getMinHeight() + 4 : run.origin.getY() - 8;
                 if (p.getLocation().getY() < floor) {
                     teleport(p, run.checkpoint);
@@ -1210,6 +1237,7 @@ public final class Runs {
         Run run = byPlayer.get(player.getUniqueId());
         if (run == null || run.state != Run.State.RUNNING) return;
         run.watching.add(player.getUniqueId());
+        pets.despawn(player);
         broadcast(run, "run.out", "%player%", player.getName());
         if (fighters(run).isEmpty()) Bukkit.getScheduler().runTask(plugin, () -> fail(run, "run.wiped"));
     }

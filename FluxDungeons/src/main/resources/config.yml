@@ -81,6 +81,18 @@ rpg:
 party:
   max-size: 4
 
+# The pet a player takes into dungeons (chosen in /donjon; one pet, never a boss's): it follows him, attacks the closest
+# monster of the run near him and is never hurt. power: its hit, a share of its owner's magic power (the hit counts as
+# his); attack-ticks: between two of its hits; speed and reach of its body (a ground or a flying mob under its model).
+pets:
+  power: 0.25
+  attack-ticks: 20
+  speed: 1.2
+  reach: 1.2
+  body:
+    ground: WOLF
+    flying: BEE
+
 scaling:
   # Each extra player adds this share of the monsters of every wave (0.5: 4 monsters become 6 for two players).
   extra-mobs-per-player: 0.5

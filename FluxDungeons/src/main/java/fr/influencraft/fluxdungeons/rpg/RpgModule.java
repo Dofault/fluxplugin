@@ -57,6 +57,7 @@ public final class RpgModule implements Listener {
         items = new RpgItems(plugin);
         if (config.get() != null) items.load(config.get());
         players = new RpgPlayers(plugin, config, store, items);
+        players.classMenu(new ClassMenu(plugin, config, store, items));
         combat = new CombatEngine(plugin, config::get, players::get);
         combat.profiles(RpgModule::profileFromTags);
         combat.immortal(e -> e.getScoreboardTags().contains(TAG_DUMMY));
