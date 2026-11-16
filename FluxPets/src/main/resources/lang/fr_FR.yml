@@ -173,3 +173,7 @@ menu:
   locked: "Verrouillé"
   cards: "Cartes"
   level-name: "Niveau %level%"
+booster-format:
+  open: 'Ouvrir'
+  open-all: 'Ouvrir toute la pile'
+  chance: ' &7(1 sur %n%)'

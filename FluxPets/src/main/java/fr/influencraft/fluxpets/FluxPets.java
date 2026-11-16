@@ -101,6 +101,15 @@ public final class FluxPets extends fr.influencraft.flux.api.FluxPlugin implemen
             }
 
             @Override
+            public org.bukkit.inventory.ItemStack preview(String id) {
+                if (id.startsWith("booster_")) {
+                    CardRegistry.Booster b = registry.booster(id.substring(8));
+                    return b == null ? null : registry.boosterPreview(b);
+                }
+                return item(id);
+            }
+
+            @Override
             public java.util.Collection<String> ids() {
                 java.util.List<String> out = new java.util.ArrayList<>();
                 registry.boosters().forEach(b -> out.add("booster_" + b.id()));

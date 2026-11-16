@@ -19,7 +19,6 @@ boosters:
     - '%adopted:dragon_gemmes% &#B376E5Dragon de Gemmes'
     - ''
     - '&7[Clic droit] &#FFD94DOuvrir'
-    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -58,7 +57,6 @@ boosters:
     - '%adopted:titan% &#B376E5Titan de Cristal'
     - ''
     - '&7[Clic droit] &#FFD94DOuvrir'
-    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -97,7 +95,6 @@ boosters:
     - '%adopted:ver_sables% &#B376E5Ver des Sables'
     - ''
     - '&7[Clic droit] &#FFD94DOuvrir'
-    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -136,7 +133,6 @@ boosters:
     - '%adopted:epouvantail% &#B376E5Épouvantail'
     - ''
     - '&7[Clic droit] &#FFD94DOuvrir'
-    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -175,7 +171,6 @@ boosters:
     - '%adopted:dryade% &#B376E5Dryade'
     - ''
     - '&7[Clic droit] &#FFD94DOuvrir'
-    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -214,7 +209,6 @@ boosters:
     - '%adopted:sylvain% &#B376E5Sylvain'
     - ''
     - '&7[Clic droit] &#FFD94DOuvrir'
-    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -253,7 +247,6 @@ boosters:
     - '%adopted:flammeche% &#B376E5Flammèche'
     - ''
     - '&7[Clic droit] &#FFD94DOuvrir'
-    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -292,7 +285,6 @@ boosters:
     - '%adopted:table_vivante% &#B376E5Table Vivante'
     - ''
     - '&7[Clic droit] &#FFD94DOuvrir'
-    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -331,7 +323,6 @@ boosters:
     - '%adopted:kraken% &#B376E5Kraken'
     - ''
     - '&7[Clic droit] &#FFD94DOuvrir'
-    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -370,7 +361,6 @@ boosters:
     - '%adopted:chevalier_spectral% &#B376E5Chevalier Spectral'
     - ''
     - '&7[Clic droit] &#FFD94DOuvrir'
-    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -409,7 +399,6 @@ boosters:
     - '%adopted:architecte% &#B376E5Architecte'
     - ''
     - '&7[Clic droit] &#FFD94DOuvrir'
-    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 8
     rarity-weights:
       simple: 2500
@@ -451,7 +440,6 @@ boosters:
     - '%adopted:faucheur% &#C8256AFaucheur du Néant'
     - ''
     - '&7[Clic droit] &#FFD94DOuvrir'
-    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 5
     rarity-weights:
       simple: 400
@@ -494,7 +482,6 @@ boosters:
     - '&fTous les familiers'
     - ''
     - '&7[Clic droit] &#FFD94DOuvrir'
-    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 8
     rarity-weights:
       simple: 400
@@ -627,7 +614,6 @@ boosters:
     - '&fTous les familiers'
     - ''
     - '&7[Clic droit] &#FFD94DOuvrir'
-    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 12
     rarity-weights:
       simple: 300
@@ -760,7 +746,6 @@ boosters:
     - '&fTous les familiers'
     - ''
     - '&7[Clic droit] &#FFD94DOuvrir'
-    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 16
     rarity-weights:
       simple: 180
@@ -893,7 +878,6 @@ boosters:
     - '&fTous les familiers'
     - ''
     - '&7[Clic droit] &#FFD94DOuvrir'
-    - '&7Maj + clic droit : ouvrir toute la pile'
     cards: 20
     rarity-weights:
       simple: 100

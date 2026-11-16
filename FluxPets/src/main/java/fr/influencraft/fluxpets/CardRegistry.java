@@ -358,9 +358,13 @@ public final class CardRegistry {
                 pets.get(card.pet() == null ? "" : card.pet())));
     }
 
+    /** Look of the boosters' lore built by code (2026-11-16: chances, actions through Flux's style); bump to refresh them. */
+    private static final int BOOSTER_FORMAT = 2;
+
     public int version(Booster booster) {
         return versions.computeIfAbsent("booster:" + booster.id(), k -> java.util.Objects.hash(
-                booster.itemId(), booster.name(), booster.lore(), booster.cards()));
+                booster.itemId(), booster.name(), booster.lore(), booster.cards(), booster.petChance(),
+                booster.petRarityWeights(), BOOSTER_FORMAT));
     }
 
     public ItemStack cardItem(Card card) {
@@ -378,7 +382,31 @@ public final class CardRegistry {
     public ItemStack boosterItem(Booster booster, org.bukkit.OfflinePlayer viewer) {
         String status = adoptionStatus(booster, viewer);
         return itemCache.computeIfAbsent("booster:" + booster.id() + ":" + status,
-                k -> buildBooster(booster, viewer)).clone();
+                k -> buildBooster(booster, viewer, true)).clone();
+    }
+
+    /** The booster as a shop shows it (its description and chances, no « right click to open » lines). */
+    public ItemStack boosterPreview(Booster booster) {
+        return itemCache.computeIfAbsent("booster-preview:" + booster.id(), k -> buildBooster(booster, null, false)).clone();
+    }
+
+    /**
+     * Chance (0-1) that one opening of this booster adopts this pet: at least one pet among its draws (one at most per
+     * opening), that pet among those of its rarity. Computed from the booster's own settings (pet-chance, weights), so
+     * its description always tells the real chance.
+     */
+    public double adoptionChance(Booster booster, String petId) {
+        double perDraw = petShare(booster, Set.of());
+        if (perDraw <= 0) return 0;
+        for (List<Reward> rewards : pool(booster, true, Set.of()).values()) {
+            for (Reward r : rewards) {
+                if (r instanceof PetReward pr && pr.pet().id().equals(petId)) {
+                    double any = 1 - Math.pow(1 - perDraw, Math.max(1, booster.cards()));
+                    return any * chance(booster, r) / perDraw;
+                }
+            }
+        }
+        return 0;
     }
 
     private ItemStack buildCard(Card card) {
@@ -436,24 +464,39 @@ public final class CardRegistry {
         return java.util.Objects.hash(version(booster), status);
     }
 
-    private ItemStack buildBooster(Booster booster, org.bukkit.OfflinePlayer viewer) {
+    private ItemStack buildBooster(Booster booster, org.bukkit.OfflinePlayer viewer, boolean actions) {
         String status = adoptionStatus(booster, viewer);
         ItemStack item = base(booster.itemId(), Material.PAPER);
         item.editMeta(meta -> {
             meta.displayName(Texts.of(booster.name()));
-            meta.lore(fr.influencraft.flux.api.text.Texts.wrapLore(booster.lore().stream()
-                    .map(l -> {
-                        var m = ADOPTED.matcher(l.replace("%cards%", String.valueOf(booster.cards())));
-                        StringBuilder out = new StringBuilder();
-                        while (m.find()) {
-                            String mark = viewer == null ? "&7•"
-                                    : PetHook.has(viewer, m.group(1)) ? "&#2ECF7B✔" : "&#FF5C5C✘";
-                            m.appendReplacement(out, java.util.regex.Matcher.quoteReplacement(mark));
-                        }
-                        m.appendTail(out);
-                        return Texts.of(out.toString());
-                    })
-                    .toList()));
+            // the description of the config (one place: every menu showing this booster shows it), a pet line telling
+            // its adoption chance, then how to use it (Flux's style: the same click icons as every button)
+            List<Component> lore = new ArrayList<>();
+            for (String l : booster.lore()) {
+                var m = ADOPTED.matcher(l.replace("%cards%", String.valueOf(booster.cards())));
+                StringBuilder out = new StringBuilder();
+                String pet = null;
+                while (m.find()) {
+                    pet = m.group(1);
+                    String mark = viewer == null ? "&7•"
+                            : PetHook.has(viewer, m.group(1)) ? "&#2ECF7B✔" : "&#FF5C5C✘";
+                    m.appendReplacement(out, java.util.regex.Matcher.quoteReplacement(mark));
+                }
+                m.appendTail(out);
+                if (pet != null) {
+                    double c = adoptionChance(booster, pet);
+                    if (c > 0) out.append(plugin.text("booster-format.chance", "%n%", String.valueOf(Math.max(1, Math.round(1 / c)))));
+                }
+                lore.add(Texts.of(out.toString()));
+            }
+            if (actions) {
+                lore.add(Component.empty());
+                for (String line : fr.influencraft.flux.api.inventory.Lore.create("objet")
+                        .right(plugin.text("booster-format.open")).shiftRight(plugin.text("booster-format.open-all")).build()) {
+                    lore.add(Texts.of(line));
+                }
+            }
+            meta.lore(fr.influencraft.flux.api.text.Texts.wrapLore(lore));
             meta.getPersistentDataContainer().set(plugin.boosterKey(), PersistentDataType.STRING, booster.id());
             meta.getPersistentDataContainer().set(plugin.versionKey(), PersistentDataType.INTEGER, version(booster, status));
         });

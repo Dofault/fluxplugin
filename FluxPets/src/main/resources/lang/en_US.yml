@@ -172,3 +172,7 @@ menu:
   locked: "Locked"
   cards: "Cards"
   level-name: "Level %level%"
+booster-format:
+  open: 'Open'
+  open-all: 'Open the whole stack'
+  chance: ' &7(1 in %n%)'
