@@ -370,7 +370,7 @@ item:
   level: 'Niveau requis'
   rarity: 'Rareté'
   set: "Ensemble %set%"
-  set-bonus: '%pieces% pièces :'
+  set-bonus: '%pieces% pièces'
 
 rarities:
   common: "Commun"

@@ -156,8 +156,17 @@ public final class Style {
         return base.frame();
     }
 
+    /** Bumped at every reading of style.yml: what was drawn with the former look (item lores) is drawn again. */
+    private static volatile int version;
+
+    /** Number of the look now in force ({@link #configure} bumps it). */
+    public static int version() {
+        return version;
+    }
+
     /** Called by Flux with style.yml. */
     public static void configure(ConfigurationSection file) {
+        version++;
         base = read(file, defaults());
         List<String> colours = file == null || !file.contains("name-default-colours") ? List.of("&#FFD94D")
                 : file.getStringList("name-default-colours");

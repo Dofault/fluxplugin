@@ -398,8 +398,8 @@ public final class DungeonMenus {
             if (sp.mana() >= 0) lore.kv(raw("menu.spell-cost"), sp.mana() == 0 ? raw("class-pages.free")
                     : raw("class-pages.mana", "%mana%", fr.influencraft.flux.api.util.Format.decimal(sp.mana())));
             lore.left(raw("menu.class-action"));
-            ItemStack item = Items.of("itemsadder:" + sp.icon(), "&#FFD94D" + sp.name(), lore.build(), viewer);
-            if (item == null) item = Items.of("ENCHANTED_BOOK", "&#FFD94D" + sp.name(), lore.build(), viewer);
+            ItemStack item = Items.of("itemsadder:" + sp.icon(), sp.name(), lore.build(), viewer);
+            if (item == null) item = Items.of("ENCHANTED_BOOK", sp.name(), lore.build(), viewer);
             out.add(ListEntry.of("spell_" + sp.slot()).item(orBarrier(item)).set("left", "[player] classe").set("right", ""));
         }
         if (out.isEmpty()) {

@@ -102,14 +102,15 @@ public final class RpgItems {
             lore.kv(plugin.messages().raw("item.classes"), String.join(", ", names));
         }
         lore.kv(plugin.messages().raw("item.level"), item.level());
-        lore.kv(plugin.messages().raw("item.rarity"), "&" + item.rarity().color() + plugin.messages().raw("rarities." + item.rarity().id()));
+        // values in the style's colours (style.yml): the rarity's own colour is the item name's
+        lore.kv(plugin.messages().raw("item.rarity"), plugin.messages().raw("rarities." + item.rarity().id()));
         if (item.set() != null) {
             Equipment.ItemSet set = equipment.set(item.set());
             lore.info(plugin.messages().raw("item.set", "%set%", plugin.messages().raw("sets." + set.id())));
             set.bonuses().forEach((pieces, bonus) -> {
                 List<String> parts = new ArrayList<>();
                 bonus.forEach((stat, v) -> parts.add(statValue(stat, v) + " " + statName(stat)));
-                lore.item(plugin.messages().raw("item.set-bonus", "%pieces%", String.valueOf(pieces)) + " &f" + String.join(", ", parts));
+                lore.kv(plugin.messages().raw("item.set-bonus", "%pieces%", String.valueOf(pieces)), String.join(", ", parts));
             });
         }
         return lore.tags();

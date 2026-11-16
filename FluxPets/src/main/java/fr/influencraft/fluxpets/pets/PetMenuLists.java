@@ -56,11 +56,49 @@ public final class PetMenuLists {
         return pet.name() + " " + t("level-suffix", "%level%", String.valueOf(level));
     }
 
+    private static final java.util.regex.Pattern COLOURS = java.util.regex.Pattern.compile("&#[0-9A-Fa-f]{6}|&[0-9a-fk-orA-FK-OR]");
+
+    /**
+     * A pet's effect lines (effects-description, rewards-description of its file) in the suite's style (2026-11-16):
+     * « Name : value » is a key : value; a name followed by its indented explanation is a key : value too (the
+     * explanation as value, the indented lines under a « Name : value » added to its value); any other sentence a
+     * description. The colours of the files are dropped: style.yml colours everything.
+     */
+    static void effects(Lore lore, List<String> lines) {
+        String key = null;
+        StringBuilder value = null;
+        String glue = " ";
+        for (int i = 0; i < lines.size(); i++) {
+            String raw = lines.get(i);
+            String text = COLOURS.matcher(raw).replaceAll("").trim();
+            if (text.isEmpty()) continue;
+            boolean indented = raw.startsWith(" ");
+            if (indented && key != null) {
+                value.append(value.length() == 0 ? "" : glue).append(text);
+                continue;
+            }
+            if (key != null) lore.kv(key, value.toString());
+            key = null;
+            int colon = text.indexOf(" : ");
+            boolean titled = i + 1 < lines.size() && lines.get(i + 1).startsWith(" ");
+            if (colon > 0) {
+                key = text.substring(0, colon);
+                value = new StringBuilder(text.substring(colon + 3));
+                glue = " · ";
+            } else if (titled) {
+                key = text;
+                value = new StringBuilder();
+                glue = " ";
+            } else lore.description(text);
+        }
+        if (key != null) lore.kv(key, value.toString());
+    }
+
     /** Description, effects at the player's level and progress of a pet. */
     private Lore sheet(Player player, Pet pet) {
         int level = PetData.level(player, pet);
         Lore lore = Lore.create().description(pet.description());
-        for (String line : pet.effectsDescription(level)) lore.line(line);
+        effects(lore, pet.effectsDescription(level));
         String progress = level >= pet.maxLevel() ? "100" : Pet.nice(Math.round(PetData.progress(player, pet) * 10000) / 100.0);
         if (pet.slots() > 1) lore.info(t("slots-taken", "%slots%", String.valueOf(pet.slots())));
         if (pet.mountable() && Pets.mountsEnabled()) {
@@ -133,7 +171,7 @@ public final class PetMenuLists {
         int level = PetData.level(player, pet);
         for (int n = 1; n <= Math.min(10, pet.maxLevel()); n++) {
             Lore lore = Lore.create();
-            for (String line : pet.rewardsDescription(n)) lore.line(line);
+            effects(lore, pet.rewardsDescription(n));
             String icon;
             if (n <= level) {
                 icon = "itemsadder:influitems:checkmark";
@@ -142,7 +180,7 @@ public final class PetMenuLists {
                 icon = "itemsadder:influitems:tracking";
                 String progress = Pet.nice(Math.round(PetData.progress(player, pet) * 10000) / 100.0);
                 lore.kv(t("progress"), progress + " %")
-                        .kv(t("cards"), Pet.nice(PetData.xp(player, pet)) + "&#B376E5/&f" + Pet.nice(pet.xpForLevel(level + 1)));
+                        .kv(t("cards"), Pet.nice(PetData.xp(player, pet)) + " / " + Pet.nice(pet.xpForLevel(level + 1)));
             } else {
                 icon = "itemsadder:influitems:lock";
                 lore.ko(t("locked"));

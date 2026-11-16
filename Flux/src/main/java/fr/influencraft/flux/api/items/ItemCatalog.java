@@ -71,7 +71,7 @@ public final class ItemCatalog {
         ItemDefinition definition = definitions.get(id);
         if (definition == null) return false;
         Integer revision = item.getPersistentDataContainer().get(REVISION, PersistentDataType.INTEGER);
-        if (revision != null && revision == definition.revision) return false;
+        if (revision != null && revision == definition.revision()) return false;
         write(item, id, definition);
         return true;
     }
@@ -80,7 +80,7 @@ public final class ItemCatalog {
         definition.applyTo(item);
         item.editMeta(meta -> {
             meta.getPersistentDataContainer().set(ITEM, PersistentDataType.STRING, namespace + ":" + id);
-            meta.getPersistentDataContainer().set(REVISION, PersistentDataType.INTEGER, definition.revision);
+            meta.getPersistentDataContainer().set(REVISION, PersistentDataType.INTEGER, definition.revision());
         });
     }
 

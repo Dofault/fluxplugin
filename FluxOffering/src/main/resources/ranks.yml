@@ -7,7 +7,7 @@ prestige-placeholder: "0"
 cycles: ["", "Prestige I", "Prestige II"]
 
 ranks:
-  newcomer: {name: "Newcomer", colour: "#C0C0C0", description: ["Starting rank."], perks: []}
+  newcomer: {name: "Newcomer", colour: "#C0C0C0", description: ["Starting rank."], perks: ["Salary | 100 / hour"]}
   citizen: {name: "Citizen", colour: "#9AD29A", description: ["First social rank."], perks: []}
   known: {name: "Known", colour: "#6AC7C7", description: ["People know your name."], perks: []}
 

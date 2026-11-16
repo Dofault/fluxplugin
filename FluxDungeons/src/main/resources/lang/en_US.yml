@@ -370,7 +370,7 @@ item:
   level: 'Required level'
   rarity: 'Rarity'
   set: "%set% set"
-  set-bonus: "%pieces% pieces:"
+  set-bonus: "%pieces% pieces"
 
 rarities:
   common: "Common"

@@ -58,9 +58,14 @@ public final class ItemDefinition {
     private final boolean equip;
     private final Key equipment;
     private final String name;
-    private final List<String> lore;
-    /** The lore without its action lines (tagged lore only, else the lore itself). */
-    private final List<String> shownLore;
+    /** The lore as written: lines, or tag lines drawn through the style ({@link #lore()}). */
+    private final List<String> written;
+    private final boolean tagged;
+    /** Drawn lore and shown lore, for the style version {@link #drawnFor} (style.yml read again: drawn again). */
+    private volatile List<String> lore, shownLore;
+    private volatile int drawnFor = -1;
+    /** Fingerprint of everything but the lore. */
+    private final int base;
     private final Map<String, Integer> enchantments = new LinkedHashMap<>();
     private final Map<String, Double> attributes = new LinkedHashMap<>();
     private final List<ItemFlag> flags = new ArrayList<>();
@@ -71,8 +76,6 @@ public final class ItemDefinition {
     private final Boolean glow;
     /** Universe the item belongs to (null = vanilla). */
     private final String universe;
-    /** Fingerprint of the definition: an item made with another one is brought up to date. */
-    final int revision;
 
     private ItemDefinition(ConfigurationSection c) {
         material = c.getString("material", "PAPER");
@@ -81,11 +84,8 @@ public final class ItemDefinition {
         equip = eq != null;
         equipment = eq == null || eq.equalsIgnoreCase("none") ? null : key(eq);
         name = c.getString("name");
-        List<String> written = c.getStringList("lore");
-        List<String> full = fr.influencraft.flux.api.inventory.Lore.fromTags(written, ITEM_STYLE, true);
-        lore = full == null ? written : full;
-        List<String> shown = full == null ? null : fr.influencraft.flux.api.inventory.Lore.fromTags(written, ITEM_STYLE, false);
-        shownLore = shown == null ? lore : shown;
+        written = c.getStringList("lore");
+        tagged = written.stream().anyMatch(l -> l.startsWith("@"));
         ConfigurationSection e = c.getConfigurationSection("enchantments");
         if (e != null) for (String k : e.getKeys(false)) enchantments.put(k.toLowerCase(Locale.ROOT), e.getInt(k));
         ConfigurationSection a = c.getConfigurationSection("attributes");
@@ -106,7 +106,34 @@ public final class ItemDefinition {
         glow = c.contains("glow") ? c.getBoolean("glow") : null;
         String u = c.getString("universe");
         universe = u == null || u.isBlank() || u.equalsIgnoreCase(fr.influencraft.flux.api.universe.Universes.VANILLA) ? null : u.toLowerCase(Locale.ROOT);
-        revision = Objects.hash(material, model, equip, equipment, name, lore, attributes, flags, durability, unbreakable, glow, universe, color);
+        base = Objects.hash(material, model, equip, equipment, name, attributes, flags, durability, unbreakable, glow, universe, color);
+    }
+
+    /**
+     * Fingerprint of the definition as drawn now: an item made with another one (the config or style.yml changed) is
+     * brought up to date.
+     */
+    int revision() {
+        return Objects.hash(base, lore());
+    }
+
+    /** The lore as items carry it, drawn with the style in force (a tagged lore follows style.yml). */
+    public List<String> lore() {
+        draw();
+        return lore;
+    }
+
+    private void draw() {
+        int now = fr.influencraft.flux.api.text.Style.version();
+        if (drawnFor == now) return;
+        if (!tagged) {
+            lore = written;
+            shownLore = written;
+        } else {
+            lore = fr.influencraft.flux.api.inventory.Lore.fromTags(written, ITEM_STYLE, true);
+            shownLore = fr.influencraft.flux.api.inventory.Lore.fromTags(written, ITEM_STYLE, false);
+        }
+        drawnFor = now;
     }
 
     /** Style variant of an item's own description (style.yml): no frame. */
@@ -114,13 +141,14 @@ public final class ItemDefinition {
 
     /** The lore a menu shows for this item: no « right click to ... » lines. */
     public List<String> shownLore() {
+        draw();
         return shownLore;
     }
 
     /** Puts the shown lore ({@link #shownLore()}) on a copy of an item of this definition (count and data kept). */
     public ItemStack shown(ItemStack item) {
         ItemStack copy = item.clone();
-        copy.editMeta(meta -> meta.lore(lines(shownLore)));
+        copy.editMeta(meta -> meta.lore(lines(shownLore())));
         return copy;
     }
 
@@ -174,7 +202,8 @@ public final class ItemDefinition {
 
     private void meta(ItemMeta meta) {
         if (name != null) meta.customName(text(name));
-        if (!lore.isEmpty()) meta.lore(lines(lore));
+        List<String> drawn = lore();
+        if (!drawn.isEmpty()) meta.lore(lines(drawn));
         if (!flags.isEmpty()) meta.addItemFlags(flags.toArray(ItemFlag[]::new));
         if (durability > 0 && meta instanceof Damageable d) d.setMaxDamage(durability);
         meta.setUnbreakable(unbreakable);
