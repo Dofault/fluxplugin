@@ -445,7 +445,7 @@ client-pack:
   # (Flux/assets/loading/gen_loading.py). logo-shader: the position_tex_color.fsh of the pack that owns it (MC GUI),
   # patched to hide the Mojang logo; blank = the logo stays over the screen.
   loading-screen:
-    enabled: true
+    enabled: false
     logo-shader: plugins/MCGUI/pack/uiengine_26_2/assets/minecraft/shaders/core/position_tex_color.fsh
 
 # The advancements key (L) opens this command instead of the vanilla screen (blank or enabled: false = vanilla).
