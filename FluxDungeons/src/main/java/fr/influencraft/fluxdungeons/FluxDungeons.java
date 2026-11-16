@@ -326,7 +326,6 @@ public final class FluxDungeons extends FluxPlugin {
         placeholders("fluxdungeons", (player, params) -> {
             String v = player == null ? null : runs.lobby().placeholder(player, params);
             if (v == null && player != null && menus != null) v = menus.placeholder(player, params);
-            if (v == null && player != null && shop != null) v = shop.placeholder(player, params);
             return v != null ? v : runs.placeholder(player, params);
         });
         // buttons of the dungeon menus (menu.DungeonMenus, dungeon.Lobby)

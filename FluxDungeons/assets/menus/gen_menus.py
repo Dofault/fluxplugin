@@ -4,30 +4,22 @@
     <venv with Pillow>/python3 gen_menus.py <plugins dir of the server> [preview dir]
 
 Writes:
-  ItemsAdder/contents/fluxdonjon/   backgrounds fd_menu_liste / fd_menu_donjon / fd_menu_sas, the big picture of each
-                                    dungeon's boss (fd_boss_<dungeon>, 64 x 64, rendered from its BetterModel model),
-                                    the token glyph jeton_donjon (%img_jeton_donjon%), items jeton_donjon, cle_donjon,
+  ItemsAdder/contents/fluxdonjon/   backgrounds fd_menu_liste_p<n> (a page of the line of dungeons), fd_menu_sas,
+                                    fd_menu_boutique, the token glyph jeton_donjon (%img_jeton_donjon%), items jeton_donjon, cle_donjon,
                                     potion_soin_<1-4>, potion_mana_<1-4>
-  FluxDungeons/menus/               donjons.yml (list), donjon.yml + _pages/donjon.yml (one page per dungeon: its job and
-                                    boss picture), donjon_sas.yml (launch screen)
+  FluxDungeons/menus/               donjons.yml (the line of dungeons, a page per PER_PAGE of them), donjon_boutique.yml
+                                    (dungeon shop), donjon_sas.yml (launch screen)
 Lists, actions and placeholders are FluxDungeons' (menu.DungeonMenus, dungeon.Lobby). Then /iazip and /fluxmenu reload.
 
 Layouts (window px 176 wide, item of a slot at fond_lib.objet):
-  donjons   the dungeon tower (2026-11-16, plain window since the owner's feedback of the same day: no bricks), the
-            whole window (chest and hidden inventory, rows 0 to 9): floors climbing in switchbacks from floor 1
-            (hotbar row, left) to floor 10 (row 1, right), two a storey, each in a frame of its job's colour with its
-            level beside it, joined by Flux's path pieces (the connectors of the ranks menu): green up to the last
-            floor beaten, orange to the floor to play, off above; past floor 10 the road climbs to the top row and
-            runs left to the "?" (slot 4: the adventure goes on), lit once every dungeon is beaten. Row 0: back (0),
-            "?" (4), info (8); beside the floors: class (36), party (44), tokens (72),
-            shop (80, on a green plate). A floor beaten is lit by Flux (won_<floor>).
-  donjon_boutique  the dungeon shop (2026-11-16, rows 0 to 7): back (0), the shop shown in a field, info (8);
-            articles in a well (rows 1-4, columns 1-7, 28 a page), Flux's pager on row 5 (every shop at once by
-            default: more than one page); the ten shops as tabs with their job's icon in the inventory's two first
-            rows (the five first dungeons below, the five next above), the one shown lit; tokens beside them (62).
-  donjon    row 0: back (0), job of the dungeon in a dark field, info (8); rows 1-4 left: the boss picture in a gold
-            frame; rows 2-4 right: possible loot (12 slots, header « Butin »); row 5: the key (49, on a green plate:
-            click = launch screen), tokens (53). The difficulty is chosen on the launch screen only.
+  donjons   the dungeons in a line (2026-11-16, owner's layout), rows 0 to 3: back (0), info (8); class, party, tokens,
+            shop (10, 12, 14, 16: above the line, on its columns; the shop on a green plate); the line on row 3: four
+            dungeons a page (28, 30, 32, 34), Flux's path through them and on to the arrows (27, 35) that turn the page,
+            each dungeon in a frame of its job's colour with its level written above it; the « ? » after the last one
+            (the adventure goes on). One picture and one path per page (pages donjons_p<n> of the menu).
+  donjon_boutique  the dungeon shop (2026-11-16, laid out as the market): back (0), info (8); articles in a well
+            (rows 1-4, columns 1-7); left column tokens (18) and the kind filter (27), right column the search (35);
+            Flux's pager on row 5; in the inventory's first row « Tous » and six jobs between two scroll arrows.
   donjon_sas row 0: leave (0), info (8); rows 1-2: one card per member (head, ready or waiting under it); row 3:
             Easy / Normal / Hard (28, 31, 34, coloured cells, no words: the buttons' names say it), the chosen one lit;
             row 4: players ready; row 5: class (45), ready (49), key (53)
@@ -56,47 +48,41 @@ NS = "fluxdonjon"
 BLACK, WHITE = (0, 0, 0, 255), (255, 255, 255, 255)
 GOLD, GOLD_LIGHT, GOLD_DARK = ui.rgb("#F0A800"), ui.rgb("#FFD94D"), ui.rgb("#8A5A14")
 VIOLET, VIOLET_DARK = ui.rgb("#5B2D9E"), ui.rgb("#1E0A3C")
-IMAGE_X, IMAGE_TOP = 9, 38           # boss picture of the dungeon page (64 x 64)
 
-# dungeon id -> (job id, job name, boss model) ; the boss pets and their jobs are in scripts/influcard/familiers_boss.py
-from familiers_boss import BOSSES  # noqa: E402
-DUNGEONS = [(b[4], b[3], b[2], b[0]) for b in BOSSES]   # (dungeon, job, model, pet)
-JOB_NAMES = {"mineur": "Mineur", "rochiste": "Rochiste", "deblayeur": "Déblayeur", "cultivateur": "Cultivateur",
-             "herboriste": "Herboriste", "sylviculteur": "Bûcheron", "fondeur": "Fondeur",
-             "enchanteur": "Enchanteur", "pecheur": "Pêcheur", "defenseur": "Défenseur"}
-
-# the tower: floor n at TOWER_SLOTS[n - 1] (switchbacks, two floors a storey, from the hotbar row up)
-TOWER_SLOTS = [83, 87, 69, 65, 47, 51, 33, 29, 11, 15]
-TOWER_BUTTONS = [0, 4, 8, 36, 44, 72, 80]     # back, "?", info, class, party, tokens, shop (DungeonMenus order)
-UNKNOWN, SHOP_BUTTON = 4, 80
+# the line of dungeons (row 3): PER_PAGE places a page (one column out of two), an arrow at each end, the buttons above
+LINE_SLOTS = [28, 30, 32, 34]           # same as DungeonMenus.PER_PAGE
+LINE_ARROWS = (27, 35)
+LINE_BUTTONS = [0, 8, 10, 12, 14, 16]   # back, info, class, party, tokens, shop (DungeonMenus order)
+SHOP_BUTTON = 16
 
 
-def tower_route():
-    """Cells of the path from floor 1 to floor 10 (each next to the one before, as Flux's paths want) and the place
-    of every floor in it: straight between the two floors of a storey, one cell up between storeys."""
-    cells = [TOWER_SLOTS[0]]
-    for a, b in zip(TOWER_SLOTS, TOWER_SLOTS[1:]):
-        ra, ca, rb, cb = a // 9, a % 9, b // 9, b % 9
-        if ra == rb:
-            step = 1 if cb > ca else -1
-            cells += [ra * 9 + c for c in range(ca + step, cb + step, step)]
-        else:
-            cells += [r * 9 + ca for r in range(ra - 1, rb - 1, -1)]
-    # the road goes on past floor 10: one row up, then along the top row to the "?" (owner, 2026-11-16: two slots to
-    # the left, so the road goes a bit further); off until every dungeon is beaten
-    last = TOWER_SLOTS[-1]
-    tail = [last - 9]
-    while tail[-1] != UNKNOWN:
-        tail.append(tail[-1] + (1 if UNKNOWN > tail[-1] else -1))
-    return cells + tail, [cells.index(s) for s in TOWER_SLOTS]
+def line_pages():
+    """[[(dungeon, job, level) or None for the « ? »]] page by page: the dungeons in tower.py's order, then the « ? »."""
+    places = [(d, job, level) for f, (d, job, level, *_r) in sorted(TOWER.items())] + [None]
+    return [places[i:i + len(LINE_SLOTS)] for i in range(0, len(places), len(LINE_SLOTS))]
+
+
+def line_cells(page_index, pages):
+    """Cells of a page's path in DungeonMenus.route's order: the way in from the page before, each place and the way
+    to the next, the way out to the next page."""
+    n = len(pages[page_index])
+    cells = [LINE_ARROWS[0]] if page_index > 0 else []
+    for i in range(n):
+        cells.append(LINE_SLOTS[i])
+        if i < n - 1:
+            cells.append(LINE_SLOTS[i] + 1)
+    if page_index < len(pages) - 1:
+        cells.append(LINE_SLOTS[n - 1] + 1)
+    return cells
+
+
 SHOP_ARTICLES = [r * 9 + c for r in range(1, 5) for c in range(1, 8)]
-SHOP_FLOORS = [65, 66, 67, 68, 69, 56, 57, 58, 59, 60]   # the five first dungeons on the lower row, the five next above
-SHOP_BUTTONS = [0, 8, 62]                 # back, info, tokens (beside the tabs)
+SHOP_BUTTONS = [0, 8, 18, 27, 35]         # back, info, tokens, kind filter, search (DungeonShop order), as the market
 SHOP_PAGER = (45, 53)                     # Flux's pager under the articles
-LOOT_SLOTS = [23, 24, 25, 26, 32, 33, 34, 35, 41, 42, 43, 44]
+SHOP_JOBS = [55, 56, 57, 58, 59, 60, 61]  # « Tous » then six jobs, in the inventory's first row
+SHOP_ARROWS = [54, 62]                    # scroll the row of jobs
 MEMBER_SLOTS, STATE_SLOTS = [11, 12, 13, 14, 15], [20, 21, 22, 23, 24]
 SAS_LEVELS = [31]                     # one level per dungeon since 2026-11-16: its floor card
-DETAIL_KEY = 49
 
 
 # --------------------------------------------------------------------------------------------------- backgrounds
@@ -114,69 +100,34 @@ from tower import DYES as _DYES  # noqa: E402
 JOB_COLOURS = _DYES                 # one colour per job: the dye of its leather set (tower.py)
 
 
-def bg_list():
-    """The dungeon tower on the theme's plain window: a frame per floor in the colour of its job, its level beside
-    it (left of a left floor, right of a right one), the shop on a green plate (the "?" above the top has no frame:
-    it would touch floor 10's). The road between the floors is Flux's path, drawn over this picture."""
-    im = bg_window(GENERIC, 0, 9, title="Donjons")
+def bg_line(page):
+    """A page of the line: the plain window (rows 0 to 3), a frame per dungeon in its job's colour (the « ? » in the
+    theme's violet) with its level written above it, the shop on a green plate. The path between them is Flux's,
+    drawn over this picture."""
+    im = bg_window(GENERIC, 0, 3, title="Donjons")
     d = ImageDraw.Draw(im, "RGBA")
-
-    def frame(slot, colour):
+    for place, slot in zip(page, LINE_SLOTS):
+        colour = VIOLET if place is None else ui.rgb(JOB_COLOURS[place[1]])
         x, y = ui.objet(slot)
-        d.rounded_rectangle((x - 3, y - 3, x + 18, y + 18), radius=3, fill=ui.tone(colour, -0.55), outline=ui.OUTLINE)
-        d.rounded_rectangle((x - 2, y - 2, x + 17, y + 17), radius=3, outline=colour)
-        d.rectangle((x - 1, y - 1, x + 16, y + 16), fill=ui.WELL)
-
-    for floor, (dungeon, job, level, party, _, _) in sorted(TOWER.items()):
-        slot = TOWER_SLOTS[floor - 1]
-        x, y = ui.objet(slot)
-        frame(slot, ui.rgb(JOB_COLOURS[job]))
-        txt = f"{level}"
-        if slot % 9 <= 4:
-            label(im, txt, x - 6 - 4 * len(txt), y + 5)
-        else:
-            label(im, txt, x + 21, y + 5)
+        # one rounded frame, its well rounded too (a square well darkened the frame's corners)
+        d.rounded_rectangle((x - 3, y - 3, x + 18, y + 18), radius=3, fill=ui.OUTLINE)
+        d.rounded_rectangle((x - 2, y - 2, x + 17, y + 17), radius=3, fill=colour)
+        d.rounded_rectangle((x - 1, y - 1, x + 16, y + 16), radius=2, fill=ui.WELL)
+        label(im, "?" if place is None else str(place[2]), x + 8, y - 11, centre=True)
     x, y = ui.objet(SHOP_BUTTON)
     ui.button(d, (x - 3, y - 3, x + 18, y + 17), ui.rgb("#3E8E2E"))
     return im
 
 
 def bg_shop():
-    """The dungeon shop: the shop shown in a field, articles in a well (Flux draws the pager under it), the shops as
-    tabs in the inventory's two first rows, in a well headed « Boutiques »."""
-    im = bg_window(GENERIC, 0, 7, title="Boutique")
+    """The dungeon shop (as the market): articles in a well, the row of jobs in a well in the inventory's first row
+    (the arrows at its ends stand on the window)."""
+    im = bg_window(GENERIC, 0, 6, title="Donjon")
     d = ImageDraw.Draw(im, "RGBA")
-    field(im, d, (26, 19, 150, 32))
     x0, y0, x1, y1 = span(SHOP_ARTICLES, 2)
-    ui.well(d, (x0, y0 + 2, x1, y1 - 2))       # 1 px of air under the name field, 2 px up from Flux's pager
-    fx0, fy0, fx1, fy1 = span(SHOP_FLOORS, 2)
-    ui.well(d, (fx0, fy0, fx1, fy1))
-    label(im, "BOUTIQUES", (fx0 + fx1) // 2, fy0 - 9, centre=True)
-    return im
-
-
-def bg_detail():
-    im = bg_window(GENERIC, 0, 5, title="Donjon")
-    d = ImageDraw.Draw(im, "RGBA")
-    field(im, d, (26, 19, 150, 32))
-    # gold frame of the boss picture (rows 1 to 4, left)
-    x0, y0, x1, y1 = IMAGE_X - 2, IMAGE_TOP - 2, IMAGE_X + 65, IMAGE_TOP + 65
-    d.rectangle((x0, y0, x1, y1), fill=BLACK)
-    d.rectangle((x0 + 1, y0 + 1, x1 - 1, y1 - 1), fill=GOLD)
-    d.line((x0 + 1, y0 + 1, x1 - 1, y0 + 1), fill=GOLD_LIGHT)
-    d.line((x0 + 1, y0 + 1, x0 + 1, y1 - 1), fill=GOLD_LIGHT)
-    d.rectangle((x0 + 2, y0 + 2, x1 - 2, y1 - 2), fill=VIOLET_DARK)
-    d.line((x0 + 1, y1 + 1, x1 - 1, y1 + 1), fill=ui.SHADE_LINE)
-    # possible loot
-    bx0, by0, bx1, by1 = span(LOOT_SLOTS)
-    ui.container(im, d, (bx0, by0 - 11, bx1, by1), "ardoise", head="Butin", accent=GOLD_DARK)
-    for c in LOOT_SLOTS:
-        ui.slot(d, c, "dark")
-    # the shop (53) on a gold plate, the key (49): launch screen of the dungeon, on a green plate
-    x, y = ui.objet(53)
-    ui.button(d, (x - 3, y - 3, x + 18, y + 17), ui.rgb("#C9930E"))
-    x, y = ui.objet(DETAIL_KEY)
-    ui.button(d, (x - 3, y - 3, x + 18, y + 17), ui.rgb("#3E8E2E"))
+    ui.well(d, (x0, y0, x1, y1 - 2))           # 2 px up from Flux's pager
+    fx0, fy0, fx1, fy1 = span(SHOP_JOBS, 2)
+    ui.well(d, (fx0 + 1, fy0, fx1 - 1, fy1))   # 1 px off the arrows next to it
     return im
 
 
@@ -302,34 +253,10 @@ def shop_icon():
     return im
 
 
-def boss_picture(model):
-    """64 x 64 three-quarter render of a boss model (dark outline), for the dungeon page."""
-    import apercu
-    import bbrender
-    path = os.path.join(PLUGINS, "BetterModel", "models", model + ".bbmodel")
-    elements, tex = bbrender.load(path)
-    art = apercu.render(elements, tex, 35, 18, size=62, bg=None, margin=2)
-    im = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
-    px = im.load()
-    for y in range(62):
-        for x in range(62):
-            if art[y][x] is not None:
-                px[x + 1, y + 1] = tuple(art[y][x])
-    outline = []
-    for y in range(64):
-        for x in range(64):
-            if px[x, y][3] == 0 and any(0 <= x + dx < 64 and 0 <= y + dy < 64 and px[x + dx, y + dy][3]
-                                        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
-                outline.append((x, y))
-    for x, y in outline:
-        px[x, y] = (13, 13, 13, 255)
-    return im
-
-
 # --------------------------------------------------------------------------------------------------- pack
 
 def pack():
-    for sub in ("textures/gui", "textures/item", "textures/font", "textures/boss"):
+    for sub in ("textures/gui", "textures/item", "textures/font"):
         os.makedirs(os.path.join(PACK, sub), exist_ok=True)
     lines = ["# Generated by plugins/fluxplugin/FluxDungeons/assets/menus/gen_menus.py: do not edit by hand.",
              "info:", f"  namespace: {NS}", "", "font_images:"]
@@ -338,19 +265,17 @@ def pack():
         return [f"  {gid}:", "    show_in_gui: false", "    suggest_in_command: false", f'    path: "{path}"',
                 f"    scale_ratio: {h}", f"    y_position: {y}"]
 
-    backgrounds = {"fd_menu_liste": bg_list(), "fd_menu_donjon": bg_detail(), "fd_menu_sas": bg_sas(),
-                   "fd_menu_boutique": bg_shop()}
+    backgrounds = {f"fd_menu_liste_p{n}": bg_line(page) for n, page in enumerate(line_pages(), start=1)}
+    backgrounds.update({"fd_menu_sas": bg_sas(), "fd_menu_boutique": bg_shop()})
+    # pictures of the former menus (the tower, the dungeon page and its boss pictures): gone
+    import shutil
+    shutil.rmtree(os.path.join(PACK, "textures", "boss"), ignore_errors=True)
+    for old in ("fd_menu_liste", "fd_menu_donjon"):
+        if os.path.exists(os.path.join(PACK, "textures/gui", old + ".png")):
+            os.remove(os.path.join(PACK, "textures/gui", old + ".png"))
     for gid, im in backgrounds.items():
         im.save(os.path.join(PACK, "textures/gui", gid + ".png"))
         lines += glyph(gid, f"gui/{gid}.png", im.height, 13)
-    for dungeon, job, model, pet in DUNGEONS:
-        try:
-            pic = boss_picture(model)
-        except FileNotFoundError:
-            print("no model for", dungeon, model)
-            continue
-        pic.save(os.path.join(PACK, "textures/boss", dungeon + ".png"))
-        lines += glyph(f"fd_boss_{dungeon}", f"boss/{dungeon}.png", 64, 13 - IMAGE_TOP)
     coin(16).save(os.path.join(PACK, "textures/font", "jeton_donjon.png"))
     lines += ["  jeton_donjon:", "    show_in_gui: true", "    suggest_in_command: true",
               '    path: "font/jeton_donjon.png"', "    scale_ratio: 9", "    y_position: 8"]
@@ -395,41 +320,66 @@ def entries(lid, slots, left=None, right=None, extra=()):
 
 
 def menus():
-    os.makedirs(os.path.join(MENUS, "_pages"), exist_ok=True)
+    # the former dungeon page (and its page file) is gone: every dungeon is prepared from the line
+    for old in (os.path.join(MENUS, "donjon.yml"), os.path.join(MENUS, "_pages", "donjon.yml")):
+        if os.path.exists(old):
+            os.remove(old)
     head = "# Generated by plugins/fluxplugin/FluxDungeons/assets/menus/gen_menus.py: do not edit by hand.\n"
     # every button is built by FluxDungeons (lists): the files only place them
     common = "player-inventory: hidden\nvanilla-background: false\n"
-    cells, at = tower_route()
-    open(os.path.join(MENUS, "donjons.yml"), "w", encoding="utf-8").write(head + f"""# The dungeon tower (/donjon, 2026-11-16): a floor per dungeon from level 10 at the bottom to 100 at the top, a
-# "?" above. Left click: the dungeon (menu donjon); right click: its page of the dungeon shop.
+    pages = line_pages()
+    page_blocks = []
+    for n, page in enumerate(pages, start=1):
+        cells = line_cells(n - 1, pages)
+        arrows = []
+        if n > 1:
+            arrows.append(f"""      precedent:
+        material: "itemsadder:fluxui:btn_left_purple"
+        slots: [{LINE_ARROWS[0]}]
+        hide-tooltip: true
+        actions:
+          left: ["[fluxdungeon] tl {n - 1}", "[page-swap] donjons_p{n - 1}"]""")
+        if n < len(pages):
+            arrows.append(f"""      suivant:
+        material: "itemsadder:fluxui:btn_right_purple"
+        slots: [{LINE_ARROWS[1]}]
+        hide-tooltip: true
+        actions:
+          left: ["[fluxdungeon] tl {n + 1}", "[page-swap] donjons_p{n + 1}"]""")
+        page_blocks.append(f"""  donjons_p{n}:
+    title: ":offset_-8::fd_menu_liste_p{n}:"
+    paths:
+      ligne:
+        slots: [{", ".join(map(str, cells))}]
+        progress: "{len(cells)}"
+        states: "%fluxdungeons_tl_route_{n}%"
+        color: vert
+        start: false
+        end: false
+    items:
+""" + "\n".join(arrows))
+    open(os.path.join(MENUS, "donjons.yml"), "w", encoding="utf-8").write(head + f"""# The dungeons in a line (/donjon, 2026-11-16): a page shows {len(LINE_SLOTS)} of them, from level 10 to 100, then a « ? ».
+# Left click: prepare the dungeon (its launch screen); right click: its page of the dungeon shop. Opens on the page of
+# the dungeon to play. Each page has its picture (frames, levels) and its path (Flux's, coloured by DungeonMenus).
 
-title: ":offset_-8::fd_menu_liste:"
-rows: 6
+title: ":offset_-8::fd_menu_liste_p1:"
+rows: 4
 {common}update-interval: 20
+
+open-actions:
+  - "[fluxdungeon] tl current"
+  - "[page-swap] donjons_p%fluxdungeons_tl_page%"
 
 lists:
 
-{entries("donjons_boutons", TOWER_BUTTONS, left=["%entry_left%", "%entry_left2%"])}
-{entries("donjons_liste", TOWER_SLOTS, left=["[fluxdungeon] view %entry_id%", "[menu] donjon"], right=["%entry_right%"])}
+{entries("donjons_boutons", LINE_BUTTONS, left=["%entry_left%", "%entry_left2%"])}
+{entries("donjons_liste", LINE_SLOTS, left=["%entry_left%"], right=["%entry_right%"])}
 
-# the road between the floors (Flux's paths, as the ranks menu): one colour per cell from DungeonMenus, green up to
-# the last floor beaten, orange to the floor to play; the "?" (last cell) lights once floor 10 is beaten
-paths:
-  tour:
-    slots: [{", ".join(map(str, cells))}]
-    progress: "{len(cells)}"
-    states: "%fluxdungeons_route_{'_'.join(map(str, at))}_{len(cells)}%"
-    color: vert
-    start: false
-    end: false
-""")
-    lit = "\n".join(f"""  etage_{f}:
-    type: lit
-    slot: {slot}
-    view-requirements:
-      - "placeholder: %fluxdungeons_shop_floor% == {f}\"""" for f, slot in enumerate(SHOP_FLOORS, start=1))
-    open(os.path.join(MENUS, "donjon_boutique.yml"), "w", encoding="utf-8").write(head + f"""# The dungeon shop (reward.DungeonShop, 2026-11-16): a page per floor of the tower, articles bought in Flux's
-# buying window. Contents and prices: shop.yml (assets/balance/tower.py).
+pages:
+""" + "\n".join(page_blocks) + "\n")
+    open(os.path.join(MENUS, "donjon_boutique.yml"), "w", encoding="utf-8").write(head + f"""# The dungeon shop (reward.DungeonShop, 2026-11-16), laid out as the market: articles bought in Flux's buying window,
+# filtered by job (row of the inventory) and by kind, searched, paged by Flux. Contents and prices: shop.yml
+# (assets/balance/tower.py).
 
 title: ":offset_-8::fd_menu_boutique:"
 rows: 6
@@ -437,9 +387,20 @@ rows: 6
 
 lists:
 
-{entries("boutique_boutons", SHOP_BUTTONS, left=["%entry_left%"])}
-{entries("boutique_articles", SHOP_ARTICLES, left=["%entry_left%"])}
-{entries("boutique_etages", SHOP_FLOORS, left=["%entry_left%", "[refresh]"])}
+{entries("boutique_boutons", SHOP_BUTTONS, left=["%entry_left%"], right=["%entry_right%"])}
+  boutique_articles:
+    slots: "{", ".join(map(str, SHOP_ARTICLES))}"
+    item:
+      material: entry
+      actions:
+        left: ["%entry_left%"]
+    empty:
+      material: "itemsadder:influitems:unknown"
+      name: "Rien ici"
+      lore:
+        - "@desc Rien ne correspond. Essaie un autre filtre, une autre recherche ou « Tous »."
+{entries("boutique_metiers", SHOP_JOBS, left=["%entry_left%"])}
+{entries("boutique_defile", SHOP_ARROWS, left=["%entry_left%"])}
 
 widgets:
   pages:
@@ -447,51 +408,7 @@ widgets:
     list: boutique_articles
     prev: {SHOP_PAGER[0]}
     next: {SHOP_PAGER[1]}
-  page:
-    type: text
-    x: 88
-    y: 23
-    align: center
-    text: "%fluxdungeons_shop_title%"
-{lit}
 """)
-    open(os.path.join(MENUS, "donjon.yml"), "w", encoding="utf-8").write(head + f"""# A dungeon (opened from donjons): its boss, the possible loot, its key (click: launch screen).
-# One page per dungeon (_pages/donjon.yml): its job in the field and its boss picture.
-
-title: ":offset_-8::fd_menu_donjon:"
-rows: 6
-{common}update-interval: 20
-
-open-actions:
-  - "[page-swap] donjon_%fluxdungeons_selected%"
-
-page-files:
-  - _pages/donjon.yml
-
-lists:
-
-{entries("donjon_boutons", [0, 8, DETAIL_KEY, 53], left=["%entry_left%", "%entry_left2%"])}
-{entries("donjon_butin", LOOT_SLOTS, left=["%entry_left%"])}
-""")
-    pages = [head, "# Pages of the dungeon menu, one per dungeon: its job and its boss.\n\npages:\n"]
-    for dungeon, job, model, pet in DUNGEONS:
-        pages.append(f"""
-  donjon_{dungeon}:
-    title: ":offset_-8::fd_menu_donjon:"
-    widgets:
-      nom:
-        type: text
-        x: 88
-        y: 23
-        align: center
-        text: {q("Donjon " + JOB_NAMES[job])}
-      boss:
-        type: image
-        glyph: "fd_boss_{dungeon}"
-        x: {IMAGE_X}
-        width: 64
-""")
-    open(os.path.join(MENUS, "_pages", "donjon.yml"), "w", encoding="utf-8").write("".join(pages))
     lit = ""
     open(os.path.join(MENUS, "donjon_sas.yml"), "w", encoding="utf-8").write(head + f"""# Launch screen of a dungeon (dungeon.Lobby): who comes, the difficulty chosen by the leader, everybody ready.
 

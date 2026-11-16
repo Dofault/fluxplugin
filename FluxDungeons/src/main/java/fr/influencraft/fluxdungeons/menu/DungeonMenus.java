@@ -3,15 +3,10 @@ package fr.influencraft.fluxdungeons.menu;
 import fr.influencraft.flux.api.FluxApi;
 import fr.influencraft.flux.api.FluxPlugin;
 import fr.influencraft.flux.api.economy.Currency;
-import fr.influencraft.flux.api.economy.Economy;
 import fr.influencraft.flux.api.inventory.Items;
 import fr.influencraft.flux.api.inventory.Lore;
-import fr.influencraft.flux.api.items.CustomItems;
 import fr.influencraft.flux.api.list.ListEntry;
 import fr.influencraft.flux.api.list.Lists;
-import fr.influencraft.flux.api.pets.Companions;
-import fr.influencraft.flux.api.text.Texts;
-import fr.influencraft.flux.api.util.Format;
 import fr.influencraft.fluxdungeons.dungeon.DungeonDefinition;
 import fr.influencraft.fluxdungeons.reward.DungeonKeys;
 import fr.influencraft.fluxdungeons.reward.DungeonTokens;
@@ -27,22 +22,22 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * The dungeon menus of /donjon (2026-11-14, files written by {@code assets/menus/gen_menus.py}):
- * <ul>
- *   <li>{@code donjons}: the dungeon tower (2026-11-16): a road climbing from floor 1 (level 10) at the bottom to
- *   floor 10 (level 100), a "?" above it (the tower goes on). Each floor shows its boss, its level, the party it is
- *   made for and whether the player beat it, the floor to play glowing, the road (Flux's path) green up to the
- *   last floor climbed ({@code route_...}); a left click shows the dungeon, a right click its page of the shop. Lists {@code donjons_liste} (one entry per
- *   floor, in floor order), {@code donjons_boutons} (back, the "?", info, class, party, tokens, shop);</li>
- *   <li>{@code donjon}: the dungeon chosen with {@code [fluxdungeon] view <id>}: its boss (picture of its page), what
- *   can be won ({@code donjon_butin}), a button per difficulty to play it ({@code donjon_niveaux},
- *   {@code [fluxdungeon] play <level>}), the key ({@code donjon_boutons}).</li>
- * </ul>
- * Buttons are built here, the files only place them; placeholder {@code selected} (dungeon shown).
+ * The dungeon menu of /donjon (2026-11-16, file written by {@code assets/menus/gen_menus.py}): the dungeons in a line,
+ * from the first one (level 10) to the last (level 100) and a « ? » after it (the adventure goes on), joined by Flux's
+ * path (green up to the last dungeon climbed, orange to the one to play, off beyond), turned a page at a time
+ * ({@link #PER_PAGE} dungeons a page, an arrow at each end); it opens on the page of the dungeon to play, which glows.
+ * Left click on a dungeon: its launch screen; right click: its page of the dungeon shop. Above the line: class,
+ * party, tokens, shop.
+ * <p>
+ * Lists {@code donjons_boutons} (back, info, class, party, tokens, shop) and {@code donjons_liste} (the dungeons of the
+ * page shown); each page of the menu ({@code donjons_p<n>}) has its own picture (frames in each job's colour, levels)
+ * and path, coloured by {@code %fluxdungeons_tl_route_<n>%}. {@code [fluxdungeon] tl <n|current>} turns the page.
  */
 public final class DungeonMenus {
 
-    public static final String LIST = "donjons", DETAIL = "donjon";
+    public static final String LIST = "donjons";
+    /** Dungeons on a page of the line (slots 28, 30, 32, 34 of the menu). */
+    public static final int PER_PAGE = 4;
     private static final String PORTRAIT = "itemsadder:influportraits:portrait_";
 
     /** What the menus need from the plugin. */
@@ -60,10 +55,10 @@ public final class DungeonMenus {
         /** Who beat which dungeon, null without the database. */
         fr.influencraft.fluxdungeons.reward.DungeonVictories victories();
 
-        /** Opens the dungeon shop on a dungeon's page (null: the last one). */
+        /** Opens the dungeon shop on a dungeon's page (null: every shop). */
         void shop(Player player, String dungeon);
 
-        /** The player plays the dungeon at this difficulty (index). */
+        /** The player prepares the dungeon (its launch screen). */
         void play(Player player, DungeonDefinition def, int level);
     }
 
@@ -71,7 +66,8 @@ public final class DungeonMenus {
     private final Host host;
     private final DungeonKeys keys;
     private final DungeonTokens tokens;
-    private final Map<UUID, String> selected = new ConcurrentHashMap<>();
+    /** Page of the line each player looks at (1 = the first dungeons). */
+    private final Map<UUID, Integer> page = new ConcurrentHashMap<>();
     private java.util.function.Predicate<Player> potionsHere = p -> false;
 
     public DungeonMenus(FluxPlugin plugin, Host host, DungeonKeys keys, DungeonTokens tokens) {
@@ -80,51 +76,58 @@ public final class DungeonMenus {
         this.keys = keys;
         this.tokens = tokens;
         Lists.register(plugin, "donjons_liste", q -> list(q.viewer()));
-        Lists.register(plugin, "donjons_boutons", q -> listButtons(q.viewer()));
-        Lists.register(plugin, "donjon_boutons", q -> detailButtons(q.viewer()));
-        Lists.register(plugin, "donjon_butin", q -> loot(q.viewer()));
+        Lists.register(plugin, "donjons_boutons", q -> buttons(q.viewer()));
     }
 
     public void open(Player p) {
-        Lists.invalidate(p, "donjons_liste");
-        Lists.invalidate(p, "donjons_boutons");
+        page.put(p.getUniqueId(), currentPage(p));
+        invalidate(p);
         FluxApi.open(p, LIST);
     }
 
-    /** {@code view <id>}, {@code play <level>}. */
+    private void invalidate(Player p) {
+        Lists.invalidate(p, "donjons_liste");
+        Lists.invalidate(p, "donjons_boutons");
+    }
+
+    /** {@code play <id>}, {@code tl <n|current>}. */
     public void act(Player p, String[] args) {
         if (args.length < 2) return;
         switch (args[0]) {
-            case "view" -> {
-                if (host.dungeon(args[1]) == null) return;
-                selected.put(p.getUniqueId(), args[1]);
-                for (String l : List.of("donjon_boutons", "donjon_butin")) Lists.invalidate(p, l);
-            }
             case "play" -> {
-                DungeonDefinition def = host.dungeon(selected.getOrDefault(p.getUniqueId(), ""));
+                DungeonDefinition def = host.dungeon(args[1]);
                 if (def == null) return;
-                int level;
-                try {
-                    level = Integer.parseInt(args[1]);
-                } catch (NumberFormatException e) {
-                    return;
-                }
                 p.closeInventory();
-                host.play(p, def, level);
+                host.play(p, def, 0);
+            }
+            case "tl" -> {
+                int n;
+                if (args[1].equals("current")) n = currentPage(p);
+                else {
+                    try {
+                        n = Integer.parseInt(args[1]);
+                    } catch (NumberFormatException e) {
+                        return;
+                    }
+                }
+                page.put(p.getUniqueId(), Math.max(1, Math.min(pages(), n)));
+                invalidate(p);
             }
             default -> {
             }
         }
     }
 
-    /** {@code selected}, {@code selected_name}, {@code route_...} (colours of the tower's road); null for another one. */
+    /** {@code tl_page} (page shown), {@code tl_route_<page>} (colours of its path); null for another one. */
     public String placeholder(Player p, String params) {
-        if (params.equals("selected")) return selected.getOrDefault(p.getUniqueId(), "");
-        if (params.equals("selected_name")) {
-            DungeonDefinition def = host.dungeon(selected.getOrDefault(p.getUniqueId(), ""));
-            return def == null ? "" : Texts.plain(Texts.colors(def.name()));
+        if (params.equals("tl_page")) return String.valueOf(page.getOrDefault(p.getUniqueId(), currentPage(p)));
+        if (params.startsWith("tl_route_")) {
+            try {
+                return route(p, Integer.parseInt(params.substring(9)));
+            } catch (NumberFormatException e) {
+                return "";
+            }
         }
-        if (params.startsWith("route_")) return route(p, params.substring(6));
         return null;
     }
 
@@ -133,66 +136,84 @@ public final class DungeonMenus {
         this.potionsHere = here;
     }
 
-    // ---------------------------------------------------------------- the tower
+    // ---------------------------------------------------------------- the line
 
-    /**
-     * Floors beaten one after the other from the bottom: the floor to play is the next one (an upper floor beaten
-     * before a lower one does not move the road on).
-     */
-    private int climbed(Player p) {
-        var v = host.victories();
-        int n = 0;
-        for (DungeonDefinition d : tower()) {
-            if (v == null || !v.beaten(p, d.id())) break;
-            n++;
-        }
-        return n;
-    }
-
-    /**
-     * Colours of the tower's road, one per cell of the menu's path ({@code route_<cell of floor 1>_..._<cells>}, written
-     * by gen_menus.py): green up to the last floor climbed, orange on the way to the floor to play and on it, off
-     * above; the cells after floor 10 (the "?") light once the whole tower is climbed.
-     */
-    private String route(Player p, String spec) {
-        String[] parts = spec.split("_");
-        int[] at = new int[parts.length - 1];
-        int cells;
-        try {
-            for (int i = 0; i < at.length; i++) at[i] = Integer.parseInt(parts[i]);
-            cells = Integer.parseInt(parts[parts.length - 1]);
-        } catch (NumberFormatException e) {
-            return "";
-        }
-        int k = Math.min(climbed(p), at.length);
-        List<String> out = new ArrayList<>();
-        for (int c = 0; c < cells; c++) {
-            String state;
-            if (k == at.length) state = "vert";
-            else if (k > 0 && c <= at[k - 1]) state = "vert";
-            else if (c <= at[k]) state = "orange";
-            else state = "eteint";
-            out.add(state);
-        }
-        return String.join(",", out);
-    }
-
-    /** The floors of the tower, from the bottom. */
-    private List<DungeonDefinition> tower() {
+    /** The dungeons in order (their floor), without the tests and imports. */
+    private List<DungeonDefinition> line() {
         List<DungeonDefinition> out = new ArrayList<>();
         for (DungeonDefinition d : host.dungeons()) if (d.floor() > 0 && !d.pet().isEmpty()) out.add(d);
         out.sort(java.util.Comparator.comparingInt(DungeonDefinition::floor));
         return out;
     }
 
+    /** Places on the line: the dungeons then the « ? ». */
+    private int places() {
+        return line().size() + 1;
+    }
+
+    private int pages() {
+        return Math.max(1, (places() + PER_PAGE - 1) / PER_PAGE);
+    }
+
+    /**
+     * Dungeons beaten one after the other from the first: the one to play is the next (a later dungeon beaten before
+     * an earlier one does not move the road on).
+     */
+    private int climbed(Player p) {
+        var v = host.victories();
+        int n = 0;
+        for (DungeonDefinition d : line()) {
+            if (v == null || !v.beaten(p, d.id())) break;
+            n++;
+        }
+        return n;
+    }
+
+    /** The page of the dungeon to play (the « ? » once every dungeon is beaten). */
+    private int currentPage(Player p) {
+        return climbed(p) / PER_PAGE + 1;
+    }
+
+    /** State of a place of the line: green beaten, orange the one to play, off beyond; the « ? » lights at the end. */
+    private String state(int place, int climbed, int dungeons) {
+        if (place >= dungeons) return climbed >= dungeons ? "vert" : "eteint";
+        if (place < climbed) return "vert";
+        return place == climbed ? "orange" : "eteint";
+    }
+
+    /**
+     * Colours of the path of a page, one per cell in the order gen_menus.py writes them: the way in from the page
+     * before (when there is one), then each place and the way to the next, the way out to the next page (when there
+     * is one). A way takes the colour of the place it leads to.
+     */
+    private String route(Player p, int pageNumber) {
+        int dungeons = line().size(), total = places(), k = climbed(p);
+        int first = (pageNumber - 1) * PER_PAGE, last = Math.min(total, first + PER_PAGE) - 1;
+        List<String> out = new ArrayList<>();
+        if (first > 0) out.add(state(first, k, dungeons));
+        for (int i = first; i <= last; i++) {
+            out.add(state(i, k, dungeons));
+            if (i < last) out.add(state(i + 1, k, dungeons));
+        }
+        if (last + 1 < total) out.add(state(last + 1, k, dungeons));
+        return String.join(",", out);
+    }
+
     private List<ListEntry> list(Player viewer) {
-        List<ListEntry> out = new ArrayList<>();
-        var victories = host.victories();
+        List<DungeonDefinition> all = line();
+        int shown = page.getOrDefault(viewer.getUniqueId(), currentPage(viewer));
+        int k = climbed(viewer);
         int level = levelOf(viewer);
-        int next = climbed(viewer);
-        int index = 0;
-        for (DungeonDefinition def : tower()) {
-            boolean current = index++ == next;
+        var victories = host.victories();
+        List<ListEntry> out = new ArrayList<>();
+        for (int i = (shown - 1) * PER_PAGE; i < Math.min(places(), shown * PER_PAGE); i++) {
+            if (i >= all.size()) {
+                out.add(ListEntry.of("unknown").item(orBarrier(Items.of("itemsadder:fluxdonjon:etage_inconnu", raw("menu.unknown"),
+                        Lore.create().description(raw("menu.unknown-desc")).build(), viewer))));
+                continue;
+            }
+            DungeonDefinition def = all.get(i);
+            boolean current = i == k;
             int wins = victories == null ? 0 : victories.wins(viewer, def.id());
             Lore lore = Lore.create().description(def.description())
                     .kv(raw("menu.level"), def.recommendedLevel())
@@ -205,22 +226,22 @@ public final class DungeonMenus {
             else if (level >= 0 && level < Math.min(def.recommendedLevel(), 50)) lore.ko(raw("menu.too-high"));
             else lore.info(raw("menu.not-beaten"));
             if (def.recommendedLevel() > 50) lore.info(raw("menu.beyond-cap"));
-            lore.left(raw("menu.see")).right(raw("menu.shop-action"));
+            lore.left(raw("menu.play")).right(raw("menu.shop-action"));
             ItemStack item = Items.of(PORTRAIT + def.pet(), def.name(), lore.build(), viewer);
             if (item == null) item = Items.dress(new ItemStack(def.icon()), def.name(), lore.build(), viewer);
-            // the floor to play glows (the road shows those already climbed)
+            // the dungeon to play glows (the road shows those already climbed)
             if (current) item.editMeta(m -> m.setEnchantmentGlintOverride(true));
-            out.add(ListEntry.of(def.id()).item(item).set("right", "[fluxdungeon] shop open " + def.id()));
+            out.add(ListEntry.of(def.id()).item(item).set("left", "[fluxdungeon] play " + def.id())
+                    .set("right", "[fluxdungeon] shop open " + def.id()));
         }
         return out;
     }
 
-    private List<ListEntry> listButtons(Player viewer) {
+    /** Back, info, then class, party, tokens and shop above the line. */
+    private List<ListEntry> buttons(Player viewer) {
         List<ListEntry> out = new ArrayList<>();
         out.add(button("close", Items.of("itemsadder:fluxui:btn_back_orange", raw("menu.close"),
                 Lore.create().left(raw("menu.close-action")).build(), viewer), "[menu] main", ""));
-        out.add(button("unknown", Items.of("itemsadder:fluxdonjon:etage_inconnu", raw("menu.unknown"),
-                Lore.create().description(raw("menu.unknown-desc")).build(), viewer), "", ""));
         out.add(button("info", Items.of("itemsadder:fluxui:btn_info_blue", raw("menu.info"),
                 Lore.create().description(raw("menu.info-desc")).description(raw("menu.info-keys"))
                         .description(raw("menu.info-rewards")).build(), viewer), "", ""));
@@ -255,83 +276,12 @@ public final class DungeonMenus {
         }
     }
 
-    // ---------------------------------------------------------------- detail
-
-    private DungeonDefinition shown(Player viewer) {
-        return host.dungeon(selected.getOrDefault(viewer.getUniqueId(), ""));
-    }
-
-    private List<ListEntry> detailButtons(Player viewer) {
-        DungeonDefinition def = shown(viewer);
-        List<ListEntry> out = new ArrayList<>();
-        out.add(button("back", Items.of("itemsadder:fluxui:btn_back_orange", raw("menu.back"),
-                Lore.create().left(raw("menu.back-action")).build(), viewer), "[menu] " + LIST, ""));
-        if (def == null) return out;
-        out.add(button("info", Items.of("itemsadder:fluxui:btn_info_blue", def.name(),
-                Lore.create().description(def.description())
-                        .kv(raw("menu.players"), def.minPlayers() + "-" + def.maxPlayers())
-                        .kv(raw("menu.level"), def.recommendedLevel()).build(), viewer), "", ""));
-        Lore key = Lore.create().description(raw("menu.key-desc", "%job%", keys.jobName(def.job())));
-        if (keys.needs(viewer, def)) {
-            int n = keys.count(viewer, def.job());
-            key.kv(raw("menu.keys"), String.valueOf(n));
-            if (n > 0) key.ok(raw("menu.key-ok"));
-            else key.ko(raw("menu.key-missing"));
-        } else key.info(raw("menu.key-free"));
-        key.left(raw("menu.key-action"));
-        ItemStack keyItem = Items.of("itemsadder:fluxdonjon:cle_donjon", raw("menu.key", "%job%", keys.jobName(def.job())),
-                key.build(), viewer);
-        if (keyItem != null) keyItem.setAmount(Math.max(1, Math.min(64, keys.count(viewer, def.job()))));
-        // the launch screen, at the easiest level: the difficulty is chosen there
-        out.add(button("key", keyItem, "[fluxdungeon] play 0", ""));
-        out.add(button("shop", Items.of("itemsadder:fluxdonjon:boutique", raw("menu.shop"),
-                Lore.create().description(raw("menu.shop-desc")).left(raw("menu.shop-open")).build(), viewer),
-                "[fluxdungeon] shop open " + def.id(), ""));
-        return out;
-    }
-
-    /**
-     * What the dungeon gives (2026-11-16): tokens only, by monster rank and the dungeon's reward, plus rpg experience;
-     * what tokens buy on its page of the shop: the boss's mount (once beaten), boosters, books, its set.
-     */
-    private List<ListEntry> loot(Player viewer) {
-        DungeonDefinition def = shown(viewer);
-        List<ListEntry> out = new ArrayList<>();
-        if (def == null) return out;
-        DungeonDefinition.Level level = def.levels().get(0);
-        Lore tokenLore = Lore.create().description(raw("loot.tokens-desc"));
-        for (String rank : List.of("TRASH", "ELITE", "MINIBOSS", "BOSS")) {
-            tokenLore.kv(raw("loot.rank." + rank.toLowerCase(java.util.Locale.ROOT)), tokens.base(rank));
-        }
-        tokenLore.kv(raw("loot.tokens-bonus"), "x" + Format.decimal(level.reward()));
-        out.add(ListEntry.of("tokens").item(Items.of("itemsadder:fluxdonjon:jeton_donjon", raw("menu.tokens"), tokenLore.build(), viewer)).set("left", ""));
-        if (!def.pet().isEmpty()) {
-            boolean owned = Companions.owns(viewer, def.pet());
-            var v = host.victories();
-            Lore lore = Lore.create().description(raw("loot.pet-desc")).description(raw("loot.pet-mount"));
-            if (owned) lore.ok(raw("loot.pet-owned"));
-            else if (v != null && v.beaten(viewer, def.id())) lore.ok(raw("loot.pet-unlocked"));
-            else lore.ko(raw("loot.pet-locked"));
-            lore.left(raw("menu.shop-open"));
-            String name = Companions.name(def.pet());
-            ItemStack pet = Items.of(PORTRAIT + def.pet(), name == null ? def.pet() : name, lore.build(), viewer);
-            out.add(ListEntry.of("pet").item(pet == null ? new ItemStack(Material.EGG) : pet).set("left", "[fluxdungeon] shop open " + def.id()));
-        }
-        if (!def.job().isEmpty()) {
-            ItemStack booster = CustomItems.item("fluxpets:booster_metier_" + def.job(), viewer);
-            if (booster != null) {
-                String name = booster.hasItemMeta() && booster.getItemMeta().hasDisplayName()
-                        ? Texts.ampersand(booster.getItemMeta().displayName()) : raw("loot.boosters");
-                out.add(ListEntry.of("boosters").item(Items.dress(booster.clone(), name,
-                        Lore.create().description(raw("loot.shop-desc", "%job%", keys.jobName(def.job()))).left(raw("menu.shop-open")).build(), viewer))
-                        .set("left", "[fluxdungeon] shop open " + def.id()));
-            }
-        }
-        return out;
+    private static ItemStack orBarrier(ItemStack i) {
+        return i == null ? new ItemStack(Material.BARRIER) : i;
     }
 
     private static ListEntry button(String id, ItemStack item, String left, String left2) {
-        return ListEntry.of(id).item(item == null ? new ItemStack(Material.BARRIER) : item).set("left", left).set("left2", left2);
+        return ListEntry.of(id).item(orBarrier(item)).set("left", left).set("left2", left2);
     }
 
     private String raw(String key, String... vars) {
