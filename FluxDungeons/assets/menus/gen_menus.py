@@ -20,6 +20,8 @@ Layouts (window px 176 wide, item of a slot at fond_lib.objet):
   donjon_boutique  the dungeon shop (2026-11-16, laid out as the market, rows 0 to 5, no inventory part): back (0),
             info (8); articles in a well (rows 1-4, columns 1-7); left column the job filter (18) and the kind filter
             (27), right column tokens (26) and the search (35); Flux's pager on row 5.
+  donjon_boutique_type  the kind of item, chosen in a small menu (rows 0 to 2): back (0), « Tous » (4, on a gold
+            plate), info (8); the eighteen kinds on rows 1 and 2 in a well; a click shows that kind in the shop.
   donjon_sas row 0: leave (0), info (8); rows 1-2: one card per member (head, ready or waiting under it); row 3:
             Easy / Normal / Hard (28, 31, 34, coloured cells, no words: the buttons' names say it), the chosen one lit;
             row 4: players ready; row 5: class (45), ready (49), key (53)
@@ -80,6 +82,8 @@ def line_cells(page_index, pages):
 SHOP_ARTICLES = [r * 9 + c for r in range(1, 5) for c in range(1, 8)]
 SHOP_BUTTONS = [0, 8, 18, 27, 26, 35]     # back, info, job filter, kind filter, tokens, search (DungeonShop order)
 SHOP_PAGER = (45, 53)                     # Flux's pager under the articles
+KIND_ALL = 4                              # « Tous » of the kind menu: middle of the first row, on a gold plate
+KIND_SLOTS = list(range(9, 27))           # the eighteen kinds, two full rows
 MEMBER_SLOTS, STATE_SLOTS = [11, 12, 13, 14, 15], [20, 21, 22, 23, 24]
 SAS_LEVELS = [31]                     # one level per dungeon since 2026-11-16: its floor card
 
@@ -124,6 +128,18 @@ def bg_shop():
     d = ImageDraw.Draw(im, "RGBA")
     x0, y0, x1, y1 = span(SHOP_ARTICLES, 2)
     ui.well(d, (x0, y0, x1, y1 - 2))           # 2 px up from Flux's pager
+    return im
+
+
+def bg_kinds():
+    """The kind menu: « Tous » on a gold plate, the eighteen kinds in a well under it."""
+    im = bg_window(GENERIC, 0, 2, title="Type d'objet")
+    d = ImageDraw.Draw(im, "RGBA")
+    x, y = ui.objet(KIND_ALL)
+    ui.button(d, (x - 2, y - 2, x + 17, y + 16), ui.rgb("#C9930E"))
+    # nine slots a row fill the window: the well keeps 1 px inside each slot's edge instead of going round it
+    x0, y0, x1, y1 = span(KIND_SLOTS, 0)
+    ui.well(d, (x0 + 1, y0 + 1, x1 - 1, y1))
     return im
 
 
@@ -262,7 +278,7 @@ def pack():
                 f"    scale_ratio: {h}", f"    y_position: {y}"]
 
     backgrounds = {f"fd_menu_liste_p{n}": bg_line(page) for n, page in enumerate(line_pages(), start=1)}
-    backgrounds.update({"fd_menu_sas": bg_sas(), "fd_menu_boutique": bg_shop()})
+    backgrounds.update({"fd_menu_sas": bg_sas(), "fd_menu_boutique": bg_shop(), "fd_menu_boutique_type": bg_kinds()})
     # pictures of the former menus (the tower, the dungeon page and its boss pictures): gone
     import shutil
     shutil.rmtree(os.path.join(PACK, "textures", "boss"), ignore_errors=True)
@@ -403,6 +419,18 @@ widgets:
     list: boutique_articles
     prev: {SHOP_PAGER[0]}
     next: {SHOP_PAGER[1]}
+""")
+    open(os.path.join(MENUS, "donjon_boutique_type.yml"), "w", encoding="utf-8").write(head + f"""# The kind of item of the dungeon shop (reward.DungeonShop), chosen here: « Tous » apart, then the eighteen kinds.
+# A click shows that kind in the shop (Flux's kind filter of its list).
+
+title: ":offset_-8::fd_menu_boutique_type:"
+rows: 3
+{common}update-interval: 20
+
+lists:
+
+{entries("boutique_type_boutons", [0, 8], left=["%entry_left%"])}
+{entries("boutique_types", [KIND_ALL] + KIND_SLOTS, left=["%entry_left%", "[menu] donjon_boutique"])}
 """)
     lit = ""
     open(os.path.join(MENUS, "donjon_sas.yml"), "w", encoding="utf-8").write(head + f"""# Launch screen of a dungeon (dungeon.Lobby): who comes, the difficulty chosen by the leader, everybody ready.

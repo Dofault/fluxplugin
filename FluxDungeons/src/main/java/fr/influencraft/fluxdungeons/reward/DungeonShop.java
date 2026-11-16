@@ -55,6 +55,8 @@ public final class DungeonShop {
 
     public static final String MENU = "donjon_boutique";
     public static final String LIST = "boutique_articles";
+    /** The small menu choosing the kind of item. */
+    public static final String KIND_MENU = "donjon_boutique_type";
 
     record Article(String kind, String id, int level, double price) {
     }
@@ -62,15 +64,19 @@ public final class DungeonShop {
     record Page(String dungeon, String job, List<Article> articles) {
     }
 
-    /** A kind of item of the second filter: its lang key and, for books, the item its enchantment must fit. */
-    private record Kind(String key, Material fits) {
+    /**
+     * A kind of item of the second filter: its lang key, for books the item its enchantment must fit, the icon of its
+     * button in the kind menu.
+     */
+    private record Kind(String key, Material fits, String icon) {
     }
 
     private static final List<Kind> KINDS = kinds();
 
     private static List<Kind> kinds() {
-        List<Kind> out = new ArrayList<>(List.of(new Kind("all", null), new Kind("mounts", null), new Kind("boosters", null),
-                new Kind("sets", null)));
+        List<Kind> out = new ArrayList<>(List.of(new Kind("all", null, "itemsadder:fluxdonjon:boutique"),
+                new Kind("mounts", null, "SADDLE"), new Kind("boosters", null, "fluxpets:booster_metier_mineur"),
+                new Kind("sets", null, "LEATHER_CHESTPLATE")));
         String[][] tools = {{"pickaxe", "DIAMOND_PICKAXE"}, {"shovel", "DIAMOND_SHOVEL"}, {"axe", "DIAMOND_AXE"},
                 {"hoe", "DIAMOND_HOE"}, {"sword", "DIAMOND_SWORD"}, {"spear", "DIAMOND_SPEAR"}, {"mace", "MACE"},
                 {"bow", "BOW"}, {"crossbow", "CROSSBOW"}, {"trident", "TRIDENT"}, {"fishing_rod", "FISHING_ROD"},
@@ -78,7 +84,7 @@ public final class DungeonShop {
                 {"boots", "DIAMOND_BOOTS"}};
         for (String[] t : tools) {
             Material m = Material.matchMaterial(t[1]);
-            if (m != null) out.add(new Kind(t[0], m));
+            if (m != null) out.add(new Kind(t[0], m, m.name()));
         }
         return List.copyOf(out);
     }
@@ -103,8 +109,13 @@ public final class DungeonShop {
             }
 
             public List<String> filters() {
+                // the job, its dungeon's level in small caps (as the pets' filter shows its counts)
                 List<String> out = new ArrayList<>(List.of(raw("shop.all")));
-                for (Page p : ordered()) out.add(jobName.apply(p.job()));
+                for (Page p : ordered()) {
+                    DungeonDefinition d = definition(p.dungeon());
+                    out.add(jobName.apply(p.job()) + (d == null ? "" : " &7<smallcaps>"
+                            + raw("shop.level-short", "%level%", String.valueOf(d.recommendedLevel())) + "</smallcaps>"));
+                }
                 return out;
             }
 
@@ -113,6 +124,8 @@ public final class DungeonShop {
             }
         });
         Lists.register(plugin, "boutique_boutons", q -> buttons(q.viewer()));
+        Lists.register(plugin, "boutique_types", q -> kinds(q.viewer()));
+        Lists.register(plugin, "boutique_type_boutons", q -> kindButtons(q.viewer()));
     }
 
     /** Reads shop.yml (written by tower.py; nothing for sale without it). */
@@ -218,9 +231,12 @@ public final class DungeonShop {
                 Lore.create().description(raw("shop.job-desc")).filter(job.labels(), job.selected()).build(), viewer),
                 "[list] " + LIST + " filter", "[list] " + LIST + " filter-prev"));
         Lists.Choice kind = Lists.choice(viewer, LIST, "kind");
-        out.add(button("kind", Items.of("itemsadder:fluxui:btn_filter_blue", raw("shop.kind"),
-                Lore.create().description(raw("shop.kind-desc")).filter(kind.labels(), kind.selected()).build(), viewer),
-                "[list] " + LIST + " kind", "[list] " + LIST + " kind-prev"));
+        // the kind: chosen in a small menu of its own (19 of them, too many to click through)
+        Lore kindLore = Lore.create().description(raw("shop.kind-desc")).kv(raw("shop.kind-current"), kind.labels().get(kind.selected()))
+                .left(raw("shop.kind-choose"));
+        if (kind.selected() != 0) kindLore.right(raw("shop.kind-reset"));
+        out.add(button("kind", Items.of("itemsadder:fluxui:btn_filter_blue", raw("shop.kind"), kindLore.build(), viewer),
+                "[menu] " + KIND_MENU, kind.selected() != 0 ? "[list] " + LIST + " kind 0" : ""));
         Currency money = tokens.currency();
         out.add(button("tokens", Items.of("itemsadder:fluxdonjon:jeton_donjon", raw("menu.tokens"),
                 Lore.create().description(raw("menu.tokens-desc"))
@@ -239,6 +255,40 @@ public final class DungeonShop {
         return ListEntry.of(id).item(item == null ? new ItemStack(Material.BARRIER) : item).set("left", left).set("right", right);
     }
 
+
+    // ---------------------------------------------------------------- the kind menu
+
+    /** Every kind, « Tous » first (shown apart in the menu), the chosen one glowing; a click chooses it. */
+    private List<ListEntry> kinds(Player viewer) {
+        int chosen = Lists.state(viewer, LIST).kind();
+        List<ListEntry> out = new ArrayList<>();
+        for (int i = 0; i < KINDS.size(); i++) {
+            Kind k = KINDS.get(i);
+            boolean on = Math.floorMod(chosen, KINDS.size()) == i;
+            Lore lore = Lore.create();
+            if (i == 0) lore.description(raw("shop.kind-all-desc"));
+            if (on) lore.ok(raw("shop.kind-shown"));
+            else lore.left(raw("shop.kind-pick"));
+            String name = raw("shop.kinds." + k.key());
+            ItemStack item = k.icon().contains(":") && !k.icon().startsWith("itemsadder:")
+                    ? CustomItems.preview(k.icon(), viewer) : Items.of(k.icon(), viewer);
+            item = item == null ? new ItemStack(Material.CHEST) : item.clone();
+            item = Items.dress(item, name, lore.build(), viewer);
+            if (on) item.editMeta(m -> m.setEnchantmentGlintOverride(true));
+            item.editMeta(m -> m.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES, org.bukkit.inventory.ItemFlag.HIDE_ADDITIONAL_TOOLTIP));
+            out.add(ListEntry.of(k.key()).item(item).set("left", "[list] " + LIST + " kind " + i));
+        }
+        return out;
+    }
+
+    /** Back to the shop, info. */
+    private List<ListEntry> kindButtons(Player viewer) {
+        return List.of(
+                button("back", Items.of("itemsadder:fluxui:btn_back_orange", raw("shop.kind-back"),
+                        Lore.create().left(raw("shop.kind-back-action")).build(), viewer), "[menu] " + MENU, ""),
+                button("info", Items.of("itemsadder:fluxui:btn_info_blue", raw("shop.kind"),
+                        Lore.create().description(raw("shop.kind-desc")).build(), viewer), "", ""));
+    }
 
     // ---------------------------------------------------------------- articles
 
@@ -300,6 +350,10 @@ public final class DungeonShop {
                 if (Companions.owns(viewer, a.id())) lore.ok(raw("shop.mount-owned"));
                 else if (victories != null && victories.beaten(viewer, page.dungeon())) lore.ok(raw("shop.mount-unlocked"));
                 else lore.ko(raw("shop.mount-locked"));
+            }
+            case "item" -> {
+                if (victories != null && victories.beaten(viewer, page.dungeon())) lore.ok(raw("shop.set-unlocked"));
+                else lore.ko(raw("shop.set-locked"));
             }
             case "booster", "book" -> lore.info(raw("shop.semi-rp"));
             default -> {
@@ -385,6 +439,12 @@ public final class DungeonShop {
                 Sounds.cue(p, "error");
                 return false;
             }
+        }
+        // the dungeon's set, as its boss's mount, is for those who beat that dungeon (boosters: everyone)
+        if (a.kind().equals("item") && (victories == null || !victories.beaten(p, page.dungeon()))) {
+            plugin.messages().send(p, "shop.set-locked-error");
+            Sounds.cue(p, "error");
+            return false;
         }
         ItemStack item = item(a, p, false);
         if (item == null) {

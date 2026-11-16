@@ -198,9 +198,10 @@ public final class Lobby implements Listener {
         List<ListEntry> out = new ArrayList<>();
         if (party == null) return out;
         String m = "lobby.";
-        out.add(button("leave", Items.of("itemsadder:fluxui:btn_close_red", raw(m + "leave"),
+        // back (owner, 2026-11-16: a back button as in every menu): cancels the launch, then the dungeon menu
+        out.add(button("leave", Items.of("itemsadder:fluxui:btn_back_orange", raw(m + "leave"),
                 Lore.create().description(raw(m + "leave-desc")).left(raw(m + "leave-action")).build(), viewer),
-                "[fluxdungeon] sas leave", ""));
+                "[fluxdungeon] sas leave", "[player] donjon"));
         Lore info = Lore.create().description(party.def.description())
                 .kv(raw(m + "players"), party.def.minPlayers() + "-" + party.def.maxPlayers())
                 .kv(raw(m + "level"), party.def.recommendedLevel());
