@@ -484,7 +484,8 @@ public final class DungeonMenus {
         for (int k = 0; k < 36; k++) {
             int i = k < 27 ? k + 9 : k - 27;
             ItemStack it = i < contents.length ? contents[i] : null;
-            out.add(it == null || it.getType().isAir() ? ListEntry.gap() : ListEntry.of("slot_" + i).item(it));
+            out.add(it == null || it.getType().isAir() ? ListEntry.gap() : ListEntry.of("slot_" + i)
+                    .item(fr.influencraft.flux.api.items.CustomItems.preview(it)));
         }
         return out;
     }
@@ -493,6 +494,7 @@ public final class DungeonMenus {
     private ListEntry slot(String id, ItemStack item, String empty, String name, Lore extra, Player viewer) {
         ItemStack shown;
         if (item != null) {
+            item = fr.influencraft.flux.api.items.CustomItems.preview(item); // shown, not held: no action lines
             List<String> lines = new ArrayList<>(item.hasItemMeta() && item.getItemMeta().hasLore()
                     ? item.getItemMeta().lore().stream().map(fr.influencraft.flux.api.text.Texts::ampersand).toList() : List.of());
             lines.addAll(extra.build());

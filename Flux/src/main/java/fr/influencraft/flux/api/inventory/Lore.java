@@ -24,6 +24,8 @@ public final class Lore {
     private final Style style;
     private final List<Style.Entry> entries = new ArrayList<>();
     private final List<String> unframed = new ArrayList<>();
+    /** The same lore as tag lines ({@link #tags()}, read back by {@link #fromTags}). */
+    private final List<String> tags = new ArrayList<>();
 
     private Lore(Style style) {
         this.style = style;
@@ -51,7 +53,10 @@ public final class Lore {
 
     /** Description paragraph(s) ({@code <description>} block). */
     public Lore description(String... paragraphs) {
-        for (String p : paragraphs) add("description", p);
+        for (String p : paragraphs) {
+            add("description", p);
+            tags.add("@desc " + p);
+        }
         return this;
     }
 
@@ -61,11 +66,13 @@ public final class Lore {
 
     /** Key/value information ({@code <values>} block, {@code {key}} and {@code {value}}). */
     public Lore kv(String key, Object value) {
+        tags.add("@kv " + key + " | " + value);
         return add("values", Map.of("key", key, "value", String.valueOf(value)), false);
     }
 
     /** Item of a list (perks, rewards...): {@code <list>} block; a colour code in the text keeps its own colour. */
     public Lore item(String text) {
+        tags.add("@item " + text);
         return add("list", text);
     }
 
@@ -76,6 +83,7 @@ public final class Lore {
 
     /** Plain text line ({@code <text>} block). */
     public Lore line(String text) {
+        tags.add("@text " + text);
         return add("text", text);
     }
 
@@ -85,20 +93,24 @@ public final class Lore {
     }
 
     public Lore ok(String text) {
+        tags.add("@ok " + text);
         return add("ok", text);
     }
 
     public Lore ko(String text) {
+        tags.add("@ko " + text);
         return add("ko", text);
     }
 
     public Lore info(String text) {
+        tags.add("@info " + text);
         return add("info", text);
     }
 
     /** Line written as is, outside the frame, after everything else. */
     public Lore raw(String text) {
         unframed.add(text);
+        tags.add("@raw " + text);
         return this;
     }
 
@@ -132,11 +144,13 @@ public final class Lore {
     }
 
     public Lore action(Style.Click click, String label) {
+        tags.add("@" + click.name().toLowerCase(java.util.Locale.ROOT).replace('_', '-') + " " + label);
         return add("actions", Map.of("icon", style.icon(click), "label", label), false);
     }
 
     /** Action line with its own icon and colours. */
     public Lore action(String text) {
+        tags.add("@action " + text);
         return add("actions", Map.of("raw", text), false);
     }
 
@@ -148,15 +162,39 @@ public final class Lore {
         return out;
     }
 
+    /**
+     * This lore as tag lines, the form an item definition keeps ({@code lore:} of {@link
+     * fr.influencraft.flux.api.items.ItemDefinition}): Flux then draws it in the item style (no frame) and knows which
+     * lines are actions, to leave them out where the item is only shown (a shop, a menu). Filters are not kept (menus only).
+     */
+    public List<String> tags() {
+        return new ArrayList<>(tags);
+    }
+
+    /** Whether this tag line is an action (« right click: ... »), the lines a shown item leaves out. */
+    public static boolean isAction(String line) {
+        if (line == null || !line.startsWith("@")) return false;
+        String tag = line.substring(1).split(" ", 2)[0].toLowerCase(java.util.Locale.ROOT);
+        return switch (tag) {
+            case "left", "right", "shift-left", "shift-right", "action" -> true;
+            default -> false;
+        };
+    }
+
     // ---------------------------------------------------------------- menu files
 
     /**
      * Lore of a menu file written with tags: {@code @desc}, {@code @kv Key | Value}, {@code @item}, {@code @text},
      * {@code @ok}, {@code @ko}, {@code @info}, {@code @left}, {@code @right}, {@code @shift-left}, {@code @shift-right},
-     * {@code @raw}, {@code @style <variant>}; a line without a tag is plain text. Returns null when no line has a tag (lore kept as written).
+     * {@code @raw}, {@code @action} (an action line of its own), {@code @style <variant>}; a line without a tag is plain text. Returns null when no line has a tag (lore kept as written).
      * {@code @filter} lines are expanded by Flux before (they need the viewer).
      */
     public static List<String> fromTags(List<String> lines, String variant) {
+        return fromTags(lines, variant, true);
+    }
+
+    /** As {@link #fromTags(List, String)}, without the action lines when {@code actions} is false. */
+    public static List<String> fromTags(List<String> lines, String variant, boolean actions) {
         boolean tagged = false;
         for (String l : lines) {
             if (l.startsWith("@")) {
@@ -170,7 +208,7 @@ public final class Lore {
         }
         Lore lore = create(variant);
         for (String l : lines) {
-            if (l.startsWith("@style ")) continue;
+            if (l.startsWith("@style ") || !actions && isAction(l)) continue;
             String tag = l.startsWith("@") ? l.substring(1).split(" ", 2)[0].toLowerCase(java.util.Locale.ROOT) : "text";
             String arg = l.startsWith("@") ? (l.contains(" ") ? l.substring(l.indexOf(' ') + 1) : "") : l;
             switch (tag) {
@@ -188,6 +226,7 @@ public final class Lore {
                 case "right" -> lore.right(arg);
                 case "shift-left" -> lore.shiftLeft(arg);
                 case "shift-right" -> lore.shiftRight(arg);
+                case "action" -> lore.action(arg);
                 case "option" -> lore.option(arg); // pre-formatted filter option
                 case "raw" -> lore.raw(arg);
                 default -> lore.line(arg);

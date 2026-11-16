@@ -216,6 +216,28 @@ public final class CustomItems {
         return vanilla;
     }
 
+    /**
+     * A copy of a stack someone owns as a menu shows it (his gear in a menu): the lore of its {@link #preview} (no
+     * « right click to... » lines), its count and own data kept. The copy as it is for an item no source knows.
+     */
+    public static ItemStack preview(ItemStack item) {
+        if (item == null || item.isEmpty()) return item;
+        ItemStack copy = item.clone();
+        String full = id(item);
+        Owned own = full == null ? null : SOURCES.get(full.substring(0, full.indexOf(':')));
+        if (own == null) return copy;
+        ItemStack shown;
+        try {
+            shown = own.source().preview(full.substring(full.indexOf(':') + 1));
+        } catch (RuntimeException e) {
+            return copy;
+        }
+        if (shown == null || !shown.hasItemMeta()) return copy;
+        java.util.List<net.kyori.adventure.text.Component> lore = shown.getItemMeta().lore();
+        copy.editMeta(meta -> meta.lore(lore));
+        return copy;
+    }
+
     /** A new stack of this custom item, or null when unknown. */
     public static ItemStack item(String id) {
         String full = resolve(id);

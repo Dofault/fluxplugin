@@ -33,12 +33,12 @@ import java.util.function.Supplier;
  * Potions of the rpg (2026-11-14): items {@code fluxrpg:potion_<id>} of {@code rpg/potions.yml}, a right click gives back
  * a share of the drinker's life or mana, no cooldown; a potion that would give nothing (life or mana full) is not
  * drunk and says nothing (owner's rule of 2026-11-15). Bought with dungeon
- * tokens at the potion merchant of the rpg lobby ({@code /potions}, a Typewriter NPC runs it), each one from its rpg
- * level: the bigger ones open as the character grows.
+ * tokens at the potion merchant of the rpg lobby ({@code /potions}, a Typewriter NPC runs it), open to every level
+ * (no level needed since 2026-11-16, owner), at most {@link #limit} carried.
  */
 public final class Potions {
 
-    record Potion(String id, String kind, double share, int level, double price, String name, String icon) {
+    record Potion(String id, String kind, double share, double price, String name, String icon) {
     }
 
     private final FluxPlugin plugin;
@@ -70,7 +70,7 @@ public final class Potions {
             ConfigurationSection p = all.getConfigurationSection(id);
             if (p == null) continue;
             potions.put(id, new Potion(id, p.getString("type", "health"), p.getDouble("share", 0.25),
-                    Math.max(1, p.getInt("level", 1)), p.getDouble("price", 1), p.getString("name", id),
+                    p.getDouble("price", 1), p.getString("name", id),
                     p.getString("icon", "itemsadder:fluxdonjon:potion_soin_1")));
         }
     }
@@ -83,9 +83,8 @@ public final class Potions {
             y.set("name", p.name());
             String what = plugin.messages().raw(p.kind().equals("mana") ? "potions.gives-mana" : "potions.gives-health",
                     "%share%", Format.decimal(p.share() * 100));
-            y.set("lore", Lore.create().description(what)
-                    .kv(plugin.messages().raw("potions.level"), p.level())
-                    .right(plugin.messages().raw("potions.drink")).build());
+            // tags: Flux draws them as an item's description and leaves « drink » out where the potion is only shown
+            y.set("lore", Lore.create().description(what).right(plugin.messages().raw("potions.drink")).tags());
             y.set("universe", RpgWorld.UNIVERSE);
             catalog.add("potion_" + p.id(), y);
         }
@@ -114,7 +113,7 @@ public final class Potions {
 
     // ---------------------------------------------------------------- shop
 
-    /** The merchant's window: every potion, the ones of a higher level shown but refused. */
+    /** The merchant's window: every potion. */
     public void shop(Player player) {
         if (!RpgWorld.UNIVERSE.equals(Universes.of(player))) {
             plugin.messages().send(player, "potions.not-rpg");
@@ -156,19 +155,10 @@ public final class Potions {
             }
 
             public void describe(Player viewer, Lore lore) {
-                RpgPlayer r = players.get(viewer);
-                int level = r == null ? 0 : r.level();
-                if (level >= potion.level()) lore.ok(plugin.messages().raw("potions.level-ok"));
-                else lore.ko(plugin.messages().raw("potions.level-needed", "%level%", String.valueOf(potion.level())));
                 lore.kv(plugin.messages().raw("potions.carried"), carried(viewer) + " / " + limit);
             }
 
             public boolean buy(Player player, int bundles) {
-                RpgPlayer r = players.get(player);
-                if (r == null || r.level() < potion.level()) {
-                    plugin.messages().send(player, "potions.level-needed", "%level%", String.valueOf(potion.level()));
-                    return false;
-                }
                 // never more than the limit carried at once, every kind together
                 int carried = carried(player);
                 if (carried + bundles > limit) {

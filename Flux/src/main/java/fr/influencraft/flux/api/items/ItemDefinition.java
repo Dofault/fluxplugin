@@ -35,7 +35,7 @@ import java.util.Objects;
  *   model: mypack:my_helmet         # item_model component (icon, and the model worn on the head)
  *   equipment: mypack:my_armor      # worn appearance; none = no texture, the model is worn on the head
  *   name: "&amp;6My helmet"
- *   lore: ["&amp;7A line."]
+ *   lore: ["&amp;7A line."]           # or tag lines (Lore#tags: @desc, @kv, @right...), drawn in the item style
  *   enchantments: {protection: 4}   # written when the item is made, never rewritten afterwards
  *   attributes: {armor: 3}          # replace the material's own ones
  *   flags: [HIDE_ENCHANTS]
@@ -46,7 +46,9 @@ import java.util.Objects;
  *                                   # vanilla, no enchantment nor vanilla attribute ever (its own system rules)
  * </pre>
  *
- * Everything but {@code material} is optional. Name, lore, look, attributes and flags follow the config on items
+ * A lore written with tags is drawn by Flux in the style variant {@code objet} (an item's description has no frame,
+ * {@code @style} picks another) and keeps a second form without its action lines, the one a menu shows ({@link
+ * #shownLore()}: the viewer does not hold the item). Everything but {@code material} is optional. Name, lore, look, attributes and flags follow the config on items
  * already handed out ({@link ItemCatalog}).
  */
 public final class ItemDefinition {
@@ -57,6 +59,8 @@ public final class ItemDefinition {
     private final Key equipment;
     private final String name;
     private final List<String> lore;
+    /** The lore without its action lines (tagged lore only, else the lore itself). */
+    private final List<String> shownLore;
     private final Map<String, Integer> enchantments = new LinkedHashMap<>();
     private final Map<String, Double> attributes = new LinkedHashMap<>();
     private final List<ItemFlag> flags = new ArrayList<>();
@@ -77,7 +81,11 @@ public final class ItemDefinition {
         equip = eq != null;
         equipment = eq == null || eq.equalsIgnoreCase("none") ? null : key(eq);
         name = c.getString("name");
-        lore = c.getStringList("lore");
+        List<String> written = c.getStringList("lore");
+        List<String> full = fr.influencraft.flux.api.inventory.Lore.fromTags(written, ITEM_STYLE, true);
+        lore = full == null ? written : full;
+        List<String> shown = full == null ? null : fr.influencraft.flux.api.inventory.Lore.fromTags(written, ITEM_STYLE, false);
+        shownLore = shown == null ? lore : shown;
         ConfigurationSection e = c.getConfigurationSection("enchantments");
         if (e != null) for (String k : e.getKeys(false)) enchantments.put(k.toLowerCase(Locale.ROOT), e.getInt(k));
         ConfigurationSection a = c.getConfigurationSection("attributes");
@@ -99,6 +107,27 @@ public final class ItemDefinition {
         String u = c.getString("universe");
         universe = u == null || u.isBlank() || u.equalsIgnoreCase(fr.influencraft.flux.api.universe.Universes.VANILLA) ? null : u.toLowerCase(Locale.ROOT);
         revision = Objects.hash(material, model, equip, equipment, name, lore, attributes, flags, durability, unbreakable, glow, universe, color);
+    }
+
+    /** Style variant of an item's own description (style.yml): no frame. */
+    public static final String ITEM_STYLE = "objet";
+
+    /** The lore a menu shows for this item: no « right click to ... » lines. */
+    public List<String> shownLore() {
+        return shownLore;
+    }
+
+    /** Puts the shown lore ({@link #shownLore()}) on a copy of an item of this definition (count and data kept). */
+    public ItemStack shown(ItemStack item) {
+        ItemStack copy = item.clone();
+        copy.editMeta(meta -> meta.lore(lines(shownLore)));
+        return copy;
+    }
+
+    private static List<Component> lines(List<String> texts) {
+        List<Component> lines = new ArrayList<>();
+        for (String line : texts) lines.add(text(line));
+        return Texts.wrapLore(lines);
     }
 
     public static ItemDefinition read(ConfigurationSection section) {
@@ -145,11 +174,7 @@ public final class ItemDefinition {
 
     private void meta(ItemMeta meta) {
         if (name != null) meta.customName(text(name));
-        if (!lore.isEmpty()) {
-            List<Component> lines = new ArrayList<>();
-            for (String line : lore) lines.add(text(line));
-            meta.lore(Texts.wrapLore(lines));
-        }
+        if (!lore.isEmpty()) meta.lore(lines(lore));
         if (!flags.isEmpty()) meta.addItemFlags(flags.toArray(ItemFlag[]::new));
         if (durability > 0 && meta instanceof Damageable d) d.setMaxDamage(durability);
         meta.setUnbreakable(unbreakable);

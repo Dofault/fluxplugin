@@ -61,7 +61,7 @@ public final class RpgItems {
         menu.set("material", "COMPASS");
         menu.set("name", plugin.messages().raw("kit.menu.name"));
         menu.set("lore", fr.influencraft.flux.api.inventory.Lore.create().description(plugin.messages().raw("kit.menu.description"))
-                .right(plugin.messages().raw("kit.menu.open")).build());
+                .right(plugin.messages().raw("kit.menu.open")).tags());
         menu.set("universe", RpgWorld.UNIVERSE);
         catalog.add(MENU, menu);
         extras.accept(catalog);
@@ -91,8 +91,8 @@ public final class RpgItems {
 
     /** Description in the suite's style (Flux Lore): description, stats, classes, level, rarity, set bonuses. */
     private List<String> lore(Equipment.Item item) {
-        // an item's own description: the frameless "objet" variant of style.yml (owner, 2026-11-16)
-        fr.influencraft.flux.api.inventory.Lore lore = fr.influencraft.flux.api.inventory.Lore.create("objet");
+        // as tags: Flux draws an item's description without frame (ItemDefinition.ITEM_STYLE), actions left out when shown
+        fr.influencraft.flux.api.inventory.Lore lore = fr.influencraft.flux.api.inventory.Lore.create();
         if (!item.description().isEmpty()) lore.description(item.description());
         if (starter(item.id())) lore.info(plugin.messages().raw("item.starter"));
         item.stats().forEach((stat, value) -> lore.kv(statName(stat), statValue(stat, value)));
@@ -112,7 +112,7 @@ public final class RpgItems {
                 lore.item(plugin.messages().raw("item.set-bonus", "%pieces%", String.valueOf(pieces)) + " &f" + String.join(", ", parts));
             });
         }
-        return lore.build();
+        return lore.tags();
     }
 
     /** Name of a stat in the server's language (templated ones: "damage against" + family). */

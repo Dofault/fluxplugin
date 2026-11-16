@@ -102,6 +102,13 @@ public final class ItemCatalog {
         }
 
         @Override
+        public ItemStack preview(String id) {
+            ItemDefinition definition = definitions.get(id);
+            ItemStack item = item(id);
+            return item == null ? null : definition.shown(item);
+        }
+
+        @Override
         public Collection<String> ids() {
             return definitions.keySet();
         }
