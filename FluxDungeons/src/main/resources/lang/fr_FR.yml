@@ -366,11 +366,11 @@ classes:
 
 item:
   starter: "Arme d'apprentissage : liée à ton personnage, elle suit ta classe."
-  classes: "Classe :"
-  level: "Niveau requis :"
-  rarity: "Rareté :"
+  classes: 'Classe'
+  level: 'Niveau requis'
+  rarity: 'Rareté'
   set: "Ensemble %set%"
-  set-bonus: "%pieces% pièces :"
+  set-bonus: '%pieces% pièces :'
 
 rarities:
   common: "Commun"

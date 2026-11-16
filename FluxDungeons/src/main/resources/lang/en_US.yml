@@ -366,9 +366,9 @@ classes:
 
 item:
   starter: "Apprentice weapon: bound to your character, it follows your class."
-  classes: "Class:"
-  level: "Required level:"
-  rarity: "Rarity:"
+  classes: 'Class'
+  level: 'Required level'
+  rarity: 'Rarity'
   set: "%set% set"
   set-bonus: "%pieces% pieces:"
 
