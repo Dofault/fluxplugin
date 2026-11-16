@@ -175,4 +175,4 @@ menu:
 booster-format:
   open: 'Open'
   open-all: 'Open the whole stack'
-  chance: ' &7(1 in %n%)'
+  chance: ' &7(%chance%)'

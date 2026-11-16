@@ -76,6 +76,18 @@ public final class Format {
         return grouping("#,##0.#").format(value);
     }
 
+    /**
+     * A chance (0-1) as players read it, in percent with the decimals it needs: 0.2 gives "20 %", 0.0333 "3,3 %",
+     * 1/300 "0,33 %", 1/2000 "0,05 %" (two significant digits under 1 %, never "0 %" for a chance that exists).
+     */
+    public static String chance(double probability) {
+        double pct = Math.max(0, Math.min(1, probability)) * 100;
+        if (pct >= 10 || pct == 0) return grouping("#,##0").format(pct) + " %";
+        if (pct >= 1) return grouping("#,##0.#").format(pct) + " %";
+        int decimals = Math.min(6, 1 - (int) Math.floor(Math.log10(pct)));
+        return grouping("0." + "#".repeat(decimals)).format(pct) + " %";
+    }
+
     private static DecimalFormat grouping(String pattern) {
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(locale);
         symbols.setGroupingSeparator(' ');

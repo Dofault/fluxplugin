@@ -636,8 +636,6 @@ keys:
   button-every: '1 key every %minutes% min of work'
   button-owned: 'Your keys'
   line: 'Dungeon key'
-  line-always: 'every time'
-  line-one-in: '1 chance in %n%'
 menu:
   close: 'Back'
   close-action: 'Main menu'

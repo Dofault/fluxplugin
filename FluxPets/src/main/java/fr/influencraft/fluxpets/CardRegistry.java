@@ -485,7 +485,7 @@ public final class CardRegistry {
                 m.appendTail(out);
                 if (pet != null) {
                     double c = adoptionChance(booster, pet);
-                    if (c > 0) out.append(plugin.text("booster-format.chance", "%n%", String.valueOf(Math.max(1, Math.round(1 / c)))));
+                    if (c > 0) out.append(plugin.text("booster-format.chance", "%chance%", fr.influencraft.flux.api.util.Format.chance(c)));
                 }
                 lore.add(Texts.of(out.toString()));
             }

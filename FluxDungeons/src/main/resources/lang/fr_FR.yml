@@ -648,8 +648,6 @@ keys:
   button-every: '1 clé toutes les %minutes% min de travail'
   button-owned: 'Tes clés'
   line: 'Clé du donjon'
-  line-always: 'à chaque fois'
-  line-one-in: '1 chance sur %n%'
 menu:
   close: 'Retour'
   close-action: 'Menu principal'

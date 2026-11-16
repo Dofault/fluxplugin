@@ -176,4 +176,4 @@ menu:
 booster-format:
   open: 'Ouvrir'
   open-all: 'Ouvrir toute la pile'
-  chance: ' &7(1 sur %n%)'
+  chance: ' &7(%chance%)'

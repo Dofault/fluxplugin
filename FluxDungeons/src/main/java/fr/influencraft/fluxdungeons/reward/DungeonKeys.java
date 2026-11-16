@@ -188,17 +188,15 @@ public final class DungeonKeys implements Listener {
         return item;
     }
 
-    /** "Clé : 1 sur N" on a paid action, from the points FluxValue gives it. */
+    /** "Clé : 0,5 %" on a paid action: its chance from the points FluxValue gives it. */
     private JobDrops.Line chanceLine(String job, JobAction action) {
         if (dungeonOf(job) == null) return null;
         double per = pointsPerKey();
         String target = action.targets().isEmpty() ? null : action.targets().get(0);
         OptionalDouble points = Values.actionPoints(action.trigger(), target);
         if (per <= 0 || points.isEmpty() || points.getAsDouble() <= 0) return null;
-        double oneIn = per / points.getAsDouble();
-        String value = oneIn <= 1 ? plugin.messages().raw("keys.line-always")
-                : plugin.messages().raw("keys.line-one-in", "%n%", Format.number(Math.round(oneIn)));
-        return new JobDrops.Line(plugin.messages().raw("keys.line"), value);
+        // in percent, as every chance shown to players (Flux's Format.chance)
+        return new JobDrops.Line(plugin.messages().raw("keys.line"), Format.chance(points.getAsDouble() / per));
     }
 
     // ---------------------------------------------------------------- storage
