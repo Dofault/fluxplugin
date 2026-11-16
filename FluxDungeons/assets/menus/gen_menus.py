@@ -64,7 +64,7 @@ def line_pages():
 
 def line_cells(page_index, pages):
     """Cells of a page's path in DungeonMenus.route's order: the way in (from the page before, or on the first page the
-    start of the road, red while the player has beaten nothing: owner, 2026-11-16), each place and the way to the
+    start of the road, green: owner, 2026-11-16), each place and the way to the
     next, the way out to the next page."""
     n = len(pages[page_index])
     cells = [LINE_ARROWS[0]]
