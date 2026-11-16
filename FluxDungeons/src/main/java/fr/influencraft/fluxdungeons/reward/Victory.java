@@ -2,9 +2,7 @@ package fr.influencraft.fluxdungeons.reward;
 
 import fr.influencraft.flux.api.FluxPlugin;
 import fr.influencraft.flux.api.economy.Currency;
-import fr.influencraft.flux.api.items.CustomItems;
 import fr.influencraft.flux.api.pets.Companions;
-import fr.influencraft.flux.api.reward.Rewards;
 import fr.influencraft.flux.api.text.Texts;
 import fr.influencraft.flux.api.util.Format;
 import fr.influencraft.fluxdungeons.dungeon.DungeonDefinition;
@@ -19,7 +17,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
 
 import java.time.Duration;
@@ -29,10 +26,10 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * A won run, once the party is back in the rpg lobby (2026-11-14): a title, fireworks around each player for a few
- * seconds (they never hurt anybody), the summary in the chat (loot, tokens of the run), the boosters of the dungeon's
- * job ({@code reward.boosters} by difficulty, vanilla items: kept in {@code /recompenses} until he is in the semi-rp
- * world) and the boss's pet: adopted on the first victory, its card on the next ones.
+ * A won run, once the party is back in the rpg lobby (2026-11-14, rewards changed 2026-11-16): a title, fireworks
+ * around each player for a few seconds (they never hurt anybody) and the summary in the chat: the tokens of the run,
+ * the only reward of a dungeon (spent in the dungeon shop: boosters, enchanted books, gear, the boss's mount). A
+ * first victory on a dungeon says that its boss's mount is now for sale there.
  */
 public final class Victory implements Listener {
 
@@ -43,7 +40,6 @@ public final class Victory implements Listener {
     private final FluxPlugin plugin;
     private final DungeonTokens tokens;
     private int fireworks = 8;
-    private long petDelay = 70;
 
     public Victory(FluxPlugin plugin, DungeonTokens tokens) {
         this.plugin = plugin;
@@ -52,54 +48,25 @@ public final class Victory implements Listener {
 
     public void reload(org.bukkit.configuration.ConfigurationSection c) {
         fireworks = c == null ? 8 : Math.max(0, c.getInt("fireworks", 8));
-        petDelay = c == null ? 70 : Math.max(0, c.getLong("pet-delay-ticks", 70));
     }
 
-    public void celebrate(DungeonDefinition def, int level, long seconds, List<Player> winners,
-                          Map<UUID, List<String>> loot, Map<UUID, Integer> earned) {
+    /** {@code firsts}: players for whom it is the first victory on that dungeon. */
+    public void celebrate(DungeonDefinition def, long seconds, List<Player> winners, Map<UUID, Integer> earned, java.util.Set<UUID> firsts) {
         for (Player p : winners) {
             if (!p.isOnline()) continue;
             p.showTitle(Title.title(Texts.parse(raw("run.victory")),
                     Texts.parse(raw("run.victory-sub", "%time%", Format.duration(seconds))),
                     Title.Times.times(Duration.ofMillis(200), Duration.ofSeconds(4), Duration.ofMillis(800))));
             fireworks(p);
-            List<String> found = loot.getOrDefault(p.getUniqueId(), List.of());
-            plugin.messages().send(p, found.isEmpty() ? "run.loot-none" : "run.loot", "%items%", String.join("&7, ", found));
             int got = earned.getOrDefault(p.getUniqueId(), 0);
             Currency money = tokens.currency();
             if (got > 0 && money != null) plugin.messages().send(p, "run.tokens", "%amount%", money.format(got));
-            boosters(p, def, level);
-            if (!def.pet().isEmpty()) {
-                Bukkit.getScheduler().runTaskLater(plugin, () -> pet(p, def), petDelay);
+            if (firsts.contains(p.getUniqueId()) && !def.pet().isEmpty()) {
+                String name = Companions.name(def.pet());
+                plugin.messages().send(p, "run.mount-unlocked", "%pet%", name == null ? def.pet() : name);
             }
+            plugin.messages().send(p, "run.shop-hint");
         }
-    }
-
-    private void boosters(Player p, DungeonDefinition def, int level) {
-        int n = def.boosters(level);
-        if (def.job().isEmpty() || n <= 0) return;
-        ItemStack booster = CustomItems.item("fluxpets:booster_metier_" + def.job(), p);
-        if (booster == null) return;
-        booster.setAmount(n);
-        String name = booster.hasItemMeta() && booster.getItemMeta().hasDisplayName()
-                ? Texts.ampersand(booster.getItemMeta().displayName()) : def.job();
-        Rewards.deliver(p, "dungeons", raw("run.boosters-label", "%dungeon%", def.name()), List.of(booster));
-        plugin.messages().send(p, "run.boosters", "%amount%", String.valueOf(n), "%booster%", name);
-    }
-
-    /** The boss's pet: adopted the first time (FluxPets shows it), its card afterwards. */
-    private void pet(Player p, DungeonDefinition def) {
-        if (!p.isOnline() || !Companions.available()) return;
-        String name = Companions.name(def.pet());
-        if (name == null) return;
-        if (Companions.adopt(p, def.pet())) {
-            plugin.messages().send(p, "run.pet-adopted", "%pet%", name);
-            return;
-        }
-        ItemStack card = Companions.card(def.pet());
-        if (card == null) return;
-        Rewards.deliver(p, "dungeons", raw("run.boosters-label", "%dungeon%", def.name()), List.of(card));
-        plugin.messages().send(p, "run.pet-card", "%pet%", name);
     }
 
     /** Rockets around the player, one after the other, exploding right away. */

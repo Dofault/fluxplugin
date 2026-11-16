@@ -116,6 +116,92 @@ def difficulty(plugin, dungeon):
     return d.get("recommended-level", 1), [(l["name"], l.get("health", 1), l.get("damage", 1)) for l in d.get("levels", [])]
 
 
+# ------------------------------------------------------------------------------ one dungeon as a function (tower.py)
+
+TOKENS = {"normal": 2, "elite": 4, "miniboss": 10, "boss": 40}   # middle of tokens.per-rank in config.yml
+
+
+def rooms_of(plugin, dungeon, mobs):
+    """{room: [monster ids]} and the objectives of a dungeon. A lair (burrows: Taupérion, generated at each run) is
+    played as rooms of its guards (the middle of per-room), drawn in proportion to their weights, plus its boss."""
+    d = yaml.safe_load(open(os.path.join(plugin, "dungeons", dungeon + ".yml")))
+    path = os.path.join(plugin, "edits", dungeon + ".yml")
+    if os.path.isfile(path):
+        edits = yaml.safe_load(open(path))["map"]
+        rooms = {}
+        for s in edits.get("spawns", []):
+            rooms.setdefault(str(s["room"]), []).append(s["mob"])
+        return rooms, set(edits.get("objectives", []))
+    b = d.get("burrows") or {}
+    guards = (b.get("guards") or {}).get("mobs") or {}
+    pool = [m for m, w in guards.items() for _ in range(int(w)) if m in mobs]
+    per = b.get("guards", {}).get("per-room", [4, 6])
+    size = (per[0] + per[-1]) // 2
+    rooms = {}
+    if pool:
+        for k in range(6):
+            rooms[str(k + 1)] = [pool[(k * size + i) % len(pool)] for i in range(size)]
+    boss = b.get("boss")
+    if boss:
+        rooms[str(len(rooms) + 1)] = [boss]
+    return rooms, {boss} if boss else set()
+
+
+def evaluate(plugin, dungeon, level, tier, hm, dm, party=1, data=None, extra_per_player=0.5):
+    """How hard a dungeon is in numbers, with the model above: monsters at `level` (the simulator's report level
+    nearest to it), abilities of difficulty rank `tier` (1-3), life x hm and damage x dm, for `party` players (each
+    one beyond the first adds extra_per_player of every pack). Returns {trash, pull, boss_time, boss, tokens}: seconds
+    of trash, life lost in the worst pull and over the boss (shares of a life, the frailest class), the tokens a run
+    gives each player (tokens.per-rank middles, reward 1)."""
+    if data is None:
+        data = load_all(plugin)
+    spells, mobs, rk, report = data
+    key = str(min((int(k) for k in report), key=lambda k: abs(k - level)))
+    rep = report[key]
+    mon = rep["monster"]
+    classes = [c for c in rep if c != "monster"]
+    rooms, objectives = rooms_of(plugin, dungeon, mobs)
+    li = tier - 1
+    more = 1 + extra_per_player * (party - 1)
+    total, worst, boss_t, boss_l, tokens = 0.0, 0.0, 0.0, 0.0, 0.0
+    for room, ids in rooms.items():
+        ids = [m for m in ids if m in mobs]
+        bosses = [m for m in ids if m in objectives or rank(mobs[m]) == "boss"]
+        troops = [m for m in ids if m not in bosses]
+        tokens += sum(TOKENS.get(rank(mobs[m]), 2) for m in troops) + sum(TOKENS["boss"] for _ in bosses)
+        for i in range(0, len(troops), PULL):
+            pull = [profile(mobs[m], spells, mobs, li, rk) for m in troops[i:i + PULL]]
+            life = sum(p[0] for p in pull) * mon["health"] * hm * more
+            threat = sum(p[1] for p in pull) * more
+            n = len(pull)
+            for c in classes:
+                me = rep[c]
+                dps = (me["dps1"] + (me["dps6"] - me["dps1"]) * (min(n, 6) - 1) / 5) * REAL * party
+                t = life / dps
+                hit = mon["attack"] * dm * (1 - me["defense"] / (me["defense"] + mon["k"]))
+                taken = threat * hit * t * 0.5 / party
+                healed = (me["heal"] + me["regen"]) * t
+                worst = max(worst, max(0.0, taken - healed) / me["health"])
+                if c == classes[0]:
+                    total += t
+        for b in bosses:
+            life_units, threat = profile(mobs[b], spells, mobs, li, rk)
+            life = life_units * mon["health"] * hm * (min(4, party) / 4 if rank(mobs[b]) == "boss" else 1)
+            for c in classes:
+                me = rep[c]
+                t = life / (me["dps1"] * REAL * party)
+                hit = mon["attack"] * dm * (1 - me["defense"] / (me["defense"] + mon["k"]))
+                lost = max(0.0, threat * hit * t / party - (me["heal"] + me["regen"]) * t) / me["health"]
+                boss_t, boss_l = max(boss_t, t), max(boss_l, lost)
+    return {"trash": total, "pull": worst, "boss_time": boss_t, "boss": boss_l, "tokens": tokens}
+
+
+def load_all(plugin):
+    report = json.load(open(os.path.join(HERE, "..", "..", "target", "balance-report.json")))
+    spells, mobs = load(plugin)
+    return spells, mobs, ranks(plugin), report
+
+
 def main():
     args = sys.argv[1:]
     check = "--check" in args

@@ -20,6 +20,22 @@ rpg:
   # Where players arrive in the lobby (/rpg, respawn, the void): set it standing there with /rpgadmin setspawn.
   # Missing: the middle of the platform.
   # spawn: {x: 0.5, y: 65, z: 0.5, yaw: 180, pitch: 0}
+  # Characters of the lobby drawn by a BetterModel model (rpg.LobbyFigures): the model shown to every player of the
+  # lobby world, a click box running `command` as the player, `name` above it (name-height blocks up). x, y, z: its
+  # feet; yaw: where it looks (Minecraft's, 90 = west); scale: of the model (the Oracle is drawn 5 blocks tall).
+  figures:
+    oracle:
+      model: oracle
+      x: 9.5
+      y: 65
+      z: 52.5
+      yaw: 90
+      scale: 0.55
+      name: "&#B376E5&lL'Oracle\n&#FFD94DBoutique de donjon"
+      command: "donjon boutique"
+      width: 1.4
+      height: 2.8
+      name-height: 3.0
   # The class showcase (/classe in the lobby, Java clients): the player watches each class cast its real spells in a
   # small arena, through a fixed camera, a panel on the left third of his screen (docs/technique/rpg.md).
   showcase:
@@ -58,9 +74,9 @@ rpg:
     # cast <right|a|f>, home (the actor back to his place). Each big spell starts on a fresh scene, the spell that
     # moves the actor comes last: it pushes the monsters about.
     scripts:
-      default: ["monsters 3", "wait 15", "basic 4 10", "wait 14", "cast a", "wait 50", "home", "monsters 3", "wait 20", "cast f", "wait 110", "home", "monsters 3", "wait 20", "cast right", "wait 45"]
-      pyromancer: ["monsters 3", "wait 15", "basic 4 10", "wait 14", "cast a", "wait 45", "home", "monsters 3", "wait 20", "cast f", "wait 130", "home", "monsters 3", "wait 20", "cast right", "wait 55"]
-      druid: ["monsters 3", "wait 15", "basic 4 10", "wait 14", "cast a", "wait 115", "home", "monsters 3", "wait 20", "cast f", "wait 180", "home", "monsters 3", "wait 20", "cast right", "wait 45"]
+      default: ["monsters 3", "wait 20", "cast a", "wait 50", "home", "monsters 3", "wait 20", "cast f", "wait 110", "home", "monsters 3", "wait 20", "cast right", "wait 45", "home", "monsters 3", "wait 15", "basic 4 10", "wait 20"]
+      pyromancer: ["monsters 3", "wait 20", "cast a", "wait 45", "home", "monsters 3", "wait 20", "cast f", "wait 130", "home", "monsters 3", "wait 20", "cast right", "wait 55", "home", "monsters 3", "wait 15", "basic 4 10", "wait 20"]
+      druid: ["monsters 3", "wait 20", "cast a", "wait 115", "home", "monsters 3", "wait 20", "cast f", "wait 180", "home", "monsters 3", "wait 20", "cast right", "wait 45", "home", "monsters 3", "wait 15", "basic 4 10", "wait 20"]
 
 party:
   max-size: 4

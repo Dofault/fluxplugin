@@ -68,9 +68,7 @@ public final class Runs {
     private final Set<UUID> teleporting = new HashSet<>();
     private int maxRuns = 8;
     private double extraMobsPerPlayer = 0.5, bossHealthPerPlayer = 0.6;
-    private double fallbackMoneyPerMinute = 50;
     private double spawnDistance = 40;
-    private String origin = "victory";
     private int ticks;
 
     /** The rpg universe the dungeons are played in (null only when the rpg module failed: nobody may play). */
@@ -86,6 +84,12 @@ public final class Runs {
     public DungeonDefinition.Level levelOf(String runId) {
         Run run = runId == null ? null : runs.get(runId);
         return run == null ? null : run.levelSpec();
+    }
+
+    /** Dungeon of a running run, null when unknown. */
+    public DungeonDefinition definitionOf(String runId) {
+        Run run = runId == null ? null : runs.get(runId);
+        return run == null ? null : run.def;
     }
 
     public void rpg(RpgBridge bridge) {
@@ -108,6 +112,12 @@ public final class Runs {
     private fr.influencraft.fluxdungeons.reward.DungeonKeys keys;
     private fr.influencraft.fluxdungeons.reward.DungeonTokens tokens;
     private fr.influencraft.fluxdungeons.reward.Victory victories;
+    /** Who beat which dungeon (tower, mounts of the shop), null when the database is off. */
+    private fr.influencraft.fluxdungeons.reward.DungeonVictories records;
+
+    public void records(fr.influencraft.fluxdungeons.reward.DungeonVictories records) {
+        this.records = records;
+    }
 
     /** Keys, tokens and the end of a won run (reward package). */
     public void rewards(fr.influencraft.fluxdungeons.reward.DungeonKeys keys, fr.influencraft.fluxdungeons.reward.DungeonTokens tokens,
@@ -143,7 +153,7 @@ public final class Runs {
             if (r == null) return null;
             DungeonDefinition.Level l = r.levelSpec();
             // 4th value: the level's rank (1 = easiest), abilities with a higher from-level stay off
-            return new double[]{l.health(), l.damage(), l.spells() ? 1 : 0, r.level + 1};
+            return new double[]{l.health(), l.damage(), l.spells() ? 1 : 0, l.tier()};
         });
         Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 10L, 10L);
     }
@@ -152,7 +162,6 @@ public final class Runs {
         maxRuns = Math.max(1, c.getInt("max-runs", 8));
         extraMobsPerPlayer = c.getDouble("scaling.extra-mobs-per-player", 0.5);
         bossHealthPerPlayer = c.getDouble("scaling.boss-health-per-player", 0.6);
-        fallbackMoneyPerMinute = c.getDouble("reward.money-per-minute-without-fluxvalue", 50);
         spawnDistance = Math.max(8, c.getDouble("spawn-distance", 40));
         WorldInstances.viewDistance = Math.max(2, c.getInt("view-distance", 8));
     }
@@ -1241,52 +1250,29 @@ public final class Runs {
     // ---------------------------------------------------------------- end
 
     /**
-     * The boss is dead: money, rpg experience, loot, boosters of the dungeon's job, then everybody is taken back to
-     * the rpg lobby at once (next tick: the monster's death is still being handled), where {@link
-     * fr.influencraft.fluxdungeons.reward.Victory} congratulates them (title, fireworks, summary, boss pet).
+     * The boss is dead (2026-11-16, the dungeon tower): tokens are the reward (given by every monster, the boss
+     * included, as the run went), plus the rpg experience of a victory and the victory recorded (the tower, the mount
+     * of the boss in the shop); everything else is bought in the dungeon shop. Then everybody is taken back to the rpg
+     * lobby at once (next tick: the monster's death is still being handled), where {@link
+     * fr.influencraft.fluxdungeons.reward.Victory} congratulates them.
      */
-    /** Money of a victory of this dungeon at this difficulty level (index). */
-    public double victoryMoney(DungeonDefinition def, int level) {
-        double perSecond = Values.moneyPerSecond();
-        List<DungeonDefinition.Level> levels = def.levels();
-        double reward = levels.get(Math.max(0, Math.min(level, levels.size() - 1))).reward();
-        return Economy.round(def.rewardMinutes() * 60 * (perSecond > 0 ? perSecond : fallbackMoneyPerMinute / 60) * reward);
-    }
-
     private void victory(Run run) {
         if (run.state != Run.State.RUNNING) return;
         run.state = Run.State.ENDING;
         hideBossBar(run);
         long seconds = (System.currentTimeMillis() - run.started) / 1000;
-        double money = victoryMoney(run.def, run.level);
         List<Player> winners = online(run);
-        Map<UUID, List<String>> loot = new HashMap<>();
+        java.util.Set<UUID> firsts = new java.util.HashSet<>();
         for (Player p : winners) {
             endMusic(run, p, true);
             hook(run, "victory", p, null);
-            if (money > 0) Economy.main().give(p, money, Origin.of(plugin, origin).detail(run.def.name()).notifyPlayer());
-            if (rpg != null) giveXp(p, rpg.victoryXp(run.world == null ? p.getWorld() : run.world) * run.levelSpec().reward());
-            List<String> found = new ArrayList<>();
-            for (DungeonDefinition.Loot drop : run.def.loot()) {
-                if (ThreadLocalRandom.current().nextDouble() >= drop.chance()) continue;
-                ItemStack item = CustomItems.item(drop.item(), p);
-                if (item == null) {
-                    plugin.getLogger().warning("Unknown loot item " + drop.item() + " in dungeon " + run.def.id());
-                    continue;
-                }
-                item.setAmount(Math.max(1, drop.amount()));
-                deliver(p, List.of(item));
-                found.add("<lang:" + item.translationKey() + ">");
-                if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
-                    found.set(found.size() - 1, Texts.ampersand(item.getItemMeta().displayName()));
-                }
-            }
-            loot.put(p.getUniqueId(), found);
+            if (rpg != null) giveXp(p, rpg.victoryXp(run.def, run.world == null ? p.getWorld() : run.world));
+            if (records != null && records.record(p, run.def.id())) firsts.add(p.getUniqueId());
         }
         Map<UUID, Integer> earned = new HashMap<>(run.tokens);
         Bukkit.getScheduler().runTask(plugin, () -> {
             stop(run);
-            if (victories != null) victories.celebrate(run.def, run.level, seconds, winners, loot, earned);
+            if (victories != null) victories.celebrate(run.def, seconds, winners, earned, firsts);
         });
     }
 

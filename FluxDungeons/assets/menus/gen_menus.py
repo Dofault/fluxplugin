@@ -13,8 +13,14 @@ Writes:
 Lists, actions and placeholders are FluxDungeons' (menu.DungeonMenus, dungeon.Lobby). Then /iazip and /fluxmenu reload.
 
 Layouts (window px 176 wide, item of a slot at fond_lib.objet):
-  donjons   row 0: back to the main menu (0), info (8); rows 1-2: the dungeons, columns 2 to 6, plain vanilla slots
-            (as the pets menu, 2026-11-14 feedback: no box); row 4: class (38), party (40), tokens and potions (42)
+  donjons   the dungeon tower (2026-11-16), the whole window (chest and hidden inventory, rows 0 to 9): a stone tower
+            and a road climbing it in switchbacks from floor 1 (hotbar row, left) to floor 10 (row 1, right), two
+            floors a storey, each in a niche of its job's colour with its level written beside it; above the top
+            the road fades towards a "?" (slot 4: the tower goes on). Row 0: back (0), "?" (4), info (8); on the free
+            rows beside the tower: class (36), party (44), tokens (72), shop (80, on a green plate). A floor beaten is lit by Flux (won_<floor>).
+  donjon_boutique  the dungeon shop (2026-11-16, rows 0 to 8): back (0), the page's name in a field, info (8);
+            articles in a well (rows 1-4, columns 1-7: 28, the largest page has 25); tokens (49); the ten floors as
+            tabs in the inventory, floors 1-5 on the lower row, 6-10 above (the tower again), the page shown lit.
   donjon    row 0: back (0), job of the dungeon in a dark field, info (8); rows 1-4 left: the boss picture in a gold
             frame; rows 2-4 right: possible loot (12 slots, header « Butin »); row 5: the key (49, on a green plate:
             click = launch screen), tokens (53). The difficulty is chosen on the launch screen only.
@@ -46,20 +52,25 @@ NS = "fluxdonjon"
 BLACK, WHITE = (0, 0, 0, 255), (255, 255, 255, 255)
 GOLD, GOLD_LIGHT, GOLD_DARK = ui.rgb("#F0A800"), ui.rgb("#FFD94D"), ui.rgb("#8A5A14")
 VIOLET, VIOLET_DARK = ui.rgb("#5B2D9E"), ui.rgb("#1E0A3C")
-LEVEL_COLOURS = [ui.rgb("#3E8E2E"), ui.rgb("#C9930E"), ui.rgb("#C0392B")]
 IMAGE_X, IMAGE_TOP = 9, 38           # boss picture of the dungeon page (64 x 64)
 
 # dungeon id -> (job id, job name, boss model) ; the boss pets and their jobs are in scripts/influcard/familiers_boss.py
 from familiers_boss import BOSSES  # noqa: E402
 DUNGEONS = [(b[4], b[3], b[2], b[0]) for b in BOSSES]   # (dungeon, job, model, pet)
 JOB_NAMES = {"mineur": "Mineur", "rochiste": "Rochiste", "deblayeur": "Déblayeur", "cultivateur": "Cultivateur",
-             "herboriste": "Herboriste", "sylviculteur": "Sylviculteur", "fondeur": "Fondeur",
+             "herboriste": "Herboriste", "sylviculteur": "Bûcheron", "fondeur": "Fondeur",
              "enchanteur": "Enchanteur", "pecheur": "Pêcheur", "defenseur": "Défenseur"}
 
-LIST_SLOTS = [11, 12, 13, 14, 15, 20, 21, 22, 23, 24]
+# the tower: floor n at TOWER_SLOTS[n - 1] (switchbacks, two floors a storey, from the hotbar row up)
+TOWER_SLOTS = [83, 87, 69, 65, 47, 51, 33, 29, 11, 15]
+TOWER_BUTTONS = [0, 4, 8, 36, 44, 72, 80]     # back, "?", info, class, party, tokens, shop (DungeonMenus order)
+UNKNOWN, SHOP_BUTTON = 4, 80
+SHOP_ARTICLES = [r * 9 + c for r in range(1, 5) for c in range(1, 8)]
+SHOP_FLOORS = [74, 75, 76, 77, 78, 65, 66, 67, 68, 69]   # floors 1-5 on the lower row, 6-10 above
+SHOP_BUTTONS = [0, 8, 49]
 LOOT_SLOTS = [23, 24, 25, 26, 32, 33, 34, 35, 41, 42, 43, 44]
 MEMBER_SLOTS, STATE_SLOTS = [11, 12, 13, 14, 15], [20, 21, 22, 23, 24]
-SAS_LEVELS = [28, 31, 34]
+SAS_LEVELS = [31]                     # one level per dungeon since 2026-11-16: its floor card
 DETAIL_KEY = 49
 
 
@@ -71,18 +82,123 @@ def field(im, d, box, txt=None):
         label(im, txt, (box[0] + box[2]) // 2, box[1] + 4, centre=True, dark_ground=True)
 
 
-def level_cells(d, slots, rows):
-    for slot, colour in zip(slots, LEVEL_COLOURS):
-        ui.slot(d, slot, "colour", colour, rows=rows)
+# floors of the tower: (dungeon id, level, colour of the job) in floor order, read from tower.py (one source)
+sys.path.insert(0, os.path.join(HERE, "..", "balance"))
+from tower import TOWER  # noqa: E402
+JOB_COLOURS = {"mineur": "#E3826C", "rochiste": "#B8B2AA", "deblayeur": "#A0855B", "fondeur": "#FF7A3D",
+               "enchanteur": "#B376E5", "cultivateur": "#F0A800", "herboriste": "#83A85A", "sylviculteur": "#8C6A3E",
+               "pecheur": "#43B7B0", "defenseur": "#C8C8C8"}
+STONE = [ui.rgb(c) for c in ("#2B2533", "#352E40", "#3F374B", "#4A4157", "#5A5068")]   # tower bricks, dark to light
+ROAD, ROAD_EDGE, ROAD_LIGHT = ui.rgb("#9C7A4E"), ui.rgb("#4E3A22"), ui.rgb("#C9A66B")
+
+
+def centre(slot):
+    x, y = ui.objet(slot)
+    return x + 8, y + 8
+
+
+def road(d, pts, width=6, fade=False):
+    """A dirt road through these points (straight legs), dark edge, lighter middle line; faded: dotted."""
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        steps = max(abs(x1 - x0), abs(y1 - y0))
+        for i in range(steps + 1):
+            x = x0 + (x1 - x0) * i // max(1, steps)
+            y = y0 + (y1 - y0) * i // max(1, steps)
+            if fade and (i // 3) % 2:
+                continue
+            h = width // 2
+            d.rectangle((x - h - 1, y - h - 1, x + h, y + h), fill=ROAD_EDGE)
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        steps = max(abs(x1 - x0), abs(y1 - y0))
+        for i in range(steps + 1):
+            x = x0 + (x1 - x0) * i // max(1, steps)
+            y = y0 + (y1 - y0) * i // max(1, steps)
+            if fade and (i // 3) % 2:
+                continue
+            h = width // 2
+            d.rectangle((x - h, y - h, x + h - 1, y + h - 1), fill=ROAD if not fade else ui.tone(ROAD, -0.25))
+            if not fade and (x + y) % 5 == 0:
+                d.point((x, y), fill=ROAD_LIGHT)
+
+
+def bricks(im, box, seed=3):
+    """Stone bricks of the tower in the theme's dark violet greys (8 x 4, rows offset), a few lighter stones."""
+    import random
+    r = random.Random(seed)
+    d = ImageDraw.Draw(im, "RGBA")
+    x0, y0, x1, y1 = box
+    d.rectangle(box, fill=STONE[0])
+    for row, y in enumerate(range(y0, y1, 5)):
+        off = 4 if row % 2 else 0
+        for x in range(x0 - off, x1, 9):
+            c = STONE[1 + (r.random() < 0.35) + (r.random() < 0.12)]
+            d.rectangle((max(x0, x), y, min(x1, x + 7), min(y1, y + 3)), fill=c)
+            if r.random() < 0.15:
+                d.point((max(x0, x) + 1, y), fill=STONE[4])
 
 
 def bg_list():
-    im = bg_window(GENERIC, 0, 4, rows=5, title="Donjons")
+    """The dungeon tower: the window, a stone tower with battlements over rows 1-9, the road climbing it from floor 1
+    to floor 10 and on, dotted, to the "?" of row 0; a niche per floor, its level beside it."""
+    im = bg_window(GENERIC, 0, 9, title="Donjons")
     d = ImageDraw.Draw(im, "RGBA")
-    for c in LIST_SLOTS:
-        ui.slot(d, c, "vanilla", rows=5)
-    for c in (38, 40, 42):
-        ui.slot(d, c, "vanilla", rows=5)
+    tx0, tx1 = 27, 149
+    top = ui.objet(TOWER_SLOTS[-1])[1] - 8
+    bottom = ui.objet(TOWER_SLOTS[0])[1] + 19
+    bricks(im, (tx0, top, tx1, bottom))
+    d.rectangle((tx0, top, tx1, bottom), outline=ui.OUTLINE)
+    # battlements on the top, a misty spire towards the "?"
+    for x in range(tx0, tx1 - 4, 10):
+        d.rectangle((x, top - 5, x + 5, top), fill=STONE[2], outline=ui.OUTLINE)
+    ux, uy = centre(UNKNOWN)
+    # a violet glow where the tower goes on, above its battlements (drawn on its own layer: drawing translucent
+    # shapes straight on a transparent picture replaces its pixels instead of blending them)
+    glow = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    gd = ImageDraw.Draw(glow)
+    for k in range(12, 0, -2):
+        gd.ellipse((ux - k - 3, uy - k, ux + k + 3, uy + k), fill=(91, 45, 158, 255))
+    glow.putalpha(glow.getchannel("A").point(lambda v: v * 3 // 5))
+    im.alpha_composite(glow)
+    d = ImageDraw.Draw(im, "RGBA")
+    # the road, through the floors in their order, then dotted up to the "?"
+    pts = [centre(s) for s in TOWER_SLOTS]
+    path = [pts[0]]
+    for a, b in zip(pts, pts[1:]):
+        if a[1] != b[1]:
+            path.append((a[0], b[1]))
+        path.append(b)
+    road(d, path)
+    road(d, [(ux, pts[-1][1]), (ux, uy + 9)], width=4, fade=True)
+    # a niche per floor in the colour of its job, its level beside it (left of a left floor, right of a right one)
+    for floor, (dungeon, job, level, party, _, _) in sorted(TOWER.items()):
+        slot = TOWER_SLOTS[floor - 1]
+        x, y = ui.objet(slot)
+        colour = ui.rgb(JOB_COLOURS[job])
+        d.rounded_rectangle((x - 3, y - 3, x + 18, y + 18), radius=3, fill=ui.tone(colour, -0.55), outline=ui.OUTLINE)
+        d.rounded_rectangle((x - 2, y - 2, x + 17, y + 17), radius=3, outline=colour)
+        d.rectangle((x - 1, y - 1, x + 16, y + 16), fill=ui.WELL)
+        txt = f"{level}"
+        if slot % 9 <= 4:
+            label(im, txt, x - 6 - 4 * len(txt), y + 5)
+        else:
+            label(im, txt, x + 21, y + 5)
+    # side buttons on the window, the shop on a green plate
+    x, y = ui.objet(SHOP_BUTTON)
+    ui.button(d, (x - 3, y - 3, x + 18, y + 17), ui.rgb("#3E8E2E"))
+    return im
+
+
+def bg_shop():
+    """The dungeon shop: the page's name in a field, articles in a well, tokens, the floors as tabs in the
+    inventory (a little tower: floors 1-5 below, 6-10 above) in a well headed « Étages »."""
+    im = bg_window(GENERIC, 0, 8, title="Boutique")
+    d = ImageDraw.Draw(im, "RGBA")
+    field(im, d, (26, 19, 150, 32))
+    x0, y0, x1, y1 = span(SHOP_ARTICLES, 2)
+    ui.well(d, (x0, y0 + 2, x1, y1))           # 1 px of air under the name field
+    fx0, fy0, fx1, fy1 = span(SHOP_FLOORS, 2)
+    ui.well(d, (fx0, fy0, fx1, fy1))
+    label(im, "ÉTAGES", (fx0 + fx1) // 2, fy0 - 9, centre=True)
     return im
 
 
@@ -103,8 +219,9 @@ def bg_detail():
     ui.container(im, d, (bx0, by0 - 11, bx1, by1), "ardoise", head="Butin", accent=GOLD_DARK)
     for c in LOOT_SLOTS:
         ui.slot(d, c, "dark")
-    ui.slot(d, 53, "vanilla")
-    # the key: launch screen of the dungeon, on a green plate
+    # the shop (53) on a gold plate, the key (49): launch screen of the dungeon, on a green plate
+    x, y = ui.objet(53)
+    ui.button(d, (x - 3, y - 3, x + 18, y + 17), ui.rgb("#C9930E"))
     x, y = ui.objet(DETAIL_KEY)
     ui.button(d, (x - 3, y - 3, x + 18, y + 17), ui.rgb("#3E8E2E"))
     return im
@@ -119,7 +236,9 @@ def bg_sas():
         ui.container(im, d, (x0, y0, x1, y1), "carte")
         ui.slot(d, head, "vanilla")
         ui.slot(d, state, "dark")
-    level_cells(d, SAS_LEVELS, 6)
+    # the floor card (one level per dungeon): a small well behind it
+    x0, y0, x1, y1 = span(SAS_LEVELS, 2)
+    ui.well(d, (x0, y0, x1, y1))
     field(im, d, (58, 97, 118, 104))      # players ready (Flux text widget)
     ui.slot(d, 45, "vanilla")
     ui.slot(d, 53, "vanilla")
@@ -201,6 +320,35 @@ def potion(kind, tier):
     return im
 
 
+def unknown_floor():
+    """The "?" above the tower: a violet question mark in a pale mist."""
+    im = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    d.ellipse((1, 2, 14, 15), fill=(179, 118, 229, 70))
+    q = ["..####..", ".##..##.", ".....##.", "....##..", "...##...", "...##...", "........", "...##..."]
+    for j, row in enumerate(q):
+        for i, ch in enumerate(row):
+            if ch == "#":
+                d.point((4 + i, 3 + j), fill=WHITE if j < 2 else ui.rgb("#E6D2FF"))
+    return im
+
+
+def shop_icon():
+    """The dungeon shop: a violet purse tied in gold, a token on it."""
+    im = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    d.ellipse((2, 5, 13, 15), fill=VIOLET_DARK)
+    d.ellipse((3, 6, 12, 14), fill=VIOLET)
+    d.polygon([(5, 2), (10, 2), (9, 6), (6, 6)], fill=VIOLET)
+    d.line((5, 6, 10, 6), fill=GOLD)
+    d.point((4, 1), fill=GOLD_LIGHT)
+    d.point((11, 1), fill=GOLD_LIGHT)
+    tok = coin(7)
+    im.alpha_composite(tok, (8, 8))
+    d.point((5, 8), fill=ui.rgb("#9A6AD8"))
+    return im
+
+
 def boss_picture(model):
     """64 x 64 three-quarter render of a boss model (dark outline), for the dungeon page."""
     import apercu
@@ -237,7 +385,8 @@ def pack():
         return [f"  {gid}:", "    show_in_gui: false", "    suggest_in_command: false", f'    path: "{path}"',
                 f"    scale_ratio: {h}", f"    y_position: {y}"]
 
-    backgrounds = {"fd_menu_liste": bg_list(), "fd_menu_donjon": bg_detail(), "fd_menu_sas": bg_sas()}
+    backgrounds = {"fd_menu_liste": bg_list(), "fd_menu_donjon": bg_detail(), "fd_menu_sas": bg_sas(),
+                   "fd_menu_boutique": bg_shop()}
     for gid, im in backgrounds.items():
         im.save(os.path.join(PACK, "textures/gui", gid + ".png"))
         lines += glyph(gid, f"gui/{gid}.png", im.height, 13)
@@ -253,7 +402,8 @@ def pack():
     lines += ["  jeton_donjon:", "    show_in_gui: true", "    suggest_in_command: true",
               '    path: "font/jeton_donjon.png"', "    scale_ratio: 9", "    y_position: 8"]
     lines += ["", "items:"]
-    icons = {"jeton_donjon": (coin(16), "Jeton de donjon"), "cle_donjon": (key(), "Clé de donjon")}
+    icons = {"jeton_donjon": (coin(16), "Jeton de donjon"), "cle_donjon": (key(), "Clé de donjon"),
+             "etage_inconnu": (unknown_floor(), "Étage inconnu"), "boutique": (shop_icon(), "Boutique de donjon")}
     for kind in ("soin", "mana"):
         for tier in range(1, 5):
             icons[f"potion_{kind}_{tier}"] = (potion(kind, tier), "Potion")
@@ -266,7 +416,7 @@ def pack():
         os.makedirs(PREVIEW, exist_ok=True)
         for gid, im in backgrounds.items():
             im.resize((im.width * 3, im.height * 3), Image.NEAREST).save(os.path.join(PREVIEW, gid + ".png"))
-        sheet = Image.new("RGBA", (16 * 12, 16), (46, 42, 56, 255))
+        sheet = Image.new("RGBA", (16 * len(icons), 16), (46, 42, 56, 255))
         for i, (im, _) in enumerate(icons.values()):
             sheet.alpha_composite(im, (i * 16, 0))
         sheet.resize((sheet.width * 6, sheet.height * 6), Image.NEAREST).save(os.path.join(PREVIEW, "icons.png"))
@@ -296,16 +446,52 @@ def menus():
     head = "# Generated by plugins/fluxplugin/FluxDungeons/assets/menus/gen_menus.py: do not edit by hand.\n"
     # every button is built by FluxDungeons (lists): the files only place them
     common = "player-inventory: hidden\nvanilla-background: false\n"
-    open(os.path.join(MENUS, "donjons.yml"), "w", encoding="utf-8").write(head + f"""# The dungeons (/donjon): the boss of each one, click to see it (menu donjon).
+    won = "\n".join(f"""  etage_{f}:
+    type: lit
+    slot: {slot}
+    view-requirements:
+      - "placeholder: %fluxdungeons_won_{f}% == yes\"""" for f, slot in enumerate(TOWER_SLOTS, start=1))
+    open(os.path.join(MENUS, "donjons.yml"), "w", encoding="utf-8").write(head + f"""# The dungeon tower (/donjon, 2026-11-16): a floor per dungeon from level 10 at the bottom to 100 at the top, a
+# "?" above. Left click: the dungeon (menu donjon); right click: its page of the dungeon shop.
 
 title: ":offset_-8::fd_menu_liste:"
-rows: 5
+rows: 6
 {common}update-interval: 20
 
 lists:
 
-{entries("donjons_boutons", [0, 8, 38, 40, 42], left=["%entry_left%", "%entry_left2%"])}
-{entries("donjons_liste", LIST_SLOTS, left=["[fluxdungeon] view %entry_id%", "[menu] donjon"])}
+{entries("donjons_boutons", TOWER_BUTTONS, left=["%entry_left%", "%entry_left2%"])}
+{entries("donjons_liste", TOWER_SLOTS, left=["[fluxdungeon] view %entry_id%", "[menu] donjon"], right=["%entry_right%"])}
+
+widgets:
+{won}
+""")
+    lit = "\n".join(f"""  etage_{f}:
+    type: lit
+    slot: {slot}
+    view-requirements:
+      - "placeholder: %fluxdungeons_shop_floor% == {f}\"""" for f, slot in enumerate(SHOP_FLOORS, start=1))
+    open(os.path.join(MENUS, "donjon_boutique.yml"), "w", encoding="utf-8").write(head + f"""# The dungeon shop (reward.DungeonShop, 2026-11-16): a page per floor of the tower, articles bought in Flux's
+# buying window. Contents and prices: shop.yml (assets/balance/tower.py).
+
+title: ":offset_-8::fd_menu_boutique:"
+rows: 6
+{common}update-interval: 20
+
+lists:
+
+{entries("boutique_boutons", SHOP_BUTTONS, left=["%entry_left%"])}
+{entries("boutique_articles", SHOP_ARTICLES, left=["%entry_left%"])}
+{entries("boutique_etages", SHOP_FLOORS, left=["%entry_left%", "[refresh]"])}
+
+widgets:
+  page:
+    type: text
+    x: 88
+    y: 23
+    align: center
+    text: "%fluxdungeons_shop_title%"
+{lit}
 """)
     open(os.path.join(MENUS, "donjon.yml"), "w", encoding="utf-8").write(head + f"""# A dungeon (opened from donjons): its boss, the possible loot, its key (click: launch screen).
 # One page per dungeon (_pages/donjon.yml): its job in the field and its boss picture.
@@ -323,7 +509,7 @@ page-files:
 lists:
 
 {entries("donjon_boutons", [0, 8, DETAIL_KEY, 53], left=["%entry_left%", "%entry_left2%"])}
-{entries("donjon_butin", LOOT_SLOTS)}
+{entries("donjon_butin", LOOT_SLOTS, left=["%entry_left%"])}
 """)
     pages = [head, "# Pages of the dungeon menu, one per dungeon: its job and its boss.\n\npages:\n"]
     for dungeon, job, model, pet in DUNGEONS:
@@ -344,11 +530,7 @@ lists:
         width: 64
 """)
     open(os.path.join(MENUS, "_pages", "donjon.yml"), "w", encoding="utf-8").write("".join(pages))
-    lit = "\n".join(f"""  niveau_{i}:
-    type: lit
-    slot: {slot}
-    view-requirements:
-      - "placeholder: %fluxdungeons_sas_level% == {i}\"""" for i, slot in enumerate(SAS_LEVELS))
+    lit = ""
     open(os.path.join(MENUS, "donjon_sas.yml"), "w", encoding="utf-8").write(head + f"""# Launch screen of a dungeon (dungeon.Lobby): who comes, the difficulty chosen by the leader, everybody ready.
 
 title: ":offset_-8::fd_menu_sas:"

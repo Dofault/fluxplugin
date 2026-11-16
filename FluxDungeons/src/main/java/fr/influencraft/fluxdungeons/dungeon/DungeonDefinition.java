@@ -54,6 +54,12 @@ public final class DungeonDefinition {
     private final Material icon;
     private final List<String> description;
     private final int minPlayers, maxPlayers, recommendedLevel, lives;
+    /**
+     * Place in the dungeon tower (2026-11-16, {@code floor}: 1 = the bottom, 0 = not in the tower) and the party it is
+     * made for ({@code players.recommended}). Its monsters are of the dungeon's level ({@code level}), whatever the
+     * party's: a floor above the rpg's last level is a party's affair.
+     */
+    private final int floor, recommendedPlayers;
     private final long timeLimit;
     private final double rewardMinutes;
     /** Job of the dungeon (its key drops in that job, its boosters are given), "" when none. */
@@ -92,7 +98,7 @@ public final class DungeonDefinition {
      * attacks of each monster at this level, shown to players (0 = not told); the monsters' files decide it with
      * {@code from-level} on their abilities.
      */
-    public record Level(String name, double health, double damage, double reward, boolean spells, int abilities) {
+    public record Level(String name, double health, double damage, double reward, boolean spells, int abilities, int tier) {
     }
 
     /**
@@ -161,7 +167,9 @@ public final class DungeonDefinition {
         description = c.getStringList("description");
         minPlayers = Math.max(1, c.getInt("players.min", 1));
         maxPlayers = Math.max(minPlayers, c.getInt("players.max", 4));
-        recommendedLevel = c.getInt("recommended-level", 1);
+        recommendedPlayers = Math.max(minPlayers, Math.min(maxPlayers, c.getInt("players.recommended", minPlayers)));
+        recommendedLevel = c.getInt("level", c.getInt("recommended-level", 1));
+        floor = Math.max(0, c.getInt("floor", 0));
         lives = Math.max(0, c.getInt("lives", 3));
         timeLimit = Format.parseDuration(c.getString("time-limit", "20m"));
         rewardMinutes = c.getDouble("reward.minutes", 5);
@@ -176,9 +184,11 @@ public final class DungeonDefinition {
             levels.add(new Level(String.valueOf(l.get("name") == null ? "Normal" : l.get("name")),
                     l.get("health") instanceof Number n ? n.doubleValue() : 1, l.get("damage") instanceof Number n ? n.doubleValue() : 1,
                     l.get("reward") instanceof Number n ? n.doubleValue() : 1,
-                    !(l.get("spells") instanceof Boolean b) || b, l.get("abilities") instanceof Number n ? n.intValue() : 0));
+                    !(l.get("spells") instanceof Boolean b) || b, l.get("abilities") instanceof Number n ? n.intValue() : 0,
+                    // tier: the from-level of the monsters' abilities that are on (1 to 3); default its rank
+                    l.get("tier") instanceof Number n ? Math.max(1, n.intValue()) : levels.size() + 1));
         }
-        if (levels.isEmpty()) levels.add(new Level("Normal", 1, 1, 1, true, 0));
+        if (levels.isEmpty()) levels.add(new Level("Normal", 1, 1, 1, true, 0, 1));
         readBreakable(c, breakable, instant);
         for (Map<?, ?> l : c.getMapList("loot")) {
             Object chance = l.get("chance"), amount = l.get("amount");
@@ -321,8 +331,19 @@ public final class DungeonDefinition {
         return maxPlayers;
     }
 
+    /** Level of the dungeon: its monsters' level (they fight at it whatever the party's), shown everywhere. */
     public int recommendedLevel() {
         return recommendedLevel;
+    }
+
+    /** Floor of the dungeon tower, 1 = the bottom; 0 when it is not in the tower (tests, imports). */
+    public int floor() {
+        return floor;
+    }
+
+    /** Players the dungeon is balanced for. */
+    public int recommendedPlayers() {
+        return recommendedPlayers;
     }
 
     public int lives() {

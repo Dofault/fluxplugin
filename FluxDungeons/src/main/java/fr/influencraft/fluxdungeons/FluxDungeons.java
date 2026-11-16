@@ -68,6 +68,9 @@ public final class FluxDungeons extends FluxPlugin {
     private fr.influencraft.fluxdungeons.reward.DungeonTokens tokens;
     private fr.influencraft.fluxdungeons.reward.Victory victory;
     private fr.influencraft.fluxdungeons.menu.DungeonMenus menus;
+    /** Victories per player and dungeon, and the dungeon shop (2026-11-16, the tower). */
+    private fr.influencraft.fluxdungeons.reward.DungeonVictories records;
+    private fr.influencraft.fluxdungeons.reward.DungeonShop shop;
     private fr.influencraft.fluxdungeons.combat.DamageNumbers damageNumbers;
 
     /**
@@ -84,6 +87,18 @@ public final class FluxDungeons extends FluxPlugin {
         return "normal";
     }
 
+    /**
+     * Level the monsters of a run fight at (2026-11-16, the dungeon tower): the dungeon's own level, never the party's,
+     * kept at the rpg's last level (balance.yml levels.max) since the curves stop there; a floor above it is harder
+     * through its own life and damage multipliers (its level in dungeons/*.yml, written by assets/balance/tower.py).
+     * Monsters outside a run (summoned for a test) take the level of the players around.
+     */
+    private int monsterLevel(DungeonDefinition def, org.bukkit.World world) {
+        var b = rpg == null ? null : rpg.balance();
+        if (def == null || b == null) return rpg == null ? 1 : rpg.players().averageLevel(world);
+        return Math.max(1, Math.min(def.recommendedLevel(), b.maxLevel()));
+    }
+
     /** Dungeon keys, tokens, the end of a won run and the dungeon menus (reward and menu packages). */
     private void wireRewards() {
         tokens = new fr.influencraft.fluxdungeons.reward.DungeonTokens(this);
@@ -98,7 +113,16 @@ public final class FluxDungeons extends FluxPlugin {
             getLogger().severe("Dungeon keys unavailable (no key needed to play): " + e.getMessage());
         }
         runs.rewards(keys, tokens, victory);
+        try {
+            records = new fr.influencraft.fluxdungeons.reward.DungeonVictories(this);
+            getServer().getPluginManager().registerEvents(records, this);
+            runs.records(records);
+        } catch (java.sql.SQLException e) {
+            getLogger().severe("Dungeon victories unavailable (no mount for sale): " + e.getMessage());
+        }
         if (keys == null) return;
+        shop = new fr.influencraft.fluxdungeons.reward.DungeonShop(this, () -> runs.dungeons(), tokens, records, keys::jobName);
+        shop.reload();
         menus = new fr.influencraft.fluxdungeons.menu.DungeonMenus(this, new fr.influencraft.fluxdungeons.menu.DungeonMenus.Host() {
             public java.util.Collection<DungeonDefinition> dungeons() {
                 return runs.dungeons();
@@ -119,8 +143,12 @@ public final class FluxDungeons extends FluxPlugin {
                         : messages().raw("menu.party-of", "%count%", String.valueOf(party.size()), "%leader%", name(party.leader()));
             }
 
-            public double victoryMoney(DungeonDefinition def, int level) {
-                return runs.victoryMoney(def, level);
+            public fr.influencraft.fluxdungeons.reward.DungeonVictories victories() {
+                return records;
+            }
+
+            public void shop(Player player, String dungeon) {
+                if (shop != null) shop.open(player, dungeon);
             }
 
             public void play(Player player, DungeonDefinition def, int level) {
@@ -165,12 +193,12 @@ public final class FluxDungeons extends FluxPlugin {
 
             public double killXp(org.bukkit.entity.LivingEntity mob, fr.influencraft.fluxdungeons.mob.MobTemplate t) {
                 var b = rpg.balance();
-                return b == null ? 0 : b.monsterXp(players.averageLevel(mob.getWorld()), rpgRank(t));
+                return b == null ? 0 : b.monsterXp(monsterLevel(runs.definitionOf(mobs.runOf(mob)), mob.getWorld()), rpgRank(t));
             }
 
-            public double victoryXp(org.bukkit.World w) {
+            public double victoryXp(DungeonDefinition def, org.bukkit.World w) {
                 var b = rpg.balance();
-                return b == null ? 0 : b.monsterXp(players.averageLevel(w), "miniboss");
+                return b == null ? 0 : b.monsterXp(monsterLevel(def, w), "miniboss");
             }
 
             public String classLine(Player p) {
@@ -183,6 +211,7 @@ public final class FluxDungeons extends FluxPlugin {
             var t = mobs.templateOfEntity(e);
             if (t == null) return fr.influencraft.fluxdungeons.rpg.RpgModule.profileFromTags(e);
             var level = runs.levelOf(mobs.runOf(e));
+            DungeonDefinition def = runs.definitionOf(mobs.runOf(e));
             java.util.List<fr.influencraft.fluxdungeons.rpg.core.Modifier> extra = new java.util.ArrayList<>();
             if (level != null) {
                 extra.add(fr.influencraft.fluxdungeons.rpg.core.Modifier.multiply("max_health", level.health() - 1, "difficulty"));
@@ -203,7 +232,7 @@ public final class FluxDungeons extends FluxPlugin {
                 extra.add(fr.influencraft.fluxdungeons.rpg.core.Modifier.multiply("max_health", Math.min(4, n) / 4.0 - 1 + Math.max(0, n - 4) * 0.25, "party"));
             }
             double unit = mobs.meleeDamage(e);
-            return new fr.influencraft.fluxdungeons.rpg.CombatEngine.MobProfile(players.averageLevel(e.getWorld()),
+            return new fr.influencraft.fluxdungeons.rpg.CombatEngine.MobProfile(monsterLevel(def, e.getWorld()),
                     rank, null, extra, unit > 0 ? unit : t.damage(), t.extra().rangedResistance());
         });
         engine.afterMonsterHit(combat::onPlayerHit);
@@ -212,7 +241,13 @@ public final class FluxDungeons extends FluxPlugin {
         // players hit a model's hit box: the creature under it takes the hit
         engine.body(fr.influencraft.fluxdungeons.mob.Mobs::body);
         healthBars.life(e -> engine.rpg(e) && !(e instanceof Player) ? new double[]{engine.health(e), engine.maxHealth(e)} : null);
+        // characters of the lobby drawn by a model (the Oracle of the dungeon shop)
+        figures = new fr.influencraft.fluxdungeons.rpg.LobbyFigures(this, rpg.world().world());
+        getServer().getPluginManager().registerEvents(figures, this);
+        figures.reload(getConfig().getConfigurationSection("rpg.figures"));
     }
+
+    private fr.influencraft.fluxdungeons.rpg.LobbyFigures figures;
 
     @Override
     protected void enable() {
@@ -291,6 +326,7 @@ public final class FluxDungeons extends FluxPlugin {
         placeholders("fluxdungeons", (player, params) -> {
             String v = player == null ? null : runs.lobby().placeholder(player, params);
             if (v == null && player != null && menus != null) v = menus.placeholder(player, params);
+            if (v == null && player != null && shop != null) v = shop.placeholder(player, params);
             return v != null ? v : runs.placeholder(player, params);
         });
         // buttons of the dungeon menus (menu.DungeonMenus, dungeon.Lobby)
@@ -298,7 +334,10 @@ public final class FluxDungeons extends FluxPlugin {
             String[] a = argument.trim().split("\\s+");
             if (a.length == 0) return;
             if (a[0].equals("sas")) runs.lobby().act(player, java.util.Arrays.copyOfRange(a, 1, a.length));
-            else if (menus != null) menus.act(player, a);
+            else if (a[0].equals("shop") && shop != null) {
+                if (a.length >= 2 && a[1].equals("open")) shop.open(player, a.length >= 3 ? a[2] : null);
+                else shop.act(player, java.util.Arrays.copyOfRange(a, 1, a.length));
+            } else if (menus != null) menus.act(player, a);
         });
         combat = new fr.influencraft.fluxdungeons.combat.CombatRules(this, runs, mobs);
         combat.hitReaction(getConfig().getConfigurationSection("hit-reaction"));
@@ -342,6 +381,7 @@ public final class FluxDungeons extends FluxPlugin {
 
     @Override
     protected void disable() {
+        if (figures != null) figures.clear();
         if (keys != null) keys.shutdown();
         if (tokens != null) tokens.shutdown();
         if (rpg != null) rpg.stop();
@@ -400,6 +440,7 @@ public final class FluxDungeons extends FluxPlugin {
         if (rpg != null) rpg.aimAssist(getConfig().getConfigurationSection("aim-assist"));
         if (healthBars != null) healthBars.load(getConfig().getConfigurationSection("health-bar"));
         if (combat != null) combat.hitReaction(getConfig().getConfigurationSection("hit-reaction"));
+        if (figures != null) figures.reload(getConfig().getConfigurationSection("rpg.figures"));
         if (tokens != null) tokens.reload(getConfig().getConfigurationSection("tokens"));
         if (victory != null) victory.reload(getConfig().getConfigurationSection("victory"));
         // spells first: monsters take them by id
@@ -444,6 +485,7 @@ public final class FluxDungeons extends FluxPlugin {
                 .forEach(d -> sorted.put(d.id(), d));
         runs.load(sorted);
         if (keys != null) keys.reload(getConfig().getConfigurationSection("keys"));
+        if (shop != null) shop.reload();
         writePages(sorted.values());
     }
 
@@ -563,6 +605,11 @@ public final class FluxDungeons extends FluxPlugin {
                     messages().send(p, "run.left");
                 }
             }
+            // the dungeon shop (the Oracle of the rpg lobby runs it too)
+            case "shop", "boutique" -> {
+                if (shop == null) messages().send(p, "shop.closed");
+                else shop.open(p, args.length >= 2 ? args[1] : null);
+            }
             // the class is the rpg one
             case "class", "classe" -> p.performCommand("classe");
             case "list", "liste" -> {
@@ -578,7 +625,7 @@ public final class FluxDungeons extends FluxPlugin {
     }
 
     private List<String> completeDungeon(CommandSender sender, String[] args) {
-        if (args.length == 1) return filter(List.of("play", "leave", "class", "list"), args[0]);
+        if (args.length == 1) return filter(List.of("play", "leave", "class", "list", "shop"), args[0]);
         if (args.length == 2 && args[0].equalsIgnoreCase("play")) return filter(runs.dungeons().stream().map(DungeonDefinition::id).toList(), args[1]);
         return List.of();
     }

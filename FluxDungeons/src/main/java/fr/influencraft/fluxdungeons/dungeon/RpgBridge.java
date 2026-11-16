@@ -20,7 +20,7 @@ public interface RpgBridge {
     double killXp(org.bukkit.entity.LivingEntity mob, fr.influencraft.fluxdungeons.mob.MobTemplate template);
 
     /** Rpg experience of a victory (a mini-boss of the party's level), before the difficulty's reward multiplier. */
-    double victoryXp(org.bukkit.World world);
+    double victoryXp(DungeonDefinition def, org.bukkit.World world);
 
     /** His class and level as shown on the launch screen ("Guerrier 5"), null when he has none yet. */
     String classLine(Player player);

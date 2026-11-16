@@ -19,7 +19,7 @@ import java.util.Collection;
  * Bones whose name ends with {@code _empty} are a second look of a part (the empty cheeks of the Harvest Hamster):
  * hidden when the model is put on, shown by the monster's abilities ({@link Handle#parts}).
  */
-final class ModelBridge {
+public final class ModelBridge {
 
     /** A model on a monster. */
     interface Handle {
@@ -125,6 +125,26 @@ final class ModelBridge {
             public void close() {
                 if (!tracker.isClosed()) tracker.close();
             }
+        };
+    }
+
+    /**
+     * A still model shown to one player at a place (a lobby character: the Oracle), at a scale, facing {@code yaw}
+     * (Minecraft's; a model without entity turns the other way round, hence the minus, as found for FluxMascot's
+     * robot). Its {@code idle} animation loops when it has one. Null when the model does not exist; to be closed by
+     * the caller (when the player leaves).
+     */
+    public static AutoCloseable figure(org.bukkit.entity.Player viewer, String model, org.bukkit.Location at, float scale, float yaw) {
+        var renderer = BetterModel.modelOrNull(model);
+        if (renderer == null) return null;
+        DummyTracker tracker = renderer.create(BukkitAdapter.adapt(at.clone()));
+        tracker.scaler(kr.toxicity.model.api.tracker.ModelScaler.value(scale));
+        float facing = -yaw;
+        tracker.rotation(() -> new kr.toxicity.model.api.tracker.ModelRotation(0, facing));
+        tracker.spawn(BukkitAdapter.adapt(viewer));
+        tracker.animate("idle", AnimationModifier.builder().type(AnimationIterator.Type.LOOP).build());
+        return () -> {
+            if (!tracker.isClosed()) tracker.close();
         };
     }
 

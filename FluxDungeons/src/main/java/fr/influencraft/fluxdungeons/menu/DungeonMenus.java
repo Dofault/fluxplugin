@@ -29,8 +29,11 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * The dungeon menus of /donjon (2026-11-14, files written by {@code assets/menus/gen_menus.py}):
  * <ul>
- *   <li>{@code donjons}: the boss of each dungeon (its pet's portrait), click to see it. Lists
- *   {@code donjons_liste}, {@code donjons_boutons} (back to the main menu, info, class, party, tokens);</li>
+ *   <li>{@code donjons}: the dungeon tower (2026-11-16): a road climbing from floor 1 (level 10) at the bottom to
+ *   floor 10 (level 100), a "?" above it (the tower goes on). Each floor shows its boss, its level, the party it is
+ *   made for and whether the player beat it (glint, and a lit cell drawn by Flux through {@code won_<floor>}); a
+ *   left click shows the dungeon, a right click its page of the shop. Lists {@code donjons_liste} (one entry per
+ *   floor, in floor order), {@code donjons_boutons} (back, the "?", info, class, party, tokens, shop);</li>
  *   <li>{@code donjon}: the dungeon chosen with {@code [fluxdungeon] view <id>}: its boss (picture of its page), what
  *   can be won ({@code donjon_butin}), a button per difficulty to play it ({@code donjon_niveaux},
  *   {@code [fluxdungeon] play <level>}), the key ({@code donjon_boutons}).</li>
@@ -54,8 +57,11 @@ public final class DungeonMenus {
         /** Party line ("Seul", "Groupe de 3"). */
         String partyLine(Player player);
 
-        /** Money of a victory at this level, rpg experience of a victory. */
-        double victoryMoney(DungeonDefinition def, int level);
+        /** Who beat which dungeon, null without the database. */
+        fr.influencraft.fluxdungeons.reward.DungeonVictories victories();
+
+        /** Opens the dungeon shop on a dungeon's page (null: the last one). */
+        void shop(Player player, String dungeon);
 
         /** The player plays the dungeon at this difficulty (index). */
         void play(Player player, DungeonDefinition def, int level);
@@ -111,12 +117,19 @@ public final class DungeonMenus {
         }
     }
 
-    /** {@code selected}, {@code selected_name}; null for another one. */
+    /** {@code selected}, {@code selected_name}, {@code won_<floor>} (yes / no); null for another one. */
     public String placeholder(Player p, String params) {
         if (params.equals("selected")) return selected.getOrDefault(p.getUniqueId(), "");
         if (params.equals("selected_name")) {
             DungeonDefinition def = host.dungeon(selected.getOrDefault(p.getUniqueId(), ""));
             return def == null ? "" : Texts.plain(Texts.colors(def.name()));
+        }
+        if (params.startsWith("won_")) {
+            var v = host.victories();
+            for (DungeonDefinition d : host.dungeons()) {
+                if (String.valueOf(d.floor()).equals(params.substring(4))) return v != null && v.beaten(p, d.id()) ? "yes" : "no";
+            }
+            return "no";
         }
         return null;
     }
@@ -126,21 +139,38 @@ public final class DungeonMenus {
         this.potionsHere = here;
     }
 
-    // ---------------------------------------------------------------- list
+    // ---------------------------------------------------------------- the tower
+
+    /** The floors of the tower, from the bottom. */
+    private List<DungeonDefinition> tower() {
+        List<DungeonDefinition> out = new ArrayList<>();
+        for (DungeonDefinition d : host.dungeons()) if (d.floor() > 0 && !d.pet().isEmpty()) out.add(d);
+        out.sort(java.util.Comparator.comparingInt(DungeonDefinition::floor));
+        return out;
+    }
 
     private List<ListEntry> list(Player viewer) {
         List<ListEntry> out = new ArrayList<>();
-        for (DungeonDefinition def : host.dungeons()) {
-            if (def.pet().isEmpty()) continue;  // tests and imports without a boss pet are not listed
+        var victories = host.victories();
+        int level = levelOf(viewer);
+        for (DungeonDefinition def : tower()) {
+            int wins = victories == null ? 0 : victories.wins(viewer, def.id());
             Lore lore = Lore.create().description(def.description())
-                    .kv(raw("menu.job"), keys.jobName(def.job()))
-                    .kv(raw("menu.players"), def.minPlayers() + "-" + def.maxPlayers())
-                    .kv(raw("menu.level"), def.recommendedLevel());
+                    .kv(raw("menu.floor"), def.floor())
+                    .kv(raw("menu.level"), def.recommendedLevel())
+                    .kv(raw("menu.players-recommended"), def.recommendedPlayers() <= 1 ? raw("menu.solo")
+                            : raw("menu.party-size", "%count%", String.valueOf(def.recommendedPlayers())))
+                    .kv(raw("menu.job"), keys.jobName(def.job()));
             if (keys.needs(viewer, def)) lore.kv(raw("menu.keys"), String.valueOf(keys.count(viewer, def.job())));
-            if (Companions.owns(viewer, def.pet())) lore.ok(raw("menu.pet-owned"));
-            lore.left(raw("menu.see"));
+            if (wins > 0) lore.ok(raw("menu.beaten", "%count%", String.valueOf(wins)));
+            else if (level >= 0 && level < Math.min(def.recommendedLevel(), 50)) lore.ko(raw("menu.too-high"));
+            else lore.info(raw("menu.not-beaten"));
+            if (def.recommendedLevel() > 50) lore.info(raw("menu.beyond-cap"));
+            lore.left(raw("menu.see")).right(raw("menu.shop-action"));
             ItemStack item = Items.of(PORTRAIT + def.pet(), def.name(), lore.build(), viewer);
-            out.add(ListEntry.of(def.id()).item(item == null ? new ItemStack(def.icon()) : item));
+            if (item == null) item = Items.dress(new ItemStack(def.icon()), def.name(), lore.build(), viewer);
+            if (wins > 0) item.editMeta(m -> m.setEnchantmentGlintOverride(true));
+            out.add(ListEntry.of(def.id()).item(item).set("right", "[fluxdungeon] shop open " + def.id()));
         }
         return out;
     }
@@ -149,6 +179,8 @@ public final class DungeonMenus {
         List<ListEntry> out = new ArrayList<>();
         out.add(button("close", Items.of("itemsadder:fluxui:btn_back_orange", raw("menu.close"),
                 Lore.create().left(raw("menu.close-action")).build(), viewer), "[menu] main", ""));
+        out.add(button("unknown", Items.of("itemsadder:fluxdonjon:etage_inconnu", raw("menu.unknown"),
+                Lore.create().description(raw("menu.unknown-desc")).build(), viewer), "", ""));
         out.add(button("info", Items.of("itemsadder:fluxui:btn_info_blue", raw("menu.info"),
                 Lore.create().description(raw("menu.info-desc")).description(raw("menu.info-keys"))
                         .description(raw("menu.info-rewards")).build(), viewer), "", ""));
@@ -162,11 +194,25 @@ public final class DungeonMenus {
         Currency money = tokens.currency();
         Lore tokenLore = Lore.create().description(raw("menu.tokens-desc"))
                 .kv(raw("menu.tokens-owned"), money == null ? "0" : money.format(money.balance(viewer)));
-        boolean shop = potionsHere.test(viewer);
-        if (shop) tokenLore.left(raw("menu.potions-action"));
+        boolean potions = potionsHere.test(viewer);
+        if (potions) tokenLore.left(raw("menu.potions-action"));
         out.add(button("tokens", Items.of("itemsadder:fluxdonjon:jeton_donjon", raw("menu.tokens"), tokenLore.build(), viewer),
-                shop ? "[close]" : "", shop ? "[player] potions" : ""));
+                potions ? "[close]" : "", potions ? "[player] potions" : ""));
+        out.add(button("shop", Items.of("itemsadder:fluxdonjon:boutique", raw("menu.shop"),
+                Lore.create().description(raw("menu.shop-desc")).left(raw("menu.shop-open")).build(), viewer),
+                "[fluxdungeon] shop open", ""));
         return out;
+    }
+
+    /** The viewer's rpg level, -1 when unknown. */
+    private int levelOf(Player viewer) {
+        String line = host.classLine(viewer);
+        if (line == null) return -1;
+        try {
+            return Integer.parseInt(line.substring(line.lastIndexOf(' ') + 1));
+        } catch (RuntimeException e) {
+            return -1;
+        }
     }
 
     // ---------------------------------------------------------------- detail
@@ -198,63 +244,48 @@ public final class DungeonMenus {
         if (keyItem != null) keyItem.setAmount(Math.max(1, Math.min(64, keys.count(viewer, def.job()))));
         // the launch screen, at the easiest level: the difficulty is chosen there
         out.add(button("key", keyItem, "[fluxdungeon] play 0", ""));
-        Currency money = tokens.currency();
-        out.add(button("tokens", Items.of("itemsadder:fluxdonjon:jeton_donjon", raw("menu.tokens"),
-                Lore.create().description(raw("menu.tokens-desc"))
-                        .kv(raw("menu.tokens-owned"), money == null ? "0" : money.format(money.balance(viewer))).build(), viewer), "", ""));
+        out.add(button("shop", Items.of("itemsadder:fluxdonjon:boutique", raw("menu.shop"),
+                Lore.create().description(raw("menu.shop-desc")).left(raw("menu.shop-open")).build(), viewer),
+                "[fluxdungeon] shop open " + def.id(), ""));
         return out;
     }
 
-    /** What can be won: the boss pet, the boosters, tokens, money and experience, the rpg loot with its chance. */
+    /**
+     * What the dungeon gives (2026-11-16): tokens only, by monster rank and the dungeon's reward, plus rpg experience;
+     * what tokens buy on its page of the shop: the boss's mount (once beaten), boosters, books, its set.
+     */
     private List<ListEntry> loot(Player viewer) {
         DungeonDefinition def = shown(viewer);
         List<ListEntry> out = new ArrayList<>();
         if (def == null) return out;
-        if (!def.pet().isEmpty()) {
-            boolean owned = Companions.owns(viewer, def.pet());
-            Lore lore = Lore.create().description(raw("loot.pet-desc"))
-                    .kv(raw("loot.rarity"), "&r&f%img_legendary%").description(raw("loot.pet-mount"));
-            if (owned) lore.ok(raw("loot.pet-owned"));
-            String name = Companions.name(def.pet());
-            ItemStack pet = Items.of(PORTRAIT + def.pet(), name == null ? def.pet() : name, lore.build(), viewer);
-            out.add(ListEntry.of("pet").item(pet == null ? new ItemStack(Material.EGG) : pet));
-        }
-        if (!def.job().isEmpty()) {
-            ItemStack booster = CustomItems.item("fluxpets:booster_metier_" + def.job(), viewer);
-            if (booster != null) {
-                Lore lore = Lore.create().description(raw("loot.boosters-desc"));
-                for (int i = 0; i < def.levels().size(); i++) {
-                    lore.kv(def.levels().get(i).name(), "x" + def.boosters(i));
-                }
-                String name = booster.hasItemMeta() && booster.getItemMeta().hasDisplayName()
-                        ? Texts.ampersand(booster.getItemMeta().displayName()) : raw("loot.boosters");
-                out.add(ListEntry.of("boosters").item(Items.dress(booster.clone(), name, lore.build(), viewer)));
-            }
-        }
+        DungeonDefinition.Level level = def.levels().get(0);
         Lore tokenLore = Lore.create().description(raw("loot.tokens-desc"));
         for (String rank : List.of("TRASH", "ELITE", "MINIBOSS", "BOSS")) {
             tokenLore.kv(raw("loot.rank." + rank.toLowerCase(java.util.Locale.ROOT)), tokens.base(rank));
         }
-        tokenLore.info(raw("loot.tokens-levels"));
-        out.add(ListEntry.of("tokens").item(Items.of("itemsadder:fluxdonjon:jeton_donjon", raw("menu.tokens"), tokenLore.build(), viewer)));
-        Lore moneyLore = Lore.create().description(raw("loot.money-desc"));
-        for (int i = 0; i < def.levels().size(); i++) {
-            Currency main = Economy.main();
-            double amount = host.victoryMoney(def, i);
-            moneyLore.kv(def.levels().get(i).name(), main == null ? Format.decimal(amount) : main.format(amount));
+        tokenLore.kv(raw("loot.tokens-bonus"), "x" + Format.decimal(level.reward()));
+        out.add(ListEntry.of("tokens").item(Items.of("itemsadder:fluxdonjon:jeton_donjon", raw("menu.tokens"), tokenLore.build(), viewer)).set("left", ""));
+        if (!def.pet().isEmpty()) {
+            boolean owned = Companions.owns(viewer, def.pet());
+            var v = host.victories();
+            Lore lore = Lore.create().description(raw("loot.pet-desc")).description(raw("loot.pet-mount"));
+            if (owned) lore.ok(raw("loot.pet-owned"));
+            else if (v != null && v.beaten(viewer, def.id())) lore.ok(raw("loot.pet-unlocked"));
+            else lore.ko(raw("loot.pet-locked"));
+            lore.left(raw("menu.shop-open"));
+            String name = Companions.name(def.pet());
+            ItemStack pet = Items.of(PORTRAIT + def.pet(), name == null ? def.pet() : name, lore.build(), viewer);
+            out.add(ListEntry.of("pet").item(pet == null ? new ItemStack(Material.EGG) : pet).set("left", "[fluxdungeon] shop open " + def.id()));
         }
-        out.add(ListEntry.of("money").item(Items.of("itemsadder:influitems:bitblock", raw("loot.money"), moneyLore.build(), viewer)));
-        for (DungeonDefinition.Loot drop : def.loot()) {
-            ItemStack item = CustomItems.item(drop.item(), viewer);
-            if (item == null) continue;
-            ItemStack shown = item.clone();
-            Lore extra = Lore.create().kv(raw("loot.chance"), Format.decimal(drop.chance() * 100) + " %");
-            List<String> lore = new ArrayList<>(shown.hasItemMeta() && shown.getItemMeta().hasLore()
-                    ? shown.getItemMeta().lore().stream().map(Texts::ampersand).toList() : List.of());
-            lore.addAll(extra.build());
-            String name = shown.hasItemMeta() && shown.getItemMeta().hasDisplayName()
-                    ? Texts.ampersand(shown.getItemMeta().displayName()) : null;
-            out.add(ListEntry.of("loot_" + out.size()).item(Items.dress(shown, name, lore, viewer)));
+        if (!def.job().isEmpty()) {
+            ItemStack booster = CustomItems.item("fluxpets:booster_metier_" + def.job(), viewer);
+            if (booster != null) {
+                String name = booster.hasItemMeta() && booster.getItemMeta().hasDisplayName()
+                        ? Texts.ampersand(booster.getItemMeta().displayName()) : raw("loot.boosters");
+                out.add(ListEntry.of("boosters").item(Items.dress(booster.clone(), name,
+                        Lore.create().description(raw("loot.shop-desc", "%job%", keys.jobName(def.job()))).left(raw("menu.shop-open")).build(), viewer))
+                        .set("left", "[fluxdungeon] shop open " + def.id()));
+            }
         }
         return out;
     }
