@@ -17,8 +17,9 @@ Layouts (window px 176 wide, item of a slot at fond_lib.objet):
             whole window (chest and hidden inventory, rows 0 to 9): floors climbing in switchbacks from floor 1
             (hotbar row, left) to floor 10 (row 1, right), two a storey, each in a frame of its job's colour with its
             level beside it, joined by Flux's path pieces (the connectors of the ranks menu): green up to the last
-            floor beaten, orange to the floor to play, off above; the path ends on the "?" (slot 6, above floor 10:
-            the tower goes on), lit once the tower is beaten. Row 0: back (0), "?" (6), info (8); beside the floors: class (36), party (44), tokens (72),
+            floor beaten, orange to the floor to play, off above; past floor 10 the road climbs to the top row and
+            runs left to the "?" (slot 4: the adventure goes on), lit once every dungeon is beaten. Row 0: back (0),
+            "?" (4), info (8); beside the floors: class (36), party (44), tokens (72),
             shop (80, on a green plate). A floor beaten is lit by Flux (won_<floor>).
   donjon_boutique  the dungeon shop (2026-11-16, rows 0 to 7): back (0), the shop shown in a field, info (8);
             articles in a well (rows 1-4, columns 1-7, 28 a page), Flux's pager on row 5 (every shop at once by
@@ -66,8 +67,8 @@ JOB_NAMES = {"mineur": "Mineur", "rochiste": "Rochiste", "deblayeur": "Déblayeu
 
 # the tower: floor n at TOWER_SLOTS[n - 1] (switchbacks, two floors a storey, from the hotbar row up)
 TOWER_SLOTS = [83, 87, 69, 65, 47, 51, 33, 29, 11, 15]
-TOWER_BUTTONS = [0, 6, 8, 36, 44, 72, 80]     # back, "?", info, class, party, tokens, shop (DungeonMenus order)
-UNKNOWN, SHOP_BUTTON = 6, 80
+TOWER_BUTTONS = [0, 4, 8, 36, 44, 72, 80]     # back, "?", info, class, party, tokens, shop (DungeonMenus order)
+UNKNOWN, SHOP_BUTTON = 4, 80
 
 
 def tower_route():
@@ -81,8 +82,13 @@ def tower_route():
             cells += [ra * 9 + c for c in range(ca + step, cb + step, step)]
         else:
             cells += [r * 9 + ca for r in range(ra - 1, rb - 1, -1)]
-    # the "?" is the path's last cell, above floor 10: off until the tower is beaten
-    return cells + [UNKNOWN], [cells.index(s) for s in TOWER_SLOTS]
+    # the road goes on past floor 10: one row up, then along the top row to the "?" (owner, 2026-11-16: two slots to
+    # the left, so the road goes a bit further); off until every dungeon is beaten
+    last = TOWER_SLOTS[-1]
+    tail = [last - 9]
+    while tail[-1] != UNKNOWN:
+        tail.append(tail[-1] + (1 if UNKNOWN > tail[-1] else -1))
+    return cells + tail, [cells.index(s) for s in TOWER_SLOTS]
 SHOP_ARTICLES = [r * 9 + c for r in range(1, 5) for c in range(1, 8)]
 SHOP_FLOORS = [65, 66, 67, 68, 69, 56, 57, 58, 59, 60]   # the five first dungeons on the lower row, the five next above
 SHOP_BUTTONS = [0, 8, 62]                 # back, info, tokens (beside the tabs)
