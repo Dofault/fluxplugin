@@ -1,0 +1,56 @@
+# Scoreboard on the right of the screen, drawn by Flux (packets, one player at a time). /fluxmenu reload reads it again.
+# While it is on, other plugins' sidebars (Typewriter) are held back, and come back when it is turned off.
+enabled: true
+# Ticks between two redraws (only changed lines are sent).
+refresh-ticks: 10
+# Hidden during an activity that wants the screen (api.client.Focus: a dungeon run).
+hide-when-focused: true
+# Option of settings.yml that hides it for a player (blank: always shown).
+setting: scoreboard
+
+# Width in pixels of the game's font: never narrower than min-width; lines wider than max-width go on to the next
+# line, starting with wrap-indent ({carry}: the frame line "│" under a branch that goes on, else a space).
+min-width: 110
+max-width: 150
+wrap-indent: " <frame>{carry}</frame>     "
+# {branch} in a line: the first character on every line of the section that has it, the second on the last one;
+# the third continues a branch on wrapped lines.
+branch: ["├", "└", "│"]
+
+# Colours by name: <name>...</name> in any line.
+colours:
+  title: "#E06C9F"
+  frame: "#E06C9F"
+  heading: "#4FC3C9"
+  text: "#F7D6E6"
+  value: "#FFFFFF"
+  bullet: "#9B3459"
+  info: "#F2B8C9"
+  link: "#4FC3C9"
+
+title: "<title>✦ <smallcaps>progression</smallcaps> ✦</title>"
+
+# Lists read from a placeholder cut at a separator, each piece is {text}. Plugins give others (api.scoreboard).
+lists:
+  quest_objectives:
+    placeholder: "%typewriter_tracked_objectives%"
+    split: ", "
+
+# Sections, top to bottom, each shown when what it requires is there (a list with rows, or a text not blank once
+# its placeholders are read). A line: text, or {text, each: <list>, limit, requires, centre}.
+sections:
+  - requires: "%typewriter_tracked_quest%"
+    lines:
+      - ""
+      - " <heading><smallcaps>quest</smallcaps></heading>"
+      - " <frame>│</frame> <value>%typewriter_tracked_quest%</value>"
+      - {each: quest_objectives, text: " <frame>{branch}</frame> <bullet>➤</bullet> <text>{text}</text>"}
+      - {requires: "%waypoint_distance%", text: " <frame>{branch}</frame> %waypoint_compass% <info>%waypoint_distance%</info>"}
+  - requires: pass_todo
+    lines:
+      - ""
+      - " <heading><smallcaps>pass</smallcaps></heading>"
+      - {each: pass_todo, limit: 3, text: " <frame>{branch}</frame> <bullet>➤</bullet> <text>{name}</text> <value>{progress}</value>"}
+  - lines:
+      - ""
+      - {text: "<link><smallcaps>play.example.net</smallcaps></link>", centre: true}

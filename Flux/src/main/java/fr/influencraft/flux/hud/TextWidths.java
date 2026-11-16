@@ -14,14 +14,14 @@ import java.util.Map;
  * How far the client moves after each character of its default font, from {@code font_widths.json} (generated from
  * the client jar by {@code Flux/assets/vanilla/gen_font_widths.py}). Characters it lacks (unifont) count 6 px.
  */
-final class TextWidths {
+public final class TextWidths {
 
     private static final int FALLBACK = 6;
     private final Map<Integer, Integer> widths = new HashMap<>();
     /** The HUD font's QuinqueFive sheet (hud_font_widths.json, Flux/assets/hud/gen_hud.py). */
     private final Map<Integer, Integer> small = new HashMap<>();
 
-    TextWidths(Plugin flux) {
+    public TextWidths(Plugin flux) {
         read(flux, "font_widths.json", widths);
         read(flux, "hud_font_widths.json", small);
     }
@@ -46,7 +46,7 @@ final class TextWidths {
         return small.containsKey(codePoint);
     }
 
-    int width(String text, boolean inSmall) {
+    public int width(String text, boolean inSmall) {
         Map<Integer, Integer> widths = inSmall ? small : this.widths;
         int w = 0;
         for (int i = 0; i < text.length(); ) {

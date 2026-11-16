@@ -25,6 +25,10 @@ public final class Sidebar {
     private static final Set<UUID> HIDDEN = ConcurrentHashMap.newKeySet();
     /** The objective each player's sidebar was last told to show ({@code ""}: none). */
     private static final Map<UUID, String> LAST = new ConcurrentHashMap<>();
+    /** Flux's own scoreboard holds the sidebar of these players: the objective it shows. */
+    private static final Map<UUID, String> CLAIMED = new ConcurrentHashMap<>();
+    /** What other plugins asked to show meanwhile, shown again when the claim ends. */
+    private static final Map<UUID, String> BLOCKED = new ConcurrentHashMap<>();
 
     private Sidebar() {
     }
@@ -57,9 +61,42 @@ public final class Sidebar {
         LAST.put(player, objective == null ? "" : objective);
     }
 
+    /**
+     * Flux's scoreboard takes this player's sidebar: only this objective may show there, what other plugins (Typewriter)
+     * ask meanwhile is held back and shown again on {@link #release}.
+     */
+    public static void claim(Player player, String objective) {
+        CLAIMED.put(player.getUniqueId(), objective);
+    }
+
+    /** The sidebar goes back to other plugins: the last one they asked for is shown again. */
+    public static void release(UUID player) {
+        if (CLAIMED.remove(player) == null) return;
+        String blocked = BLOCKED.remove(player);
+        Service s = service;
+        Player online = org.bukkit.Bukkit.getPlayer(player);
+        if (blocked == null || s == null || online == null) return;
+        LAST.put(player, blocked);
+        if (!HIDDEN.contains(player) && !blocked.isEmpty()) s.show(online, blocked);
+    }
+
+    /**
+     * Called by the adapter for each sidebar display asked to a player: false when it must be held back because Flux's
+     * scoreboard holds the sidebar and it is another objective (it is kept for {@link #release}).
+     */
+    public static boolean allowed(UUID player, String objective) {
+        String claimed = CLAIMED.get(player);
+        String name = objective == null ? "" : objective;
+        if (claimed == null || claimed.equals(name)) return true;
+        BLOCKED.put(player, name);
+        return false;
+    }
+
     /** Called by Flux when a player leaves. */
     public static void forget(UUID player) {
         HIDDEN.remove(player);
         LAST.remove(player);
+        CLAIMED.remove(player);
+        BLOCKED.remove(player);
     }
 }

@@ -44,6 +44,11 @@ public final class SidebarFilter extends PacketListenerAbstract implements Sideb
         if (!(event.getPlayer() instanceof Player p)) return;
         WrapperPlayServerDisplayScoreboard w = new WrapperPlayServerDisplayScoreboard(event);
         if (w.getPosition() != SIDEBAR) return;
+        // Flux's scoreboard holds the sidebar: another plugin's (Typewriter) waits for it to be released
+        if (!Sidebar.allowed(p.getUniqueId(), w.getScoreName())) {
+            event.setCancelled(true);
+            return;
+        }
         Sidebar.told(p.getUniqueId(), w.getScoreName());
         if (Sidebar.hidden(p.getUniqueId()) && w.getScoreName() != null && !w.getScoreName().isEmpty()) event.setCancelled(true);
     }

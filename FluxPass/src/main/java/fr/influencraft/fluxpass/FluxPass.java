@@ -57,6 +57,9 @@ public final class FluxPass extends FluxPlugin implements Listener {
         Values.onChange(() -> Bukkit.getScheduler().runTask(this, this::reloadMissions));
         Effects.whenReady(this, pass::engineReady);
         placeholders("fluxpass", menu::placeholder);
+        // the missions still to do in Flux's scoreboard (scoreboard.yml: each: pass_todo, {name} {progress})
+        fr.influencraft.flux.api.scoreboard.Scoreboard.list(this, "pass_todo", player -> menu.todos(player).stream()
+                .map(t -> java.util.Map.of("name", t.name(), "progress", t.progress(), "icon", t.icon())).toList());
         action("fluxpass", (player, view, argument) -> {
             String[] a = argument.trim().split("\\s+");
             if (a.length == 2 && a[0].equalsIgnoreCase("category")) {

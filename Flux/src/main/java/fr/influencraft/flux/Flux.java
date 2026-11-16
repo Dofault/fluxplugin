@@ -178,6 +178,10 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         // HUD (plugins/Flux/hud.yml) in place of MythicHUD, drawn by the text shader of Flux's client pack
         hud = new fr.influencraft.flux.hud.HudService(this);
         hud.start();
+        // scoreboard (plugins/Flux/scoreboard.yml) in place of Typewriter's, as packets
+        scoreboard = new fr.influencraft.flux.scoreboard.ScoreboardService(this, getServer().getPluginManager().isPluginEnabled("packetevents")
+                ? new fr.influencraft.flux.adapters.packetevents.PacketEventsScoreboard() : null);
+        scoreboard.start();
         // the advancements key opens our menu (advancement-redirect.command)
         advancementListener = PacketEvents.getAPI().getEventManager()
                 .registerListener(new fr.influencraft.flux.adapters.packetevents.AdvancementRedirect(this,
@@ -210,6 +214,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         if (currencies != null) currencies.stop();
         if (tab != null) tab.stop();
         if (hud != null) hud.stop();
+        if (scoreboard != null) scoreboard.stop();
         if (clientPack != null) clientPack.stop();
         if (bossBarListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(bossBarListener);
         if (cameraListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(cameraListener);
@@ -234,6 +239,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     private fr.influencraft.flux.economy.CurrencyService currencies;
     private fr.influencraft.flux.tab.TabService tab;
     private fr.influencraft.flux.hud.HudService hud;
+    private fr.influencraft.flux.scoreboard.ScoreboardService scoreboard;
     private fr.influencraft.flux.pack.ClientPack clientPack;
     private com.github.retrooper.packetevents.event.PacketListenerCommon bossBarListener;
     private com.github.retrooper.packetevents.event.PacketListenerCommon cameraListener;
@@ -419,6 +425,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         fr.influencraft.flux.api.economy.Economy.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.tab.TabList.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.hud.Hud.unregisterAll(event.getPlugin());
+        fr.influencraft.flux.api.scoreboard.Scoreboard.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.client.TextShader.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.reward.Rewards.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.items.CustomItems.unregisterAll(event.getPlugin());
@@ -495,6 +502,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
                 if (tab != null) tab.load();
                 if (hud != null) hud.load();
                 int warnings = registry.load();
+                if (scoreboard != null) scoreboard.load();
                 msg(sender, "&#2ECF7B" + registry.all().size() + " menu(s) rechargé(s)"
                         + (warnings > 0 ? " &#FF5C5C(" + warnings + " avertissement(s), voir la console)" : "") + ".");
             }
