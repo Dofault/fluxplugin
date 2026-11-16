@@ -167,8 +167,12 @@ public final class FluxDungeons extends FluxPlugin {
                 return runs.isBossPet(pet);
             }
 
-            public java.util.List<fr.influencraft.fluxdungeons.rpg.SpellBook.Spell> spells(Player player) {
-                return rpg == null || rpg.players() == null ? java.util.List.of() : rpg.players().spells(player);
+            public java.util.List<fr.influencraft.fluxdungeons.rpg.SpellBook.Spell> spells(Player player, String valueOn, String valueOff) {
+                return rpg == null || rpg.players() == null ? java.util.List.of() : rpg.players().spells(player, valueOn, valueOff);
+            }
+
+            public java.util.List<String[]> stats(Player player) {
+                return rpg == null || rpg.players() == null ? java.util.List.of() : rpg.players().statLines(player);
             }
 
             public void refreshGear(Player player) {
@@ -181,6 +185,16 @@ public final class FluxDungeons extends FluxPlugin {
         }, keys, tokens);
         menus.potions(p -> rpg != null && rpg.potions() != null
                 && fr.influencraft.fluxdungeons.rpg.RpgWorld.UNIVERSE.equals(fr.influencraft.flux.api.universe.Universes.of(p)));
+        if (rpg != null && rpg.players() != null) {
+            // a class chosen from the classes menu goes back to the dungeons (owner, 2026-11-16)
+            rpg.players().onClassChanged(p -> {
+                var view = fr.influencraft.flux.api.FluxApi.view(p);
+                if (view != null && view.isOpen() && "rpg_classes".equals(view.menuId())) menus.open(p);
+                else menus.refresh(p);
+            });
+            // his class read from the database: the dungeons menu shows it at once
+            rpg.players().onClassKnown(menus::refresh);
+        }
     }
 
     private void wireRpg() {

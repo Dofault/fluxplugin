@@ -35,7 +35,28 @@ public final class SpellBook {
     private SpellBook() {
     }
 
+    /** Marks around a value inside a text, replaced at the end (colour codes would be taken off by PageKit.plain). */
+    private static final char ON = '\u0001', OFF = '\u0002';
+
+    /** The spells, plain texts (the class pages). */
     public static List<Spell> of(ClassDef c, Texts texts) {
+        return of(c, texts, "", "");
+    }
+
+    /**
+     * The spells, each value of their texts (numbers, durations, ranges) between {@code valueOn} and {@code valueOff}:
+     * colour codes in a menu (the values in white, the sentence in its own colour).
+     */
+    public static List<Spell> of(ClassDef c, Texts texts, String valueOn, String valueOff) {
+        List<Spell> out = new ArrayList<>();
+        for (Spell sp : spells(c, texts)) {
+            out.add(new Spell(sp.slot(), sp.key(), sp.name(),
+                    sp.text().replace(String.valueOf(ON), valueOn).replace(String.valueOf(OFF), valueOff), sp.mana(), sp.icon()));
+        }
+        return out;
+    }
+
+    private static List<Spell> spells(ClassDef c, Texts texts) {
         List<Spell> out = new ArrayList<>();
         String id = c.id();
         for (String slot : ClassDef.SHOWN) {
@@ -66,6 +87,10 @@ public final class SpellBook {
         return out;
     }
 
+    private static String value(String v) {
+        return ON + v + OFF;
+    }
+
     private static String name(Texts texts, String classId, String slot) {
         return PageKit.plain(texts.raw("class-pages.classes." + classId + "." + slot + ".name"));
     }
@@ -77,18 +102,18 @@ public final class SpellBook {
     private static String[] vars(Texts texts, CombatMath.Type type, double coef, int hits, int targets, double duration,
                                  double mana, double range, Map<String, Double> extra) {
         List<String> v = new ArrayList<>(List.of(
-                "%coef%", ClassPages.num(coef * 100) + " %",
+                "%coef%", value(ClassPages.num(coef * 100) + " %"),
                 "%power%", texts.raw("class-pages.powers." + (type == CombatMath.Type.MAGIC ? "magic" : "physical")),
-                "%hits%", String.valueOf(Math.max(1, hits)),
-                "%targets%", String.valueOf(Math.max(1, targets)),
-                "%duration%", ClassPages.num(duration),
-                "%mana%", ClassPages.num(mana),
-                "%range%", ClassPages.num(extra.getOrDefault("range", range))));
+                "%hits%", value(String.valueOf(Math.max(1, hits))),
+                "%targets%", value(String.valueOf(Math.max(1, targets))),
+                "%duration%", value(ClassPages.num(duration)),
+                "%mana%", value(ClassPages.num(mana)),
+                "%range%", value(ClassPages.num(extra.getOrDefault("range", range)))));
         for (Map.Entry<String, Double> e : extra.entrySet()) {
             v.add("%" + e.getKey() + "%");
-            v.add(ClassPages.num(e.getValue()));
+            v.add(value(ClassPages.num(e.getValue())));
             v.add("%" + e.getKey() + "_pct%");
-            v.add(ClassPages.num(e.getValue() * 100) + " %");
+            v.add(value(ClassPages.num(e.getValue() * 100) + " %"));
         }
         return v.toArray(String[]::new);
     }

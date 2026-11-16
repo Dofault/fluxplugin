@@ -675,6 +675,9 @@ menu:
   spell-key: 'Key'
   spell-cost: 'Cost'
   spells-none: 'Choose a class to see its spells.'
+  stats: '%player%''s stats'
+  stats-desc: 'Your rpg character with its gear.'
+  stats-unknown: 'Choose a class to see your stats.'
 potions:
   title: 'Potion merchant'
   gives-health: 'Gives back %share% % of your life at once.'

@@ -13,7 +13,8 @@ Lists, actions and placeholders are FluxDungeons' (menu.DungeonMenus, dungeon.Lo
 
 Layouts (window px 176 wide, item of a slot at fond_lib.objet):
   donjons   the dungeons in a line (2026-11-16, owner's layout), rows 0 to 3 and the inventory's three rows: back (0),
-            info (8: tokens, class level); party and shop centred (12, 14; the shop on a green plate); the « stuff RPG »
+            info (8: tokens, class level); his stats (his head), party and shop centred (11, 13, 15; the shop on a
+            green plate); the « stuff RPG »
             on row 3 (below); his spells in the inventory's first row under « SORTS » (38-42: A, F, the weapon's spell,
             the basic attack, the passive; read only); the line in the inventory's third row: four
             dungeons a page (55, 57, 59, 61), Flux's path through them and on to the arrows (54, 62) that turn the page,
@@ -67,8 +68,8 @@ VIOLET, VIOLET_DARK = ui.rgb("#5B2D9E"), ui.rgb("#1E0A3C")
 SPELL_SLOTS = [38, 39, 40, 41, 42]      # A, F, weapon's spell, basic attack, passive (rpg.SpellBook order)
 LINE_SLOTS = [55, 57, 59, 61]           # same as DungeonMenus.PER_PAGE
 LINE_ARROWS = (54, 62)
-LINE_BUTTONS = [0, 8, 12, 14]           # back, info, party, shop (DungeonMenus order)
-SHOP_BUTTON = 14
+LINE_BUTTONS = [0, 8, 11, 13, 15]       # back, info, his stats (his head), party, shop (DungeonMenus order)
+SHOP_BUTTON = 15
 # the player's rpg gear, in the inventory's first row under the line (the menu has 4 chest rows): weapon (his class),
 # helmet, chestplate, leggings, boots, his rpg inventory to look at, health and mana potions, the pet for dungeons
 GEAR_SLOTS = [27, 28, 29, 30, 31, 32, 33, 34, 35]

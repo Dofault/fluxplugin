@@ -75,7 +75,10 @@ public final class DungeonMenus {
         void refreshGear(Player player);
 
         /** His class's spells in reading order (A first, basic attack, then the passive), empty without a class. */
-        List<fr.influencraft.fluxdungeons.rpg.SpellBook.Spell> spells(Player player);
+        List<fr.influencraft.fluxdungeons.rpg.SpellBook.Spell> spells(Player player, String valueOn, String valueOff);
+
+        /** His rpg stats (name, value), wherever he is; empty while unknown. */
+        List<String[]> stats(Player player);
     }
 
     public static final String PET_MENU = "donjon_familier";
@@ -116,6 +119,11 @@ public final class DungeonMenus {
         Lists.act(p, "donjons_liste", "page " + currentPage(p), PER_PAGE);
         invalidate(p);
         FluxApi.open(p, LIST);
+    }
+
+    /** What the menus show of him changed (his class, read or chosen): drawn again. */
+    public void refresh(Player p) {
+        invalidate(p);
     }
 
     private void invalidate(Player p) {
@@ -279,6 +287,7 @@ public final class DungeonMenus {
                 Lore.create().description(raw("menu.info-desc"))
                         .kv(raw("menu.class"), line == null ? raw("menu.no-class") : line)
                         .kv(raw("menu.tokens-owned"), owned).build(), viewer), "", ""));
+        out.add(button("stats", stats(viewer), "", ""));
         out.add(button("party", Items.of("PLAYER_HEAD", raw("menu.party"),
                 Lore.create().description(host.partyLine(viewer)).description(raw("menu.party-desc"))
                         .left(raw("menu.party-action")).build(), viewer), "[close]", "[player] groupe"));
@@ -286,6 +295,20 @@ public final class DungeonMenus {
                 Lore.create().description(raw("menu.shop-desc")).kv(raw("menu.tokens-owned"), owned)
                         .left(raw("menu.shop-open")).build(), viewer), "[fluxdungeon] shop open", ""));
         return out;
+    }
+
+    /** His head, his rpg stats in its description (every stat not at zero), wherever he is. */
+    private ItemStack stats(Player viewer) {
+        Lore lore = Lore.create().description(raw("menu.stats-desc"));
+        List<String[]> lines = host.stats(viewer);
+        if (lines.isEmpty()) lore.info(raw("menu.stats-unknown"));
+        for (String[] l : lines) lore.kv(l[0], l[1]);
+        ItemStack head = orBarrier(Items.of("PLAYER_HEAD", raw("menu.stats", "%player%", viewer.getName()), lore.build(), viewer));
+        if (head.getItemMeta() instanceof org.bukkit.inventory.meta.SkullMeta skull) {
+            skull.setOwningPlayer(viewer);
+            head.setItemMeta(skull);
+        }
+        return head;
     }
 
     // ---------------------------------------------------------------- his gear
@@ -365,14 +388,16 @@ public final class DungeonMenus {
      */
     private List<ListEntry> spells(Player viewer) {
         List<ListEntry> out = new ArrayList<>();
-        for (var sp : host.spells(viewer)) {
-            Lore lore = Lore.create().description(sp.text())
+        // the sentence in the theme's violet, its values in white (owner, 2026-11-16)
+        for (var sp : host.spells(viewer, "&f", Lore.PURPLE)) {
+            Lore lore = Lore.create().description(Lore.PURPLE + sp.text())
                     .kv(raw("menu.spell-key"), raw("class-pages.keys." + sp.key()));
             if (sp.mana() >= 0) lore.kv(raw("menu.spell-cost"), sp.mana() == 0 ? raw("class-pages.free")
                     : raw("class-pages.mana", "%mana%", fr.influencraft.flux.api.util.Format.decimal(sp.mana())));
+            lore.left(raw("menu.class-action"));
             ItemStack item = Items.of("itemsadder:" + sp.icon(), "&#FFD94D" + sp.name(), lore.build(), viewer);
             if (item == null) item = Items.of("ENCHANTED_BOOK", "&#FFD94D" + sp.name(), lore.build(), viewer);
-            out.add(ListEntry.of("spell_" + sp.slot()).item(orBarrier(item)).set("left", "").set("right", ""));
+            out.add(ListEntry.of("spell_" + sp.slot()).item(orBarrier(item)).set("left", "[player] classe").set("right", ""));
         }
         if (out.isEmpty()) {
             Lore lore = Lore.create().description(raw("menu.spells-none")).left(raw("menu.class-action"));

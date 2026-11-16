@@ -687,6 +687,9 @@ menu:
   spell-key: 'Touche'
   spell-cost: 'Coût'
   spells-none: 'Choisis une classe pour voir ses sorts.'
+  stats: 'Statistiques de %player%'
+  stats-desc: 'Ton personnage RPG avec son équipement.'
+  stats-unknown: 'Choisis une classe pour voir tes statistiques.'
 potions:
   title: 'Marchand de potions'
   gives-health: 'Rend %share% % de ta vie d''un coup.'

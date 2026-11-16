@@ -131,6 +131,9 @@ public final class RpgPlayers implements Listener {
                     RpgStore.Progress pr = hero == null ? null : store.progress(id, hero.heroClass());
                     away.put(id, hero == null ? new String[0]
                             : new String[]{hero.heroClass(), String.valueOf(pr == null ? 1 : pr.level())});
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        if (p.isOnline()) classKnown.accept(p);
+                    });
                 } catch (SQLException ex) {
                     plugin.getLogger().warning("Class of " + id + " unreadable: " + ex.getMessage());
                 } finally {
@@ -141,12 +144,79 @@ public final class RpgPlayers implements Listener {
         return null;
     }
 
-    /** His spells in reading order ({@link SpellBook}), empty without a class (or while it is read). */
-    public List<SpellBook.Spell> spells(Player p) {
+    /** Called on the main thread once a change of class is done (the menus go back to the dungeons). */
+    private java.util.function.Consumer<Player> changed = p -> {
+    };
+    /** Called on the main thread once his class is read from the database (the menus showing it refresh). */
+    private java.util.function.Consumer<Player> classKnown = p -> {
+    };
+
+    public void onClassChanged(java.util.function.Consumer<Player> c) {
+        changed = c == null ? p -> {
+        } : c;
+    }
+
+    public void onClassKnown(java.util.function.Consumer<Player> c) {
+        classKnown = c == null ? p -> {
+        } : c;
+    }
+
+    /** Read at his arrival, so that the menus know his class before he opens one. */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onJoin(org.bukkit.event.player.PlayerJoinEvent e) {
+        hero(e.getPlayer());
+    }
+
+    /**
+     * His rpg stats wherever he is: live in the rpg universe; elsewhere from his class at his level and the armour of
+     * his kept rpg profile, his class's weapon in hand (what he has when he comes in). Null while his class is unknown.
+     */
+    public StatSheet sheet(Player p) {
+        RpgPlayer r = online.get(p.getUniqueId());
+        if (r != null && r.stats() != null) return r.stats();
         String[] h = hero(p);
         RpgConfig.Set set = config.get();
         ClassDef c = h == null || set == null ? null : set.classes().get(h[0]);
-        return c == null ? List.of() : SpellBook.of(c, plugin.messages()::raw);
+        if (c == null) return null;
+        int lvl;
+        try {
+            lvl = Integer.parseInt(h[1]);
+        } catch (NumberFormatException ex) {
+            lvl = 1;
+        }
+        Map<String, String> worn = new LinkedHashMap<>();
+        worn.put("weapon", RpgItems.starterId(c.id()));
+        ItemStack[] contents = Universes.contents(p, RpgWorld.UNIVERSE);
+        String[] slots = {"boots", "leggings", "chestplate", "helmet"};
+        for (int i = 0; contents != null && i < 4 && 36 + i < contents.length; i++) put(worn, slots[i], contents[36 + i]);
+        List<Modifier> mods = new ArrayList<>(c.modifiers(lvl));
+        mods.addAll(set.equipment().modifiers(worn, c.id(), lvl));
+        return StatSheet.compute(set.stats(), mods);
+    }
+
+    /** His stats as menus show them: (name, value) of each stat not at zero, by category (offense first). */
+    public List<String[]> statLines(Player p) {
+        StatSheet sheet = sheet(p);
+        RpgConfig.Set set = config.get();
+        List<String[]> out = new ArrayList<>();
+        if (sheet == null || set == null) return out;
+        for (String category : List.of("offense", "defense", "resource", "utility")) {
+            for (var d : set.stats().all()) {
+                if (!d.category().equals(category)) continue;
+                double v = sheet.get(d.id());
+                if (Math.abs(v) < 1e-9) continue;
+                out.add(new String[]{items.statName(d.id()), total(d, v)});
+            }
+        }
+        return out;
+    }
+
+    /** His spells in reading order ({@link SpellBook}), empty without a class (or while it is read). */
+    public List<SpellBook.Spell> spells(Player p, String valueOn, String valueOff) {
+        String[] h = hero(p);
+        RpgConfig.Set set = config.get();
+        ClassDef c = h == null || set == null ? null : set.classes().get(h[0]);
+        return c == null ? List.of() : SpellBook.of(c, plugin.messages()::raw, valueOn, valueOff);
     }
 
     /** Whether he may enter a dungeon: an rpg class loaded, or outside the rpg universe (chosen on arriving). */
@@ -435,6 +505,7 @@ public final class RpgPlayers implements Listener {
         UUID id = p.getUniqueId();
         if (!loading.add(id)) return;
         boolean free = free(p);
+        int[] level = {1};
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             String refused = null;
             try {
@@ -444,6 +515,10 @@ public final class RpgPlayers implements Listener {
                 else if (hero.heroClass().equals(to)) refused = "";
                 else if (wait > 0 && !free) refused = "choice.cooldown:" + (wait / 60_000 + 1);
                 else if (!store.change(id, hero.heroClass(), to)) refused = "choice.changed-elsewhere";
+                else {
+                    RpgStore.Progress pr = store.progress(id, to);
+                    level[0] = pr == null ? 1 : pr.level();
+                }
             } catch (SQLException ex) {
                 refused = "rpg.unavailable";
             }
@@ -461,9 +536,11 @@ public final class RpgPlayers implements Listener {
                     online.remove(id);
                     start(p);
                 } else swapStoredWeapon(p, to);
-                away.remove(id);   // read again with the new class
+                // known at once: the menus show the new class without a database read
+                away.put(id, new String[]{to, String.valueOf(level[0])});
                 plugin.messages().send(p, "choice.changed", "%class%", plugin.messages().raw("classes." + to + ".name"));
                 Sounds.cue(p, "success");
+                changed.accept(p);
             });
         });
     }
@@ -546,6 +623,7 @@ public final class RpgPlayers implements Listener {
                 showLevel(p, now);
                 plugin.messages().send(p, "choice.changed", "%class%", plugin.messages().raw("classes." + to + ".name"));
                 Sounds.cue(p, "success");
+                changed.accept(p);
             });
         });
     }
