@@ -17,9 +17,9 @@ Layouts (window px 176 wide, item of a slot at fond_lib.objet):
             dungeons a page (28, 30, 32, 34), Flux's path through them and on to the arrows (27, 35) that turn the page,
             each dungeon in a frame of its job's colour with its level written above it; the « ? » after the last one
             (the adventure goes on). One picture and one path per page (pages donjons_p<n> of the menu).
-  donjon_boutique  the dungeon shop (2026-11-16, laid out as the market): back (0), info (8); articles in a well
-            (rows 1-4, columns 1-7); left column tokens (18) and the kind filter (27), right column the search (35);
-            Flux's pager on row 5; in the inventory's first row « Tous » and six jobs between two scroll arrows.
+  donjon_boutique  the dungeon shop (2026-11-16, laid out as the market, rows 0 to 5, no inventory part): back (0),
+            info (8); articles in a well (rows 1-4, columns 1-7); left column the job filter (18) and the kind filter
+            (27), right column tokens (26) and the search (35); Flux's pager on row 5.
   donjon_sas row 0: leave (0), info (8); rows 1-2: one card per member (head, ready or waiting under it); row 3:
             Easy / Normal / Hard (28, 31, 34, coloured cells, no words: the buttons' names say it), the chosen one lit;
             row 4: players ready; row 5: class (45), ready (49), key (53)
@@ -78,10 +78,8 @@ def line_cells(page_index, pages):
 
 
 SHOP_ARTICLES = [r * 9 + c for r in range(1, 5) for c in range(1, 8)]
-SHOP_BUTTONS = [0, 8, 18, 27, 35]         # back, info, tokens, kind filter, search (DungeonShop order), as the market
+SHOP_BUTTONS = [0, 8, 18, 27, 26, 35]     # back, info, job filter, kind filter, tokens, search (DungeonShop order)
 SHOP_PAGER = (45, 53)                     # Flux's pager under the articles
-SHOP_JOBS = [55, 56, 57, 58, 59, 60, 61]  # « Tous » then six jobs, in the inventory's first row
-SHOP_ARROWS = [54, 62]                    # scroll the row of jobs
 MEMBER_SLOTS, STATE_SLOTS = [11, 12, 13, 14, 15], [20, 21, 22, 23, 24]
 SAS_LEVELS = [31]                     # one level per dungeon since 2026-11-16: its floor card
 
@@ -121,14 +119,11 @@ def bg_line(page):
 
 
 def bg_shop():
-    """The dungeon shop (as the market): articles in a well, the row of jobs in a well in the inventory's first row
-    (the arrows at its ends stand on the window)."""
-    im = bg_window(GENERIC, 0, 6, title="Donjon")
+    """The dungeon shop (as the market): articles in a well, the window down to the pager's row."""
+    im = bg_window(GENERIC, 0, 5, title="Donjon")
     d = ImageDraw.Draw(im, "RGBA")
     x0, y0, x1, y1 = span(SHOP_ARTICLES, 2)
     ui.well(d, (x0, y0, x1, y1 - 2))           # 2 px up from Flux's pager
-    fx0, fy0, fx1, fy1 = span(SHOP_JOBS, 2)
-    ui.well(d, (fx0 + 1, fy0, fx1 - 1, fy1))   # 1 px off the arrows next to it
     return im
 
 
@@ -380,7 +375,7 @@ lists:
 pages:
 """ + "\n".join(page_blocks) + "\n")
     open(os.path.join(MENUS, "donjon_boutique.yml"), "w", encoding="utf-8").write(head + f"""# The dungeon shop (reward.DungeonShop, 2026-11-16), laid out as the market: articles bought in Flux's buying window,
-# filtered by job (row of the inventory) and by kind, searched, paged by Flux. Contents and prices: shop.yml
+# filtered by job and by kind (two filter buttons), searched, paged by Flux. Contents and prices: shop.yml
 # (assets/balance/tower.py).
 
 title: ":offset_-8::fd_menu_boutique:"
@@ -401,8 +396,6 @@ lists:
       name: "Rien ici"
       lore:
         - "@desc Rien ne correspond. Essaie un autre filtre, une autre recherche ou « Tous »."
-{entries("boutique_metiers", SHOP_JOBS, left=["%entry_left%"])}
-{entries("boutique_defile", SHOP_ARROWS, left=["%entry_left%"])}
 
 widgets:
   pages:

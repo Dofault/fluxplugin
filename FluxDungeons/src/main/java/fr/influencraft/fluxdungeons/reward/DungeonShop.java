@@ -45,10 +45,8 @@ import java.util.function.Supplier;
  * <p>
  * One Flux list ({@code boutique_articles}): its filter is the job (« Tous » first), its second filter ({@code kind})
  * the kind of item: mounts, boosters, sets, or a tool / armour piece (an enchanted book shows under every item its
- * enchantment goes on); Flux pages it and searches it. The jobs are a row of buttons in the inventory, another Flux
- * list ({@code boutique_metiers}: « Tous » then the jobs, {@link #JOB_SLOTS} a page) turned by an arrow at each end
- * ({@code boutique_defile}: {@code [list] boutique_metiers prev / next}, the page sound of every menu); a job clicked
- * again goes back to « Tous ».
+ * enchantment goes on); Flux pages it and searches it. Two filter buttons as the market's (Flux's {@code
+ * Lists.choice}, clicks {@code [list] boutique_articles filter / kind}): the job (« Tous » first), the kind of item.
  * A click on an article opens Flux's buying window ({@link TradeWindow}). Articles are shown with their own
  * description ({@code CustomItems.preview}: the booster's text of FluxPets, without its « right click » lines).
  * Semi-rp things (boosters, books) are vanilla items: bought from the rpg lobby they wait in {@code /recompenses}.
@@ -57,9 +55,6 @@ public final class DungeonShop {
 
     public static final String MENU = "donjon_boutique";
     public static final String LIST = "boutique_articles";
-    public static final String JOBS = "boutique_metiers";
-    /** Buttons of the row of jobs on a page (« Tous » and the jobs), between the two arrows. */
-    private static final int JOB_SLOTS = 7;
 
     record Article(String kind, String id, int level, double price) {
     }
@@ -118,8 +113,6 @@ public final class DungeonShop {
             }
         });
         Lists.register(plugin, "boutique_boutons", q -> buttons(q.viewer()));
-        Lists.register(plugin, JOBS, q -> jobs(q.viewer()));
-        Lists.register(plugin, "boutique_defile", q -> arrows(q.viewer()));
     }
 
     /** Reads shop.yml (written by tower.py; nothing for sale without it). */
@@ -155,13 +148,8 @@ public final class DungeonShop {
     /** Opens the shop on every job, or on a dungeon's job (its button shown in the row). */
     public void open(Player p, String dungeon) {
         Lists.reset(p, LIST);
-        Lists.reset(p, JOBS);
         int index = dungeon == null ? -1 : indexOf(dungeon);
-        if (index >= 0) {
-            Lists.act(p, LIST, "filter " + (index + 1), 28);
-            // the page of the row that shows its job (« Tous » is the first button)
-            Lists.act(p, JOBS, "page " + ((index + 1) / JOB_SLOTS + 1), JOB_SLOTS);
-        }
+        if (index >= 0) Lists.act(p, LIST, "filter " + (index + 1), 28);
         invalidate(p);
         FluxApi.open(p, MENU);
     }
@@ -192,7 +180,7 @@ public final class DungeonShop {
     }
 
     private void invalidate(Player p) {
-        for (String l : List.of(LIST, "boutique_boutons", JOBS, "boutique_defile")) Lists.invalidate(p, l);
+        for (String l : List.of(LIST, "boutique_boutons")) Lists.invalidate(p, l);
     }
 
     /** The shops in the order of the dungeons. */
@@ -218,21 +206,25 @@ public final class DungeonShop {
 
     // ---------------------------------------------------------------- buttons
 
-    /** Back, info, tokens, the kind filter, the search (their slots in the menu file). */
+    /** Back, info, the job filter, the kind filter, tokens, the search (their slots in the menu file). */
     private List<ListEntry> buttons(Player viewer) {
         List<ListEntry> out = new ArrayList<>();
         out.add(button("back", Items.of("itemsadder:fluxui:btn_back_orange", raw("shop.back"),
                 Lore.create().left(raw("shop.back-action")).build(), viewer), "[menu] donjons", ""));
         out.add(button("info", Items.of("itemsadder:fluxui:btn_info_blue", raw("shop.info"),
                 Lore.create().description(raw("shop.info-desc")).description(raw("shop.info-mount")).build(), viewer), "", ""));
-        Currency money = tokens.currency();
-        out.add(button("tokens", Items.of("itemsadder:fluxdonjon:jeton_donjon", raw("menu.tokens"),
-                Lore.create().description(raw("menu.tokens-desc"))
-                        .kv(raw("menu.tokens-owned"), money == null ? "0" : money.format(money.balance(viewer))).build(), viewer), "", ""));
+        Lists.Choice job = Lists.choice(viewer, LIST, "filter");
+        out.add(button("job", Items.of("itemsadder:fluxui:btn_filter_blue", raw("shop.job"),
+                Lore.create().description(raw("shop.job-desc")).filter(job.labels(), job.selected()).build(), viewer),
+                "[list] " + LIST + " filter", "[list] " + LIST + " filter-prev"));
         Lists.Choice kind = Lists.choice(viewer, LIST, "kind");
         out.add(button("kind", Items.of("itemsadder:fluxui:btn_filter_blue", raw("shop.kind"),
                 Lore.create().description(raw("shop.kind-desc")).filter(kind.labels(), kind.selected()).build(), viewer),
                 "[list] " + LIST + " kind", "[list] " + LIST + " kind-prev"));
+        Currency money = tokens.currency();
+        out.add(button("tokens", Items.of("itemsadder:fluxdonjon:jeton_donjon", raw("menu.tokens"),
+                Lore.create().description(raw("menu.tokens-desc"))
+                        .kv(raw("menu.tokens-owned"), money == null ? "0" : money.format(money.balance(viewer))).build(), viewer), "", ""));
         String search = Lists.state(viewer, LIST).search();
         Lore lore = Lore.create().description(raw("shop.search-desc"));
         if (!search.isEmpty()) lore.kv(raw("shop.search-current"), search);
@@ -247,51 +239,6 @@ public final class DungeonShop {
         return ListEntry.of(id).item(item == null ? new ItemStack(Material.BARRIER) : item).set("left", left).set("right", right);
     }
 
-    /** « Tous » then every job (Flux shows a page of them), the one chosen glowing. */
-    private List<ListEntry> jobs(Player viewer) {
-        List<Page> all = ordered();
-        int chosen = Lists.state(viewer, LIST).filter();
-        List<ListEntry> out = new ArrayList<>();
-        Lore every = Lore.create().description(raw("shop.all-desc"));
-        if (chosen == 0) every.ok(raw("shop.job-shown"));
-        else every.left(raw("shop.job-action"));
-        ItemStack allItem = Items.of("itemsadder:fluxdonjon:boutique", raw("shop.all"), every.build(), viewer);
-        if (allItem != null && chosen == 0) allItem.editMeta(m -> m.setEnchantmentGlintOverride(true));
-        out.add(ListEntry.of("all").item(allItem == null ? new ItemStack(Material.CHEST) : allItem).set("left", "[list] " + LIST + " filter 0"));
-        for (int i = 0; i < all.size(); i++) {
-            Page page = all.get(i);
-            DungeonDefinition d = definition(page.dungeon());
-            boolean on = chosen == i + 1;
-            Lore lore = Lore.create().kv(raw("shop.articles"), page.articles().size());
-            if (d != null) lore.kv(raw("menu.level"), d.recommendedLevel());
-            if (on) lore.ok(raw("shop.job-shown")).left(raw("shop.job-all"));
-            else lore.left(raw("shop.job-action"));
-            String icon = fr.influencraft.flux.api.jobs.JobIcons.icon(page.job());
-            String name = raw("shop.page", "%job%", jobName.apply(page.job()));
-            ItemStack item = icon == null ? null : Items.of(icon, name, lore.build(), viewer);
-            if (item == null) item = Items.dress(new ItemStack(d == null ? Material.CHEST : d.icon()), name, lore.build(), viewer);
-            if (on) item.editMeta(m -> m.setEnchantmentGlintOverride(true));
-            // Flux's filter of the articles (its click sound); the job shown, clicked again, goes back to « Tous »
-            out.add(ListEntry.of(page.dungeon()).item(item).set("left", "[list] " + LIST + " filter " + (on ? 0 : i + 1)));
-        }
-        return out;
-    }
-
-    /** The arrows at each end of the row of jobs (Flux's pages of that list): shown only when there is a page that way. */
-    private List<ListEntry> arrows(Player viewer) {
-        int page = Lists.state(viewer, JOBS).page(), pages = Lists.pages(viewer, JOBS, JOB_SLOTS);
-        ItemStack left = page > 0 ? Items.of("itemsadder:fluxui:btn_left_purple", "", List.of(), viewer) : null;
-        ItemStack right = page + 1 < pages ? Items.of("itemsadder:fluxui:btn_right_purple", "", List.of(), viewer) : null;
-        List<ListEntry> out = new ArrayList<>();
-        out.add(left == null ? ListEntry.gap() : ListEntry.of("prev").item(hide(left)).set("left", "[list] " + JOBS + " prev"));
-        out.add(right == null ? ListEntry.gap() : ListEntry.of("next").item(hide(right)).set("left", "[list] " + JOBS + " next"));
-        return out;
-    }
-
-    private static ItemStack hide(ItemStack item) {
-        item.editMeta(m -> m.setHideTooltip(true));
-        return item;
-    }
 
     // ---------------------------------------------------------------- articles
 
