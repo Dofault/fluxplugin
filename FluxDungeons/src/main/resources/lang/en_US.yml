@@ -672,6 +672,9 @@ menu:
   next-floor: '&#FFD94DYour next dungeon'
   play: 'Prepare the dungeon'
   class: 'Class'
+  spell-key: 'Key'
+  spell-cost: 'Cost'
+  spells-none: 'Choose a class to see its spells.'
 potions:
   title: 'Potion merchant'
   gives-health: 'Gives back %share% % of your life at once.'

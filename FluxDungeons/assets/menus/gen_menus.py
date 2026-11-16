@@ -12,10 +12,11 @@ Writes:
 Lists, actions and placeholders are FluxDungeons' (menu.DungeonMenus, dungeon.Lobby). Then /iazip and /fluxmenu reload.
 
 Layouts (window px 176 wide, item of a slot at fond_lib.objet):
-  donjons   the dungeons in a line (2026-11-16, owner's layout), rows 0 to 3 and the inventory's first row: back (0),
+  donjons   the dungeons in a line (2026-11-16, owner's layout), rows 0 to 3 and the inventory's three rows: back (0),
             info (8: tokens, class level); party and shop centred (12, 14; the shop on a green plate); the « stuff RPG »
-            on row 3 (below); the line in the inventory's first row: four dungeons a page (37, 39, 41, 43), Flux's path
-            through them and on to the arrows (36, 44) that turn the page,
+            on row 3 (below); his spells in the inventory's first row under « SORTS » (38-42: A, F, the weapon's spell,
+            the basic attack, the passive; read only); the line in the inventory's third row: four
+            dungeons a page (55, 57, 59, 61), Flux's path through them and on to the arrows (54, 62) that turn the page,
             each dungeon in a frame of its job's colour with its level written above it; the « ? » after the last one
             (the adventure goes on). One picture and one path per page (pages donjons_p<n> of the menu). Under the
             words « Stuff RPG » (row 3), the player's rpg gear as he really has it: weapon (27: his class, a book
@@ -61,8 +62,11 @@ VIOLET, VIOLET_DARK = ui.rgb("#5B2D9E"), ui.rgb("#1E0A3C")
 # the line of dungeons (row 3): PER_PAGE places a page (one column out of two), an arrow at each end, the buttons above
 # 2026-11-16, owner's layout: party and shop centred on row 1, the « stuff RPG » on row 3 under its words, the line
 # of dungeons in the inventory's first row (its levels written in the gap above it)
-LINE_SLOTS = [37, 39, 41, 43]           # same as DungeonMenus.PER_PAGE
-LINE_ARROWS = (36, 44)
+# 2026-11-16 (later): the inventory's first row holds the player's spells under the word « SORTS », the line of
+# dungeons moved two rows down (the inventory's third row), its levels over it
+SPELL_SLOTS = [38, 39, 40, 41, 42]      # A, F, weapon's spell, basic attack, passive (rpg.SpellBook order)
+LINE_SLOTS = [55, 57, 59, 61]           # same as DungeonMenus.PER_PAGE
+LINE_ARROWS = (54, 62)
 LINE_BUTTONS = [0, 8, 12, 14]           # back, info, party, shop (DungeonMenus order)
 SHOP_BUTTON = 14
 # the player's rpg gear, in the inventory's first row under the line (the menu has 4 chest rows): weapon (his class),
@@ -118,15 +122,17 @@ def field(im, d, box, txt=None):
 sys.path.insert(0, os.path.join(HERE, "..", "balance"))
 from tower import TOWER  # noqa: E402
 from tower import DYES as _DYES  # noqa: E402
+sys.path.insert(0, os.path.join(HERE, ".."))
+from spell_items import icons as spell_icons  # noqa: E402
 JOB_COLOURS = _DYES                 # one colour per job: the dye of its leather set (tower.py)
 
 
 def bg_line(page):
-    """A page of the dungeon menu: the plain window (rows 0 to 3 and the inventory's first row), the shop on a green
+    """A page of the dungeon menu: the plain window (rows 0 to 3 and the inventory's three rows), the shop on a green
     plate, the words « STUFF RPG » centred over the gear in its well, then the line of dungeons in the inventory's
     first row: a frame per dungeon in its job's colour (the « ? » in the theme's violet), its level written above it in
     the gap over the inventory. The path between them is Flux's, drawn over this picture."""
-    im = bg_window(GENERIC, 0, 6, extra=3, rows=LINE_ROWS, title="Donjons")
+    im = bg_window(GENERIC, 0, 8, extra=3, rows=LINE_ROWS, title="Donjons")
     d = ImageDraw.Draw(im, "RGBA")
     x, y = ui.objet(SHOP_BUTTON)
     ui.button(d, (x - 3, y - 3, x + 18, y + 17), ui.rgb("#3E8E2E"))
@@ -134,6 +140,12 @@ def bg_line(page):
     gy = ui.objet(GEAR_SLOTS[0])[1]
     label(im, "STUFF RPG", 88, gy - 11, centre=True)
     ui.well(d, (max(6, min(xs) - 2), gy - 2, min(ui.W - 7, max(xs) + 17), gy + 17))   # never against the frame
+    # his spells under the word « SORTS », in a well as the gear
+    sx = [ui.objet(c, LINE_ROWS)[0] for c in SPELL_SLOTS]
+    sy = ui.objet(SPELL_SLOTS[0], LINE_ROWS)[1]
+    label(im, "SORTS", 88, sy - 11, centre=True)
+    ui.well(d, (min(sx) - 2, sy - 2, max(sx) + 17, sy + 17))
+    # the line of dungeons, its levels over it (no word: owner, 2026-11-16)
     for place, slot in zip(page, LINE_SLOTS):
         colour = VIOLET if place is None else ui.rgb(JOB_COLOURS[place[1]])
         x, y = ui.objet(slot, LINE_ROWS)
@@ -360,6 +372,8 @@ def pack():
     for kind in ("soin", "mana"):
         for tier in range(1, 5):
             icons[f"potion_{kind}_{tier}"] = (potion(kind, tier), "Potion")
+    # every class's spells (assets/spell_items.py): sort_<type>, attaque_<style>, passif_<class>
+    icons.update(spell_icons())
     for iid, (im, name) in icons.items():
         im.save(os.path.join(PACK, "textures/item", iid + ".png"))
         lines += [f"  {iid}:", f"    display_name: '{name}'", "    resource:", "      material: PAPER",
@@ -451,6 +465,7 @@ lists:
 {entries("donjons_boutons", LINE_BUTTONS, left=["%entry_left%", "%entry_left2%"])}
 {entries("donjons_liste", LINE_SLOTS, left=["%entry_left%"], right=["%entry_right%"])}
 {entries("donjons_equipement", GEAR_SLOTS, left=["%entry_left%"], right=["%entry_right%"])}
+{entries("donjons_sorts", SPELL_SLOTS, left=["%entry_left%"])}
 
 pages:
 """ + "\n".join(page_blocks) + "\n")

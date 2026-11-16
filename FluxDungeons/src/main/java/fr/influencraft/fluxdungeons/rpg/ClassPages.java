@@ -172,19 +172,9 @@ final class ClassPages {
                     .append("</td><td class=\"hi\">").append(RpgPlayers.total(d, b)).append("</td></tr>");
         }
         StringBuilder skills = new StringBuilder();
-        for (String slot : ClassDef.SHOWN) {
-            if (slot.equals("basic")) {
-                skills.append(skill(id, c.basicOnRight() ? "hold" : "left", t("class-pages.classes." + id + ".basic.name"), basicText(c), 0));
-                continue;
-            }
-            ClassDef.Skill s = c.skills().get(slot);
-            if (s == null) continue;
-            skills.append(skill(id, c.key(slot), t("class-pages.classes." + id + "." + slot + ".name"), skillText(c, s), s.mana()));
-        }
-        // the class's own mechanic (elemental classes), with its numbers
-        if (!c.passive().isEmpty()) {
-            skills.append(skill(id, "passive", t("class-pages.classes." + id + ".passive.name"), m("class-pages.classes." + id + ".passive.description",
-                    vars(c.basic().type(), 0, 1, 1, 0, 0, c.basic().range(), c.passive())), -1));
+        // A first, basic attack then passive last (SpellBook: one source with the /donjon spells line)
+        for (SpellBook.Spell sp : SpellBook.of(c, source::raw)) {
+            skills.append(skill(id, sp.key(), esc(sp.name()), sp.text(), sp.mana()));
         }
         String body = bar(t("classes." + id + ".name"))
                 + "<section class=\"well hero\">" + weapon(id, "large") + "<div class=\"role\">" + t("class-pages.classes." + id + ".role") + "</div>"
@@ -290,36 +280,6 @@ final class ClassPages {
         out.put("mana", s.get("max_mana"));
         out.put("range", c.basic().range());
         return out;
-    }
-
-    private String basicText(ClassDef c) {
-        ClassDef.Attack b = c.basic();
-        return m("class-pages.classes." + c.id() + ".basic.description", vars(b.type(), b.coefficient(), 1, b.targets(), 0, 0, b.range(), Map.of()));
-    }
-
-    private String skillText(ClassDef c, ClassDef.Skill s) {
-        return m("class-pages.classes." + c.id() + "." + s.slot() + ".description",
-                // heals scale with magic power (CombatMath.heal), whatever the skill's damage type
-                vars(s.kind().equals("heal") ? CombatMath.Type.MAGIC : s.damage(), s.coefficient(), s.hits(), s.targets(), s.duration(), s.mana(), c.basic().range(), s.extra()));
-    }
-
-    private String[] vars(CombatMath.Type type, double coef, int hits, int targets, double duration, double mana, double range,
-                          Map<String, Double> extra) {
-        List<String> v = new ArrayList<>(List.of(
-                "%coef%", num(coef * 100) + " %",
-                "%power%", source.raw("class-pages.powers." + (type == CombatMath.Type.MAGIC ? "magic" : "physical")),
-                "%hits%", String.valueOf(Math.max(1, hits)),
-                "%targets%", String.valueOf(Math.max(1, targets)),
-                "%duration%", num(duration),
-                "%mana%", num(mana),
-                "%range%", num(extra.getOrDefault("range", range))));
-        for (Map.Entry<String, Double> e : extra.entrySet()) {
-            v.add("%" + e.getKey() + "%");
-            v.add(num(e.getValue()));
-            v.add("%" + e.getKey() + "_pct%");
-            v.add(num(e.getValue() * 100) + " %");
-        }
-        return v.toArray(String[]::new);
     }
 
     /** One accent colour per class (config rpg.class-colors). */

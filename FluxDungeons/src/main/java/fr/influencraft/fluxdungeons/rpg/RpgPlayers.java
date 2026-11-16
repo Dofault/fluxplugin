@@ -106,6 +106,49 @@ public final class RpgPlayers implements Listener {
         return online.get(p.getUniqueId());
     }
 
+    /** Class and level of players away from the rpg universe, read once from the database ({@link #hero}); empty: none. */
+    private final Map<UUID, String[]> away = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Set<UUID> reading = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    /**
+     * His class id and level wherever he is: live in the rpg universe, else read from the database once (off the main
+     * thread: null until it is known, the menus showing it refresh) and kept until he quits or changes class. Null
+     * without a class.
+     */
+    public String[] hero(Player p) {
+        UUID id = p.getUniqueId();
+        RpgPlayer r = online.get(id);
+        if (r != null) {
+            away.remove(id);   // what was read before may be out of date once he is back (a class chosen, levels)
+            return new String[]{r.heroClass().id(), String.valueOf(r.level())};
+        }
+        String[] known = away.get(id);
+        if (known != null) return known.length == 0 ? null : known;
+        if (store != null && reading.add(id)) {
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                try {
+                    RpgStore.Hero hero = store.hero(id);
+                    RpgStore.Progress pr = hero == null ? null : store.progress(id, hero.heroClass());
+                    away.put(id, hero == null ? new String[0]
+                            : new String[]{hero.heroClass(), String.valueOf(pr == null ? 1 : pr.level())});
+                } catch (SQLException ex) {
+                    plugin.getLogger().warning("Class of " + id + " unreadable: " + ex.getMessage());
+                } finally {
+                    reading.remove(id);
+                }
+            });
+        }
+        return null;
+    }
+
+    /** His spells in reading order ({@link SpellBook}), empty without a class (or while it is read). */
+    public List<SpellBook.Spell> spells(Player p) {
+        String[] h = hero(p);
+        RpgConfig.Set set = config.get();
+        ClassDef c = h == null || set == null ? null : set.classes().get(h[0]);
+        return c == null ? List.of() : SpellBook.of(c, plugin.messages()::raw);
+    }
+
     /** Whether he may enter a dungeon: an rpg class loaded, or outside the rpg universe (chosen on arriving). */
     public boolean mayPlay(Player p) {
         return online.containsKey(p.getUniqueId()) || !RpgWorld.UNIVERSE.equals(Universes.of(p));
@@ -144,6 +187,7 @@ public final class RpgPlayers implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent e) {
+        away.remove(e.getPlayer().getUniqueId());
         stop(e.getPlayer(), false);
     }
 
@@ -366,6 +410,27 @@ public final class RpgPlayers implements Listener {
      * apprentice weapon becomes the new class's when he comes back ({@code RpgKit.ensure} at his entry). Should he enter
      * the rpg universe while it is written, his character is read again.
      */
+    /**
+     * The apprentice weapon of his kept rpg profile becomes the new class's at once (Flux's {@code Universes.editContents}),
+     * so that what menus show of his rpg gear ({@code /donjon}) follows his class while he is away; a second apprentice
+     * weapon is taken away as {@code RpgKit.ensure} does. Only kit weapons change: nothing a player can trade is made.
+     * Refused (a universe change going on), {@code ensure} still does it at his entry.
+     */
+    private void swapStoredWeapon(Player p, String classId) {
+        ItemStack weapon = items.make(RpgItems.starterId(classId));
+        if (weapon == null) return;
+        Universes.editContents(p, RpgWorld.UNIVERSE, contents -> {
+            boolean placed = false;
+            for (int i = 0; i < contents.length; i++) {
+                String held = RpgItems.idOf(contents[i]);
+                if (held == null || !items.starter(held)) continue;
+                contents[i] = placed ? null : weapon;
+                placed = true;
+            }
+            return placed ? contents : null;
+        });
+    }
+
     private void changeAway(Player p, String to) {
         UUID id = p.getUniqueId();
         if (!loading.add(id)) return;
@@ -395,7 +460,8 @@ public final class RpgPlayers implements Listener {
                 if (online.containsKey(id)) {
                     online.remove(id);
                     start(p);
-                }
+                } else swapStoredWeapon(p, to);
+                away.remove(id);   // read again with the new class
                 plugin.messages().send(p, "choice.changed", "%class%", plugin.messages().raw("classes." + to + ".name"));
                 Sounds.cue(p, "success");
             });

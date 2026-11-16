@@ -167,6 +167,10 @@ public final class FluxDungeons extends FluxPlugin {
                 return runs.isBossPet(pet);
             }
 
+            public java.util.List<fr.influencraft.fluxdungeons.rpg.SpellBook.Spell> spells(Player player) {
+                return rpg == null || rpg.players() == null ? java.util.List.of() : rpg.players().spells(player);
+            }
+
             public void refreshGear(Player player) {
                 if (rpg != null && rpg.players() != null) rpg.players().recompute(player);
             }
@@ -188,8 +192,9 @@ public final class FluxDungeons extends FluxPlugin {
         fr.influencraft.flux.api.universe.Universes.claim(this, fr.influencraft.fluxdungeons.rpg.RpgWorld.UNIVERSE, runs::isDungeonWorld);
         // the HUD shows the class instead of the position in the rpg universe (hud.yml of Flux)
         fr.influencraft.flux.api.hud.Hud.piece(this, "rpg_class", p -> {
-            String[] c = rpgClass(p);
-            return c == null ? "" : c[0];
+            // live only: in the rpg universe (never a database read for every player of the server)
+            var r = rpg.players() == null ? null : rpg.players().get(p);
+            return r == null ? "" : messages().raw("classes." + r.heroClass().id() + ".name");
         });
         fr.influencraft.flux.api.hud.Hud.piece(this, "rpg_class_id", p -> {
             var r = rpg.players().get(p);
@@ -652,8 +657,9 @@ public final class FluxDungeons extends FluxPlugin {
     /** The rpg class line of a player ("Guerrier", level), null without the rpg module or a class. */
     private String[] rpgClass(Player p) {
         if (rpg == null || rpg.players() == null) return null;
-        var r = rpg.players().get(p);
-        return r == null ? null : new String[]{messages().raw("classes." + r.heroClass().id() + ".name"), String.valueOf(r.level())};
+        // wherever he is (away from the rpg universe: read from the database, RpgPlayers.hero)
+        String[] h = rpg.players().hero(p);
+        return h == null ? null : new String[]{messages().raw("classes." + h[0] + ".name"), h[1]};
     }
 
     /** Main window: class, party, dungeons to play. */

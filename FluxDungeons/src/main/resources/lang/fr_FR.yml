@@ -684,6 +684,9 @@ menu:
   next-floor: '&#FFD94DTon prochain donjon'
   play: 'Préparer le donjon'
   class: 'Classe'
+  spell-key: 'Touche'
+  spell-cost: 'Coût'
+  spells-none: 'Choisis une classe pour voir ses sorts.'
 potions:
   title: 'Marchand de potions'
   gives-health: 'Rend %share% % de ta vie d''un coup.'

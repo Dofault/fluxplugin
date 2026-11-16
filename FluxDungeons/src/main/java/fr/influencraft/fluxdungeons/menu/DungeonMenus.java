@@ -73,6 +73,9 @@ public final class DungeonMenus {
 
         /** His stats computed again (his armour changed). */
         void refreshGear(Player player);
+
+        /** His class's spells in reading order (A first, basic attack, then the passive), empty without a class. */
+        List<fr.influencraft.fluxdungeons.rpg.SpellBook.Spell> spells(Player player);
     }
 
     public static final String PET_MENU = "donjon_familier";
@@ -96,6 +99,7 @@ public final class DungeonMenus {
         Lists.register(plugin, "donjons_liste", q -> list(q.viewer()));
         Lists.register(plugin, "donjons_boutons", q -> buttons(q.viewer()));
         Lists.register(plugin, "donjons_equipement", q -> gear(q.viewer()));
+        Lists.register(plugin, "donjons_sorts", q -> spells(q.viewer()));
         Lists.register(plugin, "donjon_familier_boutons", q -> petButtons(q.viewer()));
         Lists.register(plugin, "donjon_familiers", q -> pets(q.viewer()));
         Lists.register(plugin, "rpg_armure_boutons", q -> armourButtons(q.viewer()));
@@ -115,7 +119,7 @@ public final class DungeonMenus {
     }
 
     private void invalidate(Player p) {
-        for (String l : List.of("donjons_liste", "donjons_boutons", "donjons_equipement", "donjon_familiers", "donjon_familier_boutons",
+        for (String l : List.of("donjons_liste", "donjons_boutons", "donjons_equipement", "donjons_sorts", "donjon_familiers", "donjon_familier_boutons",
                 "rpg_armures", "rpg_armure_boutons", "rpg_inventaire_objets")) {
             Lists.invalidate(p, l);
         }
@@ -349,6 +353,32 @@ public final class DungeonMenus {
             out.add(potionsHere.test(viewer) ? e.set("left", "[close]").set("right", "[player] potions") : e);
         }
         out.add(petSlot(viewer));
+        return out;
+    }
+
+    // ---------------------------------------------------------------- spells
+
+    /**
+     * The « spells » line: his class's spells as the class pages tell them (SpellBook), A first, then F, the weapon's
+     * spell, the basic attack and the passive, each with its icon, key and mana; read only. Without a class: a book that
+     * opens the classes.
+     */
+    private List<ListEntry> spells(Player viewer) {
+        List<ListEntry> out = new ArrayList<>();
+        for (var sp : host.spells(viewer)) {
+            Lore lore = Lore.create().description(sp.text())
+                    .kv(raw("menu.spell-key"), raw("class-pages.keys." + sp.key()));
+            if (sp.mana() >= 0) lore.kv(raw("menu.spell-cost"), sp.mana() == 0 ? raw("class-pages.free")
+                    : raw("class-pages.mana", "%mana%", fr.influencraft.flux.api.util.Format.decimal(sp.mana())));
+            ItemStack item = Items.of("itemsadder:" + sp.icon(), "&#FFD94D" + sp.name(), lore.build(), viewer);
+            if (item == null) item = Items.of("ENCHANTED_BOOK", "&#FFD94D" + sp.name(), lore.build(), viewer);
+            out.add(ListEntry.of("spell_" + sp.slot()).item(orBarrier(item)).set("left", "").set("right", ""));
+        }
+        if (out.isEmpty()) {
+            Lore lore = Lore.create().description(raw("menu.spells-none")).left(raw("menu.class-action"));
+            out.add(ListEntry.of("no_class").item(orBarrier(Items.of("BOOK", raw("menu.no-class"), lore.build(), viewer)))
+                    .set("left", "[player] classe").set("right", ""));
+        }
         return out;
     }
 
