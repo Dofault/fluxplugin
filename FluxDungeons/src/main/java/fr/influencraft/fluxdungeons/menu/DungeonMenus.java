@@ -195,7 +195,6 @@ public final class DungeonMenus {
             boolean current = index++ == next;
             int wins = victories == null ? 0 : victories.wins(viewer, def.id());
             Lore lore = Lore.create().description(def.description())
-                    .kv(raw("menu.floor"), def.floor())
                     .kv(raw("menu.level"), def.recommendedLevel())
                     .kv(raw("menu.players-recommended"), def.recommendedPlayers() <= 1 ? raw("menu.solo")
                             : raw("menu.party-size", "%count%", String.valueOf(def.recommendedPlayers())))

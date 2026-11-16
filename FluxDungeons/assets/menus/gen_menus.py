@@ -143,7 +143,7 @@ def bg_shop():
     ui.well(d, (x0, y0 + 2, x1, y1))           # 1 px of air under the name field
     fx0, fy0, fx1, fy1 = span(SHOP_FLOORS, 2)
     ui.well(d, (fx0, fy0, fx1, fy1))
-    label(im, "ÉTAGES", (fx0 + fx1) // 2, fy0 - 9, centre=True)
+    label(im, "DONJONS", (fx0 + fx1) // 2, fy0 - 9, centre=True)
     return im
 
 
@@ -348,7 +348,7 @@ def pack():
               '    path: "font/jeton_donjon.png"', "    scale_ratio: 9", "    y_position: 8"]
     lines += ["", "items:"]
     icons = {"jeton_donjon": (coin(16), "Jeton de donjon"), "cle_donjon": (key(), "Clé de donjon"),
-             "etage_inconnu": (unknown_floor(), "Étage inconnu"), "boutique": (shop_icon(), "Boutique de donjon")}
+             "etage_inconnu": (unknown_floor(), "Inconnu"), "boutique": (shop_icon(), "Boutique de donjon")}
     for kind in ("soin", "mana"):
         for tier in range(1, 5):
             icons[f"potion_{kind}_{tier}"] = (potion(kind, tier), "Potion")

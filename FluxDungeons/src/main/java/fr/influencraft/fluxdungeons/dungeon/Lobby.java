@@ -274,13 +274,13 @@ public final class Lobby implements Listener {
             // the dungeon tower (2026-11-16): one level per dungeon, nothing to choose; its floor, level and party
             DungeonDefinition d = party.def;
             Lore lore = Lore.create().description(raw("lobby.floor-desc"))
-                    .kv(raw("lobby.floor"), d.floor()).kv(raw("lobby.level"), d.recommendedLevel())
+                    .kv(raw("lobby.level"), d.recommendedLevel())
                     .kv(raw("lobby.recommended"), d.recommendedPlayers() <= 1 ? raw("lobby.solo")
                             : raw("lobby.party-size", "%count%", String.valueOf(d.recommendedPlayers())))
                     .kv(raw("lobby.players-here"), String.valueOf(party.members.size()));
             if (party.members.size() < d.recommendedPlayers()) lore.ko(raw("lobby.few-players"));
             ItemStack item = Items.of(LEVEL_ICONS[Math.min(2, Math.max(0, (d.floor() - 1) / 4))],
-                    raw("lobby.floor-name", "%floor%", String.valueOf(d.floor()), "%level%", String.valueOf(d.recommendedLevel())), lore.build(), viewer);
+                    raw("lobby.floor-name", "%dungeon%", d.name(), "%level%", String.valueOf(d.recommendedLevel())), lore.build(), viewer);
             out.add(ListEntry.of("0").item(item));
             return out;
         }

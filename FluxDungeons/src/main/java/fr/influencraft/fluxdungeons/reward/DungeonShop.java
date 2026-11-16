@@ -37,7 +37,7 @@ import java.util.function.Supplier;
 
 /**
  * The dungeon shop (2026-11-16): what a dungeon gives is tokens, and tokens buy everything here. One window, a page per
- * floor of the tower (the dungeon's job): the boss's mount, sold only to those who beat that boss; the job's boosters;
+ * dungeon (its job, shown with the job's icon): the boss's mount, sold only to those who beat that boss; the job's boosters;
  * the enchanted books of the job; the dungeon's rpg set. Contents and prices in {@code shop.yml}, written by
  * {@code assets/balance/tower.py} (prices in runs of the floor), never by hand.
  * <p>
@@ -201,13 +201,16 @@ public final class DungeonShop {
         List<ListEntry> out = new ArrayList<>();
         for (DungeonDefinition d : sorted) {
             Page page = pages.get(d.id());
-            Lore lore = Lore.create().kv(raw("shop.floor"), d.floor()).kv(raw("menu.level"), d.recommendedLevel())
+            Lore lore = Lore.create().kv(raw("menu.level"), d.recommendedLevel())
                     .kv(raw("shop.articles"), page.articles().size());
             boolean on = current != null && current.dungeon().equals(d.id());
             if (on) lore.ok(raw("shop.floor-shown"));
             else lore.left(raw("shop.floor-action"));
-            ItemStack item = Items.of("itemsadder:influportraits:portrait_" + d.pet(), raw("shop.page", "%job%", jobName.apply(page.job())), lore.build(), viewer);
-            if (item == null) item = Items.dress(new ItemStack(d.icon()), raw("shop.page", "%job%", jobName.apply(page.job())), lore.build(), viewer);
+            // the job's own icon (its tool: the Careers menu's, through Flux), else the dungeon's
+            String icon = fr.influencraft.flux.api.jobs.JobIcons.icon(page.job());
+            String name = raw("shop.page", "%job%", jobName.apply(page.job()));
+            ItemStack item = icon == null ? null : Items.of(icon, name, lore.build(), viewer);
+            if (item == null) item = Items.dress(new ItemStack(d.icon()), name, lore.build(), viewer);
             if (on) item.editMeta(m -> m.setEnchantmentGlintOverride(true));
             out.add(ListEntry.of(d.id()).item(item).set("left", "[fluxdungeon] shop page " + d.id()));
         }

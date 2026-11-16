@@ -67,6 +67,11 @@ final class JobMenu implements Listener {
                 menu.grid.add(new Shown(id, jobs.getString(id + ".icon", "PAPER"), jobs.getStringList(id + ".description")));
             }
         }
+        // the icon of each job for the rest of the suite (the dungeon shop): the one of this grid
+        fr.influencraft.flux.api.jobs.JobIcons.register(plugin, job -> {
+            for (Shown sh : menu.grid) if (sh.id().equals(job)) return sh.icon();
+            return null;
+        });
         FluxApi.registerPlaceholders(plugin, "fluxjob", menu::placeholder);
         FluxApi.registerAction(plugin, "fluxjob", (player, view, argument) -> {
             String[] parts = argument.trim().split("\\s+");
