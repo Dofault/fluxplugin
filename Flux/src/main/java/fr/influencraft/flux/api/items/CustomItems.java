@@ -84,6 +84,14 @@ public final class CustomItems {
 
         /** Ids (without namespace). */
         Collection<String> ids();
+
+        /**
+         * The item as a menu shows it before anyone owns it (a shop): its description without the lines that tell how
+         * to use it in hand (« right click to open »). The item itself by default.
+         */
+        default ItemStack preview(String id) {
+            return item(id);
+        }
     }
 
     private record Owned(Plugin owner, Source source) {
@@ -184,6 +192,28 @@ public final class CustomItems {
     public static boolean matches(String pattern, String id) {
         if (id == null || pattern == null) return false;
         return pattern.endsWith("*") ? id.startsWith(pattern.substring(0, pattern.length() - 1)) : pattern.equals(id);
+    }
+
+    /**
+     * The item as a shop or a list of rewards shows it (no « right click to... » lines: the viewer does not hold it),
+     * for this viewer (Bedrock look as {@link #item(String, org.bukkit.entity.Player)}); null when unknown. The
+     * description stays the one of the item: one place to change it.
+     */
+    public static ItemStack preview(String id, org.bukkit.entity.Player viewer) {
+        String full = resolve(id);
+        if (full == null) return null;
+        Owned own = SOURCES.get(full.substring(0, full.indexOf(':')));
+        if (own == null) return item(id, viewer);
+        ItemStack shown = own.source().preview(full.substring(full.indexOf(':') + 1));
+        if (shown == null || viewer == null || !fr.influencraft.flux.api.client.Clients.bedrock(viewer)) return shown;
+        ItemStack vanilla = new ItemStack(fr.influencraft.flux.api.client.Clients.bedrockItem(full));
+        org.bukkit.inventory.meta.ItemMeta from = shown.getItemMeta(), to = vanilla.getItemMeta();
+        if (from != null && to != null) {
+            if (from.displayName() != null) to.displayName(from.displayName());
+            if (from.lore() != null) to.lore(from.lore());
+            vanilla.setItemMeta(to);
+        }
+        return vanilla;
     }
 
     /** A new stack of this custom item, or null when unknown. */

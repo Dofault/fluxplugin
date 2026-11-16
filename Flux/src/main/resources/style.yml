@@ -60,8 +60,8 @@ icons:
 #   pets:
 #     name: "&#4FA8FF{text}"
 variants:
-  # rpg items (FluxDungeons: armour, class weapons): an item's own description, no frame on its left (2026-11-16)
-  equipement:
+  # an item's own description, no frame on its left (2026-11-16): rpg armour and weapons, boosters
+  objet:
     frame:
       enabled: false
   # FluxTools (« rubis » palette): garnet frame, pale pink text, mint / greyish pink states

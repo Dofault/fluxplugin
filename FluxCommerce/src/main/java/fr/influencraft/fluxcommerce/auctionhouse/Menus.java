@@ -430,12 +430,9 @@ final class Menus {
 
     /** A filter button in the suite's format (current option marked); clicks set in the menu file. */
     private ItemStack selector(Player p, String list, String key, boolean filter) {
-        ListProvider provider = Lists.provider(list);
-        if (provider == null) return null;
-        List<String> labels = filter ? provider.filters() : provider.sorts();
-        Lists.State s = Lists.state(p, list);
-        int selected = Math.floorMod(filter ? s.filter() : s.sort(), Math.max(1, labels.size()));
-        Lore lore = Lore.create().description(raw("menu." + key + "-description")).filter(labels, selected);
+        Lists.Choice choice = Lists.choice(p, list, filter ? "filter" : "sort");
+        if (choice == null) return null;
+        Lore lore = Lore.create().description(raw("menu." + key + "-description")).filter(choice.labels(), choice.selected());
         return button(p, filter ? "filter" : "sort", "menu." + key, lore);
     }
 

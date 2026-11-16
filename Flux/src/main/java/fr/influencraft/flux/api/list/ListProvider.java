@@ -16,6 +16,11 @@ public interface ListProvider {
         return List.of();
     }
 
+    /** Labels of the second filter ({@code %flux_list_<id>_kind%}, {@code [list] <id> kind}), none by default. */
+    default List<String> kinds() {
+        return List.of();
+    }
+
     /** Labels of the sort orders ({@code %flux_list_<id>_sort%}), none by default. */
     default List<String> sorts() {
         return List.of();

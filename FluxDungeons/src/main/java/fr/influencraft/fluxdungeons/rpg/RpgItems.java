@@ -91,8 +91,8 @@ public final class RpgItems {
 
     /** Description in the suite's style (Flux Lore): description, stats, classes, level, rarity, set bonuses. */
     private List<String> lore(Equipment.Item item) {
-        // an item's own description: the frameless "equipement" variant of style.yml (owner, 2026-11-16)
-        fr.influencraft.flux.api.inventory.Lore lore = fr.influencraft.flux.api.inventory.Lore.create("equipement");
+        // an item's own description: the frameless "objet" variant of style.yml (owner, 2026-11-16)
+        fr.influencraft.flux.api.inventory.Lore lore = fr.influencraft.flux.api.inventory.Lore.create("objet");
         if (!item.description().isEmpty()) lore.description(item.description());
         if (starter(item.id())) lore.info(plugin.messages().raw("item.starter"));
         item.stats().forEach((stat, value) -> lore.kv(statName(stat), statValue(stat, value)));

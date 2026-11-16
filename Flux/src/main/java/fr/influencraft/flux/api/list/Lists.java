@@ -19,11 +19,12 @@ import java.util.concurrent.ConcurrentHashMap;
  *   [list] shops next | prev | first
  *   [list] shops filter | filter-prev | filter 2      next filter, previous, or by index
  *   [list] shops sort | sort-prev | sort 1
+ *   [list] shops kind | kind-prev | kind 3          second filter (ListProvider#kinds)
  *   [list] shops search            opens a search field; [list] shops search diamond sets it; [list] shops clear
  *   [list] shops reset             back to page 1, default filter and sort, no search
  * </pre>
  * Placeholders: {@code %flux_list_<id>_page%}, {@code _pages}, {@code _count} (elements after filter and
- * search), {@code _filter}, {@code _sort} (labels), {@code _search}, {@code _has_next}, {@code _has_prev}
+ * search), {@code _filter}, {@code _kind}, {@code _sort} (labels), {@code _search}, {@code _has_next}, {@code _has_prev}
  * (true/false).
  */
 public final class Lists {
@@ -35,6 +36,7 @@ public final class Lists {
     public static final class State {
         int page;
         int filter;
+        int kind;
         int sort;
         String search = "";
         long cachedAt;
@@ -51,6 +53,10 @@ public final class Lists {
 
         public int sort() {
             return sort;
+        }
+
+        public int kind() {
+            return kind;
         }
 
         public String search() {
@@ -113,6 +119,7 @@ public final class Lists {
         State s = state(player, id);
         s.page = 0;
         s.filter = 0;
+        s.kind = 0;
         s.sort = 0;
         s.search = "";
         s.cached = null;
@@ -127,10 +134,10 @@ public final class Lists {
         ListProvider provider = provider(id);
         if (provider == null) return List.of();
         State s = state(player, id);
-        String key = s.filter + "|" + s.sort + "|" + s.search;
+        String key = s.filter + "|" + s.kind + "|" + s.sort + "|" + s.search;
         long now = System.currentTimeMillis();
         if (s.cached != null && key.equals(s.cachedKey) && now - s.cachedAt < CACHE_MS) return s.cached;
-        List<ListEntry> all = provider.entries(new ListQuery(player, id, s.filter, s.sort, s.search));
+        List<ListEntry> all = provider.entries(new ListQuery(player, id, s.filter, s.sort, s.search, s.kind));
         if (!s.search.isEmpty() && !provider.handlesSearch()) {
             String needle = s.search.toLowerCase(Locale.ROOT);
             List<ListEntry> found = new ArrayList<>();
@@ -158,6 +165,7 @@ public final class Lists {
         String arg = parts.length > 1 ? parts[1].trim() : "";
         int filters = provider == null ? 0 : provider.filters().size();
         int sorts = provider == null ? 0 : provider.sorts().size();
+        int kinds = provider == null ? 0 : provider.kinds().size();
         switch (verb) {
             case "next" -> s.page = Math.min(s.page + 1, pages(player, id, pageSize) - 1);
             case "prev" -> s.page = Math.max(0, s.page - 1);
@@ -172,6 +180,8 @@ public final class Lists {
             }
             case "filter" -> s.filter = cycle(s.filter, filters, arg, 1);
             case "filter-prev" -> s.filter = cycle(s.filter, filters, "", -1);
+            case "kind" -> s.kind = cycle(s.kind, kinds, arg, 1);
+            case "kind-prev" -> s.kind = cycle(s.kind, kinds, "", -1);
             case "sort" -> s.sort = cycle(s.sort, sorts, arg, 1);
             case "sort-prev" -> s.sort = cycle(s.sort, sorts, "", -1);
             case "search" -> {
@@ -219,12 +229,39 @@ public final class Lists {
             case "pages" -> String.valueOf(pages);
             case "count" -> String.valueOf(entries(player, id).size());
             case "filter" -> label(provider.filters(), s.filter);
+            case "kind" -> label(provider.kinds(), s.kind);
             case "sort" -> label(provider.sorts(), s.sort);
             case "search" -> s.search;
             case "has_next" -> String.valueOf(s.page + 1 < pages);
             case "has_prev" -> String.valueOf(s.page > 0);
             default -> null;
         };
+    }
+
+    /** Labels of one of a list's choices and the one the player has, for its button. */
+    public record Choice(List<String> labels, int selected) {
+    }
+
+    /**
+     * {@code axis}: {@code filter}, {@code kind} or {@code sort}. The button of a choice is drawn the same way in every
+     * menu of the suite: {@code Lore.create().filter(choice.labels(), choice.selected())} (the market, the dungeon
+     * shop), clicks {@code [list] <id> <axis>} / {@code <axis>-prev}. Null when the list does not exist.
+     */
+    public static Choice choice(Player player, String id, String axis) {
+        ListProvider provider = provider(id);
+        if (provider == null) return null;
+        State s = state(player, id);
+        List<String> labels = switch (axis) {
+            case "kind" -> provider.kinds();
+            case "sort" -> provider.sorts();
+            default -> provider.filters();
+        };
+        int at = switch (axis) {
+            case "kind" -> s.kind;
+            case "sort" -> s.sort;
+            default -> s.filter;
+        };
+        return new Choice(labels, Math.floorMod(at, Math.max(1, labels.size())));
     }
 
     private static String label(List<String> labels, int index) {
