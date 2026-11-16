@@ -142,7 +142,8 @@ public final class Potions {
     private TradeWindow.Offer offer(Potion potion) {
         return new TradeWindow.Offer() {
             public ItemStack item() {
-                ItemStack item = CustomItems.item(RpgItems.NAMESPACE + ":potion_" + potion.id());
+                // shown in the window: no « drink » line (the viewer does not hold it)
+                ItemStack item = CustomItems.preview(RpgItems.NAMESPACE + ":potion_" + potion.id(), null);
                 return item == null ? new ItemStack(org.bukkit.Material.POTION) : item;
             }
 
@@ -165,13 +166,15 @@ public final class Potions {
                     plugin.messages().send(player, "potions.limit", "%limit%", String.valueOf(limit), "%carried%", String.valueOf(carried));
                     return false;
                 }
+                // the real potion (« drink » line), made before any token is taken
+                ItemStack item = CustomItems.item(RpgItems.NAMESPACE + ":potion_" + potion.id());
+                if (item == null) return false;
                 Currency money = Economy.get(currency.get());
                 double cost = potion.price() * bundles;
                 if (money == null || !money.take(player, cost, Origin.of(plugin, "potion").detail(potion.name()))) {
                     plugin.messages().send(player, "potions.no-tokens");
                     return false;
                 }
-                ItemStack item = item();
                 item.setAmount(bundles);
                 Rewards.deliver(player, "dungeons", plugin.messages().raw("potions.title"), List.of(item));
                 Sounds.cue(player, "success");
