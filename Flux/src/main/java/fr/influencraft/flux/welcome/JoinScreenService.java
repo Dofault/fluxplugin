@@ -18,8 +18,10 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * {@link JoinScreens}: per player, a queue of screens shown one at a time once his resource pack is loaded (or
- * {@link #PACK_TIMEOUT} seconds after joining). A screen that never says it is done is dropped after
+ * {@link JoinScreens}: per player, a queue of screens shown one at a time once his resource pack is loaded and his
+ * client has left the "loading terrain" screen (or {@link #PACK_TIMEOUT} seconds after joining). The world wait is
+ * needed: a menu opened while that screen shows is closed by the client when the screen goes away (the calendar
+ * played its opening sound but never showed, 2026-11-16). A screen that never says it is done is dropped after
  * {@link #SCREEN_TIMEOUT} seconds, so it cannot block the next ones forever.
  */
 public final class JoinScreenService implements JoinScreens.Service, Listener {
@@ -33,6 +35,8 @@ public final class JoinScreenService implements JoinScreens.Service, Listener {
     private static final class State {
         final List<Queued> queue = new ArrayList<>();
         boolean ready;
+        boolean pack;  // resource pack loaded (or failed for good)
+        boolean world; // client finished loading the world
         long current; // sequence of the screen shown, 0 = none
         long sequence;
     }
@@ -59,19 +63,33 @@ public final class JoinScreenService implements JoinScreens.Service, Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
         Player p = e.getPlayer();
-        state(p).ready = false;
+        State s = state(p);
+        s.ready = false;
         // A pack applied before joining (ItemsAdder before_join) is answered during the configuration phase, where
         // Paper fires no PlayerResourcePackStatusEvent: it only keeps the status on the connection. Without this
         // check, such a player always waited the whole PACK_TIMEOUT.
-        if (finished(packStatus(p))) Bukkit.getScheduler().runTaskLater(flux, () -> ready(p), 20L);
+        if (finished(packStatus(p))) s.pack = true;
         Bukkit.getScheduler().runTaskLater(flux, () -> ready(p), PACK_TIMEOUT * 20L);
     }
 
     @EventHandler
     public void onPack(PlayerResourcePackStatusEvent e) {
         if (!finished(e.getStatus())) return;
-        Player p = e.getPlayer();
-        Bukkit.getScheduler().runTaskLater(flux, () -> ready(p), 20L);
+        state(e.getPlayer()).pack = true;
+        whenBoth(e.getPlayer());
+    }
+
+    /** Sent by the client when the "loading terrain" screen closes (or by the server after its own timeout). */
+    @EventHandler
+    public void onWorldLoaded(io.papermc.paper.event.player.PlayerClientLoadedWorldEvent e) {
+        state(e.getPlayer()).world = true;
+        whenBoth(e.getPlayer());
+    }
+
+    private void whenBoth(Player p) {
+        State s = state(p);
+        if (s.ready || !s.pack || !s.world) return;
+        Bukkit.getScheduler().runTaskLater(flux, () -> ready(p), 10L);
     }
 
     /** Loaded, or failed for good: nothing more to wait for. Null (no pack sent yet), accepted, downloaded: wait. */
