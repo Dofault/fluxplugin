@@ -690,3 +690,64 @@ def stretch(g, m, ops):
     m.after[:] = [move_xyz(c, 2 if c.startswith("fill") else 1) for c in m.after]
     m.box = (g.X0, g.Z0, g.X1, g.Z1)
     return point
+
+
+def cut(g, m, z0, z1):
+    """Takes the slices z0..z1 (both included, the whole width of the map) out of a model and brings everything north
+    of them back by their length: the inverse of a z stretch, to drop a room without redrawing what follows it. Run it
+    before the script's checks (they then see the map as it will be built). Monsters, doors, the start, ambience,
+    entities, waterfalls and m.after follow; anything inside the slices is refused (monsters, doors, the start) or
+    dropped (blocks, entities, ambience). Returns the function that moves a z."""
+    import re
+    n = z1 - z0 + 1
+
+    def mz(z):
+        return z - n if z > z1 else z
+
+    def inside(z):
+        return z0 <= z <= z1
+
+    for sp in m.spawns:
+        if inside(math.floor(sp["at"][2])):
+            sys.exit(f"cut: monster {sp['mob']} stands in the slices {z0}..{z1}")
+    for d in m.doors:
+        if inside(d["from"][2]) or inside(d["to"][2]):
+            sys.exit(f"cut: door {d['id']} is in the slices {z0}..{z1}")
+    if inside(math.floor(m.start[2])):
+        sys.exit("cut: the start is in the slices")
+    g.over = {(x, y, mz(z)): b for (x, y, z), b in g.over.items() if not inside(z)}
+    falls = {(x, y, mz(z)) for (x, y, z) in g.falls if not inside(z)}
+    g.falls.clear()
+    g.falls.update(falls)
+    g.Z1 -= n
+    num = r"(-?\d+(?:\.\d+)?)"
+    pattern = re.compile(rf"(?<![\w.\[:,-]){num} {num} {num}(?![\w.])")
+
+    def first_z(text):
+        mo = pattern.search(text)
+        return None if mo is None else float(mo.group(3))
+
+    def move(text, count=1):
+        def one(mo):
+            x, y, z = mo.group(1), mo.group(2), mo.group(3)
+            if "." in z:
+                fz = float(z)
+                bz = math.floor(fz)
+                return f"{x} {y} {round(mz(bz) + (fz - bz), 3)}"
+            return f"{x} {y} {mz(int(z))}"
+        return pattern.sub(one, text, count=count)
+
+    g.entities[:] = [move(e) for e in g.entities if first_z(e) is None or not inside(math.floor(first_z(e)))]
+    g.doors[:] = [((a[0], a[1], mz(a[2])), (b[0], b[1], mz(b[2]))) for a, b in g.doors]
+    for sp in m.spawns:
+        bz = math.floor(sp["at"][2])
+        sp["at"][2] = mz(bz) + (sp["at"][2] - bz)
+    for d in m.doors:
+        d["from"][2], d["to"][2] = mz(d["from"][2]), mz(d["to"][2])
+    m.ambience[:] = [a for a in m.ambience if not inside(math.floor(a["at"][2]))]
+    for a in m.ambience:
+        bz = math.floor(a["at"][2])
+        a["at"][2] = mz(bz) + (a["at"][2] - bz)
+    m.after[:] = [move(c, 2 if c.startswith("fill") else 1) for c in m.after]
+    m.box = (g.X0, g.Z0, g.X1, g.Z1)
+    return mz

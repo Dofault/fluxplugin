@@ -11,17 +11,19 @@ monsters: more room to fight):
   - room 2, the Great Harvest Barn (47 x 45 inside, in a 61-wide yard): stone base, plank walls, a low gable roof
     (one block up every two), sliding doors, lofts on both sides over the storage, lanterns on the tie beams; open
     39 x 43 middle. Possessed reapers, rats and the Great Scarecrow (mini-boss);
-  - room 3, the Market Gardeners' Plot (51 x 51): carrots, potatoes, beetroots, wheat, pumpkins and melons in plots
-    along the sides, irrigation ditches, crates of vegetables; a cabin and a greenhouse beyond the fences. Raging
-    rabbits, corrupted hens, rats;
-  - room 4, the Mill and the Silos (65 x 60): a 13 x 13 windmill 27 high with four sails facing the way in, four
+  - room 3, the Mill and the Silos (65 x 60): a 13 x 13 windmill 27 high with four sails facing the way in, four
     brick silos, a flour store; the Possessed Miller (mini-boss), reapers and scarecrows;
-  - room 5, the Great Hamster's Pen: the boss arena of the first version (its fences, lanterns and haystacks kept
+  - room 4, the Great Hamster's Pen: the boss arena of the first version (its fences, lanterns and haystacks kept
     where they were), now one potato field from fence to fence, entered by the gap of its
     southern fence, left by a gate in its northern fence when the boss dies; around it food stores, burrows and a
     giant hamster wheel, out of reach.
 Between rooms, tall hedges (the next room stays hidden); on the landscape side, low fences under invisible barriers
 (the countryside stays in view).
+
+2026-11-16 (owner): three rooms before the boss, not four (the hamster alone makes the dungeon hard). The Market
+Gardeners' Plot is no longer built (room3() kept for its drawing): the hedge between the barn's yard and the mill
+stays (passage()), then gridlib.cut takes its 53 slices out, so the mill and the pen come 53 blocks closer. The
+landscape (terrain, fields, meadow) is drawn after the cut, on the shorter estate (END).
 
 Usage: gen_moisson.py [server] [--check] [--preview DIR] [--edits]     (labs by default)
 """
@@ -33,6 +35,9 @@ import gridlib
 import maplib
 
 F = 63
+CUT = (107, 159)                 # the slices of the former market garden, taken out (gridlib.cut)
+CUT_N = CUT[1] - CUT[0] + 1
+END = 270 - CUT_N                # north end of the estate once cut (the landscape is drawn on it)
 DZ = 226                         # the former arena (z -4..36) is moved to z 222..262
 X0, X1, Y0, Y1, Z0, Z1 = -86, 86, 50, 112, -50, 300
 BANDS = ((50, 58, "stone"), (59, 62, "dirt"), (63, 63, "grass_block"))
@@ -227,10 +232,10 @@ def terrain():
     heights = {}
     for x in range(X0, X1 + 1):
         for z in range(Z0, Z1 + 1):
-            if abs(x) <= 37 and -14 <= z <= 270:
+            if abs(x) <= 37 and -14 <= z <= END:
                 continue
             dx = max(0, abs(x) - 58)
-            dz = max(0, -10 - z, z - 274)
+            dz = max(0, -10 - z, z - (END + 4))
             d = math.hypot(dx, dz)
             if d == 0:
                 continue
@@ -255,7 +260,7 @@ def terrain():
             g.set(x, y, z, b)
     # trees and woods on the slopes, forests further
     for (x, z), h in heights.items():
-        d = math.hypot(max(0, abs(x) - 58), max(0, -10 - z, z - 274))
+        d = math.hypot(max(0, abs(x) - 58), max(0, -10 - z, z - (END + 4)))
         if h >= F + 22 or g.get(x, h, z) != "grass_block":
             continue
         dens = 0.03 if d < 6 else (0.11 if d < 22 else 0.05)
@@ -271,7 +276,7 @@ def fields():
     crops = ["wheat", "wheat", "carrots", "potatoes", "beetroots"]
     for sx in (-1, 1):
         x_lo, x_hi = (40, 56)
-        for zb in range(-8, 272, 22):
+        for zb in range(-8, END + 2, 22):
             for xb in range(x_lo, x_hi - 4, 7):
                 c = r.choice(crops)
                 xa, xb2 = sx * xb, sx * (xb + 5)
@@ -283,19 +288,19 @@ def fields():
                 hay(hx, zb + 20 + 1 if False else zb + 19, r.randint(1, 2))
         # the stream between the fields and the hills
         sx_stream = sx * 58
-        for z in range(-8, 273):
+        for z in range(-8, END + 3):
             g.set(sx_stream, F, z, "water")
             g.set(sx_stream, F - 1, z, "gravel" if r.random() < 0.5 else "sand")
             if r.random() < 0.08:
                 g.set(sx_stream, F + 1, z, "lily_pad")
         # hedgerow along the estate
-        for z in range(-12, 270, 5):
+        for z in range(-12, END, 5):
             if r.random() < 0.55:
                 tree(sx * 38, z + r.randint(0, 3), kind=r.choice(["oak", "birch", "fruit"]))
             else:
                 g.box(sx * 38, F + 1, z, sx * 38, F + r.randint(1, 2), z + 1, LEAVES)
     # two small farmsteads out in the fields
-    for (bx, bz) in ((-48, 80), (48, 190)):
+    for (bx, bz) in ((-48, 80), (48, 190 - CUT_N)):
         g.box(bx - 3, F + 1, bz - 3, bx + 3, F + 4, bz + 3, "spruce_planks")
         g.box(bx - 2, F + 1, bz - 2, bx + 2, F + 4, bz + 2, "air")
         for k in range(4):
@@ -607,7 +612,15 @@ def room3():
             particle={"type": "SPORE_BLOSSOM_AIR", "count": 5, "spread": (10, 2, 10), "speed": 0, "every": 20})
 
 
-# ======================================================================== room 4: the mill and the silos
+def passage():
+    """What stays of the market garden (2026-11-16): the hedge between the barn's yard and the mill, a gap and the
+    path; the 53 slices north of it are cut away (CUT)."""
+    hedge(-33, 104, -3, 106)
+    hedge(3, 104, 33, 106)
+    g.box(-2, F, 104, 2, F, 107, "dirt_path")
+
+
+# ======================================================================== room 3 (formerly 4): the mill and the silos
 
 def disc(cx, cz, rad, y, block, hollow=False):
     for x in range(int(cx - rad - 1), int(cx + rad + 2)):
@@ -701,17 +714,17 @@ def room4():
         tree(x, z, kind="oak")
     hedge(-33, 220, -3, 221)
     hedge(3, 220, 33, 221)
-    m.mob("moisson_meunier", 10, 198, yaw=180, room="4")
+    m.mob("moisson_meunier", 10, 198, yaw=180, room="3")
     for x, z in ((-10, 170), (7, 176), (-13, 200)):
-        m.mob("moisson_faucheur", x, z, yaw=180, room="4")
+        m.mob("moisson_faucheur", x, z, yaw=180, room="3")
     for x, z in ((15, 167), (-5, 190)):
-        m.mob("moisson_epouvantail", x, z, yaw=180, room="4")
+        m.mob("moisson_epouvantail", x, z, yaw=180, room="3")
     # the gate to the pen
     g.box(-2, F, 219, 2, F, 221, "dirt_path")
     g.box(-2, F + 1, 221, 2, F + 5, 221, "air")
     g.box(-2, F + 1, 220, 2, F + 3, 220, "spruce_fence")
     g.box(-2, F + 4, 220, 2, F + 4, 220, "spruce_slab[type=bottom]")
-    door("porte_moulin", (-2, F + 1, 220), (2, F + 4, 220), room="4")
+    door("porte_moulin", (-2, F + 1, 220), (2, F + 4, 220), room="3")
     gate_arch(-2, 2, 219)
     m.sound(22, F + 16, 200, [("block.wooden_trapdoor.open", 0.5, 0.5), ("block.wood.step", 0.5, 0.5), ("block.wooden_door.close", 0.3, 0.5)],
             radius=24, every=(50, 110))
@@ -719,7 +732,7 @@ def room4():
             particle={"type": "FALLING_SPORE_BLOSSOM", "count": 4, "spread": (12, 3, 12), "speed": 0, "every": 20})
 
 
-# ======================================================================== room 5: the pen of the Great Hamster
+# ======================================================================== room 4 (formerly 5): the pen of the Great Hamster
 
 def room5():
     arena = {}
@@ -754,7 +767,7 @@ def room5():
                         g.set(x, y, z, "barrier")
     # the way out: a gate in its northern fence, opened when the boss dies
     g.box(-2, F + 1, 36 + DZ, 2, F + 1, 36 + DZ, EXIT_GATE)
-    door("porte_sortie", (-2, F + 1, 36 + DZ), (2, F + 1, 36 + DZ), room="5")
+    door("porte_sortie", (-2, F + 1, 36 + DZ), (2, F + 1, 36 + DZ), room="4")
     # around the pen (out of reach): food stores, burrows, crates, the wheel
     z0, z1 = -4 + DZ, 36 + DZ
     for sx in (-1, 1):
@@ -810,24 +823,23 @@ def room5():
         g.box(x, F + 1, wz, x, wy - 1, wz, "spruce_log")
         g.box(x, F + 1, wz - 2, x, F + 2, wz - 2, "spruce_fence")
         g.box(x, F + 1, wz + 2, x, F + 2, wz + 2, "spruce_fence")
-    m.mob("hamster_moissonneur", 0, 18 + DZ, yaw=180, room="5")
+    m.mob("hamster_moissonneur", 0, 18 + DZ, yaw=180, room="4")
     m.objectives = ["hamster_moissonneur"]
 
 
 # ======================================================================== checks
 
 def zone_of(x, y, z):
+    """Zone of a cell of the map as built (after the cut)."""
     if z <= 53:
         return 1
     if z <= BZ1:
         return 2
-    if z <= 159:
+    if z <= 221 - CUT_N:
         return 3
-    if z <= 221:
+    if z <= 36 + DZ - CUT_N - 1 and abs(x) <= 16:
         return 4
-    if z <= 36 + DZ - 1 and abs(x) <= 16:
-        return 5
-    return 6
+    return 5
 
 
 def check():
@@ -843,25 +855,26 @@ def check():
         if top > allowed:
             bad = next(p for p in seen if zone_of(*p) > allowed)
             errors.append(f"doors open {k}: zone {top} reachable, e.g. {bad}")
-        if top < min(allowed, 5):
+        if top < min(allowed, 4):
             errors.append(f"doors open {k}: zone {allowed} not reachable (max {top})")
     # the arena copied exactly, apart from the gap, the exit gate and the barriers over the fence
     for line in open(ARENA):
         if line.startswith("#") or not line.strip():
             continue
         x, y, z, b = line.split(maxsplit=3)
-        x, y, z, b = int(x), int(y), int(z) + DZ, b.strip()
-        if (x, z - DZ) in ((-3, 0), (3, 0)):
+        x, y, z, b = int(x), int(y), int(z) + DZ - CUT_N, b.strip()
+        if (x, z - DZ + CUT_N) in ((-3, 0), (3, 0)):
             continue
         got = g.get(x, y, z)
         sown = abs(x) <= 15 and b.split("[")[0] in SOWN and got.startswith("farmland")
-        if got != b and not sown and not (abs(x) <= 2 and z in (-4 + DZ, 36 + DZ)):
+        if got != b and not sown and not (abs(x) <= 2 and z in (-4 + DZ - CUT_N, 36 + DZ - CUT_N)):
             errors.append(f"arena changed at {x} {y} {z}: {b} -> {got}")
     # crops outside the pen kept apart from its field (the boss eats the crops joined to its spawn)
-    arena_crops = [(x, z) for (x, y, z), b in g.over.items() if abs(x) <= 16 and DZ - 4 <= z <= DZ + 36
+    AZ = DZ - CUT_N
+    arena_crops = [(x, z) for (x, y, z), b in g.over.items() if abs(x) <= 16 and AZ - 4 <= z <= AZ + 36
                    and any(c in b for c in ("carrots", "potatoes", "wheat[", "beetroots"))]
     for (x, y, z), b in g.over.items():
-        if (abs(x) > 16 or not DZ - 4 <= z <= DZ + 36) and any(c in b for c in ("carrots", "potatoes", "wheat[", "beetroots")):
+        if (abs(x) > 16 or not AZ - 4 <= z <= AZ + 36) and any(c in b for c in ("carrots", "potatoes", "wheat[", "beetroots")):
             if any(abs(x - ax) <= 2 and abs(z - az) <= 2 for ax, az in arena_crops):
                 errors.append(f"crop at {x} {y} {z} joins the hamster's field")
                 break
@@ -870,21 +883,23 @@ def check():
 
 # ======================================================================== main
 
-terrain()
-fields()
 road()
 room1()
 room2()
-room3()
+passage()
 room4()
 room5()
+gridlib.cut(g, m, *CUT)
+# the landscape on the shorter estate
+terrain()
+fields()
 # the meadow between the rooms and the fields (out of reach): wild flowers, a few trees and haystacks
-flowers(-37, -12, 37, 270, 900)
+flowers(-37, -12, 37, END, 900)
 for x, z, kind in ((-30, 20, "oak"), (29, 44, "birch"), (30, 14, "fruit"), (-29, 46, "fruit"), (-35, 75, "oak"), (35, 95, "oak"),
-                   (35, 66, "fruit"), (-35, 98, "birch"), (-30, 118, "birch"), (31, 150, "oak"), (-28, 240, "oak"), (29, 250, "birch")):
+                   (35, 66, "fruit"), (-35, 98, "birch"), (-28, 240 - CUT_N, "oak"), (29, 250 - CUT_N, "birch")):
     if g.get(x, F + 1, z) == "air":
         tree(x, z, kind=kind)
-for x, z, h in ((27, 30, 2), (28, 30, 1), (-27, 12, 1), (-34, 60, 2), (34, 85, 1), (-30, 142, 2), (-25, 232, 1), (31, 236, 2)):
+for x, z, h in ((27, 30, 2), (28, 30, 1), (-27, 12, 1), (-34, 60, 2), (34, 85, 1), (-25, 232 - CUT_N, 1), (31, 236 - CUT_N, 2)):
     if g.get(x, F + 1, z) == "air":
         hay(x, z, h)
 m.textures = "rpg"
@@ -897,8 +912,7 @@ m.ybox = (Y0, Y1)
 REINFORCE = {
     "1": ['moisson_limace', 'moisson_limace', 'moisson_limace', 'moisson_marmot', 'moisson_marmot', 'moisson_marmot', 'moisson_semeur', 'moisson_semeur', 'moisson_citrouille'],
     "2": ['moisson_taureau', 'moisson_taureau', 'moisson_marmot', 'moisson_marmot', 'moisson_semeur', 'moisson_semeur'],
-    "3": ['moisson_limace', 'moisson_limace', 'moisson_limace', 'moisson_citrouille', 'moisson_citrouille', 'moisson_semeur', 'moisson_semeur', 'moisson_taureau'],
-    "4": ['moisson_taureau', 'moisson_taureau', 'moisson_semeur', 'moisson_semeur', 'moisson_marmot', 'moisson_marmot', 'moisson_citrouille'],
+    "3": ['moisson_taureau', 'moisson_taureau', 'moisson_semeur', 'moisson_semeur', 'moisson_marmot', 'moisson_marmot', 'moisson_citrouille'],
 }
 
 
