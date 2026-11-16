@@ -13,8 +13,8 @@ Lists, actions and placeholders are FluxDungeons' (menu.DungeonMenus, dungeon.Lo
 
 Layouts (window px 176 wide, item of a slot at fond_lib.objet):
   donjons   the dungeons in a line (2026-11-16, owner's layout), rows 0 to 3 and the inventory's three rows: back (0),
-            info (8: tokens, class level); the shop a big button in the middle (3-5, 12-14, drawn on the background,
-            invisible items over it), his stats (his head) on its left (11), the party on its right (15); the « stuff RPG »
+            info (8: tokens, class level); the shop in the middle on a green plate (13), his stats (his head) on its
+            left (11), the party on its right (15); the « stuff RPG »
             on row 3 (below); his spells in the inventory's first row under « SORTS » (38-42: A, F, the weapon's spell,
             the basic attack, the passive; read only); the line in the inventory's third row: four
             dungeons a page (55, 57, 59, 61), Flux's path through them and on to the arrows (54, 62) that turn the page,
@@ -68,10 +68,8 @@ VIOLET, VIOLET_DARK = ui.rgb("#5B2D9E"), ui.rgb("#1E0A3C")
 SPELL_SLOTS = [38, 39, 40, 41, 42]      # A, F, weapon's spell, basic attack, passive (rpg.SpellBook order)
 LINE_SLOTS = [55, 57, 59, 61]           # same as DungeonMenus.PER_PAGE
 LINE_ARROWS = (54, 62)
-LINE_BUTTONS = [0, 8, 11, 15]           # back, info, his stats (his head), party (DungeonMenus order)
-# the shop, a big button in the middle (owner, 2026-11-16): 3 x 2 slots, its picture drawn on the background,
-# invisible items over it for the click (list donjons_boutique)
-SHOP_BIG = [3, 4, 5, 12, 13, 14]
+LINE_BUTTONS = [0, 8, 11, 13, 15]       # back, info, his stats (his head), shop, party (DungeonMenus order)
+SHOP_BUTTON = 13                        # the shop in the middle, on a green plate
 # the player's rpg gear, in the inventory's first row under the line (the menu has 4 chest rows): weapon (his class),
 # helmet, chestplate, leggings, boots, his rpg inventory to look at, health and mana potions, the pet for dungeons
 GEAR_SLOTS = [27, 28, 29, 30, 31, 32, 33, 34, 35]
@@ -137,12 +135,8 @@ def bg_line(page):
     the gap over the inventory. The path between them is Flux's, drawn over this picture."""
     im = bg_window(GENERIC, 0, 8, extra=3, rows=LINE_ROWS, title="Donjons")
     d = ImageDraw.Draw(im, "RGBA")
-    # the shop, big, in the middle: a green plate over 3 x 2 slots, its purse twice its size
-    x0, y0 = ui.objet(SHOP_BIG[0])
-    x1, y1 = ui.objet(SHOP_BIG[-1])
-    ui.button(d, (x0 - 1, y0 - 1, x1 + 16, y1 + 16), ui.rgb("#3E8E2E"))
-    big = shop_icon().resize((32, 32), Image.NEAREST)
-    im.alpha_composite(big, ((x0 + x1 + 16) // 2 - 16, (y0 + y1 + 16) // 2 - 16))
+    x, y = ui.objet(SHOP_BUTTON)
+    ui.button(d, (x - 3, y - 3, x + 18, y + 17), ui.rgb("#3E8E2E"))
     xs = [ui.objet(c)[0] for c in GEAR_SLOTS]
     gy = ui.objet(GEAR_SLOTS[0])[1]
     label(im, "STUFF RPG", 88, gy - 11, centre=True)
@@ -471,7 +465,6 @@ open-actions:
 lists:
 
 {entries("donjons_boutons", LINE_BUTTONS, left=["%entry_left%", "%entry_left2%"])}
-{entries("donjons_boutique", SHOP_BIG, left=["%entry_left%"])}
 {entries("donjons_liste", LINE_SLOTS, left=["%entry_left%"], right=["%entry_right%"])}
 {entries("donjons_equipement", GEAR_SLOTS, left=["%entry_left%"], right=["%entry_right%"])}
 {entries("donjons_sorts", SPELL_SLOTS, left=["%entry_left%"])}
