@@ -45,7 +45,9 @@ NS = "fluxui"
 TEXT_SHADOW = (40, 40, 40, 255)
 # characters of the menu font (lower case is drawn upper case by Flux)
 # \uE120 / \uE121: closed / open lock (pass milestones), written in a text like any letter
-CHARS = (list("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") + list("ÉÈÊÀÂÎÔ") + list("/%.:+-!'·?,()_") + ["\uE120", "\uE121"])
+# Û added last (2026-11-16, « Bûcheron »): new characters go at the end, the others keep their cell
+CHARS = (list("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") + list("ÉÈÊÀÂÎÔ") + list("/%.:+-!'·?,()_") + ["\uE120", "\uE121"]
+         + ["Û"])
 CELL_W, CELL_H = 8, 16         # accent rows 0-1, letter rows 2-6, shadow row 7, empty below: a glyph may stand
                                # up to 16 px above the baseline (ascent <= height), so text fits any row, plate too
 COLS = 16

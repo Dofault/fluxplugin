@@ -499,10 +499,10 @@ def chat_mock(tags, gui):
 def sheet(path):
     myth, colour = 3, RARITIES[3][1]
     zoom = 8
-    base_w = chat_width(s_actuel("Sylviculteur", colour, myth))[0]
+    base_w = chat_width(s_actuel("Bûcheron", colour, myth))[0]
     pieces, sizes = [], []
     for title, desc, fn in STYLES:
-        job, rank = fn("Sylviculteur", colour, myth), fn("Éminent", "4e72e6", None)
+        job, rank = fn("Bûcheron", colour, myth), fn("Éminent", "4e72e6", None)
         jw = chat_width(job)[0]
         sizes.append((title, job.size, jw))
         big = job.resize((job.width * zoom, job.height * zoom), Image.NEAREST)

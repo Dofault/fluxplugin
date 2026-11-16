@@ -203,9 +203,9 @@ boosters:
       fabled: 0
   metier_sylviculteur:
     item: fluxpet:booster_metier_sylviculteur
-    name: '&#B07A45&lBooster Sylviculteur'
+    name: '&#B07A45&lBooster Bûcheron'
     lore:
-    - '&#B376E5Contient &f%cards% &#B376E5cartes de la série &#B07A45Sylviculteur&#B376E5.'
+    - '&#B376E5Contient &f%cards% &#B376E5cartes de la série &#B07A45Bûcheron&#B376E5.'
     - ''
     - '&#B376E5Familiers à adopter :'
     - '%adopted:souche% &#AAAAAASouche'

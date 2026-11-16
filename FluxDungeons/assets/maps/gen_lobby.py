@@ -9,7 +9,7 @@ lobby world flux_rpg (no copy: the world is live), modelled in memory first (gri
     two fountains at its southern corners;
   - two wings of five gates, one per job with a dungeon or one to come, same architecture (pillars, arch, pediment,
     the job's materials and colour, its name above): west Mineur, Rochiste, Déblayeur, Fondeur, Enchanteur; east
-    Cultivateur, Herboriste, Sylviculteur, Pêcheur, Défenseur. Walking into a gate opens the dungeon's launch screen
+    Cultivateur, Herboriste, Bûcheron, Pêcheur, Défenseur. Walking into a gate opens the dungeon's launch screen
     (their trigger zones, particles and names live in Typewriter: scripts/typewriter/gen_lobby_rpg.py, page lobby_rpg);
   - north of the square: the training yard (place a dummy with /rpgadmin mannequin on its mark), the town hall, the
     bonus court (empty, kept for a future feature);
@@ -49,7 +49,7 @@ JOBS_WEST = [  # (dungeon id, name, colour, materials of the gate, emblem blocks
 JOBS_EAST = [
     ("moisson", "Cultivateur", "#F0A800", ["hay_block", "oak_planks", "stripped_oak_log"], ["pumpkin", "melon", "composter"]),
     ("herboriste", "Herboriste", "#83A85A", ["moss_block", "mossy_stone_bricks", "flowering_azalea_leaves[persistent=true]"], ["flowering_azalea", "azalea", "moss_block"]),
-    ("sylviculteur", "Sylviculteur", "#8C6A3E", ["spruce_log", "stripped_spruce_log", "spruce_planks"], ["oak_log", "birch_log", "spruce_leaves[persistent=true]"]),
+    ("sylviculteur", "Bûcheron", "#8C6A3E", ["spruce_log", "stripped_spruce_log", "spruce_planks"], ["oak_log", "birch_log", "spruce_leaves[persistent=true]"]),
     ("pecheur", "Pêcheur", "#43B7B0", ["prismarine_bricks", "dark_prismarine", "prismarine"], ["sea_lantern", "barrel[facing=up]", "tube_coral_block"]),
     ("defenseur", "Défenseur", "#C8C8C8", ["polished_blackstone_bricks", "bone_block", "chiseled_stone_bricks"], ["bone_block", "iron_bars", "skeleton_skull[rotation=0]"]),
 ]

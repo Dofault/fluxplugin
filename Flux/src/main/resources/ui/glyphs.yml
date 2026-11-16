@@ -59,6 +59,7 @@ chars:
   "_": 3
   "": 5
   "": 5
+  "Û": 5
 chunks: [1, 2, 4, 8, 16, 32, 64, 128]
 bar-colours: [green, gold, blue, red, purple]
 bar-height: 10

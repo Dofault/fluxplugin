@@ -48,7 +48,7 @@ METIERS = [
     ("deblayeur", "Déblayeur", "IRON_SHOVEL", "Déblayeur", ["Dégage terre, sable,", "gravier et neige."]),
     ("cultivateur", "Cultivateur", "WHEAT", "Cultivateur", ["Récolte blé, carottes,", "melons et canne à sucre."]),
     ("herboriste", "Herboriste", "POPPY", "Herboriste", ["Cueille fleurs, bambou,", "champignons et algues."]),
-    ("sylviculteur", "Sylviculteur", "IRON_AXE", "Sylviculteur", ["Abat les arbres,", "toutes essences confondues."]),
+    ("sylviculteur", "Bûcheron", "IRON_AXE", "Bûcheron", ["Abat les arbres,", "toutes essences confondues."]),
     ("fondeur", "Fondeur", "FURNACE", "Fondeur", ["Fond minerais et", "aliments au four."]),
     ("chimiste", "Chimiste", "BREWING_STAND", None, ["Brasse des potions", "à l'alambic."]),
     ("enchanteur", "Enchanteur", "ENCHANTING_TABLE", "Enchanteur", ["Enchante à la table", "ou à l'enclume."]),

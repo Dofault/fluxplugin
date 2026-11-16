@@ -317,7 +317,7 @@ SONGS = [
          styles={'a': dict(bass='long', guitar='arp', drums='half'),
                  'b': dict(bass='long', guitar='held', drums='sparse')}),
     dict(id='boss_sylviculteur', title='Le Gardien Sylvestre', bpm=144, meter='4/4',
-         comment='Boss du Sylviculteur : fa dièse mineur épique, grands arpèges de guitare, flûte des bois.',
+         comment='Boss du Bûcheron : fa dièse mineur épique, grands arpèges de guitare, flûte des bois.',
          lead='flute', b_lead='harp', echo='chime', arp='harp',
          prog={'a': 'F#m D A E F#m D E C#', 'b': 'Bm F#m D E Bm F#m D C#'},
          mel_a='C#5:4 F#5:4 A5:4 G#5:2 F#5:2 | A5:6 B5:2 A5:4 F#5:4 | E5:4 A5:4 C#6:4 B5:2 A5:2 | G#5:6 F#5:2 E5:8 '

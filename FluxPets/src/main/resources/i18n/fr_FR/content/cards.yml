@@ -214,44 +214,44 @@ cards:
   souche:
     item: fluxpet:carte_souche
     name: '&#AAAAAASouche'
-    series: Sylviculteur
+    series: Bûcheron
     rarity: simple
     pet: souche
     lore:
     - '&#B376E5Coupée il y a cent ans, elle a gardé la hache en souvenir.'
     - ''
-    - '&#2ECF7BSérie &fSylviculteur'
+    - '&#2ECF7BSérie &fBûcheron'
   castor:
     item: fluxpet:carte_castor
     name: '&#37C44ACastor'
-    series: Sylviculteur
+    series: Bûcheron
     rarity: unique
     pet: castor
     lore:
     - '&#B376E5Un arbre ? Trois coups de dents, et c''est réglé.'
     - ''
-    - '&#2ECF7BSérie &fSylviculteur'
+    - '&#2ECF7BSérie &fBûcheron'
   gland:
     item: fluxpet:carte_gland
     name: '&#3283A8Gland'
-    series: Sylviculteur
+    series: Bûcheron
     rarity: elite
     pet: gland
     lore:
     - '&#B376E5Un jour il sera chêne.'
     - '&#B376E5Pour l''instant, il roule.'
     - ''
-    - '&#2ECF7BSérie &fSylviculteur'
+    - '&#2ECF7BSérie &fBûcheron'
   sylvain:
     item: fluxpet:carte_sylvain
     name: '&#B376E5Sylvain'
-    series: Sylviculteur
+    series: Bûcheron
     rarity: ultimate
     pet: sylvain
     lore:
     - '&#B376E5Gardien des vieilles forêts, patient comme un chêne.'
     - ''
-    - '&#2ECF7BSérie &fSylviculteur'
+    - '&#2ECF7BSérie &fBûcheron'
   flammeche:
     item: fluxpet:carte_flammeche
     name: '&#B376E5Flammèche'
