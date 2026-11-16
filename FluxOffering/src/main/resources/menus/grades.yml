@@ -39,7 +39,8 @@ widgets:
     type: bar
     frame: true
     x: 25
-    y: 110
+    # centred in the free band under the well (y 109-126): 3 px above the frame, 3 under its outline (2026-11-16)
+    y: 112
     width: 126
     colour: green
     progress: "%grades_step%"
