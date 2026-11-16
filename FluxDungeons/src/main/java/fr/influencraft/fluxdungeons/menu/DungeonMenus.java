@@ -101,6 +101,7 @@ public final class DungeonMenus {
         this.tokens = tokens;
         Lists.register(plugin, "donjons_liste", q -> list(q.viewer()));
         Lists.register(plugin, "donjons_boutons", q -> buttons(q.viewer()));
+        Lists.register(plugin, "donjons_boutique", q -> shopButton(q.viewer()));
         Lists.register(plugin, "donjons_equipement", q -> gear(q.viewer()));
         Lists.register(plugin, "donjons_sorts", q -> spells(q.viewer()));
         Lists.register(plugin, "donjon_familier_boutons", q -> petButtons(q.viewer()));
@@ -127,7 +128,7 @@ public final class DungeonMenus {
     }
 
     private void invalidate(Player p) {
-        for (String l : List.of("donjons_liste", "donjons_boutons", "donjons_equipement", "donjons_sorts", "donjon_familiers", "donjon_familier_boutons",
+        for (String l : List.of("donjons_liste", "donjons_boutons", "donjons_boutique", "donjons_equipement", "donjons_sorts", "donjon_familiers", "donjon_familier_boutons",
                 "rpg_armures", "rpg_armure_boutons", "rpg_inventaire_objets")) {
             Lists.invalidate(p, l);
         }
@@ -291,11 +292,30 @@ public final class DungeonMenus {
         out.add(button("party", Items.of("PLAYER_HEAD", raw("menu.party"),
                 Lore.create().description(host.partyLine(viewer)).description(raw("menu.party-desc"))
                         .left(raw("menu.party-action")).build(), viewer), "[close]", "[player] groupe"));
-        out.add(button("shop", Items.of("itemsadder:fluxdonjon:boutique", raw("menu.shop"),
-                Lore.create().description(raw("menu.shop-desc")).kv(raw("menu.tokens-owned"), owned)
-                        .left(raw("menu.shop-open")).build(), viewer), "[fluxdungeon] shop open", ""));
         return out;
     }
+
+    /**
+     * The shop, a big button in the middle of the menu (owner, 2026-11-16): its picture is the background's, the same
+     * invisible item over each of its slots carries its description and its click.
+     */
+    private List<ListEntry> shopButton(Player viewer) {
+        Currency money = tokens.currency();
+        String owned = money == null ? "0" : money.format(money.balance(viewer));
+        List<String> lore = Lore.create().description(raw("menu.shop-desc")).kv(raw("menu.tokens-owned"), owned)
+                .left(raw("menu.shop-open")).build();
+        List<ListEntry> out = new ArrayList<>();
+        for (int i = 0; i < SHOP_SLOTS; i++) {
+            ItemStack item = Items.of(INVISIBLE, raw("menu.shop"), lore, viewer);
+            if (item == null) item = Items.of("itemsadder:fluxdonjon:boutique", raw("menu.shop"), lore, viewer);
+            out.add(button("shop_" + i, item, "[fluxdungeon] shop open", ""));
+        }
+        return out;
+    }
+
+    /** Slots of the big shop button (gen_menus.py SHOP_BIG) and the invisible item laid over them. */
+    private static final int SHOP_SLOTS = 6;
+    private static final String INVISIBLE = "itemsadder:influitems:invisible";
 
     /** His head, his rpg stats in its description (every stat not at zero), wherever he is. */
     private ItemStack stats(Player viewer) {
