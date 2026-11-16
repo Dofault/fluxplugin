@@ -685,6 +685,7 @@ menu:
   shop: 'Dungeon shop'
   shop-desc: 'Dungeon tokens buy everything here: the mount of a beaten boss, boosters, books and gear sets of each job.'
   shop-open: 'Open the shop'
+  next-floor: '&#FFD94DYour next floor'
 loot:
   pet-desc: 'The boss''s mount: for sale in this dungeon''s shop, only to those who beat the boss.'
   pet-mount: 'Legendary pet in the semi-rp world, a mount that attacks, takes 3 slots.'

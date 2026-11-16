@@ -13,11 +13,13 @@ Writes:
 Lists, actions and placeholders are FluxDungeons' (menu.DungeonMenus, dungeon.Lobby). Then /iazip and /fluxmenu reload.
 
 Layouts (window px 176 wide, item of a slot at fond_lib.objet):
-  donjons   the dungeon tower (2026-11-16), the whole window (chest and hidden inventory, rows 0 to 9): a stone tower
-            and a road climbing it in switchbacks from floor 1 (hotbar row, left) to floor 10 (row 1, right), two
-            floors a storey, each in a niche of its job's colour with its level written beside it; above the top
-            the road fades towards a "?" (slot 4: the tower goes on). Row 0: back (0), "?" (4), info (8); on the free
-            rows beside the tower: class (36), party (44), tokens (72), shop (80, on a green plate). A floor beaten is lit by Flux (won_<floor>).
+  donjons   the dungeon tower (2026-11-16, plain window since the owner's feedback of the same day: no bricks), the
+            whole window (chest and hidden inventory, rows 0 to 9): floors climbing in switchbacks from floor 1
+            (hotbar row, left) to floor 10 (row 1, right), two a storey, each in a frame of its job's colour with its
+            level beside it, joined by Flux's path pieces (the connectors of the ranks menu): green up to the last
+            floor beaten, orange to the floor to play, off above; the path ends on the "?" (slot 6, above floor 10:
+            the tower goes on), lit once the tower is beaten. Row 0: back (0), "?" (6), info (8); beside the floors: class (36), party (44), tokens (72),
+            shop (80, on a green plate). A floor beaten is lit by Flux (won_<floor>).
   donjon_boutique  the dungeon shop (2026-11-16, rows 0 to 8): back (0), the page's name in a field, info (8);
             articles in a well (rows 1-4, columns 1-7: 28, the largest page has 25); tokens (49); the ten floors as
             tabs in the inventory, floors 1-5 on the lower row, 6-10 above (the tower again), the page shown lit.
@@ -63,8 +65,23 @@ JOB_NAMES = {"mineur": "Mineur", "rochiste": "Rochiste", "deblayeur": "Déblayeu
 
 # the tower: floor n at TOWER_SLOTS[n - 1] (switchbacks, two floors a storey, from the hotbar row up)
 TOWER_SLOTS = [83, 87, 69, 65, 47, 51, 33, 29, 11, 15]
-TOWER_BUTTONS = [0, 4, 8, 36, 44, 72, 80]     # back, "?", info, class, party, tokens, shop (DungeonMenus order)
-UNKNOWN, SHOP_BUTTON = 4, 80
+TOWER_BUTTONS = [0, 6, 8, 36, 44, 72, 80]     # back, "?", info, class, party, tokens, shop (DungeonMenus order)
+UNKNOWN, SHOP_BUTTON = 6, 80
+
+
+def tower_route():
+    """Cells of the path from floor 1 to floor 10 (each next to the one before, as Flux's paths want) and the place
+    of every floor in it: straight between the two floors of a storey, one cell up between storeys."""
+    cells = [TOWER_SLOTS[0]]
+    for a, b in zip(TOWER_SLOTS, TOWER_SLOTS[1:]):
+        ra, ca, rb, cb = a // 9, a % 9, b // 9, b % 9
+        if ra == rb:
+            step = 1 if cb > ca else -1
+            cells += [ra * 9 + c for c in range(ca + step, cb + step, step)]
+        else:
+            cells += [r * 9 + ca for r in range(ra - 1, rb - 1, -1)]
+    # the "?" is the path's last cell, above floor 10: off until the tower is beaten
+    return cells + [UNKNOWN], [cells.index(s) for s in TOWER_SLOTS]
 SHOP_ARTICLES = [r * 9 + c for r in range(1, 5) for c in range(1, 8)]
 SHOP_FLOORS = [74, 75, 76, 77, 78, 65, 66, 67, 68, 69]   # floors 1-5 on the lower row, 6-10 above
 SHOP_BUTTONS = [0, 8, 49]
@@ -88,101 +105,30 @@ from tower import TOWER  # noqa: E402
 JOB_COLOURS = {"mineur": "#E3826C", "rochiste": "#B8B2AA", "deblayeur": "#A0855B", "fondeur": "#FF7A3D",
                "enchanteur": "#B376E5", "cultivateur": "#F0A800", "herboriste": "#83A85A", "sylviculteur": "#8C6A3E",
                "pecheur": "#43B7B0", "defenseur": "#C8C8C8"}
-STONE = [ui.rgb(c) for c in ("#2B2533", "#352E40", "#3F374B", "#4A4157", "#5A5068")]   # tower bricks, dark to light
-ROAD, ROAD_EDGE, ROAD_LIGHT = ui.rgb("#9C7A4E"), ui.rgb("#4E3A22"), ui.rgb("#C9A66B")
-
-
-def centre(slot):
-    x, y = ui.objet(slot)
-    return x + 8, y + 8
-
-
-def road(d, pts, width=6, fade=False):
-    """A dirt road through these points (straight legs), dark edge, lighter middle line; faded: dotted."""
-    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
-        steps = max(abs(x1 - x0), abs(y1 - y0))
-        for i in range(steps + 1):
-            x = x0 + (x1 - x0) * i // max(1, steps)
-            y = y0 + (y1 - y0) * i // max(1, steps)
-            if fade and (i // 3) % 2:
-                continue
-            h = width // 2
-            d.rectangle((x - h - 1, y - h - 1, x + h, y + h), fill=ROAD_EDGE)
-    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
-        steps = max(abs(x1 - x0), abs(y1 - y0))
-        for i in range(steps + 1):
-            x = x0 + (x1 - x0) * i // max(1, steps)
-            y = y0 + (y1 - y0) * i // max(1, steps)
-            if fade and (i // 3) % 2:
-                continue
-            h = width // 2
-            d.rectangle((x - h, y - h, x + h - 1, y + h - 1), fill=ROAD if not fade else ui.tone(ROAD, -0.25))
-            if not fade and (x + y) % 5 == 0:
-                d.point((x, y), fill=ROAD_LIGHT)
-
-
-def bricks(im, box, seed=3):
-    """Stone bricks of the tower in the theme's dark violet greys (8 x 4, rows offset), a few lighter stones."""
-    import random
-    r = random.Random(seed)
-    d = ImageDraw.Draw(im, "RGBA")
-    x0, y0, x1, y1 = box
-    d.rectangle(box, fill=STONE[0])
-    for row, y in enumerate(range(y0, y1, 5)):
-        off = 4 if row % 2 else 0
-        for x in range(x0 - off, x1, 9):
-            c = STONE[1 + (r.random() < 0.35) + (r.random() < 0.12)]
-            d.rectangle((max(x0, x), y, min(x1, x + 7), min(y1, y + 3)), fill=c)
-            if r.random() < 0.15:
-                d.point((max(x0, x) + 1, y), fill=STONE[4])
 
 
 def bg_list():
-    """The dungeon tower: the window, a stone tower with battlements over rows 1-9, the road climbing it from floor 1
-    to floor 10 and on, dotted, to the "?" of row 0; a niche per floor, its level beside it."""
+    """The dungeon tower on the theme's plain window: a frame per floor in the colour of its job, its level beside
+    it (left of a left floor, right of a right one), the shop on a green plate (the "?" above the top has no frame:
+    it would touch floor 10's). The road between the floors is Flux's path, drawn over this picture."""
     im = bg_window(GENERIC, 0, 9, title="Donjons")
     d = ImageDraw.Draw(im, "RGBA")
-    tx0, tx1 = 27, 149
-    top = ui.objet(TOWER_SLOTS[-1])[1] - 8
-    bottom = ui.objet(TOWER_SLOTS[0])[1] + 19
-    bricks(im, (tx0, top, tx1, bottom))
-    d.rectangle((tx0, top, tx1, bottom), outline=ui.OUTLINE)
-    # battlements on the top, a misty spire towards the "?"
-    for x in range(tx0, tx1 - 4, 10):
-        d.rectangle((x, top - 5, x + 5, top), fill=STONE[2], outline=ui.OUTLINE)
-    ux, uy = centre(UNKNOWN)
-    # a violet glow where the tower goes on, above its battlements (drawn on its own layer: drawing translucent
-    # shapes straight on a transparent picture replaces its pixels instead of blending them)
-    glow = Image.new("RGBA", im.size, (0, 0, 0, 0))
-    gd = ImageDraw.Draw(glow)
-    for k in range(12, 0, -2):
-        gd.ellipse((ux - k - 3, uy - k, ux + k + 3, uy + k), fill=(91, 45, 158, 255))
-    glow.putalpha(glow.getchannel("A").point(lambda v: v * 3 // 5))
-    im.alpha_composite(glow)
-    d = ImageDraw.Draw(im, "RGBA")
-    # the road, through the floors in their order, then dotted up to the "?"
-    pts = [centre(s) for s in TOWER_SLOTS]
-    path = [pts[0]]
-    for a, b in zip(pts, pts[1:]):
-        if a[1] != b[1]:
-            path.append((a[0], b[1]))
-        path.append(b)
-    road(d, path)
-    road(d, [(ux, pts[-1][1]), (ux, uy + 9)], width=4, fade=True)
-    # a niche per floor in the colour of its job, its level beside it (left of a left floor, right of a right one)
-    for floor, (dungeon, job, level, party, _, _) in sorted(TOWER.items()):
-        slot = TOWER_SLOTS[floor - 1]
+
+    def frame(slot, colour):
         x, y = ui.objet(slot)
-        colour = ui.rgb(JOB_COLOURS[job])
         d.rounded_rectangle((x - 3, y - 3, x + 18, y + 18), radius=3, fill=ui.tone(colour, -0.55), outline=ui.OUTLINE)
         d.rounded_rectangle((x - 2, y - 2, x + 17, y + 17), radius=3, outline=colour)
         d.rectangle((x - 1, y - 1, x + 16, y + 16), fill=ui.WELL)
+
+    for floor, (dungeon, job, level, party, _, _) in sorted(TOWER.items()):
+        slot = TOWER_SLOTS[floor - 1]
+        x, y = ui.objet(slot)
+        frame(slot, ui.rgb(JOB_COLOURS[job]))
         txt = f"{level}"
         if slot % 9 <= 4:
             label(im, txt, x - 6 - 4 * len(txt), y + 5)
         else:
             label(im, txt, x + 21, y + 5)
-    # side buttons on the window, the shop on a green plate
     x, y = ui.objet(SHOP_BUTTON)
     ui.button(d, (x - 3, y - 3, x + 18, y + 17), ui.rgb("#3E8E2E"))
     return im
@@ -446,11 +392,7 @@ def menus():
     head = "# Generated by plugins/fluxplugin/FluxDungeons/assets/menus/gen_menus.py: do not edit by hand.\n"
     # every button is built by FluxDungeons (lists): the files only place them
     common = "player-inventory: hidden\nvanilla-background: false\n"
-    won = "\n".join(f"""  etage_{f}:
-    type: lit
-    slot: {slot}
-    view-requirements:
-      - "placeholder: %fluxdungeons_won_{f}% == yes\"""" for f, slot in enumerate(TOWER_SLOTS, start=1))
+    cells, at = tower_route()
     open(os.path.join(MENUS, "donjons.yml"), "w", encoding="utf-8").write(head + f"""# The dungeon tower (/donjon, 2026-11-16): a floor per dungeon from level 10 at the bottom to 100 at the top, a
 # "?" above. Left click: the dungeon (menu donjon); right click: its page of the dungeon shop.
 
@@ -463,8 +405,16 @@ lists:
 {entries("donjons_boutons", TOWER_BUTTONS, left=["%entry_left%", "%entry_left2%"])}
 {entries("donjons_liste", TOWER_SLOTS, left=["[fluxdungeon] view %entry_id%", "[menu] donjon"], right=["%entry_right%"])}
 
-widgets:
-{won}
+# the road between the floors (Flux's paths, as the ranks menu): one colour per cell from DungeonMenus, green up to
+# the last floor beaten, orange to the floor to play; the "?" (last cell) lights once floor 10 is beaten
+paths:
+  tour:
+    slots: [{", ".join(map(str, cells))}]
+    progress: "{len(cells)}"
+    states: "%fluxdungeons_route_{'_'.join(map(str, at))}_{len(cells)}%"
+    color: vert
+    start: false
+    end: false
 """)
     lit = "\n".join(f"""  etage_{f}:
     type: lit

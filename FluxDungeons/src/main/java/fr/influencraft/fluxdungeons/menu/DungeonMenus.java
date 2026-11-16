@@ -31,8 +31,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * <ul>
  *   <li>{@code donjons}: the dungeon tower (2026-11-16): a road climbing from floor 1 (level 10) at the bottom to
  *   floor 10 (level 100), a "?" above it (the tower goes on). Each floor shows its boss, its level, the party it is
- *   made for and whether the player beat it (glint, and a lit cell drawn by Flux through {@code won_<floor>}); a
- *   left click shows the dungeon, a right click its page of the shop. Lists {@code donjons_liste} (one entry per
+ *   made for and whether the player beat it, the floor to play glowing, the road (Flux's path) green up to the
+ *   last floor climbed ({@code route_...}); a left click shows the dungeon, a right click its page of the shop. Lists {@code donjons_liste} (one entry per
  *   floor, in floor order), {@code donjons_boutons} (back, the "?", info, class, party, tokens, shop);</li>
  *   <li>{@code donjon}: the dungeon chosen with {@code [fluxdungeon] view <id>}: its boss (picture of its page), what
  *   can be won ({@code donjon_butin}), a button per difficulty to play it ({@code donjon_niveaux},
@@ -117,20 +117,14 @@ public final class DungeonMenus {
         }
     }
 
-    /** {@code selected}, {@code selected_name}, {@code won_<floor>} (yes / no); null for another one. */
+    /** {@code selected}, {@code selected_name}, {@code route_...} (colours of the tower's road); null for another one. */
     public String placeholder(Player p, String params) {
         if (params.equals("selected")) return selected.getOrDefault(p.getUniqueId(), "");
         if (params.equals("selected_name")) {
             DungeonDefinition def = host.dungeon(selected.getOrDefault(p.getUniqueId(), ""));
             return def == null ? "" : Texts.plain(Texts.colors(def.name()));
         }
-        if (params.startsWith("won_")) {
-            var v = host.victories();
-            for (DungeonDefinition d : host.dungeons()) {
-                if (String.valueOf(d.floor()).equals(params.substring(4))) return v != null && v.beaten(p, d.id()) ? "yes" : "no";
-            }
-            return "no";
-        }
+        if (params.startsWith("route_")) return route(p, params.substring(6));
         return null;
     }
 
@@ -140,6 +134,48 @@ public final class DungeonMenus {
     }
 
     // ---------------------------------------------------------------- the tower
+
+    /**
+     * Floors beaten one after the other from the bottom: the floor to play is the next one (an upper floor beaten
+     * before a lower one does not move the road on).
+     */
+    private int climbed(Player p) {
+        var v = host.victories();
+        int n = 0;
+        for (DungeonDefinition d : tower()) {
+            if (v == null || !v.beaten(p, d.id())) break;
+            n++;
+        }
+        return n;
+    }
+
+    /**
+     * Colours of the tower's road, one per cell of the menu's path ({@code route_<cell of floor 1>_..._<cells>}, written
+     * by gen_menus.py): green up to the last floor climbed, orange on the way to the floor to play and on it, off
+     * above; the cells after floor 10 (the "?") light once the whole tower is climbed.
+     */
+    private String route(Player p, String spec) {
+        String[] parts = spec.split("_");
+        int[] at = new int[parts.length - 1];
+        int cells;
+        try {
+            for (int i = 0; i < at.length; i++) at[i] = Integer.parseInt(parts[i]);
+            cells = Integer.parseInt(parts[parts.length - 1]);
+        } catch (NumberFormatException e) {
+            return "";
+        }
+        int k = Math.min(climbed(p), at.length);
+        List<String> out = new ArrayList<>();
+        for (int c = 0; c < cells; c++) {
+            String state;
+            if (k == at.length) state = "vert";
+            else if (k > 0 && c <= at[k - 1]) state = "vert";
+            else if (c <= at[k]) state = "orange";
+            else state = "eteint";
+            out.add(state);
+        }
+        return String.join(",", out);
+    }
 
     /** The floors of the tower, from the bottom. */
     private List<DungeonDefinition> tower() {
@@ -153,7 +189,10 @@ public final class DungeonMenus {
         List<ListEntry> out = new ArrayList<>();
         var victories = host.victories();
         int level = levelOf(viewer);
+        int next = climbed(viewer);
+        int index = 0;
         for (DungeonDefinition def : tower()) {
+            boolean current = index++ == next;
             int wins = victories == null ? 0 : victories.wins(viewer, def.id());
             Lore lore = Lore.create().description(def.description())
                     .kv(raw("menu.floor"), def.floor())
@@ -162,6 +201,7 @@ public final class DungeonMenus {
                             : raw("menu.party-size", "%count%", String.valueOf(def.recommendedPlayers())))
                     .kv(raw("menu.job"), keys.jobName(def.job()));
             if (keys.needs(viewer, def)) lore.kv(raw("menu.keys"), String.valueOf(keys.count(viewer, def.job())));
+            if (current) lore.info(raw("menu.next-floor"));
             if (wins > 0) lore.ok(raw("menu.beaten", "%count%", String.valueOf(wins)));
             else if (level >= 0 && level < Math.min(def.recommendedLevel(), 50)) lore.ko(raw("menu.too-high"));
             else lore.info(raw("menu.not-beaten"));
@@ -169,7 +209,8 @@ public final class DungeonMenus {
             lore.left(raw("menu.see")).right(raw("menu.shop-action"));
             ItemStack item = Items.of(PORTRAIT + def.pet(), def.name(), lore.build(), viewer);
             if (item == null) item = Items.dress(new ItemStack(def.icon()), def.name(), lore.build(), viewer);
-            if (wins > 0) item.editMeta(m -> m.setEnchantmentGlintOverride(true));
+            // the floor to play glows (the road shows those already climbed)
+            if (current) item.editMeta(m -> m.setEnchantmentGlintOverride(true));
             out.add(ListEntry.of(def.id()).item(item).set("right", "[fluxdungeon] shop open " + def.id()));
         }
         return out;

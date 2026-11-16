@@ -697,6 +697,7 @@ menu:
   shop: 'Boutique de donjon'
   shop-desc: 'Les jetons de donjon achètent tout ici : la monture d''un boss vaincu, les boosters, les livres et les panoplies de chaque métier.'
   shop-open: 'Ouvrir la boutique'
+  next-floor: '&#FFD94DTon prochain étage'
 loot:
   pet-desc: 'La monture du boss : en vente à la boutique de ce donjon, seulement pour qui a vaincu le boss.'
   pet-mount: 'Familier légendaire en Semi-RP, monture qui attaque, prend 3 emplacements.'
