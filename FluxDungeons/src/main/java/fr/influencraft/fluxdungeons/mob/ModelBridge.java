@@ -26,6 +26,11 @@ public final class ModelBridge {
         /** Plays an animation once (attack, hurt, death...); false when the model has no such animation. */
         boolean play(String animation);
 
+        /** Plays an animation once and stays on its last pose (a death); as {@link #play} where it cannot. */
+        default boolean hold(String animation) {
+            return play(animation);
+        }
+
         /** Plays an animation in a loop until {@link #stop(String)} (running while an ability moves the monster). */
         default boolean loop(String animation) {
             return loop(animation, 1f);
@@ -115,6 +120,11 @@ public final class ModelBridge {
         return new Handle() {
             public boolean play(String animation) {
                 return !tracker.isClosed() && tracker.animate(animation, AnimationModifier.DEFAULT_WITH_PLAY_ONCE);
+            }
+
+            public boolean hold(String animation) {
+                return !tracker.isClosed() && tracker.animate(animation,
+                        AnimationModifier.builder().type(AnimationIterator.Type.HOLD_ON_LAST).build());
             }
 
             public void parts(boolean visible, Collection<String> bones) {

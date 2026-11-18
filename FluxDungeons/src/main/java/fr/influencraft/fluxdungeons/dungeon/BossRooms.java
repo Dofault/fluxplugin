@@ -61,6 +61,7 @@ import java.util.concurrent.ThreadLocalRandom;
  *
  * scene:
  *   duration: 180        # ticks
+ *   music: id            # a FluxMusic song played over the scene (a jingle: the dungeon's music keeps its place)
  *   animation: intro     # of the boss (outro: of its stand-in), started at tick 0
  *   camera:              # places in the boss's own frame [right, up, forward], seen looking at `look`
  *   - {at: 0, pos: [6, 5, 17], look: [0, 1.8, 0]}
@@ -74,6 +75,7 @@ import java.util.concurrent.ThreadLocalRandom;
  *   - {at: 70, particle: CAMPFIRE_COSY_SMOKE, count: 20, spread: 1.5, pos: [0, 1, 0]}
  *   - {at: 30, animation: other}
  * </pre>
+ * The camera follows a curve through the keys of a shot and never stops at one; a cut starts a new shot.
  * Scenes are written in the boss's frame, so they play in any copy of the map. Players are seated where they stand
  * during a scene (sneaking asks to skip it: it ends once every viewer asked); Java players watch through the camera,
  * Bedrock players (no camera packet) keep their own view.
@@ -395,6 +397,18 @@ public final class BossRooms implements Listener {
     private record Key(int at, Vector pos, Vector look, boolean cut) {
     }
 
+    /** Ticks a camera takes to reach the place it was last given. */
+    private static final int GLIDE = 10;
+
+    private static Vector spline(Vector p0, Vector p1, Vector p2, Vector p3, double t) {
+        double t2 = t * t, t3 = t2 * t;
+        return p1.clone().multiply(2)
+                .add(p2.clone().subtract(p0).multiply(t))
+                .add(p0.clone().multiply(2).subtract(p1.clone().multiply(5)).add(p2.clone().multiply(4)).subtract(p3).multiply(t2))
+                .add(p1.clone().multiply(3).subtract(p0).subtract(p2.clone().multiply(3)).add(p3).multiply(t3))
+                .multiply(0.5);
+    }
+
     private void play(Run run, State s, ConfigurationSection scene, Location base, java.util.function.Consumer<String> animate, Runnable after) {
         Playing playing = new Playing(run, s, scene, base, animate, after);
         s.scene = playing;
@@ -436,12 +450,9 @@ public final class BossRooms implements Listener {
             keys.sort(java.util.Comparator.comparingInt(Key::at));
             String animation = scene.getString("animation", "");
             if (!animation.isBlank()) animate.accept(animation);
-            if (!keys.isEmpty()) {
-                camera = base.getWorld().spawn(place(keys.get(0).pos(), keys.get(0).look()), ItemDisplay.class, d -> {
-                    d.setPersistent(false);
-                    d.setTeleportDuration(1);
-                });
-            }
+            if (!keys.isEmpty()) camera = camera(place(keys.get(0).pos(), keys.get(0).look()));
+            String music = scene.getString("music", "");
+            if (!music.isBlank()) for (Player p : runs.fighters(run)) fr.influencraft.flux.api.music.Music.jingle(p, music);
             for (Player p : runs.fighters(run)) seat(p);
         }
 
@@ -491,30 +502,55 @@ public final class BossRooms implements Listener {
             tick++;
         }
 
+        /**
+         * A camera entity. Its client glides to each new place over {@link #GLIDE} ticks while a new place comes
+         * every tick (as Typewriter's cinematics do): the steps of the server's clock are smoothed out, in position
+         * and in rotation.
+         */
+        private ItemDisplay camera(Location at) {
+            return at.getWorld().spawn(at, ItemDisplay.class, d -> {
+                d.setPersistent(false);
+                d.setTeleportDuration(GLIDE);
+            });
+        }
+
+        /** Keys of the shot playing at this tick: from its cut (or the first key) to the key before the next cut. */
+        private List<Key> shot() {
+            int first = 0;
+            for (int i = 0; i < keys.size(); i++) if (keys.get(i).cut() && keys.get(i).at() <= tick) first = i;
+            int last = first;
+            while (last + 1 < keys.size() && !keys.get(last + 1).cut()) last++;
+            return keys.subList(first, last + 1);
+        }
+
         private void move() {
-            Key from = keys.get(0), to = null;
-            for (Key k : keys) {
-                if (k.at() <= tick) from = k;
-                else {
-                    to = k;
-                    break;
+            List<Key> shot = shot();
+            Key head = shot.get(0);
+            if (head.cut() && head.at() == tick) {
+                // a cut: another camera, already at its place (the former one would glide across the room)
+                ItemDisplay former = camera;
+                camera = camera(place(head.pos(), head.look()));
+                for (UUID id : seats.keySet()) {
+                    Player p = Bukkit.getPlayer(id);
+                    if (p != null && !Clients.bedrock(p)) Camera.view(p, camera);
                 }
+                Bukkit.getScheduler().runTaskLater(plugin, former::remove, 2L);
+                return;
             }
-            Vector pos = from.pos(), look = from.look();
-            // a cut waits at the former place, then jumps: the next key is not glided to
-            if (to != null && !to.cut() && to.at() > from.at()) {
-                double t = (tick - from.at()) / (double) (to.at() - from.at());
-                t = t * t * (3 - 2 * t);
-                pos = from.pos().clone().multiply(1 - t).add(to.pos().clone().multiply(t));
-                look = from.look().clone().multiply(1 - t).add(to.look().clone().multiply(t));
-            }
-            Location at = place(pos, look);
+            // along a curve through the shot's keys (Catmull-Rom): no stop at a key, no corner
+            int i = 0;
+            while (i + 1 < shot.size() && shot.get(i + 1).at() <= tick) i++;
+            Key a = shot.get(i), b = shot.get(Math.min(i + 1, shot.size() - 1));
+            Key before = shot.get(Math.max(i - 1, 0)), after = shot.get(Math.min(i + 2, shot.size() - 1));
+            double t = b.at() > a.at() ? Math.min(1, (tick - a.at()) / (double) (b.at() - a.at())) : 0;
+            // a shot starts and ends gently
+            if (i == 0 && shot.size() == 2) t = t * t * (3 - 2 * t);
+            Location at = place(spline(before.pos(), a.pos(), b.pos(), after.pos(), t), spline(before.look(), a.look(), b.look(), after.look(), t));
             if (tick < shakeUntil) {
                 ThreadLocalRandom rnd = ThreadLocalRandom.current();
-                at.add((rnd.nextDouble() - 0.5) * shakePower, (rnd.nextDouble() - 0.5) * shakePower, (rnd.nextDouble() - 0.5) * shakePower);
+                double k = shakePower * 3;
+                at.add((rnd.nextDouble() - 0.5) * k, (rnd.nextDouble() - 0.5) * k, (rnd.nextDouble() - 0.5) * k);
             }
-            boolean jump = from.cut() && from.at() == tick;
-            camera.setTeleportDuration(jump ? 0 : 1);
             camera.teleport(at);
             // the client forgets its camera when the entity is sent again: said again now and then
             if (tick % 10 == 3) {

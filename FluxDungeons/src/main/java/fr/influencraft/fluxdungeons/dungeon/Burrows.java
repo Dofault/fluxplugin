@@ -69,6 +69,8 @@ final class Burrows {
         int nextTremor, nextPassage, nextSnore;
         /** Somebody has come under the arena (the boss' ground): its sounds start. */
         boolean near;
+        /** Entered from the dungeon's own map (rooms first): the hint of the hunt waits for the first player in. */
+        boolean linked, hinted;
         final Map<java.util.UUID, Integer> nextQuiet = new HashMap<>();
 
         Lair(GalleryPlan plan, World world, int ox, int oz, String bossId) {
@@ -175,10 +177,17 @@ final class Burrows {
                 chambers(lair, r);
                 arena(lair, r);
                 surface(lair, r);
+                // a map built before the lair (its rooms): the lair is entered by a tunnel from it, not by the hole
+                List<Integer> link = c.getIntegerList("link");
+                boolean linked = link.size() >= 3;
+                if (linked) link(lair, link.get(0), link.get(1), link.get(2), r);
                 if (c.getBoolean("rpg", true)) rpgLook(lair);
-                Location start = entrance(lair);
-                run.checkpoint = start;
-                run.origin = start.clone();
+                if (!linked) {
+                    Location start = entrance(lair);
+                    run.checkpoint = start;
+                    run.origin = start.clone();
+                }
+                lair.linked = linked;
                 spawnBoss(run, lair);
                 guards(run, lair, c.getConfigurationSection("guards"), r);
                 plugin.getLogger().info("Lair of " + run.def.id() + " built (seed " + plan.seed + ", " + plan.dug()
@@ -713,6 +722,63 @@ final class Burrows {
         return at;
     }
 
+    /**
+     * The way in from the dungeon's own map ({@code link: [x, y, z]}, feet of the tunnel's first cell, just outside the
+     * map): a burrow 3 wide and 3 high dug to the entrance junction, with its own floor, walls and ceiling where it
+     * runs outside the lair's earth (the hills' stone, or nothing at all). The burrow hole of the meadow is filled.
+     */
+    private void link(Lair l, int lx, int ly, int lz, Random r) {
+        GalleryPlan.Settings s = l.plan.settings;
+        if (l.plan.hole != null) {
+            int hx = l.ox + (int) Math.floor(l.plan.hole.x()), hz = l.oz + (int) Math.floor(l.plan.hole.z());
+            for (int x = hx - 4; x <= hx + 4; x++) {
+                for (int z = hz - 4; z <= hz + 4; z++) {
+                    for (int y = s.top() - 2; y <= s.top(); y++) {
+                        Block b = l.world.getBlockAt(x, y, z);
+                        if (b.getType().isAir()) b.setType(y == s.top() ? Material.GRASS_BLOCK : Material.DIRT, false);
+                    }
+                }
+            }
+        }
+        GalleryPlan.Node e = l.plan.entrance;
+        int fx = (int) Math.floor(e.x()), fz = (int) Math.floor(e.z());
+        int stand = l.plan.standY(fx, e.floor(), fz);
+        int ex = l.ox + fx, ez = l.oz + fz, ey = stand == Integer.MIN_VALUE ? e.floor() + 1 : stand;
+        int steps = Math.max(1, Math.max(Math.abs(ex - lx), Math.abs(ez - lz)));
+        java.util.Set<Long> core = new java.util.HashSet<>();
+        List<int[]> path = new ArrayList<>();
+        for (int i = 0; i <= steps; i++) {
+            double t = (double) i / steps;
+            int x = (int) Math.round(lx + (ex - lx) * t), y = (int) Math.round(ly + (ey - ly) * t), z = (int) Math.round(lz + (ez - lz) * t);
+            path.add(new int[]{x, y, z});
+            for (int dx = -1; dx <= 1; dx++) for (int dy = 0; dy <= 2; dy++) for (int dz = -1; dz <= 1; dz++) {
+                if (z + dz >= lz) core.add(Block.getBlockKey(x + dx, y + dy, z + dz));
+            }
+        }
+        Material[] earth = {Material.DIRT, Material.DIRT, Material.COARSE_DIRT, Material.DIRT, Material.PODZOL};
+        for (int[] p : path) {
+            boolean outside = p[2] < l.oz + 2;
+            for (int dx = -2; dx <= 2; dx++) for (int dy = -1; dy <= 3; dy++) for (int dz = -1; dz <= 1; dz++) {
+                int x = p[0] + dx, y = p[1] + dy, z = p[2] + dz;
+                if (z < lz) continue;
+                Block b = l.world.getBlockAt(x, y, z);
+                if (core.contains(Block.getBlockKey(x, y, z))) b.setType(Material.AIR, false);
+                else if (outside && z < l.oz + 2) b.setType(earth[r.nextInt(earth.length)], false);
+            }
+        }
+        // the same dim light as the galleries
+        for (int i = 2; i < path.size(); i += 4) {
+            int[] p = path.get(i);
+            Block b = l.world.getBlockAt(p[0], p[1] + 2, p[2]);
+            if (!b.getType().isAir()) continue;
+            b.setType(Material.LIGHT, false);
+            if (b.getBlockData() instanceof Levelled lv) {
+                lv.setLevel(8);
+                b.setBlockData(lv, false);
+            }
+        }
+    }
+
     /** The boss, asleep in its nest until the players find it; it counts as the objective of the run. */
     private void spawnBoss(Run run, Lair l) {
         MobTemplate t = mobs.template(l.bossId);
@@ -812,7 +878,17 @@ final class Burrows {
         l.ticks += 10;
         List<Player> players = runs.fighters(run);
         if (players.isEmpty()) return;
-        if (l.ticks == 60) for (Player p : players) p.sendActionBar(Texts.parse(plugin.messages().raw("burrows.hint")));
+        if (!l.linked) {
+            if (l.ticks == 60) for (Player p : players) p.sendActionBar(Texts.parse(plugin.messages().raw("burrows.hint")));
+        } else if (!l.hinted) {
+            // the hunt starts when somebody walks into the lair's own ground, after the rooms of the map
+            for (Player p : players) {
+                if (l.localZ(p.getLocation()) < 0) continue;
+                l.hinted = true;
+                for (Player q : players) plugin.messages().send(q, "burrows.hint");
+                break;
+            }
+        }
         // somebody walked into the nest: the encounter
         Location nest = l.nest();
         for (Player p : players) {

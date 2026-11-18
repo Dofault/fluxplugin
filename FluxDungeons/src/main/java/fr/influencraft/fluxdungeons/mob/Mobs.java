@@ -1165,7 +1165,8 @@ public final class Mobs {
         ModelBridge.Handle h = handle;
         return new Corpse() {
             public void play(String animation) {
-                h.play(animation);
+                // a death stays on its last pose until the scene ends
+                h.hold(animation);
             }
 
             public void close() {

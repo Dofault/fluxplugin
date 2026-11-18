@@ -1001,6 +1001,14 @@ public final class Runs {
     private void bossMusic(Run run) {
         String song = run.def.bossMusic();
         if (run.music != null || song.isBlank() || run.state != Run.State.RUNNING) return;
+        // a lair's boss sleeps under the players' feet during the whole hunt: its music waits for the encounter
+        if (run.def.burrows() != null) {
+            Burrows.Lair lair = burrows.of(run);
+            if (lair == null || lair.stage == Burrows.Stage.HUNT) return;
+            run.music = song;
+            for (Player q : online(run)) Music.loop(q, song);
+            return;
+        }
         double r2 = run.def.bossMusicRadius() * run.def.bossMusicRadius();
         List<Player> players = online(run);
         for (UUID id : run.mobs) {

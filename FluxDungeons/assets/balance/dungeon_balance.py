@@ -127,28 +127,32 @@ TOKENS = {"normal": 2, "elite": 4, "miniboss": 10, "boss": 40}   # middle of tok
 
 def rooms_of(plugin, dungeon, mobs):
     """{room: [monster ids]} and the objectives of a dungeon. A lair (burrows: Taupérion, generated at each run) is
-    played as rooms of its guards (the middle of per-room), drawn in proportion to their weights, plus its boss."""
+    played as rooms of its guards (the middle of per-room), drawn in proportion to their weights, plus its boss, after
+    the rooms of its own map when it has one."""
     d = yaml.safe_load(open(os.path.join(plugin, "dungeons", dungeon + ".yml")))
     path = os.path.join(plugin, "edits", dungeon + ".yml")
+    rooms, objectives = {}, set()
     if os.path.isfile(path):
         edits = yaml.safe_load(open(path))["map"]
-        rooms = {}
         for s in edits.get("spawns", []):
             rooms.setdefault(str(s["room"]), []).append(s["mob"])
-        return rooms, set(edits.get("objectives", []))
+        objectives = set(edits.get("objectives", []))
+        if not d.get("burrows"):
+            return rooms, objectives
+    # a lair after the rooms of its map (Taupérion since 2026-11-18): its guards and its boss come on top
     b = d.get("burrows") or {}
     guards = (b.get("guards") or {}).get("mobs") or {}
     pool = [m for m, w in guards.items() for _ in range(int(w)) if m in mobs]
     per = b.get("guards", {}).get("per-room", [4, 6])
     size = (per[0] + per[-1]) // 2
-    rooms = {}
+    first = len(rooms)
     if pool:
         for k in range(6):
-            rooms[str(k + 1)] = [pool[(k * size + i) % len(pool)] for i in range(size)]
+            rooms[str(first + k + 1)] = [pool[(k * size + i) % len(pool)] for i in range(size)]
     boss = b.get("boss")
     if boss:
         rooms[str(len(rooms) + 1)] = [boss]
-    return rooms, {boss} if boss else set()
+    return rooms, objectives | ({boss} if boss else set())
 
 
 def evaluate(plugin, dungeon, level, tier, hm, dm, party=1, data=None, extra_per_player=0.5):
