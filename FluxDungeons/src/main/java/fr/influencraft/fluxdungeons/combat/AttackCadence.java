@@ -27,7 +27,8 @@ import java.util.Map;
  * <ul>
  *   <li>Swords and axes get the vanilla item components {@code minimum_attack_charge} (the client neither swings nor
  *   attacks before the weapon is recharged: a double click is one swing) and {@code swing_animation} lasting most of
- *   the recharge (the weapon comes back slowly, slower for a slow weapon). Given through {@link ItemLooks#registerAny};
+ *   the recharge (the weapon comes back slowly, slower for a slow weapon; swords only, axes keep the vanilla swing
+ *   since they dig). Given through {@link ItemLooks#registerAny};
  *   rpg weapons get them from the rpg (its attack speed is the player's stat, rpg.RpgPlayers#cadence).</li>
  *   <li>A swing is the arm swing the client sends (on a creature, a block or in the air: one signal for all), checked
  *   against the server's own recharge of the player (modified clients, Bedrock players: no spam).</li>
@@ -146,6 +147,18 @@ public final class AttackCadence implements Listener {
         return !(n.endsWith("_SWORD") || n.endsWith("_AXE") && !n.endsWith("_PICKAXE"));
     }
 
+    private static boolean axe(ItemStack item) {
+        String n = item.getType().name();
+        return n.endsWith("_AXE") && !n.endsWith("_PICKAXE");
+    }
+
+    /** True when the player aims at a block within his block reach: an axe swing there chops, it is no attack. */
+    private static boolean aimsAtBlock(Player p) {
+        org.bukkit.attribute.AttributeInstance a = p.getAttribute(Attribute.BLOCK_INTERACTION_RANGE);
+        double reach = a == null ? 4.5 : a.getValue();
+        return p.rayTraceBlocks(reach, org.bukkit.FluidCollisionMode.NEVER) != null;
+    }
+
     private boolean apply(ItemStack item) {
         if (excluded(item)) return clear(item);
         double speed = attackSpeed(item);
@@ -168,7 +181,9 @@ public final class AttackCadence implements Listener {
             item.setData(DataComponentTypes.MINIMUM_ATTACK_CHARGE, minimumCharge);
             changed = true;
         }
-        if (slowSwing) {
+        // axes keep the vanilla swing: the client also plays the swing animation while digging, and an axe chops wood
+        // (owner, 2026-11-18: no attack animation on a block); swords never dig, they keep the slow swing
+        if (slowSwing && !axe(item)) {
             int ticks = (int) Math.max(3, Math.round(20 / Math.max(0.1, speed) * swingShare));
             SwingAnimation swing = item.isDataOverridden(DataComponentTypes.SWING_ANIMATION) ? item.getData(DataComponentTypes.SWING_ANIMATION) : null;
             if (swing == null || swing.duration() != ticks || swing.type() != SwingAnimation.Animation.WHACK) {
@@ -291,6 +306,8 @@ public final class AttackCadence implements Listener {
         // the first swing on a block is a swing; the next ones, button held, are digging (forgotten after 5 s in
         // case the end of the digging never came)
         if (dig != null && now - dig > 1 && now - dig <= DIG_MEMORY) return;
+        // an axe on a block chops: no swing drawn, no recharge spent (a creature in front was already a hit, above)
+        if (axe(hand) && aimsAtBlock(p)) return;
         if (!ready(p, now)) return;
         lastSwing.put(id, now);
         if (melee.swing(p, null)) return;

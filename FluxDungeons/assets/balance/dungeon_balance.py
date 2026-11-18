@@ -34,6 +34,7 @@ import yaml
 REAL = 0.55
 PULL = 6
 CAST_GAP = 3.0
+FAST_WALK = 5.4  # blocks a second: a quarter faster than a walking player
 EXPOSURE = {"melee": 0.30, "fast": 0.50, "shot": 0.45, "spell": 0.45, "slow": 0.25}
 SHOOTERS = ("SKELETON", "STRAY", "BOGGED", "PILLAGER", "BLAZE", "WITCH", "GUARDIAN", "DROWNED_TRIDENT", "PARCHED")
 RANKS = {"normal": (1, 1), "elite": (3.5, 1.6), "miniboss": (9, 2.2), "boss": (70, 3)}
@@ -93,7 +94,9 @@ def profile(mob, spells, mobs, level_index, rk):
     elif mob["type"] in SHOOTERS:
         threat += 0.5 * EXPOSURE["shot"]
     else:
-        threat += speed * EXPOSURE["fast" if walk >= 3.4 or speed >= 4 or boss else "melee"]
+        # since 2026-11-18 every monster from the fourth dungeon catches a walking player (4.32 blocks a second):
+        # "melee" is such a monster, "fast" one clearly faster than his walk (a quarter more), frenzied, or a boss
+        threat += speed * EXPOSURE["fast" if walk >= FAST_WALK or speed >= 4 or boss else "melee"]
     casts, weight = 0.0, 0.0
     for a in abilities(mob, spells):
         if a.get("from-level", 1) > level_index + 1 or not a.get("power") or not a.get("every"):
