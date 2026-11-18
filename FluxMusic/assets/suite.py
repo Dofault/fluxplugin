@@ -229,7 +229,7 @@ class Song:
                         if not hits[step]:
                             del hits[step]
 
-    def build(self, folder, script):
+    def build(self, folder, script, loop_from=None):
         self._fit('lead')
         self._fit('counter')
         self._derive()
@@ -237,7 +237,7 @@ class Song:
         self._fit('harmony')
         self._give_way()
         problems = score.check(self.sections, lambda sec, step: self.strong, quiet={'sparkle'})
-        first = self.sections[0].name
+        first = loop_from or self.sections[0].name
         path = score.write_song(folder, self.piece, self.sections, [self.comment], script, first)
         seconds = sum(s.bars for s in self.sections) * self.L * 60 / (self.piece.bpm * self.piece.steps_per_beat)
         print(f'{self.piece.id:22} {self.piece.title:32} {seconds:5.0f} s  {problems} remark(s)')
