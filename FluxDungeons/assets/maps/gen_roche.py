@@ -18,7 +18,7 @@ played from south to north (+z):
     golem (mini-boss), throwers and stone-cutters;
   - the arena of the Colosse (floor 50, combat floor about 40 across: its Cataclysm burns 15 blocks around it, a
     30 x 30 floor would leave no way out of it), deepslate, basalt, tuff and amethyst veins (the boss' violet),
-    broken columns at the edge only (cover against its shards), a closed exit opening when it dies.
+    broken columns at the edge only (cover against its shards), closed all round (a victory sends the party back).
 
 Usage: gen_roche.py [server] [--check] [--preview DIR]     (labs by default)
 """
@@ -557,12 +557,7 @@ def arena():
     lights([(round(cx + 9 * math.cos(math.radians(a))), FA + 14, round(cz + 9 * math.sin(math.radians(a)))) for a in range(0, 360, 60)], 10)
     m.mob("rochiste_colosse", 0, 224, y=FA + 1, yaw=180, room="4")
     m.objectives = ["rochiste_colosse"]
-    # the closed way out (north), opened when the Colosse dies
-    g.box(-2, FA + 1, 234, 2, FA + 5, 241, "air")
-    g.box(-3, Y0, 234, 3, FA, 241, ROCK, where=lambda b: b == "air")
-    gate(236, FA, -2, 2, 4, ["cobbled_deepslate", "deepslate_bricks", "cracked_deepslate_bricks"], "polished_deepslate")
-    door("porte_sortie", (-2, FA + 1, 236), (2, FA + 4, 236), room="4")
-    g.set(0, FA + 3, 240, "lantern")
+    # no way out: a victory sends the party back to the rpg lobby at once (the exit nook was removed on 2026-11-18)
 
 
 # ======================================================================== paint, checks, main
