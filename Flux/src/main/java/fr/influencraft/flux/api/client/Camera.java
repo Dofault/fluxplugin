@@ -48,6 +48,7 @@ public final class Camera {
     private static volatile Service service;
     private static final Map<Integer, Click> TARGETS = new ConcurrentHashMap<>();
     private static final Map<java.util.UUID, Turn> TURNS = new ConcurrentHashMap<>();
+    private static final Map<java.util.UUID, Entity> VIEWS = new ConcurrentHashMap<>();
 
     private Camera() {
     }
@@ -63,7 +64,24 @@ public final class Camera {
     /** The player sees through {@code camera} (null: through his own eyes again). */
     public static void view(Player player, Entity camera) {
         Service s = service;
-        if (s != null) s.view(player, camera);
+        if (s == null) return;
+        if (camera == null) VIEWS.remove(player.getUniqueId());
+        else VIEWS.put(player.getUniqueId(), camera);
+        s.view(player, camera);
+    }
+
+    /**
+     * The entity this player sees through, null when he looks through his own eyes. His ears are there too: a sound
+     * meant for him alone (music, an interface sound) must be played from it, or he hears it from where his body was
+     * left, on one side. Thread-safe.
+     */
+    public static Entity viewed(Player player) {
+        Entity e = VIEWS.get(player.getUniqueId());
+        if (e == null) return null;
+        // isDead reads a flag only: this is called from the music clock, off the server thread
+        if (!e.isDead() && player.isOnline()) return e;
+        VIEWS.remove(player.getUniqueId(), e);
+        return null;
     }
 
     /** Turns the player's head on his side (his pointer). */

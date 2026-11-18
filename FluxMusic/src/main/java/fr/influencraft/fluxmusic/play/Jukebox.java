@@ -179,8 +179,11 @@ public final class Jukebox {
             boolean silent = layer == music && jingles.containsKey(player.getUniqueId());
             if (!silent) {
                 try {
-                    for (Sound s : song.notes()[index]) player.playSound(gain >= 1f ? s : quieter(s, gain),
-                            Sound.Emitter.self());
+                    // heard where his ears are: on himself, or on the camera he looks through (a scene), else the
+                    // music comes from where his body was left, on one side
+                    org.bukkit.entity.Entity camera = fr.influencraft.flux.api.client.Camera.viewed(player);
+                    Sound.Emitter from = camera != null ? camera : Sound.Emitter.self();
+                    for (Sound s : song.notes()[index]) player.playSound(gain >= 1f ? s : quieter(s, gain), from);
                 } catch (RuntimeException e) {
                     // the connection closed between the check and the send: the quit listener stops the song
                 }

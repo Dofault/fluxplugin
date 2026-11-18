@@ -572,8 +572,13 @@ public final class BossRooms implements Listener {
             if (e.get("sound") != null) {
                 Location at = local(vector(e.get("pos"), new Vector(0, 1, 0)));
                 float volume = (float) decimal(e.get("volume"), 1), pitch = (float) decimal(e.get("pitch"), 1);
-                // heard from the camera, not from where each player was left
-                for (Player p : viewers) p.playSound(p.getLocation(), String.valueOf(e.get("sound")), org.bukkit.SoundCategory.HOSTILE, volume, pitch);
+                // heard from the camera a player looks through (his ears are there), not from where he was left
+                net.kyori.adventure.sound.Sound sound = net.kyori.adventure.sound.Sound.sound(net.kyori.adventure.key.Key.key(String.valueOf(e.get("sound"))),
+                        net.kyori.adventure.sound.Sound.Source.HOSTILE, volume, pitch);
+                for (Player p : viewers) {
+                    Entity seen = Camera.viewed(p);
+                    p.playSound(sound, seen != null ? seen : net.kyori.adventure.sound.Sound.Emitter.self());
+                }
                 if (viewers.isEmpty()) at.getWorld().playSound(at, String.valueOf(e.get("sound")), volume, pitch);
             }
             if (e.get("say") != null) say(run, state, String.valueOf(e.get("say")));
