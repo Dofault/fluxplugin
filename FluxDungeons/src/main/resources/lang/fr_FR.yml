@@ -267,6 +267,11 @@ lobby:
   party-size: '%count% joueurs'
   players-here: 'Dans le groupe'
   few-players: 'Moins de joueurs que conseillé : ce sera dur'
+boss:
+  # une phrase du boss pendant son combat (ligne de texte en haut de l'écran)
+  speech: '&#FFD94D&lBoss &7» &f%line%'
+  scene-skip: '&7Accroupis-toi pour passer la scène.'
+  scene-skip-vote: '&7Tu veux passer la scène : elle s''arrête quand tout le groupe le demande.'
 door:
   kills: '&#FF5C5C☠ &f%done%&7/&f%needed% &7monstres'
   opened: '&#B376E5Une porte s''ouvre...'

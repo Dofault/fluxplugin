@@ -60,6 +60,8 @@ public final class Run {
     final java.util.Map<UUID, String> mobRoom = new java.util.HashMap<>();
     /** Monsters of each room killed so far. */
     final java.util.Map<String, Integer> roomKills = new java.util.HashMap<>();
+    /** Blocks taken away by each open door, to put it back (the boss room's closed door). */
+    final java.util.Map<String, java.util.Map<org.bukkit.block.Block, org.bukkit.block.data.BlockData>> doorBlocks = new java.util.HashMap<>();
     /** Doors already open. */
     final java.util.Set<String> openDoors = new java.util.HashSet<>();
     /** What each offering door received so far (counts per entry of its offering). */

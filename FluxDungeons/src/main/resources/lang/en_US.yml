@@ -267,6 +267,11 @@ lobby:
   party-size: '%count% players'
   players-here: 'In the party'
   few-players: 'Fewer players than advised: it will be hard'
+boss:
+  # a line of the boss during its fight (a text line at the top of the screen)
+  speech: '&#FFD94D&lBoss &7» &f%line%'
+  scene-skip: '&7Sneak to skip the scene.'
+  scene-skip-vote: '&7You asked to skip the scene: it ends once the whole party does.'
 door:
   kills: '&#FF5C5C☠ &f%done%&7/&f%needed% &7monsters'
   opened: '&#B376E5A door opens...'

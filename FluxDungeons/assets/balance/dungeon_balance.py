@@ -99,7 +99,8 @@ def profile(mob, spells, mobs, level_index, rk):
         threat += speed * EXPOSURE["fast" if walk >= FAST_WALK or speed >= 4 or boss else "melee"]
     casts, weight = 0.0, 0.0
     for a in abilities(mob, spells):
-        if a.get("from-level", 1) > level_index + 1 or not a.get("power") or not a.get("every"):
+        # a boss casts its whole set whatever the tier (Mobs#unlocked, 2026-11-18): the tier only thins out the troops
+        if (not boss and a.get("from-level", 1) > level_index + 1) or not a.get("power") or not a.get("every"):
             continue
         if a.get("type") in ("rally", "stone_skin", "heal", "shield", "summon", "phase_shift", "entrance"):
             continue

@@ -58,6 +58,7 @@ public final class Runs {
     private final Mobs mobs;
     /** Lairs of digging bosses (dungeons with a burrows section). */
     private final Burrows burrows;
+    private final BossRooms bossRooms;
     private final WorldInstances instances;
     private final Lobby lobby;
     private final Editor editor;
@@ -142,6 +143,7 @@ public final class Runs {
         this.mobs = mobs;
         this.pets = new PetFighters(plugin, mobs);
         this.burrows = new Burrows(plugin, this, mobs);
+        this.bossRooms = new BossRooms(plugin, this, mobs);
         this.lobby = new Lobby(plugin);
         lobby.launcher(this::launch);
         this.instances = new WorldInstances(plugin);
@@ -417,6 +419,7 @@ public final class Runs {
             run.mobs.add(mob.getUniqueId());
             if (!sp.room().isEmpty()) run.mobRoom.put(mob.getUniqueId(), sp.room());
             if (run.def.map().objectives().contains(sp.mob())) mobs.objective(mob, sp.mob());
+            bossRooms.spawned(run, mob, t);
         }
     }
 
@@ -473,7 +476,7 @@ public final class Runs {
 
     /**
      * Opens a door: each of its blocks becomes a moving copy that sinks into the ground while the real block is taken
-     * away, with the sound of a heavy wooden door. The door never closes again.
+     * away, with the sound of a heavy wooden door. Only the boss room may put it back (BossRooms, close-door).
      */
     private void openDoor(Run run, DungeonDefinition.Door d) {
         run.openDoors.add(d.id());
@@ -488,6 +491,7 @@ public final class Runs {
                     Block b = run.world.getBlockAt(x, y, z);
                     if (b.getType().isAir()) continue;
                     BlockData data = b.getBlockData();
+                    run.doorBlocks.computeIfAbsent(d.id(), k -> new java.util.LinkedHashMap<>()).put(b, data);
                     moving.add(run.world.spawn(b.getLocation(), org.bukkit.entity.BlockDisplay.class, bd -> {
                         bd.setBlock(data);
                         bd.setPersistent(false);
@@ -695,6 +699,7 @@ public final class Runs {
         boolean inside = run.players.remove(player.getUniqueId());
         run.watching.remove(player.getUniqueId());
         for (String tag : run.grants) player.removeScoreboardTag(tag);
+        bossRooms.left(run, player);
         if (run.bossBar != null) player.hideBossBar(run.bossBar);
         stopMusic(run, player);
         pets.despawn(player);
@@ -901,6 +906,7 @@ public final class Runs {
     }
 
     public void stop(Run run) {
+        bossRooms.ended(run);
         for (UUID uuid : List.copyOf(run.players)) {
             Player p = Bukkit.getPlayer(uuid);
             if (p != null) leave(p);
@@ -971,6 +977,7 @@ public final class Runs {
                 spawnNear(run);
                 doors(run);
                 if (run.def.burrows() != null) burrows.tick(run);
+                bossRooms.tick(run);
                 ambience(run);
             }
             if (run.bossBar != null) updateBossBar(run);
@@ -1224,7 +1231,8 @@ public final class Runs {
         if (objective != null && run.objectivesLeft.remove(objective)) {
             for (Player p : online(run)) hook(run, "objective", p, objective);
             broadcast(run, "objective.done", "%done%", String.valueOf(run.objectivesDone()), "%total%", String.valueOf(run.objectivesTotal));
-            if (run.objectivesLeft.isEmpty()) victory(run);
+            // the boss's death may be played as a scene first (BossRooms, outro)
+            if (run.objectivesLeft.isEmpty() && !bossRooms.outro(run, mob, t, () -> victory(run))) victory(run);
         }
         // a dungeon without objective is won once every monster is dead (those not met yet included)
         if (run.imported() && run.objectivesTotal == 0 && run.state == Run.State.RUNNING && run.pending.isEmpty() && run.mobs.isEmpty()) {
@@ -1239,6 +1247,7 @@ public final class Runs {
         run.watching.add(player.getUniqueId());
         pets.despawn(player);
         broadcast(run, "run.out", "%player%", player.getName());
+        bossRooms.playerDown(run);
         if (fighters(run).isEmpty()) Bukkit.getScheduler().runTask(plugin, () -> fail(run, "run.wiped"));
     }
 

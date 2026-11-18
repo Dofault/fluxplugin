@@ -87,6 +87,7 @@ public final class DungeonDefinition {
      * world when it starts, hunt, encounter in the nest, fight in the arena. Null for other dungeons.
      */
     private final ConfigurationSection burrows;
+    private final ConfigurationSection bossRoom;
     /** Console commands run on run events (enter, objective, victory, defeat, leave), one list per event. */
     private final Map<String, List<String>> commands = new LinkedHashMap<>();
     /** Difficulty levels, easiest first: life and damage of every monster, reward (one level when none is set). */
@@ -215,6 +216,7 @@ public final class DungeonDefinition {
         layout = computeLayout();
         map = readMap(c.getConfigurationSection("map"));
         burrows = c.getConfigurationSection("burrows");
+        bossRoom = c.getConfigurationSection("boss-room");
         fingerprint = Integer.toHexString((String.valueOf(c.get("rooms")) + "|" + theme).hashCode());
     }
 
@@ -258,6 +260,11 @@ public final class DungeonDefinition {
 
     public MapSpec map() {
         return map;
+    }
+
+    /** The {@code boss-room} section (BossRooms: gate, door, scenes, speech), null when the dungeon sets nothing. */
+    public ConfigurationSection bossRoom() {
+        return bossRoom;
     }
 
     /** The lair section of a digging boss' dungeon, null when it has none. */

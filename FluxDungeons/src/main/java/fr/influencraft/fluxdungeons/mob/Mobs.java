@@ -1146,6 +1146,34 @@ public final class Mobs {
         }
     }
 
+    /** A model without entity standing where a monster died, to play its death (a boss's last scene). */
+    public interface Corpse {
+        void play(String animation);
+
+        void close();
+    }
+
+    /** The stand-in of {@code model} at this place, shown to these players; null when the model does not exist. */
+    public Corpse corpse(Location at, String model, java.util.Collection<Player> viewers) {
+        ModelBridge.Handle handle;
+        try {
+            handle = ModelBridge.stand(at, model, viewers);
+        } catch (LinkageError | RuntimeException ex) {
+            handle = null;
+        }
+        if (handle == null) return null;
+        ModelBridge.Handle h = handle;
+        return new Corpse() {
+            public void play(String animation) {
+                h.play(animation);
+            }
+
+            public void close() {
+                h.close();
+            }
+        };
+    }
+
     /** A new home for a monster (where it is pulled back, where its abilities think its arena is). */
     public void rehome(LivingEntity e, Location home) {
         Alive a = alive.get(e.getUniqueId());
@@ -1972,6 +2000,9 @@ public final class Mobs {
      * (1 = the easiest, default). Monsters outside a run (summoned for a test) use all of theirs.
      */
     private boolean unlocked(Alive a, Ability ab) {
+        // a boss fights with its whole set: there is one difficulty per dungeon now (owner, 2026-11-18), the tier only
+        // thins out what the troops cast
+        if (a.template.boss()) return true;
         double[] v = scaling.apply(a.run);
         return v.length < 4 || ab.number("from-level", 1) <= v[3];
     }
