@@ -1,37 +1,43 @@
 #!/usr/bin/env python3
 """Currency icons redrawn from scratch in 16x16 (2026-10-28), from the owner's reference images:
-- influence.png: a square-cut ruby in a dark square frame (« cube »): light top facet, pink left, magenta right,
-  dark purple bottom pyramid, light streaks crossing at the centre. Palette taken from the reference.
+- influence.png (redrawn 2026-11-18): a six-pointed crystal star, dark magenta outline on the lit side (top left) and
+  purple on the shaded side, light yellow / peach bevel inside the outline, white spark at the centre with a yellow
+  streak towards the top point, pink facets darkening to magenta / purple at the bottom right.
 - bitblock.png: the cube of the reference (seen from a corner), same light / dark layout, recoloured in the BitBlock violet
   (server charter: #5B2D9E, #B376E5).
 
-    <venv with Pillow>/python3 gen_monnaies.py <contents/influemoji/textures/font/emoji> [preview dir]
+    <venv with Pillow>/python3 gen_monnaies.py <output dir> [preview dir]
+
+Writes both icons: the BitBlock in contents/influemoji has been changed by hand since, so write into a scratch
+directory and copy only influence.png (emoji, influitems item texture).
 """
 import os
 import sys
 
 from PIL import Image
 
-# 14x14 drawings, placed with a 1 px transparent margin in the 16x16 image (proportions of the references)
+# influence.png: full 16x16 drawing; bitblock.png: 14x14 drawing placed with a 1 px transparent margin
 INFLUENCE = [
-    "BBBBBBBBBBBBBB",
-    "BrrrrrrrrrrrrB",
-    "BkTTTTTTTTTTkB",
-    "BkpTTTTTTTTmkB",
-    "BkPpTTTTTTmMkB",
-    "BkPPptXXtmMMkB",
-    "BkPPPXXXXMMMkB",
-    "SkPPXtqqtXMMkS",
-    "SkpXqQQQQqXmkS",
-    "SkqqQQQQQQqqkS",
-    "SkqQQQQQQQQqkS",
-    "SkQQQQQQQQQQkS",
-    "SzzzzzzzzzzzzS",
-    "SSSSSSSSSSSSSS",
+    ".......OO.......",
+    "......OWYV......",
+    ".....OWYPPV.....",
+    "..OOOOWYMPVVVV..",
+    ".OWWWWYYMPCCYYV.",
+    ".OYPPMPYMPPMMCV.",
+    "..OMPPYWYMPMCV..",
+    "..OMPYWWWYPMCV..",
+    "..OMPPYWYMMmPV..",
+    "..OYPMPYMmmUPV..",
+    ".OYCPMPPMmUUmPV.",
+    ".OYYYYCPMmUmYYV.",
+    "..VVVVCPMPVVVV..",
+    ".....VCPMV......",
+    "......VPMV......",
+    ".......VV.......",
 ]
 INFLUENCE_COLOURS = {
-    "B": "591447", "S": "3b1431", "r": "a06587", "k": "611d4e", "T": "fcd0da", "t": "f6b4c7", "X": "fbcdd8",
-    "P": "f197b3", "p": "eb668e", "M": "de5e87", "m": "c23683", "Q": "7f2068", "q": "a62785", "z": "471039",
+    "O": "8a1c78", "V": "4f1c80", "W": "fff6ee", "Y": "ffe28a", "C": "ffc8a0", "P": "ff8fae", "p": "f0699e",
+    "M": "d23f95", "m": "a8278a", "U": "7a2a9c",
 }
 
 # a cube seen from a corner (hexagonal outline): light top face with its bright cross, dark left face, medium
