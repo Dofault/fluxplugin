@@ -140,6 +140,12 @@ public final class BossRooms implements Listener {
         mobs.sleep(mob, true);
     }
 
+    /** True while the run's boss still sleeps behind its gate or its entrance scene plays: no boss music yet. */
+    boolean waiting(Run run) {
+        State s = states.get(run.id);
+        return s != null && (s.stage == Stage.WAITING || s.stage == Stage.SCENE);
+    }
+
     /** Twice a second. */
     void tick(Run run) {
         State s = states.get(run.id);

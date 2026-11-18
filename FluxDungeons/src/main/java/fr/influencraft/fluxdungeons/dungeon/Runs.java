@@ -1001,6 +1001,8 @@ public final class Runs {
     private void bossMusic(Run run) {
         String song = run.def.bossMusic();
         if (run.music != null || song.isBlank() || run.state != Run.State.RUNNING) return;
+        // a boss asleep behind its gate, or the scene of its entrance: its music starts with the fight
+        if (bossRooms.waiting(run)) return;
         // a lair's boss sleeps under the players' feet during the whole hunt: its music waits for the encounter
         if (run.def.burrows() != null) {
             Burrows.Lair lair = burrows.of(run);
