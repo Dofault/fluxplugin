@@ -1,0 +1,92 @@
+# Le Salon de Thé : mi bémol majeur en rythme ternaire, accords de septième, la bémol mineur emprunté. Composition originale.
+# Généré par FluxMusic/assets/gen_resaac_suite.py : modifier le script, pas ce fichier.
+title: "Le Salon de Thé"
+author: "Influencraft"
+bpm: 96
+steps-per-beat: 3
+beats-per-bar: 4
+loop: true
+loop-from: intro
+
+tracks:
+  lead: { instrument: bit, volume: 0.62 }
+  lead2: { instrument: bell, volume: 0.18 }
+  harmony: { instrument: pling, volume: 0.26 }
+  counter: { instrument: flute, volume: 0.38 }
+  arp: { instrument: harp, volume: 0.2 }
+  comp: { instrument: guitar, volume: 0.24 }
+  bass: { instrument: bass, volume: 0.58 }
+  kick: { instrument: basedrum, volume: 0.3 }
+  snare: { instrument: snare, volume: 0.16 }
+  roll: { instrument: snare, volume: 0.12 }
+  hat: { instrument: hat, volume: 0.08 }
+
+sections:
+  intro:
+    arp: "Eb4:3 G4:3 Bb4:3 Eb5:3 | Bb3:3 D4:3 F4:3 Bb4:3"
+    bass: "Eb2:6 Bb2:6 | Bb1:6 F2:6"
+  a1:
+    lead: "G4:2 F4 Eb4:3 Bb4:6 | C5:3 Bb4:2 G4 Eb4:6 | G#4:3 G4:2 F4 D4:3 F4:3 | Eb4:12 | C5:2 Bb4 G#4:3 Eb4:3 G#4:3 | Bb4:2 A4 G4:3 E4:3 G4:3 | F4:3 G#4:3 Bb4:3 G#4:3 | G4:6 Eb4:6"
+    counter: ".:12 | .:12 | .:12 | .:6 G5:2 Bb5 Eb6:3 | .:12 | .:12 | .:12 | .:9 Bb5:3"
+    arp: "Eb4:2 G4 Bb4:2 Eb5 G4:2 Bb4 G4:2 Eb5 | C4:2 Eb4 G4:2 C5 Eb5:2 G4 Eb5:2 C5 | F4:2 G#4 C5:2 F5 Bb3:2 D4 F4:2 Bb4 | Eb4:2 G4 Bb4:2 Eb5 G4:2 Bb4 G4:2 Eb5 | G#4:2 C5 Eb5:2 G#4 C5:2 Eb5 C5:2 G#4 | G4:3 D5:2 G4 C4:2 E4 G4:2 C5 | F4:2 G#4 C5:2 F5 Bb3:2 D4 F4:2 Bb4 | Eb4:2 G4 Bb4:2 Eb5 G4:2 Bb4 G4:2 Eb5"
+    comp: ".:2 Eb3+G3+Bb3:3 Eb3+G3+Bb3:3 Eb3+G3+Bb3:3 Eb3+G3+Bb3 | .:2 G3+C4+Eb4:3 G3+C4+Eb4:3 G3+C4+Eb4:3 G3+C4+Eb4 | .:2 F3+G#3+C4:3 F3+G#3+C4:3 Bb3+D4+F4:3 Bb3+D4+F4 | .:2 Eb3+G3+Bb3:3 Eb3+G3+Bb3:3 Eb3+G3+Bb3:3 Eb3+G3+Bb3 | .:2 G#3+C4+Eb4:3 G#3+C4+Eb4:3 G#3+C4+Eb4:3 G#3+C4+Eb4 | .:2 G3+D4:3 G3+Bb3+D4:3 G3+C4+E4:3 G3+C4+E4 | .:2 F3+G#3+C4:3 F3+G#3+C4:3 Bb3+D4+F4:3 Bb3+D4+F4 | .:2 Eb3+G3+Bb3:3 Eb3+G3+Bb3:3 Eb3+G3+Bb3:3 Eb3+G3+Bb3"
+    bass: "Eb2:3 Bb2:3 Eb3:3 Bb2:3 | C2:3 G2:3 C3:3 G2:3 | F2:3 C3:3 Bb1:3 F2:3 | Eb2:3 Bb2:3 Eb3:3 Bb2:3 | G#1:3 Eb2:3 G#2:3 Eb2:3 | G2:3 D3:3 C2:3 G2:3 | F2:3 C3:3 Bb1:3 F2:3 | Eb2:3 Bb2:3 Eb3:3 Bb2:3"
+    kick: "x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6"
+    snare: ".:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x x x"
+    roll: ".:12 | .:12 | .:12 | .:12 | .:12 | .:12 | .:12 | .:6 x x x:4"
+    hat: "x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x"
+  b1:
+    lead: "Eb5:3 C5:2 G#4 Eb4:6 | Eb5:3 B4:2 G#4 Eb4:6 | D5:3 Bb4:2 G4 F4:3 D4:3 | E4:3 G4:3 Bb4:3 C5:3 | G#4:2 G4 F4:3 C5:6 | D5:2 C5 Bb4:3 F4:3 G#4:3 | G4:3 Bb4:3 C5:3 Bb4:3 | G#4:3 C5:3 D5:3 Bb4:3"
+    arp: "G#4:2 C5 Eb5:2 G#4 C5:2 Eb5 C5:2 G#4 | G#4:2 B4 Eb5:2 G#4 B4:2 Eb5 B4:2 G#4 | G4:2 Bb4 D5:2 G4 Bb4:2 D5 Bb4:2 G4 | C4:2 E4 G4:2 C5 E5:2 G4 E5:2 C5 | F4:3 C5:2 F5 G#4:2 C5 G#4:2 F5 | Bb3:2 D4 F4:2 Bb4 D5:2 F5 D5:2 Bb4 | Eb4:2 G4 Bb4:2 Eb5 C4:2 E4 G4:2 C5 | F4:2 G#4 C5:2 F5 Bb3:2 D4 F4:2 Bb4"
+    comp: ".:2 G#3+C4+Eb4:3 G#3+C4+Eb4:3 G#3+C4+Eb4:3 G#3+C4+Eb4 | .:2 G#3+B3+Eb4:3 G#3+B3+Eb4:3 G#3+B3+Eb4:3 G#3+B3+Eb4 | .:2 G3+Bb3+D4:3 G3+Bb3+D4:3 G3+Bb3+D4:3 G3+Bb3+D4 | .:2 G3+C4+E4:3 G3+C4+E4:3 G3+C4+E4:3 G3+C4+E4 | .:2 F3+C4:3 F3+G#3+C4:3 F3+G#3+C4:3 F3+G#3+C4 | .:2 Bb3+D4+F4:3 Bb3+D4+F4:3 Bb3+D4+F4:3 Bb3+D4+F4 | .:2 Eb3+G3+Bb3:3 Eb3+G3+Bb3:3 G3+C4+E4:3 G3+C4+E4 | .:2 F3+G#3+C4:3 F3+G#3+C4:3 Bb3+D4+F4:3 Bb3+D4+F4"
+    bass: "G#1:3 Eb2:3 G#2:3 Eb2:3 | G#1:3 Eb2:3 G#2:3 Eb2:3 | G2:3 D3:3 G2:3 D3:3 | C2:3 G2:3 C3:3 G2:3 | F2:3 C3:3 F3:3 C3:3 | Bb1:3 F2:3 Bb2:3 F2:3 | Eb2:3 Bb2:3 C2:3 G2:3 | F2:3 C3:3 Bb1:3 F2:3"
+    kick: "x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6"
+    snare: ".:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x x x"
+    roll: ".:12 | .:12 | .:12 | .:12 | .:12 | .:12 | .:12 | .:6 x x x:4"
+    hat: "x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x"
+  a2:
+    lead: "G4:2 F4 Eb4:3 Bb4:6 | C5:3 Bb4:2 G4 Eb4:6 | G#4:3 G4:2 F4 D4:3 F4:3 | Eb4:12 | C5:2 Bb4 G#4:3 Eb4:3 G#4:3 | Bb4:2 A4 G4:3 E4:3 G4:3 | F4:3 G#4:3 Bb4:3 G#4:3 | G4:6 Eb4:6"
+    lead2: "G6:2 F6 Eb6:3 Bb6:6 | C7:3 Bb6:2 G6 Eb6:6 | G#6:3 G6:2 F6 D6:3 F6:3 | Eb6:12 | C7:2 Bb6 G#6:3 Eb6:3 G#6:3 | Bb6:2 A6 G6:3 E6:3 G6:3 | F6:3 G#6:3 Bb6:3 G#6:3 | G6:6 Eb6:6"
+    harmony: "Eb4:2 Bb3 Bb3:3 G4:6 | G4:3 G4:2 Eb4 C4:6 | F4:3 Eb4:2 C4 Bb3:3 D4:3 | Bb3:12 | G#4:2 Eb4 Eb4:3 C4:3 Eb4:3 | G4:2 F4 D4:3 C4:3 E4:3 | C4:3 F4:3 F4:3 F4:3 | Eb4:6 Bb3:6"
+    counter: ".:12 | .:12 | .:12 | .:6 G5:2 Bb5 Eb6:3 | .:12 | .:12 | .:12 | .:9 Bb5:3"
+    arp: "Eb4:2 G4 Bb4:2 Eb5 G4:2 Bb4 G4:2 Eb5 | C4:2 Eb4 G4:2 C5 Eb5:2 G4 Eb5:2 C5 | F4:2 G#4 C5:2 F5 Bb3:2 D4 F4:2 Bb4 | Eb4:2 G4 Bb4:2 Eb5 G4:2 Bb4 G4:2 Eb5 | G#4:2 C5 Eb5:2 G#4 C5:2 Eb5 C5:2 G#4 | G4:3 D5:2 G4 C4:2 E4 G4:2 C5 | F4:2 G#4 C5:2 F5 Bb3:2 D4 F4:2 Bb4 | Eb4:2 G4 Bb4:2 Eb5 G4:2 Bb4 G4:2 Eb5"
+    comp: ".:2 Eb3+G3+Bb3:3 Eb3+G3+Bb3:3 Eb3+G3+Bb3:3 Eb3+G3+Bb3 | .:2 G3+C4+Eb4:3 G3+C4+Eb4:3 G3+C4+Eb4:3 G3+C4+Eb4 | .:2 F3+G#3+C4:3 F3+G#3+C4:3 Bb3+D4+F4:3 Bb3+D4+F4 | .:2 Eb3+G3+Bb3:3 Eb3+G3+Bb3:3 Eb3+G3+Bb3:3 Eb3+G3+Bb3 | .:2 G#3+C4+Eb4:3 G#3+C4+Eb4:3 G#3+C4+Eb4:3 G#3+C4+Eb4 | .:2 G3+D4:3 G3+Bb3+D4:3 G3+C4+E4:3 G3+C4+E4 | .:2 F3+G#3+C4:3 F3+G#3+C4:3 Bb3+D4+F4:3 Bb3+D4+F4 | .:2 Eb3+G3+Bb3:3 Eb3+G3+Bb3:3 Eb3+G3+Bb3:3 Eb3+G3+Bb3"
+    bass: "Eb2:3 Bb2:3 Eb3:3 Bb2:3 | C2:3 G2:3 C3:3 G2:3 | F2:3 C3:3 Bb1:3 F2:3 | Eb2:3 Bb2:3 Eb3:3 Bb2:3 | G#1:3 Eb2:3 G#2:3 Eb2:3 | G2:3 D3:3 C2:3 G2:3 | F2:3 C3:3 Bb1:3 F2:3 | Eb2:3 Bb2:3 Eb3:3 Bb2:3"
+    kick: "x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6"
+    snare: ".:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:2 x | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x x x"
+    roll: ".:12 | .:12 | .:12 | .:12 | .:12 | .:12 | .:12 | .:6 x x x:4"
+    hat: "x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x"
+  b2:
+    lead: "Eb5:3 C5:2 G#4 Eb4:6 | Eb5:3 B4:2 G#4 Eb4:6 | D5:3 Bb4:2 G4 F4:3 D4:3 | E4:3 G4:3 Bb4:3 C5:3 | G#4:2 G4 F4:3 C5:6 | D5:2 C5 Bb4:3 F4:3 G#4:3 | G4:3 Bb4:3 C5:3 Bb4:3 | G#4:3 C5:3 D5:3 Bb4:3"
+    lead2: "Eb7:3 C7:2 G#6 Eb6:6 | Eb7:3 B6:2 G#6 Eb6:6 | D7:3 Bb6:2 G6 F6:3 D6:3 | E6:3 G6:3 Bb6:3 C7:3 | G#6:2 G6 F6:3 C7:6 | D7:2 C7 Bb6:3 F6:3 G#6:3 | G6:3 Bb6:3 C7:3 Bb6:3 | G#6:3 C7:3 D7:3 Bb6:3"
+    harmony: "C5:3 G#4:2 Eb4 C4:6 | B4:3 G#4:2 Eb4 B3:6 | Bb4:3 G4:2 D4 D4:3 Bb3:3 | C4:3 E4:3 G4:3 G4:3 | F4:2 Eb4 C4:3 G#4:6 | Bb4:2 G#4 F4:3 D4:3 F4:3 | Eb4:3 G4:3 G4:3 G4:3 | F4:3 G#4:3 Bb4:3 F4:3"
+    arp: "G#4:2 C5 Eb5:2 G#4 C5:2 Eb5 C5:2 G#4 | G#4:2 B4 Eb5:2 G#4 B4:2 Eb5 B4:2 G#4 | G4:2 Bb4 D5:2 G4 Bb4:2 D5 Bb4:2 G4 | C4:2 E4 G4:2 C5 E5:2 G4 E5:2 C5 | F4:3 C5:2 F5 G#4:2 C5 G#4:2 F5 | Bb3:2 D4 F4:2 Bb4 D5:2 F5 D5:2 Bb4 | Eb4:2 G4 Bb4:2 Eb5 C4:2 E4 G4:2 C5 | F4:2 G#4 C5:2 F5 Bb3:2 D4 F4:2 Bb4"
+    comp: ".:2 G#3+C4+Eb4:3 G#3+C4+Eb4:3 G#3+C4+Eb4:3 G#3+C4+Eb4 | .:2 G#3+B3+Eb4:3 G#3+B3+Eb4:3 G#3+B3+Eb4:3 G#3+B3+Eb4 | .:2 G3+Bb3+D4:3 G3+Bb3+D4:3 G3+Bb3+D4:3 G3+Bb3+D4 | .:2 G3+C4+E4:3 G3+C4+E4:3 G3+C4+E4:3 G3+C4+E4 | .:2 F3+C4:3 F3+G#3+C4:3 F3+G#3+C4:3 F3+G#3+C4 | .:2 Bb3+D4+F4:3 Bb3+D4+F4:3 Bb3+D4+F4:3 Bb3+D4+F4 | .:2 Eb3+G3+Bb3:3 Eb3+G3+Bb3:3 G3+C4+E4:3 G3+C4+E4 | .:2 F3+G#3+C4:3 F3+G#3+C4:3 Bb3+D4+F4:3 Bb3+D4+F4"
+    bass: "G#1:3 Eb2:3 G#2:3 Eb2:3 | G#1:3 Eb2:3 G#2:3 Eb2:3 | G2:3 D3:3 G2:3 D3:3 | C2:3 G2:3 C3:3 G2:3 | F2:3 C3:3 F3:3 C3:3 | Bb1:3 F2:3 Bb2:3 F2:3 | Eb2:3 Bb2:3 C2:3 G2:3 | F2:3 C3:3 Bb1:3 F2:3"
+    kick: "x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6"
+    snare: ".:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:2 x | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x x x"
+    roll: ".:12 | .:12 | .:12 | .:12 | .:12 | .:12 | .:12 | .:6 x x x:4"
+    hat: "x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x"
+  a3:
+    lead: "G4:2 F4 Eb4:3 Bb4:6 | C5:3 Bb4:2 G4 Eb4:6 | G#4:3 G4:2 F4 D4:3 F4:3 | Eb4:12 | C5:2 Bb4 G#4:3 Eb4:3 G#4:3 | Bb4:2 A4 G4:3 E4:3 G4:3 | F4:3 G#4:3 Bb4:3 G#4:3 | G4:6 Eb4:6"
+    lead2: "G6:2 F6 Eb6:3 Bb6:6 | C7:3 Bb6:2 G6 Eb6:6 | G#6:3 G6:2 F6 D6:3 F6:3 | Eb6:12 | C7:2 Bb6 G#6:3 Eb6:3 G#6:3 | Bb6:2 A6 G6:3 E6:3 G6:3 | F6:3 G#6:3 Bb6:3 G#6:3 | G6:6 Eb6:6"
+    harmony: "Eb4:2 Bb3 Bb3:3 G4:6 | G4:3 G4:2 Eb4 C4:6 | F4:3 Eb4:2 C4 Bb3:3 D4:3 | Bb3:12 | G#4:2 Eb4 Eb4:3 C4:3 Eb4:3 | G4:2 F4 D4:3 C4:3 E4:3 | C4:3 F4:3 F4:3 F4:3 | Eb4:6 Bb3:6"
+    counter: ".:12 | .:12 | .:12 | .:6 G5:2 Bb5 Eb6:3 | .:12 | .:12 | .:12 | .:9 Bb5:3"
+    arp: "Eb4:2 G4 Bb4:2 Eb5 G4:2 Bb4 G4:2 Eb5 | C4:2 Eb4 G4:2 C5 Eb5:2 G4 Eb5:2 C5 | F4:2 G#4 C5:2 F5 Bb3:2 D4 F4:2 Bb4 | Eb4:2 G4 Bb4:2 Eb5 G4:2 Bb4 G4:2 Eb5 | G#4:2 C5 Eb5:2 G#4 C5:2 Eb5 C5:2 G#4 | G4:3 D5:2 G4 C4:2 E4 G4:2 C5 | F4:2 G#4 C5:2 F5 Bb3:2 D4 F4:2 Bb4 | Eb4:2 G4 Bb4:2 Eb5 G4:2 Bb4 G4:2 Eb5"
+    comp: ".:2 Eb3+G3+Bb3:3 Eb3+G3+Bb3:3 Eb3+G3+Bb3:3 Eb3+G3+Bb3 | .:2 G3+C4+Eb4:3 G3+C4+Eb4:3 G3+C4+Eb4:3 G3+C4+Eb4 | .:2 F3+G#3+C4:3 F3+G#3+C4:3 Bb3+D4+F4:3 Bb3+D4+F4 | .:2 Eb3+G3+Bb3:3 Eb3+G3+Bb3:3 Eb3+G3+Bb3:3 Eb3+G3+Bb3 | .:2 G#3+C4+Eb4:3 G#3+C4+Eb4:3 G#3+C4+Eb4:3 G#3+C4+Eb4 | .:2 G3+D4:3 G3+Bb3+D4:3 G3+C4+E4:3 G3+C4+E4 | .:2 F3+G#3+C4:3 F3+G#3+C4:3 Bb3+D4+F4:3 Bb3+D4+F4 | .:2 Eb3+G3+Bb3:3 Eb3+G3+Bb3:3 Eb3+G3+Bb3:3 Eb3+G3+Bb3"
+    bass: "Eb2:3 Bb2:3 Eb3:3 Bb2:3 | C2:3 G2:3 C3:3 G2:3 | F2:3 C3:3 Bb1:3 F2:3 | Eb2:3 Bb2:3 Eb3:3 Bb2:3 | G#1:3 Eb2:3 G#2:3 Eb2:3 | G2:3 D3:3 C2:3 G2:3 | F2:3 C3:3 Bb1:3 F2:3 | Eb2:3 Bb2:3 Eb3:3 Bb2:3"
+    kick: "x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6 | x:6 x:6"
+    snare: ".:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:2 x | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x:3 | .:3 x:6 x x x"
+    roll: ".:12 | .:12 | .:12 | .:12 | .:12 | .:12 | .:12 | .:6 x x x:4"
+    hat: "x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x | x:2 x x:2 x x:2 x x:2 x"
+  fin:
+    lead: "Eb4:12 | .:12"
+    lead2: "Eb6:12 | .:12"
+    harmony: "Bb3:12 | .:12"
+    arp: "Eb4:2 G4:2 Bb4:2 Eb5:2 G4:2 Bb4:2 | .:12"
+    comp: "Eb3+G3+Bb3:12 | .:12"
+    bass: "Eb2:12 | .:12"
+    kick: "x:12 | .:12"
+    snare: "x:12 | .:12"
+
+order: [intro, a1, b1, a2, b2, a3, fin]

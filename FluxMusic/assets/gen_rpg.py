@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generates "RPG" (rpg), an adventure theme for the RPG universe in the spirit of the note block MMORPG soundtracks
+"""Generates "RPG 1" (rpg1), an adventure theme for the RPG universe in the spirit of the note block MMORPG soundtracks
 (Wynncraft as the reference: driving octave bass, rippling arpeggios, rim-shot drums, a singable fantasy tune).
 Original composition, no quote of any existing piece. Engine in score.py.
 
@@ -20,11 +20,13 @@ Form (the intro plays once, then the rest loops, about 1 min 43 s):
     c      Les Ruines       half time, mystery: the theme's head turned over on the xylophone, Phrygian F,
                             heartbeat kick, then a build-up and a snare roll
     a2     L'Épopée         the theme with bells an octave above, second voice, descant, full drums
-    coda   Le Retour        a last phrase over Em C Am B7, a fill leads back to the road (a)
+    coda   Le Retour        a last phrase over Em C Am B7, a fill
+    fin    La Halte         the E minor chord held: the end when the song plays once (rpg lobby shuffle);
+                            when looped, the road (a) starts again after it
 
     python3 gen_rpg.py [output folder]      (default: ../src/main/resources/songs)
 
-Never edit songs/rpg.yml by hand: change this script and run it again.
+Never edit songs/rpg1.yml by hand: change this script and run it again.
 """
 import random
 import sys
@@ -49,7 +51,7 @@ TRACKS = {
     'roulement':  ('snare', 0.2),
     'charley':    ('hat', 0.14),
 }
-PIECE = Piece('rpg', 'RPG', bpm=140, steps_per_beat=4, beats_per_bar=4, tracks=TRACKS,
+PIECE = Piece('rpg1', 'RPG 1', bpm=140, steps_per_beat=4, beats_per_bar=4, tracks=TRACKS,
               melodic={'theme', 'reponse'})
 L = PIECE.L
 LEADS = ('theme', 'reponse', 'appel')
@@ -260,19 +262,33 @@ def coda(rng):
     return s
 
 
+def fin(rng):
+    s = Section(PIECE, 'fin', 'Em Em')
+    s.write('theme', 'E5:16 | .:16')
+    copy(s, 'theme', 'cloches', transpose=12)
+    s.write('reponse', 'B4:16 | .:16')
+    score.bass(s, 'basse', [(0, 'r')], bars=[0])
+    deep(s, 'grave', bars=[0])
+    score.strum(s, 'guitare', pattern=(0,), low=52, bars=[0])
+    sweep(s, 'harpe', 0, 0, 8)
+    drums(s, 'grosse', (0,), [0])
+    drums(s, 'caisse', (0,), [0])
+    return s
+
+
 def strong(sec, step):
     return (0, 8)
 
 
 def main():
     rng = random.Random(2026_11_18)
-    sections = [intro(rng), section_a(rng), section_b(rng), section_c(rng), section_a2(rng), coda(rng)]
+    sections = [intro(rng), section_a(rng), section_b(rng), section_c(rng), section_a2(rng), coda(rng), fin(rng)]
     for sec in sections:
         give_way(sec)
     problems = score.check(sections, strong, quiet={'contrechant', 'harpe'})
     path = score.write_song(score.songs_folder(sys.argv, __file__), PIECE, sections, [
-        "RPG : thème d'aventure de l'univers RPG, mi mineur à 4/4, 140 à la noire. Appel (intro, une fois), route,",
-        'plaines, ruines, épopée, retour. Composition originale.',
+        "RPG 1 : thème d'aventure de l'univers RPG, mi mineur à 4/4, 140 à la noire. Appel (intro, une fois), route,",
+        'plaines, ruines, épopée, retour, halte. Composition originale.',
     ], 'gen_rpg.py', 'a')
     score.summary(path, PIECE, sections, 'a', problems)
 

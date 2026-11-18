@@ -14,4 +14,9 @@ ambience:
   rpg-lobby:
     worlds: [flux_rpg]
     pause-seconds: 4
-    songs: [camp_veilleurs]
+    first: camp_veilleurs
+    songs: [camp_veilleurs, rpg1, rpg2, rpg3, rpg4, rpg5, rpg6, rpg7, rpg8, rpg9, rpg10]
+  resaac:
+    worlds: [resaac]
+    pause-seconds: 4
+    songs: [resaac, resaac2, resaac_bonjour, resaac_fleurs, resaac_route, resaac_the, resaac_toits, resaac_gare, resaac_parc, resaac_academie, resaac_fete, resaac_quais]

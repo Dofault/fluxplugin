@@ -1,7 +1,7 @@
-# RPG : thème d'aventure de l'univers RPG, mi mineur à 4/4, 140 à la noire. Appel (intro, une fois), route,
-# plaines, ruines, épopée, retour. Composition originale.
+# RPG 1 : thème d'aventure de l'univers RPG, mi mineur à 4/4, 140 à la noire. Appel (intro, une fois), route,
+# plaines, ruines, épopée, retour, halte. Composition originale.
 # Généré par FluxMusic/assets/gen_rpg.py : modifier le script, pas ce fichier.
-title: "RPG"
+title: "RPG 1"
 author: "Influencraft"
 bpm: 140
 steps-per-beat: 4
@@ -102,5 +102,15 @@ sections:
     caisse: ".:4 x:8 x:4 | .:4 x:8 x:4 | .:4 x:8 x:4 | .:12 x x x x"
     roulement: ".:16 | .:16 | .:16 | x x x x x x x x x x x x:5"
     charley: ".:2 x:4 x:4 x:4 x:2 | .:2 x:4 x:4 x:4 x:2 | .:2 x:4 x:4 x:4 x:2 | .:16"
+  fin:
+    theme: "E5:16 | .:16"
+    cloches: "E6:16 | .:16"
+    reponse: "B4:16 | .:16"
+    harpe: "E4 G4 B4 E5:13 | .:16"
+    guitare: "E3+G3+B3:16 | .:16"
+    basse: "E2:16 | .:16"
+    grave: "E2:16 | .:16"
+    grosse: "x:16 | .:16"
+    caisse: "x:16 | .:16"
 
-order: [intro, a, b, c, a2, coda]
+order: [intro, a, b, c, a2, coda, fin]
