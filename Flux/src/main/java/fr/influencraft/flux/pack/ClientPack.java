@@ -39,8 +39,9 @@ public final class ClientPack {
     private int maxFormat = 88;
     private boolean loading = true;
     private boolean sidebar = true;
-    private int sidebarTitleAlpha = 39;
-    private int sidebarLinesAlpha = 39;
+    // -1 = the game's own alpha (vanilla look, follows the player's text background setting)
+    private int sidebarTitleAlpha = -1;
+    private int sidebarLinesAlpha = -1;
     private Path logoShader;
     private boolean started;
     private boolean pending;
@@ -63,8 +64,8 @@ public final class ClientPack {
         String logo = section.getString("loading-screen.logo-shader", "");
         logoShader = logo == null || logo.isBlank() ? null : Path.of(logo);
         sidebar = section.getBoolean("sidebar.enabled", true);
-        sidebarTitleAlpha = Math.max(0, Math.min(255, section.getInt("sidebar.title-alpha", 39)));
-        sidebarLinesAlpha = Math.max(0, Math.min(255, section.getInt("sidebar.lines-alpha", 39)));
+        sidebarTitleAlpha = sidebarAlpha(section.getString("sidebar.title-alpha", "vanilla"));
+        sidebarLinesAlpha = sidebarAlpha(section.getString("sidebar.lines-alpha", "vanilla"));
     }
 
     /** First write, on the first tick: every plugin has given its part by then. */
@@ -192,7 +193,17 @@ public final class ClientPack {
         return text.replace("%TITLE_ALPHA%", alpha(sidebarTitleAlpha)).replace("%LINES_ALPHA%", alpha(sidebarLinesAlpha));
     }
 
+    /** "vanilla" (or anything not a number) = -1, the game's alpha; else 0 to 255. */
+    private static int sidebarAlpha(String value) {
+        try {
+            return Math.max(0, Math.min(255, Integer.parseInt(value.trim())));
+        } catch (NumberFormatException | NullPointerException e) {
+            return -1;
+        }
+    }
+
     private static String alpha(int value) {
+        if (value < 0) return "-1.0";
         return String.format(java.util.Locale.ROOT, "%.6f", value / 255.0);
     }
 

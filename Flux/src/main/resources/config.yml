@@ -447,12 +447,13 @@ client-pack:
   loading-screen:
     enabled: false
     logo-shader: plugins/MCGUI/pack/uiengine_26_2/assets/minecraft/shaders/core/position_tex_color.fsh
-  # The scoreboard's background drawn like the HUD's panels (rounded corners, black at this alpha out of 255, over
-  # the player's text background setting), by Flux's core/gui shaders: off while the loading screen is on.
+  # The scoreboard's background with the HUD panels' rounded corners, by Flux's core/gui shaders: off while the
+  # loading screen is on. Alpha: "vanilla" = the game's own (40% title, 30% lines by default, follows the player's
+  # text background setting), or a fixed black alpha out of 255.
   sidebar:
     enabled: true
-    title-alpha: 39
-    lines-alpha: 39
+    title-alpha: vanilla
+    lines-alpha: vanilla
 
 # The advancements key (L) opens this command instead of the vanilla screen (blank or enabled: false = vanilla).
 advancement-redirect:
