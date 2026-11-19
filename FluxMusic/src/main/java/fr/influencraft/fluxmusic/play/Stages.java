@@ -38,7 +38,9 @@ import java.util.function.Predicate;
  * the musicians. The band plays as long as somebody is in the place; a player who turned music off in his settings
  * sees it play and hears nothing. Each musician moves only while his instrument sounds: {@code playing} while its notes are sent,
  * {@code ready} (instrument held, still) for the rest of a song he plays in, {@code idle} otherwise. A note
- * particle rises from him on his notes.</p>
+ * particle rises from him on his notes, and his playing follows the pace of his notes (faster on a quick run).
+ * Only the musicians of the song being played stand on the stage: at each new song those who have nothing to play
+ * leave, the others take their places again across the stage.</p>
  *
  * <p>Stages are placed by command and kept in {@code stages.yml}; the band (which model plays which instrument,
  * front row first) is {@code band} of config.yml.</p>
@@ -49,7 +51,16 @@ public final class Stages {
     private static final long PLAYING_NANOS = 900_000_000L;
     /** Musicians are shown to players within this distance of the stage. */
     private static final double VIEW_DISTANCE = 72;
-    private static final double ROW_SPACING = 1.9, SIDE_SPACING = 1.3;
+    private static final double ROW_SPACING = 2.0, SIDE_SPACING = 1.3, SIDE_SPACING_MAX = 2.2;
+    /** Speed of the playing animation: bounds, and gestures per second each model's loop shows at speed 1. */
+    private static final float SPEED_MIN = 0.6f, SPEED_MAX = 2.2f;
+    private static final Map<Instrument, Float> GESTURES = new EnumMap<>(Map.ofEntries(
+            Map.entry(Instrument.GUITAR, 3.3f), Map.entry(Instrument.BANJO, 8f), Map.entry(Instrument.HARP, 2f),
+            Map.entry(Instrument.BASS, 1f), Map.entry(Instrument.FLUTE, 1.7f), Map.entry(Instrument.BASEDRUM, 2f),
+            Map.entry(Instrument.SNARE, 5f), Map.entry(Instrument.HAT, 2f), Map.entry(Instrument.COW_BELL, 1.5f),
+            Map.entry(Instrument.BELL, 2.5f), Map.entry(Instrument.CHIME, 1f), Map.entry(Instrument.XYLOPHONE, 2.7f),
+            Map.entry(Instrument.IRON_XYLOPHONE, 1.25f), Map.entry(Instrument.BIT, 4.7f),
+            Map.entry(Instrument.PLING, 4.7f)));   // the didgeridoo holds long notes: always at speed 1
 
     private final Plugin plugin;
     private final Jukebox jukebox;
@@ -98,7 +109,7 @@ public final class Stages {
                     (float) s.getDouble("scale", 1)));
         }
         // a tick later: BetterModel's models are ready
-        Bukkit.getScheduler().runTask(plugin, () -> stages.values().forEach(Stage::build));
+        // the band comes on with the first song (a tick later at least: BetterModel's models are ready)
     }
 
     private void save() {
@@ -139,7 +150,6 @@ public final class Stages {
                 radius > 0 ? radius : old != null ? old.radius : 16, old != null ? old.scale : 1f);
         stages.put(id, s);
         save();
-        s.build();
         return true;
     }
 
@@ -207,9 +217,11 @@ public final class Stages {
 
     private static final class Musician {
         final Instrument instrument;
-        final Location at;
+        Location at;
         final ModelBridge.Figure figure;
         String state = "";
+        /** Notes per second lately (smoothed), and the speed his playing is shown at. */
+        float rate, speed = 1f;
 
         Musician(Instrument instrument, Location at, ModelBridge.Figure figure) {
             this.instrument = instrument;
@@ -223,7 +235,9 @@ public final class Stages {
         final double x, y, z, width, depth, radius;
         final float yaw, scale;
         final List<Musician> musicians = new ArrayList<>();
-        final Map<Instrument, double[]> sources = new EnumMap<>(Instrument.class);
+        volatile Map<Instrument, double[]> sources = Map.of();
+        /** Notes of each instrument since the last tick (chords count once), written by the clock thread. */
+        final AtomicIntegerArray fresh = new AtomicIntegerArray(Instrument.values().length);
         final Set<UUID> viewers = new HashSet<>();
         /** Last note of each instrument (System.nanoTime) and its pitch, written by the clock thread. */
         final AtomicLongArray lastNote = new AtomicLongArray(Instrument.values().length);
@@ -253,34 +267,67 @@ public final class Stages {
             this.scale = scale;
         }
 
-        /** Stands the band on the stage: rows across its width, the first of the band in front. */
-        void build() {
+        /**
+         * Puts on the stage the musicians of this cast and only them, in the band's order (first ones in front), in
+         * rows centred on the stage. A musician already there walks to his new place; the others come or go in a puff.
+         */
+        void stand(Set<Instrument> cast) {
             World w = Bukkit.getWorld(world);
             if (w == null || closed) return;
+            List<Instrument> players = new ArrayList<>();
+            for (Instrument i : band.keySet()) if (cast.contains(i)) players.add(i);
+            Map<Instrument, Musician> former = new EnumMap<>(Instrument.class);
+            for (Musician m : musicians) former.put(m.instrument, m);
+            musicians.clear();
             double rad = Math.toRadians(yaw);
             double fx = -Math.sin(rad), fz = Math.cos(rad), rx = -Math.cos(rad), rz = -Math.sin(rad);
-            int perRow = Math.max(1, (int) Math.floor((width - 0.6) / SIDE_SPACING) + 1);
-            List<Map.Entry<Instrument, String>> players = new ArrayList<>(band.entrySet());
-            int rows = (players.size() + perRow - 1) / perRow;
+            int n = players.size();
+            int most = Math.max(1, (int) Math.floor((width - 0.6) / SIDE_SPACING) + 1);
+            int rows = Math.max(1, (n + most - 1) / most);
+            int perRow = (n + rows - 1) / rows;   // rows of even length rather than a full one and a leftover
             double rowStep = rows <= 1 ? 0 : Math.min(ROW_SPACING, (depth - 1.6) / (rows - 1));
-            for (int i = 0; i < players.size(); i++) {
-                int row = i / perRow, inRow = Math.min(perRow, players.size() - row * perRow), col = i % perRow;
-                double side = (col - (inRow - 1) / 2.0) * Math.min(SIDE_SPACING, (width - 0.6) / Math.max(1, inRow - 1));
-                // odd rows shifted half a place: nobody stands right behind somebody
-                if (row % 2 == 1 && inRow < perRow) side += 0;
-                double front = depth / 2 - 1.0 - row * rowStep;
+            Map<Instrument, double[]> places = new EnumMap<>(Instrument.class);
+            for (int i = 0; i < n; i++) {
+                int row = i / perRow, inRow = Math.min(perRow, n - row * perRow), col = i % perRow;
+                double gap = inRow <= 1 ? 0 : Math.min(SIDE_SPACING_MAX, (width - 0.6) / (inRow - 1));
+                double side = (col - (inRow - 1) / 2.0) * gap;
+                double front = ((rows - 1) / 2.0 - row) * rowStep;
                 Location at = new Location(w, x + rx * side + fx * front, y, z + rz * side + fz * front, yaw, 0);
-                Instrument instrument = players.get(i).getKey();
-                ModelBridge.Figure figure = null;
-                if (models) {
-                    figure = ModelBridge.figure(players.get(i).getValue(), at, scale, yaw);
-                    if (figure == null) plugin.getLogger().warning("Stage " + id + ": no BetterModel model "
-                            + players.get(i).getValue());
+                Instrument instrument = players.get(i);
+                Musician m = former.remove(instrument);
+                if (m != null) {
+                    if (m.figure != null && m.at.distanceSquared(at) > 0.01) m.figure.move(at);
+                    m.at = at;
+                } else {
+                    ModelBridge.Figure figure = null;
+                    if (models) {
+                        figure = ModelBridge.figure(band.get(instrument), at, scale, yaw);
+                        if (figure == null) plugin.getLogger().warning("Stage " + id + ": no BetterModel model "
+                                + band.get(instrument));
+                    }
+                    m = new Musician(instrument, at, figure);
+                    if (figure != null) {
+                        for (UUID viewer : viewers) {
+                            Player p = Bukkit.getPlayer(viewer);
+                            if (p != null) figure.show(p);
+                        }
+                        puff(at);
+                    }
                 }
-                Musician m = new Musician(instrument, at, figure);
                 musicians.add(m);
-                sources.put(instrument, new double[]{at.getX(), at.getY() + 1.4 * scale, at.getZ()});
+                places.put(instrument, new double[]{at.getX(), at.getY() + 1.4 * scale, at.getZ()});
             }
+            for (Musician gone : former.values()) {
+                if (gone.figure == null) continue;
+                puff(gone.at);
+                gone.figure.close();
+            }
+            sources = places;
+        }
+
+        private void puff(Location at) {
+            if (!viewers.isEmpty()) at.getWorld().spawnParticle(Particle.POOF, at.getX(), at.getY() + scale, at.getZ(),
+                    12, 0.25, 0.6 * scale, 0.25, 0.01);
         }
 
         void close() {
@@ -311,6 +358,14 @@ public final class Stages {
                     m.figure.loop(state);
                     m.state = state;
                 }
+                // pace of his notes -> speed of his playing, eased so it never jerks (a tick here is 0.1 s)
+                int notes = fresh.getAndSet(i, 0);
+                m.rate += (notes * 10f - m.rate) * 0.12f;
+                Float gestures = GESTURES.get(m.instrument);
+                float want = !playing || gestures == null ? 1f
+                        : Math.max(SPEED_MIN, Math.min(SPEED_MAX, m.rate / gestures));
+                m.speed += (want - m.speed) * 0.2f;
+                if (m.figure != null) m.figure.speed(m.speed);
                 // one note particle per new note, coloured by its pitch, at most every 4 ticks
                 if (playing && note != shownNote[i] && tick % 2 == i % 2 && !viewers.isEmpty()) {
                     shownNote[i] = note;
@@ -370,6 +425,7 @@ public final class Stages {
             if (song == null) return;
             last = song.id();
             cast = song.cast();
+            stand(cast);
             for (int i = 0; i < lastNote.length(); i++) lastNote.set(i, 0);
             broadcast = jukebox.broadcast(song, this);
         }
@@ -413,7 +469,9 @@ public final class Stages {
         }
 
         public void played(Instrument instrument, float notePitch) {
-            lastNote.set(instrument.ordinal(), System.nanoTime());
+            long now = System.nanoTime();
+            if (now - lastNote.get(instrument.ordinal()) > 20_000_000L) fresh.incrementAndGet(instrument.ordinal());
+            lastNote.set(instrument.ordinal(), now);
             pitch.set(instrument.ordinal(), Math.round(notePitch * 1000));
         }
     }
