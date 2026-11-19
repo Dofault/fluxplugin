@@ -190,3 +190,12 @@ universe:
 money-actionbar:
   on: "!&#FFD94D&lSettings &8► &#B376E5Money gains in the action bar &#2ECF7Bon."
   off: "!&#FFD94D&lSettings &8► &#B376E5Money gains in the action bar &#FF5C5Coff."
+
+spawn:
+  usage: "&7/fluxspawn set <player> <group|none> | here <group> | info <player> | reload"
+  unknown-player: "&cUnknown player: &f%player%"
+  unknown-group: "&cUnknown spawn group: &f%group% &c(spawns.yml)"
+  set: "&a%player% &7is now in spawn group &f%group%&7."
+  placed: "&7Spawn of group &f%group% &7set here."
+  info: "&7Spawn group of &f%player%&7: &f%group%"
+  reloaded: "&7spawns.yml reloaded. Groups: &f%groups%"

@@ -96,6 +96,7 @@ The plugins are written **as English plugins, then adapted to French** for our s
 | `profile.Profiles` | Sections of the profile menu (`/profil [player]`): each plugin registers the section of the data it owns (`Profiles.register(plugin, id, order, section)`), built for the shown player (`subject`, possibly offline). A profile is a summary: clicks only turn a section's pages or open the viewer's own menu. Flux gives economy, leaderboards, jobs, statistics; FluxLands town, FluxTools collection, FluxPets pets, FluxTags tags. |
 | `universe.Universes` | Universes: groups of worlds with fully separate player profiles (Flux, `plugins/Flux/universes.yml`). `of(player)`, `of(world)`, `allows(player, item)` before handing an item over, `tag(item, universe)` (or `universe:` in an item definition), `transitioning(player)` (never touch his items then), `claim(plugin, universe, worlds)`, `returnLocation`. `UniverseEnterEvent` = the player now carries that universe's profile: set up per-universe things there, never on world change. Rewards are claimed in vanilla only. See `docs/technique/rpg.md`. |
 | Menu `paths` | Progress paths drawn in the title (pieces in the `fluxui:y<Y>` fonts, sources in `Flux/assets/vanilla/chemin/`). `states` placeholder gives one colour per step: `vert` claimed, `orange` waiting, `rouge` missed, `eteint` locked. |
+| `spawn.Spawns` | Spawn groups (`plugins/Flux/spawns.yml`): a group's place replaces the server's spawn for `/spawn`, semi-rp respawn and the first join (`first-join` group for new players). `group(player)`, `in(player, group)` (empty group = everybody), `set(player, group)`, `location(group)`; `%flux_spawn%`, `/fluxspawn`. Also decides who sees content made for that moment (FluxMusic stage `group`, FluxMascot `stands.yml`). Quests (Typewriter) read the placeholder and change it with `/fluxspawn set`. |
 
 - FluxFamily owns couples and family trees (`fluxfamily.api.Family`: status, partner, `lineage(...)` for parent links
   kept by another plugin, as FluxReferral's sponsors). FluxTags takes tags from other plugins (`fluxtags.api.Tags`).
@@ -138,6 +139,9 @@ The plugins are written **as English plugins, then adapted to French** for our s
   The semi-rp pets are hidden during a run through Flux's `pets.Companions`, never through FluxPets itself.
   Dungeon keys, tokens, the end of a won run and the dungeon menus live in the `reward` and `menu` packages (2026-11-14):
   a key of the dungeon's job (`job:` of its file) is spent by the leader at launch (`DungeonKeys`, a number per player
+  First try of a dungeon its leader never beat is free (`Runs#trial`, 2026-11-19): no key, its tokens and rpg xp are
+  held until the victory and lost on a defeat or leave. Quest placeholders `%fluxdungeons_has_class%`,
+  `%fluxdungeons_beaten_<id>%`, `%fluxdungeons_trial_<id>%`.
   in `flux_dungeons_keys`, dropped by job actions through `Effects.count`), monsters give the Flux currency
   `dungeon_tokens` (`DungeonTokens`, coins thrown by item displays), a victory sends the party back to the rpg lobby at
   once (`Victory`: fireworks, job boosters, boss pet through `Companions.adopt`). Menus `donjons`, `donjon`,

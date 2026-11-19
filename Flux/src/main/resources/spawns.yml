@@ -1,0 +1,18 @@
+# Spawn groups (Flux, api.spawn.Spawns): a player in a group goes to its place instead of the server's spawn, for
+# /spawn, the respawn after a death (without bed or anchor, semi-rp worlds only) and his very first join.
+# Players in no group keep the server's spawn. A group also decides who sees content made for that moment of the game
+# (FluxMusic stages, FluxMascot stands). Placeholder %flux_spawn% (group id, "none"); /fluxspawn set <player> <group|none>,
+# /fluxspawn here <group> (the group's place where you stand), /fluxspawn info <player>, /fluxspawn reload.
+
+# Group given to a player who joins the server for the first time ("" = none).
+first-join: ""
+# false: a death respawns at the server's spawn whatever the group.
+respawn: true
+groups: {}
+#  tutorial:
+#    world: world
+#    x: 0.5
+#    y: 64
+#    z: 0.5
+#    yaw: 0
+#    pitch: 0

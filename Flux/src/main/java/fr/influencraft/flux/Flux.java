@@ -102,6 +102,8 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         rewards = fr.influencraft.flux.rewards.RewardService.start(this, () -> messages);
         // universes (plugins/Flux/universes.yml): separate profiles per group of worlds, items kept in their universe
         universes = fr.influencraft.flux.universe.UniverseService.start(this, () -> messages);
+        // spawn groups (plugins/Flux/spawns.yml): a group's place replaces the server's spawn (tutorial spawn)
+        spawns = fr.influencraft.flux.spawn.SpawnService.start(this, () -> messages);
         // buying / selling window of one item (shop chests, chest shops): api.trade.TradeWindow
         trades = fr.influencraft.flux.trade.TradeService.start(this, () -> messages);
         if (rewards != null) rewards.importFormerMailbox(getDataFolder().getParentFile());
@@ -215,6 +217,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         fr.influencraft.flux.api.FluxApi.bind(null);
         if (rewards != null) rewards.stop();
         if (universes != null) universes.stop();
+        if (spawns != null) spawns.stop();
         if (trades != null) trades.stop();
         if (leaderboards != null) leaderboards.stop();
         if (currencies != null) currencies.stop();
@@ -242,6 +245,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     private fr.influencraft.flux.api.text.Messages messages;
     private fr.influencraft.flux.rewards.RewardService rewards;
     private fr.influencraft.flux.universe.UniverseService universes;
+    private fr.influencraft.flux.spawn.SpawnService spawns;
     private fr.influencraft.flux.trade.TradeService trades;
     private fr.influencraft.flux.economy.CurrencyService currencies;
     private fr.influencraft.flux.tab.TabService tab;
@@ -344,6 +348,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         if (params.startsWith("balance_") && currencies != null) return currencies.placeholder(player, params.substring(8));
         if (params.startsWith("rewards_") && rewards != null) return rewards.placeholder(player, params.substring(8));
         if (params.equals("trade_title") && trades != null) return trades.title(player);
+        if (params.equals("spawn") && spawns != null) return spawns.placeholder(player);
         if (params.startsWith("top_") && leaderboards != null) return leaderboards.placeholder(player, params.substring(4));
         if (params.startsWith("profile_") && profile != null) return profile.placeholder(player, params.substring(8));
         if (params.equals("empty_slots")) {

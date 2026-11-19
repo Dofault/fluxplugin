@@ -190,3 +190,12 @@ universe:
 money-actionbar:
   on: "!&#FFD94D&lRéglages &8► &#B376E5Gains d'argent dans la barre d'action &#2ECF7Bactivés."
   off: "!&#FFD94D&lRéglages &8► &#B376E5Gains d'argent dans la barre d'action &#FF5C5Cdésactivés."
+
+spawn:
+  usage: "&#B376E5/fluxspawn set <joueur> <groupe|none> &8| &#B376E5here <groupe> &8| &#B376E5info <joueur> &8| &#B376E5reload"
+  unknown-player: "&#FF5C5CJoueur inconnu : &f%player%"
+  unknown-group: "&#FF5C5CGroupe de spawn inconnu : &f%group% &#FF5C5C(spawns.yml)"
+  set: "&#2ECF7B%player% &#B376E5est maintenant dans le groupe de spawn &f%group%&#B376E5."
+  placed: "&#B376E5Spawn du groupe &f%group% &#B376E5posé ici."
+  info: "&#B376E5Groupe de spawn de &f%player% &#B376E5: &f%group%"
+  reloaded: "&#B376E5spawns.yml relu. Groupes : &f%groups%"
