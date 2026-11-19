@@ -11,7 +11,7 @@ Without --write it only prints the table. With --write it writes, in FluxDungeon
 floor, level, players.recommended, levels (a single level: no more Easy / Normal / Hard, owner's decision) and
 reward (no money nor loot: tokens are the reward), and writes FluxDungeons/shop.yml (the dungeon shop).
 
-THE TOWER. Ten floors, one dungeon each, from level 10 to level 100. A character stops at level 50 (balance.yml), so
+THE TOWER. Ten floors, one dungeon each, level 1 (the tutorial), then 20 to 100. A character stops at level 50 (balance.yml), so
 above floor 5 nobody out-levels the monsters: what makes a floor possible is the number of players. A floor's
 monsters are always of its level, whatever the party's (FluxDungeons#monsterLevel); above 50 their curves stop at 50
 and the floor's life and damage multipliers carry the rest.
@@ -24,7 +24,8 @@ dungeon, the multiplier k (life x k, damage x k) that gives its floor's pressure
 level: two dungeons of the same floor are as hard as each other whatever their monsters. A boss the model cannot read
 (its powers have no `power`: spider, flower, evoker) counts as the median boss.
 
-    - floors 1 to 4: alone, gentle and rising (0.40 to 0.78); the monsters' abilities of difficulty rank 1, then 2;
+    - floor 1: the tutorial's dungeon (level 1, the newcomer's level), pressure 0.10: a beginner must win it;
+    - floors 2 to 4: alone, gentle and rising (0.50 to 0.78); the monsters' abilities of difficulty rank 1, then 2;
     - floor 5 (level 50): alone, pressure 1.0: "from the fifth one, it gets hard" (owner);
     - floors 6 and 7: two players; 8: three; 9 and 10: four, 10 the hardest (1.35).
     A party smaller than the recommended one meets the pressure times about recommended / its size; a bigger one
@@ -55,7 +56,8 @@ import dungeon_balance as B  # noqa: E402
 
 # floor: (dungeon, job, level, recommended players, pressure, abilities rank)
 TOWER = {
-    1: ("roche", "rochiste", 10, 1, 0.40, 1),
+    # floor 1 (2026-11-19, owner): the newcomer's first dungeon (tutorial), level 1 like him, very easy: he must win
+    1: ("roche", "rochiste", 1, 1, 0.10, 1),
     2: ("moisson", "cultivateur", 20, 1, 0.50, 1),
     3: ("sylviculteur", "sylviculteur", 30, 1, 0.62, 2),
     4: ("taupe", "deblayeur", 40, 1, 0.78, 2),
