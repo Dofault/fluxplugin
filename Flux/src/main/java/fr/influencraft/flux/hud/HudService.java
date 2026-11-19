@@ -515,6 +515,20 @@ public final class HudService implements Hud.Backend, Listener {
         for (HudLayout.Element e : layout.elements) {
             out.add("element " + e.id() + " shown=" + shown(p, v, e));
         }
+        if (v.back != null) {
+            // the exact titles sent, to compare two moments (plugins/Flux/hud-debug/<player>_<world>.json)
+            var gson = net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson();
+            String json = "{\"back\":" + gson.serialize(v.back.name()) + ",\"front\":" + gson.serialize(v.front.name()) + "}";
+            java.io.File dir = new java.io.File(flux.getDataFolder(), "hud-debug");
+            dir.mkdirs();
+            java.io.File f = new java.io.File(dir, p.getName() + "_" + p.getWorld().getName() + ".json");
+            try {
+                java.nio.file.Files.writeString(f.toPath(), json);
+                out.add("titles: " + json.length() + " chars -> hud-debug/" + f.getName());
+            } catch (java.io.IOException ex) {
+                out.add("titles not written: " + ex);
+            }
+        }
         return out;
     }
 
