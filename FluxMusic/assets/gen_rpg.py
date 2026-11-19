@@ -54,15 +54,11 @@ TRACKS = {
 PIECE = Piece('rpg1', 'RPG 1', bpm=140, steps_per_beat=4, beats_per_bar=4, tracks=TRACKS,
               melodic={'theme', 'reponse'})
 # "RPG 1 (effets)" (rpg1_effets): the same piece with FluxMusic's effects, to hear them against the plain one.
-# Thick wide basses and bells (chorus), a light placement of the answers (pan), held notes that waver (~) and glides
-# (>) on the flute and the bells, a bass falling an octave at the very end. The ripple swings from ear to ear only in
-# the intro and the ruins (owner, 2026-11-19: stereo all through the song tires, now and then it is good).
-FX_OPTIONS = {
-    'basse': {'chorus': 12}, 'grave': {'chorus': 8}, 'cloches': {'chorus': 10},
-    'reponse': {'pan': -0.6}, 'harpe': {'pan': 0.6}, 'tierce': {'pan': 0.4}, 'contrechant': {'pan': -0.4},
-}
+# Thick basses and bells (chorus), held notes that waver (~) and glides (>) on the flute and the bells, a bass falling
+# an octave at the very end. No stereo (tried and removed on 2026-11-19, owner's decision).
+FX_OPTIONS = {'basse': {'chorus': 12}, 'grave': {'chorus': 8}, 'cloches': {'chorus': 10}}
 FX_TRACKS = {t: (i, v, FX_OPTIONS.get(t, {})) for t, (i, v) in TRACKS.items()} | {
-    'chute': ('bass', 0.55, {'chorus': 15}), 'ondes_large': ('pling', 0.22, {'orbit': 2})}
+    'chute': ('bass', 0.55, {'chorus': 15})}
 FX = False
 
 
@@ -179,7 +175,7 @@ def intro(rng):
     s.write('reponse', 'E5:4 B4:4 C5:4 E5:4 | G4:4 B4:4 E5:4 G4:4 | A4:8 F#4:4 E4:4 | F#4:8 .:8', bar=4)
     s.write('theme', '.:8 B4:2 D#5:2 F#5:2 A5:2', bar=7)
     deep(s, 'grave', steps=(0, 8))
-    ripple(s, fx('ondes', 'ondes_large'), bars=range(2, 8))
+    ripple(s, 'ondes', bars=range(2, 8))
     score.bass(s, 'basse', [(0, 'r'), (8, 'r')], bars=range(4, 6))
     score.bass(s, 'basse', PUMP, bars=range(6, 8))
     drums(s, 'grosse', (0, 8), range(2, 6))
@@ -244,8 +240,8 @@ def section_c(rng):
     # the flute comes back in the second half, high and long
     s.write('theme', held(fx('B5:16', 'E5>B5:4 B5:12') + ' | G5:8 E5:8 | A5:8 C6:8 | B5:8 .:4 B4:2 D#5:2'), bar=4)
     deep(s, 'grave', steps=(0, 8))
-    score.shimmer(s, fx('ondes', 'ondes_large'), range(4), every=2)
-    ripple(s, fx('ondes', 'ondes_large'), bars=range(4, 8), low=55)
+    score.shimmer(s, 'ondes', range(4), every=2)
+    ripple(s, 'ondes', bars=range(4, 8), low=55)
     score.bass(s, 'basse', [(0, 'r'), (8, 'r')], bars=range(4))
     score.bass(s, 'basse', PUMP, bars=range(4, 8))
     drums(s, 'grosse', (0, 3), range(4))           # heartbeat
@@ -332,7 +328,7 @@ def main():
     PIECE = Piece('rpg1_effets', 'RPG 1 (effets)', bpm=140, steps_per_beat=4, beats_per_bar=4, tracks=FX_TRACKS,
                   melodic={'theme', 'reponse'})
     FX = True
-    build(list(about) + ['Version avec les effets de FluxMusic : stéréo, orbite, chœur, notes tenues, glissandos.'])
+    build(list(about) + ['Version avec les effets de FluxMusic : chœur, notes tenues, glissandos.'])
 
 
 if __name__ == '__main__':

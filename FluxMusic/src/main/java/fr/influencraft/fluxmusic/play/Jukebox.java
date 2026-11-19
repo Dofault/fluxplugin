@@ -33,10 +33,6 @@ public final class Jukebox {
 
     /** Further than this behind its time, a step shifts the rest of the song instead of catching up. */
     private static final long LATE_NANOS = 80_000_000L;
-    /** Distance from the head of a sound placed in stereo, in blocks, and the volume making up for it (a sound of
-     *  volume 1 or less fades linearly over 16 blocks). */
-    private static final double SIDE_DISTANCE = 2.5;
-    private static final float SIDE_GAIN = (float) (16 / (16 - SIDE_DISTANCE));
     /** Delay before the first note, so the first steps are not sent late. */
     private static final long LEAD_NANOS = 60_000_000L;
 
@@ -187,27 +183,7 @@ public final class Jukebox {
                     // music comes from where his body was left, on one side
                     org.bukkit.entity.Entity camera = fr.influencraft.flux.api.client.Camera.viewed(player);
                     Sound.Emitter from = camera != null ? camera : Sound.Emitter.self();
-                    Sound[] sounds = song.notes()[index];
-                    float[] angles = song.angles()[index];
-                    org.bukkit.Location ears = null;
-                    for (int i = 0; i < sounds.length; i++) {
-                        Sound s = gain >= 1f ? sounds[i] : quieter(sounds[i], gain);
-                        if (Float.isNaN(angles[i])) {
-                            player.playSound(s, from);
-                            continue;
-                        }
-                        // stereo: the sound is sent from a point around his head, on the side of the angle,
-                        // relative to where he looks (the client pans it); a little louder for the distance
-                        if (ears == null) {
-                            org.bukkit.entity.Entity head = camera != null ? camera : player;
-                            ears = head instanceof org.bukkit.entity.LivingEntity l ? l.getEyeLocation() : head.getLocation();
-                        }
-                        double yaw = Math.toRadians(ears.getYaw()), a = Math.toRadians(angles[i]);
-                        double fx = -Math.sin(yaw), fz = Math.cos(yaw), rx = -Math.cos(yaw), rz = -Math.sin(yaw);
-                        double x = ears.getX() + (fx * Math.cos(a) + rx * Math.sin(a)) * SIDE_DISTANCE;
-                        double z = ears.getZ() + (fz * Math.cos(a) + rz * Math.sin(a)) * SIDE_DISTANCE;
-                        player.playSound(louder(s, SIDE_GAIN), x, ears.getY(), z);
-                    }
+                    for (Sound s : song.notes()[index]) player.playSound(gain >= 1f ? s : quieter(s, gain), from);
                 } catch (RuntimeException e) {
                     // the connection closed between the check and the send: the quit listener stops the song
                 }
@@ -228,11 +204,6 @@ public final class Jukebox {
             }
             schedule();
         }
-    }
-
-    private static Sound louder(Sound s, float gain) {
-        return Sound.sound().type(s.name()).source(s.source()).volume(Math.min(1f, s.volume() * gain)).pitch(s.pitch())
-                .seed(0L).build();
     }
 
     private static Sound quieter(Sound s, float gain) {

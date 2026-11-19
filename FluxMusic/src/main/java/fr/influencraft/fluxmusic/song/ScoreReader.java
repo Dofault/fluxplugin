@@ -39,12 +39,10 @@ import java.util.regex.Pattern;
  * <ul>
  *   <li>{@code A5>E6:8} glide: the note slides to E6 over its duration (struck again on a continuous pitch);</li>
  *   <li>{@code A5~:8} held note: struck again softly each step, wavering a little around its pitch (vibrato);</li>
- *   <li>track {@code pan: -1..1}: heard more on the left (-1) or the right (1) of the listener, both ears always
- *   hear it ({@link #WIDTH} degrees at most: the client pans a sound hard as soon as it is well off centre);</li>
- *   <li>track {@code orbit: n}: swings from left to right and back once every n bars, within the same width;</li>
- *   <li>track {@code chorus: cents}: every note doubled by two copies detuned by that many cents, spread left and
- *   right (a thick, wide sound).</li>
+ *   <li>track {@code chorus: cents}: every note doubled by two copies detuned by that many cents (a thick sound).</li>
  * </ul>
+ * No stereo: every note is played on the listener (owner, 2026-11-19: sounds placed beside the head were tried and
+ * removed, the music has to come from everywhere).
  * Effects are placed on a grid {@link #SUB} times finer than the step.
  */
 public final class ScoreReader {
@@ -62,18 +60,8 @@ public final class ScoreReader {
     private static final int GLIDE_EVERY = 2;
     private static final float GLIDE_GAIN = 0.55f;
 
-    /** Widest angle of a sound placed in stereo, in degrees from the front (pan 1, an orbit's sides). */
-    static final float WIDTH = 40f;
-    /** Angle of the two detuned copies of a chorus, each side of their note. */
-    private static final float CHORUS_SPREAD = 22f;
-
-    /** angle: NaN = on the listener; orbitSteps: 0 = no orbit; chorus: detune in semitones, 0 = none. */
-    private record Track(Instrument instrument, float volume, float angle, double orbitSteps, double chorus) {
-
-        float angleAt(int step) {
-            if (orbitSteps <= 0) return angle;
-            return (float) (WIDTH * Math.sin(2 * Math.PI * (step % orbitSteps) / orbitSteps));
-        }
+    /** chorus: detune of its two copies, in semitones (0 = none). */
+    private record Track(Instrument instrument, float volume, double chorus) {
     }
 
     private ScoreReader() {
@@ -93,10 +81,7 @@ public final class ScoreReader {
         for (String name : ts.getKeys(false)) {
             String instrument = ts.getString(name + ".instrument", "harp");
             try {
-                float angle = ts.contains(name + ".pan")
-                        ? (float) (Math.max(-1, Math.min(1, ts.getDouble(name + ".pan"))) * WIDTH) : Float.NaN;
                 tracks.put(name, new Track(Instrument.named(instrument), (float) ts.getDouble(name + ".volume", 1.0),
-                        angle, Math.max(0, ts.getDouble(name + ".orbit", 0)) * barSteps,
                         Math.max(0, ts.getDouble(name + ".chorus", 0)) / 100.0));
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("track " + name + ": unknown instrument " + instrument);
@@ -255,25 +240,19 @@ public final class ScoreReader {
         return true;
     }
 
-    /** One note of a track at a step (plus sub-steps), with the track's stereo and chorus. */
+    /** One note of a track at a step (plus sub-steps), with the track's chorus. */
     private static void strike(Song.Builder song, Track track, int step, int sub, double midi, float gain,
                                float master) {
         int at = step * SUB + sub;
         float volume = track.volume() * master * gain;
-        float angle = track.angleAt(step);
         if (track.chorus() <= 0) {
-            song.note(at, track.instrument(), midi, volume, angle);
+            song.note(at, track.instrument(), midi, volume);
             return;
         }
-        // the note and two detuned copies, the copies on each side of it: they beat against it
-        float centre = Float.isNaN(angle) ? 0f : angle;
-        song.note(at, track.instrument(), midi, volume * 0.8f, angle);
-        song.note(at, track.instrument(), midi - track.chorus(), volume * 0.5f, wrap(centre - CHORUS_SPREAD));
-        song.note(at, track.instrument(), midi + track.chorus(), volume * 0.5f, wrap(centre + CHORUS_SPREAD));
-    }
-
-    private static float wrap(float angle) {
-        return angle > 180 ? angle - 360 : angle < -180 ? angle + 360 : angle;
+        // the note and two copies detuned each way: they beat against it
+        song.note(at, track.instrument(), midi, volume * 0.8f);
+        song.note(at, track.instrument(), midi - track.chorus(), volume * 0.5f);
+        song.note(at, track.instrument(), midi + track.chorus(), volume * 0.5f);
     }
 
     /** MIDI number of a note name (C4 = 60), NaN when unreadable. */
