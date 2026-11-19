@@ -51,7 +51,7 @@ public final class RewardService implements Rewards.Backend, Listener {
     private final Supplier<Messages> messages;
     private final RewardStore store;
     /** Rewards given in the last second, per player: one message and one sound for a burst (catch-up, crate). */
-    private final Map<UUID, List<String>> burst = new HashMap<>();
+    private final Map<UUID, List<Reward>> burst = new HashMap<>();
     private final DiscordNotifier discord;
 
     private RewardService(JavaPlugin flux, Supplier<Messages> messages, RewardStore store) {
@@ -100,25 +100,32 @@ public final class RewardService implements Rewards.Backend, Listener {
             Player online = player.getPlayer();
             if (online == null) return;
             changed(online);
-            if (flux.getConfig().getBoolean("rewards.notify-on-give", true)) notifyLater(online, given.label());
+            if (flux.getConfig().getBoolean("rewards.notify-on-give", true)) notifyLater(online, given);
         });
         return true;
     }
 
-    private void notifyLater(Player player, String label) {
-        List<String> labels = burst.get(player.getUniqueId());
-        if (labels != null) {
-            labels.add(label);
+    private void notifyLater(Player player, Reward reward) {
+        List<Reward> waiting = burst.get(player.getUniqueId());
+        if (waiting != null) {
+            waiting.add(reward);
             return;
         }
-        burst.put(player.getUniqueId(), new ArrayList<>(List.of(label)));
+        burst.put(player.getUniqueId(), new ArrayList<>(List.of(reward)));
         Bukkit.getScheduler().runTaskLater(flux, () -> {
-            List<String> all = burst.remove(player.getUniqueId());
-            if (all == null || !player.isOnline()) return;
-            if (all.size() == 1) messages.get().send(player, "rewards.given", "%label%", all.get(0));
+            List<Reward> all = burst.remove(player.getUniqueId());
+            // taken meanwhile by a plugin that tells them itself (Rewards.takeNotices)
+            if (all == null || all.isEmpty() || !player.isOnline()) return;
+            if (all.size() == 1) messages.get().send(player, "rewards.given", "%label%", all.get(0).label());
             else messages.get().send(player, "rewards.given-many", "%count%", String.valueOf(all.size()));
             Sounds.cue(player, "alert");
         }, 20L);
+    }
+
+    @Override
+    public List<Reward> takeNotices(UUID player) {
+        List<Reward> all = burst.remove(player);
+        return all == null ? List.of() : List.copyOf(all);
     }
 
     @Override

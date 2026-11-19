@@ -38,6 +38,11 @@ public final class Rewards {
         ClaimResult claim(Player player, String source, long id, boolean verbose);
 
         void open(Player player);
+
+        /** Rewards given to him whose "new reward waiting" message is not sent yet; they will not be announced. */
+        default List<Reward> takeNotices(UUID player) {
+            return List.of();
+        }
     }
 
     private static volatile Backend backend;
@@ -109,6 +114,16 @@ public final class Rewards {
     }
 
     /** Whether a reward with this key was already given to the player (claimed or not). */
+    /**
+     * The rewards just given to this player whose "new reward waiting" message has not gone yet (Flux waits a second
+     * to group them): taken out, so that message and its sound are not sent. For a plugin that tells them itself in
+     * its own message (FluxJobs: the reward of a job level in the level message).
+     */
+    public static List<Reward> takeNotices(Player player) {
+        Backend b = backend;
+        return b == null || player == null ? List.of() : b.takeNotices(player.getUniqueId());
+    }
+
     public static boolean given(UUID player, String key) {
         Backend b = backend;
         return b != null && key != null && b.given(player, key);
