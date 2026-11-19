@@ -444,6 +444,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         fr.influencraft.flux.api.effects.Effects.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.shops.ChestShops.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.client.DropKey.unregisterAll(event.getPlugin());
+        fr.influencraft.flux.api.mobs.MobStacks.unregisterAll(event.getPlugin());
         placeholdersChanged();
         if (hadMenus) menuFoldersChanged();
     }
@@ -513,8 +514,8 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
                 PathRenderer.reset();
                 if (tab != null) tab.load();
                 if (hud != null) hud.load();
-                int warnings = registry.load();
                 if (scoreboard != null) scoreboard.load();
+                int warnings = registry.load();
                 msg(sender, "&#2ECF7B" + registry.all().size() + " menu(s) rechargé(s)"
                         + (warnings > 0 ? " &#FF5C5C(" + warnings + " avertissement(s), voir la console)" : "") + ".");
             }
@@ -526,6 +527,14 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
                 }
             }
             case "database" -> database(sender, label, args);
+            case "hud" -> {
+                Player target = args.length > 1 ? Bukkit.getPlayerExact(args[1]) : sender instanceof Player p ? p : null;
+                if (target == null || hud == null) {
+                    msg(sender, "&#FF5C5CJoueur introuvable ou HUD absent.");
+                    return true;
+                }
+                for (String line : hud.explain(target)) sender.sendMessage(line);
+            }
             default -> msg(sender, "&#B376E5/" + label + " open <menu> [joueur] &8| &#B376E5reload &8| &#B376E5list &8| &#B376E5database");
         }
         return true;

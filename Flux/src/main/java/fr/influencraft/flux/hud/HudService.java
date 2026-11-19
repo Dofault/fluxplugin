@@ -488,6 +488,51 @@ public final class HudService implements Hud.Backend, Listener {
         }
     }
 
+    /** Why the HUD is shown or not to this player, step by step as draw() decides (/fluxmenu hud). Main thread. */
+    public List<String> explain(Player p) {
+        List<String> out = new ArrayList<>();
+        View v = views.get(p.getUniqueId());
+        out.add("enabled=" + enabled + " layoutEmpty=" + layout.empty() + " universe=" + fr.influencraft.flux.api.universe.Universes.of(p)
+                + " world=" + p.getWorld().getName());
+        out.add("focused=" + Focus.focused(p) + " (hide-when-focused=" + hideWhenFocused + ") bedrock=" + Clients.bedrock(p));
+        String status;
+        try {
+            @SuppressWarnings("deprecation") PlayerResourcePackStatusEvent.Status st = p.getResourcePackStatus();
+            status = String.valueOf(st);
+        } catch (RuntimeException e) {
+            status = "error " + e;
+        }
+        out.add("packStatus=" + status + " packLoaded=" + packLoaded(p));
+        if (v == null) {
+            out.add("no view yet");
+            return out;
+        }
+        out.add("view shown=" + v.shown + " back=" + (v.back != null) + " front=" + (v.front != null)
+                + " activeBars=" + countBars(p) + " hudBarsActive=" + hudBarsActive(p, v));
+        for (HudLayout.Group g : layout.groups) {
+            out.add("group " + g.setting() + " -> " + PlayerSettings.get(p, "flux:" + g.setting(), null));
+        }
+        for (HudLayout.Element e : layout.elements) {
+            out.add("element " + e.id() + " shown=" + shown(p, v, e));
+        }
+        return out;
+    }
+
+    private static int countBars(Player p) {
+        int n = 0;
+        for (BossBar ignored : p.activeBossBars()) n++;
+        return n;
+    }
+
+    private static String hudBarsActive(Player p, View v) {
+        boolean b = false, f = false;
+        for (BossBar bar : p.activeBossBars()) {
+            if (bar == v.back) b = true;
+            if (bar == v.front) f = true;
+        }
+        return b + "/" + f;
+    }
+
     private void hide(Player p) {
         View v = views.get(p.getUniqueId());
         if (v == null) return;
