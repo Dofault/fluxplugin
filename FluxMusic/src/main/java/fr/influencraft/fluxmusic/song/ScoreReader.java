@@ -39,10 +39,13 @@ import java.util.regex.Pattern;
  * <ul>
  *   <li>{@code A5>E6:8} glide: the note slides to E6 over its duration (struck again on a continuous pitch);</li>
  *   <li>{@code A5~:8} held note: struck again softly each step, wavering a little around its pitch (vibrato);</li>
- *   <li>track {@code chorus: cents}: every note doubled by two copies detuned by that many cents (a thick sound).</li>
+ *   <li>track {@code pan: -1..1}: heard more on the left (-1) or the right (1) of the listener, both ears always
+ *   hear it ({@link #WIDTH} degrees at most: the client pans a sound hard as soon as it is well off centre);</li>
+ *   <li>track {@code chorus: cents}: every note doubled by two copies detuned by that many cents, played with it
+ *   (a thick sound).</li>
  * </ul>
- * No stereo: every note is played on the listener (owner, 2026-11-19: sounds placed beside the head were tried and
- * removed, the music has to come from everywhere).
+ * Stereo is fixed: a track never moves from one ear to the other while it plays (owner, 2026-11-19: an orbit swinging
+ * round the head was tried and removed).
  * Effects are placed on a grid {@link #SUB} times finer than the step.
  */
 public final class ScoreReader {
@@ -60,8 +63,11 @@ public final class ScoreReader {
     private static final int GLIDE_EVERY = 2;
     private static final float GLIDE_GAIN = 0.55f;
 
-    /** chorus: detune of its two copies, in semitones (0 = none). */
-    private record Track(Instrument instrument, float volume, double chorus) {
+    /** Widest angle of a sound placed in stereo (pan 1), in degrees from the front. */
+    static final float WIDTH = 40f;
+
+    /** angle: NaN = on the listener; chorus: detune of its two copies in semitones, 0 = none. */
+    private record Track(Instrument instrument, float volume, float angle, double chorus) {
     }
 
     private ScoreReader() {
@@ -81,8 +87,10 @@ public final class ScoreReader {
         for (String name : ts.getKeys(false)) {
             String instrument = ts.getString(name + ".instrument", "harp");
             try {
+                float angle = ts.contains(name + ".pan")
+                        ? (float) (Math.max(-1, Math.min(1, ts.getDouble(name + ".pan"))) * WIDTH) : Float.NaN;
                 tracks.put(name, new Track(Instrument.named(instrument), (float) ts.getDouble(name + ".volume", 1.0),
-                        Math.max(0, ts.getDouble(name + ".chorus", 0)) / 100.0));
+                        angle, Math.max(0, ts.getDouble(name + ".chorus", 0)) / 100.0));
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("track " + name + ": unknown instrument " + instrument);
             }
@@ -240,19 +248,20 @@ public final class ScoreReader {
         return true;
     }
 
-    /** One note of a track at a step (plus sub-steps), with the track's chorus. */
+    /** One note of a track at a step (plus sub-steps), with the track's place and chorus. */
     private static void strike(Song.Builder song, Track track, int step, int sub, double midi, float gain,
                                float master) {
         int at = step * SUB + sub;
         float volume = track.volume() * master * gain;
+        float angle = track.angle();
         if (track.chorus() <= 0) {
-            song.note(at, track.instrument(), midi, volume);
+            song.note(at, track.instrument(), midi, volume, angle);
             return;
         }
-        // the note and two copies detuned each way: they beat against it
-        song.note(at, track.instrument(), midi, volume * 0.8f);
-        song.note(at, track.instrument(), midi - track.chorus(), volume * 0.5f);
-        song.note(at, track.instrument(), midi + track.chorus(), volume * 0.5f);
+        // the note and two copies detuned each way, from the same place: they beat against it
+        song.note(at, track.instrument(), midi, volume * 0.8f, angle);
+        song.note(at, track.instrument(), midi - track.chorus(), volume * 0.5f, angle);
+        song.note(at, track.instrument(), midi + track.chorus(), volume * 0.5f, angle);
     }
 
     /** MIDI number of a note name (C4 = 60), NaN when unreadable. */

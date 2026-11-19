@@ -15,7 +15,7 @@ import java.util.List;
  */
 public final class NbsReader {
 
-    private record RawNote(int tick, int layer, int instrument, int key, int velocity, int cents) {
+    private record RawNote(int tick, int layer, int instrument, int key, int velocity, int panning, int cents) {
     }
 
     private NbsReader() {
@@ -57,22 +57,25 @@ public final class NbsReader {
                 int instrument = in.get() & 0xFF;
                 int key = in.get() & 0xFF;
                 int velocity = 100;
+                int panning = 100;
                 int cents = 0;
                 if (version >= 4) {
                     velocity = in.get() & 0xFF;
-                    in.get(); // panning (no stereo: music is played on the listener)
+                    panning = in.get() & 0xFF;
                     cents = in.getShort();
                 }
-                notes.add(new RawNote(tick, layer, instrument, key, velocity, cents));
+                notes.add(new RawNote(tick, layer, instrument, key, velocity, panning, cents));
             }
         }
         int[] layerVolume = new int[layerCount];
+        int[] layerStereo = new int[layerCount];
         java.util.Arrays.fill(layerVolume, 100);
+        java.util.Arrays.fill(layerStereo, 100);
         for (int i = 0; i < layerCount && in.hasRemaining(); i++) {
             string(in);
             if (version >= 4) in.get(); // lock
             layerVolume[i] = in.get() & 0xFF;
-            if (version >= 2) in.get(); // stereo
+            if (version >= 2) layerStereo[i] = in.get() & 0xFF;
         }
 
         Song.Builder song = new Song.Builder();
@@ -86,7 +89,10 @@ public final class NbsReader {
             // NBS key 45 is F#4, the harp's pitch 1.0 (MIDI 66): key + 21 = MIDI, shifted to the instrument's octave.
             double midi = n.key + 21 + (instrument.base() - Instrument.HARP.base()) + n.cents / 100.0;
             int lv = n.layer < layerCount ? layerVolume[n.layer] : 100;
-            song.note(n.tick, instrument, midi, masterVolume * n.velocity / 100f * lv / 100f);
+            // stereo of the note and of its layer (0 left, 100 centre, 200 right): heard from that side
+            int pan = (n.panning - 100) + (n.layer < layerCount ? layerStereo[n.layer] - 100 : 0);
+            float angle = pan == 0 ? Float.NaN : Math.max(-100, Math.min(100, pan)) * 0.9f;
+            song.note(n.tick, instrument, midi, masterVolume * n.velocity / 100f * lv / 100f, angle);
         }
         if (skipped > 0) song.warn(skipped + " notes of custom instruments skipped");
         song.length(Math.max(length, tick) + 1);

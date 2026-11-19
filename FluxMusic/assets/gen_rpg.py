@@ -54,9 +54,13 @@ TRACKS = {
 PIECE = Piece('rpg1', 'RPG 1', bpm=140, steps_per_beat=4, beats_per_bar=4, tracks=TRACKS,
               melodic={'theme', 'reponse'})
 # "RPG 1 (effets)" (rpg1_effets): the same piece with FluxMusic's effects, to hear them against the plain one.
-# Thick basses and bells (chorus), held notes that waver (~) and glides (>) on the flute and the bells, a bass falling
-# an octave at the very end. No stereo (tried and removed on 2026-11-19, owner's decision).
-FX_OPTIONS = {'basse': {'chorus': 12}, 'grave': {'chorus': 8}, 'cloches': {'chorus': 10}}
+# Thick basses and bells (chorus), answers placed a little left and right (pan, fixed: the swinging orbit was tried
+# and removed on 2026-11-19), held notes that waver (~) and glides (>) on the flute and the bells, a bass falling an
+# octave at the very end.
+FX_OPTIONS = {
+    'basse': {'chorus': 12}, 'grave': {'chorus': 8}, 'cloches': {'chorus': 10},
+    'reponse': {'pan': -0.6}, 'harpe': {'pan': 0.6}, 'tierce': {'pan': 0.4}, 'contrechant': {'pan': -0.4},
+}
 FX_TRACKS = {t: (i, v, FX_OPTIONS.get(t, {})) for t, (i, v) in TRACKS.items()} | {
     'chute': ('bass', 0.55, {'chorus': 15})}
 FX = False
@@ -328,7 +332,7 @@ def main():
     PIECE = Piece('rpg1_effets', 'RPG 1 (effets)', bpm=140, steps_per_beat=4, beats_per_bar=4, tracks=FX_TRACKS,
                   melodic={'theme', 'reponse'})
     FX = True
-    build(list(about) + ['Version avec les effets de FluxMusic : chœur, notes tenues, glissandos.'])
+    build(list(about) + ['Version avec les effets de FluxMusic : stéréo fixe, chœur, notes tenues, glissandos.'])
 
 
 if __name__ == '__main__':
