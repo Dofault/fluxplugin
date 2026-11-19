@@ -20,7 +20,7 @@ level-up:
     - "!&r &8『&r &#4DA954&l%job% &#aafb93Niveau %level%&r &8』"
     - "!&r"
   money: "!&r  &8• &7Gᴀɪɴ :&f %money%"
-  coefficient: "!&r  &8• &7Cᴏᴇꜰꜰɪᴄɪᴇɴᴛ ᴅᴇ ɢᴀɪɴ :&f ×%before% &8➜ &#aafb93×%after%"
+  coefficient: "!&r  &8• &7Cᴏᴇꜰꜰɪᴄɪᴇɴᴛ ᴅᴇ ɢᴀɪɴ :&f ×%before% &8➜ &#aafb93×%after% &f%img_bitblock%"
   reward: "!&r  &8• &f+%amount% %label% &f[/%flux_cmd_flux_rewards%]"
   footer:
     - "!&r"
