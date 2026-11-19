@@ -128,6 +128,16 @@ public final class ScoreboardService implements Listener, Scoreboard.Backend {
     private String shadow = "auto";
     private Map<String, String> colours = Map.of();
     private String title = "";
+    /** {counter:<id>} in any line or the title: "n/total" of the first entry whose requires pass (scoreboard.yml
+     * counters, plus scoreboard_counters.yml written by a generator, the Typewriter progression for one). */
+    private final Map<String, Counter> counters = new HashMap<>();
+    private static final Pattern COUNTER = Pattern.compile("\\{counter:([a-z0-9_]+)}");
+
+    private record Counter(String text, List<CounterEntry> entries) {
+    }
+
+    private record CounterEntry(List<String> requires, String value, int add, int total) {
+    }
     private final List<Section> sections = new ArrayList<>();
     private final Map<String, Split> lists = new HashMap<>();
 
@@ -193,6 +203,10 @@ public final class ScoreboardService implements Listener, Scoreboard.Backend {
         }
         colours = cs;
         title = c.getString("title", "");
+        counters.clear();
+        readCounters(c.getConfigurationSection("counters"));
+        java.io.File extra = new java.io.File(flux.getDataFolder(), "scoreboard_counters.yml");
+        if (extra.exists()) readCounters(org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(extra).getConfigurationSection("counters"));
         lists.clear();
         ConfigurationSection ls = c.getConfigurationSection("lists");
         if (ls != null) {
@@ -485,9 +499,54 @@ public final class ScoreboardService implements Listener, Scoreboard.Backend {
     }
 
     /** Colour names to their colour, then the usual text pipeline (placeholders, MiniMessage, legacy codes). */
+    private void readCounters(ConfigurationSection section) {
+        if (section == null) return;
+        for (String id : section.getKeys(false)) {
+            ConfigurationSection cs = section.getConfigurationSection(id);
+            if (cs == null) continue;
+            List<CounterEntry> entries = new ArrayList<>();
+            for (Map<?, ?> m : cs.getMapList("entries")) {
+                Object req = m.get("requires");
+                List<String> requires = req instanceof List<?> l ? l.stream().map(String::valueOf).toList()
+                        : req == null ? List.of() : List.of(String.valueOf(req));
+                Object add = m.get("add"), total = m.get("total");
+                entries.add(new CounterEntry(requires, String.valueOf(m.get("value") == null ? "" : m.get("value")),
+                        add instanceof Number n ? n.intValue() : 0, total instanceof Number n ? n.intValue() : 0));
+            }
+            counters.put(id.toLowerCase(Locale.ROOT), new Counter(cs.getString("text", "{n}/{total}"), entries));
+        }
+    }
+
+    /** The text of a counter for this player, empty when no entry applies or its value is not a number. */
+    private String counter(String id, Player p) {
+        Counter c = counters.get(id);
+        if (c == null) return "";
+        for (CounterEntry e : c.entries()) {
+            if (!passes(e.requires(), p)) continue;
+            String v = Texts.plain(e.value(), p).trim();
+            int n;
+            try {
+                n = (int) Math.floor(Double.parseDouble(v.replace(',', '.')));
+            } catch (NumberFormatException ex) {
+                return "";
+            }
+            n += e.add();
+            if (e.total() > 0) n = Math.max(0, Math.min(e.total(), n));
+            return c.text().replace("{n}", String.valueOf(n)).replace("{total}", String.valueOf(e.total()));
+        }
+        return "";
+    }
+
     private Component render(String raw, Player p) {
         if (raw == null || raw.isEmpty()) return Component.empty();
         String text = raw;
+        if (text.contains("{counter:")) {
+            Matcher m = COUNTER.matcher(text);
+            StringBuilder sb = new StringBuilder();
+            while (m.find()) m.appendReplacement(sb, Matcher.quoteReplacement(counter(m.group(1), p)));
+            m.appendTail(sb);
+            text = sb.toString();
+        }
         if (text.indexOf('<') >= 0) {
             for (Map.Entry<String, String> c : colours.entrySet()) {
                 text = text.replace("<" + c.getKey() + ">", "<" + c.getValue() + ">").replace("</" + c.getKey() + ">", "</" + c.getValue() + ">");
