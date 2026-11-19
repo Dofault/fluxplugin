@@ -257,6 +257,11 @@ public final class Jukebox {
         /** Within this distance of the centre the music comes from the stage, in the headphones beyond. */
         double radius();
 
+        /** False: the band is not shown to him, the music sounds in his headphones whatever the distance. */
+        default boolean hearsBand(org.bukkit.entity.Player player) {
+            return true;
+        }
+
         /** Where this instrument is played on the stage (x, y, z). */
         double[] source(fr.influencraft.fluxmusic.song.Instrument instrument);
 
@@ -350,7 +355,8 @@ public final class Jukebox {
                     float head = 1f;
                     try {
                         org.bukkit.Location at = player.getEyeLocation();
-                        if (at.getWorld() != null && at.getWorld().getName().equalsIgnoreCase(scene.world())) {
+                        if (at.getWorld() != null && at.getWorld().getName().equalsIgnoreCase(scene.world())
+                                && scene.hearsBand(player)) {
                             double dx = at.getX() - scene.x(), dy = at.getY() - scene.y(), dz = at.getZ() - scene.z();
                             double d = Math.sqrt(dx * dx + dy * dy + dz * dz);
                             if (d < radius) head = (float) (d / radius);

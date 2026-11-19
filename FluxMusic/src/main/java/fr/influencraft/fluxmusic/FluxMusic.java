@@ -325,6 +325,16 @@ public final class FluxMusic extends FluxPlugin implements Listener {
                         "%id%", args[2], "%rise%", args[3]);
                 return true;
             }
+            case "group", "groupe" -> {
+                if (args.length < 4) {
+                    messages().send(sender, "stage-usage");
+                    return true;
+                }
+                String g = args[3].equalsIgnoreCase("tous") || args[3].equalsIgnoreCase("all") ? "" : args[3];
+                messages().send(sender, !stages.group(args[2], g) ? "stage-missing" : g.isEmpty() ? "stage-group-all" : "stage-group",
+                        "%id%", args[2], "%group%", g);
+                return true;
+            }
             case "remove", "supprimer" -> {
                 if (args.length < 3) {
                     messages().send(sender, "stage-usage");
@@ -373,7 +383,7 @@ public final class FluxMusic extends FluxPlugin implements Listener {
                 : Stream.of("liste", "jouer", "passer", "stop"), args[0]);
         String sub = args[0].toLowerCase(Locale.ROOT);
         if ((sub.equals("scene") || sub.equals("stage")) && sender.hasPermission("fluxmusic.admin")) {
-            if (args.length == 2) return filter(Stream.of("placer", "rayon", "gradins", "supprimer", "liste"), args[1]);
+            if (args.length == 2) return filter(Stream.of("placer", "rayon", "gradins", "groupe", "supprimer", "liste"), args[1]);
             if (args.length == 3) return filter(ambience.places().stream(), args[2]);
             return List.of();
         }

@@ -94,6 +94,26 @@ public final class Stages {
         ambience.staged(id -> stages.containsKey(id.toLowerCase(Locale.ROOT)));
     }
 
+    /**
+     * Spawn group (Flux, api.spawn.Spawns) whose players alone see the band of each stage, "" = everybody (2026-11-19:
+     * the welcome band of the tutorial spawn). Kept apart from the stages: moving or resizing one keeps it.
+     */
+    private final Map<String, String> groups = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** Only the players of this spawn group see the stage of the place ("" or null: everybody); false without stage. */
+    public boolean group(String placeId, String group) {
+        String id = placeId.toLowerCase(Locale.ROOT);
+        if (!stages.containsKey(id)) return false;
+        if (group == null || group.isEmpty()) groups.remove(id);
+        else groups.put(id, group.toLowerCase(Locale.ROOT));
+        save();
+        return true;
+    }
+
+    private boolean sees(String stage, Player p) {
+        return fr.influencraft.flux.api.spawn.Spawns.in(p, groups.get(stage));
+    }
+
     // ---------------------------------------------------------------- data
 
     /** Reads the band (config.yml) and the stages (stages.yml); everything shown is built again. */
@@ -110,9 +130,12 @@ public final class Stages {
             }
         }
         YamlConfiguration data = YamlConfiguration.loadConfiguration(file);
+        groups.clear();
         for (String id : data.getKeys(false)) {
             ConfigurationSection s = data.getConfigurationSection(id);
             if (s == null) continue;
+            String group = s.getString("group", "");
+            if (!group.isEmpty()) groups.put(id.toLowerCase(Locale.ROOT), group.toLowerCase(Locale.ROOT));
             stages.put(id.toLowerCase(Locale.ROOT), new Stage(id.toLowerCase(Locale.ROOT), s.getString("world", ""),
                     s.getDouble("x"), s.getDouble("y"), s.getDouble("z"), (float) s.getDouble("yaw"),
                     s.getDouble("width", 6), s.getDouble("depth", 7), s.getDouble("radius", 16),
@@ -136,6 +159,7 @@ public final class Stages {
             c.set("radius", s.radius);
             c.set("scale", s.scale);
             c.set("rise", s.rise);
+            if (groups.containsKey(s.id)) c.set("group", groups.get(s.id));
         }
         try {
             data.save(file);
@@ -192,6 +216,7 @@ public final class Stages {
         Stage s = stages.remove(placeId.toLowerCase(Locale.ROOT));
         if (s == null) return false;
         s.close();
+        groups.remove(s.id);
         save();
         return true;
     }
@@ -428,8 +453,10 @@ public final class Stages {
         }
 
         private void puff(Location at) {
-            if (!viewers.isEmpty()) at.getWorld().spawnParticle(Particle.POOF, at.getX(), at.getY() + scale, at.getZ(),
-                    12, 0.25, 0.6 * scale, 0.25, 0.01);
+            for (UUID viewer : viewers) {
+                Player p = Bukkit.getPlayer(viewer);
+                if (p != null) p.spawnParticle(Particle.POOF, at.getX(), at.getY() + scale, at.getZ(), 12, 0.25, 0.6 * scale, 0.25, 0.01);
+            }
         }
 
         void close() {
@@ -489,8 +516,12 @@ public final class Stages {
                     shownNote[i] = note;
                     if (w == null) w = m.at.getWorld();
                     double colour = (Math.log(pitch.get(i) / 1000.0) / Math.log(2) + 1) / 2;   // pitch 0.5..2 -> 0..1
-                    w.spawnParticle(Particle.NOTE, m.at.getX(), m.at.getY() + 2.3 * scale, m.at.getZ(), 0,
-                            Math.max(0, Math.min(1, colour)), 0, 0, 1);
+                    // to the viewers only: a stage kept for a spawn group shows nothing to the others
+                    for (UUID viewer : viewers) {
+                        Player p = Bukkit.getPlayer(viewer);
+                        if (p != null) p.spawnParticle(Particle.NOTE, m.at.getX(), m.at.getY() + 2.3 * scale, m.at.getZ(), 0,
+                                Math.max(0, Math.min(1, colour)), 0, 0, 1);
+                    }
                 }
             }
         }
@@ -508,7 +539,8 @@ public final class Stages {
                     if (wants.test(p)) hear.add(p);   // music turned off in his settings: he sees the band, silent
                 }
                 boolean sees = w != null && p.getWorld() == w
-                        && p.getLocation().distanceSquared(new Location(w, x, y, z)) < VIEW_DISTANCE * VIEW_DISTANCE;
+                        && p.getLocation().distanceSquared(new Location(w, x, y, z)) < VIEW_DISTANCE * VIEW_DISTANCE
+                        && Stages.this.sees(id, p);
                 if (sees && viewers.add(p.getUniqueId())) {
                     for (Musician m : musicians) if (m.figure != null) m.figure.show(p);
                     send(p);
@@ -586,6 +618,11 @@ public final class Stages {
 
         public double radius() {
             return radius;
+        }
+
+        /** A player who does not see the band (not in the stage's group) hears the music in his headphones. */
+        public boolean hearsBand(Player player) {
+            return viewers.contains(player.getUniqueId());
         }
 
         public double[] source(Instrument instrument) {
