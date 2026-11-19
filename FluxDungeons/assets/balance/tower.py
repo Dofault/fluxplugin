@@ -25,7 +25,7 @@ level: two dungeons of the same floor are as hard as each other whatever their m
 (its powers have no `power`: spider, flower, evoker) counts as the median boss.
 
     - floor 1: the tutorial's dungeon (level 1, the newcomer's level), pressure 0.10: a beginner must win it;
-    - floors 2 to 4: alone, gentle and rising (0.50 to 0.78); the monsters' abilities of difficulty rank 1, then 2;
+    - floors 2 to 4: alone, gentle and rising (0.30, 0.42, 0.78); the monsters' abilities of difficulty rank 1, then 2;
     - floor 5 (level 50): alone, pressure 1.0: "from the fifth one, it gets hard" (owner);
     - floors 6 and 7: two players; 8: three; 9 and 10: four, 10 the hardest (1.35).
     A party smaller than the recommended one meets the pressure times about recommended / its size; a bigger one
@@ -58,8 +58,9 @@ import dungeon_balance as B  # noqa: E402
 TOWER = {
     # floor 1 (2026-11-19, owner): the newcomer's first dungeon (tutorial), level 1 like him, very easy: he must win
     1: ("rochiste", "rochiste", 1, 1, 0.10, 1),
-    2: ("cultivateur", "cultivateur", 20, 1, 0.50, 1),
-    3: ("sylviculteur", "sylviculteur", 30, 1, 0.62, 2),
+    # floors 2 and 3 eased on 2026-11-19 (owner: too hard after the tutorial's dungeon): 0.50 -> 0.30, 0.62 -> 0.42
+    2: ("cultivateur", "cultivateur", 20, 1, 0.30, 1),
+    3: ("sylviculteur", "sylviculteur", 30, 1, 0.42, 2),
     4: ("deblayeur", "deblayeur", 40, 1, 0.78, 2),
     5: ("mineur", "mineur", 50, 1, 1.00, 3),
     6: ("herboriste", "herboriste", 60, 2, 1.00, 3),
