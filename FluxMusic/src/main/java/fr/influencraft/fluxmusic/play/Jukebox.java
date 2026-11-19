@@ -271,7 +271,8 @@ public final class Jukebox {
     /**
      * One song played to many players on one clock: they all hear the same note at the same time (a band on a
      * stage). Far from the stage it sounds in each player's headphones as any music; within the stage's radius it
-     * comes from the musicians themselves, the two blending with the distance so nothing jumps at the edge.
+     * comes from the musicians themselves (whatever the radius: see {@code near} below), the two blending with the
+ * distance so nothing jumps at the edge.
      * A player hearing his own music or a jingle is left alone meanwhile.
      */
     public final class Broadcast implements Runnable {
@@ -339,13 +340,16 @@ public final class Jukebox {
             fr.influencraft.fluxmusic.song.Instrument[] who = song.instruments()[index];
             try {
                 double radius = scene.radius();
-                float reach = (float) Math.max(1, radius / 16);   // a sound of volume 1 dies out at 16 blocks
+                // A client fades a sound out over 16 blocks, whatever we do. For the stage to be heard over its
+                // whole radius, each note is sent from a point on the line to its musician, at 16/radius of the
+                // real distance: same direction, and a fade that reaches silence at the radius instead of 16 blocks.
+                double near = 16 / Math.max(1, radius);
                 for (Player player : scene.listeners()) {
                     UUID id = player.getUniqueId();
                     if (!player.isOnline() || music.containsKey(id) || jingles.containsKey(id)) continue;
                     float head = 1f;
                     try {
-                        org.bukkit.Location at = player.getLocation();
+                        org.bukkit.Location at = player.getEyeLocation();
                         if (at.getWorld() != null && at.getWorld().getName().equalsIgnoreCase(scene.world())) {
                             double dx = at.getX() - scene.x(), dy = at.getY() - scene.y(), dz = at.getZ() - scene.z();
                             double d = Math.sqrt(dx * dx + dy * dy + dz * dz);
@@ -353,7 +357,8 @@ public final class Jukebox {
                         }
                         if (head < 1f) for (int i = 0; i < sounds.length; i++) {
                             double[] from = scene.source(who[i]);
-                            player.playSound(scaled(sounds[i], reach), from[0], from[1], from[2]);
+                            player.playSound(sounds[i], at.getX() + (from[0] - at.getX()) * near,
+                                    at.getY() + (from[1] - at.getY()) * near, at.getZ() + (from[2] - at.getZ()) * near);
                         }
                     } catch (RuntimeException e) {
                         // he left meanwhile
@@ -390,11 +395,6 @@ public final class Jukebox {
     /** Whether the player hears a music or a jingle of his own (a broadcast stays silent for him meanwhile). */
     public boolean busy(UUID player) {
         return music.containsKey(player) || jingles.containsKey(player);
-    }
-
-    private static Sound scaled(Sound s, float gain) {
-        return gain == 1f ? s : Sound.sound().type(s.name()).source(s.source()).volume(s.volume() * gain)
-                .pitch(s.pitch()).seed(0L).build();
     }
 
     private static Sound louder(Sound s, float gain) {
