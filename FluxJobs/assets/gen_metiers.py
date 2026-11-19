@@ -153,10 +153,10 @@ player-inventory: hidden
 vanilla-background: false
 update-interval: 20
 
-# À l'ouverture, le Mineur est sélectionné.
+# À l'ouverture : le métier demandé (/metier progression <métier>, familiers du tutoriel), sinon le premier (Mineur).
 open-actions:
-  - "[fluxjob] mineur reset"
-  - "[page-swap] metiers_mineur"
+  - "[fluxjob] opening reset"
+  - "[page-swap] metiers_%fluxjob_selected%"
   - "[sound] @page"
 
 page-files:

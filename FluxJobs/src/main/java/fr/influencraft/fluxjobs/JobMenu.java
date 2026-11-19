@@ -56,11 +56,28 @@ final class JobMenu implements Listener {
 
     private final List<Shown> grid = new ArrayList<>();
     private final Map<UUID, String> selected = new ConcurrentHashMap<>();
+    /** Job the Careers menu opens on for a player ({@link #open}), the first job of the grid otherwise. */
+    private final Map<UUID, String> requested = new ConcurrentHashMap<>();
+    private static JobMenu instance;
+
+    /**
+     * Opens the Careers menu on this job ({@code /metier progression <job>}: the job familiars of the tutorial spawn).
+     * False when the menu is missing.
+     */
+    static boolean open(Player player, String job) {
+        JobMenu m = instance;
+        if (m == null) return false;
+        m.requested.put(player.getUniqueId(), job.toLowerCase(Locale.ROOT));
+        if (FluxApi.open(player, "metiers")) return true;
+        m.requested.remove(player.getUniqueId());
+        return false;
+    }
     /** Window offset chosen by each player, per job (in levels). */
     private final Map<UUID, Map<String, Integer>> offsets = new ConcurrentHashMap<>();
 
     static void register(Plugin plugin, ConfigurationSection config) {
         JobMenu menu = new JobMenu();
+        instance = menu;
         ConfigurationSection jobs = config == null ? null : config.getConfigurationSection("menu");
         if (jobs != null) {
             for (String id : jobs.getKeys(false)) {
@@ -92,6 +109,7 @@ final class JobMenu implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         offsets.remove(event.getPlayer().getUniqueId());
         selected.remove(event.getPlayer().getUniqueId());
+        requested.remove(event.getPlayer().getUniqueId());
     }
 
     // ---------------------------------------------------------------- actions
@@ -99,6 +117,12 @@ final class JobMenu implements Listener {
     private void act(Player player, String job, String how) {
         switch (how) {
             case "reset" -> {
+                // "opening": the job asked by open(), else the first one of the grid
+                if (job.equals("opening")) {
+                    String wanted = requested.remove(player.getUniqueId());
+                    job = wanted != null && grid.stream().anyMatch(sh -> sh.id().equals(wanted)) ? wanted
+                            : grid.isEmpty() ? "mineur" : grid.get(0).id();
+                }
                 selected.put(player.getUniqueId(), job);
                 offsets.computeIfAbsent(player.getUniqueId(), k -> new ConcurrentHashMap<>()).remove(job);
                 Lists.reset(player, ACTIONS);
@@ -257,6 +281,7 @@ final class JobMenu implements Listener {
     private String placeholder(Player player, String params) {
         if (player == null || !Jobs.available()) return null;
         Jobs.Provider jobs = Jobs.get();
+        if (params.equals("selected")) return selected.getOrDefault(player.getUniqueId(), grid.isEmpty() ? "mineur" : grid.get(0).id());
         if (params.endsWith("_window")) {
             String job = params.substring(0, params.length() - "_window".length());
             return String.valueOf(jobs.level(player, job) - windowStart(player, job) + 1);

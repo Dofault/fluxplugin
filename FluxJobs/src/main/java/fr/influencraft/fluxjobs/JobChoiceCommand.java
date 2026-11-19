@@ -51,7 +51,8 @@ final class JobChoiceCommand {
             case "join" -> join(player, job);
             case "leave" -> leave(player, job);
             case "levels" -> {
-                if (!Jobs.get().openLevels(player, job)) m.send(player, "unknown-job", "%job%", job);
+                // our Careers menu on that job; the job plugin's own levels screen only without it
+                if (!JobMenu.open(player, job) && !Jobs.get().openLevels(player, job)) m.send(player, "unknown-job", "%job%", job);
             }
             default -> actionsMenu.open(player, job, args.length >= 3 ? page(args[2]) : 1);
         }
