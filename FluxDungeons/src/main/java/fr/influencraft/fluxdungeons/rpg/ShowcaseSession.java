@@ -98,6 +98,12 @@ final class ShowcaseSession {
     /** The bar drawn for a locked camera: side of a slot and height of its middle, in blocks one block from the eye. */
     private static final double SLOT = 0.085, BAR_Y = -0.625;
     private Location back;
+    /** He came from outside the lobby (another universe, most often): the show brings him back there. */
+    private final boolean away;
+    /** Opened from the dungeon menu, which opens again when he leaves. */
+    private final boolean menu;
+    /** His choice is being recorded: the show ends once it is. */
+    private boolean settling;
     private boolean closing, moving;
     private int ticks;
     private long lastClick;
@@ -133,7 +139,11 @@ final class ShowcaseSession {
     private int step, repeated;
     private long waitUntil;
 
-    ShowcaseSession(Showcase showcase, Player player, Showcase.Settings settings, int stage, Location origin) {
+    ShowcaseSession(Showcase showcase, Player player, Showcase.Settings settings, int stage, Location origin,
+                    Location back, boolean menu) {
+        this.back = back;
+        this.away = back != null;
+        this.menu = menu;
         this.showcase = showcase;
         this.player = player;
         this.settings = settings;
@@ -161,6 +171,18 @@ final class ShowcaseSession {
         return seat;
     }
 
+    boolean away() {
+        return away;
+    }
+
+    boolean menu() {
+        return menu;
+    }
+
+    void leaveWhenSettled() {
+        settling = true;
+    }
+
     boolean closing() {
         return closing;
     }
@@ -183,7 +205,7 @@ final class ShowcaseSession {
     // ================================================================== opening and closing
 
     void open() {
-        back = player.getLocation();
+        if (back == null) back = player.getLocation();
         Location eye = eyeAt(0);
         Location feet = eye.clone().subtract(0, SEATED_EYE, 0);
         moving = true;
@@ -289,6 +311,10 @@ final class ShowcaseSession {
             return;
         }
         ticks++;
+        if (settling && !showcase.players().busy(player)) {
+            showcase.close(player, true);
+            return;
+        }
         if (player.getVehicle() != seat) seat.addPassenger(player);
         if (rig != null) {
             rig.move(eyeAt(ticks));
@@ -441,7 +467,7 @@ final class ShowcaseSession {
 
     /** A click, left or right: the class he holds is chosen, once a second click confirmed it. */
     void click() {
-        if (closing || ticks - lastClick < 4 || shown == null) return;
+        if (closing || settling || ticks - lastClick < 4 || shown == null) return;
         lastClick = ticks;
         if (leaving) {
             showcase.close(player, true);
@@ -461,9 +487,7 @@ final class ShowcaseSession {
             showcase.plugin().messages().actionBar(player, bar("showcase.confirm"), "%color%", "&" + accent(shown), "%name%", raw("classes." + shown + ".name"));
             return;
         }
-        String id = shown;
-        showcase.close(player, true);
-        showcase.players().pick(player, id);
+        showcase.chosen(this, shown);
     }
 
     /** How the menu is used, kept over his hotbar. */

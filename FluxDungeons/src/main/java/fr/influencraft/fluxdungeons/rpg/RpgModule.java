@@ -89,7 +89,8 @@ public final class RpgModule implements Listener {
             if (!(s instanceof Player p)) return true;
             // "choisir <class>": the buttons of the class pages
             if (a.length >= 2 && a[0].equalsIgnoreCase("choisir")) players.pick(p, a[1].toLowerCase(java.util.Locale.ROOT));
-            else players.changeClass(p);
+            // "menu": asked from the dungeon menu, which opens again after the show
+            else players.changeClass(p, a.length >= 1 && a[0].equalsIgnoreCase("menu"));
             return true;
         }).register();
         if (fr.influencraft.flux.api.screen.Screens.available()) {

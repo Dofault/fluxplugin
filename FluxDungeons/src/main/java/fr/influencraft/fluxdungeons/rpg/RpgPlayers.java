@@ -359,7 +359,7 @@ public final class RpgPlayers implements Listener {
     private void chooseClass(Player p) {
         RpgConfig.Set set = config.get();
         if (set == null) return;
-        if (showcase != null && showcase.open(p)) return;
+        if (showcase != null && showcase.open(p, false)) return;
         if (pages != null && Screens.open(p, ClassPages.CLASSES)) return;
         Dialogs.Form form = Dialogs.form(p, plugin.messages().raw("choice.title"));
         form.body(plugin.messages().raw("choice.intro"));
@@ -415,13 +415,23 @@ public final class RpgPlayers implements Listener {
         });
     }
 
-    /** /classe: change class (anywhere but in a dungeon run), at most once per cooldown; progress of every class is kept. */
-    void changeClass(Player p) {
+    /**
+     * /classe: the classes played in front of him (the showcase), from anywhere but a dungeon run; he is taken to an
+     * arena of the rpg lobby at once and brought back afterwards (owner, 2026-11-19: no menu window any more).
+     * {@code menu}: asked from the dungeon menu, which opens again when he leaves the show. Progress of every class is
+     * kept; a change is allowed once per cooldown.
+     */
+    void changeClass(Player p, boolean menu) {
         RpgPlayer r = online.get(p.getUniqueId());
         RpgConfig.Set set = config.get();
-        // in the lobby: the classes played in front of him (the showcase)
-        if (set != null && showcase != null && showcase.open(p)) return;
-        // elsewhere: the classes in a plain Flux menu (owner, 2026-11-16: no MC GUI pages); choosing follows the rules
+        if (set != null && showcase != null) {
+            if (fr.influencraft.fluxdungeons.api.Dungeons.playing(p)) {
+                plugin.messages().send(p, "choice.not-in-run");
+                return;
+            }
+            if (showcase.open(p, menu)) return;
+        }
+        // the show cannot be given (switched off, every arena taken): the classes in a plain Flux menu
         if (set != null && classMenu != null && classMenu.open(p)) return;
         if (set != null && pages != null && Screens.open(p, ClassPages.CLASSES)) return;
         if (r == null || set == null) {
@@ -545,7 +555,12 @@ public final class RpgPlayers implements Listener {
         });
     }
 
-    /** The class showcase (lobby, Java clients): tried first wherever the classes are shown. */
+    /** True while a read or a write of his character is going on. */
+    boolean busy(Player p) {
+        return loading.contains(p.getUniqueId());
+    }
+
+    /** The class showcase: tried first wherever the classes are shown. */
     void useShowcase(Showcase showcase) {
         this.showcase = showcase;
     }

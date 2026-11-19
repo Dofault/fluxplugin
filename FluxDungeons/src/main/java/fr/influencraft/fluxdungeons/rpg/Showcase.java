@@ -132,18 +132,31 @@ final class Showcase implements Listener {
         return sessions.containsKey(p.getUniqueId());
     }
 
+    /** A player on his way to an arena from elsewhere: his profile of the rpg universe is still being put on. */
+    private record Arrival(int stage, Location back, boolean menu, int since) {
+    }
+
+    private final Map<UUID, Arrival> arrivals = new HashMap<>();
+    /** Ticks an arrival may take before the show starts anyway. */
+    private static final int ARRIVAL_TICKS = 100;
+
     /**
-     * Takes the player to an arena and starts the show. False when it cannot be (switched off, not in the lobby,
-     * every arena taken...): the caller opens its usual menu instead.
+     * Takes the player to an arena and starts the show, from wherever he stands (never out of a dungeon run). Outside
+     * the lobby he lands on the arena's floor first, the time his rpg profile and character are ready, and the show
+     * brings him back where he was. {@code menu}: opened from the dungeon menu, which opens again once he is back.
+     * False when it cannot be (switched off, every arena taken...): the caller opens its usual menu instead.
      */
-    boolean open(Player p) {
+    boolean open(Player p, boolean menu) {
         RpgConfig.Set set = config.get();
         ConfigurationSection c = plugin.getConfig().getConfigurationSection("rpg.showcase");
         if (set == null || c == null || world == null || world.world() == null) return false;
         Settings s = Settings.of(c);
         if (!s.enabled() || !Hotbar.available()) return false;
-        if (sessions.containsKey(p.getUniqueId())) return true;
-        if (p.getWorld() != world.world() || Universes.transitioning(p) || p.isDead() || p.isInsideVehicle()) return false;
+        UUID id = p.getUniqueId();
+        if (sessions.containsKey(id) || arrivals.containsKey(id)) return true;
+        boolean away = p.getWorld() != world.world();
+        if (Universes.transitioning(p) || p.isDead()) return false;
+        if (away && fr.influencraft.fluxdungeons.api.Dungeons.playing(p)) return false;
         if (RpgPlayers.visible(set).isEmpty()) return false;
         int stage = -1;
         for (int i = 0; i < s.stages(); i++) {
@@ -156,15 +169,56 @@ final class Showcase implements Listener {
         World w = world.world();
         int ox = s.originX() + stage * s.spacing(), oy = s.originY(), oz = s.originZ();
         build(w, ox, oy, oz);
-        ShowcaseSession session = new ShowcaseSession(this, p, s, stage, new Location(w, ox + 0.5, oy + 1, oz + 0.5));
-        stages.put(stage, p.getUniqueId());
-        sessions.put(p.getUniqueId(), session);
-        controls.take(p, true);
-        session.open();
+        Location origin = new Location(w, ox + 0.5, oy + 1, oz + 0.5);
+        if (!away) {
+            if (p.isInsideVehicle()) return false;
+            stages.put(stage, id);
+            begin(p, s, stage, origin, null, menu);
+            return true;
+        }
+        Location back = p.getLocation();
+        p.closeInventory();
+        p.leaveVehicle();
+        stages.put(stage, id);
+        arrivals.put(id, new Arrival(stage, back, menu, Bukkit.getCurrentTick()));
+        if (!p.teleport(origin, PlayerTeleportEvent.TeleportCause.PLUGIN)) {
+            arrivals.remove(id);
+            stages.remove(stage);
+            return false;
+        }
         return true;
     }
 
-    /** Ends a player's show. {@code back}: he is brought back to where he stood in the lobby. */
+    private void begin(Player p, Settings s, int stage, Location origin, Location back, boolean menu) {
+        ShowcaseSession session = new ShowcaseSession(this, p, s, stage, origin, back, menu);
+        sessions.put(p.getUniqueId(), session);
+        controls.take(p, true);
+        session.open();
+    }
+
+    /** The show of an arrived player starts once he carries his rpg profile and his character is read. */
+    private void arrive() {
+        for (Map.Entry<UUID, Arrival> e : new ArrayList<>(arrivals.entrySet())) {
+            Arrival a = e.getValue();
+            Player p = Bukkit.getPlayer(e.getKey());
+            boolean late = Bukkit.getCurrentTick() - a.since() > ARRIVAL_TICKS;
+            ConfigurationSection c = plugin.getConfig().getConfigurationSection("rpg.showcase");
+            if (p == null || p.isDead() || c == null || world.world() == null || p.getWorld() != world.world()) {
+                arrivals.remove(e.getKey());
+                stages.remove(a.stage());
+                continue;
+            }
+            boolean ready = RpgWorld.UNIVERSE.equals(Universes.of(p)) && !Universes.transitioning(p) && !players.busy(p);
+            if (!ready && !late) continue;
+            arrivals.remove(e.getKey());
+            Settings s = Settings.of(c);
+            World w = world.world();
+            begin(p, s, a.stage(), new Location(w, s.originX() + a.stage() * s.spacing() + 0.5, s.originY() + 1, s.originZ() + 0.5),
+                    a.back(), a.menu());
+        }
+    }
+
+    /** Ends a player's show. {@code back}: he is brought back to where he stood before it. */
     void close(Player p, boolean back) {
         ShowcaseSession s = sessions.remove(p.getUniqueId());
         if (s == null) return;
@@ -172,13 +226,41 @@ final class Showcase implements Listener {
         stages.remove(s.stage());
         controls.take(p, false);
         s.close(back);
+        if (back && s.menu() && plugin.isEnabled()) reopenMenu(p, 0);
+    }
+
+    /** The dungeon menu he came from, once he is back in his universe (a change of universe takes a few ticks). */
+    private void reopenMenu(Player p, int waited) {
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (!p.isOnline() || p.isDead() || watching(p)) return;
+            if (Universes.transitioning(p) && waited < 50) reopenMenu(p, waited + 1);
+            else p.performCommand("dungeon");
+        }, 2L);
+    }
+
+    /**
+     * The class he confirmed. Come from another universe, the choice is recorded while he still carries his rpg
+     * character, and he goes back once it is.
+     */
+    void chosen(ShowcaseSession s, String classId) {
+        Player p = s.player();
+        if (!s.away()) {
+            close(p, true);
+            players.pick(p, classId);
+            return;
+        }
+        players.pick(p, classId);
+        s.leaveWhenSettled();
     }
 
     void stop() {
+        for (Arrival a : arrivals.values()) stages.remove(a.stage());
+        arrivals.clear();
         for (ShowcaseSession s : new ArrayList<>(sessions.values())) close(s.player(), true);
     }
 
     private void tick() {
+        if (!arrivals.isEmpty()) arrive();
         if (sessions.isEmpty()) return;
         for (ShowcaseSession s : new ArrayList<>(sessions.values())) {
             try {

@@ -354,7 +354,7 @@ public final class DungeonMenus {
                 .kv(raw("menu.class"), line == null ? raw("menu.no-class") : line).left(raw("menu.class-action"));
         // no class yet: a book (choosing one)
         out.add(slot("weapon", weapon, line == null ? "BOOK" : "BLAZE_ROD", line == null ? raw("menu.no-class") : raw("gear.weapon"), wl, viewer)
-                .set("left", "[player] classe"));
+                .set("left", "[player] classe menu"));
         for (int i = 0; i < ARMOUR.length; i++) {
             ItemStack piece = known && contents.length > ARMOUR_INDEX[i] ? contents[ARMOUR_INDEX[i]] : null;
             Lore lore = Lore.create().description(raw(known ? (piece == null ? "gear.empty-desc" : "gear.armour-desc") : unknown))
@@ -402,12 +402,12 @@ public final class DungeonMenus {
             lore.left(raw("menu.class-action"));
             ItemStack item = Items.of("itemsadder:" + sp.icon(), sp.name(), lore.build(), viewer);
             if (item == null) item = Items.of("ENCHANTED_BOOK", sp.name(), lore.build(), viewer);
-            out.add(ListEntry.of("spell_" + sp.slot()).item(orBarrier(item)).set("left", "[player] classe").set("right", ""));
+            out.add(ListEntry.of("spell_" + sp.slot()).item(orBarrier(item)).set("left", "[player] classe menu").set("right", ""));
         }
         if (out.isEmpty()) {
             Lore lore = Lore.create().description(raw("menu.spells-none")).left(raw("menu.class-action"));
             out.add(ListEntry.of("no_class").item(orBarrier(Items.of("BOOK", raw("menu.no-class"), lore.build(), viewer)))
-                    .set("left", "[player] classe").set("right", ""));
+                    .set("left", "[player] classe menu").set("right", ""));
         }
         return out;
     }
