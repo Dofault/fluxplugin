@@ -33,7 +33,7 @@ def kit(**changes):
 
 def rpg2():
     s = Song('rpg2', 'RPG 2', 150, '4/4', 'gallop', kit(),
-             comment='RPG 2 : chevauchée dans les plaines, ré dorien, galop, 150 à la noire. Composition originale.')
+             effects=True, comment='RPG 2 : chevauchée dans les plaines, ré dorien, galop, 150 à la noire. Composition originale.')
     A = '''
         Dm    | D5:2 A4:2 D5:2 E5:2 F5:4 E5:2 D5:2
         C     | E5:2 C5:2 E5:2 F5:2 G5:4 F5:2 E5:2
@@ -77,7 +77,7 @@ def rpg2():
 
 def rpg3():
     s = Song('rpg3', 'RPG 3', 92, '6/8', 'jig', kit(lead2='xylophone', counter='banjo', arp='harp'),
-             comment="RPG 3 : chanson de route, la mineur à 6/8, gigue, le banjo répond à la flûte. Composition originale.")
+             effects=True, comment="RPG 3 : chanson de route, la mineur à 6/8, gigue, le banjo répond à la flûte. Composition originale.")
     A = '''
         Am    | A5:2 E5:2 A5:2 C6:4 B5:2
         G     | B5:2 G5:2 D5:2 G5:4 A5:2
@@ -122,7 +122,7 @@ def rpg3():
 
 def rpg4():
     s = Song('rpg4', 'RPG 4', 112, '4/4', 'march', kit(counter='guitar', arp='pling', comp='harp', harmony='pling'),
-             comment="RPG 4 : la marche des Veilleurs, do mineur, caisse claire de marche, ligne grave de guitare au "
+             effects=True, comment="RPG 4 : la marche des Veilleurs, do mineur, caisse claire de marche, ligne grave de guitare au "
                      "pont. Composition originale.")
     A = '''
         Cm    | C5:6 D5:2 Eb5:4 G5:4
@@ -166,7 +166,7 @@ def rpg4():
 
 def rpg5():
     s = Song('rpg5', 'RPG 5', 140, '4/4', 'adventure', kit(lead2='chime'),
-             comment="RPG 5 : exploration héroïque et lumineuse, ré majeur avec septième degré abaissé, 140 à la "
+             effects=True, comment="RPG 5 : exploration héroïque et lumineuse, ré majeur avec septième degré abaissé, 140 à la "
                      "noire. Composition originale.")
     A = '''
         D     | F#5:2 A5:2 D6:4 A5:4 F#5:2 A5:2
@@ -211,7 +211,7 @@ def rpg5():
 def rpg6():
     s = Song('rpg6', 'RPG 6', 100, '4/4', 'heavy', kit(lead='pling', lead2='flute', counter='flute',
                                                        arp='iron_xylophone'),
-             comment="RPG 6 : ruines du désert, mi phrygien dominant (accord de fa sur mi), demi-temps lourd, "
+             effects=True, comment="RPG 6 : ruines du désert, mi phrygien dominant (accord de fa sur mi), demi-temps lourd, "
                      "didgeridoo. Composition originale.")
     A = '''
         E     | E5:4 F5:2 G#5:2 B5:6 A5:2
@@ -255,7 +255,7 @@ def rpg6():
 
 def rpg7():
     s = Song('rpg7', 'RPG 7', 168, '3/4', 'waltz', kit(),
-             comment="RPG 7 : valse rapide des ombres, sol mineur à 3/4, accord napolitain de la bémol. "
+             effects=True, comment="RPG 7 : valse rapide des ombres, sol mineur à 3/4, accord napolitain de la bémol. "
                      "Composition originale.")
     A = '''
         Gm    | G5:4 Bb5:4 D6:4
@@ -305,7 +305,7 @@ def rpg7():
 
 def rpg8():
     s = Song('rpg8', 'RPG 8', 104, 'shuffle', 'shuffle', kit(lead='banjo', lead2='flute', counter='flute'),
-             comment="RPG 8 : la route de la côte, la dorien en rythme ternaire, air de banjo. Composition originale.")
+             effects=True, comment="RPG 8 : la route de la côte, la dorien en rythme ternaire, air de banjo. Composition originale.")
     A = '''
         Am    | A4:2 C5:1 E5:3 A5:3 G5:2 E5:1
         D     | F#5:3 E5:2 D5:1 A4:3 D5:3
@@ -349,7 +349,7 @@ def rpg8():
 
 def rpg9():
     s = Song('rpg9', 'RPG 9', 132, '4/4', 'adventure', kit(),
-             comment="RPG 9 : hymne héroïque, si bémol majeur, le dernier thème monte d'un ton (do majeur). "
+             effects=True, comment="RPG 9 : hymne héroïque, si bémol majeur, le dernier thème monte d'un ton (do majeur). "
                      "Composition originale.")
     A = '''
         Bb    | D5:4 F5:4 Bb5:6 C6:2
@@ -384,7 +384,7 @@ def rpg9():
 
 def rpg10():
     s = Song('rpg10', 'RPG 10', 160, '4/4', 'gallop', kit(lead='pling', lead2='flute', arp='bit'),
-             comment="RPG 10 : la chasse, mi mineur, galop à 160, air arpégé au pling. Composition originale.")
+             effects=True, comment="RPG 10 : la chasse, mi mineur, galop à 160, air arpégé au pling. Composition originale.")
     A = '''
         Em    | E5:2 G5:2 B5:2 E6:2 B5:2 G5:2 E5:2 G5:2
         D     | F#5:2 A5:2 D6:2 E6:2 D6:2 A5:2 F#5:2 A5:2

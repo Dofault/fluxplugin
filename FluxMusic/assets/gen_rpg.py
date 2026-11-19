@@ -34,18 +34,22 @@ import sys
 import score
 from score import Piece, Section, chord, copy, descant, drums, harmony_below, lowest, run
 
+# Effects of FluxMusic (2026-11-19, kept by the owner): thick basses and bells (chorus), answers placed a little left
+# and right (fixed stereo: an orbit swinging round the head was tried and removed), held notes that waver (~) and
+# glides (>) on the flute and the bells, a bass falling an octave at the very end.
 TRACKS = {
     'theme':      ('flute', 0.72),
-    'cloches':    ('bell', 0.24),          # the theme an octave above (climax)
+    'cloches':    ('bell', 0.24, {'chorus': 10}),   # the theme an octave above (climax)
     'appel':      ('bell', 0.34),          # the call in the intro
-    'reponse':    ('iron_xylophone', 0.5),  # answers to the flute, bridge tune
-    'tierce':     ('harp', 0.3),           # second voice under the theme
-    'contrechant': ('chime', 0.14),
+    'reponse':    ('iron_xylophone', 0.5, {'pan': -0.6}),  # answers to the flute, bridge tune
+    'tierce':     ('harp', 0.3, {'pan': 0.4}),       # second voice under the theme
+    'contrechant': ('chime', 0.14, {'pan': -0.4}),
     'ondes':      ('pling', 0.22),         # the sixteenth ripple
-    'harpe':      ('harp', 0.28),          # rising sweeps
+    'harpe':      ('harp', 0.28, {'pan': 0.6}),      # rising sweeps
     'guitare':    ('guitar', 0.3),
-    'basse':      ('bass', 0.75),
-    'grave':      ('didgeridoo', 0.4),     # deep floor under the bass
+    'basse':      ('bass', 0.75, {'chorus': 12}),
+    'grave':      ('didgeridoo', 0.4, {'chorus': 8}),  # deep floor under the bass
+    'chute':      ('bass', 0.55, {'chorus': 15}),   # the bass falling at the very end
     'grosse':     ('basedrum', 0.5),
     'caisse':     ('snare', 0.26),
     'roulement':  ('snare', 0.2),
@@ -53,27 +57,8 @@ TRACKS = {
 }
 PIECE = Piece('rpg1', 'RPG 1', bpm=140, steps_per_beat=4, beats_per_bar=4, tracks=TRACKS,
               melodic={'theme', 'reponse'})
-# "RPG 1 (effets)" (rpg1_effets): the same piece with FluxMusic's effects, to hear them against the plain one.
-# Thick basses and bells (chorus), answers placed a little left and right (pan, fixed: the swinging orbit was tried
-# and removed on 2026-11-19), held notes that waver (~) and glides (>) on the flute and the bells, a bass falling an
-# octave at the very end.
-FX_OPTIONS = {
-    'basse': {'chorus': 12}, 'grave': {'chorus': 8}, 'cloches': {'chorus': 10},
-    'reponse': {'pan': -0.6}, 'harpe': {'pan': 0.6}, 'tierce': {'pan': 0.4}, 'contrechant': {'pan': -0.4},
-}
-FX_TRACKS = {t: (i, v, FX_OPTIONS.get(t, {})) for t, (i, v) in TRACKS.items()} | {
-    'chute': ('bass', 0.55, {'chorus': 15})}
-FX = False
-
-
-def fx(plain, effected):
-    return effected if FX else plain
-
-
 def held(line):
-    """With the effects, every long single note of the tune (6 steps or more) is held, wavering."""
-    if not FX:
-        return line
+    """Every long single note of the tune (6 steps or more) is held, wavering."""
     out = []
     for t in line.split():
         body, _, d = t.partition(':')
@@ -170,12 +155,12 @@ MOTTO = 'E6:6 B5:2 E6:4 F#6:4'
 
 def theme():
     line = ' | '.join(THEME)
-    return fx(line, line.replace('B5:4 D#6:4 F#6:6 D#6:2', 'B5:4 D#6>F#6:4 F#6:6 D#6:2'))
+    return line.replace('B5:4 D#6:4 F#6:6 D#6:2', 'B5:4 D#6>F#6:4 F#6:6 D#6:2')
 
 
 def intro(rng):
     s = Section(PIECE, 'intro', 'Em Cmaj7 Em Cmaj7 Am Cmaj7 B7sus B7')
-    s.write('appel', MOTTO + ' | G6:8 E6:8 | ' + MOTTO + ' | ' + fx('G6:8 B6:8', 'G6>B6:8 B6:8'))
+    s.write('appel', MOTTO + ' | G6:8 E6:8 | ' + MOTTO + ' | ' + 'G6>B6:8 B6:8')
     s.write('reponse', 'E5:4 B4:4 C5:4 E5:4 | G4:4 B4:4 E5:4 G4:4 | A4:8 F#4:4 E4:4 | F#4:8 .:8', bar=4)
     s.write('theme', '.:8 B4:2 D#5:2 F#5:2 A5:2', bar=7)
     deep(s, 'grave', steps=(0, 8))
@@ -242,7 +227,7 @@ def section_c(rng):
     s.write('reponse', 'B4:8 G4:4 E4:4 | G4:8 B4:4 E5:4 | C5:8 A4:4 E4:4 | D#5:8 F#4:4 A4:4 '
                        '| G4:8 B4:4 E5:4 | E5:8 C5:4 B4:4 | A4:8 C5:4 E5:4 | D#5:8 B4:4 A4:4')
     # the flute comes back in the second half, high and long
-    s.write('theme', held(fx('B5:16', 'E5>B5:4 B5:12') + ' | G5:8 E5:8 | A5:8 C6:8 | B5:8 .:4 B4:2 D#5:2'), bar=4)
+    s.write('theme', held('E5>B5:4 B5:12 | G5:8 E5:8 | A5:8 C6:8 | B5:8 .:4 B4:2 D#5:2'), bar=4)
     deep(s, 'grave', steps=(0, 8))
     score.shimmer(s, 'ondes', range(4), every=2)
     ripple(s, 'ondes', bars=range(4, 8), low=55)
@@ -298,8 +283,7 @@ def fin(rng):
     s = Section(PIECE, 'fin', 'Em Em')
     s.write('theme', held('E5:16 | .:16'))
     copy(s, 'theme', 'cloches', transpose=12)
-    if FX:
-        s.write('chute', 'E3>E2:16 | .:16', octave_fit=False)
+    s.write('chute', 'E3>E2:16 | .:16', octave_fit=False)
     s.write('reponse', 'B4:16 | .:16')
     score.bass(s, 'basse', [(0, 'r')], bars=[0])
     deep(s, 'grave', bars=[0])
@@ -314,25 +298,18 @@ def strong(sec, step):
     return (0, 8)
 
 
-def build(comment):
+def main():
     rng = random.Random(2026_11_18)
     sections = [intro(rng), section_a(rng), section_b(rng), section_c(rng), section_a2(rng), coda(rng), fin(rng)]
     for sec in sections:
         give_way(sec)
     problems = score.check(sections, strong, quiet={'contrechant', 'harpe'})
-    path = score.write_song(score.songs_folder(sys.argv, __file__), PIECE, sections, comment, 'gen_rpg.py', 'a')
+    path = score.write_song(score.songs_folder(sys.argv, __file__), PIECE, sections, [
+        "RPG 1 : thème d'aventure de l'univers RPG, mi mineur à 4/4, 140 à la noire. Appel (intro, une fois), route,",
+        'plaines, ruines, épopée, retour, halte. Effets de FluxMusic : stéréo fixe, chœur, notes tenues, glissandos.',
+        'Composition originale.',
+    ], 'gen_rpg.py', 'a')
     score.summary(path, PIECE, sections, 'a', problems)
-
-
-def main():
-    global PIECE, FX
-    about = ("RPG 1 : thème d'aventure de l'univers RPG, mi mineur à 4/4, 140 à la noire. Appel (intro, une fois), "
-             "route,", 'plaines, ruines, épopée, retour, halte. Composition originale.')
-    build(list(about))
-    PIECE = Piece('rpg1_effets', 'RPG 1 (effets)', bpm=140, steps_per_beat=4, beats_per_bar=4, tracks=FX_TRACKS,
-                  melodic={'theme', 'reponse'})
-    FX = True
-    build(list(about) + ['Version avec les effets de FluxMusic : stéréo fixe, chœur, notes tenues, glissandos.'])
 
 
 if __name__ == '__main__':

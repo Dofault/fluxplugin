@@ -52,6 +52,13 @@ CALM_BASS = {'4/4': [(0, R), (8, F)], '3/4': [(0, R)], '6/8': [(0, R)], 'shuffle
 VOLUMES = {'lead': 0.7, 'lead2': 0.2, 'harmony': 0.26, 'counter': 0.42, 'arp': 0.2, 'comp': 0.24, 'bass': 0.66,
            'deep': 0.34, 'kick': 0.42, 'snare': 0.22, 'roll': 0.16, 'hat': 0.11, 'sparkle': 0.12}
 MELODIC = ('lead', 'counter', 'lead2', 'harmony')
+# FluxMusic's effects (Song(effects=True), 2026-11-19): chorus on the basses and the octave doubling, the answer and
+# the second voice placed a little left and right (fixed stereo, never an orbit), the tune's long notes held, a glide
+# into a long note reached by a leap, the bass falling an octave on the last chord.
+EFFECT_OPTIONS = {'bass': {'chorus': 12}, 'deep': {'chorus': 8}, 'lead2': {'chorus': 10}, 'counter': {'pan': -0.6},
+                  'harmony': {'pan': 0.4}}
+HELD = 6            # a tune note of at least this many steps is held (~)
+LEAP = (5, 12)      # semitones of a leap up into a held note that the note before slides through (>)
 DRUM_INSTRUMENT = {'kick': 'basedrum', 'snare': 'snare', 'roll': 'snare', 'hat': 'hat'}
 
 
@@ -66,11 +73,15 @@ def transpose_chord(sym, n):
 
 
 class Song:
-    def __init__(self, song_id, title, bpm, meter, groove, instruments, volumes=None, comment=''):
+    def __init__(self, song_id, title, bpm, meter, groove, instruments, volumes=None, comment='', effects=False):
         spb, bpb, self.strong = METERS[meter]
         self.meter, self.groove, self.comment = meter, GROOVES[groove], comment
         vol = dict(VOLUMES, **(volumes or {}))
-        tracks = {role: (inst, vol[role]) for role, inst in instruments.items()}
+        self.effects = effects
+        tracks = {role: (inst, vol[role], EFFECT_OPTIONS.get(role, {}) if effects else {})
+                  for role, inst in instruments.items()}
+        if effects:
+            tracks['chute'] = ('bass', 0.5, {'chorus': 15})
         for role in ('kick', 'snare', 'roll', 'hat'):
             tracks.setdefault(role, (DRUM_INSTRUMENT[role], vol[role]))
         self.piece = Piece(song_id, title, bpm, spb, bpb, tracks, melodic={'lead'})
@@ -172,6 +183,10 @@ class Song:
             self.arp(sec, [0], tuple(range(0, min(L, 12), 2)))
         score.drums(sec, 'kick', (0,), [0])
         score.drums(sec, 'snare', (0,), [0])
+        if self.effects:
+            top = lowest(chord(sec.chord_at(0))[0], 42)
+            sec.hit('chute', 0, {top})
+            sec.fx.setdefault('chute', {})[0] = ('>', -12)
         self.doubled.add(name)
         self.sections.append(sec)
         return sec
@@ -229,7 +244,27 @@ class Song:
                         if not hits[step]:
                             del hits[step]
 
+    def _effects(self):
+        """Held notes and glides on the tune (relative marks: they survive the octave fitting)."""
+        for sec in self.sections:
+            hits = sec.tracks.get('lead', {})
+            steps = sorted(hits)
+            fx = sec.fx.setdefault('lead', {})
+            for k, st in enumerate(steps):
+                if len(hits[st]) != 1 or st in fx:
+                    continue
+                length = (steps[k + 1] if k + 1 < len(steps) else sec.length) - st
+                if length >= HELD:
+                    fx[st] = '~'
+                    if k > 0 and len(hits[steps[k - 1]]) == 1 and steps[k - 1] not in fx \
+                            and st - steps[k - 1] <= 4:
+                        jump = next(iter(hits[st])) - next(iter(hits[steps[k - 1]]))
+                        if LEAP[0] <= jump <= LEAP[1]:
+                            fx[steps[k - 1]] = ('>', jump)
+
     def build(self, folder, script, loop_from=None):
+        if self.effects:
+            self._effects()
         self._fit('lead')
         self._fit('counter')
         self._derive()
