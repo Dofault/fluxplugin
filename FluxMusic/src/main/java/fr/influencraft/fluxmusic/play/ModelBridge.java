@@ -45,13 +45,17 @@ final class ModelBridge {
     private ModelBridge() {
     }
 
-    /** Null when no model has this name. A model without entity turns the other way round, hence the minus. */
+    /**
+     * Null when no model has this name. The model's rotation is Minecraft's yaw as it is: with the minus FluxMascot
+     * and FluxDungeons use, a band placed facing east stood facing west (seen in game 2026-11-19; north and south
+     * are the same either way).
+     */
     static Figure figure(String model, Location at, float scale, float yaw) {
         var renderer = BetterModel.modelOrNull(model);
         if (renderer == null) return null;
         DummyTracker tracker = renderer.create(BukkitAdapter.adapt(at.clone()));
         tracker.scaler(ModelScaler.value(scale));
-        float facing = -yaw;
+        float facing = yaw;
         tracker.rotation(() -> new ModelRotation(0, facing));
         return new Figure() {
             private String current;

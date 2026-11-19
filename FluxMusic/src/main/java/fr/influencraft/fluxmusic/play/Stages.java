@@ -321,6 +321,8 @@ public final class Stages {
             rows = Math.max(1, (n + most - 1) / most);
             int perRow = (n + rows - 1) / rows;   // rows of even length rather than a full one and a leftover
             rowStep = rows <= 1 ? 0 : Math.min(ROW_SPACING, (depth - 1.6) / (rows - 1));
+            // on tiers, rows are a whole number of blocks apart: the tiers are made of whole blocks
+            if (rise > 0 && tier != null && rows > 1) rowStep = Math.max(1, Math.floor(rowStep));
             clearTiers();
             Map<Instrument, double[]> places = new EnumMap<>(Instrument.class);
             for (int i = 0; i < n; i++) {
@@ -376,28 +378,38 @@ public final class Stages {
         }
 
         /**
-         * Draws the tier of each row but the first: a block stretched across the stage, as deep as a row, as high as
-         * the row stands. Made again when the chunk was not loaded or dropped them.
+         * Draws the tier of each row but the first with whole blocks (block displays of one block each, laid across
+         * the stage, as deep as a row, as high as the row stands). Made again when the chunk was not loaded or
+         * dropped them.
          */
         private void tiers() {
             World w = Bukkit.getWorld(world);
             if (w == null || tier == null || rise <= 0 || rows <= 1 || viewers.isEmpty()) return;
             if (!tiers.isEmpty() && tiers.stream().allMatch(org.bukkit.entity.Entity::isValid)) return;
             clearTiers();
-            double rad = Math.toRadians(yaw);
-            double fx = -Math.sin(rad), fz = Math.cos(rad);
+            Location at = new Location(w, x, y, z, yaw, 0);
+            if (!at.isChunkLoaded()) return;
+            int wide = Math.max(1, (int) Math.round(width)), deep = Math.max(1, (int) Math.round(rowStep));
+            org.bukkit.block.data.BlockData block = tier.createBlockData();
             for (int row = 1; row < rows; row++) {
-                double front = ((rows - 1) / 2.0 - row) * rowStep;
-                Location at = new Location(w, x + fx * front, y, z + fz * front, yaw, 0);
-                if (!at.isChunkLoaded()) return;
-                float h = (float) (row * rise), wide = (float) width, deep = (float) rowStep;
-                tiers.add(w.spawn(at, org.bukkit.entity.BlockDisplay.class, d -> {
-                    d.setBlock(tier.createBlockData());
-                    d.setPersistent(false);
-                    d.setTransformation(new org.bukkit.util.Transformation(
-                            new org.joml.Vector3f(-wide / 2, 0, -deep / 2), new org.joml.Quaternionf(),
-                            new org.joml.Vector3f(wide, h, deep), new org.joml.Quaternionf()));
-                }));
+                // in the stage's own frame: x across, z towards the audience, from the stage's centre
+                double front = ((rows - 1) / 2.0 - row) * rowStep, height = row * rise;
+                for (int iy = 0; iy < Math.ceil(height - 1e-6); iy++) {
+                    float tall = (float) Math.min(1, height - iy);
+                    for (int ix = 0; ix < wide; ix++) for (int iz = 0; iz < deep; iz++) {
+                        // only the blocks one can see: the top layer, the front and the two sides
+                        boolean top = iy + 1 >= height - 1e-6, edge = ix == 0 || ix == wide - 1 || iz == deep - 1 || iz == 0;
+                        if (!top && !edge) continue;
+                        org.joml.Vector3f place = new org.joml.Vector3f((float) (-wide / 2.0 + ix), iy,
+                                (float) (front - deep / 2.0 + iz));
+                        tiers.add(w.spawn(at, org.bukkit.entity.BlockDisplay.class, d -> {
+                            d.setBlock(block);
+                            d.setPersistent(false);
+                            d.setTransformation(new org.bukkit.util.Transformation(place, new org.joml.Quaternionf(),
+                                    new org.joml.Vector3f(1, tall, 1), new org.joml.Quaternionf()));
+                        }));
+                    }
+                }
             }
         }
 
