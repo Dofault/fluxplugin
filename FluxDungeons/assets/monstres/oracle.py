@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-"""The Oracle: an old human mage, wise and calm, STATIC Blockbench model (.bbmodel), 2026-11-14.
+"""The Oracle: an old human mage, wise and calm, Blockbench model (.bbmodel), 2026-11-14; animated since 2026-11-19
+(oracle_anim.py), with a small orb of arcane energy floating over his open right hand.
 
 Same collection as the Oversized Evoker (evocateur_demesure.py): same robe family (long robe, darker open coat,
 lighter tabard with gold edges, belt, wide cuffs, soft shoulders), same painters, same pixel size. Everything that
 makes a person is his own: a human head (warm skin, grey blue eyes, thin grey brows, straight nose), a long silver
 beard in three volumes with a moustache, silver hair showing under the server's own witch hat (the ItemsAdder NPC pack's,
-read from the pack: cf. pack_hat), a low collar. Warmer, lighter violet than the Evoker's. No glow.
+read from the pack: cf. pack_hat), a low collar. Warmer, lighter violet than the Evoker's. Only the orb glows.
 
 Few cubes: strands of beard and hair and folds are painted, not built.
 This script replaces the voxel version of 2026-11-10.
 
-Usage: oracle.py [output folder] [--apercu <sheet.png>] [--cubes <table.md>]
+Usage: oracle.py [output folder] [--apercu <sheet.png>] [--cubes <table.md>] [--anims <folder>] [--only a,b]
 Front faces north (-z), his right is +x, ground at y = 0, origin between the feet.
 """
 import json
@@ -497,6 +498,60 @@ def set_style(name):
 BASE_MATS = dict(MATS)
 set_style(STYLE)
 
+# --------------------------------------------------------------------------- the orb over the right palm
+# A small ball of arcane energy, never a perfect shape: two open violet cubes turning opposite ways (one flat, one on
+# a corner) around a pale cyan core, and a few motes circling it. Faces are cut out (corners and middle), never
+# half transparent: cut-out pixels are safe in every renderer. Each face is the same seen from any side, so a quarter
+# turn of the flat cube and a third of a turn of the cubes on a corner look like no turn at all (seamless loops).
+ORB = pal("#513B85", "#805AC2", "#AC85E8", "#64D9D2", "#B1FFF0", "#E8FFFF")   # deep, main, light violet; cyan, core, white
+ORB_GAP = 1.0                   # between the palm and the bottom of the outer cube (the hand is 3.0 wide)
+ORB_OUTER, ORB_INNER, ORB_CORE = 2.5, 2.0, 1.0
+CORNER = E.CORNER
+# motes: (size, colour, distance from the orb's centre, where on its circle at rest in degrees, height)
+MOTES = ((0.55, 4, 2.5, 20, 0.5), (0.4, 5, 3.0, 140, -0.3), (0.5, 2, 2.2, 250, 0.9), (0.4, 3, 2.8, 320, 0.1))
+SPARK = 0.45                    # two sparks kept inside the core, let out by the idle gestures
+
+
+def cut(rows, colours):
+    """Painter of a face drawn with letters ('.' = cut out); the same on every face."""
+    grid = [[colours[ch] + (255,) if ch != "." else (0, 0, 0, 0) for ch in row] for row in rows]
+    return lambda w, h, r, f: [list(row) for row in grid]
+
+
+def flat(colour):
+    return lambda w, h, r, f: [[colour] * w for _ in range(h)]
+
+
+GLOW_MATS = {
+    "orb_outer": (cut((".AAA.", "AL.LA", "A...A", "AL.LA", ".AAA."), {"A": ORB[1], "L": ORB[2]}), 2),
+    "orb_inner": (cut((".DD.", "D..D", "D..D", ".DD."), {"D": ORB[0]}), 2),
+    "orb_core": (flat(ORB[4]), 2),
+    "spark": flat(ORB[3]),
+}
+GLOW_MATS.update({f"mote_{k + 1}": flat(ORB[m[1]]) for k, m in enumerate(MOTES)})
+GLOW_COLOURS = set(ORB)
+
+
+def orb_parts(G, add, palm, M):
+    """The orb's bones and cubes; `palm`: centre of the right hand, `M`: its orientation."""
+    import math
+    n, tips = app(M, [0, 0, -1]), app(M, [0, -1, 0])        # out of the palm, towards the fingers
+    c = [palm[i] + 1.7 * n[i] + 0.6 * tips[i] for i in range(3)]
+    c[1] += ORB_GAP + ORB_OUTER / 2
+    G["Orb"] = (c, "Forearm_right")                          # moved as a whole: floats, lags behind the hand
+    for bone, size, r, mat in (("glow_orb_core", ORB_CORE, CORNER, "orb_core"),
+                               ("glow_orb_inner", ORB_INNER, CORNER, "orb_inner"),
+                               ("glow_orb_outer", ORB_OUTER, (0, 0, 0), "orb_outer")):
+        G[bone] = (c, "Orb")
+        add(bone, bone[5:], c, (size,) * 3, r, mat)
+    for k, (size, _, dist, deg, up) in enumerate(MOTES):
+        at = (c[0] + dist * math.cos(math.radians(deg)), c[1] + up, c[2] + dist * math.sin(math.radians(deg)))
+        G[f"glow_mote_{k + 1}"] = (at, "Orb")
+        add(f"glow_mote_{k + 1}", f"mote_{k + 1}", at, (size,) * 3, CORNER, f"mote_{k + 1}")
+    for k in (1, 2):
+        G[f"glow_spark_{k}"] = (c, "Orb")
+        add(f"glow_spark_{k}", f"spark_{k}", c, (SPARK,) * 3, CORNER, "spark")
+
 # --------------------------------------------------------------------------- skeleton and pose (drawing units)
 HIPS = (0, 21, 0)
 NECK = (0, 35.5, 0)
@@ -628,6 +683,8 @@ def parts():
         c, M = attach(knuckle, rot(curl + 30, 0, -20 * s))((knuckle[0], knuckle[1] - 0.8, knuckle[2]), (0, 0, 0))
         cc, M = lower(c, M)
         add(tb, "thumb", cc, (0.9, 1.8, 0.9), M, "finger")
+        if s == 1:
+            orb_parts(G, add, *lower((8.0, 14.1, 0), (0, 0, 0)))
 
     order, done = [], set()
     while len(order) < len(G):
@@ -641,7 +698,7 @@ def parts():
 if __name__ == "__main__":
     args = sys.argv[1:]
     opts = {}
-    for flag in ("--apercu", "--cubes", "--style"):
+    for flag in ("--apercu", "--cubes", "--style", "--anims", "--only", "--count"):
         if flag in args:
             i = args.index(flag)
             opts[flag] = args[i + 1]
@@ -649,16 +706,22 @@ if __name__ == "__main__":
     out = args[0] if args else HERE
     set_style(opts.get("--style", STYLE))
     P, groups, dims = ground(*parts(), scale=SCALE, center=False)
-    uv, atlases, sizes = bake(P, MATS, {})
+    uv, atlases, sizes = bake(P, MATS, GLOW_MATS)
     data = export(IDENT, NS, P, groups, uv, atlases, sizes)
-    data["textures"] = data["textures"][:1]          # nothing glows
-    print(f"{len(P)} cubes ; {dims[0]:.2f} x {dims[1]:.2f} x {dims[2]:.2f} blocs (l x h x p) ; texture {sizes[0]}")
+    import oracle_anim as OA
+    anims = OA.build(data, OA.uid_for(NS, IDENT))
+    print(f"{len(P)} cubes ; {dims[0]:.2f} x {dims[1]:.2f} x {dims[2]:.2f} blocs (l x h x p) ; "
+          f"textures {sizes[0]} et {sizes[1]} ; {len(anims)} animations")
+    if "--anims" in opts:
+        OA.strips(data, anims, atlases, sizes, opts["--anims"], count=int(opts.get("--count", 10)),
+                  only=opts["--only"].split(",") if "--only" in opts else None)
+    data["animations"] = OA.finish(anims)
     path = os.path.join(out, IDENT + ".bbmodel")
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False)
     print("écrit", path)
     if "--apercu" in opts:
-        apercu(data, atlases, sizes, opts["--apercu"], set(), views=((0, 4), (35, 12), (90, 3), (180, 6), (-40, 10)), size=440)
+        apercu(data, atlases, sizes, opts["--apercu"], GLOW_COLOURS, views=((0, 4), (35, 12), (90, 3), (180, 6), (-40, 10)), size=440)
     if "--cubes" in opts:
         E.IDENT = IDENT
         with open(opts["--cubes"], "w", encoding="utf-8") as f:

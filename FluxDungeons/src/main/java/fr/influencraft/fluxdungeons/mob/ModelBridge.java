@@ -138,13 +138,23 @@ public final class ModelBridge {
         };
     }
 
+    /** A lobby character shown to one player. */
+    public interface Figure extends AutoCloseable {
+        /** Plays an animation once over the idle loop; false when the model has no such animation. */
+        boolean play(String animation);
+
+        @Override
+        void close();
+    }
+
     /**
-     * A still model shown to one player at a place (a lobby character: the Oracle), at a scale, facing {@code yaw}
+     * A model shown to one player at a place (a lobby character: the Oracle), at a scale, facing {@code yaw}
      * (Minecraft's; a model without entity turns the other way round, hence the minus, as found for FluxMascot's
-     * robot). Its {@code idle} animation loops when it has one. Null when the model does not exist; to be closed by
-     * the caller (when the player leaves).
+     * robot). Its {@code idle} animation loops when it has one; a gesture played over it must end on the first pose
+     * of {@code idle}, which then starts again from its first tick. Null when the model does not exist; to be closed
+     * by the caller (when the player leaves).
      */
-    public static AutoCloseable figure(org.bukkit.entity.Player viewer, String model, org.bukkit.Location at, float scale, float yaw) {
+    public static Figure figure(org.bukkit.entity.Player viewer, String model, org.bukkit.Location at, float scale, float yaw) {
         var renderer = BetterModel.modelOrNull(model);
         if (renderer == null) return null;
         DummyTracker tracker = renderer.create(BukkitAdapter.adapt(at.clone()));
@@ -152,10 +162,25 @@ public final class ModelBridge {
         float facing = -yaw;
         tracker.rotation(() -> new kr.toxicity.model.api.tracker.ModelRotation(0, facing));
         tracker.spawn(BukkitAdapter.adapt(viewer));
-        tracker.animate("idle", AnimationModifier.builder().type(AnimationIterator.Type.LOOP).build());
-        return () -> {
-            if (!tracker.isClosed()) tracker.close();
+        // start: ticks taken to reach the animation's first pose from the pose shown before it
+        tracker.animate("idle", AnimationModifier.builder().type(AnimationIterator.Type.LOOP).start(4).build());
+        return new Figure() {
+            public boolean play(String animation) {
+                return !tracker.isClosed() && tracker.animate(animation,
+                        AnimationModifier.builder().type(AnimationIterator.Type.PLAY_ONCE).start(6).build());
+            }
+
+            public void close() {
+                if (!tracker.isClosed()) tracker.close();
+            }
         };
+    }
+
+    /** Length of a model's animation in ticks, 0 when the model or the animation does not exist. */
+    public static int animationTicks(String model, String animation) {
+        var renderer = BetterModel.modelOrNull(model);
+        if (renderer == null) return 0;
+        return renderer.animation(animation).map(a -> Math.round(a.length() * 20)).orElse(0);
     }
 
     /**

@@ -2,6 +2,7 @@ package fr.influencraft.fluxdungeons.rpg;
 
 import fr.influencraft.flux.api.FluxPlugin;
 import fr.influencraft.flux.api.text.Texts;
+import fr.influencraft.fluxdungeons.mob.ModelBridge;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -18,12 +19,14 @@ import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Characters of the rpg lobby drawn by a BetterModel model (2026-11-16: the Oracle, who runs the dungeon shop):
@@ -32,6 +35,9 @@ import java.util.UUID;
  * name above it. The click box and the name are not saved with the world (made again at start and when their chunk
  * loads).
  * <p>
+ * A figure's model loops its {@code idle} animation; its {@code gestures} are animations played once over it now and
+ * then, each after a random wait within its own bounds, never two at a time, to everybody at the same moment.
+ * <p>
  * Why not Typewriter, where the lobby's other characters live: Typewriter draws its characters itself and cannot show
  * a BetterModel model; that would need our own Typewriter extension, worth writing once several model characters
  * exist (the welcome robot of FluxMascot is the other one).
@@ -39,14 +45,35 @@ import java.util.UUID;
 public final class LobbyFigures implements Listener {
 
     record Figure(String id, String model, Location at, float scale, float yaw, String name, String command,
-                  double width, double height, double nameHeight) {
+                  double width, double height, double nameHeight, List<Gesture> gestures) {
     }
+
+    /** An animation played once now and then: wait bounds in ticks, and when it is next due (server tick). */
+    private static final class Gesture {
+        final String animation;
+        final int min, max;
+        long due;
+
+        Gesture(String animation, int min, int max) {
+            this.animation = animation;
+            this.min = min;
+            this.max = Math.max(min, max);
+        }
+
+        void schedule(long now) {
+            due = now + min + ThreadLocalRandom.current().nextInt(max - min + 1);
+        }
+    }
+
+    private static final int GESTURE_CHECK = 10;
 
     private static final String TAG = "fluxdungeons_figure";
     private final FluxPlugin plugin;
     private final World world;
     private final List<Figure> figures = new ArrayList<>();
-    private final Map<UUID, List<AutoCloseable>> shown = new HashMap<>();
+    private final Map<UUID, Map<Figure, ModelBridge.Figure>> shown = new HashMap<>();
+    private final Map<Figure, Long> busy = new HashMap<>();
+    private BukkitTask gestures;
     private final Map<UUID, Figure> boxes = new HashMap<>();
     private final boolean models;
 
@@ -59,6 +86,7 @@ public final class LobbyFigures implements Listener {
     public void reload(ConfigurationSection c) {
         clear();
         figures.clear();
+        busy.clear();
         if (c == null || world == null) return;
         for (String id : c.getKeys(false)) {
             ConfigurationSection f = c.getConfigurationSection(id);
@@ -67,13 +95,52 @@ public final class LobbyFigures implements Listener {
             Location at = new Location(world, f.getDouble("x"), f.getDouble("y"), f.getDouble("z"), yaw, 0);
             figures.add(new Figure(id, f.getString("model", id), at, (float) f.getDouble("scale", 1), yaw,
                     f.getString("name", ""), f.getString("command", ""), f.getDouble("width", 1.2),
-                    f.getDouble("height", 2.4), f.getDouble("name-height", 2.6)));
+                    f.getDouble("height", 2.4), f.getDouble("name-height", 2.6), gestures(f.getConfigurationSection("gestures"))));
+        }
+        if (models && figures.stream().anyMatch(f -> !f.gestures().isEmpty())) {
+            gestures = Bukkit.getScheduler().runTaskTimer(plugin, this::gesture, 40L, GESTURE_CHECK);
         }
         // a tick later: the world's chunks and BetterModel's models are ready
         Bukkit.getScheduler().runTask(plugin, () -> {
             for (Figure f : figures) place(f);
             for (Player p : world.getPlayers()) show(p);
         });
+    }
+
+    /** {@code gestures} of a figure: {@code <animation>: {min: <seconds>, max: <seconds>}}. */
+    private static List<Gesture> gestures(ConfigurationSection c) {
+        List<Gesture> list = new ArrayList<>();
+        if (c == null) return list;
+        long now = Bukkit.getCurrentTick();
+        for (String animation : c.getKeys(false)) {
+            Gesture g = new Gesture(animation, (int) (c.getDouble(animation + ".min", 15) * 20),
+                    (int) (c.getDouble(animation + ".max", 30) * 20));
+            g.schedule(now);
+            list.add(g);
+        }
+        return list;
+    }
+
+    /** Plays the gestures that are due, one at a time per figure, to the players who see it. */
+    private void gesture() {
+        if (shown.isEmpty()) return;
+        long now = Bukkit.getCurrentTick();
+        for (Figure f : figures) {
+            if (busy.getOrDefault(f, 0L) > now) continue;
+            for (Gesture g : f.gestures()) {
+                if (g.due > now) continue;
+                g.schedule(now);
+                int ticks = ModelBridge.animationTicks(f.model(), g.animation);
+                if (ticks <= 0) continue;
+                for (Map<Figure, ModelBridge.Figure> seen : shown.values()) {
+                    ModelBridge.Figure h = seen.get(f);
+                    if (h != null) h.play(g.animation);
+                }
+                // idle gets a few seconds alone before the next gesture, whichever it is
+                busy.put(f, now + ticks + 80);
+                break;
+            }
+        }
     }
 
     /** The click box and the name of a figure (old ones of ours around it removed first). */
@@ -108,26 +175,23 @@ public final class LobbyFigures implements Listener {
     private void show(Player p) {
         hide(p);
         if (!models || p.getWorld() != world) return;
-        List<AutoCloseable> list = new ArrayList<>();
+        Map<Figure, ModelBridge.Figure> seen = new HashMap<>();
         for (Figure f : figures) {
-            AutoCloseable h = fr.influencraft.fluxdungeons.mob.ModelBridge.figure(p, f.model(), f.at(), f.scale(), f.yaw());
-            if (h != null) list.add(h);
+            ModelBridge.Figure h = ModelBridge.figure(p, f.model(), f.at(), f.scale(), f.yaw());
+            if (h != null) seen.put(f, h);
             else plugin.getLogger().warning("Lobby figure " + f.id() + ": no BetterModel model " + f.model());
         }
-        shown.put(p.getUniqueId(), list);
+        shown.put(p.getUniqueId(), seen);
     }
 
     private void hide(Player p) {
-        List<AutoCloseable> list = shown.remove(p.getUniqueId());
-        if (list != null) for (AutoCloseable h : list) {
-            try {
-                h.close();
-            } catch (Exception ignored) {
-            }
-        }
+        Map<Figure, ModelBridge.Figure> seen = shown.remove(p.getUniqueId());
+        if (seen != null) seen.values().forEach(ModelBridge.Figure::close);
     }
 
     public void clear() {
+        if (gestures != null) gestures.cancel();
+        gestures = null;
         for (Player p : Bukkit.getOnlinePlayers()) hide(p);
         if (world != null) for (Entity e : world.getEntities()) if (e.getScoreboardTags().contains(TAG)) e.remove();
         boxes.clear();

@@ -36,6 +36,15 @@ rpg:
       width: 1.4
       height: 2.8
       name-height: 3.0
+      # Animations of the model played once over its idle loop, each after a random wait (seconds) within its bounds;
+      # never two at a time. They must end on the first pose of idle.
+      gestures:
+        idle_magic:
+          min: 12
+          max: 20
+        idle_gaze:
+          min: 30
+          max: 45
   # The class showcase (/classe in the lobby): the player watches each class cast its real spells in a small arena.
   # His hotbar holds one class per slot: the slot he holds is the class played, a click chooses it
   # (docs/technique/rpg.md).

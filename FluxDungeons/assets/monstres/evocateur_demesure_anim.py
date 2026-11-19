@@ -62,12 +62,13 @@ def baked():
     return _BAKED
 
 
-def arm_rotations(side, p):
-    """Rotations of Arm, Forearm, Hand, Fingers, Thumb (model axes) that put the arm in pose p."""
+def arm_rotations(side, p, base=None):
+    """Rotations of Arm, Forearm, Hand, Fingers, Thumb (model axes) that put the arm in pose p. `base`: the baked
+    arms of another model built on the same arm skeleton (the Oracle), as baked() gives them."""
     def m(v):
         return (v[0], side * v[1], side * v[2])
     Rsh, Rel, Rwr = rot(*m(p[0:3])), rot(*m(p[3:6])), rot(*m(p[6:9]))
-    sh_b, B, curl_b = baked()[side]
+    sh_b, B, curl_b = (base or baked())[side]
     Bt = transpose(B)
     d_arm = mul(Rsh, transpose(sh_b))
     d_fore = mul(transpose(d_arm), mul(mul(Rsh, Rel), Bt))
@@ -77,14 +78,14 @@ def arm_rotations(side, p):
     return [tuple(euler(d)) for d in (d_arm, d_fore, d_hand, d_fing, d_thumb)]
 
 
-def arm(anim, side, f):
+def arm(anim, side, f, base=None):
     """Tracks of one arm from f(t) -> pose (right-hand terms)."""
     name = "right" if side == 1 else "left"
     cache = {}
 
     def at(t):
         if t not in cache:
-            cache[t] = arm_rotations(side, f(t))
+            cache[t] = arm_rotations(side, f(t), base)
         return cache[t]
     for i, bone in enumerate(("Arm", "Forearm", "Hand", "Fingers", "Thumb")):
         anim.rot(f"{bone}_{name}", lambda t, i=i: at(t)[i])
