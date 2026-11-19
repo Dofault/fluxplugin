@@ -1,0 +1,28 @@
+# Stands: a BetterModel model on a base, its name above it, a right click that runs a command as the player.
+# Shown only to the players of a spawn group of Flux (plugins/Flux/spawns.yml, "" = everybody): they vanish for a
+# player as soon as he leaves the group. Nothing is placed in the world. /fluxmascot reload reads this file again.
+#
+# # How models are turned: yaw-mirror negates the yaw (needed by the robot, not by FluxMusic's musicians), yaw-offset is
+# added after (180 if every stand shows its back).
+yaw-mirror: false
+yaw-offset: 0
+stands:
+#   example:
+#     world: world
+#     x: 0.5          # centre of the block
+#     y: 64           # floor the base stands on
+#     z: 0.5
+#     yaw: 0          # way the model faces (Minecraft yaw)
+#     model: familier_caillou
+#     scale: 1.0
+#     animation: idle
+#     click-animation: happy
+#     base: "itemsadder:fluxpet:presentoir_metier_rochiste"   # item drawn under the model ("" = none)
+#     base-scale: 1.0
+#     base-height: 0.75   # the model stands this high above the floor
+#     label: "<#FFD94D><bold>Rochiste</bold>"
+#     label-height: 1.3   # above the model's feet
+#     command: "metier progression rochiste"
+#     group: ""
+#     click: {width: 1.0, height: 1.2}
+stands: {}

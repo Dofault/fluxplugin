@@ -21,6 +21,8 @@ import java.util.Locale;
  *   /fluxmascot stop &lt;player&gt;     his robot goes away
  *   /fluxmascot reload
  * </pre>
+ * Stands ({@code stands.yml}, {@link Stands}): models on a base with a name and a click command, shown to one spawn
+ * group of Flux (the job familiars of the tutorial spawn).
  * Bedrock players get the lines "bedrock" of the lang file instead: they would see no model and hear no voice.
  */
 public final class FluxMascot extends FluxPlugin {
@@ -28,6 +30,7 @@ public final class FluxMascot extends FluxPlugin {
     private Settings settings;
     private Visits greetings;
     private Network network;
+    private Stands stands;
 
     @Override
     protected void enable() {
@@ -35,6 +38,11 @@ public final class FluxMascot extends FluxPlugin {
         loadNetwork();
         greetings = new Visits(this);
         Bukkit.getPluginManager().registerEvents(greetings, this);
+        // stands of stands.yml (job familiars of the tutorial spawn), shown to a spawn group only
+        stands = new Stands(this);
+        stands.load();
+        Bukkit.getPluginManager().registerEvents(stands, this);
+        Bukkit.getScheduler().runTaskTimer(this, stands::tick, 20L, 10L);
         command("fluxmascot")
                 .description("The welcome robot: make it greet a player, stop it, reload.")
                 .permission("fluxmascot.admin")
@@ -47,6 +55,7 @@ public final class FluxMascot extends FluxPlugin {
     @Override
     protected void disable() {
         if (greetings != null) greetings.stopAll();
+        if (stands != null) stands.clear();
     }
 
     @Override
@@ -54,6 +63,7 @@ public final class FluxMascot extends FluxPlugin {
         super.reload();
         settings = Settings.read(getConfig());
         loadNetwork();
+        if (stands != null) stands.load();
     }
 
     Settings settings() {
