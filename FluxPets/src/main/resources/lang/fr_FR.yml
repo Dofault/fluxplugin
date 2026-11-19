@@ -136,7 +136,7 @@ pet-settings:
     # /influpet pet ... (administration)
     admin:
       unavailable: "&#FF5C5CSystème de familiers inactif (cf. logs du démarrage)."
-      usage: "&#FFD94D/influpet pet <give|take|givexp|givecurrentxp|reset|setlevel|activate|deactivate> <joueur> [familier] [valeur]"
+      usage: "&#FFD94D/influpet pet <give|take|givexp|givecurrentxp|reset|setlevel|activate|deactivate|starter> <joueur> [familier] [valeur]"
       unknown-player: "&#FF5C5CJoueur inconnu : %player%"
       unknown-pet: "&#FF5C5CFamilier inconnu : %id%"
       offline: "&#FF5C5C%player% n'est pas connecté."
@@ -145,6 +145,7 @@ pet-settings:
       no-active-pet: "&#FF5C5C%player% n'a pas de familier actif (ou n'est pas connecté)."
       adopted: "&#B376E5%player% adopte %pet%&#B376E5."
       already-adopted: "&#FF5C5C%player% a déjà %pet%&#FF5C5C (ou adoption annulée)."
+      starter-none: "&#FF5C5C%player% n'a aucun métier de starter-pets (config.yml) : pas de familier offert."
       taken: "&#B376E5%pet%&#B376E5 retiré à %player%."
       level-set: "&#B376E5%pet%&#B376E5 de %player% au niveau %level%."
       xp-given: "&#B376E5%xp% XP donnée à %pet%&#B376E5 de %player%."

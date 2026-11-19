@@ -135,7 +135,7 @@ pet-settings:
     # /influpet pet ... (administration)
     admin:
       unavailable: "&#FF5C5CPet system unavailable (see startup logs)."
-      usage: "&#FFD94D/influpet pet <give|take|givexp|givecurrentxp|reset|setlevel|activate|deactivate> <player> [pet] [value]"
+      usage: "&#FFD94D/influpet pet <give|take|givexp|givecurrentxp|reset|setlevel|activate|deactivate|starter> <player> [pet] [value]"
       unknown-player: "&#FF5C5CUnknown player: %player%"
       unknown-pet: "&#FF5C5CUnknown pet: %id%"
       offline: "&#FF5C5C%player% is not online."
@@ -144,6 +144,7 @@ pet-settings:
       no-active-pet: "&#FF5C5C%player% has no active pet (or is not online)."
       adopted: "&#B376E5%player% adopts %pet%&#B376E5."
       already-adopted: "&#FF5C5C%player% already has %pet%&#FF5C5C (or the adoption was cancelled)."
+      starter-none: "&#FF5C5C%player% has no job of starter-pets (config.yml): no free pet."
       taken: "&#B376E5%pet%&#B376E5 taken from %player%."
       level-set: "&#B376E5%pet%&#B376E5 of %player% set to level %level%."
       xp-given: "&#B376E5%xp% XP given to %pet%&#B376E5 of %player%."

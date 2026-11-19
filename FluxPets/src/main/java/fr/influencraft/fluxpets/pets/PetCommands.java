@@ -201,6 +201,10 @@ public final class PetCommands implements TabExecutor {
                 }
                 return;
             }
+            case "starter" -> {
+                starter(sender, online, who);
+                return;
+            }
             default -> {
                 // les autres sous-commandes prennent un familier
             }
@@ -270,6 +274,42 @@ public final class PetCommands implements TabExecutor {
             }
             default -> admin(sender, "usage");
         }
+    }
+
+    /**
+     * The free pet of a newcomer (2026-11-19): the common pet of his first job ({@code starter-pets} of the config, job
+     * id -> pet id), adopted with its reveal then made active. Run once by the tutorial (Typewriter) when he joins his
+     * first job; nothing when he already has it.
+     */
+    private static void starter(CommandSender sender, Player online, String who) {
+        if (online == null) {
+            admin(sender, "offline", "%player%", who);
+            return;
+        }
+        var map = Pets.plugin().getConfig().getConfigurationSection("starter-pets");
+        String petId = null;
+        if (map != null && fr.influencraft.flux.api.jobs.Jobs.available()) {
+            for (String job : map.getKeys(false)) {
+                if (fr.influencraft.flux.api.jobs.Jobs.get().active(online, job)) {
+                    petId = map.getString(job);
+                    break;
+                }
+            }
+        }
+        Pet pet = petId == null ? null : Pets.get(petId);
+        if (pet == null) {
+            admin(sender, "starter-none", "%player%", who);
+            return;
+        }
+        if (!fr.influencraft.flux.api.pets.Companions.adopt(online, pet.id())) {
+            admin(sender, "already-adopted", "%player%", who, "%pet%", pet.name());
+            return;
+        }
+        admin(sender, "adopted", "%player%", who, "%pet%", pet.name());
+        // made active once its reveal is over: it follows him from the start
+        Bukkit.getScheduler().runTaskLater(Pets.plugin(), () -> {
+            if (online.isOnline() && PetData.has(online, pet)) PetData.activate(online, pet);
+        }, 120L);
     }
 
     public static List<String> adminTab(String[] args) {

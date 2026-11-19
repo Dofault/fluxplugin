@@ -126,3 +126,7 @@ career-catch-up:
   boosters-per-level: 1
   # EcoJobs job id: booster id
   jobs: {}
+
+# Free pet of a newcomer: the pet of his first job (job id: pet id), given by `/fluxpets pet starter <player>`
+# (run once by the tutorial when he joins his first job). Empty: no free pet.
+starter-pets: {}
