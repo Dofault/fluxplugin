@@ -2,6 +2,7 @@ package fr.influencraft.fluxjobs;
 
 import fr.influencraft.flux.api.inventory.Items;
 import fr.influencraft.flux.api.jobs.JobXpGainEvent;
+import fr.influencraft.flux.api.universe.Universes;
 import fr.influencraft.flux.api.util.PlayerSettings;
 import fr.influencraft.flux.api.world.Coins;
 import org.bukkit.Bukkit;
@@ -121,7 +122,8 @@ final class JobCoinsListener implements Listener {
     @EventHandler
     public void onPaid(JobXpGainEvent event) {
         Player player = event.player();
-        if (event.gained() <= 0) return;
+        // the semi-rp only: another universe has its own money and its own coins (dungeon tokens in the rpg)
+        if (event.gained() <= 0 || !Universes.isVanilla(player)) return;
         boolean coins = isEnabled(player);
         boolean sound = PlayerSettings.flag(player, SOUND_SETTING, true);
         if (!coins) {
