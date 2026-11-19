@@ -43,6 +43,25 @@ public final class Ambience {
     private final Predicate<Player> wants;
     private final Map<UUID, State> states = new HashMap<>();
     private List<Place> places = List.of();
+    /** Places whose music is played by a stage instead (one shared broadcast): the ambience leaves them alone. */
+    private volatile Predicate<String> staged = id -> false;
+
+    public void staged(Predicate<String> staged) {
+        this.staged = staged;
+    }
+
+    /** Ids of the places. */
+    public List<String> places() {
+        return places.stream().map(Place::id).toList();
+    }
+
+    /** Worlds, songs (the first one heard first when the place has one) and pause of a place; null when unknown. */
+    public PlaceInfo place(String id) {
+        for (Place p : places) if (p.id().equalsIgnoreCase(id)) return new PlaceInfo(p.id(), p.worlds(), p.songs(), p.pauseMillis());
+        return null;
+    }
+
+    public record PlaceInfo(String id, List<String> worlds, List<String> songs, long pauseMillis) {}
 
     public Ambience(Jukebox jukebox, Function<String, Song> songs, Predicate<Player> wants) {
         this.jukebox = jukebox;
@@ -80,7 +99,7 @@ public final class Ambience {
 
     private Place placeOf(Player player) {
         String world = player.getWorld().getName().toLowerCase(Locale.ROOT);
-        for (Place p : places) if (p.worlds().contains(world)) return p;
+        for (Place p : places) if (p.worlds().contains(world)) return staged.test(p.id()) ? null : p;
         return null;
     }
 

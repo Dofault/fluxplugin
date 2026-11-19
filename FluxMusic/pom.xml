@@ -28,6 +28,14 @@
             <version>0.1.0</version>
             <scope>provided</scope>
         </dependency>
+        <!-- BetterModel (softdepend): only touched by play.ModelBridge -->
+        <dependency>
+            <groupId>kr.toxicity.model</groupId>
+            <artifactId>bettermodel</artifactId>
+            <version>3.6.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/bettermodel-3.6.0-paper.jar</systemPath>
+        </dependency>
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>

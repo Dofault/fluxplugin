@@ -20,3 +20,23 @@ ambience:
     worlds: [resaac]
     pause-seconds: 4
     songs: [resaac, resaac2, resaac_bonjour, resaac_fleurs, resaac_route, resaac_the, resaac_toits, resaac_gare, resaac_parc, resaac_academie, resaac_fete, resaac_quais]
+# The band of the stages (/musique stage place <place>): the model (BetterModel) playing each note block instrument,
+# front row first. A place given a stage plays one music for everybody there, heard from the stage within its
+# radius; each musician moves only while his instrument sounds.
+band:
+  guitar: guitariste
+  banjo: banjoiste
+  flute: trompettiste
+  harp: harpiste
+  pling: pling
+  bit: bit
+  bell: glockenspiel
+  cow_bell: cloche
+  chime: carillonneur
+  xylophone: xylophoniste
+  iron_xylophone: vibraphoniste
+  snare: caisse_claire
+  basedrum: grosse_caisse
+  hat: charleston
+  bass: contrebassiste
+  didgeridoo: didgeridoo

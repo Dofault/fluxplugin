@@ -18,10 +18,19 @@ import java.util.TreeMap;
  * @param notes     sounds of each of {@link #times}
  * @param angles    for each sound of {@link #notes}: where it comes from, in degrees around the listener (0 in front,
  *                  90 on his right, -90 on his left), or NaN for a sound played on the listener himself (no stereo)
+ * @param instruments for each sound of {@link #notes}: the instrument playing it (a stage shows who plays)
  * @param warnings  what was fixed while reading the file (notes moved by an octave, bars of a wrong length...)
  */
 public record Song(String id, String title, String author, long stepNanos, int length, boolean loop,
-                   int loopStart, int[] times, Sound[][] notes, float[][] angles, List<String> warnings) {
+                   int loopStart, int[] times, Sound[][] notes, float[][] angles, Instrument[][] instruments,
+                   List<String> warnings) {
+
+    /** Instruments heard at least once in the song. */
+    public java.util.Set<Instrument> cast() {
+        java.util.EnumSet<Instrument> set = java.util.EnumSet.noneOf(Instrument.class);
+        for (Instrument[] step : instruments) java.util.Collections.addAll(set, step);
+        return set;
+    }
 
     /** Index in {@link #times} of the first step played again when the song loops. */
     public int loopIndex() {
@@ -41,7 +50,7 @@ public record Song(String id, String title, String author, long stepNanos, int l
 
     /** Collects notes step by step, then builds the song. */
     public static final class Builder {
-        private record Placed(Sound sound, float angle) {
+        private record Placed(Sound sound, float angle, Instrument instrument) {
         }
 
         private final TreeMap<Integer, List<Placed>> steps = new TreeMap<>();
@@ -64,7 +73,7 @@ public record Song(String id, String title, String author, long stepNanos, int l
                     // safe off the main thread (note block sounds have a single variant anyway).
                     .seed(0L)
                     .build();
-            steps.computeIfAbsent(step, k -> new ArrayList<>()).add(new Placed(sound, angle));
+            steps.computeIfAbsent(step, k -> new ArrayList<>()).add(new Placed(sound, angle, instrument));
             length = Math.max(length, step + 1);
         }
 
@@ -80,20 +89,23 @@ public record Song(String id, String title, String author, long stepNanos, int l
             int[] times = new int[steps.size()];
             Sound[][] notes = new Sound[steps.size()][];
             float[][] angles = new float[steps.size()][];
+            Instrument[][] instruments = new Instrument[steps.size()][];
             int i = 0;
             for (var e : steps.entrySet()) {
                 times[i] = e.getKey();
                 List<Placed> placed = e.getValue();
                 notes[i] = new Sound[placed.size()];
                 angles[i] = new float[placed.size()];
+                instruments[i] = new Instrument[placed.size()];
                 for (int k = 0; k < placed.size(); k++) {
                     notes[i][k] = placed.get(k).sound();
                     angles[i][k] = placed.get(k).angle();
+                    instruments[i][k] = placed.get(k).instrument();
                 }
                 i++;
             }
             int from = loopStart < 0 || loopStart >= length ? 0 : loopStart;
-            return new Song(id, title, author, stepNanos, length, loop, from, times, notes, angles,
+            return new Song(id, title, author, stepNanos, length, loop, from, times, notes, angles, instruments,
                     List.copyOf(warnings));
         }
     }

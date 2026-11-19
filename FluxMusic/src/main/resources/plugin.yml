@@ -5,6 +5,7 @@ api-version: "26.2"
 description: Songs played note by note with the client's note block sounds (nothing in the resource pack).
 authors: [Influencraft]
 depend: [Flux]
+softdepend: [BetterModel]
 
 permissions:
   fluxmusic.play:
@@ -14,5 +15,5 @@ permissions:
     description: Play or stop a song for another player or everyone.
     default: op
   fluxmusic.admin:
-    description: Reload the songs.
+    description: Reload the songs, place the stages.
     default: op

@@ -182,35 +182,7 @@ public final class Jukebox {
             if (late > LATE_NANOS) start += late;
             boolean silent = layer == music && jingles.containsKey(player.getUniqueId());
             if (!silent) {
-                try {
-                    // heard where his ears are: on himself, or on the camera he looks through (a scene), else the
-                    // music comes from where his body was left, on one side
-                    org.bukkit.entity.Entity camera = fr.influencraft.flux.api.client.Camera.viewed(player);
-                    Sound.Emitter from = camera != null ? camera : Sound.Emitter.self();
-                    Sound[] sounds = song.notes()[index];
-                    float[] angles = song.angles()[index];
-                    org.bukkit.Location ears = null;
-                    for (int i = 0; i < sounds.length; i++) {
-                        Sound s = gain >= 1f ? sounds[i] : quieter(sounds[i], gain);
-                        if (Float.isNaN(angles[i])) {
-                            player.playSound(s, from);
-                            continue;
-                        }
-                        // stereo: the sound is sent from a point around his head, on the side of the angle,
-                        // relative to where he looks (the client pans it); a little louder for the distance
-                        if (ears == null) {
-                            org.bukkit.entity.Entity head = camera != null ? camera : player;
-                            ears = head instanceof org.bukkit.entity.LivingEntity l ? l.getEyeLocation() : head.getLocation();
-                        }
-                        double yaw = Math.toRadians(ears.getYaw()), a = Math.toRadians(angles[i]);
-                        double fx = -Math.sin(yaw), fz = Math.cos(yaw), rx = -Math.cos(yaw), rz = -Math.sin(yaw);
-                        double x = ears.getX() + (fx * Math.cos(a) + rx * Math.sin(a)) * SIDE_DISTANCE;
-                        double z = ears.getZ() + (fz * Math.cos(a) + rz * Math.sin(a)) * SIDE_DISTANCE;
-                        player.playSound(louder(s, SIDE_GAIN), x, ears.getY(), z);
-                    }
-                } catch (RuntimeException e) {
-                    // the connection closed between the check and the send: the quit listener stops the song
-                }
+                send(player, song.notes()[index], song.angles()[index], gain);
             }
             index++;
             if (index >= song.times().length) {
@@ -228,6 +200,170 @@ public final class Jukebox {
             }
             schedule();
         }
+    }
+
+    /**
+     * Sends the sounds of one step to a player's own ears ("in his headphones"), at {@code gain} times their volume.
+     * Heard on himself, or on the camera he looks through (a scene), else the music would come from where his body
+     * was left, on one side.
+     */
+    private static void send(Player player, Sound[] sounds, float[] angles, float gain) {
+        try {
+            org.bukkit.entity.Entity camera = fr.influencraft.flux.api.client.Camera.viewed(player);
+            Sound.Emitter from = camera != null ? camera : Sound.Emitter.self();
+            org.bukkit.Location ears = null;
+            for (int i = 0; i < sounds.length; i++) {
+                Sound s = gain >= 1f ? sounds[i] : quieter(sounds[i], gain);
+                if (Float.isNaN(angles[i])) {
+                    player.playSound(s, from);
+                    continue;
+                }
+                // stereo: the sound is sent from a point around his head, on the side of the angle,
+                // relative to where he looks (the client pans it); a little louder for the distance
+                if (ears == null) {
+                    org.bukkit.entity.Entity head = camera != null ? camera : player;
+                    ears = head instanceof org.bukkit.entity.LivingEntity l ? l.getEyeLocation() : head.getLocation();
+                }
+                double yaw = Math.toRadians(ears.getYaw()), a = Math.toRadians(angles[i]);
+                double fx = -Math.sin(yaw), fz = Math.cos(yaw), rx = -Math.cos(yaw), rz = -Math.sin(yaw);
+                double x = ears.getX() + (fx * Math.cos(a) + rx * Math.sin(a)) * SIDE_DISTANCE;
+                double z = ears.getZ() + (fz * Math.cos(a) + rz * Math.sin(a)) * SIDE_DISTANCE;
+                player.playSound(louder(s, SIDE_GAIN), x, ears.getY(), z);
+            }
+        } catch (RuntimeException e) {
+            // the connection closed between the check and the send: the quit listener stops the song
+        }
+    }
+
+    // ---------------------------------------------------------------- broadcast
+
+    /** Who hears a {@link Broadcast} and where it sounds from; every method is called on the clock thread. */
+    public interface Scene {
+        /** Players hearing the broadcast now (a snapshot safe to read from another thread). */
+        java.util.Collection<Player> listeners();
+
+        /** World of the stage and its centre. */
+        String world();
+
+        double x();
+
+        double y();
+
+        double z();
+
+        /** Within this distance of the centre the music comes from the stage, in the headphones beyond. */
+        double radius();
+
+        /** Where this instrument is played on the stage (x, y, z). */
+        double[] source(fr.influencraft.fluxmusic.song.Instrument instrument);
+
+        /** A note of this instrument was just sent (its pitch, 0.5 to 2). */
+        void played(fr.influencraft.fluxmusic.song.Instrument instrument, float pitch);
+    }
+
+    /**
+     * One song played to many players on one clock: they all hear the same note at the same time (a band on a
+     * stage). Far from the stage it sounds in each player's headphones as any music; within the stage's radius it
+     * comes from the musicians themselves, the two blending with the distance so nothing jumps at the edge.
+     * A player hearing his own music or a jingle is left alone meanwhile.
+     */
+    public final class Broadcast implements Runnable {
+        private final Song song;
+        private final Scene scene;
+        private long start = System.nanoTime() + LEAD_NANOS;
+        private int index;
+        private volatile boolean done;
+        private volatile ScheduledFuture<?> next;
+
+        private Broadcast(Song song, Scene scene) {
+            this.song = song;
+            this.scene = scene;
+        }
+
+        public Song song() {
+            return song;
+        }
+
+        /** True once the song ended (its last notes rung) or was cancelled. */
+        public boolean done() {
+            return done;
+        }
+
+        public void cancel() {
+            done = true;
+            ScheduledFuture<?> f = next;
+            if (f != null) f.cancel(false);
+        }
+
+        private void schedule() {
+            if (done) return;
+            next = clock.schedule(this, start + song.times()[index] * song.stepNanos() - System.nanoTime(),
+                    TimeUnit.NANOSECONDS);
+        }
+
+        @Override
+        public void run() {
+            if (done) return;
+            long late = System.nanoTime() - (start + song.times()[index] * song.stepNanos());
+            if (late > LATE_NANOS) start += late;
+            Sound[] sounds = song.notes()[index];
+            float[] angles = song.angles()[index];
+            fr.influencraft.fluxmusic.song.Instrument[] who = song.instruments()[index];
+            try {
+                double radius = scene.radius();
+                float reach = (float) Math.max(1, radius / 16);   // a sound of volume 1 dies out at 16 blocks
+                for (Player player : scene.listeners()) {
+                    UUID id = player.getUniqueId();
+                    if (!player.isOnline() || music.containsKey(id) || jingles.containsKey(id)) continue;
+                    float head = 1f;
+                    try {
+                        org.bukkit.Location at = player.getLocation();
+                        if (at.getWorld() != null && at.getWorld().getName().equalsIgnoreCase(scene.world())) {
+                            double dx = at.getX() - scene.x(), dy = at.getY() - scene.y(), dz = at.getZ() - scene.z();
+                            double d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                            if (d < radius) head = (float) (d / radius);
+                        }
+                        if (head < 1f) for (int i = 0; i < sounds.length; i++) {
+                            double[] from = scene.source(who[i]);
+                            player.playSound(scaled(sounds[i], reach), from[0], from[1], from[2]);
+                        }
+                    } catch (RuntimeException e) {
+                        // he left meanwhile
+                    }
+                    if (head > 0.02f) send(player, sounds, angles, head);
+                }
+                for (int i = 0; i < sounds.length; i++) scene.played(who[i], sounds[i].pitch());
+            } catch (RuntimeException e) {
+                // a scene reloaded under us: the next step reads the new one
+            }
+            index++;
+            if (index >= song.times().length) {
+                // the song is over once its last notes have rung
+                clock.schedule(() -> done = true,
+                        Math.max(0, (song.length() - song.times()[song.times().length - 1]) * song.stepNanos()),
+                        TimeUnit.NANOSECONDS);
+                return;
+            }
+            schedule();
+        }
+    }
+
+    /** Plays a song once to everybody of a scene, on one clock. */
+    public Broadcast broadcast(Song song, Scene scene) {
+        Broadcast b = new Broadcast(song, scene);
+        if (song.times().length == 0) b.done = true;
+        else b.schedule();
+        return b;
+    }
+
+    /** Whether the player hears a music or a jingle of his own (a broadcast stays silent for him meanwhile). */
+    public boolean busy(UUID player) {
+        return music.containsKey(player) || jingles.containsKey(player);
+    }
+
+    private static Sound scaled(Sound s, float gain) {
+        return gain == 1f ? s : Sound.sound().type(s.name()).source(s.source()).volume(s.volume() * gain)
+                .pitch(s.pitch()).seed(0L).build();
     }
 
     private static Sound louder(Sound s, float gain) {

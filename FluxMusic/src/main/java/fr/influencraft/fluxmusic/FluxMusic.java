@@ -8,6 +8,7 @@ import fr.influencraft.flux.api.music.Music;
 import fr.influencraft.flux.api.util.PlayerSettings;
 import fr.influencraft.fluxmusic.play.Ambience;
 import fr.influencraft.fluxmusic.play.Jukebox;
+import fr.influencraft.fluxmusic.play.Stages;
 import fr.influencraft.fluxmusic.song.NbsReader;
 import fr.influencraft.fluxmusic.song.ScoreReader;
 import fr.influencraft.fluxmusic.song.Song;
@@ -39,6 +40,7 @@ import java.util.stream.Stream;
  *   /musique play &lt;song&gt; [player|*]
  *   /musique stop [player|*]
  *   /musique reload
+ *   /musique stage place &lt;place&gt; [width] [depth] | radius &lt;place&gt; &lt;blocks&gt; | remove &lt;place&gt; | list
  * </pre>
  *
  * Other plugins play music through Flux's {@link Music} (this plugin is its provider); moments of the game that
@@ -50,6 +52,7 @@ public final class FluxMusic extends FluxPlugin implements Listener {
     private volatile Map<String, Song> songs = Map.of();
     private Jukebox jukebox;
     private Ambience ambience;
+    private Stages stages;
 
     @Override
     protected void enable() {
@@ -59,6 +62,9 @@ public final class FluxMusic extends FluxPlugin implements Listener {
         jukebox.fadeOut(getConfig().getDouble("fade-out-seconds", 2.5));
         ambience.load(getConfig().getConfigurationSection("ambience"), getLogger());
         Bukkit.getScheduler().runTaskTimer(this, ambience::tick, 40L, 20L);
+        stages = new Stages(this, jukebox, ambience, this::song, FluxMusic::wants);
+        stages.load(getConfig().getConfigurationSection("band"));
+        Bukkit.getScheduler().runTaskTimer(this, stages::tick, 60L, 2L);
         Music.provide(new Music.Provider() {
             public boolean play(Player player, String id, Boolean loop) {
                 Song song = song(id);
@@ -80,6 +86,7 @@ public final class FluxMusic extends FluxPlugin implements Listener {
 
             public String playing(Player player) {
                 Song s = jukebox.playing(player.getUniqueId());
+                if (s == null && !jukebox.busy(player.getUniqueId())) s = stages.playing(player);
                 return s == null ? null : s.id();
             }
 
@@ -100,6 +107,7 @@ public final class FluxMusic extends FluxPlugin implements Listener {
     @Override
     protected void disable() {
         Music.provide(null);
+        if (stages != null) stages.clear();
         if (jukebox != null) jukebox.shutdown();
     }
 
@@ -109,12 +117,14 @@ public final class FluxMusic extends FluxPlugin implements Listener {
         loadSongs();
         if (jukebox != null) jukebox.fadeOut(getConfig().getDouble("fade-out-seconds", 2.5));
         if (ambience != null) ambience.load(getConfig().getConfigurationSection("ambience"), getLogger());
+        if (stages != null) stages.load(getConfig().getConfigurationSection("band"));
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
         jukebox.stopAll(e.getPlayer().getUniqueId());
         ambience.forget(e.getPlayer().getUniqueId());
+        stages.forget(e.getPlayer());
     }
 
     /** Moments of the game given a song in config.yml ({@code moments}); empty = nothing played. */
@@ -239,10 +249,23 @@ public final class FluxMusic extends FluxPlugin implements Listener {
             case "skip", "passer", "suivant" -> {
                 Player p = Players.of(sender);
                 if (p == null) return false;
+                String stage = stages.stageOf(p);
+                if (stage != null) {   // one music for everybody there: only the staff changes the song
+                    if (p.hasPermission("fluxmusic.admin") && stages.skip(stage)) messages().send(p, "stage-skipped");
+                    else messages().send(p, "nothing-to-skip");
+                    return true;
+                }
                 Song next = ambience.skip(p);
                 if (next == null) messages().send(p, "nothing-to-skip");
                 else messages().send(p, "skipped", "%title%", next.title());
                 return true;
+            }
+            case "stage", "scene" -> {
+                if (!sender.hasPermission("fluxmusic.admin")) {
+                    messages().send(sender, "no-permission");
+                    return true;
+                }
+                return onStage(sender, args);
             }
             case "reload" -> {
                 if (!sender.hasPermission("fluxmusic.admin")) {
@@ -256,6 +279,63 @@ public final class FluxMusic extends FluxPlugin implements Listener {
             default -> {
                 return false;
             }
+        }
+    }
+
+    /** {@code /musique stage ...}: places, moves, resizes or removes the stage of a place. */
+    private boolean onStage(CommandSender sender, String[] args) {
+        String sub = args.length < 2 ? "list" : args[1].toLowerCase(Locale.ROOT);
+        switch (sub) {
+            case "list", "liste" -> {
+                List<String[]> list = stages.list();
+                if (list.isEmpty()) messages().send(sender, "stage-none");
+                for (String[] s : list) messages().send(sender, "stage-line", "%id%", s[0], "%world%", s[1],
+                        "%at%", s[2], "%size%", s[3], "%radius%", s[4], "%count%", s[5]);
+                return true;
+            }
+            case "place", "placer", "move", "deplacer" -> {
+                Player p = Players.of(sender);
+                if (p == null || args.length < 3) {
+                    messages().send(sender, "stage-usage");
+                    return true;
+                }
+                double width = args.length > 3 ? number(args[3]) : 0, depth = args.length > 4 ? number(args[4]) : 0;
+                if (!stages.place(args[2], p.getLocation(), width, depth, 0)) {
+                    messages().send(sender, "stage-unknown-place", "%id%", args[2], "%places%", String.join(", ", ambience.places()));
+                    return true;
+                }
+                messages().send(sender, "stage-placed", "%id%", args[2].toLowerCase(Locale.ROOT));
+                return true;
+            }
+            case "radius", "rayon" -> {
+                if (args.length < 4 || number(args[3]) <= 0) {
+                    messages().send(sender, "stage-usage");
+                    return true;
+                }
+                messages().send(sender, stages.radius(args[2], number(args[3])) ? "stage-radius" : "stage-missing",
+                        "%id%", args[2], "%radius%", args[3]);
+                return true;
+            }
+            case "remove", "supprimer" -> {
+                if (args.length < 3) {
+                    messages().send(sender, "stage-usage");
+                    return true;
+                }
+                messages().send(sender, stages.remove(args[2]) ? "stage-removed" : "stage-missing", "%id%", args[2]);
+                return true;
+            }
+            default -> {
+                messages().send(sender, "stage-usage");
+                return true;
+            }
+        }
+    }
+
+    private static double number(String text) {
+        try {
+            return Double.parseDouble(text.replace(',', '.'));
+        } catch (NumberFormatException e) {
+            return 0;
         }
     }
 
@@ -279,8 +359,15 @@ public final class FluxMusic extends FluxPlugin implements Listener {
     }
 
     private List<String> complete(CommandSender sender, String[] args) {
-        if (args.length == 1) return filter(Stream.of("liste", "jouer", "passer", "stop", "reload"), args[0]);
+        if (args.length == 1) return filter(sender.hasPermission("fluxmusic.admin")
+                ? Stream.of("liste", "jouer", "passer", "stop", "scene", "reload")
+                : Stream.of("liste", "jouer", "passer", "stop"), args[0]);
         String sub = args[0].toLowerCase(Locale.ROOT);
+        if ((sub.equals("scene") || sub.equals("stage")) && sender.hasPermission("fluxmusic.admin")) {
+            if (args.length == 2) return filter(Stream.of("placer", "rayon", "supprimer", "liste"), args[1]);
+            if (args.length == 3) return filter(ambience.places().stream(), args[2]);
+            return List.of();
+        }
         boolean play = sub.equals("play") || sub.equals("jouer");
         if (args.length == 2 && play) return filter(songs.keySet().stream(), args[1]);
         if (sender.hasPermission("fluxmusic.others")
