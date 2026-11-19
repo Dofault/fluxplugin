@@ -21,7 +21,8 @@ level-up:
     - "!&r"
   money: "!&r  &8• &7Gᴀɪɴ :&f %money%"
   coefficient: "!&r  &8• &7Cᴏᴇꜰꜰɪᴄɪᴇɴᴛ :&f ×%before% &8➜ &#aafb93×%after%"
-  actions: "!&r  &8• &7Aᴄᴛɪᴏɴꜱ :&f [/metier blocs %job_id%]"
+  reward: "!&r  &8• &7Réᴄᴏᴍᴘᴇɴꜱᴇ :&f %amount% %label% &f[/%flux_cmd_flux_rewards%]"
+  actions: "!&r  &8• &7Aᴄᴛɪᴏɴꜱ :&f [/metier %job_id%]"
   footer:
     - "!&r"
     - "!&#4DA954&m                                                            "

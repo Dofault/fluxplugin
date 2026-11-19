@@ -35,6 +35,11 @@ final class JobChoiceCommand {
             Bukkit.dispatchCommand(player, "metiers");
             return true;
         }
+        // /metier <job>: our Careers menu on that job (the command shown to players, 2026-11-19)
+        if (args.length == 1 && Jobs.get().exists(args[0].toLowerCase(Locale.ROOT))) {
+            if (!JobMenu.open(player, args[0].toLowerCase(Locale.ROOT))) Bukkit.dispatchCommand(player, "metiers");
+            return true;
+        }
         String sub = switch (args[0].toLowerCase(Locale.ROOT)) {
             case "join", "rejoindre" -> "join";
             case "leave", "quitter" -> "leave";

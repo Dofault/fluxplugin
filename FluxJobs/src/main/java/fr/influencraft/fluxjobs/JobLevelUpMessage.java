@@ -21,13 +21,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * look of the announcements and tournaments, in the job colours (those of the XP boss bar). Texts: {@code level-up.*}
  * of the lang file.
  * <p>
- * Levels gained one after the other (the first levels go fast) make one message: it waits a little, then tells the
- * levels from the first to the last and their money added up.
+ * Levels gained in the same moment (several at once) make one message, sent at once (two ticks later: the job
+ * plugin's level rewards are given meanwhile). Those rewards (a booster of the job) are told in it, and Flux's own
+ * "new reward waiting" message is not sent for them ({@code Rewards.takeNotices}).
  */
 final class JobLevelUpMessage implements Listener {
 
-    /** Ticks a level waits for the next one before the message is sent. */
-    private static final long GATHER_TICKS = 40L;
+    /** Ticks before the message: levels of the same moment and their rewards are in by then. */
+    private static final long GATHER_TICKS = 2L;
 
     private final FluxPlugin plugin;
     private final Map<String, Pending> pending = new ConcurrentHashMap<>();
@@ -78,6 +79,9 @@ final class JobLevelUpMessage implements Listener {
         m.send(w.player, "level-up.header", vars);
         if (w.money > 0) m.send(w.player, "level-up.money", vars);
         m.send(w.player, "level-up.coefficient", vars);
+        for (fr.influencraft.flux.api.reward.Reward r : fr.influencraft.flux.api.reward.Rewards.takeNotices(w.player)) {
+            m.send(w.player, "level-up.reward", "%amount%", String.valueOf(Math.max(1, r.amount())), "%label%", r.label());
+        }
         m.send(w.player, "level-up.actions", vars);
         m.send(w.player, "level-up.footer", vars);
     }
