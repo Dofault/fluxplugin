@@ -106,4 +106,19 @@ class GalleryPlanTest {
         assertTrue(p.deadEnds.size() >= 5, "dead ends " + p.deadEnds.size());
         System.out.println("approach, upper level\n" + p.map(LONG.upper() + 1) + "trail " + p.trail.size() + " points");
     }
+
+    /** The mole's lair since 2026-11-19: an approach of 80 blocks (a maze twice as long). */
+    private static final GalleryPlan.Settings DEEP = GalleryPlan.Settings.of(30, 110, 63);
+
+    @Test
+    void deepApproachPlansAreWalkable() {
+        for (long seed = 0; seed < 40; seed++) {
+            GalleryPlan p = GalleryPlan.generate(DEEP, seed);
+            assertTrue(p.walkable(), "seed " + seed);
+            assertTrue(p.nest.z() >= DEEP.arenaZ0(), "the nest is under the arena, seed " + seed);
+            assertFalse(p.underArena(p.entrance.z()), "the entrance is far from the arena, seed " + seed);
+        }
+        GalleryPlan p = GalleryPlan.generate(DEEP, 42);
+        System.out.println("deep approach, upper level\n" + p.map(DEEP.upper() + 1) + "trail " + p.trail.size() + " points, dead ends " + p.deadEnds.size());
+    }
 }

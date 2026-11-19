@@ -5,7 +5,7 @@ checked, then built by console commands with the RPG look of the dungeons.
 The boss's own ground (its maze of galleries, its nest and the arena above) is not here: FluxDungeons digs it anew for
 every run (dungeon/Burrows.java, `burrows` section of dungeons/taupe.yml) north of this map, and joins it to the end of
 this map by a tunnel (`burrows.link`: the cell right after the last one of the final tunnel below). This map must
-therefore stay south of z = -72 (the lair and its hills cover z -71 to 31).
+therefore stay south of z = -72 (the lair, placed right after the link, and its hills start at z -71 and run north).
 
 A burrow under the fields, going down at every step, played from south to north (+z):
   - the hollow (start at 0, 65, -282): a grassy dip open to the sky, molehills, and the mouth of the burrow;

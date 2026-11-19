@@ -115,6 +115,8 @@ final class Burrows {
 
     private static final Material[] ORES = {Material.COAL_ORE, Material.COPPER_ORE, Material.IRON_ORE};
     private static final Color DUST = Color.fromRGB(0x96765A);
+    /** Width of the wooded hills around the ground of a lair with an approach. */
+    private static final int HILLS = 16;
 
     private final FluxPlugin plugin;
     private final Runs runs;
@@ -155,7 +157,11 @@ final class Burrows {
             return;
         }
         World w = run.world;
-        Lair lair = new Lair(plan, w, -size / 2, -depth + size / 2, c.getString("boss", ""));
+        // the arena is centred on the origin, unless the lair is entered from the dungeon's own map: then its southern
+        // hills start right after the link's row, whatever the length of the approach (the map never gets covered)
+        List<Integer> linkAt = c.getIntegerList("link");
+        int oz = linkAt.size() >= 3 && depth > size ? linkAt.get(2) + 1 + HILLS : -depth + size / 2;
+        Lair lair = new Lair(plan, w, -size / 2, oz, c.getString("boss", ""));
         lairs.put(run.id, lair);
         w.setGameRule(GameRules.ADVANCE_TIME, false);
         w.setTime(c.getLong("time", 6000));
@@ -524,7 +530,7 @@ final class Burrows {
     private void surface(Lair l, Random r) {
         GalleryPlan.Settings s = l.plan.settings;
         if (s.depth() <= s.size()) return;
-        int top = s.top(), size = s.size(), depth = s.depth(), margin = 16;
+        int top = s.top(), size = s.size(), depth = s.depth(), margin = HILLS;
         // wooded hills all round
         for (int x = -margin; x < size + margin; x++) {
             for (int z = -margin; z < depth + margin; z++) {
@@ -772,6 +778,18 @@ final class Burrows {
                 Block b = l.world.getBlockAt(x, y, z);
                 if (core.contains(Block.getBlockKey(x, y, z))) b.setType(Material.AIR, false);
                 else if (outside && z < l.oz + 2) b.setType(earth[r.nextInt(earth.length)], false);
+            }
+        }
+        // the link's row is the gap between the map and the lair's hills: a wall across it, the tunnel's core only
+        // left open (the map's last tunnel is wider and higher than this one: without it, players walked out into the
+        // void there)
+        for (int z = lz; z < l.oz - HILLS; z++) {
+            for (int x = lx - 12; x <= lx + 12; x++) {
+                for (int y = ly - 6; y <= ly + 12; y++) {
+                    if (core.contains(Block.getBlockKey(x, y, z))) continue;
+                    Block b = l.world.getBlockAt(x, y, z);
+                    if (b.getType().isAir()) b.setType(earth[r.nextInt(earth.length)], false);
+                }
             }
         }
         // the same dim light as the galleries
