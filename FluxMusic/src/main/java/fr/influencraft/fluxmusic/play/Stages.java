@@ -41,7 +41,8 @@ import java.util.function.Predicate;
  * particle rises from him on his notes. A model with gestures plays each note with one: {@code hit_<k>} (k from
  * low to high pitch: which bar, key or string), or {@code hit_l} / {@code hit_r} in turn (drums), started a little
  * before the note so the stick lands on it, and {@code hold_<k>} keeps a hand where the pitch is (neck of a guitar).
- * A model without gestures loops {@code playing}, at the pace of its notes (faster on a quick run).
+ * Meanwhile his {@code ready} loop (one second drawn for two beats) sways him in time: its speed is set from the
+ * song's tempo. A model without gestures loops {@code playing}, at the pace of its notes (faster on a quick run).
  * Only the musicians of the song being played stand on the stage: at each new song those who have nothing to play
  * leave, the others take their places again across the stage.</p>
  *
@@ -256,6 +257,8 @@ public final class Stages {
         boolean present;
         volatile Jukebox.Broadcast broadcast;
         Set<Instrument> cast = Set.of();
+        /** Speed of the {@code ready} loop for the song's tempo (the loop is one second for two beats). */
+        float sway = 1f;
         final List<String> queue = new ArrayList<>();
         String last;
         long nextAt;
@@ -392,9 +395,9 @@ public final class Stages {
                 int notes = fresh.getAndSet(i, 0);
                 m.rate += (notes * 20f - m.rate) * 0.06f;
                 Float perSecond = GESTURES.get(m.instrument);
-                float want = !playing || gestures || perSecond == null ? 1f
+                float want = gestures ? (live ? sway : 1f) : !playing || perSecond == null ? 1f
                         : Math.max(SPEED_MIN, Math.min(SPEED_MAX, m.rate / perSecond));
-                m.speed += (want - m.speed) * 0.1f;
+                m.speed += (want - m.speed) * (gestures ? 1f : 0.1f);
                 if (m.figure != null) m.figure.speed(m.speed);
                 // one note particle per new note, coloured by its pitch, at most every 4 ticks
                 if (playing && note != shownNote[i] && tick % 4 == i % 4 && !viewers.isEmpty()) {
@@ -455,6 +458,11 @@ public final class Stages {
             if (song == null) return;
             last = song.id();
             cast = song.cast();
+            // a beat between 0.33 and 0.83 s (72 to 180 a minute): faster or slower songs sway on half or double time
+            double beat = song.beatNanos() > 0 ? song.beatNanos() / 1e9 : 0.5;
+            while (beat < 0.33) beat *= 2;
+            while (beat > 0.83) beat /= 2;
+            sway = (float) (0.5 / beat);
             stand(cast);
             for (int i = 0; i < lastNote.length(); i++) lastNote.set(i, 0);
             broadcast = jukebox.broadcast(song, this);

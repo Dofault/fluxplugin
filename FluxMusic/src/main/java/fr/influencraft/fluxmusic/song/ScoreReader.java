@@ -135,6 +135,7 @@ public final class ScoreReader {
         }
         song.length(cursor * SUB);
         if (!loopFound) song.warn("loop-from: section " + loopFrom + " not in order, the whole song loops");
+        song.beat(Math.round(60_000_000_000d / bpm));
         return song.build(id, yaml.getString("title", id), yaml.getString("author", ""), stepNanos,
                 yaml.getBoolean("loop", false), loopStart * SUB);
     }

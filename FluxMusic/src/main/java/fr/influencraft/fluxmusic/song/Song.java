@@ -12,6 +12,7 @@ import java.util.TreeMap;
  * Only the steps holding notes are kept ({@link #times}), so silences cost nothing.
  *
  * @param stepNanos duration of one step
+ * @param beatNanos duration of one beat (0 when the file does not tell: Note Block Studio)
  * @param length    number of steps of the whole song (silences at the end included)
  * @param loopStart step a looping song goes back to (0 = the start; an intro is played once before it)
  * @param times     steps holding notes, increasing
@@ -21,7 +22,7 @@ import java.util.TreeMap;
  * @param instruments for each sound of {@link #notes}: the instrument playing it (a stage shows who plays)
  * @param warnings  what was fixed while reading the file (notes moved by an octave, bars of a wrong length...)
  */
-public record Song(String id, String title, String author, long stepNanos, int length, boolean loop,
+public record Song(String id, String title, String author, long stepNanos, long beatNanos, int length, boolean loop,
                    int loopStart, int[] times, Sound[][] notes, float[][] angles, Instrument[][] instruments,
                    List<String> warnings) {
 
@@ -56,6 +57,12 @@ public record Song(String id, String title, String author, long stepNanos, int l
         private final TreeMap<Integer, List<Placed>> steps = new TreeMap<>();
         private final List<String> warnings = new ArrayList<>();
         private int length;
+        private long beatNanos;
+
+        /** Duration of one beat, for what moves in time with the song. */
+        public void beat(long nanos) {
+            beatNanos = nanos;
+        }
 
         public void note(int step, Instrument instrument, double midi, float volume) {
             note(step, instrument, midi, volume, Float.NaN);
@@ -105,7 +112,7 @@ public record Song(String id, String title, String author, long stepNanos, int l
                 i++;
             }
             int from = loopStart < 0 || loopStart >= length ? 0 : loopStart;
-            return new Song(id, title, author, stepNanos, length, loop, from, times, notes, angles, instruments,
+            return new Song(id, title, author, stepNanos, beatNanos, length, loop, from, times, notes, angles, instruments,
                     List.copyOf(warnings));
         }
     }
