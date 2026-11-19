@@ -132,6 +132,21 @@ final class Stands implements Listener {
             if (h != null) h.close();
         }
 
+        /** The name and the click box are entities the server removes with their chunk (not persistent): made again,
+         * and shown again to whoever sees the stand, once the chunk is loaded again. */
+        void ensure() {
+            boolean lost = (!spec.base.isEmpty() && (base == null || !base.isValid()))
+                    || (!spec.label.isEmpty() && (label == null || !label.isValid()))
+                    || (!spec.command.isEmpty() && (box == null || !box.isValid()));
+            if (!lost || !spec.at.getWorld().isChunkLoaded(spec.at.getBlockX() >> 4, spec.at.getBlockZ() >> 4)) return;
+            for (Entity e : entities()) e.remove();
+            spawn();
+            for (UUID id : models.keySet()) {
+                Player p = Bukkit.getPlayer(id);
+                if (p != null) for (Entity e : entities()) p.showEntity(plugin, e);
+            }
+        }
+
         List<Entity> entities() {
             List<Entity> out = new ArrayList<>(3);
             if (base != null && base.isValid()) out.add(base);
@@ -217,6 +232,7 @@ final class Stands implements Listener {
         }
         if (!Bukkit.getPluginManager().isPluginEnabled("BetterModel")) return;
         for (Stand s : stands) {
+            s.ensure();
             for (Player p : Bukkit.getOnlinePlayers()) {
                 boolean wants = p.getWorld() == s.spec.at.getWorld()
                         && p.getLocation().distanceSquared(s.spec.at) < VIEW_DISTANCE * VIEW_DISTANCE
