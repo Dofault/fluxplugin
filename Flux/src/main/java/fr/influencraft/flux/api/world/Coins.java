@@ -112,6 +112,8 @@ public final class Coins {
     private static final List<Coin> COINS = new ArrayList<>();
     private static final Map<UUID, Integer> FLYING = new HashMap<>();
     private static final Map<UUID, Integer> LAST_PICKUP = new HashMap<>();
+    /** Pickup volume of {@link #pop} coins. */
+    public static final float POP_VOLUME = 0.22f;
     private static BukkitTask task;
     private static Plugin flux;
 
@@ -135,7 +137,7 @@ public final class Coins {
         s.bounce = false;
         s.privateShow = true;
         s.throwSound = false;
-        s.pickupVolume = 0.22f;
+        s.pickupVolume = POP_VOLUME;
         s.maxPerPlayer = 10;
         return s;
     }
@@ -225,7 +227,6 @@ public final class Coins {
         if (COINS.isEmpty() && task != null) {
             task.cancel();
             task = null;
-            LAST_PICKUP.clear();
         }
     }
 
@@ -280,16 +281,21 @@ public final class Coins {
         return false;
     }
 
-    /** The pickup sound, at most once every 3 ticks per player: a vein of blocks is one chime, not twenty. */
     private static void pickup(Coin c) {
-        if (c.show.pickupVolume <= 0) return;
+        chime(c.target, c.show.pickupVolume);
+    }
+
+    /**
+     * The sound of a coin picked up, heard by this player only, at most once every 3 ticks: a vein of blocks is one
+     * chime, not twenty. Played by the coins themselves; call it for a player who hears his gains without seeing them.
+     */
+    public static void chime(Player player, float volume) {
+        if (volume <= 0) return;
         int now = Bukkit.getCurrentTick();
-        Integer last = LAST_PICKUP.put(c.target.getUniqueId(), now);
-        if (last != null && now - last < 3) {
-            LAST_PICKUP.put(c.target.getUniqueId(), last);
-            return;
-        }
-        c.target.playSound(c.target.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, c.show.pickupVolume,
+        Integer last = LAST_PICKUP.get(player.getUniqueId());
+        if (last != null && now - last >= 0 && now - last < 3) return;
+        LAST_PICKUP.put(player.getUniqueId(), now);
+        player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, volume,
                 1.6f + (float) ThreadLocalRandom.current().nextDouble(0.3));
     }
 

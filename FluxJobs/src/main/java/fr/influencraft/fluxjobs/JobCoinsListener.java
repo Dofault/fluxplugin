@@ -40,8 +40,12 @@ import java.util.UUID;
  */
 final class JobCoinsListener implements Listener {
 
-    /** Per-player toggle ({@code /jobcoins}), on by default. */
-    static final String SETTING = "fluxjobs:job-coins";
+    /**
+     * Per-player toggles, on by default: the coin and its sound, each on its own. The keys are those of the settings
+     * window of Flux (options {@code job_coins} and {@code job_coins_sound} of settings.yml), read here directly.
+     */
+    static final String SETTING = "flux:job_coins";
+    static final String SOUND_SETTING = "flux:job_coins_sound";
 
     private record Mark(Location at, int tick) {
     }
@@ -117,7 +121,14 @@ final class JobCoinsListener implements Listener {
     @EventHandler
     public void onPaid(JobXpGainEvent event) {
         Player player = event.player();
-        if (event.gained() <= 0 || !isEnabled(player)) return;
+        if (event.gained() <= 0) return;
+        boolean coins = isEnabled(player);
+        boolean sound = PlayerSettings.flag(player, SOUND_SETTING, true);
+        if (!coins) {
+            // the sound alone: he hears each paid action
+            if (sound) Coins.chime(player, Coins.POP_VOLUME);
+            return;
+        }
         int now = Bukkit.getCurrentTick();
         Mark mark = marks.get(player.getUniqueId());
         Location at;
@@ -134,7 +145,7 @@ final class JobCoinsListener implements Listener {
         Mark last = shown.put(player.getUniqueId(), new Mark(at, now));
         if (last != null && last.tick() == now && last.at().equals(at)) return;
         ItemStack coin = Items.of(icon, player);
-        if (coin != null) Coins.pop(coin).burst(at, 1, List.of(player));
+        if (coin != null) Coins.pop(coin).pickupVolume(sound ? Coins.POP_VOLUME : 0).burst(at, 1, List.of(player));
     }
 
     /** The hook in the water, or where it was when the fish bit (used once), else null. */
