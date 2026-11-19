@@ -1,28 +1,34 @@
 package fr.influencraft.fluxdungeons.rpg;
 
 import fr.influencraft.flux.api.client.Camera;
+import fr.influencraft.flux.api.client.ChatHold;
+import fr.influencraft.flux.api.client.Clients;
+import fr.influencraft.flux.api.client.DropKey;
+import fr.influencraft.flux.api.client.Hotbar;
+import fr.influencraft.flux.api.client.Sidebar;
+import fr.influencraft.flux.api.inventory.Items;
+import fr.influencraft.flux.api.inventory.Lore;
 import fr.influencraft.flux.api.util.Sounds;
 import fr.influencraft.fluxdungeons.rpg.core.ClassDef;
 import fr.influencraft.fluxdungeons.rpg.core.StatSheet;
+import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ResolvableProfile;
+import io.papermc.paper.entity.TeleportFlag;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
-import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
-import org.bukkit.NamespacedKey;
+import org.bukkit.Material;
 import org.bukkit.Particle;
-import org.bukkit.Registry;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
-import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Ageable;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mannequin;
 import org.bukkit.entity.Mob;
@@ -30,52 +36,44 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 /**
- * One player watching the classes ({@link Showcase}). What he sees:
+ * One player watching the classes ({@link Showcase}). Nothing is clicked with a pointer: his hotbar is the menu.
  * <ul>
- *   <li>the arena through a fixed <b>camera</b> (an invisible mannequin, {@link Camera#view}); he sits on an invisible
- *   seat, as a client whose camera is elsewhere only sends its mouse while riding;</li>
- *   <li>the <b>panel</b>: text displays one block in front of the camera, all at the same place and turned to the
- *   screen by their billboard, each put at its spot by its own translation (x to the right, y up, in blocks at that
- *   distance: the screen is about 2.5 wide and 1.4 high at the default field of view). Rectangles are text displays
- *   holding one space, stretched: their background is the rectangle;</li>
- *   <li>the <b>pointer</b>: a text display moved as his head turns ({@link Camera#turns}, {@link Camera#place});</li>
+ *   <li>the <b>camera</b> is the player himself, invisible, seated on an invisible seat that turns around the middle
+ *   of the fight (a swing from side to side, or a full turn: {@code rpg.showcase.camera}); his head is turned to that
+ *   middle every tick (a riding player's view is smoothed between ticks by his client). A Bedrock player gets a still
+ *   seat and looks around freely;</li>
+ *   <li>the <b>hotbar</b> shows one class per slot ({@link Hotbar}: packets only, his real items never move). The
+ *   slot he holds (mouse wheel, number keys, a tap) is the class played in front of him; the name of the held item is
+ *   the class's. A click, left or right, chooses it, a second click confirms;</li>
+ *   <li>the <b>texts</b> float over the fight (text displays turned to him): the class, then the spell being cast and
+ *   what it does;</li>
  *   <li>the <b>scene</b>: an actor with his skin (a mannequin made a stand-in of the class by
- *   {@link CombatEngine#standIn}) playing the script of the class on monsters, the spell being cast named under it.</li>
+ *   {@link CombatEngine#standIn}) playing the script of the class on monsters.</li>
  * </ul>
  * Everything is removed when the show ends; nothing is saved with the world. Nothing is hidden from the other players
- * either: an arena has one viewer and stands far from everything (entities hidden by default and shown to him alone
- * never reached his client when they were spawned in the tick he was taken there, 2026-11-14).
+ * either: an arena has one viewer and stands far from everything.
  */
 final class ShowcaseSession {
 
-    private static final double EYE = 1.62;
-    /** One pixel of text at scale 1, in blocks. */
-    private static final float PX = 0.025f;
-    private static final NamespacedKey MODIFIER = new NamespacedKey("fluxdungeons", "showcase");
+    /** Eyes of a seated player above the marker he rides. */
+    private static final double SEATED_EYE = 1.02;
     private static final Map<String, String> ACCENTS = Map.of("cryomancer", "#74B6DC", "pyromancer", "#FF8A3C", "druid", "#73C25C");
-    /** Middle and width of the panel, in screen units. */
-    private static final double PANEL_X = -0.80, PANEL_W = 0.80, ROW_W = 0.72;
-
-    /** A place of the panel the pointer acts on. */
-    private record Zone(String id, double x0, double y0, double x1, double y1, TextDisplay rect, int idle, int hover) {
-        boolean has(double x, double y) {
-            return x >= x0 && x <= x1 && y >= y0 && y <= y1;
-        }
-    }
+    /** Ticks a first click waits for the click that confirms it. */
+    private static final int CONFIRM_TICKS = 60;
 
     private final Showcase showcase;
     private final Player player;
@@ -84,36 +82,27 @@ final class ShowcaseSession {
     /** Feet level in the middle of the arena. */
     private final Location origin;
     private final World world;
+    /** The classes of the hotbar, one per slot from the first. */
+    private final List<String> ids;
+    private final boolean bedrock, orbit;
     private Location back;
     private boolean closing, moving;
-    private volatile int ticks;
+    private int ticks;
     private long lastClick;
     private int heldBefore = -1;
     private boolean madeInvisible;
 
-    // camera and pointer
-    private Mannequin camera;
+    // camera
     private ArmorStand seat;
-    private TextDisplay pointer;
-    private Location eye, anchor;
-    private final Vector forward, up;
-    private final double depth;
-    private volatile double sx = PANEL_X, sy = 0.1;
-    private float lastYaw, lastPitch;
-    private boolean primed, turningBack;
-    private float backYaw, backPitch;
-    private int backAt;
+    /** The middle of the fight: what the camera turns around and looks at. */
+    private final Location pivot;
 
-    // panel
-    private final List<Entity> ui = new ArrayList<>();
-    private final List<Zone> zones = new ArrayList<>();
-    private final Map<String, TextDisplay> spellRows = new HashMap<>();
-    private TextDisplay captionTitle, captionText;
-    /** The class whose page is open, null on the list. */
-    private String detail;
-    private String hovered;
-    private long hoveredSince;
-    private String activeSlot;
+    // texts over the fight
+    private final List<TextDisplay> texts = new ArrayList<>();
+    private TextDisplay title, subtitle, captionTitle, captionText;
+    /** The class a first click asked for, until {@link #armedUntil}. */
+    private String armed;
+    private long armedUntil;
 
     // scene
     private String shown;
@@ -132,11 +121,11 @@ final class ShowcaseSession {
         this.stage = stage;
         this.origin = origin;
         this.world = origin.getWorld();
-        double pitch = Math.toRadians(settings.camPitch());
-        // the camera looks south (yaw 0), tilted down: its right is west
-        forward = new Vector(0, -Math.sin(pitch), Math.cos(pitch));
-        up = new Vector(0, Math.cos(pitch), Math.sin(pitch));
-        depth = Math.max(0.5, number("distance", 1.0));
+        List<String> visible = RpgPlayers.visible(showcase.set());
+        this.ids = List.copyOf(visible.subList(0, Math.min(9, visible.size())));
+        this.bedrock = Clients.bedrock(player);
+        this.orbit = !bedrock && Camera.available() && settings.camArc() > 0 && settings.camPeriod() > 0;
+        this.pivot = origin.clone().add(settings.lookX(), settings.lookY(), 0);
     }
 
     Player player() {
@@ -160,42 +149,24 @@ final class ShowcaseSession {
         return moving;
     }
 
+    /** How many slots of his hotbar hold a class. */
+    int count() {
+        return ids.size();
+    }
+
     // ================================================================== opening and closing
 
     void open() {
         back = player.getLocation();
-        eye = origin.clone().add(settings.camX(), settings.camY(), settings.camZ());
-        eye.setYaw(0);
-        eye.setPitch(settings.camPitch());
-        Location feet = eye.clone().subtract(0, EYE, 0);
-        anchor = eye.clone().add(forward.clone().multiply(depth));
-        anchor.setYaw(0);
-        anchor.setPitch(0);
+        Location eye = eyeAt(0);
+        Location feet = eye.clone().subtract(0, SEATED_EYE, 0);
         moving = true;
         try {
             player.teleport(feet, PlayerTeleportEvent.TeleportCause.PLUGIN);
         } finally {
             moving = false;
         }
-        camera = world.spawn(feet, Mannequin.class, CreatureSpawnEvent.SpawnReason.CUSTOM, m -> {
-            m.addScoreboardTag(Showcase.TAG);
-            m.setPersistent(false);
-            m.setInvisible(true);
-            m.setInvulnerable(true);
-            m.setSilent(true);
-            m.setGravity(false);
-            m.setCollidable(false);
-            m.setImmovable(true);
-            m.setDescription(null);
-            m.setRotation(0, settings.camPitch());
-            // F5 must not move the view: no third person distance on the camera
-            Attribute distance = Registry.ATTRIBUTE.get(NamespacedKey.minecraft("camera_distance"));
-            AttributeInstance a = distance == null ? null : m.getAttribute(distance);
-            if (a != null) a.addTransientModifier(new AttributeModifier(MODIFIER, -1, AttributeModifier.Operation.MULTIPLY_SCALAR_1, EquipmentSlotGroup.ANY));
-        });
-        Location seatAt = feet.clone();
-        seatAt.setPitch(0);
-        seat = world.spawn(seatAt, ArmorStand.class, a -> {
+        seat = world.spawn(feet, ArmorStand.class, a -> {
             a.addScoreboardTag(Showcase.TAG);
             a.setPersistent(false);
             a.setMarker(true);
@@ -203,45 +174,53 @@ final class ShowcaseSession {
             a.setGravity(false);
             a.setInvulnerable(true);
             a.setSilent(true);
-            a.setBodyYaw(0);
-        });
-        pointer = world.spawn(pointerAt(), TextDisplay.class, d -> {
-            d.setPersistent(false);
-            d.text(text("showcase.pointer"));
-            d.setBillboard(Display.Billboard.CENTER);
-            d.setBackgroundColor(Color.fromARGB(0));
-            d.setShadowed(true);
-            d.setBrightness(new Display.Brightness(15, 15));
-            d.setTeleportDuration(1);
-            float s = (float) (number("pointer-scale", 0.16) * depth);
-            // a text stands on its place: lowered by half a glyph, the pointer's middle is the pointed spot
-            d.setTransformation(new Transformation(new Vector3f(0, -4.5f * PX * s, 0), new Quaternionf(), new Vector3f(s), new Quaternionf()));
+            // no hearts of a mount over his hotbar
+            AttributeInstance health = a.getAttribute(Attribute.MAX_HEALTH);
+            if (health != null) health.setBaseValue(1);
         });
         seat.addPassenger(player);
-        hideHand();
-        fr.influencraft.flux.api.client.Sidebar.hide(player, true);
-        fr.influencraft.flux.api.client.ChatHold.hold(player, true);
-        player.setPlayerTime(settings.time(), false);
-        Camera.view(player, camera);
-        Camera.turns(player, (p, yaw, pitch) -> turned(yaw, pitch));
+        title = floating(3.9, 2.2f, 400);
+        subtitle = floating(3.55, 1.0f, 400);
+        captionTitle = floating(2.75, 1.3f, 400);
+        captionText = floating(2.05, 0.95f, 260);
         RpgPlayer own = showcase.players().get(player);
-        List<String> ids = RpgPlayers.visible(showcase.set());
-        buildList();
-        play(own != null && ids.contains(own.heroClass().id()) ? own.heroClass().id() : ids.get(0));
+        int slot = own == null ? 0 : Math.max(0, ids.indexOf(own.heroClass().id()));
+        heldBefore = player.getInventory().getHeldItemSlot();
+        player.getInventory().setHeldItemSlot(slot);
+        player.closeInventory();
+        showHotbar();
+        if (!player.hasPotionEffect(PotionEffectType.INVISIBILITY)) {
+            // an invisible player's arm is not drawn in front of his view
+            madeInvisible = true;
+            player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, PotionEffect.INFINITE_DURATION, 0, false, false, false));
+        }
+        if (settings.hideBars()) Hotbar.bars(player, false);
+        // his drop key would throw the real item of the slot he holds
+        DropKey.claim(showcase.plugin(), player, () -> showcase.dropped(player));
+        Sidebar.hide(player, true);
+        ChatHold.hold(player, true);
+        player.setPlayerTime(settings.time(), false);
+        play(ids.get(slot));
+        hint();
     }
 
     void close(boolean bringBack) {
         closing = true;
-        Camera.turns(player, null);
         endScene();
-        clearPanel();
+        for (TextDisplay d : texts) if (d.isValid()) d.remove();
+        texts.clear();
         if (player.getVehicle() == seat) player.leaveVehicle();
-        for (Entity e : new Entity[]{pointer, camera, seat}) if (e != null && e.isValid()) e.remove();
-        fr.influencraft.flux.api.client.Sidebar.hide(player, false);
-        fr.influencraft.flux.api.client.ChatHold.hold(player, false);
-        showHand();
+        if (seat != null && seat.isValid()) seat.remove();
+        DropKey.release(player);
+        Sidebar.hide(player, false);
+        ChatHold.hold(player, false);
+        if (madeInvisible) player.removePotionEffect(PotionEffectType.INVISIBILITY);
+        madeInvisible = false;
         if (!player.isOnline()) return;
-        Camera.view(player, null);
+        Hotbar.bars(player, true);
+        Hotbar.clear(player);
+        if (heldBefore >= 0) player.getInventory().setHeldItemSlot(heldBefore);
+        heldBefore = -1;
         player.resetPlayerTime();
         if (bringBack && back != null) {
             moving = true;
@@ -253,37 +232,11 @@ final class ShowcaseSession {
         }
     }
 
-    /**
-     * His client still draws his own arm and what it holds over the camera's view: an invisible player's arm is not
-     * drawn, and he holds an empty slot of his hotbar meanwhile (when he has one).
-     */
-    private void hideHand() {
-        heldBefore = player.getInventory().getHeldItemSlot();
-        for (int slot = 0; slot < 9; slot++) {
-            ItemStack item = player.getInventory().getItem(slot);
-            if (item == null || item.getType().isAir()) {
-                player.getInventory().setHeldItemSlot(slot);
-                break;
-            }
-        }
-        if (!player.hasPotionEffect(org.bukkit.potion.PotionEffectType.INVISIBILITY)) {
-            madeInvisible = true;
-            player.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.INVISIBILITY,
-                    org.bukkit.potion.PotionEffect.INFINITE_DURATION, 0, false, false, false));
-        }
-    }
-
-    private void showHand() {
-        if (madeInvisible) player.removePotionEffect(org.bukkit.potion.PotionEffectType.INVISIBILITY);
-        madeInvisible = false;
-        if (heldBefore >= 0 && player.isOnline()) player.getInventory().setHeldItemSlot(heldBefore);
-        heldBefore = -1;
-    }
-
     /** He asked to leave (sneak). Without a class the choice comes first. */
     void leave() {
         if (showcase.players().get(player) == null) {
             showcase.plugin().messages().actionBar(player, "showcase.must-choose");
+            armedUntil = ticks + CONFIRM_TICKS;
             return;
         }
         showcase.close(player, true);
@@ -299,274 +252,149 @@ final class ShowcaseSession {
         }
         ticks++;
         if (player.getVehicle() != seat) seat.addPassenger(player);
-        // the camera only reaches his client once the arena's chunks and entities did (he was just taken far away, how
-        // long that takes depends on his connection): said again all along, a camera already set changes nothing
-        if (ticks == 3 || ticks % 10 == 0) Camera.view(player, camera);
-        // the pointer is moved on his screen as his mouse moves (turned); the server's own entity only follows from
-        // time to time, a move every tick would fight with those
-        if (ticks % 40 == 0 && pointer.isValid()) pointer.teleport(pointerAt());
-        hover();
+        if (orbit) {
+            Location eye = eyeAt(ticks);
+            seat.teleport(eye.clone().subtract(0, SEATED_EYE, 0), TeleportFlag.EntityState.RETAIN_PASSENGERS);
+            // his head to the middle of the fight, whatever his mouse did since the last tick
+            Camera.turn(player, eye.getYaw(), false, eye.getPitch(), false);
+        }
+        // a client told it plays in creative can fill its hotbar by itself: ours again from time to time
+        if (ticks % 40 == 0) showHotbar();
+        if (ticks % 30 == 0 && ticks > armedUntil) hint();
         scene();
     }
 
-    // ================================================================== pointer
+    // ================================================================== camera
 
-    private Location pointerAt() {
-        // a little nearer than the panel (drawn over it), brought back in so that it covers the same spot
-        double d = depth - 0.03, k = d / depth;
-        return eye.clone().add(forward.clone().multiply(d)).add(-sx * depth * k, 0, 0).add(up.clone().multiply(sy * depth * k));
+    /**
+     * Where his eyes are after {@code t} ticks, looking at the middle of the fight. The camera starts north of it
+     * (the actor on the left of the screen, the monsters on the right) and turns clockwise seen from above: a swing
+     * of {@code arc} degrees from side to side, or turn after turn from 360.
+     */
+    private Location eyeAt(int t) {
+        double angle = 0;
+        if (orbit) {
+            double phase = 2 * Math.PI * t / settings.camPeriod();
+            angle = settings.camArc() >= 360 ? phase : Math.toRadians(settings.camArc() / 2) * Math.sin(phase);
+        }
+        Location eye = origin.clone().add(settings.lookX() + settings.camDistance() * Math.sin(angle), settings.camHeight(),
+                -settings.camDistance() * Math.cos(angle));
+        eye.setDirection(pivot.toVector().subtract(eye.toVector()));
+        return eye;
+    }
+
+    // ================================================================== hotbar
+
+    private void showHotbar() {
+        RpgPlayer own = showcase.players().get(player);
+        ItemStack[] items = new ItemStack[9];
+        for (int i = 0; i < ids.size(); i++) items[i] = icon(ids.get(i), own != null && own.heroClass().id().equals(ids.get(i)));
+        Hotbar.show(player, items);
     }
 
     /**
-     * His mouse turned his (unseen) head: the pointer follows, at once (network thread). A seated player's head turns
-     * at most 85 degrees from his seat and 90 up or down: before it gets there it is turned back to the middle by a
-     * relative rotation, and the jump that rotation makes in what his client then reports is taken out, so the
-     * pointer never stops nor jumps.
+     * The item standing for a class in his hotbar: its weapon, named after the class. On a Java client its model is
+     * {@code fluxdungeons:class_<id>} of the pack (assets/classes/gen_class_icons.py): the same picture in the hotbar,
+     * nothing in the hand, so the held class never hides the fight.
      */
-    private synchronized void turned(float yaw, float pitch) {
-        if (closing) return;
-        if (!primed) {
-            lastYaw = yaw;
-            lastPitch = pitch;
-            primed = true;
+    private ItemStack icon(String id, boolean mine) {
+        ItemStack weapon = weapon(id);
+        ItemStack item = weapon == null ? new ItemStack(Material.NETHER_STAR) : weapon.clone();
+        String name = raw("showcase.card-name").replace("%color%", "&" + accent(id)).replace("%name%", raw("classes." + id + ".name"))
+                + (mine ? raw("showcase.icon-yours") : "");
+        Lore lore = Lore.create().description(raw("classes." + id + ".description"));
+        if (!mine) lore.left(raw("showcase.icon-choose"));
+        Items.dress(item, name, lore.tags(), player);
+        if (!bedrock && settings.hideHeld()) item.setData(DataComponentTypes.ITEM_MODEL, Key.key("fluxdungeons", "class_" + id));
+        return item;
+    }
+
+    /** He holds another slot of his hotbar: that class plays. */
+    void select(int slot) {
+        if (closing || slot < 0 || slot >= ids.size()) return;
+        String id = ids.get(slot);
+        if (id.equals(shown)) return;
+        armed = null;
+        armedUntil = 0;
+        Sounds.cue(player, "page");
+        play(id);
+        hint();
+    }
+
+    /** A click, left or right: the class he holds is chosen, once a second click confirmed it. */
+    void click() {
+        if (closing || ticks - lastClick < 4 || shown == null) return;
+        lastClick = ticks;
+        RpgPlayer own = showcase.players().get(player);
+        if (own != null && own.heroClass().id().equals(shown)) {
+            Sounds.cue(player, "error");
+            showcase.plugin().messages().actionBar(player, "showcase.owned");
+            armedUntil = ticks + 40;
             return;
         }
-        float dyaw = wrap(yaw - lastYaw), dpitch = pitch - lastPitch;
-        lastYaw = yaw;
-        lastPitch = pitch;
-        if (turningBack) {
-            // the report that carries the turn back is the one whose jump looks like it (far larger than a mouse move)
-            float restYaw = wrap(dyaw - backYaw), restPitch = dpitch - backPitch;
-            if (Math.abs(restYaw) + Math.abs(restPitch) < Math.abs(dyaw) + Math.abs(dpitch)) {
-                dyaw = restYaw;
-                dpitch = restPitch;
-                turningBack = false;
-            } else if (ticks - backAt > 40) turningBack = false;
+        if (!shown.equals(armed) || ticks > armedUntil) {
+            armed = shown;
+            armedUntil = ticks + CONFIRM_TICKS;
+            Sounds.cue(player, "confirm");
+            showcase.plugin().messages().actionBar(player, "showcase.confirm", "%color%", "&" + accent(shown), "%name%", raw("classes." + shown + ".name"));
+            return;
         }
-        double speed = settings.pointerSpeed();
-        sx = clamp(sx + dyaw * speed, 1.22);
-        sy = clamp(sy - dpitch * speed, 0.68);
-        if (!turningBack && (Math.abs(pitch) > 35 || Math.abs(wrap(yaw)) > 40)) {
-            backYaw = -wrap(yaw);
-            backPitch = -pitch;
-            backAt = ticks;
-            turningBack = true;
-            Camera.turn(player, backYaw, true, backPitch, true);
-        }
-        Location at = pointerAt();
-        Camera.place(player, pointer, at.getX(), at.getY(), at.getZ());
+        String id = shown;
+        showcase.close(player, true);
+        showcase.players().pick(player, id);
     }
 
-    private void hover() {
-        String now = null;
-        double x = sx, y = sy;
-        for (Zone z : zones) {
-            if (z.has(x, y)) {
-                now = z.id();
-                break;
-            }
-        }
-        if (!java.util.Objects.equals(now, hovered)) {
-            for (Zone z : zones) {
-                if (z.rect() == null || !z.rect().isValid()) continue;
-                if (z.id().equals(hovered)) z.rect().setBackgroundColor(Color.fromARGB(z.idle()));
-                if (z.id().equals(now)) z.rect().setBackgroundColor(Color.fromARGB(z.hover()));
-            }
-            hovered = now;
-            hoveredSince = ticks;
-            if (now != null) Sounds.cue(player, "page");
-        }
-        // the pointer resting on a class: its show starts
-        if (hovered != null && hovered.startsWith("class:") && ticks - hoveredSince >= settings.hoverTicks()) {
-            String id = hovered.substring(6);
-            if (!id.equals(shown)) play(id);
-        }
+    /** How the menu is used, kept over his hotbar. */
+    private void hint() {
+        String leave = showcase.players().get(player) == null ? "" : raw("showcase.hint-leave");
+        showcase.plugin().messages().actionBar(player, bedrock ? "showcase.hint-bedrock" : "showcase.hint", "%leave%", leave);
     }
 
-    void click() {
-        if (closing || ticks - lastClick < 4 || hovered == null) return;
-        lastClick = ticks;
-        if (hovered.startsWith("class:")) {
-            String id = hovered.substring(6);
-            Sounds.cue(player, "click");
-            if (!id.equals(shown)) play(id);
-            buildDetail(id);
-        } else if (hovered.equals("back")) {
-            Sounds.cue(player, "click");
-            buildList();
-        } else if (hovered.equals("choose") && detail != null) {
-            RpgPlayer own = showcase.players().get(player);
-            if (own != null && own.heroClass().id().equals(detail)) {
-                Sounds.cue(player, "error");
-                return;
-            }
-            String id = detail;
-            showcase.close(player, true);
-            showcase.players().pick(player, id);
-        }
+    // ================================================================== texts over the fight
+
+    /** A text floating {@code height} blocks over the middle of the fight, turned to whoever looks at it. */
+    private TextDisplay floating(double height, float scale, int lineWidth) {
+        float s = (float) (scale * settings.textScale());
+        TextDisplay display = world.spawn(pivot.clone().add(0, height * settings.textScale(), 0), TextDisplay.class, d -> {
+            d.setPersistent(false);
+            d.setBillboard(Display.Billboard.CENTER);
+            d.setBrightness(new Display.Brightness(15, 15));
+            d.setShadowed(true);
+            d.setLineWidth(lineWidth);
+            d.setBackgroundColor(Color.fromARGB(0));
+            d.text(Component.empty());
+            d.setTransformation(new Transformation(new Vector3f(), new Quaternionf(), new Vector3f(s), new Quaternionf()));
+        });
+        texts.add(display);
+        return display;
     }
 
-    // ================================================================== panel
-
-    private void clearPanel() {
-        for (Entity e : ui) if (e.isValid()) e.remove();
-        ui.clear();
-        zones.clear();
-        spellRows.clear();
-        captionTitle = null;
-        captionText = null;
-        hovered = null;
-    }
-
-    /** What both views share: the band on the left and, under the scene, the spell being cast. */
-    private void buildCommon() {
-        clearPanel();
-        rect(PANEL_X, 0, PANEL_W, 1.7, color("background", 0xD9120826), 0);
-        rect(PANEL_X + PANEL_W / 2, 0, 0.008, 1.7, color("edge", 0xFFF0A800), 0.0005);
-        int shade = color("caption", 0x99000000);
-        captionTitle = label(Component.empty(), 0.42, -0.38, 0.002, 0.17f, 400, shade);
-        captionText = label(Component.empty(), 0.42, -0.46, 0.002, 0.095f, 280, shade);
-        caption(activeSlot);
-    }
-
-    /** The list: one card per class; pointing at one plays it, a click opens it. */
-    private void buildList() {
-        detail = null;
-        buildCommon();
+    /** The class being played: its name, and its role (or that it is his). */
+    private void header() {
+        if (title == null || !title.isValid() || !subtitle.isValid() || shown == null) return;
         RpgPlayer own = showcase.players().get(player);
-        List<String> ids = RpgPlayers.visible(showcase.set());
-        label(text(own == null ? "showcase.title" : "showcase.title-change"), PANEL_X, 0.50, 0.002, 0.2f, 400, 0);
-        label(text("showcase.hint"), PANEL_X, 0.425, 0.002, 0.1f, 210, 0);
-        double stepY = Math.min(0.29, 0.86 / ids.size()), h = stepY - 0.04;
-        int card = color("card", 0xB00D0D0D);
-        for (int i = 0; i < ids.size(); i++) {
-            String id = ids.get(i);
-            double cy = 0.25 - i * stepY;
-            String accent = accent(id);
-            TextDisplay r = rect(PANEL_X, cy, ROW_W, h, card, 0.001);
-            zones.add(new Zone("class:" + id, PANEL_X - ROW_W / 2, cy - h / 2, PANEL_X + ROW_W / 2, cy + h / 2, r, card, color("card-hover", 0xD05B2D9E)));
-            icon(weapon(id), PANEL_X - 0.265, cy, 0.003, 0.15f);
-            label(text("showcase.card-name", "%color%", "&" + accent, "%name%", raw("classes." + id + ".name")), PANEL_X + 0.07, cy + 0.02, 0.002, 0.23f, 400, 0);
-            label(text("showcase.card-role", "%role%", raw("class-pages.classes." + id + ".role")), PANEL_X + 0.07, cy - 0.06, 0.002, 0.095f, 170, 0);
-            if (own != null && own.heroClass().id().equals(id)) label(text("showcase.yours"), PANEL_X + 0.07, cy - 0.097, 0.002, 0.08f, 300, 0);
-        }
-        label(text(own == null ? "showcase.footer-first" : "showcase.footer"), PANEL_X, -0.645, 0.002, 0.085f, 320, 0);
+        title.text(text("showcase.card-name", "%color%", "&" + accent(shown), "%name%", raw("classes." + shown + ".name")));
+        boolean mine = own != null && own.heroClass().id().equals(shown);
+        subtitle.text(mine ? text("showcase.yours") : text("showcase.card-role", "%role%", raw("class-pages.classes." + shown + ".role")));
     }
 
-    /** One class: what it is, its four spells (the one being cast is lit), the button that chooses it. */
-    private void buildDetail(String id) {
-        detail = id;
-        buildCommon();
-        ClassDef c = showcase.set().classes().get(id);
-        RpgPlayer own = showcase.players().get(player);
-        String accent = accent(id);
-        int card = color("card", 0xB00D0D0D);
-        TextDisplay backRect = rect(PANEL_X, 0.585, ROW_W, 0.085, card, 0.001);
-        zones.add(new Zone("back", PANEL_X - ROW_W / 2, 0.5425, PANEL_X + ROW_W / 2, 0.6275, backRect, card, color("card-hover", 0xD05B2D9E)));
-        label(text("showcase.back"), PANEL_X, 0.574, 0.002, 0.095f, 300, 0);
-        icon(weapon(id), PANEL_X, 0.445, 0.003, 0.14f);
-        label(text("showcase.card-name", "%color%", "&" + accent, "%name%", raw("classes." + id + ".name")), PANEL_X, 0.29, 0.002, 0.25f, 400, 0);
-        label(text("showcase.card-role", "%role%", raw("class-pages.classes." + id + ".role")), PANEL_X, 0.235, 0.002, 0.09f, 230, 0);
-        label(text("showcase.description", "%text%", raw("classes." + id + ".description")), PANEL_X, 0.065, 0.002, 0.09f, 190, 0);
-        List<String> slots = new ArrayList<>();
-        for (String slot : ClassDef.SHOWN) if (slot.equals("basic") || c.skills().get(slot) != null) slots.add(slot);
-        for (int j = 0; j < slots.size(); j++) {
-            String slot = slots.get(j);
-            double cy = -0.03 - j * 0.105;
-            spellRows.put(slot, rect(PANEL_X, cy, ROW_W, 0.09, card, 0.001));
-            label(text("showcase.spell", "%key%", keyName(c, slot), "%name%", raw("class-pages.classes." + id + "." + slot + ".name")),
-                    PANEL_X, cy - 0.008, 0.002, 0.105f, 400, 0);
-        }
-        boolean mine = own != null && own.heroClass().id().equals(id);
-        int idle = mine ? card : color("choose", 0xD02A9D5F), hover = mine ? card : color("choose-hover", 0xFF2ECF7B);
-        TextDisplay choose = rect(PANEL_X, -0.49, ROW_W, 0.11, idle, 0.001);
-        zones.add(new Zone("choose", PANEL_X - ROW_W / 2, -0.545, PANEL_X + ROW_W / 2, -0.435, choose, idle, hover));
-        label(text(mine ? "showcase.owned" : "showcase.choose", "%name%", raw("classes." + id + ".name")), PANEL_X, -0.503, 0.002, 0.11f, 400, 0);
-        if (!mine) {
-            label(text(own == null ? "showcase.note-first" : "showcase.note-change", "%hours%", String.valueOf(showcase.players().cooldownHours())),
-                    PANEL_X, -0.65, 0.002, 0.075f, 230, 0);
-        }
-        lightRow();
-    }
-
-    /** The spell being cast, named under the scene; its row lit on the class's page. */
+    /** The spell being cast: its key and name, and one sentence saying what it does. */
     private void caption(String slot) {
-        activeSlot = slot;
         if (captionTitle == null || !captionTitle.isValid() || !captionText.isValid()) return;
-        int shade = color("caption", 0x99000000);
+        int shade = settings.captionShade();
         if (slot == null || cls == null) {
             captionTitle.text(Component.empty());
             captionText.text(Component.empty());
             captionTitle.setBackgroundColor(Color.fromARGB(0));
             captionText.setBackgroundColor(Color.fromARGB(0));
-        } else {
-            String id = cls.id();
-            captionTitle.text(text("showcase.caption", "%key%", keyName(cls, slot), "%name%", raw("class-pages.classes." + id + "." + slot + ".name")));
-            captionTitle.setBackgroundColor(Color.fromARGB(shade));
-            String line = raw("showcase.lines." + id + "." + slot);
-            captionText.text(line.isEmpty() ? Component.empty() : text("showcase.caption-text", "%text%", line));
-            captionText.setBackgroundColor(Color.fromARGB(line.isEmpty() ? 0 : shade));
+            return;
         }
-        lightRow();
-    }
-
-    private void lightRow() {
-        int card = color("card", 0xB00D0D0D);
-        for (Map.Entry<String, TextDisplay> e : spellRows.entrySet()) {
-            if (!e.getValue().isValid()) continue;
-            boolean on = e.getKey().equals(activeSlot) && detail != null && detail.equals(shown);
-            e.getValue().setBackgroundColor(Color.fromARGB(on ? tint(accent(detail), 0x90) : card));
-        }
-    }
-
-    // ------------------------------------------------------------------ pieces of the panel
-
-    /** A text standing on (x, y), centred. {@code background}: 0 for none. */
-    private TextDisplay label(Component text, double x, double y, double z, float scale, int lineWidth, int background) {
-        float s = (float) (scale * depth);
-        return display(TextDisplay.class, d -> {
-            d.text(text);
-            d.setLineWidth(lineWidth);
-            d.setShadowed(true);
-            d.setBackgroundColor(Color.fromARGB(background));
-            d.setTransformation(new Transformation(new Vector3f((float) (x * depth), (float) (y * depth), (float) z), new Quaternionf(), new Vector3f(s), new Quaternionf()));
-        });
-    }
-
-    /**
-     * A flat rectangle centred on (cx, cy): the background of a text display holding one space (5 pixels wide, 11 high,
-     * from 2 pixels left of the display to 3 right of it, standing on it), stretched to the size asked.
-     */
-    private TextDisplay rect(double cx, double cy, double w, double h, int argb, double z) {
-        float fx = (float) (w * depth / (5 * PX)), fy = (float) (h * depth / (11 * PX));
-        return display(TextDisplay.class, d -> {
-            d.text(Component.text(" "));
-            d.setShadowed(false);
-            d.setBackgroundColor(Color.fromARGB(argb));
-            d.setTransformation(new Transformation(new Vector3f((float) (cx * depth) - 0.5f * PX * fx, (float) ((cy - h / 2) * depth), (float) z),
-                    new Quaternionf(), new Vector3f(fx, fy, 1), new Quaternionf()));
-        });
-    }
-
-    private void icon(ItemStack item, double x, double y, double z, float size) {
-        if (item == null) return;
-        float s = (float) (size * depth);
-        display(ItemDisplay.class, d -> {
-            d.setItemStack(item);
-            d.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.GUI);
-            d.setTransformation(new Transformation(new Vector3f((float) (x * depth), (float) (y * depth), (float) z), new Quaternionf(), new Vector3f(s, s, 0.01f), new Quaternionf()));
-        });
-    }
-
-    private <T extends Display> T display(Class<T> type, java.util.function.Consumer<T> setup) {
-        T d = world.spawn(anchor, type, e -> {
-            e.setPersistent(false);
-            e.setBillboard(Display.Billboard.CENTER);
-            e.setBrightness(new Display.Brightness(15, 15));
-            setup.accept(e);
-        });
-        ui.add(d);
-        return d;
+        String id = cls.id();
+        captionTitle.text(text("showcase.caption", "%key%", keyName(cls, slot), "%name%", raw("class-pages.classes." + id + "." + slot + ".name")));
+        captionTitle.setBackgroundColor(Color.fromARGB(shade));
+        String line = raw("showcase.lines." + id + "." + slot);
+        captionText.text(line.isEmpty() ? Component.empty() : text("showcase.caption-text", "%text%", line));
+        captionText.setBackgroundColor(Color.fromARGB(line.isEmpty() ? 0 : shade));
     }
 
     private ItemStack weapon(String classId) {
@@ -606,6 +434,7 @@ final class ShowcaseSession {
         step = 0;
         repeated = 0;
         waitUntil = ticks + 8;
+        header();
         caption(null);
     }
 
@@ -788,42 +617,11 @@ final class ShowcaseSession {
         return c != null && c.matches("#[0-9A-Fa-f]{6}") ? c : ACCENTS.getOrDefault(classId, "#B376E5");
     }
 
-    private static int tint(String rgb, int alpha) {
-        return alpha << 24 | Integer.parseInt(rgb.substring(1), 16);
-    }
-
-    /** A colour of the panel ({@code rpg.showcase.panel.<name>}, eight hex digits: opacity then colour). */
-    private int color(String name, int fallback) {
-        ConfigurationSection p = settings.panel();
-        String v = p == null ? null : p.getString(name);
-        try {
-            return v == null ? fallback : (int) Long.parseLong(v.replace("#", ""), 16);
-        } catch (NumberFormatException e) {
-            return fallback;
-        }
-    }
-
-    private double number(String name, double fallback) {
-        ConfigurationSection p = settings.panel();
-        return p == null ? fallback : p.getDouble(name, fallback);
-    }
-
     private static int integer(String[] parts, int index, int fallback) {
         try {
             return parts.length > index ? Math.max(1, Integer.parseInt(parts[index])) : fallback;
         } catch (NumberFormatException e) {
             return fallback;
         }
-    }
-
-    private static float wrap(float a) {
-        a %= 360;
-        if (a >= 180) a -= 360;
-        if (a < -180) a += 360;
-        return a;
-    }
-
-    private static double clamp(double v, double max) {
-        return Math.max(-max, Math.min(max, v));
     }
 }

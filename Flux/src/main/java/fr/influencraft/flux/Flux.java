@@ -36,6 +36,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     private com.github.retrooper.packetevents.event.PacketListenerCommon sidebarListener;
     private com.github.retrooper.packetevents.event.PacketListenerCommon driverListener;
     private com.github.retrooper.packetevents.event.PacketListenerCommon dropKeyListener;
+    private com.github.retrooper.packetevents.event.PacketListenerCommon hotbarListener;
     private PacketListenerCommon advancementListener;
     private fr.influencraft.flux.economy.MoneyActionBar moneyBar;
     private ChestBackgrounds backgrounds;
@@ -161,9 +162,14 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         // a player's drop key as an action key while a plugin claims it (api.client.DropKey)
         dropKeyListener = PacketEvents.getAPI().getEventManager()
                 .registerListener(new fr.influencraft.flux.adapters.packetevents.DropKeyFilter(this));
+        // a player's hotbar used as a menu, drawn by packets over his real one (api.client.Hotbar)
+        var hotbar = new fr.influencraft.flux.adapters.packetevents.HotbarOverlay();
+        hotbarListener = PacketEvents.getAPI().getEventManager().registerListener(hotbar);
+        fr.influencraft.flux.api.client.Hotbar.bind(hotbar);
         getServer().getPluginManager().registerEvents(new org.bukkit.event.Listener() {
             @org.bukkit.event.EventHandler
             public void onQuit(org.bukkit.event.player.PlayerQuitEvent e) {
+                hotbar.forget(e.getPlayer().getUniqueId());
                 fr.influencraft.flux.api.client.Sidebar.forget(e.getPlayer().getUniqueId());
                 fr.influencraft.flux.api.client.ChatHold.forget(e.getPlayer().getUniqueId());
             }
@@ -228,6 +234,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         if (sidebarListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(sidebarListener);
         if (driverListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(driverListener);
         if (dropKeyListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(dropKeyListener);
+        if (hotbarListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(hotbarListener);
         if (advancementListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(advancementListener);
         if (registry != null) registry.unregisterCommands();
     }

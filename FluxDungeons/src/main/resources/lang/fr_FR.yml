@@ -607,27 +607,21 @@ dungeon-pages:
   prev: Page précédente
   none: Aucun donjon n'est ouvert pour le moment.
 
-# The class showcase (/classe in the lobby): panel on the left, the spell being cast named under the scene.
+# The class showcase (/classe in the lobby): one class per hotbar slot, the spell being cast named over the fight.
 showcase:
-  pointer: "&f●"
-  title: "&#FFD94DChoisis ta classe"
-  title-change: "&#FFD94DLes classes"
-  hint: "&#B376E5Passe ta souris sur une classe pour la voir jouer"
   card-name: "%color%%name%"
   card-role: "&f%role%"
   yours: "&#FFD94D★ Ta classe"
-  footer: "&7Clic : ouvrir la classe · Accroupi : quitter"
-  footer-first: "&7Clic : ouvrir la classe"
-  back: "&f‹ Retour aux classes"
-  description: "&#B376E5%text%"
-  spell: "&#FFD94D%key% &8· &f%name%"
-  choose: "&fChoisir %name%"
-  owned: "&#FFD94D★ C'est ta classe"
-  note-first: "&7Tu pourras changer de classe plus tard avec /classe."
-  note-change: "&7Un changement toutes les %hours% h. La progression de chaque classe est gardée."
+  icon-yours: " &#FFD94D★"
+  icon-choose: "Choisir cette classe"
+  hint: "&fMolette &#B376E5: changer de classe &8· &fClic &#B376E5: choisir%leave%"
+  hint-bedrock: "&#B376E5Touche une classe dans ta barre, puis l'écran pour la choisir%leave%"
+  hint-leave: " &8· &fAccroupi &#B376E5: quitter"
+  confirm: "&#FFD94DClique encore pour choisir %color%%name%"
+  owned: "&#FFD94D★ C'est déjà ta classe"
   caption: "&#FFD94D%key% &8· &f%name%"
   caption-text: "&f%text%"
-  must-choose: "&#FFD94DChoisis d'abord ta classe : clique sur une classe, puis sur le bouton vert."
+  must-choose: "&#FFD94DChoisis d'abord ta classe : fais défiler ta barre, puis clique."
   lines:
     cryomancer:
       basic: "Chaque éclat laisse du givre. À 3 givres, le monstre est pris dans la glace."

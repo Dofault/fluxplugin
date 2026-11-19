@@ -595,27 +595,21 @@ dungeon-pages:
   prev: Previous page
   none: No dungeon is open for now.
 
-# The class showcase (/classe in the lobby): panel on the left, the spell being cast named under the scene.
+# The class showcase (/classe in the lobby): one class per hotbar slot, the spell being cast named over the fight.
 showcase:
-  pointer: "&f●"
-  title: "&#FFD94DChoose your class"
-  title-change: "&#FFD94DThe classes"
-  hint: "&#B376E5Move your mouse over a class to watch it play"
   card-name: "%color%%name%"
   card-role: "&f%role%"
   yours: "&#FFD94D★ Your class"
-  footer: "&7Click: open the class · Sneak: leave"
-  footer-first: "&7Click: open the class"
-  back: "&f‹ Back to the classes"
-  description: "&#B376E5%text%"
-  spell: "&#FFD94D%key% &8· &f%name%"
-  choose: "&fChoose %name%"
-  owned: "&#FFD94D★ This is your class"
-  note-first: "&7You can change class later with /classe."
-  note-change: "&7One change every %hours% h. The progress of each class is kept."
+  icon-yours: " &#FFD94D★"
+  icon-choose: "Choose this class"
+  hint: "&fWheel&#B376E5: change class &8· &fClick&#B376E5: choose%leave%"
+  hint-bedrock: "&#B376E5Tap a class in your hotbar, then the screen to choose it%leave%"
+  hint-leave: " &8· &fSneak&#B376E5: leave"
+  confirm: "&#FFD94DClick again to choose %color%%name%"
+  owned: "&#FFD94D★ This is already your class"
   caption: "&#FFD94D%key% &8· &f%name%"
   caption-text: "&f%text%"
-  must-choose: "&#FFD94DChoose your class first: click a class, then the green button."
+  must-choose: "&#FFD94DChoose your class first: scroll your hotbar, then click."
   lines:
     cryomancer:
       basic: "Each shard leaves frost. At 3 frosts the monster is shut in ice."

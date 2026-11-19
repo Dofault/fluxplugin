@@ -36,16 +36,20 @@ rpg:
       width: 1.4
       height: 2.8
       name-height: 3.0
-  # The class showcase (/classe in the lobby, Java clients): the player watches each class cast its real spells in a
-  # small arena, through a fixed camera, a panel on the left third of his screen (docs/technique/rpg.md).
+  # The class showcase (/classe in the lobby): the player watches each class cast its real spells in a small arena.
+  # His hotbar holds one class per slot: the slot he holds is the class played, a click chooses it
+  # (docs/technique/rpg.md).
   showcase:
     enabled: true
     # One arena per viewer: how many, where the first one is (the lobby world, far from the lobby) and how far apart.
     stages: 6
     origin: {x: 4000, y: 100, z: 4000}
     spacing: 320
-    # From the middle of the arena (x: west is negative and on the right of the screen, z: away from the camera).
-    camera: {x: 2.25, y: 4.2, z: -9.5, pitch: 20}
+    # The camera is the player, seated: "distance" blocks from the point it looks at ("look", from the middle of the
+    # arena, y above the floor) and "height" above the floor. It starts north of the fight (west, negative x, is on
+    # the right of the screen) and turns around that point: a swing of "arc" degrees from side to side in "period"
+    # seconds, a full turn every period from 360, no move at 0. Bedrock players always get a still seat.
+    camera: {distance: 10, height: 4.4, arc: 80, period: 24, look: {x: 0.5, y: 1.2}}
     actor: {x: 4.5, z: 0}
     monsters: [[-2.5, 0], [-4.2, 1.9], [-4.2, -1.9]]
     monster: HUSK
@@ -53,23 +57,17 @@ rpg:
     level: 1
     # Time of day the viewer sees (the arena is lit from above).
     time: 14000
-    # Ticks the pointer rests on a class before its show starts.
-    hover-ticks: 5
-    pointer:
-      # Screen units per degree of mouse turn (the screen is about 2.5 units wide).
-      speed: 0.02
-    panel:
-      # Blocks between the camera and the panel. Everything is drawn for a field of view of 70 on a 16:9 screen.
-      distance: 1.0
-      pointer-scale: 0.16
-      # Colours: opacity then colour, eight hex digits.
-      background: "D9120826"
-      edge: "FFF0A800"
-      card: "B00D0D0D"
-      card-hover: "D05B2D9E"
-      choose: "D02A9D5F"
-      choose-hover: "FF2ECF7B"
-      caption: "99000000"
+    # Life, food and experience bars off his screen meanwhile (Java: his client is told he is in creative mode, the
+    # server never is).
+    hide-bars: true
+    # The class he holds is not drawn in his hand (Java: item models fluxdungeons:class_<id> of the pack, written by
+    # assets/classes/gen_class_icons.py; false: the plain weapon, drawn in the hand).
+    hide-held-item: true
+    texts:
+      # Size of the texts floating over the fight (class, spell being cast).
+      scale: 1.0
+      # Behind the spell's name and sentence: opacity then colour, eight hex digits.
+      shade: "99000000"
     # What the actor does, in a loop. monsters <n> (new ones, the former go), wait <ticks>, basic <times> <ticks between>,
     # cast <right|a|f>, home (the actor back to his place). Each big spell starts on a fresh scene, the spell that
     # moves the actor comes last: it pushes the monsters about.

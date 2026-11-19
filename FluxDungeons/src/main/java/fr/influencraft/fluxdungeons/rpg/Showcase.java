@@ -1,9 +1,8 @@
 package fr.influencraft.fluxdungeons.rpg;
 
 import fr.influencraft.flux.api.FluxPlugin;
-import fr.influencraft.flux.api.client.Camera;
-import fr.influencraft.flux.api.client.Clients;
 import fr.influencraft.flux.api.client.Focus;
+import fr.influencraft.flux.api.client.Hotbar;
 import fr.influencraft.flux.api.universe.Universes;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -31,16 +30,15 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 /**
- * The class showcase ({@code /classe} in the rpg lobby): instead of pages of text, the player watches each class
- * play. He is taken to a small arena far from the lobby and sees it through a fixed camera (Flux's {@link Camera});
- * a panel drawn in front of that camera fills the left third of his screen, his mouse moves a pointer over it.
- * Pointing at a class makes an actor wearing his skin cast that class's real spells on monsters
- * ({@link CombatEngine#standIn}); a click opens the class (its spells, lit one by one as they are cast) and the
- * button that chooses it ({@link RpgPlayers#pick}, same rules as before).
+ * The class showcase ({@code /classe} in the rpg lobby): instead of a menu, the player watches each class play. He is
+ * taken to a small arena far from the lobby, seated on a seat that turns around the fight, and his hotbar holds one
+ * class per slot ({@link Hotbar}): the slot he holds (mouse wheel, number keys, a tap on Bedrock) is the class an
+ * actor wearing his skin plays on monsters, with its real spells ({@link CombatEngine#standIn}); a click chooses it
+ * ({@link RpgPlayers#pick}, same rules as before). No pointer, no window: Java and Bedrock players use it alike.
  *
  * <p>One arena per viewer (a pool of {@code rpg.showcase.stages}, built once each, {@code spacing} blocks apart), so
- * nobody sees another one's show. Java clients only, in the lobby world only: {@link #open} is false otherwise and
- * the caller opens its usual menu.</p>
+ * nobody sees another one's show. In the lobby world only: {@link #open} is false otherwise and the caller opens its
+ * usual menu.</p>
  */
 final class Showcase implements Listener {
 
@@ -49,9 +47,9 @@ final class Showcase implements Listener {
 
     /** What the config says ({@code rpg.showcase}), read at each opening. */
     record Settings(boolean enabled, int stages, int spacing, int originX, int originY, int originZ,
-                    double camX, double camY, double camZ, float camPitch, double actorX, double actorZ,
-                    List<double[]> monsters, String monster, int level, long time,
-                    double pointerSpeed, int hoverTicks, ConfigurationSection panel, ConfigurationSection scripts) {
+                    double camDistance, double camHeight, double camArc, int camPeriod, double lookX, double lookY,
+                    double actorX, double actorZ, List<double[]> monsters, String monster, int level, long time,
+                    boolean hideBars, boolean hideHeld, double textScale, int captionShade, ConfigurationSection scripts) {
 
         static Settings of(ConfigurationSection c) {
             List<double[]> spots = new ArrayList<>();
@@ -61,12 +59,21 @@ final class Showcase implements Listener {
                 }
             }
             if (spots.isEmpty()) spots.add(new double[]{-3, 0});
+            int shade;
+            try {
+                shade = (int) Long.parseLong(c.getString("texts.shade", "99000000").replace("#", ""), 16);
+            } catch (NumberFormatException e) {
+                shade = 0x99000000;
+            }
             return new Settings(c.getBoolean("enabled", true), Math.max(1, c.getInt("stages", 6)), Math.max(96, c.getInt("spacing", 320)),
                     c.getInt("origin.x", 4000), c.getInt("origin.y", 100), c.getInt("origin.z", 4000),
-                    c.getDouble("camera.x", 2.25), c.getDouble("camera.y", 4.2), c.getDouble("camera.z", -9.5), (float) c.getDouble("camera.pitch", 20),
+                    Math.max(3, c.getDouble("camera.distance", 10)), c.getDouble("camera.height", 4.4),
+                    Math.max(0, c.getDouble("camera.arc", 80)), (int) Math.round(c.getDouble("camera.period", 24) * 20),
+                    c.getDouble("camera.look.x", 0.5), c.getDouble("camera.look.y", 1.2),
                     c.getDouble("actor.x", 4.5), c.getDouble("actor.z", 0), spots, c.getString("monster", "HUSK"),
-                    Math.max(1, c.getInt("level", 1)), c.getLong("time", 14000), c.getDouble("pointer.speed", 0.02),
-                    Math.max(0, c.getInt("hover-ticks", 5)), c.getConfigurationSection("panel"), c.getConfigurationSection("scripts"));
+                    Math.max(1, c.getInt("level", 1)), c.getLong("time", 14000), c.getBoolean("hide-bars", true),
+                    c.getBoolean("hide-held-item", true), Math.max(0.2, c.getDouble("texts.scale", 1.0)), shade,
+                    c.getConfigurationSection("scripts"));
         }
     }
 
@@ -126,15 +133,15 @@ final class Showcase implements Listener {
     }
 
     /**
-     * Takes the player to an arena and starts the show. False when it cannot be (switched off, Bedrock, not in the
-     * lobby, every arena taken...): the caller opens its usual menu instead.
+     * Takes the player to an arena and starts the show. False when it cannot be (switched off, not in the lobby,
+     * every arena taken...): the caller opens its usual menu instead.
      */
     boolean open(Player p) {
         RpgConfig.Set set = config.get();
         ConfigurationSection c = plugin.getConfig().getConfigurationSection("rpg.showcase");
         if (set == null || c == null || world == null || world.world() == null) return false;
         Settings s = Settings.of(c);
-        if (!s.enabled() || !Camera.available() || Clients.bedrock(p)) return false;
+        if (!s.enabled() || !Hotbar.available()) return false;
         if (sessions.containsKey(p.getUniqueId())) return true;
         if (p.getWorld() != world.world() || Universes.transitioning(p) || p.isDead() || p.isInsideVehicle()) return false;
         if (RpgPlayers.visible(set).isEmpty()) return false;
@@ -161,6 +168,7 @@ final class Showcase implements Listener {
     void close(Player p, boolean back) {
         ShowcaseSession s = sessions.remove(p.getUniqueId());
         if (s == null) return;
+        dropped.remove(p.getUniqueId());
         stages.remove(s.stage());
         controls.take(p, false);
         s.close(back);
@@ -224,24 +232,81 @@ final class Showcase implements Listener {
 
     // ------------------------------------------------------------------ what the viewer does
 
-    /** Tick of each viewer's last dropped item: the A key swings the arm too, and is no click on the panel. */
+    /** Tick of each viewer's last press of his drop key: it swings the arm too, and is no click. */
     private final Map<UUID, Integer> dropped = new HashMap<>();
 
-    /** A left click (his arm swings, wherever the camera is): a click on the panel. */
+    /** His drop key was pressed (Flux held it back: nothing was dropped). */
+    void dropped(Player p) {
+        dropped.put(p.getUniqueId(), Bukkit.getCurrentTick());
+    }
+
+    /**
+     * A left click (his arm swings): the class he holds is chosen. Read two ticks later: the drop key swings the arm
+     * too, and Flux only tells it on the next tick.
+     */
     @EventHandler
     public void onSwing(PlayerAnimationEvent e) {
+        Player p = e.getPlayer();
+        ShowcaseSession s = sessions.get(p.getUniqueId());
+        if (s == null) return;
+        e.setCancelled(true);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (sessions.get(p.getUniqueId()) != s) return;
+            Integer drop = dropped.get(p.getUniqueId());
+            if (drop == null || Bukkit.getCurrentTick() - drop > 4) s.click();
+        }, 2L);
+    }
+
+    /** A right click chooses too (the long press of a touch screen); the item he really holds is never used. */
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onInteract(org.bukkit.event.player.PlayerInteractEvent e) {
         ShowcaseSession s = sessions.get(e.getPlayer().getUniqueId());
         if (s == null) return;
         e.setCancelled(true);
-        Integer drop = dropped.get(e.getPlayer().getUniqueId());
-        if (drop != null && Bukkit.getCurrentTick() - drop <= 2) return;
-        s.click();
+        boolean right = e.getAction() == org.bukkit.event.block.Action.RIGHT_CLICK_AIR || e.getAction() == org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK;
+        if (right && e.getHand() == org.bukkit.inventory.EquipmentSlot.HAND) s.click();
     }
 
-    @EventHandler(priority = org.bukkit.event.EventPriority.MONITOR)
+    /**
+     * The slot he holds is the class he watches. Past the last class the hotbar is empty: the wheel goes round to the
+     * other end, a number key of an empty slot changes nothing.
+     */
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onHeld(org.bukkit.event.player.PlayerItemHeldEvent e) {
+        Player p = e.getPlayer();
+        ShowcaseSession s = sessions.get(p.getUniqueId());
+        if (s == null || s.closing()) return;
+        int count = s.count(), next = e.getNewSlot();
+        if (next < count) {
+            s.select(next);
+            return;
+        }
+        e.setCancelled(true);
+        int before = Math.min(e.getPreviousSlot(), count - 1);
+        int target = count == 1 ? 0 : before == 0 ? count - 1 : before == count - 1 ? 0 : before;
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (sessions.get(p.getUniqueId()) != s || s.closing()) return;
+            p.getInventory().setHeldItemSlot(target);
+            s.select(target);
+        });
+    }
+
+    /** What he really carries stays where it is: no drop, no swap, no click in his inventory. */
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onDrop(org.bukkit.event.player.PlayerDropItemEvent e) {
-        if (sessions.containsKey(e.getPlayer().getUniqueId())) dropped.put(e.getPlayer().getUniqueId(), Bukkit.getCurrentTick());
-        else dropped.remove(e.getPlayer().getUniqueId());
+        if (!sessions.containsKey(e.getPlayer().getUniqueId())) return;
+        e.setCancelled(true);
+        dropped(e.getPlayer());
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onSwap(org.bukkit.event.player.PlayerSwapHandItemsEvent e) {
+        if (sessions.containsKey(e.getPlayer().getUniqueId())) e.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onInventoryClick(org.bukkit.event.inventory.InventoryClickEvent e) {
+        if (sessions.containsKey(e.getWhoClicked().getUniqueId())) e.setCancelled(true);
     }
 
     /** Sneaking never takes him off his seat: it asks to leave the show. */
