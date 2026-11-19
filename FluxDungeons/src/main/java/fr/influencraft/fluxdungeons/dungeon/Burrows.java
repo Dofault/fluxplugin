@@ -67,7 +67,7 @@ final class Burrows {
         LivingEntity boss;
         int ticks;
         int nextTremor, nextPassage, nextSnore;
-        /** Somebody has come under the arena (the boss' ground): its sounds start. */
+        /** Somebody has come onto the boss' ground ({@link #bossGround}): its sounds start. */
         boolean near;
         /** Entered from the dungeon's own map (rooms first): the hint of the hunt waits for the first player in. */
         boolean linked, hinted;
@@ -97,6 +97,14 @@ final class Burrows {
         Location arena() {
             int s = plan.settings.size();
             return new Location(world, ox + s / 2.0, plan.settings.top() + 1, oz + plan.settings.arenaZ0() + s / 2.0, 0, 0);
+        }
+
+        /**
+         * The boss' ground, where its sounds are heard: the whole lair when it is entered from the dungeon's own map
+         * (its rooms stay quiet), else only under the arena (the approach keeps the quiet earth sounds).
+         */
+        boolean bossGround(double z) {
+            return linked ? z >= 0 : plan.underArena(z);
         }
 
         /** Local z of a place. */
@@ -899,12 +907,12 @@ final class Burrows {
                 return;
             }
         }
-        // with an approach, the boss is only heard once somebody is under the arena; before, quiet earth sounds
+        // with an approach, the boss is only heard once somebody is on its ground (bossGround); before, quiet earth sounds
         boolean rich = l.plan.settings.depth() > l.plan.settings.size();
         if (rich) {
             boolean nowNear = false;
             for (Player p : players) {
-                if (p.getLocation().getY() <= l.plan.settings.top() && l.plan.underArena(l.localZ(p.getLocation()))) nowNear = true;
+                if (p.getLocation().getY() <= l.plan.settings.top() && l.bossGround(l.localZ(p.getLocation()))) nowNear = true;
             }
             if (nowNear && !l.near) {
                 l.near = true;
@@ -946,10 +954,10 @@ final class Burrows {
 
     /**
      * Quiet sounds of the burrows for a player outside the boss' ground (drips, earth and gravel trickling, roots
-     * creaking), now and then, from a few blocks away; nothing under the arena (the boss' sounds take over there).
+     * creaking), now and then, from a few blocks away; nothing on the boss' ground (its sounds take over there).
      */
     private void quiet(Lair l, Player p) {
-        if (l.plan.underArena(l.localZ(p.getLocation())) || p.getLocation().getY() > l.plan.settings.top()) return;
+        if (l.bossGround(l.localZ(p.getLocation())) || p.getLocation().getY() > l.plan.settings.top()) return;
         ThreadLocalRandom r = ThreadLocalRandom.current();
         int next = l.nextQuiet.getOrDefault(p.getUniqueId(), l.ticks + 100);
         if (l.ticks < next) {
@@ -1022,7 +1030,7 @@ final class Burrows {
         List<List<GalleryPlan.Point>> near = new ArrayList<>();
         boolean rich = l.plan.settings.depth() > l.plan.settings.size();
         for (List<GalleryPlan.Point> t : l.plan.tunnels) {
-            if (rich && !l.plan.underArena(t.get(t.size() / 2).z())) continue;
+            if (rich && !l.bossGround(t.get(t.size() / 2).z())) continue;
             double best = Double.MAX_VALUE;
             for (GalleryPlan.Point q : t) best = Math.min(best, l.at(q).distance(p.getLocation()));
             if (best >= 6 && best <= 14) near.add(t);
