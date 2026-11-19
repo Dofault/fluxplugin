@@ -219,6 +219,24 @@ public final class RpgPlayers implements Listener {
         return c == null ? List.of() : SpellBook.of(c, plugin.messages()::raw, valueOn, valueOff);
     }
 
+    /**
+     * Forgets a player's rpg character (/fluxdungeons reset): he chooses a class again on his next visit. False when
+     * he is in the rpg world now (his character is loaded there: he must leave it first).
+     */
+    public boolean erase(UUID id) {
+        if (online.containsKey(id)) return false;
+        away.remove(id);
+        if (store != null) Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                store.erase(id);
+            } catch (java.sql.SQLException e) {
+                plugin.getLogger().warning("Rpg character of " + id + " not erased: " + e.getMessage());
+            }
+            away.remove(id);
+        });
+        return true;
+    }
+
     /** Whether he may enter a dungeon: an rpg class loaded, or outside the rpg universe (chosen on arriving). */
     public boolean mayPlay(Player p) {
         return online.containsKey(p.getUniqueId()) || !RpgWorld.UNIVERSE.equals(Universes.of(p));

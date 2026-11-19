@@ -80,6 +80,8 @@ room:
   wave: '&#FFD94DVague %wave%/%waves%'
   cleared: '&#2ECF7BSalle nettoyée, la grille s''ouvre.'
 admin:
+  reset-in-rpg: '&#FF5C5C%player% est dans le monde RPG : fais-le sortir (/rpg quitter) puis recommence.'
+  reset-done: '&#2ECF7B%player% repart de zéro en RPG : classe, niveaux, victoires et clés de donjon effacés.'
   god-on: '&#2ECF7BInvincible, vie et faim au maximum.'
   god-off: '&#B376E5Tu n''es plus invincible (vie et faim au maximum).'
   god-denied: '&#FF5C5CRéservé au staff.'

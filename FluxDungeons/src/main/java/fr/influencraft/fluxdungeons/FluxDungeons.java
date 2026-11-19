@@ -954,6 +954,18 @@ public final class FluxDungeons extends FluxPlugin {
                 Party party = parties.of(target);
                 start(sender, def, party == null ? List.of(target) : party.online(), -1, true);
             }
+            case "reset" -> {
+                // /fluxdungeons reset <player>: his rpg character, dungeon victories and keys forgotten (test accounts)
+                if (args.length < 2) return usage(sender);
+                org.bukkit.OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
+                if (rpg != null && !rpg.players().erase(target.getUniqueId())) {
+                    messages().send(sender, "admin.reset-in-rpg", "%player%", String.valueOf(target.getName()));
+                    return true;
+                }
+                if (records != null) records.erase(target.getUniqueId());
+                if (keys != null) keys.erase(target.getUniqueId());
+                messages().send(sender, "admin.reset-done", "%player%", String.valueOf(target.getName()));
+            }
             case "keys", "cles" -> {
                 // /fluxdungeons keys <player> <job> <amount>: gives (or takes, negative) dungeon keys
                 if (args.length < 4 || keys == null) return usage(sender);
@@ -1166,7 +1178,7 @@ public final class FluxDungeons extends FluxPlugin {
     }
 
     private List<String> completeAdmin(CommandSender sender, String[] args) {
-        if (args.length == 1) return filter(List.of("create", "edit", "visit", "build", "template", "start", "stop", "summon", "god", "give", "runs", "reload"), args[0]);
+        if (args.length == 1) return filter(List.of("create", "edit", "visit", "build", "template", "start", "reset", "keys", "stop", "summon", "god", "give", "runs", "reload"), args[0]);
         List<String> ids = runs.dungeons().stream().map(DungeonDefinition::id).toList();
         List<String> online = Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
         String sub = args[0].toLowerCase(Locale.ROOT);

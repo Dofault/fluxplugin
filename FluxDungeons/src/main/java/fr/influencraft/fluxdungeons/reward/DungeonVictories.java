@@ -98,6 +98,21 @@ public final class DungeonVictories implements Listener {
         });
     }
 
+    /** Forgets every victory of the player (/fluxdungeons reset, test accounts). */
+    public void erase(UUID id) {
+        wins.remove(id);
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try (Connection c = Database.connection();
+                 PreparedStatement ps = c.prepareStatement("DELETE FROM " + table + " WHERE uuid = ?")) {
+                ps.setString(1, id.toString());
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().warning("Victories of " + id + " not erased: " + e.getMessage());
+            }
+            if (Bukkit.getPlayer(id) != null) wins.put(id, new ConcurrentHashMap<>());
+        });
+    }
+
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
         load(e.getPlayer().getUniqueId());

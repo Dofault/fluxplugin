@@ -42,6 +42,18 @@ final class RpgStore {
         }
     }
 
+    /** Forgets his rpg character: class and the levels of every class (/fluxdungeons reset, test accounts). */
+    void erase(UUID uuid) throws SQLException {
+        try (Connection c = Database.connection()) {
+            for (String t : new String[]{heroes, progress}) {
+                try (PreparedStatement ps = c.prepareStatement("DELETE FROM " + t + " WHERE uuid = ?")) {
+                    ps.setString(1, uuid.toString());
+                    ps.executeUpdate();
+                }
+            }
+        }
+    }
+
     /** The player's class, null when he never chose one. Throws when unreadable (never mistaken for "none"). */
     Hero hero(UUID uuid) throws SQLException {
         try (Connection c = Database.connection();

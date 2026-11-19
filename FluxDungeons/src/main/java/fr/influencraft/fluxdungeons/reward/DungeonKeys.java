@@ -154,6 +154,21 @@ public final class DungeonKeys implements Listener {
         return true;
     }
 
+    /** Forgets every key of the player (/fluxdungeons reset, test accounts). */
+    public void erase(UUID uuid) {
+        pending.remove(uuid);
+        if (cache.containsKey(uuid)) cache.put(uuid, new ConcurrentHashMap<>());
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try (Connection c = Database.connection();
+                 PreparedStatement ps = c.prepareStatement("DELETE FROM " + table + " WHERE uuid = ?")) {
+                ps.setString(1, uuid.toString());
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().warning("Dungeon keys of " + uuid + " not erased: " + e.getMessage());
+            }
+        });
+    }
+
     /** Gives keys (drops, staff); returns the new count. */
     public int add(UUID uuid, String job, int n) {
         Map<String, Integer> mine = cache.get(uuid);

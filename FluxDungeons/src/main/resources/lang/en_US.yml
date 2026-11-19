@@ -80,6 +80,8 @@ room:
   wave: '&#FFD94DWave %wave%/%waves%'
   cleared: '&#2ECF7BRoom cleared, the gate opens.'
 admin:
+  reset-in-rpg: '&c%player% is in the rpg world: get him out (/rpg leave) then try again.'
+  reset-done: '&a%player% starts the rpg over: class, levels, dungeon victories and keys erased.'
   god-on: '&#2ECF7BInvulnerable, full life and hunger.'
   god-off: '&#B376E5No longer invulnerable (full life and hunger).'
   god-denied: '&#FF5C5CStaff only.'
