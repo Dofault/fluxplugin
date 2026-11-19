@@ -21,7 +21,7 @@ level-up:
     - "!&r"
   money: "!&r  &8• &7Gᴀɪɴ :&f %money%"
   coefficient: "!&r  &8• &7Cᴏᴇꜰꜰɪᴄɪᴇɴᴛ ᴅᴇ ɢᴀɪɴ :&f ×%before% &8➜ &#aafb93×%after%"
-  reward: "!&r  &8• &7Réᴄᴏᴍᴘᴇɴꜱᴇ :&f %amount% %label% &f[/%flux_cmd_flux_rewards%]"
+  reward: "!&r  &8• &f+%amount% %label% &f[/%flux_cmd_flux_rewards%]"
   footer:
     - "!&r"
     - "!&#4DA954&m                                                            "
