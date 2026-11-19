@@ -52,6 +52,15 @@ def main():
         }}
         (out / f"class_{class_id}.json").write_text(json.dumps(definition, indent=1) + "\n")
         print(f"  class_{class_id}.json")
+    # the way out of the showcase (last slot of the hotbar): a barrier, hidden in the hand too
+    leave = {"model": {
+        "type": "minecraft:select",
+        "property": "minecraft:display_context",
+        "cases": [{"when": HANDS, "model": {"type": "minecraft:empty"}}],
+        "fallback": {"type": "minecraft:model", "model": "minecraft:item/barrier"},
+    }}
+    (out / "showcase_leave.json").write_text(json.dumps(leave, indent=1) + "\n")
+    print("  showcase_leave.json")
 
 
 if __name__ == "__main__":

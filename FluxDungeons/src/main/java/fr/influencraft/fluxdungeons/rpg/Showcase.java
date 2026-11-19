@@ -47,7 +47,7 @@ final class Showcase implements Listener {
 
     /** What the config says ({@code rpg.showcase}), read at each opening. */
     record Settings(boolean enabled, int stages, int spacing, int originX, int originY, int originZ,
-                    double camDistance, double camHeight, double camArc, int camPeriod, double lookX, double lookY,
+                    double camDistance, double camHeight, double camArc, int camPeriod, boolean camLocked, double lookX, double lookY,
                     double actorX, double actorZ, List<double[]> monsters, String monster, int level, long time,
                     boolean hideBars, boolean hideHeld, double textScale, int captionShade, ConfigurationSection scripts) {
 
@@ -68,7 +68,7 @@ final class Showcase implements Listener {
             return new Settings(c.getBoolean("enabled", true), Math.max(1, c.getInt("stages", 6)), Math.max(96, c.getInt("spacing", 320)),
                     c.getInt("origin.x", 4000), c.getInt("origin.y", 100), c.getInt("origin.z", 4000),
                     Math.max(3, c.getDouble("camera.distance", 10)), c.getDouble("camera.height", 4.4),
-                    Math.max(0, c.getDouble("camera.arc", 80)), (int) Math.round(c.getDouble("camera.period", 24) * 20),
+                    Math.max(0, c.getDouble("camera.arc", 80)), (int) Math.round(c.getDouble("camera.period", 24) * 20), c.getBoolean("camera.locked", true),
                     c.getDouble("camera.look.x", 0.5), c.getDouble("camera.look.y", 1.2),
                     c.getDouble("actor.x", 4.5), c.getDouble("actor.z", 0), spots, c.getString("monster", "HUSK"),
                     Math.max(1, c.getInt("level", 1)), c.getLong("time", 14000), c.getBoolean("hide-bars", true),
@@ -268,26 +268,29 @@ final class Showcase implements Listener {
     }
 
     /**
-     * The slot he holds is the class he watches. Past the last class the hotbar is empty: the wheel goes round to the
-     * other end, a number key of an empty slot changes nothing.
+     * The slot he holds is the class he watches; the last one is the way out. Between the classes and the way out the
+     * hotbar is empty: the wheel jumps over it, a number key of an empty slot changes nothing.
      */
     @EventHandler(priority = EventPriority.LOWEST)
     public void onHeld(org.bukkit.event.player.PlayerItemHeldEvent e) {
         Player p = e.getPlayer();
         ShowcaseSession s = sessions.get(p.getUniqueId());
         if (s == null || s.closing()) return;
-        int count = s.count(), next = e.getNewSlot();
-        if (next < count) {
-            s.select(next);
+        int count = s.count(), next = e.getNewSlot(), last = count - 1, leave = ShowcaseSession.LEAVE_SLOT;
+        boolean way = s.canLeave();
+        if (next < count || (way && next == leave)) {
+            s.hold(next);
             return;
         }
         e.setCancelled(true);
-        int before = Math.min(e.getPreviousSlot(), count - 1);
-        int target = count == 1 ? 0 : before == 0 ? count - 1 : before == count - 1 ? 0 : before;
+        int before = e.getPreviousSlot();
+        int target;
+        if (way) target = before == leave ? last : before == last ? leave : Math.min(before, last);
+        else target = before == 0 ? last : before >= last ? 0 : before;
         Bukkit.getScheduler().runTask(plugin, () -> {
             if (sessions.get(p.getUniqueId()) != s || s.closing()) return;
             p.getInventory().setHeldItemSlot(target);
-            s.select(target);
+            s.hold(target);
         });
     }
 

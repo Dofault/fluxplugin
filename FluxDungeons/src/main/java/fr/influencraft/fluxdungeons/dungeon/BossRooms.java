@@ -2,7 +2,7 @@ package fr.influencraft.fluxdungeons.dungeon;
 
 import fr.influencraft.flux.api.FluxPlugin;
 import fr.influencraft.flux.api.client.Camera;
-import fr.influencraft.flux.api.client.Clients;
+import fr.influencraft.flux.api.client.CameraRig;
 import fr.influencraft.flux.api.client.Sidebar;
 import fr.influencraft.flux.api.text.Texts;
 import fr.influencraft.fluxdungeons.mob.MobTemplate;
@@ -19,7 +19,6 @@ import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -403,9 +402,6 @@ public final class BossRooms implements Listener {
     private record Key(int at, Vector pos, Vector look, boolean cut) {
     }
 
-    /** Ticks a camera takes to reach the place it was last given. */
-    private static final int GLIDE = 10;
-
     private static Vector spline(Vector p0, Vector p1, Vector p2, Vector p3, double t) {
         double t2 = t * t, t3 = t2 * t;
         return p1.clone().multiply(2)
@@ -434,7 +430,7 @@ public final class BossRooms implements Listener {
         private final Runnable after;
         private final Map<UUID, ArmorStand> seats = new HashMap<>();
         private final Set<UUID> skips = new HashSet<>();
-        private ItemDisplay camera;
+        private CameraRig camera;
         private int tick, shakeUntil;
         private double shakePower;
         private boolean over;
@@ -456,7 +452,7 @@ public final class BossRooms implements Listener {
             keys.sort(java.util.Comparator.comparingInt(Key::at));
             String animation = scene.getString("animation", "");
             if (!animation.isBlank()) animate.accept(animation);
-            if (!keys.isEmpty()) camera = camera(place(keys.get(0).pos(), keys.get(0).look()));
+            if (!keys.isEmpty()) camera = new CameraRig(plugin, place(keys.get(0).pos(), keys.get(0).look()));
             String music = scene.getString("music", "");
             if (!music.isBlank()) for (Player p : runs.fighters(run)) fr.influencraft.flux.api.music.Music.jingle(p, music);
             for (Player p : runs.fighters(run)) seat(p);
@@ -478,10 +474,7 @@ public final class BossRooms implements Listener {
             seats.put(p.getUniqueId(), seat);
             seated.put(p.getUniqueId(), this);
             fr.influencraft.fluxdungeons.api.Combat.takeControls(p, true);
-            if (camera != null && !Clients.bedrock(p)) {
-                Sidebar.hide(p, true);
-                Camera.view(p, camera);
-            }
+            if (camera != null && camera.show(p)) Sidebar.hide(p, true);
             plugin.messages().send(p, "boss.scene-skip");
         }
 
@@ -504,20 +497,8 @@ public final class BossRooms implements Listener {
                 return;
             }
             for (Map<?, ?> e : events) if (integer(e.get("at"), 0) == tick) event(e);
-            if (camera != null && camera.isValid()) move();
+            if (camera != null) move();
             tick++;
-        }
-
-        /**
-         * A camera entity. Its client glides to each new place over {@link #GLIDE} ticks while a new place comes
-         * every tick (as Typewriter's cinematics do): the steps of the server's clock are smoothed out, in position
-         * and in rotation.
-         */
-        private ItemDisplay camera(Location at) {
-            return at.getWorld().spawn(at, ItemDisplay.class, d -> {
-                d.setPersistent(false);
-                d.setTeleportDuration(GLIDE);
-            });
         }
 
         /** Keys of the shot playing at this tick: from its cut (or the first key) to the key before the next cut. */
@@ -533,14 +514,7 @@ public final class BossRooms implements Listener {
             List<Key> shot = shot();
             Key head = shot.get(0);
             if (head.cut() && head.at() == tick) {
-                // a cut: another camera, already at its place (the former one would glide across the room)
-                ItemDisplay former = camera;
-                camera = camera(place(head.pos(), head.look()));
-                for (UUID id : seats.keySet()) {
-                    Player p = Bukkit.getPlayer(id);
-                    if (p != null && !Clients.bedrock(p)) Camera.view(p, camera);
-                }
-                Bukkit.getScheduler().runTaskLater(plugin, former::remove, 2L);
+                camera.cut(place(head.pos(), head.look()));
                 return;
             }
             // along a curve through the shot's keys (Catmull-Rom): no stop at a key, no corner
@@ -557,14 +531,7 @@ public final class BossRooms implements Listener {
                 double k = shakePower * 3;
                 at.add((rnd.nextDouble() - 0.5) * k, (rnd.nextDouble() - 0.5) * k, (rnd.nextDouble() - 0.5) * k);
             }
-            camera.teleport(at);
-            // the client forgets its camera when the entity is sent again: said again now and then
-            if (tick % 10 == 3) {
-                for (UUID id : seats.keySet()) {
-                    Player p = Bukkit.getPlayer(id);
-                    if (p != null && !Clients.bedrock(p)) Camera.view(p, camera);
-                }
-            }
+            camera.move(at);
         }
 
         private void event(Map<?, ?> e) {
@@ -631,8 +598,8 @@ public final class BossRooms implements Listener {
                 if (p != null) {
                     if (p.getVehicle() == e.getValue()) p.leaveVehicle();
                     fr.influencraft.fluxdungeons.api.Combat.takeControls(p, false);
-                    if (camera != null && !Clients.bedrock(p)) {
-                        Camera.view(p, null);
+                    if (camera != null && camera.shows(p)) {
+                        camera.release(p);
                         Sidebar.hide(p, false);
                     }
                 }
@@ -671,9 +638,9 @@ public final class BossRooms implements Listener {
         ArmorStand seat = playing.seats.remove(p.getUniqueId());
         if (seat != null) seat.remove();
         fr.influencraft.fluxdungeons.api.Combat.takeControls(p, false);
-        if (playing.camera != null && p.isOnline() && !Clients.bedrock(p)) {
-            Camera.view(p, null);
-            Sidebar.hide(p, false);
+        if (playing.camera != null && playing.camera.shows(p)) {
+            playing.camera.release(p);
+            if (p.isOnline()) Sidebar.hide(p, false);
         }
     }
 }

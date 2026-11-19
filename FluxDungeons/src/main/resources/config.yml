@@ -45,11 +45,14 @@ rpg:
     stages: 6
     origin: {x: 4000, y: 100, z: 4000}
     spacing: 320
-    # The camera is the player, seated: "distance" blocks from the point it looks at ("look", from the middle of the
-    # arena, y above the floor) and "height" above the floor. It starts north of the fight (west, negative x, is on
-    # the right of the screen) and turns around that point: a swing of "arc" degrees from side to side in "period"
-    # seconds, a full turn every period from 360, no move at 0. Bedrock players always get a still seat.
-    camera: {distance: 10, height: 4.4, arc: 80, period: 24, look: {x: 0.5, y: 1.2}}
+    # The camera: "distance" blocks from the point it looks at ("look", from the middle of the arena, y above the
+    # floor) and "height" above the floor. It starts north of the fight (west, negative x, is on the right of the
+    # screen) and turns around that point: a swing of "arc" degrees from side to side in "period" seconds, a full
+    # turn every period from 360, no move at 0.
+    # locked (Java): true = the camera of the boss scenes, his mouse moves nothing and the classes are drawn at the
+    # bottom of his screen (a client draws no hotbar through a camera); false = he is the camera and keeps his real
+    # hotbar, but his mouse shakes the view. Bedrock players always are their own camera, on a still seat.
+    camera: {distance: 10, height: 4.4, arc: 80, period: 24, locked: true, look: {x: 0.5, y: 1.2}}
     actor: {x: 4.5, z: 0}
     monsters: [[-2.5, 0], [-4.2, 1.9], [-4.2, -1.9]]
     monster: HUSK
