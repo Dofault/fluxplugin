@@ -31,6 +31,12 @@ job-xp-bossbar:
   # PROGRESS, NOTCHED_6, NOTCHED_10, NOTCHED_12, NOTCHED_20
   overlay: "NOTCHED_20"
 
+# A coin springs out of what a job just paid for (broken block, monster, hook...) and flies to the player, who alone
+# sees it. Players toggle it with /jobcoins on|off.
+job-coins:
+  enabled: true
+  icon: "itemsadder:influitems:bitblock"
+
 # Data of the collections menu (EcoCollections): placeholders %fluxcoll_*%, action [fluxcoll], profile section.
 collections-menu:
   enabled: true

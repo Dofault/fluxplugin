@@ -72,6 +72,9 @@ bossbar:
   bonus: " <#4DA954>(<#C8256A>+<bonus>%</#C8256A>)"
   on: "!&#FFD94D&lRéglages &8► &#B376E5Barre d'XP de métier &#2ECF7Bactivée."
   off: "!&#FFD94D&lRéglages &8► &#B376E5Barre d'XP de métier &#FF5C5Cdésactivée."
+coins:
+  on: "!&#FFD94D&lRéglages &8► &#B376E5Pièces des métiers &#2ECF7Bactivées."
+  off: "!&#FFD94D&lRéglages &8► &#B376E5Pièces des métiers &#FF5C5Cdésactivées."
 collections:
   name: "Collection"
   done: "Terminées"

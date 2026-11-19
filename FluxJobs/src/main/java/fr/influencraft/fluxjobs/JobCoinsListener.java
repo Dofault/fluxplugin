@@ -1,0 +1,135 @@
+package fr.influencraft.fluxjobs;
+
+import fr.influencraft.flux.api.inventory.Items;
+import fr.influencraft.flux.api.jobs.JobXpGainEvent;
+import fr.influencraft.flux.api.util.PlayerSettings;
+import fr.influencraft.flux.api.world.Coins;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.player.PlayerFishEvent;
+import org.bukkit.event.player.PlayerHarvestBlockEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * A coin of the server's money springs out of what a job just paid for (the broken block, the monster, the fishing
+ * hook, the furnace) and flies to the player: he sees that the action earns money. Seen by him only (Flux's
+ * {@link Coins#pop}); the money itself is paid by the job plugin.
+ * <p>
+ * The job service tells that an action was paid ({@link JobXpGainEvent}), not where: the place is the last thing the
+ * player did in the same tick, remembered here at the lowest priority, before the job plugin reads the same event. An
+ * action without a place of its own (smelting, brewing, enchanting) uses the block he looks at.
+ */
+final class JobCoinsListener implements Listener {
+
+    /** Per-player toggle ({@code /jobcoins}), on by default. */
+    static final String SETTING = "fluxjobs:job-coins";
+
+    private record Mark(Location at, int tick) {
+    }
+
+    private final String icon;
+    private final Map<UUID, Mark> marks = new HashMap<>();
+    private final Map<UUID, Mark> shown = new HashMap<>();
+
+    JobCoinsListener(String icon) {
+        this.icon = icon;
+    }
+
+    boolean isEnabled(OfflinePlayer player) {
+        return PlayerSettings.flag(player, SETTING, true);
+    }
+
+    void setEnabled(Player player, boolean enabled) {
+        PlayerSettings.set(player, SETTING, enabled);
+    }
+
+    private void mark(Player player, Location at) {
+        marks.put(player.getUniqueId(), new Mark(at, Bukkit.getCurrentTick()));
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onBreak(BlockBreakEvent event) {
+        mark(event.getPlayer(), event.getBlock().getLocation().toCenterLocation());
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onHarvest(PlayerHarvestBlockEvent event) {
+        mark(event.getPlayer(), event.getHarvestedBlock().getLocation().toCenterLocation());
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onPlace(BlockPlaceEvent event) {
+        mark(event.getPlayer(), above(event.getBlockPlaced()));
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onHit(EntityDamageByEntityEvent event) {
+        Entity by = event.getDamager();
+        if (by instanceof Projectile projectile && projectile.getShooter() instanceof Player shooter) by = shooter;
+        if (by instanceof Player player) mark(player, middle(event.getEntity()));
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onDeath(EntityDeathEvent event) {
+        Player killer = event.getEntity().getKiller();
+        if (killer != null) mark(killer, middle(event.getEntity()));
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onFish(PlayerFishEvent event) {
+        mark(event.getPlayer(), event.getHook().getLocation().add(0, 0.3, 0));
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        marks.remove(event.getPlayer().getUniqueId());
+        shown.remove(event.getPlayer().getUniqueId());
+    }
+
+    @EventHandler
+    public void onPaid(JobXpGainEvent event) {
+        Player player = event.player();
+        if (event.gained() <= 0 || !isEnabled(player)) return;
+        int now = Bukkit.getCurrentTick();
+        Mark mark = marks.get(player.getUniqueId());
+        Location at;
+        if (mark != null && now - mark.tick() <= 1 && mark.at().getWorld() == player.getWorld()) {
+            at = mark.at();
+        } else {
+            Block looked = player.getTargetBlockExact(5);
+            if (looked == null) return;
+            at = above(looked);
+        }
+        // one action paying two jobs is one coin
+        Mark last = shown.put(player.getUniqueId(), new Mark(at, now));
+        if (last != null && last.tick() == now && last.at().equals(at)) return;
+        ItemStack coin = Items.of(icon, player);
+        if (coin != null) Coins.pop(coin).burst(at, 1, List.of(player));
+    }
+
+    private static Location above(Block block) {
+        return block.getLocation().add(0.5, 1.15, 0.5);
+    }
+
+    private static Location middle(Entity entity) {
+        return entity.getLocation().add(0, entity.getHeight() / 2, 0);
+    }
+}

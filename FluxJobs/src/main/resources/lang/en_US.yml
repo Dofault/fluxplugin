@@ -72,6 +72,9 @@ bossbar:
   bonus: " <#4DA954>(<#C8256A>+<bonus>%</#C8256A>)"
   on: "!&#FFD94D&lSettings &8► &#B376E5Job XP bar &#2ECF7Bon."
   off: "!&#FFD94D&lSettings &8► &#B376E5Job XP bar &#FF5C5Coff."
+coins:
+  on: "!&#FFD94D&lSettings &8► &#B376E5Job coins &#2ECF7Bon."
+  off: "!&#FFD94D&lSettings &8► &#B376E5Job coins &#FF5C5Coff."
 collections:
   name: "Collection"
   done: "Completed"

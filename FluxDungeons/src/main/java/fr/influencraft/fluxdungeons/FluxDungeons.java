@@ -421,7 +421,6 @@ public final class FluxDungeons extends FluxPlugin {
     protected void disable() {
         if (figures != null) figures.clear();
         if (keys != null) keys.shutdown();
-        if (tokens != null) tokens.shutdown();
         if (rpg != null) rpg.stop();
         if (runs != null) runs.stopAll();
         if (mobs != null) mobs.removeAll();

@@ -10,7 +10,8 @@ import java.util.Locale;
 
 /**
  * FluxJobs: what players see of their jobs, whatever job plugin Flux serves ({@code providers.jobs}): the Careers
- * menu and the paid actions menu ({@code /metier}), the job XP boss bar, the money coefficient line at each level,
+ * menu and the paid actions menu ({@code /metier}), the job XP boss bar, the money coefficient line at each level, the coins
+ * flying out of paid actions,
  * and the data of the collections menu. Moved out of FluxTools on 2026-11-13.
  */
 public final class FluxJobs extends fr.influencraft.flux.api.FluxPlugin {
@@ -42,6 +43,22 @@ public final class FluxJobs extends fr.influencraft.flux.api.FluxPlugin {
                     boolean on = a.equals("on") || !a.equals("off") && !bar.isEnabled(player);
                     bar.setEnabled(player, on);
                     messages().send(player, on ? "bossbar.on" : "bossbar.off");
+                    return true;
+                }).register();
+            }
+            if (section("job-coins").getBoolean("enabled", true)) {
+                JobCoinsListener coins = new JobCoinsListener(
+                        section("job-coins").getString("icon", "itemsadder:influitems:bitblock"));
+                Bukkit.getPluginManager().registerEvents(coins, this);
+                command("jobcoins").description("Coins flying out of paid job actions: on, off.").executor((sender, label, args) -> {
+                    if (!(sender instanceof Player player)) {
+                        messages().send(sender, "players-only");
+                        return true;
+                    }
+                    String a = args.length == 0 ? "toggle" : args[0].toLowerCase(Locale.ROOT);
+                    boolean on = a.equals("on") || !a.equals("off") && !coins.isEnabled(player);
+                    coins.setEnabled(player, on);
+                    messages().send(player, on ? "coins.on" : "coins.off");
                     return true;
                 }).register();
             }
