@@ -64,7 +64,7 @@ public final class FluxMusic extends FluxPlugin implements Listener {
         Bukkit.getScheduler().runTaskTimer(this, ambience::tick, 40L, 20L);
         stages = new Stages(this, jukebox, ambience, this::song, FluxMusic::wants);
         stages.load(getConfig().getConfigurationSection("band"));
-        Bukkit.getScheduler().runTaskTimer(this, stages::tick, 60L, 2L);
+        Bukkit.getScheduler().runTaskTimer(this, stages::tick, 60L, 1L);
         Music.provide(new Music.Provider() {
             public boolean play(Player player, String id, Boolean loop) {
                 Song song = song(id);

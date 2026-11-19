@@ -38,7 +38,10 @@ import java.util.function.Predicate;
  * the musicians. The band plays as long as somebody is in the place; a player who turned music off in his settings
  * sees it play and hears nothing. Each musician moves only while his instrument sounds: {@code playing} while its notes are sent,
  * {@code ready} (instrument held, still) for the rest of a song he plays in, {@code idle} otherwise. A note
- * particle rises from him on his notes, and his playing follows the pace of his notes (faster on a quick run).
+ * particle rises from him on his notes. A model with gestures plays each note with one: {@code hit_<k>} (k from
+ * low to high pitch: which bar, key or string), or {@code hit_l} / {@code hit_r} in turn (drums), started a little
+ * before the note so the stick lands on it, and {@code hold_<k>} keeps a hand where the pitch is (neck of a guitar).
+ * A model without gestures loops {@code playing}, at the pace of its notes (faster on a quick run).
  * Only the musicians of the song being played stand on the stage: at each new song those who have nothing to play
  * leave, the others take their places again across the stage.</p>
  *
@@ -207,7 +210,7 @@ public final class Stages {
         for (Stage s : stages.values()) s.viewers.remove(player.getUniqueId());
     }
 
-    /** Runs every 2 ticks on the main thread. */
+    /** Runs every tick on the main thread. */
     public void tick() {
         ticks++;
         for (Stage s : stages.values()) s.tick(ticks);
@@ -222,6 +225,9 @@ public final class Stages {
         String state = "";
         /** Notes per second lately (smoothed), and the speed his playing is shown at. */
         float rate, speed = 1f;
+        /** Gestures of the model: pitch-indexed hits and holds, a left and a right hit taken in turn. */
+        int hits, holds;
+        boolean sides, left;
 
         Musician(Instrument instrument, Location at, ModelBridge.Figure figure) {
             this.instrument = instrument;
@@ -238,6 +244,8 @@ public final class Stages {
         volatile Map<Instrument, double[]> sources = Map.of();
         /** Notes of each instrument since the last tick (chords count once), written by the clock thread. */
         final AtomicIntegerArray fresh = new AtomicIntegerArray(Instrument.values().length);
+        /** Pitch (x1000) of the note each instrument is about to play, 0 when none; written by the clock thread. */
+        final AtomicIntegerArray cues = new AtomicIntegerArray(Instrument.values().length);
         final Set<UUID> viewers = new HashSet<>();
         /** Last note of each instrument (System.nanoTime) and its pitch, written by the clock thread. */
         final AtomicLongArray lastNote = new AtomicLongArray(Instrument.values().length);
@@ -307,6 +315,9 @@ public final class Stages {
                     }
                     m = new Musician(instrument, at, figure);
                     if (figure != null) {
+                        while (figure.has("hit_" + m.hits)) m.hits++;
+                        while (figure.has("hold_" + m.holds)) m.holds++;
+                        m.sides = figure.has("hit_l") && figure.has("hit_r");
                         for (UUID viewer : viewers) {
                             Player p = Bukkit.getPlayer(viewer);
                             if (p != null) figure.show(p);
@@ -342,7 +353,7 @@ public final class Stages {
 
         void tick(long tick) {
             if (closed) return;
-            if (tick % 10 == 1) {
+            if (tick % 20 == 1) {
                 audience();
                 program();
             }
@@ -353,21 +364,35 @@ public final class Stages {
                 int i = m.instrument.ordinal();
                 long note = lastNote.get(i);
                 boolean playing = live && note != 0 && now - note < PLAYING_NANOS;
-                String state = playing ? "playing" : live && cast.contains(m.instrument) ? "ready" : "idle";
+                boolean gestures = m.hits > 0 || m.sides;
+                int cued = cues.getAndSet(i, 0);
+                if (live && cued != 0 && m.figure != null && gestures) {
+                    // pitch 0.5..2 -> 0..1 along the instrument (low on his left)
+                    double t = Math.max(0, Math.min(0.999, (Math.log(cued / 1000.0) / Math.log(2) + 1) / 2));
+                    if (m.sides) {
+                        m.figure.once(m.left ? "hit_l" : "hit_r");
+                        m.left = !m.left;
+                    } else {
+                        m.figure.once("hit_" + (int) (t * m.hits));
+                    }
+                    if (m.holds > 0) m.figure.hold("hold_" + (int) (t * m.holds));
+                }
+                String state = playing && !gestures ? "playing" : live && cast.contains(m.instrument) ? "ready" : "idle";
+                if (m.figure != null && m.holds > 0 && state.equals("idle")) m.figure.hold(null);
                 if (m.figure != null && !state.equals(m.state)) {
                     m.figure.loop(state);
                     m.state = state;
                 }
-                // pace of his notes -> speed of his playing, eased so it never jerks (a tick here is 0.1 s)
+                // pace of his notes -> speed of his playing, eased so it never jerks
                 int notes = fresh.getAndSet(i, 0);
-                m.rate += (notes * 10f - m.rate) * 0.12f;
-                Float gestures = GESTURES.get(m.instrument);
-                float want = !playing || gestures == null ? 1f
-                        : Math.max(SPEED_MIN, Math.min(SPEED_MAX, m.rate / gestures));
-                m.speed += (want - m.speed) * 0.2f;
+                m.rate += (notes * 20f - m.rate) * 0.06f;
+                Float perSecond = GESTURES.get(m.instrument);
+                float want = !playing || gestures || perSecond == null ? 1f
+                        : Math.max(SPEED_MIN, Math.min(SPEED_MAX, m.rate / perSecond));
+                m.speed += (want - m.speed) * 0.1f;
                 if (m.figure != null) m.figure.speed(m.speed);
                 // one note particle per new note, coloured by its pitch, at most every 4 ticks
-                if (playing && note != shownNote[i] && tick % 2 == i % 2 && !viewers.isEmpty()) {
+                if (playing && note != shownNote[i] && tick % 4 == i % 4 && !viewers.isEmpty()) {
                     shownNote[i] = note;
                     if (w == null) w = m.at.getWorld();
                     double colour = (Math.log(pitch.get(i) / 1000.0) / Math.log(2) + 1) / 2;   // pitch 0.5..2 -> 0..1
@@ -466,6 +491,11 @@ public final class Stages {
         public double[] source(Instrument instrument) {
             double[] at = sources.get(instrument);
             return at != null ? at : new double[]{x, y + 1.4, z};
+        }
+
+        public void cue(Instrument instrument, float notePitch) {
+            // of a chord, the highest note leads the hand
+            cues.accumulateAndGet(instrument.ordinal(), Math.round(notePitch * 1000), Math::max);
         }
 
         public void played(Instrument instrument, float notePitch) {

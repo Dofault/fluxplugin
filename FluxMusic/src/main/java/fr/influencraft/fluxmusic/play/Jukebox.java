@@ -237,6 +237,9 @@ public final class Jukebox {
 
     // ---------------------------------------------------------------- broadcast
 
+    /** How long before a note a scene is told about it ({@link Scene#cue}). */
+    public static final long CUE_NANOS = 200_000_000L;
+
     /** Who hears a {@link Broadcast} and where it sounds from; every method is called on the clock thread. */
     public interface Scene {
         /** Players hearing the broadcast now (a snapshot safe to read from another thread). */
@@ -259,6 +262,10 @@ public final class Jukebox {
 
         /** A note of this instrument was just sent (its pitch, 0.5 to 2). */
         void played(fr.influencraft.fluxmusic.song.Instrument instrument, float pitch);
+
+        /** A note of this instrument will be sent in {@link #CUE_NANOS}: time to start the gesture that plays it. */
+        default void cue(fr.influencraft.fluxmusic.song.Instrument instrument, float pitch) {
+        }
     }
 
     /**
@@ -274,6 +281,27 @@ public final class Jukebox {
         private int index;
         private volatile boolean done;
         private volatile ScheduledFuture<?> next;
+        /** Step the scene is next told about ahead of time. */
+        private int cueIndex;
+
+        /** Tells the scene about the notes of the coming step, then waits for the one after. */
+        private void cue() {
+            if (done || cueIndex >= song.times().length) return;
+            long wait = start + song.times()[cueIndex] * song.stepNanos() - CUE_NANOS - System.nanoTime();
+            if (wait > 1_000_000L) {
+                clock.schedule(this::cue, wait, TimeUnit.NANOSECONDS);
+                return;
+            }
+            try {
+                Sound[] sounds = song.notes()[cueIndex];
+                fr.influencraft.fluxmusic.song.Instrument[] who = song.instruments()[cueIndex];
+                for (int i = 0; i < sounds.length; i++) scene.cue(who[i], sounds[i].pitch());
+            } catch (RuntimeException e) {
+                // a scene reloaded under us
+            }
+            cueIndex++;
+            cue();
+        }
 
         private Broadcast(Song song, Scene scene) {
             this.song = song;
@@ -352,7 +380,10 @@ public final class Jukebox {
     public Broadcast broadcast(Song song, Scene scene) {
         Broadcast b = new Broadcast(song, scene);
         if (song.times().length == 0) b.done = true;
-        else b.schedule();
+        else {
+            b.schedule();
+            b.cue();
+        }
         return b;
     }
 
