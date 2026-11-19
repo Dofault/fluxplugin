@@ -35,7 +35,7 @@ class EquipmentTest {
 
     @Test
     void setBonusesAddUpByThreshold() {
-        Map<String, String> worn = set("roche");
+        Map<String, String> worn = set("rochiste");
         assertEquals(4, worn.size(), "the Rochiste set has four pieces");
         StatSheet four = StatSheet.compute(rpg.stats, rpg.equipment.modifiers(worn, "cryomancer", 50));
         StatSheet none = StatSheet.compute(rpg.stats, List.of());
@@ -54,7 +54,7 @@ class EquipmentTest {
 
     @Test
     void wrongClassLevelOrSlotGivesNothing() {
-        Map<String, String> worn = set("roche");
+        Map<String, String> worn = set("rochiste");
         assertTrue(rpg.equipment.modifiers(Map.of("weapon", "class_cryomancer_weapon"), "druid", 50).isEmpty(), "class");
         assertTrue(rpg.equipment.modifiers(Map.of("helmet", worn.get("helmet")), "cryomancer", 9).isEmpty(), "level");
         assertTrue(rpg.equipment.modifiers(Map.of("boots", worn.get("helmet")), "cryomancer", 50).isEmpty(), "slot");

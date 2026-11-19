@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Block model shared by the dungeon map scripts that design their map in memory (gen_pecheur.py, gen_moisson.py).
+"""Block model shared by the dungeon map scripts that design their map in memory (gen_pecheur.py, gen_cultivateur.py).
 
 A `Model` holds every block of the map (vanilla ids with states), so a script can read what it built (ceilings,
 floors), check it before anything is sent (doors that cannot be bypassed, water that stays where it is put, gravity

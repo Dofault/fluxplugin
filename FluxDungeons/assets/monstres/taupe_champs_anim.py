@@ -2,7 +2,7 @@
 """Animations of the Field Mole, King Taupérion (2026-11-11).
 
 Every timing that matters to the game (impacts, hidden underground, sweep angles) is written in
-docs/technique/boss/taupe-champs.md and read by FluxDungeons (mob/MolePowers.java, spells/taupe/*.yml): keep the three
+docs/technique/boss/taupe-champs.md and read by FluxDungeons (mob/MolePowers.java, spells/deblayeur/*.yml): keep the three
 in step. Ticks are 1/20 s; every key moment falls on a tick.
 
 Values as in hamster_moissonneur_anim.py: rotation in degrees in the model's axes (x > 0 lifts the front of a bone;

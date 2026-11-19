@@ -2,7 +2,7 @@
 """Animations of the Harvest Hamster (2026-11-10).
 
 Every timing that matters to the game (events, holds, windows) is written in docs/technique/boss/hamster-moissonneur.md
-and read by FluxDungeons from spells/moisson/*.yml: keep the three in step. Ticks are 1/20 s; every key moment falls
+and read by FluxDungeons from spells/cultivateur/*.yml: keep the three in step. Ticks are 1/20 s; every key moment falls
 on a tick.
 
 "Real" values, as in loutre_marees_anim.py: rotation in degrees in the model's axes (x > 0 lifts the front of a bone

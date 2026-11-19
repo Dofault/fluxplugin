@@ -20,7 +20,7 @@ played from south to north (+z):
     30 x 30 floor would leave no way out of it), deepslate, basalt, tuff and amethyst veins (the boss' violet),
     broken columns at the edge only (cover against its shards), closed all round (a victory sends the party back).
 
-Usage: gen_roche.py [server] [--check] [--preview DIR]     (labs by default)
+Usage: gen_rochiste.py [server] [--check] [--preview DIR]     (labs by default)
 """
 import math
 import os
@@ -659,7 +659,7 @@ if __name__ == "__main__":
         print("CHECK:", e)
     print(f"{len(errs)} problem(s), {len(g.over)} blocks changed, {len(g.entities)} entities")
     if not errs:
-        maplib.widen(g, m, STRETCH, "roche", args[args.index("--preview") + 1] if "--preview" in args else None, apart={"1": 1.4, "2": 1.6, "3": 1.5})
+        maplib.widen(g, m, STRETCH, "rochiste", args[args.index("--preview") + 1] if "--preview" in args else None, apart={"1": 1.4, "2": 1.6, "3": 1.5})
     if "--preview" in args:
         out = args[args.index("--preview") + 1]
         for y in (F + 1, F2 + 1, F3 + 1, FA + 1, F3 - 18):
@@ -671,8 +671,8 @@ if __name__ == "__main__":
     if errs:
         sys.exit("checks failed: nothing sent")
     if "--edits" in args:
-        maplib.write_edits(m, args[0] if args and not args[0].startswith("--") else "labs", "roche")
+        maplib.write_edits(m, args[0] if args and not args[0].startswith("--") else "labs", "rochiste")
         sys.exit(0)
     g.commands(m)
     print(f"{len(m.cmds)} commands")
-    maplib.run(m, args[0] if args and not args[0].startswith("--") else "labs", "roche")
+    maplib.run(m, args[0] if args and not args[0].startswith("--") else "labs", "rochiste")

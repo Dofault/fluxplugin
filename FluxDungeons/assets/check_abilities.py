@@ -3,7 +3,7 @@
 
 Rule of the owner (2026-11-11): a troop monster has 2 special attacks on Facile, 3 on Normal, 4 on Difficile; a
 mini-boss or a boss at least as many. Abilities that are not attacks (phase changes, first moves, guards) do not count.
-Usage: check_abilities.py <plugins/FluxDungeons> <mob folder>...      e.g. check_abilities.py ... roche pecheur
+Usage: check_abilities.py <plugins/FluxDungeons> <mob folder>...      e.g. check_abilities.py ... rochiste pecheur
 """
 import os
 import sys

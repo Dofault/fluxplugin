@@ -25,7 +25,7 @@ Gardeners' Plot is no longer built (room3() kept for its drawing): the hedge bet
 stays (passage()), then gridlib.cut takes its 53 slices out, so the mill and the pen come 53 blocks closer. The
 landscape (terrain, fields, meadow) is drawn after the cut, on the shorter estate (END).
 
-Usage: gen_moisson.py [server] [--check] [--preview DIR] [--edits]     (labs by default)
+Usage: gen_cultivateur.py [server] [--check] [--preview DIR] [--edits]     (labs by default)
 """
 import math
 import os
@@ -934,8 +934,8 @@ if __name__ == "__main__":
     if errs:
         sys.exit("checks failed: nothing sent")
     if "--edits" in args:
-        maplib.write_edits(m, args[0] if args and not args[0].startswith("--") else "labs", "moisson")
+        maplib.write_edits(m, args[0] if args and not args[0].startswith("--") else "labs", "cultivateur")
         sys.exit(0)
     g.commands(m)
     print(f"{len(m.cmds)} commands")
-    maplib.run(m, args[0] if args and not args[0].startswith("--") else "labs", "moisson")
+    maplib.run(m, args[0] if args and not args[0].startswith("--") else "labs", "cultivateur")

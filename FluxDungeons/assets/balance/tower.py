@@ -57,10 +57,10 @@ import dungeon_balance as B  # noqa: E402
 # floor: (dungeon, job, level, recommended players, pressure, abilities rank)
 TOWER = {
     # floor 1 (2026-11-19, owner): the newcomer's first dungeon (tutorial), level 1 like him, very easy: he must win
-    1: ("roche", "rochiste", 1, 1, 0.10, 1),
-    2: ("moisson", "cultivateur", 20, 1, 0.50, 1),
+    1: ("rochiste", "rochiste", 1, 1, 0.10, 1),
+    2: ("cultivateur", "cultivateur", 20, 1, 0.50, 1),
     3: ("sylviculteur", "sylviculteur", 30, 1, 0.62, 2),
-    4: ("taupe", "deblayeur", 40, 1, 0.78, 2),
+    4: ("deblayeur", "deblayeur", 40, 1, 0.78, 2),
     5: ("mineur", "mineur", 50, 1, 1.00, 3),
     6: ("herboriste", "herboriste", 60, 2, 1.00, 3),
     7: ("fondeur", "fondeur", 70, 2, 1.15, 3),
@@ -69,6 +69,9 @@ TOWER = {
     10: ("enchanteur", "enchanteur", 100, 4, 1.35, 3),
 }
 MAX_LEVEL = 50          # balance.yml levels.max: the monsters' curves stop there
+# Multipliers fixed by hand instead of solved (2026-11-19, owner): the boss of the first dungeon got three times its
+# life on purpose; solving again would lower every monster of the dungeon to win it back.
+FIXED_K = {"rochiste": 0.519}
 
 # colour of each job (2026-11-16): dye of its dungeon's leather set (gear.py), frame of its floor in the tower menu
 # (gen_menus.py); one colour per job, none too close to another
@@ -265,7 +268,7 @@ def main():
     results = []
     for f, (dungeon, job, level, party, target, tier) in sorted(TOWER.items()):
         mb = median_boss_at(level, tier, party)
-        k = solve(plugin, dungeon, level, tier, party, target * m_ref, data, mb)
+        k = FIXED_K.get(dungeon) or solve(plugin, dungeon, level, tier, party, target * m_ref, data, mb)
         r = B.evaluate(plugin, dungeon, min(level, MAX_LEVEL), tier, k, k, party, data)
         solo = B.evaluate(plugin, dungeon, min(level, MAX_LEVEL), tier, k, k, 1, data)
         # the recommended party meets more monsters (scaling.extra-mobs-per-player): each of them gets RUN_TOKENS

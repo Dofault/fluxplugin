@@ -41,13 +41,13 @@ m.box = (X0, Z0, X1, Z1)
 
 JOBS_WEST = [  # (dungeon id, name, colour, materials of the gate, emblem blocks)
     ("mineur", "Mineur", "#E3826C", ["polished_deepslate", "cut_copper", "deepslate_bricks"], ["copper_ore", "iron_ore", "lantern"]),
-    ("roche", "Rochiste", "#B8B2AA", ["polished_andesite", "granite", "stone_bricks"], ["polished_granite", "polished_diorite", "andesite"]),
-    ("taupe", "Déblayeur", "#A0855B", ["packed_mud", "mud_bricks", "coarse_dirt"], ["rooted_dirt", "gravel", "podzol"]),
+    ("rochiste", "Rochiste", "#B8B2AA", ["polished_andesite", "granite", "stone_bricks"], ["polished_granite", "polished_diorite", "andesite"]),
+    ("deblayeur", "Déblayeur", "#A0855B", ["packed_mud", "mud_bricks", "coarse_dirt"], ["rooted_dirt", "gravel", "podzol"]),
     ("fondeur", "Fondeur", "#FF7A3D", ["bricks", "iron_block", "polished_blackstone_bricks"], ["blast_furnace", "anvil", "magma_block"]),
     ("enchanteur", "Enchanteur", "#B376E5", ["purpur_block", "amethyst_block", "polished_blackstone"], ["bookshelf", "amethyst_cluster", "enchanting_table"]),
 ]
 JOBS_EAST = [
-    ("moisson", "Cultivateur", "#F0A800", ["hay_block", "oak_planks", "stripped_oak_log"], ["pumpkin", "melon", "composter"]),
+    ("cultivateur", "Cultivateur", "#F0A800", ["hay_block", "oak_planks", "stripped_oak_log"], ["pumpkin", "melon", "composter"]),
     ("herboriste", "Herboriste", "#83A85A", ["moss_block", "mossy_stone_bricks", "flowering_azalea_leaves[persistent=true]"], ["flowering_azalea", "azalea", "moss_block"]),
     ("sylviculteur", "Bûcheron", "#8C6A3E", ["spruce_log", "stripped_spruce_log", "spruce_planks"], ["oak_log", "birch_log", "spruce_leaves[persistent=true]"]),
     ("pecheur", "Pêcheur", "#43B7B0", ["prismarine_bricks", "dark_prismarine", "prismarine"], ["sea_lantern", "barrel[facing=up]", "tube_coral_block"]),

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shared helpers of the dungeon map scripts (gen_roche.py, gen_pecheur.py, gen_moisson.py...).
+"""Shared helpers of the dungeon map scripts (gen_rochiste.py, gen_pecheur.py, gen_cultivateur.py...).
 
 A script describes its map with a Map: blocks (fill / setblock, a fill larger than the game allows is cut in slices),
 the start, the monsters by room and the doors. `run(map, server, folder, dungeon)` then:

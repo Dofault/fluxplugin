@@ -67,67 +67,67 @@ items:
     stats: {magic_power: 8, max_health: 20}
     description: [Throws a thorn on a left click., Every hit plants a seed.]
     look: {material: DIAMOND_HOE, name: Serpe du Bosquet}
-  roche_helmet:
+  rochiste_helmet:
     slot: helmet
-    level: 10
+    level: 1
     rarity: rare
-    set: roche
-    stats: {magic_power: 3, max_health: 42, physical_defense: 5, magic_defense: 5, max_mana: 2, tenacity: 0.025, damage_reduction: 0.005}
+    set: rochiste
+    stats: {magic_power: 1, max_health: 10, physical_defense: 2, magic_defense: 2, max_mana: 1, tenacity: 0.025, damage_reduction: 0.005}
     description: [Defenses first.]
     look: {material: LEATHER_HELMET, name: Helmet of the Rochiste, color: '#9A9AA3'}
-  roche_chestplate:
+  rochiste_chestplate:
     slot: chestplate
-    level: 10
+    level: 1
     rarity: rare
-    set: roche
-    stats: {magic_power: 4, max_health: 73, physical_defense: 10, magic_defense: 9, max_mana: 3, tenacity: 0.04, damage_reduction: 0.01}
+    set: rochiste
+    stats: {magic_power: 2, max_health: 18, physical_defense: 3, magic_defense: 4, max_mana: 2, tenacity: 0.04, damage_reduction: 0.01}
     description: [Defenses first.]
     look: {material: LEATHER_CHESTPLATE, name: Chestplate of the Rochiste, color: '#9A9AA3'}
-  roche_leggings:
+  rochiste_leggings:
     slot: leggings
-    level: 10
+    level: 1
     rarity: rare
-    set: roche
-    stats: {magic_power: 4, max_health: 59, physical_defense: 8, magic_defense: 7, max_mana: 2, tenacity: 0.035, damage_reduction: 0.01}
+    set: rochiste
+    stats: {magic_power: 2, max_health: 14, physical_defense: 2, magic_defense: 3, max_mana: 2, tenacity: 0.035, damage_reduction: 0.01}
     description: [Defenses first.]
     look: {material: LEATHER_LEGGINGS, name: Leggings of the Rochiste, color: '#9A9AA3'}
-  roche_boots:
+  rochiste_boots:
     slot: boots
-    level: 10
+    level: 1
     rarity: rare
-    set: roche
-    stats: {magic_power: 2, max_health: 36, physical_defense: 5, magic_defense: 4, max_mana: 1, tenacity: 0.02, damage_reduction: 0.005}
+    set: rochiste
+    stats: {magic_power: 1, max_health: 9, physical_defense: 1, magic_defense: 2, max_mana: 1, tenacity: 0.02, damage_reduction: 0.005}
     description: [Defenses first.]
     look: {material: LEATHER_BOOTS, name: Boots of the Rochiste, color: '#9A9AA3'}
-  moisson_helmet:
+  cultivateur_helmet:
     slot: helmet
     level: 20
     rarity: rare
-    set: moisson
+    set: cultivateur
     stats: {magic_power: 5, max_health: 112, physical_defense: 6, magic_defense: 6, max_mana: 3, healing_power: 0.015}
     description: ['Plenty of life, quick to come back.']
     look: {material: LEATHER_HELMET, name: Helmet of the Cultivateur, color: '#F0A800'}
-  moisson_chestplate:
+  cultivateur_chestplate:
     slot: chestplate
     level: 20
     rarity: rare
-    set: moisson
+    set: cultivateur
     stats: {magic_power: 9, max_health: 196, physical_defense: 11, magic_defense: 10, max_mana: 6, health_regen: 1, healing_power: 0.03}
     description: ['Plenty of life, quick to come back.']
     look: {material: LEATHER_CHESTPLATE, name: Chestplate of the Cultivateur, color: '#F0A800'}
-  moisson_leggings:
+  cultivateur_leggings:
     slot: leggings
     level: 20
     rarity: rare
-    set: moisson
+    set: cultivateur
     stats: {magic_power: 7, max_health: 157, physical_defense: 9, magic_defense: 8, max_mana: 5, health_regen: 1, healing_power: 0.02}
     description: ['Plenty of life, quick to come back.']
     look: {material: LEATHER_LEGGINGS, name: Leggings of the Cultivateur, color: '#F0A800'}
-  moisson_boots:
+  cultivateur_boots:
     slot: boots
     level: 20
     rarity: rare
-    set: moisson
+    set: cultivateur
     stats: {magic_power: 4, max_health: 95, physical_defense: 5, magic_defense: 5, max_mana: 3, healing_power: 0.015}
     description: ['Plenty of life, quick to come back.']
     look: {material: LEATHER_BOOTS, name: Boots of the Cultivateur, color: '#F0A800'}
@@ -163,38 +163,38 @@ items:
     stats: {magic_power: 7, max_health: 78, physical_defense: 6, magic_defense: 5, max_mana: 8, cost_reduction: 0.01}
     description: ['Mana, and cheaper spells.']
     look: {material: LEATHER_BOOTS, name: Boots of the Bûcheron, color: '#7A5230'}
-  taupe_helmet:
+  deblayeur_helmet:
     slot: helmet
     level: 40
     rarity: rare
-    set: taupe
+    set: deblayeur
     stats: {magic_power: 20, max_health: 121, physical_defense: 10, magic_defense: 8, max_mana: 6, magic_penetration: 0.015,
       crit_chance: 0.01}
     description: [Spells that hit harder.]
     look: {material: LEATHER_HELMET, name: Helmet of the Déblayeur, color: '#C9A66B'}
-  taupe_chestplate:
+  deblayeur_chestplate:
     slot: chestplate
     level: 40
     rarity: rare
-    set: taupe
+    set: deblayeur
     stats: {magic_power: 35, max_health: 211, physical_defense: 17, magic_defense: 14, max_mana: 11, magic_penetration: 0.03,
       crit_chance: 0.015}
     description: [Spells that hit harder.]
     look: {material: LEATHER_CHESTPLATE, name: Chestplate of the Déblayeur, color: '#C9A66B'}
-  taupe_leggings:
+  deblayeur_leggings:
     slot: leggings
     level: 40
     rarity: rare
-    set: taupe
+    set: deblayeur
     stats: {magic_power: 28, max_health: 169, physical_defense: 13, magic_defense: 12, max_mana: 9, magic_penetration: 0.02,
       crit_chance: 0.01}
     description: [Spells that hit harder.]
     look: {material: LEATHER_LEGGINGS, name: Leggings of the Déblayeur, color: '#C9A66B'}
-  taupe_boots:
+  deblayeur_boots:
     slot: boots
     level: 40
     rarity: rare
-    set: taupe
+    set: deblayeur
     stats: {magic_power: 17, max_health: 103, physical_defense: 8, magic_defense: 7, max_mana: 5, magic_penetration: 0.015,
       crit_chance: 0.005}
     description: [Spells that hit harder.]
@@ -404,12 +404,12 @@ items:
     description: ['Faster: running, hitting, dodging.', 'Upper version, beyond level 50.']
     look: {material: LEATHER_BOOTS, name: Boots of the Enchanteur, color: '#9B59D9'}
 sets:
-  roche:
+  rochiste:
     name: Rampart of the Rochiste
     bonuses:
-      2: {physical_defense: 5, magic_defense: 4}
+      2: {physical_defense: 2, magic_defense: 1}
       4: {damage_reduction: 0.04, tenacity: 0.1}
-  moisson:
+  cultivateur:
     name: Vitality of the Cultivateur
     bonuses:
       2: {max_health: 53}
@@ -419,7 +419,7 @@ sets:
     bonuses:
       2: {max_mana: 15, mana_regen: 1}
       4: {cost_reduction: 0.06, manasteal: 0.02}
-  taupe:
+  deblayeur:
     name: Power of the Déblayeur
     bonuses:
       2: {magic_power: 12}

@@ -569,7 +569,7 @@ public final class FluxDungeons extends FluxPlugin {
     }
 
     /**
-     * Monster files of {@code mobs/}, sub-folders included (one per dungeon: {@code mobs/roche/}). A file holds one
+     * Monster files of {@code mobs/}, sub-folders included (one per dungeon: {@code mobs/rochiste/}). A file holds one
      * monster, named after the file ({@code rochiste_tailleur.yml}: its keys at the root), or several under their ids.
      */
     private List<org.bukkit.configuration.ConfigurationSection> mobFiles(File dir) {

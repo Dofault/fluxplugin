@@ -22,8 +22,8 @@ OUT = os.path.normpath(os.path.join(HERE, "..", "..", "src", "main", "resources"
 
 # dungeon id -> (boss preview, colour of the dungeon's name)
 DUNGEONS = {
-    "roche": ("colosse_abime", "#B8B2AA"),
-    "moisson": ("hamster_moissonneur", "#F0A800"),
+    "rochiste": ("colosse_abime", "#B8B2AA"),
+    "cultivateur": ("hamster_moissonneur", "#F0A800"),
     "pecheur": ("loutre_marees", "#43B7B0"),
     "mineur": ("trex_cuivre", "#E3826C"),
     "miner": ("salamandrex", "#70CC98"),
@@ -31,7 +31,7 @@ DUNGEONS = {
     "enchanteur": ("evocateur_demesure", "#B376E5"),
     "herboriste": ("renard_sylvestre", "#83A85A"),
     "sylviculteur": ("rapace_liane", "#8C6A3E"),
-    "taupe": ("taupe_champs", "#96765A"),
+    "deblayeur": ("taupe_champs", "#96765A"),
 }
 # previews laid out on several rows: the size of one view
 CELL = {"salamandrex": 420}

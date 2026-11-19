@@ -3,7 +3,7 @@
 checked, then built by console commands with the RPG look of the dungeons.
 
 The boss's own ground (its maze of galleries, its nest and the arena above) is not here: FluxDungeons digs it anew for
-every run (dungeon/Burrows.java, `burrows` section of dungeons/taupe.yml) north of this map, and joins it to the end of
+every run (dungeon/Burrows.java, `burrows` section of dungeons/deblayeur.yml) north of this map, and joins it to the end of
 this map by a tunnel (`burrows.link`: the cell right after the last one of the final tunnel below). This map must
 therefore stay south of z = -72 (the lair, placed right after the link, and its hills start at z -71 and run north).
 
@@ -16,7 +16,7 @@ A burrow under the fields, going down at every step, played from south to north 
     the Navvy (mini-boss);
   - the last tunnel, to the galleries of the lair.
 
-Usage: gen_taupe.py [server] [--check] [--preview DIR]     (labs by default)
+Usage: gen_deblayeur.py [server] [--check] [--preview DIR]     (labs by default)
 """
 import math
 import os
@@ -358,7 +358,7 @@ if __name__ == "__main__":
         print("CHECK:", e)
     print(f"{len(errs)} problem(s), {len(g.over)} blocks changed, {len(m.spawns)} monsters, link: [0, {F3 + 1}, {Z1 + 1}]")
     if not errs:
-        maplib.widen(g, m, [], "taupe", args[args.index("--preview") + 1] if "--preview" in args else None)
+        maplib.widen(g, m, [], "deblayeur", args[args.index("--preview") + 1] if "--preview" in args else None)
     if "--preview" in args:
         out = args[args.index("--preview") + 1]
         for y in (F0 + 1, F1 + 1, F2 + 1, F3 + 1):
@@ -369,8 +369,8 @@ if __name__ == "__main__":
     if errs:
         sys.exit("checks failed: nothing sent")
     if "--edits" in args:
-        maplib.write_edits(m, args[0] if args and not args[0].startswith("--") else "labs", "taupe")
+        maplib.write_edits(m, args[0] if args and not args[0].startswith("--") else "labs", "deblayeur")
         sys.exit(0)
     g.commands(m)
     print(f"{len(m.cmds)} commands")
-    maplib.run(m, args[0] if args and not args[0].startswith("--") else "labs", "taupe")
+    maplib.run(m, args[0] if args and not args[0].startswith("--") else "labs", "deblayeur")
