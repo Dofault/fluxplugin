@@ -172,7 +172,8 @@ public class FluxShop extends fr.influencraft.flux.api.FluxPlugin {
                 .bukkit(executor, new SupermarketTabCompleter(commandManager)).register();
 
         // %fluxshop_*%: resolved by Flux in menus, exposed to PlaceholderAPI by Flux
-        ShopPlaceholders placeholders = new ShopPlaceholders(lang, activity, tpShopCooldownManager, shopEditor);
+        ShopPlaceholders placeholders = new ShopPlaceholders(lang, activity, tpShopCooldownManager, shopEditor,
+                shopRegistry, () -> getConfig().getDouble("shop.near-distance", 10));
         FluxApi.registerPlaceholders(this, "fluxshop", placeholders);
 
         getLogger().info(shopRegistry.getChestCount() + " coffre(s) magasin et " + shopRegistry.getSellBlockCount()

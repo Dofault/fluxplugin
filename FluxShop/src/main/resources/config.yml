@@ -13,6 +13,8 @@
 # Les blocs de vente (/supermarket addsellblock) peuvent être de n'importe
 # quel type : clic droit = menu de dépôt, clic gauche = consultation des prix.
 shop:
+  # %fluxshop_player_near% is true within this many blocks of a shop chest (quest "visit the shop").
+  near-distance: 10
   block-types:
     - CHEST
 
