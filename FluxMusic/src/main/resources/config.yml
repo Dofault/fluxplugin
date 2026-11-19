@@ -40,3 +40,5 @@ band:
   hat: charleston
   bass: contrebassiste
   didgeridoo: didgeridoo
+# Block the tiers under the back rows of a stage are drawn with (block displays, nothing is built); empty = none.
+stage-tier-block: SPRUCE_PLANKS

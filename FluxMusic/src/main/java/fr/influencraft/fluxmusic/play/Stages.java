@@ -44,7 +44,8 @@ import java.util.function.Predicate;
  * Meanwhile his {@code ready} loop (one second drawn for two beats) sways him in time: its speed is set from the
  * song's tempo. A model without gestures loops {@code playing}, at the pace of its notes (faster on a quick run).
  * Only the musicians of the song being played stand on the stage: at each new song those who have nothing to play
- * leave, the others take their places again across the stage.</p>
+ * leave, the others take their places again across the stage. Each row stands a step higher than the one in front
+ * (as on a class photo), on tiers drawn with block displays: nothing is built in the world.</p>
  *
  * <p>Stages are placed by command and kept in {@code stages.yml}; the band (which model plays which instrument,
  * front row first) is {@code band} of config.yml.</p>
@@ -76,6 +77,8 @@ public final class Stages {
     private final Map<String, Stage> stages = new LinkedHashMap<>();
     /** Instrument -> model, in the order of the rows (front first). */
     private final Map<Instrument, String> band = new LinkedHashMap<>();
+    /** Block the tiers under the back rows are drawn with, null = no tiers shown. */
+    private org.bukkit.Material tier = org.bukkit.Material.SPRUCE_PLANKS;
     private long ticks;
 
     public Stages(Plugin plugin, Jukebox jukebox, Ambience ambience, Function<String, Song> songs,
@@ -95,6 +98,8 @@ public final class Stages {
     /** Reads the band (config.yml) and the stages (stages.yml); everything shown is built again. */
     public void load(ConfigurationSection bandSection) {
         clear();
+        tier = org.bukkit.Material.matchMaterial(plugin.getConfig().getString("stage-tier-block", "SPRUCE_PLANKS"));
+        if (tier != null && !tier.isBlock()) tier = null;
         band.clear();
         if (bandSection != null) for (String key : bandSection.getKeys(false)) {
             try {
@@ -110,7 +115,7 @@ public final class Stages {
             stages.put(id.toLowerCase(Locale.ROOT), new Stage(id.toLowerCase(Locale.ROOT), s.getString("world", ""),
                     s.getDouble("x"), s.getDouble("y"), s.getDouble("z"), (float) s.getDouble("yaw"),
                     s.getDouble("width", 6), s.getDouble("depth", 7), s.getDouble("radius", 16),
-                    (float) s.getDouble("scale", 1)));
+                    (float) s.getDouble("scale", 1), s.getDouble("rise", 1)));
         }
         // a tick later: BetterModel's models are ready
         // the band comes on with the first song (a tick later at least: BetterModel's models are ready)
@@ -129,6 +134,7 @@ public final class Stages {
             c.set("depth", s.depth);
             c.set("radius", s.radius);
             c.set("scale", s.scale);
+            c.set("rise", s.rise);
         }
         try {
             data.save(file);
@@ -151,7 +157,8 @@ public final class Stages {
         Stage s = new Stage(id, at.getWorld().getName(), Math.round(at.getX() * 2) / 2.0, at.getY(),
                 Math.round(at.getZ() * 2) / 2.0, yaw,
                 width > 0 ? width : old != null ? old.width : 6, depth > 0 ? depth : old != null ? old.depth : 7,
-                radius > 0 ? radius : old != null ? old.radius : 16, old != null ? old.scale : 1f);
+                radius > 0 ? radius : old != null ? old.radius : 16, old != null ? old.scale : 1f,
+                old != null ? old.rise : 1);
         stages.put(id, s);
         save();
         return true;
@@ -164,6 +171,18 @@ public final class Stages {
         World w = Bukkit.getWorld(old.world);
         if (w == null) return false;
         return place(placeId, new Location(w, old.x, old.y, old.z, old.yaw, 0), 0, 0, Math.max(4, radius));
+    }
+
+    /** Height each row stands above the one in front of it (0 = all on the floor); false without a stage. */
+    public boolean rise(String placeId, double rise) {
+        String id = placeId.toLowerCase(Locale.ROOT);
+        Stage old = stages.remove(id);
+        if (old == null) return false;
+        old.close();
+        stages.put(id, new Stage(id, old.world, old.x, old.y, old.z, old.yaw, old.width, old.depth, old.radius,
+                old.scale, Math.max(0, Math.min(3, rise))));
+        save();
+        return true;
     }
 
     /** Removes the stage of a place (its ambience plays per player again); false when it had none. */
@@ -239,7 +258,11 @@ public final class Stages {
 
     private final class Stage implements Jukebox.Scene {
         final String id, world;
-        final double x, y, z, width, depth, radius;
+        final double x, y, z, width, depth, radius, rise;
+        /** Tiers under the back rows (block displays, not saved with the world) and the rows they were made for. */
+        final List<org.bukkit.entity.Entity> tiers = new ArrayList<>();
+        int rows;
+        double rowStep;
         final float yaw, scale;
         final List<Musician> musicians = new ArrayList<>();
         volatile Map<Instrument, double[]> sources = Map.of();
@@ -265,7 +288,8 @@ public final class Stages {
         boolean closed;
 
         Stage(String id, String world, double x, double y, double z, float yaw, double width, double depth,
-              double radius, float scale) {
+              double radius, float scale, double rise) {
+            this.rise = rise;
             this.id = id;
             this.world = world;
             this.x = x;
@@ -294,16 +318,18 @@ public final class Stages {
             double fx = -Math.sin(rad), fz = Math.cos(rad), rx = -Math.cos(rad), rz = -Math.sin(rad);
             int n = players.size();
             int most = Math.max(1, (int) Math.floor((width - 0.6) / SIDE_SPACING) + 1);
-            int rows = Math.max(1, (n + most - 1) / most);
+            rows = Math.max(1, (n + most - 1) / most);
             int perRow = (n + rows - 1) / rows;   // rows of even length rather than a full one and a leftover
-            double rowStep = rows <= 1 ? 0 : Math.min(ROW_SPACING, (depth - 1.6) / (rows - 1));
+            rowStep = rows <= 1 ? 0 : Math.min(ROW_SPACING, (depth - 1.6) / (rows - 1));
+            clearTiers();
             Map<Instrument, double[]> places = new EnumMap<>(Instrument.class);
             for (int i = 0; i < n; i++) {
                 int row = i / perRow, inRow = Math.min(perRow, n - row * perRow), col = i % perRow;
                 double gap = inRow <= 1 ? 0 : Math.min(SIDE_SPACING_MAX, (width - 0.6) / (inRow - 1));
                 double side = (col - (inRow - 1) / 2.0) * gap;
                 double front = ((rows - 1) / 2.0 - row) * rowStep;
-                Location at = new Location(w, x + rx * side + fx * front, y, z + rz * side + fz * front, yaw, 0);
+                Location at = new Location(w, x + rx * side + fx * front, y + row * rise,
+                        z + rz * side + fz * front, yaw, 0);
                 Instrument instrument = players.get(i);
                 Musician m = former.remove(instrument);
                 boolean moved = false;
@@ -344,6 +370,37 @@ public final class Stages {
             sources = places;
         }
 
+        private void clearTiers() {
+            tiers.forEach(org.bukkit.entity.Entity::remove);
+            tiers.clear();
+        }
+
+        /**
+         * Draws the tier of each row but the first: a block stretched across the stage, as deep as a row, as high as
+         * the row stands. Made again when the chunk was not loaded or dropped them.
+         */
+        private void tiers() {
+            World w = Bukkit.getWorld(world);
+            if (w == null || tier == null || rise <= 0 || rows <= 1 || viewers.isEmpty()) return;
+            if (!tiers.isEmpty() && tiers.stream().allMatch(org.bukkit.entity.Entity::isValid)) return;
+            clearTiers();
+            double rad = Math.toRadians(yaw);
+            double fx = -Math.sin(rad), fz = Math.cos(rad);
+            for (int row = 1; row < rows; row++) {
+                double front = ((rows - 1) / 2.0 - row) * rowStep;
+                Location at = new Location(w, x + fx * front, y, z + fz * front, yaw, 0);
+                if (!at.isChunkLoaded()) return;
+                float h = (float) (row * rise), wide = (float) width, deep = (float) rowStep;
+                tiers.add(w.spawn(at, org.bukkit.entity.BlockDisplay.class, d -> {
+                    d.setBlock(tier.createBlockData());
+                    d.setPersistent(false);
+                    d.setTransformation(new org.bukkit.util.Transformation(
+                            new org.joml.Vector3f(-wide / 2, 0, -deep / 2), new org.joml.Quaternionf(),
+                            new org.joml.Vector3f(wide, h, deep), new org.joml.Quaternionf()));
+                }));
+            }
+        }
+
         private void puff(Location at) {
             if (!viewers.isEmpty()) at.getWorld().spawnParticle(Particle.POOF, at.getX(), at.getY() + scale, at.getZ(),
                     12, 0.25, 0.6 * scale, 0.25, 0.01);
@@ -355,6 +412,7 @@ public final class Stages {
             if (b != null) b.cancel();
             for (Musician m : musicians) if (m.figure != null) m.figure.close();
             musicians.clear();
+            clearTiers();
             viewers.clear();
             listeners = List.of();
         }
@@ -364,6 +422,7 @@ public final class Stages {
             if (tick % 20 == 1) {
                 audience();
                 program();
+                tiers();
             }
             long now = System.nanoTime();
             boolean live = broadcast != null && !broadcast.done();

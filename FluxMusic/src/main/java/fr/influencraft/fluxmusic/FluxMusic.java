@@ -40,7 +40,7 @@ import java.util.stream.Stream;
  *   /musique play &lt;song&gt; [player|*]
  *   /musique stop [player|*]
  *   /musique reload
- *   /musique stage place &lt;place&gt; [width] [depth] | radius &lt;place&gt; &lt;blocks&gt; | remove &lt;place&gt; | list
+ *   /musique stage place &lt;place&gt; [width] [depth] | radius &lt;place&gt; &lt;blocks&gt; | rise &lt;place&gt; &lt;blocks&gt; | remove &lt;place&gt; | list
  * </pre>
  *
  * Other plugins play music through Flux's {@link Music} (this plugin is its provider); moments of the game that
@@ -316,6 +316,15 @@ public final class FluxMusic extends FluxPlugin implements Listener {
                         "%id%", args[2], "%radius%", args[3]);
                 return true;
             }
+            case "rise", "gradins" -> {
+                if (args.length < 4) {
+                    messages().send(sender, "stage-usage");
+                    return true;
+                }
+                messages().send(sender, stages.rise(args[2], number(args[3])) ? "stage-rise" : "stage-missing",
+                        "%id%", args[2], "%rise%", args[3]);
+                return true;
+            }
             case "remove", "supprimer" -> {
                 if (args.length < 3) {
                     messages().send(sender, "stage-usage");
@@ -364,7 +373,7 @@ public final class FluxMusic extends FluxPlugin implements Listener {
                 : Stream.of("liste", "jouer", "passer", "stop"), args[0]);
         String sub = args[0].toLowerCase(Locale.ROOT);
         if ((sub.equals("scene") || sub.equals("stage")) && sender.hasPermission("fluxmusic.admin")) {
-            if (args.length == 2) return filter(Stream.of("placer", "rayon", "supprimer", "liste"), args[1]);
+            if (args.length == 2) return filter(Stream.of("placer", "rayon", "gradins", "supprimer", "liste"), args[1]);
             if (args.length == 3) return filter(ambience.places().stream(), args[2]);
             return List.of();
         }
