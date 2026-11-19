@@ -1,11 +1,1524 @@
-# Weights of everything that can be farmed, in points. See assets/gen_values.py for how a server builds its own.
-jobs: {}
-
-# actions : ce que vaut une action qu'aucun métier ne paie (points, même échelle que le reste : 7050 = 2 min de jeu
-# optimal). Lu par les missions du pass (FluxPass) : quantité d'une mission = effort / poids de l'action.
-# actions.<déclencheur>.<cible> ; default = n'importe quelle cible. Poids de départ (2026-11-11) déduits des
-# quantités des missions d'avant ; une mission qui demande trop ou trop peu = corriger son poids ici.
-# gain_job_xp vaut 1 par définition (1 XP de métier = 1 point).
+# Weight of everything that can be farmed: the only source of value of the server (generated once by assets/gen_values.py,
+# hand-edited since). Everything is in POINTS: 7050 points = 2 minutes of optimal play (economy.yml), whatever the job.
+#
+# jobs.<job>.sources.<block>:
+#   weight: points of one action (job XP and money derive from it)
+#   yields: items obtained per action (Fortune III counted), several lines = alternatives (silk touch or not); absent = the block itself
+#   area  : true = area tools (Tranchee) multiply the harvest (factor in economy.yml), never the job XP
+# mobs.<mob>: weight = relative weight (1 = zombie, "Poids" column of the spreadsheet): how hard it is to find.
+#   A kill is worth base health (read from the server, not written here) x mobs.points-per-health (economy.yml) x weight: value of loot,
+#   offerings and collections. Defender does not depend on it: it stays paid per health point in EcoJobs.
+#   yields = average loot (Looting III), the kill's value is shared between the drops
+# others: items no job gives (points per item)
+# same-value-as: an item that is only another one passed through a tool or water, it follows it
+# Crafted items (planks, ingots, blocks...) are NOT here: their value comes from the server's real recipes.
+jobs:
+  batisseur:
+    points-per-xp-today: 6.026
+    curve:
+      base: 60.256
+      exponent: 3
+    sources:
+      place_block:
+        weight: 9.038
+        trigger: place_block
+        yields: {}
+        placeholder: money
+        filters:
+          not_blocks:
+          - wheat
+          - carrots
+          - potatoes
+          - beetroots
+          - pumpkin_stem
+          - melon_stem
+          - cocoa
+          - nether_wart
+          - sweet_berry_bush
+          - torchflower_crop
+          - pitcher_crop
+          - sugar_cane
+          - cactus
+          - bamboo
+          - bamboo_sapling
+          - kelp
+          - kelp_plant
+          - red_mushroom
+          - brown_mushroom
+          - oak_sapling
+          - spruce_sapling
+          - birch_sapling
+          - jungle_sapling
+          - acacia_sapling
+          - dark_oak_sapling
+          - mangrove_propagule
+          - cherry_sapling
+          - pale_oak_sapling
+          - azalea
+          - flowering_azalea
+  chimiste:
+    points-per-xp-today: 14.1
+    curve:
+      base: 352.5
+      exponent: 1.5
+    sources:
+      brew:
+        weight: 112.8
+        trigger: brew
+        yields: {}
+        placeholder: money
+  cultivateur:
+    points-per-xp-today: 2.518
+    curve:
+      base: 5.036
+      exponent: 3
+    sources:
+      wheat:
+        weight: 2.7
+        trigger: mine_block
+        filters: &id001
+          fully_grown: true
+      potatoes:
+        weight: 2.7
+        trigger: mine_block
+        filters: *id001
+        yields:
+          POTATO: 3.42
+      beetroots:
+        weight: 2.7
+        trigger: mine_block
+        filters: *id001
+        yields:
+          BEETROOT: 1
+      carrots:
+        weight: 2.7
+        trigger: mine_block
+        filters: *id001
+        yields:
+          CARROT: 3.42
+      sweet_berry_bush:
+        weight: 17.625
+        trigger: mine_block
+        filters:
+          fully_grown: true
+        yields:
+          SWEET_BERRIES: 2.5
+      cave_vines:
+        weight: 17.625
+        trigger: mine_block
+        filters: &id002
+          fully_grown: true
+          player_placed: false
+        yields:
+          GLOW_BERRIES: 1
+      cave_vines_plant:
+        weight: 17.625
+        trigger: mine_block
+        filters: *id002
+        yields:
+          GLOW_BERRIES: 1
+      sweet_berry_bush_click:
+        weight: 17.625
+        trigger: click_block
+        filters:
+          fully_grown: true
+        yields: {}
+        blocks:
+        - sweet_berry_bush
+      cave_vines_plant_click:
+        weight: 17.625
+        trigger: click_block
+        filters:
+          fully_grown: true
+        yields: {}
+        blocks:
+        - cave_vines_plant
+      melon:
+        weight: 2.518
+        trigger: mine_block
+        filters: &id003
+          fully_grown: true
+          player_placed: false
+        yields:
+          MELON_SLICE: 7.4
+          MELON: 1
+      pumpkin:
+        weight: 2.518
+        trigger: mine_block
+        filters: *id003
+      cocoa:
+        weight: 30.214
+        trigger: mine_block
+        filters:
+          fully_grown: true
+        yields:
+          COCOA_BEANS: 1.5
+      nether_wart:
+        weight: 2.8
+        trigger: mine_block
+        filters:
+          fully_grown: true
+        yields:
+          NETHER_WART: 3.5
+      cactus:
+        weight: 27.696
+        trigger: mine_block_cascade
+      sugar_cane:
+        weight: 1.511
+        trigger: mine_block_cascade
+    conditions:
+    - id: is_sneaking
+      args:
+        inverse: true
+  deblayeur:
+    points-per-xp-today: 1.41
+    curve:
+      base: 42.3
+      exponent: 3
+    sources:
+      dirt:
+        weight: 3.29
+        trigger: mine_block
+        area: true
+      crimson_nylium:
+        conditions:
+        - id: in_mainhand
+          args:
+            items:
+            - '*wooden_pickaxe'
+            - '*stone_pickaxe'
+            - '*iron_pickaxe'
+            - '*golden_pickaxe'
+            - '*diamond_pickaxe'
+            - '*netherite_pickaxe'
+        weight: 3.29
+        trigger: mine_block
+        yields: &id005
+          CRIMSON_NYLIUM: 1
+          NETHERRACK: 1
+      warped_nylium:
+        conditions:
+        - id: in_mainhand
+          args:
+            items:
+            - '*wooden_pickaxe'
+            - '*stone_pickaxe'
+            - '*iron_pickaxe'
+            - '*golden_pickaxe'
+            - '*diamond_pickaxe'
+            - '*netherite_pickaxe'
+        weight: 3.29
+        trigger: mine_block
+        yields: &id004
+          WARPED_NYLIUM: 1
+          NETHERRACK: 1
+      snow:
+        weight: 0.539
+        trigger: mine_block
+        yields:
+          SNOWBALL: 1
+        area: true
+      grass_block:
+        weight: 3.29
+        trigger: mine_block
+        yields:
+          GRASS_BLOCK: 1
+          DIRT: 1
+        area: true
+      coarse_dirt:
+        weight: 4.045
+        trigger: mine_block
+        area: true
+      podzol:
+        weight: 3.29
+        trigger: mine_block
+        yields:
+          PODZOL: 1
+          DIRT: 1
+        area: true
+      soul_soil:
+        weight: 3.29
+        trigger: mine_block
+        area: true
+      soul_sand:
+        weight: 3.29
+        trigger: mine_block
+        area: true
+      mud:
+        weight: 4.045
+        trigger: mine_block
+        area: true
+      mycelium:
+        weight: 5.393
+        trigger: mine_block
+        yields:
+          MYCELIUM: 1
+          DIRT: 1
+        area: true
+      rooted_dirt:
+        weight: 26.966
+        trigger: mine_block
+        area: true
+      gravel:
+        weight: 3.825
+        trigger: mine_block
+        yields:
+          GRAVEL: 1
+          FLINT: 1
+        area: true
+      red_sand:
+        weight: 4
+        trigger: mine_block
+        area: true
+      sand:
+        weight: 3.506
+        trigger: mine_block
+        area: true
+      snow_block:
+        weight: 3.506
+        trigger: mine_block
+        yields:
+          SNOW_BLOCK: 1
+          SNOWBALL: 4
+        area: true
+      clay:
+        weight: 10
+        trigger: mine_block
+        yields:
+          CLAY: 1
+          CLAY_BALL: 4
+        area: true
+    conditions:
+    - id: in_mainhand
+      args:
+        items:
+        - '*wooden_shovel'
+        - '*stone_shovel'
+        - '*iron_shovel'
+        - '*golden_shovel'
+        - '*diamond_shovel'
+        - '*netherite_shovel'
+  enchanteur:
+    points-per-xp-today: 94.0
+    curve:
+      base: 470.0
+      exponent: 3
+    sources:
+      enchanter_a_la_table:
+        weight: 47.0
+        trigger: enchant_item
+        yields: {}
+        placeholder: money_livre
+        label: Enchanter à la table
+      fabriquer_un_livre:
+        weight: 47.0
+        trigger: craft
+        yields: {}
+        placeholder: money_livre
+        filters:
+          items:
+          - '*book'
+        label: Fabriquer un livre
+  fondeur:
+    points-per-xp-today: 7.05
+    curve:
+      base: 14.1
+      exponent: 3
+    sources:
+      smelt:
+        weight: 7.05
+        trigger: smelt
+        yields: {}
+        placeholder: money
+  herboriste:
+    points-per-xp-today: 1.515
+    conditions:
+    - id: in_mainhand
+      args:
+        inverse: true
+        items:
+        - '*wooden_pickaxe'
+        - '*stone_pickaxe'
+        - '*copper_pickaxe'
+        - '*iron_pickaxe'
+        - '*golden_pickaxe'
+        - '*diamond_pickaxe'
+        - '*netherite_pickaxe'
+        - '*wooden_axe'
+        - '*stone_axe'
+        - '*copper_axe'
+        - '*iron_axe'
+        - '*golden_axe'
+        - '*diamond_axe'
+        - '*netherite_axe'
+        - '*wooden_shovel'
+        - '*stone_shovel'
+        - '*copper_shovel'
+        - '*iron_shovel'
+        - '*golden_shovel'
+        - '*diamond_shovel'
+        - '*netherite_shovel'
+        - '*wooden_sword'
+        - '*stone_sword'
+        - '*copper_sword'
+        - '*iron_sword'
+        - '*golden_sword'
+        - '*diamond_sword'
+        - '*netherite_sword'
+        - '*mace'
+        - '*trident'
+    curve:
+      base: 60.619
+      exponent: 3
+    sources:
+      chorus_plant:
+        conditions: []
+        weight: 1.061
+        trigger: mine_block_cascade
+        yields:
+          CHORUS_FRUIT: 0.5
+      cactus_flower:
+        weight: 50
+        trigger: mine_block
+      chorus_flower:
+        conditions: []
+        weight: 46.98
+        trigger: mine_block
+      kelp:
+        weight: 0.758
+        trigger: mine_block
+      vine:
+        weight: 0.758
+        trigger: mine_block
+      seagrass:
+        weight: 13.639
+        trigger: mine_block
+      tube_coral:
+        weight: 45.464
+        trigger: mine_block
+      brain_coral:
+        weight: 45.464
+        trigger: mine_block
+      bubble_coral:
+        weight: 45.464
+        trigger: mine_block
+      fire_coral:
+        weight: 45.464
+        trigger: mine_block
+      horn_coral:
+        weight: 45.464
+        trigger: mine_block
+      tube_coral_fan:
+        weight: 45.464
+        trigger: mine_block
+      brain_coral_fan:
+        weight: 45.464
+        trigger: mine_block
+      bubble_coral_fan:
+        weight: 45.464
+        trigger: mine_block
+      fire_coral_fan:
+        weight: 45.464
+        trigger: mine_block
+      horn_coral_fan:
+        weight: 45.464
+        trigger: mine_block
+      tube_coral_wall_fan:
+        weight: 45.464
+        trigger: mine_block
+      brain_coral_wall_fan:
+        weight: 45.464
+        trigger: mine_block
+      bubble_coral_wall_fan:
+        weight: 45.464
+        trigger: mine_block
+      fire_coral_wall_fan:
+        weight: 45.464
+        trigger: mine_block
+      horn_coral_wall_fan:
+        weight: 45.464
+        trigger: mine_block
+      bush:
+        weight: 9.851
+        trigger: mine_block
+      dead_bush:
+        weight: 15.6
+        trigger: mine_block
+      tall_dry_grass:
+        weight: 15.6
+        trigger: mine_block
+      leaf_litter:
+        weight: 12
+        trigger: mine_block
+      red_mushroom_block:
+        conditions: []
+        weight: 5.759
+        trigger: mine_block
+        yields:
+          RED_MUSHROOM: 0.6
+          RED_MUSHROOM_BLOCK: 1
+      brown_mushroom_block:
+        conditions: []
+        weight: 5.759
+        trigger: mine_block
+        yields:
+          BROWN_MUSHROOM: 0.6
+          BROWN_MUSHROOM_BLOCK: 1
+      mushroom_stem:
+        conditions: []
+        weight: 5.759
+        trigger: mine_block
+      brown_mushroom:
+        weight: 8.032
+        trigger: mine_block
+      red_mushroom:
+        weight: 8.032
+        trigger: mine_block
+      allium:
+        weight: 22.732
+        trigger: mine_block
+      wildflowers:
+        weight: 15.155
+        trigger: mine_block
+      spore_blossom:
+        weight: 454.643
+        trigger: mine_block
+      sunflower:
+        weight: 37.887
+        trigger: mine_block
+      peony:
+        weight: 37.887
+        trigger: mine_block
+      rose_bush:
+        weight: 37.887
+        trigger: mine_block
+      open_eyeblossom:
+        weight: 37.887
+        trigger: mine_block
+      closed_eyeblossom:
+        weight: 37.887
+        trigger: mine_block
+      lilac:
+        weight: 37.887
+        trigger: mine_block
+      red_tulip:
+        weight: 22.732
+        trigger: mine_block
+      orange_tulip:
+        weight: 22.732
+        trigger: mine_block
+      white_tulip:
+        weight: 22.732
+        trigger: mine_block
+      pink_tulip:
+        weight: 22.732
+        trigger: mine_block
+      lily_of_the_valley:
+        weight: 22.732
+        trigger: mine_block
+      dandelion:
+        weight: 7.577
+        trigger: mine_block
+      poppy:
+        weight: 7.577
+        trigger: mine_block
+      azure_bluet:
+        weight: 12.124
+        trigger: mine_block
+      oxeye_daisy:
+        weight: 12.124
+        trigger: mine_block
+      cornflower:
+        weight: 12.124
+        trigger: mine_block
+      blue_orchid:
+        weight: 12.124
+        trigger: mine_block
+      pink_petals:
+        weight: 12.124
+        trigger: mine_block
+      oak_leaves:
+        weight: 4.546
+        trigger: mine_block
+      spruce_leaves:
+        weight: 4.546
+        trigger: mine_block
+      birch_leaves:
+        weight: 4.546
+        trigger: mine_block
+      jungle_leaves:
+        weight: 4.546
+        trigger: mine_block
+      acacia_leaves:
+        weight: 4.546
+        trigger: mine_block
+      dark_oak_leaves:
+        weight: 4.546
+        trigger: mine_block
+      pale_oak_leaves:
+        weight: 4.546
+        trigger: mine_block
+      mangrove_leaves:
+        weight: 4.546
+        trigger: mine_block
+      cherry_leaves:
+        weight: 4.546
+        trigger: mine_block
+      azalea_leaves:
+        weight: 4.546
+        trigger: mine_block
+      flowering_azalea_leaves:
+        weight: 4.546
+        trigger: mine_block
+      crimson_roots:
+        weight: 14
+        trigger: mine_block
+      warped_roots:
+        weight: 14
+        trigger: mine_block
+      crimson_fungus:
+        weight: 20
+        trigger: mine_block
+      warped_fungus:
+        weight: 20
+        trigger: mine_block
+      lily_pad:
+        weight: 45.464
+        trigger: mine_block
+      sculk:
+        weight: 7
+        trigger: mine_block
+      sculk_catalyst:
+        weight: 151.548
+        trigger: mine_block
+      nether_wart_block:
+        weight: 8
+        trigger: mine_block
+      warped_wart_block:
+        weight: 8
+        trigger: mine_block
+  mineur:
+    points-per-xp-today: 1.175
+    curve:
+      base: 35.25
+      exponent: 3
+    sources:
+      iron_ore:
+        weight: 9.4
+        trigger: mine_block
+        yields:
+          RAW_IRON: 2.2
+          IRON_ORE: 1
+      deepslate_iron_ore:
+        weight: 11.75
+        trigger: mine_block
+        yields:
+          RAW_IRON: 2.2
+          DEEPSLATE_IRON_ORE: 1
+      gold_ore:
+        weight: 23.5
+        trigger: mine_block
+        yields:
+          RAW_GOLD: 2.2
+          GOLD_ORE: 1
+      deepslate_gold_ore:
+        weight: 28.2
+        trigger: mine_block
+        yields:
+          RAW_GOLD: 2.2
+          DEEPSLATE_GOLD_ORE: 1
+      redstone_ore:
+        weight: 14.1
+        trigger: mine_block
+        yields:
+          REDSTONE: 6
+          REDSTONE_ORE: 1
+      deepslate_redstone_ore:
+        weight: 14.1
+        trigger: mine_block
+        yields:
+          REDSTONE: 6
+          DEEPSLATE_REDSTONE_ORE: 1
+      lapis_ore:
+        weight: 14.1
+        trigger: mine_block
+        yields:
+          LAPIS_LAZULI: 14.3
+          LAPIS_ORE: 1
+      deepslate_lapis_ore:
+        weight: 14.1
+        trigger: mine_block
+        yields:
+          LAPIS_LAZULI: 14.3
+          DEEPSLATE_LAPIS_ORE: 1
+      diamond_ore:
+        weight: 20
+        trigger: mine_block
+        yields:
+          DIAMOND: 2.2
+          DIAMOND_ORE: 1
+      deepslate_diamond_ore:
+        weight: 20
+        trigger: mine_block
+        yields:
+          DIAMOND: 2.2
+          DEEPSLATE_DIAMOND_ORE: 1
+      emerald_ore:
+        weight: 20.0
+        trigger: mine_block
+        yields:
+          EMERALD: 2.2
+          EMERALD_ORE: 1
+      deepslate_emerald_ore:
+        weight: 56.4
+        trigger: mine_block
+        yields:
+          EMERALD: 2.2
+          DEEPSLATE_EMERALD_ORE: 1
+      coal_ore:
+        weight: 9.4
+        trigger: mine_block
+        yields:
+          COAL: 2.2
+          COAL_ORE: 1
+      deepslate_coal_ore:
+        weight: 9.4
+        trigger: mine_block
+        yields:
+          COAL: 2.2
+          DEEPSLATE_COAL_ORE: 1
+      nether_gold_ore:
+        weight: 9.4
+        trigger: mine_block
+        yields:
+          GOLD_NUGGET: 8.8
+          NETHER_GOLD_ORE: 1
+      nether_quartz_ore:
+        weight: 8
+        trigger: mine_block
+        yields:
+          QUARTZ: 2.2
+          NETHER_QUARTZ_ORE: 1
+      copper_ore:
+        weight: 5.875
+        trigger: mine_block
+        yields:
+          RAW_COPPER: 7.7
+          COPPER_ORE: 1
+      deepslate_copper_ore:
+        weight: 5.875
+        trigger: mine_block
+        yields:
+          RAW_COPPER: 7.7
+          DEEPSLATE_COPPER_ORE: 1
+      ancient_debris:
+        weight: 117.5
+        trigger: mine_block
+      budding_amethyst:
+        weight: 352.5
+        trigger: mine_block
+        yields: {}
+      glowstone:
+        weight: 23.5
+        trigger: mine_block
+        yields:
+          GLOWSTONE_DUST: 3.9
+          GLOWSTONE: 1
+      gilded_blackstone:
+        weight: 117.5
+        trigger: mine_block
+        yields:
+          GOLD_NUGGET: 3.5
+          GILDED_BLACKSTONE: 1
+    conditions:
+    - id: in_mainhand
+      args:
+        items:
+        - '*wooden_pickaxe'
+        - '*copper_pickaxe'
+        - '*stone_pickaxe'
+        - '*iron_pickaxe'
+        - '*copper_pickaxe'
+        - '*golden_pickaxe'
+        - '*diamond_pickaxe'
+        - '*netherite_pickaxe'
+  pecheur:
+    points-per-xp-today: 28.427
+    curve:
+      base: 568.548
+      exponent: 3
+    sources:
+      poisson_commun:
+        weight: 284.274
+        trigger: catch_fish
+        yields: {}
+        fixed-value: true
+        placeholder: money_commun
+        filters:
+          custom_fish_type:
+          - common_tuna_fish
+          - common_sardine_fish
+          - common_red_snapper_fish
+          - common_sunfish_fish
+          - common_octopus_fish
+          - common_blue_jellyfish
+          - common_pink_jellyfish
+          - common_mullet_fish
+          - common_perch_fish
+          - common_carp_fish
+          - common_cat_fish
+          - common_gold_fish
+          - common_woodskip_fish
+          - common_sturgeon_fish
+          - common_golden_fish
+          - common_pike_fish
+          - common_salmon_void_fish
+        label: Poisson commun
+      poisson_unique:
+        weight: 568.548
+        trigger: catch_fish
+        yields: {}
+        fixed-value: true
+        filters:
+          custom_fish_type:
+          - unique_tuna_fish
+          - unique_sardine_fish
+          - unique_red_snapper_fish
+          - unique_sunfish_fish
+          - unique_octopus_fish
+          - unique_blue_jellyfish
+          - unique_pink_jellyfish
+          - unique_mullet_fish
+          - unique_perch_fish
+          - unique_carp_fish
+          - unique_cat_fish
+          - unique_gold_fish
+          - unique_woodskip_fish
+          - unique_sturgeon_fish
+          - unique_golden_fish
+          - unique_pike_fish
+          - unique_salmon_void_fish
+        label: Poisson unique
+      poisson_epique:
+        weight: 1137.097
+        trigger: catch_fish
+        yields: {}
+        fixed-value: true
+        filters:
+          custom_fish_type:
+          - epic_tuna_fish
+          - epic_sardine_fish
+          - epic_red_snapper_fish
+          - epic_sunfish_fish
+          - epic_octopus_fish
+          - epic_blue_jellyfish
+          - epic_pink_jellyfish
+          - epic_mullet_fish
+          - epic_perch_fish
+          - epic_carp_fish
+          - epic_cat_fish
+          - epic_gold_fish
+          - epic_woodskip_fish
+          - epic_sturgeon_fish
+          - epic_golden_fish
+          - epic_pike_fish
+          - epic_salmon_void_fish
+        label: Poisson épique
+      poisson_mythique:
+        weight: 2274.194
+        trigger: catch_fish
+        yields: {}
+        fixed-value: true
+        filters:
+          custom_fish_type:
+          - mythic_tuna_fish
+          - mythic_sardine_fish
+          - mythic_red_snapper_fish
+          - mythic_sunfish_fish
+          - mythic_octopus_fish
+          - mythic_blue_jellyfish
+          - mythic_pink_jellyfish
+          - mythic_mullet_fish
+          - mythic_perch_fish
+          - mythic_carp_fish
+          - mythic_cat_fish
+          - mythic_gold_fish
+          - mythic_woodskip_fish
+          - mythic_sturgeon_fish
+          - mythic_golden_fish
+          - mythic_pike_fish
+          - mythic_salmon_void_fish
+        label: Poisson mythique
+      poisson_legendaire:
+        weight: 11655.242
+        trigger: catch_fish
+        yields: {}
+        fixed-value: true
+        placeholder: money_legendaire
+        filters:
+          custom_fish_type:
+          - legendary_tuna_fish
+          - legendary_sardine_fish
+          - legendary_red_snapper_fish
+          - legendary_sunfish_fish
+          - legendary_octopus_fish
+          - legendary_blue_jellyfish
+          - legendary_pink_jellyfish
+          - legendary_mullet_fish
+          - legendary_perch_fish
+          - legendary_carp_fish
+          - legendary_cat_fish
+          - legendary_gold_fish
+          - legendary_woodskip_fish
+          - legendary_sturgeon_fish
+          - legendary_golden_fish
+          - legendary_pike_fish
+          - legendary_salmon_void_fish
+        label: Poisson légendaire
+      poisson_arc-en-ciel:
+        weight: 284274.194
+        trigger: catch_fish
+        yields: {}
+        fixed-value: true
+        filters:
+          custom_fish_type:
+          - fabled_rainbow_fish
+        label: Poisson Arc-en-Ciel
+      poisson_radioactif:
+        weight: 142.137
+        trigger: catch_fish
+        yields: {}
+        fixed-value: true
+        filters:
+          custom_fish_type:
+          - rubbish
+        label: Poisson radioactif
+      prise_vanilla:
+        weight: 284.274
+        trigger: catch_fish
+        yields: {}
+        fixed-value: true
+        placeholder: money_commun
+        filters:
+          custom_fish_type:
+          - COD
+          - SALMON
+          - TROPICAL_FISH
+          - PUFFERFISH
+          - BAMBOO
+          - BONE
+          - BOWL
+          - FISHING_ROD
+          - INK_SAC
+          - LEATHER
+          - LEATHER_BOOTS
+          - LILY_PAD
+          - POTION
+          - ROTTEN_FLESH
+          - STICK
+          - STRING
+          - TRIPWIRE_HOOK
+          - BOOK
+          - ENCHANTED_BOOK
+          - BOW
+          - NAME_TAG
+          - NAUTILUS_SHELL
+          - SADDLE
+        label: Prise vanilla
+  rochiste:
+    points-per-xp-today: 1.0
+    curve:
+      base: 30.0
+      exponent: 3
+    sources:
+      sulfur:
+        weight: 3
+        trigger: mine_block
+        area: true
+      cinnabar:
+        weight: 3
+        trigger: mine_block
+        area: true
+      stone:
+        weight: 3
+        trigger: mine_block
+        yields:
+          STONE: 1
+          COBBLESTONE: 1
+        area: true
+      cobblestone:
+        weight: 3
+        trigger: mine_block
+        area: true
+      terracotta:
+        weight: 3
+        trigger: mine_block
+        area: true
+      white_terracotta:
+        weight: 3
+        trigger: mine_block
+      orange_terracotta:
+        weight: 3
+        trigger: mine_block
+      light_blue_terracotta:
+        weight: 3
+        trigger: mine_block
+      yellow_terracotta:
+        weight: 3
+        trigger: mine_block
+      light_gray_terracotta:
+        weight: 3
+        trigger: mine_block
+      cyan_terracotta:
+        weight: 3
+        trigger: mine_block
+      brown_terracotta:
+        weight: 3
+        trigger: mine_block
+      red_terracotta:
+        weight: 3
+        trigger: mine_block
+      prismarine:
+        weight: 3
+        trigger: mine_block
+      andesite:
+        weight: 3
+        trigger: mine_block
+        area: true
+      diorite:
+        weight: 3
+        trigger: mine_block
+        area: true
+      granite:
+        weight: 3
+        trigger: mine_block
+        area: true
+      tuff:
+        weight: 3
+        trigger: mine_block
+        area: true
+      sandstone:
+        weight: 3
+        trigger: mine_block
+        area: true
+      red_sandstone:
+        weight: 3
+        trigger: mine_block
+        area: true
+      nether_bricks:
+        weight: 22.5
+        trigger: mine_block
+      dripstone_block:
+        weight: 3
+        trigger: mine_block
+        area: true
+      basalt:
+        weight: 3.2
+        trigger: mine_block
+        area: true
+      packed_ice:
+        weight: 3
+        trigger: mine_block
+      ice:
+        weight: 3
+        trigger: mine_block
+      deepslate:
+        weight: 23.5
+        trigger: mine_block
+        yields:
+          DEEPSLATE: 1
+          COBBLED_DEEPSLATE: 1
+        area: true
+      cobbled_deepslate:
+        weight: 23.5
+        trigger: mine_block
+        area: true
+      end_stone:
+        weight: 23.5
+        trigger: mine_block
+        area: true
+      obsidian:
+        weight: 93.0
+        trigger: mine_block
+      sculk_shrieker:
+        weight: 50.0
+        trigger: mine_block
+      calcite:
+        weight: 23.5
+        trigger: mine_block
+        area: true
+      smooth_basalt:
+        weight: 23.5
+        trigger: mine_block
+        area: true
+      blackstone:
+        weight: 3
+        trigger: mine_block
+        area: true
+      polished_blackstone:
+        weight: 30.0
+        trigger: mine_block
+      cracked_polished_blackstone_bricks:
+        weight: 30.0
+        trigger: mine_block
+      magma_block:
+        weight: 3
+        trigger: mine_block
+        area: true
+      bone_block:
+        weight: 40.0
+        trigger: mine_block
+      tube_coral_block:
+        weight: 30.0
+        trigger: mine_block
+      brain_coral_block:
+        weight: 30.0
+        trigger: mine_block
+      bubble_coral_block:
+        weight: 30.0
+        trigger: mine_block
+      fire_coral_block:
+        weight: 30.0
+        trigger: mine_block
+      horn_coral_block:
+        weight: 30.0
+        trigger: mine_block
+      netherrack:
+        weight: 3
+        trigger: mine_block
+        area: true
+    conditions:
+    - id: in_mainhand
+      args:
+        items:
+        - '*wooden_pickaxe'
+        - '*stone_pickaxe'
+        - '*iron_pickaxe'
+        - '*golden_pickaxe'
+        - '*diamond_pickaxe'
+        - '*netherite_pickaxe'
+  sylviculteur:
+    points-per-xp-today: 5.875
+    curve:
+      base: 88.125
+      exponent: 3
+    sources:
+      dark_oak_log:
+        weight: 24.5
+        trigger: mine_block
+      pale_oak_log:
+        weight: 24.5
+        trigger: mine_block
+      cherry_log:
+        weight: 24.5
+        trigger: mine_block
+      birch_log:
+        weight: 24.5
+        trigger: mine_block
+      spruce_log:
+        weight: 24.5
+        trigger: mine_block
+      jungle_log:
+        weight: 24.5
+        trigger: mine_block
+      oak_log:
+        weight: 24.5
+        trigger: mine_block
+      mangrove_log:
+        weight: 24.5
+        trigger: mine_block
+      acacia_log:
+        weight: 24.5
+        trigger: mine_block
+      crimson_stem:
+        weight: 24.5
+        trigger: mine_block
+      warped_stem:
+        weight: 24.5
+        trigger: mine_block
+mobs:
+  zombie:
+    weight: 1.0
+    yields:
+      ROTTEN_FLESH: 2.5
+      IRON_INGOT: 0.018
+      CARROT: 0.018
+      POTATO: 0.018
+  zombie_villager:
+    weight: 3.0
+    yields:
+      ROTTEN_FLESH: 2.5
+      IRON_INGOT: 0.018
+      CARROT: 0.018
+      POTATO: 0.018
+  husk:
+    weight: 2.0
+    yields:
+      ROTTEN_FLESH: 2.5
+      IRON_INGOT: 0.018
+      CARROT: 0.018
+      POTATO: 0.018
+  drowned:
+    weight: 1.5
+    yields:
+      ROTTEN_FLESH: 2.5
+      COPPER_INGOT: 0.17
+  skeleton:
+    weight: 1.0
+    yields:
+      ARROW: 2.5
+      BONE: 2.5
+  stray:
+    weight: 2.0
+    yields:
+      ARROW: 2.5
+      BONE: 2.5
+      TIPPED_ARROW: 2.0
+  bogged:
+    weight: 3.0
+    yields:
+      ARROW: 2.5
+      BONE: 2.5
+      TIPPED_ARROW: 2.0
+  parched:
+    weight: 2.5
+    yields:
+      ARROW: 2.5
+      BONE: 2.5
+      TIPPED_ARROW: 2.0
+  wither_skeleton:
+    weight: 5.0
+    yields:
+      COAL: 1.5
+      BONE: 2.5
+      WITHER_SKELETON_SKULL: 0.055
+  creeper:
+    weight: 1.0
+    yields:
+      GUNPOWDER: 2.5
+  spider:
+    weight: 1.0
+    yields:
+      STRING: 2.5
+      SPIDER_EYE: 1.5
+  cave_spider:
+    weight: 2.5
+    yields:
+      STRING: 2.5
+      SPIDER_EYE: 1.5
+  enderman:
+    weight: 1.5
+    yields:
+      ENDER_PEARL: 2.0
+  endermite:
+    weight: 6.0
+    yields: {}
+  witch:
+    weight: 3.0
+    yields:
+      GLOWSTONE_DUST: 0.714
+      SUGAR: 0.714
+      SPIDER_EYE: 0.714
+      GLASS_BOTTLE: 0.714
+      GUNPOWDER: 0.714
+      STICK: 1.429
+      REDSTONE: 7.5
+  slime:
+    weight: 3.0
+    yields: {}
+  magma_cube:
+    weight: 3.0
+    yields: {}
+  silverfish:
+    weight: 3.0
+    yields: {}
+  blaze:
+    weight: 4.0
+    yields:
+      BLAZE_ROD: 2.0
+  ghast:
+    weight: 3.0
+    yields:
+      GHAST_TEAR: 2.0
+      GUNPOWDER: 2.5
+  phantom:
+    weight: 2.0
+    yields:
+      PHANTOM_MEMBRANE: 2.0
+  pillager:
+    weight: 2.5
+    yields: {}
+  vindicator:
+    weight: 5.0
+    yields:
+      EMERALD: 2.0
+  evoker:
+    weight: 6.0
+    yields:
+      TOTEM_OF_UNDYING: 1.0
+      EMERALD: 2.0
+  vex:
+    weight: 1
+    yields: {}
+  ravager:
+    weight: 6.0
+    yields:
+      SADDLE: 1.0
+  illusioner:
+    weight: 1
+    yields: {}
+  guardian:
+    weight: 4.0
+    yields:
+      PRISMARINE_SHARD: 2.5
+      COD: 1.0
+      PRISMARINE_CRYSTALS: 1.0
+  elder_guardian:
+    weight: 10.0
+    yields:
+      PRISMARINE_SHARD: 2.5
+      COD: 1.25
+      PRISMARINE_CRYSTALS: 0.833
+      WET_SPONGE: 1.0
+      TIDE_ARMOR_TRIM_SMITHING_TEMPLATE: 0.2
+  shulker:
+    weight: 6.0
+    yields:
+      SHULKER_SHELL: 0.688
+  hoglin:
+    weight: 3.5
+    yields:
+      PORKCHOP: 4.5
+      LEATHER: 2.0
+  zoglin:
+    weight: 6.0
+    yields:
+      ROTTEN_FLESH: 3.5
+  piglin:
+    weight: 2.0
+    yields: {}
+  zombified_piglin:
+    weight: 1.5
+    yields:
+      ROTTEN_FLESH: 2.0
+      GOLD_NUGGET: 2.0
+      GOLD_INGOT: 0.055
+  piglin_brute:
+    weight: 8.0
+    yields: {}
+  warden:
+    weight: 8.0
+    yields:
+      SCULK_CATALYST: 1.0
+  breeze:
+    weight: 5.0
+    yields:
+      BREEZE_ROD: 6.0
+  wither:
+    weight: 6.0
+    yields: {}
+  ender_dragon:
+    weight: 10.0
+    yields: {}
+  creaking:
+    weight: 3.0
+    yields: {}
+  zombie_nautilus:
+    weight: 4.0
+    yields:
+      ROTTEN_FLESH: 3.0
+  camel_husk:
+    weight: 4.0
+    yields:
+      ROTTEN_FLESH: 4.0
+animals:
+  cow:
+    weight: 40
+    yields:
+      LEATHER: 2.5
+      BEEF: 3.5
+  pig:
+    weight: 40
+    yields:
+      PORKCHOP: 3.5
+  sheep:
+    weight: 40
+    yields:
+      MUTTON: 3.0
+  chicken:
+    weight: 25
+    yields:
+      FEATHER: 2.5
+      CHICKEN: 2.5
+  rabbit:
+    weight: 60
+    yields:
+      RABBIT_HIDE: 2.0
+      RABBIT: 2.5
+      RABBIT_FOOT: 0.19
+  mooshroom:
+    weight: 80
+    yields:
+      LEATHER: 2.5
+      BEEF: 3.5
+  squid:
+    weight: 40
+    yields:
+      INK_SAC: 3.5
+  glow_squid:
+    weight: 80
+    yields:
+      GLOW_INK_SAC: 3.5
+  turtle:
+    weight: 300
+    yields:
+      SEAGRASS: 2.5
+  armadillo:
+    weight: 300
+    yields: {}
+  cod:
+    weight: 40
+    yields:
+      COD: 1.0
+      BONE_MEAL: 0.05
+  salmon:
+    weight: 40
+    yields:
+      SALMON: 1.0
+      BONE_MEAL: 0.05
+  pufferfish:
+    weight: 60
+    yields:
+      PUFFERFISH: 1.0
+      BONE_MEAL: 0.05
+  tropical_fish:
+    weight: 40
+    yields:
+      TROPICAL_FISH: 1.0
+      BONE_MEAL: 0.05
+  goat:
+    weight: 60
+    yields: {}
+# CUSTOMFISHING SYNC: rarities = shares of the best rod (CustomFishing contents/rod/default.yml, group-mod),
+# species = share of each species in its biome (CustomFishing loot-conditions.yml and the "group" of
+# contents/item/influfish.yml). A change on one side is carried to the other.
+fishing:
+  catch-weight: 568.548
+  rarities:
+    common: 0.615
+    unique: 0.2
+    epic: 0.1
+    mythic: 0.03
+    legendary: 0.006
+  # species: share of the catches of its rarity in its biome (one fish per biome = 1; temperate ocean: tuna and
+  # sardine = 0.5; warm ocean: red snapper and blue and pink jellyfish = 0.333), see CustomFishing loot-conditions.yml
+  species:
+    blue_jellyfish: 0.333
+    carp_fish: 1
+    cat_fish: 1
+    gold_fish: 1
+    golden_fish: 1
+    mullet_fish: 1
+    octopus_fish: 1
+    perch_fish: 1
+    pike_fish: 1
+    pink_jellyfish: 0.333
+    red_snapper_fish: 0.333
+    salmon_void_fish: 1
+    sardine_fish: 0.5
+    sturgeon_fish: 1
+    sunfish_fish: 1
+    tuna_fish: 0.5
+    woodskip_fish: 1
+others:
+  AMETHYST_SHARD: 30
+  EGG: 20
+  HONEYCOMB: 150
+  HONEY_BOTTLE: 150
+  FEATHER: 20
+  WHITE_WOOL: 25
+  LEATHER: 40
+  SEA_PICKLE: 120
+  SMALL_DRIPLEAF: 120
+  BIG_DRIPLEAF: 120
+  SHROOMLIGHT: 120
+  WEEPING_VINES: 25
+  TWISTING_VINES: 1
+  MANGROVE_ROOTS: 30
+  MUD: 12
+  BASALT: 8
+  DRIPSTONE_BLOCK: 8
+  POINTED_DRIPSTONE: 16
+  TORCHFLOWER: 300
+  PITCHER_PLANT: 300
+  SPORE_BLOSSOM: 300
+  GLASS_BOTTLE: 1
+  NAUTILUS_SHELL: 1500
+  TURTLE_EGG: 600
+  BEEHIVE: 800
+  BAMBOO: 3
+  SUGAR_CANE: 6
+  ICE: 8
+  BLUE_ICE: 700
+  SCULK_VEIN: 10
+  LILY_PAD: 176
+  NETHER_SPROUTS: 1
+  MOSS_BLOCK: 30
+  WATER_BUCKET: 0.1
+  PINK_PETALS: 12
+  SLIME_BALL: 60
+  MAGMA_CREAM: 120
+  OMINOUS_BOTTLE: 3000
+  TURTLE_SCUTE: 400
+  ARMADILLO_SCUTE: 300
+  TRIDENT: 6000
+  NETHER_STAR: 7614
+  DRAGON_BREATH: 600
+  DRAGON_HEAD: 8460
+  ECHO_SHARD: 800
+  WHEAT_SEEDS: 0.3
+  BEETROOT_SEEDS: 0.3
+  APPLE: 60
+  MILK_BUCKET: 10
+  LAVA_BUCKET: 30
+  CRYING_OBSIDIAN: 400
+  PALE_MOSS_BLOCK: 30
+  RESIN_CLUMP: 80
+  OCHRE_FROGLIGHT: 300
+  VERDANT_FROGLIGHT: 300
+  PEARLESCENT_FROGLIGHT: 300
+  POISONOUS_POTATO: 30
+  AMETHYST_CLUSTER: 120
+  OAK_SAPLING: 10
+  BIRCH_SAPLING: 10
+  SPRUCE_SAPLING: 10
+  JUNGLE_SAPLING: 15
+  ACACIA_SAPLING: 15
+  DARK_OAK_SAPLING: 15
+  CHERRY_SAPLING: 15
+  MANGROVE_PROPAGULE: 15
+  PALE_OAK_SAPLING: 15
+  NETHERITE_UPGRADE_SMITHING_TEMPLATE: 30000
+  DIAMOND_HORSE_ARMOR: 1500
+  DIAMOND_NAUTILUS_ARMOR: 1500
+enchantments:
+  use-weight: 1410
+  levels-per-use:
+    bane_of_arthropods: 0.16588
+    knockback: 0.09855
+    punch: 0.02867
+    fire_protection: 0.14404
+    blast_protection: 0.07238
+    projectile_protection: 0.00496
+    impaling: 0.07272
+    channeling: 0.0099
+    riptide: 0.0503
+# actions: what an action no job pays is worth (keys also used by "price:" of FluxPass missions,
+# e.g. move gliding: renaming a key = renaming it in plugins/FluxPass/missions/) (points, same scale as the rest: 7050 = 2 min of
+# optimal play). Read by the pass missions (FluxPass): a mission's amount = effort / weight of the action.
+# actions.<trigger>.<target>; default = any target. Starting weights (2026-11-11) derived from the
+# former mission amounts; a mission asking too much or too little = fix its weight here.
+# gain_job_xp is 1 by definition (1 job XP = 1 point).
 actions:
   gain_job_xp: 1
   breed:
@@ -42,3 +1555,52 @@ actions:
     gliding: 0.2
     riding: 0.67
     underground: 1
+
+same-value-as:
+  FARMLAND: DIRT
+  EXPOSED_COPPER: COPPER_BLOCK
+  WEATHERED_COPPER: COPPER_BLOCK
+  OXIDIZED_COPPER: COPPER_BLOCK
+  COD_BUCKET: COD
+  SALMON_BUCKET: SALMON
+  PUFFERFISH_BUCKET: PUFFERFISH
+  TROPICAL_FISH_BUCKET: TROPICAL_FISH
+  STRIPPED_OAK_LOG: OAK_LOG
+  STRIPPED_OAK_WOOD: OAK_WOOD
+  STRIPPED_SPRUCE_LOG: SPRUCE_LOG
+  STRIPPED_SPRUCE_WOOD: SPRUCE_WOOD
+  STRIPPED_BIRCH_LOG: BIRCH_LOG
+  STRIPPED_BIRCH_WOOD: BIRCH_WOOD
+  STRIPPED_JUNGLE_LOG: JUNGLE_LOG
+  STRIPPED_JUNGLE_WOOD: JUNGLE_WOOD
+  STRIPPED_ACACIA_LOG: ACACIA_LOG
+  STRIPPED_ACACIA_WOOD: ACACIA_WOOD
+  STRIPPED_DARK_OAK_LOG: DARK_OAK_LOG
+  STRIPPED_DARK_OAK_WOOD: DARK_OAK_WOOD
+  STRIPPED_CHERRY_LOG: CHERRY_LOG
+  STRIPPED_CHERRY_WOOD: CHERRY_WOOD
+  STRIPPED_MANGROVE_LOG: MANGROVE_LOG
+  STRIPPED_MANGROVE_WOOD: MANGROVE_WOOD
+  STRIPPED_PALE_OAK_LOG: PALE_OAK_LOG
+  STRIPPED_PALE_OAK_WOOD: PALE_OAK_WOOD
+  STRIPPED_CRIMSON_STEM: CRIMSON_STEM
+  STRIPPED_CRIMSON_HYPHAE: CRIMSON_HYPHAE
+  STRIPPED_WARPED_STEM: WARPED_STEM
+  STRIPPED_WARPED_HYPHAE: WARPED_HYPHAE
+  STRIPPED_BAMBOO_BLOCK: BAMBOO_BLOCK
+  WHITE_CONCRETE: WHITE_CONCRETE_POWDER
+  LIGHT_GRAY_CONCRETE: LIGHT_GRAY_CONCRETE_POWDER
+  GRAY_CONCRETE: GRAY_CONCRETE_POWDER
+  BLACK_CONCRETE: BLACK_CONCRETE_POWDER
+  BROWN_CONCRETE: BROWN_CONCRETE_POWDER
+  RED_CONCRETE: RED_CONCRETE_POWDER
+  ORANGE_CONCRETE: ORANGE_CONCRETE_POWDER
+  YELLOW_CONCRETE: YELLOW_CONCRETE_POWDER
+  LIME_CONCRETE: LIME_CONCRETE_POWDER
+  GREEN_CONCRETE: GREEN_CONCRETE_POWDER
+  CYAN_CONCRETE: CYAN_CONCRETE_POWDER
+  LIGHT_BLUE_CONCRETE: LIGHT_BLUE_CONCRETE_POWDER
+  BLUE_CONCRETE: BLUE_CONCRETE_POWDER
+  PURPLE_CONCRETE: PURPLE_CONCRETE_POWDER
+  MAGENTA_CONCRETE: MAGENTA_CONCRETE_POWDER
+  PINK_CONCRETE: PINK_CONCRETE_POWDER

@@ -1,31 +1,43 @@
-# Coefficients of the economy. Everything is counted in points, see sources.yml.
-# Points a player earns in 2 minutes of optimal play, in every job.
+# The engine of the economy. Everything counts in points, the weights are in sources.yml.
+# After a change: /fluxvalue reload (shop, offerings, jobs and collections follow).
+
+# Points earned in 2 minutes of optimal play, in EVERY job (except Defender, handled apart).
 points-per-2-minutes: 7050
-# BitBlock earned in those 2 minutes by a level 100 player. Money scales with the level: level 200 earns twice this.
-# This is the master switch of the money: doubling it doubles all job income and all shop prices.
+
+# === A PLAYER AT LEVEL 100 EARNS 705 MONEY EVERY 2 MINUTES, 21,150 PER HOUR ===
+# Money follows the job level: level 1 = 7, level 50 = 352, level 200 = 1,410, level 400 = 2,820 (per 2 min).
+# This is the knob of the economy: doubling it doubles job income AND shop prices.
 money-per-2-minutes-at-level-100: 705
-# How many more items an area enchantment harvests. Never counts for jobs. Blocks concerned: "area: true" in sources.yml.
+
+# Area tools (Tranchee) harvest 14 times more items, never counted for the job. Blocks concerned: "area: true" in sources.yml.
 area-factor: 14
+
 shop:
-  # Share of the job income the shop pays for the same harvest (0.25: a quarter of what a level 100 job pays).
+  # The shop pays this share of what a level 100 job pays for the same harvest.
+  # 0.25: median of FluxShop's prices measured on 2026-11-05 (0.24).
   sell-share: 0.25
-  # Buying from the shop costs this many times what the shop pays.
+  # Buying from the shop costs this multiple of what it pays (median of former prices: 62.5).
   buy-multiplier: 62.5
+
 jobs:
   max-level: 400
-  # Optimal hours to reach max level, in each job.
+  # Hours of optimal play to reach the maximum level, in each job (spreadsheet: 400 h).
   hours-to-max-level: 400
+
 collections:
   tiers: 7
-  # The last tier is what a player farms in these hours of optimal play.
+  # Last tier = what is farmed in 2 h of optimal play.
   hours-of-last-tier: 2
-  # Second tier = last tier ^ this. Higher: the first tiers take longer. The last tier does not change.
+  # Tier 2 = last tier ^ this: higher means longer first tiers. The last one does not move.
   second-tier-exponent: 0.455
 
 rate-meter:
-  # /fluxvalue rate: seconds of gains the pace is measured on.
+  # /fluxvalue rate: seconds of gains the rate is measured over, then scaled to 2 minutes.
   window-seconds: 10
 
 recipes:
-  # Points a furnace adds to what it cooks. 0: fuel and time are free, an ingot is worth its ore. Crafting is always free.
+  # Points a furnace adds to what it smelts. 0: coal and furnace are free, an ingot is worth its ore. Crafting is always free.
   smelt-cost: 0
+# Hostile mobs: points of one health point (time to kill it), then multiplied by its relative weight (weight under mobs:, sources.yml)
+mobs:
+  points-per-health: 4.23
