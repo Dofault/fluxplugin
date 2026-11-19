@@ -20,8 +20,10 @@ import java.util.UUID;
  * <p>The camera is an invisible display entity given a new place every tick ({@link #move}); each client glides to
  * it over {@link #GLIDE} ticks (as Typewriter's cinematics do), which smooths the steps of the server's clock out, in
  * position and in rotation. A {@link #cut} is another entity, already at its place. Things drawn on the screen
- * (displays turned to the viewer by their billboard) ride {@link #entity()}: they stay where they are on the screen
- * whatever the camera does.</p>
+ * (displays turned to the viewer by their billboard, put at their place by their translation) are {@link #attach
+ * attached}: they are given the very same moves as the camera, so each client glides them exactly as it glides the
+ * camera and they stay still on the screen. Never make them ride the camera: a client moves a passenger a moment
+ * after its vehicle, they swayed on the screen as the camera moved (seen 2026-11-19).</p>
  *
  * <p>What a viewer's client draws through a camera that is not himself (read in the 26.2 client): no hotbar, no life
  * nor food, still his experience bar, the name of the item he holds and his own arm. Keep him seated: a player whose
@@ -34,12 +36,30 @@ public final class CameraRig {
 
     private final Plugin plugin;
     private final Set<UUID> viewers = new LinkedHashSet<>();
+    private final java.util.List<org.bukkit.entity.Display> attached = new java.util.ArrayList<>();
     private ItemDisplay entity;
+    private Location last;
     private int moves;
 
     public CameraRig(Plugin plugin, Location at) {
         this.plugin = plugin;
         this.entity = spawn(at);
+        this.last = at.clone();
+    }
+
+    /** Where the camera was last sent: where a display to {@link #attach} must be spawned. */
+    public Location location() {
+        return last.clone();
+    }
+
+    /**
+     * A display drawn on the viewers' screens: spawned at {@link #location()}, billboard {@code CENTER}, its
+     * translation its place in front of the eye (x to the right, y up, z negative forward). It follows the camera
+     * from now on; removing it is the caller's.
+     */
+    public void attach(org.bukkit.entity.Display display) {
+        display.setTeleportDuration(GLIDE);
+        attached.add(display);
     }
 
     private static ItemDisplay spawn(Location at) {
@@ -81,7 +101,10 @@ public final class CameraRig {
     /** The place the camera glides to; call it every tick, even when it does not move. */
     public void move(Location at) {
         if (!entity.isValid()) return;
+        last = at.clone();
         entity.teleport(at, TeleportFlag.EntityState.RETAIN_PASSENGERS);
+        attached.removeIf(d -> !d.isValid());
+        for (org.bukkit.entity.Display d : attached) d.teleport(at);
         // a client forgets its camera when the entity is sent to it again: said again now and then
         if (++moves % 10 == 3) again();
     }
@@ -90,7 +113,14 @@ public final class CameraRig {
     public void cut(Location at) {
         ItemDisplay former = entity;
         entity = spawn(at);
-        for (Entity rider : former.getPassengers()) entity.addPassenger(rider);
+        last = at.clone();
+        // attached displays jump with the shot instead of gliding across the room
+        attached.removeIf(d -> !d.isValid());
+        for (org.bukkit.entity.Display d : attached) {
+            d.setTeleportDuration(0);
+            d.teleport(at);
+        }
+        Bukkit.getScheduler().runTaskLater(plugin, () -> attached.forEach(d -> d.setTeleportDuration(GLIDE)), 2L);
         again();
         Bukkit.getScheduler().runTaskLater(plugin, former::remove, 2L);
     }
@@ -102,13 +132,14 @@ public final class CameraRig {
         }
     }
 
-    /** The end: every viewer gets his own eyes back, the camera goes (what rides it is the caller's to remove). */
+    /** The end: every viewer gets his own eyes back, the camera goes (attached displays are the caller's to remove). */
     public void remove() {
         for (UUID id : viewers) {
             Player p = Bukkit.getPlayer(id);
             if (p != null) Camera.view(p, null);
         }
         viewers.clear();
+        attached.clear();
         entity.remove();
     }
 }

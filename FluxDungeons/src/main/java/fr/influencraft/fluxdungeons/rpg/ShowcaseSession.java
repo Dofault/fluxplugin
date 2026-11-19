@@ -58,7 +58,7 @@ import java.util.Map;
  *   <li>the <b>camera</b> turns around the middle of the fight (a swing from side to side, or a full turn:
  *   {@code rpg.showcase.camera}). On Java it is Flux's {@link CameraRig}, the camera of the boss scenes: his mouse
  *   moves nothing, he sits still on an invisible seat. Seen through a camera his client draws no hotbar, so the
- *   classes are drawn at the bottom of his screen by displays riding the camera. With {@code camera.locked: false}
+ *   classes are drawn at the bottom of his screen by displays attached to the camera. With {@code camera.locked: false}
  *   he is the camera himself, on a seat that moves, and keeps his real hotbar, but his mouse shakes the view. A
  *   Bedrock player always is his own camera, on a still seat, and looks around freely;</li>
  *   <li>the <b>hotbar</b> holds one class per slot ({@link Hotbar}: packets only, his real items never move). The
@@ -368,8 +368,8 @@ final class ShowcaseSession {
     // ------------------------------------------------------------------ the bar drawn for a locked camera
 
     /**
-     * The classes as a hotbar at the bottom of the screen, for a viewer whose client draws none: displays riding the
-     * camera, turned to it by their billboard and put at their place by their translation (x to the right, y up, one
+     * The classes as a hotbar at the bottom of the screen, for a viewer whose client draws none: displays attached to
+     * the camera, turned to it by their billboard and put at their place by their translation (x to the right, y up, one
      * block in front of the eye: the screen is about 2.5 wide and 1.4 high there at the default field of view).
      */
     private void drawBar() {
@@ -383,13 +383,13 @@ final class ShowcaseSession {
             ItemStack item = items[slot];
             float fx = (float) ((SLOT - 0.008) / (5 * PX)), fy = (float) ((SLOT - 0.008) / (11 * PX));
             // a flat square: the background of a text display holding one space (5 pixels wide, 11 high), stretched
-            slotRects.put(slot, riding(TextDisplay.class, d -> {
+            slotRects.put(slot, onScreen(TextDisplay.class, d -> {
                 d.text(Component.text(" "));
                 d.setShadowed(false);
                 d.setTransformation(new Transformation(new Vector3f((float) x - 0.5f * PX * fx, (float) (BAR_Y - (SLOT - 0.008) / 2), -1f),
                         new Quaternionf(), new Vector3f(fx, fy, 1), new Quaternionf()));
             }));
-            slotIcons.put(slot, riding(ItemDisplay.class, d -> {
+            slotIcons.put(slot, onScreen(ItemDisplay.class, d -> {
                 d.setItemStack(item);
                 d.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.GUI);
                 d.setTransformation(iconAt(x, false));
@@ -402,14 +402,14 @@ final class ShowcaseSession {
         return new Transformation(new Vector3f((float) x, (float) BAR_Y, -0.995f), new Quaternionf(), new Vector3f(s, s, 0.01f), new Quaternionf());
     }
 
-    private <T extends Display> T riding(Class<T> type, java.util.function.Consumer<T> setup) {
-        T d = world.spawn(rig.entity().getLocation(), type, e -> {
+    private <T extends Display> T onScreen(Class<T> type, java.util.function.Consumer<T> setup) {
+        T d = world.spawn(rig.location(), type, e -> {
             e.setPersistent(false);
             e.setBillboard(Display.Billboard.CENTER);
             e.setBrightness(new Display.Brightness(15, 15));
             setup.accept(e);
         });
-        rig.entity().addPassenger(d);
+        rig.attach(d);
         return d;
     }
 
