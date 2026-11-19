@@ -10,15 +10,14 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * A player's chat kept off his screen while something else needs it (FluxDungeons' class showcase): what is already
- * shown is pushed out, the messages sent to him meanwhile are held back by Flux and given to him when the hold ends
- * (the last {@value #KEPT} of them), so nothing is lost. Action bar texts still show. Thread-safe.
+ * A player's chat kept quiet while something else needs his screen (FluxDungeons' class showcase): the messages sent
+ * to him meanwhile are held back by Flux and given to him when the hold ends (the last {@value #KEPT} of them), so
+ * nothing is lost. What his chat already shows is left alone (it fades by itself in a few seconds; pushing it out
+ * with empty lines was tried and removed, owner 2026-11-19). Action bar texts still show. Thread-safe.
  */
 public final class ChatHold {
 
     private static final int KEPT = 100;
-    /** Lines of chat a client shows while its chat is closed, at most. */
-    private static final int SHOWN = 10;
     private static final Map<UUID, List<Component>> HELD = new ConcurrentHashMap<>();
 
     private ChatHold() {
@@ -29,7 +28,6 @@ public final class ChatHold {
         UUID id = player.getUniqueId();
         if (held) {
             if (HELD.containsKey(id)) return;
-            for (int i = 0; i < SHOWN; i++) player.sendMessage(Component.empty());
             HELD.put(id, new ArrayList<>());
             return;
         }
