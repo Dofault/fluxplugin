@@ -122,6 +122,7 @@ public final class FluxMusic extends FluxPlugin implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
+        levelJingles.remove(e.getPlayer().getUniqueId());
         jukebox.stopAll(e.getPlayer().getUniqueId());
         ambience.forget(e.getPlayer().getUniqueId());
         stages.forget(e.getPlayer());
@@ -137,9 +138,17 @@ public final class FluxMusic extends FluxPlugin implements Listener {
         return PlayerSettings.flag(player, Music.SETTING, true);
     }
 
+    /** When each player's level jingle last started: levels gained one after the other play it once (lag, 2026-11-19). */
+    private final java.util.Map<java.util.UUID, Long> levelJingles = new java.util.concurrent.ConcurrentHashMap<>();
+
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJobLevelUp(JobLevelUpEvent e) {
         Player p = e.player();
+        long now = System.currentTimeMillis();
+        Long last = levelJingles.get(p.getUniqueId());
+        long gap = Math.max(0, getConfig().getLong("job-level-up-gap-ms", 4000));
+        if (last != null && now - last < gap) return;
+        levelJingles.put(p.getUniqueId(), now);
         // without music, the plain level up sound (the jobs plugin's own sound is turned off for the jingle)
         if (!Music.jingle(p, moment("job-level-up"))) p.playSound(p, org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.3f);
     }
