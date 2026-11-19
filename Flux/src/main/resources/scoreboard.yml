@@ -39,14 +39,14 @@ lists:
     placeholder: "%typewriter_tracked_objectives%"
     split: ", "
 
-# Sections, top to bottom, each shown when what it requires is there (a list with rows, or a text not blank once
-# its placeholders are read). A line: text, or {text, each: <list>, limit, requires, centre}.
+# Sections, top to bottom, each shown when what it requires is there (a list with rows, a text not blank once
+# its placeholders are read, or "<text> == <value>" / "!=" ignoring case; a list of them: all needed). A line: text, or {text, each: <list>, limit, requires, centre}.
 sections:
-  - requires: "%typewriter_tracked_quest%"
+  - requires: quest_objectives
     lines:
       - ""
       - " <heading><smallcaps>quest</smallcaps></heading>"
-      - " <frame>│</frame> <value>%typewriter_tracked_quest%</value>"
+      - {requires: "%typewriter_tracked_quest%", text: " <frame>│</frame> <value>%typewriter_tracked_quest%</value>"}
       - {each: quest_objectives, text: " <frame>{branch}</frame> <bullet>➤</bullet> <text>{text}</text>"}
       - {requires: "%waypoint_distance%", text: " <frame>{branch}</frame> %waypoint_compass% <info>%waypoint_distance%</info>"}
   - requires: pass_todo

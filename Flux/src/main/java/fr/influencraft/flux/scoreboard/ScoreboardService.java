@@ -42,8 +42,8 @@ import java.util.regex.Pattern;
  * one of Typewriter (whose sidebar is held back while Flux shows its own, {@link Sidebar#claim}).
  *
  * <ul>
- *   <li>Sections of lines, each shown when what it {@code requires} is there (a list with rows, or a text that is not
- *   blank once its placeholders are read). Lines may repeat over a list ({@code each}: a plugin's
+ *   <li>Sections of lines, each shown when what it {@code requires} is there (a list with rows, a text that is not
+ *   blank once its placeholders are read, or {@code "<text> == <value>"} / {@code !=}; a list of them: all needed). Lines may repeat over a list ({@code each}: a plugin's
  *   {@link Scoreboard#list}, or a placeholder cut in pieces, {@code lists} of the file).</li>
  *   <li>Colours by name ({@code <frame>...</frame>}, {@code colours} of the file): changing one changes every line.</li>
  *   <li>{@code {branch}}: "├" on every line of a section that has it, "└" on the last one (the frame of the menus).</li>
@@ -74,10 +74,10 @@ public final class ScoreboardService implements Listener, Scoreboard.Backend {
     private static final Key HUD_FONT = Key.key("flux", "hud");
     private static final Pattern KEY = Pattern.compile("\\{([a-z0-9_]+)}");
 
-    private record Line(String text, String each, int limit, String requires, boolean centre) {
+    private record Line(String text, String each, int limit, List<String> requires, boolean centre) {
     }
 
-    private record Section(String requires, List<Line> lines) {
+    private record Section(List<String> requires, List<Line> lines) {
     }
 
     private record Split(String placeholder, String separator) {
@@ -182,7 +182,7 @@ public final class ScoreboardService implements Listener, Scoreboard.Backend {
                 Line line = line(o);
                 if (line != null) lines.add(line);
             }
-            sections.add(new Section(string(s.get("requires")), lines));
+            sections.add(new Section(requires(s.get("requires")), lines));
         }
         if (sections.isEmpty() && enabled) flux.getLogger().warning("scoreboard.yml: no section, the scoreboard is empty");
 
@@ -197,14 +197,23 @@ public final class ScoreboardService implements Listener, Scoreboard.Backend {
     }
 
     private static Line line(Object o) {
-        if (o == null) return new Line("", null, 0, null, false);
+        if (o == null) return new Line("", null, 0, List.of(), false);
         if (o instanceof Map<?, ?> m) {
             String each = string(m.get("each"));
             Object limit = m.get("limit");
             return new Line(Objects.requireNonNullElse(string(m.get("text")), ""), each == null ? null : each.toLowerCase(Locale.ROOT),
-                    limit instanceof Number n ? n.intValue() : 0, string(m.get("requires")), Boolean.TRUE.equals(m.get("centre")));
+                    limit instanceof Number n ? n.intValue() : 0, requires(m.get("requires")), Boolean.TRUE.equals(m.get("centre")));
         }
-        return new Line(String.valueOf(o), null, 0, null, false);
+        return new Line(String.valueOf(o), null, 0, List.of(), false);
+    }
+
+    /** One condition or a list of them, all needed. */
+    private static List<String> requires(Object o) {
+        List<String> out = new ArrayList<>();
+        if (o instanceof List<?> l) {
+            for (Object x : l) if (string(x) != null) out.add(string(x));
+        } else if (string(o) != null) out.add(string(o));
+        return out;
     }
 
     private static String string(Object o) {
@@ -322,8 +331,23 @@ public final class ScoreboardService implements Listener, Scoreboard.Backend {
         return out;
     }
 
+    private boolean passes(List<String> requires, Player p) {
+        for (String r : requires) if (!passes(r, p)) return false;
+        return true;
+    }
+
+    /**
+     * A list id (it has rows), {@code "<text> == <value>"} / {@code "<text> != <value>"} (placeholders read, case
+     * ignored), or a text that is not blank once its placeholders are read.
+     */
     private boolean passes(String requires, Player p) {
-        if (requires == null) return true;
+        for (String op : new String[]{" != ", " == "}) {
+            int i = requires.indexOf(op);
+            if (i < 0) continue;
+            String left = Texts.plain(requires.substring(0, i), p).trim();
+            String right = Texts.plain(requires.substring(i + op.length()), p).trim();
+            return left.equalsIgnoreCase(right) == op.equals(" == ");
+        }
         String id = requires.toLowerCase(Locale.ROOT);
         if (Scoreboard.has(id) || lists.containsKey(id)) return !rows(id, p).isEmpty();
         return !Texts.plain(requires, p).isBlank();
