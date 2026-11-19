@@ -17,8 +17,9 @@ jobs:
     defenseur: {icon: IRON_SWORD, description: ["Élimine les créatures", "hostiles."]}
     batisseur: {icon: BRICKS, description: ["Pose des blocs", "de construction."]}
 
-# Line in the chat at each job level: the money coefficient, before and after.
-job-coefficient:
+# Message in the chat at each job level (money of the level, earning coefficient, paid actions; texts level-up.* of
+# the lang file). Turn the job plugin's own level up message off (EcoJobs: level-up.message.enabled: false).
+level-up-message:
   enabled: true
 
 # Boss bar on every job XP gain, hidden after hide-after-seconds without gain (look: bossbar.* of the lang file).

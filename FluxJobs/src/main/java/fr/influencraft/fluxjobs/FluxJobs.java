@@ -62,8 +62,9 @@ public final class FluxJobs extends fr.influencraft.flux.api.FluxPlugin {
                     return true;
                 }).register();
             }
-            if (section("job-coefficient").getBoolean("enabled", true)) {
-                Bukkit.getPluginManager().registerEvents(new JobCoefficientListener(this), this);
+            // the chat message of a job level (money, coefficient, paid actions): in place of the job plugin's
+            if (section("level-up-message").getBoolean("enabled", true)) {
+                Bukkit.getPluginManager().registerEvents(new JobLevelUpMessage(this), this);
             }
         }
         // data of the collections menu (EcoCollections)

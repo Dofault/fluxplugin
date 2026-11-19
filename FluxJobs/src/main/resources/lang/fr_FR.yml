@@ -13,7 +13,18 @@ leave:
   not-in: "&7Tu n'exerces pas &f%job%&7."
   no-money: "&#FF5C5CTu n'as pas assez de BitBlock pour quitter &f%job%&#FF5C5C."
   failed: "&#FF5C5CImpossible de quitter &f%job%&#FF5C5C, aucun BitBlock n'a été prélevé."
-job-coefficient: "!&8» &7Coefficient de gain &8► &f×%before% &8→ &#2ECF7B×%after%"
+level-up:
+  header:
+    - "!&#4DA954&m                        &r&#4DA954 ᴍéᴛɪᴇʀ &m                        "
+    - "!&r"
+    - "!&r &8『&r &#4DA954&l%job% &#aafb93Niveau %level%&r &8』"
+    - "!&r"
+  money: "!&r  &8• &7Gᴀɪɴ :&f %money%"
+  coefficient: "!&r  &8• &7Cᴏᴇꜰꜰɪᴄɪᴇɴᴛ :&f ×%before% &8➜ &#aafb93×%after%"
+  actions: "!&r  &8• &7Aᴄᴛɪᴏɴꜱ :&f [/metier blocs %job_id%]"
+  footer:
+    - "!&r"
+    - "!&#4DA954&m                                                            "
 menu:
   active: "Métier actif."
   inactive: "Métier inactif."

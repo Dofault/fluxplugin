@@ -13,7 +13,18 @@ leave:
   not-in: "&7You do not work as &f%job%&7."
   no-money: "&#FF5C5CYou cannot afford to leave &f%job%&#FF5C5C."
   failed: "&#FF5C5CCould not leave &f%job%&#FF5C5C, nothing was charged."
-job-coefficient: "!&8» &7Earning coefficient &8► &f×%before% &8→ &#2ECF7B×%after%"
+level-up:
+  header:
+    - "!&#4DA954&m                        &r&#4DA954 JOB &m                        "
+    - "!&r"
+    - "!&r &8『&r &#4DA954&l%job% &#aafb93Level %level%&r &8』"
+    - "!&r"
+  money: "!&r  &8• &7Gain:&f %money%"
+  coefficient: "!&r  &8• &7Coefficient:&f ×%before% &8➜ &#aafb93×%after%"
+  actions: "!&r  &8• &7Actions:&f [/metier blocs %job_id%]"
+  footer:
+    - "!&r"
+    - "!&#4DA954&m                                                            "
 menu:
   active: "Active job."
   inactive: "Inactive job."
