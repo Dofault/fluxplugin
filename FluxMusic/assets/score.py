@@ -95,6 +95,7 @@ class Section:
             for k, sym in enumerate(parts):
                 self.slots.append((b * self.L + k * size, size, sym))
         self.tracks = {}              # track -> {step: set(midi)}
+        self.fx = {}                  # track -> {step: '~' (held) or ('>', semitones to the glide's end)}
 
     @property
     def length(self):
@@ -123,6 +124,9 @@ class Section:
             events = fit(events, self.piece.instrument(track), f'{self.name}/{track}', transpose)
         for step, notes in events:
             self.hit(track, bar * self.L + step + delay, {n + transpose for n in notes})
+        for step, mark in effects(line, self.L).items():
+            if 0 <= bar * self.L + step + delay < self.length:
+                self.fx.setdefault(track, {})[bar * self.L + step + delay] = mark
         return events
 
     def render(self, track):
@@ -139,7 +143,8 @@ class Section:
                 out.append(token(None, first - cursor))
             for k, s in enumerate(steps):
                 end = steps[k + 1] if k + 1 < len(steps) else (b + 1) * L
-                out.append(token(hits[s], end - s, self.spelling, drum=drum))
+                out.append(token(hits[s], end - s, self.spelling, drum=drum,
+                                 mark=self.fx.get(track, {}).get(s)))
             bars.append(' '.join(out))
         return ' | '.join(bars)
 
@@ -151,7 +156,7 @@ def parse(line, L, where):
             body, _, d = t.partition(':')
             d = int(d) if d else 1
             if body not in ('.', '-'):
-                events.append((step, [midi(n) for n in body.split('+')]))
+                events.append((step, [midi(n.split('>')[0].rstrip('~')) for n in body.split('+')]))
             step += d
         if step - bar_start != L:
             raise ValueError(f'{where}: bar {bar_no} lasts {step - bar_start} steps instead of {L}')
@@ -170,13 +175,36 @@ def fit(events, instrument, where, transpose=0):
     raise ValueError(f'{where}: {min(notes)}..{max(notes)} does not fit {instrument} {lo}..{hi}')
 
 
-def token(notes, duration, spelling=SPELLING, drum=False):
+def effects(line, L):
+    """Effects written on single notes of a line: {step: '~' (held, vibrato) or ('>', semitones to the end of the
+    glide)}, read by FluxMusic's ScoreReader."""
+    out, step = {}, 0
+    for bar in line.split('|'):
+        for t in bar.split():
+            body, _, d = t.partition(':')
+            if body.endswith('~'):
+                out[step] = '~'
+            elif '>' in body:
+                a, b = body.split('>')
+                out[step] = ('>', midi(b) - midi(a))
+            step += int(d) if d else 1
+    return out
+
+
+def name(n, spelling=SPELLING):
+    return spelling[n % 12] + str(n // 12 - 1)
+
+
+def token(notes, duration, spelling=SPELLING, drum=False, mark=None):
     if not notes:
         body = '.'
     elif drum and notes == {None}:
         body = 'x'
     else:
-        body = '+'.join(spelling[n % 12] + str(n // 12 - 1) for n in sorted(notes))
+        body = '+'.join(name(n, spelling) for n in sorted(notes))
+        if mark and len(notes) == 1:
+            n = next(iter(notes))
+            body += '~' if mark == '~' else '>' + name(n + mark[1], spelling)
     return body if duration == 1 else f'{body}:{duration}'
 
 
@@ -398,9 +426,11 @@ def write_song(folder, piece, sections, comments, script, loop_from):
               f'title: "{piece.title}"', 'author: "Influencraft"', f'bpm: {piece.bpm}',
               f'steps-per-beat: {piece.steps_per_beat}', f'beats-per-bar: {piece.beats_per_bar}', 'loop: true',
               f'loop-from: {loop_from}', '', 'tracks:']
-    for t, (instrument, volume) in piece.tracks.items():
+    for t, spec in piece.tracks.items():
         if t in used:
-            lines.append(f'  {t}: {{ instrument: {instrument}, volume: {volume} }}')
+            instrument, volume, opts = spec[0], spec[1], (spec[2] if len(spec) > 2 else {})
+            extra = ''.join(f', {k}: {v}' for k, v in opts.items())
+            lines.append(f'  {t}: {{ instrument: {instrument}, volume: {volume}{extra} }}')
     lines += ['', 'sections:']
     for sec in sections:
         lines.append(f'  {sec.name}:')

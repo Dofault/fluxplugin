@@ -34,6 +34,17 @@ import java.util.regex.Pattern;
  * A token is a note ({@code C4}, {@code F#5}, {@code Bb3}), a chord ({@code D4+F4+A4}), {@code x} (the
  * instrument's own pitch, for drums) or a rest ({@code .} / {@code -}), followed by {@code :n} to last n steps
  * (default 1). A pattern of a single token takes a duration too ({@code @chord:4}). {@code |} separates bars: each bar is checked against {@code beats-per-bar}.
+ *
+ * <p>Effects. A note block sound cannot change once sent, so every effect is made of the notes sent:</p>
+ * <ul>
+ *   <li>{@code A5>E6:8} glide: the note slides to E6 over its duration (struck again on a continuous pitch);</li>
+ *   <li>{@code A5~:8} held note: struck again softly each step, wavering a little around its pitch (vibrato);</li>
+ *   <li>track {@code pan: -1..1}: heard from the left (-1) or the right (1) of the listener;</li>
+ *   <li>track {@code orbit: n}: turns round the listener once every n bars;</li>
+ *   <li>track {@code chorus: cents}: every note doubled by two copies detuned by that many cents, spread left and
+ *   right (a thick, wide sound).</li>
+ * </ul>
+ * Effects are placed on a grid {@link #SUB} times finer than the step.
  */
 public final class ScoreReader {
 
@@ -41,7 +52,22 @@ public final class ScoreReader {
     private static final Pattern PATTERN_REF = Pattern.compile("@([A-Za-z0-9_]+)(?:\\*(\\d+))?(:\\d+)?");
     private static final int[] LETTER = {9, 11, 0, 2, 4, 5, 7}; // A B C D E F G
 
-    private record Track(Instrument instrument, float volume) {
+    /** Effects are placed on sub-steps: a step is cut in SUB. */
+    static final int SUB = 4;
+    /** Pitch swing of a held note (semitones) and how the strikes after the first fade. */
+    private static final double VIBRATO = 0.3;
+    private static final float HELD_FIRST = 0.55f, HELD_DECAY = 0.82f;
+    /** A glide strikes every GLIDE_EVERY sub-steps, softer than its first note. */
+    private static final int GLIDE_EVERY = 2;
+    private static final float GLIDE_GAIN = 0.55f;
+
+    /** angle: NaN = on the listener; orbitSteps: 0 = no orbit; chorus: detune in semitones, 0 = none. */
+    private record Track(Instrument instrument, float volume, float angle, double orbitSteps, double chorus) {
+
+        float angleAt(int step) {
+            if (orbitSteps <= 0) return angle;
+            return (float) (360 * ((step % orbitSteps) / orbitSteps)) - 180f;
+        }
     }
 
     private ScoreReader() {
@@ -53,7 +79,7 @@ public final class ScoreReader {
         int perBeat = Math.max(1, yaml.getInt("steps-per-beat", 4));
         int barSteps = Math.max(1, yaml.getInt("beats-per-bar", 4)) * perBeat;
         if (bpm <= 0) throw new IllegalArgumentException("bpm must be positive");
-        long stepNanos = Math.round(60_000_000_000d / (bpm * perBeat));
+        long stepNanos = Math.round(60_000_000_000d / (bpm * perBeat * SUB));
 
         Map<String, Track> tracks = new LinkedHashMap<>();
         ConfigurationSection ts = yaml.getConfigurationSection("tracks");
@@ -61,7 +87,11 @@ public final class ScoreReader {
         for (String name : ts.getKeys(false)) {
             String instrument = ts.getString(name + ".instrument", "harp");
             try {
-                tracks.put(name, new Track(Instrument.named(instrument), (float) ts.getDouble(name + ".volume", 1.0)));
+                float angle = ts.contains(name + ".pan")
+                        ? (float) (Math.max(-1, Math.min(1, ts.getDouble(name + ".pan"))) * 90) : Float.NaN;
+                tracks.put(name, new Track(Instrument.named(instrument), (float) ts.getDouble(name + ".volume", 1.0),
+                        angle, Math.max(0, ts.getDouble(name + ".orbit", 0)) * barSteps,
+                        Math.max(0, ts.getDouble(name + ".chorus", 0)) / 100.0));
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("track " + name + ": unknown instrument " + instrument);
             }
@@ -104,10 +134,10 @@ public final class ScoreReader {
                     song.warn(sectionName + "/" + e.getKey() + ": " + e.getValue() + " steps, section has " + sectionLength);
             cursor += sectionLength;
         }
-        song.length(cursor);
+        song.length(cursor * SUB);
         if (!loopFound) song.warn("loop-from: section " + loopFrom + " not in order, the whole song loops");
         return song.build(id, yaml.getString("title", id), yaml.getString("author", ""), stepNanos,
-                yaml.getBoolean("loop", false), loopStart);
+                yaml.getBoolean("loop", false), loopStart * SUB);
     }
 
     /** A score line, written as one string or a list of strings (joined as bars). */
@@ -168,20 +198,39 @@ public final class ScoreReader {
                 if (duration < 1) throw new IllegalArgumentException(where + ": bad duration in " + raw);
             }
             if (!body.equals(".") && !body.equals("-")) {
-                for (String note : body.split("\\+")) {
+                boolean held = body.endsWith("~");
+                if (held) body = body.substring(0, body.length() - 1);
+                int glide = body.indexOf('>');
+                if (glide > 0) {
+                    double from = midi(body.substring(0, glide)), to = midi(body.substring(glide + 1));
+                    if (Double.isNaN(from) || Double.isNaN(to))
+                        throw new IllegalArgumentException(where + ": bad glide " + body);
+                    folded |= checkRange(song, track, from, body, where, folded);
+                    folded |= checkRange(song, track, to, body, where, folded);
+                    int subs = duration * SUB;
+                    for (int k = 0; k < subs; k += GLIDE_EVERY) {
+                        double t = (double) k / subs;
+                        // eased: it leaves slowly and arrives quickly, as a voice sliding up
+                        double m = from + (to - from) * t * t;
+                        strike(song, track, start + step, k, m, k == 0 ? 1f : GLIDE_GAIN, master);
+                    }
+                    strike(song, track, start + step, subs - 1, to, GLIDE_GAIN, master);
+                } else for (String note : body.split("\\+")) {
                     double midi;
                     if (note.equalsIgnoreCase("x")) {
                         midi = track.instrument().base();
                     } else {
                         midi = midi(note);
                         if (Double.isNaN(midi)) throw new IllegalArgumentException(where + ": bad note " + note);
-                        if (!folded && (midi < track.instrument().lowest() || midi > track.instrument().highest())) {
-                            song.warn(where + ": " + note + " out of the " + track.instrument().name().toLowerCase()
-                                    + " range, moved by an octave");
-                            folded = true;
-                        }
+                        folded |= checkRange(song, track, midi, note, where, folded);
                     }
-                    song.note(start + step, track.instrument(), midi, track.volume() * master);
+                    strike(song, track, start + step, 0, midi, 1f, master);
+                    if (held) {
+                        float gain = HELD_FIRST;
+                        for (int k = 1; k < duration; k++, gain *= HELD_DECAY)
+                            strike(song, track, start + step + k, 0,
+                                    midi + VIBRATO * Math.sin(k * Math.PI / 2), gain, master);
+                    }
                 }
             }
             step += duration;
@@ -190,6 +239,35 @@ public final class ScoreReader {
         if (last > 0 && last % barSteps != 0)
             song.warn(where + ": bar " + bar + " lasts " + last + " steps instead of " + barSteps);
         return step;
+    }
+
+    private static boolean checkRange(Song.Builder song, Track track, double midi, String note, String where,
+                                      boolean warned) {
+        if (warned || (midi >= track.instrument().lowest() && midi <= track.instrument().highest())) return false;
+        song.warn(where + ": " + note + " out of the " + track.instrument().name().toLowerCase()
+                + " range, moved by an octave");
+        return true;
+    }
+
+    /** One note of a track at a step (plus sub-steps), with the track's stereo and chorus. */
+    private static void strike(Song.Builder song, Track track, int step, int sub, double midi, float gain,
+                               float master) {
+        int at = step * SUB + sub;
+        float volume = track.volume() * master * gain;
+        float angle = track.angleAt(step);
+        if (track.chorus() <= 0) {
+            song.note(at, track.instrument(), midi, volume, angle);
+            return;
+        }
+        // the note and two detuned copies, the copies on each side of it: they beat against it
+        float centre = Float.isNaN(angle) ? 0f : angle;
+        song.note(at, track.instrument(), midi, volume * 0.8f, angle);
+        song.note(at, track.instrument(), midi - track.chorus(), volume * 0.5f, wrap(centre - 35f));
+        song.note(at, track.instrument(), midi + track.chorus(), volume * 0.5f, wrap(centre + 35f));
+    }
+
+    private static float wrap(float angle) {
+        return angle > 180 ? angle - 360 : angle < -180 ? angle + 360 : angle;
     }
 
     /** MIDI number of a note name (C4 = 60), NaN when unreadable. */

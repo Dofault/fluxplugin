@@ -16,10 +16,12 @@ import java.util.TreeMap;
  * @param loopStart step a looping song goes back to (0 = the start; an intro is played once before it)
  * @param times     steps holding notes, increasing
  * @param notes     sounds of each of {@link #times}
+ * @param angles    for each sound of {@link #notes}: where it comes from, in degrees around the listener (0 in front,
+ *                  90 on his right, -90 on his left), or NaN for a sound played on the listener himself (no stereo)
  * @param warnings  what was fixed while reading the file (notes moved by an octave, bars of a wrong length...)
  */
 public record Song(String id, String title, String author, long stepNanos, int length, boolean loop,
-                   int loopStart, int[] times, Sound[][] notes, List<String> warnings) {
+                   int loopStart, int[] times, Sound[][] notes, float[][] angles, List<String> warnings) {
 
     /** Index in {@link #times} of the first step played again when the song loops. */
     public int loopIndex() {
@@ -39,12 +41,20 @@ public record Song(String id, String title, String author, long stepNanos, int l
 
     /** Collects notes step by step, then builds the song. */
     public static final class Builder {
-        private final TreeMap<Integer, List<Sound>> steps = new TreeMap<>();
+        private record Placed(Sound sound, float angle) {
+        }
+
+        private final TreeMap<Integer, List<Placed>> steps = new TreeMap<>();
         private final List<String> warnings = new ArrayList<>();
         private int length;
 
         public void note(int step, Instrument instrument, double midi, float volume) {
-            if (volume <= 0) return;
+            note(step, instrument, midi, volume, Float.NaN);
+        }
+
+        /** A note coming from {@code angle} degrees around the listener (NaN = on the listener). */
+        public void note(int step, Instrument instrument, double midi, float volume, float angle) {
+            if (volume <= 0 || step < 0) return;
             Sound sound = Sound.sound()
                     .type(Key.key(Key.MINECRAFT_NAMESPACE, instrument.sound()))
                     .source(Sound.Source.RECORD)
@@ -54,7 +64,7 @@ public record Song(String id, String title, String author, long stepNanos, int l
                     // safe off the main thread (note block sounds have a single variant anyway).
                     .seed(0L)
                     .build();
-            steps.computeIfAbsent(step, k -> new ArrayList<>()).add(sound);
+            steps.computeIfAbsent(step, k -> new ArrayList<>()).add(new Placed(sound, angle));
             length = Math.max(length, step + 1);
         }
 
@@ -69,13 +79,22 @@ public record Song(String id, String title, String author, long stepNanos, int l
         public Song build(String id, String title, String author, long stepNanos, boolean loop, int loopStart) {
             int[] times = new int[steps.size()];
             Sound[][] notes = new Sound[steps.size()][];
+            float[][] angles = new float[steps.size()][];
             int i = 0;
             for (var e : steps.entrySet()) {
                 times[i] = e.getKey();
-                notes[i++] = e.getValue().toArray(Sound[]::new);
+                List<Placed> placed = e.getValue();
+                notes[i] = new Sound[placed.size()];
+                angles[i] = new float[placed.size()];
+                for (int k = 0; k < placed.size(); k++) {
+                    notes[i][k] = placed.get(k).sound();
+                    angles[i][k] = placed.get(k).angle();
+                }
+                i++;
             }
             int from = loopStart < 0 || loopStart >= length ? 0 : loopStart;
-            return new Song(id, title, author, stepNanos, length, loop, from, times, notes, List.copyOf(warnings));
+            return new Song(id, title, author, stepNanos, length, loop, from, times, notes, angles,
+                    List.copyOf(warnings));
         }
     }
 }
