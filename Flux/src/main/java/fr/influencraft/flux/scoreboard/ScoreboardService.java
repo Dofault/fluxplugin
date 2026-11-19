@@ -84,7 +84,12 @@ public final class ScoreboardService implements Listener, Scoreboard.Backend {
     }
 
     /** A line ready to draw: text, centred or not, what its wrapped parts start with. */
-    private record Built(Component text, boolean centre, String carry) {
+    /** A line ready to draw; {@code compass}: its text with {compass}/{distance} still in, drawn again every tick. */
+    private record Built(Component text, boolean centre, String carry, String compass) {
+    }
+
+    /** Where the compass points (read from the placeholders of {@code compass} at each full draw). */
+    private record Target(String world, double x, double y, double z) {
     }
 
     /** What a player's client shows. */
@@ -99,6 +104,15 @@ public final class ScoreboardService implements Listener, Scoreboard.Backend {
     private final TextWidths widths;
     private final Map<UUID, Shown> shown = new HashMap<>();
     private BukkitTask task;
+    /** Last lines built for each player (the compass lines are drawn again from them between two full draws). */
+    private final Map<UUID, List<Built>> built = new HashMap<>();
+    private final Map<UUID, Target> targets = new HashMap<>();
+    private BukkitTask compassTask;
+    // compass of the file: placeholders of the target, picture of each frame, how often it turns
+    private String compassWorld = "", compassX = "", compassY = "", compassZ = "", compassGlyph = "", distanceFormat = "{n}m";
+    private int compassFrames = 32, compassTicks = 2;
+    /** Bedrock: no picture, an arrow of eight directions (up = ahead). */
+    private static final String[] ARROWS = {"↑", "↗", "→", "↘", "↓", "↙", "←", "↖"};
 
     private boolean enabled;
     private int refreshTicks = 10;
@@ -132,6 +146,9 @@ public final class ScoreboardService implements Listener, Scoreboard.Backend {
     public void stop() {
         if (task != null) task.cancel();
         task = null;
+        if (compassTask != null) compassTask.cancel();
+        compassTask = null;
+        built.clear();
         HandlerList.unregisterAll(this);
         Scoreboard.bind(null);
         for (Player p : Bukkit.getOnlinePlayers()) clear(p, true);
@@ -145,6 +162,15 @@ public final class ScoreboardService implements Listener, Scoreboard.Backend {
         YamlConfiguration c = YamlConfiguration.loadConfiguration(file);
         enabled = c.getBoolean("enabled", true) && packets != null;
         refreshTicks = Math.max(1, c.getInt("refresh-ticks", 10));
+        ConfigurationSection cp = c.getConfigurationSection("compass");
+        compassWorld = cp == null ? "" : cp.getString("world", "");
+        compassX = cp == null ? "" : cp.getString("x", "");
+        compassY = cp == null ? "" : cp.getString("y", "");
+        compassZ = cp == null ? "" : cp.getString("z", "");
+        compassGlyph = cp == null ? "" : cp.getString("glyph", "");
+        compassFrames = cp == null ? 32 : Math.max(4, cp.getInt("frames", 32));
+        compassTicks = cp == null ? 2 : Math.max(1, cp.getInt("refresh-ticks", 2));
+        distanceFormat = cp == null ? "{n}m" : cp.getString("distance", "{n}m");
         hideWhenFocused = c.getBoolean("hide-when-focused", true);
         setting = c.getString("setting", "");
         if (setting != null && setting.isBlank()) setting = null;
@@ -188,12 +214,17 @@ public final class ScoreboardService implements Listener, Scoreboard.Backend {
 
         if (task != null) task.cancel();
         task = null;
+        if (compassTask != null) compassTask.cancel();
+        compassTask = null;
+        built.clear();
         for (Player p : Bukkit.getOnlinePlayers()) clear(p, !enabled);
         shown.clear();
         if (!enabled) return;
         task = Bukkit.getScheduler().runTaskTimer(flux, () -> {
             for (Player p : Bukkit.getOnlinePlayers()) draw(p);
         }, 1L, refreshTicks);
+        // the compass lines turn more often than the rest (compass.refresh-ticks): only them are drawn again
+        compassTask = Bukkit.getScheduler().runTaskTimer(flux, this::turnCompasses, 2L, compassTicks);
     }
 
     private static Line line(Object o) {
@@ -225,6 +256,8 @@ public final class ScoreboardService implements Listener, Scoreboard.Backend {
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
         shown.remove(e.getPlayer().getUniqueId());
+        built.remove(e.getPlayer().getUniqueId());
+        targets.remove(e.getPlayer().getUniqueId());
         Sidebar.release(e.getPlayer().getUniqueId());
     }
 
@@ -239,10 +272,79 @@ public final class ScoreboardService implements Listener, Scoreboard.Backend {
         Sidebar.claim(p, OBJECTIVE);
         boolean off = (hideWhenFocused && Focus.focused(p)) || (setting != null && !PlayerSettings.flag(p, "flux:" + setting, true));
         if (off) {
+            built.remove(p.getUniqueId());
             clear(p, false);
             return;
         }
-        List<Built> built = build(p);
+        targets.put(p.getUniqueId(), target(p));
+        List<Built> lines0 = build(p);
+        built.put(p.getUniqueId(), lines0);
+        assemble(p, lines0);
+    }
+
+    /** Between two full draws: the compass lines only, from the player's current position and the target read last. */
+    private void turnCompasses() {
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            List<Built> last = built.get(p.getUniqueId());
+            if (last == null || last.stream().noneMatch(b -> b.compass() != null)) continue;
+            List<Built> now = new ArrayList<>(last.size());
+            boolean lost = false;
+            for (Built b : last) {
+                if (b.compass() == null) now.add(b);
+                else {
+                    String raw = compass(b.compass(), p);
+                    if (raw == null) {       // another world now: the next full draw takes the line off
+                        lost = true;
+                        break;
+                    }
+                    now.add(new Built(render(raw, p), b.centre(), b.carry(), b.compass()));
+                }
+            }
+            if (lost) continue;
+            built.put(p.getUniqueId(), now);
+            assemble(p, now);
+        }
+    }
+
+    private Target target(Player p) {
+        if (compassX.isEmpty()) return null;
+        try {
+            String w = Texts.plain(compassWorld, p).trim();
+            double x = Double.parseDouble(Texts.plain(compassX, p).trim().replace(',', '.'));
+            double y = compassY.isEmpty() ? p.getLocation().getY() : Double.parseDouble(Texts.plain(compassY, p).trim().replace(',', '.'));
+            double z = Double.parseDouble(Texts.plain(compassZ, p).trim().replace(',', '.'));
+            return new Target(w, x, y, z);
+        } catch (NumberFormatException e) {
+            return null;     // no waypoint now
+        }
+    }
+
+    /**
+     * {compass} and {distance} of a line for this player now; null when there is no target or it is in another world.
+     * The frame is the bearing to the target relative to where he looks, as the former Typewriter compass (same
+     * pictures); Bedrock gets an arrow of eight directions instead (no picture there).
+     */
+    private String compass(String raw, Player p) {
+        Target t = targets.get(p.getUniqueId());
+        if (t == null || !t.world().isEmpty() && !t.world().equalsIgnoreCase(p.getWorld().getName())) return null;
+        var at = p.getLocation();
+        double dx = t.x() - at.getX(), dz = t.z() - at.getZ();
+        double bearing = Math.toDegrees(Math.atan2(-dx, dz));
+        double yaw = at.getYaw();
+        double relative = ((bearing - yaw) % 360 + 360) % 360;   // 0 = straight ahead, clockwise
+        String needle;
+        if (Clients.bedrock(p)) {
+            needle = ARROWS[(int) Math.round(relative / 45.0) % 8];
+        } else {
+            int frame = (int) Math.round(((relative + 180) % 360) / (360.0 / compassFrames)) % compassFrames;
+            needle = compassGlyph.replace("{frame}", String.format(Locale.ROOT, "%02d", frame));
+        }
+        long distance = Math.round(Math.sqrt(dx * dx + Math.pow(t.y() - at.getY(), 2) + dz * dz));
+        return raw.replace("{compass}", needle).replace("{distance}", distanceFormat.replace("{n}", String.valueOf(distance)));
+    }
+
+    /** Wraps, measures, centres and sends the lines (only those that changed go to the client). */
+    private void assemble(Player p, List<Built> built) {
         boolean bedrock = Clients.bedrock(p);
         List<Component> lines = new ArrayList<>();
         List<Boolean> centred = new ArrayList<>();
@@ -325,7 +427,12 @@ public final class ScoreboardService implements Listener, Scoreboard.Backend {
                 boolean branched = raw.contains("{branch}");
                 String carry = branched && i != last ? carryBranch : " ";
                 raw = raw.replace("{branch}", i == last ? corner : branch);
-                out.add(new Built(render(raw, p), centre.get(i), carry));
+                if (raw.contains("{compass}") || raw.contains("{distance}")) {
+                    String now = compass(raw, p);
+                    if (now != null) out.add(new Built(render(now, p), centre.get(i), carry, raw));
+                    continue;
+                }
+                out.add(new Built(render(raw, p), centre.get(i), carry, null));
             }
         }
         return out;

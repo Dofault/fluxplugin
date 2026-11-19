@@ -149,20 +149,6 @@ public final class SettingsService {
 
     // Saved in PlayerSettings (one settings table for the suite). Before 2026-10-31 this class wrote its own columns in
     // the same table, which PlayerSettings had already created with others: nothing was ever saved, nothing to move.
-    /**
-     * {@code %flux_setting_<option>%}: what the player chose, else the option's default ({@code true}/{@code false},
-     * or the choice); null for an unknown option. Read by Typewriter (scoreboard shown or not).
-     */
-    public String placeholder(Player player, String id) {
-        if (player == null) return "";
-        for (Option o : options) {
-            if (!o.id().equalsIgnoreCase(id)) continue;
-            return o.choice() ? PlayerSettings.get(player, key(o.id()), o.defaultChoice())
-                    : String.valueOf(PlayerSettings.flag(player, key(o.id()), o.byDefault()));
-        }
-        return null;
-    }
-
     private static String key(String option) {
         return "flux:" + option;
     }

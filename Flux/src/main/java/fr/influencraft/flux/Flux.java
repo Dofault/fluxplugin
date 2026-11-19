@@ -349,7 +349,6 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         if (params.startsWith("rewards_") && rewards != null) return rewards.placeholder(player, params.substring(8));
         if (params.equals("trade_title") && trades != null) return trades.title(player);
         if (params.equals("spawn") && spawns != null) return spawns.placeholder(player);
-        if (params.startsWith("setting_") && settings != null) return settings.placeholder(player, params.substring(8));
         if (params.startsWith("top_") && leaderboards != null) return leaderboards.placeholder(player, params.substring(4));
         if (params.startsWith("profile_") && profile != null) return profile.placeholder(player, params.substring(8));
         if (params.equals("empty_slots")) {

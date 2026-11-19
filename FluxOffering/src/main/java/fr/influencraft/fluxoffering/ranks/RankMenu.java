@@ -267,6 +267,8 @@ public final class RankMenu implements org.bukkit.event.Listener {
         if (player == null) return "";
         int current = current(player);
         if (params.equals("rank")) return ranks.isEmpty() ? "" : ranks.get(current).name();
+        // number of his rank in roman numerals (I for the first): the chapter of the scoreboard
+        if (params.equals("roman")) return roman(current + 1);
         if (params.equals("step")) return String.valueOf(step(player) + 1);
         if (params.equals("steps")) return String.valueOf(ranks.size() * cycles.size());
         if (params.equals("route")) {
@@ -276,6 +278,19 @@ public final class RankMenu implements org.bukkit.event.Listener {
             return String.join(",", out);
         }
         return null;
+    }
+
+    private static String roman(int n) {
+        int[] values = {1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1};
+        String[] signs = {"M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"};
+        StringBuilder out = new StringBuilder();
+        for (int i = 0; i < values.length; i++) {
+            while (n >= values[i]) {
+                out.append(signs[i]);
+                n -= values[i];
+            }
+        }
+        return out.toString();
     }
 
     private void claim(Player player, String tierId) {

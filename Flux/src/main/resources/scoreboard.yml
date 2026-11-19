@@ -34,6 +34,19 @@ colours:
 title: "<title>✦ <smallcaps>progression</smallcaps> ✦</title>"
 
 # Lists read from a placeholder cut at a separator, each piece is {text}. Plugins give others (api.scoreboard).
+# Compass towards a target read in placeholders: {compass} and {distance} in a line (redrawn alone every refresh-ticks).
+# Java: glyph with {frame} (00 to frames-1, 0 = target behind); Bedrock: an arrow of eight directions. The line
+# vanishes without target or in another world. Target given by the Typewriter waypoint extension (%waypoint_x%...).
+compass:
+  world: "%waypoint_world%"
+  x: "%waypoint_x%"
+  y: "%waypoint_y%"
+  z: "%waypoint_z%"
+  frames: 32
+  glyph: "%img_compass_{frame}%"
+  distance: "{n}m"
+  refresh-ticks: 2
+
 lists:
   quest_objectives:
     placeholder: "%typewriter_tracked_objectives%"
@@ -48,7 +61,7 @@ sections:
       - " <heading><smallcaps>quest</smallcaps></heading>"
       - {requires: "%typewriter_tracked_quest%", text: " <frame>│</frame> <value>%typewriter_tracked_quest%</value>"}
       - {each: quest_objectives, text: " <frame>{branch}</frame> <bullet>➤</bullet> <text>{text}</text>"}
-      - {requires: "%waypoint_distance%", text: " <frame>{branch}</frame> %waypoint_compass% <info>%waypoint_distance%</info>"}
+      - " <frame>{branch}</frame> {compass} <info>{distance}</info>"
   - requires: pass_todo
     lines:
       - ""

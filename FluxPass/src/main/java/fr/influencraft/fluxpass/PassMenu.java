@@ -290,17 +290,6 @@ final class PassMenu {
             int n = number(a[0], 0);
             if (a.length != 2 || n < 1 || n > todos.size()) return "";
             Todo todo = todos.get(n - 1);
-            // wrap_<width>_<line> / wrap_<width>_count: the name cut in lines of <width> characters for a scoreboard
-            // that measures its lines before reading placeholders (Typewriter): room is kept on the last line for
-            // the progress, which the scoreboard writes after it
-            if (a[1].startsWith("wrap_")) {
-                String[] w = a[1].split("_");
-                if (w.length != 3) return "";
-                List<String> lines = wrap(todo.name(), Math.max(8, number(w[1], 20)), todo.progress().length() + 1);
-                if (w[2].equals("count")) return String.valueOf(lines.size());
-                int i = number(w[2], 0);
-                return i >= 1 && i <= lines.size() ? lines.get(i - 1) : "";
-            }
             return switch (a[1]) {
                 case "name" -> todo.name();
                 case "progress" -> todo.progress();
@@ -309,44 +298,6 @@ final class PassMenu {
             };
         }
         return null;
-    }
-
-    /** Most lines a mission name takes in a scoreboard; the rest of a longer name ends with « … ». */
-    private static final int WRAP_LINES = 2;
-
-    /**
-     * The words of {@code text} in lines of at most {@code width} characters, {@code reserve} of them kept free on the
-     * last line (for what follows the name), at most {@link #WRAP_LINES} lines.
-     */
-    static List<String> wrap(String text, int width, int reserve) {
-        List<String> lines = new java.util.ArrayList<>();
-        StringBuilder line = new StringBuilder();
-        for (String word : text.trim().split("\\s+")) {
-            if (line.length() > 0 && line.length() + 1 + word.length() > width) {
-                lines.add(line.toString());
-                line.setLength(0);
-            }
-            if (line.length() > 0) line.append(' ');
-            line.append(word);
-        }
-        if (line.length() > 0) lines.add(line.toString());
-        // the progress must fit after the last line: the last word goes down when it does not
-        String last = lines.isEmpty() ? "" : lines.get(lines.size() - 1);
-        if (!lines.isEmpty() && last.length() + reserve > width) {
-            int cut = last.lastIndexOf(' ');
-            if (cut > 0) {
-                lines.set(lines.size() - 1, last.substring(0, cut));
-                lines.add(last.substring(cut + 1));
-            }
-        }
-        if (lines.size() > WRAP_LINES) {
-            List<String> kept = new java.util.ArrayList<>(lines.subList(0, WRAP_LINES));
-            String end = kept.get(WRAP_LINES - 1);
-            int room = Math.max(1, width - reserve - 1);
-            kept.set(WRAP_LINES - 1, (end.length() > room ? end.substring(0, room) : end) + "…");
-            return kept;
-        }
-        return lines;
     }
 
     private static int number(String s, int fallback) {
