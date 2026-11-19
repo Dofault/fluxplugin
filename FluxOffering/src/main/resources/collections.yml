@@ -20,9 +20,9 @@
 # Avoid dots (".") in collection ids and ItemsAdder namespaced ids: this file is parsed
 # through Bukkit's ConfigurationSection, which treats "." as a path separator.
 #
-# This is the exact two-collection example from the FluxOffering spec, ready to use.
-# See docs/offrande.md for the real per-rank "Offrande <Rang>" content this plugin is meant
-# to eventually host (this default file intentionally does not try to guess/pre-fill that).
+# Fallback only: the real offerings (every grade and Prestige cycle) are defined in offerings.yml
+# and computed from FluxValue. This file is read when offerings.yml is missing or FluxValue is
+# not available; the two collections below are just an example.
 
 collections:
   collection1:

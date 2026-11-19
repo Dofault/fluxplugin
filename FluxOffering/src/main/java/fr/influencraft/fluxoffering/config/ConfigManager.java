@@ -75,6 +75,9 @@ public final class ConfigManager {
 
     private void loadCollections() {
         collections.clear();
+        if (!new File(plugin.getDataFolder(), "offerings.yml").exists()) {
+            plugin.saveResource("offerings.yml", false);
+        }
         Map<String, CollectionDefinition> computed = OfferingBudget.load(plugin);
         managed = computed != null;
         if (managed) {

@@ -1,0 +1,455 @@
+# Offerings: this file says WHAT each offering asks for, the amounts are computed. Readable result: quantities.md.
+#   hours played up to grade g = total-hours x (g / 35)^exponent
+#   a grade's hours are split evenly between the jobs it asks for, then between the items of each job
+#   amount = hours x points per second x job speed at that grade / points of the item (FluxValue)
+# Changing a weight in FluxValue/sources.yml, total-hours, or adding an item here recomputes everything (/fluxvalue reload).
+# An offering is made at grade g and gives grade g+1. slots: the composition of each position; cycles
+# (Prestige) reuse the same items, only the amount changes: grade 13 (Inconnu Prestige I) asks what grade 1 asks.
+# items.<item>: 1 = normal share within its job, 2 = two shares.
+budget:
+  total-hours: 1000
+  exponent: 2.5
+  # Effort of the first grades, in hours of optimal play: same order of magnitude as production up to Influenceur, not matched grade by grade.
+  # After the last anchor, the total-hours curve takes over (grade 11: same value as that curve).
+  anchors:
+    1: 0.0069
+    6: 2.76
+    11: 9.72
+# Money asked: 1,000 at grade 1 and 167,000 at grade 6 as in production, Supreme at 1,000,000; between two anchors the progression
+# is regular, after the last one it follows the resource curve. A composition may set its own with money: <amount>.
+money:
+  anchors:
+    1: 1000
+    6: 167000
+    11: 1000000
+ramp:
+  full-speed-grade: 12
+  area-from-grade: 13 # area items (Tranchee) only once Supreme is completed (grade 13)
+  beginner-speed:
+    default: 0.1
+    rochiste: 0.1
+    deblayeur: 0.2
+    mineur: 0.03
+    sylviculteur: 0.1
+    herboriste: 0.1
+    cultivateur: 0.02
+    fondeur: 0.02
+    pecheur: 3 # above 1: fishing weighs more early on
+    defenseur: 0.07
+    enchanteur: 0.05
+    chimiste: 0.05
+    batisseur: 0.1
+ranks:
+- inconnu
+- citoyen
+- repute
+- populaire
+- eminent
+- figure
+- influenceur
+- icone
+- legende
+- mythe
+- souverain
+- supreme
+cycles:
+- ''
+- Prestige I
+- Prestige II
+names:
+  citoyen: Offrande Citoyen
+  repute: Offrande Réputé
+  populaire: Offrande Populaire
+  eminent: Offrande Éminent
+  figure: Offrande Figure
+  influenceur: Offrande Influenceur
+  icone: Offrande Icône
+  legende: Offrande Légende
+  mythe: Offrande Mythe
+  souverain: Offrande Souverain
+  supreme: Offrande Suprême
+  inconnu: Offrande Inconnu
+slots:
+- citoyen
+- repute
+- populaire
+- eminent
+- figure
+- influenceur
+- icone
+- legende
+- mythe
+- souverain
+- supreme
+- prestige
+compositions:
+  citoyen:
+    items:
+      COAL: 1
+      STONE: 1
+      SANDSTONE: 1
+      WHEAT: 1
+      OAK_LEAVES: 1
+      POPPY: 1
+      DIRT: 1
+      OAK_LOG: 1
+      BIRCH_LOG: 1
+      SPIDER_EYE: 1
+      PORKCHOP: 1
+      ROTTEN_FLESH: 1
+      GLASS: 1
+      customfishing:common_carp_fish: 1
+  repute:
+    items:
+      RAW_IRON: 1
+      RAW_COPPER: 1
+      WHITE_WOOL: 1
+      POTATO: 1
+      CARROT: 1
+      CHARCOAL: 1
+      SMOOTH_STONE: 1
+      SPRUCE_LOG: 1
+      ACACIA_LOG: 1
+      CHERRY_LEAVES: 1
+      RED_MUSHROOM: 1
+      GUNPOWDER: 1
+      BONE: 1
+      SLIME_BALL: 1
+      LILY_PAD: 1
+      GRANITE: 1
+      GRAVEL: 1
+      DIRT: 1
+      DIORITE: 1
+      ANDESITE: 1
+      BEEF: 1
+      BOOK: 1
+      customfishing:unique_perch_fish: 1
+      customfishing:common_perch_fish: 1
+  populaire:
+    items:
+      RAW_GOLD: 1
+      LAPIS_LAZULI: 1
+      COBBLED_DEEPSLATE: 1
+      TUFF: 1
+      DRIPSTONE_BLOCK: 1
+      SAND: 1
+      PHANTOM_MEMBRANE: 1
+      CHERRY_LOG: 1
+      JUNGLE_LOG: 1
+      CRACKED_STONE_BRICKS: 1
+      BRICK: 1
+      GREEN_DYE: 1
+      BEETROOT: 1
+      MANGROVE_LEAVES: 1
+      DANDELION: 1
+      SUGAR_CANE: 1
+      OMINOUS_BOTTLE: 1
+      LEATHER: 1
+      NAUTILUS_SHELL: 1
+      enchant:knockback: 1
+      enchant:fire_protection: 1
+      customfishing:unique_cat_fish: 1
+      customfishing:common_cat_fish: 1
+      ROTTEN_FLESH: 1
+  eminent:
+    items:
+      GLOWSTONE: 1
+      REDSTONE: 1
+      MANGROVE_LOG: 1
+      PACKED_ICE: 1
+      CALCITE: 1
+      SMOOTH_BASALT: 1
+      NETHERRACK: 1
+      PUMPKIN: 1
+      CRIMSON_ROOTS: 1
+      MELON_SLICE: 1
+      SEAGRASS: 1
+      DRIED_KELP: 1
+      HONEYCOMB: 1
+      SOUL_SAND: 1
+      CLAY: 1
+      DIAMOND_PICKAXE: 1
+      CAKE: 1
+      RABBIT_HIDE: 1
+      PRISMARINE_SHARD: 1
+      MAGMA_CREAM: 1
+      TURTLE_SCUTE: 1
+      enchant:bane_of_arthropods: 1
+      enchant:blast_protection: 1
+      customfishing:unique_tuna_fish: 1
+      customfishing:unique_sardine_fish: 1
+      customfishing:common_tuna_fish: 1
+      customfishing:common_sardine_fish: 1
+      GUNPOWDER: 1
+  figure:
+    items:
+      QUARTZ: 1
+      AMETHYST_SHARD: 1
+      BLACKSTONE: 1
+      AMETHYST_BLOCK: 1
+      BASALT: 1
+      TERRACOTTA: 1
+      COCOA_BEANS: 1
+      PALE_OAK_LEAVES: 1
+      CRIMSON_FUNGUS: 1
+      WARPED_FUNGUS: 1
+      WEEPING_VINES: 1
+      SWEET_BERRIES: 1
+      PODZOL: 1
+      MUD: 1
+      DARK_OAK_LOG: 1
+      MANGROVE_ROOTS: 1
+      BLAZE_ROD: 1
+      ENDER_PEARL: 1
+      GLOW_INK_SAC: 1
+      GREEN_GLAZED_TERRACOTTA: 1
+      TRIDENT: 1
+      enchant:punch: 1
+      enchant:fire_protection: 1
+      enchant:impaling: 1
+      customfishing:unique_mullet_fish: 1
+      customfishing:epic_mullet_fish: 1
+      customfishing:common_mullet_fish: 1
+      SPIDER_EYE: 1
+      TOTEM_OF_UNDYING: 1
+  influenceur:
+    items:
+      DIAMOND: 1
+      NETHERITE_SCRAP: 1
+      NETHER_BRICKS: 1
+      END_STONE: 1
+      NETHER_WART: 1
+      GLOW_BERRIES: 1
+      SEA_PICKLE: 1
+      SMALL_DRIPLEAF: 1
+      SHROOMLIGHT: 1
+      SUNFLOWER: 1
+      TUBE_CORAL: 1
+      RED_SAND: 1
+      SNOW_BLOCK: 1
+      CRIMSON_STEM: 1
+      WARPED_STEM: 1
+      BREEZE_ROD: 1
+      ARMADILLO_SCUTE: 1
+      WITHER_SKELETON_SKULL: 1
+      DRAGON_BREATH: 1
+      POPPED_CHORUS_FRUIT: 1
+      NETHERITE_NAUTILUS_ARMOR: 1
+      NETHERITE_HORSE_ARMOR: 1
+      enchant:knockback: 1
+      enchant:channeling: 1
+      enchant:riptide: 1
+      customfishing:unique_sunfish_fish: 1
+      customfishing:epic_sunfish_fish: 1
+      customfishing:mythic_sunfish_fish: 1
+      customfishing:common_sunfish_fish: 1
+      RED_TERRACOTTA: 1
+  icone:
+    items:
+      RAW_IRON: 1
+      LAPIS_LAZULI: 1
+      RAW_GOLD: 1
+      NETHERITE_INGOT: 1
+      GRANITE: 1
+      TUFF: 1
+      PRISMARINE: 1
+      BRAIN_CORAL_BLOCK: 1
+      DIRT: 1
+      GRAVEL: 1
+      ROOTED_DIRT: 1
+      OAK_LOG: 1
+      SPRUCE_LOG: 1
+      POPPY: 1
+      RED_MUSHROOM: 1
+      BRAIN_CORAL: 1
+      CACTUS: 1
+      SPORE_BLOSSOM: 1
+      WHEAT: 1
+      POTATO: 1
+      ROTTEN_FLESH: 1
+      SPIDER_EYE: 1
+      SPONGE: 1
+      GLASS: 1
+      CHARCOAL: 1
+      BOOK: 1
+      enchant:bane_of_arthropods: 1
+      enchant:blast_protection: 1
+      enchant:projectile_protection: 1
+      customfishing:unique_woodskip_fish: 1
+      customfishing:epic_woodskip_fish: 1
+      customfishing:mythic_woodskip_fish: 1
+      customfishing:legendary_woodskip_fish: 1
+      customfishing:common_woodskip_fish: 1
+  legende:
+    items:
+      COAL: 1
+      RAW_COPPER: 1
+      RAW_GOLD: 1
+      STONE: 1
+      DIORITE: 1
+      MAGMA_BLOCK: 1
+      BUBBLE_CORAL_BLOCK: 1
+      SAND: 1
+      COARSE_DIRT: 1
+      MYCELIUM: 1
+      BIRCH_LOG: 1
+      CHERRY_LOG: 1
+      SUGAR_CANE: 1
+      OAK_LEAVES: 1
+      BUBBLE_CORAL: 1
+      BUBBLE_CORAL_FAN: 1
+      CORNFLOWER: 1
+      BROWN_MUSHROOM: 1
+      CARROT: 1
+      BEETROOT: 1
+      BONE: 1
+      GUNPOWDER: 1
+      PHANTOM_MEMBRANE: 1
+      SMOOTH_STONE: 1
+      BRICK: 1
+      SMOOTH_SANDSTONE: 1
+      BOOK: 1
+      enchant:fire_protection: 1
+      enchant:impaling: 1
+      customfishing:unique_sturgeon_fish: 1
+      customfishing:epic_sturgeon_fish: 1
+      customfishing:mythic_sturgeon_fish: 1
+      customfishing:legendary_sturgeon_fish: 1
+      customfishing:common_sturgeon_fish: 1
+  mythe:
+    items:
+      RAW_IRON: 1
+      LAPIS_LAZULI: 1
+      REDSTONE: 1
+      ANDESITE: 1
+      COBBLED_DEEPSLATE: 1
+      DRIPSTONE_BLOCK: 1
+      FIRE_CORAL_BLOCK: 1
+      ORANGE_TERRACOTTA: 1
+      YELLOW_TERRACOTTA: 1
+      GRAVEL: 1
+      DIRT: 1
+      GRASS_BLOCK: 1
+      ACACIA_LOG: 1
+      JUNGLE_LOG: 1
+      CHERRY_LEAVES: 1
+      DANDELION: 1
+      FIRE_CORAL: 1
+      FIRE_CORAL_FAN: 1
+      CACTUS_FLOWER: 1
+      PEONY: 1
+      POTATO: 1
+      WHEAT: 1
+      SLIME_BALL: 1
+      TIPPED_ARROW: 1
+      ROTTEN_FLESH: 1
+      GREEN_DYE: 1
+      CRACKED_STONE_BRICKS: 1
+      CHARCOAL: 1
+      BOOK: 1
+      enchant:knockback: 1
+      enchant:punch: 1
+      enchant:riptide: 1
+      customfishing:unique_octopus_fish: 1
+      customfishing:epic_octopus_fish: 1
+      customfishing:mythic_octopus_fish: 1
+      customfishing:legendary_octopus_fish: 1
+      customfishing:common_octopus_fish: 1
+  souverain:
+    items:
+      COAL: 1
+      RAW_COPPER: 1
+      DIAMOND: 1
+      EMERALD: 1
+      STONE: 1
+      SANDSTONE: 1
+      GRANITE: 1
+      HORN_CORAL_BLOCK: 1
+      POLISHED_BLACKSTONE: 1
+      DIRT: 1
+      SAND: 1
+      GRAVEL: 1
+      OAK_LOG: 1
+      SPRUCE_LOG: 1
+      BIRCH_LOG: 1
+      POPPY: 1
+      LILY_PAD: 1
+      HORN_CORAL: 1
+      HORN_CORAL_FAN: 1
+      WARPED_WART_BLOCK: 1
+      RED_MUSHROOM: 1
+      WHEAT: 1
+      CARROT: 1
+      POTATO: 1
+      BONE: 1
+      GUNPOWDER: 1
+      SPIDER_EYE: 1
+      NETHER_STAR: 1
+      GLASS: 1
+      SMOOTH_STONE: 1
+      BRICK: 1
+      BOOK: 1
+      enchant:bane_of_arthropods: 1
+      enchant:blast_protection: 1
+      enchant:projectile_protection: 1
+      enchant:channeling: 1
+      customfishing:unique_gold_fish: 1
+      customfishing:epic_gold_fish: 1
+      customfishing:mythic_gold_fish: 1
+      customfishing:legendary_gold_fish: 1
+      customfishing:common_gold_fish: 1
+  supreme:
+    items:
+      COPPER_BLOCK: 1
+      IRON_BLOCK: 1
+      GOLD_BLOCK: 1
+      COAL_BLOCK: 1
+      REDSTONE_BLOCK: 1
+      LAPIS_BLOCK: 1
+      DIAMOND_BLOCK: 1
+      EMERALD: 1
+      OAK_LOG: 1
+      STONE: 1
+      WHEAT: 1
+      WHITE_WOOL: 1
+      BROWN_MUSHROOM: 1
+      GOLDEN_APPLE: 1
+      NETHERITE_INGOT: 1
+      BOOK: 1
+      ENDER_PEARL: 1
+      ECHO_SHARD: 1
+      AMETHYST_BLOCK: 1
+      NETHER_BRICKS: 1
+      customfishing:common_gold_fish: 1
+      customfishing:unique_gold_fish: 1
+      customfishing:epic_gold_fish: 1
+      customfishing:mythic_gold_fish: 1
+      customfishing:legendary_gold_fish: 1
+  prestige:
+    items:
+      COPPER_BLOCK: 1
+      GOLD_BLOCK: 1
+      COAL_BLOCK: 1
+      REDSTONE_BLOCK: 1
+      LAPIS_BLOCK: 1
+      DIAMOND_BLOCK: 1
+      EMERALD: 1
+      SPRUCE_LOG: 1
+      POLISHED_ANDESITE: 1
+      HAY_BLOCK: 1
+      WHITE_WOOL: 1
+      EGG: 1
+      BONE: 1
+      ARROW: 1
+      WITHER_SKELETON_SKULL: 1
+      NETHER_STAR: 1
+      NETHERITE_BLOCK: 1
+      BOOK: 1
+      ENDER_PEARL: 1
+      ECHO_SHARD: 1
+      NETHER_BRICKS: 1
+      customfishing:common_tuna_fish: 1
+      customfishing:unique_tuna_fish: 1
+      customfishing:epic_tuna_fish: 1
+      customfishing:mythic_tuna_fish: 1
+      customfishing:legendary_tuna_fish: 1
