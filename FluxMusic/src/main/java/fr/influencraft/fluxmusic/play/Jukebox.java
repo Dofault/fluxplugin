@@ -198,12 +198,15 @@ public final class Jukebox {
                         }
                         // stereo: the sound is sent from a point around his head, on the side of the angle,
                         // relative to where he looks (the client pans it); a little louder for the distance
-                        if (ears == null) ears = (camera != null ? camera : player).getLocation();
+                        if (ears == null) {
+                            org.bukkit.entity.Entity head = camera != null ? camera : player;
+                            ears = head instanceof org.bukkit.entity.LivingEntity l ? l.getEyeLocation() : head.getLocation();
+                        }
                         double yaw = Math.toRadians(ears.getYaw()), a = Math.toRadians(angles[i]);
                         double fx = -Math.sin(yaw), fz = Math.cos(yaw), rx = -Math.cos(yaw), rz = -Math.sin(yaw);
                         double x = ears.getX() + (fx * Math.cos(a) + rx * Math.sin(a)) * SIDE_DISTANCE;
                         double z = ears.getZ() + (fz * Math.cos(a) + rz * Math.sin(a)) * SIDE_DISTANCE;
-                        player.playSound(louder(s, SIDE_GAIN), x, ears.getY() + 1.6, z);
+                        player.playSound(louder(s, SIDE_GAIN), x, ears.getY(), z);
                     }
                 } catch (RuntimeException e) {
                     // the connection closed between the check and the send: the quit listener stops the song
