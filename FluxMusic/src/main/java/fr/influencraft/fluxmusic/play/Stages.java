@@ -45,7 +45,8 @@ import java.util.function.Predicate;
  * song's tempo. A model without gestures loops {@code playing}, at the pace of its notes (faster on a quick run).
  * Only the musicians of the song being played stand on the stage: at each new song those who have nothing to play
  * leave, the others take their places again across the stage. Each row stands a step higher than the one in front
- * (as on a class photo), on tiers drawn with block displays: nothing is built in the world.</p>
+ * (as on a class photo), on tiers of blocks sent to the players who see the stage (block change packets: real blocks
+ * on their screen, nothing built in the world).</p>
  *
  * <p>Stages are placed by command and kept in {@code stages.yml}; the band (which model plays which instrument,
  * front row first) is {@code band} of config.yml.</p>
@@ -153,7 +154,8 @@ public final class Stages {
         String id = info.id().toLowerCase(Locale.ROOT);
         Stage old = stages.remove(id);
         if (old != null) old.close();
-        float yaw = Math.round(at.getYaw() / 5f) * 5f;
+        // square to the world: the tiers are blocks of the world's grid
+        float yaw = Math.round(at.getYaw() / 90f) * 90f;
         Stage s = new Stage(id, at.getWorld().getName(), Math.round(at.getX() * 2) / 2.0, at.getY(),
                 Math.round(at.getZ() * 2) / 2.0, yaw,
                 width > 0 ? width : old != null ? old.width : 6, depth > 0 ? depth : old != null ? old.depth : 7,
@@ -259,8 +261,8 @@ public final class Stages {
     private final class Stage implements Jukebox.Scene {
         final String id, world;
         final double x, y, z, width, depth, radius, rise;
-        /** Tiers under the back rows (block displays, not saved with the world) and the rows they were made for. */
-        final List<org.bukkit.entity.Entity> tiers = new ArrayList<>();
+        /** Blocks of the tiers under the back rows, shown to the viewers by packets only (the world keeps its own). */
+        final Map<Location, org.bukkit.block.data.BlockData> tiers = new LinkedHashMap<>();
         int rows;
         double rowStep;
         final float yaw, scale;
@@ -372,44 +374,56 @@ public final class Stages {
             sources = places;
         }
 
+        /** Gives the viewers the world's own blocks back. */
         private void clearTiers() {
-            tiers.forEach(org.bukkit.entity.Entity::remove);
+            for (UUID id : viewers) {
+                Player p = Bukkit.getPlayer(id);
+                if (p != null) unsend(p);
+            }
             tiers.clear();
         }
 
+        private void send(Player p) {
+            if (!tiers.isEmpty()) p.sendMultiBlockChange(tiers);
+        }
+
+        private void unsend(Player p) {
+            if (tiers.isEmpty() || !p.getWorld().getName().equalsIgnoreCase(world)) return;
+            Map<Location, org.bukkit.block.data.BlockData> real = new LinkedHashMap<>();
+            for (Location at : tiers.keySet()) if (at.isChunkLoaded()) real.put(at, at.getBlock().getBlockData());
+            if (!real.isEmpty()) p.sendMultiBlockChange(real);
+        }
+
         /**
-         * Draws the tier of each row but the first with whole blocks (block displays of one block each, laid across
-         * the stage, as deep as a row, as high as the row stands). Made again when the chunk was not loaded or
-         * dropped them.
+         * The tier of each row but the first: whole blocks across the stage, as deep as a row, as high as the row
+         * stands, where the world has none. Worked out once per formation, sent to each viewer, and sent again
+         * now and then (the client forgets them when the chunk is sent again).
          */
-        private void tiers() {
+        private void tiers(boolean again) {
             World w = Bukkit.getWorld(world);
-            if (w == null || tier == null || rise <= 0 || rows <= 1 || viewers.isEmpty()) return;
-            if (!tiers.isEmpty() && tiers.stream().allMatch(org.bukkit.entity.Entity::isValid)) return;
-            clearTiers();
-            Location at = new Location(w, x, y, z, yaw, 0);
-            if (!at.isChunkLoaded()) return;
-            int wide = Math.max(1, (int) Math.round(width)), deep = Math.max(1, (int) Math.round(rowStep));
-            org.bukkit.block.data.BlockData block = tier.createBlockData();
-            for (int row = 1; row < rows; row++) {
-                // in the stage's own frame: x across, z towards the audience, from the stage's centre
-                double front = ((rows - 1) / 2.0 - row) * rowStep, height = row * rise;
-                for (int iy = 0; iy < Math.ceil(height - 1e-6); iy++) {
-                    float tall = (float) Math.min(1, height - iy);
+            if (w == null || tier == null || rise <= 0 || rows <= 1) return;
+            if (tiers.isEmpty()) {
+                double rad = Math.toRadians(yaw);
+                double fx = -Math.sin(rad), fz = Math.cos(rad), rx = -Math.cos(rad), rz = -Math.sin(rad);
+                int wide = Math.max(1, (int) Math.round(width)), deep = Math.max(1, (int) Math.round(rowStep));
+                org.bukkit.block.data.BlockData block = tier.createBlockData();
+                for (int row = 1; row < rows; row++) {
+                    double front = ((rows - 1) / 2.0 - row) * rowStep;
+                    int high = (int) Math.ceil(row * rise - 1e-6);
                     for (int ix = 0; ix < wide; ix++) for (int iz = 0; iz < deep; iz++) {
-                        // only the blocks one can see: the top layer, the front and the two sides
-                        boolean top = iy + 1 >= height - 1e-6, edge = ix == 0 || ix == wide - 1 || iz == deep - 1 || iz == 0;
-                        if (!top && !edge) continue;
-                        org.joml.Vector3f place = new org.joml.Vector3f((float) (-wide / 2.0 + ix), iy,
-                                (float) (front - deep / 2.0 + iz));
-                        tiers.add(w.spawn(at, org.bukkit.entity.BlockDisplay.class, d -> {
-                            d.setBlock(block);
-                            d.setPersistent(false);
-                            d.setTransformation(new org.bukkit.util.Transformation(place, new org.joml.Quaternionf(),
-                                    new org.joml.Vector3f(1, tall, 1), new org.joml.Quaternionf()));
-                        }));
+                        double side = -wide / 2.0 + ix + 0.5, ahead = front - deep / 2.0 + iz + 0.5;
+                        for (int iy = 0; iy < high; iy++) {
+                            Location at = new Location(w, Math.floor(x + rx * side + fx * ahead), Math.floor(y) + iy,
+                                    Math.floor(z + rz * side + fz * ahead));
+                            if (at.isChunkLoaded() && at.getBlock().getType().isAir()) tiers.put(at, block);
+                        }
                     }
                 }
+                again = true;
+            }
+            if (again) for (UUID id : viewers) {
+                Player p = Bukkit.getPlayer(id);
+                if (p != null) send(p);
             }
         }
 
@@ -434,7 +448,7 @@ public final class Stages {
             if (tick % 20 == 1) {
                 audience();
                 program();
-                tiers();
+                tiers(tick % 100 == 1);
             }
             long now = System.nanoTime();
             boolean live = broadcast != null && !broadcast.done();
@@ -497,8 +511,10 @@ public final class Stages {
                         && p.getLocation().distanceSquared(new Location(w, x, y, z)) < VIEW_DISTANCE * VIEW_DISTANCE;
                 if (sees && viewers.add(p.getUniqueId())) {
                     for (Musician m : musicians) if (m.figure != null) m.figure.show(p);
+                    send(p);
                 } else if (!sees && viewers.remove(p.getUniqueId())) {
                     for (Musician m : musicians) if (m.figure != null) m.figure.hide(p);
+                    unsend(p);
                 }
             }
             listeners = List.copyOf(hear);
