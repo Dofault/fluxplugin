@@ -65,8 +65,11 @@ final class ModelBridge {
             public void once(String animation) {
                 if (tracker.isClosed()) return;
                 tracker.stopAnimation(animation);
+                // override: the bones this gesture does not move keep the animation under it. Without it BetterModel
+                // gives them an empty animation, the rest pose, for as long as the gesture lasts (read in
+                // RenderedBone.addAnimation; seen in game: the trumpet dropped from the lips at each note)
                 tracker.animate(animation, AnimationModifier.builder().type(AnimationIterator.Type.PLAY_ONCE)
-                        .start(0).end(2).build());
+                        .start(0).end(2).override(true).build());
             }
 
             public void hold(String animation) {
@@ -74,7 +77,7 @@ final class ModelBridge {
                 if (held != null) tracker.stopAnimation(held);
                 // start: the hand slides to its new place in a few ticks
                 if (animation != null) tracker.animate(animation, AnimationModifier.builder()
-                        .type(AnimationIterator.Type.LOOP).start(3).build());
+                        .type(AnimationIterator.Type.LOOP).start(3).override(true).build());
                 held = animation;
             }
 
