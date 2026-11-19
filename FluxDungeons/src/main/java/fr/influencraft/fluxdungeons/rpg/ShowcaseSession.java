@@ -254,7 +254,13 @@ final class ShowcaseSession {
         if (player.getVehicle() != seat) seat.addPassenger(player);
         if (orbit) {
             Location eye = eyeAt(ticks);
-            seat.teleport(eye.clone().subtract(0, SEATED_EYE, 0), TeleportFlag.EntityState.RETAIN_PASSENGERS);
+            // the server teleports the rider with his seat (a teleport event of his): ours, not a way out of the show
+            moving = true;
+            try {
+                seat.teleport(eye.clone().subtract(0, SEATED_EYE, 0), TeleportFlag.EntityState.RETAIN_PASSENGERS);
+            } finally {
+                moving = false;
+            }
             // his head to the middle of the fight, whatever his mouse did since the last tick
             Camera.turn(player, eye.getYaw(), false, eye.getPitch(), false);
         }
