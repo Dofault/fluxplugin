@@ -1,4 +1,5 @@
 #version 330
+#extension GL_ARB_shader_draw_parameters : enable
 // Minecraft's own text shader (26.2), with the hooks Flux fills (api.client.TextShader).
 
 #if !defined(IS_GUI) && !defined(IS_SEE_THROUGH)

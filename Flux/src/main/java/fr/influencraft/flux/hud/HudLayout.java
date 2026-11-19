@@ -511,7 +511,11 @@ final class HudLayout {
                     float centre = floor(ceil(gui.x - 0.01) / 2.0);
                     vec4 place = FLUX_HUD_PLACE[slot];
                     vec3 scale = FLUX_HUD_SCALE[slot];
+#ifdef GL_ARB_shader_draw_parameters
+                    int corner = (gl_VertexID - gl_BaseVertexARB) %% 4;
+#else
                     int corner = gl_VertexID %% 4;
+#endif
                     float down = (corner == 1 || corner == 2) ? scale.z : 0.0;
                     if ((colour & 1) == 1) down += scale.y;
                     p.x = place.x * gui.x + place.z + (p.x - centre) * scale.x;

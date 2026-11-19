@@ -1,4 +1,5 @@
 #version 330
+#extension GL_ARB_shader_draw_parameters : enable
 // FluxPortal window shader. Adapted from RPE-portals by ResourcePack AI (GPL-3.0): the far side of a portal drawn
 // from block layers stored in maps. Changes: a rectangular hole (half width, half height), no opening animation,
 // an open flag. This file is distributed under the GPL-3.0 like its origin.

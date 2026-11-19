@@ -1,4 +1,5 @@
 #version 330
+#extension GL_ARB_shader_draw_parameters : enable
 
 // Flux sidebar: the scoreboard's background drawn like the HUD's panels (pack.ClientPack, client-pack.sidebar).
 
@@ -31,6 +32,13 @@ void main() {
     fluxPos = (ModelViewMat * vec4(Position, 1.0)).xy;
     // a fill writes its 4 corners in turn: (x0, y0) (x0, y1) (x1, y1) (x1, y0). The fragment shader reads the
     // fill's bounds from these two values, whichever way round the corners are.
+    // Minecraft draws the GUI from one shared buffer at a base vertex that is not always a multiple of 4: the
+    // rank of a vertex in its quad must leave it out (gl_BaseVertexARB), or a damaged item's durability bar
+    // shifts every corner.
+#ifdef GL_ARB_shader_draw_parameters
+    int corner = (gl_VertexID - gl_BaseVertexARB) % 4;
+#else
     int corner = gl_VertexID % 4;
+#endif
     fluxUv = vec2(corner >= 2 ? 1.0 : 0.0, (corner == 1 || corner == 2) ? 1.0 : 0.0);
 }
