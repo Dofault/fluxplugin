@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The chat message of a job level (2026-11-19, in place of the job plugin's own): the money of the level when it gives
- * some, then the earning coefficient (a job pays its base amount x level / 100), then the paid actions command, in the
+ * some, then the earning coefficient (a job pays its base amount x level / 100), then its rewards, in the
  * look of the announcements and tournaments, in the job colours (those of the XP boss bar). Texts: {@code level-up.*}
  * of the lang file.
  * <p>
@@ -82,7 +82,6 @@ final class JobLevelUpMessage implements Listener {
         for (fr.influencraft.flux.api.reward.Reward r : fr.influencraft.flux.api.reward.Rewards.takeNotices(w.player)) {
             m.send(w.player, "level-up.reward", "%amount%", String.valueOf(Math.max(1, r.amount())), "%label%", r.label());
         }
-        m.send(w.player, "level-up.actions", vars);
         m.send(w.player, "level-up.footer", vars);
     }
 
