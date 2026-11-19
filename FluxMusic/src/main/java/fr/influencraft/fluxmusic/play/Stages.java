@@ -35,7 +35,8 @@ import java.util.function.Predicate;
  * <p>A place of the {@link Ambience} given a stage no longer plays one song per player: the stage broadcasts the
  * place's songs to everybody there on one clock ({@link Jukebox.Broadcast}), so the band plays what every player
  * hears. Far from the stage the music sounds in the headphones as before; within the stage's radius it comes from
- * the musicians. Each musician moves only while his instrument sounds: {@code playing} while its notes are sent,
+ * the musicians. The band plays as long as somebody is in the place; a player who turned music off in his settings
+ * sees it play and hears nothing. Each musician moves only while his instrument sounds: {@code playing} while its notes are sent,
  * {@code ready} (instrument held, still) for the rest of a song he plays in, {@code idle} otherwise. A note
  * particle rises from him on his notes.</p>
  *
@@ -229,6 +230,8 @@ public final class Stages {
         final AtomicIntegerArray pitch = new AtomicIntegerArray(Instrument.values().length);
         final long[] shownNote = new long[Instrument.values().length];
         volatile Collection<Player> listeners = List.of();
+        /** Somebody is in the place: the band plays, even when nobody there wants to hear music. */
+        boolean present;
         volatile Jukebox.Broadcast broadcast;
         Set<Instrument> cast = Set.of();
         final List<String> queue = new ArrayList<>();
@@ -324,9 +327,13 @@ public final class Stages {
             Ambience.PlaceInfo info = ambience.place(id);
             List<Player> hear = new ArrayList<>();
             World w = Bukkit.getWorld(world);
+            present = false;
             for (Player p : Bukkit.getOnlinePlayers()) {
                 String in = p.getWorld().getName().toLowerCase(Locale.ROOT);
-                if (info != null && info.worlds().contains(in) && wants.test(p)) hear.add(p);
+                if (info != null && info.worlds().contains(in)) {
+                    present = true;
+                    if (wants.test(p)) hear.add(p);   // music turned off in his settings: he sees the band, silent
+                }
                 boolean sees = w != null && p.getWorld() == w
                         && p.getLocation().distanceSquared(new Location(w, x, y, z)) < VIEW_DISTANCE * VIEW_DISTANCE;
                 if (sees && viewers.add(p.getUniqueId())) {
@@ -346,13 +353,13 @@ public final class Stages {
             long now = System.currentTimeMillis();
             if (b != null) {
                 if (!b.done()) {
-                    if (listeners.isEmpty()) b.cancel();   // nobody left: the band stops, a new song when one comes
+                    if (!present) b.cancel();   // nobody left: the band stops, a new song when one comes
                     return;
                 }
                 broadcast = null;
                 nextAt = now + info.pauseMillis();
             }
-            if (listeners.isEmpty() || now < nextAt) return;
+            if (!present || now < nextAt) return;
             if (queue.isEmpty()) {
                 List<String> shuffled = new ArrayList<>(info.songs());
                 Collections.shuffle(shuffled);
