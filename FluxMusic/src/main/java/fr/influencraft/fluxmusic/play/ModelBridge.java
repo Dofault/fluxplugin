@@ -38,6 +38,8 @@ final class ModelBridge {
 
         /** Speed of the looping animations from now on (1 = as drawn); read by BetterModel as it plays. */
         void speed(float speed);
+
+        void close();
     }
 
     private ModelBridge() {
