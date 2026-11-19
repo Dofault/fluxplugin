@@ -39,8 +39,9 @@ import java.util.regex.Pattern;
  * <ul>
  *   <li>{@code A5>E6:8} glide: the note slides to E6 over its duration (struck again on a continuous pitch);</li>
  *   <li>{@code A5~:8} held note: struck again softly each step, wavering a little around its pitch (vibrato);</li>
- *   <li>track {@code pan: -1..1}: heard from the left (-1) or the right (1) of the listener;</li>
- *   <li>track {@code orbit: n}: turns round the listener once every n bars;</li>
+ *   <li>track {@code pan: -1..1}: heard more on the left (-1) or the right (1) of the listener, both ears always
+ *   hear it ({@link #WIDTH} degrees at most: the client pans a sound hard as soon as it is well off centre);</li>
+ *   <li>track {@code orbit: n}: swings from left to right and back once every n bars, within the same width;</li>
  *   <li>track {@code chorus: cents}: every note doubled by two copies detuned by that many cents, spread left and
  *   right (a thick, wide sound).</li>
  * </ul>
@@ -61,12 +62,17 @@ public final class ScoreReader {
     private static final int GLIDE_EVERY = 2;
     private static final float GLIDE_GAIN = 0.55f;
 
+    /** Widest angle of a sound placed in stereo, in degrees from the front (pan 1, an orbit's sides). */
+    static final float WIDTH = 40f;
+    /** Angle of the two detuned copies of a chorus, each side of their note. */
+    private static final float CHORUS_SPREAD = 22f;
+
     /** angle: NaN = on the listener; orbitSteps: 0 = no orbit; chorus: detune in semitones, 0 = none. */
     private record Track(Instrument instrument, float volume, float angle, double orbitSteps, double chorus) {
 
         float angleAt(int step) {
             if (orbitSteps <= 0) return angle;
-            return (float) (360 * ((step % orbitSteps) / orbitSteps)) - 180f;
+            return (float) (WIDTH * Math.sin(2 * Math.PI * (step % orbitSteps) / orbitSteps));
         }
     }
 
@@ -88,7 +94,7 @@ public final class ScoreReader {
             String instrument = ts.getString(name + ".instrument", "harp");
             try {
                 float angle = ts.contains(name + ".pan")
-                        ? (float) (Math.max(-1, Math.min(1, ts.getDouble(name + ".pan"))) * 90) : Float.NaN;
+                        ? (float) (Math.max(-1, Math.min(1, ts.getDouble(name + ".pan"))) * WIDTH) : Float.NaN;
                 tracks.put(name, new Track(Instrument.named(instrument), (float) ts.getDouble(name + ".volume", 1.0),
                         angle, Math.max(0, ts.getDouble(name + ".orbit", 0)) * barSteps,
                         Math.max(0, ts.getDouble(name + ".chorus", 0)) / 100.0));
@@ -262,8 +268,8 @@ public final class ScoreReader {
         // the note and two detuned copies, the copies on each side of it: they beat against it
         float centre = Float.isNaN(angle) ? 0f : angle;
         song.note(at, track.instrument(), midi, volume * 0.8f, angle);
-        song.note(at, track.instrument(), midi - track.chorus(), volume * 0.5f, wrap(centre - 35f));
-        song.note(at, track.instrument(), midi + track.chorus(), volume * 0.5f, wrap(centre + 35f));
+        song.note(at, track.instrument(), midi - track.chorus(), volume * 0.5f, wrap(centre - CHORUS_SPREAD));
+        song.note(at, track.instrument(), midi + track.chorus(), volume * 0.5f, wrap(centre + CHORUS_SPREAD));
     }
 
     private static float wrap(float angle) {
