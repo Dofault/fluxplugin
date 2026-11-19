@@ -71,7 +71,7 @@ public final class Lobby implements Listener {
         void launch(DungeonDefinition def, List<Player> players, int level, boolean free);
     }
 
-    /** What the key button says: keys of the leader for this dungeon, -1 when no key is needed. */
+    /** What the key button says: keys of the leader for this dungeon, -1 when no key is needed, -2 first try (free). */
     public interface KeyInfo {
         int keys(Player leader, DungeonDefinition def);
     }
@@ -213,7 +213,8 @@ public final class Lobby implements Listener {
         Player leader = Bukkit.getPlayer(party.members.get(0));
         int keys = party.free || leader == null ? -1 : keyInfo.keys(leader, party.def);
         Lore key = Lore.create();
-        if (keys < 0) key.description(raw(m + "key-free"));
+        if (keys == -2) key.description(raw(m + "key-trial"));
+        else if (keys < 0) key.description(raw(m + "key-free"));
         else {
             key.description(raw(m + "key-desc", "%player%", leader.getName()))
                     .kv(raw(m + "key-owned"), String.valueOf(keys));

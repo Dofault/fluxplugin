@@ -50,6 +50,13 @@ public final class Run {
     int level;
     /** Dungeon tokens each player got from the monsters of this run (told at the end). */
     final java.util.Map<UUID, Integer> tokens = new java.util.HashMap<>();
+    /**
+     * First try of a dungeon its leader never beat (2026-11-19): launched without a key, and everything the run gives
+     * (tokens, rpg experience) is held until the victory. A defeat or a player leaving loses it.
+     */
+    boolean trial;
+    /** Rpg experience held during a trial run, per player. */
+    final java.util.Map<UUID, Double> heldXp = new java.util.HashMap<>();
 
     public DungeonDefinition.Level levelSpec() {
         List<DungeonDefinition.Level> all = def.levels();

@@ -254,6 +254,7 @@ lobby:
   key-ok: 'Le chef a une clé'
   key-missing: 'Le chef n''a pas de clé'
   key-free: 'Aucune clé à dépenser pour ce lancement.'
+  key-trial: 'Première entrée gratuite : tant que le chef n''a pas réussi ce donjon, il le lance sans clé. Les gains sont gardés jusqu''à la victoire.'
   cancelled: '&#FF5C5CLancement de %dungeon% annulé par %player%.'
   expired: '&#FF5C5CLancement de %dungeon% annulé.'
   refused: '&#FF5C5CLe donjon n''a pas pu démarrer, relance-le avec &f[/%flux_cmd_fluxdungeons_dungeon%]&#FF5C5C.'
@@ -683,6 +684,7 @@ menu:
   party-size: '%count% joueurs'
   beaten: 'Vaincu %count% fois'
   not-beaten: 'Pas encore vaincu'
+  trial: 'Première entrée gratuite'
   too-high: 'Trop haut pour ton niveau'
   beyond-cap: 'Au-delà du niveau 50 : il faut être plusieurs'
   shop-action: 'Sa boutique'
@@ -822,3 +824,7 @@ class-menu:
   back-action: 'Revenir aux donjons'
   mine: 'Ta classe'
   choose: 'La choisir'
+trial:
+  start: '&#B376E5Entrée gratuite : %player% n''a jamais réussi ce donjon, aucune clé n''est dépensée. &#FFD94DTes gains sont gardés jusqu''à la victoire&#B376E5 : en cas d''échec, tu les perds.'
+  lost: '&#FF5C5CEntrée gratuite perdue : les &f%tokens% &#FF5C5Cjetons gagnés dans %dungeon% &#FF5C5Cet l''expérience de la partie sont perdus. Réessaie, l''entrée reste gratuite jusqu''à ta victoire.'
+  lost-nothing: '&#FF5C5CEntrée gratuite perdue : rien n''est gardé de cette partie. Réessaie, l''entrée reste gratuite jusqu''à ta victoire.'

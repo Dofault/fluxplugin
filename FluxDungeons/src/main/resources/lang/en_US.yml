@@ -254,6 +254,7 @@ lobby:
   key-ok: 'The leader has a key'
   key-missing: 'The leader has no key'
   key-free: 'No key to spend for this launch.'
+  key-trial: 'First try free: until the leader has beaten this dungeon, he launches it without a key. Gains are held until the victory.'
   cancelled: '&#FF5C5CLaunch of %dungeon% cancelled by %player%.'
   expired: '&#FF5C5CLaunch of %dungeon% cancelled.'
   refused: '&#FF5C5CThe dungeon could not start, launch it again with &f[/%flux_cmd_fluxdungeons_dungeon%]&#FF5C5C.'
@@ -671,6 +672,7 @@ menu:
   party-size: '%count% players'
   beaten: 'Beaten %count% times'
   not-beaten: 'Not beaten yet'
+  trial: 'First try free'
   too-high: 'Too high for your level'
   beyond-cap: 'Beyond level 50: bring a party'
   shop-action: 'Its shop'
@@ -810,3 +812,7 @@ class-menu:
   back-action: 'Back to the dungeons'
   mine: 'Your class'
   choose: 'Choose it'
+trial:
+  start: '&7Free entry: %player% never beat this dungeon, no key is spent. &eYour gains are held until the victory&7: lose and they are gone.'
+  lost: '&cFree try lost: the &f%tokens% &ctokens earned in %dungeon% &cand the run''s experience are gone. Try again, entry stays free until you win.'
+  lost-nothing: '&cFree try lost: nothing is kept from this run. Try again, entry stays free until you win.'

@@ -25,6 +25,11 @@ public interface RpgBridge {
     /** His class and level as shown on the launch screen ("Guerrier 5"), null when he has none yet. */
     String classLine(Player player);
 
+    /** He has chosen an rpg class (read from his saved character when he is in the semi-rp world). */
+    default boolean hasClass(Player player) {
+        return classLine(player) != null;
+    }
+
     /** Where a player leaving a dungeon goes: the rpg lobby. */
     Location lobby();
 }

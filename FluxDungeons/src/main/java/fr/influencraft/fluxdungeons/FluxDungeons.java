@@ -244,6 +244,11 @@ public final class FluxDungeons extends FluxPlugin {
                 var r = players.get(p);
                 return r == null ? null : messages().raw("classes." + r.heroClass().id() + ".name") + " " + r.level();
             }
+
+            public boolean hasClass(Player p) {
+                // his saved character when he is out of the rpg world (read once, then kept)
+                return players.get(p) != null || players.hero(p) != null;
+            }
         });
         var engine = rpg.combat();
         engine.profiles(e -> {

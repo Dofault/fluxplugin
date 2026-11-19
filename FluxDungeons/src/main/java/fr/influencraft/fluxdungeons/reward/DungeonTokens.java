@@ -64,6 +64,12 @@ public final class DungeonTokens {
         maxCoins = c == null ? 6 : Math.max(1, c.getInt("max-coins-shown", 6));
     }
 
+    /** Tokens held by a trial run, paid at its victory. */
+    public void pay(Player p, int amount) {
+        Currency money = currency();
+        if (money != null && amount > 0) money.give(p, amount, Origin.of(plugin, "dungeon_kill"));
+    }
+
     public Currency currency() {
         return Economy.get(currency);
     }
@@ -94,11 +100,16 @@ public final class DungeonTokens {
 
     /** Gives {@code amount} to each player of the party and throws the coins out of the monster. */
     public void award(Location at, List<Player> party, int amount, Map<java.util.UUID, Integer> earned) {
+        award(at, party, amount, earned, true);
+    }
+
+    /** {@code pay} false: only counted in {@code earned} (a trial run holds them until its victory, see {@link #pay}). */
+    public void award(Location at, List<Player> party, int amount, Map<java.util.UUID, Integer> earned, boolean pay) {
         Currency money = currency();
         if (amount <= 0 || party.isEmpty()) return;
         if (money != null) {
             for (Player p : party) {
-                money.give(p, amount, Origin.of(plugin, "dungeon_kill"));
+                if (pay) money.give(p, amount, Origin.of(plugin, "dungeon_kill"));
                 earned.merge(p.getUniqueId(), amount, Integer::sum);
             }
         }

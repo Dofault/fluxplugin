@@ -126,7 +126,8 @@ public final class Runs {
         this.keys = keys;
         this.tokens = tokens;
         this.victories = victories;
-        lobby.keyInfo((leader, def) -> keys == null || !keys.needs(leader, def) ? -1 : keys.count(leader, def.job()));
+        lobby.keyInfo((leader, def) -> keys == null || !keys.needs(leader, def) ? -1 : trial(leader, def) ? -2
+                : keys.count(leader, def.job()));
     }
 
     /** The pet each player takes into a run (chosen in the dungeon menu), its body and fight. */
@@ -251,12 +252,20 @@ public final class Runs {
         return check(def, players, false);
     }
 
+    /**
+     * First try (2026-11-19): a leader who never beat this dungeon launches it without a key, until he wins it once.
+     * The run then holds its gains until the victory ({@link Run#trial}).
+     */
+    public boolean trial(Player leader, DungeonDefinition def) {
+        return keys != null && keys.needs(leader, def) && records != null && !records.beaten(leader, def.id());
+    }
+
     /** {@code free}: launched by the staff or Typewriter, no key needed. */
     public Refusal check(DungeonDefinition def, List<Player> players, boolean free) {
         Refusal refusal = checkPlayers(def, players);
         if (refusal == Refusal.NONE && !free && keys != null && !players.isEmpty()) {
             Player leader = players.get(0);
-            if (keys.needs(leader, def) && keys.count(leader, def.job()) <= 0) return Refusal.NO_KEY;
+            if (keys.needs(leader, def) && keys.count(leader, def.job()) <= 0 && !trial(leader, def)) return Refusal.NO_KEY;
         }
         return refusal;
     }
@@ -300,16 +309,22 @@ public final class Runs {
             }
             return;
         }
-        if (!free && keys != null && !players.isEmpty() && !keys.spend(players.get(0), def)) {
-            for (Player p : players) plugin.messages().send(p, "lobby.refused-key", "%job%", keys.jobName(def.job()));
-            return;
-        }
-        if (!free && keys != null && !players.isEmpty() && keys.needs(players.get(0), def)) {
-            for (Player p : players) {
-                plugin.messages().send(p, "keys.spent", "%player%", players.get(0).getName(), "%job%", keys.jobName(def.job()));
+        boolean trial = !free && !players.isEmpty() && trial(players.get(0), def);
+        if (trial) {
+            for (Player p : players) plugin.messages().send(p, "trial.start", "%player%", players.get(0).getName());
+        } else {
+            if (!free && keys != null && !players.isEmpty() && !keys.spend(players.get(0), def)) {
+                for (Player p : players) plugin.messages().send(p, "lobby.refused-key", "%job%", keys.jobName(def.job()));
+                return;
+            }
+            if (!free && keys != null && !players.isEmpty() && keys.needs(players.get(0), def)) {
+                for (Player p : players) {
+                    plugin.messages().send(p, "keys.spent", "%player%", players.get(0).getName(), "%job%", keys.jobName(def.job()));
+                }
             }
         }
-        start(def, players, level);
+        Run run = start(def, players, level);
+        if (run != null) run.trial = trial;
     }
 
     /** Starts a run for these players (checked before). The copy is made, then they are taken in. */
@@ -707,6 +722,7 @@ public final class Runs {
         fr.influencraft.flux.api.client.HurtShake.clear(player.getUniqueId());
         if (inside) {
             hook(run, "leave", player, null);
+            if (run.trial && run.state == Run.State.RUNNING) lostTrial(run, player);
             player.setMaximumNoDamageTicks(20);
             // back to the rpg lobby, his rpg things never left him
             if (player.isDead()) player.spigot().respawn();
@@ -1233,10 +1249,13 @@ public final class Runs {
         }
         List<Player> party = fighters(run);
         double xp = rpg == null || t == null ? 0 : rpg.killXp(mob, t);
-        if (xp > 0) for (Player p : party) giveXp(p, xp);
-        // dungeon tokens spring out of it, for every fighter of the party
+        if (xp > 0) for (Player p : party) {
+            if (run.trial) run.heldXp.merge(p.getUniqueId(), xp, Double::sum);
+            else giveXp(p, xp);
+        }
+        // dungeon tokens spring out of it, for every fighter of the party (held until the victory on a first try)
         if (tokens != null && t != null) {
-            tokens.award(mob.getLocation(), party, tokens.amount(t.boss() ? "BOSS" : t.extra() == null ? "TRASH" : t.extra().rank(), run.levelSpec().reward()), run.tokens);
+            tokens.award(mob.getLocation(), party, tokens.amount(t.boss() ? "BOSS" : t.extra() == null ? "TRASH" : t.extra().rank(), run.levelSpec().reward()), run.tokens, !run.trial);
         }
         if (objective != null && run.objectivesLeft.remove(objective)) {
             for (Player p : online(run)) hook(run, "objective", p, objective);
@@ -1313,6 +1332,12 @@ public final class Runs {
         for (Player p : winners) {
             endMusic(run, p, true);
             hook(run, "victory", p, null);
+            if (run.trial) {
+                // first try won: what the run held is his now
+                if (tokens != null) tokens.pay(p, run.tokens.getOrDefault(p.getUniqueId(), 0));
+                double held = run.heldXp.getOrDefault(p.getUniqueId(), 0.0);
+                if (held > 0) giveXp(p, held);
+            }
             if (rpg != null) giveXp(p, rpg.victoryXp(run.def, run.world == null ? p.getWorld() : run.world));
             if (records != null && records.record(p, run.def.id())) firsts.add(p.getUniqueId());
         }
@@ -1332,8 +1357,18 @@ public final class Runs {
                     Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(3), Duration.ofMillis(700))));
             endMusic(run, p, false);
             hook(run, "defeat", p, null);
+            if (run.trial) lostTrial(run, p);
         }
         Bukkit.getScheduler().runTaskLater(plugin, () -> stop(run), 100L);
+    }
+
+    /** A first try lost (defeat, or he left): what the run held for him is gone, he is told. */
+    private void lostTrial(Run run, Player p) {
+        int held = run.tokens.getOrDefault(p.getUniqueId(), 0);
+        plugin.messages().send(p, held > 0 ? "trial.lost" : "trial.lost-nothing", "%tokens%", String.valueOf(held),
+                "%dungeon%", run.def.name());
+        run.tokens.remove(p.getUniqueId());
+        run.heldXp.remove(p.getUniqueId());
     }
 
     private void hideBossBar(Run run) {
@@ -1364,11 +1399,21 @@ public final class Runs {
                 String line = rpg == null ? null : rpg.classLine(p);
                 return line == null ? "" : line.substring(line.lastIndexOf(' ') + 1);
             }
+            case "has_class" -> {
+                return String.valueOf(rpg != null && rpg.hasClass(p));
+            }
             default -> {
             }
         }
+        String key = params.toLowerCase(java.util.Locale.ROOT);
+        // beaten_<dungeon>: true once he has won it (quests)
+        if (key.startsWith("beaten_")) return String.valueOf(records != null && records.beaten(p, key.substring(7)));
+        if (key.startsWith("trial_")) {
+            DungeonDefinition d = dungeons.get(key.substring(6));
+            return String.valueOf(d != null && trial(p, d));
+        }
         if (run == null) return "";
-        return switch (params.toLowerCase(java.util.Locale.ROOT)) {
+        return switch (key) {
             case "dungeon" -> run.def.name();
             case "time" -> run.secondsLeft() < 0 ? "" : Format.duration(run.secondsLeft());
             case "mobs" -> String.valueOf(run.mobs.size());

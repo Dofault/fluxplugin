@@ -259,6 +259,8 @@ public final class DungeonMenus {
                             : raw("menu.party-size", "%count%", String.valueOf(def.recommendedPlayers())))
                     .kv(raw("menu.job"), keys.jobName(def.job()));
             if (keys.needs(viewer, def)) lore.kv(raw("menu.keys"), String.valueOf(keys.count(viewer, def.job())));
+            // first try free until beaten once (Runs#trial): said on the card
+            if (keys.needs(viewer, def) && wins == 0 && victories != null) lore.ok(raw("menu.trial"));
             if (current) lore.info(raw("menu.next-floor"));
             if (wins > 0) lore.ok(raw("menu.beaten", "%count%", String.valueOf(wins)));
             else if (level >= 0 && level < Math.min(def.recommendedLevel(), 50)) lore.ko(raw("menu.too-high"));
