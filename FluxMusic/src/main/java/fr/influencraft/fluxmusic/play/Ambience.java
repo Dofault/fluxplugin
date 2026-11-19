@@ -121,6 +121,24 @@ public final class Ambience {
         }
     }
 
+    /**
+     * Skips the song the ambience is playing for this player: the next one of the place starts at once (the former
+     * fades out meanwhile), without the pause between songs. Null when the ambience plays nothing for him (no place,
+     * music off, or another plugin's music playing).
+     */
+    public Song skip(Player player) {
+        State state = states.get(player.getUniqueId());
+        if (state == null || state.started == null || !wants.test(player)) return null;
+        Song current = jukebox.playing(player.getUniqueId());
+        if (current == null || !current.id().equals(state.started)) return null;
+        Song next = next(state);
+        if (next == null) return null;
+        jukebox.play(player, next, state.place.songs().size() == 1 && next.loop());
+        state.started = next.id();
+        state.last = next.id();
+        return next;
+    }
+
     /** Next song of the shuffled list, never the one just heard twice in a row. */
     private Song next(State state) {
         if (state.queue.isEmpty()) {

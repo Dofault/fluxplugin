@@ -221,12 +221,27 @@ public final class FluxMusic extends FluxPlugin implements Listener {
                         "%count%", String.valueOf(targets.size()));
                 return true;
             }
-            case "stop" -> {
+            case "stop", "arreter", "couper" -> {
                 Collection<? extends Player> targets = targets(sender, args, 1);
                 if (targets == null) return true;
+                // everything stops (music and jingle); a player stopping his own music turns it off in his settings,
+                // so nothing starts again (the settings window turns it back on). Others' settings are never changed.
+                boolean self = targets.size() == 1 && targets.iterator().next() == sender;
                 int stopped = 0;
-                for (Player p : targets) if (jukebox.stop(p.getUniqueId())) stopped++;
-                messages().send(sender, stopped > 0 ? "stopped" : "nothing-playing");
+                for (Player p : targets) {
+                    if (jukebox.playing(p.getUniqueId()) != null) stopped++;
+                    jukebox.stopAll(p.getUniqueId());
+                    if (self) PlayerSettings.set(p, Music.SETTING, false);
+                }
+                messages().send(sender, self ? "stopped-off" : stopped > 0 ? "stopped" : "nothing-playing");
+                return true;
+            }
+            case "skip", "passer", "suivant" -> {
+                Player p = Players.of(sender);
+                if (p == null) return false;
+                Song next = ambience.skip(p);
+                if (next == null) messages().send(p, "nothing-to-skip");
+                else messages().send(p, "skipped", "%title%", next.title());
                 return true;
             }
             case "reload" -> {
@@ -264,7 +279,7 @@ public final class FluxMusic extends FluxPlugin implements Listener {
     }
 
     private List<String> complete(CommandSender sender, String[] args) {
-        if (args.length == 1) return filter(Stream.of("liste", "jouer", "stop", "reload"), args[0]);
+        if (args.length == 1) return filter(Stream.of("liste", "jouer", "passer", "stop", "reload"), args[0]);
         String sub = args[0].toLowerCase(Locale.ROOT);
         boolean play = sub.equals("play") || sub.equals("jouer");
         if (args.length == 2 && play) return filter(songs.keySet().stream(), args[1]);
