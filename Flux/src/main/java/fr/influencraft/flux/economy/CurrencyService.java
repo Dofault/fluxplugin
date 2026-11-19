@@ -490,7 +490,7 @@ public final class CurrencyService implements Listener {
         if (line.count() > 1) lore.kv(m.raw("money.menu.count"), Format.number(line.count()));
         String from = Format.date(line.first()), to = Format.date(line.last());
         if (ledger.hourly(line.origin())) {
-            // jobs pay on every action: one line per clock hour, shown as that hour ("12/11 à 18h")
+            // one line per clock hour, shown as that hour ("12/11 à 18h" = 18:00 to 18:59)
             lore.kv(m.raw("money.menu.hour"), new java.text.SimpleDateFormat(m.raw("money.menu.hour-format"), java.util.Locale.FRANCE)
                     .format(new java.util.Date(line.first())));
         } else if (!from.equals(to)) {
