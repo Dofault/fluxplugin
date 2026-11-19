@@ -35,6 +35,7 @@ Layouts (window px 176 wide, item of a slot at fond_lib.objet):
             Easy / Normal / Hard (28, 31, 34, coloured cells, no words: the buttons' names say it), the chosen one lit;
             row 4: players ready; row 5: class (45), ready (49), key (53)
 """
+import colorsys
 import json
 import math
 import os
@@ -242,7 +243,7 @@ def bg_sas():
 # --------------------------------------------------------------------------------------------------- icons
 
 def coin(size=16):
-    """Dungeon token: gold coin with a violet rim, a dungeon gate in its middle."""
+    """Small dungeon token drawn in backgrounds: gold coin with a violet rim, a dungeon gate in its middle."""
     im = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     px = im.load()
     c = (size - 1) / 2
@@ -266,6 +267,29 @@ def coin(size=16):
     px[int(c) - 3, int(c) - 4] = WHITE
     px[int(c) - 2, int(c) - 5] = WHITE
     return im
+
+
+def token():
+    """Dungeon token (2026-11-19): the owner's six-pointed star (jeton_etoile.png, first drawn for the Influence)
+    turned gold. Every pixel keeps its value and saturation, its hue moves to gold; the purple rim and shadows slide
+    towards a darker amber so the outline stays crisp, the whitish highlights stay light."""
+    src = Image.open(os.path.join(HERE, "jeton_etoile.png")).convert("RGBA")
+    out = Image.new("RGBA", src.size, (0, 0, 0, 0))
+    for y in range(src.height):
+        for x in range(src.width):
+            r, g, b, a = src.getpixel((x, y))
+            if not a:
+                continue
+            h, s, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
+            deg = h * 360 + (360 if h * 360 < 90 else 0)
+            # 270 (purple) -> 22 (deep amber), 330 (pink) -> 40 (gold), 400 (yellow) -> 50 (light gold)
+            hue = (22 + (deg - 270) * (28 / 130)) / 360
+            if deg < 305 and s > 0.2:
+                v *= 0.72
+            s = min(1, s * 1.45 + 0.08) if s > 0.15 else s * 1.3
+            nr, ng, nb = colorsys.hsv_to_rgb(hue % 1, s, v)
+            out.putpixel((x, y), (round(nr * 255), round(ng * 255), round(nb * 255), 255))
+    return out
 
 
 def key():
@@ -365,11 +389,11 @@ def pack():
     for gid, im in backgrounds.items():
         im.save(os.path.join(PACK, "textures/gui", gid + ".png"))
         lines += glyph(gid, f"gui/{gid}.png", im.height, 13)
-    coin(16).save(os.path.join(PACK, "textures/font", "jeton_donjon.png"))
+    token().save(os.path.join(PACK, "textures/font", "jeton_donjon.png"))
     lines += ["  jeton_donjon:", "    show_in_gui: true", "    suggest_in_command: true",
               '    path: "font/jeton_donjon.png"', "    scale_ratio: 9", "    y_position: 8"]
     lines += ["", "items:"]
-    icons = {"jeton_donjon": (coin(16), "Jeton de donjon"), "cle_donjon": (key(), "Clé de donjon"),
+    icons = {"jeton_donjon": (token(), "Jeton de donjon"), "cle_donjon": (key(), "Clé de donjon"),
              "etage_inconnu": (unknown_floor(), "Inconnu"), "boutique": (shop_icon(), "Boutique de donjon")}
     for kind in ("soin", "mana"):
         for tier in range(1, 5):

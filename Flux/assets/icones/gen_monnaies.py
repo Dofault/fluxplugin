@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Currency icons redrawn from scratch in 16x16 (2026-10-28), from the owner's reference images:
-- influence.png is no longer generated: the owner's own 16x16 drawing (2026-11-18) is kept next to this script
-  (Flux/assets/icones/influence.png) and copied as is (influemoji emoji, influitems item texture).
+- influence.png is not generated: the square-cut ruby in its dark frame, retouched by hand after the 2026-10-28 drawing,
+  is kept next to this script (Flux/assets/icones/influence.png) and copied as is (influemoji emoji, influitems item).
+  The owner's six-pointed star tried on 2026-11-18 became the dungeon token (FluxDungeons/assets/menus/jeton_etoile.png).
 - bitblock.png: the cube of the reference (seen from a corner), same light / dark layout, recoloured in the BitBlock violet
   (server charter: #5B2D9E, #B376E5).
 
