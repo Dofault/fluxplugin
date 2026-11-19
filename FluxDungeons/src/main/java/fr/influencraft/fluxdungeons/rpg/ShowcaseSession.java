@@ -565,7 +565,7 @@ final class ShowcaseSession {
         script = !own.isEmpty() ? own : scripts == null ? List.of() : scripts.getStringList("default");
         step = 0;
         repeated = 0;
-        waitUntil = ticks + 8;
+        waitUntil = ticks + 1;
         header();
         caption(null);
     }
@@ -687,7 +687,7 @@ final class ShowcaseSession {
             actor.teleport(home());
             actor.setVelocity(new Vector());
             caption(null);
-            waitUntil = ticks + 12;
+            waitUntil = ticks + 2;
             return;
         }
         String[] a = script.get(step).trim().toLowerCase(Locale.ROOT).split("\\s+");
