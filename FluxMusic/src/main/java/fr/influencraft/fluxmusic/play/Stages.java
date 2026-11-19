@@ -277,7 +277,7 @@ public final class Stages {
 
         /**
          * Puts on the stage the musicians of this cast and only them, in the band's order (first ones in front), in
-         * rows centred on the stage. A musician already there walks to his new place; the others come or go in a puff.
+         * rows centred on the stage. A musician already there is put at his new place; the others come or go in a puff.
          */
         void stand(Set<Instrument> cast) {
             World w = Bukkit.getWorld(world);
@@ -303,10 +303,15 @@ public final class Stages {
                 Location at = new Location(w, x + rx * side + fx * front, y, z + rz * side + fz * front, yaw, 0);
                 Instrument instrument = players.get(i);
                 Musician m = former.remove(instrument);
-                if (m != null) {
-                    if (m.figure != null && m.at.distanceSquared(at) > 0.01) m.figure.move(at);
-                    m.at = at;
-                } else {
+                boolean moved = false;
+                if (m != null && m.at.distanceSquared(at) > 0.01) {
+                    // a new place: the model is made again there (moving a BetterModel model without entity lost the
+                    // way it faced: musicians ended up with their back to the audience, seen in game 2026-11-19)
+                    if (m.figure != null) m.figure.close();
+                    m = null;
+                    moved = true;
+                }
+                if (m == null) {
                     ModelBridge.Figure figure = null;
                     if (models) {
                         figure = ModelBridge.figure(band.get(instrument), at, scale, yaw);
@@ -322,7 +327,7 @@ public final class Stages {
                             Player p = Bukkit.getPlayer(viewer);
                             if (p != null) figure.show(p);
                         }
-                        puff(at);
+                        if (!moved) puff(at);
                     }
                 }
                 musicians.add(m);

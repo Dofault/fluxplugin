@@ -38,11 +38,6 @@ final class ModelBridge {
 
         /** Speed of the looping animations from now on (1 = as drawn); read by BetterModel as it plays. */
         void speed(float speed);
-
-        /** Moves the model to another place. */
-        void move(Location to);
-
-        void close();
     }
 
     private ModelBridge() {
@@ -83,11 +78,6 @@ final class ModelBridge {
 
             public void speed(float value) {
                 speed = value;
-            }
-
-            public void move(Location to) {
-                // a copy: BetterModel keeps the location it is given and skips a move to an "equal" one
-                if (!tracker.isClosed()) tracker.location(BukkitAdapter.adapt(to.clone()));
             }
 
             public void show(Player viewer) {
