@@ -20,6 +20,9 @@ import struct
 import zlib
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+# Alpha of the panels and boxes, out of 255: that of the vanilla scoreboard's lines (30 %), so the HUD and the
+# sidebar look alike (2026-11-19; 39 before).
+PANEL_ALPHA = 77
 RES = os.path.join(HERE, "..", "..", "src", "main", "resources")
 FONT = json.load(open(os.path.join(HERE, "..", "metiers", "quinquefive.json")))
 # characters missing from QuinqueFive, drawn in its 5 px grid (as fond_lib.py)
@@ -207,7 +210,7 @@ def main():
     for k, (ch, cuts) in enumerate(panel_cols.items()):
         for x, cut in enumerate(cuts):
             for y in range(cut, BOX_H - cut):
-                pixels[y][8 * k + x] = (0, 0, 0, 39)
+                pixels[y][8 * k + x] = (0, 0, 0, PANEL_ALPHA)
         widths[ch] = len(cuts) + 1
     with open(os.path.join(tex, "hud_panel.png"), "wb") as f:
         f.write(png(8 * len(panel_cols), BOX_H, pixels))
@@ -224,7 +227,7 @@ def main():
         {"type": "bitmap", "file": "flux:font/hud_spacer.png", "height": 40, "ascent": 7, "chars": [""]},
         {"type": "bitmap", "file": "flux:font/hud_text.png", "height": CELL_H, "ascent": CELL_H, "chars": ["".join(l) for l in rows]},
     ] + providers}
-    # backgrounds: the translucent rounded panels of the production HUD (black at alpha 39, corners cut by 2 and 1
+    # backgrounds: the translucent rounded panels of the HUD (black at PANEL_ALPHA, corners cut by 2 and 1
     # px), at the exact size hud.yml draws them (a sprite is scaled to its size: same size = crisp)
     sprites = os.path.join(RES, "pack", "assets", "flux", "textures", "gui", "sprites", "hud")
     os.makedirs(sprites, exist_ok=True)
@@ -232,7 +235,7 @@ def main():
         rows = []
         for y in range(ph):
             cut = 2 if y in (0, ph - 1) else 1 if y in (1, ph - 2) else 0
-            rows.append([(0, 0, 0, 39) if cut <= x < pw - cut else (0, 0, 0, 0) for x in range(pw)])
+            rows.append([(0, 0, 0, PANEL_ALPHA) if cut <= x < pw - cut else (0, 0, 0, 0) for x in range(pw)])
         with open(os.path.join(sprites, "panel_%dx%d.png" % (pw, ph)), "wb") as f:
             f.write(png(pw, ph, rows))
     os.makedirs(os.path.join(RES, "pack", "assets", "flux", "font"), exist_ok=True)
