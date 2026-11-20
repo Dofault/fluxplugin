@@ -468,6 +468,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         fr.influencraft.flux.api.shops.ChestShops.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.client.DropKey.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.client.UseKey.unregisterAll(event.getPlugin());
+        fr.influencraft.flux.api.client.ActionBar.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.mobs.MobStacks.unregisterAll(event.getPlugin());
         placeholdersChanged();
         if (hadMenus) menuFoldersChanged();

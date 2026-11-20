@@ -941,8 +941,10 @@ public final class RpgPlayers implements Listener {
                 continue;
             }
             // drawn on the death screen too: never a fade-out showing the hearts underneath
-            // not during the class showcase: its camera shows no hotbar for the bars to sit on
-            if (r != null && r.stats() != null && (showcase == null || !showcase.watching(p))) hud(p, r, now);
+            // not during the class showcase: its camera shows no hotbar for the bars to sit on; nor while another
+            // plugin holds his action bar (the wardrobe's controls)
+            if (r != null && r.stats() != null && (showcase == null || !showcase.watching(p))
+                    && fr.influencraft.flux.api.client.ActionBar.free(plugin, p)) hud(p, r, now);
         }
     }
 

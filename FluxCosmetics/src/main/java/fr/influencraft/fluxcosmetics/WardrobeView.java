@@ -197,6 +197,8 @@ final class WardrobeView {
         Camera.hearAt(player, mannequin);
         Hotbar.show(player, hotbar());
         Hotbar.bars(player, false);
+        // his action bar shows the controls: a bar refreshed all the time (the rpg life and mana) waits
+        fr.influencraft.flux.api.client.ActionBar.claim(plugin, player);
         // every right click opens the menu, near the mannequin or far from anything (an empty real hand sends the
         // server nothing for a click in the air: read from his packets)
         fr.influencraft.flux.api.client.UseKey.claim(plugin, player, () -> {
@@ -242,8 +244,9 @@ final class WardrobeView {
         if (!player.isOnline()) return;
         Hotbar.clear(player);
         Hotbar.bars(player, true);
-        // the controls' reminder goes at once instead of fading out over the next seconds
+        // the controls' reminder goes at once instead of fading out over the next seconds; the bar is free again
         player.sendActionBar(Component.empty());
+        fr.influencraft.flux.api.client.ActionBar.release(plugin, player);
         Sidebar.hide(player, false);
         player.getInventory().setHeldItemSlot(heldBefore);
         player.setFlySpeed(flySpeed);
