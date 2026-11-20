@@ -215,7 +215,8 @@ Check a change against this list before committing; the review found every one o
   in the hidden inventory area, no information only in a picture, a shader, a title image or a boss bar sprite.
 - **Moving a command or a setting between plugins** moves its entry in `plugins/Flux/commands.yml`, its config
   section (jar and Labs) and its docs, and gets a line in `flux-mise-en-prod.md`.
-- **Nothing dead is committed**: mockups, rollback folders, `.legacy` or `.avant-*` copies, prompts, unused
+- **Nothing dead is committed**: mockups, rollback folders, `.legacy` or `.avant-*` copies, prompts (other than the
+  owner's own, kept in `prompt/`), unused
   placeholders. Git keeps history; delete what no generator, menu or class reads.
 
 ## Menu layout rules
@@ -319,6 +320,13 @@ stay the sources.
 - Do not compare against `Format.yesNo()` in menus (localised), use fixed values.
 - A menu needs `[refresh]` after a list page change to redraw its title (paths).
 - Inventory rows of a hidden-inventory menu: the item of the first row sits at y 139 in game (as `PathRenderer`), not 140 as `fond_lib.objet` computes. Check the first background of a new menu in game.
+
+## The owner's prompts (`prompt/`)
+
+`prompt/*.md` holds the prompts the owner writes for model generation (armour sets, bosses...). They are his notes,
+kept in git on his request (2026-11-20): never edit or delete them, and **commit any new or changed file there**
+whenever you commit. On the server machine a `pre-commit` hook (`.git/hooks/pre-commit`, not versioned) adds
+`prompt/*.md` to every commit; on a fresh clone, write it again: `git add -- prompt/*.md`.
 
 ## Migrations and patches (data of former plugins, items already handed out)
 
