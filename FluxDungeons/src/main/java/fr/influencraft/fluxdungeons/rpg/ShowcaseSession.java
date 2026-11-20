@@ -1,7 +1,6 @@
 package fr.influencraft.fluxdungeons.rpg;
 
 import fr.influencraft.flux.api.client.Camera;
-import fr.influencraft.flux.api.client.CameraRig;
 import fr.influencraft.flux.api.client.ChatHold;
 import fr.influencraft.flux.api.client.Clients;
 import fr.influencraft.flux.api.client.DropKey;
@@ -30,7 +29,6 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mannequin;
 import org.bukkit.entity.Mob;
@@ -47,7 +45,6 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -55,16 +52,18 @@ import java.util.Map;
 /**
  * One player watching the classes ({@link Showcase}). Nothing is clicked with a pointer: his hotbar is the menu.
  * <ul>
- *   <li>the <b>camera</b> turns around the middle of the fight (a swing from side to side, or a full turn:
- *   {@code rpg.showcase.camera}). On Java it is Flux's {@link CameraRig}, the camera of the boss scenes: his mouse
- *   moves nothing, he sits still on an invisible seat. Seen through a camera his client draws no hotbar, so the
- *   classes are drawn at the bottom of his screen by displays attached to the camera. With {@code camera.locked: false}
- *   he is the camera himself, on a seat that moves, and keeps his real hotbar, but his mouse shakes the view. A
- *   Bedrock player always is his own camera, on a still seat, and looks around freely;</li>
- *   <li>the <b>hotbar</b> holds one class per slot ({@link Hotbar}: packets only, his real items never move). The
- *   slot he holds (mouse wheel, number keys, a tap) is the class played in front of him; the name of the held item is
- *   the class's. A click, left or right, chooses it, a second click confirms; the barrier of the last slot (or
- *   sneaking) leaves;</li>
+ *   <li>the <b>camera</b> is himself, never another entity: a client seeing through another entity draws no hotbar
+ *   (26.2 client, {@code Hud.extractItemHotbar}), and his real hotbar is the menu. He rides an invisible seat moved
+ *   every tick around the middle of the fight (a swing from side to side, or a full turn: {@code rpg.showcase.camera});
+ *   his client glides him from one place to the next. On Java his head is turned to the fight by the server: every
+ *   tick, and at once whenever his mouse moves it away ({@link Camera#turns}). Not the camera of the boss scenes
+ *   ({@link fr.influencraft.flux.api.client.CameraRig}), which hides the hotbar. A Bedrock player sits on a still seat
+ *   and looks around freely;</li>
+ *   <li>the <b>hotbar</b> is the menu ({@link Hotbar}: packets only, his real items never move): one class per slot
+ *   from the first, then the way out in the first empty slot. When the classes no longer fit (more than eight), slots
+ *   1 to 7 hold a page of classes, slot 8 an arrow to the next page and slot 9 the way out. The slot he holds (mouse
+ *   wheel, number keys, a tap) is the class played in front of him. A click, left or right, chooses it, a second
+ *   click confirms; a click on the way out (or sneaking) leaves;</li>
  *   <li>the <b>texts</b> float over the fight (text displays turned to him): the class, then the spell being cast and
  *   what it does;</li>
  *   <li>the <b>scene</b>: an actor with his skin (a mannequin made a stand-in of the class by
@@ -80,8 +79,10 @@ final class ShowcaseSession {
     private static final Map<String, String> ACCENTS = Map.of("cryomancer", "#74B6DC", "pyromancer", "#FF8A3C", "druid", "#73C25C");
     /** Ticks a first click waits for the click that confirms it. */
     private static final int CONFIRM_TICKS = 60;
-    /** The slot of the way out: the last of the hotbar. */
-    static final int LEAVE_SLOT = 8;
+    /** Classes shown at once when they do not all fit in the hotbar: slot 8 is then the arrow, slot 9 the way out. */
+    private static final int PAGE = 7;
+    /** Degrees his head may be off the fight before the server turns it back between two ticks. */
+    private static final float SLACK = 0.75f;
 
     private final Showcase showcase;
     private final Player player;
@@ -92,11 +93,12 @@ final class ShowcaseSession {
     private final World world;
     /** The classes of the hotbar, one per slot from the first. */
     private final List<String> ids;
-    private final boolean bedrock, orbit, locked;
-    /** One pixel of text at scale 1, in blocks. */
-    private static final float PX = 0.025f;
-    /** The bar drawn for a locked camera: side of a slot and height of its middle, in blocks one block from the eye. */
-    private static final double SLOT = 0.085, BAR_Y = -0.625;
+    /** steered: his head is turned to the fight by the server (Java with the packet adapter). */
+    private final boolean bedrock, steered, orbit;
+    /** The page of classes in his hotbar, when they do not all fit. */
+    private int page;
+    /** Where his head must look, read by the network thread that hears his mouse. */
+    private volatile float aimYaw, aimPitch;
     private Location back;
     /** He came from outside the lobby (another universe, most often): the show brings him back there. */
     private final boolean away;
@@ -112,11 +114,6 @@ final class ShowcaseSession {
 
     // camera
     private ArmorStand seat;
-    /** The camera he sees through when it is locked, null when he is the camera. */
-    private CameraRig rig;
-    /** The bar drawn in front of a locked camera: background and icon of each hotbar slot that holds something. */
-    private final Map<Integer, TextDisplay> slotRects = new HashMap<>();
-    private final Map<Integer, ItemDisplay> slotIcons = new HashMap<>();
     /** The middle of the fight: what the camera turns around and looks at. */
     private final Location pivot;
 
@@ -151,11 +148,10 @@ final class ShowcaseSession {
         this.origin = origin;
         this.world = origin.getWorld();
         List<String> visible = RpgPlayers.visible(showcase.set());
-        this.ids = List.copyOf(visible.subList(0, Math.min(9, visible.size())));
+        this.ids = List.copyOf(visible);
         this.bedrock = Clients.bedrock(player);
-        boolean java = !bedrock && Camera.available();
-        this.locked = java && settings.camLocked();
-        this.orbit = java && settings.camArc() > 0 && settings.camPeriod() > 0;
+        this.steered = !bedrock && Camera.available();
+        this.orbit = steered && settings.camArc() > 0 && settings.camPeriod() > 0;
         this.pivot = origin.clone().add(settings.lookX(), settings.lookY(), 0);
     }
 
@@ -192,14 +188,69 @@ final class ShowcaseSession {
         return moving;
     }
 
-    /** How many slots of his hotbar hold a class. */
-    int count() {
-        return ids.size();
+    // ------------------------------------------------------------------ the hotbar's layout
+
+    /** The classes do not all fit: a page of them, an arrow, the way out. */
+    private boolean paged() {
+        return ids.size() > 8;
     }
 
-    /** True when the last slot of his hotbar is the way out (he has a class, and that slot holds none). */
-    boolean canLeave() {
-        return ids.size() <= LEAVE_SLOT && showcase.players().get(player) != null;
+    private int pages() {
+        return paged() ? (ids.size() + PAGE - 1) / PAGE : 1;
+    }
+
+    /** The classes in his hotbar now, from its first slot. */
+    private List<String> onPage() {
+        if (!paged()) return ids;
+        int from = page * PAGE;
+        return ids.subList(from, Math.min(ids.size(), from + PAGE));
+    }
+
+    /** The class of this slot, null when it holds none. */
+    String classAt(int slot) {
+        List<String> on = onPage();
+        return slot >= 0 && slot < on.size() ? on.get(slot) : null;
+    }
+
+    /** The slot of the arrow to the next page, -1 when the classes all fit. */
+    int arrowSlot() {
+        return paged() ? PAGE : -1;
+    }
+
+    /**
+     * The slot of the way out: the first one after the classes (the last one when they are paged), -1 while he has no
+     * class yet (he must choose one first).
+     */
+    int leaveSlot() {
+        if (showcase.players().get(player) == null) return -1;
+        return paged() ? 8 : ids.size();
+    }
+
+    /** True when this slot of his hotbar holds something: a class, the arrow or the way out. */
+    boolean usable(int slot) {
+        return classAt(slot) != null || (slot >= 0 && (slot == arrowSlot() || slot == leaveSlot()));
+    }
+
+    /**
+     * Where the wheel lands when it reaches an empty slot: the next slot holding something on its way ({@code next}
+     * after {@code before}, turning the short way round the nine slots).
+     */
+    int landing(int before, int next) {
+        int step = Math.floorMod(next - before, 9) <= 4 ? 1 : -1;
+        for (int i = 1, slot = before; i <= 9; i++) {
+            slot = Math.floorMod(slot + step, 9);
+            if (usable(slot)) return slot;
+        }
+        return before;
+    }
+
+    /** The arrow: the next page of classes (the first again after the last), the first of them held. */
+    void nextPage() {
+        if (closing || !paged()) return;
+        page = (page + 1) % pages();
+        showHotbar();
+        player.getInventory().setHeldItemSlot(0);
+        hold(0);
     }
 
     // ================================================================== opening and closing
@@ -232,16 +283,21 @@ final class ShowcaseSession {
         captionTitle = floating(2.75, 1.3f, 400);
         captionText = floating(2.05, 0.95f, 260);
         RpgPlayer own = showcase.players().get(player);
-        int slot = own == null ? 0 : Math.max(0, ids.indexOf(own.heroClass().id()));
+        int index = own == null ? 0 : Math.max(0, ids.indexOf(own.heroClass().id()));
+        page = paged() ? index / PAGE : 0;
+        int slot = paged() ? index % PAGE : index;
         heldBefore = player.getInventory().getHeldItemSlot();
         player.getInventory().setHeldItemSlot(slot);
         player.closeInventory();
         showHotbar();
-        if (locked) {
-            rig = new CameraRig(showcase.plugin(), eye);
-            rig.show(player);
-            drawBar();
-            light(slot);
+        if (steered) {
+            aim(eye);
+            Camera.turn(player, aimYaw, false, aimPitch, false);
+            // his mouse turned his head away from the fight: back at once, without waiting for the next tick
+            Camera.turns(player, (p, yaw, pitch) -> {
+                float y = aimYaw, x = aimPitch;
+                if (Math.abs(wrap(yaw - y)) > SLACK || Math.abs(pitch - x) > SLACK) Camera.turn(p, y, false, x, false);
+            });
         }
         if (!player.hasPotionEffect(PotionEffectType.INVISIBILITY)) {
             // an invisible player's arm is not drawn in front of his view
@@ -254,7 +310,7 @@ final class ShowcaseSession {
         Sidebar.hide(player, true);
         ChatHold.hold(player, true);
         player.setPlayerTime(settings.time(), false);
-        play(ids.get(slot));
+        play(classAt(slot));
         hint();
     }
 
@@ -265,12 +321,7 @@ final class ShowcaseSession {
         texts.clear();
         if (player.getVehicle() == seat) player.leaveVehicle();
         if (seat != null && seat.isValid()) seat.remove();
-        for (Display d : slotRects.values()) if (d.isValid()) d.remove();
-        for (Display d : slotIcons.values()) if (d.isValid()) d.remove();
-        slotRects.clear();
-        slotIcons.clear();
-        if (rig != null) rig.remove();
-        rig = null;
+        if (steered) Camera.turns(player, null);
         DropKey.release(player);
         Sidebar.hide(player, false);
         ChatHold.hold(player, false);
@@ -316,9 +367,7 @@ final class ShowcaseSession {
             return;
         }
         if (player.getVehicle() != seat) seat.addPassenger(player);
-        if (rig != null) {
-            rig.move(eyeAt(ticks));
-        } else if (orbit) {
+        if (orbit) {
             Location eye = eyeAt(ticks);
             // the server teleports the rider with his seat (a teleport event of his): ours, not a way out of the show
             moving = true;
@@ -327,9 +376,10 @@ final class ShowcaseSession {
             } finally {
                 moving = false;
             }
-            // his head to the middle of the fight, whatever his mouse did since the last tick
-            Camera.turn(player, eye.getYaw(), false, eye.getPitch(), false);
+            aim(eye);
         }
+        // his head to the middle of the fight, whatever his mouse did since the last tick
+        if (steered) Camera.turn(player, aimYaw, false, aimPitch, false);
         // a client told it plays in creative can fill its hotbar by itself: ours again from time to time
         if (ticks % 40 == 0) showHotbar();
         if (ticks % 30 == 0 && ticks > armedUntil) hint();
@@ -355,21 +405,38 @@ final class ShowcaseSession {
         return eye;
     }
 
+    private void aim(Location eye) {
+        aimYaw = eye.getYaw();
+        aimPitch = eye.getPitch();
+    }
+
+    private static float wrap(float degrees) {
+        float d = degrees % 360;
+        return d > 180 ? d - 360 : d < -180 ? d + 360 : d;
+    }
+
     // ================================================================== hotbar
 
     private void showHotbar() {
         Hotbar.show(player, hotbarItems());
     }
 
-    /** What his hotbar holds: one class per slot from the first, the way out in the last. */
+    /** What his hotbar holds: a class per slot from the first, the arrow when they are paged, then the way out. */
     private ItemStack[] hotbarItems() {
         RpgPlayer own = showcase.players().get(player);
         ItemStack[] items = new ItemStack[9];
-        for (int i = 0; i < ids.size(); i++) items[i] = icon(ids.get(i), own != null && own.heroClass().id().equals(ids.get(i)));
-        if (canLeave()) {
+        List<String> on = onPage();
+        for (int i = 0; i < on.size(); i++) items[i] = icon(on.get(i), own != null && own.heroClass().id().equals(on.get(i)));
+        if (arrowSlot() >= 0) {
+            ItemStack next = Items.dress(new ItemStack(Material.ARROW), raw("showcase.next-name")
+                    .replace("%page%", String.valueOf(page + 1)).replace("%pages%", String.valueOf(pages())), null, player);
+            if (!bedrock && settings.hideHeld()) next.setData(DataComponentTypes.ITEM_MODEL, Key.key("fluxdungeons", "showcase_next"));
+            items[arrowSlot()] = next;
+        }
+        if (leaveSlot() >= 0) {
             ItemStack leave = Items.dress(new ItemStack(Material.BARRIER), raw("showcase.leave-name"), null, player);
             if (!bedrock && settings.hideHeld()) leave.setData(DataComponentTypes.ITEM_MODEL, Key.key("fluxdungeons", "showcase_leave"));
-            items[LEAVE_SLOT] = leave;
+            items[leaveSlot()] = leave;
         }
         return items;
     }
@@ -391,76 +458,14 @@ final class ShowcaseSession {
         return item;
     }
 
-    // ------------------------------------------------------------------ the bar drawn for a locked camera
-
-    /**
-     * The classes as a hotbar at the bottom of the screen, for a viewer whose client draws none: displays attached to
-     * the camera, turned to it by their billboard and put at their place by their translation (x to the right, y up, one
-     * block in front of the eye: the screen is about 2.5 wide and 1.4 high there at the default field of view).
-     */
-    private void drawBar() {
-        ItemStack[] items = hotbarItems();
-        boolean way = items[LEAVE_SLOT] != null && ids.size() <= LEAVE_SLOT;
-        double width = ids.size() * SLOT + (way ? 1.5 * SLOT : 0), first = -width / 2 + SLOT / 2;
-        for (int slot = 0; slot < items.length; slot++) {
-            if (items[slot] == null) continue;
-            // the way out stands apart, half a slot after the last class
-            double x = slot < ids.size() ? first + slot * SLOT : first + (ids.size() + 0.5) * SLOT;
-            ItemStack item = items[slot];
-            float fx = (float) ((SLOT - 0.008) / (5 * PX)), fy = (float) ((SLOT - 0.008) / (11 * PX));
-            // a flat square: the background of a text display holding one space (5 pixels wide, 11 high), stretched
-            slotRects.put(slot, onScreen(TextDisplay.class, d -> {
-                d.text(Component.text(" "));
-                d.setShadowed(false);
-                d.setTransformation(new Transformation(new Vector3f((float) x - 0.5f * PX * fx, (float) (BAR_Y - (SLOT - 0.008) / 2), -1f),
-                        new Quaternionf(), new Vector3f(fx, fy, 1), new Quaternionf()));
-            }));
-            slotIcons.put(slot, onScreen(ItemDisplay.class, d -> {
-                d.setItemStack(item);
-                d.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.GUI);
-                d.setTransformation(iconAt(x, false));
-            }));
-        }
-    }
-
-    private static Transformation iconAt(double x, boolean held) {
-        float s = (float) (SLOT * (held ? 0.86 : 0.68));
-        return new Transformation(new Vector3f((float) x, (float) BAR_Y, -0.995f), new Quaternionf(), new Vector3f(s, s, 0.01f), new Quaternionf());
-    }
-
-    private <T extends Display> T onScreen(Class<T> type, java.util.function.Consumer<T> setup) {
-        T d = world.spawn(rig.location(), type, e -> {
-            e.setPersistent(false);
-            e.setBillboard(Display.Billboard.CENTER);
-            e.setBrightness(new Display.Brightness(15, 15));
-            setup.accept(e);
-        });
-        rig.attach(d);
-        return d;
-    }
-
-    /** The slot he holds stands out in the drawn bar: its background in the class's colour, its icon larger. */
-    private void light(int held) {
-        for (Map.Entry<Integer, TextDisplay> e : slotRects.entrySet()) {
-            int slot = e.getKey();
-            boolean on = slot == held;
-            String tint = slot < ids.size() ? accent(ids.get(slot)) : "#FF5C5C";
-            e.getValue().setBackgroundColor(Color.fromARGB(on ? 0xD0000000 | Integer.parseInt(tint.substring(1), 16) : settings.captionShade()));
-            ItemDisplay icon = slotIcons.get(slot);
-            if (icon == null) continue;
-            Vector3f at = icon.getTransformation().getTranslation();
-            icon.setTransformation(iconAt(at.x, on));
-        }
-    }
-
     /** He holds another slot of his hotbar: a class, which plays, or the way out. */
     void hold(int slot) {
         if (closing) return;
         armed = null;
         armedUntil = 0;
-        leaving = slot == LEAVE_SLOT && canLeave();
-        light(slot);
-        if (!leaving && slot >= 0 && slot < ids.size() && !ids.get(slot).equals(shown)) play(ids.get(slot));
+        leaving = slot >= 0 && slot == leaveSlot();
+        String id = classAt(slot);
+        if (id != null && !id.equals(shown)) play(id);
         Sounds.cue(player, "page");
         hint();
     }

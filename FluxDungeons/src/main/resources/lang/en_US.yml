@@ -610,6 +610,7 @@ showcase:
   confirm: "&r&7%img_left_click% &#FFD94DConfirm %color%%name%"
   confirm-bedrock: "&#FFD94DTap the screen again to choose %color%%name%"
   leave-name: "&#FF5C5CLeave"
+  next-name: "&#FFD94DMore classes &#B376E5(%page%/%pages%)"
   leave-hint: "&r&7%img_left_click% &#FF5C5CLeave"
   leave-hint-bedrock: "&#FF5C5CTap the screen to leave"
   roles:

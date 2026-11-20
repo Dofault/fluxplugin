@@ -61,6 +61,15 @@ def main():
     }}
     (out / "showcase_leave.json").write_text(json.dumps(leave, indent=1) + "\n")
     print("  showcase_leave.json")
+    # the arrow to the next page of classes (slot 8 when they no longer fit in the hotbar), hidden in the hand too
+    arrow = {"model": {
+        "type": "minecraft:select",
+        "property": "minecraft:display_context",
+        "cases": [{"when": HANDS, "model": {"type": "minecraft:empty"}}],
+        "fallback": {"type": "minecraft:model", "model": "minecraft:item/arrow"},
+    }}
+    (out / "showcase_next.json").write_text(json.dumps(arrow, indent=1) + "\n")
+    print("  showcase_next.json")
 
 
 if __name__ == "__main__":
