@@ -187,10 +187,11 @@ public final class Skills implements Listener {
     /**
      * The class's basic attack, when ready. {@code clicked}: the creature hit by the click, if any. {@code paced}: the
      * swing was already checked against the weapon's recharge (swords and axes, combat.AttackCadence), it always goes.
+     * True when the attack went (false: still recharging).
      */
-    void basic(LivingEntity p, RpgPlayer r, LivingEntity clicked, boolean paced) {
+    boolean basic(LivingEntity p, RpgPlayer r, LivingEntity clicked, boolean paced) {
         long now = CombatEngine.now();
-        if (!paced && now < r.nextBasic()) return;
+        if (!paced && now < r.nextBasic()) return false;
         // the client already waits for the full recharge (minimum attack charge): 2 ticks of slack so a click it lets
         // through is never lost to a rounding
         r.nextBasic(now + Math.max(2, Math.round(20 * CombatMath.attackInterval(r.stats())) - 2));
@@ -209,6 +210,7 @@ public final class Skills implements Listener {
             case "thorn" -> flora.thorn(p, r, a.hit(), cast, a.range(), aimedEnemy(p, a.range()));
             default -> cleave(p, cast, a, clicked != null ? clicked : aimedEnemy(p, a.range()));
         }
+        return true;
     }
 
     /** Melee: the clicked creature and others in front of the player within reach, up to the attack's targets. */

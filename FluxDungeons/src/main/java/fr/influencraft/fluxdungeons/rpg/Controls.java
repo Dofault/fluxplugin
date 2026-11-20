@@ -89,7 +89,7 @@ final class Controls implements Listener {
             boolean held = now - en.getValue() <= HOLD_GAP || (p.isHandRaised() && p.getActiveItemHand() == EquipmentSlot.HAND);
             RpgPlayer r = held ? armed(p, hand) : null;
             if (r == null || !r.heroClass().basicOnRight()) return true;
-            skills.basic(p, r, null, false);
+            if (skills.basic(p, r, null, false)) swing(p, hand);
             return false;
         });
     }
@@ -193,7 +193,7 @@ final class Controls implements Listener {
             org.bukkit.Material m = e.getItem() == null ? null : e.getItem().getType();
             if (m != org.bukkit.Material.BOW && m != org.bukkit.Material.CROSSBOW) e.setUseItemInHand(org.bukkit.event.Event.Result.DENY);
             holding.put(p.getUniqueId(), now);
-            skills.basic(p, r, null, false);
+            if (skills.basic(p, r, null, false)) swing(p, e.getItem());
             return;
         }
         // the weapon's own vanilla use (drawing a bow, tilling with a hoe) never happens
@@ -204,6 +204,17 @@ final class Controls implements Listener {
             if (!AttackCadence.paced(e.getItem())) skills.basic(p, r, null, false);
         }
         else skills.cast(p, r, "right");
+    }
+
+    /**
+     * The arm swing of a basic attack thrown with the right click: the client swings nothing for a right click on an
+     * item without a use of its own (a staff), so the weapon would not move. A drawn bow keeps its pose. The server's
+     * swing sends no swing packet back, so neither {@link #lastRight} nor combat.AttackCadence sees a left click.
+     */
+    private static void swing(Player p, ItemStack hand) {
+        org.bukkit.Material m = hand == null ? null : hand.getType();
+        if (m == org.bukkit.Material.BOW || m == org.bukkit.Material.CROSSBOW) return;
+        p.swingMainHand();
     }
 
     /** A right click on a creature swings the arm too (see {@link #lastRight}). */
