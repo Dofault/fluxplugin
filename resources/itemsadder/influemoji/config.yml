@@ -16,11 +16,25 @@ font_images:
     scale_ratio: 9
     y_position: 8
 
-  # clic molette (souris grise, molette orange) ; Flux/assets/icones/gen_middle_click.py
+  # icônes de commandes (clic molette, molette tournée, touches de déplacement) ; Flux/assets/icones/gen_inputs.py
   middle_click:
     show_in_gui: true
     suggest_in_command: true
     path: "font/emoji/middle_click.png"
+    scale_ratio: 9
+    y_position: 8
+
+  scroll:
+    show_in_gui: true
+    suggest_in_command: true
+    path: "font/emoji/scroll.png"
+    scale_ratio: 9
+    y_position: 8
+
+  move_keys:
+    show_in_gui: true
+    suggest_in_command: true
+    path: "font/emoji/move_keys.png"
     scale_ratio: 9
     y_position: 8
 
