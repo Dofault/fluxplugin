@@ -4,8 +4,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 /** The wardrobe's settings (config.yml). */
 record Settings(double distance, double minDistance, double maxDistance, double zoomStep,
-                float turnSpeed, float pitchSpeed, float minPitch, float maxPitch, double targetHeight, float startPitch,
-                String item, String itemModel) {
+                float turnSpeed, float pitchSpeed, float minPitch, float maxPitch, double targetHeight, float startPitch) {
 
     static Settings read(FileConfiguration c) {
         double min = Math.max(0.5, c.getDouble("camera.min-distance", 0.6));
@@ -17,7 +16,6 @@ record Settings(double distance, double minDistance, double maxDistance, double 
                 (float) Math.clamp(c.getDouble("camera.turn-speed", 3), 0, 45),
                 (float) Math.clamp(c.getDouble("camera.pitch-speed", 2), 0, 45),
                 minPitch, maxPitch, c.getDouble("camera.target-height", 1.0),
-                (float) Math.clamp(c.getDouble("camera.start-pitch", 12), minPitch, maxPitch),
-                c.getString("hotbar.item", "PAPER"), c.getString("hotbar.model", "minecraft:spyglass"));
+                (float) Math.clamp(c.getDouble("camera.start-pitch", 12), minPitch, maxPitch));
     }
 }

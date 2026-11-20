@@ -25,9 +25,3 @@ camera:
   # Look down when the wardrobe opens.
   start-pitch: 12
 
-hotbar:
-  # The one item shown in the middle of the hotbar (packets only, his real items never move): a material, or
-  # itemsadder:<namespace>:<id>, and the model it is drawn with (empty = the item's own). Keep an item without a use of
-  # its own (a real spyglass would bring its scope up on the right click).
-  item: PAPER
-  model: "minecraft:spyglass"

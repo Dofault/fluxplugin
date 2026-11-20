@@ -3,10 +3,11 @@ package fr.influencraft.fluxcosmetics;
 import fr.influencraft.flux.api.client.Camera;
 import fr.influencraft.flux.api.client.Hotbar;
 import fr.influencraft.flux.api.client.Sidebar;
-import fr.influencraft.flux.api.inventory.Items;
-import fr.influencraft.flux.api.inventory.Lore;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ResolvableProfile;
+import io.papermc.paper.datacomponent.item.TooltipDisplay;
+import net.kyori.adventure.text.Component;
+import org.bukkit.Material;
 import net.kyori.adventure.key.Key;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
@@ -47,7 +48,7 @@ import org.bukkit.util.Vector;
  *   <li>His client is told he plays in creative ({@link Hotbar#bars}): no life, food nor experience bars on the
  *   screen. The server never sees him in creative.</li>
  * </ul>
- * One item in his hotbar, in the middle: left click leaves, right click will open the choice of cosmetics. Other
+ * Nothing shown in his hotbar: left click leaves, right click will open the choice of cosmetics. Other
  * players no longer see him meanwhile (an invisible player still shows his armour): they see the mannequin.
  */
 final class WardrobeView {
@@ -314,15 +315,14 @@ final class WardrobeView {
     }
 
     /**
-     * The one item of his hotbar, in the middle. It looks like a spyglass (model of the config) on an item without a
-     * use of its own: a real spyglass would bring its scope up on the right click.
+     * His hotbar, seen empty. The middle slot holds an item nobody sees (empty model, empty name, no tooltip): with
+     * an empty hand his client would send nothing for a right click in the air, the click of the cosmetics menu.
      */
-    private ItemStack[] hotbar() {
-        var m = plugin.messages();
-        ItemStack item = Items.dress(Items.of(settings.item(), player), m.raw("items.camera-name"),
-                Lore.create().description(m.raw("items.camera-description"))
-                        .left(m.raw("items.camera-left")).right(m.raw("items.camera-right")).tags(), player);
-        if (!settings.itemModel().isBlank()) item.setData(DataComponentTypes.ITEM_MODEL, Key.key(settings.itemModel()));
+    private static ItemStack[] hotbar() {
+        ItemStack item = new ItemStack(Material.PAPER);
+        item.setData(DataComponentTypes.ITEM_MODEL, Key.key("minecraft", "air"));
+        item.setData(DataComponentTypes.CUSTOM_NAME, Component.empty());
+        item.setData(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplay.tooltipDisplay().hideTooltip(true).build());
         ItemStack[] items = new ItemStack[9];
         items[SLOT] = item;
         return items;
