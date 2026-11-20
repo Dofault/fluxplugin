@@ -1,6 +1,7 @@
 # FluxCosmetics: cosmetics of the players.
 # The wardrobe (/tenue): the player leaves his body (a mannequin with his skin stays in his place) and becomes a camera
-# around it. Left / right keys turn the camera around him, forward / backward raise or lower it, the mouse wheel zooms.
+# around it. Left / right keys turn the camera around him, forward / backward tilt it over or under him, the mouse
+# moved forward / back slides it up or down, the mouse wheel zooms.
 # Distances in blocks, angles in degrees, speeds per tick (20 ticks = 1 second).
 
 language: ""
@@ -15,13 +16,18 @@ camera:
   zoom-step: 0.4
   # Degrees the camera turns around him per tick while left or right is held (3 = 60 degrees a second).
   turn-speed: 3
-  # Degrees the camera rises or sinks per tick while forward or backward is held.
+  # Degrees the camera tilts over or under him per tick while forward or backward is held.
   pitch-speed: 2
   # Highest look down (positive) and look up (negative) allowed.
   max-pitch: 70
   min-pitch: -25
-  # Point looked at, above the mannequin's feet (1.0 = his chest).
+  # Point looked at when the wardrobe opens, above the mannequin's feet (1.0 = his chest). Moving the mouse forward or
+  # back slides it, and the camera with it, between min-height (his feet) and max-height (over his head).
   target-height: 1.0
+  min-height: 0.1
+  max-height: 1.9
+  # Blocks the camera slides per degree the mouse would have turned the view.
+  mouse-height: 0.03
   # Look down when the wardrobe opens.
   start-pitch: 12
 

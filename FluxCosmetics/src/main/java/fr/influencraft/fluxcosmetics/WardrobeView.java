@@ -38,9 +38,10 @@ import org.bukkit.util.Vector;
  *   else the server refuses the move), unable to move by himself (walk and fly speed 0), on a sphere around the
  *   mannequin where his view looks right at it.</li>
  *   <li><b>Keys drive the camera</b>: left and right turn it around the mannequin, forward and backward raise or lower
- *   it, the mouse wheel brings it closer or farther (his held slot is put back at once, {@link Wardrobe}). Moving the
- *   mouse forward or back raises or lowers it too (his pitch is the camera's, read as soon as it moves,
- *   {@link Camera#turns}); its sideways moves are turned back at once.</li>
+ *   it around the mannequin, the mouse wheel brings it closer or farther (his held slot is put back at once,
+ *   {@link Wardrobe}). Moving the mouse forward or back slides the camera and the point it looks at up or down
+ *   (feet to head), its angle unchanged; his view is turned back to the camera's after each move of the mouse
+ *   ({@link Camera#turns}).</li>
  *   <li>He is moved by {@link Camera#moveSelf}, which never touches his rotation (a server teleport resets it and makes
  *   the server deaf to his rotation until his client answers, 2026-11-20); his view is turned with the camera by
  *   {@link Camera#turn}.</li>
@@ -78,8 +79,12 @@ final class WardrobeView {
     private final Settings settings;
     private final Location back;
     private final World world;
-    /** The point the camera looks at. */
-    private final Vector target;
+    /** The mannequin's feet; the camera looks at {@link #height} above them. */
+    private final Vector base;
+    /** Height of the point looked at above the mannequin's feet, slid by the mouse (read by the network thread). */
+    private volatile double height;
+    /** Until when his rotation packets still carry a mouse move already counted (nanos). */
+    private volatile long settling;
     private final double eyeHeight = STANDING_EYE * SCALE;
 
     Mannequin mannequin;
@@ -108,7 +113,8 @@ final class WardrobeView {
         this.settings = plugin.settings();
         this.back = player.getLocation();
         this.world = back.getWorld();
-        this.target = back.toVector().add(new Vector(0, settings.targetHeight(), 0));
+        this.base = back.toVector();
+        this.height = settings.targetHeight();
     }
 
     // ================================================================== opening and closing
@@ -169,19 +175,24 @@ final class WardrobeView {
         Hotbar.show(player, hotbar());
         Hotbar.bars(player, false);
         Sidebar.hide(player, true);
-        // the mouse forward or back raises or lowers the camera; sideways belongs to the keys and is turned back
+        // the mouse never turns the view: forward or back slides the camera up or down, then the view goes back
         Camera.turns(player, (p, y, x) -> {
-            float cy = yaw;
-            if (Math.abs(wrap(y - cy)) > SLACK) Camera.turn(p, cy, false, 0, true);
-            float clamped = Math.clamp(x, settings.minPitch(), settings.maxPitch());
-            if (clamped != x) Camera.turn(p, 0, true, clamped, false);
+            float cy = yaw, cx = pitch;
+            float up = cx - x;
+            boolean sideways = Math.abs(wrap(y - cy)) > SLACK;
             // his client answers each move with his rotation, unchanged: not a mouse move (that answer looped)
-            if (Math.abs(clamped - pitch) <= 0.01f) return;
-            pitch = clamped;
+            if (Math.abs(up) <= SLACK && !sideways) return;
             long now = System.nanoTime();
+            if (now - settling > 0) {
+                // forward (looking up) raises the camera
+                height = Math.clamp(height + up * settings.mouseHeight(), settings.minHeight(), settings.maxHeight());
+                // the packets already on their way still carry this move: not counted twice
+                settling = now + (p.getPing() + 25) * 1_000_000L;
+            }
+            Camera.turn(p, cy, false, cx, false);
             if (now - lastMove < MOVE_GAP_NANOS) return;
             lastMove = now;
-            Vector f = feet(cy, clamped, reach);
+            Vector f = feet(cy, cx, reach);
             Camera.moveSelf(p, f.getX(), f.getY(), f.getZ());
         });
         hint();
@@ -261,13 +272,19 @@ final class WardrobeView {
 
     /** His feet when his eyes look at the target from that direction and distance. */
     private Vector feet(float yaw, float pitch, double distance) {
-        Vector eye = target.clone().subtract(direction(yaw, pitch).multiply(distance));
+        Vector eye = target().subtract(direction(yaw, pitch).multiply(distance));
         return eye.setY(eye.getY() - eyeHeight);
+    }
+
+    /** The point the camera looks at (a new vector). */
+    private Vector target() {
+        return base.clone().setY(base.getY() + height);
     }
 
     /** The zoom, or less when a block stands between the mannequin and the camera or where his body would be. */
     private double reach() {
         float y = yaw, x = pitch;
+        Vector target = target();
         Vector backwards = direction(y, x).multiply(-1);
         RayTraceResult hit = world.rayTraceBlocks(target.toLocation(world), backwards, zoom + WALL_GAP,
                 FluidCollisionMode.NEVER, true);
