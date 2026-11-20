@@ -47,6 +47,15 @@ final class WardrobeView {
     private static final float SLACK = 0.5f;
     /** Room kept between the camera and a block in the way. */
     private static final double WALL_GAP = 0.3;
+    /**
+     * His size meanwhile: his body (1.8 blocks under his eyes at full size) would go into the floor or a wall where his
+     * eyes are free, and the server would refuse the move and put him back (kicked for too many packets, 2026-11-20).
+     */
+    private static final double SCALE = 0.1;
+    /** Eyes of a standing (flying) player at full size. */
+    private static final double STANDING_EYE = 1.62;
+    /** Least time between two moves sent from his mouse; the tick sends the last one. */
+    private static final long MOVE_GAP_NANOS = 40_000_000L;
 
     static final int CAMERA_SLOT = 0;
     static final int LEAVE_SLOT = 8;
@@ -69,8 +78,12 @@ final class WardrobeView {
     private double zoom;
     /** Distance the camera really stands at (zoom, closer when a block is in the way), read by the network thread. */
     private volatile double reach;
-    /** His eyes above his feet while he flies. */
-    private final double eyeHeight;
+    /** His eyes above his feet while he flies, at {@link #SCALE}. */
+    private final double eyeHeight = STANDING_EYE * SCALE;
+    /** The shrink, a transient modifier: never saved, gone after a crash. */
+    private static final org.bukkit.NamespacedKey SHRINK = new org.bukkit.NamespacedKey("fluxcosmetics", "wardrobe");
+    /** Last move sent from his mouse (network thread). */
+    private volatile long lastMove;
     /** True while slot 1 is held: his mouse moves the camera. Read by the network thread. */
     private volatile boolean orbiting = true;
     /** The still camera's direction, read by the network thread. */
@@ -94,7 +107,6 @@ final class WardrobeView {
         this.back = player.getLocation();
         this.world = back.getWorld();
         this.target = back.toVector().add(new Vector(0, settings.targetHeight(), 0));
-        this.eyeHeight = player.getEyeHeight();
     }
 
     // ================================================================== opening and closing
@@ -129,6 +141,12 @@ final class WardrobeView {
         player.setWalkSpeed(0);
         player.setFlySpeed(0);
         player.setFallDistance(0);
+        var scale = player.getAttribute(org.bukkit.attribute.Attribute.SCALE);
+        if (scale != null) {
+            scale.removeModifier(SHRINK);
+            scale.addTransientModifier(new org.bukkit.attribute.AttributeModifier(SHRINK, SCALE - 1,
+                    org.bukkit.attribute.AttributeModifier.Operation.MULTIPLY_SCALAR_1));
+        }
         if (!player.hasPotionEffect(PotionEffectType.INVISIBILITY)) {
             // an invisible player's arm is not drawn in front of his view
             madeInvisible = true;
@@ -143,7 +161,7 @@ final class WardrobeView {
         stillPitch = pitch;
         mouseYaw = yaw;
         mousePitch = pitch;
-        reach = Math.min(zoom, free(direction(yaw, pitch)));
+        reach = Math.min(zoom, free(yaw, pitch));
         // the one real teleport: his view is turned to the mannequin, then only his mouse turns it
         Vector start = feet(yaw, pitch, reach);
         teleport(new Location(world, start.getX(), start.getY(), start.getZ(), yaw, pitch));
@@ -153,11 +171,17 @@ final class WardrobeView {
         Hotbar.bars(player, false);
         Sidebar.hide(player, true);
         Camera.turns(player, (p, y, x) -> {
+            // his client answers each move with his rotation, unchanged: not his mouse (that answer looped forever)
+            boolean turned = Math.abs(wrap(y - mouseYaw)) > 0.01f || Math.abs(x - mousePitch) > 0.01f;
             mouseYaw = y;
             mousePitch = x;
             if (orbiting) {
+                if (!turned) return;
                 float clamped = Math.clamp(x, settings.minPitch(), settings.maxPitch());
                 if (clamped != x) Camera.turn(p, 0, true, clamped, false);
+                long now = System.nanoTime();
+                if (now - lastMove < MOVE_GAP_NANOS) return;
+                lastMove = now;
                 Vector f = feet(y, clamped, reach);
                 Camera.moveSelf(p, f.getX(), f.getY(), f.getZ());
                 return;
@@ -183,6 +207,8 @@ final class WardrobeView {
         player.setFlying(flying && allowFlight);
         player.setAllowFlight(allowFlight);
         player.setFallDistance(0);
+        var scale = player.getAttribute(org.bukkit.attribute.Attribute.SCALE);
+        if (scale != null) scale.removeModifier(SHRINK);
         if (madeInvisible) player.removePotionEffect(PotionEffectType.INVISIBILITY);
         madeInvisible = false;
         if (bringBack) teleport(back);
@@ -207,7 +233,7 @@ final class WardrobeView {
             }
         }
         if (!player.isFlying()) player.setFlying(true);
-        reach = Math.min(zoom, free(direction(yaw, pitch)));
+        reach = Math.min(zoom, free(yaw, pitch));
         Vector f = feet(yaw, pitch, reach);
         // moved: zoom, a block in the way, his mouse since the last packet; else now and then against any drift
         if (placed == null || placed.distanceSquared(f) > 1e-4 || ticks % 20 == 0) {
@@ -244,12 +270,20 @@ final class WardrobeView {
     }
 
     /** How far the camera can go back from the target in this direction before a block. */
-    private double free(Vector dir) {
-        Vector backwards = dir.clone().multiply(-1);
+    private double free(float yaw, float pitch) {
+        Vector backwards = direction(yaw, pitch).multiply(-1);
         RayTraceResult hit = world.rayTraceBlocks(target.toLocation(world), backwards, zoom + WALL_GAP,
                 FluidCollisionMode.NEVER, true);
-        if (hit == null) return zoom;
-        return Math.max(0.4, hit.getHitPosition().distance(target) - WALL_GAP);
+        double d = hit == null ? zoom : Math.max(0.4, hit.getHitPosition().distance(target) - WALL_GAP);
+        // his (small) body must be free too, else the server refuses the move
+        while (d > 0.4 && world.hasCollisionsIn(body(feet(yaw, pitch, d)))) d -= 0.1;
+        return Math.max(0.4, d);
+    }
+
+    private org.bukkit.util.BoundingBox body(Vector feet) {
+        double half = 0.3 * SCALE, height = 1.8 * SCALE;
+        return new org.bukkit.util.BoundingBox(feet.getX() - half, feet.getY(), feet.getZ() - half,
+                feet.getX() + half, feet.getY() + height, feet.getZ() + half);
     }
 
     private void teleport(Location to) {
