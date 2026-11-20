@@ -133,7 +133,7 @@ def torso():
 
 
 def sleeve():
-    return Cube("manche", [-8.5, 14, -3], [-3.5, 24, 3], "fabric")
+    return Cube("manche", [-8.5, 14, -3], [-3.5, 24.5, 3], "fabric")  # half a pixel above the arm: its top never lies in the arm's
 
 
 def right_arm():
