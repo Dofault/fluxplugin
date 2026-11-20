@@ -39,8 +39,8 @@ menu-camera:
   look-down: 17
   shots:
     head:  {height: 1.8, distance: 1.6, pitch: 6, look-down: 22}
-    chest: {height: 1.25, distance: 1.6, pitch: 8}
-    legs:  {height: 0.75, distance: 1.6, pitch: 10}
+    chest: {height: 1.25, distance: 1.9, pitch: 8, look-down: 22}
+    legs:  {height: 0.75, distance: 1.7, pitch: 10, look-down: 20}
     feet:  {height: 0.15, distance: 1.4, pitch: 16}
     # the whole body for the tags
     tags:  {height: 1.0, distance: 3.4, pitch: 8, look-down: 14}
