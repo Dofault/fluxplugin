@@ -15,6 +15,7 @@ beats, semitones struck together).
 Ambient songs play once each in a shuffled list (Ambience): every song ends on a held chord (end()).
 """
 import os
+import random
 
 import score
 from score import Piece, Section, chord, lowest
@@ -50,7 +51,11 @@ GROOVES = {
 CALM_BASS = {'4/4': [(0, R), (8, F)], '3/4': [(0, R)], '6/8': [(0, R)], 'shuffle': [(0, R), (6, F)]}
 
 VOLUMES = {'lead': 0.7, 'lead2': 0.2, 'harmony': 0.26, 'counter': 0.42, 'arp': 0.2, 'comp': 0.24, 'bass': 0.66,
-           'deep': 0.34, 'kick': 0.42, 'snare': 0.22, 'roll': 0.16, 'hat': 0.11, 'sparkle': 0.12}
+           'deep': 0.34, 'kick': 0.42, 'snare': 0.22, 'roll': 0.16, 'hat': 0.11, 'sparkle': 0.12, 'pick': 0.2}
+# optional roles, only played by the songs that give them an instrument (the band of the music pets):
+#   pick     picked eighth notes over the chord (root, fifth, octave, tenth), from energy 1
+#   sparkle  a few chord notes at random steps (seeded by the song id: the file never changes), from energy 1
+EIGHTHS = {'4/4': 2, '3/4': 2, '6/8': 2, 'shuffle': None}   # steps of an eighth note; shuffle: swung (0, 2) per beat
 MELODIC = ('lead', 'counter', 'lead2', 'harmony')
 # FluxMusic's effects (Song(effects=True), 2026-11-19): chorus on the basses and the octave doubling, the answer and
 # the second voice placed a little left and right (fixed stereo, never an orbit), the tune's long notes held, a glide
@@ -86,6 +91,7 @@ class Song:
             tracks.setdefault(role, (DRUM_INSTRUMENT[role], vol[role]))
         self.piece = Piece(song_id, title, bpm, spb, bpb, tracks, melodic={'lead'})
         self.L = self.piece.L
+        self.rng = random.Random(song_id)
         self.sections = []
         self.doubled = set()       # sections where lead2 and harmony follow the tune
 
@@ -127,6 +133,10 @@ class Song:
                 self.arp(sec, bars, tuple(range(L)) if g['arp'] == '16' else g['arp'])
             if self.has('comp'):
                 score.strum(sec, 'comp', bars=bars, pattern=g['comp'], low=self.comp_low())
+            if self.has('pick'):
+                self.pick(sec, bars)
+            if self.has('sparkle'):
+                score.stars(sec, 'sparkle', bars, self.rng, tuple(range(L // 2, L, 2)), chance=0.5 + 0.2 * energy)
             score.drums(sec, 'snare', g['snare'], bars)
             score.drums(sec, 'hat', g['hat'], bars)
             score.drums(sec, 'kick', g['kick'] if energy >= 2 else g['kick'][:1] + tuple(
@@ -136,6 +146,20 @@ class Song:
                 root, _ = chord(sym)
                 lo, _ = self.piece.range('deep')
                 sec.hit('deep', start, {lowest(root, lo + 4)})
+
+    def pick(self, sec, bars):
+        """Picked eighths over each chord: root, fifth, octave, tenth, octave, fifth..."""
+        lo, hi = self.piece.range('pick')
+        e = EIGHTHS[self.meter]
+        beat = self.piece.steps_per_beat
+        for start, size, sym in sec.slots_in(bars):
+            root, iv = chord(sym)
+            r = lowest(root, lo)
+            cycle = [r, r + 7, r + 12, r + 12 + iv[1], r + 12, r + 7]
+            cycle = [n - 12 if n > hi else n for n in cycle]
+            steps = range(0, size, e) if e else [b + x for b in range(0, size, beat) for x in (0, 2)]
+            for k, s in enumerate(steps):
+                sec.hit('pick', start + s, {cycle[k % len(cycle)]})
 
     def comp_low(self):
         lo, hi = self.piece.range('comp')

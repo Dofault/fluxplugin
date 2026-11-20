@@ -53,7 +53,9 @@ LEGACY = [
     ("superpuissance", "Superpuissance", "b22222"),
     # rarities (ids of the former AdvancedEnchantments groups), colours of the job tiers
 ] + [(rid, name, colour) for rid, (name, colour) in zip(
-    ["simple", "unique", "elite", "ultimate", "legendary", "fabled"], RARITIES)]
+    ["simple", "unique", "elite", "ultimate", "legendary", "fabled"], RARITIES)] + [
+    # exclusive rarity of the music pets (fête de la musique, 2026-11-20), outside the job tiers
+    ("melodique", "Mélodique", "1fbfa6")]
 CHAT_H = 10        # height in the chat and in item lores (chosen in game on 2026-10-30), y_position CHAT_Y
 CHAT_Y = 9
 PROFILE_Y = 76     # window y of the rank tag of the profile (row 3 of the identity card, above the sections, vanilla theme)
