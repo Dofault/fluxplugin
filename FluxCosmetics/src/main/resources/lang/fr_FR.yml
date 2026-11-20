@@ -8,3 +8,12 @@ usage: "!&#FF5C5C/%flux_cmd_fluxcosmetics_tenue% [reload]"
 # barre d'action pendant la garde-robe
 hint: "&r&7%img_move_keys% &#FFD94DCaméra   &r&7%img_mouse_move% &#FFD94DMonter/Descendre   &r&7%img_middle_click% &#FFD94DZoom   &r&7%img_right_click% &#FFD94DMenu cosmétique   &r&7%img_left_click% &#FFD94DQuitter"
 menu-soon: "&7Le choix des cosmétiques arrive bientôt."
+catalog:
+  wear: "Porter"
+  take-off: "Retirer"
+  worn: "Porté en ce moment"
+  locked: "Pas encore débloqué"
+  preview: "Voir sur toi"
+  wearing: "&7Tu portes maintenant &f%name%&7."
+  taken-off: "&7Tu as retiré &f%name%&7."
+  locked-message: "&#FF5C5C%name% &7n'est pas encore débloqué."

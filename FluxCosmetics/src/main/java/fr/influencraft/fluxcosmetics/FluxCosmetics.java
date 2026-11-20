@@ -1,6 +1,7 @@
 package fr.influencraft.fluxcosmetics;
 
 import fr.influencraft.flux.api.FluxPlugin;
+import fr.influencraft.flux.api.client.RecipeBook;
 import fr.influencraft.flux.api.staff.Staff;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -11,7 +12,8 @@ import java.util.List;
 /**
  * FluxCosmetics: the cosmetics of the players. Outfits will be drawn over the armour a player wears (or over no
  * armour at all), for everybody's eyes; they are chosen in the wardrobe ({@link Wardrobe}), where the player sees
- * himself from outside and turns the camera around himself with his mouse.
+ * himself from outside and turns the camera around himself, and in the recipe book of the inventory, which becomes the
+ * cosmetics catalog ({@link Catalog}).
  *
  * <pre>
  *   /tenue           open or close the wardrobe (aliases /garderobe, /cosmetique, /cosmetiques)
@@ -22,12 +24,21 @@ public final class FluxCosmetics extends FluxPlugin {
 
     private Settings settings;
     private Wardrobe wardrobe;
+    private Catalog catalog;
 
     @Override
     protected void enable() {
         settings = Settings.read(getConfig());
         wardrobe = new Wardrobe(this);
         Bukkit.getPluginManager().registerEvents(wardrobe, this);
+        catalog = new Catalog(this);
+        catalog.load(getConfig().getConfigurationSection("cosmetics"));
+        Bukkit.getPluginManager().registerEvents(catalog, this);
+        // the green book of the inventory becomes the cosmetics catalog (no crafting recipe in it any more)
+        if (getConfig().getBoolean("recipe-book", true)) {
+            if (RecipeBook.available()) RecipeBook.claim(this, catalog);
+            else getLogger().warning("No packet adapter in Flux: the recipe book keeps its recipes");
+        }
         command("tenue")
                 .description("Wardrobe: see yourself from outside and choose your outfit.")
                 .aliases("garderobe", "cosmetique", "cosmetiques")
@@ -40,12 +51,17 @@ public final class FluxCosmetics extends FluxPlugin {
     @Override
     protected void disable() {
         if (wardrobe != null) wardrobe.closeAll();
+        RecipeBook.release(this);
     }
 
     @Override
     public void reload() {
         super.reload();
         settings = Settings.read(getConfig());
+        if (catalog != null) {
+            catalog.load(getConfig().getConfigurationSection("cosmetics"));
+            for (org.bukkit.entity.Player p : Bukkit.getOnlinePlayers()) RecipeBook.refresh(p);
+        }
     }
 
     Settings settings() {

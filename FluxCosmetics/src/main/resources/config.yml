@@ -31,3 +31,42 @@ camera:
   # Look down when the wardrobe opens.
   start-pitch: 12
 
+
+# The green book button of the inventory opens the cosmetics instead of the recipes (no crafting recipe in the book any
+# more; crafting itself is unchanged, furnace books keep theirs). Java only.
+recipe-book: true
+
+# The cosmetics of the catalog. tab: equipment, building, redstone or misc (the four tabs of the book, icons drawn by
+# the client). icon: a material or itemsadder:<namespace>:<id>. unlocked: everybody has it (first version: ownership
+# comes later).
+cosmetics:
+  crown:
+    name: "Golden crown"
+    description: "A crown for the most famous."
+    icon: GOLDEN_HELMET
+    tab: equipment
+    unlocked: true
+  wings:
+    name: "Wings"
+    description: "Wings that only look like they fly."
+    icon: ELYTRA
+    tab: equipment
+    unlocked: false
+  cape:
+    name: "Cape"
+    description: "A cape on your shoulders."
+    icon: LEATHER_CHESTPLATE
+    tab: equipment
+    unlocked: true
+  halo:
+    name: "Halo"
+    description: "A light over your head."
+    icon: GLOWSTONE_DUST
+    tab: misc
+    unlocked: true
+  flames:
+    name: "Flames"
+    description: "Flames at your feet."
+    icon: BLAZE_POWDER
+    tab: misc
+    unlocked: false

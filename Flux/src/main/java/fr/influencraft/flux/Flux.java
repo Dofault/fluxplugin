@@ -207,6 +207,10 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         var camera = new fr.influencraft.flux.adapters.packetevents.PacketEventsCamera(this);
         cameraListener = PacketEvents.getAPI().getEventManager().registerListener(camera);
         fr.influencraft.flux.api.client.Camera.bind(camera);
+        // the crafting recipe book turned into a plugin's catalog (api.client.RecipeBook, FluxCosmetics)
+        var recipeBook = new fr.influencraft.flux.adapters.packetevents.RecipeBookCatalog(this);
+        recipeBookListener = PacketEvents.getAPI().getEventManager().registerListener(recipeBook);
+        fr.influencraft.flux.api.client.RecipeBook.bind(recipeBook);
         // Flux's part of the resource pack: the one text shader of the suite (api.client.TextShader), HUD pictures
         if (clientPack == null) clientPack = new fr.influencraft.flux.pack.ClientPack(this, getFile());
         clientPack.configure(getConfig().getConfigurationSection("client-pack"));
@@ -233,6 +237,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         if (clientPack != null) clientPack.stop();
         if (bossBarListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(bossBarListener);
         if (cameraListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(cameraListener);
+        if (recipeBookListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(recipeBookListener);
         fr.influencraft.flux.api.util.PlayerSettings.close();
         fr.influencraft.flux.api.data.Database.stop();
         if (papiBridge != null) papiBridge.shutdown();
@@ -264,6 +269,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     private fr.influencraft.flux.pack.ClientPack clientPack;
     private com.github.retrooper.packetevents.event.PacketListenerCommon bossBarListener;
     private com.github.retrooper.packetevents.event.PacketListenerCommon cameraListener;
+    private com.github.retrooper.packetevents.event.PacketListenerCommon recipeBookListener;
     private fr.influencraft.flux.leaderboard.LeaderboardService leaderboards;
     private fr.influencraft.flux.profile.ProfileService profile;
     private fr.influencraft.flux.help.HelpService help;
