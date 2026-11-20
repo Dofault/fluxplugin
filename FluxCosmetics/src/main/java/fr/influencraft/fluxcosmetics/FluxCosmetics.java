@@ -41,6 +41,7 @@ public final class FluxCosmetics extends FluxPlugin {
         Bukkit.getPluginManager().registerEvents(outfits, this);
         Bukkit.getPluginManager().registerEvents(outfits.rpg(), this);
         outfits.rpg().start();
+        fr.influencraft.flux.api.cosmetics.ClassOutfits.provide(outfits.rpg()::classItems);
         // started while players are online (restart of the plugin): their cosmetics back on
         for (Player p : Bukkit.getOnlinePlayers()) outfits.open(p);
         menu = new CosmeticsMenu(this);
@@ -70,6 +71,7 @@ public final class FluxCosmetics extends FluxPlugin {
 
     @Override
     protected void disable() {
+        fr.influencraft.flux.api.cosmetics.ClassOutfits.provide(null);
         if (wardrobe != null) wardrobe.closeAll();
         if (outfits != null) {
             outfits.closeAll();

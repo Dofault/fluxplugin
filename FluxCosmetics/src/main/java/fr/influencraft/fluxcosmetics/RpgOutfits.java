@@ -135,6 +135,18 @@ final class RpgOutfits implements Listener {
         return o != null ? o : catalog.values().stream().findFirst().orElse(null);
     }
 
+    /** The items of the outfit of a class id by armour slot ({@code default} for a class without one), for Flux's ClassOutfits. */
+    Map<EquipmentSlot, ItemStack> classItems(String classId) {
+        Outfit o = get(byClass.get(classId));
+        if (o == null) o = get(byClass.get("default"));
+        Map<EquipmentSlot, ItemStack> out = new EnumMap<>(EquipmentSlot.class);
+        if (o != null) for (EquipmentSlot slot : Outfits.ARMOUR) {
+            ItemStack item = item(o, slot);
+            if (item != null) out.put(slot, item);
+        }
+        return out;
+    }
+
     /** Whether he may wear it: his class's, free, given to him, or he is an admin. */
     boolean owns(Player player, Outfit o) {
         if (o == null) return false;

@@ -609,6 +609,8 @@ final class ShowcaseSession {
             m.setProfile(ResolvableProfile.resolvableProfile(player.getPlayerProfile()));
             ItemStack weapon = weapon(id);
             if (weapon != null) m.getEquipment().setItemInMainHand(weapon);
+            // the class's own outfit (the cosmetics plugin's, through Flux): the actor looks the part
+            fr.influencraft.flux.api.cosmetics.ClassOutfits.dress(m, id);
         });
         hero = new RpgPlayer(actor.getUniqueId(), c, settings.level(), 0);
         hero.stats(StatSheet.compute(set.stats(), c.modifiers(settings.level())));
