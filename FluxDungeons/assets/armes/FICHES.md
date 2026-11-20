@@ -340,3 +340,57 @@ Affichages (`display` du modèle) :
 | `on_shelf` | 0 180 45 | -0.29 -0.29 0 | 0.418 |
 | `ground` | 0 0 0 | 0 0 0 | 0.229 |
 | `head` | 0 180 0 | 0 13 7 | 0.6 |
+
+## Cœur-de-Givre (Cryomancien) : `fluxdungeons:coeur_de_givre`
+
+Grand bâton à deux mains : manche de bois sombre pris sous une fine couche de glace, terminaison minérale en bas ; au sommet, trois cristaux imbriqués (un grand cristal central à pointe, un cristal sombre penché à gauche, un cristal clair plus court penché à droite) tenus par un collier et deux griffes de métal ancien.
+
+| Dimension | Valeur |
+|---|---|
+| Longueur (Y) | 32.5 (de -8 à 24.5) |
+| Largeur max (X) | 14.67 (de 0.473 à 15.144) |
+| Épaisseur max (Z) | 4 |
+| Prise (point tenu par le poing) | (8, 2, 8) |
+| Centre visuel (milieu de l'encombrement) | (7.809, 8.25, 8) |
+| Longueur en main, 3e personne | 30.875 px de joueur (joueur = 32) |
+| Nombre de cubes | **10** |
+
+Palette :
+
+| Matériau (texture) | Couleur | Lumineux |
+|---|---|---|
+| `bois_gele` | Bois ancien gelé `#263D55` |  |
+| `socle` | Pierre froide `#547D9A` |  |
+| `cristal` | Cristal central `#8CCFE8` | oui |
+| `cristal_sombre` | Cristal de gauche `#5CA7C9` |  |
+| `cristal_clair` | Cristal de droite `#B5E7F5` |  |
+| `metal_gele` | Métal ancien gelé `#354F69` |  |
+
+Hiérarchie (groupes, dans l'ordre de construction) : `socle` (1), `manche` (2), `fixations` (3), `cristaux` (4)
+
+| # | Groupe | Cube | De (x, y, z) | À (x, y, z) | Taille | Rotation | Matériau | Note |
+|---|---|---|---|---|---|---|---|---|
+| 1 | socle | `socle` | 5.5 -8 6 | 10.5 -5 10 | 5 × 3 × 4 |  | `socle` | terminaison minérale, 5 x 3 x 4 |
+| 2 | manche | `manche_bas` | 6.5 -5 6.5 | 9.5 4 9.5 | 3 × 9 × 3 |  | `bois_gele` | zone de prise |
+| 3 | manche | `manche_haut` | 6.5 4 6.5 | 9.5 13 9.5 | 3 × 9 × 3 |  | `bois_gele` |  |
+| 4 | fixations | `collier` | 5.5 12 6 | 10.5 14 10 | 5 × 2 × 4 |  | `metal_gele` | porte les trois cristaux |
+| 5 | fixations | `griffe_g` | 1.4 14.6 6.2 | 6 16.4 9.8 | 4.6 × 1.8 × 3.6 | Z 22.5° autour de (3.7, 15.5, 8) | `metal_gele` | serre le cristal de gauche |
+| 6 | fixations | `griffe_d` | 10 14.6 6.2 | 14.6 16.4 9.8 | 4.6 × 1.8 × 3.6 | Z -22.5° autour de (12.3, 15.5, 8) | `metal_gele` | serre le cristal de droite |
+| 7 | cristaux | `cristal_central` | 5.5 14 6 | 10.5 22 10 | 5 × 8 × 4 |  | `cristal` | élément principal, 5 x 8 x 4 |
+| 8 | cristaux | `cristal_pointe` | 6.232 20.232 6 | 9.768 23.768 10 | 3.536 × 3.536 × 4 | Z 45° autour de (8, 22, 8) | `cristal` | pointe du cristal central |
+| 9 | cristaux | `cristal_gauche` | 1.661 12.734 6.5 | 5.661 19.734 9.5 | 4 × 7 × 3 | Z 22.5° autour de (3.661, 16.234, 8) | `cristal_sombre` | penché vers la gauche, 4 x 7 x 3 |
+| 10 | cristaux | `cristal_droit` | 10.148 12.772 6.5 | 14.148 18.772 9.5 | 4 × 6 × 3 | Z -22.5° autour de (12.148, 15.772, 8) | `cristal_clair` | plus court, penché vers la droite, 4 x 6 x 3 |
+
+Affichages (`display` du modèle) :
+
+| Contexte | Rotation | Translation | Échelle |
+|---|---|---|---|
+| `thirdperson_righthand` | 0 -90 -37 | 0 3.23 4.87 | 0.95 |
+| `thirdperson_lefthand` | 0 90 37 | 0 3.23 4.87 | 0.95 |
+| `firstperson_righthand` | 0 -90 -10 | 1.13 2.09 0.17 | 0.5 |
+| `firstperson_lefthand` | 0 90 10 | 1.13 2.09 0.17 | 0.5 |
+| `gui` | 0 0 -45 | 0.34 0.06 0 | 0.616 |
+| `fixed` | 0 180 45 | 0.06 0.32 0 | 0.578 |
+| `on_shelf` | 0 180 45 | 0.06 0.32 0 | 0.578 |
+| `ground` | 0 0 0 | 0.06 -0.08 0 | 0.338 |
+| `head` | 0 180 0 | 0 13 7 | 0.6 |

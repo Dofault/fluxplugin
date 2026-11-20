@@ -50,7 +50,7 @@ items:
     rarity: common
     stats: {magic_power: 9, max_mana: 10}
     description: [Throws a shard of ice with a left click., Every hit leaves frost.]
-    look: {material: BREEZE_ROD, name: Frostheart}
+    look: {material: BREEZE_ROD, name: Frostheart, model: 'fluxdungeons:coeur_de_givre'}
   class_pyromancer_weapon:
     slot: weapon
     classes: [pyromancer]

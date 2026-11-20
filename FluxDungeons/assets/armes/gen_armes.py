@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Class weapons of the RPG universe in 3D: Brise-Aube, Sylve-Celeste, Sceptre du Neant, Reliquaire de l'Aube.
+"""Class weapons of the RPG universe in 3D: Brise-Aube, Sylve-Celeste, Sceptre du Neant, Reliquaire de l'Aube,
+Coeur-de-Givre (the cryomancer's staff, its textures painted here pixel by pixel).
 
     <venv with Pillow and numpy>/python3 gen_armes.py <ItemsAdder/contents/fluxdungeons> [previews dir] [sheet.md]
 
@@ -51,6 +52,9 @@ class Weapon:
         self.materials = materials  # key -> (hex, label, emissive)
         self.cubes = []
         self.part = None
+        # material -> function(x, y) giving the hex colour of a pixel of its 16 x 16 hand-painted texture (one pixel
+        # per model unit, a face takes its window from the top left corner); the others get a plain swatch
+        self.painted = {}
 
     def group(self, part):
         self.part = part
@@ -343,7 +347,67 @@ def reliquaire_aube():
     return w
 
 
-WEAPONS = [brise_aube, sylve_celeste, sceptre_neant, reliquaire_aube]
+def coeur_de_givre():
+    """Cryomancer's staff, 32 units tall: a dark frozen shaft, three crystals set as one cluster, nothing floating."""
+    w = Weapon("coeur_de_givre", "Cœur-de-Givre", "Cryomancien",
+               "Grand bâton à deux mains : manche de bois sombre pris sous une fine couche de glace, terminaison "
+               "minérale en bas ; au sommet, trois cristaux imbriqués (un grand cristal central à pointe, un cristal "
+               "sombre penché à gauche, un cristal clair plus court penché à droite) tenus par un collier et deux "
+               "griffes de métal ancien.",
+               {"bois_gele": ("#263D55", "Bois ancien gelé", False), "socle": ("#547D9A", "Pierre froide", False),
+                "cristal": ("#8CCFE8", "Cristal central", True), "cristal_sombre": ("#5CA7C9", "Cristal de gauche", False),
+                "cristal_clair": ("#B5E7F5", "Cristal de droite", False), "metal_gele": ("#354F69", "Métal ancien gelé", False)})
+
+    def wood(x, y):
+        # lit edge broken twice, dark edge, two short veins, two marks of frost: nothing else
+        if (x, y) in ((1, 2), (0, 8)):
+            return "#B5E7F5"
+        if x % 3 == 0:
+            return "#263D55" if y % 6 == 4 else "#476783"
+        if x % 3 == 2 or (x % 3 == 1 and y in (4, 5, 9)):
+            return "#1C3045"
+        return "#263D55"
+
+    def crystal(base, light, shadow, spark):
+        # three flat facets cut on the diagonal, one point of reflection: mineral, not glass
+        def pixel(x, y):
+            t = 1.3 * x + 0.6 * y
+            if (x, y) == (1, 1):
+                return spark
+            if t < 2.2 or x == 0 and y < 5:
+                return light
+            return shadow if t > 6.4 else base
+        return pixel
+
+    def cold_stone(x, y):
+        return "#A7D9ED" if y == 0 or x == 0 and y < 2 else ("#397C9D" if y >= 2 else "#547D9A")
+
+    def old_metal(x, y):
+        return "#719CB6" if y == 0 and x < 2 else ("#263D55" if y >= 1 and x >= 3 else "#354F69")
+
+    w.painted = {"bois_gele": wood, "socle": cold_stone, "metal_gele": old_metal,
+                 "cristal": crystal("#8CCFE8", "#D9F5FF", "#397C9D", "#D9F5FF"),
+                 "cristal_sombre": crystal("#5CA7C9", "#8CCFE8", "#397C9D", "#B5E7F5"),
+                 "cristal_clair": crystal("#B5E7F5", "#D9F5FF", "#8CCFE8", "#D9F5FF")}
+    w.group("socle")
+    w.box("socle", [5.5, -8, 6], [10.5, -5, 10], "socle", note="terminaison minérale, 5 x 3 x 4")
+    w.group("manche")
+    # two cubes of 11: a face never stretches its texture beyond 16 units
+    w.box("manche_bas", [6.5, -5, 6.5], [9.5, 4, 9.5], "bois_gele", note="zone de prise")
+    w.box("manche_haut", [6.5, 4, 6.5], [9.5, 13, 9.5], "bois_gele")
+    w.group("fixations")
+    w.box("collier", [5.5, 12, 6], [10.5, 14, 10], "metal_gele", note="porte les trois cristaux")
+    w.box("griffe_g", [1.4, 14.6, 6.2], [6.0, 16.4, 9.8], "metal_gele", ("z", 22.5), "serre le cristal de gauche")
+    w.box("griffe_d", [10.0, 14.6, 6.2], [14.6, 16.4, 9.8], "metal_gele", ("z", -22.5), "serre le cristal de droite")
+    w.group("cristaux")
+    w.box("cristal_central", [5.5, 14, 6], [10.5, 22, 10], "cristal", note="élément principal, 5 x 8 x 4")
+    w.c("cristal_pointe", [8, 22, 8], [3.536, 3.536, 4], "cristal", ("z", 45), "pointe du cristal central")
+    w.seg("cristal_gauche", (5.0, 13.0), 22.5, 7.0, 4.0, 3.0, "cristal_sombre", overlap=0, note="penché vers la gauche, 4 x 7 x 3")
+    w.seg("cristal_droit", (11.0, 13.0), -22.5, 6.0, 4.0, 3.0, "cristal_clair", overlap=0, note="plus court, penché vers la droite, 4 x 6 x 3")
+    return w
+
+
+WEAPONS = [brise_aube, sylve_celeste, sceptre_neant, reliquaire_aube, coeur_de_givre]
 
 # ------------------------------------------------------------------------------------------- displays
 # Vanilla references (assets/minecraft/models/item/handheld.json and bow.json) and the point of their sprite held
@@ -368,6 +432,8 @@ DISPLAYS = {
     "sylve_celeste": ("bow", 135, (8.1, 8, 8), (25, 0.55), (-90, 0.36)),
     "sceptre_neant": ("handheld", 45, (8, 2, 8), (-47, 0.66), (10, 0.36)),
     "reliquaire_aube": ("handheld", 45, (8, 2.85, 8), (-47, 0.66), (10, 0.36)),
+    # 32 units tall against 47 for the two other staves: held larger, so it stays a two-handed weapon
+    "coeur_de_givre": ("handheld", 45, (8, 2, 8), (-47, 0.95), (10, 0.5)),
 }
 # Spin of the weapon around its own axis (degrees) before it is held: the bow was held back to front in game, its
 # back (grip, crystal, +X) towards the player and the string away (2026-11-13). 180 = back forward, string inward.
@@ -500,6 +566,15 @@ def check(w, disp):
 
 
 # ------------------------------------------------------------------------------------------- textures
+
+def painted(pixel):
+    """Hand-painted material: 16 x 16 pixels given one by one, doubled to the swatch size."""
+    img = Image.new("RGBA", (T, T))
+    for y in range(T):
+        for x in range(T):
+            img.putpixel((x, y), rgb(pixel(x // 2, y // 2)) + (255,))
+    return img
+
 
 def swatch(hexa, emissive, seed):
     """Placeholder swatch: base colour, light grain, soft diagonal sheen (metal) or inner glow (emissive)."""
@@ -786,7 +861,8 @@ def main():
         texdir = os.path.join(pack, "textures/item/armes", w.id)
         os.makedirs(texdir, exist_ok=True)
         for i, (m, (h, _, lum)) in enumerate(w.materials.items()):
-            swatch(h, lum, zlib.crc32((w.id + m).encode())).save(os.path.join(texdir, m + ".png"))
+            tex = painted(w.painted[m]) if m in w.painted else swatch(h, lum, zlib.crc32((w.id + m).encode()))
+            tex.save(os.path.join(texdir, m + ".png"))
         write_json(os.path.join(pack, "models/item", w.id + ".json"), model(w))
         write_json(os.path.join(pack, "items", w.id + ".json"),
                    {"model": {"type": "minecraft:model", "model": "%s:item/%s" % (NS, w.id)}})
