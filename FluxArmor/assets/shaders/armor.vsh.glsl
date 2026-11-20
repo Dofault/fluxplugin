@@ -20,6 +20,9 @@
         int faId = gl_VertexID - gl_BaseVertexARB;
         vec3 faP[4] = vec3[4](subgroupQuadBroadcast(Position, 0u), subgroupQuadBroadcast(Position, 1u),
                               subgroupQuadBroadcast(Position, 2u), subgroupQuadBroadcast(Position, 3u));
+        // Vanilla texture coordinates of the 4 vertices, in pixels of the 64 x 32 armour sheet.
+        vec2 faT[4] = vec2[4](subgroupQuadBroadcast(UV0, 0u), subgroupQuadBroadcast(UV0, 1u),
+                              subgroupQuadBroadcast(UV0, 2u), subgroupQuadBroadcast(UV0, 3u));
         int faV0 = subgroupQuadBroadcast(faId, 0u), faV1 = subgroupQuadBroadcast(faId, 1u);
         int faV2 = subgroupQuadBroadcast(faId, 2u), faV3 = subgroupQuadBroadcast(faId, 3u);
         int faRank = faId & 3, faFirst = faId - faRank;
@@ -29,6 +32,40 @@
         int faBoxes = max(faTexel(1, 0).g, 1);
         int faSlot = (faId / 4) % 6;
         int faBox = (faId / 24) % faBoxes;
+        ivec3 faDims = faTexel(2 + 2 * faBox, 0);
+        ivec3 faInfo = faTexel(3 + 2 * faBox, 0);
+        bool faMirror = faInfo.r == 1;
+        // Which face of the box this is, and which of its corners each vertex is (rank in ModelPart.Cube's polygon
+        // before a mirrored box reverses it). Vanilla sends faces and vertices in that order; other renderers do not
+        // (Sodium: down, up, north, south, west, east), so both are read from where the face sits in the vanilla
+        // texture layout of the box, which every renderer keeps. Outside that layout: vanilla order.
+        int faLabel[4];
+        for (int k = 0; k < 4; k++) faLabel[k] = faMirror ? 3 - k : k;
+        ivec3 faSheet = faTexel(16 + faBox, 0);
+        if (faSheet.b == 1) {
+            vec2 faMid = (faT[0] + faT[1] + faT[2] + faT[3]) * 0.25;
+            vec2 faIn = faMid * vec2(64.0, 32.0) - vec2(faSheet.rg);
+            float faW = float(faDims.x), faH = float(faDims.y), faD = float(faDims.z);
+            int faFound = -1;
+            if (faIn.y > 0.0 && faIn.y < faD) {
+                if (faIn.x > faD && faIn.x < faD + faW) faFound = 0;
+                else if (faIn.x > faD + faW && faIn.x < faD + 2.0 * faW) faFound = 1;
+            } else if (faIn.y > faD && faIn.y < faD + faH) {
+                if (faIn.x > 0.0 && faIn.x < faD) faFound = 2;
+                else if (faIn.x > faD && faIn.x < faD + faW) faFound = 3;
+                else if (faIn.x > faD + faW && faIn.x < 2.0 * faD + faW) faFound = 4;
+                else if (faIn.x > 2.0 * faD + faW && faIn.x < 2.0 * faD + 2.0 * faW) faFound = 5;
+            }
+            if (faFound >= 0) {
+                faSlot = faFound;
+                for (int k = 0; k < 4; k++) {
+                    bool faHighU = faT[k].x > faMid.x;
+                    // Polygon: corner 0 (u1, v0), 1 (u0, v0), 2 (u0, v1), 3 (u1, v1); the up face has v0 below v1.
+                    bool faFirstV = faSlot == 1 ? faT[k].y > faMid.y : faT[k].y < faMid.y;
+                    faLabel[k] = faFirstV ? (faHighU ? 0 : 1) : (faHighU ? 3 : 2);
+                }
+            }
+        }
         int faRow = 1 + faBox * 6 + faSlot;
         ivec3 faFace = faTexel(0, faRow);
         if ((faFace.r & 1) == 0) {
@@ -44,15 +81,12 @@
 
         // Box frame: its two axes in the plane of the face come from the 4 corners (signed sum), the third one from
         // their cross product, oriented by the vanilla normal (also right when mirrored).
-        ivec3 faDims = faTexel(2 + 2 * faBox, 0);
-        ivec3 faInfo = faTexel(3 + 2 * faBox, 0);
-        bool faMirror = faInfo.r == 1;
         vec3 faHalf = vec3(faDims) * 0.5 + float(faInfo.g) / 100.0;
         int faN = FA_AXIS[faSlot], faA = (faN + 1) % 3, faB = (faN + 2) % 3;
         vec3 faEa = vec3(0.0), faEb = vec3(0.0), faF = vec3(0.0);
         float faSn = 0.0;
         for (int k = 0; k < 4; k++) {
-            ivec3 s = FA_CORNERS[faSlot * 4 + (faMirror ? 3 - k : k)];
+            ivec3 s = FA_CORNERS[faSlot * 4 + faLabel[k]];
             if (faMirror) s.x = -s.x;
             faEa += float(s[faA]) * faP[k];
             faEb += float(s[faB]) * faP[k];
@@ -76,8 +110,8 @@
         faFrame[faN] = faEn;
         vec3 faCenter = faF - faSn * faHalf[faN] * faEn;
 
-        // Model corner carried by this vertex.
-        int faX = 2 + 4 * faRank;
+        // Model corner carried by this vertex: the rank vanilla sends this corner at.
+        int faX = 2 + 4 * (faMirror ? 3 - faLabel[faRank] : faLabel[faRank]);
         vec3 faPos = faCenter + faFrame * faOffset(faX, faRow);
         vec3 faNormal = normalize(faFrame * (vec3(faTexel(1, faRow)) / 127.5 - 1.0));
         gl_Position = ProjMat * ModelViewMat * vec4(faPos, 1.0);

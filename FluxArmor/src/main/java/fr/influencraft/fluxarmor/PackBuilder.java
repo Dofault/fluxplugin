@@ -29,7 +29,9 @@ import java.util.stream.Stream;
  * so the armour is invisible without the shader (Iris). Upper half:
  * <ul>
  * <li>(0, 0) mark (73, 65, 82); (1, 0) (version, number of boxes, 0); box b: (2 + 2b, 0) vanilla size in pixels
- * (width, height, depth), (3 + 2b, 0) (mirror, inflation x 100, 0);</li>
+ * (width, height, depth), (3 + 2b, 0) (mirror, inflation x 100, 0), (16 + b, 0) (u, v of the box in the vanilla 64 x 32
+ * armour sheet, 1): the shader finds the face and corner of a vertex from its vanilla texture coordinates, whatever
+ * order the renderer sends them in (Sodium's differs from vanilla's);</li>
  * <li>row 1 + 6b + f (face f of box b, order down, up, west, north, east, south): (0) (1 present | 2 emissive, 0, 0),
  * (1) normal ((n + 1) x 127.5), then per corner k: (2 + 4k, 3 + 4k) position, 16 bits per axis ((v + 128) x 256), in
  * pixels in the frame of the vanilla box (box centre, y down, z backwards: ModelPart's frame), (4 + 4k, 5 + 4k) u and
@@ -41,7 +43,7 @@ import java.util.stream.Stream;
  */
 final class PackBuilder {
 
-    static final int VERSION = 2;
+    static final int VERSION = 3;
     static final String NAMESPACE = "fluxarmor";
 
     /**
@@ -50,6 +52,11 @@ final class PackBuilder {
      */
     private record Box(List<String> groups, String mirrorOf, int w, int h, int d, double inflate, boolean mirror,
                        double cx, double cy, double cz) {
+
+        /** Texture offset of the box in the vanilla armour sheet (HumanoidModel): arms, body, legs. */
+        int[] sheet() {
+            return Math.abs(cx) > 5 ? new int[]{40, 16} : cx == 0 ? new int[]{16, 16} : new int[]{0, 16};
+        }
     }
 
     private record Piece(String name, String layer, boolean leggings, List<Box> boxes) {
@@ -193,6 +200,7 @@ final class PackBuilder {
             Box box = pi.boxes().get(b);
             img.setRGB(2 + 2 * b, 0, argb(box.w(), box.h(), box.d()));
             img.setRGB(3 + 2 * b, 0, argb(box.mirror() ? 1 : 0, (int) Math.round(box.inflate() * 100), 0));
+            img.setRGB(16 + b, 0, argb(box.sheet()[0], box.sheet()[1], 1));
             List<BlockbenchModel.Face> faces = perBox.get(b);
             for (int s = 0; s < 6 && 6 * c + s < faces.size(); s++) {
                 BlockbenchModel.Face f = faces.get(6 * c + s);

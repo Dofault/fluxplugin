@@ -3,7 +3,7 @@
 
 // Signs of the 4 corners of each face of the vanilla box (-1: min side, +1: max side, box frame), in the order
 // ModelPart.Cube sends them: faces down, up, west, north, east, south, vertices of the polygon.
-// Mirrored box (left limbs): x flipped and vertex order reversed.
+// Mirrored box (left limbs): x flipped and vertex order reversed (the shader works on the order before that).
 const ivec3 FA_CORNERS[24] = ivec3[24](
     ivec3( 1, -1,  1), ivec3(-1, -1,  1), ivec3(-1, -1, -1), ivec3( 1, -1, -1),
     ivec3( 1,  1, -1), ivec3(-1,  1, -1), ivec3(-1,  1,  1), ivec3( 1,  1,  1),
