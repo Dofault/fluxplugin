@@ -355,16 +355,21 @@ final class WardrobeView {
 
     // ================================================================== what he sees
 
-    /** The mannequin wears what he wears (the outfit he tries on will be drawn over it). */
+    /** The mannequin wears what the others see him wear: his cosmetics over his real items. */
     private void dress(EntityEquipment equipment) {
         if (equipment == null) return;
         var own = player.getInventory();
-        equipment.setHelmet(copy(own.getHelmet()));
-        equipment.setChestplate(copy(own.getChestplate()));
-        equipment.setLeggings(copy(own.getLeggings()));
-        equipment.setBoots(copy(own.getBoots()));
+        equipment.setHelmet(seen(org.bukkit.inventory.EquipmentSlot.HEAD, own.getHelmet()));
+        equipment.setChestplate(seen(org.bukkit.inventory.EquipmentSlot.CHEST, own.getChestplate()));
+        equipment.setLeggings(seen(org.bukkit.inventory.EquipmentSlot.LEGS, own.getLeggings()));
+        equipment.setBoots(seen(org.bukkit.inventory.EquipmentSlot.FEET, own.getBoots()));
         equipment.setItemInMainHand(copy(own.getItemInMainHand()));
         equipment.setItemInOffHand(copy(own.getItemInOffHand()));
+    }
+
+    private ItemStack seen(org.bukkit.inventory.EquipmentSlot slot, ItemStack own) {
+        ItemStack look = fr.influencraft.flux.api.client.Appearance.item(player, slot);
+        return look != null ? look : copy(own);
     }
 
     private static ItemStack copy(ItemStack item) {

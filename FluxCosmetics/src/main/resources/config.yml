@@ -36,37 +36,40 @@ camera:
 # more; crafting itself is unchanged, furnace books keep theirs). Java only.
 recipe-book: true
 
-# The cosmetics of the catalog. tab: equipment, building, redstone or misc (the four tabs of the book, icons drawn by
-# the client). icon: a material or itemsadder:<namespace>:<id>. unlocked: everybody has it (first version: ownership
-# comes later).
+# The cosmetics of the catalog. item: what is worn (a Flux item id such as fluxarmor:zero_helmet, or a material),
+# slot: head, chest, legs or feet (drawn over the real item of that slot, for the others and on the wardrobe's
+# mannequin), tab: equipment, building, redstone or misc (the four tabs of the book, icons drawn by the client),
+# icon: its picture in the book when not the item itself. unlocked: everybody has it (first version).
 cosmetics:
+  zero_helmet:
+    name: "Diadem of Absolute Zero"
+    item: fluxarmor:zero_helmet
+    slot: head
+    tab: equipment
+    unlocked: true
+  zero_chestplate:
+    name: "Mantle of the Eternal Mists"
+    item: fluxarmor:zero_chestplate
+    slot: chest
+    tab: equipment
+    unlocked: true
+  zero_boots:
+    name: "Sabatons of the Silent Winter"
+    item: fluxarmor:zero_boots
+    slot: feet
+    tab: equipment
+    unlocked: true
   crown:
     name: "Golden crown"
     description: "A crown for the most famous."
-    icon: GOLDEN_HELMET
-    tab: equipment
+    item: GOLDEN_HELMET
+    slot: head
+    tab: misc
     unlocked: true
   wings:
     name: "Wings"
     description: "Wings that only look like they fly."
-    icon: ELYTRA
-    tab: equipment
-    unlocked: false
-  cape:
-    name: "Cape"
-    description: "A cape on your shoulders."
-    icon: LEATHER_CHESTPLATE
-    tab: equipment
-    unlocked: true
-  halo:
-    name: "Halo"
-    description: "A light over your head."
-    icon: GLOWSTONE_DUST
-    tab: misc
-    unlocked: true
-  flames:
-    name: "Flames"
-    description: "Flames at your feet."
-    icon: BLAZE_POWDER
+    item: ELYTRA
+    slot: chest
     tab: misc
     unlocked: false

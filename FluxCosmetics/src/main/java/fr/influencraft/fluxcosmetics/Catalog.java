@@ -1,6 +1,9 @@
 package fr.influencraft.fluxcosmetics;
 
+import fr.influencraft.flux.api.client.Appearance;
 import fr.influencraft.flux.api.client.RecipeBook;
+import fr.influencraft.flux.api.items.CustomItems;
+import org.bukkit.inventory.EquipmentSlot;
 import fr.influencraft.flux.api.inventory.Items;
 import fr.influencraft.flux.api.inventory.Lore;
 import fr.influencraft.flux.api.util.Sounds;
@@ -25,19 +28,23 @@ import java.util.UUID;
  * the cosmetics instead of the recipes. One entry per cosmetic of the config, in the tab of its kind, drawn craftable
  * when the player has it. A click wears it (or takes it off), shift + click shows it on him in the wardrobe.
  *
+ * <p>A worn cosmetic is an item drawn in one equipment slot over his real one, for the others
+ * ({@link Appearance}) and on the wardrobe's mannequin; his inventory and real armour never change.</p>
+ *
  * <p>First version (2026-11-20): the cosmetics are those of the config, "unlocked" for everybody or nobody, and what
- * a player wears is kept in memory only. Ownership and worn cosmetics go to Flux's database with the outfits drawn
- * over the armour.</p>
+ * a player wears is kept in memory only (Flux's database later).</p>
  */
 final class Catalog implements RecipeBook.Catalog, Listener {
 
-    record Cosmetic(String key, String name, String description, String icon, RecipeBook.Tab tab, boolean unlocked) {
+    /** {@code item}: what is worn (a Flux item id or a material), {@code icon}: its picture in the book (null: the item). */
+    record Cosmetic(String key, String name, String description, String item, String icon, EquipmentSlot slot,
+                    RecipeBook.Tab tab, boolean unlocked) {
     }
 
     private final FluxCosmetics plugin;
     private final List<Cosmetic> cosmetics = new ArrayList<>();
-    /** What each player wears, one cosmetic per tab (memory only, first version). */
-    private final Map<UUID, Map<RecipeBook.Tab, String>> worn = new HashMap<>();
+    /** What each player wears, one cosmetic per slot (memory only, first version). */
+    private final Map<UUID, Map<EquipmentSlot, String>> worn = new HashMap<>();
 
     Catalog(FluxCosmetics plugin) {
         this.plugin = plugin;
@@ -56,19 +63,30 @@ final class Catalog implements RecipeBook.Catalog, Listener {
                 plugin.getLogger().warning("Cosmetic " + key + ": unknown tab " + c.getString("tab") + ", put in equipment");
                 tab = RecipeBook.Tab.EQUIPMENT;
             }
-            cosmetics.add(new Cosmetic(key, c.getString("name", key), c.getString("description", ""),
-                    c.getString("icon", "LEATHER_HELMET"), tab, c.getBoolean("unlocked", true)));
+            EquipmentSlot slot = switch (c.getString("slot", "head").toLowerCase(Locale.ROOT)) {
+                case "chest" -> EquipmentSlot.CHEST;
+                case "legs" -> EquipmentSlot.LEGS;
+                case "feet" -> EquipmentSlot.FEET;
+                default -> EquipmentSlot.HEAD;
+            };
+            String item = c.getString("item");
+            if (item == null || item.isBlank()) {
+                plugin.getLogger().warning("Cosmetic " + key + ": no item, left out");
+                continue;
+            }
+            cosmetics.add(new Cosmetic(key, c.getString("name", key), c.getString("description", ""), item,
+                    c.getString("icon"), slot, tab, c.getBoolean("unlocked", true)));
         }
         if (cosmetics.isEmpty()) plugin.getLogger().warning("No cosmetics in config.yml: the recipe book will be empty");
     }
 
     @Override
     public List<RecipeBook.Entry> entries(Player player) {
-        Map<RecipeBook.Tab, String> mine = worn.getOrDefault(player.getUniqueId(), Map.of());
+        Map<EquipmentSlot, String> mine = worn.getOrDefault(player.getUniqueId(), Map.of());
         List<RecipeBook.Entry> out = new ArrayList<>(cosmetics.size());
         for (int i = 0; i < cosmetics.size(); i++) {
             Cosmetic c = cosmetics.get(i);
-            boolean wearing = c.key().equals(mine.get(c.tab()));
+            boolean wearing = c.key().equals(mine.get(c.slot()));
             out.add(new RecipeBook.Entry(i, icon(player, c, wearing), c.tab(), c.unlocked(), false));
         }
         return out;
@@ -82,7 +100,8 @@ final class Catalog implements RecipeBook.Catalog, Listener {
         else if (c.unlocked()) lore.left(m.raw("catalog.wear"));
         else lore.ko(m.raw("catalog.locked"));
         lore.shiftLeft(m.raw("catalog.preview"));
-        ItemStack item = Items.dress(Items.of(c.icon(), player), c.name(), lore.tags(), player);
+        ItemStack base = c.icon() == null ? worn(c, player) : Items.of(c.icon(), player);
+        ItemStack item = Items.dress(base, c.name(), lore.tags(), player);
         if (wearing) item.editMeta(meta -> meta.setEnchantmentGlintOverride(true));
         return item;
     }
@@ -101,17 +120,27 @@ final class Catalog implements RecipeBook.Catalog, Listener {
             plugin.messages().send(player, "catalog.locked-message", "%name%", c.name());
             return;
         }
-        Map<RecipeBook.Tab, String> mine = worn.computeIfAbsent(player.getUniqueId(), k -> new HashMap<>());
-        if (c.key().equals(mine.get(c.tab()))) {
-            mine.remove(c.tab());
+        Map<EquipmentSlot, String> mine = worn.computeIfAbsent(player.getUniqueId(), k -> new HashMap<>());
+        if (c.key().equals(mine.get(c.slot()))) {
+            mine.remove(c.slot());
+            Appearance.set(player, c.slot(), null);
             Sounds.cue(player, "toggle-off");
             plugin.messages().send(player, "catalog.taken-off", "%name%", c.name());
         } else {
-            mine.put(c.tab(), c.key());
+            mine.put(c.slot(), c.key());
+            Appearance.set(player, c.slot(), worn(c, player));
             Sounds.cue(player, "toggle-on");
             plugin.messages().send(player, "catalog.wearing", "%name%", c.name());
         }
         RecipeBook.refresh(player);
+    }
+
+    /** The item worn for a cosmetic: a Flux item ({@code namespace:id}) or a material. */
+    private static ItemStack worn(Cosmetic c, Player player) {
+        String spec = c.item();
+        boolean fluxId = spec.indexOf(':') > 0 && !spec.startsWith("itemsadder:") && !spec.startsWith("source:");
+        ItemStack item = fluxId ? CustomItems.item(spec) : null;
+        return item != null ? item : Items.of(spec, player);
     }
 
     @EventHandler
@@ -123,5 +152,6 @@ final class Catalog implements RecipeBook.Catalog, Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
         worn.remove(e.getPlayer().getUniqueId());
+        Appearance.clear(e.getPlayer());
     }
 }
