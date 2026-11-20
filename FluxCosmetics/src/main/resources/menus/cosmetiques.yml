@@ -59,15 +59,17 @@ widgets:
     next: 89
 
 items:
-  quitter:
-    material: "itemsadder:fluxui:btn_close_red"
-    name: "Quitter"
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
     slots: [54]
     lore:
-      - "@desc Sortir de la garde-robe et revenir à ta place."
-      - "@left Quitter la garde-robe"
+      - "@desc Ferme ce menu pour te voir en entier, la caméra libre. Clic droit dans le vide pour le rouvrir, clic gauche pour quitter la garde-robe."
+      - "@left Retour à la caméra"
+      - "@right Menu principal"
     actions:
-      left: ["[cosmetics] leave"]
+      left: ["[close]"]
+      right: ["[cosmetics] main"]
 
   icone:
     material: "itemsadder:fluxui:btn_shirt_purple"

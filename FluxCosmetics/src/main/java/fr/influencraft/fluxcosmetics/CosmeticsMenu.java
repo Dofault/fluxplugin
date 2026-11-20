@@ -31,6 +31,7 @@ import java.util.List;
  *   [cosmetics] frame         the camera frames the category now shown (after [list] cosmetics filter &lt;n&gt;)
  *   [cosmetics] opened|closed the menu shows or not (the camera makes room for it)
  *   [cosmetics] leave         leave the wardrobe
+ *   [cosmetics] main          leave the wardrobe and open the main menu (main-menu of the config)
  * </pre>
  */
 final class CosmeticsMenu {
@@ -116,6 +117,14 @@ final class CosmeticsMenu {
             case "leave" -> {
                 player.closeInventory();
                 plugin.wardrobe().close(player, true);
+            }
+            case "main" -> {
+                // out of the wardrobe, back in his place, then the main menu
+                player.closeInventory();
+                plugin.wardrobe().close(player, true);
+                org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    if (player.isOnline()) FluxApi.open(player, plugin.getConfig().getString("main-menu", "main"));
+                }, 2L);
             }
             default -> {
             }

@@ -6,6 +6,9 @@
 
 language: ""
 
+# Menu opened by a right click on the back button of the cosmetics menu (the wardrobe is left first).
+main-menu: main
+
 camera:
   # Distance from the mannequin when the wardrobe opens.
   distance: 3.2
