@@ -4,7 +4,10 @@ import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
+import com.github.retrooper.packetevents.protocol.component.ComponentTypes;
+import com.github.retrooper.packetevents.protocol.component.builtin.item.ItemModel;
 import com.github.retrooper.packetevents.protocol.item.ItemStack;
+import com.github.retrooper.packetevents.resources.ResourceLocation;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.protocol.packettype.PacketTypeCommon;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerChangeGameState;
@@ -46,12 +49,33 @@ public final class HotbarOverlay extends PacketListenerAbstract implements Hotba
         for (int i = 0; i < SIZE; i++) {
             org.bukkit.inventory.ItemStack item = items != null && i < items.length ? items[i] : null;
             fake[i] = item == null || item.isEmpty() ? ItemStack.EMPTY : SpigotConversionUtil.fromBukkitItemStack(item);
+            if (item != null && !item.isEmpty()) keepModel(item, fake[i]);
         }
         shown.put(player.getUniqueId(), fake);
         for (int i = 0; i < SIZE; i++) {
             PacketEvents.getAPI().getPlayerManager().sendPacketSilently(player, new WrapperPlayServerSetSlot(0, 0, FIRST + i, fake[i].copy()));
         }
     }
+
+    /**
+     * The item's own model (a 3D weapon of the pack) carried over to the packet item: the client draws the plain
+     * material without it, which is also what a client without the pack (Bedrock) shows. Said again here because the
+     * converted item came out with the vanilla look in the class showcase (2026-11-20).
+     */
+    private static void keepModel(org.bukkit.inventory.ItemStack item, ItemStack fake) {
+        net.kyori.adventure.key.Key model = item.getData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL);
+        if (model == null) return;
+        ResourceLocation location = new ResourceLocation(model.namespace(), model.value());
+        ItemModel current = fake.getComponentOr(ComponentTypes.ITEM_MODEL, null);
+        if (current != null && location.equals(current.getModelLocation())) return;
+        if (!warned) {
+            warned = true;
+            org.bukkit.Bukkit.getLogger().warning("[Flux] Hotbar: item model " + model.asString() + " lost in the packet conversion, set again");
+        }
+        fake.setComponent(ComponentTypes.ITEM_MODEL, new ItemModel(location));
+    }
+
+    private static volatile boolean warned;
 
     @Override
     public void clear(Player player) {

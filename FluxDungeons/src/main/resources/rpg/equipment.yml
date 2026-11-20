@@ -66,7 +66,7 @@ items:
     rarity: common
     stats: {magic_power: 8, max_health: 20}
     description: [Throws a thorn on a left click., Every hit plants a seed.]
-    look: {material: DIAMOND_HOE, name: Serpe du Bosquet, model: 'fluxdungeons:coeur_de_sylve'}
+    look: {material: STICK, name: Serpe du Bosquet, model: 'fluxdungeons:coeur_de_sylve'}
   rochiste_helmet:
     slot: helmet
     level: 1
