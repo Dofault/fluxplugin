@@ -120,6 +120,11 @@ public final class Skills implements Listener {
         return s != null && run(p, r, s, r.cast(slot));
     }
 
+    /** Removes what the spells left standing around a place (the class showcase changing class). */
+    void sweep(org.bukkit.Location centre, double radius) {
+        fx.clearAround(centre, radius);
+    }
+
     /** Removes what the skills left in the world (plugin stopping). */
     void stop() {
         frost.clear();

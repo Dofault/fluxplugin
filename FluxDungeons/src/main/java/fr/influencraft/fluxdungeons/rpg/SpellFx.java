@@ -43,6 +43,17 @@ final class SpellFx {
         alive.clear();
     }
 
+    /** Removes every display within {@code radius} of a place (a scene ending before its spells did). */
+    void clearAround(Location centre, double radius) {
+        double r2 = radius * radius;
+        alive.removeIf(d -> {
+            if (!d.isValid()) return true;
+            if (d.getWorld() != centre.getWorld() || d.getLocation().distanceSquared(centre) > r2) return false;
+            d.remove();
+            return true;
+        });
+    }
+
     // ------------------------------------------------------------------ displays
 
     /** A block display of the spells: never saved, lit as in daylight, tracked until {@link #forget}. */

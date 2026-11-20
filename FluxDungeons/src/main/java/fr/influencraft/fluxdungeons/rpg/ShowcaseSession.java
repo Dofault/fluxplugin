@@ -136,6 +136,11 @@ final class ShowcaseSession {
     private List<String> script = List.of();
     private int step, repeated;
     private long waitUntil;
+    /** Until then the arena is swept every tick: what the former class's spells still spawn after their caster left. */
+    private long sweepUntil;
+    /** Arenas are at least 96 blocks apart: no other viewer's scene within this radius. */
+    private static final double SWEEP_RADIUS = 40;
+    private static final int SWEEP_TICKS = 10;
 
     ShowcaseSession(Showcase showcase, Player player, Showcase.Settings settings, int stage, Location origin,
                     Location back, boolean menu) {
@@ -622,7 +627,8 @@ final class ShowcaseSession {
         script = !own.isEmpty() ? own : scripts == null ? List.of() : scripts.getStringList("default");
         step = 0;
         repeated = 0;
-        waitUntil = ticks + 1;
+        // the new actor waits for the sweep of the former scene to end
+        waitUntil = ticks + SWEEP_TICKS;
         header();
         caption(null);
     }
@@ -635,6 +641,9 @@ final class ShowcaseSession {
         actor = null;
         hero = null;
         clearMonsters();
+        // ice, flames and plants of the spells outlive their caster: gone with the scene
+        showcase.skills().sweep(origin, SWEEP_RADIUS);
+        sweepUntil = ticks + SWEEP_TICKS;
     }
 
     private void clearMonsters() {
@@ -724,6 +733,7 @@ final class ShowcaseSession {
     /** One step of the class's script when its time has come (see {@code rpg.showcase.scripts} of the config). */
     private void scene() {
         if (shown == null) return;
+        if (ticks < sweepUntil) showcase.skills().sweep(origin, SWEEP_RADIUS);
         if (actor == null || !actor.isValid()) {
             play(shown);
             return;
