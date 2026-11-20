@@ -387,8 +387,8 @@ Affichages (`display` du modèle) :
 |---|---|---|---|
 | `thirdperson_righthand` | 0 -90 -37 | 0 3.23 4.87 | 0.95 |
 | `thirdperson_lefthand` | 0 90 37 | 0 3.23 4.87 | 0.95 |
-| `firstperson_righthand` | 0 -90 -10 | 1.13 2.09 0.17 | 0.5 |
-| `firstperson_lefthand` | 0 90 10 | 1.13 2.09 0.17 | 0.5 |
+| `firstperson_righthand` | 0 -90 -10 | 1.13 3.03 0.34 | 0.66 |
+| `firstperson_lefthand` | 0 90 10 | 1.13 3.03 0.34 | 0.66 |
 | `gui` | 0 0 -45 | 0.34 0.06 0 | 0.616 |
 | `fixed` | 0 180 45 | 0.06 0.32 0 | 0.578 |
 | `on_shelf` | 0 180 45 | 0.06 0.32 0 | 0.578 |
@@ -443,8 +443,8 @@ Affichages (`display` du modèle) :
 |---|---|---|---|
 | `thirdperson_righthand` | 0 -90 -22 | 0 6.6 4.64 | 0.95 |
 | `thirdperson_lefthand` | 0 90 22 | 0 6.6 4.64 | 0.95 |
-| `firstperson_righthand` | 0 -90 -20 | 1.13 3.78 1.34 | 0.55 |
-| `firstperson_lefthand` | 0 90 20 | 1.13 3.78 1.34 | 0.55 |
+| `firstperson_righthand` | 0 -90 -20 | 1.13 4.38 1.56 | 0.62 |
+| `firstperson_lefthand` | 0 90 20 | 1.13 4.38 1.56 | 0.62 |
 | `gui` | 0 0 -45 | -0.6 -0.3 0 | 0.566 |
 | `fixed` | 0 180 45 | -0.28 -0.56 0 | 0.53 |
 | `on_shelf` | 0 180 45 | -0.28 -0.56 0 | 0.53 |

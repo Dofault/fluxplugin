@@ -497,9 +497,11 @@ DISPLAYS = {
     "sylve_celeste": ("bow", 135, (8.1, 8, 8), (25, 0.55), (-90, 0.36)),
     "sceptre_neant": ("handheld", 45, (8, 2, 8), (-47, 0.66), (10, 0.36)),
     "reliquaire_aube": ("handheld", 45, (8, 2.85, 8), (-47, 0.66), (10, 0.36)),
-    # 32 units tall against 47 for the two other staves: held larger, so it stays a two-handed weapon
-    "coeur_de_givre": ("handheld", 45, (8, 2, 8), (-47, 0.95), (10, 0.5)),
-    "tison_soleil": ("handheld", 45, (8, -1, 8), (-32, 0.95), (0, 0.55)),
+    # The weapons of the elemental classes are 30 to 32 units tall against 47 for the first staves: held larger in
+    # third person so they stay two-handed weapons, and much larger in first person, where the owner wants them
+    # imposing on the screen (2026-11-20). Keep that first person scale for the next ones.
+    "coeur_de_givre": ("handheld", 45, (8, 2, 8), (-47, 0.95), (10, 0.66)),
+    "tison_soleil": ("handheld", 45, (8, -1, 8), (-32, 0.95), (0, 0.62)),
 }
 # Spin of the weapon around its own axis (degrees) before it is held: the bow was held back to front in game, its
 # back (grip, crystal, +X) towards the player and the string away (2026-11-13). 180 = back forward, string inward.
