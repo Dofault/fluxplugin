@@ -208,13 +208,13 @@ final class Controls implements Listener {
 
     /**
      * The arm swing of a basic attack thrown with the right click: the client swings nothing for a right click on an
-     * item without a use of its own (a staff), so the weapon would not move. A drawn bow keeps its pose. The server's
-     * swing sends no swing packet back, so neither {@link #lastRight} nor combat.AttackCadence sees a left click.
+     * item without a use of its own (a staff), so the weapon would not move. A drawn bow keeps its pose. Through Flux's
+     * {@code ArmSwing}: the swing the client sends back is dropped, never read as a left click (a cast of the skill).
      */
     private static void swing(Player p, ItemStack hand) {
         org.bukkit.Material m = hand == null ? null : hand.getType();
         if (m == org.bukkit.Material.BOW || m == org.bukkit.Material.CROSSBOW) return;
-        p.swingMainHand();
+        fr.influencraft.flux.api.client.ArmSwing.show(p);
     }
 
     /** A right click on a creature swings the arm too (see {@link #lastRight}). */

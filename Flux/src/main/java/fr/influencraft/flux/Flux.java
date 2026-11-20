@@ -36,6 +36,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     private com.github.retrooper.packetevents.event.PacketListenerCommon sidebarListener;
     private com.github.retrooper.packetevents.event.PacketListenerCommon driverListener;
     private com.github.retrooper.packetevents.event.PacketListenerCommon dropKeyListener;
+    private com.github.retrooper.packetevents.event.PacketListenerCommon armSwingListener;
     private com.github.retrooper.packetevents.event.PacketListenerCommon hotbarListener;
     private PacketListenerCommon advancementListener;
     private fr.influencraft.flux.economy.MoneyActionBar moneyBar;
@@ -164,6 +165,10 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         // a player's drop key as an action key while a plugin claims it (api.client.DropKey)
         dropKeyListener = PacketEvents.getAPI().getEventManager()
                 .registerListener(new fr.influencraft.flux.adapters.packetevents.DropKeyFilter(this));
+        // the echo of an arm swing made by the server is no left click (api.client.ArmSwing)
+        armSwingListener = PacketEvents.getAPI().getEventManager()
+                .registerListener(new fr.influencraft.flux.adapters.packetevents.ArmSwingFilter());
+        fr.influencraft.flux.api.client.ArmSwing.filtered(true);
         // a player's hotbar used as a menu, drawn by packets over his real one (api.client.Hotbar)
         var hotbar = new fr.influencraft.flux.adapters.packetevents.HotbarOverlay();
         hotbarListener = PacketEvents.getAPI().getEventManager().registerListener(hotbar);
@@ -174,6 +179,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
                 hotbar.forget(e.getPlayer().getUniqueId());
                 fr.influencraft.flux.api.client.Sidebar.forget(e.getPlayer().getUniqueId());
                 fr.influencraft.flux.api.client.ChatHold.forget(e.getPlayer().getUniqueId());
+                fr.influencraft.flux.api.client.ArmSwing.forget(e.getPlayer().getUniqueId());
             }
         }, this);
         backgrounds = new ChestBackgrounds(menus, getLogger());
@@ -237,6 +243,10 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         if (sidebarListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(sidebarListener);
         if (driverListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(driverListener);
         if (dropKeyListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(dropKeyListener);
+        if (armSwingListener != null) {
+            fr.influencraft.flux.api.client.ArmSwing.filtered(false);
+            PacketEvents.getAPI().getEventManager().unregisterListener(armSwingListener);
+        }
         if (hotbarListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(hotbarListener);
         if (advancementListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(advancementListener);
         if (registry != null) registry.unregisterCommands();
