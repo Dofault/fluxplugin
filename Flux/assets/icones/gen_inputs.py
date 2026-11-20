@@ -3,8 +3,8 @@
 
     <venv with Pillow>/python3 gen_inputs.py <contents/influemoji/textures/font/emoji>
 
-- middle_click: grey mouse, orange striped wheel (click on the wheel).
-- scroll: grey mouse and an orange up / down arrow beside it (turn the wheel: zoom, scroll).
+- middle_click: grey mouse, orange striped wheel (the wheel: zoom, middle click).
+- mouse_move: grey mouse and an orange up / down arrow beside it (move the mouse forward / backward).
 - move_keys: the four movement keys (forward on top, left / back / right below) with arrows, not letters,
   so it reads the same on AZERTY (ZQSD) and QWERTY (WASD).
 Green = left click, red = right click, orange = wheel and keys.
@@ -88,8 +88,8 @@ def middle_click():
     return im
 
 
-def scroll():
-    # grey wheel: the arrow tells the wheel turns
+def mouse_move():
+    # grey wheel: the arrow is the move of the whole mouse
     grey = [row.replace("T", "O").replace("d", "W").replace("S", "W") for row in MOUSE]
     im = Image.new("RGBA", (24, 16), (0, 0, 0, 0))
     paint(im, grey, 0, 0, COLOURS)
@@ -107,7 +107,7 @@ def move_keys():
 
 def main(dest):
     os.makedirs(dest, exist_ok=True)
-    for name, make in [("middle_click", middle_click), ("scroll", scroll), ("move_keys", move_keys)]:
+    for name, make in [("middle_click", middle_click), ("mouse_move", mouse_move), ("move_keys", move_keys)]:
         make().save(os.path.join(dest, name + ".png"))
         print(name + ".png ->", dest)
 
