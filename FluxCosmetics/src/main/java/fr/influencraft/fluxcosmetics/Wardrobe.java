@@ -66,7 +66,6 @@ final class Wardrobe implements Listener {
         views.put(player.getUniqueId(), view);
         view.open();
         for (Player other : Bukkit.getOnlinePlayers()) if (other != player) other.hidePlayer(plugin, player);
-        plugin.messages().send(player, "opened");
         // straight to the choice of cosmetics, once his client has taken the camera's place
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (view(player) == view && player.isOnline()) view.menu();
@@ -79,7 +78,6 @@ final class Wardrobe implements Listener {
         if (view == null || view.closing) return;
         view.close(bringBack);
         for (Player other : Bukkit.getOnlinePlayers()) if (other != player) other.showPlayer(plugin, player);
-        if (player.isOnline()) plugin.messages().send(player, "closed");
         if (views.isEmpty() && task != null) {
             task.cancel();
             task = null;

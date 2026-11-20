@@ -137,7 +137,14 @@ final class CosmeticsMenu {
         if (category >= SLOTS.length) {
             // the tags: FluxTags' own entries (item, click action), as its menu shows them
             ListProvider tags = Lists.provider(TAGS_LIST);
-            return tags == null ? List.of() : tags.entries(new ListQuery(viewer, TAGS_LIST, 0, 0, ""));
+            if (tags == null) return List.of();
+            List<ListEntry> entries = tags.entries(new ListQuery(viewer, TAGS_LIST, 0, 0, ""));
+            // picked without a chat line: the mannequin shows the tag
+            for (ListEntry e : entries) {
+                String click = e.values().get("clic");
+                if (click != null && click.startsWith("[tags] ")) e.set("clic", click + " quiet");
+            }
+            return entries;
         }
         EquipmentSlot slot = SLOTS[Math.max(0, category)];
         Outfits outfits = plugin.outfits();

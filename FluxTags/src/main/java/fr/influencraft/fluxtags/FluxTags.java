@@ -110,7 +110,11 @@ public final class FluxTags extends FluxPlugin implements Listener {
             return image == null ? "" : glyph(image);
         });
         list("tags", q -> entries(q.viewer()));
-        FluxApi.registerAction(this, "tags", (player, view, argument) -> pick(player, argument.trim()));
+        // [tags] <id> [quiet]: quiet = no chat line (FluxCosmetics' menu shows the tag on the mannequin instead)
+        FluxApi.registerAction(this, "tags", (player, view, argument) -> {
+            String[] parts = argument.trim().split("\\s+");
+            pick(player, parts[0], parts.length > 1 && parts[1].equalsIgnoreCase("quiet"));
+        });
         command("tags")
                 .description("Choose the tag shown next to your name.")
                 .permission("fluxtags.use")
@@ -327,22 +331,23 @@ public final class FluxTags extends FluxPlugin implements Listener {
         return t.special() != null ? t.special() : t.provided() != null ? t.id() : null;
     }
 
-    private void pick(Player p, String id) {
+    private void pick(Player p, String id, boolean quiet) {
         Tag t = all().get(id);
         if (t == null) return;
         String current = selection(p.getUniqueId());
         if (id.equals(NONE) || id.equals(current)) {
             write(p.getUniqueId(), NONE);
-            messages().send(p, "cleared");
+            if (!quiet) messages().send(p, "cleared");
             fr.influencraft.flux.api.tab.TabList.refresh(p);
             return;
         }
         if (image(p, t) == null) {
-            messages().send(p, "locked");
+            if (quiet) fr.influencraft.flux.api.util.Sounds.cue(p, "error");
+            else messages().send(p, "locked");
             return;
         }
         write(p.getUniqueId(), id);
-        messages().send(p, "picked", "%tag%", name(p, t));
+        if (!quiet) messages().send(p, "picked", "%tag%", name(p, t));
         fr.influencraft.flux.api.tab.TabList.refresh(p);
     }
 

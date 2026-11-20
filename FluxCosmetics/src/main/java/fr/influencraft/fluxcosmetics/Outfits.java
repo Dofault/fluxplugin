@@ -87,7 +87,7 @@ final class Outfits implements Listener {
         if (c == null) return false;
         if (!c.unlocked()) {
             Sounds.cue(player, "error");
-            plugin.messages().send(player, "outfits.locked", "%name%", c.name());
+            if (!quiet) plugin.messages().send(player, "outfits.locked", "%name%", c.name());
             return true;
         }
         Map<EquipmentSlot, String> mine = worn.computeIfAbsent(player.getUniqueId(), k -> new HashMap<>());
