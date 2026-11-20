@@ -474,16 +474,15 @@ def tison_soleil():
 
 
 def coeur_de_sylve():
-    """Druid's staff, 36 units tall like the cryomancer's: a raw grey rock held in a fork of two roots which grow
+    """Druid's staff, 36 units tall like the cryomancer's: a small old stone floating in a fork of two roots which grow
     outwards then back over it, one shoot at the tip of the longer root, nothing floating, nothing glowing."""
     w = Weapon("coeur_de_sylve", "Cœur-de-Sylve", "Druide",
                "Grand bâton à deux mains : manche de bois ancien vivant, pied évasé comme une racine épaisse ; au "
-               "sommet, une roche brute et grise, faite de blocs inégaux, prise dans la fourche de deux racines qui partent vers l'extérieur "
+               "sommet, une petite pierre ancienne faite de blocs inégaux, en lévitation dans la fourche de deux racines qui partent vers l'extérieur "
                "puis reviennent sur elle (la gauche plus longue, la droite plus sombre et plus courte), une seule "
                "jeune pousse au bout de la racine gauche, deux excroissances de racine à la jonction du manche.",
                {"bois_vivant": ("#514333", "Bois ancien vivant", False), "pied": ("#62503A", "Pied de racine", False),
-                "pierre": ("#77766D", "Roche brute", False), "pierre_sombre": ("#626158", "Roche à l'ombre", False),
-                "racine_claire": ("#70543A", "Racine de gauche", False),
+                "pierre": ("#747C6C", "Pierre ancienne", False), "racine_claire": ("#70543A", "Racine de gauche", False),
                 "racine_sombre": ("#59432F", "Racine de droite", False), "branche": ("#72573A", "Ramifications", False),
                 "pousse": ("#55794A", "Jeune pousse", False), "excroissance": ("#604A34", "Excroissances de racine", False)})
 
@@ -507,20 +506,14 @@ def coeur_de_sylve():
             return shadow if y % 6 == 4 else base
         return pixel
 
-    def rough_stone(base, light, pale, shade, deep):
-        # raw rock: an uneven pale patch where the light falls, an uneven dark one low on the right, a few grains,
-        # one short fracture; no band, no line a metal engraving could have
-        def pixel(x, y):
-            if (x, y) in ((1, 0), (2, 0), (0, 1), (1, 1), (0, 2), (3, 0)):
-                return pale if (x, y) in ((1, 0), (0, 1)) else light
-            if y >= 6 and x >= 1 or (x, y) in ((4, 5), (5, 4), (5, 5), (6, 5)):
-                return deep if y >= 7 and x >= 3 else shade
-            if (x, y) in ((3, 2), (3, 3), (4, 4)):
-                return shade
-            if (5 * x + 3 * y) % 11 == 0:
-                return light
-            return base
-        return pixel
+    def old_stone(x, y):
+        # the first painting of the stone, which the owner preferred: a pale band where the light falls, the body,
+        # shade below and on the right; its greens pulled towards stone grey and mineral beige
+        if y == 0 and x < 5 or x == 0 and y < 3 or (x, y) in ((2, 2), (3, 2)):
+            return "#A8A98B"
+        if y >= 6 or x >= 5 and y >= 3 or (x, y) == (3, 5):
+            return "#474E43"
+        return "#747C6C"
 
     def shoot(x, y):
         return "#8DA86A" if x + y <= 1 else ("#36533A" if x + y >= 3 else "#55794A")
@@ -528,9 +521,7 @@ def coeur_de_sylve():
     def foot(x, y):
         return "#3C3328" if y >= 2 or x >= 3 else "#62503A"
 
-    w.painted = {"bois_vivant": living_wood, "pied": foot, "pousse": shoot,
-                 "pierre": rough_stone("#77766D", "#989589", "#AAA18B", "#626158", "#48483F"),
-                 "pierre_sombre": rough_stone("#626158", "#77766D", "#989589", "#48483F", "#393A34"),
+    w.painted = {"bois_vivant": living_wood, "pied": foot, "pousse": shoot, "pierre": old_stone,
                  "racine_claire": fibre("#70543A", "#98764D", "#514333"), "racine_sombre": fibre("#59432F", "#826548", "#352B25"),
                  "branche": fibre("#72573A", "#98764D", "#514333"), "excroissance": fibre("#604A34", "#80694A", "#352B25")}
     w.group("pied")
@@ -543,12 +534,17 @@ def coeur_de_sylve():
     w.box("excroissance_g", [4.5, 10.5, 6.5], [6.5, 13.5, 9.5], "excroissance", note="porte la racine de gauche")
     w.box("excroissance_d", [9.5, 10.5, 6.5], [11.5, 13.5, 9.5], "excroissance", note="porte la racine de droite")
     w.group("pierre")
-    # A raw rock, not a slab: blocks of different sizes, deeper than the roots that hold it, one broken corner.
-    w.box("roche", [5, 14.5, 5], [11, 21, 11], "pierre", note="masse principale, 6 x 6,5 x 6")
-    w.box("roche_sommet", [5.5, 20, 5.5], [9.5, 23.5, 10], "pierre", note="bloc du haut, décalé vers la gauche et l'avant")
-    w.box("roche_epaule", [9.5, 15.5, 4.5], [12, 19, 9], "pierre_sombre", note="bloc bas à droite, sort vers l'avant")
-    w.box("roche_eclat", [4, 16, 7.5], [6.5, 20.5, 11.5], "pierre_sombre", note="bloc à gauche, sort vers l'arrière")
-    w.c("roche_angle", [10.3, 20.6, 8], [2.6, 2.6, 4.5], "pierre", ("z", 45), "angle cassé en haut à droite")
+    # A small old stone floating in the fork of the roots: the five uneven blocks of the raw rock, shrunk around
+    # their middle until a gap shows all round, clear of the shaft and of the roots (which did not move).
+    k, mid, at = 0.6, (8.0, 19.0, 8.0), (8.0, 18.2, 8.0)
+    place = lambda p: [at[i] + (p[i] - mid[i]) * k for i in range(3)]
+    for name, f, t, note in (
+            ("roche", [5, 14.5, 5], [11, 21, 11], "masse principale"),
+            ("roche_sommet", [5.5, 20, 5.5], [9.5, 23.5, 10], "bloc du haut, décalé vers la gauche et l'avant"),
+            ("roche_epaule", [9.5, 15.5, 4.5], [12, 19, 9], "bloc bas à droite, sort vers l'avant"),
+            ("roche_eclat", [4, 16, 7.5], [6.5, 20.5, 11.5], "bloc à gauche, sort vers l'arrière")):
+        w.box(name, place(f), place(t), "pierre", note=note)
+    w.c("roche_angle", place([10.3, 20.6, 8]), [2.6 * k, 2.6 * k, 4.5 * k], "pierre", ("z", 45), "angle cassé en haut à droite")
     w.group("racines")
     end = w.seg("racine_g", (5.0, 12.5), 22.5, 6.0, 3.0, 3.0, "racine_claire", note="part vers l'extérieur")
     end = w.seg("ramification_g", end, -22.5, 5.0, 2.5, 3.0, "branche", note="revient sur la pierre")

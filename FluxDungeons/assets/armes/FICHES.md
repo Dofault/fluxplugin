@@ -453,13 +453,13 @@ Affichages (`display` du modèle) :
 
 ## Cœur-de-Sylve (Druide) : `fluxdungeons:coeur_de_sylve`
 
-Grand bâton à deux mains : manche de bois ancien vivant, pied évasé comme une racine épaisse ; au sommet, une roche brute et grise, faite de blocs inégaux, prise dans la fourche de deux racines qui partent vers l'extérieur puis reviennent sur elle (la gauche plus longue, la droite plus sombre et plus courte), une seule jeune pousse au bout de la racine gauche, deux excroissances de racine à la jonction du manche.
+Grand bâton à deux mains : manche de bois ancien vivant, pied évasé comme une racine épaisse ; au sommet, une petite pierre ancienne faite de blocs inégaux, en lévitation dans la fourche de deux racines qui partent vers l'extérieur puis reviennent sur elle (la gauche plus longue, la droite plus sombre et plus courte), une seule jeune pousse au bout de la racine gauche, deux excroissances de racine à la jonction du manche.
 
 | Dimension | Valeur |
 |---|---|
 | Longueur (Y) | 37.36 (de -12 à 25.36) |
 | Largeur max (X) | 13.058 (de 1.184 à 14.242) |
-| Épaisseur max (Z) | 7 |
+| Épaisseur max (Z) | 4.2 |
 | Prise (point tenu par le poing) | (8, -0.5, 8) |
 | Centre visuel (milieu de l'encombrement) | (7.713, 6.68, 8) |
 | Longueur en main, 3e personne | 31.756 px de joueur (joueur = 32) |
@@ -471,8 +471,7 @@ Palette :
 |---|---|---|
 | `bois_vivant` | Bois ancien vivant `#514333` |  |
 | `pied` | Pied de racine `#62503A` |  |
-| `pierre` | Roche brute `#77766D` |  |
-| `pierre_sombre` | Roche à l'ombre `#626158` |  |
+| `pierre` | Pierre ancienne `#747C6C` |  |
 | `racine_claire` | Racine de gauche `#70543A` |  |
 | `racine_sombre` | Racine de droite `#59432F` |  |
 | `branche` | Ramifications `#72573A` |  |
@@ -488,11 +487,11 @@ Hiérarchie (groupes, dans l'ordre de construction) : `pied` (1), `manche` (2), 
 | 3 | manche | `manche_haut` | 6.5 2 6.5 | 9.5 13 9.5 | 3 × 11 × 3 |  | `bois_vivant` |  |
 | 4 | excroissances | `excroissance_g` | 4.5 10.5 6.5 | 6.5 13.5 9.5 | 2 × 3 × 3 |  | `excroissance` | porte la racine de gauche |
 | 5 | excroissances | `excroissance_d` | 9.5 10.5 6.5 | 11.5 13.5 9.5 | 2 × 3 × 3 |  | `excroissance` | porte la racine de droite |
-| 6 | pierre | `roche` | 5 14.5 5 | 11 21 11 | 6 × 6.5 × 6 |  | `pierre` | masse principale, 6 x 6,5 x 6 |
-| 7 | pierre | `roche_sommet` | 5.5 20 5.5 | 9.5 23.5 10 | 4 × 3.5 × 4.5 |  | `pierre` | bloc du haut, décalé vers la gauche et l'avant |
-| 8 | pierre | `roche_epaule` | 9.5 15.5 4.5 | 12 19 9 | 2.5 × 3.5 × 4.5 |  | `pierre_sombre` | bloc bas à droite, sort vers l'avant |
-| 9 | pierre | `roche_eclat` | 4 16 7.5 | 6.5 20.5 11.5 | 2.5 × 4.5 × 4 |  | `pierre_sombre` | bloc à gauche, sort vers l'arrière |
-| 10 | pierre | `roche_angle` | 9 19.3 5.75 | 11.6 21.9 10.25 | 2.6 × 2.6 × 4.5 | Z 45° autour de (10.3, 20.6, 8) | `pierre` | angle cassé en haut à droite |
+| 6 | pierre | `roche` | 6.2 15.5 6.2 | 9.8 19.4 9.8 | 3.6 × 3.9 × 3.6 |  | `pierre` | masse principale |
+| 7 | pierre | `roche_sommet` | 6.5 18.8 6.5 | 8.9 20.9 9.2 | 2.4 × 2.1 × 2.7 |  | `pierre` | bloc du haut, décalé vers la gauche et l'avant |
+| 8 | pierre | `roche_epaule` | 8.9 16.1 5.9 | 10.4 18.2 8.6 | 1.5 × 2.1 × 2.7 |  | `pierre` | bloc bas à droite, sort vers l'avant |
+| 9 | pierre | `roche_eclat` | 5.6 16.4 7.7 | 7.1 19.1 10.1 | 1.5 × 2.7 × 2.4 |  | `pierre` | bloc à gauche, sort vers l'arrière |
+| 10 | pierre | `roche_angle` | 8.6 18.38 6.65 | 10.16 19.94 9.35 | 1.56 × 1.56 × 2.7 | Z 45° autour de (9.38, 19.16, 8) | `pierre` | angle cassé en haut à droite |
 | 11 | racines | `racine_g` | 2.352 11.922 6.5 | 5.352 18.622 9.5 | 3 × 6.7 × 3 | Z 22.5° autour de (3.852, 15.272, 8) | `racine_claire` | part vers l'extérieur |
 | 12 | racines | `ramification_g` | 2.411 17.503 6.5 | 4.911 23.203 9.5 | 2.5 × 5.7 × 3 | Z -22.5° autour de (3.661, 20.353, 8) | `branche` | revient sur la pierre |
 | 13 | racines | `pousse` | 3.717 22.463 7 | 6.117 24.863 9 | 2.4 × 2.4 × 2 | Z 45° autour de (4.917, 23.663, 8) | `pousse` | seule jeune pousse, au bout de la racine gauche |
