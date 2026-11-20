@@ -1,0 +1,17 @@
+prefix: "&#B376E5ᴡᴀʀᴅʀᴏʙᴇ &8▸ "
+opened: "&7You look at yourself from outside. &fSneak&7 to leave."
+closed: "&7Wardrobe closed."
+busy: "&#FF5C5CThe wardrobe cannot open now."
+already: "&#FF5C5CYou are already in the wardrobe."
+reloaded: "&#2ECF7BFluxCosmetics reloaded."
+usage: "!&#FF5C5C/%flux_cmd_fluxcosmetics_tenue% [reload]"
+# action bar, slot 1 held
+hint-camera: "&7Mouse: &fturn around &8· &7Forward / backward: &fzoom &8· &7Sneak: &fleave"
+# action bar, another slot held
+hint-still: "&7Camera held still &8· &7Slot 1: &fmove it &8· &7Sneak: &fleave"
+items:
+  camera-name: "Camera"
+  camera-description: "Hold this slot and move the mouse to turn around yourself. Forward and backward bring the camera closer or farther."
+  leave-name: "Leave"
+  leave-description: "Back in your own eyes, where you stood."
+  leave-click: "Leave"

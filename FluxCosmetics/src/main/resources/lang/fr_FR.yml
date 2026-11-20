@@ -1,0 +1,17 @@
+prefix: "&#B376E5ɢᴀʀᴅᴇ-ʀᴏʙᴇ &8▸ "
+opened: "&7Tu te vois de l'extérieur. &fAccroupis-toi&7 pour sortir."
+closed: "&7Garde-robe fermée."
+busy: "&#FF5C5CLa garde-robe ne peut pas s'ouvrir maintenant."
+already: "&#FF5C5CTu es déjà dans la garde-robe."
+reloaded: "&#2ECF7BFluxCosmetics rechargé."
+usage: "!&#FF5C5C/%flux_cmd_fluxcosmetics_tenue% [reload]"
+# barre d'action, case 1 tenue
+hint-camera: "&7Souris : &ftourner autour &8· &7Avancer / reculer : &fzoom &8· &7S'accroupir : &fsortir"
+# barre d'action, autre case tenue
+hint-still: "&7Caméra immobile &8· &7Case 1 : &fla bouger &8· &7S'accroupir : &fsortir"
+items:
+  camera-name: "Caméra"
+  camera-description: "Garde cette case en main et bouge la souris pour tourner autour de toi. Avancer et reculer rapprochent ou éloignent la caméra."
+  leave-name: "Sortir"
+  leave-description: "Retour dans tes yeux, là où tu étais."
+  leave-click: "Sortir"

@@ -1,0 +1,28 @@
+# FluxCosmetics: cosmetics of the players.
+# The wardrobe (/tenue): the player leaves his body (a mannequin with his skin stays in his place) and becomes a camera
+# turning around it with his mouse, while the first slot of his hotbar is held.
+# Distances in blocks, angles in degrees, speeds in blocks per tick (20 ticks = 1 second).
+
+language: ""
+
+camera:
+  # Distance from the mannequin when the wardrobe opens.
+  distance: 3.2
+  # Closest and farthest the camera can be brought (forward / backward keys). Set both to "distance" to turn zoom off.
+  min-distance: 1.6
+  max-distance: 6.0
+  # Blocks gained or lost per tick while the forward or backward key is held.
+  zoom-speed: 0.12
+  # Highest look down (positive) and look up (negative) allowed.
+  max-pitch: 70
+  min-pitch: -25
+  # Point looked at, above the mannequin's feet (1.0 = his chest).
+  target-height: 1.0
+  # Look down when the wardrobe opens.
+  start-pitch: 12
+
+hotbar:
+  # Items shown in the hotbar meanwhile (packets only, his real items never move).
+  # Format of Flux items: a material, or itemsadder:<namespace>:<id>.
+  camera: SPYGLASS
+  leave: BARRIER
