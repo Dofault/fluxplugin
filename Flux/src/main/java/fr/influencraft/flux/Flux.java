@@ -36,6 +36,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     private com.github.retrooper.packetevents.event.PacketListenerCommon sidebarListener;
     private com.github.retrooper.packetevents.event.PacketListenerCommon driverListener;
     private com.github.retrooper.packetevents.event.PacketListenerCommon dropKeyListener;
+    private com.github.retrooper.packetevents.event.PacketListenerCommon useKeyListener;
     private com.github.retrooper.packetevents.event.PacketListenerCommon armSwingListener;
     private com.github.retrooper.packetevents.event.PacketListenerCommon hotbarListener;
     private PacketListenerCommon advancementListener;
@@ -165,6 +166,9 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         // a player's drop key as an action key while a plugin claims it (api.client.DropKey)
         dropKeyListener = PacketEvents.getAPI().getEventManager()
                 .registerListener(new fr.influencraft.flux.adapters.packetevents.DropKeyFilter(this));
+        // a player's right click as an action key while a plugin claims it (api.client.UseKey)
+        useKeyListener = PacketEvents.getAPI().getEventManager()
+                .registerListener(new fr.influencraft.flux.adapters.packetevents.UseKeyFilter(this));
         // the echo of an arm swing made by the server is no left click (api.client.ArmSwing)
         armSwingListener = PacketEvents.getAPI().getEventManager()
                 .registerListener(new fr.influencraft.flux.adapters.packetevents.ArmSwingFilter());
@@ -248,6 +252,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         if (sidebarListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(sidebarListener);
         if (driverListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(driverListener);
         if (dropKeyListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(dropKeyListener);
+        if (useKeyListener != null) PacketEvents.getAPI().getEventManager().unregisterListener(useKeyListener);
         if (armSwingListener != null) {
             fr.influencraft.flux.api.client.ArmSwing.filtered(false);
             PacketEvents.getAPI().getEventManager().unregisterListener(armSwingListener);
@@ -460,6 +465,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         fr.influencraft.flux.api.effects.Effects.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.shops.ChestShops.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.client.DropKey.unregisterAll(event.getPlugin());
+        fr.influencraft.flux.api.client.UseKey.unregisterAll(event.getPlugin());
         fr.influencraft.flux.api.mobs.MobStacks.unregisterAll(event.getPlugin());
         placeholdersChanged();
         if (hadMenus) menuFoldersChanged();

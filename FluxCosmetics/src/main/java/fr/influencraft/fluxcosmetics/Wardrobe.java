@@ -121,7 +121,10 @@ final class Wardrobe implements Listener {
         if (e.isSneaking() && active(e.getPlayer())) close(e.getPlayer(), true);
     }
 
-    /** Left click leaves, right click opens the choice of cosmetics; nothing else happens in the world. */
+    /**
+     * Left click leaves; nothing else happens in the world. Right clicks never get here: Flux's {@code UseKey} hands
+     * them to the view (they open the cosmetics menu) before the server reads them.
+     */
     @EventHandler(priority = EventPriority.LOWEST)
     public void onInteract(PlayerInteractEvent e) {
         Player p = e.getPlayer();
@@ -130,7 +133,6 @@ final class Wardrobe implements Listener {
         e.setCancelled(true);
         if (e.getHand() != EquipmentSlot.HAND) return;
         if (e.getAction().isLeftClick()) Bukkit.getScheduler().runTask(plugin, () -> close(p, true));
-        else if (e.getAction().isRightClick()) view.menu();
     }
 
     /** A left click on the mannequin (it is in front of him) is an attack, not an interaction: it leaves too. */
@@ -144,10 +146,7 @@ final class Wardrobe implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onInteractEntity(PlayerInteractEntityEvent e) {
-        WardrobeView view = view(e.getPlayer());
-        if (view == null) return;
-        e.setCancelled(true);
-        if (e.getHand() == EquipmentSlot.HAND) view.menu();
+        if (active(e.getPlayer())) e.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOWEST)

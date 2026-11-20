@@ -192,6 +192,11 @@ final class WardrobeView {
         Camera.hearAt(player, mannequin);
         Hotbar.show(player, hotbar());
         Hotbar.bars(player, false);
+        // every right click opens the menu, near the mannequin or far from anything (an empty real hand sends the
+        // server nothing for a click in the air: read from his packets)
+        fr.influencraft.flux.api.client.UseKey.claim(plugin, player, () -> {
+            if (!closing && player.isOnline()) menu();
+        });
         Sidebar.hide(player, true);
         // the mouse never turns the view: forward or back slides the camera up or down, then the view goes back
         Camera.turns(player, (p, y, x) -> {
@@ -224,6 +229,7 @@ final class WardrobeView {
         closing = true;
         Camera.turns(player, null);
         Camera.hearAt(player, null);
+        fr.influencraft.flux.api.client.UseKey.release(player);
         if (mannequin != null && mannequin.isValid()) mannequin.remove();
         if (!player.isOnline()) return;
         Hotbar.clear(player);
