@@ -270,7 +270,7 @@ theme:
   # Menus converted to the theme (instead of a theme: section in their file, so generators keep working):
   # title (on the plate), shift (rows the content moves down, default auto: ends on the last chest row when it
   # uses only the chest), background (default bg_window_*: bare window fitted to the rows used, * = first_last row), frames
-  # (vanilla, dark, none), no-frame / frame (slots without / with a frame whatever stands on them), keep-page-titles / keep-title-layers / keep-title-loop.
+  # (vanilla, dark, none), plate: false (no title plate), no-frame / frame (slots without / with a frame whatever stands on them), keep-page-titles / keep-title-layers / keep-title-loop.
   menus:
     main: {title: "Menu", background: bg_main, frames: none}   # 2 x 5 box of the main features (gen_ui.py)
     pass: {title: "Pass", background: bg_pass, keep-paths: false, frames: none}   # frames in its picture
@@ -282,7 +282,7 @@ theme:
         rang: {type: raw, x: 0, text: "%fluxtags_profile%"}   # rank tag centred over the sections (FluxTags)
         pseudo: {type: text, ink: true, x: 88, y: 59, align: center, text: "%flux_profile_name%"}   # shown player, between back and icon
     tags: {title: "Tags", frame: "10-16, 19-25, 28-34, 37-43"}
-    cosmetiques: {title: "Cosmétiques", frame: "64-70, 73-79"}   # FluxCosmetics: drawn in the inventory rows only
+    cosmetiques: {title: "", plate: false, frame: "64-70, 73-79"}   # FluxCosmetics: inventory rows only, no title plate (the mannequin is seen above)
     vote: {title: "Vote"}
     classement: {title: "Classement"}
     parrainage: {title: "Parrainage"}

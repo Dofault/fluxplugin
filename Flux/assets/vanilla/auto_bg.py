@@ -260,7 +260,8 @@ def build(plugins, window, generic):
         base_span = row_span(menu.all_slots(), top, hidden)
 
         def picture(span, frames, sections):
-            im = window(generic, span[0], span[1], rows=rows, title=theme.get("title"))
+            im = window(generic, span[0], span[1], rows=rows, title=theme.get("title"),
+                        plate=theme.get("plate", True) is not False)
             d = ImageDraw.Draw(im, "RGBA")
             used = set()
             list_slots = set()

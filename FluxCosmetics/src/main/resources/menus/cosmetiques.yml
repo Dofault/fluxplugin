@@ -64,12 +64,20 @@ items:
     name: "Retour"
     slots: [54]
     lore:
-      - "@desc Ferme ce menu pour te voir en entier, la caméra libre. Clic droit dans le vide pour le rouvrir, clic gauche pour quitter la garde-robe."
-      - "@left Retour à la caméra"
-      - "@right Menu principal"
+      - "@desc Quitter la garde-robe et revenir au menu principal."
+      - "@left Menu principal"
+    actions:
+      left: ["[cosmetics] main"]
+
+  camera:
+    material: "itemsadder:fluxui:btn_eye_blue"
+    name: "Voir ma tenue"
+    slots: [61]
+    lore:
+      - "@desc Ferme ce menu pour te voir en entier et tourner la caméra au clavier. Clic droit dans le vide pour rouvrir le menu."
+      - "@left Voir ma tenue"
     actions:
       left: ["[close]"]
-      right: ["[cosmetics] main"]
 
   icone:
     material: "itemsadder:fluxui:btn_shirt_purple"

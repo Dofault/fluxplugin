@@ -195,10 +195,11 @@ ICONS = {
     "search": [".###....", "#...#...", "#...#...", ".####...", "....##..", ".....##."],
     "filter": [".######.", "..####..", "...##...", "...##...", "...##...", "...##..."],
     "shirt": [".##..##.", "########", "#.####.#", "..####..", "..####..", "..####.."],
+    "eye": ["..####..", ".#....#.", "#..##..#", "#..##..#", ".#....#.", "..####.."],
 }
 ICON_X, ICON_Y = 4, 4
 BUTTONS = ["back", "close", "info", "add", "remove", "left", "right", "check", "lock", "settings", "search",
-           "filter", "up", "down", "shirt"]
+           "filter", "up", "down", "shirt", "eye"]
 
 
 def tall_button_png(icon, face, rows=2):
@@ -652,11 +653,11 @@ def window_bounds(first=0, last=9, extra=0, rows=6):
     return top, min(ui.H - 1, ROW_TOPS[last] - lift + 16 + 6 + extra)
 
 
-def bg_window(generic, first=0, last=9, extra=0, rows=6, title=None):
+def bg_window(generic, first=0, last=9, extra=0, rows=6, title=None, plate=True):
     """The bare window of the theme fitted to the rows a menu uses, its plate (title written on it when given), so a
     menu of few rows is no taller than it needs and stays centred on the screen."""
     top, bottom = window_bounds(first, last, extra, rows)
-    return ui.styled_window(top, bottom, title)
+    return ui.styled_window(top, bottom, title, plate)
 
 
 BACKGROUNDS = {"metiers": bg_metiers, "main": bg_main, "window": bg_window, "pass": bg_pass, "profil": bg_profil,

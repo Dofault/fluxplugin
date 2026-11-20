@@ -121,10 +121,13 @@ def plate_text_y(top):
     return (p0 + p1) // 2 - 2
 
 
-def styled_window(top, bottom, title=None):
-    """The window from y = top to y = bottom (inclusive) on a 176 x 221 picture, its plate, the title written on it."""
+def styled_window(top, bottom, title=None, plate=True):
+    """The window from y = top to y = bottom (inclusive) on a 176 x 221 picture, its plate, the title written on it
+    (``plate`` False: neither, the window alone)."""
     im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     im.alpha_composite(panel(W, bottom - top + 1), (0, top))
+    if not plate:
+        return im
     p0, p1 = plate_box(top)
     im.alpha_composite(panel(PLATE_W, p1 - p0 + 1), (PLATE_X, p0))
     if title:
