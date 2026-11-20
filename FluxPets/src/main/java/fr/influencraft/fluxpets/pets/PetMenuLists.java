@@ -166,7 +166,7 @@ public final class PetMenuLists {
     /** Operators only: a button taking the chosen pet out of their own collection (two clicks). */
     private List<ListEntry> remove(Player player) {
         Pet pet = PetView.selected(player);
-        if (pet == null || !player.isOp() || !PetData.has(player, pet)) return List.of();
+        if (pet == null || !player.hasPermission("fluxpets.admin") || !PetData.has(player, pet)) return List.of();
         ItemStack item = Items.of("itemsadder:influitems:chest_delete", t("remove"),
                 Lore.create().description(t("remove-description")).left(t("remove-action")).build(), player);
         return List.of(ListEntry.of(pet.id()).item(item).set("confirm", t("remove-confirm")));
