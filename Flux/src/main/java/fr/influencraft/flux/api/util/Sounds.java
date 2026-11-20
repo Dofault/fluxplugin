@@ -54,11 +54,15 @@ public final class Sounds {
     /**
      * Sounds of one click: the action lines of a click run as a batch ({@link #begin}/{@link #end}) and only one sound
      * plays, so a [list] page sound, a menu opening sound and a [sound] line never stack. A sound written in the
-     * menu ({@link #explicit}) wins over the ones played by code, else the first one played is kept.
+     * menu ({@link #explicit}) wins over the ones played by code, a menu opening ({@link #navigation}) over both,
+     * else the first one played is kept.
      */
     private static final class Batch {
         String raw;
-        boolean explicit;
+        /** Who chose the sound: 0 code, 1 the menu author ([sound]), 2 a menu opening. The highest one plays. */
+        int rank = -1;
+        /** The kept sound is a plain button click (or a page), which a menu opening replaces. */
+        boolean plain = true;
     }
 
     private static final java.util.Map<java.util.UUID, Batch> BATCHES = new java.util.HashMap<>();
@@ -81,23 +85,48 @@ public final class Sounds {
 
     /** Plays a sound ({@code "<key> [volume] [pitch]"}, or {@code "@cue"}). */
     public static void play(Player player, String spec) {
-        record(player, resolve(player, spec), false);
+        record(player, spec, 0);
     }
 
     /** Sound written by a menu author ({@code [sound]} action): during a click, it replaces the automatic ones. */
     public static void explicit(Player player, String spec) {
-        record(player, resolve(player, spec), true);
+        record(player, spec, 1);
     }
 
-    private static void record(Player player, String raw, boolean explicit) {
+    /**
+     * Sound of a menu opening: during a click, it replaces the button's plain click ({@code @click}, {@code @page}),
+     * so changing menu sounds like the menu and not like the button; a success, an error... is kept.
+     */
+    public static void navigation(Player player, String spec) {
+        if (player == null) return;
+        Batch b = org.bukkit.Bukkit.isPrimaryThread() ? BATCHES.get(player.getUniqueId()) : null;
+        if (b == null) {
+            String raw = resolve(player, spec);
+            if (raw != null) emit(player, raw);
+        } else if (b.plain) {
+            b.raw = resolve(player, spec);
+            b.rank = 2;
+            b.plain = false;
+        }
+    }
+
+    private static void record(Player player, String spec, int rank) {
+        String raw = resolve(player, spec);
         if (player == null || raw == null) return;
         Batch b = org.bukkit.Bukkit.isPrimaryThread() ? BATCHES.get(player.getUniqueId()) : null;
         if (b == null) {
             emit(player, raw);
-        } else if (explicit ? !b.explicit : b.raw == null) {
+        } else if (rank > b.rank || (b.rank == 2 && !isPlain(spec))) {
+            // a meaningful sound (success, error...) played after a menu opened in the same click still wins
             b.raw = raw;
-            b.explicit = explicit;
+            b.rank = rank;
+            b.plain = isPlain(spec);
         }
+    }
+
+    private static boolean isPlain(String spec) {
+        String cue = spec.trim().toLowerCase(Locale.ROOT);
+        return cue.equals("@click") || cue.equals("@page") || cue.equals("@open");
     }
 
     /** The sound to play ({@code key [volume] [pitch]}), null for none or a cue on cooldown. */

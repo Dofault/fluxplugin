@@ -297,6 +297,35 @@ def animations():
         root=lambda t, i: (0, 6 * charge(t)))
     A.append(a)
 
+    # ------------------------------------------------------------------ brambles: 2.4 s (48 ticks), slam at 16
+    #   0-12   it rears up and draws its head back to one side, mouth open, the leaves rise, the tongue curls in
+    #  12-16   it whips its head down and slams its open mouth against the ground: SLAM at 16, the plant shudders
+    #  16-30   it keeps its mouth pressed to the earth while the brambles race away (the game), leaves flat,
+    #          roots tense, a small tremor
+    #  30-48   it pulls its head out of the ground and straightens up
+    a = Anim("brambles", 48)
+
+    def press(t):
+        return win(t, 13, 16, 28, 36)
+    rig(a, head=lambda t: (K(t, (0, 0), (12, 16), (16, -34), (28, -32), (38, 4), (48, 0)),
+                           K(t, (0, 0), (12, 14), (16, 0), (48, 0)),
+                           K(t, (0, 0), (12, -8), (16, 0)) + 1.5 * S(TAU * 6 * t) * win(t, 16, 18, 26, 30)),
+        head_pos=lambda t: (0, -3 * press(t), -4 * press(t)),
+        stem=lambda t: (K(t, (0, 0), (12, 6), (16, -10), (28, -10), (40, 0)),
+                        K(t, (0, 0), (12, 10), (16, -16), (28, -15), (40, 0)),
+                        K(t, (0, 0), (12, 8), (16, -12), (28, -11), (40, 0)), 0),
+        stretch=lambda t: 1 + 0.25 * press(t),
+        body=lambda t: -1.2 * bump(T(15), T(22), t),
+        jaw=lambda t: (K(t, (0, 0), (12, 18), (16, 24), (28, 22), (36, -6), (40, -8), (48, 0)),
+                       K(t, (0, 0), (12, 22), (16, 30), (28, 28), (36, -6), (40, -8), (48, 0))),
+        outer=lambda t, i: (K(t, (0, 0), (12, 14), (16, 28), (28, 24), (40, 0)), K(t, (0, 0), (16, 12), (40, 0))),
+        inner=lambda t, i: K(t, (0, 0), (12, 10), (16, 22), (28, 18), (40, 0)),
+        sepal=lambda t, i: K(t, (0, 0), (12, 22), (16, 10), (40, 0)),
+        tongue=lambda t: (K(t, (0, 1), (10, 0.3), (16, 0.2), (30, 0.2), (42, 1.0)), 0, 0, 0),
+        leaf=lambda t, s: (K(t, (0, 0), (12, 24), (16, -20), (28, -18), (44, 0)), K(t, (0, 0), (12, 12), (16, -14), (44, 0))),
+        root=lambda t, i: (K(t, (0, 0), (14, 6), (17, -2), (28, 4), (40, 0)), K(t, (0, 0), (14, 14), (17, -4), (28, 12), (40, 0))))
+    A.append(a)
+
     # ------------------------------------------------------------------ roots: 3.5 s (70 ticks), strike at 30
     #   0-26   it bows towards the ground: the head comes down, the petals tighten, the mouth hangs ajar, the tongue
     #          dangles, the leaves flatten; its roots stir one after the other (4-30)

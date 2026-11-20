@@ -113,11 +113,21 @@ public final class MenuService {
                 showTitle(player, session, frames.get(index[0]++ % frames.size()));
             }, 1L, menu.loopInterval()));
         }
-        plugin.actions().run(player, session, menu.openActions());
-        // menus that play no sound when opening get the default one (menu-open-sound)
-        if (menu.openActions().stream().noneMatch(a -> a.trim().startsWith("[sound]"))) {
-            fr.influencraft.flux.api.util.Sounds.play(player, plugin.openSound());
+        // The opening sound plays now, inside the click that opened the menu, and wins over that click's own sound
+        // (a button's "[sound] @click" used to hide every menu change). A [sound] line of the open actions picks it,
+        // else menu-open-sound; the open actions run a tick later, so their [sound] lines are left out.
+        String openSound = null;
+        java.util.List<String> openActions = new java.util.ArrayList<>();
+        for (String action : menu.openActions()) {
+            String trimmed = action.trim();
+            if (trimmed.startsWith("[sound]")) {
+                if (openSound == null) openSound = trimmed.substring("[sound]".length()).trim();
+            } else {
+                openActions.add(action);
+            }
         }
+        fr.influencraft.flux.api.util.Sounds.navigation(player, openSound != null ? openSound : plugin.openSound());
+        plugin.actions().run(player, session, openActions);
         return true;
     }
 

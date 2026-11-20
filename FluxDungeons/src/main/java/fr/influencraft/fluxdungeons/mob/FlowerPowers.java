@@ -51,19 +51,23 @@ import java.util.concurrent.ThreadLocalRandom;
  *   <li>{@code fleur_thorns} (thorns 60): against whoever keeps away: three thorns at 26, 34 and 42, the first at
  *   where the player stands, the second ahead of his run, the third aimed again; they bend a little towards him for
  *   half a second, then fly straight; a block stops them;</li>
+ *   <li>{@code fleur_brambles} (brambles 48): mid range: it slams its open mouth against the ground at 16 and
+ *   {@code lines} trails of brambles race in a fan towards its prey (aim locked at 10, marked on the ground from 4):
+ *   step out of the fan or between two trails;</li>
  *   <li>{@code fleur_roots} (roots 70): its roots strike the ground at 30; two waves of marked zones (under the
  *   players and around them) break out at 42 and 52: hit and slowed hard for a moment;</li>
  *   <li>{@code fleur_bloom} (bloom 130, ultimate): it charges (0-28), turns monstrous (30-46) and bursts at 52: a cloud
  *   of spores runs out to {@code radius} (52-66), hurting and poisoning whoever it reaches; marked spore pods pop at
  *   76; then it is spent until 108 (glowing, unable to act): the players' reward.</li>
  * </ul>
- * It picks its move from what the players do: the bite for whoever comes close, thorns for whoever stays away,
+ * It picks its move from what the players do: the bite for whoever comes close, thorns and brambles for whoever
+ * stays away,
  * roots for players who stand still or bunch up (and now and then all the same). Nothing ever changes in the map: seeds, thorns
  * and roots are displays, removed with the fight.
  */
 final class FlowerPowers {
 
-    static final Set<String> TYPES = Set.of("fleur_awaken", "fleur_bite", "fleur_thorns", "fleur_roots", "fleur_bloom");
+    static final Set<String> TYPES = Set.of("fleur_awaken", "fleur_bite", "fleur_thorns", "fleur_brambles", "fleur_roots", "fleur_bloom");
     static final String MODEL = "fleur_devoreuse";
     /** How far its head turns ahead of its body to follow a player, each side. */
     static final float HEAD_RANGE = 40f;
@@ -78,7 +82,8 @@ final class FlowerPowers {
             PINK = Color.fromRGB(0xF0B79A), RED = Color.fromRGB(0xFF5C5C), OLIVE = Color.fromRGB(0x9A9A62);
     private static final int EXPOSED = 0xE8D57A;
     private static final BlockData ROOT = Material.MANGROVE_ROOTS.createBlockData(), DIRT = Material.ROOTED_DIRT.createBlockData(),
-            LEAF = Material.AZALEA_LEAVES.createBlockData(), POD = Material.SPORE_BLOSSOM.createBlockData();
+            LEAF = Material.AZALEA_LEAVES.createBlockData(), POD = Material.SPORE_BLOSSOM.createBlockData(),
+            BRAMBLE = Material.SWEET_BERRY_BUSH.createBlockData();
 
     /** A flower and what it is doing. */
     private static final class Brain {
@@ -120,6 +125,7 @@ final class FlowerPowers {
             case "fleur_awaken" -> awaken(ab, c, b);
             case "fleur_bite" -> bite(ab, c, b, target);
             case "fleur_thorns" -> thorns(ab, c, b);
+            case "fleur_brambles" -> brambles(ab, c, b);
             case "fleur_roots" -> roots(ab, c, b);
             case "fleur_bloom" -> bloom(ab, c, b);
             default -> {
@@ -141,6 +147,7 @@ final class FlowerPowers {
         return switch (ab.type()) {
             case "fleur_bite" -> biteTarget(b, ab) != null;
             case "fleur_thorns" -> farthest(b, ab.number("min-range", 7), ab.number("max-range", 28)) != null;
+            case "fleur_brambles" -> farthest(b, ab.number("min-range", 4), ab.number("max-range", 16)) != null;
             case "fleur_roots" -> rootsWanted(b, ab);
             case "fleur_bloom" -> !fighters(b.home, ab.number("radius", 9) + 6).isEmpty();
             default -> false;
@@ -387,7 +394,7 @@ final class FlowerPowers {
                 lock(b);
                 snd(at, "block.big_dripleaf.tilt_down", 1.6f, 0.5f);
             }
-            if (t >= 4 && t < 23 && t % 2 == 0) Fx.cone(at.clone().add(0, 0.05, 0), aim[0], angle, reach, t >= 14 ? RED : OLIVE, t >= 14 ? RED : POLLEN);
+            if (t >= 4 && t < 23 && t % 2 == 0) Fx.warnCone(at.clone().add(0, 0.05, 0), aim[0], angle, reach, t >= 14 ? RED : OLIVE, t >= 14 ? RED : POLLEN);
             if (t == 18) snd(at, "entity.ravager.attack", 1.6f, 0.7f);
             // 23 the jaws slam shut
             if (t == 23) {
@@ -425,7 +432,7 @@ final class FlowerPowers {
         c.animate("thorns");
         snd(b.home, "entity.cat.hiss", 1.6f, 0.5f);
         String warning = ab.text("warning", "");
-        if (!warning.isBlank()) target.sendActionBar(Texts.parse(warning));
+        if (!warning.isBlank() && Fx.telegraphs()) target.sendActionBar(Texts.parse(warning));
         timeline(e, 60, t -> {
             if (!target.isValid() || target.getWorld() != w) return;
             Vector f = front(b);
@@ -437,7 +444,7 @@ final class FlowerPowers {
                     double ang = a + i * Math.PI * 2 / 3;
                     dust(mouth.clone().add(Math.cos(ang) * 1.5, 0.3 * Math.sin(a + i), Math.sin(ang) * 1.5), SPORE, 1.0f, 1, 0);
                 }
-                Fx.ring(target.getLocation().add(0, 0.1, 0), 0.9, t >= 16 ? RED : OLIVE, 0.9f, t * 0.2);
+                Fx.warnRing(target.getLocation().add(0, 0.1, 0), 0.9, t >= 16 ? RED : OLIVE, 0.9f, t * 0.2);
             }
             if (t == 8) {
                 seed[0] = seedDisplay(mouth);
@@ -557,6 +564,101 @@ final class FlowerPowers {
         }.runTaskTimer(plugin, 0L, 1L);
     }
 
+    // ---------------------------------------------------------------- Ronces rampantes (brambles 48)
+
+    private void brambles(MobTemplate.Ability ab, RockPowers.Caster c, Brain b) {
+        LivingEntity e = c.entity();
+        World w = e.getWorld();
+        Player target = farthest(b, ab.number("min-range", 4), ab.number("max-range", 16));
+        if (target == null) return;
+        int lines = Math.max(1, (int) ab.number("lines", 3));
+        double spread = Math.toRadians(ab.number("spread", 16)), length = ab.number("length", 16), step = ab.number("speed", 0.8);
+        double power = ab.number("bramble-power", 4.5), width = ab.number("width", 0.9);
+        int slow = (int) ab.number("slow-ticks", 12);
+        Vector[] dirs = new Vector[lines];
+        Set<UUID> struck = new HashSet<>();
+        b.focus = target;
+        begin(c, b, 48, true);
+        c.animate("brambles");
+        snd(b.home, "block.sweet_berry_bush.place", 1.6f, 0.5f);
+        snd(b.home, "entity.creaking.sway", 1.2f, 0.6f);
+        timeline(e, 48, t -> {
+            Location at = b.home;
+            if (t <= 10) {
+                Vector f = front(b);
+                for (int i = 0; i < lines; i++) dirs[i] = f.clone().rotateAroundY(spread * (i - (lines - 1) / 2.0));
+            }
+            if (t == 10) {
+                lock(b);
+                snd(at, "block.big_dripleaf.tilt_down", 1.4f, 0.6f);
+            }
+            // 4-16 the trails are drawn on the ground: olive, red once the aim is set
+            if (t >= 4 && t < 18 && t % 2 == 0 && Fx.telegraphs()) {
+                for (Vector d : dirs) {
+                    for (double s = 1.5; s <= length; s += 0.9) {
+                        Location p = at.clone().add(d.clone().multiply(s));
+                        dust(p.clone().add(0, 0.12, 0), t >= 10 ? RED : OLIVE, 1.0f, 1, 0.02);
+                    }
+                }
+            }
+            if (t == 16) {
+                snd(at, "block.rooted_dirt.break", 1.8f, 0.5f);
+                snd(at, "block.mangrove_roots.break", 1.6f, 0.6f);
+                w.spawnParticle(Particle.BLOCK, at.clone().add(front(b).multiply(1.6)).add(0, 0.2, 0), 24, 0.8, 0.1, 0.8, 0, DIRT);
+                shake(at, 8);
+            }
+            // 17 on: each trail runs `speed` blocks a tick, stopped by a wall or a drop
+            if (t >= 17) {
+                double reach = 1.5 + (t - 17) * step;
+                if (reach > length) return;
+                for (int i = 0; i < lines; i++) {
+                    if (dirs[i] == null) continue;
+                    Location p = onGround(at.clone().add(dirs[i].clone().multiply(reach)));
+                    if (p == null || Math.abs(p.getY() - at.getY()) > 1.6 || !p.clone().add(0, 0.5, 0).getBlock().isPassable()) {
+                        dirs[i] = null;
+                        continue;
+                    }
+                    bramble(p, dirs[i]);
+                    if (t % 2 == i % 2) snd(p, "block.sweet_berry_bush.break", 0.9f, 0.6f + 0.05f * i);
+                    for (Player pl : fighters(p, width + 0.4)) {
+                        if (Math.abs(pl.getLocation().getY() - p.getY()) > 2 || !struck.add(pl.getUniqueId())) continue;
+                        c.hit(pl, power);
+                        pl.setVelocity(new Vector(0, 0.45, 0).add(dirs[i].clone().multiply(0.2)));
+                        if (slow > 0) pl.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, slow, 1, false, true));
+                        snd(pl.getLocation(), "entity.player.hurt_sweet_berry_bush", 1.2f, 0.8f);
+                    }
+                }
+            }
+            if (t == 48) end(c, b);
+        });
+    }
+
+    /** A clump of brambles bursting out of the ground and sinking back a moment later. */
+    private void bramble(Location at, Vector dir) {
+        ThreadLocalRandom r = ThreadLocalRandom.current();
+        Location base = at.clone();
+        base.setYaw(0);
+        base.setPitch(0);
+        float yaw = (float) (Math.atan2(dir.getX(), dir.getZ()) + r.nextDouble(-0.6, 0.6));
+        float size = (float) r.nextDouble(0.8, 1.15);
+        Quaternionf q = new Quaternionf().rotateY(yaw).rotateX((float) Math.toRadians(r.nextDouble(-12, 12)));
+        Vector3f corner = q.transform(new Vector3f(-size / 2, 0, -size / 2));
+        Transformation up = new Transformation(corner, q, new Vector3f(size, size, size), new Quaternionf());
+        Transformation down = new Transformation(new Vector3f(corner).sub(0, size + 0.2f, 0), q, new Vector3f(size, size, size), new Quaternionf());
+        BlockDisplay d = base.getWorld().spawn(base, BlockDisplay.class, bd -> {
+            bd.setBlock(BRAMBLE);
+            bd.setPersistent(false);
+            bd.setTransformation(down);
+            bd.addScoreboardTag(TAG);
+        });
+        alive.add(d);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> moveTo(d, up, 2), 1L);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> moveTo(d, down, 8), 18L);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> forget(d), 27L);
+        if (r.nextInt(3) == 0) root(at, 0.7, 0.22, r.nextDouble(-25, 25), dir, 2, 12);
+        at.getWorld().spawnParticle(Particle.BLOCK, at.clone().add(0, 0.2, 0), 4, 0.3, 0.05, 0.3, 0, DIRT);
+    }
+
     // ---------------------------------------------------------------- Racines dévoreuses (roots 70)
 
     private void roots(MobTemplate.Ability ab, RockPowers.Caster c, Brain b) {
@@ -618,7 +720,7 @@ final class FlowerPowers {
     /** A zone about to break out: a ring that turns red, earth shaking, root tips. */
     private void mark(List<Location> zones, double radius, int since) {
         for (Location z : zones) {
-            Fx.ring(z.clone().add(0, 0.08, 0), radius, since >= 14 ? RED : OLIVE, 1.2f, since * 0.08);
+            Fx.warnRing(z.clone().add(0, 0.08, 0), radius, since >= 14 ? RED : OLIVE, 1.2f, since * 0.08);
             if (since % 4 == 0) z.getWorld().spawnParticle(Particle.BLOCK, z.clone().add(0, 0.1, 0), 5, radius * 0.4, 0.02, radius * 0.4, 0, DIRT);
             if (since == 8) for (int i = 0; i < 3; i++) {
                 double a = i * Math.PI * 2 / 3;

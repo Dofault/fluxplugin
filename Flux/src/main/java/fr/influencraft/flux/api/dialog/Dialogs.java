@@ -366,7 +366,9 @@ public final class Dialogs {
             if (options.isEmpty()) return this;
             List<String> kept = List.copyOf(options.subList(0, Math.min(100, options.size())));
             inputs.add(t -> {
-                int picked = Math.max(0, kept.indexOf(t != null ? t.text(id) : initial));
+                // List.copyOf refuses indexOf(null): no initial value means the first option
+                String wanted = t != null ? t.text(id) : initial;
+                int picked = wanted == null ? 0 : Math.max(0, kept.indexOf(wanted));
                 List<SingleOptionDialogInput.OptionEntry> entries = new ArrayList<>();
                 for (int i = 0; i < kept.size(); i++) {
                     entries.add(SingleOptionDialogInput.OptionEntry.create("o" + i, Texts.parse(style("option") + kept.get(i), player), i == picked));
