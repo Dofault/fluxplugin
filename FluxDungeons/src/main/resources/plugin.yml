@@ -11,6 +11,3 @@ permissions:
   fluxdungeons.play:
     description: Choose a class, form a party and play dungeons.
     default: true
-  fluxdungeons.admin:
-    description: Build the dungeon templates, start or stop runs for others, give dungeon items, reload.
-    default: op

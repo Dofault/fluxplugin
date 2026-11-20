@@ -10,6 +10,3 @@ permissions:
   fluxcasino.use:
     description: Use the chips command (balance, bet, exchange).
     default: true
-  fluxcasino.admin:
-    description: Chips admin (give, take, set, history).
-    default: op

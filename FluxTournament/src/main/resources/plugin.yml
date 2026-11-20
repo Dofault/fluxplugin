@@ -11,6 +11,3 @@ permissions:
   fluxtournament.use:
     description: Open the tournament menu.
     default: true
-  fluxtournament.admin:
-    description: Start, stop, cancel tournaments, preview what each job can hold, reload.
-    default: op

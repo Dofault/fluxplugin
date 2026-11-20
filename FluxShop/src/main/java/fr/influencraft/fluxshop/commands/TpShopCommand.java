@@ -79,7 +79,7 @@ public class TpShopCommand implements SupermarketCommand {
     }
 
     private void selfTeleport(Player player) {
-        boolean isAdmin = player.hasPermission("fluxshop.admin");
+        boolean isAdmin = fr.influencraft.flux.api.staff.Staff.isAdmin(player);
         if (!isAdmin && !player.hasPermission("fluxshop.tpshop")) {
             player.sendMessage(lang.get("shop-no-permission"));
             return;
@@ -168,7 +168,7 @@ public class TpShopCommand implements SupermarketCommand {
     }
 
     private void adminTeleportOther(Player player, String targetName) {
-        if (!player.hasPermission("fluxshop.admin")) {
+        if (!fr.influencraft.flux.api.staff.Staff.isAdmin(player)) {
             player.sendMessage(lang.get("shop-no-permission"));
             return;
         }

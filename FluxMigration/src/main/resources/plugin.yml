@@ -7,7 +7,3 @@ authors: [Influencraft]
 depend: [Flux]
 softdepend: [FluxFly, FluxCrate, FluxFamily, FluxPW, FluxCommerce, FluxShop, FluxOffering, FluxPets, eco]
 
-permissions:
-  fluxmigration.admin:
-    description: See and run the migrations.
-    default: op

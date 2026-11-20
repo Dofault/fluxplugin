@@ -14,6 +14,3 @@ permissions:
   fluxmusic.others:
     description: Play or stop a song for another player or everyone.
     default: op
-  fluxmusic.admin:
-    description: Reload the songs, place the stages.
-    default: op

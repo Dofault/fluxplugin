@@ -8,7 +8,7 @@
 #   <id>:                     # used in /offrande <id>, and in %offrandes_<id>_*% placeholders
 #     displayname: "..."      # supports &legacy, &#RRGGBB / #RRGGBB hex, MiniMessage <tags>, %papi_placeholders%
 #     permission: "..."       # LuckPerms/Bukkit permission required to access it; blank = open to
-#                              # anyone with fluxoffering.use. Ops and fluxoffering.admin always bypass this.
+#                              # anyone with fluxoffering.use. Ops and flux.admin always bypass this.
 #     items:
 #       <item key>: <amount>  # a plain Bukkit material (DIAMOND) or an ItemsAdder namespaced id
 #                              # ("namespace:id", quoted because of the colon). Amount can be far

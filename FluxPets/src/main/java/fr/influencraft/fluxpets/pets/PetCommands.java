@@ -92,7 +92,7 @@ public final class PetCommands implements TabExecutor {
             case "remove" -> {
                 // operators only (hidden button of the progress menu): out of their own collection, to test adoption again
                 Pet pet = args.length > 1 ? Pets.get(args[1]) : null;
-                if (pet != null && player.hasPermission("fluxpets.admin") && PetData.has(player, pet)) {
+                if (pet != null && fr.influencraft.flux.api.staff.Staff.isAdmin(player) && PetData.has(player, pet)) {
                     PetData.take(player, pet);
                     PetView.invalidate(player);
                     PetMenuLists.invalidate(player);

@@ -38,7 +38,7 @@ public class ReloadCommand implements SupermarketCommand {
 
     @Override
     public boolean execute(Player player, String[] args) {
-        if (!player.hasPermission("fluxshop.admin")) {
+        if (!fr.influencraft.flux.api.staff.Staff.isAdmin(player)) {
             player.sendMessage(lang.get("shop-no-permission"));
             return true;
         }

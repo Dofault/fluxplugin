@@ -44,7 +44,7 @@ public final class FluxSorter extends fr.influencraft.flux.api.FluxPlugin implem
     @Override
     protected void enable() {
         fr.influencraft.flux.api.command.Commands.create(this, "sorter").aliases("sortingchest", "schest", "tri")
-                .description("Sorting chest administration.").permission("fluxsorter.admin").bukkit(this, this).register();
+                .description("Sorting chest administration.").permission(fr.influencraft.flux.api.staff.Staff.ADMIN).bukkit(this, this).register();
         conf = Settings.of(getConfig());
         if (!fr.influencraft.flux.api.claims.Claims.available()) {
             getLogger().warning("No claim plugin in Flux (providers.claims): sorting chests cannot work.");

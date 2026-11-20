@@ -233,7 +233,7 @@ final class Levels {
     }
 
     private boolean canLevelUp(Player p, MemberHolder holder) {
-        if (p.hasPermission("fluxlands.admin")) return true;
+        if (fr.influencraft.flux.api.staff.Staff.isAdmin(p)) return true;
         if (holder instanceof Nation n) return Pays.estChef(n, p);
         return holder instanceof Land l && Villes.estMaire(l, p.getUniqueId());
     }

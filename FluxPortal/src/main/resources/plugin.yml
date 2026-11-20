@@ -6,7 +6,3 @@ description: Permanent portals showing the other side in depth (/portail). Windo
 authors: [Influencraft]
 depend: [Flux]
 
-permissions:
-  fluxportal.admin:
-    description: /portail (create, link, move, open, close, remove, list, go to portals).
-    default: op

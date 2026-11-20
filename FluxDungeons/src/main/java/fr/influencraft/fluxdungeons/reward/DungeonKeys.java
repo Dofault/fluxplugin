@@ -59,7 +59,7 @@ public final class DungeonKeys implements Listener {
     private final List<Effects.Counter> counters = new ArrayList<>();
     private boolean required = true;
     private double minutes = 20;
-    private String bypass = "fluxdungeons.admin";
+    private String bypass = fr.influencraft.flux.api.staff.Staff.ADMIN;
 
     public DungeonKeys(FluxPlugin plugin, Supplier<Collection<DungeonDefinition>> dungeons) throws SQLException {
         this.plugin = plugin;
@@ -85,7 +85,7 @@ public final class DungeonKeys implements Listener {
     public void reload(ConfigurationSection c) {
         required = c == null || c.getBoolean("required", true);
         minutes = c == null ? 20 : Math.max(0.1, c.getDouble("minutes", 20));
-        bypass = c == null ? "fluxdungeons.admin" : c.getString("bypass-permission", "fluxdungeons.admin");
+        bypass = c == null ? fr.influencraft.flux.api.staff.Staff.ADMIN : c.getString("bypass-permission", fr.influencraft.flux.api.staff.Staff.ADMIN);
         Effects.whenReady(plugin, this::count);
     }
 

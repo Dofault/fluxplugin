@@ -76,7 +76,7 @@ public final class FluxPass extends FluxPlugin implements Listener {
                 .register();
         command("fluxpass")
                 .description("Season pass administration.")
-                .permission("fluxpass.admin")
+                .permission(fr.influencraft.flux.api.staff.Staff.ADMIN)
                 .usage(messages().raw("admin-usage"))
                 .executor(this::onAdmin)
                 .completer(this::completeAdmin)

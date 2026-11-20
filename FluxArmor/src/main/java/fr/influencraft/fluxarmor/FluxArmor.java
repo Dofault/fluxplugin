@@ -83,7 +83,7 @@ public final class FluxArmor extends FluxPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(this, this);
         command("fluxarmor")
                 .description("Armour sets administration.")
-                .permission("fluxarmor.admin")
+                .permission(fr.influencraft.flux.api.staff.Staff.ADMIN)
                 .suggest(false)
                 .usage(messages().raw("usage"))
                 .executor(this::onCommand)
@@ -91,7 +91,7 @@ public final class FluxArmor extends FluxPlugin implements Listener {
                 .register();
         command("set")
                 .description("Gives a whole armour set (and its extras).")
-                .permission("fluxarmor.admin")
+                .permission(fr.influencraft.flux.api.staff.Staff.ADMIN)
                 .suggest(false)
                 .usage(messages().raw("set.usage"))
                 .executor(this::onSet)

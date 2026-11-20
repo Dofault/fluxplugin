@@ -81,7 +81,7 @@ defaults:
 # Materials that cannot be a warp icon.
 banned-icons: [DEBUG_STICK, BARRIER, STRUCTURE_VOID, COMMAND_BLOCK, COMMAND_BLOCK_MINECART, JIGSAW]
 
-# Worlds where warps cannot be created or moved to (fluxpw.admin can).
+# Worlds where warps cannot be created or moved to (flux.admin can).
 disabled-worlds: []
 
 claims:

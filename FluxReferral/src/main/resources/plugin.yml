@@ -46,41 +46,14 @@ permissions:
     default: true
 
   # --- Commandes admin (sous /parrainage admin) ---
-  fluxreferral.admin.aide:
-    description: Afficher l'aide des commandes admin
-    default: op
 
-  fluxreferral.admin.recharger:
-    description: Recharger la configuration et les messages
-    default: op
 
-  fluxreferral.admin.reinitialiser:
-    description: Réinitialiser les données de parrainage d'un joueur
-    default: op
 
-  fluxreferral.admin.definirparrain:
-    description: Définir manuellement le parrain d'un joueur
-    default: op
 
-  fluxreferral.admin.supprimerparrain:
-    description: Supprimer le lien de parrainage d'un joueur
-    default: op
 
-  fluxreferral.admin.forcerpalier:
-    description: Déclencher manuellement un palier pour un joueur
-    default: op
 
-  fluxreferral.admin.info:
-    description: Consulter les informations de débogage d'un joueur
-    default: op
 
-  fluxreferral.admin.simuler:
-    description: Simuler l'arrivée d'un joueur par une adresse de parrainage (test sans DNS)
-    default: op
 
-  fluxreferral.admin.valider:
-    description: Valider tout de suite le parrainage en attente d'un joueur
-    default: op
 
   # --- Staff ---
   fluxreferral.staff.origine:
@@ -88,26 +61,4 @@ permissions:
     default: op
 
   # --- Permission globale admin ---
-  fluxreferral.admin.decouverte:
-    description: "Voir comment un joueur a découvert le serveur"
-    default: op
-  fluxreferral.admin.decouvertes:
-    description: "Statistiques de découverte du serveur"
-    default: op
-  fluxreferral.admin.questionnaire:
-    description: "Voir le questionnaire de découverte (aperçu) ou le reposer à un joueur"
-    default: op
 
-  fluxreferral.admin.*:
-    description: Accès complet à toutes les commandes admin du parrainage
-    default: op
-    children:
-      fluxreferral.admin.aide: true
-      fluxreferral.admin.recharger: true
-      fluxreferral.admin.reinitialiser: true
-      fluxreferral.admin.definirparrain: true
-      fluxreferral.admin.supprimerparrain: true
-      fluxreferral.admin.forcerpalier: true
-      fluxreferral.admin.info: true
-      fluxreferral.admin.simuler: true
-      fluxreferral.admin.valider: true

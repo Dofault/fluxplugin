@@ -6,10 +6,3 @@ author: dofault
 description: "Bridge between the website and the server: shop deliveries, vote rewards to claim, Vote Party, vote reminder and vote streak. Formerly InfluBridge."
 depend: [Flux]
 
-permissions:
-  fluxwebsite.admin:
-    description: "Reload the config (/website reload)."
-    default: op
-  fluxwebsite.voteparty.admin:
-    description: "Change the Vote Party counter by hand (/voteparty add|remove <amount>)."
-    default: op

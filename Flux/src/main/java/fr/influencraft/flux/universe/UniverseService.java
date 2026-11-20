@@ -80,7 +80,7 @@ import java.util.function.Supplier;
 public final class UniverseService implements Universes.Backend, Listener {
 
     public static final String BYPASS = "flux.universe.bypass";
-    public static final String ADMIN = "flux.universe.admin";
+    public static final String ADMIN = fr.influencraft.flux.api.staff.Staff.ADMIN;
 
     /** One universe of universes.yml. */
     private record Settings(String id, Set<String> worlds, List<String> prefixes, GameMode gameMode, Set<String> commands,

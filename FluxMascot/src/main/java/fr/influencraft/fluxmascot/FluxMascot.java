@@ -45,7 +45,7 @@ public final class FluxMascot extends FluxPlugin {
         Bukkit.getScheduler().runTaskTimer(this, stands::tick, 20L, 10L);
         command("fluxmascot")
                 .description("The welcome robot: make it greet a player, stop it, reload.")
-                .permission("fluxmascot.admin")
+                .permission(fr.influencraft.flux.api.staff.Staff.ADMIN)
                 .executor(this::onCommand)
                 .completer((sender, args) -> args.length == 1 ? List.of("greet", "roam", "stop", "reload")
                         : args.length == 2 ? Bukkit.getOnlinePlayers().stream().map(Player::getName).toList() : List.of())

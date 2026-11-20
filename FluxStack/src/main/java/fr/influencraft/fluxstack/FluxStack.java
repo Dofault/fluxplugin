@@ -17,7 +17,7 @@ public final class FluxStack extends FluxPlugin {
         stacks = new StackManager(this);
         getServer().getPluginManager().registerEvents(stacks, this);
         stacks.start();
-        Commands.create(this, "fluxstack").description("Mob stacking administration.").permission("fluxstack.admin")
+        Commands.create(this, "fluxstack").description("Mob stacking administration.").permission(fr.influencraft.flux.api.staff.Staff.ADMIN)
                 .executor((sender, label, args) -> {
                     if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
                         reload();

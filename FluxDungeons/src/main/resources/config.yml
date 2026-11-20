@@ -228,7 +228,7 @@ music:
 keys:
   required: true
   minutes: 20
-  bypass-permission: fluxdungeons.admin
+  bypass-permission: flux.admin
 
 # Jetons de donjon (monnaie Flux « currency ») : chaque monstre vaincu en donne à chaque joueur du groupe selon son rang,
 # multipliés par la récompense du niveau de difficulté. Ils jaillissent du monstre (au plus max-coins-shown pièces).

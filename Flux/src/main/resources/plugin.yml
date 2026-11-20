@@ -26,21 +26,40 @@ permissions:
   flux.money.others:
     description: /money <player> (another player's balance).
     default: op
-  flux.items.admin:
-    description: /fluxitems (give, list, id).
-    default: op
+  # The one admin permission of the whole suite: every admin command, admin button and admin menu of every Flux
+  # plugin checks it (fr.influencraft.flux.api.staff.Staff.isAdmin), and no plugin declares an admin node of its own.
+  # Server operators (ops.json) have it; a LuckPerms group gets everything with this single node. Its children are
+  # the finer staff nodes operators had by default, still grantable one by one to a lower rank (moderators).
   flux.admin:
-    description: /fluxmenu (open, reload, list).
+    description: Administration of the whole Flux suite (every admin command, button and menu of every plugin).
     default: op
-  flux.rewards.give:
-    description: /rewards give and /rewards list (hand a reward to a player, see what waits for him).
-    default: op
-  flux.universe.admin:
-    description: /universes (a player's universe and quarantine, reload universes.yml).
-    default: op
-  flux.spawn.admin:
-    description: /fluxspawn (a player's spawn group, a group's place, reload spawns.yml).
-    default: op
+    children:
+      flux.commands.all: true
+      flux.commands.staff: true
+      flux.money.others: true
+      flux.account.others: true
+      flux.staff.alerts: true
+      fluxcommerce.staff: true
+      fluxcommerce.trade.staff: true
+      fluxcrate.free: true
+      fluxenchant.split: true
+      fluxenchant.split.table: true
+      fluxfamily.bypass.warmup: true
+      fluxfamily.bypass.worlds: true
+      fluxfly.bypass: true
+      fluxfly.others: true
+      fluxlands.voxel: true
+      fluxmusic.others: true
+      fluxmusic.play: true
+      fluxpw.about: true
+      fluxpw.delay.bypass: true
+      fluxpw.manage.others: true
+      fluxpw.teleport.others: true
+      fluxreferral.commande.info.autres: true
+      fluxreferral.staff.origine: true
+      fluxtools.bottlexp: true
+      fluxtools.repair: true
+      fluxtopdown.use: true
   flux.universe.bypass:
     description: Outside vanilla, containers, crafting, portals and every command allowed; in creative, items of another universe are not taken away (builders).
     default: false

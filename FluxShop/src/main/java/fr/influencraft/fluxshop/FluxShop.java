@@ -92,7 +92,7 @@ public class FluxShop extends fr.influencraft.flux.api.FluxPlugin {
         influence.register();
         FluxApi.registerAction(this, "boutique", (player, view, argument) -> influence.buy(player, view, argument.trim()));
         command("shop").description("Influence shop.").executor((sender, label, args) -> {
-            if (args.length == 1 && args[0].equalsIgnoreCase("reload") && sender.hasPermission("fluxshop.admin")) {
+            if (args.length == 1 && args[0].equalsIgnoreCase("reload") && fr.influencraft.flux.api.staff.Staff.isAdmin(sender)) {
                 influence.load();
                 messages().send(sender, "influence.reloaded");
                 return true;

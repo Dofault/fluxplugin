@@ -81,7 +81,7 @@ public final class FluxTournament extends FluxPlugin implements Listener {
                 .register();
         command("fluxtournament")
                 .description("Tournament administration.")
-                .permission("fluxtournament.admin")
+                .permission(fr.influencraft.flux.api.staff.Staff.ADMIN)
                 .suggest(false)
                 .usage(messages().raw("admin-usage"))
                 .executor(this::onAdmin)

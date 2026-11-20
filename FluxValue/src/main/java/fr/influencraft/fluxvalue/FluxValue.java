@@ -81,7 +81,7 @@ public final class FluxValue extends FluxPlugin {
         Bukkit.getScheduler().runTaskTimer(this, meter::tick, 10L, 10L);
         command("fluxvalue")
                 .description("Values of the economy: weights, prices, generated files.")
-                .permission("fluxvalue.admin")
+                .permission(fr.influencraft.flux.api.staff.Staff.ADMIN)
                 .suggest(false)
                 .executor(this::onCommand)
                 .completer((sender, args) -> args.length == 1

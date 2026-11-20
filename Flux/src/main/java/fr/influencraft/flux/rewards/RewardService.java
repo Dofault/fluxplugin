@@ -459,7 +459,7 @@ public final class RewardService implements Rewards.Backend, Listener {
     /** {@code give <player> <slots> <icon> <label words...> | <command> [; <command>...]} (console, admin). */
     private void give(CommandSender sender, String[] args) {
         Messages m = messages.get();
-        if (!sender.hasPermission("flux.rewards.give")) {
+        if (!fr.influencraft.flux.api.staff.Staff.isAdmin(sender)) {
             m.send(sender, "rewards.no-permission");
             return;
         }
@@ -486,7 +486,7 @@ public final class RewardService implements Rewards.Backend, Listener {
 
     private void list(CommandSender sender, String[] args) {
         Messages m = messages.get();
-        if (!sender.hasPermission("flux.rewards.give")) {
+        if (!fr.influencraft.flux.api.staff.Staff.isAdmin(sender)) {
             m.send(sender, "rewards.no-permission");
             return;
         }
@@ -508,7 +508,7 @@ public final class RewardService implements Rewards.Backend, Listener {
         List<String> out = new ArrayList<>();
         if (args.length == 1) {
             out.addAll(List.of("claim", "menu", "discord"));
-            if (sender.hasPermission("flux.rewards.give")) out.addAll(List.of("give", "list"));
+            if (fr.influencraft.flux.api.staff.Staff.isAdmin(sender)) out.addAll(List.of("give", "list"));
         } else if (args.length == 2 && (args[0].equalsIgnoreCase("give") || args[0].equalsIgnoreCase("list"))) {
             return Players.complete(last);
         }

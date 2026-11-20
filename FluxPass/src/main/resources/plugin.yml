@@ -11,6 +11,3 @@ permissions:
   fluxpass.use:
     description: Open the pass and claim its rewards.
     default: true
-  fluxpass.admin:
-    description: Give points, set tiers, reset, complete missions, renew a category, preview amounts, reload.
-    default: op

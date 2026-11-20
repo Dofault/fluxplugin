@@ -19,6 +19,3 @@ permissions:
   fluxfly.others:
     description: /fly <player> on another player.
     default: op
-  fluxfly.admin:
-    description: Give, take, set and check fly time, reload.
-    default: op

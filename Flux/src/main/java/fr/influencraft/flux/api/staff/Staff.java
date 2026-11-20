@@ -16,12 +16,23 @@ import org.bukkit.plugin.Plugin;
  */
 public final class Staff {
 
+    /**
+     * The one admin permission of the suite. Every admin command, button or menu of every plugin checks it through
+     * {@link #isAdmin}: never declare an admin node of your own ({@code <plugin>.admin}). Operators have it by
+     * default (Flux's plugin.yml), a LuckPerms group gets the whole administration with this single node.
+     */
+    public static final String ADMIN = "flux.admin";
     public static final String PERMISSION = "flux.staff.alerts";
     private static final String FORMAT = "&#FF5C5Cꜱᴛᴀꜰꜰ &8▸ &#FFD94D{title} &8» &#B376E5{message}";
 
     private static volatile ConfigurationSection config;
 
     private Staff() {
+    }
+
+    /** This sender administers the suite (console, operator, or {@link #ADMIN} given by the permission plugin). */
+    public static boolean isAdmin(org.bukkit.command.CommandSender sender) {
+        return sender != null && sender.hasPermission(ADMIN);
     }
 
     /** Called by Flux from its config (section {@code staff}). */

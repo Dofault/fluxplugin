@@ -199,7 +199,7 @@ public class ShopEditor {
 
     private State editing(Player player) {
         State state = states.get(player.getUniqueId());
-        if (state == null || !player.hasPermission("fluxshop.admin")) return null;
+        if (state == null || !fr.influencraft.flux.api.staff.Staff.isAdmin(player)) return null;
         if (!registry.isRegistered(state.shop)) {
             player.sendMessage(lang.get("shop-admin-not-a-chest"));
             return null;

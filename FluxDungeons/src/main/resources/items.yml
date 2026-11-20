@@ -1,7 +1,7 @@
 # Items of FluxDungeons (fluxdungeons:<id>), format of Flux items (docs/technique/flux-items.md). Dungeon loot is
 # rpg gear (fluxrpg:<id>, rpg/equipment.yml).
 
-# Staff tool (op or fluxdungeons.admin): right click = invulnerable on/off and full heal. /fluxdungeons god to get it.
+# Staff tool (op or flux.admin): right click = invulnerable on/off and full heal. /fluxdungeons god to get it.
 god_tool:
   material: NETHER_STAR
   name: '&#FFD94DStaff star'

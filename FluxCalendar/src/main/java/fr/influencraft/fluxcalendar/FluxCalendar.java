@@ -63,7 +63,7 @@ public final class FluxCalendar extends FluxPlugin implements Listener {
                 .register();
         command("fluxcalendar")
                 .description("Login calendar administration.")
-                .permission("fluxcalendar.admin")
+                .permission(fr.influencraft.flux.api.staff.Staff.ADMIN)
                 .usage(messages().raw("admin-usage"))
                 .executor(this::onAdmin)
                 .completer((sender, args) -> args.length == 1 ? List.of("reset", "reload")

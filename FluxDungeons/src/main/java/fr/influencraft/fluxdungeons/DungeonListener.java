@@ -104,7 +104,7 @@ final class DungeonListener implements Listener {
             return;
         }
         // containers and switches of the dungeon are decor
-        if (arena.isArena(p.getWorld()) && e.getClickedBlock() != null && !p.hasPermission("fluxdungeons.admin")
+        if (arena.isArena(p.getWorld()) && e.getClickedBlock() != null && !fr.influencraft.flux.api.staff.Staff.isAdmin(p)
                 && e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock().getType().isInteractable()) {
             e.setCancelled(true);
         }
@@ -273,7 +273,7 @@ final class DungeonListener implements Listener {
      */
     @EventHandler(ignoreCancelled = true)
     public void onBreak(BlockBreakEvent e) {
-        if (!arena.isArena(e.getBlock().getWorld()) || e.getPlayer().hasPermission("fluxdungeons.admin")) return;
+        if (!arena.isArena(e.getBlock().getWorld()) || fr.influencraft.flux.api.staff.Staff.isAdmin(e.getPlayer())) return;
         var run = runs.runOf(e.getPlayer());
         Material type = e.getBlock().getType();
         Boolean drops = run == null ? null : run.definition().breakable(type);
@@ -325,7 +325,7 @@ final class DungeonListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent e) {
-        if (arena.isArena(e.getBlock().getWorld()) && !e.getPlayer().hasPermission("fluxdungeons.admin")) e.setCancelled(true);
+        if (arena.isArena(e.getBlock().getWorld()) && !fr.influencraft.flux.api.staff.Staff.isAdmin(e.getPlayer())) e.setCancelled(true);
     }
 
     @EventHandler(ignoreCancelled = true)

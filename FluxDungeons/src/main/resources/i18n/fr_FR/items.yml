@@ -1,7 +1,7 @@
 # Objets de FluxDungeons (fluxdungeons:<id>), format des objets Flux (docs/technique/flux-items.md). Le butin des
 # donjons est l'équipement RPG (fluxrpg:<id>, rpg/equipment.yml).
 
-# Outil du staff (op ou fluxdungeons.admin) : clic droit = invincible ou plus, et soin complet. /fluxdungeons god pour l'obtenir.
+# Outil du staff (op ou flux.admin) : clic droit = invincible ou plus, et soin complet. /fluxdungeons god pour l'obtenir.
 god_tool:
   material: NETHER_STAR
   name: '&#FFD94DÉtoile du staff'

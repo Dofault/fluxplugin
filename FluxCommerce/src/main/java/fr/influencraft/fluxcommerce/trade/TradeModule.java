@@ -46,7 +46,7 @@ import java.util.function.Function;
  */
 public final class TradeModule extends Module {
 
-    static final String USE = "fluxcommerce.trade.use", STAFF = "fluxcommerce.trade.staff", ADMIN = "fluxcommerce.trade.admin";
+    static final String USE = "fluxcommerce.trade.use", STAFF = "fluxcommerce.trade.staff", ADMIN = fr.influencraft.flux.api.staff.Staff.ADMIN;
     private static final String SETTING = "fluxtrade:requests";
 
     private final Trades trades = new Trades(this);

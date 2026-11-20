@@ -146,7 +146,7 @@ public final class FluxOfferingAdminCommand implements CommandExecutor {
     }
 
     private boolean requireAdmin(CommandSender sender) {
-        if (sender.hasPermission("fluxoffering.admin")) {
+        if (fr.influencraft.flux.api.staff.Staff.isAdmin(sender)) {
             return true;
         }
         messages.send(sender, "general.no-permission", sender instanceof Player p ? p : null);

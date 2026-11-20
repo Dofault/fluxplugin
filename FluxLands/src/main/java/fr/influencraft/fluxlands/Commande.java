@@ -50,7 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *   niveau ville|pays|monter|retour   objectifs du niveau suivant (menu ville_niveau)
  *   role creer                         nouveau rôle de ma ville (maire)
  *   spawn ma|fiche | choisir | saisie creer_ville|creer_warp|inviter
- *   reload | index | taux &lt;ville&gt; &lt;taux&gt;  (fluxlands.admin)
+ *   reload | index | taux &lt;ville&gt; &lt;taux&gt;  (flux.admin)
  * </pre>
  */
 final class Commande implements TabExecutor {
@@ -82,8 +82,8 @@ final class Commande implements TabExecutor {
         }
         String sous = a[0].toLowerCase(Locale.ROOT);
         if (sous.equals("reload") || sous.equals("index") || sous.equals("taux")) {
-            if (!sender.hasPermission("fluxlands.admin")) {
-                sender.sendMessage("Permission fluxlands.admin requise.");
+            if (!fr.influencraft.flux.api.staff.Staff.isAdmin(sender)) {
+                sender.sendMessage("Permission flux.admin requise.");
                 return true;
             }
             admin(sender, sous, a);
@@ -531,7 +531,7 @@ final class Commande implements TabExecutor {
             Fmt.erreur(p, Lang.t("commande.tu-n-es-habitant-d"));
             return null;
         }
-        if (!Villes.estMaire(ma, p.getUniqueId()) && !p.hasPermission("fluxlands.admin")) {
+        if (!Villes.estMaire(ma, p.getUniqueId()) && !fr.influencraft.flux.api.staff.Staff.isAdmin(p)) {
             Fmt.erreur(p, Lang.t("commande.seul-le-maire-de") + Fmt.ville(ma.getName()) + Lang.t("commande.peut-faire-ca"));
             return null;
         }

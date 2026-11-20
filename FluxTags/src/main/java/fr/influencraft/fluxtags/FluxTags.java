@@ -122,7 +122,7 @@ public final class FluxTags extends FluxPlugin implements Listener {
                 .register();
         command("fluxtags")
                 .description("Tags administration.")
-                .permission("fluxtags.admin")
+                .permission(fr.influencraft.flux.api.staff.Staff.ADMIN)
                 .usage(messages().raw("admin-usage"))
                 .executor(this::onAdmin)
                 .completer((sender, args) -> args.length == 1 ? List.of("set", "clear", "reload")

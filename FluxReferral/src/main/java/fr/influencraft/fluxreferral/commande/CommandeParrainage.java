@@ -41,7 +41,7 @@ import java.util.logging.Level;
 public class CommandeParrainage implements CommandExecutor, TabCompleter {
 
     /** Permission of the « admin » line of the player help: any admin permission of the referral system. */
-    private static final String ANY_ADMIN = "fluxreferral.admin";
+    private static final String ANY_ADMIN = fr.influencraft.flux.api.staff.Staff.ADMIN;
     private static final String OTHERS = "fluxreferral.commande.info.autres";
 
     private static final List<String> ADMIN_SUBCOMMANDS = List.of("aide", "recharger", "reinitialiser",
@@ -66,7 +66,7 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
     private List<ChatHelp.Entry> adminHelp() {
         List<ChatHelp.Entry> out = new ArrayList<>();
         for (String sub : ADMIN_SUBCOMMANDS) {
-            if (!sub.equals("aide")) out.add(entry("admin " + sub, "admin-" + sub, "fluxreferral.admin." + sub));
+            if (!sub.equals("aide")) out.add(entry("admin " + sub, "admin-" + sub, fr.influencraft.flux.api.staff.Staff.ADMIN));
         }
         out.add(entry("admin aide", "admin-aide", ANY_ADMIN));
         return out;
@@ -722,15 +722,13 @@ public class CommandeParrainage implements CommandExecutor, TabCompleter {
     /** Vérifie si le sender a la permission pour une sous-commande admin. Console : toujours autorisée. */
     private boolean aPermissionAdmin(CommandSender sender, String sousCommande) {
         if (sender instanceof ConsoleCommandSender) return true;
-        return sender.hasPermission("fluxreferral.admin." + sousCommande)
-            || sender.hasPermission("fluxreferral.admin.*");
+        return fr.influencraft.flux.api.staff.Staff.isAdmin(sender);
     }
 
     /** Vérifie si le sender a au moins une permission admin (pour le pied de page d'aide). */
     private boolean aPermissionAdminQuelconque(CommandSender sender) {
         if (sender instanceof ConsoleCommandSender) return true;
-        return sender.hasPermission("fluxreferral.admin.*")
-            || ADMIN_SUBCOMMANDS.stream().anyMatch(sub -> sender.hasPermission("fluxreferral.admin." + sub));
+        return fr.influencraft.flux.api.staff.Staff.isAdmin(sender);
     }
 
     private void usageAdmin(CommandSender sender, String sousUsage) {

@@ -84,7 +84,7 @@ public final class FluxTools extends fr.influencraft.flux.api.FluxPlugin {
         ToolCommand tool = new ToolCommand(this);
         command("tools")
                 .description("Admin of the crate tools.")
-                .permission("fluxtools.admin")
+                .permission(fr.influencraft.flux.api.staff.Staff.ADMIN)
                 .suggest(false)
                 .executor(tool::run)
                 .completer(tool::complete)

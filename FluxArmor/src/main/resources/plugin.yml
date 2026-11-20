@@ -8,7 +8,3 @@ depend: [Flux]
 # custom enchantments of the pieces must be registered first
 softdepend: [EcoEnchants]
 
-permissions:
-  fluxarmor.admin:
-    description: Build the 3D armour pack, reload.
-    default: op

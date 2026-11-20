@@ -124,7 +124,7 @@ public final class RpgModule implements Listener {
             return true;
         }).register();
         Commands.create(plugin, "rpgadmin").description("Rpg administration: reload, balance, dummy, xp.")
-                .permission("fluxdungeons.admin").suggest(false).usage("/rpgadmin <reload|balance [level]|mannequin [level] [rank]|mannequin retirer [tous]|xp <player> <amount>|setspawn>")
+                .permission(fr.influencraft.flux.api.staff.Staff.ADMIN).suggest(false).usage("/rpgadmin <reload|balance [level]|mannequin [level] [rank]|mannequin retirer [tous]|xp <player> <amount>|setspawn>")
                 .executor(this::admin).register();
     }
 

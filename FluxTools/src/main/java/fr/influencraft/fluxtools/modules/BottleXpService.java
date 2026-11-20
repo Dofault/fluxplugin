@@ -54,7 +54,7 @@ public final class BottleXpService implements CommandExecutor, TabCompleter, Lis
     /** XP totale pour passer du niveau 0 au niveau 30 (formule vanilla). */
     static final int XP_PER_BOTTLE = 1395;
     static final String PERMISSION = "fluxtools.bottlexp";
-    static final String ADMIN_PERMISSION = "fluxtools.bottlexp.admin";
+    static final String ADMIN_PERMISSION = fr.influencraft.flux.api.staff.Staff.ADMIN;
 
     private final NamespacedKey bottledXpKey;
     /** Version of the bottles' look: a bottle with another one is written again (ItemLooks). */

@@ -7,7 +7,3 @@ authors: [Influencraft]
 depend: [Flux]
 softdepend: [BetterModel]
 
-permissions:
-  fluxmascot.admin:
-    description: Start or stop the robot for a player, reload (/fluxmascot).
-    default: op

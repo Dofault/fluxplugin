@@ -12,6 +12,6 @@ record Category(String key, String name, String icon, String description, String
 
     boolean allowed(CommandSender sender) {
         return permission == null || permission.isBlank() || sender.hasPermission(permission)
-                || sender.hasPermission("fluxpw.admin");
+                || fr.influencraft.flux.api.staff.Staff.isAdmin(sender);
     }
 }

@@ -96,7 +96,7 @@ public final class PetView {
 
     /** Pets a player sees in his menu: the ones he adopted; every enabled pet for an operator (testing). */
     static boolean shown(Player player, Pet pet) {
-        return PetData.has(player, pet) || (player.hasPermission("fluxpets.admin") && enabled(pet));
+        return PetData.has(player, pet) || (fr.influencraft.flux.api.staff.Staff.isAdmin(player) && enabled(pet));
     }
 
     private static boolean enabled(Pet pet) {

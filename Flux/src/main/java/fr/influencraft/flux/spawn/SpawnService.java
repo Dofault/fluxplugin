@@ -51,7 +51,7 @@ import java.util.function.Supplier;
  */
 public final class SpawnService implements Listener, Spawns.Backend {
 
-    private static final String ADMIN = "flux.spawn.admin";
+    private static final String ADMIN = fr.influencraft.flux.api.staff.Staff.ADMIN;
     /** Commands that mean "take me to the spawn" when typed without argument. */
     private static final Set<String> SPAWN_COMMANDS = Set.of("spawn", "cmi:spawn", "essentials:spawn");
 

@@ -58,10 +58,10 @@ public final class FluxPW extends FluxPlugin implements Listener {
     static final List<String> SUBCOMMANDS = List.of("create", "remove", "manage", "mywarps", "favorites", "open", "help", "admin");
     /** Words after /pw admin. */
     static final List<String> ADMIN = List.of("help", "info", "list", "manage", "remove", "send", "about", "reload");
-    /** Permission of each word after /pw admin (fluxpw.admin gives them all). */
+    /** Permission of each word after /pw admin (flux.admin gives them all). */
     private static final Map<String, String> ADMIN_NODES = Map.of("info", "fluxpw.manage.others", "list", "fluxpw.manage.others",
             "manage", "fluxpw.manage.others", "remove", "fluxpw.manage.others", "send", "fluxpw.teleport.others",
-            "about", "fluxpw.about", "reload", "fluxpw.reload");
+            "about", "fluxpw.about", "reload", fr.influencraft.flux.api.staff.Staff.ADMIN);
 
     private final WarpStore store = new WarpStore(getLogger());
     private final Teleports teleports = new Teleports(this);
@@ -225,7 +225,7 @@ public final class FluxPW extends FluxPlugin implements Listener {
     }
 
     static boolean has(CommandSender s, String node) {
-        return s.isOp() || s.hasPermission("fluxpw.admin") || s.hasPermission(node);
+        return fr.influencraft.flux.api.staff.Staff.isAdmin(s) || s.hasPermission(node);
     }
 
     boolean canManage(Player p, Warp w) {
@@ -347,7 +347,7 @@ public final class FluxPW extends FluxPlugin implements Listener {
 
     /** Why a warp cannot stand where the player is (message key), null when it can. */
     private String placeRefusal(Player p, String worldKey) {
-        if (disabledWorlds.contains(p.getWorld().getName().toLowerCase(Locale.ROOT)) && !has(p, "fluxpw.admin")) return worldKey;
+        if (disabledWorlds.contains(p.getWorld().getName().toLowerCase(Locale.ROOT)) && !has(p, fr.influencraft.flux.api.staff.Staff.ADMIN)) return worldKey;
         Location at = p.getLocation();
         if (Claims.claimId(at) != null && !Claims.owner(at, p.getUniqueId())
                 && !(allowTrusted && Claims.member(at, p.getUniqueId()))) return "foreign-claim";
@@ -1008,7 +1008,7 @@ public final class FluxPW extends FluxPlugin implements Listener {
 
     /** May use at least one /pw admin command. */
     private static boolean staff(CommandSender s) {
-        if (has(s, "fluxpw.admin")) return true;
+        if (has(s, fr.influencraft.flux.api.staff.Staff.ADMIN)) return true;
         for (String node : ADMIN_NODES.values()) if (s.hasPermission(node)) return true;
         return false;
     }

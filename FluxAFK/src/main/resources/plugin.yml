@@ -16,6 +16,3 @@ permissions:
   fluxafk.exempt:
     description: Never taken to the AFK zone automatically (staff).
     default: false
-  fluxafk.admin:
-    description: Set the zone, check, send or bring back a player, reload.
-    default: op

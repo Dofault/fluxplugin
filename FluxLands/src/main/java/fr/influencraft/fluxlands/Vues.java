@@ -318,7 +318,7 @@ final class Vues {
             m.put("uuid", u.toString());
             // the mayor (or staff) changes the role of anyone but himself / the mayor
             m.put("role_modifiable", Fmt.oui(!Villes.estMaire(land, u)
-                    && (Villes.estMaire(land, p.getUniqueId()) || p.hasPermission("fluxlands.admin"))));
+                    && (Villes.estMaire(land, p.getUniqueId()) || fr.influencraft.flux.api.staff.Staff.isAdmin(p))));
             l.add(m);
         }
         return l;

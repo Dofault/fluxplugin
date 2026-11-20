@@ -7,15 +7,5 @@ depend: [Flux]
 softdepend: [BlockLocker, CoreProtect]
 
 permissions:
-  fluxsorter.admin:
-    default: op
   # Former names (sortingchest.admin, influtri.admin), kept for servers that still grant them. Never list a
   # permission among its own children: Paper recurses forever and the server crashes at start (2026-11-13).
-  sortingchest.admin:
-    default: op
-    children:
-      fluxsorter.admin: true
-  influtri.admin:
-    default: op
-    children:
-      fluxsorter.admin: true

@@ -56,17 +56,11 @@ permissions:
   fluxpw.about:
     description: /pw admin about.
     default: op
-  fluxpw.reload:
-    description: /pw admin reload.
-    default: op
   fluxpw.teleport.others:
     description: /pw admin send <warp> <player>, sending another player.
     default: op
   fluxpw.delay.bypass:
     description: Teleport without the delay.
-    default: op
-  fluxpw.admin:
-    description: Every warp permission (all of /pw admin), and warps in the disabled worlds.
     default: op
   fluxpw.settings.setadmission:
     description: Set the admission fee of one's warps.

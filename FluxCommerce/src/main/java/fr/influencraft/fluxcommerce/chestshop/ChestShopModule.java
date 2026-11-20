@@ -44,7 +44,7 @@ import java.util.Set;
 public final class ChestShopModule extends Module {
 
     static final String USE = "fluxcommerce.chestshop.use", CREATE = "fluxcommerce.chestshop.create",
-            ADMIN = "fluxcommerce.chestshop.admin";
+            ADMIN = fr.influencraft.flux.api.staff.Staff.ADMIN;
     static final String LIMIT = "fluxcommerce.chestshop.limit.";
 
     private final ShopStore store = new ShopStore(getLogger());

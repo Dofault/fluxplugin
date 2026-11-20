@@ -101,7 +101,7 @@ public final class FluxFly extends FluxPlugin implements Listener {
                 .register();
         command("fluxfly")
                 .description("Fly time administration.")
-                .permission("fluxfly.admin")
+                .permission(fr.influencraft.flux.api.staff.Staff.ADMIN)
                 .usage(messages().raw("admin-usage"))
                 .executor(this::onAdmin)
                 .completer(this::completeAdmin)

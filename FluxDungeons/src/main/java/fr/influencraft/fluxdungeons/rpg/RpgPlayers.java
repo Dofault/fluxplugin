@@ -594,7 +594,7 @@ public final class RpgPlayers implements Listener {
 
     /** The staff changes class anywhere, without waiting, and may take a class being tried out (hidden). */
     static boolean free(Player p) {
-        return p.hasPermission("fluxdungeons.admin");
+        return fr.influencraft.flux.api.staff.Staff.isAdmin(p);
     }
 
     /** The classes shown to players (not the hidden ones being tried out). */

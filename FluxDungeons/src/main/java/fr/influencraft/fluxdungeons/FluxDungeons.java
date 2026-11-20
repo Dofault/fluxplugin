@@ -324,7 +324,7 @@ public final class FluxDungeons extends FluxPlugin {
         runs.editor().onSaved(this::reload);
         // staff tool: invulnerable on or off and full heal, to test dungeons (fluxdungeons:god_tool)
         fr.influencraft.flux.api.items.ItemUses.register(this, "fluxdungeons:god_tool", (player, item, id) -> {
-            if (!player.isOp() && !player.hasPermission("fluxdungeons.admin")) {
+            if (!fr.influencraft.flux.api.staff.Staff.isAdmin(player)) {
                 messages().send(player, "admin.god-denied");
                 return false;
             }
@@ -402,7 +402,7 @@ public final class FluxDungeons extends FluxPlugin {
                 .register();
         command("fluxdungeons")
                 .description("Dungeon administration.")
-                .permission("fluxdungeons.admin")
+                .permission(fr.influencraft.flux.api.staff.Staff.ADMIN)
                 .suggest(false)
                 .executor(this::onAdmin)
                 .completer(this::completeAdmin)

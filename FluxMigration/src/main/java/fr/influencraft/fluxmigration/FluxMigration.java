@@ -43,7 +43,7 @@ public final class FluxMigration extends FluxPlugin {
         migrations = Migrations.all(this);
         command("fluxmigration")
                 .description("One-time data migrations.")
-                .permission("fluxmigration.admin")
+                .permission(fr.influencraft.flux.api.staff.Staff.ADMIN)
                 .usage(messages().raw("usage"))
                 .executor(this::onCommand)
                 .completer((sender, args) -> args.length == 1 ? List.of("status", "run")

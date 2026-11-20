@@ -9,9 +9,6 @@ depend: [eco, Flux]
 softdepend: [libreforge, FluxShop, EcoEnchants, EcoItems, BetterModel]
 
 permissions:
-  fluxpets.admin:
-    description: /influpet (give, open, list, info, pet, reload, editor menu).
-    default: op
   fluxpets.command.pets:
     description: /pets (own pets only).
     default: true

@@ -168,7 +168,7 @@ collections:
 #### Permissions par rang — comment ca marche
 
 Chaque collection a un champ `permission` optionnel. La regle d'acces
-(`util/AccessUtil.java`) est : **ops/`fluxoffering.admin` voient tout** ; sinon **`permission`
+(`util/AccessUtil.java`) est : **ops/`flux.admin` voient tout** ; sinon **`permission`
 vide = ouvert a tous** ; sinon il faut soit **la permission**, soit **avoir deja termine
 cette offrande par le passe** (verifie sur la progression sauvegardee, independamment de la
 permission actuelle).
@@ -220,15 +220,15 @@ inaccessible, et pour qu'un joueur ne voie jamais les sous-commandes admin en ta
 | `/offrande` | `fluxoffering.use` (defaut: tous) | Equivalent a `/offrande <grade du joueur>` (via `%luckperms_current_group_on_track_standard%`, pour ignorer les grades staff hors track) — pas de liste generique. Si aucune offrande ne correspond a son grade, message "offrande inconnue" |
 | `/offrande <collection>` | `fluxoffering.use` | Ouvre l'interface de depot de cette offrande precise (typiquement une offrande d'un rang passe, deja completee) |
 | `/offrande depot <collection> <montant>` | `fluxoffering.use` | Depose ce montant de BitBlock sur l'offrande. Pas faite pour etre tapee : c'est la commande cliquable envoyee au clic gauche sur la case argent, pour que le montant ne passe pas par le tchat |
-| `/influoffrande create <id> [nom affiche]` | `fluxoffering.admin` | Cree une offrande vide (id : lettres/chiffres/`_`/`-` uniquement, pas de point). A remplir ensuite via l'editeur en jeu (`/offrande <id>`, bouton d'edition) |
-| `/influoffrande remove <id>` | `fluxoffering.admin` | Supprime une offrande de `collections.yml` (ne touche pas a la progression deja sauvegardee des joueurs) |
-| `/influoffrande rename <id> <nouveau nom>` | `fluxoffering.admin` | Change le nom affiche d'une offrande |
-| `/influoffrande permission <id> <permission\|clear>` | `fluxoffering.admin` | Definit (ou retire avec `clear`) la permission requise pour acceder a une offrande |
-| `/influoffrande money <id> <montant>` | `fluxoffering.admin` | Definit le BitBlock requis pour cette offrande (0 = retire l'exigence) |
-| `/influoffrande reset <joueur> <collection\|all>` | `fluxoffering.admin` | Reinitialise la progression (items et argent deposes) |
-| `/influoffrande set <joueur> <collection> <item\|money> <quantite>` | `fluxoffering.admin` | Force une valeur (bornee entre 0 et le requis) ; `money` force le montant depose par le joueur |
-| `/influoffrande check <joueur> [collection]` | `fluxoffering.admin` | Affiche la progression d'un joueur |
-| `/influoffrande reload` | `fluxoffering.admin` | Recharge `config.yml`/`collections.yml`/`messages.yml` sans redemarrer |
+| `/influoffrande create <id> [nom affiche]` | `flux.admin` | Cree une offrande vide (id : lettres/chiffres/`_`/`-` uniquement, pas de point). A remplir ensuite via l'editeur en jeu (`/offrande <id>`, bouton d'edition) |
+| `/influoffrande remove <id>` | `flux.admin` | Supprime une offrande de `collections.yml` (ne touche pas a la progression deja sauvegardee des joueurs) |
+| `/influoffrande rename <id> <nouveau nom>` | `flux.admin` | Change le nom affiche d'une offrande |
+| `/influoffrande permission <id> <permission\|clear>` | `flux.admin` | Definit (ou retire avec `clear`) la permission requise pour acceder a une offrande |
+| `/influoffrande money <id> <montant>` | `flux.admin` | Definit le BitBlock requis pour cette offrande (0 = retire l'exigence) |
+| `/influoffrande reset <joueur> <collection\|all>` | `flux.admin` | Reinitialise la progression (items et argent deposes) |
+| `/influoffrande set <joueur> <collection> <item\|money> <quantite>` | `flux.admin` | Force une valeur (bornee entre 0 et le requis) ; `money` force le montant depose par le joueur |
+| `/influoffrande check <joueur> [collection]` | `flux.admin` | Affiche la progression d'un joueur |
+| `/influoffrande reload` | `flux.admin` | Recharge `config.yml`/`collections.yml`/`messages.yml` sans redemarrer |
 
 Tab-completion complete sur les noms de collection pour `/offrande`, et sur toutes les
 sous-commandes/joueurs en ligne/items d'une collection pour `/influoffrande`.

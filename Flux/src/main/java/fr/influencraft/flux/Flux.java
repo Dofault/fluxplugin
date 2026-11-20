@@ -127,7 +127,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         getServer().getPluginManager().registerEvents(commandManager, this);
         fr.influencraft.flux.items.ItemsCommand itemsCommand = new fr.influencraft.flux.items.ItemsCommand(() -> messages);
         fr.influencraft.flux.api.command.Commands.create(this, "fluxitems").description("Items of the suite: give, list, id.")
-                .permission("flux.items.admin").suggest(false).executor(itemsCommand::run).completer(itemsCommand::complete).register();
+                .permission(fr.influencraft.flux.api.staff.Staff.ADMIN).suggest(false).executor(itemsCommand::run).completer(itemsCommand::complete).register();
         fr.influencraft.flux.api.command.Commands.create(this, "commands").aliases("commandes")
                 .description("Liste des commandes").executor(commandManager::help).register();
         // running total of money gained in the action bar (money-actionbar), /moneynotif on|off
@@ -474,7 +474,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("flux.admin")) {
+        if (!fr.influencraft.flux.api.staff.Staff.isAdmin(sender)) {
             msg(sender, "&#FF5C5CPermission manquante.");
             return true;
         }
@@ -582,7 +582,7 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> out = new ArrayList<>();
-        if (!sender.hasPermission("flux.admin")) return out;
+        if (!fr.influencraft.flux.api.staff.Staff.isAdmin(sender)) return out;
         if (args.length == 1) {
             for (String s : List.of("open", "reload", "list", "database")) if (s.startsWith(args[0].toLowerCase(Locale.ROOT))) out.add(s);
         } else if (args.length == 2 && args[0].equalsIgnoreCase("database")) {

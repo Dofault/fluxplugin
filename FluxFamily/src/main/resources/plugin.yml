@@ -26,6 +26,3 @@ permissions:
   fluxfamily.bypass.worlds:
     description: Set the couple home in a blocked world.
     default: op
-  fluxfamily.admin:
-    description: Info on a player's family, separate a couple, reload.
-    default: op

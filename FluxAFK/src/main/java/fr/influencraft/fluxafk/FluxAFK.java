@@ -143,7 +143,7 @@ public final class FluxAFK extends FluxPlugin {
                 .register();
         command("fluxafk")
                 .description("AFK zone administration.")
-                .permission("fluxafk.admin")
+                .permission(fr.influencraft.flux.api.staff.Staff.ADMIN)
                 .usage(messages().raw("admin-usage"))
                 .executor(this::onAdmin)
                 .completer(this::completeAdmin)

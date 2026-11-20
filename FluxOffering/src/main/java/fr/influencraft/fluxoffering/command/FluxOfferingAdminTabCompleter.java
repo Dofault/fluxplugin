@@ -24,7 +24,7 @@ public final class FluxOfferingAdminTabCompleter implements TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (!sender.hasPermission("fluxoffering.admin")) {
+        if (!fr.influencraft.flux.api.staff.Staff.isAdmin(sender)) {
             return List.of();
         }
         if (args.length == 1) {

@@ -171,7 +171,7 @@ public final class FluxCasino extends FluxPlugin implements Listener {
 
     private boolean onCommand(CommandSender sender, String label, String[] args) {
         if (args.length >= 1 && args[0].equalsIgnoreCase("admin")) {
-            if (sender.hasPermission("fluxcasino.admin")) admin(sender, args);
+            if (fr.influencraft.flux.api.staff.Staff.isAdmin(sender)) admin(sender, args);
             return true;
         }
         Player player = Players.of(sender);
@@ -246,7 +246,7 @@ public final class FluxCasino extends FluxPlugin implements Listener {
         List<String> out = new ArrayList<>();
         if (args.length == 1) {
             out.addAll(List.of("bet", "buy", "sell"));
-            if (sender.hasPermission("fluxcasino.admin")) out.add("admin");
+            if (fr.influencraft.flux.api.staff.Staff.isAdmin(sender)) out.add("admin");
         } else if (args.length == 2 && args[0].equalsIgnoreCase("admin")) {
             out.addAll(List.of("give", "take", "set", "history"));
         } else if (args.length == 3 && args[0].equalsIgnoreCase("admin")) {

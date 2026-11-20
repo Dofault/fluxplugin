@@ -10,9 +10,6 @@ depend: [Flux]
 softdepend: [FluxValue]
 
 permissions:
-  fluxshop.admin:
-    description: "Commandes d'administration du Supermarket (blocs magasins, prix, tpshop d'un autre joueur...)"
-    default: op
   fluxshop.tpshop:
     description: "Permet de se téléporter soi-même au magasin via /supermarket tpshop (à attribuer par grade via LuckPerms)"
     default: false

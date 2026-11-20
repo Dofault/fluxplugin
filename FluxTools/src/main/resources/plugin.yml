@@ -11,12 +11,6 @@ permissions:
   fluxtools.bottlexp:
     description: "Permet d'utiliser /bottlexp (remplir des fioles d'expérience). Utiliser une fiole ne demande aucune permission."
     default: op
-  fluxtools.bottlexp.admin:
-    description: "Permet /bottlexp give <joueur> <xp> [quantité] : donne des fioles d'un montant d'XP libre."
-    default: op
   fluxtools.repair:
     description: "Permet d'ouvrir le menu de réparation /repair. Accordé au groupe eminent (rang 5)."
-    default: op
-  fluxtools.admin:
-    description: /tools
     default: op

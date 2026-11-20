@@ -45,7 +45,7 @@ public class AutoSellCommand implements SupermarketCommand {
         // Reserve aux OP (meme permission que giveOther ci-dessous) : un joueur normal ne doit
         // plus pouvoir se donner l'objet lui-meme via "/supermarket autosell" sans argument —
         // seuls un OP/la console (via un plugin de shop qui l'appelle en op) peuvent le faire.
-        if (!player.hasPermission("fluxshop.admin")) {
+        if (!fr.influencraft.flux.api.staff.Staff.isAdmin(player)) {
             player.sendMessage(lang.get("shop-no-permission"));
             return;
         }
@@ -67,7 +67,7 @@ public class AutoSellCommand implements SupermarketCommand {
      * here needs to change for that caller.
      */
     public void giveOther(CommandSender sender, String targetName) {
-        if (!sender.hasPermission("fluxshop.admin")) {
+        if (!fr.influencraft.flux.api.staff.Staff.isAdmin(sender)) {
             sender.sendMessage(lang.get("shop-no-permission"));
             return;
         }

@@ -42,7 +42,7 @@ public final class OffrandeTabCompleter implements TabCompleter {
             }
             return withSidebar;
         }
-        boolean admin = sender.hasPermission("fluxoffering.admin");
+        boolean admin = fr.influencraft.flux.api.staff.Staff.isAdmin(sender);
         List<String> options = new ArrayList<>();
         for (CollectionDefinition collection : configManager.collections().values()) {
             if (admin || !(sender instanceof Player player) || AccessUtil.hasAccess(player, collection, dataManager)) {

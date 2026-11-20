@@ -12,14 +12,6 @@ softdepend: [FluxLands]
 # fluxcommerce.ah.duration.sale.<hours> / fluxcommerce.ah.duration.auction.<hours>: longer listings (the highest wins).
 # fluxcommerce.chestshop.limit.<n> / fluxcommerce.chestshop.limit.unlimited: most shops a player may own.
 permissions:
-  fluxcommerce.admin:
-    description: Everything of FluxCommerce - forbidden items, reload, bans, and the admin of every part.
-    default: op
-    children:
-      fluxcommerce.staff: true
-      fluxcommerce.trade.admin: true
-      fluxcommerce.ah.admin: true
-      fluxcommerce.chestshop.admin: true
   fluxcommerce.staff:
     description: Ban a player from commerce (trades, market, shops), pardon, list of bans (/commerce).
     default: op
@@ -30,18 +22,10 @@ permissions:
   fluxcommerce.trade.staff:
     description: Moderation of trades (/trade admin history, /trade admin cancel).
     default: op
-  fluxcommerce.trade.admin:
-    description: Everything of fluxcommerce.trade.staff.
-    default: op
-    children:
-      fluxcommerce.trade.staff: true
 
   fluxcommerce.ah.use:
     description: Use the market (buy, bid, list within one's slots).
     default: true
-  fluxcommerce.ah.admin:
-    description: Staff tools of the market (remove and delete listings, keepers), unlimited slots.
-    default: op
 
   fluxcommerce.chestshop.use:
     description: Trade with chest shops.
@@ -49,6 +33,3 @@ permissions:
   fluxcommerce.chestshop.create:
     description: Create and manage one's own chest shops.
     default: false
-  fluxcommerce.chestshop.admin:
-    description: Manage and remove every shop, unlimited (server) shops, /echoppe admin, containers of claims.
-    default: op

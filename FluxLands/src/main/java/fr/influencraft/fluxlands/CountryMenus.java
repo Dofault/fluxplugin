@@ -58,7 +58,7 @@ final class CountryMenus {
         CountryEffects ce = plugin.countryEffects();
         CountryEffects.Unlocks now = ce.unlocks(n);
         List<PotionEffectType> active = ce.active(n);
-        boolean head = Pays.estChef(n, p) || p.hasPermission("fluxlands.admin");
+        boolean head = Pays.estChef(n, p) || fr.influencraft.flux.api.staff.Staff.isAdmin(p);
         // every effect of every level, the locked ones too, so players see what the next levels bring
         Set<PotionEffectType> all = new LinkedHashSet<>(ce.unlocks(4).pool());
         for (PotionEffectType t : all) {
@@ -107,7 +107,7 @@ final class CountryMenus {
     void toggleEffect(Player p, String key) {
         Nation n = plugin.pays().monPays(p);
         if (n == null) return;
-        if (!Pays.estChef(n, p) && !p.hasPermission("fluxlands.admin")) {
+        if (!Pays.estChef(n, p) && !fr.influencraft.flux.api.staff.Staff.isAdmin(p)) {
             Fmt.erreur(p, Lang.t("countrymenus.seul-le-chef-du-pays-2"));
             return;
         }
@@ -149,7 +149,7 @@ final class CountryMenus {
         lore.kv("Taxe", Fmt.argent(t) + " &r&f &7par chunk");
         lore.kv(Lang.t("countrymenus.recette-estimee"), Fmt.argent(total) + " &r&f");
         lore.kv("Bornes", Fmt.argent(b[0]) + Lang.t("countrymenus.a") + Fmt.argent(b[1]));
-        if (Pays.estChef(n, p) || p.hasPermission("fluxlands.admin")) lore.left(Lang.t("countrymenus.changer-la-taxe"));
+        if (Pays.estChef(n, p) || fr.influencraft.flux.api.staff.Staff.isAdmin(p)) lore.left(Lang.t("countrymenus.changer-la-taxe"));
         else lore.info(Lang.t("countrymenus.seul-le-chef-du-pays-3"));
         return Items.of("itemsadder:influville:taxes", Lang.t("countrymenus.taxes-de") + Couleurs.legacy(n.getColorName()), lore.build(), p);
     }
@@ -181,7 +181,7 @@ final class CountryMenus {
     void askTax(Player p) {
         Nation n = plugin.pays().monPays(p);
         if (n == null) return;
-        if (!Pays.estChef(n, p) && !p.hasPermission("fluxlands.admin")) {
+        if (!Pays.estChef(n, p) && !fr.influencraft.flux.api.staff.Staff.isAdmin(p)) {
             Fmt.erreur(p, Lang.t("countrymenus.seul-le-chef-du-pays-3"));
             return;
         }

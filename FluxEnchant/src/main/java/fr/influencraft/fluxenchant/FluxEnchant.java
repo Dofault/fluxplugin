@@ -48,7 +48,7 @@ public final class FluxEnchant extends FluxPlugin {
         } else {
             getLogger().warning("FluxTools missing: no mastery enchantments, only the weight.");
         }
-        command("fluxenchant").description("Enchantments administration.").permission("fluxenchant.admin")
+        command("fluxenchant").description("Enchantments administration.").permission(fr.influencraft.flux.api.staff.Staff.ADMIN)
                 .usage(messages().raw("admin-usage")).executor(this::onCommand)
                 .completer((sender, args) -> args.length == 1 ? List.of("reload", "info") : List.of()).register();
         fr.influencraft.flux.api.items.CustomItems.register(this, "fluxenchant", new DevGear(this));

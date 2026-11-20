@@ -17,7 +17,7 @@ public final class AccessUtil {
     }
 
     public static boolean hasAccess(Player player, CollectionDefinition collection, DataManager dataManager) {
-        if (player.hasPermission("fluxoffering.admin")) {
+        if (fr.influencraft.flux.api.staff.Staff.isAdmin(player)) {
             return true;
         }
         if (!collection.hasPermissionRequirement()) {

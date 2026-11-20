@@ -83,7 +83,7 @@ public final class FluxCrate extends FluxPlugin implements Listener {
         });
         command("fluxcrate")
                 .description("Crates and keys administration.")
-                .permission("fluxcrate.admin")
+                .permission(fr.influencraft.flux.api.staff.Staff.ADMIN)
                 .usage(messages().raw("admin-usage"))
                 .executor(this::onAdmin)
                 .completer(this::complete)
@@ -91,7 +91,7 @@ public final class FluxCrate extends FluxPlugin implements Listener {
         if (EcoCratesCommand.available()) {
             command("ecocrates")
                     .description("Former EcoCrates give command, answered by FluxCrate.")
-                    .permission("fluxcrate.admin")
+                    .permission(fr.influencraft.flux.api.staff.Staff.ADMIN)
                     .suggest(false)
                     .executor((sender, label, args) -> {
                         if (!EcoCratesCommand.run(args, (who, crate, n) -> give(sender, who, crate, n))) {
@@ -205,7 +205,7 @@ public final class FluxCrate extends FluxPlugin implements Listener {
         Player p = e.getPlayer();
         if (e.getAction() == Action.LEFT_CLICK_BLOCK) {
             // staff: sneak + left click takes the crate away (with its barrier)
-            if (p.isSneaking() && p.hasPermission("fluxcrate.admin")) {
+            if (p.isSneaking() && fr.influencraft.flux.api.staff.Staff.isAdmin(p)) {
                 messages().send(p, placed.removeWithBlock(b) ? "removed" : "not-a-crate");
                 return;
             }

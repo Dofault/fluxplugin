@@ -71,7 +71,7 @@ The plugins are written **as English plugins, then adapted to French** for our s
 | `client.HurtShake` | `HurtShake.limit(player, ms)`: a player's screen shakes at most that often when hurt (Flux drops the extra hurt packets sent to him, his hurt sound still plays). Used by FluxDungeons. |
 | `client.Sidebar` | `Sidebar.hide(player, true/false)`: takes the sidebar (Typewriter's scoreboard, or any plugin's) off a player's screen while something needs it and puts it back as it then is (Flux holds the display packet back). Used by FluxDungeons' class showcase. |
 | `client.ChatHold` | `ChatHold.hold(player, true/false)`: nothing reaches his chat: the messages sent to him are kept by Flux, then given to him when the hold ends (his chat is not cleared). Action bar texts still show. Used by FluxDungeons' class showcase. |
-| `staff.Staff` | `Staff.alert(topic, title, message)` to online staff. |
+| `staff.Staff` | **`Staff.isAdmin(sender)`: the one admin check of the suite** (permission `flux.admin`, `Staff.ADMIN`). `Staff.alert(topic, title, message)` to online staff. |
 | `screen.Screens` | Full screen HTML/CSS pages (MC GUI adapter, `docs/technique/mcgui.md`): `canShow(player)`, `open(player, page)` (false = open your own menu instead: no adapter, Bedrock, shaders), `pagesFolder()` (write generated pages in `<folder>/<plugin>/`), `onClose(plugin, closed -> ...)`. Buttons run commands (`data-command`), player values come from placeholders. A page is never the only way to a feature. Users: FluxDungeons `rpg.ClassPages` and `pages.DungeonPages`, in the plain Minecraft look of `pages.PageKit` and its one stylesheet: reuse them for a new page, no art direction of our own there. |
 | `dialog.Dialogs` | Paper dialogs (forms, copy buttons, links). Escape counts as the cancel button (`onCancel`). **Every amount, price or quantity a player types goes through `Form.amount(id, label, initial, min, max)`** (`Answer.amount`), or `Form.decimal(...)` (`Answer.decimal`) for a price with cents: the form refuses a wrong value itself and reopens with the error and what was typed; cross-field rules with `Form.check`, a short scale (rate) with `Form.slider`. Never parse a typed amount by hand or ask it in the chat. |
 | `trade.TradeWindow` | The window a player buys or sells a given item in (rows of x1/x2/x10/x64 bundles with double click and quick buy; deposit zone with a two-click confirm). The plugin gives the offer (item, bundle, price, stock) and does the trade; Flux draws it (menus `trade`, `trade_sell`, or the lists `trade_*` placed in the plugin's own menu). Used by FluxShop shop chests, FluxCommerce (chest shops, auction house) and FluxDungeons' potion merchant (`Offer.currency()`: a price in another Flux currency than the server's money). Never draw a buy/sell window again. |
@@ -202,6 +202,12 @@ Check a change against this list before committing; the review found every one o
   of files per player, never a third-party plugin's storage (eco's profile for pets). A move is a FluxMigration.
 - **Items reach players through Flux** (rewards and give helpers that know universes and full inventories), never
   `getInventory().addItem` scattered in plugins.
+- **One admin permission: `flux.admin`.** Every admin command, admin button, admin menu or bypass meant for admins,
+  in every plugin, checks `Staff.isAdmin(sender)` (or `permission: flux.admin` in a menu or a command). Never declare
+  `<plugin>.admin` nor any other admin node, never test `isOp()`: operators have `flux.admin` by default, and a
+  LuckPerms group administers the whole suite with that single node. A power meant for a lower rank (a moderator
+  tool, a rank perk) keeps a node of its own, `default: op`, added to the children of `flux.admin` in Flux's
+  plugin.yml so admins have it too (2026-11-20: 37 admin nodes had piled up, one per plugin).
 - **Identifiers start with `flux`**: permissions `flux<module>.*`, commands of new features, money origins. A former
   `influ*` node is renamed with a LuckPerms script at go-live (FluxPW did it), never kept for comfort.
 - **PacketEvents only** for packets (adapters in `Flux/adapters/packetevents`), never ProtocolLib.

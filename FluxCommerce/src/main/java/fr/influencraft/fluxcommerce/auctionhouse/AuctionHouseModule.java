@@ -42,7 +42,7 @@ import java.util.Locale;
  */
 public final class AuctionHouseModule extends Module implements Listener {
 
-    static final String USE = "fluxcommerce.ah.use", ADMIN = "fluxcommerce.ah.admin";
+    static final String USE = "fluxcommerce.ah.use", ADMIN = fr.influencraft.flux.api.staff.Staff.ADMIN;
     private static final String SEEN = "auctionhouse.seen", ANNOUNCEMENTS = "auctionhouse.announcements";
 
     private final Store store = new Store(getLogger());

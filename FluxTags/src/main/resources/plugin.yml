@@ -10,9 +10,6 @@ permissions:
   fluxtags.use:
     description: Open /tags and pick a tag.
     default: true
-  fluxtags.admin:
-    description: Reload, set or clear the tag of a player.
-    default: op
   fluxtags.tag.beta:
     description: Unlocks the « Bêta » tag.
     default: false

@@ -6,7 +6,3 @@ description: Engine of the economy. Weights of everything farmable; job XP and m
 authors: [Influencraft]
 depend: [Flux]
 
-permissions:
-  fluxvalue.admin:
-    description: Read values, reload them, write the generated files.
-    default: op

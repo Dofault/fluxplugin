@@ -260,7 +260,7 @@ public final class FluxMusic extends FluxPlugin implements Listener {
                 if (p == null) return false;
                 String stage = stages.stageOf(p);
                 if (stage != null) {   // one music for everybody there: only the staff changes the song
-                    if (p.hasPermission("fluxmusic.admin") && stages.skip(stage)) messages().send(p, "stage-skipped");
+                    if (fr.influencraft.flux.api.staff.Staff.isAdmin(p) && stages.skip(stage)) messages().send(p, "stage-skipped");
                     else messages().send(p, "nothing-to-skip");
                     return true;
                 }
@@ -270,14 +270,14 @@ public final class FluxMusic extends FluxPlugin implements Listener {
                 return true;
             }
             case "stage", "scene" -> {
-                if (!sender.hasPermission("fluxmusic.admin")) {
+                if (!fr.influencraft.flux.api.staff.Staff.isAdmin(sender)) {
                     messages().send(sender, "no-permission");
                     return true;
                 }
                 return onStage(sender, args);
             }
             case "reload" -> {
-                if (!sender.hasPermission("fluxmusic.admin")) {
+                if (!fr.influencraft.flux.api.staff.Staff.isAdmin(sender)) {
                     messages().send(sender, "no-permission");
                     return true;
                 }
@@ -387,11 +387,11 @@ public final class FluxMusic extends FluxPlugin implements Listener {
     }
 
     private List<String> complete(CommandSender sender, String[] args) {
-        if (args.length == 1) return filter(sender.hasPermission("fluxmusic.admin")
+        if (args.length == 1) return filter(fr.influencraft.flux.api.staff.Staff.isAdmin(sender)
                 ? Stream.of("liste", "jouer", "passer", "stop", "scene", "reload")
                 : Stream.of("liste", "jouer", "passer", "stop"), args[0]);
         String sub = args[0].toLowerCase(Locale.ROOT);
-        if ((sub.equals("scene") || sub.equals("stage")) && sender.hasPermission("fluxmusic.admin")) {
+        if ((sub.equals("scene") || sub.equals("stage")) && fr.influencraft.flux.api.staff.Staff.isAdmin(sender)) {
             if (args.length == 2) return filter(Stream.of("placer", "rayon", "gradins", "groupe", "supprimer", "liste"), args[1]);
             if (args.length == 3) return filter(ambience.places().stream(), args[2]);
             return List.of();

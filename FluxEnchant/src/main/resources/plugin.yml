@@ -14,6 +14,3 @@ permissions:
   fluxenchant.split.table:
     description: "Split an enchanted book with a right click on an enchanting table (VIP)."
     default: op
-  fluxenchant.admin:
-    description: /fluxenchant reload and info.
-    default: op

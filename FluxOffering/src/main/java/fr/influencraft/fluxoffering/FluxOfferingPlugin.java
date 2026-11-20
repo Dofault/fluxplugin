@@ -58,7 +58,7 @@ public final class FluxOfferingPlugin extends fr.influencraft.flux.api.FluxPlugi
         FluxOfferingAdminCommand adminExecutor = new FluxOfferingAdminCommand(configManager, messagesManager, dataManager);
         FluxOfferingAdminTabCompleter adminTabCompleter = new FluxOfferingAdminTabCompleter(configManager);
         Commands.create(this, "offerings").aliases("influoffrande").description("Offerings administration.")
-                .permission("fluxoffering.admin").bukkit(adminExecutor, adminTabCompleter).register();
+                .permission(fr.influencraft.flux.api.staff.Staff.ADMIN).bukkit(adminExecutor, adminTabCompleter).register();
 
         // Players already online when the plugin (re)loads (e.g. /reload) still need their data cached.
         for (var player : getServer().getOnlinePlayers()) {

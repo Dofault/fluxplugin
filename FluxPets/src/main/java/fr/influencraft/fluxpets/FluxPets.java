@@ -143,7 +143,7 @@ public final class FluxPets extends fr.influencraft.flux.api.FluxPlugin implemen
             }
         });
         fr.influencraft.flux.api.command.Commands.create(this, "fluxpets").aliases("influpet")
-                .description("Pets, cards and boosters administration.").permission("fluxpets.admin")
+                .description("Pets, cards and boosters administration.").permission(fr.influencraft.flux.api.staff.Staff.ADMIN)
                 .bukkit(this, this).register();
         // boosters en attente (/boosters) et rattrapage unique des boosters de carrière, cf. CareerCatchUp
         boosterStash = fr.influencraft.fluxpets.careers.CareerCatchUp.enable(this);
@@ -349,8 +349,8 @@ public final class FluxPets extends fr.influencraft.flux.api.FluxPlugin implemen
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
-        // double sécurité : plugin.yml réserve déjà la commande à fluxpets.admin (op par défaut)
-        if (!sender.hasPermission("fluxpets.admin")) {
+        // double sécurité : plugin.yml réserve déjà la commande à flux.admin (op par défaut)
+        if (!fr.influencraft.flux.api.staff.Staff.isAdmin(sender)) {
             send(sender, "no-permission");
             return true;
         }
@@ -591,7 +591,7 @@ public final class FluxPets extends fr.influencraft.flux.api.FluxPlugin implemen
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
                                       @NotNull String alias, @NotNull String[] args) {
-        if (!sender.hasPermission("fluxpets.admin")) {
+        if (!fr.influencraft.flux.api.staff.Staff.isAdmin(sender)) {
             return List.of();
         }
         List<String> players = Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();

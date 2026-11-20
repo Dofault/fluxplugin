@@ -90,7 +90,7 @@ public final class FluxPortal extends FluxPlugin {
         });
         PortalCommand command = new PortalCommand(this);
         Commands.create(this, "portail").description("Portals: create, link, move, open, close, remove, list.")
-                .permission("fluxportal.admin").usage("/portail aide")
+                .permission(fr.influencraft.flux.api.staff.Staff.ADMIN).usage("/portail aide")
                 .executor(command::run).completer((sender, args) -> command.complete(args)).register();
         getLogger().info(portals.size() + " portal(s), holes of " + width + "x" + height);
     }
