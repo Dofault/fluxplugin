@@ -52,6 +52,7 @@ public final class Camera {
     private static final Map<Integer, Click> TARGETS = new ConcurrentHashMap<>();
     private static final Map<java.util.UUID, Turn> TURNS = new ConcurrentHashMap<>();
     private static final Map<java.util.UUID, Entity> VIEWS = new ConcurrentHashMap<>();
+    private static final Map<java.util.UUID, Entity> EARS = new ConcurrentHashMap<>();
 
     private Camera() {
     }
@@ -85,6 +86,34 @@ public final class Camera {
         if (!e.isDead() && player.isOnline()) return e;
         VIEWS.remove(player.getUniqueId(), e);
         return null;
+    }
+
+    /**
+     * The sounds meant for him alone come from {@code entity} (null: back to {@link #ears}' default): his own camera
+     * carried around by {@link #moveSelf} (FluxCosmetics' wardrobe) is ahead of where the server thinks he is, so
+     * music sent around his head glitched; it is heard on the mannequin he looks at instead.
+     */
+    public static void hearAt(Player player, Entity entity) {
+        if (entity == null) EARS.remove(player.getUniqueId());
+        else EARS.put(player.getUniqueId(), entity);
+    }
+
+    /**
+     * Where the sounds meant for this player alone must come from: the entity given to {@link #hearAt}, else the one
+     * he sees through ({@link #viewed}), else null (himself). Thread-safe.
+     */
+    public static Entity ears(Player player) {
+        Entity e = EARS.get(player.getUniqueId());
+        if (e != null) {
+            if (!e.isDead() && player.isOnline()) return e;
+            EARS.remove(player.getUniqueId(), e);
+        }
+        return viewed(player);
+    }
+
+    /** True when {@link #ears} is an entity given to {@link #hearAt}, not a camera: his view is not that entity's. */
+    public static boolean hearsElsewhere(Player player) {
+        return EARS.containsKey(player.getUniqueId());
     }
 
     /** Turns the player's head on his side (his pointer). */

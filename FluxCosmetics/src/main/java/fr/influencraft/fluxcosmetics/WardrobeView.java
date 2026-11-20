@@ -155,6 +155,8 @@ final class WardrobeView {
         teleport(new Location(world, start.getX(), start.getY(), start.getZ(), yaw, pitch));
         placed = start;
 
+        // his music is heard on the mannequin: around his head it glitched, the server being behind his camera
+        Camera.hearAt(player, mannequin);
         Hotbar.show(player, hotbar());
         Hotbar.bars(player, false);
         Sidebar.hide(player, true);
@@ -170,6 +172,7 @@ final class WardrobeView {
     void close(boolean bringBack) {
         closing = true;
         Camera.turns(player, null);
+        Camera.hearAt(player, null);
         if (mannequin != null && mannequin.isValid()) mannequin.remove();
         if (!player.isOnline()) return;
         Hotbar.clear(player);

@@ -205,11 +205,12 @@ public final class Jukebox {
     /**
      * Sends the sounds of one step to a player's own ears ("in his headphones"), at {@code gain} times their volume.
      * Heard on himself, or on the camera he looks through (a scene), else the music would come from where his body
-     * was left, on one side.
+     * was left, on one side; or on the entity Flux says he hears from ({@link fr.influencraft.flux.api.client.Camera#ears}:
+     * the mannequin of the wardrobe), the sides then following his own view.
      */
     private static void send(Player player, Sound[] sounds, float[] angles, float gain) {
         try {
-            org.bukkit.entity.Entity camera = fr.influencraft.flux.api.client.Camera.viewed(player);
+            org.bukkit.entity.Entity camera = fr.influencraft.flux.api.client.Camera.ears(player);
             Sound.Emitter from = camera != null ? camera : Sound.Emitter.self();
             org.bukkit.Location ears = null;
             for (int i = 0; i < sounds.length; i++) {
@@ -224,7 +225,9 @@ public final class Jukebox {
                     org.bukkit.entity.Entity head = camera != null ? camera : player;
                     ears = head instanceof org.bukkit.entity.LivingEntity l ? l.getEyeLocation() : head.getLocation();
                 }
-                double yaw = Math.toRadians(ears.getYaw()), a = Math.toRadians(angles[i]);
+                float facing = camera != null && fr.influencraft.flux.api.client.Camera.hearsElsewhere(player)
+                        ? player.getYaw() : ears.getYaw();
+                double yaw = Math.toRadians(facing), a = Math.toRadians(angles[i]);
                 double fx = -Math.sin(yaw), fz = Math.cos(yaw), rx = -Math.cos(yaw), rz = -Math.sin(yaw);
                 double x = ears.getX() + (fx * Math.cos(a) + rx * Math.sin(a)) * SIDE_DISTANCE;
                 double z = ears.getZ() + (fz * Math.cos(a) + rz * Math.sin(a)) * SIDE_DISTANCE;
