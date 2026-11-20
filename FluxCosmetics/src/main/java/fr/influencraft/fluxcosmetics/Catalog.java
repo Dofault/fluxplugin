@@ -46,9 +46,13 @@ final class Catalog implements RecipeBook.Catalog, Listener {
 
     /** The one tab everything sits in (axe and sword): the search tab shows it too. */
     private static final RecipeBook.Tab TAB = RecipeBook.Tab.EQUIPMENT;
-    /** The folders, in this order, and their entry ids (the cosmetics are 0 to n - 1). */
+    /** The folders, in this order. */
     private static final EquipmentSlot[] FOLDERS = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
-    private static final int FOLDER_ID = 900_000, BACK_ID = 999_999;
+    /**
+     * Entry ids: the client lists the book by id, so "back" comes first, then the folders, then the cosmetics
+     * ({@link #COSMETIC_ID} + their index).
+     */
+    private static final int BACK_ID = 0, FOLDER_ID = 1, COSMETIC_ID = 100;
 
     private final FluxCosmetics plugin;
     private final List<Cosmetic> cosmetics = new ArrayList<>();
@@ -103,7 +107,7 @@ final class Catalog implements RecipeBook.Catalog, Listener {
             Cosmetic c = cosmetics.get(i);
             if (c.slot() != folder) continue;
             boolean wearing = c.key().equals(mine.get(c.slot()));
-            out.add(new RecipeBook.Entry(i, icon(player, c, wearing), TAB, c.unlocked(), false));
+            out.add(new RecipeBook.Entry(COSMETIC_ID + i, icon(player, c, wearing), TAB, c.unlocked(), false));
         }
         return out;
     }
@@ -147,13 +151,14 @@ final class Catalog implements RecipeBook.Catalog, Listener {
             RecipeBook.refresh(player);
             return;
         }
-        if (id >= FOLDER_ID) {
+        if (id < COSMETIC_ID) {
             int ordinal = id - FOLDER_ID;
             for (EquipmentSlot slot : FOLDERS) if (slot.ordinal() == ordinal) open.put(player.getUniqueId(), slot);
             Sounds.cue(player, "page");
             RecipeBook.refresh(player);
             return;
         }
+        id -= COSMETIC_ID;
         if (id < 0 || id >= cosmetics.size()) return;
         Cosmetic c = cosmetics.get(id);
         if (shift) {
