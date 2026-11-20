@@ -347,13 +347,13 @@ Grand bâton à deux mains : manche de bois sombre pris sous une fine couche de 
 
 | Dimension | Valeur |
 |---|---|
-| Longueur (Y) | 40.5 (de -16 à 24.5) |
+| Longueur (Y) | 36.5 (de -12 à 24.5) |
 | Largeur max (X) | 14.67 (de 0.473 à 15.144) |
 | Épaisseur max (Z) | 4 |
-| Prise (point tenu par le poing) | (8, -3, 8) |
-| Centre visuel (milieu de l'encombrement) | (7.809, 4.25, 8) |
-| Longueur en main, 3e personne | 30.78 px de joueur (joueur = 32) |
-| Nombre de cubes | **11** |
+| Prise (point tenu par le poing) | (8, -0.5, 8) |
+| Centre visuel (milieu de l'encombrement) | (7.809, 6.25, 8) |
+| Longueur en main, 3e personne | 31.025 px de joueur (joueur = 32) |
+| Nombre de cubes | **10** |
 
 Palette :
 
@@ -366,34 +366,33 @@ Palette :
 | `cristal_clair` | Cristal de droite `#B5E7F5` |  |
 | `metal_gele` | Métal ancien gelé `#354F69` |  |
 
-Hiérarchie (groupes, dans l'ordre de construction) : `socle` (1), `manche` (3), `fixations` (3), `cristaux` (4)
+Hiérarchie (groupes, dans l'ordre de construction) : `socle` (1), `manche` (2), `fixations` (3), `cristaux` (4)
 
 | # | Groupe | Cube | De (x, y, z) | À (x, y, z) | Taille | Rotation | Matériau | Note |
 |---|---|---|---|---|---|---|---|---|
-| 1 | socle | `socle` | 5.5 -16 6 | 10.5 -13 10 | 5 × 3 × 4 |  | `socle` | terminaison minérale, 5 x 3 x 4 |
-| 2 | manche | `manche_bas` | 6.5 -13 6.5 | 9.5 -4 9.5 | 3 × 9 × 3 |  | `bois_gele` |  |
-| 3 | manche | `manche_milieu` | 6.5 -4 6.5 | 9.5 5 9.5 | 3 × 9 × 3 |  | `bois_gele` | zone de prise |
-| 4 | manche | `manche_haut` | 6.5 5 6.5 | 9.5 13 9.5 | 3 × 8 × 3 |  | `bois_gele` |  |
-| 5 | fixations | `collier` | 5.5 12 6 | 10.5 14 10 | 5 × 2 × 4 |  | `metal_gele` | porte les trois cristaux |
-| 6 | fixations | `griffe_g` | 1.4 14.6 6.2 | 6 16.4 9.8 | 4.6 × 1.8 × 3.6 | Z 22.5° autour de (3.7, 15.5, 8) | `metal_gele` | serre le cristal de gauche |
-| 7 | fixations | `griffe_d` | 10 14.6 6.2 | 14.6 16.4 9.8 | 4.6 × 1.8 × 3.6 | Z -22.5° autour de (12.3, 15.5, 8) | `metal_gele` | serre le cristal de droite |
-| 8 | cristaux | `cristal_central` | 5.5 14 6 | 10.5 22 10 | 5 × 8 × 4 |  | `cristal` | élément principal, 5 x 8 x 4 |
-| 9 | cristaux | `cristal_pointe` | 6.232 20.232 6 | 9.768 23.768 10 | 3.536 × 3.536 × 4 | Z 45° autour de (8, 22, 8) | `cristal` | pointe du cristal central |
-| 10 | cristaux | `cristal_gauche` | 1.661 12.734 6.5 | 5.661 19.734 9.5 | 4 × 7 × 3 | Z 22.5° autour de (3.661, 16.234, 8) | `cristal_sombre` | penché vers la gauche, 4 x 7 x 3 |
-| 11 | cristaux | `cristal_droit` | 10.148 12.772 6.5 | 14.148 18.772 9.5 | 4 × 6 × 3 | Z -22.5° autour de (12.148, 15.772, 8) | `cristal_clair` | plus court, penché vers la droite, 4 x 6 x 3 |
+| 1 | socle | `socle` | 5.5 -12 6 | 10.5 -9 10 | 5 × 3 × 4 |  | `socle` | terminaison minérale, 5 x 3 x 4 |
+| 2 | manche | `manche_bas` | 6.5 -9 6.5 | 9.5 2 9.5 | 3 × 11 × 3 |  | `bois_gele` | zone de prise |
+| 3 | manche | `manche_haut` | 6.5 2 6.5 | 9.5 13 9.5 | 3 × 11 × 3 |  | `bois_gele` |  |
+| 4 | fixations | `collier` | 5.5 12 6 | 10.5 14 10 | 5 × 2 × 4 |  | `metal_gele` | porte les trois cristaux |
+| 5 | fixations | `griffe_g` | 1.4 14.6 6.2 | 6 16.4 9.8 | 4.6 × 1.8 × 3.6 | Z 22.5° autour de (3.7, 15.5, 8) | `metal_gele` | serre le cristal de gauche |
+| 6 | fixations | `griffe_d` | 10 14.6 6.2 | 14.6 16.4 9.8 | 4.6 × 1.8 × 3.6 | Z -22.5° autour de (12.3, 15.5, 8) | `metal_gele` | serre le cristal de droite |
+| 7 | cristaux | `cristal_central` | 5.5 14 6 | 10.5 22 10 | 5 × 8 × 4 |  | `cristal` | élément principal, 5 x 8 x 4 |
+| 8 | cristaux | `cristal_pointe` | 6.232 20.232 6 | 9.768 23.768 10 | 3.536 × 3.536 × 4 | Z 45° autour de (8, 22, 8) | `cristal` | pointe du cristal central |
+| 9 | cristaux | `cristal_gauche` | 1.661 12.734 6.5 | 5.661 19.734 9.5 | 4 × 7 × 3 | Z 22.5° autour de (3.661, 16.234, 8) | `cristal_sombre` | penché vers la gauche, 4 x 7 x 3 |
+| 10 | cristaux | `cristal_droit` | 10.148 12.772 6.5 | 14.148 18.772 9.5 | 4 × 6 × 3 | Z -22.5° autour de (12.148, 15.772, 8) | `cristal_clair` | plus court, penché vers la droite, 4 x 6 x 3 |
 
 Affichages (`display` du modèle) :
 
 | Contexte | Rotation | Translation | Échelle |
 |---|---|---|---|
-| `thirdperson_righthand` | 0 -90 -37 | 0 5.35 6.47 | 0.76 |
-| `thirdperson_lefthand` | 0 90 37 | 0 5.35 6.47 | 0.76 |
-| `firstperson_righthand` | 0 -90 -10 | 1.13 4.12 0.53 | 0.46 |
-| `firstperson_lefthand` | 0 90 10 | 1.13 4.12 0.53 | 0.46 |
-| `gui` | 0 0 -45 | 1.71 1.48 0 | 0.506 |
-| `fixed` | 0 180 45 | 1.39 1.61 0 | 0.474 |
-| `on_shelf` | 0 180 45 | 1.39 1.61 0 | 0.474 |
-| `ground` | 0 0 0 | 0.05 1.02 0 | 0.272 |
+| `thirdperson_righthand` | 0 -90 -37 | 0 4.44 5.79 | 0.85 |
+| `thirdperson_lefthand` | 0 90 37 | 0 4.44 5.79 | 0.85 |
+| `firstperson_righthand` | 0 -90 -10 | 1.13 3.49 0.42 | 0.52 |
+| `firstperson_lefthand` | 0 90 10 | 1.13 3.49 0.42 | 0.52 |
+| `gui` | 0 0 -45 | 1.1 0.84 0 | 0.556 |
+| `fixed` | 0 180 45 | 0.79 1.03 0 | 0.521 |
+| `on_shelf` | 0 180 45 | 0.79 1.03 0 | 0.521 |
+| `ground` | 0 0 0 | 0.06 0.53 0 | 0.301 |
 | `head` | 0 180 0 | 0 13 7 | 0.6 |
 
 ## Tison-Soleil (Pyromancien) : `fluxdungeons:tison_soleil`
