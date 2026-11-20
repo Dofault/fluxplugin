@@ -322,7 +322,10 @@ final class CosmeticsMenu {
             if (c.slot() != slot) continue;
             boolean wearing = c.key().equals(worn);
             boolean owned = outfits.owns(viewer, c);
+            // pieces of rpg outfits: shown to admins only
+            if (c.adminOnly() && !owned) continue;
             Lore lore = Lore.create();
+            if (c.adminOnly()) lore.description(plugin.messages().raw("menu.rpg-piece"));
             lore.kv(plugin.messages().raw("menu.rarity"), "&" + c.rarity().colour() + plugin.messages().raw("rarities." + c.rarity().id()));
             if (wearing) lore.ok(plugin.messages().raw("menu.worn"));
             if (!owned) lore.ko(plugin.messages().raw("menu.locked"));

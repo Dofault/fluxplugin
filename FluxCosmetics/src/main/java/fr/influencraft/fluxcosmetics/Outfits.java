@@ -55,7 +55,7 @@ final class Outfits implements Listener {
     }
 
     /** {@code item}: what is worn, a Flux item id ({@code namespace:id}) or a material. */
-    record Cosmetic(String key, String name, String item, EquipmentSlot slot, boolean free, Rarity rarity) {
+    record Cosmetic(String key, String name, String item, EquipmentSlot slot, boolean free, Rarity rarity, boolean adminOnly) {
     }
 
     /**
@@ -162,15 +162,24 @@ final class Outfits implements Listener {
                 plugin.getLogger().warning("Cosmetic " + key + ": unknown rarity " + c.getString("rarity") + ", " + lowest.id() + " used");
                 rarity = lowest;
             }
-            cosmetics.put(key, new Cosmetic(key, c.getString("name", key), item, slot, c.getBoolean("free", false), rarity));
+            cosmetics.put(key, new Cosmetic(key, c.getString("name", key), item, slot, c.getBoolean("free", false), rarity, false));
         }
         rpg.load(config);
+        // each piece of an rpg outfit, worn on its own outside the rpg universe by admins only
+        for (RpgOutfits.Outfit o : rpg.all()) {
+            for (EquipmentSlot slot : ARMOUR) {
+                String item = o.pieces().get(slot);
+                String key = o.key() + "." + slot.name().toLowerCase(Locale.ROOT);
+                if (item != null && !cosmetics.containsKey(key)) cosmetics.put(key, new Cosmetic(key, o.name(), item, slot, false, o.rarity(), true));
+            }
+        }
         // the looks of the players online follow the new definitions
         for (Player p : Bukkit.getOnlinePlayers()) if (players.containsKey(p.getUniqueId())) dress(p);
     }
 
+    /** Keys of the cosmetics players can be given (never the admin-only pieces of rpg outfits). */
     List<String> keys() {
-        return List.copyOf(cosmetics.keySet());
+        return cosmetics.values().stream().filter(c -> !c.adminOnly()).map(Cosmetic::key).toList();
     }
 
     Cosmetic get(String key) {
@@ -184,9 +193,11 @@ final class Outfits implements Listener {
         return out;
     }
 
-    /** Whether he may wear it: free, given to him, or he is an admin. */
+    /** Whether he may wear it: free, given to him, or he is an admin (an admin-only one: admins alone). */
     boolean owns(Player player, Cosmetic c) {
-        if (c.free() || Staff.isAdmin(player)) return true;
+        if (Staff.isAdmin(player)) return true;
+        if (c.adminOnly()) return false;
+        if (c.free()) return true;
         Wardrobe w = players.get(player.getUniqueId());
         return w != null && w.owned.contains(c.key());
     }
@@ -602,7 +613,7 @@ final class Outfits implements Listener {
 
     /** Keys of every cosmetic and rpg outfit, for "all" in the admin commands. */
     Set<String> everything() {
-        Set<String> out = new HashSet<>(cosmetics.keySet());
+        Set<String> out = new HashSet<>(keys());
         out.addAll(rpg.keys());
         return out;
     }

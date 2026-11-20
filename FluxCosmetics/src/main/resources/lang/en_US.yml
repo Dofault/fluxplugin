@@ -20,6 +20,7 @@ menu:
   rpg-here: "Wear in this world (admin)"
   rpg-here-off: "Take off in this world (admin)"
   rpg-here-worn: "Worn in this world (admin)"
+  rpg-piece: "A piece of an rpg outfit (admin)."
   selected: "Shown category"
   see: "See"
   worn: "Worn"
