@@ -55,7 +55,16 @@ public final class AppearanceOverlay extends PacketListenerAbstract implements A
             PacketEvents.getAPI().getPlayerManager().sendPacket(viewer,
                     new WrapperPlayServerEntityEquipment(wearer.getEntityId(), new ArrayList<>(equipment)));
         }
-        // his own screen: the armour slots sent again, rewritten on their way
+        // his own screen: the armour slots sent again, rewritten on their way. Slot by slot: updateInventory() sends
+        // the open window only, which has no armour slot while a menu shows (the cosmetics menu changing a look)
+        var user = PacketEvents.getAPI().getPlayerManager().getUser(wearer);
+        if (user != null) {
+            for (int slot = 36; slot <= 39; slot++) {
+                org.bukkit.inventory.ItemStack real = wearer.getInventory().getItem(inventoryArmour(slot));
+                user.sendPacket(new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetPlayerInventory(
+                        slot, SpigotConversionUtil.fromBukkitItemStack(real)));
+            }
+        }
         wearer.updateInventory();
     }
 
