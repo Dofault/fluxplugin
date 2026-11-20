@@ -349,7 +349,7 @@ def reliquaire_aube():
 
 
 def coeur_de_givre():
-    """Cryomancer's staff, 32 units tall: a dark frozen shaft, three crystals set as one cluster, nothing floating."""
+    """Cryomancer's staff, 40 units tall: a dark frozen shaft, three crystals set as one cluster, nothing floating."""
     w = Weapon("coeur_de_givre", "Cœur-de-Givre", "Cryomancien",
                "Grand bâton à deux mains : manche de bois sombre pris sous une fine couche de glace, terminaison "
                "minérale en bas ; au sommet, trois cristaux imbriqués (un grand cristal central à pointe, un cristal "
@@ -391,11 +391,13 @@ def coeur_de_givre():
                  "cristal_sombre": crystal("#5CA7C9", "#8CCFE8", "#397C9D", "#B5E7F5"),
                  "cristal_clair": crystal("#B5E7F5", "#D9F5FF", "#8CCFE8", "#D9F5FF")}
     w.group("socle")
-    w.box("socle", [5.5, -8, 6], [10.5, -5, 10], "socle", note="terminaison minérale, 5 x 3 x 4")
+    w.box("socle", [5.5, -16, 6], [10.5, -13, 10], "socle", note="terminaison minérale, 5 x 3 x 4")
     w.group("manche")
-    # two cubes of 11: a face never stretches its texture beyond 16 units
-    w.box("manche_bas", [6.5, -5, 6.5], [9.5, 4, 9.5], "bois_gele", note="zone de prise")
-    w.box("manche_haut", [6.5, 4, 6.5], [9.5, 13, 9.5], "bois_gele")
+    # three cubes of 9: a face never stretches its texture beyond 16 units. The shaft is long on purpose: the staff
+    # looks imposing in the hand by its height, the head keeps its size (owner's call, 2026-11-20)
+    w.box("manche_bas", [6.5, -13, 6.5], [9.5, -4, 9.5], "bois_gele")
+    w.box("manche_milieu", [6.5, -4, 6.5], [9.5, 5, 9.5], "bois_gele", note="zone de prise")
+    w.box("manche_haut", [6.5, 5, 6.5], [9.5, 13, 9.5], "bois_gele")
     w.group("fixations")
     w.box("collier", [5.5, 12, 6], [10.5, 14, 10], "metal_gele", note="porte les trois cristaux")
     w.box("griffe_g", [1.4, 14.6, 6.2], [6.0, 16.4, 9.8], "metal_gele", ("z", 22.5), "serre le cristal de gauche")
@@ -497,10 +499,9 @@ DISPLAYS = {
     "sylve_celeste": ("bow", 135, (8.1, 8, 8), (25, 0.55), (-90, 0.36)),
     "sceptre_neant": ("handheld", 45, (8, 2, 8), (-47, 0.66), (10, 0.36)),
     "reliquaire_aube": ("handheld", 45, (8, 2.85, 8), (-47, 0.66), (10, 0.36)),
-    # The weapons of the elemental classes are 30 to 32 units tall against 47 for the first staves: held larger in
-    # third person so they stay two-handed weapons, and much larger in first person, where the owner wants them
-    # imposing on the screen (2026-11-20). Keep that first person scale for the next ones.
-    "coeur_de_givre": ("handheld", 45, (8, 2, 8), (-47, 0.95), (10, 0.66)),
+    # Cryomancer's staff: 40 units tall, the fist low on the shaft so the head stands high on the screen. An imposing
+    # weapon is a tall one: scaling it up in first person only made its head huge (tried 2026-11-20).
+    "coeur_de_givre": ("handheld", 45, (8, -3, 8), (-47, 0.76), (10, 0.46)),
     "tison_soleil": ("handheld", 45, (8, -1, 8), (-32, 0.95), (0, 0.62)),
 }
 # Spin of the weapon around its own axis (degrees) before it is held: the bow was held back to front in game, its
