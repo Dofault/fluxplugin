@@ -73,10 +73,12 @@ final class Outfits implements Listener {
         final Map<Integer, Preset> presets = new ConcurrentHashMap<>();
         /** Rpg outfit he chose, null: his class's ({@link RpgOutfits}). */
         volatile String rpg;
+        /** Rpg outfit an admin wears outside the rpg universe, null: his vanilla cosmetics. */
+        volatile String rpgHere;
     }
 
-    /** Slot name of the chosen rpg outfit in the worn table. */
-    private static final String RPG_SLOT = "RPG";
+    /** Slot names of the chosen rpg outfit, and of an admin's rpg outfit worn outside it, in the worn table. */
+    private static final String RPG_SLOT = "RPG", RPG_HERE_SLOT = "RPG_V";
 
     /** Armour slots kept in a preset, in the order of the table's columns. */
     static final EquipmentSlot[] ARMOUR = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
@@ -222,8 +224,8 @@ final class Outfits implements Listener {
     boolean toggle(Player player, String key, boolean quiet) {
         Cosmetic c = cosmetics.get(key);
         if (c == null) return false;
-        // the vanilla cosmetics are never put on in the rpg universe (nor shown there)
-        if (!owns(player, c) || rpg.in(player)) {
+        // edited from any universe: show() draws only those of the universe he is in
+        if (!owns(player, c)) {
             Sounds.cue(player, "error");
             if (!quiet) plugin.messages().send(player, "outfits.locked", "%name%", c.name());
             return true;
@@ -250,7 +252,7 @@ final class Outfits implements Listener {
      */
     boolean wear(Player player, String key) {
         Cosmetic c = cosmetics.get(key);
-        if (c == null || !owns(player, c) || rpg.in(player)) return false;
+        if (c == null || !owns(player, c)) return false;
         Wardrobe w = players.computeIfAbsent(player.getUniqueId(), k -> new Wardrobe());
         if (key.equals(w.worn.get(c.slot()))) return true;
         w.worn.put(c.slot(), key);
@@ -323,7 +325,7 @@ final class Outfits implements Listener {
     /** Takes off whatever cosmetic he wears in that slot (his real item shows again), quietly. */
     void takeOff(Player player, EquipmentSlot slot) {
         Wardrobe w = players.get(player.getUniqueId());
-        if (w == null || rpg.in(player) || w.worn.remove(slot) == null) return;
+        if (w == null || w.worn.remove(slot) == null) return;
         show(player);
         saveWorn(player.getUniqueId(), slot, null);
         Sounds.cue(player, "toggle-off");
@@ -418,6 +420,10 @@ final class Outfits implements Listener {
                                 w.rpg = rs.getString(2);
                                 continue;
                             }
+                            if (RPG_HERE_SLOT.equals(rs.getString(1))) {
+                                w.rpgHere = rs.getString(2);
+                                continue;
+                            }
                             try {
                                 w.worn.put(EquipmentSlot.valueOf(rs.getString(1)), rs.getString(2));
                             } catch (IllegalArgumentException ignored) {
@@ -452,6 +458,7 @@ final class Outfits implements Listener {
                     w.worn.putAll(before.worn);
                     w.presets.putAll(before.presets);
                     if (before.rpg != null) w.rpg = before.rpg;
+                    if (before.rpgHere != null) w.rpgHere = before.rpgHere;
                 }
                 dress(player);
             });
@@ -481,17 +488,49 @@ final class Outfits implements Listener {
      * his class's: never bare), elsewhere his vanilla cosmetics only. The one place looks are set.
      */
     void show(Player player) {
+        if (!players.containsKey(player.getUniqueId())) return;
+        Map<EquipmentSlot, ItemStack> looks = looks(player, rpg.in(player));
+        for (EquipmentSlot slot : ARMOUR) Appearance.set(player, slot, looks.get(slot));
+    }
+
+    /**
+     * His looks in a universe (rpg or not), whichever he is in: the item drawn over each armour slot, missing when his
+     * real piece shows. Rpg: his rpg outfit. Elsewhere: his vanilla cosmetics, or the rpg outfit an admin chose to
+     * wear there.
+     */
+    Map<EquipmentSlot, ItemStack> looks(Player player, boolean rpgUniverse) {
+        Map<EquipmentSlot, ItemStack> out = new EnumMap<>(EquipmentSlot.class);
         Wardrobe w = players.get(player.getUniqueId());
-        if (w == null) return;
-        if (rpg.in(player)) {
-            RpgOutfits.Outfit o = rpg.active(player, w.rpg);
-            for (EquipmentSlot slot : ARMOUR) Appearance.set(player, slot, o == null ? null : rpg.item(o, slot));
-            return;
+        if (w == null) return out;
+        RpgOutfits.Outfit o = rpgUniverse ? rpg.active(player, w.rpg) : rpgHere(player);
+        if (o != null) {
+            for (EquipmentSlot slot : ARMOUR) {
+                ItemStack item = rpg.item(o, slot);
+                if (item != null) out.put(slot, item);
+            }
+            return out;
         }
+        if (rpgUniverse) return out;
         for (EquipmentSlot slot : ARMOUR) {
             Cosmetic c = cosmetics.get(w.worn.get(slot));
-            Appearance.set(player, slot, c == null ? null : item(c, player));
+            if (c != null) out.put(slot, item(c, player));
         }
+        return out;
+    }
+
+    /** The rpg outfit he wears outside the rpg universe (admins only), null otherwise. */
+    RpgOutfits.Outfit rpgHere(Player player) {
+        Wardrobe w = players.get(player.getUniqueId());
+        if (w == null || w.rpgHere == null || !Staff.isAdmin(player)) return null;
+        return rpg.get(w.rpgHere);
+    }
+
+    /** Puts an rpg outfit on an admin outside the rpg universe, or takes it off when he wears it (null: off). */
+    void toggleRpgHere(Player player, String key) {
+        Wardrobe w = players.computeIfAbsent(player.getUniqueId(), k -> new Wardrobe());
+        w.rpgHere = key == null || key.equals(w.rpgHere) ? null : key;
+        saveWorn(player.getUniqueId(), RPG_HERE_SLOT, w.rpgHere);
+        show(player);
     }
 
     /** Whether his data is read (looks can be drawn). */

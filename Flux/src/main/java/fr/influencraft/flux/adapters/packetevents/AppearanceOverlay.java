@@ -59,6 +59,16 @@ public final class AppearanceOverlay extends PacketListenerAbstract implements A
         wearer.updateInventory();
     }
 
+    @Override
+    public void resend(Player viewer, org.bukkit.entity.LivingEntity entity) {
+        var own = entity.getEquipment();
+        if (own == null) return;
+        List<Equipment> equipment = new ArrayList<>(ARMOUR.length);
+        // the entity's own items: rewritten on their way (preview, looks) like any other equipment packet
+        for (EquipmentSlot slot : ARMOUR) equipment.add(new Equipment(slot(slot), SpigotConversionUtil.fromBukkitItemStack(own.getItem(slot))));
+        PacketEvents.getAPI().getPlayerManager().sendPacket(viewer, new WrapperPlayServerEntityEquipment(entity.getEntityId(), equipment));
+    }
+
     /** Window 0 slot of an armour slot (5 helmet to 8 boots), -1 for any other. */
     private static EquipmentSlot windowArmour(int slot) {
         return switch (slot) {
@@ -142,6 +152,19 @@ public final class AppearanceOverlay extends PacketListenerAbstract implements A
         }
         if (type != PacketType.Play.Server.ENTITY_EQUIPMENT) return;
         WrapperPlayServerEntityEquipment w = new WrapperPlayServerEntityEquipment(event);
+        // drawn for this viewer alone (the wardrobe's mannequin trying on what he edits): wins over everything
+        java.util.UUID viewer = event.getUser() == null ? null : event.getUser().getUUID();
+        Map<EquipmentSlot, Object> preview = viewer == null ? Map.of() : Appearance.preview(viewer, w.getEntityId());
+        if (!preview.isEmpty()) {
+            for (Equipment e : w.getEquipment()) {
+                EquipmentSlot slot = bukkit(e.getSlot());
+                if (!preview.containsKey(slot)) continue;
+                Object look = preview.get(slot);
+                e.setItem(look instanceof ItemStack s ? s : ItemStack.EMPTY);
+            }
+            event.markForReEncode(true);
+            return;
+        }
         Map<EquipmentSlot, Object> looks = Appearance.looks(w.getEntityId());
         if (looks.isEmpty()) return;
         boolean invisible = Appearance.invisible(w.getEntityId());

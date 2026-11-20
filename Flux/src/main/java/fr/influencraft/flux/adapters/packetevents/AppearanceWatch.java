@@ -87,7 +87,12 @@ public final class AppearanceWatch implements Listener {
                 && e.getItem().getData(io.papermc.paper.datacomponent.DataComponentTypes.EQUIPPABLE) != null) resend(e.getPlayer());
     }
 
-    /** A creative client sends the items it shows: a drawn look never becomes an item. */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onQuit(org.bukkit.event.player.PlayerQuitEvent e) {
+        Appearance.endPreviews(e.getPlayer());
+    }
+
+        /** A creative client sends the items it shows: a drawn look never becomes an item. */
     @EventHandler(priority = EventPriority.LOWEST)
     public void onCreative(InventoryCreativeEvent e) {
         if (!Appearance.marked(e.getCursor()) && !Appearance.marked(e.getCurrentItem())) return;

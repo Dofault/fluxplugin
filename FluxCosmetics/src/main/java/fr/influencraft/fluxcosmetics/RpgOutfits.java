@@ -96,6 +96,11 @@ final class RpgOutfits implements Listener {
         }, 40L, 40L);
     }
 
+    /** Id of the rpg universe (Flux's universes.yml). */
+    String universe() {
+        return universe;
+    }
+
     /** Whether he is in the rpg universe now. */
     boolean in(Player player) {
         return universe.equals(Universes.of(player));

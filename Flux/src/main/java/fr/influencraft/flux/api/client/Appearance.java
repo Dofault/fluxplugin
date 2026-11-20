@@ -44,6 +44,9 @@ public final class Appearance {
 
         /** The item ready for the network thread (converted once, on the server thread). */
         Object convert(ItemStack item);
+
+        /** Sends {@code viewer} the equipment of {@code entity}, previews included. */
+        void resend(Player viewer, org.bukkit.entity.LivingEntity entity);
     }
 
     /** A look: the item, its packet form for the others, and for his own empty slot (tooltip hidden). */
@@ -65,6 +68,8 @@ public final class Appearance {
     /** Entity ids of invisible wearers; UUIDs of wearers in creative (their own slots never rewritten). */
     private static final Set<Integer> INVISIBLE = ConcurrentHashMap.newKeySet();
     private static final Set<UUID> CREATIVE = ConcurrentHashMap.newKeySet();
+    /** Previews: by viewer, the slots of an entity drawn for him alone (packet items; null value = empty slot). */
+    private static final Map<UUID, Map<Integer, Map<EquipmentSlot, Object>>> PREVIEWS = new ConcurrentHashMap<>();
 
     private Appearance() {
     }
@@ -133,6 +138,41 @@ public final class Appearance {
         changed |= creative ? CREATIVE.add(wearer.getUniqueId()) : CREATIVE.remove(wearer.getUniqueId());
         Service s = service;
         if (changed && s != null) s.update(wearer);
+    }
+
+    /**
+     * What {@code viewer} alone sees an entity wear (the wardrobe's mannequin trying on what he edits): every armour
+     * slot given is drawn with that item for him (null item: empty), the others see the entity's own equipment. Null
+     * or empty {@code looks}: his preview of it ends. Server thread.
+     */
+    public static void preview(Player viewer, org.bukkit.entity.LivingEntity entity, Map<EquipmentSlot, ItemStack> looks) {
+        Service s = service;
+        if (s == null) return;
+        if (looks == null || looks.isEmpty()) {
+            Map<Integer, Map<EquipmentSlot, Object>> mine = PREVIEWS.get(viewer.getUniqueId());
+            if (mine == null || mine.remove(entity.getEntityId()) == null) return;
+            if (mine.isEmpty()) PREVIEWS.remove(viewer.getUniqueId());
+        } else {
+            Map<EquipmentSlot, Object> converted = new EnumMap<>(EquipmentSlot.class);
+            looks.forEach((slot, item) -> converted.put(slot, item == null || item.getType().isAir() ? EMPTY : s.convert(item)));
+            PREVIEWS.computeIfAbsent(viewer.getUniqueId(), k -> new ConcurrentHashMap<>()).put(entity.getEntityId(), converted);
+        }
+        if (viewer.isOnline()) s.resend(viewer, entity);
+    }
+
+    /** Every preview of this viewer ends (he left). */
+    public static void endPreviews(Player viewer) {
+        PREVIEWS.remove(viewer.getUniqueId());
+    }
+
+    /** An empty slot in a preview. */
+    public static final Object EMPTY = new Object();
+
+    /** The slots of an entity drawn for this viewer alone, empty when none (network thread). */
+    public static Map<EquipmentSlot, Object> preview(UUID viewer, int entityId) {
+        Map<Integer, Map<EquipmentSlot, Object>> mine = PREVIEWS.get(viewer);
+        Map<EquipmentSlot, Object> p = mine == null ? null : mine.get(entityId);
+        return p == null ? Map.of() : p;
     }
 
     // ------------------------------------------------------------------ network thread

@@ -117,6 +117,8 @@ final class WardrobeView {
     private boolean nametag;
     /** A dialog of the menu is open: closing the menu keeps the camera's shot. */
     private boolean held;
+    /** Category of the cosmetics menu he looks at, -1 before any. */
+    private int category = -1;
     /** Where the camera glides to (a shot, the free camera given back, a turn button), null once there. */
     private volatile Float goalYaw, goalPitch;
     /** Free camera's angle and zoom when the menu opened, given back when it closes. */
@@ -240,6 +242,7 @@ final class WardrobeView {
         Camera.turns(player, null);
         Camera.hearAt(player, null);
         fr.influencraft.flux.api.client.UseKey.release(player);
+        if (mannequin != null) fr.influencraft.flux.api.client.Appearance.preview(player, mannequin, null);
         if (mannequin != null && mannequin.isValid()) mannequin.remove();
         if (!player.isOnline()) return;
         Hotbar.clear(player);
@@ -388,6 +391,7 @@ final class WardrobeView {
      * that piece, the piece showing in the upper middle of the screen.
      */
     void frame(int category) {
+        this.category = category;
         shot = settings.shot(category);
         // the tags: his real nametag over the mannequin's head, as the others see it
         nametag = category == CosmeticsMenu.TAGS || category == CosmeticsMenu.PRESETS;
@@ -412,9 +416,39 @@ final class WardrobeView {
     void redress() {
         if (mannequin == null || !mannequin.isValid()) return;
         dress(mannequin.getEquipment());
+        preview();
         Component name = nametag ? TabList.nametag(player) : null;
         mannequin.customName(name);
         mannequin.setCustomNameVisible(name != null);
+    }
+
+    /**
+     * Editing the other universe's looks (rpg outfits outside the rpg universe, vanilla cosmetics in it): the
+     * mannequin wears them for his eyes alone ({@link fr.influencraft.flux.api.client.Appearance#preview}), over his
+     * real pieces of that universe; the others keep seeing the looks of the universe he is in. Tags show the current
+     * universe.
+     */
+    private void preview() {
+        RpgOutfits rpg = plugin.outfits().rpg();
+        boolean here = rpg.in(player);
+        boolean shown = category == CosmeticsMenu.RPG || (category == CosmeticsMenu.TAGS || category < 0) && here;
+        if (shown == here) {
+            fr.influencraft.flux.api.client.Appearance.preview(player, mannequin, null);
+            return;
+        }
+        var looks = plugin.outfits().looks(player, shown);
+        org.bukkit.inventory.ItemStack[] real = fr.influencraft.flux.api.universe.Universes.contents(player,
+                shown ? rpg.universe() : fr.influencraft.flux.api.universe.Universes.VANILLA);
+        java.util.Map<org.bukkit.inventory.EquipmentSlot, org.bukkit.inventory.ItemStack> drawn = new java.util.EnumMap<>(org.bukkit.inventory.EquipmentSlot.class);
+        // index of each armour slot in the contents (36 boots ... 39 helmet)
+        int[] index = {39, 38, 37, 36};
+        for (int i = 0; i < Outfits.ARMOUR.length; i++) {
+            var slot = Outfits.ARMOUR[i];
+            org.bukkit.inventory.ItemStack item = looks.get(slot);
+            if (item == null && real != null && real.length > index[i]) item = real[index[i]];
+            drawn.put(slot, item);
+        }
+        fr.influencraft.flux.api.client.Appearance.preview(player, mannequin, drawn);
     }
 
     // ================================================================== camera
