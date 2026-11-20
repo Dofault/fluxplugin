@@ -16,8 +16,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * client itself.
  *
  * <ul>
- *   <li>While a catalog is {@link #claim claimed}, no crafting recipe reaches the book any more (furnace, smoker and
- *   blast furnace books keep theirs): only the catalog's {@link Entry entries}. Crafting itself is unchanged.</li>
+ *   <li>While a catalog is {@link #claim claimed}, its {@link Entry entries} come first in the book of each player,
+ *   before the crafting recipes, or in their place when {@link Catalog#recipes} says so for him (furnace, smoker
+ *   and blast furnace books always keep theirs). Crafting itself is unchanged.</li>
  *   <li>An entry {@code available} is drawn as craftable (the "craftable only" filter keeps it), else as missing
  *   ingredients.</li>
  *   <li>A click on an entry never reaches the server's crafting: it goes to {@link Catalog#clicked}, on the server
@@ -46,13 +47,21 @@ public final class RecipeBook {
         /** The entries this player sees, in this order (server thread). */
         List<Entry> entries(Player player);
 
+        /**
+         * True when this player's book keeps the server's crafting recipes after the entries (a button among the
+         * recipes), false when it shows the entries alone (server thread).
+         */
+        default boolean recipes(Player player) {
+            return false;
+        }
+
         /** He clicked an entry (server thread). */
         void clicked(Player player, int id, boolean shift);
     }
 
     public interface Service {
-        /** Sends these entries in place of the ones sent before. */
-        void show(Player player, List<Entry> entries);
+        /** Sends his whole book again: these entries, then the server's (its crafting recipes when {@code recipes}). */
+        void show(Player player, List<Entry> entries, boolean recipes);
     }
 
     private record Claim(Plugin plugin, Catalog catalog) {
@@ -62,6 +71,8 @@ public final class RecipeBook {
     private static volatile Claim claim;
     /** Entries last sent to each player, read by the network thread when the server sends the whole book again. */
     private static final ConcurrentHashMap<UUID, List<Entry>> SENT = new ConcurrentHashMap<>();
+    /** Whether each player's book keeps the crafting recipes, as last sent. */
+    private static final ConcurrentHashMap<UUID, Boolean> RECIPES = new ConcurrentHashMap<>();
 
     private RecipeBook() {
     }
@@ -86,6 +97,7 @@ public final class RecipeBook {
         if (c != null && c.plugin().equals(plugin)) {
             claim = null;
             SENT.clear();
+            RECIPES.clear();
         }
     }
 
@@ -100,13 +112,20 @@ public final class RecipeBook {
         Service s = service;
         if (c == null || s == null || !player.isOnline() || Clients.bedrock(player)) return;
         List<Entry> entries = List.copyOf(c.catalog().entries(player));
-        s.show(player, entries);
+        boolean recipes = c.catalog().recipes(player);
         SENT.put(player.getUniqueId(), entries);
+        RECIPES.put(player.getUniqueId(), recipes);
+        s.show(player, entries, recipes);
     }
 
     /** The entries last sent to this player, empty when none (network thread). */
     public static List<Entry> sent(UUID player) {
         return SENT.getOrDefault(player, List.of());
+    }
+
+    /** Whether this player's book keeps the crafting recipes, null before the catalog first said (network thread). */
+    public static Boolean recipes(UUID player) {
+        return RECIPES.get(player);
     }
 
     /** He clicked an entry of the catalog (server thread, called by the adapter). */
@@ -118,5 +137,6 @@ public final class RecipeBook {
     /** He left: forget what he was sent. */
     public static void forget(UUID player) {
         SENT.remove(player);
+        RECIPES.remove(player);
     }
 }

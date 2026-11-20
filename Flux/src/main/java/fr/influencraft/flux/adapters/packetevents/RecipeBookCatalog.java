@@ -33,8 +33,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * {@link RecipeBook} with PacketEvents. The catalog's entries get display ids from {@link #BASE} up (the server
- * counts its own from 0); the crafting recipes the server sends are left out of every book add, the catalog's put in
- * when the server sends the whole book again (login, reload), and a click on one of ours never reaches the server.
+ * counts its own from 0) and are always sent first: the client lists its book in the order it learnt it. What the
+ * server says a player knows is remembered ({@link #known}), so the whole book can be sent again, with or without the
+ * crafting recipes, whenever the catalog asks; a click on one of ours never reaches the server.
  */
 public final class RecipeBookCatalog extends PacketListenerAbstract implements RecipeBook.Service {
 
@@ -42,8 +43,8 @@ public final class RecipeBookCatalog extends PacketListenerAbstract implements R
     private static final int BASE = 0x40000000;
 
     private final Plugin flux;
-    /** Ids last sent to each player, removed before the next ones are added. */
-    private final Map<UUID, List<RecipeDisplayId>> shown = new ConcurrentHashMap<>();
+    /** The server's own entries each player knows, by display id, in the order they came. */
+    private final Map<UUID, Map<Integer, RecipeDisplayEntry>> known = new ConcurrentHashMap<>();
 
     public RecipeBookCatalog(Plugin flux) {
         super(PacketListenerPriority.HIGH);
@@ -51,19 +52,25 @@ public final class RecipeBookCatalog extends PacketListenerAbstract implements R
     }
 
     @Override
-    public void show(Player player, List<RecipeBook.Entry> entries) {
-        List<RecipeDisplayId> before = shown.get(player.getUniqueId());
-        if (before != null && !before.isEmpty()) {
-            PacketEvents.getAPI().getPlayerManager().sendPacket(player, new WrapperPlayServerRecipeBookRemove(before));
+    public void show(Player player, List<RecipeBook.Entry> entries, boolean recipes) {
+        Map<Integer, RecipeDisplayEntry> server = known.get(player.getUniqueId());
+        // never heard the server's book (Flux started with him online): nothing to rebuild his book from
+        if (server == null) return;
+        PacketEvents.getAPI().getPlayerManager().sendPacketSilently(player,
+                new WrapperPlayServerRecipeBookAdd(book(entries, server, recipes), true));
+    }
+
+    /** The whole book: the catalog's entries first, then the server's (its crafting recipes only when kept). */
+    private static List<WrapperPlayServerRecipeBookAdd.AddEntry> book(List<RecipeBook.Entry> entries,
+                                                                    Map<Integer, RecipeDisplayEntry> server, boolean recipes) {
+        List<WrapperPlayServerRecipeBookAdd.AddEntry> all = new ArrayList<>();
+        for (RecipeBook.Entry e : entries) all.add(convert(e, e.fresh()));
+        synchronized (server) {
+            for (RecipeDisplayEntry e : server.values()) {
+                if (recipes || !crafting(e.getCategory())) all.add(new WrapperPlayServerRecipeBookAdd.AddEntry(e, false, false));
+            }
         }
-        List<WrapperPlayServerRecipeBookAdd.AddEntry> add = new ArrayList<>(entries.size());
-        List<RecipeDisplayId> ids = new ArrayList<>(entries.size());
-        for (RecipeBook.Entry e : entries) {
-            add.add(convert(e, e.fresh()));
-            ids.add(new RecipeDisplayId(BASE + e.id()));
-        }
-        shown.put(player.getUniqueId(), ids);
-        if (!add.isEmpty()) PacketEvents.getAPI().getPlayerManager().sendPacket(player, new WrapperPlayServerRecipeBookAdd(add, false));
+        return all;
     }
 
     /** A catalog entry as a shapeless crafting display: the icon as its result, nothing or an unknown item asked. */
@@ -94,26 +101,44 @@ public final class RecipeBookCatalog extends PacketListenerAbstract implements R
 
     @Override
     public void onPacketSend(PacketSendEvent event) {
-        if (event.getPacketType() != PacketType.Play.Server.RECIPE_BOOK_ADD || !RecipeBook.claimed()) return;
+        var type = event.getPacketType();
+        if (type == PacketType.Play.Server.RECIPE_BOOK_REMOVE) {
+            UUID id = event.getUser().getUUID();
+            Map<Integer, RecipeDisplayEntry> server = id == null ? null : known.get(id);
+            if (server == null) return;
+            synchronized (server) {
+                for (RecipeDisplayId gone : new WrapperPlayServerRecipeBookRemove(event).getRecipeIds()) server.remove(gone.getId());
+            }
+            return;
+        }
+        if (type != PacketType.Play.Server.RECIPE_BOOK_ADD) return;
         UUID id = event.getUser().getUUID();
         if (id == null) return;
         WrapperPlayServerRecipeBookAdd w = new WrapperPlayServerRecipeBookAdd(event);
-        List<WrapperPlayServerRecipeBookAdd.AddEntry> kept = new ArrayList<>();
-        boolean ours = false;
-        for (var e : w.getEntries()) {
-            int display = e.getContents().getId().getId();
-            if (display >= BASE) ours = true;
-            if (display >= BASE || !crafting(e.getContents().getCategory())) kept.add(e);
+        Map<Integer, RecipeDisplayEntry> server = known.computeIfAbsent(id, k -> new java.util.LinkedHashMap<>());
+        synchronized (server) {
+            if (w.isReplace()) server.clear();
+            for (var e : w.getEntries()) server.put(e.getContents().getId().getId(), e.getContents());
         }
-        // the whole book again (join, reload): the catalog goes in with it
-        if (w.isReplace() && !ours) for (RecipeBook.Entry e : RecipeBook.sent(id)) kept.add(convert(e, false));
-        if (kept.size() == w.getEntries().size() && !(w.isReplace() && !ours)) return;
-        if (kept.isEmpty() && !w.isReplace()) {
-            event.setCancelled(true);
-            return;
+        // what his book shows now: null until the catalog first said (he keeps the server's book as it is)
+        Boolean recipes = RecipeBook.claimed() ? RecipeBook.recipes(id) : null;
+        if (recipes == null) return;
+        if (w.isReplace()) {
+            // the whole book again (join, reload): rebuilt our way
+            w.setEntries(book(RecipeBook.sent(id), server, recipes));
+            event.markForReEncode(true);
+        } else if (!recipes) {
+            // a recipe learnt while the catalog hides them: kept for later
+            List<WrapperPlayServerRecipeBookAdd.AddEntry> kept = new ArrayList<>();
+            for (var e : w.getEntries()) if (!crafting(e.getContents().getCategory())) kept.add(e);
+            if (kept.size() == w.getEntries().size()) return;
+            if (kept.isEmpty()) {
+                event.setCancelled(true);
+                return;
+            }
+            w.setEntries(kept);
+            event.markForReEncode(true);
         }
-        w.setEntries(kept);
-        event.markForReEncode(true);
     }
 
     @Override
@@ -142,7 +167,7 @@ public final class RecipeBookCatalog extends PacketListenerAbstract implements R
     public void onUserDisconnect(com.github.retrooper.packetevents.event.UserDisconnectEvent event) {
         UUID player = event.getUser().getUUID();
         if (player == null) return;
-        shown.remove(player);
+        known.remove(player);
         RecipeBook.forget(player);
     }
 }

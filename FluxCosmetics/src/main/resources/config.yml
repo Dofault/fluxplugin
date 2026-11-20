@@ -32,8 +32,8 @@ camera:
   start-pitch: 12
 
 
-# The green book button of the inventory opens the cosmetics instead of the recipes (no crafting recipe in the book any
-# more; crafting itself is unchanged, furnace books keep theirs). Java only.
+# The recipe book of the inventory and of crafting tables gets a "Cosmetics" entry before its recipes: a click on it
+# shows the cosmetics in place of the recipes, closing the inventory puts the recipes back. Java only.
 recipe-book: true
 
 # The cosmetics of the catalog. item: what is worn (a Flux item id such as fluxarmor:zero_helmet, or a material),

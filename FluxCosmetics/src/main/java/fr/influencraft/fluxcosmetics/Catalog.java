@@ -24,12 +24,13 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * The cosmetics catalog, shown in the recipe book of the inventory ({@link RecipeBook}): the green book button opens
- * the cosmetics instead of the recipes. The tab icons of the book are drawn by the client (nothing to do with
- * cosmetics), so everything sits in one tab and the book is browsed like folders: first one entry per slot (helmets,
- * chestplates...), a click opens it (its cosmetics, a "back" entry first), closing the inventory comes back to the
- * folders. A cosmetic is drawn craftable when the player has it; a click wears it (or takes it off), shift + click
- * shows it on him in the wardrobe.
+ * The cosmetics catalog, reached from the recipe book of the inventory ({@link RecipeBook}). The book keeps its
+ * recipes; a "Cosmetics" entry comes first among them. A click on it shows the catalog in place of the recipes,
+ * browsed like folders (the tab icons of the book are drawn by the client, nothing to do with cosmetics, so
+ * everything sits in one tab): one entry per slot (helmets, chestplates...), a click opens it, the first entry
+ * goes back (to the folders, then to the recipes). Closing the inventory puts the recipes back. A cosmetic is
+ * drawn craftable when the player has it; a click wears it (or takes it off), shift + click shows it on him in the
+ * wardrobe.
  *
  * <p>A worn cosmetic is an item drawn in one equipment slot over his real one, for the others
  * ({@link Appearance}) and on the wardrobe's mannequin; his inventory and real armour never change.</p>
@@ -49,15 +50,17 @@ final class Catalog implements RecipeBook.Catalog, Listener {
     /** The folders, in this order. */
     private static final EquipmentSlot[] FOLDERS = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
     /**
-     * Entry ids: the client lists the book by id, so "back" comes first, then the folders, then the cosmetics
-     * ({@link #COSMETIC_ID} + their index).
+     * Entry ids, in the order they are shown: the first entry (the "Cosmetics" button among the recipes, "back"
+     * inside the catalog), the folders, the cosmetics ({@link #COSMETIC_ID} + their index).
      */
-    private static final int BACK_ID = 0, FOLDER_ID = 1, COSMETIC_ID = 100;
+    private static final int FIRST_ID = 0, FOLDER_ID = 1, COSMETIC_ID = 100;
 
     private final FluxCosmetics plugin;
     private final List<Cosmetic> cosmetics = new ArrayList<>();
     /** What each player wears, one cosmetic per slot (memory only, first version). */
     private final Map<UUID, Map<EquipmentSlot, String>> worn = new HashMap<>();
+    /** The players whose book shows the catalog in place of the recipes. */
+    private final java.util.Set<UUID> inside = new java.util.HashSet<>();
     /** The folder each player has open, none for the folders themselves. */
     private final Map<UUID, EquipmentSlot> open = new HashMap<>();
 
@@ -88,19 +91,33 @@ final class Catalog implements RecipeBook.Catalog, Listener {
         if (cosmetics.isEmpty()) plugin.getLogger().warning("No cosmetics in config.yml: the recipe book will be empty");
     }
 
+    /** His book keeps the recipes until he clicks the "Cosmetics" entry. */
+    @Override
+    public boolean recipes(Player player) {
+        return !inside.contains(player.getUniqueId());
+    }
+
     @Override
     public List<RecipeBook.Entry> entries(Player player) {
-        EquipmentSlot folder = open.get(player.getUniqueId());
+        var m = plugin.messages();
         List<RecipeBook.Entry> out = new ArrayList<>();
+        if (!inside.contains(player.getUniqueId())) {
+            out.add(new RecipeBook.Entry(FIRST_ID, Items.dress(plain(Items.of(m.raw("catalog.button-icon"), player)),
+                    m.raw("catalog.button"), Lore.create().description(m.raw("catalog.button-description"))
+                            .left(m.raw("catalog.folder-open")).build(), player), TAB, true, false));
+            return out;
+        }
+        EquipmentSlot folder = open.get(player.getUniqueId());
         if (folder == null) {
+            out.add(new RecipeBook.Entry(FIRST_ID, Items.dress(Items.of(m.raw("catalog.back-icon"), player),
+                    m.raw("catalog.back"), Lore.create().left(m.raw("catalog.back-recipes")).build(), player), TAB, true, false));
             for (int f = 0; f < FOLDERS.length; f++) {
                 List<Cosmetic> in = in(FOLDERS[f]);
                 if (!in.isEmpty()) out.add(new RecipeBook.Entry(FOLDER_ID + f, folderIcon(player, FOLDERS[f], in), TAB, true, false));
             }
             return out;
         }
-        var m = plugin.messages();
-        out.add(new RecipeBook.Entry(BACK_ID, Items.dress(Items.of(m.raw("catalog.back-icon"), player), m.raw("catalog.back"),
+        out.add(new RecipeBook.Entry(FIRST_ID, Items.dress(Items.of(m.raw("catalog.back-icon"), player), m.raw("catalog.back"),
                 Lore.create().left(m.raw("catalog.back-click")).build(), player), TAB, true, false));
         Map<EquipmentSlot, String> mine = worn.getOrDefault(player.getUniqueId(), Map.of());
         for (int i = 0; i < cosmetics.size(); i++) {
@@ -130,11 +147,15 @@ final class Catalog implements RecipeBook.Catalog, Listener {
             case FEET -> org.bukkit.Material.DIAMOND_BOOTS;
             default -> org.bukkit.Material.DIAMOND_HELMET;
         });
-        // a plain picture: no armour points nor "when on head" lines under the name
-        base.setData(io.papermc.paper.datacomponent.DataComponentTypes.TOOLTIP_DISPLAY,
+        return Items.dress(plain(base), m.raw("catalog.folders." + key), lore.build(), player);
+    }
+
+    /** A plain picture: no armour points nor "when on head" lines under the name. */
+    private static ItemStack plain(ItemStack item) {
+        item.setData(io.papermc.paper.datacomponent.DataComponentTypes.TOOLTIP_DISPLAY,
                 io.papermc.paper.datacomponent.item.TooltipDisplay.tooltipDisplay()
                         .addHiddenComponents(io.papermc.paper.datacomponent.DataComponentTypes.ATTRIBUTE_MODIFIERS).build());
-        return Items.dress(base, m.raw("catalog.folders." + key), lore.build(), player);
+        return item;
     }
 
     private ItemStack icon(Player player, Cosmetic c, boolean wearing) {
@@ -153,8 +174,11 @@ final class Catalog implements RecipeBook.Catalog, Listener {
 
     @Override
     public void clicked(Player player, int id, boolean shift) {
-        if (id == BACK_ID) {
-            open.remove(player.getUniqueId());
+        if (id == FIRST_ID) {
+            // the button among the recipes, else back: out of the folder, then out of the catalog
+            UUID who = player.getUniqueId();
+            if (!inside.contains(who)) inside.add(who);
+            else if (open.remove(who) == null) inside.remove(who);
             Sounds.cue(player, "page");
             RecipeBook.refresh(player);
             return;
@@ -211,13 +235,16 @@ final class Catalog implements RecipeBook.Catalog, Listener {
     /** His inventory (or a crafting table) closed: the book opens on the folders next time. */
     @EventHandler
     public void onClose(org.bukkit.event.inventory.InventoryCloseEvent e) {
-        if (!(e.getPlayer() instanceof Player p) || open.remove(p.getUniqueId()) == null) return;
+        if (!(e.getPlayer() instanceof Player p)) return;
+        boolean folder = open.remove(p.getUniqueId()) != null;
+        if (!inside.remove(p.getUniqueId()) && !folder) return;
         Bukkit.getScheduler().runTask(plugin, () -> RecipeBook.refresh(p));
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
         open.remove(e.getPlayer().getUniqueId());
+        inside.remove(e.getPlayer().getUniqueId());
         worn.remove(e.getPlayer().getUniqueId());
         Appearance.clear(e.getPlayer());
     }
