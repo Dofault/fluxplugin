@@ -320,6 +320,7 @@ public final class RpgPlayers implements Listener {
     private void setup(Player p, ClassDef c, int level, double xp, boolean fresh) {
         RpgPlayer r = new RpgPlayer(p.getUniqueId(), c, Math.max(1, level), xp);
         online.put(p.getUniqueId(), r);
+        away.remove(p.getUniqueId());
         // his kit first (apprentice weapon, menu compass): the weapon in hand counts in the stats
         if (kit != null) kit.ensure(p, r, true);
         // entering the universe: full life and mana (the game's own life stays full there, the engine's is the real one)
@@ -350,6 +351,9 @@ public final class RpgPlayers implements Listener {
         int level = r.level();
         double xp = r.xp();
         String cls = r.heroClass().id();
+        // what menus show of him away from the universe is what he leaves with (a class changed inside it included):
+        // the class read before he came in would be shown again otherwise
+        if (left) away.put(id, new String[]{cls, String.valueOf(level)});
         if (plugin.isEnabled()) Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> store.save(id, cls, level, xp));
         else store.save(id, cls, level, xp);
         dirty.remove(id);
