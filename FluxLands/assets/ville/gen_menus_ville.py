@@ -536,8 +536,8 @@ parcelle = [
     bouton("ma_ville", 49, "itemsadder:influville:ville", OR + "Ma ville", lore([], [(GAUCHE, "Ouvrir")]),
            {"left": [iv("ouvrir ville")]}),
     bouton("supprimer", 53, "itemsadder:influitems:deny", OR + "Supprimer la parcelle",
-           lore(["Ouvre la liste des parcelles", "de Lands : survole " + pc("nom") + " et", "appuie sur ta touche Jeter (Q).",
-                 "Impossible tant qu'une annonce", "ou un occupant s'y trouve."], [(GAUCHE, "Double clic pour continuer")]),
+           lore(["Supprime " + pc("nom") + " et ses", "réglages. Les chunks restent", "à ta ville.",
+                 "Impossible tant qu'une annonce", "ou un occupant s'y trouve."], [(GAUCHE, "Double clic pour supprimer")]),
            {"left": [iv("parcelle supprimer")]}, conditions=[MAIRE],
            extra={"confirm": q("&#FF5C5CClique encore pour supprimer la parcelle " + pc("nom"))}),
 ]

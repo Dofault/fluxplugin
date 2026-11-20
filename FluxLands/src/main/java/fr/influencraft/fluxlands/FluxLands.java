@@ -321,7 +321,8 @@ public final class FluxLands extends fr.influencraft.flux.api.FluxPlugin impleme
         m.put("habitants", String.valueOf(land.getTrustedPlayers().size()));
         m.put("en_ligne", String.valueOf(land.getOnlinePlayers().size()));
         m.put("chunks", String.valueOf(land.getChunksAmount()));
-        m.put("chunks_max", String.valueOf(land.getMaxChunks()));
+        // Lands 9.3 removed getMaxChunks(): the chunk cap of a town is its LAND_SIZE limit
+        m.put("chunks_max", String.valueOf(land.getLimit(me.angeschossen.lands.api.limits.Limit.LAND_SIZE)));
         m.put("solde", membre ? Fmt.argent(land.getBalance()) : "");
         m.put("entretien", Fmt.argent(land.getUpkeepCosts()));
         String nation = Villes.nation(land);
@@ -366,6 +367,7 @@ public final class FluxLands extends fr.influencraft.flux.api.FluxPlugin impleme
     @EventHandler
     public void quitter(PlayerQuitEvent e) {
         vues.oublier(e.getPlayer().getUniqueId());
+        if (commande != null) commande.forgetSelection(e.getPlayer());
         levels.forget(e.getPlayer().getUniqueId());
     }
 

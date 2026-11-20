@@ -5,6 +5,7 @@ import me.angeschossen.lands.api.flags.type.NaturalFlag;
 import me.angeschossen.lands.api.flags.type.RoleFlag;
 import me.angeschossen.lands.api.land.Area;
 import me.angeschossen.lands.api.land.Land;
+import me.angeschossen.lands.api.land.LandArea;
 import me.angeschossen.lands.api.nation.Nation;
 import me.angeschossen.lands.api.player.LandPlayer;
 import me.angeschossen.lands.api.player.Selection;
@@ -64,6 +65,8 @@ final class Commande implements TabExecutor {
     private final Map<UUID, Long> attenteSelection = new ConcurrentHashMap<>();
     /** Parcelle à délimiter dès que la sélection est complète ("" = nouvelle parcelle à nommer). */
     private final Map<UUID, String> attenteParcelle = new ConcurrentHashMap<>();
+    /** Mayors already told that their outline goes out of the town (until they fix it or start again). */
+    private final java.util.Set<UUID> warnedOutside = ConcurrentHashMap.newKeySet();
 
     Commande(FluxLands plugin) {
         this.plugin = plugin;
@@ -832,15 +835,22 @@ final class Commande implements TabExecutor {
             }
             case "habitants" -> natif(p, "lands", "area " + zone.getName() + " menu");
             case "supprimer" -> {
-                // Lands ne supprime une parcelle que depuis son menu natif des parcelles (aucune
-                // commande ni API) : on l'ouvre et on explique la touche à utiliser.
+                // Lands 9.3 deletes a plot through its API (before, only from its own plot list). The menu button
+                // already asks for a double click.
                 if (gerable(p) == null) return;
+                String name = zone.getName();
                 if (zone.getRentalOffer() != null) {
-                    Fmt.erreur(p, Lang.t("commande.la-parcelle") + Fmt.v(zone.getName()) + Lang.t("commande.a-une-annonce-ou-un"), Lang.t("commande.retire-d-abord-l-annonce"));
+                    Fmt.erreur(p, Lang.t("commande.la-parcelle") + Fmt.v(name) + Lang.t("commande.a-une-annonce-ou-un"), Lang.t("commande.retire-d-abord-l-annonce"));
                     return;
                 }
-                natif(p, "lands", "menu land areas");
-                Fmt.envoyer(p, "Survole " + Fmt.v(zone.getName()) + Lang.t("commande.dans-la-liste-et-appuie") + Fmt.v("Jeter") + Lang.t("commande.q-par-defaut-pour-la"));
+                if (!plugin.gestion().deletePlot(zone, p)) {
+                    Fmt.erreur(p, Lang.t("commande.la-parcelle") + Fmt.v(name) + Lang.t("commande.plot-not-deleted"), Lang.t("commande.plot-not-deleted-hint"));
+                    return;
+                }
+                e.parcelle = null;
+                e.changer();
+                Fmt.envoyer(p, Lang.t("commande.plot-deleted") + Fmt.v(name) + "<t:texte>.</t>");
+                plugin.ouvrirMenu(p, "parcelles");
             }
             case "delimiter" -> {
                 if (gerable(p) == null) return;
@@ -912,14 +922,18 @@ final class Commande implements TabExecutor {
                 .open();
     }
 
-    /** Starts a fresh Lands selection (tool in hand); the name window opens once both corners are set. */
+    /**
+     * Starts a fresh Lands selection through its API: the tool and the particles, without Lands' own status titles
+     * (they stayed on screen after a refusal, and only {@code /v selection} again took them off). Our action bar shows
+     * the corners instead, and the name window opens once both are set inside the town.
+     */
     private void lancerSelection(Player p, Land ma, String cible) {
         p.closeInventory();
-        editer(p, ma);
-        // /lands selection toggles the mode: drop a former selection first, or the command would end it
         LandPlayer lp = plugin.villes().api().getLandPlayer(p.getUniqueId());
-        if (lp != null && lp.getSelection() != null) lp.getSelection().disable();
-        p.performCommand("lands selection");
+        if (lp == null) return;
+        if (lp.getSelection() != null) lp.getSelection().disable();
+        Selection.of(lp, true, false, true);
+        warnedOutside.remove(p.getUniqueId());
         attenteSelection.put(p.getUniqueId(), System.currentTimeMillis() + 10 * 60_000L);
         attenteParcelle.put(p.getUniqueId(), cible);
         Fmt.envoyer(p, Lang.t("commande.clique-sur-deux-coins-opposes") + (cible.isEmpty() ? Lang.t("commande.ta-parcelle") : Fmt.v(cible))
@@ -944,30 +958,60 @@ final class Commande implements TabExecutor {
         nommerParcelle(p, ma);
     }
 
-    /** Appelé toutes les demi-secondes : ouvre la saisie du nom dès que la sélection est complète. */
+    /**
+     * Every half second while a mayor outlines a plot: action bar with both corners (a corner out of the town in red),
+     * then the name window once both corners are set and the box stays inside the town. A box going out of the town
+     * waits for the mayor to click a corner again. Ten minutes without it end the selection.
+     */
     void verifierSelections() {
         long now = System.currentTimeMillis();
         for (Map.Entry<UUID, Long> en : attenteSelection.entrySet()) {
             Player p = Bukkit.getPlayer(en.getKey());
-            if (p == null || en.getValue() < now) {
+            Land ma = p != null ? plugin.villes().maVille(p) : null;
+            Location[] c = p != null ? plugin.gestion().clickedCorners(p) : null;
+            if (p == null || ma == null || c == null || en.getValue() < now) {
                 attenteSelection.remove(en.getKey());
                 attenteParcelle.remove(en.getKey());
+                warnedOutside.remove(en.getKey());
+                if (p != null) {
+                    plugin.gestion().endSelection(p);
+                    if (c != null) Fmt.erreur(p, Lang.t("commande.selection-expired"));
+                }
                 continue;
             }
-            if (plugin.gestion().selection(p).isEmpty()) continue;
+            Fmt.barre(p, Lang.t("commande.corners-bar")
+                    .replace("{1}", corner(ma, c[0], "commande.corner-left"))
+                    .replace("{2}", corner(ma, c[1], "commande.corner-right")));
+            if (c[0] == null || c[1] == null) continue;
+            if (!Gestion.insideTown(ma, c[0], c[1])) {
+                // told once per outline: the mayor fixes it by clicking a corner again
+                if (warnedOutside.add(en.getKey())) {
+                    fr.influencraft.flux.api.util.Sounds.cue(p, "error");
+                    Fmt.erreur(p, Lang.t("gestion.plot-outside") + Fmt.ville(ma.getName()) + ".", Lang.t("commande.click-corner-again"));
+                }
+                continue;
+            }
             attenteSelection.remove(en.getKey());
+            warnedOutside.remove(en.getKey());
             String cible = attenteParcelle.remove(en.getKey());
-            Land ma = plugin.villes().maVille(p);
-            if (ma == null) continue;
+            p.sendActionBar(net.kyori.adventure.text.Component.empty());
             fr.influencraft.flux.api.util.Sounds.cue(p, "success");
-            if (cible != null && !cible.isEmpty()) {
-                nommerParcelle(p, ma, cible);
-                continue;
-            }
-            Fmt.action(p, Lang.t("commande.selection-prete") + Fmt.v(plugin.gestion().selection(p)) + Lang.t("commande.fenetre-fermee-par-erreur"),
-                    Lang.t("commande.nommer-la-parcelle"), label() + Lang.t("commande.parcelle-nouvelle"));
-            nommerParcelle(p, ma);
+            nommerParcelle(p, ma, cible != null ? cible : "");
         }
+    }
+
+    /** One corner on the action bar: set (inside or out of the town), or the click that sets it. */
+    private static String corner(Land town, Location at, String clickKey) {
+        if (at == null) return Lang.t(clickKey);
+        return Lang.t(Gestion.insideTown(town, at, null) ? "commande.corner-set" : "commande.corner-outside");
+    }
+
+    /** A mayor leaving the server while outlining a plot: his selection ends with him. */
+    void forgetSelection(Player p) {
+        attenteSelection.remove(p.getUniqueId());
+        attenteParcelle.remove(p.getUniqueId());
+        warnedOutside.remove(p.getUniqueId());
+        plugin.gestion().endSelection(p);
     }
 
     private void nommerParcelle(Player p, Land ma) {
@@ -982,62 +1026,93 @@ final class Commande implements TabExecutor {
                 Lang.t("commande.selection") + plugin.gestion().selection(p) + "." + yTexte
                         + Lang.t("commande.coche-du-sol-au-ciel"),
                 nomInitial, true, "", "", "parcelles",
-                (pl, nom, solAuCiel, yMin, yMax, ensuite) -> assigner(pl, ma, nom, solAuCiel, yMin, yMax, ensuite));
+                (pl, nom, solAuCiel, yMin, yMax, ensuite) -> assigner(pl, ma, nom, solAuCiel, yMin, yMax, ensuite),
+                pl -> plugin.gestion().endSelection(pl));
     }
 
     /**
-     * Crée la parcelle (si besoin) et lui donne la sélection du joueur, en une seule commande Lands
-     * tapable à la main : {@code /lands area <nom> assign confirm} (nom avant la sous-commande ;
-     * {@code confirm} passe la question « faible hauteur »). Hauteur : « Du sol au ciel » lance
-     * {@code /lands selection expand} ; sinon Y min / Y max sont posés sur la sélection par l'API.
+     * Creates the plot from the mayor's selection through Lands' API ({@link LandArea#of}, Lands 9.3+: the checks of
+     * the command, no command typed for the player, no wait for the plot to appear). Height: the whole world height
+     * ("Du sol au ciel") or the Y min / Y max typed in the window, set on the corners. An existing plot without an
+     * outline still gets it from {@code /lands area <name> assign confirm}: the API cannot change the box of a plot.
      */
     private void assigner(Player p, Land ma, String nom, boolean toutLaHauteur, Integer yMin, Integer yMax, Saisie.Ensuite ensuite) {
         if (!p.isOnline()) return;
-        if (plugin.gestion().selection(p).isEmpty()) {
+        Location[] corners = plugin.gestion().corners(p, toutLaHauteur, yMin, yMax);
+        if (corners == null) {
+            plugin.gestion().endSelection(p);
             Fmt.erreur(p, Lang.t("commande.ta-selection-n-est-plus"), Lang.t("commande.reselectionne-les-deux-coins-de"));
             plugin.ouvrirMenu(p, "parcelles");
             return;
         }
         p.closeInventory();
-        editer(p, ma);
-        if (toutLaHauteur) {
-            // expand est un interrupteur : si la hauteur a rétréci, le mode était déjà actif et vient
-            // d'être coupé, on le rallume.
-            int avant = plugin.gestion().hauteurSelection(p);
-            p.performCommand("lands selection expand");
-            if (plugin.gestion().hauteurSelection(p) < avant) p.performCommand("lands selection expand");
-        } else if (yMin != null || yMax != null) {
-            if (plugin.gestion().reglerY(p, yMin, yMax)) {
-                int[] y = plugin.gestion().ySelection(p);
-                if (y != null) Fmt.envoyer(p, Lang.t("commande.hauteur-de-la-selection") + Fmt.v("Y " + y[0] + Lang.t("commande.a") + y[1]) + ".");
-            }
+        if (!toutLaHauteur && (yMin != null || yMax != null)) {
+            Fmt.envoyer(p, Lang.t("commande.hauteur-de-la-selection") + Fmt.v("Y " + corners[0].getBlockY() + Lang.t("commande.a") + corners[1].getBlockY()) + ".");
         }
-        p.performCommand("lands area " + nom + " assign confirm");
-        attendreParcelle(p, ma, nom, ensuite, 0);
+        if (plugin.gestion().parcelle(ma, nom) != null) {
+            editer(p, ma);
+            p.performCommand("lands area " + nom + " assign confirm");
+            attendreParcelle(p, ma, nom, ensuite, 0);
+            return;
+        }
+        String refusal = plugin.gestion().plotRefusal(ma, corners);
+        if (refusal != null) {
+            plugin.gestion().endSelection(p);
+            Fmt.erreur(p, refusal, Lang.t("commande.reselectionne-les-deux-coins-de"));
+            plugin.ouvrirMenu(p, "parcelles");
+            return;
+        }
+        LandPlayer lp = plugin.villes().api().getLandPlayer(p.getUniqueId());
+        if (lp == null) return;
+        java.util.concurrent.CompletableFuture<?> creation;
+        try {
+            creation = LandArea.of(ma, nom, corners[0], corners[1], lp);
+        } catch (IllegalArgumentException invalidName) {
+            plugin.gestion().endSelection(p);
+            Fmt.erreur(p, Lang.t("commande.nom-refuse-par-lands") + Fmt.v(nom) + ".");
+            plugin.ouvrirMenu(p, "parcelles");
+            return;
+        }
+        // completes off the main thread (Lands saves the plot asynchronously); null = refused, without a reason
+        creation.whenComplete((created, error) -> Bukkit.getScheduler().runTask(plugin, () -> {
+            if (!p.isOnline()) return;
+            Area a = created instanceof Area area ? area : plugin.gestion().parcelle(ma, nom);
+            plugin.gestion().endSelection(p);
+            if (error != null || a == null) {
+                if (error != null) plugin.getLogger().warning("Plot " + nom + " of " + ma.getName() + " not created: " + error);
+                Fmt.erreur(p, Lang.t("commande.lands-n-a-pas-cree") + Fmt.v(nom) + ".", Lang.t("commande.plot-refused-hint"));
+                plugin.ouvrirMenu(p, "parcelles");
+                return;
+            }
+            parcelleCreee(p, ma, a, ensuite);
+        }));
+    }
+
+    /** Plot ready: tells its size, then the plot's menu or the Agency window the mayor chose. */
+    private void parcelleCreee(Player p, Land ma, Area a, Saisie.Ensuite ensuite) {
+        plugin.vues().etat(p).parcelle = a.getName();
+        Fmt.envoyer(p, Lang.t("commande.parcelle-creee") + Fmt.v(a.getName()) + " (" + Fmt.v(Gestion.dimensions(a)) + ").");
+        if (ensuite == Saisie.Ensuite.RIEN) plugin.ouvrirMenu(p, "parcelle");
+        else plugin.listings().open(p, ma, a, ensuite == Saisie.Ensuite.LOCATION);
     }
 
     /**
-     * Lands enregistre la parcelle en tâche asynchrone : on la guette 2 secondes avant de conclure, puis on
-     * enchaîne sur la fenêtre de l'Agence si le maire l'a demandé.
+     * Outline given by the command to an existing plot: Lands saves it asynchronously, we look for it for 2 seconds
+     * before concluding.
      */
     private void attendreParcelle(Player p, Land ma, String nom, Saisie.Ensuite ensuite, int essai) {
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (!p.isOnline()) return;
             Area a = plugin.gestion().parcelle(ma, nom);
             if (a != null && Gestion.delimitee(a)) {
-                plugin.vues().etat(p).parcelle = nom;
-                Fmt.envoyer(p, Lang.t("commande.parcelle-creee") + Fmt.v(nom) + " (" + Fmt.v(Gestion.dimensions(a)) + ").");
-                if (ensuite == Saisie.Ensuite.RIEN) plugin.ouvrirMenu(p, "parcelle");
-                else plugin.listings().open(p, ma, a, ensuite == Saisie.Ensuite.LOCATION);
+                plugin.gestion().endSelection(p);
+                parcelleCreee(p, ma, a, ensuite);
             } else if (essai < 7) {
                 attendreParcelle(p, ma, nom, ensuite, essai + 1);
-            } else if (a != null) {
-                plugin.vues().etat(p).parcelle = nom;
+            } else {
+                plugin.gestion().endSelection(p);
                 Fmt.erreur(p, Lang.t("commande.la-parcelle") + Fmt.v(nom) + Lang.t("commande.n-a-pas-recu-ta"), Lang.t("commande.elle-existe-voir-le-message"));
                 plugin.ouvrirMenu(p, "parcelle");
-            } else {
-                Fmt.erreur(p, Lang.t("commande.lands-n-a-pas-cree") + Fmt.v(nom) + ".", Lang.t("commande.voir-son-message-au-dessus"));
-                plugin.ouvrirMenu(p, "parcelles");
             }
         }, 5L);
     }
@@ -1141,6 +1216,48 @@ final class Commande implements TabExecutor {
         plugin.vues().etat(p).changer();
     }
 
+    /**
+     * Invites a player into the town through Lands' API (9.3+): same checks as {@code /lands trust}, Lands' messages
+     * kept ({@code notify = true}) since they tell the reason of a refusal.
+     */
+    private void inviteResident(Player p, Land town, String name) {
+        org.bukkit.OfflinePlayer target = Bukkit.getPlayerExact(name);
+        if (target == null) target = Bukkit.getOfflinePlayerIfCached(name);
+        LandPlayer lp = plugin.villes().api().getLandPlayer(p.getUniqueId());
+        if (target == null || lp == null) {
+            Fmt.erreur(p, Lang.t("commande.player-unknown") + Fmt.v(name) + ".");
+            plugin.ouvrirMenu(p, "habitants");
+            return;
+        }
+        // Lands' jar has no generics left: the future is raw
+        java.util.concurrent.CompletableFuture<?> invite = me.angeschossen.lands.api.player.invite.type.TrustInvite.of(town, target.getUniqueId(), lp, true);
+        invite.whenComplete((result, error) -> afterInvite(p, error, "habitants"));
+    }
+
+    /** Invites a town into the country through Lands' API (9.3+), Lands' messages kept as for a resident. */
+    private void inviteTown(Player p, Nation country, String name) {
+        Land town = plugin.villes().api().getLandByName(name.replace(' ', '_'));
+        LandPlayer lp = plugin.villes().api().getLandPlayer(p.getUniqueId());
+        if (town == null || lp == null) {
+            Fmt.erreur(p, Lang.t("commande.town-unknown") + Fmt.v(name) + ".");
+            plugin.ouvrirMenu(p, "pays");
+            return;
+        }
+        java.util.concurrent.CompletableFuture<?> invite = me.angeschossen.lands.api.nation.invite.NationInvite.of(country, town, lp, true);
+        invite.whenComplete((result, error) -> afterInvite(p, error, "pays"));
+    }
+
+    /** Back on the main thread once Lands answered an invitation: reopens the menu (Lands told the result). */
+    private void afterInvite(Player p, Throwable error, String menu) {
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (error != null) {
+                plugin.getLogger().warning("Invitation by " + p.getName() + " failed: " + error);
+                if (p.isOnline()) Fmt.erreur(p, Lang.t("commande.invite-failed"));
+            }
+            if (p.isOnline()) plugin.ouvrirMenu(p, menu);
+        });
+    }
+
     /** Ville éditée par les commandes Lands sans argument de ville (banque, menu). */
     private void editer(Player p, Land land) {
         LandPlayer lp = plugin.villes().api().getLandPlayer(p.getUniqueId());
@@ -1169,11 +1286,8 @@ final class Commande implements TabExecutor {
                 for (Player o : Bukkit.getOnlinePlayers()) if (!ma.isTrusted(o.getUniqueId())) enLigne.add(o.getName());
                 enLigne.sort(String.CASE_INSENSITIVE_ORDER);
                 plugin.saisie().choisir(p, Lang.t("commande.inviter-un-habitant"), Lang.t("commande.le-joueur-recevra-une-invitation") + ma.getName() + ".",
-                        Lang.t("commande.joueur-connecte"), enLigne, Lang.t("commande.ou-tape-un-pseudo"), 16, "habitants", (pl, txt) -> {
-                            editer(pl, ma);
-                            pl.performCommand("lands trust " + txt);
-                            plugin.ouvrirMenu(pl, "habitants");
-                        });
+                        Lang.t("commande.joueur-connecte"), enLigne, Lang.t("commande.ou-tape-un-pseudo"), 16, "habitants",
+                        (pl, txt) -> inviteResident(pl, ma, txt));
             }
             default -> p.sendMessage("saisie creer_ville|creer_warp|inviter");
         }
@@ -1320,10 +1434,8 @@ final class Commande implements TabExecutor {
                         for (Land l : plugin.villes().toutes()) if (l.getNation() == null) libres.add(l.getName());
                         libres.sort(String.CASE_INSENSITIVE_ORDER);
                         plugin.saisie().choisir(p, Lang.t("commande.inviter-une-ville"), Lang.t("commande.la-ville-recevra-une-invitation") + mon.getName() + ".",
-                                Lang.t("commande.ville-sans-pays"), libres, Lang.t("commande.ou-tape-un-nom-de"), 24, "pays", (pl, txt) -> {
-                                    pl.performCommand("nations trust " + txt);
-                                    plugin.ouvrirMenu(pl, "pays");
-                                });
+                                Lang.t("commande.ville-sans-pays"), libres, Lang.t("commande.ou-tape-un-nom-de"), 24, "pays",
+                                (pl, txt) -> inviteTown(pl, mon, txt));
                     }
                     case "capitale" -> {
                         List<String> membres = new ArrayList<>();

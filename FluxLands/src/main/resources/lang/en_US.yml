@@ -77,8 +77,6 @@ commande:
   la-parcelle: 'La parcelle '
   a-une-annonce-ou-un: ' a une annonce ou un occupant.'
   retire-d-abord-l-annonce: Retire d'abord l'annonce ou mets fin à l'occupation.
-  dans-la-liste-et-appuie: ' dans la liste et appuie sur ta touche '
-  q-par-defaut-pour-la: ' <t:deco>(Q par défaut)</t> pour la supprimer.'
   tu-n-es-pas-dans: 'Tu n''es pas dans la parcelle '
   place-toi-la-ou-les: Place-toi là où les visiteurs doivent arriver.
   point-d-arrivee-de-la: 'Point d''arrivée de la parcelle '
@@ -99,12 +97,15 @@ commande:
   le-chunk-ou-je-suis-2: Le chunk où je suis
   clique-sur-deux-coins-opposes: 'Clique sur deux coins opposés de '
   ta-parcelle: ta parcelle
-  avec-l-outil-la-fenetre: ' avec l''outil : la fenêtre s''ouvrira toute seule.'
+  avec-l-outil-la-fenetre: ' with the tool (left click, then right click): the window opens by itself.'
+  corners-bar: '<t:texte>Corner 1:</t> {1} <t:deco>·</t> <t:texte>Corner 2:</t> {2}'
+  corner-left: '<t:valeur>left click</t>'
+  corner-right: '<t:valeur>right click</t>'
+  corner-set: '<t:succes>set</t>'
+  corner-outside: '<t:erreur>out of your town</t>'
+  click-corner-again: 'Click the corner out of the town somewhere else: the window opens as soon as the selection fits.'
+  selection-expired: 'Plot selection stopped after 10 minutes.'
   le-chunk-ou-tu-te: 'Le chunk où tu te tiens n''appartient pas à '
-  selection-prete: 'Sélection prête : '
-  fenetre-fermee-par-erreur: . Fenêtre fermée par erreur ?
-  nommer-la-parcelle: Nommer la parcelle
-  parcelle-nouvelle: ' parcelle nouvelle'
   delimiter: 'Délimiter '
   selection: 'Sélection : '
   coche-du-sol-au-ciel: ' Coche « Du sol au ciel » ou indique un Y min et/ou un Y max pour l''étendre en profondeur ou en hauteur.'
@@ -114,8 +115,14 @@ commande:
   parcelle-creee: '<t:succes>Parcelle créée :</t> '
   n-a-pas-recu-ta: ' n''a pas reçu ta sélection.'
   elle-existe-voir-le-message: 'Elle existe : voir le message de Lands au-dessus.'
+  plot-deleted: '<t:succes>Plot deleted:</t> '
+  plot-not-deleted: ' was not deleted.'
+  plot-not-deleted-hint: Lands refused it. Check that you may manage the plots of your town.
+  plot-refused-hint: Lands refused it. The selection may be too small, or you may not create plots.
+  player-unknown: 'No known player named '
+  town-unknown: 'No town is named '
+  invite-failed: The invitation could not be sent, try again in a moment.
   lands-n-a-pas-cree: 'Lands n''a pas créé la parcelle '
-  voir-son-message-au-dessus: Voir son message au-dessus.
   aucune-parcelle-de: 'Aucune parcelle de '
   a-moins-de: ' à moins de '
   place-toi-juste-a-cote: 'Place-toi juste à côté, ou donne son nom : '
@@ -207,6 +214,10 @@ fluxlands:
 fmt:
   clique-pour: '<t:survol>Clique pour '
 gestion:
+  plot-limit: 'Your town reached its maximum of '
+  plot-limit-end: ' plots.'
+  plot-outside: 'The selection goes out of your town: every chunk it touches must belong to '
+  plot-overlap: 'The selection overlaps the plot '
   a-delimiter: À délimiter
   louee: Louée
   proprietaire: '&#B376E5Propriétaire : &f'

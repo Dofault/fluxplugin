@@ -60,6 +60,11 @@ final class Fmt {
         envoyer(p, "<t:erreur>" + phrase + "</t> " + explication);
     }
 
+    /** Action bar in Lands' look (theme tokens, no prefix). */
+    static void barre(Player p, String texte) {
+        if (p != null && p.isOnline()) p.sendActionBar(fr.influencraft.flux.api.text.Texts.parse(Couleurs.legacy("<t:texte>" + texte + "</t>"), p));
+    }
+
     /** Message followed by Lands' action line {@code ➤ Label [CLIQUER]}, whose click runs {@code commande}. */
     static void action(Player p, String texte, String libelle, String commande) {
         if (p == null || !p.isOnline()) return;

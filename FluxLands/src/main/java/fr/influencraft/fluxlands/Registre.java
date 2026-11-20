@@ -52,6 +52,8 @@ final class Registre {
     private final Map<UUID, String> villeChoisie = new ConcurrentHashMap<>();
     /** Active effects chosen by each country (key: country ULID), applied by {@link CountryEffects}. */
     private final Map<String, List<String>> effetsPays = new ConcurrentHashMap<>();
+    /** Terms of the last listing of each plot (key: town ULID, then plot name in lower case), to post it again. */
+    private final Map<String, Map<String, Listings.Draft>> lastListings = new ConcurrentHashMap<>();
     private volatile boolean modifie;
 
     Registre(FluxLands plugin) {
@@ -64,6 +66,7 @@ final class Registre {
         vitrines.clear();
         recettes.clear();
         villeChoisie.clear();
+        lastListings.clear();
         YamlConfiguration y = lireBase();
         if (y == null && fichier.exists()) {
             // COMPAT 2026-11-13: data.yml of the Labs before the database - remove once Labs saved once (at go-live)
@@ -77,6 +80,10 @@ final class Registre {
                 ConfigurationSection v = villes.getConfigurationSection(id);
                 if (v == null) continue;
                 if (v.contains("taux")) taux.put(id, v.getDouble("taux"));
+                for (String line : v.getStringList("annonces")) {
+                    Listings.Draft d = Listings.Draft.parse(line);
+                    if (d != null) lastListings.computeIfAbsent(id, k -> new ConcurrentHashMap<>()).put(d.plot().toLowerCase(java.util.Locale.ROOT), d);
+                }
                 List<String> vit = v.getStringList("vitrine");
                 if (!vit.isEmpty()) vitrines.put(id, new ArrayList<>(vit));
                 ConfigurationSection r = v.getConfigurationSection("recettes");
@@ -114,6 +121,19 @@ final class Registre {
         }
     }
 
+    /** Terms of the last listing of a plot, or null. */
+    Listings.Draft lastListing(String town, String plot) {
+        Map<String, Listings.Draft> m = lastListings.get(town);
+        return m == null || plot == null ? null : m.get(plot.toLowerCase(java.util.Locale.ROOT));
+    }
+
+    void rememberListing(String town, Listings.Draft d) {
+        Listings.Draft before = lastListing(town, d.plot());
+        if (d.equals(before)) return;
+        lastListings.computeIfAbsent(town, k -> new ConcurrentHashMap<>()).put(d.plot().toLowerCase(java.util.Locale.ROOT), d);
+        modifie = true;
+    }
+
     /** Sérialise sur le fil appelant, écrit en tâche de fond (ou tout de suite si {@code sync}). */
     void sauvegarder(boolean sync) {
         if (!modifie) return;
@@ -123,12 +143,15 @@ final class Registre {
         ids.addAll(taux.keySet());
         ids.addAll(vitrines.keySet());
         ids.addAll(recettes.keySet());
+        ids.addAll(lastListings.keySet());
         int garder = plugin.getConfig().getInt("jours-historique", 14);
         String limite = LocalDate.now().minusDays(garder).toString();
         for (String id : ids) {
             String b = "villes." + id;
             if (taux.containsKey(id)) y.set(b + ".taux", taux.get(id));
             if (vitrines.containsKey(id)) y.set(b + ".vitrine", vitrines.get(id));
+            Map<String, Listings.Draft> last = lastListings.get(id);
+            if (last != null && !last.isEmpty()) y.set(b + ".annonces", last.values().stream().map(Listings.Draft::line).toList());
             Recette r = recettes.get(id);
             if (r != null) {
                 y.set(b + ".recettes.total", r.total);

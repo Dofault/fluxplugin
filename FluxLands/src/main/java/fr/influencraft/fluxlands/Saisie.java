@@ -84,7 +84,8 @@ final class Saisie {
 
     /** Plot name, "from ground to sky" box, two optional Y min / Y max fields and what to do once created. */
     void ouvrirParcelle(Player p, String titre, String explication, String nomInitial, boolean solAuCiel,
-                        String yMinInitial, String yMaxInitial, String menuRetour, ReponseParcelle apres) {
+                        String yMinInitial, String yMaxInitial, String menuRetour, ReponseParcelle apres,
+                        java.util.function.Consumer<Player> cancelled) {
         Dialogs.form(p, titre).body(explication)
                 .requiredInput("valeur", Lang.t("saisie.nom-de-la-parcelle"), nomInitial, 24)
                 .toggle("case", Lang.t("saisie.du-sol-au-ciel-toute"), solAuCiel)
@@ -94,7 +95,10 @@ final class Saisie {
                 .buttons(nomInitial.isEmpty() ? Lang.t("saisie.creer-la-parcelle") : Lang.t("saisie.delimiter"), "Annuler")
                 .onSubmit((pl, a) -> apres.accepter(pl, a.text("valeur").replace(' ', '_'), a.toggle("case"),
                         a.integer("ymin"), a.integer("ymax"), Ensuite.de(a.text("ensuite"))))
-                .onCancel(pl -> plugin.ouvrirMenu(pl, menuRetour))
+                .onCancel(pl -> {
+                    cancelled.accept(pl);
+                    plugin.ouvrirMenu(pl, menuRetour);
+                })
                 .open();
     }
 }

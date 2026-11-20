@@ -77,8 +77,6 @@ commande:
   la-parcelle: 'La parcelle '
   a-une-annonce-ou-un: ' a une annonce ou un occupant.'
   retire-d-abord-l-annonce: Retire d'abord l'annonce ou mets fin à l'occupation.
-  dans-la-liste-et-appuie: ' dans la liste et appuie sur ta touche '
-  q-par-defaut-pour-la: ' <t:deco>(Q par défaut)</t> pour la supprimer.'
   tu-n-es-pas-dans: 'Tu n''es pas dans la parcelle '
   place-toi-la-ou-les: Place-toi là où les visiteurs doivent arriver.
   point-d-arrivee-de-la: 'Point d''arrivée de la parcelle '
@@ -99,12 +97,15 @@ commande:
   le-chunk-ou-je-suis-2: Le chunk où je suis
   clique-sur-deux-coins-opposes: 'Clique sur deux coins opposés de '
   ta-parcelle: ta parcelle
-  avec-l-outil-la-fenetre: ' avec l''outil : la fenêtre s''ouvrira toute seule.'
+  avec-l-outil-la-fenetre: ' avec l''outil (clic gauche, puis clic droit) : la fenêtre s''ouvrira toute seule.'
+  corners-bar: '<t:texte>Coin 1 :</t> {1} <t:deco>·</t> <t:texte>Coin 2 :</t> {2}'
+  corner-left: '<t:valeur>clic gauche</t>'
+  corner-right: '<t:valeur>clic droit</t>'
+  corner-set: '<t:succes>posé</t>'
+  corner-outside: '<t:erreur>hors de ta ville</t>'
+  click-corner-again: 'Reclique le coin hors de la ville à un autre endroit : la fenêtre s''ouvrira dès que la sélection sera bonne.'
+  selection-expired: 'Sélection de la parcelle arrêtée après 10 minutes.'
   le-chunk-ou-tu-te: 'Le chunk où tu te tiens n''appartient pas à '
-  selection-prete: 'Sélection prête : '
-  fenetre-fermee-par-erreur: . Fenêtre fermée par erreur ?
-  nommer-la-parcelle: Nommer la parcelle
-  parcelle-nouvelle: ' parcelle nouvelle'
   delimiter: 'Délimiter '
   selection: 'Sélection : '
   coche-du-sol-au-ciel: ' Coche « Du sol au ciel » ou indique un Y min et/ou un Y max pour l''étendre en profondeur ou en hauteur.'
@@ -114,8 +115,14 @@ commande:
   parcelle-creee: '<t:succes>Parcelle créée :</t> '
   n-a-pas-recu-ta: ' n''a pas reçu ta sélection.'
   elle-existe-voir-le-message: 'Elle existe : voir le message de Lands au-dessus.'
+  plot-deleted: '<t:succes>Parcelle supprimée :</t> '
+  plot-not-deleted: ' n''a pas été supprimée.'
+  plot-not-deleted-hint: Lands l'a refusé. Vérifie que tu as le droit de gérer les parcelles de ta ville.
+  plot-refused-hint: Lands l'a refusée. La sélection est peut-être trop petite, ou tu n'as pas le droit de créer des parcelles.
+  player-unknown: 'Aucun joueur connu sous le pseudo '
+  town-unknown: 'Aucune ville ne s''appelle '
+  invite-failed: L'invitation n'a pas pu être envoyée, réessaie dans un instant.
   lands-n-a-pas-cree: 'Lands n''a pas créé la parcelle '
-  voir-son-message-au-dessus: Voir son message au-dessus.
   aucune-parcelle-de: 'Aucune parcelle de '
   a-moins-de: ' à moins de '
   place-toi-juste-a-cote: 'Place-toi juste à côté, ou donne son nom : '
@@ -207,6 +214,10 @@ fluxlands:
 fmt:
   clique-pour: '<t:survol>Clique pour '
 gestion:
+  plot-limit: 'Ta ville a atteint son maximum de '
+  plot-limit-end: ' parcelles.'
+  plot-outside: 'La sélection sort de ta ville : chaque chunk qu''elle touche doit appartenir à '
+  plot-overlap: 'La sélection empiète sur la parcelle '
   a-delimiter: À délimiter
   louee: Louée
   proprietaire: '&#B376E5Propriétaire : &f'

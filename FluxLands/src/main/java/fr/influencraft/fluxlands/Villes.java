@@ -119,6 +119,14 @@ final class Villes {
         return land != null && joueur != null && joueur.equals(land.getOwnerUID());
     }
 
+    /** The player manages the town: its mayor, or a role allowed to edit the town's settings (deputies). */
+    static boolean peutGerer(Land land, Player joueur) {
+        if (land == null || joueur == null) return false;
+        if (estMaire(land, joueur.getUniqueId())) return true;
+        me.angeschossen.lands.api.land.Area open = land.getDefaultArea();
+        return open != null && open.hasRoleFlag(joueur.getUniqueId(), me.angeschossen.lands.api.flags.type.Flags.SETTING_EDIT_LAND);
+    }
+
     static String nomJoueur(UUID uuid) {
         if (uuid == null) return "?";
         Player p = Bukkit.getPlayer(uuid);

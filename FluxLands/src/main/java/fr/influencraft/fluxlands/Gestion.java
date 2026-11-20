@@ -78,8 +78,9 @@ final class Gestion {
         if (land == null || loc == null || loc.getWorld() == null) return null;
         Area best = null;
         double bestDist = (double) range * range;
-        for (Object o : land.getSubAreas(loc.getWorld())) {
-            if (!(o instanceof LandArea la) || la.isDefault() || la.getBoundingBox() == null) continue;
+        for (Object o : land.getAllAreas()) {
+            if (!(o instanceof LandArea la) || la.isDefault() || la.getBoundingBox() == null
+                    || !loc.getWorld().equals(la.getWorld())) continue;
             BoundingBox b = la.getBoundingBox();
             double dx = Math.max(0, Math.max(b.getMin().getX() - loc.getX(), loc.getX() - (b.getMax().getX() + 1)));
             double dz = Math.max(0, Math.max(b.getMin().getZ() - loc.getZ(), loc.getZ() - (b.getMax().getZ() + 1)));
@@ -205,41 +206,100 @@ final class Gestion {
     }
 
     /**
-     * Règle le Y bas et/ou haut de la sélection Lands (x et z inchangés). {@code setPos1/2} écrit
-     * dans la sélection réelle de Lands et la recalcule (vérifié dans le code de Lands 8.8.0).
-     * Valeurs bornées aux limites du monde ; renvoie false sans sélection complète.
+     * Sets the height of the player's Lands selection and returns its two corners (x and z unchanged), or null without
+     * a complete selection. {@code fullHeight} spans the whole world height (in place of Lands' {@code selection expand}
+     * toggle); otherwise {@code yMin} / {@code yMax} replace the selection's own when given. Values are kept within the
+     * world. The selection itself is updated too ({@code setPos1/2}), so the particles show what will be created.
      */
-    boolean reglerY(Player p, Integer yMin, Integer yMax) {
+    Location[] corners(Player p, boolean fullHeight, Integer yMin, Integer yMax) {
         LandPlayer lp = plugin.villes().api().getLandPlayer(p.getUniqueId());
         Selection s = lp != null ? lp.getSelection() : null;
-        if (s == null || !s.isComplete() || s.getPos1() == null || s.getPos2() == null) return false;
-        org.bukkit.Location a = s.getPos1().toLocation();
-        org.bukkit.Location b = s.getPos2().toLocation();
+        if (s == null || !s.isComplete() || s.getPos1() == null || s.getPos2() == null) return null;
+        Location a = s.getPos1().toLocation();
+        Location b = s.getPos2().toLocation();
         org.bukkit.World w = a.getWorld() != null ? a.getWorld() : p.getWorld();
-        int bas = Math.min(a.getBlockY(), b.getBlockY());
-        int haut = Math.max(a.getBlockY(), b.getBlockY());
-        if (yMin != null) bas = yMin;
-        if (yMax != null) haut = yMax;
-        bas = Math.max(w.getMinHeight(), Math.min(w.getMaxHeight() - 1, bas));
-        haut = Math.max(w.getMinHeight(), Math.min(w.getMaxHeight() - 1, haut));
-        if (bas > haut) {
-            int t = bas;
-            bas = haut;
-            haut = t;
+        a.setWorld(w);
+        b.setWorld(w);
+        int low = Math.min(a.getBlockY(), b.getBlockY());
+        int high = Math.max(a.getBlockY(), b.getBlockY());
+        if (fullHeight) {
+            low = w.getMinHeight();
+            high = w.getMaxHeight() - 1;
+        } else {
+            if (yMin != null) low = yMin;
+            if (yMax != null) high = yMax;
         }
-        a.setY(bas);
-        b.setY(haut);
+        low = Math.max(w.getMinHeight(), Math.min(w.getMaxHeight() - 1, low));
+        high = Math.max(w.getMinHeight(), Math.min(w.getMaxHeight() - 1, high));
+        if (low > high) {
+            int t = low;
+            low = high;
+            high = t;
+        }
+        a.setY(low);
+        b.setY(high);
         s.setPos1(a);
         s.setPos2(b);
+        return new Location[]{a, b};
+    }
+
+    /**
+     * Why Lands would refuse a new plot of {@code land} between these corners, as a text for the mayor, or null when
+     * nothing we can check stands against it: plot limit of the town, a chunk of the box not claimed by the town, a
+     * box crossing another plot. {@link LandArea#of} only answers null on a refusal, without the reason.
+     */
+    String plotRefusal(Land land, Location[] c) {
+        int max = land.getLimit(me.angeschossen.lands.api.limits.Limit.LAND_AREAS);
+        if (parcelles(land).size() >= max) return Lang.t("gestion.plot-limit") + max + Lang.t("gestion.plot-limit-end");
+        if (!insideTown(land, c[0], c[1])) return Lang.t("gestion.plot-outside") + Fmt.ville(land.getName()) + ".";
+        int x1 = Math.min(c[0].getBlockX(), c[1].getBlockX()), x2 = Math.max(c[0].getBlockX(), c[1].getBlockX());
+        int y1 = Math.min(c[0].getBlockY(), c[1].getBlockY()), y2 = Math.max(c[0].getBlockY(), c[1].getBlockY());
+        int z1 = Math.min(c[0].getBlockZ(), c[1].getBlockZ()), z2 = Math.max(c[0].getBlockZ(), c[1].getBlockZ());
+        for (Area o : parcelles(land)) {
+            if (!(o instanceof LandArea la) || la.getBoundingBox() == null || !c[0].getWorld().equals(la.getWorld())) continue;
+            BoundingBox b = la.getBoundingBox();
+            boolean crosses = x1 <= b.getMax().getX() && x2 >= b.getMin().getX()
+                    && y1 <= b.getMax().getY() && y2 >= b.getMin().getY()
+                    && z1 <= b.getMax().getZ() && z2 >= b.getMin().getZ();
+            if (crosses) return Lang.t("gestion.plot-overlap") + Fmt.v(la.getName()) + ".";
+        }
+        return null;
+    }
+
+    /** Every chunk of the box between {@code a} and {@code b} (one corner alone when b is null) belongs to the town. */
+    static boolean insideTown(Land land, Location a, Location b) {
+        if (b == null) b = a;
+        if (a.getWorld() == null || (b.getWorld() != null && !a.getWorld().equals(b.getWorld()))) return false;
+        for (int cx = Math.min(a.getBlockX(), b.getBlockX()) >> 4; cx <= Math.max(a.getBlockX(), b.getBlockX()) >> 4; cx++) {
+            for (int cz = Math.min(a.getBlockZ(), b.getBlockZ()) >> 4; cz <= Math.max(a.getBlockZ(), b.getBlockZ()) >> 4; cz++) {
+                if (!land.hasChunk(a.getWorld(), cx, cz)) return false;
+            }
+        }
         return true;
     }
 
-    /** Hauteur de la sélection Lands du joueur (0 sans sélection complète). */
-    int hauteurSelection(Player p) {
+    /** The two corners the player clicked so far (each null until set), or null without a selection. */
+    Location[] clickedCorners(Player p) {
         LandPlayer lp = plugin.villes().api().getLandPlayer(p.getUniqueId());
         Selection s = lp != null ? lp.getSelection() : null;
-        if (s == null || !s.isComplete() || s.getPos1() == null || s.getPos2() == null) return 0;
-        return Math.abs(s.getPos1().getY() - s.getPos2().getY()) + 1;
+        if (s == null) return null;
+        Location a = s.getPos1() != null ? s.getPos1().toLocation() : null;
+        Location b = s.getPos2() != null ? s.getPos2().toLocation() : null;
+        if (a != null && a.getWorld() == null) a.setWorld(p.getWorld());
+        if (b != null && b.getWorld() == null) b.setWorld(p.getWorld());
+        return new Location[]{a, b};
+    }
+
+    /** Ends the player's Lands selection: its particles, tool and messages go away. */
+    void endSelection(Player p) {
+        LandPlayer lp = plugin.villes().api().getLandPlayer(p.getUniqueId());
+        if (lp != null && lp.getSelection() != null) lp.getSelection().disable();
+    }
+
+    /** Deletes a plot through Lands' API (9.3+), with the permission checks of the mayor's {@code player}. */
+    boolean deletePlot(Area a, Player player) {
+        LandPlayer lp = plugin.villes().api().getLandPlayer(player.getUniqueId());
+        return lp != null && a instanceof LandArea la && !la.isDefault() && la.delete(lp);
     }
 
     /** La parcelle a-t-elle une zone (assignée depuis une sélection) ? */

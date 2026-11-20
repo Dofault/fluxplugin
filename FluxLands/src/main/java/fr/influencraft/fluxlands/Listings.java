@@ -26,7 +26,41 @@ final class Listings {
 
     /** A listing being prepared; {@code maxDays} 0 = no limit. */
     record Draft(String plot, boolean rent, long price, int periodDays, int maxDays) {
+
+        /** One line for storage: {@code plot|rent|price|period|max}. */
+        String line() {
+            return plot + "|" + rent + "|" + price + "|" + periodDays + "|" + maxDays;
+        }
+
+        static Draft parse(String line) {
+            String[] f = line.split("\\|");
+            if (f.length != 5) return null;
+            try {
+                return new Draft(f[0], Boolean.parseBoolean(f[1]), Long.parseLong(f[2]), Integer.parseInt(f[3]), Integer.parseInt(f[4]));
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+
+        /** Terms of a listing still available (rent or sale), or null. */
+        static Draft of(Area zone, RentalBase offer) {
+            if (offer instanceof RentOffer r && offer.getType() == RentalType.RENT) {
+                return new Draft(zone.getName(), true, (long) r.getCost(), Math.max(1, r.getMinutes() / 1440),
+                        r.getMaxMinutes() >= LANDS_MAX_MINUTES ? 0 : Math.max(1, r.getMaxMinutes() / 1440));
+            }
+            if (offer != null && offer.getType() == RentalType.SELL) return new Draft(zone.getName(), false, (long) offer.getCost(), 0, 0);
+            return null;
+        }
     }
+
+    /** A listing seen on the Agency: its terms and where its sign or hologram stands. */
+    private record Seen(String town, Draft terms, org.bukkit.Location spot) {
+    }
+
+    /** Listings available at the last {@link #watch()} (key: town ULID / plot in lower case). */
+    private java.util.Map<String, Seen> seen = java.util.Map.of();
+    /** Listings the mayor took off through our menu: remembered, but no "post it again" message. */
+    private final java.util.Set<String> takenOff = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     /** Payment periods and longest leases offered, in days (0 = no limit). */
     private static final int[] PERIODS = {1, 2, 3, 7, 14, 30};
@@ -52,14 +86,16 @@ final class Listings {
             return;
         }
         Draft pending = plugin.vues().etat(p).brouillon;
+        Draft current = Draft.of(zone, offer);
+        // the plot's last listing (taken off by its menu or by Shift + click on the hologram) prefills the window
+        Draft last = plugin.registre().lastListing(Villes.id(land), zone.getName());
         Draft initial;
-        if (offer instanceof RentOffer r && rent) {
-            initial = new Draft(zone.getName(), true, (long) r.getCost(), Math.max(1, r.getMinutes() / 1440),
-                    r.getMaxMinutes() >= LANDS_MAX_MINUTES ? 0 : Math.max(1, r.getMaxMinutes() / 1440));
-        } else if (offer != null && offer.getType() == RentalType.SELL && !rent) {
-            initial = new Draft(zone.getName(), false, (long) offer.getCost(), 0, 0);
+        if (current != null && current.rent() == rent) {
+            initial = current;
         } else if (pending != null && pending.plot().equalsIgnoreCase(zone.getName()) && pending.rent() == rent) {
             initial = pending;
+        } else if (last != null && last.rent() == rent) {
+            initial = new Draft(zone.getName(), rent, last.price(), last.periodDays(), last.maxDays());
         } else {
             initial = new Draft(zone.getName(), rent, rent ? 5000 : 50000, 7, 30);
         }
@@ -137,10 +173,71 @@ final class Listings {
             RentalBase o = zone.getRentalOffer();
             if (o == null || o.getType() != (d.rent() ? RentalType.RENT : RentalType.SELL)) return;
             if (e.brouillon == d) e.brouillon = null;
+            plugin.registre().rememberListing(Villes.id(land), d);
             Fmt.envoyer(p, Lang.t("listings.annonce-publiee") + Fmt.v(zone.getName()) + (d.rent() ? Lang.t("listings.a-louer")
                     + Fmt.bitblock(d.price()) + " par " + Fmt.v(Gestion.duree(d.periodDays() * 1440)) + "." : Lang.t("listings.a-vendre")
                     + Fmt.bitblock(d.price()) + ".") + Lang.t("listings.elle-apparait-dans-l-agence") + Fmt.cmd("/agence") + ".");
         }, 10L);
+    }
+
+    /** The mayor takes a listing off through our menu: its terms are kept, no message offers to post it again. */
+    void takenOff(Land land, Area zone) {
+        takenOff.add(Villes.id(land) + "/" + zone.getName().toLowerCase(java.util.Locale.ROOT));
+    }
+
+    /**
+     * Every few seconds: the listings available in every town. Lands has no event when a listing is taken off (Shift
+     * + left click on its hologram): a listing gone while its plot is still free is remembered (the listing window is
+     * prefilled with it) and the managers of the town standing near it, else its mayor, get a click to post it again.
+     */
+    void watch() {
+        java.util.Map<String, Seen> now = new java.util.HashMap<>();
+        for (Land land : plugin.villes().toutes()) {
+            String town = Villes.id(land);
+            for (Area zone : plugin.gestion().parcelles(land)) {
+                RentalBase offer = zone.getRentalOffer();
+                Draft terms = Draft.of(zone, offer);
+                if (terms == null) continue;
+                org.bukkit.Location spot = null;
+                try {
+                    if (offer.getBlock() != null) spot = offer.getBlock().getCenter().toLocation();   // Lands 9.3.0: a block has a centre, no location
+                } catch (RuntimeException ignored) {
+                }
+                now.put(town + "/" + zone.getName().toLowerCase(java.util.Locale.ROOT), new Seen(town, terms, spot));
+                plugin.registre().rememberListing(town, terms);
+            }
+        }
+        for (java.util.Map.Entry<String, Seen> gone : seen.entrySet()) {
+            if (now.containsKey(gone.getKey())) continue;
+            Seen s = gone.getValue();
+            Land land = plugin.villes().parId(s.town());
+            Area zone = land != null ? plugin.gestion().parcelle(land, s.terms().plot()) : null;
+            // rented or sold meanwhile, or the plot is gone: nothing to post again
+            if (zone == null || zone.getRentalOffer() != null) continue;
+            if (takenOff.remove(gone.getKey())) continue;
+            for (Player p : notified(land, s.spot())) {
+                Fmt.action(p, Lang.t("listings.listing-taken-off") + Fmt.v(zone.getName()) + Lang.t("listings.listing-taken-off-end"),
+                        Lang.t("listings.post-again"), plugin.commande().label() + " annonce " + zone.getName()
+                                + (s.terms().rent() ? " location" : " vente"));
+            }
+        }
+        takenOff.retainAll(now.keySet());
+        seen = now;
+    }
+
+    /** Managers of the town within 16 blocks of the listing's spot, else its mayor when online. */
+    private List<Player> notified(Land land, org.bukkit.Location spot) {
+        List<Player> near = new ArrayList<>();
+        if (spot != null && spot.getWorld() != null) {
+            for (Player p : spot.getWorld().getPlayers()) {
+                if (p.getLocation().distanceSquared(spot) <= 256 && Villes.peutGerer(land, p)) near.add(p);
+            }
+        }
+        if (near.isEmpty()) {
+            Player mayor = Bukkit.getPlayer(land.getOwnerUID());
+            if (mayor != null) near.add(mayor);
+        }
+        return near;
     }
 
     /** Drops the pending draft. */
@@ -171,7 +268,7 @@ final class Listings {
 
     private void link(Player p, Area zone) {
         Fmt.action(p, Lang.t("listings.ton-annonce-pour") + Fmt.v(zone.getName()) + Lang.t("listings.est-prete-une-fois-au")
-                        + Fmt.cmd("/v annonce") + " :",
+                        + Fmt.cmd("/parcelle annonce") + " :",
                 "Poser l'annonce ici", plugin.commande().label() + " annonce publier");
     }
 
