@@ -93,9 +93,9 @@ final class Catalog implements RecipeBook.Catalog, Listener {
         EquipmentSlot folder = open.get(player.getUniqueId());
         List<RecipeBook.Entry> out = new ArrayList<>();
         if (folder == null) {
-            for (EquipmentSlot slot : FOLDERS) {
-                List<Cosmetic> in = in(slot);
-                if (!in.isEmpty()) out.add(new RecipeBook.Entry(FOLDER_ID + slot.ordinal(), folderIcon(player, slot, in), TAB, true, false));
+            for (int f = 0; f < FOLDERS.length; f++) {
+                List<Cosmetic> in = in(FOLDERS[f]);
+                if (!in.isEmpty()) out.add(new RecipeBook.Entry(FOLDER_ID + f, folderIcon(player, FOLDERS[f], in), TAB, true, false));
             }
             return out;
         }
@@ -152,8 +152,8 @@ final class Catalog implements RecipeBook.Catalog, Listener {
             return;
         }
         if (id < COSMETIC_ID) {
-            int ordinal = id - FOLDER_ID;
-            for (EquipmentSlot slot : FOLDERS) if (slot.ordinal() == ordinal) open.put(player.getUniqueId(), slot);
+            int f = id - FOLDER_ID;
+            if (f >= 0 && f < FOLDERS.length) open.put(player.getUniqueId(), FOLDERS[f]);
             Sounds.cue(player, "page");
             RecipeBook.refresh(player);
             return;
