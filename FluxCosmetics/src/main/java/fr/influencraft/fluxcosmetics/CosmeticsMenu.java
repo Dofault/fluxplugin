@@ -89,7 +89,11 @@ final class CosmeticsMenu {
                 Lists.invalidate(player, LIST);
                 if (view != null) view.redress();
             }
-            case "changed" -> Lists.invalidate(player, LIST);
+            case "changed" -> {
+                Lists.invalidate(player, LIST);
+                // a tag picked: his nametag changed, over the mannequin too
+                if (view != null) view.redress();
+            }
             case "turn" -> {
                 if (view == null) return;
                 try {

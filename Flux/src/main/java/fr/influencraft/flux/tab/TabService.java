@@ -233,6 +233,16 @@ public final class TabService implements TabList.Backend, Listener {
     }
 
     @Override
+    public net.kyori.adventure.text.Component nametag(Player player) {
+        if (!enabled || !nametagsOn) return null;
+        Map<String, String> f = fields(PlayerMeta.group(player));
+        // as a client draws a team member: prefix, the name in the team's colour (white, no style carried over), suffix
+        return Texts.parse(render(f.getOrDefault("tag-prefix", ""), player), player)
+                .append(net.kyori.adventure.text.Component.text(player.getName(), net.kyori.adventure.text.format.NamedTextColor.WHITE))
+                .append(Texts.parse(render(f.getOrDefault("tag-suffix", ""), player), player));
+    }
+
+    @Override
     public boolean collision(Player player, boolean collides) {
         boolean changed = collides ? noCollision.remove(player.getUniqueId()) : noCollision.add(player.getUniqueId());
         if (!enabled || !nametagsOn) return false;

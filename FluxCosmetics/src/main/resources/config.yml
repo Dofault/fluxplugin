@@ -42,8 +42,8 @@ menu-camera:
     chest: {height: 1.25, distance: 1.9, pitch: 8, look-down: 22}
     legs:  {height: 0.75, distance: 1.7, pitch: 10, look-down: 20}
     feet:  {height: 0.15, distance: 1.4, pitch: 16}
-    # the whole body for the tags
-    tags:  {height: 1.0, distance: 3.4, pitch: 8, look-down: 14}
+    # the tags: his real nametag over the mannequin's head, framed with his head
+    tags:  {height: 2.15, distance: 1.9, pitch: 2, look-down: 18}
 
 
 # The cosmetics. item: what is worn (a Flux item id such as fluxarmor:zero_helmet, or a material), slot: head, chest,

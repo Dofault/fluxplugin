@@ -33,6 +33,8 @@ public final class TabList {
         void refresh(Player player);
 
         boolean collision(Player player, boolean collides);
+
+        net.kyori.adventure.text.Component nametag(Player player);
     }
 
     private static final Map<String, Owned> PIECES = new ConcurrentHashMap<>();
@@ -67,6 +69,15 @@ public final class TabList {
     public static void refresh(Player player) {
         Backend b = backend;
         if (b != null && player != null) b.refresh(player);
+    }
+
+    /**
+     * The name shown above this player's head, as the others see it now (tag-prefix, his name, tag-suffix of
+     * tab.yml), to show it on something else: the wardrobe's mannequin. Null when Flux draws no nametags.
+     */
+    public static net.kyori.adventure.text.Component nametag(Player player) {
+        Backend b = backend;
+        return b == null || player == null ? null : b.nametag(player);
     }
 
     /**

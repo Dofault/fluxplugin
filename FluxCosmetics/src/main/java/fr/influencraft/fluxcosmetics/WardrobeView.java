@@ -3,6 +3,7 @@ package fr.influencraft.fluxcosmetics;
 import fr.influencraft.flux.api.client.Camera;
 import fr.influencraft.flux.api.client.Hotbar;
 import fr.influencraft.flux.api.client.Sidebar;
+import fr.influencraft.flux.api.tab.TabList;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ResolvableProfile;
 import io.papermc.paper.datacomponent.item.TooltipDisplay;
@@ -112,6 +113,8 @@ final class WardrobeView {
     private int ticks;
     /** Framing of the category shown in the cosmetics menu, null while the menu is closed. */
     private Settings.Shot shot;
+    /** His nametag shows over the mannequin (the tags category). */
+    private boolean nametag;
     /** Where the camera glides to (a shot, the free camera given back, a turn button), null once there. */
     private Float goalYaw, goalPitch;
     /** Free camera's angle and zoom when the menu opened, given back when it closes. */
@@ -357,6 +360,8 @@ final class WardrobeView {
         }
         if (shot != null) {
             shot = null;
+            nametag = false;
+            redress();
             goalPitch = freePitch;
             wantedZoom = freeZoom;
         }
@@ -372,6 +377,9 @@ final class WardrobeView {
      */
     void frame(int category) {
         shot = settings.shot(category);
+        // the tags: his real nametag over the mannequin's head, as the others see it
+        nametag = category == Settings.CATEGORIES.length - 1;
+        redress();
         goalYaw = wrap(back.getYaw() + 180);
         goalPitch = shot.pitch();
         wantedZoom = shot.distance();
@@ -385,7 +393,11 @@ final class WardrobeView {
 
     /** What he wears changed: the mannequin wears it too. */
     void redress() {
-        if (mannequin != null && mannequin.isValid()) dress(mannequin.getEquipment());
+        if (mannequin == null || !mannequin.isValid()) return;
+        dress(mannequin.getEquipment());
+        Component name = nametag ? TabList.nametag(player) : null;
+        mannequin.customName(name);
+        mannequin.setCustomNameVisible(name != null);
     }
 
     // ================================================================== camera
