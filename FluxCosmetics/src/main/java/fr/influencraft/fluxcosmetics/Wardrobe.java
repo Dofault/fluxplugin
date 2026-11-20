@@ -174,8 +174,12 @@ final class Wardrobe implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onTeleport(PlayerTeleportEvent e) {
         WardrobeView view = view(e.getPlayer());
-        // UNKNOWN: the server putting him back after a move it refused (the camera brushing a wall), not a way out
-        if (view == null || view.moving || e.getCause() == PlayerTeleportEvent.TeleportCause.UNKNOWN) return;
+        if (view == null || view.moving) return;
+        // UNKNOWN: the server putting him back after a move it refused (a block, a hole), not a way out: back in place
+        if (e.getCause() == PlayerTeleportEvent.TeleportCause.UNKNOWN) {
+            view.resync();
+            return;
+        }
         Player p = e.getPlayer();
         Bukkit.getScheduler().runTask(plugin, () -> {
             if (view(p) == view) close(p, false);

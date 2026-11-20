@@ -61,6 +61,10 @@ final class WardrobeView {
     private static final float SLACK = 0.5f;
     /** Room kept between the camera and a block in the way. */
     private static final double WALL_GAP = 0.3;
+    /** Eyes of the camera above the mannequin's feet at least: a floor is assumed there. */
+    private static final double FLOOR = 0.25;
+    /** Distance kept sideways from the mannequin's middle while level with his body, and his height. */
+    private static final double CLEARANCE = 0.5, MANNEQUIN_HEIGHT = 2.0;
     /** Closest the camera comes to the mannequin, whatever stands in the way. */
     private static final double MIN_REACH = 0.4;
     /** His size meanwhile (1.8 blocks of body under his eyes at full size would go into the floor or a wall). */
@@ -193,6 +197,8 @@ final class WardrobeView {
             if (now - lastMove < MOVE_GAP_NANOS) return;
             lastMove = now;
             Vector f = feet(cy, cx, reach);
+            // under the floor until the tick raises the angle: left to the tick
+            if (f.getY() + eyeHeight < base.getY() + FLOOR) return;
             Camera.moveSelf(p, f.getX(), f.getY(), f.getZ());
         });
         hint();
@@ -234,23 +240,53 @@ final class WardrobeView {
         int sideways = (input.isLeft() ? 1 : 0) - (input.isRight() ? 1 : 0);
         // forward (Z on AZERTY) raises the camera: it looks further down
         int upwards = (input.isForward() ? 1 : 0) - (input.isBackward() ? 1 : 0);
-        if (sideways != 0 || upwards != 0) {
+        boolean turned = sideways != 0 || upwards != 0;
+        if (turned) {
             yaw = wrap(yaw + sideways * settings.turnSpeed());
             pitch = Math.clamp(pitch + upwards * settings.pitchSpeed(), settings.minPitch(), settings.maxPitch());
-            Camera.turn(player, yaw, false, pitch, false);
         }
         if (Math.abs(wantedZoom - zoom) > 1e-3) zoom += (wantedZoom - zoom) * ZOOM_GLIDE;
         if (!player.isFlying()) player.setFlying(true);
 
-        reach = reach();
-        Vector f = feet(yaw, pitch, reach);
-        // moved: keys, zoom, a block in the way; else now and then against any drift
-        if (placed.distanceSquared(f) > 1e-4 || ticks % 20 == 0) {
+        // a floor is assumed at the mannequin's feet, whatever is really there (holes glitched the camera): the
+        // camera never goes under it, its angle rises instead of it coming closer (it ended inside the mannequin)
+        turned |= keepAboveFloor(zoom);
+        double d = reach();
+        if (keepAboveFloor(d)) {
+            turned = true;
+            d = reach();
+        }
+        reach = d;
+        if (turned) Camera.turn(player, yaw, false, pitch, false);
+        Vector f = feet(yaw, pitch, d);
+        // moved: keys, zoom, a block in the way, put back by the server; else now and then against any drift
+        // (every 5 ticks: Paper may put him back after a refused move without any event)
+        if (placed == null || placed.distanceSquared(f) > 1e-4 || ticks % 5 == 0) {
             placed = f;
             Camera.moveSelf(player, f.getX(), f.getY(), f.getZ());
         }
         if (ticks % 40 == 0) Hotbar.show(player, hotbar());
         if (ticks % 30 == 0) hint();
+    }
+
+    /**
+     * Raises the camera's angle so that at {@code distance} its eyes stay {@link #FLOOR} above the mannequin's feet.
+     * True when the angle changed.
+     */
+    private boolean keepAboveFloor(double distance) {
+        // pitch down is positive: the eyes stand sin(pitch) * distance above the point looked at
+        double need = (FLOOR - height) / Math.max(0.05, distance);
+        if (need <= -1) return false;
+        float lowest = (float) Math.toDegrees(Math.asin(Math.min(1, need)));
+        lowest = Math.min(lowest, settings.maxPitch());
+        if (pitch >= lowest) return false;
+        pitch = lowest;
+        return true;
+    }
+
+    /** The server put him back after a move it refused: placed again at the next tick. */
+    void resync() {
+        placed = null;
     }
 
     /** The mouse wheel turned by {@code notches}: up (negative) brings the camera closer. */
@@ -290,7 +326,11 @@ final class WardrobeView {
                 FluidCollisionMode.NEVER, true);
         double d = hit == null ? zoom : Math.max(MIN_REACH, hit.getHitPosition().distance(target) - WALL_GAP);
         while (d > MIN_REACH && world.hasCollisionsIn(body(feet(y, x, d)))) d -= 0.1;
-        return Math.max(MIN_REACH, d);
+        d = Math.max(MIN_REACH, d);
+        // never inside the mannequin: far enough from his middle, sideways, while level with his body
+        double level = Math.cos(Math.toRadians(x));
+        if (level > 0.2 && height + Math.sin(Math.toRadians(x)) * d < MANNEQUIN_HEIGHT) d = Math.max(d, CLEARANCE / level);
+        return d;
     }
 
     private BoundingBox body(Vector feet) {
