@@ -240,6 +240,8 @@ final class WardrobeView {
         if (!player.isOnline()) return;
         Hotbar.clear(player);
         Hotbar.bars(player, true);
+        // the controls' reminder goes at once instead of fading out over the next seconds
+        player.sendActionBar(Component.empty());
         Sidebar.hide(player, false);
         player.getInventory().setHeldItemSlot(heldBefore);
         player.setFlySpeed(flySpeed);
