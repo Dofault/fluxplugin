@@ -267,6 +267,19 @@ def deploy(model, hat, gui):
     print("Deployed to Labs: run /fluxarmor build, then /iazip.")
 
 
+def listing(model, hat, path):
+    """Markdown table of every cube: group, material, corners, rotation and its pivot."""
+    lines = ["| Group | Cube | Material | From | To | Rotation (x, y, z) | Pivot |", "|---|---|---|---|---|---|---|"]
+    for group, cubes in [("tete", hat)] + list(model.items()):
+        for c in cubes:
+            fmt = lambda p: " / ".join("%g" % round(a, 3) for a in p)
+            turned = any(c.rotation)
+            lines.append("| %s | %s | %s | %s | %s | %s | %s |" % (group, c.style, "lueur" if c.glow else c.material, fmt(c.low),
+                                                              fmt(c.high), fmt(c.rotation) if turned else "", fmt(c.origin) if turned else ""))
+    with open(path, "w") as fh:
+        fh.write("\n".join(lines) + "\n")
+
+
 def run(doc, groups, hat, gui, sources=None):
     """groups: {limb group: function}; hat: function; sources: {file name: group prefix} of editable files per piece."""
     args = [a for a in sys.argv[1:] if a != "--deploy"]
@@ -282,6 +295,7 @@ def run(doc, groups, hat, gui, sources=None):
             part = {"tete": head} if prefix == "tete" else {k: c for k, c in model.items() if k.startswith(prefix)}
             v.write_json(os.path.join(args[0], file + ".bbmodel"), bbmodel(file, part))
         v.write_json(os.path.join(args[0], NAME + ".bbmodel"), bbmodel(NAME, model))
+        listing(model, head, os.path.join(args[0], NAME + "_cubes.md"))
         MAIN.image.save(os.path.join(args[0], NAME + "_armure.png"))
         GLOW.image.save(os.path.join(args[0], NAME + "_neon.png"))
     if "--deploy" in sys.argv:
