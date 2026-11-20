@@ -32,14 +32,9 @@ camera:
   start-pitch: 12
 
 
-# The recipe book of the inventory and of crafting tables gets a "Cosmetics" entry before its recipes: a click on it
-# shows the cosmetics in place of the recipes, closing the inventory puts the recipes back. Java only.
-recipe-book: true
-
-# The cosmetics of the catalog. item: what is worn (a Flux item id such as fluxarmor:zero_helmet, or a material),
-# slot: head, chest, legs or feet (drawn over the real item of that slot, for everybody, the wearer included; it is
-# also the folder of the book it is listed in), icon: its picture in the book when not the item itself.
-# unlocked: everybody has it (first version).
+# The cosmetics. item: what is worn (a Flux item id such as fluxarmor:zero_helmet, or a material), slot: head, chest,
+# legs or feet (drawn over the real item of that slot, for everybody, the wearer included). unlocked: everybody has
+# it (first version: put on with /tenue porter <id>, admins only, until the wardrobe has its menu).
 cosmetics:
   zero_helmet:
     name: "Diadem of Absolute Zero"
@@ -58,13 +53,11 @@ cosmetics:
     unlocked: true
   crown:
     name: "Golden crown"
-    description: "A crown for the most famous."
     item: GOLDEN_HELMET
     slot: head
     unlocked: true
   wings:
     name: "Wings"
-    description: "Wings that only look like they fly."
     item: ELYTRA
     slot: chest
     unlocked: false
