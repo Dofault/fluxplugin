@@ -71,6 +71,13 @@ final class WardrobeView {
     private volatile boolean orbiting = true;
     /** The still camera's direction, read by the network thread. */
     private volatile float stillYaw, stillPitch;
+    /**
+     * His mouse, read in his packets as soon as they come (network thread). Never his server location: Paper drops
+     * the rotation he sends while a teleport waits for his answer, and he is teleported almost every tick.
+     */
+    private volatile float mouseYaw, mousePitch;
+    /** Where he was last put, to teleport him only when the camera really moves. */
+    private Location placed;
     /** True while the wardrobe itself teleports him. */
     boolean moving;
     boolean closing;
@@ -129,12 +136,16 @@ final class WardrobeView {
         zoom = settings.distance();
         stillYaw = yaw;
         stillPitch = pitch;
+        mouseYaw = yaw;
+        mousePitch = pitch;
         place(true);
 
         Hotbar.show(player, hotbar());
         Hotbar.bars(player, false);
         Sidebar.hide(player, true);
         Camera.turns(player, (p, y, x) -> {
+            mouseYaw = y;
+            mousePitch = x;
             if (orbiting) return;
             float sy = stillYaw, sx = stillPitch;
             if (Math.abs(wrap(y - sy)) > SLACK || Math.abs(x - sx) > SLACK) Camera.turn(p, sy, false, sx, false);
@@ -171,10 +182,21 @@ final class WardrobeView {
             return;
         }
         if (orbiting) {
-            Location now = player.getLocation();
-            yaw = now.getYaw();
-            float clamped = Math.clamp(now.getPitch(), settings.minPitch(), settings.maxPitch());
-            if (clamped != now.getPitch()) Camera.turn(player, 0, true, clamped, false);
+            float y, x;
+            if (Camera.available()) {
+                y = mouseYaw;
+                x = mousePitch;
+            } else {
+                Location now = player.getLocation();
+                y = now.getYaw();
+                x = now.getPitch();
+            }
+            float clamped = Math.clamp(x, settings.minPitch(), settings.maxPitch());
+            if (clamped != x) {
+                Camera.turn(player, 0, true, clamped, false);
+                mousePitch = clamped;
+            }
+            yaw = y;
             pitch = clamped;
             var input = player.getCurrentInput();
             if (input.isForward() != input.isBackward()) {
@@ -216,6 +238,9 @@ final class WardrobeView {
         double distance = Math.min(zoom, free(dir));
         Vector eye = target.clone().subtract(dir.multiply(distance));
         Location feet = new Location(world, eye.getX(), eye.getY() - player.getEyeHeight(), eye.getZ());
+        // a teleport makes the server deaf to his rotation until his client answers: only when he must move
+        if (!turn && placed != null && placed.distanceSquared(feet) < 1e-4) return;
+        placed = feet.clone();
         if (turn) {
             feet.setYaw(orbiting ? yaw : stillYaw);
             feet.setPitch(orbiting ? pitch : stillPitch);
