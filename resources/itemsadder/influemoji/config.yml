@@ -16,6 +16,14 @@ font_images:
     scale_ratio: 9
     y_position: 8
 
+  # clic molette (souris grise, molette orange) ; Flux/assets/icones/gen_middle_click.py
+  middle_click:
+    show_in_gui: true
+    suggest_in_command: true
+    path: "font/emoji/middle_click.png"
+    scale_ratio: 9
+    y_position: 8
+
   # touche Maj, devant l'icône de clic des actions maj + clic (Flux style.yml) ; Flux/assets/icones/gen_shift.py
   shift:
     show_in_gui: true
