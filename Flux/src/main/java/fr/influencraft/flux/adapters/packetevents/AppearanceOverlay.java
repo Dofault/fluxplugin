@@ -19,7 +19,9 @@ import java.util.Map;
 
 /**
  * {@link Appearance} with PacketEvents: the equipment packets naming a player who wears looks are rewritten on their
- * way to the others (his own client is never sent his own equipment this way).
+ * way to the others, and the armour slots of his own inventory on their way to him (window 0: slots 5 to 8; the
+ * player inventory numbering: 36 to 39). Other listeners rewriting the same packets (HotbarOverlay) chain with it:
+ * a wrapper made from an event starts from the last one used on it.
  */
 public final class AppearanceOverlay extends PacketListenerAbstract implements Appearance.Service {
 
@@ -49,11 +51,79 @@ public final class AppearanceOverlay extends PacketListenerAbstract implements A
             PacketEvents.getAPI().getPlayerManager().sendPacket(viewer,
                     new WrapperPlayServerEntityEquipment(wearer.getEntityId(), new ArrayList<>(equipment)));
         }
+        // his own screen: the armour slots sent again, rewritten on their way
+        wearer.updateInventory();
+    }
+
+    /** Window 0 slot of an armour slot (5 helmet to 8 boots), -1 for any other. */
+    private static EquipmentSlot windowArmour(int slot) {
+        return switch (slot) {
+            case 5 -> EquipmentSlot.HEAD;
+            case 6 -> EquipmentSlot.CHEST;
+            case 7 -> EquipmentSlot.LEGS;
+            case 8 -> EquipmentSlot.FEET;
+            default -> null;
+        };
+    }
+
+    /** Player inventory numbering (36 boots to 39 helmet). */
+    private static EquipmentSlot inventoryArmour(int slot) {
+        return switch (slot) {
+            case 36 -> EquipmentSlot.FEET;
+            case 37 -> EquipmentSlot.LEGS;
+            case 38 -> EquipmentSlot.CHEST;
+            case 39 -> EquipmentSlot.HEAD;
+            default -> null;
+        };
+    }
+
+    /** His own armour slots, rewritten on their way to him. */
+    private static void own(PacketSendEvent event) {
+        java.util.UUID id = event.getUser() == null ? null : event.getUser().getUUID();
+        Map<EquipmentSlot, Object> looks = id == null ? Map.of() : Appearance.looks(id);
+        if (looks.isEmpty()) return;
+        var type = event.getPacketType();
+        if (type == PacketType.Play.Server.WINDOW_ITEMS) {
+            var packet = new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerWindowItems(event);
+            if (packet.getWindowId() != 0) return;
+            List<ItemStack> items = new ArrayList<>(packet.getItems());
+            boolean changed = false;
+            for (int slot = 5; slot <= 8 && slot < items.size(); slot++) {
+                if (looks.get(windowArmour(slot)) instanceof ItemStack s) {
+                    items.set(slot, s.copy());
+                    changed = true;
+                }
+            }
+            if (!changed) return;
+            packet.setItems(items);
+            event.markForReEncode(true);
+        } else if (type == PacketType.Play.Server.SET_SLOT) {
+            var packet = new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetSlot(event);
+            EquipmentSlot slot = packet.getWindowId() == 0 ? windowArmour(packet.getSlot())
+                    : packet.getWindowId() == -2 ? inventoryArmour(packet.getSlot()) : null;
+            if (slot != null && looks.get(slot) instanceof ItemStack s) {
+                packet.setItem(s.copy());
+                event.markForReEncode(true);
+            }
+        } else if (type == PacketType.Play.Server.SET_PLAYER_INVENTORY) {
+            var packet = new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetPlayerInventory(event);
+            EquipmentSlot slot = inventoryArmour(packet.getSlot());
+            if (slot != null && looks.get(slot) instanceof ItemStack s) {
+                packet.setStack(s.copy());
+                event.markForReEncode(true);
+            }
+        }
     }
 
     @Override
     public void onPacketSend(PacketSendEvent event) {
-        if (event.getPacketType() != PacketType.Play.Server.ENTITY_EQUIPMENT) return;
+        var type = event.getPacketType();
+        if (type == PacketType.Play.Server.WINDOW_ITEMS || type == PacketType.Play.Server.SET_SLOT
+                || type == PacketType.Play.Server.SET_PLAYER_INVENTORY) {
+            own(event);
+            return;
+        }
+        if (type != PacketType.Play.Server.ENTITY_EQUIPMENT) return;
         WrapperPlayServerEntityEquipment w = new WrapperPlayServerEntityEquipment(event);
         Map<EquipmentSlot, Object> looks = Appearance.looks(w.getEntityId());
         if (looks.isEmpty()) return;

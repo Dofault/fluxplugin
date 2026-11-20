@@ -101,7 +101,7 @@ final class Catalog implements RecipeBook.Catalog, Listener {
         else lore.ko(m.raw("catalog.locked"));
         lore.shiftLeft(m.raw("catalog.preview"));
         ItemStack base = c.icon() == null ? worn(c, player) : Items.of(c.icon(), player);
-        ItemStack item = Items.dress(base, c.name(), lore.tags(), player);
+        ItemStack item = Items.dress(base, c.name(), lore.build(), player);
         if (wearing) item.editMeta(meta -> meta.setEnchantmentGlintOverride(true));
         return item;
     }

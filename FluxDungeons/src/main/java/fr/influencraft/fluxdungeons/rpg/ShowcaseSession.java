@@ -453,7 +453,7 @@ final class ShowcaseSession {
                 + (mine ? raw("showcase.icon-yours") : "");
         Lore lore = Lore.create().description(raw("classes." + id + ".description"));
         if (!mine) lore.left(raw("showcase.icon-choose"));
-        Items.dress(item, name, lore.tags(), player);
+        Items.dress(item, name, lore.build(), player);
         if (!bedrock && settings.hideHeld()) item.setData(DataComponentTypes.ITEM_MODEL, Key.key("fluxdungeons", "class_" + id));
         return item;
     }

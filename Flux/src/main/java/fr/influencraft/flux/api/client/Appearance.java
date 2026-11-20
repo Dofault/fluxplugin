@@ -10,9 +10,10 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * What other players see a player wear, over what he really wears: an item per equipment slot drawn in place of his
- * own (FluxCosmetics' outfits), shown even when the slot is empty. Only the packets sent to the others change: his
- * real items, their stats and durability, his own screen and inventory stay as they are.
+ * What a player is seen wearing, over what he really wears: an item per equipment slot drawn in place of his own
+ * (FluxCosmetics' outfits), shown even when the slot is empty. Only packets change: the others' equipment packets,
+ * and his own armour slots on his screen (third person view, the figure and the armour slots of his inventory show
+ * the look, 2026-11-20). His real items, their stats and durability stay on the server, which handles every click.
  *
  * <p>{@link #set} from the server thread; the adapter reads {@link #look} on the network thread when the server
  * sends his equipment to someone. Java viewers only (Geyser draws Bedrock viewers from its own translation).</p>
@@ -73,6 +74,12 @@ public final class Appearance {
         Map<EquipmentSlot, Look> looks = LOOKS.get(wearer.getEntityId());
         Look l = looks == null ? null : looks.get(slot);
         return l == null ? null : l.item().clone();
+    }
+
+    /** The looks of this player by his UUID (his own screen), empty when none (network thread). */
+    public static Map<EquipmentSlot, Object> looks(UUID player) {
+        Integer id = IDS.get(player);
+        return id == null ? Map.of() : looks(id);
     }
 
     /** The slots of this entity that show a look, empty when none (network thread). */
