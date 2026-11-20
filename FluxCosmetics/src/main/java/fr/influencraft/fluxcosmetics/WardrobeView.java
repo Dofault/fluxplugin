@@ -6,7 +6,6 @@ import fr.influencraft.flux.api.client.Sidebar;
 import fr.influencraft.flux.api.inventory.Items;
 import fr.influencraft.flux.api.inventory.Lore;
 import io.papermc.paper.datacomponent.item.ResolvableProfile;
-import io.papermc.paper.entity.TeleportFlag;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -29,9 +28,10 @@ import org.bukkit.util.Vector;
  *   the outfit he tries on).</li>
  *   <li>The <b>camera is himself</b>: a client looking through another entity draws no hotbar (26.2), and his hotbar
  *   is the wardrobe's menu. He flies, invisible, unable to move by himself (walk and fly speed 0), and is put back on
- *   a sphere around the mannequin every tick, where his own view direction looks right at it: his mouse turns the
- *   camera around himself and nothing has to turn his head. Teleports keep his rotation (relative yaw and pitch), so
- *   the server never fights his mouse.</li>
+ *   a sphere around the mannequin, where his own view direction looks right at it: his mouse turns the camera around
+ *   himself and nothing has to turn his head. He is moved as soon as his mouse moves, from the network thread, by
+ *   {@link Camera#moveSelf}, which never touches his rotation (a server teleport resets it and makes the server deaf
+ *   to his mouse until his client answers: the camera did not turn at all, 2026-11-20).</li>
  *   <li>While <b>slot 1</b> is held the mouse moves the camera, forward and backward bring it closer or farther. Any
  *   other slot holds the camera still: his head is turned back to it as soon as his mouse moves
  *   ({@link Camera#turns}, without a packet adapter at the next tick).</li>
@@ -67,17 +67,21 @@ final class WardrobeView {
     /** Where the camera stands around the target: the view direction of the player (yaw, pitch) and its distance. */
     private float yaw, pitch;
     private double zoom;
+    /** Distance the camera really stands at (zoom, closer when a block is in the way), read by the network thread. */
+    private volatile double reach;
+    /** His eyes above his feet while he flies. */
+    private final double eyeHeight;
     /** True while slot 1 is held: his mouse moves the camera. Read by the network thread. */
     private volatile boolean orbiting = true;
     /** The still camera's direction, read by the network thread. */
     private volatile float stillYaw, stillPitch;
     /**
-     * His mouse, read in his packets as soon as they come (network thread). Never his server location: Paper drops
-     * the rotation he sends while a teleport waits for his answer, and he is teleported almost every tick.
+     * His mouse, read in his packets as soon as they come (network thread), never in his server location (late, and
+     * not updated while a teleport waits for his answer).
      */
     private volatile float mouseYaw, mousePitch;
-    /** Where he was last put, to teleport him only when the camera really moves. */
-    private Location placed;
+    /** Where the tick last put him, to move him only when the camera really moves. */
+    private Vector placed;
     /** True while the wardrobe itself teleports him. */
     boolean moving;
     boolean closing;
@@ -90,6 +94,7 @@ final class WardrobeView {
         this.back = player.getLocation();
         this.world = back.getWorld();
         this.target = back.toVector().add(new Vector(0, settings.targetHeight(), 0));
+        this.eyeHeight = player.getEyeHeight();
     }
 
     // ================================================================== opening and closing
@@ -138,7 +143,11 @@ final class WardrobeView {
         stillPitch = pitch;
         mouseYaw = yaw;
         mousePitch = pitch;
-        place(true);
+        reach = Math.min(zoom, free(direction(yaw, pitch)));
+        // the one real teleport: his view is turned to the mannequin, then only his mouse turns it
+        Vector start = feet(yaw, pitch, reach);
+        teleport(new Location(world, start.getX(), start.getY(), start.getZ(), yaw, pitch));
+        placed = start;
 
         Hotbar.show(player, hotbar());
         Hotbar.bars(player, false);
@@ -146,7 +155,13 @@ final class WardrobeView {
         Camera.turns(player, (p, y, x) -> {
             mouseYaw = y;
             mousePitch = x;
-            if (orbiting) return;
+            if (orbiting) {
+                float clamped = Math.clamp(x, settings.minPitch(), settings.maxPitch());
+                if (clamped != x) Camera.turn(p, 0, true, clamped, false);
+                Vector f = feet(y, clamped, reach);
+                Camera.moveSelf(p, f.getX(), f.getY(), f.getZ());
+                return;
+            }
             float sy = stillYaw, sx = stillPitch;
             if (Math.abs(wrap(y - sy)) > SLACK || Math.abs(x - sx) > SLACK) Camera.turn(p, sy, false, sx, false);
         });
@@ -182,34 +197,23 @@ final class WardrobeView {
             return;
         }
         if (orbiting) {
-            float y, x;
-            if (Camera.available()) {
-                y = mouseYaw;
-                x = mousePitch;
-            } else {
-                Location now = player.getLocation();
-                y = now.getYaw();
-                x = now.getPitch();
-            }
-            float clamped = Math.clamp(x, settings.minPitch(), settings.maxPitch());
-            if (clamped != x) {
-                Camera.turn(player, 0, true, clamped, false);
-                mousePitch = clamped;
-            }
-            yaw = y;
-            pitch = clamped;
+            yaw = mouseYaw;
+            float x = mousePitch;
+            pitch = Math.clamp(x, settings.minPitch(), settings.maxPitch());
             var input = player.getCurrentInput();
             if (input.isForward() != input.isBackward()) {
                 double step = input.isForward() ? -settings.zoomSpeed() : settings.zoomSpeed();
                 zoom = Math.clamp(zoom + step, settings.minDistance(), settings.maxDistance());
             }
-        } else if (!Camera.available()) {
-            // no packet adapter: his head is turned back by the teleport itself
-            place(true);
-            return;
         }
         if (!player.isFlying()) player.setFlying(true);
-        place(false);
+        reach = Math.min(zoom, free(direction(yaw, pitch)));
+        Vector f = feet(yaw, pitch, reach);
+        // moved: zoom, a block in the way, his mouse since the last packet; else now and then against any drift
+        if (placed == null || placed.distanceSquared(f) > 1e-4 || ticks % 20 == 0) {
+            placed = f;
+            Camera.moveSelf(player, f.getX(), f.getY(), f.getZ());
+        }
         if (ticks % 40 == 0) Hotbar.show(player, hotbar());
         if (ticks % 30 == 0) hint();
     }
@@ -228,32 +232,15 @@ final class WardrobeView {
 
     // ================================================================== camera
 
-    /**
-     * Puts him where his eyes look at the target from {@link #yaw}, {@link #pitch} and the distance left free by the
-     * blocks around. {@code turn}: his view is given that direction too (else his own rotation is kept).
-     */
-    private void place(boolean turn) {
-        Location look = new Location(world, 0, 0, 0, yaw, pitch);
-        Vector dir = look.getDirection();
-        double distance = Math.min(zoom, free(dir));
-        Vector eye = target.clone().subtract(dir.multiply(distance));
-        Location feet = new Location(world, eye.getX(), eye.getY() - player.getEyeHeight(), eye.getZ());
-        // a teleport makes the server deaf to his rotation until his client answers: only when he must move
-        if (!turn && placed != null && placed.distanceSquared(feet) < 1e-4) return;
-        placed = feet.clone();
-        if (turn) {
-            feet.setYaw(orbiting ? yaw : stillYaw);
-            feet.setPitch(orbiting ? pitch : stillPitch);
-            teleport(feet);
-        } else {
-            moving = true;
-            try {
-                player.teleport(feet, PlayerTeleportEvent.TeleportCause.PLUGIN,
-                        TeleportFlag.Relative.YAW, TeleportFlag.Relative.PITCH);
-            } finally {
-                moving = false;
-            }
-        }
+    /** Unit vector of a view direction. */
+    private static Vector direction(float yaw, float pitch) {
+        return new Location(null, 0, 0, 0, yaw, pitch).getDirection();
+    }
+
+    /** His feet when his eyes look at the target from that direction and distance. Thread-safe (no world access). */
+    private Vector feet(float yaw, float pitch, double distance) {
+        Vector eye = target.clone().subtract(direction(yaw, pitch).multiply(distance));
+        return eye.setY(eye.getY() - eyeHeight);
     }
 
     /** How far the camera can go back from the target in this direction before a block. */

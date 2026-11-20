@@ -31,6 +31,9 @@ public final class Camera {
 
         /** Moves an entity on this player's screen only, at once (the server's own entity is not moved). */
         void place(Player viewer, Entity entity, double x, double y, double z);
+
+        /** Moves the player himself on his screen, his rotation untouched (see {@link Camera#moveSelf}). */
+        void moveSelf(Player player, double x, double y, double z);
     }
 
     /** The player turned his head (his mouse moved). Called on a network thread, as soon as his client says it. */
@@ -105,6 +108,19 @@ public final class Camera {
     public static void place(Player viewer, Entity entity, double x, double y, double z) {
         Service s = service;
         if (s != null) s.place(viewer, entity, x, y, z);
+    }
+
+    /**
+     * Moves the player himself, his view direction untouched: his own camera carried around (FluxCosmetics' wardrobe).
+     * A server teleport cannot do it: Paper 26.2 no longer passes relative yaw and pitch on (the view is set again),
+     * and the server ignores his rotation until his client answers the teleport. Here his client gets a position packet
+     * keeping his rotation, its answer never reaches the server, and his client then says where he is as if he had
+     * moved himself (keep him flying, and the way free of blocks: the server checks that move). Thread-safe, so it can
+     * follow his mouse from {@link #turns}.
+     */
+    public static void moveSelf(Player player, double x, double y, double z) {
+        Service s = service;
+        if (s != null) s.moveSelf(player, x, y, z);
     }
 
     /** Clicks on this entity go to {@code click} (null stops). */

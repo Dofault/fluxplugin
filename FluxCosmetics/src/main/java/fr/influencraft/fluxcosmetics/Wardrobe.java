@@ -53,7 +53,8 @@ final class Wardrobe implements Listener {
             plugin.messages().send(player, "already");
             return;
         }
-        if (player.isDead() || player.isInsideVehicle() || player.isSleeping() || player.isGliding()
+        // the camera follows his mouse through packets: no packet adapter, no wardrobe
+        if (!fr.influencraft.flux.api.client.Camera.available() || player.isDead() || player.isInsideVehicle() || player.isSleeping() || player.isGliding()
                 || Focus.focused(player)) {
             plugin.messages().send(player, "busy");
             return;
@@ -150,7 +151,8 @@ final class Wardrobe implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onTeleport(PlayerTeleportEvent e) {
         WardrobeView view = view(e.getPlayer());
-        if (view == null || view.moving) return;
+        // UNKNOWN: the server putting him back after a move it refused (the camera brushing a wall), not a way out
+        if (view == null || view.moving || e.getCause() == PlayerTeleportEvent.TeleportCause.UNKNOWN) return;
         Player p = e.getPlayer();
         Bukkit.getScheduler().runTask(plugin, () -> {
             if (view(p) == view) close(p, false);

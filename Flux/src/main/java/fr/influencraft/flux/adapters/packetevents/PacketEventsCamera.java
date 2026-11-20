@@ -54,9 +54,30 @@ public final class PacketEventsCamera extends PacketListenerAbstract implements 
                 new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityPositionSync(entity.getEntityId(), data, false));
     }
 
+    /**
+     * Teleport id of {@link #moveSelf}: the server counts its own from 0 upwards, the answer to this one is dropped
+     * before the server reads it.
+     */
+    private static final int SELF_MOVE_ID = -0x464C58;
+
+    @Override
+    public void moveSelf(Player player, double x, double y, double z) {
+        var zero = new com.github.retrooper.packetevents.util.Vector3d(0, 0, 0);
+        var keepView = com.github.retrooper.packetevents.protocol.teleport.RelativeFlag.YAW
+                .or(com.github.retrooper.packetevents.protocol.teleport.RelativeFlag.PITCH);
+        PacketEvents.getAPI().getPlayerManager().sendPacket(player,
+                new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerPositionAndLook(
+                        SELF_MOVE_ID, new com.github.retrooper.packetevents.util.Vector3d(x, y, z), zero, 0f, 0f, keepView));
+    }
+
     @Override
     public void onPacketReceive(PacketReceiveEvent event) {
         var type = event.getPacketType();
+        if (type == PacketType.Play.Client.TELEPORT_CONFIRM) {
+            var w = new com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientTeleportConfirm(event);
+            if (w.getTeleportId() == SELF_MOVE_ID) event.setCancelled(true);
+            return;
+        }
         if (type == PacketType.Play.Client.PLAYER_ROTATION || type == PacketType.Play.Client.PLAYER_POSITION_AND_ROTATION) {
             if (event.getPlayer() instanceof Player p) {
                 Camera.Turn turn = Camera.turn(p.getUniqueId());
