@@ -40,7 +40,7 @@ final class OutfitPresets {
     }
 
     private int count() {
-        return Math.clamp(plugin.getConfig().getInt("presets", 5), 1, 28);
+        return Math.clamp(plugin.getConfig().getInt("presets", 7), 1, 28);
     }
 
     // ================================================================== list

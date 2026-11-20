@@ -75,6 +75,13 @@ final class CosmeticsMenu {
         FluxApi.registerAction(plugin, "cosmetics", (player, view, argument) -> act(player, argument.trim()));
     }
 
+    /** The next opening of the menu shows his saved outfits (/tenue). */
+    void showOutfits(Player player) {
+        Lists.act(player, LIST, "filter " + PRESETS, 14);
+        WardrobeView view = plugin.wardrobe().view(player);
+        if (view != null) view.frame(PRESETS);
+    }
+
     /** Opens the menu on the category and page he last looked at. */
     void open(Player player) {
         Lists.invalidate(player, LIST);

@@ -14,8 +14,9 @@ import java.util.List;
  * outside, a camera turning around him.
  *
  * <pre>
- *   /tenue                    open the wardrobe on the choice of cosmetics, or close it (aliases /garderobe,
- *                             /cosmetique, /cosmetiques)
+ *   /cosmetique               open the wardrobe on the category last looked at, or close it (aliases
+ *                             /cosmetiques, /garderobe, /garde-robe)
+ *   /tenue                    open the wardrobe on the saved outfits (alias /tenues)
  *   /tenue porter &lt;cosmetic&gt;  put a cosmetic on, or take it off (flux.admin)
  *   /tenue donner &lt;player&gt; &lt;cosmetic|tout&gt;     give cosmetics (flux.admin, offline players too)
  *   /tenue reprendre &lt;player&gt; &lt;cosmetic|tout&gt;  take them back (flux.admin)
@@ -42,16 +43,26 @@ public final class FluxCosmetics extends FluxPlugin {
         for (Player p : Bukkit.getOnlinePlayers()) outfits.open(p);
         menu = new CosmeticsMenu(this);
         menu.register();
-        command("tenue")
-                .description("Wardrobe: see yourself from outside and choose your outfit.")
-                .aliases("garderobe", "cosmetique", "cosmetiques")
+        fr.influencraft.flux.api.command.Commands.Completer admin = (sender, args) -> !Staff.isAdmin(sender) ? List.of()
+                : args.length == 1 ? List.of("porter", "donner", "reprendre", "reload")
+                : args.length == 2 && args[0].equalsIgnoreCase("porter") ? outfits.keys()
+                : args.length == 2 ? fr.influencraft.flux.api.util.Players.complete(args[1])
+                : args.length == 3 && !args[0].equalsIgnoreCase("porter") ? withAll(outfits.keys()) : List.of();
+        // the wardrobe on the category last looked at
+        command("cosmetique")
+                .description("Wardrobe: see yourself from outside and choose your cosmetics.")
+                .aliases("cosmetiques", "garderobe", "garde-robe")
                 .permission("fluxcosmetics.use")
-                .executor(this::onCommand)
-                .completer((sender, args) -> !Staff.isAdmin(sender) ? List.of()
-                        : args.length == 1 ? List.of("porter", "donner", "reprendre", "reload")
-                        : args.length == 2 && args[0].equalsIgnoreCase("porter") ? outfits.keys()
-                        : args.length == 2 ? fr.influencraft.flux.api.util.Players.complete(args[1])
-                        : args.length == 3 && !args[0].equalsIgnoreCase("porter") ? withAll(outfits.keys()) : List.of())
+                .executor((sender, label, args) -> onCommand(sender, args, false))
+                .completer(admin)
+                .register();
+        // the wardrobe on the saved outfits
+        command("tenue")
+                .description("Wardrobe on your saved outfits.")
+                .aliases("tenues")
+                .permission("fluxcosmetics.use")
+                .executor((sender, label, args) -> onCommand(sender, args, true))
+                .completer(admin)
                 .register();
     }
 
@@ -115,7 +126,8 @@ public final class FluxCosmetics extends FluxPlugin {
         return menu;
     }
 
-    private boolean onCommand(CommandSender sender, String label, String[] args) {
+    /** {@code saved}: /tenue, the wardrobe opens on the saved outfits. */
+    private boolean onCommand(CommandSender sender, String[] args, boolean saved) {
         if (args.length > 0 && args[0].equalsIgnoreCase("reload") && Staff.isAdmin(sender)) {
             reload();
             messages().send(sender, "reloaded");
@@ -133,8 +145,12 @@ public final class FluxCosmetics extends FluxPlugin {
             messages().send(sender, "usage");
             return true;
         }
-        if (wardrobe.active(p)) wardrobe.close(p, true);
-        else wardrobe.open(p);
+        if (saved) menu.showOutfits(p);
+        // already in it: the menu again on that category; else the wardrobe opens on it
+        if (wardrobe.active(p)) {
+            if (saved) menu.open(p);
+            else wardrobe.close(p, true);
+        } else wardrobe.open(p);
         return true;
     }
 }

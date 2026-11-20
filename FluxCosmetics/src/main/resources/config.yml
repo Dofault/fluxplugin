@@ -10,7 +10,7 @@ language: ""
 main-menu: main
 
 # Saved outfits per player (category "My outfits" of the cosmetics menu).
-presets: 5
+presets: 7
 
 # Colours of the leather icons of the cosmetics menu's categories, in order: helmets, chestplates, leggings, boots.
 menu-colours: ["#7A48C0", "#E060A0", "#2BC4E8", "#2ECF7B"]

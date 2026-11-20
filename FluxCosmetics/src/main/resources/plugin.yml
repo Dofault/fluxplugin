@@ -8,5 +8,5 @@ depend: [Flux]
 
 permissions:
   fluxcosmetics.use:
-    description: Open the wardrobe (/tenue).
+    description: Open the wardrobe (/cosmetique, /tenue).
     default: true

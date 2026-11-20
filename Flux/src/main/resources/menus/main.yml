@@ -185,7 +185,7 @@ items:
       - "@desc Change ton apparence : casque, plastron, jambières, bottes et le tag à côté de ton pseudo. Tu te vois de l'extérieur pendant que tu choisis."
       - "@left Voir"
     actions:
-      left: ["[close]", "[player] tenue"]
+      left: ["[close]", "[player] cosmetique"]
   # >>> gen_pages (boutons générés par assets/gen_pages.py)
 
   parrainage:
