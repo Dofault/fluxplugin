@@ -1,0 +1,31 @@
+# Mob of a spawner, vanilla theme (theme.menus.spawner_types of Flux's config).
+# Row 1: back, menu icon. Rows 2-4: the mobs (left: choose). Lists built by FluxSpawner.
+rows: 4
+player-inventory: hidden
+vanilla-background: false
+
+open-actions:
+  - "[sound] @page"
+
+lists:
+  spawner_types_info:
+    slots: [8]
+    item:
+      material: entry
+  spawner_types:
+    slots: 9-35
+    item:
+      material: entry
+      actions:
+        left: ["%entry_clic%"]
+
+items:
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
+    slots: [0]
+    lore:
+      - "@desc Revenir au spawner."
+      - "@left Retour"
+    actions:
+      left: ["[spawner] back"]

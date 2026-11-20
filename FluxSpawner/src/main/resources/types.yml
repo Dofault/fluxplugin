@@ -1,0 +1,62 @@
+# FluxSpawner types: one per mob a spawner may make. The key is the item id (fluxspawner:<key>).
+#
+# entity          the mob (Minecraft id), the key by default
+# name            shown name; absent = the mob's name in each player's game language
+# icon            icon in menus; absent = its spawn egg
+# profile         level profile of levels.yml (default: "default")
+# rate            production multiplier, to balance one type (1 = the value of the level)
+# cost-multiplier multiplies the money and items of every goal (a rarer mob costs more to level up)
+# vanilla-xp      its mobs drop vanilla experience (false: experience farms out of reach)
+# loot            its mobs drop their loot
+# upgrade-item    the item meant by "item: type" in the goals of levels.yml
+# change-price    money to turn a spawner into this type: hours of the reference income, or a fixed amount
+# permission      needed to place or choose this type (a rank...); absent = everybody
+# fuel            fuels accepted by this type on top of fuel.items of config.yml (never its own drops)
+types:
+  zombie:
+    upgrade-item: ROTTEN_FLESH
+    change-price: 1h
+  husk:
+    upgrade-item: ROTTEN_FLESH
+    change-price: 1h
+  skeleton:
+    upgrade-item: BONE
+    change-price: 1h
+  stray:
+    upgrade-item: BONE
+    change-price: 1h
+  spider:
+    upgrade-item: STRING
+    change-price: 1h
+  cave_spider:
+    upgrade-item: SPIDER_EYE
+    change-price: 1.5h
+  creeper:
+    upgrade-item: GUNPOWDER
+    change-price: 1.5h
+  witch:
+    upgrade-item: REDSTONE
+    cost-multiplier: 1.25
+    change-price: 2h
+  blaze:
+    upgrade-item: BLAZE_ROD
+    cost-multiplier: 1.5
+    change-price: 3h
+  enderman:
+    upgrade-item: ENDER_PEARL
+    cost-multiplier: 1.5
+    # no experience farm: endermen are the classic one
+    vanilla-xp: false
+    change-price: 3h
+  cow:
+    upgrade-item: LEATHER
+    change-price: 0.5h
+  pig:
+    upgrade-item: PORKCHOP
+    change-price: 0.5h
+  chicken:
+    upgrade-item: FEATHER
+    change-price: 0.5h
+  sheep:
+    upgrade-item: WHITE_WOOL
+    change-price: 0.5h

@@ -1,0 +1,46 @@
+# The player's spawners (/spawners), vanilla theme (theme.menus.spawners of Flux's config). Row 1: back, filter,
+# menu icon. Rows 2-5: the placed spawners (left: manage, right: on / pause). Row 6: pages. Lists built by FluxSpawner.
+rows: 6
+player-inventory: hidden
+vanilla-background: false
+
+open-actions:
+  - "[sound] @page"
+
+lists:
+  spawners_info:
+    slots: [8]
+    item:
+      material: entry
+  spawners_filter:
+    slots: [2]
+    item:
+      material: entry
+      actions:
+        left: ["[list] spawners_list filter"]
+        right: ["[list] spawners_list filter-prev"]
+  spawners_list:
+    slots: 9-44
+    item:
+      material: entry
+      actions:
+        left: ["%entry_left%"]
+        right: ["%entry_right%"]
+
+widgets:
+  pages:
+    type: pager
+    list: spawners_list
+    prev: 45
+    next: 53
+
+items:
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
+    slots: [0]
+    lore:
+      - "@desc Revenir au menu principal."
+      - "@left Retour"
+    actions:
+      left: ["[menu] main"]

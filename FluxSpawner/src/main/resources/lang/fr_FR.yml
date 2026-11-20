@@ -1,0 +1,304 @@
+# FluxSpawner : textes en français pour tous les joueurs ; %type% = nom de la créature dans la langue du jeu du joueur.
+# Une ligne qui commence par « ! » n'a pas le préfixe. Une clé vide n'affiche rien.
+# Charte des messages : celle de CMI et des autres plugins Flux (FluxCommerce, FluxPW) : texte gris #8A8A8A, noms
+# de créature, de joueur et durées en or #FFD94D, chiffres en blanc, erreur en rouge #FF5C5C puis explication en
+# gris, réussite en vert #2ECF7B, info système en bleu #2BC4E8, commandes entre crochets (cliquables). Les messages
+# d'argent viennent de Flux (convention BitBlock commune).
+# Variables d'un spawner, partout où il est question de lui : %type% %level% %max% %rate% (créatures par heure)
+# %waiting% %capacity% %fuel% %tank% %status% %owner% %world% %coords% %kills%
+prefix: "&#B376E5ꜱᴘᴀᴡɴᴇʀꜱ&8 ▸ "
+
+free: "Gratuit"
+unlimited: "illimité"
+units:
+  xp: "points d'XP"
+  per-hour: "/ h"
+
+# ---------------------------------------------------------------- pose, ramassage
+unknown-type: "&#FF5C5CCe spawner n'existe plus.&#8A8A8A Montre-le au staff."
+type-locked: "&#FF5C5CCe spawner ne t'est pas encore ouvert.&#8A8A8A Ton grade ne le permet pas."
+world-disabled: "&#FF5C5CPas de spawner ici.&#8A8A8A Les spawners ne sont pas autorisés dans ce monde."
+not-in-town: "&#FF5C5CPas de spawner ici.&#8A8A8A Pose-le dans ta ville, ou dans une ville dont tu es habitant."
+too-close: "&#FF5C5CTrop près d'un autre spawner.&#8A8A8A Laisse au moins &f%distance% &#8A8A8Ablocs entre deux spawners."
+placed-limit: "&#FF5C5CTu as déjà posé ton maximum de spawners (&f%limit%&#FF5C5C).&#8A8A8A Ramasses-en un pour en poser un autre : [/spawners]"
+duplicate: "&#FF5C5CCe spawner est déjà posé ailleurs.&#8A8A8A Le staff a été prévenu."
+placed: "&#2ECF7BSpawner de &#FFD94D%type% &#2ECF7Bposé !&#8A8A8A Niveau &f%level%&#8A8A8A, &f%rate% &#8A8A8Acréatures par heure. Clic droit dessus pour le gérer."
+placed-inactive: "&#FFD94DSpawner de %type% &#8A8A8Aposé, &#FF5C5Cen pause&#8A8A8A : tu as déjà ton maximum de spawners allumés. Gère-les ici : [/spawners]"
+picked-up: "&#2ECF7BSpawner de &#FFD94D%type% &#2ECF7Bramassé.&#8A8A8A Il garde son niveau &f%level%&#8A8A8A, son carburant et ses créatures en attente."
+not-yours: "&#FF5C5CCe spawner ne t'appartient pas.&#8A8A8A Il est à &#FFD94D%owner%&#8A8A8A."
+info-other:
+  - "&#8A8A8ASpawner de &#FFD94D%type% &#8A8A8Aniveau &f%level%&#8A8A8A, à &#FFD94D%owner%&#8A8A8A."
+  - "!&#8A8A8A  %status% &8· &f%waiting% &#8A8A8Acréatures en attente."
+captured: "&#2ECF7BSpawner capturé !&#8A8A8A Ce spawner de &#FFD94D%type% &#8A8A8Aest à toi, niveau &f0&#8A8A8A."
+too-far: "&#FF5C5CTrop loin.&#8A8A8A Approche-toi de ce spawner pour le gérer."
+rewards-label: "&#FFD94DSpawner de %type% &8· &fniveau %level%"
+rewards-label-new: "&#FFD94DSpawner de %type%"
+
+# ---------------------------------------------------------------- marche, arrêt
+turned-on: "&#2ECF7BSpawner allumé."
+turned-off: "&#8A8A8ASpawner mis en pause."
+active-limit: "&#FF5C5CTu as déjà ton maximum de spawners allumés (&f%limit%&#FF5C5C).&#8A8A8A Mets-en un en pause d'abord : [/spawners]"
+limit-lowered: "&#FF5C5C%count% spawner(s) mis en pause.&#8A8A8A Ton grade en permet &f%limit% &#8A8A8Aallumé(s) à la fois : [/spawners]"
+alert-no-fuel: "&#FF5C5CTon spawner de &#FFD94D%type% &#FF5C5Cn'a plus de carburant.&#8A8A8A Il est en &f%world% %coords%&#8A8A8A : [/spawners]"
+alert-full: "&#8A8A8ATon spawner de &#FFD94D%type% &#8A8A8Aest plein (&f%capacity% &#8A8A8Acréatures). Il attend que tu les tues pour repartir."
+
+# ---------------------------------------------------------------- niveaux
+goal-done: "&#FF5C5CCet objectif est déjà atteint."
+goal-kills: "&#8A8A8AIl reste &f%missing% &#8A8A8Acréatures de ce spawner à tuer. Les kills comptent tout seuls."
+no-xp: "&#FF5C5CPas assez d'expérience.&#8A8A8A Il te faut au moins un point d'XP."
+no-item: "&#FF5C5CTu n'as pas de &#FFD94D%item%&#FF5C5C.&#8A8A8A Prends-en dans ton inventaire, puis recommence."
+no-currency: "&#FF5C5CCette monnaie n'est pas disponible pour le moment."
+no-money: "&#FF5C5CSolde insuffisant.&#8A8A8A Il te faut &f%price%&#8A8A8A."
+given: "&#2ECF7B%what% &#2ECF7Bdonnés au spawner."
+goals-complete: "&#2ECF7BTous les objectifs sont atteints !&#8A8A8A Ton spawner peut monter de niveau."
+goals-missing: "&#FF5C5CPas encore.&#8A8A8A Tous les objectifs du niveau suivant doivent être atteints."
+max-level: "&#FF5C5CCe spawner est déjà au niveau maximal."
+level-up: "&#2ECF7BSpawner de &#FFD94D%type% &#2ECF7Bau niveau &f%level% &#2ECF7B!&#8A8A8A Il produit maintenant &f%rate% &#8A8A8Acréatures par heure."
+# Annonce à tout le serveur quand un spawner atteint le niveau maximal (vide = aucune annonce).
+max-level-broadcast: ""
+
+# ---------------------------------------------------------------- carburant
+fuel-worthless: "&#FF5C5CCe carburant ne vaut rien pour le moment.&#8A8A8A Préviens le staff."
+tank-full: "&#FF5C5CLe réservoir est plein."
+fuel-added: "&#2ECF7B+%time% &#8A8A8Ade carburant (&f%count% %item%&#8A8A8A). Réservoir : &#FFD94D%fuel%&#8A8A8A."
+
+# ---------------------------------------------------------------- créature
+type-changed: "&#2ECF7BTon spawner fait maintenant apparaître des &#FFD94D%type%&#2ECF7B.&#8A8A8A Niveau &f%level% &#8A8A8Aconservé."
+
+# ---------------------------------------------------------------- staff
+reloaded: "&#2BC4E8FluxSpawner rechargé."
+unknown-player: "&#FF5C5CJoueur inconnu."
+look-at-spawner: "&#FF5C5CAucun spawner en vue.&#8A8A8A Regarde le spawner concerné (5 blocs au plus)."
+given-admin: "&#2ECF7B%count% spawner(s) de &#FFD94D%type% &#2ECF7Bniveau &f%level% &#2ECF7Bdonné(s) à &#FFD94D%player%&#2ECF7B."
+admin-info:
+  - "&#FFD94DSpawner de %type% &#8A8A8Aniveau &f%level%&8/&f%max% &#8A8A8Ade &#FFD94D%owner%"
+  - "!&#8A8A8A  %status% &8· &f%rate% &#8A8A8A/ h &8· &f%waiting%&8/&f%capacity% &#8A8A8Aprêtes &8· carburant &f%fuel%&8/&f%tank%"
+  - "!&#8A8A8A  &f%world% %coords% &8· &f%kills% &#8A8A8Akills"
+admin-done: "&#2ECF7BFait.&#8A8A8A Niveau &f%level%&#8A8A8A, carburant &f%fuel%&#8A8A8A."
+admin-removed: "&#2ECF7BSpawner supprimé&#8A8A8A, avec ses créatures et ses données."
+admin-restore-none: "&#FF5C5CAucun spawner ramassé ou perdu avec cet identifiant."
+admin-restored: "&#2ECF7BSpawner rendu à &#FFD94D%owner%&#2ECF7B&#8A8A8A (dans son inventaire ou ses récompenses)."
+staff:
+  duplicate-title: "Spawner copié"
+  duplicate: "%player% a essayé de poser une copie du spawner %id%, déjà posé."
+
+# Origines de l'argent dépensé (historique /compte).
+origins:
+  upgrade: "Amélioration de spawner"
+  change_type: "Changement de créature d'un spawner"
+
+# ---------------------------------------------------------------- états
+status:
+  running: "&#2ECF7B● En marche"
+  paused: "&#8A8A8A● En pause"
+  no_fuel: "&#FF5C5C● Plus de carburant"
+  full: "&#F0A800● Plein"
+  waiting: "&#8A8A8A● En attente d'un joueur"
+  blocked: "&#FF5C5C● Pas de place pour une créature"
+  unloaded: "&#8A8A8A● Zone non chargée"
+  item: "&#8A8A8A● Ramassé"
+filters:
+  all: "Tous"
+  active: "Allumés"
+  paused: "En pause"
+
+# Texte au-dessus de chaque spawner (une ligne par élément).
+hologram:
+  lines:
+    - "&#FFD94DSpawner de %type% &8· &fNiv. %level%"
+    - "%status%"
+    - "&#8A8A8A%waiting%&8/&#8A8A8A%capacity% créatures prêtes &8· &#8A8A8ACarburant &f%fuel%"
+
+# ---------------------------------------------------------------- objets
+item:
+  name: "&#FFD94DSpawner de %type% &8· &fNiveau %level%"
+  name-max: "&#FFD94DSpawner de %type% &8· &#F0A800Niveau %level% ✦"
+  lore:
+    - "&#B376E5Ses créatures se regroupent sur lui"
+    - "&#B376E5et attendent d'être tuées."
+    - ""
+    - "&7Niveau : &f%level%&7/&f%max%"
+    - "&7Production : &f%rate% &7créatures par heure"
+    - "&7Capacité : &f%capacity% &7créatures"
+  lore-stock:
+    - "&7Créatures gardées : &f%stock%"
+  lore-fuel:
+    - "&7Carburant : &f%fuel%"
+  lore-footer:
+    - ""
+    - "&#FFD94DPose-le dans ta ville pour l'allumer."
+essences:
+  essence:
+    name: "&#B376E5Essence de spawner"
+    lore:
+      - "&#B376E5Un carburant pur, qui fait tourner"
+      - "&#B376E5n'importe quel spawner."
+      - ""
+      - "&7Durée : &f%time%&7, quel que soit le niveau"
+      - ""
+      - "&#FFD94DDépose-la dans le menu Carburant d'un spawner."
+
+# ---------------------------------------------------------------- fenêtres
+forms:
+  money:
+    title: "Donner au spawner"
+    body: "Il manque %missing% pour cet objectif. Tu as %balance%."
+    field: "Montant"
+  change:
+    title: "Changer de créature"
+    body: "Ton spawner de %from% fera apparaître des %to%, pour %price%. Il garde son niveau ; ses créatures en attente et les objectifs en cours sont perdus. Confirmer ?"
+  pickup:
+    title: "Ramasser le spawner"
+    body: "Ton spawner de %type% revient dans ton inventaire avec son niveau %level%, son carburant et ses %waiting% créatures en attente. Confirmer ?"
+
+# ---------------------------------------------------------------- objectifs (menu Améliorer)
+goals:
+  kills:
+    name: "Créatures tuées"
+    description: "Tue les créatures de ce spawner. Seuls les kills des joueurs comptent."
+    hint: "Les kills comptent tout seuls."
+  xp:
+    name: "Expérience"
+    description: "Donne de l'expérience vanilla (les niveaux de ta barre verte)."
+    all: "Donner tout ce qu'il faut"
+    one: "Donner un niveau"
+  money:
+    name: "BitBlock"
+    description: "Investis des BitBlock dans ton spawner."
+    give: "Choisir un montant"
+  currency:
+    name: "%item%"
+    description: "Investis de la monnaie dans ton spawner."
+  item:
+    name: "%item%"
+    description: "Dépose %item% depuis ton inventaire."
+    all: "Tout déposer"
+    stack: "Déposer un stack"
+
+# ---------------------------------------------------------------- menus
+menu:
+  bar-filled: "&#2ECF7B"
+  bar-empty: "&8"
+  spawner-name: "Spawner de %type% · Niveau %level%"
+  list-name: "Mes spawners"
+  list-description: "Tes spawners posés. Clic gauche pour les gérer, clic droit pour les allumer ou les mettre en pause."
+  list-description-other: "Les spawners de %owner%."
+  filter: "Filtre"
+  active: "Allumés"
+  placed: "Posés"
+  status: "État"
+  place: "Lieu"
+  place-value: "%world% %coords%"
+  production: "Production"
+  production-value: "%rate% / h"
+  production-number: "%rate% / h"
+  waiting: "En attente"
+  waiting-value: "%waiting% / %capacity%"
+  fuel: "Carburant"
+  fuel-value: "%fuel% / %tank%"
+  manage: "Gérer"
+  turn-on: "Allumer"
+  turn-off: "Mettre en pause"
+  owner: "Propriétaire"
+  kills: "Kills"
+  vanilla-xp: "XP vanilla"
+  "yes": "Oui"
+  "no": "Non"
+  spawner-description: "Ses créatures se regroupent sur lui en un seul stack et attendent d'être tuées."
+  production-name: "Production"
+  production-description: "Créatures qu'il fait apparaître par heure de marche, à son niveau."
+  next-production: "Au niveau suivant"
+  activation: "Ne tourne que si un joueur est à %range% blocs au plus."
+  waiting-name: "Créatures en attente"
+  waiting-description: "Quand il est plein, il s'arrête sans brûler de carburant jusqu'à ce que tu tues ses créatures."
+  full: "Plein"
+  fuel-name: "Carburant"
+  fuel-description: "Il ne brûle que quand il produit. Plus il est haut en niveau, plus il consomme."
+  fuel-off: "Les spawners n'ont pas besoin de carburant."
+  fuel-empty: "Réservoir vide"
+  refuel: "Recharger"
+  upgrade-name: "Améliorer"
+  upgrade-description: "Atteins les objectifs du niveau %next% pour produire plus, garder plus de créatures et de carburant."
+  upgrade-max: "Ce spawner est au niveau maximal."
+  max-level: "Niveau maximal"
+  goals: "Objectifs"
+  upgrade-ready: "Prêt à monter de niveau"
+  see-goals: "Voir les objectifs"
+  toggle-on: "Allumé"
+  toggle-off: "En pause"
+  toggle-on-description: "Il produit tant qu'il a du carburant et de la place."
+  toggle-off-description: "Il ne produit rien et ne brûle rien. Il ne compte pas dans ta limite de spawners allumés."
+  type-name: "Créature"
+  type-description: "Fais-lui produire une autre créature. Il garde son niveau."
+  type-off: "On ne peut pas changer la créature d'un spawner."
+  mob: "Créature"
+  choose-mob: "Changer de créature"
+  pickup-name: "Ramasser"
+  pickup-description: "Le spawner revient dans ton inventaire avec son niveau, son carburant et ses créatures en attente."
+  pickup: "Ramasser"
+  next-name: "Niveau %next%"
+  next-description: "Ce que le niveau %next% change :"
+  change: "%from% ➜ %to%"
+  capacity: "Capacité"
+  tank: "Réservoir"
+  progress: "Progression"
+  goal-done: "Objectif atteint"
+  you-have: "Tu as"
+  levelup-name: "Monter de niveau"
+  levelup-description: "Passe au niveau %next% une fois tous les objectifs atteints. Ce qui a été donné est dépensé."
+  levelup: "Monter de niveau"
+  goals-missing: "Objectifs incomplets"
+  levels-name: "Paliers"
+  levels-description: "Ce que produit chaque niveau de ce spawner."
+  level: "Niveau"
+  level-name: "Niveau %level%"
+  level-reached: "Atteint"
+  level-current: "Niveau actuel"
+  tank-name: "Réservoir"
+  tank-description: "Dépose du carburant depuis ton inventaire."
+  fuel-burns: "Brûle seulement quand il produit."
+  fuel-each: "Chaque unité"
+  fuel-one: "Déposer 1"
+  fuel-stack: "Déposer un stack"
+  fuel-all: "Tout déposer"
+  types-name: "Créature"
+  types-description: "Choisis la créature que ce spawner fait apparaître. Son niveau est gardé ; ses créatures en attente et les objectifs en cours sont perdus."
+  type-current: "Créature actuelle"
+  type-locked: "Ton grade ne l'ouvre pas encore"
+  price: "Prix"
+  choose: "Choisir"
+
+# ---------------------------------------------------------------- aide /fluxspawner help (ChatHelp de Flux)
+help:
+  header: "<#8A8A8A><st>               </st></#8A8A8A> %previous% <#FFD94D>ᴀɪᴅᴇ</#FFD94D> <dark_gray>·</dark_gray> <#8A8A8A>Page</#8A8A8A> <white>%page%</white><dark_gray>/</dark_gray><white>%pages%</white> %next% <#8A8A8A><st>               </st></#8A8A8A>"
+  header-admin: "<#8A8A8A><st>             </st></#8A8A8A> %previous% <#FFD94D>ꜱᴘᴀᴡɴᴇʀꜱ ꜱᴛᴀꜰꜰ</#FFD94D> <dark_gray>·</dark_gray> <#8A8A8A>Page</#8A8A8A> <white>%page%</white><dark_gray>/</dark_gray><white>%pages%</white> %next% <#8A8A8A><st>             </st></#8A8A8A>"
+  line: "<#F0A800>   %command%</#F0A800> <dark_gray>-</dark_gray> <#8A8A8A>%description%"
+  footer: "<#8A8A8A><st>             </st></#8A8A8A> %previous% <dark_gray>|</dark_gray> %next% <#8A8A8A><st>             </st></#8A8A8A>"
+  previous-arrow: "<#FFD94D>«</#FFD94D>"
+  next-arrow: "<#FFD94D>»</#FFD94D>"
+  previous: "<#FFD94D>« Précédente</#FFD94D>"
+  next: "<#FFD94D>Suivante »</#FFD94D>"
+  previous-hover: "<#B376E5>Aller à la page précédente"
+  next-hover: "<#B376E5>Aller à la page suivante"
+  hover-run: "<#B376E5>Clique pour exécuter."
+  hover-suggest: "<#B376E5>Clique pour copier la commande."
+  args:
+    help: "[page]"
+    give: "<joueur> <type> [niveau] [nombre]"
+    info: ""
+    setlevel: "<niveau>"
+    fuel: "<durée>"
+    list: "[joueur]"
+    restore: "<id>"
+    remove: ""
+    reload: ""
+  commands:
+    help: "Afficher cette aide"
+    give: "Donner des spawners à un joueur"
+    info: "Tout savoir du spawner regardé"
+    setlevel: "Changer le niveau du spawner regardé"
+    fuel: "Ajouter du carburant au spawner regardé"
+    list: "Voir les spawners d'un joueur"
+    restore: "Rendre à son propriétaire un spawner perdu"
+    remove: "Supprimer le spawner regardé et ses données"
+    reload: "Recharger la config et les textes"

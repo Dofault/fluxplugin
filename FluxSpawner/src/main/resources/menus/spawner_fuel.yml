@@ -1,0 +1,34 @@
+# Fuel of a spawner, vanilla theme (theme.menus.spawner_fuel of Flux's config).
+# Row 1: back, the tank. Rows 2-3: accepted fuels (left: 1, right: a stack, shift + left: everything).
+# Lists built by FluxSpawner.
+rows: 3
+player-inventory: hidden
+vanilla-background: false
+
+open-actions:
+  - "[sound] @page"
+
+lists:
+  spawner_tank:
+    slots: [8]
+    item:
+      material: entry
+  spawner_fuels:
+    slots: 9-26
+    item:
+      material: entry
+      actions:
+        left: ["%entry_left%"]
+        right: ["%entry_right%"]
+        shift-left: ["%entry_shift_left%"]
+
+items:
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
+    slots: [0]
+    lore:
+      - "@desc Revenir au spawner."
+      - "@left Retour"
+    actions:
+      left: ["[spawner] back"]

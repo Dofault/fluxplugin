@@ -1,0 +1,22 @@
+name: FluxSpawner
+version: '1.0.0'
+main: fr.influencraft.fluxspawner.FluxSpawner
+api-version: '26.2'
+description: Spawners with levels, fuel, goals and a limit per rank; their mobs stack on the spawner (FluxStack).
+authors: [Influencraft]
+depend: [Flux]
+softdepend: [FluxStack, FluxValue]
+
+permissions:
+  fluxspawner.use:
+    description: /spawners, the list of one's own spawners.
+    default: true
+  fluxspawner.place:
+    description: Place a spawner.
+    default: true
+  fluxspawner.active.1:
+    description: One spawner switched on at a time (fluxspawner.active.<n>, highest wins; .unlimited).
+    default: false
+  fluxspawner.placed.3:
+    description: Three spawners placed at most (fluxspawner.placed.<n>, highest wins; .unlimited).
+    default: false

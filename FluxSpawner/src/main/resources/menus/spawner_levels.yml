@@ -1,0 +1,31 @@
+# Every level of a spawner, vanilla theme (theme.menus.spawner_levels of Flux's config).
+# Row 1: back, menu icon. Rows 2-3: the levels. Lists built by FluxSpawner.
+rows: 3
+player-inventory: hidden
+vanilla-background: false
+
+open-actions:
+  - "[sound] @page"
+
+lists:
+  spawner_levels_info:
+    slots: [8]
+    item:
+      material: entry
+  spawner_levels:
+    slots: 9-26
+    item:
+      material: entry
+      actions:
+        left: ["%entry_clic%"]
+
+items:
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
+    slots: [0]
+    lore:
+      - "@desc Revenir aux objectifs."
+      - "@left Retour"
+    actions:
+      left: ["[spawner] upgrade-back"]

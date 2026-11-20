@@ -1,5 +1,6 @@
 package fr.influencraft.fluxstack;
 
+import fr.influencraft.flux.api.mobs.MobStacks;
 import fr.influencraft.flux.api.text.Texts;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -140,6 +141,24 @@ final class StackManager implements Listener {
         return n == null ? 1 : Math.max(1, n);
     }
 
+    int maxStack() {
+        return maxStack;
+    }
+
+    /**
+     * Count asked by another plugin through Flux's {@code MobStacks}: same as a merge, within {@code max-stack}.
+     * The mob must be one FluxStack would stack, so a stack is never made of a kind that stays single.
+     */
+    int setCountFromApi(LivingEntity e, int n) {
+        if (!e.isValid() || e.isDead()) return count(e);
+        int wanted = Math.max(1, Math.min(maxStack, n));
+        if (wanted > 1 && (!worldAllowed(e.getWorld()) || !allowedKind(e) || excluded.contains(e.getType().getKey().getKey()))) {
+            return count(e);
+        }
+        setCount(e, wanted);
+        return wanted;
+    }
+
     /** Count, frozen state and floating label of a stack (n = 1: a normal mob again). */
     private void setCount(LivingEntity e, int n) {
         if (n <= 1) {
@@ -227,11 +246,14 @@ final class StackManager implements Listener {
         return (passive && stackPassive) || (fromSpawner && stackSpawner);
     }
 
+    /** Identity of a mob: two mobs merge only when it is the same (key parts of other plugins included). */
     private static String signature(LivingEntity e) {
         StringBuilder sb = new StringBuilder(e.getType().getKey().getKey());
         if (e instanceof Ageable a) sb.append(a.isAdult() ? "|adult" : "|baby");
         if (e instanceof Sheep s) sb.append('|').append(s.getColor()).append(s.isSheared());
         if (e instanceof Slime s) sb.append("|size").append(s.getSize());
+        // FluxSpawner keeps the mobs of each spawner apart (from each other and from the wild)
+        sb.append(MobStacks.key(e));
         return sb.toString();
     }
 

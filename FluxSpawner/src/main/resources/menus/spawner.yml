@@ -1,0 +1,64 @@
+# One spawner (right click on it, or from /spawners), vanilla theme (theme.menus.spawner of Flux's config).
+# Row 1: back, the spawner. Row 2: production, waiting mobs, fuel, upgrade. Row 3: on / pause, mob, pick up.
+# Buttons built by FluxSpawner.
+rows: 3
+player-inventory: hidden
+vanilla-background: false
+
+open-actions:
+  - "[sound] @page"
+
+lists:
+  spawner_info:
+    slots: [8]
+    item:
+      material: entry
+  spawner_production:
+    slots: [10]
+    item:
+      material: entry
+  spawner_stock:
+    slots: [12]
+    item:
+      material: entry
+  spawner_fuel_button:
+    slots: [14]
+    item:
+      material: entry
+      actions:
+        left: ["[spawner] fuel-menu"]
+  spawner_upgrade_button:
+    slots: [16]
+    item:
+      material: entry
+      actions:
+        left: ["[spawner] upgrade-menu"]
+  spawner_toggle:
+    slots: [20]
+    item:
+      material: entry
+      actions:
+        left: ["[spawner] toggle"]
+  spawner_type_button:
+    slots: [22]
+    item:
+      material: entry
+      actions:
+        left: ["[spawner] types-menu"]
+  spawner_pickup:
+    slots: [24]
+    item:
+      material: entry
+      actions:
+        left: ["[spawner] pickup"]
+
+items:
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
+    slots: [0]
+    lore:
+      - "@desc Revenir à tes spawners."
+      - "@left Retour"
+    actions:
+      left: ["[spawner] list"]

@@ -1,0 +1,84 @@
+# FluxSpawner: spawners with levels.
+# A spawner is an item (fluxspawner:<type>, /fluxitems give or /fluxspawner give) placed by a player. While it is on,
+# has fuel, room for more mobs and a player close by, it makes its mob into one stack standing on it (FluxStack).
+# Its level sets how fast it produces, how many mobs wait and how much fuel it holds (levels.yml); players level it
+# up by reaching goals. Mobs (types.yml), levels and goals are in their own files; every rate is worked out from
+# FluxValue, so a level is worth the same whatever the mob.
+
+# Language of the texts (lang/<language>.yml); empty = the language of the suite (Flux).
+language: ""
+
+placement:
+  # Worlds where a spawner may be placed (empty = every world), then worlds where it never may.
+  worlds: []
+  disabled-worlds: []
+  # Only in a town the player lives in (owner or member of the claim, through Flux's claims adapter: Lands).
+  require-town: true
+  # Fewest blocks between two spawners (their mobs and holograms stay apart).
+  min-distance: 4
+
+# The owner may open a spawner's menu from /spawners wherever he is (else from 32 blocks at most).
+remote-management: true
+
+production:
+  # Seconds between two production steps.
+  tick-seconds: 1
+  # A player (not spectator) within this many blocks keeps the spawner running; 0 = whenever its chunk is loaded.
+  activation-range: 32
+  # Blocks around the spawner where a new mob may appear when no stack stands there yet.
+  spawn-radius: 2
+  # Blocks around the spawner where its mobs are counted (they never wander when frozen).
+  stock-radius: 6
+  # Mobs stand still and never attack (no AI): they wait to be killed.
+  freeze: true
+  # Mobs only take damage from players (and the void, /kill): no machine, lava or cactus kills them (rules 4.5 to 4.7).
+  protect: true
+  # Most mobs waiting when FluxStack is missing (one entity per mob then, like a vanilla spawner).
+  no-stack-capacity: 6
+  # Used when FluxValue is missing or does not know a mob.
+  fallback:
+    kill-points: 84.6           # points of one kill (a zombie)
+    points-per-second: 58.75    # points of one second of optimal play
+    money-per-second: 5.875     # money of one second of optimal play at level 100
+
+fuel:
+  # false: spawners never need fuel.
+  enabled: true
+  # Fuel burns this share of what the spawner produces: an item worth N points in FluxValue gives
+  # N / (cost-ratio x points produced per second) seconds. The seconds of an item go down as the level goes up:
+  # a bigger spawner burns more. At 0.1 a block of coal runs a level 0 spawner 2 min 10 s, a level 10 one 22 s.
+  # Never list a drop of a spawner's own mobs here: worth about one kill, it would let a spawner run on itself.
+  cost-ratio: 0.1
+  # Items accepted by every spawner (material names or item ids of the suite); types.yml may add some per type.
+  items: [COAL, CHARCOAL, COAL_BLOCK, "fluxspawner:essence"]
+  # Fuels of FluxSpawner itself: fixed time of running whatever the level (rewards, pass, shop).
+  # Name and description in the lang file (essences.<id>). Given with /fluxitems give <player> fluxspawner:<id>.
+  essences:
+    essence:
+      material: ECHO_SHARD
+      fuel: 1h
+      glint: true
+
+limits:
+  # Spawners switched on at a time without a fluxspawner.active.<n> permission (highest wins, .unlimited).
+  active-default: 1
+  # Spawners placed at most without a fluxspawner.placed.<n> permission.
+  placed-default: 3
+
+# Spawners of the world (dungeons, mineshafts), not made by FluxSpawner.
+vanilla:
+  # Worlds where they never spawn anything.
+  disabled-worlds: []
+  # Breaking one with Silk Touch gives a FluxSpawner of level 0 of its mob (when that mob is in types.yml).
+  capture: false
+
+hologram:
+  # Text over each spawner (mob, level, status), lines in the lang file (hologram.lines).
+  enabled: true
+  # Height above the spawner block.
+  height: 1.35
+  refresh-seconds: 2
+
+change-type:
+  # The owner may turn his spawner into another mob (price: change-price of types.yml); its level stays.
+  enabled: true

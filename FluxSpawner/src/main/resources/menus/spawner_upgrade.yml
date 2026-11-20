@@ -1,0 +1,48 @@
+# Goals of the next level of a spawner, vanilla theme (theme.menus.spawner_upgrade of Flux's config).
+# Row 1: back, the next level. Row 2: the goals (left: give all, right: give a little). Row 3: levels, level up.
+# Lists built by FluxSpawner.
+rows: 3
+player-inventory: hidden
+vanilla-background: false
+
+open-actions:
+  - "[sound] @page"
+
+lists:
+  spawner_next:
+    slots: [8]
+    item:
+      material: entry
+  spawner_goals:
+    slots: 10-16
+    item:
+      material: entry
+      actions:
+        left: ["%entry_left%"]
+        right: ["%entry_right%"]
+  spawner_levelup:
+    slots: [22]
+    item:
+      material: entry
+      actions:
+        left: ["[spawner] levelup"]
+
+items:
+  retour:
+    material: "itemsadder:influitems:btn_back"
+    name: "Retour"
+    slots: [0]
+    lore:
+      - "@desc Revenir au spawner."
+      - "@left Retour"
+    actions:
+      left: ["[spawner] back"]
+  paliers:
+    material: "itemsadder:influitems:stairs"
+    name: "Paliers"
+    slots: [20]
+    lore:
+      - "@desc Ce que produit chaque niveau de ce spawner."
+      - "@left Voir"
+    actions:
+      left: ["[spawner] levels-menu"]

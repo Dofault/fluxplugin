@@ -1,0 +1,123 @@
+# FluxSpawner levels, by profile (a type picks one in types.yml, "default" otherwise).
+#
+# efficiency  share of optimal play the spawner produces (FluxValue points): 0.05 = in an hour it makes as many mobs
+#             as 5 % of an hour of optimal play is worth. Every mob type is then worth the same at the same level:
+#             a blaze is worth 4 zombies, so a blaze spawner makes 4 times fewer mobs.
+#             Zombie reference: optimal play = about 2 500 zombies an hour; a vanilla spawner makes about 300 an hour
+#             in a good farm (576 at most). Level 0 = 125 / h, level 5 = 305 / h (a good vanilla farm),
+#             level 10 = 750 / h. x1.196 per level.
+# capacity    mobs waiting at most, in hours of its production (shown in mobs). Full: it stops, fuel is kept.
+# tank        fuel it holds at most, in hours of running (2 h at level 0, 12 h at level 10).
+# requirements goals to reach this level from the one below, given bit by bit in the menu:
+#   - kills: 1h            kills by players of this spawner's own mobs: an hour of its production (or a number)
+#   - money: 0.5h          server money: half an hour of the reference income (or a fixed amount)
+#   - xp-levels: 15        vanilla experience: the points of levels 0 to 15
+#   - item: type           the type's upgrade-item (or a material, or an item id of the suite)
+#     amount: 0.25h        a quarter of an hour of optimal play in that item (FluxValue), or a number
+#   - currency: influence  another Flux currency, a fixed amount
+#     amount: 50
+# Hours of money and items are multiplied by the type's cost-multiplier. Amounts are rounded to readable numbers.
+# The mob's own drop (item: type) is asked in hours: its value in FluxValue is the time to farm it. Prestige
+# materials (iron, gold, diamonds, netherite, nether star) are fixed amounts on purpose: FluxValue prices them by the
+# effort of a miner with Fortune (a diamond = 9 points), so hours of them would ask thousands of diamonds.
+profiles:
+  default:
+    "0": {efficiency: 0.05, capacity: 1h, tank: 2h}
+    "1":
+      efficiency: 0.06
+      capacity: 1h
+      tank: 2.5h
+      requirements:
+        - kills: 1h
+        - money: 0.25h
+        - xp-levels: 10
+        - {item: type, amount: 0.05h}
+    "2":
+      efficiency: 0.072
+      capacity: 1h
+      tank: 3h
+      requirements:
+        - kills: 1h
+        - money: 0.4h
+        - xp-levels: 15
+        - {item: type, amount: 0.075h}
+    "3":
+      efficiency: 0.086
+      capacity: 1.25h
+      tank: 3.5h
+      requirements:
+        - kills: 1.25h
+        - money: 0.6h
+        - xp-levels: 20
+        - {item: type, amount: 0.1h}
+        - {item: IRON_BLOCK, amount: 16}
+    "4":
+      efficiency: 0.103
+      capacity: 1.25h
+      tank: 4h
+      requirements:
+        - kills: 1.5h
+        - money: 0.8h
+        - xp-levels: 25
+        - {item: type, amount: 0.125h}
+        - {item: GOLD_BLOCK, amount: 16}
+    "5":
+      efficiency: 0.122
+      capacity: 1.5h
+      tank: 5h
+      requirements:
+        - kills: 1.5h
+        - money: 1h
+        - xp-levels: 30
+        - {item: type, amount: 0.15h}
+        - {item: DIAMOND, amount: 32}
+    "6":
+      efficiency: 0.147
+      capacity: 1.5h
+      tank: 6h
+      requirements:
+        - kills: 2h
+        - money: 1.5h
+        - xp-levels: 35
+        - {item: type, amount: 0.2h}
+        - {item: DIAMOND, amount: 64}
+    "7":
+      efficiency: 0.175
+      capacity: 1.75h
+      tank: 7h
+      requirements:
+        - kills: 2h
+        - money: 2h
+        - xp-levels: 40
+        - {item: type, amount: 0.25h}
+        - {item: DIAMOND_BLOCK, amount: 16}
+    "8":
+      efficiency: 0.21
+      capacity: 2h
+      tank: 8h
+      requirements:
+        - kills: 2.5h
+        - money: 2.5h
+        - xp-levels: 45
+        - {item: type, amount: 0.3h}
+        - {item: DIAMOND_BLOCK, amount: 32}
+    "9":
+      efficiency: 0.251
+      capacity: 2h
+      tank: 10h
+      requirements:
+        - kills: 3h
+        - money: 3h
+        - xp-levels: 50
+        - {item: type, amount: 0.4h}
+        - {item: NETHERITE_INGOT, amount: 2}
+    "10":
+      efficiency: 0.30
+      capacity: 2h
+      tank: 12h
+      requirements:
+        - kills: 3h
+        - money: 4h
+        - xp-levels: 60
+        - {item: type, amount: 0.5h}
+        - {item: NETHER_STAR, amount: 1}
