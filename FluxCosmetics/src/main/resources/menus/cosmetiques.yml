@@ -1,9 +1,10 @@
-# Cosmetics menu, opened from the wardrobe (/tenue, right click). Drawn in the player's inventory rows only (slots 54
-# to 89 of a 6-row chest): the chest above stays empty and transparent, the mannequin is seen over the menu and wears
-# what is clicked at once. Row 1: back, turn, the 5 categories, see the outfit, icon; rows 2-3: saved outfits
-# (63), the list (14 per page); hotbar row: pages. Entries and category buttons are built by FluxCosmetics (lists cosmetics, cosmetics_cat_<n>);
-# Flux keeps each player's category and page, so the menu opens again where he left it.
-# Theme: theme.menus.cosmetiques of Flux's config (picture drawn by gen_ui.py).
+# Cosmetics menu, opened from the wardrobe (/cosmetique, /tenue, right click). Drawn in the player's inventory rows
+# only (slots 54 to 89 of a 6-row chest): the chest above stays empty and transparent, the mannequin is seen over the
+# menu and wears what is clicked at once. Entries and category buttons are built by FluxCosmetics (lists cosmetics,
+# cosmetics_cat_<n>); Flux keeps each player's category and page, so the menu opens again where he left it.
+# Row 1: back, the 7 categories (helmets, chestplates, leggings, boots, tags, saved outfits, rpg outfits: those of
+# the other universe are greyed), icon. Rows 2-3: the list (14 per page), turn and see the outfit on the right.
+# Hotbar row: pages. Theme: theme.menus.cosmetiques of Flux's config (picture drawn by gen_ui.py).
 rows: 6
 player-inventory: hidden
 vanilla-background: false
@@ -16,42 +17,47 @@ close-actions:
 
 lists:
   cosmetics_cat_0:
+    slots: 55
+    item:
+      material: entry
+      actions:
+        left: ["[cosmetics] category 0"]
+  cosmetics_cat_1:
     slots: 56
     item:
       material: entry
       actions:
-        left: ["[list] cosmetics filter 0", "[cosmetics] frame", "[refresh]"]
-  cosmetics_cat_1:
+        left: ["[cosmetics] category 1"]
+  cosmetics_cat_2:
     slots: 57
     item:
       material: entry
       actions:
-        left: ["[list] cosmetics filter 1", "[cosmetics] frame", "[refresh]"]
-  cosmetics_cat_2:
+        left: ["[cosmetics] category 2"]
+  cosmetics_cat_3:
     slots: 58
     item:
       material: entry
       actions:
-        left: ["[list] cosmetics filter 2", "[cosmetics] frame", "[refresh]"]
-  cosmetics_cat_3:
+        left: ["[cosmetics] category 3"]
+  cosmetics_cat_4:
     slots: 59
     item:
       material: entry
       actions:
-        left: ["[list] cosmetics filter 3", "[cosmetics] frame", "[refresh]"]
-  cosmetics_cat_4:
+        left: ["[cosmetics] category 4"]
+  cosmetics_cat_5:
     slots: 60
     item:
       material: entry
       actions:
-        left: ["[list] cosmetics filter 4", "[cosmetics] frame", "[refresh]"]
-  # saved outfits, left of the list they fill
-  cosmetics_cat_5:
-    slots: 63
+        left: ["[cosmetics] category 5"]
+  cosmetics_cat_6:
+    slots: 61
     item:
       material: entry
       actions:
-        left: ["[list] cosmetics filter 5", "[cosmetics] frame", "[refresh]"]
+        left: ["[cosmetics] category 6"]
   cosmetics:
     slots: 64-70, 73-79
     item:
@@ -78,10 +84,18 @@ items:
     actions:
       left: ["[cosmetics] main"]
 
+  icone:
+    material: "itemsadder:fluxcosmetics:penderie"
+    name: "Cosmétiques"
+    slots: [62]
+    lore:
+      - "@desc Choisis ce que tu portes par-dessus ton armure et le tag affiché à côté de ton pseudo. Ton personnage le porte aussitôt, juste au-dessus."
+      - "@desc Dans le monde RPG, seule ta tenue RPG compte : celle de ta classe, ou une autre que tu as débloquée."
+
   tourner:
     material: "itemsadder:fluxui:btn_rotate_blue"
     name: "Tourner"
-    slots: [55]
+    slots: [71]
     lore:
       - "@desc Fait tourner la caméra autour de ton personnage."
       - "@left Tourner à gauche"
@@ -93,17 +107,9 @@ items:
   camera:
     material: "itemsadder:fluxui:btn_eye_blue"
     name: "Voir ma tenue"
-    slots: [61]
+    slots: [80]
     lore:
       - "@desc Ferme ce menu pour te voir en entier et tourner la caméra au clavier. Clic droit dans le vide pour rouvrir le menu."
       - "@left Voir ma tenue"
     actions:
       left: ["[close]"]
-
-  icone:
-    material: "itemsadder:fluxcosmetics:penderie"
-    name: "Cosmétiques"
-    slots: [62]
-    lore:
-      - "@desc Choisis ce que tu portes par-dessus ton armure et le tag affiché à côté de ton pseudo. Ton personnage le porte aussitôt, juste au-dessus."
-      - "@desc Ferme ce menu pour bouger la caméra, puis clic droit pour le rouvrir."

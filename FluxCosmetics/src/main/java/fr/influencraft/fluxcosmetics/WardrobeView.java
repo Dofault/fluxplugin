@@ -387,7 +387,7 @@ final class WardrobeView {
     void frame(int category) {
         shot = settings.shot(category);
         // the tags: his real nametag over the mannequin's head, as the others see it
-        nametag = category >= CosmeticsMenu.TAGS;
+        nametag = category == CosmeticsMenu.TAGS || category == CosmeticsMenu.PRESETS;
         redress();
         goalYaw = wrap(back.getYaw() + 180);
         goalPitch = shot.pitch();

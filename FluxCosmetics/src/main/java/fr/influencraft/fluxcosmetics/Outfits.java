@@ -71,13 +71,19 @@ final class Outfits implements Listener {
         final Map<EquipmentSlot, String> worn = new EnumMap<>(EquipmentSlot.class);
         /** Saved outfits by slot number (1, 2...). */
         final Map<Integer, Preset> presets = new ConcurrentHashMap<>();
+        /** Rpg outfit he chose, null: his class's ({@link RpgOutfits}). */
+        volatile String rpg;
     }
+
+    /** Slot name of the chosen rpg outfit in the worn table. */
+    private static final String RPG_SLOT = "RPG";
 
     /** Armour slots kept in a preset, in the order of the table's columns. */
     static final EquipmentSlot[] ARMOUR = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
     private static final String[] COLUMNS = {"head", "chest", "legs", "feet"};
 
     private final FluxCosmetics plugin;
+    private final RpgOutfits rpg;
     private final Map<String, Cosmetic> cosmetics = new LinkedHashMap<>();
     private final Map<String, Rarity> rarities = new LinkedHashMap<>();
     private final Map<UUID, Wardrobe> players = new ConcurrentHashMap<>();
@@ -90,6 +96,17 @@ final class Outfits implements Listener {
 
     Outfits(FluxCosmetics plugin) {
         this.plugin = plugin;
+        this.rpg = new RpgOutfits(plugin, this);
+    }
+
+    RpgOutfits rpg() {
+        return rpg;
+    }
+
+    /** Rarity by id, the most common when unknown. */
+    Rarity rarity(String id) {
+        Rarity r = rarities.get(id == null ? "" : id);
+        return r != null ? r : rarities.values().iterator().next();
     }
 
     void createTables() {
@@ -145,6 +162,7 @@ final class Outfits implements Listener {
             }
             cosmetics.put(key, new Cosmetic(key, c.getString("name", key), item, slot, c.getBoolean("free", false), rarity));
         }
+        rpg.load(config);
         // the looks of the players online follow the new definitions
         for (Player p : Bukkit.getOnlinePlayers()) if (players.containsKey(p.getUniqueId())) dress(p);
     }
@@ -171,6 +189,26 @@ final class Outfits implements Listener {
         return w != null && w.owned.contains(c.key());
     }
 
+    /** Whether he was given this key (a cosmetic or an rpg outfit). */
+    boolean given(Player player, String key) {
+        Wardrobe w = players.get(player.getUniqueId());
+        return w != null && w.owned.contains(key);
+    }
+
+    /** The rpg outfit he chose, null for his class's. */
+    String rpgChoice(Player player) {
+        Wardrobe w = players.get(player.getUniqueId());
+        return w == null ? null : w.rpg;
+    }
+
+    /** Chooses his rpg outfit (null: his class's), shown at once in the rpg universe. */
+    void chooseRpg(Player player, String key) {
+        Wardrobe w = players.computeIfAbsent(player.getUniqueId(), k -> new Wardrobe());
+        w.rpg = key;
+        saveWorn(player.getUniqueId(), RPG_SLOT, key);
+        show(player);
+    }
+
     /** Key of the cosmetic he wears in that slot, or null. */
     String worn(Player player, EquipmentSlot slot) {
         Wardrobe w = players.get(player.getUniqueId());
@@ -184,7 +222,8 @@ final class Outfits implements Listener {
     boolean toggle(Player player, String key, boolean quiet) {
         Cosmetic c = cosmetics.get(key);
         if (c == null) return false;
-        if (!owns(player, c)) {
+        // the vanilla cosmetics are never put on in the rpg universe (nor shown there)
+        if (!owns(player, c) || rpg.in(player)) {
             Sounds.cue(player, "error");
             if (!quiet) plugin.messages().send(player, "outfits.locked", "%name%", c.name());
             return true;
@@ -192,13 +231,13 @@ final class Outfits implements Listener {
         Wardrobe w = players.computeIfAbsent(player.getUniqueId(), k -> new Wardrobe());
         if (key.equals(w.worn.get(c.slot()))) {
             w.worn.remove(c.slot());
-            Appearance.set(player, c.slot(), null);
+            show(player);
             saveWorn(player.getUniqueId(), c.slot(), null);
             Sounds.cue(player, "toggle-off");
             if (!quiet) plugin.messages().send(player, "outfits.taken-off", "%name%", c.name());
         } else {
             w.worn.put(c.slot(), key);
-            Appearance.set(player, c.slot(), item(c, player));
+            show(player);
             saveWorn(player.getUniqueId(), c.slot(), key);
             Sounds.cue(player, "toggle-on");
             if (!quiet) plugin.messages().send(player, "outfits.wearing", "%name%", c.name());
@@ -211,11 +250,11 @@ final class Outfits implements Listener {
      */
     boolean wear(Player player, String key) {
         Cosmetic c = cosmetics.get(key);
-        if (c == null || !owns(player, c)) return false;
+        if (c == null || !owns(player, c) || rpg.in(player)) return false;
         Wardrobe w = players.computeIfAbsent(player.getUniqueId(), k -> new Wardrobe());
         if (key.equals(w.worn.get(c.slot()))) return true;
         w.worn.put(c.slot(), key);
-        Appearance.set(player, c.slot(), item(c, player));
+        show(player);
         saveWorn(player.getUniqueId(), c.slot(), key);
         return true;
     }
@@ -284,8 +323,8 @@ final class Outfits implements Listener {
     /** Takes off whatever cosmetic he wears in that slot (his real item shows again), quietly. */
     void takeOff(Player player, EquipmentSlot slot) {
         Wardrobe w = players.get(player.getUniqueId());
-        if (w == null || w.worn.remove(slot) == null) return;
-        Appearance.set(player, slot, null);
+        if (w == null || rpg.in(player) || w.worn.remove(slot) == null) return;
+        show(player);
         saveWorn(player.getUniqueId(), slot, null);
         Sounds.cue(player, "toggle-off");
     }
@@ -375,6 +414,10 @@ final class Outfits implements Listener {
                     ps.setString(1, id.toString());
                     try (ResultSet rs = ps.executeQuery()) {
                         while (rs.next()) {
+                            if (RPG_SLOT.equals(rs.getString(1))) {
+                                w.rpg = rs.getString(2);
+                                continue;
+                            }
                             try {
                                 w.worn.put(EquipmentSlot.valueOf(rs.getString(1)), rs.getString(2));
                             } catch (IllegalArgumentException ignored) {
@@ -408,6 +451,7 @@ final class Outfits implements Listener {
                     w.owned.addAll(before.owned);
                     w.worn.putAll(before.worn);
                     w.presets.putAll(before.presets);
+                    if (before.rpg != null) w.rpg = before.rpg;
                 }
                 dress(player);
             });
@@ -422,12 +466,37 @@ final class Outfits implements Listener {
             Cosmetic c = cosmetics.get(w.worn.get(slot));
             if (c == null || c.slot() != slot || !owns(player, c)) {
                 w.worn.remove(slot);
-                Appearance.set(player, slot, null);
                 saveWorn(player.getUniqueId(), slot, null);
-            } else {
-                Appearance.set(player, slot, item(c, player));
             }
         }
+        if (w.rpg != null && !rpg.owns(player, rpg.get(w.rpg))) {
+            w.rpg = null;
+            saveWorn(player.getUniqueId(), RPG_SLOT, null);
+        }
+        show(player);
+    }
+
+    /**
+     * Draws what he wears for the universe he is in: in the rpg universe his rpg outfit only (the one he chose, else
+     * his class's: never bare), elsewhere his vanilla cosmetics only. The one place looks are set.
+     */
+    void show(Player player) {
+        Wardrobe w = players.get(player.getUniqueId());
+        if (w == null) return;
+        if (rpg.in(player)) {
+            RpgOutfits.Outfit o = rpg.active(player, w.rpg);
+            for (EquipmentSlot slot : ARMOUR) Appearance.set(player, slot, o == null ? null : rpg.item(o, slot));
+            return;
+        }
+        for (EquipmentSlot slot : ARMOUR) {
+            Cosmetic c = cosmetics.get(w.worn.get(slot));
+            Appearance.set(player, slot, c == null ? null : item(c, player));
+        }
+    }
+
+    /** Whether his data is read (looks can be drawn). */
+    boolean ready(Player player) {
+        return players.containsKey(player.getUniqueId());
     }
 
     @EventHandler
@@ -443,17 +512,21 @@ final class Outfits implements Listener {
     }
 
     private void saveWorn(UUID player, EquipmentSlot slot, String key) {
+        saveWorn(player, slot.name(), key);
+    }
+
+    private void saveWorn(UUID player, String slot, String key) {
         async(() -> {
             try (Connection c = Database.connection()) {
                 try (PreparedStatement del = c.prepareStatement("DELETE FROM " + wornTable + " WHERE uuid = ? AND slot = ?")) {
                     del.setString(1, player.toString());
-                    del.setString(2, slot.name());
+                    del.setString(2, slot);
                     del.executeUpdate();
                 }
                 if (key == null) return;
                 try (PreparedStatement ins = c.prepareStatement("INSERT INTO " + wornTable + " (uuid, slot, cosmetic) VALUES (?, ?, ?)")) {
                     ins.setString(1, player.toString());
-                    ins.setString(2, slot.name());
+                    ins.setString(2, slot);
                     ins.setString(3, key);
                     ins.executeUpdate();
                 }
@@ -488,8 +561,10 @@ final class Outfits implements Listener {
         }
     }
 
-    /** Keys of every cosmetic, for "all" in the admin commands. */
+    /** Keys of every cosmetic and rpg outfit, for "all" in the admin commands. */
     Set<String> everything() {
-        return new HashSet<>(cosmetics.keySet());
+        Set<String> out = new HashSet<>(cosmetics.keySet());
+        out.addAll(rpg.keys());
+        return out;
     }
 }

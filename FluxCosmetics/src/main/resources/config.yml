@@ -55,6 +55,8 @@ menu-camera:
     tags:  {height: 2.15, distance: 1.9, pitch: 2, look-down: 18}
     # saved outfits: the whole body, nametag included
     outfits: {height: 1.1, distance: 3.6, pitch: 8, look-down: 14}
+    # rpg outfits: the whole body
+    rpg: {height: 1.0, distance: 3.2, pitch: 8, look-down: 14}
 
 
 # Rarities, from the most common to the rarest (menu order); colour of the name shown in the menu. Names in the
@@ -71,50 +73,8 @@ rarities:
 # legs or feet (drawn over the real item of that slot, for everybody, the wearer included: his real item keeps its
 # name and lore on his screen), rarity: one of the rarities above, free: owned by everybody. Otherwise a player owns
 # it once given (/tenue donner <player> <id|tout>); admins (flux.admin) own them all.
-# 3D sets of FluxArmor (2026-11-20): every piece of the sets with a model.
+# Vanilla cosmetics only (never shown in the rpg universe, whose outfits are rpg-outfits below).
 cosmetics:
-  # saule
-  saule_helmet:
-    name: "&#82916BCouronne du Vieux-Saule"
-    item: fluxarmor:saule_helmet
-    slot: head
-    rarity: unique
-  saule_chestplate:
-    name: "&#82916BMantelet des Ronces"
-    item: fluxarmor:saule_chestplate
-    slot: chest
-    rarity: unique
-  saule_leggings:
-    name: "&#82916BCeinture des Racines"
-    item: fluxarmor:saule_leggings
-    slot: legs
-    rarity: unique
-  saule_boots:
-    name: "&#82916BMarcheurs de Sylve"
-    item: fluxarmor:saule_boots
-    slot: feet
-    rarity: unique
-  # brasier
-  brasier_helmet:
-    name: "&#C96B36Chapeau du Brasier"
-    item: fluxarmor:brasier_helmet
-    slot: head
-    rarity: epique
-  brasier_chestplate:
-    name: "&#C96B36Robe du Brasier"
-    item: fluxarmor:brasier_chestplate
-    slot: chest
-    rarity: epique
-  brasier_leggings:
-    name: "&#C96B36Jupe du Brasier"
-    item: fluxarmor:brasier_leggings
-    slot: legs
-    rarity: epique
-  brasier_boots:
-    name: "&#C96B36Bottes du Brasier"
-    item: fluxarmor:brasier_boots
-    slot: feet
-    rarity: epique
   # grandnord (tenue de Noël)
   grandnord_helmet:
     name: "&#A83B43Bonnet du Solstice"
@@ -136,169 +96,6 @@ cosmetics:
     item: fluxarmor:grandnord_boots
     slot: feet
     rarity: epique
-  # givre
-  givre_helmet:
-    name: "&#8EBCCBDiadème du Permafrost"
-    item: fluxarmor:givre_helmet
-    slot: head
-    rarity: epique
-  givre_chestplate:
-    name: "&#8EBCCBManteau du Zénith Glacial"
-    item: fluxarmor:givre_chestplate
-    slot: chest
-    rarity: epique
-  givre_leggings:
-    name: "&#8EBCCBVoile des Neiges Éternelles"
-    item: fluxarmor:givre_leggings
-    slot: legs
-    rarity: epique
-  givre_boots:
-    name: "&#8EBCCBBottes du Silence Blanc"
-    item: fluxarmor:givre_boots
-    slot: feet
-    rarity: epique
-  # sylve
-  sylve_helmet:
-    name: "&#A2B88ACouronne du Sylve-Ancien"
-    item: fluxarmor:sylve_helmet
-    slot: head
-    rarity: epique
-  sylve_chestplate:
-    name: "&#A2B88AManteau du Cœur Végétal"
-    item: fluxarmor:sylve_chestplate
-    slot: chest
-    rarity: epique
-  sylve_leggings:
-    name: "&#A2B88AJambières des Racines Profondes"
-    item: fluxarmor:sylve_leggings
-    slot: legs
-    rarity: epique
-  sylve_boots:
-    name: "&#A2B88ABottines du Marche-Racine"
-    item: fluxarmor:sylve_boots
-    slot: feet
-    rarity: epique
-  # hivers
-  hivers_helmet:
-    name: "&#8EBCCBDiadème du Permafrost II"
-    item: fluxarmor:hivers_helmet
-    slot: head
-    rarity: mythique
-  hivers_chestplate:
-    name: "&#8EBCCBManteau du Zénith Éternel II"
-    item: fluxarmor:hivers_chestplate
-    slot: chest
-    rarity: mythique
-  hivers_leggings:
-    name: "&#8EBCCBVoile des Neiges Éternelles II"
-    item: fluxarmor:hivers_leggings
-    slot: legs
-    rarity: mythique
-  hivers_boots:
-    name: "&#8EBCCBBottes du Silence Blanc II"
-    item: fluxarmor:hivers_boots
-    slot: feet
-    rarity: mythique
-  # ancien
-  ancien_helmet:
-    name: "&#A2B88ACouronne du Sylve-Ancien II"
-    item: fluxarmor:ancien_helmet
-    slot: head
-    rarity: mythique
-  ancien_chestplate:
-    name: "&#A2B88AManteau de l'Éveil Sylvestre II"
-    item: fluxarmor:ancien_chestplate
-    slot: chest
-    rarity: mythique
-  ancien_leggings:
-    name: "&#A2B88AJambières des Racines Profondes II"
-    item: fluxarmor:ancien_leggings
-    slot: legs
-    rarity: mythique
-  ancien_boots:
-    name: "&#A2B88ABottines du Marche-Racine II"
-    item: fluxarmor:ancien_boots
-    slot: feet
-    rarity: mythique
-  # sentinelle
-  sentinelle_helmet:
-    name: "&#83A6F5Heaume du Serment Azur"
-    item: fluxarmor:sentinelle_helmet
-    slot: head
-    rarity: mythique
-  sentinelle_chestplate:
-    name: "&#83A6F5Cuirasse du Bastion Céleste"
-    item: fluxarmor:sentinelle_chestplate
-    slot: chest
-    rarity: mythique
-  sentinelle_leggings:
-    name: "&#83A6F5Grèves du Marcheur Royal"
-    item: fluxarmor:sentinelle_leggings
-    slot: legs
-    rarity: mythique
-  sentinelle_boots:
-    name: "&#83A6F5Sabatons du Veilleur"
-    item: fluxarmor:sentinelle_boots
-    slot: feet
-    rarity: mythique
-  # pyromancien
-  pyromancien_helmet:
-    name: "&#C65A35Diadème du Four Ancien"
-    item: fluxarmor:pyromancien_helmet
-    slot: head
-    rarity: mythique
-  pyromancien_chestplate:
-    name: "&#C65A35Manteau du Brasier"
-    item: fluxarmor:pyromancien_chestplate
-    slot: chest
-    rarity: mythique
-  pyromancien_leggings:
-    name: "&#C65A35Voile des Cendres"
-    item: fluxarmor:pyromancien_leggings
-    slot: legs
-    rarity: mythique
-  pyromancien_boots:
-    name: "&#C65A35Bottes des Terres Ardentes"
-    item: fluxarmor:pyromancien_boots
-    slot: feet
-    rarity: mythique
-  # zero
-  zero_helmet:
-    name: "&#B9E8F2Diadème du Zéro Absolu"
-    item: fluxarmor:zero_helmet
-    slot: head
-    rarity: legendaire
-  zero_chestplate:
-    name: "&#B9E8F2Mantelet des Brumes Éternelles"
-    item: fluxarmor:zero_chestplate
-    slot: chest
-    rarity: legendaire
-  zero_boots:
-    name: "&#B9E8F2Solerets de l'Hiver Silencieux"
-    item: fluxarmor:zero_boots
-    slot: feet
-    rarity: legendaire
-  # arcanum
-  arcanum_helmet:
-    name: "&#C8874DCapuche du Soleil Brisé"
-    item: fluxarmor:arcanum_helmet
-    slot: head
-    rarity: legendaire
-  arcanum_chestplate:
-    name: "&#C8874DManteau du Sceau de Combustion"
-    item: fluxarmor:arcanum_chestplate
-    slot: chest
-    rarity: legendaire
-  arcanum_leggings:
-    name: "&#C8874DSillage des Braises"
-    item: fluxarmor:arcanum_leggings
-    slot: legs
-    rarity: legendaire
-  arcanum_boots:
-    name: "&#C8874DFoulées de Cendre"
-    item: fluxarmor:arcanum_boots
-    slot: feet
-    rarity: legendaire
   # virale
   virale_helmet:
     name: "&#5a85eaCasque virale"
@@ -353,3 +150,59 @@ cosmetics:
     item: ELYTRA
     slot: chest
     rarity: unique
+
+# Outfits of the rpg universe, apart from the vanilla cosmetics: each one is a whole outfit (the four slots).
+# set: a FluxArmor set (pieces fluxarmor:<set>_<helmet|chestplate|leggings|boots>), or pieces.<piece> to pick the
+# items one by one. Owned when free, given (/tenue donner), by admins, or when it is the player's class's.
+rpg-outfits:
+  rpg_brasier:
+    name: "&#C96B36Tenue du Brasier"
+    set: brasier
+    rarity: commun
+  rpg_givre:
+    name: "&#8EBCCBTenue du Givre"
+    set: givre
+    rarity: commun
+  rpg_ancien:
+    name: "&#A2B88ATenue du Sylve-Ancien"
+    set: ancien
+    rarity: commun
+  rpg_saule:
+    name: "&#82916BTenue du Vieux-Saule"
+    set: saule
+    rarity: unique
+  rpg_sylve:
+    name: "&#A2B88ATenue de la Sylve Primordiale"
+    set: sylve
+    rarity: epique
+  rpg_hivers:
+    name: "&#8EBCCBTenue des Mille Hivers"
+    set: hivers
+    rarity: mythique
+  rpg_pyromancien:
+    name: "&#C65A35Tenue du Pyromancien des Cendres"
+    set: pyromancien
+    rarity: mythique
+  rpg_sentinelle:
+    name: "&#83A6F5Tenue de la Sentinelle Azurée"
+    set: sentinelle
+    rarity: mythique
+  rpg_zero:
+    name: "&#B9E8F2Tenue du Zéro Absolu"
+    set: zero
+    rarity: legendaire
+  rpg_arcanum:
+    name: "&#C8874DTenue de l'Arcanum"
+    set: arcanum
+    rarity: legendaire
+
+# Outfit worn by default in the rpg universe, by class (FluxDungeons class id; default: any other class). A player
+# there is never bare.
+rpg-class-outfits:
+  pyromancer: rpg_brasier
+  cryomancer: rpg_givre
+  druid: rpg_ancien
+  default: rpg_sentinelle
+
+# Universe of the rpg world (Flux's universes.yml).
+rpg-universe: rpg

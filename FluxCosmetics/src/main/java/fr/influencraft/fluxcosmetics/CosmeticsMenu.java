@@ -7,6 +7,7 @@ import fr.influencraft.flux.api.list.ListEntry;
 import fr.influencraft.flux.api.list.ListProvider;
 import fr.influencraft.flux.api.list.ListQuery;
 import fr.influencraft.flux.api.list.Lists;
+import fr.influencraft.flux.api.util.Sounds;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -30,7 +31,9 @@ import java.util.List;
  *   [cosmetics] none &lt;slot&gt;   take off the cosmetic worn in that slot (HEAD, CHEST, LEGS, FEET)
  *   [cosmetics] changed       something was worn by another plugin's action (a tag): entries are read again
  *   [cosmetics] turn &lt;deg&gt;    turn the wardrobe's camera around the mannequin
- *   [cosmetics] frame         the camera frames the category now shown (after [list] cosmetics filter &lt;n&gt;)
+ *   [cosmetics] category &lt;n&gt;  shows a category of his universe (the camera frames it), refused otherwise
+ *   [cosmetics] frame         the camera frames the category now shown
+ *   [cosmetics] rpg &lt;key&gt;     chooses his rpg outfit ({@link RpgOutfits})
  *   [cosmetics] opened|closed the menu shows or not (the camera makes room for it)
  *   [cosmetics] leave         leave the wardrobe
  *   [cosmetics] main          leave the wardrobe and open the main menu (main-menu of the config)
@@ -45,8 +48,9 @@ final class CosmeticsMenu {
 
     /** The categories in filter order: the four armour slots, the tags, the saved outfits. */
     private static final EquipmentSlot[] SLOTS = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
-    private static final String[] ICONS = {"LEATHER_HELMET", "LEATHER_CHESTPLATE", "LEATHER_LEGGINGS", "LEATHER_BOOTS", "NAME_TAG", "ARMOR_STAND"};
-    static final int TAGS = 4, PRESETS = 5;
+    private static final String[] ICONS = {"LEATHER_HELMET", "LEATHER_CHESTPLATE", "LEATHER_LEGGINGS", "LEATHER_BOOTS", "NAME_TAG",
+            "ARMOR_STAND", "NETHERITE_CHESTPLATE"};
+    static final int TAGS = 4, PRESETS = 5, RPG = 6;
 
     private final FluxCosmetics plugin;
     private final OutfitPresets presets;
@@ -77,15 +81,28 @@ final class CosmeticsMenu {
 
     /** The next opening of the menu shows his saved outfits (/tenue). */
     void showOutfits(Player player) {
-        Lists.act(player, LIST, "filter " + PRESETS, 14);
+        // his saved outfits are vanilla ones: in the rpg universe, his rpg outfits instead
+        int category = plugin.outfits().rpg().in(player) ? RPG : PRESETS;
+        Lists.act(player, LIST, "filter " + category, 14);
         WardrobeView view = plugin.wardrobe().view(player);
-        if (view != null) view.frame(PRESETS);
+        if (view != null) view.frame(category);
     }
 
     /** Opens the menu on the category and page he last looked at. */
     void open(Player player) {
+        int shown = Lists.state(player, LIST).filter();
+        if (!allowed(player, shown)) Lists.act(player, LIST, "filter " + (plugin.outfits().rpg().in(player) ? RPG : 0), 14);
         Lists.invalidate(player, LIST);
         FluxApi.open(player, MENU);
+    }
+
+    /**
+     * Categories of his universe: in the rpg universe his rpg outfit and the tags only (vanilla cosmetics never show
+     * there), elsewhere everything but the rpg outfits.
+     */
+    boolean allowed(Player player, int category) {
+        boolean rpg = plugin.outfits().rpg().in(player);
+        return category == TAGS || (category == RPG) == rpg;
     }
 
     private List<String> categories() {
@@ -100,7 +117,22 @@ final class CosmeticsMenu {
         String arg = parts.length > 1 ? parts[1].trim() : "";
         WardrobeView view = plugin.wardrobe().view(player);
         if (parts[0].startsWith("preset-")) {
-            presets.act(player, parts[0], arg);
+            if (plugin.outfits().rpg().in(player)) Sounds.cue(player, "error");
+            else presets.act(player, parts[0], arg);
+            return;
+        }
+        if (parts[0].equals("rpg")) {
+            RpgOutfits rpg = plugin.outfits().rpg();
+            RpgOutfits.Outfit o = rpg.get(arg);
+            if (o == null || !rpg.owns(player, o)) {
+                Sounds.cue(player, "error");
+                return;
+            }
+            // his class's outfit chosen: back to "my class's", which follows a class change
+            plugin.outfits().chooseRpg(player, o.equals(rpg.classOutfit(player)) ? null : o.key());
+            Sounds.cue(player, "toggle-on");
+            Lists.invalidate(player, LIST);
+            if (view != null) view.redress();
             return;
         }
         switch (parts[0]) {
@@ -139,6 +171,24 @@ final class CosmeticsMenu {
             case "frame" -> {
                 if (view != null) view.frame(Lists.state(player, LIST).filter());
             }
+            case "category" -> {
+                int category;
+                try {
+                    category = Integer.parseInt(arg);
+                } catch (NumberFormatException e) {
+                    return;
+                }
+                // a category of the other universe: refused, the list stays
+                if (!allowed(player, category)) {
+                    Sounds.cue(player, "error");
+                    return;
+                }
+                Sounds.cue(player, "page");
+                Lists.act(player, LIST, "filter " + category, 14);
+                if (view != null) view.frame(category);
+                var open = FluxApi.view(player);
+                if (open != null) open.refresh();
+            }
             case "closed" -> {
                 if (view != null) view.menuShown(false);
             }
@@ -162,7 +212,9 @@ final class CosmeticsMenu {
     // ================================================================== what the menu shows
 
     private List<ListEntry> entries(Player viewer, int category) {
-        List<ListEntry> out = category == PRESETS ? presets.entries(viewer) : category == TAGS ? tags(viewer) : pieces(viewer, category);
+        List<ListEntry> out = !allowed(viewer, category) ? new ArrayList<>()
+                : category == RPG ? rpgEntries(viewer)
+                : category == PRESETS ? presets.entries(viewer) : category == TAGS ? tags(viewer) : pieces(viewer, category);
         // only the saved outfits answer a right click
         for (ListEntry e : out) if (!e.values().containsKey("clic_droit")) e.set("clic_droit", "");
         return out;
@@ -211,6 +263,33 @@ final class CosmeticsMenu {
             out.add(e);
         }
         out.addFirst(noTag(viewer, rankShown));
+        return out;
+    }
+
+    /** His rpg outfits: his class's first, then the others, the worn one glowing. */
+    private List<ListEntry> rpgEntries(Player viewer) {
+        RpgOutfits rpg = plugin.outfits().rpg();
+        RpgOutfits.Outfit mine = rpg.classOutfit(viewer);
+        RpgOutfits.Outfit worn = rpg.active(viewer, plugin.outfits().rpgChoice(viewer));
+        List<RpgOutfits.Outfit> all = new ArrayList<>(rpg.all());
+        if (mine != null && all.remove(mine)) all.addFirst(mine);
+        List<ListEntry> out = new ArrayList<>();
+        for (RpgOutfits.Outfit o : all) {
+            boolean wearing = o.equals(worn), owned = rpg.owns(viewer, o);
+            Lore lore = Lore.create();
+            if (o.equals(mine)) lore.description(plugin.messages().raw("menu.rpg-class-outfit"));
+            lore.kv(plugin.messages().raw("menu.rarity"), "&" + o.rarity().colour() + plugin.messages().raw("rarities." + o.rarity().id()));
+            if (wearing) lore.ok(plugin.messages().raw("menu.worn"));
+            if (!owned) lore.ko(plugin.messages().raw("menu.locked"));
+            else if (!wearing) lore.left(plugin.messages().raw("menu.wear"));
+            ItemStack piece = rpg.item(o, EquipmentSlot.CHEST);
+            if (piece == null) piece = rpg.item(o, EquipmentSlot.HEAD);
+            ItemStack item = Items.dress(icon(piece != null ? piece : new ItemStack(org.bukkit.Material.ARMOR_STAND)), o.name(), lore.build(), viewer);
+            if (item == null) continue;
+            item.setData(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, wearing);
+            out.add(ListEntry.of(o.key()).item(item)
+                    .set("clic", owned && !wearing ? "[cosmetics] rpg " + o.key() : "[sound] @error"));
+        }
         return out;
     }
 
@@ -282,12 +361,15 @@ final class CosmeticsMenu {
     private ItemStack categoryButton(Player player, int category) {
         List<String> names = categories();
         boolean selected = Lists.state(player, LIST).filter() == category;
+        boolean allowed = allowed(player, category);
         Lore lore = Lore.create().description(plugin.messages().rawList("menu.category-descriptions").stream()
                 .skip(category).findFirst().orElse(""));
-        if (selected) lore.ok(plugin.messages().raw("menu.selected"));
+        if (!allowed) lore.ko(plugin.messages().raw(category == RPG ? "menu.rpg-only" : "menu.vanilla-only"));
+        else if (selected) lore.ok(plugin.messages().raw("menu.selected"));
         else lore.left(plugin.messages().raw("menu.see"));
         ItemStack item = Items.of(ICONS[category], names.get(category), lore.build(), player);
         if (item == null) return null;
+        if (!allowed) item.setData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL, org.bukkit.NamespacedKey.minecraft("gray_dye"));
         dye(item, plugin.getConfig().getStringList("menu-colours"), category);
         if (selected) glint(item);
         return item;

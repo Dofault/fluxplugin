@@ -20,8 +20,9 @@ record Settings(double distance, double minDistance, double maxDistance, double 
     }
 
     /** Categories of the menu, in its filter order. */
-    static final String[] CATEGORIES = {"head", "chest", "legs", "feet", "tags", "outfits"};
-    private static final double[][] DEFAULTS = {{1.75, 1.3, 6}, {1.25, 1.6, 8}, {0.75, 1.6, 10}, {0.15, 1.4, 16}, {2.15, 1.9, 2}, {1.1, 3.6, 8}};
+    static final String[] CATEGORIES = {"head", "chest", "legs", "feet", "tags", "outfits", "rpg"};
+    private static final double[][] DEFAULTS = {{1.75, 1.3, 6}, {1.25, 1.6, 8}, {0.75, 1.6, 10}, {0.15, 1.4, 16}, {2.15, 1.9, 2}, {1.1, 3.6, 8},
+            {1.0, 3.2, 8}};
 
     /** The shot of a category (index of the menu's filter), the last one past the end. */
     Shot shot(int category) {

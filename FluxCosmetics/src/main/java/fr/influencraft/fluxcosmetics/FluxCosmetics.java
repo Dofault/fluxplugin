@@ -39,6 +39,8 @@ public final class FluxCosmetics extends FluxPlugin {
         outfits.createTables();
         outfits.load(getConfig());
         Bukkit.getPluginManager().registerEvents(outfits, this);
+        Bukkit.getPluginManager().registerEvents(outfits.rpg(), this);
+        outfits.rpg().start();
         // started while players are online (restart of the plugin): their cosmetics back on
         for (Player p : Bukkit.getOnlinePlayers()) outfits.open(p);
         menu = new CosmeticsMenu(this);
@@ -47,7 +49,7 @@ public final class FluxCosmetics extends FluxPlugin {
                 : args.length == 1 ? List.of("porter", "donner", "reprendre", "reload")
                 : args.length == 2 && args[0].equalsIgnoreCase("porter") ? outfits.keys()
                 : args.length == 2 ? fr.influencraft.flux.api.util.Players.complete(args[1])
-                : args.length == 3 && !args[0].equalsIgnoreCase("porter") ? withAll(outfits.keys()) : List.of();
+                : args.length == 3 && !args[0].equalsIgnoreCase("porter") ? withAll(both()) : List.of();
         // the wardrobe on the category last looked at
         command("cosmetique")
                 .description("Wardrobe: see yourself from outside and choose your cosmetics.")
@@ -82,6 +84,12 @@ public final class FluxCosmetics extends FluxPlugin {
         if (outfits != null) outfits.load(getConfig());
     }
 
+    private List<String> both() {
+        List<String> out = new java.util.ArrayList<>(outfits.keys());
+        out.addAll(outfits.rpg().keys());
+        return out;
+    }
+
     private static List<String> withAll(List<String> keys) {
         List<String> out = new java.util.ArrayList<>(keys);
         out.addFirst("tout");
@@ -99,14 +107,16 @@ public final class FluxCosmetics extends FluxPlugin {
         }
         java.util.Collection<String> keys;
         if (what.equalsIgnoreCase("tout")) keys = outfits.everything();
-        else if (outfits.get(what) != null) keys = List.of(what);
+        else if (outfits.get(what) != null || outfits.rpg().get(what) != null) keys = List.of(what);
         else {
             messages().send(sender, "outfits.unknown", "%name%", what);
             return;
         }
         if (give) outfits.give(target.getUniqueId(), keys);
         else outfits.take(target.getUniqueId(), keys);
-        String shown = keys.size() == 1 ? outfits.get(keys.iterator().next()).name() : messages().raw("admin.all");
+        String one = keys.size() == 1 ? keys.iterator().next() : null;
+        String shown = one == null ? messages().raw("admin.all")
+                : outfits.get(one) != null ? outfits.get(one).name() : outfits.rpg().get(one).name();
         messages().send(sender, give ? "admin.given" : "admin.taken", "%player%", target.getName(), "%name%", shown);
     }
 
