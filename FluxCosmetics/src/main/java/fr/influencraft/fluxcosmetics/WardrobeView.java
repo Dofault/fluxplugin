@@ -115,6 +115,8 @@ final class WardrobeView {
     private volatile Settings.Shot shot;
     /** His nametag shows over the mannequin (the tags category). */
     private boolean nametag;
+    /** A dialog of the menu is open: closing the menu keeps the camera's shot. */
+    private boolean held;
     /** Where the camera glides to (a shot, the free camera given back, a turn button), null once there. */
     private volatile Float goalYaw, goalPitch;
     /** Free camera's angle and zoom when the menu opened, given back when it closes. */
@@ -356,6 +358,8 @@ final class WardrobeView {
      * is closed, the free camera's angle and zoom come back.
      */
     void menuShown(boolean shown) {
+        // a dialog of the menu (an outfit's name) took the screen: the shot stays, the menu comes back after it
+        if (!shown && held) return;
         if (shown) {
             if (shot == null) {
                 freePitch = pitch;
@@ -383,11 +387,16 @@ final class WardrobeView {
     void frame(int category) {
         shot = settings.shot(category);
         // the tags: his real nametag over the mannequin's head, as the others see it
-        nametag = category == Settings.CATEGORIES.length - 1;
+        nametag = category >= CosmeticsMenu.TAGS;
         redress();
         goalYaw = wrap(back.getYaw() + 180);
         goalPitch = shot.pitch();
         wantedZoom = shot.distance();
+    }
+
+    /** While a dialog of the menu is shown, its closing of the menu does not give the free camera back. */
+    void holdShot(boolean hold) {
+        held = hold;
     }
 
     /** Turns the camera around the mannequin by that many degrees (the menu's buttons: no key reaches the server then). */

@@ -1,6 +1,7 @@
 # Cosmetics menu, opened from the wardrobe (/tenue, right click). Drawn in the player's inventory rows only (slots 54
 # to 89 of a 6-row chest): the chest above stays empty and transparent, the mannequin is seen over the menu and wears
-# what is clicked at once. Entries and category buttons are built by FluxCosmetics (lists cosmetics, cosmetics_cat_<n>);
+# what is clicked at once. Row 1: back, turn, the 5 categories, see the outfit, icon; rows 2-3: saved outfits
+# (63), the list (14 per page); hotbar row: pages. Entries and category buttons are built by FluxCosmetics (lists cosmetics, cosmetics_cat_<n>);
 # Flux keeps each player's category and page, so the menu opens again where he left it.
 # Theme: theme.menus.cosmetiques of Flux's config (picture drawn by gen_ui.py).
 rows: 6
@@ -44,12 +45,20 @@ lists:
       material: entry
       actions:
         left: ["[list] cosmetics filter 4", "[cosmetics] frame", "[refresh]"]
+  # saved outfits, left of the list they fill
+  cosmetics_cat_5:
+    slots: 63
+    item:
+      material: entry
+      actions:
+        left: ["[list] cosmetics filter 5", "[cosmetics] frame", "[refresh]"]
   cosmetics:
     slots: 64-70, 73-79
     item:
       material: entry
       actions:
         left: ["%entry_clic%", "[cosmetics] changed", "[refresh]"]
+        right: ["%entry_clic_droit%"]
 
 widgets:
   pages:
@@ -69,6 +78,18 @@ items:
     actions:
       left: ["[cosmetics] main"]
 
+  tourner:
+    material: "itemsadder:fluxui:btn_rotate_blue"
+    name: "Tourner"
+    slots: [55]
+    lore:
+      - "@desc Fait tourner la caméra autour de ton personnage."
+      - "@left Tourner à gauche"
+      - "@right Tourner à droite"
+    actions:
+      left: ["[cosmetics] turn -45"]
+      right: ["[cosmetics] turn 45"]
+
   camera:
     material: "itemsadder:fluxui:btn_eye_blue"
     name: "Voir ma tenue"
@@ -86,23 +107,3 @@ items:
     lore:
       - "@desc Choisis ce que tu portes par-dessus ton armure et le tag affiché à côté de ton pseudo. Ton personnage le porte aussitôt, juste au-dessus."
       - "@desc Ferme ce menu pour bouger la caméra, puis clic droit pour le rouvrir."
-
-  tourner_gauche:
-    material: "itemsadder:fluxui:btn_left_blue"
-    name: "Tourner"
-    slots: [63]
-    lore:
-      - "@desc Fait tourner la caméra autour de ton personnage."
-      - "@left Tourner à gauche"
-    actions:
-      left: ["[cosmetics] turn -45"]
-
-  tourner_droite:
-    material: "itemsadder:fluxui:btn_right_blue"
-    name: "Tourner"
-    slots: [71]
-    lore:
-      - "@desc Fait tourner la caméra autour de ton personnage."
-      - "@left Tourner à droite"
-    actions:
-      left: ["[cosmetics] turn 45"]

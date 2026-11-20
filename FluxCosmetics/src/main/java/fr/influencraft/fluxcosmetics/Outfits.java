@@ -58,17 +58,30 @@ final class Outfits implements Listener {
     record Cosmetic(String key, String name, String item, EquipmentSlot slot, boolean free, Rarity rarity) {
     }
 
+    /**
+     * An outfit saved by a player: its name (already cleaned), the cosmetic of each armour slot (missing: nothing
+     * there) and the tag (FluxTags id, null: not saved).
+     */
+    record Preset(String name, Map<EquipmentSlot, String> pieces, String tag) {
+    }
+
     /** What a player has: kept while he is online. */
     private static final class Wardrobe {
         final Set<String> owned = ConcurrentHashMap.newKeySet();
         final Map<EquipmentSlot, String> worn = new EnumMap<>(EquipmentSlot.class);
+        /** Saved outfits by slot number (1, 2...). */
+        final Map<Integer, Preset> presets = new ConcurrentHashMap<>();
     }
+
+    /** Armour slots kept in a preset, in the order of the table's columns. */
+    static final EquipmentSlot[] ARMOUR = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
+    private static final String[] COLUMNS = {"head", "chest", "legs", "feet"};
 
     private final FluxCosmetics plugin;
     private final Map<String, Cosmetic> cosmetics = new LinkedHashMap<>();
     private final Map<String, Rarity> rarities = new LinkedHashMap<>();
     private final Map<UUID, Wardrobe> players = new ConcurrentHashMap<>();
-    private String ownedTable, wornTable;
+    private String ownedTable, wornTable, presetsTable;
     private final java.util.concurrent.ExecutorService db = java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
         Thread t = new Thread(r, "FluxCosmetics-db");
         t.setDaemon(true);
@@ -82,12 +95,16 @@ final class Outfits implements Listener {
     void createTables() {
         ownedTable = Database.table("flux_cosmetics_owned");
         wornTable = Database.table("flux_cosmetics_worn");
+        presetsTable = Database.table("flux_cosmetics_presets");
         String uuid = Database.dialect().key(36);
         try (Connection c = Database.connection(); Statement st = c.createStatement()) {
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + ownedTable + " (uuid " + uuid + " NOT NULL, cosmetic VARCHAR(64) NOT NULL,"
                     + " PRIMARY KEY (uuid, cosmetic))");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + wornTable + " (uuid " + uuid + " NOT NULL, slot VARCHAR(8) NOT NULL,"
                     + " cosmetic VARCHAR(64) NOT NULL, PRIMARY KEY (uuid, slot))");
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS " + presetsTable + " (uuid " + uuid + " NOT NULL, slot INT NOT NULL,"
+                    + " name VARCHAR(64) NOT NULL, head VARCHAR(64), chest VARCHAR(64), legs VARCHAR(64), feet VARCHAR(64),"
+                    + " tag VARCHAR(64), PRIMARY KEY (uuid, slot))");
         } catch (SQLException e) {
             plugin.getLogger().severe("Could not create the cosmetics tables: " + e.getMessage());
         }
@@ -187,6 +204,81 @@ final class Outfits implements Listener {
             if (!quiet) plugin.messages().send(player, "outfits.wearing", "%name%", c.name());
         }
         return true;
+    }
+
+    /**
+     * Puts this cosmetic on him, quietly, whatever he wore in its slot (a preset): false when it is unknown or not his.
+     */
+    boolean wear(Player player, String key) {
+        Cosmetic c = cosmetics.get(key);
+        if (c == null || !owns(player, c)) return false;
+        Wardrobe w = players.computeIfAbsent(player.getUniqueId(), k -> new Wardrobe());
+        if (key.equals(w.worn.get(c.slot()))) return true;
+        w.worn.put(c.slot(), key);
+        Appearance.set(player, c.slot(), item(c, player));
+        saveWorn(player.getUniqueId(), c.slot(), key);
+        return true;
+    }
+
+    // ================================================================== presets
+
+    /** His saved outfits by slot number (1...), empty while not read yet. */
+    Map<Integer, Preset> presets(Player player) {
+        Wardrobe w = players.get(player.getUniqueId());
+        return w == null ? Map.of() : Map.copyOf(w.presets);
+    }
+
+    /** What he wears now, as a preset of that name ({@code tag}: his tag now, null when unknown). */
+    Preset current(Player player, String name, String tag) {
+        Map<EquipmentSlot, String> pieces = new EnumMap<>(EquipmentSlot.class);
+        for (EquipmentSlot slot : ARMOUR) {
+            String key = worn(player, slot);
+            if (key != null) pieces.put(slot, key);
+        }
+        return new Preset(name, Map.copyOf(pieces), tag);
+    }
+
+    /** Saves (or overwrites) one of his outfits. */
+    void savePreset(Player player, int number, Preset preset) {
+        Wardrobe w = players.computeIfAbsent(player.getUniqueId(), k -> new Wardrobe());
+        w.presets.put(number, preset);
+        UUID id = player.getUniqueId();
+        async(() -> {
+            try (Connection c = Database.connection()) {
+                try (PreparedStatement del = c.prepareStatement("DELETE FROM " + presetsTable + " WHERE uuid = ? AND slot = ?")) {
+                    del.setString(1, id.toString());
+                    del.setInt(2, number);
+                    del.executeUpdate();
+                }
+                try (PreparedStatement ins = c.prepareStatement("INSERT INTO " + presetsTable
+                        + " (uuid, slot, name, head, chest, legs, feet, tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
+                    ins.setString(1, id.toString());
+                    ins.setInt(2, number);
+                    ins.setString(3, preset.name());
+                    for (int i = 0; i < ARMOUR.length; i++) ins.setString(4 + i, preset.pieces().get(ARMOUR[i]));
+                    ins.setString(8, preset.tag());
+                    ins.executeUpdate();
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().warning("Could not save an outfit of " + id + ": " + e.getMessage());
+            }
+        });
+    }
+
+    void deletePreset(Player player, int number) {
+        Wardrobe w = players.get(player.getUniqueId());
+        if (w != null) w.presets.remove(number);
+        UUID id = player.getUniqueId();
+        async(() -> {
+            try (Connection c = Database.connection();
+                 PreparedStatement del = c.prepareStatement("DELETE FROM " + presetsTable + " WHERE uuid = ? AND slot = ?")) {
+                del.setString(1, id.toString());
+                del.setInt(2, number);
+                del.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().warning("Could not delete an outfit of " + id + ": " + e.getMessage());
+            }
+        });
     }
 
     /** Takes off whatever cosmetic he wears in that slot (his real item shows again), quietly. */
@@ -291,6 +383,19 @@ final class Outfits implements Listener {
                         }
                     }
                 }
+                try (PreparedStatement ps = c.prepareStatement("SELECT slot, name, head, chest, legs, feet, tag FROM " + presetsTable + " WHERE uuid = ?")) {
+                    ps.setString(1, id.toString());
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            Map<EquipmentSlot, String> pieces = new EnumMap<>(EquipmentSlot.class);
+                            for (int i = 0; i < ARMOUR.length; i++) {
+                                String key = rs.getString(COLUMNS[i]);
+                                if (key != null) pieces.put(ARMOUR[i], key);
+                            }
+                            w.presets.put(rs.getInt("slot"), new Preset(rs.getString("name"), Map.copyOf(pieces), rs.getString("tag")));
+                        }
+                    }
+                }
             } catch (SQLException ex) {
                 plugin.getLogger().warning("Could not read the cosmetics of " + id + ": " + ex.getMessage());
                 return;
@@ -302,6 +407,7 @@ final class Outfits implements Listener {
                 if (before != null) {
                     w.owned.addAll(before.owned);
                     w.worn.putAll(before.worn);
+                    w.presets.putAll(before.presets);
                 }
                 dress(player);
             });

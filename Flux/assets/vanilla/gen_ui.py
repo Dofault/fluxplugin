@@ -196,10 +196,11 @@ ICONS = {
     "filter": [".######.", "..####..", "...##...", "...##...", "...##...", "...##..."],
     "shirt": [".##..##.", "########", "#.####.#", "..####..", "..####..", "..####.."],
     "eye": ["..####..", ".#....#.", "#..##..#", "#..##..#", ".#....#.", "..####.."],
+    "rotate": ["..###.#.", ".#...##.", "#...###.", "#......#", ".#....#.", "..####.."],
 }
 ICON_X, ICON_Y = 4, 4
 BUTTONS = ["back", "close", "info", "add", "remove", "left", "right", "check", "lock", "settings", "search",
-           "filter", "up", "down", "shirt", "eye"]
+           "filter", "up", "down", "shirt", "eye", "rotate"]
 
 
 def tall_button_png(icon, face, rows=2):

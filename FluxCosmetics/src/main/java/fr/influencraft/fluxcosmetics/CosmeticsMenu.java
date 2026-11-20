@@ -20,8 +20,9 @@ import java.util.List;
  * player's inventory rows, the chest above stays empty and transparent: the mannequin is seen over it and wears what
  * is clicked at once.
  *
- * <p>One Flux list, {@code cosmetics}, filtered by category: the four armour slots ({@link Outfits}) and the tags,
- * whose entries are those of FluxTags' own list (read through Flux, no dependency). Flux keeps the category and the
+ * <p>One Flux list, {@code cosmetics}, filtered by category: the four armour slots ({@link Outfits}), the tags,
+ * whose entries are those of FluxTags' own list (read through Flux, no dependency), and the saved outfits
+ * ({@link OutfitPresets}). Flux keeps the category and the
  * page of each player, so the menu opens again where he left it.</p>
  *
  * <pre>
@@ -33,6 +34,7 @@ import java.util.List;
  *   [cosmetics] opened|closed the menu shows or not (the camera makes room for it)
  *   [cosmetics] leave         leave the wardrobe
  *   [cosmetics] main          leave the wardrobe and open the main menu (main-menu of the config)
+ *   [cosmetics] preset-wear|preset-new|preset-manage &lt;n&gt;   saved outfits ({@link OutfitPresets})
  * </pre>
  */
 final class CosmeticsMenu {
@@ -41,14 +43,17 @@ final class CosmeticsMenu {
     /** Ids of FluxTags' "no tag" and rank tag entries. */
     private static final String NO_TAG = "aucun", RANK_TAG = "rang";
 
-    /** The categories in filter order; the last one is the tags. */
+    /** The categories in filter order: the four armour slots, the tags, the saved outfits. */
     private static final EquipmentSlot[] SLOTS = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
-    private static final String[] ICONS = {"LEATHER_HELMET", "LEATHER_CHESTPLATE", "LEATHER_LEGGINGS", "LEATHER_BOOTS", "NAME_TAG"};
+    private static final String[] ICONS = {"LEATHER_HELMET", "LEATHER_CHESTPLATE", "LEATHER_LEGGINGS", "LEATHER_BOOTS", "NAME_TAG", "ARMOR_STAND"};
+    static final int TAGS = 4, PRESETS = 5;
 
     private final FluxCosmetics plugin;
+    private final OutfitPresets presets;
 
     CosmeticsMenu(FluxCosmetics plugin) {
         this.plugin = plugin;
+        this.presets = new OutfitPresets(plugin);
     }
 
     void register() {
@@ -87,6 +92,10 @@ final class CosmeticsMenu {
         String[] parts = argument.split("\\s+", 2);
         String arg = parts.length > 1 ? parts[1].trim() : "";
         WardrobeView view = plugin.wardrobe().view(player);
+        if (parts[0].startsWith("preset-")) {
+            presets.act(player, parts[0], arg);
+            return;
+        }
         switch (parts[0]) {
             case "wear" -> {
                 plugin.outfits().toggle(player, arg, true);
@@ -146,31 +155,60 @@ final class CosmeticsMenu {
     // ================================================================== what the menu shows
 
     private List<ListEntry> entries(Player viewer, int category) {
-        if (category >= SLOTS.length) {
-            // the tags: FluxTags' own entries (item, click action), as its menu shows them
-            ListProvider tags = Lists.provider(TAGS_LIST);
-            if (tags == null) return List.of();
-            List<ListEntry> entries = tags.entries(new ListQuery(viewer, TAGS_LIST, 0, 0, ""));
-            // picked without a chat line: the mannequin shows the tag
-            List<ListEntry> out = new ArrayList<>();
-            boolean rankShown = false;
-            for (ListEntry e : entries) {
-                // "no tag at all" left out: taking a tag off brings the rank's back (the barrier below)
-                if (e.id().equals(NO_TAG)) continue;
-                String click = e.values().get("clic");
-                var meta = e.item() == null ? null : e.item().getItemMeta();
-                boolean shown = meta != null && meta.hasEnchantmentGlintOverride() && meta.getEnchantmentGlintOverride();
-                if (e.id().equals(RANK_TAG)) rankShown = shown;
-                // the worn tag clicked again comes off: back to the rank's tag, never to no tag at all
-                if (shown && !e.id().equals(RANK_TAG)) e.set("clic", "[tags] " + RANK_TAG + " quiet");
-                else if (shown) e.set("clic", "[sound] @error");
-                else if (click != null && click.startsWith("[tags] ")) e.set("clic", click + " quiet");
-                out.add(e);
-            }
-            out.addFirst(noTag(viewer, rankShown));
-            return out;
+        List<ListEntry> out = category == PRESETS ? presets.entries(viewer) : category == TAGS ? tags(viewer) : pieces(viewer, category);
+        // only the saved outfits answer a right click
+        for (ListEntry e : out) if (!e.values().containsKey("clic_droit")) e.set("clic_droit", "");
+        return out;
+    }
+
+    /** FluxTags' entries as its own menu shows them, read through Flux; null when FluxTags is not there. */
+    private List<ListEntry> tagEntries(Player viewer) {
+        ListProvider tags = Lists.provider(TAGS_LIST);
+        return tags == null ? List.of() : tags.entries(new ListQuery(viewer, TAGS_LIST, 0, 0, ""));
+    }
+
+    private static boolean glinting(ListEntry e) {
+        var meta = e.item() == null ? null : e.item().getItemMeta();
+        return meta != null && meta.hasEnchantmentGlintOverride() && meta.getEnchantmentGlintOverride();
+    }
+
+    /** Id of the tag he shows now (FluxTags makes it glint in its list), null when unknown. */
+    String currentTag(Player player) {
+        for (ListEntry e : tagEntries(player)) if (glinting(e)) return e.id();
+        return null;
+    }
+
+    /** Picture of a tag for him (the {@code image} of FluxTags' entry), null when unknown. */
+    String tagImage(Player player, String tag) {
+        for (ListEntry e : tagEntries(player)) if (e.id().equals(tag)) return e.values().get("image");
+        return null;
+    }
+
+    private List<ListEntry> tags(Player viewer) {
+        // the tags: FluxTags' own entries (item, click action), as its menu shows them
+        List<ListEntry> entries = tagEntries(viewer);
+        if (entries.isEmpty()) return new ArrayList<>();
+        // picked without a chat line: the mannequin shows the tag
+        List<ListEntry> out = new ArrayList<>();
+        boolean rankShown = false;
+        for (ListEntry e : entries) {
+            // "no tag at all" left out: taking a tag off brings the rank's back (the barrier below)
+            if (e.id().equals(NO_TAG)) continue;
+            String click = e.values().get("clic");
+            boolean shown = glinting(e);
+            if (e.id().equals(RANK_TAG)) rankShown = shown;
+            // the worn tag clicked again comes off: back to the rank's tag, never to no tag at all
+            if (shown && !e.id().equals(RANK_TAG)) e.set("clic", "[tags] " + RANK_TAG + " quiet");
+            else if (shown) e.set("clic", "[sound] @error");
+            else if (click != null && click.startsWith("[tags] ")) e.set("clic", click + " quiet");
+            out.add(e);
         }
-        EquipmentSlot slot = SLOTS[Math.max(0, category)];
+        out.addFirst(noTag(viewer, rankShown));
+        return out;
+    }
+
+    private List<ListEntry> pieces(Player viewer, int category) {
+        EquipmentSlot slot = SLOTS[Math.clamp(category, 0, SLOTS.length - 1)];
         Outfits outfits = plugin.outfits();
         String worn = outfits.worn(viewer, slot);
         List<ListEntry> out = new ArrayList<>();

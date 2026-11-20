@@ -899,6 +899,62 @@ items:
       generate: true
       textures:
       - btn/btn_eye_off.png
+  btn_rotate_red:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - btn/btn_rotate_red.png
+  btn_rotate_green:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - btn/btn_rotate_green.png
+  btn_rotate_blue:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - btn/btn_rotate_blue.png
+  btn_rotate_orange:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - btn/btn_rotate_orange.png
+  btn_rotate_purple:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - btn/btn_rotate_purple.png
+  btn_rotate_grey:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - btn/btn_rotate_grey.png
+  btn_rotate_gold:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - btn/btn_rotate_gold.png
+  btn_rotate_off:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - btn/btn_rotate_off.png
   monde_utopia:
     display_name: ' '
     resource:

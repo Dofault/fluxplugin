@@ -7,13 +7,14 @@ usage: "!&#FF5C5C/%flux_cmd_fluxcosmetics_tenue%"
 hint: "&r&7%img_move_keys% &#FFD94DCamera   &r&7%img_mouse_move% &#FFD94DUp/Down   &r&7%img_middle_click% &#FFD94DZoom   &r&7%img_right_click% &#FFD94DCosmetics menu   &r&7%img_left_click% &#FFD94DLeave"
 menu:
   # one entry per category, in this order: helmet, chestplate, leggings, boots, tags
-  categories: ["Helmets", "Chestplates", "Leggings", "Boots", "Tags"]
+  categories: ["Helmets", "Chestplates", "Leggings", "Boots", "Tags", "My outfits"]
   category-descriptions:
     - "What you wear on your head, over your real helmet."
     - "What you wear on your chest, over your real chestplate."
     - "What you wear on your legs, over your real leggings."
     - "What you wear on your feet, over your real boots."
     - "The tag shown next to your name in the chat."
+    - "Save what you wear (cosmetics and tag) under a name, and put it back on in one click."
   selected: "Shown category"
   see: "See"
   worn: "Worn"
@@ -43,3 +44,24 @@ admin:
   taken: "&7%name% &7taken back from &f%player%&7."
   all: "&fEvery cosmetic"
   unknown-player: "&#FF5C5CNo player named &f%player%&#FF5C5C."
+presets:
+  empty-name: "Slot %n%"
+  empty-description: "Saves here what you wear now: cosmetics and tag."
+  save: "Save my outfit"
+  wear: "Put this outfit on"
+  manage: "Rename, overwrite or delete"
+  worn: "Worn now"
+  nothing: "&7Nothing"
+  tag: "Tag"
+  slots: ["Helmet", "Chestplate", "Leggings", "Boots"]
+  default-name: "Outfit %n%"
+  dialog-title: "Outfit %n%"
+  dialog-new: "What you wear now (cosmetics and tag) will be saved in this slot."
+  dialog-saved: "Change the name of this outfit, replace it with what you wear now, or delete it."
+  name-label: "Outfit name"
+  button-save: "Save"
+  button-overwrite: "Overwrite"
+  button-overwrite-hover: "Replaces this outfit with what you wear now."
+  button-rename: "Rename"
+  button-delete: "Delete"
+  button-cancel: "Cancel"

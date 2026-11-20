@@ -9,6 +9,9 @@ language: ""
 # Menu opened by a right click on the back button of the cosmetics menu (the wardrobe is left first).
 main-menu: main
 
+# Saved outfits per player (category "My outfits" of the cosmetics menu).
+presets: 5
+
 # Colours of the leather icons of the cosmetics menu's categories, in order: helmets, chestplates, leggings, boots.
 menu-colours: ["#7A48C0", "#E060A0", "#2BC4E8", "#2ECF7B"]
 
@@ -50,6 +53,8 @@ menu-camera:
     feet:  {height: 0.15, distance: 1.4, pitch: 16}
     # the tags: his real nametag over the mannequin's head, framed with his head
     tags:  {height: 2.15, distance: 1.9, pitch: 2, look-down: 18}
+    # saved outfits: the whole body, nametag included
+    outfits: {height: 1.1, distance: 3.6, pitch: 8, look-down: 14}
 
 
 # Rarities, from the most common to the rarest (menu order); colour of the name shown in the menu. Names in the
