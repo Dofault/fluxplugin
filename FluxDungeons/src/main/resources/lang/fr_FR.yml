@@ -617,7 +617,7 @@ showcase:
   yours: "&#FFD94D★ Ta classe"
   icon-yours: " &#FFD94D★"
   icon-choose: "Choisir cette classe"
-  hint: "&fMolette &#B376E5: changer de classe &8· &r&7%img_left_click% &#FFD94DChoisir &8· &r&7%img_right_click% &#FFD94DDétails"
+  hint: "&r&7%img_middle_click% &#FFD94DChanger de classe   &r&7%img_left_click% &#FFD94DChoisir   &r&7%img_right_click% &#FFD94DDétails"
   hint-bedrock: "&#B376E5Touche une classe dans ta barre, puis l'écran pour la choisir &8· &#B376E5Appui long : détails"
   confirm: "&r&7%img_left_click% &#FFD94DConfirmer %color%%name%"
   confirm-bedrock: "&#FFD94DTouche encore l'écran pour choisir %color%%name%"
@@ -818,6 +818,8 @@ pets:
   take: 'L''emmener'
   level: 'Niveau'
 class-details:
+  mine: "C'est ta classe"
+  not-mine: "Tu ne joues pas cette classe"
   name: "%name%"
   back: "Retour"
   back-action: "Revenir"

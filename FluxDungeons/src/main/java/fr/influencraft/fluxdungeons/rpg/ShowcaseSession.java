@@ -4,6 +4,7 @@ import fr.influencraft.flux.api.client.Camera;
 import fr.influencraft.flux.api.client.ChatHold;
 import fr.influencraft.flux.api.client.Clients;
 import fr.influencraft.flux.api.client.DropKey;
+import fr.influencraft.flux.api.client.UseKey;
 import fr.influencraft.flux.api.client.Hotbar;
 import fr.influencraft.flux.api.client.Sidebar;
 import fr.influencraft.flux.api.inventory.Items;
@@ -78,7 +79,7 @@ final class ShowcaseSession {
     private static final double SEATED_EYE = 1.02;
     private static final Map<String, String> ACCENTS = Map.of("cryomancer", "#74B6DC", "pyromancer", "#FF8A3C", "druid", "#73C25C");
     /** Ticks a first click waits for the click that confirms it. */
-    private static final int CONFIRM_TICKS = 60;
+    private static final int CONFIRM_TICKS = 100;
     /** Classes shown at once when they do not all fit in the hotbar: slot 8 is then the arrow, slot 9 the way out. */
     private static final int PAGE = 7;
     /** Degrees his head may be off the fight before the server turns it back between two ticks. */
@@ -307,6 +308,9 @@ final class ShowcaseSession {
         if (settings.hideBars()) Hotbar.bars(player, false);
         // his drop key would throw the real item of the slot he holds
         DropKey.claim(showcase.plugin(), player, () -> showcase.dropped(player));
+        // his right click is read from his packets: with an empty real hand the server hears nothing of a click in
+        // the air (the details opened only when the slot he held really carried something)
+        UseKey.claim(showcase.plugin(), player, this::details);
         Sidebar.hide(player, true);
         ChatHold.hold(player, true);
         player.setPlayerTime(settings.time(), false);
@@ -323,6 +327,7 @@ final class ShowcaseSession {
         if (seat != null && seat.isValid()) seat.remove();
         if (steered) Camera.turns(player, null);
         DropKey.release(player);
+        UseKey.release(player);
         Sidebar.hide(player, false);
         ChatHold.hold(player, false);
         if (madeInvisible) player.removePotionEffect(PotionEffectType.INVISIBILITY);
@@ -453,7 +458,12 @@ final class ShowcaseSession {
                 + (mine ? raw("showcase.icon-yours") : "");
         Lore lore = Lore.create().description(raw("classes." + id + ".description"));
         if (!mine) lore.left(raw("showcase.icon-choose"));
+        lore.right(raw("class-menu.details"));
         Items.dress(item, name, lore.build(), player);
+        // a paced weapon (combat.AttackCadence) is not swung by the client before it is recharged, and the recharge
+        // starts again at each change of slot: his left click was not even sent after turning the wheel
+        item.unsetData(DataComponentTypes.MINIMUM_ATTACK_CHARGE);
+        item.resetData(DataComponentTypes.SWING_ANIMATION);
         if (!bedrock && settings.hideHeld()) item.setData(DataComponentTypes.ITEM_MODEL, Key.key("fluxdungeons", "class_" + id));
         return item;
     }
@@ -481,7 +491,9 @@ final class ShowcaseSession {
             showcase.close(player, true);
             return;
         }
-        if (shown != null && showcase.classMenu().openDetails(player, shown, "[close]")) Sounds.cue(player, "page");
+        if (shown == null) return;
+        armed = null;
+        if (showcase.classMenu().openDetails(player, shown, "[close]")) Sounds.cue(player, "page");
     }
 
     /** A left click: the class he holds is chosen, once a second click confirmed it. */

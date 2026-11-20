@@ -345,7 +345,11 @@ final class Showcase implements Listener {
         }, 2L);
     }
 
-    /** A right click (the long press of a touch screen) shows the details of the class he holds; the item he really holds is never used. */
+    /**
+     * A right click (the long press of a touch screen) shows the details of the class he holds; the item he really
+     * holds is never used. Flux's {@code UseKey}, claimed by the session, hears it first from his packets: this one
+     * only answers without the packet adapter.
+     */
     @EventHandler(priority = EventPriority.LOWEST)
     public void onInteract(org.bukkit.event.player.PlayerInteractEvent e) {
         ShowcaseSession s = sessions.get(e.getPlayer().getUniqueId());

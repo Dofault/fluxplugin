@@ -51,6 +51,8 @@ public final class ClassMenu {
     private final RpgStore store;
     private final RpgItems items;
     private final Map<UUID, Seen> seen = new ConcurrentHashMap<>();
+    /** The class of a player who is in the rpg universe (null elsewhere: {@link #seen} tells it then). */
+    private java.util.function.Function<Player, String> playing = p -> null;
 
     ClassMenu(FluxPlugin plugin, RpgConfig config, RpgStore store, RpgItems items) {
         this.plugin = plugin;
@@ -62,6 +64,17 @@ public final class ClassMenu {
         Lists.register(plugin, "rpg_classe_boutons", q -> detailButtons(q.viewer()));
         Lists.register(plugin, "rpg_classe_arme", q -> detailWeapon(q.viewer()));
         Lists.register(plugin, "rpg_classe_sorts", q -> detailSpells(q.viewer()));
+    }
+
+    void playing(java.util.function.Function<Player, String> playing) {
+        this.playing = playing;
+    }
+
+    /** The class he plays now, null when he has none or it is not known. */
+    private String current(Player p) {
+        String id = playing.apply(p);
+        Seen s = seen.get(p.getUniqueId());
+        return id != null ? id : s == null ? null : s.heroClass();
     }
 
     /**
@@ -94,6 +107,8 @@ public final class ClassMenu {
         out.add(ListEntry.of("back").item(orBarrier(Items.of("itemsadder:fluxui:btn_back_orange", raw("class-details.back"),
                 Lore.create().left(raw("class-details.back-action")).build(), viewer))).set("left", d.back()));
         Lore lore = Lore.create().description(role(c.id())).description(raw("classes." + c.id() + ".description"));
+        if (c.id().equals(current(viewer))) lore.ok(raw("class-details.mine"));
+        else lore.info(raw("class-details.not-mine"));
         ItemStack icon = Items.of("itemsadder:fluxui:btn_info_blue", raw("class-details.name", "%name%", raw("classes." + c.id() + ".name")),
                 lore.build(), viewer);
         out.add(ListEntry.of("info").item(orBarrier(icon)).set("left", ""));
