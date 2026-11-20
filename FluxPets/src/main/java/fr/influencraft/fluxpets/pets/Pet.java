@@ -140,6 +140,8 @@ public final class Pet {
     private final double size;
     private final int slots;
     private final String walkAnimation;
+    /** Note block instruments this pet plays in a band of music pets (PetBands), and its gestures of a note. */
+    private final List<String> instruments, bandGestures;
     private final String runAnimation;
     private final double runSpeed;
     private final String revealAnimation;
@@ -181,6 +183,9 @@ public final class Pet {
         this.runSpeed = config.getDoubleOrNull("run-speed") == null ? 5.0 : Math.max(0.5, config.getDouble("run-speed"));
         this.revealAnimation = config.has("reveal-animation") ? config.getString("reveal-animation") : null;
         this.iconLookup = config.getString("icon");
+        this.instruments = config.has("instruments") ? config.getStrings("instruments").stream()
+                .map(i -> i.toLowerCase(java.util.Locale.ROOT)).toList() : List.of();
+        this.bandGestures = config.has("band-gestures") ? List.copyOf(config.getStrings("band-gestures")) : List.of();
 
         // %level% des effets : le niveau de CE familier chez le joueur évalué (comme EcoPets)
         config.injectPlaceholders(new PlayerStaticPlaceholder("level", p -> String.valueOf(PetData.level(p, this))));
@@ -326,6 +331,14 @@ public final class Pet {
     }
 
     /** Animation of its model while it moves. */
+    public List<String> instruments() {
+        return instruments;
+    }
+
+    public List<String> bandGestures() {
+        return bandGestures;
+    }
+
     public String walkAnimation() {
         return walkAnimation;
     }

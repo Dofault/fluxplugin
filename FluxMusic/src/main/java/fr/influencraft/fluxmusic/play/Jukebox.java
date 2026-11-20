@@ -271,6 +271,19 @@ public final class Jukebox {
         /** A note of this instrument will be sent in {@link #CUE_NANOS}: time to start the gesture that plays it. */
         default void cue(fr.influencraft.fluxmusic.song.Instrument instrument, float pitch) {
         }
+
+        /** False: nobody of the scene plays this instrument, its notes are left out (a band of a few musicians). */
+        default boolean plays(fr.influencraft.fluxmusic.song.Instrument instrument) {
+            return true;
+        }
+
+        /**
+         * False: the music is only heard from the musicians and dies out at {@link #radius} from them; a stage (true)
+         * also sounds in the headphones of the listeners far from it.
+         */
+        default boolean headphones() {
+            return true;
+        }
     }
 
     /**
@@ -301,7 +314,7 @@ public final class Jukebox {
             try {
                 Sound[] sounds = song.notes()[cueIndex];
                 fr.influencraft.fluxmusic.song.Instrument[] who = song.instruments()[cueIndex];
-                for (int i = 0; i < sounds.length; i++) scene.cue(who[i], sounds[i].pitch());
+                for (int i = 0; i < sounds.length; i++) if (scene.plays(who[i])) scene.cue(who[i], sounds[i].pitch());
             } catch (RuntimeException e) {
                 // a scene reloaded under us
             }
@@ -344,6 +357,24 @@ public final class Jukebox {
             float[] angles = song.angles()[index];
             fr.influencraft.fluxmusic.song.Instrument[] who = song.instruments()[index];
             try {
+                // only the notes of the instruments somebody plays
+                int kept = 0;
+                for (fr.influencraft.fluxmusic.song.Instrument i : who) if (scene.plays(i)) kept++;
+                if (kept < who.length) {
+                    Sound[] s2 = new Sound[kept];
+                    float[] a2 = new float[kept];
+                    fr.influencraft.fluxmusic.song.Instrument[] w2 = new fr.influencraft.fluxmusic.song.Instrument[kept];
+                    for (int i = 0, k = 0; i < who.length; i++) {
+                        if (!scene.plays(who[i])) continue;
+                        s2[k] = sounds[i];
+                        a2[k] = angles[i];
+                        w2[k++] = who[i];
+                    }
+                    sounds = s2;
+                    angles = a2;
+                    who = w2;
+                }
+                boolean headphones = scene.headphones();
                 double radius = scene.radius();
                 // A client fades a sound out over 16 blocks, whatever we do. For the stage to be heard over its
                 // whole radius, each note is sent from a point on the line to its musician, at 16/radius of the
@@ -360,6 +391,7 @@ public final class Jukebox {
                             double dx = at.getX() - scene.x(), dy = at.getY() - scene.y(), dz = at.getZ() - scene.z();
                             double d = Math.sqrt(dx * dx + dy * dy + dz * dz);
                             if (d < radius) head = (float) (d / radius);
+                            if (!headphones) head = 0f;
                         }
                         if (head < 1f) for (int i = 0; i < sounds.length; i++) {
                             double[] from = scene.source(who[i]);
@@ -369,7 +401,7 @@ public final class Jukebox {
                     } catch (RuntimeException e) {
                         // he left meanwhile
                     }
-                    if (head > 0.02f) send(player, sounds, angles, head);
+                    if (headphones && head > 0.02f) send(player, sounds, angles, head);
                 }
                 for (int i = 0; i < sounds.length; i++) scene.played(who[i], sounds[i].pitch());
             } catch (RuntimeException e) {

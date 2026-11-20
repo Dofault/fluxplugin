@@ -154,12 +154,24 @@ public final class PetDisplay implements org.bukkit.event.Listener {
     private double height, minDistance, maxDistance, snapDistance, smoothing, minSpeed, bobAmplitude,
             labelHeight, gapMin, gapMax;
 
+    /** Every pet shown now (server thread). */
+    List<Follower> shown() {
+        List<Follower> all = new ArrayList<>();
+        followers.values().forEach(all::addAll);
+        return all;
+    }
+
+    /** Music pets playing together. */
+    private PetBands bands;
+
     public PetDisplay() {
         reload();
+        bands = new PetBands(this);
         Bukkit.getScheduler().runTaskTimer(Pets.plugin(), this::tickAll, 1L, 1L);
     }
 
     public void reload() {
+        if (bands != null) bands.reload();
         ConfigurationSection c = Pets.plugin().getConfig().getConfigurationSection("pet-follow");
         height = get(c, "height", 0.9);
         minDistance = Math.max(0, get(c, "min-distance", 1.5));
@@ -987,6 +999,7 @@ public final class PetDisplay implements org.bukkit.event.Listener {
 
     /** Arrêt du plugin ou rechargement : retire tous les modèles. */
     public void shutdown() {
+        if (bands != null) bands.shutdown();
         MountKit.clear();
         followers.values().forEach(list -> list.forEach(this::remove));
         followers.clear();

@@ -22,18 +22,18 @@ SRC = os.path.join(os.path.dirname(os.path.dirname(HERE)), "assets", "personnage
 ROOT = sys.argv[1]
 PETS = os.path.join(ROOT, "FluxPets")
 COLOR = "#1FBFA6"
-# (id, nom, vole, ce qu'il joue)
+# (id, nom, vole, ce qu'il joue, blocs musicaux joués dans le groupe, gestes d'une note pris à tour de rôle)
 FAMILIERS = [
-    ("flute", "Flûte", True, "la mélodie"),
-    ("cloche", "Cloche", False, "la mélodie à l'octave"),
-    ("xylophone", "Xylophone", False, "les réponses entre les phrases"),
-    ("vibraphone", "Vibraphone", False, "la seconde voix"),
-    ("harpe", "Harpe", True, "les accords brisés"),
-    ("guitare", "Guitare", False, "les accords grattés"),
-    ("banjo", "Banjo", False, "les croches picorées"),
-    ("contrebasse", "Contrebasse", False, "la basse"),
-    ("pling", "Pling", True, "les notes qui scintillent"),
-    ("batterie", "Batterie", False, "le rythme"),
+    ("flute", "Flûte", True, "la mélodie", ["flute"], []),
+    ("cloche", "Cloche", False, "la mélodie à l'octave", ["bell"], ["hit_0"]),
+    ("xylophone", "Xylophone", False, "les réponses entre les phrases", ["xylophone"], ["hit_l", "hit_r"]),
+    ("vibraphone", "Vibraphone", False, "la seconde voix", ["iron_xylophone"], []),
+    ("harpe", "Harpe", True, "les accords brisés", ["harp"], []),
+    ("guitare", "Guitare", False, "les accords grattés", ["guitar"], []),
+    ("banjo", "Banjo", False, "les croches picorées", ["banjo"], []),
+    ("contrebasse", "Contrebasse", False, "la basse", ["bass"], []),
+    ("pling", "Pling", True, "les notes qui scintillent", ["pling"], []),
+    ("batterie", "Batterie", False, "le rythme", ["basedrum", "snare", "hat"], ["hit_l", "hit_r"]),
 ]
 
 
@@ -51,7 +51,7 @@ def dump(path, data, header):
 def main():
     content = os.path.join(PETS, "content", "pets.yml")
     pets = yaml.safe_load(open(content, encoding="utf-8"))
-    for pid, name, flying, part in FAMILIERS:
+    for pid, name, flying, part, instruments, gestures in FAMILIERS:
         shutil.copyfile(os.path.join(SRC, pid, f"familier_{pid}.bbmodel"),
                         os.path.join(ROOT, "BetterModel", "models", f"familier_{pid}.bbmodel"))
         lines = {1: [f"&#B376E5Dans l'orchestre : {part}."]}
@@ -62,6 +62,9 @@ def main():
             "flying": flying,
             "icon": f"itemsadder:influportraits__portrait_{pid}",
             "reveal-animation": "happy",
+            # joués dans le groupe des familiers musiciens (PetBands de FluxPets)
+            "instruments": instruments,
+            "band-gestures": gestures,
             "trail": {"enabled": False, "particle": "note", "gap": 2, "amount": 1, "y-offset": 0.0},
             "max-level": 1,
             "level-xp-requirements": [],

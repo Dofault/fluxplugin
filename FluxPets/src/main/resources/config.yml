@@ -74,6 +74,17 @@ pets:
 
 # Pet system
 pet-settings:
+  # Music pets play together (PetBands): pets with "instruments" in their file, standing within link-distance blocks of
+  # each other, form a band; from min-pets different pets on they play the songs below (FluxMusic), one after another
+  # in a shuffled order, each pet its own instruments. Heard within radius blocks of a pet, in place of the
+  # background music.
+  band:
+    enabled: false
+    link-distance: 12
+    radius: 24
+    min-pets: 2
+    pause-seconds: 4
+    songs: []
   # /pets without arguments: console command that opens the pets menu (%player% = player name). The plugin
   # ships no player menu: build it with a menu plugin from the %influpet_view_...%, %influpet_slot_...% and
   # %influpet_selected_...% placeholders, its buttons calling /pets toggle|filter|page|select|view|visibility.

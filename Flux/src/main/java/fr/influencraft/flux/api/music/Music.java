@@ -36,6 +36,11 @@ public final class Music {
         String playing(Player player);
 
         Set<String> songs();
+
+        /** Plays the song once for a band; null when the song is unknown. */
+        default Band.Session band(Band band, String song) {
+            return null;
+        }
     }
 
     private static volatile Provider provider;
@@ -79,6 +84,16 @@ public final class Music {
     public static String playing(Player player) {
         Provider p = provider;
         return p == null ? null : p.playing(player);
+    }
+
+    /**
+     * Plays a song once for a band: each note comes from the musician playing its instrument, the instruments nobody
+     * plays stay silent, and the listeners' background music waits meanwhile. Null when the song (or the music
+     * plugin) is missing.
+     */
+    public static Band.Session band(Band band, String song) {
+        Provider p = provider;
+        return p == null || band == null || song == null || song.isBlank() ? null : p.band(band, song);
     }
 
     public static Set<String> songs() {

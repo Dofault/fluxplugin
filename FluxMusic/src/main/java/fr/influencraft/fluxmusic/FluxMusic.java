@@ -57,14 +57,15 @@ public final class FluxMusic extends FluxPlugin implements Listener {
     @Override
     protected void enable() {
         jukebox = new Jukebox();
-        ambience = new Ambience(jukebox, this::song, FluxMusic::wants);
+        ambience = new Ambience(jukebox, this::song, this::wantsAmbience);
         loadSongs();
         jukebox.fadeOut(getConfig().getDouble("fade-out-seconds", 2.5));
         ambience.load(getConfig().getConfigurationSection("ambience"), getLogger());
         Bukkit.getScheduler().runTaskTimer(this, ambience::tick, 40L, 20L);
-        stages = new Stages(this, jukebox, ambience, this::song, FluxMusic::wants);
+        stages = new Stages(this, jukebox, ambience, this::song, this::wantsAmbience);
         stages.load(getConfig().getConfigurationSection("band"));
         Bukkit.getScheduler().runTaskTimer(this, stages::tick, 60L, 1L);
+        Bukkit.getScheduler().runTaskTimer(this, this::tickBands, 60L, 10L);
         Music.provide(new Music.Provider() {
             public boolean play(Player player, String id, Boolean loop) {
                 Song song = song(id);
@@ -92,6 +93,16 @@ public final class FluxMusic extends FluxPlugin implements Listener {
 
             public Set<String> songs() {
                 return songs.keySet();
+            }
+
+            public fr.influencraft.flux.api.music.Band.Session band(fr.influencraft.flux.api.music.Band band, String id) {
+                Song song = song(id);
+                if (song == null) return null;
+                Playing playing = new Playing(band);
+                playing.refresh();
+                playing.broadcast = jukebox.broadcast(song, playing);
+                bands.add(playing);
+                return playing;
             }
         });
         command("musique")
@@ -131,6 +142,108 @@ public final class FluxMusic extends FluxPlugin implements Listener {
     /** Moments of the game given a song in config.yml ({@code moments}); empty = nothing played. */
     private String moment(String key) {
         return getConfig().getString("moments." + key, "");
+    }
+
+    // ---------------------------------------------------------------- bands (Music.band)
+
+    private final java.util.List<Playing> bands = new java.util.concurrent.CopyOnWriteArrayList<>();
+    /** Players hearing a band: the ambience and the stages leave them alone meanwhile. */
+    private final java.util.Set<java.util.UUID> held = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    /** A song a band plays: the band seen as a scene of the jukebox, heard from its musicians only. */
+    private final class Playing implements fr.influencraft.fluxmusic.play.Jukebox.Scene, fr.influencraft.flux.api.music.Band.Session {
+        private final fr.influencraft.flux.api.music.Band band;
+        private volatile fr.influencraft.fluxmusic.play.Jukebox.Broadcast broadcast;
+        private volatile java.util.List<Player> listeners = java.util.List.of();
+
+        Playing(fr.influencraft.flux.api.music.Band band) {
+            this.band = band;
+        }
+
+        /** Server thread: the listeners who want music. */
+        void refresh() {
+            java.util.List<Player> out = new java.util.ArrayList<>();
+            for (Player p : band.listeners()) if (p.isOnline() && wants(p)) out.add(p);
+            listeners = java.util.List.copyOf(out);
+        }
+
+        public java.util.Collection<Player> listeners() {
+            return listeners;
+        }
+
+        public String world() {
+            return band.world();
+        }
+
+        public double x() {
+            return band.centre()[0];
+        }
+
+        public double y() {
+            return band.centre()[1];
+        }
+
+        public double z() {
+            return band.centre()[2];
+        }
+
+        public double radius() {
+            return band.radius();
+        }
+
+        public boolean headphones() {
+            return false;
+        }
+
+        public boolean plays(fr.influencraft.fluxmusic.song.Instrument instrument) {
+            return band.source(name(instrument)) != null;
+        }
+
+        public double[] source(fr.influencraft.fluxmusic.song.Instrument instrument) {
+            double[] at = band.source(name(instrument));
+            return at != null ? at : band.centre();
+        }
+
+        public void played(fr.influencraft.fluxmusic.song.Instrument instrument, float pitch) {
+        }
+
+        public void cue(fr.influencraft.fluxmusic.song.Instrument instrument, float pitch) {
+            band.cue(name(instrument), pitch);
+        }
+
+        private static String name(fr.influencraft.fluxmusic.song.Instrument instrument) {
+            return instrument.name().toLowerCase(Locale.ROOT);
+        }
+
+        public boolean done() {
+            fr.influencraft.fluxmusic.play.Jukebox.Broadcast b = broadcast;
+            return b == null || b.done();
+        }
+
+        public void cancel() {
+            fr.influencraft.fluxmusic.play.Jukebox.Broadcast b = broadcast;
+            if (b != null) b.cancel();
+        }
+    }
+
+    /** Every half second: who hears a band; a player who starts hearing one has his background music fade out. */
+    private void tickBands() {
+        java.util.Set<java.util.UUID> now = new java.util.HashSet<>();
+        for (Playing playing : bands) {
+            if (playing.done()) {
+                bands.remove(playing);
+                continue;
+            }
+            playing.refresh();
+            for (Player p : playing.listeners) now.add(p.getUniqueId());
+        }
+        for (java.util.UUID id : now) if (held.add(id)) jukebox.stop(id);
+        held.retainAll(now);
+    }
+
+    /** The ambience and the stages play for him: he wants music and no band plays to him. */
+    private boolean wantsAmbience(Player player) {
+        return wants(player) && !held.contains(player.getUniqueId());
     }
 
     /** Whether the player wants music (settings window, option {@code music}). */
