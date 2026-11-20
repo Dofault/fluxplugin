@@ -30,9 +30,20 @@ camera:
   mouse-height: 0.03
   # Look down when the wardrobe opens.
   start-pitch: 12
-  # Point looked at while the cosmetics menu is open, above the mannequin's feet (negative: under them). The menu
-  # covers the lower half of the screen: aiming low puts the mannequin in the upper half.
-  menu-height: -0.25
+
+# Camera of the cosmetics menu (right click in the wardrobe). The menu covers the lower part of the screen: each
+# category frames its piece in the upper middle. height: the piece above the mannequin's feet (blocks), distance:
+# from it, pitch: the camera's angle above it (degrees, looking down), look-down: degrees the view tilts below the
+# piece so it shows above the menu (17 puts it halfway up the upper half with the default field of view).
+menu-camera:
+  look-down: 17
+  shots:
+    head:  {height: 1.75, distance: 1.3, pitch: 6}
+    chest: {height: 1.25, distance: 1.6, pitch: 8}
+    legs:  {height: 0.75, distance: 1.6, pitch: 10}
+    feet:  {height: 0.15, distance: 1.4, pitch: 16}
+    # the whole body for the tags
+    tags:  {height: 1.0, distance: 3.4, pitch: 8, look-down: 14}
 
 
 # The cosmetics. item: what is worn (a Flux item id such as fluxarmor:zero_helmet, or a material), slot: head, chest,

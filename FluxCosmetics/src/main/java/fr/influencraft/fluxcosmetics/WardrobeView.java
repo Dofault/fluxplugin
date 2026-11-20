@@ -110,12 +110,19 @@ final class WardrobeView {
     boolean moving;
     boolean closing;
     private int ticks;
-    /** True while the cosmetics menu covers the lower half of his screen. */
-    private boolean menu;
+    /** Framing of the category shown in the cosmetics menu, null while the menu is closed. */
+    private Settings.Shot shot;
+    /** Where the camera glides to (a shot, the free camera given back, a turn button), null once there. */
+    private Float goalYaw, goalPitch;
+    /** Free camera's angle and zoom when the menu opened, given back when it closes. */
+    private float freePitch;
+    private double freeZoom;
     /** The camera was turned by something else than his keys: sent at the next tick. */
     private boolean forced;
-    /** Height really looked at: {@link #height}, or the menu's, reached in a few ticks. */
+    /** Height of the point the camera turns around: {@link #height}, or the shot's piece, reached in a few ticks. */
     private volatile double aim;
+    /** Degrees his view looks below that point (the piece shows above the menu), read by the network thread. */
+    private volatile float lookDown;
 
     WardrobeView(FluxCosmetics plugin, Player player) {
         this.plugin = plugin;
@@ -188,8 +195,8 @@ final class WardrobeView {
         Sidebar.hide(player, true);
         // the mouse never turns the view: forward or back slides the camera up or down, then the view goes back
         Camera.turns(player, (p, y, x) -> {
-            float cy = yaw, cx = pitch;
-            float up = cx - x;
+            float cy = yaw, cx = pitch, cv = cx + lookDown;
+            float up = cv - x;
             boolean sideways = Math.abs(wrap(y - cy)) > SLACK;
             // his client answers each move with his rotation, unchanged: not a mouse move (that answer looped)
             if (Math.abs(up) <= SLACK && !sideways) return;
@@ -201,7 +208,7 @@ final class WardrobeView {
                 // the packets already on their way still carry this move: not counted twice
                 settling = now + (p.getPing() + 25) * 1_000_000L;
             }
-            Camera.turn(p, cy, false, cx, false);
+            Camera.turn(p, cy, false, cv, false);
             if (now - lastMove < MOVE_GAP_NANOS) return;
             lastMove = now;
             Vector f = feet(cy, cx, reach);
@@ -250,10 +257,29 @@ final class WardrobeView {
         int upwards = (input.isForward() ? 1 : 0) - (input.isBackward() ? 1 : 0);
         boolean turned = sideways != 0 || upwards != 0 || forced;
         forced = false;
-        double wanted = menu ? settings.menuHeight() : height;
+        double wanted = shot != null ? shot.height() : height;
         if (Math.abs(wanted - aim) > 1e-3) aim += (wanted - aim) * ZOOM_GLIDE;
         else aim = wanted;
+        float look = shot != null ? shot.lookDown() : 0;
+        if (lookDown != look) {
+            lookDown = Math.abs(look - lookDown) > 0.1 ? lookDown + (look - lookDown) * (float) ZOOM_GLIDE : look;
+            turned = true;
+        }
+        if (goalYaw != null) {
+            float dy = wrap(goalYaw - yaw);
+            yaw = Math.abs(dy) > 0.2 ? wrap(yaw + dy * (float) ZOOM_GLIDE) : goalYaw;
+            if (yaw == goalYaw) goalYaw = null;
+            turned = true;
+        }
+        if (goalPitch != null) {
+            float dp = goalPitch - pitch;
+            pitch = Math.abs(dp) > 0.2 ? pitch + dp * (float) ZOOM_GLIDE : goalPitch;
+            if (pitch == goalPitch) goalPitch = null;
+            turned = true;
+        }
         if (sideways != 0 || upwards != 0) {
+            goalYaw = null;
+            goalPitch = null;
             yaw = wrap(yaw + sideways * settings.turnSpeed());
             pitch = Math.clamp(pitch + upwards * settings.pitchSpeed(), settings.minPitch(), settings.maxPitch());
         }
@@ -269,7 +295,7 @@ final class WardrobeView {
             d = reach();
         }
         reach = d;
-        if (turned) Camera.turn(player, yaw, false, pitch, false);
+        if (turned) Camera.turn(player, yaw, false, pitch + lookDown, false);
         Vector f = feet(yaw, pitch, d);
         // moved: keys, zoom, a block in the way, put back by the server; else now and then against any drift
         // (every 5 ticks: Paper may put him back after a refused move without any event)
@@ -312,20 +338,42 @@ final class WardrobeView {
     }
 
     /**
-     * The cosmetics menu shows or not: it covers the lower half of his screen, so the camera aims lower meanwhile and
-     * the mannequin stands in the upper half.
+     * The cosmetics menu shows or not. While it shows, the camera frames the shown category ({@link #frame}); once it
+     * is closed, the free camera's angle and zoom come back.
      */
     void menuShown(boolean shown) {
-        menu = shown;
+        if (shown) {
+            if (shot == null) {
+                freePitch = pitch;
+                freeZoom = wantedZoom;
+            }
+            return;
+        }
+        if (shot != null) {
+            shot = null;
+            goalPitch = freePitch;
+            wantedZoom = freeZoom;
+        }
         // the menu gave him his real inventory back on its way out: the wardrobe's empty hotbar again
         if (!shown) org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (!closing && player.isOnline()) Hotbar.show(player, hotbar());
         }, 2L);
     }
 
+    /**
+     * Frames a category of the cosmetics menu (index of its filter): the camera glides in front of the mannequin, on
+     * that piece, the piece showing in the upper middle of the screen.
+     */
+    void frame(int category) {
+        shot = settings.shot(category);
+        goalYaw = wrap(back.getYaw() + 180);
+        goalPitch = shot.pitch();
+        wantedZoom = shot.distance();
+    }
+
     /** Turns the camera around the mannequin by that many degrees (the menu's buttons: no key reaches the server then). */
     void turn(float degrees) {
-        yaw = wrap(yaw + degrees);
+        goalYaw = wrap((goalYaw != null ? goalYaw : yaw) + degrees);
         forced = true;
     }
 

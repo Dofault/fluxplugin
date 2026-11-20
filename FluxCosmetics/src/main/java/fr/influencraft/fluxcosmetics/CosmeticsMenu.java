@@ -28,6 +28,7 @@ import java.util.List;
  *   [cosmetics] wear &lt;id&gt;     put a cosmetic on or take it off
  *   [cosmetics] changed       something was worn by another plugin's action (a tag): entries are read again
  *   [cosmetics] turn &lt;deg&gt;    turn the wardrobe's camera around the mannequin
+ *   [cosmetics] frame         the camera frames the category now shown (after [list] cosmetics filter &lt;n&gt;)
  *   [cosmetics] opened|closed the menu shows or not (the camera makes room for it)
  *   [cosmetics] leave         leave the wardrobe
  * </pre>
@@ -98,7 +99,12 @@ final class CosmeticsMenu {
                 }
             }
             case "opened" -> {
-                if (view != null) view.menuShown(true);
+                if (view == null) return;
+                view.menuShown(true);
+                view.frame(Lists.state(player, LIST).filter());
+            }
+            case "frame" -> {
+                if (view != null) view.frame(Lists.state(player, LIST).filter());
             }
             case "closed" -> {
                 if (view != null) view.menuShown(false);

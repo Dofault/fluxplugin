@@ -19,31 +19,31 @@ lists:
     item:
       material: entry
       actions:
-        left: ["[list] cosmetics filter 0", "[refresh]"]
+        left: ["[list] cosmetics filter 0", "[cosmetics] frame", "[refresh]"]
   cosmetics_cat_1:
     slots: 57
     item:
       material: entry
       actions:
-        left: ["[list] cosmetics filter 1", "[refresh]"]
+        left: ["[list] cosmetics filter 1", "[cosmetics] frame", "[refresh]"]
   cosmetics_cat_2:
     slots: 58
     item:
       material: entry
       actions:
-        left: ["[list] cosmetics filter 2", "[refresh]"]
+        left: ["[list] cosmetics filter 2", "[cosmetics] frame", "[refresh]"]
   cosmetics_cat_3:
     slots: 59
     item:
       material: entry
       actions:
-        left: ["[list] cosmetics filter 3", "[refresh]"]
+        left: ["[list] cosmetics filter 3", "[cosmetics] frame", "[refresh]"]
   cosmetics_cat_4:
     slots: 60
     item:
       material: entry
       actions:
-        left: ["[list] cosmetics filter 4", "[refresh]"]
+        left: ["[list] cosmetics filter 4", "[cosmetics] frame", "[refresh]"]
   cosmetics:
     slots: 64-70, 73-79
     item:
