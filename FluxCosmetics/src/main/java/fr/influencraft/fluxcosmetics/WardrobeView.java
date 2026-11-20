@@ -112,11 +112,11 @@ final class WardrobeView {
     boolean closing;
     private int ticks;
     /** Framing of the category shown in the cosmetics menu, null while the menu is closed. */
-    private Settings.Shot shot;
+    private volatile Settings.Shot shot;
     /** His nametag shows over the mannequin (the tags category). */
     private boolean nametag;
     /** Where the camera glides to (a shot, the free camera given back, a turn button), null once there. */
-    private Float goalYaw, goalPitch;
+    private volatile Float goalYaw, goalPitch;
     /** Free camera's angle and zoom when the menu opened, given back when it closes. */
     private float freePitch;
     private double freeZoom;
@@ -203,6 +203,9 @@ final class WardrobeView {
         Sidebar.hide(player, true);
         // the mouse never turns the view: forward or back slides the camera up or down, then the view goes back
         Camera.turns(player, (p, y, x) -> {
+            // a menu open or a glide on its way (a shot, a turn button): his client only echoes the rotations the
+            // tick sends it, late; read as mouse moves they threw the camera back to the free one's height (glitch)
+            if (shot != null || goalYaw != null || goalPitch != null) return;
             float cy = yaw, cx = pitch, cv = cx + lookDown;
             float up = cv - x;
             boolean sideways = Math.abs(wrap(y - cy)) > SLACK;
