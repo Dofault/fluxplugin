@@ -198,12 +198,16 @@ final class Outfits implements Listener {
         Sounds.cue(player, "toggle-off");
     }
 
-    /** The item worn for this cosmetic (a new stack). */
+    /** The item worn for this cosmetic (a new stack), with the looks of the suite (3D armour). */
     ItemStack item(Cosmetic c, Player player) {
         String spec = c.item();
         boolean fluxId = spec.indexOf(':') > 0 && !spec.startsWith("itemsadder:") && !spec.startsWith("source:");
         ItemStack item = fluxId ? CustomItems.item(spec) : null;
-        return item != null ? item : Items.of(spec, player);
+        if (item == null) item = Items.of(spec, player);
+        // the looks of the suite (FluxArmor's 3D worn asset, no glint over it): Flux gives them to items in
+        // inventories only, and a cosmetic's item never is in one
+        if (item != null) fr.influencraft.flux.api.items.ItemLooks.apply(item);
+        return item;
     }
 
     // ================================================================== giving (admin)
