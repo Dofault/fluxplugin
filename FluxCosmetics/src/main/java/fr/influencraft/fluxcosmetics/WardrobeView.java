@@ -114,7 +114,7 @@ final class WardrobeView {
             m.setInvulnerable(true);
             m.setCollidable(false);
             m.setImmovable(true);
-            m.setSilent(true);
+            // never silent: a client plays no sound bound to a silent entity, and his music is heard on it
             m.setDescription(null);
             m.setProfile(ResolvableProfile.resolvableProfile(player.getPlayerProfile()));
             m.setMainHand(player.getMainHand());
