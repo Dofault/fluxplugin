@@ -120,9 +120,12 @@ public final class RecipeBookCatalog extends PacketListenerAbstract implements R
     public void onPacketReceive(PacketReceiveEvent event) {
         if (event.getPacketType() != PacketType.Play.Client.CRAFT_RECIPE_REQUEST || !RecipeBook.claimed()) return;
         WrapperPlayClientCraftRecipeRequest w = new WrapperPlayClientCraftRecipeRequest(event);
+        // since 1.21.2 the display id, given as an Integer by getRecipe() (a RecipeDisplayId in other versions)
         Object recipe = w.getRecipe();
-        if (!(recipe instanceof RecipeDisplayId display)) return;
-        int id = display.getId();
+        int id;
+        if (recipe instanceof Integer i) id = i;
+        else if (recipe instanceof RecipeDisplayId display) id = display.getId();
+        else return;
         // the server's own (a furnace's book): its business
         if (id < BASE) return;
         event.setCancelled(true);
