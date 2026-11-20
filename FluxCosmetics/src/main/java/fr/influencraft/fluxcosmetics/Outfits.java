@@ -73,12 +73,10 @@ final class Outfits implements Listener {
         final Map<Integer, Preset> presets = new ConcurrentHashMap<>();
         /** Rpg outfit he chose, null: his class's ({@link RpgOutfits}). */
         volatile String rpg;
-        /** Rpg outfit an admin wears outside the rpg universe, null: his vanilla cosmetics. */
-        volatile String rpgHere;
     }
 
-    /** Slot names of the chosen rpg outfit, and of an admin's rpg outfit worn outside it, in the worn table. */
-    private static final String RPG_SLOT = "RPG", RPG_HERE_SLOT = "RPG_V";
+    /** Slot name of the chosen rpg outfit in the worn table. */
+    private static final String RPG_SLOT = "RPG";
 
     /** Armour slots kept in a preset, in the order of the table's columns. */
     static final EquipmentSlot[] ARMOUR = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
@@ -169,7 +167,7 @@ final class Outfits implements Listener {
         for (RpgOutfits.Outfit o : rpg.all()) {
             for (EquipmentSlot slot : ARMOUR) {
                 String item = o.pieces().get(slot);
-                String key = o.key() + "." + slot.name().toLowerCase(Locale.ROOT);
+                String key = pieceKey(o, slot);
                 if (item != null && !cosmetics.containsKey(key)) cosmetics.put(key, new Cosmetic(key, o.name(), item, slot, false, o.rarity(), true));
             }
         }
@@ -431,10 +429,6 @@ final class Outfits implements Listener {
                                 w.rpg = rs.getString(2);
                                 continue;
                             }
-                            if (RPG_HERE_SLOT.equals(rs.getString(1))) {
-                                w.rpgHere = rs.getString(2);
-                                continue;
-                            }
                             try {
                                 w.worn.put(EquipmentSlot.valueOf(rs.getString(1)), rs.getString(2));
                             } catch (IllegalArgumentException ignored) {
@@ -469,7 +463,6 @@ final class Outfits implements Listener {
                     w.worn.putAll(before.worn);
                     w.presets.putAll(before.presets);
                     if (before.rpg != null) w.rpg = before.rpg;
-                    if (before.rpgHere != null) w.rpgHere = before.rpgHere;
                 }
                 dress(player);
             });
@@ -506,14 +499,13 @@ final class Outfits implements Listener {
 
     /**
      * His looks in a universe (rpg or not), whichever he is in: the item drawn over each armour slot, missing when his
-     * real piece shows. Rpg: his rpg outfit. Elsewhere: his vanilla cosmetics, or the rpg outfit an admin chose to
-     * wear there.
+     * real piece shows. Rpg: his rpg outfit. Elsewhere: his vanilla cosmetics (for an admin, pieces of rpg outfits too).
      */
     Map<EquipmentSlot, ItemStack> looks(Player player, boolean rpgUniverse) {
         Map<EquipmentSlot, ItemStack> out = new EnumMap<>(EquipmentSlot.class);
         Wardrobe w = players.get(player.getUniqueId());
         if (w == null) return out;
-        RpgOutfits.Outfit o = rpgUniverse ? rpg.active(player, w.rpg) : rpgHere(player);
+        RpgOutfits.Outfit o = rpgUniverse ? rpg.active(player, w.rpg) : null;
         if (o != null) {
             for (EquipmentSlot slot : ARMOUR) {
                 ItemStack item = rpg.item(o, slot);
@@ -529,18 +521,32 @@ final class Outfits implements Listener {
         return out;
     }
 
-    /** The rpg outfit he wears outside the rpg universe (admins only), null otherwise. */
-    RpgOutfits.Outfit rpgHere(Player player) {
-        Wardrobe w = players.get(player.getUniqueId());
-        if (w == null || w.rpgHere == null || !Staff.isAdmin(player)) return null;
-        return rpg.get(w.rpgHere);
+    /** Key of the cosmetic that is one piece of an rpg outfit (admins only, see {@link #load}). */
+    private static String pieceKey(RpgOutfits.Outfit o, EquipmentSlot slot) {
+        return o.key() + "." + slot.name().toLowerCase(Locale.ROOT);
     }
 
-    /** Puts an rpg outfit on an admin outside the rpg universe, or takes it off when he wears it (null: off). */
-    void toggleRpgHere(Player player, String key) {
+    /** Whether an admin wears every piece of this rpg outfit outside the rpg universe. */
+    boolean wornHere(Player player, RpgOutfits.Outfit o) {
+        Wardrobe w = players.get(player.getUniqueId());
+        if (w == null || o == null || o.pieces().isEmpty() || !Staff.isAdmin(player)) return false;
+        for (EquipmentSlot slot : o.pieces().keySet()) if (!pieceKey(o, slot).equals(w.worn.get(slot))) return false;
+        return true;
+    }
+
+    /**
+     * Puts every piece of an rpg outfit on an admin outside the rpg universe, or takes them off when he wears them
+     * all. A shortcut over the single pieces: each slot can then be changed on its own.
+     */
+    void toggleRpgHere(Player player, RpgOutfits.Outfit o) {
         Wardrobe w = players.computeIfAbsent(player.getUniqueId(), k -> new Wardrobe());
-        w.rpgHere = key == null || key.equals(w.rpgHere) ? null : key;
-        saveWorn(player.getUniqueId(), RPG_HERE_SLOT, w.rpgHere);
+        boolean off = wornHere(player, o);
+        for (EquipmentSlot slot : o.pieces().keySet()) {
+            String key = off ? null : pieceKey(o, slot);
+            if (key == null) w.worn.remove(slot);
+            else w.worn.put(slot, key);
+            saveWorn(player.getUniqueId(), slot, key);
+        }
         show(player);
     }
 

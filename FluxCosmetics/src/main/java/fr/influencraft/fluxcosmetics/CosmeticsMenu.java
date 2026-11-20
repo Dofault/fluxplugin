@@ -128,7 +128,7 @@ final class CosmeticsMenu {
                 Sounds.cue(player, "error");
                 return;
             }
-            plugin.outfits().toggleRpgHere(player, o.key());
+            plugin.outfits().toggleRpgHere(player, o);
             Sounds.cue(player, "toggle-on");
             Lists.invalidate(player, LIST);
             if (view != null) view.redress();
@@ -284,7 +284,6 @@ final class CosmeticsMenu {
         RpgOutfits rpg = plugin.outfits().rpg();
         RpgOutfits.Outfit mine = rpg.classOutfit(viewer);
         RpgOutfits.Outfit worn = rpg.active(viewer, plugin.outfits().rpgChoice(viewer));
-        RpgOutfits.Outfit here = plugin.outfits().rpgHere(viewer);
         boolean admin = fr.influencraft.flux.api.staff.Staff.isAdmin(viewer) && !rpg.in(viewer);
         List<RpgOutfits.Outfit> all = new ArrayList<>(rpg.all());
         if (mine != null && all.remove(mine)) all.addFirst(mine);
@@ -295,10 +294,10 @@ final class CosmeticsMenu {
             if (o.equals(mine)) lore.description(plugin.messages().raw("menu.rpg-class-outfit"));
             lore.kv(plugin.messages().raw("menu.rarity"), "&" + o.rarity().colour() + plugin.messages().raw("rarities." + o.rarity().id()));
             if (wearing) lore.ok(plugin.messages().raw("menu.worn"));
-            if (o.equals(here)) lore.ok(plugin.messages().raw("menu.rpg-here-worn"));
+            if ((admin && plugin.outfits().wornHere(viewer, o))) lore.ok(plugin.messages().raw("menu.rpg-here-worn"));
             if (!owned) lore.ko(plugin.messages().raw("menu.locked"));
             else if (!wearing) lore.left(plugin.messages().raw("menu.wear"));
-            if (admin) lore.right(plugin.messages().raw(o.equals(here) ? "menu.rpg-here-off" : "menu.rpg-here"));
+            if (admin) lore.right(plugin.messages().raw((admin && plugin.outfits().wornHere(viewer, o)) ? "menu.rpg-here-off" : "menu.rpg-here"));
             ItemStack piece = rpg.item(o, EquipmentSlot.CHEST);
             if (piece == null) piece = rpg.item(o, EquipmentSlot.HEAD);
             ItemStack item = Items.dress(icon(piece != null ? piece : new ItemStack(org.bukkit.Material.ARMOR_STAND)), o.name(), lore.build(), viewer);
