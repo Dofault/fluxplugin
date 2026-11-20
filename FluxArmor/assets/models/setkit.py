@@ -244,6 +244,8 @@ def item_models(model, hat, gui):
     # On the head one skin pixel is 1.6 units: head centre at (8, 8, 8).
     for piece, cubes, scale, centre_y in (("casque", head, 1.6, 28), ("plastron", chest, 1.0, 18.5),
                                           ("jambieres", legs, 1.0, 8.5), ("bottes", feet, 1.0, 2.5)):
+        if not cubes:
+            continue  # the set has nothing in that slot
         shift, size = gui[piece]
         m = v.item_model(v.item_elements(cubes, scale, centre_y),
                          {"rotation": [15, 155, 0], "translation": [0, shift, 0], "scale": [size, size, size]}, piece == "casque")
@@ -281,7 +283,8 @@ def listing(model, hat, path):
 
 
 def run(doc, groups, hat, gui, sources=None):
-    """groups: {limb group: function}; hat: function; sources: {file name: group prefix} of editable files per piece."""
+    """groups: {limb group: function}; hat: function; sources: {file name: group prefix, or function(model, hat) giving
+    the groups} of editable files per piece."""
     args = [a for a in sys.argv[1:] if a != "--deploy"]
     if len(sys.argv) < 2:
         raise SystemExit(doc)
@@ -292,7 +295,10 @@ def run(doc, groups, hat, gui, sources=None):
     if args:
         previews(model, head, args[0])
         for file, prefix in (sources or {}).items():
-            part = {"tete": head} if prefix == "tete" else {k: c for k, c in model.items() if k.startswith(prefix)}
+            if callable(prefix):
+                part = prefix(model, head)
+            else:
+                part = {"tete": head} if prefix == "tete" else {k: c for k, c in model.items() if k.startswith(prefix)}
             v.write_json(os.path.join(args[0], file + ".bbmodel"), bbmodel(file, part))
         v.write_json(os.path.join(args[0], NAME + ".bbmodel"), bbmodel(NAME, model))
         listing(model, head, os.path.join(args[0], NAME + "_cubes.md"))
