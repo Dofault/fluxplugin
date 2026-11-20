@@ -20,6 +20,11 @@ menu:
   locked: "Pas encore débloqué"
   wear: "Porter"
   take-off: "Retirer"
+  none-name: "Aucun"
+  none-description: "Retire le cosmétique de cet emplacement : ta vraie pièce se voit de nouveau."
+  none-current: "Rien n'est porté ici"
+  no-tag-description: "Retire ton tag : celui de ton grade s'affiche de nouveau."
+  no-tag-current: "Tag du grade affiché"
 outfits:
   wearing: "&7Tu portes maintenant &f%name%&7."
   taken-off: "&7Tu as retiré &f%name%&7."

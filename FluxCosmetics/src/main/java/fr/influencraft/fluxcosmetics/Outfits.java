@@ -72,6 +72,14 @@ final class Outfits implements Listener {
         return List.copyOf(cosmetics.values());
     }
 
+    /** Takes off whatever cosmetic he wears in that slot (his real item shows again), quietly. */
+    void takeOff(Player player, EquipmentSlot slot) {
+        Map<EquipmentSlot, String> mine = worn.get(player.getUniqueId());
+        if (mine == null || mine.remove(slot) == null) return;
+        Appearance.set(player, slot, null);
+        Sounds.cue(player, "toggle-off");
+    }
+
     /** Key of the cosmetic he wears in that slot, or null. */
     String worn(Player player, EquipmentSlot slot) {
         Map<EquipmentSlot, String> mine = worn.get(player.getUniqueId());

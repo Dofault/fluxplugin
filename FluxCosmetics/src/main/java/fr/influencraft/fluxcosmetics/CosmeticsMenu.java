@@ -26,6 +26,7 @@ import java.util.List;
  *
  * <pre>
  *   [cosmetics] wear &lt;id&gt;     put a cosmetic on or take it off
+ *   [cosmetics] none &lt;slot&gt;   take off the cosmetic worn in that slot (HEAD, CHEST, LEGS, FEET)
  *   [cosmetics] changed       something was worn by another plugin's action (a tag): entries are read again
  *   [cosmetics] turn &lt;deg&gt;    turn the wardrobe's camera around the mannequin
  *   [cosmetics] frame         the camera frames the category now shown (after [list] cosmetics filter &lt;n&gt;)
@@ -37,6 +38,8 @@ import java.util.List;
 final class CosmeticsMenu {
 
     static final String MENU = "cosmetiques", LIST = "cosmetics", TAGS_LIST = "tags";
+    /** Ids of FluxTags' "no tag" and rank tag entries. */
+    private static final String NO_TAG = "aucun", RANK_TAG = "rang";
 
     /** The categories in filter order; the last one is the tags. */
     private static final EquipmentSlot[] SLOTS = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
@@ -90,6 +93,15 @@ final class CosmeticsMenu {
                 Lists.invalidate(player, LIST);
                 if (view != null) view.redress();
             }
+            case "none" -> {
+                try {
+                    plugin.outfits().takeOff(player, EquipmentSlot.valueOf(arg));
+                } catch (IllegalArgumentException ignored) {
+                    return;
+                }
+                Lists.invalidate(player, LIST);
+                if (view != null) view.redress();
+            }
             case "changed" -> {
                 Lists.invalidate(player, LIST);
                 // a tag picked: his nametag changed, over the mannequin too
@@ -140,16 +152,29 @@ final class CosmeticsMenu {
             if (tags == null) return List.of();
             List<ListEntry> entries = tags.entries(new ListQuery(viewer, TAGS_LIST, 0, 0, ""));
             // picked without a chat line: the mannequin shows the tag
+            List<ListEntry> out = new ArrayList<>();
+            boolean rankShown = false;
             for (ListEntry e : entries) {
+                // "no tag at all" left out: taking a tag off brings the rank's back (the barrier below)
+                if (e.id().equals(NO_TAG)) continue;
                 String click = e.values().get("clic");
-                if (click != null && click.startsWith("[tags] ")) e.set("clic", click + " quiet");
+                var meta = e.item() == null ? null : e.item().getItemMeta();
+                boolean shown = meta != null && meta.hasEnchantmentGlintOverride() && meta.getEnchantmentGlintOverride();
+                if (e.id().equals(RANK_TAG)) rankShown = shown;
+                // the worn tag clicked again comes off: back to the rank's tag, never to no tag at all
+                if (shown && !e.id().equals(RANK_TAG)) e.set("clic", "[tags] " + RANK_TAG + " quiet");
+                else if (shown) e.set("clic", "[sound] @error");
+                else if (click != null && click.startsWith("[tags] ")) e.set("clic", click + " quiet");
+                out.add(e);
             }
-            return entries;
+            out.addFirst(noTag(viewer, rankShown));
+            return out;
         }
         EquipmentSlot slot = SLOTS[Math.max(0, category)];
         Outfits outfits = plugin.outfits();
         String worn = outfits.worn(viewer, slot);
         List<ListEntry> out = new ArrayList<>();
+        out.add(nothing(viewer, slot, worn == null));
         for (Outfits.Cosmetic c : outfits.all()) {
             if (c.slot() != slot) continue;
             boolean wearing = c.key().equals(worn);
@@ -164,6 +189,28 @@ final class CosmeticsMenu {
                     .set("clic", c.unlocked() ? "[cosmetics] wear " + c.key() : "[sound] @error"));
         }
         return out;
+    }
+
+    /** First choice of an armour category: a barrier that takes off the cosmetic worn in that slot. */
+    private ListEntry nothing(Player viewer, EquipmentSlot slot, boolean bare) {
+        Lore lore = Lore.create().description(plugin.messages().raw("menu.none-description"));
+        if (bare) lore.ok(plugin.messages().raw("menu.none-current"));
+        else lore.left(plugin.messages().raw("menu.take-off"));
+        ItemStack item = Items.of("BARRIER", plugin.messages().raw("menu.none-name"), lore.build(), viewer);
+        if (bare && item != null) glint(item);
+        return ListEntry.of("none").item(item)
+                .set("clic", bare ? "[sound] @error" : "[cosmetics] none " + slot.name());
+    }
+
+    /** First choice of the tags: a barrier that takes the worn tag off, the rank's tag showing again. */
+    private ListEntry noTag(Player viewer, boolean rankShown) {
+        Lore lore = Lore.create().description(plugin.messages().raw("menu.no-tag-description"));
+        if (rankShown) lore.ok(plugin.messages().raw("menu.no-tag-current"));
+        else lore.left(plugin.messages().raw("menu.take-off"));
+        ItemStack item = Items.of("BARRIER", plugin.messages().raw("menu.none-name"), lore.build(), viewer);
+        if (rankShown && item != null) glint(item);
+        return ListEntry.of("none").item(item)
+                .set("clic", rankShown ? "[sound] @error" : "[tags] " + RANK_TAG + " quiet");
     }
 
     private ItemStack categoryButton(Player player, int category) {

@@ -20,6 +20,11 @@ menu:
   locked: "Not unlocked yet"
   wear: "Wear"
   take-off: "Take off"
+  none-name: "None"
+  none-description: "Takes off the cosmetic of this slot: your real piece shows again."
+  none-current: "Nothing worn here"
+  no-tag-description: "Takes your tag off: your rank's tag shows again."
+  no-tag-current: "Rank tag shown"
 outfits:
   wearing: "&7You now wear &f%name%&7."
   taken-off: "&7You took off &f%name%&7."
