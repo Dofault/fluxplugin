@@ -26,10 +26,21 @@ import java.util.concurrent.ConcurrentHashMap;
  * classes with their role, description and the player's level in each (read from the database, so it works outside
  * the rpg universe too), his own class marked; a click chooses one through {@code /classe choisir} (the rules of a
  * change: from the lobby, once per cooldown).
+ *
+ * <p>The details of one class ({@code rpg_classe}, 2026-11-20): what it is (role, description), its weapon and every
+ * spell (the same buttons as the « spells » line of /donjon). Opened by a right click on a class, here or in the class
+ * showcase, whose scene goes on behind it.</p>
  */
 public final class ClassMenu {
 
     public static final String MENU = "rpg_classes";
+    public static final String DETAILS = "rpg_classe";
+
+    /** The class a player reads the details of, and what its back button does. */
+    private record Details(String classId, String back) {
+    }
+
+    private final Map<UUID, Details> details = new ConcurrentHashMap<>();
 
     /** What a player had when the menu was opened: his class and his level in each class. */
     private record Seen(String heroClass, Map<String, Integer> levels) {
@@ -48,6 +59,70 @@ public final class ClassMenu {
         this.items = items;
         Lists.register(plugin, "rpg_classes_boutons", q -> buttons(q.viewer()));
         Lists.register(plugin, "rpg_classes_liste", q -> classes(q.viewer()));
+        Lists.register(plugin, "rpg_classe_boutons", q -> detailButtons(q.viewer()));
+        Lists.register(plugin, "rpg_classe_arme", q -> detailWeapon(q.viewer()));
+        Lists.register(plugin, "rpg_classe_sorts", q -> detailSpells(q.viewer()));
+    }
+
+    /**
+     * Opens the details of a class. {@code back}: the action of its back button ({@code [close]} from the showcase:
+     * the scene is still there behind). False when it cannot be shown (menu missing, unknown class).
+     */
+    boolean openDetails(Player p, String classId, String back) {
+        RpgConfig.Set set = config.get();
+        if (!FluxApi.hasMenu(DETAILS) || set == null || !set.classes().containsKey(classId)) return false;
+        details.put(p.getUniqueId(), new Details(classId, back));
+        Lists.invalidate(p, "rpg_classe_boutons");
+        Lists.invalidate(p, "rpg_classe_arme");
+        Lists.invalidate(p, "rpg_classe_sorts");
+        FluxApi.open(p, DETAILS);
+        return true;
+    }
+
+    private ClassDef shownClass(Player viewer) {
+        Details d = details.get(viewer.getUniqueId());
+        RpgConfig.Set set = config.get();
+        return d == null || set == null ? null : set.classes().get(d.classId());
+    }
+
+    /** Back (0) and the class itself (8): its name, role and what it does. */
+    private List<ListEntry> detailButtons(Player viewer) {
+        List<ListEntry> out = new ArrayList<>();
+        Details d = details.get(viewer.getUniqueId());
+        ClassDef c = shownClass(viewer);
+        if (d == null || c == null) return out;
+        out.add(ListEntry.of("back").item(orBarrier(Items.of("itemsadder:fluxui:btn_back_orange", raw("class-details.back"),
+                Lore.create().left(raw("class-details.back-action")).build(), viewer))).set("left", d.back()));
+        Lore lore = Lore.create().description(role(c.id())).description(raw("classes." + c.id() + ".description"));
+        ItemStack icon = Items.of("itemsadder:fluxui:btn_info_blue", raw("class-details.name", "%name%", raw("classes." + c.id() + ".name")),
+                lore.build(), viewer);
+        out.add(ListEntry.of("info").item(orBarrier(icon)).set("left", ""));
+        return out;
+    }
+
+    /** The class's apprentice weapon, as it is handed out (its own name and description). */
+    private List<ListEntry> detailWeapon(Player viewer) {
+        ClassDef c = shownClass(viewer);
+        if (c == null) return List.of();
+        ItemStack weapon = items.make(RpgItems.starterId(c.id()));
+        return weapon == null ? List.of() : List.of(ListEntry.of("weapon").item(weapon).set("left", ""));
+    }
+
+    /** Every spell of the class, in the order of the class pages (A, F, the weapon's spell, basic attack, passive). */
+    private List<ListEntry> detailSpells(Player viewer) {
+        ClassDef c = shownClass(viewer);
+        if (c == null) return List.of();
+        List<ListEntry> out = new ArrayList<>();
+        for (SpellBook.Spell sp : SpellBook.of(c, plugin.messages()::raw, SpellItems.VALUE, SpellItems.VALUE_END)) {
+            out.add(ListEntry.of("spell_" + sp.slot()).item(SpellItems.item(plugin, sp, viewer, null)).set("left", ""));
+        }
+        return out;
+    }
+
+    /** What the class is for, as tags (Damage, Control...); the sentence of the class pages when it has none. */
+    String role(String classId) {
+        String tags = raw("showcase.roles." + classId);
+        return tags.isEmpty() || tags.equals("showcase.roles." + classId) ? raw("class-pages.classes." + classId + ".role") : tags;
     }
 
     /** Reads his class and levels (off the main thread), then opens the menu; false when it cannot be shown. */
@@ -108,11 +183,13 @@ public final class ClassMenu {
                     .kv(raw("class-menu.level"), s == null ? 1 : s.levels().getOrDefault(id, 1));
             if (mine) lore.ok(raw("class-menu.mine"));
             else lore.left(raw("class-menu.choose"));
+            lore.right(raw("class-menu.details"));
             ItemStack weapon = items.make(RpgItems.starterId(id));
             ItemStack item = Items.dress(weapon == null ? new ItemStack(Material.BOOK) : weapon,
                     raw("classes." + id + ".name"), lore.build(), viewer);
             if (mine) item.editMeta(m -> m.setEnchantmentGlintOverride(true));
-            out.add(ListEntry.of(id).item(item).set("left", mine || c == null ? "" : "[player] classe choisir " + id));
+            out.add(ListEntry.of(id).item(item).set("left", mine || c == null ? "" : "[player] classe choisir " + id)
+                    .set("right", "[player] classe details " + id));
         }
         return out;
     }

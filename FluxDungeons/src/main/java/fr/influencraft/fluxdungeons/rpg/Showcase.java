@@ -85,11 +85,13 @@ final class Showcase implements Listener {
     private final Controls controls;
     private final RpgItems items;
     private final RpgWorld world;
+    private final ClassMenu classMenu;
     private final Map<UUID, ShowcaseSession> sessions = new HashMap<>();
     private final Map<Integer, UUID> stages = new HashMap<>();
 
     Showcase(FluxPlugin plugin, Supplier<RpgConfig.Set> config, RpgPlayers players, CombatEngine combat, Skills skills,
-             Controls controls, RpgItems items, RpgWorld world) {
+             Controls controls, RpgItems items, RpgWorld world, ClassMenu classMenu) {
+        this.classMenu = classMenu;
         this.plugin = plugin;
         this.config = config;
         this.players = players;
@@ -126,6 +128,10 @@ final class Showcase implements Listener {
 
     RpgItems items() {
         return items;
+    }
+
+    ClassMenu classMenu() {
+        return classMenu;
     }
 
     boolean watching(Player p) {
@@ -339,14 +345,14 @@ final class Showcase implements Listener {
         }, 2L);
     }
 
-    /** A right click chooses too (the long press of a touch screen); the item he really holds is never used. */
+    /** A right click (the long press of a touch screen) shows the details of the class he holds; the item he really holds is never used. */
     @EventHandler(priority = EventPriority.LOWEST)
     public void onInteract(org.bukkit.event.player.PlayerInteractEvent e) {
         ShowcaseSession s = sessions.get(e.getPlayer().getUniqueId());
         if (s == null) return;
         e.setCancelled(true);
         boolean right = e.getAction() == org.bukkit.event.block.Action.RIGHT_CLICK_AIR || e.getAction() == org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK;
-        if (right && e.getHand() == org.bukkit.inventory.EquipmentSlot.HAND) s.click();
+        if (right && e.getHand() == org.bukkit.inventory.EquipmentSlot.HAND) s.details();
     }
 
     /**

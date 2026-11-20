@@ -57,7 +57,8 @@ public final class RpgModule implements Listener {
         items = new RpgItems(plugin);
         if (config.get() != null) items.load(config.get());
         players = new RpgPlayers(plugin, config, store, items);
-        players.classMenu(new ClassMenu(plugin, config, store, items));
+        ClassMenu classMenu = new ClassMenu(plugin, config, store, items);
+        players.classMenu(classMenu);
         combat = new CombatEngine(plugin, config::get, players::get);
         combat.profiles(RpgModule::profileFromTags);
         combat.immortal(e -> e.getScoreboardTags().contains(TAG_DUMMY));
@@ -76,7 +77,7 @@ public final class RpgModule implements Listener {
             kit.open(p);
             return false;
         });
-        showcase = new Showcase(plugin, config::get, players, combat, skills, controls, items, world);
+        showcase = new Showcase(plugin, config::get, players, combat, skills, controls, items, world, classMenu);
         players.useShowcase(showcase);
         registerCombatApi(skills);
         var pm = Bukkit.getPluginManager();
@@ -89,6 +90,8 @@ public final class RpgModule implements Listener {
             if (!(s instanceof Player p)) return true;
             // "choisir <class>": the buttons of the class pages
             if (a.length >= 2 && a[0].equalsIgnoreCase("choisir")) players.pick(p, a[1].toLowerCase(java.util.Locale.ROOT));
+            // "details <class>": a right click on a class of the class menu; its back button opens that menu again
+            else if (a.length >= 2 && a[0].equalsIgnoreCase("details")) classMenu.openDetails(p, a[1].toLowerCase(java.util.Locale.ROOT), "[player] classe");
             // "menu": asked from the dungeon menu, which opens again after the show
             else players.changeClass(p, a.length >= 1 && a[0].equalsIgnoreCase("menu"));
             return true;

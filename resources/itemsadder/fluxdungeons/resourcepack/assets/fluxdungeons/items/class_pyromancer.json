@@ -17,7 +17,7 @@
   ],
   "fallback": {
    "type": "minecraft:model",
-   "model": "minecraft:item/blaze_rod"
+   "model": "fluxdungeons:item/tison_soleil"
   }
  }
 }

@@ -390,21 +390,11 @@ public final class DungeonMenus {
      * spell, the basic attack and the passive, each with its icon, key and mana; read only. Without a class: a book that
      * opens the classes.
      */
-    /** Colour of the numbers in a spell's text. */
-    private static final String SPELL_VALUE = "&#4FC3C9";
-
     private List<ListEntry> spells(Player viewer) {
         List<ListEntry> out = new ArrayList<>();
-        // the sentence in white, its numbers in teal (owner, 2026-11-16)
-        for (var sp : host.spells(viewer, SPELL_VALUE, "&f")) {
-            Lore lore = Lore.create().description("&f" + sp.text())
-                    .kv(raw("menu.spell-key"), raw("class-pages.keys." + sp.key()));
-            if (sp.mana() >= 0) lore.kv(raw("menu.spell-cost"), sp.mana() == 0 ? raw("class-pages.free")
-                    : raw("class-pages.mana", "%mana%", fr.influencraft.flux.api.util.Format.decimal(sp.mana())));
-            lore.left(raw("menu.class-action"));
-            ItemStack item = Items.of("itemsadder:" + sp.icon(), sp.name(), lore.build(), viewer);
-            if (item == null) item = Items.of("ENCHANTED_BOOK", sp.name(), lore.build(), viewer);
-            out.add(ListEntry.of("spell_" + sp.slot()).item(orBarrier(item)).set("left", "[player] classe menu").set("right", ""));
+        for (var sp : host.spells(viewer, fr.influencraft.fluxdungeons.rpg.SpellItems.VALUE, fr.influencraft.fluxdungeons.rpg.SpellItems.VALUE_END)) {
+            ItemStack item = fr.influencraft.fluxdungeons.rpg.SpellItems.item(plugin, sp, viewer, l -> l.left(raw("menu.class-action")));
+            out.add(ListEntry.of("spell_" + sp.slot()).item(item).set("left", "[player] classe menu").set("right", ""));
         }
         if (out.isEmpty()) {
             Lore lore = Lore.create().description(raw("menu.spells-none")).left(raw("menu.class-action"));

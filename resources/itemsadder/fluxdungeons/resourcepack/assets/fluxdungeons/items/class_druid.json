@@ -17,7 +17,7 @@
   ],
   "fallback": {
    "type": "minecraft:model",
-   "model": "minecraft:item/diamond_hoe"
+   "model": "fluxdungeons:item/coeur_de_sylve"
   }
  }
 }

@@ -51,6 +51,12 @@ font_images:
     path: "gui/fd_menu_classes.png"
     scale_ratio: 221
     y_position: 13
+  fd_menu_classe:
+    show_in_gui: false
+    suggest_in_command: false
+    path: "gui/fd_menu_classe.png"
+    scale_ratio: 221
+    y_position: 13
   fd_menu_armure:
     show_in_gui: false
     suggest_in_command: false

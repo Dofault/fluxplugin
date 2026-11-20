@@ -605,8 +605,8 @@ showcase:
   yours: "&#FFD94D★ Your class"
   icon-yours: " &#FFD94D★"
   icon-choose: "Choose this class"
-  hint: "&fWheel&#B376E5: change class &8· &r&7%img_left_click% &#FFD94DChoose"
-  hint-bedrock: "&#B376E5Tap a class in your hotbar, then the screen to choose it"
+  hint: "&fWheel&#B376E5: change class &8· &r&7%img_left_click% &#FFD94DChoose &8· &r&7%img_right_click% &#FFD94DDetails"
+  hint-bedrock: "&#B376E5Tap a class in your hotbar, then the screen to choose it &8· &#B376E5Long press: details"
   confirm: "&r&7%img_left_click% &#FFD94DConfirm %color%%name%"
   confirm-bedrock: "&#FFD94DTap the screen again to choose %color%%name%"
   leave-name: "&#FF5C5CLeave"
@@ -805,6 +805,10 @@ pets:
   taken: 'It comes with you'
   take: 'Take it'
   level: 'Level'
+class-details:
+  name: "%name%"
+  back: "Back"
+  back-action: "Go back"
 class-menu:
   title: 'Classes'
   info-desc: 'Your class and your level in each. You can change it anywhere, but not during a dungeon.'
@@ -815,6 +819,7 @@ class-menu:
   back-action: 'Back to the dungeons'
   mine: 'Your class'
   choose: 'Choose it'
+  details: "Details"
 trial:
   start: '&7Free entry: %player% never beat this dungeon, no key is spent. &eYour gains are held until the victory&7: lose and they are gone.'
   lost: '&cFree try lost: the &f%tokens% &ctokens earned in %dungeon% &cand the run''s experience are gone. Try again, entry stays free until you win.'

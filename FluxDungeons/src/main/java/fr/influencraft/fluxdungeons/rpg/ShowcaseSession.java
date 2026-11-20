@@ -470,7 +470,21 @@ final class ShowcaseSession {
         hint();
     }
 
-    /** A click, left or right: the class he holds is chosen, once a second click confirmed it. */
+    /**
+     * A right click: the details of the class he holds (its weapon and spells), in a menu over the scene, which goes on
+     * behind; its back button closes it. On the way out it leaves, as a left click.
+     */
+    void details() {
+        if (closing || settling || ticks - lastClick < 4) return;
+        lastClick = ticks;
+        if (leaving) {
+            showcase.close(player, true);
+            return;
+        }
+        if (shown != null && showcase.classMenu().openDetails(player, shown, "[close]")) Sounds.cue(player, "page");
+    }
+
+    /** A left click: the class he holds is chosen, once a second click confirmed it. */
     void click() {
         if (closing || settling || ticks - lastClick < 4 || shown == null) return;
         lastClick = ticks;

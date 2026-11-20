@@ -25,7 +25,10 @@ Layouts (window px 176 wide, item of a slot at fond_lib.objet):
             inventory to look at (32, menu rpg_inventaire, read only), potions (33-34), pet (35).
   donjon_familier  the pet taken into dungeons (one, never a boss's): « none » then his pets, 28 a page, Flux's pager.
   rpg_classes  the classes outside the lobby (a plain menu instead of the MC GUI pages): back (0), his class (8), the
-            three classes (11, 13, 15) with his level in each; a click chooses one (the lobby's rules).
+            three classes (11, 13, 15) with his level in each; a left click chooses one (the lobby's rules), a right
+            click shows its details.
+  rpg_classe  the details of a class (2026-11-20, right click on a class here or in the showcase), rows 0 to 1:
+            back (0), the class (8: role, description); its weapon (10) and its spells (12-16), each in a well.
   donjon_boutique  the dungeon shop (2026-11-16, laid out as the market, rows 0 to 5, no inventory part): back (0),
             info (8); articles in a well (rows 1-4, columns 1-7); left column the job filter (18) and the kind filter
             (27), right column tokens (26) and the search (35); Flux's pager on row 5.
@@ -80,6 +83,9 @@ LINE_ROWS = 4
 # pet chosen for the dungeons (menu donjon_familier) and the classes outside the lobby (menu rpg_classes)
 PET_SLOTS = [r * 9 + c for r in range(1, 5) for c in range(1, 8)]
 CLASS_SLOTS = [11, 13, 15]
+# the details of a class (menu rpg_classe): its weapon, then its spells (rpg.SpellBook order, five at most)
+DETAIL_WEAPON = 10
+DETAIL_SPELLS = [12, 13, 14, 15, 16]
 
 
 def line_pages():
@@ -204,6 +210,17 @@ def bg_classes():
     for c in CLASS_SLOTS:
         x, y = ui.objet(c)
         ui.well(d, (x - 3, y - 3, x + 18, y + 18))
+    return im
+
+
+def bg_class_details():
+    """The details of a class: the weapon in a well of its own, the spells in one well."""
+    im = bg_window(GENERIC, 0, 1, title="Classe")
+    d = ImageDraw.Draw(im, "RGBA")
+    x, y = ui.objet(DETAIL_WEAPON)
+    ui.well(d, (x - 3, y - 3, x + 18, y + 18))
+    x0, y0, x1, y1 = span(DETAIL_SPELLS, 0)
+    ui.well(d, (x0 - 2, y0 - 2, x1 + 2, y1 + 2))
     return im
 
 
@@ -378,7 +395,7 @@ def pack():
 
     backgrounds = {f"fd_menu_liste_p{n}": bg_line(page) for n, page in enumerate(line_pages(), start=1)}
     backgrounds.update({"fd_menu_sas": bg_sas(), "fd_menu_boutique": bg_shop(), "fd_menu_boutique_type": bg_kinds(),
-                        "fd_menu_familier": bg_pets(), "fd_menu_classes": bg_classes(),
+                        "fd_menu_familier": bg_pets(), "fd_menu_classes": bg_classes(), "fd_menu_classe": bg_class_details(),
                         "fd_menu_armure": bg_armour(), "fd_menu_inventaire": bg_inventory()})
     # pictures of the former menus (the tower, the dungeon page and its boss pictures): gone
     import shutil
@@ -605,7 +622,20 @@ rows: 3
 lists:
 
 {entries("rpg_classes_boutons", [0, 8], left=["%entry_left%"])}
-{entries("rpg_classes_liste", CLASS_SLOTS, left=["%entry_left%"])}
+{entries("rpg_classes_liste", CLASS_SLOTS, left=["%entry_left%"], right=["%entry_right%"])}
+""")
+    open(os.path.join(MENUS, "rpg_classe.yml"), "w", encoding="utf-8").write(head + f"""# The details of a class (rpg.ClassMenu#openDetails): what it is, its weapon and its spells; read only. Opened by a
+# right click on a class (class menu, class showcase); the back button goes back there.
+
+title: ":offset_-8::fd_menu_classe:"
+rows: 2
+{common}update-interval: 20
+
+lists:
+
+{entries("rpg_classe_boutons", [0, 8], left=["%entry_left%"])}
+{entries("rpg_classe_arme", [DETAIL_WEAPON])}
+{entries("rpg_classe_sorts", DETAIL_SPELLS)}
 """)
     lit = ""
     open(os.path.join(MENUS, "donjon_sas.yml"), "w", encoding="utf-8").write(head + f"""# Launch screen of a dungeon (dungeon.Lobby): who comes, the difficulty chosen by the leader, everybody ready.

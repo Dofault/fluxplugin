@@ -617,8 +617,8 @@ showcase:
   yours: "&#FFD94D★ Ta classe"
   icon-yours: " &#FFD94D★"
   icon-choose: "Choisir cette classe"
-  hint: "&fMolette &#B376E5: changer de classe &8· &r&7%img_left_click% &#FFD94DChoisir"
-  hint-bedrock: "&#B376E5Touche une classe dans ta barre, puis l'écran pour la choisir"
+  hint: "&fMolette &#B376E5: changer de classe &8· &r&7%img_left_click% &#FFD94DChoisir &8· &r&7%img_right_click% &#FFD94DDétails"
+  hint-bedrock: "&#B376E5Touche une classe dans ta barre, puis l'écran pour la choisir &8· &#B376E5Appui long : détails"
   confirm: "&r&7%img_left_click% &#FFD94DConfirmer %color%%name%"
   confirm-bedrock: "&#FFD94DTouche encore l'écran pour choisir %color%%name%"
   leave-name: "&#FF5C5CQuitter"
@@ -817,6 +817,10 @@ pets:
   taken: 'Il t''accompagne'
   take: 'L''emmener'
   level: 'Niveau'
+class-details:
+  name: "%name%"
+  back: "Retour"
+  back-action: "Revenir"
 class-menu:
   title: 'Classes'
   info-desc: 'Ta classe et ton niveau dans chacune. Tu peux en changer partout, sauf pendant un donjon.'
@@ -827,6 +831,7 @@ class-menu:
   back-action: 'Revenir aux donjons'
   mine: 'Ta classe'
   choose: 'La choisir'
+  details: "Détails"
 trial:
   start: '&#B376E5Entrée gratuite : %player% n''a jamais réussi ce donjon, aucune clé n''est dépensée. &#FFD94DTes gains sont gardés jusqu''à la victoire&#B376E5 : en cas d''échec, tu les perds.'
   lost: '&#FF5C5CEntrée gratuite perdue : les &f%tokens% &#FF5C5Cjetons gagnés dans %dungeon% &#FF5C5Cet l''expérience de la partie sont perdus. Réessaie, l''entrée reste gratuite jusqu''à ta victoire.'
