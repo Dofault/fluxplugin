@@ -175,6 +175,7 @@ menu:
   level-name: "Level %level%"
   level: "Level"
   not-adopted: "Not adopted yet."
+  admin-adopt: "Adopt (admin)"
   remove: "&#FF5C5CRemove from my collection"
   remove-description: "Operators only: takes this pet out of your collection, its level is lost."
   remove-action: "Remove"

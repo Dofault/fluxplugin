@@ -130,15 +130,20 @@ public final class PetMenuLists {
 
     /**
      * The button of a pet, the same wherever it is shown. Adopted: its sheet, left click to activate or put away,
-     * right click for its progress (glowing while active). Not adopted: its sheet at level 1, no click.
+     * right click for its progress (glowing while active). Not adopted: its sheet at level 1, no click (an admin adopts it with a left click).
      */
     private ListEntry button(Player player, Pet pet) {
         int level = PetData.level(player, pet);
         Lore lore = sheet(player, pet);
         if (level < 1) {
             lore.ko(t("not-adopted"));
+            // an admin adopts it from here (with its reveal, the menu closes to show it): testing
+            boolean admin = fr.influencraft.flux.api.staff.Staff.isAdmin(player);
+            if (admin) lore.left(t("admin-adopt"));
             ItemStack item = Items.of(PORTRAIT + pet.id(), pet.name(), lore.build(), player);
-            return ListEntry.of(pet.id()).item(item).set("left", "").set("left2", "").set("right", "").set("right2", "");
+            return ListEntry.of(pet.id()).item(item)
+                    .set("left", admin ? "[player] pets adopt " + pet.id() : "").set("left2", admin ? "[close]" : "")
+                    .set("right", "").set("right2", "");
         }
         boolean active = PetData.isActive(player, pet);
         if (active) lore.ok(t("active"));

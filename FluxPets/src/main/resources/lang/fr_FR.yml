@@ -176,6 +176,7 @@ menu:
   level-name: "Niveau %level%"
   level: "Niveau"
   not-adopted: "Pas encore adopté."
+  admin-adopt: "Adopter (admin)"
   remove: "&#FF5C5CRetirer de ma collection"
   remove-description: "Réservé aux opérateurs : retire ce familier de ta collection, son niveau est perdu."
   remove-action: "Retirer"
