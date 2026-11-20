@@ -8,7 +8,7 @@ record Settings(double distance, double minDistance, double maxDistance, double 
                 String item, String itemModel) {
 
     static Settings read(FileConfiguration c) {
-        double min = Math.max(0.8, c.getDouble("camera.min-distance", 1.6));
+        double min = Math.max(0.5, c.getDouble("camera.min-distance", 0.6));
         double max = Math.max(min, c.getDouble("camera.max-distance", 6.0));
         double start = Math.clamp(c.getDouble("camera.distance", 3.2), min, max);
         float minPitch = (float) Math.max(-89, c.getDouble("camera.min-pitch", -25));

@@ -6,10 +6,10 @@ already: "&#FF5C5CTu es déjà dans la garde-robe."
 reloaded: "&#2ECF7BFluxCosmetics rechargé."
 usage: "!&#FF5C5C/%flux_cmd_fluxcosmetics_tenue% [reload]"
 # barre d'action pendant la garde-robe
-hint: "&r&7%img_move_keys% &#FFD94DCaméra   &r&7%img_middle_click% &#FFD94DZoom   &r&7%img_right_click% &#FFD94DMenu cosmétique   &r&7%img_left_click% &#FFD94DQuitter"
+hint: "&r&7%img_move_keys% &#FFD94DCaméra   &r&7%img_mouse_move% &#FFD94DMonter/Descendre   &r&7%img_middle_click% &#FFD94DZoom   &r&7%img_right_click% &#FFD94DMenu cosmétique   &r&7%img_left_click% &#FFD94DQuitter"
 menu-soon: "&7Le choix des cosmétiques arrive bientôt."
 items:
   camera-name: "Longue-vue"
-  camera-description: "Gauche et droite font tourner la caméra autour de toi, avancer et reculer la montent ou la descendent, la molette la rapproche ou l'éloigne."
+  camera-description: "Gauche et droite font tourner la caméra autour de toi, la souris avancée ou reculée la monte ou la descend, la molette la rapproche ou l'éloigne."
   camera-left: "Sortir"
   camera-right: "Choisir un cosmétique"

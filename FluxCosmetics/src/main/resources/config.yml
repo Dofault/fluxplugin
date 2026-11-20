@@ -9,7 +9,7 @@ camera:
   # Distance from the mannequin when the wardrobe opens.
   distance: 3.2
   # Closest and farthest the wheel can bring the camera.
-  min-distance: 1.6
+  min-distance: 0.6
   max-distance: 6.0
   # Blocks per notch of the mouse wheel.
   zoom-step: 0.4

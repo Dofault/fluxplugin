@@ -6,10 +6,10 @@ already: "&#FF5C5CYou are already in the wardrobe."
 reloaded: "&#2ECF7BFluxCosmetics reloaded."
 usage: "!&#FF5C5C/%flux_cmd_fluxcosmetics_tenue% [reload]"
 # action bar in the wardrobe
-hint: "&r&7%img_move_keys% &#FFD94DCamera   &r&7%img_middle_click% &#FFD94DZoom   &r&7%img_right_click% &#FFD94DCosmetics menu   &r&7%img_left_click% &#FFD94DLeave"
+hint: "&r&7%img_move_keys% &#FFD94DCamera   &r&7%img_mouse_move% &#FFD94DUp/Down   &r&7%img_middle_click% &#FFD94DZoom   &r&7%img_right_click% &#FFD94DCosmetics menu   &r&7%img_left_click% &#FFD94DLeave"
 menu-soon: "&7Choosing cosmetics is coming soon."
 items:
   camera-name: "Spyglass"
-  camera-description: "Left and right turn the camera around yourself, forward and backward raise or lower it, the wheel brings it closer or farther."
+  camera-description: "Left and right turn the camera around yourself, moving the mouse forward or back raises or lowers it, the wheel brings it closer or farther."
   camera-left: "Leave"
   camera-right: "Choose a cosmetic"

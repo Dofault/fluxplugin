@@ -37,8 +37,9 @@ import org.bukkit.util.Vector;
  *   else the server refuses the move), unable to move by himself (walk and fly speed 0), on a sphere around the
  *   mannequin where his view looks right at it.</li>
  *   <li><b>Keys drive the camera</b>: left and right turn it around the mannequin, forward and backward raise or lower
- *   it, the mouse wheel brings it closer or farther (his held slot is put back at once, {@link Wardrobe}). The mouse
- *   does nothing: his view is turned back to the camera's as soon as it moves ({@link Camera#turns}).</li>
+ *   it, the mouse wheel brings it closer or farther (his held slot is put back at once, {@link Wardrobe}). Moving the
+ *   mouse forward or back raises or lowers it too (his pitch is the camera's, read as soon as it moves,
+ *   {@link Camera#turns}); its sideways moves are turned back at once.</li>
  *   <li>He is moved by {@link Camera#moveSelf}, which never touches his rotation (a server teleport resets it and makes
  *   the server deaf to his rotation until his client answers, 2026-11-20); his view is turned with the camera by
  *   {@link Camera#turn}.</li>
@@ -64,6 +65,8 @@ final class WardrobeView {
     private static final double SCALE = 0.1;
     /** Eyes of a standing (flying) player at full size. */
     private static final double STANDING_EYE = 1.62;
+    /** Least time between two moves sent from his mouse; the tick sends the last one. */
+    private static final long MOVE_GAP_NANOS = 40_000_000L;
     /** Share of the way to the wanted zoom made each tick: the wheel's notches glide instead of jumping. */
     private static final double ZOOM_GLIDE = 0.35;
     /** The shrink, a transient modifier: never saved, gone after a crash. */
@@ -87,6 +90,10 @@ final class WardrobeView {
     private volatile float yaw, pitch;
     /** Distance now, and the one the wheel asked for. */
     private double zoom, wantedZoom;
+    /** Distance the camera really stands at (zoom, closer when a block is in the way), read by the network thread. */
+    private volatile double reach;
+    /** Last move sent from his mouse (network thread). */
+    private volatile long lastMove;
     /** Where he was last put, to move him only when the camera really moves. */
     private Vector placed;
     /** True while the wardrobe itself teleports him. */
@@ -151,7 +158,8 @@ final class WardrobeView {
         pitch = settings.startPitch();
         zoom = wantedZoom = settings.distance();
         // the one real teleport: his view is set to the camera's here, then turned by packets only
-        Vector start = feet(yaw, pitch, reach());
+        reach = reach();
+        Vector start = feet(yaw, pitch, reach);
         teleport(new Location(world, start.getX(), start.getY(), start.getZ(), yaw, pitch));
         placed = start;
 
@@ -160,10 +168,20 @@ final class WardrobeView {
         Hotbar.show(player, hotbar());
         Hotbar.bars(player, false);
         Sidebar.hide(player, true);
-        // the mouse does nothing: his view goes back to the camera's as soon as it moves
+        // the mouse forward or back raises or lowers the camera; sideways belongs to the keys and is turned back
         Camera.turns(player, (p, y, x) -> {
-            float cy = yaw, cx = pitch;
-            if (Math.abs(wrap(y - cy)) > SLACK || Math.abs(x - cx) > SLACK) Camera.turn(p, cy, false, cx, false);
+            float cy = yaw;
+            if (Math.abs(wrap(y - cy)) > SLACK) Camera.turn(p, cy, false, 0, true);
+            float clamped = Math.clamp(x, settings.minPitch(), settings.maxPitch());
+            if (clamped != x) Camera.turn(p, 0, true, clamped, false);
+            // his client answers each move with his rotation, unchanged: not a mouse move (that answer looped)
+            if (Math.abs(clamped - pitch) <= 0.01f) return;
+            pitch = clamped;
+            long now = System.nanoTime();
+            if (now - lastMove < MOVE_GAP_NANOS) return;
+            lastMove = now;
+            Vector f = feet(cy, clamped, reach);
+            Camera.moveSelf(p, f.getX(), f.getY(), f.getZ());
         });
         hint();
     }
@@ -212,7 +230,8 @@ final class WardrobeView {
         if (Math.abs(wantedZoom - zoom) > 1e-3) zoom += (wantedZoom - zoom) * ZOOM_GLIDE;
         if (!player.isFlying()) player.setFlying(true);
 
-        Vector f = feet(yaw, pitch, reach());
+        reach = reach();
+        Vector f = feet(yaw, pitch, reach);
         // moved: keys, zoom, a block in the way; else now and then against any drift
         if (placed.distanceSquared(f) > 1e-4 || ticks % 20 == 0) {
             placed = f;
