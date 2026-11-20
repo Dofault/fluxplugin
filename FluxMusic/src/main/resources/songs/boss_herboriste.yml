@@ -11,9 +11,9 @@ loop-from: a
 tracks:
   lead: { instrument: harp, volume: 0.8 }
   chant: { instrument: flute, volume: 0.7, pan: -0.5 }
-  echo: { instrument: chime, volume: 0.3, pan: 0.3 }
-  arpege: { instrument: pling, volume: 0.32, pan: -0.3 }
-  guitare: { instrument: guitar, volume: 0.55, pan: 0.4 }
+  echo: { instrument: chime, volume: 0.3, pan: 0.4 }
+  arpege: { instrument: pling, volume: 0.32 }
+  guitare: { instrument: guitar, volume: 0.55 }
   basse: { instrument: bass, volume: 0.85, chorus: 12 }
   grosse: { instrument: basedrum, volume: 0.65 }
   caisse: { instrument: snare, volume: 0.33 }

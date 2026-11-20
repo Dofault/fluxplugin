@@ -7,10 +7,10 @@ beats-per-bar: 4
 
 tracks:
   harpe:      { instrument: harp, volume: 0.8 }
-  guitare:    { instrument: guitar, volume: 0.6, pan: -0.5 }
+  guitare:    { instrument: guitar, volume: 0.6 }
   basse:      { instrument: bass, volume: 0.8, chorus: 12 }
   grondement: { instrument: didgeridoo, volume: 0.45, chorus: 8 }
-  cloche:     { instrument: bell, volume: 0.25, pan: 0.4 }
+  cloche:     { instrument: bell, volume: 0.25 }
 
 sections:
   chute:

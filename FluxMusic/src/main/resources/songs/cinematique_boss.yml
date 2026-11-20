@@ -10,9 +10,9 @@ beats-per-bar: 4
 tracks:
   bourdon: { instrument: didgeridoo, volume: 0.7, chorus: 8 }
   basse:   { instrument: bass, volume: 0.85, chorus: 12 }
-  harpe:   { instrument: harp, volume: 0.55, pan: -0.5 }
+  harpe:   { instrument: harp, volume: 0.55 }
   flute:   { instrument: flute, volume: 0.6 }
-  cloche:  { instrument: bell, volume: 0.45, pan: 0.4 }
+  cloche:  { instrument: bell, volume: 0.45 }
   guitare: { instrument: guitar, volume: 0.7 }
   grosse:  { instrument: basedrum, volume: 0.8 }
   caisse:  { instrument: snare, volume: 0.4 }

@@ -12,7 +12,7 @@ tracks:
   serre:     { instrument: snare, volume: 0.35 }
   grosse:    { instrument: basedrum, volume: 0.55 }
   montee:    { instrument: pling, volume: 0.35 }
-  cloche:    { instrument: bell, volume: 0.25, pan: -0.5 }
+  cloche:    { instrument: bell, volume: 0.25 }
 
 sections:
   jingle:

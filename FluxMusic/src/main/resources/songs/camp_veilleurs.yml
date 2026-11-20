@@ -16,7 +16,7 @@ tracks:
   ronde: { instrument: banjo, volume: 0.62, pan: -0.5 }
   breche: { instrument: iron_xylophone, volume: 0.55, pan: 0.4 }
   cloches: { instrument: bell, volume: 0.26 }
-  harmonie: { instrument: harp, volume: 0.38 }
+  harmonie: { instrument: harp, volume: 0.38, pan: 0.3 }
   echo: { instrument: harp, volume: 0.17 }
   arpege: { instrument: pling, volume: 0.2 }
   arpege_doux: { instrument: harp, volume: 0.22 }
@@ -24,7 +24,7 @@ tracks:
   etoiles: { instrument: chime, volume: 0.13 }
   cloche: { instrument: bell, volume: 0.3 }
   cloche_loin: { instrument: bell, volume: 0.1 }
-  guitare: { instrument: guitar, volume: 0.42, pan: 0.3 }
+  guitare: { instrument: guitar, volume: 0.42 }
   basse: { instrument: bass, volume: 0.75, chorus: 12 }
   basse_douce: { instrument: bass, volume: 0.5, chorus: 12 }
   vent: { instrument: didgeridoo, volume: 0.28, chorus: 8 }

@@ -9,10 +9,10 @@ loop: false
 
 tracks:
   melodie: { instrument: flute, volume: 1.0 }
-  echo:    { instrument: chime, volume: 0.3, pan: -0.3 }
-  arpege:  { instrument: harp, volume: 0.5, pan: -0.5 }
+  echo:    { instrument: chime, volume: 0.3, pan: -0.5 }
+  arpege:  { instrument: harp, volume: 0.5 }
   basse:   { instrument: bass, volume: 0.85, chorus: 12 }
-  cloche:  { instrument: bell, volume: 0.35, pan: 0.4 }
+  cloche:  { instrument: bell, volume: 0.35 }
   grosse:  { instrument: basedrum, volume: 0.6 }
   caisse:  { instrument: snare, volume: 0.3 }
   charley: { instrument: hat, volume: 0.2 }

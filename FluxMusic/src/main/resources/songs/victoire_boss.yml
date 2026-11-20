@@ -7,9 +7,9 @@ beats-per-bar: 4
 
 tracks:
   flute:   { instrument: flute, volume: 1.0 }
-  cloche:  { instrument: bell, volume: 0.4, pan: -0.3 }
-  harpe:   { instrument: harp, volume: 0.5, pan: 0.4 }
-  guitare: { instrument: guitar, volume: 0.65, pan: -0.5 }
+  cloche:  { instrument: bell, volume: 0.4 }
+  harpe:   { instrument: harp, volume: 0.5 }
+  guitare: { instrument: guitar, volume: 0.65 }
   basse:   { instrument: bass, volume: 0.85, chorus: 12 }
   grosse:  { instrument: basedrum, volume: 0.65 }
   caisse:  { instrument: snare, volume: 0.35 }

@@ -10,10 +10,10 @@ loop: false
 tracks:
   harpe:   { instrument: harp, volume: 0.8 }
   flute:   { instrument: flute, volume: 0.7 }
-  nappe:   { instrument: harp, volume: 0.3, pan: 0.4 }
-  guitare: { instrument: guitar, volume: 0.6, pan: -0.5 }
+  nappe:   { instrument: harp, volume: 0.3, pan: -0.5 }
+  guitare: { instrument: guitar, volume: 0.6 }
   basse:   { instrument: bass, volume: 0.8, chorus: 12 }
-  carillon: { instrument: chime, volume: 0.3, pan: -0.3 }
+  carillon: { instrument: chime, volume: 0.3 }
   grosse:  { instrument: basedrum, volume: 0.5 }
   caisse:  { instrument: snare, volume: 0.22 }
   charley: { instrument: hat, volume: 0.15 }

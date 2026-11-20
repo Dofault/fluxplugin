@@ -14,17 +14,17 @@ tracks:
   theme: { instrument: flute, volume: 0.72 }
   chanson: { instrument: flute, volume: 0.6, pan: -0.5 }
   seconde: { instrument: flute, volume: 0.28 }
-  lanterne: { instrument: bell, volume: 0.36, pan: 0.3 }
+  lanterne: { instrument: bell, volume: 0.36, pan: -0.3 }
   lanterne_harpe: { instrument: harp, volume: 0.4, pan: 0.4 }
   cloches: { instrument: bell, volume: 0.24 }
-  harmonie: { instrument: harp, volume: 0.34 }
+  harmonie: { instrument: harp, volume: 0.34, pan: 0.3 }
   contrechant: { instrument: bell, volume: 0.18 }
   echo: { instrument: harp, volume: 0.14 }
   carillon: { instrument: bell, volume: 0.34 }
   magie: { instrument: chime, volume: 0.16 }
   etoiles: { instrument: chime, volume: 0.11 }
   arpege: { instrument: pling, volume: 0.16 }
-  guitare: { instrument: guitar, volume: 0.4, pan: -0.3 }
+  guitare: { instrument: guitar, volume: 0.4 }
   basse: { instrument: bass, volume: 0.7, chorus: 12 }
   basse_douce: { instrument: bass, volume: 0.5, chorus: 12 }
   tictac: { instrument: hat, volume: 0.07 }

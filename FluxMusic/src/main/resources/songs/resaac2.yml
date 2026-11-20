@@ -13,14 +13,14 @@ loop-from: intro
 tracks:
   theme: { instrument: flute, volume: 0.7 }
   place: { instrument: harp, volume: 0.62, pan: -0.5 }
-  reponse: { instrument: harp, volume: 0.5, pan: 0.4 }
-  tierce: { instrument: harp, volume: 0.26 }
-  cloches: { instrument: bell, volume: 0.16 }
+  reponse: { instrument: harp, volume: 0.5 }
+  tierce: { instrument: harp, volume: 0.26, pan: -0.3 }
+  cloches: { instrument: bell, volume: 0.16, pan: 0.3 }
   contrechant: { instrument: bell, volume: 0.14 }
   piano: { instrument: harp, volume: 0.3 }
-  riff: { instrument: harp, volume: 0.46, pan: 0.3 }
+  riff: { instrument: harp, volume: 0.46, pan: 0.4 }
   guitare: { instrument: guitar, volume: 0.34 }
-  guitare_solo: { instrument: guitar, volume: 0.5, pan: -0.3 }
+  guitare_solo: { instrument: guitar, volume: 0.5 }
   harpe: { instrument: harp, volume: 0.2 }
   cascade: { instrument: chime, volume: 0.15 }
   etoiles: { instrument: chime, volume: 0.1 }

@@ -11,7 +11,7 @@ loop-from: intro
 tracks:
   lead: { instrument: flute, volume: 0.62 }
   lead2: { instrument: chime, volume: 0.18, chorus: 10 }
-  harmony: { instrument: harp, volume: 0.26, pan: 0.4 }
+  harmony: { instrument: harp, volume: 0.26 }
   arp: { instrument: pling, volume: 0.2 }
   comp: { instrument: guitar, volume: 0.24 }
   bass: { instrument: bass, volume: 0.58, chorus: 12 }

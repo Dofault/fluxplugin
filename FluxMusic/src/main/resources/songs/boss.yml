@@ -9,9 +9,9 @@ loop: false
 
 tracks:
   lead:     { instrument: bit, volume: 0.7 }
-  aigu:     { instrument: flute, volume: 0.5, pan: 0.4 }
-  cloche:   { instrument: bell, volume: 0.35, pan: -0.3 }
-  guitare:  { instrument: guitar, volume: 0.65, pan: -0.5 }
+  aigu:     { instrument: flute, volume: 0.5 }
+  cloche:   { instrument: bell, volume: 0.35 }
+  guitare:  { instrument: guitar, volume: 0.65 }
   basse:    { instrument: bass, volume: 0.85, chorus: 12 }
   grondement: { instrument: didgeridoo, volume: 0.5, chorus: 8 }
   grosse:   { instrument: basedrum, volume: 0.7 }

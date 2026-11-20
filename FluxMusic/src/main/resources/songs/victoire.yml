@@ -7,7 +7,7 @@ beats-per-bar: 4
 
 tracks:
   pling:    { instrument: pling, volume: 0.7 }
-  carillon: { instrument: chime, volume: 0.4, pan: -0.5 }
+  carillon: { instrument: chime, volume: 0.4 }
   flute:    { instrument: flute, volume: 0.6 }
   guitare:  { instrument: guitar, volume: 0.6 }
   basse:    { instrument: bass, volume: 0.8, chorus: 12 }

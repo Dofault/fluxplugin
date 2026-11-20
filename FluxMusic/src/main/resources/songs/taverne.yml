@@ -9,8 +9,8 @@ loop: false
 
 tracks:
   melodie: { instrument: flute, volume: 0.9 }
-  banjo:   { instrument: banjo, volume: 0.45, pan: 0.4 }
-  guitare: { instrument: guitar, volume: 0.6, pan: -0.5 }
+  banjo:   { instrument: banjo, volume: 0.45, pan: -0.5 }
+  guitare: { instrument: guitar, volume: 0.6 }
   basse:   { instrument: bass, volume: 0.8, chorus: 12 }
   grosse:  { instrument: basedrum, volume: 0.55 }
   caisse:  { instrument: snare, volume: 0.25 }

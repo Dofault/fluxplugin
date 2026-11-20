@@ -14,11 +14,11 @@ tracks:
   theme: { instrument: flute, volume: 0.72 }
   cloches: { instrument: bell, volume: 0.24, chorus: 10 }
   appel: { instrument: bell, volume: 0.34 }
-  reponse: { instrument: iron_xylophone, volume: 0.5, pan: -0.6 }
+  reponse: { instrument: iron_xylophone, volume: 0.5 }
   tierce: { instrument: harp, volume: 0.3, pan: 0.4 }
-  contrechant: { instrument: chime, volume: 0.14, pan: -0.4 }
+  contrechant: { instrument: chime, volume: 0.14 }
   ondes: { instrument: pling, volume: 0.22 }
-  harpe: { instrument: harp, volume: 0.28, pan: 0.6 }
+  harpe: { instrument: harp, volume: 0.28 }
   guitare: { instrument: guitar, volume: 0.3 }
   basse: { instrument: bass, volume: 0.75, chorus: 12 }
   grave: { instrument: didgeridoo, volume: 0.4, chorus: 8 }
