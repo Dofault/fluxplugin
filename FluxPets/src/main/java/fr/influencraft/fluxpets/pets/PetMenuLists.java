@@ -17,8 +17,7 @@ import java.util.List;
  *   <li>{@code familiers_slots}: the 5 slots of active pets (pet, free or locked);</li>
  *   <li>{@code familiers_view}: the adopted pets of the current filter, active ones glowing (Flux pages them);</li>
  *   <li>{@code familier_levels}: the levels of the pet chosen with {@code /pets select};</li>
- *   <li>{@code familier_portrait}: its card with its whole sheet (description, effects, level, progress);</li>
- *   <li>{@code familier_remove}: operators only, takes the chosen pet out of their collection (testing).</li>
+ *   <li>{@code familier_portrait}: its card with its whole sheet (description, effects, level, progress).</li>
  * </ul>
  * {@link #button} is the one button of a pet, the same in every menu showing it (the pets menu, the Careers menu
  * through Flux's {@code Companions.button}): adopted, its sheet and clicks; not adopted, its sheet at level 1.
@@ -28,7 +27,7 @@ import java.util.List;
 public final class PetMenuLists {
 
     public static final String SLOTS = "familiers_slots", VIEW = "familiers_view", LEVELS = "familier_levels",
-            PORTRAIT_ITEM = "familier_portrait", REMOVE = "familier_remove";
+            PORTRAIT_ITEM = "familier_portrait";
     private static PetMenuLists instance;
     private static final String PORTRAIT = "itemsadder:influportraits:portrait_";
     private static final int SLOT_COUNT = 5;
@@ -52,7 +51,6 @@ public final class PetMenuLists {
         Lists.register(plugin, VIEW, q -> view(q.viewer()));
         Lists.register(plugin, LEVELS, q -> levels(q.viewer()));
         Lists.registerItem(plugin, PORTRAIT_ITEM, this::portrait);
-        Lists.register(plugin, REMOVE, q -> remove(q.viewer()));
     }
 
     /** The lists are built again (a pet changed, a filter...). */
@@ -61,7 +59,6 @@ public final class PetMenuLists {
         Lists.invalidate(player, VIEW);
         Lists.invalidate(player, LEVELS);
         Lists.invalidate(player, PORTRAIT_ITEM);
-        Lists.invalidate(player, REMOVE);
         fr.influencraft.flux.api.pets.Companions.changed(player);
     }
 
@@ -130,20 +127,15 @@ public final class PetMenuLists {
 
     /**
      * The button of a pet, the same wherever it is shown. Adopted: its sheet, left click to activate or put away,
-     * right click for its progress (glowing while active). Not adopted: its sheet at level 1, no click (an admin adopts it with a left click).
+     * right click for its progress (glowing while active). Not adopted: its sheet at level 1, no click.
      */
     private ListEntry button(Player player, Pet pet) {
         int level = PetData.level(player, pet);
         Lore lore = sheet(player, pet);
         if (level < 1) {
             lore.ko(t("not-adopted"));
-            // an admin adopts it from here (with its reveal, the menu closes to show it): testing
-            boolean admin = fr.influencraft.flux.api.staff.Staff.isAdmin(player);
-            if (admin) lore.left(t("admin-adopt"));
             ItemStack item = Items.of(PORTRAIT + pet.id(), pet.name(), lore.build(), player);
-            return ListEntry.of(pet.id()).item(item)
-                    .set("left", admin ? "[player] pets adopt " + pet.id() : "").set("left2", admin ? "[close]" : "")
-                    .set("right", "").set("right2", "");
+            return ListEntry.of(pet.id()).item(item).set("left", "").set("left2", "").set("right", "").set("right2", "");
         }
         boolean active = PetData.isActive(player, pet);
         if (active) lore.ok(t("active"));
@@ -166,15 +158,6 @@ public final class PetMenuLists {
         String icon = card == null ? PORTRAIT + pet.id() : "itemsadder:" + card.itemId();
         Lore lore = sheet(player, pet).kv(t("level"), level + " / " + pet.maxLevel());
         return Items.of(icon, name(pet, level), lore.build(), player);
-    }
-
-    /** Operators only: a button taking the chosen pet out of their own collection (two clicks). */
-    private List<ListEntry> remove(Player player) {
-        Pet pet = PetView.selected(player);
-        if (pet == null || !fr.influencraft.flux.api.staff.Staff.isAdmin(player) || !PetData.has(player, pet)) return List.of();
-        ItemStack item = Items.of("itemsadder:influitems:chest_delete", t("remove"),
-                Lore.create().description(t("remove-description")).left(t("remove-action")).build(), player);
-        return List.of(ListEntry.of(pet.id()).item(item).set("confirm", t("remove-confirm")));
     }
 
     /**
@@ -216,7 +199,7 @@ public final class PetMenuLists {
         return out;
     }
 
-    /** Adopted pets of the current filter; an operator sees every pet, the ones he lacks after his own. */
+    /** Adopted pets of the current filter (an admin has them all, see PetData.level). */
     private List<ListEntry> view(Player player) {
         List<ListEntry> out = new ArrayList<>();
         for (Pet pet : PetView.list(player)) out.add(button(player, pet));

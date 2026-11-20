@@ -44,7 +44,19 @@ public final class PetData {
     // ------------------------------------------------------------------ niveau et XP
 
     public static int level(OfflinePlayer player, Pet pet) {
-        return profile(player).levels.getOrDefault(pet.id(), 0);
+        int level = profile(player).levels.getOrDefault(pet.id(), 0);
+        return level < 1 && lent(player, pet) ? 1 : level;
+    }
+
+    /**
+     * An admin ({@code flux.admin}) has every enabled pet as if adopted, at level 1, to test them. Nothing is stored:
+     * without the permission he is back to the pets he really adopted (a lent pet he had active is put away, see
+     * {@link #actives}).
+     */
+    private static boolean lent(OfflinePlayer player, Pet pet) {
+        if (!(player instanceof Player online) || !fr.influencraft.flux.api.staff.Staff.isAdmin(online)) return false;
+        fr.influencraft.fluxpets.CardRegistry.PetEntry entry = Pets.plugin().registry().pet(pet.id());
+        return entry != null && entry.enabled();
     }
 
     public static void setLevel(OfflinePlayer player, Pet pet, int level) {

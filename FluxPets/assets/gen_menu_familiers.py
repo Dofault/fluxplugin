@@ -9,7 +9,7 @@
   Rangées 2 à 4 : familiers adoptés (7 x 3 = 21 par page, plus haut niveau d'abord, filtre en cours).
   Rangée 5 : filtre (46), précédent (48), tout ranger (49), suivant (50), cacher / montrer (52).
 - familier.yml : progression d'un familier (celui choisi par /pets select) : sa carte et sa fiche (4, liste
-  familier_portrait), le bouton caché des opérateurs (53, familier_remove), ses 10 niveaux
+  familier_portrait), ses 10 niveaux
   (rangées 2 et 3, colonnes 2 à 6 : débloqué, en cours, verrouillé, avec leurs effets), retour (49).
 Données : listes construites par FluxPets (PetMenuLists, 2026-11-13) : familiers_slots, familiers_view (pages de Flux),
 familier_levels ; quelques placeholders %influpet_...% (compteurs, filtre, carte du familier choisi) ; actions : /pets
@@ -144,14 +144,6 @@ L[L.index("items:")] = """lists:
     slots: 4
     item:
       material: entry
-  # opérateurs seulement (rien pour les autres joueurs) : retirer ce familier de sa propre collection, deux clics
-  familier_remove:
-    slots: 53
-    item:
-      material: entry
-      confirm: "%%entry_confirm%%"
-      actions:
-        left: ["[player] pets remove %%entry_id%%", "[menu] familiers"]
 
 items:""" % ", ".join(map(str, NIVEAUX))
 bouton(L, "retour", "itemsadder:influitems:btn_back", OR + "Retour", [49],

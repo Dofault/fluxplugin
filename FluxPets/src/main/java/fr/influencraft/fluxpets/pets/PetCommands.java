@@ -89,25 +89,6 @@ public final class PetCommands implements TabExecutor {
                     PetView.select(player, pet);
                 }
             }
-            case "adopt" -> {
-                // admins only (left click on a pet they lack, in the menus): adopted with its reveal
-                Pet pet = args.length > 1 ? Pets.get(args[1]) : null;
-                if (pet != null && fr.influencraft.flux.api.staff.Staff.isAdmin(player) && !PetData.has(player, pet)
-                        && !fr.influencraft.flux.api.pets.Companions.adopt(player, pet.id())) {
-                    PetData.adopt(player, pet);   // a pet outside the boosters' list has no reveal
-                }
-                PetView.invalidate(player);
-                PetMenuLists.invalidate(player);
-            }
-            case "remove" -> {
-                // operators only (hidden button of the progress menu): out of their own collection, to test adoption again
-                Pet pet = args.length > 1 ? Pets.get(args[1]) : null;
-                if (pet != null && fr.influencraft.flux.api.staff.Staff.isAdmin(player) && PetData.has(player, pet)) {
-                    PetData.take(player, pet);
-                    PetView.invalidate(player);
-                    PetMenuLists.invalidate(player);
-                }
-            }
             case "view" -> PetView.reset(player);
             case "visibility" -> PetData.setHidden(player, !PetData.hidden(player));
             default -> openMenu(player);
