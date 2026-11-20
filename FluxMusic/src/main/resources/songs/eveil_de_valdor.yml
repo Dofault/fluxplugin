@@ -9,10 +9,10 @@ loop: false
 
 tracks:
   melodie: { instrument: flute, volume: 1.0 }
-  echo:    { instrument: chime, volume: 0.3 }
-  arpege:  { instrument: harp, volume: 0.5 }
-  basse:   { instrument: bass, volume: 0.85 }
-  cloche:  { instrument: bell, volume: 0.35 }
+  echo:    { instrument: chime, volume: 0.3, pan: -0.3 }
+  arpege:  { instrument: harp, volume: 0.5, pan: -0.5 }
+  basse:   { instrument: bass, volume: 0.85, chorus: 12 }
+  cloche:  { instrument: bell, volume: 0.35, pan: 0.4 }
   grosse:  { instrument: basedrum, volume: 0.6 }
   caisse:  { instrument: snare, volume: 0.3 }
   charley: { instrument: hat, volume: 0.2 }
@@ -39,7 +39,7 @@ patterns:
   hats:  "x:2 x:2 x:2 x:2 x:2 x:2 x:2 x:2"
   rest:  ".:16"
   # Thème principal (4 mesures) et son écho une octave plus haut
-  mel_a: "A4:4 D5:2 E5:2 F5:4 E5:2 D5:2 | F5:6 G5:2 F5:2 E5:2 D5:4 | C5:4 F5:2 G5:2 A5:4 G5:2 F5:2 | E5:6 F5:2 E5:2 D5:2 C5:4"
+  mel_a: "A4:4 D5:2 E5:2 F5:4 E5:2 D5:2 | F5~:6 G5:2 F5:2 E5:2 D5:4 | C5:4 F5:2 G5:2 A5:4 G5:2 F5:2 | E5~:6 F5:2 E5:2 D5:2 C5:4"
   mel_a_haut: "A5:4 D6:2 E6:2 F6:4 E6:2 D6:2 | F6:6 G6:2 F6:2 E6:2 D6:4 | C6:4 F6:2 G6:2 A6:4 G6:2 F6:2 | E6:6 F6:2 E6:2 D6:2 C6:4"
 
 sections:
@@ -67,7 +67,7 @@ sections:
     charley: "@hats*4"
 
   montee:
-    melodie: "D5:4 F5:2 A5:2 D6:6 C6:2 | Bb5:4 A5:2 G5:2 D5:4 G5:4 | A5:4 G5:2 F5:2 E5:4 C#5:2 E5:2 | E5:2 F5:2 G5:2 A5:10"
+    melodie: "D5:4 F5:2 A5>D6:2 D6~:6 C6:2 | Bb5:4 A5:2 G5:2 D5:4 G5:4 | A5:4 G5:2 F5:2 E5:4 C#5:2 E5:2 | E5:2 F5:2 G5:2 A5~:10"
     arpege: "@arp_dm | @arp_gm | @arp_a | @arp_a"
     basse: "@bass_dm | @bass_gm | @bass_a | @bass_walk"
     cloche: "@rest*3 | A6:4 E6:4 C#6:4 A5:4"
@@ -82,7 +82,7 @@ sections:
     charley: "@rest*3 | @hats"
 
   final:
-    melodie: "A4:4 D5:4 F5:4 E5:4 | D5:16"
+    melodie: "A4:4 D5:4 F5:4 E5:4 | D5~:16"
     arpege: "@arp_dm | D4+F4+A4+D5:16"
     basse: "@bass_dm | D2:16"
     cloche: "@rest | D6+A6:16"

@@ -9,9 +9,9 @@ loop: false
 
 tracks:
   melodie: { instrument: flute, volume: 0.9 }
-  banjo:   { instrument: banjo, volume: 0.45 }
-  guitare: { instrument: guitar, volume: 0.6 }
-  basse:   { instrument: bass, volume: 0.8 }
+  banjo:   { instrument: banjo, volume: 0.45, pan: 0.4 }
+  guitare: { instrument: guitar, volume: 0.6, pan: -0.5 }
+  basse:   { instrument: bass, volume: 0.8, chorus: 12 }
   grosse:  { instrument: basedrum, volume: 0.55 }
   caisse:  { instrument: snare, volume: 0.25 }
   charley: { instrument: hat, volume: 0.18 }
@@ -60,7 +60,7 @@ sections:
     caisse: "@rim*8"
     charley: "@hats*8"
   fin:
-    melodie: "G5:6"
+    melodie: "G5~:6"
     banjo: "G3+B3+D4+G4:6"
     guitare: "G2+D3+G3+B3:6"
     basse: "G1:6"

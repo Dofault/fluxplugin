@@ -11,10 +11,10 @@ loop-from: a
 
 tracks:
   theme: { instrument: flute, volume: 0.72 }
-  theme_doux: { instrument: flute, volume: 0.45 }
+  theme_doux: { instrument: flute, volume: 0.45, pan: -0.3 }
   descant: { instrument: flute, volume: 0.28 }
-  ronde: { instrument: banjo, volume: 0.62 }
-  breche: { instrument: iron_xylophone, volume: 0.55 }
+  ronde: { instrument: banjo, volume: 0.62, pan: -0.5 }
+  breche: { instrument: iron_xylophone, volume: 0.55, pan: 0.4 }
   cloches: { instrument: bell, volume: 0.26 }
   harmonie: { instrument: harp, volume: 0.38 }
   echo: { instrument: harp, volume: 0.17 }
@@ -24,10 +24,10 @@ tracks:
   etoiles: { instrument: chime, volume: 0.13 }
   cloche: { instrument: bell, volume: 0.3 }
   cloche_loin: { instrument: bell, volume: 0.1 }
-  guitare: { instrument: guitar, volume: 0.42 }
-  basse: { instrument: bass, volume: 0.75 }
-  basse_douce: { instrument: bass, volume: 0.5 }
-  vent: { instrument: didgeridoo, volume: 0.28 }
+  guitare: { instrument: guitar, volume: 0.42, pan: 0.3 }
+  basse: { instrument: bass, volume: 0.75, chorus: 12 }
+  basse_douce: { instrument: bass, volume: 0.5, chorus: 12 }
+  vent: { instrument: didgeridoo, volume: 0.28, chorus: 8 }
   braises: { instrument: hat, volume: 0.07 }
   tison: { instrument: basedrum, volume: 0.1 }
   coeur: { instrument: basedrum, volume: 0.36 }
@@ -51,7 +51,7 @@ sections:
     braises: ".:5 F4:7 | Eb5:2 A4:7 Eb4 E4+G#4:2 | .:3 G#4:2 D4+C#5:2 E4+D5:5 | E4:2 F4+Eb5 C#5:9 | C5:7 B4:4 D4+F#4 | F#4:4 G4 A4+Eb5:6 C5 | B4 Eb4+F4:7 C4 Bb4:3 | .:2 C5:4 F4+E5 Bb4:3 D5 G#4"
     tison: ".:12 | .:3 G4:9 | .:12 | .:12 | .:12 | .:8 Bb4:4 | .:4 G4:8 | .:12"
   a:
-    theme: "D5:4 E5:2 F5:4 A5:2 | G5:6 E5:4 C5:2 | D5:4 F5:2 Bb5:4 A5:2 | G5:6 E5:2 F5:2 G5:2 | A5:4 D6:2 C6:4 A5:2 | C6:6 A5:4 F5:2 | B5:4 A5:2 G5:4 D5:2 | E5:4 C#5:2 A4:6 | D5:4 E5:2 F5:4 A5:2 | G5:4 C6:2 E6:4 D6:2 | D6:6 Bb5:4 F5:2 | A5:4 G5:2 F5:4 A5:2 | G5:4 Bb5:2 D6:4 C6:2 | A5:6 F5:4 D5:2 | E5:4 G5:2 E5:4 C#5:2 | D5:12"
+    theme: "D5:4 E5:2 F5:4 A5:2 | G5:6 E5:4 C5:2 | D5:4 F5:2 Bb5:4 A5:2 | G5:6 E5:2 F5:2 G5:2 | A5:4 D6:2 C6:4 A5:2 | C6:6 A5:4 F5:2 | B5:4 A5:2 G5:4 D5:2 | E5:4 C#5:2 A4:6 | D5:4 E5:2 F5:4 A5:2 | G5:4 C6:2 E6:4 D6:2 | D6:6 Bb5:4 F5:2 | A5:4 G5:2 F5:4 A5:2 | G5:4 Bb5:2 D6:4 C6:2 | A5:6 F5:4 D5:2 | E5:4 G5:2 E5:4 C#5:2 | D5~:12"
     echo: ".:3 D4:4 E4:2 F4:3 | . A4:2 G4:6 E4:3 | . C4:2 D4:4 F4:2 Bb4:3 | . A4:2 G4:6 E4:2 F4 | . G4:2 A4:4 D5:2 C5:3 | . A4:2 C5:6 A4:3 | . F4:2 B4:4 A4:2 G4:3 | . D4:2 E4:4 C#4:2 A3:3 | .:3 D4:4 E4:2 F4:3 | . A4:2 G4:4 C5:2 E5:3 | . D5:2 D5:6 Bb4:3 | . F4:2 A4:4 G4:2 F4:3 | . A4:2 G4:4 Bb4:2 D5:3 | . C5:2 A4:6 F4:3 | . D4:2 E4:4 G4:2 E4:3 | . C#4:2 D4:9"
     etoiles: ".:12 | .:12 | .:12 | .:12 | .:12 | .:12 | .:12 | .:12 | .:2 D6:2 D7:8 | .:2 E6:10 | .:12 | .:6 F7:6 | .:6 Bb6:6 | .:9 A5:3 | .:2 C#6:2 C#7:8 | .:2 A5:10"
     guitare: "D3:2 A3:2 D4:2 F4:2 D4:2 A3:2 | C3:2 G3:2 C4:2 E4:2 C4:2 G3:2 | Bb2:2 F3:2 Bb3:2 D4:2 Bb3:2 F3:2 | C3:2 G3:2 C4:2 E4:2 C4:2 G3:2 | D3:2 A3:2 D4:2 F4:2 D4:2 A3:2 | F3:2 C4:2 F4:2 A3:2 F4:2 C4:2 | G2:2 D3:2 G3:2 B3:2 G3:2 D3:2 | A2:2 E3:2 A3:2 C#4:2 A3:2 E3:2 | D3:2 A3:2 D4:2 F4:2 D4:2 A3:2 | C3:2 G3:2 C4:2 E4:2 C4:2 G3:2 | Bb2:2 F3:2 Bb3:2 D4:2 Bb3:2 F3:2 | F3:2 C4:2 F4:2 A3:2 F4:2 C4:2 | G2:2 D3:2 G3:2 Bb3:2 G3:2 D3:2 | D3:2 A3:2 D4:2 F4:2 D4:2 A3:2 | A2:2 E3:2 A3:2 C#4:2 A3:2 E3:2 | D3:2 A3:2 D4:2 F4:2 D4:2 A3:2"

@@ -30,7 +30,7 @@ def main():
              {'lead': 'flute', 'lead2': 'bell', 'harmony': 'harp', 'counter': 'iron_xylophone', 'arp': 'pling',
               'comp': 'guitar', 'bass': 'bass', 'deep': 'didgeridoo', 'tick': 'hat'},
              volumes={'tick': 0.22, 'arp': 0.24, 'bass': 0.72},
-             comment="L'Horloge Brisée : thème de boss, le temps qui se brise, si mineur à 168. "
+             effects=True, comment="L'Horloge Brisée : thème de boss, le temps qui se brise, si mineur à 168. "
                      "Composition originale.")
     A = '''
         Bm     | B5:2 F#5:2 B5:2 C#6:2 D6:4 C#6:2 B5:2

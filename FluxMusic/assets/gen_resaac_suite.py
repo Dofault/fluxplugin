@@ -37,7 +37,7 @@ def kit(**changes):
 
 def bonjour():
     s = Song('resaac_bonjour', 'Bonjour, Resaac', 126, '4/4', 'town', kit(), SOFT,
-             comment="Bonjour, Resaac : la ville au matin, do majeur sautillant, monte en ré majeur pour la fin. "
+             effects=True, comment="Bonjour, Resaac : la ville au matin, do majeur sautillant, monte en ré majeur pour la fin. "
                      "Composition originale.")
     A = '''
         C      | G5:6 E5:2 C5:4 E5:4
@@ -74,7 +74,7 @@ def bonjour():
 def fleurs():
     s = Song('resaac_fleurs', 'Le Marché aux Fleurs', 108, '4/4', 'stroll',
              kit(lead='flute', lead2='chime', counter='bit'), SOFT,
-             comment="Le Marché aux Fleurs : promenade en fa majeur, flûte, si bémol mineur emprunté. "
+             effects=True, comment="Le Marché aux Fleurs : promenade en fa majeur, flûte, si bémol mineur emprunté. "
                      "Composition originale.")
     A = '''
         F       | A5:6 G5:2 F5:4 C5:4
@@ -108,7 +108,7 @@ def fleurs():
 
 def route():
     s = Song('resaac_route', 'La Route des Platanes', 144, '4/4', 'town', kit(), SOFT,
-             comment="La Route des Platanes : thème de route, sol majeur à 144, monte en la majeur. "
+             effects=True, comment="La Route des Platanes : thème de route, sol majeur à 144, monte en la majeur. "
                      "Composition originale.")
     A = '''
         G      | B4:2 D5:2 G5:4 D6:4 B5:4
@@ -143,7 +143,7 @@ def route():
 
 def the():
     s = Song('resaac_the', 'Le Salon de Thé', 96, 'shuffle', 'shuffle', kit(lead2='bell'), SOFT,
-             comment="Le Salon de Thé : mi bémol majeur en rythme ternaire, accords de septième, la bémol mineur "
+             effects=True, comment="Le Salon de Thé : mi bémol majeur en rythme ternaire, accords de septième, la bémol mineur "
                      "emprunté. Composition originale.")
     A = '''
         Eb       | G5:2 F5:1 Eb5:3 Bb5:6
@@ -178,7 +178,7 @@ def the():
 def toits():
     s = Song('resaac_toits', 'Les Toits de Resaac', 144, '3/4', 'waltz',
              kit(lead='flute', lead2='chime', counter='bit', arp='pling', harmony='harp'), SOFT,
-             comment="Les Toits de Resaac : valse sous les étoiles, la majeur, ré mineur emprunté. "
+             effects=True, comment="Les Toits de Resaac : valse sous les étoiles, la majeur, ré mineur emprunté. "
                      "Composition originale.")
     A = '''
         A     | E5:4 A5:4 C#6:4
@@ -227,7 +227,7 @@ def toits():
 
 def gare():
     s = Song('resaac_gare', 'La Gare', 120, 'shuffle', 'shuffle', kit(), SOFT,
-             comment="La Gare : ré majeur en rythme ternaire, trains qui vont et viennent, accord de III7. "
+             effects=True, comment="La Gare : ré majeur en rythme ternaire, trains qui vont et viennent, accord de III7. "
                      "Composition originale.")
     A = '''
         D       | F#5:2 A5:1 D6:3 A5:2 F#5:1 D5:3
@@ -262,7 +262,7 @@ def gare():
 
 def parc():
     s = Song('resaac_parc', 'Le Parc', 88, '6/8', 'jig', kit(lead='flute', lead2='chime', counter='bit'), SOFT,
-             comment="Le Parc : promenade à 6/8 en mi majeur, flûte, la mineur emprunté. Composition originale.")
+             effects=True, comment="Le Parc : promenade à 6/8 en mi majeur, flûte, la mineur emprunté. Composition originale.")
     A = '''
         E        | G#5:4 B5:2 E6:4 B5:2
         A        | C#6:4 B5:2 A5:4 E5:2
@@ -296,7 +296,7 @@ def parc():
 
 def academie():
     s = Song('resaac_academie', "L'Académie", 116, '4/4', 'stroll', kit(), SOFT,
-             comment="L'Académie : si bémol majeur, enchaînements ii-V, un peu studieux. Composition originale.")
+             effects=True, comment="L'Académie : si bémol majeur, enchaînements ii-V, un peu studieux. Composition originale.")
     A = '''
         Bb       | F5:2 Bb5:2 D6:4 Bb5:4 F5:4
         Eb,Ebm   | G5:4 Bb5:4 Gb5:4 Bb5:4
@@ -329,7 +329,7 @@ def academie():
 
 def fete():
     s = Song('resaac_fete', 'Jour de Fête', 150, '4/4', 'town', kit(), SOFT,
-             comment="Jour de Fête : sol majeur à 150, monte en la majeur pour la reprise. Composition originale.")
+             effects=True, comment="Jour de Fête : sol majeur à 150, monte en la majeur pour la reprise. Composition originale.")
     A = '''
         G       | G5:2 A5:2 B5:2 D6:2 B5:4 G5:4
         C       | E5:2 G5:2 C6:4 E6:4 C6:4
@@ -365,7 +365,7 @@ def fete():
 def quais():
     s = Song('resaac_quais', 'Crépuscule sur les Quais', 92, '4/4', 'stroll',
              kit(lead='flute', lead2='bell', counter='bit'), SOFT,
-             comment="Crépuscule sur les Quais : soirée chaleureuse en ré majeur, accords de septième majeure. "
+             effects=True, comment="Crépuscule sur les Quais : soirée chaleureuse en ré majeur, accords de septième majeure. "
                      "Composition originale.")
     A = '''
         Dmaj7      | F#5:6 E5:2 D5:4 A5:4

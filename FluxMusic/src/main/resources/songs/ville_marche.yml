@@ -10,11 +10,11 @@ loop-from: a
 
 tracks:
   lead: { instrument: flute, volume: 0.8 }
-  chant: { instrument: banjo, volume: 0.7 }
-  echo: { instrument: chime, volume: 0.3 }
-  arpege: { instrument: pling, volume: 0.32 }
-  guitare: { instrument: guitar, volume: 0.55 }
-  basse: { instrument: bass, volume: 0.85 }
+  chant: { instrument: banjo, volume: 0.7, pan: -0.5 }
+  echo: { instrument: chime, volume: 0.3, pan: 0.3 }
+  arpege: { instrument: pling, volume: 0.32, pan: -0.3 }
+  guitare: { instrument: guitar, volume: 0.55, pan: 0.4 }
+  basse: { instrument: bass, volume: 0.85, chorus: 12 }
   grosse: { instrument: basedrum, volume: 0.4 }
   charley: { instrument: hat, volume: 0.13 }
 
@@ -25,7 +25,7 @@ sections:
     grosse: "x:8 x:8 | x:8 x:8"
     charley: ".:4 x:4 .:4 x:4 | .:4 x:4 .:4 x:4"
   a:
-    lead: "D5:2 G5:2 B5:2 G5:2 A5:4 G5:4 | E5:4 G5:2 E5:2 C5:8 | B4:2 D5:2 G5:2 B5:2 D6:4 B5:4 | A5:6 G5:2 F#5:4 D5:4 | D5:2 G5:2 B5:2 G5:2 C6:4 B5:4 | A5:2 G5:2 E5:2 G5:2 C6:8 | B5:4 A5:2 G5:2 F#5:4 A5:4 | G5:12 .:4"
+    lead: "D5:2 G5:2 B5:2 G5:2 A5:4 G5:4 | E5:4 G5:2 E5:2 C5~:8 | B4:2 D5:2 G5:2 B5:2 D6:4 B5:4 | A5~:6 G5:2 F#5:4 D5:4 | D5:2 G5:2 B5:2 G5:2 C6:4 B5:4 | A5:2 G5:2 E5:2 G5>C6:2 C6~:8 | B5:4 A5:2 G5:2 F#5:4 A5:4 | G5~:12 .:4"
     guitare: ".:2 G3+B3+D4:2 .:2 G3+B3+D4:2 .:2 G3+B3+D4:2 .:2 G3+B3+D4:2 | .:2 C3+E3+G3:2 .:2 C3+E3+G3:2 .:2 C3+E3+G3:2 .:2 C3+E3+G3:2 | .:2 G3+B3+D4:2 .:2 G3+B3+D4:2 .:2 G3+B3+D4:2 .:2 G3+B3+D4:2 | .:2 D3+F#3+A3:2 .:2 D3+F#3+A3:2 .:2 D3+F#3+A3:2 .:2 D3+F#3+A3:2 | .:2 G3+B3+D4:2 .:2 G3+B3+D4:2 .:2 G3+B3+D4:2 .:2 G3+B3+D4:2 | .:2 C3+E3+G3:2 .:2 C3+E3+G3:2 .:2 C3+E3+G3:2 .:2 C3+E3+G3:2 | .:2 D3+F#3+A3:2 .:2 D3+F#3+A3:2 .:2 D3+F#3+A3:2 .:2 D3+F#3+A3:2 | .:2 G3+B3+D4:2 .:2 G3+B3+D4:2 .:2 G3+B3+D4:2 .:2 G3+B3+D4:2"
     basse: "G1:2 G2:2 G1:2 G2:2 G1:2 G2:2 G1:2 G2:2 | C2:2 C3:2 C2:2 C3:2 C2:2 C3:2 C2:2 C3:2 | G1:2 G2:2 G1:2 G2:2 G1:2 G2:2 G1:2 G2:2 | D2:2 D3:2 D2:2 D3:2 D2:2 D3:2 D2:2 D3:2 | G1:2 G2:2 G1:2 G2:2 G1:2 G2:2 G1:2 G2:2 | C2:2 C3:2 C2:2 C3:2 C2:2 C3:2 C2:2 C3:2 | D2:2 D3:2 D2:2 D3:2 D2:2 D3:2 D2:2 D3:2 | G1:2 G2:2 G1:2 G2:2 G1:2 G2:2 G1:2 G2:2"
     grosse: "x:8 x:8 | x:8 x:8 | x:8 x:8 | x:8 x:8 | x:8 x:8 | x:8 x:8 | x:8 x:8 | x:8 x:8"
@@ -38,7 +38,7 @@ sections:
     grosse: "x:8 x:8 | x:8 x:8 | x:8 x:8 | x:8 x:8 | x:8 x:8 | x:8 x:8 | x:8 x:8 | x:8 x:8"
     charley: ".:4 x:4 .:4 x:4 | .:4 x:4 .:4 x:4 | .:4 x:4 .:4 x:4 | .:4 x:4 .:4 x:4 | .:4 x:4 .:4 x:4 | .:4 x:4 .:4 x:4 | .:4 x:4 .:4 x:4 | .:4 x:4 .:4 x:4"
   a2:
-    lead: "D5:2 G5:2 B5:2 G5:2 A5:4 G5:4 | E5:4 G5:2 E5:2 C5:8 | B4:2 D5:2 G5:2 B5:2 D6:4 B5:4 | A5:6 G5:2 F#5:4 D5:4 | D5:2 G5:2 B5:2 G5:2 C6:4 B5:4 | A5:2 G5:2 E5:2 G5:2 C6:8 | B5:4 A5:2 G5:2 F#5:4 A5:4 | G5:12 .:4"
+    lead: "D5:2 G5:2 B5:2 G5:2 A5:4 G5:4 | E5:4 G5:2 E5:2 C5~:8 | B4:2 D5:2 G5:2 B5:2 D6:4 B5:4 | A5~:6 G5:2 F#5:4 D5:4 | D5:2 G5:2 B5:2 G5:2 C6:4 B5:4 | A5:2 G5:2 E5:2 G5>C6:2 C6~:8 | B5:4 A5:2 G5:2 F#5:4 A5:4 | G5~:12 .:4"
     echo: "D6:2 G6:2 B6:2 G6:2 A6:4 G6:4 | E6:4 G6:2 E6:2 C6:8 | B5:2 D6:2 G6:2 B6:2 D7:4 B6:4 | A6:6 G6:2 F#6:4 D6:4 | D6:2 G6:2 B6:2 G6:2 C7:4 B6:4 | A6:2 G6:2 E6:2 G6:2 C7:8 | B6:4 A6:2 G6:2 F#6:4 A6:4 | G6:12 .:4"
     arpege: "G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 | C4 E4 G4 C5 G4 E4 C4 E4 G4 C5 G4 E4 C4 E4 G4 C5 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 | D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 | C4 E4 G4 C5 G4 E4 C4 E4 G4 C5 G4 E4 C4 E4 G4 C5 | D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 A4 F#4 D4 F#4 A4 D5 | G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4 G4 B4 D5 B4"
     guitare: ".:2 G3+B3+D4:2 .:2 G3+B3+D4:2 .:2 G3+B3+D4:2 .:2 G3+B3+D4:2 | .:2 C3+E3+G3:2 .:2 C3+E3+G3:2 .:2 C3+E3+G3:2 .:2 C3+E3+G3:2 | .:2 G3+B3+D4:2 .:2 G3+B3+D4:2 .:2 G3+B3+D4:2 .:2 G3+B3+D4:2 | .:2 D3+F#3+A3:2 .:2 D3+F#3+A3:2 .:2 D3+F#3+A3:2 .:2 D3+F#3+A3:2 | .:2 G3+B3+D4:2 .:2 G3+B3+D4:2 .:2 G3+B3+D4:2 .:2 G3+B3+D4:2 | .:2 C3+E3+G3:2 .:2 C3+E3+G3:2 .:2 C3+E3+G3:2 .:2 C3+E3+G3:2 | .:2 D3+F#3+A3:2 .:2 D3+F#3+A3:2 .:2 D3+F#3+A3:2 .:2 D3+F#3+A3:2 | .:2 G3+B3+D4:2 .:2 G3+B3+D4:2 .:2 G3+B3+D4:2 .:2 G3+B3+D4:2"

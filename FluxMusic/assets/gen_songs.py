@@ -13,6 +13,8 @@ import os
 import re
 import sys
 
+import effects
+
 NAMES = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
 # Range (lowest, highest MIDI) of each note block instrument.
 RANGE = {
@@ -514,7 +516,7 @@ def main():
     out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                                              '..', 'src', 'main', 'resources', 'songs')
     for spec in SONGS + [TOWN] + TOWNS + SPAWN:
-        text = yaml(*build(spec))
+        text = effects.apply(yaml(*build(spec)))[0]   # FluxMusic's effects, as on every song
         with open(os.path.join(out, spec['id'] + '.yml'), 'w', encoding='utf-8') as f:
             f.write(text)
         print('written', spec['id'])

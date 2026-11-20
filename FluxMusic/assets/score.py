@@ -439,8 +439,9 @@ def write_song(folder, piece, sections, comments, script, loop_from):
                 lines.append(f'    {t}: {q(sec.render(t))}')
     lines += ['', 'order: [' + ', '.join(s.name for s in sections) + ']', '']
     path = os.path.join(folder, piece.id + '.yml')
+    import effects   # FluxMusic's effects on every song (left alone when the song placed its own)
     with open(path, 'w', encoding='utf-8') as f:
-        f.write('\n'.join(lines))
+        f.write(effects.apply('\n'.join(lines))[0])
     return path
 
 

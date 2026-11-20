@@ -12,7 +12,7 @@ tracks:
   arpege:  { instrument: pling, volume: 0.35 }
   cloche:  { instrument: bell, volume: 0.35 }
   guitare: { instrument: guitar, volume: 0.4 }
-  basse:   { instrument: bass, volume: 0.6 }
+  basse:   { instrument: bass, volume: 0.6, chorus: 12 }
   grosse:  { instrument: basedrum, volume: 0.45 }
   caisse:  { instrument: snare, volume: 0.22 }
   charley: { instrument: hat, volume: 0.15 }
