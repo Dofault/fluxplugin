@@ -115,6 +115,27 @@ cosmetics:
     item: fluxarmor:brasier_boots
     slot: feet
     rarity: epique
+  # grandnord (tenue de Noël)
+  grandnord_helmet:
+    name: "&#A83B43Bonnet du Solstice"
+    item: fluxarmor:grandnord_helmet
+    slot: head
+    rarity: epique
+  grandnord_chestplate:
+    name: "&#A83B43Manteau du Grand Père Hivernal"
+    item: fluxarmor:grandnord_chestplate
+    slot: chest
+    rarity: epique
+  grandnord_leggings:
+    name: "&#A83B43Grèves du Voyageur des Neiges"
+    item: fluxarmor:grandnord_leggings
+    slot: legs
+    rarity: epique
+  grandnord_boots:
+    name: "&#A83B43Pas du Père Hivernal"
+    item: fluxarmor:grandnord_boots
+    slot: feet
+    rarity: epique
   # givre
   givre_helmet:
     name: "&#8EBCCBDiadème du Permafrost"
