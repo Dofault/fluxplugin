@@ -1,0 +1,164 @@
+{
+ "textures": {
+  "0": "influcrates:item/noel/caisse_noel",
+  "particle": "influcrates:item/noel/caisse_noel"
+ },
+ "elements": [
+  {
+   "name": "rayon_x",
+   "from": [
+    3.0,
+    7.5,
+    8.0
+   ],
+   "to": [
+    13.0,
+    23.5,
+    8.0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      3.5,
+      2.5,
+      4.75,
+      4.5
+     ],
+     "texture": "#0"
+    },
+    "south": {
+     "uv": [
+      4.75,
+      2.5,
+      6.0,
+      4.5
+     ],
+     "texture": "#0"
+    }
+   },
+   "shade": false
+  },
+  {
+   "name": "rayon_z",
+   "from": [
+    8.0,
+    7.5,
+    4.5
+   ],
+   "to": [
+    8.0,
+    23.5,
+    11.5
+   ],
+   "faces": {
+    "west": {
+     "uv": [
+      6.0,
+      2.5,
+      6.875,
+      4.5
+     ],
+     "texture": "#0"
+    },
+    "east": {
+     "uv": [
+      6.875,
+      2.5,
+      7.75,
+      4.5
+     ],
+     "texture": "#0"
+    }
+   },
+   "shade": false
+  },
+  {
+   "name": "rayon_d1",
+   "from": [
+    3.5,
+    7.5,
+    8.0
+   ],
+   "to": [
+    12.5,
+    23.5,
+    8.0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      7.75,
+      2.5,
+      8.875,
+      4.5
+     ],
+     "texture": "#0"
+    },
+    "south": {
+     "uv": [
+      8.875,
+      2.5,
+      10.0,
+      4.5
+     ],
+     "texture": "#0"
+    }
+   },
+   "rotation": {
+    "origin": [
+     8.0,
+     7.5,
+     8.0
+    ],
+    "x": 0,
+    "y": 45,
+    "z": 0
+   },
+   "shade": false
+  },
+  {
+   "name": "rayon_d2",
+   "from": [
+    3.5,
+    7.5,
+    8.0
+   ],
+   "to": [
+    12.5,
+    23.5,
+    8.0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      10.0,
+      2.5,
+      11.125,
+      4.5
+     ],
+     "texture": "#0"
+    },
+    "south": {
+     "uv": [
+      11.125,
+      2.5,
+      12.25,
+      4.5
+     ],
+     "texture": "#0"
+    }
+   },
+   "rotation": {
+    "origin": [
+     8.0,
+     7.5,
+     8.0
+    ],
+    "x": 0,
+    "y": -45,
+    "z": 0
+   },
+   "shade": false
+  }
+ ]
+}

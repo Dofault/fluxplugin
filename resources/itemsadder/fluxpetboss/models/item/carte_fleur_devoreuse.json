@@ -1,0 +1,205 @@
+{
+  "textures": {
+    "front": "fluxpetboss:item/carte_fleur_devoreuse",
+    "back": "fluxpet:item/carte_dos",
+    "particle": "fluxpetboss:item/carte_fleur_devoreuse"
+  },
+  "elements": [
+    {
+      "from": [
+        2,
+        0,
+        7.75
+      ],
+      "to": [
+        14,
+        16,
+        8.25
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            2,
+            0,
+            14,
+            16
+          ],
+          "texture": "#front"
+        },
+        "north": {
+          "uv": [
+            14,
+            0,
+            2,
+            16
+          ],
+          "texture": "#back"
+        },
+        "east": {
+          "uv": [
+            2,
+            0,
+            2.5,
+            16
+          ],
+          "texture": "#front"
+        },
+        "west": {
+          "uv": [
+            2,
+            0,
+            2.5,
+            16
+          ],
+          "texture": "#front"
+        },
+        "up": {
+          "uv": [
+            2,
+            0,
+            14,
+            0.5
+          ],
+          "texture": "#front"
+        },
+        "down": {
+          "uv": [
+            2,
+            15.5,
+            14,
+            16
+          ],
+          "texture": "#front"
+        }
+      }
+    }
+  ],
+  "display": {
+    "thirdperson_righthand": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        3,
+        1
+      ],
+      "scale": [
+        0.55,
+        0.55,
+        0.55
+      ]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        3,
+        1
+      ],
+      "scale": [
+        0.55,
+        0.55,
+        0.55
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        -90,
+        25
+      ],
+      "translation": [
+        1.13,
+        3.2,
+        1.13
+      ],
+      "scale": [
+        0.68,
+        0.68,
+        0.68
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        0,
+        -90,
+        25
+      ],
+      "translation": [
+        1.13,
+        3.2,
+        1.13
+      ],
+      "scale": [
+        0.68,
+        0.68,
+        0.68
+      ]
+    },
+    "ground": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        2,
+        0
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "head": {
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "translation": [
+        0,
+        13,
+        7
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "gui": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    }
+  }
+}

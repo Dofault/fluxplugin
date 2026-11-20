@@ -1,0 +1,10 @@
+info:
+  namespace: ia_various_configs
+minecraft_lang_overwrite:
+  esc_menu_texts:
+    entries:
+      "menu.returnToGame": ":offset_-110::esc_bottom::offset_-100:"
+      "menu.game" : ""
+
+    languages:
+      - ALL

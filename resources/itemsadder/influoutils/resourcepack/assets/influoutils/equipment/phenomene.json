@@ -1,0 +1,19 @@
+{
+ "layers": {
+  "humanoid": [
+   {
+    "texture": "influoutils:phenomene"
+   }
+  ],
+  "humanoid_leggings": [
+   {
+    "texture": "influoutils:phenomene"
+   }
+  ],
+  "wings": [
+   {
+    "texture": "influoutils:phenomene"
+   }
+  ]
+ }
+}

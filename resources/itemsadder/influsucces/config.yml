@@ -1,0 +1,36 @@
+info:
+  namespace: influsucces
+
+# Fonds des menus EcoCollections (succès). Une image de fond n'est pas un item : c'est un glyphe
+# posé dans le TITRE du menu, comme influbattlepass:battlepass et influmenu:succes1/succes2.
+# Réglages repris du BattlePass : canevas 256x256, scale_ratio 256, y_position 13.
+#
+# Côté EcoCollections (framework eco), les shortcodes ItemsAdder (":offset_-8:") ne sont pas lus :
+# le titre vaut "&r&f" + espace négatif -8 (U+F808) + %img_<id>%. Le &r&f est obligatoire, sinon le
+# titre s'affiche en gris foncé et l'image sort noire.
+
+font_images:
+
+  # Menu principal (/collections) : la grille des catégories.
+  succes_menu:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/succes_menu.png
+    scale_ratio: 256
+    y_position: 13
+
+  # Menu d'une catégorie : la liste des succès de la catégorie.
+  succes_categorie:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/succes_categorie.png
+    scale_ratio: 256
+    y_position: 13
+
+  # Menu d'un succès : la barre des paliers (5 rangées, contrairement aux deux autres).
+  succes_details:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/succes_details.png
+    scale_ratio: 256
+    y_position: 13

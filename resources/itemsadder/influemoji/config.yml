@@ -1,0 +1,53 @@
+info:
+  namespace: influemoji
+
+font_images:
+  left_click:
+    show_in_gui: true
+    suggest_in_command: true
+    path: "font/emoji/left_click.png"
+    scale_ratio: 9
+    y_position: 8
+
+  right_click:
+    show_in_gui: true
+    suggest_in_command: true
+    path: "font/emoji/right_click.png"
+    scale_ratio: 9
+    y_position: 8
+
+  # touche Maj, devant l'icône de clic des actions maj + clic (Flux style.yml) ; Flux/assets/icones/gen_shift.py
+  shift:
+    show_in_gui: true
+    suggest_in_command: true
+    path: "font/emoji/shift.png"
+    scale_ratio: 9
+    y_position: 8
+
+  bitblock:
+    show_in_gui: true
+    suggest_in_command: true
+    path: "font/emoji/bitblock.png"
+    scale_ratio: 9
+    y_position: 8
+
+  impact:
+    show_in_gui: true
+    suggest_in_command: true
+    path: "font/emoji/impact.png"
+    scale_ratio: 9
+    y_position: 8
+
+  influence:
+    show_in_gui: true
+    suggest_in_command: true
+    path: "font/emoji/influence.png"
+    scale_ratio: 9
+    y_position: 8
+
+  vip:
+    show_in_gui: true
+    suggest_in_command: true
+    path: "font/emoji/vip.png"
+    scale_ratio: 9
+    y_position: 8

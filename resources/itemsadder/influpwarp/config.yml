@@ -1,0 +1,15 @@
+
+info:
+  namespace: influpwarp
+
+font_images:
+  # ── Menus principaux ──────────────────────────────────────────────────────
+
+  # ── pwarp ───────────────────────────────────────────────────────────────
+
+  pwarpcategories:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/pwarpcategories.png
+    scale_ratio: 256
+    y_position: 13

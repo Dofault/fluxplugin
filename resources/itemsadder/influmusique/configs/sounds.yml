@@ -1,0 +1,13 @@
+info:
+  namespace: influmusique
+
+sounds:
+  quest-step:
+    path: bruitage/quest_step
+    category: music
+  codex-discover:
+    path: bruitage/codex_discover
+    category: music
+  keyboard-touch:
+    path: bruitage/keyboard_touch
+    category: master

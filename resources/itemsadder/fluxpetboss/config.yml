@@ -1,0 +1,87 @@
+# Cartes des familiers légendaires de boss, généré par scripts/influcard/gen_familiers_boss.py.
+# Nom, description et comportement : plugins/FluxPets/content/cards.yml.
+
+info:
+  namespace: fluxpetboss
+items:
+  slot_left:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/slot_left.png
+  slot_middle:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/slot_middle.png
+  slot_right:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/slot_right.png
+  carte_trex_cuivre:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_trex_cuivre
+  carte_colosse_abime:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_colosse_abime
+  carte_taupe_perion:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_taupe_perion
+  carte_hamster_moissonneur:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_hamster_moissonneur
+  carte_fleur_devoreuse:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_fleur_devoreuse
+  carte_araignee_sylvestre:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_araignee_sylvestre
+  carte_golem_fonderie:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_golem_fonderie
+  carte_evocateur_demesure:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_evocateur_demesure
+  carte_loutre_marees:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_loutre_marees
+  carte_ossacorne:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_ossacorne

@@ -1,0 +1,252 @@
+{
+ "credit": "Influencraft, généré par plugins/FluxItems/assets/modeles/gen_phenomene.py",
+ "gui_light": "front",
+ "textures": {
+  "armure": "influoutils:item/phenomene/armure",
+  "particle": "influoutils:item/phenomene/armure"
+ },
+ "elements": [
+  {
+   "from": [
+    1.5,
+    2,
+    5
+   ],
+   "to": [
+    7.5,
+    10,
+    11
+   ],
+   "faces": {
+    "south": {
+     "uv": [
+      1.0,
+      13.0,
+      2.0,
+      16.0
+     ],
+     "texture": "#armure"
+    },
+    "north": {
+     "uv": [
+      3.0,
+      13.0,
+      4.0,
+      16.0
+     ],
+     "texture": "#armure"
+    },
+    "west": {
+     "uv": [
+      0.0,
+      13.0,
+      1.0,
+      16.0
+     ],
+     "texture": "#armure"
+    },
+    "east": {
+     "uv": [
+      2.0,
+      13.0,
+      3.0,
+      16.0
+     ],
+     "texture": "#armure"
+    },
+    "up": {
+     "uv": [
+      1.0,
+      13.0,
+      2.0,
+      15.0
+     ],
+     "texture": "#armure"
+    },
+    "down": {
+     "uv": [
+      2.0,
+      8.0,
+      3.0,
+      10.0
+     ],
+     "texture": "#armure"
+    }
+   }
+  },
+  {
+   "from": [
+    8.5,
+    2,
+    5
+   ],
+   "to": [
+    14.5,
+    10,
+    11
+   ],
+   "faces": {
+    "south": {
+     "uv": [
+      2.0,
+      13.0,
+      1.0,
+      16.0
+     ],
+     "texture": "#armure"
+    },
+    "north": {
+     "uv": [
+      4.0,
+      13.0,
+      3.0,
+      16.0
+     ],
+     "texture": "#armure"
+    },
+    "west": {
+     "uv": [
+      3.0,
+      13.0,
+      2.0,
+      16.0
+     ],
+     "texture": "#armure"
+    },
+    "east": {
+     "uv": [
+      1.0,
+      13.0,
+      0.0,
+      16.0
+     ],
+     "texture": "#armure"
+    },
+    "up": {
+     "uv": [
+      2.0,
+      13.0,
+      1.0,
+      15.0
+     ],
+     "texture": "#armure"
+    },
+    "down": {
+     "uv": [
+      3.0,
+      8.0,
+      2.0,
+      10.0
+     ],
+     "texture": "#armure"
+    }
+   }
+  }
+ ],
+ "display": {
+  "gui": {
+   "rotation": [
+    20,
+    -30,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.9,
+    0.9,
+    0.9
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    3,
+    0
+   ],
+   "scale": [
+    0.25,
+    0.25,
+    0.25
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    180,
+    0
+   ],
+   "scale": [
+    0.5,
+    0.5,
+    0.5
+   ]
+  },
+  "thirdperson_righthand": {
+   "rotation": [
+    75,
+    45,
+    0
+   ],
+   "translation": [
+    0,
+    2.5,
+    0
+   ],
+   "scale": [
+    0.375,
+    0.375,
+    0.375
+   ]
+  },
+  "thirdperson_lefthand": {
+   "rotation": [
+    75,
+    45,
+    0
+   ],
+   "translation": [
+    0,
+    2.5,
+    0
+   ],
+   "scale": [
+    0.375,
+    0.375,
+    0.375
+   ]
+  },
+  "firstperson_righthand": {
+   "rotation": [
+    0,
+    45,
+    0
+   ],
+   "scale": [
+    0.4,
+    0.4,
+    0.4
+   ]
+  },
+  "firstperson_lefthand": {
+   "rotation": [
+    0,
+    225,
+    0
+   ],
+   "scale": [
+    0.4,
+    0.4,
+    0.4
+   ]
+  }
+ }
+}

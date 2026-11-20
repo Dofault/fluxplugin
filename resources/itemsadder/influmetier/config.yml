@@ -1,0 +1,212 @@
+info:
+  namespace: influmetier
+
+# Généré par plugins/FluxMenu/assets/gen_influmetier.py, ne pas éditer à la main.
+# metier_<id> : illustration du métier dans le cadre du fond menu_metier (menu Carrières).
+# nom_<id>    : nom du métier en police QuinqueFive, centré sur la rangée du haut.
+
+font_images:
+  metier_mineur:
+    suggest_in_command: false
+    show_in_gui: false
+    path: metier/mineur.png
+    scale_ratio: 64
+    y_position: -26
+  nom_mineur:
+    suggest_in_command: false
+    show_in_gui: false
+    path: nom/mineur.png
+    scale_ratio: 8
+    y_position: -9
+  metier_rochiste:
+    suggest_in_command: false
+    show_in_gui: false
+    path: metier/rochiste.png
+    scale_ratio: 64
+    y_position: -26
+  nom_rochiste:
+    suggest_in_command: false
+    show_in_gui: false
+    path: nom/rochiste.png
+    scale_ratio: 8
+    y_position: -9
+  metier_deblayeur:
+    suggest_in_command: false
+    show_in_gui: false
+    path: metier/deblayeur.png
+    scale_ratio: 64
+    y_position: -26
+  nom_deblayeur:
+    suggest_in_command: false
+    show_in_gui: false
+    path: nom/deblayeur.png
+    scale_ratio: 8
+    y_position: -9
+  metier_cultivateur:
+    suggest_in_command: false
+    show_in_gui: false
+    path: metier/cultivateur.png
+    scale_ratio: 64
+    y_position: -26
+  nom_cultivateur:
+    suggest_in_command: false
+    show_in_gui: false
+    path: nom/cultivateur.png
+    scale_ratio: 8
+    y_position: -9
+  metier_herboriste:
+    suggest_in_command: false
+    show_in_gui: false
+    path: metier/herboriste.png
+    scale_ratio: 64
+    y_position: -26
+  nom_herboriste:
+    suggest_in_command: false
+    show_in_gui: false
+    path: nom/herboriste.png
+    scale_ratio: 8
+    y_position: -9
+  metier_sylviculteur:
+    suggest_in_command: false
+    show_in_gui: false
+    path: metier/sylviculteur.png
+    scale_ratio: 64
+    y_position: -26
+  nom_sylviculteur:
+    suggest_in_command: false
+    show_in_gui: false
+    path: nom/sylviculteur.png
+    scale_ratio: 8
+    y_position: -9
+  metier_fondeur:
+    suggest_in_command: false
+    show_in_gui: false
+    path: metier/fondeur.png
+    scale_ratio: 64
+    y_position: -26
+  nom_fondeur:
+    suggest_in_command: false
+    show_in_gui: false
+    path: nom/fondeur.png
+    scale_ratio: 8
+    y_position: -9
+  metier_chimiste:
+    suggest_in_command: false
+    show_in_gui: false
+    path: metier/chimiste.png
+    scale_ratio: 64
+    y_position: -26
+  nom_chimiste:
+    suggest_in_command: false
+    show_in_gui: false
+    path: nom/chimiste.png
+    scale_ratio: 8
+    y_position: -9
+  metier_enchanteur:
+    suggest_in_command: false
+    show_in_gui: false
+    path: metier/enchanteur.png
+    scale_ratio: 64
+    y_position: -26
+  nom_enchanteur:
+    suggest_in_command: false
+    show_in_gui: false
+    path: nom/enchanteur.png
+    scale_ratio: 8
+    y_position: -9
+  metier_pecheur:
+    suggest_in_command: false
+    show_in_gui: false
+    path: metier/pecheur.png
+    scale_ratio: 64
+    y_position: -26
+  nom_pecheur:
+    suggest_in_command: false
+    show_in_gui: false
+    path: nom/pecheur.png
+    scale_ratio: 8
+    y_position: -9
+  metier_defenseur:
+    suggest_in_command: false
+    show_in_gui: false
+    path: metier/defenseur.png
+    scale_ratio: 64
+    y_position: -26
+  nom_defenseur:
+    suggest_in_command: false
+    show_in_gui: false
+    path: nom/defenseur.png
+    scale_ratio: 8
+    y_position: -9
+  metier_batisseur:
+    suggest_in_command: false
+    show_in_gui: false
+    path: metier/batisseur.png
+    scale_ratio: 64
+    y_position: -26
+  nom_batisseur:
+    suggest_in_command: false
+    show_in_gui: false
+    path: nom/batisseur.png
+    scale_ratio: 8
+    y_position: -9
+  chiffre_0:
+    suggest_in_command: false
+    show_in_gui: false
+    path: chiffre/0.png
+    scale_ratio: 6
+    y_position: -184
+  chiffre_1:
+    suggest_in_command: false
+    show_in_gui: false
+    path: chiffre/1.png
+    scale_ratio: 6
+    y_position: -184
+  chiffre_2:
+    suggest_in_command: false
+    show_in_gui: false
+    path: chiffre/2.png
+    scale_ratio: 6
+    y_position: -184
+  chiffre_3:
+    suggest_in_command: false
+    show_in_gui: false
+    path: chiffre/3.png
+    scale_ratio: 6
+    y_position: -184
+  chiffre_4:
+    suggest_in_command: false
+    show_in_gui: false
+    path: chiffre/4.png
+    scale_ratio: 6
+    y_position: -184
+  chiffre_5:
+    suggest_in_command: false
+    show_in_gui: false
+    path: chiffre/5.png
+    scale_ratio: 6
+    y_position: -184
+  chiffre_6:
+    suggest_in_command: false
+    show_in_gui: false
+    path: chiffre/6.png
+    scale_ratio: 6
+    y_position: -184
+  chiffre_7:
+    suggest_in_command: false
+    show_in_gui: false
+    path: chiffre/7.png
+    scale_ratio: 6
+    y_position: -184
+  chiffre_8:
+    suggest_in_command: false
+    show_in_gui: false
+    path: chiffre/8.png
+    scale_ratio: 6
+    y_position: -184
+  chiffre_9:
+    suggest_in_command: false
+    show_in_gui: false
+    path: chiffre/9.png
+    scale_ratio: 6
+    y_position: -184

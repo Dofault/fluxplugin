@@ -1,0 +1,524 @@
+# Généré par plugins/fluxplugin/FluxLands/assets/ville/gen_ville.py : ne pas modifier à la main.
+# Menus Ville (FluxLands + Flux, Labs) : icônes de boutons, niveaux de ville, jauges, fonds.
+info:
+  namespace: influville
+items:
+  ville:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/ville.png
+  annuaire:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/annuaire.png
+  habitants:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/habitants.png
+  chunks:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/chunks.png
+  changer_ville:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/changer_ville.png
+  parcelle:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/parcelle.png
+  nation:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/nation.png
+  niveau:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/niveau.png
+  entretien:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/entretien.png
+  roles:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/roles.png
+  renommer:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/renommer.png
+  periode:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/periode.png
+  taille:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/taille.png
+  banque:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/banque.png
+  commerce:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/commerce.png
+  budget:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/budget.png
+  location:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/location.png
+  echoppe:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/echoppe.png
+  vente:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/vente.png
+  agence:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/agence.png
+  warp:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/warp.png
+  lier:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/lier.png
+  spawn:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/spawn.png
+  message:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/message.png
+  deposer:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/deposer.png
+  retirer:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/retirer.png
+  epingle:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/epingle.png
+  epingle_off:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/epingle_off.png
+  pays:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/pays.png
+  capitale:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/capitale.png
+  inviter_ville:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/inviter_ville.png
+  quitter:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/quitter.png
+  guerre:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/guerre.png
+  effets:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/effets.png
+  taxes:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/taxes.png
+  niveau_1:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/niveau_1.png
+  niveau_2:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/niveau_2.png
+  niveau_3:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/niveau_3.png
+  niveau_4:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/niveau_4.png
+  niveau_5:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/niveau_5.png
+  niveau_6:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/niveau_6.png
+  niveau_7:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/niveau_7.png
+  barre_1:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/barre_1.png
+  barre_2:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/barre_2.png
+  barre_3:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/barre_3.png
+  barre_4:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/barre_4.png
+  barre_5:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/barre_5.png
+  barre_6:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/barre_6.png
+  barre_7:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/barre_7.png
+  barre_8:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/barre_8.png
+  barre_9:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/barre_9.png
+  pays_niveau_1:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/pays_niveau_1.png
+  pays_niveau_2:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/pays_niveau_2.png
+  pays_niveau_3:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/pays_niveau_3.png
+  pays_niveau_4:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/pays_niveau_4.png
+font_images:
+  # Fond plein écran 176 x 221 (coffre de 6 rangées, inventaire masqué).
+  menu_ville:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_ville.png
+    scale_ratio: 221
+    y_position: 13
+  # Fond plein écran 176 x 221 (coffre de 6 rangées, inventaire masqué).
+  menu_ville_accueil:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_ville_accueil.png
+    scale_ratio: 221
+    y_position: 13
+  # Fond plein écran 176 x 221 (coffre de 6 rangées, inventaire masqué).
+  menu_ville_fiche:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_ville_fiche.png
+    scale_ratio: 221
+    y_position: 13
+  # Fond plein écran 176 x 221 (coffre de 6 rangées, inventaire masqué).
+  menu_ville_commerce:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_ville_commerce.png
+    scale_ratio: 221
+    y_position: 13
+  # Fond plein écran 176 x 221 (coffre de 6 rangées, inventaire masqué).
+  menu_ville_parcelle:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_ville_parcelle.png
+    scale_ratio: 221
+    y_position: 13
+  # Fond plein écran 176 x 221 (coffre de 6 rangées, inventaire masqué).
+  menu_villes:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_villes.png
+    scale_ratio: 221
+    y_position: 13
+  # Fond plein écran 176 x 221 (coffre de 6 rangées, inventaire masqué).
+  menu_warps:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_warps.png
+    scale_ratio: 221
+    y_position: 13
+  # Fond plein écran 176 x 221 (coffre de 6 rangées, inventaire masqué).
+  menu_habitants:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_habitants.png
+    scale_ratio: 221
+    y_position: 13
+  # Fond plein écran 176 x 221 (coffre de 6 rangées, inventaire masqué).
+  menu_agence:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_agence.png
+    scale_ratio: 221
+    y_position: 13
+  # Fond plein écran 176 x 221 (coffre de 6 rangées, inventaire masqué).
+  menu_parcelles:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_parcelles.png
+    scale_ratio: 221
+    y_position: 13
+  # Fond plein écran 176 x 221 (coffre de 6 rangées, inventaire masqué).
+  menu_roles:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_roles.png
+    scale_ratio: 221
+    y_position: 13
+  # Fond plein écran 176 x 221 (coffre de 6 rangées, inventaire masqué).
+  menu_droits:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_droits.png
+    scale_ratio: 221
+    y_position: 13
+  # Fond plein écran 176 x 221 (coffre de 6 rangées, inventaire masqué).
+  menu_parametres:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_parametres.png
+    scale_ratio: 221
+    y_position: 13
+  # Fond plein écran 176 x 221 (coffre de 6 rangées, inventaire masqué).
+  menu_territoires:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_territoires.png
+    scale_ratio: 221
+    y_position: 13
+  # Fond plein écran 176 x 221 (coffre de 6 rangées, inventaire masqué).
+  menu_pays:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_pays.png
+    scale_ratio: 221
+    y_position: 13
+  # Fond plein écran 176 x 221 (coffre de 6 rangées, inventaire masqué).
+  menu_pays_accueil:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_pays_accueil.png
+    scale_ratio: 221
+    y_position: 13
+  # Fond plein écran 176 x 221 (coffre de 6 rangées, inventaire masqué).
+  menu_pays_fiche:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_pays_fiche.png
+    scale_ratio: 221
+    y_position: 13
+  # Fond plein écran 176 x 221 (coffre de 6 rangées, inventaire masqué).
+  menu_pays_annuaire:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_pays_annuaire.png
+    scale_ratio: 221
+    y_position: 13
+  # Fond plein écran 176 x 221 (coffre de 6 rangées, inventaire masqué).
+  menu_pays_villes:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_pays_villes.png
+    scale_ratio: 221
+    y_position: 13

@@ -1,0 +1,505 @@
+info:
+  namespace: influportraits
+
+# Généré par scripts/influcard/portraits.py, ne pas éditer à la main.
+# portrait_<id> : photo 32x32 du familier (vue de trois quarts du modèle BetterModel),
+# utilisée par les menus à la place de la carte.
+
+items:
+  portrait_faucheur:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/faucheur.png
+  portrait_leviathan:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/leviathan.png
+  portrait_nida:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/nida.png
+  portrait_abeille:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/abeille.png
+  portrait_araignee_sylvestre:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/araignee_sylvestre.png
+  portrait_architecte:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/architecte.png
+  portrait_astrolabe:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/astrolabe.png
+  portrait_banjo:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/banjo.png
+  portrait_batterie:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/batterie.png
+  portrait_betonniere:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/betonniere.png
+  portrait_cabri:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/cabri.png
+  portrait_caillou:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/caillou.png
+  portrait_carottin:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/carottin.png
+  portrait_castor:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/castor.png
+  portrait_champinou:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/champinou.png
+  portrait_chevalier_spectral:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/chevalier_spectral.png
+  portrait_chien_garde:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/chien_garde.png
+  portrait_chouette_arcane:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/chouette_arcane.png
+  portrait_cloche:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/cloche.png
+  portrait_colosse:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/colosse.png
+  portrait_colosse_abime:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/colosse_abime.png
+  portrait_contrebasse:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/contrebasse.png
+  portrait_coquelicot:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/coquelicot.png
+  portrait_crabichon:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/crabichon.png
+  portrait_dauphin:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/dauphin.png
+  portrait_dragon_gemmes:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/dragon_gemmes.png
+  portrait_dryade:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/dryade.png
+  portrait_ecuyer:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/ecuyer.png
+  portrait_epouvantail:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/epouvantail.png
+  portrait_evocateur_demesure:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/evocateur_demesure.png
+  portrait_flammeche:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/flammeche.png
+  portrait_fleur_devoreuse:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/fleur_devoreuse.png
+  portrait_flute:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/flute.png
+  portrait_fourmi:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/fourmi.png
+  portrait_fournaise:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/fournaise.png
+  portrait_gland:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/gland.png
+  portrait_golem_fonderie:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/golem_fonderie.png
+  portrait_grue:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/grue.png
+  portrait_guitare:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/guitare.png
+  portrait_hamster_moissonneur:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/hamster_moissonneur.png
+  portrait_harpe:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/harpe.png
+  portrait_kitsune:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/kitsune.png
+  portrait_kraken:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/kraken.png
+  portrait_lanterne:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/lanterne.png
+  portrait_lapin_lapis:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/lapin_lapis.png
+  portrait_licorne:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/licorne.png
+  portrait_lievre_neiges:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/lievre_neiges.png
+  portrait_loutre_marees:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/loutre_marees.png
+  portrait_marteau_piqueur:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/marteau_piqueur.png
+  portrait_mimique:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/mimique.png
+  portrait_orbe_xp:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/orbe_xp.png
+  portrait_ossacorne:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/ossacorne.png
+  portrait_ouistiti:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/ouistiti.png
+  portrait_papillon:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/papillon.png
+  portrait_pavois:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/pavois.png
+  portrait_pepite:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/pepite.png
+  portrait_phenix:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/phenix.png
+  portrait_pling:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/pling.png
+  portrait_poissonnet:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/poissonnet.png
+  portrait_salamandre:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/salamandre.png
+  portrait_souche:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/souche.png
+  portrait_soufflet:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/soufflet.png
+  portrait_sylvain:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/sylvain.png
+  portrait_table_vivante:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/table_vivante.png
+  portrait_taupe_perion:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/taupe_perion.png
+  portrait_titan:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/titan.png
+  portrait_trex_cuivre:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/trex_cuivre.png
+  portrait_ver_sables:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/ver_sables.png
+  portrait_vibraphone:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/vibraphone.png
+  portrait_wagonnet:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/wagonnet.png
+  portrait_xylophone:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - portrait/xylophone.png

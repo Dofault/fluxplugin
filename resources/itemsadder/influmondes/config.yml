@@ -1,0 +1,19 @@
+# Généré par plugins/FluxMenu/assets/mondes/gen_mondes.py : ne pas modifier à la main.
+# Menu Mondes de /menu2 (FluxMenu, Labs) : fond illustré des mondes et continents.
+info:
+  namespace: influmondes
+font_images:
+  # Fond plein écran 176 x 221 (coffre de 6 rangées, inventaire masqué).
+  menu_mondes:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_mondes.png
+    scale_ratio: 221
+    y_position: 13
+  # Cadenas d'un monde verrouillé, ajouté au titre par les title-layers de mondes.yml.
+  cadenas_monde:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/cadenas_monde.png
+    scale_ratio: 16
+    y_position: -23

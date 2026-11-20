@@ -1,0 +1,13 @@
+{
+  "item.totem.use": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "item/totem/use_totem",
+        "volume": 0.1,
+        "pitch": 1.2
+      }
+    ],
+    "subtitle": "subtitles.item.totem.use"
+  }
+}

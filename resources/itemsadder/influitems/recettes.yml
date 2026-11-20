@@ -1,0 +1,24 @@
+# Recettes de craft vanilla ajoutées via ItemsAdder (résultat = item vanilla, pas custom).
+info:
+  namespace: influitems
+
+recipes:
+  crafting_table:
+    # Bloc de lumière invisible (minecraft:light, niveau 15 par défaut).
+    # 4 poussières de glowstone + 4 pépites de cuivre + 1 verre = 2 blocs.
+    # Le bloc n'est visible qu'en main, une fois posé il est introuvable.
+    light_block:
+      enabled: true
+      # ItemsAdder teste ia.user.craft.<permission> : sans cette clé il teste "null" et refuse le craft.
+      permission: light_block
+      pattern:
+        - "GCG"
+        - "CVC"
+        - "GCG"
+      ingredients:
+        G: GLOWSTONE_DUST
+        V: GLASS
+        C: COPPER_NUGGET
+      result:
+        item: LIGHT
+        amount: 2

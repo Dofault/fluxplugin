@@ -1,0 +1,36 @@
+# Généré par plugins/FluxItems/assets/modeles/gen_virale.py : ne pas modifier à la main.
+# Modèles 3D des outils viraux. Les vrais outils portent le composant item_model (influoutils:<id>),
+# posé par FluxItems (clé modele:) ; ces objets ItemsAdder servent à l'aperçu des caisses et à /iagive.
+info:
+  namespace: influoutils
+items:
+  pioche_virale:
+    display_name: '&#5A85EA&lPioche virale'
+    resource:
+      material: DIAMOND_PICKAXE
+      generate: false
+      model_path: item/pioche_virale
+  pelle_virale:
+    display_name: '&#5A85EA&lPelle virale'
+    resource:
+      material: DIAMOND_SHOVEL
+      generate: false
+      model_path: item/pelle_virale
+  hache_virale:
+    display_name: '&#5A85EA&lHache virale'
+    resource:
+      material: DIAMOND_AXE
+      generate: false
+      model_path: item/hache_virale
+  houe_virale:
+    display_name: '&#5A85EA&lHoue virale'
+    resource:
+      material: DIAMOND_HOE
+      generate: false
+      model_path: item/houe_virale
+  epee_virale:
+    display_name: '&#5A85EA&lÉpée virale'
+    resource:
+      material: DIAMOND_SWORD
+      generate: false
+      model_path: item/epee_virale

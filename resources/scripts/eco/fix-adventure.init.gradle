@@ -1,0 +1,10 @@
+allprojects {
+    configurations.configureEach {
+        resolutionStrategy.eachDependency { details ->
+            if (details.requested.group == 'net.kyori' && (details.requested.version == null || details.requested.version.isEmpty())) {
+                details.useVersion('4.26.1')
+                details.because('dev bundle 1.21.11 sans version quand genSources=false')
+            }
+        }
+    }
+}

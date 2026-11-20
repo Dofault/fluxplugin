@@ -1,0 +1,54 @@
+info:
+  namespace: influcasino
+
+# Généré par plugins/FluxMenu/assets/slots/gen_slots.py, ne pas éditer à la main.
+# Machine à sous : fond, rouleaux (fenêtre de 3 cases à une position de la bande, nette ou floue), cadres
+# de gain, ampoules, icônes. Glyphes posés au pixel près dans le titre (y_position = 13 - haut).
+
+items:
+  machine_a_sous:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/machine_a_sous.png
+  levier:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/levier.png
+
+font_images:
+  menu_slots:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/menu_slots.png
+    scale_ratio: 221
+    y_position: 13
+  slots_cadre_a:
+    suggest_in_command: false
+    show_in_gui: false
+    path: slots/cadre_a.png
+    scale_ratio: 28
+    y_position: -75
+  slots_ampoules_a:
+    suggest_in_command: false
+    show_in_gui: false
+    path: slots/ampoules_a.png
+    scale_ratio: 102
+    y_position: -38
+  slots_cadre_b:
+    suggest_in_command: false
+    show_in_gui: false
+    path: slots/cadre_b.png
+    scale_ratio: 28
+    y_position: -75
+  slots_ampoules_b:
+    suggest_in_command: false
+    show_in_gui: false
+    path: slots/ampoules_b.png
+    scale_ratio: 102
+    y_position: -38

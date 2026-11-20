@@ -1,0 +1,10 @@
+info:
+  namespace: influbattlepass
+
+font_images:
+  battlepass:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/battlepass.png
+    scale_ratio: 256
+    y_position: 13

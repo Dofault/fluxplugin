@@ -1,0 +1,90 @@
+info:
+  namespace: influkey
+
+# ══════════════════════════════════════════════════════════
+#  Modèles convertis depuis crate_pack_2 (Blockbench → ItemsAdder)
+#  Animations d'origine (idle/open) non conservées : modèles statiques
+#  en pose fermée uniquement, comme demandé.
+# ══════════════════════════════════════════════════════════
+
+items:
+
+  # ── Caisses (furniture, entity item_display) ─────────────────────────────
+
+  chest1:
+    display_name: "&6Caisse Commune"
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/chest1
+    behaviours:
+      furniture:
+        entity: item_display
+        solid: true
+        placeable_on:
+          floor: true
+          ceiling: false
+          walls: false
+        hitbox:
+          length: 1
+          width: 1
+          height: 1
+        display_transformation:
+          translation:
+            x: 0
+            y: 0.001
+            z: -0.012
+
+  chest3:
+    display_name: "&6Caisse Épique"
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/chest3
+    behaviours:
+      furniture:
+        entity: item_display
+        solid: true
+        placeable_on:
+          floor: true
+          ceiling: false
+          walls: false
+        hitbox:
+          length: 2
+          width: 2
+          height: 2
+        display_transformation:
+          translation:
+            x: 0
+            y: 0.002
+            z: -0.019
+
+  # ── Clés (items tenus en main) ────────────────────────────────────────────
+
+  common_key:
+    display_name: "&6Clé Ordinaire"
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/common_key
+
+  rare_key:
+    display_name: "&6Clé Virale"
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/rare_key
+
+  epic_key:
+    display_name: "&6Clé Tendance"
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/epic_key
+
+  legendary_key:
+    display_name: "&6Clé Phénomène"
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/legendary_key

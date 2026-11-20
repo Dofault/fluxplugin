@@ -1,0 +1,591 @@
+# Présentoirs de boosters (meubles), générés par scripts/influcard/presentoirs.py : modifier le
+# script, pas ce fichier. /iagive <joueur> fluxpet:presentoir_<booster>
+
+info:
+  namespace: fluxpet
+items:
+  presentoir_metier_mineur:
+    display_name: <#4FD6E8>Présentoir Mineur
+    lore:
+    - <#EADBC8>Une boîte de boosters à exposer
+    - <#EADBC8>dans ton magasin.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/presentoir_metier_mineur
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: true
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wood.place
+          break:
+            name: block.wood.break
+  presentoir_metier_rochiste:
+    display_name: <#A8AEB8>Présentoir Rochiste
+    lore:
+    - <#EADBC8>Une boîte de boosters à exposer
+    - <#EADBC8>dans ton magasin.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/presentoir_metier_rochiste
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: true
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wood.place
+          break:
+            name: block.wood.break
+  presentoir_metier_deblayeur:
+    display_name: <#D9C27A>Présentoir Déblayeur
+    lore:
+    - <#EADBC8>Une boîte de boosters à exposer
+    - <#EADBC8>dans ton magasin.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/presentoir_metier_deblayeur
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: true
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wood.place
+          break:
+            name: block.wood.break
+  presentoir_metier_cultivateur:
+    display_name: <#E8C547>Présentoir Cultivateur
+    lore:
+    - <#EADBC8>Une boîte de boosters à exposer
+    - <#EADBC8>dans ton magasin.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/presentoir_metier_cultivateur
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: true
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wood.place
+          break:
+            name: block.wood.break
+  presentoir_metier_herboriste:
+    display_name: <#6CD46C>Présentoir Herboriste
+    lore:
+    - <#EADBC8>Une boîte de boosters à exposer
+    - <#EADBC8>dans ton magasin.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/presentoir_metier_herboriste
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: true
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wood.place
+          break:
+            name: block.wood.break
+  presentoir_metier_sylviculteur:
+    display_name: <#B07A45>Présentoir Bûcheron
+    lore:
+    - <#EADBC8>Une boîte de boosters à exposer
+    - <#EADBC8>dans ton magasin.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/presentoir_metier_sylviculteur
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: true
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wood.place
+          break:
+            name: block.wood.break
+  presentoir_metier_fondeur:
+    display_name: <#FF8A3D>Présentoir Fondeur
+    lore:
+    - <#EADBC8>Une boîte de boosters à exposer
+    - <#EADBC8>dans ton magasin.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/presentoir_metier_fondeur
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: true
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wood.place
+          break:
+            name: block.wood.break
+  presentoir_metier_enchanteur:
+    display_name: <#8C7BFF>Présentoir Enchanteur
+    lore:
+    - <#EADBC8>Une boîte de boosters à exposer
+    - <#EADBC8>dans ton magasin.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/presentoir_metier_enchanteur
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: true
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wood.place
+          break:
+            name: block.wood.break
+  presentoir_metier_pecheur:
+    display_name: <#4FA8FF>Présentoir Pêcheur
+    lore:
+    - <#EADBC8>Une boîte de boosters à exposer
+    - <#EADBC8>dans ton magasin.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/presentoir_metier_pecheur
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: true
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wood.place
+          break:
+            name: block.wood.break
+  presentoir_metier_defenseur:
+    display_name: <#E04848>Présentoir Défenseur
+    lore:
+    - <#EADBC8>Une boîte de boosters à exposer
+    - <#EADBC8>dans ton magasin.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/presentoir_metier_defenseur
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: true
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wood.place
+          break:
+            name: block.wood.break
+  presentoir_metier_batisseur:
+    display_name: <#F2A33A>Présentoir Bâtisseur
+    lore:
+    - <#EADBC8>Une boîte de boosters à exposer
+    - <#EADBC8>dans ton magasin.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/presentoir_metier_batisseur
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: true
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wood.place
+          break:
+            name: block.wood.break
+  presentoir_ordinaire:
+    display_name: <#C8CCD8>Présentoir Ordinaire
+    lore:
+    - <#EADBC8>Une boîte de boosters à exposer
+    - <#EADBC8>dans ton magasin.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/presentoir_ordinaire
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: true
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wood.place
+          break:
+            name: block.wood.break
+  presentoir_tendance:
+    display_name: <#55FF55>Présentoir Tendance
+    lore:
+    - <#EADBC8>Une boîte de boosters à exposer
+    - <#EADBC8>dans ton magasin.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/presentoir_tendance
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: true
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wood.place
+          break:
+            name: block.wood.break
+  presentoir_virale:
+    display_name: <#5A85EA>Présentoir Viral
+    lore:
+    - <#EADBC8>Une boîte de boosters à exposer
+    - <#EADBC8>dans ton magasin.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/presentoir_virale
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: true
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wood.place
+          break:
+            name: block.wood.break
+  presentoir_phenomene:
+    display_name: <#F0A800>Présentoir Phénomène
+    lore:
+    - <#EADBC8>Une boîte de boosters à exposer
+    - <#EADBC8>dans ton magasin.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/presentoir_phenomene
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: true
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wood.place
+          break:
+            name: block.wood.break

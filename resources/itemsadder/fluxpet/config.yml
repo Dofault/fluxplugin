@@ -1,0 +1,2819 @@
+# Cartes et boosters InfluCard (textures seules), généré par scripts/influcard/gen_familiers.py.
+# Nom, lore et comportement : plugins/InfluCard/config.yml.
+
+info:
+  namespace: fluxpet
+items:
+  carte_pepite:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_pepite
+  peluche_pepite:
+    display_name: <#AAAAAA>Peluche Pépite
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#AAAAAA>Pépite<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_pepite
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_lanterne:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_lanterne
+  peluche_lanterne:
+    display_name: <#37C44A>Peluche Lanterne
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#37C44A>Lanterne<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_lanterne
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_wagonnet:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_wagonnet
+  peluche_wagonnet:
+    display_name: <#3283A8>Peluche Wagonnet
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#3283A8>Wagonnet<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_wagonnet
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_dragon_gemmes:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_dragon_gemmes
+  peluche_dragon_gemmes:
+    display_name: <#B376E5>Peluche Dragon de Gemmes
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#B376E5>Dragon de Gemmes<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_dragon_gemmes
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_caillou:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_caillou
+  peluche_caillou:
+    display_name: <#AAAAAA>Peluche Caillou
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#AAAAAA>Caillou<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_caillou
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_mimique:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_mimique
+  peluche_mimique:
+    display_name: <#37C44A>Peluche Mimique
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#37C44A>Mimique<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_mimique
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_colosse:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_colosse
+  peluche_colosse:
+    display_name: <#3283A8>Peluche Colosse de Basalte
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#3283A8>Colosse de Basalte<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_colosse
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_titan:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_titan
+  peluche_titan:
+    display_name: <#B376E5>Peluche Titan de Cristal
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#B376E5>Titan de Cristal<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_titan
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_fourmi:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_fourmi
+  peluche_fourmi:
+    display_name: <#AAAAAA>Peluche Fourmi
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#AAAAAA>Fourmi<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_fourmi
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_cabri:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_cabri
+  peluche_cabri:
+    display_name: <#37C44A>Peluche Cabri
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#37C44A>Cabri<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_cabri
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_lievre_neiges:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_lievre_neiges
+  peluche_lievre_neiges:
+    display_name: <#3283A8>Peluche Lièvre des Neiges
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#3283A8>Lièvre des Neiges<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_lievre_neiges
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_ver_sables:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_ver_sables
+  peluche_ver_sables:
+    display_name: <#B376E5>Peluche Ver des Sables
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#B376E5>Ver des Sables<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_ver_sables
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_abeille:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_abeille
+  peluche_abeille:
+    display_name: <#AAAAAA>Peluche Abeille
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#AAAAAA>Abeille<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_abeille
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_carottin:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_carottin
+  peluche_carottin:
+    display_name: <#37C44A>Peluche Carottin
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#37C44A>Carottin<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_carottin
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_ouistiti:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_ouistiti
+  peluche_ouistiti:
+    display_name: <#3283A8>Peluche Ouistiti
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#3283A8>Ouistiti<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_ouistiti
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_epouvantail:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_epouvantail
+  peluche_epouvantail:
+    display_name: <#B376E5>Peluche Épouvantail
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#B376E5>Épouvantail<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_epouvantail
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_coquelicot:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_coquelicot
+  peluche_coquelicot:
+    display_name: <#AAAAAA>Peluche Coquelicot
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#AAAAAA>Coquelicot<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_coquelicot
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_champinou:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_champinou
+  peluche_champinou:
+    display_name: <#37C44A>Peluche Champinou
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#37C44A>Champinou<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_champinou
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_papillon:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_papillon
+  peluche_papillon:
+    display_name: <#3283A8>Peluche Papillon
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#3283A8>Papillon<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_papillon
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_dryade:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_dryade
+  peluche_dryade:
+    display_name: <#B376E5>Peluche Dryade
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#B376E5>Dryade<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_dryade
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_souche:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_souche
+  peluche_souche:
+    display_name: <#AAAAAA>Peluche Souche
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#AAAAAA>Souche<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_souche
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_castor:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_castor
+  peluche_castor:
+    display_name: <#37C44A>Peluche Castor
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#37C44A>Castor<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_castor
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_gland:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_gland
+  peluche_gland:
+    display_name: <#3283A8>Peluche Gland
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#3283A8>Gland<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_gland
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_sylvain:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_sylvain
+  peluche_sylvain:
+    display_name: <#B376E5>Peluche Sylvain
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#B376E5>Sylvain<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_sylvain
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_flammeche:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_flammeche
+  peluche_flammeche:
+    display_name: <#B376E5>Peluche Flammèche
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#B376E5>Flammèche<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_flammeche
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_soufflet:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_soufflet
+  peluche_soufflet:
+    display_name: <#AAAAAA>Peluche Soufflet
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#AAAAAA>Soufflet<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_soufflet
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_salamandre:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_salamandre
+  peluche_salamandre:
+    display_name: <#37C44A>Peluche Salamandre Ardente
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#37C44A>Salamandre Ardente<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_salamandre
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_fournaise:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_fournaise
+  peluche_fournaise:
+    display_name: <#3283A8>Peluche Fournaise
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#3283A8>Fournaise<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_fournaise
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_lapin_lapis:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_lapin_lapis
+  peluche_lapin_lapis:
+    display_name: <#AAAAAA>Peluche Lapis-Lapin
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#AAAAAA>Lapis-Lapin<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_lapin_lapis
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_orbe_xp:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_orbe_xp
+  peluche_orbe_xp:
+    display_name: <#37C44A>Peluche Orbe d'Expérience
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#37C44A>Orbe d'Expérience<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_orbe_xp
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_chouette_arcane:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_chouette_arcane
+  peluche_chouette_arcane:
+    display_name: <#3283A8>Peluche Chouette Arcane
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#3283A8>Chouette Arcane<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_chouette_arcane
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_table_vivante:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_table_vivante
+  peluche_table_vivante:
+    display_name: <#B376E5>Peluche Table Vivante
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#B376E5>Table Vivante<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_table_vivante
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_poissonnet:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_poissonnet
+  peluche_poissonnet:
+    display_name: <#AAAAAA>Peluche Poissonnet
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#AAAAAA>Poissonnet<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_poissonnet
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_crabichon:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_crabichon
+  peluche_crabichon:
+    display_name: <#37C44A>Peluche Crabichon
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#37C44A>Crabichon<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_crabichon
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_dauphin:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_dauphin
+  peluche_dauphin:
+    display_name: <#3283A8>Peluche Dauphin
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#3283A8>Dauphin<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_dauphin
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_kraken:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_kraken
+  peluche_kraken:
+    display_name: <#B376E5>Peluche Kraken
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#B376E5>Kraken<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_kraken
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_ecuyer:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_ecuyer
+  peluche_ecuyer:
+    display_name: <#AAAAAA>Peluche Écuyer
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#AAAAAA>Écuyer<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_ecuyer
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_pavois:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_pavois
+  peluche_pavois:
+    display_name: <#37C44A>Peluche Pavois
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#37C44A>Pavois<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_pavois
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_chien_garde:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_chien_garde
+  peluche_chien_garde:
+    display_name: <#3283A8>Peluche Chien de Garde
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#3283A8>Chien de Garde<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_chien_garde
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_chevalier_spectral:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_chevalier_spectral
+  peluche_chevalier_spectral:
+    display_name: <#B376E5>Peluche Chevalier Spectral
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#B376E5>Chevalier Spectral<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_chevalier_spectral
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_marteau_piqueur:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_marteau_piqueur
+  peluche_marteau_piqueur:
+    display_name: <#AAAAAA>Peluche Marteau-Piqueur
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#AAAAAA>Marteau-Piqueur<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_marteau_piqueur
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_betonniere:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_betonniere
+  peluche_betonniere:
+    display_name: <#37C44A>Peluche Bétonnière
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#37C44A>Bétonnière<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_betonniere
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_grue:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_grue
+  peluche_grue:
+    display_name: <#3283A8>Peluche Grue
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#3283A8>Grue<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_grue
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_architecte:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_architecte
+  peluche_architecte:
+    display_name: <#B376E5>Peluche Architecte
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#B376E5>Architecte<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_architecte
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_phenix:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_phenix
+  peluche_phenix:
+    display_name: <#F0A800>Peluche Phénix
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#F0A800>Phénix<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_phenix
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_astrolabe:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_astrolabe
+  peluche_astrolabe:
+    display_name: <#F0A800>Peluche Astrolabe Céleste
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#F0A800>Astrolabe Céleste<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_astrolabe
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_kitsune:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_kitsune
+  peluche_kitsune:
+    display_name: <#F0A800>Peluche Kitsune des Neiges
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#F0A800>Kitsune des Neiges<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_kitsune
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_licorne:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_licorne
+  peluche_licorne:
+    display_name: <#F0A800>Peluche Licorne Astrale
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#F0A800>Licorne Astrale<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_licorne
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_nida:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_nida
+  peluche_nida:
+    display_name: <#F0A800>Peluche Nida
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#F0A800>Nida<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_nida
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_leviathan:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_leviathan
+  peluche_leviathan:
+    display_name: <#C8256A>Peluche Léviathan
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#C8256A>Léviathan<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_leviathan
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_faucheur:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_faucheur
+  peluche_faucheur:
+    display_name: <#C8256A>Peluche Faucheur du Néant
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#C8256A>Faucheur du Néant<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_faucheur
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  booster_metier_mineur:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/booster_metier_mineur.png
+  booster_metier_rochiste:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/booster_metier_rochiste.png
+  booster_metier_deblayeur:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/booster_metier_deblayeur.png
+  booster_metier_cultivateur:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/booster_metier_cultivateur.png
+  booster_metier_herboriste:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/booster_metier_herboriste.png
+  booster_metier_sylviculteur:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/booster_metier_sylviculteur.png
+  booster_metier_fondeur:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/booster_metier_fondeur.png
+  booster_metier_enchanteur:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/booster_metier_enchanteur.png
+  booster_metier_pecheur:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/booster_metier_pecheur.png
+  booster_metier_defenseur:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/booster_metier_defenseur.png
+  booster_metier_batisseur:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/booster_metier_batisseur.png
+  booster_prestige:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/booster_prestige.png
+  booster_ordinaire:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/booster_ordinaire.png
+  booster_tendance:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/booster_tendance.png
+  booster_virale:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/booster_virale.png
+  booster_phenomene:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/booster_phenomene.png
+  carte_fiolin:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_fiolin
+  peluche_fiolin:
+    display_name: <#AAAAAA>Peluche Fiolin
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#AAAAAA>Fiolin<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_fiolin
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_chaudronnet:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_chaudronnet
+  peluche_chaudronnet:
+    display_name: <#37C44A>Peluche Chaudronnet
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#37C44A>Chaudronnet<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_chaudronnet
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_slime_alchimique:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_slime_alchimique
+  peluche_slime_alchimique:
+    display_name: <#3283A8>Peluche Slime Alchimique
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#3283A8>Slime Alchimique<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_slime_alchimique
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  carte_grand_alchimiste:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carte_grand_alchimiste
+  peluche_grand_alchimiste:
+    display_name: <#B376E5>Peluche Grand Alchimiste
+    lore:
+    - <#EADBC8>Une peluche à l'effigie de <#B376E5>Grand Alchimiste<#EADBC8>.
+    - ''
+    - <#6B7A8F>Obtenue en complétant sa série
+    - <#6B7A8F>de familiers. Se pose comme un meuble.
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/peluche_grand_alchimiste
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.5
+            z: 0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        solid: false
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.wool.place
+          break:
+            name: block.wool.break
+  booster_metier_chimiste:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/booster_metier_chimiste.png
+font_images:
+  carte_verso:
+    show_in_gui: true
+    suggest_in_command: true
+    path: font/carte_dos.png
+    scale_ratio: 12
+    y_position: 10
+  carte_verso_grand:
+    show_in_gui: false
+    suggest_in_command: false
+    path: font/carte_dos.png
+    scale_ratio: 31
+    y_position: 18
+  booster_metier_mineur_grand:
+    show_in_gui: false
+    suggest_in_command: false
+    path: font/booster_metier_mineur.png
+    scale_ratio: 31
+    y_position: 18
+  booster_metier_rochiste_grand:
+    show_in_gui: false
+    suggest_in_command: false
+    path: font/booster_metier_rochiste.png
+    scale_ratio: 31
+    y_position: 18
+  booster_metier_deblayeur_grand:
+    show_in_gui: false
+    suggest_in_command: false
+    path: font/booster_metier_deblayeur.png
+    scale_ratio: 31
+    y_position: 18
+  booster_metier_cultivateur_grand:
+    show_in_gui: false
+    suggest_in_command: false
+    path: font/booster_metier_cultivateur.png
+    scale_ratio: 31
+    y_position: 18
+  booster_metier_herboriste_grand:
+    show_in_gui: false
+    suggest_in_command: false
+    path: font/booster_metier_herboriste.png
+    scale_ratio: 31
+    y_position: 18
+  booster_metier_sylviculteur_grand:
+    show_in_gui: false
+    suggest_in_command: false
+    path: font/booster_metier_sylviculteur.png
+    scale_ratio: 31
+    y_position: 18
+  booster_metier_fondeur_grand:
+    show_in_gui: false
+    suggest_in_command: false
+    path: font/booster_metier_fondeur.png
+    scale_ratio: 31
+    y_position: 18
+  booster_metier_enchanteur_grand:
+    show_in_gui: false
+    suggest_in_command: false
+    path: font/booster_metier_enchanteur.png
+    scale_ratio: 31
+    y_position: 18
+  booster_metier_pecheur_grand:
+    show_in_gui: false
+    suggest_in_command: false
+    path: font/booster_metier_pecheur.png
+    scale_ratio: 31
+    y_position: 18
+  booster_metier_defenseur_grand:
+    show_in_gui: false
+    suggest_in_command: false
+    path: font/booster_metier_defenseur.png
+    scale_ratio: 31
+    y_position: 18
+  booster_metier_batisseur_grand:
+    show_in_gui: false
+    suggest_in_command: false
+    path: font/booster_metier_batisseur.png
+    scale_ratio: 31
+    y_position: 18
+  booster_prestige_grand:
+    show_in_gui: false
+    suggest_in_command: false
+    path: font/booster_prestige.png
+    scale_ratio: 31
+    y_position: 18
+  booster_ordinaire_grand:
+    show_in_gui: false
+    suggest_in_command: false
+    path: font/booster_ordinaire.png
+    scale_ratio: 31
+    y_position: 18
+  booster_tendance_grand:
+    show_in_gui: false
+    suggest_in_command: false
+    path: font/booster_tendance.png
+    scale_ratio: 31
+    y_position: 18
+  booster_virale_grand:
+    show_in_gui: false
+    suggest_in_command: false
+    path: font/booster_virale.png
+    scale_ratio: 31
+    y_position: 18
+  booster_phenomene_grand:
+    show_in_gui: false
+    suggest_in_command: false
+    path: font/booster_phenomene.png
+    scale_ratio: 31
+    y_position: 18

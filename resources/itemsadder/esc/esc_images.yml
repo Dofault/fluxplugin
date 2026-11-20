@@ -1,0 +1,7 @@
+info:
+  namespace: "esc"
+font_images:
+  esc_bottom:
+    path: "esc_bottom.png"
+    suggest_in_command: false
+    y_position: 89

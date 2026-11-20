@@ -1,0 +1,72 @@
+info:
+  namespace: influcasino
+
+# Généré par plugins/FluxMenu/assets/casino/gen_casino.py, ne pas éditer à la main.
+# Jeton de casino : objet (menus, 16 x 16) et glyphe %img_jeton% (texte, 9 x 9, réglé comme %img_bitblock%).
+
+items:
+  jeton:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/jeton.png
+  plinko:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/plinko.png
+
+  btn_retour:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - bouton/btn_retour.png
+  btn_precedent:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - bouton/btn_precedent.png
+  btn_suivant:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - bouton/btn_suivant.png
+  plus:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - bouton/plus.png
+  moins:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - bouton/moins.png
+  cadenas:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - bouton/cadenas.png
+
+font_images:
+  jeton:
+    show_in_gui: true
+    suggest_in_command: true
+    path: font/jeton.png
+    scale_ratio: 9
+    y_position: 8

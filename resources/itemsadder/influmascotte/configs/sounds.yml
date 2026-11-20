@@ -1,0 +1,9 @@
+info:
+  namespace: influmascotte
+
+# Voix du robot d'accueil (FluxMascot). Fichiers en mono : un son stéréo ne serait pas situé dans l'espace,
+# la voix ne sortirait plus du robot.
+sounds:
+  accueil:
+    path: voix/accueil
+    category: voice

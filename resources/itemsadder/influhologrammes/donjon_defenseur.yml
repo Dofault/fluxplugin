@@ -1,0 +1,18 @@
+# Généré par scripts/hologrammes/gen_donjon_defenseur.py : ne pas modifier à la main.
+info:
+  namespace: influhologrammes
+font_images:
+  # Ossacorne au-dessus du logo du portail Défenseur (lobby RPG, page Typewriter lobby_rpg).
+  donjon_defenseur_ossacorne:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/hologrammes/donjon_defenseur_ossacorne.png
+    scale_ratio: 51
+    y_position: 49
+  # Logo DONJON DÉFENSEUR, sous l'Ossacorne (remplace le nom en texte du portail).
+  donjon_defenseur_logo:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/hologrammes/donjon_defenseur_logo.png
+    scale_ratio: 37
+    y_position: 35

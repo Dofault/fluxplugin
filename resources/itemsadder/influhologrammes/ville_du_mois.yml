@@ -1,0 +1,18 @@
+# Généré par scripts/hologrammes/gen_ville_du_mois.py : ne pas modifier à la main.
+info:
+  namespace: influhologrammes
+font_images:
+  # Étoile de l'hologramme VILLE DU MOIS : 23 px de haut comme l'icône MONDE RPG, affichée à 130 % de la hauteur du logo, centrée sur lui.
+  ville_du_mois_icone:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/hologrammes/ville_du_mois_icone.png
+    scale_ratio: 34
+    y_position: 28
+  # Logo VILLE DU MOIS, même taille de pixel que l'icône, même bas.
+  ville_du_mois_titre:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/hologrammes/ville_du_mois_titre.png
+    scale_ratio: 26
+    y_position: 24

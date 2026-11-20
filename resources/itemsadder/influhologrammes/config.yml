@@ -1,0 +1,19 @@
+# Généré par scripts/hologrammes/gen_monde_rpg.py : ne pas modifier à la main.
+# Images des hologrammes posés par Typewriter (scripts/typewriter/gen_resaac.py).
+info:
+  namespace: influhologrammes
+font_images:
+  # Pixel art de l'hologramme MONDE RPG (épée dans un bloc d'herbe), 16 x 23 affiché x2.
+  monde_rpg_icone:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/hologrammes/monde_rpg_icone.png
+    scale_ratio: 46
+    y_position: 44
+  # Logo MONDE RPG, même taille de pixel que l'icône, même bas.
+  monde_rpg_titre:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/hologrammes/monde_rpg_titre.png
+    scale_ratio: 32
+    y_position: 30

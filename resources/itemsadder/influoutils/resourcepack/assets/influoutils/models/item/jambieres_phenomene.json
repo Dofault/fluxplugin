@@ -1,0 +1,320 @@
+{
+ "credit": "Influencraft, généré par plugins/FluxItems/assets/modeles/gen_phenomene.py",
+ "gui_light": "front",
+ "textures": {
+  "jambieres": "influoutils:item/phenomene/jambieres",
+  "particle": "influoutils:item/phenomene/jambieres"
+ },
+ "elements": [
+  {
+   "from": [
+    3.5,
+    11.5,
+    5.5
+   ],
+   "to": [
+    12.5,
+    16.5,
+    10.5
+   ],
+   "faces": {
+    "south": {
+     "uv": [
+      5.0,
+      14.0,
+      7.0,
+      16.0
+     ],
+     "texture": "#jambieres"
+    },
+    "north": {
+     "uv": [
+      8.0,
+      14.0,
+      10.0,
+      16.0
+     ],
+     "texture": "#jambieres"
+    },
+    "west": {
+     "uv": [
+      4.0,
+      14.0,
+      5.0,
+      16.0
+     ],
+     "texture": "#jambieres"
+    },
+    "east": {
+     "uv": [
+      7.0,
+      14.0,
+      8.0,
+      16.0
+     ],
+     "texture": "#jambieres"
+    },
+    "up": {
+     "uv": [
+      5.0,
+      8.0,
+      7.0,
+      10.0
+     ],
+     "texture": "#jambieres"
+    },
+    "down": {
+     "uv": [
+      7.0,
+      8.0,
+      9.0,
+      10.0
+     ],
+     "texture": "#jambieres"
+    }
+   }
+  },
+  {
+   "from": [
+    3.4,
+    -0.5,
+    5.5
+   ],
+   "to": [
+    8.4,
+    12.5,
+    10.5
+   ],
+   "faces": {
+    "south": {
+     "uv": [
+      1.0,
+      10.0,
+      2.0,
+      16.0
+     ],
+     "texture": "#jambieres"
+    },
+    "north": {
+     "uv": [
+      3.0,
+      10.0,
+      4.0,
+      16.0
+     ],
+     "texture": "#jambieres"
+    },
+    "west": {
+     "uv": [
+      0.0,
+      10.0,
+      1.0,
+      16.0
+     ],
+     "texture": "#jambieres"
+    },
+    "east": {
+     "uv": [
+      2.0,
+      10.0,
+      3.0,
+      16.0
+     ],
+     "texture": "#jambieres"
+    },
+    "up": {
+     "uv": [
+      1.0,
+      8.0,
+      2.0,
+      10.0
+     ],
+     "texture": "#jambieres"
+    },
+    "down": {
+     "uv": [
+      2.0,
+      8.0,
+      3.0,
+      10.0
+     ],
+     "texture": "#jambieres"
+    }
+   }
+  },
+  {
+   "from": [
+    7.6,
+    -0.5,
+    5.5
+   ],
+   "to": [
+    12.6,
+    12.5,
+    10.5
+   ],
+   "faces": {
+    "south": {
+     "uv": [
+      2.0,
+      10.0,
+      1.0,
+      16.0
+     ],
+     "texture": "#jambieres"
+    },
+    "north": {
+     "uv": [
+      4.0,
+      10.0,
+      3.0,
+      16.0
+     ],
+     "texture": "#jambieres"
+    },
+    "west": {
+     "uv": [
+      3.0,
+      10.0,
+      2.0,
+      16.0
+     ],
+     "texture": "#jambieres"
+    },
+    "east": {
+     "uv": [
+      1.0,
+      10.0,
+      0.0,
+      16.0
+     ],
+     "texture": "#jambieres"
+    },
+    "up": {
+     "uv": [
+      2.0,
+      8.0,
+      1.0,
+      10.0
+     ],
+     "texture": "#jambieres"
+    },
+    "down": {
+     "uv": [
+      3.0,
+      8.0,
+      2.0,
+      10.0
+     ],
+     "texture": "#jambieres"
+    }
+   }
+  }
+ ],
+ "display": {
+  "gui": {
+   "rotation": [
+    10,
+    -25,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.8,
+    0.8,
+    0.8
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    3,
+    0
+   ],
+   "scale": [
+    0.25,
+    0.25,
+    0.25
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    180,
+    0
+   ],
+   "scale": [
+    0.5,
+    0.5,
+    0.5
+   ]
+  },
+  "thirdperson_righthand": {
+   "rotation": [
+    75,
+    45,
+    0
+   ],
+   "translation": [
+    0,
+    2.5,
+    0
+   ],
+   "scale": [
+    0.375,
+    0.375,
+    0.375
+   ]
+  },
+  "thirdperson_lefthand": {
+   "rotation": [
+    75,
+    45,
+    0
+   ],
+   "translation": [
+    0,
+    2.5,
+    0
+   ],
+   "scale": [
+    0.375,
+    0.375,
+    0.375
+   ]
+  },
+  "firstperson_righthand": {
+   "rotation": [
+    0,
+    45,
+    0
+   ],
+   "scale": [
+    0.4,
+    0.4,
+    0.4
+   ]
+  },
+  "firstperson_lefthand": {
+   "rotation": [
+    0,
+    225,
+    0
+   ],
+   "scale": [
+    0.4,
+    0.4,
+    0.4
+   ]
+  }
+ }
+}

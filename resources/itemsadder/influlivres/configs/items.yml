@@ -1,0 +1,118 @@
+# Livres mystère : remplaçants du livre "clic droit" d'AdvancedEnchantments (givercbook), pour la
+# migration vers EcoEnchants (2026-09-26). Même visuel qu'AE : textures des livres de rareté de
+# hyronic_ae_configuration (copiées ici, le pack tiers n'est pas modifié), même nom (glyphe influtags
+# de la rareté) et même lore que enchanter-books d'AE. Clic droit = livre aléatoire EcoEnchants de la
+# rareté, en console, puis l'objet est consommé.
+# Depuis le 2026-10-28 (Labs) : plus de bloc events ici, le clic droit est géré par FluxEnchant (mystery-books).
+info:
+  namespace: influlivres
+
+items:
+  livre_simple:
+    display_name: "<white></white> <#FFD94D>Enchantement Aléatoire"
+    lore:
+      - ""
+      - "<#B376E5>Un livre à l'esprit mystérieux,"
+      - "<#B376E5>renfermant une magie occulte"
+      - "<#B376E5>qui émet une lueur étrange."
+      - ""
+      - "<dark_gray>Tu recevras un livre aléatoire"
+      - "<dark_gray>selon la rareté une fois purifié."
+      - ""
+      - "<gray><#FFD94D>Clique droit pour purifier ce livre"
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - items/livre_simple
+
+  livre_unique:
+    display_name: "<white></white> <#FFD94D>Enchantement Aléatoire"
+    lore:
+      - ""
+      - "<#B376E5>Un livre à l'esprit mystérieux,"
+      - "<#B376E5>renfermant une magie occulte"
+      - "<#B376E5>qui émet une lueur étrange."
+      - ""
+      - "<dark_gray>Tu recevras un livre aléatoire"
+      - "<dark_gray>selon la rareté une fois purifié."
+      - ""
+      - "<gray><#FFD94D>Clique droit pour purifier ce livre"
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - items/livre_unique
+
+  livre_elite:
+    display_name: "<white></white> <#FFD94D>Enchantement Aléatoire"
+    lore:
+      - ""
+      - "<#B376E5>Un livre à l'esprit mystérieux,"
+      - "<#B376E5>renfermant une magie occulte"
+      - "<#B376E5>qui émet une lueur étrange."
+      - ""
+      - "<dark_gray>Tu recevras un livre aléatoire"
+      - "<dark_gray>selon la rareté une fois purifié."
+      - ""
+      - "<gray><#FFD94D>Clique droit pour purifier ce livre"
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - items/livre_elite
+
+  livre_ultimate:
+    display_name: "<white></white> <#FFD94D>Enchantement Aléatoire"
+    lore:
+      - ""
+      - "<#B376E5>Un livre à l'esprit mystérieux,"
+      - "<#B376E5>renfermant une magie occulte"
+      - "<#B376E5>qui émet une lueur étrange."
+      - ""
+      - "<dark_gray>Tu recevras un livre aléatoire"
+      - "<dark_gray>selon la rareté une fois purifié."
+      - ""
+      - "<gray><#FFD94D>Clique droit pour purifier ce livre"
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - items/livre_ultimate
+
+  livre_legendary:
+    display_name: "<white></white> <#FFD94D>Enchantement Aléatoire"
+    lore:
+      - ""
+      - "<#B376E5>Un livre à l'esprit mystérieux,"
+      - "<#B376E5>renfermant une magie occulte"
+      - "<#B376E5>qui émet une lueur étrange."
+      - ""
+      - "<dark_gray>Tu recevras un livre aléatoire"
+      - "<dark_gray>selon la rareté une fois purifié."
+      - ""
+      - "<gray><#FFD94D>Clique droit pour purifier ce livre"
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - items/livre_legendary
+
+  livre_fabled:
+    display_name: "<white></white> <#FFD94D>Enchantement Aléatoire"
+    lore:
+      - ""
+      - "<#B376E5>Un livre à l'esprit mystérieux,"
+      - "<#B376E5>renfermant une magie occulte"
+      - "<#B376E5>qui émet une lueur étrange."
+      - ""
+      - "<dark_gray>Tu recevras un livre aléatoire"
+      - "<dark_gray>selon la rareté une fois purifié."
+      - ""
+      - "<gray><#FFD94D>Clique droit pour purifier ce livre"
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - items/livre_fabled
+

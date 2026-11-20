@@ -1,0 +1,22 @@
+info:
+  namespace: influcasino
+
+# Généré par plugins/FluxMenu/assets/casino/roulette/gen_roulette.py, ne pas éditer à la main.
+# roulette_roue : la roue (124 x 124, haut à y 18), affichée immobile.
+
+items:
+  roulette:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - roulette/icone.png
+
+font_images:
+  roulette_roue:
+    suggest_in_command: false
+    show_in_gui: false
+    path: roulette/roue.png
+    scale_ratio: 124
+    y_position: -5

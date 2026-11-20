@@ -1,0 +1,33 @@
+{
+ "textures": {
+  "0": "influcrates:item/noel/caisse_noel",
+  "particle": "influcrates:item/noel/caisse_noel"
+ },
+ "elements": [
+  {
+   "name": "serrure_lueur",
+   "from": [
+    6.75,
+    4.6,
+    2.97
+   ],
+   "to": [
+    9.25,
+    7.85,
+    2.97
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.0,
+      8.0,
+      6.25,
+      9.625
+     ],
+     "texture": "#0"
+    }
+   },
+   "shade": false
+  }
+ ]
+}

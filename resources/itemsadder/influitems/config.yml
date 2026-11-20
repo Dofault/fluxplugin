@@ -1,0 +1,278 @@
+info:
+  namespace: influitems
+items:
+  # ── Items invisibles ───────────────────────────────────────────────────────
+
+  invisible:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - invisible.png
+  
+  # ── Boutons de navigation ──────────────────────────────────────────────────
+
+  btn_back:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - back.png
+  
+  btn_next:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - next.png
+  
+  btn_prev:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - prev.png
+  
+  filter:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - text_line_spacing.png
+  
+  home:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - home.png
+  
+  search:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - search.png
+  
+  settings:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - settings.png
+  
+  # ── Icônes génériques ─────────────────────────────────────────────────────
+
+  accept:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - accept.png
+  
+  add:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - add.png
+  
+  chest:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - chest.png
+  
+  chest_checkmark:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - chest_checkmark.png
+  
+  chest_delete:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - chest_delete.png
+  
+  chest_item:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - chest_item.png
+  
+  lock:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - lock.png
+  
+  unlock:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - unlock.png
+  
+  oneshot:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - oneshot.png
+  
+  stairs:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - stairs.png
+  
+  tracking:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - tracking.png
+  
+  checkmark:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - checkmark.png
+
+  unknown:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - unknown.png
+
+  # ── Monnaies ──────────────────────────────────────────────────────────────
+
+  bitblock:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - bitblock.png
+  
+  influence:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - influence.png
+
+  # ── Boutons utilitaires (2026-10-14, thème bouton violet) ──────────────────
+
+  close:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - close.png
+
+  remove:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - remove.png
+
+  deny:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - deny.png
+
+  reward:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - reward.png
+
+  referral:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - referral.png
+
+  leaderboard:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - leaderboard.png
+
+  vote:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - vote.png
+
+  # Copier (presse-papier) : adresse de parrainage, code, lien (2026-10-14)
+  copy:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - copy.png
+
+  # Pass de combat (EcoBattlepass), bouton du menu principal (2026-10-14)
+  pass:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - pass.png
+
+  chest_unlock:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - chest_unlock.png

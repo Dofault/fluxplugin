@@ -1,0 +1,205 @@
+info:
+  namespace: influcasino
+
+# Généré par plugins/FluxMenu/assets/casino/roulette/gen_roulette_jeu.py, ne pas éditer à la main.
+# Roulette jouable : fond, bille et ombre de vitesse, jetons de pari.
+# Glyphes posés au pixel près dans le titre (y_position = 13 - haut).
+
+items:
+  pari_rouge:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_rouge.png
+  pari_noir:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_noir.png
+  pari_n0:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n0.png
+  pari_n1:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n1.png
+  pari_n2:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n2.png
+  pari_n3:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n3.png
+  pari_n4:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n4.png
+  pari_n5:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n5.png
+  pari_n6:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n6.png
+  pari_n7:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n7.png
+  pari_n8:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n8.png
+  pari_n9:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n9.png
+  pari_n10:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n10.png
+  pari_n11:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n11.png
+  pari_n12:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n12.png
+  pari_n13:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n13.png
+  pari_n14:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n14.png
+  pari_n15:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n15.png
+  pari_n16:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n16.png
+  pari_n17:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n17.png
+  pari_n18:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n18.png
+  pari_n19:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n19.png
+  pari_n20:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n20.png
+  pari_n21:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n21.png
+  pari_n22:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n22.png
+  pari_n23:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n23.png
+  pari_n24:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - item/pari_n24.png
+
+font_images:
+  menu_roulette:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/menu_roulette.png
+    scale_ratio: 221
+    y_position: 13

@@ -1,0 +1,48 @@
+info:
+  namespace: fluxmenu
+
+# Fonds de coffre redessinés par FluxMenu (Labs).
+# La texture vanilla des coffres (influstatique > generic_54.png) est rendue
+# transparente : FluxMenu remet l'un de ces fonds dans le titre de chaque fenêtre
+# de coffre qui n'est pas un menu FluxMenu, les menus FluxMenu restent transparents.
+# Images générées depuis plugins/FluxMenu/assets/generic_54_influstatique.png par assets/chests.py
+# (haut = rangées x 18 + 17 px, puis les 96 px de l'inventaire, comme le client).
+# 256 px maximum de côté, y_position 13 = haut de l'image sur le haut de la fenêtre.
+
+font_images:
+  fluxchest_1:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/chest/chest_1.png
+    scale_ratio: 131
+    y_position: 13
+  fluxchest_2:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/chest/chest_2.png
+    scale_ratio: 149
+    y_position: 13
+  fluxchest_3:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/chest/chest_3.png
+    scale_ratio: 167
+    y_position: 13
+  fluxchest_4:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/chest/chest_4.png
+    scale_ratio: 185
+    y_position: 13
+  fluxchest_5:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/chest/chest_5.png
+    scale_ratio: 203
+    y_position: 13
+  fluxchest_6:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/chest/chest_6.png
+    scale_ratio: 221
+    y_position: 13

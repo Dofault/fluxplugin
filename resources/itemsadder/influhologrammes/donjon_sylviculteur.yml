@@ -1,0 +1,18 @@
+# Généré par scripts/hologrammes/gen_donjon_sylviculteur.py : ne pas modifier à la main.
+info:
+  namespace: influhologrammes
+font_images:
+  # Araignée Sylvestre au-dessus du logo du portail Bûcheron (lobby RPG, page Typewriter lobby_rpg).
+  donjon_sylviculteur_araignee:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/hologrammes/donjon_sylviculteur_araignee.png
+    scale_ratio: 42
+    y_position: 40
+  # Logo DONJON BÛCHERON, sous l'araignée (remplace le nom en texte du portail).
+  donjon_sylviculteur_logo:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/hologrammes/donjon_sylviculteur_logo.png
+    scale_ratio: 31
+    y_position: 29

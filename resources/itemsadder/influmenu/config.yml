@@ -1,0 +1,225 @@
+info:
+  namespace: influmenu
+
+font_images:
+  # ── Menu principal FluxMenu (/menu2, Labs) ───────────────────────────────
+  # Fond plein écran : coffre 6 rangées + inventaire du joueur (masqué par
+  # FluxMenu). Image 176x221 (jamais plus de 256 px de côté : au-delà Minecraft
+  # n'arrive pas à la ranger dans ses planches de police et affiche un rectangle).
+  # y_position 13 aligne le haut de l'image sur le haut de la fenêtre.
+  menu2:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu2.png
+    scale_ratio: 221
+    y_position: 13
+
+  # ── Animation d'extension de /menu2 (FluxMenu, page « parametres ») ───────
+  # 5 étapes du panneau qui s'agrandit vers le bas (frame_1 = menu2 de base,
+  # frame_5 = fond final de la page). Sources : plugins/FluxMenu/assets/menu2_anim/.
+  menu2_anim_1:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu2_anim/frame_1.png
+    scale_ratio: 221
+    y_position: 13
+  menu2_anim_2:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu2_anim/frame_2.png
+    scale_ratio: 221
+    y_position: 13
+  menu2_anim_3:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu2_anim/frame_3.png
+    scale_ratio: 221
+    y_position: 13
+  menu2_anim_4:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu2_anim/frame_4.png
+    scale_ratio: 221
+    y_position: 13
+  menu2_anim_5:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu2_anim/frame_5.png
+    scale_ratio: 221
+    y_position: 13
+
+
+  # ── Fond générique plein écran (FluxMenu, menu Pass) ─────────────────────
+  # Panneau plein écran (coffre + inventaire), image fournie 176x221
+  # (source : plugins/FluxMenu/assets/menu_generique.png).
+  menu_generique:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_generique.png
+    scale_ratio: 221
+    y_position: 13
+
+  # ── Fond du menu Pass (FluxMenu, menus/pass.yml) ─────────────────────────
+  # Image fournie 176x221 (source : plugins/FluxMenu/assets/menu_pass.png).
+  menu_pass:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_pass.png
+    scale_ratio: 221
+    y_position: 13
+
+  # ── Fond du menu Carrières (FluxMenu, menus/metiers.yml) ─────────────────
+  # Image fournie 176x221 (source : plugins/FluxMenu/assets/menu_metier.png) :
+  # 4 cases boosters à gauche, cadre de l'illustration, 12 métiers à droite.
+  menu_metier:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_metier.png
+    scale_ratio: 221
+    y_position: 13
+
+  # ── Fonds du menu d'offrande (FluxOffering, menus/offering.yml), un par rang ──
+  # Source : plugins/fluxplugin/Flux/assets/offrande/gen_fonds.py (coffre de la suite, inventaire visible).
+  menu_offrande_citoyen:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_offrande_citoyen.png
+    scale_ratio: 221
+    y_position: 13
+  menu_offrande_repute:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_offrande_repute.png
+    scale_ratio: 221
+    y_position: 13
+  menu_offrande_populaire:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_offrande_populaire.png
+    scale_ratio: 221
+    y_position: 13
+  menu_offrande_eminent:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_offrande_eminent.png
+    scale_ratio: 221
+    y_position: 13
+  menu_offrande_figure:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_offrande_figure.png
+    scale_ratio: 221
+    y_position: 13
+  menu_offrande_influenceur:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_offrande_influenceur.png
+    scale_ratio: 221
+    y_position: 13
+  menu_offrande_icone:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_offrande_icone.png
+    scale_ratio: 221
+    y_position: 13
+  menu_offrande_legende:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_offrande_legende.png
+    scale_ratio: 221
+    y_position: 13
+  menu_offrande_mythe:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_offrande_mythe.png
+    scale_ratio: 221
+    y_position: 13
+  menu_offrande_souverain:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_offrande_souverain.png
+    scale_ratio: 221
+    y_position: 13
+  menu_offrande_supreme:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_offrande_supreme.png
+    scale_ratio: 221
+    y_position: 13
+
+  # ── Fond du menu des grades (FluxOffering, menus/grades.yml, /grade) ─────
+  # Fenêtre entière 176x221 (source : plugins/fluxplugin/Flux/assets/rangs/gen_fond.py) : musée, bannières des
+  # 4 paliers sous des spots, menu décalé d'une ligne (récompenses de palier sur la 1re ligne de l'inventaire).
+  menu_rangs:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_rangs.png
+    scale_ratio: 221
+    y_position: 13
+
+  # ── Fond du menu Profil (Flux, menus/profil.yml, /profil) ──────
+  # Fenêtre entière 176x221 (source : plugins/fluxplugin/Flux/assets/profil/gen_fond.py) : monnaies et tête, 7
+  # classements, 4 cases d'activité, 4 raccourcis sur la première rangée de l'inventaire.
+  menu_profil:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_profil.png
+    scale_ratio: 221
+    y_position: 13
+
+  # fond du sous-menu Classements du profil (Flux/assets/profil/gen_fond.py)
+  menu_classements:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_classements.png
+    scale_ratio: 221
+    y_position: 13
+
+  # ── Fond du menu Récompenses (Flux, menus/rewards.yml, /recompenses) ──────
+  # Fenêtre entière 176x221 (source : plugins/fluxplugin/Flux/assets/recompenses/gen_fond.py) : étoiles
+  # gravées sur la bordure, grande étoile en filigrane, boîte des 21 récompenses façon actions du menu métier.
+  menu_recompenses:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_recompenses.png
+    scale_ratio: 221
+    y_position: 13
+
+  # ── Fond du menu Collection (FluxMenu, menus/collection.yml) ─────────────
+  # Fenêtre entière 176x221 (source : plugins/FluxMenu/assets/collection/, gen_fond.py) :
+  # 3 étagères sous les rangées 3 à 5 du coffre (couronne et titre effacés), cadre jusqu'à la 1re rangée
+  # de l'inventaire (barre de progression).
+  menu_collection:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_collection.png
+    scale_ratio: 221
+    y_position: 13
+
+  # ── Fond des menus de catégorie de collections (FluxMenu, menus/collection_<id>.yml) ──
+  # Fenêtre entière 176x221 (source : plugins/FluxMenu/assets/collection/gen_fond_categorie.py,
+  # fond générique raccourci jusque sous la 2e rangée de l'inventaire) : cases de la catégorie (4), des 28 collections
+  # (rangées 1 à 4, colonnes 1 à 7) et de la collection sélectionnée (1re rangée de l'inventaire).
+  menu_collection_categorie:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_collection_categorie.png
+    scale_ratio: 221
+    y_position: 13
+
+  # ── Fonds des menus des familiers (FluxMenu, menus/familiers.yml et familier.yml) ──
+  # Générés par plugins/FluxMenu/assets/familiers/gen_fond.py : fond générique raccourci au coffre,
+  # case arrondie de l'utilisateur sous chaque case utile.
+  menu_familiers:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_familiers.png
+    scale_ratio: 221
+    y_position: 13
+  menu_familier:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_familier.png
+    scale_ratio: 221
+    y_position: 13
+

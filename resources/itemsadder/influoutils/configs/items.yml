@@ -1,0 +1,13 @@
+# Généré par plugins/FluxItems/assets/modeles/gen_phenomene.py : ne pas modifier à la main.
+# Modèles 3D du set phénomène. Les vrais objets portent le composant item_model (influoutils:<id>,
+# cf. resourcepack/assets/influoutils/items), posé par FluxItems ; l'objet ItemsAdder ci-dessous
+# reprend le modèle de la pioche pour l'aperçu de sa caisse (itemsadder:influoutils__<id>) et /iagive.
+info:
+  namespace: influoutils
+items:
+  pioche_phenomene:
+    display_name: '&#F0A800&lPioche phénomène'
+    resource:
+      material: NETHERITE_PICKAXE
+      generate: false
+      model_path: item/pioche_phenomene

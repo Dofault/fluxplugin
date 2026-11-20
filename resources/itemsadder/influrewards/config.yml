@@ -1,0 +1,1742 @@
+info:
+  namespace: influrewards
+
+# Catégorie du menu /ia (admin) — cf. doc ItemsAdder "Recipes Menu" (categories.md par namespace,
+# jamais dans ia_gui.yml). Permission de visibilité de la catégorie : ia.menu.seecategory.boosts_metiers
+categories:
+  temps_de_vol:
+    enabled: true
+    icon: "influrewards:plume_vol_unique"
+    name: "Plumes de vol"
+    permission: "ia.menu.seecategory.temps_de_vol"
+    items:
+      - "influrewards:plume_vol_commune"
+      - "influrewards:plume_vol_unique"
+
+  vip:
+    enabled: true
+    icon: "influrewards:sceau_vip_24h"
+    name: "VIP"
+    permission: "ia.menu.seecategory.vip"
+    items:
+      - "influrewards:sceau_vip_24h"
+
+  boosts_metiers:
+    enabled: true
+    icon: "influrewards:boost_mineur"
+    name: 'Boosts de métier'
+    permission: "ia.menu.seecategory.boosts_metiers"
+    items:
+      - "influrewards:boost_mineur"
+      - "influrewards:boost_pecheur"
+      - "influrewards:boost_sylviculteur"
+      - "influrewards:boost_eleveur"
+      - "influrewards:boost_defenseur"
+      - "influrewards:boost_dompteur"
+      - "influrewards:boost_enchanteur"
+      - "influrewards:boost_fondeur"
+      - "influrewards:boost_herboriste"
+      - "influrewards:boost_chimiste"
+      - "influrewards:boost_cultivateur"
+      - "influrewards:boost_rochiste"
+      - "influrewards:boost_tondeur"
+      - "influrewards:boost_coloriste"
+      - "influrewards:boost_ravitailleur"
+      - "influrewards:boost_explorateur"
+      - "influrewards:boost_deblayeur"
+      - "influrewards:boost_gourmet"
+
+  bouteilles_xp:
+    enabled: true
+    icon: "influrewards:bouteille_xp_12"
+    name: "Bouteilles d'XP"
+    permission: "ia.menu.seecategory.bouteilles_xp"
+    items:
+      - "influrewards:bouteille_xp_01"
+      - "influrewards:bouteille_xp_02"
+      - "influrewards:bouteille_xp_03"
+      - "influrewards:bouteille_xp_04"
+      - "influrewards:bouteille_xp_05"
+      - "influrewards:bouteille_xp_06"
+      - "influrewards:bouteille_xp_07"
+      - "influrewards:bouteille_xp_08"
+      - "influrewards:bouteille_xp_09"
+      - "influrewards:bouteille_xp_10"
+      - "influrewards:bouteille_xp_11"
+      - "influrewards:bouteille_xp_12"
+
+  outils:
+    enabled: true
+    icon: "influrewards:pioche_suffrage"
+    name: "Outils"
+    permission: "ia.menu.seecategory.outils"
+    items:
+      - "influrewards:pioche_suffrage"
+      - "influrewards:epee_ordinaire"
+      - "influrewards:pelle_ordinaire"
+      - "influrewards:hache_ordinaire"
+      - "influrewards:houe_ordinaire"
+      - "influrewards:canne_peche_ordinaire"
+      - "influrewards:pioche_tendance"
+      - "influrewards:epee_tendance"
+      - "influrewards:pelle_tendance"
+      - "influrewards:hache_tendance"
+      - "influrewards:houe_tendance"
+      - "influrewards:canne_peche_tendance"
+      - "influrewards:pioche_virale"
+      - "influrewards:epee_virale"
+      - "influrewards:pelle_virale"
+      - "influrewards:hache_virale"
+      - "influrewards:houe_virale"
+      - "influrewards:canne_peche_virale"
+      - "influrewards:pioche_phenomene"
+      - "influrewards:epee_phenomene"
+      - "influrewards:pelle_phenomene"
+      - "influrewards:hache_phenomene"
+      - "influrewards:houe_phenomene"
+      - "influrewards:canne_peche_phenomene"
+
+  armures:
+    enabled: true
+    icon: "influrewards:casque_phenomene"
+    name: "Armures"
+    permission: "ia.menu.seecategory.armures"
+    items:
+      - "influrewards:casque_ordinaire"
+      - "influrewards:plastron_ordinaire"
+      - "influrewards:jambieres_ordinaire"
+      - "influrewards:bottes_ordinaire"
+      - "influrewards:casque_tendance"
+      - "influrewards:plastron_tendance"
+      - "influrewards:jambieres_tendance"
+      - "influrewards:bottes_tendance"
+      - "influrewards:casque_virale"
+      - "influrewards:plastron_virale"
+      - "influrewards:jambieres_virale"
+      - "influrewards:bottes_virale"
+      - "influrewards:casque_phenomene"
+      - "influrewards:plastron_phenomene"
+      - "influrewards:jambieres_phenomene"
+      - "influrewards:bottes_phenomene"
+
+items:
+  # ── Potions de boost de métier — usage unique, +25% XP (PROGRESS) pendant 1h ──────────────
+  # Commande AdvancedJobs déclenchée au moment où le joueur boit (event 'drink'), en console :
+  #   aja boosters add <player> PROGRESS <percent> <heures> <affects=job id>
+  # La potion est consommée automatiquement par le client (comportement vanilla POTION).
+  # Pas d'indicateur de cooldown : events_settings.cooldown testé en profondeur (BOSSBAR/HUD/TITLE,
+  # events drink/interact/interact_mainhand, permission, enabled) sans succès sur cette install
+  # ItemsAdder — abandonné. Pas de notification non plus.
+
+  boost_mineur:
+    display_name: "<#34C9C0>Ferveur du Mineur"
+    lore:
+      - "<#8FE1DC>Effet : +25% XP Mineur"
+      - "<#8FE1DC>Durée : 1h"
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#34C9C0'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          apply_boost:
+            command: 'aja boosters add {player} PROGRESS 25 1 mineur'
+            as_console: true
+        play_sound:
+          name: entity.player.levelup
+
+  boost_pecheur:
+    display_name: "<#3A8FD9>Marée Vive"
+    lore:
+      - "<#93C1EA>Effet : +25% XP Pêcheur"
+      - "<#93C1EA>Durée : 1h"
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#3A8FD9'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          apply_boost:
+            command: 'aja boosters add {player} PROGRESS 25 1 pecheur'
+            as_console: true
+        play_sound:
+          name: entity.player.levelup
+
+  boost_sylviculteur:
+    display_name: "<#2F8F4E>Sève Ardente"
+    lore:
+      - "<#8DC19E>Effet : +25% XP Bûcheron"
+      - "<#8DC19E>Durée : 1h"
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#2F8F4E'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          apply_boost:
+            command: 'aja boosters add {player} PROGRESS 25 1 sylviculteur'
+            as_console: true
+        play_sound:
+          name: entity.player.levelup
+
+  boost_eleveur:
+    display_name: "<#E06B9E>Tendresse Fertile"
+    lore:
+      - "<#EEAECA>Effet : +25% XP Éleveur"
+      - "<#EEAECA>Durée : 1h"
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#E06B9E'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          apply_boost:
+            command: 'aja boosters add {player} PROGRESS 25 1 eleveur'
+            as_console: true
+        play_sound:
+          name: entity.player.levelup
+
+  boost_defenseur:
+    display_name: "<#B23A3A>Rage du Défenseur"
+    lore:
+      - "<#D59393>Effet : +25% XP Défenseur"
+      - "<#D59393>Durée : 1h"
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#B23A3A'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          apply_boost:
+            command: 'aja boosters add {player} PROGRESS 25 1 defenseur'
+            as_console: true
+        play_sound:
+          name: entity.player.levelup
+
+  boost_dompteur:
+    display_name: "<#8A6A4E>Instinct Sauvage"
+    lore:
+      - "<#BFAD9E>Effet : +25% XP Dompteur"
+      - "<#BFAD9E>Durée : 1h"
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#8A6A4E'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          apply_boost:
+            command: 'aja boosters add {player} PROGRESS 25 1 dompteur'
+            as_console: true
+        play_sound:
+          name: entity.player.levelup
+
+  boost_enchanteur:
+    display_name: "<#7A4FD1>Murmure Arcanique"
+    lore:
+      - "<#B69EE6>Effet : +25% XP Enchanteur"
+      - "<#B69EE6>Durée : 1h"
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#7A4FD1'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          apply_boost:
+            command: 'aja boosters add {player} PROGRESS 25 1 enchanteur'
+            as_console: true
+        play_sound:
+          name: entity.player.levelup
+
+  boost_fondeur:
+    display_name: "<#E0722E>Braise Vive"
+    lore:
+      - "<#EEB18C>Effet : +25% XP Fondeur"
+      - "<#EEB18C>Durée : 1h"
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#E0722E'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          apply_boost:
+            command: 'aja boosters add {player} PROGRESS 25 1 fondeur'
+            as_console: true
+        play_sound:
+          name: entity.player.levelup
+
+  boost_herboriste:
+    display_name: "<#6FBF5C>Rosée Sylvestre"
+    lore:
+      - "<#B0DCA5>Effet : +25% XP Herboriste"
+      - "<#B0DCA5>Durée : 1h"
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#6FBF5C'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          apply_boost:
+            command: 'aja boosters add {player} PROGRESS 25 1 herboriste'
+            as_console: true
+        play_sound:
+          name: entity.player.levelup
+
+  boost_chimiste:
+    display_name: "<#8CD62A>Réaction Vive"
+    lore:
+      - "<#C0E88A>Effet : +25% XP Chimiste"
+      - "<#C0E88A>Durée : 1h"
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#8CD62A'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          apply_boost:
+            command: 'aja boosters add {player} PROGRESS 25 1 chimiste'
+            as_console: true
+        play_sound:
+          name: entity.player.levelup
+
+  boost_cultivateur:
+    display_name: "<#E0B93A>Sève Dorée"
+    lore:
+      - "<#EED893>Effet : +25% XP Cultivateur"
+      - "<#EED893>Durée : 1h"
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#E0B93A'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          apply_boost:
+            command: 'aja boosters add {player} PROGRESS 25 1 cultivateur'
+            as_console: true
+        play_sound:
+          name: entity.player.levelup
+
+  boost_rochiste:
+    display_name: "<#8C8C8C>Écho de la Pierre"
+    lore:
+      - "<#C0C0C0>Effet : +25% XP Rochiste"
+      - "<#C0C0C0>Durée : 1h"
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#8C8C8C'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          apply_boost:
+            command: 'aja boosters add {player} PROGRESS 25 1 rochiste'
+            as_console: true
+        play_sound:
+          name: entity.player.levelup
+
+  boost_tondeur:
+    display_name: "<#E8E0D0>Toison Légère"
+    lore:
+      - "<#F2EEE5>Effet : +25% XP Tondeur"
+      - "<#F2EEE5>Durée : 1h"
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#E8E0D0'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          apply_boost:
+            command: 'aja boosters add {player} PROGRESS 25 1 tondeur'
+            as_console: true
+        play_sound:
+          name: entity.player.levelup
+
+  boost_coloriste:
+    display_name: "<#D13ABF>Nuance Éclatante"
+    lore:
+      - "<#E693DC>Effet : +25% XP Coloriste"
+      - "<#E693DC>Durée : 1h"
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#D13ABF'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          apply_boost:
+            command: 'aja boosters add {player} PROGRESS 25 1 coloriste'
+            as_console: true
+        play_sound:
+          name: entity.player.levelup
+
+  boost_ravitailleur:
+    display_name: "<#C2A26B>Élan du Bâtisseur"
+    lore:
+      - "<#DDCCAE>Effet : +25% XP Ravitailleur"
+      - "<#DDCCAE>Durée : 1h"
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#C2A26B'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          apply_boost:
+            command: 'aja boosters add {player} PROGRESS 25 1 ravitailleur'
+            as_console: true
+        play_sound:
+          name: entity.player.levelup
+
+  boost_explorateur:
+    display_name: "<#2E9E9E>Vent du Large"
+    lore:
+      - "<#8CCACA>Effet : +25% XP Explorateur"
+      - "<#8CCACA>Durée : 1h"
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#2E9E9E'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          apply_boost:
+            command: 'aja boosters add {player} PROGRESS 25 1 explorateur'
+            as_console: true
+        play_sound:
+          name: entity.player.levelup
+
+  boost_deblayeur:
+    display_name: "<#6E8CA0>Coup de Balai"
+    lore:
+      - "<#AFC0CB>Effet : +25% XP Déblayeur"
+      - "<#AFC0CB>Durée : 1h"
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#6E8CA0'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          apply_boost:
+            command: 'aja boosters add {player} PROGRESS 25 1 deblayeur'
+            as_console: true
+        play_sound:
+          name: entity.player.levelup
+
+  boost_gourmet:
+    display_name: "<#D98A2B>Appétit Ardent"
+    lore:
+      - "<#EABF8A>Effet : +25% XP Gourmet"
+      - "<#EABF8A>Durée : 1h"
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#D98A2B'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          apply_boost:
+            command: 'aja boosters add {player} PROGRESS 25 1 gourmet'
+            as_console: true
+        play_sound:
+          name: entity.player.levelup
+
+  # ── Bouteilles d'XP — usage unique, 12 paliers exponentiels (×1,427) ──────
+  # Matériau POTION reskin (comme les boosts de métier ci-dessus), PAS
+  # EXPERIENCE_BOTTLE : une vraie bouteille d'XP se jette au clic droit
+  # (comportement vanilla non désactivable en config ItemsAdder), et le jet
+  # empêchait execute_commands de se déclencher côté client sur cette install
+  # — testé avec l'event 'item_throw', sans succès. La potion réutilise le
+  # pattern 'drink' déjà éprouvé en prod (18 items ci-dessus) : événement
+  # fiable, et le clic droit maintenu consomme l'item nativement.
+  # Dégradé de couleur pâle → or (#FFD94D) appliqué à la fois sur la teinte
+  # de la potion (specific_properties.potion.color) et sur le nom/lore.
+
+  bouteille_xp_01:
+    display_name: "<#F5EEDD>Bouteille d'XP I"
+    lore:
+      - "<#FAF7EE>Libère 400 points d'expérience"
+      - "<#FAF7EE>au clic droit."
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#F5EEDD'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          give_xp:
+            command: 'xp give {player} 400'
+            as_console: true
+        play_sound:
+          name: entity.experience_orb.pickup
+
+  bouteille_xp_02:
+    display_name: "<#F6ECD0>Bouteille d'XP II"
+    lore:
+      - "<#FBF6E8>Libère 570 points d'expérience"
+      - "<#FBF6E8>au clic droit."
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#F6ECD0'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          give_xp:
+            command: 'xp give {player} 570'
+            as_console: true
+        play_sound:
+          name: entity.experience_orb.pickup
+
+  bouteille_xp_03:
+    display_name: "<#F7EAC3>Bouteille d'XP III"
+    lore:
+      - "<#FBF5E1>Libère 815 points d'expérience"
+      - "<#FBF5E1>au clic droit."
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#F7EAC3'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          give_xp:
+            command: 'xp give {player} 815'
+            as_console: true
+        play_sound:
+          name: entity.experience_orb.pickup
+
+  bouteille_xp_04:
+    display_name: "<#F8E8B6>Bouteille d'XP IV"
+    lore:
+      - "<#FCF4DB>Libère 1160 points d'expérience"
+      - "<#FCF4DB>au clic droit."
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#F8E8B6'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          give_xp:
+            command: 'xp give {player} 1160'
+            as_console: true
+        play_sound:
+          name: entity.experience_orb.pickup
+
+  bouteille_xp_05:
+    display_name: "<#F9E6A9>Bouteille d'XP V"
+    lore:
+      - "<#FCF3D4>Libère 1660 points d'expérience"
+      - "<#FCF3D4>au clic droit."
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#F9E6A9'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          give_xp:
+            command: 'xp give {player} 1660'
+            as_console: true
+        play_sound:
+          name: entity.experience_orb.pickup
+
+  bouteille_xp_06:
+    display_name: "<#FAE49C>Bouteille d'XP VI"
+    lore:
+      - "<#FDF2CE>Libère 2370 points d'expérience"
+      - "<#FDF2CE>au clic droit."
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#FAE49C'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          give_xp:
+            command: 'xp give {player} 2370'
+            as_console: true
+        play_sound:
+          name: entity.experience_orb.pickup
+
+  bouteille_xp_07:
+    display_name: "<#FBE38F>Bouteille d'XP VII"
+    lore:
+      - "<#FDF1C7>Libère 3380 points d'expérience"
+      - "<#FDF1C7>au clic droit."
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#FBE38F'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          give_xp:
+            command: 'xp give {player} 3380'
+            as_console: true
+        play_sound:
+          name: entity.experience_orb.pickup
+
+  bouteille_xp_08:
+    display_name: "<#FBE181>Bouteille d'XP VIII"
+    lore:
+      - "<#FDF0C0>Libère 4820 points d'expérience"
+      - "<#FDF0C0>au clic droit."
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#FBE181'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          give_xp:
+            command: 'xp give {player} 4820'
+            as_console: true
+        play_sound:
+          name: entity.experience_orb.pickup
+
+  bouteille_xp_09:
+    display_name: "<#FCDF74>Bouteille d'XP IX"
+    lore:
+      - "<#FEEFBA>Libère 6880 points d'expérience"
+      - "<#FEEFBA>au clic droit."
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#FCDF74'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          give_xp:
+            command: 'xp give {player} 6880'
+            as_console: true
+        play_sound:
+          name: entity.experience_orb.pickup
+
+  bouteille_xp_10:
+    display_name: "<#FDDD67>Bouteille d'XP X"
+    lore:
+      - "<#FEEEB3>Libère 9810 points d'expérience"
+      - "<#FEEEB3>au clic droit."
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#FDDD67'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          give_xp:
+            command: 'xp give {player} 9810'
+            as_console: true
+        play_sound:
+          name: entity.experience_orb.pickup
+
+  bouteille_xp_11:
+    display_name: "<#FEDB5A>Bouteille d'XP XI"
+    lore:
+      - "<#FFEDAD>Libère 14000 points d'expérience"
+      - "<#FFEDAD>au clic droit."
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#FEDB5A'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          give_xp:
+            command: 'xp give {player} 14000'
+            as_console: true
+        play_sound:
+          name: entity.experience_orb.pickup
+
+  bouteille_xp_12:
+    display_name: "<#FFD94D>Bouteille d'XP XII"
+    lore:
+      - "<#FFECA6>Libère 20000 points d'expérience"
+      - "<#FFECA6>au clic droit."
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/potion
+    specific_properties:
+      potion:
+        type: WATER
+        color: '#FFD94D'
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          give_xp:
+            command: 'xp give {player} 20000'
+            as_console: true
+        play_sound:
+          name: entity.experience_orb.pickup
+
+  # ── Outils — récompenses de caisses de vote ────────────────────────────────
+  # Pas d'enchantement baké ici volontairement — appliqués à la main
+  # (enchantement vanilla + livre AE Hâte Express) par-dessus cet item.
+  # Couleur de nom alignée sur la couleur de caisse ExcellentCrates du palier
+  # (blanc = Caisse Ordinaire, vert = Caisse Tendance). Ligne "Rareté :" =
+  # glyphe brut influtags en unicode direct (%img_simple%/%img_unique% ne se
+  # parsait pas dans le lore natif ItemsAdder — cf. storage/
+  # font_images_unicode_cache.yml pour les autres rarétés). Couleur du glyphe
+  # posée avec deux tags MiniMessage bien scopés (<gray>...</gray><white>glyphe
+  # </white>), PAS <reset> : un <reset> se traduit en §r legacy, et dès que
+  # AdvancedEnchantments touche le lore de l'objet (getLore()/setLore(),
+  # déclenché par /ae enchant ou l'organisation automatique des enchants sur
+  # l'item, organizeEnchants() dans AEAPI.class), ce §r survit au
+  # round-trip mais le §f qui le suivait saute — le glyphe hérite alors de la
+  # couleur par défaut du lore vanilla (violet foncé &5), pas de la couleur
+  # voulue. Repéré en jeu : la ligne Rareté restait blanche tant qu'aucun
+  # enchant AE n'était appliqué, et virait &5 uniquement après application.
+  # Durabilité affichée = vraie valeur vanilla du matériau (1561 = outils
+  # diamant, 64 = canne à pêche), pas une valeur custom réduite comme la
+  # gamme ordinaire (150 / 50).
+  pioche_suffrage:
+    display_name: "<white><b>Pioche ordinaire</b></white>"
+    lore:
+      - ""
+      - "<gray><italic>Forgée à la chaîne pour les nouveaux venus,"
+      - "<gray><italic>elle n'a rien d'exceptionnel — sauf qu'elle mine."
+      - ""
+      - "<gray>Rareté : </gray><#aaaaaa>✦ Commun</#aaaaaa>"
+      - "<#FF5C5C>Irréparable"
+      - "<dark_gray>150 durabilités"
+    resource:
+      material: IRON_PICKAXE
+      generate: false
+      model_path: minecraft:item/iron_pickaxe
+    durability:
+      max_durability: 150
+      unbreakable: false
+    components:
+      repairable: []
+
+  epee_ordinaire:
+    display_name: "<white><b>Épée ordinaire</b></white>"
+    lore:
+      - ""
+      - "<gray><italic>Une lame simple, sans prestige, mais"
+      - "<gray><italic>assez tranchante pour un premier duel."
+      - ""
+      - "<gray>Rareté : </gray><#aaaaaa>✦ Commun</#aaaaaa>"
+      - "<#FF5C5C>Irréparable"
+      - "<dark_gray>150 durabilités"
+    resource:
+      material: IRON_SWORD
+      generate: false
+      model_path: minecraft:item/iron_sword
+    durability:
+      max_durability: 150
+      unbreakable: false
+    components:
+      repairable: []
+
+  pelle_ordinaire:
+    display_name: "<white><b>Pelle ordinaire</b></white>"
+    lore:
+      - ""
+      - "<gray><italic>Le genre d'outil qu'on oublie vite,"
+      - "<gray><italic>jusqu'au jour où on en a besoin."
+      - ""
+      - "<gray>Rareté : </gray><#aaaaaa>✦ Commun</#aaaaaa>"
+      - "<#FF5C5C>Irréparable"
+      - "<dark_gray>150 durabilités"
+    resource:
+      material: IRON_SHOVEL
+      generate: false
+      model_path: minecraft:item/iron_shovel
+    durability:
+      max_durability: 150
+      unbreakable: false
+    components:
+      repairable: []
+
+  hache_ordinaire:
+    display_name: "<white><b>Hache ordinaire</b></white>"
+    lore:
+      - ""
+      - "<gray><italic>Elle a coupé plus de bois qu'elle"
+      - "<gray><italic>n'a connu de propriétaires."
+      - ""
+      - "<gray>Rareté : </gray><#aaaaaa>✦ Commun</#aaaaaa>"
+      - "<#FF5C5C>Irréparable"
+      - "<dark_gray>150 durabilités"
+    resource:
+      material: IRON_AXE
+      generate: false
+      model_path: minecraft:item/iron_axe
+    durability:
+      max_durability: 150
+      unbreakable: false
+    components:
+      repairable: []
+
+  houe_ordinaire:
+    display_name: "<white><b>Houe ordinaire</b></white>"
+    lore:
+      - ""
+      - "<gray><italic>Retournée mille fois, elle sent encore"
+      - "<gray><italic>la terre fraîche des premiers champs."
+      - ""
+      - "<gray>Rareté : </gray><#aaaaaa>✦ Commun</#aaaaaa>"
+      - "<#FF5C5C>Irréparable"
+      - "<dark_gray>150 durabilités"
+    resource:
+      material: IRON_HOE
+      generate: false
+      model_path: minecraft:item/iron_hoe
+    durability:
+      max_durability: 150
+      unbreakable: false
+    components:
+      repairable: []
+
+  canne_peche_ordinaire:
+    display_name: "<white><b>Canne à pêche ordinaire</b></white>"
+    lore:
+      - ""
+      - "<gray><italic>Une ligne simple, un bout de bois —"
+      - "<gray><italic>largement suffisant pour l'essentiel."
+      - ""
+      - "<gray>Rareté : </gray><#aaaaaa>✦ Commun</#aaaaaa>"
+      - "<#FF5C5C>Irréparable"
+      - "<dark_gray>50 durabilités"
+      - ""
+    resource:
+      material: FISHING_ROD
+      generate: false
+      model_path: minecraft:item/fishing_rod
+    durability:
+      max_durability: 50
+      unbreakable: false
+    components:
+      repairable: []
+
+  pioche_tendance:
+    display_name: "<green><b>Pioche tendance</b></green>"
+    lore:
+      - ""
+      - "<gray><italic>Taillée dans un éclat de diamant, elle"
+      - "<gray><italic>attire les regards autant que les minerais."
+      - ""
+      - "<gray>Rareté : </gray><#37c44a>✦ Unique</#37c44a>"
+      - "<#FF5C5C>Irréparable"
+      - "<dark_gray>1561 durabilités"
+    resource:
+      material: DIAMOND_PICKAXE
+      generate: false
+      model_path: minecraft:item/diamond_pickaxe
+    durability:
+      max_durability: 1561
+      unbreakable: false
+    components:
+      repairable: []
+
+  epee_tendance:
+    display_name: "<green><b>Épée tendance</b></green>"
+    lore:
+      - ""
+      - "<gray><italic>On raconte qu'elle brille un peu plus"
+      - "<gray><italic>fort entre les mains de ceux qui montent."
+      - ""
+      - "<gray>Rareté : </gray><#37c44a>✦ Unique</#37c44a>"
+      - "<#FF5C5C>Irréparable"
+      - "<dark_gray>1561 durabilités"
+    resource:
+      material: DIAMOND_SWORD
+      generate: false
+      model_path: minecraft:item/diamond_sword
+    durability:
+      max_durability: 1561
+      unbreakable: false
+    components:
+      repairable: []
+
+  pelle_tendance:
+    display_name: "<green><b>Pelle tendance</b></green>"
+    lore:
+      - ""
+      - "<gray><italic>Plus légère, plus vive — creuser n'a"
+      - "<gray><italic>jamais semblé aussi... tendance."
+      - ""
+      - "<gray>Rareté : </gray><#37c44a>✦ Unique</#37c44a>"
+      - "<#FF5C5C>Irréparable"
+      - "<dark_gray>1561 durabilités"
+    resource:
+      material: DIAMOND_SHOVEL
+      generate: false
+      model_path: minecraft:item/diamond_shovel
+    durability:
+      max_durability: 1561
+      unbreakable: false
+    components:
+      repairable: []
+
+  hache_tendance:
+    display_name: "<green><b>Hache tendance</b></green>"
+    lore:
+      - ""
+      - "<gray><italic>Son tranchant impeccable trahit"
+      - "<gray><italic>une fabrication au-dessus du commun."
+      - ""
+      - "<gray>Rareté : </gray><#37c44a>✦ Unique</#37c44a>"
+      - "<#FF5C5C>Irréparable"
+      - "<dark_gray>1561 durabilités"
+    resource:
+      material: DIAMOND_AXE
+      generate: false
+      model_path: minecraft:item/diamond_axe
+    durability:
+      max_durability: 1561
+      unbreakable: false
+    components:
+      repairable: []
+
+  houe_tendance:
+    display_name: "<green><b>Houe tendance</b></green>"
+    lore:
+      - ""
+      - "<gray><italic>Les récoltes qu'elle prépare ont, dit-on,"
+      - "<gray><italic>un goût légèrement meilleur."
+      - ""
+      - "<gray>Rareté : </gray><#37c44a>✦ Unique</#37c44a>"
+      - "<#FF5C5C>Irréparable"
+      - "<dark_gray>1561 durabilités"
+    resource:
+      material: DIAMOND_HOE
+      generate: false
+      model_path: minecraft:item/diamond_hoe
+    durability:
+      max_durability: 1561
+      unbreakable: false
+    components:
+      repairable: []
+
+  canne_peche_tendance:
+    display_name: "<green><b>Canne à pêche tendance</b></green>"
+    lore:
+      - ""
+      - "<gray><italic>Prisée par les pêcheurs en vue, elle ne"
+      - "<gray><italic>passe jamais inaperçue au bord de l'eau."
+      - ""
+      - "<gray>Rareté : </gray><#37c44a>✦ Unique</#37c44a>"
+      - "<#FF5C5C>Irréparable"
+      - "<dark_gray>64 durabilités"
+    resource:
+      material: FISHING_ROD
+      generate: false
+      model_path: minecraft:item/fishing_rod
+    durability:
+      max_durability: 64
+      unbreakable: false
+    components:
+      repairable: []
+
+  # ── Armures — ordinaire (fer, irréparable, durabilité custom 150) ─────────
+  casque_ordinaire:
+    display_name: "<white><b>Casque ordinaire</b></white>"
+    lore:
+      - ""
+      - "<gray><italic>Un casque simple,"
+      - "<gray><italic>juste assez solide pour rassurer."
+      - ""
+      - "<gray>Rareté : </gray><#aaaaaa>✦ Commun</#aaaaaa>"
+      - "<#FF5C5C>Irréparable"
+      - "<dark_gray>165 durabilités"
+    resource:
+      material: IRON_HELMET
+      generate: false
+      model_path: minecraft:item/iron_helmet
+    durability:
+      max_durability: 165
+      unbreakable: false
+    components:
+      repairable: []
+
+  plastron_ordinaire:
+    display_name: "<white><b>Plastron ordinaire</b></white>"
+    lore:
+      - ""
+      - "<gray><italic>Il a encaissé"
+      - "<gray><italic>plus de coups qu'il n'aurait dû."
+      - ""
+      - "<gray>Rareté : </gray><#aaaaaa>✦ Commun</#aaaaaa>"
+      - "<#FF5C5C>Irréparable"
+      - "<dark_gray>240 durabilités"
+    resource:
+      material: IRON_CHESTPLATE
+      generate: false
+      model_path: minecraft:item/iron_chestplate
+    durability:
+      max_durability: 240
+      unbreakable: false
+    components:
+      repairable: []
+
+  jambieres_ordinaire:
+    display_name: "<white><b>Jambières ordinaire</b></white>"
+    lore:
+      - ""
+      - "<gray><italic>Rien d'élégant,"
+      - "<gray><italic>mais elles tiennent la route."
+      - ""
+      - "<gray>Rareté : </gray><#aaaaaa>✦ Commun</#aaaaaa>"
+      - "<#FF5C5C>Irréparable"
+      - "<dark_gray>225 durabilités"
+    resource:
+      material: IRON_LEGGINGS
+      generate: false
+      model_path: minecraft:item/iron_leggings
+    durability:
+      max_durability: 225
+      unbreakable: false
+    components:
+      repairable: []
+
+  bottes_ordinaire:
+    display_name: "<white><b>Bottes ordinaire</b></white>"
+    lore:
+      - ""
+      - "<gray><italic>Elles ont fait leurs preuves"
+      - "<gray><italic>sur bien des chemins."
+      - ""
+      - "<gray>Rareté : </gray><#aaaaaa>✦ Commun</#aaaaaa>"
+      - "<#FF5C5C>Irréparable"
+      - "<dark_gray>195 durabilités"
+    resource:
+      material: IRON_BOOTS
+      generate: false
+      model_path: minecraft:item/iron_boots
+    durability:
+      max_durability: 195
+      unbreakable: false
+    components:
+      repairable: []
+
+  # ── Armures — tendance (diamant, irréparable, durabilité vanilla réelle) ──
+  casque_tendance:
+    display_name: "<green><b>Casque tendance</b></green>"
+    lore:
+      - ""
+      - "<gray><italic>Poli pour briller,"
+      - "<gray><italic>pas seulement pour protéger."
+      - ""
+      - "<gray>Rareté : </gray><#37c44a>✦ Unique</#37c44a>"
+      - "<#FF5C5C>Irréparable"
+      - "<dark_gray>363 durabilités"
+    resource:
+      material: DIAMOND_HELMET
+      generate: false
+      model_path: minecraft:item/diamond_helmet
+    durability:
+      max_durability: 363
+      unbreakable: false
+    components:
+      repairable: []
+
+  plastron_tendance:
+    display_name: "<green><b>Plastron tendance</b></green>"
+    lore:
+      - ""
+      - "<gray><italic>Porté par ceux"
+      - "<gray><italic>qu'on remarque de loin."
+      - ""
+      - "<gray>Rareté : </gray><#37c44a>✦ Unique</#37c44a>"
+      - "<#FF5C5C>Irréparable"
+      - "<dark_gray>528 durabilités"
+    resource:
+      material: DIAMOND_CHESTPLATE
+      generate: false
+      model_path: minecraft:item/diamond_chestplate
+    durability:
+      max_durability: 528
+      unbreakable: false
+    components:
+      repairable: []
+
+  jambieres_tendance:
+    display_name: "<green><b>Jambières tendance</b></green>"
+    lore:
+      - ""
+      - "<gray><italic>Le genre d'équipement"
+      - "<gray><italic>qu'on montre volontiers."
+      - ""
+      - "<gray>Rareté : </gray><#37c44a>✦ Unique</#37c44a>"
+      - "<#FF5C5C>Irréparable"
+      - "<dark_gray>495 durabilités"
+    resource:
+      material: DIAMOND_LEGGINGS
+      generate: false
+      model_path: minecraft:item/diamond_leggings
+    durability:
+      max_durability: 495
+      unbreakable: false
+    components:
+      repairable: []
+
+  bottes_tendance:
+    display_name: "<green><b>Bottes tendance</b></green>"
+    lore:
+      - ""
+      - "<gray><italic>Elles laissent une trace"
+      - "<gray><italic>qu'on a envie de suivre."
+      - ""
+      - "<gray>Rareté : </gray><#37c44a>✦ Unique</#37c44a>"
+      - "<#FF5C5C>Irréparable"
+      - "<dark_gray>429 durabilités"
+    resource:
+      material: DIAMOND_BOOTS
+      generate: false
+      model_path: minecraft:item/diamond_boots
+    durability:
+      max_durability: 429
+      unbreakable: false
+    components:
+      repairable: []
+
+  # ── Outils (diamant) + armure (netherite) — virale ──────────────
+  # Contrairement à ordinaire/tendance : PAS irréparable, PAS de durabilité
+  # custom. Outils virale = vrais outils diamant vanilla, armure = netherite (réparables
+  # normalement à l'enclume) — seuls le nom/lore/tag de rareté changent.
+  pioche_virale:
+    display_name: "<aqua><b>Pioche virale</b></aqua>"
+    lore:
+      - ""
+      - "<gray><italic>Elle a été filmée en train de miner un filon complet —"
+      - "<gray><italic>depuis, tout le monde en veut une."
+      - ""
+      - "<gray>Rareté : </gray><white></white>"
+    resource:
+      material: DIAMOND_PICKAXE
+      generate: false
+      model_path: minecraft:item/netherite_pickaxe
+
+  epee_virale:
+    display_name: "<aqua><b>Épée virale</b></aqua>"
+    lore:
+      - ""
+      - "<gray><italic>Une lame qui a fait le tour des réseaux"
+      - "<gray><italic>avant même son premier coup."
+      - ""
+      - "<gray>Rareté : </gray><white></white>"
+    resource:
+      material: DIAMOND_SWORD
+      generate: false
+      model_path: minecraft:item/netherite_sword
+
+  pelle_virale:
+    display_name: "<aqua><b>Pelle virale</b></aqua>"
+    lore:
+      - ""
+      - "<gray><italic>Creuser n'a jamais généré"
+      - "<gray><italic>autant de vues."
+      - ""
+      - "<gray>Rareté : </gray><white></white>"
+    resource:
+      material: DIAMOND_SHOVEL
+      generate: false
+      model_path: minecraft:item/netherite_shovel
+
+  hache_virale:
+    display_name: "<aqua><b>Hache virale</b></aqua>"
+    lore:
+      - ""
+      - "<gray><italic>Chaque coup de hache est devenu"
+      - "<gray><italic>un clip qu'on partage."
+      - ""
+      - "<gray>Rareté : </gray><white></white>"
+    resource:
+      material: DIAMOND_AXE
+      generate: false
+      model_path: minecraft:item/netherite_axe
+
+  houe_virale:
+    display_name: "<aqua><b>Houe virale</b></aqua>"
+    lore:
+      - ""
+      - "<gray><italic>Une houe qu'on montre"
+      - "<gray><italic>plus qu'on ne l'utilise."
+      - ""
+      - "<gray>Rareté : </gray><white></white>"
+    resource:
+      material: DIAMOND_HOE
+      generate: false
+      model_path: minecraft:item/netherite_hoe
+
+  canne_peche_virale:
+    display_name: "<aqua><b>Canne à pêche virale</b></aqua>"
+    lore:
+      - ""
+      - "<gray><italic>La prise qu'elle a ramenée a explosé"
+      - "<gray><italic>les compteurs de vues."
+      - ""
+      - "<gray>Rareté : </gray><white></white>"
+    resource:
+      material: FISHING_ROD
+      generate: false
+      model_path: minecraft:item/fishing_rod
+
+  casque_virale:
+    display_name: "<aqua><b>Casque virale</b></aqua>"
+    lore:
+      - ""
+      - "<gray><italic>Une seule apparition, et tout le monde"
+      - "<gray><italic>voulait le même."
+      - ""
+      - "<gray>Rareté : </gray><white></white>"
+    resource:
+      material: NETHERITE_HELMET
+      generate: false
+      model_path: minecraft:item/netherite_helmet
+
+  plastron_virale:
+    display_name: "<aqua><b>Plastron virale</b></aqua>"
+    lore:
+      - ""
+      - "<gray><italic>Résistant au feu, aux coups,"
+      - "<gray><italic>et à l'oubli."
+      - ""
+      - "<gray>Rareté : </gray><white></white>"
+    resource:
+      material: NETHERITE_CHESTPLATE
+      generate: false
+      model_path: minecraft:item/netherite_chestplate
+
+  jambieres_virale:
+    display_name: "<aqua><b>Jambières virale</b></aqua>"
+    lore:
+      - ""
+      - "<gray><italic>Elles ont survécu"
+      - "<gray><italic>à plus de chutes qu'on ne le pense."
+      - ""
+      - "<gray>Rareté : </gray><white></white>"
+    resource:
+      material: NETHERITE_LEGGINGS
+      generate: false
+      model_path: minecraft:item/netherite_leggings
+
+  bottes_virale:
+    display_name: "<aqua><b>Bottes virale</b></aqua>"
+    lore:
+      - ""
+      - "<gray><italic>Chaque pas laisse une empreinte"
+      - "<gray><italic>qu'on repartage."
+      - ""
+      - "<gray>Rareté : </gray><white></white>"
+    resource:
+      material: NETHERITE_BOOTS
+      generate: false
+      model_path: minecraft:item/netherite_boots
+
+  # ── Outils + armure — phénomène (netherite, jaune/légendaire) ──────────────
+  # Même matériau que virale (netherite = tier vanilla le plus haut, il n'y a
+  # rien au-dessus) — la différence est uniquement couleur/tag de rareté/lore.
+  # Pas irréparable non plus, comme virale.
+  pioche_phenomene:
+    display_name: "<#f0a800><b>Pioche phénomène</b></#f0a800>"
+    lore:
+      - ""
+      - "<gray><italic>On raconte qu'un seul filon"
+      - "<gray><italic>suffit à changer une vie."
+      - ""
+      - "<gray>Rareté : </gray><white></white>"
+    resource:
+      material: NETHERITE_PICKAXE
+      generate: false
+      model_path: minecraft:item/netherite_pickaxe
+
+  epee_phenomene:
+    display_name: "<#f0a800><b>Épée phénomène</b></#f0a800>"
+    lore:
+      - ""
+      - "<gray><italic>Une arme dont on parle encore"
+      - "<gray><italic>longtemps après le duel."
+      - ""
+      - "<gray>Rareté : </gray><white></white>"
+    resource:
+      material: NETHERITE_SWORD
+      generate: false
+      model_path: minecraft:item/netherite_sword
+
+  pelle_phenomene:
+    display_name: "<#f0a800><b>Pelle phénomène</b></#f0a800>"
+    lore:
+      - ""
+      - "<gray><italic>Elle ne creuse pas la terre,"
+      - "<gray><italic>elle creuse l'histoire."
+      - ""
+      - "<gray>Rareté : </gray><white></white>"
+    resource:
+      material: NETHERITE_SHOVEL
+      generate: false
+      model_path: minecraft:item/netherite_shovel
+
+  hache_phenomene:
+    display_name: "<#f0a800><b>Hache phénomène</b></#f0a800>"
+    lore:
+      - ""
+      - "<gray><italic>Un seul coup,"
+      - "<gray><italic>et la légende commence."
+      - ""
+      - "<gray>Rareté : </gray><white></white>"
+    resource:
+      material: NETHERITE_AXE
+      generate: false
+      model_path: minecraft:item/netherite_axe
+
+  houe_phenomene:
+    display_name: "<#f0a800><b>Houe phénomène</b></#f0a800>"
+    lore:
+      - ""
+      - "<gray><italic>Les récoltes qu'elle prépare"
+      - "<gray><italic>nourrissent des légendes."
+      - ""
+      - "<gray>Rareté : </gray><white></white>"
+    resource:
+      material: NETHERITE_HOE
+      generate: false
+      model_path: minecraft:item/netherite_hoe
+
+  canne_peche_phenomene:
+    display_name: "<#f0a800><b>Canne à pêche phénomène</b></#f0a800>"
+    lore:
+      - ""
+      - "<gray><italic>Une prise avec elle, et ton nom"
+      - "<gray><italic>entre dans la légende du serveur."
+      - ""
+      - "<gray>Rareté : </gray><white></white>"
+    resource:
+      material: FISHING_ROD
+      generate: false
+      model_path: minecraft:item/fishing_rod
+
+  casque_phenomene:
+    display_name: "<#f0a800><b>Casque phénomène</b></#f0a800>"
+    lore:
+      - ""
+      - "<gray><italic>Porté par ceux dont on se souvient"
+      - "<gray><italic>encore des années après."
+      - ""
+      - "<gray>Rareté : </gray><white></white>"
+    resource:
+      material: NETHERITE_HELMET
+      generate: false
+      model_path: minecraft:item/netherite_helmet
+
+  plastron_phenomene:
+    display_name: "<#f0a800><b>Plastron phénomène</b></#f0a800>"
+    lore:
+      - ""
+      - "<gray><italic>Forgé dans les flammes"
+      - "<gray><italic>d'une réputation qui ne s'éteint pas."
+      - ""
+      - "<gray>Rareté : </gray><white></white>"
+    resource:
+      material: NETHERITE_CHESTPLATE
+      generate: false
+      model_path: minecraft:item/netherite_chestplate
+
+  jambieres_phenomene:
+    display_name: "<#f0a800><b>Jambières phénomène</b></#f0a800>"
+    lore:
+      - ""
+      - "<gray><italic>Elles n'ont jamais connu"
+      - "<gray><italic>la défaite."
+      - ""
+      - "<gray>Rareté : </gray><white></white>"
+    resource:
+      material: NETHERITE_LEGGINGS
+      generate: false
+      model_path: minecraft:item/netherite_leggings
+
+  bottes_phenomene:
+    display_name: "<#f0a800><b>Bottes phénomène</b></#f0a800>"
+    lore:
+      - ""
+      - "<gray><italic>Là où elles passent,"
+      - "<gray><italic>une légende commence."
+      - ""
+      - "<gray>Rareté : </gray><white></white>"
+    resource:
+      material: NETHERITE_BOOTS
+      generate: false
+      model_path: minecraft:item/netherite_boots
+
+  # ── Plumes de temps de vol — récompenses PowerFly ───────────────────────────
+  # Solde PowerFly sans plafond (addFlyTime est purement additif, cf. échange avec
+  # l'utilisateur) : ces plumes peuvent être distribuées sans limite via succès/votes/quêtes.
+  # Tag de rareté = glyphe brut influtags en unicode direct ( simple/commun,
+  #  unique), PAS la convention "✦ texte" utilisée sur les autres items de ce fichier -
+  # demande explicite pour ces deux items précis, ne pas généraliser sans qu'on le redemande.
+  # Mécanique : 1ère tentative avec le composant 1.21 "consumable"/event "consume" -
+  # ne fonctionnait pas en jeu (item non consommable). Revenu sur l'event "drink", seul
+  # mécanisme de consommation PROUVÉ sur ce serveur (utilisé par les ~30 potions/bouteilles
+  # de récompense ci-dessus) : material: POTION garantit le comportement (clic droit,
+  # consommation automatique, commande déclenchée) ; model_path pousse le rendu visuel vers
+  # la plume vanilla - si cet override visuel ne prenait pas, l'item resterait fonctionnel
+  # mais rendrait comme une fiole de potion (à vérifier en jeu après reload du pack).
+  plume_vol_commune:
+    display_name: "<white><b>Plume de Vol — 10 minutes</b></white>"
+    lore:
+      - ""
+      - "<gray><italic>Une plume banale, mais son souffle"
+      - "<gray><italic>suffit pour quelques instants dans les airs."
+      - ""
+      - "<gray>Rareté : </gray><white></white>"
+      - "<#B376E5>+10 minutes de temps de vol"
+      - ""
+      - "<gray><italic>Utilisable uniquement à Valdor —"
+      - "<gray><italic>fais /fly pour activer tes ailes."
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/feather
+    specific_properties:
+      potion:
+        type: WATER
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          add_flytime:
+            command: 'powerfly addflytime {player} 600'
+            as_console: true
+        play_sound:
+          name: entity.player.levelup
+
+  plume_vol_unique:
+    display_name: "<#B376E5><b>Plume de Vol — 30 minutes</b></#B376E5>"
+    lore:
+      - ""
+      - "<gray><italic>Ses reflets ne trompent pas :"
+      - "<gray><italic>elle porte plus loin, plus longtemps."
+      - ""
+      - "<gray>Rareté : </gray><white></white>"
+      - "<#B376E5>+30 minutes de temps de vol"
+      - ""
+      - "<gray><italic>Utilisable uniquement à Valdor —"
+      - "<gray><italic>fais /fly pour activer tes ailes."
+    resource:
+      material: POTION
+      generate: false
+      model_path: minecraft:item/feather
+    specific_properties:
+      potion:
+        type: WATER
+    item_flags:
+      - HIDE_POTION_EFFECTS
+    events:
+      drink:
+        execute_commands:
+          add_flytime:
+            command: 'powerfly addflytime {player} 1800'
+            as_console: true
+        play_sound:
+          name: entity.player.levelup
+
+  # ── Sceau VIP temporaire ─────────────────────────────────────────────────────
+  # Accorde le groupe LuckPerms "vip" en temporaire via /lp addtemp (natif LuckPerms, pas de
+  # code maison). "accumulate" : un joueur qui en consomme plusieurs cumule la durée au lieu de
+  # la remplacer - cohérent avec le comportement additif des plumes de vol ci-dessus.
+  # essentials.fly (hérité du groupe vip) ne fait plus rien depuis PowerFly (voir échange sur
+  # la régression VIP/fly) - le VIP garde ses autres avantages (chat colors, HeadDB, bypass tpa).
+  # Event "events.right_click" (1ère/2ᵉ tentative) n'existe pas - clé incorrecte,
+  # confirmée par la doc officielle ItemsAdder (wiki.itemsadder.com/plugin-usage/adding-
+  # content/item-properties/events) : la bonne structure est "events.interact.right".
+  # Consommé à l'usage (1 par activation) via l'action "decrement_amount: {amount: 1}" -
+  # il n'y a pas de retrait automatique sur ce type d'event (contrairement à "drink" sur
+  # les potions, qui consomme nativement), donc ce serait resté en main indéfiniment sans
+  # cette action, réutilisable à volonté pour du VIP gratuit à l'infini.
+  sceau_vip_24h:
+    display_name: "<white></white> <#FFD94D><b>Sceau VIP — 24 heures</b></#FFD94D>"
+    lore:
+      - ""
+      - "<gray><italic>Un sceau scintillant, réservé"
+      - "<gray><italic>à ceux qu'on remarque."
+      - ""
+      - "<#B376E5>Accorde le statut VIP"
+      - "<#B376E5>pendant 24 heures"
+    resource:
+      material: NETHER_STAR
+      generate: false
+      model_path: minecraft:item/nether_star
+    events:
+      interact:
+        right:
+          execute_commands:
+            grant_vip:
+              command: 'lp user {player} parent addtemp vip 1d accumulate'
+              as_console: true
+          decrement_amount:
+            amount: 1
+          play_sound:
+            name: entity.player.levelup
+
+# ── Réparation à l'enclume — virale (outils : diamant) + phénomène (netherite) ──
+# ItemsAdder bloque la réparation vanilla de ses items custom, même quand le
+# matériau de base est de la netherite : sans ces recettes, les outils/armures
+# virale et phénomène sont irréparables à l'enclume. Ordinaire/tendance restent
+# volontairement irréparables (repairable: [] + tag "Irréparable").
+recipes:
+  anvil_repair:
+    pioche_virale:
+      enabled: true
+      item: influrewards:pioche_virale
+      ingredient: DIAMOND
+    pioche_phenomene:
+      enabled: true
+      item: influrewards:pioche_phenomene
+      ingredient: NETHERITE_INGOT
+    epee_virale:
+      enabled: true
+      item: influrewards:epee_virale
+      ingredient: DIAMOND
+    epee_phenomene:
+      enabled: true
+      item: influrewards:epee_phenomene
+      ingredient: NETHERITE_INGOT
+    pelle_virale:
+      enabled: true
+      item: influrewards:pelle_virale
+      ingredient: DIAMOND
+    pelle_phenomene:
+      enabled: true
+      item: influrewards:pelle_phenomene
+      ingredient: NETHERITE_INGOT
+    hache_virale:
+      enabled: true
+      item: influrewards:hache_virale
+      ingredient: DIAMOND
+    hache_phenomene:
+      enabled: true
+      item: influrewards:hache_phenomene
+      ingredient: NETHERITE_INGOT
+    houe_virale:
+      enabled: true
+      item: influrewards:houe_virale
+      ingredient: DIAMOND
+    houe_phenomene:
+      enabled: true
+      item: influrewards:houe_phenomene
+      ingredient: NETHERITE_INGOT
+    casque_virale:
+      enabled: true
+      item: influrewards:casque_virale
+      ingredient: NETHERITE_INGOT
+    casque_phenomene:
+      enabled: true
+      item: influrewards:casque_phenomene
+      ingredient: NETHERITE_INGOT
+    plastron_virale:
+      enabled: true
+      item: influrewards:plastron_virale
+      ingredient: NETHERITE_INGOT
+    plastron_phenomene:
+      enabled: true
+      item: influrewards:plastron_phenomene
+      ingredient: NETHERITE_INGOT
+    jambieres_virale:
+      enabled: true
+      item: influrewards:jambieres_virale
+      ingredient: NETHERITE_INGOT
+    jambieres_phenomene:
+      enabled: true
+      item: influrewards:jambieres_phenomene
+      ingredient: NETHERITE_INGOT
+    bottes_virale:
+      enabled: true
+      item: influrewards:bottes_virale
+      ingredient: NETHERITE_INGOT
+    bottes_phenomene:
+      enabled: true
+      item: influrewards:bottes_phenomene
+      ingredient: NETHERITE_INGOT

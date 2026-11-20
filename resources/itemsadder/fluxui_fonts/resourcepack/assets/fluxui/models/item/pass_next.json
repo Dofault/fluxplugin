@@ -1,0 +1,1 @@
+{"textures": {"t": "fluxui:item/pass_next", "particle": "fluxui:item/pass_next"}, "gui_light": "front", "elements": [{"from": [0, 0, 8], "to": [16, 16, 8], "faces": {"south": {"uv": [0, 0, 16, 16], "texture": "#t"}, "north": {"uv": [0, 0, 16, 16], "texture": "#t"}}}], "display": {"gui": {"rotation": [0, 0, 0], "translation": [0, 9, 0], "scale": [1, 2.125, 1]}}}

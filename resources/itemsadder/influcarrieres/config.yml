@@ -1,0 +1,102 @@
+
+info:
+  namespace: influcarrieres
+
+items:
+  # ── Bordures de métier (actif/inactif) ─────────────────────────────────────
+
+  border_active_top_left:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/border_active_top_left
+
+  border_active_top_right:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/border_active_top_right
+
+  border_active_bottom_left:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/border_active_bottom_left
+
+  border_active_bottom_right:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/border_active_bottom_right
+
+  border_inactive_top_left:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/border_inactive_top_left
+
+  border_inactive_top_right:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/border_inactive_top_right
+
+  border_inactive_bottom_left:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/border_inactive_bottom_left
+
+  border_inactive_bottom_right:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/border_inactive_bottom_right
+
+font_images:
+  # ── Menus principaux ──────────────────────────────────────────────────────
+
+  # ── carrieres ───────────────────────────────────────────────────────────
+
+  carriereportal:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/carriereportal.png
+    scale_ratio: 256
+    y_position: 13
+
+  carrierecitoyen:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/carrierecitoyen.png
+    scale_ratio: 256
+    y_position: 13
+
+  carriereelite:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/carriereelite.png
+    scale_ratio: 256
+    y_position: 13
+
+  carrieretop:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/carrieretop.png
+    scale_ratio: 256
+    y_position: 13
+
+  carriereprogression:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/carriereprogression.png
+    scale_ratio: 256
+    y_position: 13

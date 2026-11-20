@@ -1,0 +1,104 @@
+# Généré par plugins/FluxMenu/assets/marche/gen_marche.py : ne pas modifier à la main.
+# Marché (InfluMarche + FluxMenu, Labs) : icônes de boutons et fonds de menus.
+info:
+  namespace: influmarche
+items:
+  marche:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/marche.png
+  tout:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/tout.png
+  rachat:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/rachat.png
+  mes_ventes:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/mes_ventes.png
+  enchere:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/enchere.png
+  historique:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/historique.png
+  moyenne:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/moyenne.png
+  acheter:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - icones/acheter.png
+font_images:
+  # Fond plein écran 176 x 221.
+  menu_marche:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_marche.png
+    scale_ratio: 221
+    y_position: 13
+  # Fond plein écran 176 x 221.
+  menu_marche_offre:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_marche_offre.png
+    scale_ratio: 221
+    y_position: 13
+  # Fond plein écran 176 x 221.
+  menu_marche_vendre:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_marche_vendre.png
+    scale_ratio: 221
+    y_position: 13
+  # Fond plein écran 176 x 221.
+  menu_marche_ventes:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_marche_ventes.png
+    scale_ratio: 221
+    y_position: 13
+  # Fond plein écran 176 x 221.
+  menu_marche_encheres:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_marche_encheres.png
+    scale_ratio: 221
+    y_position: 13
+  # Fond plein écran 176 x 221.
+  menu_marche_historique:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/gui/menu_marche_historique.png
+    scale_ratio: 221
+    y_position: 13

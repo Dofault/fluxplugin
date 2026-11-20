@@ -1,0 +1,910 @@
+# Note: This file is made for you to manager textures and models
+# Fish display_name mirrors CustomFishing contents/item/default.yml
+info:
+  namespace: customfishing
+items:
+############
+#   Fish   #
+############
+  #################
+  #  Influfish 19  #
+  #################
+  common_tuna_fish:
+    display_name: '<gray>Thon</gray>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/common_tuna_fish
+      model_id: 52001
+  unique_tuna_fish:
+    display_name: '<#37C44A>Thon</#37C44A>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/unique_tuna_fish
+      model_id: 52002
+  epic_tuna_fish:
+    display_name: '<#3283A8>Thon</#3283A8>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/epic_tuna_fish
+      model_id: 52003
+  mythic_tuna_fish:
+    display_name: '<#B376E5>Thon</#B376E5>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/mythic_tuna_fish
+      model_id: 52004
+  legendary_tuna_fish:
+    display_name: '<#F0A800>Thon Titan</#F0A800>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/legendary_tuna_fish
+      model_id: 52005
+  common_sardine_fish:
+    display_name: '<gray>Sardine</gray>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/common_sardine_fish
+      model_id: 52006
+  unique_sardine_fish:
+    display_name: '<#37C44A>Sardine</#37C44A>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/unique_sardine_fish
+      model_id: 52007
+  epic_sardine_fish:
+    display_name: '<#3283A8>Sardine</#3283A8>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/epic_sardine_fish
+      model_id: 52008
+  mythic_sardine_fish:
+    display_name: '<#B376E5>Sardine</#B376E5>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/mythic_sardine_fish
+      model_id: 52009
+  legendary_sardine_fish:
+    display_name: '<#F0A800>Sardine Dorée</#F0A800>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/legendary_sardine_fish
+      model_id: 52010
+  common_red_snapper_fish:
+    display_name: '<gray>Vivaneau rouge</gray>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/common_red_snapper_fish
+      model_id: 52011
+  unique_red_snapper_fish:
+    display_name: '<#37C44A>Vivaneau rouge</#37C44A>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/unique_red_snapper_fish
+      model_id: 52012
+  epic_red_snapper_fish:
+    display_name: '<#3283A8>Vivaneau rouge</#3283A8>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/epic_red_snapper_fish
+      model_id: 52013
+  mythic_red_snapper_fish:
+    display_name: '<#B376E5>Vivaneau rouge</#B376E5>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/mythic_red_snapper_fish
+      model_id: 52014
+  legendary_red_snapper_fish:
+    display_name: '<#F0A800>Vivaneau Impérial</#F0A800>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/legendary_red_snapper_fish
+      model_id: 52015
+  common_sunfish_fish:
+    display_name: '<gray>Poisson-lune</gray>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/common_sunfish_fish
+      model_id: 52016
+  unique_sunfish_fish:
+    display_name: '<#37C44A>Poisson-lune</#37C44A>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/unique_sunfish_fish
+      model_id: 52017
+  epic_sunfish_fish:
+    display_name: '<#3283A8>Poisson-lune</#3283A8>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/epic_sunfish_fish
+      model_id: 52018
+  mythic_sunfish_fish:
+    display_name: '<#B376E5>Poisson-lune</#B376E5>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/mythic_sunfish_fish
+      model_id: 52019
+  legendary_sunfish_fish:
+    display_name: '<#F0A800>Poisson-lune Ancestral</#F0A800>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/legendary_sunfish_fish
+      model_id: 52020
+  common_octopus_fish:
+    display_name: '<gray>Poulpe</gray>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/common_octopus_fish
+      model_id: 52021
+  unique_octopus_fish:
+    display_name: '<#37C44A>Poulpe</#37C44A>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/unique_octopus_fish
+      model_id: 52022
+  epic_octopus_fish:
+    display_name: '<#3283A8>Poulpe</#3283A8>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/epic_octopus_fish
+      model_id: 52023
+  mythic_octopus_fish:
+    display_name: '<#B376E5>Poulpe</#B376E5>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/mythic_octopus_fish
+      model_id: 52024
+  legendary_octopus_fish:
+    display_name: '<#F0A800>Kraken des Récifs</#F0A800>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/legendary_octopus_fish
+      model_id: 52025
+  common_blue_jellyfish:
+    display_name: '<gray>Méduse bleue</gray>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/common_blue_jellyfish
+      model_id: 52026
+  unique_blue_jellyfish:
+    display_name: '<#37C44A>Méduse bleue</#37C44A>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/unique_blue_jellyfish
+      model_id: 52027
+  epic_blue_jellyfish:
+    display_name: '<#3283A8>Méduse bleue</#3283A8>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/epic_blue_jellyfish
+      model_id: 52028
+  mythic_blue_jellyfish:
+    display_name: '<#B376E5>Méduse bleue</#B376E5>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/mythic_blue_jellyfish
+      model_id: 52029
+  legendary_blue_jellyfish:
+    display_name: '<#F0A800>Méduse Céleste</#F0A800>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/legendary_blue_jellyfish
+      model_id: 52030
+  common_pink_jellyfish:
+    display_name: '<gray>Méduse rose</gray>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/common_pink_jellyfish
+      model_id: 52031
+  unique_pink_jellyfish:
+    display_name: '<#37C44A>Méduse rose</#37C44A>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/unique_pink_jellyfish
+      model_id: 52032
+  epic_pink_jellyfish:
+    display_name: '<#3283A8>Méduse rose</#3283A8>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/epic_pink_jellyfish
+      model_id: 52033
+  mythic_pink_jellyfish:
+    display_name: '<#B376E5>Méduse rose</#B376E5>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/mythic_pink_jellyfish
+      model_id: 52034
+  legendary_pink_jellyfish:
+    display_name: '<#F0A800>Méduse de Corail</#F0A800>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/legendary_pink_jellyfish
+      model_id: 52035
+  common_mullet_fish:
+    display_name: '<gray>Mulet</gray>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/common_mullet_fish
+      model_id: 52036
+  unique_mullet_fish:
+    display_name: '<#37C44A>Mulet</#37C44A>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/unique_mullet_fish
+      model_id: 52037
+  epic_mullet_fish:
+    display_name: '<#3283A8>Mulet</#3283A8>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/epic_mullet_fish
+      model_id: 52038
+  mythic_mullet_fish:
+    display_name: '<#B376E5>Mulet</#B376E5>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/mythic_mullet_fish
+      model_id: 52039
+  legendary_mullet_fish:
+    display_name: '<#F0A800>Mulet Royal</#F0A800>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/legendary_mullet_fish
+      model_id: 52040
+  common_perch_fish:
+    display_name: '<gray>Perche</gray>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/common_perch_fish
+      model_id: 52041
+  unique_perch_fish:
+    display_name: '<#37C44A>Perche</#37C44A>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/unique_perch_fish
+      model_id: 52042
+  epic_perch_fish:
+    display_name: '<#3283A8>Perche</#3283A8>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/epic_perch_fish
+      model_id: 52043
+  mythic_perch_fish:
+    display_name: '<#B376E5>Perche</#B376E5>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/mythic_perch_fish
+      model_id: 52044
+  legendary_perch_fish:
+    display_name: '<#F0A800>Perche Géante</#F0A800>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/legendary_perch_fish
+      model_id: 52045
+  common_carp_fish:
+    display_name: '<gray>Carpe</gray>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/common_carp_fish
+      model_id: 52046
+  unique_carp_fish:
+    display_name: '<#37C44A>Carpe</#37C44A>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/unique_carp_fish
+      model_id: 52047
+  epic_carp_fish:
+    display_name: '<#3283A8>Carpe</#3283A8>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/epic_carp_fish
+      model_id: 52048
+  mythic_carp_fish:
+    display_name: '<#B376E5>Carpe</#B376E5>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/mythic_carp_fish
+      model_id: 52049
+  legendary_carp_fish:
+    display_name: '<#F0A800>Carpe Mastodonte</#F0A800>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/legendary_carp_fish
+      model_id: 52050
+  common_cat_fish:
+    display_name: '<gray>Poisson-chat</gray>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/common_cat_fish
+      model_id: 52051
+  unique_cat_fish:
+    display_name: '<#37C44A>Poisson-chat</#37C44A>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/unique_cat_fish
+      model_id: 52052
+  epic_cat_fish:
+    display_name: '<#3283A8>Poisson-chat</#3283A8>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/epic_cat_fish
+      model_id: 52053
+  mythic_cat_fish:
+    display_name: '<#B376E5>Silure Monstrueux</#B376E5>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/mythic_cat_fish
+      model_id: 52054
+  legendary_cat_fish:
+    display_name: '<#F0A800>Léviathan des Fonds</#F0A800>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/legendary_cat_fish
+      model_id: 52055
+  common_gold_fish:
+    display_name: '<gray>Poisson doré</gray>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/common_gold_fish
+      model_id: 52056
+  unique_gold_fish:
+    display_name: '<#37C44A>Poisson doré</#37C44A>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/unique_gold_fish
+      model_id: 52057
+  epic_gold_fish:
+    display_name: '<#3283A8>Poisson doré</#3283A8>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/epic_gold_fish
+      model_id: 52058
+  mythic_gold_fish:
+    display_name: '<#B376E5>Poisson doré</#B376E5>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/mythic_gold_fish
+      model_id: 52059
+  legendary_gold_fish:
+    display_name: '<#F0A800>Poisson d''Or Impérial</#F0A800>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/legendary_gold_fish
+      model_id: 52060
+  common_woodskip_fish:
+    display_name: '<gray>Woodskip</gray>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/common_woodskip_fish
+      model_id: 52061
+  unique_woodskip_fish:
+    display_name: '<#37C44A>Woodskip</#37C44A>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/unique_woodskip_fish
+      model_id: 52062
+  epic_woodskip_fish:
+    display_name: '<#3283A8>Woodskip</#3283A8>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/epic_woodskip_fish
+      model_id: 52063
+  mythic_woodskip_fish:
+    display_name: '<#B376E5>Woodskip</#B376E5>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/mythic_woodskip_fish
+      model_id: 52064
+  legendary_woodskip_fish:
+    display_name: '<#F0A800>Woodskip Ancestral</#F0A800>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/legendary_woodskip_fish
+      model_id: 52065
+  common_sturgeon_fish:
+    display_name: '<gray>Esturgeon</gray>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/common_sturgeon_fish
+      model_id: 52066
+  unique_sturgeon_fish:
+    display_name: '<#37C44A>Esturgeon</#37C44A>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/unique_sturgeon_fish
+      model_id: 52067
+  epic_sturgeon_fish:
+    display_name: '<#3283A8>Esturgeon</#3283A8>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/epic_sturgeon_fish
+      model_id: 52068
+  mythic_sturgeon_fish:
+    display_name: '<#B376E5>Esturgeon Millénaire</#B376E5>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/mythic_sturgeon_fish
+      model_id: 52069
+  legendary_sturgeon_fish:
+    display_name: '<#F0A800>Béluga des Abysses</#F0A800>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/legendary_sturgeon_fish
+      model_id: 52070
+  common_golden_fish:
+    display_name: '<gray>Poisson des Temples</gray>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/common_golden_fish
+      model_id: 52071
+  unique_golden_fish:
+    display_name: '<#37C44A>Poisson des Temples</#37C44A>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/unique_golden_fish
+      model_id: 52072
+  epic_golden_fish:
+    display_name: '<#3283A8>Poisson des Temples</#3283A8>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/epic_golden_fish
+      model_id: 52073
+  mythic_golden_fish:
+    display_name: '<#B376E5>Poisson d''Or Mystique</#B376E5>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/mythic_golden_fish
+      model_id: 52074
+  legendary_golden_fish:
+    display_name: '<#F0A800>Gardien d''Or du Temple</#F0A800>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/legendary_golden_fish
+      model_id: 52075
+  common_pike_fish:
+    display_name: '<gray>Brochet</gray>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/common_pike_fish
+      model_id: 52076
+  unique_pike_fish:
+    display_name: '<#37C44A>Brochet</#37C44A>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/unique_pike_fish
+      model_id: 52077
+  epic_pike_fish:
+    display_name: '<#3283A8>Brochet</#3283A8>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/epic_pike_fish
+      model_id: 52078
+  mythic_pike_fish:
+    display_name: '<#B376E5>Brochet des Glaces</#B376E5>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/mythic_pike_fish
+      model_id: 52079
+  legendary_pike_fish:
+    display_name: '<#F0A800>Brochet Titan du Nord</#F0A800>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/legendary_pike_fish
+      model_id: 52080
+  common_salmon_void_fish:
+    display_name: '<gray>Saumon du Vide</gray>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/common_salmon_void_fish
+      model_id: 52081
+  unique_salmon_void_fish:
+    display_name: '<#37C44A>Saumon du Vide</#37C44A>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/unique_salmon_void_fish
+      model_id: 52082
+  epic_salmon_void_fish:
+    display_name: '<#3283A8>Saumon du Vide</#3283A8>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/epic_salmon_void_fish
+      model_id: 52083
+  mythic_salmon_void_fish:
+    display_name: '<#B376E5>Saumon des Ténèbres</#B376E5>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/mythic_salmon_void_fish
+      model_id: 52084
+  legendary_salmon_void_fish:
+    display_name: '<#F0A800>Saumon de l''Abîme Infernal</#F0A800>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/legendary_salmon_void_fish
+      model_id: 52085
+  rubbish:
+    display_name: '<#00BFFF>Poisson radioactif</#00BFFF>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/common_radioactive_fish
+      model_id: 52090
+  rainbow_fish_legendary:
+    display_name: '<Rainbow><bold>Poisson Arc-en-Ciel Éclatant</bold></Rainbow>'
+    resource:
+      material: COD
+      generate: false
+      model_path: item/influfish/legendary_rainbow_fish
+      model_id: 52092
+############
+#   Rod    #
+############
+  common_rod:
+    nbt: '{CustomFishing:{id: common_rod}}'
+    durability:
+      max_custom_durability: 64
+      custom_durability: 64
+    display_name: '<b><#AAAAAA>Canne Commune'
+    lore:
+      - ''
+      - '<#7FFFD4>Description :'
+      - '<gray> - Une canne simple et fiable, le premier vrai pas'
+      - '<gray> - au-delà du matériel de fortune.'
+      - ''
+      - '<#FFD700>Effets :'
+      - '<gray> - Augmente le temps d''attente'
+      - '<gray> - Réduit la difficulté de pêche'
+      - '<gray> - Favorise les poissons ✦ Commun'
+    resource:
+      material: FISHING_ROD
+      generate: false
+      model_path: item/influrod/common_rod
+      model_id: 51001
+  unique_rod:
+    nbt: '{CustomFishing:{id: unique_rod}}'
+    durability:
+      max_custom_durability: 96
+      custom_durability: 96
+    display_name: '<b><#37C44A>Canne Unique'
+    lore:
+      - ''
+      - '<#7FFFD4>Description :'
+      - '<gray> - Sa finition soignée attire des poissons plus'
+      - '<gray> - intéressants que la moyenne.'
+      - ''
+      - '<#FFD700>Effets :'
+      - '<gray> - Réduit le temps d''attente'
+      - '<gray> - Favorise les poissons ✦ Commun et ✦ Unique'
+    resource:
+      material: FISHING_ROD
+      generate: false
+      model_path: item/influrod/unique_rod
+      model_id: 51002
+  epic_rod:
+    nbt: '{CustomFishing:{id: epic_rod}}'
+    durability:
+      max_custom_durability: 112
+      custom_durability: 112
+    display_name: '<b><#3283A8>Canne Épique'
+    lore:
+      - ''
+      - '<#7FFFD4>Description :'
+      - '<gray> - Une canne recherchée, taillée pour ramener'
+      - '<gray> - des prises qui sortent de l''ordinaire.'
+      - ''
+      - '<#FFD700>Effets :'
+      - '<gray> - Temps d''attente normal'
+      - '<gray> - Augmente légèrement la difficulté'
+      - '<gray> - Favorise les poissons ✦ Commun, ✦ Unique et ✦ Épique'
+    resource:
+      material: FISHING_ROD
+      generate: false
+      model_path: item/influrod/epic_rod
+      model_id: 51003
+  mythic_rod:
+    nbt: '{CustomFishing:{id: mythic_rod}}'
+    durability:
+      max_custom_durability: 128
+      custom_durability: 128
+    display_name: '<b><#B376E5>Canne Mythique'
+    lore:
+      - ''
+      - '<#7FFFD4>Description :'
+      - '<gray> - Peu de pêcheurs possèdent une canne aussi rare.'
+      - '<gray> - Elle attire des créatures que peu ont vues.'
+      - ''
+      - '<#FFD700>Effets :'
+      - '<gray> - Réduit le temps d''attente'
+      - '<gray> - Augmente la difficulté'
+      - '<gray> - Favorise les poissons jusqu''à ✦ Mythique'
+    resource:
+      material: FISHING_ROD
+      generate: false
+      model_path: item/influrod/mythic_rod
+      model_id: 51004
+  legendary_rod:
+    nbt: '{CustomFishing:{id: legendary_rod}}'
+    durability:
+      max_custom_durability: 160
+      custom_durability: 160
+    display_name: '<b><#F0A800>Canne Légendaire'
+    lore:
+      - ''
+      - '<#7FFFD4>Description :'
+      - '<gray> - Le sommet de l''artisanat halieutique. On raconte'
+      - '<gray> - qu''elle a déjà ramené des poissons qui n''auraient'
+      - '<gray> - jamais dû mordre.'
+      - ''
+      - '<#FFD700>Effets :'
+      - '<gray> - Réduit fortement le temps d''attente'
+      - '<gray> - Augmente fortement la difficulté'
+      - '<gray> - Favorise les poissons de tous les paliers,'
+      - '<gray> - jusqu''à ✦ Légendaire'
+    resource:
+      material: FISHING_ROD
+      generate: false
+      model_path: item/influrod/legendary_rod
+      model_id: 51005
+  star_rod:
+    nbt: '{CustomFishing:{id: star_rod}}'
+    durability:
+      max_custom_durability: 128
+      custom_durability: 128
+    display_name: "<b><#FFFF00>Canne Stellaire"
+    lore:
+      - ''
+      - '<#7FFFD4>Description :'
+      - '<gray> - Taillée dans la poussière d''étoiles et baignée'
+      - '<gray> - d''énergie cosmique, la Canne Stellaire est un'
+      - '<gray> - témoignage des merveilles de l''univers. Son'
+      - '<gray> - réservoir magique infini donne l''impression que'
+      - '<gray> - le temps s''arrête pendant la pêche.'
+      - ''
+      - '<#FFD700>Effets :'
+      - '<gray> - +15s de temps de jeu'
+    resource:
+      material: FISHING_ROD
+      generate: false
+      model_path: item/influrod/star_rod
+      model_id: 50004
+  bone_rod:
+    nbt: '{CustomFishing:{id: bone_rod}}'
+    durability:
+      max_custom_durability: 32
+      custom_durability: 32
+    display_name: "<b><#CD2626>Canne en Os"
+    lore:
+      - ''
+      - '<#7FFFD4>Description :'
+      - '<gray> - Forgée à partir des os de squelettes anciens'
+      - '<gray> - et imprégnée de magie sombre, cette canne'
+      - '<gray> - permet aux téméraires de pêcher dans la lave'
+      - '<gray> - du Nether, défiant toute limite habituelle.'
+      - ''
+      - '<#FFD700>Effets :'
+      - '<gray> - Pêche dans la lave'
+      - '<gray> - Attire les squelettes'
+    resource:
+      material: FISHING_ROD
+      generate: false
+      model_path: item/influrod/bone_rod
+      model_id: 50005
+  magical_rod:
+    nbt: '{CustomFishing:{id: magical_rod}}'
+    durability:
+      max_custom_durability: 16
+      custom_durability: 16
+    display_name: '<b><#7B68EE>Canne Magique'
+    lore:
+      - ''
+      - '<#7FFFD4>Description :'
+      - '<gray> - Produit de l''innovation arcanique, cette canne'
+      - '<gray> - utilise des livres enchantés comme appâts.'
+      - '<gray> - Son mécanisme complexe consomme des niveaux'
+      - '<gray> - d''expérience à chaque lancer.'
+      - ''
+      - '<#FFD700>Effets :'
+      - '<gray> - Obtiens un livre enchanté en pêchant.'
+      - '<gray> - Temps d''attente très long.'
+      - ''
+      - '<#CD5C5C>Prérequis :'
+      - '<gray> - 1 appât livre'
+      - '<gray> - 30 niveaux d''expérience'
+    resource:
+      material: FISHING_ROD
+      generate: false
+      model_path: item/rod/magical_rod
+      model_id: 50006
+############
+#   Bait   #
+############
+  simple_bait:
+    nbt: '{CustomFishing:{id: simple_bait}}'
+    display_name: '<b><#00BFFF>Appâts simples'
+    lore:
+      - ''
+      - '<#7FFFD4>Description :'
+      - '<gray>Fabriqués à partir d''ingrédients naturels, ils'
+      - '<gray>attirent les poissons de façon calme et régulière.'
+      - '<gray>Le choix idéal pour une expérience de pêche'
+      - '<gray>simple et fiable.'
+      - ''
+      - '<#FFD700>Effets :'
+      - '<gray> - Réduit la difficulté de pêche'
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/bait/simple_bait
+      model_id: 50001
+  magnetic_bait:
+    nbt: '{CustomFishing:{id: magnetic_bait}}'
+    display_name: '<b><red>App<blue>âts <gray>magnétiques'
+    lore:
+      - ''
+      - '<#7FFFD4>Description :'
+      - '<gray>Leur éclat radieux et leur impulsion énergétique'
+      - '<gray>unique s''avèrent irrésistibles pour les poissons'
+      - '<gray>curieux, les attirant à une vitesse sans précédent.'
+      - '<gray>Pas juste un appât — un véritable spectacle aquatique.'
+      - ''
+      - '<#FFD700>Effets :'
+      - '<gray> - Réduit le temps d''attente'
+      - '<gray> - Plus de temps de jeu'
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/bait/magnetic_bait
+      model_id: 50002
+  wild_bait:
+    nbt: '{CustomFishing:{id: wild_bait}}'
+    display_name: '<b><#2E8B57>Appâts sauvages'
+    lore:
+      - ''
+      - '<#7FFFD4>Description :'
+      - '<gray>Conçus pour les pêcheurs intrépides, ces appâts'
+      - '<gray>infusés d''ingrédients naturels puissants dégagent'
+      - '<gray>un arôme irrésistible pour les grandes créatures'
+      - '<gray>aquatiques.'
+      - ''
+      - '<#FFD700>Effets :'
+      - '<gray> - Augmente la difficulté de pêche'
+      - '<gray> - Augmente la taille des poissons capturés'
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/bait/wild_bait
+      model_id: 50003
+############
+#   Hook   #
+############
+  delicate_hook:
+    nbt: '{CustomFishing:{id: delicate_hook, max_dur: 16, cur_dur: 16}}'
+    display_name: '<#1E90FF>Hameçon délicat'
+    lore:
+      - ''
+      - '<#7FFFD4>Description :'
+      - '<gray> - Un chef-d''œuvre d''artisanat et d''élégance.'
+      - '<gray> - Poli à la perfection et finement conçu, il brille'
+      - '<gray> - dans l''eau, attirant irrésistiblement les'
+      - '<gray> - poissons de haute qualité.'
+      - ''
+      - '<#FFD700>Effets :'
+      - '<gray> - Augmente les chances d''obtenir des poissons de qualité'
+    resource:
+      material: SHEARS
+      generate: false
+      model_path: item/hook/delicate_hook
+      model_id: 50000
+############
+#   Util   #
+############
+  fishfinder:
+    nbt: '{CustomFishing:{id: fishfinder}}'
+    display_name: '<#1E90FF>Détecteur de poissons'
+    lore:
+      - ''
+      - '<#7FFFD4>Description :'
+      - '<gray> - Compact mais puissant, il analyse les eaux avec'
+      - '<gray> - précision et révèle la variété des espèces qui'
+      - '<gray> - se cachent sous la surface. Que tu sois en'
+      - '<gray> - territoire inconnu ou dans des eaux familières,'
+      - '<gray> - tu resteras toujours informé de tes voisins aquatiques.'
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/util/fishfinder
+      model_id: 50000
+  splash_water:
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/util/splash_water
+      model_id: 49998
+  splash_lava:
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/util/splash_lava
+      model_id: 49999

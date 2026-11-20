@@ -1,0 +1,18 @@
+info:
+  namespace: influcasino
+
+# Généré par plugins/FluxMenu/assets/casino/gen_fond.py, ne pas éditer à la main.
+font_images:
+  # fond générique plein écran du casino (cadre de y 0 à 220), pour les prochains menus
+  menu_casino_generique:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/menu_casino_generique.png
+    scale_ratio: 221
+    y_position: 13
+  menu_casino:
+    suggest_in_command: false
+    show_in_gui: false
+    path: font/menu_casino.png
+    scale_ratio: 221
+    y_position: 13

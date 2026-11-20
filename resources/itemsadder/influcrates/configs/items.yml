@@ -1,0 +1,245 @@
+# Caisses issues du "Crates and Stuff Model Pack".
+# Modèles convertis depuis les .bbmodel bruts vers le format JSON Minecraft
+# (contents/influcrates/models/*.json) + textures extraites (textures/item/*).
+#
+# Toutes en FURNITURE ItemsAdder (entity: item_display). Le custom block
+# (behaviours.block) a été essayé sur common_crate mais se comportait mal
+# à la pose/interaction — abandonné au profit de furniture partout.
+#
+# ExcellentCrates ne peut lier ses caisses qu'à un vrai bloc, jamais à une
+# furniture (cf doc officielle IA) : il faut donc poser un vrai bloc (barrier
+# ou sol existant) au même endroit que le meuble, et lier CE bloc à la caisse
+# EC via /crates editor (bouton de liaison de bloc dans le menu de la caisse).
+#
+# Les 5 caisses partagent les mêmes réglages (solid, hitbox, translation,
+# placement, sons...) — seuls display_name, model_path et scale diffèrent.
+info:
+  namespace: influcrates
+
+items:
+  common_crate:
+    display_name: "&fCaisse Commune"
+    resource:
+      material: PAPER
+      generate: false
+      model_path: common_crate
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.6
+            z: 0
+          scale:
+            x: 1.5
+            y: 1.2
+            z: 1.2
+        solid: true
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wood.place
+          break:
+            name: block.wood.break
+
+  rare_crate:
+    display_name: "&bCaisse Rare"
+    resource:
+      material: PAPER
+      generate: false
+      model_path: rare_crate
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.6
+            z: 0
+          scale:
+            x: 1.2
+            y: 1.2
+            z: 1.2
+        solid: true
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wood.place
+          break:
+            name: block.wood.break
+
+  legendary_crate:
+    display_name: "&6Caisse Légendaire"
+    resource:
+      material: PAPER
+      generate: false
+      model_path: legendary_crate
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.6
+            z: 0
+          scale:
+            x: 1.2
+            y: 1.2
+            z: 1.2
+        solid: true
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wood.place
+          break:
+            name: block.wood.break
+
+  vote_crate:
+    display_name: "&aCaisse de Vote"
+    resource:
+      material: PAPER
+      generate: false
+      model_path: vote_crate
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.6
+            z: 0
+          scale:
+            x: 1.5
+            y: 1.2
+            z: 1.2
+        solid: true
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wood.place
+          break:
+            name: block.wood.break
+
+  cosmetic_crate:
+    display_name: "&dCaisse Cosmétique"
+    resource:
+      material: PAPER
+      generate: false
+      model_path: cosmetic_crate
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 0.6
+            z: 0
+          scale:
+            x: 1.2
+            y: 1.2
+            z: 1.2
+        solid: true
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 1
+        sound:
+          place:
+            name: block.wood.place
+          break:
+            name: block.wood.break
+
+  # Cage à BitBlocks (cage suspendue) : modèle fixe, BBModels/cage_bitblocks.bbmodel
+  # converti en models/cage_bitblocks.json. Rotations libres multi-axes, format
+  # accepté depuis Minecraft 1.21.11. La géométrie du JSON est réduite de moitié
+  # (limite -16..32 d'un modèle) : scale 4 = x2 la taille du Blockbench, soit
+  # ~5 blocs de large, ~9 de haut. translation.y = pendentif posé au sol.
+  cage_bitblocks:
+    display_name: "&#FFD94DCage à BitBlocks"
+    resource:
+      material: PAPER
+      generate: false
+      model_path: cage_bitblocks
+    behaviours:
+      furniture:
+        entity: item_display
+        opposite_direction: true
+        display_transformation:
+          transform: FIXED
+          translation:
+            x: 0
+            y: 4.46
+            z: 0
+          scale:
+            x: 4
+            y: 4
+            z: 4
+        solid: true
+        gravity: false
+        fixed_rotation: false
+        placeable_on:
+          floor: true
+          walls: false
+          ceiling: false
+        hitbox:
+          width: 1
+          length: 1
+          height: 2
+        sound:
+          place:
+            name: block.metal.place
+          break:
+            name: block.metal.break

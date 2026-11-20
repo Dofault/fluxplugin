@@ -1,0 +1,174 @@
+info:
+  namespace: influwaypoint
+
+font_images:
+  compass_diff_world:
+    suggest_in_command: false
+    path: compass_diff_world
+    scale_ratio: 16
+    y_position: 12
+  compass_reached:
+    suggest_in_command: false
+    path: compass_reached
+    scale_ratio: 16
+    y_position: 12
+  compass_00:
+    suggest_in_command: false
+    path: compass_00
+    scale_ratio: 16
+    y_position: 12
+  compass_01:
+    suggest_in_command: false
+    path: compass_01
+    scale_ratio: 16
+    y_position: 12
+  compass_02:
+    suggest_in_command: false
+    path: compass_02
+    scale_ratio: 16
+    y_position: 12
+  compass_03:
+    suggest_in_command: false
+    path: compass_03
+    scale_ratio: 16
+    y_position: 12
+  compass_04:
+    suggest_in_command: false
+    path: compass_04
+    scale_ratio: 16
+    y_position: 12
+  compass_05:
+    suggest_in_command: false
+    path: compass_05
+    scale_ratio: 16
+    y_position: 12
+  compass_06:
+    suggest_in_command: false
+    path: compass_06
+    scale_ratio: 16
+    y_position: 12
+  compass_07:
+    suggest_in_command: false
+    path: compass_07
+    scale_ratio: 16
+    y_position: 12
+  compass_08:
+    suggest_in_command: false
+    path: compass_08
+    scale_ratio: 16
+    y_position: 12
+  compass_09:
+    suggest_in_command: false
+    path: compass_09
+    scale_ratio: 16
+    y_position: 12
+  compass_10:
+    suggest_in_command: false
+    path: compass_10
+    scale_ratio: 16
+    y_position: 12
+  compass_11:
+    suggest_in_command: false
+    path: compass_11
+    scale_ratio: 16
+    y_position: 12
+  compass_12:
+    suggest_in_command: false
+    path: compass_12
+    scale_ratio: 16
+    y_position: 12
+  compass_13:
+    suggest_in_command: false
+    path: compass_13
+    scale_ratio: 16
+    y_position: 12
+  compass_14:
+    suggest_in_command: false
+    path: compass_14
+    scale_ratio: 16
+    y_position: 12
+  compass_15:
+    suggest_in_command: false
+    path: compass_15
+    scale_ratio: 16
+    y_position: 12
+  compass_16:
+    suggest_in_command: false
+    path: compass_16
+    scale_ratio: 16
+    y_position: 12
+  compass_17:
+    suggest_in_command: false
+    path: compass_17
+    scale_ratio: 16
+    y_position: 12
+  compass_18:
+    suggest_in_command: false
+    path: compass_18
+    scale_ratio: 16
+    y_position: 12
+  compass_19:
+    suggest_in_command: false
+    path: compass_19
+    scale_ratio: 16
+    y_position: 12
+  compass_20:
+    suggest_in_command: false
+    path: compass_20
+    scale_ratio: 16
+    y_position: 12
+  compass_21:
+    suggest_in_command: false
+    path: compass_21
+    scale_ratio: 16
+    y_position: 12
+  compass_22:
+    suggest_in_command: false
+    path: compass_22
+    scale_ratio: 16
+    y_position: 12
+  compass_23:
+    suggest_in_command: false
+    path: compass_23
+    scale_ratio: 16
+    y_position: 12
+  compass_24:
+    suggest_in_command: false
+    path: compass_24
+    scale_ratio: 16
+    y_position: 12
+  compass_25:
+    suggest_in_command: false
+    path: compass_25
+    scale_ratio: 16
+    y_position: 12
+  compass_26:
+    suggest_in_command: false
+    path: compass_26
+    scale_ratio: 16
+    y_position: 12
+  compass_27:
+    suggest_in_command: false
+    path: compass_27
+    scale_ratio: 16
+    y_position: 12
+  compass_28:
+    suggest_in_command: false
+    path: compass_28
+    scale_ratio: 16
+    y_position: 12
+  compass_29:
+    suggest_in_command: false
+    path: compass_29
+    scale_ratio: 16
+    y_position: 12
+  compass_30:
+    suggest_in_command: false
+    path: compass_30
+    scale_ratio: 16
+    y_position: 12
+  compass_31:
+    suggest_in_command: false
+    path: compass_31
+    scale_ratio: 16
+    y_position: 12

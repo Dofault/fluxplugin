@@ -1,0 +1,68 @@
+# EcoBattlePass, traduction Influencraft (tutoiement, préfixe repris de l'ancien BattlePass)
+messages:
+  # Général
+  prefix: "&#B376E5ᴘᴀꜱꜱ &8▸ "
+  reloaded: "&7Rechargé en &f%time%&7ms, &f%count% &7pass chargé(s)."
+  invalid-command: "&#FF5C5CCommande inconnue."
+  no-permission: "&#FF5C5CTu n'as pas la permission d'exécuter cette commande."
+  not-player: "&#FF5C5CCette commande doit être lancée par un joueur."
+  tier-up: "&7Palier &f%tier% &7atteint sur le &#FFD94DPass&7. Ouvre &f/pass &7et clique sur le palier pour récupérer ta récompense."
+  quest-complete: "&#FFD94D✦ Mission réussie ! &f%quest% &#2ECF7B✔"
+  reward-claim: "&7Récompense récupérée : &f%reward%&7."
+  premium-required: "&#FF5C5CIl te faut le &#FFD94DPass Prestige &#FF5C5Cpour récupérer cette récompense."
+  # Erreurs de saisie
+  player-required: "&#FF5C5CTu dois préciser un joueur."
+  player-not-found: "&#FF5C5CJoueur introuvable."
+  pass-required: "&#FF5C5CTu dois préciser un pass."
+  pass-not-found: "&#FF5C5CPass invalide."
+  amount-required: "&#FF5C5CTu dois préciser une quantité."
+  invalid-amount: "&#FF5C5CQuantité invalide."
+  category-required: "&#FF5C5CTu dois préciser une catégorie."
+  quest-required: "&#FF5C5CTu dois préciser une mission."
+  task-required: "&#FF5C5CTu dois préciser une tâche."
+  invalid-category: "&#FF5C5CCatégorie invalide."
+  invalid-quest: "&#FF5C5CMission invalide."
+  invalid-task: "&#FF5C5CTâche invalide."
+  # Commandes staff
+  given-experience: "&f%amount% &7points de &r%pass% &7donnés à &f%playername%&7."
+  received-experience: "&7Tu as reçu &f%amount% &7points de &r%pass%&7."
+  given-tiers: "&f%amount% &7palier(s) de &r%pass% &7donné(s) à &f%playername%&7."
+  received-tiers: "&7Tu as reçu &f%amount% &7palier(s) de &r%pass%&7."
+  given-task-progress: "&7Progression &f+%amount% &7sur &f%task% &7(&r%pass%&7) donnée à &f%playername%&7."
+  received-task-progress: "&7Tu as reçu &f+%amount% &7de progression sur &f%task%&7."
+  reset-player: "&7Données de &r%pass% &7réinitialisées pour &f%playername%&7."
+  reset-task: "&7Tâche &f%task% &7(&r%pass%&7) réinitialisée pour &f%playername%&7."
+  premium-given: "&#FFD94DPass Prestige &7accordé à &f%playername%&7."
+  premium-removed: "&#FFD94DPass Prestige &7retiré à &f%playername%&7."
+  already-premium: "&f%playername% &#FF5C5Ca déjà le &#FFD94DPass Prestige&#FF5C5C."
+  not-premium: "&f%playername% &#FF5C5Cn'a pas le &#FFD94DPass Prestige&#FF5C5C."
+  premium-unlocked: "&7Tu as débloqué le &#FFD94DPass Prestige &7!"
+  premium-revoked: "&7Ton &#FFD94DPass Prestige &7a été retiré."
+  premium-broadcast: "&f%playername% &7a débloqué le &#FFD94DPass Prestige &7!"
+  completed-task: "&7Tâche &f%task% &7(&r%pass%&7) complétée pour &f%playername%&7."
+  task-already-completed: "&#FF5C5CLa tâche %task% est déjà complétée pour %playername%."
+  # Réclamation
+  tier-not-found: "&#FF5C5CPalier %tier% introuvable."
+  tier-not-unlocked: "&#FF5C5CTu n'as pas encore atteint le palier &f%tier%&#FF5C5C."
+  tier-already-claimed: "&#FF5C5CTu as déjà récupéré les récompenses du palier &f%tier%&#FF5C5C."
+  no-rewards-to-claim: "&#FF5C5CTu n'as aucune récompense à récupérer."
+  claim-no-premium: "&#FF5C5CIl te faut le &#FFD94DPass Prestige &#FF5C5Cpour ces récompenses."
+  claim-all-success: "&7Récompenses récupérées sur &f%count% &7palier(s)."
+
+# Nom des pistes (aussi utilisé par %pass_type%)
+pass-type:
+  free: "&fPass Standard"
+  premium: "&#FFD94D★ Pass Prestige"
+
+# Piste d'une mission (%quest_tier%)
+free: "&fPass Standard"
+premium: "&#FFD94D★ Pass Prestige"
+
+"yes": "&#2ECF7BOui"
+"no": "&#FF5C5CNon"
+infinity: "∞"
+category-expired: "&#FF5C5CTerminée"
+category-in-progress: "&#2ECF7BDisponible"
+season-finished: "&#2ECF7BSaison terminée"
+season-not-started: "&#FF5C5CBientôt"
+waiting-for-week: "&#FF5C5CVerrouillée"

@@ -1,0 +1,493 @@
+#
+# EcoBattlePass, Influencraft
+# Reprend l'interface de l'ancien BattlePass (AdvancedPlugins) du SemiRP :
+#   /pass        -> portail (menus/portal.yml)
+#   /pass tiers  -> récompenses, Pass Standard en ligne 1, Pass Prestige en ligne 3 (menus/rewards.yml)
+#   Missions     -> catégories (menus/quest-overview.yml) puis une semaine / les quotidiennes (menus/week.yml)
+# Charte : titres et boutons en #FFD94D, descriptions en #B376E5, &r&7 devant %img_left_click%.
+#
+
+gui-cache-ttl: 1000
+
+date-format: "yyyy-MM-dd HH:mm"
+
+time-format:
+  split: " "
+  days: "&f%value%&7j"
+  hours: "&f%value%&7h"
+  minutes: "&f%value%&7min"
+  seconds: "&f%value%&7s"
+
+# Portail (/pass)
+battlepass-gui:
+  title: "&#FFD94D✦ Pass &8► &#B376E5Saison 4"
+  mask:
+    materials:
+      - air
+    pattern:
+      - "000000000"
+      - "000000000"
+      - "000000000"
+
+  buttons:
+    tiers:
+      item: itemsadder:influitems__chest
+      name: "&r&7%img_left_click% &#FFD94DRécompense Pass"
+      lore:
+        - ""
+        - "&#B376E5Palier &8► &f%tier%"
+        - "&#B376E5Palier suivant &8► &f%current_bp_xp%&7/&f%required_bp_xp%"
+        - ""
+        - "&#B376E5Consulte les récompenses débloquées"
+        - "&#B376E5et réclame-les !"
+      location:
+        row: 2
+        column: 5
+
+    quests:
+      item: book
+      name: "&r&7%img_left_click% &#FFD94DMissions"
+      lore:
+        - ""
+        - "&#B376E5Voir les missions hebdomadaires"
+        - "&#B376E5et les missions quotidiennes."
+      location:
+        row: 2
+        column: 7
+
+    close:
+      enabled: false
+      item: barrier
+      name: "&cFermer"
+      location:
+        row: 3
+        column: 5
+
+    custom-slots:
+      # Remplace l'ancien bouton Classement (pas de classement dans EcoBattlePass)
+      - item: nether_star
+        name: "&#FFD94DTon Pass"
+        lore:
+          - ""
+          - "&#B376E5Pass &8► %pass_type%"
+          - "&#B376E5Palier &8► &f%tier%&7/&f%max_tiers%"
+          - "&#B376E5Paliers à récupérer &8► &f%claimable_tiers%"
+        row: 2
+        column: 3
+      - item: itemsadder:influitems__btn_back
+        name: "&r&7%img_left_click% &#FFD94DRetour"
+        lore:
+          - ""
+          - "&#B376E5Retourne"
+          - "&#B376E5au profil."
+          - ""
+        left-click:
+          - "menu"
+        row: 3
+        column: 1
+
+# Récompenses (/pass tiers) : une page = 9 paliers, Standard ligne 1, Prestige ligne 3
+tiers-gui:
+  title: ":offset_-8::battlepass:"
+  open-at-current-tier: true
+  empty-tier-display-mode: "normal"
+  layout: "split"
+
+  mask:
+    materials:
+      - air
+    pattern:
+      - "000000000"
+      - "000000000"
+      - "000000000"
+      - "000000000"
+      - "000000000"
+
+  layouts:
+    combined:
+      pattern:
+        - "123456789"
+        - "000000000"
+        - "000000000"
+        - "000000000"
+        - "000000000"
+    split:
+      free-pattern:
+        - "123456789"
+        - "000000000"
+        - "000000000"
+        - "000000000"
+        - "000000000"
+      premium-pattern:
+        - "000000000"
+        - "000000000"
+        - "123456789"
+        - "000000000"
+        - "000000000"
+
+  buttons:
+    # Pas de quantité par palier (l'ancien menu affichait des items seuls)
+    item-amount: "1"
+    max-item-amount: 64
+
+    prev-page:
+      item:
+        active: itemsadder:influitems__btn_prev
+        inactive: itemsadder:influitems__btn_prev
+      name: "&r&7%img_left_click% &#FFD94DPage précédente"
+      lore:
+        active: []
+        inactive: []
+      location:
+        row: 5
+        column: 4
+
+    next-page:
+      item:
+        active: itemsadder:influitems__btn_next
+        inactive: itemsadder:influitems__btn_next
+      name: "&r&7%img_left_click% &#FFD94DPage suivante"
+      lore:
+        active: []
+        inactive: []
+      location:
+        row: 5
+        column: 6
+
+    close:
+      enabled: false
+      item: barrier
+      name: "&cFermer"
+      location:
+        row: 5
+        column: 5
+
+    # Lignes de récompense : celles des récompenses commencent par "&8➤", elles sont reprises telles quelles
+    empty-rewards-format: "&8&oAucune récompense"
+    free-rewards-format: "&8➤ &f%reward%"
+    premium-rewards-format: "&8➤ &f%reward%"
+    missing-premium-rewards-format: "&8➤ &f%reward%"
+    claimed-free-rewards-format: "&8➤ &f%reward%"
+    claimed-premium-rewards-format: "&8➤ &f%reward%"
+
+    # Mode combiné (inutilisé, layout: split) : repris pour que les clés existent
+    unlocked-free:
+      item: itemsadder:influitems__chest_item glint
+      name: "&#FFD94DPalier %tier% &8(&#2ECF7BÀ récupérer&8)"
+      lore:
+        - ""
+        - "&#B376E5Récompenses :"
+        - "%free-rewards%"
+        - "%premium-rewards%"
+    unlocked:
+      item: itemsadder:influitems__chest_item glint
+      name: "&#FFD94DPalier %tier% &8(&#2ECF7BÀ récupérer&8)"
+      lore:
+        - ""
+        - "&#B376E5Récompenses :"
+        - "%free-rewards%"
+        - "%premium-rewards%"
+    premium-required:
+      item: itemsadder:influitems__lock
+      name: "&#FFD94D★ &8Palier %tier% (&#FF5C5CIndisponible&8)"
+      lore:
+        - "&#FF5C5CPass Prestige requis"
+    in-progress:
+      item: itemsadder:influitems__lock
+      name: "&#FFD94DPalier %tier% &8(&#FF5C5CVerrouillé&8)"
+      lore: []
+    locked:
+      item: itemsadder:influitems__lock
+      name: "&#FFD94DPalier %tier% &8(&#FF5C5CVerrouillé&8)"
+      lore: []
+    claimed:
+      item: itemsadder:influitems__chest_checkmark
+      name: "&7&o&mPalier %tier% (débloqué)"
+      lore: []
+
+    # Ligne 1 : Pass Standard (passes/free.yml de l'ancien plugin)
+    free-track:
+      unlocked:
+        item: itemsadder:influitems__chest_item glint
+        name: "&#FFD94DPalier %tier% &8(&#2ECF7BÀ récupérer&8)"
+        lore:
+          - ""
+          - "&#B376E5Récompenses :"
+          - "%free-rewards%"
+          - ""
+          - "&r&7%img_left_click% &#FFD94DRécupère ta récompense"
+      locked:
+        item: itemsadder:influitems__lock
+        name: "&#FFD94DPalier %tier% &8(&#FF5C5CVerrouillé&8)"
+        lore:
+          - ""
+          - "&#B376E5Récompenses :"
+          - "%free-rewards%"
+          - ""
+          - "&#B376E5Prochain palier &8► &f%current_bp_xp%&7/%required_bp_xp%"
+      in-progress:
+        item: itemsadder:influitems__lock
+        name: "&#FFD94DPalier %tier% &8(&#FF5C5CVerrouillé&8)"
+        lore:
+          - ""
+          - "&#B376E5Récompenses :"
+          - "%free-rewards%"
+          - ""
+          - "&#B376E5Prochain palier &8► &f%current_bp_xp%&7/%required_bp_xp%"
+      claimed:
+        item: itemsadder:influitems__chest_checkmark
+        name: "&7&o&mPalier %tier% (débloqué)"
+        lore:
+          - ""
+          - "&#B376E5Récompenses :"
+          - "%claimed-free-rewards%"
+
+    # Ligne 3 : Pass Prestige (passes/premium.yml de l'ancien plugin)
+    premium-track:
+      unlocked:
+        item: itemsadder:influitems__chest_item glint
+        name: "&#FFD94D★ Palier %tier% &8(&#2ECF7BÀ récupérer&8)"
+        lore:
+          - ""
+          - "&#B376E5Récompenses :"
+          - "%premium-rewards%"
+          - ""
+          - "&r&7%img_left_click% &#FFD94DRécupère ta récompense"
+      premium-required:
+        item: itemsadder:influitems__lock
+        name: "&#FFD94D★ &8Palier %tier% (&#FF5C5CIndisponible&8)"
+        lore:
+          - "&#FF5C5CPass Prestige requis"
+          - "&#B376E5Obtiens-le sur la &#FFD94Dboutique"
+          - ""
+          - "&#B376E5Récompenses :"
+          - "%premium-rewards%"
+          - ""
+          - "&#B376E5Prochain palier &8► &f%current_bp_xp%&7/%required_bp_xp%"
+      locked:
+        item: itemsadder:influitems__lock
+        name: "&#FFD94D★ Palier %tier% &8(&#FF5C5CVerrouillé&8)"
+        lore:
+          - ""
+          - "&#B376E5Récompenses :"
+          - "%premium-rewards%"
+          - ""
+          - "&#B376E5Prochain palier &8► &f%current_bp_xp%&7/%required_bp_xp%"
+      in-progress:
+        item: itemsadder:influitems__lock
+        name: "&#FFD94D★ Palier %tier% &8(&#FF5C5CVerrouillé&8)"
+        lore:
+          - ""
+          - "&#B376E5Récompenses :"
+          - "%premium-rewards%"
+          - ""
+          - "&#B376E5Prochain palier &8► &f%current_bp_xp%&7/%required_bp_xp%"
+      claimed:
+        item: itemsadder:influitems__chest_checkmark
+        name: "&#FFD94D★ &7&o&mPalier %tier% (débloqué)"
+        lore:
+          - ""
+          - "&#B376E5Récompenses :"
+          - "%claimed-premium-rewards%"
+
+    custom-slots:
+      - item: itemsadder:influitems__btn_back
+        name: "&r&7%img_left_click% &#FFD94DRetour à l'accueil"
+        lore: []
+        left-click:
+          - "menu"
+        row: 5
+        column: 1
+      - item: enchanted_book
+        name: "&#FFD94DComment ça marche ?"
+        lore:
+          - ""
+          - "&#B376E5Ligne 1 &8: &#FFD94DPass Standard"
+          - "&#B376E5Ligne 3 &8: &#FFD94DPass Prestige"
+          - ""
+          - "&#B376E5Clique sur un palier &#2ECF7Bdisponible"
+          - "&#B376E5pour réclamer ta récompense !"
+        row: 5
+        column: 5
+      - item: book
+        name: "&r&7%img_left_click% &#FFD94DMissions"
+        lore:
+          - ""
+          - "&#B376E5Voir les missions hebdomadaires"
+          - "&#B376E5et les missions quotidiennes."
+        left-click:
+          - "ecobattlepass quests pass"
+        row: 5
+        column: 9
+
+# Missions : quotidiennes + semaines 1 à 4
+categories-gui:
+  title: "&#FFD94DPass &8► &#B376E5Missions"
+  mask:
+    materials:
+      - air
+    pattern:
+      - "000000000"
+      - "00ccccc00"
+      - "000000000"
+      - "000000000"
+
+  buttons:
+    next-page:
+      item:
+        active: itemsadder:influitems__btn_next name:"&r&7%img_left_click% &#FFD94DPage suivante"
+        inactive: air
+      lore:
+        active: []
+        inactive: []
+      location:
+        row: 4
+        column: 6
+    prev-page:
+      item:
+        active: itemsadder:influitems__btn_prev name:"&r&7%img_left_click% &#FFD94DPage précédente"
+        inactive: air
+      lore:
+        active: []
+        inactive: []
+      location:
+        row: 4
+        column: 4
+    close:
+      enabled: false
+      item: barrier
+      name: "&cFermer"
+      location:
+        row: 4
+        column: 5
+
+    custom-slots:
+      - item: itemsadder:influitems__btn_back
+        name: "&r&7%img_left_click% &#FFD94DRetour à l'accueil"
+        lore: []
+        left-click:
+          - "pass tiers"
+        row: 4
+        column: 1
+
+# Liste des missions d'une catégorie (une semaine ou les quotidiennes)
+quests-gui:
+  title: "%category%"
+  mask:
+    materials:
+      - air
+    pattern:
+      - "000000000"
+      - "00qqqqq00"
+      - "00qqqqq00"
+      - "000000000"
+      - "000000000"
+
+  buttons:
+    next-page:
+      item:
+        active: itemsadder:influitems__btn_next name:"&r&7%img_left_click% &#FFD94DPage suivante"
+        inactive: air
+      lore:
+        active: []
+        inactive: []
+      location:
+        row: 5
+        column: 6
+    prev-page:
+      item:
+        active: itemsadder:influitems__btn_prev name:"&r&7%img_left_click% &#FFD94DPage précédente"
+        inactive: air
+      lore:
+        active: []
+        inactive: []
+      location:
+        row: 5
+        column: 4
+    close:
+      enabled: false
+      item: barrier
+      name: "&cFermer"
+      location:
+        row: 5
+        column: 5
+
+    custom-slots:
+      - item: itemsadder:influitems__btn_back
+        name: "&r&7%img_left_click% &#FFD94DRetour aux missions"
+        lore: []
+        left-click:
+          - "ecobattlepass quests pass"
+        row: 5
+        column: 1
+      - item: book
+        name: "&#FFD94DComment gagner des points ?"
+        lore:
+          - ""
+          - "&#B376E5Complète ces missions pour gagner"
+          - "&#B376E5des &fpoints &#B376E5et monter en palier."
+          - ""
+          - "&#B376E5Les récompenses t'attendent dans"
+          - "&#B376E5le menu &f/pass tiers&#B376E5."
+          - ""
+          - "&#B376E5Les missions marquées &#FFD94D★ &#B376E5sont"
+          - "&#B376E5exclusives aux joueurs &#FFD94DPass Prestige"
+        row: 5
+        column: 5
+
+# Icône d'une mission
+quests-icon:
+  timer-format:
+    start: "&#B376E5Débute dans %time%"
+    end: "&#B376E5Se termine dans %time%"
+    reset: "&#B376E5Renouvellement dans %time%"
+    none: "&#B376E5Sans limite de temps"
+  tasks-format:
+    - "%task_lore%"
+  tasks-separator: []
+  name: "%quest_name%"
+  lore:
+    - "%quest_tasks%"
+    - "%quest_timer%"
+
+sound:
+  tier-up:
+    enabled: true
+    sound: entity.player.levelup
+    volume: 1
+    pitch: 1
+  reward-claim:
+    enabled: true
+    sound: entity.experience_orb.pickup
+    volume: 1
+    pitch: 1
+  reward-locked:
+    enabled: true
+    sound: entity.villager.no
+    volume: 1
+    pitch: 1
+  premium-required:
+    enabled: true
+    sound: entity.villager.no
+    volume: 1
+    pitch: 1
+  premium-unlocked:
+    enabled: true
+    sound: ui_toast_challenge_complete
+    volume: 1
+    pitch: 1
+  quest-complete:
+    enabled: true
+    sound: entity.player.levelup
+    volume: 1
+    pitch: 1.2
+  gui-click-sound:
+    enabled: true
+    sound: ui_button_click
+    volume: 1
+    pitch: 1
+  page-turn:
+    enabled: true
+    sound: ui_button_click
+    volume: 1
+    pitch: 1

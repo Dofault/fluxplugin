@@ -1,0 +1,14 @@
+{
+ "layers": {
+  "humanoid": [
+   {
+    "texture": "influoutils:virale"
+   }
+  ],
+  "humanoid_leggings": [
+   {
+    "texture": "influoutils:virale"
+   }
+  ]
+ }
+}
