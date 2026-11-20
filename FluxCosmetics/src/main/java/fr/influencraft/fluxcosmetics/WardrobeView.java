@@ -28,11 +28,13 @@ import org.bukkit.util.Vector;
  *   the outfit he tries on).</li>
  *   <li>The <b>camera is himself</b>: a client looking through another entity draws no hotbar (26.2), and his hotbar
  *   is the wardrobe's menu. He flies, invisible, unable to move by himself (walk and fly speed 0), and is put back on
- *   a sphere around the mannequin, where his own view direction looks right at it: his mouse turns the camera around
- *   himself and nothing has to turn his head. He is moved as soon as his mouse moves, from the network thread, by
+ *   a sphere around the mannequin, where his own view direction looks right at it. The left and right keys turn the
+ *   camera around himself (his view is turned with it, {@link Camera#turn}), the mouse only raises or lowers it: its
+ *   sideways moves are turned back at once. He is moved as soon as his mouse moves, from the network thread, by
  *   {@link Camera#moveSelf}, which never touches his rotation (a server teleport resets it and makes the server deaf
  *   to his mouse until his client answers: the camera did not turn at all, 2026-11-20).</li>
- *   <li>While <b>slot 1</b> is held the mouse moves the camera, forward and backward bring it closer or farther. Any
+ *   <li>While <b>slot 1</b> is held the keys and the mouse move the camera, forward and backward bring it closer or
+ *   farther. Any
  *   other slot holds the camera still: his head is turned back to it as soon as his mouse moves
  *   ({@link Camera#turns}, without a packet adapter at the next tick).</li>
  *   <li>The camera never goes through blocks: it comes closer when something stands between it and the mannequin.</li>
@@ -73,8 +75,12 @@ final class WardrobeView {
     private boolean allowFlight, flying, madeInvisible;
     private float walkSpeed, flySpeed;
 
-    /** Where the camera stands around the target: the view direction of the player (yaw, pitch) and its distance. */
-    private float yaw, pitch;
+    /**
+     * Where the camera stands around the target: the view direction of the player (yaw, pitch) and its distance. The
+     * yaw belongs to the left and right keys (read by the network thread), the pitch to his mouse.
+     */
+    private volatile float yaw;
+    private float pitch;
     private double zoom;
     /** Distance the camera really stands at (zoom, closer when a block is in the way), read by the network thread. */
     private volatile double reach;
@@ -172,17 +178,20 @@ final class WardrobeView {
         Sidebar.hide(player, true);
         Camera.turns(player, (p, y, x) -> {
             // his client answers each move with his rotation, unchanged: not his mouse (that answer looped forever)
-            boolean turned = Math.abs(wrap(y - mouseYaw)) > 0.01f || Math.abs(x - mousePitch) > 0.01f;
+            boolean raised = Math.abs(x - mousePitch) > 0.01f;
             mouseYaw = y;
             mousePitch = x;
             if (orbiting) {
-                if (!turned) return;
+                float camYaw = yaw;
+                // sideways belongs to the keys: his view goes back to the camera's, his pitch untouched
+                if (Math.abs(wrap(y - camYaw)) > SLACK) Camera.turn(p, camYaw, false, 0, true);
+                if (!raised) return;
                 float clamped = Math.clamp(x, settings.minPitch(), settings.maxPitch());
                 if (clamped != x) Camera.turn(p, 0, true, clamped, false);
                 long now = System.nanoTime();
                 if (now - lastMove < MOVE_GAP_NANOS) return;
                 lastMove = now;
-                Vector f = feet(y, clamped, reach);
+                Vector f = feet(camYaw, clamped, reach);
                 Camera.moveSelf(p, f.getX(), f.getY(), f.getZ());
                 return;
             }
@@ -223,10 +232,14 @@ final class WardrobeView {
             return;
         }
         if (orbiting) {
-            yaw = mouseYaw;
-            float x = mousePitch;
-            pitch = Math.clamp(x, settings.minPitch(), settings.maxPitch());
+            pitch = Math.clamp(mousePitch, settings.minPitch(), settings.maxPitch());
             var input = player.getCurrentInput();
+            // left (Q on AZERTY) takes the camera to its left around him: its view turns right, the yaw grows
+            int turn = (input.isLeft() ? 1 : 0) - (input.isRight() ? 1 : 0);
+            if (turn != 0) {
+                yaw = wrap(yaw + turn * settings.turnSpeed());
+                Camera.turn(player, yaw, false, 0, true);
+            }
             if (input.isForward() != input.isBackward()) {
                 double step = input.isForward() ? -settings.zoomSpeed() : settings.zoomSpeed();
                 zoom = Math.clamp(zoom + step, settings.minDistance(), settings.maxDistance());

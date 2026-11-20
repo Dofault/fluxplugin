@@ -13,6 +13,8 @@ camera:
   max-distance: 6.0
   # Blocks gained or lost per tick while the forward or backward key is held.
   zoom-speed: 0.12
+  # Degrees the camera turns around him per tick while the left or right key is held (3 = 60 degrees a second).
+  turn-speed: 3
   # Highest look down (positive) and look up (negative) allowed.
   max-pitch: 70
   min-pitch: -25

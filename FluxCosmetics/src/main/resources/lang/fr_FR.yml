@@ -6,12 +6,12 @@ already: "&#FF5C5CTu es déjà dans la garde-robe."
 reloaded: "&#2ECF7BFluxCosmetics rechargé."
 usage: "!&#FF5C5C/%flux_cmd_fluxcosmetics_tenue% [reload]"
 # barre d'action, case 1 tenue
-hint-camera: "&7Souris : &ftourner autour &8· &7Avancer / reculer : &fzoom &8· &7S'accroupir : &fsortir"
+hint-camera: "&7Gauche / droite : &ftourner autour &8· &7Souris : &fmonter / descendre &8· &7Avancer / reculer : &fzoom &8· &7S'accroupir : &fsortir"
 # barre d'action, autre case tenue
 hint-still: "&7Caméra immobile &8· &7Case 1 : &fla bouger &8· &7S'accroupir : &fsortir"
 items:
   camera-name: "Caméra"
-  camera-description: "Garde cette case en main et bouge la souris pour tourner autour de toi. Avancer et reculer rapprochent ou éloignent la caméra."
+  camera-description: "Garde cette case en main : gauche et droite font tourner la caméra autour de toi, la souris la monte ou la descend, avancer et reculer la rapprochent ou l'éloignent."
   leave-name: "Sortir"
   leave-description: "Retour dans tes yeux, là où tu étais."
   leave-click: "Sortir"
