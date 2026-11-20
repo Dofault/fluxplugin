@@ -178,7 +178,7 @@ items:
 
 
   cosmetiques:
-    material: "itemsadder:fluxui:btn_shirt_purple"
+    material: "itemsadder:fluxcosmetics:penderie"
     name: "&#FFD94DCosmétiques"
     slots: [24]
     lore:

@@ -80,7 +80,7 @@ items:
       left: ["[close]"]
 
   icone:
-    material: "itemsadder:fluxui:btn_shirt_purple"
+    material: "itemsadder:fluxcosmetics:penderie"
     name: "Cosmétiques"
     slots: [62]
     lore:
