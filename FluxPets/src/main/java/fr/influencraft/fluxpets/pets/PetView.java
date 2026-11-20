@@ -74,7 +74,7 @@ public final class PetView {
 
     // ------------------------------------------------------------------ liste
 
-    /** Familiers adoptés du filtre en cours, du plus haut niveau au plus bas. */
+    /** Familiers adoptés du filtre en cours (tous pour un opérateur), du plus haut niveau au plus bas. */
     public static List<Pet> list(Player player) {
         String filter = filter(player);
         int tick = org.bukkit.Bukkit.getCurrentTick();
@@ -84,7 +84,7 @@ public final class PetView {
         }
         List<Pet> pets = new ArrayList<>();
         for (Pet pet : Pets.values()) {
-            if (PetData.has(player, pet) && (filter == null || filterKeys(pet).contains(filter))) {
+            if (shown(player, pet) && (filter == null || filterKeys(pet).contains(filter))) {
                 pets.add(pet);
             }
         }
@@ -92,6 +92,16 @@ public final class PetView {
         List<Pet> result = List.copyOf(pets);
         CACHE.put(player.getUniqueId(), new Cached(tick, filter, result));
         return result;
+    }
+
+    /** Pets a player sees in his menu: the ones he adopted; every enabled pet for an operator (testing). */
+    static boolean shown(Player player, Pet pet) {
+        return PetData.has(player, pet) || (player.isOp() && enabled(pet));
+    }
+
+    private static boolean enabled(Pet pet) {
+        CardRegistry.PetEntry entry = Pets.plugin().registry().pet(pet.id());
+        return entry != null && entry.enabled();
     }
 
     public static int pages(Player player) {
@@ -172,7 +182,7 @@ public final class PetView {
         Map<Integer, String[]> rarities = new TreeMap<>();
         for (CardRegistry.Card card : registry.cards()) {
             Pet pet = Pets.get(card.pet());
-            if (pet == null || !PetData.has(player, pet)) {
+            if (pet == null || !shown(player, pet)) {
                 continue;
             }
             for (String key : filterKeys(pet)) {

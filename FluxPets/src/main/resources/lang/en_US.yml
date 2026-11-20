@@ -173,6 +173,12 @@ menu:
   locked: "Locked"
   cards: "Cards"
   level-name: "Level %level%"
+  level: "Level"
+  not-adopted: "Not adopted yet."
+  remove: "&#FF5C5CRemove from my collection"
+  remove-description: "Operators only: takes this pet out of your collection, its level is lost."
+  remove-action: "Remove"
+  remove-confirm: "Click again to remove this pet."
 booster-format:
   open: 'Open'
   open-all: 'Open the whole stack'

@@ -121,6 +121,22 @@ public final class PetHook {
                 Pet pet = available() ? Pets.get(id) : null;
                 return pet == null ? null : pet.name();
             }
+
+            public List<String> ofJob(String job) {
+                FluxPets plugin = FluxPets.get();
+                if (plugin == null || !available()) return List.of();
+                String series = plugin.getConfig().getString("job-series." + job.toLowerCase(java.util.Locale.ROOT));
+                if (series == null) return List.of();
+                return plugin.registry().cards().stream()
+                        .filter(c -> c.pet() != null && series.equalsIgnoreCase(c.series()) && Pets.get(c.pet()) != null)
+                        .sorted(java.util.Comparator.comparingInt(c -> c.rarity().order()))
+                        .map(CardRegistry.Card::pet).toList();
+            }
+
+            public fr.influencraft.flux.api.list.ListEntry button(Player viewer, String id) {
+                Pet pet = available() ? Pets.get(id) : null;
+                return pet == null ? null : fr.influencraft.fluxpets.pets.PetMenuLists.buttonOf(viewer, pet);
+            }
         });
     }
 

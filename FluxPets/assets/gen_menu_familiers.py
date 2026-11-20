@@ -8,7 +8,8 @@
   les familiers montent avec leurs cartes, débloqués / existants, actifs).
   Rangées 2 à 4 : familiers adoptés (7 x 3 = 21 par page, plus haut niveau d'abord, filtre en cours).
   Rangée 5 : filtre (46), précédent (48), tout ranger (49), suivant (50), cacher / montrer (52).
-- familier.yml : progression d'un familier (celui choisi par /pets select) : sa carte (4), ses 10 niveaux
+- familier.yml : progression d'un familier (celui choisi par /pets select) : sa carte et sa fiche (4, liste
+  familier_portrait), le bouton caché des opérateurs (53, familier_remove), ses 10 niveaux
   (rangées 2 et 3, colonnes 2 à 6 : débloqué, en cours, verrouillé, avec leurs effets), retour (49).
 Données : listes construites par FluxPets (PetMenuLists, 2026-11-13) : familiers_slots, familiers_view (pages de Flux),
 familier_levels ; quelques placeholders %influpet_...% (compteurs, filtre, carte du familier choisi) ; actions : /pets
@@ -131,17 +132,26 @@ open(os.path.join(OUT, "familiers.yml"), "w", encoding="utf-8").write("\n".join(
 p = "influpet_selected"
 L = entete("menu_familier", "Progression d'un familier (choisi par /pets select), ouverte depuis le menu des familiers.")
 L += ["items:", ""]
-# Exception : ici, la carte du familier plutôt que son portrait (demande du 2026-10-15).
-bouton(L, "portrait", f"itemsadder:fluxpet:carte_%{p}%", f"%{p}_name% {OR}Niv. %{p}_level%", [4],
-       [f"@desc %{p}_description%",
-        f"@kv Niveau | %{p}_level%{VIOLET}/&f%{p}_max_level%",
-        f"@kv Progression | %{p}_progress% %"])
 L[L.index("items:")] = """lists:
   # niveaux du familier choisi (débloqué, en cours, verrouillé, avec leurs effets), construits par FluxPets
   familier_levels:
     slots: %s
     item:
       material: entry
+  # la carte du familier (et non son portrait, demande du 2026-10-15) avec sa fiche complète : description,
+  # effets, niveau, progression (FluxPets, la même fiche que dans le menu des familiers)
+  familier_portrait:
+    slots: 4
+    item:
+      material: entry
+  # opérateurs seulement (rien pour les autres joueurs) : retirer ce familier de sa propre collection, deux clics
+  familier_remove:
+    slots: 53
+    item:
+      material: entry
+      confirm: "%%entry_confirm%%"
+      actions:
+        left: ["[player] pets remove %%entry_id%%", "[menu] familiers"]
 
 items:""" % ", ".join(map(str, NIVEAUX))
 bouton(L, "retour", "itemsadder:influitems:btn_back", OR + "Retour", [49],

@@ -50,6 +50,8 @@ menu:
   full: "Plus de place"
   full-description: "Tu exerces déjà le maximum de métiers pour ton rang."
   full-hint: "Monte en rang pour en exercer plus."
+  no-pets: "Pas de familier"
+  no-pets-description: "Ce métier n'a pas encore de familiers."
   reward-money: "&#2ECF7B+%amount%<base> en atteignant ce niveau"
   reward-booster: "&#2ECF7B+1 <base>Booster %job%"
   reward-rates: "Gains par action plus élevés"

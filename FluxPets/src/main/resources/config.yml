@@ -130,3 +130,7 @@ career-catch-up:
 # Free pet of a newcomer: the pet of his first job (job id: pet id), given by `/fluxpets pet starter <player>`
 # (run once by the tutorial when he joins his first job). Empty: no free pet.
 starter-pets: {}
+
+# Card series of each job (job id: series name, as written in content/cards.yml): the pets of that series are the
+# job's pets, shown by the Careers menu (Flux's Companions.ofJob). Empty: no job shows pets.
+job-series: {}

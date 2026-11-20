@@ -50,6 +50,8 @@ menu:
   full: "No room left"
   full-description: "You already work the most jobs your rank allows."
   full-hint: "Rank up to work more jobs."
+  no-pets: "No pet"
+  no-pets-description: "This job has no pets yet."
   reward-money: "&#2ECF7B+%amount%<base> when reaching this level"
   reward-booster: "&#2ECF7B+1 <base>%job% booster"
   reward-rates: "Higher earnings per action"

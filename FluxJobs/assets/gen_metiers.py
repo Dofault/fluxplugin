@@ -1,33 +1,31 @@
 #!/usr/bin/env python3
 """Génère le menu Carrières de Flux (Labs) : menus/metiers.yml et menus/_pages/metiers.yml.
 
-    python3 gen_metiers.py <plugins/FluxJobs/menus> <FluxPets/content/cards.yml>
+    python3 gen_metiers.py <plugins/FluxJobs/menus>
 
 Thème vanilla (2026-10-29) : fond fluxui:bg_metiers (Flux/assets/vanilla/gen_ui.py), le reste en widgets de Flux.
   rangée 0                   : retour (0), nom du métier dans le champ sombre (widget text), rejoindre /
                                quitter (7, quitter = double clic), info (8)
-  cases 9 / 18 / 27 / 36     : les 4 familiers FluxPets du métier, en portrait
-  case 45                    : son légendaire de boss (familier du boss de son donjon, 2026-11-14)
+  cases 9 / 18 / 27 / 36 / 45 : les familiers du métier puis son légendaire de boss, liste metiers_familiers :
+                               les boutons mêmes du menu des familiers (Companions.button de Flux, 2026-11-20)
   cadre                      : illustration du métier choisi (influmetier:metier_<id>, widget image)
   cases 15-17 ... 42-44      : les 12 métiers (plus de case éclairée depuis le 2026-11-15)
   rangée 5 (46-53)           : barre d'XP vers le niveau suivant, « Niv. N » dessus, XP au survol (widget bar)
   inventaire 54-80           : actions rémunérées (27 par page)
   barre d'action 81 / 89     : pagination des actions (widget pager : rien quand tout tient sur une page)
-Une page par métier (metiers_<id>) : familiers et widgets du métier. Grille, actions et rejoindre / quitter sont
-des listes de Flux construites par FluxJobs (JobMenu). À relancer après un changement de cartes ou de métiers
+Une page par métier (metiers_<id>) : widgets du métier. Grille, actions et rejoindre / quitter sont
+des listes de Flux construites par FluxJobs (JobMenu). À relancer après un changement de métiers
 (liste METIERS), puis /fluxmenu reload.
 """
 import os
 import sys
 
-import yaml
 
 # gen_pages (page helpers of the main menu) stays with Flux
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "Flux", "assets"))
-from gen_pages import item, page, q, CLIC_G, OR, VIOLET, ROUGE  # noqa: E402
+from gen_pages import item, page, q, CLIC_G, OR  # noqa: E402
 
 FOND = ":offset_-8::bg_metiers:"
-VERT = "&#2ECF7B"
 CARTES = [9, 18, 27, 36, 45]
 METIER_CASES = [15, 16, 17, 24, 25, 26, 33, 34, 35, 42, 43, 44]
 RETOUR, ADHESION, INFO = 0, 7, 8
@@ -38,8 +36,6 @@ PREV, NEXT = 81, 89                 # pagination, sur la barre d'action
 BARRE = {"x": 33, "y": 110, "width": 138, "survol": "46-53", "couleur": "purple"}
 NOM = {"x": 77, "y": 23}            # centre du champ sombre de la rangée 0
 PHOTO_X = 33
-RARETES = [("simple", "Commune"), ("unique", "Rare"), ("elite", "Élite"), ("ultimate", "Ultime"),
-           ("legendary", "Légendaire")]
 
 # (id EcoJobs, nom, objet, série FluxPets, description courte) ; une rangée par famille.
 METIERS = [
@@ -56,36 +52,6 @@ METIERS = [
     ("defenseur", "Défenseur", "IRON_SWORD", "Défenseur", ["Élimine les créatures", "hostiles."]),
     ("batisseur", "Bâtisseur", "BRICKS", "Bâtisseur", ["Pose des blocs", "de construction."]),
 ]
-
-
-def cartes(serie, toutes):
-    """Les 5 familiers du métier (cases 9, 18, 27, 36, 45), de commune à ultime puis son légendaire de boss."""
-    its = []
-    if serie is None:
-        for k, slot in enumerate(CARTES):
-            its.append(item(f"carte{k + 1}", "itemsadder:influitems:lock", "Pas de carte", slot,
-                            ["Ce métier n'a pas encore", "de série de cartes."]))
-        return its
-    par_rarete = {c["rarity"]: (cid, c) for cid, c in toutes.items() if c.get("series") == serie}
-    for k, (rarete, libelle) in enumerate(RARETES):
-        if rarete not in par_rarete:
-            continue
-        cid, c = par_rarete[rarete]
-        desc = [l for l in c.get("lore") or [] if l and "Série" not in l and "Légendaire de boss" not in l]
-        if rarete == "legendary":
-            desc = desc + ["", VERT + "Battu dans le donjon du métier :", VERT + "il devient ton familier."]
-        pet = c.get("pet") or cid
-        nom = c.get("name", cid)
-        # Portrait du familier (influportraits, scripts/influcard/portraits.py) plutôt que sa carte (2026-10-15).
-        portrait = "itemsadder:influportraits:portrait_" + pet
-        its.append(item(f"carte{k + 1}_obtenue", portrait, "", CARTES[k],
-                        [f"Rareté : &r&f%img_{rarete}%"] + desc +
-                        [VERT + f"Familier niveau &f%influpet_{pet}_level%" + VERT + "."], priorite=1, glow=True,
-                        conditions=[f"placeholder: %influpet_{pet}_level% >= 1"]).replace(f'name: "{OR}"', f"name: {q(nom)}"))
-        its.append(item(f"carte{k + 1}", portrait, "", CARTES[k],
-                        [f"Rareté : &r&f%img_{rarete}%"] + desc + [ROUGE + "Pas encore adopté."],
-                        priorite=2).replace(f'name: "{OR}"', f"name: {q(nom)}"))
-    return its
 
 
 def widgets(jid, nom, case):
@@ -123,8 +89,7 @@ def liste(lid, slots, actions=None, extra=()):
 
 
 def main():
-    menus, cards_yml = sys.argv[1:3]
-    toutes = yaml.safe_load(open(cards_yml, encoding="utf-8"))["cards"]
+    menus = sys.argv[1]
     base = [
         item("retour", "itemsadder:fluxui:btn_back_orange", "Retour", RETOUR, ["Revenir au menu."],
              [CLIC_G + "Menu principal"], {"left": ["[menu] main"]}),
@@ -137,6 +102,12 @@ def main():
               ["[fluxjob] %entry_id% reset", "[page-swap] metiers_%entry_id%", "[sound] @page"]),
         liste("metiers_actions", ACTIONS),
         liste("metiers_adhesion", [ADHESION], ["[fluxjob] %entry_id% adhesion"], ['confirm: "%entry_confirm%"']),
+        # les familiers du métier : le bouton même du menu des familiers (fiche, effets, clics), donné par FluxPets
+        # à travers Flux (Companions.button) ; quel familier va à quel métier : job-series de FluxPets/config.yml
+        liste("metiers_familiers", CARTES) + """
+      actions:
+        left: ["%entry_left%", "%entry_left2%", "[sound] @click"]
+        right: ["%entry_right%", "%entry_right2%"]""",
     ]
     corps = "\n\n".join("\n".join(l[4:] for l in b.split("\n")) for b in base)
     with open(os.path.join(menus, "metiers.yml"), "w", encoding="utf-8") as f:
@@ -180,7 +151,7 @@ items:
 """)
     pages = []
     for k, (jid, nom, objet, serie, desc) in enumerate(METIERS):
-        bloc = page(f"metiers_{jid}", cartes(serie, toutes), {}, q(FOND), animation=False)
+        bloc = page(f"metiers_{jid}", [], {}, q(FOND), animation=False)
         pages.append(bloc.rstrip("\n") + "\n" + widgets(jid, nom, METIER_CASES[k]) + "\n")
     os.makedirs(os.path.join(menus, "_pages"), exist_ok=True)
     with open(os.path.join(menus, "_pages", "metiers.yml"), "w", encoding="utf-8") as f:

@@ -52,6 +52,42 @@ public final class Companions {
         default String name(String pet) {
             return null;
         }
+
+        /** Ids of the pets tied to this job, from the most common to the rarest. */
+        default List<String> ofJob(String job) {
+            return List.of();
+        }
+
+        /**
+         * The pet as a menu button for this viewer, the same in every menu: its item (sheet, effects, state) and its
+         * click actions in {@code left}, {@code left2}, {@code right}, {@code right2} (empty when it has none, as for
+         * a pet he has not adopted). Null when unknown.
+         */
+        default fr.influencraft.flux.api.list.ListEntry button(Player viewer, String pet) {
+            return null;
+        }
+    }
+
+    private static final List<java.util.function.Consumer<Player>> LISTENERS = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+    /** Called when a player's pets changed (adopted, activated, level...): a menu showing them drops its cache. */
+    public static void onChange(java.util.function.Consumer<Player> listener) {
+        LISTENERS.add(listener);
+    }
+
+    /** The provider tells a player's pets changed. */
+    public static void changed(Player player) {
+        for (java.util.function.Consumer<Player> l : LISTENERS) l.accept(player);
+    }
+
+    public static List<String> ofJob(String job) {
+        Provider p = provider;
+        return p == null ? List.of() : p.ofJob(job);
+    }
+
+    public static fr.influencraft.flux.api.list.ListEntry button(Player viewer, String pet) {
+        Provider p = provider;
+        return p == null ? null : p.button(viewer, pet);
     }
 
     private static volatile Provider provider;

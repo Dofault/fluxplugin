@@ -89,6 +89,15 @@ public final class PetCommands implements TabExecutor {
                     PetView.select(player, pet);
                 }
             }
+            case "remove" -> {
+                // operators only (hidden button of the progress menu): out of their own collection, to test adoption again
+                Pet pet = args.length > 1 ? Pets.get(args[1]) : null;
+                if (pet != null && player.isOp() && PetData.has(player, pet)) {
+                    PetData.take(player, pet);
+                    PetView.invalidate(player);
+                    PetMenuLists.invalidate(player);
+                }
+            }
             case "view" -> PetView.reset(player);
             case "visibility" -> PetData.setHidden(player, !PetData.hidden(player));
             default -> openMenu(player);

@@ -45,7 +45,10 @@ import java.util.concurrent.ConcurrentHashMap;
 final class JobMenu implements Listener {
 
     static final String GRID = "metiers_grille", LEVELS = "metiers_niveaux", PREV = "metiers_niveaux_prec",
-            NEXT = "metiers_niveaux_suiv", ACTIONS = "metiers_actions", MEMBERSHIP = "metiers_adhesion";
+            NEXT = "metiers_niveaux_suiv", ACTIONS = "metiers_actions", MEMBERSHIP = "metiers_adhesion",
+            PETS = "metiers_familiers";
+    /** Pet slots of a job page: four pets and the legendary of its dungeon boss. */
+    private static final int PET_SLOTS = 5;
     private static final int WINDOW = 7;
     /** Digit "chiffre_<n>": 5 px + shadow = 6 wide, advance 7. */
     private static final int DIGIT_ADVANCE = 7;
@@ -102,6 +105,8 @@ final class JobMenu implements Listener {
         Lists.register(plugin, NEXT, q -> menu.arrow(q.viewer(), true));
         Lists.register(plugin, ACTIONS, q -> menu.actions(q.viewer()));
         Lists.register(plugin, MEMBERSHIP, q -> menu.membership(q.viewer()));
+        Lists.register(plugin, PETS, q -> menu.pets(q.viewer()));
+        fr.influencraft.flux.api.pets.Companions.onChange(player -> Lists.invalidate(player, PETS));
         Bukkit.getPluginManager().registerEvents(menu, plugin);
     }
 
@@ -126,6 +131,7 @@ final class JobMenu implements Listener {
                 selected.put(player.getUniqueId(), job);
                 offsets.computeIfAbsent(player.getUniqueId(), k -> new ConcurrentHashMap<>()).remove(job);
                 Lists.reset(player, ACTIONS);
+                Lists.invalidate(player, PETS);
             }
             case "prev", "next" -> shift(player, job, how.equals("prev") ? -WINDOW : WINDOW);
             case "adhesion" -> {
@@ -252,6 +258,27 @@ final class JobMenu implements Listener {
             for (var line : fr.influencraft.flux.api.jobs.JobDrops.lines(player, job, a)) lore.kv(line.key(), line.value());
             JobActionLook.Look look = JobActionLook.of(player, a);
             out.add(ListEntry.of(String.valueOf(i++)).item(Items.dress(look.icon(), look.name(), lore.build(), player)));
+        }
+        return out;
+    }
+
+    /**
+     * The pets of the selected job, each the very button of the pets menu (same sheet, effects and clicks, given by the
+     * pet plugin through Flux); locks when the job has none.
+     */
+    private List<ListEntry> pets(Player player) {
+        String job = job(player);
+        List<ListEntry> out = new ArrayList<>();
+        if (job == null) return out;
+        for (String id : fr.influencraft.flux.api.pets.Companions.ofJob(job)) {
+            ListEntry entry = fr.influencraft.flux.api.pets.Companions.button(player, id);
+            if (entry != null && out.size() < PET_SLOTS) out.add(entry);
+        }
+        if (!out.isEmpty()) return out;
+        ItemStack lock = item("itemsadder:influitems:lock", Lang.t("menu.no-pets"),
+                Lore.create().description(Lang.t("menu.no-pets-description")).build(), player);
+        for (int n = 0; n < PET_SLOTS; n++) {
+            out.add(ListEntry.of("none" + n).item(lock).set("left", "").set("left2", "").set("right", "").set("right2", ""));
         }
         return out;
     }
