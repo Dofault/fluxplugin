@@ -1,17 +1,15 @@
 prefix: "&#B376E5ᴡᴀʀᴅʀᴏʙᴇ &8▸ "
-opened: "&7You look at yourself from outside. &fSneak&7 to leave."
+opened: "&7You look at yourself from outside. &fLeft click&7 or &fsneak&7 to leave."
 closed: "&7Wardrobe closed."
 busy: "&#FF5C5CThe wardrobe cannot open now."
 already: "&#FF5C5CYou are already in the wardrobe."
 reloaded: "&#2ECF7BFluxCosmetics reloaded."
 usage: "!&#FF5C5C/%flux_cmd_fluxcosmetics_tenue% [reload]"
-# action bar, slot 1 held
-hint-camera: "&7Left / right: &fturn around &8· &7Mouse: &fup / down &8· &7Forward / backward: &fzoom &8· &7Sneak: &fleave"
-# action bar, another slot held
-hint-still: "&7Camera held still &8· &7Slot 1: &fmove it &8· &7Sneak: &fleave"
+# action bar in the wardrobe
+hint: "&7Left / right: &fturn &8· &7Forward / backward: &fup / down &8· &7Wheel: &fzoom"
+menu-soon: "&7Choosing cosmetics is coming soon."
 items:
-  camera-name: "Camera"
-  camera-description: "Hold this slot: left and right turn the camera around yourself, the mouse raises or lowers it, forward and backward bring it closer or farther."
-  leave-name: "Leave"
-  leave-description: "Back in your own eyes, where you stood."
-  leave-click: "Leave"
+  camera-name: "Spyglass"
+  camera-description: "Left and right turn the camera around yourself, forward and backward raise or lower it, the wheel brings it closer or farther."
+  camera-left: "Leave"
+  camera-right: "Choose a cosmetic"

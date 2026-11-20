@@ -19,7 +19,9 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.scheduler.BukkitTask;
+import io.papermc.paper.event.player.PrePlayerAttackEntityEvent;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,8 +30,9 @@ import java.util.UUID;
 
 /**
  * The wardrobe ({@code /tenue}): the players in it ({@link WardrobeView}), their tick, and what they may not do
- * meanwhile (his real items never move: the hotbar he sees is drawn by packets). Sneaking, the "leave" slot clicked,
- * {@code /tenue} again, a teleport by somebody else, death, world change or log out end it.
+ * meanwhile (his real items never move: the hotbar he sees is drawn by packets). The mouse wheel zooms, a right click
+ * opens the choice of cosmetics. A left click, sneaking, {@code /tenue} again, a teleport by somebody else, death,
+ * world change or log out end it.
  */
 final class Wardrobe implements Listener {
 
@@ -96,11 +99,17 @@ final class Wardrobe implements Listener {
 
     // ================================================================== controls
 
-    /** Slot 1 moves the camera, any other holds it still. */
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    /**
+     * The mouse wheel (or a number key) zooms: the slot change is refused, he keeps the middle slot, and the way it
+     * went (the short way round the nine slots) says closer or farther.
+     */
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onHeld(PlayerItemHeldEvent e) {
         WardrobeView view = view(e.getPlayer());
-        if (view != null) view.held(e.getNewSlot());
+        if (view == null) return;
+        e.setCancelled(true);
+        int step = Math.floorMod(e.getNewSlot() - e.getPreviousSlot(), 9);
+        view.wheel(step <= 4 ? step : step - 9);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -108,19 +117,33 @@ final class Wardrobe implements Listener {
         if (e.isSneaking() && active(e.getPlayer())) close(e.getPlayer(), true);
     }
 
+    /** Left click leaves, right click opens the choice of cosmetics; nothing else happens in the world. */
     @EventHandler(priority = EventPriority.LOWEST)
     public void onInteract(PlayerInteractEvent e) {
         Player p = e.getPlayer();
+        WardrobeView view = view(p);
+        if (view == null) return;
+        e.setCancelled(true);
+        if (e.getHand() != EquipmentSlot.HAND) return;
+        if (e.getAction().isLeftClick()) Bukkit.getScheduler().runTask(plugin, () -> close(p, true));
+        else if (e.getAction().isRightClick()) view.menu();
+    }
+
+    /** A left click on the mannequin (it is in front of him) is an attack, not an interaction: it leaves too. */
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onAttack(PrePlayerAttackEntityEvent e) {
+        Player p = e.getPlayer();
         if (!active(p)) return;
         e.setCancelled(true);
-        if (p.getInventory().getHeldItemSlot() == WardrobeView.LEAVE_SLOT) {
-            Bukkit.getScheduler().runTask(plugin, () -> close(p, true));
-        }
+        Bukkit.getScheduler().runTask(plugin, () -> close(p, true));
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onInteractEntity(PlayerInteractEntityEvent e) {
-        if (active(e.getPlayer())) e.setCancelled(true);
+        WardrobeView view = view(e.getPlayer());
+        if (view == null) return;
+        e.setCancelled(true);
+        if (e.getHand() == EquipmentSlot.HAND) view.menu();
     }
 
     @EventHandler(priority = EventPriority.LOWEST)

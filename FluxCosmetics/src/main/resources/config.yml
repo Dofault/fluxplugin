@@ -1,20 +1,22 @@
 # FluxCosmetics: cosmetics of the players.
 # The wardrobe (/tenue): the player leaves his body (a mannequin with his skin stays in his place) and becomes a camera
-# turning around it with his mouse, while the first slot of his hotbar is held.
-# Distances in blocks, angles in degrees, speeds in blocks per tick (20 ticks = 1 second).
+# around it. Left / right keys turn the camera around him, forward / backward raise or lower it, the mouse wheel zooms.
+# Distances in blocks, angles in degrees, speeds per tick (20 ticks = 1 second).
 
 language: ""
 
 camera:
   # Distance from the mannequin when the wardrobe opens.
   distance: 3.2
-  # Closest and farthest the camera can be brought (forward / backward keys). Set both to "distance" to turn zoom off.
+  # Closest and farthest the wheel can bring the camera.
   min-distance: 1.6
   max-distance: 6.0
-  # Blocks gained or lost per tick while the forward or backward key is held.
-  zoom-speed: 0.12
-  # Degrees the camera turns around him per tick while the left or right key is held (3 = 60 degrees a second).
+  # Blocks per notch of the mouse wheel.
+  zoom-step: 0.4
+  # Degrees the camera turns around him per tick while left or right is held (3 = 60 degrees a second).
   turn-speed: 3
+  # Degrees the camera rises or sinks per tick while forward or backward is held.
+  pitch-speed: 2
   # Highest look down (positive) and look up (negative) allowed.
   max-pitch: 70
   min-pitch: -25
@@ -24,7 +26,8 @@ camera:
   start-pitch: 12
 
 hotbar:
-  # Items shown in the hotbar meanwhile (packets only, his real items never move).
-  # Format of Flux items: a material, or itemsadder:<namespace>:<id>.
-  camera: SPYGLASS
-  leave: BARRIER
+  # The one item shown in the middle of the hotbar (packets only, his real items never move): a material, or
+  # itemsadder:<namespace>:<id>, and the model it is drawn with (empty = the item's own). Keep an item without a use of
+  # its own (a real spyglass would bring its scope up on the right click).
+  item: PAPER
+  model: "minecraft:spyglass"

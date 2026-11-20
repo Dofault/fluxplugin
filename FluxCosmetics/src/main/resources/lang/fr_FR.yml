@@ -1,17 +1,15 @@
 prefix: "&#B376E5ɢᴀʀᴅᴇ-ʀᴏʙᴇ &8▸ "
-opened: "&7Tu te vois de l'extérieur. &fAccroupis-toi&7 pour sortir."
+opened: "&7Tu te vois de l'extérieur. &fClic gauche&7 ou &fs'accroupir&7 pour sortir."
 closed: "&7Garde-robe fermée."
 busy: "&#FF5C5CLa garde-robe ne peut pas s'ouvrir maintenant."
 already: "&#FF5C5CTu es déjà dans la garde-robe."
 reloaded: "&#2ECF7BFluxCosmetics rechargé."
 usage: "!&#FF5C5C/%flux_cmd_fluxcosmetics_tenue% [reload]"
-# barre d'action, case 1 tenue
-hint-camera: "&7Gauche / droite : &ftourner autour &8· &7Souris : &fmonter / descendre &8· &7Avancer / reculer : &fzoom &8· &7S'accroupir : &fsortir"
-# barre d'action, autre case tenue
-hint-still: "&7Caméra immobile &8· &7Case 1 : &fla bouger &8· &7S'accroupir : &fsortir"
+# barre d'action pendant la garde-robe
+hint: "&7Gauche / droite : &ftourner &8· &7Avancer / reculer : &fmonter / descendre &8· &7Molette : &fzoom"
+menu-soon: "&7Le choix des cosmétiques arrive bientôt."
 items:
-  camera-name: "Caméra"
-  camera-description: "Garde cette case en main : gauche et droite font tourner la caméra autour de toi, la souris la monte ou la descend, avancer et reculer la rapprochent ou l'éloignent."
-  leave-name: "Sortir"
-  leave-description: "Retour dans tes yeux, là où tu étais."
-  leave-click: "Sortir"
+  camera-name: "Longue-vue"
+  camera-description: "Gauche et droite font tourner la caméra autour de toi, avancer et reculer la montent ou la descendent, la molette la rapproche ou l'éloigne."
+  camera-left: "Sortir"
+  camera-right: "Choisir un cosmétique"

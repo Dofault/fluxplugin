@@ -5,10 +5,15 @@ import fr.influencraft.flux.api.client.Hotbar;
 import fr.influencraft.flux.api.client.Sidebar;
 import fr.influencraft.flux.api.inventory.Items;
 import fr.influencraft.flux.api.inventory.Lore;
+import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ResolvableProfile;
+import net.kyori.adventure.key.Key;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.Mannequin;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.CreatureSpawnEvent;
@@ -17,6 +22,7 @@ import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.BoundingBox;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
@@ -27,40 +33,41 @@ import org.bukkit.util.Vector;
  *   <li>A <b>mannequin</b> with his skin and his equipment stays where he stood: what he looks at (later dressed in
  *   the outfit he tries on).</li>
  *   <li>The <b>camera is himself</b>: a client looking through another entity draws no hotbar (26.2), and his hotbar
- *   is the wardrobe's menu. He flies, invisible, unable to move by himself (walk and fly speed 0), and is put back on
- *   a sphere around the mannequin, where his own view direction looks right at it. The left and right keys turn the
- *   camera around himself (his view is turned with it, {@link Camera#turn}), the mouse only raises or lowers it: its
- *   sideways moves are turned back at once. He is moved as soon as his mouse moves, from the network thread, by
- *   {@link Camera#moveSelf}, which never touches his rotation (a server teleport resets it and makes the server deaf
- *   to his mouse until his client answers: the camera did not turn at all, 2026-11-20).</li>
- *   <li>While <b>slot 1</b> is held the keys and the mouse move the camera, forward and backward bring it closer or
- *   farther. Any
- *   other slot holds the camera still: his head is turned back to it as soon as his mouse moves
- *   ({@link Camera#turns}, without a packet adapter at the next tick).</li>
+ *   shows the wardrobe's item. He flies, invisible, shrunk (his body never touches a block where his eyes are free,
+ *   else the server refuses the move), unable to move by himself (walk and fly speed 0), on a sphere around the
+ *   mannequin where his view looks right at it.</li>
+ *   <li><b>Keys drive the camera</b>: left and right turn it around the mannequin, forward and backward raise or lower
+ *   it, the mouse wheel brings it closer or farther (his held slot is put back at once, {@link Wardrobe}). The mouse
+ *   does nothing: his view is turned back to the camera's as soon as it moves ({@link Camera#turns}).</li>
+ *   <li>He is moved by {@link Camera#moveSelf}, which never touches his rotation (a server teleport resets it and makes
+ *   the server deaf to his rotation until his client answers, 2026-11-20); his view is turned with the camera by
+ *   {@link Camera#turn}.</li>
  *   <li>The camera never goes through blocks: it comes closer when something stands between it and the mannequin.</li>
  *   <li>His client is told he plays in creative ({@link Hotbar#bars}): no life, food nor experience bars on the
  *   screen. The server never sees him in creative.</li>
  * </ul>
- * Other players no longer see him meanwhile (an invisible player still shows his armour): they see the mannequin.
+ * One item in his hotbar, in the middle: left click leaves, right click will open the choice of cosmetics. Other
+ * players no longer see him meanwhile (an invisible player still shows his armour): they see the mannequin.
  */
 final class WardrobeView {
 
-    /** Degrees his head may be off the still camera before it is turned back. */
+    /** The slot of the wardrobe's item: the middle of the hotbar. */
+    static final int SLOT = 4;
+
+    /** Degrees his view may be off the camera's before it is turned back. */
     private static final float SLACK = 0.5f;
     /** Room kept between the camera and a block in the way. */
     private static final double WALL_GAP = 0.3;
-    /**
-     * His size meanwhile: his body (1.8 blocks under his eyes at full size) would go into the floor or a wall where his
-     * eyes are free, and the server would refuse the move and put him back (kicked for too many packets, 2026-11-20).
-     */
+    /** Closest the camera comes to the mannequin, whatever stands in the way. */
+    private static final double MIN_REACH = 0.4;
+    /** His size meanwhile (1.8 blocks of body under his eyes at full size would go into the floor or a wall). */
     private static final double SCALE = 0.1;
     /** Eyes of a standing (flying) player at full size. */
     private static final double STANDING_EYE = 1.62;
-    /** Least time between two moves sent from his mouse; the tick sends the last one. */
-    private static final long MOVE_GAP_NANOS = 40_000_000L;
-
-    static final int CAMERA_SLOT = 0;
-    static final int LEAVE_SLOT = 8;
+    /** Share of the way to the wanted zoom made each tick: the wheel's notches glide instead of jumping. */
+    private static final double ZOOM_GLIDE = 0.35;
+    /** The shrink, a transient modifier: never saved, gone after a crash. */
+    private static final NamespacedKey SHRINK = new NamespacedKey("fluxcosmetics", "wardrobe");
 
     private final FluxCosmetics plugin;
     final Player player;
@@ -69,37 +76,18 @@ final class WardrobeView {
     private final World world;
     /** The point the camera looks at. */
     private final Vector target;
+    private final double eyeHeight = STANDING_EYE * SCALE;
 
     Mannequin mannequin;
     private int heldBefore;
     private boolean allowFlight, flying, madeInvisible;
     private float walkSpeed, flySpeed;
 
-    /**
-     * Where the camera stands around the target: the view direction of the player (yaw, pitch) and its distance. The
-     * yaw belongs to the left and right keys (read by the network thread), the pitch to his mouse.
-     */
-    private volatile float yaw;
-    private float pitch;
-    private double zoom;
-    /** Distance the camera really stands at (zoom, closer when a block is in the way), read by the network thread. */
-    private volatile double reach;
-    /** His eyes above his feet while he flies, at {@link #SCALE}. */
-    private final double eyeHeight = STANDING_EYE * SCALE;
-    /** The shrink, a transient modifier: never saved, gone after a crash. */
-    private static final org.bukkit.NamespacedKey SHRINK = new org.bukkit.NamespacedKey("fluxcosmetics", "wardrobe");
-    /** Last move sent from his mouse (network thread). */
-    private volatile long lastMove;
-    /** True while slot 1 is held: his mouse moves the camera. Read by the network thread. */
-    private volatile boolean orbiting = true;
-    /** The still camera's direction, read by the network thread. */
-    private volatile float stillYaw, stillPitch;
-    /**
-     * His mouse, read in his packets as soon as they come (network thread), never in his server location (late, and
-     * not updated while a teleport waits for his answer).
-     */
-    private volatile float mouseYaw, mousePitch;
-    /** Where the tick last put him, to move him only when the camera really moves. */
+    /** The camera's direction (his view), read by the network thread to turn his mouse back. */
+    private volatile float yaw, pitch;
+    /** Distance now, and the one the wheel asked for. */
+    private double zoom, wantedZoom;
+    /** Where he was last put, to move him only when the camera really moves. */
     private Vector placed;
     /** True while the wardrobe itself teleports him. */
     boolean moving;
@@ -141,17 +129,16 @@ final class WardrobeView {
         flySpeed = player.getFlySpeed();
 
         player.closeInventory();
-        player.getInventory().setHeldItemSlot(CAMERA_SLOT);
+        player.getInventory().setHeldItemSlot(SLOT);
         player.setAllowFlight(true);
         player.setFlying(true);
         player.setWalkSpeed(0);
         player.setFlySpeed(0);
         player.setFallDistance(0);
-        var scale = player.getAttribute(org.bukkit.attribute.Attribute.SCALE);
+        var scale = player.getAttribute(Attribute.SCALE);
         if (scale != null) {
             scale.removeModifier(SHRINK);
-            scale.addTransientModifier(new org.bukkit.attribute.AttributeModifier(SHRINK, SCALE - 1,
-                    org.bukkit.attribute.AttributeModifier.Operation.MULTIPLY_SCALAR_1));
+            scale.addTransientModifier(new AttributeModifier(SHRINK, SCALE - 1, AttributeModifier.Operation.MULTIPLY_SCALAR_1));
         }
         if (!player.hasPotionEffect(PotionEffectType.INVISIBILITY)) {
             // an invisible player's arm is not drawn in front of his view
@@ -160,43 +147,21 @@ final class WardrobeView {
         }
 
         // the camera starts in front of him, looking at his face
-        yaw = back.getYaw() + 180;
+        yaw = wrap(back.getYaw() + 180);
         pitch = settings.startPitch();
-        zoom = settings.distance();
-        stillYaw = yaw;
-        stillPitch = pitch;
-        mouseYaw = yaw;
-        mousePitch = pitch;
-        reach = Math.min(zoom, free(yaw, pitch));
-        // the one real teleport: his view is turned to the mannequin, then only his mouse turns it
-        Vector start = feet(yaw, pitch, reach);
+        zoom = wantedZoom = settings.distance();
+        // the one real teleport: his view is set to the camera's here, then turned by packets only
+        Vector start = feet(yaw, pitch, reach());
         teleport(new Location(world, start.getX(), start.getY(), start.getZ(), yaw, pitch));
         placed = start;
 
         Hotbar.show(player, hotbar());
         Hotbar.bars(player, false);
         Sidebar.hide(player, true);
+        // the mouse does nothing: his view goes back to the camera's as soon as it moves
         Camera.turns(player, (p, y, x) -> {
-            // his client answers each move with his rotation, unchanged: not his mouse (that answer looped forever)
-            boolean raised = Math.abs(x - mousePitch) > 0.01f;
-            mouseYaw = y;
-            mousePitch = x;
-            if (orbiting) {
-                float camYaw = yaw;
-                // sideways belongs to the keys: his view goes back to the camera's, his pitch untouched
-                if (Math.abs(wrap(y - camYaw)) > SLACK) Camera.turn(p, camYaw, false, 0, true);
-                if (!raised) return;
-                float clamped = Math.clamp(x, settings.minPitch(), settings.maxPitch());
-                if (clamped != x) Camera.turn(p, 0, true, clamped, false);
-                long now = System.nanoTime();
-                if (now - lastMove < MOVE_GAP_NANOS) return;
-                lastMove = now;
-                Vector f = feet(camYaw, clamped, reach);
-                Camera.moveSelf(p, f.getX(), f.getY(), f.getZ());
-                return;
-            }
-            float sy = stillYaw, sx = stillPitch;
-            if (Math.abs(wrap(y - sy)) > SLACK || Math.abs(x - sx) > SLACK) Camera.turn(p, sy, false, sx, false);
+            float cy = yaw, cx = pitch;
+            if (Math.abs(wrap(y - cy)) > SLACK || Math.abs(x - cx) > SLACK) Camera.turn(p, cy, false, cx, false);
         });
         hint();
     }
@@ -216,14 +181,14 @@ final class WardrobeView {
         player.setFlying(flying && allowFlight);
         player.setAllowFlight(allowFlight);
         player.setFallDistance(0);
-        var scale = player.getAttribute(org.bukkit.attribute.Attribute.SCALE);
+        var scale = player.getAttribute(Attribute.SCALE);
         if (scale != null) scale.removeModifier(SHRINK);
         if (madeInvisible) player.removePotionEffect(PotionEffectType.INVISIBILITY);
         madeInvisible = false;
         if (bringBack) teleport(back);
     }
 
-    // ================================================================== every tick
+    // ================================================================== controls
 
     void tick() {
         ticks++;
@@ -231,25 +196,22 @@ final class WardrobeView {
             plugin.wardrobe().close(player, true);
             return;
         }
-        if (orbiting) {
-            pitch = Math.clamp(mousePitch, settings.minPitch(), settings.maxPitch());
-            var input = player.getCurrentInput();
-            // left (Q on AZERTY) takes the camera to its left around him: its view turns right, the yaw grows
-            int turn = (input.isLeft() ? 1 : 0) - (input.isRight() ? 1 : 0);
-            if (turn != 0) {
-                yaw = wrap(yaw + turn * settings.turnSpeed());
-                Camera.turn(player, yaw, false, 0, true);
-            }
-            if (input.isForward() != input.isBackward()) {
-                double step = input.isForward() ? -settings.zoomSpeed() : settings.zoomSpeed();
-                zoom = Math.clamp(zoom + step, settings.minDistance(), settings.maxDistance());
-            }
+        var input = player.getCurrentInput();
+        // left (Q on AZERTY) takes the camera to its left around him: its view turns right, the yaw grows
+        int sideways = (input.isLeft() ? 1 : 0) - (input.isRight() ? 1 : 0);
+        // forward (Z on AZERTY) raises the camera: it looks further down
+        int upwards = (input.isForward() ? 1 : 0) - (input.isBackward() ? 1 : 0);
+        if (sideways != 0 || upwards != 0) {
+            yaw = wrap(yaw + sideways * settings.turnSpeed());
+            pitch = Math.clamp(pitch + upwards * settings.pitchSpeed(), settings.minPitch(), settings.maxPitch());
+            Camera.turn(player, yaw, false, pitch, false);
         }
+        if (Math.abs(wantedZoom - zoom) > 1e-3) zoom += (wantedZoom - zoom) * ZOOM_GLIDE;
         if (!player.isFlying()) player.setFlying(true);
-        reach = Math.min(zoom, free(yaw, pitch));
-        Vector f = feet(yaw, pitch, reach);
-        // moved: zoom, a block in the way, his mouse since the last packet; else now and then against any drift
-        if (placed == null || placed.distanceSquared(f) > 1e-4 || ticks % 20 == 0) {
+
+        Vector f = feet(yaw, pitch, reach());
+        // moved: keys, zoom, a block in the way; else now and then against any drift
+        if (placed.distanceSquared(f) > 1e-4 || ticks % 20 == 0) {
             placed = f;
             Camera.moveSelf(player, f.getX(), f.getY(), f.getZ());
         }
@@ -257,16 +219,14 @@ final class WardrobeView {
         if (ticks % 30 == 0) hint();
     }
 
-    /** He holds another slot: slot 1 sets the camera free, any other holds it still where it is. */
-    void held(int slot) {
-        boolean free = slot == CAMERA_SLOT;
-        if (free == orbiting) return;
-        if (!free) {
-            stillYaw = yaw;
-            stillPitch = pitch;
-        }
-        orbiting = free;
-        hint();
+    /** The mouse wheel turned by {@code notches}: up (negative) brings the camera closer. */
+    void wheel(int notches) {
+        wantedZoom = Math.clamp(wantedZoom + notches * settings.zoomStep(), settings.minDistance(), settings.maxDistance());
+    }
+
+    /** Right click: the choice of cosmetics (to come). */
+    void menu() {
+        plugin.messages().send(player, "menu-soon");
     }
 
     // ================================================================== camera
@@ -276,26 +236,26 @@ final class WardrobeView {
         return new Location(null, 0, 0, 0, yaw, pitch).getDirection();
     }
 
-    /** His feet when his eyes look at the target from that direction and distance. Thread-safe (no world access). */
+    /** His feet when his eyes look at the target from that direction and distance. */
     private Vector feet(float yaw, float pitch, double distance) {
         Vector eye = target.clone().subtract(direction(yaw, pitch).multiply(distance));
         return eye.setY(eye.getY() - eyeHeight);
     }
 
-    /** How far the camera can go back from the target in this direction before a block. */
-    private double free(float yaw, float pitch) {
-        Vector backwards = direction(yaw, pitch).multiply(-1);
+    /** The zoom, or less when a block stands between the mannequin and the camera or where his body would be. */
+    private double reach() {
+        float y = yaw, x = pitch;
+        Vector backwards = direction(y, x).multiply(-1);
         RayTraceResult hit = world.rayTraceBlocks(target.toLocation(world), backwards, zoom + WALL_GAP,
                 FluidCollisionMode.NEVER, true);
-        double d = hit == null ? zoom : Math.max(0.4, hit.getHitPosition().distance(target) - WALL_GAP);
-        // his (small) body must be free too, else the server refuses the move
-        while (d > 0.4 && world.hasCollisionsIn(body(feet(yaw, pitch, d)))) d -= 0.1;
-        return Math.max(0.4, d);
+        double d = hit == null ? zoom : Math.max(MIN_REACH, hit.getHitPosition().distance(target) - WALL_GAP);
+        while (d > MIN_REACH && world.hasCollisionsIn(body(feet(y, x, d)))) d -= 0.1;
+        return Math.max(MIN_REACH, d);
     }
 
-    private org.bukkit.util.BoundingBox body(Vector feet) {
+    private BoundingBox body(Vector feet) {
         double half = 0.3 * SCALE, height = 1.8 * SCALE;
-        return new org.bukkit.util.BoundingBox(feet.getX() - half, feet.getY(), feet.getZ() - half,
+        return new BoundingBox(feet.getX() - half, feet.getY(), feet.getZ() - half,
                 feet.getX() + half, feet.getY() + height, feet.getZ() + half);
     }
 
@@ -308,7 +268,7 @@ final class WardrobeView {
         }
     }
 
-    private static float wrap(float degrees) {
+    static float wrap(float degrees) {
         float d = degrees % 360;
         return d > 180 ? d - 360 : d < -180 ? d + 360 : d;
     }
@@ -331,17 +291,22 @@ final class WardrobeView {
         return item == null ? null : item.clone();
     }
 
+    /**
+     * The one item of his hotbar, in the middle. It looks like a spyglass (model of the config) on an item without a
+     * use of its own: a real spyglass would bring its scope up on the right click.
+     */
     private ItemStack[] hotbar() {
         var m = plugin.messages();
+        ItemStack item = Items.dress(Items.of(settings.item(), player), m.raw("items.camera-name"),
+                Lore.create().description(m.raw("items.camera-description"))
+                        .left(m.raw("items.camera-left")).right(m.raw("items.camera-right")).tags(), player);
+        if (!settings.itemModel().isBlank()) item.setData(DataComponentTypes.ITEM_MODEL, Key.key(settings.itemModel()));
         ItemStack[] items = new ItemStack[9];
-        items[CAMERA_SLOT] = Items.dress(Items.of(settings.cameraItem(), player), m.raw("items.camera-name"),
-                Lore.create().description(m.raw("items.camera-description")).tags(), player);
-        items[LEAVE_SLOT] = Items.dress(Items.of(settings.leaveItem(), player), m.raw("items.leave-name"),
-                Lore.create().description(m.raw("items.leave-description")).left(m.raw("items.leave-click")).tags(), player);
+        items[SLOT] = item;
         return items;
     }
 
     private void hint() {
-        plugin.messages().actionBar(player, orbiting ? "hint-camera" : "hint-still");
+        plugin.messages().actionBar(player, "hint");
     }
 }
