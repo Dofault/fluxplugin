@@ -20,8 +20,9 @@ import java.util.Map;
 /**
  * {@link Appearance} with PacketEvents: the equipment packets naming a player who wears looks are rewritten on their
  * way to the others, and the armour slots of his own inventory on their way to him (window 0: slots 5 to 8; the
- * player inventory numbering: 36 to 39). Other listeners rewriting the same packets (HotbarOverlay) chain with it:
- * a wrapper made from an event starts from the last one used on it.
+ * player inventory numbering: 36 to 39): his real item with the look's visual parts ({@link Appearance#merge}), the
+ * look with its tooltip hidden over an empty slot. Other listeners rewriting the same packets (HotbarOverlay) chain
+ * with it: a wrapper made from an event starts from the last one used on it.
  */
 public final class AppearanceOverlay extends PacketListenerAbstract implements Appearance.Service {
 
@@ -41,10 +42,13 @@ public final class AppearanceOverlay extends PacketListenerAbstract implements A
         // the four armour slots, looks or his own items, to everybody who sees him
         List<Equipment> equipment = new ArrayList<>(ARMOUR.length);
         Map<EquipmentSlot, Object> looks = Appearance.looks(wearer.getEntityId());
+        boolean invisible = Appearance.invisible(wearer.getEntityId());
         for (EquipmentSlot slot : ARMOUR) {
+            org.bukkit.inventory.ItemStack real = wearer.getInventory().getItem(slot);
             Object look = looks.get(slot);
-            ItemStack item = look instanceof ItemStack s ? s
-                    : SpigotConversionUtil.fromBukkitItemStack(wearer.getInventory().getItem(slot));
+            // invisible: a look only over a real piece, else it would give him away
+            boolean shown = look instanceof ItemStack && !(invisible && (real == null || real.getType().isAir()));
+            ItemStack item = shown ? (ItemStack) look : SpigotConversionUtil.fromBukkitItemStack(real);
             equipment.add(new Equipment(slot(slot), item));
         }
         for (Player viewer : wearer.getTrackedBy()) {
@@ -77,10 +81,19 @@ public final class AppearanceOverlay extends PacketListenerAbstract implements A
         };
     }
 
-    /** His own armour slots, rewritten on their way to him. */
+    /** What his own slot shows for the real item the server sends: merged with the look, or the look over nothing. */
+    private static ItemStack shown(java.util.UUID id, EquipmentSlot slot, ItemStack real, org.bukkit.inventory.ItemStack look) {
+        if (real == null || real.isEmpty()) {
+            Object empty = Appearance.ownEmpty(id, slot);
+            return empty instanceof ItemStack s ? s.copy() : real;
+        }
+        return SpigotConversionUtil.fromBukkitItemStack(Appearance.merge(SpigotConversionUtil.toBukkitItemStack(real), look));
+    }
+
+    /** His own armour slots, rewritten on their way to him (never in creative: Appearance#own is empty then). */
     private static void own(PacketSendEvent event) {
         java.util.UUID id = event.getUser() == null ? null : event.getUser().getUUID();
-        Map<EquipmentSlot, Object> looks = id == null ? Map.of() : Appearance.looks(id);
+        Map<EquipmentSlot, org.bukkit.inventory.ItemStack> looks = id == null ? Map.of() : Appearance.own(id);
         if (looks.isEmpty()) return;
         var type = event.getPacketType();
         if (type == PacketType.Play.Server.WINDOW_ITEMS) {
@@ -89,8 +102,10 @@ public final class AppearanceOverlay extends PacketListenerAbstract implements A
             List<ItemStack> items = new ArrayList<>(packet.getItems());
             boolean changed = false;
             for (int slot = 5; slot <= 8 && slot < items.size(); slot++) {
-                if (looks.get(windowArmour(slot)) instanceof ItemStack s) {
-                    items.set(slot, s.copy());
+                EquipmentSlot armour = windowArmour(slot);
+                org.bukkit.inventory.ItemStack look = looks.get(armour);
+                if (look != null) {
+                    items.set(slot, shown(id, armour, items.get(slot), look));
                     changed = true;
                 }
             }
@@ -101,15 +116,17 @@ public final class AppearanceOverlay extends PacketListenerAbstract implements A
             var packet = new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetSlot(event);
             EquipmentSlot slot = packet.getWindowId() == 0 ? windowArmour(packet.getSlot())
                     : packet.getWindowId() == -2 ? inventoryArmour(packet.getSlot()) : null;
-            if (slot != null && looks.get(slot) instanceof ItemStack s) {
-                packet.setItem(s.copy());
+            org.bukkit.inventory.ItemStack look = slot == null ? null : looks.get(slot);
+            if (look != null) {
+                packet.setItem(shown(id, slot, packet.getItem(), look));
                 event.markForReEncode(true);
             }
         } else if (type == PacketType.Play.Server.SET_PLAYER_INVENTORY) {
             var packet = new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetPlayerInventory(event);
             EquipmentSlot slot = inventoryArmour(packet.getSlot());
-            if (slot != null && looks.get(slot) instanceof ItemStack s) {
-                packet.setStack(s.copy());
+            org.bukkit.inventory.ItemStack look = slot == null ? null : looks.get(slot);
+            if (look != null) {
+                packet.setStack(shown(id, slot, packet.getStack(), look));
                 event.markForReEncode(true);
             }
         }
@@ -127,9 +144,12 @@ public final class AppearanceOverlay extends PacketListenerAbstract implements A
         WrapperPlayServerEntityEquipment w = new WrapperPlayServerEntityEquipment(event);
         Map<EquipmentSlot, Object> looks = Appearance.looks(w.getEntityId());
         if (looks.isEmpty()) return;
+        boolean invisible = Appearance.invisible(w.getEntityId());
         boolean changed = false;
         for (Equipment e : w.getEquipment()) {
             Object look = looks.get(bukkit(e.getSlot()));
+            // invisible: a look only over a real piece, else it would give him away
+            if (invisible && (e.getItem() == null || e.getItem().isEmpty())) continue;
             if (look instanceof ItemStack s) {
                 e.setItem(s);
                 changed = true;

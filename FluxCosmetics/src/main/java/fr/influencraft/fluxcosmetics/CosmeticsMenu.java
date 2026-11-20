@@ -178,17 +178,38 @@ final class CosmeticsMenu {
         for (Outfits.Cosmetic c : outfits.all()) {
             if (c.slot() != slot) continue;
             boolean wearing = c.key().equals(worn);
+            boolean owned = outfits.owns(viewer, c);
             Lore lore = Lore.create();
+            lore.kv(plugin.messages().raw("menu.rarity"), "&" + c.rarity().colour() + plugin.messages().raw("rarities." + c.rarity().id()));
             if (wearing) lore.ok(plugin.messages().raw("menu.worn"));
-            if (!c.unlocked()) lore.ko(plugin.messages().raw("menu.locked"));
+            if (!owned) lore.ko(plugin.messages().raw("menu.locked"));
             else lore.left(plugin.messages().raw(wearing ? "menu.take-off" : "menu.wear"));
-            ItemStack item = Items.dress(outfits.item(c, viewer), c.name(), lore.build(), viewer);
+            ItemStack item = Items.dress(icon(outfits.item(c, viewer)), c.name(), lore.build(), viewer);
             if (item == null) continue;
-            if (wearing) glint(item);
+            item.setData(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, wearing);
             out.add(ListEntry.of(c.key()).item(item)
-                    .set("clic", c.unlocked() ? "[cosmetics] wear " + c.key() : "[sound] @error"));
+                    .set("clic", owned ? "[cosmetics] wear " + c.key() : "[sound] @error"));
         }
         return out;
+    }
+
+    /**
+     * A cosmetic's item as the menu shows it: only its look. Its stats, enchantments, trim and colour lines are hidden
+     * (a FluxArmor piece worn as a cosmetic gives none of them), its glint is the "worn" mark.
+     */
+    private static ItemStack icon(ItemStack item) {
+        if (item == null) return null;
+        item.setData(io.papermc.paper.datacomponent.DataComponentTypes.TOOLTIP_DISPLAY,
+                io.papermc.paper.datacomponent.item.TooltipDisplay.tooltipDisplay()
+                        .addHiddenComponents(io.papermc.paper.datacomponent.DataComponentTypes.ATTRIBUTE_MODIFIERS,
+                                io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENTS,
+                                io.papermc.paper.datacomponent.DataComponentTypes.TRIM,
+                                io.papermc.paper.datacomponent.DataComponentTypes.DYED_COLOR,
+                                io.papermc.paper.datacomponent.DataComponentTypes.UNBREAKABLE,
+                                io.papermc.paper.datacomponent.DataComponentTypes.DAMAGE)
+                        .build());
+        item.unsetData(io.papermc.paper.datacomponent.DataComponentTypes.MAX_DAMAGE);
+        return item;
     }
 
     /** First choice of an armour category: a barrier that takes off the cosmetic worn in that slot. */

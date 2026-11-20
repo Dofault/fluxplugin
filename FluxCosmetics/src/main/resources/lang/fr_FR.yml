@@ -25,8 +25,21 @@ menu:
   none-current: "Rien n'est porté ici"
   no-tag-description: "Retire ton tag : celui de ton grade s'affiche de nouveau."
   no-tag-current: "Tag du grade affiché"
+  rarity: "Rareté"
 outfits:
   wearing: "&7Tu portes maintenant &f%name%&7."
   taken-off: "&7Tu as retiré &f%name%&7."
   locked: "&#FF5C5C%name% &7n'est pas encore débloqué."
   unknown: "&#FF5C5CAucun cosmétique nommé &f%name%&#FF5C5C."
+rarities:
+  commun: "Commun"
+  unique: "Unique"
+  epique: "Épique"
+  mythique: "Mythique"
+  legendaire: "Légendaire"
+  fabuleux: "Fabuleux"
+admin:
+  given: "&7%name% &7donné à &f%player%&7."
+  taken: "&7%name% &7repris à &f%player%&7."
+  all: "&fTous les cosmétiques"
+  unknown-player: "&#FF5C5CAucun joueur nommé &f%player%&#FF5C5C."

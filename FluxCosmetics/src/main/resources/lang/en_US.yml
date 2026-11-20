@@ -25,8 +25,21 @@ menu:
   none-current: "Nothing worn here"
   no-tag-description: "Takes your tag off: your rank's tag shows again."
   no-tag-current: "Rank tag shown"
+  rarity: "Rarity"
 outfits:
   wearing: "&7You now wear &f%name%&7."
   taken-off: "&7You took off &f%name%&7."
   locked: "&#FF5C5C%name% &7is not unlocked yet."
   unknown: "&#FF5C5CNo cosmetic named &f%name%&#FF5C5C."
+rarities:
+  commun: "Common"
+  unique: "Uncommon"
+  epique: "Epic"
+  mythique: "Mythic"
+  legendaire: "Legendary"
+  fabuleux: "Fabled"
+admin:
+  given: "&7%name% &7given to &f%player%&7."
+  taken: "&7%name% &7taken back from &f%player%&7."
+  all: "&fEvery cosmetic"
+  unknown-player: "&#FF5C5CNo player named &f%player%&#FF5C5C."

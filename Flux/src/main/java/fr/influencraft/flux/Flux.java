@@ -215,6 +215,8 @@ public final class Flux extends JavaPlugin implements fr.influencraft.flux.api.F
         var appearance = new fr.influencraft.flux.adapters.packetevents.AppearanceOverlay();
         appearanceListener = PacketEvents.getAPI().getEventManager().registerListener(appearance);
         fr.influencraft.flux.api.client.Appearance.bind(appearance);
+        // looks kept right (invisibility, creative, clicks predicted by the client) and never turned into items
+        getServer().getPluginManager().registerEvents(new fr.influencraft.flux.adapters.packetevents.AppearanceWatch(this), this);
         // Flux's part of the resource pack: the one text shader of the suite (api.client.TextShader), HUD pictures
         if (clientPack == null) clientPack = new fr.influencraft.flux.pack.ClientPack(this, getFile());
         clientPack.configure(getConfig().getConfigurationSection("client-pack"));
