@@ -401,12 +401,12 @@ Grand marteau à deux mains : manche de bois carbonisé, talon de métal noirci 
 
 | Dimension | Valeur |
 |---|---|
-| Longueur (Y) | 30 (de -8 à 22) |
+| Longueur (Y) | 34 (de -12 à 22) |
 | Largeur max (X) | 17 (de 0 à 17) |
 | Épaisseur max (Z) | 6.2 |
-| Prise (point tenu par le poing) | (8, -1, 8) |
-| Centre visuel (milieu de l'encombrement) | (8.5, 7, 8) |
-| Longueur en main, 3e personne | 28.5 px de joueur (joueur = 32) |
+| Prise (point tenu par le poing) | (8, -2, 8) |
+| Centre visuel (milieu de l'encombrement) | (8.5, 5, 8) |
+| Longueur en main, 3e personne | 29.92 px de joueur (joueur = 32) |
 | Nombre de cubes | **11** |
 
 Palette :
@@ -425,9 +425,9 @@ Hiérarchie (groupes, dans l'ordre de construction) : `talon` (1), `manche` (2),
 
 | # | Groupe | Cube | De (x, y, z) | À (x, y, z) | Taille | Rotation | Matériau | Note |
 |---|---|---|---|---|---|---|---|---|
-| 1 | talon | `talon` | 5.5 -8 6 | 10.5 -5 10 | 5 × 3 × 4 |  | `talon` | 5 x 3 x 4 |
-| 2 | manche | `manche_bas` | 6.5 -5 6.5 | 9.5 3 9.5 | 3 × 8 × 3 |  | `bois_brule` | zone de prise |
-| 3 | manche | `manche_haut` | 6.5 3 6.5 | 9.5 10 9.5 | 3 × 7 × 3 |  | `bois_brule` |  |
+| 1 | talon | `talon` | 5.5 -12 6 | 10.5 -9 10 | 5 × 3 × 4 |  | `talon` | 5 x 3 x 4 |
+| 2 | manche | `manche_bas` | 6.5 -9 6.5 | 9.5 1 9.5 | 3 × 10 × 3 |  | `bois_brule` | zone de prise |
+| 3 | manche | `manche_haut` | 6.5 1 6.5 | 9.5 10 9.5 | 3 × 9 × 3 |  | `bois_brule` |  |
 | 4 | renforts | `collier` | 5.5 10 6 | 10.5 12 10 | 5 × 2 × 4 |  | `fer` | sous la tête |
 | 5 | renforts | `coin` | 6 21 6 | 10 22 10 | 4 × 1 × 4 |  | `fer` | coin de fer au sommet, là où le manche traverse la tête |
 | 6 | tete | `bloc_central` | 5 12 5 | 11 21 11 | 6 × 9 × 6 |  | `roche` | 6 x 9 x 6 |
@@ -441,12 +441,70 @@ Affichages (`display` du modèle) :
 
 | Contexte | Rotation | Translation | Échelle |
 |---|---|---|---|
-| `thirdperson_righthand` | 0 -90 -22 | 0 6.6 4.64 | 0.95 |
-| `thirdperson_lefthand` | 0 90 22 | 0 6.6 4.64 | 0.95 |
-| `firstperson_righthand` | 0 -90 -20 | 1.13 4.38 1.56 | 0.62 |
-| `firstperson_lefthand` | 0 90 20 | 1.13 4.38 1.56 | 0.62 |
-| `gui` | 0 0 -45 | -0.6 -0.3 0 | 0.566 |
-| `fixed` | 0 180 45 | -0.28 -0.56 0 | 0.53 |
-| `on_shelf` | 0 180 45 | -0.28 -0.56 0 | 0.53 |
-| `ground` | 0 0 0 | -0.18 0.37 0 | 0.367 |
+| `thirdperson_righthand` | 0 -90 -22 | 0 6.83 4.74 | 0.88 |
+| `thirdperson_lefthand` | 0 90 22 | 0 6.83 4.74 | 0.88 |
+| `firstperson_righthand` | 0 -90 -20 | 1.13 4.02 1.43 | 0.52 |
+| `firstperson_lefthand` | 0 90 20 | 1.13 4.02 1.43 | 0.52 |
+| `gui` | 0 0 -45 | 0.18 0.45 0 | 0.514 |
+| `fixed` | 0 180 45 | 0.43 0.17 0 | 0.482 |
+| `on_shelf` | 0 180 45 | 0.43 0.17 0 | 0.482 |
+| `ground` | 0 0 0 | -0.16 0.97 0 | 0.324 |
+| `head` | 0 180 0 | 0 13 7 | 0.6 |
+
+## Cœur-de-Sylve (Druide) : `fluxdungeons:coeur_de_sylve`
+
+Grand bâton à deux mains : manche de bois ancien vivant, pied évasé comme une racine épaisse ; au sommet, une pierre ancienne mate posée dans la fourche de deux racines qui partent vers l'extérieur puis reviennent sur elle (la gauche plus longue, la droite plus sombre et plus courte), une seule jeune pousse au bout de la racine gauche, deux excroissances de racine à la jonction du manche.
+
+| Dimension | Valeur |
+|---|---|
+| Longueur (Y) | 37.36 (de -12 à 25.36) |
+| Largeur max (X) | 13.058 (de 1.184 à 14.242) |
+| Épaisseur max (Z) | 5 |
+| Prise (point tenu par le poing) | (8, -0.5, 8) |
+| Centre visuel (milieu de l'encombrement) | (7.713, 6.68, 8) |
+| Longueur en main, 3e personne | 31.756 px de joueur (joueur = 32) |
+| Nombre de cubes | **12** |
+
+Palette :
+
+| Matériau (texture) | Couleur | Lumineux |
+|---|---|---|
+| `bois_vivant` | Bois ancien vivant `#514333` |  |
+| `pied` | Pied de racine `#62503A` |  |
+| `pierre` | Pierre ancienne `#71816A` |  |
+| `racine_claire` | Racine de gauche `#70543A` |  |
+| `racine_sombre` | Racine de droite `#59432F` |  |
+| `branche` | Ramifications `#72573A` |  |
+| `pousse` | Jeune pousse `#55794A` |  |
+| `excroissance` | Excroissances de racine `#604A34` |  |
+
+Hiérarchie (groupes, dans l'ordre de construction) : `pied` (1), `manche` (2), `excroissances` (2), `pierre` (2), `racines` (5)
+
+| # | Groupe | Cube | De (x, y, z) | À (x, y, z) | Taille | Rotation | Matériau | Note |
+|---|---|---|---|---|---|---|---|---|
+| 1 | pied | `pied` | 6 -12 6 | 10 -9 10 | 4 × 3 × 4 |  | `pied` | 4 x 3 x 4, évasé comme une racine épaisse |
+| 2 | manche | `manche_bas` | 6.5 -9 6.5 | 9.5 2 9.5 | 3 × 11 × 3 |  | `bois_vivant` | zone de prise |
+| 3 | manche | `manche_haut` | 6.5 2 6.5 | 9.5 13 9.5 | 3 × 11 × 3 |  | `bois_vivant` |  |
+| 4 | excroissances | `excroissance_g` | 4.5 10.5 6.5 | 6.5 13.5 9.5 | 2 × 3 × 3 |  | `excroissance` | porte la racine de gauche |
+| 5 | excroissances | `excroissance_d` | 9.5 10.5 6.5 | 11.5 13.5 9.5 | 2 × 3 × 3 |  | `excroissance` | porte la racine de droite |
+| 6 | pierre | `pierre` | 4.5 14 5.5 | 11.5 22 10.5 | 7 × 8 × 5 |  | `pierre` | élément principal, 7 x 8 x 5 |
+| 7 | pierre | `pierre_sommet` | 5.5 22 6 | 10 23.5 10 | 4.5 × 1.5 × 4 |  | `pierre` | rend la pierre irrégulière |
+| 8 | racines | `racine_g` | 2.352 11.922 6.5 | 5.352 18.622 9.5 | 3 × 6.7 × 3 | Z 22.5° autour de (3.852, 15.272, 8) | `racine_claire` | part vers l'extérieur |
+| 9 | racines | `ramification_g` | 2.411 17.503 6.5 | 4.911 23.203 9.5 | 2.5 × 5.7 × 3 | Z -22.5° autour de (3.661, 20.353, 8) | `branche` | revient sur la pierre |
+| 10 | racines | `pousse` | 3.717 22.463 7 | 6.117 24.863 9 | 2.4 × 2.4 × 2 | Z 45° autour de (4.917, 23.663, 8) | `pousse` | seule jeune pousse, au bout de la racine gauche |
+| 11 | racines | `racine_d` | 10.361 11.979 6.5 | 13.361 17.179 9.5 | 3 × 5.2 × 3 | Z -22.5° autour de (11.861, 14.579, 8) | `racine_sombre` | plus courte et plus sombre |
+| 12 | racines | `ramification_d` | 10.515 16.117 6.5 | 13.015 21.817 9.5 | 2.5 × 5.7 × 3 | Z 22.5° autour de (11.765, 18.967, 8) | `branche` | revient sur la pierre |
+
+Affichages (`display` du modèle) :
+
+| Contexte | Rotation | Translation | Échelle |
+|---|---|---|---|
+| `thirdperson_righthand` | 0 -90 -37 | 0 4.44 5.79 | 0.85 |
+| `thirdperson_lefthand` | 0 90 37 | 0 4.44 5.79 | 0.85 |
+| `firstperson_righthand` | 0 -90 -10 | 1.13 3.49 0.42 | 0.52 |
+| `firstperson_lefthand` | 0 90 10 | 1.13 3.49 0.42 | 0.52 |
+| `gui` | 0 0 -45 | 0.77 0.29 0 | 0.533 |
+| `fixed` | 0 180 45 | 0.28 0.72 0 | 0.5 |
+| `on_shelf` | 0 180 45 | 0.28 0.72 0 | 0.5 |
+| `ground` | 0 0 0 | 0.08 0.39 0 | 0.294 |
 | `head` | 0 180 0 | 0 13 7 | 0.6 |

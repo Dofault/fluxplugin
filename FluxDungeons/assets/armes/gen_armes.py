@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Class weapons of the RPG universe in 3D: Brise-Aube, Sylve-Celeste, Sceptre du Neant, Reliquaire de l'Aube,
-Coeur-de-Givre (the cryomancer's staff) and Tison-Soleil (the pyromancer's hammer), these two with textures painted
-here pixel by pixel.
+Coeur-de-Givre (the cryomancer's staff), Tison-Soleil (the pyromancer's hammer) and Coeur-de-Sylve (the druid's
+staff), these three with textures painted here pixel by pixel.
 
     <venv with Pillow and numpy>/python3 gen_armes.py <ItemsAdder/contents/fluxdungeons> [previews dir] [sheet.md]
 
@@ -410,7 +410,7 @@ def coeur_de_givre():
 
 
 def tison_soleil():
-    """Pyromancer's hammer, 30 units tall: three blocks of volcanic rock parted by two seams of magma set back into
+    """Pyromancer's hammer, 34 units tall: three blocks of volcanic rock parted by two seams of magma set back into
     the head, one crack across the middle block, blackened iron holding it on a charred shaft."""
     w = Weapon("tison_soleil", "Tison-Soleil", "Pyromancien",
                "Grand marteau à deux mains : manche de bois carbonisé, talon de métal noirci ; tête massive et "
@@ -454,11 +454,11 @@ def tison_soleil():
                  "roche": rock("#392D2B", "#65443A", "#241F20"), "roche_gauche": rock("#44302B", "#65443A", "#30231F"),
                  "roche_droite": rock("#352726", "#4A3530", "#241F20")}
     w.group("talon")
-    w.box("talon", [5.5, -8, 6], [10.5, -5, 10], "talon", note="5 x 3 x 4")
+    w.box("talon", [5.5, -12, 6], [10.5, -9, 10], "talon", note="5 x 3 x 4")
     w.group("manche")
-    # two cubes: a face never stretches its texture beyond 16 units
-    w.box("manche_bas", [6.5, -5, 6.5], [9.5, 3, 9.5], "bois_brule", note="zone de prise")
-    w.box("manche_haut", [6.5, 3, 6.5], [9.5, 10, 9.5], "bois_brule")
+    # two cubes: a face never stretches its texture beyond 16 units. Long shaft: the hammer is imposing by its height
+    w.box("manche_bas", [6.5, -9, 6.5], [9.5, 1, 9.5], "bois_brule", note="zone de prise")
+    w.box("manche_haut", [6.5, 1, 6.5], [9.5, 10, 9.5], "bois_brule")
     w.group("renforts")
     w.box("collier", [5.5, 10, 6], [10.5, 12, 10], "fer", note="sous la tête")
     w.box("coin", [6, 21, 6], [10, 22, 10], "fer", note="coin de fer au sommet, là où le manche traverse la tête")
@@ -473,7 +473,78 @@ def tison_soleil():
     return w
 
 
-WEAPONS = [brise_aube, sylve_celeste, sceptre_neant, reliquaire_aube, coeur_de_givre, tison_soleil]
+def coeur_de_sylve():
+    """Druid's staff, 36 units tall like the cryomancer's: an old matt stone held in a fork of two roots which grow
+    outwards then back over it, one shoot at the tip of the longer root, nothing floating, nothing glowing."""
+    w = Weapon("coeur_de_sylve", "Cœur-de-Sylve", "Druide",
+               "Grand bâton à deux mains : manche de bois ancien vivant, pied évasé comme une racine épaisse ; au "
+               "sommet, une pierre ancienne mate posée dans la fourche de deux racines qui partent vers l'extérieur "
+               "puis reviennent sur elle (la gauche plus longue, la droite plus sombre et plus courte), une seule "
+               "jeune pousse au bout de la racine gauche, deux excroissances de racine à la jonction du manche.",
+               {"bois_vivant": ("#514333", "Bois ancien vivant", False), "pied": ("#62503A", "Pied de racine", False),
+                "pierre": ("#71816A", "Pierre ancienne", False), "racine_claire": ("#70543A", "Racine de gauche", False),
+                "racine_sombre": ("#59432F", "Racine de droite", False), "branche": ("#72573A", "Ramifications", False),
+                "pousse": ("#55794A", "Jeune pousse", False), "excroissance": ("#604A34", "Excroissances de racine", False)})
+
+    def living_wood(x, y):
+        # uneven veins, lighter where the edge catches the light, two touches of ochre: no parallel stripes
+        if (x, y) in ((1, 6), (0, 2)):
+            return "#98764D"
+        if x % 3 == 0:
+            return "#514333" if y % 7 in (4, 5) else "#80694A"
+        if x % 3 == 2 or x % 3 == 1 and y % 9 in (1, 2, 3):
+            return "#352B25"
+        return "#514333"
+
+    def fibre(base, light, shadow):
+        # root: lit along one side, dark along the other, a fibre breaking the middle now and then
+        def pixel(x, y):
+            if x % 3 == 0:
+                return light if y % 5 != 2 else base
+            if x % 3 == 2:
+                return shadow
+            return shadow if y % 6 == 4 else base
+        return pixel
+
+    def old_stone(x, y):
+        # matt mineral masses: a pale band where the light falls, grey green body, shade below and on the right
+        if y == 0 and x < 5 or x == 0 and y < 3 or (x, y) in ((2, 2), (3, 2)):
+            return "#A6B18A"
+        if y >= 6 or x >= 5 and y >= 3 or (x, y) == (3, 5):
+            return "#465447"
+        return "#71816A"
+
+    def shoot(x, y):
+        return "#8DA86A" if x + y <= 1 else ("#36533A" if x + y >= 3 else "#55794A")
+
+    def foot(x, y):
+        return "#3C3328" if y >= 2 or x >= 3 else "#62503A"
+
+    w.painted = {"bois_vivant": living_wood, "pied": foot, "pierre": old_stone, "pousse": shoot,
+                 "racine_claire": fibre("#70543A", "#98764D", "#514333"), "racine_sombre": fibre("#59432F", "#826548", "#352B25"),
+                 "branche": fibre("#72573A", "#98764D", "#514333"), "excroissance": fibre("#604A34", "#80694A", "#352B25")}
+    w.group("pied")
+    w.box("pied", [6, -12, 6], [10, -9, 10], "pied", note="4 x 3 x 4, évasé comme une racine épaisse")
+    w.group("manche")
+    # two cubes of 11: a face never stretches its texture beyond 16 units
+    w.box("manche_bas", [6.5, -9, 6.5], [9.5, 2, 9.5], "bois_vivant", note="zone de prise")
+    w.box("manche_haut", [6.5, 2, 6.5], [9.5, 13, 9.5], "bois_vivant")
+    w.group("excroissances")
+    w.box("excroissance_g", [4.5, 10.5, 6.5], [6.5, 13.5, 9.5], "excroissance", note="porte la racine de gauche")
+    w.box("excroissance_d", [9.5, 10.5, 6.5], [11.5, 13.5, 9.5], "excroissance", note="porte la racine de droite")
+    w.group("pierre")
+    w.box("pierre", [4.5, 14, 5.5], [11.5, 22, 10.5], "pierre", note="élément principal, 7 x 8 x 5")
+    w.box("pierre_sommet", [5.5, 22, 6], [10, 23.5, 10], "pierre", note="rend la pierre irrégulière")
+    w.group("racines")
+    end = w.seg("racine_g", (5.0, 12.5), 22.5, 6.0, 3.0, 3.0, "racine_claire", note="part vers l'extérieur")
+    end = w.seg("ramification_g", end, -22.5, 5.0, 2.5, 3.0, "branche", note="revient sur la pierre")
+    w.c("pousse", [end[0] + 0.3, end[1] + 1.0, 8], [2.4, 2.4, 2.0], "pousse", ("z", 45), "seule jeune pousse, au bout de la racine gauche")
+    end = w.seg("racine_d", (11.0, 12.5), -22.5, 4.5, 3.0, 3.0, "racine_sombre", note="plus courte et plus sombre")
+    w.seg("ramification_d", end, 22.5, 5.0, 2.5, 3.0, "branche", note="revient sur la pierre")
+    return w
+
+
+WEAPONS = [brise_aube, sylve_celeste, sceptre_neant, reliquaire_aube, coeur_de_givre, tison_soleil, coeur_de_sylve]
 
 # ------------------------------------------------------------------------------------------- displays
 # Vanilla references (assets/minecraft/models/item/handheld.json and bow.json) and the point of their sprite held
@@ -501,7 +572,9 @@ DISPLAYS = {
     # Cryomancer's staff: 36 units tall, the fist a little under the middle of the shaft. An imposing weapon is a tall
     # one: scaling it up in first person only made its head huge (tried 2026-11-20).
     "coeur_de_givre": ("handheld", 45, (8, -0.5, 8), (-47, 0.85), (10, 0.52)),
-    "tison_soleil": ("handheld", 45, (8, -1, 8), (-32, 0.95), (0, 0.62)),
+    # same height and hold as the cryomancer's staff, the size the owner approved
+    "coeur_de_sylve": ("handheld", 45, (8, -0.5, 8), (-47, 0.85), (10, 0.52)),
+    "tison_soleil": ("handheld", 45, (8, -2, 8), (-32, 0.88), (0, 0.52)),
 }
 # Spin of the weapon around its own axis (degrees) before it is held: the bow was held back to front in game, its
 # back (grip, crystal, +X) towards the player and the string away (2026-11-13). 180 = back forward, string inward.
