@@ -14,7 +14,7 @@ import java.util.List;
  * himself from outside and turns the camera around himself with his mouse.
  *
  * <pre>
- *   /tenue           open or close the wardrobe
+ *   /tenue           open or close the wardrobe (aliases /garderobe, /cosmetique, /cosmetiques)
  *   /tenue reload    (flux.admin)
  * </pre>
  */
@@ -30,7 +30,7 @@ public final class FluxCosmetics extends FluxPlugin {
         Bukkit.getPluginManager().registerEvents(wardrobe, this);
         command("tenue")
                 .description("Wardrobe: see yourself from outside and choose your outfit.")
-                .aliases("garderobe")
+                .aliases("garderobe", "cosmetique", "cosmetiques")
                 .permission("fluxcosmetics.use")
                 .executor(this::onCommand)
                 .completer((sender, args) -> args.length == 1 && Staff.isAdmin(sender) ? List.of("reload") : List.of())
