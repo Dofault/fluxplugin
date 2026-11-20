@@ -194,10 +194,11 @@ ICONS = {
     "settings": ["...##...", ".######.", ".##..##.", ".##..##.", ".######.", "...##..."],
     "search": [".###....", "#...#...", "#...#...", ".####...", "....##..", ".....##."],
     "filter": [".######.", "..####..", "...##...", "...##...", "...##...", "...##..."],
+    "shirt": [".##..##.", "########", "#.####.#", "..####..", "..####..", "..####.."],
 }
 ICON_X, ICON_Y = 4, 4
 BUTTONS = ["back", "close", "info", "add", "remove", "left", "right", "check", "lock", "settings", "search",
-           "filter", "up", "down"]
+           "filter", "up", "down", "shirt"]
 
 
 def tall_button_png(icon, face, rows=2):
@@ -645,7 +646,10 @@ def window_bounds(first=0, last=9, extra=0, rows=6):
     under its last row (``extra`` more); ``rows``: chest rows of the menu, the inventory of a smaller chest is higher
     in game (18 px a row)."""
     lift = 18 * (6 - rows) if last >= 6 else 0
-    return 7 + 18 * first, min(ui.H - 1, ROW_TOPS[last] - lift + 16 + 6 + extra)
+    # a menu drawn in the inventory rows only (first >= 6): its frame starts 15 px over its first row, so the
+    # client's own "Inventory" label falls on the frame, dark on dark, instead of floating over the world
+    top = 7 + 18 * first if first < 6 else ROW_TOPS[first] - lift - 15
+    return top, min(ui.H - 1, ROW_TOPS[last] - lift + 16 + 6 + extra)
 
 
 def bg_window(generic, first=0, last=9, extra=0, rows=6, title=None):

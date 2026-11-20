@@ -67,6 +67,10 @@ final class Wardrobe implements Listener {
         view.open();
         for (Player other : Bukkit.getOnlinePlayers()) if (other != player) other.hidePlayer(plugin, player);
         plugin.messages().send(player, "opened");
+        // straight to the choice of cosmetics, once his client has taken the camera's place
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (view(player) == view && player.isOnline()) view.menu();
+        }, 3L);
         if (task == null) task = Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 1L, 1L);
     }
 
@@ -93,7 +97,7 @@ final class Wardrobe implements Listener {
         }
     }
 
-    private WardrobeView view(Player player) {
+    WardrobeView view(Player player) {
         return views.get(player.getUniqueId());
     }
 
@@ -158,7 +162,8 @@ final class Wardrobe implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onInventoryClick(InventoryClickEvent e) {
-        if (e.getWhoClicked() instanceof Player p && active(p)) e.setCancelled(true);
+        // clicks in the cosmetics menu are Flux's
+        if (e.getWhoClicked() instanceof Player p && active(p) && fr.influencraft.flux.api.FluxApi.view(p) == null) e.setCancelled(true);
     }
 
     /** Nothing hurts him nor his mannequin while he looks at himself. */

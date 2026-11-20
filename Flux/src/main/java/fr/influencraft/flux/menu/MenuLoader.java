@@ -155,7 +155,8 @@ public final class MenuLoader {
      */
     private static int[] rowSpan(List<MenuButton> b1, List<ListSpec> l1, List<MenuButton> b2, List<ListSpec> l2, Menu m) {
         int top = m.topSize();
-        int first = 5, last = 0;
+        int first = 5, last = 0, low = 9;
+        boolean chest = false, any = false;
         java.util.List<int[]> all = new ArrayList<>();
         for (MenuButton b : b1) all.add(b.slots());
         for (MenuButton b : b2) all.add(b.slots());
@@ -163,10 +164,16 @@ public final class MenuLoader {
         for (ListSpec l : l2) all.add(l.slots());
         for (int[] slots : all) for (int s : slots) {
             int row = s < top ? s / 9 : 6 + Math.min(3, (s - top) / 9);
-            if (s < top) first = Math.min(first, row);
+            any = true;
+            if (s < top) {
+                first = Math.min(first, row);
+                chest = true;
+            } else low = Math.min(low, row);
             last = Math.max(last, row);
         }
         if (m.inventoryMode() != InventoryMode.HIDDEN) last = 9;
+        // nothing in the chest: the window starts on the first inventory row used (same rule in auto_bg.py)
+        else if (any && !chest) first = low;
         if (last < first) last = first;
         return new int[]{first, last};
     }

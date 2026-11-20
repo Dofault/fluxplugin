@@ -49,7 +49,7 @@ import org.bukkit.util.Vector;
  *   <li>His client is told he plays in creative ({@link Hotbar#bars}): no life, food nor experience bars on the
  *   screen. The server never sees him in creative.</li>
  * </ul>
- * Nothing shown in his hotbar: left click leaves, right click will open the choice of cosmetics. Other
+ * Nothing shown in his hotbar: left click leaves, right click opens the choice of cosmetics. Other
  * players no longer see him meanwhile (an invisible player still shows his armour): they see the mannequin.
  */
 final class WardrobeView {
@@ -110,6 +110,12 @@ final class WardrobeView {
     boolean moving;
     boolean closing;
     private int ticks;
+    /** True while the cosmetics menu covers the lower half of his screen. */
+    private boolean menu;
+    /** The camera was turned by something else than his keys: sent at the next tick. */
+    private boolean forced;
+    /** Height really looked at: {@link #height}, or the menu's, reached in a few ticks. */
+    private volatile double aim;
 
     WardrobeView(FluxCosmetics plugin, Player player) {
         this.plugin = plugin;
@@ -119,6 +125,7 @@ final class WardrobeView {
         this.world = back.getWorld();
         this.base = back.toVector();
         this.height = settings.targetHeight();
+        this.aim = height;
     }
 
     // ================================================================== opening and closing
@@ -190,6 +197,7 @@ final class WardrobeView {
             if (now - settling > 0) {
                 // forward (looking up) raises the camera
                 height = Math.clamp(height + up * settings.mouseHeight(), settings.minHeight(), settings.maxHeight());
+                aim = height;
                 // the packets already on their way still carry this move: not counted twice
                 settling = now + (p.getPing() + 25) * 1_000_000L;
             }
@@ -240,8 +248,12 @@ final class WardrobeView {
         int sideways = (input.isLeft() ? 1 : 0) - (input.isRight() ? 1 : 0);
         // forward (Z on AZERTY) raises the camera: it looks further down
         int upwards = (input.isForward() ? 1 : 0) - (input.isBackward() ? 1 : 0);
-        boolean turned = sideways != 0 || upwards != 0;
-        if (turned) {
+        boolean turned = sideways != 0 || upwards != 0 || forced;
+        forced = false;
+        double wanted = menu ? settings.menuHeight() : height;
+        if (Math.abs(wanted - aim) > 1e-3) aim += (wanted - aim) * ZOOM_GLIDE;
+        else aim = wanted;
+        if (sideways != 0 || upwards != 0) {
             yaw = wrap(yaw + sideways * settings.turnSpeed());
             pitch = Math.clamp(pitch + upwards * settings.pitchSpeed(), settings.minPitch(), settings.maxPitch());
         }
@@ -275,7 +287,7 @@ final class WardrobeView {
      */
     private boolean keepAboveFloor(double distance) {
         // pitch down is positive: the eyes stand sin(pitch) * distance above the point looked at
-        double need = (FLOOR - height) / Math.max(0.05, distance);
+        double need = (FLOOR - aim) / Math.max(0.05, distance);
         if (need <= -1) return false;
         float lowest = (float) Math.toDegrees(Math.asin(Math.min(1, need)));
         lowest = Math.min(lowest, settings.maxPitch());
@@ -294,9 +306,32 @@ final class WardrobeView {
         wantedZoom = Math.clamp(wantedZoom + notches * settings.zoomStep(), settings.minDistance(), settings.maxDistance());
     }
 
-    /** Right click: the choice of cosmetics (to come). */
+    /** Right click: the choice of cosmetics. */
     void menu() {
-        plugin.messages().send(player, "menu-soon");
+        plugin.menu().open(player);
+    }
+
+    /**
+     * The cosmetics menu shows or not: it covers the lower half of his screen, so the camera aims lower meanwhile and
+     * the mannequin stands in the upper half.
+     */
+    void menuShown(boolean shown) {
+        menu = shown;
+        // the menu gave him his real inventory back on its way out: the wardrobe's empty hotbar again
+        if (!shown) org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (!closing && player.isOnline()) Hotbar.show(player, hotbar());
+        }, 2L);
+    }
+
+    /** Turns the camera around the mannequin by that many degrees (the menu's buttons: no key reaches the server then). */
+    void turn(float degrees) {
+        yaw = wrap(yaw + degrees);
+        forced = true;
+    }
+
+    /** What he wears changed: the mannequin wears it too. */
+    void redress() {
+        if (mannequin != null && mannequin.isValid()) dress(mannequin.getEquipment());
     }
 
     // ================================================================== camera
@@ -314,7 +349,7 @@ final class WardrobeView {
 
     /** The point the camera looks at (a new vector). */
     private Vector target() {
-        return base.clone().setY(base.getY() + height);
+        return base.clone().setY(base.getY() + aim);
     }
 
     /** The zoom, or less when a block stands between the mannequin and the camera or where his body would be. */
@@ -329,7 +364,7 @@ final class WardrobeView {
         d = Math.max(MIN_REACH, d);
         // never inside the mannequin: far enough from his middle, sideways, while level with his body
         double level = Math.cos(Math.toRadians(x));
-        if (level > 0.2 && height + Math.sin(Math.toRadians(x)) * d < MANNEQUIN_HEIGHT) d = Math.max(d, CLEARANCE / level);
+        if (level > 0.2 && aim + Math.sin(Math.toRadians(x)) * d < MANNEQUIN_HEIGHT) d = Math.max(d, CLEARANCE / level);
         return d;
     }
 

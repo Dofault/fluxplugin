@@ -68,8 +68,21 @@ final class Outfits implements Listener {
         return List.copyOf(cosmetics.keySet());
     }
 
-    /** Puts this cosmetic on him, or takes it off when he wears it. False when it does not exist. */
-    boolean toggle(Player player, String key) {
+    List<Cosmetic> all() {
+        return List.copyOf(cosmetics.values());
+    }
+
+    /** Key of the cosmetic he wears in that slot, or null. */
+    String worn(Player player, EquipmentSlot slot) {
+        Map<EquipmentSlot, String> mine = worn.get(player.getUniqueId());
+        return mine == null ? null : mine.get(slot);
+    }
+
+    /**
+     * Puts this cosmetic on him, or takes it off when he wears it. False when it does not exist. {@code quiet}: no
+     * chat line (the menu shows it on the mannequin).
+     */
+    boolean toggle(Player player, String key, boolean quiet) {
         Cosmetic c = cosmetics.get(key);
         if (c == null) return false;
         if (!c.unlocked()) {
@@ -82,17 +95,18 @@ final class Outfits implements Listener {
             mine.remove(c.slot());
             Appearance.set(player, c.slot(), null);
             Sounds.cue(player, "toggle-off");
-            plugin.messages().send(player, "outfits.taken-off", "%name%", c.name());
+            if (!quiet) plugin.messages().send(player, "outfits.taken-off", "%name%", c.name());
         } else {
             mine.put(c.slot(), key);
             Appearance.set(player, c.slot(), item(c, player));
             Sounds.cue(player, "toggle-on");
-            plugin.messages().send(player, "outfits.wearing", "%name%", c.name());
+            if (!quiet) plugin.messages().send(player, "outfits.wearing", "%name%", c.name());
         }
         return true;
     }
 
-    private static ItemStack item(Cosmetic c, Player player) {
+    /** The item worn for this cosmetic (a new stack). */
+    ItemStack item(Cosmetic c, Player player) {
         String spec = c.item();
         boolean fluxId = spec.indexOf(':') > 0 && !spec.startsWith("itemsadder:") && !spec.startsWith("source:");
         ItemStack item = fluxId ? CustomItems.item(spec) : null;

@@ -177,14 +177,21 @@ class Section:
 
 
 def row_span(slot_sets, top, hidden):
-    first, last = 5, 0
+    first, last, low = 5, 0, 9
+    chest = False
     for s in slot_sets:
         row = s // 9 if s < top else 6 + min(3, (s - top) // 9)
         if s < top:
             first = min(first, row)
+            chest = True
+        else:
+            low = min(low, row)
         last = max(last, row)
     if not hidden:
         last = 9
+    # nothing in the chest: the window starts on the first inventory row used (the chest stays transparent)
+    if hidden and not chest and slot_sets:
+        first = low
     return first, max(first, last)
 
 

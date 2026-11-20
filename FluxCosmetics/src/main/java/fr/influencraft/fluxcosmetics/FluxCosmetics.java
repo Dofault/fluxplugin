@@ -14,8 +14,9 @@ import java.util.List;
  * outside, a camera turning around him.
  *
  * <pre>
- *   /tenue                    open or close the wardrobe (aliases /garderobe, /cosmetique, /cosmetiques)
- *   /tenue porter &lt;cosmetic&gt;  put a cosmetic on, or take it off (flux.admin, until the wardrobe has its menu)
+ *   /tenue                    open the wardrobe on the choice of cosmetics, or close it (aliases /garderobe,
+ *                             /cosmetique, /cosmetiques)
+ *   /tenue porter &lt;cosmetic&gt;  put a cosmetic on, or take it off (flux.admin)
  *   /tenue reload             (flux.admin)
  * </pre>
  */
@@ -24,6 +25,7 @@ public final class FluxCosmetics extends FluxPlugin {
     private Settings settings;
     private Wardrobe wardrobe;
     private Outfits outfits;
+    private CosmeticsMenu menu;
 
     @Override
     protected void enable() {
@@ -33,6 +35,8 @@ public final class FluxCosmetics extends FluxPlugin {
         outfits = new Outfits(this);
         outfits.load(getConfig().getConfigurationSection("cosmetics"));
         Bukkit.getPluginManager().registerEvents(outfits, this);
+        menu = new CosmeticsMenu(this);
+        menu.register();
         command("tenue")
                 .description("Wardrobe: see yourself from outside and choose your outfit.")
                 .aliases("garderobe", "cosmetique", "cosmetiques")
@@ -64,6 +68,14 @@ public final class FluxCosmetics extends FluxPlugin {
         return wardrobe;
     }
 
+    Outfits outfits() {
+        return outfits;
+    }
+
+    CosmeticsMenu menu() {
+        return menu;
+    }
+
     private boolean onCommand(CommandSender sender, String label, String[] args) {
         if (args.length > 0 && args[0].equalsIgnoreCase("reload") && Staff.isAdmin(sender)) {
             reload();
@@ -71,7 +83,7 @@ public final class FluxCosmetics extends FluxPlugin {
             return true;
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("porter") && Staff.isAdmin(sender) && sender instanceof Player p) {
-            if (!outfits.toggle(p, args[1])) messages().send(p, "outfits.unknown", "%name%", args[1]);
+            if (!outfits.toggle(p, args[1], false)) messages().send(p, "outfits.unknown", "%name%", args[1]);
             return true;
         }
         if (!(sender instanceof Player p) || args.length > 0) {

@@ -5,7 +5,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 /** The wardrobe's settings (config.yml). */
 record Settings(double distance, double minDistance, double maxDistance, double zoomStep,
                 float turnSpeed, float pitchSpeed, float minPitch, float maxPitch, double targetHeight, double minHeight, double maxHeight,
-                double mouseHeight, float startPitch) {
+                double mouseHeight, float startPitch, double menuHeight) {
 
     static Settings read(FileConfiguration c) {
         double min = Math.max(0.5, c.getDouble("camera.min-distance", 0.6));
@@ -20,6 +20,7 @@ record Settings(double distance, double minDistance, double maxDistance, double 
                 (float) Math.clamp(c.getDouble("camera.pitch-speed", 2), 0, 45),
                 minPitch, maxPitch, Math.clamp(c.getDouble("camera.target-height", 1.0), minH, maxH), minH, maxH,
                 Math.max(0, c.getDouble("camera.mouse-height", 0.03)),
-                (float) Math.clamp(c.getDouble("camera.start-pitch", 12), minPitch, maxPitch));
+                (float) Math.clamp(c.getDouble("camera.start-pitch", 12), minPitch, maxPitch),
+                Math.clamp(c.getDouble("camera.menu-height", -0.25), -2.0, maxH));
     }
 }

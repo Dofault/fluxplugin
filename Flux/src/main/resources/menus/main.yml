@@ -8,7 +8,7 @@
 # Disposition (centrée) :
 #   Thème vanilla (2026-10-30, theme.menus.main de la config de Flux) : rangée 1 = tableau de bord (tête = profil
 #   en 9, pseudo : widget, bouton Compte en 17 : soldes et historique), fonctionnalités dans un bloc de 2 x 5 (2026-11-10, fond bg_main de gen_ui.py) :
-#   20-24 Rangs, Carrières, Quêtes, Collections, Tags ; 29-33 Marché, Mondes, Villes et Pays, Familiers, Donjons
+#   20-24 Rangs, Carrières, Quêtes, Collections, Cosmétiques (garde-robe /tenue, tags compris) ; 29-33 Marché, Mondes, Villes et Pays, Familiers, Donjons
 #   coffre rangée 6 : Vote 45, Parrainage 46, Classement 47, Récompenses 51 (calendrier au clic droit),
 #   Pass 52, Autre 53
 #   (Autre = fenêtre des paramètres au clic gauche, fenêtre d'aide au clic droit : Flux, settings.yml et help.yml)
@@ -177,15 +177,15 @@ items:
       left: ["[menu] grades"]
 
 
-  tags:
-    material: NAME_TAG
-    name: "&#FFD94DTags"
+  cosmetiques:
+    material: "itemsadder:fluxui:btn_shirt_purple"
+    name: "&#FFD94DCosmétiques"
     slots: [24]
     lore:
-      - "@desc Choisis le tag affiché à côté de ton pseudo."
+      - "@desc Change ton apparence : casque, plastron, jambières, bottes et le tag à côté de ton pseudo. Tu te vois de l'extérieur pendant que tu choisis."
       - "@left Voir"
     actions:
-      left: ["[menu] tags"]
+      left: ["[close]", "[player] tenue"]
   # >>> gen_pages (boutons générés par assets/gen_pages.py)
 
   parrainage:

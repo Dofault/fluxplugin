@@ -1,0 +1,98 @@
+# Cosmetics menu, opened from the wardrobe (/tenue, right click). Drawn in the player's inventory rows only (slots 54
+# to 89 of a 6-row chest): the chest above stays empty and transparent, the mannequin is seen over the menu and wears
+# what is clicked at once. Entries and category buttons are built by FluxCosmetics (lists cosmetics, cosmetics_cat_<n>);
+# Flux keeps each player's category and page, so the menu opens again where he left it.
+# Theme: theme.menus.cosmetiques of Flux's config (picture drawn by gen_ui.py).
+rows: 6
+player-inventory: hidden
+vanilla-background: false
+
+open-actions:
+  - "[cosmetics] opened"
+  - "[sound] @page"
+close-actions:
+  - "[cosmetics] closed"
+
+lists:
+  cosmetics_cat_0:
+    slots: 56
+    item:
+      material: entry
+      actions:
+        left: ["[list] cosmetics filter 0", "[refresh]"]
+  cosmetics_cat_1:
+    slots: 57
+    item:
+      material: entry
+      actions:
+        left: ["[list] cosmetics filter 1", "[refresh]"]
+  cosmetics_cat_2:
+    slots: 58
+    item:
+      material: entry
+      actions:
+        left: ["[list] cosmetics filter 2", "[refresh]"]
+  cosmetics_cat_3:
+    slots: 59
+    item:
+      material: entry
+      actions:
+        left: ["[list] cosmetics filter 3", "[refresh]"]
+  cosmetics_cat_4:
+    slots: 60
+    item:
+      material: entry
+      actions:
+        left: ["[list] cosmetics filter 4", "[refresh]"]
+  cosmetics:
+    slots: 64-70, 73-79
+    item:
+      material: entry
+      actions:
+        left: ["%entry_clic%", "[cosmetics] changed", "[refresh]"]
+
+widgets:
+  pages:
+    type: pager
+    list: cosmetics
+    prev: 81
+    next: 89
+
+items:
+  quitter:
+    material: "itemsadder:fluxui:btn_close_red"
+    name: "Quitter"
+    slots: [54]
+    lore:
+      - "@desc Sortir de la garde-robe et revenir à ta place."
+      - "@left Quitter la garde-robe"
+    actions:
+      left: ["[cosmetics] leave"]
+
+  icone:
+    material: "itemsadder:fluxui:btn_shirt_purple"
+    name: "Cosmétiques"
+    slots: [62]
+    lore:
+      - "@desc Choisis ce que tu portes par-dessus ton armure et le tag affiché à côté de ton pseudo. Ton personnage le porte aussitôt, juste au-dessus."
+      - "@desc Ferme ce menu pour bouger la caméra, puis clic droit pour le rouvrir."
+
+  tourner_gauche:
+    material: "itemsadder:fluxui:btn_left_blue"
+    name: "Tourner"
+    slots: [63]
+    lore:
+      - "@desc Fait tourner la caméra autour de ton personnage."
+      - "@left Tourner à gauche"
+    actions:
+      left: ["[cosmetics] turn -45"]
+
+  tourner_droite:
+    material: "itemsadder:fluxui:btn_right_blue"
+    name: "Tourner"
+    slots: [71]
+    lore:
+      - "@desc Fait tourner la caméra autour de ton personnage."
+      - "@left Tourner à droite"
+    actions:
+      left: ["[cosmetics] turn 45"]

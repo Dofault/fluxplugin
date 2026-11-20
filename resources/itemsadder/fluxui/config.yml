@@ -787,6 +787,62 @@ items:
       generate: true
       textures:
       - btn/btn_down_off.png
+  btn_shirt_red:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - btn/btn_shirt_red.png
+  btn_shirt_green:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - btn/btn_shirt_green.png
+  btn_shirt_blue:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - btn/btn_shirt_blue.png
+  btn_shirt_orange:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - btn/btn_shirt_orange.png
+  btn_shirt_purple:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - btn/btn_shirt_purple.png
+  btn_shirt_grey:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - btn/btn_shirt_grey.png
+  btn_shirt_gold:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - btn/btn_shirt_gold.png
+  btn_shirt_off:
+    display_name: ' '
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+      - btn/btn_shirt_off.png
   monde_utopia:
     display_name: ' '
     resource:
@@ -2279,6 +2335,12 @@ font_images:
     show_in_gui: false
     suggest_in_command: false
     path: bg/auto/auto_tags.png
+    scale_ratio: 221
+    y_position: 13
+  bg_auto_cosmetiques:
+    show_in_gui: false
+    suggest_in_command: false
+    path: bg/auto/auto_cosmetiques.png
     scale_ratio: 221
     y_position: 13
   bg_auto_vote:

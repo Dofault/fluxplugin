@@ -30,11 +30,14 @@ camera:
   mouse-height: 0.03
   # Look down when the wardrobe opens.
   start-pitch: 12
+  # Point looked at while the cosmetics menu is open, above the mannequin's feet (negative: under them). The menu
+  # covers the lower half of the screen: aiming low puts the mannequin in the upper half.
+  menu-height: -0.25
 
 
 # The cosmetics. item: what is worn (a Flux item id such as fluxarmor:zero_helmet, or a material), slot: head, chest,
 # legs or feet (drawn over the real item of that slot, for everybody, the wearer included). unlocked: everybody has
-# it (first version: put on with /tenue porter <id>, admins only, until the wardrobe has its menu).
+# it. Chosen in the wardrobe's menu (right click in /tenue), or with /tenue porter <id> (admins).
 cosmetics:
   zero_helmet:
     name: "Diadem of Absolute Zero"
