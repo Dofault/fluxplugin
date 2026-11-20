@@ -9,6 +9,9 @@ language: ""
 # Menu opened by a right click on the back button of the cosmetics menu (the wardrobe is left first).
 main-menu: main
 
+# Colours of the leather icons of the cosmetics menu's categories, in order: helmets, chestplates, leggings, boots.
+menu-colours: ["#7A48C0", "#E060A0", "#2BC4E8", "#2ECF7B"]
+
 camera:
   # Distance from the mannequin when the wardrobe opens.
   distance: 3.2

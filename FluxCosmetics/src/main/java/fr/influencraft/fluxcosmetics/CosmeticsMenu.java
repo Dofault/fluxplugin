@@ -167,8 +167,22 @@ final class CosmeticsMenu {
         if (selected) lore.ok(plugin.messages().raw("menu.selected"));
         else lore.left(plugin.messages().raw("menu.see"));
         ItemStack item = Items.of(ICONS[category], names.get(category), lore.build(), player);
-        if (item != null && selected) glint(item);
+        if (item == null) return null;
+        dye(item, plugin.getConfig().getStringList("menu-colours"), category);
+        if (selected) glint(item);
         return item;
+    }
+
+    /** Leather icons dyed with the colour of their category ({@code menu-colours} of the config, #RRGGBB). */
+    private static void dye(ItemStack item, List<String> colours, int category) {
+        if (category >= colours.size() || !(item.getItemMeta() instanceof org.bukkit.inventory.meta.LeatherArmorMeta meta)) return;
+        try {
+            meta.setColor(org.bukkit.Color.fromRGB(Integer.parseInt(colours.get(category).replace("#", "").trim(), 16)));
+        } catch (IllegalArgumentException ignored) {
+            return;
+        }
+        meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_DYE);
+        item.setItemMeta(meta);
     }
 
     private static void glint(ItemStack item) {
