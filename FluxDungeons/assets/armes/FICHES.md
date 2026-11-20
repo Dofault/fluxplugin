@@ -394,3 +394,59 @@ Affichages (`display` du modèle) :
 | `on_shelf` | 0 180 45 | 0.06 0.32 0 | 0.578 |
 | `ground` | 0 0 0 | 0.06 -0.08 0 | 0.338 |
 | `head` | 0 180 0 | 0 13 7 | 0.6 |
+
+## Tison-Soleil (Pyromancien) : `fluxdungeons:tison_soleil`
+
+Grand marteau à deux mains : manche de bois carbonisé, talon de métal noirci ; tête massive et asymétrique en trois blocs de roche volcanique (le bloc de droite plus gros que celui de gauche), séparés par deux veines de magma en retrait dans la roche, une fissure en travers du bloc central ; collier et coin de fer noirci à la jonction du manche.
+
+| Dimension | Valeur |
+|---|---|
+| Longueur (Y) | 30 (de -8 à 22) |
+| Largeur max (X) | 17 (de 0 à 17) |
+| Épaisseur max (Z) | 6.2 |
+| Prise (point tenu par le poing) | (8, -1, 8) |
+| Centre visuel (milieu de l'encombrement) | (8.5, 7, 8) |
+| Longueur en main, 3e personne | 28.5 px de joueur (joueur = 32) |
+| Nombre de cubes | **11** |
+
+Palette :
+
+| Matériau (texture) | Couleur | Lumineux |
+|---|---|---|
+| `bois_brule` | Bois carbonisé `#49352F` |  |
+| `talon` | Métal noirci du talon `#41332E` |  |
+| `roche` | Roche volcanique `#392D2B` |  |
+| `roche_gauche` | Roche brunie `#44302B` |  |
+| `roche_droite` | Roche sombre `#352726` |  |
+| `magma` | Magma `#C95725` | oui |
+| `fer` | Fer noirci `#292729` |  |
+
+Hiérarchie (groupes, dans l'ordre de construction) : `talon` (1), `manche` (2), `renforts` (2), `tete` (3), `magma` (3)
+
+| # | Groupe | Cube | De (x, y, z) | À (x, y, z) | Taille | Rotation | Matériau | Note |
+|---|---|---|---|---|---|---|---|---|
+| 1 | talon | `talon` | 5.5 -8 6 | 10.5 -5 10 | 5 × 3 × 4 |  | `talon` | 5 x 3 x 4 |
+| 2 | manche | `manche_bas` | 6.5 -5 6.5 | 9.5 3 9.5 | 3 × 8 × 3 |  | `bois_brule` | zone de prise |
+| 3 | manche | `manche_haut` | 6.5 3 6.5 | 9.5 10 9.5 | 3 × 7 × 3 |  | `bois_brule` |  |
+| 4 | renforts | `collier` | 5.5 10 6 | 10.5 12 10 | 5 × 2 × 4 |  | `fer` | sous la tête |
+| 5 | renforts | `coin` | 6 21 6 | 10 22 10 | 4 × 1 × 4 |  | `fer` | coin de fer au sommet, là où le manche traverse la tête |
+| 6 | tete | `bloc_central` | 5 12 5 | 11 21 11 | 6 × 9 × 6 |  | `roche` | 6 x 9 x 6 |
+| 7 | tete | `bloc_gauche` | 0 13 5 | 4 20 11 | 4 × 7 × 6 |  | `roche_gauche` | 4 x 7 x 6 |
+| 8 | tete | `bloc_droit` | 12 12.5 5 | 17 20.5 11 | 5 × 8 × 6 |  | `roche_droite` | 5 x 8 x 6, le plus gros |
+| 9 | magma | `veine_gauche` | 4 13.5 5.5 | 5 19.5 10.5 | 1 × 6 × 5 |  | `magma` | entre deux blocs, en retrait de 0,5 |
+| 10 | magma | `veine_droite` | 11 13 5.5 | 12 20 10.5 | 1 × 7 × 5 |  | `magma` | entre deux blocs, en retrait de 0,5 |
+| 11 | magma | `fissure` | 7.5 13.5 4.9 | 8.5 19.5 11.1 | 1 × 6 × 6.2 | Z 22.5° autour de (8, 16.5, 8) | `magma` | traverse le bloc central, affleure de 0,1 devant et derrière |
+
+Affichages (`display` du modèle) :
+
+| Contexte | Rotation | Translation | Échelle |
+|---|---|---|---|
+| `thirdperson_righthand` | 0 -90 -22 | 0 6.6 4.64 | 0.95 |
+| `thirdperson_lefthand` | 0 90 22 | 0 6.6 4.64 | 0.95 |
+| `firstperson_righthand` | 0 -90 -20 | 1.13 3.78 1.34 | 0.55 |
+| `firstperson_lefthand` | 0 90 20 | 1.13 3.78 1.34 | 0.55 |
+| `gui` | 0 0 -45 | -0.6 -0.3 0 | 0.566 |
+| `fixed` | 0 180 45 | -0.28 -0.56 0 | 0.53 |
+| `on_shelf` | 0 180 45 | -0.28 -0.56 0 | 0.53 |
+| `ground` | 0 0 0 | -0.18 0.37 0 | 0.367 |
+| `head` | 0 180 0 | 0 13 7 | 0.6 |

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Class weapons of the RPG universe in 3D: Brise-Aube, Sylve-Celeste, Sceptre du Neant, Reliquaire de l'Aube,
-Coeur-de-Givre (the cryomancer's staff, its textures painted here pixel by pixel).
+Coeur-de-Givre (the cryomancer's staff) and Tison-Soleil (the pyromancer's hammer), these two with textures painted
+here pixel by pixel.
 
     <venv with Pillow and numpy>/python3 gen_armes.py <ItemsAdder/contents/fluxdungeons> [previews dir] [sheet.md]
 
@@ -407,7 +408,71 @@ def coeur_de_givre():
     return w
 
 
-WEAPONS = [brise_aube, sylve_celeste, sceptre_neant, reliquaire_aube, coeur_de_givre]
+def tison_soleil():
+    """Pyromancer's hammer, 30 units tall: three blocks of volcanic rock parted by two seams of magma set back into
+    the head, one crack across the middle block, blackened iron holding it on a charred shaft."""
+    w = Weapon("tison_soleil", "Tison-Soleil", "Pyromancien",
+               "Grand marteau à deux mains : manche de bois carbonisé, talon de métal noirci ; tête massive et "
+               "asymétrique en trois blocs de roche volcanique (le bloc de droite plus gros que celui de gauche), "
+               "séparés par deux veines de magma en retrait dans la roche, une fissure en travers du bloc central ; "
+               "collier et coin de fer noirci à la jonction du manche.",
+               {"bois_brule": ("#49352F", "Bois carbonisé", False), "talon": ("#41332E", "Métal noirci du talon", False),
+                "roche": ("#392D2B", "Roche volcanique", False), "roche_gauche": ("#44302B", "Roche brunie", False),
+                "roche_droite": ("#352726", "Roche sombre", False), "magma": ("#C95725", "Magma", True),
+                "fer": ("#292729", "Fer noirci", False)})
+
+    def charred(x, y):
+        # uneven vertical marks, one crack per face: burnt wood, not stripes
+        if x % 3 == 1 and y in (3, 4, 5):
+            return "#241F20"
+        if x % 3 == 0:
+            return "#49352F" if y % 5 == 3 else "#725044"
+        return "#30231F" if x % 3 == 2 else "#49352F"
+
+    def rock(base, light, shadow):
+        # large dark masses: lit along the top and the upper left, shaded below and on the right, one lighter patch
+        def pixel(x, y):
+            if y == 0 or x == 0 and y < 3 or (x, y) in ((2, 3), (3, 3)):
+                return light
+            if y >= 6 or x >= 4 and y >= 4:
+                return shadow
+            return base
+        return pixel
+
+    def magma(x, y):
+        # heat from inside: ember red at the ends of a seam, orange towards its middle, one hot pixel
+        return ("#8F3022", "#C95725", "#E98732", "#F4BE62", "#E98732", "#C95725", "#8F3022", "#8F3022")[y % 8]
+
+    def iron(x, y):
+        return "#68534A" if y == 0 and x < 3 else "#292729"
+
+    def heel(x, y):
+        return "#80604A" if y == 0 and x < 2 else ("#30231F" if y >= 2 else "#41332E")
+
+    w.painted = {"bois_brule": charred, "talon": heel, "magma": magma, "fer": iron,
+                 "roche": rock("#392D2B", "#65443A", "#241F20"), "roche_gauche": rock("#44302B", "#65443A", "#30231F"),
+                 "roche_droite": rock("#352726", "#4A3530", "#241F20")}
+    w.group("talon")
+    w.box("talon", [5.5, -8, 6], [10.5, -5, 10], "talon", note="5 x 3 x 4")
+    w.group("manche")
+    # two cubes: a face never stretches its texture beyond 16 units
+    w.box("manche_bas", [6.5, -5, 6.5], [9.5, 3, 9.5], "bois_brule", note="zone de prise")
+    w.box("manche_haut", [6.5, 3, 6.5], [9.5, 10, 9.5], "bois_brule")
+    w.group("renforts")
+    w.box("collier", [5.5, 10, 6], [10.5, 12, 10], "fer", note="sous la tête")
+    w.box("coin", [6, 21, 6], [10, 22, 10], "fer", note="coin de fer au sommet, là où le manche traverse la tête")
+    w.group("tete")
+    w.box("bloc_central", [5, 12, 5], [11, 21, 11], "roche", note="6 x 9 x 6")
+    w.box("bloc_gauche", [0, 13, 5], [4, 20, 11], "roche_gauche", note="4 x 7 x 6")
+    w.box("bloc_droit", [12, 12.5, 5], [17, 20.5, 11], "roche_droite", note="5 x 8 x 6, le plus gros")
+    w.group("magma")
+    w.box("veine_gauche", [4, 13.5, 5.5], [5, 19.5, 10.5], "magma", note="entre deux blocs, en retrait de 0,5")
+    w.box("veine_droite", [11, 13, 5.5], [12, 20, 10.5], "magma", note="entre deux blocs, en retrait de 0,5")
+    w.c("fissure", [8, 16.5, 8], [1, 6, 6.2], "magma", ("z", 22.5), "traverse le bloc central, affleure de 0,1 devant et derrière")
+    return w
+
+
+WEAPONS = [brise_aube, sylve_celeste, sceptre_neant, reliquaire_aube, coeur_de_givre, tison_soleil]
 
 # ------------------------------------------------------------------------------------------- displays
 # Vanilla references (assets/minecraft/models/item/handheld.json and bow.json) and the point of their sprite held
@@ -434,6 +499,7 @@ DISPLAYS = {
     "reliquaire_aube": ("handheld", 45, (8, 2.85, 8), (-47, 0.66), (10, 0.36)),
     # 32 units tall against 47 for the two other staves: held larger, so it stays a two-handed weapon
     "coeur_de_givre": ("handheld", 45, (8, 2, 8), (-47, 0.95), (10, 0.5)),
+    "tison_soleil": ("handheld", 45, (8, -1, 8), (-32, 0.95), (0, 0.55)),
 }
 # Spin of the weapon around its own axis (degrees) before it is held: the bow was held back to front in game, its
 # back (grip, crystal, +X) towards the player and the string away (2026-11-13). 180 = back forward, string inward.

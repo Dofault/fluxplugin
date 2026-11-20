@@ -58,7 +58,7 @@ items:
     rarity: common
     stats: {magic_power: 10, max_mana: 10}
     description: [Throws an ember on a left click., Every hit sets the monster alight.]
-    look: {material: BLAZE_ROD, name: Tison-Soleil}
+    look: {material: BLAZE_ROD, name: Tison-Soleil, model: 'fluxdungeons:tison_soleil'}
   class_druid_weapon:
     slot: weapon
     classes: [druid]
