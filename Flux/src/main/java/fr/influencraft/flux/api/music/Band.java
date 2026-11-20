@@ -34,6 +34,10 @@ public interface Band {
     default void cue(String instrument, float pitch) {
     }
 
+    /** A note of this instrument was just sent (pitch 0.5 to 2): time to show it (a note particle). */
+    default void played(String instrument, float pitch) {
+    }
+
     /** A song played by the band: over ({@link #done}) once its last note rang, or when cancelled. */
     interface Session {
         boolean done();

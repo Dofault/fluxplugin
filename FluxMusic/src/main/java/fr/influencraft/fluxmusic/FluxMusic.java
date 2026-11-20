@@ -205,6 +205,7 @@ public final class FluxMusic extends FluxPlugin implements Listener {
         }
 
         public void played(fr.influencraft.fluxmusic.song.Instrument instrument, float pitch) {
+            band.played(name(instrument), pitch);
         }
 
         public void cue(fr.influencraft.fluxmusic.song.Instrument instrument, float pitch) {

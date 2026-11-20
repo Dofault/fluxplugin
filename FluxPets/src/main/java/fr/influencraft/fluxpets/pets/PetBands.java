@@ -29,7 +29,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * they part.
  *
  * <p>While a song plays, the pets loop their {@code playing} animation and answer each of their notes with a gesture
- * of their file ({@code band-gestures}, taken in turn), started 200 ms ahead so its contact falls on the note.</p>
+ * of their file ({@code band-gestures}, taken in turn), started 200 ms ahead so its contact falls on the note; a note
+ * particle coloured by the pitch rises above the pet that just played.</p>
  */
 final class PetBands {
 
@@ -46,6 +47,10 @@ final class PetBands {
         final Map<Follower, Integer> gestureTurn = new HashMap<>();
         /** Instruments with a note coming, told by the clock thread, played as gestures on the next tick. */
         final Set<String> cues = ConcurrentHashMap.newKeySet();
+        /** Notes just sent (instrument -> pitch, the highest of a chord), shown as particles on the next tick. */
+        final Map<String, Float> notes = new ConcurrentHashMap<>();
+        /** Tick each member last showed a note particle at. */
+        final Map<Follower, Long> shownAt = new HashMap<>();
         final List<String> queue = new ArrayList<>();
         volatile Snapshot snapshot = new Snapshot("", new double[3], Map.of(), List.of());
         Band.Session session;
@@ -74,6 +79,10 @@ final class PetBands {
 
         public void cue(String instrument, float pitch) {
             cues.add(instrument);
+        }
+
+        public void played(String instrument, float pitch) {
+            notes.merge(instrument, pitch, Math::max);
         }
     }
 
@@ -117,7 +126,10 @@ final class PetBands {
             return;
         }
         if (tick++ % 10 == 0) regroup();
-        for (Group g : groups) gestures(g);
+        for (Group g : groups) {
+            gestures(g);
+            particles(g);
+        }
     }
 
     // ---------------------------------------------------------------- who plays with whom
@@ -181,6 +193,7 @@ final class PetBands {
                 rest(g, gone);
                 g.members.remove(gone);
                 g.gestureTurn.remove(gone);
+                g.shownAt.remove(gone);
             }
         }
         g.members.addAll(band);
@@ -260,6 +273,37 @@ final class PetBands {
             // override: the bones the gesture leaves alone keep the playing loop under it
             f.tracker.animate(gesture, AnimationModifier.builder().type(AnimationIterator.Type.PLAY_ONCE)
                     .start(0).end(2).override(true).build());
+        }
+    }
+
+    // ---------------------------------------------------------------- a note particle above the pet playing
+
+    /** Ticks between two note particles of the same pet (fast runs would hide it under a cloud of notes). */
+    private static final int PARTICLE_EVERY = 4;
+    private static final double PARTICLE_HEIGHT = 1.5;
+
+    /** One note particle above each pet that just played, coloured by the pitch, seen by those hearing the band. */
+    private void particles(Group g) {
+        if (g.notes.isEmpty()) return;
+        Map<String, Float> fresh = new HashMap<>(g.notes);
+        fresh.keySet().forEach(g.notes::remove);
+        List<Player> viewers = g.snapshot.listeners();
+        if (viewers.isEmpty()) return;
+        for (Follower f : g.members) {
+            float pitch = 0;
+            for (String instrument : f.pet.instruments()) pitch = Math.max(pitch, fresh.getOrDefault(instrument, 0f));
+            if (pitch <= 0 || !f.carrier.isValid()) continue;
+            Long last = g.shownAt.get(f);
+            if (last != null && tick - last < PARTICLE_EVERY) continue;
+            g.shownAt.put(f, tick);
+            Location at = f.carrier.getLocation();
+            double colour = Math.max(0, Math.min(1, (Math.log(pitch) / Math.log(2) + 1) / 2));   // pitch 0.5..2 -> 0..1
+            for (Player p : viewers) {
+                if (p.isOnline() && p.getWorld() == at.getWorld()) {
+                    // count 0: the "offset" is the note's colour
+                    p.spawnParticle(org.bukkit.Particle.NOTE, at.getX(), at.getY() + PARTICLE_HEIGHT, at.getZ(), 0, colour, 0, 0, 1);
+                }
+            }
         }
     }
 }
