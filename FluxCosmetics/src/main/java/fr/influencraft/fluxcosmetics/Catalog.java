@@ -116,7 +116,7 @@ final class Catalog implements RecipeBook.Catalog, Listener {
         return cosmetics.stream().filter(c -> c.slot() == slot).toList();
     }
 
-    /** A folder: the picture of its first cosmetic, its name, how many it holds and which one he wears. */
+    /** A folder: a diamond piece of its slot, its name, how many it holds and which one he wears. */
     private ItemStack folderIcon(Player player, EquipmentSlot slot, List<Cosmetic> in) {
         var m = plugin.messages();
         String key = slot.name().toLowerCase(Locale.ROOT);
@@ -124,8 +124,16 @@ final class Catalog implements RecipeBook.Catalog, Listener {
         String wearing = worn.getOrDefault(player.getUniqueId(), Map.of()).get(slot);
         in.stream().filter(c -> c.key().equals(wearing)).findFirst().ifPresent(c -> lore.kv(m.raw("catalog.folder-worn"), c.name()));
         lore.left(m.raw("catalog.folder-open"));
-        Cosmetic first = in.getFirst();
-        ItemStack base = first.icon() == null ? worn(first, player) : Items.of(first.icon(), player);
+        ItemStack base = new ItemStack(switch (slot) {
+            case CHEST -> org.bukkit.Material.DIAMOND_CHESTPLATE;
+            case LEGS -> org.bukkit.Material.DIAMOND_LEGGINGS;
+            case FEET -> org.bukkit.Material.DIAMOND_BOOTS;
+            default -> org.bukkit.Material.DIAMOND_HELMET;
+        });
+        // a plain picture: no armour points nor "when on head" lines under the name
+        base.setData(io.papermc.paper.datacomponent.DataComponentTypes.TOOLTIP_DISPLAY,
+                io.papermc.paper.datacomponent.item.TooltipDisplay.tooltipDisplay()
+                        .addHiddenComponents(io.papermc.paper.datacomponent.DataComponentTypes.ATTRIBUTE_MODIFIERS).build());
         return Items.dress(base, m.raw("catalog.folders." + key), lore.build(), player);
     }
 
