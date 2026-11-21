@@ -23,3 +23,4 @@ pick: "Show"
 remove: "Stop showing"
 rarities: ["Common", "Unique", "Epic", "Mythic", "Legendary", "Fabled"]
 locked-tag: "Not unlocked yet."
+no-menu: "&#FF5C5CThe cosmetics menu is not available: use /%flux_cmd_fluxtags_tags% <tag>."

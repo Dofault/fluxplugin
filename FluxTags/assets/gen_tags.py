@@ -12,12 +12,11 @@ panel, fat tinted capitals; « plaque » before, from 2026-10-30), and fluxtags 
                        every %img_<id>% of the other plugins keeps working once influtags is removed
 Each FluxTags tag is in the pack:
   <id>                 an ItemsAdder glyph for %fluxtags_tag% in the chat and TAB (CHAT_H px high)
-  menu sheet           every tag once in fluxtags:font/menu.png, read by 7 fonts of their own (2026-11-11):
-                       fluxtags:r<1..6> places it on line 1..6 of the /tags menu (chest rows 0 to 5, gen_fonds.TAG_X)
-                       and fluxtags:p on the rank line of the profile menu (PROFILE_Y), character 0xE000 + index
-                       (third value of glyphs.yml). They replace 552 ItemsAdder glyphs (<id>_r<n>, rang_<rank>_p),
-                       each read on its own by the client at every resource reload.
-Background of /tags: gen_fonds.background (« rubans »).
+  menu sheet           every tag once in fluxtags:font/menu.png, read by the font fluxtags:p, which places it on the
+                       rank line of the profile menu (PROFILE_Y), character 0xE000 + index (third value of
+                       glyphs.yml): one picture for the client instead of one ItemsAdder glyph per tag. The /tags
+                       menu and its fonts fluxtags:r<1..6> are gone since 2026-11-21 (tags are chosen in the
+                       cosmetics menu).
 
     <venv with Pillow>/python3 gen_tags.py <plugins dir of the server>
 Writes plugins/ItemsAdder/contents/fluxtags (textures, config.yml), contents/fluxtags_fonts (menu sheet and fonts, a
@@ -34,7 +33,6 @@ import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from tag_styles import RARITIES, rails as draw  # noqa: E402
-from gen_fonds import LIFT, ROWS, TAG_H, background, tag_top  # noqa: E402
 
 SPECIALS = [("beta", "Bêta", "b376e5"), ("createur", "Créateur", "2bc4e8"),
             # FluxFamily (2026-10-30): relationship status (one tag « situation » showing one of the three) and divorced
@@ -61,6 +59,7 @@ LEGACY = [
     ("melodique", "Mélodique", "1fbfa6")]
 CHAT_H = 11        # height in the chat and in item lores (chosen in game on 2026-11-21, 10 before), y_position CHAT_Y
 CHAT_Y = 9
+TAG_H = 9          # height of a tag in a menu title (the profile)
 PROFILE_Y = 76     # window y of the rank tag of the profile (row 3 of the identity card, above the sections, vanilla theme)
 
 
@@ -75,7 +74,7 @@ MENU_BASE = 0xE000
 
 def menu_fonts(plugins, images):
     """The menu sheet (every tag in a cell, padded with transparency: a glyph's width stops at its last opaque
-    column) and its 7 fonts, one bitmap provider each, in a raw pack folder (copied as it is by ItemsAdder)."""
+    column) and its font, one bitmap provider, in a raw pack folder (copied as it is by ItemsAdder)."""
     root = os.path.join(plugins, "ItemsAdder", "contents", "fluxtags_fonts", "resourcepack", "assets", "fluxtags")
     os.makedirs(os.path.join(root, "textures", "font"), exist_ok=True)
     os.makedirs(os.path.join(root, "font"), exist_ok=True)
@@ -88,8 +87,7 @@ def menu_fonts(plugins, images):
     chars = ["".join(chr(MENU_BASE + r * SHEET_COLS + c) if r * SHEET_COLS + c < len(images) else "\u0000"
                      for c in range(SHEET_COLS)) for r in range(rows)]
     # the cell is scaled to TAG_H as a whole: a tag shorter than the cell sits at its bottom, as tall as before
-    tops = {"r%d" % (row + 1): tag_top(row) for row in range(ROWS)}
-    tops["p"] = PROFILE_Y
+    tops = {"p": PROFILE_Y}
     for name, top in tops.items():
         provider = {"type": "bitmap", "file": "fluxtags:font/menu.png", "ascent": 13 - top, "height": TAG_H,
                     "chars": chars}
@@ -167,14 +165,6 @@ def main(plugins):
     for lid, name, colour in LEGACY:
         draw(name, colour).save(os.path.join(tex, lid + ".png"))
         lines += glyph(lid, lid, CHAT_H, CHAT_Y)
-    os.makedirs(os.path.join(dest, "textures", "gui"), exist_ok=True)
-    widest = max(round(im.width * TAG_H / im.height) for _, im in tags)
-    try:  # old-theme background (the vanilla theme draws its own): kept as it is when its source cannot be read
-        background(widest).save(os.path.join(dest, "textures", "gui", "menu_tags.png"))
-    except OSError as e:
-        print("menu_tags.png not redrawn (%s), existing file kept" % e)
-    lines += ["  menu_tags:", "    show_in_gui: false", "    suggest_in_command: false",
-              '    path: "gui/menu_tags.png"', "    scale_ratio: 221", "    y_position: %d" % (13 + LIFT)]
     open(os.path.join(dest, "config.yml"), "w").write("\n".join(lines) + "\n")
     # size of every tag image file: FluxTags places the menu images with it
     data = os.path.join(plugins, "FluxTags")

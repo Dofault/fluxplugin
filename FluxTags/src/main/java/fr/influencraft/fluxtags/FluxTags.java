@@ -9,7 +9,6 @@ import fr.influencraft.flux.api.inventory.Lore;
 import fr.influencraft.flux.api.items.CustomItems;
 import fr.influencraft.flux.api.jobs.Jobs;
 import fr.influencraft.flux.api.list.ListEntry;
-import fr.influencraft.flux.api.list.Lists;
 import fr.influencraft.flux.api.text.Texts;
 import fr.influencraft.flux.api.util.Players;
 import fr.influencraft.fluxtags.api.Tags;
@@ -39,7 +38,9 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * FluxTags: collectible tags. A player shows one tag at most, picked in {@code /tags}:
+ * FluxTags: collectible tags. A player shows one tag at most, picked in the cosmetics menu (FluxCosmetics shows the
+ * list {@code tags} of this plugin; {@code /tags} opens it there, this plugin has no menu of its own since
+ * 2026-11-21) or with {@code /tags <tag>}:
  * <ul>
  *   <li>{@code rang} (shown until the player picks another tag or none): follows his current rank (an older rank's
  *   tag cannot be kept);</li>
@@ -51,10 +52,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * A player who never picked wears the tag {@code default-tags} gives his main group (a staff member his staff tag)
  * when he has it, else his rank. {@code /tags <tag>} wears a tag without the menu.
  * Images: pack {@code fluxtags} of ItemsAdder ({@code assets/gen_tags.py}), glyph {@code <image>} for the chat and
- * {@code <image>_r<row>} for row 1 to 5 of the menu, {@code rang_<rank>_p} for the profile. Placeholders:
+ * the menu sheet font {@code fluxtags:p} for the profile. Placeholders:
  * {@code %fluxtags_tag%}, {@code %fluxtags_tag_spaced%}, {@code %fluxtags_name%}, {@code %fluxtags_unlocked%},
- * {@code %fluxtags_total%}, {@code %fluxtags_rows%} (title of /tags), {@code %fluxtags_profile%} (title of the profile:
- * the rank tag of the shown player).
+ * {@code %fluxtags_total%}, {@code %fluxtags_profile%} (title of the profile: the rank tag of the shown player).
  */
 public final class FluxTags extends FluxPlugin implements Listener {
 
@@ -63,11 +63,8 @@ public final class FluxTags extends FluxPlugin implements Listener {
     private static final String RANK = "rang";
     /** Nothing picked yet (no row): the default tag is worked out from what the player has. */
     private static final String UNSET = "";
-    private static final int ROWS = 6;
     /** First character of the menu sheet fonts (gen_tags.MENU_BASE). */
     private static final int MENU_BASE = 0xE000;
-    /** Window x of the tags in /tags and of the rank tag in the profile (assets/gen_fonds.py). */
-    private static final int TAG_X = 46;
     private static final int PROFILE_CENTRE = 115;   // window x the profile's rank tag is centred on: over the 4 section columns (vanilla theme)
     private static final int TAG_HEIGHT = 9;
 
@@ -130,7 +127,7 @@ public final class FluxTags extends FluxPlugin implements Listener {
                     Player p = Players.of(sender);
                     if (p == null) return true;
                     if (args.length > 0) wear(p, args[0].toLowerCase(Locale.ROOT));
-                    else FluxApi.open(p, "tags");
+                    else menu(p);
                     return true;
                 })
                 .completer((sender, args) -> {
@@ -167,7 +164,7 @@ public final class FluxTags extends FluxPlugin implements Listener {
             }
 
             public boolean click(Player viewer, OfflinePlayer subject, boolean right) {
-                if (fr.influencraft.flux.api.profile.Profiles.own(viewer) && !right) FluxApi.open(viewer, "tags");
+                if (fr.influencraft.flux.api.profile.Profiles.own(viewer) && !right) menu(viewer);
                 return false;
             }
         });
@@ -390,6 +387,13 @@ public final class FluxTags extends FluxPlugin implements Listener {
         return t.special() != null ? t.special() : t.provided() != null ? t.id() : null;
     }
 
+    /** The choice of tags: the cosmetics menu on its tags (FluxCosmetics' action, read through Flux: no dependency). */
+    private void menu(Player p) {
+        fr.influencraft.flux.api.FluxAction cosmetics = FluxApi.action("cosmetics");
+        if (cosmetics != null) cosmetics.run(p, null, "tags");
+        else messages().send(p, "no-menu");
+    }
+
     /** A special tag only listed for the players who have it (staff tags). */
     private boolean hidden(Tag t) {
         return t.special() != null && getConfig().getBoolean("specials." + t.special() + ".hidden");
@@ -429,22 +433,6 @@ public final class FluxTags extends FluxPlugin implements Listener {
         fr.influencraft.flux.api.tab.TabList.refresh(p);
     }
 
-    /**
-     * The tag images of the shown page, one per row next to its button (title text, cursor at the window's left
-     * edge before and after). A locked tag is drawn dark.
-     */
-    private String rows(Player p) {
-        List<ListEntry> all = Lists.entries(p, "tags");
-        int page = Lists.state(p, "tags").page();
-        TitleOverlay out = new TitleOverlay("", 0);
-        for (int r = 0; r < ROWS && page * ROWS + r < all.size(); r++) {
-            ListEntry e = all.get(page * ROWS + r);
-            String image = e.values().get("image");
-            if (image != null) place(out, "r" + (r + 1), image, TAG_X, "true".equals(e.values().get("locked")) ? "&8" : "&f");
-        }
-        return out.moveTo(0).resolved();
-    }
-
     /** The rank tag of the player whose profile the viewer looks at, on the profile's line above the sections. */
     private String profile(Player viewer) {
         OfflinePlayer subject = fr.influencraft.flux.api.profile.Profiles.subject(viewer);
@@ -473,9 +461,6 @@ public final class FluxTags extends FluxPlugin implements Listener {
             case "total" -> {
                 return String.valueOf(all().values().stream()
                         .filter(t -> !t.id().equals(NONE) && (!hidden(t) || (p != null && image(p, t) != null))).count());
-            }
-            case "rows" -> {
-                return p == null ? "" : rows(p);
             }
             case "profile" -> {
                 return p == null ? "" : profile(p);

@@ -33,6 +33,7 @@ import java.util.List;
  *   [cosmetics] turn &lt;deg&gt;    turn the wardrobe's camera around the mannequin
  *   [cosmetics] category &lt;n&gt;  shows a category of his universe (the camera frames it), refused otherwise
  *   [cosmetics] frame         the camera frames the category now shown
+ *   [cosmetics] tags          the wardrobe on the tags, from anywhere (FluxTags' /tags)
  *   [cosmetics] rpg &lt;key&gt;     chooses his rpg outfit ({@link RpgOutfits})
  *   [cosmetics] rpg-here &lt;key&gt; an admin wears an rpg outfit outside the rpg universe (again: off)
  *   [cosmetics] opened|closed the menu shows or not (the camera makes room for it)
@@ -117,6 +118,18 @@ final class CosmeticsMenu {
         String[] parts = argument.split("\\s+", 2);
         String arg = parts.length > 1 ? parts[1].trim() : "";
         WardrobeView view = plugin.wardrobe().view(player);
+        if (parts[0].equals("tags")) {
+            Lists.act(player, LIST, "filter " + TAGS, 14);
+            if (view != null) {
+                view.frame(TAGS);
+                open(player);
+            } else {
+                // from a menu (the profile) or a command: the wardrobe opens on that category
+                player.closeInventory();
+                plugin.wardrobe().open(player);
+            }
+            return;
+        }
         if (parts[0].startsWith("preset-")) {
             presets.act(player, parts[0], arg);
             return;

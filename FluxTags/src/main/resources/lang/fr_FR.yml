@@ -23,3 +23,4 @@ pick: "Afficher"
 remove: "Ne plus afficher"
 rarities: ["Commun", "Unique", "Épique", "Mythique", "Légendaire", "Fabuleux"]
 locked-tag: "Pas encore débloqué."
+no-menu: "&#FF5C5CLe menu des cosmétiques n'est pas disponible : utilise /%flux_cmd_fluxtags_tags% <tag>."

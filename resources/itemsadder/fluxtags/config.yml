@@ -760,9 +760,3 @@ font_images:
     path: "tags/melodique.png"
     scale_ratio: 11
     y_position: 9
-  menu_tags:
-    show_in_gui: false
-    suggest_in_command: false
-    path: "gui/menu_tags.png"
-    scale_ratio: 221
-    y_position: 22
